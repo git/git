@@ -90,7 +90,8 @@ test_expect_success "deleting current branch adds message to HEAD's log" '
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-$m -d $m &&
 	test_must_fail git show-ref --verify -q $m &&
-	grep "delete-$m$" .git/logs/HEAD
+	test-tool ref-store main for-each-reflog-ent HEAD >actual &&
+	grep "delete-$m$" actual
 '
 
 test_expect_success "deleting by HEAD adds message to HEAD's log" '
@@ -99,7 +100,8 @@ test_expect_success "deleting by HEAD adds message to HEAD's log" '
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-by-head -d HEAD &&
 	test_must_fail git show-ref --verify -q $m &&
-	grep "delete-by-head$" .git/logs/HEAD
+	test-tool ref-store main for-each-reflog-ent HEAD >actual &&
+	grep "delete-by-head$" actual
 '
 
 test_expect_success 'update-ref does not create reflogs by default' '
@@ -130,7 +132,7 @@ test_expect_success 'creates no reflog in bare repository' '
 
 test_expect_success 'core.logAllRefUpdates=true creates reflog in bare repository' '
 	test_when_finished "git -C $bare config --unset core.logAllRefUpdates && \
-		rm $bare/logs/$m" &&
+		test-tool ref-store main delete-reflog $m" &&
 	git -C $bare config core.logAllRefUpdates true &&
 	git -C $bare update-ref $m $bareB &&
 	git -C $bare rev-parse $bareB >expect &&
@@ -263,7 +265,10 @@ test_expect_success "(not) changed .git/$m" '
 	! test $B = $(git show-ref -s --verify $m)
 '
 
-rm -f .git/logs/refs/heads/main
+test_expect_success "clean up reflog" '
+	test-tool ref-store main delete-reflog $m
+'
+
 test_expect_success "create $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
@@ -316,7 +321,7 @@ $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150260 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success "verifying $m's log (logged by touch)" '
-	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
+	test_when_finished "git update-ref -d $m && git reflog expire --expire=all --all && rm -rf actual expect" &&
 	test-tool ref-store main for-each-reflog-ent $m >actual &&
 	test_cmp actual expect
 '
@@ -346,7 +351,7 @@ $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success "verifying $m's log (logged by config)" '
-	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
+	test_when_finished "git update-ref -d $m && git reflog expire --expire=all --all && rm -rf actual expect" &&
 	test-tool ref-store main for-each-reflog-ent $m >actual &&
 	test_cmp actual expect
 '
