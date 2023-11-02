@@ -9,8 +9,6 @@ test_description='Test git update-ref and basic ref logging'
 Z=$ZERO_OID
 
 m=refs/heads/main
-n_dir=refs/heads/gu
-n=$n_dir/fixes
 outside=refs/foo
 bare=bare-repo
 
@@ -62,10 +60,10 @@ test_expect_success "delete $m without oldvalue verification" '
 	test_must_fail git show-ref --verify -q $m
 '
 
-test_expect_success "fail to create $n" '
-	test_when_finished "rm -f .git/$n_dir" &&
-	touch .git/$n_dir &&
-	test_must_fail git update-ref $n $A
+test_expect_success "fail to create $n due to file/directory conflict" '
+	test_when_finished "git update-ref -d refs/heads/gu" &&
+	git update-ref refs/heads/gu $A &&
+	test_must_fail git update-ref refs/heads/gu/fixes $A
 '
 
 test_expect_success "create $m (by HEAD)" '
@@ -221,16 +219,16 @@ test_expect_success 'delete symref without dereference when the referred ref is 
 '
 
 test_expect_success 'update-ref -d is not confused by self-reference' '
+	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF refs/heads/self" &&
 	git symbolic-ref refs/heads/self refs/heads/self &&
-	test_when_finished "rm -f .git/refs/heads/self" &&
 	test_path_is_file .git/refs/heads/self &&
 	test_must_fail git update-ref -d refs/heads/self &&
 	test_path_is_file .git/refs/heads/self
 '
 
 test_expect_success 'update-ref --no-deref -d can delete self-reference' '
+	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF refs/heads/self" &&
 	git symbolic-ref refs/heads/self refs/heads/self &&
-	test_when_finished "rm -f .git/refs/heads/self" &&
 	test_path_is_file .git/refs/heads/self &&
 	git update-ref --no-deref -d refs/heads/self &&
 	test_must_fail git show-ref --verify -q refs/heads/self
@@ -434,7 +432,8 @@ test_expect_success 'Query "main@{2005-05-28}" (past end of history)' '
 	test_i18ngrep -F "warning: log for ref $m unexpectedly ended on $ld" e
 '
 
-rm -f .git/$m .git/logs/$m expect
+rm -f expect
+git update-ref -d $m
 
 test_expect_success 'creating initial files' '
 	test_when_finished rm -f M &&
