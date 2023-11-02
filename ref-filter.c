@@ -582,9 +582,10 @@ static int contents_atom_parser(struct ref_format *format, struct used_atom *ato
 		atom->u.contents.option = C_BARE;
 	else if (!strcmp(arg, "body"))
 		atom->u.contents.option = C_BODY;
-	else if (!strcmp(arg, "size"))
+	else if (!strcmp(arg, "size")) {
+		atom->type = FIELD_ULONG;
 		atom->u.contents.option = C_LENGTH;
-	else if (!strcmp(arg, "signature"))
+	} else if (!strcmp(arg, "signature"))
 		atom->u.contents.option = C_SIG;
 	else if (!strcmp(arg, "subject"))
 		atom->u.contents.option = C_SUB;
@@ -690,9 +691,10 @@ static int raw_atom_parser(struct ref_format *format UNUSED,
 {
 	if (!arg)
 		atom->u.raw_data.option = RAW_BARE;
-	else if (!strcmp(arg, "size"))
+	else if (!strcmp(arg, "size")) {
+		atom->type = FIELD_ULONG;
 		atom->u.raw_data.option = RAW_LENGTH;
-	else
+	} else
 		return err_bad_arg(err, "raw", arg);
 	return 0;
 }
@@ -1857,7 +1859,8 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct exp
 				v->s = xmemdupz(buf, buf_size);
 				v->s_size = buf_size;
 			} else if (atom->u.raw_data.option == RAW_LENGTH) {
-				v->s = xstrfmt("%"PRIuMAX, (uintmax_t)buf_size);
+				v->value = buf_size;
+				v->s = xstrfmt("%"PRIuMAX, v->value);
 			}
 			continue;
 		}
@@ -1883,9 +1886,10 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct exp
 			v->s = strbuf_detach(&sb, NULL);
 		} else if (atom->u.contents.option == C_BODY_DEP)
 			v->s = xmemdupz(bodypos, bodylen);
-		else if (atom->u.contents.option == C_LENGTH)
-			v->s = xstrfmt("%"PRIuMAX, (uintmax_t)strlen(subpos));
-		else if (atom->u.contents.option == C_BODY)
+		else if (atom->u.contents.option == C_LENGTH) {
+			v->value = strlen(subpos);
+			v->s = xstrfmt("%"PRIuMAX, v->value);
+		} else if (atom->u.contents.option == C_BODY)
 			v->s = xmemdupz(bodypos, nonsiglen);
 		else if (atom->u.contents.option == C_SIG)
 			v->s = xmemdupz(sigpos, siglen);
@@ -2265,6 +2269,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 
 		v->s_size = ATOM_SIZE_UNSPECIFIED;
 		v->handler = append_atom;
+		v->value = 0;
 		v->atom = atom;
 
 		if (*name == '*') {
