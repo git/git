@@ -28,6 +28,7 @@
 # completion style.  For example '!f() { : git commit ; ... }; f' will
 # tell the completion to use commit completion.  This also works with aliases
 # of form "!sh -c '...'".  For example, "!sh -c ': git commit ; ... '".
+# Be sure to add a space between the command name and the ';'.
 #
 # If you have a command that is not part of git, but you would still
 # like completion, you can use __git_complete:
