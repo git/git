@@ -517,8 +517,12 @@ test_expect_success 'nested (empty) git should be kept' '
 	git init empty_repo &&
 	mkdir to_clean &&
 	>to_clean/should_clean.this &&
+	# Note that we put the expect file in the .git directory so that it
+	# does not get cleaned.
+	find empty_repo | sort >.git/expect &&
 	git clean -f -d &&
-	test_path_is_file empty_repo/.git/HEAD &&
+	find empty_repo | sort >actual &&
+	test_cmp .git/expect actual &&
 	test_path_is_missing to_clean
 '
 
@@ -559,10 +563,10 @@ test_expect_success 'giving path in nested git work tree will NOT remove it' '
 		mkdir -p bar/baz &&
 		test_commit msg bar/baz/hello.world
 	) &&
+	find repo | sort >expect &&
 	git clean -f -d repo/bar/baz &&
-	test_path_is_file repo/.git/HEAD &&
-	test_path_is_dir repo/bar/ &&
-	test_path_is_file repo/bar/baz/hello.world
+	find repo | sort >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'giving path to nested .git will not remove it' '
@@ -573,10 +577,10 @@ test_expect_success 'giving path to nested .git will not remove it' '
 		git init &&
 		test_commit msg hello.world
 	) &&
+	find repo | sort >expect &&
 	git clean -f -d repo/.git &&
-	test_path_is_file repo/.git/HEAD &&
-	test_path_is_dir repo/.git/refs &&
-	test_path_is_dir repo/.git/objects &&
+	find repo | sort >actual &&
+	test_cmp expect actual &&
 	test_path_is_dir untracked/
 '
 
@@ -588,9 +592,10 @@ test_expect_success 'giving path to nested .git/ will NOT remove contents' '
 		git init &&
 		test_commit msg hello.world
 	) &&
+	find repo | sort >expect &&
 	git clean -f -d repo/.git/ &&
-	test_path_is_dir repo/.git &&
-	test_path_is_file repo/.git/HEAD &&
+	find repo | sort >actual &&
+	test_cmp expect actual &&
 	test_path_is_dir untracked/
 '
 
