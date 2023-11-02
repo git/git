@@ -586,4 +586,15 @@ test_expect_success 'progress shows the correct total' '
 	test_line_count = 14 progress
 '
 
+test_expect_success 'truncate label names' '
+	commit=$(git commit-tree -p HEAD^ -p HEAD -m "0123456789 我 123" HEAD^{tree}) &&
+	git merge --ff-only $commit &&
+
+	done="$(git rev-parse --git-path rebase-merge/done)" &&
+	git -c rebase.maxLabelLength=14 rebase --rebase-merges -x "cp \"$done\" out" --root &&
+	grep "label 0123456789-我$" out &&
+	git -c rebase.maxLabelLength=13 rebase --rebase-merges -x "cp \"$done\" out" --root &&
+	grep "label 0123456789-$" out
+'
+
 test_done
