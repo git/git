@@ -201,7 +201,7 @@ Valid `<type>`'s include:
   1073741824 upon input.
 - 'bool-or-int': canonicalize according to either 'bool' or 'int', as described
   above.
-- 'path': canonicalize by adding a leading `~` to the value of `$HOME` and
+- 'path': canonicalize by expanding a leading `~` to the value of `$HOME` and
   `~user` to the home directory for the specified user. This specifier has no
   effect when setting the value (but you can use `git config section.variable
   ~/` from the command line to let your shell do the expansion.)
