@@ -455,7 +455,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		refresh_cache_or_die(refresh_flags);
 		cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, 0))
-			die(_("unable to write new_index file"));
+			die(_("unable to write new index file"));
 		commit_style = COMMIT_NORMAL;
 		ret = get_lock_file_path(&index_lock);
 		goto out;
@@ -479,7 +479,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 			cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock,
 				       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-			die(_("unable to write new_index file"));
+			die(_("unable to write new index file"));
 		commit_style = COMMIT_AS_IS;
 		ret = get_index_file();
 		goto out;
@@ -527,7 +527,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 	cache_tree_update(&the_index, WRITE_TREE_SILENT);
 	if (write_locked_index(&the_index, &index_lock, 0))
-		die(_("unable to write new_index file"));
+		die(_("unable to write new index file"));
 
 	hold_lock_file_for_update(&false_lock,
 				  git_path("next-index-%"PRIuMAX,
@@ -1862,7 +1862,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (commit_index_files())
 		die(_("repository has been updated, but unable to write\n"
-		      "new_index file. Check that disk is not full and quota is\n"
+		      "new index file. Check that disk is not full and quota is\n"
 		      "not exceeded, and then \"git restore --staged :/\" to recover."));
 
 	git_test_write_commit_graph_or_die();
