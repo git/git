@@ -16,7 +16,7 @@ Backward Compatibility Notes
    rule is that "--not" given from the command line only affects revs
    given from the command line that comes but not revs read from the
    standard input, and "--not" read from the standard input affects
-   revs given from the stanrdard input and not revs given from the
+   revs given from the standard input and not revs given from the
    command line.
 
 UI, Workflows & Features
@@ -62,7 +62,7 @@ UI, Workflows & Features
    describe complex "revert of revert of revert" situation better in
    their own words.
 
- * The command-line complation support (in contrib/) learned to
+ * The command-line completion support (in contrib/) learned to
    complete "git commit --trailer=" for possible trailer keys.
 
  * "git update-index" learns "--show-index-version" to inspect
