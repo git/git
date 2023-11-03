@@ -37,8 +37,9 @@ UI, Workflows & Features
    oath token and password expiration data) are stored in libsecret
    keyrings has been rethought.
 
- * Update two credential helpers to correctly match which credential
-   to erase; they dropped not the ones with stale password.
+ * Update the libsecret and wincred credential helpers to correctly
+   match which credential to erase; they erased the wrong entry in
+   some cases.
 
  * Git GUI updates.
 
