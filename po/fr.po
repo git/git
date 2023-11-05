@@ -21,6 +21,7 @@
 #   bypass           |  éviter d'utiliser
 #   to checkout      |  extraire
 #   cherry-pick      |  picorer
+#   chunk            |  tronçon
 #   to commit        |  valider
 #   commit-ish       |  commit ou apparenté
 #   config file      |  fichier de configuration
@@ -29,6 +30,7 @@
 #   debugging        |  débogage
 #   to deflate       |  compresser
 #   email            |  courriel
+#   enlistment       |  enrôlement
 #   entry            |  élément
 #   fanout           |  dispersion
 #   fast-forward     |  avance rapide
@@ -78,8 +80,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-08-16 11:48+0200\n"
-"PO-Revision-Date: 2023-08-16 11:49+0200\n"
+"POT-Creation-Date: 2023-11-08 04:57+0000\n"
+"PO-Revision-Date: 2023-11-11 10:00+0100\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -1855,8 +1857,8 @@ msgid "submodule '%s': cannot create branch '%s'"
 msgstr "sous-module '%s' : impossible de créer la branche '%s'"
 
 #, c-format
-msgid "'%s' is already checked out at '%s'"
-msgstr "'%s' est déjà extrait dans '%s'"
+msgid "'%s' is already used by worktree at '%s'"
+msgstr "'%s' est déjà utilisé par l'arbre-de-travail dans '%s'"
 
 msgid "git add [<options>] [--] <pathspec>..."
 msgstr "git add [<options>] [--] <chemin>..."
@@ -1875,25 +1877,22 @@ msgstr ""
 "le réglage add.interactive.useBuiltin a été supprimé !\n"
 "Référez-vous à cette entrée dans 'git help config' pour plus de détails."
 
-msgid "Could not read the index"
-msgstr "Impossible de lire l'index"
-
-msgid "Could not write patch"
-msgstr "Impossible d'écrire le patch"
+msgid "could not read the index"
+msgstr "impossible de lire l'index"
 
 msgid "editing patch failed"
 msgstr "échec de l'édition du patch"
 
 #, c-format
-msgid "Could not stat '%s'"
-msgstr "Stat de '%s' impossible"
+msgid "could not stat '%s'"
+msgstr "impossible de stat '%s'"
 
-msgid "Empty patch. Aborted."
-msgstr "Patch vide. Abandon."
+msgid "empty patch. aborted"
+msgstr "rustine vide. abandon"
 
 #, c-format
-msgid "Could not apply '%s'"
-msgstr "Impossible d'appliquer '%s'"
+msgid "could not apply '%s'"
+msgstr "impossible d'appliquer '%s'"
 
 msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr ""
@@ -2026,6 +2025,9 @@ msgstr ""
 
 msgid "index file corrupt"
 msgstr "fichier d'index corrompu"
+
+msgid "unable to write new index file"
+msgstr "impossible d'écrire le nouveau fichier d'index"
 
 #, c-format
 msgid "bad action '%s' for '%s'"
@@ -2236,9 +2238,6 @@ msgstr ""
 "Vous pouvez lancer 'git rm' sur un fichier \"supprimé par eux\" pour "
 "accepter son état."
 
-msgid "unable to write new index file"
-msgstr "impossible d'écrire le nouveau fichier d'index"
-
 #, c-format
 msgid "Could not parse object '%s'."
 msgstr "Impossible d'analyser l'objet '%s'."
@@ -2256,10 +2255,6 @@ msgstr ""
 #, c-format
 msgid "failed to read '%s'"
 msgstr "échec de la lecture de '%s'"
-
-#, c-format
-msgid "options '%s=%s' and '%s=%s' cannot be used together"
-msgstr "les options '%s=%s' et '%s=%s' ne peuvent pas être utilisées ensemble"
 
 msgid "git am [<options>] [(<mbox> | <Maildir>)...]"
 msgstr "git am [<options>] [(<mbox> | <Maildir>)...]"
@@ -2414,7 +2409,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive : vidage attendu"
 
 msgid ""
-"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]    [--no-"
 "checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 msgstr ""
 "git bisect start [--term-{new,bad}=<terme> --term-{old,good}=<terme>]    [--"
@@ -2433,8 +2428,8 @@ msgstr "git bisect reset [<commit>]"
 msgid "git bisect replay <logfile>"
 msgstr "git bisect replay <fichier-journal>"
 
-msgid "git bisect run <cmd>..."
-msgstr "git bisect run <cmd>..."
+msgid "git bisect run <cmd> [<arg>...]"
+msgstr "git bisect run <cmd>  [<arg>...]"
 
 #, c-format
 msgid "cannot open file '%s' in mode '%s'"
@@ -2861,44 +2856,46 @@ msgstr "git branch [<options>] [-r | -a] [--format]"
 #, c-format
 msgid ""
 "deleting branch '%s' that has been merged to\n"
-"         '%s', but not yet merged to HEAD."
+"         '%s', but not yet merged to HEAD"
 msgstr ""
 "suppression de la branche '%s' qui a été fusionnée dans\n"
-"         '%s', mais pas dans HEAD."
+"         '%s', mais pas encore dans HEAD"
 
 #, c-format
 msgid ""
 "not deleting branch '%s' that is not yet merged to\n"
-"         '%s', even though it is merged to HEAD."
+"         '%s', even though it is merged to HEAD"
 msgstr ""
-"branche '%s' non supprimée car elle n'a pas été fusionnée dans\n"
-"         '%s', même si elle est fusionnée dans HEAD."
+"branche '%s' non supprimée car elle n'a pas encore été fusionnée dans\n"
+"         '%s', même si elle est fusionnée dans HEAD"
 
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
-msgstr "Impossible de rechercher l'objet commit pour '%s'"
+msgid "couldn't look up commit object for '%s'"
+msgstr "impossible de rechercher l'objet commit pour '%s'"
 
 #, c-format
 msgid ""
-"The branch '%s' is not fully merged.\n"
-"If you are sure you want to delete it, run 'git branch -D %s'."
+"the branch '%s' is not fully merged.\n"
+"If you are sure you want to delete it, run 'git branch -D %s'"
 msgstr ""
-"La branche '%s' n'est pas totalement fusionnée.\n"
-"Si vous souhaitez réellement la supprimer, lancez 'git branch -D %s'."
+"la branche '%s' n'est pas totalement fusionnée.\n"
+"Si vous souhaitez réellement la supprimer, lancez 'git branch -D %s'"
 
-msgid "Update of config-file failed"
-msgstr "Échec de la mise à jour du fichier de configuration"
+msgid "update of config-file failed"
+msgstr "échec de la mise à jour du fichier de configuration"
 
 msgid "cannot use -a with -d"
 msgstr "impossible d'utiliser -a avec -d"
 
 #, c-format
-msgid "Cannot delete branch '%s' checked out at '%s'"
-msgstr "Impossible de supprimer la branche '%s' extraite dans '%s'"
+msgid "cannot delete branch '%s' used by worktree at '%s'"
+msgstr ""
+"impossible de supprimer la branche '%s' utilisée par l'arbre-de-travail dans "
+"'%s'"
 
 #, c-format
-msgid "remote-tracking branch '%s' not found."
-msgstr "branche de suivi '%s' non trouvée."
+msgid "remote-tracking branch '%s' not found"
+msgstr "branche de suivi '%s' non trouvée"
 
 #, c-format
 msgid ""
@@ -2909,8 +2906,8 @@ msgstr ""
 "Avez-vous oublié --remote ?"
 
 #, c-format
-msgid "branch '%s' not found."
-msgstr "branche '%s' non trouvée."
+msgid "branch '%s' not found"
+msgstr "branche '%s' non trouvée"
 
 #, c-format
 msgid "Deleted remote-tracking branch %s (was %s).\n"
@@ -2931,55 +2928,55 @@ msgid "HEAD (%s) points outside of refs/heads/"
 msgstr "HEAD (%s) pointe hors de refs/heads/"
 
 #, c-format
-msgid "Branch %s is being rebased at %s"
-msgstr "La branche %s est en cours de rebasage sur %s"
+msgid "branch %s is being rebased at %s"
+msgstr "la branche %s est en cours de rebasage sur %s"
 
 #, c-format
-msgid "Branch %s is being bisected at %s"
-msgstr "La branche %s est en cours de bissection sur %s"
+msgid "branch %s is being bisected at %s"
+msgstr "la branche %s est en cours de bissection sur %s"
 
 #, c-format
 msgid "HEAD of working tree %s is not updated"
 msgstr "la HEAD de la copie de travail %s n'est pas mise à jour"
 
 #, c-format
-msgid "Invalid branch name: '%s'"
-msgstr "Nom de branche invalide : '%s'"
+msgid "invalid branch name: '%s'"
+msgstr "nom de branche invalide : '%s'"
 
 #, c-format
-msgid "No commit on branch '%s' yet."
-msgstr "Aucun commit sur la branche '%s'."
+msgid "no commit on branch '%s' yet"
+msgstr "aucun commit encore sur la branche '%s'"
 
 #, c-format
-msgid "No branch named '%s'."
-msgstr "Aucune branche nommée '%s'."
+msgid "no branch named '%s'"
+msgstr "aucune branche nommée '%s'"
 
-msgid "Branch rename failed"
-msgstr "Échec de renommage de la branche"
+msgid "branch rename failed"
+msgstr "échec de renommage de la branche"
 
-msgid "Branch copy failed"
-msgstr "Échec de copie de la branche"
-
-#, c-format
-msgid "Created a copy of a misnamed branch '%s'"
-msgstr "Création d'une copie d'une branche mal nommée '%s'"
+msgid "branch copy failed"
+msgstr "échec de copie de la branche"
 
 #, c-format
-msgid "Renamed a misnamed branch '%s' away"
-msgstr "Renommage d'une branche mal nommée '%s'"
+msgid "created a copy of a misnamed branch '%s'"
+msgstr "création d'une copie d'une branche mal nommée '%s'"
 
 #, c-format
-msgid "Branch renamed to %s, but HEAD is not updated!"
-msgstr "La branche a été renommée en %s, mais HEAD n'est pas mise à jour !"
+msgid "renamed a misnamed branch '%s' away"
+msgstr "renommage d'une branche mal nommée '%s'"
 
-msgid "Branch is renamed, but update of config-file failed"
+#, c-format
+msgid "branch renamed to %s, but HEAD is not updated"
+msgstr "la branche a été renommée en %s, mais HEAD n'est pas mise à jour"
+
+msgid "branch is renamed, but update of config-file failed"
 msgstr ""
-"La branche est renommée, mais la mise à jour du fichier de configuration a "
+"la branche est renommée, mais la mise à jour du fichier de configuration a "
 "échoué"
 
-msgid "Branch is copied, but update of config-file failed"
+msgid "branch is copied, but update of config-file failed"
 msgstr ""
-"La branche est copiée, mais la mise à jour du fichier de configuration a "
+"la branche est copiée, mais la mise à jour du fichier de configuration a "
 "échoué"
 
 #, c-format
@@ -3094,8 +3091,8 @@ msgstr "parcourir récursivement les sous-modules"
 msgid "format to use for the output"
 msgstr "format à utiliser pour la sortie"
 
-msgid "Failed to resolve HEAD as a valid ref."
-msgstr "Échec de résolution de HEAD comme référence valide."
+msgid "failed to resolve HEAD as a valid ref"
+msgstr "échec de résolution de HEAD comme référence valide"
 
 msgid "HEAD not found below refs/heads!"
 msgstr "HEAD non trouvée sous refs/heads !"
@@ -3113,17 +3110,17 @@ msgstr "--recurse-submodules ne peut être utilisé que pour créer des branches
 msgid "branch name required"
 msgstr "le nom de branche est requis"
 
-msgid "Cannot give description to detached HEAD"
-msgstr "Impossible de décrire une HEAD détachée"
+msgid "cannot give description to detached HEAD"
+msgstr "impossible de décrire une HEAD détachée"
 
 msgid "cannot edit description of more than one branch"
 msgstr "impossible d'éditer la description de plus d'une branche"
 
-msgid "cannot copy the current branch while not on any."
-msgstr "impossible de copier la branche actuelle, il n'y en a pas."
+msgid "cannot copy the current branch while not on any"
+msgstr "impossible de copier la branche actuelle, il n'y en a pas"
 
-msgid "cannot rename the current branch while not on any."
-msgstr "impossible de renommer la branche actuelle, il n'y en a pas."
+msgid "cannot rename the current branch while not on any"
+msgstr "impossible de renommer la branche actuelle, il n'y en a pas"
 
 msgid "too many branches for a copy operation"
 msgstr "trop de branches pour une opération de copie"
@@ -3136,10 +3133,10 @@ msgstr "trop d'arguments pour spécifier une branche amont"
 
 #, c-format
 msgid ""
-"could not set upstream of HEAD to %s when it does not point to any branch."
+"could not set upstream of HEAD to %s when it does not point to any branch"
 msgstr ""
 "impossible de spécifier une branche amont de HEAD par %s qui ne pointe sur "
-"aucune branche."
+"aucune branche"
 
 #, c-format
 msgid "no such branch '%s'"
@@ -3152,29 +3149,29 @@ msgstr "la branche '%s' n'existe pas"
 msgid "too many arguments to unset upstream"
 msgstr "trop d'arguments pour désactiver un amont"
 
-msgid "could not unset upstream of HEAD when it does not point to any branch."
+msgid "could not unset upstream of HEAD when it does not point to any branch"
 msgstr ""
 "impossible de désactiver une branche amont de HEAD quand elle ne pointe sur "
-"aucune branche."
+"aucune branche"
 
 #, c-format
-msgid "Branch '%s' has no upstream information"
-msgstr "La branche '%s' n'a aucune information de branche amont"
+msgid "branch '%s' has no upstream information"
+msgstr "la branche '%s' n'a aucune information de branche amont"
 
 msgid ""
-"The -a, and -r, options to 'git branch' do not take a branch name.\n"
+"the -a, and -r, options to 'git branch' do not take a branch name.\n"
 "Did you mean to use: -a|-r --list <pattern>?"
 msgstr ""
-"Les options -a et -r de 'git branch' n'ont pas de sens avec un nom de "
+"les options -a et -r de 'git branch' n'ont pas de sens avec un nom de "
 "branche.\n"
 "Vouliez-vous plutôt dire -a|-r --list <motif> ?"
 
 msgid ""
 "the '--set-upstream' option is no longer supported. Please use '--track' or "
-"'--set-upstream-to' instead."
+"'--set-upstream-to' instead"
 msgstr ""
 "l'option '--set-upstream' est obsolète. Utilisez '--track' ou '--set-"
-"upstream-to' à la place."
+"upstream-to' à la place"
 
 msgid "git version:\n"
 msgstr "version git ::\n"
@@ -3250,6 +3247,10 @@ msgstr "spécifier la destination du/des fichier(s) de rapport de bogue"
 
 msgid "specify a strftime format suffix for the filename(s)"
 msgstr "spécifier une suffixe au format strftime pour le(s) nom(s) de fichier"
+
+#, c-format
+msgid "unknown argument `%s'"
+msgstr "argument inconnu '%s'"
 
 #, c-format
 msgid "could not create leading directories for '%s'"
@@ -3358,22 +3359,22 @@ msgid "git cat-file (-t | -s) [--allow-unknown-type] <object>"
 msgstr "git cat-file (-t | -s) [--allow-unknown-type] <objet>"
 
 msgid ""
-"git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
-"objects]\n"
-"             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters] [-Z]"
-msgstr ""
-"git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
-"objects]\n"
-"             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters] [-Z]"
-
-msgid ""
 "git cat-file (--textconv | --filters)\n"
 "             [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]"
 msgstr ""
 "git cat-file (--textconv | --filters)\n"
 "             [<rev>:<chemin|arbresque> | --path=<chemin|arbresque> <rev>]"
+
+msgid ""
+"git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
+"objects]\n"
+"             [--buffer] [--follow-symlinks] [--unordered]\n"
+"             [--textconv | --filters] [-Z]"
+msgstr ""
+"git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
+"objects]\n"
+"             [--buffer] [--follow-symlinks] [--unordered]\n"
+"             [--textconv | --filters] [-Z]"
 
 msgid "Check object existence or emit object contents"
 msgstr "Vérifie l'existence d'un objet ou émettre le contenu de l'objet"
@@ -3674,6 +3675,12 @@ msgstr "'%s' ne peut pas être utilisé quand '%s' n'est pas spécifié"
 #, c-format
 msgid "'%s' or '%s' cannot be used with %s"
 msgstr "'%s' ou '%s' ne peut pas être utilisé avec %s"
+
+#, c-format
+msgid "'%s', '%s', or '%s' cannot be used when checking out of a tree"
+msgstr ""
+"'%s', '%s' ou '%s' ne peuvent pas être utilisés lors de l'extraction d'un "
+"arbre"
 
 #, c-format
 msgid "path '%s' is unmerged"
@@ -4563,6 +4570,10 @@ msgid "Could not open commit-graph '%s'"
 msgstr "Impossible d'ouvrir le graphe de commit '%s'"
 
 #, c-format
+msgid "could not open commit-graph chain '%s'"
+msgstr "impossible d'ouvrir le graphe de commit '%s'"
+
+#, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "argument de --split non reconnu, %s"
 
@@ -4761,9 +4772,6 @@ msgstr "impossible de mettre à jour l'index temporaire"
 
 msgid "Failed to update main cache tree"
 msgstr "Impossible de mettre à jour l'arbre de cache principal"
-
-msgid "unable to write new_index file"
-msgstr "impossible d'écrire le fichier new_index"
 
 msgid "cannot do a partial commit during a merge."
 msgstr "impossible de faire une validation partielle pendant une fusion."
@@ -5174,11 +5182,11 @@ msgstr ""
 
 msgid ""
 "repository has been updated, but unable to write\n"
-"new_index file. Check that disk is not full and quota is\n"
+"new index file. Check that disk is not full and quota is\n"
 "not exceeded, and then \"git restore --staged :/\" to recover."
 msgstr ""
-"le dépôt a été mis à jour, mais impossible d'écrire le fichier\n"
-"new_index. Vérifiez que le disque n'est pas plein ou que le quota\n"
+"le dépôt a été mis à jour, mais impossible d'écrire le nouveau fichier\n"
+"d'index. Vérifiez que le disque n'est pas plein ou que le quota\n"
 "n'a pas été dépassé, puis lancez \"git restore --staged :/\" pour réparer."
 
 msgid "git config [<options>]"
@@ -6644,6 +6652,9 @@ msgstr "élaguer les objets non référencés"
 msgid "pack unreferenced objects separately"
 msgstr "empaqueter les objets non référencés séparément"
 
+msgid "with --cruft, limit the size of new cruft packs"
+msgstr "avec --cruft, limiter la taille des nouveaux paquets déchets"
+
 msgid "be more thorough (increased runtime)"
 msgstr "être plus consciencieux (durée de traitement allongée)"
 
@@ -6823,12 +6834,6 @@ msgstr ""
 msgid "'crontab' died"
 msgstr "'crontab' est mort"
 
-msgid "failed to start systemctl"
-msgstr "échec du démarrage de systemctl"
-
-msgid "failed to run systemctl"
-msgstr "échec pour lancer systemctl"
-
 #, c-format
 msgid "failed to delete '%s'"
 msgstr "échec de la suppression de '%s'"
@@ -6836,6 +6841,12 @@ msgstr "échec de la suppression de '%s'"
 #, c-format
 msgid "failed to flush '%s'"
 msgstr "échec du flush de '%s'"
+
+msgid "failed to start systemctl"
+msgstr "échec du démarrage de systemctl"
+
+msgid "failed to run systemctl"
+msgstr "échec pour lancer systemctl"
 
 #, c-format
 msgid "unrecognized --scheduler argument '%s'"
@@ -6861,6 +6872,9 @@ msgstr "planificateur"
 
 msgid "scheduler to trigger git maintenance run"
 msgstr "planificateur qui lancera les maintenances git"
+
+msgid "failed to set up maintenance schedule"
+msgstr "impossible de mettre en place la planification de maintenance"
 
 msgid "failed to add repo to global config"
 msgstr "échec de l'ajout du dépôt à la config globale"
@@ -6936,8 +6950,8 @@ msgstr "traiter les fichiers binaires avec les filtres textconv"
 msgid "search in subdirectories (default)"
 msgstr "rechercher dans les sous-répertoires (défaut)"
 
-msgid "descend at most <depth> levels"
-msgstr "descendre au plus de <profondeur> dans l'arborescence"
+msgid "descend at most <n> levels"
+msgstr "descendre au plus de <n> niveaux"
 
 msgid "use extended POSIX regular expressions"
 msgstr "utiliser des expressions régulières étendues POSIX"
@@ -7503,11 +7517,12 @@ msgstr "--separate-git-dir est incompatible avec un dépôt nu"
 
 msgid ""
 "git interpret-trailers [--in-place] [--trim-empty]\n"
-"                       [(--trailer <token>[(=|:)<value>])...]\n"
+"                       [(--trailer (<key>|<keyAlias>)[(=|:)<value>])...]\n"
 "                       [--parse] [<file>...]"
 msgstr ""
 "git interpret-trailers [--in-place] [--trim-empty]\n"
-"                       [(--trailer <symbole>[(=|:)<valeur>])...]\n"
+"                       [(--trailer (<clé>|<alias-de-clé>)"
+"[(=|:)<valeur>])...]\n"
 "                       [--parse] [<fichier>...]"
 
 msgid "edit files in place"
@@ -7515,6 +7530,9 @@ msgstr "éditer les fichiers sur place"
 
 msgid "trim empty trailers"
 msgstr "éliminer les lignes de fin vides"
+
+msgid "placement"
+msgstr "placement"
 
 msgid "where to place the new trailer"
 msgstr "où placer les nouvelles lignes terminales"
@@ -7528,17 +7546,19 @@ msgstr "action si les lignes terminales manquent"
 msgid "output only the trailers"
 msgstr "éliminer les lignes terminales vides"
 
-msgid "do not apply config rules"
-msgstr "ne pas appliquer les règles de la configuration"
+msgid "do not apply trailer.* configuration variables"
+msgstr "ne pas appliquer les variables de configuration trailer.*"
 
-msgid "join whitespace-continued values"
-msgstr "joindre les valeurs continuées avec des caractères blancs"
+msgid "reformat multiline trailer values as single-line values"
+msgstr ""
+"reformatter les valeurs de ligne terminales multi-lignes en valeurs sur une "
+"seule ligne"
 
-msgid "set parsing options"
-msgstr "paramètres d'analyse"
+msgid "alias for --only-trailers --only-input --unfold"
+msgstr "alias pour --only-trailers --only-input --unfold"
 
-msgid "do not treat --- specially"
-msgstr "ne pas traiter spécialement ---"
+msgid "do not treat \"---\" as the end of input"
+msgstr "ne pas traiter \"---\" comme la fin d'entrée"
 
 msgid "trailer(s) to add"
 msgstr "ligne(s) de fin à ajouter"
@@ -7627,6 +7647,10 @@ msgstr "exactement une plage nécessaire"
 
 msgid "not a range"
 msgstr "ceci n'est pas une plage"
+
+#, c-format
+msgid "unable to read branch description file '%s'"
+msgstr "lecture du fichier de description de branche '%s' impossible"
 
 msgid "cover letter needs email format"
 msgstr "la lettre de motivation doit être au format courriel"
@@ -7733,6 +7757,9 @@ msgid "generate parts of a cover letter based on a branch's description"
 msgstr ""
 "générer des parties de la lettre d'introduction à partir de la description "
 "de la branche"
+
+msgid "use branch description from file"
+msgstr "utiliser la description de branche dans le fichier"
 
 msgid "use [<prefix>] instead of [PATCH]"
 msgstr "utiliser [<préfixe>] au lieu de [PATCH]"
@@ -8180,6 +8207,9 @@ msgstr ""
 msgid "send results to standard output"
 msgstr "envoyer les résultats sur la sortie standard"
 
+msgid "use object IDs instead of filenames"
+msgstr "utiliser les IDs d'objet au lieu de noms de fichier"
+
 msgid "use a diff3 based merge"
 msgstr "utiliser une fusion basée sur diff3"
 
@@ -8203,6 +8233,13 @@ msgstr "ne pas avertir à propos des conflits"
 
 msgid "set labels for file1/orig-file/file2"
 msgstr "définir les labels pour fichier1/fichier-orig/fichier2"
+
+#, c-format
+msgid "object '%s' does not exist"
+msgstr "l'objet '%s' n'existe pas"
+
+msgid "Could not write object file"
+msgstr "impossible d'écrire le fichier d'objet"
 
 #, c-format
 msgid "unknown option %s"
@@ -8265,8 +8302,18 @@ msgstr "réaliser des fusions multiples, une par ligne d'entrée"
 msgid "specify a merge-base for the merge"
 msgstr "spécifier une base de fusion pour la fusion"
 
+msgid "option=value"
+msgstr "option=valeur"
+
+msgid "option for selected merge strategy"
+msgstr "option pour la stratégie de fusion sélectionnée"
+
 msgid "--trivial-merge is incompatible with all other options"
 msgstr "--trivial-merge est incompatible avec d'autres options"
+
+#, c-format
+msgid "unknown strategy option: -X%s"
+msgstr "option de stratégie inconnue : -X%s"
 
 msgid "--merge-base is incompatible with --stdin"
 msgstr "--merge-base est incompatible avec --stdin"
@@ -8339,12 +8386,6 @@ msgstr "stratégie"
 msgid "merge strategy to use"
 msgstr "stratégie de fusion à utiliser"
 
-msgid "option=value"
-msgstr "option=valeur"
-
-msgid "option for selected merge strategy"
-msgstr "option pour la stratégie de fusion sélectionnée"
-
 msgid "merge commit message (for a non-fast-forward merge)"
 msgstr ""
 "message de validation de la fusion (pour une fusion sans avance rapide)"
@@ -8404,10 +8445,6 @@ msgstr "Impossible d'écrire l'index."
 
 msgid "Not handling anything other than two heads merge."
 msgstr "Impossible de gérer autre chose que la fusion de deux têtes."
-
-#, c-format
-msgid "unknown strategy option: -X%s"
-msgstr "option de stratégie inconnue : -X%s"
 
 #, c-format
 msgid "unable to write %s"
@@ -8710,8 +8747,8 @@ msgstr "la destination existe"
 msgid "can not move directory into itself"
 msgstr "impossible de déplacer un répertoire dans lui-même"
 
-msgid "cannot move directory over file"
-msgstr "impossible de déplacer un répertoire sur un fichier"
+msgid "destination already exists"
+msgstr "la destination existe déjà"
 
 msgid "source directory is empty"
 msgstr "le répertoire source est vide"
@@ -9471,9 +9508,6 @@ msgstr "la taille limite minimale d'un paquet est 1 MiB"
 msgid "--thin cannot be used to build an indexable pack"
 msgstr "--thin ne peut pas être utilisé pour construire un paquet indexable"
 
-msgid "cannot use --filter without --stdout"
-msgstr "impossible d'utiliser --filter sans --stdout"
-
 msgid "cannot use --filter with --stdin-packs"
 msgstr "impossible d'utiliser --filter avec --stdin-packs"
 
@@ -9486,9 +9520,6 @@ msgstr "impossible d'utiliser une liste interne de révisions avec --cruft"
 
 msgid "cannot use --stdin-packs with --cruft"
 msgstr "impossible d'utiliser --stdin-packs avec --cruft"
-
-msgid "cannot use --max-pack-size with --cruft"
-msgstr "impossible d'utiliser --max-pack-size avec --cruft"
 
 msgid "Enumerating objects"
 msgstr "Énumération des objets"
@@ -10488,9 +10519,6 @@ msgstr ""
 msgid "switch `C' expects a numerical value"
 msgstr "l'option `C' attend un valeur numérique"
 
-msgid "--strategy requires --merge or --interactive"
-msgstr "--strategy requiert --merge ou --interactive"
-
 msgid ""
 "apply options are incompatible with rebase.autoSquash.  Consider adding --no-"
 "autosquash"
@@ -11213,6 +11241,10 @@ msgstr "impossible de fermer le fichier temporaire d'instantané des réfs"
 msgid "could not remove stale bitmap: %s"
 msgstr "impossible de revenir la bitmap obsolète : %s"
 
+#, c-format
+msgid "pack prefix %s does not begin with objdir %s"
+msgstr "le préfixe %s ne commence pas avec objdir %s"
+
 msgid "pack everything in a single pack"
 msgstr "empaqueter tout dans un seul paquet"
 
@@ -11290,15 +11322,18 @@ msgstr "écrire un index de multi-paquet des paquets résultants"
 msgid "pack prefix to store a pack containing pruned objects"
 msgstr "préfixe de paquet pour stocker un paquet contenant les objets élagués"
 
+msgid "pack prefix to store a pack containing filtered out objects"
+msgstr "préfixe de paquet pour stocker un paquet contenant les objets filtrés"
+
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "impossible de supprimer les paquets dans un dépôt d'objets précieux"
 
+#, c-format
+msgid "option '%s' can only be used along with '%s'"
+msgstr "l'option '%s' ne peut être utilisé qu'avec '%s'"
+
 msgid "Nothing new to pack."
 msgstr "Rien de neuf à empaqueter."
-
-#, c-format
-msgid "pack prefix %s does not begin with objdir %s"
-msgstr "le préfixe %s ne commence pas avec objdir %s"
 
 #, c-format
 msgid "renaming pack to '%s' failed"
@@ -11723,6 +11758,9 @@ msgstr "--exclude-hidden ne peut pas être utilisé avec --remotes"
 msgid "this operation must be run in a work tree"
 msgstr "cette opération doit être effectuée dans un arbre de travail"
 
+msgid "Could not read the index"
+msgstr "Impossible de lire l'index"
+
 #, c-format
 msgid "unknown mode for --show-object-format: %s"
 msgstr "mode inconnu pour --show-object-format : %s"
@@ -12072,22 +12110,43 @@ msgid "Unknown hash algorithm"
 msgstr "Algorithme d'empreinte inconnu"
 
 msgid ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"git show-ref [--head] [-d | --dereference]\n"
 "             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
 "             [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"git show-ref [--head] [-d | --dereference]\n"
 "             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
 "             [--heads] [--] [<motif>...]"
 
+msgid ""
+"git show-ref --verify [-q | --quiet] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]]\n"
+"             [--] [<ref>...]"
+msgstr ""
+"git show-ref --verify [-q | --quiet] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]]\n"
+"             [--] [<ref>...]"
+
 msgid "git show-ref --exclude-existing[=<pattern>]"
 msgstr "git show-ref --exclude-existing[=<motif>]"
+
+msgid "git show-ref --exists <ref>"
+msgstr "git show-ref --exists <réf>"
+
+msgid "reference does not exist"
+msgstr "la référence n'existe pas"
+
+msgid "failed to look up reference"
+msgstr "échec de la recherche de la référence"
 
 msgid "only show tags (can be combined with heads)"
 msgstr "afficher seulement les étiquettes (peut être combiné avec heads)"
 
 msgid "only show heads (can be combined with tags)"
 msgstr "afficher seulement les têtes (peut être combiné avec tags)"
+
+msgid "check for reference existence without resolving"
+msgstr "vérifier l'existence de la référence sans la résoudre"
 
 msgid "stricter reference checking, requires exact ref path"
 msgstr ""
@@ -12111,6 +12170,10 @@ msgid "show refs from stdin that aren't in local repository"
 msgstr ""
 "afficher les références de l'entrée standard qui ne sont pas dans le dépôt "
 "local"
+
+#, c-format
+msgid "only one of '%s', '%s' or '%s' can be given"
+msgstr "les options '%s', '%s' et '%s' sont mutuellement exclusives"
 
 msgid ""
 "git sparse-checkout (init | list | set | add | reapply | disable | check-"
@@ -12935,6 +12998,9 @@ msgstr ""
 "[no-]recommend-shallow] [--reference <dépôt>] [--recursive] [--[no-]single-"
 "branch] [--] [<chemin>...]"
 
+msgid "Failed to resolve HEAD as a valid ref."
+msgstr "Échec de résolution de HEAD comme référence valide."
+
 msgid "git submodule absorbgitdirs [<options>] [<path>...]"
 msgstr "git submodule absorbgitdirs [<options>] [<chemin>...]"
 
@@ -13413,6 +13479,9 @@ msgstr "(pour porcelaines) oublier les conflits sauvés et non résolus"
 msgid "write index in this format"
 msgstr "écrire l'index dans ce format"
 
+msgid "report on-disk index format version"
+msgstr "afficher la version du format d'index sur disque"
+
 msgid "enable or disable split index"
 msgstr "activer ou désactiver l'index scindé"
 
@@ -13437,6 +13506,14 @@ msgstr "marquer les fichiers comme valides pour fsmonitor"
 
 msgid "clear fsmonitor valid bit"
 msgstr "effacer le bit de validité fsmonitor"
+
+#, c-format
+msgid "%d\n"
+msgstr "%d\n"
+
+#, c-format
+msgid "index-version: was %d, set to %d"
+msgstr "index-version : précédemment %d, mis à %d"
 
 msgid ""
 "core.splitIndex is set to false; remove or change it, if you really want to "
@@ -13713,11 +13790,12 @@ msgstr ""
 
 msgid ""
 "No local or remote refs exist despite at least one remote\n"
-"present, stopping; use 'add -f' to overide or fetch a remote first"
+"present, stopping; use 'add -f' to override or fetch a remote first"
 msgstr ""
 "Aucune réf locale ou distant n'existe malgré la présence d'au moins un "
 "distant,\n"
-"on arrête ; utilisez 'add -f' pour passe outre ou récupérer le distant avant"
+"on arrête ; utilisez 'add -f' pour passe outre ou récupérer le distant en "
+"premier"
 
 #, c-format
 msgid "'%s' and '%s' cannot be used together"
@@ -14043,16 +14121,20 @@ msgid "terminating chunk id appears earlier than expected"
 msgstr "l'identifiant de terminaison de tronçon apparaît plus tôt qu'attendu"
 
 #, c-format
+msgid "chunk id %<PRIx32> not %d-byte aligned"
+msgstr "id de tronçon %<PRIx32> non alignés sur %d octets"
+
+#, c-format
 msgid "improper chunk offset(s) %<PRIx64> and %<PRIx64>"
-msgstr "décalage(s) de section incorrect(s) %<PRIx64> et %<PRIx64>"
+msgstr "décalage(s) de tronçon incorrect(s) %<PRIx64> et %<PRIx64>"
 
 #, c-format
 msgid "duplicate chunk ID %<PRIx32> found"
-msgstr "ID de section dupliqué %<PRIx32>"
+msgstr "ID de tronçon dupliqué %<PRIx32>"
 
 #, c-format
 msgid "final chunk has non-zero id %<PRIx32>"
-msgstr "la section finale a un id non nul %<PRIx32>"
+msgstr "le tronçon final a un id non nul %<PRIx32>"
 
 msgid "invalid hash version"
 msgstr "version d'empreinte invalide"
@@ -14097,10 +14179,8 @@ msgstr ""
 msgid "Move objects and refs by archive"
 msgstr "Déplacer les objets et références par archive"
 
-msgid "Provide content or type and size information for repository objects"
-msgstr ""
-"Fournir le contenu ou l'information de type et taille pour les objets du "
-"dépôt"
+msgid "Provide contents or details of repository objects"
+msgstr "Fournir le contenu ou les détails des objets du dépôt"
 
 msgid "Display gitattributes information"
 msgstr "Afficher les informations gitattributes"
@@ -14524,7 +14604,7 @@ msgstr "Vérifier la signature GPG d'étiquettes"
 msgid "Display version information about Git"
 msgstr "Afficher l'information de version à propos de Git"
 
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with differences each commit introduces"
 msgstr "Afficher les journaux avec la différence que chaque commit introduit"
 
 msgid "Manage multiple working trees"
@@ -14561,7 +14641,7 @@ msgid "The bundle file format"
 msgstr "le format du fichier de colis"
 
 msgid "Chunk-based file formats"
-msgstr "format de fichier avec des sections"
+msgstr "format de fichier avec des tronçons"
 
 msgid "Git commit-graph format"
 msgstr "format de graphe de commit de Git"
@@ -14659,10 +14739,13 @@ msgstr ""
 
 #, c-format
 msgid "commit-graph file is too small to hold %u chunks"
-msgstr "le graphe de commit est trop petit pour contenir %u sections"
+msgstr "le graphe de commit est trop petit pour contenir %u tronçons"
 
 msgid "commit-graph has no base graphs chunk"
-msgstr "le graphe de commit n'a pas de section de graphes de base"
+msgstr "le graphe de commit n'a pas de tronçon de graphes de base"
+
+msgid "commit-graph base graphs chunk is too small"
+msgstr "le tronçon de graphes de base du graphe de commit est trop petit"
 
 msgid "commit-graph chain does not match"
 msgstr "la chaîne de graphe de commit ne correspond pas"
@@ -14692,6 +14775,11 @@ msgid "commit-graph requires overflow generation data but has none"
 msgstr ""
 "le graphe de commits requiert des données de génération de débordement mais "
 "n'en contient pas"
+
+msgid "commit-graph overflow generation data is too small"
+msgstr ""
+"les données de génération de débordement du graphe de commits sont trop "
+"petites"
 
 msgid "Loading known commits in commit graph"
 msgstr "Lecture des commits connus dans un graphe de commit"
@@ -14830,20 +14918,6 @@ msgstr ""
 "la liste de parents du graphe de commit pour le commit %s se termine trop tôt"
 
 #, c-format
-msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
-msgstr ""
-"le graphe de commit a un numéro de génération nul pour le commit %s, mais "
-"non-nul ailleurs"
-
-#, c-format
-msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
-msgstr ""
-"le graphe de commit a un numéro de génération non-nul pour le commit %s, "
-"mais nul ailleurs"
-
-#, c-format
 msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr ""
 "la génération du graphe de commit pour le commit %s est %<PRIuMAX> < "
@@ -14854,6 +14928,14 @@ msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
 "la date de validation pour le commit %s dans le graphe de commit est "
 "%<PRIuMAX> != %<PRIuMAX>"
+
+#, c-format
+msgid ""
+"commit-graph has both zero and non-zero generations (e.g., commits '%s' and "
+"'%s')"
+msgstr ""
+"le graphe de commit a des numéros de génération à la fois nuls et non-nuls "
+"(par ex. les commits %s et %s)"
 
 msgid "Verifying commits in commit graph"
 msgstr "Verification des commits dans le graphe de commits"
@@ -14880,6 +14962,12 @@ msgstr ""
 "\n"
 "Supprimez ce message en lançant\n"
 "\"git config advice.graftFileDeprecated false\""
+
+#, c-format
+msgid "commit %s exists in commit-graph but not in the object database"
+msgstr ""
+"le commit '%s' existe dans la graphe de commit mais pas dans la base de "
+"données d'objets"
 
 #, c-format
 msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
@@ -15327,10 +15415,6 @@ msgstr "la référence '%s' ne pointe pas sur un blob"
 #, c-format
 msgid "unable to resolve config blob '%s'"
 msgstr "impossible de résoudre le blob de config '%s'"
-
-#, c-format
-msgid "failed to parse %s"
-msgstr "échec de l'analyse de %s"
 
 msgid "unable to parse command-line config"
 msgstr "lecture de la configuration de ligne de commande impossible"
@@ -15813,9 +15897,6 @@ msgstr "impossible d'écrire l'archive"
 
 msgid "--merge-base does not work with ranges"
 msgstr "--merge-base ne fonctionne pas avec des plages"
-
-msgid "--merge-base only works with commits"
-msgstr "--merge-base ne fonctionne qu'avec des commits"
 
 msgid "unable to get HEAD"
 msgstr "impossible d'acquérir HEAD"
@@ -17280,12 +17361,12 @@ msgstr ""
 "existent :\n"
 "%s"
 
-msgid "Failed to execute internal merge"
-msgstr "Échec à l'exécution de la fusion interne"
+msgid "failed to execute internal merge"
+msgstr "échec à l'exécution de la fusion interne"
 
 #, c-format
-msgid "Unable to add %s to database"
-msgstr "Impossible d'ajouter %s à la base de données"
+msgid "unable to add %s to database"
+msgstr "impossible d'ajouter %s à la base de données"
 
 #, c-format
 msgid "Auto-merging %s"
@@ -17727,6 +17808,14 @@ msgstr "impossible de lire le cache"
 msgid "multi-pack-index OID fanout is of the wrong size"
 msgstr "l'étalement de l'OID d'index multi-paquet n'a pas la bonne taille"
 
+msgid "multi-pack-index OID lookup chunk is the wrong size"
+msgstr ""
+"le tronçon de recherche de l'OID d'index multi-paquet n'a pas la bonne taille"
+
+msgid "multi-pack-index object offset chunk is the wrong size"
+msgstr ""
+"le tronçon de décalage de l'OID d'index multi-paquet n'a pas la bonne taille"
+
 #, c-format
 msgid "multi-pack-index file %s is too small"
 msgstr "le fichier d'index multi-paquet %s est trop petit"
@@ -17747,17 +17836,28 @@ msgstr ""
 "la version d'empreinte d'index multi-paquet %u ne correspond pas à la "
 "version %u"
 
-msgid "multi-pack-index missing required pack-name chunk"
-msgstr "index multi-paquet manque de tronçon de nom de paquet"
+msgid "multi-pack-index required pack-name chunk missing or corrupted"
+msgstr ""
+"le tronçon de nom de paquet requis par l'index multi-paquet est manquant ou "
+"corrompu"
 
-msgid "multi-pack-index missing required OID fanout chunk"
-msgstr "index multi-paquet manque de tronçon de d'étalement OID requis"
+msgid "multi-pack-index required OID fanout chunk missing or corrupted"
+msgstr ""
+"le tronçon d'étalement OID requis de l'index multi-paquet est manquant ou "
+"corrompu"
 
-msgid "multi-pack-index missing required OID lookup chunk"
-msgstr "index multi-paquet manque de tronçon de recherche OID requis"
+msgid "multi-pack-index required OID lookup chunk missing or corrupted"
+msgstr ""
+"le tronçon de recherche OID requis de l'index multi-paquet est manquant ou "
+"corrompu"
 
-msgid "multi-pack-index missing required object offsets chunk"
-msgstr "index multi-paquet manque de tronçon de décalage d'objet requis"
+msgid "multi-pack-index required object offsets chunk missing or corrupted"
+msgstr ""
+"le tronçon de décalage d'objet requis de l'index multi-paquet est manquant "
+"ou corrompu"
+
+msgid "multi-pack-index pack-name chunk is too short"
+msgstr "le tronçon de nom de paquet de l'index multi-paquet est trop petit"
 
 #, c-format
 msgid "multi-pack-index pack names out of order: '%s' before '%s'"
@@ -17770,7 +17870,10 @@ msgstr "mauvais pack-int-id : %u (%u paquets au total)"
 
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
 msgstr ""
-"l'index multi-paquet stock un décalage en 64-bit, mais off_t est trop petit"
+"l'index multi-paquet stocke un décalage en 64-bit, mais off_t est trop petit"
+
+msgid "multi-pack-index large offset out of bounds"
+msgstr "le grand décalage de l'index-multi-paquet est hors limite"
 
 #, c-format
 msgid "failed to add packfile '%s'"
@@ -18492,6 +18595,10 @@ msgstr "somme de contrôle invalide"
 msgid "invalid rev-index position at %<PRIu64>: %<PRIu32> != %<PRIu32>"
 msgstr "position de rev-index invalide à %<PRIu64> : %<PRIu32> != %<PRIu32>"
 
+msgid "multi-pack-index reverse-index chunk is the wrong size"
+msgstr ""
+"le tronçon d'index inversé de l'index multi-paquet n'a pas la bonne taille"
+
 msgid "cannot both write and verify reverse index"
 msgstr "impossible de lire et vérifier à la fois l'index inverse"
 
@@ -18544,14 +18651,6 @@ msgid "%s requires a value"
 msgstr "%s a besoin d'une valeur"
 
 #, c-format
-msgid "%s is incompatible with %s"
-msgstr "%s est incompatible avec %s"
-
-#, c-format
-msgid "%s : incompatible with something else"
-msgstr "%s est incompatible avec toute autre option"
-
-#, c-format
 msgid "%s takes no value"
 msgstr "%s n'accepte aucune valeur"
 
@@ -18562,6 +18661,10 @@ msgstr "%s n'est pas disponible"
 #, c-format
 msgid "%s expects a non-negative integer value with an optional k/m/g suffix"
 msgstr "%s attend une valeur entière non négative avec une suffixe k/m/g"
+
+#, c-format
+msgid "%s is incompatible with %s"
+msgstr "%s est incompatible avec %s"
 
 #, c-format
 msgid "ambiguous option: %s (could be --%s%s or --%s%s)"
@@ -18634,6 +18737,10 @@ msgstr "    %s"
 msgid "-NUM"
 msgstr "-NUM"
 
+#, c-format
+msgid "opposite of --no-%s"
+msgstr "opposé de --no-%s"
+
 msgid "expiry-date"
 msgstr "date-d'expiration"
 
@@ -18663,6 +18770,14 @@ msgid ""
 msgstr ""
 "avec --pathspec-from-file, les spécificateurs de chemin sont séparés par un "
 "caractère NUL"
+
+#, c-format
+msgid "bad boolean environment value '%s' for '%s'"
+msgstr "valeur booléenne d'environnement invalide '%s' pour '%s'"
+
+#, c-format
+msgid "failed to parse %s"
+msgstr "échec de l'analyse de %s"
 
 #, c-format
 msgid "Could not make %s writable by group"
@@ -18713,6 +18828,10 @@ msgstr "Spécificateur magique '%c' non implémenté dans '%s'"
 #, c-format
 msgid "%s: 'literal' and 'glob' are incompatible"
 msgstr "%s : 'literal' et 'glob' sont incompatibles"
+
+#, c-format
+msgid "'%s' is outside the directory tree"
+msgstr "'%s' est hors de l'arbre de répertoire"
 
 #, c-format
 msgid "%s: '%s' is outside repository at '%s'"
@@ -18985,10 +19104,6 @@ msgstr "impossible d'écrire un index scindé pour un index clairsemé"
 
 msgid "failed to convert to a sparse-index"
 msgstr "échec de conversion d'un index clairsemé"
-
-#, c-format
-msgid "could not stat '%s'"
-msgstr "impossible de stat '%s'"
 
 #, c-format
 msgid "unable to open git dir: %s"
@@ -20032,8 +20147,16 @@ msgstr "lors d'un clonage, créer un répertoire de travail complet"
 msgid "only download metadata for the branch that will be checked out"
 msgstr "ne télécharger les méta-données que pour la branche qui sera extraite"
 
-msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr "scalar clone [<options>] [--] <dépôt> [<répertoire>]"
+msgid "create repository within 'src' directory"
+msgstr "Créer un dépôt dans le repertoire 'src'"
+
+msgid ""
+"scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
+"\t[--[no-]src] <url> [<enlistment>]"
+msgstr ""
+"scalar clone [--single-branch] [--branch <branche-principale>] [--full-"
+"clone]\n"
+"\t[--[no-]src] <url> [<enrôlement>]"
 
 #, c-format
 msgid "cannot deduce worktree name from '%s'"
@@ -20084,12 +20207,28 @@ msgid "could not remove stale scalar.repo '%s'"
 msgstr "impossible de supprimé le scalar.repo obsolète '%s'"
 
 #, c-format
-msgid "removing stale scalar.repo '%s'"
+msgid "removed stale scalar.repo '%s'"
 msgstr "suppression du scalar.repo obsolète '%s'"
 
 #, c-format
-msgid "git repository gone in '%s'"
-msgstr "dépôt git parti dans '%s'"
+msgid "repository at '%s' has different owner"
+msgstr "le dépôt dans '%s' a un propriétaire différent"
+
+#, c-format
+msgid "repository at '%s' has a format issue"
+msgstr "le dépôt dans '%s' a un problème de format"
+
+#, c-format
+msgid "repository not found in '%s'"
+msgstr "dépôt non trouvé dans '%s'"
+
+#, c-format
+msgid ""
+"to unregister this repository from Scalar, run\n"
+"\tgit config --global --unset --fixed-value scalar.repo \"%s\""
+msgstr ""
+"pour désinscrire ce dépôt de Scalar, lancez\n"
+"\tgit config --global --unset --fixed-value scalar.repo \"%s\""
 
 msgid ""
 "scalar run <task> [<enlistment>]\n"
@@ -20497,10 +20636,6 @@ msgid "%s: cannot parse parent commit %s"
 msgstr "%s : impossible d'analyser le commit parent %s"
 
 #, c-format
-msgid "could not rename '%s' to '%s'"
-msgstr "impossible de renommer '%s' en '%s'"
-
-#, c-format
 msgid "could not revert %s... %s"
 msgstr "impossible d'annuler %s... %s"
 
@@ -20858,12 +20993,12 @@ msgstr ""
 "    git rebase --continue\n"
 
 #, c-format
-msgid "Rebasing (%d/%d)%s"
-msgstr "Rebasage (%d/%d)%s"
-
-#, c-format
 msgid "Stopped at %s...  %.*s\n"
 msgstr "Arrêt à %s... %.*s\n"
+
+#, c-format
+msgid "Rebasing (%d/%d)%s"
+msgstr "Rebasage (%d/%d)%s"
 
 #, c-format
 msgid "unknown command %d"
@@ -22189,6 +22324,9 @@ msgstr "impossible d'accéder à '%s'"
 msgid "unable to get current working directory"
 msgstr "impossible d'accéder au répertoire de travail courant"
 
+msgid "unable to get random bytes"
+msgstr "impossible d'acquérir des octets aléatoires"
+
 msgid "Unmerged paths:"
 msgstr "Chemins non fusionnés :"
 
@@ -22828,12 +22966,12 @@ msgstr ""
 "Effacez le corps si vous ne souhaitez pas envoyer un résumé.\n"
 
 #, perl-format
-msgid "Failed to open %s: %s"
-msgstr "Échec à l'ouverture de %s : %s"
-
-#, perl-format
 msgid "Failed to open %s.final: %s"
 msgstr "Échec à l'ouverture de %s.final : %s"
+
+#, perl-format
+msgid "Failed to open %s: %s"
+msgstr "Échec à l'ouverture de %s : %s"
 
 msgid "Summary email is empty, skipping it\n"
 msgstr "Le courriel de résumé étant vide, il a été ignoré\n"
@@ -23035,6 +23173,68 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
+
+#, c-format
+#~ msgid "options '%s=%s' and '%s=%s' cannot be used together"
+#~ msgstr ""
+#~ "les options '%s=%s' et '%s=%s' ne peuvent pas être utilisées ensemble"
+
+#, c-format
+#~ msgid "%s : incompatible with something else"
+#~ msgstr "%s est incompatible avec toute autre option"
+
+#~ msgid "Could not write patch"
+#~ msgstr "Impossible d'écrire le patch"
+
+#, c-format
+#~ msgid "Could not stat '%s'"
+#~ msgstr "Stat de '%s' impossible"
+
+#, c-format
+#~ msgid "Cannot delete branch '%s' checked out at '%s'"
+#~ msgstr "Impossible de supprimer la branche '%s' extraite dans '%s'"
+
+#~ msgid "unable to write new_index file"
+#~ msgstr "impossible d'écrire le fichier new_index"
+
+#~ msgid "do not apply config rules"
+#~ msgstr "ne pas appliquer les règles de la configuration"
+
+#~ msgid "join whitespace-continued values"
+#~ msgstr "joindre les valeurs continuées avec des caractères blancs"
+
+#~ msgid "set parsing options"
+#~ msgstr "paramètres d'analyse"
+
+#~ msgid "cannot move directory over file"
+#~ msgstr "impossible de déplacer un répertoire sur un fichier"
+
+#~ msgid "cannot use --filter without --stdout"
+#~ msgstr "impossible d'utiliser --filter sans --stdout"
+
+#~ msgid "cannot use --max-pack-size with --cruft"
+#~ msgstr "impossible d'utiliser --max-pack-size avec --cruft"
+
+#~ msgid "--strategy requires --merge or --interactive"
+#~ msgstr "--strategy requiert --merge ou --interactive"
+
+#, c-format
+#~ msgid ""
+#~ "commit-graph has generation number zero for commit %s, but non-zero "
+#~ "elsewhere"
+#~ msgstr ""
+#~ "le graphe de commit a un numéro de génération nul pour le commit %s, mais "
+#~ "non-nul ailleurs"
+
+#~ msgid "--merge-base only works with commits"
+#~ msgstr "--merge-base ne fonctionne qu'avec des commits"
+
+#~ msgid "scalar clone [<options>] [--] <repo> [<dir>]"
+#~ msgstr "scalar clone [<options>] [--] <dépôt> [<répertoire>]"
+
+#, c-format
+#~ msgid "could not rename '%s' to '%s'"
+#~ msgstr "impossible de renommer '%s' en '%s'"
 
 #, c-format
 #~ msgid "It is not possible to %s because you have unmerged files."
