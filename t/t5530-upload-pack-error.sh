@@ -2,6 +2,7 @@
 
 test_description='errors in upload-pack'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 D=$(pwd)

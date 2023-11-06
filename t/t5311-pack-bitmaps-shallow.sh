@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='check bitmap operation with shallow repositories'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # We want to create a situation where the shallow, grafted
