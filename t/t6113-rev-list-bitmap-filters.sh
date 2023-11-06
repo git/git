@@ -141,4 +141,17 @@ test_expect_success 'combine filter with --filter-provided-objects' '
 	done <objects
 '
 
+test_expect_success 'bitmap traversal with --unpacked' '
+	git repack -adb &&
+	test_commit unpacked &&
+
+	git rev-list --objects --no-object-names unpacked^.. >expect.raw &&
+	sort expect.raw >expect &&
+
+	git rev-list --use-bitmap-index --objects --all --unpacked >actual.raw &&
+	sort actual.raw >actual &&
+
+	test_cmp expect actual
+'
+
 test_done
