@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #01; Thu, 2)
-X-master-at: 692be87cbba55e8488f805d236f2ad50483bd7d5
-X-next-at: 2469dfc402e53bfa18aaef393af11393d21a9522
+Subject: What's cooking in git.git (Nov 2023, #02; Mon, 6)
+X-master-at: bc5204569f7db44d22477485afd52ea410d83743
+X-next-at: f7406347cdb3b53eeb25238b9d8d215caf633a80
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #01; Thu, 2)
+What's cooking in git.git (Nov 2023, #02; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,232 +48,44 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* jc/strbuf-comment-line-char (2023-11-01) 4 commits
- - strbuf: move env-using functions to environment.c
- - strbuf: make add_lines() public
- - strbuf_add_commented_lines(): drop the comment_line_char parameter
- - strbuf_commented_addf(): drop the comment_line_char parameter
+* jw/git-add-attr-pathspec (2023-11-04) 1 commit
+ - attr: enable attr pathspec magic for git-add and git-stash
 
- Code simplification.
- source: <cover.1698791220.git.jonathantanmy@google.com>
+ "git add" and "git stash" learned to support the ":(attr:...)"
+ magic pathspec.
 
-
-* ps/show-ref (2023-11-01) 12 commits
-  (merged to 'next' on 2023-11-02 at 987bb117f5)
- + t: use git-show-ref(1) to check for ref existence
- + builtin/show-ref: add new mode to check for reference existence
- + builtin/show-ref: explicitly spell out different modes in synopsis
- + builtin/show-ref: ensure mutual exclusiveness of subcommands
- + builtin/show-ref: refactor options for patterns subcommand
- + builtin/show-ref: stop using global vars for `show_one()`
- + builtin/show-ref: stop using global variable to count matches
- + builtin/show-ref: refactor `--exclude-existing` options
- + builtin/show-ref: fix dead code when passing patterns
- + builtin/show-ref: fix leaking string buffer
- + builtin/show-ref: split up different subcommands
- + builtin/show-ref: convert pattern to a local variable
-
- Teach "git show-ref" a mode to check the existence of a ref.
-
- Will merge to 'master'.
- source: <cover.1698739941.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <20231103163449.1578841-1-jojwang@google.com>
 
 
-* rc/trace-upload-pack (2023-10-30) 1 commit
-  (merged to 'next' on 2023-11-01 at 90892b5cf0)
- + upload-pack: add tracing for fetches
-
- Trace2 update.
-
- Will merge to 'master'.
- source: <pull.1598.v2.git.1697577168128.gitgitgadget@gmail.com>
-
-
-* bc/merge-file-object-input (2023-11-02) 2 commits
- - merge-file: add an option to process object IDs
- - git-merge-file doc: drop "-file" from argument placeholders
-
- "git merge-file" learns a mode to read three contents to be merged
- from blob objects.
-
- Will merge to 'next'.
- source: <20231101192419.794162-1-sandals@crustytoothpaste.net>
-
-
-* jc/test-i18ngrep (2023-10-31) 2 commits
- - tests: teach callers of test_i18ngrep to use test_grep
- - test framework: further deprecate test_i18ngrep
-
- Another step to deprecate test_i18ngrep.
-
- Will merge to 'next'.
- source: <20231031052330.3762989-1-gitster@pobox.com>
-
-
-* an/clang-format-typofix (2023-11-01) 1 commit
-  (merged to 'next' on 2023-11-02 at 7f639690ab)
- + clang-format: fix typo in comment
-
- Typofix.
-
- Will merge to 'master'.
- source: <pull.1602.v2.git.git.1698759629166.gitgitgadget@gmail.com>
-
-
-* jk/tree-name-and-depth-limit (2023-11-02) 1 commit
- - max_tree_depth: lower it for MSVC to avoid stack overflows
-
- Further limit tree depth max to avoid Windows build running out of
- the stack space.
-
- Will merge to 'next' and then to 'master'.
- source: <pull.1604.v2.git.1698843810814.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* da/t7601-style-fix (2023-10-18) 1 commit
-  (merged to 'next' on 2023-10-20 at 8e7326458c)
- + t7601: use "test_path_is_file" etc. instead of "test -f"
-
- Coding style update.
- source: <20231018124538.68549-2-anonolitunya@gmail.com>
-
-
-* ii/branch-error-messages-update (2023-10-23) 1 commit
-  (merged to 'next' on 2023-10-23 at 3d00599173)
- + builtin/branch.c: adjust error messages to coding guidelines
-
- Error message update.
- source: <20231023160656.4341-1-isokenjune@gmail.com>
-
-
-* jc/am-doc-whitespace-action-fix (2023-10-18) 1 commit
-  (merged to 'next' on 2023-10-20 at 9200d39c08)
- + am: align placeholder for --whitespace option with apply
-
- Docfix.
- source: <xmqqwmvjzeqd.fsf@gitster.g>
-
-
-* jc/attr-tree-config (2023-10-13) 2 commits
-  (merged to 'next' on 2023-10-19 at 202dc1c453)
- + attr: add attr.tree for setting the treeish to read attributes from
- + attr: read attributes from HEAD when bare repo
-
- The attribute subsystem learned to honor `attr.tree` configuration
- that specifies which tree to read the .gitattributes files from.
- source: <pull.1577.v5.git.git.1697218770.gitgitgadget@gmail.com>
-
-
-* jc/commit-new-underscore-index-fix (2023-10-17) 1 commit
-  (merged to 'next' on 2023-10-22 at 0e4787303d)
- + commit: do not use cryptic "new_index" in end-user facing messages
-
- Message fix.
- source: <xmqqo7gwvd8c.fsf_-_@gitster.g>
-
-
-* jc/update-list-references-to-lore (2023-10-06) 1 commit
-  (merged to 'next' on 2023-10-19 at 83a721a137)
- + doc: update list archive reference to use lore.kernel.org
-
- Doc update.
- source: <xmqq7cnz741s.fsf@gitster.g>
-
-
-* jk/send-email-fix-addresses-from-composed-messages (2023-10-20) 3 commits
-  (merged to 'next' on 2023-10-22 at 43221cc3a4)
- + send-email: handle to/cc/bcc from --compose message
- + Revert "send-email: extract email-parsing code into a subroutine"
- + doc/send-email: mention handling of "reply-to" with --compose
-
- The codepath to handle recipient addresses `git send-email
- --compose` learns from the user was completely broken, which has
- been corrected.
- source: <20231020100343.GA2194322@coredump.intra.peff.net>
-
-
-* jm/bisect-run-synopsis-fix (2023-10-23) 1 commit
-  (merged to 'next' on 2023-10-23 at 8dfa3ed356)
- + doc/git-bisect: clarify `git bisect run` syntax
-
- Doc and usage message update.
- source: <pull.1602.v2.git.1698088990478.gitgitgadget@gmail.com>
-
-
-* kh/pathspec-error-wo-repository-fix (2023-10-20) 1 commit
-  (merged to 'next' on 2023-10-22 at 4f77af1e40)
- + grep: die gracefully when outside repository
-
- The pathspec code carelessly dereferenced NULL while emitting an
- error message, which has been corrected.
- source: <5c8ef6bec1c99e0fae7ada903885a8e77f8137f9.1697819838.git.code@khaugsbakk.name>
-
-
-* mm/p4-symlink-with-lfs (2023-10-19) 1 commit
-  (merged to 'next' on 2023-10-20 at 9c05ce7e85)
- + git-p4 shouldn't attempt to store symlinks in LFS
-
- "git p4" tried to store symlinks to LFS when told, but has been
- fixed not to do so, because it does not make sense.
- source: <20231019002558.867830-1-mmcclain@noprivs.com>
-
-
-* ms/doc-push-fix (2023-10-20) 1 commit
-  (merged to 'next' on 2023-10-22 at 7ce3cef56b)
- + git-push doc: more visibility for -q option
-
- Docfix.
- source: <20231020184627.14336-1-msuchanek@suse.de>
-
-
-* ni/die-message-fix-for-git-add (2023-10-17) 1 commit
-  (merged to 'next' on 2023-10-22 at f46c5dfd63)
- + builtin/add.c: clean up die() messages
-
- Message updates.
- source: <20231017113946.747-1-naomi.ibeh69@gmail.com>
-
-
-* ob/rebase-cleanup (2023-10-20) 3 commits
-  (merged to 'next' on 2023-10-22 at 05e14ca4fc)
- + rebase: move parse_opt_keep_empty() down
- + rebase: handle --strategy via imply_merge() as well
- + rebase: simplify code related to imply_merge()
+* la/strvec-header-fix (2023-11-03) 1 commit
+  (merged to 'next' on 2023-11-03 at db23d8a911)
+ + strvec: drop unnecessary include of hex.h
 
  Code clean-up.
- source: <20231020093654.922890-1-oswald.buddenhagen@gmx.de>
+
+ Will merge to 'master'.
+ source: <pull.1608.git.1698958277454.gitgitgadget@gmail.com>
 
 
-* ps/git-repack-doc-fixes (2023-10-16) 2 commits
-  (merged to 'next' on 2023-10-22 at df64849f26)
- + doc/git-repack: don't mention nonexistent "--unpacked" option
- + doc/git-repack: fix syntax for `-g` shorthand option
+* jk/chunk-bounds (2023-11-04) 1 commit
+  (merged to 'next' on 2023-11-06 at ae9fbc1700)
+ + t: avoid perl's pack/unpack "Q" specifier
 
- Doc updates.
- source: <cover.1697440686.git.ps@pks.im>
+ Test portability fix.
 
-
-* sn/typo-grammo-phraso-fixes (2023-10-05) 5 commits
-  (merged to 'next' on 2023-10-18 at 575d767f9a)
- + t/README: fix multi-prerequisite example
- + doc/gitk: s/sticked/stuck/
- + git-jump: admit to passing merge mode args to ls-files
- + doc/diff-options: improve wording of the log.diffMerges mention
- + doc: fix some typos, grammar and wording issues
-
- Many typos, ungrammatical sentences and wrong phrasing have been
- fixed.
- source: <20231003082107.3002173-1-stepnem@smrk.net>
+ Will merge to 'master'.
+ source: <20231103162019.GB1470570@coredump.intra.peff.net>
 
 
-* wx/merge-ort-comment-typofix (2023-10-21) 1 commit
-  (merged to 'next' on 2023-10-22 at ad1e33883a)
- + merge-ort.c: fix typo 'neeed' to 'needed'
+* js/ci-use-macos-13 (2023-11-03) 1 commit
+  (merged to 'next' on 2023-11-06 at f7406347cd)
+ + ci: upgrade to using macos-13
 
- Typofix.
- source: <pull.1592.v3.git.git.1697942768555.gitgitgadget@gmail.com>
+ Replace macos-12 used at GitHub CI with macos-13.
+
+ Will merge to 'master'.
+ source: <pull.1607.git.1698996455218.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -319,6 +131,92 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* jc/strbuf-comment-line-char (2023-11-01) 4 commits
+ - strbuf: move env-using functions to environment.c
+ - strbuf: make add_lines() public
+ - strbuf_add_commented_lines(): drop the comment_line_char parameter
+ - strbuf_commented_addf(): drop the comment_line_char parameter
+
+ Code simplification.
+ source: <cover.1698791220.git.jonathantanmy@google.com>
+
+
+* ps/show-ref (2023-11-01) 12 commits
+  (merged to 'next' on 2023-11-02 at 987bb117f5)
+ + t: use git-show-ref(1) to check for ref existence
+ + builtin/show-ref: add new mode to check for reference existence
+ + builtin/show-ref: explicitly spell out different modes in synopsis
+ + builtin/show-ref: ensure mutual exclusiveness of subcommands
+ + builtin/show-ref: refactor options for patterns subcommand
+ + builtin/show-ref: stop using global vars for `show_one()`
+ + builtin/show-ref: stop using global variable to count matches
+ + builtin/show-ref: refactor `--exclude-existing` options
+ + builtin/show-ref: fix dead code when passing patterns
+ + builtin/show-ref: fix leaking string buffer
+ + builtin/show-ref: split up different subcommands
+ + builtin/show-ref: convert pattern to a local variable
+ (this branch is used by ps/ref-tests-update.)
+
+ Teach "git show-ref" a mode to check the existence of a ref.
+
+ Will merge to 'master'.
+ source: <cover.1698739941.git.ps@pks.im>
+
+
+* rc/trace-upload-pack (2023-10-30) 1 commit
+  (merged to 'next' on 2023-11-01 at 90892b5cf0)
+ + upload-pack: add tracing for fetches
+
+ Trace2 update.
+
+ Will merge to 'master'.
+ source: <pull.1598.v2.git.1697577168128.gitgitgadget@gmail.com>
+
+
+* bc/merge-file-object-input (2023-11-02) 2 commits
+  (merged to 'next' on 2023-11-02 at ccbba9416c)
+ + merge-file: add an option to process object IDs
+ + git-merge-file doc: drop "-file" from argument placeholders
+
+ "git merge-file" learns a mode to read three contents to be merged
+ from blob objects.
+
+ Will merge to 'master'.
+ source: <20231101192419.794162-1-sandals@crustytoothpaste.net>
+
+
+* jc/test-i18ngrep (2023-11-02) 2 commits
+  (merged to 'next' on 2023-11-03 at 78406f8d94)
+ + tests: teach callers of test_i18ngrep to use test_grep
+ + test framework: further deprecate test_i18ngrep
+
+ Another step to deprecate test_i18ngrep.
+
+ Will merge to 'master'.
+ source: <20231031052330.3762989-1-gitster@pobox.com>
+
+
+* an/clang-format-typofix (2023-11-01) 1 commit
+  (merged to 'next' on 2023-11-02 at 7f639690ab)
+ + clang-format: fix typo in comment
+
+ Typofix.
+
+ Will merge to 'master'.
+ source: <pull.1602.v2.git.git.1698759629166.gitgitgadget@gmail.com>
+
+
+* jk/tree-name-and-depth-limit (2023-11-02) 1 commit
+  (merged to 'next' on 2023-11-06 at 041423344c)
+ + max_tree_depth: lower it for MSVC to avoid stack overflows
+
+ Further limit tree depth max to avoid Windows build running out of
+ the stack space.
+
+ Will merge to 'master'.
+ source: <pull.1604.v2.git.1698843810814.gitgitgadget@gmail.com>
+
 
 * ar/submitting-patches-doc-update (2023-10-24) 1 commit
   (merged to 'next' on 2023-10-30 at e140009eb6)
@@ -380,7 +278,7 @@ Release tarballs are available at:
  source: <cover.1698843660.git.ps@pks.im>
 
 
-* ps/ref-tests-update (2023-10-24) 9 commits
+* ps/ref-tests-update (2023-11-03) 10 commits
  - t: mark several tests that assume the files backend with REFFILES
  - t7900: assert the absence of refs via git-for-each-ref(1)
  - t7300: assert exact states of repo
@@ -390,11 +288,13 @@ Release tarballs are available at:
  - t: convert tests to not access symrefs via the filesystem
  - t: convert tests to not write references via the filesystem
  - t: allow skipping expected object ID in `ref-store update-ref`
+ - Merge branch 'ps/show-ref' into ps/ref-tests-update
+ (this branch uses ps/show-ref.)
 
  Update ref-related tests.
 
  Will merge to 'next'?
- source: <cover.1698156169.git.ps@pks.im>
+ source: <cover.1698914571.git.ps@pks.im>
 
 
 * rs/fix-arghelp (2023-10-29) 1 commit
@@ -582,7 +482,7 @@ Release tarballs are available at:
  source: <20231026101109.43110-1-karthik.188@gmail.com>
 
 
-* cc/git-replay (2023-10-10) 14 commits
+* cc/git-replay (2023-11-03) 14 commits
  - replay: stop assuming replayed branches do not diverge
  - replay: add --contained to rebase contained branches
  - replay: add --advance or 'cherry-pick' mode
@@ -601,9 +501,8 @@ Release tarballs are available at:
  Introduce "git replay", a tool meant on the server side without
  working tree to recreate a history.
 
- Expectting a (hopefully final and quick) reroll.
- cf. <bd872b81-80a9-5e4e-dcb6-faebc9671848@gmx.de>
- source: <20231010123847.2777056-1-christian.couder@gmail.com>
+ Will merge to 'next'?
+ source: <20231102135151.843758-1-christian.couder@gmail.com>
 
 
 * ak/color-decorate-symbols (2023-10-23) 7 commits
@@ -780,17 +679,3 @@ Release tarballs are available at:
 
  Needs review.
  source: <2e24ca9b-9c5f-f4df-b9f8-6574a714dfb2@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* rs/parse-options-value-int (2023-09-18) 2 commits
- . parse-options: use and require int pointer for OPT_CMDMODE
- . parse-options: add int value pointer to struct option
-
- A bit of type safety for the "value" pointer used in the
- parse-options API.
-
- Retracted.
- cf. <4014e490-c6c1-453d-b0ed-645220e3e614@web.de>
- source: <e6d8a291-03de-cfd3-3813-747fc2cad145@web.de>
