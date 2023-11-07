@@ -799,30 +799,6 @@ $sender = sanitize_address($sender);
 
 $time = time - scalar $#files;
 
-if ($validate) {
-	# FIFOs can only be read once, exclude them from validation.
-	my @real_files = ();
-	foreach my $f (@files) {
-		unless (-p $f) {
-			push(@real_files, $f);
-		}
-	}
-
-	# Run the loop once again to avoid gaps in the counter due to FIFO
-	# arguments provided by the user.
-	my $num = 1;
-	my $num_files = scalar @real_files;
-	$ENV{GIT_SENDEMAIL_FILE_TOTAL} = "$num_files";
-	foreach my $r (@real_files) {
-		$ENV{GIT_SENDEMAIL_FILE_COUNTER} = "$num";
-		pre_process_file($r, 1);
-		validate_patch($r, $target_xfer_encoding);
-		$num += 1;
-	}
-	delete $ENV{GIT_SENDEMAIL_FILE_COUNTER};
-	delete $ENV{GIT_SENDEMAIL_FILE_TOTAL};
-}
-
 @files = handle_backup_files(@files);
 
 if (@files) {
@@ -1726,10 +1702,6 @@ EOF
 	return 1;
 }
 
-$in_reply_to = $initial_in_reply_to;
-$references = $initial_in_reply_to || '';
-$message_num = 0;
-
 sub pre_process_file {
 	my ($t, $quiet) = @_;
 
@@ -1995,6 +1967,38 @@ sub process_file {
 	return 1;
 }
 
+sub initialize_modified_loop_vars {
+	$in_reply_to = $initial_in_reply_to;
+	$references = $initial_in_reply_to || '';
+	$message_num = 0;
+}
+
+if ($validate) {
+	# FIFOs can only be read once, exclude them from validation.
+	my @real_files = ();
+	foreach my $f (@files) {
+		unless (-p $f) {
+			push(@real_files, $f);
+		}
+	}
+
+	# Run the loop once again to avoid gaps in the counter due to FIFO
+	# arguments provided by the user.
+	my $num = 1;
+	my $num_files = scalar @real_files;
+	$ENV{GIT_SENDEMAIL_FILE_TOTAL} = "$num_files";
+	initialize_modified_loop_vars();
+	foreach my $r (@real_files) {
+		$ENV{GIT_SENDEMAIL_FILE_COUNTER} = "$num";
+		pre_process_file($r, 1);
+		validate_patch($r, $target_xfer_encoding);
+		$num += 1;
+	}
+	delete $ENV{GIT_SENDEMAIL_FILE_COUNTER};
+	delete $ENV{GIT_SENDEMAIL_FILE_TOTAL};
+}
+
+initialize_modified_loop_vars();
 foreach my $t (@files) {
 	while (!process_file($t)) {
 		# user edited the file

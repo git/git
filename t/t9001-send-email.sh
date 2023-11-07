@@ -633,6 +633,25 @@ test_expect_success $PREREQ "--validate respects absolute core.hooksPath path" '
 	test_cmp expect actual
 '
 
+test_expect_success $PREREQ "--validate hook supports multiple addresses in arguments" '
+	hooks_path="$(pwd)/my-hooks" &&
+	test_config core.hooksPath "$hooks_path" &&
+	test_when_finished "rm my-hooks.ran" &&
+	test_must_fail git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com,abc@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate \
+		longline.patch 2>actual &&
+	test_path_is_file my-hooks.ran &&
+	cat >expect <<-EOF &&
+	fatal: longline.patch: rejected by sendemail-validate hook
+	fatal: command '"'"'git hook run --ignore-missing sendemail-validate -- <patch> <header>'"'"' died with exit code 1
+	warning: no patches were sent
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success $PREREQ "--validate hook supports header argument" '
 	write_script my-hooks/sendemail-validate <<-\EOF &&
 	if test "$#" -ge 2
