@@ -808,6 +808,19 @@ test_expect_success 'grep -f, ignore empty lines, read patterns from stdin' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep -f, use cwd relative file' '
+	test_when_finished "git rm -f sub/dir/file" &&
+	mkdir -p sub/dir &&
+	echo hit >sub/dir/file &&
+	git add sub/dir/file &&
+	echo hit >sub/dir/pattern &&
+	echo miss >pattern &&
+	(
+		cd sub/dir && git grep -f pattern file
+	) &&
+	git -C sub/dir grep -f pattern file
+'
+
 cat >expected <<EOF
 y:y yy
 --
