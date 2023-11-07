@@ -132,13 +132,18 @@ test_expect_success 'single branch object count' '
 '
 
 test_expect_success 'single given branch clone' '
-	git clone --single-branch --branch A "file://$(pwd)/." branch-a &&
-	test_must_fail git --git-dir=branch-a/.git rev-parse origin/B
+	GIT_TRACE2_EVENT="$(pwd)/branch-a/trace2_event" \
+		git clone --single-branch --branch A "file://$(pwd)/." branch-a &&
+	test_must_fail git --git-dir=branch-a/.git rev-parse origin/B &&
+	grep \"fetch-info\".*\"haves\":0 branch-a/trace2_event &&
+	grep \"fetch-info\".*\"wants\":1 branch-a/trace2_event
 '
 
 test_expect_success 'clone shallow depth 1' '
-	git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
-	test "$(git --git-dir=shallow0/.git rev-list --count HEAD)" = 1
+	GIT_TRACE2_EVENT="$(pwd)/shallow0/trace2_event" \
+		git clone --no-single-branch --depth 1 "file://$(pwd)/." shallow0 &&
+	test "$(git --git-dir=shallow0/.git rev-list --count HEAD)" = 1 &&
+	grep \"fetch-info\".*\"depth\":1 shallow0/trace2_event
 '
 
 test_expect_success 'clone shallow depth 1 with fsck' '
@@ -235,7 +240,10 @@ test_expect_success 'add two more (part 2)' '
 test_expect_success 'deepening pull in shallow repo' '
 	(
 		cd shallow &&
-		git pull --depth 4 .. B
+		GIT_TRACE2_EVENT="$(pwd)/trace2_event" \
+			git pull --depth 4 .. B &&
+		grep \"fetch-info\".*\"depth\":4 trace2_event &&
+		grep \"fetch-info\".*\"shallows\":2 trace2_event
 	)
 '
 
@@ -306,9 +314,12 @@ test_expect_success 'fetch --depth --no-shallow' '
 test_expect_success 'turn shallow to complete repository' '
 	(
 		cd shallow &&
-		git fetch --unshallow &&
+		GIT_TRACE2_EVENT="$(pwd)/trace2_event" \
+			git fetch --unshallow &&
 		! test -f .git/shallow &&
-		git fsck --full
+		git fsck --full &&
+		grep \"fetch-info\".*\"shallows\":2 trace2_event &&
+		grep \"fetch-info\".*\"depth\":2147483647 trace2_event
 	)
 '
 
@@ -826,13 +837,15 @@ test_expect_success 'clone shallow since ...' '
 '
 
 test_expect_success 'fetch shallow since ...' '
-	git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
+	GIT_TRACE2_EVENT=$(pwd)/shallow11/trace2_event \
+		git -C shallow11 fetch --shallow-since "200000000 +0700" origin &&
 	git -C shallow11 log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
 	three
 	two
 	EOF
-	test_cmp expected actual
+	test_cmp expected actual &&
+	grep \"fetch-info\".*\"deepen-since\":true shallow11/trace2_event
 '
 
 test_expect_success 'clone shallow since selects no commits' '
@@ -987,13 +1000,16 @@ test_expect_success 'filtering by size' '
 	test_config -C server uploadpack.allowfilter 1 &&
 
 	test_create_repo client &&
-	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD &&
+	GIT_TRACE2_EVENT=$(pwd)/client/trace2_event \
+		git -C client fetch-pack --filter=blob:limit=0 ../server HEAD &&
 
 	# Ensure that object is not inadvertently fetched
 	commit=$(git -C server rev-parse HEAD) &&
 	blob=$(git hash-object server/one.t) &&
 	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
-	! grep "$blob" oids
+	! grep "$blob" oids &&
+
+	grep \"fetch-info\".*\"filter\":\"blob:limit\" client/trace2_event
 '
 
 test_expect_success 'filtering by size has no effect if support for it is not advertised' '
