@@ -109,16 +109,13 @@ Performance, Internal Implementation, Development Support etc.
    the help text is optional.
 
  * Tests that are known to pass with LSan are now marked as such.
-   (merge 5fafe8c95f tb/mark-more-tests-as-leak-free later to maint).
 
  * Flaky "git p4" tests, as well as "git svn" tests, are now skipped
    in the (rather expensive) sanitizer CI job.
-   (merge 6ba913629f js/ci-san-skip-p4-and-svn-tests later to maint).
 
  * Tests with LSan from time to time seem to emit harmless message
    that makes our tests unnecessarily flaky; we work it around by
    filtering the uninteresting output.
-   (merge 370ef7e40d jk/test-lsan-denoise-output later to maint).
 
  * Unused parameters to functions are marked as such, and/or removed,
    in order to bring us closer to -Wunused-parameter clean.
@@ -131,7 +128,6 @@ Performance, Internal Implementation, Development Support etc.
    functionality.
 
  * GitHub CI workflow has learned to trigger Coverity check.
-   (merge 3349520e1a js/ci-coverity later to maint).
 
  * Test coverage for trailers has been improved.
 
@@ -148,40 +144,31 @@ Fixes since v2.42
 
  * Overly long label names used in the sequencer machinery are now
    chopped to fit under filesystem limitation.
-   (merge ac300bda10 mp/rebase-label-length-limit later to maint).
 
  * Scalar updates.
-   (merge f9a547d3a7 ds/scalar-updates later to maint).
 
  * Tweak GitHub Actions CI so that pushing the same commit to multiple
    branch tips at the same time will not waste building and testing
    the same thing twice.
-   (merge 99fe06cbfd jc/ci-skip-same-commit later to maint).
 
  * The commit-graph verification code that detects mixture of zero and
    non-zero generation numbers has been updated.
-   (merge db6044d762 tb/commit-graph-verify-fix later to maint).
 
  * "git diff -w --exit-code" with various options did not work
    correctly, which is being addressed.
-   (merge a64f8b2595 jc/diff-exit-code-with-w-fixes later to maint).
 
  * transfer.unpackLimit ought to be used as a fallback, but overrode
    fetch.unpackLimit and receive.unpackLimit instead.
-   (merge f3d33f8cfe ts/unpacklimit-config-fix later to maint).
 
  * The use of API between two calls to require_clean_work_tree() from
    the sequencer code has been cleaned up for consistency.
-   (merge a9b5955e07 ob/sequencer-empty-hint-fix later to maint).
 
  * "git diff --no-such-option" and other corner cases around the exit
    status of the "diff" command has been corrected.
-   (merge 5cc6b2d70b jk/diff-result-code-cleanup later to maint).
 
  * "git for-each-ref --sort='contents:size'" sorts the refs according
    to size numerically, giving a ref that points at a blob twelve-byte
    (12) long before showing a blob hundred-byte (100) long.
-   (merge 6d79cd8474 ks/ref-filter-sort-numerically later to maint).
 
  * We now limit depth of the tree objects and maximum length of
    pathnames recorded in tree objects.
@@ -189,51 +176,40 @@ Fixes since v2.42
 
  * Various fixes to the behavior of "rebase -i" when the command got
    interrupted by conflicting changes.
-   (merge 203573b024 pw/rebase-i-after-failure later to maint).
 
  * References from description of the `--patch` option in various
    manual pages have been simplified and improved.
-   (merge 11422f23e3 so/diff-doc-for-patch-update later to maint).
 
  * "git grep -e A --no-or -e B" is accepted, even though the negation
    of "or" did not mean anything, which has been tightened.
-   (merge aae8558b10 rs/grep-no-no-or later to maint).
 
  * The completion script (in contrib/) has been taught to treat the
    "-t" option to "git checkout" and "git switch" just like the
    "--track" option, to complete remote-tracking branches.
-   (merge 9f892830d6 js/complete-checkout-t later to maint).
 
  * "git diff --no-index -R <(one) <(two)" did not work correctly,
    which has been corrected.
-   (merge 48944f214c pw/diff-no-index-from-named-pipes later to maint).
 
  * Update "git maintenance" timers' implementation based on systemd
    timers to work with WSL.
-   (merge 5e8515e8e8 js/systemd-timers-wsl-fix later to maint).
 
  * "git diff --cached" codepath did not fill the necessary stat
    information for a file when fsmonitor knows it is clean and ended
    up behaving as if it is not clean, which has been corrected.
-   (merge 6a044a2048 js/diff-cached-fsmonitor-fix later to maint).
 
  * Clarify how "alias.foo = : git cmd ; aliased-command-string" should
    be spelled with necessary whitespaces around punctuation marks to
    work.
-   (merge 4333267995 pb/completion-aliases-doc later to maint).
 
  * HTTP Header redaction code has been adjusted for a newer version of
    cURL library that shows its traces differently from earlier
    versions.
-   (merge 0763c3a2c4 jk/redact-h2h3-headers-fix later to maint).
 
  * An error message given by "git send-email" when given a malformed
    address did not give correct information, which has been corrected.
-   (merge 12288cc44e tb/send-email-extract-valid-address-error-message-fix later to maint).
 
  * UBSan options were not propagated through the test framework to git
    run via the httpd, unlike ASan options, which has been corrected.
-   (merge 252d693797 jk/test-pass-ubsan-options-to-http-test later to maint).
 
  * "checkout --merge -- path" and "update-index --unresolve path" did
    not resurrect conflicted state that was resolved to remove path,
@@ -290,35 +266,20 @@ Fixes since v2.42
    been corrected.
    (merge 3ec6167567 jk/send-email-fix-addresses-from-composed-messages later to maint).
 
+ * "cd sub && git grep -f patterns" tried to read "patterns" file at
+   the top level of the working tree; it has been corrected to read
+   "sub/patterns" instead.
+
+
+ * "git reflog expire --single-worktree" has been broken for the past
+   20 months or so, which has been corrected.
+
+ * "git send-email" did not have certain pieces of data computed yet
+   when it tried to validate the outging messages and its recipient
+   addresses, which has been sorted out.
+
+ * "git bugreport" learned to complain when it received a command line
+   argument that it will not use.
+
  * Other code cleanup, docfix, build fix, etc.
-   (merge fd3ba590d8 ws/git-push-doc-grammofix later to maint).
-   (merge 5f33a843de ds/upload-pack-error-sequence-fix later to maint).
-   (merge beaa1d952b jk/function-pointer-mismatches-fix later to maint).
-   (merge b46d806ea5 ob/t9001-indent-fix later to maint).
-   (merge fdc9914c28 ja/worktree-orphan later to maint).
-   (merge c2cbefc510 jc/mv-d-to-d-error-message-fix later to maint).
-   (merge d0fc552bfc ch/t6300-verify-commit-test-cleanup later to maint).
-   (merge aa4b83dd5e ws/git-svn-retire-faketerm later to maint).
-   (merge edf80d23f1 jk/ci-retire-allow-ref later to maint).
-   (merge 256a94ef6c bc/more-git-var later to maint).
-   (merge 82af2c639c ob/sequencer-reword-error-message later to maint).
-   (merge 2a63c79dae rs/grep-parseopt-simplify later to maint).
-   (merge 078c42531e rs/name-rev-use-opt-hidden-bool later to maint).
-   (merge 63642d58b4 ob/sequencer-remove-dead-code later to maint).
-   (merge 8aae489756 ob/t3404-typofix later to maint).
-   (merge 58be11432e eg/config-type-path-docfix later to maint).
-   (merge 563f339d98 ch/clean-docfix later to maint).
-   (merge 4fbe83fcd9 hy/doc-show-is-like-log-not-diff-tree later to maint).
-   (merge 43abaaf008 ob/am-msgfix later to maint).
    (merge c2c349a15c xz/commit-title-soft-limit-doc later to maint).
-   (merge f4cbb32c27 rs/parse-opt-ctx-cleanup later to maint).
-   (merge badf2fe1c3 jk/decoration-and-other-leak-fixes later to maint).
-   (merge cebfaaa333 sn/cat-file-doc-update later to maint).
-   (merge 8b3aa36f5a ps/rewritten-is-per-worktree-doc later to maint).
-   (merge ffbf6a748d jc/update-list-references-to-lore later to maint).
-   (merge 14d569b1a7 jc/am-doc-whitespace-action-fix later to maint).
-   (merge 48399e9cf0 ni/die-message-fix-for-git-add later to maint).
-   (merge ca3285dd69 ps/git-repack-doc-fixes later to maint).
-   (merge 243c79fdc7 wx/merge-ort-comment-typofix later to maint).
-   (merge a060705d94 jc/commit-new-underscore-index-fix later to maint).
-   (merge f6d83e2115 ms/doc-push-fix later to maint).
