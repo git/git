@@ -92,9 +92,16 @@ enum signoff_type {
 	SIGNOFF_EXPLICIT /* --signoff was set on the command-line */
 };
 
-enum show_patch_type {
-	SHOW_PATCH_RAW = 0,
-	SHOW_PATCH_DIFF = 1,
+enum resume_type {
+	RESUME_FALSE = 0,
+	RESUME_APPLY,
+	RESUME_RESOLVED,
+	RESUME_SKIP,
+	RESUME_ABORT,
+	RESUME_QUIT,
+	RESUME_SHOW_PATCH_RAW,
+	RESUME_SHOW_PATCH_DIFF,
+	RESUME_ALLOW_EMPTY,
 };
 
 enum empty_action {
@@ -2191,7 +2198,7 @@ static void am_abort(struct am_state *state)
 	am_destroy(state);
 }
 
-static int show_patch(struct am_state *state, enum show_patch_type sub_mode)
+static int show_patch(struct am_state *state, enum resume_type resume_mode)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *patch_path;
@@ -2206,11 +2213,11 @@ static int show_patch(struct am_state *state, enum show_patch_type sub_mode)
 		return run_command(&cmd);
 	}
 
-	switch (sub_mode) {
-	case SHOW_PATCH_RAW:
+	switch (resume_mode) {
+	case RESUME_SHOW_PATCH_RAW:
 		patch_path = am_path(state, msgnum(state));
 		break;
-	case SHOW_PATCH_DIFF:
+	case RESUME_SHOW_PATCH_DIFF:
 		patch_path = am_path(state, "patch");
 		break;
 	default:
@@ -2257,57 +2264,25 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 	return 0;
 }
 
-enum resume_type {
-	RESUME_FALSE = 0,
-	RESUME_APPLY,
-	RESUME_RESOLVED,
-	RESUME_SKIP,
-	RESUME_ABORT,
-	RESUME_QUIT,
-	RESUME_SHOW_PATCH,
-	RESUME_ALLOW_EMPTY,
-};
-
-struct resume_mode {
-	enum resume_type mode;
-	enum show_patch_type sub_mode;
-};
-
 static int parse_opt_show_current_patch(const struct option *opt, const char *arg, int unset)
 {
 	int *opt_value = opt->value;
-	struct resume_mode *resume = container_of(opt_value, struct resume_mode, mode);
 
+	BUG_ON_OPT_NEG(unset);
+
+	if (!arg)
+		*opt_value = opt->defval;
+	else if (!strcmp(arg, "raw"))
+		*opt_value = RESUME_SHOW_PATCH_RAW;
+	else if (!strcmp(arg, "diff"))
+		*opt_value = RESUME_SHOW_PATCH_DIFF;
 	/*
 	 * Please update $__git_showcurrentpatch in git-completion.bash
 	 * when you add new options
 	 */
-	const char *valid_modes[] = {
-		[SHOW_PATCH_DIFF] = "diff",
-		[SHOW_PATCH_RAW] = "raw"
-	};
-	int new_value = SHOW_PATCH_RAW;
-
-	BUG_ON_OPT_NEG(unset);
-
-	if (arg) {
-		for (new_value = 0; new_value < ARRAY_SIZE(valid_modes); new_value++) {
-			if (!strcmp(arg, valid_modes[new_value]))
-				break;
-		}
-		if (new_value >= ARRAY_SIZE(valid_modes))
-			return error(_("invalid value for '%s': '%s'"),
-				     "--show-current-patch", arg);
-	}
-
-	if (resume->mode == RESUME_SHOW_PATCH && new_value != resume->sub_mode)
-		return error(_("options '%s=%s' and '%s=%s' "
-					   "cannot be used together"),
-			     "--show-current-patch", arg,
-			     "--show-current-patch", valid_modes[resume->sub_mode]);
-
-	resume->mode = RESUME_SHOW_PATCH;
-	resume->sub_mode = new_value;
+	else
+		return error(_("invalid value for '%s': '%s'"),
+			     "--show-current-patch", arg);
 	return 0;
 }
 
@@ -2317,7 +2292,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	int binary = -1;
 	int keep_cr = -1;
 	int patch_format = PATCH_FORMAT_UNKNOWN;
-	struct resume_mode resume = { .mode = RESUME_FALSE };
+	enum resume_type resume_mode = RESUME_FALSE;
 	int in_progress;
 	int ret = 0;
 
@@ -2388,27 +2363,27 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG),
 		OPT_STRING(0, "resolvemsg", &state.resolvemsg, NULL,
 			N_("override error message when patch failure occurs")),
-		OPT_CMDMODE(0, "continue", &resume.mode,
+		OPT_CMDMODE(0, "continue", &resume_mode,
 			N_("continue applying patches after resolving a conflict"),
 			RESUME_RESOLVED),
-		OPT_CMDMODE('r', "resolved", &resume.mode,
+		OPT_CMDMODE('r', "resolved", &resume_mode,
 			N_("synonyms for --continue"),
 			RESUME_RESOLVED),
-		OPT_CMDMODE(0, "skip", &resume.mode,
+		OPT_CMDMODE(0, "skip", &resume_mode,
 			N_("skip the current patch"),
 			RESUME_SKIP),
-		OPT_CMDMODE(0, "abort", &resume.mode,
+		OPT_CMDMODE(0, "abort", &resume_mode,
 			N_("restore the original branch and abort the patching operation"),
 			RESUME_ABORT),
-		OPT_CMDMODE(0, "quit", &resume.mode,
+		OPT_CMDMODE(0, "quit", &resume_mode,
 			N_("abort the patching operation but keep HEAD where it is"),
 			RESUME_QUIT),
-		{ OPTION_CALLBACK, 0, "show-current-patch", &resume.mode,
+		{ OPTION_CALLBACK, 0, "show-current-patch", &resume_mode,
 		  "(diff|raw)",
 		  N_("show the patch being applied"),
 		  PARSE_OPT_CMDMODE | PARSE_OPT_OPTARG | PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
-		  parse_opt_show_current_patch, RESUME_SHOW_PATCH },
-		OPT_CMDMODE(0, "allow-empty", &resume.mode,
+		  parse_opt_show_current_patch, RESUME_SHOW_PATCH_RAW },
+		OPT_CMDMODE(0, "allow-empty", &resume_mode,
 			N_("record the empty patch as an empty commit"),
 			RESUME_ALLOW_EMPTY),
 		OPT_BOOL(0, "committer-date-is-author-date",
@@ -2463,12 +2438,12 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		 *    intend to feed us a patch but wanted to continue
 		 *    unattended.
 		 */
-		if (argc || (resume.mode == RESUME_FALSE && !isatty(0)))
+		if (argc || (resume_mode == RESUME_FALSE && !isatty(0)))
 			die(_("previous rebase directory %s still exists but mbox given."),
 				state.dir);
 
-		if (resume.mode == RESUME_FALSE)
-			resume.mode = RESUME_APPLY;
+		if (resume_mode == RESUME_FALSE)
+			resume_mode = RESUME_APPLY;
 
 		if (state.signoff == SIGNOFF_EXPLICIT)
 			am_append_signoff(&state);
@@ -2482,7 +2457,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		 * stray directories.
 		 */
 		if (file_exists(state.dir) && !state.rebasing) {
-			if (resume.mode == RESUME_ABORT || resume.mode == RESUME_QUIT) {
+			if (resume_mode == RESUME_ABORT || resume_mode == RESUME_QUIT) {
 				am_destroy(&state);
 				am_state_release(&state);
 				return 0;
@@ -2493,7 +2468,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 				state.dir);
 		}
 
-		if (resume.mode)
+		if (resume_mode)
 			die(_("Resolve operation not in progress, we are not resuming."));
 
 		for (i = 0; i < argc; i++) {
@@ -2511,7 +2486,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		strvec_clear(&paths);
 	}
 
-	switch (resume.mode) {
+	switch (resume_mode) {
 	case RESUME_FALSE:
 		am_run(&state, 0);
 		break;
@@ -2520,7 +2495,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		break;
 	case RESUME_RESOLVED:
 	case RESUME_ALLOW_EMPTY:
-		am_resolve(&state, resume.mode == RESUME_ALLOW_EMPTY ? 1 : 0);
+		am_resolve(&state, resume_mode == RESUME_ALLOW_EMPTY ? 1 : 0);
 		break;
 	case RESUME_SKIP:
 		am_skip(&state);
@@ -2532,8 +2507,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		am_rerere_clear();
 		am_destroy(&state);
 		break;
-	case RESUME_SHOW_PATCH:
-		ret = show_patch(&state, resume.sub_mode);
+	case RESUME_SHOW_PATCH_RAW:
+	case RESUME_SHOW_PATCH_DIFF:
+		ret = show_patch(&state, resume_mode);
 		break;
 	default:
 		BUG("invalid resume value");

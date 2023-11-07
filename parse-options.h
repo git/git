@@ -445,6 +445,8 @@ static inline void die_for_incompatible_opt3(int opt1, const char *opt1_name,
 
 /*----- incremental advanced APIs -----*/
 
+struct parse_opt_cmdmode_list;
+
 /*
  * It's okay for the caller to consume argv/argc in the usual way.
  * Other fields of that structure are private to parse-options and should not
@@ -459,6 +461,7 @@ struct parse_opt_ctx_t {
 	unsigned has_subcommands;
 	const char *prefix;
 	const char **alias_groups; /* must be in groups of 3 elements! */
+	struct parse_opt_cmdmode_list *cmdmode_list;
 };
 
 void parse_options_start(struct parse_opt_ctx_t *ctx,
