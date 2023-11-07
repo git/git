@@ -446,6 +446,29 @@ test_expect_success 'expire with multiple worktrees' '
 	)
 '
 
+test_expect_success 'expire one of multiple worktrees' '
+	git init main-wt2 &&
+	(
+		cd main-wt2 &&
+		test_tick &&
+		test_commit foo &&
+		git worktree add link-wt &&
+		test_tick &&
+		test_commit -C link-wt foobar &&
+		test_tick &&
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD \
+			>expect-link-wt &&
+		git reflog expire --verbose --all --expire=$test_tick \
+			--single-worktree &&
+		test-tool ref-store worktree:main for-each-reflog-ent HEAD \
+			>actual-main &&
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD \
+			>actual-link-wt &&
+		test_must_be_empty actual-main &&
+		test_cmp expect-link-wt actual-link-wt
+	)
+'
+
 test_expect_success REFFILES 'empty reflog' '
 	test_when_finished "rm -rf empty" &&
 	git init empty &&
