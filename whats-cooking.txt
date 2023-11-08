@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #02; Mon, 6)
-X-master-at: bc5204569f7db44d22477485afd52ea410d83743
-X-next-at: f7406347cdb3b53eeb25238b9d8d215caf633a80
+Subject: What's cooking in git.git (Nov 2023, #03; Tue, 7)
+X-master-at: 8be77c5de65442b331a28d63802c7a3b94a06c5a
+X-next-at: 63f67c610266b225d783c4c488463ff26ad58572
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #02; Mon, 6)
+What's cooking in git.git (Nov 2023, #03; Tue, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,46 +46,133 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ar/submitting-patches-doc-update (2023-10-24) 1 commit
+  (merged to 'next' on 2023-10-30 at e140009eb6)
+ + SubmittingPatches: call gitk's command "Copy commit reference"
+
+ Doc update.
+ source: <20231024195123.911431-1-rybak.a.v@gmail.com>
+
+
+* es/bugreport-no-extra-arg (2023-10-29) 2 commits
+  (merged to 'next' on 2023-11-01 at 4ca0a9c77c)
+ + bugreport: reject positional arguments
+ + t0091-bugreport: stop using i18ngrep
+
+ "git bugreport" learned to complain when it received a command line
+ argument that it will not use.
+ source: <20231026155459.2234929-1-nasamuffin@google.com>
+
+
+* jc/grep-f-relative-to-cwd (2023-10-12) 1 commit
+  (merged to 'next' on 2023-10-31 at 0d32547b18)
+ + grep: -f <path> is relative to $cwd
+
+ "cd sub && git grep -f patterns" tried to read "patterns" file at
+ the top level of the working tree; it has been corrected to read
+ "sub/patterns" instead.
+ cf. <ZUAnEVk65VQQE263@nand.local>
+ source: <xmqqedhzg37z.fsf@gitster.g>
+
+
+* js/my-first-contribution-update (2023-10-28) 1 commit
+  (merged to 'next' on 2023-11-01 at 94590ee724)
+ + Include gettext.h in MyFirstContribution tutorial
+
+ Documentation update.
+ source: <20231017041503.3249-1-jacob@initialcommit.io>
+
+
+* ms/send-email-validate-fix (2023-10-26) 1 commit
+  (merged to 'next' on 2023-11-01 at f9dd32186b)
+ + send-email: move validation code below process_address_list
+
+ "git send-email" did not have certain pieces of data computed yet
+ when it tried to validate the outging messages and its recipient
+ addresses, which has been sorted out.
+ source: <ddd4bfdd-ed14-44f4-89d3-192332bbc1c4@amd.com>
+
+
+* rc/trace-upload-pack (2023-10-30) 1 commit
+  (merged to 'next' on 2023-11-01 at 90892b5cf0)
+ + upload-pack: add tracing for fetches
+
+ Trace2 update.
+ source: <pull.1598.v2.git.1697577168128.gitgitgadget@gmail.com>
+
+
+* rs/fix-arghelp (2023-10-29) 1 commit
+  (merged to 'next' on 2023-11-01 at cd923d3362)
+ + am, rebase: fix arghelp syntax of --empty
+
+ Doc and help update.
+ source: <10e09b2d-15d7-4af1-b24c-217f9e2f457a@web.de>
+
+
+* rs/parse-options-cmdmode (2023-10-29) 2 commits
+  (merged to 'next' on 2023-11-01 at b83328f1e7)
+ + am: simplify --show-current-patch handling
+ + parse-options: make CMDMODE errors more precise
+
+ parse-options improvements for OPT_CMDMODE options.
+ source: <4520156b-9418-493c-a50c-e61b42e805b3@web.de>
+
+
+* rs/reflog-expire-single-worktree-fix (2023-10-29) 1 commit
+  (merged to 'next' on 2023-11-01 at 6b4dab2cd2)
+ + reflog: fix expire --single-worktree
+
+ "git reflog expire --single-worktree" has been broken for the past
+ 20 months or so, which has been corrected.
+ source: <63eade0e-bf2c-4906-8b4c-689797cff737@web.de>
+
+--------------------------------------------------
 [New Topics]
 
-* jw/git-add-attr-pathspec (2023-11-04) 1 commit
- - attr: enable attr pathspec magic for git-add and git-stash
+* ps/leakfixes (2023-11-07) 4 commits
+ - setup: fix leaking repository format
+ - setup: refactor `upgrade_repository_format()` to have common exit
+ - shallow: fix memory leak when registering shallow roots
+ - test-bloom: stop setting up Git directory twice
 
- "git add" and "git stash" learned to support the ":(attr:...)"
- magic pathspec.
+ Leakfix.
 
- Will merge to 'next'?
- source: <20231103163449.1578841-1-jojwang@google.com>
-
-
-* la/strvec-header-fix (2023-11-03) 1 commit
-  (merged to 'next' on 2023-11-03 at db23d8a911)
- + strvec: drop unnecessary include of hex.h
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1608.git.1698958277454.gitgitgadget@gmail.com>
+ Will merge to 'next' and then to 'master'.
+ source: <cover.1699267422.git.ps@pks.im>
 
 
-* jk/chunk-bounds (2023-11-04) 1 commit
-  (merged to 'next' on 2023-11-06 at ae9fbc1700)
- + t: avoid perl's pack/unpack "Q" specifier
+* tb/rev-list-unpacked-fix (2023-11-07) 2 commits
+ - pack-bitmap: drop --unpacked non-commit objects from results
+ - list-objects: drop --unpacked non-commit objects from results
 
- Test portability fix.
+ "git rev-list --unpacked --objects" failed to exclude packed
+ non-commit objects, which has been corrected.
 
- Will merge to 'master'.
- source: <20231103162019.GB1470570@coredump.intra.peff.net>
+ Will merge to 'next' and then to 'master'.
+ source: <cover.1699311386.git.me@ttaylorr.com>
 
 
-* js/ci-use-macos-13 (2023-11-03) 1 commit
-  (merged to 'next' on 2023-11-06 at f7406347cd)
- + ci: upgrade to using macos-13
+* vd/for-each-ref-unsorted-optimization (2023-11-07) 9 commits
+ - t/perf: add perf tests for for-each-ref
+ - for-each-ref: add option to fully dereference tags
+ - ref-filter.c: filter & format refs in the same callback
+ - ref-filter.c: refactor to create common helper functions
+ - ref-filter.h: add functions for filter/format & format-only
+ - ref-filter.h: move contains caches into filter
+ - ref-filter.h: add max_count and omit_empty to ref_format
+ - for-each-ref: clarify interaction of --omit-empty & --count
+ - ref-filter.c: really don't sort when using --no-sort
 
- Replace macos-12 used at GitHub CI with macos-13.
+ "git for-each-ref --no-sort" still sorted the refs alphabetically
+ which paid non-trivial cost.  It has been redefined to show output
+ in an unspecified order, to allow certain optimizations to take
+ advantage of.
 
- Will merge to 'master'.
- source: <pull.1607.git.1698996455218.gitgitgadget@gmail.com>
+ Expecting a reroll.
+ cf. <dbcbcf0e-aeee-4bb9-9e39-e2e85194d083@github.com>
+ source: <pull.1609.git.1699320361.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -132,6 +219,46 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jw/git-add-attr-pathspec (2023-11-04) 1 commit
+ - attr: enable attr pathspec magic for git-add and git-stash
+
+ "git add" and "git stash" learned to support the ":(attr:...)"
+ magic pathspec.
+
+ Will merge to 'next'?
+ source: <20231103163449.1578841-1-jojwang@google.com>
+
+
+* la/strvec-header-fix (2023-11-03) 1 commit
+  (merged to 'next' on 2023-11-03 at db23d8a911)
+ + strvec: drop unnecessary include of hex.h
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <pull.1608.git.1698958277454.gitgitgadget@gmail.com>
+
+
+* jk/chunk-bounds (2023-11-04) 1 commit
+  (merged to 'next' on 2023-11-06 at ae9fbc1700)
+ + t: avoid perl's pack/unpack "Q" specifier
+
+ Test portability fix.
+
+ Will merge to 'master'.
+ source: <20231103162019.GB1470570@coredump.intra.peff.net>
+
+
+* js/ci-use-macos-13 (2023-11-03) 1 commit
+  (merged to 'next' on 2023-11-06 at f7406347cd)
+ + ci: upgrade to using macos-13
+
+ Replace macos-12 used at GitHub CI with macos-13.
+
+ Will merge to 'master'.
+ source: <pull.1607.git.1698996455218.gitgitgadget@gmail.com>
+
+
 * jc/strbuf-comment-line-char (2023-11-01) 4 commits
  - strbuf: move env-using functions to environment.c
  - strbuf: make add_lines() public
@@ -162,16 +289,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1698739941.git.ps@pks.im>
-
-
-* rc/trace-upload-pack (2023-10-30) 1 commit
-  (merged to 'next' on 2023-11-01 at 90892b5cf0)
- + upload-pack: add tracing for fetches
-
- Trace2 update.
-
- Will merge to 'master'.
- source: <pull.1598.v2.git.1697577168128.gitgitgadget@gmail.com>
 
 
 * bc/merge-file-object-input (2023-11-02) 2 commits
@@ -218,50 +335,6 @@ Release tarballs are available at:
  source: <pull.1604.v2.git.1698843810814.gitgitgadget@gmail.com>
 
 
-* ar/submitting-patches-doc-update (2023-10-24) 1 commit
-  (merged to 'next' on 2023-10-30 at e140009eb6)
- + SubmittingPatches: call gitk's command "Copy commit reference"
-
- Doc update.
-
- Will merge to 'master'.
- source: <20231024195123.911431-1-rybak.a.v@gmail.com>
-
-
-* es/bugreport-no-extra-arg (2023-10-29) 2 commits
-  (merged to 'next' on 2023-11-01 at 4ca0a9c77c)
- + bugreport: reject positional arguments
- + t0091-bugreport: stop using i18ngrep
-
- "git bugreport" learned to complain when it received a command line
- argument that it will not use.
-
- Will merge to 'master'.
- source: <20231026155459.2234929-1-nasamuffin@google.com>
-
-
-* js/my-first-contribution-update (2023-10-28) 1 commit
-  (merged to 'next' on 2023-11-01 at 94590ee724)
- + Include gettext.h in MyFirstContribution tutorial
-
- Documentation update.
-
- Will merge to 'master'.
- source: <20231017041503.3249-1-jacob@initialcommit.io>
-
-
-* ms/send-email-validate-fix (2023-10-26) 1 commit
-  (merged to 'next' on 2023-11-01 at f9dd32186b)
- + send-email: move validation code below process_address_list
-
- "git send-email" did not have certain pieces of data computed yet
- when it tried to validate the outging messages and its recipient
- addresses, which has been sorted out.
-
- Will merge to 'master'.
- source: <ddd4bfdd-ed14-44f4-89d3-192332bbc1c4@amd.com>
-
-
 * ps/ci-gitlab (2023-11-02) 8 commits
  - ci: add support for GitLab CI
  - ci: install test dependencies for linux-musl
@@ -295,38 +368,6 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <cover.1698914571.git.ps@pks.im>
-
-
-* rs/fix-arghelp (2023-10-29) 1 commit
-  (merged to 'next' on 2023-11-01 at cd923d3362)
- + am, rebase: fix arghelp syntax of --empty
-
- Doc and help update.
-
- Will merge to 'master'.
- source: <10e09b2d-15d7-4af1-b24c-217f9e2f457a@web.de>
-
-
-* rs/parse-options-cmdmode (2023-10-29) 2 commits
-  (merged to 'next' on 2023-11-01 at b83328f1e7)
- + am: simplify --show-current-patch handling
- + parse-options: make CMDMODE errors more precise
-
- parse-options improvements for OPT_CMDMODE options.
-
- Will merge to 'master'.
- source: <4520156b-9418-493c-a50c-e61b42e805b3@web.de>
-
-
-* rs/reflog-expire-single-worktree-fix (2023-10-29) 1 commit
-  (merged to 'next' on 2023-11-01 at 6b4dab2cd2)
- + reflog: fix expire --single-worktree
-
- "git reflog expire --single-worktree" has been broken for the past
- 20 months or so, which has been corrected.
-
- Will merge to 'master'.
- source: <63eade0e-bf2c-4906-8b4c-689797cff737@web.de>
 
 
 * jx/fetch-atomic-error-message-fix (2023-10-19) 2 commits
@@ -425,19 +466,6 @@ Release tarballs are available at:
  Comments?
  source: <45cac29403e63483951f7766c6da3c022c68d9f0.1697225110.git.me@ttaylorr.com>
  source: <cover.1697225110.git.me@ttaylorr.com>
-
-
-* jc/grep-f-relative-to-cwd (2023-10-12) 1 commit
-  (merged to 'next' on 2023-10-31 at 0d32547b18)
- + grep: -f <path> is relative to $cwd
-
- "cd sub && git grep -f patterns" tried to read "patterns" file at
- the top level of the working tree; it has been corrected to read
- "sub/patterns" instead.
-
- Will merge to 'master'.
- cf. <ZUAnEVk65VQQE263@nand.local>
- source: <xmqqedhzg37z.fsf@gitster.g>
 
 
 * tb/path-filter-fix (2023-10-18) 17 commits
