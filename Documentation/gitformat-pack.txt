@@ -390,10 +390,11 @@ CHUNK LOOKUP:
 CHUNK DATA:
 
 	Packfile Names (ID: {'P', 'N', 'A', 'M'})
-	    Stores the packfile names as concatenated, null-terminated strings.
-	    Packfiles must be listed in lexicographic order for fast lookups by
-	    name. This is the only chunk not guaranteed to be a multiple of four
-	    bytes in length, so should be the last chunk for alignment reasons.
+	    Store the names of packfiles as a sequence of NUL-terminated
+	    strings. There is no extra padding between the filenames,
+	    and they are listed in lexicographic order. The chunk itself
+	    is padded at the end with between 0 and 3 NUL bytes to make the
+	    chunk size a multiple of 4 bytes.
 
 	OID Fanout (ID: {'O', 'I', 'D', 'F'})
 	    The ith entry, F[i], stores the number of OIDs with first
