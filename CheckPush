@@ -63,7 +63,7 @@ if ! next_equiv=$(git rev-parse --verify 'jch^{/^### match next}' 2>/dev/null) |
    ! git diff --stat --exit-code next $next_equiv
 then
 	next_tree=$(git rev-parse next^{tree}) &&
-	next_equiv=$(git rev-list --first-parent $MASTER..seen |
+	next_equiv=$(git rev-list --first-parent $MASTER^..seen |
 			xargs -n1 sh -c '
 				echo $(git rev-parse $1^{tree}) $1
 			' - | sed -n -e "s/^$next_tree //p"
