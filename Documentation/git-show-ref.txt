@@ -8,10 +8,14 @@ git-show-ref - List references in a local repository
 SYNOPSIS
 --------
 [verse]
-'git show-ref' [-q | --quiet] [--verify] [--head] [-d | --dereference]
+'git show-ref' [--head] [-d | --dereference]
 	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]
 	     [--heads] [--] [<pattern>...]
+'git show-ref' --verify [-q | --quiet] [-d | --dereference]
+	     [-s | --hash[=<n>]] [--abbrev[=<n>]]
+	     [--] [<ref>...]
 'git show-ref' --exclude-existing[=<pattern>]
+'git show-ref' --exists <ref>
 
 DESCRIPTION
 -----------
@@ -26,6 +30,10 @@ By default, shows the tags, heads, and remote refs.
 The `--exclude-existing` form is a filter that does the inverse. It reads
 refs from stdin, one ref per line, and shows those that don't exist in
 the local repository.
+
+The `--exists` form can be used to check for the existence of a single
+references. This form does not verify whether the reference resolves to an
+actual object.
 
 Use of this utility is encouraged in favor of directly accessing files under
 the `.git` directory.
@@ -62,6 +70,12 @@ OPTIONS
 	Aside from returning an error code of 1, it will also print an error
 	message if `--quiet` was not specified.
 
+--exists::
+
+	Check whether the given reference exists. Returns an exit code of 0 if
+	it does, 2 if it is missing, and 1 in case looking up the reference
+	failed with an error other than the reference being missing.
+
 --abbrev[=<n>]::
 
 	Abbreviate the object name.  When using `--hash`, you do
@@ -70,8 +84,8 @@ OPTIONS
 -q::
 --quiet::
 
-	Do not print any results to stdout. When combined with `--verify`, this
-	can be used to silently check if a reference exists.
+	Do not print any results to stdout. Can be used with `--verify` to
+	silently check if a reference exists.
 
 --exclude-existing[=<pattern>]::
 

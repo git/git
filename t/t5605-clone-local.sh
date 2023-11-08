@@ -69,7 +69,7 @@ test_expect_success 'local clone of repo with nonexistent ref in HEAD' '
 	git clone a d &&
 	(cd d &&
 	git fetch &&
-	test ! -e .git/refs/remotes/origin/HEAD)
+	test_ref_missing refs/remotes/origin/HEAD)
 '
 
 test_expect_success 'bundle clone without .bundle suffix' '
