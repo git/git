@@ -296,9 +296,14 @@ Fixes since v2.42
  * "git rev-list --missing" did not work for missing commit objects,
    which has been corrected.
 
+ * "git rev-list --unpacked --objects" failed to exclude packed
+   non-commit objects, which has been corrected.
+   (merge 7b3c8e9f38 tb/rev-list-unpacked-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c2c349a15c xz/commit-title-soft-limit-doc later to maint).
    (merge 1bd809938a tb/format-pack-doc-update later to maint).
    (merge 8f81532599 an/clang-format-typofix later to maint).
    (merge 3ca86adc2d la/strvec-header-fix later to maint).
    (merge 6789275d37 jc/test-i18ngrep later to maint).
+   (merge 9972cd6004 ps/leakfixes later to maint).
