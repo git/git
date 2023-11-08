@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "abspath.h"
+#include "diff.h"
 #include "hex.h"
 #include "object-name.h"
 #include "object-store.h"
@@ -28,6 +29,30 @@ static int label_cb(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int set_diff_algorithm(xpparam_t *xpp,
+			      const char *alg)
+{
+	long diff_algorithm = parse_algorithm_value(alg);
+	if (diff_algorithm < 0)
+		return -1;
+	xpp->flags = (xpp->flags & ~XDF_DIFF_ALGORITHM_MASK) | diff_algorithm;
+	return 0;
+}
+
+static int diff_algorithm_cb(const struct option *opt,
+				const char *arg, int unset)
+{
+	xpparam_t *xpp = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
+	if (set_diff_algorithm(xpp, arg))
+		return error(_("option diff-algorithm accepts \"myers\", "
+			       "\"minimal\", \"patience\" and \"histogram\""));
+
+	return 0;
+}
+
 int cmd_merge_file(int argc, const char **argv, const char *prefix)
 {
 	const char *names[3] = { 0 };
@@ -48,6 +73,9 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 			    XDL_MERGE_FAVOR_THEIRS),
 		OPT_SET_INT(0, "union", &xmp.favor, N_("for conflicts, use a union version"),
 			    XDL_MERGE_FAVOR_UNION),
+		OPT_CALLBACK_F(0, "diff-algorithm", &xmp.xpp, N_("<algorithm>"),
+			     N_("choose a diff algorithm"),
+			     PARSE_OPT_NONEG, diff_algorithm_cb),
 		OPT_INTEGER(0, "marker-size", &xmp.marker_size,
 			    N_("for conflicts, use this marker size")),
 		OPT__QUIET(&quiet, N_("do not warn about conflicts")),
