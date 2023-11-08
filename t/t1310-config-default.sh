@@ -26,12 +26,12 @@ test_expect_success 'canonicalizes --default with appropriate type' '
 test_expect_success 'dies when --default cannot be parsed' '
 	test_must_fail git config -f config --type=expiry-date --default=x --get \
 		not.a.section 2>error &&
-	test_i18ngrep "failed to format default config value" error
+	test_grep "failed to format default config value" error
 '
 
 test_expect_success 'does not allow --default without --get' '
 	test_must_fail git config --default=quux --unset a.section >output 2>&1 &&
-	test_i18ngrep "\-\-default is only applicable to" output
+	test_grep "\-\-default is only applicable to" output
 '
 
 test_done

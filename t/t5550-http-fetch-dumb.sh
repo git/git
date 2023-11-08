@@ -376,7 +376,7 @@ test_expect_success 'git client send an empty Accept-Language' '
 
 test_expect_success 'remote-http complains cleanly about malformed urls' '
 	test_must_fail git remote-http http::/example.com/repo.git 2>stderr &&
-	test_i18ngrep "url has no scheme" stderr
+	test_grep "url has no scheme" stderr
 '
 
 # NEEDSWORK: Writing commands to git-remote-curl can race against the latter
@@ -385,7 +385,7 @@ test_expect_success 'remote-http complains cleanly about malformed urls' '
 test_expect_success 'remote-http complains cleanly about empty scheme' '
 	test_must_fail ok=sigpipe git ls-remote \
 		http::${HTTPD_URL#http}/dumb/repo.git 2>stderr &&
-	test_i18ngrep "url has no scheme" stderr
+	test_grep "url has no scheme" stderr
 '
 
 test_expect_success 'redirects can be forbidden/allowed' '
@@ -397,7 +397,7 @@ test_expect_success 'redirects can be forbidden/allowed' '
 
 test_expect_success 'redirects are reported to stderr' '
 	# just look for a snippet of the redirected-to URL
-	test_i18ngrep /dumb/ stderr
+	test_grep /dumb/ stderr
 '
 
 test_expect_success 'non-initial redirects can be forbidden' '
@@ -466,7 +466,7 @@ test_expect_success 'can redirect through non-"info/refs?service=git-upload-pack
 
 test_expect_success 'print HTTP error when any intermediate redirect throws error' '
 	test_must_fail git clone "$HTTPD_URL/redir-to/502" 2> stderr &&
-	test_i18ngrep "unable to access.*/redir-to/502" stderr
+	test_grep "unable to access.*/redir-to/502" stderr
 '
 
 test_expect_success 'fetching via http alternates works' '

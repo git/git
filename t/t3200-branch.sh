@@ -36,7 +36,7 @@ test_expect_success 'branch -h in broken repository' '
 		>.git/refs/heads/main &&
 		test_expect_code 129 git branch -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage" broken/usage
+	test_grep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'git branch abc should create a branch' '
@@ -106,7 +106,7 @@ test_expect_success 'git branch l should work after branch l/m has been deleted'
 
 test_expect_success 'git branch -m dumps usage' '
 	test_expect_code 128 git branch -m 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch -m m broken_symref should work' '
@@ -584,12 +584,12 @@ EOF
 
 test_expect_success 'git branch -c dumps usage' '
 	test_expect_code 128 git branch -c 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch --copy dumps usage' '
 	test_expect_code 128 git branch --copy 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch -c d e should work' '
@@ -1040,7 +1040,7 @@ test_expect_success '--set-upstream-to fails on a missing dst branch' '
 
 test_expect_success '--set-upstream-to fails on a missing src branch' '
 	test_must_fail git branch --set-upstream-to does-not-exist main 2>err &&
-	test_i18ngrep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
+	test_grep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
 '
 
 test_expect_success '--set-upstream-to fails on a non-ref' '
@@ -1054,7 +1054,7 @@ test_expect_success '--set-upstream-to fails on locked config' '
 	>.git/config.lock &&
 	git branch locked &&
 	test_must_fail git branch --set-upstream-to locked 2>err &&
-	test_i18ngrep "could not lock config file .git/config" err
+	test_grep "could not lock config file .git/config" err
 '
 
 test_expect_success 'use --set-upstream-to modify HEAD' '
@@ -1085,7 +1085,7 @@ test_expect_success '--unset-upstream should fail if config is locked' '
 	git branch --set-upstream-to locked &&
 	>.git/config.lock &&
 	test_must_fail git branch --unset-upstream 2>err &&
-	test_i18ngrep "could not lock config file .git/config" err
+	test_grep "could not lock config file .git/config" err
 '
 
 test_expect_success 'test --unset-upstream on HEAD' '
@@ -1521,7 +1521,7 @@ test_expect_success '--list during rebase' '
 	set_fake_editor &&
 	git rebase -i HEAD~2 &&
 	git branch --list >actual &&
-	test_i18ngrep "rebasing main" actual
+	test_grep "rebasing main" actual
 '
 
 test_expect_success '--list during rebase from detached HEAD' '
@@ -1533,7 +1533,7 @@ test_expect_success '--list during rebase from detached HEAD' '
 	set_fake_editor &&
 	git rebase -i HEAD~2 &&
 	git branch --list >actual &&
-	test_i18ngrep "rebasing detached HEAD $oid" actual
+	test_grep "rebasing detached HEAD $oid" actual
 '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '

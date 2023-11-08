@@ -161,7 +161,7 @@ test_expect_success 'git push properly warns about insufficient permissions' '
 		git add foo.forbidden &&
 		git commit -m "add a file" &&
 		git push 2>actual &&
-		test_i18ngrep "foo.forbidden is not a permitted file" actual
+		test_grep "foo.forbidden is not a permitted file" actual
 	)
 '
 

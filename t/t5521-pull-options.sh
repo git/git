@@ -94,7 +94,7 @@ test_expect_success 'git pull --no-write-fetch-head fails' '
 	(cd clonedwfh && git init &&
 	test_expect_code 129 git pull --no-write-fetch-head "../parent" >out 2>err &&
 	test_must_be_empty out &&
-	test_i18ngrep "no-write-fetch-head" err)
+	test_grep "no-write-fetch-head" err)
 '
 
 test_expect_success 'git pull --force' '

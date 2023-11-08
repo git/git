@@ -48,7 +48,7 @@ test_expect_success 'exit with correct error on bad input to --stdin-packs' '
 	echo doesnotexist >in &&
 	test_expect_code 1 git -C full commit-graph write --stdin-packs \
 		<in 2>stderr &&
-	test_i18ngrep "error adding pack" stderr
+	test_grep "error adding pack" stderr
 '
 
 test_expect_success 'create commits and repack' '
@@ -68,11 +68,11 @@ test_expect_success 'exit with correct error on bad input to --stdin-commits' '
 	# invalid, non-hex OID
 	echo HEAD | test_expect_code 1 git -C full commit-graph write \
 		--stdin-commits 2>stderr &&
-	test_i18ngrep "unexpected non-hex object ID: HEAD" stderr &&
+	test_grep "unexpected non-hex object ID: HEAD" stderr &&
 	# non-existent OID
 	echo $ZERO_OID | test_expect_code 1 git -C full commit-graph write \
 		--stdin-commits 2>stderr &&
-	test_i18ngrep "invalid object" stderr &&
+	test_grep "invalid object" stderr &&
 	# valid commit and tree OID
 	git -C full rev-parse HEAD HEAD^{tree} >in &&
 	git -C full commit-graph write --stdin-commits <in &&
@@ -144,7 +144,7 @@ test_expect_success 'commit-graph write --stdin-commits force progress on for st
 	git -C full rev-parse commits/5 >in &&
 	GIT_PROGRESS_DELAY=0 git -C full commit-graph write --stdin-commits \
 		--progress <in 2>err &&
-	test_i18ngrep "Collecting commits from input" err
+	test_grep "Collecting commits from input" err
 '
 
 test_expect_success 'commit-graph write --stdin-commits with the --no-progress option' '
@@ -384,13 +384,13 @@ test_expect_success 'warn on improper hash version' '
 		cd sha1 &&
 		mv ../cg-sha256 .git/objects/info/commit-graph &&
 		git log -1 2>err &&
-		test_i18ngrep "commit-graph hash version 2 does not match version 1" err
+		test_grep "commit-graph hash version 2 does not match version 1" err
 	) &&
 	(
 		cd sha256 &&
 		mv ../cg-sha1 .git/objects/info/commit-graph &&
 		git log -1 2>err &&
-		test_i18ngrep "commit-graph hash version 1 does not match version 2" err
+		test_grep "commit-graph hash version 1 does not match version 2" err
 	)
 '
 
@@ -475,7 +475,7 @@ corrupt_graph_verify() {
 	grepstr=$1
 	test_must_fail git -C full commit-graph verify 2>test_err &&
 	grep -v "^+" test_err >err &&
-	test_i18ngrep "$grepstr" err &&
+	test_grep "$grepstr" err &&
 	if test "$2" != "no-copy"
 	then
 		cp full/$objdir/info/commit-graph commit-graph-pre-write-test
@@ -721,7 +721,7 @@ test_expect_success 'corrupt commit-graph write (broken parent)' '
 		git commit-tree -p "$broken" -m "good commit" "$empty" >good &&
 		test_must_fail git commit-graph write --stdin-commits \
 			<good 2>test_err &&
-		test_i18ngrep "unable to parse commit" test_err
+		test_grep "unable to parse commit" test_err
 	)
 '
 
@@ -742,7 +742,7 @@ test_expect_success 'corrupt commit-graph write (missing tree)' '
 		git commit-tree -p "$broken" -m "good" "$tree" >good &&
 		test_must_fail git commit-graph write --stdin-commits \
 			<good 2>test_err &&
-		test_i18ngrep "unable to parse commit" test_err
+		test_grep "unable to parse commit" test_err
 	)
 '
 

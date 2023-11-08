@@ -182,8 +182,8 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 
 	: Final squash failed, but there was still a squash &&
 	head -n1 .git/copy.txt >first-line &&
-	test_i18ngrep "# This is a combination of 3 commits" first-line &&
-	test_i18ngrep "# This is the commit message #3:" .git/copy.txt
+	test_grep "# This is a combination of 3 commits" first-line &&
+	test_grep "# This is the commit message #3:" .git/copy.txt
 '
 
 test_expect_success 'setup rerere database' '
@@ -294,7 +294,7 @@ test_expect_success '--reschedule-failed-exec' '
 	test_must_fail git -c rebase.rescheduleFailedExec=true \
 		rebase -x false HEAD^ 2>err &&
 	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
-	test_i18ngrep "has been rescheduled" err
+	test_grep "has been rescheduled" err
 '
 
 test_expect_success 'rebase.rescheduleFailedExec only affects `rebase -i`' '

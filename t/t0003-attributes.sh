@@ -263,7 +263,7 @@ test_expect_success 'root subdir attribute test' '
 test_expect_success 'negative patterns' '
 	echo "!f test=bar" >.gitattributes &&
 	git check-attr test -- '"'"'!f'"'"' 2>errors &&
-	test_i18ngrep "Negative patterns are ignored" errors
+	test_grep "Negative patterns are ignored" errors
 '
 
 test_expect_success 'patterns starting with exclamation' '
@@ -496,7 +496,7 @@ test_expect_success SYMLINKS 'symlinks not respected in-tree' '
 	mkdir subdir &&
 	ln -s ../attr subdir/.gitattributes &&
 	attr_check_basic subdir/file unspecified &&
-	test_i18ngrep "unable to access.*gitattributes" err
+	test_grep "unable to access.*gitattributes" err
 '
 
 test_expect_success 'large attributes line ignored in tree' '

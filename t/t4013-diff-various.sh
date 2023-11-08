@@ -621,7 +621,7 @@ test_expect_success 'diff -I<regex> --stat' '
 
 test_expect_success 'diff -I<regex>: detect malformed regex' '
 	test_expect_code 129 git diff --ignore-matching-lines="^[124-9" 2>error &&
-	test_i18ngrep "invalid regex given to -I: " error
+	test_grep "invalid regex given to -I: " error
 '
 
 # check_prefix <patch> <src> <dst>

@@ -53,7 +53,7 @@ test_expect_success '--no-quiet overrides --quiet' '
 	# Applying side1 will be quiet.
 	test_must_fail git am --quiet side[123].eml >out &&
 	test_path_is_dir .git/rebase-apply &&
-	test_i18ngrep ! "^Applying: " out &&
+	test_grep ! "^Applying: " out &&
 	echo side1 >file &&
 	git add file &&
 

@@ -26,7 +26,7 @@ test_expect_success 'checkout --no-overlay removing last file from directory' '
 
 test_expect_success 'checkout -p --overlay is disallowed' '
 	test_must_fail git checkout -p --overlay HEAD 2>actual &&
-	test_i18ngrep "fatal: options .-p. and .--overlay. cannot be used together" actual
+	test_grep "fatal: options .-p. and .--overlay. cannot be used together" actual
 '
 
 test_expect_success '--no-overlay --theirs with D/F conflict deletes file' '

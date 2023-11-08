@@ -100,17 +100,17 @@ test_expect_success "--help does not work for guides" "
 
 test_expect_success 'git help' '
 	git help >help.output &&
-	test_i18ngrep "^   clone  " help.output &&
-	test_i18ngrep "^   add    " help.output &&
-	test_i18ngrep "^   log    " help.output &&
-	test_i18ngrep "^   commit " help.output &&
-	test_i18ngrep "^   fetch  " help.output
+	test_grep "^   clone  " help.output &&
+	test_grep "^   add    " help.output &&
+	test_grep "^   log    " help.output &&
+	test_grep "^   commit " help.output &&
+	test_grep "^   fetch  " help.output
 '
 
 test_expect_success 'git help -g' '
 	git help -g >help.output &&
-	test_i18ngrep "^   everyday   " help.output &&
-	test_i18ngrep "^   tutorial   " help.output
+	test_grep "^   everyday   " help.output &&
+	test_grep "^   tutorial   " help.output
 '
 
 test_expect_success 'git help fails for non-existing html pages' '
@@ -257,7 +257,7 @@ do
 			export GIT_CEILING_DIRECTORIES &&
 			test_expect_code 129 git -C sub $builtin -h >output 2>&1
 		) &&
-		test_i18ngrep usage output
+		test_grep usage output
 	'
 done <builtins
 

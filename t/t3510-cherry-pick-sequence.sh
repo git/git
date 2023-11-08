@@ -154,7 +154,7 @@ test_expect_success 'skip "empty" commit' '
 	pristine_detach picked &&
 	test_commit dummy foo d &&
 	test_must_fail git cherry-pick anotherpick 2>err &&
-	test_i18ngrep "git cherry-pick --skip" err &&
+	test_grep "git cherry-pick --skip" err &&
 	git cherry-pick --skip &&
 	test_cmp_rev dummy HEAD
 '
@@ -314,7 +314,7 @@ test_expect_success '--abort does not unsafely change HEAD' '
 	git reset --hard base &&
 	test_must_fail git cherry-pick picked anotherpick &&
 	git cherry-pick --abort 2>actual &&
-	test_i18ngrep "You seem to have moved HEAD" actual &&
+	test_grep "You seem to have moved HEAD" actual &&
 	test_cmp_rev base HEAD
 '
 
@@ -520,7 +520,7 @@ test_expect_success '--continue asks for help after resolving patch to nil' '
 	test_cmp_rev unrelatedpick CHERRY_PICK_HEAD &&
 	git checkout HEAD -- unrelated &&
 	test_must_fail git cherry-pick --continue 2>msg &&
-	test_i18ngrep "The previous cherry-pick is now empty" msg
+	test_grep "The previous cherry-pick is now empty" msg
 '
 
 test_expect_success 'follow advice and skip nil patch' '

@@ -1426,7 +1426,7 @@ test_expect_success 'grep --no-index pattern -- path' '
 
 test_expect_success 'grep --no-index complains of revs' '
 	test_must_fail git grep --no-index o main -- 2>err &&
-	test_i18ngrep "cannot be used with revs" err
+	test_grep "cannot be used with revs" err
 '
 
 test_expect_success 'grep --no-index prefers paths to revs' '
@@ -1439,7 +1439,7 @@ test_expect_success 'grep --no-index prefers paths to revs' '
 
 test_expect_success 'grep --no-index does not "diagnose" revs' '
 	test_must_fail git grep --no-index o :1:hello.c 2>err &&
-	test_i18ngrep ! -i "did you mean" err
+	test_grep ! -i "did you mean" err
 '
 
 cat >expected <<EOF

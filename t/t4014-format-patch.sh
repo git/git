@@ -2403,25 +2403,25 @@ test_expect_success 'interdiff: cover-letter' '
 	--q
 	EOF
 	git format-patch --cover-letter --interdiff=boop~2 -1 boop &&
-	test_i18ngrep "^Interdiff:$" 0000-cover-letter.patch &&
-	test_i18ngrep ! "^Interdiff:$" 0001-fleep.patch &&
+	test_grep "^Interdiff:$" 0000-cover-letter.patch &&
+	test_grep ! "^Interdiff:$" 0001-fleep.patch &&
 	sed "1,/^@@ /d; /^-- $/q" 0000-cover-letter.patch >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'interdiff: reroll-count' '
 	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
-	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
+	test_grep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
 '
 
 test_expect_success 'interdiff: reroll-count with a non-integer' '
 	git format-patch --cover-letter --interdiff=boop~2 -v2.2 -1 boop &&
-	test_i18ngrep "^Interdiff:$" v2.2-0000-cover-letter.patch
+	test_grep "^Interdiff:$" v2.2-0000-cover-letter.patch
 '
 
 test_expect_success 'interdiff: reroll-count with a integer' '
 	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
-	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
+	test_grep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
 '
 
 test_expect_success 'interdiff: solo-patch' '
@@ -2430,7 +2430,7 @@ test_expect_success 'interdiff: solo-patch' '
 
 	EOF
 	git format-patch --interdiff=boop~2 -1 boop &&
-	test_i18ngrep "^Interdiff:$" 0001-fleep.patch &&
+	test_grep "^Interdiff:$" 0001-fleep.patch &&
 	sed "1,/^  @@ /d; /^$/q" 0001-fleep.patch >actual &&
 	test_cmp expect actual
 '

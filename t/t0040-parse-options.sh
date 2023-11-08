@@ -374,34 +374,34 @@ test_expect_success 'OPT_CMDMODE() works' '
 test_expect_success 'OPT_CMDMODE() detects incompatibility (1)' '
 	test_must_fail test-tool parse-options --mode1 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "mode1" output.err &&
-	test_i18ngrep "mode2" output.err &&
-	test_i18ngrep "is incompatible with" output.err
+	test_grep "mode1" output.err &&
+	test_grep "mode2" output.err &&
+	test_grep "is incompatible with" output.err
 '
 
 test_expect_success 'OPT_CMDMODE() detects incompatibility (2)' '
 	test_must_fail test-tool parse-options --set23 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "mode2" output.err &&
-	test_i18ngrep "set23" output.err &&
-	test_i18ngrep "is incompatible with" output.err
+	test_grep "mode2" output.err &&
+	test_grep "set23" output.err &&
+	test_grep "is incompatible with" output.err
 '
 
 test_expect_success 'OPT_CMDMODE() detects incompatibility (3)' '
 	test_must_fail test-tool parse-options --mode2 --set23 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "mode2" output.err &&
-	test_i18ngrep "set23" output.err &&
-	test_i18ngrep "is incompatible with" output.err
+	test_grep "mode2" output.err &&
+	test_grep "set23" output.err &&
+	test_grep "is incompatible with" output.err
 '
 
 test_expect_success 'OPT_CMDMODE() detects incompatibility (4)' '
 	test_must_fail test-tool parse-options --mode2 --mode34=3 \
 		>output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "mode2" output.err &&
-	test_i18ngrep "mode34.3" output.err &&
-	test_i18ngrep "is incompatible with" output.err
+	test_grep "mode2" output.err &&
+	test_grep "mode34.3" output.err &&
+	test_grep "is incompatible with" output.err
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '

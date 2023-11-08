@@ -29,7 +29,7 @@ check_fsck () {
 	'')
 		test_must_be_empty fsck.output ;;
 	*)
-		test_i18ngrep "$1" fsck.output ;;
+		test_grep "$1" fsck.output ;;
 	esac
 }
 
@@ -308,9 +308,9 @@ test_expect_success 'git reflog expire unknown reference' '
 	test_config gc.reflogexpireunreachable never &&
 
 	test_must_fail git reflog expire main@{123} 2>stderr &&
-	test_i18ngrep "points nowhere" stderr &&
+	test_grep "points nowhere" stderr &&
 	test_must_fail git reflog expire does-not-exist 2>stderr &&
-	test_i18ngrep "points nowhere" stderr
+	test_grep "points nowhere" stderr
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '

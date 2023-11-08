@@ -371,7 +371,7 @@ test_expect_success $PREREQ,!AUTOIDENT 'broken implicit ident aborts send-email'
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--to=to@example.com \
 		$patches </dev/null 2>errors &&
-	test_i18ngrep "tell me who you are" errors
+	test_grep "tell me who you are" errors
 	)
 '
 
@@ -2081,7 +2081,7 @@ test_expect_success $PREREQ 'aliases and sendemail.identity' '
 		-c sendemail.aliasesfile=default-aliases \
 		-c sendemail.cloud.aliasesfile=cloud-aliases \
 		send-email -1 2>stderr &&
-	test_i18ngrep "cloud-aliases" stderr
+	test_grep "cloud-aliases" stderr
 '
 
 test_sendmail_aliases () {
@@ -2446,7 +2446,7 @@ test_expect_success $PREREQ 'invoke hook' '
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/../fake.sendmail" \
 			../another.patch 2>err &&
-		test_i18ngrep "rejected by sendemail-validate hook" err
+		test_grep "rejected by sendemail-validate hook" err
 	)
 '
 
@@ -2502,7 +2502,7 @@ test_expect_success $PREREQ 'test that sendmail config is rejected' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		HEAD^ 2>err &&
-	test_i18ngrep "found configuration options for '"'"sendmail"'"'" err
+	test_grep "found configuration options for '"'"sendmail"'"'" err
 '
 
 test_expect_success $PREREQ 'test that sendmail config rejection is specific' '

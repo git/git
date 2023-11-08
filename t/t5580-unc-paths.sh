@@ -75,7 +75,7 @@ test_expect_success push '
 test_expect_success MINGW 'remote nick cannot contain backslashes' '
 	BACKSLASHED="$(winpwd | tr / \\\\)" &&
 	git ls-remote "$BACKSLASHED" 2>err &&
-	test_i18ngrep ! "unable to access" err
+	test_grep ! "unable to access" err
 '
 
 test_expect_success 'unc alternates' '

@@ -163,7 +163,7 @@ test_expect_success '"git submodule sync" should update submodule URLs - subdire
 		cd sub &&
 		git submodule sync >../../output
 	) &&
-	test_i18ngrep "\\.\\./submodule" output &&
+	test_grep "\\.\\./submodule" output &&
 	test -d "$(
 		cd super-clone/submodule &&
 		git config remote.origin.url
@@ -194,7 +194,7 @@ test_expect_success '"git submodule sync --recursive" should update all submodul
 		cd sub &&
 		git submodule sync --recursive >../../output
 	) &&
-	test_i18ngrep "\\.\\./submodule/sub-submodule" output &&
+	test_grep "\\.\\./submodule/sub-submodule" output &&
 	test -d "$(
 		cd super-clone/submodule &&
 		git config remote.origin.url

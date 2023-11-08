@@ -375,7 +375,7 @@ test_expect_success '2c: Modify b & add c VS rename b->c' '
 		export GIT_MERGE_VERBOSITY &&
 		test_must_fail git merge -s recursive B^0 >out 2>err &&
 
-		test_i18ngrep "CONFLICT (.*/add):" out &&
+		test_grep "CONFLICT (.*/add):" out &&
 		test_must_be_empty err &&
 
 		git ls-files -s >index_files &&

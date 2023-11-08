@@ -68,27 +68,27 @@ test_expect_success 'diff with two merge bases' '
 
 test_expect_success 'diff with no merge bases' '
 	test_must_fail git diff br2...br3 2>err &&
-	test_i18ngrep "fatal: br2...br3: no merge base" err
+	test_grep "fatal: br2...br3: no merge base" err
 '
 
 test_expect_success 'diff with too many symmetric differences' '
 	test_must_fail git diff br1...main br2...br3 2>err &&
-	test_i18ngrep "usage" err
+	test_grep "usage" err
 '
 
 test_expect_success 'diff with symmetric difference and extraneous arg' '
 	test_must_fail git diff main br1...main 2>err &&
-	test_i18ngrep "usage" err
+	test_grep "usage" err
 '
 
 test_expect_success 'diff with two ranges' '
 	test_must_fail git diff main br1..main br2..br3 2>err &&
-	test_i18ngrep "usage" err
+	test_grep "usage" err
 '
 
 test_expect_success 'diff with ranges and extra arg' '
 	test_must_fail git diff main br1..main commit-D 2>err &&
-	test_i18ngrep "usage" err
+	test_grep "usage" err
 '
 
 test_expect_success 'diff --merge-base with no commits' '
@@ -97,7 +97,7 @@ test_expect_success 'diff --merge-base with no commits' '
 
 test_expect_success 'diff --merge-base with three commits' '
 	test_must_fail git diff --merge-base br1 br2 main 2>err &&
-	test_i18ngrep "usage" err
+	test_grep "usage" err
 '
 
 for cmd in diff-index diff
@@ -150,19 +150,19 @@ do
 	test_expect_success "$cmd --merge-base with non-commit" '
 		git checkout main &&
 		test_must_fail git $cmd --merge-base main^{tree} 2>err &&
-		test_i18ngrep "is a tree, not a commit" err
+		test_grep "is a tree, not a commit" err
 	'
 
 	test_expect_success "$cmd --merge-base with no merge bases and one commit" '
 		git checkout main &&
 		test_must_fail git $cmd --merge-base br3 2>err &&
-		test_i18ngrep "fatal: no merge base found" err
+		test_grep "fatal: no merge base found" err
 	'
 
 	test_expect_success "$cmd --merge-base with multiple merge bases and one commit" '
 		git checkout main &&
 		test_must_fail git $cmd --merge-base br1 2>err &&
-		test_i18ngrep "fatal: multiple merge bases found" err
+		test_grep "fatal: multiple merge bases found" err
 	'
 done
 
@@ -176,28 +176,28 @@ do
 
 	test_expect_success "$cmd --merge-base commit and non-commit" '
 		test_must_fail git $cmd --merge-base br2 main^{tree} 2>err &&
-		test_i18ngrep "is a tree, not a commit" err
+		test_grep "is a tree, not a commit" err
 	'
 
 	test_expect_success "$cmd --merge-base with no merge bases and two commits" '
 		test_must_fail git $cmd --merge-base br2 br3 2>err &&
-		test_i18ngrep "fatal: no merge base found" err
+		test_grep "fatal: no merge base found" err
 	'
 
 	test_expect_success "$cmd --merge-base with multiple merge bases and two commits" '
 		test_must_fail git $cmd --merge-base main br1 2>err &&
-		test_i18ngrep "fatal: multiple merge bases found" err
+		test_grep "fatal: multiple merge bases found" err
 	'
 done
 
 test_expect_success 'diff-tree --merge-base with one commit' '
 	test_must_fail git diff-tree --merge-base main 2>err &&
-	test_i18ngrep "fatal: --merge-base only works with two commits" err
+	test_grep "fatal: --merge-base only works with two commits" err
 '
 
 test_expect_success 'diff --merge-base with range' '
 	test_must_fail git diff --merge-base br2..br3 2>err &&
-	test_i18ngrep "fatal: --merge-base does not work with ranges" err
+	test_grep "fatal: --merge-base does not work with ranges" err
 '
 
 test_done

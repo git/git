@@ -280,13 +280,13 @@ test_expect_success 'warn on improper hash version' '
 		cd sha1 &&
 		mv ../mpi-sha256 .git/objects/pack/multi-pack-index &&
 		git log -1 2>err &&
-		test_i18ngrep "multi-pack-index hash version 2 does not match version 1" err
+		test_grep "multi-pack-index hash version 2 does not match version 1" err
 	) &&
 	(
 		cd sha256 &&
 		mv ../mpi-sha1 .git/objects/pack/multi-pack-index &&
 		git log -1 2>err &&
-		test_i18ngrep "multi-pack-index hash version 1 does not match version 2" err
+		test_grep "multi-pack-index hash version 1 does not match version 2" err
 	)
 '
 
@@ -387,7 +387,7 @@ corrupt_midx_and_verify() {
 	printf "$DATA" | dd of="$FILE" bs=1 seek="$POS" conv=notrunc &&
 	test_must_fail $COMMAND 2>test_err &&
 	grep -v "^+" test_err >err &&
-	test_i18ngrep "$GREPSTR" err
+	test_grep "$GREPSTR" err
 }
 
 test_expect_success 'verify bad signature' '
@@ -502,7 +502,7 @@ test_expect_success 'corrupt MIDX is not reused' '
 	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
 		"incorrect object offset" &&
 	git multi-pack-index write 2>err &&
-	test_i18ngrep checksum.mismatch err &&
+	test_grep checksum.mismatch err &&
 	git multi-pack-index verify
 '
 
@@ -1032,7 +1032,7 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 
 test_expect_success 'usage shown without sub-command' '
 	test_expect_code 129 git multi-pack-index 2>err &&
-	! test_i18ngrep "unrecognized subcommand" err
+	! test_grep "unrecognized subcommand" err
 '
 
 test_expect_success 'complains when run outside of a repository' '

@@ -1263,14 +1263,16 @@ test_cmp_bin () {
 	cmp "$@"
 }
 
-# Wrapper for grep which used to be used for
-# GIT_TEST_GETTEXT_POISON=false. Only here as a shim for other
-# in-flight changes. Should not be used and will be removed soon.
+# Deprecated - do not use this in new code
 test_i18ngrep () {
+	test_grep "$@"
+}
+
+test_grep () {
 	eval "last_arg=\${$#}"
 
 	test -f "$last_arg" ||
-	BUG "test_i18ngrep requires a file to read as the last parameter"
+	BUG "test_grep requires a file to read as the last parameter"
 
 	if test $# -lt 2 ||
 	   { test "x!" = "x$1" && test $# -lt 3 ; }

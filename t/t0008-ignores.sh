@@ -49,7 +49,7 @@ broken_c_unquote_verbose () {
 
 stderr_contains () {
 	regexp="$1"
-	if test_i18ngrep "$regexp" "$HOME/stderr"
+	if test_grep "$regexp" "$HOME/stderr"
 	then
 		return 0
 	else
@@ -942,7 +942,7 @@ test_expect_success SYMLINKS 'symlinks not respected in-tree' '
 	ln -s ignore subdir/.gitignore &&
 	test_must_fail git check-ignore subdir/file >actual 2>err &&
 	test_must_be_empty actual &&
-	test_i18ngrep "unable to access.*gitignore" err
+	test_grep "unable to access.*gitignore" err
 '
 
 test_done

@@ -19,7 +19,7 @@ test_expect_success 'basic command line parsing' '
 
 	# -L requires there is no pathspec
 	test_must_fail git log -L1,1:b.c -- b.c 2>error &&
-	test_i18ngrep "cannot be used with pathspec" error &&
+	test_grep "cannot be used with pathspec" error &&
 
 	# This would fail because --follow wants a single path, but
 	# we may fail due to incompatibility between -L/--follow in
@@ -50,7 +50,7 @@ canned_test_failure () {
 test_bad_opts () {
 	test_expect_success "invalid args: $1" "
 		test_must_fail git log $1 2>errors &&
-		test_i18ngrep '$2' errors
+		test_grep '$2' errors
 	"
 }
 

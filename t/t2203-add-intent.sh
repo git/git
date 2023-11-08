@@ -173,7 +173,7 @@ test_expect_success 'rename detection finds the right names' '
 		git add -N third &&
 
 		git status | grep -v "^?" >actual.1 &&
-		test_i18ngrep "renamed: *first -> third" actual.1 &&
+		test_grep "renamed: *first -> third" actual.1 &&
 
 		git status --porcelain | grep -v "^?" >actual.2 &&
 		cat >expected.2 <<-\EOF &&
@@ -213,8 +213,8 @@ test_expect_success 'double rename detection in status' '
 		git add -N third &&
 
 		git status | grep -v "^?" >actual.1 &&
-		test_i18ngrep "renamed: *first -> second" actual.1 &&
-		test_i18ngrep "renamed: *second -> third" actual.1 &&
+		test_grep "renamed: *first -> second" actual.1 &&
+		test_grep "renamed: *second -> third" actual.1 &&
 
 		git status --porcelain | grep -v "^?" >actual.2 &&
 		cat >expected.2 <<-\EOF &&

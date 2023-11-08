@@ -75,7 +75,7 @@ test_expect_success 'submit --dry-run' '
 		test_commit "dry-run1" &&
 		test_commit "dry-run2" &&
 		git p4 submit --dry-run >out &&
-		test_i18ngrep "Would apply" out
+		test_grep "Would apply" out
 	) &&
 	(
 		cd "$cli" &&
@@ -99,7 +99,7 @@ test_expect_success 'submit --dry-run --export-labels' '
 		git commit -m "dry-run2" dry-run2 &&
 		git tag -m "dry-run-tag1" dry-run-tag1 HEAD^ &&
 		git p4 submit --dry-run --export-labels >out &&
-		test_i18ngrep "Would create p4 label" out
+		test_grep "Would create p4 label" out
 	) &&
 	(
 		cd "$cli" &&
@@ -443,7 +443,7 @@ test_expect_success 'description with Jobs section and bogus following text' '
 		# build a job
 		make_job $(cat jobname) &&
 		test_must_fail git p4 submit 2>err &&
-		test_i18ngrep "Unknown field name" err
+		test_grep "Unknown field name" err
 	) &&
 	(
 		cd "$cli" &&
@@ -461,9 +461,9 @@ test_expect_success 'submit --prepare-p4-only' '
 		git add prep-only-add &&
 		git commit -m "prep only add" &&
 		git p4 submit --prepare-p4-only >out &&
-		test_i18ngrep "prepared for submission" out &&
-		test_i18ngrep "must be deleted" out &&
-		test_i18ngrep ! "everything below this line is just the diff" out
+		test_grep "prepared for submission" out &&
+		test_grep "must be deleted" out &&
+		test_grep ! "everything below this line is just the diff" out
 	) &&
 	(
 		cd "$cli" &&

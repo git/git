@@ -143,8 +143,8 @@ test_expect_success 'Show verbose error when HEAD could not be detached' '
 	>B &&
 	test_when_finished "rm -f B" &&
 	test_must_fail git rebase topic 2>output.err >output.out &&
-	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" output.err &&
-	test_i18ngrep B output.err
+	test_grep "The following untracked working tree files would be overwritten by checkout:" output.err &&
+	test_grep B output.err
 '
 
 test_expect_success 'fail when upstream arg is missing and not on branch' '
@@ -421,7 +421,7 @@ test_expect_success 'refuse to switch to branch checked out elsewhere' '
 	git checkout main &&
 	git worktree add wt &&
 	test_must_fail git -C wt rebase main main 2>err &&
-	test_i18ngrep "already used by worktree at" err
+	test_grep "already used by worktree at" err
 '
 
 test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '

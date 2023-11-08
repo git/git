@@ -56,7 +56,7 @@ test_expect_success 'git diff --no-index executed outside repo gives correct err
 		export GIT_CEILING_DIRECTORIES &&
 		cd non/git &&
 		test_must_fail git diff --no-index a 2>actual.err &&
-		test_i18ngrep "usage: git diff --no-index" actual.err
+		test_grep "usage: git diff --no-index" actual.err
 	)
 '
 
