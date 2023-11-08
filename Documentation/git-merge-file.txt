@@ -11,19 +11,20 @@ SYNOPSIS
 [verse]
 'git merge-file' [-L <current-name> [-L <base-name> [-L <other-name>]]]
 	[--ours|--theirs|--union] [-p|--stdout] [-q|--quiet] [--marker-size=<n>]
-	[--[no-]diff3] <current-file> <base-file> <other-file>
+	[--[no-]diff3] [--object-id] <current> <base> <other>
 
 
 DESCRIPTION
 -----------
-'git merge-file' incorporates all changes that lead from the `<base-file>`
-to `<other-file>` into `<current-file>`. The result ordinarily goes into
-`<current-file>`. 'git merge-file' is useful for combining separate changes
-to an original. Suppose `<base-file>` is the original, and both
-`<current-file>` and `<other-file>` are modifications of `<base-file>`,
+Given three files `<current>`, `<base>` and `<other>`,
+'git merge-file' incorporates all changes that lead from `<base>`
+to `<other>` into `<current>`. The result ordinarily goes into
+`<current>`. 'git merge-file' is useful for combining separate changes
+to an original. Suppose `<base>` is the original, and both
+`<current>` and `<other>` are modifications of `<base>`,
 then 'git merge-file' combines both changes.
 
-A conflict occurs if both `<current-file>` and `<other-file>` have changes
+A conflict occurs if both `<current>` and `<other>` have changes
 in a common segment of lines. If a conflict is found, 'git merge-file'
 normally outputs a warning and brackets the conflict with lines containing
 <<<<<<< and >>>>>>> markers. A typical conflict will look like this:
@@ -36,9 +37,13 @@ normally outputs a warning and brackets the conflict with lines containing
 
 If there are conflicts, the user should edit the result and delete one of
 the alternatives.  When `--ours`, `--theirs`, or `--union` option is in effect,
-however, these conflicts are resolved favouring lines from `<current-file>`,
-lines from `<other-file>`, or lines from both respectively.  The length of the
+however, these conflicts are resolved favouring lines from `<current>`,
+lines from `<other>`, or lines from both respectively.  The length of the
 conflict markers can be given with the `--marker-size` option.
+
+If `--object-id` is specified, exactly the same behavior occurs, except that
+instead of specifying what to merge as files, it is specified as a list of
+object IDs referring to blobs.
 
 The exit value of this program is negative on error, and the number of
 conflicts otherwise (truncated to 127 if there are more than that many
@@ -52,6 +57,14 @@ linkgit:git[1].
 OPTIONS
 -------
 
+--object-id::
+	Specify the contents to merge as blobs in the current repository instead of
+	files.  In this case, the operation must take place within a valid repository.
++
+If the `-p` option is specified, the merged file (including conflicts, if any)
+goes to standard output as normal; otherwise, the merged file is written to the
+object store and the object ID of its blob is written to standard output.
+
 -L <label>::
 	This option may be given up to three times, and
 	specifies labels to be used in place of the
@@ -62,7 +75,7 @@ OPTIONS
 
 -p::
 	Send results to standard output instead of overwriting
-	`<current-file>`.
+	`<current>`.
 
 -q::
 	Quiet; do not warn about conflicts.
@@ -92,6 +105,11 @@ EXAMPLES
 
 	merges tmp/a123 and tmp/c345 with the base tmp/b234, but uses labels
 	`a` and `c` instead of `tmp/a123` and `tmp/c345`.
+
+`git merge-file -p --object-id abc1234 def567 890abcd`::
+
+	combines the changes of the blob abc1234 and 890abcd since def567,
+	tries to merge them and writes the result to standard output
 
 GIT
 ---
