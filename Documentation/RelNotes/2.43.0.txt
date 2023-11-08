@@ -99,6 +99,9 @@ UI, Workflows & Features
  * The attribute subsystem learned to honor `attr.tree` configuration
    that specifies which tree to read the .gitattributes files from.
 
+ * "git merge-file" learns a mode to read three contents to be merged
+   from blob objects.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -134,10 +137,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to iterate over loose references have been optimized to
    reduce the number of lstat() system calls.
-   (merge 2cdb796101 vd/loose-ref-iteration-optimization later to maint).
 
  * The codepaths that read "chunk" formatted files have been corrected
    to pay attention to the chunk size and notice broken files.
+
+ * Replace macos-12 used at GitHub CI with macos-13.
+   (merge 682a868f67 js/ci-use-macos-13 later to maint).
 
 
 Fixes since v2.42
@@ -282,5 +287,18 @@ Fixes since v2.42
  * "git bugreport" learned to complain when it received a command line
    argument that it will not use.
 
+ * The codepath to traverse the commit-graph learned to notice that a
+   commit is missing (e.g., corrupt repository lost an object), even
+   though it knows something about the commit (like its parents) from
+   what is in commit-graph.
+   (merge 7a5d604443 ps/do-not-trust-commit-graph-blindly-for-existence later to maint).
+
+ * "git rev-list --missing" did not work for missing commit objects,
+   which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c2c349a15c xz/commit-title-soft-limit-doc later to maint).
+   (merge 1bd809938a tb/format-pack-doc-update later to maint).
+   (merge 8f81532599 an/clang-format-typofix later to maint).
+   (merge 3ca86adc2d la/strvec-header-fix later to maint).
+   (merge 6789275d37 jc/test-i18ngrep later to maint).
