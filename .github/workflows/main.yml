@@ -276,11 +276,11 @@ jobs:
             pool: ubuntu-20.04
           - jobname: osx-clang
             cc: clang
-            pool: macos-12
+            pool: macos-13
           - jobname: osx-gcc
             cc: gcc
-            cc_package: gcc-9
-            pool: macos-12
+            cc_package: gcc-13
+            pool: macos-13
           - jobname: linux-gcc-default
             cc: gcc
             pool: ubuntu-latest
