@@ -39,6 +39,9 @@ static void show_object(struct traversal_context *ctx,
 {
 	if (!ctx->show_object)
 		return;
+	if (ctx->revs->unpacked && has_object_pack(&object->oid))
+		return;
+
 	ctx->show_object(object, name, ctx->show_data);
 }
 
