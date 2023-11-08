@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #03; Tue, 7)
-X-master-at: 8be77c5de65442b331a28d63802c7a3b94a06c5a
-X-next-at: 63f67c610266b225d783c4c488463ff26ad58572
+Subject: What's cooking in git.git (Nov 2023, #04; Thu, 9)
+X-master-at: dadef801b365989099a9929e995589e455c51fed
+X-next-at: bcd1edfa6a19000b3bc04690bd9c0d0c692dd5b3
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #03; Tue, 7)
+What's cooking in git.git (Nov 2023, #04; Thu, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,12 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+The first candidate for the upcoming release, Git 2.43.0-rc0, has
+been tagged.  As of now, 'next' is "empty" in the sense that its
+tree is identical to that of 'master'.  There are tons of topic
+waiting outside 'next' without sufficient support, which is sad, but
+they are of lower priority now for a few weeks X-<.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,131 +54,140 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ar/submitting-patches-doc-update (2023-10-24) 1 commit
-  (merged to 'next' on 2023-10-30 at e140009eb6)
- + SubmittingPatches: call gitk's command "Copy commit reference"
+* an/clang-format-typofix (2023-11-01) 1 commit
+  (merged to 'next' on 2023-11-02 at 7f639690ab)
+ + clang-format: fix typo in comment
 
- Doc update.
- source: <20231024195123.911431-1-rybak.a.v@gmail.com>
-
-
-* es/bugreport-no-extra-arg (2023-10-29) 2 commits
-  (merged to 'next' on 2023-11-01 at 4ca0a9c77c)
- + bugreport: reject positional arguments
- + t0091-bugreport: stop using i18ngrep
-
- "git bugreport" learned to complain when it received a command line
- argument that it will not use.
- source: <20231026155459.2234929-1-nasamuffin@google.com>
+ Typofix.
+ source: <pull.1602.v2.git.git.1698759629166.gitgitgadget@gmail.com>
 
 
-* jc/grep-f-relative-to-cwd (2023-10-12) 1 commit
-  (merged to 'next' on 2023-10-31 at 0d32547b18)
- + grep: -f <path> is relative to $cwd
+* bc/merge-file-object-input (2023-11-02) 2 commits
+  (merged to 'next' on 2023-11-02 at ccbba9416c)
+ + merge-file: add an option to process object IDs
+ + git-merge-file doc: drop "-file" from argument placeholders
 
- "cd sub && git grep -f patterns" tried to read "patterns" file at
- the top level of the working tree; it has been corrected to read
- "sub/patterns" instead.
- cf. <ZUAnEVk65VQQE263@nand.local>
- source: <xmqqedhzg37z.fsf@gitster.g>
-
-
-* js/my-first-contribution-update (2023-10-28) 1 commit
-  (merged to 'next' on 2023-11-01 at 94590ee724)
- + Include gettext.h in MyFirstContribution tutorial
-
- Documentation update.
- source: <20231017041503.3249-1-jacob@initialcommit.io>
+ "git merge-file" learns a mode to read three contents to be merged
+ from blob objects.
+ source: <20231101192419.794162-1-sandals@crustytoothpaste.net>
 
 
-* ms/send-email-validate-fix (2023-10-26) 1 commit
-  (merged to 'next' on 2023-11-01 at f9dd32186b)
- + send-email: move validation code below process_address_list
+* jc/test-i18ngrep (2023-11-02) 2 commits
+  (merged to 'next' on 2023-11-03 at 78406f8d94)
+ + tests: teach callers of test_i18ngrep to use test_grep
+ + test framework: further deprecate test_i18ngrep
 
- "git send-email" did not have certain pieces of data computed yet
- when it tried to validate the outging messages and its recipient
- addresses, which has been sorted out.
- source: <ddd4bfdd-ed14-44f4-89d3-192332bbc1c4@amd.com>
-
-
-* rc/trace-upload-pack (2023-10-30) 1 commit
-  (merged to 'next' on 2023-11-01 at 90892b5cf0)
- + upload-pack: add tracing for fetches
-
- Trace2 update.
- source: <pull.1598.v2.git.1697577168128.gitgitgadget@gmail.com>
+ Another step to deprecate test_i18ngrep.
+ source: <20231031052330.3762989-1-gitster@pobox.com>
 
 
-* rs/fix-arghelp (2023-10-29) 1 commit
-  (merged to 'next' on 2023-11-01 at cd923d3362)
- + am, rebase: fix arghelp syntax of --empty
+* jk/chunk-bounds (2023-11-04) 1 commit
+  (merged to 'next' on 2023-11-06 at ae9fbc1700)
+ + t: avoid perl's pack/unpack "Q" specifier
 
- Doc and help update.
- source: <10e09b2d-15d7-4af1-b24c-217f9e2f457a@web.de>
-
-
-* rs/parse-options-cmdmode (2023-10-29) 2 commits
-  (merged to 'next' on 2023-11-01 at b83328f1e7)
- + am: simplify --show-current-patch handling
- + parse-options: make CMDMODE errors more precise
-
- parse-options improvements for OPT_CMDMODE options.
- source: <4520156b-9418-493c-a50c-e61b42e805b3@web.de>
+ Test portability fix.
+ source: <20231103162019.GB1470570@coredump.intra.peff.net>
 
 
-* rs/reflog-expire-single-worktree-fix (2023-10-29) 1 commit
-  (merged to 'next' on 2023-11-01 at 6b4dab2cd2)
- + reflog: fix expire --single-worktree
+* jk/tree-name-and-depth-limit (2023-11-02) 1 commit
+  (merged to 'next' on 2023-11-06 at 041423344c)
+ + max_tree_depth: lower it for MSVC to avoid stack overflows
 
- "git reflog expire --single-worktree" has been broken for the past
- 20 months or so, which has been corrected.
- source: <63eade0e-bf2c-4906-8b4c-689797cff737@web.de>
+ Further limit tree depth max to avoid Windows build running out of
+ the stack space.
+ source: <pull.1604.v2.git.1698843810814.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[New Topics]
+
+* js/ci-use-macos-13 (2023-11-03) 1 commit
+  (merged to 'next' on 2023-11-06 at f7406347cd)
+ + ci: upgrade to using macos-13
+
+ Replace macos-12 used at GitHub CI with macos-13.
+ source: <pull.1607.git.1698996455218.gitgitgadget@gmail.com>
+
+
+* kn/rev-list-missing-fix (2023-11-01) 4 commits
+  (merged to 'next' on 2023-11-02 at 2469dfc402)
+ + rev-list: add commit object support in `--missing` option
+ + rev-list: move `show_commit()` to the bottom
+ + revision: rename bit to `do_not_die_on_missing_objects`
+ + Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
+ (this branch uses ps/do-not-trust-commit-graph-blindly-for-existence.)
+
+ "git rev-list --missing" did not work for missing commit objects,
+ which has been corrected.
+ source: <20231026101109.43110-1-karthik.188@gmail.com>
+
+
+* la/strvec-header-fix (2023-11-03) 1 commit
+  (merged to 'next' on 2023-11-03 at db23d8a911)
+ + strvec: drop unnecessary include of hex.h
+
+ Code clean-up.
+ source: <pull.1608.git.1698958277454.gitgitgadget@gmail.com>
+
+
+* ps/do-not-trust-commit-graph-blindly-for-existence (2023-11-01) 2 commits
+  (merged to 'next' on 2023-11-01 at 06037376ee)
+ + commit: detect commits that exist in commit-graph but not in the ODB
+ + commit-graph: introduce envvar to disable commit existence checks
+ (this branch is used by kn/rev-list-missing-fix.)
+
+ The codepath to traverse the commit-graph learned to notice that a
+ commit is missing (e.g., corrupt repository lost an object), even
+ though it knows something about the commit (like its parents) from
+ what is in commit-graph.
+ source: <cover.1698736363.git.ps@pks.im>
+
 
 * ps/leakfixes (2023-11-07) 4 commits
- - setup: fix leaking repository format
- - setup: refactor `upgrade_repository_format()` to have common exit
- - shallow: fix memory leak when registering shallow roots
- - test-bloom: stop setting up Git directory twice
+  (merged to 'next' on 2023-11-08 at 1969726a2f)
+ + setup: fix leaking repository format
+ + setup: refactor `upgrade_repository_format()` to have common exit
+ + shallow: fix memory leak when registering shallow roots
+ + test-bloom: stop setting up Git directory twice
 
  Leakfix.
-
- Will merge to 'next' and then to 'master'.
  source: <cover.1699267422.git.ps@pks.im>
 
 
+* ps/show-ref (2023-11-01) 12 commits
+  (merged to 'next' on 2023-11-02 at 987bb117f5)
+ + t: use git-show-ref(1) to check for ref existence
+ + builtin/show-ref: add new mode to check for reference existence
+ + builtin/show-ref: explicitly spell out different modes in synopsis
+ + builtin/show-ref: ensure mutual exclusiveness of subcommands
+ + builtin/show-ref: refactor options for patterns subcommand
+ + builtin/show-ref: stop using global vars for `show_one()`
+ + builtin/show-ref: stop using global variable to count matches
+ + builtin/show-ref: refactor `--exclude-existing` options
+ + builtin/show-ref: fix dead code when passing patterns
+ + builtin/show-ref: fix leaking string buffer
+ + builtin/show-ref: split up different subcommands
+ + builtin/show-ref: convert pattern to a local variable
+ (this branch is used by ps/ref-tests-update.)
+
+ Teach "git show-ref" a mode to check the existence of a ref.
+ source: <cover.1698739941.git.ps@pks.im>
+
+
+* tb/format-pack-doc-update (2023-11-01) 2 commits
+  (merged to 'next' on 2023-11-02 at 538991fe9b)
+ + Documentation/gitformat-pack.txt: fix incorrect MIDX documentation
+ + Documentation/gitformat-pack.txt: fix typo
+
+ Doc update.
+ source: <cover.1698780244.git.me@ttaylorr.com>
+
+
 * tb/rev-list-unpacked-fix (2023-11-07) 2 commits
- - pack-bitmap: drop --unpacked non-commit objects from results
- - list-objects: drop --unpacked non-commit objects from results
+  (merged to 'next' on 2023-11-08 at 4b73bc0256)
+ + pack-bitmap: drop --unpacked non-commit objects from results
+ + list-objects: drop --unpacked non-commit objects from results
 
  "git rev-list --unpacked --objects" failed to exclude packed
  non-commit objects, which has been corrected.
-
- Will merge to 'next' and then to 'master'.
  source: <cover.1699311386.git.me@ttaylorr.com>
-
-
-* vd/for-each-ref-unsorted-optimization (2023-11-07) 9 commits
- - t/perf: add perf tests for for-each-ref
- - for-each-ref: add option to fully dereference tags
- - ref-filter.c: filter & format refs in the same callback
- - ref-filter.c: refactor to create common helper functions
- - ref-filter.h: add functions for filter/format & format-only
- - ref-filter.h: move contains caches into filter
- - ref-filter.h: add max_count and omit_empty to ref_format
- - for-each-ref: clarify interaction of --omit-empty & --count
- - ref-filter.c: really don't sort when using --no-sort
-
- "git for-each-ref --no-sort" still sorted the refs alphabetically
- which paid non-trivial cost.  It has been redefined to show output
- in an unspecified order, to allow certain optimizations to take
- advantage of.
-
- Expecting a reroll.
- cf. <dbcbcf0e-aeee-4bb9-9e39-e2e85194d083@github.com>
- source: <pull.1609.git.1699320361.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -219,6 +234,27 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* vd/for-each-ref-unsorted-optimization (2023-11-07) 9 commits
+ - t/perf: add perf tests for for-each-ref
+ - for-each-ref: add option to fully dereference tags
+ - ref-filter.c: filter & format refs in the same callback
+ - ref-filter.c: refactor to create common helper functions
+ - ref-filter.h: add functions for filter/format & format-only
+ - ref-filter.h: move contains caches into filter
+ - ref-filter.h: add max_count and omit_empty to ref_format
+ - for-each-ref: clarify interaction of --omit-empty & --count
+ - ref-filter.c: really don't sort when using --no-sort
+
+ "git for-each-ref --no-sort" still sorted the refs alphabetically
+ which paid non-trivial cost.  It has been redefined to show output
+ in an unspecified order, to allow certain optimizations to take
+ advantage of.
+
+ Expecting a reroll.
+ cf. <dbcbcf0e-aeee-4bb9-9e39-e2e85194d083@github.com>
+ source: <pull.1609.git.1699320361.gitgitgadget@gmail.com>
+
+
 * jw/git-add-attr-pathspec (2023-11-04) 1 commit
  - attr: enable attr pathspec magic for git-add and git-stash
 
@@ -229,36 +265,6 @@ Release tarballs are available at:
  source: <20231103163449.1578841-1-jojwang@google.com>
 
 
-* la/strvec-header-fix (2023-11-03) 1 commit
-  (merged to 'next' on 2023-11-03 at db23d8a911)
- + strvec: drop unnecessary include of hex.h
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1608.git.1698958277454.gitgitgadget@gmail.com>
-
-
-* jk/chunk-bounds (2023-11-04) 1 commit
-  (merged to 'next' on 2023-11-06 at ae9fbc1700)
- + t: avoid perl's pack/unpack "Q" specifier
-
- Test portability fix.
-
- Will merge to 'master'.
- source: <20231103162019.GB1470570@coredump.intra.peff.net>
-
-
-* js/ci-use-macos-13 (2023-11-03) 1 commit
-  (merged to 'next' on 2023-11-06 at f7406347cd)
- + ci: upgrade to using macos-13
-
- Replace macos-12 used at GitHub CI with macos-13.
-
- Will merge to 'master'.
- source: <pull.1607.git.1698996455218.gitgitgadget@gmail.com>
-
-
 * jc/strbuf-comment-line-char (2023-11-01) 4 commits
  - strbuf: move env-using functions to environment.c
  - strbuf: make add_lines() public
@@ -267,72 +273,6 @@ Release tarballs are available at:
 
  Code simplification.
  source: <cover.1698791220.git.jonathantanmy@google.com>
-
-
-* ps/show-ref (2023-11-01) 12 commits
-  (merged to 'next' on 2023-11-02 at 987bb117f5)
- + t: use git-show-ref(1) to check for ref existence
- + builtin/show-ref: add new mode to check for reference existence
- + builtin/show-ref: explicitly spell out different modes in synopsis
- + builtin/show-ref: ensure mutual exclusiveness of subcommands
- + builtin/show-ref: refactor options for patterns subcommand
- + builtin/show-ref: stop using global vars for `show_one()`
- + builtin/show-ref: stop using global variable to count matches
- + builtin/show-ref: refactor `--exclude-existing` options
- + builtin/show-ref: fix dead code when passing patterns
- + builtin/show-ref: fix leaking string buffer
- + builtin/show-ref: split up different subcommands
- + builtin/show-ref: convert pattern to a local variable
- (this branch is used by ps/ref-tests-update.)
-
- Teach "git show-ref" a mode to check the existence of a ref.
-
- Will merge to 'master'.
- source: <cover.1698739941.git.ps@pks.im>
-
-
-* bc/merge-file-object-input (2023-11-02) 2 commits
-  (merged to 'next' on 2023-11-02 at ccbba9416c)
- + merge-file: add an option to process object IDs
- + git-merge-file doc: drop "-file" from argument placeholders
-
- "git merge-file" learns a mode to read three contents to be merged
- from blob objects.
-
- Will merge to 'master'.
- source: <20231101192419.794162-1-sandals@crustytoothpaste.net>
-
-
-* jc/test-i18ngrep (2023-11-02) 2 commits
-  (merged to 'next' on 2023-11-03 at 78406f8d94)
- + tests: teach callers of test_i18ngrep to use test_grep
- + test framework: further deprecate test_i18ngrep
-
- Another step to deprecate test_i18ngrep.
-
- Will merge to 'master'.
- source: <20231031052330.3762989-1-gitster@pobox.com>
-
-
-* an/clang-format-typofix (2023-11-01) 1 commit
-  (merged to 'next' on 2023-11-02 at 7f639690ab)
- + clang-format: fix typo in comment
-
- Typofix.
-
- Will merge to 'master'.
- source: <pull.1602.v2.git.git.1698759629166.gitgitgadget@gmail.com>
-
-
-* jk/tree-name-and-depth-limit (2023-11-02) 1 commit
-  (merged to 'next' on 2023-11-06 at 041423344c)
- + max_tree_depth: lower it for MSVC to avoid stack overflows
-
- Further limit tree depth max to avoid Windows build running out of
- the stack space.
-
- Will merge to 'master'.
- source: <pull.1604.v2.git.1698843810814.gitgitgadget@gmail.com>
 
 
 * ps/ci-gitlab (2023-11-02) 8 commits
@@ -362,11 +302,10 @@ Release tarballs are available at:
  - t: convert tests to not write references via the filesystem
  - t: allow skipping expected object ID in `ref-store update-ref`
  - Merge branch 'ps/show-ref' into ps/ref-tests-update
- (this branch uses ps/show-ref.)
 
  Update ref-related tests.
 
- Will merge to 'next'?
+ Comments?
  source: <cover.1698914571.git.ps@pks.im>
 
 
@@ -421,34 +360,8 @@ Release tarballs are available at:
  "git merge-tree" learned "--write-pack" to record its result
  without creating loose objects.
 
- Will merge to 'next'?
+ Comments?
  source: <cover.1698101088.git.me@ttaylorr.com>
-
-
-* tb/format-pack-doc-update (2023-11-01) 2 commits
-  (merged to 'next' on 2023-11-02 at 538991fe9b)
- + Documentation/gitformat-pack.txt: fix incorrect MIDX documentation
- + Documentation/gitformat-pack.txt: fix typo
-
- Doc update.
-
- Will merge to 'master'.
- source: <cover.1698780244.git.me@ttaylorr.com>
-
-
-* ps/do-not-trust-commit-graph-blindly-for-existence (2023-11-01) 2 commits
-  (merged to 'next' on 2023-11-01 at 06037376ee)
- + commit: detect commits that exist in commit-graph but not in the ODB
- + commit-graph: introduce envvar to disable commit existence checks
- (this branch is used by kn/rev-list-missing-fix.)
-
- The codepath to traverse the commit-graph learned to notice that a
- commit is missing (e.g., corrupt repository lost an object), even
- though it knows something about the commit (like its parents) from
- what is in commit-graph.
-
- Will merge to 'master'.
- source: <cover.1698736363.git.ps@pks.im>
 
 
 * tb/pair-chunk-expect-size (2023-10-14) 8 commits
@@ -495,21 +408,6 @@ Release tarballs are available at:
  source: <cover.1697653929.git.me@ttaylorr.com>
 
 
-* kn/rev-list-missing-fix (2023-11-01) 4 commits
-  (merged to 'next' on 2023-11-02 at 2469dfc402)
- + rev-list: add commit object support in `--missing` option
- + rev-list: move `show_commit()` to the bottom
- + revision: rename bit to `do_not_die_on_missing_objects`
- + Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
- (this branch uses ps/do-not-trust-commit-graph-blindly-for-existence.)
-
- "git rev-list --missing" did not work for missing commit objects,
- which has been corrected.
-
- Will merge to 'master'.
- source: <20231026101109.43110-1-karthik.188@gmail.com>
-
-
 * cc/git-replay (2023-11-03) 14 commits
  - replay: stop assuming replayed branches do not diverge
  - replay: add --contained to rebase contained branches
@@ -529,7 +427,7 @@ Release tarballs are available at:
  Introduce "git replay", a tool meant on the server side without
  working tree to recreate a history.
 
- Will merge to 'next'?
+ Comments?
  source: <20231102135151.843758-1-christian.couder@gmail.com>
 
 
@@ -568,7 +466,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Will merge to 'next'?
+ Comments?
  source: <pull.1563.v5.git.1697828495.gitgitgadget@gmail.com>
 
 
