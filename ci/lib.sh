@@ -69,10 +69,32 @@ skip_branch_tip_with_tag () {
 	fi
 }
 
+# Check whether we can use the path passed via the first argument as Git
+# repository.
+is_usable_git_repository () {
+	# We require Git in our PATH, otherwise we cannot access repositories
+	# at all.
+	if ! command -v git >/dev/null
+	then
+		return 1
+	fi
+
+	# And the target directory needs to be a proper Git repository.
+	if ! git -C "$1" rev-parse 2>/dev/null
+	then
+		return 1
+	fi
+}
+
 # Save some info about the current commit's tree, so we can skip the build
 # job if we encounter the same tree again and can provide a useful info
 # message.
 save_good_tree () {
+	if ! is_usable_git_repository .
+	then
+		return
+	fi
+
 	echo "$(git rev-parse $CI_COMMIT^{tree}) $CI_COMMIT $CI_JOB_NUMBER $CI_JOB_ID" >>"$good_trees_file"
 	# limit the file size
 	tail -1000 "$good_trees_file" >"$good_trees_file".tmp
@@ -84,6 +106,11 @@ save_good_tree () {
 # the commit messages).
 skip_good_tree () {
 	if test true = "$GITHUB_ACTIONS"
+	then
+		return
+	fi
+
+	if ! is_usable_git_repository .
 	then
 		return
 	fi
@@ -119,6 +146,11 @@ skip_good_tree () {
 }
 
 check_unignored_build_artifacts () {
+	if ! is_usable_git_repository .
+	then
+		return
+	fi
+
 	! git ls-files --other --exclude-standard --error-unmatch \
 		-- ':/*' 2>/dev/null ||
 	{
