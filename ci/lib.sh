@@ -131,6 +131,26 @@ handle_failed_tests () {
 	return 1
 }
 
+create_failed_test_artifacts () {
+	mkdir -p t/failed-test-artifacts
+
+	for test_exit in t/test-results/*.exit
+	do
+		test 0 != "$(cat "$test_exit")" || continue
+
+		test_name="${test_exit%.exit}"
+		test_name="${test_name##*/}"
+		printf "\\e[33m\\e[1m=== Failed test: ${test_name} ===\\e[m\\n"
+		echo "The full logs are in the 'print test failures' step below."
+		echo "See also the 'failed-tests-*' artifacts attached to this run."
+		cat "t/test-results/$test_name.markup"
+
+		trash_dir="t/trash directory.$test_name"
+		cp "t/test-results/$test_name.out" t/failed-test-artifacts/
+		tar czf t/failed-test-artifacts/"$test_name".trash.tar.gz "$trash_dir"
+	done
+}
+
 # GitHub Action doesn't set TERM, which is required by tput
 export TERM=${TERM:-dumb}
 
@@ -171,24 +191,8 @@ then
 	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
 	handle_failed_tests () {
-		mkdir -p t/failed-test-artifacts
 		echo "FAILED_TEST_ARTIFACTS=t/failed-test-artifacts" >>$GITHUB_ENV
-
-		for test_exit in t/test-results/*.exit
-		do
-			test 0 != "$(cat "$test_exit")" || continue
-
-			test_name="${test_exit%.exit}"
-			test_name="${test_name##*/}"
-			printf "\\e[33m\\e[1m=== Failed test: ${test_name} ===\\e[m\\n"
-			echo "The full logs are in the 'print test failures' step below."
-			echo "See also the 'failed-tests-*' artifacts attached to this run."
-			cat "t/test-results/$test_name.markup"
-
-			trash_dir="t/trash directory.$test_name"
-			cp "t/test-results/$test_name.out" t/failed-test-artifacts/
-			tar czf t/failed-test-artifacts/"$test_name".trash.tar.gz "$trash_dir"
-		done
+		create_failed_test_artifacts
 		return 1
 	}
 
