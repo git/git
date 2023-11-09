@@ -291,19 +291,6 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 	 * over g->num_commits, or runs a checksum on the commit-graph
 	 * itself.
 	 */
-	if (!g->chunk_oid_fanout) {
-		error(_("commit-graph required OID fanout chunk missing or corrupted"));
-		return 1;
-	}
-	if (!g->chunk_oid_lookup) {
-		error(_("commit-graph required OID lookup chunk missing or corrupted"));
-		return 1;
-	}
-	if (!g->chunk_commit_data) {
-		error(_("commit-graph required commit data chunk missing or corrupted"));
-		return 1;
-	}
-
 	for (i = 0; i < 255; i++) {
 		uint32_t oid_fanout1 = ntohl(g->chunk_oid_fanout[i]);
 		uint32_t oid_fanout2 = ntohl(g->chunk_oid_fanout[i + 1]);
@@ -462,9 +449,19 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 				   GRAPH_HEADER_SIZE, graph->num_chunks, 1))
 		goto free_and_return;
 
-	read_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, graph_read_oid_fanout, graph);
-	read_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, graph_read_oid_lookup, graph);
-	read_chunk(cf, GRAPH_CHUNKID_DATA, graph_read_commit_data, graph);
+	if (read_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, graph_read_oid_fanout, graph)) {
+		error(_("commit-graph required OID fanout chunk missing or corrupted"));
+		goto free_and_return;
+	}
+	if (read_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, graph_read_oid_lookup, graph)) {
+		error(_("commit-graph required OID lookup chunk missing or corrupted"));
+		goto free_and_return;
+	}
+	if (read_chunk(cf, GRAPH_CHUNKID_DATA, graph_read_commit_data, graph)) {
+		error(_("commit-graph required commit data chunk missing or corrupted"));
+		goto free_and_return;
+	}
+
 	pair_chunk(cf, GRAPH_CHUNKID_EXTRAEDGES, &graph->chunk_extra_edges,
 		   &graph->chunk_extra_edges_size);
 	pair_chunk(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs,
