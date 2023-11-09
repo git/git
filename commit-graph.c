@@ -2690,10 +2690,6 @@ static int verify_one_commit_graph(struct repository *r,
 	struct commit *seen_gen_zero = NULL;
 	struct commit *seen_gen_non_zero = NULL;
 
-	verify_commit_graph_error = verify_commit_graph_lite(g);
-	if (verify_commit_graph_error)
-		return verify_commit_graph_error;
-
 	if (!commit_graph_checksum_valid(g)) {
 		graph_report(_("the commit-graph file has incorrect checksum and is likely corrupt"));
 		verify_commit_graph_error = VERIFY_COMMIT_GRAPH_ERROR_HASH;
