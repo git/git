@@ -1157,4 +1157,18 @@ test_expect_success 'reader notices too-small revindex chunk' '
 	test_cmp expect.err err
 '
 
+test_expect_success 'reader notices out-of-bounds fanout' '
+	# This is similar to the out-of-bounds fanout test in t5318. The values
+	# in adjacent entries should be large but not identical (they
+	# are used as hi/lo starts for a binary search, which would then abort
+	# immediately).
+	corrupt_chunk OIDF 0 $(printf "%02x000000" $(test_seq 0 254)) &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	error: oid fanout out of order: fanout[254] = fe000000 > 5c = fanout[255]
+	fatal: multi-pack-index required OID fanout chunk missing or corrupted
+	EOF
+	test_cmp expect err
+'
+
 test_done
