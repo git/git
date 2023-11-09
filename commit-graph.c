@@ -282,7 +282,7 @@ static int graph_read_oid_fanout(const unsigned char *chunk_start,
 	int i;
 
 	if (chunk_size != 256 * sizeof(uint32_t))
-		return error("commit-graph oid fanout chunk is wrong size");
+		return error(_("commit-graph oid fanout chunk is wrong size"));
 	g->chunk_oid_fanout = (const uint32_t *)chunk_start;
 	g->num_commits = ntohl(g->chunk_oid_fanout[255]);
 
@@ -291,7 +291,7 @@ static int graph_read_oid_fanout(const unsigned char *chunk_start,
 		uint32_t oid_fanout2 = ntohl(g->chunk_oid_fanout[i + 1]);
 
 		if (oid_fanout1 > oid_fanout2) {
-			error("commit-graph fanout values out of order");
+			error(_("commit-graph fanout values out of order"));
 			return 1;
 		}
 	}
@@ -314,7 +314,7 @@ static int graph_read_commit_data(const unsigned char *chunk_start,
 {
 	struct commit_graph *g = data;
 	if (chunk_size / GRAPH_DATA_WIDTH != g->num_commits)
-		return error("commit-graph commit data chunk is wrong size");
+		return error(_("commit-graph commit data chunk is wrong size"));
 	g->chunk_commit_data = chunk_start;
 	return 0;
 }
@@ -324,7 +324,7 @@ static int graph_read_generation_data(const unsigned char *chunk_start,
 {
 	struct commit_graph *g = data;
 	if (chunk_size / sizeof(uint32_t) != g->num_commits)
-		return error("commit-graph generations chunk is wrong size");
+		return error(_("commit-graph generations chunk is wrong size"));
 	g->chunk_generation_data = chunk_start;
 	return 0;
 }
@@ -334,7 +334,7 @@ static int graph_read_bloom_index(const unsigned char *chunk_start,
 {
 	struct commit_graph *g = data;
 	if (chunk_size / 4 != g->num_commits) {
-		warning("commit-graph changed-path index chunk is too small");
+		warning(_("commit-graph changed-path index chunk is too small"));
 		return -1;
 	}
 	g->chunk_bloom_indexes = chunk_start;
@@ -348,8 +348,8 @@ static int graph_read_bloom_data(const unsigned char *chunk_start,
 	uint32_t hash_version;
 
 	if (chunk_size < BLOOMDATA_CHUNK_HEADER_SIZE) {
-		warning("ignoring too-small changed-path chunk"
-			" (%"PRIuMAX" < %"PRIuMAX") in commit-graph file",
+		warning(_("ignoring too-small changed-path chunk"
+			" (%"PRIuMAX" < %"PRIuMAX") in commit-graph file"),
 			(uintmax_t)chunk_size,
 			(uintmax_t)BLOOMDATA_CHUNK_HEADER_SIZE);
 		return -1;
@@ -605,7 +605,7 @@ int open_commit_graph_chain(const char *chain_file,
 			/* treat empty files the same as missing */
 			errno = ENOENT;
 		} else {
-			warning("commit-graph chain file too small");
+			warning(_("commit-graph chain file too small"));
 			errno = EINVAL;
 		}
 		return 0;
@@ -953,7 +953,7 @@ static int fill_commit_in_graph(struct repository *r,
 	parent_data_pos = edge_value & GRAPH_EDGE_LAST_MASK;
 	do {
 		if (g->chunk_extra_edges_size / sizeof(uint32_t) <= parent_data_pos) {
-			error("commit-graph extra-edges pointer out of bounds");
+			error(_("commit-graph extra-edges pointer out of bounds"));
 			free_commit_list(item->parents);
 			item->parents = NULL;
 			item->object.parsed = 0;
