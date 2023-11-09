@@ -1,16 +1,7 @@
 # Library of functions shared by all CI scripts
 
-if test true != "$GITHUB_ACTIONS"
+if test true = "$GITHUB_ACTIONS"
 then
-	begin_group () { :; }
-	end_group () { :; }
-
-	group () {
-		shift
-		"$@"
-	}
-	set -x
-else
 	begin_group () {
 		need_to_end_group=t
 		echo "::group::$1" >&2
@@ -42,6 +33,15 @@ else
 	}
 
 	begin_group "CI setup"
+else
+	begin_group () { :; }
+	end_group () { :; }
+
+	group () {
+		shift
+		"$@"
+	}
+	set -x
 fi
 
 # Set 'exit on error' for all CI scripts to let the caller know that
