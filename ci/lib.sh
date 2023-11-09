@@ -14,6 +14,22 @@ then
 		need_to_end_group=
 		echo '::endgroup::' >&2
 	}
+elif test true = "$GITLAB_CI"
+then
+	begin_group () {
+		need_to_end_group=t
+		printf "\e[0Ksection_start:$(date +%s):$(echo "$1" | tr ' ' _)\r\e[0K$1\n"
+		trap "end_group '$1'" EXIT
+		set -x
+	}
+
+	end_group () {
+		test -n "$need_to_end_group" || return 0
+		set +x
+		need_to_end_group=
+		printf "\e[0Ksection_end:$(date +%s):$(echo "$1" | tr ' ' _)\r\e[0K\n"
+		trap - EXIT
+	}
 else
 	begin_group () { :; }
 	end_group () { :; }
@@ -229,6 +245,35 @@ then
 
 	GIT_TEST_OPTS="--github-workflow-markup"
 	JOBS=10
+elif test true = "$GITLAB_CI"
+then
+	CI_TYPE=gitlab-ci
+	CI_BRANCH="$CI_COMMIT_REF_NAME"
+	CI_COMMIT="$CI_COMMIT_SHA"
+	case "$CI_JOB_IMAGE" in
+	macos-*)
+		CI_OS_NAME=osx;;
+	alpine:*|fedora:*|ubuntu:*)
+		CI_OS_NAME=linux;;
+	*)
+		echo "Could not identify OS image" >&2
+		env >&2
+		exit 1
+		;;
+	esac
+	CI_REPO_SLUG="$CI_PROJECT_PATH"
+	CI_JOB_ID="$CI_JOB_ID"
+	CC="${CC_PACKAGE:-${CC:-gcc}}"
+	DONT_SKIP_TAGS=t
+	handle_failed_tests () {
+		create_failed_test_artifacts
+		return 1
+	}
+
+	cache_dir="$HOME/none"
+
+	runs_on_pool=$(echo "$CI_JOB_IMAGE" | tr : -)
+	JOBS=$(nproc)
 else
 	echo "Could not identify CI type" >&2
 	env >&2

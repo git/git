@@ -16,10 +16,21 @@ linux32)
 	'
 	;;
 linux-musl)
-	apk add --update build-base curl-dev openssl-dev expat-dev gettext \
+	apk add --update shadow sudo build-base curl-dev openssl-dev expat-dev gettext \
 		pcre2-dev python3 musl-libintl perl-utils ncurses \
 		apache2 apache2-http2 apache2-proxy apache2-ssl apache2-webdav apr-util-dbd_sqlite3 \
 		bash cvs gnupg perl-cgi perl-dbd-sqlite >/dev/null
+	;;
+linux-*)
+	# Required so that apt doesn't wait for user input on certain packages.
+	export DEBIAN_FRONTEND=noninteractive
+
+	apt update -q &&
+	apt install -q -y sudo git make language-pack-is libsvn-perl apache2 libssl-dev \
+		libcurl4-openssl-dev libexpat-dev tcl tk gettext zlib1g-dev \
+		perl-modules liberror-perl libauthen-sasl-perl libemail-valid-perl \
+		libdbd-sqlite3-perl libio-socket-ssl-perl libnet-smtp-ssl-perl ${CC_PACKAGE:-${CC:-gcc}} \
+		apache2 cvs cvsps gnupg libcgi-pm-perl subversion
 	;;
 pedantic)
 	dnf -yq update >/dev/null &&
