@@ -867,6 +867,7 @@ test_expect_success 'reader notices out-of-bounds fanout' '
 	check_corrupt_chunk OIDF 0 $(printf "%02x000000" $(test_seq 0 254)) &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph fanout values out of order
+	error: commit-graph required OID fanout chunk missing or corrupted
 	EOF
 	test_cmp expect.err err
 '

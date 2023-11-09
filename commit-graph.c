@@ -277,8 +277,6 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 
 static int verify_commit_graph_lite(struct commit_graph *g)
 {
-	int i;
-
 	/*
 	 * Basic validation shared between parse_commit_graph()
 	 * which'll be called every time the graph is used, and the
@@ -291,6 +289,20 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 	 * over g->num_commits, or runs a checksum on the commit-graph
 	 * itself.
 	 */
+	return 0;
+}
+
+static int graph_read_oid_fanout(const unsigned char *chunk_start,
+				 size_t chunk_size, void *data)
+{
+	struct commit_graph *g = data;
+	int i;
+
+	if (chunk_size != 256 * sizeof(uint32_t))
+		return error("commit-graph oid fanout chunk is wrong size");
+	g->chunk_oid_fanout = (const uint32_t *)chunk_start;
+	g->num_commits = ntohl(g->chunk_oid_fanout[255]);
+
 	for (i = 0; i < 255; i++) {
 		uint32_t oid_fanout1 = ntohl(g->chunk_oid_fanout[i]);
 		uint32_t oid_fanout2 = ntohl(g->chunk_oid_fanout[i + 1]);
@@ -301,17 +313,6 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 		}
 	}
 
-	return 0;
-}
-
-static int graph_read_oid_fanout(const unsigned char *chunk_start,
-				 size_t chunk_size, void *data)
-{
-	struct commit_graph *g = data;
-	if (chunk_size != 256 * sizeof(uint32_t))
-		return error("commit-graph oid fanout chunk is wrong size");
-	g->chunk_oid_fanout = (const uint32_t *)chunk_start;
-	g->num_commits = ntohl(g->chunk_oid_fanout[255]);
 	return 0;
 }
 
