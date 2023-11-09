@@ -174,11 +174,8 @@ then
 	# among *all* phases)
 	cache_dir="$HOME/test-cache/$SYSTEM_PHASENAME"
 
-	export GIT_PROVE_OPTS="--timer --jobs 10 --state=failed,slow,save"
-	export GIT_TEST_OPTS="--verbose-log -x --write-junit-xml"
-	MAKEFLAGS="$MAKEFLAGS --jobs=10"
-	test windows_nt != "$CI_OS_NAME" ||
-	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
+	GIT_TEST_OPTS="--write-junit-xml"
+	JOBS=10
 elif test true = "$GITHUB_ACTIONS"
 then
 	CI_TYPE=github-actions
@@ -198,16 +195,26 @@ then
 
 	cache_dir="$HOME/none"
 
-	export GIT_PROVE_OPTS="--timer --jobs 10"
-	export GIT_TEST_OPTS="--verbose-log -x --github-workflow-markup"
-	MAKEFLAGS="$MAKEFLAGS --jobs=10"
-	test windows != "$CI_OS_NAME" ||
-	GIT_TEST_OPTS="--no-chain-lint --no-bin-wrappers $GIT_TEST_OPTS"
+	GIT_TEST_OPTS="--github-workflow-markup"
+	JOBS=10
 else
 	echo "Could not identify CI type" >&2
 	env >&2
 	exit 1
 fi
+
+MAKEFLAGS="$MAKEFLAGS --jobs=$JOBS"
+GIT_PROVE_OPTS="--timer --jobs $JOBS --state=failed,slow,save"
+
+GIT_TEST_OPTS="$GIT_TEST_OPTS --verbose-log -x"
+case "$CI_OS_NAME" in
+windows|windows_nt)
+	GIT_TEST_OPTS="$GIT_TEST_OPTS --no-chain-lint --no-bin-wrappers"
+	;;
+esac
+
+export GIT_TEST_OPTS
+export GIT_PROVE_OPTS
 
 good_trees_file="$cache_dir/good-trees"
 
