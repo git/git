@@ -275,23 +275,6 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 	return ret;
 }
 
-static int verify_commit_graph_lite(struct commit_graph *g)
-{
-	/*
-	 * Basic validation shared between parse_commit_graph()
-	 * which'll be called every time the graph is used, and the
-	 * much more expensive verify_commit_graph() used by
-	 * "commit-graph verify".
-	 *
-	 * There should only be very basic checks here to ensure that
-	 * we don't e.g. segfault in fill_commit_in_graph(), but
-	 * because this is a very hot codepath nothing that e.g. loops
-	 * over g->num_commits, or runs a checksum on the commit-graph
-	 * itself.
-	 */
-	return 0;
-}
-
 static int graph_read_oid_fanout(const unsigned char *chunk_start,
 				 size_t chunk_size, void *data)
 {
@@ -494,9 +477,6 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	}
 
 	oidread(&graph->oid, graph->data + graph->data_len - graph->hash_len);
-
-	if (verify_commit_graph_lite(graph))
-		goto free_and_return;
 
 	free_chunkfile(cf);
 	return graph;
