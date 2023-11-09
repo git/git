@@ -344,7 +344,7 @@ static int graph_read_commit_data(const unsigned char *chunk_start,
 				  size_t chunk_size, void *data)
 {
 	struct commit_graph *g = data;
-	if (chunk_size != g->num_commits * GRAPH_DATA_WIDTH)
+	if (chunk_size / GRAPH_DATA_WIDTH != g->num_commits)
 		return error("commit-graph commit data chunk is wrong size");
 	g->chunk_commit_data = chunk_start;
 	return 0;
@@ -354,7 +354,7 @@ static int graph_read_generation_data(const unsigned char *chunk_start,
 				      size_t chunk_size, void *data)
 {
 	struct commit_graph *g = data;
-	if (chunk_size != g->num_commits * sizeof(uint32_t))
+	if (chunk_size / sizeof(uint32_t) != g->num_commits)
 		return error("commit-graph generations chunk is wrong size");
 	g->chunk_generation_data = chunk_start;
 	return 0;
@@ -364,7 +364,7 @@ static int graph_read_bloom_index(const unsigned char *chunk_start,
 				  size_t chunk_size, void *data)
 {
 	struct commit_graph *g = data;
-	if (chunk_size != g->num_commits * 4) {
+	if (chunk_size / 4 != g->num_commits) {
 		warning("commit-graph changed-path index chunk is too small");
 		return -1;
 	}
