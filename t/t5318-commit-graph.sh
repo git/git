@@ -540,17 +540,17 @@ test_expect_success 'detect low chunk count' '
 
 test_expect_success 'detect missing OID fanout chunk' '
 	corrupt_graph_and_verify $GRAPH_BYTE_OID_FANOUT_ID "\0" \
-		"missing the OID Fanout chunk"
+		"commit-graph required OID fanout chunk missing or corrupted"
 '
 
 test_expect_success 'detect missing OID lookup chunk' '
 	corrupt_graph_and_verify $GRAPH_BYTE_OID_LOOKUP_ID "\0" \
-		"missing the OID Lookup chunk"
+		"commit-graph required OID lookup chunk missing or corrupted"
 '
 
 test_expect_success 'detect missing commit data chunk' '
 	corrupt_graph_and_verify $GRAPH_BYTE_COMMIT_DATA_ID "\0" \
-		"missing the Commit Data chunk"
+		"commit-graph required commit data chunk missing or corrupted"
 '
 
 test_expect_success 'detect incorrect fanout' '
@@ -842,7 +842,7 @@ test_expect_success 'reader notices too-small oid fanout chunk' '
 	check_corrupt_chunk OIDF clear $(printf "000000%02x" $(test_seq 250)) &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph oid fanout chunk is wrong size
-	error: commit-graph is missing the OID Fanout chunk
+	error: commit-graph required OID fanout chunk missing or corrupted
 	EOF
 	test_cmp expect.err err
 '
@@ -874,7 +874,7 @@ test_expect_success 'reader notices too-small commit data chunk' '
 	check_corrupt_chunk CDAT clear 00000000 &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph commit data chunk is wrong size
-	error: commit-graph is missing the Commit Data chunk
+	error: commit-graph required commit data chunk missing or corrupted
 	EOF
 	test_cmp expect.err err
 '

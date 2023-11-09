@@ -292,15 +292,15 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 	 * itself.
 	 */
 	if (!g->chunk_oid_fanout) {
-		error("commit-graph is missing the OID Fanout chunk");
+		error(_("commit-graph required OID fanout chunk missing or corrupted"));
 		return 1;
 	}
 	if (!g->chunk_oid_lookup) {
-		error("commit-graph is missing the OID Lookup chunk");
+		error(_("commit-graph required OID lookup chunk missing or corrupted"));
 		return 1;
 	}
 	if (!g->chunk_commit_data) {
-		error("commit-graph is missing the Commit Data chunk");
+		error(_("commit-graph required commit data chunk missing or corrupted"));
 		return 1;
 	}
 
