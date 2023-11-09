@@ -300,10 +300,6 @@ static int verify_commit_graph_lite(struct commit_graph *g)
 			return 1;
 		}
 	}
-	if (ntohl(g->chunk_oid_fanout[255]) != g->num_commits) {
-		error("commit-graph oid table and fanout disagree on size");
-		return 1;
-	}
 
 	return 0;
 }
@@ -315,6 +311,7 @@ static int graph_read_oid_fanout(const unsigned char *chunk_start,
 	if (chunk_size != 256 * sizeof(uint32_t))
 		return error("commit-graph oid fanout chunk is wrong size");
 	g->chunk_oid_fanout = (const uint32_t *)chunk_start;
+	g->num_commits = ntohl(g->chunk_oid_fanout[255]);
 	return 0;
 }
 
@@ -323,7 +320,8 @@ static int graph_read_oid_lookup(const unsigned char *chunk_start,
 {
 	struct commit_graph *g = data;
 	g->chunk_oid_lookup = chunk_start;
-	g->num_commits = chunk_size / g->hash_len;
+	if (chunk_size / g->hash_len != g->num_commits)
+		return error(_("commit-graph OID lookup chunk is the wrong size"));
 	return 0;
 }
 
