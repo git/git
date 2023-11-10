@@ -489,13 +489,13 @@ find_existing_splits () {
 			;;
 		END)
 			debug "Main is: '$main'"
-			if test -z "$main" -a -n "$sub"
+			if test -z "$main" && test -n "$sub"
 			then
 				# squash commits refer to a subtree
 				debug "  Squash: $sq from $sub"
 				cache_set "$sq" "$sub"
 			fi
-			if test -n "$main" -a -n "$sub"
+			if test -n "$main" && test -n "$sub"
 			then
 				debug "  Prior: $main -> $sub"
 				cache_set $main $sub

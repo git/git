@@ -94,7 +94,7 @@ AC_DEFUN([GIT_PARSE_WITH_SET_MAKE_VAR],
 [AC_ARG_WITH([$1],
  [AS_HELP_STRING([--with-$1=VALUE], $3)],
  if test -n "$withval"; then
-  if test "$withval" = "yes" -o "$withval" = "no"; then
+  if test "$withval" = "yes" || test "$withval" = "no"; then
     AC_MSG_WARN([You likely do not want either 'yes' or 'no' as]
 		     [a value for $1 ($2).  Maybe you do...?])
   fi
