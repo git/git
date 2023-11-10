@@ -641,10 +641,16 @@ subtree_for_commit () {
 	while read mode type tree name
 	do
 		assert test "$name" = "$dir"
-		assert test "$type" = "tree" -o "$type" = "commit"
-		test "$type" = "commit" && continue  # ignore submodules
-		echo $tree
-		break
+
+		case "$type" in
+		commit)
+			continue;; # ignore submodules
+		tree)
+			echo $tree
+			break;;
+		*)
+			die "fatal: tree entry is of type ${type}, expected tree or commit";;
+		esac
 	done || exit $?
 }
 
