@@ -27,14 +27,14 @@ UI, Workflows & Features
    a branch that is checked out and protect it.  Rephrase the message
    to say that the branch is in use.
 
- * Hourly and other schedule of "git maintenance" jobs are randomly
+ * Hourly and other schedules of "git maintenance" jobs are randomly
    distributed now.
 
  * "git cmd -h" learned to signal which options can be negated by
    listing such options like "--[no-]opt".
 
- * The way authentication related data other than passwords (e.g.
-   oath token and password expiration data) are stored in libsecret
+ * The way authentication related data other than passwords (e.g.,
+   oauth token and password expiration data) are stored in libsecret
    keyrings has been rethought.
 
  * Update the libsecret and wincred credential helpers to correctly
@@ -60,7 +60,7 @@ UI, Workflows & Features
 
  * The default log message created by "git revert", when reverting a
    commit that records a revert, has been tweaked, to encourage people
-   describe complex "revert of revert of revert" situation better in
+   to describe complex "revert of revert of revert" situations better in
    their own words.
 
  * The command-line completion support (in contrib/) learned to
@@ -77,8 +77,8 @@ UI, Workflows & Features
 
  * The command line completion script (in contrib/) can be told to
    complete aliases by including ": git <cmd> ;" in the alias to tell
-   it that the alias should be completed similar to how "git <cmd>" is
-   completed.  The parsing code for the alias as been loosened to
+   it that the alias should be completed in a similar way to how "git <cmd>" is
+   completed.  The parsing code for the alias has been loosened to
    allow ';' without an extra space before it.
 
  * "git for-each-ref" and friends learned to apply mailmap to
@@ -117,8 +117,8 @@ Performance, Internal Implementation, Development Support etc.
  * Flaky "git p4" tests, as well as "git svn" tests, are now skipped
    in the (rather expensive) sanitizer CI job.
 
- * Tests with LSan from time to time seem to emit harmless message
-   that makes our tests unnecessarily flaky; we work it around by
+ * Tests with LSan from time to time seem to emit harmless messages
+   that make our tests unnecessarily flaky; we work around it by
    filtering the uninteresting output.
 
  * Unused parameters to functions are marked as such, and/or removed,
@@ -135,7 +135,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Test coverage for trailers has been improved.
 
- * The code to iterate over loose references have been optimized to
+ * The code to iterate over loose references has been optimized to
    reduce the number of lstat() system calls.
 
  * The codepaths that read "chunk" formatted files have been corrected
@@ -157,7 +157,7 @@ Fixes since v2.42
    branch tips at the same time will not waste building and testing
    the same thing twice.
 
- * The commit-graph verification code that detects mixture of zero and
+ * The commit-graph verification code that detects a mixture of zero and
    non-zero generation numbers has been updated.
 
  * "git diff -w --exit-code" with various options did not work
@@ -170,20 +170,20 @@ Fixes since v2.42
    the sequencer code has been cleaned up for consistency.
 
  * "git diff --no-such-option" and other corner cases around the exit
-   status of the "diff" command has been corrected.
+   status of the "diff" command have been corrected.
 
  * "git for-each-ref --sort='contents:size'" sorts the refs according
    to size numerically, giving a ref that points at a blob twelve-byte
    (12) long before showing a blob hundred-byte (100) long.
 
- * We now limit depth of the tree objects and maximum length of
+ * We now limit the depth of the tree objects and maximum length of
    pathnames recorded in tree objects.
    (merge 4d5693ba05 jk/tree-name-and-depth-limit later to maint).
 
  * Various fixes to the behavior of "rebase -i" when the command got
    interrupted by conflicting changes.
 
- * References from description of the `--patch` option in various
+ * References from a description of the `--patch` option in various
    manual pages have been simplified and improved.
 
  * "git grep -e A --no-or -e B" is accepted, even though the negation
@@ -203,8 +203,8 @@ Fixes since v2.42
    information for a file when fsmonitor knows it is clean and ended
    up behaving as if it is not clean, which has been corrected.
 
- * Clarify how "alias.foo = : git cmd ; aliased-command-string" should
-   be spelled with necessary whitespaces around punctuation marks to
+ * Clarify how "alias.foo = : git cmd ; aliased-command-string" should be
+   spelled with necessary whitespace around punctuation marks to
    work.
 
  * HTTP Header redaction code has been adjusted for a newer version of
@@ -256,9 +256,9 @@ Fixes since v2.42
    by "git stash create" now errors out.
    (merge d9b6634589 jc/fail-stash-to-store-non-stash later to maint).
 
- * The index file has room only for lower 32-bit of the file size in
+ * The index file has room only for the lower 32-bit of the file size in
    the cached stat information, which means cached stat information
-   will have 0 in its sd_size member for a file whose size is multiple
+   will have 0 in its sd_size member for a file whose size is a multiple
    of 4GiB.  This is mistaken for a racily clean path.  Avoid it by
    storing a bogus sd_size value instead for such files.
    (merge 5143ac07b1 bc/racy-4gb-files later to maint).
@@ -281,7 +281,7 @@ Fixes since v2.42
    20 months or so, which has been corrected.
 
  * "git send-email" did not have certain pieces of data computed yet
-   when it tried to validate the outging messages and its recipient
+   when it tried to validate the outgoing messages and its recipient
    addresses, which has been sorted out.
 
  * "git bugreport" learned to complain when it received a command line
