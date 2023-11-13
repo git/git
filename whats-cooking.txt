@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #04; Thu, 9)
-X-master-at: dadef801b365989099a9929e995589e455c51fed
-X-next-at: bcd1edfa6a19000b3bc04690bd9c0d0c692dd5b3
+Subject: What's cooking in git.git (Nov 2023, #05; Mon, 13)
+X-master-at: e0939bec273052b1a8d69db4a3f7c87aaf83e220
+X-next-at: 309e3ec6dda82ab1e7b7722ef344e6c5d0c0964b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #04; Thu, 9)
+What's cooking in git.git (Nov 2023, #05; Mon, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,142 +52,79 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* an/clang-format-typofix (2023-11-01) 1 commit
-  (merged to 'next' on 2023-11-02 at 7f639690ab)
- + clang-format: fix typo in comment
+* jk/chunk-bounds-more (2023-11-09) 9 commits
+  (merged to 'next' on 2023-11-13 at 3df4b18bea)
+ + commit-graph: mark chunk error messages for translation
+ + commit-graph: drop verify_commit_graph_lite()
+ + commit-graph: check order while reading fanout chunk
+ + commit-graph: use fanout value for graph size
+ + commit-graph: abort as soon as we see a bogus chunk
+ + commit-graph: clarify missing-chunk error messages
+ + commit-graph: drop redundant call to "lite" verification
+ + midx: check consistency of fanout table
+ + commit-graph: handle overflow in chunk_size checks
+ (this branch is used by tb/pair-chunk-expect.)
 
- Typofix.
- source: <pull.1602.v2.git.git.1698759629166.gitgitgadget@gmail.com>
+ Code clean-up for jk/chunk-bounds topic.
 
-
-* bc/merge-file-object-input (2023-11-02) 2 commits
-  (merged to 'next' on 2023-11-02 at ccbba9416c)
- + merge-file: add an option to process object IDs
- + git-merge-file doc: drop "-file" from argument placeholders
-
- "git merge-file" learns a mode to read three contents to be merged
- from blob objects.
- source: <20231101192419.794162-1-sandals@crustytoothpaste.net>
-
-
-* jc/test-i18ngrep (2023-11-02) 2 commits
-  (merged to 'next' on 2023-11-03 at 78406f8d94)
- + tests: teach callers of test_i18ngrep to use test_grep
- + test framework: further deprecate test_i18ngrep
-
- Another step to deprecate test_i18ngrep.
- source: <20231031052330.3762989-1-gitster@pobox.com>
+ Will cook in 'next'.
+ source: <20231109070310.GA2697602@coredump.intra.peff.net>
 
 
-* jk/chunk-bounds (2023-11-04) 1 commit
-  (merged to 'next' on 2023-11-06 at ae9fbc1700)
- + t: avoid perl's pack/unpack "Q" specifier
+* ps/httpd-tests-on-nixos (2023-11-11) 3 commits
+  (merged to 'next' on 2023-11-13 at 81bd6f5334)
+ + t9164: fix inability to find basename(1) in Subversion hooks
+ + t/lib-httpd: stop using legacy crypt(3) for authentication
+ + t/lib-httpd: dynamically detect httpd and modules path
 
- Test portability fix.
- source: <20231103162019.GB1470570@coredump.intra.peff.net>
+ Portability tweak.
 
-
-* jk/tree-name-and-depth-limit (2023-11-02) 1 commit
-  (merged to 'next' on 2023-11-06 at 041423344c)
- + max_tree_depth: lower it for MSVC to avoid stack overflows
-
- Further limit tree depth max to avoid Windows build running out of
- the stack space.
- source: <pull.1604.v2.git.1698843810814.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <cover.1699596457.git.ps@pks.im>
 
 
-* js/ci-use-macos-13 (2023-11-03) 1 commit
-  (merged to 'next' on 2023-11-06 at f7406347cd)
- + ci: upgrade to using macos-13
+* ss/format-patch-use-encode-headers-for-cover-letter (2023-11-10) 1 commit
+ - format-patch: fix ignored encode_email_headers for cover letter
 
- Replace macos-12 used at GitHub CI with macos-13.
- source: <pull.1607.git.1698996455218.gitgitgadget@gmail.com>
+ "git format-patch --encode-email-headers" ignored the option when
+ preparing the cover letter, which has been corrected.
 
-
-* kn/rev-list-missing-fix (2023-11-01) 4 commits
-  (merged to 'next' on 2023-11-02 at 2469dfc402)
- + rev-list: add commit object support in `--missing` option
- + rev-list: move `show_commit()` to the bottom
- + revision: rename bit to `do_not_die_on_missing_objects`
- + Merge branch 'ps/do-not-trust-commit-graph-blindly-for-existence' into kn/rev-list-missing-fix
- (this branch uses ps/do-not-trust-commit-graph-blindly-for-existence.)
-
- "git rev-list --missing" did not work for missing commit objects,
- which has been corrected.
- source: <20231026101109.43110-1-karthik.188@gmail.com>
+ Will merge to 'next'.
+ source: <20231109111950.387219-1-contact@emersion.fr>
 
 
-* la/strvec-header-fix (2023-11-03) 1 commit
-  (merged to 'next' on 2023-11-03 at db23d8a911)
- + strvec: drop unnecessary include of hex.h
+* ps/ban-a-or-o-operator-with-test (2023-11-11) 4 commits
+ - Makefile: stop using `test -o` when unlinking duplicate executables
+ - contrib/subtree: convert subtree type check to use case statement
+ - contrib/subtree: stop using `-o` to test for number of args
+ - global: convert trivial usages of `test <expr> -a/-o <expr>`
 
- Code clean-up.
- source: <pull.1608.git.1698958277454.gitgitgadget@gmail.com>
+ Test and shell scripts clean-up.
 
-
-* ps/do-not-trust-commit-graph-blindly-for-existence (2023-11-01) 2 commits
-  (merged to 'next' on 2023-11-01 at 06037376ee)
- + commit: detect commits that exist in commit-graph but not in the ODB
- + commit-graph: introduce envvar to disable commit existence checks
- (this branch is used by kn/rev-list-missing-fix.)
-
- The codepath to traverse the commit-graph learned to notice that a
- commit is missing (e.g., corrupt repository lost an object), even
- though it knows something about the commit (like its parents) from
- what is in commit-graph.
- source: <cover.1698736363.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1699609940.git.ps@pks.im>
 
 
-* ps/leakfixes (2023-11-07) 4 commits
-  (merged to 'next' on 2023-11-08 at 1969726a2f)
- + setup: fix leaking repository format
- + setup: refactor `upgrade_repository_format()` to have common exit
- + shallow: fix memory leak when registering shallow roots
- + test-bloom: stop setting up Git directory twice
+* vd/glossary-dereference-peel (2023-11-10) 1 commit
+ - glossary: add definitions for dereference & peel
 
- Leakfix.
- source: <cover.1699267422.git.ps@pks.im>
+ "To dereference" and "to peel" were sometimes used in in-code
+ comments and documentation but without description in the glossary.
 
-
-* ps/show-ref (2023-11-01) 12 commits
-  (merged to 'next' on 2023-11-02 at 987bb117f5)
- + t: use git-show-ref(1) to check for ref existence
- + builtin/show-ref: add new mode to check for reference existence
- + builtin/show-ref: explicitly spell out different modes in synopsis
- + builtin/show-ref: ensure mutual exclusiveness of subcommands
- + builtin/show-ref: refactor options for patterns subcommand
- + builtin/show-ref: stop using global vars for `show_one()`
- + builtin/show-ref: stop using global variable to count matches
- + builtin/show-ref: refactor `--exclude-existing` options
- + builtin/show-ref: fix dead code when passing patterns
- + builtin/show-ref: fix leaking string buffer
- + builtin/show-ref: split up different subcommands
- + builtin/show-ref: convert pattern to a local variable
- (this branch is used by ps/ref-tests-update.)
-
- Teach "git show-ref" a mode to check the existence of a ref.
- source: <cover.1698739941.git.ps@pks.im>
+ Expecting an update.
+ cf. <xmqq1qcyxxri.fsf@gitster.g>
+ source: <pull.1610.git.1699574277143.gitgitgadget@gmail.com>
 
 
-* tb/format-pack-doc-update (2023-11-01) 2 commits
-  (merged to 'next' on 2023-11-02 at 538991fe9b)
- + Documentation/gitformat-pack.txt: fix incorrect MIDX documentation
- + Documentation/gitformat-pack.txt: fix typo
+* ak/rebase-autosquash (2023-11-13) 4 commits
+ - rebase: rewrite --(no-)autosquash documentation
+ - rebase: test autosquash with and without -i
+ - rebase: support --autosquash without -i
+ - rebase: fully ignore rebase.autoSquash without -i
 
- Doc update.
- source: <cover.1698780244.git.me@ttaylorr.com>
-
-
-* tb/rev-list-unpacked-fix (2023-11-07) 2 commits
-  (merged to 'next' on 2023-11-08 at 4b73bc0256)
- + pack-bitmap: drop --unpacked non-commit objects from results
- + list-objects: drop --unpacked non-commit objects from results
-
- "git rev-list --unpacked --objects" failed to exclude packed
- non-commit objects, which has been corrected.
- source: <cover.1699311386.git.me@ttaylorr.com>
+ source: <20231111132720.78877-1-andy.koppe@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -256,56 +193,49 @@ Release tarballs are available at:
 
 
 * jw/git-add-attr-pathspec (2023-11-04) 1 commit
- - attr: enable attr pathspec magic for git-add and git-stash
+  (merged to 'next' on 2023-11-13 at b61be94e4d)
+ + attr: enable attr pathspec magic for git-add and git-stash
 
  "git add" and "git stash" learned to support the ":(attr:...)"
  magic pathspec.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20231103163449.1578841-1-jojwang@google.com>
 
 
-* jc/strbuf-comment-line-char (2023-11-01) 4 commits
- - strbuf: move env-using functions to environment.c
- - strbuf: make add_lines() public
- - strbuf_add_commented_lines(): drop the comment_line_char parameter
- - strbuf_commented_addf(): drop the comment_line_char parameter
-
- Code simplification.
- source: <cover.1698791220.git.jonathantanmy@google.com>
-
-
-* ps/ci-gitlab (2023-11-02) 8 commits
- - ci: add support for GitLab CI
- - ci: install test dependencies for linux-musl
- - ci: squelch warnings when testing with unusable Git repo
- - ci: unify setup of some environment variables
- - ci: split out logic to set up failed test artifacts
- - ci: group installation of Docker dependencies
- - ci: make grouping setup more generic
- - ci: reorder definitions for grouping functions
+* ps/ci-gitlab (2023-11-09) 8 commits
+  (merged to 'next' on 2023-11-10 at ea7ed67945)
+ + ci: add support for GitLab CI
+ + ci: install test dependencies for linux-musl
+ + ci: squelch warnings when testing with unusable Git repo
+ + ci: unify setup of some environment variables
+ + ci: split out logic to set up failed test artifacts
+ + ci: group installation of Docker dependencies
+ + ci: make grouping setup more generic
+ + ci: reorder definitions for grouping functions
 
  Add support for GitLab CI.
 
- Comments?
- source: <cover.1698843660.git.ps@pks.im>
+ Will cook in 'next'.
+ source: <cover.1699514143.git.ps@pks.im>
 
 
 * ps/ref-tests-update (2023-11-03) 10 commits
- - t: mark several tests that assume the files backend with REFFILES
- - t7900: assert the absence of refs via git-for-each-ref(1)
- - t7300: assert exact states of repo
- - t4207: delete replace references via git-update-ref(1)
- - t1450: convert tests to remove worktrees via git-worktree(1)
- - t: convert tests to not access reflog via the filesystem
- - t: convert tests to not access symrefs via the filesystem
- - t: convert tests to not write references via the filesystem
- - t: allow skipping expected object ID in `ref-store update-ref`
- - Merge branch 'ps/show-ref' into ps/ref-tests-update
+  (merged to 'next' on 2023-11-13 at dc26e55d6f)
+ + t: mark several tests that assume the files backend with REFFILES
+ + t7900: assert the absence of refs via git-for-each-ref(1)
+ + t7300: assert exact states of repo
+ + t4207: delete replace references via git-update-ref(1)
+ + t1450: convert tests to remove worktrees via git-worktree(1)
+ + t: convert tests to not access reflog via the filesystem
+ + t: convert tests to not access symrefs via the filesystem
+ + t: convert tests to not write references via the filesystem
+ + t: allow skipping expected object ID in `ref-store update-ref`
+ + Merge branch 'ps/show-ref' into ps/ref-tests-update
 
  Update ref-related tests.
 
- Comments?
+ Will cook in 'next'.
  source: <cover.1698914571.git.ps@pks.im>
 
 
@@ -316,7 +246,8 @@ Release tarballs are available at:
  "git fetch --atomic" issued an unnecessary empty error message,
  which has been corrected.
 
- Needs review.
+ Expecting an update.
+ cf. <ZTjQIrCgSANAT8wR@tanuki>
  source: <ced46baeb1c18b416b4b4cc947f498bea2910b1b.1697725898.git.zhiyou.jx@alibaba-inc.com>
 
 
@@ -360,25 +291,26 @@ Release tarballs are available at:
  "git merge-tree" learned "--write-pack" to record its result
  without creating loose objects.
 
- Comments?
+ Broken when an object created during a merge is needed to continue merge
+ cf. <CABPp-BEfy9VOvimP9==ry_rZXu=metOQ8s=_-XiG_Pdx9c06Ww@mail.gmail.com>
  source: <cover.1698101088.git.me@ttaylorr.com>
 
 
-* tb/pair-chunk-expect-size (2023-10-14) 8 commits
+* tb/pair-chunk-expect (2023-11-10) 8 commits
  - midx: read `OOFF` chunk with `pair_chunk_expect()`
  - midx: read `OIDL` chunk with `pair_chunk_expect()`
- - midx: read `OIDF` chunk with `pair_chunk_expect()`
  - commit-graph: read `BIDX` chunk with `pair_chunk_expect()`
  - commit-graph: read `GDAT` chunk with `pair_chunk_expect()`
  - commit-graph: read `CDAT` chunk with `pair_chunk_expect()`
- - commit-graph: read `OIDF` chunk with `pair_chunk_expect()`
+ - commit-graph: read `OIDL` chunk with `pair_chunk_expect()`
  - chunk-format: introduce `pair_chunk_expect()` helper
+ - Merge branch 'jk/chunk-bounds-more' into HEAD
+ (this branch uses jk/chunk-bounds-more.)
 
- Code clean-up for jk/chunk-bounds topic.
+ Further code clean-up.
 
- Comments?
- source: <45cac29403e63483951f7766c6da3c022c68d9f0.1697225110.git.me@ttaylorr.com>
- source: <cover.1697225110.git.me@ttaylorr.com>
+ Needs review.
+ source: <cover.1699569246.git.me@ttaylorr.com>
 
 
 * tb/path-filter-fix (2023-10-18) 17 commits
@@ -557,31 +489,33 @@ Release tarballs are available at:
  source: <xmqqcyykig1l.fsf@gitster.g>
 
 
-* js/doc-unit-tests (2023-11-02) 3 commits
- - ci: run unit tests in CI
- - unit tests: add TAP unit test framework
- - unit tests: add a project plan document
+* js/doc-unit-tests (2023-11-10) 3 commits
+  (merged to 'next' on 2023-11-10 at 7d00ffd06b)
+ + ci: run unit tests in CI
+ + unit tests: add TAP unit test framework
+ + unit tests: add a project plan document
  (this branch is used by js/doc-unit-tests-with-cmake.)
 
  Process to add some form of low-level unit tests has started.
 
- Will merge to 'next'?
- source: <cover.1698881249.git.steadmon@google.com>
+ Will cook in 'next'.
+ source: <cover.1699555664.git.steadmon@google.com>
 
 
-* js/doc-unit-tests-with-cmake (2023-11-02) 7 commits
- - cmake: handle also unit tests
- - cmake: use test names instead of full paths
- - cmake: fix typo in variable name
- - artifacts-tar: when including `.dll` files, don't forget the unit-tests
- - unit-tests: do show relative file paths
- - unit-tests: do not mistake `.pdb` files for being executable
- - cmake: also build unit tests
+* js/doc-unit-tests-with-cmake (2023-11-10) 7 commits
+  (merged to 'next' on 2023-11-10 at b4503c9c8c)
+ + cmake: handle also unit tests
+ + cmake: use test names instead of full paths
+ + cmake: fix typo in variable name
+ + artifacts-tar: when including `.dll` files, don't forget the unit-tests
+ + unit-tests: do show relative file paths
+ + unit-tests: do not mistake `.pdb` files for being executable
+ + cmake: also build unit tests
  (this branch uses js/doc-unit-tests.)
 
  Update the base topic to work with CMake builds.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1579.v3.git.1695640836.gitgitgadget@gmail.com>
 
 
@@ -605,3 +539,19 @@ Release tarballs are available at:
 
  Needs review.
  source: <2e24ca9b-9c5f-f4df-b9f8-6574a714dfb2@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* jc/strbuf-comment-line-char (2023-11-01) 4 commits
+ . strbuf: move env-using functions to environment.c
+ . strbuf: make add_lines() public
+ . strbuf_add_commented_lines(): drop the comment_line_char parameter
+ . strbuf_commented_addf(): drop the comment_line_char parameter
+
+ Code simplification that goes directly against a past libification
+ topic.  It is hard to judge because the "libification" is done
+ piecewise without seemingly clear design principle.
+
+ Will discard.
+ source: <cover.1698791220.git.jonathantanmy@google.com>
