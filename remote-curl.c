@@ -606,13 +606,14 @@ struct rpc_state {
 	unsigned write_line_lengths : 1;
 
 	/*
-	 * Used by rpc_out; initialize to 0. This is true if a flush has been
-	 * read, but the corresponding line length (if write_line_lengths is
-	 * true) and EOF have not been sent to libcurl. Since each flush marks
-	 * the end of a request, each flush must be completely sent before any
-	 * further reading occurs.
+	 * Used by rpc_out; initialize to 0. This is true if a flush packet
+	 * has been read from the child process, signaling the end of the
+	 * current data to send. There might be still some bytes pending in
+	 * 'buf' (e.g. the corresponding line length, if write_line_lengths
+	 * is true), but no more reads can be performed on the 'out' pipe as
+	 * part of the current RPC exchange.
 	 */
-	unsigned flush_read_but_not_sent : 1;
+	unsigned read_from_out_done : 1;
 };
 
 #define RPC_STATE_INIT { 0 }
@@ -675,48 +676,51 @@ static int rpc_read_from_out(struct rpc_state *rpc, int options,
 	return 1;
 }
 
+/*
+ * CURLOPT_READFUNCTION callback, called by libcurl when it wants more data
+ * to send out. Used only if the request did not fit into just one buffer and
+ * data must be streamed as it comes.
+ * Has the same semantics as fread(), but reads packets from the pipe from
+ * the child process instead. A return value of 0 (EOF) finishes the upload.
+ */
 static size_t rpc_out(void *ptr, size_t eltsize,
-		size_t nmemb, void *buffer_)
+		size_t nmemb, void *userdata)
 {
 	size_t max = eltsize * nmemb;
-	struct rpc_state *rpc = buffer_;
+	struct rpc_state *rpc = userdata;
 	size_t avail = rpc->len - rpc->pos;
 	enum packet_read_status status;
 
-	if (!avail) {
+	/*
+	 * If there is no more data available in our buffer and the child
+	 * process is not done sending yet, read the next packet.
+	 */
+	if (!avail && !rpc->read_from_out_done) {
 		rpc->initial_buffer = 0;
 		rpc->len = 0;
 		rpc->pos = 0;
-		if (!rpc->flush_read_but_not_sent) {
-			if (!rpc_read_from_out(rpc, 0, &avail, &status))
-				BUG("The entire rpc->buf should be larger than LARGE_PACKET_MAX");
-			if (status == PACKET_READ_FLUSH)
-				rpc->flush_read_but_not_sent = 1;
-		}
+		if (!rpc_read_from_out(rpc, 0, &avail, &status))
+			BUG("The entire rpc->buf should be larger than LARGE_PACKET_MAX");
+
 		/*
-		 * If flush_read_but_not_sent is true, we have already read one
-		 * full request but have not fully sent it + EOF, which is why
-		 * we need to refrain from reading.
+		 * If a flush packet was read, it means the child process is
+		 * done sending this request. The buffer might be fully empty
+		 * at this point or contain a flush packet too, depending on
+		 * rpc->write_line_lengths.
+		 * In any case, we must refrain from reading any more, because
+		 * the child process already expects to receive a response back
+		 * instead. If both sides would try to read at once, they would
+		 * just hang waiting for each other.
 		 */
-	}
-	if (rpc->flush_read_but_not_sent) {
-		if (!avail) {
-			/*
-			 * The line length either does not need to be sent at
-			 * all or has already been completely sent. Now we can
-			 * return 0, indicating EOF, meaning that the flush has
-			 * been fully sent.
-			 */
-			rpc->flush_read_but_not_sent = 0;
-			return 0;
-		}
-		/*
-		 * If avail is non-zero, the line length for the flush still
-		 * hasn't been fully sent. Proceed with sending the line
-		 * length.
-		 */
+		rpc->read_from_out_done = (status == PACKET_READ_FLUSH);
 	}
 
+	/*
+	 * Copy data to the provided buffer. If there is nothing more to send,
+	 * nothing gets written and the return value is 0 (EOF).
+	 * It is important to keep returning 0 as long as needed in that case,
+	 * as libcurl invokes the callback multiple times at EOF sometimes.
+	 */
 	if (max < avail)
 		avail = max;
 	memcpy(ptr, rpc->buf + rpc->pos, avail);
@@ -724,9 +728,16 @@ static size_t rpc_out(void *ptr, size_t eltsize,
 	return avail;
 }
 
-static int rpc_seek(void *clientp, curl_off_t offset, int origin)
+/*
+ * CURLOPT_SEEKFUNCTION callback, called by libcurl when it wants to seek in
+ * the data being sent out. Used only if the request did not fit into just
+ * one buffer and data must be streamed as it comes.
+ * Has the same semantics as fseek(), but seeks in the buffered packet read
+ * from the pipe from the child process instead.
+ */
+static int rpc_seek(void *userdata, curl_off_t offset, int origin)
 {
-	struct rpc_state *rpc = clientp;
+	struct rpc_state *rpc = userdata;
 
 	if (origin != SEEK_SET)
 		BUG("rpc_seek only handles SEEK_SET, not %d", origin);
@@ -800,10 +811,10 @@ struct rpc_in_data {
  * from ptr.
  */
 static size_t rpc_in(char *ptr, size_t eltsize,
-		size_t nmemb, void *buffer_)
+		size_t nmemb, void *userdata)
 {
 	size_t size = eltsize * nmemb;
-	struct rpc_in_data *data = buffer_;
+	struct rpc_in_data *data = userdata;
 	long response_code;
 
 	if (curl_easy_getinfo(data->slot->curl, CURLINFO_RESPONSE_CODE,
@@ -963,6 +974,7 @@ retry:
 		 */
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
 		rpc->initial_buffer = 1;
+		rpc->read_from_out_done = 0;
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, rpc_out);
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, rpc);
 		curl_easy_setopt(slot->curl, CURLOPT_SEEKFUNCTION, rpc_seek);
@@ -1482,7 +1494,7 @@ static int stateless_connect(const char *service_name)
 	rpc.gzip_request = 1;
 	rpc.initial_buffer = 0;
 	rpc.write_line_lengths = 1;
-	rpc.flush_read_but_not_sent = 0;
+	rpc.read_from_out_done = 0;
 
 	/*
 	 * Dump the capability listing that we got from the server earlier
@@ -1505,6 +1517,7 @@ static int stateless_connect(const char *service_name)
 			break;
 		/* Reset the buffer for next request */
 		rpc.len = 0;
+		rpc.pos = 0;
 	}
 
 	free(rpc.service_url);
