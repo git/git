@@ -281,7 +281,7 @@ else
 fi
 
 MAKEFLAGS="$MAKEFLAGS --jobs=$JOBS"
-GIT_PROVE_OPTS="--timer --jobs $JOBS --state=failed,slow,save"
+GIT_PROVE_OPTS="--timer --jobs $JOBS"
 
 GIT_TEST_OPTS="$GIT_TEST_OPTS --verbose-log -x"
 case "$CI_OS_NAME" in
