@@ -1268,49 +1268,51 @@ static int files_pack_refs(struct ref_store *ref_store,
 static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 			     struct string_list *refnames, unsigned int flags)
 {
-	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_WRITE, "delete_refs");
+	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
-	int i, result = 0;
+	struct string_list_item *item;
+	int ret = 0, failures = 0;
 
 	if (!refnames->nr)
 		return 0;
 
-	if (packed_refs_lock(refs->packed_ref_store, 0, &err))
-		goto error;
-
-	if (refs_delete_refs(refs->packed_ref_store, msg, refnames, flags)) {
-		packed_refs_unlock(refs->packed_ref_store);
-		goto error;
-	}
-
-	packed_refs_unlock(refs->packed_ref_store);
-
-	for (i = 0; i < refnames->nr; i++) {
-		const char *refname = refnames->items[i].string;
-
-		if (refs_delete_ref(&refs->base, msg, refname, NULL, flags))
-			result |= error(_("could not remove reference %s"), refname);
-	}
-
-	strbuf_release(&err);
-	return result;
-
-error:
 	/*
-	 * If we failed to rewrite the packed-refs file, then it is
-	 * unsafe to try to remove loose refs, because doing so might
-	 * expose an obsolete packed value for a reference that might
-	 * even point at an object that has been garbage collected.
+	 * Since we don't check the references' old_oids, the
+	 * individual updates can't fail, so we can pack all of the
+	 * updates into a single transaction.
 	 */
-	if (refnames->nr == 1)
-		error(_("could not delete reference %s: %s"),
-		      refnames->items[0].string, err.buf);
-	else
-		error(_("could not delete references: %s"), err.buf);
+	transaction = ref_store_transaction_begin(ref_store, &err);
+	if (!transaction) {
+		ret = error("%s", err.buf);
+		goto out;
+	}
 
+	for_each_string_list_item(item, refnames) {
+		ret = ref_transaction_delete(transaction, item->string,
+					     NULL, flags, msg, &err);
+		if (ret) {
+			warning(_("could not delete reference %s: %s"),
+				item->string, err.buf);
+			strbuf_reset(&err);
+			failures = 1;
+		}
+	}
+
+	ret = ref_transaction_commit(transaction, &err);
+	if (ret) {
+		if (refnames->nr == 1)
+			error(_("could not delete reference %s: %s"),
+			      refnames->items[0].string, err.buf);
+		else
+			error(_("could not delete references: %s"), err.buf);
+	}
+
+out:
+	if (!ret && failures)
+		ret = -1;
+	ref_transaction_free(transaction);
 	strbuf_release(&err);
-	return -1;
+	return ret;
 }
 
 /*
