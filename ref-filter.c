@@ -2779,6 +2779,49 @@ static void free_array_item(struct ref_array_item *item)
 	free(item);
 }
 
+struct ref_filter_and_format_cbdata {
+	struct ref_filter *filter;
+	struct ref_format *format;
+
+	struct ref_filter_and_format_internal {
+		int count;
+	} internal;
+};
+
+static int filter_and_format_one(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+{
+	struct ref_filter_and_format_cbdata *ref_cbdata = cb_data;
+	struct ref_array_item *ref;
+	struct strbuf output = STRBUF_INIT, err = STRBUF_INIT;
+
+	ref = apply_ref_filter(refname, oid, flag, ref_cbdata->filter);
+	if (!ref)
+		return 0;
+
+	if (format_ref_array_item(ref, ref_cbdata->format, &output, &err))
+		die("%s", err.buf);
+
+	if (output.len || !ref_cbdata->format->array_opts.omit_empty) {
+		fwrite(output.buf, 1, output.len, stdout);
+		putchar('\n');
+	}
+
+	strbuf_release(&output);
+	strbuf_release(&err);
+	free_array_item(ref);
+
+	/*
+	 * Increment the running count of refs that match the filter. If
+	 * max_count is set and we've reached the max, stop the ref
+	 * iteration by returning a nonzero value.
+	 */
+	if (ref_cbdata->format->array_opts.max_count &&
+	    ++ref_cbdata->internal.count >= ref_cbdata->format->array_opts.max_count)
+		return 1;
+
+	return 0;
+}
+
 /* Free all memory allocated for ref_array */
 void ref_array_clear(struct ref_array *array)
 {
@@ -2962,16 +3005,49 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	return ret;
 }
 
+static inline int can_do_iterative_format(struct ref_filter *filter,
+					  struct ref_sorting *sorting,
+					  struct ref_format *format)
+{
+	/*
+	 * Filtering & formatting results within a single ref iteration
+	 * callback is not compatible with options that require
+	 * post-processing a filtered ref_array. These include:
+	 * - filtering on reachability
+	 * - sorting the filtered results
+	 * - including ahead-behind information in the formatted output
+	 */
+	return !(filter->reachable_from ||
+		 filter->unreachable_from ||
+		 sorting ||
+		 format->bases.nr);
+}
+
 void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
 			    struct ref_sorting *sorting,
 			    struct ref_format *format)
 {
-	struct ref_array array = { 0 };
-	filter_refs(&array, filter, type);
-	filter_ahead_behind(the_repository, format, &array);
-	ref_array_sort(sorting, &array);
-	print_formatted_ref_array(&array, format);
-	ref_array_clear(&array);
+	if (can_do_iterative_format(filter, sorting, format)) {
+		int save_commit_buffer_orig;
+		struct ref_filter_and_format_cbdata ref_cbdata = {
+			.filter = filter,
+			.format = format,
+		};
+
+		save_commit_buffer_orig = save_commit_buffer;
+		save_commit_buffer = 0;
+
+		do_filter_refs(filter, type, filter_and_format_one, &ref_cbdata);
+
+		save_commit_buffer = save_commit_buffer_orig;
+	} else {
+		struct ref_array array = { 0 };
+		filter_refs(&array, filter, type);
+		filter_ahead_behind(the_repository, format, &array);
+		ref_array_sort(sorting, &array);
+		print_formatted_ref_array(&array, format);
+		ref_array_clear(&array);
+	}
 }
 
 static int compare_detached_head(struct ref_array_item *a, struct ref_array_item *b)
