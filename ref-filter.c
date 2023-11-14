@@ -2632,15 +2632,18 @@ static struct ref_array_item *new_ref_array_item(const char *refname,
 	return ref;
 }
 
+static void ref_array_append(struct ref_array *array, struct ref_array_item *ref)
+{
+	ALLOC_GROW(array->items, array->nr + 1, array->alloc);
+	array->items[array->nr++] = ref;
+}
+
 struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
 				      const struct object_id *oid)
 {
 	struct ref_array_item *ref = new_ref_array_item(refname, oid);
-
-	ALLOC_GROW(array->items, array->nr + 1, array->alloc);
-	array->items[array->nr++] = ref;
-
+	ref_array_append(array, ref);
 	return ref;
 }
 
@@ -2677,6 +2680,70 @@ static int filter_ref_kind(struct ref_filter *filter, const char *refname)
 	return ref_kind_from_refname(refname);
 }
 
+static struct ref_array_item *apply_ref_filter(const char *refname, const struct object_id *oid,
+			    int flag, struct ref_filter *filter)
+{
+	struct ref_array_item *ref;
+	struct commit *commit = NULL;
+	unsigned int kind;
+
+	if (flag & REF_BAD_NAME) {
+		warning(_("ignoring ref with broken name %s"), refname);
+		return NULL;
+	}
+
+	if (flag & REF_ISBROKEN) {
+		warning(_("ignoring broken ref %s"), refname);
+		return NULL;
+	}
+
+	/* Obtain the current ref kind from filter_ref_kind() and ignore unwanted refs. */
+	kind = filter_ref_kind(filter, refname);
+	if (!(kind & filter->kind))
+		return NULL;
+
+	if (!filter_pattern_match(filter, refname))
+		return NULL;
+
+	if (filter_exclude_match(filter, refname))
+		return NULL;
+
+	if (filter->points_at.nr && !match_points_at(&filter->points_at, oid, refname))
+		return NULL;
+
+	/*
+	 * A merge filter is applied on refs pointing to commits. Hence
+	 * obtain the commit using the 'oid' available and discard all
+	 * non-commits early. The actual filtering is done later.
+	 */
+	if (filter->reachable_from || filter->unreachable_from ||
+	    filter->with_commit || filter->no_commit || filter->verbose) {
+		commit = lookup_commit_reference_gently(the_repository, oid, 1);
+		if (!commit)
+			return NULL;
+		/* We perform the filtering for the '--contains' option... */
+		if (filter->with_commit &&
+		    !commit_contains(filter, commit, filter->with_commit, &filter->internal.contains_cache))
+			return NULL;
+		/* ...or for the `--no-contains' option */
+		if (filter->no_commit &&
+		    commit_contains(filter, commit, filter->no_commit, &filter->internal.no_contains_cache))
+			return NULL;
+	}
+
+	/*
+	 * We do not open the object yet; sort may only need refname
+	 * to do its job and the resulting list may yet to be pruned
+	 * by maxcount logic.
+	 */
+	ref = new_ref_array_item(refname, oid);
+	ref->commit = commit;
+	ref->flag = flag;
+	ref->kind = kind;
+
+	return ref;
+}
+
 struct ref_filter_cbdata {
 	struct ref_array *array;
 	struct ref_filter *filter;
@@ -2689,64 +2756,11 @@ struct ref_filter_cbdata {
 static int filter_one(const char *refname, const struct object_id *oid, int flag, void *cb_data)
 {
 	struct ref_filter_cbdata *ref_cbdata = cb_data;
-	struct ref_filter *filter = ref_cbdata->filter;
 	struct ref_array_item *ref;
-	struct commit *commit = NULL;
-	unsigned int kind;
 
-	if (flag & REF_BAD_NAME) {
-		warning(_("ignoring ref with broken name %s"), refname);
-		return 0;
-	}
-
-	if (flag & REF_ISBROKEN) {
-		warning(_("ignoring broken ref %s"), refname);
-		return 0;
-	}
-
-	/* Obtain the current ref kind from filter_ref_kind() and ignore unwanted refs. */
-	kind = filter_ref_kind(filter, refname);
-	if (!(kind & filter->kind))
-		return 0;
-
-	if (!filter_pattern_match(filter, refname))
-		return 0;
-
-	if (filter_exclude_match(filter, refname))
-		return 0;
-
-	if (filter->points_at.nr && !match_points_at(&filter->points_at, oid, refname))
-		return 0;
-
-	/*
-	 * A merge filter is applied on refs pointing to commits. Hence
-	 * obtain the commit using the 'oid' available and discard all
-	 * non-commits early. The actual filtering is done later.
-	 */
-	if (filter->reachable_from || filter->unreachable_from ||
-	    filter->with_commit || filter->no_commit || filter->verbose) {
-		commit = lookup_commit_reference_gently(the_repository, oid, 1);
-		if (!commit)
-			return 0;
-		/* We perform the filtering for the '--contains' option... */
-		if (filter->with_commit &&
-		    !commit_contains(filter, commit, filter->with_commit, &filter->internal.contains_cache))
-			return 0;
-		/* ...or for the `--no-contains' option */
-		if (filter->no_commit &&
-		    commit_contains(filter, commit, filter->no_commit, &filter->internal.no_contains_cache))
-			return 0;
-	}
-
-	/*
-	 * We do not open the object yet; sort may only need refname
-	 * to do its job and the resulting list may yet to be pruned
-	 * by maxcount logic.
-	 */
-	ref = ref_array_push(ref_cbdata->array, refname, oid);
-	ref->commit = commit;
-	ref->flag = flag;
-	ref->kind = kind;
+	ref = apply_ref_filter(refname, oid, flag, ref_cbdata->filter);
+	if (ref)
+		ref_array_append(ref_cbdata->array, ref);
 
 	return 0;
 }
@@ -2883,25 +2897,11 @@ void filter_ahead_behind(struct repository *r,
 	free(commits);
 }
 
-/*
- * API for filtering a set of refs. Based on the type of refs the user
- * has requested, we iterate through those refs and apply filters
- * as per the given ref_filter structure and finally store the
- * filtered refs in the ref_array structure.
- */
-int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type)
+static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref_fn fn, void *cb_data)
 {
-	struct ref_filter_cbdata ref_cbdata;
-	int save_commit_buffer_orig;
 	int ret = 0;
 
-	ref_cbdata.array = array;
-	ref_cbdata.filter = filter;
-
 	filter->kind = type & FILTER_REFS_KIND_MASK;
-
-	save_commit_buffer_orig = save_commit_buffer;
-	save_commit_buffer = 0;
 
 	init_contains_cache(&filter->internal.contains_cache);
 	init_contains_cache(&filter->internal.no_contains_cache);
@@ -2917,19 +2917,42 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 		 * of filter_ref_kind().
 		 */
 		if (filter->kind == FILTER_REFS_BRANCHES)
-			ret = for_each_fullref_in("refs/heads/", filter_one, &ref_cbdata);
+			ret = for_each_fullref_in("refs/heads/", fn, cb_data);
 		else if (filter->kind == FILTER_REFS_REMOTES)
-			ret = for_each_fullref_in("refs/remotes/", filter_one, &ref_cbdata);
+			ret = for_each_fullref_in("refs/remotes/", fn, cb_data);
 		else if (filter->kind == FILTER_REFS_TAGS)
-			ret = for_each_fullref_in("refs/tags/", filter_one, &ref_cbdata);
+			ret = for_each_fullref_in("refs/tags/", fn, cb_data);
 		else if (filter->kind & FILTER_REFS_ALL)
-			ret = for_each_fullref_in_pattern(filter, filter_one, &ref_cbdata);
+			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
 		if (!ret && (filter->kind & FILTER_REFS_DETACHED_HEAD))
-			head_ref(filter_one, &ref_cbdata);
+			head_ref(fn, cb_data);
 	}
 
 	clear_contains_cache(&filter->internal.contains_cache);
 	clear_contains_cache(&filter->internal.no_contains_cache);
+
+	return ret;
+}
+
+/*
+ * API for filtering a set of refs. Based on the type of refs the user
+ * has requested, we iterate through those refs and apply filters
+ * as per the given ref_filter structure and finally store the
+ * filtered refs in the ref_array structure.
+ */
+int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type)
+{
+	struct ref_filter_cbdata ref_cbdata;
+	int save_commit_buffer_orig;
+	int ret = 0;
+
+	ref_cbdata.array = array;
+	ref_cbdata.filter = filter;
+
+	save_commit_buffer_orig = save_commit_buffer;
+	save_commit_buffer = 0;
+
+	ret = do_filter_refs(filter, type, filter_one, &ref_cbdata);
 
 	/*  Filters that need revision walking */
 	reach_filter(array, &filter->reachable_from, INCLUDE_REACHED);
