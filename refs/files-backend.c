@@ -1268,51 +1268,7 @@ static int files_pack_refs(struct ref_store *ref_store,
 static int files_delete_refs(struct ref_store *ref_store, const char *msg,
 			     struct string_list *refnames, unsigned int flags)
 {
-	struct ref_transaction *transaction;
-	struct strbuf err = STRBUF_INIT;
-	struct string_list_item *item;
-	int ret = 0, failures = 0;
-
-	if (!refnames->nr)
-		return 0;
-
-	/*
-	 * Since we don't check the references' old_oids, the
-	 * individual updates can't fail, so we can pack all of the
-	 * updates into a single transaction.
-	 */
-	transaction = ref_store_transaction_begin(ref_store, &err);
-	if (!transaction) {
-		ret = error("%s", err.buf);
-		goto out;
-	}
-
-	for_each_string_list_item(item, refnames) {
-		ret = ref_transaction_delete(transaction, item->string,
-					     NULL, flags, msg, &err);
-		if (ret) {
-			warning(_("could not delete reference %s: %s"),
-				item->string, err.buf);
-			strbuf_reset(&err);
-			failures = 1;
-		}
-	}
-
-	ret = ref_transaction_commit(transaction, &err);
-	if (ret) {
-		if (refnames->nr == 1)
-			error(_("could not delete reference %s: %s"),
-			      refnames->items[0].string, err.buf);
-		else
-			error(_("could not delete references: %s"), err.buf);
-	}
-
-out:
-	if (!ret && failures)
-		ret = -1;
-	ref_transaction_free(transaction);
-	strbuf_release(&err);
-	return ret;
+	return refs_delete_refs(ref_store, msg, refnames, flags);
 }
 
 /*
