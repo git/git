@@ -19,10 +19,10 @@ static char const * const for_each_ref_usage[] = {
 
 int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 {
-	int i;
+	int i, total;
 	struct ref_sorting *sorting;
 	struct string_list sorting_options = STRING_LIST_INIT_DUP;
-	int maxcount = 0, icase = 0, omit_empty = 0;
+	int icase = 0;
 	struct ref_array array;
 	struct ref_filter filter = REF_FILTER_INIT;
 	struct ref_format format = REF_FORMAT_INIT;
@@ -40,11 +40,11 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 			N_("quote placeholders suitably for python"), QUOTE_PYTHON),
 		OPT_BIT(0 , "tcl",  &format.quote_style,
 			N_("quote placeholders suitably for Tcl"), QUOTE_TCL),
-		OPT_BOOL(0, "omit-empty",  &omit_empty,
+		OPT_BOOL(0, "omit-empty",  &format.array_opts.omit_empty,
 			N_("do not output a newline after empty formatted refs")),
 
 		OPT_GROUP(""),
-		OPT_INTEGER( 0 , "count", &maxcount, N_("show only <n> matched refs")),
+		OPT_INTEGER( 0 , "count", &format.array_opts.max_count, N_("show only <n> matched refs")),
 		OPT_STRING(  0 , "format", &format.format, N_("format"), N_("format to use for the output")),
 		OPT__COLOR(&format.use_color, N_("respect format colors")),
 		OPT_REF_FILTER_EXCLUDE(&filter),
@@ -71,8 +71,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	string_list_append(&sorting_options, "refname");
 
 	parse_options(argc, argv, prefix, opts, for_each_ref_usage, 0);
-	if (maxcount < 0) {
-		error("invalid --count argument: `%d'", maxcount);
+	if (format.array_opts.max_count < 0) {
+		error("invalid --count argument: `%d'", format.array_opts.max_count);
 		usage_with_options(for_each_ref_usage, opts);
 	}
 	if (HAS_MULTI_BITS(format.quote_style)) {
@@ -109,15 +109,16 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	ref_array_sort(sorting, &array);
 
-	if (!maxcount || array.nr < maxcount)
-		maxcount = array.nr;
-	for (i = 0; i < maxcount; i++) {
+	total = format.array_opts.max_count;
+	if (!total || array.nr < total)
+		total = array.nr;
+	for (i = 0; i < total; i++) {
 		strbuf_reset(&err);
 		strbuf_reset(&output);
 		if (format_ref_array_item(array.items[i], &format, &output, &err))
 			die("%s", err.buf);
 		fwrite(output.buf, 1, output.len, stdout);
-		if (output.len || !omit_empty)
+		if (output.len || !format.array_opts.omit_empty)
 			putchar('\n');
 	}
 

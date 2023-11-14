@@ -92,6 +92,11 @@ struct ref_format {
 
 	/* List of bases for ahead-behind counts. */
 	struct string_list bases;
+
+	struct {
+		int max_count;
+		int omit_empty;
+	} array_opts;
 };
 
 #define REF_FILTER_INIT { \
