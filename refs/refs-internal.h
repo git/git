@@ -553,8 +553,6 @@ typedef int create_symref_fn(struct ref_store *ref_store,
 			     const char *ref_target,
 			     const char *refs_heads_master,
 			     const char *logmsg);
-typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
-			   struct string_list *refnames, unsigned int flags);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
@@ -677,7 +675,6 @@ struct ref_storage_be {
 
 	pack_refs_fn *pack_refs;
 	create_symref_fn *create_symref;
-	delete_refs_fn *delete_refs;
 	rename_ref_fn *rename_ref;
 	copy_ref_fn *copy_ref;
 

@@ -1688,12 +1688,6 @@ static int packed_initial_transaction_commit(struct ref_store *ref_store UNUSED,
 	return ref_transaction_commit(transaction, err);
 }
 
-static int packed_delete_refs(struct ref_store *ref_store, const char *msg,
-			     struct string_list *refnames, unsigned int flags)
-{
-	return refs_delete_refs(ref_store, msg, refnames, flags);
-}
-
 static int packed_pack_refs(struct ref_store *ref_store UNUSED,
 			    struct pack_refs_opts *pack_opts UNUSED)
 {
@@ -1722,7 +1716,6 @@ struct ref_storage_be refs_be_packed = {
 
 	.pack_refs = packed_pack_refs,
 	.create_symref = NULL,
-	.delete_refs = packed_delete_refs,
 	.rename_ref = NULL,
 	.copy_ref = NULL,
 

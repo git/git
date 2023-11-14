@@ -1265,12 +1265,6 @@ static int files_pack_refs(struct ref_store *ref_store,
 	return 0;
 }
 
-static int files_delete_refs(struct ref_store *ref_store, const char *msg,
-			     struct string_list *refnames, unsigned int flags)
-{
-	return refs_delete_refs(ref_store, msg, refnames, flags);
-}
-
 /*
  * People using contrib's git-new-workdir have .git/logs/refs ->
  * /some/other/path/.git/logs/refs, and that may live on another device.
@@ -3258,7 +3252,6 @@ struct ref_storage_be refs_be_files = {
 
 	.pack_refs = files_pack_refs,
 	.create_symref = files_create_symref,
-	.delete_refs = files_delete_refs,
 	.rename_ref = files_rename_ref,
 	.copy_ref = files_copy_ref,
 
