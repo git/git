@@ -48,13 +48,7 @@ static int config_sign_tag = -1; /* unspecified */
 static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 		     struct ref_format *format)
 {
-	struct ref_array array;
-	struct strbuf output = STRBUF_INIT;
-	struct strbuf err = STRBUF_INIT;
 	char *to_free = NULL;
-	int i;
-
-	memset(&array, 0, sizeof(array));
 
 	if (filter->lines == -1)
 		filter->lines = 0;
@@ -72,23 +66,8 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 	if (verify_ref_format(format))
 		die(_("unable to parse format string"));
 	filter->with_commit_tag_algo = 1;
-	filter_refs(&array, filter, FILTER_REFS_TAGS);
-	filter_ahead_behind(the_repository, format, &array);
-	ref_array_sort(sorting, &array);
+	filter_and_format_refs(filter, FILTER_REFS_TAGS, sorting, format);
 
-	for (i = 0; i < array.nr; i++) {
-		strbuf_reset(&output);
-		strbuf_reset(&err);
-		if (format_ref_array_item(array.items[i], format, &output, &err))
-			die("%s", err.buf);
-		fwrite(output.buf, 1, output.len, stdout);
-		if (output.len || !format->array_opts.omit_empty)
-			putchar('\n');
-	}
-
-	strbuf_release(&err);
-	strbuf_release(&output);
-	ref_array_clear(&array);
 	free(to_free);
 
 	return 0;

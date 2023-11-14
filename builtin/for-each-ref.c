@@ -19,15 +19,11 @@ static char const * const for_each_ref_usage[] = {
 
 int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 {
-	int i, total;
 	struct ref_sorting *sorting;
 	struct string_list sorting_options = STRING_LIST_INIT_DUP;
 	int icase = 0;
-	struct ref_array array;
 	struct ref_filter filter = REF_FILTER_INIT;
 	struct ref_format format = REF_FORMAT_INIT;
-	struct strbuf output = STRBUF_INIT;
-	struct strbuf err = STRBUF_INIT;
 	int from_stdin = 0;
 	struct strvec vec = STRVEC_INIT;
 
@@ -60,8 +56,6 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stdin", &from_stdin, N_("read reference patterns from stdin")),
 		OPT_END(),
 	};
-
-	memset(&array, 0, sizeof(array));
 
 	format.format = "%(objectname) %(objecttype)\t%(refname)";
 
@@ -104,27 +98,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	}
 
 	filter.match_as_path = 1;
-	filter_refs(&array, &filter, FILTER_REFS_ALL);
-	filter_ahead_behind(the_repository, &format, &array);
+	filter_and_format_refs(&filter, FILTER_REFS_ALL, sorting, &format);
 
-	ref_array_sort(sorting, &array);
-
-	total = format.array_opts.max_count;
-	if (!total || array.nr < total)
-		total = array.nr;
-	for (i = 0; i < total; i++) {
-		strbuf_reset(&err);
-		strbuf_reset(&output);
-		if (format_ref_array_item(array.items[i], &format, &output, &err))
-			die("%s", err.buf);
-		fwrite(output.buf, 1, output.len, stdout);
-		if (output.len || !format.array_opts.omit_empty)
-			putchar('\n');
-	}
-
-	strbuf_release(&err);
-	strbuf_release(&output);
-	ref_array_clear(&array);
 	ref_filter_clear(&filter);
 	ref_sorting_release(sorting);
 	strvec_clear(&vec);

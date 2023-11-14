@@ -2939,6 +2939,18 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	return ret;
 }
 
+void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
+			    struct ref_sorting *sorting,
+			    struct ref_format *format)
+{
+	struct ref_array array = { 0 };
+	filter_refs(&array, filter, type);
+	filter_ahead_behind(the_repository, format, &array);
+	ref_array_sort(sorting, &array);
+	print_formatted_ref_array(&array, format);
+	ref_array_clear(&array);
+}
+
 static int compare_detached_head(struct ref_array_item *a, struct ref_array_item *b)
 {
 	if (!(a->kind ^ b->kind))
@@ -3126,6 +3138,29 @@ int format_ref_array_item(struct ref_array_item *info,
 	strbuf_addbuf(final_buf, &state.stack->output);
 	pop_stack_element(&state.stack);
 	return 0;
+}
+
+void print_formatted_ref_array(struct ref_array *array, struct ref_format *format)
+{
+	int total;
+	struct strbuf output = STRBUF_INIT, err = STRBUF_INIT;
+
+	total = format->array_opts.max_count;
+	if (!total || array->nr < total)
+		total = array->nr;
+	for (int i = 0; i < total; i++) {
+		strbuf_reset(&err);
+		strbuf_reset(&output);
+		if (format_ref_array_item(array->items[i], format, &output, &err))
+			die("%s", err.buf);
+		if (output.len || !format->array_opts.omit_empty) {
+			fwrite(output.buf, 1, output.len, stdout);
+			putchar('\n');
+		}
+	}
+
+	strbuf_release(&err);
+	strbuf_release(&output);
 }
 
 void pretty_print_ref(const char *name, const struct object_id *oid,
