@@ -1224,6 +1224,27 @@ test_expect_success '--no-sort cancels the previous sort keys' '
 	test_cmp expected actual
 '
 
+test_expect_success '--no-sort without subsequent --sort prints expected refs' '
+	cat >expected <<-\EOF &&
+	refs/tags/multi-ref1-100000-user1
+	refs/tags/multi-ref1-100000-user2
+	refs/tags/multi-ref1-200000-user1
+	refs/tags/multi-ref1-200000-user2
+	refs/tags/multi-ref2-100000-user1
+	refs/tags/multi-ref2-100000-user2
+	refs/tags/multi-ref2-200000-user1
+	refs/tags/multi-ref2-200000-user2
+	EOF
+
+	# Sort the results with `sort` for a consistent comparison against
+	# expected
+	git for-each-ref \
+		--format="%(refname)" \
+		--no-sort \
+		"refs/tags/multi-*" | sort >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'do not dereference NULL upon %(HEAD) on unborn branch' '
 	test_when_finished "git checkout main" &&
 	git for-each-ref --format="%(HEAD) %(refname:short)" refs/heads/ >actual &&

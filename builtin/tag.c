@@ -501,7 +501,13 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 	setup_ref_filter_porcelain_msg();
 
+	/*
+	 * Try to set sort keys from config. If config does not set any,
+	 * fall back on default (refname) sorting.
+	 */
 	git_config(git_tag_config, &sorting_options);
+	if (!sorting_options.nr)
+		string_list_append(&sorting_options, "refname");
 
 	memset(&opt, 0, sizeof(opt));
 	filter.lines = -1;

@@ -3058,7 +3058,8 @@ void ref_sorting_set_sort_flags_all(struct ref_sorting *sorting,
 
 void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
 {
-	QSORT_S(array->items, array->nr, compare_refs, sorting);
+	if (sorting)
+		QSORT_S(array->items, array->nr, compare_refs, sorting);
 }
 
 static void append_literal(const char *cp, const char *ep, struct ref_formatting_state *state)
@@ -3164,18 +3165,6 @@ static int parse_sorting_atom(const char *atom)
 	return res;
 }
 
-/*  If no sorting option is given, use refname to sort as default */
-static struct ref_sorting *ref_default_sorting(void)
-{
-	static const char cstr_name[] = "refname";
-
-	struct ref_sorting *sorting = xcalloc(1, sizeof(*sorting));
-
-	sorting->next = NULL;
-	sorting->atom = parse_sorting_atom(cstr_name);
-	return sorting;
-}
-
 static void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *arg)
 {
 	struct ref_sorting *s;
@@ -3199,9 +3188,7 @@ struct ref_sorting *ref_sorting_options(struct string_list *options)
 	struct string_list_item *item;
 	struct ref_sorting *sorting = NULL, **tail = &sorting;
 
-	if (!options->nr) {
-		sorting = ref_default_sorting();
-	} else {
+	if (options->nr) {
 		for_each_string_list_item(item, options)
 			parse_ref_sorting(tail, item->string);
 	}

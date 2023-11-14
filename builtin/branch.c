@@ -767,7 +767,13 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_branch_usage, options);
 
+	/*
+	 * Try to set sort keys from config. If config does not set any,
+	 * fall back on default (refname) sorting.
+	 */
 	git_config(git_branch_config, &sorting_options);
+	if (!sorting_options.nr)
+		string_list_append(&sorting_options, "refname");
 
 	track = git_branch_track;
 

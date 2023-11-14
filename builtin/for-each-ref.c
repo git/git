@@ -67,6 +67,9 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
+	/* Set default (refname) sorting */
+	string_list_append(&sorting_options, "refname");
+
 	parse_options(argc, argv, prefix, opts, for_each_ref_usage, 0);
 	if (maxcount < 0) {
 		error("invalid --count argument: `%d'", maxcount);
