@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #05; Mon, 13)
-X-master-at: e0939bec273052b1a8d69db4a3f7c87aaf83e220
-X-next-at: 309e3ec6dda82ab1e7b7722ef344e6c5d0c0964b
+Subject: What's cooking in git.git (Nov 2023, #06; Tue, 14)
+X-master-at: cfb8a6e9a93adbe81efca66e6110c9b4d2e57169
+X-next-at: 8631bc74722bb0614b8db08fb17e94121449d13f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #05; Mon, 13)
+What's cooking in git.git (Nov 2023, #06; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,11 +17,7 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-The first candidate for the upcoming release, Git 2.43.0-rc0, has
-been tagged.  As of now, 'next' is "empty" in the sense that its
-tree is identical to that of 'master'.  There are tons of topic
-waiting outside 'next' without sufficient support, which is sad, but
-they are of lower priority now for a few weeks X-<.
+Git 2.43-rc2 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,77 +50,16 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* jk/chunk-bounds-more (2023-11-09) 9 commits
-  (merged to 'next' on 2023-11-13 at 3df4b18bea)
- + commit-graph: mark chunk error messages for translation
- + commit-graph: drop verify_commit_graph_lite()
- + commit-graph: check order while reading fanout chunk
- + commit-graph: use fanout value for graph size
- + commit-graph: abort as soon as we see a bogus chunk
- + commit-graph: clarify missing-chunk error messages
- + commit-graph: drop redundant call to "lite" verification
- + midx: check consistency of fanout table
- + commit-graph: handle overflow in chunk_size checks
- (this branch is used by tb/pair-chunk-expect.)
+* js/ci-discard-prove-state (2023-11-14) 1 commit
+  (merged to 'next' on 2023-11-14 at fade3ba143)
+ + ci: avoid running the test suite _twice_
+ (this branch uses ps/ci-gitlab.)
 
- Code clean-up for jk/chunk-bounds topic.
+ The way CI testing used "prove" could lead to running the test
+ suite twice needlessly, which has been corrected.
 
  Will cook in 'next'.
- source: <20231109070310.GA2697602@coredump.intra.peff.net>
-
-
-* ps/httpd-tests-on-nixos (2023-11-11) 3 commits
-  (merged to 'next' on 2023-11-13 at 81bd6f5334)
- + t9164: fix inability to find basename(1) in Subversion hooks
- + t/lib-httpd: stop using legacy crypt(3) for authentication
- + t/lib-httpd: dynamically detect httpd and modules path
-
- Portability tweak.
-
- Will merge to 'master'.
- source: <cover.1699596457.git.ps@pks.im>
-
-
-* ss/format-patch-use-encode-headers-for-cover-letter (2023-11-10) 1 commit
- - format-patch: fix ignored encode_email_headers for cover letter
-
- "git format-patch --encode-email-headers" ignored the option when
- preparing the cover letter, which has been corrected.
-
- Will merge to 'next'.
- source: <20231109111950.387219-1-contact@emersion.fr>
-
-
-* ps/ban-a-or-o-operator-with-test (2023-11-11) 4 commits
- - Makefile: stop using `test -o` when unlinking duplicate executables
- - contrib/subtree: convert subtree type check to use case statement
- - contrib/subtree: stop using `-o` to test for number of args
- - global: convert trivial usages of `test <expr> -a/-o <expr>`
-
- Test and shell scripts clean-up.
-
- Will merge to 'next'.
- source: <cover.1699609940.git.ps@pks.im>
-
-
-* vd/glossary-dereference-peel (2023-11-10) 1 commit
- - glossary: add definitions for dereference & peel
-
- "To dereference" and "to peel" were sometimes used in in-code
- comments and documentation but without description in the glossary.
-
- Expecting an update.
- cf. <xmqq1qcyxxri.fsf@gitster.g>
- source: <pull.1610.git.1699574277143.gitgitgadget@gmail.com>
-
-
-* ak/rebase-autosquash (2023-11-13) 4 commits
- - rebase: rewrite --(no-)autosquash documentation
- - rebase: test autosquash with and without -i
- - rebase: support --autosquash without -i
- - rebase: fully ignore rebase.autoSquash without -i
-
- source: <20231111132720.78877-1-andy.koppe@gmail.com>
+ source: <pull.1613.git.1699894837844.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -171,6 +106,85 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jk/chunk-bounds-more (2023-11-09) 9 commits
+  (merged to 'next' on 2023-11-13 at 3df4b18bea)
+ + commit-graph: mark chunk error messages for translation
+ + commit-graph: drop verify_commit_graph_lite()
+ + commit-graph: check order while reading fanout chunk
+ + commit-graph: use fanout value for graph size
+ + commit-graph: abort as soon as we see a bogus chunk
+ + commit-graph: clarify missing-chunk error messages
+ + commit-graph: drop redundant call to "lite" verification
+ + midx: check consistency of fanout table
+ + commit-graph: handle overflow in chunk_size checks
+ (this branch is used by tb/pair-chunk-expect.)
+
+ Code clean-up for jk/chunk-bounds topic.
+
+ Will cook in 'next'.
+ source: <20231109070310.GA2697602@coredump.intra.peff.net>
+
+
+* ps/httpd-tests-on-nixos (2023-11-11) 3 commits
+  (merged to 'next' on 2023-11-13 at 81bd6f5334)
+ + t9164: fix inability to find basename(1) in Subversion hooks
+ + t/lib-httpd: stop using legacy crypt(3) for authentication
+ + t/lib-httpd: dynamically detect httpd and modules path
+
+ Portability tweak.
+
+ Will cook in 'next'.
+ source: <cover.1699596457.git.ps@pks.im>
+
+
+* ss/format-patch-use-encode-headers-for-cover-letter (2023-11-10) 1 commit
+  (merged to 'next' on 2023-11-14 at 1a4bd59e15)
+ + format-patch: fix ignored encode_email_headers for cover letter
+
+ "git format-patch --encode-email-headers" ignored the option when
+ preparing the cover letter, which has been corrected.
+
+ Will cook in 'next'.
+ source: <20231109111950.387219-1-contact@emersion.fr>
+
+
+* ps/ban-a-or-o-operator-with-test (2023-11-11) 4 commits
+  (merged to 'next' on 2023-11-14 at d84471baab)
+ + Makefile: stop using `test -o` when unlinking duplicate executables
+ + contrib/subtree: convert subtree type check to use case statement
+ + contrib/subtree: stop using `-o` to test for number of args
+ + global: convert trivial usages of `test <expr> -a/-o <expr>`
+
+ Test and shell scripts clean-up.
+
+ Will cook in 'next'.
+ source: <cover.1699609940.git.ps@pks.im>
+
+
+* vd/glossary-dereference-peel (2023-11-14) 1 commit
+ - glossary: add definitions for dereference & peel
+
+ "To dereference" and "to peel" were sometimes used in in-code
+ comments and documentation but without description in the glossary.
+
+ Will merge to 'next'.
+ source: <pull.1610.v2.git.1699917471769.gitgitgadget@gmail.com>
+
+
+* ak/rebase-autosquash (2023-11-13) 4 commits
+ - rebase: rewrite --(no-)autosquash documentation
+ - rebase: test autosquash with and without -i
+ - rebase: support --autosquash without -i
+ - rebase: fully ignore rebase.autoSquash without -i
+
+ "git rebase --autosquash" is now enabled for non-interactive rebase,
+ but it is still incompatible with the apply backend.
+
+ Expecting a (hopefully small and final) reroll.
+ cf. <058eb5d9-35d9-4452-8d33-d9cfebb94347@gmail.com>
+ source: <20231111132720.78877-1-andy.koppe@gmail.com>
+
+
 * vd/for-each-ref-unsorted-optimization (2023-11-07) 9 commits
  - t/perf: add perf tests for for-each-ref
  - for-each-ref: add option to fully dereference tags
@@ -213,6 +227,7 @@ Release tarballs are available at:
  + ci: group installation of Docker dependencies
  + ci: make grouping setup more generic
  + ci: reorder definitions for grouping functions
+ (this branch is used by js/ci-discard-prove-state.)
 
  Add support for GitLab CI.
 
