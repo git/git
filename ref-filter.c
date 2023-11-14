@@ -2680,8 +2680,6 @@ static int filter_ref_kind(struct ref_filter *filter, const char *refname)
 struct ref_filter_cbdata {
 	struct ref_array *array;
 	struct ref_filter *filter;
-	struct contains_cache contains_cache;
-	struct contains_cache no_contains_cache;
 };
 
 /*
@@ -2732,11 +2730,11 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 			return 0;
 		/* We perform the filtering for the '--contains' option... */
 		if (filter->with_commit &&
-		    !commit_contains(filter, commit, filter->with_commit, &ref_cbdata->contains_cache))
+		    !commit_contains(filter, commit, filter->with_commit, &filter->internal.contains_cache))
 			return 0;
 		/* ...or for the `--no-contains' option */
 		if (filter->no_commit &&
-		    commit_contains(filter, commit, filter->no_commit, &ref_cbdata->no_contains_cache))
+		    commit_contains(filter, commit, filter->no_commit, &filter->internal.no_contains_cache))
 			return 0;
 	}
 
@@ -2905,8 +2903,8 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	save_commit_buffer_orig = save_commit_buffer;
 	save_commit_buffer = 0;
 
-	init_contains_cache(&ref_cbdata.contains_cache);
-	init_contains_cache(&ref_cbdata.no_contains_cache);
+	init_contains_cache(&filter->internal.contains_cache);
+	init_contains_cache(&filter->internal.no_contains_cache);
 
 	/*  Simple per-ref filtering */
 	if (!filter->kind)
@@ -2930,8 +2928,8 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 			head_ref(ref_filter_handler, &ref_cbdata);
 	}
 
-	clear_contains_cache(&ref_cbdata.contains_cache);
-	clear_contains_cache(&ref_cbdata.no_contains_cache);
+	clear_contains_cache(&filter->internal.contains_cache);
+	clear_contains_cache(&filter->internal.no_contains_cache);
 
 	/*  Filters that need revision walking */
 	reach_filter(array, &filter->reachable_from, INCLUDE_REACHED);

@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "string-list.h"
 #include "strvec.h"
+#include "commit-reach.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -75,6 +76,11 @@ struct ref_filter {
 		lines;
 	int abbrev,
 		verbose;
+
+	struct {
+		struct contains_cache contains_cache;
+		struct contains_cache no_contains_cache;
+	} internal;
 };
 
 struct ref_format {
