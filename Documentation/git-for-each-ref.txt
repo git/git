@@ -296,8 +296,8 @@ from the `committer` or `tagger` fields depending on the object type.
 These are intended for working on a mix of annotated and lightweight tags.
 
 For tag objects, a `fieldname` prefixed with an asterisk (`*`) expands to
-the `fieldname` value of object the tag points at, rather than that of the
-tag object itself.
+the `fieldname` value of the peeled object, rather than that of the tag
+object itself.
 
 Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,

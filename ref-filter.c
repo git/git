@@ -2424,17 +2424,12 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 		return 0;
 
 	/*
-	 * If it is a tag object, see if we use a value that derefs
-	 * the object, and if we do grab the object it refers to.
+	 * If it is a tag object, see if we use the peeled value. If we do,
+	 * grab the peeled OID.
 	 */
-	oi_deref.oid = *get_tagged_oid((struct tag *)obj);
+	if (need_tagged && peel_iterated_oid(&obj->oid, &oi_deref.oid))
+		die("bad tag");
 
-	/*
-	 * NEEDSWORK: This derefs tag only once, which
-	 * is good to deal with chains of trust, but
-	 * is not consistent with what deref_tag() does
-	 * which peels the onion to the core.
-	 */
 	return get_object(ref, 1, &obj, &oi_deref, err);
 }
 
