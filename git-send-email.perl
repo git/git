@@ -28,8 +28,8 @@ Getopt::Long::Configure qw/ pass_through /;
 
 sub usage {
 	print <<EOT;
-git send-email' [<options>] <file|directory>
-git send-email' [<options>] <format-patch options>
+git send-email [<options>] <file|directory>
+git send-email [<options>] <format-patch options>
 git send-email --dump-aliases
 
   Composing:
