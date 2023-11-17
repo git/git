@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #06; Tue, 14)
+Subject: What's cooking in git.git (Nov 2023, #07; Fri, 17)
 X-master-at: cfb8a6e9a93adbe81efca66e6110c9b4d2e57169
-X-next-at: 8631bc74722bb0614b8db08fb17e94121449d13f
+X-next-at: f09e533e43c38d90657504164412796b01e6a322
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #06; Tue, 14)
+What's cooking in git.git (Nov 2023, #07; Fri, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,16 +50,52 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* js/ci-discard-prove-state (2023-11-14) 1 commit
-  (merged to 'next' on 2023-11-14 at fade3ba143)
- + ci: avoid running the test suite _twice_
- (this branch uses ps/ci-gitlab.)
+* jw/builtin-objectmode-attr (2023-11-16) 2 commits
+ - SQUASH???
+ - attr: add builtin objectmode values support
 
- The way CI testing used "prove" could lead to running the test
- suite twice needlessly, which has been corrected.
+ The builtin_objectmode attribute is populated for each path
+ without adding anything in .gitattributes files, which would be
+ useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
+ to limit to executables.
+ source: <20231116054437.2343549-1-jojwang@google.com>
+
+
+* ps/ref-deletion-updates (2023-11-17) 4 commits
+ - refs: remove `delete_refs` callback from backends
+ - refs: deduplicate code to delete references
+ - refs/files: use transactions to delete references
+ - t5510: ensure that the packed-refs file needs locking
+
+ Simplify API implementation to delete references by eliminating
+ duplication.
+
+ Will merge to 'next'.
+ source: <cover.1699951815.git.ps@pks.im>
+
+
+* tz/send-email-helpfix (2023-11-16) 1 commit
+  (merged to 'next' on 2023-11-17 at 8422271795)
+ + send-email: remove stray characters from usage
+
+ Typoes in "git send-email -h" have been corrected.
+
+ Will merge to 'master'.
+ source: <20231115173952.339303-3-tmz@pobox.com>
+
+
+* tz/send-email-negatable-options (2023-11-17) 2 commits
+  (merged to 'next' on 2023-11-17 at f09e533e43)
+ + send-email: avoid duplicate specification warnings
+ + perl: bump the required Perl version to 5.8.1 from 5.8.0
+
+ Newer versions of Getopt::Long started giving warnings against our
+ (ab)use of it in "git send-email".  Bump the minimum version
+ requirement for Perl to 5.8.1 (from September 2002) to allow
+ simplifying our implementation.
 
  Will cook in 'next'.
- source: <pull.1613.git.1699894837844.gitgitgadget@gmail.com>
+ source: <20231116193014.470420-1-tmz@pobox.com>
 
 --------------------------------------------------
 [Stalled]
@@ -105,6 +141,18 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* js/ci-discard-prove-state (2023-11-14) 1 commit
+  (merged to 'next' on 2023-11-14 at fade3ba143)
+ + ci: avoid running the test suite _twice_
+ (this branch uses ps/ci-gitlab.)
+
+ The way CI testing used "prove" could lead to running the test
+ suite twice needlessly, which has been corrected.
+
+ Will cook in 'next'.
+ source: <pull.1613.git.1699894837844.gitgitgadget@gmail.com>
+
 
 * jk/chunk-bounds-more (2023-11-09) 9 commits
   (merged to 'next' on 2023-11-13 at 3df4b18bea)
@@ -162,48 +210,49 @@ Release tarballs are available at:
 
 
 * vd/glossary-dereference-peel (2023-11-14) 1 commit
- - glossary: add definitions for dereference & peel
+  (merged to 'next' on 2023-11-17 at bac3ab0c0b)
+ + glossary: add definitions for dereference & peel
 
  "To dereference" and "to peel" were sometimes used in in-code
  comments and documentation but without description in the glossary.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1610.v2.git.1699917471769.gitgitgadget@gmail.com>
 
 
-* ak/rebase-autosquash (2023-11-13) 4 commits
- - rebase: rewrite --(no-)autosquash documentation
- - rebase: test autosquash with and without -i
- - rebase: support --autosquash without -i
- - rebase: fully ignore rebase.autoSquash without -i
+* ak/rebase-autosquash (2023-11-16) 3 commits
+  (merged to 'next' on 2023-11-17 at 3ed6e79445)
+ + rebase: rewrite --(no-)autosquash documentation
+ + rebase: support --autosquash without -i
+ + rebase: fully ignore rebase.autoSquash without -i
 
  "git rebase --autosquash" is now enabled for non-interactive rebase,
  but it is still incompatible with the apply backend.
 
- Expecting a (hopefully small and final) reroll.
- cf. <058eb5d9-35d9-4452-8d33-d9cfebb94347@gmail.com>
- source: <20231111132720.78877-1-andy.koppe@gmail.com>
+ Will cook in 'next'.
+ source: <20231114214339.10925-1-andy.koppe@gmail.com>
 
 
-* vd/for-each-ref-unsorted-optimization (2023-11-07) 9 commits
- - t/perf: add perf tests for for-each-ref
- - for-each-ref: add option to fully dereference tags
- - ref-filter.c: filter & format refs in the same callback
- - ref-filter.c: refactor to create common helper functions
- - ref-filter.h: add functions for filter/format & format-only
- - ref-filter.h: move contains caches into filter
- - ref-filter.h: add max_count and omit_empty to ref_format
- - for-each-ref: clarify interaction of --omit-empty & --count
- - ref-filter.c: really don't sort when using --no-sort
+* vd/for-each-ref-unsorted-optimization (2023-11-16) 10 commits
+  (merged to 'next' on 2023-11-17 at ff99420bf6)
+ + t/perf: add perf tests for for-each-ref
+ + ref-filter.c: use peeled tag for '*' format fields
+ + for-each-ref: clean up documentation of --format
+ + ref-filter.c: filter & format refs in the same callback
+ + ref-filter.c: refactor to create common helper functions
+ + ref-filter.c: rename 'ref_filter_handler()' to 'filter_one()'
+ + ref-filter.h: add functions for filter/format & format-only
+ + ref-filter.h: move contains caches into filter
+ + ref-filter.h: add max_count and omit_empty to ref_format
+ + ref-filter.c: really don't sort when using --no-sort
 
  "git for-each-ref --no-sort" still sorted the refs alphabetically
  which paid non-trivial cost.  It has been redefined to show output
  in an unspecified order, to allow certain optimizations to take
  advantage of.
 
- Expecting a reroll.
- cf. <dbcbcf0e-aeee-4bb9-9e39-e2e85194d083@github.com>
- source: <pull.1609.git.1699320361.gitgitgadget@gmail.com>
+ Will cook in 'next'.
+ source: <pull.1609.v2.git.1699991638.gitgitgadget@gmail.com>
 
 
 * jw/git-add-attr-pathspec (2023-11-04) 1 commit
@@ -355,7 +404,7 @@ Release tarballs are available at:
  source: <cover.1697653929.git.me@ttaylorr.com>
 
 
-* cc/git-replay (2023-11-03) 14 commits
+* cc/git-replay (2023-11-16) 14 commits
  - replay: stop assuming replayed branches do not diverge
  - replay: add --contained to rebase contained branches
  - replay: add --advance or 'cherry-pick' mode
@@ -373,9 +422,7 @@ Release tarballs are available at:
 
  Introduce "git replay", a tool meant on the server side without
  working tree to recreate a history.
-
- Comments?
- source: <20231102135151.843758-1-christian.couder@gmail.com>
+ source: <20231115143327.2441397-1-christian.couder@gmail.com>
 
 
 * ak/color-decorate-symbols (2023-10-23) 7 commits
