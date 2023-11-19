@@ -10,8 +10,8 @@ Backward Compatibility Notes
    prefix.  If you are negatively affected by this change, please use
    "--subject-prefix=PATCH --rfc" as a replacement.
 
- * "git rev-list --stdin" learned to take non-revisions (like "--not")
-   recently from the standard input, but the way such a "--not" was
+ * In Git 2.42, "git rev-list --stdin" learned to take non-revisions
+   (like "--not") from the standard input, but the way such a "--not" was
    handled was quite confusing, which has been rethought.  The updated
    rule is that "--not" given from the command line only affects revs
    given from the command line that comes but not revs read from the
@@ -22,10 +22,11 @@ Backward Compatibility Notes
 UI, Workflows & Features
 
  * A message written in olden time prevented a branch from getting
-   checked out saying it is already checked out elsewhere, but these
+   checked out, saying it is already checked out elsewhere. But these
    days, we treat a branch that is being bisected or rebased just like
-   a branch that is checked out and protect it.  Rephrase the message
-   to say that the branch is in use.
+   a branch that is checked out and protect it from getting modified
+   with the same codepath.  The message has been rephrased to say that
+   the branch is "in use" to avoid confusion.
 
  * Hourly and other schedules of "git maintenance" jobs are randomly
    distributed now.
@@ -43,20 +44,21 @@ UI, Workflows & Features
 
  * Git GUI updates.
 
- * "git format-patch" learns a way to feed cover letter description,
-   that (1) can be used on detached HEAD where there is no branch
-   description available, and (2) also can override the branch
-   description if there is one.
+ * "git format-patch" learned a new "--description-file" option that
+   lets cover letter description to be fed; this can be used on
+   detached HEAD where there is no branch description available, and
+   also can override the branch description if there is one.
 
- * Use of --max-pack-size to allow multiple packfiles to be created is
-   now supported even when we are sending unreachable objects to cruft
-   packs.
+ * Use of the "--max-pack-size" option to allow multiple packfiles to
+   be created is now supported even when we are sending unreachable
+   objects to cruft packs.
 
  * "git format-patch --rfc --subject-prefix=<foo>" used to ignore the
    "--subject-prefix" option and used "[RFC PATCH]"; now we will add
    "RFC" prefix to whatever subject prefix is specified.
 
- * "git log --format" has been taught the %(decorate) placeholder.
+ * "git log --format" has been taught the %(decorate) placeholder for
+   further customization over what the "--decorate" option offers.
 
  * The default log message created by "git revert", when reverting a
    commit that records a revert, has been tweaked, to encourage people
@@ -66,41 +68,45 @@ UI, Workflows & Features
  * The command-line completion support (in contrib/) learned to
    complete "git commit --trailer=" for possible trailer keys.
 
- * "git update-index" learns "--show-index-version" to inspect
-   the index format version used by the on-disk index file.
+ * "git update-index" learned the "--show-index-version" option to
+   inspect the index format version used by the on-disk index file.
 
- * "git diff" learned diff.statNameWidth configuration variable, to
-   give the default width for the name part in the "--stat" output.
+ * "git diff" learned the "diff.statNameWidth" configuration variable,
+   to give the default width for the name part in the "--stat" output.
 
  * "git range-diff --notes=foo" compared "log --notes=foo --notes" of
-   the two ranges, instead of using just the specified notes tree.
+   the two ranges, instead of using just the specified notes tree,
+   which has been corrected to use only the specified notes tree.
 
  * The command line completion script (in contrib/) can be told to
    complete aliases by including ": git <cmd> ;" in the alias to tell
-   it that the alias should be completed in a similar way to how "git <cmd>" is
-   completed.  The parsing code for the alias has been loosened to
-   allow ';' without an extra space before it.
+   it that the alias should be completed in a similar way to how "git
+   <cmd>" is completed.  The parsing code for the alias has been
+   loosened to allow ';' without an extra space before it.
 
  * "git for-each-ref" and friends learned to apply mailmap to
-   authorname and other fields.
+   authorname and other fields in a more flexible way than using
+   separate placeholder letters like %a[eElL] every time we want to
+   come up with small variants.
 
- * "git repack" machinery learns to pay attention to the "--filter="
+ * "git repack" machinery learned to pay attention to the "--filter="
    option.
 
- * "git repack" learned "--max-cruft-size" to prevent cruft packs from
-   growing without bounds.
+ * "git repack" learned the "--max-cruft-size" option to prevent cruft
+   packs from growing without bounds.
 
  * "git merge-tree" learned to take strategy backend specific options
    via the "-X" option, like "git merge" does.
 
- * "git log" and friends learned "--dd" that is a short-hand for
-   "--diff-merges=first-parent -p".
+ * "git log" and friends learned the "--dd" option that is a
+   short-hand for "--diff-merges=first-parent -p".
 
- * The attribute subsystem learned to honor `attr.tree` configuration
-   that specifies which tree to read the .gitattributes files from.
+ * The attribute subsystem learned to honor the "attr.tree"
+   configuration variable that specifies which tree to read the
+   .gitattributes files from.
 
- * "git merge-file" learns a mode to read three contents to be merged
-   from blob objects.
+ * "git merge-file" learns a mode to read three variants of the
+   contents to be merged from blob objects.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -110,7 +116,7 @@ Performance, Internal Implementation, Development Support etc.
  * It may be tempting to leave the help text NULL for a command line
    option that is either hidden or too obvious, but "git subcmd -h"
    and "git subcmd --help-all" would have segfaulted if done so.  Now
-   the help text is optional.
+   the help text is truly optional.
 
  * Tests that are known to pass with LSan are now marked as such.
 
@@ -122,7 +128,7 @@ Performance, Internal Implementation, Development Support etc.
    filtering the uninteresting output.
 
  * Unused parameters to functions are marked as such, and/or removed,
-   in order to bring us closer to -Wunused-parameter clean.
+   in order to bring us closer to "-Wunused-parameter" clean.
 
  * The code to keep track of existing packs in the repository while
    repacking has been refactored.
@@ -161,10 +167,12 @@ Fixes since v2.42
    non-zero generation numbers has been updated.
 
  * "git diff -w --exit-code" with various options did not work
-   correctly, which is being addressed.
+   correctly, which has been corrected.
 
- * transfer.unpackLimit ought to be used as a fallback, but overrode
-   fetch.unpackLimit and receive.unpackLimit instead.
+ * The "transfer.unpackLimit" configuration variable ought to be used
+   as a fallback, but overrode the more specific "fetch.unpackLimit"
+   and "receive.unpackLimit" configuration variables by mistake, which
+   has been corrected.
 
  * The use of API between two calls to require_clean_work_tree() from
    the sequencer code has been cleaned up for consistency.
@@ -172,22 +180,23 @@ Fixes since v2.42
  * "git diff --no-such-option" and other corner cases around the exit
    status of the "diff" command have been corrected.
 
- * "git for-each-ref --sort='contents:size'" sorts the refs according
+ * "git for-each-ref --sort='contents:size'" sorted the refs according
    to size numerically, giving a ref that points at a blob twelve-byte
-   (12) long before showing a blob hundred-byte (100) long.
+   (12) long before showing a blob hundred-byte (100) long, which has
+   been corrected.
 
  * We now limit the depth of the tree objects and maximum length of
    pathnames recorded in tree objects.
    (merge 4d5693ba05 jk/tree-name-and-depth-limit later to maint).
 
- * Various fixes to the behavior of "rebase -i" when the command got
-   interrupted by conflicting changes.
+ * Various fixes to the behavior of "rebase -i", when the command got
+   interrupted by conflicting changes, have been made.
 
  * References from a description of the `--patch` option in various
    manual pages have been simplified and improved.
 
  * "git grep -e A --no-or -e B" is accepted, even though the negation
-   of "or" did not mean anything, which has been tightened.
+   of the "--or" option did not mean anything, which has been tightened.
 
  * The completion script (in contrib/) has been taught to treat the
    "-t" option to "git checkout" and "git switch" just like the
@@ -196,23 +205,24 @@ Fixes since v2.42
  * "git diff --no-index -R <(one) <(two)" did not work correctly,
    which has been corrected.
 
- * Update "git maintenance" timers' implementation based on systemd
-   timers to work with WSL.
+ * "git maintenance" timers' implementation has been updated, based on
+   systemd timers, to work with WSL.
 
  * "git diff --cached" codepath did not fill the necessary stat
    information for a file when fsmonitor knows it is clean and ended
-   up behaving as if it is not clean, which has been corrected.
+   up behaving as if it were not clean, which has been corrected.
 
- * Clarify how "alias.foo = : git cmd ; aliased-command-string" should be
-   spelled with necessary whitespace around punctuation marks to
-   work.
+ * How "alias.foo = : git cmd ; aliased-command-string" should be
+   spelled with necessary whitespace around punctuation marks to work
+   has been more clearly documented (but this will be moot with newer
+   versions of Git where the parsing rules have been improved).
 
  * HTTP Header redaction code has been adjusted for a newer version of
    cURL library that shows its traces differently from earlier
    versions.
 
- * An error message given by "git send-email" when given a malformed
-   address did not give correct information, which has been corrected.
+ * An error message given by "git send-email", when given a malformed
+   address, did not show the offending address, which has been corrected.
 
  * UBSan options were not propagated through the test framework to git
    run via the httpd, unlike ASan options, which has been corrected.
@@ -229,9 +239,9 @@ Fixes since v2.42
  * Update mailmap entry for Derrick.
    (merge 6e5457d8c7 ds/mailmap-entry-update later to maint).
 
- * In .gitmodules files, submodules are keyed by their names, and the
-   path to the submodule whose name is $name is specified by the
-   submodule.$name.path variable.  There were a few codepaths that
+ * In the ".gitmodules" files, submodules are keyed by their names,
+   and the path to the submodule whose name is $name is specified by
+   the submodule.$name.path variable.  There were a few codepaths that
    mixed the name and path up when consulting the submodule database,
    which have been corrected.  It took long for these bugs to be found
    as the name of a submodule initially is the same as its path, and
@@ -244,8 +254,8 @@ Fixes since v2.42
    corrected.
    (merge 4adceb5a29 ar/diff-index-merge-base-fix later to maint).
 
- * Fix "git merge-tree" to stop segfaulting when the --attr-source
-   option is used.
+ * "git merge-tree" used to segfault when the "--attr-source"
+   option is used, which has been corrected.
    (merge e95bafc52f jc/merge-ort-attr-index-fix later to maint).
 
  * Unlike "git log --pretty=%D", "git log --pretty="%(decorate)" did
@@ -276,7 +286,6 @@ Fixes since v2.42
    the top level of the working tree; it has been corrected to read
    "sub/patterns" instead.
 
-
  * "git reflog expire --single-worktree" has been broken for the past
    20 months or so, which has been corrected.
 
@@ -300,6 +309,10 @@ Fixes since v2.42
    non-commit objects, which has been corrected.
    (merge 7b3c8e9f38 tb/rev-list-unpacked-fix later to maint).
 
+ * "To dereference" and "to peel" were sometimes used in in-code
+   comments and documentation but without description in the glossary.
+   (merge 893dce2ffb vd/glossary-dereference-peel later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge c2c349a15c xz/commit-title-soft-limit-doc later to maint).
    (merge 1bd809938a tb/format-pack-doc-update later to maint).
@@ -307,3 +320,4 @@ Fixes since v2.42
    (merge 3ca86adc2d la/strvec-header-fix later to maint).
    (merge 6789275d37 jc/test-i18ngrep later to maint).
    (merge 9972cd6004 ps/leakfixes later to maint).
+   (merge 46edab516b tz/send-email-helpfix later to maint).
