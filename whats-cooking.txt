@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #07; Fri, 17)
-X-master-at: cfb8a6e9a93adbe81efca66e6110c9b4d2e57169
-X-next-at: f09e533e43c38d90657504164412796b01e6a322
+Subject: What's cooking in git.git (Nov 2023, #08; Mon, 20)
+X-master-at: 564d0252ca632e0264ed670534a51d18a689ef5d
+X-next-at: 3155946c3afb0941e6e01302cf86e4489bffc968
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #07; Fri, 17)
+What's cooking in git.git (Nov 2023, #08; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,7 +17,9 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.43-rc2 has been tagged.
+Git 2.43 has been tagged.  With many folks are away from the
+keyboard for vacation, I would expect it will be a very slow week.
+I'll be taking a few weeks off, too, so please enjoy this release ;-).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,54 +50,43 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* jw/builtin-objectmode-attr (2023-11-16) 2 commits
- - SQUASH???
- - attr: add builtin objectmode values support
-
- The builtin_objectmode attribute is populated for each path
- without adding anything in .gitattributes files, which would be
- useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
- to limit to executables.
- source: <20231116054437.2343549-1-jojwang@google.com>
-
-
-* ps/ref-deletion-updates (2023-11-17) 4 commits
- - refs: remove `delete_refs` callback from backends
- - refs: deduplicate code to delete references
- - refs/files: use transactions to delete references
- - t5510: ensure that the packed-refs file needs locking
-
- Simplify API implementation to delete references by eliminating
- duplication.
-
- Will merge to 'next'.
- source: <cover.1699951815.git.ps@pks.im>
-
+[Graduated to 'master']
 
 * tz/send-email-helpfix (2023-11-16) 1 commit
   (merged to 'next' on 2023-11-17 at 8422271795)
  + send-email: remove stray characters from usage
 
  Typoes in "git send-email -h" have been corrected.
-
- Will merge to 'master'.
  source: <20231115173952.339303-3-tmz@pobox.com>
 
 
-* tz/send-email-negatable-options (2023-11-17) 2 commits
-  (merged to 'next' on 2023-11-17 at f09e533e43)
- + send-email: avoid duplicate specification warnings
- + perl: bump the required Perl version to 5.8.1 from 5.8.0
+* vd/glossary-dereference-peel (2023-11-14) 1 commit
+  (merged to 'next' on 2023-11-17 at bac3ab0c0b)
+ + glossary: add definitions for dereference & peel
 
- Newer versions of Getopt::Long started giving warnings against our
- (ab)use of it in "git send-email".  Bump the minimum version
- requirement for Perl to 5.8.1 (from September 2002) to allow
- simplifying our implementation.
+ "To dereference" and "to peel" were sometimes used in in-code
+ comments and documentation but without description in the glossary.
+ source: <pull.1610.v2.git.1699917471769.gitgitgadget@gmail.com>
 
- Will cook in 'next'.
- source: <20231116193014.470420-1-tmz@pobox.com>
+--------------------------------------------------
+[New Topics]
+
+* ac/fuzz-show-date (2023-11-20) 1 commit
+ - fuzz: add new oss-fuzz fuzzer for date.c / date.h
+
+ Subject approxidate() and show_date() macchinery to OSS-Fuzz.
+
+ Will merge to 'next'?
+ source: <pull.1612.v4.git.1700243267653.gitgitgadget@gmail.com>
+
+
+* js/packfile-h-typofix (2023-11-20) 1 commit
+ - packfile.c: fix a typo in `each_file_in_pack_dir_fn()`'s declaration
+
+ Typofix.
+
+ Will merge to 'next'.
+ source: <pull.1614.git.1700226915859.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -141,6 +132,44 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* jw/builtin-objectmode-attr (2023-11-16) 2 commits
+ - SQUASH???
+ - attr: add builtin objectmode values support
+
+ The builtin_objectmode attribute is populated for each path
+ without adding anything in .gitattributes files, which would be
+ useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
+ to limit to executables.
+ source: <20231116054437.2343549-1-jojwang@google.com>
+
+
+* ps/ref-deletion-updates (2023-11-17) 4 commits
+ - refs: remove `delete_refs` callback from backends
+ - refs: deduplicate code to delete references
+ - refs/files: use transactions to delete references
+ - t5510: ensure that the packed-refs file needs locking
+
+ Simplify API implementation to delete references by eliminating
+ duplication.
+
+ Will merge to 'next'.
+ source: <cover.1699951815.git.ps@pks.im>
+
+
+* tz/send-email-negatable-options (2023-11-17) 2 commits
+  (merged to 'next' on 2023-11-17 at f09e533e43)
+ + send-email: avoid duplicate specification warnings
+ + perl: bump the required Perl version to 5.8.1 from 5.8.0
+
+ Newer versions of Getopt::Long started giving warnings against our
+ (ab)use of it in "git send-email".  Bump the minimum version
+ requirement for Perl to 5.8.1 (from September 2002) to allow
+ simplifying our implementation.
+
+ Will cook in 'next'.
+ source: <20231116193014.470420-1-tmz@pobox.com>
+
 
 * js/ci-discard-prove-state (2023-11-14) 1 commit
   (merged to 'next' on 2023-11-14 at fade3ba143)
@@ -207,17 +236,6 @@ Release tarballs are available at:
 
  Will cook in 'next'.
  source: <cover.1699609940.git.ps@pks.im>
-
-
-* vd/glossary-dereference-peel (2023-11-14) 1 commit
-  (merged to 'next' on 2023-11-17 at bac3ab0c0b)
- + glossary: add definitions for dereference & peel
-
- "To dereference" and "to peel" were sometimes used in in-code
- comments and documentation but without description in the glossary.
-
- Will merge to 'master'.
- source: <pull.1610.v2.git.1699917471769.gitgitgadget@gmail.com>
 
 
 * ak/rebase-autosquash (2023-11-16) 3 commits
