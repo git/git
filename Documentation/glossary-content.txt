@@ -98,9 +98,8 @@ to point at the new commit.
 	revision.
 
 [[def_commit-ish]]commit-ish (also committish)::
-	A <<def_commit_object,commit object>> or an
-	<<def_object,object>> that can be recursively dereferenced to
-	a commit object.
+	A <<def_commit_object,commit object>> or an <<def_object,object>> that
+	can be recursively <<def_dereference,dereferenced>> to a commit object.
 	The following are all commit-ishes:
 	a commit object,
 	a <<def_tag_object,tag object>> that points to a commit
@@ -124,6 +123,25 @@ to point at the new commit.
 	<<def_reachable,reachable>> even from other unreachable objects; a
 	dangling object has no references to it from any
 	reference or <<def_object,object>> in the <<def_repository,repository>>.
+
+[[def_dereference]]dereference::
+	Referring to a <<def_symref,symbolic ref>>: the action of accessing the
+	<<def_ref,reference>> pointed at by a symbolic ref. Recursive
+	dereferencing involves repeating the aforementioned process on the
+	resulting ref until a non-symbolic reference is found.
++
+Referring to a <<def_tag_object,tag object>>: the action of accessing the
+<<def_object,object>> a tag points at. Tags are recursively dereferenced by
+repeating the operation on the result object until the result has either a
+specified <<def_object_type,object type>> (where applicable) or any non-"tag"
+object type. A synonym for "recursive dereference" in the context of tags is
+"<<def_peel,peel>>".
++
+Referring to a <<def_commit_object,commit object>>: the action of accessing
+the commit's tree object. Commits cannot be dereferenced recursively.
++
+Unless otherwise specified, "dereferencing" as it used in the context of Git
+commands or protocols is implicitly recursive.
 
 [[def_detached_HEAD]]detached HEAD::
 	Normally the <<def_HEAD,HEAD>> stores the name of a
@@ -444,6 +462,10 @@ exclude;;
 	of the logical predecessor(s) in the line of development, i.e. its
 	parents.
 
+[[def_peel]]peel::
+	The action of recursively <<def_dereference,dereferencing>> a
+	<<def_tag_object,tag object>>.
+
 [[def_pickaxe]]pickaxe::
 	The term <<def_pickaxe,pickaxe>> refers to an option to the diffcore
 	routines that help select changes that add or delete a given text
@@ -620,12 +642,11 @@ The most notable example is `HEAD`.
 	copies of) commit objects of the contained submodules.
 
 [[def_symref]]symref::
-	Symbolic reference: instead of containing the <<def_SHA1,SHA-1>>
-	id itself, it is of the format 'ref: refs/some/thing' and when
-	referenced, it recursively dereferences to this reference.
-	'<<def_HEAD,HEAD>>' is a prime example of a symref. Symbolic
-	references are manipulated with the linkgit:git-symbolic-ref[1]
-	command.
+	Symbolic reference: instead of containing the <<def_SHA1,SHA-1>> id
+	itself, it is of the format 'ref: refs/some/thing' and when referenced,
+	it recursively <<def_dereference,dereferences>> to this reference.
+	'<<def_HEAD,HEAD>>' is a prime example of a symref. Symbolic references
+	are manipulated with the linkgit:git-symbolic-ref[1] command.
 
 [[def_tag]]tag::
 	A <<def_ref,ref>> under `refs/tags/` namespace that points to an
@@ -661,11 +682,11 @@ The most notable example is `HEAD`.
 	<<def_tree,tree>> is equivalent to a <<def_directory,directory>>.
 
 [[def_tree-ish]]tree-ish (also treeish)::
-	A <<def_tree_object,tree object>> or an <<def_object,object>>
-	that can be recursively dereferenced to a tree object.
-	Dereferencing a <<def_commit_object,commit object>> yields the
-	tree object corresponding to the <<def_revision,revision>>'s
-	top <<def_directory,directory>>.
+	A <<def_tree_object,tree object>> or an <<def_object,object>> that can
+	be recursively <<def_dereference,dereferenced>> to a tree object.
+	Dereferencing a <<def_commit_object,commit object>> yields the tree
+	object corresponding to the <<def_revision,revision>>'s top
+	<<def_directory,directory>>.
 	The following are all tree-ishes:
 	a <<def_commit-ish,commit-ish>>,
 	a tree object,
