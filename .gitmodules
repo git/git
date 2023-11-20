@@ -2,3 +2,6 @@
 	path = sha1collisiondetection
 	url = https://github.com/cr-marcstevens/sha1collisiondetection.git
 	branch = master
+[submodule "zlib"]
+	path = zlib
+	url = https://github.com/cielavenir/zlib.git
