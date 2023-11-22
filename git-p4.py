@@ -3466,7 +3466,7 @@ class P4Sync(Command, P4UserMap):
         if not files and not allow_empty:
             print('Ignoring revision {0} as it would produce an empty commit.'
                 .format(details['change']))
-            return
+            return False
 
         self.gitStream.write("commit %s\n" % branch)
         self.gitStream.write("mark :%s\n" % details["change"])
@@ -3532,6 +3532,8 @@ class P4Sync(Command, P4UserMap):
                 if not self.silent:
                     print("Tag %s does not match with change %s: file count is different."
                            % (labelDetails["label"], change))
+
+        return True
 
     def getLabels(self):
         """Build a dictionary of changelists and labels, for "detect-labels"
@@ -3876,10 +3878,12 @@ class P4Sync(Command, P4UserMap):
                             self.commit(description, filesForCommit, branch, parent)
                 else:
                     files = self.extractFilesFromCommit(description)
-                    self.commit(description, files, self.branch,
+                    haveCommitted = self.commit(description, files, self.branch,
                                 self.initialParent)
                     # only needed once, to connect to the previous commit
-                    self.initialParent = ""
+                    if haveCommitted:
+                        self.initialParent = ""
+
             except IOError:
                 print(self.gitError.read())
                 sys.exit(1)
