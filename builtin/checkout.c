@@ -1600,6 +1600,13 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (new_branch_info->path && !opts->force_detach && !opts->new_branch)
 		die_if_switching_to_a_branch_in_use(opts, new_branch_info->path);
 
+	/* "git checkout -B <branch>" */
+	if (opts->new_branch_force) {
+		char *full_ref = xstrfmt("refs/heads/%s", opts->new_branch);
+		die_if_switching_to_a_branch_in_use(opts, full_ref);
+		free(full_ref);
+	}
+
 	if (!new_branch_info->commit && opts->new_branch) {
 		struct object_id rev;
 		int flag;
