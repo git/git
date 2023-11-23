@@ -55,7 +55,7 @@ do
 		in="[41;37m" out="[m"
 		installed="	none"
 	else
-		installed=$(git describe $version)
+		installed=$(git describe --long $version)
 		case "$dirty" in
 		'')
 			;;
@@ -65,7 +65,7 @@ do
 		in="[41;37m" out="[m" installed="	$installed"
 	fi
 	output="$output${output:+$LF}"
-	output="$output$in$v$out$installed	$(git describe refs/heads/$v)"
+	output="$output$in$v$out$installed	$(git describe --long refs/heads/$v)"
 done
 
 echo "$output"
