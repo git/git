@@ -3,7 +3,7 @@
 # (Copied from gitk, commit fd8ccbec4f0161)
 
 # This list of encoding names and aliases is distilled from
-# http://www.iana.org/assignments/character-sets.
+# https://www.iana.org/assignments/character-sets.
 # Not all of them are supported by Tcl.
 set encoding_aliases {
     { ANSI_X3.4-1968 iso-ir-6 ANSI_X3.4-1986 ISO_646.irv:1991 ASCII

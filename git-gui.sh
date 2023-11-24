@@ -24,7 +24,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, see <http://www.gnu.org/licenses/>.}]
+along with this program; if not, see <https://www.gnu.org/licenses/>.}]
 
 ######################################################################
 ##
@@ -3052,7 +3052,7 @@ if {$doc_path ne {}} {
 if {[file isfile $doc_path]} {
 	set doc_url "file:$doc_path"
 } else {
-	set doc_url {http://www.kernel.org/pub/software/scm/git/docs/}
+	set doc_url {https://www.kernel.org/pub/software/scm/git/docs/}
 }
 
 proc start_browser {url} {
