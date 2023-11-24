@@ -917,9 +917,9 @@ for full details.
 	avoid issues with stale commit-graphs that contain references to
 	already-deleted commits, but comes with a performance penalty.
 +
-The default is "true", which enables the aforementioned behavior.
-Setting this to "false" disables the existence check. This can lead to
-a performance improvement at the cost of consistency.
+The default is "false", which disables the aforementioned behavior.
+Setting this to "true" enables the existence check so that stale commits
+will never be returned from the commit-graph at the cost of performance.
 
 `GIT_ALLOW_PROTOCOL`::
 	If set to a colon-separated list of protocols, behave as if
