@@ -137,7 +137,7 @@ function addCssRule(selector, style) {
  *   http://www.dustindiaz.com/getelementsbyclass/
  *   http://stackoverflow.com/questions/1818865/do-we-have-getelementsbyclassname-in-javascript
  *
- * See also http://ejohn.org/blog/getelementsbyclassname-speed-comparison/
+ * See also https://johnresig.com/blog/getelementsbyclassname-speed-comparison/
  *
  * @param {String} class: name of _single_ class to find
  * @param {String} [taghint] limit search to given tags

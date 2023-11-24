@@ -63,7 +63,7 @@ users will fare this time.
 
    Please refer to:
 
-   http://git.or.cz/gitwiki/GitFaq#non-bare
+   https://archive.kernel.org/oldwiki/git.wiki.kernel.org/index.php/GitFaq.html#non-bare
    https://lore.kernel.org/git/7vbptlsuyv.fsf@gitster.siamese.dyndns.org/
 
    for more details on the reason why this change is needed and the
