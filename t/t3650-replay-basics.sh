@@ -52,7 +52,7 @@ test_expect_success 'setup bare' '
 '
 
 test_expect_success 'using replay to rebase two branches, one on top of other' '
-	git replay --onto main topic1 topic2 >result &&
+	git replay --onto main topic1..topic2 >result &&
 
 	test_line_count = 1 result &&
 
@@ -68,8 +68,16 @@ test_expect_success 'using replay to rebase two branches, one on top of other' '
 '
 
 test_expect_success 'using replay on bare repo to rebase two branches, one on top of other' '
-	git -C bare replay --onto main topic1 topic2 >result-bare &&
+	git -C bare replay --onto main topic1..topic2 >result-bare &&
 	test_cmp expect result-bare
+'
+
+test_expect_success 'using replay to rebase with a conflict' '
+	test_expect_code 1 git replay --onto topic1 B..conflict
+'
+
+test_expect_success 'using replay on bare repo to rebase with a conflict' '
+	test_expect_code 1 git -C bare replay --onto topic1 B..conflict
 '
 
 test_done
