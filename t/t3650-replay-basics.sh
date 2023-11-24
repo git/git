@@ -47,12 +47,29 @@ test_expect_success 'setup' '
 	test_commit C.conflict C.t conflict
 '
 
+test_expect_success 'setup bare' '
+	git clone --bare . bare
+'
+
 test_expect_success 'using replay to rebase two branches, one on top of other' '
 	git replay --onto main topic1 topic2 >result &&
 
+	test_line_count = 1 result &&
+
 	git log --format=%s $(cut -f 3 -d " " result) >actual &&
 	test_write_lines E D M L B A >expect &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	printf "update refs/heads/topic2 " >expect &&
+	printf "%s " $(cut -f 3 -d " " result) >>expect &&
+	git rev-parse topic2 >>expect &&
+
+	test_cmp expect result
+'
+
+test_expect_success 'using replay on bare repo to rebase two branches, one on top of other' '
+	git -C bare replay --onto main topic1 topic2 >result-bare &&
+	test_cmp expect result-bare
 '
 
 test_done

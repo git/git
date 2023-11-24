@@ -15,7 +15,10 @@ DESCRIPTION
 -----------
 
 Takes a range of commits, specified by <oldbase> and <branch>, and
-replays them onto a new location (see `--onto` option below).
+replays them onto a new location (see `--onto` option below). Leaves
+the working tree and the index untouched, and updates no references.
+The output of this command is meant to be used as input to
+`git update-ref --stdin`, which would update the relevant branches.
 
 THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 
