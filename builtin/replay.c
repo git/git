@@ -173,20 +173,54 @@ int cmd_replay(int argc, const char **argv, const char *prefix)
 
 	repo_init_revisions(the_repository, &revs, prefix);
 
-	revs.verbose_header = 1;
-	revs.max_parents = 1;
-	revs.cherry_mark = 1;
-	revs.limited = 1;
+	strvec_pushl(&rev_walk_args, "", argv[2], "--not", argv[1], NULL);
+
+	/*
+	 * Set desired values for rev walking options here. If they
+	 * are changed by some user specified option in setup_revisions()
+	 * below, we will detect that below and then warn.
+	 *
+	 * TODO: In the future we might want to either die(), or allow
+	 * some options changing these values if we think they could
+	 * be useful.
+	 */
 	revs.reverse = 1;
-	revs.right_only = 1;
 	revs.sort_order = REV_SORT_IN_GRAPH_ORDER;
 	revs.topo_order = 1;
-
-	strvec_pushl(&rev_walk_args, "", argv[2], "--not", argv[1], NULL);
+	revs.simplify_history = 0;
 
 	if (setup_revisions(rev_walk_args.nr, rev_walk_args.v, &revs, NULL) > 1) {
 		ret = error(_("unhandled options"));
 		goto cleanup;
+	}
+
+	/*
+	 * Detect and warn if we override some user specified rev
+	 * walking options.
+	 */
+	if (revs.reverse != 1) {
+		warning(_("some rev walking options will be overridden as "
+			  "'%s' bit in 'struct rev_info' will be forced"),
+			"reverse");
+		revs.reverse = 1;
+	}
+	if (revs.sort_order != REV_SORT_IN_GRAPH_ORDER) {
+		warning(_("some rev walking options will be overridden as "
+			  "'%s' bit in 'struct rev_info' will be forced"),
+			"sort_order");
+		revs.sort_order = REV_SORT_IN_GRAPH_ORDER;
+	}
+	if (revs.topo_order != 1) {
+		warning(_("some rev walking options will be overridden as "
+			  "'%s' bit in 'struct rev_info' will be forced"),
+			"topo_order");
+		revs.topo_order = 1;
+	}
+	if (revs.simplify_history != 0) {
+		warning(_("some rev walking options will be overridden as "
+			  "'%s' bit in 'struct rev_info' will be forced"),
+			"simplify_history");
+		revs.simplify_history = 0;
 	}
 
 	strvec_clear(&rev_walk_args);
