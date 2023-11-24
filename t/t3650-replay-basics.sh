@@ -48,8 +48,6 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'using replay to rebase two branches, one on top of other' '
-	git switch main &&
-
 	git replay --onto main topic1 topic2 >result &&
 
 	git log --format=%s $(cut -f 3 -d " " result) >actual &&
