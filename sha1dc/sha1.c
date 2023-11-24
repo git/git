@@ -88,7 +88,7 @@
 /*
  * Should define Big Endian for a whitelist of known processors. See
  * https://sourceforge.net/p/predef/wiki/Endianness/ and
- * http://www.oracle.com/technetwork/server-storage/solaris/portingtosolaris-138514.html
+ * https://web.archive.org/web/20140421151132/http://www.perforce.com/perforce/doc.current/manuals/p4sag/chapter.superuser.html
  */
 #define SHA1DC_BIGENDIAN
 
