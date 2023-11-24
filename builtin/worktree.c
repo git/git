@@ -49,14 +49,14 @@
 	_("No possible source branch, inferring '--orphan'")
 
 #define WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT \
-	_("If you meant to create a worktree containing a new orphan branch\n" \
+	_("If you meant to create a worktree containing a new unborn branch\n" \
 	"(branch with no commits) for this repository, you can do so\n" \
 	"using the --orphan flag:\n" \
 	"\n" \
 	"    git worktree add --orphan -b %s %s\n")
 
 #define WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT \
-	_("If you meant to create a worktree containing a new orphan branch\n" \
+	_("If you meant to create a worktree containing a new unborn branch\n" \
 	"(branch with no commits) for this repository, you can do so\n" \
 	"using the --orphan flag:\n" \
 	"\n" \
@@ -784,7 +784,7 @@ static int add(int ac, const char **av, const char *prefix)
 			   N_("create a new branch")),
 		OPT_STRING('B', NULL, &new_branch_force, N_("branch"),
 			   N_("create or reset a branch")),
-		OPT_BOOL(0, "orphan", &opts.orphan, N_("create unborn/orphaned branch")),
+		OPT_BOOL(0, "orphan", &opts.orphan, N_("create unborn branch")),
 		OPT_BOOL('d', "detach", &opts.detach, N_("detach HEAD at named commit")),
 		OPT_BOOL(0, "checkout", &opts.checkout, N_("populate the new working tree")),
 		OPT_BOOL(0, "lock", &keep_locked, N_("keep the new working tree locked")),
