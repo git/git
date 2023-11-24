@@ -221,7 +221,7 @@ Problems related to tags:
 If you suspect that any of these issues may apply to the repository you
 want to import, consider using cvs2git:
 
-* cvs2git (part of cvs2svn), `http://subversion.apache.org/`
+* cvs2git (part of cvs2svn), `https://subversion.apache.org/`
 
 GIT
 ---

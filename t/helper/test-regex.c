@@ -30,7 +30,7 @@ static int test_regex_bug(void)
 	if (regexec(&r, str, 1, m, 0))
 		die("no match of pattern '%s' to string '%s'", pat, str);
 
-	/* http://sourceware.org/bugzilla/show_bug.cgi?id=3957  */
+	/* https://sourceware.org/bugzilla/show_bug.cgi?id=3957 */
 	if (m[0].rm_so == 3) /* matches '\n' when it should not */
 		die("regex bug confirmed: re-build git with NO_REGEX=1");
 

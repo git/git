@@ -122,9 +122,9 @@ our $favicon = "++GITWEB_FAVICON++";
 our $javascript = "++GITWEB_JS++";
 
 # URI and label (title) of GIT logo link
-#our $logo_url = "http://www.kernel.org/pub/software/scm/git/docs/";
+#our $logo_url = "https://www.kernel.org/pub/software/scm/git/docs/";
 #our $logo_label = "git documentation";
-our $logo_url = "http://git-scm.com/";
+our $logo_url = "https://git-scm.com/";
 our $logo_label = "git homepage";
 
 # source of projects list

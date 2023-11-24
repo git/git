@@ -130,7 +130,7 @@ void graph_setup_line_prefix(struct diff_options *diffopt);
  * This functions must be called BEFORE graph_init() is called.
  *
  * NOTE: This function isn't used in Git outside graph.c but it is used
- * by CGit (http://git.zx2c4.com/cgit/) to use HTML for colors.
+ * by CGit (https://git.zx2c4.com/cgit/) to use HTML for colors.
  */
 void graph_set_column_colors(const char **colors, unsigned short colors_max);
 
@@ -196,7 +196,7 @@ int graph_is_commit_finished(struct git_graph const *graph);
  * graph_update() is called.
  *
  * NOTE: This function isn't used in Git outside graph.c but it is used
- * by CGit (http://git.zx2c4.com/cgit/) to wrap HTML around graph lines.
+ * by CGit (https://git.zx2c4.com/cgit/) to wrap HTML around graph lines.
  */
 int graph_next_line(struct git_graph *graph, struct strbuf *sb);
 

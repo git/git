@@ -42,7 +42,7 @@ string translations (localization l10) should see [po/README.md][]
 To subscribe to the list, send an email with just "subscribe git" in
 the body to majordomo@vger.kernel.org (not the Git list). The mailing
 list archives are available at <https://lore.kernel.org/git/>,
-<http://marc.info/?l=git> and other archival sites.
+<https://marc.info/?l=git> and other archival sites.
 
 Issues which are security relevant should be disclosed privately to
 the Git Security mailing list <git-security@googlegroups.com>.
