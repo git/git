@@ -577,7 +577,8 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 		if (o.mode == MODE_TRIVIAL)
 			die(_("--trivial-merge is incompatible with all other options"));
 		if (merge_base)
-			die(_("--merge-base is incompatible with --stdin"));
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--merge-base", "--stdin");
 		line_termination = '\0';
 		while (strbuf_getline_lf(&buf, stdin) != EOF) {
 			struct strbuf **split;

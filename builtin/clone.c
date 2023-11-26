@@ -965,7 +965,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	}
 
 	if (bundle_uri && deepen)
-		die(_("--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-exclude"));
+		die(_("options '%s' and '%s' cannot be used together"),
+		    "--bundle-uri",
+		    "--depth/--shallow-since/--shallow-exclude");
 
 	repo_name = argv[0];
 
