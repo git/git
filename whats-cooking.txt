@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #08; Mon, 20)
+Subject: What's cooking in git.git (Nov 2023, #09; Mon, 27)
 X-master-at: 564d0252ca632e0264ed670534a51d18a689ef5d
 X-next-at: 3155946c3afb0941e6e01302cf86e4489bffc968
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #08; Mon, 20)
+What's cooking in git.git (Nov 2023, #09; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,10 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-Git 2.43 has been tagged.  With many folks are away from the
-keyboard for vacation, I would expect it will be a very slow week.
-I'll be taking a few weeks off, too, so please enjoy this release ;-).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,43 +46,113 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* tz/send-email-helpfix (2023-11-16) 1 commit
-  (merged to 'next' on 2023-11-17 at 8422271795)
- + send-email: remove stray characters from usage
-
- Typoes in "git send-email -h" have been corrected.
- source: <20231115173952.339303-3-tmz@pobox.com>
-
-
-* vd/glossary-dereference-peel (2023-11-14) 1 commit
-  (merged to 'next' on 2023-11-17 at bac3ab0c0b)
- + glossary: add definitions for dereference & peel
-
- "To dereference" and "to peel" were sometimes used in in-code
- comments and documentation but without description in the glossary.
- source: <pull.1610.v2.git.1699917471769.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* ac/fuzz-show-date (2023-11-20) 1 commit
- - fuzz: add new oss-fuzz fuzzer for date.c / date.h
+* ad/merge-file-diff-algo (2023-11-22) 1 commit
+ - merge-file: add --diff-algorithm option
 
- Subject approxidate() and show_date() macchinery to OSS-Fuzz.
+ "git merge-file" learned to take the "--diff-algorithm" option to
+ use algorithm different from the default "myers" diff.
 
  Will merge to 'next'?
- source: <pull.1612.v4.git.1700243267653.gitgitgadget@gmail.com>
+ source: <pull.1606.v2.git.git.1700507932937.gitgitgadget@gmail.com>
 
 
-* js/packfile-h-typofix (2023-11-20) 1 commit
- - packfile.c: fix a typo in `each_file_in_pack_dir_fn()`'s declaration
+* ak/p4-initial-empty-commits (2023-11-23) 1 commit
+ - git-p4: fix fast import when empty commit is first
 
- Typofix.
+ Expecting a reroll.
+ source: <pull.1609.git.git.1700639764041.gitgitgadget@gmail.com>
+
+
+* jc/checkout-B-branch-in-use (2023-11-23) 2 commits
+ - checkout: forbid "-B <branch>" from touching a branch used elsewhere
+ - checkout: refactor die_if_checked_out() caller
+
+ "git checkout -B <branch> [<start-point>]" allowed a branch that is
+ in use in another worktree to be updated and checked out, which
+ might be a bit unexpected.  The rule has been tightened, which is a
+ breaking change.  "--ignore-other-worktrees" option is required to
+ unbreak you, if you are used to the current behaviour that "-B"
+ overrides the safety.
+
+ Needs review and documentation updates.
+ source: <xmqqjzq9cl70.fsf@gitster.g>
+
+
+* jh/trace2-redact-auth (2023-11-23) 4 commits
+ - t0212: test URL redacting in EVENT format
+ - t0211: test URL redacting in PERF format
+ - trace2: redact passwords from https:// URLs by default
+ - trace2: fix signature of trace2_def_param() macro
+
+ trace2 streams used to record the URLs that potentially embed
+ authentication material, which has been corrected.
 
  Will merge to 'next'.
- source: <pull.1614.git.1700226915859.gitgitgadget@gmail.com>
+ source: <pull.1616.git.1700680717.gitgitgadget@gmail.com>
+
+
+* ps/commit-graph-less-paranoid (2023-11-26) 1 commit
+ - commit-graph: disable GIT_COMMIT_GRAPH_PARANOIA by default
+
+ Earlier we stopped relying on commit-graph that (still) records
+ information about commits that are lost from the object store,
+ which has negative performance implications.  The default has been
+ flipped to disable this pessimization.
+
+ Will merge to 'next'.
+ source: <17e08289cd59d20de0de9b4e18f5e6bf77987351.1700823746.git.ps@pks.im>
+
+
+* ps/reftable-fixes (2023-11-22) 8 commits
+ - reftable/stack: fix stale lock when dying
+ - reftable/merged: reuse buffer to compute record keys
+ - reftable/stack: reuse buffers when reloading stack
+ - reftable/stack: perform auto-compaction with transactional interface
+ - reftable/stack: verify that `reftable_stack_add()` uses auto-compaction
+ - reftable: handle interrupted writes
+ - reftable: handle interrupted reads
+ - reftable: wrap EXPECT macros in do/while
+
+ Bunch of small fix-ups to the reftable code.
+
+ Needs review.
+ source: <cover.1700549493.git.ps@pks.im>
+
+
+* en/complete-sparse-checkout (2023-11-27) 4 commits
+ - completion: avoid user confusion in non-cone mode
+ - completion: avoid misleading completions in cone mode
+ - completion: fix logic for determining whether cone mode is active
+ - completion: squelch stray errors in sparse-checkout completion
+
+ source: <pull.1349.v2.git.1700985086.gitgitgadget@gmail.com>
+
+
+* jb/reflog-expire-delete-dry-run-options (2023-11-26) 1 commit
+ - builtin/reflog.c: fix dry-run option short name
+
+ source: <20231126000514.85509-1-josh@brob.st>
+
+
+* jc/orphan-unborn (2023-11-24) 2 commits
+ - orphan/unborn: fix use of 'orphan' in end-user facing messages
+ - orphan/unborn: add to the glossary and use them consistently
+
+ source: <xmqq4jhb977x.fsf@gitster.g>
+
+
+* rs/column-leakfix (2023-11-27) 1 commit
+ - column: release strbuf and string_list after use
+
+ source: <f087137d-a5aa-487e-a1cb-0ad7117b38ed@web.de>
+
+
+* rs/i18n-cannot-be-used-together (2023-11-27) 1 commit
+ - i18n: factorize even more 'incompatible options' messages
+
+ source: <e6eb12e4-bb63-473c-9c2f-965a4d5981ad@web.de>
 
 --------------------------------------------------
 [Stalled]
@@ -133,6 +199,24 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ac/fuzz-show-date (2023-11-20) 1 commit
+ - fuzz: add new oss-fuzz fuzzer for date.c / date.h
+
+ Subject approxidate() and show_date() macchinery to OSS-Fuzz.
+
+ Will merge to 'next'?
+ source: <pull.1612.v4.git.1700243267653.gitgitgadget@gmail.com>
+
+
+* js/packfile-h-typofix (2023-11-20) 1 commit
+ - packfile.c: fix a typo in `each_file_in_pack_dir_fn()`'s declaration
+
+ Typofix.
+
+ Will merge to 'next'.
+ source: <pull.1614.git.1700226915859.gitgitgadget@gmail.com>
+
+
 * jw/builtin-objectmode-attr (2023-11-16) 2 commits
  - SQUASH???
  - attr: add builtin objectmode values support
@@ -167,7 +251,7 @@ Release tarballs are available at:
  requirement for Perl to 5.8.1 (from September 2002) to allow
  simplifying our implementation.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20231116193014.470420-1-tmz@pobox.com>
 
 
@@ -179,7 +263,7 @@ Release tarballs are available at:
  The way CI testing used "prove" could lead to running the test
  suite twice needlessly, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1613.git.1699894837844.gitgitgadget@gmail.com>
 
 
@@ -198,7 +282,7 @@ Release tarballs are available at:
 
  Code clean-up for jk/chunk-bounds topic.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20231109070310.GA2697602@coredump.intra.peff.net>
 
 
@@ -210,7 +294,7 @@ Release tarballs are available at:
 
  Portability tweak.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1699596457.git.ps@pks.im>
 
 
@@ -221,7 +305,7 @@ Release tarballs are available at:
  "git format-patch --encode-email-headers" ignored the option when
  preparing the cover letter, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20231109111950.387219-1-contact@emersion.fr>
 
 
@@ -234,7 +318,7 @@ Release tarballs are available at:
 
  Test and shell scripts clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1699609940.git.ps@pks.im>
 
 
@@ -247,7 +331,7 @@ Release tarballs are available at:
  "git rebase --autosquash" is now enabled for non-interactive rebase,
  but it is still incompatible with the apply backend.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20231114214339.10925-1-andy.koppe@gmail.com>
 
 
@@ -269,7 +353,7 @@ Release tarballs are available at:
  in an unspecified order, to allow certain optimizations to take
  advantage of.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1609.v2.git.1699991638.gitgitgadget@gmail.com>
 
 
@@ -280,7 +364,7 @@ Release tarballs are available at:
  "git add" and "git stash" learned to support the ":(attr:...)"
  magic pathspec.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20231103163449.1578841-1-jojwang@google.com>
 
 
@@ -298,7 +382,7 @@ Release tarballs are available at:
 
  Add support for GitLab CI.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1699514143.git.ps@pks.im>
 
 
@@ -317,7 +401,7 @@ Release tarballs are available at:
 
  Update ref-related tests.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1698914571.git.ps@pks.im>
 
 
@@ -422,7 +506,7 @@ Release tarballs are available at:
  source: <cover.1697653929.git.me@ttaylorr.com>
 
 
-* cc/git-replay (2023-11-16) 14 commits
+* cc/git-replay (2023-11-26) 14 commits
  - replay: stop assuming replayed branches do not diverge
  - replay: add --contained to rebase contained branches
  - replay: add --advance or 'cherry-pick' mode
@@ -440,7 +524,10 @@ Release tarballs are available at:
 
  Introduce "git replay", a tool meant on the server side without
  working tree to recreate a history.
- source: <20231115143327.2441397-1-christian.couder@gmail.com>
+
+ Will merge to 'next'.
+ cf. <6bfe1541-54dd-ca6b-e930-94d3038060f1@gmx.de>
+ source: <20231124111044.3426007-1-christian.couder@gmail.com>
 
 
 * ak/color-decorate-symbols (2023-10-23) 7 commits
@@ -458,17 +545,17 @@ Release tarballs are available at:
  source: <20231023221143.72489-1-andy.koppe@gmail.com>
 
 
-* js/update-urls-in-doc-and-comment (2023-09-26) 4 commits
+* js/update-urls-in-doc-and-comment (2023-11-26) 4 commits
  - doc: refer to internet archive
  - doc: update links for andre-simon.de
- - doc: update links to current pages
  - doc: switch links to https
+ - doc: update links to current pages
 
  Stale URLs have been updated to their current counterparts (or
  archive.org) and HTTP links are replaced with working HTTPS links.
 
- Needs review.
- source: <pull.1589.v2.git.1695553041.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1589.v3.git.1700796916.gitgitgadget@gmail.com>
 
 
 * la/trailer-cleanups (2023-10-20) 3 commits
@@ -578,7 +665,7 @@ Release tarballs are available at:
 
  Process to add some form of low-level unit tests has started.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1699555664.git.steadmon@google.com>
 
 
@@ -595,7 +682,7 @@ Release tarballs are available at:
 
  Update the base topic to work with CMake builds.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1579.v3.git.1695640836.gitgitgadget@gmail.com>
 
 
