@@ -4,6 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "builtin.h"
+#include "abspath.h"
 #include "gettext.h"
 #include "hex.h"
 #include "repository.h"
@@ -812,14 +813,20 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	int from_stdin;
+	const char *filename = arg;
 	FILE *patterns;
 	int lno = 0;
 	struct strbuf sb = STRBUF_INIT;
 
 	BUG_ON_OPT_NEG(unset);
 
-	from_stdin = !strcmp(arg, "-");
-	patterns = from_stdin ? stdin : fopen(arg, "r");
+	if (!*filename)
+		; /* leave it as-is */
+	else
+		filename = prefix_filename_except_for_dash(grep_prefix, filename);
+
+	from_stdin = !strcmp(filename, "-");
+	patterns = from_stdin ? stdin : fopen(filename, "r");
 	if (!patterns)
 		die_errno(_("cannot open '%s'"), arg);
 	while (strbuf_getline(&sb, patterns) == 0) {
@@ -833,6 +840,8 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 	if (!from_stdin)
 		fclose(patterns);
 	strbuf_release(&sb);
+	if (filename != arg)
+		free((void *)filename);
 	return 0;
 }
 

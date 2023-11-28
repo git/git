@@ -29,7 +29,7 @@ check_fsck () {
 	'')
 		test_must_be_empty fsck.output ;;
 	*)
-		test_i18ngrep "$1" fsck.output ;;
+		test_grep "$1" fsck.output ;;
 	esac
 }
 
@@ -308,9 +308,9 @@ test_expect_success 'git reflog expire unknown reference' '
 	test_config gc.reflogexpireunreachable never &&
 
 	test_must_fail git reflog expire main@{123} 2>stderr &&
-	test_i18ngrep "points nowhere" stderr &&
+	test_grep "points nowhere" stderr &&
 	test_must_fail git reflog expire does-not-exist 2>stderr &&
-	test_i18ngrep "points nowhere" stderr
+	test_grep "points nowhere" stderr
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '
@@ -443,6 +443,29 @@ test_expect_success 'expire with multiple worktrees' '
 		git reflog expire --verbose --all --expire=$test_tick &&
 		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD >actual &&
 		test_must_be_empty actual
+	)
+'
+
+test_expect_success 'expire one of multiple worktrees' '
+	git init main-wt2 &&
+	(
+		cd main-wt2 &&
+		test_tick &&
+		test_commit foo &&
+		git worktree add link-wt &&
+		test_tick &&
+		test_commit -C link-wt foobar &&
+		test_tick &&
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD \
+			>expect-link-wt &&
+		git reflog expire --verbose --all --expire=$test_tick \
+			--single-worktree &&
+		test-tool ref-store worktree:main for-each-reflog-ent HEAD \
+			>actual-main &&
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD \
+			>actual-link-wt &&
+		test_must_be_empty actual-main &&
+		test_cmp expect-link-wt actual-link-wt
 	)
 '
 

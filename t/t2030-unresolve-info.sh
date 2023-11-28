@@ -228,7 +228,7 @@ test_expect_success 'rerere forget (add-add conflict)' '
 	git commit -m "add differently" &&
 	test_must_fail git merge fifth &&
 	git rerere forget add-differently 2>actual &&
-	test_i18ngrep "no remembered" actual
+	test_grep "no remembered" actual
 '
 
 test_expect_success 'resolve-undo keeps blobs from gc' '

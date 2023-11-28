@@ -271,7 +271,7 @@ test_bitmap_cases () {
 		mv -f $bitmap.tmp $bitmap &&
 		git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
 		test_cmp expect actual &&
-		test_i18ngrep corrupt.ewah.bitmap stderr
+		test_grep corrupt.ewah.bitmap stderr
 	'
 
 	test_expect_success 'truncated bitmap fails gracefully (cache)' '
@@ -284,7 +284,7 @@ test_bitmap_cases () {
 		mv -f $bitmap.tmp $bitmap &&
 		git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
 		test_cmp expect actual &&
-		test_i18ngrep corrupted.bitmap.index stderr
+		test_grep corrupted.bitmap.index stderr
 	'
 
 	# Create a state of history with these properties:
@@ -471,7 +471,7 @@ sane_unset GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL
 test_expect_success 'incremental repack fails when bitmaps are requested' '
 	test_commit more-1 &&
 	test_must_fail git repack -d 2>err &&
-	test_i18ngrep "Incremental repacks are incompatible with bitmap" err
+	test_grep "Incremental repacks are incompatible with bitmap" err
 '
 
 test_expect_success 'incremental repack can disable bitmaps' '
@@ -524,7 +524,7 @@ test_expect_success 'truncated bitmap fails gracefully (lookup table)' '
 	mv -f $bitmap.tmp $bitmap &&
 	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
 	test_cmp expect actual &&
-	test_i18ngrep corrupted.bitmap.index stderr
+	test_grep corrupted.bitmap.index stderr
 '
 
 test_done

@@ -95,19 +95,19 @@ test_expect_success SYMLINKS 'do not follow symbolic link (same input)' '
 
 	# same input creates a confusing symbolic link
 	test_must_fail git apply patch 2>error-wt &&
-	test_i18ngrep "beyond a symbolic link" error-wt &&
+	test_grep "beyond a symbolic link" error-wt &&
 	test_path_is_missing arch/x86_64/dir &&
 	test_path_is_missing arch/i386/dir/file &&
 
 	test_must_fail git apply --index patch 2>error-ix &&
-	test_i18ngrep "beyond a symbolic link" error-ix &&
+	test_grep "beyond a symbolic link" error-ix &&
 	test_path_is_missing arch/x86_64/dir &&
 	test_path_is_missing arch/i386/dir/file &&
 	test_must_fail git ls-files --error-unmatch arch/x86_64/dir &&
 	test_must_fail git ls-files --error-unmatch arch/i386/dir &&
 
 	test_must_fail git apply --cached patch 2>error-ct &&
-	test_i18ngrep "beyond a symbolic link" error-ct &&
+	test_grep "beyond a symbolic link" error-ct &&
 	test_must_fail git ls-files --error-unmatch arch/x86_64/dir &&
 	test_must_fail git ls-files --error-unmatch arch/i386/dir &&
 
@@ -135,23 +135,23 @@ test_expect_success SYMLINKS 'do not follow symbolic link (existing)' '
 	git add arch/x86_64/dir &&
 
 	test_must_fail git apply add_file.patch 2>error-wt-add &&
-	test_i18ngrep "beyond a symbolic link" error-wt-add &&
+	test_grep "beyond a symbolic link" error-wt-add &&
 	test_path_is_missing arch/i386/dir/file &&
 
 	mkdir arch/i386/dir &&
 	>arch/i386/dir/file &&
 	test_must_fail git apply del_file.patch 2>error-wt-del &&
-	test_i18ngrep "beyond a symbolic link" error-wt-del &&
+	test_grep "beyond a symbolic link" error-wt-del &&
 	test_path_is_file arch/i386/dir/file &&
 	rm arch/i386/dir/file &&
 
 	test_must_fail git apply --index add_file.patch 2>error-ix-add &&
-	test_i18ngrep "beyond a symbolic link" error-ix-add &&
+	test_grep "beyond a symbolic link" error-ix-add &&
 	test_path_is_missing arch/i386/dir/file &&
 	test_must_fail git ls-files --error-unmatch arch/i386/dir &&
 
 	test_must_fail git apply --cached add_file.patch 2>error-ct-file &&
-	test_i18ngrep "beyond a symbolic link" error-ct-file &&
+	test_grep "beyond a symbolic link" error-ct-file &&
 	test_must_fail git ls-files --error-unmatch arch/i386/dir
 '
 

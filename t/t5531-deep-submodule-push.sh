@@ -311,7 +311,7 @@ test_expect_success 'submodule entry pointing at a tag is error' '
 	git -C work commit -m "bad commit" &&
 	test_when_finished "git -C work reset --hard HEAD^" &&
 	test_must_fail git -C work push --recurse-submodules=on-demand ../pub.git main 2>err &&
-	test_i18ngrep "is a tag, not a commit" err
+	test_grep "is a tag, not a commit" err
 '
 
 test_expect_success 'push fails if recurse submodules option passed as yes' '

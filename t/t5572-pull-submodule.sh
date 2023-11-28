@@ -177,7 +177,7 @@ test_expect_success 'pull --rebase --recurse-submodules fails if both sides reco
 	# submodule itself, but the merge strategy in submodules
 	# does not support rebase:
 	test_must_fail git -C super pull --rebase --recurse-submodules 2>err &&
-	test_i18ngrep "locally recorded submodule modifications" err
+	test_grep "locally recorded submodule modifications" err
 '
 
 test_expect_success 'pull --rebase --recurse-submodules (no submodule changes, no fork-point)' '

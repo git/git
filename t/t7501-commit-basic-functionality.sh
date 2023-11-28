@@ -21,7 +21,7 @@ test_expect_success 'initial status' '
 	echo bongo bongo >file &&
 	git add file &&
 	git status >actual &&
-	test_i18ngrep "No commits yet" actual
+	test_grep "No commits yet" actual
 '
 
 test_expect_success 'fail initial amend' '
@@ -141,7 +141,7 @@ test_expect_success 'template "emptyness" check does not kick in with -F' '
 test_expect_success 'template "emptyness" check' '
 	git checkout HEAD file && echo >>file && git add file &&
 	test_must_fail git commit -t file 2>err &&
-	test_i18ngrep "did not edit" err
+	test_grep "did not edit" err
 '
 
 test_expect_success 'setup: commit message from file' '
@@ -671,7 +671,7 @@ test_expect_success 'commit a file whose name is a dash' '
 	git add ./- &&
 	test_tick &&
 	git commit -m "add dash" >output </dev/null &&
-	test_i18ngrep " changed, 5 insertions" output
+	test_grep " changed, 5 insertions" output
 '
 
 test_expect_success '--only works on to-be-born branch' '

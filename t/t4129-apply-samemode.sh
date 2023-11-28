@@ -66,13 +66,13 @@ test_expect_success FILEMODE 'mode update (index only)' '
 test_expect_success FILEMODE 'empty mode is rejected' '
 	git reset --hard &&
 	test_must_fail git apply patch-empty-mode.txt 2>err &&
-	test_i18ngrep "invalid mode" err
+	test_grep "invalid mode" err
 '
 
 test_expect_success FILEMODE 'bogus mode is rejected' '
 	git reset --hard &&
 	test_must_fail git apply patch-bogus-mode.txt 2>err &&
-	test_i18ngrep "invalid mode" err
+	test_grep "invalid mode" err
 '
 
 test_expect_success POSIXPERM 'do not use core.sharedRepository for working tree files' '

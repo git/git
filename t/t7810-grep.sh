@@ -808,6 +808,19 @@ test_expect_success 'grep -f, ignore empty lines, read patterns from stdin' '
 	test_cmp expected actual
 '
 
+test_expect_success 'grep -f, use cwd relative file' '
+	test_when_finished "git rm -f sub/dir/file" &&
+	mkdir -p sub/dir &&
+	echo hit >sub/dir/file &&
+	git add sub/dir/file &&
+	echo hit >sub/dir/pattern &&
+	echo miss >pattern &&
+	(
+		cd sub/dir && git grep -f pattern file
+	) &&
+	git -C sub/dir grep -f pattern file
+'
+
 cat >expected <<EOF
 y:y yy
 --
@@ -1413,7 +1426,7 @@ test_expect_success 'grep --no-index pattern -- path' '
 
 test_expect_success 'grep --no-index complains of revs' '
 	test_must_fail git grep --no-index o main -- 2>err &&
-	test_i18ngrep "cannot be used with revs" err
+	test_grep "cannot be used with revs" err
 '
 
 test_expect_success 'grep --no-index prefers paths to revs' '
@@ -1426,7 +1439,7 @@ test_expect_success 'grep --no-index prefers paths to revs' '
 
 test_expect_success 'grep --no-index does not "diagnose" revs' '
 	test_must_fail git grep --no-index o :1:hello.c 2>err &&
-	test_i18ngrep ! -i "did you mean" err
+	test_grep ! -i "did you mean" err
 '
 
 cat >expected <<EOF

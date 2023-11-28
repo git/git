@@ -395,7 +395,7 @@ test_expect_success 'stash --staged' '
 
 test_expect_success 'dont assume push with non-option args' '
 	test_must_fail git stash -q drop 2>err &&
-	test_i18ngrep -e "subcommand wasn'\''t specified; '\''push'\'' can'\''t be assumed due to unexpected token '\''drop'\''" err
+	test_grep -e "subcommand wasn'\''t specified; '\''push'\'' can'\''t be assumed due to unexpected token '\''drop'\''" err
 '
 
 test_expect_success 'stash --invalid-option' '
@@ -596,7 +596,7 @@ test_expect_success 'giving too many ref arguments does not modify files' '
 	for type in apply pop "branch stash-branch"
 	do
 		test_must_fail git stash $type stash@{0} stash@{1} 2>err &&
-		test_i18ngrep "Too many revisions" err &&
+		test_grep "Too many revisions" err &&
 		test 123456789 = $(test-tool chmtime -g file2) || return 1
 	done
 '
@@ -604,14 +604,14 @@ test_expect_success 'giving too many ref arguments does not modify files' '
 test_expect_success 'drop: too many arguments errors out (does nothing)' '
 	git stash list >expect &&
 	test_must_fail git stash drop stash@{0} stash@{1} 2>err &&
-	test_i18ngrep "Too many revisions" err &&
+	test_grep "Too many revisions" err &&
 	git stash list >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'show: too many arguments errors out (does nothing)' '
 	test_must_fail git stash show stash@{0} stash@{1} 2>err 1>out &&
-	test_i18ngrep "Too many revisions" err &&
+	test_grep "Too many revisions" err &&
 	test_must_be_empty out
 '
 
@@ -654,7 +654,7 @@ test_expect_success 'stash branch - stashes on stack, stash-like argument' '
 
 test_expect_success 'stash branch complains with no arguments' '
 	test_must_fail git stash branch 2>err &&
-	test_i18ngrep "No branch name specified" err
+	test_grep "No branch name specified" err
 '
 
 test_expect_success 'stash show format defaults to --stat' '

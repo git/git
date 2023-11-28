@@ -238,7 +238,7 @@ test_expect_success 'fsck detects non-blob .gitmodules' '
 		git ls-tree HEAD | sed s/subdir/.gitmodules/ | git mktree &&
 
 		test_must_fail git fsck 2>output &&
-		test_i18ngrep gitmodulesBlob output
+		test_grep gitmodulesBlob output
 	)
 '
 
@@ -252,8 +252,8 @@ test_expect_success 'fsck detects corrupt .gitmodules' '
 		git commit -m "broken gitmodules" &&
 
 		git fsck 2>output &&
-		test_i18ngrep gitmodulesParse output &&
-		test_i18ngrep ! "bad config" output
+		test_grep gitmodulesParse output &&
+		test_grep ! "bad config" output
 	)
 '
 
@@ -275,7 +275,7 @@ test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 		hash="$(echo x | git hash-object -w --stdin)" &&
 		test_must_fail git update-index --add \
 			--cacheinfo 160000,$rev,d\\a 2>err &&
-		test_i18ngrep "Invalid path" err &&
+		test_grep "Invalid path" err &&
 		git -c core.protectNTFS=false update-index --add \
 			--cacheinfo 100644,$modules,.gitmodules \
 			--cacheinfo 160000,$rev,c \
@@ -289,7 +289,7 @@ test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 	then
 		test_must_fail git -c core.protectNTFS=false \
 			clone --recurse-submodules squatting squatting-clone 2>err &&
-		test_i18ngrep -e "directory not empty" -e "not an empty directory" err &&
+		test_grep -e "directory not empty" -e "not an empty directory" err &&
 		! grep gitdir squatting-clone/d/a/git~2
 	fi
 '
@@ -314,7 +314,7 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 		git commit -m nested
 	) &&
 	test_must_fail git clone --recurse-submodules nested clone 2>err &&
-	test_i18ngrep "is inside git dir" err
+	test_grep "is inside git dir" err
 '
 
 test_done

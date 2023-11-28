@@ -35,7 +35,7 @@ test_expect_success 'conflict on one commit' '
 		git add file1 &&
 		git commit -m "line3 in file1 will conflict" &&
 		test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "No commits applied" out
+		test_grep "No commits applied" out
 	)
 '
 
@@ -58,7 +58,7 @@ test_expect_success 'conflict on second of two commits' '
 		git add file1 &&
 		git commit -m "line4 in file1 will conflict" &&
 		test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "Applied only the commits" out
+		test_grep "Applied only the commits" out
 	)
 '
 
@@ -81,7 +81,7 @@ test_expect_success 'conflict on first of two commits, skip' '
 		# but this commit is okay
 		test_commit "okay_commit_after_skip" &&
 		echo s | test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "Applied only the commits" out
+		test_grep "Applied only the commits" out
 	)
 '
 
@@ -104,7 +104,7 @@ test_expect_success 'conflict on first of two commits, quit' '
 		# but this commit is okay
 		test_commit "okay_commit_after_quit" &&
 		echo q | test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "No commits applied" out
+		test_grep "No commits applied" out
 	)
 '
 
@@ -144,7 +144,7 @@ test_expect_success 'conflict on first of two commits, --conflict=skip' '
 		# but this commit is okay
 		test_commit "okay_commit_after_auto_skip" &&
 		test_expect_code 1 git p4 submit --conflict=skip >out &&
-		test_i18ngrep "Applied only the commits" out
+		test_grep "Applied only the commits" out
 	)
 '
 
@@ -167,7 +167,7 @@ test_expect_success 'conflict on first of two commits, --conflict=quit' '
 		# but this commit is okay
 		test_commit "okay_commit_after_auto_quit" &&
 		test_expect_code 1 git p4 submit --conflict=quit >out &&
-		test_i18ngrep "No commits applied" out
+		test_grep "No commits applied" out
 	)
 '
 

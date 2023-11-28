@@ -44,7 +44,7 @@ commit_peeling_shows_parents ()
 	_parent_number=$(( $_parent_number + 1 ))
     done &&
     test_must_fail git rev-parse --verify $_commit^$_parent_number 2>err &&
-    test_i18ngrep "Needed a single revision" err
+    test_grep "Needed a single revision" err
 }
 
 commit_has_parents ()
@@ -137,8 +137,8 @@ test_expect_success 'tag replaced commit' '
 
 test_expect_success '"git fsck" works' '
 	git fsck main >fsck_main.out &&
-	test_i18ngrep "dangling commit $R" fsck_main.out &&
-	test_i18ngrep "dangling tag $(git show-ref -s refs/tags/mytag)" fsck_main.out &&
+	test_grep "dangling commit $R" fsck_main.out &&
+	test_grep "dangling tag $(git show-ref -s refs/tags/mytag)" fsck_main.out &&
 	test -z "$(git fsck)"
 '
 
@@ -490,9 +490,9 @@ test_expect_success '--convert-graft-file' '
 		$(git rev-parse HEAD^^ HEAD^ HEAD^^ HEAD^2) \
 		>.git/info/grafts &&
 	git status 2>stderr &&
-	test_i18ngrep "hint:.*grafts is deprecated" stderr &&
+	test_grep "hint:.*grafts is deprecated" stderr &&
 	git replace --convert-graft-file 2>stderr &&
-	test_i18ngrep ! "hint:.*grafts is deprecated" stderr &&
+	test_grep ! "hint:.*grafts is deprecated" stderr &&
 	test_path_is_missing .git/info/grafts &&
 
 	: verify that the history is now "grafted" &&
@@ -503,8 +503,8 @@ test_expect_success '--convert-graft-file' '
 	test_when_finished "rm -f .git/info/grafts" &&
 	echo $EMPTY_BLOB $EMPTY_TREE >.git/info/grafts &&
 	test_must_fail git replace --convert-graft-file 2>err &&
-	test_i18ngrep "$EMPTY_BLOB $EMPTY_TREE" err &&
-	test_i18ngrep "$EMPTY_BLOB $EMPTY_TREE" .git/info/grafts
+	test_grep "$EMPTY_BLOB $EMPTY_TREE" err &&
+	test_grep "$EMPTY_BLOB $EMPTY_TREE" .git/info/grafts
 '
 
 test_done

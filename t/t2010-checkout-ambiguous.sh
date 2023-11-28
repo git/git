@@ -62,8 +62,8 @@ test_expect_success 'disambiguate checking out from a tree-ish' '
 
 test_expect_success 'accurate error message with more than one ref' '
 	test_must_fail git checkout HEAD main -- 2>actual &&
-	test_i18ngrep 2 actual &&
-	test_i18ngrep "one reference expected, 2 given" actual
+	test_grep 2 actual &&
+	test_grep "one reference expected, 2 given" actual
 '
 
 test_done

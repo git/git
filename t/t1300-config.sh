@@ -453,7 +453,7 @@ test_expect_success 'get bool variable with empty value' '
 
 test_expect_success 'no arguments, but no crash' '
 	test_must_fail git config >output 2>&1 &&
-	test_i18ngrep usage output
+	test_grep usage output
 '
 
 cat > .git/config << EOF
@@ -720,25 +720,25 @@ test_expect_success 'invalid unit' '
 	git config aninvalid.unit "1auto" &&
 	test_cmp_config 1auto aninvalid.unit &&
 	test_must_fail git config --int --get aninvalid.unit 2>actual &&
-	test_i18ngrep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
+	test_grep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
 '
 
 test_expect_success 'invalid unit boolean' '
 	git config commit.gpgsign "1true" &&
 	test_cmp_config 1true commit.gpgsign &&
 	test_must_fail git config --bool --get commit.gpgsign 2>actual &&
-	test_i18ngrep "bad boolean config value .1true. for .commit.gpgsign." actual
+	test_grep "bad boolean config value .1true. for .commit.gpgsign." actual
 '
 
 test_expect_success 'line number is reported correctly' '
 	printf "[bool]\n\tvar\n" >invalid &&
 	test_must_fail git config -f invalid --path bool.var 2>actual &&
-	test_i18ngrep "line 2" actual
+	test_grep "line 2" actual
 '
 
 test_expect_success 'invalid stdin config' '
 	echo "[broken" | test_must_fail git config --list --file - >output 2>&1 &&
-	test_i18ngrep "bad config line 1 in standard input" output
+	test_grep "bad config line 1 in standard input" output
 '
 
 cat > expect << EOF
@@ -919,7 +919,7 @@ test_expect_success !MINGW 'get --path copes with unset $HOME' '
 		git config --get --path path.normal >>result &&
 		git config --get --path path.trailingtilde >>result
 	) &&
-	test_i18ngrep "[Ff]ailed to expand.*~/" msg &&
+	test_grep "[Ff]ailed to expand.*~/" msg &&
 	test_cmp expect result
 '
 
@@ -986,7 +986,7 @@ test_expect_success 'get --type=color barfs on non-color' '
 
 test_expect_success 'set --type=color barfs on non-color' '
 	test_must_fail git config --type=color foo.color "not-a-color" 2>error &&
-	test_i18ngrep "cannot parse color" error
+	test_grep "cannot parse color" error
 '
 
 cat > expect << EOF
@@ -1447,12 +1447,12 @@ test_expect_success 'git --config-env with missing value' '
 
 test_expect_success 'git --config-env fails with invalid parameters' '
 	test_must_fail git --config-env=foo.flag config --bool foo.flag 2>error &&
-	test_i18ngrep "invalid config format: foo.flag" error &&
+	test_grep "invalid config format: foo.flag" error &&
 	test_must_fail git --config-env=foo.flag= config --bool foo.flag 2>error &&
-	test_i18ngrep "missing environment variable name for configuration ${SQ}foo.flag${SQ}" error &&
+	test_grep "missing environment variable name for configuration ${SQ}foo.flag${SQ}" error &&
 	sane_unset NONEXISTENT &&
 	test_must_fail git --config-env=foo.flag=NONEXISTENT config --bool foo.flag 2>error &&
-	test_i18ngrep "missing environment variable ${SQ}NONEXISTENT${SQ} for configuration ${SQ}foo.flag${SQ}" error
+	test_grep "missing environment variable ${SQ}NONEXISTENT${SQ} for configuration ${SQ}foo.flag${SQ}" error
 '
 
 test_expect_success 'git -c and --config-env work together' '
@@ -1533,21 +1533,21 @@ test_expect_success 'git config ignores pairs with empty count' '
 
 test_expect_success 'git config fails with invalid count' '
 	test_must_fail env GIT_CONFIG_COUNT=10a git config --list 2>error &&
-	test_i18ngrep "bogus count" error &&
+	test_grep "bogus count" error &&
 	test_must_fail env GIT_CONFIG_COUNT=9999999999999999 git config --list 2>error &&
-	test_i18ngrep "too many entries" error
+	test_grep "too many entries" error
 '
 
 test_expect_success 'git config fails with missing config key' '
 	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_VALUE_0="value" \
 		git config --list 2>error &&
-	test_i18ngrep "missing config key" error
+	test_grep "missing config key" error
 '
 
 test_expect_success 'git config fails with missing config value' '
 	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="pair.one" \
 		git config --list 2>error &&
-	test_i18ngrep "missing config value" error
+	test_grep "missing config value" error
 '
 
 test_expect_success 'git config fails with invalid config pair key' '
@@ -1617,7 +1617,7 @@ test_expect_success 'barf on syntax error' '
 	key garbage
 	EOF
 	test_must_fail git config --get section.key 2>error &&
-	test_i18ngrep " line 3 " error
+	test_grep " line 3 " error
 '
 
 test_expect_success 'barf on incomplete section header' '
@@ -1627,7 +1627,7 @@ test_expect_success 'barf on incomplete section header' '
 	key = value
 	EOF
 	test_must_fail git config --get section.key 2>error &&
-	test_i18ngrep " line 2 " error
+	test_grep " line 2 " error
 '
 
 test_expect_success 'barf on incomplete string' '
@@ -1637,7 +1637,7 @@ test_expect_success 'barf on incomplete string' '
 	key = "value string
 	EOF
 	test_must_fail git config --get section.key 2>error &&
-	test_i18ngrep " line 3 " error
+	test_grep " line 3 " error
 '
 
 test_expect_success 'urlmatch' '
@@ -2266,17 +2266,17 @@ test_expect_success 'identical mixed --type specifiers are allowed' '
 
 test_expect_success 'non-identical modern --type specifiers are not allowed' '
 	test_must_fail git config --type=int --type=bool section.big 2>error &&
-	test_i18ngrep "only one type at a time" error
+	test_grep "only one type at a time" error
 '
 
 test_expect_success 'non-identical legacy --type specifiers are not allowed' '
 	test_must_fail git config --int --bool section.big 2>error &&
-	test_i18ngrep "only one type at a time" error
+	test_grep "only one type at a time" error
 '
 
 test_expect_success 'non-identical mixed --type specifiers are not allowed' '
 	test_must_fail git config --type=int --bool section.big 2>error &&
-	test_i18ngrep "only one type at a time" error
+	test_grep "only one type at a time" error
 '
 
 test_expect_success '--type allows valid type specifiers' '
@@ -2293,7 +2293,7 @@ test_expect_success 'unset type specifiers may be reset to conflicting ones' '
 
 test_expect_success '--type rejects unknown specifiers' '
 	test_must_fail git config --type=nonsense section.foo 2>error &&
-	test_i18ngrep "unrecognized --type argument" error
+	test_grep "unrecognized --type argument" error
 '
 
 test_expect_success '--type=int requires at least one digit' '
@@ -2339,7 +2339,7 @@ test_expect_success 'set all config with value-pattern' '
 
 	# multiple matches => failure
 	test_must_fail git config --file=config abc.key three o+ 2>err &&
-	test_i18ngrep "has multiple values" err &&
+	test_grep "has multiple values" err &&
 
 	# multiple values, no match => add
 	git config --file=config abc.key three a+ &&

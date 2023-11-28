@@ -1666,6 +1666,30 @@ static int can_filter_bitmap(struct list_objects_filter_options *filter)
 	return !filter_bitmap(NULL, NULL, NULL, filter);
 }
 
+
+static void filter_packed_objects_from_bitmap(struct bitmap_index *bitmap_git,
+					      struct bitmap *result)
+{
+	struct eindex *eindex = &bitmap_git->ext_index;
+	uint32_t objects_nr;
+	size_t i, pos;
+
+	objects_nr = bitmap_num_objects(bitmap_git);
+	pos = objects_nr / BITS_IN_EWORD;
+
+	if (pos > result->word_alloc)
+		pos = result->word_alloc;
+
+	memset(result->words, 0x00, sizeof(eword_t) * pos);
+	for (i = pos * BITS_IN_EWORD; i < objects_nr; i++)
+		bitmap_unset(result, i);
+
+	for (i = 0; i < eindex->count; ++i) {
+		if (has_object_pack(&eindex->objects[i]->oid))
+			bitmap_unset(result, objects_nr + i);
+	}
+}
+
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 					 int filter_provided_objects)
 {
@@ -1787,6 +1811,9 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 		      (revs->filter.choice && filter_provided_objects) ? NULL : wants,
 		      wants_bitmap,
 		      &revs->filter);
+
+	if (revs->unpacked)
+		filter_packed_objects_from_bitmap(bitmap_git, wants_bitmap);
 
 	bitmap_git->result = wants_bitmap;
 	bitmap_git->haves = haves_bitmap;

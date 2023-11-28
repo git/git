@@ -27,7 +27,7 @@ test_expect_success 'error message for path inside submodule' '
 
 test_expect_success 'error message for path inside submodule from within submodule' '
 	test_must_fail git -C sub add . 2>actual &&
-	test_i18ngrep "in unpopulated submodule" actual
+	test_grep "in unpopulated submodule" actual
 '
 
 test_done

@@ -84,7 +84,7 @@ test_expect_success 'git rebase --fork-point with ambigous refname' '
 
 test_expect_success '--fork-point and --root both given' '
 	test_must_fail git rebase --fork-point --root 2>err &&
-	test_i18ngrep "cannot be used together" err
+	test_grep "cannot be used together" err
 '
 
 test_expect_success 'rebase.forkPoint set to false' '

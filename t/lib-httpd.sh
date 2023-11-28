@@ -255,7 +255,7 @@ test_http_push_nonff () {
 	'
 
 	test_expect_success 'non-fast-forward push shows help message' '
-		test_i18ngrep "Updates were rejected because" output
+		test_grep "Updates were rejected because" output
 	'
 
 	test_expect_${EXPECT_CAS_RESULT} 'force with lease aka cas' '

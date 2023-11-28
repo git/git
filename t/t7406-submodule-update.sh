@@ -945,7 +945,7 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir re
 	git clone super_update_r super_update_r2 &&
 	(cd super_update_r2 &&
 	 git submodule update --init --recursive >actual &&
-	 test_i18ngrep "Submodule path .submodule/subsubmodule.: checked out" actual &&
+	 test_grep "Submodule path .submodule/subsubmodule.: checked out" actual &&
 	 (cd submodule/subsubmodule &&
 	  git log > ../../expected
 	 ) &&
@@ -1025,7 +1025,7 @@ test_expect_success 'submodule update clone shallow submodule outside of depth' 
 		# unadvertised objects, so restrict this test to v0.
 		test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 \
 			git submodule update --init --depth=1 2>actual &&
-		test_i18ngrep "Direct fetching of that commit failed." actual &&
+		test_grep "Direct fetching of that commit failed." actual &&
 		git -C ../submodule config uploadpack.allowReachableSHA1InWant true &&
 		git submodule update --init --depth=1 >actual &&
 		git -C submodule log --oneline >out &&
@@ -1039,7 +1039,7 @@ test_expect_success 'submodule update --recursive drops module name before recur
 	  git checkout HEAD^
 	 ) &&
 	 git submodule update --recursive deeper/submodule >actual &&
-	 test_i18ngrep "Submodule path .deeper/submodule/subsubmodule.: checked out" actual
+	 test_grep "Submodule path .deeper/submodule/subsubmodule.: checked out" actual
 	)
 '
 

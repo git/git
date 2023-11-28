@@ -152,7 +152,7 @@ test_expect_success 'refuse two-project merge by default, quit before --autostas
 	echo change >>one.t &&
 	git diff >expect &&
 	test_must_fail git merge --autostash five 2>err &&
-	test_i18ngrep ! "stash" err &&
+	test_grep ! "stash" err &&
 	git diff >actual &&
 	test_cmp expect actual
 '
@@ -170,7 +170,7 @@ test_expect_success 'two-project merge with --allow-unrelated-histories with --a
 	echo change >>one.t &&
 	git diff one.t >expect &&
 	git merge --allow-unrelated-histories --autostash five 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	git diff one.t >actual &&
 	test_cmp expect actual
 '

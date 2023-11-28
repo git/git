@@ -318,10 +318,10 @@ test_expect_success 'prune: handle HEAD reflog in multiple worktrees' '
 
 test_expect_success 'prune: handle expire option correctly' '
 	test_must_fail git prune --expire 2>error &&
-	test_i18ngrep "requires a value" error &&
+	test_grep "requires a value" error &&
 
 	test_must_fail git prune --expire=nyah 2>error &&
-	test_i18ngrep "malformed expiration" error &&
+	test_grep "malformed expiration" error &&
 
 	git prune --no-expire
 '

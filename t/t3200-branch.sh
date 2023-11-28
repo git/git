@@ -25,7 +25,7 @@ test_expect_success 'prepare a trivial repository' '
 
 test_expect_success 'git branch --help should not have created a bogus branch' '
 	test_might_fail git branch --man --help </dev/null >/dev/null 2>&1 &&
-	test_path_is_missing .git/refs/heads/--help
+	test_ref_missing refs/heads/--help
 '
 
 test_expect_success 'branch -h in broken repository' '
@@ -36,11 +36,12 @@ test_expect_success 'branch -h in broken repository' '
 		>.git/refs/heads/main &&
 		test_expect_code 129 git branch -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage" broken/usage
+	test_grep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'git branch abc should create a branch' '
-	git branch abc && test_path_is_file .git/refs/heads/abc
+	git branch abc &&
+	test_ref_exists refs/heads/abc
 '
 
 test_expect_success 'git branch abc should fail when abc exists' '
@@ -61,11 +62,13 @@ test_expect_success 'git branch --force abc should succeed when abc exists' '
 '
 
 test_expect_success 'git branch a/b/c should create a branch' '
-	git branch a/b/c && test_path_is_file .git/refs/heads/a/b/c
+	git branch a/b/c &&
+	test_ref_exists refs/heads/a/b/c
 '
 
 test_expect_success 'git branch mb main... should create a branch' '
-	git branch mb main... && test_path_is_file .git/refs/heads/mb
+	git branch mb main... &&
+	test_ref_exists refs/heads/mb
 '
 
 test_expect_success 'git branch HEAD should fail' '
@@ -78,14 +81,14 @@ EOF
 test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
-	test_path_is_file .git/refs/heads/d/e/f &&
+	test_ref_exists refs/heads/d/e/f &&
 	test_path_is_file .git/logs/refs/heads/d/e/f &&
 	test_cmp expect .git/logs/refs/heads/d/e/f
 '
 
 test_expect_success 'git branch -d d/e/f should delete a branch and a log' '
 	git branch -d d/e/f &&
-	test_path_is_missing .git/refs/heads/d/e/f &&
+	test_ref_missing refs/heads/d/e/f &&
 	test_must_fail git reflog exists refs/heads/d/e/f
 '
 
@@ -103,7 +106,7 @@ test_expect_success 'git branch l should work after branch l/m has been deleted'
 
 test_expect_success 'git branch -m dumps usage' '
 	test_expect_code 128 git branch -m 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch -m m broken_symref should work' '
@@ -213,7 +216,7 @@ test_expect_success 'git branch -M should leave orphaned HEAD alone' '
 		test_commit initial &&
 		git checkout --orphan lonely &&
 		grep lonely .git/HEAD &&
-		test_path_is_missing .git/refs/head/lonely &&
+		test_ref_missing refs/head/lonely &&
 		git branch -M main mistress &&
 		grep lonely .git/HEAD
 	)
@@ -581,12 +584,12 @@ EOF
 
 test_expect_success 'git branch -c dumps usage' '
 	test_expect_code 128 git branch -c 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch --copy dumps usage' '
 	test_expect_code 128 git branch --copy 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch -c d e should work' '
@@ -799,8 +802,8 @@ test_expect_success 'deleting a symref' '
 	git symbolic-ref refs/heads/symref refs/heads/target &&
 	echo "Deleted branch symref (was refs/heads/target)." >expect &&
 	git branch -d symref >actual &&
-	test_path_is_file .git/refs/heads/target &&
-	test_path_is_missing .git/refs/heads/symref &&
+	test_ref_exists refs/heads/target &&
+	test_ref_missing refs/heads/symref &&
 	test_cmp expect actual
 '
 
@@ -809,16 +812,16 @@ test_expect_success 'deleting a dangling symref' '
 	test_path_is_file .git/refs/heads/dangling-symref &&
 	echo "Deleted branch dangling-symref (was nowhere)." >expect &&
 	git branch -d dangling-symref >actual &&
-	test_path_is_missing .git/refs/heads/dangling-symref &&
+	test_ref_missing refs/heads/dangling-symref &&
 	test_cmp expect actual
 '
 
 test_expect_success 'deleting a self-referential symref' '
 	git symbolic-ref refs/heads/self-reference refs/heads/self-reference &&
-	test_path_is_file .git/refs/heads/self-reference &&
+	test_ref_exists refs/heads/self-reference &&
 	echo "Deleted branch self-reference (was refs/heads/self-reference)." >expect &&
 	git branch -d self-reference >actual &&
-	test_path_is_missing .git/refs/heads/self-reference &&
+	test_ref_missing refs/heads/self-reference &&
 	test_cmp expect actual
 '
 
@@ -826,8 +829,8 @@ test_expect_success 'renaming a symref is not allowed' '
 	git symbolic-ref refs/heads/topic refs/heads/main &&
 	test_must_fail git branch -m topic new-topic &&
 	git symbolic-ref refs/heads/topic &&
-	test_path_is_file .git/refs/heads/main &&
-	test_path_is_missing .git/refs/heads/new-topic
+	test_ref_exists refs/heads/main &&
+	test_ref_missing refs/heads/new-topic
 '
 
 test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for u is a symlink' '
@@ -1037,7 +1040,7 @@ test_expect_success '--set-upstream-to fails on a missing dst branch' '
 
 test_expect_success '--set-upstream-to fails on a missing src branch' '
 	test_must_fail git branch --set-upstream-to does-not-exist main 2>err &&
-	test_i18ngrep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
+	test_grep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
 '
 
 test_expect_success '--set-upstream-to fails on a non-ref' '
@@ -1051,7 +1054,7 @@ test_expect_success '--set-upstream-to fails on locked config' '
 	>.git/config.lock &&
 	git branch locked &&
 	test_must_fail git branch --set-upstream-to locked 2>err &&
-	test_i18ngrep "could not lock config file .git/config" err
+	test_grep "could not lock config file .git/config" err
 '
 
 test_expect_success 'use --set-upstream-to modify HEAD' '
@@ -1082,7 +1085,7 @@ test_expect_success '--unset-upstream should fail if config is locked' '
 	git branch --set-upstream-to locked &&
 	>.git/config.lock &&
 	test_must_fail git branch --unset-upstream 2>err &&
-	test_i18ngrep "could not lock config file .git/config" err
+	test_grep "could not lock config file .git/config" err
 '
 
 test_expect_success 'test --unset-upstream on HEAD' '
@@ -1142,7 +1145,7 @@ EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git checkout -b g/h/i -l main &&
-	test_path_is_file .git/refs/heads/g/h/i &&
+	test_ref_exists refs/heads/g/h/i &&
 	test_path_is_file .git/logs/refs/heads/g/h/i &&
 	test_cmp expect .git/logs/refs/heads/g/h/i
 '
@@ -1518,7 +1521,7 @@ test_expect_success '--list during rebase' '
 	set_fake_editor &&
 	git rebase -i HEAD~2 &&
 	git branch --list >actual &&
-	test_i18ngrep "rebasing main" actual
+	test_grep "rebasing main" actual
 '
 
 test_expect_success '--list during rebase from detached HEAD' '
@@ -1530,7 +1533,7 @@ test_expect_success '--list during rebase from detached HEAD' '
 	set_fake_editor &&
 	git rebase -i HEAD~2 &&
 	git branch --list >actual &&
-	test_i18ngrep "rebasing detached HEAD $oid" actual
+	test_grep "rebasing detached HEAD $oid" actual
 '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '

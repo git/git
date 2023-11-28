@@ -1075,7 +1075,7 @@ test_expect_success 'remote prune to cause a dangling symref' '
 		cd eight &&
 		git remote prune origin
 	) >err 2>&1 &&
-	test_i18ngrep "has become dangling" err &&
+	test_grep "has become dangling" err &&
 
 	: And the dangling symref will not cause other annoying errors &&
 	(
@@ -1087,7 +1087,7 @@ test_expect_success 'remote prune to cause a dangling symref' '
 		cd eight &&
 		test_must_fail git branch nomore origin
 	) 2>err &&
-	test_i18ngrep "dangling symref" err
+	test_grep "dangling symref" err
 '
 
 test_expect_success 'show empty remote' '
@@ -1419,7 +1419,7 @@ test_expect_success 'extra args: setup' '
 test_extra_arg () {
 	test_expect_success "extra args: $*" "
 		test_must_fail git remote $* bogus_extra_arg 2>actual &&
-		test_i18ngrep '^usage:' actual
+		test_grep '^usage:' actual
 	"
 }
 
@@ -1453,12 +1453,12 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 				oid=$(git rev-parse some-tag^{$type})
 			fi &&
 			test_must_fail git push origin $oid:dst 2>err &&
-			test_i18ngrep "error: The destination you" err &&
-			test_i18ngrep "hint: Did you mean" err &&
+			test_grep "error: The destination you" err &&
+			test_grep "hint: Did you mean" err &&
 			test_must_fail git -c advice.pushUnqualifiedRefName=false \
 				push origin $oid:dst 2>err &&
-			test_i18ngrep "error: The destination you" err &&
-			test_i18ngrep ! "hint: Did you mean" err ||
+			test_grep "error: The destination you" err &&
+			test_grep ! "hint: Did you mean" err ||
 			exit 1
 		done
 	)
@@ -1479,16 +1479,16 @@ test_expect_success 'refs/remotes/* <src> refspec and unqualified <dst> DWIM and
 		git fetch --no-tags two &&
 
 		test_must_fail git push origin refs/remotes/two/another:dst 2>err &&
-		test_i18ngrep "error: The destination you" err &&
+		test_grep "error: The destination you" err &&
 
 		test_must_fail git push origin refs/remotes/tags-from-two/my-tag:dst-tag 2>err &&
-		test_i18ngrep "error: The destination you" err &&
+		test_grep "error: The destination you" err &&
 
 		test_must_fail git push origin refs/remotes/trees-from-two/my-head-tree:dst-tree 2>err &&
-		test_i18ngrep "error: The destination you" err &&
+		test_grep "error: The destination you" err &&
 
 		test_must_fail git push origin refs/remotes/blobs-from-two/my-file-blob:dst-blob 2>err &&
-		test_i18ngrep "error: The destination you" err
+		test_grep "error: The destination you" err
 	)
 '
 

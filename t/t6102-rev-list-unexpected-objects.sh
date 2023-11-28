@@ -28,7 +28,7 @@ test_expect_success 'TODO (should fail!): traverse unexpected non-blob entry (lo
 
 test_expect_success 'traverse unexpected non-blob entry (seen)' '
 	test_must_fail git rev-list --objects $tree $broken_tree >output 2>&1 &&
-	test_i18ngrep "is not a blob" output
+	test_grep "is not a blob" output
 '
 
 test_expect_success 'setup unexpected non-tree entry' '
@@ -42,7 +42,7 @@ test_expect_success 'traverse unexpected non-tree entry (lone)' '
 
 test_expect_success 'traverse unexpected non-tree entry (seen)' '
 	test_must_fail git rev-list --objects $blob $broken_tree >output 2>&1 &&
-	test_i18ngrep "is not a tree" output
+	test_grep "is not a tree" output
 '
 
 test_expect_success 'setup unexpected non-commit parent' '
@@ -54,13 +54,13 @@ test_expect_success 'setup unexpected non-commit parent' '
 
 test_expect_success 'traverse unexpected non-commit parent (lone)' '
 	test_must_fail git rev-list --objects $broken_commit >output 2>&1 &&
-	test_i18ngrep "not a commit" output
+	test_grep "not a commit" output
 '
 
 test_expect_success 'traverse unexpected non-commit parent (seen)' '
 	test_must_fail git rev-list --objects $blob $broken_commit \
 		>output 2>&1 &&
-	test_i18ngrep "not a commit" output
+	test_grep "not a commit" output
 '
 
 test_expect_success 'setup unexpected non-tree root' '
@@ -76,7 +76,7 @@ test_expect_success 'traverse unexpected non-tree root (lone)' '
 test_expect_success 'traverse unexpected non-tree root (seen)' '
 	test_must_fail git rev-list --objects $blob $broken_commit \
 		>output 2>&1 &&
-	test_i18ngrep "not a tree" output
+	test_grep "not a tree" output
 '
 
 test_expect_success 'setup unexpected non-commit tag' '
@@ -93,7 +93,7 @@ test_expect_success 'traverse unexpected non-commit tag (lone)' '
 
 test_expect_success 'traverse unexpected non-commit tag (seen)' '
 	test_must_fail git rev-list --objects $blob $tag >output 2>&1 &&
-	test_i18ngrep "not a commit" output
+	test_grep "not a commit" output
 '
 
 test_expect_success 'setup unexpected non-tree tag' '
@@ -110,7 +110,7 @@ test_expect_success 'traverse unexpected non-tree tag (lone)' '
 
 test_expect_success 'traverse unexpected non-tree tag (seen)' '
 	test_must_fail git rev-list --objects $blob $tag >output 2>&1 &&
-	test_i18ngrep "not a tree" output
+	test_grep "not a tree" output
 '
 
 test_expect_success 'setup unexpected non-blob tag' '
@@ -127,7 +127,7 @@ test_expect_success 'traverse unexpected non-blob tag (lone)' '
 
 test_expect_success 'traverse unexpected non-blob tag (seen)' '
 	test_must_fail git rev-list --objects $commit $tag >output 2>&1 &&
-	test_i18ngrep "not a blob" output
+	test_grep "not a blob" output
 '
 
 test_done

@@ -353,14 +353,14 @@ test_expect_success 'upload-pack complains of bogus filter config' '
 	test_must_fail git \
 		-c uploadpackfilter.tree.maxdepth \
 		upload-pack . >/dev/null 2>err &&
-	test_i18ngrep "unable to parse.*tree.maxdepth" err
+	test_grep "unable to parse.*tree.maxdepth" err
 '
 
 test_expect_success 'upload-pack fails banned object filters' '
 	test_config -C srv.bare uploadpackfilter.blob:none.allow false &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=blob:none \
 		"file://$(pwd)/srv.bare" pc3 2>err &&
-	test_i18ngrep "filter '\''blob:none'\'' not supported" err
+	test_grep "filter '\''blob:none'\'' not supported" err
 '
 
 test_expect_success 'upload-pack fails banned combine object filters' '
@@ -370,14 +370,14 @@ test_expect_success 'upload-pack fails banned combine object filters' '
 	test_config -C srv.bare uploadpackfilter.blob:none.allow false &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
 		--filter=blob:none "file://$(pwd)/srv.bare" pc3 2>err &&
-	test_i18ngrep "filter '\''blob:none'\'' not supported" err
+	test_grep "filter '\''blob:none'\'' not supported" err
 '
 
 test_expect_success 'upload-pack fails banned object filters with fallback' '
 	test_config -C srv.bare uploadpackfilter.allow false &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=blob:none \
 		"file://$(pwd)/srv.bare" pc3 2>err &&
-	test_i18ngrep "filter '\''blob:none'\'' not supported" err
+	test_grep "filter '\''blob:none'\'' not supported" err
 '
 
 test_expect_success 'upload-pack limits tree depth filters' '
@@ -386,7 +386,7 @@ test_expect_success 'upload-pack limits tree depth filters' '
 	test_config -C srv.bare uploadpackfilter.tree.maxDepth 0 &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:1 \
 		"file://$(pwd)/srv.bare" pc3 2>err &&
-	test_i18ngrep "tree filter allows max depth 0, but got 1" err &&
+	test_grep "tree filter allows max depth 0, but got 1" err &&
 
 	git clone --no-checkout --filter=tree:0 "file://$(pwd)/srv.bare" pc4 &&
 
@@ -394,7 +394,7 @@ test_expect_success 'upload-pack limits tree depth filters' '
 	git clone --no-checkout --filter=tree:5 "file://$(pwd)/srv.bare" pc5 &&
 	test_must_fail ok=sigpipe git clone --no-checkout --filter=tree:6 \
 		"file://$(pwd)/srv.bare" pc6 2>err &&
-	test_i18ngrep "tree filter allows max depth 5, but got 6" err
+	test_grep "tree filter allows max depth 5, but got 6" err
 '
 
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
@@ -459,11 +459,11 @@ test_expect_success 'partial clone with unresolvable sparse filter fails cleanly
 	test_must_fail git clone --no-local --bare \
 				 --filter=sparse:oid=main:no-such-name \
 				 sparse-src dst.git 2>err &&
-	test_i18ngrep "unable to access sparse blob in .main:no-such-name" err &&
+	test_grep "unable to access sparse blob in .main:no-such-name" err &&
 	test_must_fail git clone --no-local --bare \
 				 --filter=sparse:oid=main \
 				 sparse-src dst.git 2>err &&
-	test_i18ngrep "unable to parse sparse filter data in" err
+	test_grep "unable to parse sparse filter data in" err
 '
 
 setup_triangle () {
@@ -493,8 +493,8 @@ setup_triangle () {
 	TREE_HASH=$(git -C server rev-parse HEAD~1^{tree}) &&
 	git -C promisor-remote fetch --keep "file://$(pwd)/server" "$TREE_HASH" &&
 	git -C promisor-remote count-objects -v >object-count &&
-	test_i18ngrep "count: 0" object-count &&
-	test_i18ngrep "in-pack: 2" object-count &&
+	test_grep "count: 0" object-count &&
+	test_grep "in-pack: 2" object-count &&
 
 	# Set it as the promisor remote of client. Thus, whenever
 	# the client lazy fetches, the lazy fetch will succeed only if it is
@@ -748,7 +748,7 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	test_must_fail git -c protocol.version=2 clone \
 		--filter=blob:none $HTTPD_URL/one_time_perl/server repo 2>err &&
 
-	test_i18ngrep "did not send all necessary objects" err &&
+	test_grep "did not send all necessary objects" err &&
 
 	# Ensure that the one-time-perl script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-perl"

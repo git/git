@@ -202,7 +202,7 @@ test_expect_success 'proper error when worktree not found' '
 	for i in noodle noodle/bork
 	do
 		test_must_fail git worktree lock $i 2>err &&
-		test_i18ngrep "not a working tree" err || return 1
+		test_grep "not a working tree" err || return 1
 	done
 '
 

@@ -830,7 +830,7 @@ test_submodule_recursing_with_args_common () {
 			cd submodule_update &&
 			git branch -t invalid_sub1 origin/invalid_sub1 &&
 			test_must_fail $command invalid_sub1 2>err &&
-			test_i18ngrep sub1 err &&
+			test_grep sub1 err &&
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1
 		)

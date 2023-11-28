@@ -480,7 +480,7 @@ test_expect_merge_algorithm failure success !FAIL_PREREQS 'directory/submodule c
 		# We do not want files within the submodule to prevent the
 		# merge from starting; we should not be writing to such paths
 		# anyway.
-		test_i18ngrep ! "refusing to lose untracked file at" err
+		test_grep ! "refusing to lose untracked file at" err
 	)
 '
 

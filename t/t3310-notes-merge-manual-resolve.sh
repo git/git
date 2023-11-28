@@ -216,7 +216,7 @@ test_expect_success 'merge z into m (== y) with default ("manual") resolver => C
 	git config core.notesRef refs/notes/m &&
 	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_grep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -263,7 +263,7 @@ test_expect_success 'cannot do merge w/conflicts when previous merge is unfinish
 	test -d .git/NOTES_MERGE_WORKTREE &&
 	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should indicate what is wrong
-	test_i18ngrep -q "\\.git/NOTES_MERGE_\\* exists" output
+	test_grep -q "\\.git/NOTES_MERGE_\\* exists" output
 '
 
 # Setup non-conflicting merge between x and new notes ref w
@@ -417,7 +417,7 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 	git config core.notesRef refs/notes/m &&
 	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_grep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -449,7 +449,7 @@ git rev-parse refs/notes/z > pre_merge_z
 test_expect_success 'redo merge of z into m (== y) with default ("manual") resolver => Conflicting 3-way merge' '
 	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_grep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -528,7 +528,7 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 	git update-ref refs/notes/m refs/notes/y &&
 	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should point to where to resolve conflicts
-	test_i18ngrep "\\.git/NOTES_MERGE_WORKTREE" output &&
+	test_grep "\\.git/NOTES_MERGE_WORKTREE" output &&
 	# Inspect merge conflicts
 	ls .git/NOTES_MERGE_WORKTREE >output_conflicts &&
 	test_cmp expect_conflicts output_conflicts &&
@@ -573,9 +573,9 @@ EOF
 	test "$(git rev-parse refs/notes/y)" = "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
 	test "$(git rev-parse refs/notes/m)" != "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
 	# Mention refs/notes/m, and its current and expected value in output
-	test_i18ngrep -q "refs/notes/m" output &&
-	test_i18ngrep -q "$(git rev-parse refs/notes/m)" output &&
-	test_i18ngrep -q "$(git rev-parse NOTES_MERGE_PARTIAL^1)" output &&
+	test_grep -q "refs/notes/m" output &&
+	test_grep -q "$(git rev-parse refs/notes/m)" output &&
+	test_grep -q "$(git rev-parse NOTES_MERGE_PARTIAL^1)" output &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&

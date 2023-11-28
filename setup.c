@@ -693,29 +693,39 @@ int upgrade_repository_format(int target_version)
 	struct strbuf err = STRBUF_INIT;
 	struct strbuf repo_version = STRBUF_INIT;
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
+	int ret;
 
 	strbuf_git_common_path(&sb, the_repository, "config");
 	read_repository_format(&repo_fmt, sb.buf);
 	strbuf_release(&sb);
 
-	if (repo_fmt.version >= target_version)
-		return 0;
+	if (repo_fmt.version >= target_version) {
+		ret = 0;
+		goto out;
+	}
 
 	if (verify_repository_format(&repo_fmt, &err) < 0) {
-		error("cannot upgrade repository format from %d to %d: %s",
-		      repo_fmt.version, target_version, err.buf);
-		strbuf_release(&err);
-		return -1;
+		ret = error("cannot upgrade repository format from %d to %d: %s",
+			    repo_fmt.version, target_version, err.buf);
+		goto out;
 	}
-	if (!repo_fmt.version && repo_fmt.unknown_extensions.nr)
-		return error("cannot upgrade repository format: "
-			     "unknown extension %s",
-			     repo_fmt.unknown_extensions.items[0].string);
+	if (!repo_fmt.version && repo_fmt.unknown_extensions.nr) {
+		ret = error("cannot upgrade repository format: "
+			    "unknown extension %s",
+			    repo_fmt.unknown_extensions.items[0].string);
+		goto out;
+	}
 
 	strbuf_addf(&repo_version, "%d", target_version);
 	git_config_set("core.repositoryformatversion", repo_version.buf);
+
+	ret = 1;
+
+out:
+	clear_repository_format(&repo_fmt);
 	strbuf_release(&repo_version);
-	return 1;
+	strbuf_release(&err);
+	return ret;
 }
 
 static void init_repository_format(struct repository_format *format)
@@ -2190,6 +2200,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 	}
 
+	clear_repository_format(&repo_fmt);
 	free(original_git_dir);
 	return 0;
 }

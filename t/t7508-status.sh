@@ -19,7 +19,7 @@ test_expect_success 'status -h in broken repository' '
 		echo "[status] showuntrackedfiles = CORRUPT" >>.git/config &&
 		test_expect_code 129 git status -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage" broken/usage
+	test_grep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'commit -h in broken repository' '
@@ -31,7 +31,7 @@ test_expect_success 'commit -h in broken repository' '
 		echo "[status] showuntrackedfiles = CORRUPT" >>.git/config &&
 		test_expect_code 129 git commit -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage" broken/usage
+	test_grep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'create upstream branch' '
@@ -72,7 +72,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'status (1)' '
-	test_i18ngrep "use \"git rm --cached <file>\.\.\.\" to unstage" output
+	test_grep "use \"git rm --cached <file>\.\.\.\" to unstage" output
 '
 
 strip_comments () {
@@ -1542,12 +1542,12 @@ test_expect_success 'git commit will commit a staged but ignored submodule' '
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git config --add submodule.subname.ignore all &&
 	git status -s --ignore-submodules=dirty >output &&
-	test_i18ngrep "^M. sm" output &&
+	test_grep "^M. sm" output &&
 	GIT_EDITOR="echo hello >>\"\$1\"" &&
 	export GIT_EDITOR &&
 	git commit -uno &&
 	git status -s --ignore-submodules=dirty >output &&
-	test_i18ngrep ! "^M. sm" output
+	test_grep ! "^M. sm" output
 '
 
 test_expect_success 'git commit --dry-run will show a staged but ignored submodule' '
@@ -1572,13 +1572,13 @@ EOF
 	git commit -uno --dry-run >output &&
 	test_cmp expect output &&
 	git status -s --ignore-submodules=dirty >output &&
-	test_i18ngrep "^M. sm" output
+	test_grep "^M. sm" output
 '
 
 test_expect_success 'git commit -m will commit a staged but ignored submodule' '
 	git commit -uno -m message &&
 	git status -s --ignore-submodules=dirty >output &&
-	test_i18ngrep ! "^M. sm" output &&
+	test_grep ! "^M. sm" output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1591,7 +1591,7 @@ test_expect_success 'show stash info with "--show-stash"' '
 	git stash &&
 	git status >expected_default &&
 	git status --show-stash >expected_with_stash &&
-	test_i18ngrep "^Your stash currently has 1 entry$" expected_with_stash
+	test_grep "^Your stash currently has 1 entry$" expected_with_stash
 '
 
 test_expect_success 'no stash info with "--show-stash --no-show-stash"' '
@@ -1618,14 +1618,14 @@ test_expect_success 'no additional info if no stash entries' '
 test_expect_success '"No commits yet" should be noted in status output' '
 	git checkout --orphan empty-branch-1 &&
 	git status >output &&
-	test_i18ngrep "No commits yet" output
+	test_grep "No commits yet" output
 '
 
 test_expect_success '"No commits yet" should not be noted in status output' '
 	git checkout --orphan empty-branch-2 &&
 	test_commit test-commit-1 &&
 	git status >output &&
-	test_i18ngrep ! "No commits yet" output
+	test_grep ! "No commits yet" output
 '
 
 test_expect_success '"Initial commit" should be noted in commit template' '
@@ -1633,7 +1633,7 @@ test_expect_success '"Initial commit" should be noted in commit template' '
 	touch to_be_committed_1 &&
 	git add to_be_committed_1 &&
 	git commit --dry-run >output &&
-	test_i18ngrep "Initial commit" output
+	test_grep "Initial commit" output
 '
 
 test_expect_success '"Initial commit" should not be noted in commit template' '
@@ -1642,7 +1642,7 @@ test_expect_success '"Initial commit" should not be noted in commit template' '
 	touch to_be_committed_2 &&
 	git add to_be_committed_2 &&
 	git commit --dry-run >output &&
-	test_i18ngrep ! "Initial commit" output
+	test_grep ! "Initial commit" output
 '
 
 test_expect_success '--no-optional-locks prevents index update' '

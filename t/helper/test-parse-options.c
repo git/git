@@ -21,6 +21,19 @@ static struct {
 	int unset;
 } length_cb;
 
+static int mode34_callback(const struct option *opt, const char *arg, int unset)
+{
+	if (unset)
+		*(int *)opt->value = 0;
+	else if (!strcmp(arg, "3"))
+		*(int *)opt->value = 3;
+	else if (!strcmp(arg, "4"))
+		*(int *)opt->value = 4;
+	else
+		return error("invalid value for '%s': '%s'", "--mode34", arg);
+	return 0;
+}
+
 static int length_callback(const struct option *opt, const char *arg, int unset)
 {
 	length_cb.called = 1;
@@ -124,6 +137,9 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_SET_INT(0, "set23", &integer, "set integer to 23", 23),
 		OPT_CMDMODE(0, "mode1", &integer, "set integer to 1 (cmdmode option)", 1),
 		OPT_CMDMODE(0, "mode2", &integer, "set integer to 2 (cmdmode option)", 2),
+		OPT_CALLBACK_F(0, "mode34", &integer, "(3|4)",
+			"set integer to 3 or 4 (cmdmode option)",
+			PARSE_OPT_CMDMODE, mode34_callback),
 		OPT_CALLBACK('L', "length", &integer, "str",
 			"get length of <str>", length_callback),
 		OPT_FILENAME('F', "file", &file, "set file to <file>"),

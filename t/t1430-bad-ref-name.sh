@@ -47,7 +47,7 @@ test_expect_success 'git branch shows badly named ref as warning' '
 	test-tool ref-store main update-ref msg "refs/heads/broken...ref" $main_sha1 $ZERO_OID REF_SKIP_REFNAME_VERIFICATION &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	git branch >output 2>error &&
-	test_i18ngrep -e "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
+	test_grep -e "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
 	! grep -e "broken\.\.\.ref" output
 '
 
@@ -158,7 +158,7 @@ test_expect_success 'rev-parse skips symref pointing to broken name' '
 	git rev-parse --verify one >expect &&
 	git rev-parse --verify shadow >actual 2>err &&
 	test_cmp expect actual &&
-	test_i18ngrep "ignoring dangling symref refs/tags/shadow" err
+	test_grep "ignoring dangling symref refs/tags/shadow" err
 '
 
 test_expect_success 'for-each-ref emits warnings for broken names' '
@@ -172,9 +172,9 @@ test_expect_success 'for-each-ref emits warnings for broken names' '
 	! grep -e "broken\.\.\.ref" output &&
 	! grep -e "badname" output &&
 	! grep -e "broken\.\.\.symref" output &&
-	test_i18ngrep "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
-	test_i18ngrep ! "ignoring broken ref refs/heads/badname" error &&
-	test_i18ngrep "ignoring ref with broken name refs/heads/broken\.\.\.symref" error
+	test_grep "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
+	test_grep ! "ignoring broken ref refs/heads/badname" error &&
+	test_grep "ignoring ref with broken name refs/heads/broken\.\.\.symref" error
 '
 
 test_expect_success 'update-ref -d can delete broken name' '
@@ -192,7 +192,7 @@ test_expect_success 'branch -d can delete broken name' '
 	test-tool ref-store main update-ref msg "refs/heads/broken...ref" $main_sha1 $ZERO_OID REF_SKIP_REFNAME_VERIFICATION &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	git branch -d broken...ref >output 2>error &&
-	test_i18ngrep "Deleted branch broken...ref (was broken)" output &&
+	test_grep "Deleted branch broken...ref (was broken)" output &&
 	test_must_be_empty error &&
 	git branch >output 2>error &&
 	! grep -e "broken\.\.\.ref" error &&
@@ -205,8 +205,9 @@ test_expect_success 'update-ref --no-deref -d can delete symref to broken name' 
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	test-tool ref-store main create-symref refs/heads/badname refs/heads/broken...ref msg &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/badname" &&
+	test_ref_exists refs/heads/badname &&
 	git update-ref --no-deref -d refs/heads/badname >output 2>error &&
-	test_path_is_missing .git/refs/heads/badname &&
+	test_ref_missing refs/heads/badname &&
 	test_must_be_empty output &&
 	test_must_be_empty error
 '
@@ -216,17 +217,19 @@ test_expect_success 'branch -d can delete symref to broken name' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	test-tool ref-store main create-symref refs/heads/badname refs/heads/broken...ref msg &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/badname" &&
+	test_ref_exists refs/heads/badname &&
 	git branch -d badname >output 2>error &&
-	test_path_is_missing .git/refs/heads/badname &&
-	test_i18ngrep "Deleted branch badname (was refs/heads/broken\.\.\.ref)" output &&
+	test_ref_missing refs/heads/badname &&
+	test_grep "Deleted branch badname (was refs/heads/broken\.\.\.ref)" output &&
 	test_must_be_empty error
 '
 
 test_expect_success 'update-ref --no-deref -d can delete dangling symref to broken name' '
 	test-tool ref-store main create-symref refs/heads/badname refs/heads/broken...ref msg &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/badname" &&
+	test_ref_exists refs/heads/badname &&
 	git update-ref --no-deref -d refs/heads/badname >output 2>error &&
-	test_path_is_missing .git/refs/heads/badname &&
+	test_ref_missing refs/heads/badname &&
 	test_must_be_empty output &&
 	test_must_be_empty error
 '
@@ -234,9 +237,10 @@ test_expect_success 'update-ref --no-deref -d can delete dangling symref to brok
 test_expect_success 'branch -d can delete dangling symref to broken name' '
 	test-tool ref-store main create-symref refs/heads/badname refs/heads/broken...ref msg &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/badname" &&
+	test_ref_exists refs/heads/badname &&
 	git branch -d badname >output 2>error &&
-	test_path_is_missing .git/refs/heads/badname &&
-	test_i18ngrep "Deleted branch badname (was refs/heads/broken\.\.\.ref)" output &&
+	test_ref_missing refs/heads/badname &&
+	test_grep "Deleted branch badname (was refs/heads/broken\.\.\.ref)" output &&
 	test_must_be_empty error
 '
 
@@ -245,8 +249,9 @@ test_expect_success 'update-ref -d can delete broken name through symref' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	test-tool ref-store main create-symref refs/heads/badname refs/heads/broken...ref msg &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/badname" &&
+	test_ref_exists refs/heads/broken...ref &&
 	git update-ref -d refs/heads/badname >output 2>error &&
-	test_path_is_missing .git/refs/heads/broken...ref &&
+	test_ref_missing refs/heads/broken...ref &&
 	test_must_be_empty output &&
 	test_must_be_empty error
 '
@@ -254,8 +259,9 @@ test_expect_success 'update-ref -d can delete broken name through symref' '
 test_expect_success 'update-ref --no-deref -d can delete symref with broken name' '
 	printf "ref: refs/heads/main\n" >.git/refs/heads/broken...symref &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
+	test_ref_exists refs/heads/broken...symref &&
 	git update-ref --no-deref -d refs/heads/broken...symref >output 2>error &&
-	test_path_is_missing .git/refs/heads/broken...symref &&
+	test_ref_missing refs/heads/broken...symref &&
 	test_must_be_empty output &&
 	test_must_be_empty error
 '
@@ -263,17 +269,19 @@ test_expect_success 'update-ref --no-deref -d can delete symref with broken name
 test_expect_success 'branch -d can delete symref with broken name' '
 	printf "ref: refs/heads/main\n" >.git/refs/heads/broken...symref &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
+	test_ref_exists refs/heads/broken...symref &&
 	git branch -d broken...symref >output 2>error &&
-	test_path_is_missing .git/refs/heads/broken...symref &&
-	test_i18ngrep "Deleted branch broken...symref (was refs/heads/main)" output &&
+	test_ref_missing refs/heads/broken...symref &&
+	test_grep "Deleted branch broken...symref (was refs/heads/main)" output &&
 	test_must_be_empty error
 '
 
 test_expect_success 'update-ref --no-deref -d can delete dangling symref with broken name' '
 	printf "ref: refs/heads/idonotexist\n" >.git/refs/heads/broken...symref &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
+	test_ref_exists refs/heads/broken...symref &&
 	git update-ref --no-deref -d refs/heads/broken...symref >output 2>error &&
-	test_path_is_missing .git/refs/heads/broken...symref &&
+	test_ref_missing refs/heads/broken...symref &&
 	test_must_be_empty output &&
 	test_must_be_empty error
 '
@@ -281,9 +289,10 @@ test_expect_success 'update-ref --no-deref -d can delete dangling symref with br
 test_expect_success 'branch -d can delete dangling symref with broken name' '
 	printf "ref: refs/heads/idonotexist\n" >.git/refs/heads/broken...symref &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
+	test_ref_exists refs/heads/broken...symref &&
 	git branch -d broken...symref >output 2>error &&
-	test_path_is_missing .git/refs/heads/broken...symref &&
-	test_i18ngrep "Deleted branch broken...symref (was refs/heads/idonotexist)" output &&
+	test_ref_missing refs/heads/broken...symref &&
+	test_grep "Deleted branch broken...symref (was refs/heads/idonotexist)" output &&
 	test_must_be_empty error
 '
 
@@ -292,7 +301,7 @@ test_expect_success 'update-ref -d cannot delete non-ref in .git dir' '
 	echo precious >expect &&
 	test_must_fail git update-ref -d my-private-file >output 2>error &&
 	test_must_be_empty output &&
-	test_i18ngrep -e "refusing to update ref with bad name" error &&
+	test_grep -e "refusing to update ref with bad name" error &&
 	test_cmp expect .git/my-private-file
 '
 

@@ -289,7 +289,7 @@ See also INCOMPATIBLE OPTIONS below.
 +
 See also INCOMPATIBLE OPTIONS below.
 
---empty={drop,keep,ask}::
+--empty=(drop|keep|ask)::
 	How to handle commits that are not empty to start and are not
 	clean cherry-picks of any upstream commit, but which become
 	empty after rebasing (because they contain a subset of already
@@ -695,7 +695,7 @@ be dropped automatically with `--no-keep-empty`).
 Similar to the apply backend, by default the merge backend drops
 commits that become empty unless `-i`/`--interactive` is specified (in
 which case it stops and asks the user what to do).  The merge backend
-also has an `--empty={drop,keep,ask}` option for changing the behavior
+also has an `--empty=(drop|keep|ask)` option for changing the behavior
 of handling commits that become empty.
 
 Directory rename detection

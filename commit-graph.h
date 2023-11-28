@@ -9,6 +9,12 @@
 #define GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS"
 
 /*
+ * This environment variable controls whether commits looked up via the
+ * commit graph will be double checked to exist in the object database.
+ */
+#define GIT_COMMIT_GRAPH_PARANOIA "GIT_COMMIT_GRAPH_PARANOIA"
+
+/*
  * This method is only used to enhance coverage of the commit-graph
  * feature in the test suite with the GIT_TEST_COMMIT_GRAPH and
  * GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS environment variables. Do not

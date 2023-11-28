@@ -24,7 +24,7 @@ test_expect_success 'setup' '
 test_expect_success '"verify" needs a worktree' '
 	git bundle create tip.bundle -1 main &&
 	nongit test_must_fail git bundle verify ../tip.bundle 2>err &&
-	test_i18ngrep "need a repository" err
+	test_grep "need a repository" err
 '
 
 test_expect_success 'annotated tags can be excluded by rev-list options' '
@@ -166,7 +166,7 @@ test_expect_success 'git bundle v3 rejects unknown capabilities' '
 	@unknown=silly
 	EOF
 	test_must_fail git bundle verify new 2>output &&
-	test_i18ngrep "unknown capability .unknown=silly." output
+	test_grep "unknown capability .unknown=silly." output
 '
 
 test_done

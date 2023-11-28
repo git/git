@@ -175,7 +175,7 @@ test_expect_success 'merge -h with invalid index' '
 		>.git/index &&
 		test_expect_code 129 git merge -h 2>usage
 	) &&
-	test_i18ngrep "[Uu]sage: git merge" broken/usage
+	test_grep "[Uu]sage: git merge" broken/usage
 '
 
 test_expect_success 'reject non-strategy with a git-merge-foo name' '
@@ -681,7 +681,7 @@ test_debug 'git log --graph --decorate --oneline --all'
 test_expect_success 'in-index merge' '
 	git reset --hard c0 &&
 	git merge --no-ff -s resolve c1 >out &&
-	test_i18ngrep "Wonderful." out &&
+	test_grep "Wonderful." out &&
 	verify_parents $c0 $c1
 '
 
@@ -697,7 +697,7 @@ test_expect_success 'merge with --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
 	git merge --autostash c2 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-5 merge-result &&
 	test_cmp result.1-5-9 file
@@ -708,7 +708,7 @@ test_expect_success 'merge with merge.autoStash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
 	git merge c2 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-5 merge-result &&
 	test_cmp result.1-5-9 file
@@ -718,7 +718,7 @@ test_expect_success 'fast-forward merge with --autostash' '
 	git reset --hard c0 &&
 	git merge-file file file.orig file.5 &&
 	git merge --autostash c1 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	test_cmp result.1-5 file
 '
 
@@ -728,7 +728,7 @@ test_expect_success 'failed fast-forward merge with --autostash' '
 	cp file.5 other &&
 	test_when_finished "rm other" &&
 	test_must_fail git merge --autostash c1 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	test_cmp file.5 file
 '
 
@@ -736,7 +736,7 @@ test_expect_success 'octopus merge with --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.3 &&
 	git merge --autostash c2 c3 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-5-9 merge-result &&
 	test_cmp result.1-3-5-9 file
@@ -746,7 +746,7 @@ test_expect_success 'failed merge (exit 2) with --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.5 &&
 	test_must_fail git merge -s recursive --autostash c2 c3 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	test_cmp result.1-5 file
 '
 
@@ -755,7 +755,7 @@ test_expect_success 'conflicted merge with --autostash, --abort restores stash' 
 	cp file.1 file &&
 	test_must_fail git merge --autostash c7 &&
 	git merge --abort 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	test_cmp file.1 file
 '
 
@@ -767,7 +767,7 @@ test_expect_success 'completed merge (git commit) with --no-commit and --autosta
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git commit 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-5 merge-result &&
 	test_cmp result.1-5-9 file
@@ -781,7 +781,7 @@ test_expect_success 'completed merge (git merge --continue) with --no-commit and
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git merge --continue 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-5 merge-result &&
 	test_cmp result.1-5-9 file
@@ -795,7 +795,7 @@ test_expect_success 'aborted merge (merge --abort) with --no-commit and --autost
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git merge --abort 2>err &&
-	test_i18ngrep "Applied autostash." err &&
+	test_grep "Applied autostash." err &&
 	git diff >actual &&
 	test_cmp expect actual
 '
@@ -808,7 +808,7 @@ test_expect_success 'aborted merge (reset --hard) with --no-commit and --autosta
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git reset --hard 2>err &&
-	test_i18ngrep "Autostash exists; creating a new stash entry." err &&
+	test_grep "Autostash exists; creating a new stash entry." err &&
 	git diff --exit-code
 '
 
@@ -821,7 +821,7 @@ test_expect_success 'quit merge with --no-commit and --autostash' '
 	test_cmp expect actual &&
 	git diff HEAD >expect &&
 	git merge --quit 2>err &&
-	test_i18ngrep "Autostash exists; creating a new stash entry." err &&
+	test_grep "Autostash exists; creating a new stash entry." err &&
 	git diff HEAD >actual &&
 	test_cmp expect actual
 '
@@ -832,7 +832,7 @@ test_expect_success 'merge with conflicted --autostash changes' '
 	git diff >expect &&
 	test_when_finished "test_might_fail git stash drop" &&
 	git merge --autostash c3 2>err &&
-	test_i18ngrep "Applying autostash resulted in conflicts." err &&
+	test_grep "Applying autostash resulted in conflicts." err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-9 merge-result &&
 	git stash show -p >actual &&

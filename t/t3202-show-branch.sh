@@ -253,7 +253,7 @@ test_expect_success 'error descriptions on orphan branch' '
 	test_branch_op_in_wt() {
 		test_orphan_error() {
 			test_must_fail git $* 2>actual &&
-			test_i18ngrep "no commit on branch .orphan-branch. yet$" actual
+			test_grep "no commit on branch .orphan-branch. yet$" actual
 		} &&
 		test_orphan_error -C wt branch $1 $2 &&                # implicit branch
 		test_orphan_error -C wt branch $1 orphan-branch $2 &&  # explicit branch

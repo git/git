@@ -160,10 +160,11 @@ in order to keep the declarations alphabetically sorted:
 int cmd_psuh(int argc, const char **argv, const char *prefix);
 ----
 
-Be sure to `#include "builtin.h"` in your `psuh.c`.
+Be sure to `#include "builtin.h"` in your `psuh.c`. You'll also need to
+`#include "gettext.h"` to use functions related to printing output text.
 
-Go ahead and add some throwaway printf to that function. This is a decent
-starting point as we can now add build rules and register the command.
+Go ahead and add some throwaway printf to the `cmd_psuh` function. This is a
+decent starting point as we can now add build rules and register the command.
 
 NOTE: Your throwaway text, as well as much of the text you will be adding over
 the course of this tutorial, is user-facing. That means it needs to be

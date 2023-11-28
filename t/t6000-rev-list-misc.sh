@@ -169,4 +169,17 @@ test_expect_success 'rev-list --count --objects' '
 	test_line_count = $count actual
 '
 
+test_expect_success 'rev-list --unpacked' '
+	git repack -ad &&
+	test_commit unpacked &&
+
+	git rev-list --objects --no-object-names unpacked^.. >expect.raw &&
+	sort expect.raw >expect &&
+
+	git rev-list --all --objects --unpacked --no-object-names >actual.raw &&
+	sort actual.raw >actual &&
+
+	test_cmp expect actual
+'
+
 test_done

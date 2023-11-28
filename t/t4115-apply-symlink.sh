@@ -136,7 +136,7 @@ test_expect_success SYMLINKS '--reject removes .rej symlink if it exists' '
 
 	ln -s foo file.t.rej &&
 	test_must_fail git apply patch --reject 2>err &&
-	test_i18ngrep "Rejected hunk" err &&
+	test_grep "Rejected hunk" err &&
 	test_path_is_missing foo &&
 	test_path_is_file file.t.rej
 '
