@@ -1232,7 +1232,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 
  all_done:
 	if (negotiator)
-		negotiator->release(negotiator);
+		negotiator->release_negotiator(negotiator);
 	return ref;
 }
 
@@ -1853,7 +1853,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		die("fsck failed");
 
 	if (negotiator)
-		negotiator->release(negotiator);
+		negotiator->release_negotiator(negotiator);
 
 	oidset_clear(&common);
 	return ref;

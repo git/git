@@ -62,6 +62,14 @@ static void hash_object(const char *path, const char *type, const char *vpath,
 {
 	int fd;
 	fd = xopen(path, O_RDONLY);
+#ifdef __MVS__
+	/*
+	 * Since the data being read is in binary format,
+	 * we need to disable autoconversion for z/OS
+	 */
+	if (__setfdbinary(fd))
+		die_errno("Cannot set to binary '%s'", path);
+#endif
 	hash_fd(fd, type, vpath, flags, literally);
 }
 

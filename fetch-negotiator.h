@@ -14,7 +14,7 @@ struct repository;
  * Then, when "have" lines are required, call next(). Call ack() to report what
  * the server tells us.
  *
- * Once negotiation is done, call release(). The negotiator then cannot be used
+ * Once negotiation is done, call release_negotiator(). The negotiator then cannot be used
  * (unless reinitialized with fetch_negotiator_init()).
  */
 struct fetch_negotiator {
@@ -47,7 +47,7 @@ struct fetch_negotiator {
 	 */
 	int (*ack)(struct fetch_negotiator *, struct commit *);
 
-	void (*release)(struct fetch_negotiator *);
+	void (*release_negotiator)(struct fetch_negotiator *);
 
 	/* internal use */
 	void *data;

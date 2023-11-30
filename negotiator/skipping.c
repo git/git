@@ -243,7 +243,7 @@ static int ack(struct fetch_negotiator *n, struct commit *c)
 	return known_to_be_common;
 }
 
-static void release(struct fetch_negotiator *n)
+static void release_negotiator(struct fetch_negotiator *n)
 {
 	clear_prio_queue(&((struct data *)n->data)->rev_list);
 	FREE_AND_NULL(n->data);
@@ -256,7 +256,7 @@ void skipping_negotiator_init(struct fetch_negotiator *negotiator)
 	negotiator->add_tip = add_tip;
 	negotiator->next = next;
 	negotiator->ack = ack;
-	negotiator->release = release;
+	negotiator->release_negotiator = release_negotiator;
 	negotiator->data = CALLOC_ARRAY(data, 1);
 	data->rev_list.compare = compare;
 

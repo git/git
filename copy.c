@@ -14,6 +14,13 @@ int copy_fd(int ifd, int ofd)
 		if (write_in_full(ofd, buffer, len) < 0)
 			return COPY_WRITE_ERROR;
 	}
+	#ifdef __MVS__
+		/*
+		 * This is to ensure that file tags are copied
+		 * from source to destination
+		 */
+		__copyfdccsid(ifd, ofd);
+	#endif
 	return 0;
 }
 

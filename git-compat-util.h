@@ -223,7 +223,15 @@ struct strbuf;
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stddef.h>
+#ifdef __MVS__
+	#define release stdlib_release
+	#define fetch stdlib_fetch
+#endif
 #include <stdlib.h>
+#ifdef __MVS__
+	#undef fetch
+	#undef release
+#endif
 #include <stdarg.h>
 #include <string.h>
 #ifdef HAVE_STRINGS_H
