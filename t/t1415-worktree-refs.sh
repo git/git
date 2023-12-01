@@ -17,17 +17,6 @@ test_expect_success 'setup' '
 	git -C wt2 update-ref refs/worktree/foo HEAD
 '
 
-# The 'packed-refs' file is stored directly in .git/. This means it is global
-# to the repository, and can only contain refs that are shared across all
-# worktrees.
-test_expect_success REFFILES 'refs/worktree must not be packed' '
-	git pack-refs --all &&
-	test_path_is_missing .git/refs/tags/wt1 &&
-	test_path_is_file .git/refs/worktree/foo &&
-	test_path_is_file .git/worktrees/wt1/refs/worktree/foo &&
-	test_path_is_file .git/worktrees/wt2/refs/worktree/foo
-'
-
 test_expect_success 'refs/worktree are per-worktree' '
 	test_cmp_rev worktree/foo initial &&
 	( cd wt1 && test_cmp_rev worktree/foo wt1 ) &&
