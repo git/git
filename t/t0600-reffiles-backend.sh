@@ -260,4 +260,52 @@ test_expect_success 'delete fails cleanly if packed-refs.new write fails' '
 	test_cmp unchanged actual
 '
 
+RWT="test-tool ref-store worktree:wt"
+RMAIN="test-tool ref-store worktree:main"
+
+test_expect_success 'setup worktree' '
+	test_commit first &&
+	git worktree add -b wt-main wt &&
+	(
+		cd wt &&
+		test_commit second
+	)
+'
+
+# Some refs (refs/bisect/*, pseudorefs) are kept per worktree, so they should
+# only appear in the for-each-reflog output if it is called from the correct
+# worktree, which is exercised in this test. This test is poorly written for
+# mulitple reasons: 1) it creates invalidly formatted log entres. 2) it uses
+# direct FS access for creating the reflogs. 3) PSEUDO-WT and refs/bisect/random
+# do not create reflogs by default, so it is not testing a realistic scenario.
+test_expect_success 'for_each_reflog()' '
+	echo $ZERO_OID > .git/logs/PSEUDO-MAIN &&
+	mkdir -p     .git/logs/refs/bisect &&
+	echo $ZERO_OID > .git/logs/refs/bisect/random &&
+
+	echo $ZERO_OID > .git/worktrees/wt/logs/PSEUDO-WT &&
+	mkdir -p     .git/worktrees/wt/logs/refs/bisect &&
+	echo $ZERO_OID > .git/worktrees/wt/logs/refs/bisect/wt-random &&
+
+	$RWT for-each-reflog | cut -d" " -f 2- | sort >actual &&
+	cat >expected <<-\EOF &&
+	HEAD 0x1
+	PSEUDO-WT 0x0
+	refs/bisect/wt-random 0x0
+	refs/heads/main 0x0
+	refs/heads/wt-main 0x0
+	EOF
+	test_cmp expected actual &&
+
+	$RMAIN for-each-reflog | cut -d" " -f 2- | sort >actual &&
+	cat >expected <<-\EOF &&
+	HEAD 0x1
+	PSEUDO-MAIN 0x0
+	refs/bisect/random 0x0
+	refs/heads/main 0x0
+	refs/heads/wt-main 0x0
+	EOF
+	test_cmp expected actual
+'
+
 test_done
