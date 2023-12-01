@@ -32,6 +32,14 @@ test_expect_success 'prepare a trivial repository' '
 	HEAD=$(git rev-parse --verify HEAD)
 '
 
+test_expect_success 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
+	N=`find .git/refs -type f | wc -l` &&
+	test "$N" != 0 &&
+	test-tool ref-store main pack-refs PACK_REFS_PRUNE,PACK_REFS_ALL &&
+	N=`find .git/refs -type f` &&
+	test -z "$N"
+'
+
 SHA1=
 
 test_expect_success 'see if git show-ref works as expected' '
