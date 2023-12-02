@@ -175,7 +175,6 @@ sub createProject {
       <AdditionalDependencies>\$(VCPKGLibs);\$(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>invalidcontinue.obj %(AdditionalOptions)</AdditionalOptions>
       <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
-      <ManifestFile>$cdup\\compat\\win32\\git.manifest</ManifestFile>
       <SubSystem>Console</SubSystem>
     </Link>
 EOM

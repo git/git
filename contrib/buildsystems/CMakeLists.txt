@@ -219,6 +219,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR})
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR})
 	add_compile_options(/MP /std:c11)
+	add_link_options(/MANIFEST:NO)
 endif()
 
 #default behaviour
