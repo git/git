@@ -3113,6 +3113,93 @@ __gitcomp_directories ()
 	fi
 }
 
+# In non-cone mode, the arguments to {set,add} are supposed to be
+# patterns, relative to the toplevel directory.  These can be any kind
+# of general pattern, like 'subdir/*.c' and we can't complete on all
+# of those.  However, if the user presses Tab to get tab completion, we
+# presume that they are trying to provide a pattern that names a specific
+# path.
+__gitcomp_slash_leading_paths ()
+{
+	local dequoted_word pfx="" cur_ toplevel
+
+	# Since we are dealing with a sparse-checkout, subdirectories may not
+	# exist in the local working copy.  Therefore, we want to run all
+	# ls-files commands relative to the repository toplevel.
+	toplevel="$(git rev-parse --show-toplevel)/"
+
+	__git_dequote "$cur"
+
+	# If the paths provided by the user already start with '/', then
+	# they are considered relative to the toplevel of the repository
+	# already.  If they do not start with /, then we need to adjust
+	# them to start with the appropriate prefix.
+	case "$cur" in
+	/*)
+		cur="${cur:1}"
+		;;
+	*)
+		pfx="$(__git rev-parse --show-prefix)"
+	esac
+
+	# Since sparse-index is limited to cone-mode, in non-cone-mode the
+	# list of valid paths is precisely the cached files in the index.
+	#
+	# NEEDSWORK:
+	#   1) We probably need to take care of cases where ls-files
+	#      responds with special quoting.
+	#   2) We probably need to take care of cases where ${cur} has
+	#      some kind of special quoting.
+	#   3) On top of any quoting from 1 & 2, we have to provide an extra
+	#      level of quoting for any paths that contain a '*', '?', '\',
+	#      '[', ']', or leading '#' or '!' since those will be
+	#      interpreted by sparse-checkout as something other than a
+	#      literal path character.
+	# Since there are two types of quoting here, this might get really
+	# complex.  For now, just punt on all of this...
+	completions="$(__git -C "${toplevel}" -c core.quotePath=false \
+			 ls-files --cached -- "${pfx}${cur}*" \
+			 | sed -e s%^%/% -e 's%$% %')"
+	# Note, above, though that we needed all of the completions to be
+	# prefixed with a '/', and we want to add a space so that bash
+	# completion will actually complete an entry and let us move on to
+	# the next one.
+
+	# Return what we've found.
+	if test -n "$completions"; then
+		# We found some completions; return them
+		local IFS=$'\n'
+		COMPREPLY=($completions)
+	else
+		# Do NOT fall back to bash-style all-local-files-and-dirs
+		# when we find no match.  Such options are worse than
+		# useless:
+		#     1. "git sparse-checkout add" needs paths that are NOT
+		#        currently in the working copy.  "git
+		#        sparse-checkout set" does as well, except in the
+		#        special cases when users are only trying to narrow
+		#        their sparse checkout to a subset of what they
+		#        already have.
+		#
+		#     2. A path like '.config' is ambiguous as to whether
+		#        the user wants all '.config' files throughout the
+		#        tree, or just the one under the current directory.
+		#        It would result in a warning from the
+		#        sparse-checkout command due to this.  As such, all
+		#        completions of paths should be prefixed with a
+		#        '/'.
+		#
+		#     3. We don't want paths prefixed with a '/' to
+		#        complete files in the system root directory, we
+		#        want it to complete on files relative to the
+		#        repository root.
+		#
+		# As such, make sure that NO completions are offered rather
+		# than falling back to bash's default completions.
+		COMPREPLY=( "" )
+	fi
+}
+
 _git_sparse_checkout ()
 {
 	local subcommands="list init set disable add reapply"
@@ -3138,6 +3225,8 @@ _git_sparse_checkout ()
 		fi
 		if [[ "$using_cone" == "true" ]]; then
 			__gitcomp_directories
+		else
+			 __gitcomp_slash_leading_paths
 		fi
 	esac
 }
