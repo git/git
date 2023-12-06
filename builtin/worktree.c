@@ -815,8 +815,8 @@ static int add(int ac, const char **av, const char *prefix)
 		die(_("options '%s' and '%s' cannot be used together"),
 		    "--orphan", "--no-checkout");
 	if (opts.orphan && ac == 2)
-		die(_("'%s' and '%s' cannot be used together"), "--orphan",
-		    _("<commit-ish>"));
+		die(_("option '%s' and commit-ish cannot be used together"),
+		    "--orphan");
 	if (lock_reason && !keep_locked)
 		die(_("the option '%s' requires '%s'"), "--reason", "--lock");
 	if (lock_reason)
