@@ -711,7 +711,7 @@ test_dwim_orphan () {
 	local fetch_error_text="fatal: No local or remote refs exist despite at least one remote" &&
 	local orphan_hint="hint: If you meant to create a worktree containing a new orphan branch" &&
 	local invalid_ref_regex="^fatal: invalid reference: " &&
-	local bad_combo_regex="^fatal: '[-a-z]*' and '[-a-z]*' cannot be used together" &&
+	local bad_combo_regex="^fatal: options '[-a-z]*' and '[-a-z]*' cannot be used together" &&
 
 	local git_ns="repo" &&
 	local dashc_args="-C $git_ns" &&
