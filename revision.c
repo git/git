@@ -2709,7 +2709,8 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--branches")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --branches"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--branches");
 		handle_refs(refs, revs, *flags, refs_for_each_branch_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--bisect")) {
@@ -2720,12 +2721,14 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		revs->bisect = 1;
 	} else if (!strcmp(arg, "--tags")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --tags"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--tags");
 		handle_refs(refs, revs, *flags, refs_for_each_tag_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--remotes")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --remotes"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--remotes");
 		handle_refs(refs, revs, *flags, refs_for_each_remote_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
@@ -2743,21 +2746,24 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 	} else if (skip_prefix(arg, "--branches=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --branches"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--branches");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/heads/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --tags"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--tags");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/tags/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --remotes"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--remotes");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/remotes/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);

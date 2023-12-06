@@ -151,12 +151,12 @@ do
 	do
 		test_expect_success "$section: fails with --$pseudoopt" '
 			test_must_fail git rev-list --exclude-hidden=$section --$pseudoopt 2>err &&
-			test_grep "error: --exclude-hidden cannot be used together with --$pseudoopt" err
+			test_grep "error: options .--exclude-hidden. and .--$pseudoopt. cannot be used together" err
 		'
 
 		test_expect_success "$section: fails with --$pseudoopt=pattern" '
 			test_must_fail git rev-list --exclude-hidden=$section --$pseudoopt=pattern 2>err &&
-			test_grep "error: --exclude-hidden cannot be used together with --$pseudoopt" err
+			test_grep "error: options .--exclude-hidden. and .--$pseudoopt. cannot be used together" err
 		'
 	done
 done
