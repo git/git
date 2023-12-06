@@ -971,7 +971,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
 	if (ignored && ignored_only)
-		die(_("-x and -X cannot be used together"));
+		die(_("options '%s' and '%s' cannot be used together"), "-x", "-X");
 	if (!ignored)
 		setup_standard_excludes(&dir);
 	if (ignored_only)
