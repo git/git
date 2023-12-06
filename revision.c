@@ -3036,8 +3036,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		revs->grep_filter.ignore_locale = 1;
 	compile_grep_patterns(&revs->grep_filter);
 
-	if (revs->reverse && revs->reflog_info)
-		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--walk-reflogs");
 	if (revs->reflog_info && revs->limited)
 		die("cannot combine --walk-reflogs with history-limiting options");
 	if (revs->rewrite_parents && revs->children.name)
@@ -3048,11 +3046,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	/*
 	 * Limitations on the graph functionality
 	 */
-	if (revs->reverse && revs->graph)
-		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--graph");
+	die_for_incompatible_opt3(!!revs->graph, "--graph",
+				  !!revs->reverse, "--reverse",
+				  !!revs->reflog_info, "--walk-reflogs");
 
-	if (revs->reflog_info && revs->graph)
-		die(_("options '%s' and '%s' cannot be used together"), "--walk-reflogs", "--graph");
 	if (revs->no_walk && revs->graph)
 		die(_("options '%s' and '%s' cannot be used together"), "--no-walk", "--graph");
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
