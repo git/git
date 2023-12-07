@@ -238,34 +238,29 @@ static int git_sequencer_config(const char *k, const char *v,
 				const struct config_context *ctx, void *cb)
 {
 	struct replay_opts *opts = cb;
-	int status;
 
 	if (!strcmp(k, "commit.cleanup")) {
-		const char *s;
+		if (!v)
+			return config_error_nonbool(k);
 
-		status = git_config_string(&s, k, v);
-		if (status)
-			return status;
-
-		if (!strcmp(s, "verbatim")) {
+		if (!strcmp(v, "verbatim")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_NONE;
 			opts->explicit_cleanup = 1;
-		} else if (!strcmp(s, "whitespace")) {
+		} else if (!strcmp(v, "whitespace")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SPACE;
 			opts->explicit_cleanup = 1;
-		} else if (!strcmp(s, "strip")) {
+		} else if (!strcmp(v, "strip")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_ALL;
 			opts->explicit_cleanup = 1;
-		} else if (!strcmp(s, "scissors")) {
+		} else if (!strcmp(v, "scissors")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SCISSORS;
 			opts->explicit_cleanup = 1;
 		} else {
 			warning(_("invalid commit message cleanup mode '%s'"),
-				  s);
+				  v);
 		}
 
-		free((char *)s);
-		return status;
+		return 0;
 	}
 
 	if (!strcmp(k, "commit.gpgsign")) {
