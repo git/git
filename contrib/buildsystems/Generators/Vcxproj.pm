@@ -198,7 +198,6 @@ sub createProject {
       <AdditionalDependencies>\$(VCPKGLibs);\$(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>invalidcontinue.obj %(AdditionalOptions)</AdditionalOptions>
       <EntryPointSymbol>$entrypoint</EntryPointSymbol>
-      <ManifestFile>$cdup\\compat\\win32\\git.manifest</ManifestFile>
       <SubSystem>$subsystem</SubSystem>
     </Link>
 EOM
