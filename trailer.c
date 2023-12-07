@@ -553,16 +553,22 @@ static int git_trailer_config(const char *conf_key, const char *value,
 	case TRAILER_KEY:
 		if (conf->key)
 			warning(_("more than one %s"), conf_key);
+		if (!value)
+			return config_error_nonbool(conf_key);
 		conf->key = xstrdup(value);
 		break;
 	case TRAILER_COMMAND:
 		if (conf->command)
 			warning(_("more than one %s"), conf_key);
+		if (!value)
+			return config_error_nonbool(conf_key);
 		conf->command = xstrdup(value);
 		break;
 	case TRAILER_CMD:
 		if (conf->cmd)
 			warning(_("more than one %s"), conf_key);
+		if (!value)
+			return config_error_nonbool(conf_key);
 		conf->cmd = xstrdup(value);
 		break;
 	case TRAILER_WHERE:
