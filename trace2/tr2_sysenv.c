@@ -68,6 +68,8 @@ static int tr2_sysenv_cb(const char *key, const char *value,
 
 	for (k = 0; k < ARRAY_SIZE(tr2_sysenv_settings); k++) {
 		if (!strcmp(key, tr2_sysenv_settings[k].git_config_name)) {
+			if (!value)
+				return config_error_nonbool(key);
 			free(tr2_sysenv_settings[k].value);
 			tr2_sysenv_settings[k].value = xstrdup(value);
 			return 0;
