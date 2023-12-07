@@ -445,9 +445,12 @@ int git_diff_ui_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "diff.algorithm")) {
+		if (!value)
+			return config_error_nonbool(var);
 		diff_algorithm = parse_algorithm_value(value);
 		if (diff_algorithm < 0)
-			return -1;
+			return error(_("unknown value for config '%s': %s"),
+				     var, value);
 		return 0;
 	}
 
@@ -486,7 +489,8 @@ int git_diff_basic_config(const char *var, const char *value,
 			return config_error_nonbool(var);
 		val = parse_ws_error_highlight(value);
 		if (val < 0)
-			return -1;
+			return error(_("unknown value for config '%s': %s"),
+				     var, value);
 		ws_error_highlight_default = val;
 		return 0;
 	}
