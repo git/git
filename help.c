@@ -464,8 +464,11 @@ static int get_alias(const char *var, const char *value,
 {
 	struct string_list *list = data;
 
-	if (skip_prefix(var, "alias.", &var))
+	if (skip_prefix(var, "alias.", &var)) {
+		if (!value)
+			return config_error_nonbool(var);
 		string_list_append(list, var)->util = xstrdup(value);
+	}
 
 	return 0;
 }
