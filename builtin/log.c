@@ -594,8 +594,11 @@ static int git_log_config(const char *var, const char *value,
 			decoration_style = 0; /* maybe warn? */
 		return 0;
 	}
-	if (!strcmp(var, "log.diffmerges"))
+	if (!strcmp(var, "log.diffmerges")) {
+		if (!value)
+			return config_error_nonbool(var);
 		return diff_merges_config(value);
+	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;

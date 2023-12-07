@@ -507,6 +507,8 @@ static int git_trailer_default_config(const char *conf_key, const char *value,
 				warning(_("unknown value '%s' for key '%s'"),
 					value, conf_key);
 		} else if (!strcmp(trailer_item, "separators")) {
+			if (!value)
+				return config_error_nonbool(conf_key);
 			separators = xstrdup(value);
 		}
 	}

@@ -1253,6 +1253,8 @@ static int git_mailinfo_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "mailinfo.quotedcr")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (mailinfo_parse_quoted_cr_action(value, &mi->quoted_cr) != 0)
 			return error(_("bad action '%s' for '%s'"), value, var);
 		return 0;
