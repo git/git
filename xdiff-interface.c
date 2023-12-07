@@ -314,7 +314,7 @@ int git_xmerge_config(const char *var, const char *value,
 {
 	if (!strcmp(var, "merge.conflictstyle")) {
 		if (!value)
-			return error(_("'%s' is not a boolean"), var);
+			return config_error_nonbool(var);
 		if (!strcmp(value, "diff3"))
 			git_xmerge_style = XDL_MERGE_DIFF3;
 		else if (!strcmp(value, "zdiff3"))
