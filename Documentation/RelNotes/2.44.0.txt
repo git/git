@@ -1,0 +1,43 @@
+Git v2.44 Release Notes
+=======================
+
+UI, Workflows & Features
+
+ * "git add" and "git stash" learned to support the ":(attr:...)"
+   magic pathspec.
+
+ * "git rebase --autosquash" is now enabled for non-interactive rebase,
+   but it is still incompatible with the apply backend.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Process to add some form of low-level unit tests has started.
+
+ * Add support for GitLab CI.
+
+ * "git for-each-ref --no-sort" still sorted the refs alphabetically
+   which paid non-trivial cost.  It has been redefined to show output
+   in an unspecified order, to allow certain optimizations to take
+   advantage of.
+
+
+Fixes since v2.43
+-----------------
+
+ * The way CI testing used "prove" could lead to running the test
+   suite twice needlessly, which has been corrected.
+   (merge e7e03ef995 js/ci-discard-prove-state later to maint).
+
+ * Update ref-related tests.
+
+ * "git format-patch --encode-email-headers" ignored the option when
+   preparing the cover letter, which has been corrected.
+
+ * Newer versions of Getopt::Long started giving warnings against our
+   (ab)use of it in "git send-email".  Bump the minimum version
+   requirement for Perl to 5.8.1 (from September 2002) to allow
+   simplifying our implementation.
+   (merge 6ff658cc78 tz/send-email-negatable-options later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
