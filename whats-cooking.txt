@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2023, #09; Mon, 27)
+Subject: What's cooking in git.git (Dec 2023, #01; Sat, 9)
 X-master-at: 564d0252ca632e0264ed670534a51d18a689ef5d
 X-next-at: 3155946c3afb0941e6e01302cf86e4489bffc968
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2023, #09; Mon, 27)
+What's cooking in git.git (Dec 2023, #01; Sat, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,111 +48,174 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* ad/merge-file-diff-algo (2023-11-22) 1 commit
- - merge-file: add --diff-algorithm option
+* jp/use-diff-index-in-pre-commit-sample (2023-12-03) 1 commit
+ - hooks--pre-commit: detect non-ASCII when renaming
 
- "git merge-file" learned to take the "--diff-algorithm" option to
- use algorithm different from the default "myers" diff.
+ The sample pre-commit hook that tries to catch introduction of new
+ paths that use potentially non-portable characters did not notice
+ an existing path getting renamed to such a problematic path, when
+ rename detection was enabled.
 
- Will merge to 'next'?
- source: <pull.1606.v2.git.git.1700507932937.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1291.v2.git.git.1701360836307.gitgitgadget@gmail.com>
 
 
-* ak/p4-initial-empty-commits (2023-11-23) 1 commit
- - git-p4: fix fast import when empty commit is first
+* mk/doc-gitfile-more (2023-12-03) 1 commit
+ - doc: make the gitfile syntax easier to discover
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <20231128065558.1061206-1-mk+copyleft@pimpmybyte.de>
+
+
+* ps/ref-tests-update-more (2023-12-03) 10 commits
+ - t6301: write invalid object ID via `test-tool ref-store`
+ - t5551: stop writing packed-refs directly
+ - t5401: speed up creation of many branches
+ - t4013: simplify magic parsing and drop "failure"
+ - t3310: stop checking for reference existence via `test -f`
+ - t1417: make `reflog --updateref` tests backend agnostic
+ - t1410: use test-tool to create empty reflog
+ - t1401: stop treating FETCH_HEAD as real reference
+ - t1400: split up generic reflog tests from the reffile-specific ones
+ - t0410: mark tests to require the reffiles backend
+
+ Tests update.
+
+ Will merge to 'next'.
+ source: <cover.1701242407.git.ps@pks.im>
+
+
+* sh/completion-with-reftable (2023-12-03) 2 commits
+ - completion: stop checking for reference existence via `test -f`
+ - completion: refactor existence checks for special refs
+
+ Command line completion script (in contrib/) learned to work better
+ with the reftable backend.
 
  Expecting a reroll.
- source: <pull.1609.git.git.1700639764041.gitgitgadget@gmail.com>
+ source: <20231130202404.89791-1-stanhu@gmail.com>
 
 
-* jc/checkout-B-branch-in-use (2023-11-23) 2 commits
- - checkout: forbid "-B <branch>" from touching a branch used elsewhere
- - checkout: refactor die_if_checked_out() caller
+* en/header-cleanup (2023-12-03) 12 commits
+ - treewide: remove unnecessary includes in source files
+ - treewide: add direct includes currently only pulled in transitively
+ - trace2/tr2_tls.h: remove unnecessary include
+ - submodule-config.h: remove unnecessary include
+ - pkt-line.h: remove unnecessary include
+ - line-log.h: remove unnecessary include
+ - http.h: remove unnecessary include
+ - fsmonitor--daemon.h: remove unnecessary includes
+ - blame.h: remove unnecessary includes
+ - archive.h: remove unnecessary include
+ - treewide: remove unnecessary includes in source files
+ - treewide: remove unnecessary includes from header files
 
- "git checkout -B <branch> [<start-point>]" allowed a branch that is
- in use in another worktree to be updated and checked out, which
- might be a bit unexpected.  The rule has been tightened, which is a
- breaking change.  "--ignore-other-worktrees" option is required to
- unbreak you, if you are used to the current behaviour that "-B"
- overrides the safety.
+ Remove unused header "#include".
 
- Needs review and documentation updates.
- source: <xmqqjzq9cl70.fsf@gitster.g>
-
-
-* jh/trace2-redact-auth (2023-11-23) 4 commits
- - t0212: test URL redacting in EVENT format
- - t0211: test URL redacting in PERF format
- - trace2: redact passwords from https:// URLs by default
- - trace2: fix signature of trace2_def_param() macro
-
- trace2 streams used to record the URLs that potentially embed
- authentication material, which has been corrected.
-
- Will merge to 'next'.
- source: <pull.1616.git.1700680717.gitgitgadget@gmail.com>
+ Has a few interactions with topics in flight.
+ source: <pull.1617.git.1701585682.gitgitgadget@gmail.com>
 
 
-* ps/commit-graph-less-paranoid (2023-11-26) 1 commit
- - commit-graph: disable GIT_COMMIT_GRAPH_PARANOIA by default
+* jc/revision-parse-int (2023-12-09) 1 commit
+ - revision: parse integer arguments to --max-count, --skip, etc., more carefully
 
- Earlier we stopped relying on commit-graph that (still) records
- information about commits that are lost from the object store,
- which has negative performance implications.  The default has been
- flipped to disable this pessimization.
+ The command line parser for the "log" family of commands was too
+ loose when parsing certain numbers, e.g., silently ignoring the
+ extra 'q' in "git log -n 1q" without complaining, which has been
+ tightened up.
 
  Will merge to 'next'.
- source: <17e08289cd59d20de0de9b4e18f5e6bf77987351.1700823746.git.ps@pks.im>
+ source: <xmqq5y181fx0.fsf_-_@gitster.g>
 
 
-* ps/reftable-fixes (2023-11-22) 8 commits
- - reftable/stack: fix stale lock when dying
- - reftable/merged: reuse buffer to compute record keys
- - reftable/stack: reuse buffers when reloading stack
- - reftable/stack: perform auto-compaction with transactional interface
- - reftable/stack: verify that `reftable_stack_add()` uses auto-compaction
- - reftable: handle interrupted writes
- - reftable: handle interrupted reads
- - reftable: wrap EXPECT macros in do/while
+* jk/bisect-reset-fix (2023-12-09) 1 commit
+ - bisect: always clean on reset
 
- Bunch of small fix-ups to the reftable code.
+ "git bisect reset" has been taught to clean up state files and refs
+ even when BISECT_START file is gone.
 
- Needs review.
- source: <cover.1700549493.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <20231207065341.GA778781@coredump.intra.peff.net>
 
 
-* en/complete-sparse-checkout (2023-11-27) 4 commits
- - completion: avoid user confusion in non-cone mode
- - completion: avoid misleading completions in cone mode
- - completion: fix logic for determining whether cone mode is active
- - completion: squelch stray errors in sparse-checkout completion
+* jk/implicit-true (2023-12-09) 7 commits
+ - fsck: handle NULL value when parsing message config
+ - trailer: handle NULL value when parsing trailer-specific config
+ - submodule: handle NULL value when parsing submodule.*.branch
+ - help: handle NULL value for alias.* config
+ - trace2: handle NULL values in tr2_sysenv config callback
+ - setup: handle NULL value when parsing extensions
+ - config: handle NULL value when parsing non-bools
+ (this branch is used by jk/config-cleanup.)
 
- source: <pull.1349.v2.git.1700985086.gitgitgadget@gmail.com>
+ Some codepaths did not correctly parse configuration variables
+ specified with valueless "true", which has been corrected.
 
-
-* jb/reflog-expire-delete-dry-run-options (2023-11-26) 1 commit
- - builtin/reflog.c: fix dry-run option short name
-
- source: <20231126000514.85509-1-josh@brob.st>
-
-
-* jc/orphan-unborn (2023-11-24) 2 commits
- - orphan/unborn: fix use of 'orphan' in end-user facing messages
- - orphan/unborn: add to the glossary and use them consistently
-
- source: <xmqq4jhb977x.fsf@gitster.g>
+ Will merge to 'next'.
+ source: <20231207071030.GA1275835@coredump.intra.peff.net>
 
 
-* rs/column-leakfix (2023-11-27) 1 commit
- - column: release strbuf and string_list after use
+* jk/config-cleanup (2023-12-09) 9 commits
+ - sequencer: simplify away extra git_config_string() call
+ - gpg-interface: drop pointless config_error_nonbool() checks
+ - push: drop confusing configset/callback redundancy
+ - config: use git_config_string() for core.checkRoundTripEncoding
+ - diff: give more detailed messages for bogus diff.* config
+ - config: use config_error_nonbool() instead of custom messages
+ - imap-send: don't use git_die_config() inside callback
+ - git_xmerge_config(): prefer error() to die()
+ - config: reject bogus values for core.checkstat
+ (this branch uses jk/implicit-true.)
 
- source: <f087137d-a5aa-487e-a1cb-0ad7117b38ed@web.de>
+ Code clean-up around use of configuration variables.
+
+ Will merge to 'next'.
+ source: <20231207071030.GA1275835@coredump.intra.peff.net>
+ source: <20231207072338.GA1277727@coredump.intra.peff.net>
 
 
-* rs/i18n-cannot-be-used-together (2023-11-27) 1 commit
- - i18n: factorize even more 'incompatible options' messages
+* jk/end-of-options (2023-12-09) 1 commit
+ - parse-options: decouple "--end-of-options" and "--"
 
- source: <e6eb12e4-bb63-473c-9c2f-965a4d5981ad@web.de>
+ "git log --end-of-options --rev -- --path" learned to interpret
+ "--rev" as a rev, and "--path" as a path, as expected.
+
+ Will merge to 'next'.
+ source: <20231206222145.GA136253@coredump.intra.peff.net>
+
+
+* ps/clone-into-reftable-repository (2023-12-09) 7 commits
+ - builtin/clone: create the refdb with the correct object format
+ - builtin/clone: skip reading HEAD when retrieving remote
+ - builtin/clone: set up sparse checkout later
+ - builtin/clone: fix bundle URIs with mismatching object formats
+ - remote-curl: rediscover repository when fetching refs
+ - setup: allow skipping creation of the refdb
+ - setup: extract function to create the refdb
+
+ "git clone" has been prepared to allow cloning a repository with
+ non-default hash function into a repository that uses the reftable
+ backend.
+
+ Will merge to 'next'?
+ source: <cover.1701863960.git.ps@pks.im>
+
+
+* rs/incompatible-options-messages (2023-12-09) 7 commits
+ - worktree: simplify incompatibility message for --orphan and commit-ish
+ - worktree: standardize incompatibility messages
+ - clean: factorize incompatibility message
+ - revision, rev-parse: factorize incompatibility messages about - -exclude-hidden
+ - revision: use die_for_incompatible_opt3() for - -graph/--reverse/--walk-reflogs
+ - repack: use die_for_incompatible_opt3() for -A/-k/--cruft
+ - push: use die_for_incompatible_opt4() for - -delete/--tags/--all/--mirror
+
+ Clean-up code that handles combinations of incompatible options.
+
+ Will merge to 'next'.
+ source: <20231206115215.94467-1-l.s.r@web.de>
 
 --------------------------------------------------
 [Stalled]
@@ -199,12 +262,137 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ad/merge-file-diff-algo (2023-11-22) 1 commit
+ - merge-file: add --diff-algorithm option
+
+ "git merge-file" learned to take the "--diff-algorithm" option to
+ use algorithm different from the default "myers" diff.
+
+ Will merge to 'next'.
+ source: <pull.1606.v2.git.git.1700507932937.gitgitgadget@gmail.com>
+
+
+* ak/p4-initial-empty-commits (2023-11-23) 1 commit
+ - git-p4: fix fast import when empty commit is first
+
+ Expecting a reroll.
+ source: <pull.1609.git.git.1700639764041.gitgitgadget@gmail.com>
+
+
+* jc/checkout-B-branch-in-use (2023-12-09) 3 commits
+ - fixup! checkout: forbid "-B <branch>" from touching a branch used elsewhere
+ - checkout: forbid "-B <branch>" from touching a branch used elsewhere
+ - checkout: refactor die_if_checked_out() caller
+
+ "git checkout -B <branch> [<start-point>]" allowed a branch that is
+ in use in another worktree to be updated and checked out, which
+ might be a bit unexpected.  The rule has been tightened, which is a
+ breaking change.  "--ignore-other-worktrees" option is required to
+ unbreak you, if you are used to the current behaviour that "-B"
+ overrides the safety.
+
+ Needs review.
+ source: <xmqqjzq9cl70.fsf@gitster.g>
+
+
+* jh/trace2-redact-auth (2023-11-23) 4 commits
+ - t0212: test URL redacting in EVENT format
+ - t0211: test URL redacting in PERF format
+ - trace2: redact passwords from https:// URLs by default
+ - trace2: fix signature of trace2_def_param() macro
+
+ trace2 streams used to record the URLs that potentially embed
+ authentication material, which has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1616.git.1700680717.gitgitgadget@gmail.com>
+
+
+* ps/commit-graph-less-paranoid (2023-11-26) 1 commit
+ - commit-graph: disable GIT_COMMIT_GRAPH_PARANOIA by default
+
+ Earlier we stopped relying on commit-graph that (still) records
+ information about commits that are lost from the object store,
+ which has negative performance implications.  The default has been
+ flipped to disable this pessimization.
+
+ Will merge to 'next'.
+ source: <17e08289cd59d20de0de9b4e18f5e6bf77987351.1700823746.git.ps@pks.im>
+
+
+* ps/reftable-fixes (2023-11-22) 8 commits
+ - reftable/stack: fix stale lock when dying
+ - reftable/merged: reuse buffer to compute record keys
+ - reftable/stack: reuse buffers when reloading stack
+ - reftable/stack: perform auto-compaction with transactional interface
+ - reftable/stack: verify that `reftable_stack_add()` uses auto-compaction
+ - reftable: handle interrupted writes
+ - reftable: handle interrupted reads
+ - reftable: wrap EXPECT macros in do/while
+
+ Bunch of small fix-ups to the reftable code.
+
+ Needs review.
+ source: <cover.1700549493.git.ps@pks.im>
+
+
+* en/complete-sparse-checkout (2023-12-03) 4 commits
+ - completion: avoid user confusion in non-cone mode
+ - completion: avoid misleading completions in cone mode
+ - completion: fix logic for determining whether cone mode is active
+ - completion: squelch stray errors in sparse-checkout completion
+
+ Command line completion (in contrib/) learned to complete path
+ arguments to the "add/set" subcommands of "git sparse-checkout"
+ better.
+
+ Will merge to 'next'.
+ source: <pull.1349.v3.git.1701583024.gitgitgadget@gmail.com>
+
+
+* jb/reflog-expire-delete-dry-run-options (2023-11-26) 1 commit
+ - builtin/reflog.c: fix dry-run option short name
+
+ Command line parsing fix for "git reflog".
+
+ Will merge to 'next'.
+ source: <20231126000514.85509-1-josh@brob.st>
+
+
+* jc/orphan-unborn (2023-11-24) 2 commits
+ - orphan/unborn: fix use of 'orphan' in end-user facing messages
+ - orphan/unborn: add to the glossary and use them consistently
+
+ Doc updates to clarify what an "unborn branch" means.
+
+ Comments?
+ source: <xmqq4jhb977x.fsf@gitster.g>
+
+
+* rs/column-leakfix (2023-11-27) 1 commit
+ - column: release strbuf and string_list after use
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <f087137d-a5aa-487e-a1cb-0ad7117b38ed@web.de>
+
+
+* rs/i18n-cannot-be-used-together (2023-11-27) 1 commit
+ - i18n: factorize even more 'incompatible options' messages
+
+ Clean-up code that handles combinations of incompatible options.
+
+ Will merge to 'next'.
+ source: <e6eb12e4-bb63-473c-9c2f-965a4d5981ad@web.de>
+
+
 * ac/fuzz-show-date (2023-11-20) 1 commit
  - fuzz: add new oss-fuzz fuzzer for date.c / date.h
 
- Subject approxidate() and show_date() macchinery to OSS-Fuzz.
+ Subject approxidate() and show_date() machinery to OSS-Fuzz.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1612.v4.git.1700243267653.gitgitgadget@gmail.com>
 
 
@@ -225,6 +413,8 @@ Release tarballs are available at:
  without adding anything in .gitattributes files, which would be
  useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
  to limit to executables.
+
+ Will merge to 'next' after squashing the fix-up in?
  source: <20231116054437.2343549-1-jojwang@google.com>
 
 
