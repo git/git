@@ -91,10 +91,10 @@ set_git_test_installed () {
 run_dirs_helper () {
 	mydir=${1%/}
 	shift
-	while test $# -gt 0 -a "$1" != -- -a ! -f "$1"; do
+	while test $# -gt 0 && test "$1" != -- && test ! -f "$1"; do
 		shift
 	done
-	if test $# -gt 0 -a "$1" = --; then
+	if test $# -gt 0 && test "$1" = --; then
 		shift
 	fi
 
@@ -124,7 +124,7 @@ run_dirs_helper () {
 }
 
 run_dirs () {
-	while test $# -gt 0 -a "$1" != -- -a ! -f "$1"; do
+	while test $# -gt 0 && test "$1" != -- && test ! -f "$1"; do
 		run_dirs_helper "$@"
 		shift
 	done
@@ -180,7 +180,8 @@ run_subsection () {
 	GIT_PERF_AGGREGATING_LATER=t
 	export GIT_PERF_AGGREGATING_LATER
 
-	if test $# = 0 -o "$1" = -- -o -f "$1"; then
+	if test $# = 0 || test "$1" = -- || test -f "$1"
+	then
 		set -- . "$@"
 	fi
 

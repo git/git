@@ -31,7 +31,7 @@ unset GIT_CONFIG_NOSYSTEM
 GIT_CONFIG_SYSTEM="$TEST_DIRECTORY/perf/config"
 export GIT_CONFIG_SYSTEM
 
-if test -n "$GIT_TEST_INSTALLED" -a -z "$PERF_SET_GIT_TEST_INSTALLED"
+if test -n "$GIT_TEST_INSTALLED" && test -z "$PERF_SET_GIT_TEST_INSTALLED"
 then
 	error "Do not use GIT_TEST_INSTALLED with the perf tests.
 
