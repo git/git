@@ -1862,6 +1862,51 @@ test_expect_success 'option override configured sort' '
 	test_cmp expect actual
 '
 
+test_expect_success '--no-sort cancels config sort keys' '
+	test_config tag.sort "-refname" &&
+
+	# objecttype is identical for all of them, so sort falls back on
+	# default (ascending refname)
+	git tag -l \
+		--no-sort \
+		--sort="objecttype" \
+		"foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.3
+	foo1.6
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--no-sort cancels command line sort keys' '
+	# objecttype is identical for all of them, so sort falls back on
+	# default (ascending refname)
+	git tag -l \
+		--sort="-refname" \
+		--no-sort \
+		--sort="objecttype" \
+		"foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.3
+	foo1.6
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--no-sort without subsequent --sort prints expected tags' '
+	# Sort the results with `sort` for a consistent comparison against
+	# expected
+	git tag -l --no-sort "foo*" | sort >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.3
+	foo1.6
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'invalid sort parameter on command line' '
 	test_must_fail git tag -l --sort=notvalid "foo*" >actual
 '

@@ -51,17 +51,14 @@ OPTIONS
 	key.
 
 --format=<format>::
-	A string that interpolates `%(fieldname)` from a ref being shown
-	and the object it points at.  If `fieldname`
-	is prefixed with an asterisk (`*`) and the ref points
-	at a tag object, use the value for the field in the object
-	which the tag object refers to (instead of the field in the tag object).
-	When unspecified, `<format>` defaults to
-	`%(objectname) SPC %(objecttype) TAB %(refname)`.
-	It also interpolates `%%` to `%`, and `%xx` where `xx`
-	are hex digits interpolates to character with hex code
-	`xx`; for example `%00` interpolates to `\0` (NUL),
-	`%09` to `\t` (TAB) and `%0a` to `\n` (LF).
+	A string that interpolates `%(fieldname)` from a ref being shown and
+	the object it points at. In addition, the string literal `%%`
+	renders as `%` and `%xx` - where `xx` are hex digits - renders as
+	the character with hex code `xx`. For example, `%00` interpolates to
+	`\0` (NUL), `%09` to `\t` (TAB), and `%0a` to `\n` (LF).
++
+When unspecified, `<format>` defaults to `%(objectname) SPC %(objecttype)
+TAB %(refname)`.
 
 --color[=<when>]::
 	Respect any colors specified in the `--format` option. The
@@ -297,6 +294,10 @@ For commit and tag objects, the special `creatordate` and `creator`
 fields will correspond to the appropriate date or name-email-date tuple
 from the `committer` or `tagger` fields depending on the object type.
 These are intended for working on a mix of annotated and lightweight tags.
+
+For tag objects, a `fieldname` prefixed with an asterisk (`*`) expands to
+the `fieldname` value of the peeled object, rather than that of the tag
+object itself.
 
 Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,

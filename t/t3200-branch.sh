@@ -1576,9 +1576,10 @@ test_expect_success 'tracking with unexpected .fetch refspec' '
 
 test_expect_success 'configured committerdate sort' '
 	git init -b main sort &&
+	test_config -C sort branch.sort "committerdate" &&
+
 	(
 		cd sort &&
-		git config branch.sort committerdate &&
 		test_commit initial &&
 		git checkout -b a &&
 		test_commit a &&
@@ -1598,9 +1599,10 @@ test_expect_success 'configured committerdate sort' '
 '
 
 test_expect_success 'option override configured sort' '
+	test_config -C sort branch.sort "committerdate" &&
+
 	(
 		cd sort &&
-		git config branch.sort committerdate &&
 		git branch --sort=refname >actual &&
 		cat >expect <<-\EOF &&
 		  a
@@ -1612,10 +1614,70 @@ test_expect_success 'option override configured sort' '
 	)
 '
 
-test_expect_success 'invalid sort parameter in configuration' '
+test_expect_success '--no-sort cancels config sort keys' '
+	test_config -C sort branch.sort "-refname" &&
+
 	(
 		cd sort &&
-		git config branch.sort "v:notvalid" &&
+
+		# objecttype is identical for all of them, so sort falls back on
+		# default (ascending refname)
+		git branch \
+			--no-sort \
+			--sort="objecttype" >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		* b
+		  c
+		  main
+		EOF
+		test_cmp expect actual
+	)
+
+'
+
+test_expect_success '--no-sort cancels command line sort keys' '
+	(
+		cd sort &&
+
+		# objecttype is identical for all of them, so sort falls back on
+		# default (ascending refname)
+		git branch \
+			--sort="-refname" \
+			--no-sort \
+			--sort="objecttype" >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		* b
+		  c
+		  main
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--no-sort without subsequent --sort prints expected branches' '
+	(
+		cd sort &&
+
+		# Sort the results with `sort` for a consistent comparison
+		# against expected
+		git branch --no-sort | sort >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		  c
+		  main
+		* b
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'invalid sort parameter in configuration' '
+	test_config -C sort branch.sort "v:notvalid" &&
+
+	(
+		cd sort &&
 
 		# this works in the "listing" mode, so bad sort key
 		# is a dying offence.
