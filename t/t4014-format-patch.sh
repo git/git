@@ -1906,6 +1906,16 @@ body" &&
 	grep "^body$" actual
 '
 
+test_expect_success 'cover letter with --cover-from-description subject (UTF-8 subject line)' '
+	test_config branch.rebuild-1.description "Café?
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description subject --encode-email-headers main >actual &&
+	grep "^Subject: \[PATCH 0/2\] =?UTF-8?q?Caf=C3=A9=3F?=$" actual &&
+	! grep "Café" actual
+'
+
 test_expect_success 'cover letter with format.coverFromDescription = auto (short subject line)' '
 	test_config branch.rebuild-1.description "config subject
 
