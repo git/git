@@ -9,7 +9,9 @@ rebase.stat::
 	rebase. False by default.
 
 rebase.autoSquash::
-	If set to true enable `--autosquash` option by default.
+	If set to true, enable the `--autosquash` option of
+	linkgit:git-rebase[1] by default for interactive mode.
+	This can be overridden with the `--no-autosquash` option.
 
 rebase.autoStash::
 	When set to true, automatically create a temporary stash entry

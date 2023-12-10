@@ -43,7 +43,7 @@ test_auto_fixup () {
 
 	git tag $1 &&
 	test_tick &&
-	git rebase $2 -i HEAD^^^ &&
+	git rebase $2 HEAD^^^ &&
 	git log --oneline >actual &&
 	if test -n "$no_squash"
 	then
@@ -61,15 +61,24 @@ test_auto_fixup () {
 }
 
 test_expect_success 'auto fixup (option)' '
-	test_auto_fixup final-fixup-option --autosquash
+	test_auto_fixup fixup-option --autosquash &&
+	test_auto_fixup fixup-option-i "--autosquash -i"
 '
 
-test_expect_success 'auto fixup (config)' '
+test_expect_success 'auto fixup (config true)' '
 	git config rebase.autosquash true &&
-	test_auto_fixup final-fixup-config-true &&
+	test_auto_fixup ! fixup-config-true &&
+	test_auto_fixup fixup-config-true-i -i &&
 	test_auto_fixup ! fixup-config-true-no --no-autosquash &&
+	test_auto_fixup ! fixup-config-true-i-no "-i --no-autosquash"
+'
+
+test_expect_success 'auto fixup (config false)' '
 	git config rebase.autosquash false &&
-	test_auto_fixup ! final-fixup-config-false
+	test_auto_fixup ! fixup-config-false &&
+	test_auto_fixup ! fixup-config-false-i -i &&
+	test_auto_fixup fixup-config-false-yes --autosquash &&
+	test_auto_fixup fixup-config-false-i-yes "-i --autosquash"
 '
 
 test_auto_squash () {
@@ -87,7 +96,7 @@ test_auto_squash () {
 	git commit -m "squash! first" -m "extra para for first" &&
 	git tag $1 &&
 	test_tick &&
-	git rebase $2 -i HEAD^^^ &&
+	git rebase $2 HEAD^^^ &&
 	git log --oneline >actual &&
 	if test -n "$no_squash"
 	then
@@ -105,15 +114,24 @@ test_auto_squash () {
 }
 
 test_expect_success 'auto squash (option)' '
-	test_auto_squash final-squash --autosquash
+	test_auto_squash squash-option --autosquash &&
+	test_auto_squash squash-option-i "--autosquash -i"
 '
 
-test_expect_success 'auto squash (config)' '
+test_expect_success 'auto squash (config true)' '
 	git config rebase.autosquash true &&
-	test_auto_squash final-squash-config-true &&
+	test_auto_squash ! squash-config-true &&
+	test_auto_squash squash-config-true-i -i &&
 	test_auto_squash ! squash-config-true-no --no-autosquash &&
+	test_auto_squash ! squash-config-true-i-no "-i --no-autosquash"
+'
+
+test_expect_success 'auto squash (config false)' '
 	git config rebase.autosquash false &&
-	test_auto_squash ! final-squash-config-false
+	test_auto_squash ! squash-config-false &&
+	test_auto_squash ! squash-config-false-i -i &&
+	test_auto_squash squash-config-false-yes --autosquash &&
+	test_auto_squash squash-config-false-i-yes "-i --autosquash"
 '
 
 test_expect_success 'misspelled auto squash' '
