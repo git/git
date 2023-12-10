@@ -164,9 +164,9 @@ test_expect_success 'rev-parse skips symref pointing to broken name' '
 test_expect_success 'for-each-ref emits warnings for broken names' '
 	test-tool ref-store main update-ref msg "refs/heads/broken...ref" $main_sha1 $ZERO_OID REF_SKIP_REFNAME_VERIFICATION &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
-	printf "ref: refs/heads/broken...ref\n" >.git/refs/heads/badname &&
+	test-tool ref-store main create-symref refs/heads/badname refs/heads/broken...ref &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/badname" &&
-	printf "ref: refs/heads/main\n" >.git/refs/heads/broken...symref &&
+	test-tool ref-store main create-symref refs/heads/broken...symref refs/heads/main &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
 	git for-each-ref >output 2>error &&
 	! grep -e "broken\.\.\.ref" output &&
@@ -257,7 +257,7 @@ test_expect_success 'update-ref -d can delete broken name through symref' '
 '
 
 test_expect_success 'update-ref --no-deref -d can delete symref with broken name' '
-	printf "ref: refs/heads/main\n" >.git/refs/heads/broken...symref &&
+	test-tool ref-store main create-symref refs/heads/broken...symref refs/heads/main &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
 	test_ref_exists refs/heads/broken...symref &&
 	git update-ref --no-deref -d refs/heads/broken...symref >output 2>error &&
@@ -267,7 +267,7 @@ test_expect_success 'update-ref --no-deref -d can delete symref with broken name
 '
 
 test_expect_success 'branch -d can delete symref with broken name' '
-	printf "ref: refs/heads/main\n" >.git/refs/heads/broken...symref &&
+	test-tool ref-store main create-symref refs/heads/broken...symref refs/heads/main &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
 	test_ref_exists refs/heads/broken...symref &&
 	git branch -d broken...symref >output 2>error &&
@@ -277,7 +277,7 @@ test_expect_success 'branch -d can delete symref with broken name' '
 '
 
 test_expect_success 'update-ref --no-deref -d can delete dangling symref with broken name' '
-	printf "ref: refs/heads/idonotexist\n" >.git/refs/heads/broken...symref &&
+	test-tool ref-store main create-symref refs/heads/broken...symref refs/heads/idonotexist &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
 	test_ref_exists refs/heads/broken...symref &&
 	git update-ref --no-deref -d refs/heads/broken...symref >output 2>error &&
@@ -287,7 +287,7 @@ test_expect_success 'update-ref --no-deref -d can delete dangling symref with br
 '
 
 test_expect_success 'branch -d can delete dangling symref with broken name' '
-	printf "ref: refs/heads/idonotexist\n" >.git/refs/heads/broken...symref &&
+	test-tool ref-store main create-symref refs/heads/broken...symref refs/heads/idonotexist &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
 	test_ref_exists refs/heads/broken...symref &&
 	git branch -d broken...symref >output 2>error &&

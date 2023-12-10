@@ -522,7 +522,7 @@ test_expect_success 'log -S requires an argument' '
 '
 
 test_expect_success 'diff --cached on unborn branch' '
-	echo ref: refs/heads/unborn >.git/HEAD &&
+	git symbolic-ref HEAD refs/heads/unborn &&
 	git diff --cached >result &&
 	process_diffs result >actual &&
 	process_diffs "$TEST_DIRECTORY/t4013/diff.diff_--cached" >expected &&

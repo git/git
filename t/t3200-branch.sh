@@ -28,7 +28,7 @@ test_expect_success 'git branch --help should not have created a bogus branch' '
 	test_ref_missing refs/heads/--help
 '
 
-test_expect_success 'branch -h in broken repository' '
+test_expect_success REFFILES 'branch -h in broken repository' '
 	mkdir broken &&
 	(
 		cd broken &&
@@ -76,14 +76,14 @@ test_expect_success 'git branch HEAD should fail' '
 '
 
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$HEAD refs/heads/d/e/f@{0}: branch: Created from main
 EOF
 test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
 	test_ref_exists refs/heads/d/e/f &&
-	test_path_is_file .git/logs/refs/heads/d/e/f &&
-	test_cmp expect .git/logs/refs/heads/d/e/f
+	git reflog show --no-abbrev-commit refs/heads/d/e/f >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git branch -d d/e/f should delete a branch and a log' '
@@ -203,10 +203,9 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	test $(git rev-parse --abbrev-ref HEAD) = bam
 '
 
-test_expect_success 'git branch -M baz bam should add entries to .git/logs/HEAD' '
-	msg="Branch: renamed refs/heads/baz to refs/heads/bam" &&
-	grep " $ZERO_OID.*$msg$" .git/logs/HEAD &&
-	grep "^$ZERO_OID.*$msg$" .git/logs/HEAD
+test_expect_success 'git branch -M baz bam should add entries to HEAD reflog' '
+	git reflog show HEAD >actual &&
+	grep "HEAD@{0}: Branch: renamed refs/heads/baz to refs/heads/bam" actual
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '
@@ -215,17 +214,20 @@ test_expect_success 'git branch -M should leave orphaned HEAD alone' '
 		cd orphan &&
 		test_commit initial &&
 		git checkout --orphan lonely &&
-		grep lonely .git/HEAD &&
+		git symbolic-ref HEAD >expect &&
+		echo refs/heads/lonely >actual &&
+		test_cmp expect actual &&
 		test_ref_missing refs/head/lonely &&
 		git branch -M main mistress &&
-		grep lonely .git/HEAD
+		git symbolic-ref HEAD >expect &&
+		test_cmp expect actual
 	)
 '
 
 test_expect_success 'resulting reflog can be shown by log -g' '
 	oid=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
-	HEAD@{0} $oid $msg
+	HEAD@{0} $oid Branch: renamed refs/heads/baz to refs/heads/bam
 	HEAD@{2} $oid checkout: moving from foo to baz
 	EOF
 	git log -g --format="%gd %H %gs" -2 HEAD >actual &&
@@ -243,7 +245,7 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	git worktree prune
 '
 
-test_expect_success 'git branch -M fails if updating any linked working tree fails' '
+test_expect_success REFFILES 'git branch -M fails if updating any linked working tree fails' '
 	git worktree add -b baz bazdir1 &&
 	git worktree add -f bazdir2 baz &&
 	touch .git/worktrees/bazdir1/HEAD.lock &&
@@ -699,7 +701,8 @@ test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' 
 
 test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
 	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
-	! grep "$msg$" .git/logs/HEAD
+	git reflog HEAD >actual &&
+	! grep "$msg$" actual
 '
 
 test_expect_success 'git branch -C main should work when main is checked out' '
@@ -809,7 +812,7 @@ test_expect_success 'deleting a symref' '
 
 test_expect_success 'deleting a dangling symref' '
 	git symbolic-ref refs/heads/dangling-symref nowhere &&
-	test_path_is_file .git/refs/heads/dangling-symref &&
+	git symbolic-ref --no-recurse refs/heads/dangling-symref &&
 	echo "Deleted branch dangling-symref (was nowhere)." >expect &&
 	git branch -d dangling-symref >actual &&
 	test_ref_missing refs/heads/dangling-symref &&
@@ -833,14 +836,14 @@ test_expect_success 'renaming a symref is not allowed' '
 	test_ref_missing refs/heads/new-topic
 '
 
-test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for u is a symlink' '
+test_expect_success SYMLINKS,REFFILES 'git branch -m u v should fail when the reflog for u is a symlink' '
 	git branch --create-reflog u &&
 	mv .git/logs/refs/heads/u real-u &&
 	ln -s real-u .git/logs/refs/heads/u &&
 	test_must_fail git branch -m u v
 '
 
-test_expect_success SYMLINKS 'git branch -m with symlinked .git/refs' '
+test_expect_success SYMLINKS,REFFILES 'git branch -m with symlinked .git/refs' '
 	test_when_finished "rm -rf subdir" &&
 	git init --bare subdir &&
 
@@ -1140,14 +1143,14 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$HEAD refs/heads/g/h/i@{0}: branch: Created from main
 EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git checkout -b g/h/i -l main &&
 	test_ref_exists refs/heads/g/h/i &&
-	test_path_is_file .git/logs/refs/heads/g/h/i &&
-	test_cmp expect .git/logs/refs/heads/g/h/i
+	git reflog show --no-abbrev-commit refs/heads/g/h/i >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'checkout -b makes reflog by default' '
