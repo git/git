@@ -21,6 +21,46 @@ static struct {
 	.result = RESULT_NONE,
 };
 
+#ifndef _MSC_VER
+#define make_relative(location) location
+#else
+/*
+ * Visual C interpolates the absolute Windows path for `__FILE__`,
+ * but we want to see relative paths, as verified by t0080.
+ */
+#include "dir.h"
+
+static const char *make_relative(const char *location)
+{
+	static char prefix[] = __FILE__, buf[PATH_MAX], *p;
+	static size_t prefix_len;
+
+	if (!prefix_len) {
+		size_t len = strlen(prefix);
+		const char *needle = "\\t\\unit-tests\\test-lib.c";
+		size_t needle_len = strlen(needle);
+
+		if (len < needle_len || strcmp(needle, prefix + len - needle_len))
+			die("unexpected suffix of '%s'", prefix);
+
+		/* let it end in a directory separator */
+		prefix_len = len - needle_len + 1;
+	}
+
+	/* Does it not start with the expected prefix? */
+	if (fspathncmp(location, prefix, prefix_len))
+		return location;
+
+	strlcpy(buf, location + prefix_len, sizeof(buf));
+	/* convert backslashes to forward slashes */
+	for (p = buf; *p; p++)
+		if (*p == '\\')
+			*p = '/';
+
+	return buf;
+}
+#endif
+
 static void msg_with_prefix(const char *prefix, const char *format, va_list ap)
 {
 	fflush(stderr);
@@ -147,7 +187,8 @@ int test__run_end(int was_run UNUSED, const char *location, const char *format, 
 			break;
 
 		case RESULT_NONE:
-			test_msg("BUG: test has no checks at %s", location);
+			test_msg("BUG: test has no checks at %s",
+				 make_relative(location));
 			printf("not ok %d", ctx.count);
 			print_description(format, ap);
 			ctx.result = RESULT_FAILURE;
@@ -193,14 +234,16 @@ int test_assert(const char *location, const char *check, int ok)
 	assert(ctx.running);
 
 	if (ctx.result == RESULT_SKIP) {
-		test_msg("skipping check '%s' at %s", check, location);
+		test_msg("skipping check '%s' at %s", check,
+			 make_relative(location));
 		return 1;
 	}
 	if (!ctx.todo) {
 		if (ok) {
 			test_pass();
 		} else {
-			test_msg("check \"%s\" failed at %s", check, location);
+			test_msg("check \"%s\" failed at %s", check,
+				 make_relative(location));
 			test_fail();
 		}
 	}
@@ -225,7 +268,8 @@ int test__todo_end(const char *location, const char *check, int res)
 	if (ctx.result == RESULT_SKIP)
 		return 1;
 	if (res) {
-		test_msg("todo check '%s' succeeded at %s", check, location);
+		test_msg("todo check '%s' succeeded at %s", check,
+			 make_relative(location));
 		test_fail();
 	} else {
 		test_todo();
