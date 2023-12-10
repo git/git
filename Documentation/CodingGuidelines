@@ -490,7 +490,7 @@ For Perl programs:
 
  - Most of the C guidelines above apply.
 
- - We try to support Perl 5.8 and later ("use Perl 5.008").
+ - We try to support Perl 5.8.1 and later ("use Perl 5.008001").
 
  - use strict and use warnings are strongly preferred.
 
