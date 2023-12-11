@@ -197,18 +197,20 @@ test_expect_success 'show-ref --verify with dangling ref' '
 '
 
 test_expect_success 'show-ref sub-modes are mutually exclusive' '
-	cat >expect <<-EOF &&
-	fatal: only one of ${SQ}--exclude-existing${SQ}, ${SQ}--verify${SQ} or ${SQ}--exists${SQ} can be given
-	EOF
-
 	test_must_fail git show-ref --verify --exclude-existing 2>err &&
-	test_cmp expect err &&
+	grep "verify" err &&
+	grep "exclude-existing" err &&
+	grep "cannot be used together" err &&
 
 	test_must_fail git show-ref --verify --exists 2>err &&
-	test_cmp expect err &&
+	grep "verify" err &&
+	grep "exists" err &&
+	grep "cannot be used together" err &&
 
 	test_must_fail git show-ref --exclude-existing --exists 2>err &&
-	test_cmp expect err
+	grep "exclude-existing" err &&
+	grep "exists" err &&
+	grep "cannot be used together" err
 '
 
 test_expect_success '--exists with existing reference' '
