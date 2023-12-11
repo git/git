@@ -850,6 +850,54 @@ static void test_reftable_stack_auto_compaction(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_add_performs_auto_compaction(void)
+{
+	struct reftable_write_options cfg = { 0 };
+	struct reftable_stack *st = NULL;
+	struct strbuf refname = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err, i, n = 20;
+
+	err = reftable_new_stack(&st, dir, cfg);
+	EXPECT_ERR(err);
+
+	for (i = 0; i <= n; i++) {
+		struct reftable_ref_record ref = {
+			.update_index = reftable_stack_next_update_index(st),
+			.value_type = REFTABLE_REF_SYMREF,
+			.value.symref = "master",
+		};
+
+		/*
+		 * Disable auto-compaction for all but the last runs. Like this
+		 * we can ensure that we indeed honor this setting and have
+		 * better control over when exactly auto compaction runs.
+		 */
+		st->disable_auto_compact = i != n;
+
+		strbuf_reset(&refname);
+		strbuf_addf(&refname, "branch-%04d", i);
+		ref.refname = refname.buf;
+
+		err = reftable_stack_add(st, &write_test_ref, &ref);
+		EXPECT_ERR(err);
+
+		/*
+		 * The stack length should grow continuously for all runs where
+		 * auto compaction is disabled. When enabled, we should merge
+		 * all tables in the stack.
+		 */
+		if (i != n)
+			EXPECT(st->merged->stack_len == i + 1);
+		else
+			EXPECT(st->merged->stack_len == 1);
+	}
+
+	reftable_stack_destroy(st);
+	strbuf_release(&refname);
+	clear_dir(dir);
+}
+
 static void test_reftable_stack_compaction_concurrent(void)
 {
 	struct reftable_write_options cfg = { 0 };
@@ -960,6 +1008,7 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_add);
 	RUN_TEST(test_reftable_stack_add_one);
 	RUN_TEST(test_reftable_stack_auto_compaction);
+	RUN_TEST(test_reftable_stack_add_performs_auto_compaction);
 	RUN_TEST(test_reftable_stack_compaction_concurrent);
 	RUN_TEST(test_reftable_stack_compaction_concurrent_clean);
 	RUN_TEST(test_reftable_stack_hash_id);
