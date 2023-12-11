@@ -86,6 +86,10 @@ struct block_iter {
 	struct strbuf last_key;
 };
 
+#define BLOCK_ITER_INIT { \
+	.last_key = STRBUF_INIT, \
+}
+
 /* initializes a block reader. */
 int block_reader_init(struct block_reader *br, struct reftable_block *bl,
 		      uint32_t header_off, uint32_t table_block_size,

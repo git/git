@@ -224,10 +224,9 @@ struct table_iter {
 	struct block_iter bi;
 	int is_finished;
 };
-#define TABLE_ITER_INIT                          \
-	{                                        \
-		.bi = {.last_key = STRBUF_INIT } \
-	}
+#define TABLE_ITER_INIT { \
+	.bi = BLOCK_ITER_INIT \
+}
 
 static void table_iter_copy_from(struct table_iter *dest,
 				 struct table_iter *src)

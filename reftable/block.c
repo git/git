@@ -389,9 +389,7 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 	struct reftable_record rec = reftable_new_record(block_reader_type(br));
 	struct strbuf key = STRBUF_INIT;
 	int err = 0;
-	struct block_iter next = {
-		.last_key = STRBUF_INIT,
-	};
+	struct block_iter next = BLOCK_ITER_INIT;
 
 	int i = binsearch(br->restart_count, &restart_key_less, &args);
 	if (args.error) {
