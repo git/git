@@ -92,7 +92,7 @@ static int fd_read_lines(int fd, char ***namesp)
 	}
 
 	buf = reftable_malloc(size + 1);
-	if (read(fd, buf, size) != size) {
+	if (read_in_full(fd, buf, size) != size) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
