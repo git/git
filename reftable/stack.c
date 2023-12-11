@@ -42,7 +42,7 @@ static void stack_filename(struct strbuf *dest, struct reftable_stack *st,
 static ssize_t reftable_fd_write(void *arg, const void *data, size_t sz)
 {
 	int *fdp = (int *)arg;
-	return write(*fdp, data, sz);
+	return write_in_full(*fdp, data, sz);
 }
 
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
@@ -554,7 +554,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 		strbuf_addstr(&table_list, "\n");
 	}
 
-	err = write(add->lock_file_fd, table_list.buf, table_list.len);
+	err = write_in_full(add->lock_file_fd, table_list.buf, table_list.len);
 	strbuf_release(&table_list);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
@@ -1024,7 +1024,7 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 		strbuf_addstr(&ref_list_contents, "\n");
 	}
 
-	err = write(lock_file_fd, ref_list_contents.buf, ref_list_contents.len);
+	err = write_in_full(lock_file_fd, ref_list_contents.buf, ref_list_contents.len);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		unlink(new_table_path.buf);

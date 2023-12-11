@@ -78,7 +78,7 @@ static void test_read_file(void)
 	int i = 0;
 
 	EXPECT(fd > 0);
-	n = write(fd, out, strlen(out));
+	n = write_in_full(fd, out, strlen(out));
 	EXPECT(n == strlen(out));
 	err = close(fd);
 	EXPECT(err >= 0);
