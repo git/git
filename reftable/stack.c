@@ -17,6 +17,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-merged.h"
 #include "writer.h"
 
+#include "tempfile.h"
+
 static int stack_try_add(struct reftable_stack *st,
 			 int (*write_table)(struct reftable_writer *wr,
 					    void *arg),
@@ -440,8 +442,7 @@ static void format_name(struct strbuf *dest, uint64_t min, uint64_t max)
 }
 
 struct reftable_addition {
-	int lock_file_fd;
-	struct strbuf lock_file_name;
+	struct tempfile *lock_file;
 	struct reftable_stack *stack;
 
 	char **new_tables;
@@ -449,24 +450,19 @@ struct reftable_addition {
 	uint64_t next_update_index;
 };
 
-#define REFTABLE_ADDITION_INIT                \
-	{                                     \
-		.lock_file_name = STRBUF_INIT \
-	}
+#define REFTABLE_ADDITION_INIT {0}
 
 static int reftable_stack_init_addition(struct reftable_addition *add,
 					struct reftable_stack *st)
 {
+	struct strbuf lock_file_name = STRBUF_INIT;
 	int err = 0;
 	add->stack = st;
 
-	strbuf_reset(&add->lock_file_name);
-	strbuf_addstr(&add->lock_file_name, st->list_file);
-	strbuf_addstr(&add->lock_file_name, ".lock");
+	strbuf_addf(&lock_file_name, "%s.lock", st->list_file);
 
-	add->lock_file_fd = open(add->lock_file_name.buf,
-				 O_EXCL | O_CREAT | O_WRONLY, 0666);
-	if (add->lock_file_fd < 0) {
+	add->lock_file = create_tempfile(lock_file_name.buf);
+	if (!add->lock_file) {
 		if (errno == EEXIST) {
 			err = REFTABLE_LOCK_ERROR;
 		} else {
@@ -475,7 +471,7 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 		goto done;
 	}
 	if (st->config.default_permissions) {
-		if (chmod(add->lock_file_name.buf, st->config.default_permissions) < 0) {
+		if (chmod(add->lock_file->filename.buf, st->config.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -495,6 +491,7 @@ done:
 	if (err) {
 		reftable_addition_close(add);
 	}
+	strbuf_release(&lock_file_name);
 	return err;
 }
 
@@ -512,15 +509,7 @@ static void reftable_addition_close(struct reftable_addition *add)
 	add->new_tables = NULL;
 	add->new_tables_len = 0;
 
-	if (add->lock_file_fd > 0) {
-		close(add->lock_file_fd);
-		add->lock_file_fd = 0;
-	}
-	if (add->lock_file_name.len > 0) {
-		unlink(add->lock_file_name.buf);
-		strbuf_release(&add->lock_file_name);
-	}
-
+	delete_tempfile(&add->lock_file);
 	strbuf_release(&nm);
 }
 
@@ -536,8 +525,10 @@ void reftable_addition_destroy(struct reftable_addition *add)
 int reftable_addition_commit(struct reftable_addition *add)
 {
 	struct strbuf table_list = STRBUF_INIT;
+	int lock_file_fd = get_tempfile_fd(add->lock_file);
 	int i = 0;
 	int err = 0;
+
 	if (add->new_tables_len == 0)
 		goto done;
 
@@ -550,28 +541,20 @@ int reftable_addition_commit(struct reftable_addition *add)
 		strbuf_addstr(&table_list, "\n");
 	}
 
-	err = write_in_full(add->lock_file_fd, table_list.buf, table_list.len);
+	err = write_in_full(lock_file_fd, table_list.buf, table_list.len);
 	strbuf_release(&table_list);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	err = close(add->lock_file_fd);
-	add->lock_file_fd = 0;
-	if (err < 0) {
-		err = REFTABLE_IO_ERROR;
-		goto done;
-	}
-
-	err = rename(add->lock_file_name.buf, add->stack->list_file);
+	err = rename_tempfile(&add->lock_file, add->stack->list_file);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
 	/* success, no more state to clean up. */
-	strbuf_release(&add->lock_file_name);
 	for (i = 0; i < add->new_tables_len; i++) {
 		reftable_free(add->new_tables[i]);
 	}
