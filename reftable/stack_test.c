@@ -289,6 +289,61 @@ static void test_reftable_stack_transaction_api(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_transaction_api_performs_auto_compaction(void)
+{
+	char *dir = get_tmp_dir(__LINE__);
+	struct reftable_write_options cfg = {0};
+	struct reftable_addition *add = NULL;
+	struct reftable_stack *st = NULL;
+	int i, n = 20, err;
+
+	err = reftable_new_stack(&st, dir, cfg);
+	EXPECT_ERR(err);
+
+	for (i = 0; i <= n; i++) {
+		struct reftable_ref_record ref = {
+			.update_index = reftable_stack_next_update_index(st),
+			.value_type = REFTABLE_REF_SYMREF,
+			.value.symref = "master",
+		};
+		char name[100];
+
+		snprintf(name, sizeof(name), "branch%04d", i);
+		ref.refname = name;
+
+		/*
+		 * Disable auto-compaction for all but the last runs. Like this
+		 * we can ensure that we indeed honor this setting and have
+		 * better control over when exactly auto compaction runs.
+		 */
+		st->disable_auto_compact = i != n;
+
+		err = reftable_stack_new_addition(&add, st);
+		EXPECT_ERR(err);
+
+		err = reftable_addition_add(add, &write_test_ref, &ref);
+		EXPECT_ERR(err);
+
+		err = reftable_addition_commit(add);
+		EXPECT_ERR(err);
+
+		reftable_addition_destroy(add);
+
+		/*
+		 * The stack length should grow continuously for all runs where
+		 * auto compaction is disabled. When enabled, we should merge
+		 * all tables in the stack.
+		 */
+		if (i != n)
+			EXPECT(st->merged->stack_len == i + 1);
+		else
+			EXPECT(st->merged->stack_len == 1);
+	}
+
+	reftable_stack_destroy(st);
+	clear_dir(dir);
+}
+
 static void test_reftable_stack_validate_refname(void)
 {
 	struct reftable_write_options cfg = { 0 };
@@ -1016,6 +1071,7 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_log_normalize);
 	RUN_TEST(test_reftable_stack_tombstone);
 	RUN_TEST(test_reftable_stack_transaction_api);
+	RUN_TEST(test_reftable_stack_transaction_api_performs_auto_compaction);
 	RUN_TEST(test_reftable_stack_update_index_check);
 	RUN_TEST(test_reftable_stack_uptodate);
 	RUN_TEST(test_reftable_stack_validate_refname);
