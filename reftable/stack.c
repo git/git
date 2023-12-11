@@ -204,6 +204,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 		reftable_calloc(sizeof(struct reftable_table) * names_len);
 	int new_readers_len = 0;
 	struct reftable_merged_table *new_merged = NULL;
+	struct strbuf table_path = STRBUF_INIT;
 	int i;
 
 	while (*names) {
@@ -223,13 +224,10 @@ static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 
 		if (!rd) {
 			struct reftable_block_source src = { NULL };
-			struct strbuf table_path = STRBUF_INIT;
 			stack_filename(&table_path, st, name);
 
 			err = reftable_block_source_from_file(&src,
 							      table_path.buf);
-			strbuf_release(&table_path);
-
 			if (err < 0)
 				goto done;
 
@@ -267,16 +265,13 @@ static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 	for (i = 0; i < cur_len; i++) {
 		if (cur[i]) {
 			const char *name = reader_name(cur[i]);
-			struct strbuf filename = STRBUF_INIT;
-			stack_filename(&filename, st, name);
+			stack_filename(&table_path, st, name);
 
 			reader_close(cur[i]);
 			reftable_reader_free(cur[i]);
 
 			/* On Windows, can only unlink after closing. */
-			unlink(filename.buf);
-
-			strbuf_release(&filename);
+			unlink(table_path.buf);
 		}
 	}
 
@@ -288,6 +283,7 @@ done:
 	reftable_free(new_readers);
 	reftable_free(new_tables);
 	reftable_free(cur);
+	strbuf_release(&table_path);
 	return err;
 }
 
