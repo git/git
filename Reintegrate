@@ -123,6 +123,27 @@ cocci_mark="treewide: apply cocci patch"
 case "$generate" in
 no)
 	accept_rerere () {
+		git ls-files -u -z |
+		perl -0 -e '
+			my %path_stage = ();
+			my @to_remove = ();
+			while (<>) {
+				my ($mode, $sha1, $stage, $path) =
+					/^([0-7]+) ([0-9a-f]+) ([0-3])	(.*)$/;
+				$path_stage{$path} ||= 0;
+				$path_stage{$path} |= (1 << ($stage - 1));
+			}
+
+			while (my ($path, $bits) = each %path_stage) {
+				if ($bits == 3 || $bits == 5) {
+					push @to_remove, $path;
+				}
+			}
+			if (@to_remove) {
+				system(qw(git rm -f), @to_remove);
+			}
+		'
+
 		if ! git write-tree 2>/dev/null >/dev/null
 		then
 			git rerere remaining
