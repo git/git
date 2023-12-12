@@ -1185,9 +1185,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_required_reference.nr || option_optional_reference.nr)
 		setup_reference();
 
-	if (option_sparse_checkout && git_sparse_checkout_init(dir))
-		return 1;
-
 	remote = remote_get(remote_name);
 
 	refspec_appendf(&remote->fetch, "+%s*:%s*", src_ref_prefix,
@@ -1425,6 +1422,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		close_object_store(the_repository->objects);
 		dissociate_from_references();
 	}
+
+	if (option_sparse_checkout && git_sparse_checkout_init(dir))
+		return 1;
 
 	junk_mode = JUNK_LEAVE_REPO;
 	err = checkout(submodule_progress, filter_submodules);
