@@ -1266,6 +1266,26 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (transport->smart_options && !deepen && !filter_options.choice)
 		transport->smart_options->check_self_contained_and_connected = 1;
 
+	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+	refspec_ref_prefixes(&remote->fetch,
+			     &transport_ls_refs_options.ref_prefixes);
+	if (option_branch)
+		expand_ref_prefix(&transport_ls_refs_options.ref_prefixes,
+				  option_branch);
+	if (!option_no_tags)
+		strvec_push(&transport_ls_refs_options.ref_prefixes,
+			    "refs/tags/");
+
+	refs = transport_get_remote_refs(transport, &transport_ls_refs_options);
+
+	/*
+	 * Now that we know what algorithm the remote side is using, let's set
+	 * ours to the same thing.
+	 */
+	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
+	initialize_repository_version(hash_algo, 1);
+	repo_set_hash_algo(the_repository, hash_algo);
+
 	/*
 	 * Before fetching from the remote, download and install bundle
 	 * data from the --bundle-uri option.
@@ -1281,24 +1301,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				bundle_uri);
 		else if (has_heuristic)
 			git_config_set_gently("fetch.bundleuri", bundle_uri);
-	}
-
-	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
-	refspec_ref_prefixes(&remote->fetch,
-			     &transport_ls_refs_options.ref_prefixes);
-	if (option_branch)
-		expand_ref_prefix(&transport_ls_refs_options.ref_prefixes,
-				  option_branch);
-	if (!option_no_tags)
-		strvec_push(&transport_ls_refs_options.ref_prefixes,
-			    "refs/tags/");
-
-	refs = transport_get_remote_refs(transport, &transport_ls_refs_options);
-
-	if (refs)
-		mapped_refs = wanted_peer_refs(refs, &remote->fetch);
-
-	if (!bundle_uri) {
+	} else {
 		/*
 		* Populate transport->got_remote_bundle_uri and
 		* transport->bundle_uri. We might get nothing.
@@ -1319,13 +1322,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-		/*
-		 * Now that we know what algorithm the remote side is using,
-		 * let's set ours to the same thing.
-		 */
-	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
-	initialize_repository_version(hash_algo, 1);
-	repo_set_hash_algo(the_repository, hash_algo);
+	if (refs)
+		mapped_refs = wanted_peer_refs(refs, &remote->fetch);
 
 	if (mapped_refs) {
 		/*
