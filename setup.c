@@ -1885,6 +1885,68 @@ void initialize_repository_version(int hash_algo, int reinit)
 		git_config_set_gently("extensions.objectformat", NULL);
 }
 
+static int is_reinit(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char junk[2];
+	int ret;
+
+	git_path_buf(&buf, "HEAD");
+	ret = !access(buf.buf, R_OK) || readlink(buf.buf, junk, sizeof(junk) - 1) != -1;
+	strbuf_release(&buf);
+	return ret;
+}
+
+static void create_reference_database(const char *initial_branch, int quiet)
+{
+	struct strbuf err = STRBUF_INIT;
+	int reinit = is_reinit();
+
+	/*
+	 * We need to create a "refs" dir in any case so that older versions of
+	 * Git can tell that this is a repository. This serves two main purposes:
+	 *
+	 * - Clients will know to stop walking the parent-directory chain when
+	 *   detecting the Git repository. Otherwise they may end up detecting
+	 *   a Git repository in a parent directory instead.
+	 *
+	 * - Instead of failing to detect a repository with unknown reference
+	 *   format altogether, old clients will print an error saying that
+	 *   they do not understand the reference format extension.
+	 */
+	safe_create_dir(git_path("refs"), 1);
+	adjust_shared_perm(git_path("refs"));
+
+	if (refs_init_db(&err))
+		die("failed to set up refs db: %s", err.buf);
+
+	/*
+	 * Point the HEAD symref to the initial branch with if HEAD does
+	 * not yet exist.
+	 */
+	if (!reinit) {
+		char *ref;
+
+		if (!initial_branch)
+			initial_branch = git_default_branch_name(quiet);
+
+		ref = xstrfmt("refs/heads/%s", initial_branch);
+		if (check_refname_format(ref, 0) < 0)
+			die(_("invalid initial branch name: '%s'"),
+			    initial_branch);
+
+		if (create_symref("HEAD", ref, NULL) < 0)
+			exit(1);
+		free(ref);
+	}
+
+	if (reinit && initial_branch)
+		warning(_("re-init: ignored --initial-branch=%s"),
+			initial_branch);
+
+	strbuf_release(&err);
+}
+
 static int create_default_files(const char *template_path,
 				const char *original_git_dir,
 				const char *initial_branch,
@@ -1896,10 +1958,8 @@ static int create_default_files(const char *template_path,
 	struct stat st1;
 	struct strbuf buf = STRBUF_INIT;
 	char *path;
-	char junk[2];
 	int reinit;
 	int filemode;
-	struct strbuf err = STRBUF_INIT;
 	const char *init_template_dir = NULL;
 	const char *work_tree = get_git_work_tree();
 
@@ -1918,6 +1978,8 @@ static int create_default_files(const char *template_path,
 	git_config_clear();
 	reset_shared_repository();
 	git_config(git_default_config, NULL);
+
+	reinit = is_reinit();
 
 	/*
 	 * We must make sure command-line options continue to override any
@@ -1962,39 +2024,7 @@ static int create_default_files(const char *template_path,
 		adjust_shared_perm(get_git_dir());
 	}
 
-	/*
-	 * We need to create a "refs" dir in any case so that older
-	 * versions of git can tell that this is a repository.
-	 */
-	safe_create_dir(git_path("refs"), 1);
-	adjust_shared_perm(git_path("refs"));
-
-	if (refs_init_db(&err))
-		die("failed to set up refs db: %s", err.buf);
-
-	/*
-	 * Point the HEAD symref to the initial branch with if HEAD does
-	 * not yet exist.
-	 */
-	path = git_path_buf(&buf, "HEAD");
-	reinit = (!access(path, R_OK)
-		  || readlink(path, junk, sizeof(junk)-1) != -1);
-	if (!reinit) {
-		char *ref;
-
-		if (!initial_branch)
-			initial_branch = git_default_branch_name(quiet);
-
-		ref = xstrfmt("refs/heads/%s", initial_branch);
-		if (check_refname_format(ref, 0) < 0)
-			die(_("invalid initial branch name: '%s'"),
-			    initial_branch);
-
-		if (create_symref("HEAD", ref, NULL) < 0)
-			exit(1);
-		free(ref);
-	}
-
+	create_reference_database(initial_branch, quiet);
 	initialize_repository_version(fmt->hash_algo, 0);
 
 	/* Check filemode trustability */
@@ -2158,9 +2188,6 @@ int init_db(const char *git_dir, const char *real_git_dir,
 				      prev_bare_repository,
 				      init_shared_repository,
 				      flags & INIT_DB_QUIET);
-	if (reinit && initial_branch)
-		warning(_("re-init: ignored --initial-branch=%s"),
-			initial_branch);
 
 	create_object_directory();
 
