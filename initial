@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="your-stylesheet.css"> <!-- Replace "your-stylesheet.css" with the actual path to your stylesheet -->
+    <style>
+        p {
+            height: 60px;
+            background-color: rgba(247, 247, 96, 0.601);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        input {
+            width: 200px;
+            height: 30px;
+            border-radius: 30px;
+            padding: 10px;
+            font-size: larger;
+            color: antiquewhite;
+            border: none;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+<p> <input type="text" placeholder="full name" id="fullName"> </p>
+
+<p> <input type="text" placeholder="email" id="email"></p>
+<p> <input type="number" placeholder="phone" id="phone"></p>
+<p><input type="number" placeholder="Password" id="password"></p>
+<p><button class="account" id="createAccount">Create account</button></p>
+<a id="result" href="./data-file.html"></a>
+
+<script>
+    const fullNameInput = document.getElementById("fullName");
+    const emailInput = document.getElementById("email");
+    const phoneInput = document.getElementById("phone");
+    const cnicInput = document.getElementById("password");
+    const createAccountButton = document.getElementById("createAccount");
+
+    // Add an event listener to the button to perform an action when it's clicked
+    createAccountButton.addEventListener("click", function () {
+        // Get the values from the input fields
+        const fullName = fullNameInput.value;
+        const email = emailInput.value;
+        const phone = phoneInput.value;
+        const cnic = cnicInput.value;
+
+        // Check if any of the fields are empty
+        if (fullName === "" || email === "" || phone === "" || cnic === "") {
+            alert("Please fill in all fields.");
+        } else {
+           document.getElementById(style="result")  
+             
+        }
+    });
+</script>
+</body>
+</html>
