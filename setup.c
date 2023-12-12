@@ -1897,7 +1897,7 @@ static int is_reinit(void)
 	return ret;
 }
 
-static void create_reference_database(const char *initial_branch, int quiet)
+void create_reference_database(const char *initial_branch, int quiet)
 {
 	struct strbuf err = STRBUF_INIT;
 	int reinit = is_reinit();

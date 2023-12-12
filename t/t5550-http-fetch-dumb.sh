@@ -66,11 +66,11 @@ test_expect_success 'create empty remote repository' '
 	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/empty.git"
 '
 
-test_expect_success 'empty dumb HTTP repository has default hash algorithm' '
+test_expect_success 'empty dumb HTTP repository falls back to SHA1' '
 	test_when_finished "rm -fr clone-empty" &&
 	git clone $HTTPD_URL/dumb/empty.git clone-empty &&
 	git -C clone-empty rev-parse --show-object-format >empty-format &&
-	test "$(cat empty-format)" = "$(test_oid algo)"
+	test "$(cat empty-format)" = sha1
 '
 
 setup_askpass_helper
