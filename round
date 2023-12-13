@@ -2,7 +2,7 @@
 
 # Give names of targets to use on the command line
 # coccicheck is not enabled by default
-default="sparse hdr-check leaks address,undefined test check-docs doc"
+default="sparse hdr-check sha256 leaks address,undefined test check-docs doc"
 skip=" "
 more=" "
 
@@ -43,6 +43,9 @@ do
 		Meta/Make -j16 -- NO_REGEX=NoThanks SPARSE_FLAGS=-Wsparse-error "$t" &&
 		Meta/Make -j16 -- NO_REGEX=NoThanks clean >/dev/null 2>&1 &&
 		rm -f compat/regex/regex.o
+		;;
+	sha256)
+		GIT_TEST_DEFAULT_HASH=sha256 Meta/Make -j16 test
 		;;
 	*)
 		Meta/Make -j16 "$t"
