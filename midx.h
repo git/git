@@ -29,6 +29,7 @@ struct multi_pack_index {
 	unsigned char num_chunks;
 	uint32_t num_packs;
 	uint32_t num_objects;
+	int preferred_pack_idx;
 
 	int local;
 
@@ -74,6 +75,7 @@ int midx_contains_pack(struct multi_pack_index *m,
 		       const char *idx_or_pack_name);
 int midx_locate_pack(struct multi_pack_index *m, const char *idx_or_pack_name,
 		     uint32_t *pos);
+int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id);
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local);
 
 /*

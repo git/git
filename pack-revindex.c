@@ -542,7 +542,9 @@ int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
 	 * implicitly is preferred (and includes all its objects, since ties are
 	 * broken first by pack identifier).
 	 */
-	key.preferred_pack = nth_midxed_pack_int_id(m, pack_pos_to_midx(m, 0));
+	if (midx_preferred_pack(key.midx, &key.preferred_pack) < 0)
+		return error(_("could not determine preferred pack"));
+
 
 	found = bsearch(&key, m->revindex_data, m->num_objects,
 			sizeof(*m->revindex_data), midx_pack_order_cmp);

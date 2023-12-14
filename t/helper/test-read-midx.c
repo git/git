@@ -6,6 +6,7 @@
 #include "pack-bitmap.h"
 #include "packfile.h"
 #include "setup.h"
+#include "gettext.h"
 
 static int read_midx_file(const char *object_dir, int show_objects)
 {
@@ -79,7 +80,7 @@ static int read_midx_checksum(const char *object_dir)
 static int read_midx_preferred_pack(const char *object_dir)
 {
 	struct multi_pack_index *midx = NULL;
-	struct bitmap_index *bitmap = NULL;
+	uint32_t preferred_pack;
 
 	setup_git_directory();
 
@@ -87,16 +88,12 @@ static int read_midx_preferred_pack(const char *object_dir)
 	if (!midx)
 		return 1;
 
-	bitmap = prepare_bitmap_git(the_repository);
-	if (!bitmap)
-		return 1;
-	if (!bitmap_is_midx(bitmap)) {
-		free_bitmap_index(bitmap);
+	if (midx_preferred_pack(midx, &preferred_pack) < 0) {
+		warning(_("could not determine MIDX preferred pack"));
 		return 1;
 	}
 
-	printf("%s\n", midx->pack_names[midx_preferred_pack(bitmap)]);
-	free_bitmap_index(bitmap);
+	printf("%s\n", midx->pack_names[preferred_pack]);
 	return 0;
 }
 

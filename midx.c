@@ -21,6 +21,7 @@
 #include "refs.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "pack-revindex.h"
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -176,6 +177,8 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 	m->num_chunks = m->data[MIDX_BYTE_NUM_CHUNKS];
 
 	m->num_packs = get_be32(m->data + MIDX_BYTE_NUM_PACKS);
+
+	m->preferred_pack_idx = -1;
 
 	cf = init_chunkfile(NULL);
 
@@ -458,6 +461,23 @@ int midx_locate_pack(struct multi_pack_index *m, const char *idx_or_pack_name,
 int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
 {
 	return midx_locate_pack(m, idx_or_pack_name, NULL);
+}
+
+int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id)
+{
+	if (m->preferred_pack_idx == -1) {
+		if (load_midx_revindex(m) < 0) {
+			m->preferred_pack_idx = -2;
+			return -1;
+		}
+
+		m->preferred_pack_idx =
+			nth_midxed_pack_int_id(m, pack_pos_to_midx(m, 0));
+	} else if (m->preferred_pack_idx == -2)
+		return -1; /* no revindex */
+
+	*pack_int_id = m->preferred_pack_idx;
+	return 0;
 }
 
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local)

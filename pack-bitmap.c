@@ -338,7 +338,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	struct stat st;
 	char *bitmap_name = midx_bitmap_filename(midx);
 	int fd = git_open(bitmap_name);
-	uint32_t i;
+	uint32_t i, preferred_pack;
 	struct packed_git *preferred;
 
 	if (fd < 0) {
@@ -393,7 +393,12 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 		}
 	}
 
-	preferred = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
+	if (midx_preferred_pack(bitmap_git->midx, &preferred_pack) < 0) {
+		warning(_("could not determine MIDX preferred pack"));
+		goto cleanup;
+	}
+
+	preferred = bitmap_git->midx->packs[preferred_pack];
 	if (!is_pack_valid(preferred)) {
 		warning(_("preferred pack (%s) is invalid"),
 			preferred->pack_name);
@@ -1924,14 +1929,6 @@ static int try_partial_reuse(struct bitmapped_pack *pack,
 	 */
 	bitmap_set(reuse, pack->bitmap_pos + pos);
 	return 0;
-}
-
-uint32_t midx_preferred_pack(struct bitmap_index *bitmap_git)
-{
-	struct multi_pack_index *m = bitmap_git->midx;
-	if (!m)
-		BUG("midx_preferred_pack: requires non-empty MIDX");
-	return nth_midxed_pack_int_id(m, pack_pos_to_midx(bitmap_git->midx, 0));
 }
 
 static void reuse_partial_packfile_from_bitmap_1(struct bitmap_index *bitmap_git,
