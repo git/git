@@ -1127,7 +1127,7 @@ static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
 static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
 			      struct hashfile *f)
 {
-	size_t i = 0;
+	size_t i = reuse_packfile->bitmap_pos / BITS_IN_EWORD;
 	uint32_t offset;
 	off_t pack_start = hashfile_total(f) - sizeof(struct pack_header);
 	struct pack_window *w_curs = NULL;
@@ -1145,17 +1145,23 @@ static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
+			if (pos + offset < reuse_packfile->bitmap_pos)
+				continue;
+			if (pos + offset >= reuse_packfile->bitmap_pos + reuse_packfile->bitmap_nr)
+				goto done;
 			/*
 			 * Can use bit positions directly, even for MIDX
 			 * bitmaps. See comment in try_partial_reuse()
 			 * for why.
 			 */
-			write_reused_pack_one(reuse_packfile->p, pos + offset,
+			write_reused_pack_one(reuse_packfile->p,
+					      pos + offset - reuse_packfile->bitmap_pos,
 					      f, pack_start, &w_curs);
 			display_progress(progress_state, ++written);
 		}
 	}
 
+done:
 	unuse_pack(&w_curs);
 }
 
