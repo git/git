@@ -169,6 +169,15 @@ size_t bitmap_popcount(struct bitmap *self)
 	return count;
 }
 
+int bitmap_is_empty(struct bitmap *self)
+{
+	size_t i;
+	for (i = 0; i < self->word_alloc; i++)
+		if (self->words[i])
+			return 0;
+	return 1;
+}
+
 int bitmap_equals(struct bitmap *self, struct bitmap *other)
 {
 	struct bitmap *big, *small;
