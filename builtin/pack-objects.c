@@ -1013,7 +1013,8 @@ static off_t find_reused_offset(off_t where)
 	return reused_chunks[lo-1].difference;
 }
 
-static void write_reused_pack_one(size_t pos, struct hashfile *out,
+static void write_reused_pack_one(struct packed_git *reuse_packfile,
+				  size_t pos, struct hashfile *out,
 				  struct pack_window **w_curs)
 {
 	off_t offset, next, cur;
@@ -1091,7 +1092,8 @@ static void write_reused_pack_one(size_t pos, struct hashfile *out,
 	copy_pack_data(out, reuse_packfile, w_curs, offset, next - offset);
 }
 
-static size_t write_reused_pack_verbatim(struct hashfile *out,
+static size_t write_reused_pack_verbatim(struct packed_git *reuse_packfile,
+					 struct hashfile *out,
 					 struct pack_window **w_curs)
 {
 	size_t pos = 0;
@@ -1118,14 +1120,15 @@ static size_t write_reused_pack_verbatim(struct hashfile *out,
 	return pos;
 }
 
-static void write_reused_pack(struct hashfile *f)
+static void write_reused_pack(struct packed_git *reuse_packfile,
+			      struct hashfile *f)
 {
 	size_t i = 0;
 	uint32_t offset;
 	struct pack_window *w_curs = NULL;
 
 	if (allow_ofs_delta)
-		i = write_reused_pack_verbatim(f, &w_curs);
+		i = write_reused_pack_verbatim(reuse_packfile, f, &w_curs);
 
 	for (; i < reuse_packfile_bitmap->word_alloc; ++i) {
 		eword_t word = reuse_packfile_bitmap->words[i];
@@ -1141,7 +1144,8 @@ static void write_reused_pack(struct hashfile *f)
 			 * bitmaps. See comment in try_partial_reuse()
 			 * for why.
 			 */
-			write_reused_pack_one(pos + offset, f, &w_curs);
+			write_reused_pack_one(reuse_packfile, pos + offset, f,
+					      &w_curs);
 			display_progress(progress_state, ++written);
 		}
 	}
@@ -1199,7 +1203,7 @@ static void write_pack_file(void)
 
 		if (reuse_packfile) {
 			assert(pack_to_stdout);
-			write_reused_pack(f);
+			write_reused_pack(reuse_packfile, f);
 			offset = hashfile_total(f);
 		}
 
