@@ -28,7 +28,7 @@ all existing objects. You can force recompression by passing the -F option
 to linkgit:git-repack[1].
 
 pack.allowPackReuse::
-	When true, and when reachability bitmaps are enabled,
+	When true or "single", and when reachability bitmaps are enabled,
 	pack-objects will try to send parts of the bitmapped packfile
 	verbatim. This can reduce memory and CPU usage to serve fetches,
 	but might result in sending a slightly larger pack. Defaults to
