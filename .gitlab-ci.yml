@@ -26,6 +26,9 @@ test:linux:
       - jobname: linux-sha256
         image: ubuntu:latest
         CC: clang
+      - jobname: linux-reftable
+        image: ubuntu:latest
+        CC: clang
       - jobname: linux-gcc
         image: ubuntu:20.04
         CC: gcc
@@ -38,6 +41,9 @@ test:linux:
         image: ubuntu:latest
         CC: gcc
       - jobname: linux-leaks
+        image: ubuntu:latest
+        CC: gcc
+      - jobname: linux-reftable-leaks
         image: ubuntu:latest
         CC: gcc
       - jobname: linux-asan-ubsan
@@ -77,6 +83,9 @@ test:osx:
   parallel:
     matrix:
       - jobname: osx-clang
+        image: macos-13-xcode-14
+        CC: clang
+      - jobname: osx-reftable
         image: macos-13-xcode-14
         CC: clang
   artifacts:
