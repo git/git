@@ -1603,8 +1603,13 @@ static int write_midx_internal(const char *object_dir,
 				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			result = 1;
+			clear_packing_data(&pdata);
+			free(commits);
 			goto cleanup;
 		}
+
+		clear_packing_data(&pdata);
+		free(commits);
 	}
 	/*
 	 * NOTE: Do not use ctx.entries beyond this point, since it might
