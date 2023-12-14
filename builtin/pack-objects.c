@@ -221,7 +221,8 @@ static int thin;
 static int num_preferred_base;
 static struct progress *progress_state;
 
-static struct packed_git *reuse_packfile;
+static struct bitmapped_pack *reuse_packfiles;
+static size_t reuse_packfiles_nr;
 static uint32_t reuse_packfile_objects;
 static struct bitmap *reuse_packfile_bitmap;
 
@@ -1094,7 +1095,7 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
 	copy_pack_data(out, reuse_packfile, w_curs, offset, next - offset);
 }
 
-static size_t write_reused_pack_verbatim(struct packed_git *reuse_packfile,
+static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
 					 struct hashfile *out,
 					 off_t pack_start UNUSED,
 					 struct pack_window **w_curs)
@@ -1109,13 +1110,13 @@ static size_t write_reused_pack_verbatim(struct packed_git *reuse_packfile,
 		off_t to_write;
 
 		written = (pos * BITS_IN_EWORD);
-		to_write = pack_pos_to_offset(reuse_packfile, written)
+		to_write = pack_pos_to_offset(reuse_packfile->p, written)
 			- sizeof(struct pack_header);
 
 		/* We're recording one chunk, not one object. */
 		record_reused_object(sizeof(struct pack_header), 0);
 		hashflush(out);
-		copy_pack_data(out, reuse_packfile, w_curs,
+		copy_pack_data(out, reuse_packfile->p, w_curs,
 			sizeof(struct pack_header), to_write);
 
 		display_progress(progress_state, written);
@@ -1123,7 +1124,7 @@ static size_t write_reused_pack_verbatim(struct packed_git *reuse_packfile,
 	return pos;
 }
 
-static void write_reused_pack(struct packed_git *reuse_packfile,
+static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
 			      struct hashfile *f)
 {
 	size_t i = 0;
@@ -1149,8 +1150,8 @@ static void write_reused_pack(struct packed_git *reuse_packfile,
 			 * bitmaps. See comment in try_partial_reuse()
 			 * for why.
 			 */
-			write_reused_pack_one(reuse_packfile, pos + offset, f,
-					      pack_start, &w_curs);
+			write_reused_pack_one(reuse_packfile->p, pos + offset,
+					      f, pack_start, &w_curs);
 			display_progress(progress_state, ++written);
 		}
 	}
@@ -1206,9 +1207,12 @@ static void write_pack_file(void)
 
 		offset = write_pack_header(f, nr_remaining);
 
-		if (reuse_packfile) {
+		if (reuse_packfiles_nr) {
 			assert(pack_to_stdout);
-			write_reused_pack(reuse_packfile, f);
+			for (j = 0; j < reuse_packfiles_nr; j++) {
+				reused_chunks_nr = 0;
+				write_reused_pack(&reuse_packfiles[j], f);
+			}
 			offset = hashfile_total(f);
 		}
 
@@ -3949,19 +3953,16 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
-	struct bitmapped_pack *packs = NULL;
-	size_t packs_nr = 0;
-
 	if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
 		return -1;
 
 	if (pack_options_allow_reuse())
-		reuse_partial_packfile_from_bitmap(bitmap_git, &packs,
-						   &packs_nr,
+		reuse_partial_packfile_from_bitmap(bitmap_git,
+						   &reuse_packfiles,
+						   &reuse_packfiles_nr,
 						   &reuse_packfile_bitmap);
 
-	if (packs) {
-		reuse_packfile = packs[0].p;
+	if (reuse_packfiles) {
 		reuse_packfile_objects = bitmap_popcount(reuse_packfile_bitmap);
 		if (!reuse_packfile_objects)
 			BUG("expected non-empty reuse bitmap");
