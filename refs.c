@@ -1820,15 +1820,65 @@ done:
 	return result;
 }
 
+static int is_special_ref(const char *refname)
+{
+	/*
+	 * Special references get written and read directly via the filesystem
+	 * by the subsystems that create them. Thus, they must not go through
+	 * the reference backend but must instead be read directly. It is
+	 * arguable whether this behaviour is sensible, or whether it's simply
+	 * a leaky abstraction enabled by us only having a single reference
+	 * backend implementation. But at least for a subset of references it
+	 * indeed does make sense to treat them specially:
+	 *
+	 * - FETCH_HEAD may contain multiple object IDs, and each one of them
+	 *   carries additional metadata like where it came from.
+	 *
+	 * - MERGE_HEAD may contain multiple object IDs when merging multiple
+	 *   heads.
+	 *
+	 * There are some exceptions that you might expect to see on this list
+	 * but which are handled exclusively via the reference backend:
+	 *
+	 * - CHERRY_PICK_HEAD
+	 *
+	 * - HEAD
+	 *
+	 * - ORIG_HEAD
+	 *
+	 * - "rebase-apply/" and "rebase-merge/" contain all of the state for
+	 *   rebases, including some reference-like files. These are
+	 *   exclusively read and written via the filesystem and never go
+	 *   through the refdb.
+	 *
+	 * Writing or deleting references must consistently go either through
+	 * the filesystem (special refs) or through the reference backend
+	 * (normal ones).
+	 */
+	static const char * const special_refs[] = {
+		"AUTO_MERGE",
+		"BISECT_EXPECTED_REV",
+		"FETCH_HEAD",
+		"MERGE_AUTOSTASH",
+		"MERGE_HEAD",
+	};
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(special_refs); i++)
+		if (!strcmp(refname, special_refs[i]))
+			return 1;
+
+	return 0;
+}
+
 int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		      struct object_id *oid, struct strbuf *referent,
 		      unsigned int *type, int *failure_errno)
 {
 	assert(failure_errno);
-	if (!strcmp(refname, "FETCH_HEAD") || !strcmp(refname, "MERGE_HEAD")) {
+	if (is_special_ref(refname))
 		return refs_read_special_head(ref_store, refname, oid, referent,
 					      type, failure_errno);
-	}
 
 	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
 					   type, failure_errno);
