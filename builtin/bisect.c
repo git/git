@@ -17,7 +17,6 @@
 #include "revision.h"
 
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
-static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
 static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
@@ -921,7 +920,6 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 	const char *state;
 	int i, verify_expected = 1;
 	struct object_id oid, expected;
-	struct strbuf buf = STRBUF_INIT;
 	struct oid_array revs = OID_ARRAY_INIT;
 
 	if (!argc)
@@ -976,10 +974,8 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 		oid_array_append(&revs, &commit->object.oid);
 	}
 
-	if (strbuf_read_file(&buf, git_path_bisect_expected_rev(), 0) < the_hash_algo->hexsz ||
-	    get_oid_hex(buf.buf, &expected) < 0)
+	if (read_ref("BISECT_EXPECTED_REV", &expected))
 		verify_expected = 0; /* Ignore invalid file contents */
-	strbuf_release(&buf);
 
 	for (i = 0; i < revs.nr; i++) {
 		if (bisect_write(state, oid_to_hex(&revs.oid[i]), terms, 0)) {
@@ -988,7 +984,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 		}
 		if (verify_expected && !oideq(&revs.oid[i], &expected)) {
 			unlink_or_warn(git_path_bisect_ancestors_ok());
-			unlink_or_warn(git_path_bisect_expected_rev());
+			delete_ref(NULL, "BISECT_EXPECTED_REV", NULL, REF_NO_DEREF);
 			verify_expected = 0;
 		}
 	}

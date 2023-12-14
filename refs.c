@@ -1840,6 +1840,8 @@ static int is_special_ref(const char *refname)
 	 * There are some exceptions that you might expect to see on this list
 	 * but which are handled exclusively via the reference backend:
 	 *
+	 * - BISECT_EXPECTED_REV
+	 *
 	 * - CHERRY_PICK_HEAD
 	 *
 	 * - HEAD
@@ -1857,7 +1859,6 @@ static int is_special_ref(const char *refname)
 	 */
 	static const char * const special_refs[] = {
 		"AUTO_MERGE",
-		"BISECT_EXPECTED_REV",
 		"FETCH_HEAD",
 		"MERGE_AUTOSTASH",
 		"MERGE_HEAD",

@@ -471,7 +471,6 @@ static int read_bisect_refs(void)
 }
 
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
-static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
 static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
 static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
@@ -707,26 +706,10 @@ static enum bisect_error error_if_skipped_commits(struct commit_list *tried,
 
 static int is_expected_rev(const struct object_id *oid)
 {
-	const char *filename = git_path_bisect_expected_rev();
-	struct stat st;
-	struct strbuf str = STRBUF_INIT;
-	FILE *fp;
-	int res = 0;
-
-	if (stat(filename, &st) || !S_ISREG(st.st_mode))
+	struct object_id expected_oid;
+	if (read_ref("BISECT_EXPECTED_REV", &expected_oid))
 		return 0;
-
-	fp = fopen_or_warn(filename, "r");
-	if (!fp)
-		return 0;
-
-	if (strbuf_getline_lf(&str, fp) != EOF)
-		res = !strcmp(str.buf, oid_to_hex(oid));
-
-	strbuf_release(&str);
-	fclose(fp);
-
-	return res;
+	return oideq(oid, &expected_oid);
 }
 
 enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
@@ -1185,10 +1168,10 @@ int bisect_clean_state(void)
 	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
 	for_each_ref_in("refs/bisect", mark_for_removal, (void *) &refs_for_removal);
 	string_list_append(&refs_for_removal, xstrdup("BISECT_HEAD"));
+	string_list_append(&refs_for_removal, xstrdup("BISECT_EXPECTED_REV"));
 	result = delete_refs("bisect: remove", &refs_for_removal, REF_NO_DEREF);
 	refs_for_removal.strdup_strings = 1;
 	string_list_clear(&refs_for_removal, 0);
-	unlink_or_warn(git_path_bisect_expected_rev());
 	unlink_or_warn(git_path_bisect_ancestors_ok());
 	unlink_or_warn(git_path_bisect_log());
 	unlink_or_warn(git_path_bisect_names());
