@@ -1015,6 +1015,7 @@ static off_t find_reused_offset(off_t where)
 
 static void write_reused_pack_one(struct packed_git *reuse_packfile,
 				  size_t pos, struct hashfile *out,
+				  off_t pack_start,
 				  struct pack_window **w_curs)
 {
 	off_t offset, next, cur;
@@ -1024,7 +1025,8 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
 	offset = pack_pos_to_offset(reuse_packfile, pos);
 	next = pack_pos_to_offset(reuse_packfile, pos + 1);
 
-	record_reused_object(offset, offset - hashfile_total(out));
+	record_reused_object(offset,
+			     offset - (hashfile_total(out) - pack_start));
 
 	cur = offset;
 	type = unpack_object_header(reuse_packfile, w_curs, &cur, &size);
@@ -1094,6 +1096,7 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
 
 static size_t write_reused_pack_verbatim(struct packed_git *reuse_packfile,
 					 struct hashfile *out,
+					 off_t pack_start UNUSED,
 					 struct pack_window **w_curs)
 {
 	size_t pos = 0;
@@ -1125,10 +1128,12 @@ static void write_reused_pack(struct packed_git *reuse_packfile,
 {
 	size_t i = 0;
 	uint32_t offset;
+	off_t pack_start = hashfile_total(f) - sizeof(struct pack_header);
 	struct pack_window *w_curs = NULL;
 
 	if (allow_ofs_delta)
-		i = write_reused_pack_verbatim(reuse_packfile, f, &w_curs);
+		i = write_reused_pack_verbatim(reuse_packfile, f, pack_start,
+					       &w_curs);
 
 	for (; i < reuse_packfile_bitmap->word_alloc; ++i) {
 		eword_t word = reuse_packfile_bitmap->words[i];
@@ -1145,7 +1150,7 @@ static void write_reused_pack(struct packed_git *reuse_packfile,
 			 * for why.
 			 */
 			write_reused_pack_one(reuse_packfile, pos + offset, f,
-					      &w_curs);
+					      pack_start, &w_curs);
 			display_progress(progress_state, ++written);
 		}
 	}
