@@ -3940,14 +3940,19 @@ static int pack_options_allow_reuse(void)
 
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
+	struct bitmapped_pack *packs = NULL;
+	size_t packs_nr = 0;
+
 	if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
 		return -1;
 
 	if (pack_options_allow_reuse())
-		reuse_partial_packfile_from_bitmap(bitmap_git, &reuse_packfile,
+		reuse_partial_packfile_from_bitmap(bitmap_git, &packs,
+						   &packs_nr,
 						   &reuse_packfile_bitmap);
 
-	if (reuse_packfile) {
+	if (packs) {
+		reuse_packfile = packs[0].p;
 		reuse_packfile_objects = bitmap_popcount(reuse_packfile_bitmap);
 		if (!reuse_packfile_objects)
 			BUG("expected non-empty reuse bitmap");
