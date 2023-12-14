@@ -1171,4 +1171,39 @@ test_expect_success 'reader notices out-of-bounds fanout' '
 	test_cmp expect err
 '
 
+test_expect_success 'bitmapped packs are stored via the BTMP chunk' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		for i in 1 2 3 4 5
+		do
+			test_commit "$i" &&
+			git repack -d || return 1
+		done &&
+
+		find $objdir/pack -type f -name "*.idx" | xargs -n 1 basename |
+		sort >packs &&
+
+		git multi-pack-index write --stdin-packs <packs &&
+		test_must_fail test-tool read-midx --bitmap $objdir 2>err &&
+		cat >expect <<-\EOF &&
+		error: MIDX does not contain the BTMP chunk
+		EOF
+		test_cmp expect err &&
+
+		git multi-pack-index write --stdin-packs --bitmap \
+			--preferred-pack="$(head -n1 <packs)" <packs  &&
+		test-tool read-midx --bitmap $objdir >actual &&
+		for i in $(test_seq $(wc -l <packs))
+		do
+			sed -ne "${i}s/\.idx$/\.pack/p" packs &&
+			echo "  bitmap_pos: $((($i - 1) * 3))" &&
+			echo "  bitmap_nr: 3" || return 1
+		done >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done

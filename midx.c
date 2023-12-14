@@ -33,6 +33,7 @@
 
 #define MIDX_CHUNK_ALIGNMENT 4
 #define MIDX_CHUNKID_PACKNAMES 0x504e414d /* "PNAM" */
+#define MIDX_CHUNKID_BITMAPPEDPACKS 0x42544d50 /* "BTMP" */
 #define MIDX_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
 #define MIDX_CHUNKID_OIDLOOKUP 0x4f49444c /* "OIDL" */
 #define MIDX_CHUNKID_OBJECTOFFSETS 0x4f4f4646 /* "OOFF" */
@@ -41,6 +42,7 @@
 #define MIDX_CHUNK_FANOUT_SIZE (sizeof(uint32_t) * 256)
 #define MIDX_CHUNK_OFFSET_WIDTH (2 * sizeof(uint32_t))
 #define MIDX_CHUNK_LARGE_OFFSET_WIDTH (sizeof(uint64_t))
+#define MIDX_CHUNK_BITMAPPED_PACKS_WIDTH (2 * sizeof(uint32_t))
 #define MIDX_LARGE_OFFSET_NEEDED 0x80000000
 
 #define PACK_EXPIRED UINT_MAX
@@ -193,6 +195,9 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets,
 		   &m->chunk_large_offsets_len);
+	pair_chunk(cf, MIDX_CHUNKID_BITMAPPEDPACKS,
+		   (const unsigned char **)&m->chunk_bitmapped_packs,
+		   &m->chunk_bitmapped_packs_len);
 
 	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
 		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex,
@@ -282,6 +287,26 @@ int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t
 	m->packs[pack_int_id] = p;
 	install_packed_git(r, p);
 	list_add_tail(&p->mru, &r->objects->packed_git_mru);
+
+	return 0;
+}
+
+int nth_bitmapped_pack(struct repository *r, struct multi_pack_index *m,
+		       struct bitmapped_pack *bp, uint32_t pack_int_id)
+{
+	if (!m->chunk_bitmapped_packs)
+		return error(_("MIDX does not contain the BTMP chunk"));
+
+	if (prepare_midx_pack(r, m, pack_int_id))
+		return error(_("could not load bitmapped pack %"PRIu32), pack_int_id);
+
+	bp->p = m->packs[pack_int_id];
+	bp->bitmap_pos = get_be32((char *)m->chunk_bitmapped_packs +
+				  MIDX_CHUNK_BITMAPPED_PACKS_WIDTH * pack_int_id);
+	bp->bitmap_nr = get_be32((char *)m->chunk_bitmapped_packs +
+				 MIDX_CHUNK_BITMAPPED_PACKS_WIDTH * pack_int_id +
+				 sizeof(uint32_t));
+	bp->pack_int_id = pack_int_id;
 
 	return 0;
 }
@@ -468,10 +493,16 @@ static size_t write_midx_header(struct hashfile *f,
 	return MIDX_HEADER_SIZE;
 }
 
+#define BITMAP_POS_UNKNOWN (~((uint32_t)0))
+
 struct pack_info {
 	uint32_t orig_pack_int_id;
 	char *pack_name;
 	struct packed_git *p;
+
+	uint32_t bitmap_pos;
+	uint32_t bitmap_nr;
+
 	unsigned expired : 1;
 };
 
@@ -484,6 +515,7 @@ static void fill_pack_info(struct pack_info *info,
 	info->orig_pack_int_id = orig_pack_int_id;
 	info->pack_name = xstrdup(pack_name);
 	info->p = p;
+	info->bitmap_pos = BITMAP_POS_UNKNOWN;
 }
 
 static int pack_info_compare(const void *_a, const void *_b)
@@ -824,6 +856,26 @@ static int write_midx_pack_names(struct hashfile *f, void *data)
 	return 0;
 }
 
+static int write_midx_bitmapped_packs(struct hashfile *f, void *data)
+{
+	struct write_midx_context *ctx = data;
+	size_t i;
+
+	for (i = 0; i < ctx->nr; i++) {
+		struct pack_info *pack = &ctx->info[i];
+		if (pack->expired)
+			continue;
+
+		if (pack->bitmap_pos == BITMAP_POS_UNKNOWN && pack->bitmap_nr)
+			BUG("pack '%s' has no bitmap position, but has %d bitmapped object(s)",
+			    pack->pack_name, pack->bitmap_nr);
+
+		hashwrite_be32(f, pack->bitmap_pos);
+		hashwrite_be32(f, pack->bitmap_nr);
+	}
+	return 0;
+}
+
 static int write_midx_oid_fanout(struct hashfile *f,
 				 void *data)
 {
@@ -991,8 +1043,19 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	QSORT(data, ctx->entries_nr, midx_pack_order_cmp);
 
 	ALLOC_ARRAY(pack_order, ctx->entries_nr);
-	for (i = 0; i < ctx->entries_nr; i++)
+	for (i = 0; i < ctx->entries_nr; i++) {
+		struct pack_midx_entry *e = &ctx->entries[data[i].nr];
+		struct pack_info *pack = &ctx->info[ctx->pack_perm[e->pack_int_id]];
+		if (pack->bitmap_pos == BITMAP_POS_UNKNOWN)
+			pack->bitmap_pos = i;
+		pack->bitmap_nr++;
 		pack_order[i] = data[i].nr;
+	}
+	for (i = 0; i < ctx->nr; i++) {
+		struct pack_info *pack = &ctx->info[ctx->pack_perm[i]];
+		if (pack->bitmap_pos == BITMAP_POS_UNKNOWN)
+			pack->bitmap_pos = 0;
+	}
 	free(data);
 
 	trace2_region_leave("midx", "midx_pack_order", the_repository);
@@ -1293,6 +1356,7 @@ static int write_midx_internal(const char *object_dir,
 	struct hashfile *f = NULL;
 	struct lock_file lk;
 	struct write_midx_context ctx = { 0 };
+	int bitmapped_packs_concat_len = 0;
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
 	int result = 0;
@@ -1505,8 +1569,10 @@ static int write_midx_internal(const char *object_dir,
 	}
 
 	for (i = 0; i < ctx.nr; i++) {
-		if (!ctx.info[i].expired)
-			pack_name_concat_len += strlen(ctx.info[i].pack_name) + 1;
+		if (ctx.info[i].expired)
+			continue;
+		pack_name_concat_len += strlen(ctx.info[i].pack_name) + 1;
+		bitmapped_packs_concat_len += 2 * sizeof(uint32_t);
 	}
 
 	/* Check that the preferred pack wasn't expired (if given). */
@@ -1566,6 +1632,9 @@ static int write_midx_internal(const char *object_dir,
 		add_chunk(cf, MIDX_CHUNKID_REVINDEX,
 			  st_mult(ctx.entries_nr, sizeof(uint32_t)),
 			  write_midx_revindex);
+		add_chunk(cf, MIDX_CHUNKID_BITMAPPEDPACKS,
+			  bitmapped_packs_concat_len,
+			  write_midx_bitmapped_packs);
 	}
 
 	write_midx_header(f, get_num_chunks(cf), ctx.nr - dropped_packs);

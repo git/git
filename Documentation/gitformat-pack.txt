@@ -396,6 +396,15 @@ CHUNK DATA:
 	    is padded at the end with between 0 and 3 NUL bytes to make the
 	    chunk size a multiple of 4 bytes.
 
+	Bitmapped Packfiles (ID: {'B', 'T', 'M', 'P'})
+	    Stores a table of two 4-byte unsigned integers in network order.
+	    Each table entry corresponds to a single pack (in the order that
+	    they appear above in the `PNAM` chunk). The values for each table
+	    entry are as follows:
+	    - The first bit position (in pseudo-pack order, see below) to
+	      contain an object from that pack.
+	    - The number of bits whose objects are selected from that pack.
+
 	OID Fanout (ID: {'O', 'I', 'D', 'F'})
 	    The ith entry, F[i], stores the number of OIDs with first
 	    byte at most i. Thus F[255] stores the total
@@ -508,6 +517,73 @@ packs arranged in MIDX order (with the preferred pack coming first).
 
 The MIDX's reverse index is stored in the optional 'RIDX' chunk within
 the MIDX itself.
+
+=== `BTMP` chunk
+
+The Bitmapped Packfiles (`BTMP`) chunk encodes additional information
+about the objects in the multi-pack index's reachability bitmap. Recall
+that objects from the MIDX are arranged in "pseudo-pack" order (see
+above) for reachability bitmaps.
+
+From the example above, suppose we have packs "a", "b", and "c", with
+10, 15, and 20 objects, respectively. In pseudo-pack order, those would
+be arranged as follows:
+
+    |a,0|a,1|...|a,9|b,0|b,1|...|b,14|c,0|c,1|...|c,19|
+
+When working with single-pack bitmaps (or, equivalently, multi-pack
+reachability bitmaps with a preferred pack), linkgit:git-pack-objects[1]
+performs ``verbatim'' reuse, attempting to reuse chunks of the bitmapped
+or preferred packfile instead of adding objects to the packing list.
+
+When a chunk of bytes is reused from an existing pack, any objects
+contained therein do not need to be added to the packing list, saving
+memory and CPU time. But a chunk from an existing packfile can only be
+reused when the following conditions are met:
+
+  - The chunk contains only objects which were requested by the caller
+    (i.e. does not contain any objects which the caller didn't ask for
+    explicitly or implicitly).
+
+  - All objects stored in non-thin packs as offset- or reference-deltas
+    also include their base object in the resulting pack.
+
+The `BTMP` chunk encodes the necessary information in order to implement
+multi-pack reuse over a set of packfiles as described above.
+Specifically, the `BTMP` chunk encodes three pieces of information (all
+32-bit unsigned integers in network byte-order) for each packfile `p`
+that is stored in the MIDX, as follows:
+
+`bitmap_pos`:: The first bit position (in pseudo-pack order) in the
+  multi-pack index's reachability bitmap occupied by an object from `p`.
+
+`bitmap_nr`:: The number of bit positions (including the one at
+  `bitmap_pos`) that encode objects from that pack `p`.
+
+For example, the `BTMP` chunk corresponding to the above example (with
+packs ``a'', ``b'', and ``c'') would look like:
+
+[cols="1,2,2"]
+|===
+| |`bitmap_pos` |`bitmap_nr`
+
+|packfile ``a''
+|`0`
+|`10`
+
+|packfile ``b''
+|`10`
+|`15`
+
+|packfile ``c''
+|`25`
+|`20`
+|===
+
+With this information in place, we can treat each packfile as
+individually reusable in the same fashion as verbatim pack reuse is
+performed on individual packs prior to the implementation of the `BTMP`
+chunk.
 
 == cruft packs
 
