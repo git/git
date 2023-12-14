@@ -232,6 +232,7 @@ static int use_bitmap_index = -1;
 static enum {
 	NO_PACK_REUSE = 0,
 	SINGLE_PACK_REUSE,
+	MULTI_PACK_REUSE,
 } allow_pack_reuse = SINGLE_PACK_REUSE;
 static enum {
 	WRITE_BITMAP_FALSE = 0,
@@ -3251,6 +3252,8 @@ static int git_pack_config(const char *k, const char *v,
 		if (res < 0) {
 			if (!strcasecmp(v, "single"))
 				allow_pack_reuse = SINGLE_PACK_REUSE;
+			else if (!strcasecmp(v, "multi"))
+				allow_pack_reuse = MULTI_PACK_REUSE;
 			else
 				die(_("invalid pack.allowPackReuse value: '%s'"), v);
 		} else if (res) {
@@ -4029,7 +4032,8 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 		reuse_partial_packfile_from_bitmap(bitmap_git,
 						   &reuse_packfiles,
 						   &reuse_packfiles_nr,
-						   &reuse_packfile_bitmap);
+						   &reuse_packfile_bitmap,
+						   allow_pack_reuse == MULTI_PACK_REUSE);
 
 	if (reuse_packfiles) {
 		reuse_packfile_objects = bitmap_popcount(reuse_packfile_bitmap);

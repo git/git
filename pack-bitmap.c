@@ -2040,7 +2040,8 @@ static int bitmapped_pack_cmp(const void *va, const void *vb)
 void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 					struct bitmapped_pack **packs_out,
 					size_t *packs_nr_out,
-					struct bitmap **reuse_out)
+					struct bitmap **reuse_out,
+					int multi_pack_reuse)
 {
 	struct repository *r = the_repository;
 	struct bitmapped_pack *packs = NULL;
@@ -2064,15 +2065,30 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 				free(packs);
 				return;
 			}
+
 			if (!pack.bitmap_nr)
-				continue; /* no objects from this pack */
-			if (pack.bitmap_pos)
-				continue; /* not preferred pack */
+				continue;
+
+			if (!multi_pack_reuse && pack.bitmap_pos) {
+				/*
+				 * If we're only reusing a single pack, skip
+				 * over any packs which are not positioned at
+				 * the beginning of the MIDX bitmap.
+				 *
+				 * This is consistent with the existing
+				 * single-pack reuse behavior, which only reuses
+				 * parts of the MIDX's preferred pack.
+				 */
+				continue;
+			}
 
 			ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
 			memcpy(&packs[packs_nr++], &pack, sizeof(pack));
 
 			objects_nr += pack.p->num_objects;
+
+			if (!multi_pack_reuse)
+				break;
 		}
 
 		QSORT(packs, packs_nr, bitmapped_pack_cmp);
@@ -2080,10 +2096,10 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 		ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
 
 		packs[packs_nr].p = bitmap_git->pack;
-		packs[packs_nr].bitmap_pos = 0;
 		packs[packs_nr].bitmap_nr = bitmap_git->pack->num_objects;
+		packs[packs_nr].bitmap_pos = 0;
 
-		objects_nr = packs[packs_nr++].p->num_objects;
+		objects_nr = packs[packs_nr++].bitmap_nr;
 	}
 
 	word_alloc = objects_nr / BITS_IN_EWORD;
@@ -2091,10 +2107,8 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 		word_alloc++;
 	reuse = bitmap_word_alloc(word_alloc);
 
-	if (packs_nr != 1)
-		BUG("pack reuse not yet implemented for multiple packs");
-
-	reuse_partial_packfile_from_bitmap_1(bitmap_git, packs, reuse);
+	for (i = 0; i < packs_nr; i++)
+		reuse_partial_packfile_from_bitmap_1(bitmap_git, &packs[i], reuse);
 
 	if (bitmap_is_empty(reuse)) {
 		free(packs);
