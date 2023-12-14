@@ -3943,13 +3943,15 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 	if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
 		return -1;
 
-	if (pack_options_allow_reuse() &&
-	    !reuse_partial_packfile_from_bitmap(
-			bitmap_git,
-			&reuse_packfile,
-			&reuse_packfile_objects,
-			&reuse_packfile_bitmap)) {
-		assert(reuse_packfile_objects);
+	if (pack_options_allow_reuse())
+		reuse_partial_packfile_from_bitmap(bitmap_git, &reuse_packfile,
+						   &reuse_packfile_bitmap);
+
+	if (reuse_packfile) {
+		reuse_packfile_objects = bitmap_popcount(reuse_packfile_bitmap);
+		if (!reuse_packfile_objects)
+			BUG("expected non-empty reuse bitmap");
+
 		nr_result += reuse_packfile_objects;
 		nr_seen += reuse_packfile_objects;
 		display_progress(progress_state, nr_seen);

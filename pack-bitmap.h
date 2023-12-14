@@ -78,10 +78,9 @@ int test_bitmap_hashes(struct repository *r);
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 					 int filter_provided_objects);
 uint32_t midx_preferred_pack(struct bitmap_index *bitmap_git);
-int reuse_partial_packfile_from_bitmap(struct bitmap_index *,
-				       struct packed_git **packfile,
-				       uint32_t *entries,
-				       struct bitmap **reuse_out);
+void reuse_partial_packfile_from_bitmap(struct bitmap_index *,
+					struct packed_git **packfile,
+					struct bitmap **reuse_out);
 int rebuild_existing_bitmaps(struct bitmap_index *, struct packing_data *mapping,
 			     kh_oid_map_t *reused_bitmaps, int show_progress);
 void free_bitmap_index(struct bitmap_index *);
