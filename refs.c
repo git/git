@@ -1806,8 +1806,10 @@ static int refs_read_special_head(struct ref_store *ref_store,
 	int result = -1;
 	strbuf_addf(&full_path, "%s/%s", ref_store->gitdir, refname);
 
-	if (strbuf_read_file(&content, full_path.buf, 0) < 0)
+	if (strbuf_read_file(&content, full_path.buf, 0) < 0) {
+		*failure_errno = errno;
 		goto done;
+	}
 
 	result = parse_loose_ref_contents(content.buf, oid, referent, type,
 					  failure_errno);
