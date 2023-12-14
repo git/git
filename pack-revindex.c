@@ -564,3 +564,14 @@ int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
 
 	return midx_key_to_pack_pos(m, &key, pos);
 }
+
+int midx_pair_to_pack_pos(struct multi_pack_index *m, uint32_t pack_int_id,
+			  off_t ofs, uint32_t *pos)
+{
+	struct midx_pack_key key = {
+		.pack = pack_int_id,
+		.offset = ofs,
+		.midx = m,
+	};
+	return midx_key_to_pack_pos(m, &key, pos);
+}
