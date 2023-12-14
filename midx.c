@@ -428,7 +428,8 @@ static int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 	return strcmp(idx_or_pack_name, idx_name);
 }
 
-int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
+int midx_locate_pack(struct multi_pack_index *m, const char *idx_or_pack_name,
+		     uint32_t *pos)
 {
 	uint32_t first = 0, last = m->num_packs;
 
@@ -439,8 +440,11 @@ int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
 
 		current = m->pack_names[mid];
 		cmp = cmp_idx_or_pack_name(idx_or_pack_name, current);
-		if (!cmp)
+		if (!cmp) {
+			if (pos)
+				*pos = mid;
 			return 1;
+		}
 		if (cmp > 0) {
 			first = mid + 1;
 			continue;
@@ -449,6 +453,11 @@ int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
 	}
 
 	return 0;
+}
+
+int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
+{
+	return midx_locate_pack(m, idx_or_pack_name, NULL);
 }
 
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local)
