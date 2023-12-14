@@ -1836,7 +1836,7 @@ cleanup:
  * -1 means "stop trying further objects"; 0 means we may or may not have
  * reused, but you can keep feeding bits.
  */
-static int try_partial_reuse(struct packed_git *pack,
+static int try_partial_reuse(struct bitmapped_pack *pack,
 			     size_t pos,
 			     struct bitmap *reuse,
 			     struct pack_window **w_curs)
@@ -1868,11 +1868,11 @@ static int try_partial_reuse(struct packed_git *pack,
 	 * preferred pack precede all bits from other packs.
 	 */
 
-	if (pos >= pack->num_objects)
+	if (pos >= pack->p->num_objects)
 		return -1; /* not actually in the pack or MIDX preferred pack */
 
-	offset = delta_obj_offset = pack_pos_to_offset(pack, pos);
-	type = unpack_object_header(pack, w_curs, &offset, &size);
+	offset = delta_obj_offset = pack_pos_to_offset(pack->p, pos);
+	type = unpack_object_header(pack->p, w_curs, &offset, &size);
 	if (type < 0)
 		return -1; /* broken packfile, punt */
 
@@ -1888,11 +1888,11 @@ static int try_partial_reuse(struct packed_git *pack,
 		 * and the normal slow path will complain about it in
 		 * more detail.
 		 */
-		base_offset = get_delta_base(pack, w_curs, &offset, type,
+		base_offset = get_delta_base(pack->p, w_curs, &offset, type,
 					     delta_obj_offset);
 		if (!base_offset)
 			return 0;
-		if (offset_to_pack_pos(pack, base_offset, &base_pos) < 0)
+		if (offset_to_pack_pos(pack->p, base_offset, &base_pos) < 0)
 			return 0;
 
 		/*
@@ -1915,14 +1915,14 @@ static int try_partial_reuse(struct packed_git *pack,
 		 * to REF_DELTA on the fly. Better to just let the normal
 		 * object_entry code path handle it.
 		 */
-		if (!bitmap_get(reuse, base_pos))
+		if (!bitmap_get(reuse, pack->bitmap_pos + base_pos))
 			return 0;
 	}
 
 	/*
 	 * If we got here, then the object is OK to reuse. Mark it.
 	 */
-	bitmap_set(reuse, pos);
+	bitmap_set(reuse, pack->bitmap_pos + pos);
 	return 0;
 }
 
@@ -1934,29 +1934,13 @@ uint32_t midx_preferred_pack(struct bitmap_index *bitmap_git)
 	return nth_midxed_pack_int_id(m, pack_pos_to_midx(bitmap_git->midx, 0));
 }
 
-int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
-				       struct packed_git **packfile_out,
-				       uint32_t *entries,
-				       struct bitmap **reuse_out)
+static void reuse_partial_packfile_from_bitmap_1(struct bitmap_index *bitmap_git,
+						 struct bitmapped_pack *pack,
+						 struct bitmap *reuse)
 {
-	struct repository *r = the_repository;
-	struct packed_git *pack;
 	struct bitmap *result = bitmap_git->result;
-	struct bitmap *reuse;
 	struct pack_window *w_curs = NULL;
 	size_t i = 0;
-	uint32_t offset;
-	uint32_t objects_nr;
-
-	assert(result);
-
-	load_reverse_index(r, bitmap_git);
-
-	if (bitmap_is_midx(bitmap_git))
-		pack = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
-	else
-		pack = bitmap_git->pack;
-	objects_nr = pack->num_objects;
 
 	while (i < result->word_alloc && result->words[i] == (eword_t)~0)
 		i++;
@@ -1969,15 +1953,15 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 	 * we use it instead of another pack. In single-pack bitmaps, the choice
 	 * is made for us.
 	 */
-	if (i > objects_nr / BITS_IN_EWORD)
-		i = objects_nr / BITS_IN_EWORD;
+	if (i > pack->p->num_objects / BITS_IN_EWORD)
+		i = pack->p->num_objects / BITS_IN_EWORD;
 
-	reuse = bitmap_word_alloc(i);
 	memset(reuse->words, 0xFF, i * sizeof(eword_t));
 
 	for (; i < result->word_alloc; ++i) {
 		eword_t word = result->words[i];
 		size_t pos = (i * BITS_IN_EWORD);
+		size_t offset;
 
 		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
 			if ((word >> offset) == 0)
@@ -2002,6 +1986,78 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 
 done:
 	unuse_pack(&w_curs);
+}
+
+static int bitmapped_pack_cmp(const void *va, const void *vb)
+{
+	const struct bitmapped_pack *a = va;
+	const struct bitmapped_pack *b = vb;
+
+	if (a->bitmap_pos < b->bitmap_pos)
+		return -1;
+	if (a->bitmap_pos > b->bitmap_pos)
+		return 1;
+	return 0;
+}
+
+int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
+				       struct packed_git **packfile_out,
+				       uint32_t *entries,
+				       struct bitmap **reuse_out)
+{
+	struct repository *r = the_repository;
+	struct bitmapped_pack *packs = NULL;
+	struct bitmap *result = bitmap_git->result;
+	struct bitmap *reuse;
+	size_t i;
+	size_t packs_nr = 0, packs_alloc = 0;
+	size_t word_alloc;
+	uint32_t objects_nr = 0;
+
+	assert(result);
+
+	load_reverse_index(r, bitmap_git);
+
+	if (bitmap_is_midx(bitmap_git)) {
+		for (i = 0; i < bitmap_git->midx->num_packs; i++) {
+			struct bitmapped_pack pack;
+			if (nth_bitmapped_pack(r, bitmap_git->midx, &pack, i) < 0) {
+				warning(_("unable to load pack: '%s', disabling pack-reuse"),
+					bitmap_git->midx->pack_names[i]);
+				free(packs);
+				return -1;
+			}
+			if (!pack.bitmap_nr)
+				continue; /* no objects from this pack */
+			if (pack.bitmap_pos)
+				continue; /* not preferred pack */
+
+			ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
+			memcpy(&packs[packs_nr++], &pack, sizeof(pack));
+
+			objects_nr += pack.p->num_objects;
+		}
+
+		QSORT(packs, packs_nr, bitmapped_pack_cmp);
+	} else {
+		ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
+
+		packs[packs_nr].p = bitmap_git->pack;
+		packs[packs_nr].bitmap_pos = 0;
+		packs[packs_nr].bitmap_nr = bitmap_git->pack->num_objects;
+
+		objects_nr = packs[packs_nr++].p->num_objects;
+	}
+
+	word_alloc = objects_nr / BITS_IN_EWORD;
+	if (objects_nr % BITS_IN_EWORD)
+		word_alloc++;
+	reuse = bitmap_word_alloc(word_alloc);
+
+	if (packs_nr != 1)
+		BUG("pack reuse not yet implemented for multiple packs");
+
+	reuse_partial_packfile_from_bitmap_1(bitmap_git, packs, reuse);
 
 	*entries = bitmap_popcount(reuse);
 	if (!*entries) {
@@ -2014,7 +2070,7 @@ done:
 	 * need to be handled separately.
 	 */
 	bitmap_and_not(result, reuse);
-	*packfile_out = pack;
+	*packfile_out = packs[0].p;
 	*reuse_out = reuse;
 	return 0;
 }
