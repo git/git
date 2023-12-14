@@ -1280,6 +1280,8 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		base = fill_in_bitmap(bitmap_git, revs, base, seen);
 	}
 
+	object_list_free(&not_mapped);
+
 	return base;
 }
 
