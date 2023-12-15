@@ -119,7 +119,7 @@ format.notes::
 	`--notes=<ref>`, where `ref` is the non-boolean value. Defaults
 	to false.
 +
-If one wishes to use the ref `ref/notes/true`, please use that literal
+If one wishes to use the ref `refs/notes/true`, please use that literal
 instead.
 +
 This configuration can be specified multiple times in order to allow
