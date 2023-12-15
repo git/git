@@ -1755,6 +1755,8 @@ esac
 case "$GIT_DEFAULT_REF_FORMAT" in
 files)
 	test_set_prereq REFFILES;;
+reftable)
+	test_set_prereq REFTABLE;;
 *)
 	echo 2>&1 "error: unknown ref format $GIT_DEFAULT_REF_FORMAT"
 	exit 1

@@ -79,7 +79,7 @@ trap cleanup $siglist
 # create the links to the original repo.  explicitly exclude index, HEAD and
 # logs/HEAD from the list since they are purely related to the current working
 # directory, and should not be shared.
-for x in config refs logs/refs objects info hooks packed-refs remotes rr-cache svn
+for x in config refs logs/refs objects info hooks packed-refs remotes rr-cache svn reftable
 do
 	# create a containing directory if needed
 	case $x in
