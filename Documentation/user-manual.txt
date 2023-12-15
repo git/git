@@ -1344,7 +1344,7 @@ $ git diff --theirs file.txt	# same as the above.
 -------------------------------------------------
 
 When using the 'ort' merge strategy (the default), before updating the working
-tree with the result of the merge, Git writes a special ref named AUTO_MERGE
+tree with the result of the merge, Git writes a ref named AUTO_MERGE
 reflecting the state of the tree it is about to write. Conflicted paths with
 textual conflicts that could not be automatically merged are written to this
 tree with conflict markers, just as in the working tree. AUTO_MERGE can thus be
