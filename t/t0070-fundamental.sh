@@ -81,7 +81,7 @@ test_expect_success 'unpack-sideband: --chomp-newline (default)' '
 	test_cmp expect-err err
 '
 
-test_expect_failure 'unpack-sideband: packet_reader_read() consumes sideband, no chomp payload' '
+test_expect_success 'unpack-sideband: packet_reader_read() consumes sideband, no chomp payload' '
 	test_when_finished "rm -f expect-out expect-err" &&
 	test-tool pkt-line send-split-sideband >split-sideband &&
 	test-tool pkt-line unpack-sideband \

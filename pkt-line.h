@@ -194,6 +194,9 @@ struct packet_reader {
 
 	/* hash algorithm in use */
 	const struct git_hash_algo *hash_algo;
+
+	/* hold temporary sideband message */
+	struct strbuf scratch;
 };
 
 /*
