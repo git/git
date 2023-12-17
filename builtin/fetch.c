@@ -1651,7 +1651,7 @@ static int do_fetch(struct transport *transport,
 	if (atomic_fetch) {
 		transaction = ref_transaction_begin(&err);
 		if (!transaction) {
-			retcode = error("%s", err.buf);
+			retcode = -1;
 			goto cleanup;
 		}
 	}
@@ -1711,7 +1711,6 @@ static int do_fetch(struct transport *transport,
 
 		retcode = ref_transaction_commit(transaction, &err);
 		if (retcode) {
-			error("%s", err.buf);
 			ref_transaction_free(transaction);
 			transaction = NULL;
 			goto cleanup;
@@ -1775,9 +1774,14 @@ static int do_fetch(struct transport *transport,
 	}
 
 cleanup:
-	if (retcode && transaction) {
-		ref_transaction_abort(transaction, &err);
-		error("%s", err.buf);
+	if (retcode) {
+		if (err.len) {
+			error("%s", err.buf);
+			strbuf_reset(&err);
+		}
+		if (transaction && ref_transaction_abort(transaction, &err) &&
+		    err.len)
+			error("%s", err.buf);
 	}
 
 	display_state_release(&display_state);
