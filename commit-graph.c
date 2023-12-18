@@ -1005,7 +1005,7 @@ struct commit *lookup_commit_in_graph(struct repository *repo, const struct obje
 	uint32_t pos;
 
 	if (commit_graph_paranoia == -1)
-		commit_graph_paranoia = git_env_bool(GIT_COMMIT_GRAPH_PARANOIA, 1);
+		commit_graph_paranoia = git_env_bool(GIT_COMMIT_GRAPH_PARANOIA, 0);
 
 	if (!prepare_commit_graph(repo))
 		return NULL;

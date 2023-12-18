@@ -911,10 +911,10 @@ test_expect_success 'stale commit cannot be parsed when given directly' '
 
 		# Verify that it is possible to read the commit from the
 		# commit graph when not being paranoid, ...
-		GIT_COMMIT_GRAPH_PARANOIA=false git rev-list B &&
+		git rev-list B &&
 		# ... but parsing the commit when double checking that
 		# it actually exists in the object database should fail.
-		test_must_fail git rev-list -1 B
+		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git rev-list -1 B
 	)
 '
 
@@ -938,9 +938,9 @@ test_expect_success 'stale commit cannot be parsed when traversing graph' '
 
 		# Again, we should be able to parse the commit when not
 		# being paranoid about commit graph staleness...
-		GIT_COMMIT_GRAPH_PARANOIA=false git rev-parse HEAD~2 &&
+		git rev-parse HEAD~2 &&
 		# ... but fail when we are paranoid.
-		test_must_fail git rev-parse HEAD~2 2>error &&
+		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git rev-parse HEAD~2 2>error &&
 		grep "error: commit $oid exists in commit-graph but not in the object database" error
 	)
 '

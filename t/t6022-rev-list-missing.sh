@@ -13,6 +13,12 @@ test_expect_success 'create repository and alternate directory' '
 	test_commit 3
 '
 
+# We manually corrupt the repository, which means that the commit-graph may
+# contain references to already-deleted objects. We thus need to enable
+# commit-graph paranoia to not returned these deleted commits from the graph.
+GIT_COMMIT_GRAPH_PARANOIA=true
+export GIT_COMMIT_GRAPH_PARANOIA
+
 for obj in "HEAD~1" "HEAD~1^{tree}" "HEAD:1.t"
 do
 	test_expect_success "rev-list --missing=error fails with missing object $obj" '
