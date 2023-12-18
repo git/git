@@ -2599,13 +2599,55 @@ void ref_transaction_for_each_queued_update(struct ref_transaction *transaction,
 int refs_delete_refs(struct ref_store *refs, const char *logmsg,
 		     struct string_list *refnames, unsigned int flags)
 {
+	struct ref_transaction *transaction;
+	struct strbuf err = STRBUF_INIT;
+	struct string_list_item *item;
+	int ret = 0, failures = 0;
 	char *msg;
-	int retval;
+
+	if (!refnames->nr)
+		return 0;
 
 	msg = normalize_reflog_message(logmsg);
-	retval = refs->be->delete_refs(refs, msg, refnames, flags);
+
+	/*
+	 * Since we don't check the references' old_oids, the
+	 * individual updates can't fail, so we can pack all of the
+	 * updates into a single transaction.
+	 */
+	transaction = ref_store_transaction_begin(refs, &err);
+	if (!transaction) {
+		ret = error("%s", err.buf);
+		goto out;
+	}
+
+	for_each_string_list_item(item, refnames) {
+		ret = ref_transaction_delete(transaction, item->string,
+					     NULL, flags, msg, &err);
+		if (ret) {
+			warning(_("could not delete reference %s: %s"),
+				item->string, err.buf);
+			strbuf_reset(&err);
+			failures = 1;
+		}
+	}
+
+	ret = ref_transaction_commit(transaction, &err);
+	if (ret) {
+		if (refnames->nr == 1)
+			error(_("could not delete reference %s: %s"),
+			      refnames->items[0].string, err.buf);
+		else
+			error(_("could not delete references: %s"), err.buf);
+	}
+
+out:
+	if (!ret && failures)
+		ret = -1;
+	ref_transaction_free(transaction);
+	strbuf_release(&err);
 	free(msg);
-	return retval;
+	return ret;
 }
 
 int delete_refs(const char *msg, struct string_list *refnames,
