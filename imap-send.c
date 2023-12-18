@@ -18,7 +18,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "git-compat-util.h"
@@ -860,7 +860,7 @@ static void imap_close_store(struct imap_store *ctx)
 
 /*
  * hexchar() and cram() functions are based on the code from the isync
- * project (http://isync.sf.net/).
+ * project (https://isync.sourceforge.io/).
  */
 static char hexchar(unsigned int b)
 {

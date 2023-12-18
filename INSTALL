@@ -124,7 +124,7 @@ Issues of note:
 	  interacting with svn repositories with "git svn").  If you can
 	  live without these, use NO_PERL.  Note that recent releases of
 	  Redhat/Fedora are reported to ship Perl binary package with some
-	  core modules stripped away (see http://lwn.net/Articles/477234/),
+	  core modules stripped away (see https://lwn.net/Articles/477234/),
 	  so you might need to install additional packages other than Perl
 	  itself, e.g. Digest::MD5, File::Spec, File::Temp, Net::Domain,
 	  Net::SMTP, and Time::HiRes.

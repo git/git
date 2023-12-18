@@ -329,7 +329,7 @@ sub conn {
 			# Use a HTTP Proxy. Only works for HTTP proxies that
 			# don't require user authentication
 			#
-			# See: http://www.ietf.org/rfc/rfc2817.txt
+			# See: https://www.ietf.org/rfc/rfc2817.txt
 
 			$s = IO::Socket::INET->new(PeerHost => $proxyhost, PeerPort => $proxyport);
 			die "Socket to $proxyhost: $!\n" unless defined $s;
