@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2023, #02; Mon, 11)
-X-master-at: 1a87c842ece327d03d08096395969aca5e0a6996
-X-next-at: 7e679a4c4d5a908dba9a9861daa4163557cf570c
+Subject: What's cooking in git.git (Dec 2023, #03; Mon, 18)
+X-master-at: 624eb90fa8f65a79396615f3c2842ac5a3743350
+X-next-at: 073fad21af32d0c37efae35e0e1830b9bd151fcd
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2023, #02; Mon, 11)
+What's cooking in git.git (Dec 2023, #03; Mon, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -60,175 +60,286 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/rebase-autosquash (2023-11-16) 3 commits
-  (merged to 'next' on 2023-11-17 at 3ed6e79445)
- + rebase: rewrite --(no-)autosquash documentation
- + rebase: support --autosquash without -i
- + rebase: fully ignore rebase.autoSquash without -i
+* ac/fuzz-show-date (2023-11-20) 1 commit
+  (merged to 'next' on 2023-12-11 at f36795a896)
+ + fuzz: add new oss-fuzz fuzzer for date.c / date.h
 
- "git rebase --autosquash" is now enabled for non-interactive rebase,
- but it is still incompatible with the apply backend.
- source: <20231114214339.10925-1-andy.koppe@gmail.com>
+ Subject approxidate() and show_date() machinery to OSS-Fuzz.
+ source: <pull.1612.v4.git.1700243267653.gitgitgadget@gmail.com>
 
 
-* jk/chunk-bounds-more (2023-11-09) 9 commits
-  (merged to 'next' on 2023-11-13 at 3df4b18bea)
- + commit-graph: mark chunk error messages for translation
- + commit-graph: drop verify_commit_graph_lite()
- + commit-graph: check order while reading fanout chunk
- + commit-graph: use fanout value for graph size
- + commit-graph: abort as soon as we see a bogus chunk
- + commit-graph: clarify missing-chunk error messages
- + commit-graph: drop redundant call to "lite" verification
- + midx: check consistency of fanout table
- + commit-graph: handle overflow in chunk_size checks
- (this branch is used by tb/pair-chunk-expect.)
+* ad/merge-file-diff-algo (2023-11-22) 1 commit
+  (merged to 'next' on 2023-12-11 at ab43a54c43)
+ + merge-file: add --diff-algorithm option
 
- Code clean-up for jk/chunk-bounds topic.
- source: <20231109070310.GA2697602@coredump.intra.peff.net>
+ "git merge-file" learned to take the "--diff-algorithm" option to
+ use algorithm different from the default "myers" diff.
+ source: <pull.1606.v2.git.git.1700507932937.gitgitgadget@gmail.com>
 
 
-* js/ci-discard-prove-state (2023-11-14) 1 commit
-  (merged to 'next' on 2023-11-14 at fade3ba143)
- + ci: avoid running the test suite _twice_
- (this branch uses ps/ci-gitlab.)
+* cc/git-replay (2023-11-26) 14 commits
+  (merged to 'next' on 2023-12-11 at 6f7d123578)
+ + replay: stop assuming replayed branches do not diverge
+ + replay: add --contained to rebase contained branches
+ + replay: add --advance or 'cherry-pick' mode
+ + replay: use standard revision ranges
+ + replay: make it a minimal server side command
+ + replay: remove HEAD related sanity check
+ + replay: remove progress and info output
+ + replay: add an important FIXME comment about gpg signing
+ + replay: change rev walking options
+ + replay: introduce pick_regular_commit()
+ + replay: die() instead of failing assert()
+ + replay: start using parse_options API
+ + replay: introduce new builtin
+ + t6429: remove switching aspects of fast-rebase
 
- The way CI testing used "prove" could lead to running the test
- suite twice needlessly, which has been corrected.
- source: <pull.1613.git.1699894837844.gitgitgadget@gmail.com>
-
-
-* js/doc-unit-tests (2023-11-10) 3 commits
-  (merged to 'next' on 2023-11-10 at 7d00ffd06b)
- + ci: run unit tests in CI
- + unit tests: add TAP unit test framework
- + unit tests: add a project plan document
- (this branch is used by js/doc-unit-tests-with-cmake.)
-
- Process to add some form of low-level unit tests has started.
- source: <cover.1699555664.git.steadmon@google.com>
-
-
-* js/doc-unit-tests-with-cmake (2023-11-10) 7 commits
-  (merged to 'next' on 2023-11-10 at b4503c9c8c)
- + cmake: handle also unit tests
- + cmake: use test names instead of full paths
- + cmake: fix typo in variable name
- + artifacts-tar: when including `.dll` files, don't forget the unit-tests
- + unit-tests: do show relative file paths
- + unit-tests: do not mistake `.pdb` files for being executable
- + cmake: also build unit tests
- (this branch uses js/doc-unit-tests.)
-
- Update the base topic to work with CMake builds.
- source: <pull.1579.v3.git.1695640836.gitgitgadget@gmail.com>
+ Introduce "git replay", a tool meant on the server side without
+ working tree to recreate a history.
+ cf. <6bfe1541-54dd-ca6b-e930-94d3038060f1@gmx.de>
+ source: <20231124111044.3426007-1-christian.couder@gmail.com>
 
 
-* jw/git-add-attr-pathspec (2023-11-04) 1 commit
-  (merged to 'next' on 2023-11-13 at b61be94e4d)
- + attr: enable attr pathspec magic for git-add and git-stash
+* jb/reflog-expire-delete-dry-run-options (2023-11-26) 1 commit
+  (merged to 'next' on 2023-12-11 at c7e9846963)
+ + builtin/reflog.c: fix dry-run option short name
 
- "git add" and "git stash" learned to support the ":(attr:...)"
- magic pathspec.
- source: <20231103163449.1578841-1-jojwang@google.com>
-
-
-* ps/ban-a-or-o-operator-with-test (2023-11-11) 4 commits
-  (merged to 'next' on 2023-11-14 at d84471baab)
- + Makefile: stop using `test -o` when unlinking duplicate executables
- + contrib/subtree: convert subtree type check to use case statement
- + contrib/subtree: stop using `-o` to test for number of args
- + global: convert trivial usages of `test <expr> -a/-o <expr>`
-
- Test and shell scripts clean-up.
- source: <cover.1699609940.git.ps@pks.im>
+ Command line parsing fix for "git reflog".
+ source: <20231126000514.85509-1-josh@brob.st>
 
 
-* ps/ci-gitlab (2023-11-09) 8 commits
-  (merged to 'next' on 2023-11-10 at ea7ed67945)
- + ci: add support for GitLab CI
- + ci: install test dependencies for linux-musl
- + ci: squelch warnings when testing with unusable Git repo
- + ci: unify setup of some environment variables
- + ci: split out logic to set up failed test artifacts
- + ci: group installation of Docker dependencies
- + ci: make grouping setup more generic
- + ci: reorder definitions for grouping functions
- (this branch is used by js/ci-discard-prove-state.)
+* jh/trace2-redact-auth (2023-11-23) 4 commits
+  (merged to 'next' on 2023-12-11 at 7e679a4c4d)
+ + t0212: test URL redacting in EVENT format
+ + t0211: test URL redacting in PERF format
+ + trace2: redact passwords from https:// URLs by default
+ + trace2: fix signature of trace2_def_param() macro
 
- Add support for GitLab CI.
- source: <cover.1699514143.git.ps@pks.im>
+ trace2 streams used to record the URLs that potentially embed
+ authentication material, which has been corrected.
+ source: <pull.1616.git.1700680717.gitgitgadget@gmail.com>
 
 
-* ps/httpd-tests-on-nixos (2023-11-11) 3 commits
-  (merged to 'next' on 2023-11-13 at 81bd6f5334)
- + t9164: fix inability to find basename(1) in Subversion hooks
- + t/lib-httpd: stop using legacy crypt(3) for authentication
- + t/lib-httpd: dynamically detect httpd and modules path
+* js/packfile-h-typofix (2023-11-20) 1 commit
+  (merged to 'next' on 2023-12-11 at 328399439a)
+ + packfile.c: fix a typo in `each_file_in_pack_dir_fn()`'s declaration
 
- Portability tweak.
- source: <cover.1699596457.git.ps@pks.im>
+ Typofix.
+ source: <pull.1614.git.1700226915859.gitgitgadget@gmail.com>
 
 
-* ps/ref-tests-update (2023-11-03) 10 commits
-  (merged to 'next' on 2023-11-13 at dc26e55d6f)
- + t: mark several tests that assume the files backend with REFFILES
- + t7900: assert the absence of refs via git-for-each-ref(1)
- + t7300: assert exact states of repo
- + t4207: delete replace references via git-update-ref(1)
- + t1450: convert tests to remove worktrees via git-worktree(1)
- + t: convert tests to not access reflog via the filesystem
- + t: convert tests to not access symrefs via the filesystem
- + t: convert tests to not write references via the filesystem
- + t: allow skipping expected object ID in `ref-store update-ref`
- + Merge branch 'ps/show-ref' into ps/ref-tests-update
+* js/update-urls-in-doc-and-comment (2023-11-26) 4 commits
+  (merged to 'next' on 2023-12-11 at 3cda3f2a03)
+ + doc: refer to internet archive
+ + doc: update links for andre-simon.de
+ + doc: switch links to https
+ + doc: update links to current pages
 
- Update ref-related tests.
- source: <cover.1698914571.git.ps@pks.im>
+ Stale URLs have been updated to their current counterparts (or
+ archive.org) and HTTP links are replaced with working HTTPS links.
+ source: <pull.1589.v3.git.1700796916.gitgitgadget@gmail.com>
 
 
-* ss/format-patch-use-encode-headers-for-cover-letter (2023-11-10) 1 commit
-  (merged to 'next' on 2023-11-14 at 1a4bd59e15)
- + format-patch: fix ignored encode_email_headers for cover letter
+* ps/commit-graph-less-paranoid (2023-11-26) 1 commit
+  (merged to 'next' on 2023-12-11 at 618bd08fa1)
+ + commit-graph: disable GIT_COMMIT_GRAPH_PARANOIA by default
 
- "git format-patch --encode-email-headers" ignored the option when
- preparing the cover letter, which has been corrected.
- source: <20231109111950.387219-1-contact@emersion.fr>
-
-
-* tz/send-email-negatable-options (2023-11-17) 2 commits
-  (merged to 'next' on 2023-11-17 at f09e533e43)
- + send-email: avoid duplicate specification warnings
- + perl: bump the required Perl version to 5.8.1 from 5.8.0
-
- Newer versions of Getopt::Long started giving warnings against our
- (ab)use of it in "git send-email".  Bump the minimum version
- requirement for Perl to 5.8.1 (from September 2002) to allow
- simplifying our implementation.
- source: <20231116193014.470420-1-tmz@pobox.com>
+ Earlier we stopped relying on commit-graph that (still) records
+ information about commits that are lost from the object store,
+ which has negative performance implications.  The default has been
+ flipped to disable this pessimization.
+ source: <17e08289cd59d20de0de9b4e18f5e6bf77987351.1700823746.git.ps@pks.im>
 
 
-* vd/for-each-ref-unsorted-optimization (2023-11-16) 10 commits
-  (merged to 'next' on 2023-11-17 at ff99420bf6)
- + t/perf: add perf tests for for-each-ref
- + ref-filter.c: use peeled tag for '*' format fields
- + for-each-ref: clean up documentation of --format
- + ref-filter.c: filter & format refs in the same callback
- + ref-filter.c: refactor to create common helper functions
- + ref-filter.c: rename 'ref_filter_handler()' to 'filter_one()'
- + ref-filter.h: add functions for filter/format & format-only
- + ref-filter.h: move contains caches into filter
- + ref-filter.h: add max_count and omit_empty to ref_format
- + ref-filter.c: really don't sort when using --no-sort
+* ps/ref-deletion-updates (2023-11-17) 4 commits
+  (merged to 'next' on 2023-12-11 at ca551a0c36)
+ + refs: remove `delete_refs` callback from backends
+ + refs: deduplicate code to delete references
+ + refs/files: use transactions to delete references
+ + t5510: ensure that the packed-refs file needs locking
 
- "git for-each-ref --no-sort" still sorted the refs alphabetically
- which paid non-trivial cost.  It has been redefined to show output
- in an unspecified order, to allow certain optimizations to take
- advantage of.
- source: <pull.1609.v2.git.1699991638.gitgitgadget@gmail.com>
+ Simplify API implementation to delete references by eliminating
+ duplication.
+ source: <cover.1699951815.git.ps@pks.im>
+
+
+* rs/column-leakfix (2023-11-27) 1 commit
+  (merged to 'next' on 2023-12-11 at 9ac1707337)
+ + column: release strbuf and string_list after use
+
+ Leakfix.
+ source: <f087137d-a5aa-487e-a1cb-0ad7117b38ed@web.de>
+
+
+* rs/i18n-cannot-be-used-together (2023-11-27) 1 commit
+  (merged to 'next' on 2023-12-11 at a44e1c84c9)
+ + i18n: factorize even more 'incompatible options' messages
+
+ Clean-up code that handles combinations of incompatible options.
+ source: <e6eb12e4-bb63-473c-9c2f-965a4d5981ad@web.de>
 
 --------------------------------------------------
 [New Topics]
+
+* jk/mailinfo-oob-read-fix (2023-12-12) 1 commit
+  (merged to 'next' on 2023-12-14 at 0dcfcb0d02)
+ + mailinfo: fix out-of-bounds memory reads in unquote_quoted_pair()
+ (this branch is used by jk/mailinfo-iterative-unquote-comment.)
+
+ OOB read fix.
+
+ Will merge to 'master'.
+ source: <20231212221243.GA1656116@coredump.intra.peff.net>
+
+
+* ps/pseudo-refs (2023-12-14) 4 commits
+ - bisect: consistently write BISECT_EXPECTED_REV via the refdb
+ - refs: complete list of special refs
+ - refs: propagate errno when reading special refs fails
+ - wt-status: read HEAD and ORIG_HEAD via the refdb
+
+ Assorted changes around pseudoref handling.
+ source: <cover.1702560829.git.ps@pks.im>
+
+
+* rs/t6300-compressed-size-fix (2023-12-13) 2 commits
+ - test-lib-functions: add object size functions
+ - t6300: avoid hard-coding object sizes
+
+ Test fix.
+
+ Will merge to 'next'?
+ source: <9feeb6cf-aabf-4002-917f-3f6c27547bc8@web.de>
+ source: <ff735aac-b60b-4d52-a6dc-180ab504fc8d@web.de>
+
+
+* es/add-doc-list-short-form-of-all-in-synopsis (2023-12-15) 1 commit
+  (merged to 'next' on 2023-12-18 at a4f20da2bf)
+ + git-add.txt: add missing short option -A to synopsis
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <20231215204333.1253-1-ericsunshine@charter.net>
+
+
+* jc/doc-misspelt-refs-fix (2023-12-18) 1 commit
+  (merged to 'next' on 2023-12-18 at e7799fd5c9)
+ + doc: format.notes specify a ref under refs/notes/ hierarchy
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <xmqqjzpfje33.fsf_-_@gitster.g>
+
+
+* jc/doc-most-refs-are-not-that-special (2023-12-15) 5 commits
+  (merged to 'next' on 2023-12-18 at aead30fcc8)
+ + docs: MERGE_AUTOSTASH is not that special
+ + docs: AUTO_MERGE is not that special
+ + refs.h: HEAD is not that special
+ + git-bisect.txt: BISECT_HEAD is not that special
+ + git.txt: HEAD is not that special
+
+ Doc updates.
+
+ Will merge to 'master'.
+ source: <20231215203245.3622299-1-gitster@pobox.com>
+
+
+* jk/mailinfo-iterative-unquote-comment (2023-12-14) 2 commits
+  (merged to 'next' on 2023-12-18 at 92363605fd)
+ + mailinfo: avoid recursion when unquoting From headers
+ + t5100: make rfc822 comment test more careful
+ (this branch uses jk/mailinfo-oob-read-fix.)
+
+ The code to parse the From e-mail header has been updated to avoid
+ recursion.
+
+ Will merge to 'master'.
+ source: <20231214214444.GB2297853@coredump.intra.peff.net>
+
+
+* ps/chainlint-self-check-update (2023-12-15) 1 commit
+  (merged to 'next' on 2023-12-18 at 0de2e1807f)
+ + tests: adjust whitespace in chainlint expectations
+
+ Test framework update.
+
+ Will merge to 'master'.
+ source: <fb312f559de7b99244e4c86a995250599cd9be06.1702622508.git.ps@pks.im>
+
+
+* tb/multi-pack-verbatim-reuse (2023-12-14) 26 commits
+ - t/perf: add performance tests for multi-pack reuse
+ - pack-bitmap: enable reuse from all bitmapped packs
+ - pack-objects: allow setting `pack.allowPackReuse` to "single"
+ - t/test-lib-functions.sh: implement `test_trace2_data` helper
+ - pack-objects: add tracing for various packfile metrics
+ - pack-bitmap: prepare to mark objects from multiple packs for reuse
+ - pack-revindex: implement `midx_pair_to_pack_pos()`
+ - pack-revindex: factor out `midx_key_to_pack_pos()` helper
+ - midx: implement `midx_preferred_pack()`
+ - git-compat-util.h: implement checked size_t to uint32_t conversion
+ - pack-objects: include number of packs reused in output
+ - pack-objects: prepare `write_reused_pack_verbatim()` for multi-pack reuse
+ - pack-objects: prepare `write_reused_pack()` for multi-pack reuse
+ - pack-objects: pass `bitmapped_pack`'s to pack-reuse functions
+ - pack-objects: keep track of `pack_start` for each reuse pack
+ - pack-objects: parameterize pack-reuse routines over a single pack
+ - pack-bitmap: return multiple packs via `reuse_partial_packfile_from_bitmap()`
+ - pack-bitmap: simplify `reuse_partial_packfile_from_bitmap()` signature
+ - ewah: implement `bitmap_is_empty()`
+ - pack-bitmap: pass `bitmapped_pack` struct to pack-reuse functions
+ - midx: implement `midx_locate_pack()`
+ - midx: implement `BTMP` chunk
+ - midx: factor out `fill_pack_info()`
+ - pack-bitmap: plug leak in find_objects()
+ - pack-bitmap-write: deep-clear the `bb_commit` slab
+ - pack-objects: free packing_data in more places
+
+ Streaming spans of packfile data used to be done only from a
+ single, primary, pack in a repository with multiple packfiles.  It
+ has been extended to allow reuse from other packfiles, too.
+
+ Will merge to 'next'?
+ source: <cover.1702592603.git.me@ttaylorr.com>
+
+
+* rs/c99-stdbool-test-balloon (2023-12-18) 1 commit
+  (merged to 'next' on 2023-12-18 at 5a62aaa127)
+ + git-compat-util: convert skip_{prefix,suffix}{,_mem} to bool
+
+ Test balloon to use C99 "bool" type from <stdbool.h>.
+
+ Will merge to 'master'.
+ source: <2d30dc36-6091-4b47-846f-92d3f4a8b135@web.de>
+
+
+* sp/test-i18ngrep (2023-12-18) 1 commit
+  (merged to 'next' on 2023-12-18 at d54442693a)
+ + test-lib-functions.sh: fix test_grep fail message wording
+
+ Error message fix in the test framework.
+
+ Will merge to 'master'.
+ source: <20231203171956.771-1-shreyanshpaliwalcmsmn@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* jx/fetch-atomic-error-message-fix (2023-12-18) 2 commits
+  (merged to 'next' on 2023-12-18 at a1988b00e5)
+ + fetch: no redundant error message for atomic fetch
+ + t5574: test porcelain output of atomic fetch
+
+ "git fetch --atomic" issued an unnecessary empty error message,
+ which has been corrected.
+
+ Will merge to 'master'.
+ cf. <ZX__e7VjyLXIl-uV@tanuki>
+ source: <cover.1702821462.git.zhiyou.jx@alibaba-inc.com>
+
 
 * jc/bisect-doc (2023-12-09) 1 commit
  - bisect: document "terms" subcommand more fully
@@ -240,91 +351,55 @@ Release tarballs are available at:
 
 
 * rs/show-ref-incompatible-options (2023-12-11) 1 commit
- - show-ref: use die_for_incompatible_opt3()
+  (merged to 'next' on 2023-12-18 at 5a092285f7)
+ + show-ref: use die_for_incompatible_opt3()
 
+ Code clean-up for sanity checking of command line options for "git
+ show-ref".
+
+ Will merge to 'master'.
  source: <e5304253-3347-4900-bbf2-d3c6ee3fb976@web.de>
 
---------------------------------------------------
-[Stalled]
-
-* pw/rebase-sigint (2023-09-07) 1 commit
- - rebase -i: ignore signals when forking subprocesses
-
- If the commit log editor or other external programs (spawned via
- "exec" insn in the todo list) receive internactive signal during
- "git rebase -i", it caused not just the spawned program but the
- "Git" process that spawned them, which is often not what the end
- user intended.  "git" learned to ignore SIGINT and SIGQUIT while
- waiting for these subprocesses.
-
- Expecting a reroll.
- cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
- source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
-
-
-* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
- - cherry-pick: refuse cherry-pick sequence if index is dirty
-
- "git cherry-pick A" that replays a single commit stopped before
- clobbering local modification, but "git cherry-pick A..B" did not,
- which has been corrected.
-
- Expecting a reroll.
- cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
- source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
-
-
-* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
- - diff-lib: fix check_removed() when fsmonitor is active
- - Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
- - Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
- (this branch uses jc/fake-lstat.)
-
- The optimization based on fsmonitor in the "diff --cached"
- codepath is resurrected with the "fake-lstat" introduced earlier.
-
- It is unknown if the optimization is worth resurrecting, but in case...
- source: <xmqqr0n0h0tw.fsf@gitster.g>
-
---------------------------------------------------
-[Cooking]
 
 * jp/use-diff-index-in-pre-commit-sample (2023-12-03) 1 commit
- - hooks--pre-commit: detect non-ASCII when renaming
+  (merged to 'next' on 2023-12-12 at 4771ea61b9)
+ + hooks--pre-commit: detect non-ASCII when renaming
 
  The sample pre-commit hook that tries to catch introduction of new
  paths that use potentially non-portable characters did not notice
  an existing path getting renamed to such a problematic path, when
  rename detection was enabled.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1291.v2.git.git.1701360836307.gitgitgadget@gmail.com>
 
 
 * mk/doc-gitfile-more (2023-12-03) 1 commit
- - doc: make the gitfile syntax easier to discover
+  (merged to 'next' on 2023-12-12 at 7990e4a163)
+ + doc: make the gitfile syntax easier to discover
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231128065558.1061206-1-mk+copyleft@pimpmybyte.de>
 
 
 * ps/ref-tests-update-more (2023-12-03) 10 commits
- - t6301: write invalid object ID via `test-tool ref-store`
- - t5551: stop writing packed-refs directly
- - t5401: speed up creation of many branches
- - t4013: simplify magic parsing and drop "failure"
- - t3310: stop checking for reference existence via `test -f`
- - t1417: make `reflog --updateref` tests backend agnostic
- - t1410: use test-tool to create empty reflog
- - t1401: stop treating FETCH_HEAD as real reference
- - t1400: split up generic reflog tests from the reffile-specific ones
- - t0410: mark tests to require the reffiles backend
+  (merged to 'next' on 2023-12-12 at 3d4004fe3b)
+ + t6301: write invalid object ID via `test-tool ref-store`
+ + t5551: stop writing packed-refs directly
+ + t5401: speed up creation of many branches
+ + t4013: simplify magic parsing and drop "failure"
+ + t3310: stop checking for reference existence via `test -f`
+ + t1417: make `reflog --updateref` tests backend agnostic
+ + t1410: use test-tool to create empty reflog
+ + t1401: stop treating FETCH_HEAD as real reference
+ + t1400: split up generic reflog tests from the reffile-specific ones
+ + t0410: mark tests to require the reffiles backend
 
  Tests update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1701242407.git.ps@pks.im>
 
 
@@ -360,74 +435,80 @@ Release tarballs are available at:
 
 
 * jc/revision-parse-int (2023-12-09) 1 commit
- - revision: parse integer arguments to --max-count, --skip, etc., more carefully
+  (merged to 'next' on 2023-12-12 at 6209b4c97c)
+ + revision: parse integer arguments to --max-count, --skip, etc., more carefully
 
  The command line parser for the "log" family of commands was too
  loose when parsing certain numbers, e.g., silently ignoring the
  extra 'q' in "git log -n 1q" without complaining, which has been
  tightened up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq5y181fx0.fsf_-_@gitster.g>
 
 
 * jk/bisect-reset-fix (2023-12-09) 1 commit
- - bisect: always clean on reset
+  (merged to 'next' on 2023-12-12 at 8f946eafb6)
+ + bisect: always clean on reset
 
  "git bisect reset" has been taught to clean up state files and refs
  even when BISECT_START file is gone.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231207065341.GA778781@coredump.intra.peff.net>
 
 
 * jk/implicit-true (2023-12-09) 7 commits
- - fsck: handle NULL value when parsing message config
- - trailer: handle NULL value when parsing trailer-specific config
- - submodule: handle NULL value when parsing submodule.*.branch
- - help: handle NULL value for alias.* config
- - trace2: handle NULL values in tr2_sysenv config callback
- - setup: handle NULL value when parsing extensions
- - config: handle NULL value when parsing non-bools
+  (merged to 'next' on 2023-12-12 at 2a42fdc998)
+ + fsck: handle NULL value when parsing message config
+ + trailer: handle NULL value when parsing trailer-specific config
+ + submodule: handle NULL value when parsing submodule.*.branch
+ + help: handle NULL value for alias.* config
+ + trace2: handle NULL values in tr2_sysenv config callback
+ + setup: handle NULL value when parsing extensions
+ + config: handle NULL value when parsing non-bools
  (this branch is used by jk/config-cleanup.)
 
  Some codepaths did not correctly parse configuration variables
  specified with valueless "true", which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231207071030.GA1275835@coredump.intra.peff.net>
 
 
 * jk/config-cleanup (2023-12-09) 9 commits
- - sequencer: simplify away extra git_config_string() call
- - gpg-interface: drop pointless config_error_nonbool() checks
- - push: drop confusing configset/callback redundancy
- - config: use git_config_string() for core.checkRoundTripEncoding
- - diff: give more detailed messages for bogus diff.* config
- - config: use config_error_nonbool() instead of custom messages
- - imap-send: don't use git_die_config() inside callback
- - git_xmerge_config(): prefer error() to die()
- - config: reject bogus values for core.checkstat
+  (merged to 'next' on 2023-12-12 at 44ee006c25)
+ + sequencer: simplify away extra git_config_string() call
+ + gpg-interface: drop pointless config_error_nonbool() checks
+ + push: drop confusing configset/callback redundancy
+ + config: use git_config_string() for core.checkRoundTripEncoding
+ + diff: give more detailed messages for bogus diff.* config
+ + config: use config_error_nonbool() instead of custom messages
+ + imap-send: don't use git_die_config() inside callback
+ + git_xmerge_config(): prefer error() to die()
+ + config: reject bogus values for core.checkstat
  (this branch uses jk/implicit-true.)
 
  Code clean-up around use of configuration variables.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231207071030.GA1275835@coredump.intra.peff.net>
  source: <20231207072338.GA1277727@coredump.intra.peff.net>
 
 
 * jk/end-of-options (2023-12-09) 1 commit
- - parse-options: decouple "--end-of-options" and "--"
+  (merged to 'next' on 2023-12-12 at 4ae454b26d)
+ + parse-options: decouple "--end-of-options" and "--"
 
- "git log --end-of-options --rev -- --path" learned to interpret
- "--rev" as a rev, and "--path" as a path, as expected.
+ "git $cmd --end-of-options --rev -- --path" for some $cmd failed
+ to interpret "--rev" as a rev, and "--path" as a path.  This was
+ fixed for many programs like "reset" and "checkout".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231206222145.GA136253@coredump.intra.peff.net>
 
 
-* ps/clone-into-reftable-repository (2023-12-09) 7 commits
+* ps/clone-into-reftable-repository (2023-12-12) 7 commits
  - builtin/clone: create the refdb with the correct object format
  - builtin/clone: skip reading HEAD when retrieving remote
  - builtin/clone: set up sparse checkout later
@@ -440,48 +521,30 @@ Release tarballs are available at:
  non-default hash function into a repository that uses the reftable
  backend.
 
- Fails t5550 under SHA-256 mode.
- cf. <xmqq7clmn3w1.fsf@gitster.g>
- source: <cover.1701863960.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1702361370.git.ps@pks.im>
 
 
 * rs/incompatible-options-messages (2023-12-09) 7 commits
- - worktree: simplify incompatibility message for --orphan and commit-ish
- - worktree: standardize incompatibility messages
- - clean: factorize incompatibility message
- - revision, rev-parse: factorize incompatibility messages about - -exclude-hidden
- - revision: use die_for_incompatible_opt3() for - -graph/--reverse/--walk-reflogs
- - repack: use die_for_incompatible_opt3() for -A/-k/--cruft
- - push: use die_for_incompatible_opt4() for - -delete/--tags/--all/--mirror
+  (merged to 'next' on 2023-12-12 at a13847a7f6)
+ + worktree: simplify incompatibility message for --orphan and commit-ish
+ + worktree: standardize incompatibility messages
+ + clean: factorize incompatibility message
+ + revision, rev-parse: factorize incompatibility messages about - -exclude-hidden
+ + revision: use die_for_incompatible_opt3() for - -graph/--reverse/--walk-reflogs
+ + repack: use die_for_incompatible_opt3() for -A/-k/--cruft
+ + push: use die_for_incompatible_opt4() for - -delete/--tags/--all/--mirror
 
  Clean-up code that handles combinations of incompatible options.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231206115215.94467-1-l.s.r@web.de>
 
 
-* ad/merge-file-diff-algo (2023-11-22) 1 commit
-  (merged to 'next' on 2023-12-11 at ab43a54c43)
- + merge-file: add --diff-algorithm option
-
- "git merge-file" learned to take the "--diff-algorithm" option to
- use algorithm different from the default "myers" diff.
-
- Will merge to 'master'.
- source: <pull.1606.v2.git.git.1700507932937.gitgitgadget@gmail.com>
-
-
-* ak/p4-initial-empty-commits (2023-11-23) 1 commit
- - git-p4: fix fast import when empty commit is first
-
- Expecting a reroll.
- source: <pull.1609.git.git.1700639764041.gitgitgadget@gmail.com>
-
-
-* jc/checkout-B-branch-in-use (2023-12-09) 3 commits
- - fixup! checkout: forbid "-B <branch>" from touching a branch used elsewhere
- - checkout: forbid "-B <branch>" from touching a branch used elsewhere
- - checkout: refactor die_if_checked_out() caller
+* jc/checkout-B-branch-in-use (2023-12-13) 2 commits
+  (merged to 'next' on 2023-12-14 at 0a3998619e)
+ + checkout: forbid "-B <branch>" from touching a branch used elsewhere
+ + checkout: refactor die_if_checked_out() caller
 
  "git checkout -B <branch> [<start-point>]" allowed a branch that is
  in use in another worktree to be updated and checked out, which
@@ -490,78 +553,43 @@ Release tarballs are available at:
  unbreak you, if you are used to the current behaviour that "-B"
  overrides the safety.
 
- Needs review.
+ Will merge to 'master'.
  source: <xmqqjzq9cl70.fsf@gitster.g>
 
 
-* jh/trace2-redact-auth (2023-11-23) 4 commits
-  (merged to 'next' on 2023-12-11 at 7e679a4c4d)
- + t0212: test URL redacting in EVENT format
- + t0211: test URL redacting in PERF format
- + trace2: redact passwords from https:// URLs by default
- + trace2: fix signature of trace2_def_param() macro
-
- trace2 streams used to record the URLs that potentially embed
- authentication material, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.1616.git.1700680717.gitgitgadget@gmail.com>
-
-
-* ps/commit-graph-less-paranoid (2023-11-26) 1 commit
-  (merged to 'next' on 2023-12-11 at 618bd08fa1)
- + commit-graph: disable GIT_COMMIT_GRAPH_PARANOIA by default
-
- Earlier we stopped relying on commit-graph that (still) records
- information about commits that are lost from the object store,
- which has negative performance implications.  The default has been
- flipped to disable this pessimization.
-
- Will merge to 'master'.
- source: <17e08289cd59d20de0de9b4e18f5e6bf77987351.1700823746.git.ps@pks.im>
-
-
 * ps/reftable-fixes (2023-12-11) 11 commits
- - reftable/block: reuse buffer to compute record keys
- - reftable/block: introduce macro to initialize `struct block_iter`
- - reftable/merged: reuse buffer to compute record keys
- - reftable/stack: fix use of unseeded randomness
- - reftable/stack: fix stale lock when dying
- - reftable/stack: reuse buffers when reloading stack
- - reftable/stack: perform auto-compaction with transactional interface
- - reftable/stack: verify that `reftable_stack_add()` uses auto-compaction
- - reftable: handle interrupted writes
- - reftable: handle interrupted reads
- - reftable: wrap EXPECT macros in do/while
+  (merged to 'next' on 2023-12-15 at ebba966016)
+ + reftable/block: reuse buffer to compute record keys
+ + reftable/block: introduce macro to initialize `struct block_iter`
+ + reftable/merged: reuse buffer to compute record keys
+ + reftable/stack: fix use of unseeded randomness
+ + reftable/stack: fix stale lock when dying
+ + reftable/stack: reuse buffers when reloading stack
+ + reftable/stack: perform auto-compaction with transactional interface
+ + reftable/stack: verify that `reftable_stack_add()` uses auto-compaction
+ + reftable: handle interrupted writes
+ + reftable: handle interrupted reads
+ + reftable: wrap EXPECT macros in do/while
 
  Bunch of small fix-ups to the reftable code.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1702285387.git.ps@pks.im>
 
 
 * en/complete-sparse-checkout (2023-12-03) 4 commits
- - completion: avoid user confusion in non-cone mode
- - completion: avoid misleading completions in cone mode
- - completion: fix logic for determining whether cone mode is active
- - completion: squelch stray errors in sparse-checkout completion
+  (merged to 'next' on 2023-12-12 at 3de75bd6af)
+ + completion: avoid user confusion in non-cone mode
+ + completion: avoid misleading completions in cone mode
+ + completion: fix logic for determining whether cone mode is active
+ + completion: squelch stray errors in sparse-checkout completion
 
  Command line completion (in contrib/) learned to complete path
  arguments to the "add/set" subcommands of "git sparse-checkout"
  better.
 
- Will merge to 'next'.
- source: <pull.1349.v3.git.1701583024.gitgitgadget@gmail.com>
-
-
-* jb/reflog-expire-delete-dry-run-options (2023-11-26) 1 commit
-  (merged to 'next' on 2023-12-11 at c7e9846963)
- + builtin/reflog.c: fix dry-run option short name
-
- Command line parsing fix for "git reflog".
-
  Will merge to 'master'.
- source: <20231126000514.85509-1-josh@brob.st>
+ source: <pull.1349.v3.git.1701583024.gitgitgadget@gmail.com>
 
 
 * jc/orphan-unborn (2023-11-24) 2 commits
@@ -574,47 +602,8 @@ Release tarballs are available at:
  source: <xmqq4jhb977x.fsf@gitster.g>
 
 
-* rs/column-leakfix (2023-11-27) 1 commit
-  (merged to 'next' on 2023-12-11 at 9ac1707337)
- + column: release strbuf and string_list after use
-
- Leakfix.
-
- Will merge to 'master'.
- source: <f087137d-a5aa-487e-a1cb-0ad7117b38ed@web.de>
-
-
-* rs/i18n-cannot-be-used-together (2023-11-27) 1 commit
-  (merged to 'next' on 2023-12-11 at a44e1c84c9)
- + i18n: factorize even more 'incompatible options' messages
-
- Clean-up code that handles combinations of incompatible options.
-
- Will merge to 'master'.
- source: <e6eb12e4-bb63-473c-9c2f-965a4d5981ad@web.de>
-
-
-* ac/fuzz-show-date (2023-11-20) 1 commit
-  (merged to 'next' on 2023-12-11 at f36795a896)
- + fuzz: add new oss-fuzz fuzzer for date.c / date.h
-
- Subject approxidate() and show_date() machinery to OSS-Fuzz.
-
- Will merge to 'master'.
- source: <pull.1612.v4.git.1700243267653.gitgitgadget@gmail.com>
-
-
-* js/packfile-h-typofix (2023-11-20) 1 commit
-  (merged to 'next' on 2023-12-11 at 328399439a)
- + packfile.c: fix a typo in `each_file_in_pack_dir_fn()`'s declaration
-
- Typofix.
-
- Will merge to 'master'.
- source: <pull.1614.git.1700226915859.gitgitgadget@gmail.com>
-
-
-* jw/builtin-objectmode-attr (2023-12-09) 1 commit
+* jw/builtin-objectmode-attr (2023-12-12) 2 commits
+ - SQUASH??? - leakfix
  - attr: add builtin objectmode values support
 
  The builtin_objectmode attribute is populated for each path
@@ -622,64 +611,8 @@ Release tarballs are available at:
  useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
  to limit to executables.
 
- Will merge to 'next'.
+ Needs to get leakfix reviewed.
  source: <20231116054437.2343549-1-jojwang@google.com>
-
-
-* ps/ref-deletion-updates (2023-11-17) 4 commits
-  (merged to 'next' on 2023-12-11 at ca551a0c36)
- + refs: remove `delete_refs` callback from backends
- + refs: deduplicate code to delete references
- + refs/files: use transactions to delete references
- + t5510: ensure that the packed-refs file needs locking
-
- Simplify API implementation to delete references by eliminating
- duplication.
-
- Will merge to 'master'.
- source: <cover.1699951815.git.ps@pks.im>
-
-
-* jx/fetch-atomic-error-message-fix (2023-10-19) 2 commits
- - fetch: no redundant error message for atomic fetch
- - t5574: test porcelain output of atomic fetch
-
- "git fetch --atomic" issued an unnecessary empty error message,
- which has been corrected.
-
- Expecting an update.
- cf. <ZTjQIrCgSANAT8wR@tanuki>
- source: <ced46baeb1c18b416b4b4cc947f498bea2910b1b.1697725898.git.zhiyou.jx@alibaba-inc.com>
-
-
-* js/bugreport-in-the-same-minute (2023-10-16) 1 commit
- - bugreport: include +i in outfile suffix as needed
-
- Instead of auto-generating a filename that is already in use for
- output and fail the command, `git bugreport` learned to fuzz the
- filename to avoid collisions with existing files.
-
- Expecting a reroll.
- cf. <ZTtZ5CbIGETy1ucV.jacob@initialcommit.io>
- source: <20231016214045.146862-2-jacob@initialcommit.io>
-
-
-* kh/t7900-cleanup (2023-10-17) 9 commits
- - t7900: fix register dependency
- - t7900: factor out packfile dependency
- - t7900: fix `print-args` dependency
- - t7900: fix `pfx` dependency
- - t7900: factor out common schedule setup
- - t7900: factor out inheritance test dependency
- - t7900: create commit so that branch is born
- - t7900: setup and tear down clones
- - t7900: remove register dependency
-
- Test clean-up.
-
- Perhaps discard?
- cf. <655ca147-c214-41be-919d-023c1b27b311@app.fastmail.com>
- source: <cover.1697319294.git.code@khaugsbakk.name>
 
 
 * tb/merge-tree-write-pack (2023-10-23) 5 commits
@@ -740,31 +673,6 @@ Release tarballs are available at:
  source: <cover.1697653929.git.me@ttaylorr.com>
 
 
-* cc/git-replay (2023-11-26) 14 commits
-  (merged to 'next' on 2023-12-11 at 6f7d123578)
- + replay: stop assuming replayed branches do not diverge
- + replay: add --contained to rebase contained branches
- + replay: add --advance or 'cherry-pick' mode
- + replay: use standard revision ranges
- + replay: make it a minimal server side command
- + replay: remove HEAD related sanity check
- + replay: remove progress and info output
- + replay: add an important FIXME comment about gpg signing
- + replay: change rev walking options
- + replay: introduce pick_regular_commit()
- + replay: die() instead of failing assert()
- + replay: start using parse_options API
- + replay: introduce new builtin
- + t6429: remove switching aspects of fast-rebase
-
- Introduce "git replay", a tool meant on the server side without
- working tree to recreate a history.
-
- Will merge to 'master'.
- cf. <6bfe1541-54dd-ca6b-e930-94d3038060f1@gmx.de>
- source: <20231124111044.3426007-1-christian.couder@gmail.com>
-
-
 * ak/color-decorate-symbols (2023-10-23) 7 commits
  - log: add color.decorate.pseudoref config variable
  - refs: exempt pseudorefs from pattern prefixing
@@ -778,20 +686,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20231023221143.72489-1-andy.koppe@gmail.com>
-
-
-* js/update-urls-in-doc-and-comment (2023-11-26) 4 commits
-  (merged to 'next' on 2023-12-11 at 3cda3f2a03)
- + doc: refer to internet archive
- + doc: update links for andre-simon.de
- + doc: switch links to https
- + doc: update links to current pages
-
- Stale URLs have been updated to their current counterparts (or
- archive.org) and HTTP links are replaced with working HTTPS links.
-
- Will merge to 'master'.
- source: <pull.1589.v3.git.1700796916.gitgitgadget@gmail.com>
 
 
 * la/trailer-cleanups (2023-10-20) 3 commits
@@ -843,7 +737,7 @@ Release tarballs are available at:
  source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
-* jx/remote-archive-over-smart-http (2023-10-04) 4 commits
+* jx/remote-archive-over-smart-http (2023-12-14) 4 commits
  - archive: support remote archive from stateless transport
  - transport-helper: call do_take_over() in connect_helper
  - transport-helper: call do_take_over() in process_connect
@@ -853,42 +747,30 @@ Release tarballs are available at:
  http (aka stateless) transport.
 
  Needs review.
- source: <cover.1696432593.git.zhiyou.jx@alibaba-inc.com>
+ source: <cover.1702562879.git.zhiyou.jx@alibaba-inc.com>
 
 
-* jx/sideband-chomp-newline-fix (2023-10-04) 3 commits
+* jx/sideband-chomp-newline-fix (2023-12-18) 3 commits
  - pkt-line: do not chomp newlines for sideband messages
  - pkt-line: memorize sideband fragment in reader
  - test-pkt-line: add option parser for unpack-sideband
 
  Sideband demultiplexer fixes.
 
- Needs review.
- source: <cover.1696425168.git.zhiyou.jx@alibaba-inc.com>
-
-
-* js/config-parse (2023-09-21) 5 commits
- - config-parse: split library out of config.[c|h]
- - config.c: accept config_parse_options in git_config_from_stdin
- - config: report config parse errors using cb
- - config: split do_event() into start and flush operations
- - config: split out config_parse_options
-
- The parsing routines for the configuration files have been split
- into a separate file.
-
- Needs review.
- source: <cover.1695330852.git.steadmon@google.com>
+ Will merge to 'next'?
+ source: <cover.1702823801.git.zhiyou.jx@alibaba-inc.com>
 
 
 * jc/fake-lstat (2023-09-15) 1 commit
- - cache: add fake_lstat()
+  (merged to 'next' on 2023-12-15 at 48e34cc0b4)
+ + cache: add fake_lstat()
  (this branch is used by jc/diff-cached-fsmonitor-fix.)
 
  A new helper to let us pretend that we called lstat() when we know
  our cache_entry is up-to-date via fsmonitor.
 
- Needs review.
+ Will merge to 'master'.
+ cf. <e5295dbe-94d2-3186-5663-2466eba4bdde@jeffhostetler.com>
  source: <xmqqcyykig1l.fsf@gitster.g>
 
 
@@ -912,3 +794,98 @@ Release tarballs are available at:
 
  Needs review.
  source: <2e24ca9b-9c5f-f4df-b9f8-6574a714dfb2@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* ak/p4-initial-empty-commits (2023-11-23) 1 commit
+ - git-p4: fix fast import when empty commit is first
+
+ Expecting a reroll.
+ source: <pull.1609.git.git.1700639764041.gitgitgadget@gmail.com>
+
+
+* js/bugreport-in-the-same-minute (2023-10-16) 1 commit
+ - bugreport: include +i in outfile suffix as needed
+
+ Instead of auto-generating a filename that is already in use for
+ output and fail the command, `git bugreport` learned to fuzz the
+ filename to avoid collisions with existing files.
+
+ Expecting a reroll.
+ cf. <ZTtZ5CbIGETy1ucV.jacob@initialcommit.io>
+ source: <20231016214045.146862-2-jacob@initialcommit.io>
+
+
+* kh/t7900-cleanup (2023-10-17) 9 commits
+ - t7900: fix register dependency
+ - t7900: factor out packfile dependency
+ - t7900: fix `print-args` dependency
+ - t7900: fix `pfx` dependency
+ - t7900: factor out common schedule setup
+ - t7900: factor out inheritance test dependency
+ - t7900: create commit so that branch is born
+ - t7900: setup and tear down clones
+ - t7900: remove register dependency
+
+ Test clean-up.
+
+ Perhaps discard?
+ cf. <655ca147-c214-41be-919d-023c1b27b311@app.fastmail.com>
+ source: <cover.1697319294.git.code@khaugsbakk.name>
+
+
+* js/config-parse (2023-09-21) 5 commits
+ - config-parse: split library out of config.[c|h]
+ - config.c: accept config_parse_options in git_config_from_stdin
+ - config: report config parse errors using cb
+ - config: split do_event() into start and flush operations
+ - config: split out config_parse_options
+
+ The parsing routines for the configuration files have been split
+ into a separate file.
+
+ Needs review.
+ source: <cover.1695330852.git.steadmon@google.com>
+
+
+* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
+  (merged to 'next' on 2023-12-15 at 4aa7596593)
+ + diff-lib: fix check_removed() when fsmonitor is active
+ + Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
+ + Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
+ (this branch uses jc/fake-lstat.)
+
+ The optimization based on fsmonitor in the "diff --cached"
+ codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ Will merge to 'master'.
+ cf. <e5295dbe-94d2-3186-5663-2466eba4bdde@jeffhostetler.com>
+ source: <xmqqr0n0h0tw.fsf@gitster.g>
+
+
+* pw/rebase-sigint (2023-09-07) 1 commit
+ - rebase -i: ignore signals when forking subprocesses
+
+ If the commit log editor or other external programs (spawned via
+ "exec" insn in the todo list) receive internactive signal during
+ "git rebase -i", it caused not just the spawned program but the
+ "Git" process that spawned them, which is often not what the end
+ user intended.  "git" learned to ignore SIGINT and SIGQUIT while
+ waiting for these subprocesses.
+
+ Expecting a reroll.
+ cf. <12c956ea-330d-4441-937f-7885ab519e26@gmail.com>
+ source: <pull.1581.git.1694080982621.gitgitgadget@gmail.com>
+
+
+* tk/cherry-pick-sequence-requires-clean-worktree (2023-06-01) 1 commit
+ - cherry-pick: refuse cherry-pick sequence if index is dirty
+
+ "git cherry-pick A" that replays a single commit stopped before
+ clobbering local modification, but "git cherry-pick A..B" did not,
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <999f12b2-38d6-f446-e763-4985116ad37d@gmail.com>
+ source: <pull.1535.v2.git.1685264889088.gitgitgadget@gmail.com>
