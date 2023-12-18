@@ -9,6 +9,12 @@ UI, Workflows & Features
  * "git rebase --autosquash" is now enabled for non-interactive rebase,
    but it is still incompatible with the apply backend.
 
+ * Introduce "git replay", a tool meant on the server side without
+   working tree to recreate a history.
+
+ * "git merge-file" learned to take the "--diff-algorithm" option to
+   use algorithm different from the default "myers" diff.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -20,6 +26,11 @@ Performance, Internal Implementation, Development Support etc.
    which paid non-trivial cost.  It has been redefined to show output
    in an unspecified order, to allow certain optimizations to take
    advantage of.
+
+ * Simplify API implementation to delete references by eliminating
+   duplication.
+
+ * Subject approxidate() and show_date() machinery to OSS-Fuzz.
 
 
 Fixes since v2.43
@@ -40,4 +51,22 @@ Fixes since v2.43
    simplifying our implementation.
    (merge 6ff658cc78 tz/send-email-negatable-options later to maint).
 
+ * Earlier we stopped relying on commit-graph that (still) records
+   information about commits that are lost from the object store,
+   which has negative performance implications.  The default has been
+   flipped to disable this pessimization.
+   (merge b1df3b3867 ps/commit-graph-less-paranoid later to maint).
+
+ * Stale URLs have been updated to their current counterparts (or
+   archive.org) and HTTP links are replaced with working HTTPS links.
+   (merge 62b4f7b9c6 js/update-urls-in-doc-and-comment later to maint).
+
+ * trace2 streams used to record the URLs that potentially embed
+   authentication material, which has been corrected.
+   (merge 16fa3eebc0 jh/trace2-redact-auth later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
+   (merge 50f1abcff6 js/packfile-h-typofix later to maint).
+   (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
+   (merge 7854bf4960 rs/i18n-cannot-be-used-together later to maint).
+   (merge cd3c28c53a rs/column-leakfix later to maint).
