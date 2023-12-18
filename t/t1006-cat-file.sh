@@ -6,7 +6,7 @@ test_description='git cat-file'
 
 test_cmdmode_usage () {
 	test_expect_code 129 "$@" 2>err &&
-	grep "^error:.*is incompatible with" err
+	grep "^error: .* cannot be used together" err
 }
 
 for switches in \

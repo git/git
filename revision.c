@@ -2384,8 +2384,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->left_right = 1;
 	} else if (!strcmp(arg, "--left-only")) {
 		if (revs->right_only)
-			die("--left-only is incompatible with --right-only"
-			    " or --cherry");
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--left-only", "--right-only/--cherry");
 		revs->left_only = 1;
 	} else if (!strcmp(arg, "--right-only")) {
 		if (revs->left_only)
