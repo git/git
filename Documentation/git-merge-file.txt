@@ -92,6 +92,12 @@ object store and the object ID of its blob is written to standard output.
 	Instead of leaving conflicts in the file, resolve conflicts
 	favouring our (or their or both) side of the lines.
 
+--diff-algorithm={patience|minimal|histogram|myers}::
+	Use a different diff algorithm while merging. The current default is "myers",
+	but selecting more recent algorithm such as "histogram" can help
+	avoid mismerges that occur due to unimportant matching lines
+	(such as braces from distinct functions). See also
+	linkgit:git-diff[1] `--diff-algorithm`.
 
 EXAMPLES
 --------
