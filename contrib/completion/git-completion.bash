@@ -122,11 +122,34 @@ __git ()
 		${__git_dir:+--git-dir="$__git_dir"} "$@" 2>/dev/null
 }
 
+# Helper function to read the first line of a file into a variable.
+# __git_eread requires 2 arguments, the file path and the name of the
+# variable, in that order.
+#
+# This is taken from git-prompt.sh.
+__git_eread ()
+{
+	test -r "$1" && IFS=$'\r\n' read -r "$2" <"$1"
+}
+
 # Runs git in $__git_repo_path to determine whether a pseudoref exists.
 # 1: The pseudo-ref to search
 __git_pseudoref_exists ()
 {
 	local ref=$1
+
+	# If the reftable is in use, we have to shell out to 'git rev-parse'
+	# to determine whether the ref exists instead of looking directly in
+	# the filesystem to determine whether the ref exists. Otherwise, use
+	# Bash builtins since executing Git commands are expensive on some
+	# platforms.
+	if __git_eread "$__git_repo_path/HEAD" head; then
+		b="${head#ref: }"
+		if [ "$b" == "refs/heads/.invalid" ]; then
+			__git -C "$__git_repo_path" rev-parse --verify --quiet "$ref" 2>/dev/null
+			return $?
+		fi
+	fi
 
 	[ -f "$__git_repo_path/$ref" ]
 }
