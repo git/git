@@ -233,11 +233,10 @@ static int bisect_reset(const char *commit)
 	struct strbuf branch = STRBUF_INIT;
 
 	if (!commit) {
-		if (strbuf_read_file(&branch, git_path_bisect_start(), 0) < 1) {
+		if (!strbuf_read_file(&branch, git_path_bisect_start(), 0))
 			printf(_("We are not bisecting.\n"));
-			return 0;
-		}
-		strbuf_rtrim(&branch);
+		else
+			strbuf_rtrim(&branch);
 	} else {
 		struct object_id oid;
 
@@ -246,7 +245,7 @@ static int bisect_reset(const char *commit)
 		strbuf_addstr(&branch, commit);
 	}
 
-	if (!ref_exists("BISECT_HEAD")) {
+	if (branch.len && !ref_exists("BISECT_HEAD")) {
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
 		cmd.git_cmd = 1;
