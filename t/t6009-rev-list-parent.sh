@@ -63,6 +63,17 @@ test_expect_success 'setup roots, merges and octopuses' '
 	git checkout main
 '
 
+test_expect_success 'parse --max-parents & --min-parents' '
+	test_must_fail git rev-list --max-parents=1q HEAD 2>error &&
+	grep "not an integer" error &&
+
+	test_must_fail git rev-list --min-parents=1q HEAD 2>error &&
+	grep "not an integer" error &&
+
+	git rev-list --max-parents=1 --min-parents=1 HEAD &&
+	git rev-list --max-parents=-1 --min-parents=-1 HEAD
+'
+
 test_expect_success 'rev-list roots' '
 
 	check_revlist "--max-parents=0" one five
