@@ -1564,8 +1564,11 @@ int cmd_main(int argc, const char **argv)
 		if (buf.len == 0)
 			break;
 		if (starts_with(buf.buf, "fetch ")) {
-			if (nongit)
-				die(_("remote-curl: fetch attempted without a local repo"));
+			if (nongit) {
+				setup_git_directory_gently(&nongit);
+				if (nongit)
+					die(_("remote-curl: fetch attempted without a local repo"));
+			}
 			parse_fetch(&buf);
 
 		} else if (!strcmp(buf.buf, "list") || starts_with(buf.buf, "list ")) {

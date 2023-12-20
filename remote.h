@@ -118,6 +118,7 @@ struct remote {
  * and configuration.
  */
 struct remote *remote_get(const char *name);
+struct remote *remote_get_early(const char *name);
 
 struct remote *pushremote_get(const char *name);
 int remote_is_configured(struct remote *remote, int in_repo);
