@@ -19,11 +19,14 @@ set -- $default $more
 
 for t
 do
+	echo "----- >8 -----" >&2
 	case "$skip" in
 	*" $t "*)
 		echo "Skipping $t" >&2
 		continue ;;
 	esac
+
+	echo "Running $t" >&2
 
 	case "$t" in
 	address | undefined | address,undefined)
