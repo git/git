@@ -42,6 +42,6 @@ Changes during this period are as follows:
 
 EOF
 
-git shortlog -w72,2,4 --no-merges $bottom..$top
+git --no-pager shortlog -w72,2,4 --no-merges $bottom..$top
 
-git diff --dirstat $bottom..$top
+git --no-pager diff --dirstat $bottom..$top
