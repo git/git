@@ -930,9 +930,14 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 			continue;
 		}
 
-		if (!arg[2] /* "--" */ ||
-		    !strcmp(arg + 2, "end-of-options")) {
+		if (!arg[2] /* "--" */) {
 			if (!(ctx->flags & PARSE_OPT_KEEP_DASHDASH)) {
+				ctx->argc--;
+				ctx->argv++;
+			}
+			break;
+		} else if (!strcmp(arg + 2, "end-of-options")) {
+			if (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN_OPT)) {
 				ctx->argc--;
 				ctx->argv++;
 			}
