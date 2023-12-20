@@ -561,9 +561,9 @@ y and z notes on 4th commit
 EOF
 	# Fail to finalize merge
 	test_must_fail git notes merge --commit >output 2>&1 &&
-	# .git/NOTES_MERGE_* must remain
-	test -f .git/NOTES_MERGE_PARTIAL &&
-	test -f .git/NOTES_MERGE_REF &&
+	# NOTES_MERGE_* refs and .git/NOTES_MERGE_* state files must remain
+	git rev-parse --verify NOTES_MERGE_PARTIAL &&
+	git rev-parse --verify NOTES_MERGE_REF &&
 	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha1 &&
 	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha2 &&
 	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&

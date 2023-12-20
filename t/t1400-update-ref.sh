@@ -357,14 +357,28 @@ test_expect_success "verifying $m's log (logged by config)" '
 '
 
 test_expect_success 'set up for querying the reflog' '
+	git update-ref -d $m &&
+	test-tool ref-store main delete-reflog $m &&
+
+	GIT_COMMITTER_DATE="1117150320 -0500" git update-ref $m $C &&
+	GIT_COMMITTER_DATE="1117150350 -0500" git update-ref $m $A &&
+	GIT_COMMITTER_DATE="1117150380 -0500" git update-ref $m $B &&
+	GIT_COMMITTER_DATE="1117150680 -0500" git update-ref $m $F &&
+	GIT_COMMITTER_DATE="1117150980 -0500" git update-ref $m $E &&
 	git update-ref $m $D &&
-	cat >.git/logs/$m <<-EOF
+	# Delete the last reflog entry so that the tip of m and the reflog for
+	# it disagree.
+	git reflog delete $m@{0} &&
+
+	cat >expect <<-EOF &&
 	$Z $C $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
 	$C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150350 -0500
 	$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
-	$F $Z $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
-	$Z $E $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 -0500
+	$B $F $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
+	$F $E $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 -0500
 	EOF
+	test-tool ref-store main for-each-reflog-ent $m >actual &&
+	test_cmp expect actual
 '
 
 ed="Thu, 26 May 2005 18:32:00 -0500"
@@ -412,13 +426,12 @@ test_expect_success 'Query "main@{2005-05-26 23:33:01}" (middle of history with 
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "main@{2005-05-26 23:33:01}" >o 2>e &&
 	echo "$B" >expect &&
-	test_cmp expect o &&
-	test_grep -F "warning: log for ref $m has gap after $gd" e
+	test_cmp expect o
 '
 test_expect_success 'Query "main@{2005-05-26 23:38:00}" (middle of history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "main@{2005-05-26 23:38:00}" >o 2>e &&
-	echo "$Z" >expect &&
+	echo "$F" >expect &&
 	test_cmp expect o &&
 	test_must_be_empty e
 '
@@ -439,6 +452,22 @@ test_expect_success 'Query "main@{2005-05-28}" (past end of history)' '
 
 rm -f expect
 git update-ref -d $m
+
+test_expect_success REFFILES 'query reflog with gap' '
+	test_when_finished "git update-ref -d $m" &&
+
+	git update-ref $m $F &&
+	cat >.git/logs/$m <<-EOF &&
+	$Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
+	$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
+	$D $F $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
+	EOF
+
+	git rev-parse --verify "main@{2005-05-26 23:33:01}" >actual 2>stderr &&
+	echo "$B" >expect &&
+	test_cmp expect actual &&
+	test_grep -F "warning: log for ref $m has gap after $gd" stderr
+'
 
 test_expect_success 'creating initial files' '
 	test_when_finished rm -f M &&

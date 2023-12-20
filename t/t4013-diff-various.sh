@@ -178,32 +178,29 @@ process_diffs () {
 V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
 while read magic cmd
 do
-	status=success
 	case "$magic" in
 	'' | '#'*)
 		continue ;;
-	:*)
-		magic=${magic#:}
+	:noellipses)
+		magic=noellipses
 		label="$magic-$cmd"
-		case "$magic" in
-		noellipses) ;;
-		failure)
-			status=failure
-			magic=
-			label="$cmd" ;;
-		*)
-			BUG "unknown magic $magic" ;;
-		esac ;;
+		;;
+	:*)
+		BUG "unknown magic $magic"
+		;;
 	*)
-		cmd="$magic $cmd" magic=
-		label="$cmd" ;;
+		cmd="$magic $cmd"
+		magic=
+		label="$cmd"
+		;;
 	esac
+
 	test=$(echo "$label" | sed -e 's|[/ ][/ ]*|_|g')
 	pfx=$(printf "%04d" $test_count)
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
-	test_expect_$status "git $cmd # magic is ${magic:-(not used)}" '
+	test_expect_success "git $cmd # magic is ${magic:-(not used)}" '
 		{
 			echo "$ git $cmd"
 			case "$magic" in
