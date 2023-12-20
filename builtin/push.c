@@ -526,26 +526,21 @@ static int git_push_config(const char *k, const char *v,
 			*flags |= TRANSPORT_PUSH_AUTO_UPSTREAM;
 		return 0;
 	} else if (!strcmp(k, "push.gpgsign")) {
-		const char *value;
-		if (!git_config_get_value("push.gpgsign", &value)) {
-			switch (git_parse_maybe_bool(value)) {
-			case 0:
-				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_NEVER);
-				break;
-			case 1:
-				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_ALWAYS);
-				break;
-			default:
-				if (value && !strcasecmp(value, "if-asked"))
-					set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_IF_ASKED);
-				else
-					return error(_("invalid value for '%s'"), k);
-			}
+		switch (git_parse_maybe_bool(v)) {
+		case 0:
+			set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_NEVER);
+			break;
+		case 1:
+			set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_ALWAYS);
+			break;
+		default:
+			if (!strcasecmp(v, "if-asked"))
+				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_IF_ASKED);
+			else
+				return error(_("invalid value for '%s'"), k);
 		}
 	} else if (!strcmp(k, "push.recursesubmodules")) {
-		const char *value;
-		if (!git_config_get_value("push.recursesubmodules", &value))
-			recurse_submodules = parse_push_recurse_submodules_arg(k, value);
+		recurse_submodules = parse_push_recurse_submodules_arg(k, v);
 	} else if (!strcmp(k, "submodule.recurse")) {
 		int val = git_config_bool(k, v) ?
 			RECURSE_SUBMODULES_ON_DEMAND : RECURSE_SUBMODULES_OFF;
