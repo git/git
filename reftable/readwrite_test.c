@@ -141,8 +141,8 @@ static void test_log_buffer_size(void)
 	*/
 	uint8_t hash1[GIT_SHA1_RAWSZ], hash2[GIT_SHA1_RAWSZ];
 	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
-		hash1[i] = (uint8_t)(rand() % 256);
-		hash2[i] = (uint8_t)(rand() % 256);
+		hash1[i] = (uint8_t)(git_rand() % 256);
+		hash2[i] = (uint8_t)(git_rand() % 256);
 	}
 	log.value.update.old_hash = hash1;
 	log.value.update.new_hash = hash2;
@@ -320,7 +320,7 @@ static void test_log_zlib_corruption(void)
 	};
 
 	for (i = 0; i < sizeof(message) - 1; i++)
-		message[i] = (uint8_t)(rand() % 64 + ' ');
+		message[i] = (uint8_t)(git_rand() % 64 + ' ');
 
 	reftable_writer_set_limits(w, 1, 1);
 

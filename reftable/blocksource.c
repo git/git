@@ -109,7 +109,7 @@ static int file_read_block(void *v, struct reftable_block *dest, uint64_t off,
 	struct file_block_source *b = v;
 	assert(off + size <= b->size);
 	dest->data = reftable_malloc(size);
-	if (pread(b->fd, dest->data, size, off) != size)
+	if (pread_in_full(b->fd, dest->data, size, off) != size)
 		return -1;
 	dest->len = size;
 	return size;
