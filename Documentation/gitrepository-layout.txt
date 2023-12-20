@@ -23,7 +23,9 @@ A Git repository comes in two different flavours:
 
 *Note*: Also you can have a plain text file `.git` at the root of
 your working tree, containing `gitdir: <path>` to point at the real
-directory that has the repository.  This mechanism is often used for
+directory that has the repository.
+This mechanism is called a 'gitfile' and is usually managed via the
+`git submodule` and `git worktree` commands. It is often used for
 a working tree of a submodule checkout, to allow you in the
 containing superproject to `git checkout` a branch that does not
 have the submodule.  The `checkout` has to remove the entire
