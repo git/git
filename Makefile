@@ -2088,8 +2088,10 @@ ifdef USE_MIMALLOC
 		compat/mimalloc/os.o \
 		compat/mimalloc/page.o \
 		compat/mimalloc/random.o \
+		compat/mimalloc/prim/windows/prim.o \
 		compat/mimalloc/segment.o \
 		compat/mimalloc/segment-cache.o \
+		compat/mimalloc/segment-map.o \
 		compat/mimalloc/stats.o
 
 	COMPAT_CFLAGS += -Icompat/mimalloc -DMI_DEBUG=0 -DUSE_MIMALLOC --std=gnu11
