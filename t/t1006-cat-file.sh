@@ -1100,6 +1100,40 @@ test_expect_success 'cat-file --batch="batman" with --batch-all-objects will wor
 	cmp expect actual
 '
 
+test_expect_success 'cat-file %(objectsize:disk) with --batch-all-objects' '
+	# our state has both loose and packed objects,
+	# so find both for our expected output
+	{
+		find .git/objects/?? -type f |
+		awk -F/ "{ print \$0, \$3\$4 }" |
+		while read path oid
+		do
+			size=$(test_file_size "$path") &&
+			echo "$oid $size" ||
+			return 1
+		done &&
+		rawsz=$(test_oid rawsz) &&
+		find .git/objects/pack -name "*.idx" |
+		while read idx
+		do
+			git show-index <"$idx" >idx.raw &&
+			sort -n <idx.raw >idx.sorted &&
+			packsz=$(test_file_size "${idx%.idx}.pack") &&
+			end=$((packsz - rawsz)) &&
+			awk -v end="$end" "
+			  NR > 1 { print oid, \$1 - start }
+			  { start = \$1; oid = \$2 }
+			  END { print oid, end - start }
+			" idx.sorted ||
+			return 1
+		done
+	} >expect.raw &&
+	sort <expect.raw >expect &&
+	git cat-file --batch-all-objects \
+		--batch-check="%(objectname) %(objectsize:disk)" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'set up replacement object' '
 	orig=$(git rev-parse HEAD) &&
 	git cat-file commit $orig >orig &&
