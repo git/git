@@ -31,6 +31,7 @@ index.version::
 	initialized.  This does not affect existing repositories.
 	If `feature.manyFiles` is enabled, then the default is 4.
 
+<<<<<<< HEAD
 index.skipHash::
 	When enabled, do not compute the trailing hash for the index file.
 	This accelerates Git commands that manipulate the index, such as
@@ -41,3 +42,12 @@ index.skipHash::
 If you enable `index.skipHash`, then Git clients older than 2.13.0 will
 refuse to parse the index and Git clients older than 2.40.0 will report an
 error during `git fsck`.
+=======
+index.computeHash::
+	When enabled, compute the hash of the index file as it is written
+	and store the hash at the end of the content. This is enabled by
+	default.
++
+If you disable `index.computHash`, then older Git clients may report that
+your index is corrupt during `git fsck`.
+>>>>>>> origin/jch

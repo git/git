@@ -2340,6 +2340,7 @@ test_expect_success 'format-patch --attach cover-letter only is non-multipart' '
 	test_line_count = 1 output
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'format-patch with format.attach' '
 	test_when_finished "rm -fr patches" &&
 	separator=attachment-separator &&
@@ -2359,6 +2360,9 @@ test_expect_success 'format-patch with format.attach=disabled' '
 '
 
 test_expect_success '-c format.mboxrd format-patch' '
+================================
+test_expect_success 'format-patch --mboxrd' '
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	sp=" " &&
 	cat >msg <<-INPUT_END &&
 	mboxrd should escape the body
@@ -2393,7 +2397,11 @@ test_expect_success '-c format.mboxrd format-patch' '
 	INPUT_END
 
 	C=$(git commit-tree HEAD^^{tree} -p HEAD <msg) &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	git -c format.mboxrd format-patch --stdout -1 $C~1..$C >patch &&
+================================
+	git format-patch --mboxrd --stdout -1 $C~1..$C >patch &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >compat &&
 	test_cmp patch compat &&
 	git grep -h --no-index -A11 \

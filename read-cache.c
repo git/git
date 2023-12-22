@@ -246,7 +246,7 @@ static int ce_compare_gitlink(const struct cache_entry *ce)
 	 *
 	 * If so, we consider it always to match.
 	 */
-	if (resolve_gitlink_ref(ce->name, "HEAD", &oid) < 0)
+	if (resolve_gitlink_ref(ce->name, "HEAD", &oid, NULL) < 0)
 		return 0;
 	return !oideq(&oid, &ce->oid);
 }
@@ -686,7 +686,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 
 	namelen = strlen(path);
 	if (S_ISDIR(st_mode)) {
-		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
+		if (resolve_gitlink_ref(path, "HEAD", &oid, NULL) < 0)
 			return error(_("'%s' does not have a commit checked out"), path);
 		while (namelen && path[namelen-1] == '/')
 			namelen--;
@@ -1722,8 +1722,13 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	git_hash_ctx c;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	int hdr_version;
+<<<<<<< HEAD
 	unsigned char *start, *end;
 	struct object_id oid;
+=======
+	int all_zeroes = 1;
+	unsigned char *start, *end;
+>>>>>>> origin/jch
 
 	if (hdr->hdr_signature != htonl(CACHE_SIGNATURE))
 		return error(_("bad signature 0x%08x"), hdr->hdr_signature);
@@ -1736,14 +1741,30 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 
 	end = (unsigned char *)hdr + size;
 	start = end - the_hash_algo->rawsz;
+<<<<<<< HEAD
 	oidread(&oid, start);
 	if (oideq(&oid, null_oid()))
+=======
+	while (start < end) {
+		if (*start != 0) {
+			all_zeroes = 0;
+			break;
+		}
+		start++;
+	}
+
+	if (all_zeroes)
+>>>>>>> origin/jch
 		return 0;
 
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, size - the_hash_algo->rawsz);
 	the_hash_algo->final_fn(hash, &c);
+<<<<<<< HEAD
 	if (!hasheq(hash, start))
+=======
+	if (!hasheq(hash, end - the_hash_algo->rawsz))
+>>>>>>> origin/jch
 		return error(_("bad index file sha1 signature"));
 	return 0;
 }
@@ -2471,6 +2492,11 @@ void release_index(struct index_state *istate)
 		FREE_AND_NULL(istate->sparse_checkout_patterns);
 	}
 
+	if (istate->sparse_checkout_patterns) {
+		clear_pattern_list(istate->sparse_checkout_patterns);
+		FREE_AND_NULL(istate->sparse_checkout_patterns);
+	}
+
 	if (istate->ce_mem_pool) {
 		mem_pool_discard(istate->ce_mem_pool, should_validate_cache_entries());
 		FREE_AND_NULL(istate->ce_mem_pool);
@@ -2844,12 +2870,22 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	int ieot_entries = 1;
 	struct index_entry_offset_table *ieot = NULL;
 	int nr, nr_threads;
+<<<<<<< HEAD
 	struct repository *r = istate->repo;
 
 	f = hashfd(tempfile->fd, tempfile->filename.buf);
 
 	prepare_repo_settings(r);
 	f->skip_hash = r->settings.index_skip_hash;
+=======
+	int compute_hash;
+
+	f = hashfd(tempfile->fd, tempfile->filename.buf);
+
+	if (!git_config_get_maybe_bool("index.computehash", &compute_hash) &&
+	    !compute_hash)
+		f->skip_hash = 1;
+>>>>>>> origin/jch
 
 	for (i = removed = extended = 0; i < entries; i++) {
 		if (cache[i]->ce_flags & CE_REMOVE)

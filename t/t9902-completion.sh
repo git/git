@@ -33,7 +33,7 @@ complete ()
 GIT_TESTING_ALL_COMMAND_LIST='add checkout check-attr rebase ls-files'
 GIT_TESTING_PORCELAIN_COMMAND_LIST='add checkout rebase'
 
-. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash"
+. "$GIT_SOURCE_DIR/contrib/completion/git-completion.bash"
 
 # We don't need this function to actually join words or do anything special.
 # Also, it's cleaner to avoid touching bash's internal completion variables.
@@ -2274,7 +2274,12 @@ test_expect_success 'checkout does not match ref names of a different case' '
 
 test_expect_success 'checkout matches case insensitively with GIT_COMPLETION_IGNORE_CASE' '
 	(
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		GIT_COMPLETION_IGNORE_CASE=1 &&
+================================
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		GIT_COMPLETION_IGNORE_CASE=1 && export GIT_COMPLETION_IGNORE_CASE &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 		test_completion "git checkout M" <<-\EOF
 		main Z
 		mybranch Z
@@ -2291,7 +2296,12 @@ test_expect_success 'checkout completes pseudo refs' '
 
 test_expect_success 'checkout completes pseudo refs case insensitively with GIT_COMPLETION_IGNORE_CASE' '
 	(
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		GIT_COMPLETION_IGNORE_CASE=1 &&
+================================
+		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		GIT_COMPLETION_IGNORE_CASE=1 && export GIT_COMPLETION_IGNORE_CASE &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 		test_completion "git checkout h" <<-\EOF
 		HEAD Z
 		EOF
@@ -2627,18 +2637,30 @@ test_expect_success 'options with value' '
 test_expect_success 'sourcing the completion script clears cached commands' '
 	(
 		__git_compute_all_commands &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		test -n "$__git_all_commands" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
 		test -z "$__git_all_commands"
+================================
+		verbose test -n "$__git_all_commands" &&
+		. "$GIT_SOURCE_DIR/contrib/completion/git-completion.bash" &&
+		verbose test -z "$__git_all_commands"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	)
 '
 
 test_expect_success 'sourcing the completion script clears cached merge strategies' '
 	(
 		__git_compute_merge_strategies &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		test -n "$__git_merge_strategies" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
 		test -z "$__git_merge_strategies"
+================================
+		verbose test -n "$__git_merge_strategies" &&
+		. "$GIT_SOURCE_DIR/contrib/completion/git-completion.bash" &&
+		verbose test -z "$__git_merge_strategies"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	)
 '
 
@@ -2647,10 +2669,17 @@ test_expect_success 'sourcing the completion script clears cached --options' '
 		__gitcomp_builtin checkout &&
 		test -n "$__gitcomp_builtin_checkout" &&
 		__gitcomp_builtin notes_edit &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 		test -n "$__gitcomp_builtin_notes_edit" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
 		test -z "$__gitcomp_builtin_checkout" &&
 		test -z "$__gitcomp_builtin_notes_edit"
+================================
+		verbose test -n "$__gitcomp_builtin_notes_edit" &&
+		. "$GIT_SOURCE_DIR/contrib/completion/git-completion.bash" &&
+		verbose test -z "$__gitcomp_builtin_checkout" &&
+		verbose test -z "$__gitcomp_builtin_notes_edit"
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	)
 '
 
@@ -2660,7 +2689,7 @@ test_expect_success 'option aliases are not shown by default' '
 
 test_expect_success 'option aliases are shown with GIT_COMPLETION_SHOW_ALL' '
 	(
-		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		. "$GIT_SOURCE_DIR/contrib/completion/git-completion.bash" &&
 		GIT_COMPLETION_SHOW_ALL=1 && export GIT_COMPLETION_SHOW_ALL &&
 		test_completion "git clone --recurs" <<-\EOF
 		--recurse-submodules Z
@@ -2671,7 +2700,7 @@ test_expect_success 'option aliases are shown with GIT_COMPLETION_SHOW_ALL' '
 
 test_expect_success 'plumbing commands are excluded without GIT_COMPLETION_SHOW_ALL_COMMANDS' '
 	(
-		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		. "$GIT_SOURCE_DIR/contrib/completion/git-completion.bash" &&
 		sane_unset GIT_TESTING_PORCELAIN_COMMAND_LIST &&
 
 		# Just mainporcelain, not plumbing commands
@@ -2683,7 +2712,7 @@ test_expect_success 'plumbing commands are excluded without GIT_COMPLETION_SHOW_
 
 test_expect_success 'all commands are shown with GIT_COMPLETION_SHOW_ALL_COMMANDS (also main non-builtin)' '
 	(
-		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
+		. "$GIT_SOURCE_DIR/contrib/completion/git-completion.bash" &&
 		GIT_COMPLETION_SHOW_ALL_COMMANDS=1 &&
 		export GIT_COMPLETION_SHOW_ALL_COMMANDS &&
 		sane_unset GIT_TESTING_PORCELAIN_COMMAND_LIST &&

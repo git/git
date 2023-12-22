@@ -557,6 +557,7 @@ test_expect_success 'listing non-existing notes fails' '
 	test_must_be_empty actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'append: specify a separator with an empty arg' '
 	test_when_finished git notes remove HEAD &&
 	cat >expect <<-\EOF &&
@@ -567,10 +568,21 @@ test_expect_success 'append: specify a separator with an empty arg' '
 
 	git notes add -m "notes-1" &&
 	git notes append --separator="" -m "notes-2" &&
+================================
+test_expect_success 'append to existing note without a beginning blank line' '
+	test_when_finished git notes remove HEAD &&
+	cat >expect <<-\EOF &&
+		Initial set of notes
+		Appended notes
+	EOF
+	git notes add -m "Initial set of notes" &&
+	git notes append --no-blank-line -m "Appended notes" &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	git notes show >actual &&
 	test_cmp expect actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'append: specify a separator without arg' '
 	test_when_finished git notes remove HEAD &&
 	cat >expect <<-\EOF &&
@@ -663,12 +675,15 @@ test_expect_success 'append note with combination of -m and -F and --separator' 
 	test_cmp expect-combine_m_and_F actual
 '
 
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 test_expect_success 'append to existing note with "git notes append"' '
 	cat >expect <<-EOF &&
 		Initial set of notes
 
 		More notes appended with git notes append
 	EOF
+
 	git notes add -m "Initial set of notes" &&
 	git notes append -m "More notes appended with git notes append" &&
 	git notes show >actual &&
@@ -694,6 +709,7 @@ test_expect_success 'appending empty string does not change existing note' '
 '
 
 test_expect_success 'git notes append == add when there is no existing note' '
+	test_when_finished git notes remove HEAD &&
 	git notes remove HEAD &&
 	test_must_fail git notes list HEAD &&
 	git notes append -m "Initial set of notes${LF}${LF}More notes appended with git notes append" &&
@@ -702,9 +718,9 @@ test_expect_success 'git notes append == add when there is no existing note' '
 '
 
 test_expect_success 'appending empty string to non-existing note does not create note' '
-	git notes remove HEAD &&
 	test_must_fail git notes list HEAD &&
-	git notes append -m "" &&
+	git notes append -m "" >output 2>&1 &&
+	grep "Both original and appended notes are empty" output &&
 	test_must_fail git notes list HEAD
 '
 

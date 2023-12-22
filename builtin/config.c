@@ -675,7 +675,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	char *value = NULL;
 	int flags = 0;
 	int ret = 0;
+<<<<<<< HEAD
 	struct key_value_info default_kvi = KVI_INIT;
+=======
+>>>>>>> origin/jch
 
 	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
 
@@ -893,7 +896,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_SET) {
 		check_write();
 		check_argc(argc, 2, 2);
+<<<<<<< HEAD
 		value = normalize_value(argv[0], argv[1], &default_kvi);
+=======
+		value = normalize_value(argv[0], argv[1]);
+>>>>>>> origin/jch
 		ret = git_config_set_in_file_gently(given_config_source.file, argv[0], value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
@@ -902,7 +909,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_SET_ALL) {
 		check_write();
 		check_argc(argc, 2, 3);
+<<<<<<< HEAD
 		value = normalize_value(argv[0], argv[1], &default_kvi);
+=======
+		value = normalize_value(argv[0], argv[1]);
+>>>>>>> origin/jch
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value, argv[2],
 							     flags);
@@ -910,7 +921,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_ADD) {
 		check_write();
 		check_argc(argc, 2, 2);
+<<<<<<< HEAD
 		value = normalize_value(argv[0], argv[1], &default_kvi);
+=======
+		value = normalize_value(argv[0], argv[1]);
+>>>>>>> origin/jch
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value,
 							     CONFIG_REGEX_NONE,
@@ -919,7 +934,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_write();
 		check_argc(argc, 2, 3);
+<<<<<<< HEAD
 		value = normalize_value(argv[0], argv[1], &default_kvi);
+=======
+		value = normalize_value(argv[0], argv[1]);
+>>>>>>> origin/jch
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value, argv[2],
 							     flags | CONFIG_FLAGS_MULTI_REPLACE);

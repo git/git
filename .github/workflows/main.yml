@@ -273,7 +273,14 @@ jobs:
           - jobname: linux-TEST-vars
             cc: gcc
             cc_package: gcc-8
+<<<<<<< HEAD
             pool: ubuntu-20.04
+=======
+            pool: ubuntu-latest
+          - jobname: linux-cmake-ctest
+            cc: gcc
+            pool: ubuntu-latest
+>>>>>>> origin/jch
           - jobname: osx-clang
             cc: clang
             pool: macos-13

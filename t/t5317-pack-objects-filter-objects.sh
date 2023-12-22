@@ -188,6 +188,25 @@ test_expect_success 'verify blob:limit=1001' '
 	test_cmp expected observed
 '
 
+test_expect_success 'verify blob:limit=1001+object:type=blob' '
+	git -C r2 ls-files -s large.1000 |
+	test_parse_ls_files_stage_oids |
+	sort >expected &&
+
+	git -C r2 pack-objects --revs --stdout --filter=blob:limit=1001 \
+		--filter=object:type=blob >filter.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C r2 index-pack ../filter.pack &&
+
+	git -C r2 verify-pack -v ../filter.pack >verify_result &&
+	grep blob verify_result |
+	parse_verify_pack_blob_oid |
+	sort >observed &&
+
+	test_cmp expected observed
+'
+
 test_expect_success 'verify blob:limit=10001' '
 	git -C r2 ls-files -s large.1000 large.10000 >ls_files_result &&
 	test_parse_ls_files_stage_oids <ls_files_result |

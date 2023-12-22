@@ -318,6 +318,26 @@ test_wt_add_excl --orphan --no-checkout bamboo
 test_wt_add_excl --orphan bamboo main
 test_wt_add_excl --orphan -b bamboo wtdir/ main
 
+test_expect_success '"add" --orphan/-b mutually exclusive' '
+	test_must_fail git worktree add --orphan poodle -b poodle bamboo
+'
+
+test_expect_success '"add" --orphan/-B mutually exclusive' '
+	test_must_fail git worktree add --orphan poodle -B poodle bamboo
+'
+
+test_expect_success '"add" --orphan/--detach mutually exclusive' '
+	test_must_fail git worktree add --orphan poodle --detach bamboo
+'
+
+test_expect_success '"add" --orphan/--no-checkout mutually exclusive' '
+	test_must_fail git worktree add --orphan poodle --no-checkout bamboo
+'
+
+test_expect_success '"add" -B/--detach mutually exclusive' '
+	test_must_fail git worktree add -B poodle --detach bamboo main
+'
+
 test_expect_success '"add -B" fails if the branch is checked out' '
 	git rev-parse newmain >before &&
 	test_must_fail git worktree add -B newmain bamboo main &&
@@ -339,6 +359,7 @@ test_expect_success 'add --quiet' '
 	test_must_be_empty actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success 'add --quiet -b' '
 	test_when_finished "git branch -D quietnewbranch" &&
 	test_when_finished "git worktree remove -f -f another-worktree" &&
@@ -366,6 +387,11 @@ test_expect_success '"add --orphan --quiet"' '
 	test_when_finished "git worktree remove -f -f orphandir" &&
 	git worktree add --quiet --orphan -b neworphan orphandir 2>log.actual &&
 	test_must_be_empty log.actual &&
+================================
+test_expect_success '"add --orphan"' '
+	test_when_finished "git worktree remove -f -f orphandir" &&
+	git worktree add --orphan neworphan orphandir &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	echo refs/heads/neworphan >expected &&
 	git -C orphandir symbolic-ref HEAD >actual &&
 	test_cmp expected actual
@@ -373,20 +399,32 @@ test_expect_success '"add --orphan --quiet"' '
 
 test_expect_success '"add --orphan" fails if the branch already exists' '
 	test_when_finished "git branch -D existingbranch" &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	git worktree add -b existingbranch orphandir main &&
 	git worktree remove orphandir &&
 	test_must_fail git worktree add --orphan -b existingbranch orphandir
+================================
+	test_when_finished "git worktree remove -f -f orphandir" &&
+	git worktree add -b existingbranch orphandir main &&
+	test_must_fail git worktree add --orphan existingbranch orphandir2 &&
+	test ! -d orphandir2
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 '
 
 test_expect_success '"add --orphan" with empty repository' '
 	test_when_finished "rm -rf empty_repo" &&
 	echo refs/heads/newbranch >expected &&
 	GIT_DIR="empty_repo" git init --bare &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	git -C empty_repo worktree add --orphan -b newbranch worktreedir &&
+================================
+	git -C empty_repo  worktree add --orphan newbranch worktreedir &&
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	git -C empty_repo/worktreedir symbolic-ref HEAD >actual &&
 	test_cmp expected actual
 '
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 test_expect_success '"add" worktree with orphan branch and lock' '
 	git worktree add --lock --orphan -b orphanbr orphan-with-lock &&
 	test_when_finished "git worktree unlock orphan-with-lock || :" &&
@@ -439,6 +477,8 @@ test_expect_success "'worktree add' doesn't show orphan hint in bad/orphan HEAD 
 	! grep "hint: If you meant to create a worktree containing a new orphan branch" actual
 '
 
+================================
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 test_expect_success 'local clone from linked checkout' '
 	git clone --local here here-clone &&
 	( cd here-clone && git fsck )

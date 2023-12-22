@@ -1358,7 +1358,22 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		fclose(in);
 	}
 
+<<<<<<< HEAD
 	ret = finish_pack_objects_cmd(&cmd, &names, 1);
+=======
+	out = xfdopen(cmd.out, "r");
+	while (strbuf_getline_lf(&line, out) != EOF) {
+		struct string_list_item *item;
+
+		if (line.len != the_hash_algo->hexsz)
+			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
+		item = string_list_append(&names, line.buf);
+		item->util = populate_pack_exts(item->string);
+	}
+	strbuf_release(&line);
+	fclose(out);
+	ret = finish_command(&cmd);
+>>>>>>> origin/jch
 	if (ret)
 		goto cleanup;
 
@@ -1524,9 +1539,15 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 cleanup:
 	string_list_clear(&names, 1);
+<<<<<<< HEAD
 	existing_packs_release(&existing);
 	free_pack_geometry(&geometry);
 	list_objects_filter_release(&po_args.filter_options);
+=======
+	string_list_clear(&existing_nonkept_packs, 0);
+	string_list_clear(&existing_kept_packs, 0);
+	clear_pack_geometry(geometry);
+>>>>>>> origin/jch
 
 	return ret;
 }

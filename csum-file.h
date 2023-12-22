@@ -22,11 +22,19 @@ struct hashfile {
 	unsigned char *check_buffer;
 
 	/**
+<<<<<<< HEAD
 	 * If non-zero, skip_hash indicates that we should
 	 * not actually compute the hash for this hashfile and
 	 * instead only use it as a buffered write.
 	 */
 	int skip_hash;
+=======
+	 * If set to 1, skip_hash indicates that we should
+	 * not actually compute the hash for this hashfile and
+	 * instead only use it as a buffered write.
+	 */
+	unsigned int skip_hash;
+>>>>>>> origin/jch
 };
 
 /* Checkpoint */

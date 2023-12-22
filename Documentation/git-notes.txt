@@ -11,8 +11,13 @@ SYNOPSIS
 'git notes' [list [<object>]]
 'git notes' add [-f] [--allow-empty] [--[no-]separator | --separator=<paragraph-break>] [--[no-]stripspace] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
+<<<<<<< HEAD
 'git notes' append [--allow-empty] [--[no-]separator | --separator=<paragraph-break>] [--[no-]stripspace] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
 'git notes' edit [--allow-empty] [<object>] [--[no-]stripspace]
+=======
+'git notes' append [--allow-empty] [--no-blank-line] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'git notes' edit [--allow-empty] [<object>]
+>>>>>>> origin/jch
 'git notes' show [<object>]
 'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
 'git notes' merge --commit [-v | -q]
@@ -87,12 +92,19 @@ corresponding <to-object>.  (The optional `<rest>` is ignored so that
 the command can read the input given to the `post-rewrite` hook.)
 
 append::
+<<<<<<< HEAD
 	Append new message(s) given by `-m` or `-F` options to an
 	existing note, or add them as a new note if one does not
 	exist, for the object (defaults to HEAD).  When appending to
 	an existing note, a blank line is added before each new
 	message as an inter-paragraph separator.  The separator can
 	be customized with the `--separator` option.
+=======
+	Append to the notes of an existing object (defaults to HEAD).
+	Creates a new notes object if needed. If the note of the given
+	object and the note to be appended are not empty, a blank line
+	will be inserted between them.
+>>>>>>> origin/jch
 
 edit::
 	Edit the notes for a given object (defaults to HEAD).
@@ -170,6 +182,7 @@ OPTIONS
 	Allow an empty note object to be stored. The default behavior is
 	to automatically remove empty notes.
 
+<<<<<<< HEAD
 --[no-]separator, --separator=<paragraph-break>::
 	Specify a string used as a custom inter-paragraph separator
 	(a newline is added at the end as needed). If `--no-separator`, no
@@ -182,6 +195,11 @@ OPTIONS
 	paragraphs. Lines starting with `#` will be stripped out
 	in non-editor cases like `-m`, `-F` and `-C`, but not in
 	editor case like `git notes edit`, `-c`, etc.
+=======
+--no-blank-line::
+	Do not insert a blank line before the inserted notes (insert
+	a blank line is the default).
+>>>>>>> origin/jch
 
 --ref <ref>::
 	Manipulate the notes tree in <ref>.  This overrides

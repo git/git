@@ -68,7 +68,11 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result,
 	hashflush(f);
 
 	if (f->skip_hash)
+<<<<<<< HEAD
 		hashclr(f->buffer);
+=======
+		memset(f->buffer, 0, the_hash_algo->rawsz);
+>>>>>>> origin/jch
 	else
 		the_hash_algo->final_fn(f->buffer, &f->ctx);
 

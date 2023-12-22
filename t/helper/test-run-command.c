@@ -49,7 +49,26 @@ static int no_job(struct child_process *cp UNUSED,
 	return 0;
 }
 
+<<<<<<< HEAD
 static int task_finished(int result UNUSED,
+=======
+static void duplicate_output(struct strbuf *process_out,
+			struct strbuf *out,
+			void *pp_cb,
+			void *pp_task_cb)
+{
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	string_list_split(&list, process_out->buf, '\n', -1);
+	for (size_t i = 0; i < list.nr; i++) {
+		if (strlen(list.items[i].string) > 0)
+			fprintf(stderr, "duplicate_output: %s\n", list.items[i].string);
+	}
+	string_list_clear(&list, 0);
+}
+
+static int task_finished(int result,
+>>>>>>> origin/jch
 			 struct strbuf *err,
 			 void *pp_cb UNUSED,
 			 void *pp_task_cb UNUSED)
@@ -434,6 +453,12 @@ int cmd__run_command(int argc, const char **argv)
 		argv += 1;
 		argc -= 1;
 		opts.ungroup = 1;
+	}
+
+	if (!strcmp(argv[1], "--duplicate-output")) {
+		argv += 1;
+		argc -= 1;
+		opts.duplicate_output = duplicate_output;
 	}
 
 	jobs = atoi(argv[2]);

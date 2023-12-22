@@ -27,10 +27,15 @@ test_expect_success 'absorb the git dir' '
 	>actual.2 &&
 	git status >expect.1 &&
 	git -C sub1 rev-parse HEAD >expect.2 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''sub1'\'' from
 	'\''$cwd/sub1/.git'\'' to
 	'\''$cwd/.git/modules/sub1'\''
+================================
+	cat >expect <<-\EOF &&
+	Migrating git directory of '\''sub1'\'' from '\''sub1/.git'\'' to '\''.git/modules/sub1'\''
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	EOF
 	git submodule absorbgitdirs 2>actual &&
 	test_cmp expect actual &&
@@ -66,10 +71,15 @@ test_expect_success 'setup nested submodule' '
 test_expect_success 'absorb the git dir in a nested submodule' '
 	git status >expect.1 &&
 	git -C sub1/nested rev-parse HEAD >expect.2 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''sub1/nested'\'' from
 	'\''$cwd/sub1/nested/.git'\'' to
 	'\''$cwd/.git/modules/sub1/modules/nested'\''
+================================
+	cat >expect <<-\EOF &&
+	Migrating git directory of '\''sub1/nested'\'' from '\''sub1/nested/.git'\'' to '\''.git/modules/sub1/modules/nested'\''
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	EOF
 	git submodule absorbgitdirs 2>actual &&
 	test_cmp expect actual &&
@@ -103,10 +113,15 @@ test_expect_success 're-setup nested submodule' '
 test_expect_success 'absorb the git dir in a nested submodule' '
 	git status >expect.1 &&
 	git -C sub1/nested rev-parse HEAD >expect.2 &&
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< HEAD
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''sub1'\'' from
 	'\''$cwd/sub1/.git'\'' to
 	'\''$cwd/.git/modules/sub1'\''
+================================
+	cat >expect <<-\EOF &&
+	Migrating git directory of '\''sub1'\'' from '\''sub1/.git'\'' to '\''.git/modules/sub1'\''
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> origin/jch
 	EOF
 	git submodule absorbgitdirs 2>actual &&
 	test_cmp expect actual &&

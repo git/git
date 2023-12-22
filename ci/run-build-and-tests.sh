@@ -29,7 +29,11 @@ linux-TEST-vars)
 	export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
 	export GIT_TEST_NO_WRITE_REV_INDEX=1
 	export GIT_TEST_CHECKOUT_WORKERS=2
+<<<<<<< HEAD
 	export GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=1
+=======
+	export GIT_TEST_PACKED_REFS_VERSION=2
+>>>>>>> origin/jch
 	;;
 linux-clang)
 	export GIT_TEST_DEFAULT_HASH=sha1
@@ -45,10 +49,19 @@ pedantic)
 	;;
 esac
 
-group Build make
+mc=
+if test "$jobname" = "linux-cmake-ctest"
+then
+	cb=contrib/buildsystems
+	group CMake cmake -S "$cb" -B "$cb/out"
+	mc="-C $cb/out"
+fi
+
+group Build make $mc
+
 if test -n "$run_tests"
 then
-	group "Run tests" make test ||
+	group "Run tests" make $mc test ||
 	handle_failed_tests
 	group "Run unit tests" \
 		make DEFAULT_UNIT_TEST_TARGET=unit-tests-prove unit-tests

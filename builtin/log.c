@@ -1906,7 +1906,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf rdiff_title = STRBUF_INIT;
 	struct strbuf sprefix = STRBUF_INIT;
 	int creation_factor = -1;
+<<<<<<< HEAD
 	int rfc = 0;
+=======
+	int mboxrd = 0;
+>>>>>>> origin/jch
 
 	const struct option builtin_format_patch_options[] = {
 		OPT_CALLBACK_F('n', "numbered", &numbered, NULL,
@@ -1918,6 +1922,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('s', "signoff", &do_signoff, N_("add a Signed-off-by trailer")),
 		OPT_BOOL(0, "stdout", &use_stdout,
 			    N_("print patches to standard out")),
+		OPT_BOOL(0, "mboxrd", &mboxrd,
+			    N_("use the robust mboxrd format with --stdout")),
 		OPT_BOOL(0, "cover-letter", &cover_letter,
 			    N_("generate a cover letter")),
 		OPT_BOOL(0, "numbered-files", &just_numbers,
@@ -2146,7 +2152,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				  rev.diffopt.close_file, "--output",
 				  !!output_directory, "--output-directory");
 
+<<<<<<< HEAD
 	if (use_stdout && stdout_mboxrd)
+=======
+	/* should we warn on --mboxrd w/o --stdout? */
+	if (mboxrd)
+>>>>>>> origin/jch
 		rev.commit_format = CMIT_FMT_MBOXRD;
 
 	if (use_stdout) {

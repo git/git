@@ -9,7 +9,7 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git format-patch' [-k] [(-o|--output-directory) <dir> | --stdout]
+'git format-patch' [-k] [(-o|--output-directory) <dir> | --stdout] [--mboxrd]
 		   [--no-thread | --thread[=<style>]]
 		   [(--attach|--inline)[=<boundary>] | --no-attach]
 		   [-s | --signoff]
@@ -144,6 +144,10 @@ include::diff-options.txt[]
 --stdout::
 	Print all commits to the standard output in mbox format,
 	instead of creating a file for each one.
+
+--mboxrd::
+	Use the robust "mboxrd" format with `--stdout` to escape
+	"^>+From " lines.
 
 --attach[=<boundary>]::
 	Create multipart/mixed attachment, the first part of

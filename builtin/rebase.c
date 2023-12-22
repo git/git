@@ -1852,6 +1852,11 @@ cleanup:
 	string_list_clear(&options.strategy_opts, 0);
 	strbuf_release(&options.git_format_patch_opt);
 	free(squash_onto_name);
+<<<<<<< HEAD
 	free(keep_base_onto_name);
+=======
+	string_list_clear(&exec, 0);
+	string_list_clear(&strategy_options, 0);
+>>>>>>> origin/jch
 	return !!ret;
 }

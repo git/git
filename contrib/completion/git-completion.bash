@@ -63,9 +63,14 @@
 #
 #   GIT_COMPLETION_IGNORE_CASE
 #
+<<<<<<< HEAD
 #     When set, uses for-each-ref '--ignore-case' to find refs that match
 #     case insensitively, even on systems with case sensitive file systems
 #     (e.g., completing tag name "FOO" on "git checkout f<TAB>").
+=======
+#     When set to "1", suggest refs that match case insensitively (e.g.,
+#     completing "FOO" on "git checkout f<TAB>").
+>>>>>>> origin/jch
 
 case "$COMP_WORDBREAKS" in
 *:*) : great ;;
@@ -652,9 +657,19 @@ __git_complete_index_file ()
 __git_heads ()
 {
 	local pfx="${1-}" cur_="${2-}" sfx="${3-}"
+	local ignore_case=""
+
+	if test "${GIT_COMPLETION_IGNORE_CASE-}" = "1"
+	then
+		ignore_case="--ignore-case"
+	fi
 
 	__git for-each-ref --format="${pfx//\%/%%}%(refname:strip=2)$sfx" \
+<<<<<<< HEAD
 			${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
+=======
+			$ignore_case \
+>>>>>>> origin/jch
 			"refs/heads/$cur_*" "refs/heads/$cur_*/**"
 }
 
@@ -666,9 +681,19 @@ __git_heads ()
 __git_remote_heads ()
 {
 	local pfx="${1-}" cur_="${2-}" sfx="${3-}"
+	local ignore_case=""
+
+	if test "${GIT_COMPLETION_IGNORE_CASE-}" = "1"
+	then
+		ignore_case="--ignore-case"
+	fi
 
 	__git for-each-ref --format="${pfx//\%/%%}%(refname:strip=2)$sfx" \
+<<<<<<< HEAD
 			${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
+=======
+			$ignore_case \
+>>>>>>> origin/jch
 			"refs/remotes/$cur_*" "refs/remotes/$cur_*/**"
 }
 
@@ -677,9 +702,19 @@ __git_remote_heads ()
 __git_tags ()
 {
 	local pfx="${1-}" cur_="${2-}" sfx="${3-}"
+	local ignore_case=""
+
+	if test "${GIT_COMPLETION_IGNORE_CASE-}" = "1"
+	then
+		ignore_case="--ignore-case"
+	fi
 
 	__git for-each-ref --format="${pfx//\%/%%}%(refname:strip=2)$sfx" \
+<<<<<<< HEAD
 			${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
+=======
+			$ignore_case \
+>>>>>>> origin/jch
 			"refs/tags/$cur_*" "refs/tags/$cur_*/**"
 }
 
@@ -693,13 +728,23 @@ __git_dwim_remote_heads ()
 {
 	local pfx="${1-}" cur_="${2-}" sfx="${3-}"
 	local fer_pfx="${pfx//\%/%%}" # "escape" for-each-ref format specifiers
+	local ignore_case=""
+
+	if test "${GIT_COMPLETION_IGNORE_CASE-}" = "1"
+	then
+		ignore_case="--ignore-case"
+	fi
 
 	# employ the heuristic used by git checkout and git switch
 	# Try to find a remote branch that cur_es the completion word
 	# but only output if the branch name is unique
 	__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
 		--sort="refname:strip=3" \
+<<<<<<< HEAD
 		${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
+=======
+		$ignore_case \
+>>>>>>> origin/jch
 		"refs/remotes/*/$cur_*" "refs/remotes/*/$cur_*/**" | \
 	uniq -u
 }
@@ -726,6 +771,7 @@ __git_refs ()
 	local match="${4-}"
 	local umatch="${4-}"
 	local fer_pfx="${pfx//\%/%%}" # "escape" for-each-ref format specifiers
+	local ignore_case=""
 
 	__git_find_repo_path
 	dir="$__git_repo_path"
@@ -748,10 +794,18 @@ __git_refs ()
 		fi
 	fi
 
+<<<<<<< HEAD
 	if test "${GIT_COMPLETION_IGNORE_CASE:+1}" = "1"
 	then
 		# uppercase with tr instead of ${match,^^} for bash 3.2 compatibility
 		umatch=$(echo "$match" | tr a-z A-Z 2>/dev/null || echo "$match")
+=======
+	if test "${GIT_COMPLETION_IGNORE_CASE-}" = "1"
+	then
+		ignore_case="--ignore-case"
+		# use tr instead of ${match,^^} to preserve bash 3.2 compatibility
+		umatch=$(echo "$match" | tr a-z A-Z 2> /dev/null || echo "$match")
+>>>>>>> origin/jch
 	fi
 
 	if [ "$list_refs_from" = path ]; then
@@ -785,7 +839,11 @@ __git_refs ()
 			;;
 		esac
 		__git_dir="$dir" __git for-each-ref --format="$fer_pfx%($format)$sfx" \
+<<<<<<< HEAD
 			${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
+=======
+			$ignore_case \
+>>>>>>> origin/jch
 			"${refs[@]}"
 		if [ -n "$track" ]; then
 			__git_dwim_remote_heads "$pfx" "$match" "$sfx"
@@ -808,7 +866,11 @@ __git_refs ()
 			$match*|$umatch*)	echo "${pfx}HEAD$sfx" ;;
 			esac
 			__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
+<<<<<<< HEAD
 				${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
+=======
+				$ignore_case \
+>>>>>>> origin/jch
 				"refs/remotes/$remote/$match*" \
 				"refs/remotes/$remote/$match*/**"
 		else
@@ -1862,7 +1924,7 @@ _git_fetch ()
 
 __git_format_patch_extra_options="
 	--full-index --not --all --no-prefix --src-prefix=
-	--dst-prefix= --notes
+	--dst-prefix= --notes --mboxrd
 "
 
 _git_format_patch ()

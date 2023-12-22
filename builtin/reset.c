@@ -515,8 +515,11 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 
 	discard_index(&the_index);
 
+<<<<<<< HEAD
 cleanup:
 	clear_pathspec(&pathspec);
 	free(pathspec_from_file);
+=======
+>>>>>>> origin/jch
 	return update_ref_status;
 }

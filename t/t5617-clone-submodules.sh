@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test cloning repos with submodules using remote-tracking branches'
+test_description='Test cloning repos with submodules'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -14,10 +14,17 @@ test_expect_success 'setup' '
 	git config --global protocol.file.allow always &&
 	git checkout -b main &&
 	test_commit commit1 &&
+	mkdir subsub &&
+	(
+		cd subsub &&
+		git init &&
+		test_commit subsubcommit1
+	) &&
 	mkdir sub &&
 	(
 		cd sub &&
 		git init &&
+		git submodule add "file://$pwd/subsub" subsub &&
 		test_commit subcommit1 &&
 		git tag sub_when_added_to_super &&
 		git branch other
@@ -106,6 +113,37 @@ test_expect_success '--no-also-filter-submodules overrides clone.filterSubmodule
 	test_cmp_config -C super_clone3 true remote.origin.promisor &&
 	test_cmp_config -C super_clone3 blob:none remote.origin.partialclonefilter &&
 	test_cmp_config -C super_clone3/sub false --default false remote.origin.promisor
+'
+
+test_expect_success 'submodule.propagateBranches checks out branches at correct commits' '
+	test_when_finished "git checkout main" &&
+
+	git checkout -b checked-out &&
+	git -C sub checkout -b not-in-clone &&
+	git -C subsub checkout -b not-in-clone &&
+	git clone --recurse-submodules \
+		--branch checked-out \
+		-c submodule.propagateBranches=true \
+		"file://$pwd/." super_clone4 &&
+
+	# Assert that each repo is pointing to "checked-out"
+	for REPO in "super_clone4" "super_clone4/sub" "super_clone4/sub/subsub"
+	do
+	    HEAD_BRANCH=$(git -C $REPO symbolic-ref HEAD) &&
+	    test $HEAD_BRANCH = "refs/heads/checked-out" || return 1
+	done &&
+
+	# Assert that the submodule branches are pointing to the right revs
+	EXPECT_SUB_OID="$(git -C super_clone4 rev-parse :sub)" &&
+	ACTUAL_SUB_OID="$(git -C super_clone4/sub rev-parse refs/heads/checked-out)" &&
+	test $EXPECT_SUB_OID = $ACTUAL_SUB_OID &&
+	EXPECT_SUBSUB_OID="$(git -C super_clone4/sub rev-parse :subsub)" &&
+	ACTUAL_SUBSUB_OID="$(git -C super_clone4/sub/subsub rev-parse refs/heads/checked-out)" &&
+	test $EXPECT_SUBSUB_OID = $ACTUAL_SUBSUB_OID &&
+
+	# Assert that the submodules do not have branches from their upstream
+	test_must_fail git -C super_clone4/sub rev-parse not-in-clone &&
+	test_must_fail git -C super_clone4/sub/subsub rev-parse not-in-clone
 '
 
 test_done

@@ -10,7 +10,11 @@ SYNOPSIS
 --------
 [verse]
 'git worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]]
+<<<<<<< HEAD
 		   [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]
+=======
+		   [[-b | -B | --orphan] <new-branch>] <path> [<commit-ish>]
+>>>>>>> origin/jch
 'git worktree list' [-v | --porcelain [-z]]
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree move' <worktree> <new-path>
@@ -96,6 +100,7 @@ exist, a new branch based on `HEAD` is automatically created as if
 in the new worktree, if it's not checked out anywhere else, otherwise the
 command will refuse to create the worktree (unless `--force` is used).
 +
+<<<<<<< HEAD
 If `<commit-ish>` is omitted, neither `--detach`, or `--orphan` is
 used, and there are no valid local branches (or remote branches if
 `--guess-remote` is specified) then, as a convenience, the new worktree is
@@ -105,6 +110,15 @@ passed to the command. In the event the repository has a remote and
 `--guess-remote` is used, but no remote or local branches exist, then the
 command fails with a warning reminding the user to fetch from their remote
 first (or override by using `-f/--force`).
+=======
+------------
+$ git worktree add --orphan <branch> <path>
+------------
++
+Create a worktree containing an orphan branch named `<branch>` with a
+clean working directory.  See `--orphan` in linkgit:git-switch[1] for
+more details.
+>>>>>>> origin/jch
 
 list::
 
@@ -232,9 +246,15 @@ This can also be set up as the default behaviour by using the
 	With `prune`, do not remove anything; just report what it would
 	remove.
 
+<<<<<<< HEAD
 --orphan::
 	With `add`, make the new worktree and index empty, associating
 	the worktree with a new orphan/unborn branch named `<new-branch>`.
+=======
+--orphan <new-branch>::
+	With `add`, create a new orphan branch named `<new-branch>` in the new
+	worktree. See `--orphan` in linkgit:git-switch[1] for details.
+>>>>>>> origin/jch
 
 --porcelain::
 	With `list`, output in an easy-to-parse format for scripts.

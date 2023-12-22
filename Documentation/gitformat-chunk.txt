@@ -24,8 +24,9 @@ how they use the chunks to describe structured data.
 
 A chunk-based file format begins with some header information custom to
 that format. That header should include enough information to identify
-the file type, format version, and number of chunks in the file. From this
-information, that file can determine the start of the chunk-based region.
+the file type, format version, and (optionally) the number of chunks in
+the file. From this information, that file can determine the start of the
+chunk-based region.
 
 The chunk-based region starts with a table of contents describing where
 each chunk starts and ends. This consists of (C+1) rows of 12 bytes each,
@@ -51,8 +52,27 @@ The final entry in the table of contents must be four zero bytes. This
 confirms that the table of contents is ending and provides the offset for
 the end of the chunk-based data.
 
+The default chunk format assumes the table of contents appears at the
+beginning of the file (after the header information) and the chunks are
+ordered by increasing offset. Alternatively, the chunk format allows a
+table of contents that is placed at the end of the file (before the
+trailing hash) and the offsets are in descending order. In this trailing
+table of contents case, the data in order looks instead like the following
+table:
+
+  | Chunk ID (4 bytes) | Chunk Offset (8 bytes) |
+  |--------------------|------------------------|
+  | 0x0000             | OFFSET[C+1]            |
+  | ID[C]              | OFFSET[C]              |
+  | ...                | ...                    |
+  | ID[0]              | OFFSET[0]              |
+
+The concrete file format that uses the chunk format will mention that it
+uses a trailing table of contents if it uses it. By default, the table of
+contents is in ascending order before all chunk data.
+
 Note: The chunk-based format expects that the file contains _at least_ a
-trailing hash after `OFFSET[C+1]`.
+trailing hash after either `OFFSET[C+1]` or the trailing table of contents.
 
 Functions for working with chunk-based file formats are declared in
 `chunk-format.h`. Using these methods provide extra checks that assist

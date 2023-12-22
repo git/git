@@ -4406,8 +4406,17 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
 		unpack_unreachable_expiration = 0;
 
+<<<<<<< HEAD
 	if (stdin_packs && filter_options.choice)
 		die(_("cannot use --filter with --stdin-packs"));
+=======
+	if (filter_options.choice) {
+		if (!pack_to_stdout)
+			die(_("cannot use --filter without --stdout"));
+		if (stdin_packs)
+			die(_("cannot use --filter with --stdin-packs"));
+	}
+>>>>>>> origin/jch
 
 	if (stdin_packs && use_internal_rev_list)
 		die(_("cannot use internal rev list with --stdin-packs"));
@@ -4495,6 +4504,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		get_object_list(&revs, rp.nr, rp.v);
 		release_revisions(&revs);
 	}
+	list_objects_filter_release(&filter_options);
 	cleanup_preferred_base();
 	if (include_tag && nr_result)
 		for_each_tag_ref(add_ref_tag, NULL);

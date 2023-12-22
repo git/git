@@ -34,6 +34,7 @@ struct repo_settings {
 	int fetch_write_commit_graph;
 	int command_requires_full_index;
 	int sparse_index;
+<<<<<<< HEAD
 	int pack_read_reverse_index;
 	int pack_use_bitmap_boundary_traversal;
 
@@ -45,6 +46,9 @@ struct repo_settings {
 	 * replace_refs_enabled() for more details.
 	 */
 	int read_replace_refs;
+=======
+	int submodule_propagate_branches;
+>>>>>>> origin/jch
 
 	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 
@@ -68,6 +72,12 @@ struct repo_path_cache {
 	char *auto_merge;
 	char *fetch_head;
 	char *shallow;
+};
+
+enum ref_format_flags {
+	REF_FORMAT_FILES = (1 << 0),
+	REF_FORMAT_PACKED = (1 << 1),
+	REF_FORMAT_PACKED_V2 = (1 << 2),
 };
 
 struct repository {
@@ -104,6 +114,7 @@ struct repository {
 	 * the ref object.
 	 */
 	struct ref_store *refs_private;
+	enum ref_format_flags ref_format;
 
 	/*
 	 * Contains path to often used file names.
