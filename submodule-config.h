@@ -3,7 +3,6 @@
 
 #include "config.h"
 #include "submodule.h"
-#include "strbuf.h"
 #include "tree-walk.h"
 
 /**
