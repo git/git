@@ -1,12 +1,9 @@
 #ifndef BLAME_H
 #define BLAME_H
 
-#include "commit.h"
 #include "oidset.h"
 #include "xdiff-interface.h"
-#include "revision.h"
 #include "prio-queue.h"
-#include "diff.h"
 
 #define PICKAXE_BLAME_MOVE		01
 #define PICKAXE_BLAME_COPY		02
