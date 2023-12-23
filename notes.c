@@ -5,8 +5,6 @@
 #include "notes.h"
 #include "object-name.h"
 #include "object-store-ll.h"
-#include "blob.h"
-#include "tree.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "tree-walk.h"

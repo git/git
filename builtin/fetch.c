@@ -26,7 +26,6 @@
 #include "connected.h"
 #include "strvec.h"
 #include "utf8.h"
-#include "packfile.h"
 #include "pager.h"
 #include "path.h"
 #include "pkt-line.h"
@@ -38,7 +37,6 @@
 #include "shallow.h"
 #include "trace.h"
 #include "trace2.h"
-#include "worktree.h"
 #include "bundle-uri.h"
 
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)

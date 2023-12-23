@@ -18,7 +18,6 @@
 #include "copy.h"
 #include "run-command.h"
 #include "environment.h"
-#include "exec-cmd.h"
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"

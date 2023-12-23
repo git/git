@@ -14,7 +14,6 @@
 #include "merge.h"
 #include "object-name.h"
 #include "parse-options.h"
-#include "exec-cmd.h"
 #include "run-command.h"
 #include "oid-array.h"
 #include "remote.h"
@@ -24,15 +23,11 @@
 #include "rebase.h"
 #include "refs.h"
 #include "refspec.h"
-#include "revision.h"
 #include "submodule.h"
 #include "submodule-config.h"
-#include "tempfile.h"
-#include "lockfile.h"
 #include "wt-status.h"
 #include "commit-reach.h"
 #include "sequencer.h"
-#include "packfile.h"
 
 /**
  * Parses the value of --rebase. If value is a false value, returns

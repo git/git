@@ -6,7 +6,6 @@
 #include "environment.h"
 #include "object-file.h"
 #include "path.h"
-#include "sigchain.h"
 #include "string-list.h"
 #include "strbuf.h"
 #include "strvec.h"

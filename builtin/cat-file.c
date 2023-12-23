@@ -15,7 +15,6 @@
 #include "parse-options.h"
 #include "userdiff.h"
 #include "streaming.h"
-#include "tree-walk.h"
 #include "oid-array.h"
 #include "packfile.h"
 #include "object-file.h"

@@ -1,7 +1,6 @@
 #include "test-tool.h"
 #include "commit-graph.h"
 #include "commit.h"
-#include "config.h"
 #include "environment.h"
 #include "hex.h"
 #include "object-store-ll.h"

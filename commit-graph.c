@@ -8,7 +8,6 @@
 #include "commit.h"
 #include "object.h"
 #include "refs.h"
-#include "revision.h"
 #include "hash-lookup.h"
 #include "commit-graph.h"
 #include "object-file.h"

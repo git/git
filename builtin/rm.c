@@ -9,7 +9,6 @@
 #include "config.h"
 #include "lockfile.h"
 #include "dir.h"
-#include "cache-tree.h"
 #include "gettext.h"
 #include "hash.h"
 #include "tree-walk.h"

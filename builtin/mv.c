@@ -15,7 +15,6 @@
 #include "pathspec.h"
 #include "lockfile.h"
 #include "dir.h"
-#include "cache-tree.h"
 #include "string-list.h"
 #include "parse-options.h"
 #include "read-cache-ll.h"

@@ -22,7 +22,6 @@
 #include "connected.h"
 #include "strvec.h"
 #include "version.h"
-#include "tag.h"
 #include "gpg-interface.h"
 #include "sigchain.h"
 #include "fsck.h"

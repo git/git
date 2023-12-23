@@ -16,7 +16,6 @@
 #include "refs.h"
 #include "url.h"
 #include "utf8.h"
-#include "decorate.h"
 #include "oidset.h"
 #include "packfile.h"
 #include "submodule-config.h"

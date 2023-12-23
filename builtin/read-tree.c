@@ -16,14 +16,12 @@
 #include "tree-walk.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
-#include "dir.h"
 #include "parse-options.h"
 #include "repository.h"
 #include "resolve-undo.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "submodule.h"
-#include "submodule-config.h"
 
 static int nr_trees;
 static int read_empty;

@@ -15,7 +15,6 @@
 #include "trace.h"
 #include "transport.h"
 #include "packfile.h"
-#include "protocol.h"
 #include "string-list.h"
 #include "object-file.h"
 #include "object-store-ll.h"

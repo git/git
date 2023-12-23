@@ -7,7 +7,6 @@
 #include "hex.h"
 #include "revision.h"
 #include "list-objects.h"
-#include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "object.h"
 #include "object-name.h"

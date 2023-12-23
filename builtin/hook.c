@@ -3,7 +3,6 @@
 #include "gettext.h"
 #include "hook.h"
 #include "parse-options.h"
-#include "strbuf.h"
 #include "strvec.h"
 
 #define BUILTIN_HOOK_RUN_USAGE \

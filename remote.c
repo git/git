@@ -15,7 +15,6 @@
 #include "diff.h"
 #include "revision.h"
 #include "dir.h"
-#include "tag.h"
 #include "setup.h"
 #include "string-list.h"
 #include "strvec.h"

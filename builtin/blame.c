@@ -25,7 +25,6 @@
 #include "userdiff.h"
 #include "line-range.h"
 #include "line-log.h"
-#include "dir.h"
 #include "progress.h"
 #include "object-name.h"
 #include "object-store-ll.h"

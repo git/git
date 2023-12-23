@@ -1,7 +1,6 @@
 #include "git-compat-util.h"
 #include "line-range.h"
 #include "xdiff-interface.h"
-#include "strbuf.h"
 #include "userdiff.h"
 
 /*

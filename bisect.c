@@ -9,7 +9,6 @@
 #include "refs.h"
 #include "list-objects.h"
 #include "quote.h"
-#include "hash-lookup.h"
 #include "run-command.h"
 #include "log-tree.h"
 #include "bisect.h"

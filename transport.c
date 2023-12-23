@@ -10,9 +10,7 @@
 #include "remote.h"
 #include "connect.h"
 #include "send-pack.h"
-#include "walker.h"
 #include "bundle.h"
-#include "dir.h"
 #include "gettext.h"
 #include "refs.h"
 #include "refspec.h"
@@ -26,7 +24,6 @@
 #include "transport-internal.h"
 #include "protocol.h"
 #include "object-name.h"
-#include "object-store-ll.h"
 #include "color.h"
 #include "bundle-uri.h"
 

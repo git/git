@@ -7,7 +7,6 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
-#include "dir.h"
 #include "gettext.h"
 #include "lockfile.h"
 #include "quote.h"

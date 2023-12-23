@@ -7,7 +7,6 @@
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
-#include "refs.h"
 #include "refspec.h"
 #include "run-command.h"
 #include "remote.h"

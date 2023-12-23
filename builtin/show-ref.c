@@ -6,7 +6,6 @@
 #include "object-name.h"
 #include "object-store-ll.h"
 #include "object.h"
-#include "tag.h"
 #include "string-list.h"
 #include "parse-options.h"
 
