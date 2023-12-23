@@ -21,6 +21,7 @@
 #include "quote.h"
 #include "trace2.h"
 #include "transport.h"
+#include "url.h"
 #include "write-or-die.h"
 
 static struct remote *remote;

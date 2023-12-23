@@ -6,6 +6,7 @@
 #include "walker.h"
 #include "setup.h"
 #include "strvec.h"
+#include "url.h"
 #include "urlmatch.h"
 #include "trace2.h"
 
