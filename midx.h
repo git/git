@@ -1,7 +1,6 @@
 #ifndef MIDX_H
 #define MIDX_H
 
-#include "repository.h"
 #include "string-list.h"
 
 struct object_id;
