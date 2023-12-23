@@ -1,6 +1,7 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
+#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
@@ -14,6 +15,7 @@
 #include "simple-ipc.h"
 #include "khash.h"
 #include "pkt-line.h"
+#include "run-command.h"
 #include "trace.h"
 #include "trace2.h"
 

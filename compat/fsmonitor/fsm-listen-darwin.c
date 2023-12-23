@@ -29,6 +29,7 @@
 #include "fsmonitor--daemon.h"
 #include "fsmonitor-path-utils.h"
 #include "gettext.h"
+#include "simple-ipc.h"
 #include "string-list.h"
 #include "trace.h"
 
