@@ -12,7 +12,6 @@
 #include "xdiff-interface.h"
 #include "strbuf.h"
 #include "log-tree.h"
-#include "userdiff.h"
 #include "line-log.h"
 #include "setup.h"
 #include "strvec.h"

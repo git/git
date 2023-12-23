@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "thread-utils.h"
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 #include "trace2/tr2_tmr.h"

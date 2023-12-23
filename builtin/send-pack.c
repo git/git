@@ -2,7 +2,6 @@
 #include "config.h"
 #include "hex.h"
 #include "pkt-line.h"
-#include "sideband.h"
 #include "run-command.h"
 #include "remote.h"
 #include "connect.h"

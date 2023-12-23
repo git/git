@@ -12,7 +12,6 @@
 #include "object-name.h"
 #include "object-file.h"
 #include "object-store-ll.h"
-#include "pack.h"
 #include "pack-bitmap.h"
 #include "log-tree.h"
 #include "graph.h"

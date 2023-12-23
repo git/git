@@ -14,7 +14,6 @@
 #include "parse-options.h"
 #include "string-list.h"
 #include "run-command.h"
-#include "userdiff.h"
 #include "grep.h"
 #include "quote.h"
 #include "dir.h"

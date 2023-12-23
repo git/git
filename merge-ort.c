@@ -41,7 +41,6 @@
 #include "revision.h"
 #include "sparse-index.h"
 #include "strmap.h"
-#include "submodule.h"
 #include "trace2.h"
 #include "tree.h"
 #include "unpack-trees.h"

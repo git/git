@@ -3,7 +3,6 @@
 #include "commit.h"
 #include "environment.h"
 #include "hex.h"
-#include "object-store-ll.h"
 #include "object.h"
 #include "repository.h"
 #include "setup.h"
