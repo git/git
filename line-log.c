@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "diffcore.h"
 #include "line-range.h"
 #include "hex.h"
 #include "tag.h"
