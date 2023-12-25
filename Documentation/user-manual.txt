@@ -4100,8 +4100,8 @@ independently of the contents or the type of the object: all objects can
 be validated by verifying that (a) their hashes match the content of the
 file and (b) the object successfully inflates to a stream of bytes that
 forms a sequence of
-`<ascii type without space> + <space> + <ascii decimal size> +
-<byte\0> + <binary object data>`.
+`<ascii-type-without-space> + <space> + <ascii-decimal-size> +
+<byte\0> + <binary-object-data>`.
 
 The structured objects can further have their structure and
 connectivity to other objects verified. This is generally done with

@@ -838,7 +838,7 @@ of the SID and an optional counter (to avoid filename
 collisions).
 +
 In addition, if the variable is set to
-`af_unix:[<socket_type>:]<absolute-pathname>`, Git will try
+`af_unix:[<socket-type>:]<absolute-pathname>`, Git will try
 to open the path as a Unix Domain Socket.  The socket type
 can be either `stream` or `dgram`.
 +

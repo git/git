@@ -17,10 +17,10 @@ SYNOPSIS
 		   [--signature-file=<file>]
 		   [-n | --numbered | -N | --no-numbered]
 		   [--start-number <n>] [--numbered-files]
-		   [--in-reply-to=<message id>] [--suffix=.<sfx>]
+		   [--in-reply-to=<message-id>] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream] [--always]
 		   [--cover-from-description=<mode>]
-		   [--rfc] [--subject-prefix=<subject prefix>]
+		   [--rfc] [--subject-prefix=<subject-prefix>]
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet]
@@ -30,8 +30,8 @@ SYNOPSIS
 		   [--range-diff=<previous> [--creation-factor=<percent>]]
 		   [--filename-max-length=<n>]
 		   [--progress]
-		   [<common diff options>]
-		   [ <since> | <revision range> ]
+		   [<common-diff-options>]
+		   [ <since> | <revision-range> ]
 
 DESCRIPTION
 -----------
@@ -64,7 +64,7 @@ There are two ways to specify which commits to operate on.
    to the tip of the current branch that are not in the history
    that leads to the <since> to be output.
 
-2. Generic <revision range> expression (see "SPECIFYING
+2. Generic <revision-range> expression (see "SPECIFYING
    REVISIONS" section in linkgit:gitrevisions[7]) means the
    commits in the specified range.
 
@@ -179,9 +179,9 @@ Beware that the default for 'git send-email' is to thread emails
 itself.  If you want `git format-patch` to take care of threading, you
 will want to ensure that threading is disabled for `git send-email`.
 
---in-reply-to=<message id>::
+--in-reply-to=<message-id>::
 	Make the first mail (or all the mails with `--no-thread`) appear as a
-	reply to the given <message id>, which avoids breaking threads to
+	reply to the given <message-id>, which avoids breaking threads to
 	provide a new patch series.
 
 --ignore-if-in-upstream::
@@ -219,9 +219,9 @@ populated with placeholder text.
 	Use the contents of <file> instead of the branch's description
 	for generating the cover letter.
 
---subject-prefix=<subject prefix>::
+--subject-prefix=<subject-prefix>::
 	Instead of the standard '[PATCH]' prefix in the subject
-	line, instead use '[<subject prefix>]'. This can be used
+	line, instead use '[<subject-prefix>]'. This can be used
 	to name a patch series, and can be combined with the
 	`--numbered` option.
 +
@@ -403,7 +403,7 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
 	`format.useAutoBase` configuration.
 
 --root::
-	Treat the revision argument as a <revision range>, even if it
+	Treat the revision argument as a <revision-range>, even if it
 	is just a single commit (that would normally be treated as a
 	<since>).  Note that root commits included in the specified
 	range are always formatted as creation patches, independently
