@@ -3780,11 +3780,15 @@ static int check_preimage(struct apply_state *state,
 	}
 
 	if (!state->cached && !previous) {
-		if (!trust_executable_bit)
-			st_mode = (*ce && (*ce)->ce_mode)
-				? (*ce)->ce_mode : patch->old_mode;
-		else
+		if (*ce && !(*ce)->ce_mode)
+			BUG("ce_mode == 0 for path '%s'", old_name);
+
+		if (trust_executable_bit)
 			st_mode = ce_mode_from_stat(*ce, st->st_mode);
+		else if (*ce)
+			st_mode = (*ce)->ce_mode;
+		else
+			st_mode = patch->old_mode;
 	}
 
 	if (patch->is_new < 0)
