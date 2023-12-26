@@ -2220,7 +2220,8 @@ static void reverse_patches(struct patch *p)
 		struct fragment *frag = p->fragments;
 
 		SWAP(p->new_name, p->old_name);
-		SWAP(p->new_mode, p->old_mode);
+		if (p->new_mode)
+			SWAP(p->new_mode, p->old_mode);
 		SWAP(p->is_new, p->is_delete);
 		SWAP(p->lines_added, p->lines_deleted);
 		SWAP(p->old_oid_prefix, p->new_oid_prefix);
@@ -3780,9 +3781,8 @@ static int check_preimage(struct apply_state *state,
 
 	if (!state->cached && !previous) {
 		if (!trust_executable_bit)
-			st_mode = (*ce && (*ce)->ce_mode) ? (*ce)->ce_mode :
-				(state->apply_in_reverse
-				 ? patch->new_mode : patch->old_mode);
+			st_mode = (*ce && (*ce)->ce_mode)
+				? (*ce)->ce_mode : patch->old_mode;
 		else
 			st_mode = ce_mode_from_stat(*ce, st->st_mode);
 	}
