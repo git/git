@@ -411,7 +411,10 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 	err |= transport_disconnect(transport);
 	free(anon_url);
 	if (!err)
+	{
+		warning("Custom response: for your push");
 		return 0;
+	}
 
 	if (reject_reasons & REJECT_NON_FF_HEAD) {
 		advise_pull_before_push();
