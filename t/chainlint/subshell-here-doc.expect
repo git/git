@@ -1,7 +1,7 @@
 (
 	echo wobba \
-		gorgo snoot \
-		wafta snurb <<-EOF &&
+	       gorgo snoot \
+	       wafta snurb <<-EOF &&
 	quoth the raven,
 	nevermore...
 	EOF

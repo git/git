@@ -6,6 +6,7 @@
 		bar
 		EOF
 	done ?!AMP?!
+
 	while true; do
 		echo foo &&
 		cat bar ?!LOOP?!

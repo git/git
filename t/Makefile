@@ -103,20 +103,12 @@ check-chainlint:
 		echo "# chainlint: $(CHAINLINTTMP_SQ)/tests" && \
 		for i in $(CHAINLINTTESTS); do \
 			echo "# chainlint: $$i" && \
-			sed -e '/^[ 	]*$$/d' chainlint/$$i.expect; \
+			cat chainlint/$$i.expect; \
 		done \
 	} >'$(CHAINLINTTMP_SQ)'/expect && \
 	$(CHAINLINT) --emit-all '$(CHAINLINTTMP_SQ)'/tests | \
-		sed -e 's/^[1-9][0-9]* //;/^[ 	]*$$/d' >'$(CHAINLINTTMP_SQ)'/actual && \
-	if test -f ../GIT-BUILD-OPTIONS; then \
-		. ../GIT-BUILD-OPTIONS; \
-	fi && \
-	if test -x ../git$$X; then \
-		DIFFW="../git$$X --no-pager diff -w --no-index"; \
-	else \
-		DIFFW="diff -w -u"; \
-	fi && \
-	$$DIFFW '$(CHAINLINTTMP_SQ)'/expect '$(CHAINLINTTMP_SQ)'/actual
+		sed -e 's/^[1-9][0-9]* //' >'$(CHAINLINTTMP_SQ)'/actual && \
+	diff -u '$(CHAINLINTTMP_SQ)'/expect '$(CHAINLINTTMP_SQ)'/actual
 
 test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \
 	test-lint-filenames
