@@ -1,6 +1,13 @@
 Git v2.44 Release Notes
 =======================
 
+Backward Compatibility Notes
+
+ * "git chekcout -B <branch>" used to allow switching to a branch that
+   is in use on another worktree, but this was by mistake.  The users
+   need to use "--ignore-other-worktrees" option.
+
+
 UI, Workflows & Features
 
  * "git add" and "git stash" learned to support the ":(attr:...)"
@@ -19,6 +26,14 @@ UI, Workflows & Features
    arguments to the "add/set" subcommands of "git sparse-checkout"
    better.
 
+ * "git checkout -B <branch> [<start-point>]" allowed a branch that is
+   in use in another worktree to be updated and checked out, which
+   might be a bit unexpected.  The rule has been tightened, which is a
+   breaking change.  "--ignore-other-worktrees" option is required to
+   unbreak you, if you are used to the current behaviour that "-B"
+   overrides the safety.
+   (merge b23285a921 jc/checkout-B-branch-in-use later to maint).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -35,6 +50,19 @@ Performance, Internal Implementation, Development Support etc.
    duplication.
 
  * Subject approxidate() and show_date() machinery to OSS-Fuzz.
+
+ * A new helper to let us pretend that we called lstat() when we know
+   our cache_entry is up-to-date via fsmonitor.
+
+ * The optimization based on fsmonitor in the "diff --cached"
+   codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ * Test balloon to use C99 "bool" type from <stdbool.h> has been
+   added.
+
+ * "git clone" has been prepared to allow cloning a repository with
+   non-default hash function into a repository that uses the reftable
+   backend.
 
 
 Fixes since v2.43
@@ -94,6 +122,18 @@ Fixes since v2.43
    specified with valueless "true", which has been corrected.
    (merge d49cb162fa jk/implicit-true later to maint).
 
+ * Code clean-up for sanity checking of command line options for "git
+   show-ref".
+   (merge 7382497372 rs/show-ref-incompatible-options later to maint).
+
+ * The code to parse the From e-mail header has been updated to avoid
+   recursion.
+   (merge dee182941f jk/mailinfo-iterative-unquote-comment later to maint).
+
+ * "git fetch --atomic" issued an unnecessary empty error message,
+   which has been corrected.
+   (merge 18ce48918c jx/fetch-atomic-error-message-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -103,3 +143,11 @@ Fixes since v2.43
    (merge e4299d26d4 mk/doc-gitfile-more later to maint).
    (merge 792b86283b rs/incompatible-options-messages later to maint).
    (merge ea8f9494ab jk/config-cleanup later to maint).
+   (merge d1bd3a8c34 jk/mailinfo-oob-read-fix later to maint).
+   (merge c0cadb0576 ps/reftable-fixes later to maint).
+   (merge 647b5e0998 ps/chainlint-self-check-update later to maint).
+   (merge 68fcebfb1a es/add-doc-list-short-form-of-all-in-synopsis later to maint).
+   (merge bc62d27d5c jc/doc-most-refs-are-not-that-special later to maint).
+   (merge 6d6f1cd7ee jc/doc-misspelt-refs-fix later to maint).
+   (merge 37e8d795be sp/test-i18ngrep later to maint).
+   (merge fbc6526ea6 rs/t6300-compressed-size-fix later to maint).
