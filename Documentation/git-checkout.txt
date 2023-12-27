@@ -63,7 +63,9 @@ $ git checkout <branch>
 ------------
 +
 that is to say, the branch is not reset/created unless "git checkout" is
-successful.
+successful (e.g., when the branch is in use in another worktree, not
+just the current branch stays the same, but the branch is not reset to
+the start-point, either).
 
 'git checkout' --detach [<branch>]::
 'git checkout' [--detach] <commit>::

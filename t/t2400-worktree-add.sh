@@ -126,6 +126,28 @@ test_expect_success 'die the same branch is already checked out' '
 	)
 '
 
+test_expect_success 'refuse to reset a branch in use elsewhere' '
+	(
+		cd here &&
+
+		# we know we are on detached HEAD but just in case ...
+		git checkout --detach HEAD &&
+		git rev-parse --verify HEAD >old.head &&
+
+		git rev-parse --verify refs/heads/newmain >old.branch &&
+		test_must_fail git checkout -B newmain 2>error &&
+		git rev-parse --verify refs/heads/newmain >new.branch &&
+		git rev-parse --verify HEAD >new.head &&
+
+		grep "already used by worktree at" error &&
+		test_cmp old.branch new.branch &&
+		test_cmp old.head new.head &&
+
+		# and we must be still on the same detached HEAD state
+		test_must_fail git symbolic-ref HEAD
+	)
+'
+
 test_expect_success SYMLINKS 'die the same branch is already checked out (symlink)' '
 	head=$(git -C there rev-parse --git-path HEAD) &&
 	ref=$(git -C there symbolic-ref HEAD) &&
