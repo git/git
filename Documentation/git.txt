@@ -1025,10 +1025,11 @@ When first created, objects are stored in individual files, but for
 efficiency may later be compressed together into "pack files".
 
 Named pointers called refs mark interesting points in history.  A ref
-may contain the SHA-1 name of an object or the name of another ref.  Refs
-with names beginning `ref/head/` contain the SHA-1 name of the most
+may contain the SHA-1 name of an object or the name of another ref (the
+latter is called a "symbolic ref").
+Refs with names beginning `refs/head/` contain the SHA-1 name of the most
 recent commit (or "head") of a branch under development.  SHA-1 names of
-tags of interest are stored under `ref/tags/`.  A special ref named
+tags of interest are stored under `refs/tags/`.  A symbolic ref named
 `HEAD` contains the name of the currently checked-out branch.
 
 The index file is initialized with a list of all paths and, for each
