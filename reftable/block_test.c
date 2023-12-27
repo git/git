@@ -32,7 +32,7 @@ static void test_block_read_write(void)
 	int i = 0;
 	int n;
 	struct block_reader br = { 0 };
-	struct block_iter it = { .last_key = STRBUF_INIT };
+	struct block_iter it = BLOCK_ITER_INIT;
 	int j = 0;
 	struct strbuf want = STRBUF_INIT;
 
@@ -87,7 +87,7 @@ static void test_block_read_write(void)
 	block_iter_close(&it);
 
 	for (i = 0; i < N; i++) {
-		struct block_iter it = { .last_key = STRBUF_INIT };
+		struct block_iter it = BLOCK_ITER_INIT;
 		strbuf_reset(&want);
 		strbuf_addstr(&want, names[i]);
 

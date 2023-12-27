@@ -323,30 +323,28 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 		.len = it->br->block_len - it->next_off,
 	};
 	struct string_view start = in;
-	struct strbuf key = STRBUF_INIT;
 	uint8_t extra = 0;
 	int n = 0;
 
 	if (it->next_off >= it->br->block_len)
 		return 1;
 
-	n = reftable_decode_key(&key, &extra, it->last_key, in);
+	n = reftable_decode_key(&it->key, &extra, it->last_key, in);
 	if (n < 0)
 		return -1;
 
-	if (!key.len)
+	if (!it->key.len)
 		return REFTABLE_FORMAT_ERROR;
 
 	string_view_consume(&in, n);
-	n = reftable_record_decode(rec, key, extra, in, it->br->hash_size);
+	n = reftable_record_decode(rec, it->key, extra, in, it->br->hash_size);
 	if (n < 0)
 		return -1;
 	string_view_consume(&in, n);
 
 	strbuf_reset(&it->last_key);
-	strbuf_addbuf(&it->last_key, &key);
+	strbuf_addbuf(&it->last_key, &it->key);
 	it->next_off += start.len - in.len;
-	strbuf_release(&key);
 	return 0;
 }
 
@@ -377,6 +375,7 @@ int block_iter_seek(struct block_iter *it, struct strbuf *want)
 void block_iter_close(struct block_iter *it)
 {
 	strbuf_release(&it->last_key);
+	strbuf_release(&it->key);
 }
 
 int block_reader_seek(struct block_reader *br, struct block_iter *it,
@@ -387,11 +386,8 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 		.r = br,
 	};
 	struct reftable_record rec = reftable_new_record(block_reader_type(br));
-	struct strbuf key = STRBUF_INIT;
 	int err = 0;
-	struct block_iter next = {
-		.last_key = STRBUF_INIT,
-	};
+	struct block_iter next = BLOCK_ITER_INIT;
 
 	int i = binsearch(br->restart_count, &restart_key_less, &args);
 	if (args.error) {
@@ -416,8 +412,8 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 		if (err < 0)
 			goto done;
 
-		reftable_record_key(&rec, &key);
-		if (err > 0 || strbuf_cmp(&key, want) >= 0) {
+		reftable_record_key(&rec, &it->key);
+		if (err > 0 || strbuf_cmp(&it->key, want) >= 0) {
 			err = 0;
 			goto done;
 		}
@@ -426,8 +422,7 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 	}
 
 done:
-	strbuf_release(&key);
-	strbuf_release(&next.last_key);
+	block_iter_close(&next);
 	reftable_record_release(&rec);
 
 	return err;

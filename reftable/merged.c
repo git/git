@@ -52,6 +52,8 @@ static void merged_iter_close(void *p)
 		reftable_iterator_destroy(&mi->stack[i]);
 	}
 	reftable_free(mi->stack);
+	strbuf_release(&mi->key);
+	strbuf_release(&mi->entry_key);
 }
 
 static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
@@ -85,7 +87,6 @@ static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
 static int merged_iter_next_entry(struct merged_iter *mi,
 				  struct reftable_record *rec)
 {
-	struct strbuf entry_key = STRBUF_INIT;
 	struct pq_entry entry = { 0 };
 	int err = 0;
 
@@ -105,33 +106,31 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	  such a deployment, the loop below must be changed to collect all
 	  entries for the same key, and return new the newest one.
 	*/
-	reftable_record_key(&entry.rec, &entry_key);
+	reftable_record_key(&entry.rec, &mi->entry_key);
 	while (!merged_iter_pqueue_is_empty(mi->pq)) {
 		struct pq_entry top = merged_iter_pqueue_top(mi->pq);
-		struct strbuf k = STRBUF_INIT;
-		int err = 0, cmp = 0;
+		int cmp = 0;
 
-		reftable_record_key(&top.rec, &k);
+		reftable_record_key(&top.rec, &mi->key);
 
-		cmp = strbuf_cmp(&k, &entry_key);
-		strbuf_release(&k);
-
-		if (cmp > 0) {
+		cmp = strbuf_cmp(&mi->key, &mi->entry_key);
+		if (cmp > 0)
 			break;
-		}
 
 		merged_iter_pqueue_remove(&mi->pq);
 		err = merged_iter_advance_subiter(mi, top.index);
-		if (err < 0) {
-			return err;
-		}
+		if (err < 0)
+			goto done;
 		reftable_record_release(&top.rec);
 	}
 
 	reftable_record_copy_from(rec, &entry.rec, hash_size(mi->hash_id));
+
+done:
 	reftable_record_release(&entry.rec);
-	strbuf_release(&entry_key);
-	return 0;
+	strbuf_release(&mi->entry_key);
+	strbuf_release(&mi->key);
+	return err;
 }
 
 static int merged_iter_next(struct merged_iter *mi, struct reftable_record *rec)
@@ -248,6 +247,8 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 		.typ = reftable_record_type(rec),
 		.hash_id = mt->hash_id,
 		.suppress_deletions = mt->suppress_deletions,
+		.key = STRBUF_INIT,
+		.entry_key = STRBUF_INIT,
 	};
 	int n = 0;
 	int err = 0;
