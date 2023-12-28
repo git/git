@@ -17,6 +17,7 @@ test_expect_success 'setup' '
 
 		body
 	EOF
+	printf "subject\n\nbody" > basic_message_no_eol &&
 	cat >complex_message_body <<-\EOF &&
 		my subject
 
@@ -679,6 +680,12 @@ test_expect_success 'with message that has an old style conflict block' '
 	EOF
 	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success 'with message without trailing newline twice' '
+	git interpret-trailers --trailer "Cc: Peff" basic_message_no_eol > intermediary &&
+	git interpret-trailers --trailer "Cc: Peff" intermediary > actual &&
+	test_cmp intermediary actual
 '
 
 test_expect_success 'with commit complex message and trailer args' '

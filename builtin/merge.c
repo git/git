@@ -870,6 +870,7 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	}
 	if (signoff)
 		append_signoff(&msg, ignore_non_trailer(msg.buf, msg.len), 0);
+	strbuf_complete_line(&msg);
 	write_merge_heads(remoteheads);
 	write_file_buf(git_path_merge_msg(the_repository), msg.buf, msg.len);
 	if (run_commit_hook(0 < option_edit, get_index_file(), NULL,

@@ -784,6 +784,9 @@ static void read_input_file(struct strbuf *sb, const char *file)
 		if (strbuf_read(sb, fileno(stdin), 0) < 0)
 			die_errno(_("could not read from stdin"));
 	}
+
+	/* Make sure the input ends with a newline */
+	strbuf_complete_line(sb);
 }
 
 static const char *next_line(const char *str)
