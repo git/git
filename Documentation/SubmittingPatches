@@ -606,7 +606,8 @@ If a branch does not pass all test cases then it will be marked with a
 red +x+, instead of a green check. In that case, you can click on the
 failing job and navigate to "ci/run-build-and-tests.sh" and/or
 "ci/print-test-failures.sh". You can also download "Artifacts" which
-are tarred (or zipped) archives with test data relevant for debugging.
+are zip archives containing tarred (or zipped) archives with test data
+relevant for debugging.
 
 Then fix the problem and push your fix to your GitHub fork. This will
 trigger a new CI build to ensure all tests pass.
