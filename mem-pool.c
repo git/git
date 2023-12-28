@@ -99,9 +99,9 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len)
 
 	if (!p) {
 		if (len >= (pool->block_alloc / 2))
-			return mem_pool_alloc_block(pool, len, pool->mp_block);
-
-		p = mem_pool_alloc_block(pool, pool->block_alloc, NULL);
+			p = mem_pool_alloc_block(pool, len, pool->mp_block);
+		else
+			p = mem_pool_alloc_block(pool, pool->block_alloc, NULL);
 	}
 
 	r = p->next_free;
