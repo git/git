@@ -368,6 +368,9 @@ While you can also create your own trailer if the situation warrants it, we
 encourage you to instead use one of the common trailers in this project
 highlighted above.
 
+Only capitalize the very first letter of tags, i.e. favor
+"Signed-off-by" over "Signed-Off-By" and "Acked-by:" over "Acked-By".
+
 [[git-tools]]
 === Generate your patch using Git tools out of your commits.
 
