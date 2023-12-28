@@ -602,11 +602,11 @@ After the initial setup, CI will run whenever you push new changes
 to your fork of Git on GitHub.  You can monitor the test state of all your
 branches here: `https://github.com/<Your GitHub handle>/git/actions/workflows/main.yml`
 
-If a branch did not pass all test cases then it is marked with a red
-cross. In that case you can click on the failing job and navigate to
-"ci/run-build-and-tests.sh" and/or "ci/print-test-failures.sh". You
-can also download "Artifacts" which are tarred (or zipped) archives
-with test data relevant for debugging.
+If a branch does not pass all test cases then it will be marked with a
+red +x+, instead of a green check. In that case, you can click on the
+failing job and navigate to "ci/run-build-and-tests.sh" and/or
+"ci/print-test-failures.sh". You can also download "Artifacts" which
+are tarred (or zipped) archives with test data relevant for debugging.
 
 Then fix the problem and push your fix to your GitHub fork. This will
 trigger a new CI build to ensure all tests pass.
