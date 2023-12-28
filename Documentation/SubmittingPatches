@@ -699,7 +699,7 @@ message to an external program, and this is a handy way to drive
 `git am`.  However, if the message is MIME encoded, what is
 piped into the program is the representation you see in your
 `*Article*` buffer after unwrapping MIME.  This is often not what
-you would want for two reasons.  It tends to screw up non ASCII
+you would want for two reasons.  It tends to screw up non-ASCII
 characters (most notably in people's names), and also
 whitespaces (fatal in patches).  Running "C-u g" to display the
 message in raw form before using "|" to run the pipe can work
