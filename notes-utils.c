@@ -112,6 +112,8 @@ static int notes_rewrite_config(const char *k, const char *v,
 		}
 		return 0;
 	} else if (!c->refs_from_env && !strcmp(k, "notes.rewriteref")) {
+		if (!v)
+			return config_error_nonbool(k);
 		/* note that a refs/ prefix is implied in the
 		 * underlying for_each_glob_ref */
 		if (starts_with(v, "refs/notes/"))

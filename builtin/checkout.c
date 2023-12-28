@@ -1202,6 +1202,8 @@ static int git_checkout_config(const char *var, const char *value,
 	struct checkout_opts *opts = cb;
 
 	if (!strcmp(var, "diff.ignoresubmodules")) {
+		if (!value)
+			return config_error_nonbool(var);
 		handle_ignore_submodules_arg(&opts->diff_options, value);
 		return 0;
 	}
@@ -1516,6 +1518,26 @@ static void die_if_some_operation_in_progress(void)
 	wt_status_state_free_buffers(&state);
 }
 
+/*
+ * die if attempting to checkout an existing branch that is in use
+ * in another worktree, unless ignore-other-wortrees option is given.
+ * The check is bypassed when the branch is already the current one,
+ * as it will not make things any worse.
+ */
+static void die_if_switching_to_a_branch_in_use(struct checkout_opts *opts,
+						const char *full_ref)
+{
+	int flags;
+	char *head_ref;
+
+	if (opts->ignore_other_worktrees)
+		return;
+	head_ref = resolve_refdup("HEAD", 0, NULL, &flags);
+	if (head_ref && (!(flags & REF_ISSYMREF) || strcmp(head_ref, full_ref)))
+		die_if_checked_out(full_ref, 1);
+	free(head_ref);
+}
+
 static int checkout_branch(struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
@@ -1576,14 +1598,15 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (!opts->can_switch_when_in_progress)
 		die_if_some_operation_in_progress();
 
-	if (new_branch_info->path && !opts->force_detach && !opts->new_branch &&
-	    !opts->ignore_other_worktrees) {
-		int flag;
-		char *head_ref = resolve_refdup("HEAD", 0, NULL, &flag);
-		if (head_ref &&
-		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new_branch_info->path)))
-			die_if_checked_out(new_branch_info->path, 1);
-		free(head_ref);
+	/* "git checkout <branch>" */
+	if (new_branch_info->path && !opts->force_detach && !opts->new_branch)
+		die_if_switching_to_a_branch_in_use(opts, new_branch_info->path);
+
+	/* "git checkout -B <branch>" */
+	if (opts->new_branch_force) {
+		char *full_ref = xstrfmt("refs/heads/%s", opts->new_branch);
+		die_if_switching_to_a_branch_in_use(opts, full_ref);
+		free(full_ref);
 	}
 
 	if (!new_branch_info->commit && opts->new_branch) {

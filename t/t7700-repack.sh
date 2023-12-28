@@ -271,7 +271,7 @@ test_expect_success 'repacking fails when missing .pack actually means missing o
 		ls .git/objects/pack/*.pack >before-pack-dir &&
 
 		test_must_fail git fsck &&
-		test_must_fail git repack --cruft -d 2>err &&
+		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git repack --cruft -d 2>err &&
 		grep "bad object" err &&
 
 		# Before failing, the repack did not modify the

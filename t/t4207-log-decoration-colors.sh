@@ -70,8 +70,14 @@ ${c_tag}tag: ${c_reset}${c_tag}A${c_reset}${c_commit})${c_reset} A
 	cmp_filtered_decorations
 '
 
+remove_replace_refs () {
+	git for-each-ref 'refs/replace*/**' --format='delete %(refname)' >in &&
+	git update-ref --stdin <in &&
+	rm in
+}
+
 test_expect_success 'test coloring with replace-objects' '
-	test_when_finished rm -rf .git/refs/replace* &&
+	test_when_finished remove_replace_refs &&
 	test_commit C &&
 	test_commit D &&
 
@@ -99,7 +105,7 @@ EOF
 '
 
 test_expect_success 'test coloring with grafted commit' '
-	test_when_finished rm -rf .git/refs/replace* &&
+	test_when_finished remove_replace_refs &&
 
 	git replace --graft HEAD HEAD~2 &&
 

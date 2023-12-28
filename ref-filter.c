@@ -2508,17 +2508,12 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 		return 0;
 
 	/*
-	 * If it is a tag object, see if we use a value that derefs
-	 * the object, and if we do grab the object it refers to.
+	 * If it is a tag object, see if we use the peeled value. If we do,
+	 * grab the peeled OID.
 	 */
-	oi_deref.oid = *get_tagged_oid((struct tag *)obj);
+	if (need_tagged && peel_iterated_oid(&obj->oid, &oi_deref.oid))
+		die("bad tag");
 
-	/*
-	 * NEEDSWORK: This derefs tag only once, which
-	 * is good to deal with chains of trust, but
-	 * is not consistent with what deref_tag() does
-	 * which peels the onion to the core.
-	 */
 	return get_object(ref, 1, &obj, &oi_deref, err);
 }
 
@@ -2716,15 +2711,18 @@ static struct ref_array_item *new_ref_array_item(const char *refname,
 	return ref;
 }
 
+static void ref_array_append(struct ref_array *array, struct ref_array_item *ref)
+{
+	ALLOC_GROW(array->items, array->nr + 1, array->alloc);
+	array->items[array->nr++] = ref;
+}
+
 struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
 				      const struct object_id *oid)
 {
 	struct ref_array_item *ref = new_ref_array_item(refname, oid);
-
-	ALLOC_GROW(array->items, array->nr + 1, array->alloc);
-	array->items[array->nr++] = ref;
-
+	ref_array_append(array, ref);
 	return ref;
 }
 
@@ -2761,48 +2759,36 @@ static int filter_ref_kind(struct ref_filter *filter, const char *refname)
 	return ref_kind_from_refname(refname);
 }
 
-struct ref_filter_cbdata {
-	struct ref_array *array;
-	struct ref_filter *filter;
-	struct contains_cache contains_cache;
-	struct contains_cache no_contains_cache;
-};
-
-/*
- * A call-back given to for_each_ref().  Filter refs and keep them for
- * later object processing.
- */
-static int ref_filter_handler(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+static struct ref_array_item *apply_ref_filter(const char *refname, const struct object_id *oid,
+			    int flag, struct ref_filter *filter)
 {
-	struct ref_filter_cbdata *ref_cbdata = cb_data;
-	struct ref_filter *filter = ref_cbdata->filter;
 	struct ref_array_item *ref;
 	struct commit *commit = NULL;
 	unsigned int kind;
 
 	if (flag & REF_BAD_NAME) {
 		warning(_("ignoring ref with broken name %s"), refname);
-		return 0;
+		return NULL;
 	}
 
 	if (flag & REF_ISBROKEN) {
 		warning(_("ignoring broken ref %s"), refname);
-		return 0;
+		return NULL;
 	}
 
 	/* Obtain the current ref kind from filter_ref_kind() and ignore unwanted refs. */
 	kind = filter_ref_kind(filter, refname);
 	if (!(kind & filter->kind))
-		return 0;
+		return NULL;
 
 	if (!filter_pattern_match(filter, refname))
-		return 0;
+		return NULL;
 
 	if (filter_exclude_match(filter, refname))
-		return 0;
+		return NULL;
 
 	if (filter->points_at.nr && !match_points_at(&filter->points_at, oid, refname))
-		return 0;
+		return NULL;
 
 	/*
 	 * A merge filter is applied on refs pointing to commits. Hence
@@ -2813,15 +2799,15 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 	    filter->with_commit || filter->no_commit || filter->verbose) {
 		commit = lookup_commit_reference_gently(the_repository, oid, 1);
 		if (!commit)
-			return 0;
+			return NULL;
 		/* We perform the filtering for the '--contains' option... */
 		if (filter->with_commit &&
-		    !commit_contains(filter, commit, filter->with_commit, &ref_cbdata->contains_cache))
-			return 0;
+		    !commit_contains(filter, commit, filter->with_commit, &filter->internal.contains_cache))
+			return NULL;
 		/* ...or for the `--no-contains' option */
 		if (filter->no_commit &&
-		    commit_contains(filter, commit, filter->no_commit, &ref_cbdata->no_contains_cache))
-			return 0;
+		    commit_contains(filter, commit, filter->no_commit, &filter->internal.no_contains_cache))
+			return NULL;
 	}
 
 	/*
@@ -2829,10 +2815,31 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 	 * to do its job and the resulting list may yet to be pruned
 	 * by maxcount logic.
 	 */
-	ref = ref_array_push(ref_cbdata->array, refname, oid);
+	ref = new_ref_array_item(refname, oid);
 	ref->commit = commit;
 	ref->flag = flag;
 	ref->kind = kind;
+
+	return ref;
+}
+
+struct ref_filter_cbdata {
+	struct ref_array *array;
+	struct ref_filter *filter;
+};
+
+/*
+ * A call-back given to for_each_ref().  Filter refs and keep them for
+ * later object processing.
+ */
+static int filter_one(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+{
+	struct ref_filter_cbdata *ref_cbdata = cb_data;
+	struct ref_array_item *ref;
+
+	ref = apply_ref_filter(refname, oid, flag, ref_cbdata->filter);
+	if (ref)
+		ref_array_append(ref_cbdata->array, ref);
 
 	return 0;
 }
@@ -2849,6 +2856,49 @@ static void free_array_item(struct ref_array_item *item)
 	}
 	free(item->counts);
 	free(item);
+}
+
+struct ref_filter_and_format_cbdata {
+	struct ref_filter *filter;
+	struct ref_format *format;
+
+	struct ref_filter_and_format_internal {
+		int count;
+	} internal;
+};
+
+static int filter_and_format_one(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+{
+	struct ref_filter_and_format_cbdata *ref_cbdata = cb_data;
+	struct ref_array_item *ref;
+	struct strbuf output = STRBUF_INIT, err = STRBUF_INIT;
+
+	ref = apply_ref_filter(refname, oid, flag, ref_cbdata->filter);
+	if (!ref)
+		return 0;
+
+	if (format_ref_array_item(ref, ref_cbdata->format, &output, &err))
+		die("%s", err.buf);
+
+	if (output.len || !ref_cbdata->format->array_opts.omit_empty) {
+		fwrite(output.buf, 1, output.len, stdout);
+		putchar('\n');
+	}
+
+	strbuf_release(&output);
+	strbuf_release(&err);
+	free_array_item(ref);
+
+	/*
+	 * Increment the running count of refs that match the filter. If
+	 * max_count is set and we've reached the max, stop the ref
+	 * iteration by returning a nonzero value.
+	 */
+	if (ref_cbdata->format->array_opts.max_count &&
+	    ++ref_cbdata->internal.count >= ref_cbdata->format->array_opts.max_count)
+		return 1;
+
+	return 0;
 }
 
 /* Free all memory allocated for ref_array */
@@ -2969,6 +3019,43 @@ void filter_ahead_behind(struct repository *r,
 	free(commits);
 }
 
+static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref_fn fn, void *cb_data)
+{
+	int ret = 0;
+
+	filter->kind = type & FILTER_REFS_KIND_MASK;
+
+	init_contains_cache(&filter->internal.contains_cache);
+	init_contains_cache(&filter->internal.no_contains_cache);
+
+	/*  Simple per-ref filtering */
+	if (!filter->kind)
+		die("filter_refs: invalid type");
+	else {
+		/*
+		 * For common cases where we need only branches or remotes or tags,
+		 * we only iterate through those refs. If a mix of refs is needed,
+		 * we iterate over all refs and filter out required refs with the help
+		 * of filter_ref_kind().
+		 */
+		if (filter->kind == FILTER_REFS_BRANCHES)
+			ret = for_each_fullref_in("refs/heads/", fn, cb_data);
+		else if (filter->kind == FILTER_REFS_REMOTES)
+			ret = for_each_fullref_in("refs/remotes/", fn, cb_data);
+		else if (filter->kind == FILTER_REFS_TAGS)
+			ret = for_each_fullref_in("refs/tags/", fn, cb_data);
+		else if (filter->kind & FILTER_REFS_ALL)
+			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
+		if (!ret && (filter->kind & FILTER_REFS_DETACHED_HEAD))
+			head_ref(fn, cb_data);
+	}
+
+	clear_contains_cache(&filter->internal.contains_cache);
+	clear_contains_cache(&filter->internal.no_contains_cache);
+
+	return ret;
+}
+
 /*
  * API for filtering a set of refs. Based on the type of refs the user
  * has requested, we iterate through those refs and apply filters
@@ -2984,38 +3071,10 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	ref_cbdata.array = array;
 	ref_cbdata.filter = filter;
 
-	filter->kind = type & FILTER_REFS_KIND_MASK;
-
 	save_commit_buffer_orig = save_commit_buffer;
 	save_commit_buffer = 0;
 
-	init_contains_cache(&ref_cbdata.contains_cache);
-	init_contains_cache(&ref_cbdata.no_contains_cache);
-
-	/*  Simple per-ref filtering */
-	if (!filter->kind)
-		die("filter_refs: invalid type");
-	else {
-		/*
-		 * For common cases where we need only branches or remotes or tags,
-		 * we only iterate through those refs. If a mix of refs is needed,
-		 * we iterate over all refs and filter out required refs with the help
-		 * of filter_ref_kind().
-		 */
-		if (filter->kind == FILTER_REFS_BRANCHES)
-			ret = for_each_fullref_in("refs/heads/", ref_filter_handler, &ref_cbdata);
-		else if (filter->kind == FILTER_REFS_REMOTES)
-			ret = for_each_fullref_in("refs/remotes/", ref_filter_handler, &ref_cbdata);
-		else if (filter->kind == FILTER_REFS_TAGS)
-			ret = for_each_fullref_in("refs/tags/", ref_filter_handler, &ref_cbdata);
-		else if (filter->kind & FILTER_REFS_ALL)
-			ret = for_each_fullref_in_pattern(filter, ref_filter_handler, &ref_cbdata);
-		if (!ret && (filter->kind & FILTER_REFS_DETACHED_HEAD))
-			head_ref(ref_filter_handler, &ref_cbdata);
-	}
-
-	clear_contains_cache(&ref_cbdata.contains_cache);
-	clear_contains_cache(&ref_cbdata.no_contains_cache);
+	ret = do_filter_refs(filter, type, filter_one, &ref_cbdata);
 
 	/*  Filters that need revision walking */
 	reach_filter(array, &filter->reachable_from, INCLUDE_REACHED);
@@ -3023,6 +3082,51 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 
 	save_commit_buffer = save_commit_buffer_orig;
 	return ret;
+}
+
+static inline int can_do_iterative_format(struct ref_filter *filter,
+					  struct ref_sorting *sorting,
+					  struct ref_format *format)
+{
+	/*
+	 * Filtering & formatting results within a single ref iteration
+	 * callback is not compatible with options that require
+	 * post-processing a filtered ref_array. These include:
+	 * - filtering on reachability
+	 * - sorting the filtered results
+	 * - including ahead-behind information in the formatted output
+	 */
+	return !(filter->reachable_from ||
+		 filter->unreachable_from ||
+		 sorting ||
+		 format->bases.nr);
+}
+
+void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
+			    struct ref_sorting *sorting,
+			    struct ref_format *format)
+{
+	if (can_do_iterative_format(filter, sorting, format)) {
+		int save_commit_buffer_orig;
+		struct ref_filter_and_format_cbdata ref_cbdata = {
+			.filter = filter,
+			.format = format,
+		};
+
+		save_commit_buffer_orig = save_commit_buffer;
+		save_commit_buffer = 0;
+
+		do_filter_refs(filter, type, filter_and_format_one, &ref_cbdata);
+
+		save_commit_buffer = save_commit_buffer_orig;
+	} else {
+		struct ref_array array = { 0 };
+		filter_refs(&array, filter, type);
+		filter_ahead_behind(the_repository, format, &array);
+		ref_array_sort(sorting, &array);
+		print_formatted_ref_array(&array, format);
+		ref_array_clear(&array);
+	}
 }
 
 static int compare_detached_head(struct ref_array_item *a, struct ref_array_item *b)
@@ -3142,7 +3246,8 @@ void ref_sorting_set_sort_flags_all(struct ref_sorting *sorting,
 
 void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
 {
-	QSORT_S(array->items, array->nr, compare_refs, sorting);
+	if (sorting)
+		QSORT_S(array->items, array->nr, compare_refs, sorting);
 }
 
 static void append_literal(const char *cp, const char *ep, struct ref_formatting_state *state)
@@ -3213,6 +3318,29 @@ int format_ref_array_item(struct ref_array_item *info,
 	return 0;
 }
 
+void print_formatted_ref_array(struct ref_array *array, struct ref_format *format)
+{
+	int total;
+	struct strbuf output = STRBUF_INIT, err = STRBUF_INIT;
+
+	total = format->array_opts.max_count;
+	if (!total || array->nr < total)
+		total = array->nr;
+	for (int i = 0; i < total; i++) {
+		strbuf_reset(&err);
+		strbuf_reset(&output);
+		if (format_ref_array_item(array->items[i], format, &output, &err))
+			die("%s", err.buf);
+		if (output.len || !format->array_opts.omit_empty) {
+			fwrite(output.buf, 1, output.len, stdout);
+			putchar('\n');
+		}
+	}
+
+	strbuf_release(&err);
+	strbuf_release(&output);
+}
+
 void pretty_print_ref(const char *name, const struct object_id *oid,
 		      struct ref_format *format)
 {
@@ -3248,18 +3376,6 @@ static int parse_sorting_atom(const char *atom)
 	return res;
 }
 
-/*  If no sorting option is given, use refname to sort as default */
-static struct ref_sorting *ref_default_sorting(void)
-{
-	static const char cstr_name[] = "refname";
-
-	struct ref_sorting *sorting = xcalloc(1, sizeof(*sorting));
-
-	sorting->next = NULL;
-	sorting->atom = parse_sorting_atom(cstr_name);
-	return sorting;
-}
-
 static void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *arg)
 {
 	struct ref_sorting *s;
@@ -3283,9 +3399,7 @@ struct ref_sorting *ref_sorting_options(struct string_list *options)
 	struct string_list_item *item;
 	struct ref_sorting *sorting = NULL, **tail = &sorting;
 
-	if (!options->nr) {
-		sorting = ref_default_sorting();
-	} else {
+	if (options->nr) {
 		for_each_string_list_item(item, options)
 			parse_ref_sorting(tail, item->string);
 	}

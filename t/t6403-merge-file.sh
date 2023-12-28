@@ -56,7 +56,67 @@ test_expect_success 'setup' '
 	deduxit me super semitas jusitiae,
 	EOF
 
-	printf "propter nomen suum." >>new4.txt
+	printf "propter nomen suum." >>new4.txt &&
+
+	cat >base.c <<-\EOF &&
+	int f(int x, int y)
+	{
+		if (x == 0)
+		{
+			return y;
+		}
+		return x;
+	}
+
+	int g(size_t u)
+	{
+		while (u < 30)
+		{
+			u++;
+		}
+		return u;
+	}
+	EOF
+
+	cat >ours.c <<-\EOF &&
+	int g(size_t u)
+	{
+		while (u < 30)
+		{
+			u++;
+		}
+		return u;
+	}
+
+	int h(int x, int y, int z)
+	{
+		if (z == 0)
+		{
+			return x;
+		}
+		return y;
+	}
+	EOF
+
+	cat >theirs.c <<-\EOF
+	int f(int x, int y)
+	{
+		if (x == 0)
+		{
+			return y;
+		}
+		return x;
+	}
+
+	int g(size_t u)
+	{
+		while (u > 34)
+		{
+			u--;
+		}
+		return u;
+	}
+	EOF
 '
 
 test_expect_success 'merge with no changes' '
@@ -445,6 +505,68 @@ test_expect_success '--object-id fails without repository' '
 	empty="$(test_oid empty_blob)" &&
 	nongit test_must_fail git merge-file --object-id $empty $empty $empty 2>err &&
 	grep "not a git repository" err
+'
+
+test_expect_success 'merging C files with "myers" diff algorithm creates some spurious conflicts' '
+	cat >expect.c <<-\EOF &&
+	int g(size_t u)
+	{
+		while (u < 30)
+		{
+			u++;
+		}
+		return u;
+	}
+
+	int h(int x, int y, int z)
+	{
+	<<<<<<< ours.c
+		if (z == 0)
+	||||||| base.c
+		while (u < 30)
+	=======
+		while (u > 34)
+	>>>>>>> theirs.c
+		{
+	<<<<<<< ours.c
+			return x;
+	||||||| base.c
+			u++;
+	=======
+			u--;
+	>>>>>>> theirs.c
+		}
+		return y;
+	}
+	EOF
+
+	test_must_fail git merge-file -p --diff3 --diff-algorithm myers ours.c base.c theirs.c >myers_output.c &&
+	test_cmp expect.c myers_output.c
+'
+
+test_expect_success 'merging C files with "histogram" diff algorithm avoids some spurious conflicts' '
+	cat >expect.c <<-\EOF &&
+	int g(size_t u)
+	{
+		while (u > 34)
+		{
+			u--;
+		}
+		return u;
+	}
+
+	int h(int x, int y, int z)
+	{
+		if (z == 0)
+		{
+			return x;
+		}
+		return y;
+	}
+	EOF
+
+	git merge-file -p --diff3 --diff-algorithm histogram ours.c base.c theirs.c >histogram_output.c &&
+	test_cmp expect.c histogram_output.c
 '
 
 test_done

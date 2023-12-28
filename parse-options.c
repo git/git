@@ -279,7 +279,8 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 
 	opt_name = optnamearg(opt, arg, flags);
 	other_opt_name = optnamearg(elem->opt, elem->arg, elem->flags);
-	error(_("%s is incompatible with %s"), opt_name, other_opt_name);
+	error(_("options '%s' and '%s' cannot be used together"),
+	      opt_name, other_opt_name);
 	free(opt_name);
 	free(other_opt_name);
 	return -1;
@@ -929,9 +930,14 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 			continue;
 		}
 
-		if (!arg[2] /* "--" */ ||
-		    !strcmp(arg + 2, "end-of-options")) {
+		if (!arg[2] /* "--" */) {
 			if (!(ctx->flags & PARSE_OPT_KEEP_DASHDASH)) {
+				ctx->argc--;
+				ctx->argv++;
+			}
+			break;
+		} else if (!strcmp(arg + 2, "end-of-options")) {
+			if (!(ctx->flags & PARSE_OPT_KEEP_UNKNOWN_OPT)) {
 				ctx->argc--;
 				ctx->argv++;
 			}

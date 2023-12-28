@@ -298,16 +298,19 @@ static int cmd_update_ref(struct ref_store *refs, const char **argv)
 	const char *new_sha1_buf = notnull(*argv++, "new-sha1");
 	const char *old_sha1_buf = notnull(*argv++, "old-sha1");
 	unsigned int flags = arg_flags(*argv++, "flags", transaction_flags);
-	struct object_id old_oid;
+	struct object_id old_oid, *old_oid_ptr = NULL;
 	struct object_id new_oid;
 
-	if (get_oid_hex(old_sha1_buf, &old_oid))
-		die("cannot parse %s as %s", old_sha1_buf, the_hash_algo->name);
+	if (*old_sha1_buf) {
+		if (get_oid_hex(old_sha1_buf, &old_oid))
+			die("cannot parse %s as %s", old_sha1_buf, the_hash_algo->name);
+		old_oid_ptr = &old_oid;
+	}
 	if (get_oid_hex(new_sha1_buf, &new_oid))
 		die("cannot parse %s as %s", new_sha1_buf, the_hash_algo->name);
 
 	return refs_update_ref(refs, msg, refname,
-			       &new_oid, &old_oid,
+			       &new_oid, old_oid_ptr,
 			       flags, UPDATE_REFS_DIE_ON_ERR);
 }
 

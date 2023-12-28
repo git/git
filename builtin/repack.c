@@ -1203,18 +1203,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (delete_redundant && repository_format_precious_objects)
 		die(_("cannot delete packs in a precious-objects repo"));
 
-	if (keep_unreachable &&
-	    (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE)))
-		die(_("options '%s' and '%s' cannot be used together"), "--keep-unreachable", "-A");
+	die_for_incompatible_opt3(unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE), "-A",
+				  keep_unreachable, "-k/--keep-unreachable",
+				  pack_everything & PACK_CRUFT, "--cruft");
 
-	if (pack_everything & PACK_CRUFT) {
+	if (pack_everything & PACK_CRUFT)
 		pack_everything |= ALL_INTO_ONE;
-
-		if (unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE))
-			die(_("options '%s' and '%s' cannot be used together"), "--cruft", "-A");
-		if (keep_unreachable)
-			die(_("options '%s' and '%s' cannot be used together"), "--cruft", "-k");
-	}
 
 	if (write_bitmaps < 0) {
 		if (!write_midx &&

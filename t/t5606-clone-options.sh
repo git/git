@@ -64,7 +64,7 @@ test_expect_success 'disallows --bundle-uri with shallow options' '
 	for option in --depth=1 --shallow-since=01-01-2000 --shallow-exclude=HEAD
 	do
 		test_must_fail git clone --bundle-uri=bundle $option from to 2>err &&
-		grep "bundle-uri is incompatible" err || return 1
+		grep "bundle-uri.* cannot be used together" err || return 1
 	done
 '
 

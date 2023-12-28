@@ -14,9 +14,13 @@ test_expect_success 'setup' '
 		test_commit B &&
 		test_commit C &&
 
-		cp .git/logs/HEAD HEAD.old &&
+		git reflog HEAD >expect &&
 		git reset --hard HEAD~ &&
-		cp HEAD.old .git/logs/HEAD
+		# Make sure that the reflog does not point to the same commit
+		# as HEAD.
+		git reflog delete HEAD@{0} &&
+		git reflog HEAD >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -25,7 +29,7 @@ test_reflog_updateref () {
 	shift
 	args="$@"
 
-	test_expect_success REFFILES "get '$exp' with '$args'"  '
+	test_expect_success "get '$exp' with '$args'"  '
 		test_when_finished "rm -rf copy" &&
 		cp -R repo copy &&
 

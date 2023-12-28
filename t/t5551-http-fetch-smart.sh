@@ -359,7 +359,9 @@ create_tags () {
 
 	# now assign tags to all the dangling commits we created above
 	tag=$(perl -e "print \"bla\" x 30") &&
-	sed -e "s|^:\([^ ]*\) \(.*\)$|\2 refs/tags/$tag-\1|" <marks >>packed-refs
+	sed -e "s|^:\([^ ]*\) \(.*\)$|create refs/tags/$tag-\1 \2|" <marks >input &&
+	git update-ref --stdin <input &&
+	rm input
 }
 
 test_expect_success 'create 2,000 tags in the repo' '

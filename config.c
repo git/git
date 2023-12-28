@@ -1386,10 +1386,15 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "core.checkstat")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (!strcasecmp(value, "default"))
 			check_stat = 1;
 		else if (!strcasecmp(value, "minimal"))
 			check_stat = 0;
+		else
+			return error(_("invalid value for '%s': '%s'"),
+				     var, value);
 	}
 
 	if (!strcmp(var, "core.quotepath")) {
@@ -1546,12 +1551,12 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.checkroundtripencoding")) {
-		check_roundtrip_encoding = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.checkroundtripencoding"))
+		return git_config_string(&check_roundtrip_encoding, var, value);
 
 	if (!strcmp(var, "core.notesref")) {
+		if (!value)
+			return config_error_nonbool(var);
 		notes_ref_name = xstrdup(value);
 		return 0;
 	}
@@ -1619,6 +1624,8 @@ static int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.createobject")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (!strcmp(value, "rename"))
 			object_creation_mode = OBJECT_CREATION_USES_RENAMES;
 		else if (!strcmp(value, "link"))

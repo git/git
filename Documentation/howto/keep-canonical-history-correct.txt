@@ -213,4 +213,4 @@ The procedure will result in a history that looks like this:
 		 B0--B1---------B2
 ------------
 
-See also http://git-blame.blogspot.com/2013/09/fun-with-first-parent-history.html
+See also https://git-blame.blogspot.com/2013/09/fun-with-first-parent-history.html

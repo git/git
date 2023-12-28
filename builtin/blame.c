@@ -748,6 +748,8 @@ static int git_blame_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "blame.coloring")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (!strcmp(value, "repeatedLines")) {
 			coloring_mode |= OUTPUT_COLOR_LINE;
 		} else if (!strcmp(value, "highlightRecent")) {

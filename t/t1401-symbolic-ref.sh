@@ -171,8 +171,8 @@ test_expect_success 'symbolic-ref refuses invalid target for non-HEAD' '
 '
 
 test_expect_success 'symbolic-ref allows top-level target for non-HEAD' '
-	git symbolic-ref refs/heads/top-level FETCH_HEAD &&
-	git update-ref FETCH_HEAD HEAD &&
+	git symbolic-ref refs/heads/top-level ORIG_HEAD &&
+	git update-ref ORIG_HEAD HEAD &&
 	test_cmp_rev top-level HEAD
 '
 

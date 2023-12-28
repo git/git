@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use 5.008;
+use 5.008001;
 use strict;
 use warnings;
 use Getopt::Std;

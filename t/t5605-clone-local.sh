@@ -65,7 +65,7 @@ test_expect_success 'Even without -l, local will make a hardlink' '
 '
 
 test_expect_success 'local clone of repo with nonexistent ref in HEAD' '
-	echo "ref: refs/heads/nonexistent" > a.git/HEAD &&
+	git -C a.git symbolic-ref HEAD refs/heads/nonexistent &&
 	git clone a d &&
 	(cd d &&
 	git fetch &&
@@ -157,7 +157,7 @@ test_expect_success 'cloning locally respects "-u" for fetching refs' '
 	test_must_fail git clone --bare -u false a should_not_work.git
 '
 
-test_expect_success 'local clone from repo with corrupt refs fails gracefully' '
+test_expect_success REFFILES 'local clone from repo with corrupt refs fails gracefully' '
 	git init corrupt &&
 	test_commit -C corrupt one &&
 	echo a >corrupt/.git/refs/heads/topic &&

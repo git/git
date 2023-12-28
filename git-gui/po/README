@@ -39,7 +39,7 @@ in your language?
 If you do not know what your language should be named, you need to find
 it.  This currently follows ISO 639-1 two letter codes:
 
-	http://www.loc.gov/standards/iso639-2/php/code_list.php
+	https://www.loc.gov/standards/iso639-2/php/code_list.php
 
 For example, if you are preparing a translation for Afrikaans, the
 language code is "af".  If there already is a translation for your

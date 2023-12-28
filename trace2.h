@@ -337,8 +337,8 @@ struct key_value_info;
 void trace2_def_param_fl(const char *file, int line, const char *param,
 			 const char *value, const struct key_value_info *kvi);
 
-#define trace2_def_param(param, value) \
-	trace2_def_param_fl(__FILE__, __LINE__, (param), (value))
+#define trace2_def_param(param, value, kvi) \
+	trace2_def_param_fl(__FILE__, __LINE__, (param), (value), (kvi))
 
 /*
  * Tell trace2 about a newly instantiated repo object and assign

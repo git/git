@@ -11956,7 +11956,7 @@ proc formatdate {d} {
 }
 
 # This list of encoding names and aliases is distilled from
-# http://www.iana.org/assignments/character-sets.
+# https://www.iana.org/assignments/character-sets.
 # Not all of them are supported by Tcl.
 set encoding_aliases {
     { ANSI_X3.4-1968 iso-ir-6 ANSI_X3.4-1986 ISO_646.irv:1991 ASCII
@@ -12472,7 +12472,7 @@ if {[tk windowingsystem] eq "aqua"} {
 
 catch {
     # follow the XDG base directory specification by default. See
-    # http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
     if {[info exists env(XDG_CONFIG_HOME)] && $env(XDG_CONFIG_HOME) ne ""} {
         # XDG_CONFIG_HOME environment variable is set
         set config_file [file join $env(XDG_CONFIG_HOME) git gitk]

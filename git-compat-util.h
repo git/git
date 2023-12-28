@@ -225,6 +225,7 @@ struct strbuf;
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <string.h>
 #ifdef HAVE_STRINGS_H
 #include <strings.h> /* for strcasecmp() */
@@ -684,11 +685,11 @@ report_fn get_warn_routine(void);
 void set_die_is_recursing_routine(int (*routine)(void));
 
 /*
- * If the string "str" begins with the string found in "prefix", return 1.
+ * If the string "str" begins with the string found in "prefix", return true.
  * The "out" parameter is set to "str + strlen(prefix)" (i.e., to the point in
  * the string right after the prefix).
  *
- * Otherwise, return 0 and leave "out" untouched.
+ * Otherwise, return false and leave "out" untouched.
  *
  * Examples:
  *
@@ -699,57 +700,58 @@ void set_die_is_recursing_routine(int (*routine)(void));
  *   [skip prefix if present, otherwise use whole string]
  *   skip_prefix(name, "refs/heads/", &name);
  */
-static inline int skip_prefix(const char *str, const char *prefix,
-			      const char **out)
+static inline bool skip_prefix(const char *str, const char *prefix,
+			       const char **out)
 {
 	do {
 		if (!*prefix) {
 			*out = str;
-			return 1;
+			return true;
 		}
 	} while (*str++ == *prefix++);
-	return 0;
+	return false;
 }
 
 /*
  * Like skip_prefix, but promises never to read past "len" bytes of the input
  * buffer, and returns the remaining number of bytes in "out" via "outlen".
  */
-static inline int skip_prefix_mem(const char *buf, size_t len,
-				  const char *prefix,
-				  const char **out, size_t *outlen)
+static inline bool skip_prefix_mem(const char *buf, size_t len,
+				   const char *prefix,
+				   const char **out, size_t *outlen)
 {
 	size_t prefix_len = strlen(prefix);
 	if (prefix_len <= len && !memcmp(buf, prefix, prefix_len)) {
 		*out = buf + prefix_len;
 		*outlen = len - prefix_len;
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 /*
- * If buf ends with suffix, return 1 and subtract the length of the suffix
- * from *len. Otherwise, return 0 and leave *len untouched.
+ * If buf ends with suffix, return true and subtract the length of the suffix
+ * from *len. Otherwise, return false and leave *len untouched.
  */
-static inline int strip_suffix_mem(const char *buf, size_t *len,
-				   const char *suffix)
+static inline bool strip_suffix_mem(const char *buf, size_t *len,
+				    const char *suffix)
 {
 	size_t suflen = strlen(suffix);
 	if (*len < suflen || memcmp(buf + (*len - suflen), suffix, suflen))
-		return 0;
+		return false;
 	*len -= suflen;
-	return 1;
+	return true;
 }
 
 /*
- * If str ends with suffix, return 1 and set *len to the size of the string
- * without the suffix. Otherwise, return 0 and set *len to the size of the
+ * If str ends with suffix, return true and set *len to the size of the string
+ * without the suffix. Otherwise, return false and set *len to the size of the
  * string.
  *
  * Note that we do _not_ NUL-terminate str to the new length.
  */
-static inline int strip_suffix(const char *str, const char *suffix, size_t *len)
+static inline bool strip_suffix(const char *str, const char *suffix,
+				size_t *len)
 {
 	*len = strlen(str);
 	return strip_suffix_mem(str, len, suffix);

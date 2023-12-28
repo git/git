@@ -16,7 +16,7 @@
 #    and second line is the subject of the message.
 #
 
-use 5.008;
+use 5.008001;
 use strict;
 use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use Getopt::Long;
@@ -119,13 +119,16 @@ sub completion_helper {
 
 	foreach my $key (keys %$original_opts) {
 		unless (exists $not_for_completion{$key}) {
-			$key =~ s/!$//;
+			my $negatable = ($key =~ s/!$//);
 
 			if ($key =~ /[:=][si]$/) {
 				$key =~ s/[:=][si]$//;
 				push (@send_email_opts, "--$_=") foreach (split (/\|/, $key));
 			} else {
 				push (@send_email_opts, "--$_") foreach (split (/\|/, $key));
+				if ($negatable) {
+					push (@send_email_opts, "--no-$_") foreach (split (/\|/, $key));
+				}
 			}
 		}
 	}
@@ -228,7 +231,7 @@ sub system_or_msg {
 	my @sprintf_args = ($cmd_name ? $cmd_name : $args->[0], $exit_code);
 	if (defined $msg) {
 		# Quiet the 'redundant' warning category, except we
-		# need to support down to Perl 5.8, so we can't do a
+		# need to support down to Perl 5.8.1, so we can't do a
 		# "no warnings 'redundant'", since that category was
 		# introduced in perl 5.22, and asking for it will die
 		# on older perls.
@@ -491,7 +494,6 @@ my %options = (
 		    "bcc=s" => \@getopt_bcc,
 		    "no-bcc" => \$no_bcc,
 		    "chain-reply-to!" => \$chain_reply_to,
-		    "no-chain-reply-to" => sub {$chain_reply_to = 0},
 		    "sendmail-cmd=s" => \$sendmail_cmd,
 		    "smtp-server=s" => \$smtp_server,
 		    "smtp-server-option=s" => \@smtp_server_options,
@@ -506,36 +508,27 @@ my %options = (
 		    "smtp-auth=s" => \$smtp_auth,
 		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
 		    "annotate!" => \$annotate,
-		    "no-annotate" => sub {$annotate = 0},
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
 		    "cc-cmd=s" => \$cc_cmd,
 		    "header-cmd=s" => \$header_cmd,
 		    "no-header-cmd" => \$no_header_cmd,
 		    "suppress-from!" => \$suppress_from,
-		    "no-suppress-from" => sub {$suppress_from = 0},
 		    "suppress-cc=s" => \@suppress_cc,
 		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_by_cc,
-		    "no-signed-off-cc|no-signed-off-by-cc" => sub {$signed_off_by_cc = 0},
-		    "cc-cover|cc-cover!" => \$cover_cc,
-		    "no-cc-cover" => sub {$cover_cc = 0},
-		    "to-cover|to-cover!" => \$cover_to,
-		    "no-to-cover" => sub {$cover_to = 0},
+		    "cc-cover!" => \$cover_cc,
+		    "to-cover!" => \$cover_to,
 		    "confirm=s" => \$confirm,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
-		    "no-thread" => sub {$thread = 0},
 		    "validate!" => \$validate,
-		    "no-validate" => sub {$validate = 0},
 		    "transfer-encoding=s" => \$target_xfer_encoding,
 		    "format-patch!" => \$format_patch,
-		    "no-format-patch" => sub {$format_patch = 0},
 		    "8bit-encoding=s" => \$auto_8bit_encoding,
 		    "compose-encoding=s" => \$compose_encoding,
 		    "force" => \$force,
 		    "xmailer!" => \$use_xmailer,
-		    "no-xmailer" => sub {$use_xmailer = 0},
 		    "batch-size=i" => \$batch_size,
 		    "relogin-delay=i" => \$relogin_delay,
 		    "git-completion-helper" => \$git_completion_helper,

@@ -516,7 +516,9 @@ static int parse_config(const char *var, const char *value,
 			submodule->recommend_shallow =
 				git_config_bool(var, value);
 	} else if (!strcmp(item.buf, "branch")) {
-		if (!me->overwrite && submodule->branch)
+		if (!value)
+			ret = config_error_nonbool(var);
+		else if (!me->overwrite && submodule->branch)
 			warn_multiple_config(me->treeish_name, submodule->name,
 					     "branch");
 		else {

@@ -214,15 +214,13 @@ do
 	for pseudoopt in branches tags remotes
 	do
 		test_expect_success "rev-parse --exclude-hidden=$section fails with --$pseudoopt" '
-			echo "error: --exclude-hidden cannot be used together with --$pseudoopt" >expected &&
 			test_must_fail git rev-parse --exclude-hidden=$section --$pseudoopt 2>err &&
-			test_cmp expected err
+			test_grep "error: options .--exclude-hidden. and .--$pseudoopt. cannot be used together" err
 		'
 
 		test_expect_success "rev-parse --exclude-hidden=$section fails with --$pseudoopt=pattern" '
-			echo "error: --exclude-hidden cannot be used together with --$pseudoopt" >expected &&
 			test_must_fail git rev-parse --exclude-hidden=$section --$pseudoopt=pattern 2>err &&
-			test_cmp expected err
+			test_grep "error: options .--exclude-hidden. and .--$pseudoopt. cannot be used together" err
 		'
 	done
 done

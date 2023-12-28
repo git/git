@@ -1403,6 +1403,8 @@ int git_fsck_config(const char *var, const char *value,
 		    const struct config_context *ctx, void *cb)
 {
 	struct fsck_options *options = cb;
+	const char *msg_id;
+
 	if (strcmp(var, "fsck.skiplist") == 0) {
 		const char *path;
 		struct strbuf sb = STRBUF_INIT;
@@ -1416,8 +1418,10 @@ int git_fsck_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (skip_prefix(var, "fsck.", &var)) {
-		fsck_set_msg_type(options, var, value);
+	if (skip_prefix(var, "fsck.", &msg_id)) {
+		if (!value)
+			return config_error_nonbool(var);
+		fsck_set_msg_type(options, msg_id, value);
 		return 0;
 	}
 

@@ -242,7 +242,7 @@ $mimetypes_file::
 
 $highlight_bin::
 	Path to the highlight executable to use (it must be the one from
-	http://www.andre-simon.de[] due to assumptions about parameters and output).
+	http://andre-simon.de/zip/download.php[] due to assumptions about parameters and output).
 	By default set to 'highlight'; set it to full path to highlight
 	executable if it is not installed on your web server's PATH.
 	Note that 'highlight' feature must be set for gitweb to actually
@@ -820,7 +820,7 @@ filesystem (i.e. "$projectroot/$project"), `%h` to the current hash
 (\'h' gitweb parameter) and `%b` to the current hash base
 (\'hb' gitweb parameter); `%%` expands to \'%'.
 +
-For example, at the time this page was written, the http://repo.or.cz[]
+For example, at the time this page was written, the https://repo.or.cz[]
 Git hosting site set it to the following to enable graphical log
 (using the third party tool *git-browser*):
 +

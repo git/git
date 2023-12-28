@@ -3204,7 +3204,7 @@ static int git_pack_config(const char *k, const char *v,
 		return 0;
 	}
 	if (!strcmp(k, "uploadpack.blobpackfileuri")) {
-		struct configured_exclusion *ex = xmalloc(sizeof(*ex));
+		struct configured_exclusion *ex;
 		const char *oid_end, *pack_end;
 		/*
 		 * Stores the pack hash. This is not a true object ID, but is
@@ -3212,6 +3212,10 @@ static int git_pack_config(const char *k, const char *v,
 		 */
 		struct object_id pack_hash;
 
+		if (!v)
+			return config_error_nonbool(k);
+
+		ex = xmalloc(sizeof(*ex));
 		if (parse_oid_hex(v, &ex->e.oid, &oid_end) ||
 		    *oid_end != ' ' ||
 		    parse_oid_hex(oid_end + 1, &pack_hash, &pack_end) ||

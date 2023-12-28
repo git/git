@@ -64,12 +64,23 @@ void get_midx_rev_filename(struct strbuf *out, struct multi_pack_index *m)
 static int midx_read_oid_fanout(const unsigned char *chunk_start,
 				size_t chunk_size, void *data)
 {
+	int i;
 	struct multi_pack_index *m = data;
 	m->chunk_oid_fanout = (uint32_t *)chunk_start;
 
 	if (chunk_size != 4 * 256) {
 		error(_("multi-pack-index OID fanout is of the wrong size"));
 		return 1;
+	}
+	for (i = 0; i < 255; i++) {
+		uint32_t oid_fanout1 = ntohl(m->chunk_oid_fanout[i]);
+		uint32_t oid_fanout2 = ntohl(m->chunk_oid_fanout[i+1]);
+
+		if (oid_fanout1 > oid_fanout2) {
+			error(_("oid fanout out of order: fanout[%d] = %"PRIx32" > %"PRIx32" = fanout[%d]"),
+			      i, oid_fanout1, oid_fanout2, i + 1);
+			return 1;
+		}
 	}
 	m->num_objects = ntohl(m->chunk_oid_fanout[255]);
 	return 0;
@@ -1781,15 +1792,6 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 		display_progress(progress, i + 1);
 	}
 	stop_progress(&progress);
-
-	for (i = 0; i < 255; i++) {
-		uint32_t oid_fanout1 = ntohl(m->chunk_oid_fanout[i]);
-		uint32_t oid_fanout2 = ntohl(m->chunk_oid_fanout[i + 1]);
-
-		if (oid_fanout1 > oid_fanout2)
-			midx_report(_("oid fanout out of order: fanout[%d] = %"PRIx32" > %"PRIx32" = fanout[%d]"),
-				    i, oid_fanout1, oid_fanout2, i + 1);
-	}
 
 	if (m->num_objects == 0) {
 		midx_report(_("the midx contains no oid"));

@@ -135,7 +135,7 @@ flames ridiculing you if you don't check this.
 
 Thunderbird in particular is known to be problematic.  Thunderbird
 users may wish to visit this web page for more information:
-  http://kb.mozillazine.org/Plain_text_e-mail_-_Thunderbird#Completely_plain_email
+  https://kb.mozillazine.org/Plain_text_e-mail_-_Thunderbird#Completely_plain_email
 
 SEE ALSO
 --------

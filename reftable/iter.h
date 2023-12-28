@@ -53,10 +53,10 @@ struct indexed_table_ref_iter {
 	int is_finished;
 };
 
-#define INDEXED_TABLE_REF_ITER_INIT                                     \
-	{                                                               \
-		.cur = { .last_key = STRBUF_INIT }, .oid = STRBUF_INIT, \
-	}
+#define INDEXED_TABLE_REF_ITER_INIT { \
+	.cur = BLOCK_ITER_INIT, \
+	.oid = STRBUF_INIT, \
+}
 
 void iterator_from_indexed_table_ref_iter(struct reftable_iterator *it,
 					  struct indexed_table_ref_iter *itr);
