@@ -355,6 +355,14 @@ If you like, you can put extra tags at the end:
   patch after a detailed analysis.
 . `Tested-by:` is used to indicate that the person applied the patch
   and found it to have the desired effect.
+. `Co-authored-by:` is used to indicate that people exchanged drafts
+   of a patch before submitting it.
+. `Helped-by:` is used to credit someone who suggested ideas for
+  changes without providing the precise changes in patch form.
+. `Mentored-by:` is used to credit someone with helping develop a
+  patch as part of a mentorship program (e.g., GSoC or Outreachy).
+. `Suggested-by:` is used to credit someone with suggesting the idea
+  for a patch.
 
 While you can also create your own trailer if the situation warrants it, we
 encourage you to instead use one of the common trailers in this project
