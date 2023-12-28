@@ -21,7 +21,7 @@ linux-musl)
 		apache2 apache2-http2 apache2-proxy apache2-ssl apache2-webdav apr-util-dbd_sqlite3 \
 		bash cvs gnupg perl-cgi perl-dbd-sqlite >/dev/null
 	;;
-linux-*)
+linux-*|StaticAnalysis)
 	# Required so that apt doesn't wait for user input on certain packages.
 	export DEBIAN_FRONTEND=noninteractive
 
@@ -31,6 +31,11 @@ linux-*)
 		perl-modules liberror-perl libauthen-sasl-perl libemail-valid-perl \
 		libdbd-sqlite3-perl libio-socket-ssl-perl libnet-smtp-ssl-perl ${CC_PACKAGE:-${CC:-gcc}} \
 		apache2 cvs cvsps gnupg libcgi-pm-perl subversion
+
+	if test "$jobname" = StaticAnalysis
+	then
+		apt install -q -y coccinelle
+	fi
 	;;
 pedantic)
 	dnf -yq update >/dev/null &&
