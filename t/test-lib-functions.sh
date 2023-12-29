@@ -1659,6 +1659,11 @@ test_detect_hash () {
 	test_hash_algo="${GIT_TEST_DEFAULT_HASH:-sha1}"
 }
 
+# Detect the hash algorithm in use.
+test_detect_ref_format () {
+	echo "${GIT_TEST_DEFAULT_REF_FORMAT:-files}"
+}
+
 # Load common hash metadata and common placeholder object IDs for use with
 # test_oid.
 test_oid_init () {
