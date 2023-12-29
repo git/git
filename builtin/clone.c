@@ -1107,7 +1107,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 * repository, and reference backends may persist that information into
 	 * their on-disk data structures.
 	 */
-	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN, NULL,
+	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN,
+		REF_STORAGE_FORMAT_UNKNOWN, NULL,
 		do_not_override_repo_unix_permissions, INIT_DB_QUIET | INIT_DB_SKIP_REFDB);
 
 	if (real_git_dir) {
@@ -1292,7 +1293,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
 	initialize_repository_version(hash_algo, 1);
 	repo_set_hash_algo(the_repository, hash_algo);
-	create_reference_database(NULL, 1);
+	create_reference_database(the_repository->ref_storage_format, NULL, 1);
 
 	/*
 	 * Before fetching from the remote, download and install bundle

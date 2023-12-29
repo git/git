@@ -2045,10 +2045,10 @@ static struct ref_store *ref_store_init(struct repository *repo,
 					const char *gitdir,
 					unsigned int flags)
 {
-	unsigned int format = REF_STORAGE_FORMAT_FILES;
-	const struct ref_storage_be *be = find_ref_storage_backend(format);
+	const struct ref_storage_be *be;
 	struct ref_store *refs;
 
+	be = find_ref_storage_backend(repo->ref_storage_format);
 	if (!be)
 		BUG("reference backend is unknown");
 

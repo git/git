@@ -11,6 +11,7 @@
 #include "object-file.h"
 #include "parse-options.h"
 #include "path.h"
+#include "refs.h"
 #include "setup.h"
 #include "strbuf.h"
 
@@ -236,5 +237,6 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 
 	flags |= INIT_DB_EXIST_OK;
 	return init_db(git_dir, real_git_dir, template_dir, hash_algo,
-		       initial_branch, init_shared_repository, flags);
+		       REF_STORAGE_FORMAT_UNKNOWN, initial_branch,
+		       init_shared_repository, flags);
 }
