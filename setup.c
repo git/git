@@ -2164,11 +2164,18 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 static void validate_ref_storage_format(struct repository_format *repo_fmt,
 					unsigned int format)
 {
+	const char *name = getenv("GIT_DEFAULT_REF_FORMAT");
+
 	if (repo_fmt->version >= 0 &&
 	    format != REF_STORAGE_FORMAT_UNKNOWN &&
 	    format != repo_fmt->ref_storage_format) {
 		die(_("attempt to reinitialize repository with different reference storage format"));
 	} else if (format != REF_STORAGE_FORMAT_UNKNOWN) {
+		repo_fmt->ref_storage_format = format;
+	} else if (name) {
+		format = ref_storage_format_by_name(name);
+		if (format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format '%s'"), name);
 		repo_fmt->ref_storage_format = format;
 	}
 }
