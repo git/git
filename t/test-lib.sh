@@ -1937,7 +1937,7 @@ test_lazy_prereq SHA1 '
 '
 
 test_lazy_prereq DEFAULT_REPO_FORMAT '
-	test_have_prereq SHA1
+	test_have_prereq SHA1,REFFILES
 '
 
 # Ensure that no test accidentally triggers a Git command
