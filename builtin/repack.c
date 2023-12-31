@@ -1446,10 +1446,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		struct generated_pack_data *data = item->util;
 
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
-			char *fname;
-
-			fname = mkpathdup("%s/pack-%s%s", packdir, item->string,
-					  exts[ext].name);
+			char *fname = mkpathdup("%s/pack-%s%s", packdir,
+						item->string, exts[ext].name);
 
 			if (data->tempfiles[ext]) {
 				const char *fname_old =
@@ -1460,16 +1458,21 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 					statbuffer.st_mode &=
 						~(S_IWUSR | S_IWGRP | S_IWOTH);
 					int fd = open(fname_old, O_WRONLY);
-					if (fd < 0)
-						; // Error handling
-					else {
-						if (flock(fd, LOCK_EX) == -1)
-							; // Handle lock failure
+					if (fd < 0) {
+						die_errno(
+							_("Error opening file: %s"),
+							fname_old);
+					} else {
+						if (flock(fd, LOCK_EX) == -1) {
+							close(fd);
+							die_errno(
+								_("Error locking file: %s"),
+								fname_old);
+						}
 
 						// Perform file operation
 						chmod(fname_old,
 						      statbuffer.st_mode);
-
 						flock(fd, LOCK_UN); // Release
 								    // lock
 						close(fd);
@@ -1477,19 +1480,22 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				}
 
 				if (rename_tempfile(&data->tempfiles[ext],
-						    fname))
+						    fname)) {
 					die_errno(
-						_("renaming pack to '%s' failed"),
+						_("Renaming pack to '%s' failed"),
 						fname);
-			} else if (!exts[ext].optional)
+				}
+			} else if (!exts[ext].optional) {
 				die(_("pack-objects did not write a '%s' file for pack %s-%s"),
 				    exts[ext].name, packtmp, item->string);
-			else if (unlink(fname) < 0 && errno != ENOENT)
-				die_errno(_("could not unlink: %s"), fname);
+			} else if (unlink(fname) < 0 && errno != ENOENT) {
+				die_errno(_("Could not unlink: %s"), fname);
+			}
 
 			free(fname);
 		}
 	}
+
 	/* End of pack replacement. */
 
 	if (delete_redundant && pack_everything & ALL_INTO_ONE)
