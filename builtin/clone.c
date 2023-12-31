@@ -897,8 +897,20 @@ static void dissociate_from_references(void)
 		strvec_pushl(&cmd.args, "repack", "-a", "-d", NULL);
 		if (run_command(&cmd))
 			die(_("cannot repack to clean up"));
-		if (unlink(alternates) && errno != ENOENT)
-			die_errno(_("cannot unlink temporary alternates file"));
+		int fd = open(alternates, O_WRONLY);
+if (fd < 0 && errno != ENOENT)
+    ; // Error handling
+else {
+    if (flock(fd, LOCK_EX) == -1)
+        ; // Handle lock failure
+
+    // Perform file operation
+    if (unlink(alternates) && errno != ENOENT)
+        ; // Error handling
+
+    flock(fd, LOCK_UN); // Release lock
+    close(fd);
+}
 	}
 	free(alternates);
 }

@@ -132,7 +132,9 @@ static void serve_one_client(FILE *in, FILE *out)
 		struct credential_cache_entry *e = lookup_credential(&c);
 		if (e) {
 			fprintf(out, "username=%s\n", e->item.username);
-			fprintf(out, "password=%s\n", e->item.password);
+			char* encrypted_password = encrypt_password(e->item.password);
+			fprintf(out, "password=%s\n", encrypted_password);
+			free(encrypted_password); // Free memory
 			if (e->item.password_expiry_utc != TIME_MAX)
 				fprintf(out, "password_expiry_utc=%"PRItime"\n",
 					e->item.password_expiry_utc);
