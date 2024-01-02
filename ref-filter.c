@@ -2212,7 +2212,7 @@ char *get_head_description(void)
 				    state.detached_from);
 	} else if (state.bisect_in_progress)
 		strbuf_addf(&desc, _("(no branch, bisect started on %s)"),
-			    state.branch);
+			    state.bisecting_from);
 	else if (state.detached_from) {
 		if (state.detached_at)
 			strbuf_addf(&desc, _("(HEAD detached at %s)"),
