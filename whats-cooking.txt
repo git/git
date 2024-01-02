@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2023, #05; Wed, 27)
-X-master-at: e79552d19784ee7f4bbce278fe25f93fbda196fa
-X-next-at: 99fb0cbb532347ba88a24a050722cdec13dad2e8
+Subject: What's cooking in git.git (Jan 2024, #01; Tue, 2)
+X-master-at: a26002b62827b89a19b1084bd75d9371d565d03c
+X-next-at: 074686ec740dcf9adf7983090d00482a0390dc8a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2023, #05; Wed, 27)
+What's cooking in git.git (Jan 2024, #01; Tue, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,11 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-The RelNotes symbolic link says we are now working towards Git 2.44.
-It may not be a bad idea to reflect on what technical debt and UI
-warts we have accumulated so far to see if we have enough of them to
-start planning for a breaking Git 3.0 release (or, of course, keep
-incrementally improve the system, which is much more preferrable---
-continuity and stability is good).  End of year being a relatively
-quiet period, it may be a good time to think about your favorite pet
-peeve, to be discussed early next year.
+As the past couple of weeks have been slow, topics that have been
+merged to 'next' (and to a lessor extent, to 'master') this season
+may have seen less scrutinizing eyes than they deserve, which might
+lead bugs and regressions caused by them discovered later, but that
+is a regular part of life.  Let's see what happens.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -57,189 +54,108 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* es/add-doc-list-short-form-of-all-in-synopsis (2023-12-15) 1 commit
-  (merged to 'next' on 2023-12-18 at a4f20da2bf)
- + git-add.txt: add missing short option -A to synopsis
+* jc/orphan-unborn (2023-11-24) 2 commits
+  (merged to 'next' on 2023-12-21 at 030300487a)
+ + orphan/unborn: fix use of 'orphan' in end-user facing messages
+ + orphan/unborn: add to the glossary and use them consistently
 
- Doc update.
- source: <20231215204333.1253-1-ericsunshine@charter.net>
-
-
-* jc/checkout-B-branch-in-use (2023-12-13) 2 commits
-  (merged to 'next' on 2023-12-14 at 0a3998619e)
- + checkout: forbid "-B <branch>" from touching a branch used elsewhere
- + checkout: refactor die_if_checked_out() caller
-
- "git checkout -B <branch> [<start-point>]" allowed a branch that is
- in use in another worktree to be updated and checked out, which
- might be a bit unexpected.  The rule has been tightened, which is a
- breaking change.  "--ignore-other-worktrees" option is required to
- unbreak you, if you are used to the current behaviour that "-B"
- overrides the safety.
- source: <xmqqjzq9cl70.fsf@gitster.g>
+ Doc updates to clarify what an "unborn branch" means.
+ source: <xmqq4jhb977x.fsf@gitster.g>
 
 
-* jc/diff-cached-fsmonitor-fix (2023-09-15) 3 commits
-  (merged to 'next' on 2023-12-15 at 4aa7596593)
- + diff-lib: fix check_removed() when fsmonitor is active
- + Merge branch 'jc/fake-lstat' into jc/diff-cached-fsmonitor-fix
- + Merge branch 'js/diff-cached-fsmonitor-fix' into jc/diff-cached-fsmonitor-fix
- (this branch uses jc/fake-lstat.)
+* jc/retire-cas-opt-name-constant (2023-12-19) 1 commit
+  (merged to 'next' on 2023-12-21 at 39ef057c8b)
+ + remote.h: retire CAS_OPT_NAME
 
- The optimization based on fsmonitor in the "diff --cached"
- codepath is resurrected with the "fake-lstat" introduced earlier.
- cf. <e5295dbe-94d2-3186-5663-2466eba4bdde@jeffhostetler.com>
- source: <xmqqr0n0h0tw.fsf@gitster.g>
+ Code clean-up.
+ source: <xmqq5y0uc7tq.fsf@gitster.g>
 
 
-* jc/doc-misspelt-refs-fix (2023-12-18) 1 commit
-  (merged to 'next' on 2023-12-18 at e7799fd5c9)
- + doc: format.notes specify a ref under refs/notes/ hierarchy
+* la/trailer-cleanups (2023-12-20) 3 commits
+  (merged to 'next' on 2023-12-21 at e26ede5f55)
+ + trailer: use offsets for trailer_start/trailer_end
+ + trailer: find the end of the log message
+ + commit: ignore_non_trailer computes number of bytes to ignore
 
- Doc update.
- source: <xmqqjzpfje33.fsf_-_@gitster.g>
-
-
-* jc/doc-most-refs-are-not-that-special (2023-12-15) 5 commits
-  (merged to 'next' on 2023-12-18 at aead30fcc8)
- + docs: MERGE_AUTOSTASH is not that special
- + docs: AUTO_MERGE is not that special
- + refs.h: HEAD is not that special
- + git-bisect.txt: BISECT_HEAD is not that special
- + git.txt: HEAD is not that special
-
- Doc updates.
- source: <20231215203245.3622299-1-gitster@pobox.com>
+ Code clean-up.
+ source: <pull.1563.v5.git.1697828495.gitgitgadget@gmail.com>
 
 
-* jc/fake-lstat (2023-09-15) 1 commit
-  (merged to 'next' on 2023-12-15 at 48e34cc0b4)
- + cache: add fake_lstat()
- (this branch is used by jc/diff-cached-fsmonitor-fix.)
+* ps/pseudo-refs (2023-12-14) 4 commits
+  (merged to 'next' on 2023-12-21 at 3460e3d667)
+ + bisect: consistently write BISECT_EXPECTED_REV via the refdb
+ + refs: complete list of special refs
+ + refs: propagate errno when reading special refs fails
+ + wt-status: read HEAD and ORIG_HEAD via the refdb
 
- A new helper to let us pretend that we called lstat() when we know
- our cache_entry is up-to-date via fsmonitor.
- cf. <e5295dbe-94d2-3186-5663-2466eba4bdde@jeffhostetler.com>
- source: <xmqqcyykig1l.fsf@gitster.g>
-
-
-* jk/mailinfo-iterative-unquote-comment (2023-12-14) 2 commits
-  (merged to 'next' on 2023-12-18 at 92363605fd)
- + mailinfo: avoid recursion when unquoting From headers
- + t5100: make rfc822 comment test more careful
- (this branch uses jk/mailinfo-oob-read-fix.)
-
- The code to parse the From e-mail header has been updated to avoid
- recursion.
- source: <20231214214444.GB2297853@coredump.intra.peff.net>
+ Assorted changes around pseudoref handling.
+ source: <cover.1702560829.git.ps@pks.im>
 
 
-* jk/mailinfo-oob-read-fix (2023-12-12) 1 commit
-  (merged to 'next' on 2023-12-14 at 0dcfcb0d02)
- + mailinfo: fix out-of-bounds memory reads in unquote_quoted_pair()
- (this branch is used by jk/mailinfo-iterative-unquote-comment.)
+* rj/status-bisect-while-rebase (2023-10-16) 1 commit
+  (merged to 'next' on 2023-12-21 at 929a027fb7)
+ + status: fix branch shown when not only bisecting
 
- OOB read fix.
- source: <20231212221243.GA1656116@coredump.intra.peff.net>
-
-
-* jx/fetch-atomic-error-message-fix (2023-12-18) 2 commits
-  (merged to 'next' on 2023-12-18 at a1988b00e5)
- + fetch: no redundant error message for atomic fetch
- + t5574: test porcelain output of atomic fetch
-
- "git fetch --atomic" issued an unnecessary empty error message,
- which has been corrected.
- cf. <ZX__e7VjyLXIl-uV@tanuki>
- source: <cover.1702821462.git.zhiyou.jx@alibaba-inc.com>
+ "git status" is taught to show both the branch being bisected and
+ being rebased when both are in effect at the same time.
+ cf. <xmqqil76kyov.fsf@gitster.g>
+ source: <2e24ca9b-9c5f-f4df-b9f8-6574a714dfb2@gmail.com>
 
 
-* ps/chainlint-self-check-update (2023-12-15) 1 commit
-  (merged to 'next' on 2023-12-18 at 0de2e1807f)
- + tests: adjust whitespace in chainlint expectations
+* rs/rebase-use-strvec-pushf (2023-12-20) 1 commit
+  (merged to 'next' on 2023-12-20 at ecb190973c)
+ + rebase: use strvec_pushf() for format-patch revisions
 
- Test framework update.
- source: <fb312f559de7b99244e4c86a995250599cd9be06.1702622508.git.ps@pks.im>
-
-
-* ps/clone-into-reftable-repository (2023-12-12) 7 commits
-  (merged to 'next' on 2023-12-19 at adf7eb1f84)
- + builtin/clone: create the refdb with the correct object format
- + builtin/clone: skip reading HEAD when retrieving remote
- + builtin/clone: set up sparse checkout later
- + builtin/clone: fix bundle URIs with mismatching object formats
- + remote-curl: rediscover repository when fetching refs
- + setup: allow skipping creation of the refdb
- + setup: extract function to create the refdb
- (this branch is used by ps/refstorage-extension.)
-
- "git clone" has been prepared to allow cloning a repository with
- non-default hash function into a repository that uses the reftable
- backend.
- source: <cover.1702361370.git.ps@pks.im>
+ Code clean-up.
+ source: <4ab7431c-6c1b-448c-b4d2-e8b9be0e4eef@web.de>
 
 
-* ps/reftable-fixes (2023-12-11) 11 commits
-  (merged to 'next' on 2023-12-15 at ebba966016)
- + reftable/block: reuse buffer to compute record keys
- + reftable/block: introduce macro to initialize `struct block_iter`
- + reftable/merged: reuse buffer to compute record keys
- + reftable/stack: fix use of unseeded randomness
- + reftable/stack: fix stale lock when dying
- + reftable/stack: reuse buffers when reloading stack
- + reftable/stack: perform auto-compaction with transactional interface
- + reftable/stack: verify that `reftable_stack_add()` uses auto-compaction
- + reftable: handle interrupted writes
- + reftable: handle interrupted reads
- + reftable: wrap EXPECT macros in do/while
- (this branch is used by ps/reftable-fixes-and-optims.)
+* sh/completion-with-reftable (2023-12-19) 2 commits
+  (merged to 'next' on 2023-12-20 at 7957d4aa5b)
+ + completion: support pseudoref existence checks for reftables
+ + completion: refactor existence checks for pseudorefs
 
- Bunch of small fix-ups to the reftable code.
- source: <cover.1702285387.git.ps@pks.im>
-
-
-* rs/c99-stdbool-test-balloon (2023-12-18) 1 commit
-  (merged to 'next' on 2023-12-18 at 5a62aaa127)
- + git-compat-util: convert skip_{prefix,suffix}{,_mem} to bool
-
- Test balloon to use C99 "bool" type from <stdbool.h>.
- source: <2d30dc36-6091-4b47-846f-92d3f4a8b135@web.de>
-
-
-* rs/show-ref-incompatible-options (2023-12-11) 1 commit
-  (merged to 'next' on 2023-12-18 at 5a092285f7)
- + show-ref: use die_for_incompatible_opt3()
-
- Code clean-up for sanity checking of command line options for "git
- show-ref".
- source: <e5304253-3347-4900-bbf2-d3c6ee3fb976@web.de>
-
-
-* rs/t6300-compressed-size-fix (2023-12-12) 1 commit
-  (merged to 'next' on 2023-12-19 at 37ed09549c)
- + t6300: avoid hard-coding object sizes
-
- Test fix.
- source: <9feeb6cf-aabf-4002-917f-3f6c27547bc8@web.de>
-
-
-* sp/test-i18ngrep (2023-12-18) 1 commit
-  (merged to 'next' on 2023-12-18 at d54442693a)
- + test-lib-functions.sh: fix test_grep fail message wording
-
- Error message fix in the test framework.
- source: <20231203171956.771-1-shreyanshpaliwalcmsmn@gmail.com>
+ Command line completion script (in contrib/) learned to work better
+ with the reftable backend.
+ source: <cover.1703022850.git.stanhu@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
+* cp/sideband-array-index-comment-fix (2023-12-28) 1 commit
+ - sideband.c: remove redundant 'NEEDSWORK' tag
+
+ In-code comment fix.
+ source: <pull.1625.v4.git.1703750460527.gitgitgadget@gmail.com>
+
+
+* ps/worktree-refdb-initialization (2023-12-28) 6 commits
+ - builtin/worktree: create refdb via ref backend
+ - worktree: expose interface to look up worktree by name
+ - builtin/worktree: move setup of commondir file earlier
+ - refs/files: skip creation of "refs/{heads,tags}" for worktrees
+ - setup: move creation of "refs/" into the files backend
+ - refs: prepare `refs_init_db()` for initializing worktree refs
+
+ Instead of manually creating refs/ hierarchy on disk upon a
+ creation of a secondary worktree, which is only usable via the
+ files backend, use the refs API to populate it.
+
+ May want to wait until other topics solidify a bit more.
+ cf. <xmqqedf6gpt8.fsf@gitster.g>
+ source: <cover.1703754513.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
 * ml/doc-merge-updates (2023-12-20) 2 commits
- - Documentation/git-merge.txt: use backticks for command wrapping
- - Documentation/git-merge.txt: fix reference to synopsis
+  (merged to 'next' on 2023-12-28 at 7a6329a219)
+ + Documentation/git-merge.txt: use backticks for command wrapping
+ + Documentation/git-merge.txt: fix reference to synopsis
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231220195342.17590-1-mi.al.lohmann@gmail.com>
 
 
@@ -259,48 +175,49 @@ Release tarballs are available at:
 
 
 * jc/archive-list-with-extra-args (2023-12-21) 1 commit
- - archive: "--list" does not take further options
+  (merged to 'next' on 2023-12-28 at 2d5c20e67f)
+ + archive: "--list" does not take further options
 
  "git archive --list extra garbage" silently ignored excess command
  line parameters, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqmsu3mnix.fsf@gitster.g>
 
 
 * jk/t1006-cat-file-objectsize-disk (2023-12-21) 1 commit
- - t1006: add tests for %(objectsize:disk)
+  (merged to 'next' on 2023-12-28 at d82812e636)
+ + t1006: add tests for %(objectsize:disk)
 
  Test update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231221094722.GA570888@coredump.intra.peff.net>
 
 
-* js/contributor-docs-updates (2023-12-21) 9 commits
- - SubmittingPatches: hyphenate non-ASCII
- - SubmittingPatches: clarify GitHub artifact format
- - SubmittingPatches: clarify GitHub visual
- - SubmittingPatches: improve extra tags advice
- - SubmittingPatches: update extra tags list
- - SubmittingPatches: discourage new trailers
- - SubmittingPatches: drop ref to "What's in git.git"
- - CodingGuidelines: write punctuation marks
- - CodingGuidelines: move period inside parentheses
+* js/contributor-docs-updates (2023-12-27) 9 commits
+  (merged to 'next' on 2024-01-02 at 0e072117cd)
+ + SubmittingPatches: hyphenate non-ASCII
+ + SubmittingPatches: clarify GitHub artifact format
+ + SubmittingPatches: clarify GitHub visual
+ + SubmittingPatches: provide tag naming advice
+ + SubmittingPatches: update extra tags list
+ + SubmittingPatches: discourage new trailers
+ + SubmittingPatches: drop ref to "What's in git.git"
+ + CodingGuidelines: write punctuation marks
+ + CodingGuidelines: move period inside parentheses
 
  Doc update.
 
- Expecting a reroll, but basically looking good.
- source: <pull.1623.v2.git.1703176865.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1623.v3.git.1703739324.gitgitgadget@gmail.com>
 
 
-* al/unit-test-ctype (2023-12-26) 1 commit
- - unit-tests: rewrite t/helper/test-ctype.c as a unit test.
+* al/unit-test-ctype (2024-01-02) 1 commit
+ - unit-tests: rewrite t/helper/test-ctype.c as a unit test
 
  Move test-ctype helper to the unit-test framework.
-
- Expecting a reroll.
- source: <20231221231527.8130-1-ach.lumap@gmail.com>
+ source: <20240101104017.9452-2-ach.lumap@gmail.com>
 
 
 * bk/bisect-doc-fix (2023-12-27) 1 commit
@@ -313,13 +230,14 @@ Release tarballs are available at:
 
 
 * en/sparse-checkout-eoo (2023-12-26) 2 commits
- - sparse-checkout: be consistent with end of options markers
- - Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
+  (merged to 'next' on 2023-12-28 at 3ddf2ebab6)
+ + sparse-checkout: be consistent with end of options markers
+ + Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
 
  "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
  not handle "--end-of-options" correctly after a recent update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1625.v2.git.git.1703619562639.gitgitgadget@gmail.com>
 
 
@@ -334,58 +252,39 @@ Release tarballs are available at:
 
 
 * jc/sparse-checkout-set-default-fix (2023-12-26) 1 commit
- - sparse-checkout: use default patterns for 'set' only !stdin
+  (merged to 'next' on 2023-12-28 at a558eccf8e)
+ + sparse-checkout: use default patterns for 'set' only !stdin
 
  "git sparse-checkout set" added default patterns even when the
  patterns are being fed from the standard input, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20231221065925.3234048-3-gitster@pobox.com>
 
 
 * rs/fast-import-simplify-mempool-allocation (2023-12-26) 1 commit
- - fast-import: use mem_pool_calloc()
+  (merged to 'next' on 2023-12-28 at 16e6dd2a69)
+ + fast-import: use mem_pool_calloc()
 
  Code simplification.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <50c1f410-ca37-4c1c-a28b-3e9fad49f2b4@web.de>
 
 
-* rs/mem-pool-improvements (2023-12-26) 2 commits
- - mem-pool: simplify alignment calculation
- - mem-pool: fix big allocations
+* rs/mem-pool-improvements (2023-12-28) 2 commits
+  (merged to 'next' on 2023-12-28 at aa03d9441c)
+ + mem-pool: simplify alignment calculation
+ + mem-pool: fix big allocations
 
  MemPool allocator fixes.
 
- Will merge to 'next'.
- source: <3e15d11a-bd19-49ca-b674-9b50e0ba7fc2@web.de>
-
---------------------------------------------------
-[Cooking]
-
-* jc/retire-cas-opt-name-constant (2023-12-19) 1 commit
-  (merged to 'next' on 2023-12-21 at 39ef057c8b)
- + remote.h: retire CAS_OPT_NAME
-
- Code clean-up.
-
  Will merge to 'master'.
- source: <xmqq5y0uc7tq.fsf@gitster.g>
+ source: <fa89d269-1a23-4ed6-bebc-30c0b629f444@web.de>
 
 
-* rs/rebase-use-strvec-pushf (2023-12-20) 1 commit
-  (merged to 'next' on 2023-12-20 at ecb190973c)
- + rebase: use strvec_pushf() for format-patch revisions
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <4ab7431c-6c1b-448c-b4d2-e8b9be0e4eef@web.de>
-
-
-* ps/refstorage-extension (2023-12-20) 13 commits
+* ps/refstorage-extension (2024-01-02) 13 commits
  - t9500: write "extensions.refstorage" into config
  - builtin/clone: introduce `--ref-format=` value flag
  - builtin/init: introduce `--ref-format=` value flag
@@ -394,7 +293,7 @@ Release tarballs are available at:
  - setup: introduce GIT_DEFAULT_REF_FORMAT envvar
  - setup: introduce "extensions.refStorage" extension
  - setup: set repository's formats on init
- - setup: start tracking ref storage format when
+ - setup: start tracking ref storage format
  - refs: refactor logic to look up storage backends
  - worktree: skip reading HEAD when repairing worktrees
  - t: introduce DEFAULT_REPO_FORMAT prereq
@@ -403,38 +302,26 @@ Release tarballs are available at:
  Introduce a new extension "refstorage" so that we can mark a
  repository that uses a non-default ref backend, like reftable.
 
- Needs review.
- source: <cover.1703067989.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1703833818.git.ps@pks.im>
 
 
-* ps/reftable-fixes-and-optims (2023-12-20) 9 commits
- - SQUASH??? make "make hdr-check" pass
+* ps/reftable-fixes-and-optims (2023-12-28) 9 commits
  - reftable/merged: transfer ownership of records when iterating
  - reftable/merged: really reuse buffers to compute record keys
  - reftable/record: store "val2" hashes as static arrays
  - reftable/record: store "val1" hashes as static arrays
  - reftable/record: constify some parts of the interface
  - reftable/writer: fix index corruption when writing multiple indices
+ - reftable/stack: do not auto-compact twice in `reftable_stack_add()`
  - reftable/stack: do not overwrite errors when compacting
  - Merge branch 'ps/reftable-fixes' into ps/reftable-fixes-and-optims
 
  More fixes and optimizations to the reftable backend.
 
- Needs review.
- source: <cover.1703063544.git.ps@pks.im>
-
-
-* ps/pseudo-refs (2023-12-14) 4 commits
-  (merged to 'next' on 2023-12-21 at 3460e3d667)
- + bisect: consistently write BISECT_EXPECTED_REV via the refdb
- + refs: complete list of special refs
- + refs: propagate errno when reading special refs fails
- + wt-status: read HEAD and ORIG_HEAD via the refdb
-
- Assorted changes around pseudoref handling.
-
- Will merge to 'master'.
- source: <cover.1702560829.git.ps@pks.im>
+ Expecting a (hopefully minor and final) reroll.
+ cf. <xmqqtto2gswa.fsf@gitster.g>
+ source: <cover.1703743174.git.ps@pks.im>
 
 
 * tb/multi-pack-verbatim-reuse (2023-12-14) 26 commits
@@ -483,59 +370,37 @@ Release tarballs are available at:
  source: <xmqqzfyjmk02.fsf@gitster.g>
 
 
-* sh/completion-with-reftable (2023-12-19) 2 commits
-  (merged to 'next' on 2023-12-20 at 7957d4aa5b)
- + completion: support pseudoref existence checks for reftables
- + completion: refactor existence checks for pseudorefs
-
- Command line completion script (in contrib/) learned to work better
- with the reftable backend.
-
- Will merge to 'master'.
- source: <cover.1703022850.git.stanhu@gmail.com>
-
-
 * en/header-cleanup (2023-12-26) 12 commits
- - treewide: remove unnecessary includes in source files
- - treewide: add direct includes currently only pulled in transitively
- - trace2/tr2_tls.h: remove unnecessary include
- - submodule-config.h: remove unnecessary include
- - pkt-line.h: remove unnecessary include
- - line-log.h: remove unnecessary include
- - http.h: remove unnecessary include
- - fsmonitor--daemon.h: remove unnecessary includes
- - blame.h: remove unnecessary includes
- - archive.h: remove unnecessary include
- - treewide: remove unnecessary includes in source files
- - treewide: remove unnecessary includes from header files
+  (merged to 'next' on 2023-12-28 at 1ccddc2a10)
+ + treewide: remove unnecessary includes in source files
+ + treewide: add direct includes currently only pulled in transitively
+ + trace2/tr2_tls.h: remove unnecessary include
+ + submodule-config.h: remove unnecessary include
+ + pkt-line.h: remove unnecessary include
+ + line-log.h: remove unnecessary include
+ + http.h: remove unnecessary include
+ + fsmonitor--daemon.h: remove unnecessary includes
+ + blame.h: remove unnecessary includes
+ + archive.h: remove unnecessary include
+ + treewide: remove unnecessary includes in source files
+ + treewide: remove unnecessary includes from header files
 
  Remove unused header "#include".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1617.v2.git.1703351700.gitgitgadget@gmail.com>
 
 
-* jc/orphan-unborn (2023-11-24) 2 commits
-  (merged to 'next' on 2023-12-21 at 030300487a)
- + orphan/unborn: fix use of 'orphan' in end-user facing messages
- + orphan/unborn: add to the glossary and use them consistently
-
- Doc updates to clarify what an "unborn branch" means.
-
- Will merge to 'master'.
- source: <xmqq4jhb977x.fsf@gitster.g>
-
-
-* jw/builtin-objectmode-attr (2023-12-12) 2 commits
- - SQUASH??? - leakfix
- - attr: add builtin objectmode values support
+* jw/builtin-objectmode-attr (2023-12-28) 1 commit
+  (merged to 'next' on 2024-01-02 at 4c3784b3a1)
+ + attr: add builtin objectmode values support
 
  The builtin_objectmode attribute is populated for each path
  without adding anything in .gitattributes files, which would be
  useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
  to limit to executables.
 
- Needs to get leakfix reviewed.
+ Will merge to 'master'.
  cf. <xmqq5y0ssknj.fsf@gitster.g>
  source: <20231116054437.2343549-1-jojwang@google.com>
 
@@ -614,18 +479,6 @@ Release tarballs are available at:
  source: <20231023221143.72489-1-andy.koppe@gmail.com>
 
 
-* la/trailer-cleanups (2023-12-20) 3 commits
-  (merged to 'next' on 2023-12-21 at e26ede5f55)
- + trailer: use offsets for trailer_start/trailer_end
- + trailer: find the end of the log message
- + commit: ignore_non_trailer computes number of bytes to ignore
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1563.v5.git.1697828495.gitgitgadget@gmail.com>
-
-
 * eb/hash-transition (2023-10-02) 30 commits
  - t1016-compatObjectFormat: add tests to verify the conversion between objects
  - t1006: test oid compatibility with cat-file
@@ -699,19 +552,6 @@ Release tarballs are available at:
  Not ready to be reviewed yet.
  source: <20230824205456.1231371-1-gitster@pobox.com>
 
-
-* rj/status-bisect-while-rebase (2023-10-16) 1 commit
-  (merged to 'next' on 2023-12-21 at 929a027fb7)
- + status: fix branch shown when not only bisecting
-
- "git status" is taught to show both the branch being bisected and
- being rebased when both are in effect at the same time.
-
- Will merge to 'master'.
- cf. <xmqqil76kyov.fsf@gitster.g>
- source: <2e24ca9b-9c5f-f4df-b9f8-6574a714dfb2@gmail.com>
-
-
 --------------------------------------------------
 [Discarded]
 
@@ -720,11 +560,10 @@ Release tarballs are available at:
  . sparse-checkout: use default patterns for 'set' only !stdin
  . SQUASH??? end-of-options test
  . sparse-checkout: take care of "--end-of-options" in set/add/check-rules
- - Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
+ + Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
 
  "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
  not handle "--end-of-options" correctly after a recent update.
 
  Superseded by the en/sparse-checkout-eoo topic.
  source: <20231221065925.3234048-1-gitster@pobox.com>
-
