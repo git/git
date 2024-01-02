@@ -134,6 +134,14 @@ Fixes since v2.43
    which has been corrected.
    (merge 18ce48918c jx/fetch-atomic-error-message-fix later to maint).
 
+ * Command line completion script (in contrib/) learned to work better
+   with the reftable backend.
+   (merge 44dbb3bf29 sh/completion-with-reftable later to maint).
+
+ * "git status" is taught to show both the branch being bisected and
+   being rebased when both are in effect at the same time.
+   (merge 990adccbdf rj/status-bisect-while-rebase later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -151,3 +159,7 @@ Fixes since v2.43
    (merge 6d6f1cd7ee jc/doc-misspelt-refs-fix later to maint).
    (merge 37e8d795be sp/test-i18ngrep later to maint).
    (merge fbc6526ea6 rs/t6300-compressed-size-fix later to maint).
+   (merge 45184afb4d rs/rebase-use-strvec-pushf later to maint).
+   (merge a762af3dfd jc/retire-cas-opt-name-constant later to maint).
+   (merge de7c27a186 la/trailer-cleanups later to maint).
+   (merge d44b517137 jc/orphan-unborn later to maint).
