@@ -582,7 +582,6 @@ static int run_am(struct rebase_options *opts)
 {
 	struct child_process am = CHILD_PROCESS_INIT;
 	struct child_process format_patch = CHILD_PROCESS_INIT;
-	struct strbuf revisions = STRBUF_INIT;
 	int status;
 	char *rebased_patches;
 
@@ -615,13 +614,6 @@ static int run_am(struct rebase_options *opts)
 		return run_command(&am);
 	}
 
-	strbuf_addf(&revisions, "%s...%s",
-		    oid_to_hex(opts->root ?
-			       /* this is now equivalent to !opts->upstream */
-			       &opts->onto->object.oid :
-			       &opts->upstream->object.oid),
-		    oid_to_hex(&opts->orig_head->object.oid));
-
 	rebased_patches = xstrdup(git_path("rebased-patches"));
 	format_patch.out = open(rebased_patches,
 				O_WRONLY | O_CREAT | O_TRUNC, 0666);
@@ -642,7 +634,12 @@ static int run_am(struct rebase_options *opts)
 	if (opts->git_format_patch_opt.len)
 		strvec_split(&format_patch.args,
 			     opts->git_format_patch_opt.buf);
-	strvec_push(&format_patch.args, revisions.buf);
+	strvec_pushf(&format_patch.args, "%s...%s",
+		     oid_to_hex(opts->root ?
+				/* this is now equivalent to !opts->upstream */
+				&opts->onto->object.oid :
+				&opts->upstream->object.oid),
+		     oid_to_hex(&opts->orig_head->object.oid));
 	if (opts->restrict_revision)
 		strvec_pushf(&format_patch.args, "^%s",
 			     oid_to_hex(&opts->restrict_revision->object.oid));
@@ -665,10 +662,8 @@ static int run_am(struct rebase_options *opts)
 			"As a result, git cannot rebase them."),
 		      opts->revisions);
 
-		strbuf_release(&revisions);
 		return status;
 	}
-	strbuf_release(&revisions);
 
 	am.in = open(rebased_patches, O_RDONLY);
 	if (am.in < 0) {
