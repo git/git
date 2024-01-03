@@ -60,18 +60,15 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 	*names = reftable_calloc(sizeof(char *) * (N + 1));
 	reftable_writer_set_limits(w, update_index, update_index);
 	for (i = 0; i < N; i++) {
-		uint8_t hash[GIT_SHA256_RAWSZ] = { 0 };
 		char name[100];
 		int n;
-
-		set_test_hash(hash, i);
 
 		snprintf(name, sizeof(name), "refs/heads/branch%02d", i);
 
 		ref.refname = name;
 		ref.update_index = update_index;
 		ref.value_type = REFTABLE_REF_VAL1;
-		ref.value.val1 = hash;
+		set_test_hash(ref.value.val1, i);
 		(*names)[i] = xstrdup(name);
 
 		n = reftable_writer_add_ref(w, &ref);
@@ -675,11 +672,10 @@ static void test_write_object_id_min_length(void)
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w =
 		reftable_new_writer(&strbuf_add_void, &buf, &opts);
-	uint8_t hash[GIT_SHA1_RAWSZ] = {42};
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
-		.value.val1 = hash,
+		.value.val1 = {42},
 	};
 	int err;
 	int i;
@@ -711,11 +707,10 @@ static void test_write_object_id_length(void)
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w =
 		reftable_new_writer(&strbuf_add_void, &buf, &opts);
-	uint8_t hash[GIT_SHA1_RAWSZ] = {42};
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
-		.value.val1 = hash,
+		.value.val1 = {42},
 	};
 	int err;
 	int i;
@@ -814,11 +809,10 @@ static void test_write_multiple_indices(void)
 	writer = reftable_new_writer(&strbuf_add_void, &writer_buf, &opts);
 	reftable_writer_set_limits(writer, 1, 1);
 	for (i = 0; i < 100; i++) {
-		unsigned char hash[GIT_SHA1_RAWSZ] = {i};
 		struct reftable_ref_record ref = {
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash,
+			.value.val1 = {i},
 		};
 
 		strbuf_reset(&buf);

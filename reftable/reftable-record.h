@@ -9,6 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #ifndef REFTABLE_RECORD_H
 #define REFTABLE_RECORD_H
 
+#include "hash-ll.h"
 #include <stdint.h>
 
 /*
@@ -38,7 +39,7 @@ struct reftable_ref_record {
 #define REFTABLE_NR_REF_VALUETYPES 4
 	} value_type;
 	union {
-		uint8_t *val1; /* malloced hash. */
+		unsigned char val1[GIT_MAX_RAWSZ];
 		struct {
 			uint8_t *value; /* first value, malloced hash  */
 			uint8_t *target_value; /* second value, malloced hash */

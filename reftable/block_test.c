@@ -49,13 +49,11 @@ static void test_block_read_write(void)
 
 	for (i = 0; i < N; i++) {
 		char name[100];
-		uint8_t hash[GIT_SHA1_RAWSZ];
 		snprintf(name, sizeof(name), "branch%02d", i);
-		memset(hash, i, sizeof(hash));
 
 		rec.u.ref.refname = name;
 		rec.u.ref.value_type = REFTABLE_REF_VAL1;
-		rec.u.ref.value.val1 = hash;
+		memset(rec.u.ref.value.val1, i, GIT_SHA1_RAWSZ);
 
 		names[i] = xstrdup(name);
 		n = block_writer_add(&bw, &rec);

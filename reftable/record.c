@@ -219,7 +219,6 @@ static void reftable_ref_record_copy_from(void *rec, const void *src_rec,
 	case REFTABLE_REF_DELETION:
 		break;
 	case REFTABLE_REF_VAL1:
-		ref->value.val1 = reftable_malloc(hash_size);
 		memcpy(ref->value.val1, src->value.val1, hash_size);
 		break;
 	case REFTABLE_REF_VAL2:
@@ -303,7 +302,6 @@ void reftable_ref_record_release(struct reftable_ref_record *ref)
 		reftable_free(ref->value.val2.value);
 		break;
 	case REFTABLE_REF_VAL1:
-		reftable_free(ref->value.val1);
 		break;
 	case REFTABLE_REF_DELETION:
 		break;
@@ -394,7 +392,6 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 			return -1;
 		}
 
-		r->value.val1 = reftable_malloc(hash_size);
 		memcpy(r->value.val1, in.buf, hash_size);
 		string_view_consume(&in, hash_size);
 		break;
