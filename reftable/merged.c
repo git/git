@@ -128,8 +128,6 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 
 done:
 	reftable_record_release(&entry.rec);
-	strbuf_release(&mi->entry_key);
-	strbuf_release(&mi->key);
 	return err;
 }
 
