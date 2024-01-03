@@ -1117,14 +1117,16 @@ test_expect_success 'cat-file %(objectsize:disk) with --batch-all-objects' '
 		while read idx
 		do
 			git show-index <"$idx" >idx.raw &&
-			sort -n <idx.raw >idx.sorted &&
+			sort -nr <idx.raw >idx.sorted &&
 			packsz=$(test_file_size "${idx%.idx}.pack") &&
 			end=$((packsz - rawsz)) &&
-			awk -v end="$end" "
-			  NR > 1 { print oid, \$1 - start }
-			  { start = \$1; oid = \$2 }
-			  END { print oid, end - start }
-			" idx.sorted ||
+			while read start oid rest
+			do
+				size=$((end - start)) &&
+				end=$start &&
+				echo "$oid $size" ||
+				return 1
+			done <idx.sorted ||
 			return 1
 		done
 	} >expect.raw &&
