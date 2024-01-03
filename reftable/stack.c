@@ -425,9 +425,6 @@ int reftable_stack_add(struct reftable_stack *st,
 		return err;
 	}
 
-	if (!st->disable_auto_compact)
-		return reftable_stack_auto_compact(st);
-
 	return 0;
 }
 
