@@ -801,18 +801,16 @@ static int stack_write_compact(struct reftable_stack *st,
 			err = 0;
 			break;
 		}
-		if (err < 0) {
-			break;
-		}
+		if (err < 0)
+			goto done;
 
 		if (first == 0 && reftable_ref_record_is_deletion(&ref)) {
 			continue;
 		}
 
 		err = reftable_writer_add_ref(wr, &ref);
-		if (err < 0) {
-			break;
-		}
+		if (err < 0)
+			goto done;
 		entries++;
 	}
 	reftable_iterator_destroy(&it);
@@ -827,9 +825,8 @@ static int stack_write_compact(struct reftable_stack *st,
 			err = 0;
 			break;
 		}
-		if (err < 0) {
-			break;
-		}
+		if (err < 0)
+			goto done;
 		if (first == 0 && reftable_log_record_is_deletion(&log)) {
 			continue;
 		}
@@ -845,9 +842,8 @@ static int stack_write_compact(struct reftable_stack *st,
 		}
 
 		err = reftable_writer_add_log(wr, &log);
-		if (err < 0) {
-			break;
-		}
+		if (err < 0)
+			goto done;
 		entries++;
 	}
 
