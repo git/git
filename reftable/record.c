@@ -76,7 +76,7 @@ int reftable_is_block_type(uint8_t typ)
 	return 0;
 }
 
-uint8_t *reftable_ref_record_val1(const struct reftable_ref_record *rec)
+const unsigned char *reftable_ref_record_val1(const struct reftable_ref_record *rec)
 {
 	switch (rec->value_type) {
 	case REFTABLE_REF_VAL1:
@@ -88,7 +88,7 @@ uint8_t *reftable_ref_record_val1(const struct reftable_ref_record *rec)
 	}
 }
 
-uint8_t *reftable_ref_record_val2(const struct reftable_ref_record *rec)
+const unsigned char *reftable_ref_record_val2(const struct reftable_ref_record *rec)
 {
 	switch (rec->value_type) {
 	case REFTABLE_REF_VAL2:
@@ -242,7 +242,7 @@ static char hexdigit(int c)
 	return 'a' + (c - 10);
 }
 
-static void hex_format(char *dest, uint8_t *src, int hash_size)
+static void hex_format(char *dest, const unsigned char *src, int hash_size)
 {
 	assert(hash_size > 0);
 	if (src) {
@@ -1164,7 +1164,7 @@ int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, 
 		reftable_record_data(a), reftable_record_data(b), hash_size);
 }
 
-static int hash_equal(uint8_t *a, uint8_t *b, int hash_size)
+static int hash_equal(const unsigned char *a, const unsigned char *b, int hash_size)
 {
 	if (a && b)
 		return !memcmp(a, b, hash_size);

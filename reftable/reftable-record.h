@@ -49,11 +49,11 @@ struct reftable_ref_record {
 
 /* Returns the first hash, or NULL if `rec` is not of type
  * REFTABLE_REF_VAL1 or REFTABLE_REF_VAL2. */
-uint8_t *reftable_ref_record_val1(const struct reftable_ref_record *rec);
+const unsigned char *reftable_ref_record_val1(const struct reftable_ref_record *rec);
 
 /* Returns the second hash, or NULL if `rec` is not of type
  * REFTABLE_REF_VAL2. */
-uint8_t *reftable_ref_record_val2(const struct reftable_ref_record *rec);
+const unsigned char *reftable_ref_record_val2(const struct reftable_ref_record *rec);
 
 /* returns whether 'ref' represents a deletion */
 int reftable_ref_record_is_deletion(const struct reftable_ref_record *ref);
