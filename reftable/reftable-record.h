@@ -41,8 +41,8 @@ struct reftable_ref_record {
 	union {
 		unsigned char val1[GIT_MAX_RAWSZ];
 		struct {
-			uint8_t *value; /* first value, malloced hash  */
-			uint8_t *target_value; /* second value, malloced hash */
+			unsigned char value[GIT_MAX_RAWSZ]; /* first hash  */
+			unsigned char target_value[GIT_MAX_RAWSZ]; /* second hash */
 		} val2;
 		char *symref; /* referent, malloced 0-terminated string */
 	} value;

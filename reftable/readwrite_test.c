@@ -547,8 +547,6 @@ static void test_table_refs_for(int indexed)
 		uint8_t hash[GIT_SHA1_RAWSZ];
 		char fill[51] = { 0 };
 		char name[100];
-		uint8_t hash1[GIT_SHA1_RAWSZ];
-		uint8_t hash2[GIT_SHA1_RAWSZ];
 		struct reftable_ref_record ref = { NULL };
 
 		memset(hash, i, sizeof(hash));
@@ -558,11 +556,9 @@ static void test_table_refs_for(int indexed)
 		name[40] = 0;
 		ref.refname = name;
 
-		set_test_hash(hash1, i / 4);
-		set_test_hash(hash2, 3 + i / 4);
 		ref.value_type = REFTABLE_REF_VAL2;
-		ref.value.val2.value = hash1;
-		ref.value.val2.target_value = hash2;
+		set_test_hash(ref.value.val2.value, i / 4);
+		set_test_hash(ref.value.val2.target_value, 3 + i / 4);
 
 		/* 80 bytes / entry, so 3 entries per block. Yields 17
 		 */
@@ -570,8 +566,8 @@ static void test_table_refs_for(int indexed)
 		n = reftable_writer_add_ref(w, &ref);
 		EXPECT(n == 0);
 
-		if (!memcmp(hash1, want_hash, GIT_SHA1_RAWSZ) ||
-		    !memcmp(hash2, want_hash, GIT_SHA1_RAWSZ)) {
+		if (!memcmp(ref.value.val2.value, want_hash, GIT_SHA1_RAWSZ) ||
+		    !memcmp(ref.value.val2.target_value, want_hash, GIT_SHA1_RAWSZ)) {
 			want_names[want_names_len++] = xstrdup(name);
 		}
 	}
