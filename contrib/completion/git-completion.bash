@@ -1807,7 +1807,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--output= --output-indicator-context=
 			--output-indicator-new= --output-indicator-old=
 			--ws-error-highlight=
-			--pickaxe-all --pickaxe-regex
+			--pickaxe-all --pickaxe-regex --patch-with-raw
 "
 
 # Options for diff/difftool
