@@ -124,7 +124,7 @@ static int read_request(FILE *fh, struct credential *c, struct strbuf *action,
 	return 0;
 }
 
-void encrypt_password(const char *plain_text, unsigned char *encrypted)
+static void encrypt_password(const char *plain_text, unsigned char *encrypted)
 {
 	AES_KEY aes_key;
 	unsigned char key[AES_BLOCK_SIZE]; // AES_BLOCK_SIZE는 보통 16
@@ -139,8 +139,8 @@ void encrypt_password(const char *plain_text, unsigned char *encrypted)
 	AES_set_encrypt_key(key, 128, &aes_key);
 
 	// 암호화
-	AES_cbc_encrypt(plain_text, encrypted, strlen(plain_text), &aes_key, iv,
-			AES_ENCRYPT);
+	AES_cbc_encrypt((const unsigned char *)plain_text, encrypted,
+			strlen(plain_text), &aes_key, iv, AES_ENCRYPT);
 }
 
 static void serve_one_client(FILE *in, FILE *out)
