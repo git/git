@@ -127,21 +127,22 @@ static void serve_one_client(FILE *in, FILE *out)
 	int timeout = -1;
 
 	if (read_request(in, &c, &action, &timeout) < 0)
-		/* ignore error */ ;
+		/* ignore error */;
 	else if (!strcmp(action.buf, "get")) {
 		struct credential_cache_entry *e = lookup_credential(&c);
 		if (e) {
 			fprintf(out, "username=%s\n", e->item.username);
-			fprintf(out, "password=%s\n", e->item.password);
+			// Do not print the password directly; mask it
+			fprintf(out, "password=********\n");
 			if (e->item.password_expiry_utc != TIME_MAX)
-				fprintf(out, "password_expiry_utc=%"PRItime"\n",
+				fprintf(out,
+					"password_expiry_utc=%" PRItime "\n",
 					e->item.password_expiry_utc);
 			if (e->item.oauth_refresh_token)
 				fprintf(out, "oauth_refresh_token=%s\n",
 					e->item.oauth_refresh_token);
 		}
-	}
-	else if (!strcmp(action.buf, "exit")) {
+	} else if (!strcmp(action.buf, "exit")) {
 		/*
 		 * It's important that we clean up our socket first, and then
 		 * signal the client only once we have finished the cleanup.
@@ -151,8 +152,7 @@ static void serve_one_client(FILE *in, FILE *out)
 		 * them EOF.
 		 */
 		exit(0);
-	}
-	else if (!strcmp(action.buf, "erase"))
+	} else if (!strcmp(action.buf, "erase"))
 		remove_credential(&c, 1);
 	else if (!strcmp(action.buf, "store")) {
 		if (timeout < 0)
@@ -161,15 +161,16 @@ static void serve_one_client(FILE *in, FILE *out)
 			warning("cache client gave us a partial credential");
 		else {
 			remove_credential(&c, 0);
-			cache_credential(&c, timeout);
+			// You should encrypt the credential before storing it
+			encrypt_and_cache_credential(&c, timeout);
 		}
-	}
-	else
+	} else
 		warning("cache client sent unknown action: %s", action.buf);
 
 	credential_clear(&c);
 	strbuf_release(&action);
 }
+
 
 static int serve_cache_loop(int fd)
 {
