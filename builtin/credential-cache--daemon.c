@@ -127,9 +127,8 @@ static int read_request(FILE *fh, struct credential *c, struct strbuf *action,
 static void encrypt_password(const char *plain_text, unsigned char *encrypted)
 {
 	AES_KEY aes_key;
-	unsigned char key[AES_BLOCK_SIZE]; // AES_BLOCK_SIZE는 보통 16
-					   // 바이트입니다.
-	unsigned char iv[AES_BLOCK_SIZE]; // 초기화 벡터
+	unsigned char key[AES_BLOCK_SIZE];
+	unsigned char iv[AES_BLOCK_SIZE];
 
 	// 무작위 키와 초기화 벡터 생성
 	RAND_bytes(key, sizeof(key));
