@@ -724,13 +724,12 @@ for further details.
 	waiting for someone with sufficient permissions to fix it.
 
 `GIT_FLUSH`::
-// NEEDSWORK: make it into a usual Boolean environment variable
-	If this environment variable is set to "1", then commands such
+	If this Boolean environment variable is set to true, then commands such
 	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
 	'git check-attr' and 'git check-ignore' will
 	force a flush of the output stream after each record have been
 	flushed. If this
-	variable is set to "0", the output of these commands will be done
+	variable is set to false, the output of these commands will be done
 	using completely buffered I/O.   If this environment variable is
 	not set, Git will choose buffered or record-oriented flushing
 	based on whether stdout appears to be redirected to a file or not.
