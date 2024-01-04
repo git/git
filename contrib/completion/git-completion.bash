@@ -2071,6 +2071,16 @@ __git_log_common_options="
 	--min-age= --until= --before=
 	--min-parents= --max-parents=
 	--no-min-parents --no-max-parents
+	--alternate-refs --ancestry-path
+	--author-date-order --basic-regexp
+	--bisect --boundary --exclude-first-parent-only
+	--exclude-hidden --extended-regexp
+	--fixed-strings --grep-reflog
+	--ignore-missing --left-only --perl-regexp
+	--reflog --regexp-ignore-case --remove-empty
+	--right-only --show-linear-break
+	--show-notes-by-default --show-pulls
+	--since-as-filter --single-worktree
 "
 # Options that go well for log and gitk (not shortlog)
 __git_log_gitk_options="
