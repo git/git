@@ -408,7 +408,7 @@ __git_ps1 ()
 
 	local repo_info rev_parse_exit_code
 	repo_info="$(git rev-parse --git-dir --is-inside-git-dir \
-		--is-bare-repository --is-inside-work-tree \
+		--is-bare-repository --is-inside-work-tree --show-ref-format \
 		--short HEAD 2>/dev/null)"
 	rev_parse_exit_code="$?"
 
@@ -421,6 +421,8 @@ __git_ps1 ()
 		short_sha="${repo_info##*$'\n'}"
 		repo_info="${repo_info%$'\n'*}"
 	fi
+	local ref_format="${repo_info##*$'\n'}"
+	repo_info="${repo_info%$'\n'*}"
 	local inside_worktree="${repo_info##*$'\n'}"
 	repo_info="${repo_info%$'\n'*}"
 	local bare_repo="${repo_info##*$'\n'}"
@@ -479,12 +481,25 @@ __git_ps1 ()
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
 			local head=""
-			if ! __git_eread "$g/HEAD" head; then
-				return $exit
-			fi
-			# is it a symbolic ref?
-			b="${head#ref: }"
-			if [ "$head" = "$b" ]; then
+
+			case "$ref_format" in
+			files)
+				if ! __git_eread "$g/HEAD" head; then
+					return $exit
+				fi
+
+				if [[ $head == "ref: "* ]]; then
+					head="${head#ref: }"
+				else
+					head=""
+				fi
+				;;
+			*)
+				head="$(git symbolic-ref HEAD 2>/dev/null)"
+				;;
+			esac
+
+			if test -z "$head"; then
 				detached=yes
 				b="$(
 				case "${GIT_PS1_DESCRIBE_STYLE-}" in
@@ -502,6 +517,8 @@ __git_ps1 ()
 
 				b="$short_sha..."
 				b="($b)"
+			else
+				b="$head"
 			fi
 		fi
 	fi
