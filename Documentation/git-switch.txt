@@ -176,7 +176,7 @@ name, the guessing is aborted.  You can explicitly give a name with
 	`branch.autoSetupMerge` configuration variable is true.
 
 --orphan <new-branch>::
-	Create a new 'orphan' branch, named `<new-branch>`. All
+	Create a new unborn branch, named `<new-branch>`. All
 	tracked files are removed.
 
 --ignore-other-worktrees::

@@ -437,7 +437,7 @@ test_wt_add_orphan_hint () {
 		git -C repo switch --orphan noref &&
 		test_must_fail git -C repo worktree add $opts foobar/ 2>actual &&
 		! grep "error: unknown switch" actual &&
-		grep "hint: If you meant to create a worktree containing a new orphan branch" actual &&
+		grep "hint: If you meant to create a worktree containing a new unborn branch" actual &&
 		if [ $use_branch -eq 1 ]
 		then
 			grep -E "^hint: +git worktree add --orphan -b [^ ]+ [^ ]+$" actual
@@ -458,7 +458,7 @@ test_expect_success "'worktree add' doesn't show orphan hint in bad/orphan HEAD 
 	(cd repo && test_commit commit) &&
 	test_must_fail git -C repo worktree add --quiet foobar_branch foobar/ 2>actual &&
 	! grep "error: unknown switch" actual &&
-	! grep "hint: If you meant to create a worktree containing a new orphan branch" actual
+	! grep "hint: If you meant to create a worktree containing a new unborn branch" actual
 '
 
 test_expect_success 'local clone from linked checkout' '
@@ -731,7 +731,7 @@ test_expect_success 'git worktree --no-guess-remote option overrides config' '
 test_dwim_orphan () {
 	local info_text="No possible source branch, inferring '--orphan'" &&
 	local fetch_error_text="fatal: No local or remote refs exist despite at least one remote" &&
-	local orphan_hint="hint: If you meant to create a worktree containing a new orphan branch" &&
+	local orphan_hint="hint: If you meant to create a worktree containing a new unborn branch" &&
 	local invalid_ref_regex="^fatal: invalid reference: " &&
 	local bad_combo_regex="^fatal: options '[-a-z]*' and '[-a-z]*' cannot be used together" &&
 

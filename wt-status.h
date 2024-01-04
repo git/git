@@ -94,6 +94,7 @@ struct wt_status_state {
 	char *branch;
 	char *onto;
 	char *detached_from;
+	char *bisecting_from;
 	struct object_id detached_oid;
 	struct object_id revert_head_oid;
 	struct object_id cherry_pick_head_oid;

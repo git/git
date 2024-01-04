@@ -401,8 +401,6 @@ struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);
 /*
  * Compare-and-swap
  */
-#define CAS_OPT_NAME "force-with-lease"
-
 struct push_cas_option {
 	unsigned use_tracking_for_rest:1;
 	unsigned use_force_if_includes:1;

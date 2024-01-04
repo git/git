@@ -861,6 +861,7 @@ void wt_status_state_free_buffers(struct wt_status_state *state)
 	FREE_AND_NULL(state->branch);
 	FREE_AND_NULL(state->onto);
 	FREE_AND_NULL(state->detached_from);
+	FREE_AND_NULL(state->bisecting_from);
 }
 
 static void wt_longstatus_print_unmerged(struct wt_status *s)
@@ -1295,26 +1296,32 @@ static char *read_line_from_git_path(const char *filename)
 static int split_commit_in_progress(struct wt_status *s)
 {
 	int split_in_progress = 0;
-	char *head, *orig_head, *rebase_amend, *rebase_orig_head;
+	struct object_id head_oid, orig_head_oid;
+	char *rebase_amend, *rebase_orig_head;
+	int head_flags, orig_head_flags;
 
 	if ((!s->amend && !s->nowarn && !s->workdir_dirty) ||
 	    !s->branch || strcmp(s->branch, "HEAD"))
 		return 0;
 
-	head = read_line_from_git_path("HEAD");
-	orig_head = read_line_from_git_path("ORIG_HEAD");
+	if (read_ref_full("HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+			  &head_oid, &head_flags) ||
+	    read_ref_full("ORIG_HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+			  &orig_head_oid, &orig_head_flags))
+		return 0;
+	if (head_flags & REF_ISSYMREF || orig_head_flags & REF_ISSYMREF)
+		return 0;
+
 	rebase_amend = read_line_from_git_path("rebase-merge/amend");
 	rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
 
-	if (!head || !orig_head || !rebase_amend || !rebase_orig_head)
+	if (!rebase_amend || !rebase_orig_head)
 		; /* fall through, no split in progress */
 	else if (!strcmp(rebase_amend, rebase_orig_head))
-		split_in_progress = !!strcmp(head, rebase_amend);
-	else if (strcmp(orig_head, rebase_orig_head))
+		split_in_progress = !!strcmp(oid_to_hex(&head_oid), rebase_amend);
+	else if (strcmp(oid_to_hex(&orig_head_oid), rebase_orig_head))
 		split_in_progress = 1;
 
-	free(head);
-	free(orig_head);
 	free(rebase_amend);
 	free(rebase_orig_head);
 
@@ -1569,10 +1576,10 @@ static void show_revert_in_progress(struct wt_status *s,
 static void show_bisect_in_progress(struct wt_status *s,
 				    const char *color)
 {
-	if (s->state.branch)
+	if (s->state.bisecting_from)
 		status_printf_ln(s, color,
 				 _("You are currently bisecting, started from branch '%s'."),
-				 s->state.branch);
+				 s->state.bisecting_from);
 	else
 		status_printf_ln(s, color,
 				 _("You are currently bisecting."));
@@ -1733,7 +1740,7 @@ int wt_status_check_bisect(const struct worktree *wt,
 
 	if (!stat(worktree_git_path(wt, "BISECT_LOG"), &st)) {
 		state->bisect_in_progress = 1;
-		state->branch = get_branch(wt, "BISECT_START");
+		state->bisecting_from = get_branch(wt, "BISECT_START");
 		return 1;
 	}
 	return 0;
