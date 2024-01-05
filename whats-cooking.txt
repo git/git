@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2024, #01; Tue, 2)
+Subject: What's cooking in git.git (Jan 2024, #02; Fri, 5)
 X-master-at: a26002b62827b89a19b1084bd75d9371d565d03c
-X-next-at: 074686ec740dcf9adf7983090d00482a0390dc8a
+X-next-at: b435a96ce80ec65acd71d7318b1fc27d53dfa924
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2024, #01; Tue, 2)
+What's cooking in git.git (Jan 2024, #02; Fri, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,12 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-As the past couple of weeks have been slow, topics that have been
-merged to 'next' (and to a lessor extent, to 'master') this season
-may have seen less scrutinizing eyes than they deserve, which might
-lead bugs and regressions caused by them discovered later, but that
-is a regular part of life.  Let's see what happens.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,80 +46,90 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* jc/orphan-unborn (2023-11-24) 2 commits
-  (merged to 'next' on 2023-12-21 at 030300487a)
- + orphan/unborn: fix use of 'orphan' in end-user facing messages
- + orphan/unborn: add to the glossary and use them consistently
+* ms/rebase-insnformat-doc-fix (2024-01-03) 1 commit
+  (merged to 'next' on 2024-01-04 at d68f2be39b)
+ + Documentation: fix statement about rebase.instructionFormat
 
- Doc updates to clarify what an "unborn branch" means.
- source: <xmqq4jhb977x.fsf@gitster.g>
+ Docfix.
 
-
-* jc/retire-cas-opt-name-constant (2023-12-19) 1 commit
-  (merged to 'next' on 2023-12-21 at 39ef057c8b)
- + remote.h: retire CAS_OPT_NAME
-
- Code clean-up.
- source: <xmqq5y0uc7tq.fsf@gitster.g>
+ Will merge to 'master'.
+ source: <pull.1629.git.git.1704305663254.gitgitgadget@gmail.com>
 
 
-* la/trailer-cleanups (2023-12-20) 3 commits
-  (merged to 'next' on 2023-12-21 at e26ede5f55)
- + trailer: use offsets for trailer_start/trailer_end
- + trailer: find the end of the log message
- + commit: ignore_non_trailer computes number of bytes to ignore
+* cp/git-flush-is-an-env-bool (2024-01-04) 1 commit
+  (merged to 'next' on 2024-01-04 at b435a96ce8)
+ + write-or-die: make GIT_FLUSH a Boolean environment variable
 
- Code clean-up.
- source: <pull.1563.v5.git.1697828495.gitgitgadget@gmail.com>
+ Unlike other environment variables that took the usual
+ true/false/yes/no as well as 0/1, GIT_FLUSH only understood 0/1,
+ which has been corrected.
 
-
-* ps/pseudo-refs (2023-12-14) 4 commits
-  (merged to 'next' on 2023-12-21 at 3460e3d667)
- + bisect: consistently write BISECT_EXPECTED_REV via the refdb
- + refs: complete list of special refs
- + refs: propagate errno when reading special refs fails
- + wt-status: read HEAD and ORIG_HEAD via the refdb
-
- Assorted changes around pseudoref handling.
- source: <cover.1702560829.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <pull.1628.v3.git.1704363617842.gitgitgadget@gmail.com>
 
 
-* rj/status-bisect-while-rebase (2023-10-16) 1 commit
-  (merged to 'next' on 2023-12-21 at 929a027fb7)
- + status: fix branch shown when not only bisecting
+* sd/negotiate-trace-fix (2024-01-03) 1 commit
+ - push: region_leave trace for negotiate_using_fetch
 
- "git status" is taught to show both the branch being bisected and
- being rebased when both are in effect at the same time.
- cf. <xmqqil76kyov.fsf@gitster.g>
- source: <2e24ca9b-9c5f-f4df-b9f8-6574a714dfb2@gmail.com>
+ Tracing fix.
 
-
-* rs/rebase-use-strvec-pushf (2023-12-20) 1 commit
-  (merged to 'next' on 2023-12-20 at ecb190973c)
- + rebase: use strvec_pushf() for format-patch revisions
-
- Code clean-up.
- source: <4ab7431c-6c1b-448c-b4d2-e8b9be0e4eef@web.de>
+ Waiting for a review response.
+ cf. <xmqqbka27zu9.fsf@gitster.g>
+ source: <20240103224054.1940209-1-delmerico@google.com>
 
 
-* sh/completion-with-reftable (2023-12-19) 2 commits
-  (merged to 'next' on 2023-12-20 at 7957d4aa5b)
- + completion: support pseudoref existence checks for reftables
- + completion: refactor existence checks for pseudorefs
+* sk/mingw-owner-check-error-message-improvement (2024-01-04) 1 commit
+ - mingw: give more details about unsafe directory's ownership
 
- Command line completion script (in contrib/) learned to work better
- with the reftable backend.
- source: <cover.1703022850.git.stanhu@gmail.com>
+ In addition to (rather cryptic) Security Identifiers, show username
+ and domain in the error message when we barf on mismatch between
+ the Git directory and the current user.
+
+ Waiting for a review by the area maintainer.
+ cf. <xmqqbka07te6.fsf@gitster.g>
+ source: <20240104192202.2124-2-soekkle@freenet.de>
+
+
+* ib/rebase-reschedule-doc (2024-01-05) 1 commit
+ - rebase: clarify --reschedule-failed-exec default
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <20240105011424.1443732-2-illia.bobyr@gmail.com>
+
+
+* jk/commit-graph-slab-clear-fix (2024-01-05) 1 commit
+ - commit-graph: retain commit slab when closing NULL commit_graph
+
+ Clearing in-core repository (happens during e.g., "git fetch
+ --recurse-submodules" with commit graph enabled) made in-core
+ commit object in an inconsistent state by discarding the necessary
+ data from commit-graph too early, which has been corrected.
+
+ Will merge to 'next'.
+ source: <20240105054142.GA2035092@coredump.intra.peff.net>
+
+
+* jk/index-pack-lsan-false-positive-fix (2024-01-05) 1 commit
+ - index-pack: spawn threads atomically
+
+ Fix false positive reported by leak sanitizer.
+
+ Will merge to 'next'.
+ source: <20240105085034.GA3078476@coredump.intra.peff.net>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * cp/sideband-array-index-comment-fix (2023-12-28) 1 commit
  - sideband.c: remove redundant 'NEEDSWORK' tag
 
  In-code comment fix.
+
+ Will merge to 'next'.
  source: <pull.1625.v4.git.1703750460527.gitgitgadget@gmail.com>
 
 
@@ -145,8 +149,6 @@ Release tarballs are available at:
  cf. <xmqqedf6gpt8.fsf@gitster.g>
  source: <cover.1703754513.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * ml/doc-merge-updates (2023-12-20) 2 commits
   (merged to 'next' on 2023-12-28 at 7a6329a219)
@@ -185,7 +187,9 @@ Release tarballs are available at:
  source: <xmqqmsu3mnix.fsf@gitster.g>
 
 
-* jk/t1006-cat-file-objectsize-disk (2023-12-21) 1 commit
+* jk/t1006-cat-file-objectsize-disk (2024-01-03) 2 commits
+  (merged to 'next' on 2024-01-03 at a492c6355c)
+ + t1006: prefer shell loop to awk for packed object sizes
   (merged to 'next' on 2023-12-28 at d82812e636)
  + t1006: add tests for %(objectsize:disk)
 
@@ -193,6 +197,7 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20231221094722.GA570888@coredump.intra.peff.net>
+ source: <20240103090152.GB1866508@coredump.intra.peff.net>
 
 
 * js/contributor-docs-updates (2023-12-27) 9 commits
@@ -213,11 +218,13 @@ Release tarballs are available at:
  source: <pull.1623.v3.git.1703739324.gitgitgadget@gmail.com>
 
 
-* al/unit-test-ctype (2024-01-02) 1 commit
+* al/unit-test-ctype (2024-01-05) 1 commit
  - unit-tests: rewrite t/helper/test-ctype.c as a unit test
 
  Move test-ctype helper to the unit-test framework.
- source: <20240101104017.9452-2-ach.lumap@gmail.com>
+
+ Will merge to 'next'.
+ source: <20240105161413.10422-1-ach.lumap@gmail.com>
 
 
 * bk/bisect-doc-fix (2023-12-27) 1 commit
@@ -302,11 +309,11 @@ Release tarballs are available at:
  Introduce a new extension "refstorage" so that we can mark a
  repository that uses a non-default ref backend, like reftable.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1703833818.git.ps@pks.im>
 
 
-* ps/reftable-fixes-and-optims (2023-12-28) 9 commits
+* ps/reftable-fixes-and-optims (2024-01-03) 9 commits
  - reftable/merged: transfer ownership of records when iterating
  - reftable/merged: really reuse buffers to compute record keys
  - reftable/record: store "val2" hashes as static arrays
@@ -319,44 +326,44 @@ Release tarballs are available at:
 
  More fixes and optimizations to the reftable backend.
 
- Expecting a (hopefully minor and final) reroll.
- cf. <xmqqtto2gswa.fsf@gitster.g>
- source: <cover.1703743174.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1704262787.git.ps@pks.im>
 
 
 * tb/multi-pack-verbatim-reuse (2023-12-14) 26 commits
- - t/perf: add performance tests for multi-pack reuse
- - pack-bitmap: enable reuse from all bitmapped packs
- - pack-objects: allow setting `pack.allowPackReuse` to "single"
- - t/test-lib-functions.sh: implement `test_trace2_data` helper
- - pack-objects: add tracing for various packfile metrics
- - pack-bitmap: prepare to mark objects from multiple packs for reuse
- - pack-revindex: implement `midx_pair_to_pack_pos()`
- - pack-revindex: factor out `midx_key_to_pack_pos()` helper
- - midx: implement `midx_preferred_pack()`
- - git-compat-util.h: implement checked size_t to uint32_t conversion
- - pack-objects: include number of packs reused in output
- - pack-objects: prepare `write_reused_pack_verbatim()` for multi-pack reuse
- - pack-objects: prepare `write_reused_pack()` for multi-pack reuse
- - pack-objects: pass `bitmapped_pack`'s to pack-reuse functions
- - pack-objects: keep track of `pack_start` for each reuse pack
- - pack-objects: parameterize pack-reuse routines over a single pack
- - pack-bitmap: return multiple packs via `reuse_partial_packfile_from_bitmap()`
- - pack-bitmap: simplify `reuse_partial_packfile_from_bitmap()` signature
- - ewah: implement `bitmap_is_empty()`
- - pack-bitmap: pass `bitmapped_pack` struct to pack-reuse functions
- - midx: implement `midx_locate_pack()`
- - midx: implement `BTMP` chunk
- - midx: factor out `fill_pack_info()`
- - pack-bitmap: plug leak in find_objects()
- - pack-bitmap-write: deep-clear the `bb_commit` slab
- - pack-objects: free packing_data in more places
+  (merged to 'next' on 2024-01-04 at 891ac0fa2c)
+ + t/perf: add performance tests for multi-pack reuse
+ + pack-bitmap: enable reuse from all bitmapped packs
+ + pack-objects: allow setting `pack.allowPackReuse` to "single"
+ + t/test-lib-functions.sh: implement `test_trace2_data` helper
+ + pack-objects: add tracing for various packfile metrics
+ + pack-bitmap: prepare to mark objects from multiple packs for reuse
+ + pack-revindex: implement `midx_pair_to_pack_pos()`
+ + pack-revindex: factor out `midx_key_to_pack_pos()` helper
+ + midx: implement `midx_preferred_pack()`
+ + git-compat-util.h: implement checked size_t to uint32_t conversion
+ + pack-objects: include number of packs reused in output
+ + pack-objects: prepare `write_reused_pack_verbatim()` for multi-pack reuse
+ + pack-objects: prepare `write_reused_pack()` for multi-pack reuse
+ + pack-objects: pass `bitmapped_pack`'s to pack-reuse functions
+ + pack-objects: keep track of `pack_start` for each reuse pack
+ + pack-objects: parameterize pack-reuse routines over a single pack
+ + pack-bitmap: return multiple packs via `reuse_partial_packfile_from_bitmap()`
+ + pack-bitmap: simplify `reuse_partial_packfile_from_bitmap()` signature
+ + ewah: implement `bitmap_is_empty()`
+ + pack-bitmap: pass `bitmapped_pack` struct to pack-reuse functions
+ + midx: implement `midx_locate_pack()`
+ + midx: implement `BTMP` chunk
+ + midx: factor out `fill_pack_info()`
+ + pack-bitmap: plug leak in find_objects()
+ + pack-bitmap-write: deep-clear the `bb_commit` slab
+ + pack-objects: free packing_data in more places
 
  Streaming spans of packfile data used to be done only from a
  single, primary, pack in a repository with multiple packfiles.  It
  has been extended to allow reuse from other packfiles, too.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <ZXurD1NTZ4TAs7WZ@nand.local>
  source: <cover.1702592603.git.me@ttaylorr.com>
 
@@ -405,21 +412,6 @@ Release tarballs are available at:
  source: <20231116054437.2343549-1-jojwang@google.com>
 
 
-* tb/merge-tree-write-pack (2023-10-23) 5 commits
- - builtin/merge-tree.c: implement support for `--write-pack`
- - bulk-checkin: introduce `index_tree_bulk_checkin_incore()`
- - bulk-checkin: introduce `index_blob_bulk_checkin_incore()`
- - bulk-checkin: generify `stream_blob_to_pack()` for arbitrary types
- - bulk-checkin: extract abstract `bulk_checkin_source`
-
- "git merge-tree" learned "--write-pack" to record its result
- without creating loose objects.
-
- Broken when an object created during a merge is needed to continue merge
- cf. <CABPp-BEfy9VOvimP9==ry_rZXu=metOQ8s=_-XiG_Pdx9c06Ww@mail.gmail.com>
- source: <cover.1698101088.git.me@ttaylorr.com>
-
-
 * tb/pair-chunk-expect (2023-11-10) 8 commits
  - midx: read `OOFF` chunk with `pair_chunk_expect()`
  - midx: read `OIDL` chunk with `pair_chunk_expect()`
@@ -459,7 +451,7 @@ Release tarballs are available at:
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Expecting a reroll.
+ Expecting a reroll?
  cf. <20231023202212.GA5470@szeder.dev>
  source: <cover.1697653929.git.me@ttaylorr.com>
 
@@ -531,13 +523,14 @@ Release tarballs are available at:
 
 
 * jx/sideband-chomp-newline-fix (2023-12-18) 3 commits
- - pkt-line: do not chomp newlines for sideband messages
- - pkt-line: memorize sideband fragment in reader
- - test-pkt-line: add option parser for unpack-sideband
+  (merged to 'next' on 2024-01-04 at 1237898a22)
+ + pkt-line: do not chomp newlines for sideband messages
+ + pkt-line: memorize sideband fragment in reader
+ + test-pkt-line: add option parser for unpack-sideband
 
  Sideband demultiplexer fixes.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1702823801.git.zhiyou.jx@alibaba-inc.com>
 
 
@@ -567,3 +560,19 @@ Release tarballs are available at:
 
  Superseded by the en/sparse-checkout-eoo topic.
  source: <20231221065925.3234048-1-gitster@pobox.com>
+
+
+* tb/merge-tree-write-pack (2023-10-23) 5 commits
+ . builtin/merge-tree.c: implement support for `--write-pack`
+ . bulk-checkin: introduce `index_tree_bulk_checkin_incore()`
+ . bulk-checkin: introduce `index_blob_bulk_checkin_incore()`
+ . bulk-checkin: generify `stream_blob_to_pack()` for arbitrary types
+ . bulk-checkin: extract abstract `bulk_checkin_source`
+
+ "git merge-tree" learned "--write-pack" to record its result
+ without creating loose objects.
+
+ Broken when an object created during a merge is needed to continue merge
+ cf. <CABPp-BEfy9VOvimP9==ry_rZXu=metOQ8s=_-XiG_Pdx9c06Ww@mail.gmail.com>
+ cf. <ZZWOtnP2IHNldcy6@nand.local>
+ source: <cover.1698101088.git.me@ttaylorr.com>
