@@ -556,6 +556,11 @@ double-quotes and respecting backslash escapes. E.g., the value
 	is always used. The default is "sha1".
 	See `--object-format` in linkgit:git-init[1].
 
+`GIT_DEFAULT_REF_FORMAT`::
+	If this variable is set, the default reference backend format for new
+	repositories will be set to this value. The default is "files".
+	See `--ref-format` in linkgit:git-init[1].
+
 Git Commits
 ~~~~~~~~~~~
 `GIT_AUTHOR_NAME`::

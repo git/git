@@ -311,6 +311,12 @@ or `--mirror` is given)
 	The result is Git repository can be separated from working
 	tree.
 
+--ref-format=<ref-format::
+
+Specify the given ref storage format for the repository. The valid values are:
++
+include::ref-storage-format.txt[]
+
 -j <n>::
 --jobs <n>::
 	The number of submodules fetched at the same time.

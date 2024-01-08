@@ -426,7 +426,6 @@ static int debug_reflog_expire(struct ref_store *ref_store, const char *refname,
 }
 
 struct ref_storage_be refs_be_debug = {
-	.next = NULL,
 	.name = "debug",
 	.init = NULL,
 	.init_db = debug_init_db,

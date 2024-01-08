@@ -307,6 +307,9 @@ The following options are unaffected by `--path-format`:
 	input, multiple algorithms may be printed, space-separated.
 	If not specified, the default is "storage".
 
+--show-ref-format::
+	Show the reference storage format used for the repository.
+
 
 Other Options
 ~~~~~~~~~~~~~
