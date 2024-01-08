@@ -831,7 +831,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 	 * non-cone mode, if nothing is specified, manually select just the
 	 * top-level directory (much as 'init' would do).
 	 */
-	if (!core_sparse_checkout_cone && argc == 0) {
+	if (!core_sparse_checkout_cone && !set_opts.use_stdin && argc == 0) {
 		argv = default_patterns;
 		argc = default_patterns_nr;
 	} else {
