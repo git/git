@@ -3221,7 +3221,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 }
 
 static int files_init_db(struct ref_store *ref_store,
-			 int flags UNUSED,
+			 int flags,
 			 struct strbuf *err UNUSED)
 {
 	struct files_ref_store *refs =
@@ -3245,15 +3245,21 @@ static int files_init_db(struct ref_store *ref_store,
 	adjust_shared_perm(sb.buf);
 
 	/*
-	 * Create .git/refs/{heads,tags}
+	 * There is no need to create directories for common refs when creating
+	 * a worktree ref store.
 	 */
-	strbuf_reset(&sb);
-	files_ref_path(refs, &sb, "refs/heads");
-	safe_create_dir(sb.buf, 1);
+	if (!(flags & REFS_INIT_DB_IS_WORKTREE)) {
+		/*
+		 * Create .git/refs/{heads,tags}
+		 */
+		strbuf_reset(&sb);
+		files_ref_path(refs, &sb, "refs/heads");
+		safe_create_dir(sb.buf, 1);
 
-	strbuf_reset(&sb);
-	files_ref_path(refs, &sb, "refs/tags");
-	safe_create_dir(sb.buf, 1);
+		strbuf_reset(&sb);
+		files_ref_path(refs, &sb, "refs/tags");
+		safe_create_dir(sb.buf, 1);
+	}
 
 	strbuf_release(&sb);
 	return 0;

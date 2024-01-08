@@ -126,6 +126,8 @@ int should_autocreate_reflog(const char *refname);
 
 int is_branch(const char *refname);
 
+#define REFS_INIT_DB_IS_WORKTREE (1 << 0)
+
 int refs_init_db(struct ref_store *refs, int flags, struct strbuf *err);
 
 /*
