@@ -2,9 +2,7 @@
 #define SUBMODULE_CONFIG_CACHE_H
 
 #include "config.h"
-#include "hashmap.h"
 #include "submodule.h"
-#include "strbuf.h"
 #include "tree-walk.h"
 
 /**

@@ -13,7 +13,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-reader.h"
 #include "merged.h"
 #include "basics.h"
-#include "constants.h"
 #include "record.h"
 #include "test_framework.h"
 #include "reftable-tests.h"

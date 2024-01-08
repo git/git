@@ -7,9 +7,7 @@
 #include "environment.h"
 #include "exec-cmd.h"
 #include "gettext.h"
-#include "strbuf.h"
 #include "utf8.h"
-#include "config.h"
 
 #ifndef NO_GETTEXT
 #	include <libintl.h>

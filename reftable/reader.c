@@ -16,7 +16,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "record.h"
 #include "reftable-error.h"
 #include "reftable-generic.h"
-#include "tree.h"
 
 uint64_t block_source_size(struct reftable_block_source *source)
 {

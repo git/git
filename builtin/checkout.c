@@ -1,7 +1,6 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "advice.h"
-#include "blob.h"
 #include "branch.h"
 #include "cache-tree.h"
 #include "checkout.h"
@@ -27,10 +26,8 @@
 #include "remote.h"
 #include "resolve-undo.h"
 #include "revision.h"
-#include "run-command.h"
 #include "setup.h"
 #include "submodule.h"
-#include "submodule-config.h"
 #include "symlinks.h"
 #include "trace2.h"
 #include "tree.h"

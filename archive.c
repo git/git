@@ -5,6 +5,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "path.h"
 #include "pretty.h"
 #include "setup.h"
@@ -17,7 +18,6 @@
 #include "archive.h"
 #include "parse-options.h"
 #include "unpack-trees.h"
-#include "dir.h"
 #include "quote.h"
 
 static char const * const archive_usage[] = {

@@ -9,7 +9,6 @@
 
 #include "builtin.h"
 #include "config.h"
-#include "alloc.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
@@ -19,7 +18,6 @@
 #include "object-store-ll.h"
 #include "path.h"
 #include "repository.h"
-#include "blob.h"
 #include "pretty.h"
 #include "refs.h"
 #include "exec-cmd.h"

@@ -1,8 +1,6 @@
 #ifndef LINE_LOG_H
 #define LINE_LOG_H
 
-#include "diffcore.h"
-
 struct rev_info;
 struct commit;
 struct string_list;

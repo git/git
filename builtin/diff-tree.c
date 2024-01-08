@@ -6,7 +6,6 @@
 #include "gettext.h"
 #include "hex.h"
 #include "log-tree.h"
-#include "submodule.h"
 #include "read-cache-ll.h"
 #include "repository.h"
 #include "revision.h"

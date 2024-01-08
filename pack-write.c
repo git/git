@@ -7,7 +7,6 @@
 #include "remote.h"
 #include "chunk-format.h"
 #include "pack-mtimes.h"
-#include "oidmap.h"
 #include "pack-objects.h"
 #include "pack-revindex.h"
 #include "path.h"

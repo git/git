@@ -5,7 +5,6 @@
 #include "range-diff.h"
 #include "config.h"
 #include "repository.h"
-#include "revision.h"
 
 static const char * const builtin_range_diff_usage[] = {
 N_("git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),

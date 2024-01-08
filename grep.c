@@ -9,7 +9,6 @@
 #include "xdiff-interface.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "commit.h"
 #include "quote.h"
 #include "help.h"
 

@@ -5,7 +5,6 @@
 #include "gettext.h"
 #include "refs.h"
 #include "notes-utils.h"
-#include "repository.h"
 #include "strbuf.h"
 
 void create_notes_commit(struct repository *r,

@@ -3,9 +3,7 @@
 
 #ifdef HAVE_FSMONITOR_DAEMON_BACKEND
 
-#include "dir.h"
-#include "run-command.h"
-#include "simple-ipc.h"
+#include "hashmap.h"
 #include "thread-utils.h"
 #include "fsmonitor-path-utils.h"
 

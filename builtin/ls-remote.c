@@ -5,7 +5,6 @@
 #include "pkt-line.h"
 #include "ref-filter.h"
 #include "remote.h"
-#include "refs.h"
 #include "parse-options.h"
 #include "wildmatch.h"
 

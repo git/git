@@ -4,6 +4,7 @@
 #include "remote.h"
 #include "repository.h"
 #include "setup.h"
+#include "strbuf.h"
 #include "submodule-config.h"
 #include "submodule.h"
 

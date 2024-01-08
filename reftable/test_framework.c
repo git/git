@@ -9,7 +9,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include "test_framework.h"
 
-#include "basics.h"
 
 void set_test_hash(uint8_t *p, int i)
 {

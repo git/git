@@ -6,7 +6,6 @@
 #include "abspath.h"
 #include "environment.h"
 #include "gettext.h"
-#include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
 #include "parse-options.h"

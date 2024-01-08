@@ -1,6 +1,5 @@
 #include "builtin.h"
 #include "gettext.h"
-#include "parse-options.h"
 #include "repository.h"
 #include "apply.h"
 

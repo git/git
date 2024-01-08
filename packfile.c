@@ -9,7 +9,6 @@
 #include "mergesort.h"
 #include "packfile.h"
 #include "delta.h"
-#include "streaming.h"
 #include "hash-lookup.h"
 #include "commit.h"
 #include "object.h"
