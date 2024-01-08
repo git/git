@@ -3229,8 +3229,25 @@ static int files_init_db(struct ref_store *ref_store,
 	struct strbuf sb = STRBUF_INIT;
 
 	/*
+	 * We need to create a "refs" dir in any case so that older versions of
+	 * Git can tell that this is a repository. This serves two main purposes:
+	 *
+	 * - Clients will know to stop walking the parent-directory chain when
+	 *   detecting the Git repository. Otherwise they may end up detecting
+	 *   a Git repository in a parent directory instead.
+	 *
+	 * - Instead of failing to detect a repository with unknown reference
+	 *   format altogether, old clients will print an error saying that
+	 *   they do not understand the reference format extension.
+	 */
+	strbuf_addf(&sb, "%s/refs", ref_store->gitdir);
+	safe_create_dir(sb.buf, 1);
+	adjust_shared_perm(sb.buf);
+
+	/*
 	 * Create .git/refs/{heads,tags}
 	 */
+	strbuf_reset(&sb);
 	files_ref_path(refs, &sb, "refs/heads");
 	safe_create_dir(sb.buf, 1);
 
