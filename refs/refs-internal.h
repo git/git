@@ -663,7 +663,6 @@ typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refnam
 				 struct strbuf *referent);
 
 struct ref_storage_be {
-	struct ref_storage_be *next;
 	const char *name;
 	ref_store_init_fn *init;
 	ref_init_db_fn *init_db;

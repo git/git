@@ -51,7 +51,7 @@ static void add_head_info(struct worktree *wt)
 /**
  * get the main worktree
  */
-static struct worktree *get_main_worktree(void)
+static struct worktree *get_main_worktree(int skip_reading_head)
 {
 	struct worktree *worktree = NULL;
 	struct strbuf worktree_path = STRBUF_INIT;
@@ -70,11 +70,13 @@ static struct worktree *get_main_worktree(void)
 	 */
 	worktree->is_bare = (is_bare_repository_cfg == 1) ||
 		is_bare_repository();
-	add_head_info(worktree);
+	if (!skip_reading_head)
+		add_head_info(worktree);
 	return worktree;
 }
 
-static struct worktree *get_linked_worktree(const char *id)
+static struct worktree *get_linked_worktree(const char *id,
+					    int skip_reading_head)
 {
 	struct worktree *worktree = NULL;
 	struct strbuf path = STRBUF_INIT;
@@ -93,7 +95,8 @@ static struct worktree *get_linked_worktree(const char *id)
 	CALLOC_ARRAY(worktree, 1);
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	worktree->id = xstrdup(id);
-	add_head_info(worktree);
+	if (!skip_reading_head)
+		add_head_info(worktree);
 
 done:
 	strbuf_release(&path);
@@ -118,7 +121,14 @@ static void mark_current_worktree(struct worktree **worktrees)
 	free(git_dir);
 }
 
-struct worktree **get_worktrees(void)
+/*
+ * NEEDSWORK: This function exists so that we can look up metadata of a
+ * worktree without trying to access any of its internals like the refdb. It
+ * would be preferable to instead have a corruption-tolerant function for
+ * retrieving worktree metadata that could be used when the worktree is known
+ * to not be in a healthy state, e.g. when creating or repairing it.
+ */
+static struct worktree **get_worktrees_internal(int skip_reading_head)
 {
 	struct worktree **list = NULL;
 	struct strbuf path = STRBUF_INIT;
@@ -128,7 +138,7 @@ struct worktree **get_worktrees(void)
 
 	ALLOC_ARRAY(list, alloc);
 
-	list[counter++] = get_main_worktree();
+	list[counter++] = get_main_worktree(skip_reading_head);
 
 	strbuf_addf(&path, "%s/worktrees", get_git_common_dir());
 	dir = opendir(path.buf);
@@ -137,7 +147,7 @@ struct worktree **get_worktrees(void)
 		while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 			struct worktree *linked = NULL;
 
-			if ((linked = get_linked_worktree(d->d_name))) {
+			if ((linked = get_linked_worktree(d->d_name, skip_reading_head))) {
 				ALLOC_GROW(list, counter + 1, alloc);
 				list[counter++] = linked;
 			}
@@ -149,6 +159,11 @@ struct worktree **get_worktrees(void)
 
 	mark_current_worktree(list);
 	return list;
+}
+
+struct worktree **get_worktrees(void)
+{
+	return get_worktrees_internal(0);
 }
 
 const char *get_worktree_git_dir(const struct worktree *wt)
@@ -591,7 +606,7 @@ static void repair_noop(int iserr UNUSED,
 
 void repair_worktrees(worktree_repair_fn fn, void *cb_data)
 {
-	struct worktree **worktrees = get_worktrees();
+	struct worktree **worktrees = get_worktrees_internal(1);
 	struct worktree **wt = worktrees + 1; /* +1 skips main worktree */
 
 	if (!fn)

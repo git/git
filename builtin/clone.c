@@ -72,6 +72,7 @@ static char *remote_name = NULL;
 static char *option_branch = NULL;
 static struct string_list option_not = STRING_LIST_INIT_NODUP;
 static const char *real_git_dir;
+static const char *ref_format;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress = -1;
@@ -157,6 +158,8 @@ static struct option builtin_clone_options[] = {
 		    N_("any cloned submodules will be shallow")),
 	OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 		   N_("separate git dir from working tree")),
+	OPT_STRING(0, "ref-format", &ref_format, N_("format"),
+		   N_("specify the reference format to use")),
 	OPT_STRING_LIST('c', "config", &option_config, N_("key=value"),
 			N_("set config inside the new repository")),
 	OPT_STRING_LIST(0, "server-option", &server_options,
@@ -932,6 +935,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int submodule_progress;
 	int filter_submodules = 0;
 	int hash_algo;
+	unsigned int ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
 	const int do_not_override_repo_unix_permissions = -1;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
@@ -956,6 +960,12 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		deepen = 1;
 	if (option_single_branch == -1)
 		option_single_branch = deepen ? 1 : 0;
+
+	if (ref_format) {
+		ref_storage_format = ref_storage_format_by_name(ref_format);
+		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format '%s'"), ref_format);
+	}
 
 	if (option_mirror)
 		option_bare = 1;
@@ -1101,8 +1111,15 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN, NULL,
-		do_not_override_repo_unix_permissions, INIT_DB_QUIET);
+	/*
+	 * Initialize the repository, but skip initializing the reference
+	 * database. We do not yet know about the object format of the
+	 * repository, and reference backends may persist that information into
+	 * their on-disk data structures.
+	 */
+	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN,
+		ref_storage_format, NULL,
+		do_not_override_repo_unix_permissions, INIT_DB_QUIET | INIT_DB_SKIP_REFDB);
 
 	if (real_git_dir) {
 		free((char *)git_dir);
@@ -1189,10 +1206,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (option_required_reference.nr || option_optional_reference.nr)
 		setup_reference();
 
-	if (option_sparse_checkout && git_sparse_checkout_init(dir))
-		return 1;
-
-	remote = remote_get(remote_name);
+	remote = remote_get_early(remote_name);
 
 	refspec_appendf(&remote->fetch, "+%s*:%s*", src_ref_prefix,
 			branch_top.buf);
@@ -1270,6 +1284,27 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (transport->smart_options && !deepen && !filter_options.choice)
 		transport->smart_options->check_self_contained_and_connected = 1;
 
+	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+	refspec_ref_prefixes(&remote->fetch,
+			     &transport_ls_refs_options.ref_prefixes);
+	if (option_branch)
+		expand_ref_prefix(&transport_ls_refs_options.ref_prefixes,
+				  option_branch);
+	if (!option_no_tags)
+		strvec_push(&transport_ls_refs_options.ref_prefixes,
+			    "refs/tags/");
+
+	refs = transport_get_remote_refs(transport, &transport_ls_refs_options);
+
+	/*
+	 * Now that we know what algorithm the remote side is using, let's set
+	 * ours to the same thing.
+	 */
+	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
+	initialize_repository_version(hash_algo, the_repository->ref_storage_format, 1);
+	repo_set_hash_algo(the_repository, hash_algo);
+	create_reference_database(the_repository->ref_storage_format, NULL, 1);
+
 	/*
 	 * Before fetching from the remote, download and install bundle
 	 * data from the --bundle-uri option.
@@ -1285,24 +1320,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				bundle_uri);
 		else if (has_heuristic)
 			git_config_set_gently("fetch.bundleuri", bundle_uri);
-	}
-
-	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
-	refspec_ref_prefixes(&remote->fetch,
-			     &transport_ls_refs_options.ref_prefixes);
-	if (option_branch)
-		expand_ref_prefix(&transport_ls_refs_options.ref_prefixes,
-				  option_branch);
-	if (!option_no_tags)
-		strvec_push(&transport_ls_refs_options.ref_prefixes,
-			    "refs/tags/");
-
-	refs = transport_get_remote_refs(transport, &transport_ls_refs_options);
-
-	if (refs)
-		mapped_refs = wanted_peer_refs(refs, &remote->fetch);
-
-	if (!bundle_uri) {
+	} else {
 		/*
 		* Populate transport->got_remote_bundle_uri and
 		* transport->bundle_uri. We might get nothing.
@@ -1323,13 +1341,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-		/*
-		 * Now that we know what algorithm the remote side is using,
-		 * let's set ours to the same thing.
-		 */
-	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
-	initialize_repository_version(hash_algo, 1);
-	repo_set_hash_algo(the_repository, hash_algo);
+	if (refs)
+		mapped_refs = wanted_peer_refs(refs, &remote->fetch);
 
 	if (mapped_refs) {
 		/*
@@ -1431,6 +1444,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		close_object_store(the_repository->objects);
 		dissociate_from_references();
 	}
+
+	if (option_sparse_checkout && git_sparse_checkout_init(dir))
+		return 1;
 
 	junk_mode = JUNK_LEAVE_REPO;
 	err = checkout(submodule_progress, filter_submodules);
