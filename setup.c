@@ -1943,7 +1943,7 @@ void create_reference_database(unsigned int ref_storage_format,
 	adjust_shared_perm(git_path("refs"));
 
 	repo_set_ref_storage_format(the_repository, ref_storage_format);
-	if (refs_init_db(&err))
+	if (refs_init_db(get_main_ref_store(the_repository), 0, &err))
 		die("failed to set up refs db: %s", err.buf);
 
 	/*

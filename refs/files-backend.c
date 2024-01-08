@@ -3220,7 +3220,9 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	return -1;
 }
 
-static int files_init_db(struct ref_store *ref_store, struct strbuf *err UNUSED)
+static int files_init_db(struct ref_store *ref_store,
+			 int flags UNUSED,
+			 struct strbuf *err UNUSED)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "init_db");

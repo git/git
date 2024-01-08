@@ -529,7 +529,9 @@ typedef struct ref_store *ref_store_init_fn(struct repository *repo,
 					    const char *gitdir,
 					    unsigned int flags);
 
-typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
+typedef int ref_init_db_fn(struct ref_store *refs,
+			   int flags,
+			   struct strbuf *err);
 
 typedef int ref_transaction_prepare_fn(struct ref_store *refs,
 				       struct ref_transaction *transaction,
