@@ -20,12 +20,12 @@ DESCRIPTION
 -----------
 Incorporates changes from the named commits (since the time their
 histories diverged from the current branch) into the current
-branch.  This command is used by 'git pull' to incorporate changes
+branch.  This command is used by `git pull` to incorporate changes
 from another repository and can be used by hand to merge changes
 from one branch into another.
 
 Assume the following history exists and the current branch is
-"`master`":
+`master`:
 
 ------------
 	  A---B---C topic
@@ -33,7 +33,7 @@ Assume the following history exists and the current branch is
     D---E---F---G master
 ------------
 
-Then "`git merge topic`" will replay the changes made on the
+Then `git merge topic` will replay the changes made on the
 `topic` branch since it diverged from `master` (i.e., `E`) until
 its current commit (`C`) on top of `master`, and record the result
 in a new commit along with the names of the two parent commits and
@@ -46,20 +46,20 @@ a log message from the user describing the changes. Before the operation,
     D---E---F---G---H master
 ------------
 
-The second syntax ("`git merge --abort`") can only be run after the
-merge has resulted in conflicts. 'git merge --abort' will abort the
-merge process and try to reconstruct the pre-merge state. However,
-if there were uncommitted changes when the merge started (and
-especially if those changes were further modified after the merge
-was started), 'git merge --abort' will in some cases be unable to
-reconstruct the original (pre-merge) changes. Therefore:
+A merge stops if there's a conflict that cannot be resolved
+automatically or if `--no-commit` was provided when initiating the
+merge. At that point you can run `git merge --abort` or `git merge
+--continue`.
 
-*Warning*: Running 'git merge' with non-trivial uncommitted changes is
+`git merge --abort` will abort the merge process and try to reconstruct
+the pre-merge state. However, if there were uncommitted changes when the
+merge started (and especially if those changes were further modified
+after the merge was started), `git merge --abort` will in some cases be
+unable to reconstruct the original (pre-merge) changes. Therefore:
+
+*Warning*: Running `git merge` with non-trivial uncommitted changes is
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
-
-The third syntax ("`git merge --continue`") can only be run after the
-merge has resulted in conflicts.
 
 OPTIONS
 -------
@@ -74,8 +74,8 @@ include::merge-options.txt[]
 If `--log` is specified, a shortlog of the commits being merged
 will be appended to the specified message.
 +
-The 'git fmt-merge-msg' command can be
-used to give a good default for automated 'git merge'
+The `git fmt-merge-msg` command can be
+used to give a good default for automated `git merge`
 invocations. The automated message can include the branch description.
 
 --into-name <branch>::
@@ -104,14 +104,14 @@ include::rerere-options.txt[]
 	present, apply it to the worktree.
 +
 If there were uncommitted worktree changes present when the merge
-started, 'git merge --abort' will in some cases be unable to
+started, `git merge --abort` will in some cases be unable to
 reconstruct these changes. It is therefore recommended to always
-commit or stash your changes before running 'git merge'.
+commit or stash your changes before running `git merge`.
 +
-'git merge --abort' is equivalent to 'git reset --merge' when
+`git merge --abort` is equivalent to `git reset --merge` when
 `MERGE_HEAD` is present unless `MERGE_AUTOSTASH` is also present in
-which case 'git merge --abort' applies the stash entry to the worktree
-whereas 'git reset --merge' will save the stashed changes in the stash
+which case `git merge --abort` applies the stash entry to the worktree
+whereas `git reset --merge` will save the stashed changes in the stash
 list.
 
 --quit::
@@ -120,8 +120,8 @@ list.
 	stash entry will be saved to the stash list.
 
 --continue::
-	After a 'git merge' stops due to conflicts you can conclude the
-	merge by running 'git merge --continue' (see "HOW TO RESOLVE
+	After a `git merge` stops due to conflicts you can conclude the
+	merge by running `git merge --continue` (see "HOW TO RESOLVE
 	CONFLICTS" section below).
 
 <commit>...::
@@ -144,25 +144,25 @@ PRE-MERGE CHECKS
 Before applying outside changes, you should get your own work in
 good shape and committed locally, so it will not be clobbered if
 there are conflicts.  See also linkgit:git-stash[1].
-'git pull' and 'git merge' will stop without doing anything when
-local uncommitted changes overlap with files that 'git pull'/'git
-merge' may need to update.
+`git pull` and `git merge` will stop without doing anything when
+local uncommitted changes overlap with files that `git pull`/`git
+merge` may need to update.
 
 To avoid recording unrelated changes in the merge commit,
-'git pull' and 'git merge' will also abort if there are any changes
+`git pull` and `git merge` will also abort if there are any changes
 registered in the index relative to the `HEAD` commit.  (Special
 narrow exceptions to this rule may exist depending on which merge
 strategy is in use, but generally, the index must match HEAD.)
 
-If all named commits are already ancestors of `HEAD`, 'git merge'
+If all named commits are already ancestors of `HEAD`, `git merge`
 will exit early with the message "Already up to date."
 
 FAST-FORWARD MERGE
 ------------------
 
 Often the current branch head is an ancestor of the named commit.
-This is the most common case especially when invoked from 'git
-pull': you are tracking an upstream repository, you have committed
+This is the most common case especially when invoked from `git
+pull`: you are tracking an upstream repository, you have committed
 no local changes, and now you want to update to a newer upstream
 revision.  In this case, a new commit is not needed to store the
 combined history; instead, the `HEAD` (along with the index) is
@@ -269,7 +269,7 @@ Barbie's remark on your side.  The only thing you can tell is that your
 side wants to say it is hard and you'd prefer to go shopping, while the
 other side wants to claim it is easy.
 
-An alternative style can be used by setting the "merge.conflictStyle"
+An alternative style can be used by setting the `merge.conflictStyle`
 configuration variable to either "diff3" or "zdiff3".  In "diff3"
 style, the above conflict may look like this:
 
@@ -328,10 +328,10 @@ After seeing a conflict, you can do two things:
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
-   'git add' them to the index.  Use 'git commit' or
-   'git merge --continue' to seal the deal. The latter command
+   `git add` them to the index.  Use `git commit` or
+   `git merge --continue` to seal the deal. The latter command
    checks whether there is a (interrupted) merge in progress
-   before calling 'git commit'.
+   before calling `git commit`.
 
 You can work through the conflict with a number of tools:
 
@@ -392,7 +392,7 @@ CONFIGURATION
 
 branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and
-	supported options are the same as those of 'git merge', but option
+	supported options are the same as those of `git merge`, but option
 	values containing whitespace characters are currently not supported.
 
 include::includes/cmd-config-section-rest.txt[]
