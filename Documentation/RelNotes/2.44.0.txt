@@ -142,6 +142,18 @@ Fixes since v2.43
    being rebased when both are in effect at the same time.
    (merge 990adccbdf rj/status-bisect-while-rebase later to maint).
 
+ * "git archive --list extra garbage" silently ignored excess command
+   line parameters, which has been corrected.
+   (merge d6b6cd1393 jc/archive-list-with-extra-args later to maint).
+
+ * "git sparse-checkout set" added default patterns even when the
+   patterns are being fed from the standard input, which has been
+   corrected.
+   (merge 53ded839ae jc/sparse-checkout-set-default-fix later to maint).
+
+ * "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
+   not handle "--end-of-options" correctly after a recent update.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -163,3 +175,6 @@ Fixes since v2.43
    (merge a762af3dfd jc/retire-cas-opt-name-constant later to maint).
    (merge de7c27a186 la/trailer-cleanups later to maint).
    (merge d44b517137 jc/orphan-unborn later to maint).
+   (merge 63956c553d ml/doc-merge-updates later to maint).
+   (merge d57c671a51 en/header-cleanup later to maint).
+   (merge 5b7eec4bc5 rs/fast-import-simplify-mempool-allocation later to maint).
