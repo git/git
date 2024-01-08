@@ -124,6 +124,16 @@ test_expect_success 'setup' '
 	EOF
 '
 
+test_expect_success '--list notices extra parameters' '
+	test_must_fail git archive --list blah &&
+	test_must_fail git archive --remote=. --list blah
+'
+
+test_expect_success 'end-of-options is correctly eaten' '
+	git archive --list --end-of-options &&
+	git archive --remote=. --list --end-of-options
+'
+
 test_expect_success 'populate workdir' '
 	mkdir a &&
 	echo simple textfile >a/a &&

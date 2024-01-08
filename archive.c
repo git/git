@@ -685,6 +685,8 @@ static int parse_archive_args(int argc, const char **argv,
 		base = "";
 
 	if (list) {
+		if (argc)
+			die(_("extra command line parameter '%s'"), *argv);
 		for (i = 0; i < nr_archivers; i++)
 			if (!is_remote || archivers[i]->flags & ARCHIVER_REMOTE)
 				printf("%s\n", archivers[i]->name);
