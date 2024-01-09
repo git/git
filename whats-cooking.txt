@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2024, #02; Fri, 5)
-X-master-at: a26002b62827b89a19b1084bd75d9371d565d03c
-X-next-at: b435a96ce80ec65acd71d7318b1fc27d53dfa924
+Subject: What's cooking in git.git (Jan 2024, #03; Tue, 9)
+X-master-at: a54a84b333adbecf7bc4483c0e36ed5878cac17b
+X-next-at: 5e73029237c4506a7ca4fe5b7157ba7e1fc95d26
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2024, #02; Fri, 5)
+What's cooking in git.git (Jan 2024, #03; Tue, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,162 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* en/header-cleanup (2023-12-26) 12 commits
+  (merged to 'next' on 2023-12-28 at 1ccddc2a10)
+ + treewide: remove unnecessary includes in source files
+ + treewide: add direct includes currently only pulled in transitively
+ + trace2/tr2_tls.h: remove unnecessary include
+ + submodule-config.h: remove unnecessary include
+ + pkt-line.h: remove unnecessary include
+ + line-log.h: remove unnecessary include
+ + http.h: remove unnecessary include
+ + fsmonitor--daemon.h: remove unnecessary includes
+ + blame.h: remove unnecessary includes
+ + archive.h: remove unnecessary include
+ + treewide: remove unnecessary includes in source files
+ + treewide: remove unnecessary includes from header files
+
+ Remove unused header "#include".
+ source: <pull.1617.v2.git.1703351700.gitgitgadget@gmail.com>
+
+
+* en/sparse-checkout-eoo (2023-12-26) 2 commits
+  (merged to 'next' on 2023-12-28 at 3ddf2ebab6)
+ + sparse-checkout: be consistent with end of options markers
+ + Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
+
+ "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
+ not handle "--end-of-options" correctly after a recent update.
+ source: <pull.1625.v2.git.git.1703619562639.gitgitgadget@gmail.com>
+
+
+* jc/archive-list-with-extra-args (2023-12-21) 1 commit
+  (merged to 'next' on 2023-12-28 at 2d5c20e67f)
+ + archive: "--list" does not take further options
+
+ "git archive --list extra garbage" silently ignored excess command
+ line parameters, which has been corrected.
+ source: <xmqqmsu3mnix.fsf@gitster.g>
+
+
+* jc/sparse-checkout-set-default-fix (2023-12-26) 1 commit
+  (merged to 'next' on 2023-12-28 at a558eccf8e)
+ + sparse-checkout: use default patterns for 'set' only !stdin
+
+ "git sparse-checkout set" added default patterns even when the
+ patterns are being fed from the standard input, which has been
+ corrected.
+ source: <20231221065925.3234048-3-gitster@pobox.com>
+
+
+* ml/doc-merge-updates (2023-12-20) 2 commits
+  (merged to 'next' on 2023-12-28 at 7a6329a219)
+ + Documentation/git-merge.txt: use backticks for command wrapping
+ + Documentation/git-merge.txt: fix reference to synopsis
+
+ Doc update.
+ source: <20231220195342.17590-1-mi.al.lohmann@gmail.com>
+
+
+* rs/fast-import-simplify-mempool-allocation (2023-12-26) 1 commit
+  (merged to 'next' on 2023-12-28 at 16e6dd2a69)
+ + fast-import: use mem_pool_calloc()
+
+ Code simplification.
+ source: <50c1f410-ca37-4c1c-a28b-3e9fad49f2b4@web.de>
+
+
+* rs/mem-pool-improvements (2023-12-28) 2 commits
+  (merged to 'next' on 2023-12-28 at aa03d9441c)
+ + mem-pool: simplify alignment calculation
+ + mem-pool: fix big allocations
+
+ MemPool allocator fixes.
+ source: <fa89d269-1a23-4ed6-bebc-30c0b629f444@web.de>
+
+--------------------------------------------------
 [New Topics]
+
+* ps/gitlab-ci-static-analysis (2024-01-08) 1 commit
+ - ci: add job performing static analysis on GitLab CI
+
+ GitLab CI update.
+
+ Will merge to 'next'.
+ source: <1536a5ef07ad24dafb5d685b40099882f89e6cc5.1703761005.git.ps@pks.im>
+
+
+* ps/prompt-parse-HEAD-futureproof (2024-01-08) 2 commits
+ - git-prompt: stop manually parsing HEAD with unknown ref formats
+ - Merge branch 'ps/refstorage-extension' into ps/prompt-parse-HEAD-futureproof
+ (this branch uses ps/refstorage-extension.)
+
+ Futureproof command line prompt support (in contrib/).
+
+ Will merge to 'next'.
+ source: <ef4e36a5a40c369da138242a8fdc9e12a846613b.1704356313.git.ps@pks.im>
+
+
+* ps/reftable-optimize-io (2024-01-08) 4 commits
+ - reftable/blocksource: use mmap to read tables
+ - reftable/stack: use stat info to avoid re-reading stack list
+ - reftable/stack: refactor reloading to use file descriptor
+ - reftable/stack: refactor stack reloading to have common exit path
+
+ Low-level I/O optimization for reftable.
+
+ Will merge to 'next'?
+ source: <cover.1704714575.git.ps@pks.im>
+
+
+* rj/clarify-branch-doc-m (2024-01-08) 1 commit
+ - branch: clarify <oldbranch> term
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <d38e5a18-4d85-48f3-bc8b-8ca02ea683a4@gmail.com>
+
+
+* tb/fetch-all-configuration (2024-01-08) 1 commit
+ - fetch: add new config option fetch.all
+
+ "git fetch" learned to pay attention to "fetch.all" configuration
+ variable, which pretends as if "--all" was passed from the command
+ line when no remote parameter was given.
+
+ Will merge to 'next'.
+ source: <20240108211832.47362-1-dev@tb6.eu>
+
+
+* rj/advice-disable-how-to-disable (2024-01-09) 3 commits
+ - advice: allow disabling the automatic hint in advise_if_enabled()
+ - t/test-tool: handle -c <name>=<value> arguments
+ - t/test-tool: usage description
+
+ All conditional "advice" messages show how to turn them off, which
+ becomes repetitive.  Add a configuration variable to omit the
+ instruction.
+
+ Expecting a reroll.
+ cf. <ZZ2QafUf/JxXYZU/@nand.local>
+ source: <7c68392c-af2f-4999-ae64-63221bf7833a@gmail.com>
+
+
+* vd/fsck-submodule-url-test (2024-01-09) 3 commits
+ - submodule-config.c: strengthen URL fsck check
+ - t7450: test submodule urls
+ - submodule-config.h: move check_submodule_url
+
+ Tighten URL checks fsck makes in a URL recorded for submodules.
+
+ Will merge to 'next'?
+ source: <pull.1635.git.1704822817.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ms/rebase-insnformat-doc-fix (2024-01-03) 1 commit
   (merged to 'next' on 2024-01-04 at d68f2be39b)
@@ -80,85 +235,74 @@ Release tarballs are available at:
  source: <20240103224054.1940209-1-delmerico@google.com>
 
 
-* sk/mingw-owner-check-error-message-improvement (2024-01-04) 1 commit
+* sk/mingw-owner-check-error-message-improvement (2024-01-08) 1 commit
  - mingw: give more details about unsafe directory's ownership
 
  In addition to (rather cryptic) Security Identifiers, show username
  and domain in the error message when we barf on mismatch between
  the Git directory and the current user.
 
- Waiting for a review by the area maintainer.
- cf. <xmqqbka07te6.fsf@gitster.g>
- source: <20240104192202.2124-2-soekkle@freenet.de>
+ Will merge to 'next'?
+ source: <20240108173837.20480-2-soekkle@freenet.de>
 
 
 * ib/rebase-reschedule-doc (2024-01-05) 1 commit
- - rebase: clarify --reschedule-failed-exec default
+  (merged to 'next' on 2024-01-08 at d451d1f760)
+ + rebase: clarify --reschedule-failed-exec default
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240105011424.1443732-2-illia.bobyr@gmail.com>
 
 
 * jk/commit-graph-slab-clear-fix (2024-01-05) 1 commit
- - commit-graph: retain commit slab when closing NULL commit_graph
+  (merged to 'next' on 2024-01-08 at f78c4fc296)
+ + commit-graph: retain commit slab when closing NULL commit_graph
 
  Clearing in-core repository (happens during e.g., "git fetch
  --recurse-submodules" with commit graph enabled) made in-core
  commit object in an inconsistent state by discarding the necessary
  data from commit-graph too early, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240105054142.GA2035092@coredump.intra.peff.net>
 
 
 * jk/index-pack-lsan-false-positive-fix (2024-01-05) 1 commit
- - index-pack: spawn threads atomically
+  (merged to 'next' on 2024-01-08 at 589ed65251)
+ + index-pack: spawn threads atomically
 
  Fix false positive reported by leak sanitizer.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240105085034.GA3078476@coredump.intra.peff.net>
 
---------------------------------------------------
-[Cooking]
 
 * cp/sideband-array-index-comment-fix (2023-12-28) 1 commit
- - sideband.c: remove redundant 'NEEDSWORK' tag
+  (merged to 'next' on 2024-01-08 at f906bc86f1)
+ + sideband.c: remove redundant 'NEEDSWORK' tag
 
  In-code comment fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1625.v4.git.1703750460527.gitgitgadget@gmail.com>
 
 
-* ps/worktree-refdb-initialization (2023-12-28) 6 commits
+* ps/worktree-refdb-initialization (2024-01-08) 7 commits
  - builtin/worktree: create refdb via ref backend
  - worktree: expose interface to look up worktree by name
  - builtin/worktree: move setup of commondir file earlier
  - refs/files: skip creation of "refs/{heads,tags}" for worktrees
  - setup: move creation of "refs/" into the files backend
  - refs: prepare `refs_init_db()` for initializing worktree refs
+ - Merge branch 'ps/refstorage-extension' into ps/worktree-refdb-initialization
+ (this branch uses ps/refstorage-extension.)
 
  Instead of manually creating refs/ hierarchy on disk upon a
  creation of a secondary worktree, which is only usable via the
  files backend, use the refs API to populate it.
-
- May want to wait until other topics solidify a bit more.
- cf. <xmqqedf6gpt8.fsf@gitster.g>
- source: <cover.1703754513.git.ps@pks.im>
-
-
-* ml/doc-merge-updates (2023-12-20) 2 commits
-  (merged to 'next' on 2023-12-28 at 7a6329a219)
- + Documentation/git-merge.txt: use backticks for command wrapping
- + Documentation/git-merge.txt: fix reference to synopsis
-
- Doc update.
-
- Will merge to 'master'.
- source: <20231220195342.17590-1-mi.al.lohmann@gmail.com>
+ source: <cover.1704705733.git.ps@pks.im>
 
 
 * cp/apply-core-filemode (2023-12-26) 3 commits
@@ -174,17 +318,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20231226233218.472054-1-gitster@pobox.com>
-
-
-* jc/archive-list-with-extra-args (2023-12-21) 1 commit
-  (merged to 'next' on 2023-12-28 at 2d5c20e67f)
- + archive: "--list" does not take further options
-
- "git archive --list extra garbage" silently ignored excess command
- line parameters, which has been corrected.
-
- Will merge to 'master'.
- source: <xmqqmsu3mnix.fsf@gitster.g>
 
 
 * jk/t1006-cat-file-objectsize-disk (2024-01-03) 2 commits
@@ -223,7 +356,9 @@ Release tarballs are available at:
 
  Move test-ctype helper to the unit-test framework.
 
- Will merge to 'next'.
+ Almost there.
+ cf. <a087f57c-ce72-45c7-8182-f38d0aca9030@web.de>
+ cf. <33c81610-0958-49da-b702-ba8d96ecf1d3@gmail.com>
  source: <20240105161413.10422-1-ach.lumap@gmail.com>
 
 
@@ -236,18 +371,6 @@ Release tarballs are available at:
  source: <3d46bca1-96d4-43ba-a912-1f7c76942287@smtp-relay.sendinblue.com>
 
 
-* en/sparse-checkout-eoo (2023-12-26) 2 commits
-  (merged to 'next' on 2023-12-28 at 3ddf2ebab6)
- + sparse-checkout: be consistent with end of options markers
- + Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
-
- "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
- not handle "--end-of-options" correctly after a recent update.
-
- Will merge to 'master'.
- source: <pull.1625.v2.git.git.1703619562639.gitgitgadget@gmail.com>
-
-
 * ja/doc-placeholders-fix (2023-12-26) 2 commits
  - doc: enforce placeholders in documentation
  - doc: enforce dashes in placeholders
@@ -258,75 +381,45 @@ Release tarballs are available at:
  source: <pull.1626.git.1703539287.gitgitgadget@gmail.com>
 
 
-* jc/sparse-checkout-set-default-fix (2023-12-26) 1 commit
-  (merged to 'next' on 2023-12-28 at a558eccf8e)
- + sparse-checkout: use default patterns for 'set' only !stdin
-
- "git sparse-checkout set" added default patterns even when the
- patterns are being fed from the standard input, which has been
- corrected.
-
- Will merge to 'master'.
- source: <20231221065925.3234048-3-gitster@pobox.com>
-
-
-* rs/fast-import-simplify-mempool-allocation (2023-12-26) 1 commit
-  (merged to 'next' on 2023-12-28 at 16e6dd2a69)
- + fast-import: use mem_pool_calloc()
-
- Code simplification.
-
- Will merge to 'master'.
- source: <50c1f410-ca37-4c1c-a28b-3e9fad49f2b4@web.de>
-
-
-* rs/mem-pool-improvements (2023-12-28) 2 commits
-  (merged to 'next' on 2023-12-28 at aa03d9441c)
- + mem-pool: simplify alignment calculation
- + mem-pool: fix big allocations
-
- MemPool allocator fixes.
-
- Will merge to 'master'.
- source: <fa89d269-1a23-4ed6-bebc-30c0b629f444@web.de>
-
-
 * ps/refstorage-extension (2024-01-02) 13 commits
- - t9500: write "extensions.refstorage" into config
- - builtin/clone: introduce `--ref-format=` value flag
- - builtin/init: introduce `--ref-format=` value flag
- - builtin/rev-parse: introduce `--show-ref-format` flag
- - t: introduce GIT_TEST_DEFAULT_REF_FORMAT envvar
- - setup: introduce GIT_DEFAULT_REF_FORMAT envvar
- - setup: introduce "extensions.refStorage" extension
- - setup: set repository's formats on init
- - setup: start tracking ref storage format
- - refs: refactor logic to look up storage backends
- - worktree: skip reading HEAD when repairing worktrees
- - t: introduce DEFAULT_REPO_FORMAT prereq
- - Merge branch 'ps/clone-into-reftable-repository' into ps/refstorage-extension
+  (merged to 'next' on 2024-01-08 at f9a034803b)
+ + t9500: write "extensions.refstorage" into config
+ + builtin/clone: introduce `--ref-format=` value flag
+ + builtin/init: introduce `--ref-format=` value flag
+ + builtin/rev-parse: introduce `--show-ref-format` flag
+ + t: introduce GIT_TEST_DEFAULT_REF_FORMAT envvar
+ + setup: introduce GIT_DEFAULT_REF_FORMAT envvar
+ + setup: introduce "extensions.refStorage" extension
+ + setup: set repository's formats on init
+ + setup: start tracking ref storage format
+ + refs: refactor logic to look up storage backends
+ + worktree: skip reading HEAD when repairing worktrees
+ + t: introduce DEFAULT_REPO_FORMAT prereq
+ + Merge branch 'ps/clone-into-reftable-repository' into ps/refstorage-extension
+ (this branch is used by ps/prompt-parse-HEAD-futureproof and ps/worktree-refdb-initialization.)
 
  Introduce a new extension "refstorage" so that we can mark a
  repository that uses a non-default ref backend, like reftable.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1703833818.git.ps@pks.im>
 
 
 * ps/reftable-fixes-and-optims (2024-01-03) 9 commits
- - reftable/merged: transfer ownership of records when iterating
- - reftable/merged: really reuse buffers to compute record keys
- - reftable/record: store "val2" hashes as static arrays
- - reftable/record: store "val1" hashes as static arrays
- - reftable/record: constify some parts of the interface
- - reftable/writer: fix index corruption when writing multiple indices
- - reftable/stack: do not auto-compact twice in `reftable_stack_add()`
- - reftable/stack: do not overwrite errors when compacting
- - Merge branch 'ps/reftable-fixes' into ps/reftable-fixes-and-optims
+  (merged to 'next' on 2024-01-08 at 167d7685f8)
+ + reftable/merged: transfer ownership of records when iterating
+ + reftable/merged: really reuse buffers to compute record keys
+ + reftable/record: store "val2" hashes as static arrays
+ + reftable/record: store "val1" hashes as static arrays
+ + reftable/record: constify some parts of the interface
+ + reftable/writer: fix index corruption when writing multiple indices
+ + reftable/stack: do not auto-compact twice in `reftable_stack_add()`
+ + reftable/stack: do not overwrite errors when compacting
+ + Merge branch 'ps/reftable-fixes' into ps/reftable-fixes-and-optims
 
  More fixes and optimizations to the reftable backend.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1704262787.git.ps@pks.im>
 
 
@@ -375,27 +468,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <xmqqzfyjmk02.fsf@gitster.g>
-
-
-* en/header-cleanup (2023-12-26) 12 commits
-  (merged to 'next' on 2023-12-28 at 1ccddc2a10)
- + treewide: remove unnecessary includes in source files
- + treewide: add direct includes currently only pulled in transitively
- + trace2/tr2_tls.h: remove unnecessary include
- + submodule-config.h: remove unnecessary include
- + pkt-line.h: remove unnecessary include
- + line-log.h: remove unnecessary include
- + http.h: remove unnecessary include
- + fsmonitor--daemon.h: remove unnecessary includes
- + blame.h: remove unnecessary includes
- + archive.h: remove unnecessary include
- + treewide: remove unnecessary includes in source files
- + treewide: remove unnecessary includes from header files
-
- Remove unused header "#include".
-
- Will merge to 'master'.
- source: <pull.1617.v2.git.1703351700.gitgitgadget@gmail.com>
 
 
 * jw/builtin-objectmode-attr (2023-12-28) 1 commit
@@ -548,12 +620,11 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* jc/sparse-checkout-eoo (2023-12-21) 5 commits
+* jc/sparse-checkout-eoo (2023-12-21) 4 commits
  . sparse-checkout: tighten add_patterns_from_input()
  . sparse-checkout: use default patterns for 'set' only !stdin
  . SQUASH??? end-of-options test
  . sparse-checkout: take care of "--end-of-options" in set/add/check-rules
- + Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
 
  "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
  not handle "--end-of-options" correctly after a recent update.
