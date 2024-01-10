@@ -1,0 +1,60 @@
+Git v2.30.6 Release Notes
+=========================
+
+This release addresses the security issues CVE-2022-39253 and
+CVE-2022-39260.
+
+Fixes since v2.30.5
+-------------------
+
+ * CVE-2022-39253:
+   When relying on the `--local` clone optimization, Git dereferences
+   symbolic links in the source repository before creating hardlinks
+   (or copies) of the dereferenced link in the destination repository.
+   This can lead to surprising behavior where arbitrary files are
+   present in a repository's `$GIT_DIR` when cloning from a malicious
+   repository.
+
+   Git will no longer dereference symbolic links via the `--local`
+   clone mechanism, and will instead refuse to clone repositories that
+   have symbolic links present in the `$GIT_DIR/objects` directory.
+
+   Additionally, the value of `protocol.file.allow` is changed to be
+   "user" by default.
+
+ * CVE-2022-39260:
+   An overly-long command string given to `git shell` can result in
+   overflow in `split_cmdline()`, leading to arbitrary heap writes and
+   remote code execution when `git shell` is exposed and the directory
+   `$HOME/git-shell-commands` exists.
+
+   `git shell` is taught to refuse interactive commands that are
+   longer than 4MiB in size. `split_cmdline()` is hardened to reject
+   inputs larger than 2GiB.
+
+Credit for finding CVE-2022-39253 goes to Cory Snider of Mirantis. The
+fix was authored by Taylor Blau, with help from Johannes Schindelin.
+
+Credit for finding CVE-2022-39260 goes to Kevin Backhouse of GitHub.
+The fix was authored by Kevin Backhouse, Jeff King, and Taylor Blau.
+
+
+Jeff King (2):
+      shell: add basic tests
+      shell: limit size of interactive commands
+
+Kevin Backhouse (1):
+      alias.c: reject too-long cmdline strings in split_cmdline()
+
+Taylor Blau (11):
+      builtin/clone.c: disallow `--local` clones with symlinks
+      t/lib-submodule-update.sh: allow local submodules
+      t/t1NNN: allow local submodules
+      t/2NNNN: allow local submodules
+      t/t3NNN: allow local submodules
+      t/t4NNN: allow local submodules
+      t/t5NNN: allow local submodules
+      t/t6NNN: allow local submodules
+      t/t7NNN: allow local submodules
+      t/t9NNN: allow local submodules
+      transport: make `protocol.file.allow` be "user" by default

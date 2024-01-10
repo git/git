@@ -2,6 +2,7 @@
 
 test_description='Intent to add'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'intent to add' '
@@ -116,7 +117,7 @@ test_expect_success 'cache-tree does not ignore dir that has i-t-a entries' '
 		mkdir 2 &&
 		for f in 1 2/1 2/2 3
 		do
-			echo "$f" >"$f"
+			echo "$f" >"$f" || return 1
 		done &&
 		git add 1 2/2 3 &&
 		git add -N 2/1 &&
@@ -172,7 +173,7 @@ test_expect_success 'rename detection finds the right names' '
 		git add -N third &&
 
 		git status | grep -v "^?" >actual.1 &&
-		test_i18ngrep "renamed: *first -> third" actual.1 &&
+		test_grep "renamed: *first -> third" actual.1 &&
 
 		git status --porcelain | grep -v "^?" >actual.2 &&
 		cat >expected.2 <<-\EOF &&
@@ -212,8 +213,8 @@ test_expect_success 'double rename detection in status' '
 		git add -N third &&
 
 		git status | grep -v "^?" >actual.1 &&
-		test_i18ngrep "renamed: *first -> second" actual.1 &&
-		test_i18ngrep "renamed: *second -> third" actual.1 &&
+		test_grep "renamed: *first -> second" actual.1 &&
+		test_grep "renamed: *second -> third" actual.1 &&
 
 		git status --porcelain | grep -v "^?" >actual.2 &&
 		cat >expected.2 <<-\EOF &&

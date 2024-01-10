@@ -8,7 +8,7 @@ git-pack-refs - Pack heads and tags for efficient repository access
 SYNOPSIS
 --------
 [verse]
-'git pack-refs' [--all] [--no-prune]
+'git pack-refs' [--all] [--no-prune] [--include <pattern>] [--exclude <pattern>]
 
 DESCRIPTION
 -----------
@@ -51,13 +51,36 @@ The command by default packs all tags and refs that are already
 packed, and leaves other refs
 alone.  This is because branches are expected to be actively
 developed and packing their tips does not help performance.
-This option causes branch tips to be packed as well.  Useful for
-a repository with many branches of historical interests.
+This option causes all refs to be packed as well, with the exception
+of hidden refs, broken refs, and symbolic refs. Useful for a repository
+with many branches of historical interests.
 
 --no-prune::
 
 The command usually removes loose refs under `$GIT_DIR/refs`
 hierarchy after packing them.  This option tells it not to.
+
+--include <pattern>::
+
+Pack refs based on a `glob(7)` pattern. Repetitions of this option
+accumulate inclusion patterns. If a ref is both included in `--include` and
+`--exclude`, `--exclude` takes precedence. Using `--include` will preclude all
+tags from being included by default. Symbolic refs and broken refs will never
+be packed. When used with `--all`, it will be a noop. Use `--no-include` to clear
+and reset the list of patterns.
+
+--exclude <pattern>::
+
+Do not pack refs matching the given `glob(7)` pattern. Repetitions of this option
+accumulate exclusion patterns. Use `--no-exclude` to clear and reset the list of
+patterns. If a ref is already packed, including it with `--exclude` will not
+unpack it.
+
+When used with `--all`, pack only loose refs which do not match any of
+the provided `--exclude` patterns.
+
+When used with `--include`, refs provided to `--include`, minus refs that are
+provided to `--exclude` will be packed.
 
 
 BUGS

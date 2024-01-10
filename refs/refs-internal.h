@@ -1,7 +1,6 @@
 #ifndef REFS_REFS_INTERNAL_H
 #define REFS_REFS_INTERNAL_H
 
-#include "cache.h"
 #include "refs.h"
 #include "iterator.h"
 
@@ -66,6 +65,7 @@ int refname_is_safe(const char *refname);
  * referred-to object does not exist, emit a warning and return false.
  */
 int ref_resolves_to_object(const char *refname,
+			   struct repository *repo,
 			   const struct object_id *oid,
 			   unsigned int flags);
 
@@ -149,9 +149,9 @@ struct ref_update {
 	const char refname[FLEX_ARRAY];
 };
 
-int refs_read_raw_ref(struct ref_store *ref_store,
-		      const char *refname, struct object_id *oid,
-		      struct strbuf *referent, unsigned int *type);
+int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
+		      struct object_id *oid, struct strbuf *referent,
+		      unsigned int *type, int *failure_errno);
 
 /*
  * Write an error to `err` and return a nonzero value iff the same
@@ -227,20 +227,6 @@ struct ref_transaction {
 const char *find_descendant_ref(const char *dirname,
 				const struct string_list *extras,
 				const struct string_list *skip);
-
-/*
- * Check whether an attempt to rename old_refname to new_refname would
- * cause a D/F conflict with any existing reference (other than
- * possibly old_refname). If there would be a conflict, emit an error
- * message and return false; otherwise, return true.
- *
- * Note that this function is not safe against all races with other
- * processes (though rename_ref() catches some races that might get by
- * this check).
- */
-int refs_rename_ref_available(struct ref_store *refs,
-			      const char *old_refname,
-			      const char *new_refname);
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define SYMREF_MAXDEPTH 5
@@ -381,8 +367,8 @@ int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
  */
 struct ref_iterator *refs_ref_iterator_begin(
 		struct ref_store *refs,
-		const char *prefix, int trim,
-		enum do_for_each_ref_flags flags);
+		const char *prefix, const char **exclude_patterns,
+		int trim, enum do_for_each_ref_flags flags);
 
 /*
  * A callback function used to instruct merge_ref_iterator how to
@@ -539,7 +525,8 @@ struct ref_store;
  * should call base_ref_store_init() to initialize the shared part of
  * the ref_store and to record the ref_store for later lookup.
  */
-typedef struct ref_store *ref_store_init_fn(const char *gitdir,
+typedef struct ref_store *ref_store_init_fn(struct repository *repo,
+					    const char *gitdir,
 					    unsigned int flags);
 
 typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
@@ -560,13 +547,12 @@ typedef int ref_transaction_commit_fn(struct ref_store *refs,
 				      struct ref_transaction *transaction,
 				      struct strbuf *err);
 
-typedef int pack_refs_fn(struct ref_store *ref_store, unsigned int flags);
+typedef int pack_refs_fn(struct ref_store *ref_store,
+			 struct pack_refs_opts *opts);
 typedef int create_symref_fn(struct ref_store *ref_store,
 			     const char *ref_target,
 			     const char *refs_heads_master,
 			     const char *logmsg);
-typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
-			   struct string_list *refnames, unsigned int flags);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
@@ -583,7 +569,8 @@ typedef int copy_ref_fn(struct ref_store *ref_store,
  */
 typedef struct ref_iterator *ref_iterator_begin_fn(
 		struct ref_store *ref_store,
-		const char *prefix, unsigned int flags);
+		const char *prefix, const char **exclude_patterns,
+		unsigned int flags);
 
 /* reflog functions */
 
@@ -604,7 +591,7 @@ typedef int for_each_reflog_ent_reverse_fn(struct ref_store *ref_store,
 					   void *cb_data);
 typedef int reflog_exists_fn(struct ref_store *ref_store, const char *refname);
 typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
-			     int force_create, struct strbuf *err);
+			     struct strbuf *err);
 typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
 typedef int reflog_expire_fn(struct ref_store *ref_store,
 			     const char *refname,
@@ -660,6 +647,21 @@ typedef int read_raw_ref_fn(struct ref_store *ref_store, const char *refname,
 			    struct object_id *oid, struct strbuf *referent,
 			    unsigned int *type, int *failure_errno);
 
+/*
+ * Read a symbolic reference from the specified reference store. This function
+ * is optional: if not implemented by a backend, then `read_raw_ref_fn` is used
+ * to read the symbolcic reference instead. It is intended to be implemented
+ * only in case the backend can optimize the reading of symbolic references.
+ *
+ * Return 0 on success, or -1 on failure. `referent` will be set to the target
+ * of the symbolic reference on success. This function explicitly does not
+ * distinguish between error cases and the reference not being a symbolic
+ * reference to allow backends to optimize this operation in case symbolic and
+ * non-symbolic references are treated differently.
+ */
+typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refname,
+				 struct strbuf *referent);
+
 struct ref_storage_be {
 	struct ref_storage_be *next;
 	const char *name;
@@ -673,12 +675,12 @@ struct ref_storage_be {
 
 	pack_refs_fn *pack_refs;
 	create_symref_fn *create_symref;
-	delete_refs_fn *delete_refs;
 	rename_ref_fn *rename_ref;
 	copy_ref_fn *copy_ref;
 
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
+	read_symbolic_ref_fn *read_symbolic_ref;
 
 	reflog_iterator_begin_fn *reflog_iterator_begin;
 	for_each_reflog_ent_fn *for_each_reflog_ent;
@@ -701,22 +703,29 @@ struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
 	const struct ref_storage_be *be;
 
-	/* The gitdir that this ref_store applies to: */
+	struct repository *repo;
+
+	/*
+	 * The gitdir that this ref_store applies to. Note that this is not
+	 * necessarily repo->gitdir if the repo has multiple worktrees.
+	 */
 	char *gitdir;
 };
 
 /*
- * Parse contents of a loose ref file.
+ * Parse contents of a loose ref file. *failure_errno maybe be set to EINVAL for
+ * invalid contents.
  */
 int parse_loose_ref_contents(const char *buf, struct object_id *oid,
-			     struct strbuf *referent, unsigned int *type);
+			     struct strbuf *referent, unsigned int *type,
+			     int *failure_errno);
 
 /*
  * Fill in the generic part of refs and add it to our collection of
  * reference stores.
  */
-void base_ref_store_init(struct ref_store *refs,
-			 const struct ref_storage_be *be);
+void base_ref_store_init(struct ref_store *refs, struct repository *repo,
+			 const char *path, const struct ref_storage_be *be);
 
 /*
  * Support GIT_TRACE_REFS by optionally wrapping the given ref_store instance.

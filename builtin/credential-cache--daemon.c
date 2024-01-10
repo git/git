@@ -1,4 +1,7 @@
 #include "builtin.h"
+#include "abspath.h"
+#include "gettext.h"
+#include "object-file.h"
 #include "parse-options.h"
 
 #ifndef NO_UNIX_SOCKETS
@@ -34,19 +37,22 @@ static struct credential_cache_entry *lookup_credential(const struct credential 
 	int i;
 	for (i = 0; i < entries_nr; i++) {
 		struct credential *e = &entries[i].item;
-		if (credential_match(c, e))
+		if (credential_match(c, e, 0))
 			return &entries[i];
 	}
 	return NULL;
 }
 
-static void remove_credential(const struct credential *c)
+static void remove_credential(const struct credential *c, int match_password)
 {
 	struct credential_cache_entry *e;
 
-	e = lookup_credential(c);
-	if (e)
-		e->expiration = 0;
+	int i;
+	for (i = 0; i < entries_nr; i++) {
+		e = &entries[i];
+		if (credential_match(c, &e->item, match_password))
+			e->expiration = 0;
+	}
 }
 
 static timestamp_t check_expirations(void)
@@ -127,6 +133,12 @@ static void serve_one_client(FILE *in, FILE *out)
 		if (e) {
 			fprintf(out, "username=%s\n", e->item.username);
 			fprintf(out, "password=%s\n", e->item.password);
+			if (e->item.password_expiry_utc != TIME_MAX)
+				fprintf(out, "password_expiry_utc=%"PRItime"\n",
+					e->item.password_expiry_utc);
+			if (e->item.oauth_refresh_token)
+				fprintf(out, "oauth_refresh_token=%s\n",
+					e->item.oauth_refresh_token);
 		}
 	}
 	else if (!strcmp(action.buf, "exit")) {
@@ -141,14 +153,14 @@ static void serve_one_client(FILE *in, FILE *out)
 		exit(0);
 	}
 	else if (!strcmp(action.buf, "erase"))
-		remove_credential(&c);
+		remove_credential(&c, 1);
 	else if (!strcmp(action.buf, "store")) {
 		if (timeout < 0)
 			warning("cache client didn't specify a timeout");
 		else if (!c.username || !c.password)
 			warning("cache client gave us a partial credential");
 		else {
-			remove_credential(&c);
+			remove_credential(&c, 0);
 			cache_credential(&c, timeout);
 		}
 	}
@@ -267,7 +279,7 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 	const char *socket_path;
 	int ignore_sighup = 0;
 	static const char *usage[] = {
-		"git-credential-cache--daemon [opts] <socket_path>",
+		"git credential-cache--daemon [--debug] <socket-path>",
 		NULL
 	};
 	int debug = 0;
@@ -305,7 +317,7 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 {
 	const char * const usage[] = {
-		"git credential-cache--daemon [options] <action>",
+		"git credential-cache--daemon [--debug] <socket-path>",
 		"",
 		"credential-cache--daemon is disabled in this build of Git",
 		NULL

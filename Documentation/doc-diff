@@ -153,7 +153,7 @@ render_tree () {
 		make -j$parallel -C "$tmp/worktree" \
 			$makemanflags \
 			GIT_VERSION=omitted \
-			SOURCE_DATE_EPOCH=0 \
+			GIT_DATE=1970-01-01 \
 			DESTDIR="$tmp/installed/$dname+" \
 			install-man &&
 		mv "$tmp/installed/$dname+" "$tmp/installed/$dname"

@@ -129,6 +129,16 @@ test_expect_success 'import depot, branch detection' '
 	)
 '
 
+test_expect_success 'sync specific detected branch' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" --detect-branches //depot@all &&
+	(
+		cd "$git" &&
+		git p4 sync --branch=depot/branch2 >out &&
+		test_grep "No changes to import!" out
+	)
+'
+
 test_expect_success 'import depot, branch detection, branchList branch definition' '
 	test_when_finished cleanup_git &&
 	test_create_repo "$git" &&
@@ -456,7 +466,7 @@ test_expect_success 'git p4 clone complex branches with excluded files' '
 	)
 '
 
-# From a report in http://stackoverflow.com/questions/11893688
+# From a report in https://stackoverflow.com/questions/11893688
 # where --use-client-spec caused branch prefixes not to be removed;
 # every file in git appeared into a subdirectory of the branch name.
 test_expect_success 'use-client-spec detect-branches setup' '

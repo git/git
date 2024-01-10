@@ -1,7 +1,7 @@
 # Test routines for checking protocol disabling.
 
-# Test clone/fetch/push with GIT_ALLOW_PROTOCOL whitelist
-test_whitelist () {
+# Test clone/fetch/push with GIT_ALLOW_PROTOCOL environment variable
+test_allow_var () {
 	desc=$1
 	proto=$2
 	url=$3
@@ -183,7 +183,7 @@ test_config () {
 #   $2 - machine-readable name of the protocol
 #   $3 - the URL to try cloning
 test_proto () {
-	test_whitelist "$@"
+	test_allow_var "$@"
 
 	test_config "$@"
 }

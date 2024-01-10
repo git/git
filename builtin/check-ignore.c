@@ -1,12 +1,14 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
 #include "dir.h"
+#include "gettext.h"
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "submodule.h"
+#include "write-or-die.h"
 
 static int quiet, verbose, stdin_paths, show_non_matching, no_index;
 static const char * const check_ignore_usage[] = {
@@ -179,7 +181,7 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
 		die(_("--non-matching is only valid with --verbose"));
 
 	/* read_cache() is only necessary so we can watch out for submodules. */
-	if (!no_index && read_cache() < 0)
+	if (!no_index && repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
 	setup_standard_excludes(&dir);

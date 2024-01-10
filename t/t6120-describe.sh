@@ -85,6 +85,7 @@ check_describe e-1-gHASH --tags HEAD^^
 check_describe c-2-gHASH --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 check_describe e --tags HEAD^^^
+check_describe e --tags --exact-match HEAD^^^
 
 check_describe heads/main --all HEAD
 check_describe tags/c-6-gHASH --all HEAD^
@@ -95,6 +96,13 @@ check_describe A-3-gHASH --long HEAD^^2
 
 check_describe c-7-gHASH --tags
 check_describe e-3-gHASH --first-parent --tags
+
+check_describe c-7-gHASH --tags --no-exact-match HEAD
+check_describe e-3-gHASH --first-parent --tags --no-exact-match HEAD
+
+test_expect_success '--exact-match failure' '
+	test_must_fail git describe --exact-match HEAD 2>err
+'
 
 test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 	echo "A^0" >expect &&
@@ -262,7 +270,7 @@ test_expect_success 'name-rev --all' '
 	>expect.unsorted &&
 	for rev in $(git rev-list --all)
 	do
-		git name-rev $rev >>expect.unsorted
+		git name-rev $rev >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
 	git name-rev --all >actual.unsorted &&
@@ -270,18 +278,23 @@ test_expect_success 'name-rev --all' '
 	test_cmp expect actual
 '
 
-test_expect_success 'name-rev --stdin' '
+test_expect_success 'name-rev --annotate-stdin' '
 	>expect.unsorted &&
 	for rev in $(git rev-list --all)
 	do
 		name=$(git name-rev --name-only $rev) &&
-		echo "$rev ($name)" >>expect.unsorted
+		echo "$rev ($name)" >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
-	git rev-list --all | git name-rev --stdin >actual.unsorted &&
+	git rev-list --all | git name-rev --annotate-stdin >actual.unsorted &&
 	sort <actual.unsorted >actual &&
 	test_cmp expect actual
 '
+
+test_expect_success 'name-rev --stdin deprecated' "
+	git rev-list --all | git name-rev --stdin 2>actual &&
+	grep -E 'warning: --stdin is deprecated' actual
+"
 
 test_expect_success 'describe --contains with the exact tags' '
 	echo "A^0" >expect &&
@@ -379,7 +392,7 @@ test_expect_success 'describe directly tagged blob' '
 test_expect_success 'describe tag object' '
 	git tag test-blob-1 -a -m msg unique-file:file &&
 	test_must_fail git describe test-blob-1 2>actual &&
-	test_i18ngrep "fatal: test-blob-1 is neither a commit nor blob" actual
+	test_grep "fatal: test-blob-1 is neither a commit nor blob" actual
 '
 
 test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
@@ -390,9 +403,12 @@ test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
 data <<EOF
 commit #$i
-EOF"
-		test $i = 1 && echo "from refs/heads/main^0"
-		i=$(($i + 1))
+EOF" &&
+		if test $i = 1
+		then
+			echo "from refs/heads/main^0"
+		fi &&
+		i=$(($i + 1)) || return 1
 	done | git fast-import &&
 	git checkout main &&
 	git tag far-far-away HEAD^ &&
@@ -480,6 +496,124 @@ test_expect_success 'name-rev covers all conditions while looking at parents' '
 	)
 '
 
+# A-B-C-D-E-main
+#
+# Where C has a non-monotonically increasing commit timestamp w.r.t. other
+# commits
+test_expect_success 'non-monotonic commit dates setup' '
+	UNIX_EPOCH_ZERO="@0 +0000" &&
+	git init non-monotonic &&
+	test_commit -C non-monotonic A &&
+	test_commit -C non-monotonic --no-tag B &&
+	test_commit -C non-monotonic --no-tag --date "$UNIX_EPOCH_ZERO" C &&
+	test_commit -C non-monotonic D &&
+	test_commit -C non-monotonic E
+'
+
+test_expect_success 'name-rev with commitGraph handles non-monotonic timestamps' '
+	test_config -C non-monotonic core.commitGraph true &&
+	(
+		cd non-monotonic &&
+
+		git commit-graph write --reachable &&
+
+		echo "main~3 tags/D~2" >expect &&
+		git name-rev --tags main~3 >actual &&
+
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --all works with non-monotonic timestamps' '
+	test_config -C non-monotonic core.commitGraph false &&
+	(
+		cd non-monotonic &&
+
+		rm -rf .git/info/commit-graph* &&
+
+		cat >tags <<-\EOF &&
+		tags/E
+		tags/D
+		tags/D~1
+		tags/D~2
+		tags/A
+		EOF
+
+		git log --pretty=%H >revs &&
+
+		paste -d" " revs tags | sort >expect &&
+
+		git name-rev --tags --all | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --annotate-stdin works with non-monotonic timestamps' '
+	test_config -C non-monotonic core.commitGraph false &&
+	(
+		cd non-monotonic &&
+
+		rm -rf .git/info/commit-graph* &&
+
+		cat >expect <<-\EOF &&
+		E
+		D
+		D~1
+		D~2
+		A
+		EOF
+
+		git log --pretty=%H >revs &&
+		git name-rev --tags --annotate-stdin --name-only <revs >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --all works with commitGraph' '
+	test_config -C non-monotonic core.commitGraph true &&
+	(
+		cd non-monotonic &&
+
+		git commit-graph write --reachable &&
+
+		cat >tags <<-\EOF &&
+		tags/E
+		tags/D
+		tags/D~1
+		tags/D~2
+		tags/A
+		EOF
+
+		git log --pretty=%H >revs &&
+
+		paste -d" " revs tags | sort >expect &&
+
+		git name-rev --tags --all | sort >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'name-rev --annotate-stdin works with commitGraph' '
+	test_config -C non-monotonic core.commitGraph true &&
+	(
+		cd non-monotonic &&
+
+		git commit-graph write --reachable &&
+
+		cat >expect <<-\EOF &&
+		E
+		D
+		D~1
+		D~2
+		A
+		EOF
+
+		git log --pretty=%H >revs &&
+		git name-rev --tags --annotate-stdin --name-only <revs >actual &&
+		test_cmp expect actual
+	)
+'
+
 #               B
 #               o
 #                \
@@ -530,5 +664,11 @@ test_expect_success 'setup: describe commits with disjoint bases 2' '
 '
 
 check_describe -C disjoint2 "B-3-gHASH" HEAD
+
+test_expect_success 'setup misleading taggerdates' '
+	GIT_COMMITTER_DATE="2006-12-12 12:31" git tag -a -m "another tag" newer-tag-older-commit unique-file~1
+'
+
+check_describe newer-tag-older-commit~1 --contains unique-file~2
 
 test_done

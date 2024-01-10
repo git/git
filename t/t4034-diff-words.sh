@@ -2,6 +2,7 @@
 
 test_description='word diff colors'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 
@@ -66,6 +67,10 @@ test_language_driver () {
 			"$TEST_DIRECTORY/t4034/'"$lang"'/post" \
 			"$TEST_DIRECTORY/t4034/'"$lang"'/expect" . &&
 		echo "* diff='"$lang"'" >.gitattributes &&
+		word_diff --color-words
+	'
+	test_expect_success "diff driver '$lang' in Islandic" '
+		LANG=is_IS.UTF-8 LANGUAGE=is LC_ALL="$is_IS_locale" \
 		word_diff --color-words
 	'
 }
@@ -323,6 +328,7 @@ test_language_driver dts
 test_language_driver fortran
 test_language_driver html
 test_language_driver java
+test_language_driver kotlin
 test_language_driver matlab
 test_language_driver objc
 test_language_driver pascal

@@ -4,6 +4,7 @@
  * Based on Adam Langley's adaptation of Dan Bernstein's public domain code
  * git clone https://github.com/agl/critbit.git
  */
+#include "git-compat-util.h"
 #include "cbtree.h"
 
 static struct cb_node *cb_node_of(const void *p)
@@ -93,38 +94,6 @@ struct cb_node *cb_lookup(struct cb_tree *t, const uint8_t *k, size_t klen)
 	struct cb_node *p = cb_internal_best_match(t->root, k, klen);
 
 	return p && !memcmp(p->k, k, klen) ? p : NULL;
-}
-
-struct cb_node *cb_unlink(struct cb_tree *t, const uint8_t *k, size_t klen)
-{
-	struct cb_node **wherep = &t->root;
-	struct cb_node **whereq = NULL;
-	struct cb_node *q = NULL;
-	size_t direction = 0;
-	uint8_t c;
-	struct cb_node *p = t->root;
-
-	if (!p) return NULL;	/* empty tree, nothing to delete */
-
-	/* traverse to find best match, keeping link to parent */
-	while (1 & (uintptr_t)p) {
-		whereq = wherep;
-		q = cb_node_of(p);
-		c = q->byte < klen ? k[q->byte] : 0;
-		direction = (1 + (q->otherbits | c)) >> 8;
-		wherep = q->child + direction;
-		p = *wherep;
-	}
-
-	if (memcmp(p->k, k, klen))
-		return NULL;		/* no match, nothing unlinked */
-
-	/* found an exact match */
-	if (whereq)	/* update parent */
-		*whereq = q->child[1 - direction];
-	else
-		t->root = NULL;
-	return p;
 }
 
 static enum cb_next cb_descend(struct cb_node *p, cb_iter fn, void *arg)

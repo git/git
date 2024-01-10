@@ -113,14 +113,16 @@ static void add_internet_password(void)
 
 static void read_credential(void)
 {
-	char buf[1024];
+	char *buf = NULL;
+	size_t alloc;
+	ssize_t line_len;
 
-	while (fgets(buf, sizeof(buf), stdin)) {
+	while ((line_len = getline(&buf, &alloc, stdin)) > 0) {
 		char *v;
 
 		if (!strcmp(buf, "\n"))
 			break;
-		buf[strlen(buf)-1] = '\0';
+		buf[line_len-1] = '\0';
 
 		v = strchr(buf, '=');
 		if (!v)
@@ -159,7 +161,14 @@ static void read_credential(void)
 			username = xstrdup(v);
 		else if (!strcmp(buf, "password"))
 			password = xstrdup(v);
+		/*
+		 * Ignore other lines; we don't know what they mean, but
+		 * this future-proofs us when later versions of git do
+		 * learn new lines, and the helpers are updated to match.
+		 */
 	}
+
+	free(buf);
 }
 
 int main(int argc, const char **argv)
@@ -168,7 +177,7 @@ int main(int argc, const char **argv)
 		"usage: git credential-osxkeychain <get|store|erase>";
 
 	if (!argv[1])
-		die(usage);
+		die("%s", usage);
 
 	read_credential();
 

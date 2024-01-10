@@ -1,0 +1,13 @@
+# LINT: "()" in function definition not mistaken for subshell
+sha1_file() {
+	echo "$*" | sed "s#..#.git/objects/&/#"
+} &&
+
+# LINT: broken &&-chain in function and after function
+remove_object() {
+	file=$(sha1_file "$*") &&
+	test -e "$file"
+	rm -f "$file"
+}
+
+sha1_file arg && remove_object arg

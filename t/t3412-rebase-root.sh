@@ -7,11 +7,12 @@ Tests if git rebase --root --onto <newparent> can rebase the root commit.
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 log_with_names () {
 	git rev-list --topo-order --parents --pretty="tformat:%s" HEAD |
-	git name-rev --stdin --name-only --refs=refs/heads/$1
+	git name-rev --annotate-stdin --name-only --refs=refs/heads/$1
 }
 
 
@@ -31,12 +32,9 @@ test_expect_success 'rebase --root fails with too many args' '
 '
 
 test_expect_success 'setup pre-rebase hook' '
-	mkdir -p .git/hooks &&
-	cat >.git/hooks/pre-rebase <<EOF &&
-#!$SHELL_PATH
-echo "\$1,\$2" >.git/PRE-REBASE-INPUT
-EOF
-	chmod +x .git/hooks/pre-rebase
+	test_hook --setup pre-rebase <<-\EOF
+	echo "$1,$2" >.git/PRE-REBASE-INPUT
+	EOF
 '
 cat > expect <<EOF
 4
@@ -89,17 +87,6 @@ test_expect_success 'pre-rebase got correct input (4)' '
 	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,work4
 '
 
-test_expect_success REBASE_P 'rebase -i -p with linear history' '
-	git checkout -b work5 other &&
-	git rebase -i -p --root --onto main &&
-	git log --pretty=tformat:"%s" > rebased5 &&
-	test_cmp expect rebased5
-'
-
-test_expect_success REBASE_P 'pre-rebase got correct input (5)' '
-	test "z$(cat .git/PRE-REBASE-INPUT)" = z--root,
-'
-
 test_expect_success 'set up merge history' '
 	git checkout other^ &&
 	git checkout -b side &&
@@ -122,13 +109,6 @@ commit work6~3 work6~4
 commit work6~4
 1
 EOF
-
-test_expect_success REBASE_P 'rebase -i -p with merge' '
-	git checkout -b work6 other &&
-	git rebase -i -p --root --onto main &&
-	log_with_names work6 > rebased6 &&
-	test_cmp expect-side rebased6
-'
 
 test_expect_success 'set up second root and merge' '
 	git symbolic-ref HEAD refs/heads/third &&
@@ -158,20 +138,10 @@ commit work7~5
 1
 EOF
 
-test_expect_success REBASE_P 'rebase -i -p with two roots' '
-	git checkout -b work7 other &&
-	git rebase -i -p --root --onto main &&
-	log_with_names work7 > rebased7 &&
-	test_cmp expect-third rebased7
-'
-
 test_expect_success 'setup pre-rebase hook that fails' '
-	mkdir -p .git/hooks &&
-	cat >.git/hooks/pre-rebase <<EOF &&
-#!$SHELL_PATH
-false
-EOF
-	chmod +x .git/hooks/pre-rebase
+	test_hook --setup --clobber pre-rebase <<-\EOF
+	false
+	EOF
 '
 
 test_expect_success 'pre-rebase hook stops rebase' '
@@ -264,21 +234,9 @@ commit conflict3~6
 1
 EOF
 
-test_expect_success REBASE_P 'rebase -i -p --root with conflict (first part)' '
-	git checkout -b conflict3 other &&
-	test_must_fail git rebase -i -p --root --onto main &&
-	git ls-files -u | grep "B$"
-'
-
 test_expect_success 'fix the conflict' '
 	echo 3 > B &&
 	git add B
-'
-
-test_expect_success REBASE_P 'rebase -i -p --root with conflict (second part)' '
-	git rebase --continue &&
-	log_with_names conflict3 >out &&
-	test_cmp expect-conflict-p out
 '
 
 test_done

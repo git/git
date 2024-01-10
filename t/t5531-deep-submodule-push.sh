@@ -5,6 +5,9 @@ test_description='test push with submodules'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
+export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
+
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -308,7 +311,7 @@ test_expect_success 'submodule entry pointing at a tag is error' '
 	git -C work commit -m "bad commit" &&
 	test_when_finished "git -C work reset --hard HEAD^" &&
 	test_must_fail git -C work push --recurse-submodules=on-demand ../pub.git main 2>err &&
-	test_i18ngrep "is a tag, not a commit" err
+	test_grep "is a tag, not a commit" err
 '
 
 test_expect_success 'push fails if recurse submodules option passed as yes' '
@@ -507,6 +510,56 @@ test_expect_success 'push only unpushed submodules recursively' '
 	git -C pub.git rev-parse main >actual_pub &&
 	test_cmp expected_submodule actual_submodule &&
 	test_cmp expected_pub actual_pub
+'
+
+setup_subsub () {
+	git init upstream &&
+	git init upstream/sub &&
+	git init upstream/sub/deepsub &&
+	test_commit -C upstream/sub/deepsub innermost &&
+	git -C upstream/sub submodule add ./deepsub deepsub &&
+	git -C upstream/sub commit -m middle &&
+	git -C upstream submodule add ./sub sub &&
+	git -C upstream commit -m outermost &&
+
+	git -c protocol.file.allow=always clone --recurse-submodules upstream downstream &&
+	git -C downstream/sub/deepsub checkout -b downstream-branch &&
+	git -C downstream/sub checkout -b downstream-branch &&
+	git -C downstream checkout -b downstream-branch
+}
+
+new_downstream_commits () {
+	test_commit -C downstream/sub/deepsub new-innermost &&
+	git -C downstream/sub add deepsub &&
+	git -C downstream/sub commit -m new-middle &&
+	git -C downstream add sub &&
+	git -C downstream commit -m new-outermost
+}
+
+test_expect_success 'push with push.recurseSubmodules=only on superproject' '
+	test_when_finished rm -rf upstream downstream &&
+	setup_subsub &&
+	new_downstream_commits &&
+	git -C downstream config push.recurseSubmodules only &&
+	git -C downstream push origin downstream-branch &&
+
+	test_must_fail git -C upstream rev-parse refs/heads/downstream-branch &&
+	git -C upstream/sub rev-parse refs/heads/downstream-branch &&
+	test_must_fail git -C upstream/sub/deepsub rev-parse refs/heads/downstream-branch
+'
+
+test_expect_success 'push with push.recurseSubmodules=only on superproject and top-level submodule' '
+	test_when_finished rm -rf upstream downstream &&
+	setup_subsub &&
+	new_downstream_commits &&
+	git -C downstream config push.recurseSubmodules only &&
+	git -C downstream/sub config push.recurseSubmodules only &&
+	git -C downstream push origin downstream-branch 2> err &&
+
+	test_must_fail git -C upstream rev-parse refs/heads/downstream-branch &&
+	git -C upstream/sub rev-parse refs/heads/downstream-branch &&
+	git -C upstream/sub/deepsub rev-parse refs/heads/downstream-branch &&
+	grep "recursing into submodule with push.recurseSubmodules=only; using on-demand instead" err
 '
 
 test_expect_success 'push propagating the remotes name to a submodule' '

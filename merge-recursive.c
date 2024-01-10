@@ -3,14 +3,10 @@
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "merge-recursive.h"
 
-#include "advice.h"
 #include "alloc.h"
-#include "attr.h"
-#include "blob.h"
-#include "builtin.h"
 #include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
@@ -18,14 +14,22 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
-#include "ll-merge.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "merge-ll.h"
 #include "lockfile.h"
-#include "object-store.h"
+#include "match-trees.h"
+#include "name-hash.h"
+#include "object-file.h"
+#include "object-name.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "repository.h"
 #include "revision.h"
+#include "sparse-index.h"
 #include "string-list.h"
-#include "submodule-config.h"
-#include "submodule.h"
+#include "symlinks.h"
 #include "tag.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
@@ -45,7 +49,7 @@ struct path_hashmap_entry {
 	char path[FLEX_ARRAY];
 };
 
-static int path_hashmap_cmp(const void *cmp_data,
+static int path_hashmap_cmp(const void *cmp_data UNUSED,
 			    const struct hashmap_entry *eptr,
 			    const struct hashmap_entry *entry_or_key,
 			    const void *keydata)
@@ -82,17 +86,17 @@ static struct dir_rename_entry *dir_rename_find_entry(struct hashmap *hashmap,
 {
 	struct dir_rename_entry key;
 
-	if (dir == NULL)
+	if (!dir)
 		return NULL;
 	hashmap_entry_init(&key.ent, strhash(dir));
 	key.dir = dir;
 	return hashmap_get_entry(hashmap, &key, ent, NULL);
 }
 
-static int dir_rename_cmp(const void *unused_cmp_data,
+static int dir_rename_cmp(const void *cmp_data UNUSED,
 			  const struct hashmap_entry *eptr,
 			  const struct hashmap_entry *entry_or_key,
-			  const void *unused_keydata)
+			  const void *keydata UNUSED)
 {
 	const struct dir_rename_entry *e1, *e2;
 
@@ -134,10 +138,10 @@ static struct collision_entry *collision_find_entry(struct hashmap *hashmap,
 	return hashmap_get_entry(hashmap, &key, ent, NULL);
 }
 
-static int collision_cmp(const void *unused_cmp_data,
+static int collision_cmp(const void *cmp_data UNUSED,
 			 const struct hashmap_entry *eptr,
 			 const struct hashmap_entry *entry_or_key,
-			 const void *unused_keydata)
+			 const void *keydata UNUSED)
 {
 	const struct collision_entry *e1, *e2;
 
@@ -334,7 +338,9 @@ static void output(struct merge_options *opt, int v, const char *fmt, ...)
 		flush_output(opt);
 }
 
-static void output_commit_title(struct merge_options *opt, struct commit *commit)
+static void repo_output_commit_title(struct merge_options *opt,
+				     struct repository *repo,
+				     struct commit *commit)
 {
 	struct merge_remote_desc *desc;
 
@@ -343,21 +349,27 @@ static void output_commit_title(struct merge_options *opt, struct commit *commit
 	if (desc)
 		strbuf_addf(&opt->obuf, "virtual %s\n", desc->name);
 	else {
-		strbuf_add_unique_abbrev(&opt->obuf, &commit->object.oid,
-					 DEFAULT_ABBREV);
+		strbuf_repo_add_unique_abbrev(&opt->obuf, repo,
+					      &commit->object.oid,
+					      DEFAULT_ABBREV);
 		strbuf_addch(&opt->obuf, ' ');
-		if (parse_commit(commit) != 0)
+		if (repo_parse_commit(repo, commit) != 0)
 			strbuf_addstr(&opt->obuf, _("(bad commit)\n"));
 		else {
 			const char *title;
-			const char *msg = get_commit_buffer(commit, NULL);
+			const char *msg = repo_get_commit_buffer(repo, commit, NULL);
 			int len = find_commit_subject(msg, &title);
 			if (len)
 				strbuf_addf(&opt->obuf, "%.*s\n", len, title);
-			unuse_commit_buffer(commit, msg);
+			repo_unuse_commit_buffer(repo, commit, msg);
 		}
 	}
 	flush_output(opt);
+}
+
+static void output_commit_title(struct merge_options *opt, struct commit *commit)
+{
+	repo_output_commit_title(opt, the_repository, commit);
 }
 
 static int add_cacheinfo(struct merge_options *opt,
@@ -404,13 +416,16 @@ static int unpack_trees_start(struct merge_options *opt,
 {
 	int rc;
 	struct tree_desc t[3];
-	struct index_state tmp_index = { NULL };
+	struct index_state tmp_index = INDEX_STATE_INIT(opt->repo);
 
 	memset(&opt->priv->unpack_opts, 0, sizeof(opt->priv->unpack_opts));
 	if (opt->priv->call_depth)
 		opt->priv->unpack_opts.index_only = 1;
-	else
+	else {
 		opt->priv->unpack_opts.update = 1;
+		/* FIXME: should only do this if !overwrite_ignore */
+		opt->priv->unpack_opts.preserve_ignored = 0;
+	}
 	opt->priv->unpack_opts.merge = 1;
 	opt->priv->unpack_opts.head_idx = 2;
 	opt->priv->unpack_opts.fn = threeway_merge;
@@ -445,7 +460,7 @@ static void unpack_trees_finish(struct merge_options *opt)
 	clear_unpack_trees_porcelain(&opt->priv->unpack_opts);
 }
 
-static int save_files_dirs(const struct object_id *oid,
+static int save_files_dirs(const struct object_id *oid UNUSED,
 			   struct strbuf *base, const char *path,
 			   unsigned int mode, void *context)
 {
@@ -511,10 +526,10 @@ static struct stage_data *insert_stage_data(struct repository *r,
  */
 static struct string_list *get_unmerged(struct index_state *istate)
 {
-	struct string_list *unmerged = xcalloc(1, sizeof(struct string_list));
+	struct string_list *unmerged = xmalloc(sizeof(struct string_list));
 	int i;
 
-	unmerged->strdup_strings = 1;
+	string_list_init_dup(unmerged);
 
 	/* TODO: audit for interaction with sparse-index. */
 	ensure_full_index(istate);
@@ -940,7 +955,8 @@ static int update_file_flags(struct merge_options *opt,
 			goto update_index;
 		}
 
-		buf = read_object_file(&contents->oid, &type, &size);
+		buf = repo_read_object_file(the_repository, &contents->oid,
+					    &type, &size);
 		if (!buf) {
 			ret = err(opt, _("cannot read object %s '%s'"),
 				  oid_to_hex(&contents->oid), path);
@@ -1033,7 +1049,7 @@ static int merge_3way(struct merge_options *opt,
 	mmfile_t orig, src1, src2;
 	struct ll_merge_options ll_opts = {0};
 	char *base, *name1, *name2;
-	int merge_status;
+	enum ll_merge_result merge_status;
 
 	ll_opts.renormalize = opt->renormalize;
 	ll_opts.extra_marker_size = extra_marker_size;
@@ -1079,6 +1095,9 @@ static int merge_3way(struct merge_options *opt,
 	merge_status = ll_merge(result_buf, a->path, &orig, base,
 				&src1, name1, &src2, name2,
 				opt->repo->index, &ll_opts);
+	if (merge_status == LL_MERGE_BINARY_CONFLICT)
+		warning("Cannot merge binary files: %s (%s vs. %s)",
+			a->path, name1, name2);
 
 	free(base);
 	free(name1);
@@ -1146,17 +1165,18 @@ static int find_first_merges(struct repository *repo,
 	}
 
 	object_array_clear(&merges);
+	release_revisions(&revs);
 	return result->nr;
 }
 
-static void print_commit(struct commit *commit)
+static void print_commit(struct repository *repo, struct commit *commit)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	ctx.date_mode.type = DATE_NORMAL;
 	/* FIXME: Merge this with output_commit_title() */
 	assert(!merge_remote_util(commit));
-	format_commit_message(commit, " %h: %m %s", &sb, &ctx);
+	repo_format_commit_message(repo, commit, " %h: %m %s", &sb, &ctx);
 	fprintf(stderr, "%s\n", sb.buf);
 	strbuf_release(&sb);
 }
@@ -1196,15 +1216,6 @@ static int merge_submodule(struct merge_options *opt,
 	if (is_null_oid(b))
 		return 0;
 
-	/*
-	 * NEEDSWORK: Remove this when all submodule object accesses are
-	 * through explicitly specified repositores.
-	 */
-	if (add_submodule_odb(path)) {
-		output(opt, 1, _("Failed to merge submodule %s (not checked out)"), path);
-		return 0;
-	}
-
 	if (repo_submodule_init(&subrepo, opt->repo, path, null_oid())) {
 		output(opt, 1, _("Failed to merge submodule %s (not checked out)"), path);
 		return 0;
@@ -1229,7 +1240,7 @@ static int merge_submodule(struct merge_options *opt,
 		oidcpy(result, b);
 		if (show(opt, 3)) {
 			output(opt, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
-			output_commit_title(opt, commit_b);
+			repo_output_commit_title(opt, &subrepo, commit_b);
 		} else if (show(opt, 2))
 			output(opt, 2, _("Fast-forwarding submodule %s"), path);
 		else
@@ -1242,7 +1253,7 @@ static int merge_submodule(struct merge_options *opt,
 		oidcpy(result, a);
 		if (show(opt, 3)) {
 			output(opt, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
-			output_commit_title(opt, commit_a);
+			repo_output_commit_title(opt, &subrepo, commit_a);
 		} else if (show(opt, 2))
 			output(opt, 2, _("Fast-forwarding submodule %s"), path);
 		else
@@ -1274,7 +1285,7 @@ static int merge_submodule(struct merge_options *opt,
 	case 1:
 		output(opt, 1, _("Failed to merge submodule %s (not fast-forward)"), path);
 		output(opt, 2, _("Found a possible merge resolution for the submodule:\n"));
-		print_commit((struct commit *) merges.objects[0].item);
+		print_commit(&subrepo, (struct commit *) merges.objects[0].item);
 		output(opt, 2, _(
 		       "If this is correct simply add it to the index "
 		       "for example\n"
@@ -1287,7 +1298,7 @@ static int merge_submodule(struct merge_options *opt,
 	default:
 		output(opt, 1, _("Failed to merge submodule %s (multiple merges found)"), path);
 		for (i = 0; i < merges.nr; i++)
-			print_commit((struct commit *) merges.objects[i].item);
+			print_commit(&subrepo, (struct commit *) merges.objects[i].item);
 	}
 
 	object_array_clear(&merges);
@@ -1367,12 +1378,12 @@ static int merge_mode_and_contents(struct merge_options *opt,
 						  extra_marker_size);
 
 			if ((merge_status < 0) || !result_buf.ptr)
-				ret = err(opt, _("Failed to execute internal merge"));
+				ret = err(opt, _("failed to execute internal merge"));
 
 			if (!ret &&
 			    write_object_file(result_buf.ptr, result_buf.size,
-					      blob_type, &result->blob.oid))
-				ret = err(opt, _("Unable to add %s to database"),
+					      OBJ_BLOB, &result->blob.oid))
+				ret = err(opt, _("unable to add %s to database"),
 					  a->path);
 
 			free(result_buf.ptr);
@@ -1985,14 +1996,14 @@ static void get_renamed_dir_portion(const char *old_path, const char *new_path,
 	 * renamed means the root directory can never be renamed -- because
 	 * the root directory always exists).
 	 */
-	if (end_of_old == NULL)
+	if (!end_of_old)
 		return; /* Note: *old_dir and *new_dir are still NULL */
 
 	/*
 	 * If new_path contains no directory (end_of_new is NULL), then we
 	 * have a rename of old_path's directory to the root directory.
 	 */
-	if (end_of_new == NULL) {
+	if (!end_of_new) {
 		*old_dir = xstrndup(old_path, end_of_old - old_path);
 		*new_dir = xstrdup("");
 		return;
@@ -2094,7 +2105,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	if (!new_path) {
 		/* This should only happen when entry->non_unique_new_dir set */
 		if (!entry->non_unique_new_dir)
-			BUG("entry->non_unqiue_dir not set and !new_path");
+			BUG("entry->non_unique_new_dir not set and !new_path");
 		output(opt, 1, _("CONFLICT (directory rename split): "
 			       "Unclear where to place %s because directory "
 			       "%s was renamed to multiple other directories, "
@@ -2111,7 +2122,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	 * to ensure that's the case.
 	 */
 	collision_ent = collision_find_entry(collisions, new_path);
-	if (collision_ent == NULL)
+	if (!collision_ent)
 		BUG("collision_ent is NULL");
 
 	/*
@@ -2991,7 +3002,7 @@ static void final_cleanup_rename(struct string_list *rename)
 	const struct rename *re;
 	int i;
 
-	if (rename == NULL)
+	if (!rename)
 		return;
 
 	for (i = 0; i < rename->nr; i++) {
@@ -3015,7 +3026,7 @@ static int read_oid_strbuf(struct merge_options *opt,
 	void *buf;
 	enum object_type type;
 	unsigned long size;
-	buf = read_object_file(oid, &type, &size);
+	buf = repo_read_object_file(the_repository, oid, &type, &size);
 	if (!buf)
 		return err(opt, _("cannot read object %s"), oid_to_hex(oid));
 	if (type != OBJ_BLOB) {
@@ -3586,7 +3597,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 	}
 
 	if (!merge_bases) {
-		merge_bases = get_merge_bases(h1, h2);
+		merge_bases = repo_get_merge_bases(the_repository, h1, h2);
 		merge_bases = reverse_commit_list(merge_bases);
 	}
 
@@ -3600,7 +3611,7 @@ static int merge_recursive_internal(struct merge_options *opt,
 	}
 
 	merged_merge_bases = pop_commit(&merge_bases);
-	if (merged_merge_bases == NULL) {
+	if (!merged_merge_bases) {
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 
@@ -3709,6 +3720,10 @@ static int merge_start(struct merge_options *opt, struct tree *head)
 
 	assert(opt->priv == NULL);
 
+	/* Not supported; option specific to merge-ort */
+	assert(!opt->record_conflict_msgs_as_headers);
+	assert(!opt->msg_header_prefix);
+
 	/* Sanity check on repo state; index must match head */
 	if (repo_index_has_changes(opt->repo, head, &sb)) {
 		err(opt, _("Your local changes to the following files would be overwritten by merge:\n  %s"),
@@ -3787,7 +3802,7 @@ static struct commit *get_ref(struct repository *repo,
 		return make_virtual_commit(repo, (struct tree*)object, name);
 	if (object->type != OBJ_COMMIT)
 		return NULL;
-	if (parse_commit((struct commit *)object))
+	if (repo_parse_commit(repo, (struct commit *)object))
 		return NULL;
 	return (struct commit *)object;
 }
@@ -3890,6 +3905,22 @@ void init_merge_options(struct merge_options *opt,
 		opt->verbosity = strtol(merge_verbosity, NULL, 10);
 	if (opt->verbosity >= 5)
 		opt->buffer_output = 0;
+}
+
+/*
+ * For now, members of merge_options do not need deep copying, but
+ * it may change in the future, in which case we would need to update
+ * this, and also make a matching change to clear_merge_options() to
+ * release the resources held by a copied instance.
+ */
+void copy_merge_options(struct merge_options *dst, struct merge_options *src)
+{
+	*dst = *src;
+}
+
+void clear_merge_options(struct merge_options *opt UNUSED)
+{
+	; /* no-op as our copy is shallow right now */
 }
 
 int parse_merge_opt(struct merge_options *opt, const char *s)

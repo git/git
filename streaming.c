@@ -1,10 +1,13 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "convert.h"
+#include "environment.h"
 #include "streaming.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "replace-object.h"
 #include "packfile.h"
 
@@ -38,7 +41,7 @@ struct git_istream {
 
 	union {
 		struct {
-			char *buf; /* from read_object() */
+			char *buf; /* from oid_object_info_extended() */
 			unsigned long read_ptr;
 		} incore;
 
@@ -223,19 +226,24 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 			      const struct object_id *oid,
 			      enum object_type *type)
 {
+	struct object_info oi = OBJECT_INFO_INIT;
+	oi.sizep = &st->size;
+	oi.typep = type;
+
 	st->u.loose.mapped = map_loose_object(r, oid, &st->u.loose.mapsize);
 	if (!st->u.loose.mapped)
 		return -1;
-	if ((unpack_loose_header(&st->z,
-				 st->u.loose.mapped,
-				 st->u.loose.mapsize,
-				 st->u.loose.hdr,
-				 sizeof(st->u.loose.hdr)) < 0) ||
-	    (parse_loose_header(st->u.loose.hdr, &st->size) < 0)) {
-		git_inflate_end(&st->z);
-		munmap(st->u.loose.mapped, st->u.loose.mapsize);
-		return -1;
+	switch (unpack_loose_header(&st->z, st->u.loose.mapped,
+				    st->u.loose.mapsize, st->u.loose.hdr,
+				    sizeof(st->u.loose.hdr), NULL)) {
+	case ULHR_OK:
+		break;
+	case ULHR_BAD:
+	case ULHR_TOO_LONG:
+		goto error;
 	}
+	if (parse_loose_header(st->u.loose.hdr, &oi) < 0 || *type < 0)
+		goto error;
 
 	st->u.loose.hdr_used = strlen(st->u.loose.hdr) + 1;
 	st->u.loose.hdr_avail = st->z.total_out;
@@ -244,6 +252,10 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 	st->read = read_istream_loose;
 
 	return 0;
+error:
+	git_inflate_end(&st->z);
+	munmap(st->u.loose.mapped, st->u.loose.mapsize);
+	return -1;
 }
 
 
@@ -319,9 +331,9 @@ static int close_istream_pack_non_delta(struct git_istream *st)
 }
 
 static int open_istream_pack_non_delta(struct git_istream *st,
-				       struct repository *r,
-				       const struct object_id *oid,
-				       enum object_type *type)
+				       struct repository *r UNUSED,
+				       const struct object_id *oid UNUSED,
+				       enum object_type *type UNUSED)
 {
 	struct pack_window *window;
 	enum object_type in_pack_type;
@@ -379,12 +391,17 @@ static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
 static int open_istream_incore(struct git_istream *st, struct repository *r,
 			       const struct object_id *oid, enum object_type *type)
 {
-	st->u.incore.buf = read_object_file_extended(r, oid, type, &st->size, 0);
+	struct object_info oi = OBJECT_INFO_INIT;
+
 	st->u.incore.read_ptr = 0;
 	st->close = close_istream_incore;
 	st->read = read_istream_incore;
 
-	return st->u.incore.buf ? 0 : -1;
+	oi.typep = type;
+	oi.sizep = &st->size;
+	oi.contentp = (void **)&st->u.incore.buf;
+	return oid_object_info_extended(r, oid, &oi,
+					OBJECT_INFO_DIE_IF_CORRUPT);
 }
 
 /*****************************************************************************

@@ -1,5 +1,4 @@
-# LINT: first subshell statement cuddled with opening "("; for implementation
-# LINT: simplicity, "(..." is split into two lines, "(" and "..."
+# LINT: first subshell statement cuddled with opening "("
 (cd foo &&
 	bar
 ) &&

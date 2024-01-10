@@ -5,6 +5,7 @@
 
 test_description='Pickaxe options'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -23,7 +24,7 @@ test_expect_success '-G matches' '
 
 test_expect_success '-S --pickaxe-regex' '
 	git diff --name-only -S0 --pickaxe-regex HEAD^ >out &&
-	verbose test 4096-zeroes.txt = "$(cat out)"
+	test 4096-zeroes.txt = "$(cat out)"
 '
 
 test_done

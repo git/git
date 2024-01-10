@@ -74,7 +74,7 @@ pack.threads::
 	warning. This is meant to reduce packing time on multiprocessor
 	machines. The required amount of memory for the delta search window
 	is however multiplied by the number of threads.
-	Specifying 0 will cause Git to auto-detect the number of CPU's
+	Specifying 0 will cause Git to auto-detect the number of CPUs
 	and set the number of threads accordingly.
 
 pack.indexVersion::
@@ -83,11 +83,11 @@ pack.indexVersion::
 	the new pack index with capabilities for packs larger than 4 GB
 	as well as proper protection against the repacking of corrupted
 	packs.  Version 2 is the default.  Note that version 2 is enforced
-	and this config option ignored whenever the corresponding pack is
+	and this config option is ignored whenever the corresponding pack is
 	larger than 2 GB.
 +
 If you have an old Git that does not understand the version 2 `*.idx` file,
-cloning or fetching over a non native protocol (e.g. "http")
+cloning or fetching over a non-native protocol (e.g. "http")
 that will copy both `*.pack` file and corresponding `*.idx` file from the
 other side may give you a repository that cannot be accessed with your
 older version of Git. If the `*.pack` file is smaller than 2 GB, however,
@@ -102,8 +102,8 @@ pack.packSizeLimit::
 	in the creation of multiple packfiles.
 +
 Note that this option is rarely useful, and may result in a larger total
-on-disk size (because Git will not store deltas between packs), as well
-as worse runtime performance (object lookup within multiple packs is
+on-disk size (because Git will not store deltas between packs) and
+worse runtime performance (object lookup within multiple packs is
 slower than a single pack, and optimizations like reachability bitmaps
 cannot cope with multiple packs).
 +
@@ -122,6 +122,23 @@ pack.useBitmaps::
 	to stdout (e.g., during the server side of a fetch). Defaults to
 	true. You should not generally need to turn this off unless
 	you are debugging pack bitmaps.
+
+pack.useBitmapBoundaryTraversal::
+	When true, Git will use an experimental algorithm for computing
+	reachability queries with bitmaps. Instead of building up
+	complete bitmaps for all of the negated tips and then OR-ing
+	them together, consider negated tips with existing bitmaps as
+	additive (i.e. OR-ing them into the result if they exist,
+	ignoring them otherwise), and build up a bitmap at the boundary
+	instead.
++
+When using this algorithm, Git may include too many objects as a result
+of not opening up trees belonging to certain UNINTERESTING commits. This
+inexactness matches the non-bitmap traversal algorithm.
++
+In many cases, this can provide a speed-up over the exact algorithm,
+particularly when there is poor bitmap coverage of the negated side of
+the query.
 
 pack.useSparse::
 	When true, git will default to using the '--sparse' option in
@@ -164,9 +181,22 @@ When writing a multi-pack reachability bitmap, no new namehashes are
 computed; instead, any namehashes stored in an existing bitmap are
 permuted into their appropriate location when writing a new bitmap.
 
+pack.writeBitmapLookupTable::
+	When true, Git will include a "lookup table" section in the
+	bitmap index (if one is written). This table is used to defer
+	loading individual bitmaps as late as possible. This can be
+	beneficial in repositories that have relatively large bitmap
+	indexes. Defaults to false.
+
+pack.readReverseIndex::
+	When true, git will read any .rev file(s) that may be available
+	(see: linkgit:gitformat-pack[5]). When false, the reverse index
+	will be generated from scratch and stored in memory. Defaults to
+	true.
+
 pack.writeReverseIndex::
 	When true, git will write a corresponding .rev file (see:
-	link:../technical/pack-format.html[Documentation/technical/pack-format.txt])
+	linkgit:gitformat-pack[5])
 	for each new packfile that it writes in all places except for
 	linkgit:git-fast-import[1] and in the bulk checkin mechanism.
-	Defaults to false.
+	Defaults to true.

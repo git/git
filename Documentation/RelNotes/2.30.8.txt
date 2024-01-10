@@ -1,0 +1,51 @@
+Git v2.30.8 Release Notes
+=========================
+
+This release addresses the security issues CVE-2023-22490 and
+CVE-2023-23946.
+
+
+Fixes since v2.30.7
+-------------------
+
+ * CVE-2023-22490:
+
+   Using a specially-crafted repository, Git can be tricked into using
+   its local clone optimization even when using a non-local transport.
+   Though Git will abort local clones whose source $GIT_DIR/objects
+   directory contains symbolic links (c.f., CVE-2022-39253), the objects
+   directory itself may still be a symbolic link.
+
+   These two may be combined to include arbitrary files based on known
+   paths on the victim's filesystem within the malicious repository's
+   working copy, allowing for data exfiltration in a similar manner as
+   CVE-2022-39253.
+
+ * CVE-2023-23946:
+
+   By feeding a crafted input to "git apply", a path outside the
+   working tree can be overwritten as the user who is running "git
+   apply".
+
+ * A mismatched type in `attr.c::read_attr_from_index()` which could
+   cause Git to errantly reject attributes on Windows and 32-bit Linux
+   has been corrected.
+
+Credit for finding CVE-2023-22490 goes to yvvdwf, and the fix was
+developed by Taylor Blau, with additional help from others on the
+Git security mailing list.
+
+Credit for finding CVE-2023-23946 goes to Joern Schneeweisz, and the
+fix was developed by Patrick Steinhardt.
+
+
+Johannes Schindelin (1):
+      attr: adjust a mismatched data type
+
+Patrick Steinhardt (1):
+      apply: fix writing behind newly created symbolic links
+
+Taylor Blau (3):
+      t5619: demonstrate clone_local() with ambiguous transport
+      clone: delay picking a transport until after get_repo_path()
+      dir-iterator: prevent top-level symlinks without FOLLOW_SYMLINKS

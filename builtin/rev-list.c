@@ -1,16 +1,18 @@
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "commit.h"
 #include "diff.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "revision.h"
 #include "list-objects.h"
-#include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "object.h"
-#include "object-store.h"
-#include "pack.h"
+#include "object-name.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "pack-bitmap.h"
-#include "builtin.h"
 #include "log-tree.h"
 #include "graph.h"
 #include "bisect.h"
@@ -20,7 +22,8 @@
 #include "packfile.h"
 
 static const char rev_list_usage[] =
-"git rev-list [OPTION] <commit-id>... [ -- paths... ]\n"
+"git rev-list [<options>] <commit>... [--] [<path>...]\n"
+"\n"
 "  limiting output:\n"
 "    --max-count=<n>\n"
 "    --max-age=<epoch>\n"
@@ -37,6 +40,7 @@ static const char rev_list_usage[] =
 "    --tags\n"
 "    --remotes\n"
 "    --stdin\n"
+"    --exclude-hidden=[fetch|receive|uploadpack]\n"
 "    --quiet\n"
 "  ordering output:\n"
 "    --topo-order\n"
@@ -46,6 +50,7 @@ static const char rev_list_usage[] =
 "    --parents\n"
 "    --children\n"
 "    --objects | --objects-edge\n"
+"    --disk-usage[=human]\n"
 "    --unpacked\n"
 "    --header | --pretty\n"
 "    --[no-]object-names\n"
@@ -62,7 +67,6 @@ static const char rev_list_usage[] =
 static struct progress *progress;
 static unsigned progress_counter;
 
-static struct list_objects_filter_options filter_options;
 static struct oidset omitted_objects;
 static int arg_print_omitted; /* print objects omitted by filter */
 
@@ -82,6 +86,7 @@ static int arg_show_object_names = 1;
 
 static int show_disk_usage;
 static off_t total_disk_usage;
+static int human_readable;
 
 static off_t get_object_disk_usage(struct object *obj)
 {
@@ -93,13 +98,60 @@ static off_t get_object_disk_usage(struct object *obj)
 	return size;
 }
 
-static void finish_commit(struct commit *commit);
+static inline void finish_object__ma(struct object *obj)
+{
+	/*
+	 * Whether or not we try to dynamically fetch missing objects
+	 * from the server, we currently DO NOT have the object.  We
+	 * can either print, allow (ignore), or conditionally allow
+	 * (ignore) them.
+	 */
+	switch (arg_missing_action) {
+	case MA_ERROR:
+		die("missing %s object '%s'",
+		    type_name(obj->type), oid_to_hex(&obj->oid));
+		return;
+
+	case MA_ALLOW_ANY:
+		return;
+
+	case MA_PRINT:
+		oidset_insert(&missing_objects, &obj->oid);
+		return;
+
+	case MA_ALLOW_PROMISOR:
+		if (is_promisor_object(&obj->oid))
+			return;
+		die("unexpected missing %s object '%s'",
+		    type_name(obj->type), oid_to_hex(&obj->oid));
+		return;
+
+	default:
+		BUG("unhandled missing_action");
+		return;
+	}
+}
+
+static void finish_commit(struct commit *commit)
+{
+	free_commit_list(commit->parents);
+	commit->parents = NULL;
+	free_commit_buffer(the_repository->parsed_objects,
+			   commit);
+}
+
 static void show_commit(struct commit *commit, void *data)
 {
 	struct rev_list_info *info = data;
 	struct rev_info *revs = info->revs;
 
 	display_progress(progress, ++progress_counter);
+
+	if (revs->do_not_die_on_missing_objects &&
+	    oidset_contains(&revs->missing_commits, &commit->object.oid)) {
+		finish_object__ma(&commit->object);
+		return;
+	}
 
 	if (show_disk_usage)
 		total_disk_usage += get_object_disk_usage(&commit->object);
@@ -131,7 +183,7 @@ static void show_commit(struct commit *commit, void *data)
 		if (!revs->graph)
 			fputs(get_revision_mark(revs, commit), stdout);
 		if (revs->abbrev_commit && revs->abbrev)
-			fputs(find_unique_abbrev(&commit->object.oid, revs->abbrev),
+			fputs(repo_find_unique_abbrev(the_repository, &commit->object.oid, revs->abbrev),
 			      stdout);
 		else
 			fputs(oid_to_hex(&commit->object.oid), stdout);
@@ -212,51 +264,8 @@ static void show_commit(struct commit *commit, void *data)
 	finish_commit(commit);
 }
 
-static void finish_commit(struct commit *commit)
-{
-	if (commit->parents) {
-		free_commit_list(commit->parents);
-		commit->parents = NULL;
-	}
-	free_commit_buffer(the_repository->parsed_objects,
-			   commit);
-}
-
-static inline void finish_object__ma(struct object *obj)
-{
-	/*
-	 * Whether or not we try to dynamically fetch missing objects
-	 * from the server, we currently DO NOT have the object.  We
-	 * can either print, allow (ignore), or conditionally allow
-	 * (ignore) them.
-	 */
-	switch (arg_missing_action) {
-	case MA_ERROR:
-		die("missing %s object '%s'",
-		    type_name(obj->type), oid_to_hex(&obj->oid));
-		return;
-
-	case MA_ALLOW_ANY:
-		return;
-
-	case MA_PRINT:
-		oidset_insert(&missing_objects, &obj->oid);
-		return;
-
-	case MA_ALLOW_PROMISOR:
-		if (is_promisor_object(&obj->oid))
-			return;
-		die("unexpected missing %s object '%s'",
-		    type_name(obj->type), oid_to_hex(&obj->oid));
-		return;
-
-	default:
-		BUG("unhandled missing_action");
-		return;
-	}
-}
-
-static int finish_object(struct object *obj, const char *name, void *cb_data)
+static int finish_object(struct object *obj, const char *name UNUSED,
+			 void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
 	if (oid_object_info_extended(the_repository, &obj->oid, NULL, 0) < 0) {
@@ -361,14 +370,25 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 
 static int show_object_fast(
 	const struct object_id *oid,
-	enum object_type type,
-	int exclude,
-	uint32_t name_hash,
-	struct packed_git *found_pack,
-	off_t found_offset)
+	enum object_type type UNUSED,
+	int exclude UNUSED,
+	uint32_t name_hash UNUSED,
+	struct packed_git *found_pack UNUSED,
+	off_t found_offset UNUSED)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
 	return 1;
+}
+
+static void print_disk_usage(off_t size)
+{
+	struct strbuf sb = STRBUF_INIT;
+	if (human_readable)
+		strbuf_humanise_bytes(&sb, size);
+	else
+		strbuf_addf(&sb, "%"PRIuMAX, (uintmax_t)size);
+	puts(sb.buf);
+	strbuf_release(&sb);
 }
 
 static inline int parse_missing_action_value(const char *value)
@@ -400,7 +420,6 @@ static inline int parse_missing_action_value(const char *value)
 }
 
 static int try_bitmap_count(struct rev_info *revs,
-			    struct list_objects_filter_options *filter,
 			    int filter_provided_objects)
 {
 	uint32_t commit_count = 0,
@@ -436,7 +455,7 @@ static int try_bitmap_count(struct rev_info *revs,
 	 */
 	max_count = revs->max_count;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
+	bitmap_git = prepare_bitmap_walk(revs, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
@@ -453,7 +472,6 @@ static int try_bitmap_count(struct rev_info *revs,
 }
 
 static int try_bitmap_traversal(struct rev_info *revs,
-				struct list_objects_filter_options *filter,
 				int filter_provided_objects)
 {
 	struct bitmap_index *bitmap_git;
@@ -465,7 +483,7 @@ static int try_bitmap_traversal(struct rev_info *revs,
 	if (revs->max_count >= 0)
 		return -1;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
+	bitmap_git = prepare_bitmap_walk(revs, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
@@ -475,20 +493,20 @@ static int try_bitmap_traversal(struct rev_info *revs,
 }
 
 static int try_bitmap_disk_usage(struct rev_info *revs,
-				 struct list_objects_filter_options *filter,
 				 int filter_provided_objects)
 {
 	struct bitmap_index *bitmap_git;
+	off_t size_from_bitmap;
 
 	if (!show_disk_usage)
 		return -1;
 
-	bitmap_git = prepare_bitmap_walk(revs, filter, filter_provided_objects);
+	bitmap_git = prepare_bitmap_walk(revs, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
 
-	printf("%"PRIuMAX"\n",
-	       (uintmax_t)get_disk_usage_from_bitmap(bitmap_git, revs));
+	size_from_bitmap = get_disk_usage_from_bitmap(bitmap_git, revs);
+	print_disk_usage(size_from_bitmap);
 	return 0;
 }
 
@@ -506,6 +524,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	int use_bitmap_index = 0;
 	int filter_provided_objects = 0;
 	const char *show_progress = NULL;
+	int ret = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(rev_list_usage);
@@ -538,14 +557,14 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (skip_prefix(arg, "--missing=", &arg)) {
 			if (revs.exclude_promisor_objects)
-				die(_("cannot combine --exclude-promisor-objects and --missing"));
+				die(_("options '%s' and '%s' cannot be used together"), "--exclude-promisor-objects", "--missing");
 			if (parse_missing_action_value(arg))
 				break;
 		}
 	}
 
 	if (arg_missing_action)
-		revs.do_not_die_on_missing_tree = 1;
+		revs.do_not_die_on_missing_objects = 1;
 
 	argc = setup_revisions(argc, argv, &revs, &s_r_opt);
 
@@ -589,21 +608,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--test-bitmap")) {
 			test_bitmap_walk(&revs);
-			return 0;
+			goto cleanup;
 		}
 		if (skip_prefix(arg, "--progress=", &arg)) {
 			show_progress = arg;
-			continue;
-		}
-
-		if (skip_prefix(arg, ("--" CL_ARG__FILTER "="), &arg)) {
-			parse_list_objects_filter(&filter_options, arg);
-			if (filter_options.choice && !revs.blob_objects)
-				die(_("object filtering requires --objects"));
-			continue;
-		}
-		if (!strcmp(arg, ("--no-" CL_ARG__FILTER))) {
-			list_objects_filter_set_no_filter(&filter_options);
 			continue;
 		}
 		if (!strcmp(arg, "--filter-provided-objects")) {
@@ -640,7 +648,21 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (!strcmp(arg, "--disk-usage")) {
+		if (skip_prefix(arg, "--disk-usage", &arg)) {
+			if (*arg == '=') {
+				if (!strcmp(++arg, "human")) {
+					human_readable = 1;
+				} else
+					die(_("invalid value for '%s': '%s', the only allowed format is '%s'"),
+					    "--disk-usage=<format>", arg, "human");
+			} else if (*arg) {
+				/*
+				 * Arguably should goto a label to continue chain of ifs?
+				 * Doesn't matter unless we try to add --disk-usage-foo
+				 * afterwards.
+				 */
+				usage(rev_list_usage);
+			}
 			show_disk_usage = 1;
 			info.flags |= REV_LIST_QUIET;
 			continue;
@@ -676,7 +698,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (revs.count &&
 	    (revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
 	    (revs.left_right || revs.cherry_mark))
-		die(_("marked counting is incompatible with --objects"));
+		die(_("marked counting and '%s' cannot be used together"), "--objects");
 
 	save_commit_buffer = (revs.verbose_header ||
 			      revs.grep_filter.pattern_list ||
@@ -688,12 +710,12 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		progress = start_delayed_progress(show_progress, 0);
 
 	if (use_bitmap_index) {
-		if (!try_bitmap_count(&revs, &filter_options, filter_provided_objects))
-			return 0;
-		if (!try_bitmap_disk_usage(&revs, &filter_options, filter_provided_objects))
-			return 0;
-		if (!try_bitmap_traversal(&revs, &filter_options, filter_provided_objects))
-			return 0;
+		if (!try_bitmap_count(&revs, filter_provided_objects))
+			goto cleanup;
+		if (!try_bitmap_disk_usage(&revs, filter_provided_objects))
+			goto cleanup;
+		if (!try_bitmap_traversal(&revs, filter_provided_objects))
+			goto cleanup;
 	}
 
 	if (prepare_revision_walk(&revs))
@@ -713,8 +735,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 		find_bisection(&revs.commits, &reaches, &all, bisect_flags);
 
-		if (bisect_show_vars)
-			return show_bisect_vars(&info, reaches, all);
+		if (bisect_show_vars) {
+			ret = show_bisect_vars(&info, reaches, all);
+			goto cleanup;
+		}
 	}
 
 	if (filter_provided_objects) {
@@ -733,7 +757,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		oidset_init(&missing_objects, DEFAULT_OIDSET_SIZE);
 
 	traverse_commit_list_filtered(
-		&filter_options, &revs, show_commit, show_object, &info,
+		&revs, show_commit, show_object, &info,
 		(arg_print_omitted ? &omitted_objects : NULL));
 
 	if (arg_print_omitted) {
@@ -767,7 +791,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	}
 
 	if (show_disk_usage)
-		printf("%"PRIuMAX"\n", (uintmax_t)total_disk_usage);
+		print_disk_usage(total_disk_usage);
 
-	return 0;
+cleanup:
+	release_revisions(&revs);
+	return ret;
 }

@@ -46,6 +46,13 @@ struct check_connected_options {
 	 * during a fetch.
 	 */
 	unsigned is_deepening_fetch : 1;
+
+	/*
+	 * If not NULL, use `--exclude-hidden=$section` to exclude all refs
+	 * hidden via the `$section.hideRefs` config from the set of
+	 * already-reachable refs.
+	 */
+	const char *exclude_hidden_refs_section;
 };
 
 #define CHECK_CONNECTED_INIT { 0 }

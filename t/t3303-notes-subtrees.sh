@@ -5,6 +5,7 @@ test_description='Test commit notes organized in subtrees'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 number_of_commits=100
@@ -30,7 +31,7 @@ verify_notes () {
 	while [ $i -gt 0 ]; do
 		echo "    commit #$i" &&
 		echo "    note for commit #$i" &&
-		i=$(($i-1));
+		i=$(($i-1)) || return 1
 	done > expect &&
 	test_cmp expect output
 }
@@ -42,7 +43,7 @@ test_expect_success "setup: create $number_of_commits commits" '
 		while [ $nr -lt $number_of_commits ]; do
 			nr=$(($nr+1)) &&
 			test_tick &&
-			cat <<INPUT_END
+			cat <<INPUT_END || return 1
 commit refs/heads/main
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 data <<COMMIT
@@ -78,7 +79,7 @@ test_sha1_based () {
 	(
 		start_note_commit &&
 		nr=$number_of_commits &&
-		git rev-list refs/heads/main |
+		git rev-list refs/heads/main >out &&
 		while read sha1; do
 			note_path=$(echo "$sha1" | sed "$1")
 			cat <<INPUT_END &&
@@ -90,9 +91,9 @@ EOF
 INPUT_END
 
 			nr=$(($nr-1))
-		done
-	) |
-	git fast-import --quiet
+		done <out
+	) >gfi &&
+	git fast-import --quiet <gfi
 }
 
 test_expect_success 'test notes in 2/38-fanout' 'test_sha1_based "s|^..|&/|"'
@@ -178,7 +179,7 @@ verify_concatenated_notes () {
 		echo "    first note for commit #$i" &&
 		echo "    " &&
 		echo "    second note for commit #$i" &&
-		i=$(($i-1));
+		i=$(($i-1)) || return 1
 	done > expect &&
 	test_cmp expect output
 }

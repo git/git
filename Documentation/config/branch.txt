@@ -7,8 +7,11 @@ branch.autoSetupMerge::
 	automatic setup is done; `true` -- automatic setup is done when the
 	starting point is a remote-tracking branch; `always` --
 	automatic setup is done when the starting point is either a
-	local branch or remote-tracking
-	branch. This option defaults to true.
+	local branch or remote-tracking branch; `inherit` -- if the starting point
+	has a tracking configuration, it is copied to the new
+	branch; `simple` -- automatic setup is done only when the starting point
+	is a remote-tracking branch and the new branch has the same name as the
+	remote branch. This option defaults to true.
 
 branch.autoSetupRebase::
 	When a new branch is created with 'git branch', 'git switch' or 'git checkout'
@@ -33,12 +36,13 @@ branch.sort::
 
 branch.<name>.remote::
 	When on branch <name>, it tells 'git fetch' and 'git push'
-	which remote to fetch from/push to.  The remote to push to
+	which remote to fetch from or push to.  The remote to push to
 	may be overridden with `remote.pushDefault` (for all branches).
 	The remote to push to, for the current branch, may be further
 	overridden by `branch.<name>.pushRemote`.  If no remote is
-	configured, or if you are not on any branch, it defaults to
-	`origin` for fetching and `remote.pushDefault` for pushing.
+	configured, or if you are not on any branch and there is more than
+	one remote defined in the repository, it defaults to `origin` for
+	fetching and `remote.pushDefault` for pushing.
 	Additionally, `.` (a period) is the current local repository
 	(a dot-repository), see `branch.<name>.merge`'s final note below.
 
@@ -60,7 +64,7 @@ branch.<name>.merge::
 	handled like the remote part of a refspec, and must match a
 	ref which is fetched from the remote given by
 	"branch.<name>.remote".
-	The merge information is used by 'git pull' (which at first calls
+	The merge information is used by 'git pull' (which first calls
 	'git fetch') to lookup the default branch for merging. Without
 	this option, 'git pull' defaults to merge the first refspec fetched.
 	Specify multiple values to get an octopus merge.
@@ -85,10 +89,6 @@ When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
 so that the local merge commits are included in the rebase (see
 linkgit:git-rebase[1] for details).
 +
-When `preserve` (or just 'p', deprecated in favor of `merges`), also pass
-`--preserve-merges` along to 'git rebase' so that locally committed merge
-commits will not be flattened by running 'git pull'.
-+
 When the value is `interactive` (or just 'i'), the rebase is run in interactive
 mode.
 +
@@ -99,5 +99,5 @@ for details).
 branch.<name>.description::
 	Branch description, can be edited with
 	`git branch --edit-description`. Branch description is
-	automatically added in the format-patch cover letter or
+	automatically added to the format-patch cover letter or
 	request-pull summary.

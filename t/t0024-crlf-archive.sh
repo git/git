@@ -2,6 +2,7 @@
 
 test_description='respect crlf in git archive'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

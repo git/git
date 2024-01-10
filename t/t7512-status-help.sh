@@ -659,6 +659,7 @@ On branch am_empty
 You are in the middle of an am session.
 The current patch is empty.
   (use "git am --skip" to skip this patch)
+  (use "git am --allow-empty" to record this patch as an empty commit)
   (use "git am --abort" to restore the original branch)
 
 nothing to commit (use -u to show untracked files)
@@ -682,6 +683,34 @@ test_expect_success 'status when bisecting' '
 	cat >expected <<EOF &&
 HEAD detached at $TGT
 You are currently bisecting, started from branch '\''bisect'\''.
+  (use "git bisect reset" to get back to the original branch)
+
+nothing to commit (use -u to show untracked files)
+EOF
+	git status --untracked-files=no >actual &&
+	test_cmp expected actual
+'
+
+
+test_expect_success 'status when bisecting while rebasing' '
+	git reset --hard main &&
+	test_when_finished "git rebase --abort" &&
+	ONTO=$(git rev-parse --short HEAD^) &&
+	FAKE_LINES="break" git rebase -i HEAD^ &&
+	test_when_finished "git checkout -" &&
+	git checkout -b bisect_while_rebasing &&
+	test_when_finished "git bisect reset" &&
+	git bisect start &&
+	cat >expected <<EOF &&
+On branch bisect_while_rebasing
+Last command done (1 command done):
+   break
+No commands remaining.
+You are currently editing a commit while rebasing branch '\''bisect'\'' on '\''$ONTO'\''.
+  (use "git commit --amend" to amend the current commit)
+  (use "git rebase --continue" once you are satisfied with your changes)
+
+You are currently bisecting, started from branch '\''bisect_while_rebasing'\''.
   (use "git bisect reset" to get back to the original branch)
 
 nothing to commit (use -u to show untracked files)
@@ -768,6 +797,28 @@ Changes to be committed:
 	modified:   main.txt
 
 Untracked files not listed (use -u option to show untracked files)
+EOF
+	git status --untracked-files=no >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'status when cherry-picking multiple commits' '
+	git reset --hard cherry_branch &&
+	test_when_finished "git cherry-pick --abort" &&
+	test_must_fail git cherry-pick cherry_branch_second one_cherry &&
+	TO_CHERRY_PICK=$(git rev-parse --short CHERRY_PICK_HEAD) &&
+	cat >expected <<EOF &&
+On branch cherry_branch
+You are currently cherry-picking commit $TO_CHERRY_PICK.
+  (fix conflicts and run "git cherry-pick --continue")
+  (use "git cherry-pick --skip" to skip this patch)
+  (use "git cherry-pick --abort" to cancel the cherry-pick operation)
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+	both modified:   main.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
 EOF
 	git status --untracked-files=no >actual &&
 	test_cmp expected actual

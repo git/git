@@ -1,9 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "builtin.h"
 #include "exec-cmd.h"
 #include "run-command.h"
 #include "levenshtein.h"
+#include "gettext.h"
 #include "help.h"
 #include "command-list.h"
 #include "string-list.h"
@@ -12,6 +13,7 @@
 #include "refs.h"
 #include "parse-options.h"
 #include "prompt.h"
+#include "fsmonitor-ipc.h"
 
 struct category_description {
 	uint32_t category;
@@ -37,19 +39,30 @@ static struct category_description main_categories[] = {
 	{ CAT_plumbinginterrogators, N_("Low-level Commands / Interrogators") },
 	{ CAT_synchingrepositories, N_("Low-level Commands / Syncing Repositories") },
 	{ CAT_purehelpers, N_("Low-level Commands / Internal Helpers") },
+	{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces") },
+	{ CAT_developerinterfaces, N_("Developer-facing file formats, protocols and other interfaces") },
 	{ 0, NULL }
 };
 
 static const char *drop_prefix(const char *name, uint32_t category)
 {
 	const char *new_name;
+	const char *prefix;
 
-	if (skip_prefix(name, "git-", &new_name))
+	switch (category) {
+	case CAT_guide:
+	case CAT_userinterfaces:
+	case CAT_developerinterfaces:
+		prefix = "git";
+		break;
+	default:
+		prefix = "git-";
+		break;
+	}
+	if (skip_prefix(name, prefix, &new_name))
 		return new_name;
-	if (category == CAT_guide && skip_prefix(name, "git", &new_name))
-		return new_name;
+
 	return name;
-
 }
 
 static void extract_cmds(struct cmdname_help **p_cmds, uint32_t mask)
@@ -124,7 +137,9 @@ static void print_cmd_by_category(const struct category_description *catdesc,
 		uint32_t mask = catdesc[i].category;
 		const char *desc = catdesc[i].desc;
 
-		printf("\n%s\n", _(desc));
+		if (i)
+			putchar('\n');
+		puts(_(desc));
 		print_command_list(cmds, mask, longest);
 	}
 	free(cmds);
@@ -293,9 +308,22 @@ void load_command_list(const char *prefix,
 	exclude_cmds(other_cmds, main_cmds);
 }
 
-void list_commands(unsigned int colopts,
-		   struct cmdnames *main_cmds, struct cmdnames *other_cmds)
+static int get_colopts(const char *var, const char *value,
+		       const struct config_context *ctx UNUSED, void *data)
 {
+	unsigned int *colopts = data;
+
+	if (starts_with(var, "column."))
+		return git_column_config(var, value, "help", colopts);
+
+	return 0;
+}
+
+void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds)
+{
+	unsigned int colopts = 0;
+	git_config(get_colopts, &colopts);
+
 	if (main_cmds->cnt) {
 		const char *exec_path = git_exec_path();
 		printf_ln(_("available git commands in '%s'"), exec_path);
@@ -305,7 +333,7 @@ void list_commands(unsigned int colopts,
 	}
 
 	if (other_cmds->cnt) {
-		printf_ln(_("git commands available from elsewhere on your $PATH"));
+		puts(_("git commands available from elsewhere on your $PATH"));
 		putchar('\n');
 		pretty_print_cmdnames(other_cmds, colopts);
 		putchar('\n');
@@ -315,6 +343,7 @@ void list_commands(unsigned int colopts,
 void list_common_cmds_help(void)
 {
 	puts(_("These are common Git commands used in various situations:"));
+	putchar('\n');
 	print_cmd_by_category(common_categories, NULL);
 }
 
@@ -410,25 +439,44 @@ void list_guides_help(void)
 	putchar('\n');
 }
 
-static int get_alias(const char *var, const char *value, void *data)
+void list_user_interfaces_help(void)
+{
+	struct category_description catdesc[] = {
+		{ CAT_userinterfaces, N_("User-facing repository, command and file interfaces:") },
+		{ 0, NULL }
+	};
+	print_cmd_by_category(catdesc, NULL);
+	putchar('\n');
+}
+
+void list_developer_interfaces_help(void)
+{
+	struct category_description catdesc[] = {
+		{ CAT_developerinterfaces, N_("File formats, protocols and other developer interfaces:") },
+		{ 0, NULL }
+	};
+	print_cmd_by_category(catdesc, NULL);
+	putchar('\n');
+}
+
+static int get_alias(const char *var, const char *value,
+		     const struct config_context *ctx UNUSED, void *data)
 {
 	struct string_list *list = data;
 
-	if (skip_prefix(var, "alias.", &var))
+	if (skip_prefix(var, "alias.", &var)) {
+		if (!value)
+			return config_error_nonbool(var);
 		string_list_append(list, var)->util = xstrdup(value);
+	}
 
 	return 0;
 }
 
-void list_all_cmds_help(void)
+static void list_all_cmds_help_external_commands(void)
 {
 	struct string_list others = STRING_LIST_INIT_DUP;
-	struct string_list alias_list = STRING_LIST_INIT_DUP;
-	struct cmdname_help *aliases;
-	int i, longest;
-
-	printf_ln(_("See 'git help <command>' to read about a specific subcommand"));
-	print_cmd_by_category(main_categories, &longest);
+	int i;
 
 	list_all_other_cmds(&others);
 	if (others.nr)
@@ -436,6 +484,13 @@ void list_all_cmds_help(void)
 	for (i = 0; i < others.nr; i++)
 		printf("   %s\n", others.items[i].string);
 	string_list_clear(&others, 0);
+}
+
+static void list_all_cmds_help_aliases(int longest)
+{
+	struct string_list alias_list = STRING_LIST_INIT_DUP;
+	struct cmdname_help *aliases;
+	int i;
 
 	git_config(get_alias, &alias_list);
 	string_list_sort(&alias_list);
@@ -461,6 +516,20 @@ void list_all_cmds_help(void)
 	string_list_clear(&alias_list, 1);
 }
 
+void list_all_cmds_help(int show_external_commands, int show_aliases)
+{
+	int longest;
+
+	puts(_("See 'git help <command>' to read about a specific subcommand"));
+	putchar('\n');
+	print_cmd_by_category(main_categories, &longest);
+
+	if (show_external_commands)
+		list_all_cmds_help_external_commands();
+	if (show_aliases)
+		list_all_cmds_help_aliases(longest);
+}
+
 int is_in_cmdlist(struct cmdnames *c, const char *s)
 {
 	int i;
@@ -477,7 +546,9 @@ static struct cmdnames aliases;
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
-static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
+static int git_unknown_cmd_config(const char *var, const char *value,
+				  const struct config_context *ctx,
+				  void *cb UNUSED)
 {
 	const char *p;
 
@@ -491,7 +562,7 @@ static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 		} else if (!strcmp(value, "prompt")) {
 			autocorrect = AUTOCORRECT_PROMPT;
 		} else {
-			int v = git_config_int(var, value);
+			int v = git_config_int(var, value, ctx->kvi);
 			autocorrect = (v < 0)
 				? AUTOCORRECT_IMMEDIATELY : v;
 		}
@@ -500,7 +571,7 @@ static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 	if (skip_prefix(var, "alias.", &p))
 		add_cmdname(&aliases, p, strlen(p));
 
-	return git_default_config(var, value, cb);
+	return 0;
 }
 
 static int levenshtein_compare(const void *p1, const void *p2)
@@ -631,7 +702,7 @@ const char *help_unknown_cmd(const char *cmd)
 		else if (autocorrect == AUTOCORRECT_PROMPT) {
 			char *answer;
 			struct strbuf msg = STRBUF_INIT;
-			strbuf_addf(&msg, _("Run '%s' instead? (y/N)"), assumed);
+			strbuf_addf(&msg, _("Run '%s' instead [y/N]? "), assumed);
 			answer = git_prompt(msg.buf, PROMPT_ECHO);
 			strbuf_release(&msg);
 			if (!(starts_with(answer, "y") ||
@@ -683,6 +754,9 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 		strbuf_addf(buf, "sizeof-size_t: %d\n", (int)sizeof(size_t));
 		strbuf_addf(buf, "shell-path: %s\n", SHELL_PATH);
 		/* NEEDSWORK: also save and output GIT-BUILD_OPTIONS? */
+
+		if (fsmonitor_ipc__is_supported())
+			strbuf_addstr(buf, "feature: fsmonitor--daemon\n");
 	}
 }
 
@@ -691,7 +765,7 @@ int cmd_version(int argc, const char **argv, const char *prefix)
 	struct strbuf buf = STRBUF_INIT;
 	int build_options = 0;
 	const char * const usage[] = {
-		N_("git version [<options>]"),
+		N_("git version [--build-options]"),
 		NULL
 	};
 	struct option options[] = {
@@ -715,8 +789,9 @@ struct similar_ref_cb {
 	struct string_list *similar_refs;
 };
 
-static int append_similar_ref(const char *refname, const struct object_id *oid,
-			      int flags, void *cb_data)
+static int append_similar_ref(const char *refname,
+			      const struct object_id *oid UNUSED,
+			      int flags UNUSED, void *cb_data)
 {
 	struct similar_ref_cb *cb = (struct similar_ref_cb *)(cb_data);
 	char *branch = strrchr(refname, '/') + 1;

@@ -4,6 +4,7 @@
 #
 
 test_description='concurrent git svn dcommit'
+
 . ./lib-git-svn.sh
 
 
@@ -45,6 +46,14 @@ setup_hook()
 			"passed to setup_hook" >&2 ; return 1; }
 	echo "cnt=$skip_revs" > "$hook_type-counter"
 	rm -f "$rawsvnrepo/hooks/"*-commit # drop previous hooks
+
+	# Subversion hooks run with an empty environment by default. We thus
+	# need to propagate PATH so that we can find executables.
+	cat >"$rawsvnrepo/conf/hooks-env" <<-EOF
+	[default]
+	PATH = ${PATH}
+	EOF
+
 	hook="$rawsvnrepo/hooks/$hook_type"
 	cat > "$hook" <<- 'EOF1'
 		#!/bin/sh
@@ -62,7 +71,6 @@ EOF1
 	if [ "$hook_type" = "pre-commit" ]; then
 		echo "echo 'commit disallowed' >&2; exit 1" >>"$hook"
 	else
-		echo "PATH=\"$PATH\"; export PATH" >>"$hook"
 		echo "svnconf=\"$svnconf\"" >>"$hook"
 		cat >>"$hook" <<- 'EOF2'
 			cd work-auto-commits.svn

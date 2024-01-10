@@ -22,8 +22,8 @@ mergetool.<tool>.trustExitCode::
 	For a custom merge command, specify whether the exit code of
 	the merge command can be used to determine whether the merge was
 	successful.  If this is not set to true then the merge target file
-	timestamp is checked and the merge assumed to have been successful
-	if the file has been updated, otherwise the user is prompted to
+	timestamp is checked, and the merge is assumed to have been successful
+	if the file has been updated; otherwise, the user is prompted to
 	indicate the success of the merge.
 
 mergetool.meld.hasOutput::
@@ -37,7 +37,7 @@ mergetool.meld.hasOutput::
 
 mergetool.meld.useAutoMerge::
 	When the `--auto-merge` is given, meld will merge all non-conflicting
-	parts automatically, highlight the conflicting parts and wait for
+	parts automatically, highlight the conflicting parts, and wait for
 	user decision.  Setting `mergetool.meld.useAutoMerge` to `true` tells
 	Git to unconditionally use the `--auto-merge` option with `meld`.
 	Setting this value to `auto` makes git detect whether `--auto-merge`
@@ -45,12 +45,21 @@ mergetool.meld.useAutoMerge::
 	value of `false` avoids using `--auto-merge` altogether, and is the
 	default value.
 
+mergetool.vimdiff.layout::
+	The vimdiff backend uses this variable to control how its split
+	windows appear. Applies even if you are using Neovim (`nvim`) or
+	gVim (`gvim`) as the merge tool. See BACKEND SPECIFIC HINTS section
+ifndef::git-mergetool[]
+	in linkgit:git-mergetool[1].
+endif::[]
+	for details.
+
 mergetool.hideResolved::
-	During a merge Git will automatically resolve as many conflicts as
+	During a merge, Git will automatically resolve as many conflicts as
 	possible and write the 'MERGED' file containing conflict markers around
 	any conflicts that it cannot resolve; 'LOCAL' and 'REMOTE' normally
 	represent the versions of the file from before Git's conflict
-	resolution. This flag causes 'LOCAL' and 'REMOTE' to be overwriten so
+	resolution. This flag causes 'LOCAL' and 'REMOTE' to be overwritten so
 	that only the unresolved conflicts are presented to the merge tool. Can
 	be configured per-tool via the `mergetool.<tool>.hideResolved`
 	configuration variable. Defaults to `false`.
@@ -65,7 +74,7 @@ mergetool.keepTemporaries::
 	When invoking a custom merge tool, Git uses a set of temporary
 	files to pass to the tool. If the tool returns an error and this
 	variable is set to `true`, then these temporary files will be
-	preserved, otherwise they will be removed after the tool has
+	preserved; otherwise, they will be removed after the tool has
 	exited. Defaults to `false`.
 
 mergetool.writeToTemp::
@@ -76,3 +85,10 @@ mergetool.writeToTemp::
 
 mergetool.prompt::
 	Prompt before each invocation of the merge resolution program.
+
+mergetool.guiDefault::
+	Set `true` to use the `merge.guitool` by default (equivalent to
+	specifying the `--gui` argument), or `auto` to select `merge.guitool`
+	or `merge.tool` depending on the presence of a `DISPLAY` environment
+	variable value. The default is `false`, where the `--gui` argument
+	must be provided explicitly for the `merge.guitool` to be used.

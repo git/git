@@ -20,8 +20,10 @@ static inline void mput_char(char c, unsigned int num)
 }
 
 void list_common_cmds_help(void);
-void list_all_cmds_help(void);
+void list_all_cmds_help(int show_external_commands, int show_aliases);
 void list_guides_help(void);
+void list_user_interfaces_help(void);
+void list_developer_interfaces_help(void);
 
 void list_all_main_cmds(struct string_list *list);
 void list_all_other_cmds(struct string_list *list);
@@ -37,7 +39,7 @@ void add_cmdname(struct cmdnames *cmds, const char *name, int len);
 /* Here we require that excludes is a sorted list. */
 void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes);
 int is_in_cmdlist(struct cmdnames *cmds, const char *name);
-void list_commands(unsigned int colopts, struct cmdnames *main_cmds, struct cmdnames *other_cmds);
+void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds);
 void get_version_info(struct strbuf *buf, int show_build_options);
 
 /*

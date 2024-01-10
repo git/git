@@ -5,6 +5,7 @@ test_description='Return value of diffs'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -135,6 +136,11 @@ test_expect_success 'check honors conflict marker length' '
 	test_expect_code 2 git diff --check b &&
 	git diff --check a &&
 	git reset --hard
+'
+
+test_expect_success 'option errors are not confused by --exit-code' '
+	test_must_fail git diff --exit-code --nonsense 2>err &&
+	grep '^usage:' err
 '
 
 test_done

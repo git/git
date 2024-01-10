@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "alias.h"
 #include "config.h"
+#include "gettext.h"
+#include "strbuf.h"
 #include "string-list.h"
 
 struct config_alias_data {
@@ -9,7 +11,8 @@ struct config_alias_data {
 	struct string_list *list;
 };
 
-static int config_alias_cb(const char *key, const char *value, void *d)
+static int config_alias_cb(const char *key, const char *value,
+			   const struct config_context *ctx UNUSED, void *d)
 {
 	struct config_alias_data *data = d;
 	const char *p;
@@ -44,16 +47,35 @@ void list_aliases(struct string_list *list)
 	read_early_config(config_alias_cb, &data);
 }
 
+void quote_cmdline(struct strbuf *buf, const char **argv)
+{
+	for (const char **argp = argv; *argp; argp++) {
+		if (argp != argv)
+			strbuf_addch(buf, ' ');
+		strbuf_addch(buf, '"');
+		for (const char *p = *argp; *p; p++) {
+			const char c = *p;
+
+			if (c == '"' || c =='\\')
+				strbuf_addch(buf, '\\');
+			strbuf_addch(buf, c);
+		}
+		strbuf_addch(buf, '"');
+	}
+}
+
 #define SPLIT_CMDLINE_BAD_ENDING 1
 #define SPLIT_CMDLINE_UNCLOSED_QUOTE 2
+#define SPLIT_CMDLINE_ARGC_OVERFLOW 3
 static const char *split_cmdline_errors[] = {
 	N_("cmdline ends with \\"),
-	N_("unclosed quote")
+	N_("unclosed quote"),
+	N_("too many arguments"),
 };
 
 int split_cmdline(char *cmdline, const char ***argv)
 {
-	int src, dst, count = 0, size = 16;
+	size_t src, dst, count = 0, size = 16;
 	char quoted = 0;
 
 	ALLOC_ARRAY(*argv, size);
@@ -94,6 +116,11 @@ int split_cmdline(char *cmdline, const char ***argv)
 	if (quoted) {
 		FREE_AND_NULL(*argv);
 		return -SPLIT_CMDLINE_UNCLOSED_QUOTE;
+	}
+
+	if (count >= INT_MAX) {
+		FREE_AND_NULL(*argv);
+		return -SPLIT_CMDLINE_ARGC_OVERFLOW;
 	}
 
 	ALLOC_GROW(*argv, count + 1, size);

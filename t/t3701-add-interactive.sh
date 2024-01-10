@@ -7,12 +7,6 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-if ! test_have_prereq PERL
-then
-	skip_all='skipping add -i tests, perl not available'
-	test_done
-fi
-
 diff_cmp () {
 	for x
 	do
@@ -45,6 +39,21 @@ force_color () {
 		"$@"
 	)
 }
+
+test_expect_success 'warn about add.interactive.useBuiltin' '
+	cat >expect <<-\EOF &&
+	warning: the add.interactive.useBuiltin setting has been removed!
+	See its entry in '\''git help config'\'' for details.
+	No changes.
+	EOF
+
+	for v in = =true =false
+	do
+		git -c "add.interactive.useBuiltin$v" add -p >out 2>actual &&
+		test_must_be_empty out &&
+		test_cmp expect actual || return 1
+	done
+'
 
 test_expect_success 'setup (initial)' '
 	echo content >file &&
@@ -101,6 +110,15 @@ test_expect_success 'setup (commit)' '
 test_expect_success 'status works (commit)' '
 	git add -i </dev/null >output &&
 	grep "+1/-0 *+2/-0 file" output
+'
+
+test_expect_success 'update can stage deletions' '
+	>to-delete &&
+	git add to-delete &&
+	rm to-delete &&
+	test_write_lines u t "" | git add -i &&
+	git ls-files to-delete >output &&
+	test_must_be_empty output
 '
 
 test_expect_success 'setup expected' '
@@ -287,9 +305,11 @@ test_expect_success FILEMODE 'stage mode and hunk' '
 	echo content >>file &&
 	chmod +x file &&
 	printf "y\\ny\\n" | git add -p &&
-	git diff --cached file | grep "new mode" &&
-	git diff --cached file | grep "+content" &&
-	test -z "$(git diff file)"
+	git diff --cached file >out &&
+	grep "new mode" out &&
+	grep "+content" out &&
+	git diff file >out &&
+	test_must_be_empty out
 '
 
 # end of tests disabled when filemode is not usable
@@ -315,18 +335,20 @@ test_expect_success 'different prompts for mode change/deleted' '
 test_expect_success 'correct message when there is nothing to do' '
 	git reset --hard &&
 	git add -p 2>err &&
-	test_i18ngrep "No changes" err &&
+	test_grep "No changes" err &&
 	printf "\\0123" >binary &&
 	git add binary &&
 	printf "\\0abc" >binary &&
 	git add -p 2>err &&
-	test_i18ngrep "Only binary files changed" err
+	test_grep "Only binary files changed" err
 '
 
 test_expect_success 'setup again' '
 	git reset --hard &&
 	test_chmod +x file &&
-	echo content >>file
+	echo content >>file &&
+	test_write_lines A B C D>file2 &&
+	git add file2
 '
 
 # Write the patch file with a new line at the top and bottom
@@ -341,13 +363,27 @@ test_expect_success 'setup patch' '
 	 content
 	+lastline
 	\ No newline at end of file
+	diff --git a/file2 b/file2
+	index 8422d40..35b930a 100644
+	--- a/file2
+	+++ b/file2
+	@@ -1,4 +1,5 @@
+	-A
+	+Z
+	 B
+	+Y
+	 C
+	-D
+	+X
 	EOF
 '
 
 # Expected output, diff is similar to the patch but w/ diff at the top
 test_expect_success 'setup expected' '
 	echo diff --git a/file b/file >expected &&
-	cat patch |sed "/^index/s/ 100644/ 100755/" >>expected &&
+	sed -e "/^index 180b47c/s/ 100644/ 100755/" \
+	    -e /1,5/s//1,4/ \
+	    -e /Y/d patch >>expected &&
 	cat >expected-output <<-\EOF
 	--- a/file
 	+++ b/file
@@ -366,6 +402,28 @@ test_expect_success 'setup expected' '
 	 content
 	+lastline
 	\ No newline at end of file
+	--- a/file2
+	+++ b/file2
+	@@ -1,4 +1,5 @@
+	-A
+	+Z
+	 B
+	+Y
+	 C
+	-D
+	+X
+	@@ -1,2 +1,2 @@
+	-A
+	+Z
+	 B
+	@@ -2,2 +2,3 @@
+	 B
+	+Y
+	 C
+	@@ -3,2 +4,2 @@
+	 C
+	-D
+	+X
 	EOF
 '
 
@@ -373,9 +431,9 @@ test_expect_success 'setup expected' '
 test_expect_success 'add first line works' '
 	git commit -am "clear local changes" &&
 	git apply patch &&
-	printf "%s\n" s y y | git add -p file 2>error |
-		sed -n -e "s/^([1-2]\/[1-2]) Stage this hunk[^@]*\(@@ .*\)/\1/" \
-		       -e "/^[-+@ \\\\]"/p  >output &&
+	test_write_lines s y y s y n y | git add -p 2>error >raw-output &&
+	sed -n -e "s/^([1-9]\/[1-9]) Stage this hunk[^@]*\(@@ .*\)/\1/" \
+	       -e "/^[-+@ \\\\]"/p raw-output >output &&
 	test_must_be_empty error &&
 	git diff --cached >diff &&
 	diff_cmp expected diff &&
@@ -439,7 +497,7 @@ test_expect_success 'adding an empty file' '
 
 		echo y | git checkout -p added-file -- >actual &&
 		test_path_is_file empty &&
-		test_i18ngrep "Apply addition to index and worktree" actual
+		test_grep "Apply addition to index and worktree" actual
 	)
 '
 
@@ -500,7 +558,7 @@ test_expect_success 'split hunk "add -p (edit)"' '
 	! grep "^+15" actual
 '
 
-test_expect_failure 'split hunk "add -p (no, yes, edit)"' '
+test_expect_success 'split hunk "add -p (no, yes, edit)"' '
 	test_write_lines 5 10 20 21 30 31 40 50 60 >test &&
 	git reset &&
 	# test sequence is s(plit), n(o), y(es), e(dit)
@@ -524,7 +582,7 @@ test_expect_success 'split hunk with incomplete line at end' '
 	test_must_fail git grep --cached before
 '
 
-test_expect_failure 'edit, adding lines to the first hunk' '
+test_expect_success 'edit, adding lines to the first hunk' '
 	test_write_lines 10 11 20 30 40 50 51 60 >test &&
 	git reset &&
 	tr _ " " >patch <<-EOF &&
@@ -676,6 +734,44 @@ test_expect_success 'colors can be overridden' '
 	test_cmp expect actual
 '
 
+test_expect_success 'brackets appear without color' '
+	git reset --hard &&
+	test_when_finished "git rm -f bracket-test" &&
+	test_write_lines context old more-context >bracket-test &&
+	git add bracket-test &&
+	test_write_lines context new more-context another-one >bracket-test &&
+
+	test_write_lines quit >input &&
+	git add -i >actual <input &&
+
+	sed "s/^|//" >expect <<-\EOF &&
+	|           staged     unstaged path
+	|  1:        +3/-0        +2/-1 bracket-test
+	|
+	|*** Commands ***
+	|  1: [s]tatus	  2: [u]pdate	  3: [r]evert	  4: [a]dd untracked
+	|  5: [p]atch	  6: [d]iff	  7: [q]uit	  8: [h]elp
+	|What now> Bye.
+	EOF
+
+	test_cmp expect actual
+'
+
+test_expect_success 'colors can be skipped with color.ui=false' '
+	git reset --hard &&
+	test_when_finished "git rm -f color-test" &&
+	test_write_lines context old more-context >color-test &&
+	git add color-test &&
+	test_write_lines context new more-context another-one >color-test &&
+
+	test_write_lines help quit >input &&
+	force_color git \
+		-c color.ui=false \
+		add -i >actual.raw <input &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp actual.raw actual
+'
+
 test_expect_success 'colorized diffs respect diff.wsErrorHighlight' '
 	git reset --hard &&
 
@@ -706,9 +802,33 @@ test_expect_success 'detect bogus diffFilter output' '
 	git reset --hard &&
 
 	echo content >test &&
-	test_config interactive.diffFilter "sed 1d" &&
+	test_config interactive.diffFilter "sed 6d" &&
 	printf y >y &&
-	force_color test_must_fail git add -p <y
+	force_color test_must_fail git add -p <y >output 2>&1 &&
+	grep "mismatched output" output
+'
+
+test_expect_success 'handle iffy colored hunk headers' '
+	git reset --hard &&
+
+	echo content >test &&
+	printf n >n &&
+	force_color git -c interactive.diffFilter="sed s/.*@@.*/XX/" \
+		add -p >output 2>&1 <n &&
+	grep "^XX$" output
+'
+
+test_expect_success 'handle very large filtered diff' '
+	git reset --hard &&
+	# The specific number here is not important, but it must
+	# be large enough that the output of "git diff --color"
+	# fills up the pipe buffer. 10,000 results in ~200k of
+	# colored output.
+	test_seq 10000 >test &&
+	test_config interactive.diffFilter cat &&
+	printf y >y &&
+	force_color git add -p >output 2>&1 <y &&
+	git diff-files --exit-code -- test
 '
 
 test_expect_success 'diff.algorithm is passed to `git diff-files`' '
@@ -718,7 +838,7 @@ test_expect_success 'diff.algorithm is passed to `git diff-files`' '
 	git add file &&
 	echo changed >file &&
 	test_must_fail git -c diff.algorithm=bogus add -p 2>err &&
-	test_i18ngrep "error: option diff-algorithm accepts " err
+	test_grep "error: option diff-algorithm accepts " err
 '
 
 test_expect_success 'patch-mode via -i prompts for files' '
@@ -876,6 +996,18 @@ test_expect_success 'status ignores dirty submodules (except HEAD)' '
 	! grep dirty-otherwise output
 '
 
+test_expect_success 'handle submodules' '
+	echo 123 >>for-submodules/dirty-otherwise/initial.t &&
+
+	force_color git -C for-submodules add -p dirty-otherwise >output 2>&1 &&
+	grep "No changes" output &&
+
+	force_color git -C for-submodules add -p dirty-head >output 2>&1 <y &&
+	git -C for-submodules ls-files --stage dirty-head >actual &&
+	rev="$(git -C for-submodules/dirty-head rev-parse HEAD)" &&
+	grep "$rev" actual
+'
+
 test_expect_success 'set up pathological context' '
 	git reset --hard &&
 	test_write_lines a a a a a a a a a a a >a &&
@@ -975,6 +1107,27 @@ test_expect_success 'show help from add--helper' '
 	test_write_lines h | force_color git add -i >actual.colored &&
 	test_decode_color <actual.colored >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'reset -p with unmerged files' '
+	test_when_finished "git checkout --force main" &&
+	test_commit one conflict &&
+	git checkout -B side HEAD^ &&
+	test_commit two conflict &&
+	test_must_fail git merge one &&
+
+	# this is a noop with only an unmerged entry
+	git reset -p &&
+
+	# add files that sort before and after unmerged entry
+	echo a >a &&
+	echo z >z &&
+	git add a z &&
+
+	# confirm that we can reset those files
+	printf "%s\n" y y | git reset -p &&
+	git diff-index --cached --diff-filter=u HEAD >staged &&
+	test_must_be_empty staged
 '
 
 test_done

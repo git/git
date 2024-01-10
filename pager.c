@@ -1,14 +1,18 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "editor.h"
+#include "pager.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "alias.h"
+
+int pager_use_color = 1;
 
 #ifndef DEFAULT_PAGER
 #define DEFAULT_PAGER "less"
 #endif
 
-static struct child_process pager_process = CHILD_PROCESS_INIT;
+static struct child_process pager_process;
 static const char *pager_program;
 
 /* Is the value coming back from term_columns() just a guess? */
@@ -38,7 +42,9 @@ static void wait_for_pager_signal(int signo)
 	raise(signo);
 }
 
-static int core_pager_config(const char *var, const char *value, void *data)
+static int core_pager_config(const char *var, const char *value,
+			     const struct config_context *ctx UNUSED,
+			     void *data UNUSED)
 {
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);
@@ -99,7 +105,7 @@ void prepare_pager_args(struct child_process *pager_process, const char *pager)
 {
 	strvec_push(&pager_process->args, pager);
 	pager_process->use_shell = 1;
-	setup_pager_env(&pager_process->env_array);
+	setup_pager_env(&pager_process->env);
 	pager_process->trace2_child_class = "pager";
 }
 
@@ -124,10 +130,12 @@ void setup_pager(void)
 
 	setenv("GIT_PAGER_IN_USE", "true", 1);
 
+	child_process_init(&pager_process);
+
 	/* spawn the pager */
 	prepare_pager_args(&pager_process, pager);
 	pager_process.in = -1;
-	strvec_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
+	strvec_push(&pager_process.env, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
 
@@ -221,7 +229,9 @@ struct pager_command_config_data {
 	char *value;
 };
 
-static int pager_command_config(const char *var, const char *value, void *vdata)
+static int pager_command_config(const char *var, const char *value,
+				const struct config_context *ctx UNUSED,
+				void *vdata)
 {
 	struct pager_command_config_data *data = vdata;
 	const char *cmd;

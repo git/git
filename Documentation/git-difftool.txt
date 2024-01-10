@@ -36,7 +36,7 @@ OPTIONS
 
 --rotate-to=<file>::
 	Start showing the diff for the given path,
-	the paths before it will move to end and output.
+	the paths before it will move to the end and output.
 
 --skip-to=<file>::
 	Start showing the diff for the given path, skipping all
@@ -78,7 +78,7 @@ with custom merge tool commands and has the same value as `$MERGED`.
 	Print a list of diff tools that may be used with `--tool`.
 
 --[no-]symlinks::
-	'git difftool''s default behavior is create symlinks to the
+	'git difftool''s default behavior is to create symlinks to the
 	working tree when run in `--dir-diff` mode and the right-hand
 	side of the comparison yields the same content as the file in
 	the working tree.
@@ -97,10 +97,12 @@ instead.  `--no-symlinks` is the default on Windows.
 --[no-]gui::
 	When 'git-difftool' is invoked with the `-g` or `--gui` option
 	the default diff tool will be read from the configured
-	`diff.guitool` variable instead of `diff.tool`. The `--no-gui`
-	option can be used to override this setting. If `diff.guitool`
-	is not set, we will fallback in the order of `merge.guitool`,
-	`diff.tool`, `merge.tool` until a tool is found.
+	`diff.guitool` variable instead of `diff.tool`. This may be
+	selected automatically using the configuration variable
+	`difftool.guiDefault`. The `--no-gui` option can be used to
+	override these settings. If `diff.guitool` is not set, we will
+	fallback in the order of `merge.guitool`, `diff.tool`,
+	`merge.tool` until a tool is found.
 
 --[no-]trust-exit-code::
 	'git-difftool' invokes a diff tool individually on each file.
@@ -113,33 +115,14 @@ instead.  `--no-symlinks` is the default on Windows.
 
 See linkgit:git-diff[1] for the full list of supported options.
 
-CONFIG VARIABLES
-----------------
+CONFIGURATION
+-------------
 'git difftool' falls back to 'git mergetool' config variables when the
 difftool equivalents have not been defined.
 
-diff.tool::
-	The default diff tool to use.
+include::includes/cmd-config-section-rest.txt[]
 
-diff.guitool::
-	The default diff tool to use when `--gui` is specified.
-
-difftool.<tool>.path::
-	Override the path for the given tool.  This is useful in case
-	your tool is not in the PATH.
-
-difftool.<tool>.cmd::
-	Specify the command to invoke the specified diff tool.
-+
-See the `--tool=<tool>` option above for more details.
-
-difftool.prompt::
-	Prompt before each invocation of the diff tool.
-
-difftool.trustExitCode::
-	Exit difftool if the invoked diff tool returns a non-zero exit status.
-+
-See the `--trust-exit-code` option above for more details.
+include::config/difftool.txt[]
 
 SEE ALSO
 --------

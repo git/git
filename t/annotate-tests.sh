@@ -56,6 +56,10 @@ check_count () {
 	' "$@" <actual
 }
 
+get_progress_result () {
+	tr '\015' '\012' | tail -n 1
+}
+
 test_expect_success 'setup A lines' '
 	echo "1A quick brown fox jumps over the" >file &&
 	echo "lazy dog" >>file &&
@@ -66,6 +70,32 @@ test_expect_success 'setup A lines' '
 
 test_expect_success 'blame 1 author' '
 	check_count A 2
+'
+
+test_expect_success 'blame working copy' '
+	test_when_finished "git restore file" &&
+	echo "1A quick brown fox jumps over the" >file &&
+	echo "another lazy dog" >>file &&
+	check_count A 1 "Not Committed Yet" 1
+'
+
+test_expect_success 'blame with --contents' '
+	check_count --contents=file A 2
+'
+
+test_expect_success 'blame with --contents in a bare repo' '
+	git clone --bare . bare-contents.git &&
+	(
+		cd bare-contents.git &&
+		echo "1A quick brown fox jumps over the" >contents &&
+		check_count --contents=contents A 1
+	)
+'
+
+test_expect_success 'blame with --contents changed' '
+	echo "1A quick brown fox jumps over the" >contents &&
+	echo "another lazy dog" >>contents &&
+	check_count --contents=contents A 1 "External file (--contents)" 1
 '
 
 test_expect_success 'blame in a bare repo without starting commit' '
@@ -92,6 +122,10 @@ test_expect_success 'setup B lines' '
 
 test_expect_success 'blame 2 authors' '
 	check_count A 2 B 2
+'
+
+test_expect_success 'blame with --contents and revision' '
+	check_count -h testTag --contents=file A 2 "External file (--contents)" 2
 '
 
 test_expect_success 'setup B1 lines (branch1)' '
@@ -149,7 +183,7 @@ test_expect_success 'blame evil merge' '
 
 test_expect_success 'blame huge graft' '
 	test_when_finished "git checkout branch2" &&
-	test_when_finished "rm -f .git/info/grafts" &&
+	test_when_finished "rm -rf .git/info" &&
 	graft= &&
 	for i in 0 1 2
 	do
@@ -161,9 +195,10 @@ test_expect_success 'blame huge graft' '
 			GIT_AUTHOR_NAME=$i$j GIT_AUTHOR_EMAIL=$i$j@test.git \
 			git commit -a -m "$i$j" &&
 			commit=$(git rev-parse --verify HEAD) &&
-			graft="$graft$commit "
+			graft="$graft$commit " || return 1
 		done
 	done &&
+	mkdir .git/info &&
 	printf "%s " $graft >.git/info/grafts &&
 	check_count -h 00 01 1 10 1
 '
@@ -603,4 +638,40 @@ test_expect_success 'blame -L X,-N (non-numeric N)' '
 
 test_expect_success 'blame -L ,^/RE/' '
 	test_must_fail $PROG -L1,^/99/ file
+'
+
+test_expect_success 'blame progress on a full file' '
+	cat >expect <<-\EOF &&
+	Blaming lines: 100% (10/10), done.
+	EOF
+
+	GIT_PROGRESS_DELAY=0 \
+	git blame --progress hello.c 2>stderr &&
+
+	get_progress_result <stderr >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'blame progress on a single range' '
+	cat >expect <<-\EOF &&
+	Blaming lines: 100% (4/4), done.
+	EOF
+
+	GIT_PROGRESS_DELAY=0 \
+	git blame --progress -L 3,6 hello.c 2>stderr &&
+
+	get_progress_result <stderr >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'blame progress on multiple ranges' '
+	cat >expect <<-\EOF &&
+	Blaming lines: 100% (7/7), done.
+	EOF
+
+	GIT_PROGRESS_DELAY=0 \
+	git blame --progress -L 3,6 -L 8,10 hello.c 2>stderr &&
+
+	get_progress_result <stderr >actual &&
+	test_cmp expect actual
 '

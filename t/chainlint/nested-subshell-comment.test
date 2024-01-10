@@ -7,7 +7,7 @@
 		# minor numbers of cows (or do they?)
 		baz &&
 		snaff
-# LINT: missing "&&" on ')'
+# LINT: missing "&&" on ")"
 	)
 	fuzzy
 )

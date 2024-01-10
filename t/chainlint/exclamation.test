@@ -1,0 +1,8 @@
+# LINT: "! word" is two tokens
+if ! condition; then echo nope; else yep; fi &&
+# LINT: "!word" is single token, not two tokens "!" and "word"
+test_prerequisite !MINGW &&
+# LINT: "word!word" is single token, not three tokens "word", "!", and "word"
+mail uucp!address &&
+# LINT: "!word!" is single token, not three tokens "!", "word", and "!"
+echo !whatever!

@@ -2994,7 +2994,7 @@ msgstr "Controllo connessione in corso"
 
 #: connected.c:120
 msgid "Could not run 'git rev-list'"
-msgstr "Impossibile eseguire 'git-rev-list'"
+msgstr "Impossibile eseguire 'git rev-list'"
 
 #: connected.c:144
 msgid "failed write to rev-list"
@@ -18722,7 +18722,7 @@ msgstr "impossibile accedere al commit %s"
 
 #: builtin/pull.c:894
 msgid "ignoring --verify-signatures for rebase"
-msgstr "ignoro --verify-signature per il rebase"
+msgstr "ignoro --verify-signatures per il rebase"
 
 #: builtin/pull.c:954
 msgid "Updating an unborn branch with changes added to the index."
@@ -20073,7 +20073,7 @@ msgid ""
 "\t use --mirror=fetch or --mirror=push instead"
 msgstr ""
 "--mirror è pericoloso e deprecato; per favore\n"
-"\t usa invece --mirror-fetch o --mirror-push"
+"\t usa invece --mirror=fetch o --mirror=push"
 
 #: builtin/remote.c:148
 #, c-format

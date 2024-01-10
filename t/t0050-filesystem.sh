@@ -5,6 +5,7 @@ test_description='Various filesystem issues'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 auml=$(printf '\303\244')
@@ -104,7 +105,8 @@ test_expect_failure CASE_INSENSITIVE_FS 'add (with different case)' '
 	rm camelcase &&
 	echo 1 >CamelCase &&
 	git add CamelCase &&
-	camel=$(git ls-files | grep -i camelcase) &&
+	git ls-files >tmp &&
+	camel=$(grep -i camelcase tmp) &&
 	test $(echo "$camel" | wc -l) = 1 &&
 	test "z$(git cat-file blob :$camel)" = z1
 '

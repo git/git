@@ -11,7 +11,7 @@ write out the next tree object to be committed.  The state is
 "virtual" in the sense that it does not necessarily have to, and
 often does not, match the files in the working tree.
 
-There are cases Git needs to examine the differences between the
+There are cases where Git needs to examine the differences between the
 virtual working tree state in the index and the files in the
 working tree.  The most obvious case is when the user asks `git
 diff` (or its low level implementation, `git diff-files`) or
@@ -165,9 +165,9 @@ Avoiding runtime penalty
 
 In order to avoid the above runtime penalty, post 1.4.2 Git used
 to have a code that made sure the index file
-got timestamp newer than the youngest files in the index when
-there are many young files with the same timestamp as the
-resulting index file would otherwise would have by waiting
+got a timestamp newer than the youngest files in the index when
+there were many young files with the same timestamp as the
+resulting index file otherwise would have by waiting
 before finishing writing the index file out.
 
 I suspected that in practice the situation where many paths in the
@@ -190,7 +190,7 @@ In a large project where raciness avoidance cost really matters,
 however, the initial computation of all object names in the
 index takes more than one second, and the index file is written
 out after all that happens.  Therefore the timestamp of the
-index file will be more than one seconds later than the
+index file will be more than one second later than the
 youngest file in the working tree.  This means that in these
 cases there actually will not be any racily clean entry in
 the resulting index.

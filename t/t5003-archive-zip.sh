@@ -2,6 +2,7 @@
 
 test_description='git archive --format=zip test'
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 SUBSTFORMAT=%H%n
@@ -106,7 +107,7 @@ test_expect_success \
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
      (p=long_path_to_a_file && cd a &&
-      for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
+      for depth in 1 2 3 4 5; do mkdir $p && cd $p || exit 1; done &&
       echo text >file_with_long_path)
 '
 
@@ -121,6 +122,7 @@ test_expect_success 'prepare file list' '
 test_expect_success \
     'add ignored file' \
     'echo ignore me >a/ignored &&
+     mkdir .git/info &&
      echo ignored export-ignore >.git/info/attributes'
 
 test_expect_success 'add files to repository' '
@@ -139,7 +141,8 @@ test_expect_success 'setup export-subst and diff attributes' '
 '
 
 test_expect_success 'create bare clone' '
-	git clone --bare . bare.git &&
+	git clone --template= --bare . bare.git &&
+	mkdir bare.git/info &&
 	cp .git/info/attributes bare.git/info/attributes &&
 	# Recreate our changes to .git/config rather than just copying it, as
 	# we do not want to clobber core.bare or other settings.
@@ -205,6 +208,26 @@ test_expect_success 'git archive --format=zip --add-file' '
 
 check_zip with_untracked
 check_added with_untracked untracked untracked
+
+test_expect_success UNZIP 'git archive --format=zip --add-virtual-file' '
+	if test_have_prereq FUNNYNAMES
+	then
+		PATHNAME="pathname with : colon"
+	else
+		PATHNAME="pathname without colon"
+	fi &&
+	git archive --format=zip >with_file_with_content.zip \
+		--add-virtual-file=\""$PATHNAME"\": \
+		--add-virtual-file=hello:world $EMPTY_TREE &&
+	test_when_finished "rm -rf tmp-unpack" &&
+	mkdir tmp-unpack && (
+		cd tmp-unpack &&
+		"$GIT_UNZIP" ../with_file_with_content.zip &&
+		test_path_is_file hello &&
+		test_path_is_file "$PATHNAME" &&
+		test world = $(cat hello)
+	)
+'
 
 test_expect_success 'git archive --format=zip --add-file twice' '
 	echo untracked >untracked &&

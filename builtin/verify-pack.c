@@ -1,8 +1,9 @@
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
+#include "gettext.h"
 #include "run-command.h"
 #include "parse-options.h"
+#include "strbuf.h"
 
 #define VERIFY_PACK_VERBOSE 01
 #define VERIFY_PACK_STAT_ONLY 02
@@ -56,7 +57,7 @@ static int verify_one_pack(const char *path, unsigned int flags, const char *has
 }
 
 static const char * const verify_pack_usage[] = {
-	N_("git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."),
+	N_("git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."),
 	NULL
 };
 

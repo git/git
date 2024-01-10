@@ -1,4 +1,4 @@
-@ preincrement @
+@@
 identifier i;
 @@
 - ++i > 1

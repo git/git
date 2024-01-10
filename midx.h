@@ -1,7 +1,7 @@
 #ifndef MIDX_H
 #define MIDX_H
 
-#include "repository.h"
+#include "string-list.h"
 
 struct object_id;
 struct pack_entry;
@@ -31,10 +31,14 @@ struct multi_pack_index {
 	int local;
 
 	const unsigned char *chunk_pack_names;
+	size_t chunk_pack_names_len;
 	const uint32_t *chunk_oid_fanout;
 	const unsigned char *chunk_oid_lookup;
 	const unsigned char *chunk_object_offsets;
 	const unsigned char *chunk_large_offsets;
+	size_t chunk_large_offsets_len;
+	const unsigned char *chunk_revindex;
+	size_t chunk_revindex_len;
 
 	const char **pack_names;
 	struct packed_git **packs;
@@ -45,10 +49,11 @@ struct multi_pack_index {
 #define MIDX_WRITE_REV_INDEX (1 << 1)
 #define MIDX_WRITE_BITMAP (1 << 2)
 #define MIDX_WRITE_BITMAP_HASH_CACHE (1 << 3)
+#define MIDX_WRITE_BITMAP_LOOKUP_TABLE (1 << 4)
 
 const unsigned char *get_midx_checksum(struct multi_pack_index *m);
-char *get_midx_filename(const char *object_dir);
-char *get_midx_rev_filename(struct multi_pack_index *m);
+void get_midx_filename(struct strbuf *out, const char *object_dir);
+void get_midx_rev_filename(struct strbuf *out, struct multi_pack_index *m);
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);
@@ -62,7 +67,19 @@ int fill_midx_entry(struct repository *r, const struct object_id *oid, struct pa
 int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name);
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local);
 
-int write_midx_file(const char *object_dir, const char *preferred_pack_name, unsigned flags);
+/*
+ * Variant of write_midx_file which writes a MIDX containing only the packs
+ * specified in packs_to_include.
+ */
+int write_midx_file(const char *object_dir,
+		    const char *preferred_pack_name,
+		    const char *refs_snapshot,
+		    unsigned flags);
+int write_midx_file_only(const char *object_dir,
+			 struct string_list *packs_to_include,
+			 const char *preferred_pack_name,
+			 const char *refs_snapshot,
+			 unsigned flags);
 void clear_midx_file(struct repository *r);
 int verify_midx_file(struct repository *r, const char *object_dir, unsigned flags);
 int expire_midx_packs(struct repository *r, const char *object_dir, unsigned flags);

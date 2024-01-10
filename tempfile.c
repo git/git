@@ -14,16 +14,14 @@
  *
  * The possible states of a `tempfile` object are as follows:
  *
- * - Uninitialized. In this state the object's `on_list` field must be
- *   zero but the rest of its contents need not be initialized. As
- *   soon as the object is used in any way, it is irrevocably
- *   registered in `tempfile_list`, and `on_list` is set.
+ * - Inactive/unallocated. The only way to get a tempfile is via a creation
+ *   function like create_tempfile(). Once allocated, the tempfile is on the
+ *   global tempfile_list and considered active.
  *
  * - Active, file open (after `create_tempfile()` or
  *   `reopen_tempfile()`). In this state:
  *
  *   - the temporary file exists
- *   - `active` is set
  *   - `filename` holds the filename of the temporary file
  *   - `fd` holds a file descriptor open for writing to it
  *   - `fp` holds a pointer to an open `FILE` object if and only if
@@ -35,14 +33,8 @@
  *   `fd` is -1, and `fp` is `NULL`.
  *
  * - Inactive (after `delete_tempfile()`, `rename_tempfile()`, or a
- *   failed attempt to create a temporary file). In this state:
- *
- *   - `active` is unset
- *   - `filename` is empty (usually, though there are transitory
- *     states in which this condition doesn't hold). Client code should
- *     *not* rely on the filename being empty in this state.
- *   - `fd` is -1 and `fp` is `NULL`
- *   - the object is removed from `tempfile_list` (but could be used again)
+ *   failed attempt to create a temporary file). The struct is removed from
+ *   the global tempfile_list and deallocated.
  *
  * A temporary file is owned by the process that created it. The
  * `tempfile` has an `owner` field that records the owner's PID. This
@@ -50,11 +42,24 @@
  * file created by its parent.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "path.h"
 #include "tempfile.h"
 #include "sigchain.h"
 
 static VOLATILE_LIST_HEAD(tempfile_list);
+
+static void remove_template_directory(struct tempfile *tempfile,
+				      int in_signal_handler)
+{
+	if (tempfile->directory) {
+		if (in_signal_handler)
+			rmdir(tempfile->directory);
+		else
+			rmdir_or_warn(tempfile->directory);
+	}
+}
 
 static void remove_tempfiles(int in_signal_handler)
 {
@@ -74,8 +79,7 @@ static void remove_tempfiles(int in_signal_handler)
 			unlink(p->filename.buf);
 		else
 			unlink_or_warn(p->filename.buf);
-
-		p->active = 0;
+		remove_template_directory(p, in_signal_handler);
 	}
 }
 
@@ -96,19 +100,16 @@ static struct tempfile *new_tempfile(void)
 	struct tempfile *tempfile = xmalloc(sizeof(*tempfile));
 	tempfile->fd = -1;
 	tempfile->fp = NULL;
-	tempfile->active = 0;
 	tempfile->owner = 0;
 	INIT_LIST_HEAD(&tempfile->list);
 	strbuf_init(&tempfile->filename, 0);
+	tempfile->directory = NULL;
 	return tempfile;
 }
 
 static void activate_tempfile(struct tempfile *tempfile)
 {
 	static int initialized;
-
-	if (is_tempfile_active(tempfile))
-		BUG("activate_tempfile called for active object");
 
 	if (!initialized) {
 		sigchain_push_common(remove_tempfiles_on_signal);
@@ -118,14 +119,13 @@ static void activate_tempfile(struct tempfile *tempfile)
 
 	volatile_list_add(&tempfile->list, &tempfile_list);
 	tempfile->owner = getpid();
-	tempfile->active = 1;
 }
 
 static void deactivate_tempfile(struct tempfile *tempfile)
 {
-	tempfile->active = 0;
-	strbuf_release(&tempfile->filename);
 	volatile_list_del(&tempfile->list);
+	strbuf_release(&tempfile->filename);
+	free(tempfile->directory);
 	free(tempfile);
 }
 
@@ -194,6 +194,52 @@ struct tempfile *mks_tempfile_tsm(const char *filename_template, int suffixlen, 
 		deactivate_tempfile(tempfile);
 		return NULL;
 	}
+	activate_tempfile(tempfile);
+	return tempfile;
+}
+
+struct tempfile *mks_tempfile_dt(const char *directory_template,
+				 const char *filename)
+{
+	struct tempfile *tempfile;
+	const char *tmpdir;
+	struct strbuf sb = STRBUF_INIT;
+	int fd;
+	size_t directorylen;
+
+	if (!ends_with(directory_template, "XXXXXX")) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	tmpdir = getenv("TMPDIR");
+	if (!tmpdir)
+		tmpdir = "/tmp";
+
+	strbuf_addf(&sb, "%s/%s", tmpdir, directory_template);
+	directorylen = sb.len;
+	if (!mkdtemp(sb.buf)) {
+		int orig_errno = errno;
+		strbuf_release(&sb);
+		errno = orig_errno;
+		return NULL;
+	}
+
+	strbuf_addf(&sb, "/%s", filename);
+	fd = open(sb.buf, O_CREAT | O_EXCL | O_RDWR, 0600);
+	if (fd < 0) {
+		int orig_errno = errno;
+		strbuf_setlen(&sb, directorylen);
+		rmdir(sb.buf);
+		strbuf_release(&sb);
+		errno = orig_errno;
+		return NULL;
+	}
+
+	tempfile = new_tempfile();
+	strbuf_swap(&tempfile->filename, &sb);
+	tempfile->directory = xmemdupz(tempfile->filename.buf, directorylen);
+	tempfile->fd = fd;
 	activate_tempfile(tempfile);
 	return tempfile;
 }
@@ -316,6 +362,7 @@ void delete_tempfile(struct tempfile **tempfile_p)
 
 	close_tempfile_gently(tempfile);
 	unlink_or_warn(tempfile->filename.buf);
+	remove_template_directory(tempfile, 0);
 	deactivate_tempfile(tempfile);
 	*tempfile_p = NULL;
 }

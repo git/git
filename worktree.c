@@ -1,10 +1,16 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "environment.h"
+#include "gettext.h"
+#include "path.h"
 #include "repository.h"
 #include "refs.h"
+#include "setup.h"
 #include "strbuf.h"
 #include "worktree.h"
 #include "dir.h"
 #include "wt-status.h"
+#include "config.h"
 
 void free_worktrees(struct worktree **worktrees)
 {
@@ -389,9 +395,9 @@ int is_worktree_being_bisected(const struct worktree *wt,
 
 	memset(&state, 0, sizeof(state));
 	found_bisect = wt_status_check_bisect(wt, &state) &&
-		       state.branch &&
+		       state.bisecting_from &&
 		       skip_prefix(target, "refs/heads/", &target) &&
-		       !strcmp(state.branch, target);
+		       !strcmp(state.bisecting_from, target);
 	wt_status_state_free_buffers(&state);
 	return found_bisect;
 }
@@ -402,48 +408,43 @@ int is_worktree_being_bisected(const struct worktree *wt,
  * bisect). New commands that do similar things should update this
  * function as well.
  */
-const struct worktree *find_shared_symref(const char *symref,
-					  const char *target)
+int is_shared_symref(const struct worktree *wt, const char *symref,
+		     const char *target)
 {
-	const struct worktree *existing = NULL;
-	static struct worktree **worktrees;
-	int i = 0;
+	const char *symref_target;
+	struct ref_store *refs;
+	int flags;
 
-	if (worktrees)
-		free_worktrees(worktrees);
-	worktrees = get_worktrees();
+	if (wt->is_bare)
+		return 0;
 
-	for (i = 0; worktrees[i]; i++) {
-		struct worktree *wt = worktrees[i];
-		const char *symref_target;
-		struct ref_store *refs;
-		int flags;
-
-		if (wt->is_bare)
-			continue;
-
-		if (wt->is_detached && !strcmp(symref, "HEAD")) {
-			if (is_worktree_being_rebased(wt, target)) {
-				existing = wt;
-				break;
-			}
-			if (is_worktree_being_bisected(wt, target)) {
-				existing = wt;
-				break;
-			}
-		}
-
-		refs = get_worktree_ref_store(wt);
-		symref_target = refs_resolve_ref_unsafe(refs, symref, 0,
-							NULL, &flags);
-		if ((flags & REF_ISSYMREF) &&
-		    symref_target && !strcmp(symref_target, target)) {
-			existing = wt;
-			break;
-		}
+	if (wt->is_detached && !strcmp(symref, "HEAD")) {
+		if (is_worktree_being_rebased(wt, target))
+			return 1;
+		if (is_worktree_being_bisected(wt, target))
+			return 1;
 	}
 
-	return existing;
+	refs = get_worktree_ref_store(wt);
+	symref_target = refs_resolve_ref_unsafe(refs, symref, 0,
+						NULL, &flags);
+	if ((flags & REF_ISSYMREF) &&
+	    symref_target && !strcmp(symref_target, target))
+		return 1;
+
+	return 0;
+}
+
+const struct worktree *find_shared_symref(struct worktree **worktrees,
+					  const char *symref,
+					  const char *target)
+{
+
+	for (int i = 0; worktrees[i]; i++)
+		if (is_shared_symref(worktrees[i], symref, target))
+			return worktrees[i];
+
+	return NULL;
 }
 
 int submodule_uses_worktrees(const char *path)
@@ -486,68 +487,23 @@ int submodule_uses_worktrees(const char *path)
 		return 0;
 
 	d = readdir_skip_dot_and_dotdot(dir);
-	if (d != NULL)
+	if (d)
 		ret = 1;
 	closedir(dir);
 	return ret;
-}
-
-int parse_worktree_ref(const char *worktree_ref, const char **name,
-		       int *name_length, const char **ref)
-{
-	if (skip_prefix(worktree_ref, "main-worktree/", &worktree_ref)) {
-		if (!*worktree_ref)
-			return -1;
-		if (name)
-			*name = NULL;
-		if (name_length)
-			*name_length = 0;
-		if (ref)
-			*ref = worktree_ref;
-		return 0;
-	}
-	if (skip_prefix(worktree_ref, "worktrees/", &worktree_ref)) {
-		const char *slash = strchr(worktree_ref, '/');
-
-		if (!slash || slash == worktree_ref || !slash[1])
-			return -1;
-		if (name)
-			*name = worktree_ref;
-		if (name_length)
-			*name_length = slash - worktree_ref;
-		if (ref)
-			*ref = slash + 1;
-		return 0;
-	}
-	return -1;
 }
 
 void strbuf_worktree_ref(const struct worktree *wt,
 			 struct strbuf *sb,
 			 const char *refname)
 {
-	switch (ref_type(refname)) {
-	case REF_TYPE_PSEUDOREF:
-	case REF_TYPE_PER_WORKTREE:
-		if (wt && !wt->is_current) {
-			if (is_main_worktree(wt))
-				strbuf_addstr(sb, "main-worktree/");
-			else
-				strbuf_addf(sb, "worktrees/%s/", wt->id);
-		}
-		break;
-
-	case REF_TYPE_MAIN_PSEUDOREF:
-	case REF_TYPE_OTHER_PSEUDOREF:
-		break;
-
-	case REF_TYPE_NORMAL:
-		/*
-		 * For shared refs, don't prefix worktrees/ or
-		 * main-worktree/. It's not necessary and
-		 * files-backend.c can't handle it anyway.
-		 */
-		break;
+	if (parse_worktree_ref(refname, NULL, NULL, NULL) ==
+		    REF_WORKTREE_CURRENT &&
+	    wt && !wt->is_current) {
+		if (is_main_worktree(wt))
+			strbuf_addstr(sb, "main-worktree/");
+		else
+			strbuf_addf(sb, "worktrees/%s/", wt->id);
 	}
 	strbuf_addstr(sb, refname);
 }
@@ -569,10 +525,10 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 
 		strbuf_reset(&refname);
 		strbuf_worktree_ref(wt, &refname, "HEAD");
-		if (!refs_read_ref_full(get_main_ref_store(the_repository),
-					refname.buf,
-					RESOLVE_REF_READING,
-					&oid, &flag))
+		if (refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					    refname.buf,
+					    RESOLVE_REF_READING,
+					    &oid, &flag))
 			ret = fn(refname.buf, &oid, flag, cb_data);
 		if (ret)
 			break;
@@ -625,8 +581,10 @@ static void repair_gitfile(struct worktree *wt,
 	strbuf_release(&dotgit);
 }
 
-static void repair_noop(int iserr, const char *path, const char *msg,
-			void *cb_data)
+static void repair_noop(int iserr UNUSED,
+			const char *path UNUSED,
+			const char *msg UNUSED,
+			void *cb_data UNUSED)
 {
 	/* nothing */
 }
@@ -824,4 +782,76 @@ int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, 
 	}
 	*wtpath = path;
 	return 0;
+}
+
+static int move_config_setting(const char *key, const char *value,
+			       const char *from_file, const char *to_file)
+{
+	if (git_config_set_in_file_gently(to_file, key, value))
+		return error(_("unable to set %s in '%s'"), key, to_file);
+	if (git_config_set_in_file_gently(from_file, key, NULL))
+		return error(_("unable to unset %s in '%s'"), key, from_file);
+	return 0;
+}
+
+int init_worktree_config(struct repository *r)
+{
+	int res = 0;
+	int bare = 0;
+	struct config_set cs = { { 0 } };
+	const char *core_worktree;
+	char *common_config_file;
+	char *main_worktree_file;
+
+	/*
+	 * If the extension is already enabled, then we can skip the
+	 * upgrade process.
+	 */
+	if (r->repository_format_worktree_config)
+		return 0;
+	if ((res = git_config_set_gently("extensions.worktreeConfig", "true")))
+		return error(_("failed to set extensions.worktreeConfig setting"));
+
+	common_config_file = xstrfmt("%s/config", r->commondir);
+	main_worktree_file = xstrfmt("%s/config.worktree", r->commondir);
+
+	git_configset_init(&cs);
+	git_configset_add_file(&cs, common_config_file);
+
+	/*
+	 * If core.bare is true in the common config file, then we need to
+	 * move it to the main worktree's config file or it will break all
+	 * worktrees. If it is false, then leave it in place because it
+	 * _could_ be negating a global core.bare=true.
+	 */
+	if (!git_configset_get_bool(&cs, "core.bare", &bare) && bare) {
+		if ((res = move_config_setting("core.bare", "true",
+					       common_config_file,
+					       main_worktree_file)))
+			goto cleanup;
+	}
+	/*
+	 * If core.worktree is set, then the main worktree is located
+	 * somewhere different than the parent of the common Git dir.
+	 * Relocate that value to avoid breaking all worktrees with this
+	 * upgrade to worktree config.
+	 */
+	if (!git_configset_get_value(&cs, "core.worktree", &core_worktree, NULL)) {
+		if ((res = move_config_setting("core.worktree", core_worktree,
+					       common_config_file,
+					       main_worktree_file)))
+			goto cleanup;
+	}
+
+	/*
+	 * Ensure that we use worktree config for the remaining lifetime
+	 * of the current process.
+	 */
+	r->repository_format_worktree_config = 1;
+
+cleanup:
+	git_configset_clear(&cs);
+	free(common_config_file);
+	free(main_worktree_file);
+	return res;
 }

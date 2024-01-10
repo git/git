@@ -3,6 +3,7 @@
  */
 
 #undef NOGDI
+
 #include "../git-compat-util.h"
 #include <wingdi.h>
 #include <winreg.h>
@@ -45,8 +46,9 @@ typedef struct _CONSOLE_FONT_INFOEX {
 static void warn_if_raster_font(void)
 {
 	DWORD fontFamily = 0;
-	DECLARE_PROC_ADDR(kernel32.dll, BOOL, GetCurrentConsoleFontEx,
-			HANDLE, BOOL, PCONSOLE_FONT_INFOEX);
+	DECLARE_PROC_ADDR(kernel32.dll, BOOL, WINAPI,
+			GetCurrentConsoleFontEx, HANDLE, BOOL,
+			PCONSOLE_FONT_INFOEX);
 
 	/* don't bother if output was ascii only */
 	if (!non_ascii_used)
@@ -642,7 +644,7 @@ void winansi_init(void)
 
 	/* start console spool thread on the pipe's read end */
 	hthread = CreateThread(NULL, 0, console_thread, NULL, 0, NULL);
-	if (hthread == INVALID_HANDLE_VALUE)
+	if (!hthread)
 		die_lasterr("CreateThread(console_thread) failed");
 
 	/* schedule cleanup routine */

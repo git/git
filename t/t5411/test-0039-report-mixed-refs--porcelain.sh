@@ -1,5 +1,5 @@
 test_expect_success "setup proc-receive hook ($PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok refs/for/next/topic2" \

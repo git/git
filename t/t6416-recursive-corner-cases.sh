@@ -5,6 +5,7 @@ test_description='recursive merge corner cases involving criss-cross merges'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
 
@@ -19,19 +20,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #
 
 test_expect_success 'setup basic criss-cross + rename with no modifications' '
-	test_create_repo basic-rename &&
+	git init basic-rename &&
 	(
 		cd basic-rename &&
 
 		ten="0 1 2 3 4 5 6 7 8 9" &&
-		for i in $ten
-		do
-			echo line $i in a sample file
-		done >one &&
-		for i in $ten
-		do
-			echo line $i in another sample file
-		done >two &&
+		printf "line %d in a sample file\n" $ten >one &&
+		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
 		test_tick && git commit -m initial &&
 
@@ -91,19 +86,13 @@ test_expect_success 'merge simple rename+criss-cross with no modifications' '
 #
 
 test_expect_success 'setup criss-cross + rename merges with basic modification' '
-	test_create_repo rename-modify &&
+	git init rename-modify &&
 	(
 		cd rename-modify &&
 
 		ten="0 1 2 3 4 5 6 7 8 9" &&
-		for i in $ten
-		do
-			echo line $i in a sample file
-		done >one &&
-		for i in $ten
-		do
-			echo line $i in another sample file
-		done >two &&
+		printf "line %d in a sample file\n" $ten >one &&
+		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
 		test_tick && git commit -m initial &&
 
@@ -172,7 +161,7 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 #
 
 test_expect_success 'setup differently handled merges of rename/add conflict' '
-	test_create_repo rename-add &&
+	git init rename-add &&
 	(
 		cd rename-add &&
 
@@ -336,7 +325,7 @@ test_expect_success 'git detects differently handled merges conflict, swapped' '
 # Merging commits D & E should result in modify/delete conflict.
 
 test_expect_success 'setup criss-cross + modify/delete resolved differently' '
-	test_create_repo modify-delete &&
+	git init modify-delete &&
 	(
 		cd modify-delete &&
 
@@ -511,7 +500,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 #
 
 test_expect_success 'setup differently handled merges of directory/file conflict' '
-	test_create_repo directory-file &&
+	git init directory-file &&
 	(
 		cd directory-file &&
 
@@ -879,7 +868,7 @@ test_expect_failure 'merge of D2 & E4 merges a2s & reports conflict for a/file' 
 # but that may cancel out at the final merge stage".
 
 test_expect_success 'setup rename/rename(1to2)/modify followed by what looks like rename/rename(2to1)/modify' '
-	test_create_repo rename-squared-squared &&
+	git init rename-squared-squared &&
 	(
 		cd rename-squared-squared &&
 
@@ -956,7 +945,7 @@ test_expect_success 'handle rename/rename(1to2)/modify followed by what looks li
 # content merge handled.
 
 test_expect_success 'setup criss-cross + rename/rename/add-source + modify/modify' '
-	test_create_repo rename-rename-add-source &&
+	git init rename-rename-add-source &&
 	(
 		cd rename-rename-add-source &&
 
@@ -1044,7 +1033,7 @@ test_expect_failure 'detect rename/rename/add-source for virtual merge-base' '
 # base of B & C needs to not delete B:c for that to work, though...
 
 test_expect_success 'setup criss-cross+rename/rename/add-dest + simple modify' '
-	test_create_repo rename-rename-add-dest &&
+	git init rename-rename-add-dest &&
 	(
 		cd rename-rename-add-dest &&
 
@@ -1123,7 +1112,7 @@ test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 # git detect it?
 
 test_expect_success 'setup symlink modify/modify' '
-	test_create_repo symlink-modify-modify &&
+	git init symlink-modify-modify &&
 	(
 		cd symlink-modify-modify &&
 
@@ -1190,7 +1179,7 @@ test_expect_merge_algorithm failure success 'check symlink modify/modify' '
 # git detect it?
 
 test_expect_success 'setup symlink add/add' '
-	test_create_repo symlink-add-add &&
+	git init symlink-add-add &&
 	(
 		cd symlink-add-add &&
 
@@ -1256,11 +1245,11 @@ test_expect_merge_algorithm failure success 'check symlink add/add' '
 # git detect it?
 
 test_expect_success 'setup submodule modify/modify' '
-	test_create_repo submodule-modify-modify &&
+	git init submodule-modify-modify &&
 	(
 		cd submodule-modify-modify &&
 
-		test_create_repo submod &&
+		git init submod &&
 		(
 			cd submod &&
 			touch file-A &&
@@ -1344,11 +1333,11 @@ test_expect_merge_algorithm failure success 'check submodule modify/modify' '
 # git detect it?
 
 test_expect_success 'setup submodule add/add' '
-	test_create_repo submodule-add-add &&
+	git init submodule-add-add &&
 	(
 		cd submodule-add-add &&
 
-		test_create_repo submod &&
+		git init submod &&
 		(
 			cd submod &&
 			touch file-A &&
@@ -1431,11 +1420,11 @@ test_expect_merge_algorithm failure success 'check submodule add/add' '
 # This is an obvious add/add conflict for 'path'.  Can git detect it?
 
 test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
-	test_create_repo submodule-symlink-add-add &&
+	git init submodule-symlink-add-add &&
 	(
 		cd submodule-symlink-add-add &&
 
-		test_create_repo path &&
+		git init path &&
 		(
 			cd path &&
 			touch file-B &&
@@ -1506,7 +1495,7 @@ test_expect_merge_algorithm failure success 'check conflicting entry types (subm
 # This is an obvious add/add mode conflict.  Can git detect it?
 
 test_expect_success 'setup conflicting modes for regular file' '
-	test_create_repo regular-file-mode-conflict &&
+	git init regular-file-mode-conflict &&
 	(
 		cd regular-file-mode-conflict &&
 
@@ -1583,15 +1572,12 @@ test_expect_failure 'check conflicting modes for regular file' '
 #   to ensure that we handle it as well as practical.
 
 test_expect_success 'setup nested conflicts' '
-	test_create_repo nested_conflicts &&
+	git init nested_conflicts &&
 	(
 		cd nested_conflicts &&
 
 		# Create some related files now
-		for i in $(test_seq 1 10)
-		do
-			echo Random base content line $i
-		done >initial &&
+		printf "Random base content line %d\n" $(test_seq 1 10) >initial &&
 
 		cp initial b_L1 &&
 		cp initial b_R1 &&
@@ -1772,15 +1758,12 @@ test_expect_success 'check nested conflicts' '
 #   have three levels of conflict markers.  Can we distinguish all three?
 
 test_expect_success 'setup virtual merge base with nested conflicts' '
-	test_create_repo virtual_merge_base_has_nested_conflicts &&
+	git init virtual_merge_base_has_nested_conflicts &&
 	(
 		cd virtual_merge_base_has_nested_conflicts &&
 
 		# Create some related files now
-		for i in $(test_seq 1 10)
-		do
-			echo Random base content line $i
-		done >content &&
+		printf "Random base content line %d\n" $(test_seq 1 10) >content &&
 
 		# Setup original commit
 		git add content &&

@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='Testing the various Bloom filter computations in bloom.c'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'compute unseeded murmur3 hash for empty string' '
@@ -67,7 +69,7 @@ test_expect_success 'compute bloom key for test string 2' '
 	test_cmp expect actual
 '
 
-test_expect_success 'get bloom filters for commit with no changes' '
+test_expect_success !SANITIZE_LEAK 'get bloom filters for commit with no changes' '
 	git init &&
 	git commit --allow-empty -m "c0" &&
 	cat >expect <<-\EOF &&
@@ -84,7 +86,7 @@ test_expect_success 'get bloom filter for commit with 10 changes' '
 	mkdir smallDir &&
 	for i in $(test_seq 0 9)
 	do
-		echo $i >smallDir/$i
+		echo $i >smallDir/$i || return 1
 	done &&
 	git add smallDir &&
 	git commit -m "commit with 10 changes" &&
@@ -102,7 +104,7 @@ test_expect_success EXPENSIVE 'get bloom filter for commit with 513 changes' '
 	mkdir bigDir &&
 	for i in $(test_seq 0 511)
 	do
-		echo $i >bigDir/$i
+		echo $i >bigDir/$i || return 1
 	done &&
 	git add bigDir &&
 	git commit -m "commit with 513 changes" &&

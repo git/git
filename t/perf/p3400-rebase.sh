@@ -22,7 +22,7 @@ test_expect_success 'setup rebasing on top of a lot of changes' '
 		git add unrelated-file$i &&
 		test_tick &&
 		git commit -m commit$i-reverse unrelated-file$i ||
-		break
+		return 1
 	done &&
 	git checkout to-rebase &&
 	test_commit our-patch interesting-file

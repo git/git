@@ -1,0 +1,5 @@
+# LINT: SQ-string Perl code fragment within SQ-string
+perl -e '\''
+	defined($_ = -s $_) or die for @ARGV;
+	exit 1 if $ARGV[0] <= $ARGV[1];
+'\'' test-2-$packname_2.pack test-3-$packname_3.pack

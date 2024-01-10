@@ -1,0 +1,18 @@
+test_done () {
+	case "$test_failure" in
+	0)
+		test_at_end_hook_
+
+		exit 0 ;;
+
+	*)
+		if test $test_external_has_tap -eq 0
+		then
+			say_color error "# failed $test_failure among $msg"
+			say "1..$test_count"
+		fi
+
+		exit 1 ;;
+
+	esac
+}

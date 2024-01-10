@@ -16,6 +16,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 
 test_expect_success 'setup a submodule tree' '
+	git config --global protocol.file.allow always &&
 	echo file > file &&
 	git add file &&
 	test_tick &&
@@ -151,6 +152,11 @@ test_expect_success 'use "submodule foreach" to checkout 2nd level submodule' '
 		git rev-parse --resolve-git-dir nested1/nested2/.git &&
 		test_must_fail git rev-parse --resolve-git-dir nested1/nested2/nested3/.git
 	)
+'
+
+test_expect_success 'usage: foreach -- --not-an-option' '
+	test_expect_code 1 git submodule foreach -- --not-an-option &&
+	test_expect_code 1 git -C clone2 submodule foreach -- --not-an-option
 '
 
 test_expect_success 'use "foreach --recursive" to checkout all submodules' '

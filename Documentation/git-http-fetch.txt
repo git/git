@@ -9,7 +9,7 @@ git-http-fetch - Download from a remote Git repository via HTTP
 SYNOPSIS
 --------
 [verse]
-'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [--stdin | --packfile=<hash> | <commit>] <url>
+'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w <filename>] [--recover] [--stdin | --packfile=<hash> | <commit>] <URL>
 
 DESCRIPTION
 -----------
@@ -31,7 +31,7 @@ commit-id::
 	Report what is downloaded.
 
 -w <filename>::
-        Writes the commit-id into the filename under $GIT_DIR/refs/<filename> on
+	Writes the commit-id into the specified filename under $GIT_DIR/refs/<filename> on
         the local end after the transfer is complete.
 
 --stdin::

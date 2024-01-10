@@ -33,6 +33,26 @@ test_expect_success 'setup' '
 	u3 sha256:736c4bc
 	u4 sha256:673e77d
 
+	# topic (abbrev=10)
+	t1_abbrev sha1:4de457d2c0
+	t2_abbrev sha1:fccce22f8c
+	t3_abbrev sha1:147e64ef53
+	t4_abbrev sha1:a63e992599
+	t1_abbrev sha256:b89f8b9092
+	t2_abbrev sha256:5f12aadf34
+	t3_abbrev sha256:ea8b273a6c
+	t4_abbrev sha256:14b73361fc
+
+	# unmodified (abbrev=10)
+	u1_abbrev sha1:35b9b25f76
+	u2_abbrev sha1:de345ab3de
+	u3_abbrev sha1:9af6654000
+	u4_abbrev sha1:2901f773f3
+	u1_abbrev sha256:e3731be242
+	u2_abbrev sha256:14fadf8cee
+	u3_abbrev sha256:736c4bcb44
+	u4_abbrev sha256:673e77d589
+
 	# reordered
 	r1 sha1:aca177a
 	r2 sha1:14ad629
@@ -153,6 +173,18 @@ test_expect_success 'simple A B C (unmodified)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'simple A..B A..C (unmodified) with --abbrev' '
+	git range-diff --no-color --abbrev=10 main..topic main..unmodified \
+		>actual &&
+	cat >expect <<-EOF &&
+	1:  $(test_oid t1_abbrev) = 1:  $(test_oid u1_abbrev) s/5/A/
+	2:  $(test_oid t2_abbrev) = 2:  $(test_oid u2_abbrev) s/4/A/
+	3:  $(test_oid t3_abbrev) = 3:  $(test_oid u3_abbrev) s/11/B/
+	4:  $(test_oid t4_abbrev) = 4:  $(test_oid u4_abbrev) s/12/B/
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'A^! and A^-<n> (unmodified)' '
 	git range-diff --no-color topic^! unmodified^-1 >actual &&
 	cat >expect <<-EOF &&
@@ -162,8 +194,8 @@ test_expect_success 'A^! and A^-<n> (unmodified)' '
 '
 
 test_expect_success 'A^{/..} is not mistaken for a range' '
-	test_must_fail git range-diff topic^.. topic^{/..} 2>error &&
-	test_i18ngrep "not a commit range" error
+	test_must_fail git range-diff topic^.. topic^{/..} -- 2>error &&
+	test_grep "not a commit range" error
 '
 
 test_expect_success 'trivial reordering' '
@@ -505,7 +537,7 @@ do
 			main..unmodified >actual &&
 		test_when_finished "rm 000?-*" &&
 		test_line_count = 5 actual &&
-		test_i18ngrep "^Range-diff:$" 0000-* &&
+		test_grep "^Range-diff:$" 0000-* &&
 		grep "= 1: .* s/5/A" 0000-* &&
 		grep "= 2: .* s/4/A" 0000-* &&
 		grep "= 3: .* s/11/B" 0000-* &&
@@ -517,7 +549,7 @@ test_expect_success 'format-patch --range-diff as commentary' '
 	git format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
 	test_when_finished "rm 0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff:$" 0001-* &&
+	test_grep "^Range-diff:$" 0001-* &&
 	grep "> 1: .* new message" 0001-*
 '
 
@@ -525,7 +557,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a non-integer' 
 	git format-patch --range-diff=HEAD~1 -v2.9 HEAD~1 >actual &&
 	test_when_finished "rm v2.9-0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff:$" v2.9-0001-* &&
+	test_grep "^Range-diff:$" v2.9-0001-* &&
 	grep "> 1: .* new message" v2.9-0001-*
 '
 
@@ -533,7 +565,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a integer' '
 	git format-patch --range-diff=HEAD~1 -v2 HEAD~1 >actual &&
 	test_when_finished "rm v2-0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff ..* v1:$" v2-0001-* &&
+	test_grep "^Range-diff ..* v1:$" v2-0001-* &&
 	grep "> 1: .* new message" v2-0001-*
 '
 
@@ -541,7 +573,7 @@ test_expect_success 'format-patch --range-diff with v0' '
 	git format-patch --range-diff=HEAD~1 -v0 HEAD~1 >actual &&
 	test_when_finished "rm v0-0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff:$" v0-0001-* &&
+	test_grep "^Range-diff:$" v0-0001-* &&
 	grep "> 1: .* new message" v0-0001-*
 '
 
@@ -630,6 +662,20 @@ test_expect_success 'range-diff with multiple --notes' '
 	test_cmp expect actual
 '
 
+# `range-diff` should act like `log` with regards to notes
+test_expect_success 'range-diff with --notes=custom does not show default notes' '
+	git notes add -m "topic note" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	git notes --ref=custom add -m "topic note" topic &&
+	git notes --ref=custom add -m "unmodified note" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	test_when_finished git notes --ref=custom remove topic unmodified &&
+	git range-diff --notes=custom main..topic main..unmodified \
+		>actual &&
+	! grep "## Notes ##" actual &&
+	grep "## Notes (custom) ##" actual
+'
+
 test_expect_success 'format-patch --range-diff does not compare notes by default' '
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
@@ -638,13 +684,27 @@ test_expect_success 'format-patch --range-diff does not compare notes by default
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
 	grep "= 4: .* s/12/B" 0000-* &&
 	! grep "Notes" 0000-* &&
 	! grep "note" 0000-*
+'
+
+test_expect_success 'format-patch --notes=custom --range-diff only compares custom notes' '
+	git notes add -m "topic note" topic &&
+	git notes --ref=custom add -m "topic note (custom)" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	git notes --ref=custom add -m "unmodified note (custom)" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	test_when_finished git notes --ref=custom remove topic unmodified &&
+	git format-patch --notes=custom --cover-letter --range-diff=$prev \
+		main..unmodified >actual &&
+	test_when_finished "rm 000?-*" &&
+	grep "## Notes (custom) ##" 0000-* &&
+	! grep "## Notes ##" 0000-*
 '
 
 test_expect_success 'format-patch --range-diff with --no-notes' '
@@ -655,7 +715,7 @@ test_expect_success 'format-patch --range-diff with --no-notes' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
@@ -672,7 +732,7 @@ test_expect_success 'format-patch --range-diff with --notes' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
@@ -701,7 +761,7 @@ test_expect_success 'format-patch --range-diff with format.notes config' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
@@ -732,7 +792,7 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
@@ -769,6 +829,68 @@ test_expect_success '--left-only/--right-only' '
 	head_oid=$(git rev-parse --short HEAD) &&
 	common_oid=$(git rev-parse --short common) &&
 	echo "1:  $head_oid = 2:  $common_oid common" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ranges with pathspecs' '
+	git range-diff topic...mode-only-change -- other-file >actual &&
+	test_line_count = 2 actual &&
+	topic_oid=$(git rev-parse --short topic) &&
+	mode_change_oid=$(git rev-parse --short mode-only-change^) &&
+	file_change_oid=$(git rev-parse --short mode-only-change) &&
+	grep "$mode_change_oid" actual &&
+	! grep "$file_change_oid" actual &&
+	! grep "$topic_oid" actual
+'
+
+test_expect_success 'submodule changes are shown irrespective of diff.submodule' '
+	git init sub-repo &&
+	test_commit -C sub-repo sub-first &&
+	sub_oid1=$(git -C sub-repo rev-parse HEAD) &&
+	test_commit -C sub-repo sub-second &&
+	sub_oid2=$(git -C sub-repo rev-parse HEAD) &&
+	test_commit -C sub-repo sub-third &&
+	sub_oid3=$(git -C sub-repo rev-parse HEAD) &&
+
+	git checkout -b main-sub topic &&
+	git -c protocol.file.allow=always submodule add ./sub-repo sub &&
+	git -C sub checkout --detach sub-first &&
+	git commit -m "add sub" sub &&
+	sup_oid1=$(git rev-parse --short HEAD) &&
+	git checkout -b topic-sub &&
+	git -C sub checkout sub-second &&
+	git commit -m "change sub" sub &&
+	sup_oid2=$(git rev-parse --short HEAD) &&
+	git checkout -b modified-sub main-sub &&
+	git -C sub checkout sub-third &&
+	git commit -m "change sub" sub &&
+	sup_oid3=$(git rev-parse --short HEAD) &&
+	sup_oid0=$(test_oid __) &&
+
+	test_config diff.submodule log &&
+	git range-diff topic topic-sub modified-sub >actual &&
+	cat >expect <<-EOF &&
+	1:  $sup_oid1 = 1:  $sup_oid1 add sub
+	2:  $sup_oid2 < -:  $sup_oid0 change sub
+	-:  $sup_oid0 > 2:  $sup_oid3 change sub
+	EOF
+	test_cmp expect actual &&
+	test_config diff.submodule diff &&
+	git range-diff topic topic-sub modified-sub >actual &&
+	git range-diff --creation-factor=100 topic topic-sub modified-sub >actual &&
+	cat >expect <<-EOF &&
+	1:  $sup_oid1 = 1:  $sup_oid1 add sub
+	2:  $sup_oid2 ! 2:  $sup_oid3 change sub
+	    @@ Commit message
+	      ## sub ##
+	     @@
+	     -Subproject commit $sub_oid1
+	    -+Subproject commit $sub_oid2
+	    ++Subproject commit $sub_oid3
+	EOF
+	test_cmp expect actual &&
+	test_config diff.submodule diff &&
+	git range-diff --creation-factor=100 topic topic-sub modified-sub >actual &&
 	test_cmp expect actual
 '
 

@@ -5,8 +5,14 @@
  *
  * Copyright (C) 2008 Linus Torvalds
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "gettext.h"
+#include "name-hash.h"
+#include "object.h"
+#include "read-cache-ll.h"
 #include "thread-utils.h"
+#include "trace.h"
 #include "trace2.h"
 #include "sparse-index.h"
 
@@ -18,7 +24,7 @@ struct dir_entry {
 	char name[FLEX_ARRAY];
 };
 
-static int dir_entry_cmp(const void *unused_cmp_data,
+static int dir_entry_cmp(const void *cmp_data UNUSED,
 			 const struct hashmap_entry *eptr,
 			 const struct hashmap_entry *entry_or_key,
 			 const void *keydata)
@@ -120,7 +126,7 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 		add_dir_entry(istate, ce);
 }
 
-static int cache_entry_cmp(const void *unused_cmp_data,
+static int cache_entry_cmp(const void *cmp_data UNUSED,
 			   const struct hashmap_entry *eptr,
 			   const struct hashmap_entry *entry_or_key,
 			   const void *remove)

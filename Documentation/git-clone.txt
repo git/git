@@ -9,14 +9,14 @@ git-clone - Clone a repository into a new directory
 SYNOPSIS
 --------
 [verse]
-'git clone' [--template=<template_directory>]
+'git clone' [--template=<template-directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--dissociate] [--separate-git-dir <git dir>]
+	  [--dissociate] [--separate-git-dir <git-dir>]
 	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
 	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
-	  [--filter=<filter>] [--] <repository>
+	  [--filter=<filter> [--also-filter-submodules]] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -57,6 +57,11 @@ repository is specified as a URL, then this flag is ignored (and we
 never use the local optimizations).  Specifying `--no-local` will
 override the default when `/path/to/repo` is given, using the regular
 Git transport instead.
++
+If the repository's `$GIT_DIR/objects` has symbolic links or is a
+symbolic link, the clone will fail. This is a security measure to
+prevent the unintentional copying of files by dereferencing the symbolic
+links.
 +
 *NOTE*: this operation can race with concurrent modification to the
 source repository, similar to running `cp -r src dst` while modifying
@@ -167,10 +172,10 @@ objects from the source repository into a pack in the cloned repository.
 	configuration variables are created.
 
 --sparse::
-	Initialize the sparse-checkout file so the working
-	directory starts with only the files in the root
-	of the repository. The sparse-checkout file can be
-	modified to grow the working directory as needed.
+	Employ a sparse-checkout, with only files in the toplevel
+	directory initially being present.  The
+	linkgit:git-sparse-checkout[1] command can be used to grow the
+	working directory as needed.
 
 --filter=<filter-spec>::
 	Use the partial clone feature and request that the server sends
@@ -181,6 +186,11 @@ objects from the source repository into a pack in the cloned repository.
 	`--filter=blob:limit=<size>` will filter out all blobs of size
 	at least `<size>`. For more details on filter specifications, see
 	the `--filter` option in linkgit:git-rev-list[1].
+
+--also-filter-submodules::
+	Also apply the partial clone filter to any submodules in the repository.
+	Requires `--filter` and `--recurse-submodules`. This can be turned on by
+	default by setting the `clone.filterSubmodules` config option.
 
 --mirror::
 	Set up a mirror of the source repository.  This implies `--bare`.
@@ -211,7 +221,7 @@ objects from the source repository into a pack in the cloned repository.
 	via ssh, this specifies a non-default path for the command
 	run on the other end.
 
---template=<template_directory>::
+--template=<template-directory>::
 	Specify the directory from which templates will be used;
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
@@ -294,7 +304,7 @@ or `--mirror` is given)
 	superproject's recorded SHA-1. Equivalent to passing `--remote` to
 	`git submodule update`.
 
---separate-git-dir=<git dir>::
+--separate-git-dir=<git-dir>::
 	Instead of placing the cloned repository where it is supposed
 	to be, place the cloned repository at the specified directory,
 	then make a filesystem-agnostic Git symbolic link to there.
@@ -317,6 +327,13 @@ or `--mirror` is given)
 	explicitly given (`repo` for `/path/to/repo.git` and `foo`
 	for `host.xz:foo/.git`).  Cloning into an existing directory
 	is only allowed if the directory is empty.
+
+--bundle-uri=<uri>::
+	Before fetching from the remote, fetch a bundle from the given
+	`<uri>` and unbundle the data into the local repository. The refs
+	in the bundle will be stored under the hidden `refs/bundle/*`
+	namespace. This option is incompatible with `--depth`,
+	`--shallow-since`, and `--shallow-exclude`.
 
 :git-clone: 1
 include::urls.txt[]
@@ -357,6 +374,15 @@ $ cd my-linux
 ------------
 $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
 ------------
+
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/init.txt[]
+
+include::config/clone.txt[]
 
 
 GIT

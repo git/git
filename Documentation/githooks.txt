@@ -27,6 +27,18 @@ repository. An exception are hooks triggered during a push ('pre-receive',
 'update', 'post-receive', 'post-update', 'push-to-checkout') which are always
 executed in $GIT_DIR.
 
+Environment variables, such as `GIT_DIR`, `GIT_WORK_TREE`, etc., are exported
+so that Git commands run by the hook can correctly locate the repository.  If
+your hook needs to invoke Git commands in a foreign repository or in a
+different working tree of the same repository, then it should clear these
+environment variables so they do not interfere with Git operations at the
+foreign location.  For example:
+
+------------
+local_desc=$(git describe)
+foreign_desc=$(unset $(git rev-parse --local-env-vars); git -C ../foreign-repo describe)
+------------
+
 Hooks can get their arguments via the environment, command-line
 arguments, and stdin. See the documentation for each hook below for
 details.
@@ -68,7 +80,7 @@ If it exits with non-zero status, then the working tree will not be
 committed after applying the patch.
 
 It can be used to inspect the current working tree and refuse to
-make a commit if it does not pass certain test.
+make a commit if it does not pass certain tests.
 
 The default 'pre-applypatch' hook, when enabled, runs the
 'pre-commit' hook, if the latter is enabled.
@@ -145,7 +157,7 @@ If the exit status is non-zero, `git commit` will abort.
 The purpose of the hook is to edit the message file in place, and
 it is not suppressed by the `--no-verify` option.  A non-zero exit
 means a failure of the hook and aborts the commit.  It should not
-be used as replacement for pre-commit hook.
+be used as a replacement for the pre-commit hook.
 
 The sample `prepare-commit-msg` hook that comes with Git removes the
 help message found in the commented portion of the commit template.
@@ -333,7 +345,7 @@ for the user.
 
 The default 'update' hook, when enabled--and with
 `hooks.allowunannotated` config option unset or set to false--prevents
-unannotated tags to be pushed.
+unannotated tags from being pushed.
 
 [[proc-receive]]
 proc-receive
@@ -367,12 +379,12 @@ following example for the protocol, the letter 'S' stands for
     S: ... ...
     S: flush-pkt
 
-    # Receive result from the hook.
+    # Receive results from the hook.
     # OK, run this command successfully.
     H: PKT-LINE(ok <ref>)
     # NO, I reject it.
     H: PKT-LINE(ng <ref> <reason>)
-    # Fall through, let 'receive-pack' to execute it.
+    # Fall through, let 'receive-pack' execute it.
     H: PKT-LINE(ok <ref>)
     H: PKT-LINE(option fall-through)
     # OK, but has an alternate reference.  The alternate reference name
@@ -583,10 +595,51 @@ processed by rebase.
 sendemail-validate
 ~~~~~~~~~~~~~~~~~~
 
-This hook is invoked by linkgit:git-send-email[1].  It takes a single parameter,
-the name of the file that holds the e-mail to be sent.  Exiting with a
-non-zero status causes `git send-email` to abort before sending any
-e-mails.
+This hook is invoked by linkgit:git-send-email[1].
+
+It takes these command line arguments. They are,
+1. the name of the file which holds the contents of the email to be sent.
+2. The name of the file which holds the SMTP headers of the email.
+
+The SMTP headers are passed in the exact same way as they are passed to the
+user's Mail Transport Agent (MTA). In effect, the email given to the user's
+MTA, is the contents of $2 followed by the contents of $1.
+
+An example of a few common headers is shown below. Take notice of the
+capitalization and multi-line tab structure.
+
+  From: Example <from@example.com>
+  To: to@example.com
+  Cc: cc@example.com,
+	  A <author@example.com>,
+	  One <one@example.com>,
+	  two@example.com
+  Subject: PATCH-STRING
+
+Exiting with a non-zero status causes `git send-email` to abort
+before sending any e-mails.
+
+The following environment variables are set when executing the hook.
+
+`GIT_SENDEMAIL_FILE_COUNTER`::
+	A 1-based counter incremented by one for every file holding an e-mail
+	to be sent (excluding any FIFOs). This counter does not follow the
+	patch series counter scheme. It will always start at 1 and will end at
+	GIT_SENDEMAIL_FILE_TOTAL.
+
+`GIT_SENDEMAIL_FILE_TOTAL`::
+	The total number of files that will be sent (excluding any FIFOs). This
+	counter does not follow the patch series counter scheme. It will always
+	be equal to the number of files being sent, whether there is a cover
+	letter or not.
+
+These variables may for instance be used to validate patch series.
+
+The sample `sendemail-validate` hook that comes with Git checks that all sent
+patches (excluding the cover letter) can be applied on top of the upstream
+repository default branch without conflicts. Some placeholders are left for
+additional validation steps to be performed after all patches of a given series
+have been applied.
 
 fsmonitor-watchman
 ~~~~~~~~~~~~~~~~~~
@@ -697,6 +750,10 @@ and "0" meaning they were not.
 
 Only one parameter should be set to "1" when the hook runs.  The hook
 running passing "1", "1" should not be possible.
+
+SEE ALSO
+--------
+linkgit:git-hook[1]
 
 GIT
 ---

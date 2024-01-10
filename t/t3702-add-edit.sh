@@ -4,6 +4,8 @@
 #
 
 test_description='add -e basic tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 
@@ -98,7 +100,7 @@ EOF
 
 echo "#!$SHELL_PATH" >fake-editor.sh
 cat >> fake-editor.sh <<\EOF
-egrep -v '^index' "$1" >orig-patch &&
+grep -E -v '^index' "$1" >orig-patch &&
 mv -f patch "$1"
 EOF
 

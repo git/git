@@ -8,6 +8,8 @@ test_description='Test git rev-parse with different parent options'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 test_cmp_rev_output () {
@@ -25,6 +27,7 @@ test_expect_success 'setup' '
 	git merge -m next --allow-unrelated-histories start2 &&
 	test_commit final &&
 
+	mkdir .git/info &&
 	test_seq 40 |
 	while read i
 	do
@@ -32,7 +35,7 @@ test_expect_success 'setup' '
 		test_tick &&
 		git commit --allow-empty -m "$i" &&
 		commit=$(git rev-parse --verify HEAD) &&
-		printf "$commit " >>.git/info/grafts
+		printf "$commit " >>.git/info/grafts || return 1
 	done
 '
 

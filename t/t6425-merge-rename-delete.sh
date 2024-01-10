@@ -4,6 +4,7 @@ test_description='Merge-recursive rename/delete conflict message'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'rename/delete' '
@@ -20,8 +21,8 @@ test_expect_success 'rename/delete' '
 	git commit -m "delete" &&
 
 	test_must_fail git merge --strategy=recursive rename >output &&
-	test_i18ngrep "CONFLICT (rename/delete): A.* renamed .*to B.* in rename" output &&
-	test_i18ngrep "CONFLICT (rename/delete): A.*deleted in HEAD." output
+	test_grep "CONFLICT (rename/delete): A.* renamed .*to B.* in rename" output &&
+	test_grep "CONFLICT (rename/delete): A.*deleted in HEAD." output
 '
 
 test_done

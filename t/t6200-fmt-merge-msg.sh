@@ -81,6 +81,36 @@ test_expect_success GPG 'set up a signed tag' '
 	git tag -s -m signed-tag-msg signed-good-tag left
 '
 
+test_expect_success GPGSSH 'created ssh signed commit and tag' '
+	test_config gpg.format ssh &&
+	git checkout -b signed-ssh &&
+	touch file &&
+	git add file &&
+	git commit -m "ssh signed" -S"${GPGSSH_KEY_PRIMARY}" &&
+	git tag -s -u"${GPGSSH_KEY_PRIMARY}" -m signed-ssh-tag-msg signed-good-ssh-tag left &&
+	git tag -s -u"${GPGSSH_KEY_UNTRUSTED}" -m signed-ssh-tag-msg-untrusted signed-untrusted-ssh-tag left
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'create signed tags with keys having defined lifetimes' '
+	test_when_finished "test_unconfig commit.gpgsign" &&
+	test_config gpg.format ssh &&
+	git checkout -b signed-expiry-ssh &&
+	touch file &&
+	git add file &&
+
+	echo expired >file && test_tick && git commit -a -m expired -S"${GPGSSH_KEY_EXPIRED}" &&
+	git tag -s -u "${GPGSSH_KEY_EXPIRED}" -m expired-signed expired-signed &&
+
+	echo notyetvalid >file && test_tick && git commit -a -m notyetvalid -S"${GPGSSH_KEY_NOTYETVALID}" &&
+	git tag -s -u "${GPGSSH_KEY_NOTYETVALID}" -m notyetvalid-signed notyetvalid-signed &&
+
+	echo timeboxedvalid >file && test_tick && git commit -a -m timeboxedvalid -S"${GPGSSH_KEY_TIMEBOXEDVALID}" &&
+	git tag -s -u "${GPGSSH_KEY_TIMEBOXEDVALID}" -m timeboxedvalid-signed timeboxedvalid-signed &&
+
+	echo timeboxedinvalid >file && test_tick && git commit -a -m timeboxedinvalid -S"${GPGSSH_KEY_TIMEBOXEDINVALID}" &&
+	git tag -s -u "${GPGSSH_KEY_TIMEBOXEDINVALID}" -m timeboxedinvalid-signed timeboxedinvalid-signed
+'
+
 test_expect_success 'message for merging local branch' '
 	echo "Merge branch ${apos}left${apos}" >expected &&
 
@@ -94,8 +124,9 @@ test_expect_success 'message for merging local branch' '
 test_expect_success GPG 'message for merging local tag signed by good key' '
 	git checkout main &&
 	git fetch . signed-good-tag &&
-	git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
+	grep "^signed-tag-msg" actual &&
 	grep "^# gpg: Signature made" actual &&
 	grep "^# gpg: Good signature from" actual
 '
@@ -103,10 +134,75 @@ test_expect_success GPG 'message for merging local tag signed by good key' '
 test_expect_success GPG 'message for merging local tag signed by unknown key' '
 	git checkout main &&
 	git fetch . signed-good-tag &&
-	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual 2>&1 &&
+	GNUPGHOME=. git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	grep "^Merge tag ${apos}signed-good-tag${apos}" actual &&
+	grep "^signed-tag-msg" actual &&
 	grep "^# gpg: Signature made" actual &&
 	grep -E "^# gpg: Can${apos}t check signature: (public key not found|No public key)" actual
+'
+
+test_expect_success GPGSSH 'message for merging local tag signed by good ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . signed-good-ssh-tag &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}signed-good-ssh-tag${apos}" actual &&
+	grep "^signed-ssh-tag-msg" actual &&
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual
+'
+
+test_expect_success GPGSSH 'message for merging local tag signed by unknown ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . signed-untrusted-ssh-tag &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}signed-untrusted-ssh-tag${apos}" actual &&
+	grep "^signed-ssh-tag-msg-untrusted" actual &&
+	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+	grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by expired ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . expired-signed &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}expired-signed${apos}" actual &&
+	grep "^expired-signed" actual &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by not yet valid ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . notyetvalid-signed &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}notyetvalid-signed${apos}" actual &&
+	grep "^notyetvalid-signed" actual &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by valid timeboxed ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . timeboxedvalid-signed &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}timeboxedvalid-signed${apos}" actual &&
+	grep "^timeboxedvalid-signed" actual &&
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	! grep "${GPGSSH_BAD_SIGNATURE}" actual
+'
+
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'message for merging local tag signed by invalid timeboxed ssh key' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	git checkout main &&
+	git fetch . timeboxedinvalid-signed &&
+	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
+	grep "^Merge tag ${apos}timeboxedinvalid-signed${apos}" actual &&
+	grep "^timeboxedinvalid-signed" actual &&
+	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success 'message for merging external branch' '
@@ -491,7 +587,7 @@ test_expect_success 'merge-msg lots of commits' '
 		while test $i -gt 9
 		do
 			echo "  $i" &&
-			i=$(($i-1))
+			i=$(($i-1)) || return 1
 		done &&
 		echo "  ..."
 	} >expected &&
@@ -545,7 +641,35 @@ test_expect_success 'merge-msg with "merging" an annotated tag' '
 	test_cmp expected .git/MERGE_MSG
 '
 
+test_expect_success 'merge --into-name=<name>' '
+	test_when_finished "git checkout main" &&
+	git checkout -B side main &&
+	git commit --allow-empty -m "One step ahead" &&
+
+	git checkout --detach main &&
+	git merge --no-ff side &&
+	git show -s --format="%s" >full.0 &&
+	head -n1 full.0 >actual &&
+	# expect that HEAD is shown as-is
+	grep -e "Merge branch .side. into HEAD$" actual &&
+
+	git reset --hard main &&
+	git merge --no-ff --into-name=main side &&
+	git show -s --format="%s" >full.1 &&
+	head -n1 full.1 >actual &&
+	# expect that we pretend to be merging to main, that is suppressed
+	grep -e "Merge branch .side.$" actual &&
+
+	git checkout -b throwaway main &&
+	git merge --no-ff --into-name=main side &&
+	git show -s --format="%s" >full.2 &&
+	head -n1 full.2 >actual &&
+	# expect that we pretend to be merging to main, that is suppressed
+	grep -e "Merge branch .side.$" actual
+'
+
 test_expect_success 'merge.suppressDest configuration' '
+	test_when_finished "git checkout main" &&
 	git checkout -B side main &&
 	git commit --allow-empty -m "One step ahead" &&
 	git checkout main &&
@@ -562,7 +686,19 @@ test_expect_success 'merge.suppressDest configuration' '
 	git -c merge.suppressDest="ma?*[rn]" fmt-merge-msg <.git/FETCH_HEAD >full.3 &&
 	head -n1 full.3 >actual &&
 	grep -e "Merge branch .side." actual &&
-	! grep -e " into main$" actual
+	! grep -e " into main$" actual &&
+
+	git checkout --detach HEAD &&
+	git -c merge.suppressDest="main" fmt-merge-msg <.git/FETCH_HEAD >full.4 &&
+	head -n1 full.4 >actual &&
+	grep -e "Merge branch .side. into HEAD$" actual &&
+
+	git -c merge.suppressDest="main" fmt-merge-msg \
+		--into-name=main <.git/FETCH_HEAD >full.5 &&
+	head -n1 full.5 >actual &&
+	grep -e "Merge branch .side." actual &&
+	! grep -e " into main$" actual &&
+	! grep -e " into HEAD$" actual
 '
 
 test_done

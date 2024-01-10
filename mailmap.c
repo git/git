@@ -1,17 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
 #include "string-list.h"
 #include "mailmap.h"
-#include "object-store.h"
-
-#define DEBUG_MAILMAP 0
-#if DEBUG_MAILMAP
-#define debug_mm(...) fprintf(stderr, __VA_ARGS__)
-#define debug_str(X) ((X) ? (X) : "(none)")
-#else
-__attribute__((format (printf, 1, 2)))
-static inline void debug_mm(const char *format, ...) {}
-static inline const char *debug_str(const char *s) { return s; }
-#endif
+#include "object-name.h"
+#include "object-store-ll.h"
+#include "setup.h"
 
 const char *git_mailmap_file;
 const char *git_mailmap_blob;
@@ -30,23 +23,17 @@ struct mailmap_entry {
 	struct string_list namemap;
 };
 
-static void free_mailmap_info(void *p, const char *s)
+static void free_mailmap_info(void *p, const char *s UNUSED)
 {
 	struct mailmap_info *mi = (struct mailmap_info *)p;
-	debug_mm("mailmap: -- complex: '%s' -> '%s' <%s>\n",
-		 s, debug_str(mi->name), debug_str(mi->email));
 	free(mi->name);
 	free(mi->email);
 	free(mi);
 }
 
-static void free_mailmap_entry(void *p, const char *s)
+static void free_mailmap_entry(void *p, const char *s UNUSED)
 {
 	struct mailmap_entry *me = (struct mailmap_entry *)p;
-	debug_mm("mailmap: removing entries for <%s>, with %d sub-entries\n",
-		 s, me->namemap.nr);
-	debug_mm("mailmap: - simple: '%s' <%s>\n",
-		 debug_str(me->name), debug_str(me->email));
 
 	free(me->name);
 	free(me->email);
@@ -77,7 +64,7 @@ static void add_mapping(struct string_list *map,
 	struct mailmap_entry *me;
 	struct string_list_item *item;
 
-	if (old_email == NULL) {
+	if (!old_email) {
 		old_email = new_email;
 		new_email = NULL;
 	}
@@ -92,9 +79,7 @@ static void add_mapping(struct string_list *map,
 		item->util = me;
 	}
 
-	if (old_name == NULL) {
-		debug_mm("mailmap: adding (simple) entry for '%s'\n", old_email);
-
+	if (!old_name) {
 		/* Replace current name and new email for simple entry */
 		if (new_name) {
 			free(me->name);
@@ -106,15 +91,10 @@ static void add_mapping(struct string_list *map,
 		}
 	} else {
 		struct mailmap_info *mi = xcalloc(1, sizeof(struct mailmap_info));
-		debug_mm("mailmap: adding (complex) entry for '%s'\n", old_email);
 		mi->name = xstrdup_or_null(new_name);
 		mi->email = xstrdup_or_null(new_email);
 		string_list_insert(&me->namemap, old_name)->util = mi;
 	}
-
-	debug_mm("mailmap:  '%s' <%s> -> '%s' <%s>\n",
-		 debug_str(old_name), old_email,
-		 debug_str(new_name), debug_str(new_email));
 }
 
 static char *parse_name_and_email(char *buffer, char **name,
@@ -123,9 +103,9 @@ static char *parse_name_and_email(char *buffer, char **name,
 	char *left, *right, *nstart, *nend;
 	*name = *email = NULL;
 
-	if ((left = strchr(buffer, '<')) == NULL)
+	if (!(left = strchr(buffer, '<')))
 		return NULL;
-	if ((right = strchr(left+1, '>')) == NULL)
+	if (!(right = strchr(left + 1, '>')))
 		return NULL;
 	if (!allow_empty_email && (left+1 == right))
 		return NULL;
@@ -153,7 +133,7 @@ static void read_mailmap_line(struct string_list *map, char *buffer)
 	if (buffer[0] == '#')
 		return;
 
-	if ((name2 = parse_name_and_email(buffer, &name1, &email1, 0)) != NULL)
+	if ((name2 = parse_name_and_email(buffer, &name1, &email1, 0)))
 		parse_name_and_email(name2, &name2, &email2, 1);
 
 	if (email1)
@@ -213,10 +193,10 @@ static int read_mailmap_blob(struct string_list *map, const char *name)
 
 	if (!name)
 		return 0;
-	if (get_oid(name, &oid) < 0)
+	if (repo_get_oid(the_repository, name, &oid) < 0)
 		return 0;
 
-	buf = read_object_file(&oid, &type, &size);
+	buf = repo_read_object_file(the_repository, &oid, &type, &size);
 	if (!buf)
 		return error("unable to read mailmap object at %s", name);
 	if (type != OBJ_BLOB)
@@ -250,10 +230,8 @@ int read_mailmap(struct string_list *map)
 
 void clear_mailmap(struct string_list *map)
 {
-	debug_mm("mailmap: clearing %d entries...\n", map->nr);
 	map->strdup_strings = 1;
 	string_list_clear_func(map, free_mailmap_entry);
-	debug_mm("mailmap: cleared\n");
 }
 
 /*
@@ -314,12 +292,8 @@ int map_user(struct string_list *map,
 	struct string_list_item *item;
 	struct mailmap_entry *me;
 
-	debug_mm("map_user: map '%.*s' <%.*s>\n",
-		 (int)*namelen, debug_str(*name),
-		 (int)*emaillen, debug_str(*email));
-
 	item = lookup_prefix(map, *email, *emaillen);
-	if (item != NULL) {
+	if (item) {
 		me = (struct mailmap_entry *)item->util;
 		if (me->namemap.nr) {
 			/*
@@ -333,12 +307,10 @@ int map_user(struct string_list *map,
 				item = subitem;
 		}
 	}
-	if (item != NULL) {
+	if (item) {
 		struct mailmap_info *mi = (struct mailmap_info *)item->util;
-		if (mi->name == NULL && mi->email == NULL) {
-			debug_mm("map_user:  -- (no simple mapping)\n");
+		if (mi->name == NULL && mi->email == NULL)
 			return 0;
-		}
 		if (mi->email) {
 				*email = mi->email;
 				*emaillen = strlen(*email);
@@ -347,11 +319,7 @@ int map_user(struct string_list *map,
 				*name = mi->name;
 				*namelen = strlen(*name);
 		}
-		debug_mm("map_user:  to '%.*s' <%.*s>\n",
-			 (int)*namelen, debug_str(*name),
-			 (int)*emaillen, debug_str(*email));
 		return 1;
 	}
-	debug_mm("map_user:  --\n");
 	return 0;
 }

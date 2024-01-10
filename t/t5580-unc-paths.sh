@@ -4,6 +4,7 @@ test_description='various Windows-only path tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if test_have_prereq CYGWIN
@@ -74,7 +75,7 @@ test_expect_success push '
 test_expect_success MINGW 'remote nick cannot contain backslashes' '
 	BACKSLASHED="$(winpwd | tr / \\\\)" &&
 	git ls-remote "$BACKSLASHED" 2>err &&
-	test_i18ngrep ! "unable to access" err
+	test_grep ! "unable to access" err
 '
 
 test_expect_success 'unc alternates' '

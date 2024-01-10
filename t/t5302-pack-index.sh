@@ -4,6 +4,8 @@
 #
 
 test_description='pack index with 64-bit offsets and object CRC'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -14,7 +16,7 @@ test_expect_success 'setup' '
 	i=1 &&
 	while test $i -le 100
 	do
-		iii=$(printf "%03i" $i)
+		iii=$(printf "%03i" $i) &&
 		test-tool genrandom "bar" 200 > wide_delta_$iii &&
 		test-tool genrandom "baz $iii" 50 >> wide_delta_$iii &&
 		test-tool genrandom "foo"$i 100 > deep_delta_$iii &&
@@ -263,7 +265,7 @@ tag guten tag
 This is an invalid tag.
 EOF
 
-	tag=$(git hash-object -t tag -w --stdin <wrong-tag) &&
+	tag=$(git hash-object -t tag -w --stdin --literally <wrong-tag) &&
 	pack1=$(echo $tag $sha | git pack-objects tag-test) &&
 	echo remove tag object &&
 	thirtyeight=${tag#??} &&
@@ -280,8 +282,16 @@ test_expect_success 'index-pack --fsck-objects also warns upon missing tagger in
 test_expect_success 'index-pack -v --stdin produces progress for both phases' '
 	pack=$(git pack-objects --all pack </dev/null) &&
 	GIT_PROGRESS_DELAY=0 git index-pack -v --stdin <pack-$pack.pack 2>err &&
-	test_i18ngrep "Receiving objects" err &&
-	test_i18ngrep "Resolving deltas" err
+	test_grep "Receiving objects" err &&
+	test_grep "Resolving deltas" err
+'
+
+test_expect_success 'too-large packs report the breach' '
+	pack=$(git pack-objects --all pack </dev/null) &&
+	sz="$(test_file_size pack-$pack.pack)" &&
+	test "$sz" -gt 20 &&
+	test_must_fail git index-pack --max-input-size=20 pack-$pack.pack 2>err &&
+	grep "maximum allowed size (20 bytes)" err
 '
 
 test_done

@@ -110,6 +110,13 @@ test_expect_success GPG 'verify and show signatures' '
 	)
 '
 
+test_expect_success GPG 'verify-commit exits failure on unknown signature' '
+	test_must_fail env GNUPGHOME="$GNUPGHOME_NOT_USED" git verify-commit initial 2>actual &&
+	! grep "Good signature from" actual &&
+	! grep "BAD signature from" actual &&
+	grep -q -F -e "No public key" -e "public key not found" actual
+'
+
 test_expect_success GPG 'verify-commit exits success on untrusted signature' '
 	git verify-commit eighth-signed-alt 2>actual &&
 	grep "Good signature from" actual &&
@@ -195,7 +202,7 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 	git cat-file commit seventh-signed >raw &&
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
-	git hash-object -w -t commit forged2 >forged2.commit &&
+	git hash-object --literally -w -t commit forged2 >forged2.commit &&
 	test_must_fail git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
 	grep "BAD signature from" actual2 &&
@@ -203,7 +210,7 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 '
 
 test_expect_success GPG 'amending already signed commit' '
-	git checkout fourth-signed^0 &&
+	git checkout -f fourth-signed^0 &&
 	git commit --amend -S --no-edit &&
 	git verify-commit HEAD &&
 	git show -s --show-signature HEAD >actual &&
@@ -211,87 +218,101 @@ test_expect_success GPG 'amending already signed commit' '
 	! grep "BAD signature from" actual
 '
 
+test_expect_success GPG2 'bare signature' '
+	git verify-commit fifth-signed 2>expect &&
+	echo >>expect &&
+	git log -1 --format="%GG" fifth-signed >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success GPG 'show good signature with custom format' '
 	cat >expect <<-\EOF &&
 	G
-	13B6F51ECDDE430D
-	C O Mitter <committer@example.com>
-	73D758744BE721698EC54E8713B6F51ECDDE430D
-	73D758744BE721698EC54E8713B6F51ECDDE430D
-	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show bad signature with custom format' '
-	cat >expect <<-\EOF &&
-	B
-	13B6F51ECDDE430D
-	C O Mitter <committer@example.com>
-
-
-	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" $(cat forged1.commit) >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show untrusted signature with custom format' '
-	cat >expect <<-\EOF &&
-	U
-	65A0EEA02E30CAD7
-	Eris Discordia <discord@example.net>
-	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
-	D4BE22311AD3131E5EDA29A461092E85B7227189
-	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show untrusted signature with undefined trust level' '
-	cat >expect <<-\EOF &&
-	undefined
-	65A0EEA02E30CAD7
-	Eris Discordia <discord@example.net>
-	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
-	D4BE22311AD3131E5EDA29A461092E85B7227189
-	EOF
-	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success GPG 'show untrusted signature with ultimate trust level' '
-	cat >expect <<-\EOF &&
 	ultimate
 	13B6F51ECDDE430D
 	C O Mitter <committer@example.com>
 	73D758744BE721698EC54E8713B6F51ECDDE430D
 	73D758744BE721698EC54E8713B6F51ECDDE430D
 	EOF
-	git log -1 --format="%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show bad signature with custom format' '
+	cat >expect <<-\EOF &&
+	B
+	undefined
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+
+
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" $(cat forged1.commit) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with custom format' '
+	cat >expect <<-\EOF &&
+	U
+	undefined
+	65A0EEA02E30CAD7
+	Eris Discordia <discord@example.net>
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
+	D4BE22311AD3131E5EDA29A461092E85B7227189
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with undefined trust level' '
+	cat >expect <<-\EOF &&
+	U
+	undefined
+	65A0EEA02E30CAD7
+	Eris Discordia <discord@example.net>
+	F8364A59E07FFE9F4D63005A65A0EEA02E30CAD7
+	D4BE22311AD3131E5EDA29A461092E85B7227189
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show untrusted signature with ultimate trust level' '
+	cat >expect <<-\EOF &&
+	G
+	ultimate
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+	73D758744BE721698EC54E8713B6F51ECDDE430D
+	73D758744BE721698EC54E8713B6F51ECDDE430D
+	EOF
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" sixth-signed >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show unknown signature with custom format' '
 	cat >expect <<-\EOF &&
 	E
+	undefined
 	65A0EEA02E30CAD7
 
 
 
 	EOF
-	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
+	GNUPGHOME="$GNUPGHOME_NOT_USED" git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" eighth-signed-alt >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success GPG 'show lack of signature with custom format' '
 	cat >expect <<-\EOF &&
 	N
+	undefined
 
 
 
 
 	EOF
-	git log -1 --format="%G?%n%GK%n%GS%n%GF%n%GP" seventh-unsigned >actual &&
+	git log -1 --format="%G?%n%GT%n%GK%n%GS%n%GF%n%GP" seventh-unsigned >actual &&
 	test_cmp expect actual
 '
 
@@ -338,6 +359,8 @@ test_expect_success GPG 'show double signature with custom format' '
 '
 
 
+# NEEDSWORK: This test relies on the test_tick commit/author dates from the first
+# 'create signed commits' test even though it creates its own
 test_expect_success GPG 'verify-commit verifies multiply signed commits' '
 	git init multiply-signed &&
 	cd multiply-signed &&
@@ -376,6 +399,50 @@ test_expect_success GPG 'verify-commit verifies multiply signed commits' '
 	git verify-commit $head 2>actual &&
 	grep "Good signature from" actual &&
 	! grep "BAD signature from" actual
+'
+
+test_expect_success 'custom `gpg.program`' '
+	write_script fake-gpg <<-\EOF &&
+	args="$*"
+
+	# skip uninteresting options
+	while case "$1" in
+	--status-fd=*|--keyid-format=*) ;; # skip
+	*) break;;
+	esac; do shift; done
+
+	case "$1" in
+	-bsau)
+		test -z "$LET_GPG_PROGRAM_FAIL" || {
+			echo "zOMG signing failed!" >&2
+			exit 1
+		}
+		cat >sign.file
+		echo "[GNUPG:] SIG_CREATED $args" >&2
+		echo "-----BEGIN PGP MESSAGE-----"
+		echo "$args"
+		echo "-----END PGP MESSAGE-----"
+		;;
+	--verify)
+		cat "$2" >verify.file
+		exit 0
+		;;
+	*)
+		echo "Unhandled args: $*" >&2
+		exit 1
+		;;
+	esac
+	EOF
+
+	test_config gpg.program "$(pwd)/fake-gpg" &&
+	git commit -S --allow-empty -m signed-commit &&
+	test_path_exists sign.file &&
+	git show --show-signature &&
+	test_path_exists verify.file &&
+
+	test_must_fail env LET_GPG_PROGRAM_FAIL=1 \
+	git commit -S --allow-empty -m must-fail 2>err &&
+	grep zOMG err
 '
 
 test_done

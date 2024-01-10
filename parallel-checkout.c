@@ -1,12 +1,17 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "entry.h"
+#include "gettext.h"
+#include "hash.h"
+#include "hex.h"
 #include "parallel-checkout.h"
 #include "pkt-line.h"
 #include "progress.h"
+#include "read-cache-ll.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "streaming.h"
+#include "symlinks.h"
 #include "thread-utils.h"
 #include "trace2.h"
 
@@ -39,8 +44,8 @@ void get_parallel_checkout_configs(int *num_workers, int *threshold)
 
 	if (env_workers && *env_workers) {
 		if (strtol_i(env_workers, 10, num_workers)) {
-			die("invalid value for GIT_TEST_CHECKOUT_WORKERS: '%s'",
-			    env_workers);
+			die(_("invalid value for '%s': '%s'"),
+			    "GIT_TEST_CHECKOUT_WORKERS", env_workers);
 		}
 		if (*num_workers < 1)
 			*num_workers = online_cpus();
@@ -143,7 +148,8 @@ static int is_eligible_for_parallel_checkout(const struct cache_entry *ce,
 	}
 }
 
-int enqueue_checkout(struct cache_entry *ce, struct conv_attrs *ca)
+int enqueue_checkout(struct cache_entry *ce, struct conv_attrs *ca,
+		     int *checkout_counter)
 {
 	struct parallel_checkout_item *pc_item;
 
@@ -159,6 +165,7 @@ int enqueue_checkout(struct cache_entry *ce, struct conv_attrs *ca)
 	memcpy(&pc_item->ca, ca, sizeof(pc_item->ca));
 	pc_item->status = PC_ITEM_PENDING;
 	pc_item->id = parallel_checkout.nr;
+	pc_item->checkout_counter = checkout_counter;
 	parallel_checkout.nr++;
 
 	return 0;
@@ -200,7 +207,8 @@ static int handle_results(struct checkout *state)
 
 		switch(pc_item->status) {
 		case PC_ITEM_WRITTEN:
-			/* Already handled */
+			if (pc_item->checkout_counter)
+				(*pc_item->checkout_counter)++;
 			break;
 		case PC_ITEM_COLLIDED:
 			/*
@@ -225,7 +233,8 @@ static int handle_results(struct checkout *state)
 			 * add any extra overhead.
 			 */
 			ret |= checkout_entry_ca(pc_item->ce, &pc_item->ca,
-						 state, NULL, NULL);
+						 state, NULL,
+						 pc_item->checkout_counter);
 			advance_progress_meter();
 			break;
 		case PC_ITEM_PENDING:
@@ -261,7 +270,7 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
 	struct stream_filter *filter;
 	struct strbuf buf = STRBUF_INIT;
 	char *blob;
-	unsigned long size;
+	size_t size;
 	ssize_t wrote;
 
 	/* Sanity check */
@@ -603,8 +612,7 @@ static void gather_results_from_workers(struct pc_worker *workers,
 				continue;
 
 			if (pfd->revents & POLLIN) {
-				int len = packet_read(pfd->fd, NULL, NULL,
-						      packet_buffer,
+				int len = packet_read(pfd->fd, packet_buffer,
 						      sizeof(packet_buffer), 0);
 
 				if (len < 0) {

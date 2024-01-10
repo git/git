@@ -5,10 +5,7 @@ test_description='am --abort'
 . ./test-lib.sh
 
 test_expect_success setup '
-	for i in a b c d e f g
-	do
-		echo $i
-	done >file-1 &&
+	test_write_lines a b c d e f g >file-1 &&
 	cp file-1 file-2 &&
 	test_tick &&
 	git add file-1 file-2 &&
@@ -43,16 +40,13 @@ do
 
 		test_must_fail git am$with3 000[1245]-*.patch &&
 		git log --pretty=tformat:%s >actual &&
-		for i in 3 2 initial
-		do
-			echo $i
-		done >expect &&
+		test_write_lines 3 2 initial >expect &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "am$with3 --skip continue after failed am$with3" '
 		test_must_fail git am$with3 --skip >output &&
-		test_i18ngrep "^Applying: 6$" output &&
+		test_grep "^Applying: 6$" output &&
 		test_cmp file-2-expect file-2 &&
 		test ! -f .git/MERGE_RR
 	'

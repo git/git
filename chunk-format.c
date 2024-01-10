@@ -1,6 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "chunk-format.h"
 #include "csum-file.h"
+#include "gettext.h"
+#include "hash.h"
+#include "trace2.h"
 
 /*
  * When writing a chunk-based file format, collect the chunks in
@@ -99,7 +102,8 @@ int read_table_of_contents(struct chunkfile *cf,
 			   const unsigned char *mfile,
 			   size_t mfile_size,
 			   uint64_t toc_offset,
-			   int toc_length)
+			   int toc_length,
+			   unsigned expected_alignment)
 {
 	int i;
 	uint32_t chunk_id;
@@ -115,6 +119,11 @@ int read_table_of_contents(struct chunkfile *cf,
 
 		if (!chunk_id) {
 			error(_("terminating chunk id appears earlier than expected"));
+			return 1;
+		}
+		if (chunk_offset % expected_alignment != 0) {
+			error(_("chunk id %"PRIx32" not %d-byte aligned"),
+			      chunk_id, expected_alignment);
 			return 1;
 		}
 
@@ -151,20 +160,28 @@ int read_table_of_contents(struct chunkfile *cf,
 	return 0;
 }
 
+struct pair_chunk_data {
+	const unsigned char **p;
+	size_t *size;
+};
+
 static int pair_chunk_fn(const unsigned char *chunk_start,
 			 size_t chunk_size,
 			 void *data)
 {
-	const unsigned char **p = data;
-	*p = chunk_start;
+	struct pair_chunk_data *pcd = data;
+	*pcd->p = chunk_start;
+	*pcd->size = chunk_size;
 	return 0;
 }
 
 int pair_chunk(struct chunkfile *cf,
 	       uint32_t chunk_id,
-	       const unsigned char **p)
+	       const unsigned char **p,
+	       size_t *size)
 {
-	return read_chunk(cf, chunk_id, pair_chunk_fn, p);
+	struct pair_chunk_data pcd = { .p = p, .size = size };
+	return read_chunk(cf, chunk_id, pair_chunk_fn, &pcd);
 }
 
 int read_chunk(struct chunkfile *cf,
@@ -180,4 +197,16 @@ int read_chunk(struct chunkfile *cf,
 	}
 
 	return CHUNK_NOT_FOUND;
+}
+
+uint8_t oid_version(const struct git_hash_algo *algop)
+{
+	switch (hash_algo_by_ptr(algop)) {
+	case GIT_HASH_SHA1:
+		return 1;
+	case GIT_HASH_SHA256:
+		return 2;
+	default:
+		die(_("invalid hash version"));
+	}
 }

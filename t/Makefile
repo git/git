@@ -1,3 +1,6 @@
+# Import tree-wide shared Makefile behavior and libraries
+include ../shared.mak
+
 # Run tests
 #
 # Copyright (c) 2005 Junio C Hamano
@@ -14,6 +17,7 @@ TAR ?= $(TAR)
 RM ?= rm -f
 PROVE ?= prove
 DEFAULT_TEST_TARGET ?= test
+DEFAULT_UNIT_TEST_TARGET ?= unit-tests-raw
 TEST_LINT ?= test-lint
 
 ifdef TEST_OUTPUT_DIRECTORY
@@ -32,16 +36,23 @@ TEST_RESULTS_DIRECTORY_SQ = $(subst ','\'',$(TEST_RESULTS_DIRECTORY))
 CHAINLINTTMP_SQ = $(subst ','\'',$(CHAINLINTTMP))
 
 T = $(sort $(wildcard t[0-9][0-9][0-9][0-9]-*.sh))
-TGITWEB = $(sort $(wildcard t95[0-9][0-9]-*.sh))
 THELPERS = $(sort $(filter-out $(T),$(wildcard *.sh)))
+TLIBS = $(sort $(wildcard lib-*.sh)) annotate-tests.sh
 TPERF = $(sort $(wildcard perf/p[0-9][0-9][0-9][0-9]-*.sh))
+TINTEROP = $(sort $(wildcard interop/i[0-9][0-9][0-9][0-9]-*.sh))
 CHAINLINTTESTS = $(sort $(patsubst chainlint/%.test,%,$(wildcard chainlint/*.test)))
-CHAINLINT = sed -f chainlint.sed
+CHAINLINT = '$(PERL_PATH_SQ)' chainlint.pl
+UNIT_TESTS = $(sort $(filter-out %.pdb unit-tests/bin/t-basic%,$(wildcard unit-tests/bin/t-*)))
+
+# `test-chainlint` (which is a dependency of `test-lint`, `test` and `prove`)
+# checks all tests in all scripts via a single invocation, so tell individual
+# scripts not to run the external "chainlint.pl" script themselves
+CHAINLINTSUPPRESS = GIT_TEST_EXT_CHAIN_LINT=0 && export GIT_TEST_EXT_CHAIN_LINT &&
 
 all: $(DEFAULT_TEST_TARGET)
 
 test: pre-clean check-chainlint $(TEST_LINT)
-	$(MAKE) aggregate-results-and-cleanup
+	$(CHAINLINTSUPPRESS) $(MAKE) aggregate-results-and-cleanup
 
 failed:
 	@failed=$$(cd '$(TEST_RESULTS_DIRECTORY_SQ)' && \
@@ -50,20 +61,32 @@ failed:
 	test -z "$$failed" || $(MAKE) $$failed
 
 prove: pre-clean check-chainlint $(TEST_LINT)
-	@echo "*** prove ***"; $(PROVE) --exec '$(TEST_SHELL_PATH_SQ)' $(GIT_PROVE_OPTS) $(T) :: $(GIT_TEST_OPTS)
+	@echo "*** prove ***"; $(CHAINLINTSUPPRESS) $(PROVE) --exec '$(TEST_SHELL_PATH_SQ)' $(GIT_PROVE_OPTS) $(T) :: $(GIT_TEST_OPTS)
 	$(MAKE) clean-except-prove-cache
 
 $(T):
 	@echo "*** $@ ***"; '$(TEST_SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
 
+$(UNIT_TESTS):
+	@echo "*** $@ ***"; $@
+
+.PHONY: unit-tests unit-tests-raw unit-tests-prove
+unit-tests: $(DEFAULT_UNIT_TEST_TARGET)
+
+unit-tests-raw: $(UNIT_TESTS)
+
+unit-tests-prove:
+	@echo "*** prove - unit tests ***"; $(PROVE) $(GIT_PROVE_OPTS) $(UNIT_TESTS)
+
 pre-clean:
 	$(RM) -r '$(TEST_RESULTS_DIRECTORY_SQ)'
 
 clean-except-prove-cache: clean-chainlint
-	$(RM) -r 'trash directory'.* '$(TEST_RESULTS_DIRECTORY_SQ)'
+	$(RM) -r 'trash directory'.*
 	$(RM) -r valgrind/bin
 
 clean: clean-except-prove-cache
+	$(RM) -r '$(TEST_RESULTS_DIRECTORY_SQ)'
 	$(RM) .prove
 
 clean-chainlint:
@@ -71,15 +94,27 @@ clean-chainlint:
 
 check-chainlint:
 	@mkdir -p '$(CHAINLINTTMP_SQ)' && \
-	err=0 && \
 	for i in $(CHAINLINTTESTS); do \
-		$(CHAINLINT) <chainlint/$$i.test | \
-		sed -e '/^# LINT: /d' >'$(CHAINLINTTMP_SQ)'/$$i.actual && \
-		diff -u chainlint/$$i.expect '$(CHAINLINTTMP_SQ)'/$$i.actual || err=1; \
-	done && exit $$err
+		echo "test_expect_success '$$i' '" && \
+		sed -e '/^# LINT: /d' chainlint/$$i.test && \
+		echo "'"; \
+	done >'$(CHAINLINTTMP_SQ)'/tests && \
+	{ \
+		echo "# chainlint: $(CHAINLINTTMP_SQ)/tests" && \
+		for i in $(CHAINLINTTESTS); do \
+			echo "# chainlint: $$i" && \
+			cat chainlint/$$i.expect; \
+		done \
+	} >'$(CHAINLINTTMP_SQ)'/expect && \
+	$(CHAINLINT) --emit-all '$(CHAINLINTTMP_SQ)'/tests | \
+		sed -e 's/^[1-9][0-9]* //' >'$(CHAINLINTTMP_SQ)'/actual && \
+	diff -u '$(CHAINLINTTMP_SQ)'/expect '$(CHAINLINTTMP_SQ)'/actual
 
 test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \
 	test-lint-filenames
+ifneq ($(GIT_TEST_CHAIN_LINT),0)
+test-lint: test-chainlint
+endif
 
 test-lint-duplicates:
 	@dups=`echo $(T) $(TPERF) | tr ' ' '\n' | sed 's/-.*//' | sort | uniq -d` && \
@@ -102,17 +137,15 @@ test-lint-filenames:
 		test -z "$$bad" || { \
 		echo >&2 "non-portable file name(s): $$bad"; exit 1; }
 
+test-chainlint:
+	@$(CHAINLINT) $(T) $(TLIBS) $(TPERF) $(TINTEROP)
+
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
 	$(MAKE) clean
 
 aggregate-results:
-	for f in '$(TEST_RESULTS_DIRECTORY_SQ)'/t*-*.counts; do \
-		echo "$$f"; \
-	done | '$(SHELL_PATH_SQ)' ./aggregate-results.sh
-
-gitweb-test:
-	$(MAKE) $(TGITWEB)
+	@'$(SHELL_PATH_SQ)' ./aggregate-results.sh '$(TEST_RESULTS_DIRECTORY_SQ)'
 
 valgrind:
 	$(MAKE) GIT_TEST_OPTS="$(GIT_TEST_OPTS) --valgrind"
@@ -120,4 +153,5 @@ valgrind:
 perf:
 	$(MAKE) -C perf/ all
 
-.PHONY: pre-clean $(T) aggregate-results clean valgrind perf check-chainlint clean-chainlint
+.PHONY: pre-clean $(T) aggregate-results clean valgrind perf \
+	check-chainlint clean-chainlint test-chainlint $(UNIT_TESTS)

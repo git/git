@@ -4,6 +4,7 @@ test_description='push with --set-upstream'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -60,12 +61,20 @@ test_expect_success 'push -u :topic_2' '
 	check_config topic_2 upstream refs/heads/other2
 '
 
-test_expect_success 'push -u --all' '
+test_expect_success 'push -u --all(the same behavior with--branches)' '
 	git branch all1 &&
 	git branch all2 &&
 	git push -u --all &&
 	check_config all1 upstream refs/heads/all1 &&
-	check_config all2 upstream refs/heads/all2
+	check_config all2 upstream refs/heads/all2 &&
+	git config --get-regexp branch.all* > expect &&
+	git config --remove-section branch.all1 &&
+	git config --remove-section branch.all2 &&
+	git push -u --branches &&
+	check_config all1 upstream refs/heads/all1 &&
+	check_config all2 upstream refs/heads/all2 &&
+	git config --get-regexp branch.all* > actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'push -u HEAD' '
@@ -78,7 +87,7 @@ test_expect_success TTY 'progress messages go to tty' '
 	ensure_fresh_upstream &&
 
 	test_terminal git push -u upstream main >out 2>err &&
-	test_i18ngrep "Writing objects" err
+	test_grep "Writing objects" err
 '
 
 test_expect_success 'progress messages do not go to non-tty' '
@@ -86,7 +95,7 @@ test_expect_success 'progress messages do not go to non-tty' '
 
 	# skip progress messages, since stderr is non-tty
 	git push -u upstream main >out 2>err &&
-	test_i18ngrep ! "Writing objects" err
+	test_grep ! "Writing objects" err
 '
 
 test_expect_success 'progress messages go to non-tty (forced)' '
@@ -94,22 +103,22 @@ test_expect_success 'progress messages go to non-tty (forced)' '
 
 	# force progress messages to stderr, even though it is non-tty
 	git push -u --progress upstream main >out 2>err &&
-	test_i18ngrep "Writing objects" err
+	test_grep "Writing objects" err
 '
 
 test_expect_success TTY 'push -q suppresses progress' '
 	ensure_fresh_upstream &&
 
 	test_terminal git push -u -q upstream main >out 2>err &&
-	test_i18ngrep ! "Writing objects" err
+	test_grep ! "Writing objects" err
 '
 
 test_expect_success TTY 'push --no-progress suppresses progress' '
 	ensure_fresh_upstream &&
 
 	test_terminal git push -u --no-progress upstream main >out 2>err &&
-	test_i18ngrep ! "Unpacking objects" err &&
-	test_i18ngrep ! "Writing objects" err
+	test_grep ! "Unpacking objects" err &&
+	test_grep ! "Writing objects" err
 '
 
 test_expect_success TTY 'quiet push' '

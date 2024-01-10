@@ -9,9 +9,8 @@ git-read-tree - Reads tree information into the index
 SYNOPSIS
 --------
 [verse]
-'git read-tree' [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>]
-		[-u [--exclude-per-directory=<gitignore>] | -i]]
-		[--index-output=<file>] [--no-sparse-checkout]
+'git read-tree' [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>)
+		[-u | -i]] [--index-output=<file>] [--no-sparse-checkout]
 		(--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
@@ -26,21 +25,22 @@ fast-forward (i.e. 2-way) merge, or a 3-way merge, with the `-m`
 flag.  When used with `-m`, the `-u` flag causes it to also update
 the files in the work tree with the result of the merge.
 
-Trivial merges are done by 'git read-tree' itself.  Only conflicting paths
-will be in unmerged state when 'git read-tree' returns.
+Only trivial merges are done by 'git read-tree' itself.  Only conflicting paths
+will be in an unmerged state when 'git read-tree' returns.
 
 OPTIONS
 -------
 -m::
 	Perform a merge, not just a read.  The command will
 	refuse to run if your index file has unmerged entries,
-	indicating that you have not finished previous merge you
+	indicating that you have not finished a previous merge you
 	started.
 
 --reset::
 	Same as -m, except that unmerged entries are discarded instead
-	of failing. When used with `-u`, updates leading to loss of
-	working tree changes will not abort the operation.
+	of failing.  When used with `-u`, updates leading to loss of
+	working tree changes or untracked files or directories will not
+	abort the operation.
 
 -u::
 	After a successful merge, update the files in the work
@@ -87,21 +87,6 @@ OPTIONS
 	of the named tree-ish under the directory at `<prefix>`.
 	The command will refuse to overwrite entries that already
 	existed in the original index file.
-
---exclude-per-directory=<gitignore>::
-	When running the command with `-u` and `-m` options, the
-	merge result may need to overwrite paths that are not
-	tracked in the current branch.  The command usually
-	refuses to proceed with the merge to avoid losing such a
-	path.  However this safety valve sometimes gets in the
-	way.  For example, it often happens that the other
-	branch added a file that used to be a generated file in
-	your branch, and the safety valve triggers when you try
-	to switch to that branch after you ran `make` but before
-	running `make clean` to remove the generated file.  This
-	option tells the command to read per-directory exclude
-	file (usually '.gitignore') and allows such an untracked
-	but explicitly ignored file to be overwritten.
 
 --index-output=<file>::
 	Instead of writing the results out to `$GIT_INDEX_FILE`,
@@ -234,7 +219,7 @@ see which of the "local changes" that you made were carried forward by running
 `git diff-index --cached $M`.  Note that this does not
 necessarily match what `git diff-index --cached $H` would have
 produced before such a two tree merge.  This is because of cases
-18 and 19 --- if you already had the changes in $M (e.g. maybe
+18 and 19 -- if you already had the changes in $M (e.g. maybe
 you picked it up via e-mail in a patch form), `git diff-index
 --cached $H` would have told you about the change before this
 merge, but it would not show in `git diff-index --cached $M`
@@ -390,9 +375,17 @@ have finished your work-in-progress), attempt the merge again.
 SPARSE CHECKOUT
 ---------------
 
+Note: The skip-worktree capabilities in linkgit:git-update-index[1]
+and `read-tree` predated the introduction of
+linkgit:git-sparse-checkout[1].  Users are encouraged to use the
+`sparse-checkout` command in preference to these plumbing commands for
+sparse-checkout/skip-worktree related needs.  However, the information
+below might be useful to users trying to understand the pattern style
+used in non-cone mode of the `sparse-checkout` command.
+
 "Sparse checkout" allows populating the working directory sparsely.
-It uses the skip-worktree bit (see linkgit:git-update-index[1]) to tell
-Git whether a file in the working directory is worth looking at.
+It uses the skip-worktree bit (see linkgit:git-update-index[1]) to
+tell Git whether a file in the working directory is worth looking at.
 
 'git read-tree' and other merge-based commands ('git merge', 'git
 checkout'...) can help maintaining the skip-worktree bitmap and working
@@ -400,7 +393,8 @@ directory update. `$GIT_DIR/info/sparse-checkout` is used to
 define the skip-worktree reference bitmap. When 'git read-tree' needs
 to update the working directory, it resets the skip-worktree bit in the index
 based on this file, which uses the same syntax as .gitignore files.
-If an entry matches a pattern in this file, skip-worktree will not be
+If an entry matches a pattern in this file, or the entry corresponds to
+a file present in the working tree, then skip-worktree will not be
 set on that entry. Otherwise, skip-worktree will be set.
 
 Then it compares the new skip-worktree value with the previous one. If
@@ -435,8 +429,8 @@ support.
 
 SEE ALSO
 --------
-linkgit:git-write-tree[1]; linkgit:git-ls-files[1];
-linkgit:gitignore[5]; linkgit:git-sparse-checkout[1];
+linkgit:git-write-tree[1], linkgit:git-ls-files[1],
+linkgit:gitignore[5], linkgit:git-sparse-checkout[1]
 
 GIT
 ---

@@ -31,7 +31,7 @@ test_expect_success 'apply git diff with -p2' '
 test_expect_success 'apply with too large -p' '
 	cp file1.saved file1 &&
 	test_must_fail git apply --stat -p3 patch.file 2>err &&
-	test_i18ngrep "removing 3 leading" err
+	test_grep "removing 3 leading" err
 '
 
 test_expect_success 'apply (-p2) traditional diff with funny filenames' '
@@ -53,7 +53,7 @@ test_expect_success 'apply (-p2) traditional diff with funny filenames' '
 test_expect_success 'apply with too large -p and fancy filename' '
 	cp file1.saved file1 &&
 	test_must_fail git apply --stat -p3 patch.escaped 2>err &&
-	test_i18ngrep "removing 3 leading" err
+	test_grep "removing 3 leading" err
 '
 
 test_expect_success 'apply (-p2) diff, mode change only' '

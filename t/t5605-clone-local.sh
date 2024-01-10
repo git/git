@@ -15,19 +15,27 @@ test_expect_success 'preparing origin repository' '
 	: >file && git add . && git commit -m1 &&
 	git clone --bare . a.git &&
 	git clone --bare . x &&
-	test "$(cd a.git && git config --bool core.bare)" = true &&
-	test "$(cd x && git config --bool core.bare)" = true &&
+	echo true >expect &&
+	git -C a.git config --bool core.bare >actual &&
+	test_cmp expect actual &&
+	echo true >expect &&
+	git -C x config --bool core.bare >actual &&
+	test_cmp expect actual &&
 	git bundle create b1.bundle --all &&
 	git bundle create b2.bundle main &&
 	mkdir dir &&
 	cp b1.bundle dir/b3 &&
-	cp b1.bundle b4
+	cp b1.bundle b4 &&
+	git branch not-main main &&
+	git bundle create b5.bundle not-main
 '
 
 test_expect_success 'local clone without .git suffix' '
 	git clone -l -s a b &&
 	(cd b &&
-	test "$(git config --bool core.bare)" = false &&
+	echo false >expect &&
+	git config --bool core.bare >actual &&
+	test_cmp expect actual &&
 	git fetch)
 '
 
@@ -57,11 +65,11 @@ test_expect_success 'Even without -l, local will make a hardlink' '
 '
 
 test_expect_success 'local clone of repo with nonexistent ref in HEAD' '
-	echo "ref: refs/heads/nonexistent" > a.git/HEAD &&
+	git -C a.git symbolic-ref HEAD refs/heads/nonexistent &&
 	git clone a d &&
 	(cd d &&
 	git fetch &&
-	test ! -e .git/refs/remotes/origin/HEAD)
+	test_ref_missing refs/remotes/origin/HEAD)
 '
 
 test_expect_success 'bundle clone without .bundle suffix' '
@@ -83,11 +91,19 @@ test_expect_success 'bundle clone from b4.bundle that does not exist' '
 	test_must_fail git clone b4.bundle bb
 '
 
-test_expect_success 'bundle clone with nonexistent HEAD' '
+test_expect_success 'bundle clone with nonexistent HEAD (match default)' '
 	git clone b2.bundle b2 &&
 	(cd b2 &&
 	git fetch &&
-	test_must_fail git rev-parse --verify refs/heads/main)
+	git rev-parse --verify refs/heads/main)
+'
+
+test_expect_success 'bundle clone with nonexistent HEAD (no match default)' '
+	git clone b5.bundle b5 &&
+	(cd b5 &&
+	git fetch &&
+	test_must_fail git rev-parse --verify refs/heads/main &&
+	test_must_fail git rev-parse --verify refs/heads/not-main)
 '
 
 test_expect_success 'clone empty repository' '
@@ -139,6 +155,15 @@ test_expect_success 'cloning a local path with --no-local does not hardlink' '
 
 test_expect_success 'cloning locally respects "-u" for fetching refs' '
 	test_must_fail git clone --bare -u false a should_not_work.git
+'
+
+test_expect_success REFFILES 'local clone from repo with corrupt refs fails gracefully' '
+	git init corrupt &&
+	test_commit -C corrupt one &&
+	echo a >corrupt/.git/refs/heads/topic &&
+
+	test_must_fail git clone corrupt working 2>err &&
+	grep "has a null OID" err
 '
 
 test_done

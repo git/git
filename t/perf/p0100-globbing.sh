@@ -19,9 +19,9 @@ test_expect_success 'setup' '
 		printf "a" >>refname &&
 		for j in $(test_seq 1 $i)
 		do
-			printf "a*" >>refglob.$i
+			printf "a*" >>refglob.$i || return 1
 		done &&
-		echo b >>refglob.$i
+		echo b >>refglob.$i || return 1
 	done &&
 	test_commit test $(cat refname).t "" $(cat refname).t
 '

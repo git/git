@@ -1,0 +1,33 @@
+Git v2.36.1 Release Notes
+=========================
+
+Fixes since v2.36
+-----------------
+
+ * "git submodule update" without pathspec should silently skip an
+   uninitialized submodule, but it started to become noisy by mistake.
+
+ * "diff-tree --stdin" has been broken for about a year, but 2.36
+   release broke it even worse by breaking running the command with
+   <pathspec>, which in turn broke "gitk" and got noticed.  This has
+   been corrected by aligning its behaviour to that of "log".
+
+ * Regression fix for 2.36 where "git name-rev" started to sometimes
+   reference strings after they are freed.
+
+ * "git show <commit1> <commit2>... -- <pathspec>" lost the pathspec
+   when showing the second and subsequent commits, which has been
+   corrected.
+
+ * "git fast-export -- <pathspec>" lost the pathspec when showing the
+   second and subsequent commits, which has been corrected.
+
+ * "git format-patch <args> -- <pathspec>" lost the pathspec when
+   showing the second and subsequent commits, which has been
+   corrected.
+
+ * Get rid of a bogus and over-eager coccinelle rule.
+
+ * Correct choices of C compilers used in various CI jobs.
+
+Also contains minor documentation updates and code clean-ups.

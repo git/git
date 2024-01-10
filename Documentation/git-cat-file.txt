@@ -3,28 +3,32 @@ git-cat-file(1)
 
 NAME
 ----
-git-cat-file - Provide content or type and size information for repository objects
-
+git-cat-file - Provide contents or details of repository objects
 
 SYNOPSIS
 --------
 [verse]
-'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv | --filters ) [--path=<path>] <object>
-'git cat-file' (--batch[=<format>] | --batch-check[=<format>]) [ --textconv | --filters ] [--follow-symlinks]
+'git cat-file' <type> <object>
+'git cat-file' (-e | -p) <object>
+'git cat-file' (-t | -s) [--allow-unknown-type] <object>
+'git cat-file' (--textconv | --filters)
+	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
+'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
+	     [--buffer] [--follow-symlinks] [--unordered]
+	     [--textconv | --filters] [-Z]
 
 DESCRIPTION
 -----------
-In its first form, the command provides the content or the type of an object in
-the repository. The type is required unless `-t` or `-p` is used to find the
-object type, or `-s` is used to find the object size, or `--textconv` or
-`--filters` is used (which imply type "blob").
+Output the contents or other properties such as size, type or delta
+information of one or more objects.
 
-In the second form, a list of objects (separated by linefeeds) is provided on
-stdin, and the SHA-1, type, and size of each object is printed on stdout. The
-output format can be overridden using the optional `<format>` argument. If
-either `--textconv` or `--filters` was specified, the input is expected to
-list the object names followed by the path name, separated by a single
-whitespace, so that the appropriate drivers can be determined.
+This command can operate in two modes, depending on whether an option
+from the `--batch` family is specified.
+
+In non-batch mode, the command provides information on an object
+named on the command line.
+
+In batch mode, arguments are read from standard input.
 
 OPTIONS
 -------
@@ -39,12 +43,14 @@ OPTIONS
 
 -s::
 	Instead of the content, show the object size identified by
-	`<object>`.
+	`<object>`. If used with `--use-mailmap` option, will show
+	the size of updated object after replacing idents using the
+	mailmap mechanism.
 
 -e::
 	Exit with zero status if `<object>` exists and is a valid
-	object. If `<object>` is of an invalid format exit with non-zero and
-	emits an error on stderr.
+	object. If `<object>` is of an invalid format, exit with non-zero
+	status and emit an error on stderr.
 
 -p::
 	Pretty-print the contents of `<object>` based on its type.
@@ -56,6 +62,12 @@ OPTIONS
 	"tree" with `<object>` being a commit object that contains it,
 	or to ask for a "blob" with `<object>` being a tag object that
 	points at it.
+
+--[no-]mailmap::
+--[no-]use-mailmap::
+       Use mailmap file to map author, committer and tagger names
+       and email addresses to canonical real names and email addresses.
+       See linkgit:git-shortlog[1].
 
 --textconv::
 	Show the content as transformed by a textconv filter. In this case,
@@ -77,32 +89,89 @@ OPTIONS
 --batch::
 --batch=<format>::
 	Print object information and contents for each object provided
-	on stdin.  May not be combined with any other options or arguments
-	except `--textconv` or `--filters`, in which case the input lines
-	also need to specify the path, separated by whitespace.  See the
-	section `BATCH OUTPUT` below for details.
+	on stdin. May not be combined with any other options or arguments
+	except `--textconv`, `--filters`, or `--use-mailmap`.
++
+--
+	* When used with `--textconv` or `--filters`, the input lines
+	  must specify the path, separated by whitespace. See the section
+	  `BATCH OUTPUT` below for details.
+
+	* When used with `--use-mailmap`, for commit and tag objects, the
+	  contents part of the output shows the identities replaced using the
+	  mailmap mechanism, while the information part of the output shows
+	  the size of the object as if it actually recorded the replacement
+	  identities.
+--
 
 --batch-check::
 --batch-check=<format>::
-	Print object information for each object provided on stdin.  May
-	not be combined with any other options or arguments except
-	`--textconv` or `--filters`, in which case the input lines also
-	need to specify the path, separated by whitespace.  See the
-	section `BATCH OUTPUT` below for details.
+	Print object information for each object provided on stdin. May not be
+	combined with any other options or arguments except `--textconv`, `--filters`
+	or `--use-mailmap`.
++
+--
+	* When used with `--textconv` or `--filters`, the input lines must
+	 specify the path, separated by whitespace. See the section
+	 `BATCH OUTPUT` below for details.
+
+	* When used with `--use-mailmap`, for commit and tag objects, the
+	  printed object information shows the size of the object as if the
+	  identities recorded in it were replaced by the mailmap mechanism.
+--
+
+--batch-command::
+--batch-command=<format>::
+	Enter a command mode that reads commands and arguments from stdin. May
+	only be combined with `--buffer`, `--textconv`, `--use-mailmap` or
+	`--filters`.
++
+--
+	* When used with `--textconv` or `--filters`, the input lines must
+	  specify the path, separated by whitespace. See the section
+	  `BATCH OUTPUT` below for details.
+
+	* When used with `--use-mailmap`, for commit and tag objects, the
+	  `contents` command shows the identities replaced using the
+	  mailmap mechanism, while the `info` command shows the size
+	  of the object as if it actually recorded the replacement
+	  identities.
+--
++
+`--batch-command` recognizes the following commands:
++
+--
+contents <object>::
+	Print object contents for object reference `<object>`. This corresponds to
+	the output of `--batch`.
+
+info <object>::
+	Print object info for object reference `<object>`. This corresponds to the
+	output of `--batch-check`.
+
+flush::
+	Used with `--buffer` to execute all preceding commands that were issued
+	since the beginning or since the last flush was issued. When `--buffer`
+	is used, no output will come until a `flush` is issued. When `--buffer`
+	is not used, commands are flushed each time without issuing `flush`.
+--
++
 
 --batch-all-objects::
 	Instead of reading a list of objects on stdin, perform the
 	requested batch operation on all objects in the repository and
 	any alternate object stores (not just reachable objects).
-	Requires `--batch` or `--batch-check` be specified. Note that
-	the objects are visited in order sorted by their hashes.
+	Requires `--batch` or `--batch-check` be specified. By default,
+	the objects are visited in order sorted by their hashes; see
+	also `--unordered` below. Objects are presented as-is, without
+	respecting the "replace" mechanism of linkgit:git-replace[1].
 
 --buffer::
 	Normally batch output is flushed after each object is output, so
 	that a process can interactively read and write from
 	`cat-file`. With this option, the output uses normal stdio
 	buffering; this is much more efficient when invoking
-	`--batch-check` on a large number of objects.
+	`--batch-check` or `--batch-command` on a large number of objects.
 
 --unordered::
 	When `--batch-all-objects` is in use, visit objects in an
@@ -172,6 +241,17 @@ respectively print:
 	/etc/passwd
 --
 
+-Z::
+	Only meaningful with `--batch`, `--batch-check`, or
+	`--batch-command`; input and output is NUL-delimited instead of
+	newline-delimited.
+
+-z::
+	Only meaningful with `--batch`, `--batch-check`, or
+	`--batch-command`; input is NUL-delimited instead of
+	newline-delimited. This option is deprecated in favor of
+	`-Z` as the output can otherwise be ambiguous.
+
 
 OUTPUT
 ------
@@ -193,6 +273,13 @@ If `--batch` or `--batch-check` is given, `cat-file` will read objects
 from stdin, one per line, and print information about them. By default,
 the whole line is considered as an object, as if it were fed to
 linkgit:git-rev-parse[1].
+
+When `--batch-command` is given, `cat-file` will read commands from stdin,
+one per line, and print information based on the command given. With
+`--batch-command`, the `info` command followed by an object will print
+information about the object the same way `--batch-check` would, and the
+`contents` command followed by an object prints contents in the same way
+`--batch` would.
 
 You can specify the information shown for each object by using a custom
 `<format>`. The `<format>` is copied literally to stdout for each
@@ -229,9 +316,9 @@ newline. The available atoms are:
 If no format is specified, the default format is `%(objectname)
 %(objecttype) %(objectsize)`.
 
-If `--batch` is specified, the object information is followed by the
-object contents (consisting of `%(objectsize)` bytes), followed by a
-newline.
+If `--batch` is specified, or if `--batch-command` is used with the `contents`
+command, the object information is followed by the object contents (consisting
+of `%(objectsize)` bytes), followed by a newline.
 
 For example, `--batch` without a custom format would produce:
 
@@ -300,6 +387,11 @@ notdir SP <size> LF
 ------------
 is printed when, during symlink resolution, a file is used as a
 directory name.
+
+Alternatively, when `-Z` is passed, the line feeds in any of the above examples
+are replaced with NUL terminators. This ensures that output will be parsable if
+the output itself would contain a linefeed and is thus recommended for
+scripting purposes.
 
 CAVEATS
 -------

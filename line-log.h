@@ -1,10 +1,9 @@
 #ifndef LINE_LOG_H
 #define LINE_LOG_H
 
-#include "diffcore.h"
-
 struct rev_info;
 struct commit;
+struct string_list;
 
 /* A range [start,end].  Lines are numbered starting at 0, and the
  * ranges include start but exclude end. */
@@ -58,5 +57,7 @@ int line_log_process_ranges_arbitrary_commit(struct rev_info *rev,
 						    struct commit *commit);
 
 int line_log_print(struct rev_info *rev, struct commit *commit);
+
+void line_log_free(struct rev_info *rev);
 
 #endif /* LINE_LOG_H */

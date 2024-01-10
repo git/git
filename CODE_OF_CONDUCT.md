@@ -70,8 +70,8 @@ git@sfconservancy.org, or individually:
 
   - Ævar Arnfjörð Bjarmason <avarab@gmail.com>
   - Christian Couder <christian.couder@gmail.com>
-  - Jeff King <peff@peff.net>
   - Junio C Hamano <gitster@pobox.com>
+  - Taylor Blau <me@ttaylorr.com>
 
 All complaints will be reviewed and investigated promptly and fairly.
 

@@ -3,10 +3,10 @@ splitIndex.maxPercentChange::
 	percent of entries the split index can contain compared to the
 	total number of entries in both the split index and the shared
 	index before a new shared index is written.
-	The value should be between 0 and 100. If the value is 0 then
-	a new shared index is always written, if it is 100 a new
+	The value should be between 0 and 100. If the value is 0, then
+	a new shared index is always written; if it is 100, a new
 	shared index is never written.
-	By default the value is 20, so a new shared index is written
+	By default, the value is 20, so a new shared index is written
 	if the number of entries in the split index would be greater
 	than 20 percent of the total number of entries.
 	See linkgit:git-update-index[1].

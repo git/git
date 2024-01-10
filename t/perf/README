@@ -95,6 +95,10 @@ You can set the following variables (also in your config.mak):
 	Git (e.g., performance of index-pack as the number of threads
 	changes). These can be enabled with GIT_PERF_EXTRA.
 
+    GIT_PERF_USE_SCALAR
+	Boolean indicating whether to register test repo(s) with Scalar
+	before executing tests.
+
 You can also pass the options taken by ordinary git tests; the most
 useful one is:
 

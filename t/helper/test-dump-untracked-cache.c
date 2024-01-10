@@ -1,7 +1,10 @@
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
 #include "dir.h"
+#include "hex.h"
+#include "read-cache-ll.h"
+#include "repository.h"
+#include "setup.h"
 
 static int compare_untracked(const void *a_, const void *b_)
 {
@@ -40,7 +43,7 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	strbuf_setlen(base, len);
 }
 
-int cmd__dump_untracked_cache(int ac, const char **av)
+int cmd__dump_untracked_cache(int ac UNUSED, const char **av UNUSED)
 {
 	struct untracked_cache *uc;
 	struct strbuf base = STRBUF_INIT;
@@ -51,7 +54,7 @@ int cmd__dump_untracked_cache(int ac, const char **av)
 	xsetenv("GIT_CONFIG_VALUE_0", "keep", 1);
 
 	setup_git_directory();
-	if (read_cache() < 0)
+	if (repo_read_index(the_repository) < 0)
 		die("unable to read index file");
 	uc = the_index.untracked;
 	if (!uc) {

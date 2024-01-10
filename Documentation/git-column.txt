@@ -74,6 +74,13 @@ v2.4.3  v2.4.4      v2.4.5      v2.4.6      v2.4.7
 v2.4.8  v2.4.9
 ------------
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/column.txt[]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

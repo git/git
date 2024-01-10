@@ -1,0 +1,7 @@
+command_which_is_run &&
+cat >expect <<\EOF &&
+	we try to end the here-doc below,
+	but the indentation throws us off
+	since the operator is not "<<-".
+	EOF
+command_which_is_gobbled

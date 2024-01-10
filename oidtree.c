@@ -2,8 +2,8 @@
  * A wrapper around cbtree which stores oids
  * May be used to replace oid-array for prefix (abbreviation) matches
  */
+#include "git-compat-util.h"
 #include "oidtree.h"
-#include "alloc.h"
 #include "hash.h"
 
 struct oidtree_iter_data {

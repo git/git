@@ -1,0 +1,15 @@
+git init r1 &&
+for n in 1 2 3 4 5
+do
+	echo "This is file: $n" > r1/file.$n &&
+	git -C r1 add file.$n &&
+	git -C r1 commit -m "$n" || return 1
+done &&
+
+git init r2 &&
+for n in 1000 10000
+do
+	printf "%"$n"s" X > r2/large.$n &&
+	git -C r2 add large.$n &&
+	git -C r2 commit -m "$n" ?!LOOP?!
+done

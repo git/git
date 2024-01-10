@@ -36,11 +36,10 @@ commit_message() {
 # where the root commit adds three files: topic_1.t, topic_2.t and topic_3.t.
 #
 # This commit history is then rebased onto `topic_3` with the
-# `-Xsubtree=files_subtree` option in three different ways:
+# `-Xsubtree=files_subtree` option in two different ways:
 #
-# 1. using `--preserve-merges`
-# 2. using `--preserve-merges` and --keep-empty
-# 3. without specifying a rebase backend
+# 1. without specifying a rebase backend
+# 2. using the `--rebase-merges` backend
 
 test_expect_success 'setup' '
 	test_commit README &&
@@ -69,34 +68,15 @@ test_expect_success 'setup' '
 	git commit -m "Empty commit" --allow-empty
 '
 
-# FAILURE: Does not preserve topic_4.
-test_expect_failure REBASE_P 'Rebase -Xsubtree --preserve-merges --onto commit' '
-	reset_rebase &&
-	git checkout -b rebase-preserve-merges to-rebase &&
-	git rebase -Xsubtree=files_subtree --preserve-merges --onto files-main main &&
-	verbose test "$(commit_message HEAD~)" = "topic_4" &&
-	verbose test "$(commit_message HEAD)" = "files_subtree/topic_5"
-'
-
-# FAILURE: Does not preserve topic_4.
-test_expect_failure REBASE_P 'Rebase -Xsubtree --keep-empty --preserve-merges --onto commit' '
-	reset_rebase &&
-	git checkout -b rebase-keep-empty to-rebase &&
-	git rebase -Xsubtree=files_subtree --keep-empty --preserve-merges --onto files-main main &&
-	verbose test "$(commit_message HEAD~2)" = "topic_4" &&
-	verbose test "$(commit_message HEAD~)" = "files_subtree/topic_5" &&
-	verbose test "$(commit_message HEAD)" = "Empty commit"
-'
-
 test_expect_success 'Rebase -Xsubtree --empty=ask --onto commit' '
 	reset_rebase &&
 	git checkout -b rebase-onto to-rebase &&
 	test_must_fail git rebase -Xsubtree=files_subtree --empty=ask --onto files-main main &&
 	: first pick results in no changes &&
 	git rebase --skip &&
-	verbose test "$(commit_message HEAD~2)" = "topic_4" &&
-	verbose test "$(commit_message HEAD~)" = "files_subtree/topic_5" &&
-	verbose test "$(commit_message HEAD)" = "Empty commit"
+	test "$(commit_message HEAD~2)" = "topic_4" &&
+	test "$(commit_message HEAD~)" = "files_subtree/topic_5" &&
+	test "$(commit_message HEAD)" = "Empty commit"
 '
 
 test_expect_success 'Rebase -Xsubtree --empty=ask --rebase-merges --onto commit' '
@@ -105,9 +85,9 @@ test_expect_success 'Rebase -Xsubtree --empty=ask --rebase-merges --onto commit'
 	test_must_fail git rebase -Xsubtree=files_subtree --empty=ask --rebase-merges --onto files-main --root &&
 	: first pick results in no changes &&
 	git rebase --skip &&
-	verbose test "$(commit_message HEAD~2)" = "topic_4" &&
-	verbose test "$(commit_message HEAD~)" = "files_subtree/topic_5" &&
-	verbose test "$(commit_message HEAD)" = "Empty commit"
+	test "$(commit_message HEAD~2)" = "topic_4" &&
+	test "$(commit_message HEAD~)" = "files_subtree/topic_5" &&
+	test "$(commit_message HEAD)" = "Empty commit"
 '
 
 test_done

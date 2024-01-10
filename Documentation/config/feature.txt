@@ -14,11 +14,19 @@ feature.experimental::
 +
 * `fetch.negotiationAlgorithm=skipping` may improve fetch negotiation times by
 skipping more commits at a time, reducing the number of round trips.
++
+* `pack.useBitmapBoundaryTraversal=true` may improve bitmap traversal times by
+walking fewer objects.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the
 	working directory. With many files, commands such as `git status` and
 	`git checkout` may be slow and these new defaults improve performance:
++
+* `index.skipHash=true` speeds up index writes by not computing a trailing
+  checksum. Note that this will cause Git versions earlier than 2.13.0 to
+  refuse to parse the index and Git versions earlier than 2.40.0 will report
+  a corrupted index during `git fsck`.
 +
 * `index.version=4` enables path-prefix compression in the index.
 +

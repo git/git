@@ -99,6 +99,7 @@ do
 	"
 
 	test_expect_success 'with grafts' "
+		mkdir -p .git/info &&
 		echo '$B0 $A2' >.git/info/grafts &&
 		check $type $B2 -- $B2 $B1 $B0 $A2 $A1 $A0
 	"
@@ -117,10 +118,10 @@ done
 
 test_expect_success 'show advice that grafts are deprecated' '
 	git show HEAD 2>err &&
-	test_i18ngrep "git replace" err &&
+	test_grep "git replace" err &&
 	test_config advice.graftFileDeprecated false &&
 	git show HEAD 2>err &&
-	test_i18ngrep ! "git replace" err
+	test_grep ! "git replace" err
 '
 
 test_done

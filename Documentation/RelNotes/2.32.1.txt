@@ -1,0 +1,6 @@
+Git v2.32.1 Release Notes
+=========================
+
+This release merges up the fixes that appear in v2.30.3 and
+v2.31.2 to address the security issue CVE-2022-24765; see the
+release notes for these versions for details.

@@ -3,13 +3,13 @@
 	then
 		while true
 		do
-# LINT: missing "&&" on 'echo'
+# LINT: missing "&&" on "echo"
 			echo "pop"
 			echo "glup"
-# LINT: missing "&&" on 'done'
+# LINT: missing "&&" on "done"
 		done
 		foo
-# LINT: missing "&&" on 'fi'
+# LINT: missing "&&" on "fi"
 	fi
 	bar
 )

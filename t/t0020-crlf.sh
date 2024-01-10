@@ -5,6 +5,7 @@ test_description='CRLF conversion'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 has_cr() {
@@ -22,10 +23,10 @@ test_expect_success setup '
 
 	git config core.autocrlf false &&
 
-	for w in Hello world how are you; do echo $w; done >one &&
+	test_write_lines Hello world how are you >one &&
 	mkdir dir &&
-	for w in I am very very fine thank you; do echo $w; done >dir/two &&
-	for w in Oh here is NULQin text here; do echo $w; done | q_to_nul >three &&
+	test_write_lines I am very very fine thank you >dir/two &&
+	test_write_lines Oh here is NULQin text here | q_to_nul >three &&
 	git add . &&
 
 	git commit -m initial &&
@@ -35,7 +36,7 @@ test_expect_success setup '
 	two=$(git rev-parse HEAD:dir/two) &&
 	three=$(git rev-parse HEAD:three) &&
 
-	for w in Some extra lines here; do echo $w; done >>one &&
+	test_write_lines Some extra lines here >>one &&
 	git diff >patch.file &&
 	patched=$(git hash-object --stdin <one) &&
 	git read-tree --reset -u HEAD
@@ -46,7 +47,7 @@ test_expect_success 'safecrlf: autocrlf=input, all CRLF' '
 	git config core.autocrlf input &&
 	git config core.safecrlf true &&
 
-	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	test_write_lines I am all CRLF | append_cr >allcrlf &&
 	test_must_fail git add allcrlf
 '
 
@@ -55,7 +56,7 @@ test_expect_success 'safecrlf: autocrlf=input, mixed LF/CRLF' '
 	git config core.autocrlf input &&
 	git config core.safecrlf true &&
 
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
 	test_must_fail git add mixed
 '
 
@@ -64,7 +65,7 @@ test_expect_success 'safecrlf: autocrlf=true, all LF' '
 	git config core.autocrlf true &&
 	git config core.safecrlf true &&
 
-	for w in I am all LF; do echo $w; done >alllf &&
+	test_write_lines I am all LF >alllf &&
 	test_must_fail git add alllf
 '
 
@@ -73,7 +74,7 @@ test_expect_success 'safecrlf: autocrlf=true mixed LF/CRLF' '
 	git config core.autocrlf true &&
 	git config core.safecrlf true &&
 
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
 	test_must_fail git add mixed
 '
 
@@ -82,10 +83,10 @@ test_expect_success 'safecrlf: print warning only once' '
 	git config core.autocrlf input &&
 	git config core.safecrlf warn &&
 
-	for w in I am all LF; do echo $w; done >doublewarn &&
+	test_write_lines I am all LF >doublewarn &&
 	git add doublewarn &&
 	git commit -m "nowarn" &&
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >doublewarn &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >doublewarn &&
 	git add doublewarn 2>err &&
 	grep "CRLF will be replaced by LF" err >err.warnings &&
 	test_line_count = 1 err.warnings
@@ -103,7 +104,7 @@ test_expect_success 'safecrlf: no warning with safecrlf=false' '
 	git config core.autocrlf input &&
 	git config core.safecrlf false &&
 
-	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	test_write_lines I am all CRLF | append_cr >allcrlf &&
 	git add allcrlf 2>err &&
 	test_must_be_empty err
 '
@@ -124,7 +125,7 @@ test_expect_success 'update with autocrlf=input' '
 	munge_cr append dir/two &&
 	git update-index -- one dir/two &&
 	differs=$(git diff-index --cached HEAD) &&
-	verbose test -z "$differs"
+	test -z "$differs"
 
 '
 
@@ -137,7 +138,7 @@ test_expect_success 'update with autocrlf=true' '
 	munge_cr append dir/two &&
 	git update-index -- one dir/two &&
 	differs=$(git diff-index --cached HEAD) &&
-	verbose test -z "$differs"
+	test -z "$differs"
 
 '
 
@@ -152,7 +153,7 @@ test_expect_success 'checkout with autocrlf=true' '
 	test "$one" = $(git hash-object --stdin <one) &&
 	test "$two" = $(git hash-object --stdin <dir/two) &&
 	differs=$(git diff-index --cached HEAD) &&
-	verbose test -z "$differs"
+	test -z "$differs"
 '
 
 test_expect_success 'checkout with autocrlf=input' '
@@ -166,7 +167,7 @@ test_expect_success 'checkout with autocrlf=input' '
 	test "$one" = $(git hash-object --stdin <one) &&
 	test "$two" = $(git hash-object --stdin <dir/two) &&
 	differs=$(git diff-index --cached HEAD) &&
-	verbose test -z "$differs"
+	test -z "$differs"
 '
 
 test_expect_success 'apply patch (autocrlf=input)' '
@@ -176,7 +177,7 @@ test_expect_success 'apply patch (autocrlf=input)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply patch.file &&
-	verbose test "$patched" = "$(git hash-object --stdin <one)"
+	test "$patched" = "$(git hash-object --stdin <one)"
 '
 
 test_expect_success 'apply patch --cached (autocrlf=input)' '
@@ -186,7 +187,7 @@ test_expect_success 'apply patch --cached (autocrlf=input)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --cached patch.file &&
-	verbose test "$patched" = $(git rev-parse :one)
+	test "$patched" = $(git rev-parse :one)
 '
 
 test_expect_success 'apply patch --index (autocrlf=input)' '
@@ -196,8 +197,8 @@ test_expect_success 'apply patch --index (autocrlf=input)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --index patch.file &&
-	verbose test "$patched" = $(git rev-parse :one) &&
-	verbose test "$patched" = $(git hash-object --stdin <one)
+	test "$patched" = $(git rev-parse :one) &&
+	test "$patched" = $(git hash-object --stdin <one)
 '
 
 test_expect_success 'apply patch (autocrlf=true)' '
@@ -207,7 +208,7 @@ test_expect_success 'apply patch (autocrlf=true)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply patch.file &&
-	verbose test "$patched" = "$(remove_cr <one | git hash-object --stdin)"
+	test "$patched" = "$(remove_cr <one | git hash-object --stdin)"
 '
 
 test_expect_success 'apply patch --cached (autocrlf=true)' '
@@ -217,7 +218,7 @@ test_expect_success 'apply patch --cached (autocrlf=true)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --cached patch.file &&
-	verbose test "$patched" = $(git rev-parse :one)
+	test "$patched" = $(git rev-parse :one)
 '
 
 test_expect_success 'apply patch --index (autocrlf=true)' '
@@ -227,8 +228,8 @@ test_expect_success 'apply patch --index (autocrlf=true)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --index patch.file &&
-	verbose test "$patched" = $(git rev-parse :one) &&
-	verbose test "$patched" = "$(remove_cr <one | git hash-object --stdin)"
+	test "$patched" = $(git rev-parse :one) &&
+	test "$patched" = "$(remove_cr <one | git hash-object --stdin)"
 '
 
 test_expect_success '.gitattributes says two is binary' '
@@ -239,7 +240,7 @@ test_expect_success '.gitattributes says two is binary' '
 	git read-tree --reset -u HEAD &&
 
 	! has_cr dir/two &&
-	verbose has_cr one &&
+	has_cr one &&
 	! has_cr three
 '
 
@@ -258,8 +259,8 @@ test_expect_success '.gitattributes says two and three are text' '
 	echo "t* crlf" >.gitattributes &&
 	git read-tree --reset -u HEAD &&
 
-	verbose has_cr dir/two &&
-	verbose has_cr three
+	has_cr dir/two &&
+	has_cr three
 '
 
 test_expect_success 'in-tree .gitattributes (1)' '
@@ -272,7 +273,7 @@ test_expect_success 'in-tree .gitattributes (1)' '
 	git read-tree --reset -u HEAD &&
 
 	! has_cr one &&
-	verbose has_cr three
+	has_cr three
 '
 
 test_expect_success 'in-tree .gitattributes (2)' '
@@ -282,7 +283,7 @@ test_expect_success 'in-tree .gitattributes (2)' '
 	git checkout-index -f -q -u -a &&
 
 	! has_cr one &&
-	verbose has_cr three
+	has_cr three
 '
 
 test_expect_success 'in-tree .gitattributes (3)' '
@@ -293,7 +294,7 @@ test_expect_success 'in-tree .gitattributes (3)' '
 	git checkout-index -u one dir/two three &&
 
 	! has_cr one &&
-	verbose has_cr three
+	has_cr three
 '
 
 test_expect_success 'in-tree .gitattributes (4)' '
@@ -304,7 +305,7 @@ test_expect_success 'in-tree .gitattributes (4)' '
 	git checkout-index -u .gitattributes &&
 
 	! has_cr one &&
-	verbose has_cr three
+	has_cr three
 '
 
 test_expect_success 'checkout with existing .gitattributes' '
@@ -351,9 +352,9 @@ test_expect_success 'setting up for new autocrlf tests' '
 	git config core.autocrlf false &&
 	git config core.safecrlf false &&
 	rm -rf .????* * &&
-	for w in I am all LF; do echo $w; done >alllf &&
-	for w in Oh here is CRLFQ in text; do echo $w; done | q_to_cr >mixed &&
-	for w in I am all CRLF; do echo $w; done | append_cr >allcrlf &&
+	test_write_lines I am all LF >alllf &&
+	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
+	test_write_lines I am all CRLF | append_cr >allcrlf &&
 	git add -A . &&
 	git commit -m "alllf, allcrlf and mixed only" &&
 	git tag -a -m "message" autocrlf-checkpoint

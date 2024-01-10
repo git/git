@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='basic tests for priority queue implementation'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expect <<'EOF'

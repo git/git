@@ -1,10 +1,12 @@
 #ifndef REF_FILTER_H
 #define REF_FILTER_H
 
+#include "gettext.h"
 #include "oid-array.h"
-#include "refs.h"
 #include "commit.h"
-#include "parse-options.h"
+#include "string-list.h"
+#include "strvec.h"
+#include "commit-reach.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -23,16 +25,15 @@
 #define FILTER_REFS_KIND_MASK      (FILTER_REFS_ALL | FILTER_REFS_DETACHED_HEAD)
 
 struct atom_value;
+struct ref_sorting;
+struct ahead_behind_count;
+struct option;
 
-struct ref_sorting {
-	struct ref_sorting *next;
-	int atom; /* index into used_atom array (internal) */
-	enum {
-		REF_SORTING_REVERSE = 1<<0,
-		REF_SORTING_ICASE = 1<<1,
-		REF_SORTING_VERSION = 1<<2,
-		REF_SORTING_DETACHED_HEAD_FIRST = 1<<3,
-	} sort_flags;
+enum ref_sorting_order {
+	REF_SORTING_REVERSE = 1<<0,
+	REF_SORTING_ICASE = 1<<1,
+	REF_SORTING_VERSION = 1<<2,
+	REF_SORTING_DETACHED_HEAD_FIRST = 1<<3,
 };
 
 struct ref_array_item {
@@ -43,6 +44,8 @@ struct ref_array_item {
 	const char *symref;
 	struct commit *commit;
 	struct atom_value *value;
+	struct ahead_behind_count **counts;
+
 	char refname[FLEX_ARRAY];
 };
 
@@ -50,10 +53,14 @@ struct ref_array {
 	int nr, alloc;
 	struct ref_array_item **items;
 	struct rev_info *revs;
+
+	struct ahead_behind_count *counts;
+	size_t counts_nr;
 };
 
 struct ref_filter {
 	const char **name_patterns;
+	struct strvec exclude;
 	struct oid_array points_at;
 	struct commit_list *with_commit;
 	struct commit_list *no_commit;
@@ -68,6 +75,11 @@ struct ref_filter {
 		lines;
 	int abbrev,
 		verbose;
+
+	struct {
+		struct contains_cache contains_cache;
+		struct contains_cache no_contains_cache;
+	} internal;
 };
 
 struct ref_format {
@@ -78,14 +90,28 @@ struct ref_format {
 	const char *format;
 	const char *rest;
 	int quote_style;
-	int use_rest;
 	int use_color;
 
 	/* Internal state to ref-filter */
 	int need_color_reset_at_eol;
+
+	/* List of bases for ahead-behind counts. */
+	struct string_list bases;
+
+	struct {
+		int max_count;
+		int omit_empty;
+	} array_opts;
 };
 
-#define REF_FORMAT_INIT { .use_color = -1 }
+#define REF_FILTER_INIT { \
+	.points_at = OID_ARRAY_INIT, \
+	.exclude = STRVEC_INIT, \
+}
+#define REF_FORMAT_INIT {             \
+	.use_color = -1,              \
+	.bases = STRING_LIST_INIT_DUP, \
+}
 
 /*  Macros for checking --merged and --no-merged options */
 #define _OPT_MERGED_NO_MERGED(option, filter, h) \
@@ -97,9 +123,11 @@ struct ref_format {
 #define OPT_NO_MERGED(f, h) _OPT_MERGED_NO_MERGED("no-merged", f, h)
 
 #define OPT_REF_SORT(var) \
-	OPT_CALLBACK_F(0, "sort", (var), \
-		       N_("key"), N_("field name to sort on"), \
-		       PARSE_OPT_NONEG, parse_opt_ref_sorting)
+	OPT_STRING_LIST(0, "sort", (var), \
+			N_("key"), N_("field name to sort on"))
+#define OPT_REF_FILTER_EXCLUDE(var) \
+	OPT_STRVEC(0, "exclude", &(var)->exclude, \
+		   N_("pattern"), N_("exclude refs which match pattern"))
 
 /*
  * API for filtering a set of refs. Based on the type of refs the user
@@ -108,6 +136,14 @@ struct ref_format {
  * filtered refs in the ref_array structure.
  */
 int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type);
+/*
+ * Filter refs using the given ref_filter and type, sort the contents
+ * according to the given ref_sorting, format the filtered refs with the
+ * given ref_format, and print them to stdout.
+ */
+void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
+			    struct ref_sorting *sorting,
+			    struct ref_format *format);
 /*  Clear all memory allocated to ref_array */
 void ref_array_clear(struct ref_array *array);
 /*  Used to verify if the given format is correct and to parse out the used atoms */
@@ -121,18 +157,22 @@ int format_ref_array_item(struct ref_array_item *info,
 			  struct ref_format *format,
 			  struct strbuf *final_buf,
 			  struct strbuf *error_buf);
-/*  Parse a single sort specifier and add it to the list */
-void parse_ref_sorting(struct ref_sorting **sorting_tail, const char *atom);
-/*  Callback function for parsing the sort option */
-int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset);
-/*  Default sort option based on refname */
-struct ref_sorting *ref_default_sorting(void);
+/* Release a "struct ref_sorting" */
+void ref_sorting_release(struct ref_sorting *);
+/*  Convert list of sort options into ref_sorting */
+struct ref_sorting *ref_sorting_options(struct string_list *);
 /*  Function to parse --merged and --no-merged options */
 int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset);
 /*  Get the current HEAD's description */
 char *get_head_description(void);
 /*  Set up translated strings in the output. */
 void setup_ref_filter_porcelain_msg(void);
+
+/*
+ * Print up to maxcount ref_array elements to stdout using the given
+ * ref_format.
+ */
+void print_formatted_ref_array(struct ref_array *array, struct ref_format *format);
 
 /*
  * Print a single ref, outside of any ref-filter. Note that the
@@ -148,5 +188,19 @@ void pretty_print_ref(const char *name, const struct object_id *oid,
 struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
 				      const struct object_id *oid);
+
+/*
+ * If the provided format includes ahead-behind atoms, then compute the
+ * ahead-behind values for the array of filtered references. Must be
+ * called after filter_refs() but before outputting the formatted refs.
+ *
+ * If this is not called, then any ahead-behind atoms will be blank.
+ */
+void filter_ahead_behind(struct repository *r,
+			 struct ref_format *format,
+			 struct ref_array *array);
+
+void ref_filter_init(struct ref_filter *filter);
+void ref_filter_clear(struct ref_filter *filter);
 
 #endif /*  REF_FILTER_H  */

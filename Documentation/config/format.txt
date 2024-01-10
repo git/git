@@ -3,7 +3,8 @@ format.attach::
 	'format-patch'.  The value can also be a double quoted string
 	which will enable attachments as the default and set the
 	value as the boundary.  See the --attach option in
-	linkgit:git-format-patch[1].
+	linkgit:git-format-patch[1].  To countermand an earlier
+	value, set it to an empty string.
 
 format.from::
 	Provides the default value for the `--from` option to format-patch.
@@ -14,6 +15,10 @@ format.from::
 	mails and including a "From:" field in the body of the patch mail if
 	different.  If set to a non-boolean value, format-patch uses that
 	value instead of your committer identity.  Defaults to false.
+
+format.forceInBodyFrom::
+	Provides the default value for the `--[no-]force-in-body-from`
+	option to format-patch.  Defaults to false.
 
 format.numbered::
 	A boolean which can enable or disable sequence numbers in patch
@@ -63,7 +68,7 @@ format.encodeEmailHeaders::
 	Defaults to true.
 
 format.pretty::
-	The default pretty format for log/show/whatchanged command,
+	The default pretty format for log/show/whatchanged command.
 	See linkgit:git-log[1], linkgit:git-show[1],
 	linkgit:git-whatchanged[1].
 
@@ -114,7 +119,7 @@ format.notes::
 	`--notes=<ref>`, where `ref` is the non-boolean value. Defaults
 	to false.
 +
-If one wishes to use the ref `ref/notes/true`, please use that literal
+If one wishes to use the ref `refs/notes/true`, please use that literal
 instead.
 +
 This configuration can be specified multiple times in order to allow
@@ -135,3 +140,14 @@ For example,
 ------------
 +
 will only show notes from `refs/notes/bar`.
+
+format.mboxrd::
+	A boolean value which enables the robust "mboxrd" format when
+	`--stdout` is in use to escape "^>+From " lines.
+
+format.noprefix::
+	If set, do not show any source or destination prefix in patches.
+	This is equivalent to the `diff.noprefix` option used by `git
+	diff` (but which is not respected by `format-patch`). Note that
+	by setting this, the receiver of any patches you generate will
+	have to apply them using the `-p0` option.

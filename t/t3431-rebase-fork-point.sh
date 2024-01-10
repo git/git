@@ -8,6 +8,7 @@ test_description='git rebase --fork-point test'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # A---B---D---E    (main)
@@ -50,7 +51,7 @@ test_rebase () {
 
 test_rebase 'G F E D B A'
 test_rebase 'G F D B A' --onto D
-test_rebase 'G F B A' --keep-base
+test_rebase 'G F C B A' --keep-base
 test_rebase 'G F C E D B A' --no-fork-point
 test_rebase 'G F C D B A' --no-fork-point --onto D
 test_rebase 'G F C B A' --no-fork-point --keep-base
@@ -83,7 +84,7 @@ test_expect_success 'git rebase --fork-point with ambigous refname' '
 
 test_expect_success '--fork-point and --root both given' '
 	test_must_fail git rebase --fork-point --root 2>err &&
-	test_i18ngrep "cannot combine" err
+	test_grep "cannot be used together" err
 '
 
 test_expect_success 'rebase.forkPoint set to false' '

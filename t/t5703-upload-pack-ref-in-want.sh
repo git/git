@@ -2,9 +2,6 @@
 
 test_description='upload-pack ref-in-want'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 
 get_actual_refs () {
@@ -232,14 +229,16 @@ test_expect_success 'setup repos for fetching with ref-in-want tests' '
 '
 
 test_expect_success 'fetching with exact OID' '
-	test_when_finished "rm -f log" &&
+	test_when_finished "rm -f log trace2" &&
 
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
 	oid=$(git -C "$REPO" rev-parse d) &&
-	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch origin \
+	GIT_TRACE_PACKET="$(pwd)/log" GIT_TRACE2_EVENT="$(pwd)/trace2" \
+		git -C local fetch origin \
 		"$oid":refs/heads/actual &&
 
+	grep \"key\":\"total_rounds\",\"value\":\"2\" trace2 &&
 	git -C "$REPO" rev-parse "d" >expected &&
 	git -C local rev-parse refs/heads/actual >actual &&
 	test_cmp expected actual &&
@@ -485,7 +484,7 @@ test_expect_success 'server is initially ahead - no ref in want' '
 	cp -r "$LOCAL_PRISTINE" local &&
 	inconsistency main $(test_oid numeric) &&
 	test_must_fail git -C local fetch 2>err &&
-	test_i18ngrep "fatal: remote error: upload-pack: not our ref" err
+	test_grep "fatal: remote error: upload-pack: not our ref" err
 '
 
 test_expect_success 'server is initially ahead - ref in want' '
@@ -531,7 +530,7 @@ test_expect_success 'server loses a ref - ref in want' '
 	echo "s/main/rain/" >"$HTTPD_ROOT_PATH/one-time-perl" &&
 	test_must_fail git -C local fetch 2>err &&
 
-	test_i18ngrep "fatal: remote error: unknown ref refs/heads/rain" err
+	test_grep "fatal: remote error: unknown ref refs/heads/rain" err
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

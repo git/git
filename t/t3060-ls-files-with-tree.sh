@@ -8,9 +8,11 @@ test_description='git ls-files test (--with-tree).
 This test runs git ls-files --with-tree and in particular in
 a scenario known to trigger a crash with some versions of git.
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
-test_expect_success setup '
+test_expect_success 'setup' '
 
 	# The bug we are exercising requires a fair number of entries
 	# in a sub-directory so that add_index_entry will trigger a
@@ -38,7 +40,7 @@ test_expect_success setup '
 	git commit -a -m "remove them all" &&
 
 	# The bug also requires some entry before our directory so that
-	# prune_path will modify the_index.cache
+	# prune_index will modify the_repository->index.cache
 
 	mkdir a_directory_that_sorts_before_sub &&
 	>a_directory_that_sorts_before_sub/file &&
@@ -54,7 +56,7 @@ test_expect_success 'usage' '
 '
 
 test_expect_success 'git ls-files --with-tree should succeed from subdir' '
-	# We have to run from a sub-directory to trigger prune_path
+	# We have to run from a sub-directory to trigger prune_index
 	# Then we finally get to run our --with-tree test
 	(
 		cd sub &&
@@ -62,9 +64,9 @@ test_expect_success 'git ls-files --with-tree should succeed from subdir' '
 	)
 '
 
-test_expect_success \
-    'git ls-files --with-tree should add entries from named tree.' \
-    'test_cmp expected output'
+test_expect_success 'git ls-files --with-tree should add entries from named tree.' '
+	test_cmp expected output
+'
 
 test_expect_success 'no duplicates in --with-tree output' '
 	git ls-files --with-tree=HEAD >actual &&

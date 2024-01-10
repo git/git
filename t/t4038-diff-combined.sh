@@ -80,8 +80,18 @@ test_expect_success 'check combined output (1)' '
 	verify_helper sidewithone
 '
 
+test_expect_success 'check combined output (1) with git diff <rev>^!' '
+	git diff sidewithone^! -- >sidewithone &&
+	verify_helper sidewithone
+'
+
 test_expect_success 'check combined output (2)' '
 	git show sidesansone -- >sidesansone &&
+	verify_helper sidesansone
+'
+
+test_expect_success 'check combined output (2) with git diff <rev>^!' '
+	git diff sidesansone^! -- >sidesansone &&
 	verify_helper sidesansone
 '
 
@@ -100,7 +110,7 @@ test_expect_success 'setup for --cc --raw' '
 	for i in $(test_seq 1 40)
 	do
 		blob=$(echo file$i | git hash-object --stdin -w) &&
-		trees="$trees$(echo "100644 blob $blob	file" | git mktree)$LF"
+		trees="$trees$(echo "100644 blob $blob	file" | git mktree)$LF" || return 1
 	done
 '
 

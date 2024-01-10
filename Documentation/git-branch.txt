@@ -16,7 +16,8 @@ SYNOPSIS
 	[--points-at <object>] [--format=<format>]
 	[(-r | --remotes) | (-a | --all)]
 	[--list] [<pattern>...]
-'git branch' [--track | --no-track] [-f] <branchname> [<start-point>]
+'git branch' [--track[=(direct|inherit)] | --no-track] [-f]
+	[--recurse-submodules] <branchname> [<start-point>]
 'git branch' (--set-upstream-to=<upstream> | -u <upstream>) [<branchname>]
 'git branch' --unset-upstream [<branchname>]
 'git branch' (-m | -M) [<oldbranch>] <newbranch>
@@ -115,24 +116,28 @@ OPTIONS
 
 -f::
 --force::
-	Reset <branchname> to <startpoint>, even if <branchname> exists
+	Reset <branchname> to <start-point>, even if <branchname> exists
 	already. Without `-f`, 'git branch' refuses to change an existing branch.
 	In combination with `-d` (or `--delete`), allow deleting the
 	branch irrespective of its merged status, or whether it even
 	points to a valid commit. In combination with
 	`-m` (or `--move`), allow renaming the branch even if the new
 	branch name already exists, the same applies for `-c` (or `--copy`).
++
+Note that 'git branch -f <branchname> [<start-point>]', even with '-f',
+refuses to change an existing branch `<branchname>` that is checked out
+in another worktree linked to the same repository.
 
 -m::
 --move::
-	Move/rename a branch and the corresponding reflog.
+	Move/rename a branch, together with its config and reflog.
 
 -M::
 	Shortcut for `--move --force`.
 
 -c::
 --copy::
-	Copy a branch and the corresponding reflog.
+	Copy a branch, together with its config and reflog.
 
 -C::
 	Shortcut for `--copy --force`.
@@ -150,6 +155,10 @@ OPTIONS
 -i::
 --ignore-case::
 	Sorting and filtering branches are case insensitive.
+
+--omit-empty::
+	Do not print a newline after formatted refs where the format expands
+	to the empty string.
 
 --column[=<options>]::
 --no-column::
@@ -206,24 +215,54 @@ This option is only applicable in non-verbose mode.
 	Display the full sha1s in the output listing rather than abbreviating them.
 
 -t::
---track::
+--track[=(direct|inherit)]::
 	When creating a new branch, set up `branch.<name>.remote` and
-	`branch.<name>.merge` configuration entries to mark the
-	start-point branch as "upstream" from the new branch. This
+	`branch.<name>.merge` configuration entries to set "upstream" tracking
+	configuration for the new branch. This
 	configuration will tell git to show the relationship between the
 	two branches in `git status` and `git branch -v`. Furthermore,
 	it directs `git pull` without arguments to pull from the
 	upstream when the new branch is checked out.
 +
-This behavior is the default when the start point is a remote-tracking branch.
-Set the branch.autoSetupMerge configuration variable to `false` if you
-want `git switch`, `git checkout` and `git branch` to always behave as if `--no-track`
-were given. Set it to `always` if you want this behavior when the
-start-point is either a local or remote-tracking branch.
+The exact upstream branch is chosen depending on the optional argument:
+`-t`, `--track`, or `--track=direct` means to use the start-point branch
+itself as the upstream; `--track=inherit` means to copy the upstream
+configuration of the start-point branch.
++
+The branch.autoSetupMerge configuration variable specifies how `git switch`,
+`git checkout` and `git branch` should behave when neither `--track` nor
+`--no-track` are specified:
++
+The default option, `true`, behaves as though `--track=direct`
+were given whenever the start-point is a remote-tracking branch.
+`false` behaves as if `--no-track` were given. `always` behaves as though
+`--track=direct` were given. `inherit` behaves as though `--track=inherit`
+were given. `simple` behaves as though `--track=direct` were given only when
+the start-point is a remote-tracking branch and the new branch has the same
+name as the remote branch.
++
+See linkgit:git-pull[1] and linkgit:git-config[1] for additional discussion on
+how the `branch.<name>.remote` and `branch.<name>.merge` options are used.
 
 --no-track::
 	Do not set up "upstream" configuration, even if the
-	branch.autoSetupMerge configuration variable is true.
+	branch.autoSetupMerge configuration variable is set.
+
+--recurse-submodules::
+	THIS OPTION IS EXPERIMENTAL! Causes the current command to
+	recurse into submodules if `submodule.propagateBranches` is
+	enabled. See `submodule.propagateBranches` in
+	linkgit:git-config[1]. Currently, only branch creation is
+	supported.
++
+When used in branch creation, a new branch <branchname> will be created
+in the superproject and all of the submodules in the superproject's
+<start-point>. In submodules, the branch will point to the submodule
+commit in the superproject's <start-point> but the branch's tracking
+information will be set up based on the submodule's branches and remotes
+e.g. `git branch --recurse-submodules topic origin/main` will create the
+submodule branch "topic" that points to the submodule commit in the
+superproject's "origin/main", but tracks the submodule's "origin/main".
 
 --set-upstream::
 	As this option had confusing syntax, it is no longer supported.
@@ -285,7 +324,7 @@ start-point is either a local or remote-tracking branch.
 	multiple times, in which case the last key becomes the primary
 	key. The keys supported are the same as those in `git
 	for-each-ref`. Sort order defaults to the value configured for the
-	`branch.sort` variable if exists, or to sorting based on the
+	`branch.sort` variable if it exists, or to sorting based on the
 	full refname (including `refs/...` prefix). This lists
 	detached HEAD (if present) first, then local branches and
 	finally remote-tracking branches. See linkgit:git-config[1].
@@ -304,6 +343,10 @@ CONFIGURATION
 `pager.branch` is only respected when listing branches, i.e., when
 `--list` is used or implied. The default is to use a pager.
 See linkgit:git-config[1].
+
+include::includes/cmd-config-section-rest.txt[]
+
+include::config/branch.txt[]
 
 EXAMPLES
 --------

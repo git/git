@@ -1,9 +1,11 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "wildmatch.h"
 
 static char **order;
 static int order_cnt;

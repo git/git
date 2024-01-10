@@ -1,7 +1,6 @@
 #include "git-compat-util.h"
 #include "line-range.h"
 #include "xdiff-interface.h"
-#include "strbuf.h"
 #include "userdiff.h"
 
 /*
@@ -135,7 +134,7 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 {
 	int reg_error;
 	regmatch_t match[1];
-	while (1) {
+	while (*start) {
 		const char *bol, *eol;
 		reg_error = regexec(regexp, start, 1, match, 0);
 		if (reg_error == REG_NOMATCH)
@@ -148,8 +147,8 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 		/* determine extent of line matched */
 		bol = start+match[0].rm_so;
 		eol = start+match[0].rm_eo;
-		while (bol > start && *bol != '\n')
-			bol--;
+		while (bol > start && *--bol != '\n')
+			; /* nothing */
 		if (*bol == '\n')
 			bol++;
 		while (*eol && *eol != '\n')
@@ -161,6 +160,7 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 			return bol;
 		start = eol;
 	}
+	return NULL;
 }
 
 static const char *parse_range_funcname(

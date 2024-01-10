@@ -1,9 +1,13 @@
-#include "cache.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-store-ll.h"
 #include "promisor-remote.h"
 #include "config.h"
+#include "trace2.h"
 #include "transport.h"
 #include "strvec.h"
+#include "packfile.h"
 
 struct promisor_remote_config {
 	struct promisor_remote *promisors;
@@ -22,7 +26,7 @@ static int fetch_objects(struct repository *repo,
 	child.git_cmd = 1;
 	child.in = -1;
 	if (repo != the_repository)
-		prepare_other_repo_env(&child.env_array, repo->gitdir);
+		prepare_other_repo_env(&child.env, repo->gitdir);
 	strvec_pushl(&child.args, "-c", "fetch.negotiationAlgorithm=noop",
 		     "fetch", remote_name, "--no-tags",
 		     "--no-write-fetch-head", "--recurse-submodules=no",
@@ -84,7 +88,7 @@ static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
 					 struct promisor_remote *r,
 					 struct promisor_remote *previous)
 {
-	if (r->next == NULL)
+	if (!r->next)
 		return;
 
 	if (previous)
@@ -96,7 +100,9 @@ static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
 	config->promisors_tail = &r->next;
 }
 
-static int promisor_remote_config(const char *var, const char *value, void *data)
+static int promisor_remote_config(const char *var, const char *value,
+				  const struct config_context *ctx UNUSED,
+				  void *data)
 {
 	struct promisor_remote_config *config = data;
 	const char *name;
@@ -146,7 +152,7 @@ static void promisor_remote_init(struct repository *r)
 	if (r->promisor_remote_config)
 		return;
 	config = r->promisor_remote_config =
-		xcalloc(sizeof(*r->promisor_remote_config), 1);
+		xcalloc(1, sizeof(*r->promisor_remote_config));
 	config->promisors_tail = &config->promisors;
 
 	repo_config(r, promisor_remote_config, config);
@@ -230,18 +236,18 @@ static int remove_fetched_oids(struct repository *repo,
 	return remaining_nr;
 }
 
-int promisor_remote_get_direct(struct repository *repo,
-			       const struct object_id *oids,
-			       int oid_nr)
+void promisor_remote_get_direct(struct repository *repo,
+				const struct object_id *oids,
+				int oid_nr)
 {
 	struct promisor_remote *r;
 	struct object_id *remaining_oids = (struct object_id *)oids;
 	int remaining_nr = oid_nr;
 	int to_free = 0;
-	int res = -1;
+	int i;
 
 	if (oid_nr == 0)
-		return 0;
+		return;
 
 	promisor_remote_init(repo);
 
@@ -256,12 +262,16 @@ int promisor_remote_get_direct(struct repository *repo,
 				continue;
 			}
 		}
-		res = 0;
-		break;
+		goto all_fetched;
 	}
 
+	for (i = 0; i < remaining_nr; i++) {
+		if (is_promisor_object(&remaining_oids[i]))
+			die(_("could not fetch %s from promisor remote"),
+			    oid_to_hex(&remaining_oids[i]));
+	}
+
+all_fetched:
 	if (to_free)
 		free(remaining_oids);
-
-	return res;
 }

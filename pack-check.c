@@ -1,10 +1,12 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "hex.h"
 #include "repository.h"
 #include "pack.h"
-#include "pack-revindex.h"
 #include "progress.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 
 struct idx_entry {
 	off_t                offset;
@@ -127,7 +129,7 @@ static int verify_packfile(struct repository *r,
 
 		if (type == OBJ_BLOB && big_file_threshold <= size) {
 			/*
-			 * Let check_object_signature() check it with
+			 * Let stream_object_signature() check it with
 			 * the streaming interface; no point slurping
 			 * the data in-core only to discard.
 			 */
@@ -142,7 +144,11 @@ static int verify_packfile(struct repository *r,
 			err = error("cannot unpack %s from %s at offset %"PRIuMAX"",
 				    oid_to_hex(&oid), p->pack_name,
 				    (uintmax_t)entries[i].offset);
-		else if (check_object_signature(r, &oid, data, size, type_name(type)))
+		else if (data && check_object_signature(r, &oid, data, size,
+							type) < 0)
+			err = error("packed %s from %s is corrupt",
+				    oid_to_hex(&oid), p->pack_name);
+		else if (!data && stream_object_signature(r, &oid) < 0)
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(&oid), p->pack_name);
 		else if (fn) {

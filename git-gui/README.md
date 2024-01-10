@@ -88,7 +88,7 @@ that you first use `git-format-patch` to generate the emails, audit them, and
 then send them via `git-send-email`.
 
 A pretty good guide to configuring and using `git-send-email` can be found
-[here](https://www.freedesktop.org/wiki/Software/PulseAudio/HowToUseGitSendEmail/)
+[here](https://www.freedesktop.org/wiki/Software/PulseAudio/HowToUseGitSendEmail/).
 
 ### Using your email client
 

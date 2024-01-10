@@ -88,19 +88,14 @@ struct region {
 #define REC(env, s, l) \
 	(env->xdf##s.recs[l - 1])
 
-static int cmp_recs(xpparam_t const *xpp,
-	xrecord_t *r1, xrecord_t *r2)
+static int cmp_recs(xrecord_t *r1, xrecord_t *r2)
 {
-	return r1->ha == r2->ha &&
-		xdl_recmatch(r1->ptr, r1->size, r2->ptr, r2->size,
-			    xpp->flags);
+	return r1->ha == r2->ha;
+
 }
 
-#define CMP_ENV(xpp, env, s1, l1, s2, l2) \
-	(cmp_recs(xpp, REC(env, s1, l1), REC(env, s2, l2)))
-
 #define CMP(i, s1, l1, s2, l2) \
-	(cmp_recs(i->xpp, REC(i->env, s1, l1), REC(i->env, s2, l2)))
+	(cmp_recs(REC(i->env, s1, l1), REC(i->env, s2, l2)))
 
 #define TABLE_HASH(index, side, line) \
 	XDL_HASHLONG((REC(index->env, side, line))->ha, index->table_bits)
@@ -256,7 +251,7 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 		    int line1, int count1, int line2, int count2)
 {
 	int b_ptr;
-	int sz, ret = -1;
+	int ret = -1;
 	struct histindex index;
 
 	memset(&index, 0, sizeof(index));
@@ -270,23 +265,16 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 	index.rcha.head = NULL;
 
 	index.table_bits = xdl_hashbits(count1);
-	sz = index.records_size = 1 << index.table_bits;
-	sz *= sizeof(struct record *);
-	if (!(index.records = (struct record **) xdl_malloc(sz)))
+	index.records_size = 1 << index.table_bits;
+	if (!XDL_CALLOC_ARRAY(index.records, index.records_size))
 		goto cleanup;
-	memset(index.records, 0, sz);
 
-	sz = index.line_map_size = count1;
-	sz *= sizeof(struct record *);
-	if (!(index.line_map = (struct record **) xdl_malloc(sz)))
+	index.line_map_size = count1;
+	if (!XDL_CALLOC_ARRAY(index.line_map, index.line_map_size))
 		goto cleanup;
-	memset(index.line_map, 0, sz);
 
-	sz = index.line_map_size;
-	sz *= sizeof(unsigned int);
-	if (!(index.next_ptrs = (unsigned int *) xdl_malloc(sz)))
+	if (!XDL_CALLOC_ARRAY(index.next_ptrs, index.line_map_size))
 		goto cleanup;
-	memset(index.next_ptrs, 0, sz);
 
 	/* lines / 4 + 1 comes from xprepare.c:xdl_prepare_ctx() */
 	if (xdl_cha_init(&index.rcha, sizeof(struct record), count1 / 4 + 1) < 0)
@@ -374,12 +362,8 @@ out:
 	return result;
 }
 
-int xdl_do_histogram_diff(mmfile_t *file1, mmfile_t *file2,
-	xpparam_t const *xpp, xdfenv_t *env)
+int xdl_do_histogram_diff(xpparam_t const *xpp, xdfenv_t *env)
 {
-	if (xdl_prepare_env(file1, file2, xpp, env) < 0)
-		return -1;
-
 	return histogram_diff(xpp, env,
 		env->xdf1.dstart + 1, env->xdf1.dend - env->xdf1.dstart + 1,
 		env->xdf2.dstart + 1, env->xdf2.dend - env->xdf2.dstart + 1);

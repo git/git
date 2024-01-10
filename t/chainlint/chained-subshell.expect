@@ -1,0 +1,10 @@
+mkdir sub && (
+	cd sub &&
+	foo the bar ?!AMP?!
+	nuff said
+) &&
+
+cut "-d " -f actual | (read s1 s2 s3 &&
+test -f $s1 ?!AMP?!
+test $(cat $s2) = tree2path1 &&
+test $(cat $s3) = tree3path1)

@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='handling of alternates in environment variables'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 check_obj () {

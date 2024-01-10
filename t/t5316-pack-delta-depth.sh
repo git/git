@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='pack-objects breaks long cross-pack delta chains'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # This mirrors a repeated push setup:
@@ -57,11 +59,18 @@ test_expect_success 'create series of packs' '
 		git commit -m $i &&
 		cur=$(git rev-parse HEAD^{tree}) &&
 		{
-			test -n "$prev" && echo "-$prev"
-			echo $cur
+			if test -n "$prev"
+			then
+				echo "-$prev"
+			fi &&
+			echo $cur &&
 			echo "$(git rev-parse :file) file"
 		} | git pack-objects --stdout >tmp &&
-		git index-pack --stdin --fix-thin <tmp || return 1
+		GIT_TRACE2_EVENT=$PWD/trace \
+		git index-pack -v --stdin --fix-thin <tmp || return 1 &&
+		grep -c region_enter.*progress trace >enter &&
+		grep -c region_leave.*progress trace >leave &&
+		test_cmp enter leave &&
 		prev=$cur
 	done
 '

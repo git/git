@@ -265,7 +265,7 @@ test_expect_success 'choking "git rm" should not let it die with cruft (induce S
 
 test_expect_success !MINGW 'choking "git rm" should not let it die with cruft (induce and check SIGPIPE)' '
 	choke_git_rm_setup &&
-	OUT=$( ((trap "" PIPE; git rm -n "some-file-*"; echo $? 1>&3) | :) 3>&1 ) &&
+	OUT=$( ((trap "" PIPE && git rm -n "some-file-*"; echo $? 1>&3) | :) 3>&1 ) &&
 	test_match_signal 13 "$OUT" &&
 	test_path_is_missing .git/index.lock
 '
@@ -274,12 +274,9 @@ test_expect_success 'Resolving by removal is not a warning-worthy event' '
 	git reset -q --hard &&
 	test_when_finished "rm -f .git/index.lock msg && git reset -q --hard" &&
 	blob=$(echo blob | git hash-object -w --stdin) &&
-	for stage in 1 2 3
-	do
-		echo "100644 $blob $stage	blob"
-	done | git update-index --index-info &&
+	printf "100644 $blob %d\tblob\n" 1 2 3 | git update-index --index-info &&
 	git rm blob >msg 2>&1 &&
-	test_i18ngrep ! "needs merge" msg &&
+	test_grep ! "needs merge" msg &&
 	test_must_fail git ls-files -s --error-unmatch blob
 '
 
@@ -336,7 +333,7 @@ test_expect_success 'rm removes empty submodules from work tree' '
 
 test_expect_success 'rm removes removed submodule from index and .gitmodules' '
 	git reset --hard &&
-	git submodule update &&
+	git -c protocol.file.allow=always submodule update &&
 	rm -rf submod &&
 	git rm submod &&
 	git status -s -uno --ignore-submodules=none >actual &&
@@ -634,7 +631,7 @@ test_expect_success 'rm of a populated submodule with a .git directory migrates 
 	test_path_is_missing submod/.git &&
 	git status -s -uno --ignore-submodules=none >actual &&
 	test_file_not_empty actual &&
-	test_i18ngrep Migrating output.err
+	test_grep Migrating output.err
 '
 
 cat >expect.deepmodified <<EOF
@@ -642,6 +639,7 @@ cat >expect.deepmodified <<EOF
 EOF
 
 test_expect_success 'setup subsubmodule' '
+	test_config_global protocol.file.allow always &&
 	git reset --hard &&
 	git submodule update &&
 	(
@@ -724,7 +722,7 @@ test_expect_success "rm absorbs submodule's nested .git directory" '
 	test_path_is_missing submod/subsubmod/.git &&
 	git status -s -uno --ignore-submodules=none >actual &&
 	test_file_not_empty actual &&
-	test_i18ngrep Migrating output.err
+	test_grep Migrating output.err
 '
 
 test_expect_success 'checking out a commit after submodule removal needs manual updates' '
@@ -733,7 +731,7 @@ test_expect_success 'checking out a commit after submodule removal needs manual 
 	git submodule update &&
 	git checkout -q HEAD^ &&
 	git checkout -q main 2>actual &&
-	test_i18ngrep "^warning: unable to rmdir '\''submod'\'':" actual &&
+	test_grep "^warning: unable to rmdir '\''submod'\'':" actual &&
 	git status -s submod >actual &&
 	echo "?? submod/" >expected &&
 	test_cmp expected actual &&

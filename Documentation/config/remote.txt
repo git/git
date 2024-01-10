@@ -82,5 +82,7 @@ remote.<name>.promisor::
 	objects.
 
 remote.<name>.partialclonefilter::
-	The filter that will be applied when fetching from this
-	promisor remote.
+	The filter that will be applied when fetching from this	promisor remote.
+	Changing or clearing this value will only affect fetches for new commits.
+	To fetch associated objects for commits already present in the local object
+	database, use the `--refetch` option of linkgit:git-fetch[1].

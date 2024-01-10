@@ -2,6 +2,7 @@
 
 test_description='git status for submodule'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_create_repo_with_commit () {
@@ -36,19 +37,19 @@ test_expect_success 'setup' '
 
 test_expect_success 'status clean' '
 	git status >output &&
-	test_i18ngrep "nothing to commit" output
+	test_grep "nothing to commit" output
 '
 
 test_expect_success 'commit --dry-run -a clean' '
 	test_must_fail git commit --dry-run -a >output &&
-	test_i18ngrep "nothing to commit" output
+	test_grep "nothing to commit" output
 '
 
 test_expect_success 'status with modified file in submodule' '
 	(cd sub && git reset --hard) &&
 	echo "changed" >sub/foo &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (modified content)" output
+	test_grep "modified:   sub (modified content)" output
 '
 
 test_expect_success 'status with modified file in submodule (porcelain)' '
@@ -72,7 +73,7 @@ test_expect_success 'status with modified file in submodule (short)' '
 test_expect_success 'status with added file in submodule' '
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (modified content)" output
+	test_grep "modified:   sub (modified content)" output
 '
 
 test_expect_success 'status with added file in submodule (porcelain)' '
@@ -95,12 +96,12 @@ test_expect_success 'status with untracked file in submodule' '
 	(cd sub && git reset --hard) &&
 	echo "content" >sub/new-file &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (untracked content)" output
+	test_grep "modified:   sub (untracked content)" output
 '
 
 test_expect_success 'status -uno with untracked file in submodule' '
 	git status -uno >output &&
-	test_i18ngrep "^nothing to commit" output
+	test_grep "^nothing to commit" output
 '
 
 test_expect_success 'status with untracked file in submodule (porcelain)' '
@@ -121,7 +122,7 @@ test_expect_success 'status with added and untracked file in submodule' '
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	echo "content" >sub/new-file &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (modified content, untracked content)" output
+	test_grep "modified:   sub (modified content, untracked content)" output
 '
 
 test_expect_success 'status with added and untracked file in submodule (porcelain)' '
@@ -139,7 +140,7 @@ test_expect_success 'status with modified file in modified submodule' '
 	(cd sub && echo "next change" >foo && git commit -m "next change" foo) &&
 	echo "changed" >sub/foo &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content)" output
+	test_grep "modified:   sub (new commits, modified content)" output
 '
 
 test_expect_success 'status with modified file in modified submodule (porcelain)' '
@@ -154,7 +155,7 @@ test_expect_success 'status with modified file in modified submodule (porcelain)
 test_expect_success 'status with added file in modified submodule' '
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content)" output
+	test_grep "modified:   sub (new commits, modified content)" output
 '
 
 test_expect_success 'status with added file in modified submodule (porcelain)' '
@@ -169,7 +170,7 @@ test_expect_success 'status with untracked file in modified submodule' '
 	(cd sub && git reset --hard) &&
 	echo "content" >sub/new-file &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, untracked content)" output
+	test_grep "modified:   sub (new commits, untracked content)" output
 '
 
 test_expect_success 'status with untracked file in modified submodule (porcelain)' '
@@ -183,7 +184,7 @@ test_expect_success 'status with added and untracked file in modified submodule'
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	echo "content" >sub/new-file &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content, untracked content)" output
+	test_grep "modified:   sub (new commits, modified content, untracked content)" output
 '
 
 test_expect_success 'status with added and untracked file in modified submodule (porcelain)' '
@@ -208,7 +209,7 @@ test_expect_success 'setup .git file for sub' '
 test_expect_success 'status with added file in modified submodule with .git file' '
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content)" output
+	test_grep "modified:   sub (new commits, modified content)" output
 '
 
 test_expect_success 'status with a lot of untracked files in the submodule' '
@@ -233,12 +234,12 @@ test_expect_success 'rm submodule contents' '
 
 test_expect_success 'status clean (empty submodule dir)' '
 	git status >output &&
-	test_i18ngrep "nothing to commit" output
+	test_grep "nothing to commit" output
 '
 
 test_expect_success 'status -a clean (empty submodule dir)' '
 	test_must_fail git commit --dry-run -a >output &&
-	test_i18ngrep "nothing to commit" output
+	test_grep "nothing to commit" output
 '
 
 cat >status_expect <<\EOF
@@ -251,6 +252,7 @@ test_expect_success 'status with merge conflict in .gitmodules' '
 	test_create_repo_with_commit sub1 &&
 	test_tick &&
 	test_create_repo_with_commit sub2 &&
+	test_config_global protocol.file.allow always &&
 	(
 		cd super &&
 		prev=$(git rev-parse HEAD) &&
@@ -326,6 +328,7 @@ test_expect_success 'diff --submodule with merge conflict in .gitmodules' '
 # sub2 will have an untracked file
 # sub3 will have an untracked repository
 test_expect_success 'setup superproject with untracked file in nested submodule' '
+	test_config_global protocol.file.allow always &&
 	(
 		cd super &&
 		git clean -dfx &&

@@ -1,11 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex-ll.h"
+#include "strbuf.h"
 #include "urlmatch.h"
 
 #define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 #define URL_DIGIT "0123456789"
 #define URL_ALPHADIGIT URL_ALPHA URL_DIGIT
 #define URL_SCHEME_CHARS URL_ALPHADIGIT "+.-"
-#define URL_HOST_CHARS URL_ALPHADIGIT ".-[:]" /* IPv6 literals need [:] */
+#define URL_HOST_CHARS URL_ALPHADIGIT ".-_[:]" /* IPv6 literals need [:] */
 #define URL_UNSAFE_CHARS " <>\"%{}|\\^`" /* plus 0x00-0x1F,0x7F-0xFF */
 #define URL_GEN_RESERVED ":/?#[]@"
 #define URL_SUB_RESERVED "!$&'()*+,;="
@@ -209,7 +212,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 	 */
 	if (!url_len || strchr(":/?#", *url)) {
 		/* Missing host invalid for all URL schemes except file */
-		if (strncmp(norm.buf, "file:", 5)) {
+		if (!starts_with(norm.buf, "file:")) {
 			if (out_info) {
 				out_info->url = NULL;
 				out_info->err = _("missing host and scheme is not 'file:'");
@@ -268,11 +271,11 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 		if (url == slash_ptr) {
 			/* Skip ":" port with no number, it's same as default */
 		} else if (slash_ptr - url == 2 &&
-			   !strncmp(norm.buf, "http:", 5) &&
+			   starts_with(norm.buf, "http:") &&
 			   !strncmp(url, "80", 2)) {
 			/* Skip http :80 as it's the default */
 		} else if (slash_ptr - url == 3 &&
-			   !strncmp(norm.buf, "https:", 6) &&
+			   starts_with(norm.buf, "https:") &&
 			   !strncmp(url, "443", 3)) {
 			/* Skip https :443 as it's the default */
 		} else {
@@ -548,7 +551,8 @@ static int cmp_matches(const struct urlmatch_item *a,
 	return 0;
 }
 
-int urlmatch_config_entry(const char *var, const char *value, void *cb)
+int urlmatch_config_entry(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb)
 {
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
@@ -562,7 +566,7 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 
 	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
 		if (collect->cascade_fn)
-			return collect->cascade_fn(var, value, cb);
+			return collect->cascade_fn(var, value, ctx, cb);
 		return 0; /* not interested */
 	}
 	dot = strrchr(key, '.');
@@ -606,8 +610,13 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	strbuf_addstr(&synthkey, collect->section);
 	strbuf_addch(&synthkey, '.');
 	strbuf_addstr(&synthkey, key);
-	retval = collect->collect_fn(synthkey.buf, value, collect->cb);
+	retval = collect->collect_fn(synthkey.buf, value, ctx, collect->cb);
 
 	strbuf_release(&synthkey);
 	return retval;
+}
+
+void urlmatch_config_release(struct urlmatch_config *config)
+{
+	string_list_clear(&config->vars, 1);
 }

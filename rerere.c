@@ -1,16 +1,21 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
 #include "config.h"
+#include "copy.h"
+#include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "string-list.h"
+#include "read-cache-ll.h"
 #include "rerere.h"
 #include "xdiff-interface.h"
 #include "dir.h"
 #include "resolve-undo.h"
-#include "ll-merge.h"
-#include "attr.h"
+#include "merge-ll.h"
+#include "path.h"
 #include "pathspec.h"
-#include "object-store.h"
-#include "hash-lookup.h"
+#include "object-file.h"
+#include "object-store-ll.h"
 #include "strmap.h"
 
 #define RESOLVED 0
@@ -197,7 +202,7 @@ static void read_rr(struct repository *r, struct string_list *rr)
 		const unsigned hexsz = the_hash_algo->hexsz;
 
 		/* There has to be the hash, tab, path and then NUL */
-		if (buf.len < hexsz + 2 || get_sha1_hex(buf.buf, hash))
+		if (buf.len < hexsz + 2 || get_hash_hex(buf.buf, hash))
 			die(_("corrupt MERGE_RR"));
 
 		if (buf.buf[hexsz] != '.') {
@@ -591,7 +596,7 @@ int rerere_remaining(struct repository *r, struct string_list *merge_rr)
 		else if (conflict_type == RESOLVED) {
 			struct string_list_item *it;
 			it = string_list_lookup(merge_rr, (const char *)e->name);
-			if (it != NULL) {
+			if (it) {
 				free_rerere_id(it);
 				it->util = RERERE_RESOLVED;
 			}
@@ -609,19 +614,20 @@ static int try_merge(struct index_state *istate,
 		     const struct rerere_id *id, const char *path,
 		     mmfile_t *cur, mmbuffer_t *result)
 {
-	int ret;
+	enum ll_merge_result ret;
 	mmfile_t base = {NULL, 0}, other = {NULL, 0};
 
 	if (read_mmfile(&base, rerere_path(id, "preimage")) ||
-	    read_mmfile(&other, rerere_path(id, "postimage")))
-		ret = 1;
-	else
+	    read_mmfile(&other, rerere_path(id, "postimage"))) {
+		ret = LL_MERGE_CONFLICT;
+	} else {
 		/*
 		 * A three-way merge. Note that this honors user-customizable
 		 * low-level merge driver settings.
 		 */
 		ret = ll_merge(result, path, &base, NULL, cur, "", &other, "",
 			       istate, NULL);
+	}
 
 	free(base.ptr);
 	free(other.ptr);
@@ -964,8 +970,9 @@ static int handle_cache(struct index_state *istate,
 			break;
 		i = ce_stage(ce) - 1;
 		if (!mmfile[i].ptr) {
-			mmfile[i].ptr = read_object_file(&ce->oid, &type,
-							 &size);
+			mmfile[i].ptr = repo_read_object_file(the_repository,
+							      &ce->oid, &type,
+							      &size);
 			mmfile[i].size = size;
 		}
 	}
@@ -1103,7 +1110,7 @@ int rerere_forget(struct repository *r, struct pathspec *pathspec)
 	 * recover the original conflicted state and then
 	 * find the conflicted paths.
 	 */
-	unmerge_index(r->index, pathspec);
+	unmerge_index(r->index, pathspec, 0);
 	find_conflict(r, &conflict);
 	for (i = 0; i < conflict.nr; i++) {
 		struct string_list_item *it = &conflict.items[i];

@@ -1,14 +1,15 @@
 /*
  * Generic implementation of background process infrastructure.
  */
+#include "git-compat-util.h"
 #include "sub-process.h"
 #include "sigchain.h"
 #include "pkt-line.h"
 
-int cmd2process_cmp(const void *unused_cmp_data,
+int cmd2process_cmp(const void *cmp_data UNUSED,
 		    const struct hashmap_entry *eptr,
 		    const struct hashmap_entry *entry_or_key,
-		    const void *unused_keydata)
+		    const void *keydata UNUSED)
 {
 	const struct subprocess_entry *e1, *e2;
 
@@ -187,7 +188,7 @@ static int handshake_capabilities(struct child_process *process,
 				*supported_capabilities |= capabilities[i].flag;
 		} else {
 			die("subprocess '%s' requested unsupported capability '%s'",
-			    process->argv[0], p);
+			    process->args.v[0], p);
 		}
 	}
 

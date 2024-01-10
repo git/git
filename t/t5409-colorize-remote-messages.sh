@@ -5,7 +5,7 @@ test_description='remote messages are colorized on the client'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	write_script .git/hooks/update <<-\EOF &&
+	test_hook --setup update <<-\EOF &&
 	echo error: error
 	echo ERROR: also highlighted
 	echo hint: hint

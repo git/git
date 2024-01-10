@@ -1,5 +1,5 @@
 test_expect_success "setup proc-receive hook (ng, no message, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ng refs/for/main/topic"
@@ -32,7 +32,7 @@ test_expect_success "proc-receive: fail to update (ng, no message, $PROTOCOL/por
 '
 
 test_expect_success "setup proc-receive hook (ng message, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ng refs/for/main/topic error msg"

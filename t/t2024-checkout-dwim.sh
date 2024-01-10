@@ -93,7 +93,7 @@ test_expect_success 'when arg matches multiple remotes, do not fallback to inter
 
 	test_must_fail git checkout ambiguous_branch_and_file 2>err &&
 
-	test_i18ngrep "matched multiple (2) remote tracking branches" err &&
+	test_grep "matched multiple (2) remote tracking branches" err &&
 
 	# file must not be altered
 	test_cmp expect ambiguous_branch_and_file
@@ -105,12 +105,12 @@ test_expect_success 'checkout of branch from multiple remotes fails with advice'
 	test_must_fail git checkout foo 2>stderr &&
 	test_branch main &&
 	status_uno_is_clean &&
-	test_i18ngrep "^hint: " stderr &&
+	test_grep "^hint: " stderr &&
 	test_must_fail git -c advice.checkoutAmbiguousRemoteBranchName=false \
 		checkout foo 2>stderr &&
 	test_branch main &&
 	status_uno_is_clean &&
-	test_i18ngrep ! "^hint: " stderr
+	test_grep ! "^hint: " stderr
 '
 
 test_expect_success PERL 'checkout -p with multiple remotes does not print advice' '
@@ -118,7 +118,7 @@ test_expect_success PERL 'checkout -p with multiple remotes does not print advic
 	test_might_fail git branch -D foo &&
 
 	git checkout -p foo 2>stderr &&
-	test_i18ngrep ! "^hint: " stderr &&
+	test_grep ! "^hint: " stderr &&
 	status_uno_is_clean
 '
 
@@ -305,10 +305,13 @@ test_expect_success 'loosely defined local base branch is reported correctly' '
 	test_config branch.strict.merge refs/heads/main &&
 	test_config branch.loose.merge main &&
 
-	git checkout strict | sed -e "s/strict/BRANCHNAME/g" >expect &&
+	git checkout strict >expect.raw 2>&1 &&
+	sed -e "s/strict/BRANCHNAME/g" <expect.raw >expect &&
 	status_uno_is_clean &&
-	git checkout loose | sed -e "s/loose/BRANCHNAME/g" >actual &&
+	git checkout loose >actual.raw 2>&1 &&
+	sed -e "s/loose/BRANCHNAME/g" <actual.raw >actual &&
 	status_uno_is_clean &&
+	grep BRANCHNAME actual &&
 
 	test_cmp expect actual
 '

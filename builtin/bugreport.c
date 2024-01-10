@@ -1,10 +1,16 @@
 #include "builtin.h"
+#include "abspath.h"
+#include "editor.h"
+#include "gettext.h"
 #include "parse-options.h"
 #include "strbuf.h"
 #include "help.h"
 #include "compat/compiler.h"
-#include "run-command.h"
-
+#include "hook.h"
+#include "hook-list.h"
+#include "diagnose.h"
+#include "object-file.h"
+#include "setup.h"
 
 static void get_system_info(struct strbuf *sys_info)
 {
@@ -41,39 +47,7 @@ static void get_system_info(struct strbuf *sys_info)
 
 static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 {
-	/*
-	 * NEEDSWORK: Doesn't look like there is a list of all possible hooks;
-	 * so below is a transcription of `git help hooks`. Later, this should
-	 * be replaced with some programmatically generated list (generated from
-	 * doc or else taken from some library which tells us about all the
-	 * hooks)
-	 */
-	static const char *hook[] = {
-		"applypatch-msg",
-		"pre-applypatch",
-		"post-applypatch",
-		"pre-commit",
-		"pre-merge-commit",
-		"prepare-commit-msg",
-		"commit-msg",
-		"post-commit",
-		"pre-rebase",
-		"post-checkout",
-		"post-merge",
-		"pre-push",
-		"pre-receive",
-		"update",
-		"post-receive",
-		"post-update",
-		"push-to-checkout",
-		"pre-auto-gc",
-		"post-rewrite",
-		"sendemail-validate",
-		"fsmonitor-watchman",
-		"p4-pre-submit",
-		"post-index-change",
-	};
-	int i;
+	const char **p;
 
 	if (nongit) {
 		strbuf_addstr(hook_info,
@@ -81,13 +55,17 @@ static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 		return;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(hook); i++)
-		if (find_hook(hook[i]))
-			strbuf_addf(hook_info, "%s\n", hook[i]);
+	for (p = hook_name_list; *p; p++) {
+		const char *hook = *p;
+
+		if (hook_exists(hook))
+			strbuf_addf(hook_info, "%s\n", hook);
+	}
 }
 
 static const char * const bugreport_usage[] = {
-	N_("git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"),
+	N_("git bugreport [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+	   "              [--diagnose[=<mode>]]"),
 	NULL
 };
 
@@ -126,27 +104,39 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	int report = -1;
 	time_t now = time(NULL);
 	struct tm tm;
+	enum diagnose_mode diagnose = DIAGNOSE_NONE;
 	char *option_output = NULL;
 	char *option_suffix = "%Y-%m-%d-%H%M";
 	const char *user_relative_path = NULL;
 	char *prefixed_filename;
+	size_t output_path_len;
+	int ret;
 
 	const struct option bugreport_options[] = {
+		OPT_CALLBACK_F(0, "diagnose", &diagnose, N_("mode"),
+			       N_("create an additional zip archive of detailed diagnostics (default 'stats')"),
+			       PARSE_OPT_OPTARG, option_parse_diagnose),
 		OPT_STRING('o', "output-directory", &option_output, N_("path"),
-			   N_("specify a destination for the bugreport file")),
+			   N_("specify a destination for the bugreport file(s)")),
 		OPT_STRING('s', "suffix", &option_suffix, N_("format"),
-			   N_("specify a strftime format suffix for the filename")),
+			   N_("specify a strftime format suffix for the filename(s)")),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, bugreport_options,
 			     bugreport_usage, 0);
 
+	if (argc) {
+		error(_("unknown argument `%s'"), argv[0]);
+		usage(bugreport_usage[0]);
+	}
+
 	/* Prepare the path to put the result */
 	prefixed_filename = prefix_filename(prefix,
 					    option_output ? option_output : "");
 	strbuf_addstr(&report_path, prefixed_filename);
 	strbuf_complete(&report_path, '/');
+	output_path_len = report_path.len;
 
 	strbuf_addstr(&report_path, "git-bugreport-");
 	strbuf_addftime(&report_path, option_suffix, localtime_r(&now, &tm), 0, 0);
@@ -159,6 +149,20 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	default:
 		die(_("could not create leading directories for '%s'"),
 		    report_path.buf);
+	}
+
+	/* Prepare diagnostics, if requested */
+	if (diagnose != DIAGNOSE_NONE) {
+		struct strbuf zip_path = STRBUF_INIT;
+		strbuf_add(&zip_path, report_path.buf, output_path_len);
+		strbuf_addstr(&zip_path, "git-diagnostics-");
+		strbuf_addftime(&zip_path, option_suffix, localtime_r(&now, &tm), 0, 0);
+		strbuf_addstr(&zip_path, ".zip");
+
+		if (create_diagnostics_archive(&zip_path, diagnose))
+			die_errno(_("unable to create diagnostics archive %s"), zip_path.buf);
+
+		strbuf_release(&zip_path);
 	}
 
 	/* Prepare the report contents */
@@ -188,7 +192,9 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 		user_relative_path);
 
 	free(prefixed_filename);
-	UNLEAK(buffer);
-	UNLEAK(report_path);
-	return !!launch_editor(report_path.buf, NULL, NULL);
+	strbuf_release(&buffer);
+
+	ret = !!launch_editor(report_path.buf, NULL, NULL);
+	strbuf_release(&report_path);
+	return ret;
 }

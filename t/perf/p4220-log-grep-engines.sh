@@ -36,7 +36,8 @@ do
 		else
 			prereq=""
 		fi
-		test_perf $prereq "$engine log$GIT_PERF_4220_LOG_OPTS --grep='$pattern'" "
+		test_perf "$engine log$GIT_PERF_4220_LOG_OPTS --grep='$pattern'" \
+			--prereq "$prereq" "
 			git -c grep.patternType=$engine log --pretty=format:%h$GIT_PERF_4220_LOG_OPTS --grep='$pattern' >'out.$engine' || :
 		"
 	done

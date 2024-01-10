@@ -5,9 +5,6 @@
 
 test_description='git-svn svn mergeinfo properties'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./lib-git-svn.sh
 
 test_expect_success 'load svn dump' "

@@ -32,7 +32,7 @@ the tests.
     ok 2 - plain with GIT_WORK_TREE
     ok 3 - plain bare
 
-Since the tests all output TAP (see http://testanything.org) they can
+Since the tests all output TAP (see https://testanything.org) they can
 be run with any TAP harness. Here's an example of parallel testing
 powered by a recent version of prove(1):
 
@@ -196,11 +196,6 @@ appropriately before running "make". Short options can be bundled, i.e.
 	this feature by setting the GIT_TEST_CHAIN_LINT environment
 	variable to "1" or "0", respectively.
 
-	A few test scripts disable some of the more advanced
-	chain-linting detection in the name of efficiency. You can
-	override this by setting the GIT_TEST_CHAIN_LINT_HARDER
-	environment variable to "1".
-
 --stress::
 	Run the test script repeatedly in multiple parallel jobs until
 	one of them fails.  Useful for reproducing rare failures in
@@ -267,8 +262,8 @@ The argument for --run, <test-selector>, is a list of description
 substrings or globs or individual test numbers or ranges with an
 optional negation prefix (of '!') that define what tests in a test
 suite to include (or exclude, if negated) in the run.  A range is two
-numbers separated with a dash and matches a range of tests with both
-ends been included.  You may omit the first or the second number to
+numbers separated with a dash and specifies an inclusive range of tests
+to run.  You may omit the first or the second number to
 mean "from the first test" or "up to the very last test" respectively.
 
 The argument to --run is split on commas into separate strings,
@@ -279,10 +274,10 @@ text that you want to match includes a comma, use the glob character
 on all tests that match either the glob *rebase* or the glob
 *merge?cherry-pick*.
 
-If --run starts with an unprefixed number or range the initial
-set of tests to run is empty. If the first item starts with '!'
+If --run starts with an unprefixed number or range, the initial
+set of tests to run is empty.  If the first item starts with '!',
 all the tests are added to the initial set.  After initial set is
-determined every test number or range is added or excluded from
+determined, every test number or range is added or excluded from
 the set one by one, from left to right.
 
 For example, to run only tests up to a specific test (21), one
@@ -366,12 +361,47 @@ excluded as so much relies on it, but this might change in the future.
 GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
 test suite. Accept any boolean values that are accepted by git-config.
 
-GIT_TEST_PASSING_SANITIZE_LEAK=<boolean> when compiled with
-SANITIZE=leak will run only those tests that have whitelisted
-themselves as passing with no memory leaks. Tests can be whitelisted
-by setting "TEST_PASSES_SANITIZE_LEAK=true" before sourcing
-"test-lib.sh" itself at the top of the test script. This test mode is
-used by the "linux-leaks" CI target.
+GIT_TEST_PASSING_SANITIZE_LEAK=true skips those tests that haven't
+declared themselves as leak-free by setting
+"TEST_PASSES_SANITIZE_LEAK=true" before sourcing "test-lib.sh". This
+test mode is used by the "linux-leaks" CI target.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=check checks that our
+"TEST_PASSES_SANITIZE_LEAK=true" markings are current. Rather than
+skipping those tests that haven't set "TEST_PASSES_SANITIZE_LEAK=true"
+before sourcing "test-lib.sh" this mode runs them with
+"--invert-exit-code". This is used to check that there's a one-to-one
+mapping between "TEST_PASSES_SANITIZE_LEAK=true" and those tests that
+pass under "SANITIZE=leak". This is especially useful when testing a
+series that fixes various memory leaks with "git rebase -x".
+
+GIT_TEST_SANITIZE_LEAK_LOG=true will log memory leaks to
+"test-results/$TEST_NAME.leak/trace.*" files. The logs include a
+"dedup_token" (see +"ASAN_OPTIONS=help=1 ./git") and other options to
+make logs +machine-readable.
+
+With GIT_TEST_SANITIZE_LEAK_LOG=true we'll look at the leak logs
+before exiting and exit on failure if the logs showed that we had a
+memory leak, even if the test itself would have otherwise passed. This
+allows us to catch e.g. missing &&-chaining. This is especially useful
+when combined with "GIT_TEST_PASSING_SANITIZE_LEAK", see below.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=check when combined with "--immediate"
+will run to completion faster, and result in the same failing
+tests. The only practical reason to run
+GIT_TEST_PASSING_SANITIZE_LEAK=check without "--immediate" is to
+combine it with "GIT_TEST_SANITIZE_LEAK_LOG=true". If we stop at the
+first failing test case our leak logs won't show subsequent leaks we
+might have run into.
+
+GIT_TEST_PASSING_SANITIZE_LEAK=(true|check) will not catch all memory
+leaks unless combined with GIT_TEST_SANITIZE_LEAK_LOG=true. Some tests
+run "git" (or "test-tool" etc.) without properly checking the exit
+code, or git will invoke itself and fail to ferry the abort() exit
+code to the original caller. When the two modes are combined we'll
+look at the "test-results/$TEST_NAME.leak/trace.*" files at the end of
+the test run to see if had memory leaks which the test itself didn't
+catch.
 
 GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
@@ -405,12 +435,16 @@ every 'git commit-graph write', as if the `--changed-paths` option was
 passed in.
 
 GIT_TEST_FSMONITOR=$PWD/t7519/fsmonitor-all exercises the fsmonitor
-code path for utilizing a file system monitor to speed up detecting
-new or changed files.
+code paths for utilizing a (hook based) file system monitor to speed up
+detecting new or changed files.
 
 GIT_TEST_INDEX_VERSION=<n> exercises the index read/write code path
 for the index version specified.  Can be set to any valid version
 (currently 2, 3, or 4).
+
+GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=<boolean> if enabled will
+use the boundary-based bitmap traversal algorithm. See the documentation
+of `pack.useBitmapBoundaryTraversal` for more details.
 
 GIT_TEST_PACK_SPARSE=<boolean> if disabled will default the pack-objects
 builtin to use the non-sparse object walk. This can still be overridden by
@@ -418,10 +452,6 @@ the --sparse command-line argument.
 
 GIT_TEST_PRELOAD_INDEX=<boolean> exercises the preload-index code path
 by overriding the minimum number of cache entries required per thread.
-
-GIT_TEST_ADD_I_USE_BUILTIN=<boolean>, when true, enables the
-built-in version of git add -i. See 'add.interactive.useBuiltin' in
-git-config(1).
 
 GIT_TEST_INDEX_THREADS=<n> enables exercising the multi-threaded loading
 of the index for the whole test suite by bypassing the default number of
@@ -449,7 +479,7 @@ GIT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
 use in the test scripts. Recognized values for <hash-algo> are "sha1"
 and "sha256".
 
-GIT_TEST_WRITE_REV_INDEX=<boolean>, when true enables the
+GIT_TEST_NO_WRITE_REV_INDEX=<boolean>, when true disables the
 'pack.writeReverseIndex' setting.
 
 GIT_TEST_SPARSE_INDEX=<boolean>, when true enables index writes to use the
@@ -463,11 +493,14 @@ GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=<boolean>, when true, makes
 registering submodule ODBs as alternates a fatal action. Support for
 this environment variable can be removed once the migration to
 explicitly providing repositories when accessing submodule objects is
-complete (in which case we might want to replace this with a trace2
-call so that users can make it visible if accessing submodule objects
-without an explicit repository still happens) or needs to be abandoned
-for whatever reason (in which case the migrated codepaths still retain
-their performance benefits).
+complete or needs to be abandoned for whatever reason (in which case the
+migrated codepaths still retain their performance benefits).
+
+GIT_TEST_REQUIRE_PREREQ=<list> allows specifying a space separated list of
+prereqs that are required to succeed. If a prereq in this list is triggered by
+a test and then fails then the whole test run will abort. This can help to make
+sure the expected tests are executed and not silently skipped when their
+dependency breaks or is simply not present in a new environment.
 
 Naming Tests
 ------------
@@ -544,13 +577,67 @@ This test harness library does the following things:
    consistently when command line arguments --verbose (or -v),
    --debug (or -d), and --immediate (or -i) is given.
 
+Recommended style
+-----------------
+
+ - Keep the test_expect_* function call and test title on
+   the same line.
+
+   For example, with test_expect_success, write it like:
+
+  test_expect_success 'test title' '
+      ... test body ...
+  '
+
+   Instead of:
+
+  test_expect_success \
+      'test title' \
+      '... test body ...'
+
+ - End the line with an opening single quote.
+
+ - Indent here-document bodies, and use "<<-" instead of "<<"
+   to strip leading TABs used for indentation:
+
+  test_expect_success 'test something' '
+      cat >expect <<-\EOF &&
+      one
+      two
+      three
+      EOF
+      test_something > actual &&
+      test_cmp expect actual
+  '
+
+   Instead of:
+
+  test_expect_success 'test something' '
+      cat >expect <<\EOF &&
+  one
+  two
+  three
+  EOF
+      test_something > actual &&
+      test_cmp expect actual
+  '
+
+ - Quote or escape the EOF delimiter that begins a here-document if
+   there is no parameter or other expansion in it, to signal readers
+   that they can skim it more casually:
+
+  cmd <<-\EOF
+  literal here-document text without any expansion
+  EOF
+
+
 Do's & don'ts
 -------------
 
 Here are a few examples of things you probably should and shouldn't do
 when writing tests.
 
-Here are the "do's:"
+The "do's:"
 
  - Put all code inside test_expect_success and other assertions.
 
@@ -800,7 +887,7 @@ see test-lib-functions.sh for the full list and their options.
    rare case where your test depends on more than one:
 
 	test_expect_success PERL,PYTHON 'yo dawg' \
-	    ' test $(perl -E 'print eval "1 +" . qx[python -c "print 2"]') == "4" '
+	    ' test $(perl -E '\''print eval "1 +" . qx[python -c "print(2)"]'\'') = "4" '
 
  - test_expect_failure [<prereq>] <message> <script>
 
@@ -876,32 +963,6 @@ see test-lib-functions.sh for the full list and their options.
 	    skip_all='skipping perl interface tests, perl not available'
 	    test_done
 	fi
-
- - test_external [<prereq>] <message> <external> <script>
-
-   Execute a <script> with an <external> interpreter (like perl). This
-   was added for tests like t9700-perl-git.sh which do most of their
-   work in an external test script.
-
-	test_external \
-	    'GitwebCache::*FileCache*' \
-	    perl "$TEST_DIRECTORY"/t9503/test_cache_interface.pl
-
-   If the test is outputting its own TAP you should set the
-   test_external_has_tap variable somewhere before calling the first
-   test_external* function. See t9700-perl-git.sh for an example.
-
-	# The external test will outputs its own plan
-	test_external_has_tap=1
-
- - test_external_without_stderr [<prereq>] <message> <external> <script>
-
-   Like test_external but fail if there's any output on stderr,
-   instead of checking the exit code.
-
-	test_external_without_stderr \
-	    'Perl API' \
-	    perl "$TEST_DIRECTORY"/t9700/test.pl
 
  - test_expect_code <exit-code> <command>
 
@@ -1040,6 +1101,12 @@ see test-lib-functions.sh for the full list and their options.
    the symbolic link in the file system and a part that does; then only
    the latter part need be protected by a SYMLINKS prerequisite (see below).
 
+ - test_path_is_executable
+
+   This tests whether a file is executable and prints an error message
+   if not. This must be used only under the POSIXPERM prerequisite
+   (see below).
+
  - test_oid_init
 
    This function loads facts and useful object IDs related to the hash
@@ -1169,8 +1236,8 @@ and it knows that the object ID of an empty tree is a certain
 because the things the very basic core test tries to achieve is
 to serve as a basis for people who are changing the Git internals
 drastically.  For these people, after making certain changes,
-not seeing failures from the basic test _is_ a failure.  And
-such drastic changes to the core Git that even changes these
+not seeing failures from the basic test _is_ a failure.  Any
+Git core changes so drastic that they change even these
 otherwise supposedly stable object IDs should be accompanied by
 an update to t0000-basic.sh.
 
@@ -1180,7 +1247,7 @@ knowledge of the core Git internals.  If all the test scripts
 hardcoded the object IDs like t0000-basic.sh does, that defeats
 the purpose of t0000-basic.sh, which is to isolate that level of
 validation in one place.  Your test also ends up needing
-updating when such a change to the internal happens, so do _not_
+an update whenever the internals change, so do _not_
 do it and leave the low level of validation to t0000-basic.sh.
 
 Test coverage
@@ -1211,7 +1278,7 @@ Devel::Cover module. To install it do:
    sudo aptitude install libdevel-cover-perl
 
    # From the CPAN with cpanminus
-   curl -L http://cpanmin.us | perl - --sudo --self-upgrade
+   curl -L https://cpanmin.us/ | perl - --sudo --self-upgrade
    cpanm --sudo Devel::Cover
 
 Then, at the top-level:

@@ -1,7 +1,7 @@
 #ifndef PACK_OBJECTS_H
 #define PACK_OBJECTS_H
 
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "thread-utils.h"
 #include "pack.h"
 
@@ -116,16 +116,6 @@ struct object_entry {
 	unsigned dfs_state:OE_DFS_STATE_BITS;
 	unsigned depth:OE_DEPTH_BITS;
 	unsigned ext_base:1; /* delta_idx points outside packlist */
-
-	/*
-	 * pahole results on 64-bit linux (gcc and clang)
-	 *
-	 *   size: 80, bit_padding: 9 bits
-	 *
-	 * and on 32-bit (gcc)
-	 *
-	 *   size: 76, bit_padding: 9 bits
-	 */
 };
 
 struct packing_data {
@@ -168,6 +158,14 @@ struct packing_data {
 	/* delta islands */
 	unsigned int *tree_depth;
 	unsigned char *layer;
+
+	/*
+	 * Used when writing cruft packs.
+	 *
+	 * Object mtimes are stored in pack order when writing, but
+	 * written out in lexicographic (index) order.
+	 */
+	uint32_t *cruft_mtime;
 };
 
 void prepare_packing_data(struct repository *r, struct packing_data *pdata);
@@ -287,6 +285,23 @@ static inline void oe_set_layer(struct packing_data *pack,
 	if (!pack->layer)
 		CALLOC_ARRAY(pack->layer, pack->nr_alloc);
 	pack->layer[e - pack->objects] = layer;
+}
+
+static inline uint32_t oe_cruft_mtime(struct packing_data *pack,
+				      struct object_entry *e)
+{
+	if (!pack->cruft_mtime)
+		return 0;
+	return pack->cruft_mtime[e - pack->objects];
+}
+
+static inline void oe_set_cruft_mtime(struct packing_data *pack,
+				      struct object_entry *e,
+				      uint32_t mtime)
+{
+	if (!pack->cruft_mtime)
+		CALLOC_ARRAY(pack->cruft_mtime, pack->nr_alloc);
+	pack->cruft_mtime[e - pack->objects] = mtime;
 }
 
 #endif

@@ -5,11 +5,13 @@
 
 test_description='Same rename detection as t4003 but testing diff-raw.'
 
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success 'setup reference tree' '
-	cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
+	COPYING_test_data >COPYING &&
 	echo frotz >rezrov &&
 	git update-index --add COPYING rezrov &&
 	tree=$(git write-tree) &&
@@ -64,7 +66,7 @@ test_expect_success 'validate output from rename/copy detection (#2)' '
 # nows how to say Copy.
 
 test_expect_success 'validate output from rename/copy detection (#3)' '
-	cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
+	COPYING_test_data >COPYING &&
 	git update-index --add --remove COPYING COPYING.1 &&
 
 	cat <<-EOF >expected &&

@@ -9,14 +9,14 @@ git-diff-index - Compare a tree to the working tree or index
 SYNOPSIS
 --------
 [verse]
-'git diff-index' [-m] [--cached] [--merge-base] [<common diff options>] <tree-ish> [<path>...]
+'git diff-index' [-m] [--cached] [--merge-base] [<common-diff-options>] <tree-ish> [<path>...]
 
 DESCRIPTION
 -----------
-Compares the content and mode of the blobs found in a tree object
+Compare the content and mode of the blobs found in a tree object
 with the corresponding tracked files in the working tree, or with the
 corresponding paths in the index.  When <path> arguments are present,
-compares only paths matching those patterns.  Otherwise all tracked
+compare only paths matching those patterns.  Otherwise all tracked
 files are compared.
 
 OPTIONS
@@ -69,8 +69,8 @@ done an `update-index` to make that effective in the index file.
 matches my working directory. But doing a 'git diff-index' does:
 
   torvalds@ppc970:~/git> git diff-index --cached HEAD
-  -100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        commit.c
-  +100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        git-commit.c
+  :100644 000000 4161aecc6700a2eb579e842af0b7f22b98443f74 0000000000000000000000000000000000000000 D	commit.c
+  :000000 100644 0000000000000000000000000000000000000000 4161aecc6700a2eb579e842af0b7f22b98443f74 A	git-commit.c
 
 You can see easily that the above is a rename.
 
@@ -103,7 +103,7 @@ have not actually done a 'git update-index' on it yet - there is no
 "object" associated with the new state, and you get:
 
   torvalds@ppc970:~/v2.6/linux> git diff-index --abbrev HEAD
-  :100644 100664 7476bb... 000000...      kernel/sched.c
+  :100644 100644 7476bb5ba 000000000 M	kernel/sched.c
 
 i.e., it shows that the tree has changed, and that `kernel/sched.c` is
 not up to date and may contain new stuff. The all-zero sha1 means that to

@@ -16,7 +16,7 @@ test_expect_success 'setup large marks file' '
 	blob=$(git rev-parse HEAD:one.t) &&
 	for i in $(test_seq 1024 16384)
 	do
-		echo ":$i $blob"
+		echo ":$i $blob" || return 1
 	done >>marks
 '
 
@@ -25,6 +25,7 @@ test_expect_success 'import with large marks file' '
 '
 
 test_expect_success 'setup dump with submodule' '
+	test_config_global protocol.file.allow always &&
 	git submodule add "$PWD" sub &&
 	git commit -m "add submodule" &&
 	git fast-export HEAD >dump
@@ -46,6 +47,35 @@ test_expect_success 'import with submodule mapping' '
 	git -C dst rev-parse HEAD:sub >actual &&
 	echo "$new" >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'paths adjusted for relative subdir' '
+	git init deep-dst &&
+	mkdir deep-dst/subdir &&
+	>deep-dst/subdir/empty-marks &&
+	git -C deep-dst/subdir fast-import \
+		--rewrite-submodules-from=sub:../../from \
+		--rewrite-submodules-to=sub:../../to \
+		--import-marks=empty-marks \
+		--export-marks=exported-marks \
+		--export-pack-edges=exported-edges \
+		<dump &&
+	# we do not bother checking resulting repo; we just care that nothing
+	# complained about failing to open files for reading, and that files
+	# for writing were created in the expected spot
+	test_path_is_file deep-dst/subdir/exported-marks &&
+	test_path_is_file deep-dst/subdir/exported-edges
+'
+
+test_expect_success 'relative marks are not affected by subdir' '
+	git init deep-relative &&
+	mkdir deep-relative/subdir &&
+	git -C deep-relative/subdir fast-import \
+		--relative-marks \
+		--export-marks=exported-marks \
+		<dump &&
+	test_path_is_missing deep-relative/subdir/exported-marks &&
+	test_path_is_file deep-relative/.git/info/fast-import/exported-marks
 '
 
 test_done

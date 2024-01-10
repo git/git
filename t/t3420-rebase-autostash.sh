@@ -310,7 +310,7 @@ test_expect_success 'autostash is saved on editor failure with conflict' '
 test_expect_success 'autostash with dirty submodules' '
 	test_when_finished "git reset --hard && git checkout main" &&
 	git checkout -b with-submodule &&
-	git submodule add ./ sub &&
+	git -c protocol.file.allow=always submodule add ./ sub &&
 	test_tick &&
 	git commit -m add-submodule &&
 	echo changed >sub/file0 &&

@@ -1,3 +1,14 @@
+push.autoSetupRemote::
+	If set to "true" assume `--set-upstream` on default push when no
+	upstream tracking exists for the current branch; this option
+	takes effect with push.default options 'simple', 'upstream',
+	and 'current'. It is useful if by default you want new branches
+	to be pushed to the default remote (like the behavior of
+	'push.default=current') and you also want the upstream tracking
+	to be set. Workflows most likely to benefit from this option are
+	'simple' central workflows where all branches are expected to
+	have the same name on the remote.
+
 push.default::
 	Defines the action `git push` should take if no refspec is
 	given (whether from the command-line, config, or elsewhere).
@@ -24,7 +35,7 @@ push.default::
 
 * `tracking` - This is a deprecated synonym for `upstream`.
 
-* `simple` - pushes the current branch with the same name on the remote.
+* `simple` - push the current branch with the same name on the remote.
 +
 If you are working on a centralized workflow (pushing to the same repository you
 pull from, which is typically `origin`), then you need to configure an upstream
@@ -56,7 +67,7 @@ new default).
 --
 
 push.followTags::
-	If set to true enable `--follow-tags` option by default.  You
+	If set to true, enable `--follow-tags` option by default.  You
 	may override this configuration at time of push by specifying
 	`--no-follow-tags`.
 
@@ -99,18 +110,8 @@ This will result in only b (a and c are cleared).
 ----
 
 push.recurseSubmodules::
-	Make sure all submodule commits used by the revisions to be pushed
-	are available on a remote-tracking branch. If the value is 'check'
-	then Git will verify that all submodule commits that changed in the
-	revisions to be pushed are available on at least one remote of the
-	submodule. If any commits are missing, the push will be aborted and
-	exit with non-zero status. If the value is 'on-demand' then all
-	submodules that changed in the revisions to be pushed will be
-	pushed. If on-demand was not able to push all necessary revisions
-	it will also be aborted and exit with non-zero status. If the value
-	is 'no' then default behavior of ignoring submodules when pushing
-	is retained. You may override this configuration at time of push by
-	specifying '--recurse-submodules=check|on-demand|no'.
+	May be "check", "on-demand", "only", or "no", with the same behavior
+	as that of "push --recurse-submodules".
 	If not set, 'no' is used by default, unless 'submodule.recurse' is
 	set (in which case a 'true' value means 'on-demand').
 
@@ -126,3 +127,8 @@ push.negotiate::
 	server attempt to find commits in common. If "false", Git will
 	rely solely on the server's ref advertisement to find commits
 	in common.
+
+push.useBitmaps::
+	If set to "false", disable use of bitmaps for "git push" even if
+	`pack.useBitmaps` is "true", without preventing other git operations
+	from using bitmaps. Default is true.

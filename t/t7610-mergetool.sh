@@ -33,7 +33,7 @@ test_expect_success 'setup' '
 		git add foo &&
 		git commit -m "Add foo"
 	) &&
-	git submodule add git://example.com/submod submod &&
+	git submodule add file:///dev/null submod &&
 	git add file1 "spaced name" file1[1-4] subdir/file3 .gitmodules submod &&
 	git commit -m "add initial versions" &&
 
@@ -614,7 +614,7 @@ test_expect_success 'submodule in subdirectory' '
 		)
 	) &&
 	test_when_finished "rm -rf subdir/subdir_module" &&
-	git submodule add git://example.com/subsubmodule subdir/subdir_module &&
+	git submodule add file:///dev/null subdir/subdir_module &&
 	git add subdir/subdir_module &&
 	git commit -m "add submodule in subdirectory" &&
 
@@ -858,6 +858,44 @@ test_expect_success 'mergetool hideResolved' '
 	test_write_lines >expect local "" c &&
 	test_cmp expect file1 &&
 	git commit -m "test resolved with mergetool"
+'
+
+test_expect_success 'mergetool with guiDefault' '
+	test_config merge.guitool myguitool &&
+	test_config mergetool.myguitool.cmd "(printf \"gui \" && cat \"\$REMOTE\") >\"\$MERGED\"" &&
+	test_config mergetool.myguitool.trustExitCode true &&
+	test_when_finished "git reset --hard" &&
+	git checkout -b test$test_count branch1 &&
+	git submodule update -N &&
+	test_must_fail git merge main &&
+
+	test_config mergetool.guiDefault auto &&
+	DISPLAY=SOMETHING && export DISPLAY &&
+	yes "" | git mergetool both &&
+	yes "" | git mergetool file1 file1 &&
+
+	DISPLAY= && export DISPLAY &&
+	yes "" | git mergetool file2 "spaced name" &&
+
+	test_config mergetool.guiDefault true &&
+	yes "" | git mergetool subdir/file3 &&
+
+	yes "d" | git mergetool file11 &&
+	yes "d" | git mergetool file12 &&
+	yes "l" | git mergetool submod &&
+
+	echo "gui main updated" >expect &&
+	test_cmp expect file1 &&
+
+	echo "main new" >expect &&
+	test_cmp expect file2 &&
+
+	echo "gui main new sub" >expect &&
+	test_cmp expect subdir/file3 &&
+
+	echo "branch1 submodule" >expect &&
+	test_cmp expect submod/bar &&
+	git commit -m "branch1 resolved with mergetool"
 '
 
 test_done

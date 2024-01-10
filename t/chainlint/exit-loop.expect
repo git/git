@@ -5,7 +5,7 @@
 		bar &&
 		baz
 	done
->) &&
+) &&
 (
 	while true
 	do
@@ -13,7 +13,7 @@
 		bar &&
 		baz
 	done
->) &&
+) &&
 (
 	i=0 &&
 	while test $i -lt 10
@@ -21,4 +21,4 @@
 		echo $i || exit
 		i=$(($i + 1))
 	done
->)
+)

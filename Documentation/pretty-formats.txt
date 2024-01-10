@@ -20,7 +20,7 @@ built-in formats:
 
 * 'oneline'
 
-	  <hash> <title line>
+	  <hash> <title-line>
 +
 This is designed to be as compact as possible.
 
@@ -29,17 +29,17 @@ This is designed to be as compact as possible.
 	  commit <hash>
 	  Author: <author>
 
-	      <title line>
+	      <title-line>
 
 * 'medium'
 
 	  commit <hash>
 	  Author: <author>
-	  Date:   <author date>
+	  Date:   <author-date>
 
-	      <title line>
+	      <title-line>
 
-	      <full commit message>
+	      <full-commit-message>
 
 * 'full'
 
@@ -47,25 +47,25 @@ This is designed to be as compact as possible.
 	  Author: <author>
 	  Commit: <committer>
 
-	      <title line>
+	      <title-line>
 
-	      <full commit message>
+	      <full-commit-message>
 
 * 'fuller'
 
 	  commit <hash>
 	  Author:     <author>
-	  AuthorDate: <author date>
+	  AuthorDate: <author-date>
 	  Commit:     <committer>
-	  CommitDate: <committer date>
+	  CommitDate: <committer-date>
 
-	       <title line>
+	       <title-line>
 
-	       <full commit message>
+	       <full-commit-message>
 
 * 'reference'
 
-	  <abbrev hash> (<title line>, <short author date>)
+	  <abbrev-hash> (<title-line>, <short-author-date>)
 +
 This format is used to refer to another commit in a commit message and
 is the same as `--pretty='format:%C(auto)%h (%s, %ad)'`.  By default,
@@ -78,10 +78,10 @@ placeholders, its output is not affected by other options like
 
 	  From <hash> <date>
 	  From: <author>
-	  Date: <author date>
-	  Subject: [PATCH] <title line>
+	  Date: <author-date>
+	  Subject: [PATCH] <title-line>
 
-	  <full commit message>
+	  <full-commit-message>
 
 * 'mboxrd'
 +
@@ -101,9 +101,9 @@ commits are displayed, but not the way the diff is shown e.g. with
 `git log --raw`. To get full object names in a raw diff format,
 use `--no-abbrev`.
 
-* 'format:<string>'
+* 'format:<format-string>'
 +
-The 'format:<string>' format allows you to specify which information
+The 'format:<format-string>' format allows you to specify which information
 you want to show. It works a little bit like printf format,
 with the notable exception that you get a newline with '%n'
 instead of '\n'.
@@ -122,7 +122,9 @@ The placeholders are:
 - Placeholders that expand to a single literal character:
 '%n':: newline
 '%%':: a raw '%'
-'%x00':: print a byte from a hex code
+'%x00':: '%x' followed by two hexadecimal digits is replaced with a
+	 byte with the hexadecimal digits' value (we will call this
+	 "literal formatting code" in the rest of this document).
 
 - Placeholders that affect formatting of later placeholders:
 '%Cred':: switch color to red
@@ -146,24 +148,34 @@ The placeholders are:
 '%m':: left (`<`), right (`>`) or boundary (`-`) mark
 '%w([<w>[,<i1>[,<i2>]]])':: switch line wrapping, like the -w option of
 			    linkgit:git-shortlog[1].
-'%<(<N>[,trunc|ltrunc|mtrunc])':: make the next placeholder take at
-				  least N columns, padding spaces on
+'%<( <N> [,trunc|ltrunc|mtrunc])':: make the next placeholder take at
+				  least N column widths, padding spaces on
 				  the right if necessary.  Optionally
-				  truncate at the beginning (ltrunc),
-				  the middle (mtrunc) or the end
-				  (trunc) if the output is longer than
-				  N columns.  Note that truncating
+				  truncate (with ellipsis '..') at the left (ltrunc) `..ft`,
+				  the middle (mtrunc) `mi..le`, or the end
+				  (trunc) `rig..`, if the output is longer than
+				  N columns.
+				  Note 1: that truncating
 				  only works correctly with N >= 2.
-'%<|(<N>)':: make the next placeholder take at least until Nth
-	     columns, padding spaces on the right if necessary
-'%>(<N>)', '%>|(<N>)':: similar to '%<(<N>)', '%<|(<N>)' respectively,
+				  Note 2: spaces around the N and M (see below)
+				  values are optional.
+				  Note 3: Emojis and other wide characters
+				  will take two display columns, which may
+				  over-run column boundaries.
+				  Note 4: decomposed character combining marks
+				  may be misplaced at padding boundaries.
+'%<|( <M> )':: make the next placeholder take at least until Mth
+	     display column, padding spaces on the right if necessary.
+	     Use negative M values for column positions measured
+	     from the right hand edge of the terminal window.
+'%>( <N> )', '%>|( <M> )':: similar to '%<( <N> )', '%<|( <M> )' respectively,
 			but padding spaces on the left
-'%>>(<N>)', '%>>|(<N>)':: similar to '%>(<N>)', '%>|(<N>)'
+'%>>( <N> )', '%>>|( <M> )':: similar to '%>( <N> )', '%>|( <M> )'
 			  respectively, except that if the next
 			  placeholder takes more spaces than given and
 			  there are spaces on its left, use those
 			  spaces
-'%><(<N>)', '%><|(<N>)':: similar to '%<(<N>)', '%<|(<N>)'
+'%><( <N> )', '%><|( <M> )':: similar to '%<( <N> )', '%<|( <M> )'
 			  respectively, but padding both sides
 			  (i.e. the text is centered)
 
@@ -212,14 +224,37 @@ The placeholders are:
 	linkgit:git-rev-list[1])
 '%d':: ref names, like the --decorate option of linkgit:git-log[1]
 '%D':: ref names without the " (", ")" wrapping.
-'%(describe[:options])':: human-readable name, like
-			  linkgit:git-describe[1]; empty string for
-			  undescribable commits.  The `describe` string
-			  may be followed by a colon and zero or more
-			  comma-separated options.  Descriptions can be
-			  inconsistent when tags are added or removed at
-			  the same time.
+'%(decorate[:<options>])'::
+ref names with custom decorations. The `decorate` string may be followed by a
+colon and zero or more comma-separated options. Option values may contain
+literal formatting codes. These must be used for commas (`%x2C`) and closing
+parentheses (`%x29`), due to their role in the option syntax.
 +
+** 'prefix=<value>': Shown before the list of ref names.  Defaults to "{nbsp}`(`".
+** 'suffix=<value>': Shown after the list of ref names.  Defaults to "`)`".
+** 'separator=<value>': Shown between ref names.  Defaults to "`,`{nbsp}".
+** 'pointer=<value>': Shown between HEAD and the branch it points to, if any.
+		      Defaults to "{nbsp}`->`{nbsp}".
+** 'tag=<value>': Shown before tag names. Defaults to "`tag:`{nbsp}".
+
++
+For example, to produce decorations with no wrapping
+or tag annotations, and spaces as separators:
++
+`%(decorate:prefix=,suffix=,tag=,separator= )`
+
+'%(describe[:<options>])'::
+human-readable name, like linkgit:git-describe[1]; empty string for
+undescribable commits.  The `describe` string may be followed by a colon and
+zero or more comma-separated options.  Descriptions can be inconsistent when
+tags are added or removed at the same time.
++
+** 'tags[=<bool-value>]': Instead of only considering annotated tags,
+   consider lightweight tags as well.
+** 'abbrev=<number>': Instead of using the default number of hexadecimal digits
+   (which will vary according to the number of objects in the repository with a
+   default of 7) of the abbreviated object name, use <number> digits, or as many
+   digits as needed to form a unique object name.
 ** 'match=<pattern>': Only consider tags matching the given
    `glob(7)` pattern, excluding the "refs/tags/" prefix.
 ** 'exclude=<pattern>': Do not consider tags matching the given
@@ -265,20 +300,13 @@ endif::git-rev-list[]
 '%gE':: reflog identity email (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
 '%gs':: reflog subject
-'%(trailers[:options])':: display the trailers of the body as
-			  interpreted by
-			  linkgit:git-interpret-trailers[1]. The
-			  `trailers` string may be followed by a colon
-			  and zero or more comma-separated options.
-			  If any option is provided multiple times the
-			  last occurrence wins.
+'%(trailers[:<options>])'::
+display the trailers of the body as interpreted by
+linkgit:git-interpret-trailers[1]. The `trailers` string may be followed by
+a colon and zero or more comma-separated options. If any option is provided
+multiple times, the last occurrence wins.
 +
-The boolean options accept an optional value `[=<BOOL>]`. The values
-`true`, `false`, `on`, `off` etc. are all accepted. See the "boolean"
-sub-section in "EXAMPLES" in linkgit:git-config[1]. If a boolean
-option is given with no value, it's enabled.
-+
-** 'key=<K>': only show trailers with specified key. Matching is done
+** 'key=<key>': only show trailers with specified <key>. Matching is done
    case-insensitively and trailing colon is optional. If option is
    given multiple times trailer lines matching any of the keys are
    shown. This option automatically enables the `only` option so that
@@ -286,25 +314,25 @@ option is given with no value, it's enabled.
    desired it can be disabled with `only=false`.  E.g.,
    `%(trailers:key=Reviewed-by)` shows trailer lines with key
    `Reviewed-by`.
-** 'only[=<BOOL>]': select whether non-trailer lines from the trailer
+** 'only[=<bool>]': select whether non-trailer lines from the trailer
    block should be included.
-** 'separator=<SEP>': specify a separator inserted between trailer
+** 'separator=<sep>': specify a separator inserted between trailer
    lines. When this option is not given each trailer line is
-   terminated with a line feed character. The string SEP may contain
+   terminated with a line feed character. The string <sep> may contain
    the literal formatting codes described above. To use comma as
    separator one must use `%x2C` as it would otherwise be parsed as
    next option. E.g., `%(trailers:key=Ticket,separator=%x2C )`
    shows all trailer lines whose key is "Ticket" separated by a comma
    and a space.
-** 'unfold[=<BOOL>]': make it behave as if interpret-trailer's `--unfold`
+** 'unfold[=<bool>]': make it behave as if interpret-trailer's `--unfold`
    option was given. E.g.,
    `%(trailers:only,unfold=true)` unfolds and shows all trailer lines.
-** 'keyonly[=<BOOL>]': only show the key part of the trailer.
-** 'valueonly[=<BOOL>]': only show the value part of the trailer.
-** 'key_value_separator=<SEP>': specify a separator inserted between
+** 'keyonly[=<bool>]': only show the key part of the trailer.
+** 'valueonly[=<bool>]': only show the value part of the trailer.
+** 'key_value_separator=<sep>': specify a separator inserted between
    trailer lines. When this option is not given each trailer key-value
    pair is separated by ": ". Otherwise it shares the same semantics
-   as 'separator=<SEP>' above.
+   as 'separator=<sep>' above.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will
@@ -312,6 +340,11 @@ insert an empty string unless we are traversing reflog entries (e.g., by
 `git log -g`). The `%d` and `%D` placeholders will use the "short"
 decoration format if `--decorate` was not already provided on the command
 line.
+
+The boolean options accept an optional value `[=<bool-value>]`. The values
+`true`, `false`, `on`, `off` etc. are all accepted. See the "boolean"
+sub-section in "EXAMPLES" in linkgit:git-config[1]. If a boolean
+option is given with no value, it's enabled.
 
 If you add a `+` (plus sign) after '%' of a placeholder, a line-feed
 is inserted immediately before the expansion if and only if the

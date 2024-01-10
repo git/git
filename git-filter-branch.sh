@@ -579,7 +579,7 @@ if [ "$filter_tag_name" ]; then
 				git hash-object -t tag -w --stdin) ||
 				die "Could not create new tag object for $ref"
 			if git cat-file tag "$ref" | \
-			   sane_grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
+			   grep '^-----BEGIN PGP SIGNATURE-----' >/dev/null 2>&1
 			then
 				warn "gpg signature stripped from tag object $sha1t"
 			fi

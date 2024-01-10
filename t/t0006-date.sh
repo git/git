@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test date parsing and printing'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # arbitrary reference time: 2009-08-30 19:20:00
@@ -63,6 +65,10 @@ check_show 'format-local:%%z' "$TIME" '%z'
 check_show 'format:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 16:13:20'
 check_show 'format-local:%Y-%m-%d %H:%M:%S' "$TIME" '2016-06-15 09:13:20' '' EST5
 
+check_show 'format:%s' '123456789 +1234' 123456789
+check_show 'format:%s' '123456789 -1234' 123456789
+check_show 'format-local:%s' '123456789 -1234' 123456789
+
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
 check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" TIME_IS_64BIT,TIME_T_IS_64BIT
@@ -82,6 +88,13 @@ check_parse 2008-02-14 bad
 check_parse '2008-02-14 20:30:45' '2008-02-14 20:30:45 +0000'
 check_parse '2008-02-14 20:30:45 -0500' '2008-02-14 20:30:45 -0500'
 check_parse '2008.02.14 20:30:45 -0500' '2008-02-14 20:30:45 -0500'
+check_parse '20080214T20:30:45' '2008-02-14 20:30:45 +0000'
+check_parse '20080214T20:30' '2008-02-14 20:30:00 +0000'
+check_parse '20080214T20' '2008-02-14 20:00:00 +0000'
+check_parse '20080214T203045' '2008-02-14 20:30:45 +0000'
+check_parse '20080214T2030' '2008-02-14 20:30:00 +0000'
+check_parse '20080214T000000.20' '2008-02-14 00:00:00 +0000'
+check_parse '20080214T00:00:00.20' '2008-02-14 00:00:00 +0000'
 check_parse '20080214T203045-04:00' '2008-02-14 20:30:45 -0400'
 check_parse '20080214T203045 -04:00' '2008-02-14 20:30:45 -0400'
 check_parse '20080214T203045.019-04:00' '2008-02-14 20:30:45 -0400'
@@ -93,6 +106,7 @@ check_parse '2008-02-14 20:30:45 -05' '2008-02-14 20:30:45 -0500'
 check_parse '2008-02-14 20:30:45 -:30' '2008-02-14 20:30:45 +0000'
 check_parse '2008-02-14 20:30:45 -05:00' '2008-02-14 20:30:45 -0500'
 check_parse '2008-02-14 20:30:45' '2008-02-14 20:30:45 -0500' EST5
+check_parse 'Thu, 7 Apr 2005 15:14:13 -0700' '2005-04-07 15:14:13 -0700'
 
 check_approxidate() {
 	echo "$1 -> $2 +0000" >expect

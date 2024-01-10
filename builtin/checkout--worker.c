@@ -1,9 +1,11 @@
 #include "builtin.h"
 #include "config.h"
 #include "entry.h"
+#include "gettext.h"
 #include "parallel-checkout.h"
 #include "parse-options.h"
 #include "pkt-line.h"
+#include "read-cache-ll.h"
 
 static void packet_to_pc_item(const char *buffer, int len,
 			      struct parallel_checkout_item *pc_item)
@@ -82,8 +84,8 @@ static void worker_loop(struct checkout *state)
 	size_t i, nr = 0, alloc = 0;
 
 	while (1) {
-		int len = packet_read(0, NULL, NULL, packet_buffer,
-				      sizeof(packet_buffer), 0);
+		int len = packet_read(0, packet_buffer, sizeof(packet_buffer),
+				      0);
 
 		if (len < 0)
 			BUG("packet_read() returned negative value");

@@ -49,7 +49,8 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 'git reset' [<mode>] [<commit>]::
 	This form resets the current branch head to `<commit>` and
 	possibly updates the index (resetting it to the tree of `<commit>`) and
-	the working tree depending on `<mode>`. If `<mode>` is omitted,
+	the working tree depending on `<mode>`. Before the operation, `ORIG_HEAD`
+	is set to the tip of the current branch. If `<mode>` is omitted,
 	defaults to `--mixed`. The `<mode>` must be one of the following:
 +
 --
@@ -69,7 +70,8 @@ linkgit:git-add[1]).
 
 --hard::
 	Resets the index and working tree. Any changes to tracked files in the
-	working tree since `<commit>` are discarded.
+	working tree since `<commit>` are discarded.  Any untracked files or
+	directories in the way of writing any tracked files are simply deleted.
 
 --merge::
 	Resets the index and updates the files in the working tree that are
@@ -104,10 +106,11 @@ OPTIONS
 
 -q::
 --quiet::
---no-quiet::
-	Be quiet, only report errors. The default behavior is set by the
-	`reset.quiet` config option. `--quiet` and `--no-quiet` will
-	override the default behavior.
+	Be quiet, only report errors.
+
+--refresh::
+--no-refresh::
+	Refresh the index after a mixed reset. Enabled by default.
 
 --pathspec-from-file=<file>::
 	Pathspec is passed in `<file>` instead of commandline args. If

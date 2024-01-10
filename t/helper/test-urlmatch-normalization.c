@@ -5,8 +5,9 @@
 int cmd__urlmatch_normalization(int argc, const char **argv)
 {
 	const char usage[] = "test-tool urlmatch-normalization [-p | -l] <url1> | <url1> <url2>";
-	char *url1, *url2;
+	char *url1 = NULL, *url2 = NULL;
 	int opt_p = 0, opt_l = 0;
+	int ret = 0;
 
 	/*
 	 * For one url, succeed if url_normalize succeeds on it, fail otherwise.
@@ -39,7 +40,7 @@ int cmd__urlmatch_normalization(int argc, const char **argv)
 			printf("%s\n", url1);
 		if (opt_l)
 			printf("%u\n", (unsigned)info.url_len);
-		return 0;
+		goto cleanup;
 	}
 
 	if (opt_p || opt_l)
@@ -47,5 +48,9 @@ int cmd__urlmatch_normalization(int argc, const char **argv)
 
 	url1 = url_normalize(argv[1], NULL);
 	url2 = url_normalize(argv[2], NULL);
-	return (url1 && url2 && !strcmp(url1, url2)) ? 0 : 1;
+	ret = (url1 && url2 && !strcmp(url1, url2)) ? 0 : 1;
+cleanup:
+	free(url1);
+	free(url2);
+	return ret;
 }

@@ -54,7 +54,7 @@ test_expect_success 'git p4 sync uninitialized repo' '
 	(
 		cd "$git" &&
 		test_must_fail git p4 sync 2>errs &&
-		test_i18ngrep "Perhaps you never did" errs
+		test_grep "Perhaps you never did" errs
 	)
 '
 
@@ -71,6 +71,91 @@ test_expect_success 'git p4 sync new branch' '
 		git p4 sync --branch=refs/remotes/p4/depot //depot@all &&
 		git log --oneline p4/depot >lines &&
 		test_line_count = 2 lines
+	)
+'
+
+#
+# Setup as before, and then explicitly sync imported branch, using a
+# different ref format.
+#
+test_expect_success 'git p4 sync existing branch without changes' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		git p4 sync --branch=refs/remotes/p4/depot >out &&
+		test_grep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, relative branch name.
+#
+test_expect_success 'git p4 sync existing branch with relative name' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=branch1 //depot@all &&
+		git p4 sync --branch=p4/branch1 >out &&
+		test_grep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, with a nested branch path, referenced different ways.
+#
+test_expect_success 'git p4 sync existing branch with nested path' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=p4/some/path //depot@all &&
+		git p4 sync --branch=some/path >out &&
+		test_grep "No changes to import!" out
+	)
+'
+
+#
+# Same as before, with a full ref path outside the p4/* namespace.
+#
+test_expect_success 'git p4 sync branch explicit ref without p4 in path' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=refs/remotes/someremote/depot //depot@all &&
+		git p4 sync --branch=refs/remotes/someremote/depot >out &&
+		test_grep "No changes to import!" out
+	)
+'
+
+test_expect_success 'git p4 sync nonexistent ref' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		test_must_fail git p4 sync --branch=depot2 2>errs &&
+		test_grep "Perhaps you never did" errs
+	)
+'
+
+test_expect_success 'git p4 sync existing non-p4-imported ref' '
+	test_create_repo "$git" &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		test_commit head &&
+		git p4 sync --branch=depot //depot@all &&
+		test_must_fail git p4 sync --branch=refs/heads/master 2>errs &&
+		test_grep "Perhaps you never did" errs
 	)
 '
 
@@ -171,7 +256,7 @@ test_expect_success 'clone using non-numeric revision ranges' '
 			cd "$git" &&
 			git ls-files >lines &&
 			test_line_count = 8 lines
-		)
+		) || return 1
 	done
 '
 
@@ -205,7 +290,7 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 		export PATH &&
 		test_expect_code 1 git p4 clone --dest="$git" //depot >errs 2>&1
 	) &&
-	test_i18ngrep ! Traceback errs
+	test_grep ! Traceback errs
 '
 
 # Hide a file from p4d, make sure we catch its complaint.  This won't fail in
@@ -216,7 +301,7 @@ test_expect_success 'exit gracefully for p4 server errors' '
 	mv "$db"/depot/file1,v "$db"/depot/file1,v,hidden &&
 	test_when_finished cleanup_git &&
 	test_expect_code 1 git p4 clone --dest="$git" //depot@1 >out 2>err &&
-	test_i18ngrep "Error from p4 print" err
+	test_grep "Error from p4 print" err
 '
 
 test_expect_success 'clone --bare should make a bare repository' '
@@ -245,7 +330,7 @@ test_expect_success 'initial import time from top change time' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
-		gittime=$(git show -s --raw --pretty=format:%at HEAD) &&
+		gittime=$(git show -s --pretty=format:%at HEAD) &&
 		echo $p4time $gittime &&
 		test $p4time = $gittime
 	)
@@ -277,16 +362,21 @@ test_expect_success 'run hook p4-pre-submit before submit' '
 		git commit -m "add hello.txt" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --dry-run >out &&
-		grep "Would apply" out &&
-		mkdir -p .git/hooks &&
-		write_script .git/hooks/p4-pre-submit <<-\EOF &&
-		exit 0
-		EOF
+		grep "Would apply" out
+	) &&
+	test_hook -C "$git" p4-pre-submit <<-\EOF &&
+	exit 0
+	EOF
+	(
+		cd "$git" &&
 		git p4 submit --dry-run >out &&
-		grep "Would apply" out &&
-		write_script .git/hooks/p4-pre-submit <<-\EOF &&
-		exit 1
-		EOF
+		grep "Would apply" out
+	) &&
+	test_hook -C "$git" --clobber p4-pre-submit <<-\EOF &&
+	exit 1
+	EOF
+	(
+		cd "$git" &&
 		test_must_fail git p4 submit --dry-run >errs 2>&1 &&
 		! grep "Would apply" errs
 	)

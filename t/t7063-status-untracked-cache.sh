@@ -86,11 +86,15 @@ test_expect_success 'core.untrackedCache is unset' '
 '
 
 test_expect_success 'setup' '
-	git init worktree &&
+	git init --template= worktree &&
 	cd worktree &&
 	mkdir done dtwo dthree &&
 	touch one two three done/one dtwo/two dthree/three &&
+	test-tool chmtime =-300 one two three done/one dtwo/two dthree/three &&
+	test-tool chmtime =-300 done dtwo dthree &&
+	test-tool chmtime =-300 . &&
 	git add one two done/one &&
+	mkdir .git/info &&
 	: >.git/info/exclude &&
 	git update-index --untracked-cache &&
 	test_oid_cache <<-EOF
@@ -142,7 +146,6 @@ two
 EOF
 
 test_expect_success 'status first time (empty cache)' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../actual &&
@@ -166,7 +169,6 @@ test_expect_success 'untracked cache after first status' '
 '
 
 test_expect_success 'status second time (fully populated cache)' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../actual &&
@@ -189,9 +191,122 @@ test_expect_success 'untracked cache after second status' '
 	test_cmp ../dump.expect ../actual
 '
 
+cat >../status_uall.expect <<EOF &&
+A  done/one
+A  one
+A  two
+?? dthree/three
+?? dtwo/two
+?? three
+EOF
+
+# Bypassing the untracked cache here is not desirable from an
+# end-user perspective, but is expected in the current design.
+# The untracked cache data stored for a -unormal run cannot be
+# correctly used in a -uall run - it would yield incorrect output.
+test_expect_success 'untracked cache is bypassed with -uall' '
+	: >../trace.output &&
+	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	git status -uall --porcelain >../actual &&
+	iuc status -uall --porcelain >../status.iuc &&
+	test_cmp ../status_uall.expect ../status.iuc &&
+	test_cmp ../status_uall.expect ../actual &&
+	get_relevant_traces ../trace.output ../trace.relevant &&
+	cat >../trace.expect <<EOF &&
+ ....path:
+EOF
+	test_cmp ../trace.expect ../trace.relevant
+'
+
+test_expect_success 'untracked cache remains after bypass' '
+	test-tool dump-untracked-cache >../actual &&
+	test_cmp ../dump.expect ../actual
+'
+
+test_expect_success 'if -uall is configured, untracked cache gets populated by default' '
+	test_config status.showuntrackedfiles all &&
+	: >../trace.output &&
+	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
+	test_cmp ../status_uall.expect ../status.iuc &&
+	test_cmp ../status_uall.expect ../actual &&
+	get_relevant_traces ../trace.output ../trace.relevant &&
+	cat >../trace.expect <<EOF &&
+ ....path:
+ ....node-creation:3
+ ....gitignore-invalidation:1
+ ....directory-invalidation:0
+ ....opendir:4
+EOF
+	test_cmp ../trace.expect ../trace.relevant
+'
+
+cat >../dump_uall.expect <<EOF &&
+info/exclude $EMPTY_BLOB
+core.excludesfile $ZERO_OID
+exclude_per_dir .gitignore
+flags 00000000
+/ $ZERO_OID recurse valid
+three
+/done/ $ZERO_OID recurse valid
+/dthree/ $ZERO_OID recurse valid
+three
+/dtwo/ $ZERO_OID recurse valid
+two
+EOF
+
+test_expect_success 'if -uall was configured, untracked cache is populated' '
+	test-tool dump-untracked-cache >../actual &&
+	test_cmp ../dump_uall.expect ../actual
+'
+
+test_expect_success 'if -uall is configured, untracked cache is used by default' '
+	test_config status.showuntrackedfiles all &&
+	: >../trace.output &&
+	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	git status --porcelain >../actual &&
+	iuc status --porcelain >../status.iuc &&
+	test_cmp ../status_uall.expect ../status.iuc &&
+	test_cmp ../status_uall.expect ../actual &&
+	get_relevant_traces ../trace.output ../trace.relevant &&
+	cat >../trace.expect <<EOF &&
+ ....path:
+ ....node-creation:0
+ ....gitignore-invalidation:0
+ ....directory-invalidation:0
+ ....opendir:0
+EOF
+	test_cmp ../trace.expect ../trace.relevant
+'
+
+# Bypassing the untracked cache here is not desirable from an
+# end-user perspective, but is expected in the current design.
+# The untracked cache data stored for a -all run cannot be
+# correctly used in a -unormal run - it would yield incorrect
+# output.
+test_expect_success 'if -uall is configured, untracked cache is bypassed with -unormal' '
+	test_config status.showuntrackedfiles all &&
+	: >../trace.output &&
+	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
+	git status -unormal --porcelain >../actual &&
+	iuc status -unormal --porcelain >../status.iuc &&
+	test_cmp ../status.expect ../status.iuc &&
+	test_cmp ../status.expect ../actual &&
+	get_relevant_traces ../trace.output ../trace.relevant &&
+	cat >../trace.expect <<EOF &&
+ ....path:
+EOF
+	test_cmp ../trace.expect ../trace.relevant
+'
+
+test_expect_success 'repopulate untracked cache for -unormal' '
+	git status --porcelain
+'
+
 test_expect_success 'modify in root directory, one dir invalidation' '
-	avoid_racy &&
 	: >four &&
+	test-tool chmtime =-240 four &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../actual &&
@@ -241,7 +356,6 @@ EOF
 '
 
 test_expect_success 'new .gitignore invalidates recursively' '
-	avoid_racy &&
 	echo four >.gitignore &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
@@ -292,7 +406,6 @@ EOF
 '
 
 test_expect_success 'new info/exclude invalidates everything' '
-	avoid_racy &&
 	echo three >>.git/info/exclude &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
@@ -520,14 +633,14 @@ test_expect_success 'create/modify files, some of which are gitignored' '
 	echo three >done/three && # three is gitignored
 	echo four >done/four && # four is gitignored at a higher level
 	echo five >done/five && # five is not gitignored
-	echo test >base && #we need to ensure that the root dir is touched
-	rm base &&
+	test-tool chmtime =-180 done/two done/three done/four done/five done &&
+	# we need to ensure that the root dir is touched (in the past);
+	test-tool chmtime =-180 . &&
 	sync_mtime
 '
 
 test_expect_success 'test sparse status with untracked cache' '
 	: >../trace.output &&
-	avoid_racy &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
 	iuc status --porcelain >../status.iuc &&
@@ -570,7 +683,6 @@ EOF
 '
 
 test_expect_success 'test sparse status again with untracked cache' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
@@ -597,11 +709,11 @@ EOF
 test_expect_success 'set up for test of subdir and sparse checkouts' '
 	mkdir done/sub &&
 	mkdir done/sub/sub &&
-	echo "sub" > done/sub/sub/file
+	echo "sub" > done/sub/sub/file &&
+	test-tool chmtime =-120 done/sub/sub/file done/sub/sub done/sub done
 '
 
 test_expect_success 'test sparse status with untracked cache and subdir' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
@@ -651,7 +763,6 @@ EOF
 '
 
 test_expect_success 'test sparse status again with untracked cache and subdir' '
-	avoid_racy &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../status.actual &&
@@ -873,6 +984,11 @@ test_expect_success '"status" after file replacement should be clean with UC=fal
 	avoid_racy &&
 	status_is_clean &&
 	status_is_clean
+'
+
+test_expect_success 'empty repo (no index) and core.untrackedCache' '
+	git init emptyrepo &&
+	git -C emptyrepo -c core.untrackedCache=true write-tree
 '
 
 test_done

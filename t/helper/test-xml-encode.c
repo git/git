@@ -6,7 +6,7 @@ static const char *utf8_replace_character = "&#xfffd;";
  * Encodes (possibly incorrect) UTF-8 on <stdin> to <stdout>, to be embedded
  * in an XML file.
  */
-int cmd__xml_encode(int argc, const char **argv)
+int cmd__xml_encode(int argc UNUSED, const char **argv UNUSED)
 {
 	unsigned char buf[1024], tmp[4], *tmp2 = NULL;
 	ssize_t cur = 0, len = 1, remaining = 0;

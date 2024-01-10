@@ -1,18 +1,22 @@
-#include "cache.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-store-ll.h"
 #include "commit.h"
-#include "tag.h"
 #include "diff.h"
 #include "revision.h"
-#include "list-objects.h"
 #include "progress.h"
-#include "pack-revindex.h"
 #include "pack.h"
 #include "pack-bitmap.h"
 #include "hash-lookup.h"
 #include "pack-objects.h"
+#include "path.h"
 #include "commit-reach.h"
 #include "prio-queue.h"
+#include "trace2.h"
+#include "tree.h"
+#include "tree-walk.h"
 
 struct bitmapped_commit {
 	struct commit *commit;
@@ -326,6 +330,7 @@ next:
 	trace2_data_intmax("pack-bitmap-write", the_repository,
 			   "num_maximal_commits", num_maximal);
 
+	release_revisions(&revs);
 	free_commit_list(reusable);
 }
 
@@ -383,6 +388,8 @@ static int fill_bitmap_tree(struct bitmap *bitmap,
 	return 0;
 }
 
+static int reused_bitmaps_nr;
+
 static int fill_bitmap_commit(struct bb_commit *ent,
 			      struct commit *commit,
 			      struct prio_queue *queue,
@@ -403,13 +410,19 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 
 		if (old_bitmap && mapping) {
 			struct ewah_bitmap *old = bitmap_for_commit(old_bitmap, c);
+			struct bitmap *remapped = bitmap_new();
 			/*
 			 * If this commit has an old bitmap, then translate that
 			 * bitmap and add its bits to this one. No need to walk
 			 * parents or the tree for this commit.
 			 */
-			if (old && !rebuild_bitmap(mapping, old, ent->bitmap))
+			if (old && !rebuild_bitmap(mapping, old, remapped)) {
+				bitmap_or(ent->bitmap, remapped);
+				bitmap_free(remapped);
+				reused_bitmaps_nr++;
 				continue;
+			}
+			bitmap_free(remapped);
 		}
 
 		/*
@@ -420,7 +433,8 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 		if (!found)
 			return -1;
 		bitmap_set(ent->bitmap, pos);
-		prio_queue_put(tree_queue, get_commit_tree(c));
+		prio_queue_put(tree_queue,
+			       repo_get_commit_tree(the_repository, c));
 
 		for (p = c->parents; p; p = p->next) {
 			pos = find_object_pos(&p->item->object.oid, &found);
@@ -525,6 +539,8 @@ int bitmap_writer_build(struct packing_data *to_pack)
 
 	trace2_region_leave("pack-bitmap-write", "building_bitmaps_total",
 			    the_repository);
+	trace2_data_intmax("pack-bitmap-write", the_repository,
+			   "building_bitmaps_reused", reused_bitmaps_nr);
 
 	stop_progress(&writer.progress);
 
@@ -575,14 +591,14 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 
 	QSORT(indexed_commits, indexed_commits_nr, date_compare);
 
-	if (writer.show_progress)
-		writer.progress = start_progress("Selecting bitmap commits", 0);
-
 	if (indexed_commits_nr < 100) {
 		for (i = 0; i < indexed_commits_nr; ++i)
 			push_bitmapped_commit(indexed_commits[i]);
 		return;
 	}
+
+	if (writer.show_progress)
+		writer.progress = start_progress("Selecting bitmap commits", 0);
 
 	for (;;) {
 		struct commit *chosen = NULL;
@@ -648,26 +664,96 @@ static const struct object_id *oid_access(size_t pos, const void *table)
 }
 
 static void write_selected_commits_v1(struct hashfile *f,
-				      struct pack_idx_entry **index,
-				      uint32_t index_nr)
+				      uint32_t *commit_positions,
+				      off_t *offsets)
 {
 	int i;
 
 	for (i = 0; i < writer.selected_nr; ++i) {
 		struct bitmapped_commit *stored = &writer.selected[i];
 
-		int commit_pos =
-			oid_pos(&stored->commit->object.oid, index, index_nr, oid_access);
+		if (offsets)
+			offsets[i] = hashfile_total(f);
 
-		if (commit_pos < 0)
-			BUG("trying to write commit not in index");
-
-		hashwrite_be32(f, commit_pos);
+		hashwrite_be32(f, commit_positions[i]);
 		hashwrite_u8(f, stored->xor_offset);
 		hashwrite_u8(f, stored->flags);
 
 		dump_bitmap(f, stored->write_as);
 	}
+}
+
+static int table_cmp(const void *_va, const void *_vb, void *_data)
+{
+	uint32_t *commit_positions = _data;
+	uint32_t a = commit_positions[*(uint32_t *)_va];
+	uint32_t b = commit_positions[*(uint32_t *)_vb];
+
+	if (a > b)
+		return 1;
+	else if (a < b)
+		return -1;
+
+	return 0;
+}
+
+static void write_lookup_table(struct hashfile *f,
+			       uint32_t *commit_positions,
+			       off_t *offsets)
+{
+	uint32_t i;
+	uint32_t *table, *table_inv;
+
+	ALLOC_ARRAY(table, writer.selected_nr);
+	ALLOC_ARRAY(table_inv, writer.selected_nr);
+
+	for (i = 0; i < writer.selected_nr; i++)
+		table[i] = i;
+
+	/*
+	 * At the end of this sort table[j] = i means that the i'th
+	 * bitmap corresponds to j'th bitmapped commit (among the selected
+	 * commits) in lex order of OIDs.
+	 */
+	QSORT_S(table, writer.selected_nr, table_cmp, commit_positions);
+
+	/* table_inv helps us discover that relationship (i'th bitmap
+	 * to j'th commit by j = table_inv[i])
+	 */
+	for (i = 0; i < writer.selected_nr; i++)
+		table_inv[table[i]] = i;
+
+	trace2_region_enter("pack-bitmap-write", "writing_lookup_table", the_repository);
+	for (i = 0; i < writer.selected_nr; i++) {
+		struct bitmapped_commit *selected = &writer.selected[table[i]];
+		uint32_t xor_offset = selected->xor_offset;
+		uint32_t xor_row;
+
+		if (xor_offset) {
+			/*
+			 * xor_index stores the index (in the bitmap entries)
+			 * of the corresponding xor bitmap. But we need to convert
+			 * this index into lookup table's index. So, table_inv[xor_index]
+			 * gives us the index position w.r.t. the lookup table.
+			 *
+			 * If "k = table[i] - xor_offset" then the xor base is the k'th
+			 * bitmap. `table_inv[k]` gives us the position of that bitmap
+			 * in the lookup table.
+			 */
+			uint32_t xor_index = table[i] - xor_offset;
+			xor_row = table_inv[xor_index];
+		} else {
+			xor_row = 0xffffffff;
+		}
+
+		hashwrite_be32(f, commit_positions[table[i]]);
+		hashwrite_be64(f, (uint64_t)offsets[table[i]]);
+		hashwrite_be32(f, xor_row);
+	}
+	trace2_region_leave("pack-bitmap-write", "writing_lookup_table", the_repository);
+
+	free(table);
+	free(table_inv);
 }
 
 static void write_hash_cache(struct hashfile *f,
@@ -682,7 +768,7 @@ static void write_hash_cache(struct hashfile *f,
 	}
 }
 
-void bitmap_writer_set_checksum(unsigned char *sha1)
+void bitmap_writer_set_checksum(const unsigned char *sha1)
 {
 	hashcpy(writer.pack_checksum, sha1);
 }
@@ -696,6 +782,9 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	static uint16_t flags = BITMAP_OPT_FULL_DAG;
 	struct strbuf tmp_file = STRBUF_INIT;
 	struct hashfile *f;
+	uint32_t *commit_positions = NULL;
+	off_t *offsets = NULL;
+	uint32_t i;
 
 	struct bitmap_disk_header header;
 
@@ -714,12 +803,32 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	dump_bitmap(f, writer.trees);
 	dump_bitmap(f, writer.blobs);
 	dump_bitmap(f, writer.tags);
-	write_selected_commits_v1(f, index, index_nr);
+
+	if (options & BITMAP_OPT_LOOKUP_TABLE)
+		CALLOC_ARRAY(offsets, index_nr);
+
+	ALLOC_ARRAY(commit_positions, writer.selected_nr);
+
+	for (i = 0; i < writer.selected_nr; i++) {
+		struct bitmapped_commit *stored = &writer.selected[i];
+		int commit_pos = oid_pos(&stored->commit->object.oid, index, index_nr, oid_access);
+
+		if (commit_pos < 0)
+			BUG(_("trying to write commit not in index"));
+
+		commit_positions[i] = commit_pos;
+	}
+
+	write_selected_commits_v1(f, commit_positions, offsets);
+
+	if (options & BITMAP_OPT_LOOKUP_TABLE)
+		write_lookup_table(f, commit_positions, offsets);
 
 	if (options & BITMAP_OPT_HASH_CACHE)
 		write_hash_cache(f, index, index_nr);
 
-	finalize_hashfile(f, NULL, CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
+	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
+			  CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 
 	if (adjust_shared_perm(tmp_file.buf))
 		die_errno("unable to make temporary bitmap file readable");
@@ -728,4 +837,6 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 		die_errno("unable to rename temporary bitmap file to '%s'", filename);
 
 	strbuf_release(&tmp_file);
+	free(commit_positions);
+	free(offsets);
 }

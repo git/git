@@ -43,6 +43,13 @@ helper_test_clean() {
 	reject $1 https example.com store-user
 	reject $1 https example.com user1
 	reject $1 https example.com user2
+	reject $1 https example.com user-expiry
+	reject $1 https example.com user-expiry-overwrite
+	reject $1 https example.com user4
+	reject $1 https example.com user-distinct-pass
+	reject $1 https example.com user-overwrite
+	reject $1 https example.com user-erase1
+	reject $1 https example.com user-erase2
 	reject $1 http path.tld user
 	reject $1 https timeout.tld user
 	reject $1 https sso.tld
@@ -166,6 +173,49 @@ helper_test() {
 		EOF
 	'
 
+	test_expect_success "helper ($HELPER) overwrites on store" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass1
+		EOF
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass2
+		EOF
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-overwrite
+		password=askpass-password
+		--
+		askpass: Password for '\''https://user-overwrite@example.com'\'':
+		EOF
+	'
+
 	test_expect_success "helper ($HELPER) can forget host" '
 		check reject $HELPER <<-\EOF &&
 		protocol=https
@@ -220,6 +270,31 @@ helper_test() {
 		EOF
 	'
 
+	test_expect_success "helper ($HELPER) does not erase a password distinct from input" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		password=pass1
+		EOF
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		--
+		protocol=https
+		host=example.com
+		username=user-distinct-pass
+		password=pass1
+		EOF
+	'
+
 	test_expect_success "helper ($HELPER) can forget user" '
 		check reject $HELPER <<-\EOF &&
 		protocol=https
@@ -270,6 +345,66 @@ helper_test() {
 		password=
 		EOF
 	'
+
+	test_expect_success "helper ($HELPER) erases all matching credentials" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-erase1
+		password=pass1
+		EOF
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-erase2
+		password=pass1
+		EOF
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		--
+		protocol=https
+		host=example.com
+		username=askpass-username
+		password=askpass-password
+		--
+		askpass: Username for '\''https://example.com'\'':
+		askpass: Password for '\''https://askpass-username@example.com'\'':
+		EOF
+	'
+
+	: ${GIT_TEST_LONG_CRED_BUFFER:=1024}
+	# 23 bytes accounts for "wwwauth[]=basic realm=" plus NUL
+	LONG_VALUE_LEN=$((GIT_TEST_LONG_CRED_BUFFER - 23))
+	LONG_VALUE=$(perl -e 'print "a" x shift' $LONG_VALUE_LEN)
+
+	test_expect_success "helper ($HELPER) not confused by long header" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=victim.example.com
+		username=user
+		password=to-be-stolen
+		EOF
+
+		check fill $HELPER <<-EOF
+		protocol=https
+		host=badguy.example.com
+		wwwauth[]=basic realm=${LONG_VALUE}host=victim.example.com
+		--
+		protocol=https
+		host=badguy.example.com
+		username=askpass-username
+		password=askpass-password
+		wwwauth[]=basic realm=${LONG_VALUE}host=victim.example.com
+		--
+		askpass: Username for '\''https://badguy.example.com'\'':
+		askpass: Password for '\''https://askpass-username@badguy.example.com'\'':
+		EOF
+	'
 }
 
 helper_test_timeout() {
@@ -294,6 +429,110 @@ helper_test_timeout() {
 		--
 		askpass: Username for '\''https://timeout.tld'\'':
 		askpass: Password for '\''https://askpass-username@timeout.tld'\'':
+		EOF
+	'
+}
+
+helper_test_password_expiry_utc() {
+	HELPER=$1
+
+	test_expect_success "helper ($HELPER) stores password_expiry_utc" '
+		check approve $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-expiry
+		password=pass
+		password_expiry_utc=9999999999
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) gets password_expiry_utc" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-expiry
+		--
+		protocol=https
+		host=example.com
+		username=user-expiry
+		password=pass
+		password_expiry_utc=9999999999
+		--
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) overwrites when password_expiry_utc changes" '
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass1
+		password_expiry_utc=9999999998
+		EOF
+		check approve $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass2
+		password_expiry_utc=9999999999
+		EOF
+		check fill $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass2
+		password_expiry_utc=9999999999
+		EOF
+		check reject $HELPER <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=pass2
+		EOF
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		--
+		protocol=https
+		host=example.com
+		username=user-expiry-overwrite
+		password=askpass-password
+		--
+		askpass: Password for '\''https://user-expiry-overwrite@example.com'\'':
+		EOF
+	'
+}
+
+helper_test_oauth_refresh_token() {
+	HELPER=$1
+
+	test_expect_success "helper ($HELPER) stores oauth_refresh_token" '
+		check approve $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user4
+		password=pass
+		oauth_refresh_token=xyzzy
+		EOF
+	'
+
+	test_expect_success "helper ($HELPER) gets oauth_refresh_token" '
+		check fill $HELPER <<-\EOF
+		protocol=https
+		host=example.com
+		username=user4
+		--
+		protocol=https
+		host=example.com
+		username=user4
+		password=pass
+		oauth_refresh_token=xyzzy
+		--
 		EOF
 	'
 }

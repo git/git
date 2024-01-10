@@ -1,11 +1,9 @@
 #ifndef SUBMODULE_CONFIG_CACHE_H
 #define SUBMODULE_CONFIG_CACHE_H
 
-#include "cache.h"
 #include "config.h"
-#include "hashmap.h"
 #include "submodule.h"
-#include "strbuf.h"
+#include "tree-walk.h"
 
 /**
  * The submodule config cache API allows to read submodule
@@ -37,7 +35,7 @@ struct submodule {
 	const char *path;
 	const char *name;
 	const char *url;
-	int fetch_recurse;
+	enum submodule_recurse_mode fetch_recurse;
 	const char *ignore;
 	const char *branch;
 	struct submodule_update_strategy update_strategy;
@@ -50,7 +48,8 @@ struct repository;
 
 void submodule_cache_free(struct submodule_cache *cache);
 
-int parse_submodule_fetchjobs(const char *var, const char *value);
+int parse_submodule_fetchjobs(const char *var, const char *value,
+			      const struct key_value_info *kvi);
 int parse_fetch_recurse_submodules_arg(const char *opt, const char *arg);
 struct option;
 int option_fetch_parse_recurse_submodules(const struct option *opt,
@@ -101,4 +100,37 @@ int check_submodule_name(const char *name);
 void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules);
 void update_clone_config_from_gitmodules(int *max_jobs);
 
+/*
+ * Submodule entry that contains relevant information about a
+ * submodule in a tree.
+ */
+struct submodule_tree_entry {
+	/* The submodule's tree entry. */
+	struct name_entry *name_entry;
+	/*
+	 * A struct repository corresponding to the submodule. May be
+	 * NULL if the submodule has not been updated.
+	 */
+	struct repository *repo;
+	/*
+	 * A struct submodule containing the submodule config in the
+	 * tree's .gitmodules.
+	 */
+	const struct submodule *submodule;
+};
+
+struct submodule_entry_list {
+	struct submodule_tree_entry *entries;
+	int entry_nr;
+	int entry_alloc;
+};
+
+/**
+ * Given a treeish, return all submodules in the tree and its subtrees,
+ * but excluding nested submodules. Callers that require nested
+ * submodules are expected to recurse into the submodules themselves.
+ */
+void submodules_of_tree(struct repository *r,
+			const struct object_id *treeish_name,
+			struct submodule_entry_list *ret);
 #endif /* SUBMODULE_CONFIG_H */

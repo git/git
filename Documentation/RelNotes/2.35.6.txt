@@ -1,0 +1,5 @@
+Git v2.35.6 Release Notes
+=========================
+
+This release merges the security fix that appears in v2.30.7; see
+the release notes for that version for details.

@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='basic tests for the oid array implementation'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 echoid () {

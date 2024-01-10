@@ -4,6 +4,7 @@ test_description='git merge
 
 Testing merge when using a custom message for the merge commit.'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 create_merge_msgs() {

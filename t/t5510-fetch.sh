@@ -5,9 +5,6 @@ test_description='Per branch config variables affects "git fetch".
 
 '
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
 
@@ -40,11 +37,11 @@ test_expect_success "clone and setup child repos" '
 		git config branch.main.remote two &&
 		git config branch.main.merge refs/heads/one &&
 		mkdir -p .git/remotes &&
-		{
-			echo "URL: ../two/.git/"
-			echo "Pull: refs/heads/main:refs/heads/two"
-			echo "Pull: refs/heads/one:refs/heads/one"
-		} >.git/remotes/two
+		cat >.git/remotes/two <<-\EOF
+		URL: ../two/.git/
+		Pull: refs/heads/main:refs/heads/two
+		Pull: refs/heads/one:refs/heads/one
+		EOF
 	) &&
 	git clone . bundle &&
 	git clone . seven
@@ -71,7 +68,7 @@ test_expect_success "fetch test for-merge" '
 	main_in_two=$(cd ../two && git rev-parse main) &&
 	one_in_two=$(cd ../two && git rev-parse one) &&
 	{
-		echo "$one_in_two	"
+		echo "$one_in_two	" &&
 		echo "$main_in_two	not-for-merge"
 	} >expected &&
 	cut -f -2 .git/FETCH_HEAD >actual &&
@@ -165,6 +162,18 @@ test_expect_success 'fetch --prune --tags with refspec prunes based on refspec' 
 	test_must_fail git rev-parse refs/remotes/origin/foo/otherbranch &&
 	git rev-parse origin/extrabranch &&
 	git rev-parse sometag
+'
+
+test_expect_success REFFILES 'fetch --prune fails to delete branches' '
+	cd "$D" &&
+	git clone . prune-fail &&
+	cd prune-fail &&
+	git update-ref refs/remotes/origin/extrabranch main &&
+	git pack-refs --all &&
+	: this will prevent --prune from locking packed-refs for deleting refs, but adding loose refs still succeeds  &&
+	>.git/packed-refs.new &&
+
+	test_must_fail git fetch --prune origin
 '
 
 test_expect_success 'fetch --atomic works with a single branch' '
@@ -265,7 +274,7 @@ test_expect_success 'fetch --atomic executes a single reference transaction only
 	EOF
 
 	rm -f atomic/actual &&
-	write_script atomic/.git/hooks/reference-transaction <<-\EOF &&
+	test_hook -C atomic reference-transaction <<-\EOF &&
 		( echo "$*" && cat ) >>actual
 	EOF
 
@@ -298,7 +307,7 @@ test_expect_success 'fetch --atomic aborts all reference updates if hook aborts'
 	EOF
 
 	rm -f atomic/actual &&
-	write_script atomic/.git/hooks/reference-transaction <<-\EOF &&
+	test_hook -C atomic/.git reference-transaction <<-\EOF &&
 		( echo "$*" && cat ) >>actual
 		exit 1
 	EOF
@@ -326,7 +335,7 @@ test_expect_success 'fetch --atomic --append appends to FETCH_HEAD' '
 	test_line_count = 2 atomic/.git/FETCH_HEAD &&
 	cp atomic/.git/FETCH_HEAD expected &&
 
-	write_script atomic/.git/hooks/reference-transaction <<-\EOF &&
+	test_hook -C atomic reference-transaction <<-\EOF &&
 		exit 1
 	EOF
 
@@ -407,9 +416,9 @@ test_expect_success 'fetch uses remote ref names to describe new refs' '
 	(
 		cd descriptive &&
 		git fetch o 2>actual &&
-		test_i18ngrep "new branch.* -> refs/crazyheads/descriptive-branch$" actual &&
-		test_i18ngrep "new tag.* -> descriptive-tag$" actual &&
-		test_i18ngrep "new ref.* -> crazy$" actual
+		test_grep "new branch.* -> refs/crazyheads/descriptive-branch$" actual &&
+		test_grep "new tag.* -> descriptive-tag$" actual &&
+		test_grep "new ref.* -> crazy$" actual
 	) &&
 	git checkout main
 '
@@ -550,7 +559,7 @@ test_expect_success 'bundle should record HEAD correctly' '
 	git bundle list-heads bundle5 >actual &&
 	for h in HEAD refs/heads/main
 	do
-		echo "$(git rev-parse --verify $h) $h"
+		echo "$(git rev-parse --verify $h) $h" || return 1
 	done >expect &&
 	test_cmp expect actual
 
@@ -782,6 +791,7 @@ test_expect_success 'fetch.writeCommitGraph' '
 '
 
 test_expect_success 'fetch.writeCommitGraph with submodules' '
+	test_config_global protocol.file.allow always &&
 	git clone dups super &&
 	(
 		cd super &&
@@ -795,6 +805,14 @@ test_expect_success 'fetch.writeCommitGraph with submodules' '
 		git -c fetch.writeCommitGraph=true fetch origin &&
 		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain
 	)
+'
+
+# fetches from first configured url
+test_expect_success 'fetch from multiple configured URLs in single remote' '
+	git init url1 &&
+	git remote add multipleurls url1 &&
+	git remote set-url --add multipleurls url2 &&
+	git fetch multipleurls
 '
 
 # configured prune tests
@@ -845,7 +863,11 @@ test_configured_prune_type () {
 		then
 			new_cmdline=$cmdline_setup
 		else
-			new_cmdline=$(printf "%s" "$cmdline" | perl -pe 's[origin(?!/)]["'"$remote_url"'"]g')
+			new_cmdline=$(perl -e '
+				my ($cmdline, $url) = @ARGV;
+				$cmdline =~ s[origin(?!/)][quotemeta($url)]ge;
+				print $cmdline;
+			' -- "$cmdline" "$remote_url")
 		fi
 
 		if test "$fetch_prune_tags" = 'true' ||
@@ -1092,63 +1114,65 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 		git config gc.autoPackLimit 1 &&
 		git config gc.autoDetach false &&
 		GIT_ASK_YESNO="$D/askyesno" git fetch --verbose >fetch.out 2>&1 &&
-		test_i18ngrep "Auto packing the repository" fetch.out &&
+		test_grep "Auto packing the repository" fetch.out &&
 		! grep "Should I try again" fetch.out
 	)
 '
 
-test_expect_success 'fetch aligned output' '
-	git clone . full-output &&
-	test_commit looooooooooooong-tag &&
-	(
-		cd full-output &&
-		git -c fetch.output=full fetch origin >actual 2>&1 &&
-		grep -e "->" actual | cut -c 22- >../actual
-	) &&
-	cat >expect <<-\EOF &&
-	main                 -> origin/main
-	looooooooooooong-tag -> looooooooooooong-tag
-	EOF
-	test_cmp expect actual
+for section in fetch transfer
+do
+	test_expect_success "$section.hideRefs affects connectivity check" '
+		GIT_TRACE="$PWD"/trace git -c $section.hideRefs=refs -c \
+			$section.hideRefs="!refs/tags/" fetch &&
+		grep "git rev-list .*--exclude-hidden=fetch" trace
+	'
+done
+
+test_expect_success 'prepare source branch' '
+	echo one >onebranch &&
+	git checkout --orphan onebranch &&
+	git rm --cached -r . &&
+	git add onebranch &&
+	git commit -m onebranch &&
+	git rev-list --objects onebranch -- >actual &&
+	# 3 objects should be created, at least ...
+	test 3 -le $(wc -l <actual)
 '
 
-test_expect_success 'fetch compact output' '
-	git clone . compact &&
-	test_commit extraaa &&
-	(
-		cd compact &&
-		git -c fetch.output=compact fetch origin >actual 2>&1 &&
-		grep -e "->" actual | cut -c 22- >../actual
-	) &&
-	cat >expect <<-\EOF &&
-	main       -> origin/*
-	extraaa    -> *
-	EOF
-	test_cmp expect actual
-'
+validate_store_type () {
+	git -C dest count-objects -v >actual &&
+	case "$store_type" in
+	packed)
+		grep "^count: 0$" actual ;;
+	loose)
+		grep "^packs: 0$" actual ;;
+	esac || {
+		echo "store_type is $store_type"
+		cat actual
+		false
+	}
+}
 
-test_expect_success '--no-show-forced-updates' '
-	mkdir forced-updates &&
-	(
-		cd forced-updates &&
-		git init &&
-		test_commit 1 &&
-		test_commit 2
-	) &&
-	git clone forced-updates forced-update-clone &&
-	git clone forced-updates no-forced-update-clone &&
-	git -C forced-updates reset --hard HEAD~1 &&
-	(
-		cd forced-update-clone &&
-		git fetch --show-forced-updates origin 2>output &&
-		test_i18ngrep "(forced update)" output
-	) &&
-	(
-		cd no-forced-update-clone &&
-		git fetch --no-show-forced-updates origin 2>output &&
-		test_i18ngrep ! "(forced update)" output
-	)
-'
+test_unpack_limit () {
+	store_type=$1
+
+	case "$store_type" in
+	packed) fetch_limit=1 transfer_limit=10000 ;;
+	loose) fetch_limit=10000 transfer_limit=1 ;;
+	esac
+
+	test_expect_success "fetch trumps transfer limit" '
+		rm -fr dest &&
+		git --bare init dest &&
+		git -C dest config fetch.unpacklimit $fetch_limit &&
+		git -C dest config transfer.unpacklimit $transfer_limit &&
+		git -C dest fetch .. onebranch &&
+		validate_store_type
+	'
+}
+
+test_unpack_limit packed
+test_unpack_limit loose
 
 setup_negotiation_tip () {
 	SERVER="$1"

@@ -5,6 +5,12 @@ test_description='adding and checking out large blobs'
 
 . ./test-lib.sh
 
+test_expect_success 'core.bigFileThreshold must be non-negative' '
+	test_must_fail git -c core.bigFileThreshold=-1 rev-parse >out 2>err &&
+	grep "bad numeric config value" err &&
+	test_must_be_empty out
+'
+
 test_expect_success setup '
 	# clone does not allow us to pass core.bigfilethreshold to
 	# new repos, so set core.bigfilethreshold globally
@@ -15,6 +21,14 @@ test_expect_success setup '
 	printf "%2500000s" Y >huge &&
 	GIT_ALLOC_LIMIT=1500k &&
 	export GIT_ALLOC_LIMIT
+'
+
+test_expect_success 'enter "large" codepath, with small core.bigFileThreshold' '
+	test_when_finished "rm -rf repo" &&
+
+	git init --bare repo &&
+	echo large | git -C repo hash-object -w --stdin &&
+	git -C repo -c core.bigfilethreshold=4 fsck
 '
 
 # add a large file with different settings
@@ -43,42 +57,32 @@ EOF
 test_expect_success 'add a large file or two' '
 	git add large1 huge large2 &&
 	# make sure we got a single packfile and no loose objects
-	bad= count=0 idx= &&
+	count=0 idx= &&
 	for p in .git/objects/pack/pack-*.pack
 	do
-		count=$(( $count + 1 ))
-		if test_path_is_file "$p" &&
-		   idx=${p%.pack}.idx && test_path_is_file "$idx"
-		then
-			continue
-		fi
-		bad=t
+		count=$(( $count + 1 )) &&
+		test_path_is_file "$p" &&
+		idx=${p%.pack}.idx &&
+		test_path_is_file "$idx" || return 1
 	done &&
-	test -z "$bad" &&
 	test $count = 1 &&
 	cnt=$(git show-index <"$idx" | wc -l) &&
 	test $cnt = 2 &&
 	for l in .git/objects/$OIDPATH_REGEX
 	do
-		test_path_is_file "$l" || continue
-		bad=t
+		test_path_is_missing "$l" || return 1
 	done &&
-	test -z "$bad" &&
 
 	# attempt to add another copy of the same
 	git add large3 &&
 	bad= count=0 &&
 	for p in .git/objects/pack/pack-*.pack
 	do
-		count=$(( $count + 1 ))
-		if test_path_is_file "$p" &&
-		   idx=${p%.pack}.idx && test_path_is_file "$idx"
-		then
-			continue
-		fi
-		bad=t
+		count=$(( $count + 1 )) &&
+		test_path_is_file "$p" &&
+		idx=${p%.pack}.idx &&
+		test_path_is_file "$idx" || return 1
 	done &&
-	test -z "$bad" &&
 	test $count = 1
 '
 
@@ -107,7 +111,7 @@ test_expect_success 'packsize limit' '
 		count=0 &&
 		for pi in .git/objects/pack/pack-*.idx
 		do
-			test_path_is_file "$pi" && count=$(( $count + 1 ))
+			test_path_is_file "$pi" && count=$(( $count + 1 )) || return 1
 		done &&
 		test $count = 2 &&
 
@@ -120,7 +124,7 @@ test_expect_success 'packsize limit' '
 
 		for pi in .git/objects/pack/pack-*.idx
 		do
-			git show-index <"$pi"
+			git show-index <"$pi" || return 1
 		done |
 		sed -e "s/^[0-9]* \([0-9a-f]*\) .*/\1/" |
 		sort >actual &&

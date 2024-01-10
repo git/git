@@ -13,7 +13,7 @@ then
 	export LC_ALL
 
 	"$GIT_EXEC_PATH/git-http-backend" >out
-	perl -pe "$(cat one-time-perl)" out >out_modified
+	"$PERL_PATH" -pe "$(cat one-time-perl)" out >out_modified
 
 	if cmp -s out out_modified
 	then

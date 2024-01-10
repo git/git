@@ -4,6 +4,7 @@ test_description='Test reflog display routines'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -167,11 +168,6 @@ test_expect_success 'git log -g -p shows diffs vs. parents' '
 		cat log.two
 	) >expect &&
 	test_cmp expect actual
-'
-
-test_expect_success 'reflog exists works' '
-	git reflog exists refs/heads/main &&
-	! git reflog exists refs/heads/nonexistent
 '
 
 test_done

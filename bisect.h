@@ -3,6 +3,7 @@
 
 struct commit_list;
 struct repository;
+struct object_id;
 
 /*
  * Find bisection. If something is found, `reaches` will be the number of
@@ -61,6 +62,15 @@ enum bisect_error {
 	BISECT_INTERNAL_SUCCESS_MERGE_BASE = -11
 };
 
+/*
+ * Stores how many good/bad commits we have stored for a bisect. nr_bad can
+ * only be 0 or 1.
+ */
+struct bisect_state {
+	unsigned int nr_good;
+	unsigned int nr_bad;
+};
+
 enum bisect_error bisect_next_all(struct repository *r, const char *prefix);
 
 int estimate_bisect_steps(int all);
@@ -68,5 +78,8 @@ int estimate_bisect_steps(int all);
 void read_bisect_terms(const char **bad, const char **good);
 
 int bisect_clean_state(void);
+
+enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
+				  int no_checkout);
 
 #endif

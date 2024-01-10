@@ -6,12 +6,14 @@
 test_description='Same rename detection as t4003 but testing diff-raw -z.
 
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success \
     'prepare reference tree' \
-    'cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
+    'COPYING_test_data >COPYING &&
      echo frotz >rezrov &&
     git update-index --add COPYING rezrov &&
     orig=$(git hash-object COPYING) &&
@@ -81,7 +83,7 @@ test_expect_success \
 
 test_expect_success \
     'prepare work tree once again' \
-    'cat "$TEST_DIRECTORY"/lib-diff/COPYING >COPYING &&
+    'COPYING_test_data >COPYING &&
      git update-index --add --remove COPYING COPYING.1'
 
 git diff-index -z -C --find-copies-harder $tree >current

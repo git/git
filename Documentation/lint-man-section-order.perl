@@ -32,6 +32,9 @@ my %SECTIONS;
 		'SEE ALSO' => {
 			order => $order++,
 		},
+		'FILE FORMAT' => {
+			order => $order++,
+		},
 		'GIT' => {
 			required => 1,
 			order => $order++,
@@ -46,7 +49,7 @@ my $SECTION_RX = do {
 my $exit_code = 0;
 sub report {
 	my ($msg) = @_;
-	print "$ARGV:$.: $msg\n";
+	print STDERR "$ARGV:$.: $msg\n";
 	$exit_code = 1;
 }
 

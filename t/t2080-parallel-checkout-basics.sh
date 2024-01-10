@@ -41,6 +41,8 @@ TEST_NO_CREATE_REPO=1
 #  -                  m/m (file)
 #
 test_expect_success 'setup repo for checkout with various types of changes' '
+	test_config_global protocol.file.allow always &&
+
 	git init sub &&
 	(
 		cd sub &&
@@ -140,6 +142,7 @@ do
 	esac
 
 	test_expect_success "$mode checkout on clone" '
+		test_config_global protocol.file.allow always &&
 		repo=various_${mode}_clone &&
 		set_checkout_config $workers $threshold &&
 		test_checkout_workers $expected_workers \
@@ -223,6 +226,51 @@ test_expect_success SYMLINKS 'parallel checkout checks for symlinks in leading d
 		! test -h D &&
 		grep D/A D/A.t &&
 		grep D/B D/B.t
+	)
+'
+
+# This test is here (and not in e.g. t2022-checkout-paths.sh), because we
+# check the final report including sequential, parallel, and delayed entries
+# all at the same time. So we must have finer control of the parallel checkout
+# variables.
+test_expect_success '"git checkout ." report should not include failed entries' '
+	test_config_global filter.delay.process \
+		"test-tool rot13-filter --always-delay --log=delayed.log clean smudge delay" &&
+	test_config_global filter.delay.required true &&
+	test_config_global filter.cat.clean cat  &&
+	test_config_global filter.cat.smudge cat  &&
+	test_config_global filter.cat.required true  &&
+
+	set_checkout_config 2 0 &&
+	git init failed_entries &&
+	(
+		cd failed_entries &&
+		cat >.gitattributes <<-EOF &&
+		*delay*              filter=delay
+		parallel-ineligible* filter=cat
+		EOF
+		echo a >missing-delay.a &&
+		echo a >parallel-ineligible.a &&
+		echo a >parallel-eligible.a &&
+		echo b >success-delay.b &&
+		echo b >parallel-ineligible.b &&
+		echo b >parallel-eligible.b &&
+		git add -A &&
+		git commit -m files &&
+
+		a_blob="$(git rev-parse :parallel-ineligible.a)" &&
+		rm .git/objects/$(test_oid_to_path $a_blob) &&
+		rm *.a *.b &&
+
+		test_checkout_workers 2 test_must_fail git checkout . 2>err &&
+
+		# All *.b entries should succeed and all *.a entries should fail:
+		#  - missing-delay.a: the delay filter will drop this path
+		#  - parallel-*.a: the blob will be missing
+		#
+		grep "Updated 3 paths from the index" err &&
+		test_stdout_line_count = 3 ls *.b &&
+		! ls *.a
 	)
 '
 

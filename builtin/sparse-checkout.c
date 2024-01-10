@@ -1,25 +1,26 @@
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "object-file.h"
+#include "object-name.h"
 #include "parse-options.h"
 #include "pathspec.h"
 #include "repository.h"
-#include "run-command.h"
 #include "strbuf.h"
 #include "string-list.h"
-#include "cache.h"
-#include "cache-tree.h"
 #include "lockfile.h"
-#include "resolve-undo.h"
 #include "unpack-trees.h"
-#include "wt-status.h"
 #include "quote.h"
+#include "setup.h"
 #include "sparse-index.h"
+#include "worktree.h"
 
 static const char *empty_base = "";
 
 static char const * const builtin_sparse_checkout_usage[] = {
-	N_("git sparse-checkout (init|list|set|add|reapply|disable) <options>"),
+	N_("git sparse-checkout (init | list | set | add | reapply | disable | check-rules) [<options>]"),
 	NULL
 };
 
@@ -43,11 +44,11 @@ static void write_patterns_to_file(FILE *fp, struct pattern_list *pl)
 }
 
 static char const * const builtin_sparse_checkout_list_usage[] = {
-	N_("git sparse-checkout list"),
+	"git sparse-checkout list",
 	NULL
 };
 
-static int sparse_checkout_list(int argc, const char **argv)
+static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
 {
 	static struct option builtin_sparse_checkout_list_options[] = {
 		OPT_END(),
@@ -56,7 +57,11 @@ static int sparse_checkout_list(int argc, const char **argv)
 	char *sparse_filename;
 	int res;
 
-	argc = parse_options(argc, argv, NULL,
+	setup_work_tree();
+	if (!core_apply_sparse_checkout)
+		die(_("this worktree is not sparse"));
+
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_list_options,
 			     builtin_sparse_checkout_list_usage, 0);
 
@@ -124,7 +129,7 @@ static void clean_tracked_sparse_directories(struct repository *r)
 	 * sparse index will not delete directories that contain
 	 * conflicted entries or submodules.
 	 */
-	if (!r->index->sparse_index) {
+	if (r->index->sparse_index == INDEX_EXPANDED) {
 		/*
 		 * If something, such as a merge conflict or other concern,
 		 * prevents us from converting to a sparse index, then do
@@ -182,6 +187,8 @@ static void clean_tracked_sparse_directories(struct repository *r)
 				item->string);
 		}
 
+		strvec_clear(&s);
+		clear_pathspec(&p);
 		dir_clear(&dir);
 	}
 
@@ -212,14 +219,13 @@ static int update_working_directory(struct pattern_list *pl)
 	o.src_index = r->index;
 	o.dst_index = r->index;
 	o.skip_sparse_checkout = 0;
-	o.pl = pl;
 
 	setup_work_tree();
 
 	repo_hold_locked_index(r, &lock_file, LOCK_DIE_ON_ERROR);
 
 	setup_unpack_trees_porcelain(&o, "sparse-checkout");
-	result = update_sparsity(&o);
+	result = update_sparsity(&o, pl);
 	clear_unpack_trees_porcelain(&o);
 
 	if (result == UPDATE_SPARSITY_WARNINGS)
@@ -322,11 +328,11 @@ static int write_patterns_and_update(struct pattern_list *pl)
 
 	fd = hold_lock_file_for_update(&lk, sparse_filename,
 				      LOCK_DIE_ON_ERROR);
+	free(sparse_filename);
 
 	result = update_working_directory(pl);
 	if (result) {
 		rollback_lock_file(&lk);
-		free(sparse_filename);
 		clear_pattern_list(pl);
 		update_working_directory(NULL);
 		return result;
@@ -342,7 +348,6 @@ static int write_patterns_and_update(struct pattern_list *pl)
 	fflush(fp);
 	commit_lock_file(&lk);
 
-	free(sparse_filename);
 	clear_pattern_list(pl);
 
 	return 0;
@@ -356,32 +361,71 @@ enum sparse_checkout_mode {
 
 static int set_config(enum sparse_checkout_mode mode)
 {
-	const char *config_path;
-
-	if (upgrade_repository_format(1) < 0)
-		die(_("unable to upgrade repository format to enable worktreeConfig"));
-	if (git_config_set_gently("extensions.worktreeConfig", "true")) {
-		error(_("failed to set extensions.worktreeConfig setting"));
+	/* Update to use worktree config, if not already. */
+	if (init_worktree_config(the_repository)) {
+		error(_("failed to initialize worktree config"));
 		return 1;
 	}
 
-	config_path = git_path("config.worktree");
-	git_config_set_in_file_gently(config_path,
-				      "core.sparseCheckout",
-				      mode ? "true" : NULL);
-
-	git_config_set_in_file_gently(config_path,
-				      "core.sparseCheckoutCone",
-				      mode == MODE_CONE_PATTERNS ? "true" : NULL);
+	if (repo_config_set_worktree_gently(the_repository,
+					    "core.sparseCheckout",
+					    mode ? "true" : "false") ||
+	    repo_config_set_worktree_gently(the_repository,
+					    "core.sparseCheckoutCone",
+					    mode == MODE_CONE_PATTERNS ?
+						"true" : "false"))
+		return 1;
 
 	if (mode == MODE_NO_PATTERNS)
-		set_sparse_index_config(the_repository, 0);
+		return set_sparse_index_config(the_repository, 0);
+
+	return 0;
+}
+
+static enum sparse_checkout_mode update_cone_mode(int *cone_mode) {
+	/* If not specified, use previous definition of cone mode */
+	if (*cone_mode == -1 && core_apply_sparse_checkout)
+		*cone_mode = core_sparse_checkout_cone;
+
+	/* Set cone/non-cone mode appropriately */
+	core_apply_sparse_checkout = 1;
+	if (*cone_mode == 1 || *cone_mode == -1) {
+		core_sparse_checkout_cone = 1;
+		return MODE_CONE_PATTERNS;
+	}
+	core_sparse_checkout_cone = 0;
+	return MODE_ALL_PATTERNS;
+}
+
+static int update_modes(int *cone_mode, int *sparse_index)
+{
+	int mode, record_mode;
+
+	/* Determine if we need to record the mode; ensure sparse checkout on */
+	record_mode = (*cone_mode != -1) || !core_apply_sparse_checkout;
+
+	mode = update_cone_mode(cone_mode);
+	if (record_mode && set_config(mode))
+		return 1;
+
+	/* Set sparse-index/non-sparse-index mode if specified */
+	if (*sparse_index >= 0) {
+		if (set_sparse_index_config(the_repository, *sparse_index) < 0)
+			die(_("failed to modify sparse-index config"));
+
+		/* force an index rewrite */
+		repo_read_index(the_repository);
+		the_repository->index->updated_workdir = 1;
+
+		if (!*sparse_index)
+			ensure_full_index(the_repository->index);
+	}
 
 	return 0;
 }
 
 static char const * const builtin_sparse_checkout_init_usage[] = {
-	N_("git sparse-checkout init [--cone] [--[no-]sparse-index]"),
+	"git sparse-checkout init [--cone] [--[no-]sparse-index]",
 	NULL
 };
 
@@ -390,13 +434,12 @@ static struct sparse_checkout_init_opts {
 	int sparse_index;
 } init_opts;
 
-static int sparse_checkout_init(int argc, const char **argv)
+static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 {
 	struct pattern_list pl;
 	char *sparse_filename;
 	int res;
 	struct object_id oid;
-	int mode;
 	struct strbuf pattern = STRBUF_INIT;
 
 	static struct option builtin_sparse_checkout_init_options[] = {
@@ -407,21 +450,17 @@ static int sparse_checkout_init(int argc, const char **argv)
 		OPT_END(),
 	};
 
+	setup_work_tree();
 	repo_read_index(the_repository);
 
+	init_opts.cone_mode = -1;
 	init_opts.sparse_index = -1;
 
-	argc = parse_options(argc, argv, NULL,
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_init_options,
 			     builtin_sparse_checkout_init_usage, 0);
 
-	if (init_opts.cone_mode) {
-		mode = MODE_CONE_PATTERNS;
-		core_sparse_checkout_cone = 1;
-	} else
-		mode = MODE_ALL_PATTERNS;
-
-	if (set_config(mode))
+	if (update_modes(&init_opts.cone_mode, &init_opts.sparse_index))
 		return 1;
 
 	memset(&pl, 0, sizeof(pl));
@@ -429,27 +468,19 @@ static int sparse_checkout_init(int argc, const char **argv)
 	sparse_filename = get_sparse_checkout_filename();
 	res = add_patterns_from_file_to_list(sparse_filename, "", 0, &pl, NULL, 0);
 
-	if (init_opts.sparse_index >= 0) {
-		if (set_sparse_index_config(the_repository, init_opts.sparse_index) < 0)
-			die(_("failed to modify sparse-index config"));
-
-		/* force an index rewrite */
-		repo_read_index(the_repository);
-		the_repository->index->updated_workdir = 1;
-	}
-
-	core_apply_sparse_checkout = 1;
-
 	/* If we already have a sparse-checkout file, use it. */
 	if (res >= 0) {
 		free(sparse_filename);
 		return update_working_directory(NULL);
 	}
 
-	if (get_oid("HEAD", &oid)) {
+	if (repo_get_oid(the_repository, "HEAD", &oid)) {
 		FILE *fp;
 
 		/* assume we are in a fresh repo, but update the sparse-checkout file */
+		if (safe_create_leading_directories(sparse_filename))
+			die(_("unable to create leading directories of %s"),
+			    sparse_filename);
 		fp = xfopen(sparse_filename, "w");
 		if (!fp)
 			die(_("failed to open '%s'"), sparse_filename);
@@ -483,7 +514,7 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 		char *oldpattern = e->pattern;
 		size_t newlen;
 
-		if (slash == e->pattern)
+		if (!slash || slash == e->pattern)
 			break;
 
 		newlen = slash - e->pattern;
@@ -515,17 +546,9 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
 	insert_recursive_pattern(pl, line);
 }
 
-static char const * const builtin_sparse_checkout_set_usage[] = {
-	N_("git sparse-checkout (set|add) (--stdin | <patterns>)"),
-	NULL
-};
-
-static struct sparse_checkout_set_opts {
-	int use_stdin;
-} set_opts;
-
 static void add_patterns_from_input(struct pattern_list *pl,
-				    int argc, const char **argv)
+				    int argc, const char **argv,
+				    FILE *file)
 {
 	int i;
 	if (core_sparse_checkout_cone) {
@@ -535,9 +558,9 @@ static void add_patterns_from_input(struct pattern_list *pl,
 		hashmap_init(&pl->parent_hashmap, pl_hashmap_cmp, NULL, 0);
 		pl->use_cone_patterns = 1;
 
-		if (set_opts.use_stdin) {
+		if (file) {
 			struct strbuf unquoted = STRBUF_INIT;
-			while (!strbuf_getline(&line, stdin)) {
+			while (!strbuf_getline(&line, file)) {
 				if (line.buf[0] == '"') {
 					strbuf_reset(&unquoted);
 					if (unquote_c_style(&unquoted, line.buf, NULL))
@@ -559,10 +582,10 @@ static void add_patterns_from_input(struct pattern_list *pl,
 			}
 		}
 	} else {
-		if (set_opts.use_stdin) {
+		if (file) {
 			struct strbuf line = STRBUF_INIT;
 
-			while (!strbuf_getline(&line, stdin)) {
+			while (!strbuf_getline(&line, file)) {
 				size_t len;
 				char *buf = strbuf_detach(&line, &len);
 				add_pattern(buf, empty_base, 0, pl, 0);
@@ -580,7 +603,8 @@ enum modify_type {
 };
 
 static void add_patterns_cone_mode(int argc, const char **argv,
-				   struct pattern_list *pl)
+				   struct pattern_list *pl,
+				   int use_stdin)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	struct pattern_entry *pe;
@@ -588,7 +612,8 @@ static void add_patterns_cone_mode(int argc, const char **argv,
 	struct pattern_list existing;
 	char *sparse_filename = get_sparse_checkout_filename();
 
-	add_patterns_from_input(pl, argc, argv);
+	add_patterns_from_input(pl, argc, argv,
+				use_stdin ? stdin : NULL);
 
 	memset(&existing, 0, sizeof(existing));
 	existing.use_cone_patterns = core_sparse_checkout_cone;
@@ -597,6 +622,9 @@ static void add_patterns_cone_mode(int argc, const char **argv,
 					   &existing, NULL, 0))
 		die(_("unable to load existing sparse-checkout patterns"));
 	free(sparse_filename);
+
+	if (!existing.use_cone_patterns)
+		die(_("existing sparse-checkout patterns do not use cone mode"));
 
 	hashmap_for_each_entry(&existing.recursive_hashmap, &iter, pe, ent) {
 		if (!hashmap_contains_parent(&pl->recursive_hashmap,
@@ -614,17 +642,19 @@ static void add_patterns_cone_mode(int argc, const char **argv,
 }
 
 static void add_patterns_literal(int argc, const char **argv,
-				 struct pattern_list *pl)
+				 struct pattern_list *pl,
+				 int use_stdin)
 {
 	char *sparse_filename = get_sparse_checkout_filename();
 	if (add_patterns_from_file_to_list(sparse_filename, "", 0,
 					   pl, NULL, 0))
 		die(_("unable to load existing sparse-checkout patterns"));
 	free(sparse_filename);
-	add_patterns_from_input(pl, argc, argv);
+	add_patterns_from_input(pl, argc, argv, use_stdin ? stdin : NULL);
 }
 
-static int modify_pattern_list(int argc, const char **argv, enum modify_type m)
+static int modify_pattern_list(int argc, const char **argv, int use_stdin,
+			       enum modify_type m)
 {
 	int result;
 	int changed_config = 0;
@@ -633,13 +663,14 @@ static int modify_pattern_list(int argc, const char **argv, enum modify_type m)
 	switch (m) {
 	case ADD:
 		if (core_sparse_checkout_cone)
-			add_patterns_cone_mode(argc, argv, pl);
+			add_patterns_cone_mode(argc, argv, pl, use_stdin);
 		else
-			add_patterns_literal(argc, argv, pl);
+			add_patterns_literal(argc, argv, pl, use_stdin);
 		break;
 
 	case REPLACE:
-		add_patterns_from_input(pl, argc, argv);
+		add_patterns_from_input(pl, argc, argv,
+					use_stdin ? stdin : NULL);
 		break;
 	}
 
@@ -659,50 +690,202 @@ static int modify_pattern_list(int argc, const char **argv, enum modify_type m)
 	return result;
 }
 
-static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
-			       enum modify_type m)
+static void sanitize_paths(int argc, const char **argv,
+			   const char *prefix, int skip_checks)
 {
-	static struct option builtin_sparse_checkout_set_options[] = {
-		OPT_BOOL(0, "stdin", &set_opts.use_stdin,
+	int i;
+
+	if (!argc)
+		return;
+
+	if (prefix && *prefix && core_sparse_checkout_cone) {
+		/*
+		 * The args are not pathspecs, so unfortunately we
+		 * cannot imitate how cmd_add() uses parse_pathspec().
+		 */
+		int prefix_len = strlen(prefix);
+
+		for (i = 0; i < argc; i++)
+			argv[i] = prefix_path(prefix, prefix_len, argv[i]);
+	}
+
+	if (skip_checks)
+		return;
+
+	if (prefix && *prefix && !core_sparse_checkout_cone)
+		die(_("please run from the toplevel directory in non-cone mode"));
+
+	if (core_sparse_checkout_cone) {
+		for (i = 0; i < argc; i++) {
+			if (argv[i][0] == '/')
+				die(_("specify directories rather than patterns (no leading slash)"));
+			if (argv[i][0] == '!')
+				die(_("specify directories rather than patterns.  If your directory starts with a '!', pass --skip-checks"));
+			if (strpbrk(argv[i], "*?[]"))
+				die(_("specify directories rather than patterns.  If your directory really has any of '*?[]\\' in it, pass --skip-checks"));
+		}
+	}
+
+	for (i = 0; i < argc; i++) {
+		struct cache_entry *ce;
+		struct index_state *index = the_repository->index;
+		int pos = index_name_pos(index, argv[i], strlen(argv[i]));
+
+		if (pos < 0)
+			continue;
+		ce = index->cache[pos];
+		if (S_ISSPARSEDIR(ce->ce_mode))
+			continue;
+
+		if (core_sparse_checkout_cone)
+			die(_("'%s' is not a directory; to treat it as a directory anyway, rerun with --skip-checks"), argv[i]);
+		else
+			warning(_("pass a leading slash before paths such as '%s' if you want a single file (see NON-CONE PROBLEMS in the git-sparse-checkout manual)."), argv[i]);
+	}
+}
+
+static char const * const builtin_sparse_checkout_add_usage[] = {
+	N_("git sparse-checkout add [--skip-checks] (--stdin | <patterns>)"),
+	NULL
+};
+
+static struct sparse_checkout_add_opts {
+	int skip_checks;
+	int use_stdin;
+} add_opts;
+
+static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
+{
+	static struct option builtin_sparse_checkout_add_options[] = {
+		OPT_BOOL_F(0, "skip-checks", &add_opts.skip_checks,
+			   N_("skip some sanity checks on the given paths that might give false positives"),
+			   PARSE_OPT_NONEG),
+		OPT_BOOL(0, "stdin", &add_opts.use_stdin,
 			 N_("read patterns from standard in")),
 		OPT_END(),
 	};
 
+	setup_work_tree();
+	if (!core_apply_sparse_checkout)
+		die(_("no sparse-checkout to add to"));
+
 	repo_read_index(the_repository);
 
 	argc = parse_options(argc, argv, prefix,
-			     builtin_sparse_checkout_set_options,
-			     builtin_sparse_checkout_set_usage,
-			     PARSE_OPT_KEEP_UNKNOWN);
+			     builtin_sparse_checkout_add_options,
+			     builtin_sparse_checkout_add_usage, 0);
 
-	return modify_pattern_list(argc, argv, m);
+	sanitize_paths(argc, argv, prefix, add_opts.skip_checks);
+
+	return modify_pattern_list(argc, argv, add_opts.use_stdin, ADD);
 }
 
-static char const * const builtin_sparse_checkout_reapply_usage[] = {
-	N_("git sparse-checkout reapply"),
+static char const * const builtin_sparse_checkout_set_usage[] = {
+	N_("git sparse-checkout set [--[no-]cone] [--[no-]sparse-index] [--skip-checks] (--stdin | <patterns>)"),
 	NULL
 };
 
-static int sparse_checkout_reapply(int argc, const char **argv)
+static struct sparse_checkout_set_opts {
+	int cone_mode;
+	int sparse_index;
+	int skip_checks;
+	int use_stdin;
+} set_opts;
+
+static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 {
-	static struct option builtin_sparse_checkout_reapply_options[] = {
+	int default_patterns_nr = 2;
+	const char *default_patterns[] = {"/*", "!/*/", NULL};
+
+	static struct option builtin_sparse_checkout_set_options[] = {
+		OPT_BOOL(0, "cone", &set_opts.cone_mode,
+			 N_("initialize the sparse-checkout in cone mode")),
+		OPT_BOOL(0, "sparse-index", &set_opts.sparse_index,
+			 N_("toggle the use of a sparse index")),
+		OPT_BOOL_F(0, "skip-checks", &set_opts.skip_checks,
+			   N_("skip some sanity checks on the given paths that might give false positives"),
+			   PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "stdin", &set_opts.use_stdin,
+			   N_("read patterns from standard in"),
+			   PARSE_OPT_NONEG),
 		OPT_END(),
 	};
 
-	argc = parse_options(argc, argv, NULL,
+	setup_work_tree();
+	repo_read_index(the_repository);
+
+	set_opts.cone_mode = -1;
+	set_opts.sparse_index = -1;
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_sparse_checkout_set_options,
+			     builtin_sparse_checkout_set_usage, 0);
+
+	if (update_modes(&set_opts.cone_mode, &set_opts.sparse_index))
+		return 1;
+
+	/*
+	 * Cone mode automatically specifies the toplevel directory.  For
+	 * non-cone mode, if nothing is specified, manually select just the
+	 * top-level directory (much as 'init' would do).
+	 */
+	if (!core_sparse_checkout_cone && !set_opts.use_stdin && argc == 0) {
+		argv = default_patterns;
+		argc = default_patterns_nr;
+	} else {
+		sanitize_paths(argc, argv, prefix, set_opts.skip_checks);
+	}
+
+	return modify_pattern_list(argc, argv, set_opts.use_stdin, REPLACE);
+}
+
+static char const * const builtin_sparse_checkout_reapply_usage[] = {
+	"git sparse-checkout reapply [--[no-]cone] [--[no-]sparse-index]",
+	NULL
+};
+
+static struct sparse_checkout_reapply_opts {
+	int cone_mode;
+	int sparse_index;
+} reapply_opts;
+
+static int sparse_checkout_reapply(int argc, const char **argv,
+				   const char *prefix)
+{
+	static struct option builtin_sparse_checkout_reapply_options[] = {
+		OPT_BOOL(0, "cone", &reapply_opts.cone_mode,
+			 N_("initialize the sparse-checkout in cone mode")),
+		OPT_BOOL(0, "sparse-index", &reapply_opts.sparse_index,
+			 N_("toggle the use of a sparse index")),
+		OPT_END(),
+	};
+
+	setup_work_tree();
+	if (!core_apply_sparse_checkout)
+		die(_("must be in a sparse-checkout to reapply sparsity patterns"));
+
+	reapply_opts.cone_mode = -1;
+	reapply_opts.sparse_index = -1;
+
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_reapply_options,
 			     builtin_sparse_checkout_reapply_usage, 0);
 
 	repo_read_index(the_repository);
+
+	if (update_modes(&reapply_opts.cone_mode, &reapply_opts.sparse_index))
+		return 1;
+
 	return update_working_directory(NULL);
 }
 
 static char const * const builtin_sparse_checkout_disable_usage[] = {
-	N_("git sparse-checkout disable"),
+	"git sparse-checkout disable",
 	NULL
 };
 
-static int sparse_checkout_disable(int argc, const char **argv)
+static int sparse_checkout_disable(int argc, const char **argv,
+				   const char *prefix)
 {
 	static struct option builtin_sparse_checkout_disable_options[] = {
 		OPT_END(),
@@ -710,7 +893,19 @@ static int sparse_checkout_disable(int argc, const char **argv)
 	struct pattern_list pl;
 	struct strbuf match_all = STRBUF_INIT;
 
-	argc = parse_options(argc, argv, NULL,
+	/*
+	 * We do not exit early if !core_apply_sparse_checkout; due to the
+	 * ability for users to manually muck things up between
+	 *   direct editing of .git/info/sparse-checkout
+	 *   running read-tree -m u HEAD or update-index --skip-worktree
+	 *   direct toggling of config options
+	 * users might end up with an index with SKIP_WORKTREE bit set on
+	 * some files and not know how to undo it.  So, here we just
+	 * forcibly return to a dense checkout regardless of initial state.
+	 */
+
+	setup_work_tree();
+	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_disable_options,
 			     builtin_sparse_checkout_disable_usage, 0);
 
@@ -735,38 +930,112 @@ static int sparse_checkout_disable(int argc, const char **argv)
 	return set_config(MODE_NO_PATTERNS);
 }
 
-int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
+static char const * const builtin_sparse_checkout_check_rules_usage[] = {
+	N_("git sparse-checkout check-rules [-z] [--skip-checks]"
+	   "[--[no-]cone] [--rules-file <file>]"),
+	NULL
+};
+
+static struct sparse_checkout_check_rules_opts {
+	int cone_mode;
+	int null_termination;
+	char *rules_file;
+} check_rules_opts;
+
+static int check_rules(struct pattern_list *pl, int null_terminated) {
+	struct strbuf line = STRBUF_INIT;
+	struct strbuf unquoted = STRBUF_INIT;
+	char *path;
+	int line_terminator = null_terminated ? 0 : '\n';
+	strbuf_getline_fn getline_fn = null_terminated ? strbuf_getline_nul
+		: strbuf_getline;
+	the_repository->index->sparse_checkout_patterns = pl;
+	while (!getline_fn(&line, stdin)) {
+		path = line.buf;
+		if (!null_terminated && line.buf[0] == '"') {
+			strbuf_reset(&unquoted);
+			if (unquote_c_style(&unquoted, line.buf, NULL))
+				die(_("unable to unquote C-style string '%s'"),
+					line.buf);
+
+			path = unquoted.buf;
+		}
+
+		if (path_in_sparse_checkout(path, the_repository->index))
+			write_name_quoted(path, stdout, line_terminator);
+	}
+	strbuf_release(&line);
+	strbuf_release(&unquoted);
+
+	return 0;
+}
+
+static int sparse_checkout_check_rules(int argc, const char **argv, const char *prefix)
 {
-	static struct option builtin_sparse_checkout_options[] = {
+	static struct option builtin_sparse_checkout_check_rules_options[] = {
+		OPT_BOOL('z', NULL, &check_rules_opts.null_termination,
+			 N_("terminate input and output files by a NUL character")),
+		OPT_BOOL(0, "cone", &check_rules_opts.cone_mode,
+			 N_("when used with --rules-file interpret patterns as cone mode patterns")),
+		OPT_FILENAME(0, "rules-file", &check_rules_opts.rules_file,
+			 N_("use patterns in <file> instead of the current ones.")),
 		OPT_END(),
 	};
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(builtin_sparse_checkout_usage,
-				   builtin_sparse_checkout_options);
+	FILE *fp;
+	int ret;
+	struct pattern_list pl = {0};
+	char *sparse_filename;
+	check_rules_opts.cone_mode = -1;
+
+	argc = parse_options(argc, argv, prefix,
+			     builtin_sparse_checkout_check_rules_options,
+			     builtin_sparse_checkout_check_rules_usage, 0);
+
+	if (check_rules_opts.rules_file && check_rules_opts.cone_mode < 0)
+		check_rules_opts.cone_mode = 1;
+
+	update_cone_mode(&check_rules_opts.cone_mode);
+	pl.use_cone_patterns = core_sparse_checkout_cone;
+	if (check_rules_opts.rules_file) {
+		fp = xfopen(check_rules_opts.rules_file, "r");
+		add_patterns_from_input(&pl, argc, argv, fp);
+		fclose(fp);
+	} else {
+		sparse_filename = get_sparse_checkout_filename();
+		if (add_patterns_from_file_to_list(sparse_filename, "", 0, &pl,
+						   NULL, 0))
+			die(_("unable to load existing sparse-checkout patterns"));
+		free(sparse_filename);
+	}
+
+	ret = check_rules(&pl, check_rules_opts.null_termination);
+	clear_pattern_list(&pl);
+	return ret;
+}
+
+int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
+{
+	parse_opt_subcommand_fn *fn = NULL;
+	struct option builtin_sparse_checkout_options[] = {
+		OPT_SUBCOMMAND("list", &fn, sparse_checkout_list),
+		OPT_SUBCOMMAND("init", &fn, sparse_checkout_init),
+		OPT_SUBCOMMAND("set", &fn, sparse_checkout_set),
+		OPT_SUBCOMMAND("add", &fn, sparse_checkout_add),
+		OPT_SUBCOMMAND("reapply", &fn, sparse_checkout_reapply),
+		OPT_SUBCOMMAND("disable", &fn, sparse_checkout_disable),
+		OPT_SUBCOMMAND("check-rules", &fn, sparse_checkout_check_rules),
+		OPT_END(),
+	};
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_options,
-			     builtin_sparse_checkout_usage,
-			     PARSE_OPT_STOP_AT_NON_OPTION);
+			     builtin_sparse_checkout_usage, 0);
 
 	git_config(git_default_config, NULL);
 
-	if (argc > 0) {
-		if (!strcmp(argv[0], "list"))
-			return sparse_checkout_list(argc, argv);
-		if (!strcmp(argv[0], "init"))
-			return sparse_checkout_init(argc, argv);
-		if (!strcmp(argv[0], "set"))
-			return sparse_checkout_set(argc, argv, prefix, REPLACE);
-		if (!strcmp(argv[0], "add"))
-			return sparse_checkout_set(argc, argv, prefix, ADD);
-		if (!strcmp(argv[0], "reapply"))
-			return sparse_checkout_reapply(argc, argv);
-		if (!strcmp(argv[0], "disable"))
-			return sparse_checkout_disable(argc, argv);
-	}
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
-	usage_with_options(builtin_sparse_checkout_usage,
-			   builtin_sparse_checkout_options);
+	return fn(argc, argv, prefix);
 }

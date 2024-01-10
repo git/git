@@ -840,7 +840,7 @@ rm sm2
 mv sm2-bak sm2
 
 test_expect_success 'setup nested submodule' '
-	git -C sm2 submodule add ../sm2 nested &&
+	git -c protocol.file.allow=always -C sm2 submodule add ../sm2 nested &&
 	git -C sm2 commit -a -m "nested sub" &&
 	head10=$(git -C sm2 rev-parse --short --verify HEAD)
 '

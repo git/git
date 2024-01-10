@@ -3,7 +3,7 @@
  * algorithm for dense and sparse linear assignment problems</i>. Computing,
  * 38(4), 325-340.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "linear-assignment.h"
 
 #define COST(column, row) cost[(column) + column_count * (row)]

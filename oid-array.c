@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "oid-array.h"
 #include "hash-lookup.h"
 

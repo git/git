@@ -2,6 +2,7 @@
 
 test_description='git-status with core.ignorecase=true'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'status with hash collisions' '

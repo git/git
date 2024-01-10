@@ -1,0 +1,180 @@
+Git v2.44 Release Notes
+=======================
+
+Backward Compatibility Notes
+
+ * "git chekcout -B <branch>" used to allow switching to a branch that
+   is in use on another worktree, but this was by mistake.  The users
+   need to use "--ignore-other-worktrees" option.
+
+
+UI, Workflows & Features
+
+ * "git add" and "git stash" learned to support the ":(attr:...)"
+   magic pathspec.
+
+ * "git rebase --autosquash" is now enabled for non-interactive rebase,
+   but it is still incompatible with the apply backend.
+
+ * Introduce "git replay", a tool meant on the server side without
+   working tree to recreate a history.
+
+ * "git merge-file" learned to take the "--diff-algorithm" option to
+   use algorithm different from the default "myers" diff.
+
+ * Command line completion (in contrib/) learned to complete path
+   arguments to the "add/set" subcommands of "git sparse-checkout"
+   better.
+
+ * "git checkout -B <branch> [<start-point>]" allowed a branch that is
+   in use in another worktree to be updated and checked out, which
+   might be a bit unexpected.  The rule has been tightened, which is a
+   breaking change.  "--ignore-other-worktrees" option is required to
+   unbreak you, if you are used to the current behaviour that "-B"
+   overrides the safety.
+   (merge b23285a921 jc/checkout-B-branch-in-use later to maint).
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Process to add some form of low-level unit tests has started.
+
+ * Add support for GitLab CI.
+
+ * "git for-each-ref --no-sort" still sorted the refs alphabetically
+   which paid non-trivial cost.  It has been redefined to show output
+   in an unspecified order, to allow certain optimizations to take
+   advantage of.
+
+ * Simplify API implementation to delete references by eliminating
+   duplication.
+
+ * Subject approxidate() and show_date() machinery to OSS-Fuzz.
+
+ * A new helper to let us pretend that we called lstat() when we know
+   our cache_entry is up-to-date via fsmonitor.
+
+ * The optimization based on fsmonitor in the "diff --cached"
+   codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ * Test balloon to use C99 "bool" type from <stdbool.h> has been
+   added.
+
+ * "git clone" has been prepared to allow cloning a repository with
+   non-default hash function into a repository that uses the reftable
+   backend.
+
+
+Fixes since v2.43
+-----------------
+
+ * The way CI testing used "prove" could lead to running the test
+   suite twice needlessly, which has been corrected.
+   (merge e7e03ef995 js/ci-discard-prove-state later to maint).
+
+ * Update ref-related tests.
+
+ * "git format-patch --encode-email-headers" ignored the option when
+   preparing the cover letter, which has been corrected.
+
+ * Newer versions of Getopt::Long started giving warnings against our
+   (ab)use of it in "git send-email".  Bump the minimum version
+   requirement for Perl to 5.8.1 (from September 2002) to allow
+   simplifying our implementation.
+   (merge 6ff658cc78 tz/send-email-negatable-options later to maint).
+
+ * Earlier we stopped relying on commit-graph that (still) records
+   information about commits that are lost from the object store,
+   which has negative performance implications.  The default has been
+   flipped to disable this pessimization.
+   (merge b1df3b3867 ps/commit-graph-less-paranoid later to maint).
+
+ * Stale URLs have been updated to their current counterparts (or
+   archive.org) and HTTP links are replaced with working HTTPS links.
+   (merge 62b4f7b9c6 js/update-urls-in-doc-and-comment later to maint).
+
+ * trace2 streams used to record the URLs that potentially embed
+   authentication material, which has been corrected.
+   (merge 16fa3eebc0 jh/trace2-redact-auth later to maint).
+
+ * The sample pre-commit hook that tries to catch introduction of new
+   paths that use potentially non-portable characters did not notice
+   an existing path getting renamed to such a problematic path, when
+   rename detection was enabled.
+   (merge d9fd71fa2a jp/use-diff-index-in-pre-commit-sample later to maint).
+
+ * The command line parser for the "log" family of commands was too
+   loose when parsing certain numbers, e.g., silently ignoring the
+   extra 'q' in "git log -n 1q" without complaining, which has been
+   tightened up.
+   (merge 71a1e94821 jc/revision-parse-int later to maint).
+
+ * "git $cmd --end-of-options --rev -- --path" for some $cmd failed
+   to interpret "--rev" as a rev, and "--path" as a path.  This was
+   fixed for many programs like "reset" and "checkout".
+   (merge 9385174627 jk/end-of-options later to maint).
+
+ * "git bisect reset" has been taught to clean up state files and refs
+   even when BISECT_START file is gone.
+   (merge daaa03e54c jk/bisect-reset-fix later to maint).
+
+ * Some codepaths did not correctly parse configuration variables
+   specified with valueless "true", which has been corrected.
+   (merge d49cb162fa jk/implicit-true later to maint).
+
+ * Code clean-up for sanity checking of command line options for "git
+   show-ref".
+   (merge 7382497372 rs/show-ref-incompatible-options later to maint).
+
+ * The code to parse the From e-mail header has been updated to avoid
+   recursion.
+   (merge dee182941f jk/mailinfo-iterative-unquote-comment later to maint).
+
+ * "git fetch --atomic" issued an unnecessary empty error message,
+   which has been corrected.
+   (merge 18ce48918c jx/fetch-atomic-error-message-fix later to maint).
+
+ * Command line completion script (in contrib/) learned to work better
+   with the reftable backend.
+   (merge 44dbb3bf29 sh/completion-with-reftable later to maint).
+
+ * "git status" is taught to show both the branch being bisected and
+   being rebased when both are in effect at the same time.
+   (merge 990adccbdf rj/status-bisect-while-rebase later to maint).
+
+ * "git archive --list extra garbage" silently ignored excess command
+   line parameters, which has been corrected.
+   (merge d6b6cd1393 jc/archive-list-with-extra-args later to maint).
+
+ * "git sparse-checkout set" added default patterns even when the
+   patterns are being fed from the standard input, which has been
+   corrected.
+   (merge 53ded839ae jc/sparse-checkout-set-default-fix later to maint).
+
+ * "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
+   not handle "--end-of-options" correctly after a recent update.
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 50f1abcff6 js/packfile-h-typofix later to maint).
+   (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
+   (merge 7854bf4960 rs/i18n-cannot-be-used-together later to maint).
+   (merge cd3c28c53a rs/column-leakfix later to maint).
+   (merge 866a1b9026 ps/ref-tests-update-more later to maint).
+   (merge e4299d26d4 mk/doc-gitfile-more later to maint).
+   (merge 792b86283b rs/incompatible-options-messages later to maint).
+   (merge ea8f9494ab jk/config-cleanup later to maint).
+   (merge d1bd3a8c34 jk/mailinfo-oob-read-fix later to maint).
+   (merge c0cadb0576 ps/reftable-fixes later to maint).
+   (merge 647b5e0998 ps/chainlint-self-check-update later to maint).
+   (merge 68fcebfb1a es/add-doc-list-short-form-of-all-in-synopsis later to maint).
+   (merge bc62d27d5c jc/doc-most-refs-are-not-that-special later to maint).
+   (merge 6d6f1cd7ee jc/doc-misspelt-refs-fix later to maint).
+   (merge 37e8d795be sp/test-i18ngrep later to maint).
+   (merge fbc6526ea6 rs/t6300-compressed-size-fix later to maint).
+   (merge 45184afb4d rs/rebase-use-strvec-pushf later to maint).
+   (merge a762af3dfd jc/retire-cas-opt-name-constant later to maint).
+   (merge de7c27a186 la/trailer-cleanups later to maint).
+   (merge d44b517137 jc/orphan-unborn later to maint).
+   (merge 63956c553d ml/doc-merge-updates later to maint).
+   (merge d57c671a51 en/header-cleanup later to maint).
+   (merge 5b7eec4bc5 rs/fast-import-simplify-mempool-allocation later to maint).

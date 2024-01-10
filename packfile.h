@@ -1,12 +1,26 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
-#include "cache.h"
+#include "object.h"
 #include "oidset.h"
 
 /* in object-store.h */
 struct packed_git;
 struct object_info;
+
+struct pack_window {
+	struct pack_window *next;
+	unsigned char *base;
+	off_t offset;
+	size_t len;
+	unsigned int last_used;
+	unsigned int inuse_cnt;
+};
+
+struct pack_entry {
+	off_t offset;
+	struct packed_git *p;
+};
 
 /*
  * Generate the filename to be used for a pack file with checksum "sha1" and
@@ -40,7 +54,7 @@ const char *pack_basename(struct packed_git *p);
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
-				      const char *file_pach, void *data);
+				      const char *file_name, void *data);
 void for_each_file_in_pack_dir(const char *objdir,
 			       each_file_in_pack_dir_fn fn,
 			       void *data);
@@ -65,7 +79,6 @@ struct packed_git *get_all_packs(struct repository *r);
  * for speed.
  */
 unsigned long repo_approximate_object_count(struct repository *r);
-#define approximate_object_count() repo_approximate_object_count(the_repository)
 
 struct packed_git *find_sha1_pack(const unsigned char *sha1,
 				  struct packed_git *packs);
@@ -90,7 +103,6 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 
 unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
 void close_pack_windows(struct packed_git *);
-void close_pack_revindex(struct packed_git *);
 void close_pack(struct packed_git *);
 void close_object_store(struct raw_object_store *o);
 void unuse_pack(struct pack_window **);

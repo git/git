@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test trace2 facility'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Turn off any inherited trace2 settings for this test.
@@ -319,6 +321,46 @@ test_expect_success 'discard traces when there are too many files' '
 	test_cmp expected_filenames.txt ls_output.txt &&
 	head -n1 trace_target_dir/git-trace2-discard | grep \"event\":\"version\" &&
 	head -n2 trace_target_dir/git-trace2-discard | tail -n1 | grep \"event\":\"too_many_files\"
+'
+
+# In the following "...redact..." tests, skip testing the GIT_TRACE2_REDACT=0
+# case because we would need to exactly model the full JSON event stream like
+# we did in the basic tests above and I do not think it is worth it.
+
+test_expect_success 'unsafe URLs are redacted by default in cmd_start events' '
+	test_when_finished \
+		"rm -r trace.event" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+		test-tool trace2 300redact_start git clone https://user:pwd@example.com/ clone2 &&
+	! grep user:pwd trace.event
+'
+
+test_expect_success 'unsafe URLs are redacted by default in child_start events' '
+	test_when_finished \
+		"rm -r trace.event" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+		test-tool trace2 301redact_child_start git clone https://user:pwd@example.com/ clone2 &&
+	! grep user:pwd trace.event
+'
+
+test_expect_success 'unsafe URLs are redacted by default in exec events' '
+	test_when_finished \
+		"rm -r trace.event" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+		test-tool trace2 302redact_exec git clone https://user:pwd@example.com/ clone2 &&
+	! grep user:pwd trace.event
+'
+
+test_expect_success 'unsafe URLs are redacted by default in def_param events' '
+	test_when_finished \
+		"rm -r trace.event" &&
+
+	GIT_TRACE2_EVENT="$(pwd)/trace.event" \
+		test-tool trace2 303redact_def_param url https://user:pwd@example.com/ &&
+	! grep user:pwd trace.event
 '
 
 test_done

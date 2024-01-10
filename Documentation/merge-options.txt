@@ -132,8 +132,9 @@ ifdef::git-pull[]
 Only useful when merging.
 endif::git-pull[]
 
---no-verify::
-	This option bypasses the pre-merge and commit-msg hooks.
+--[no-]verify::
+	By default, the pre-merge and commit-msg hooks are run.
+	When `--no-verify` is given, these are bypassed.
 	See also linkgit:githooks[5].
 ifdef::git-pull[]
 	Only useful when merging.
@@ -190,7 +191,7 @@ endif::git-pull[]
 --autostash::
 --no-autostash::
 	Automatically create a temporary stash entry before the operation
-	begins, record it in the special ref `MERGE_AUTOSTASH`
+	begins, record it in the ref `MERGE_AUTOSTASH`
 	and apply it after the operation ends.  This means
 	that you can run the operation on a dirty worktree.  However, use
 	with care: the final stash application after a successful

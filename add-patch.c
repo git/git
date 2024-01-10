@@ -1,11 +1,17 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "add-interactive.h"
+#include "advice.h"
+#include "editor.h"
+#include "environment.h"
+#include "gettext.h"
+#include "object-name.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "run-command.h"
 #include "strvec.h"
 #include "pathspec.h"
 #include "color.h"
-#include "diff.h"
 #include "compat/terminal.h"
 #include "prompt.h"
 
@@ -191,10 +197,10 @@ static struct patch_mode patch_mode_worktree_head = {
 	.apply_check_args = { "-R", NULL },
 	.is_reverse = 1,
 	.prompt_mode = {
-		N_("Discard mode change from index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Discard deletion from index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Discard addition from index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard mode change from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard deletion from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard addition from worktree [y,n,q,a,d%s,?]? "),
+		N_("Discard this hunk from worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for discarding."),
@@ -213,10 +219,10 @@ static struct patch_mode patch_mode_worktree_nothead = {
 	.apply_args = { NULL },
 	.apply_check_args = { NULL },
 	.prompt_mode = {
-		N_("Apply mode change to index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Apply deletion to index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Apply addition to index and worktree [y,n,q,a,d%s,?]? "),
-		N_("Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply mode change to worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply deletion to worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply addition to worktree [y,n,q,a,d%s,?]? "),
+		N_("Apply this hunk to worktree [y,n,q,a,d%s,?]? "),
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for applying."),
@@ -238,6 +244,7 @@ struct hunk_header {
 	 * include the newline.
 	 */
 	size_t extra_start, extra_end, colored_extra_start, colored_extra_end;
+	unsigned suppress_colored_line_range:1;
 };
 
 struct hunk {
@@ -305,7 +312,7 @@ static void setup_child_process(struct add_p_state *s,
 	va_end(ap);
 
 	cp->git_cmd = 1;
-	strvec_pushf(&cp->env_array,
+	strvec_pushf(&cp->env,
 		     INDEX_ENVIRONMENT "=%s", s->s.r->index_file);
 }
 
@@ -358,15 +365,14 @@ static int parse_hunk_header(struct add_p_state *s, struct hunk *hunk)
 	if (!eol)
 		eol = s->colored.buf + s->colored.len;
 	p = memmem(line, eol - line, "@@ -", 4);
-	if (!p)
-		return error(_("could not parse colored hunk header '%.*s'"),
-			     (int)(eol - line), line);
-	p = memmem(p + 4, eol - p - 4, " @@", 3);
-	if (!p)
-		return error(_("could not parse colored hunk header '%.*s'"),
-			     (int)(eol - line), line);
+	if (p && (p = memmem(p + 4, eol - p - 4, " @@", 3))) {
+		header->colored_extra_start = p + 3 - s->colored.buf;
+	} else {
+		/* could not parse colored hunk header, leave as-is */
+		header->colored_extra_start = hunk->colored_start;
+		header->suppress_colored_line_range = 1;
+	}
 	hunk->colored_start = eol - s->colored.buf + (*eol == '\n');
-	header->colored_extra_start = p + 3 - s->colored.buf;
 	header->colored_extra_end = hunk->colored_start;
 
 	return 0;
@@ -381,6 +387,17 @@ static int is_octal(const char *p, size_t len)
 		if (*p < '0' || *(p++) > '7')
 			return 0;
 	return 1;
+}
+
+static void complete_file(char marker, struct hunk *hunk)
+{
+	if (marker == '-' || marker == '+')
+		/*
+		 * Last hunk ended in non-context line (i.e. it
+		 * appended lines to the file, so there are no
+		 * trailing context lines).
+		 */
+		hunk->splittable_into++;
 }
 
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
@@ -403,17 +420,18 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		strvec_push(&args,
 			    /* could be on an unborn branch */
 			    !strcmp("HEAD", s->revision) &&
-			    get_oid("HEAD", &oid) ?
+			    repo_get_oid(the_repository, "HEAD", &oid) ?
 			    empty_tree_oid_hex() : s->revision);
 	}
 	color_arg_index = args.nr;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */
-	strvec_pushl(&args, "--no-color", "-p", "--", NULL);
+	strvec_pushl(&args, "--no-color", "--ignore-submodules=dirty", "-p",
+		     "--", NULL);
 	for (i = 0; i < ps->nr; i++)
 		strvec_push(&args, ps->items[i].original);
 
 	setup_child_process(s, &cp, NULL);
-	cp.argv = args.v;
+	strvec_pushv(&cp.args, args.v);
 	res = capture_command(&cp, plain, 0);
 	if (res) {
 		strvec_clear(&args);
@@ -431,7 +449,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 
 		setup_child_process(s, &colored_cp, NULL);
 		xsnprintf((char *)args.v[color_arg_index], 8, "--color");
-		colored_cp.argv = args.v;
+		strvec_pushv(&colored_cp.args, args.v);
 		colored = &s->colored;
 		res = capture_command(&colored_cp, colored, 0);
 		strvec_clear(&args);
@@ -471,7 +489,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		if (!eol)
 			eol = pend;
 
-		if (starts_with(p, "diff ")) {
+		if (starts_with(p, "diff ") ||
+		    starts_with(p, "* Unmerged path ")) {
+			complete_file(marker, hunk);
 			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
 				   file_diff_alloc);
 			file_diff = s->file_diff + s->file_diff_nr - 1;
@@ -580,7 +600,10 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			if (colored_eol)
 				colored_p = colored_eol + 1;
 			else if (p != pend)
-				/* colored shorter than non-colored? */
+				/* non-colored has more lines? */
+				goto mismatched_output;
+			else if (colored_p == colored_pend)
+				/* last line has no matching colored one? */
 				goto mismatched_output;
 			else
 				colored_p = colored_pend;
@@ -598,13 +621,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				file_diff->hunk->colored_end = hunk->colored_end;
 		}
 	}
-
-	if (marker == '-' || marker == '+')
-		/*
-		 * Last hunk ended in non-context line (i.e. it appended lines
-		 * to the file, so there are no trailing context lines).
-		 */
-		hunk->splittable_into++;
+	complete_file(marker, hunk);
 
 	/* non-colored shorter than colored? */
 	if (colored_p != colored_pend) {
@@ -650,6 +667,15 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		if (!colored) {
 			p = s->plain.buf + header->extra_start;
 			len = header->extra_end - header->extra_start;
+		} else if (header->suppress_colored_line_range) {
+			strbuf_add(out,
+				   s->colored.buf + header->colored_extra_start,
+				   header->colored_extra_end -
+				   header->colored_extra_start);
+
+			strbuf_add(out, s->colored.buf + hunk->colored_start,
+				   hunk->colored_end - hunk->colored_start);
+			return;
 		} else {
 			strbuf_addstr(out, s->s.fraginfo_color);
 			p = s->colored.buf + header->colored_extra_start;
@@ -1079,10 +1105,11 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 	size_t i;
 
 	strbuf_reset(&s->buf);
-	strbuf_commented_addf(&s->buf, _("Manual hunk edit mode -- see bottom for "
-				      "a quick guide.\n"));
+	strbuf_commented_addf(&s->buf, comment_line_char,
+			      _("Manual hunk edit mode -- see bottom for "
+				"a quick guide.\n"));
 	render_hunk(s, hunk, 0, 0, &s->buf);
-	strbuf_commented_addf(&s->buf,
+	strbuf_commented_addf(&s->buf, comment_line_char,
 			      _("---\n"
 				"To remove '%c' lines, make them ' ' lines "
 				"(context).\n"
@@ -1091,12 +1118,13 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 			      s->mode->is_reverse ? '+' : '-',
 			      s->mode->is_reverse ? '-' : '+',
 			      comment_line_char);
-	strbuf_commented_addf(&s->buf, "%s", _(s->mode->edit_hunk_hint));
+	strbuf_commented_addf(&s->buf, comment_line_char, "%s",
+			      _(s->mode->edit_hunk_hint));
 	/*
 	 * TRANSLATORS: 'it' refers to the patch mentioned in the previous
 	 * messages.
 	 */
-	strbuf_commented_addf(&s->buf,
+	strbuf_commented_addf(&s->buf, comment_line_char,
 			      _("If it does not apply cleanly, you will be "
 				"given an opportunity to\n"
 				"edit again.  If all lines of the hunk are "
@@ -1541,7 +1569,7 @@ soft_increment:
 			strbuf_remove(&s->answer, 0, 1);
 			strbuf_trim(&s->answer);
 			i = hunk_index - DISPLAY_HUNKS_LINES / 2;
-			if (i < file_diff->mode_change)
+			if (i < (int)file_diff->mode_change)
 				i = file_diff->mode_change;
 			while (s->answer.len == 0) {
 				i = display_hunks(s, file_diff, i);
@@ -1731,7 +1759,8 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 		s.mode = &patch_mode_add;
 	s.revision = revision;
 
-	if (discard_index(r->index) < 0 || repo_read_index(r) < 0 ||
+	discard_index(r->index);
+	if (repo_read_index(r) < 0 ||
 	    (!s.mode->index_only &&
 	     repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
 					  NULL, NULL, NULL) < 0) ||

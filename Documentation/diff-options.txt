@@ -22,66 +22,94 @@ ifndef::git-format-patch[]
 -p::
 -u::
 --patch::
-	Generate patch (see section on generating patches).
+	Generate patch (see <<generate_patch_text_with_p>>).
 ifdef::git-diff[]
 	This is the default.
 endif::git-diff[]
 
 -s::
 --no-patch::
-	Suppress diff output. Useful for commands like `git show` that
-	show the patch by default, or to cancel the effect of `--patch`.
+	Suppress all output from the diff machinery.  Useful for
+	commands like `git show` that show the patch by default to
+	squelch their output, or to cancel the effect of options like
+	`--patch`, `--stat` earlier on the command line in an alias.
+
 endif::git-format-patch[]
 
 ifdef::git-log[]
---diff-merges=(off|none|on|first-parent|1|separate|m|combined|c|dense-combined|cc)::
+-m::
+	Show diffs for merge commits in the default format. This is
+	similar to '--diff-merges=on', except `-m` will
+	produce no output unless `-p` is given as well.
+
+-c::
+	Produce combined diff output for merge commits.
+	Shortcut for '--diff-merges=combined -p'.
+
+--cc::
+	Produce dense combined diff output for merge commits.
+	Shortcut for '--diff-merges=dense-combined -p'.
+
+--dd::
+	Produce diff with respect to first parent for both merge and
+	regular commits.
+	Shortcut for '--diff-merges=first-parent -p'.
+
+--remerge-diff::
+	Produce remerge-diff output for merge commits.
+	Shortcut for '--diff-merges=remerge -p'.
+
 --no-diff-merges::
+	Synonym for '--diff-merges=off'.
+
+--diff-merges=<format>::
 	Specify diff format to be used for merge commits. Default is
-	{diff-merges-default} unless `--first-parent` is in use, in which case
-	`first-parent` is the default.
+	{diff-merges-default} unless `--first-parent` is in use, in
+	which case `first-parent` is the default.
 +
---diff-merges=(off|none):::
---no-diff-merges:::
+The following formats are supported:
++
+--
+off, none::
 	Disable output of diffs for merge commits. Useful to override
 	implied value.
 +
---diff-merges=on:::
---diff-merges=m:::
--m:::
-	This option makes diff output for merge commits to be shown in
-	the default format. `-m` will produce the output only if `-p`
-	is given as well. The default format could be changed using
-	`log.diffMerges` configuration parameter, which default value
+on, m::
+	Make diff output for merge commits to be shown in the default
+	format. The default format can be changed using
+	`log.diffMerges` configuration variable, whose default value
 	is `separate`.
 +
---diff-merges=first-parent:::
---diff-merges=1:::
-	This option makes merge commits show the full diff with
-	respect to the first parent only.
+first-parent, 1::
+	Show full diff with respect to first parent. This is the same
+	format as `--patch` produces for non-merge commits.
 +
---diff-merges=separate:::
-	This makes merge commits show the full diff with respect to
-	each of the parents. Separate log entry and diff is generated
-	for each parent.
+separate::
+	Show full diff with respect to each of parents.
+	Separate log entry and diff is generated for each parent.
 +
---diff-merges=combined:::
---diff-merges=c:::
--c:::
-	With this option, diff output for a merge commit shows the
-	differences from each of the parents to the merge result
-	simultaneously instead of showing pairwise diff between a
-	parent and the result one at a time. Furthermore, it lists
-	only files which were modified from all parents. `-c` implies
-	`-p`.
+combined, c::
+	Show differences from each of the parents to the merge
+	result simultaneously instead of showing pairwise diff between
+	a parent and the result one at a time. Furthermore, it lists
+	only files which were modified from all parents.
 +
---diff-merges=dense-combined:::
---diff-merges=cc:::
---cc:::
-	With this option the output produced by
-	`--diff-merges=combined` is further compressed by omitting
-	uninteresting hunks whose contents in the parents have only
-	two variants and the merge result picks one of them without
-	modification.  `--cc` implies `-p`.
+dense-combined, cc::
+	Further compress output produced by `--diff-merges=combined`
+	by omitting uninteresting hunks whose contents in the parents
+	have only two variants and the merge result picks one of them
+	without modification.
++
+remerge, r::
+	Remerge two-parent merge commits to create a temporary tree
+	object--potentially containing files with conflict markers
+	and such.  A diff is then shown between that temporary tree
+	and the actual merge commit.
++
+The output emitted when this option is used is subject to change, and
+so is its interaction with other options (unless explicitly
+documented).
+--
 
 --combined-all-paths::
 	This flag causes combined diffs (used for merge commits) to
@@ -189,14 +217,15 @@ have to use `--diff-algorithm=default` option.
 	part. Maximum width defaults to terminal width, or 80 columns
 	if not connected to a terminal, and can be overridden by
 	`<width>`. The width of the filename part can be limited by
-	giving another width `<name-width>` after a comma. The width
-	of the graph part can be limited by using
-	`--stat-graph-width=<width>` (affects all commands generating
-	a stat graph) or by setting `diff.statGraphWidth=<width>`
-	(does not affect `git format-patch`).
-	By giving a third parameter `<count>`, you can limit the
-	output to the first `<count>` lines, followed by `...` if
-	there are more.
+	giving another width `<name-width>` after a comma or by setting
+	`diff.statNameWidth=<width>`. The width of the graph part can be
+	limited by using `--stat-graph-width=<width>` or by setting
+	`diff.statGraphWidth=<width>`. Using `--stat` or
+	`--stat-graph-width` affects all commands generating a stat graph,
+	while setting `diff.statNameWidth` or `diff.statGraphWidth`
+	does not affect `git format-patch`.
+	By giving a third parameter `<count>`, you can limit the output to
+	the first `<count>` lines, followed by `...` if there are more.
 +
 These parameters can also be set individually with `--stat-width=<width>`,
 `--stat-name-width=<name-width>` and `--stat-count=<count>`.
@@ -285,7 +314,7 @@ ifndef::git-format-patch[]
 
 -z::
 ifdef::git-log[]
-	Separate the commits with NULs instead of with new newlines.
+	Separate the commits with NULs instead of newlines.
 +
 Also, when `--raw` or `--numstat` has been given, do not munge
 pathnames and use NULs as output field terminators.
@@ -616,11 +645,8 @@ ifndef::git-format-patch[]
 Also, these upper-case letters can be downcased to exclude.  E.g.
 `--diff-filter=ad` excludes added and deleted paths.
 +
-Note that not all diffs can feature all types. For instance, diffs
-from the index to the working tree can never have Added entries
-(because the set of paths included in the diff is limited by what is in
-the index).  Similarly, copied and renamed entries cannot appear if
-detection for those types is disabled.
+Note that not all diffs can feature all types. For instance, copied and
+renamed entries cannot appear if detection for those types is disabled.
 
 -S<string>::
 	Look for differences that change the number of occurrences of
@@ -720,7 +746,7 @@ matches "`fooasdfbar`" and "`foo/bar/baz/asdf`" but not "`foobarx`".
 --rotate-to=<file>::
 	Discard the files before the named <file> from the output
 	(i.e. 'skip to'), or move them to the end of the output
-	(i.e. 'rotate to').  These were invented primarily for use
+	(i.e. 'rotate to').  These options were invented primarily for the use
 	of the `git difftool` command, and may not be very useful
 	otherwise.
 
@@ -836,6 +862,11 @@ endif::git-format-patch[]
 
 --no-prefix::
 	Do not show any source or destination prefix.
+
+--default-prefix::
+	Use the default source and destination prefixes ("a/" and "b/").
+	This is usually the default already, but may be used to override
+	config such as `diff.noprefix`.
 
 --line-prefix=<prefix>::
 	Prepend an additional prefix to every line of output.

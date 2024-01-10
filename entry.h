@@ -1,13 +1,16 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-#include "cache.h"
 #include "convert.h"
+
+struct cache_entry;
+struct index_state;
 
 struct checkout {
 	struct index_state *istate;
 	const char *base_dir;
 	int base_dir_len;
+	const char *super_prefix;
 	struct delayed_checkout *delayed_checkout;
 	struct checkout_metadata meta;
 	unsigned force:1,
@@ -43,18 +46,26 @@ static inline int checkout_entry(struct cache_entry *ce,
 }
 
 void enable_delayed_checkout(struct checkout *state);
-int finish_delayed_checkout(struct checkout *state, int *nr_checkouts,
-			    int show_progress);
+int finish_delayed_checkout(struct checkout *state, int show_progress);
 
 /*
  * Unlink the last component and schedule the leading directories for
  * removal, such that empty directories get removed.
+ *
+ * The "super_prefix" is either NULL, or the "--super-prefix" passed
+ * down from "read-tree" et al.
  */
-void unlink_entry(const struct cache_entry *ce);
+void unlink_entry(const struct cache_entry *ce, const char *super_prefix);
 
-void *read_blob_entry(const struct cache_entry *ce, unsigned long *size);
+void *read_blob_entry(const struct cache_entry *ce, size_t *size);
 int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st);
 void update_ce_after_write(const struct checkout *state, struct cache_entry *ce,
 			   struct stat *st);
+
+/*
+ * Calls the correct function out of {unlink,rmdir}_or_warn based on
+ * the supplied file mode.
+ */
+int remove_or_warn(unsigned int mode, const char *path);
 
 #endif /* ENTRY_H */

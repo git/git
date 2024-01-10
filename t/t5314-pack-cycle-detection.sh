@@ -49,9 +49,9 @@ Then no matter which order we start looking at the packs in, we know that we
 will always find a delta for "file", because its lookup will always come
 immediately after the lookup for "dummy".
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
-
-
 
 # Create a pack containing the tree $1 and blob $1:file, with
 # the latter stored as a delta against $2:file.
@@ -63,13 +63,16 @@ immediately after the lookup for "dummy".
 # Note that the two variants of "file" must be similar enough to convince git
 # to create the delta.
 make_pack () {
-	{
-		printf '%s\n' "-$(git rev-parse $2)"
-		printf '%s dummy\n' "$(git rev-parse $1:dummy)"
-		printf '%s file\n' "$(git rev-parse $1:file)"
-	} |
-	git pack-objects --stdout |
-	git index-pack --stdin --fix-thin
+	ln1=$(git rev-parse "$2") &&
+	ln2=$(git rev-parse "$1:dummy") &&
+	ln3=$(git rev-parse "$1:file") &&
+	cat >list <<-EOF
+	-$ln1
+	$ln2 dummy
+	$ln3 file
+	EOF
+	git pack-objects --stdout <list >pack &&
+	git index-pack --stdin --fix-thin <pack
 }
 
 test_expect_success 'setup' '

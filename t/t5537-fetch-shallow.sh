@@ -161,6 +161,30 @@ test_expect_success 'fetch --update-shallow' '
 	)
 '
 
+test_expect_success 'fetch --update-shallow into a repo with submodules' '
+	test_config_global protocol.file.allow always &&
+
+	git init a-submodule &&
+	test_commit -C a-submodule foo &&
+
+	test_when_finished "rm -rf repo-with-sub" &&
+	git init repo-with-sub &&
+	git -C repo-with-sub submodule add ../a-submodule a-submodule &&
+	git -C repo-with-sub commit -m "added submodule" &&
+	git -C repo-with-sub fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/*
+'
+
+test_expect_success 'fetch --update-shallow a commit that is also a shallow point into a repo with submodules' '
+	test_when_finished "rm -rf repo-with-sub" &&
+	git init repo-with-sub &&
+	git -c protocol.file.allow=always -C repo-with-sub \
+		submodule add ../a-submodule a-submodule &&
+	git -C repo-with-sub commit -m "added submodule" &&
+
+	SHALLOW=$(cat shallow/.git/shallow) &&
+	git -C repo-with-sub fetch --update-shallow ../shallow/.git "$SHALLOW":refs/heads/a-shallow
+'
+
 test_expect_success 'fetch --update-shallow (with fetch.writeCommitGraph)' '
 	(
 	cd shallow &&

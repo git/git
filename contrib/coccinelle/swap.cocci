@@ -1,4 +1,4 @@
-@ swap_with_declaration @
+@@
 type T;
 identifier tmp;
 T a, b;

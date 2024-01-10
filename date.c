@@ -4,12 +4,16 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "date.h"
+#include "gettext.h"
+#include "pager.h"
+#include "strbuf.h"
 
 /*
  * This is like mktime, but without normalization of tm_wday and tm_yday.
  */
-static time_t tm_to_time_t(const struct tm *tm)
+time_t tm_to_time_t(const struct tm *tm)
 {
 	static const int mdays[] = {
 	    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
@@ -205,11 +209,10 @@ void show_date_relative(timestamp_t time, struct strbuf *timebuf)
 
 struct date_mode *date_mode_from_type(enum date_mode_type type)
 {
-	static struct date_mode mode;
+	static struct date_mode mode = DATE_MODE_INIT;
 	if (type == DATE_STRFTIME)
 		BUG("cannot create anonymous strftime date_mode struct");
 	mode.type = type;
-	mode.local = 0;
 	return &mode;
 }
 
@@ -493,6 +496,12 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 		return 2;
 	}
 
+	/* ISO-8601 allows yyyymmDD'T'HHMMSS, with less precision */
+	if (*date == 'T' && isdigit(date[1]) && tm->tm_hour == -1) {
+		tm->tm_min = tm->tm_sec = 0;
+		return 1;
+	}
+
 	/* BAD CRAP */
 	return skip_alpha(date);
 }
@@ -639,6 +648,18 @@ static inline int nodate(struct tm *tm)
 }
 
 /*
+ * Have we seen an ISO-8601-alike date, i.e. 20220101T0,
+ * In which, hour is still unset,
+ * and minutes and second has been set to 0.
+ */
+static inline int maybeiso8601(struct tm *tm)
+{
+	return tm->tm_hour == -1 &&
+		tm->tm_min == 0 &&
+		tm->tm_sec == 0;
+}
+
+/*
  * We've seen a digit. Time? Year? Date?
  */
 static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt)
@@ -699,6 +720,25 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 			 *end == '.' && isdigit(end[1]))
 			strtoul(end + 1, &end, 10);
 		return end - date;
+	}
+
+	/* reduced precision of ISO-8601's time: HHMM or HH */
+	if (maybeiso8601(tm)) {
+		unsigned int num1 = num;
+		unsigned int num2 = 0;
+		if (n == 4) {
+			num1 = num / 100;
+			num2 = num % 100;
+		}
+		if ((n == 4 || n == 2) && !nodate(tm) &&
+		    set_time(num1, num2, 0, tm) == 0)
+			return n;
+		/*
+		 * We thought this is an ISO-8601 time string,
+		 * we set minutes and seconds to 0,
+		 * turn out it isn't, rollback the change.
+		 */
+		tm->tm_min = tm->tm_sec = -1;
 	}
 
 	/* Four-digit year or a timezone? */
@@ -993,6 +1033,11 @@ void parse_date_format(const char *format, struct date_mode *mode)
 		die("unknown date format %s", format);
 }
 
+void date_mode_release(struct date_mode *mode)
+{
+	free((char *)mode->strftime_fmt);
+}
+
 void datestamp(struct strbuf *out)
 {
 	time_t now;
@@ -1096,7 +1141,7 @@ static void date_tea(struct tm *tm, struct tm *now, int *num)
 	date_time(tm, now, 17);
 }
 
-static void date_pm(struct tm *tm, struct tm *now, int *num)
+static void date_pm(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	int hour, n = *num;
 	*num = 0;
@@ -1110,7 +1155,7 @@ static void date_pm(struct tm *tm, struct tm *now, int *num)
 	tm->tm_hour = (hour % 12) + 12;
 }
 
-static void date_am(struct tm *tm, struct tm *now, int *num)
+static void date_am(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	int hour, n = *num;
 	*num = 0;
@@ -1124,7 +1169,7 @@ static void date_am(struct tm *tm, struct tm *now, int *num)
 	tm->tm_hour = (hour % 12);
 }
 
-static void date_never(struct tm *tm, struct tm *now, int *num)
+static void date_never(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	time_t n = 0;
 	localtime_r(&n, tm);
@@ -1321,20 +1366,6 @@ static timestamp_t approxidate_str(const char *date,
 	if (!touched)
 		*error_ret = 1;
 	return (timestamp_t)update_tm(&tm, &now, 0);
-}
-
-timestamp_t approxidate_relative(const char *date)
-{
-	struct timeval tv;
-	timestamp_t timestamp;
-	int offset;
-	int errors = 0;
-
-	if (!parse_date_basic(date, &timestamp, &offset))
-		return timestamp;
-
-	get_time(&tv);
-	return approxidate_str(date, (const struct timeval *) &tv, &errors);
 }
 
 timestamp_t approxidate_careful(const char *date, int *error_ret)

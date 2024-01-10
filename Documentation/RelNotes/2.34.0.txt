@@ -4,13 +4,19 @@ Git 2.34 Release Notes
 Updates since Git 2.33
 ----------------------
 
+Backward compatibility notes
+
+ * The "--preserve-merges" option of "git rebase" has been removed.
+
+
 UI, Workflows & Features
 
  * Pathname expansion (like "~username/") learned a way to specify a
    location relative to Git installation (e.g. its $sharedir which is
    $(prefix)/share), with "%(prefix)".
 
- * Use `ort` instead of `recursive` as the default merge strategy.
+ * The `ort` strategy is used instead of `recursive` as the default
+   merge strategy.
 
  * The userdiff pattern for "java" language has been updated.
 
@@ -61,6 +67,25 @@ UI, Workflows & Features
 
  * The ref iteration code used to optionally allow dangling refs to be
    shown, which has been tightened up.
+
+ * "git add", "git mv", and "git rm" have been adjusted to avoid
+   updating paths outside of the sparse-checkout definition unless
+   the user specifies a "--sparse" option.
+
+ * "git repack" has been taught to generate multi-pack reachability
+   bitmaps.
+
+ * "git fsck" has been taught to report mismatch between expected and
+   actual types of an object better.
+
+ * In addition to GnuPG, ssh public crypto can be used for object and
+   push-cert signing.  Note that this feature cannot be used with
+   ssh-keygen from OpenSSH 8.7, whose support for it is broken.  Avoid
+   using it unless you update to OpenSSH 8.8.
+
+ * "git log --grep=string --author=name" learns to highlight hits just
+   like "git grep string" does.
+
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -146,211 +171,256 @@ Performance, Internal Implementation, Development Support etc.
 
  * CI learns to run the leak sanitizer builds.
 
+ * "git grep --recurse-submodules" takes trees and blobs from the
+   submodule repository, but the textconv settings when processing a
+   blob from the submodule is not taken from the submodule repository.
+   A test is added to demonstrate the issue, without fixing it.
+
+ * Teach "git help -c" into helping the command line completion of
+   configuration variables.
+
+ * When "git cmd -h" shows more than one line of usage text (e.g.
+   the cmd subcommand may take sub-sub-command), parse-options API
+   learned to align these lines, even across i18n/l10n.
+
+ * Prevent "make sparse" from running for the source files that
+   haven't been modified.
+
+ * The code path to write a new version of .midx multi-pack index files
+   has learned to release the mmaped memory holding the current
+   version of .midx before removing them from the disk, as some
+   platforms do not allow removal of a file that still has mapping.
+
+ * A new feature has been added to abort early in the test framework.
+
 
 Fixes since v2.33
 -----------------
 
  * Input validation of "git pack-objects --stdin-packs" has been
    corrected.
-   (merge 561fa03529 ab/pack-stdin-packs-fix later to maint).
 
  * Bugfix for common ancestor negotiation recently introduced in "git
    push" code path.
-   (merge 82823118b9 jt/push-negotiation-fixes later to maint).
 
  * "git pull" had various corner cases that were not well thought out
    around its --rebase backend, e.g. "git pull --ff-only" did not stop
    but went ahead and rebased when the history on other side is not a
    descendant of our history.  The series tries to fix them up.
-   (merge 6f843a3355 en/pull-conflicting-options later to maint).
 
  * "git apply" miscounted the bytes and failed to read to the end of
    binary hunks.
-   (merge 46d723ce57 jk/apply-binary-hunk-parsing-fix later to maint).
 
  * "git range-diff" code clean-up.
-   (merge c4d5907324 jk/range-diff-fixes later to maint).
 
  * "git commit --fixup" now works with "--edit" again, after it was
    broken in v2.32.
-   (merge 8ef6aad664 jk/commit-edit-fixup-fix later to maint).
 
  * Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
    new version has a blocker bug for that architecture.
-   (merge 3cf9bb36bf cb/ci-use-upload-artifacts-v1 later to maint).
 
  * Checking out all the paths from HEAD during the last conflicted
    step in "git rebase" and continuing would cause the step to be
    skipped (which is expected), but leaves MERGE_MSG file behind in
    $GIT_DIR and confuses the next "git commit", which has been
    corrected.
-   (merge e5ee33e855 pw/rebase-skip-final-fix later to maint).
 
  * Various bugs in "git rebase -r" have been fixed.
-   (merge f2563c9ef3 pw/rebase-r-fixes later to maint).
 
  * mmap() imitation used to call xmalloc() that dies upon malloc()
    failure, which has been corrected to just return an error to the
    caller to be handled.
-   (merge 95b4ff3931 rs/git-mmap-uses-malloc later to maint).
 
  * "git diff --relative" segfaulted and/or produced incorrect result
    when there are unmerged paths.
-   (merge 8174627b3d dd/diff-files-unmerged-fix later to maint).
 
  * The delayed checkout code path in "git checkout" etc. were chatty
    even when --quiet and/or --no-progress options were given.
-   (merge 7a132c628e mt/quiet-with-delayed-checkout later to maint).
 
  * "git branch -D <branch>" used to refuse to remove a broken branch
    ref that points at a missing commit, which has been corrected.
-   (merge 597a977489 rs/branch-allow-deleting-dangling later to maint).
 
  * Build update for Apple clang.
-   (merge f32c5d3716 cb/makefile-apple-clang later to maint).
 
  * The parser for the "--nl" option of "git column" has been
    corrected.
-   (merge c93ca46cf5 sg/column-nl later to maint).
 
  * "git upload-pack" which runs on the other side of "git fetch"
    forgot to take the ref namespaces into account when handling
    want-ref requests.
-   (merge 53a66ec37c ka/want-ref-in-namespace later to maint).
 
  * The sparse-index support can corrupt the index structure by storing
    a stale and/or uninitialized data, which has been corrected.
-   (merge d9e9b44d7a jh/sparse-index-resize-fix later to maint).
 
  * Buggy tests could damage repositories outside the throw-away test
    area we created.  We now by default export GIT_CEILING_DIRECTORIES
    to limit the damage from such a stray test.
-   (merge 614c3d8f2e sg/set-ceiling-during-tests later to maint).
 
  * Even when running "git send-email" without its own threaded
    discussion support, a threading related header in one message is
    carried over to the subsequent message to result in an unwanted
    threading, which has been corrected.
-   (merge e082113484 mh/send-email-reset-in-reply-to later to maint).
 
  * The output from "git fast-export", when its anonymization feature
    is in use, showed an annotated tag incorrectly.
-   (merge 2f040a9671 tk/fast-export-anonymized-tag-fix later to maint).
-
- * Doc update plus improved error reporting.
-   (merge 1e93770888 jk/log-warn-on-bogus-encoding later to maint).
 
  * Recent "diff -m" changes broke "gitk", which has been corrected.
-   (merge 5acffd3473 so/diff-index-regression-fix later to maint).
-
- * Regression fix.
-   (merge b996f84989 ab/send-email-config-fix later to maint).
 
  * The "git apply -3" code path learned not to bother the lower level
    merge machinery when the three-way merge can be trivially resolved
    without the content level merge.  This fixes a regression caused by
    recent "-3way first and fall back to direct application" change.
-   (merge 57f183b698 jc/trivial-threeway-binary-merge later to maint).
 
  * The code that optionally creates the *.rev reverse index file has
    been optimized to avoid needless computation when it is not writing
    the file out.
-   (merge 8fe8bae9d2 ab/reverse-midx-optim later to maint).
 
  * "git range-diff -I... <range> <range>" segfaulted, which has been
    corrected.
-   (merge 709b3f32d3 rs/range-diff-avoid-segfault-with-I later to maint).
 
  * The order in which various files that make up a single (conceptual)
    packfile has been reevaluated and straightened up.  This matters in
    correctness, as an incomplete set of files must not be shown to a
    running Git.
-   (merge 4bc1fd6e39 tb/pack-finalize-ordering later to maint).
 
  * The "mode" word is useless in a call to open(2) that does not
    create a new file.  Such a call in the files backend of the ref
    subsystem has been cleaned up.
-   (merge 35cf94eaf6 rs/no-mode-to-open-when-appending later to maint).
 
  * "git update-ref --stdin" failed to flush its output as needed,
    which potentially led the conversation to a deadlock.
-   (merge 7c1200745b ps/update-ref-batch-flush later to maint).
 
  * When "git am --abort" fails to abort correctly, it still exited
    with exit status of 0, which has been corrected.
-   (merge c5ead19ea2 en/am-abort-fix later to maint).
 
  * Correct nr and alloc members of strvec struct to be of type size_t.
-   (merge 8d133a4653 jk/strvec-typefix later to maint).
 
  * "git stash", where the tentative change involves changing a
    directory to a file (or vice versa), was confused, which has been
    corrected.
-   (merge bee8691f19 en/stash-df-fix later to maint).
 
  * "git clone" from a repository whose HEAD is unborn into a bare
    repository didn't follow the branch name the other side used, which
    is corrected.
-   (merge 6b58df54cf jk/clone-unborn-head-in-bare later to maint).
 
  * "git cvsserver" had a long-standing bug in its authentication code,
    which has finally been corrected (it is unclear and is a separate
    question if anybody is seriously using it, though).
-   (merge 4b81f690f6 cb/cvsserver later to maint).
 
  * "git difftool --dir-diff" mishandled symbolic links.
-   (merge 5bafb3576a da/difftool-dir-diff-symlink-fix later to maint).
 
  * Sensitive data in the HTTP trace were supposed to be redacted, but
    we failed to do so in HTTP/2 requests.
-   (merge b66c77a64e jk/http-redact-fix later to maint).
 
  * "make clean" has been updated to remove leftover .depend/
    directories, even when it is not told to use them to compute header
    dependencies.
-   (merge f0a74bcb03 ab/make-clean-depend-dirs later to maint).
 
  * Protocol v0 clients can get stuck parsing a malformed feature line.
-   (merge 44d2aec6e8 ah/connect-parse-feature-v0-fix later to maint).
+
+ * A few kinds of changes "git status" can show were not documented.
+   (merge d2a534c515 ja/doc-status-types-and-copies later to maint).
+
+ * The mergesort implementation used to sort linked list has been
+   optimized.
+   (merge c90cfc225b rs/mergesort later to maint).
+
+ * An editor session launched during a Git operation (e.g. during 'git
+   commit') can leave the terminal in a funny state.  The code path
+   has updated to save the terminal state before, and restore it
+   after, it spawns an editor.
+   (merge 3d411afabc cm/save-restore-terminal later to maint).
+
+ * "git cat-file --batch" with the "--batch-all-objects" option is
+   supposed to iterate over all the objects found in a repository, but
+   it used to translate these object names using the replace mechanism,
+   which defeats the point of enumerating all objects in the repository.
+   This has been corrected.
+   (merge bf972896d7 jk/cat-file-batch-all-wo-replace later to maint).
+
+ * Recent sparse-index work broke safety against attempts to add paths
+   with trailing slashes to the index, which has been corrected.
+   (merge c8ad9d04c6 rs/make-verify-path-really-verify-again later to maint).
+
+ * The "--color-lines" and "--color-by-age" options of "git blame"
+   have been missing, which are now documented.
+   (merge 8c32856133 bs/doc-blame-color-lines later to maint).
+
+ * The PATH used in CI job may be too wide and let incompatible dlls
+   to be grabbed, which can cause the build&test to fail.  Tighten it.
+   (merge 7491ef6198 js/windows-ci-path-fix later to maint).
+
+ * Avoid performance measurements from getting ruined by gc and other
+   housekeeping pauses interfering in the middle.
+   (merge be79131a53 rs/disable-gc-during-perf-tests later to maint).
+
+ * Stop "git add --dry-run" from creating new blob and tree objects.
+   (merge e578d0311d rs/add-dry-run-without-objects later to maint).
+
+ * "git commit" gave duplicated error message when the object store
+   was unwritable, which has been corrected.
+   (merge 4ef91a2d79 ab/fix-commit-error-message-upon-unwritable-object-store later to maint).
+
+ * Recent sparse-index addition, namely any use of index_name_pos(),
+   can expand sparse index entries and breaks any code that walks
+   cache-tree or existing index entries.  One such instance of such a
+   breakage has been corrected.
+
+ * The xxdiff difftool backend can exit with status 128, which the
+   difftool-helper that launches the backend takes as a significant
+   failure, when it is not significant at all.  Work it around.
+   (merge 571f4348dd da/mergetools-special-case-xxdiff-exit-128 later to maint).
+
+ * Improve test framework around unwritable directories.
+   (merge 5d22e18965 ab/test-cleanly-recreate-trash-directory later to maint).
+
+ * "git push" client talking to an HTTP server did not diagnose the
+   lack of the final status report from the other side correctly,
+   which has been corrected.
+   (merge c5c3486f38 jk/http-push-status-fix later to maint).
+
+ * Update "git archive" documentation and give explicit mention on the
+   compression level for both zip and tar.gz format.
+   (merge c4b208c309 bs/archive-doc-compression-level later to maint).
+
+ * Drop "git sparse-checkout" from the list of common commands.
+   (merge 6a9a50a8af sg/sparse-index-not-that-common-a-command later to maint).
+
+ * "git branch -c/-m new old" was not described to copy config, which
+   has been corrected.
+   (merge 8252ec300e jc/branch-copy-doc later to maint).
+
+ * Squelch over-eager warning message added during this cycle.
+
+ * Fix long-standing shell syntax error in the completion script.
+   (merge 46b0585286 re/completion-fix-test-equality later to maint).
+
+ * Teach "git commit-graph" command not to allow using replace objects
+   at all, as we do not use the commit-graph at runtime when we see
+   object replacement.
+   (merge 095d112f8c ab/ignore-replace-while-working-on-commit-graph later to maint).
+
+ * "git pull --no-verify" did not affect the underlying "git merge".
+   (merge 47bfdfb3fd ar/fix-git-pull-no-verify later to maint).
+
+ * One CI task based on Fedora image noticed a not-quite-kosher
+   construct recently, which has been corrected.
+
+ * "git pull --ff-only" and "git pull --rebase --ff-only" should make
+   it a no-op to attempt pulling from a remote that is behind us, but
+   instead the command errored out by saying it was impossible to
+   fast-forward, which may technically be true, but not a useful thing
+   to diagnose as an error.  This has been corrected.
+   (merge 361cb52383 jc/fix-pull-ff-only-when-already-up-to-date later to maint).
+
+ * The way Cygwin emulates a unix-domain socket, on top of which the
+   simple-ipc mechanism is implemented, can race with the program on
+   the other side that wants to use the socket, and briefly make it
+   appear as a regular file before lstat(2) starts reporting it as a
+   socket.  We now have a workaround on the side that connects to a
+   unix domain socket.
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 1d9c8daef8 ab/bundle-doc later to maint).
-   (merge 81483fe613 en/merge-strategy-docs later to maint).
-   (merge 626beebdf8 js/log-protocol-version later to maint).
-   (merge 00e302da76 cb/builtin-merge-format-string-fix later to maint).
-   (merge ad51ae4dc0 cb/ci-freebsd-update later to maint).
-   (merge be6444d1ca fc/completion-updates later to maint).
-   (merge ff7b83f562 ti/tcsh-completion-regression-fix later to maint).
-   (merge 325b06deda sg/make-fix-ar-invocation later to maint).
-   (merge bd72824c60 me/t5582-cleanup later to maint).
-   (merge f6a5af0f62 ga/send-email-sendmail-cmd later to maint).
-   (merge f58c7468cd ab/ls-remote-packet-trace later to maint).
-   (merge 0160f7e725 ab/rebase-fatal-fatal-fix later to maint).
-   (merge a16eb6b1ff js/maintenance-launchctl-fix later to maint).
-   (merge c21b2511c2 jk/t5323-no-pack-test-fix later to maint).
-   (merge 5146c2f148 mh/credential-leakfix later to maint).
-   (merge 1549577338 dd/t6300-wo-gpg-fix later to maint).
-   (merge 66e905b7dd rs/xopen-reports-open-failures later to maint).
-   (merge 469888e6a5 es/walken-tutorial-fix later to maint).
-   (merge 88682b016d ba/object-info later to maint).
-   (merge b45c172e51 ab/gc-log-rephrase later to maint).
-   (merge ccdd5d1eb1 ab/mailmap-leakfix later to maint).
-   (merge 6540b71614 cb/remote-ndebug-fix later to maint).
-   (merge e4f8d27585 rs/show-branch-simplify later to maint).
-   (merge e124ecf7f7 rs/archive-use-object-id later to maint).
-   (merge cebead1ebf cb/ci-build-pedantic later to maint).
-   (merge ca0cc98e03 bs/doc-bugreport-outdir later to maint).
-   (merge 72b113e562 ab/no-more-check-bindir later to maint).
-   (merge 92a5d1c9b4 jc/prefix-filename-allocates later to maint).
-   (merge d9a65b6c0a rs/setup-use-xopen-and-xdup later to maint).
-   (merge e8f55568de jk/t5562-racefix later to maint).
-   (merge 8f0f110156 rs/drop-core-compression-vars later to maint).
-   (merge b6d8887d3d ma/doc-git-version later to maint).
-   (merge 66c0c44df6 cb/plug-leaks-in-alloca-emu-users later to maint).
-   (merge afb32e8101 kz/revindex-comment-fix later to maint).
-   (merge ae578de926 po/git-config-doc-mentions-help-c later to maint).
-   (merge 187fc8b8b6 cb/unicode-14 later to maint).
-   (merge 3584cff71c en/typofixes later to maint).
    (merge f188160be9 ab/bundle-remove-verbose-option later to maint).
    (merge 8c6b4332b4 rs/close-pack-leakfix later to maint).
    (merge 51b04c05b7 bs/difftool-msg-tweak later to maint).
@@ -358,3 +428,11 @@ Fixes since v2.33
    (merge 6ffb990dc4 os/status-docfix later to maint).
    (merge 100c2da2d3 rs/p3400-lose-tac later to maint).
    (merge 76f3b69896 tb/aggregate-ignore-leading-whitespaces later to maint).
+   (merge 6e4fd8bfcd tz/doc-link-to-bundle-format-fix later to maint).
+   (merge f6c013dfa1 jc/doc-commit-header-continuation-line later to maint).
+   (merge ec9a37d69b ab/pkt-line-cleanup later to maint).
+   (merge 8650c6298c ab/fix-make-lint-docs later to maint).
+   (merge 1c720357ce ab/test-lib-diff-cleanup later to maint).
+   (merge 6b615dbece ks/submodule-add-message-fix later to maint).
+   (merge 203eb8381a jc/doc-format-patch-clarify-auto-base later to maint).
+   (merge 559664c792 ab/test-lib later to maint).

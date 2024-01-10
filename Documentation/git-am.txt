@@ -9,21 +9,24 @@ git-am - Apply a series of patches from a mailbox
 SYNOPSIS
 --------
 [verse]
-'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8]
+'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--no-verify]
 	 [--[no-]3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
-	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
+	 [--whitespace=<action>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [--quoted-cr=<action>]
+	 [--empty=(stop|drop|keep)]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)])
+'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)] | --allow-empty)
 
 DESCRIPTION
 -----------
-Splits mail messages in a mailbox into commit log message,
-authorship information and patches, and applies them to the
-current branch.
+Splits mail messages in a mailbox into commit log messages,
+authorship information, and patches, and applies them to the
+current branch. You could think of it as a reverse operation
+of linkgit:git-format-patch[1] run on a branch with a straight
+history without merges.
 
 OPTIONS
 -------
@@ -63,6 +66,14 @@ OPTIONS
 --quoted-cr=<action>::
 	This flag will be passed down to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 
+--empty=(stop|drop|keep)::
+	By default, or when the option is set to 'stop', the command
+	errors out on an input e-mail message lacking a patch
+	and stops in the middle of the current am session. When this
+	option is set to 'drop', skip such an e-mail message instead.
+	When this option is set to 'keep', create an empty commit,
+	recording the contents of the e-mail message as its log.
+
 -m::
 --message-id::
 	Pass the `-m` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]),
@@ -83,7 +94,7 @@ OPTIONS
 	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
-	`i18n.commitEncoding` can be used to specify project's
+	`i18n.commitEncoding` can be used to specify the project's
 	preferred encoding if it is not UTF-8).
 +
 This was optional in prior versions of git, but now it is the
@@ -103,14 +114,11 @@ default.   You can use `--no-utf8` to override this.
 	am.threeWay configuration variable. For more information,
 	see am.threeWay in linkgit:git-config[1].
 
---rerere-autoupdate::
---no-rerere-autoupdate::
-	Allow the rerere mechanism to update the index with the
-	result of auto-conflict resolution if possible.
+include::rerere-options.txt[]
 
 --ignore-space-change::
 --ignore-whitespace::
---whitespace=<option>::
+--whitespace=<action>::
 -C<n>::
 -p<n>::
 --directory=<dir>::
@@ -126,11 +134,17 @@ default.   You can use `--no-utf8` to override this.
 	automatically. This option allows the user to bypass the automatic
 	detection and specify the patch format that the patch(es) should be
 	interpreted as. Valid formats are mbox, mboxrd,
-	stgit, stgit-series and hg.
+	stgit, stgit-series, and hg.
 
 -i::
 --interactive::
 	Run interactively.
+
+-n::
+--no-verify::
+	By default, the pre-applypatch and applypatch-msg hooks are run.
+	When any of `--no-verify` or `-n` is given, these are bypassed.
+	See also linkgit:githooks[5].
 
 --committer-date-is-author-date::
 	By default the command records the date from the e-mail
@@ -178,7 +192,7 @@ default.   You can use `--no-utf8` to override this.
 
 --abort::
 	Restore the original branch and abort the patching operation.
-	Revert contents of files involved in the am operation to their
+	Revert the contents of files involved in the am operation to their
 	pre-am state.
 
 --quit::
@@ -190,6 +204,11 @@ default.   You can use `--no-utf8` to override this.
 	conflicts.  If `raw` is specified, show the raw contents of
 	the e-mail message; if `diff`, show the diff portion only.
 	Defaults to `raw`.
+
+--allow-empty::
+	After a patch failure on an input e-mail message lacking a patch,
+	create an empty commit with the contents of the e-mail message
+	as its log message.
 
 DISCUSSION
 ----------
@@ -247,9 +266,17 @@ This command can run `applypatch-msg`, `pre-applypatch`,
 and `post-applypatch` hooks.  See linkgit:githooks[5] for more
 information.
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/am.txt[]
+
 SEE ALSO
 --------
-linkgit:git-apply[1].
+linkgit:git-apply[1],
+linkgit:git-format-patch[1].
 
 GIT
 ---

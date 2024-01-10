@@ -25,8 +25,6 @@ Initial setup:
  where A, B, D and G all touch file1, and one, two, three, four all
  touch file "conflict".
 '
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
@@ -293,9 +291,9 @@ test_expect_success 'abort with error when new base cannot be checked out' '
 	git rm --cached file1 &&
 	git commit -m "remove file in base" &&
 	test_must_fail git rebase -i primary > output 2>&1 &&
-	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" \
+	test_grep "The following untracked working tree files would be overwritten by checkout:" \
 		output &&
-	test_i18ngrep "file1" output &&
+	test_grep "file1" output &&
 	test_path_is_missing .git/rebase-merge &&
 	rm file1 &&
 	git reset --hard HEAD^
@@ -350,82 +348,6 @@ test_expect_success 'squash' '
 
 test_expect_success 'retain authorship when squashing' '
 	git show HEAD | grep "^Author: Twerp Snog"
-'
-
-test_expect_success REBASE_P '-p handles "no changes" gracefully' '
-	HEAD=$(git rev-parse HEAD) &&
-	git rebase -i -p HEAD^ &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --quiet --cached HEAD -- &&
-	test $HEAD = $(git rev-parse HEAD)
-'
-
-test_expect_failure REBASE_P 'exchange two commits with -p' '
-	git checkout H &&
-	(
-		set_fake_editor &&
-		FAKE_LINES="2 1" git rebase -i -p HEAD~2
-	) &&
-	test H = $(git cat-file commit HEAD^ | sed -ne \$p) &&
-	test G = $(git cat-file commit HEAD | sed -ne \$p)
-'
-
-test_expect_success REBASE_P 'preserve merges with -p' '
-	git checkout -b to-be-preserved primary^ &&
-	: > unrelated-file &&
-	git add unrelated-file &&
-	test_tick &&
-	git commit -m "unrelated" &&
-	git checkout -b another-branch primary &&
-	echo B > file1 &&
-	test_tick &&
-	git commit -m J file1 &&
-	test_tick &&
-	git merge to-be-preserved &&
-	echo C > file1 &&
-	test_tick &&
-	git commit -m K file1 &&
-	echo D > file1 &&
-	test_tick &&
-	git commit -m L1 file1 &&
-	git checkout HEAD^ &&
-	echo 1 > unrelated-file &&
-	test_tick &&
-	git commit -m L2 unrelated-file &&
-	test_tick &&
-	git merge another-branch &&
-	echo E > file1 &&
-	test_tick &&
-	git commit -m M file1 &&
-	git checkout -b to-be-rebased &&
-	test_tick &&
-	git rebase -i -p --onto branch1 primary &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --quiet --cached HEAD -- &&
-	test_cmp_rev HEAD~6 branch1 &&
-	test_cmp_rev HEAD~4^2 to-be-preserved &&
-	test_cmp_rev HEAD^^2^ HEAD^^^ &&
-	test $(git show HEAD~5:file1) = B &&
-	test $(git show HEAD~3:file1) = C &&
-	test $(git show HEAD:file1) = E &&
-	test $(git show HEAD:unrelated-file) = 1
-'
-
-test_expect_success REBASE_P 'edit ancestor with -p' '
-	(
-		set_fake_editor &&
-		FAKE_LINES="1 2 edit 3 4" git rebase -i -p HEAD~3
-	) &&
-	echo 2 > unrelated-file &&
-	test_tick &&
-	git commit -m L2-modified --amend unrelated-file &&
-	git rebase --continue &&
-	git update-index --refresh &&
-	git diff-files --quiet &&
-	git diff-index --quiet --cached HEAD -- &&
-	test $(git show HEAD:unrelated-file) = 2
 '
 
 test_expect_success '--continue tries to commit' '
@@ -682,7 +604,8 @@ test_expect_success 'clean error after failed "exec"' '
 	echo "edited again" > file7 &&
 	git add file7 &&
 	test_must_fail git rebase --continue 2>error &&
-	test_i18ngrep "you have staged changes in your working tree" error
+	test_grep "you have staged changes in your working tree" error &&
+	test_grep ! "could not open.*for reading" error
 '
 
 test_expect_success 'rebase a detached HEAD' '
@@ -697,9 +620,7 @@ test_expect_success 'rebase a detached HEAD' '
 '
 
 test_expect_success 'rebase a commit violating pre-commit' '
-
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/pre-commit <<-\EOF &&
+	test_hook pre-commit <<-\EOF &&
 	test -z "$(git diff --cached --check)"
 	EOF
 	echo "monde! " >> file1 &&
@@ -714,8 +635,6 @@ test_expect_success 'rebase a commit violating pre-commit' '
 '
 
 test_expect_success 'rebase with a file named HEAD in worktree' '
-
-	rm -fr .git/hooks &&
 	git reset --hard &&
 	git checkout -b branch3 A &&
 
@@ -840,7 +759,7 @@ test_expect_success 'reword' '
 	git show HEAD~2 | grep "C changed"
 '
 
-test_expect_success 'no uncommited changes when rewording the todo list is reloaded' '
+test_expect_success 'no uncommitted changes when rewording and the todo list is reloaded' '
 	git checkout E &&
 	test_when_finished "git checkout @{-1}" &&
 	(
@@ -902,7 +821,7 @@ test_expect_success 'always cherry-pick with --no-ff' '
 	do
 		test ! $(git rev-parse HEAD~$p) = $(git rev-parse original-no-ff-branch~$p) &&
 		git diff HEAD~$p original-no-ff-branch~$p > out &&
-		test_must_be_empty out
+		test_must_be_empty out || return 1
 	done &&
 	test_cmp_rev HEAD~3 original-no-ff-branch~3 &&
 	git diff HEAD~3 original-no-ff-branch~3 > out &&
@@ -1037,7 +956,7 @@ test_expect_success 'rebase --exec works without -i ' '
 	git reset --hard execute &&
 	rm -rf exec_output &&
 	EDITOR="echo >invoked_editor" git rebase --exec "echo a line >>exec_output"  HEAD~2 2>actual &&
-	test_i18ngrep  "Successfully rebased and updated" actual &&
+	test_grep  "Successfully rebased and updated" actual &&
 	test_line_count = 2 exec_output &&
 	test_path_is_missing invoked_editor
 '
@@ -1045,7 +964,7 @@ test_expect_success 'rebase --exec works without -i ' '
 test_expect_success 'rebase -i --exec without <CMD>' '
 	git reset --hard execute &&
 	test_must_fail git rebase -i --exec 2>actual &&
-	test_i18ngrep "requires a value" actual &&
+	test_grep "requires a value" actual &&
 	git checkout primary
 '
 
@@ -1326,9 +1245,9 @@ test_expect_success 'short commit ID collide' '
 		test $colliding_id = "$(git rev-parse HEAD | cut -c 1-4)" &&
 		grep "^pick $colliding_id " \
 			.git/rebase-merge/git-rebase-todo.tmp &&
-		grep "^pick [0-9a-f]\{$hexsz\}" \
+		grep -E "^pick [0-9a-f]{$hexsz}" \
 			.git/rebase-merge/git-rebase-todo &&
-		grep "^pick [0-9a-f]\{$hexsz\}" \
+		grep -E "^pick [0-9a-f]{$hexsz}" \
 			.git/rebase-merge/git-rebase-todo.backup &&
 		git rebase --continue
 	) &&
@@ -1343,7 +1262,7 @@ test_expect_success 'respect core.abbrev' '
 		set_cat_todo_editor &&
 		test_must_fail git rebase -i HEAD~4 >todo-list
 	) &&
-	test 4 = $(grep -c "pick [0-9a-f]\{12,\}" todo-list)
+	test 4 = $(grep -c -E "pick [0-9a-f]{12,}" todo-list)
 '
 
 test_expect_success 'todo count' '
@@ -1354,24 +1273,38 @@ test_expect_success 'todo count' '
 		test_set_editor "$(pwd)/dump-raw.sh" &&
 		git rebase -i HEAD~4 >actual
 	) &&
-	test_i18ngrep "^# Rebase ..* onto ..* ([0-9]" actual
+	test_grep "^# Rebase ..* onto ..* ([0-9]" actual
 '
 
 test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
-	git checkout --force branch2 &&
+	git checkout --force A &&
 	git clean -f &&
+	cat >todo <<-EOF &&
+	exec >file2
+	pick $(git rev-parse B) B
+	pick $(git rev-parse C) C
+	pick $(git rev-parse D) D
+	exec cat .git/rebase-merge/done >actual
+	EOF
 	(
-		set_fake_editor &&
-		FAKE_LINES="edit 1 2" git rebase -i A
+		set_replace_editor todo &&
+		test_must_fail git rebase -i A
 	) &&
-	test_cmp_rev HEAD F &&
-	test_path_is_missing file6 &&
-	>file6 &&
-	test_must_fail git rebase --continue &&
-	test_cmp_rev HEAD F &&
-	rm file6 &&
+	test_cmp_rev HEAD B &&
+	test_cmp_rev REBASE_HEAD C &&
+	head -n3 todo >expect &&
+	test_cmp expect .git/rebase-merge/done &&
+	rm file2 &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
-	test_cmp_rev HEAD I
+	test_cmp_rev HEAD D &&
+	tail -n3 todo >>expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'rebase -i commits that overwrite untracked files (squash)' '
@@ -1387,7 +1320,14 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	>file6 &&
 	test_must_fail git rebase --continue &&
 	test_cmp_rev HEAD F &&
+	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
 	git reset --hard original-branch2
@@ -1405,7 +1345,14 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	>file6 &&
 	test_must_fail git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = F &&
+	test_cmp_rev REBASE_HEAD I &&
 	rm file6 &&
+	test_path_is_missing .git/rebase-merge/patch &&
+	echo changed >file1 &&
+	git add file1 &&
+	test_must_fail git rebase --continue 2>err &&
+	grep "error: you have staged changes in your working tree" err &&
+	git reset --hard HEAD &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '
@@ -1417,7 +1364,7 @@ test_expect_success 'rebase --continue removes CHERRY_PICK_HEAD' '
 		test_seq 5 | sed "s/$double/&&/" >seq &&
 		git add seq &&
 		test_tick &&
-		git commit -m seq-$double
+		git commit -m seq-$double || return 1
 	done &&
 	git tag seq-onto &&
 	git reset --hard HEAD~2 &&
@@ -1461,7 +1408,7 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = ignore' '
 		FAKE_LINES="1 2 3 4" git rebase -i --root 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test_i18ngrep \
+	test_grep \
 		"Successfully rebased and updated refs/heads/missing-commit" \
 		actual
 '
@@ -1524,21 +1471,22 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ig
 		git rebase --continue 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test_i18ngrep \
+	test_grep \
 		"Successfully rebased and updated refs/heads/missing-commit" \
 		actual
 '
 
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = warn' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	error: invalid command '\''pickled'\''
+	error: invalid line 1: pickled $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
-	head -n4 expect >expect.2 &&
+	head -n5 expect >expect.2 &&
 	tail -n1 expect >>expect.2 &&
 	tail -n4 expect.2 >expect.3 &&
 	test_config rebase.missingCommitsCheck warn &&
@@ -1549,7 +1497,7 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 			git rebase -i --root &&
 		cp .git/rebase-merge/git-rebase-todo.backup orig &&
 		FAKE_LINES="2 3 4" git rebase --edit-todo 2>actual.2 &&
-		head -n6 actual.2 >actual &&
+		head -n7 actual.2 >actual &&
 		test_cmp expect actual &&
 		cp orig .git/rebase-merge/git-rebase-todo &&
 		FAKE_LINES="1 2 3 4" git rebase --edit-todo 2>actual.2 &&
@@ -1558,14 +1506,15 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 		git rebase --continue 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test_i18ngrep \
+	test_grep \
 		"Successfully rebased and updated refs/heads/missing-commit" \
 		actual
 '
 
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = error' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	error: invalid command '\''pickled'\''
+	error: invalid line 1: pickled $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
 	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
@@ -1605,7 +1554,7 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 		git rebase --continue 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
-	test_i18ngrep \
+	test_grep \
 		"Successfully rebased and updated refs/heads/missing-commit" \
 		actual
 '
@@ -1665,15 +1614,41 @@ test_expect_success 'static check of bad command' '
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 2 3 bad 4 5" \
 		git rebase -i --root 2>actual &&
-		test_i18ngrep "badcmd $(git rev-list --oneline -1 primary~1)" \
+		test_grep "pickled $(git rev-list --oneline -1 primary~1)" \
 				actual &&
-		test_i18ngrep "You can fix this with .git rebase --edit-todo.." \
+		test_grep "You can fix this with .git rebase --edit-todo.." \
 				actual &&
 		FAKE_LINES="1 2 3 drop 4 5" git rebase --edit-todo
 	) &&
 	git rebase --continue &&
 	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test C = $(git cat-file commit HEAD^ | sed -ne \$p)
+'
+
+test_expect_success 'the first command cannot be a fixup' '
+	rebase_setup_and_clean fixup-first &&
+
+	cat >orig <<-EOF &&
+	fixup $(git log -1 --format="%h %s" B)
+	pick $(git log -1 --format="%h %s" C)
+	EOF
+
+	(
+		set_replace_editor orig &&
+		test_must_fail git rebase -i A 2>actual
+	) &&
+	grep "cannot .fixup. without a previous commit" actual &&
+	grep "You can fix this with .git rebase --edit-todo.." actual &&
+	# verify that the todo list has not been truncated
+	grep -v "^#" .git/rebase-merge/git-rebase-todo >actual &&
+	test_cmp orig actual &&
+
+	test_must_fail git rebase --edit-todo 2>actual &&
+	grep "cannot .fixup. without a previous commit" actual &&
+	grep "You can fix this with .git rebase --edit-todo.." actual &&
+	# verify that the todo list has not been truncated
+	grep -v "^#" .git/rebase-merge/git-rebase-todo >actual &&
+	test_cmp orig actual
 '
 
 test_expect_success 'tabs and spaces are accepted in the todolist' '
@@ -1699,8 +1674,8 @@ test_expect_success 'static check of bad SHA-1' '
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 2 edit fakesha 3 4 5 #" \
 			git rebase -i --root 2>actual &&
-			test_i18ngrep "edit XXXXXXX False commit" actual &&
-			test_i18ngrep "You can fix this with .git rebase --edit-todo.." \
+			test_grep "edit XXXXXXX False commit" actual &&
+			test_grep "You can fix this with .git rebase --edit-todo.." \
 					actual &&
 		FAKE_LINES="1 2 4 5 6" git rebase --edit-todo
 	) &&
@@ -1727,7 +1702,7 @@ test_expect_success 'rebase -i --gpg-sign=<key-id>' '
 		FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" \
 			HEAD^ >out 2>err
 	) &&
-	test_i18ngrep "$SQ-S\"S I Gner\"$SQ" err
+	test_grep "$SQ-S\"S I Gner\"$SQ" err
 '
 
 test_expect_success 'rebase -i --gpg-sign=<key-id> overrides commit.gpgSign' '
@@ -1738,7 +1713,7 @@ test_expect_success 'rebase -i --gpg-sign=<key-id> overrides commit.gpgSign' '
 		FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" \
 			HEAD^ >out 2>err
 	) &&
-	test_i18ngrep "$SQ-S\"S I Gner\"$SQ" err
+	test_grep "$SQ-S\"S I Gner\"$SQ" err
 '
 
 test_expect_success 'valid author header after --root swap' '
@@ -1766,10 +1741,8 @@ test_expect_success 'valid author header when author contains single quote' '
 '
 
 test_expect_success 'post-commit hook is called' '
-	test_when_finished "rm -f .git/hooks/post-commit" &&
 	>actual &&
-	mkdir -p .git/hooks &&
-	write_script .git/hooks/post-commit <<-\EOS &&
+	test_hook post-commit <<-\EOS &&
 	git rev-parse HEAD >>actual
 	EOS
 	(
@@ -1794,7 +1767,7 @@ test_expect_success 'correct error message for partial commit after empty pick' 
 	) &&
 	echo x >file1 &&
 	test_must_fail git commit file1 2>err &&
-	test_i18ngrep "cannot do a partial commit during a rebase." err
+	test_grep "cannot do a partial commit during a rebase." err
 '
 
 test_expect_success 'correct error message for commit --amend after empty pick' '
@@ -1807,13 +1780,13 @@ test_expect_success 'correct error message for commit --amend after empty pick' 
 	) &&
 	echo x>file1 &&
 	test_must_fail git commit -a --amend 2>err &&
-	test_i18ngrep "middle of a rebase -- cannot amend." err
+	test_grep "middle of a rebase -- cannot amend." err
 '
 
 test_expect_success 'todo has correct onto hash' '
 	GIT_SEQUENCE_EDITOR=cat git rebase -i no-conflict-branch~4 no-conflict-branch >actual &&
 	onto=$(git rev-parse --short HEAD~4) &&
-	test_i18ngrep "^# Rebase ..* onto $onto" actual
+	test_grep "^# Rebase ..* onto $onto" actual
 '
 
 test_expect_success 'ORIG_HEAD is updated correctly' '
@@ -1825,6 +1798,409 @@ test_expect_success 'ORIG_HEAD is updated correctly' '
 	git commit --allow-empty -m A4 &&
 	git rebase primary &&
 	test_cmp_rev ORIG_HEAD test-orig-head@{1}
+'
+
+test_expect_success '--update-refs adds label and update-ref commands' '
+	git checkout -b update-refs no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git commit --allow-empty --fixup=third &&
+	git branch -f is-not-reordered &&
+	git commit --allow-empty --fixup=HEAD~4 &&
+	git branch -f shared-tip &&
+	(
+		set_cat_todo_editor &&
+
+		cat >expect <<-EOF &&
+		pick $(git log -1 --format=%h J) J
+		fixup $(git log -1 --format=%h update-refs) fixup! J # empty
+		update-ref refs/heads/second
+		update-ref refs/heads/first
+		pick $(git log -1 --format=%h K) K
+		pick $(git log -1 --format=%h L) L
+		fixup $(git log -1 --format=%h is-not-reordered) fixup! L # empty
+		update-ref refs/heads/third
+		pick $(git log -1 --format=%h M) M
+		update-ref refs/heads/no-conflict-branch
+		update-ref refs/heads/is-not-reordered
+		update-ref refs/heads/shared-tip
+		EOF
+
+		test_must_fail git rebase -i --autosquash --update-refs primary >todo &&
+		test_cmp expect todo &&
+
+		test_must_fail git -c rebase.autosquash=true \
+				   -c rebase.updaterefs=true \
+				   rebase -i primary >todo &&
+
+		test_cmp expect todo
+	)
+'
+
+test_expect_success '--update-refs adds commands with --rebase-merges' '
+	git checkout -b update-refs-with-merge no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git merge -m merge branch2 &&
+	git branch -f merge-branch &&
+	git commit --fixup=third --allow-empty &&
+	(
+		set_cat_todo_editor &&
+
+		cat >expect <<-EOF &&
+		label onto
+		reset onto
+		pick $(git log -1 --format=%h branch2~1) F
+		pick $(git log -1 --format=%h branch2) I
+		update-ref refs/heads/branch2
+		label merge
+		reset onto
+		pick $(git log -1 --format=%h refs/heads/second) J
+		update-ref refs/heads/second
+		update-ref refs/heads/first
+		pick $(git log -1 --format=%h refs/heads/third~1) K
+		pick $(git log -1 --format=%h refs/heads/third) L
+		fixup $(git log -1 --format=%h update-refs-with-merge) fixup! L # empty
+		update-ref refs/heads/third
+		pick $(git log -1 --format=%h HEAD~2) M
+		update-ref refs/heads/no-conflict-branch
+		merge -C $(git log -1 --format=%h HEAD~1) merge # merge
+		update-ref refs/heads/merge-branch
+		EOF
+
+		test_must_fail git rebase -i --autosquash \
+				   --rebase-merges=rebase-cousins \
+				   --update-refs primary >todo &&
+
+		test_cmp expect todo &&
+
+		test_must_fail git -c rebase.autosquash=true \
+				   -c rebase.updaterefs=true \
+				   rebase -i \
+				   --rebase-merges=rebase-cousins \
+				   primary >todo &&
+
+		test_cmp expect todo
+	)
+'
+
+test_expect_success '--update-refs updates refs correctly' '
+	git checkout -B update-refs no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	test_commit extra2 fileX &&
+	git commit --amend --fixup=L &&
+
+	git rebase -i --autosquash --update-refs primary 2>err &&
+
+	test_cmp_rev HEAD~3 refs/heads/first &&
+	test_cmp_rev HEAD~3 refs/heads/second &&
+	test_cmp_rev HEAD~1 refs/heads/third &&
+	test_cmp_rev HEAD refs/heads/no-conflict-branch &&
+
+	cat >expect <<-\EOF &&
+	Successfully rebased and updated refs/heads/update-refs.
+	Updated the following refs with --update-refs:
+		refs/heads/first
+		refs/heads/no-conflict-branch
+		refs/heads/second
+		refs/heads/third
+	EOF
+
+	# Clear "Rebasing (X/Y)" progress lines and drop leading tabs.
+	sed -e "s/Rebasing.*Successfully/Successfully/g" -e "s/^\t//g" \
+		<err >err.trimmed &&
+	test_cmp expect err.trimmed
+'
+
+test_expect_success 'respect user edits to update-ref steps' '
+	git checkout -B update-refs-break no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f unseen base &&
+
+	# First, we will add breaks to the expected todo file
+	cat >fake-todo-1 <<-EOF &&
+	pick $(git rev-parse HEAD~3)
+	break
+	update-ref refs/heads/second
+	update-ref refs/heads/first
+
+	pick $(git rev-parse HEAD~2)
+	pick $(git rev-parse HEAD~1)
+	update-ref refs/heads/third
+
+	pick $(git rev-parse HEAD)
+	update-ref refs/heads/no-conflict-branch
+	EOF
+
+	# Second, we will drop some update-refs commands (and move one)
+	cat >fake-todo-2 <<-EOF &&
+	update-ref refs/heads/second
+
+	pick $(git rev-parse HEAD~2)
+	update-ref refs/heads/third
+	pick $(git rev-parse HEAD~1)
+	break
+
+	pick $(git rev-parse HEAD)
+	EOF
+
+	# Third, we will:
+	# * insert a new one (new-branch),
+	# * re-add an old one (first), and
+	# * add a second instance of a previously-stored one (second)
+	cat >fake-todo-3 <<-EOF &&
+	update-ref refs/heads/unseen
+	update-ref refs/heads/new-branch
+	pick $(git rev-parse HEAD)
+	update-ref refs/heads/first
+	update-ref refs/heads/second
+	EOF
+
+	(
+		set_replace_editor fake-todo-1 &&
+		git rebase -i --update-refs primary &&
+
+		# These branches are currently locked.
+		for b in first second third no-conflict-branch
+		do
+			test_must_fail git branch -f $b base || return 1
+		done &&
+
+		set_replace_editor fake-todo-2 &&
+		git rebase --edit-todo &&
+
+		# These branches are currently locked.
+		for b in second third
+		do
+			test_must_fail git branch -f $b base || return 1
+		done &&
+
+		# These branches are currently unlocked for checkout.
+		for b in first no-conflict-branch
+		do
+			git worktree add wt-$b $b &&
+			git worktree remove wt-$b || return 1
+		done &&
+
+		git rebase --continue &&
+
+		set_replace_editor fake-todo-3 &&
+		git rebase --edit-todo &&
+
+		# These branches are currently locked.
+		for b in second third first unseen
+		do
+			test_must_fail git branch -f $b base || return 1
+		done &&
+
+		# These branches are currently unlocked for checkout.
+		for b in no-conflict-branch
+		do
+			git worktree add wt-$b $b &&
+			git worktree remove wt-$b || return 1
+		done &&
+
+		git rebase --continue
+	) &&
+
+	test_cmp_rev HEAD~2 refs/heads/third &&
+	test_cmp_rev HEAD~1 refs/heads/unseen &&
+	test_cmp_rev HEAD~1 refs/heads/new-branch &&
+	test_cmp_rev HEAD refs/heads/first &&
+	test_cmp_rev HEAD refs/heads/second &&
+	test_cmp_rev HEAD refs/heads/no-conflict-branch
+'
+
+test_expect_success '--update-refs: all update-ref lines removed' '
+	git checkout -b test-refs-not-removed no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f tip &&
+
+	test_commit test-refs-not-removed &&
+	git commit --amend --fixup first &&
+
+	git rev-parse first second third tip no-conflict-branch >expect-oids &&
+
+	(
+		set_cat_todo_editor &&
+		test_must_fail git rebase -i --update-refs base >todo.raw &&
+		sed -e "/^update-ref/d" <todo.raw >todo
+	) &&
+	(
+		set_replace_editor todo &&
+		git rebase -i --update-refs base
+	) &&
+
+	# Ensure refs are not deleted and their OIDs have not changed
+	git rev-parse first second third tip no-conflict-branch >actual-oids &&
+	test_cmp expect-oids actual-oids
+'
+
+test_expect_success '--update-refs: all update-ref lines removed, then some re-added' '
+	git checkout -b test-refs-not-removed2 no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f tip &&
+
+	test_commit test-refs-not-removed2 &&
+	git commit --amend --fixup first &&
+
+	git rev-parse first second third >expect-oids &&
+
+	(
+		set_cat_todo_editor &&
+		test_must_fail git rebase -i \
+			--autosquash --update-refs \
+			base >todo.raw &&
+		sed -e "/^update-ref/d" <todo.raw >todo
+	) &&
+
+	# Add a break to the end of the todo so we can edit later
+	echo "break" >>todo &&
+
+	(
+		set_replace_editor todo &&
+		git rebase -i --autosquash --update-refs base &&
+		echo "update-ref refs/heads/tip" >todo &&
+		git rebase --edit-todo &&
+		git rebase --continue
+	) &&
+
+	# Ensure first/second/third are unchanged, but tip is updated
+	git rev-parse first second third >actual-oids &&
+	test_cmp expect-oids actual-oids &&
+	test_cmp_rev HEAD tip
+'
+
+test_expect_success '--update-refs: --edit-todo with no update-ref lines' '
+	git checkout -b test-refs-not-removed3 no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~3 &&
+	git branch -f third HEAD~1 &&
+	git branch -f tip &&
+
+	test_commit test-refs-not-removed3 &&
+	git commit --amend --fixup first &&
+
+	git rev-parse first second third tip no-conflict-branch >expect-oids &&
+
+	(
+		set_cat_todo_editor &&
+		test_must_fail git rebase -i \
+			--autosquash --update-refs \
+			base >todo.raw &&
+		sed -e "/^update-ref/d" <todo.raw >todo
+	) &&
+
+	# Add a break to the beginning of the todo so we can resume with no
+	# update-ref lines
+	echo "break" >todo.new &&
+	cat todo >>todo.new &&
+
+	(
+		set_replace_editor todo.new &&
+		git rebase -i --autosquash --update-refs base &&
+
+		# Make no changes when editing so update-refs is still empty
+		cat todo >todo.new &&
+		git rebase --edit-todo &&
+		git rebase --continue
+	) &&
+
+	# Ensure refs are not deleted and their OIDs have not changed
+	git rev-parse first second third tip no-conflict-branch >actual-oids &&
+	test_cmp expect-oids actual-oids
+'
+
+test_expect_success '--update-refs: check failed ref update' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git checkout -B update-refs-error no-conflict-branch &&
+	git branch -f base HEAD~4 &&
+	git branch -f first HEAD~3 &&
+	git branch -f second HEAD~2 &&
+	git branch -f third HEAD~1 &&
+
+	cat >fake-todo <<-EOF &&
+	pick $(git rev-parse HEAD~3)
+	break
+	update-ref refs/heads/first
+
+	pick $(git rev-parse HEAD~2)
+	update-ref refs/heads/second
+
+	pick $(git rev-parse HEAD~1)
+	update-ref refs/heads/third
+
+	pick $(git rev-parse HEAD)
+	update-ref refs/heads/no-conflict-branch
+	EOF
+
+	(
+		set_replace_editor fake-todo &&
+		git rebase -i --update-refs base
+	) &&
+
+	# At this point, the values of first, second, and third are
+	# recorded in the update-refs file. We will force-update the
+	# "second" ref, but "git branch -f" will not work because of
+	# the lock in the update-refs file.
+	git update-ref refs/heads/second third &&
+
+	test_must_fail git rebase --continue 2>err &&
+	grep "update_ref failed for ref '\''refs/heads/second'\''" err &&
+
+	cat >expect <<-\EOF &&
+	Updated the following refs with --update-refs:
+		refs/heads/first
+		refs/heads/no-conflict-branch
+		refs/heads/third
+	Failed to update the following refs with --update-refs:
+		refs/heads/second
+	EOF
+
+	# Clear "Rebasing (X/Y)" progress lines and drop leading tabs.
+	tail -n 6 err >err.last &&
+	sed -e "s/Rebasing.*Successfully/Successfully/g" -e "s/^\t//g" \
+		<err.last >err.trimmed &&
+	test_cmp expect err.trimmed
+'
+
+test_expect_success 'bad labels and refs rejected when parsing todo list' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	cat >todo <<-\EOF &&
+	exec >execed
+	label #
+	label :invalid
+	update-ref :bad
+	update-ref topic
+	EOF
+	rm -f execed &&
+	(
+		set_replace_editor todo &&
+		test_must_fail git rebase -i HEAD 2>err
+	) &&
+	grep "'\''#'\'' is not a valid label" err &&
+	grep "'\'':invalid'\'' is not a valid label" err &&
+	grep "'\'':bad'\'' is not a valid refname" err &&
+	grep "update-ref requires a fully qualified refname e.g. refs/heads/topic" \
+		err &&
+	test_path_is_missing execed
 '
 
 # This must be the last test in this file

@@ -212,8 +212,9 @@ include::signoff-option.txt[]
 	each trailer would appear, and other details.
 
 -n::
---no-verify::
-	This option bypasses the pre-commit and commit-msg hooks.
+--[no-]verify::
+	By default, the pre-commit and commit-msg hooks are run.
+	When any of `--no-verify` or `-n` is given, these are bypassed.
 	See also linkgit:githooks[5].
 
 --allow-empty::
@@ -540,7 +541,7 @@ DISCUSSION
 ----------
 
 Though not required, it's a good idea to begin the commit message
-with a single short (less than 50 character) line summarizing the
+with a single short (no more than 50 characters) line summarizing the
 change, followed by a blank line and then a more thorough description.
 The text up to the first blank line in a commit message is treated
 as the commit title, and that title is used throughout Git.
@@ -555,6 +556,10 @@ The editor used to edit the commit log message will be chosen from the
 `GIT_EDITOR` environment variable, the core.editor configuration variable, the
 `VISUAL` environment variable, or the `EDITOR` environment variable (in that
 order).  See linkgit:git-var[1] for details.
+
+include::includes/cmd-config-section-rest.txt[]
+
+include::config/commit.txt[]
 
 HOOKS
 -----

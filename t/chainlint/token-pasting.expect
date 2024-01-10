@@ -1,0 +1,27 @@
+git config filter.rot13.smudge ./rot13.sh &&
+git config filter.rot13.clean ./rot13.sh &&
+
+{
+    echo "*.t filter=rot13" ?!AMP?!
+    echo "*.i ident"
+} >.gitattributes &&
+
+{
+    echo a b c d e f g h i j k l m ?!AMP?!
+    echo n o p q r s t u v w x y z ?!AMP?!
+    echo '$Id$'
+} >test &&
+cat test >test.t &&
+cat test >test.o &&
+cat test >test.i &&
+git add test test.t test.i &&
+rm -f test test.t test.i &&
+git checkout -- test test.t test.i &&
+
+echo "content-test2" >test2.o &&
+echo "content-test3 - filename with special characters" >"test3 'sq',$x=.o" ?!AMP?!
+
+downstream_url_for_sed=$(
+	printf "%sn" "$downstream_url" |
+	sed -e 's/\/\\/g' -e 's/[[/.*^$]/\&/g'
+)

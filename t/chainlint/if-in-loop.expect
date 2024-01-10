@@ -3,10 +3,10 @@
 	do
 		if false
 		then
-?!AMP?!			echo "err"
+			echo "err"
 			exit 1
-?!AMP?!		fi
+		fi ?!AMP?!
 		foo
-?!AMP?!	done
+	done ?!AMP?!
 	bar
->)
+)

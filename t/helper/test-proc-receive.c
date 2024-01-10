@@ -1,12 +1,13 @@
-#include "cache.h"
+#include "test-tool.h"
 #include "connect.h"
+#include "hex.h"
 #include "parse-options.h"
 #include "pkt-line.h"
+#include "setup.h"
 #include "sigchain.h"
-#include "test-tool.h"
 
 static const char *proc_receive_usage[] = {
-	"test-tool proc-receive [<options>...]",
+	"test-tool proc-receive [<options>]",
 	NULL
 };
 

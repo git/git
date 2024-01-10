@@ -1,5 +1,5 @@
 test_expect_success "setup proc-receive hook (unknown version, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v --version 2
 	EOF
@@ -40,7 +40,7 @@ test_expect_success "proc-receive: bad protocol (unknown version, $PROTOCOL/porc
 '
 
 test_expect_success "setup proc-receive hook (hook --die-read-version, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v --die-read-version
 	EOF
@@ -71,7 +71,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-version, $PROTO
 '
 
 test_expect_success "setup proc-receive hook (hook --die-write-version, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v --die-write-version
 	EOF
@@ -102,7 +102,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-version, $PROT
 '
 
 test_expect_success "setup proc-receive hook (hook --die-read-commands, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v --die-read-commands
 	EOF
@@ -132,7 +132,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-commands, $PROT
 '
 
 test_expect_success "setup proc-receive hook (hook --die-read-push-options, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v --die-read-push-options
 	EOF
@@ -164,7 +164,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-read-push-options, $
 '
 
 test_expect_success "setup proc-receive hook (hook --die-write-report, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v --die-write-report
 	EOF
@@ -194,7 +194,7 @@ test_expect_success "proc-receive: bad protocol (hook --die-write-report, $PROTO
 '
 
 test_expect_success "setup proc-receive hook (no report, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v
 	EOF
@@ -236,7 +236,7 @@ test_expect_success "cleanup ($PROTOCOL/porcelain)" '
 '
 
 test_expect_success "setup proc-receive hook (no ref, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "ok"
@@ -270,7 +270,7 @@ test_expect_success "proc-receive: bad protocol (no ref, $PROTOCOL/porcelain)" '
 '
 
 test_expect_success "setup proc-receive hook (unknown status, $PROTOCOL/porcelain)" '
-	write_script "$upstream/hooks/proc-receive" <<-EOF
+	test_hook -C "$upstream" --clobber proc-receive <<-\EOF
 	printf >&2 "# proc-receive hook\n"
 	test-tool proc-receive -v \
 		-r "xx refs/for/main/topic"

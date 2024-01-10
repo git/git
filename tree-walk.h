@@ -1,9 +1,10 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
-#include "cache.h"
+#include "hash-ll.h"
 
-#define MAX_TRAVERSE_TREES 8
+struct index_state;
+struct repository;
 
 /**
  * The tree walking API is used to traverse and inspect trees.
@@ -34,6 +35,11 @@ struct tree_desc {
 
 	/* counts the number of bytes left in the `buffer`. */
 	unsigned int size;
+
+	/* option flags passed via init_tree_desc_gently() */
+	enum tree_desc_flags {
+		TREE_DESC_RAW_MODES = (1 << 0),
+	} flags;
 };
 
 /**
@@ -79,7 +85,8 @@ int update_tree_entry_gently(struct tree_desc *);
  */
 void init_tree_desc(struct tree_desc *desc, const void *buf, unsigned long size);
 
-int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long size);
+int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long size,
+			  enum tree_desc_flags flags);
 
 /*
  * Visit the next entry in a tree. Returns 1 when there are more entries
@@ -215,7 +222,7 @@ enum interesting {
 
 enum interesting tree_entry_interesting(struct index_state *istate,
 					const struct name_entry *,
-					struct strbuf *, int,
+					struct strbuf *,
 					const struct pathspec *ps);
 
 #endif

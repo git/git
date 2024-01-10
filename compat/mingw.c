@@ -1,13 +1,23 @@
 #include "../git-compat-util.h"
 #include "win32.h"
+#include <aclapi.h>
+#include <sddl.h>
 #include <conio.h>
 #include <wchar.h>
 #include "../strbuf.h"
 #include "../run-command.h"
-#include "../cache.h"
+#include "../abspath.h"
+#include "../alloc.h"
 #include "win32/lazyload.h"
 #include "../config.h"
+#include "../environment.h"
+#include "../trace2.h"
+#include "../symlinks.h"
+#include "../wrapper.h"
 #include "dir.h"
+#include "gettext.h"
+#define SECURITY_WIN32
+#include <sspi.h>
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -192,16 +202,19 @@ static int read_yes_no_answer(void)
 static int ask_yes_no_if_possible(const char *format, ...)
 {
 	char question[4096];
-	const char *retry_hook[] = { NULL, NULL, NULL };
+	const char *retry_hook;
 	va_list args;
 
 	va_start(args, format);
 	vsnprintf(question, sizeof(question), format, args);
 	va_end(args);
 
-	if ((retry_hook[0] = mingw_getenv("GIT_ASK_YESNO"))) {
-		retry_hook[1] = question;
-		return !run_command_v_opt(retry_hook, 0);
+	retry_hook = mingw_getenv("GIT_ASK_YESNO");
+	if (retry_hook) {
+		struct child_process cmd = CHILD_PROCESS_INIT;
+
+		strvec_pushl(&cmd.args, retry_hook, question, NULL);
+		return !run_command(&cmd);
 	}
 
 	if (!isatty(_fileno(stdin)) || !isatty(_fileno(stderr)))
@@ -230,7 +243,8 @@ static int core_restrict_inherited_handles = -1;
 static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 static char *unset_environment_variables;
 
-int mingw_core_config(const char *var, const char *value, void *cb)
+int mingw_core_config(const char *var, const char *value,
+		      const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "core.hidedotfiles")) {
 		if (value && !strcasecmp(value, "dotgitonly"))
@@ -241,6 +255,8 @@ int mingw_core_config(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp(var, "core.unsetenvvars")) {
+		if (!value)
+			return config_error_nonbool(var);
 		free(unset_environment_variables);
 		unset_environment_variables = xstrdup(value);
 		return 0;
@@ -765,8 +781,8 @@ static int has_valid_directory_prefix(wchar_t *wfilename)
 		wfilename[n] = L'\0';
 		attributes = GetFileAttributesW(wfilename);
 		wfilename[n] = c;
-		if (attributes == FILE_ATTRIBUTE_DIRECTORY ||
-				attributes == FILE_ATTRIBUTE_DEVICE)
+		if (attributes &
+		    (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE))
 			return 1;
 		if (attributes == INVALID_FILE_ATTRIBUTES)
 			switch (GetLastError()) {
@@ -959,9 +975,11 @@ static inline void time_t_to_filetime(time_t t, FILETIME *ft)
 int mingw_utime (const char *file_name, const struct utimbuf *times)
 {
 	FILETIME mft, aft;
-	int fh, rc;
+	int rc;
 	DWORD attrs;
 	wchar_t wfilename[MAX_PATH];
+	HANDLE osfilehandle;
+
 	if (xutftowcs_path(wfilename, file_name) < 0)
 		return -1;
 
@@ -973,7 +991,17 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 		SetFileAttributesW(wfilename, attrs & ~FILE_ATTRIBUTE_READONLY);
 	}
 
-	if ((fh = _wopen(wfilename, O_RDWR | O_BINARY)) < 0) {
+	osfilehandle = CreateFileW(wfilename,
+				   FILE_WRITE_ATTRIBUTES,
+				   0 /*FileShare.None*/,
+				   NULL,
+				   OPEN_EXISTING,
+				   (attrs != INVALID_FILE_ATTRIBUTES &&
+					(attrs & FILE_ATTRIBUTE_DIRECTORY)) ?
+					FILE_FLAG_BACKUP_SEMANTICS : 0,
+				   NULL);
+	if (osfilehandle == INVALID_HANDLE_VALUE) {
+		errno = err_win_to_posix(GetLastError());
 		rc = -1;
 		goto revert_attrs;
 	}
@@ -985,12 +1013,15 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 		GetSystemTimeAsFileTime(&mft);
 		aft = mft;
 	}
-	if (!SetFileTime((HANDLE)_get_osfhandle(fh), NULL, &aft, &mft)) {
+
+	if (!SetFileTime(osfilehandle, NULL, &aft, &mft)) {
 		errno = EINVAL;
 		rc = -1;
 	} else
 		rc = 0;
-	close(fh);
+
+	if (osfilehandle != INVALID_HANDLE_VALUE)
+		CloseHandle(osfilehandle);
 
 revert_attrs:
 	if (attrs != INVALID_FILE_ATTRIBUTES &&
@@ -1008,7 +1039,7 @@ size_t mingw_strftime(char *s, size_t max,
 	/* a pointer to the original strftime in case we can't find the UCRT version */
 	static size_t (*fallback)(char *, size_t, const char *, const struct tm *) = strftime;
 	size_t ret;
-	DECLARE_PROC_ADDR(ucrtbase.dll, size_t, strftime, char *, size_t,
+	DECLARE_PROC_ADDR(ucrtbase.dll, size_t, __cdecl, strftime, char *, size_t,
 		const char *, const struct tm *);
 
 	if (INIT_PROC_ADDR(strftime))
@@ -1041,10 +1072,7 @@ char *mingw_mktemp(char *template)
 
 int mkstemp(char *template)
 {
-	char *filename = mktemp(template);
-	if (filename == NULL)
-		return -1;
-	return open(filename, O_RDWR | O_CREAT, 0600);
+	return git_mkstemp_mode(template, 0600);
 }
 
 int gettimeofday(struct timeval *tv, void *tz)
@@ -1083,6 +1111,7 @@ int pipe(int filedes[2])
 	return 0;
 }
 
+#ifndef __MINGW64__
 struct tm *gmtime_r(const time_t *timep, struct tm *result)
 {
 	if (gmtime_s(result, timep) == 0)
@@ -1096,6 +1125,7 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 		return result;
 	return NULL;
 }
+#endif
 
 char *mingw_getcwd(char *pointer, int len)
 {
@@ -1123,6 +1153,10 @@ char *mingw_getcwd(char *pointer, int len)
 	}
 	if (!ret || ret >= ARRAY_SIZE(wpointer))
 		return NULL;
+	if (GetFileAttributesW(wpointer) == INVALID_FILE_ATTRIBUTES) {
+		errno = ENOENT;
+		return NULL;
+	}
 	if (xwcstoutf(pointer, wpointer, len) < 0)
 		return NULL;
 	convert_slashes(pointer);
@@ -1315,6 +1349,11 @@ static char *path_lookup(const char *cmd, int exe_only)
 	return prog;
 }
 
+char *mingw_locate_in_PATH(const char *cmd)
+{
+	return path_lookup(cmd, 0);
+}
+
 static const wchar_t *wcschrnul(const wchar_t *s, wchar_t c)
 {
 	while (*s && *s != c)
@@ -1371,8 +1410,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 			p += s;
 		}
 
-		ALLOC_ARRAY(result, size);
-		COPY_ARRAY(result, wenv, size);
+		DUP_ARRAY(result, wenv, size);
 		FreeEnvironmentStringsW(wenv);
 		return result;
 	}
@@ -1814,16 +1852,13 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 	if (prog) {
 		int exec_id;
 		int argc = 0;
-#ifndef _MSC_VER
-		const
-#endif
 		char **argv2;
 		while (argv[argc]) argc++;
 		ALLOC_ARRAY(argv2, argc + 1);
 		argv2[0] = (char *)cmd;	/* full path to the script file */
 		COPY_ARRAY(&argv2[1], &argv[1], argc);
-		exec_id = trace2_exec(prog, argv2);
-		pid = mingw_spawnv(prog, argv2, 1);
+		exec_id = trace2_exec(prog, (const char **)argv2);
+		pid = mingw_spawnv(prog, (const char **)argv2, 1);
 		if (pid >= 0) {
 			int status;
 			if (waitpid(pid, &status, 0) < 0)
@@ -2183,7 +2218,7 @@ enum EXTENDED_NAME_FORMAT {
 
 static char *get_extended_user_info(enum EXTENDED_NAME_FORMAT type)
 {
-	DECLARE_PROC_ADDR(secur32.dll, BOOL, GetUserNameExW,
+	DECLARE_PROC_ADDR(secur32.dll, BOOL, SEC_ENTRY, GetUserNameExW,
 		enum EXTENDED_NAME_FORMAT, LPCWSTR, PULONG);
 	static wchar_t wbuffer[1024];
 	DWORD len;
@@ -2308,7 +2343,7 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out)
 	static const struct timeval zero;
 	static int atexit_done;
 
-	if (out != NULL)
+	if (out)
 		return errno = EINVAL,
 			error("setitimer param 3 != NULL not implemented");
 	if (!is_timeval_eq(&in->it_interval, &zero) &&
@@ -2337,7 +2372,7 @@ int sigaction(int sig, struct sigaction *in, struct sigaction *out)
 	if (sig != SIGALRM)
 		return errno = EINVAL,
 			error("sigaction only implemented for SIGALRM");
-	if (out != NULL)
+	if (out)
 		return errno = EINVAL,
 			error("sigaction: param 3 != NULL not implemented");
 
@@ -2622,6 +2657,148 @@ static void setup_windows_environment(void)
 	}
 }
 
+static PSID get_current_user_sid(void)
+{
+	HANDLE token;
+	DWORD len = 0;
+	PSID result = NULL;
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+		return NULL;
+
+	if (!GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
+		TOKEN_USER *info = xmalloc((size_t)len);
+		if (GetTokenInformation(token, TokenUser, info, len, &len)) {
+			len = GetLengthSid(info->User.Sid);
+			result = xmalloc(len);
+			if (!CopySid(len, result, info->User.Sid)) {
+				error(_("failed to copy SID (%ld)"),
+				      GetLastError());
+				FREE_AND_NULL(result);
+			}
+		}
+		FREE_AND_NULL(info);
+	}
+	CloseHandle(token);
+
+	return result;
+}
+
+static int acls_supported(const char *path)
+{
+	size_t offset = offset_1st_component(path);
+	WCHAR wroot[MAX_PATH];
+	DWORD file_system_flags;
+
+	if (offset &&
+	    xutftowcsn(wroot, path, MAX_PATH, offset) > 0 &&
+	    GetVolumeInformationW(wroot, NULL, 0, NULL, NULL,
+				  &file_system_flags, NULL, 0))
+		return !!(file_system_flags & FILE_PERSISTENT_ACLS);
+
+	return 0;
+}
+
+int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
+{
+	WCHAR wpath[MAX_PATH];
+	PSID sid = NULL;
+	PSECURITY_DESCRIPTOR descriptor = NULL;
+	DWORD err;
+
+	static wchar_t home[MAX_PATH];
+
+	int result = 0;
+
+	if (xutftowcs_path(wpath, path) < 0)
+		return 0;
+
+	/*
+	 * On Windows, the home directory is owned by the administrator, but for
+	 * all practical purposes, it belongs to the user. Do pretend that it is
+	 * owned by the user.
+	 */
+	if (!*home) {
+		DWORD size = ARRAY_SIZE(home);
+		DWORD len = GetEnvironmentVariableW(L"HOME", home, size);
+		if (!len || len > size)
+			wcscpy(home, L"::N/A::");
+	}
+	if (!wcsicmp(wpath, home))
+		return 1;
+
+	/* Get the owner SID */
+	err = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
+				    OWNER_SECURITY_INFORMATION |
+				    DACL_SECURITY_INFORMATION,
+				    &sid, NULL, NULL, NULL, &descriptor);
+
+	if (err != ERROR_SUCCESS)
+		error(_("failed to get owner for '%s' (%ld)"), path, err);
+	else if (sid && IsValidSid(sid)) {
+		/* Now, verify that the SID matches the current user's */
+		static PSID current_user_sid;
+		BOOL is_member;
+
+		if (!current_user_sid)
+			current_user_sid = get_current_user_sid();
+
+		if (current_user_sid &&
+		    IsValidSid(current_user_sid) &&
+		    EqualSid(sid, current_user_sid))
+			result = 1;
+		else if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) &&
+			 CheckTokenMembership(NULL, sid, &is_member) &&
+			 is_member)
+			/*
+			 * If owned by the Administrators group, and the
+			 * current user is an administrator, we consider that
+			 * okay, too.
+			 */
+			result = 1;
+		else if (report &&
+			 IsWellKnownSid(sid, WinWorldSid) &&
+			 !acls_supported(path)) {
+			/*
+			 * On FAT32 volumes, ownership is not actually recorded.
+			 */
+			strbuf_addf(report, "'%s' is on a file system that does "
+				    "not record ownership\n", path);
+		} else if (report) {
+			LPSTR str1, str2, to_free1 = NULL, to_free2 = NULL;
+
+			if (ConvertSidToStringSidA(sid, &str1))
+				to_free1 = str1;
+			else
+				str1 = "(inconvertible)";
+
+			if (!current_user_sid)
+				str2 = "(none)";
+			else if (!IsValidSid(current_user_sid))
+				str2 = "(invalid)";
+			else if (ConvertSidToStringSidA(current_user_sid, &str2))
+				to_free2 = str2;
+			else
+				str2 = "(inconvertible)";
+			strbuf_addf(report,
+				    "'%s' is owned by:\n"
+				    "\t'%s'\nbut the current user is:\n"
+				    "\t'%s'\n", path, str1, str2);
+			LocalFree(to_free1);
+			LocalFree(to_free2);
+		}
+	}
+
+	/*
+	 * We can release the security descriptor struct only now because `sid`
+	 * actually points into this struct.
+	 */
+	if (descriptor)
+		LocalFree(descriptor);
+
+	return result;
+}
+
 int is_valid_win32_path(const char *path, int allow_literal_nul)
 {
 	const char *p = path;
@@ -2720,7 +2897,7 @@ not_a_reserved_name:
 			}
 
 			c = path[i];
-			if (c && c != '.' && c != ':' && c != '/' && c != '\\')
+			if (c && c != '.' && c != ':' && !is_xplatform_dir_sep(c))
 				goto not_a_reserved_name;
 
 			/* contains reserved name */

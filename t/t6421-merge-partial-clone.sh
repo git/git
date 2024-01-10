@@ -31,7 +31,7 @@ test_description="limiting blob downloads when merging with partial clones"
 
 test_setup_repo () {
 	test -d server && return
-	test_create_repo server &&
+	git init server &&
 	(
 		cd server &&
 
@@ -155,7 +155,7 @@ test_setup_repo () {
 #   Commit A:
 #     (Rename leap->jump, rename basename/ -> basename/subdir/, rename dir/
 #      -> folder/, move e into newsubdir, add newfile.rs, remove f, modify
-#      both both Makefiles and jumps)
+#      both Makefiles and jumps)
 #              general/{jump1_A, jump2_A}
 #              basename/subdir/{numbers_A, sequence_A, values_A}
 #              folder/subdir/{a,b,c,d,Makefile_TOP_A}
@@ -343,7 +343,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 #   Commit A:
 #     (Rename leap->jump, rename basename/ -> basename/subdir/, rename dir/
 #      -> folder/, move e into newsubdir, add newfile.rs, remove f, modify
-#      both both Makefiles and jumps)
+#      both Makefiles and jumps)
 #              general/{jump1_A, jump2_A}
 #              basename/subdir/{numbers_A, sequence_A, values_A}
 #              folder/subdir/{a,b,c,d,Makefile_TOP_A}

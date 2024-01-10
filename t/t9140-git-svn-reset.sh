@@ -43,7 +43,7 @@ test_expect_success 'fetch fails on modified hidden file' '
 	  git svn find-rev refs/remotes/git-svn > ../expect &&
 	  test_must_fail git svn fetch 2> ../errors &&
 	  git svn find-rev refs/remotes/git-svn > ../expect2 ) &&
-	fgrep "not found in commit" errors &&
+	grep "not found in commit" errors &&
 	test_cmp expect expect2
 '
 
@@ -59,7 +59,7 @@ test_expect_success 'refetch succeeds not ignoring any files' '
 	( cd g &&
 	  git svn fetch &&
 	  git svn rebase &&
-	  fgrep "mod hidden" hid/hid.txt
+	  grep "mod hidden" hid/hid.txt
 	)
 '
 

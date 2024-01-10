@@ -5,21 +5,27 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
+#include "builtin.h"
 #include "repository.h"
 #include "config.h"
+#include "convert.h"
 #include "quote.h"
 #include "dir.h"
-#include "builtin.h"
-#include "tree.h"
-#include "cache-tree.h"
+#include "gettext.h"
+#include "object-name.h"
+#include "strbuf.h"
 #include "parse-options.h"
 #include "resolve-undo.h"
 #include "string-list.h"
+#include "path.h"
 #include "pathspec.h"
-#include "run-command.h"
+#include "read-cache.h"
+#include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
-#include "submodule-config.h"
+#include "object-store.h"
+#include "hex.h"
+
 
 static int abbrev;
 static int show_deleted;
@@ -37,6 +43,7 @@ static int debug_mode;
 static int show_eol;
 static int recurse_submodules;
 static int skipping_duplicates;
+static int show_sparse_dirs;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -47,6 +54,7 @@ static char *ps_matched;
 static const char *with_tree;
 static int exc_given;
 static int exclude_args;
+static const char *format;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
@@ -82,6 +90,19 @@ static void write_name(const char *name)
 	 */
 	write_name_quoted_relative(name, prefix_len ? prefix : NULL,
 				   stdout, line_terminator);
+}
+
+static void write_name_to_buf(struct strbuf *sb, const char *name)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *rel = relative_path(name, prefix_len ? prefix : NULL, &buf);
+
+	if (line_terminator)
+		quote_c_style(rel, sb, NULL, 0);
+	else
+		strbuf_addstr(sb, rel);
+
+	strbuf_release(&buf);
 }
 
 static const char *get_tag(const struct cache_entry *ce, const char *tag)
@@ -221,6 +242,80 @@ static void show_submodule(struct repository *superproject,
 	repo_clear(&subrepo);
 }
 
+static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
+			      const enum object_type type, unsigned int padded)
+{
+	if (type == OBJ_BLOB) {
+		unsigned long size;
+		if (oid_object_info(the_repository, oid, &size) < 0)
+			die(_("could not get object info about '%s'"),
+			    oid_to_hex(oid));
+		if (padded)
+			strbuf_addf(line, "%7"PRIuMAX, (uintmax_t)size);
+		else
+			strbuf_addf(line, "%"PRIuMAX, (uintmax_t)size);
+	} else if (padded) {
+		strbuf_addf(line, "%7s", "-");
+	} else {
+		strbuf_addstr(line, "-");
+	}
+}
+
+static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
+			const char *format, const char *fullname) {
+	struct strbuf sb = STRBUF_INIT;
+
+	while (strbuf_expand_step(&sb, &format)) {
+		const char *end;
+		size_t len;
+		struct stat st;
+
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(&sb, '%');
+		else if ((len = strbuf_expand_literal(&sb, format)))
+			format += len;
+		else if (*format != '(')
+			die(_("bad ls-files format: element '%s' "
+			      "does not start with '('"), format);
+		else if (!(end = strchr(format + 1, ')')))
+			die(_("bad ls-files format: element '%s' "
+			      "does not end in ')'"), format);
+		else if (skip_prefix(format, "(objectmode)", &format))
+			strbuf_addf(&sb, "%06o", ce->ce_mode);
+		else if (skip_prefix(format, "(objectname)", &format))
+			strbuf_add_unique_abbrev(&sb, &ce->oid, abbrev);
+		else if (skip_prefix(format, "(objecttype)", &format))
+			strbuf_addstr(&sb, type_name(object_type(ce->ce_mode)));
+		else if (skip_prefix(format, "(objectsize:padded)", &format))
+			expand_objectsize(&sb, &ce->oid,
+					  object_type(ce->ce_mode), 1);
+		else if (skip_prefix(format, "(objectsize)", &format))
+			expand_objectsize(&sb, &ce->oid,
+					  object_type(ce->ce_mode), 0);
+		else if (skip_prefix(format, "(stage)", &format))
+			strbuf_addf(&sb, "%d", ce_stage(ce));
+		else if (skip_prefix(format, "(eolinfo:index)", &format))
+			strbuf_addstr(&sb, S_ISREG(ce->ce_mode) ?
+				      get_cached_convert_stats_ascii(repo->index,
+				      ce->name) : "");
+		else if (skip_prefix(format, "(eolinfo:worktree)", &format))
+			strbuf_addstr(&sb, !lstat(fullname, &st) &&
+				      S_ISREG(st.st_mode) ?
+				      get_wt_convert_stats_ascii(fullname) : "");
+		else if (skip_prefix(format, "(eolattr)", &format))
+			strbuf_addstr(&sb, get_convert_attr_ascii(repo->index,
+								 fullname));
+		else if (skip_prefix(format, "(path)", &format))
+			write_name_to_buf(&sb, fullname);
+		else
+			die(_("bad ls-files format: %%%.*s"),
+			    (int)(end - format + 1), format);
+	}
+	strbuf_addch(&sb, line_terminator);
+	fwrite(sb.buf, sb.len, 1, stdout);
+	strbuf_release(&sb);
+}
+
 static void show_ce(struct repository *repo, struct dir_struct *dir,
 		    const struct cache_entry *ce, const char *fullname,
 		    const char *tag)
@@ -235,6 +330,12 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
 				  max_prefix_len, ps_matched,
 				  S_ISDIR(ce->ce_mode) ||
 				  S_ISGITLINK(ce->ce_mode))) {
+		if (format) {
+			show_ce_fmt(repo, ce, format, fullname);
+			print_debug(ce);
+			return;
+		}
+
 		tag = get_tag(ce, tag);
 
 		if (!show_stage) {
@@ -243,7 +344,7 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
 			printf("%s%06o %s %d\t",
 			       tag,
 			       ce->ce_mode,
-			       find_unique_abbrev(&ce->oid, abbrev),
+			       repo_find_unique_abbrev(repo, &ce->oid, abbrev),
 			       ce_stage(ce));
 		}
 		write_eolinfo(repo->index, ce, fullname);
@@ -274,7 +375,7 @@ static void show_ru_info(struct index_state *istate)
 			if (!ui->mode[i])
 				continue;
 			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
-			       find_unique_abbrev(&ui->oid[i], abbrev),
+			       repo_find_unique_abbrev(the_repository, &ui->oid[i], abbrev),
 			       i + 1);
 			write_name(path);
 		}
@@ -315,8 +416,10 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 
 	if (!(show_cached || show_stage || show_deleted || show_modified))
 		return;
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(repo->index);
+
+	if (!show_sparse_dirs)
+		ensure_full_index(repo->index);
+
 	for (i = 0; i < repo->index->cache_nr; i++) {
 		const struct cache_entry *ce = repo->index->cache[i];
 		struct stat st;
@@ -419,142 +522,6 @@ static int get_common_prefix_len(const char *common_prefix)
 		common_prefix_len--;
 
 	return common_prefix_len;
-}
-
-static int read_one_entry_opt(struct index_state *istate,
-			      const struct object_id *oid,
-			      struct strbuf *base,
-			      const char *pathname,
-			      unsigned mode, int opt)
-{
-	int len;
-	struct cache_entry *ce;
-
-	if (S_ISDIR(mode))
-		return READ_TREE_RECURSIVE;
-
-	len = strlen(pathname);
-	ce = make_empty_cache_entry(istate, base->len + len);
-
-	ce->ce_mode = create_ce_mode(mode);
-	ce->ce_flags = create_ce_flags(1);
-	ce->ce_namelen = base->len + len;
-	memcpy(ce->name, base->buf, base->len);
-	memcpy(ce->name + base->len, pathname, len+1);
-	oidcpy(&ce->oid, oid);
-	return add_index_entry(istate, ce, opt);
-}
-
-static int read_one_entry(const struct object_id *oid, struct strbuf *base,
-			  const char *pathname, unsigned mode,
-			  void *context)
-{
-	struct index_state *istate = context;
-	return read_one_entry_opt(istate, oid, base, pathname,
-				  mode,
-				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
-}
-
-/*
- * This is used when the caller knows there is no existing entries at
- * the stage that will conflict with the entry being added.
- */
-static int read_one_entry_quick(const struct object_id *oid, struct strbuf *base,
-				const char *pathname, unsigned mode,
-				void *context)
-{
-	struct index_state *istate = context;
-	return read_one_entry_opt(istate, oid, base, pathname,
-				  mode, ADD_CACHE_JUST_APPEND);
-}
-
-/*
- * Read the tree specified with --with-tree option
- * (typically, HEAD) into stage #1 and then
- * squash them down to stage #0.  This is used for
- * --error-unmatch to list and check the path patterns
- * that were given from the command line.  We are not
- * going to write this index out.
- */
-void overlay_tree_on_index(struct index_state *istate,
-			   const char *tree_name, const char *prefix)
-{
-	struct tree *tree;
-	struct object_id oid;
-	struct pathspec pathspec;
-	struct cache_entry *last_stage0 = NULL;
-	int i;
-	read_tree_fn_t fn = NULL;
-	int err;
-
-	if (get_oid(tree_name, &oid))
-		die("tree-ish %s not found.", tree_name);
-	tree = parse_tree_indirect(&oid);
-	if (!tree)
-		die("bad tree-ish %s", tree_name);
-
-	/* Hoist the unmerged entries up to stage #3 to make room */
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(istate);
-	for (i = 0; i < istate->cache_nr; i++) {
-		struct cache_entry *ce = istate->cache[i];
-		if (!ce_stage(ce))
-			continue;
-		ce->ce_flags |= CE_STAGEMASK;
-	}
-
-	if (prefix) {
-		static const char *(matchbuf[1]);
-		matchbuf[0] = NULL;
-		parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC,
-			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
-	} else
-		memset(&pathspec, 0, sizeof(pathspec));
-
-	/*
-	 * See if we have cache entry at the stage.  If so,
-	 * do it the original slow way, otherwise, append and then
-	 * sort at the end.
-	 */
-	for (i = 0; !fn && i < istate->cache_nr; i++) {
-		const struct cache_entry *ce = istate->cache[i];
-		if (ce_stage(ce) == 1)
-			fn = read_one_entry;
-	}
-
-	if (!fn)
-		fn = read_one_entry_quick;
-	err = read_tree(the_repository, tree, &pathspec, fn, istate);
-	if (err)
-		die("unable to read tree entries %s", tree_name);
-
-	/*
-	 * Sort the cache entry -- we need to nuke the cache tree, though.
-	 */
-	if (fn == read_one_entry_quick) {
-		cache_tree_free(&istate->cache_tree);
-		QSORT(istate->cache, istate->cache_nr, cmp_cache_name_compare);
-	}
-
-	for (i = 0; i < istate->cache_nr; i++) {
-		struct cache_entry *ce = istate->cache[i];
-		switch (ce_stage(ce)) {
-		case 0:
-			last_stage0 = ce;
-			/* fallthru */
-		default:
-			continue;
-		case 1:
-			/*
-			 * If there is stage #0 entry for this, we do not
-			 * need to show it.  We use CE_UPDATE bit to mark
-			 * such an entry.
-			 */
-			if (last_stage0 &&
-			    !strcmp(last_stage0->name, ce->name))
-				ce->ce_flags |= CE_UPDATE;
-		}
-	}
 }
 
 static const char * const ls_files_usage[] = {
@@ -670,11 +637,20 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
 		OPT_BOOL(0, "deduplicate", &skipping_duplicates,
 			 N_("suppress duplicate entries")),
+		OPT_BOOL(0, "sparse", &show_sparse_dirs,
+			 N_("show sparse directories in the presence of a sparse index")),
+		OPT_STRING_F(0, "format", &format, N_("format"),
+			     N_("format to use for the output"),
+			     PARSE_OPT_NONEG),
 		OPT_END()
 	};
+	int ret = 0;
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(ls_files_usage, builtin_ls_files_options);
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
 
 	prefix = cmd_prefix;
 	if (prefix)
@@ -690,6 +666,13 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	for (i = 0; i < exclude_list.nr; i++) {
 		add_pattern(exclude_list.items[i].string, "", 0, pl, --exclude_args);
 	}
+
+	if (format && (show_stage || show_others || show_killed ||
+		show_resolve_undo || skipping_duplicates || show_eol || show_tag))
+			usage_msg_opt(_("--format cannot be used with -s, -o, -k, -t, "
+				      "--resolve-undo, --deduplicate, --eol"),
+				      ls_files_usage, builtin_ls_files_options);
+
 	if (show_tag || show_valid_bit || show_fsmonitor_bit) {
 		tag_cached = "H ";
 		tag_unmerged = "M ";
@@ -717,7 +700,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		setup_work_tree();
 
 	if (recurse_submodules &&
-	    (show_stage || show_deleted || show_others || show_unmerged ||
+	    (show_deleted || show_others || show_unmerged ||
 	     show_killed || show_modified || show_resolve_undo || with_tree))
 		die("ls-files --recurse-submodules unsupported mode");
 
@@ -766,7 +749,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		 * would not make any sense with this option.
 		 */
 		if (show_stage || show_unmerged)
-			die("ls-files --with-tree is incompatible with -s or -u");
+			die(_("options '%s' and '%s' cannot be used together"), "ls-files --with-tree", "-s/-u");
 		overlay_tree_on_index(the_repository->index, with_tree, max_prefix);
 	}
 
@@ -775,16 +758,13 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (show_resolve_undo)
 		show_ru_info(the_repository->index);
 
-	if (ps_matched) {
-		int bad;
-		bad = report_path_error(ps_matched, &pathspec);
-		if (bad)
-			fprintf(stderr, "Did you forget to 'git add'?\n");
-
-		return bad ? 1 : 0;
+	if (ps_matched && report_path_error(ps_matched, &pathspec)) {
+		fprintf(stderr, "Did you forget to 'git add'?\n");
+		ret = 1;
 	}
 
+	string_list_clear(&exclude_list, 0);
 	dir_clear(&dir);
 	free(max_prefix);
-	return 0;
+	return ret;
 }

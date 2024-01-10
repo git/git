@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "compat/terminal.h"
+#include "gettext.h"
 #include "sigchain.h"
 #include "strbuf.h"
 #include "run-command.h"
@@ -8,12 +9,10 @@
 
 #if defined(HAVE_DEV_TTY) || defined(GIT_WINDOWS_NATIVE)
 
-static void restore_term(void);
-
 static void restore_term_on_signal(int sig)
 {
 	restore_term();
-	sigchain_pop(sig);
+	/* restore_term calls sigchain_pop_common */
 	raise(sig);
 }
 
@@ -22,48 +21,227 @@ static void restore_term_on_signal(int sig)
 #define INPUT_PATH "/dev/tty"
 #define OUTPUT_PATH "/dev/tty"
 
+static volatile sig_atomic_t term_fd_needs_closing;
 static int term_fd = -1;
 static struct termios old_term;
 
-static void restore_term(void)
+static const char *background_resume_msg;
+static const char *restore_error_msg;
+static volatile sig_atomic_t ttou_received;
+
+/* async safe error function for use by signal handlers. */
+static void write_err(const char *msg)
+{
+	write_in_full(2, "error: ", strlen("error: "));
+	write_in_full(2, msg, strlen(msg));
+	write_in_full(2, "\n", 1);
+}
+
+static void print_background_resume_msg(int signo)
+{
+	int saved_errno = errno;
+	sigset_t mask;
+	struct sigaction old_sa;
+	struct sigaction sa = { .sa_handler = SIG_DFL };
+
+	ttou_received = 1;
+	write_err(background_resume_msg);
+	sigaction(signo, &sa, &old_sa);
+	raise(signo);
+	sigemptyset(&mask);
+	sigaddset(&mask, signo);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	/* Stopped here */
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+	sigaction(signo, &old_sa, NULL);
+	errno = saved_errno;
+}
+
+static void restore_terminal_on_suspend(int signo)
+{
+	int saved_errno = errno;
+	int res;
+	struct termios t;
+	sigset_t mask;
+	struct sigaction old_sa;
+	struct sigaction sa = { .sa_handler = SIG_DFL };
+	int can_restore = 1;
+
+	if (tcgetattr(term_fd, &t) < 0)
+		can_restore = 0;
+
+	if (tcsetattr(term_fd, TCSAFLUSH, &old_term) < 0)
+		write_err(restore_error_msg);
+
+	sigaction(signo, &sa, &old_sa);
+	raise(signo);
+	sigemptyset(&mask);
+	sigaddset(&mask, signo);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	/* Stopped here */
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+	sigaction(signo, &old_sa, NULL);
+	if (!can_restore) {
+		write_err(restore_error_msg);
+		goto out;
+	}
+	/*
+	 * If we resume in the background then we receive SIGTTOU when calling
+	 * tcsetattr() below. Set up a handler to print an error message in that
+	 * case.
+	 */
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGTTOU);
+	sa.sa_mask = old_sa.sa_mask;
+	sa.sa_handler = print_background_resume_msg;
+	sa.sa_flags = SA_RESTART;
+	sigaction(SIGTTOU, &sa, &old_sa);
+ again:
+	ttou_received = 0;
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	res = tcsetattr(term_fd, TCSAFLUSH, &t);
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+	if (ttou_received)
+		goto again;
+	else if (res < 0)
+		write_err(restore_error_msg);
+	sigaction(SIGTTOU, &old_sa, NULL);
+ out:
+	errno = saved_errno;
+}
+
+static void reset_job_signals(void)
+{
+	if (restore_error_msg) {
+		signal(SIGTTIN, SIG_DFL);
+		signal(SIGTTOU, SIG_DFL);
+		signal(SIGTSTP, SIG_DFL);
+		restore_error_msg = NULL;
+		background_resume_msg = NULL;
+	}
+}
+
+static void close_term_fd(void)
+{
+	if (term_fd_needs_closing)
+		close(term_fd);
+	term_fd_needs_closing = 0;
+	term_fd = -1;
+}
+
+void restore_term(void)
 {
 	if (term_fd < 0)
 		return;
 
 	tcsetattr(term_fd, TCSAFLUSH, &old_term);
-	close(term_fd);
-	term_fd = -1;
+	close_term_fd();
+	sigchain_pop_common();
+	reset_job_signals();
 }
 
-static int disable_bits(tcflag_t bits)
+int save_term(enum save_term_flags flags)
+{
+	struct sigaction sa;
+
+	if (term_fd < 0)
+		term_fd = ((flags & SAVE_TERM_STDIN)
+			   ? 0
+			   : open("/dev/tty", O_RDWR));
+	if (term_fd < 0)
+		return -1;
+	term_fd_needs_closing = !(flags & SAVE_TERM_STDIN);
+	if (tcgetattr(term_fd, &old_term) < 0) {
+		close_term_fd();
+		return -1;
+	}
+	sigchain_push_common(restore_term_on_signal);
+	/*
+	 * If job control is disabled then the shell will have set the
+	 * disposition of SIGTSTP to SIG_IGN.
+	 */
+	sigaction(SIGTSTP, NULL, &sa);
+	if (sa.sa_handler == SIG_IGN)
+		return 0;
+
+	/* avoid calling gettext() from signal handler */
+	background_resume_msg = _("cannot resume in the background, please use 'fg' to resume");
+	restore_error_msg = _("cannot restore terminal settings");
+	sa.sa_handler = restore_terminal_on_suspend;
+	sa.sa_flags = SA_RESTART;
+	sigemptyset(&sa.sa_mask);
+	sigaddset(&sa.sa_mask, SIGTSTP);
+	sigaddset(&sa.sa_mask, SIGTTIN);
+	sigaddset(&sa.sa_mask, SIGTTOU);
+	sigaction(SIGTSTP, &sa, NULL);
+	sigaction(SIGTTIN, &sa, NULL);
+	sigaction(SIGTTOU, &sa, NULL);
+
+	return 0;
+}
+
+static int disable_bits(enum save_term_flags flags, tcflag_t bits)
 {
 	struct termios t;
 
-	term_fd = open("/dev/tty", O_RDWR);
-	if (tcgetattr(term_fd, &t) < 0)
-		goto error;
+	if (save_term(flags) < 0)
+		return -1;
 
-	old_term = t;
-	sigchain_push_common(restore_term_on_signal);
+	t = old_term;
 
 	t.c_lflag &= ~bits;
+	if (bits & ICANON) {
+		t.c_cc[VMIN] = 1;
+		t.c_cc[VTIME] = 0;
+	}
 	if (!tcsetattr(term_fd, TCSAFLUSH, &t))
 		return 0;
 
-error:
-	close(term_fd);
-	term_fd = -1;
+	sigchain_pop_common();
+	reset_job_signals();
+	close_term_fd();
 	return -1;
 }
 
-static int disable_echo(void)
+static int disable_echo(enum save_term_flags flags)
 {
-	return disable_bits(ECHO);
+	return disable_bits(flags, ECHO);
 }
 
-static int enable_non_canonical(void)
+static int enable_non_canonical(enum save_term_flags flags)
 {
-	return disable_bits(ICANON | ECHO);
+	return disable_bits(flags, ICANON | ECHO);
+}
+
+/*
+ * On macos it is not possible to use poll() with a terminal so use select
+ * instead.
+ */
+static int getchar_with_timeout(int timeout)
+{
+	struct timeval tv, *tvp = NULL;
+	fd_set readfds;
+	int res;
+
+ again:
+	if (timeout >= 0) {
+		tv.tv_sec = timeout / 1000;
+		tv.tv_usec = (timeout % 1000) * 1000;
+		tvp = &tv;
+	}
+
+	FD_ZERO(&readfds);
+	FD_SET(0, &readfds);
+	res = select(1, &readfds, NULL, NULL, tvp);
+	if (!res)
+		return EOF;
+	if (res < 0) {
+		if (errno == EINTR)
+			goto again;
+		else
+			return EOF;
+	}
+	return getchar();
 }
 
 #elif defined(GIT_WINDOWS_NATIVE)
@@ -75,9 +253,10 @@ static int enable_non_canonical(void)
 static int use_stty = 1;
 static struct string_list stty_restore = STRING_LIST_INIT_DUP;
 static HANDLE hconin = INVALID_HANDLE_VALUE;
-static DWORD cmode;
+static HANDLE hconout = INVALID_HANDLE_VALUE;
+static DWORD cmode_in, cmode_out;
 
-static void restore_term(void)
+void restore_term(void)
 {
 	if (use_stty) {
 		int i;
@@ -94,15 +273,51 @@ static void restore_term(void)
 		return;
 	}
 
+	sigchain_pop_common();
+
 	if (hconin == INVALID_HANDLE_VALUE)
 		return;
 
-	SetConsoleMode(hconin, cmode);
+	SetConsoleMode(hconin, cmode_in);
 	CloseHandle(hconin);
-	hconin = INVALID_HANDLE_VALUE;
+	if (cmode_out) {
+		assert(hconout != INVALID_HANDLE_VALUE);
+		SetConsoleMode(hconout, cmode_out);
+		CloseHandle(hconout);
+	}
+
+	hconin = hconout = INVALID_HANDLE_VALUE;
 }
 
-static int disable_bits(DWORD bits)
+int save_term(enum save_term_flags flags)
+{
+	hconin = CreateFileA("CONIN$", GENERIC_READ | GENERIC_WRITE,
+	    FILE_SHARE_READ, NULL, OPEN_EXISTING,
+	    FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hconin == INVALID_HANDLE_VALUE)
+		return -1;
+
+	if (flags & SAVE_TERM_DUPLEX) {
+		hconout = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hconout == INVALID_HANDLE_VALUE)
+			goto error;
+
+		GetConsoleMode(hconout, &cmode_out);
+	}
+
+	GetConsoleMode(hconin, &cmode_in);
+	use_stty = 0;
+	sigchain_push_common(restore_term_on_signal);
+	return 0;
+error:
+	CloseHandle(hconin);
+	hconin = INVALID_HANDLE_VALUE;
+	return -1;
+}
+
+static int disable_bits(enum save_term_flags flags, DWORD bits)
 {
 	if (use_stty) {
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -111,7 +326,11 @@ static int disable_bits(DWORD bits)
 
 		if (bits & ENABLE_LINE_INPUT) {
 			string_list_append(&stty_restore, "icanon");
-			strvec_push(&cp.args, "-icanon");
+			/*
+			 * POSIX allows VMIN and VTIME to overlap with VEOF and
+			 * VEOL - let's hope that is not the case on windows.
+			 */
+			strvec_pushl(&cp.args, "-icanon", "min", "1", "time", "0", NULL);
 		}
 
 		if (bits & ENABLE_ECHO_INPUT) {
@@ -135,31 +354,28 @@ static int disable_bits(DWORD bits)
 		use_stty = 0;
 	}
 
-	hconin = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
-	    FILE_SHARE_READ, NULL, OPEN_EXISTING,
-	    FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hconin == INVALID_HANDLE_VALUE)
+	if (save_term(flags) < 0)
 		return -1;
 
-	GetConsoleMode(hconin, &cmode);
-	sigchain_push_common(restore_term_on_signal);
-	if (!SetConsoleMode(hconin, cmode & ~bits)) {
+	if (!SetConsoleMode(hconin, cmode_in & ~bits)) {
 		CloseHandle(hconin);
 		hconin = INVALID_HANDLE_VALUE;
+		sigchain_pop_common();
 		return -1;
 	}
 
 	return 0;
 }
 
-static int disable_echo(void)
+static int disable_echo(enum save_term_flags flags)
 {
-	return disable_bits(ENABLE_ECHO_INPUT);
+	return disable_bits(flags, ENABLE_ECHO_INPUT);
 }
 
-static int enable_non_canonical(void)
+static int enable_non_canonical(enum save_term_flags flags)
 {
-	return disable_bits(ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
+	return disable_bits(flags,
+			    ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
 }
 
 /*
@@ -193,6 +409,16 @@ static int mingw_getchar(void)
 }
 #define getchar mingw_getchar
 
+static int getchar_with_timeout(int timeout)
+{
+	struct pollfd pfd = { .fd = 0, .events = POLLIN };
+
+	if (poll(&pfd, 1, timeout) < 1)
+		return EOF;
+
+	return getchar();
+}
+
 #endif
 
 #ifndef FORCE_TEXT
@@ -215,7 +441,7 @@ char *git_terminal_prompt(const char *prompt, int echo)
 		return NULL;
 	}
 
-	if (!echo && disable_echo()) {
+	if (!echo && disable_echo(0)) {
 		fclose(input_fh);
 		fclose(output_fh);
 		return NULL;
@@ -252,11 +478,14 @@ struct escape_sequence_entry {
 	char sequence[FLEX_ARRAY];
 };
 
-static int sequence_entry_cmp(const void *hashmap_cmp_fn_data,
-			      const struct escape_sequence_entry *e1,
-			      const struct escape_sequence_entry *e2,
+static int sequence_entry_cmp(const void *hashmap_cmp_fn_data UNUSED,
+			      const struct hashmap_entry *he1,
+			      const struct hashmap_entry *he2,
 			      const void *keydata)
 {
+	const struct escape_sequence_entry
+		*e1 = container_of(he1, const struct escape_sequence_entry, entry),
+		*e2 = container_of(he2, const struct escape_sequence_entry, entry);
 	return strcmp(e1->sequence, keydata ? keydata : e2->sequence);
 }
 
@@ -270,8 +499,7 @@ static int is_known_escape_sequence(const char *sequence)
 		struct strbuf buf = STRBUF_INIT;
 		char *p, *eol;
 
-		hashmap_init(&sequences, (hashmap_cmp_fn)sequence_entry_cmp,
-			     NULL, 0);
+		hashmap_init(&sequences, sequence_entry_cmp, NULL, 0);
 
 		strvec_pushl(&cp.args, "infocmp", "-L", "-1", NULL);
 		if (pipe_command(&cp, NULL, 0, &buf, 0, NULL, 0))
@@ -309,7 +537,7 @@ int read_key_without_echo(struct strbuf *buf)
 	static int warning_displayed;
 	int ch;
 
-	if (warning_displayed || enable_non_canonical() < 0) {
+	if (warning_displayed || enable_non_canonical(SAVE_TERM_STDIN) < 0) {
 		if (!warning_displayed) {
 			warning("reading single keystrokes not supported on "
 				"this platform; reading line instead");
@@ -343,14 +571,9 @@ int read_key_without_echo(struct strbuf *buf)
 		 * half a second when we know that the sequence is complete.
 		 */
 		while (!is_known_escape_sequence(buf->buf)) {
-			struct pollfd pfd = { .fd = 0, .events = POLLIN };
-
-			if (poll(&pfd, 1, 500) < 1)
-				break;
-
-			ch = getchar();
+			ch = getchar_with_timeout(500);
 			if (ch == EOF)
-				return 0;
+				break;
 			strbuf_addch(buf, ch);
 		}
 	}
@@ -360,6 +583,16 @@ int read_key_without_echo(struct strbuf *buf)
 }
 
 #else
+
+int save_term(enum save_term_flags flags)
+{
+	/* no duplex support available */
+	return -!!(flags & SAVE_TERM_DUPLEX);
+}
+
+void restore_term(void)
+{
+}
 
 char *git_terminal_prompt(const char *prompt, int echo)
 {

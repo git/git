@@ -4,7 +4,7 @@ How to use git-daemon
 =====================
 
 Git can be run in inetd mode and in stand alone mode. But all you want is
-let a coworker pull from you, and therefore need to set up a Git server
+to let a coworker pull from you, and therefore need to set up a Git server
 real quick, right?
 
 Note that git-daemon is not really chatty at the moment, especially when

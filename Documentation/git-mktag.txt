@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Reads a tag contents on standard input and creates a tag object. The
+Reads a tag's contents on standard input and creates a tag object. The
 output is the new tag's <object> identifier.
 
 This command is mostly equivalent to linkgit:git-hash-object[1]
@@ -27,13 +27,13 @@ write a tag found in `my-tag`:
 The difference is that mktag will die before writing the tag if the
 tag doesn't pass a linkgit:git-fsck[1] check.
 
-The "fsck" check done mktag is stricter than what linkgit:git-fsck[1]
+The "fsck" check done by mktag is stricter than what linkgit:git-fsck[1]
 would run by default in that all `fsck.<msg-id>` messages are promoted
 from warnings to errors (so e.g. a missing "tagger" line is an error).
 
 Extra headers in the object are also an error under mktag, but ignored
 by linkgit:git-fsck[1]. This extra check can be turned off by setting
-the appropriate `fsck.<msg-id>` varible:
+the appropriate `fsck.<msg-id>` variable:
 
     git -c fsck.extraHeaderEntry=ignore mktag <my-tag-with-headers
 
@@ -56,7 +56,7 @@ has a very simple fixed format: four lines of
   tagger <tagger>
 
 followed by some 'optional' free-form message (some tags created
-by older Git may not have `tagger` line).  The message, when it
+by older Git may not have a `tagger` line).  The message, when it
 exists, is separated by a blank line from the header.  The
 message part may contain a signature that Git itself doesn't
 care about, but that can be verified with gpg.

@@ -1,8 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "simple-ipc.h"
-#include "strbuf.h"
-#include "pkt-line.h"
-#include "thread-utils.h"
 
 #ifndef SUPPORTS_SIMPLE_IPC
 /*

@@ -98,6 +98,22 @@ http.version::
 	- HTTP/2
 	- HTTP/1.1
 
+http.curloptResolve::
+	Hostname resolution information that will be used first by
+	libcurl when sending HTTP requests.  This information should
+	be in one of the following formats:
+
+	- [+]HOST:PORT:ADDRESS[,ADDRESS]
+	- -HOST:PORT
+
++
+The first format redirects all requests to the given `HOST:PORT`
+to the provided `ADDRESS`(s). The second format clears all
+previous config values for that `HOST:PORT` combination.  To
+allow easy overriding of all the settings inherited from the
+system config, an empty value will reset all resolution
+information to the empty list.
+
 http.sslVersion::
 	The SSL version to use when negotiating an SSL connection, if you
 	want to force the default.  The available and default version
@@ -187,7 +203,7 @@ http.schannelUseSSLCAInfo::
 	when the `schannel` backend was configured via `http.sslBackend`,
 	unless `http.schannelUseSSLCAInfo` overrides this behavior.
 
-http.pinnedpubkey::
+http.pinnedPubkey::
 	Public key of the https service. It may either be the filename of
 	a PEM or DER encoded public key file or a string starting with
 	'sha256//' followed by the base64 encoded sha256 hash of the
@@ -230,20 +246,21 @@ significantly since the entire buffer is allocated even for small
 pushes.
 
 http.lowSpeedLimit, http.lowSpeedTime::
-	If the HTTP transfer speed is less than 'http.lowSpeedLimit'
-	for longer than 'http.lowSpeedTime' seconds, the transfer is aborted.
+	If the HTTP transfer speed, in bytes per second, is less than
+	'http.lowSpeedLimit' for longer than 'http.lowSpeedTime' seconds,
+	the transfer is aborted.
 	Can be overridden by the `GIT_HTTP_LOW_SPEED_LIMIT` and
 	`GIT_HTTP_LOW_SPEED_TIME` environment variables.
 
 http.noEPSV::
 	A boolean which disables using of EPSV ftp command by curl.
-	This can helpful with some "poor" ftp servers which don't
+	This can be helpful with some "poor" ftp servers which don't
 	support EPSV mode. Can be overridden by the `GIT_CURL_FTP_NO_EPSV`
 	environment variable. Default is false (curl will use EPSV).
 
 http.userAgent::
 	The HTTP USER_AGENT string presented to an HTTP server.  The default
-	value represents the version of the client Git such as git/1.7.1.
+	value represents the version of the Git client such as git/1.7.1.
 	This option allows you to override this value to a more common value
 	such as Mozilla/4.0.  This may be necessary, for instance, if
 	connecting through a firewall that restricts HTTP connections to a set

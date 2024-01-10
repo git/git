@@ -3,8 +3,12 @@
  *
  * Copyright (c) 2007 Junio C Hamano
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "attr.h"
+#include "strbuf.h"
+#include "ws.h"
+
+unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
 
 static struct whitespace_rule {
 	const char *rule_name;
@@ -29,6 +33,7 @@ unsigned parse_whitespace_rule(const char *string)
 		int i;
 		size_t len;
 		const char *ep;
+		const char *arg;
 		int negated = 0;
 
 		string = string + strspn(string, ", \t\n\r");
@@ -52,15 +57,15 @@ unsigned parse_whitespace_rule(const char *string)
 				rule |= whitespace_rule_names[i].rule_bits;
 			break;
 		}
-		if (strncmp(string, "tabwidth=", 9) == 0) {
-			unsigned tabwidth = atoi(string + 9);
+		if (skip_prefix(string, "tabwidth=", &arg)) {
+			unsigned tabwidth = atoi(arg);
 			if (0 < tabwidth && tabwidth < 0100) {
 				rule &= ~WS_TAB_WIDTH_MASK;
 				rule |= tabwidth;
 			}
 			else
 				warning("tabwidth %.*s out of range",
-					(int)(len - 9), string + 9);
+					(int)(ep - arg), arg);
 		}
 		string = ep;
 	}
@@ -252,7 +257,7 @@ unsigned ws_check(const char *line, int len, unsigned ws_rule)
 	return ws_check_emit_1(line, len, ws_rule, NULL, NULL, NULL, NULL);
 }
 
-int ws_blank_line(const char *line, int len, unsigned ws_rule)
+int ws_blank_line(const char *line, int len)
 {
 	/*
 	 * We _might_ want to treat CR differently from other

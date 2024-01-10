@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # Copyright (C) 2006, Eric Wong <normalperson@yhbt.net>
 # License: GPL v2 or later
-use 5.008;
+use 5.008001;
 use warnings $ENV{GIT_PERL_FATAL_WARNINGS} ? qw(FATAL all) : ();
 use strict;
 use vars qw/	$AUTHOR $VERSION
@@ -273,7 +273,6 @@ my %cmd = (
 			  'fetch-all|all' => \$_fetch_all,
 			  'dry-run|n' => \$_dry_run,
 			  'rebase-merges|p' => \$_rebase_merges,
-			  'preserve-merges|p' => \$_rebase_merges,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
@@ -298,28 +297,12 @@ my %cmd = (
 		{} ],
 );
 
-package FakeTerm;
-sub new {
-	my ($class, $reason) = @_;
-	return bless \$reason, shift;
-}
-sub readline {
-	my $self = shift;
-	die "Cannot use readline on FakeTerm: $$self";
-}
-package main;
-
 my $term;
 sub term_init {
-	$term = eval {
-		require Term::ReadLine;
-		$ENV{"GIT_SVN_NOTTY"}
+	require Term::ReadLine;
+	$term = $ENV{"GIT_SVN_NOTTY"}
 			? new Term::ReadLine 'git-svn', \*STDIN, \*STDOUT
 			: new Term::ReadLine 'git-svn';
-	};
-	if ($@) {
-		$term = new FakeTerm "$@: going non-interactive";
-	}
 }
 
 my $cmd;

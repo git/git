@@ -18,10 +18,7 @@ GIT_AUTHOR_EMAIL=bogus@email@address
 export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 
 test_expect_success 'prepare repository with topic branches' '
-	git config core.logAllRefUpdates true &&
-	echo First >A &&
-	git update-index --add A &&
-	git commit -m "Add A." &&
+	test_commit "Add A." A First First &&
 	git checkout -b force-3way &&
 	echo Dummy >Y &&
 	git update-index --add Y &&
@@ -32,9 +29,7 @@ test_expect_success 'prepare repository with topic branches' '
 	git mv A D/A &&
 	git commit -m "Move A." &&
 	git checkout -b my-topic-branch main &&
-	echo Second >B &&
-	git update-index --add B &&
-	git commit -m "Add B." &&
+	test_commit "Add B." B Second Second &&
 	git checkout -f main &&
 	echo Third >>A &&
 	git update-index A &&
@@ -148,8 +143,8 @@ test_expect_success 'Show verbose error when HEAD could not be detached' '
 	>B &&
 	test_when_finished "rm -f B" &&
 	test_must_fail git rebase topic 2>output.err >output.out &&
-	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" output.err &&
-	test_i18ngrep B output.err
+	test_grep "The following untracked working tree files would be overwritten by checkout:" output.err &&
+	test_grep B output.err
 '
 
 test_expect_success 'fail when upstream arg is missing and not on branch' '
@@ -393,20 +388,43 @@ test_expect_success 'switch to branch checked out here' '
 	git rebase main main
 '
 
+test_expect_success 'switch to branch checked out elsewhere fails' '
+	test_when_finished "
+		git worktree remove wt1 &&
+		git worktree remove wt2 &&
+		git branch -d shared
+	" &&
+	git worktree add wt1 -b shared &&
+	git worktree add wt2 -f shared &&
+	# we test in both worktrees to ensure that works
+	# as expected with "first" and "next" worktrees
+	test_must_fail git -C wt1 rebase shared shared &&
+	test_must_fail git -C wt2 rebase shared shared
+'
+
 test_expect_success 'switch to branch not checked out' '
 	git checkout main &&
 	git branch other &&
 	git rebase main other
 '
 
+test_expect_success 'switch to non-branch detaches HEAD' '
+	git checkout main &&
+	old_main=$(git rev-parse HEAD) &&
+	git rebase First Second^0 &&
+	test_cmp_rev HEAD Second &&
+	test_cmp_rev main $old_main &&
+	test_must_fail git symbolic-ref HEAD
+'
+
 test_expect_success 'refuse to switch to branch checked out elsewhere' '
 	git checkout main &&
 	git worktree add wt &&
 	test_must_fail git -C wt rebase main main 2>err &&
-	test_i18ngrep "already checked out" err
+	test_grep "already used by worktree at" err
 '
 
-test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
+test_expect_success REFFILES,MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
 	git checkout main &&
 	mv .git/logs actual_logs &&
 	cmd //c "mklink /D .git\logs ..\actual_logs" &&
@@ -414,6 +432,27 @@ test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' 
 	test -L .git/logs &&
 	rm .git/logs &&
 	mv actual_logs .git/logs
+'
+
+test_expect_success 'rebase when inside worktree subdirectory' '
+	git init main-wt &&
+	(
+		cd main-wt &&
+		git commit --allow-empty -m "initial" &&
+		mkdir -p foo/bar &&
+		test_commit foo/bar/baz &&
+		mkdir -p a/b &&
+		test_commit a/b/c &&
+		# create another branch for our other worktree
+		git branch other &&
+		git worktree add ../other-wt other &&
+		cd ../other-wt &&
+		# create and cd into a subdirectory
+		mkdir -p random/dir &&
+		cd random/dir &&
+		# now do the rebase
+		git rebase --onto HEAD^^ HEAD^  # drops the HEAD^ commit
+	)
 '
 
 test_done

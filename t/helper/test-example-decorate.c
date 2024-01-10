@@ -1,9 +1,10 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "git-compat-util.h"
 #include "object.h"
 #include "decorate.h"
+#include "repository.h"
 
-int cmd__example_decorate(int argc, const char **argv)
+int cmd__example_decorate(int argc UNUSED, const char **argv UNUSED)
 {
 	struct decoration n;
 	struct object_id one_oid = { {1} };
@@ -70,6 +71,8 @@ int cmd__example_decorate(int argc, const char **argv)
 	}
 	if (objects_noticed != 2)
 		BUG("should have 2 objects");
+
+	clear_decoration(&n, NULL);
 
 	return 0;
 }

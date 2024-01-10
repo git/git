@@ -216,12 +216,19 @@ while (<>) {
 
     elsif ($event eq 'data') {
 	my $cat = $line->{'category'};
-	if ($cat eq 'test_category') {
-	    
-	    my $key = $line->{'key'};
-	    my $value = $line->{'value'};
-	    $processes->{$sid}->{'data'}->{$cat}->{$key} = $value;
-	}
+	my $key = $line->{'key'};
+	my $value = $line->{'value'};
+	$processes->{$sid}->{'data'}->{$cat}->{$key} = $value;
+    }
+
+    elsif ($event eq 'data_json') {
+	# NEEDSWORK: Ignore due to
+	# compat/win32/trace2_win32_process_info.c, which should log a
+	# "cmd_ancestry" event instead.
+    }
+
+    else {
+	push @{$processes->{$sid}->{$event}} => $line->{value};
     }
 
     # This trace2 target does not emit 'printf' events.

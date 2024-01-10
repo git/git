@@ -5,6 +5,13 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+
+if test_have_prereq !REFFILES
+then
+	skip_all='skipping test; dumb HTTP protocol not supported with reftable.'
+	test_done
+fi
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
@@ -18,16 +25,17 @@ test_expect_success 'setup repository' '
 	git commit -m two
 '
 
+setup_post_update_server_info_hook () {
+	test_hook --setup -C "$1" post-update <<-\EOF &&
+	exec git update-server-info
+	EOF
+	git -C "$1" update-server-info
+}
+
 test_expect_success 'create http-accessible bare repository with loose objects' '
 	cp -R .git "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	 git config core.bare true &&
-	 mkdir -p hooks &&
-	 write_script "hooks/post-update" <<-\EOF &&
-	 exec git update-server-info
-	EOF
-	 hooks/post-update
-	) &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" config core.bare true &&
+	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git push public main:main
 '
@@ -55,20 +63,14 @@ test_expect_success 'create password-protected repository' '
 
 test_expect_success 'create empty remote repository' '
 	git init --bare "$HTTPD_DOCUMENT_ROOT_PATH/empty.git" &&
-	(cd "$HTTPD_DOCUMENT_ROOT_PATH/empty.git" &&
-	 mkdir -p hooks &&
-	 write_script "hooks/post-update" <<-\EOF &&
-	 exec git update-server-info
-	EOF
-	 hooks/post-update
-	)
+	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/empty.git"
 '
 
-test_expect_success 'empty dumb HTTP repository has default hash algorithm' '
+test_expect_success 'empty dumb HTTP repository falls back to SHA1' '
 	test_when_finished "rm -fr clone-empty" &&
 	git clone $HTTPD_URL/dumb/empty.git clone-empty &&
 	git -C clone-empty rev-parse --show-object-format >empty-format &&
-	test "$(cat empty-format)" = "$(test_oid algo)"
+	test "$(cat empty-format)" = sha1
 '
 
 setup_askpass_helper
@@ -232,7 +234,7 @@ test_expect_success 'http-fetch --packfile' '
 		--index-pack-arg=--keep \
 		"$HTTPD_URL"/dumb/repo_pack.git/$p >out &&
 
-	grep "^keep.[0-9a-f]\{16,\}$" out &&
+	grep -E "^keep.[0-9a-f]{16,}$" out &&
 	cut -c6- out >packhash &&
 
 	# Ensure that the expected files are generated
@@ -367,14 +369,14 @@ ja;q=0.95, zh;q=0.94, sv;q=0.93, pt;q=0.92, nb;q=0.91, *;q=0.90" \
 		ko_KR.EUC-KR:en_US.UTF-8:fr_CA:de.UTF-8@euro:sr@latin:ja:zh:sv:pt:nb
 '
 
-test_expect_success 'git client does not send an empty Accept-Language' '
+test_expect_success 'git client send an empty Accept-Language' '
 	GIT_TRACE_CURL=true LANGUAGE= git ls-remote "$HTTPD_URL/dumb/repo.git" 2>stderr &&
 	! grep "^=> Send header: Accept-Language:" stderr
 '
 
 test_expect_success 'remote-http complains cleanly about malformed urls' '
 	test_must_fail git remote-http http::/example.com/repo.git 2>stderr &&
-	test_i18ngrep "url has no scheme" stderr
+	test_grep "url has no scheme" stderr
 '
 
 # NEEDSWORK: Writing commands to git-remote-curl can race against the latter
@@ -383,7 +385,7 @@ test_expect_success 'remote-http complains cleanly about malformed urls' '
 test_expect_success 'remote-http complains cleanly about empty scheme' '
 	test_must_fail ok=sigpipe git ls-remote \
 		http::${HTTPD_URL#http}/dumb/repo.git 2>stderr &&
-	test_i18ngrep "url has no scheme" stderr
+	test_grep "url has no scheme" stderr
 '
 
 test_expect_success 'redirects can be forbidden/allowed' '
@@ -395,7 +397,7 @@ test_expect_success 'redirects can be forbidden/allowed' '
 
 test_expect_success 'redirects are reported to stderr' '
 	# just look for a snippet of the redirected-to URL
-	test_i18ngrep /dumb/ stderr
+	test_grep /dumb/ stderr
 '
 
 test_expect_success 'non-initial redirects can be forbidden' '
@@ -420,7 +422,8 @@ test_expect_success 'set up evil alternates scheme' '
 	sha1=$(git -C "$victim" rev-parse HEAD) &&
 
 	evil=$HTTPD_DOCUMENT_ROOT_PATH/evil.git &&
-	git init --bare "$evil" &&
+	git init --template= --bare "$evil" &&
+	mkdir "$evil/info" &&
 	# do this by hand to avoid object existence check
 	printf "%s\\t%s\\n" $sha1 refs/heads/main >"$evil/info/refs"
 '
@@ -463,7 +466,7 @@ test_expect_success 'can redirect through non-"info/refs?service=git-upload-pack
 
 test_expect_success 'print HTTP error when any intermediate redirect throws error' '
 	test_must_fail git clone "$HTTPD_URL/redir-to/502" 2> stderr &&
-	test_i18ngrep "unable to access.*/redir-to/502" stderr
+	test_grep "unable to access.*/redir-to/502" stderr
 '
 
 test_expect_success 'fetching via http alternates works' '

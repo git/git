@@ -1,9 +1,6 @@
 #!/bin/sh
 
 test_description='git branch display tests'
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -58,7 +55,15 @@ cat >expect <<'EOF'
 EOF
 test_expect_success 'git branch -r shows remote branches' '
 	git branch -r >actual &&
+	test_cmp expect actual &&
+
+	git branch --remotes >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'git branch --no-remotes is rejected' '
+	test_must_fail git branch --no-remotes 2>err &&
+	grep "unknown option .no-remotes." err
 '
 
 cat >expect <<'EOF'
@@ -71,7 +76,15 @@ cat >expect <<'EOF'
 EOF
 test_expect_success 'git branch -a shows local and remote branches' '
 	git branch -a >actual &&
+	test_cmp expect actual &&
+
+	git branch --all >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'git branch --no-all is rejected' '
+	test_must_fail git branch --no-all 2>err &&
+	grep "unknown option .no-all." err
 '
 
 cat >expect <<'EOF'
@@ -340,8 +353,46 @@ test_expect_success 'git branch --format option' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git branch --format with ahead-behind' '
+	cat >expect <<-\EOF &&
+	(HEAD detached from fromtag) 0 0
+	refs/heads/ambiguous 0 0
+	refs/heads/branch-one 1 0
+	refs/heads/branch-two 0 0
+	refs/heads/main 1 0
+	refs/heads/ref-to-branch 1 0
+	refs/heads/ref-to-remote 1 0
+	EOF
+	git branch --format="%(refname) %(ahead-behind:HEAD)" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git branch with --format=%(rest) must fail' '
 	test_must_fail git branch --format="%(rest)" >actual
+'
+
+test_expect_success 'git branch --format --omit-empty' '
+	cat >expect <<-\EOF &&
+	Refname is (HEAD detached from fromtag)
+	Refname is refs/heads/ambiguous
+	Refname is refs/heads/branch-one
+	Refname is refs/heads/branch-two
+
+	Refname is refs/heads/ref-to-branch
+	Refname is refs/heads/ref-to-remote
+	EOF
+	git branch --format="%(if:notequals=refs/heads/main)%(refname)%(then)Refname is %(refname)%(end)" >actual &&
+	test_cmp expect actual &&
+	cat >expect <<-\EOF &&
+	Refname is (HEAD detached from fromtag)
+	Refname is refs/heads/ambiguous
+	Refname is refs/heads/branch-one
+	Refname is refs/heads/branch-two
+	Refname is refs/heads/ref-to-branch
+	Refname is refs/heads/ref-to-remote
+	EOF
+	git branch --omit-empty --format="%(if:notequals=refs/heads/main)%(refname)%(then)Refname is %(refname)%(end)" >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'worktree colors correct' '

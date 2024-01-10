@@ -394,7 +394,7 @@ request to do so by mail.  Such a request looks like
 
 -------------------------------------
 Please pull from
-    <url> <branch>
+    <URL> <branch>
 -------------------------------------
 
 In that case, 'git pull' can do the fetch and merge in one go, as
@@ -403,7 +403,7 @@ follows.
 .Push/pull: Merging remote topics
 [caption="Recipe: "]
 =====================================
-`git pull <url> <branch>`
+`git pull <URL> <branch>`
 =====================================
 
 Occasionally, the maintainer may get merge conflicts when they try to
@@ -440,7 +440,7 @@ merge because you cannot format-patch merges):
 .format-patch/am: Keeping topics up to date
 [caption="Recipe: "]
 =====================================
-`git pull --rebase <url> <branch>`
+`git pull --rebase <URL> <branch>`
 =====================================
 
 You can then fix the conflicts during the rebase.  Presumably you have

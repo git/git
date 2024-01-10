@@ -2,6 +2,7 @@
 
 test_description='Test the lazy init name hash with various folder structures'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if test 1 -eq $(test-tool online-cpus)

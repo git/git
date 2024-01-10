@@ -1,0 +1,11 @@
+cat >expect <<- EOF &&
+header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
+num_commits: $1
+chunks: oid_fanout oid_lookup commit_metadata generation_data bloom_indexes bloom_data
+EOF
+
+cat >expect << -EOF ?!AMP?!
+this is not indented
+-EOF
+
+cleanup

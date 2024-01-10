@@ -12,25 +12,25 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_expect_success setup '
-	for i in 1 2 3 4 5 6 7 8 9 10; do echo "$i"; done >file &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 10 >file &&
 	cat file >elif &&
 	git add file elif &&
 	test_tick &&
 	git commit -m Initial &&
 	git checkout -b side &&
 
-	for i in 1 2 5 6 A B C 7 8 9 10; do echo "$i"; done >file &&
+	test_write_lines 1 2 5 6 A B C 7 8 9 10 >file &&
 	test_chmod +x elif &&
 	test_tick &&
 	git commit -m "Side changes #1" &&
 
-	for i in D E F; do echo "$i"; done >>file &&
+	test_write_lines D E F >>file &&
 	git update-index file &&
 	test_tick &&
 	git commit -m "Side changes #2" &&
 	git tag C2 &&
 
-	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file &&
+	test_write_lines 5 6 1 2 3 A 4 B C 7 8 9 10 D E F >file &&
 	git update-index file &&
 	test_tick &&
 	git commit -m "Side changes #3 with \\n backslash-n in it." &&
@@ -43,21 +43,25 @@ test_expect_success setup '
 
 	git checkout side &&
 	git checkout -b patchid &&
-	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file2 &&
-	for i in 1 2 3 A 4 B C 7 8 9 10 D E F 5 6; do echo "$i"; done >file3 &&
-	for i in 8 9 10; do echo "$i"; done >file &&
+	test_write_lines 5 6 1 2 3 A 4 B C 7 8 9 10 D E F >file2 &&
+	test_write_lines 1 2 3 A 4 B C 7 8 9 10 D E F 5 6 >file3 &&
+	test_write_lines 8 9 10 >file &&
 	git add file file2 file3 &&
 	test_tick &&
 	git commit -m "patchid 1" &&
-	for i in 4 A B 7 8 9 10; do echo "$i"; done >file2 &&
-	for i in 8 9 10 5 6; do echo "$i"; done >file3 &&
+	test_write_lines 4 A B 7 8 9 10 >file2 &&
+	test_write_lines 8 9 10 5 6 >file3 &&
 	git add file2 file3 &&
 	test_tick &&
 	git commit -m "patchid 2" &&
-	for i in 10 5 6; do echo "$i"; done >file &&
+	test_write_lines 10 5 6 >file &&
 	git add file &&
 	test_tick &&
 	git commit -m "patchid 3" &&
+
+	git checkout -b empty main &&
+	test_tick &&
+	git commit --allow-empty -m "empty commit" &&
 
 	git checkout main
 '
@@ -126,6 +130,12 @@ test_expect_success 'format-patch did not screw up the log message' '
 test_expect_success 'replay did not screw up the log message' '
 	git cat-file commit rebuild-1 >actual &&
 	grep "^Side .* with .* backslash-n" actual
+'
+
+test_expect_success 'format-patch empty commit' '
+	git format-patch --stdout main..empty >empty &&
+	grep "^From " empty >from &&
+	test_line_count = 1 from
 '
 
 test_expect_success 'extra headers' '
@@ -325,7 +335,7 @@ test_expect_success 'filename length limit' '
 		max=$(
 			for patch in 000[1-9]-*.patch
 			do
-				echo "$patch" | wc -c
+				echo "$patch" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -343,7 +353,7 @@ test_expect_success 'filename length limit from config' '
 		max=$(
 			for patch in 000[1-9]-*.patch
 			do
-				echo "$patch" | wc -c
+				echo "$patch" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -361,7 +371,7 @@ test_expect_success 'filename limit applies only to basename' '
 		max=$(
 			for patch in patches/000[1-9]-*.patch
 			do
-				echo "${patch#patches/}" | wc -c
+				echo "${patch#patches/}" | wc -c || exit 1
 			done |
 			sort -nr |
 			head -n 1
@@ -445,13 +455,13 @@ test_expect_success 'no threading' '
 
 cat >expect.thread <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <0>
 EOF
@@ -460,17 +470,22 @@ test_expect_success 'thread' '
 	check_threading expect.thread --thread main
 '
 
+test_expect_success '--thread overrides format.thread=deep' '
+	test_config format.thread deep &&
+	check_threading expect.thread --thread main
+'
+
 cat >expect.in-reply-to <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <1>
 References: <1>
 EOF
@@ -482,17 +497,17 @@ test_expect_success 'thread in-reply-to' '
 
 cat >expect.cover-letter <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <0>
 References: <0>
 EOF
@@ -503,21 +518,21 @@ test_expect_success 'thread cover-letter' '
 
 cat >expect.cl-irt <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <4>
+Message-ID: <4>
 In-Reply-To: <0>
 References: <1>
 	<0>
@@ -535,13 +550,13 @@ test_expect_success 'thread explicit shallow' '
 
 cat >expect.deep <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <1>
 References: <0>
 	<1>
@@ -553,16 +568,16 @@ test_expect_success 'thread deep' '
 
 cat >expect.deep-irt <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <2>
 References: <1>
 	<0>
@@ -576,18 +591,18 @@ test_expect_success 'thread deep in-reply-to' '
 
 cat >expect.deep-cl <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 ---
-Message-Id: <1>
+Message-ID: <1>
 In-Reply-To: <0>
 References: <0>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <1>
 References: <0>
 	<1>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <2>
 References: <0>
 	<1>
@@ -600,22 +615,22 @@ test_expect_success 'thread deep cover-letter' '
 
 cat >expect.deep-cl-irt <<EOF
 ---
-Message-Id: <0>
+Message-ID: <0>
 In-Reply-To: <1>
 References: <1>
 ---
-Message-Id: <2>
+Message-ID: <2>
 In-Reply-To: <0>
 References: <1>
 	<0>
 ---
-Message-Id: <3>
+Message-ID: <3>
 In-Reply-To: <2>
 References: <1>
 	<0>
 	<2>
 ---
-Message-Id: <4>
+Message-ID: <4>
 In-Reply-To: <3>
 References: <1>
 	<0>
@@ -653,7 +668,7 @@ test_expect_success 'excessive subject' '
 	git checkout side &&
 	before=$(git hash-object file) &&
 	before=$(git rev-parse --short $before) &&
-	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >>file &&
+	test_write_lines 5 6 1 2 3 A 4 B C 7 8 9 10 D E F >>file &&
 	after=$(git hash-object file) &&
 	after=$(git rev-parse --short $after) &&
 	git update-index file &&
@@ -926,11 +941,40 @@ test_expect_success 'format-patch --numstat should produce a patch' '
 '
 
 test_expect_success 'format-patch -- <path>' '
-	git format-patch main..side -- file 2>error &&
-	! grep "Use .--" error
+	rm -f *.patch &&
+	git checkout -b pathspec main &&
+
+	echo file_a 1 >file_a &&
+	echo file_b 1 >file_b &&
+	git add file_a file_b &&
+	git commit -m pathspec_initial &&
+
+	echo file_a 2 >>file_a &&
+	git add file_a &&
+	git commit -m pathspec_a &&
+
+	echo file_b 2 >>file_b &&
+	git add file_b &&
+	git commit -m pathspec_b &&
+
+	echo file_a 3 >>file_a &&
+	echo file_b 3 >>file_b &&
+	git add file_a file_b &&
+	git commit -m pathspec_ab &&
+
+	cat >expect <<-\EOF &&
+	0001-pathspec_initial.patch
+	0002-pathspec_a.patch
+	0003-pathspec_ab.patch
+	EOF
+
+	git format-patch main..pathspec -- file_a >output &&
+	test_cmp expect output &&
+	! grep file_b *.patch
 '
 
 test_expect_success 'format-patch --ignore-if-in-upstream HEAD' '
+	git checkout side &&
 	git format-patch --ignore-if-in-upstream HEAD
 '
 
@@ -1086,7 +1130,7 @@ test_expect_success TTY 'format-patch --stdout paginates' '
 test_expect_success 'format-patch handles multi-line subjects' '
 	rm -rf patches/ &&
 	echo content >>file &&
-	for i in one two three; do echo $i; done >msg &&
+	test_write_lines one two three >msg &&
 	git add file &&
 	git commit -F msg &&
 	git format-patch -o patches -1 &&
@@ -1098,7 +1142,7 @@ test_expect_success 'format-patch handles multi-line subjects' '
 test_expect_success 'format-patch handles multi-line encoded subjects' '
 	rm -rf patches/ &&
 	echo content >>file &&
-	for i in en två tre; do echo $i; done >msg &&
+	test_write_lines en två tre >msg &&
 	git add file &&
 	git commit -F msg &&
 	git format-patch -o patches -1 &&
@@ -1329,7 +1373,27 @@ test_expect_success '--rfc' '
 	Subject: [RFC PATCH 1/1] header with . in it
 	EOF
 	git format-patch -n -1 --stdout --rfc >patch &&
-	grep ^Subject: patch >actual &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--rfc does not overwrite prefix' '
+	cat >expect <<-\EOF &&
+	Subject: [RFC PATCH foobar 1/1] header with . in it
+	EOF
+	git -c format.subjectPrefix="PATCH foobar" \
+		format-patch -n -1 --stdout --rfc >patch &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--rfc is argument order independent' '
+	cat >expect <<-\EOF &&
+	Subject: [RFC PATCH foobar 1/1] header with . in it
+	EOF
+	git format-patch -n -1 --stdout --rfc \
+		--subject-prefix="PATCH foobar" >patch &&
+	grep "^Subject:" patch >actual &&
 	test_cmp expect actual
 '
 
@@ -1371,6 +1435,43 @@ test_expect_success '--from omits redundant in-body header' '
 	test_cmp expect patch.head
 '
 
+test_expect_success 'with --force-in-body-from, redundant in-body from is kept' '
+	git format-patch --force-in-body-from \
+		-1 --stdout --from="A U Thor <author@example.com>" >patch &&
+	cat >expect <<-\EOF &&
+	From: A U Thor <author@example.com>
+
+	From: A U Thor <author@example.com>
+
+	EOF
+	sed -ne "/^From:/p; /^$/p; /^---$/q" patch >patch.head &&
+	test_cmp expect patch.head
+'
+
+test_expect_success 'format.forceInBodyFrom, equivalent to --force-in-body-from' '
+	git -c format.forceInBodyFrom=yes format-patch \
+		-1 --stdout --from="A U Thor <author@example.com>" >patch &&
+	cat >expect <<-\EOF &&
+	From: A U Thor <author@example.com>
+
+	From: A U Thor <author@example.com>
+
+	EOF
+	sed -ne "/^From:/p; /^$/p; /^---$/q" patch >patch.head &&
+	test_cmp expect patch.head
+'
+
+test_expect_success 'format.forceInBodyFrom, equivalent to --force-in-body-from' '
+	git -c format.forceInBodyFrom=yes format-patch --no-force-in-body-from \
+		-1 --stdout --from="A U Thor <author@example.com>" >patch &&
+	cat >expect <<-\EOF &&
+	From: A U Thor <author@example.com>
+
+	EOF
+	sed -ne "/^From:/p; /^$/p; /^---$/q" patch >patch.head &&
+	test_cmp expect patch.head
+'
+
 test_expect_success 'in-body headers trigger content encoding' '
 	test_env GIT_AUTHOR_NAME="éxötìc" test_commit exotic &&
 	test_when_finished "git reset --hard HEAD^" &&
@@ -1391,7 +1492,7 @@ append_signoff()
 	C=$(git commit-tree HEAD^^{tree} -p HEAD) &&
 	git format-patch --stdout --signoff $C^..$C >append_signoff.patch &&
 	sed -n -e "1,/^---$/p" append_signoff.patch |
-		egrep -n "^Subject|Sign|^$"
+		grep -E -n "^Subject|Sign|^$"
 }
 
 test_expect_success 'signoff: commit with no body' '
@@ -1805,6 +1906,16 @@ body" &&
 	grep "^body$" actual
 '
 
+test_expect_success 'cover letter with --cover-from-description subject (UTF-8 subject line)' '
+	test_config branch.rebuild-1.description "Café?
+
+body" &&
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description subject --encode-email-headers main >actual &&
+	grep "^Subject: \[PATCH 0/2\] =?UTF-8?q?Caf=C3=A9=3F?=$" actual &&
+	! grep "Café" actual
+'
+
 test_expect_success 'cover letter with format.coverFromDescription = auto (short subject line)' '
 	test_config branch.rebuild-1.description "config subject
 
@@ -1908,6 +2019,20 @@ test_expect_success 'cover letter using branch description (6)' '
 	test_config branch.rebuild-1.description hello &&
 	git format-patch --stdout --cover-letter -2 >actual &&
 	grep hello actual
+'
+
+test_expect_success 'cover letter with --description-file' '
+	test_when_finished "rm -f description.txt" &&
+	cat >description.txt <<-\EOF &&
+	subject from file
+
+	body from file
+	EOF
+	git checkout rebuild-1 &&
+	git format-patch --stdout --cover-letter --cover-from-description auto \
+		--description-file description.txt main >actual &&
+	grep "^Subject: \[PATCH 0/2\] subject from file$" actual &&
+	grep "^body from file$" actual
 '
 
 test_expect_success 'cover letter with nothing' '
@@ -2208,14 +2333,32 @@ test_expect_success 'format-patch --base with --attach' '
 test_expect_success 'format-patch --attach cover-letter only is non-multipart' '
 	test_when_finished "rm -fr patches" &&
 	git format-patch -o patches --cover-letter --attach=mimemime --base=HEAD~ -1 &&
-	! egrep "^--+mimemime" patches/0000*.patch &&
-	egrep "^--+mimemime$" patches/0001*.patch >output &&
+	! grep -E "^--+mimemime" patches/0000*.patch &&
+	grep -E "^--+mimemime$" patches/0001*.patch >output &&
 	test_line_count = 2 output &&
-	egrep "^--+mimemime--$" patches/0001*.patch >output &&
+	grep -E "^--+mimemime--$" patches/0001*.patch >output &&
 	test_line_count = 1 output
 '
 
-test_expect_success 'format-patch --pretty=mboxrd' '
+test_expect_success 'format-patch with format.attach' '
+	test_when_finished "rm -fr patches" &&
+	separator=attachment-separator &&
+	test_config format.attach "$separator" &&
+	filename=$(git format-patch -o patches -1) &&
+	grep "^Content-Type: multipart/.*$separator" "$filename"
+'
+
+test_expect_success 'format-patch with format.attach=disabled' '
+	test_when_finished "rm -fr patches" &&
+	separator=attachment-separator &&
+	test_config_global format.attach "$separator" &&
+	test_config format.attach "" &&
+	filename=$(git format-patch -o patches -1) &&
+	# The output should not even declare content type for text/plain.
+	! grep "^Content-Type: multipart/" "$filename"
+'
+
+test_expect_success '-c format.mboxrd format-patch' '
 	sp=" " &&
 	cat >msg <<-INPUT_END &&
 	mboxrd should escape the body
@@ -2250,7 +2393,9 @@ test_expect_success 'format-patch --pretty=mboxrd' '
 	INPUT_END
 
 	C=$(git commit-tree HEAD^^{tree} -p HEAD <msg) &&
-	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >patch &&
+	git -c format.mboxrd format-patch --stdout -1 $C~1..$C >patch &&
+	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >compat &&
+	test_cmp patch compat &&
 	git grep -h --no-index -A11 \
 		"^>From could trip up a loose mbox parser" patch >actual &&
 	test_cmp expect actual
@@ -2268,25 +2413,25 @@ test_expect_success 'interdiff: cover-letter' '
 	--q
 	EOF
 	git format-patch --cover-letter --interdiff=boop~2 -1 boop &&
-	test_i18ngrep "^Interdiff:$" 0000-cover-letter.patch &&
-	test_i18ngrep ! "^Interdiff:$" 0001-fleep.patch &&
+	test_grep "^Interdiff:$" 0000-cover-letter.patch &&
+	test_grep ! "^Interdiff:$" 0001-fleep.patch &&
 	sed "1,/^@@ /d; /^-- $/q" 0000-cover-letter.patch >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'interdiff: reroll-count' '
 	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
-	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
+	test_grep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
 '
 
 test_expect_success 'interdiff: reroll-count with a non-integer' '
 	git format-patch --cover-letter --interdiff=boop~2 -v2.2 -1 boop &&
-	test_i18ngrep "^Interdiff:$" v2.2-0000-cover-letter.patch
+	test_grep "^Interdiff:$" v2.2-0000-cover-letter.patch
 '
 
 test_expect_success 'interdiff: reroll-count with a integer' '
 	git format-patch --cover-letter --interdiff=boop~2 -v2 -1 boop &&
-	test_i18ngrep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
+	test_grep "^Interdiff ..* v1:$" v2-0000-cover-letter.patch
 '
 
 test_expect_success 'interdiff: solo-patch' '
@@ -2295,9 +2440,25 @@ test_expect_success 'interdiff: solo-patch' '
 
 	EOF
 	git format-patch --interdiff=boop~2 -1 boop &&
-	test_i18ngrep "^Interdiff:$" 0001-fleep.patch &&
+	test_grep "^Interdiff:$" 0001-fleep.patch &&
 	sed "1,/^  @@ /d; /^$/q" 0001-fleep.patch >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'format-patch does not respect diff.noprefix' '
+	git -c diff.noprefix format-patch -1 --stdout >actual &&
+	grep "^--- a/blorp" actual
+'
+
+test_expect_success 'format-patch respects format.noprefix' '
+	git -c format.noprefix format-patch -1 --stdout >actual &&
+	grep "^--- blorp" actual
+'
+
+test_expect_success 'format-patch --default-prefix overrides format.noprefix' '
+	git -c format.noprefix \
+		format-patch -1 --default-prefix --stdout >actual &&
+	grep "^--- a/blorp" actual
 '
 
 test_done

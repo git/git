@@ -1,4 +1,6 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "hex-ll.h"
+#include "strbuf.h"
 #include "url.h"
 
 int is_urlschemechar(int first_flag, int ch)

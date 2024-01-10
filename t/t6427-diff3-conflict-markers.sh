@@ -19,7 +19,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #
 
 test_expect_success 'setup no merge base' '
-	test_create_repo no_merge_base &&
+	git init no_merge_base &&
 	(
 		cd no_merge_base &&
 
@@ -55,7 +55,7 @@ test_expect_success 'check no merge base' '
 #
 
 test_expect_success 'setup unique merge base' '
-	test_create_repo unique_merge_base &&
+	git init unique_merge_base &&
 	(
 		cd unique_merge_base &&
 
@@ -116,7 +116,7 @@ test_expect_success 'check unique merge base' '
 #
 
 test_expect_success 'setup multiple merge bases' '
-	test_create_repo multiple_merge_bases &&
+	git init multiple_merge_bases &&
 	(
 		cd multiple_merge_bases &&
 
@@ -190,7 +190,7 @@ test_expect_success 'check multiple merge bases' '
 '
 
 test_expect_success 'rebase --merge describes parent of commit being picked' '
-	test_create_repo rebase &&
+	git init rebase &&
 	(
 		cd rebase &&
 		test_commit base file &&
@@ -208,6 +208,96 @@ test_expect_success 'rebase --apply describes fake ancestor base' '
 		git rebase --abort &&
 		test_must_fail git -c merge.conflictstyle=diff3 rebase --apply main &&
 		grep "||||||| constructed merge base" file
+	)
+'
+
+test_setup_zdiff3 () {
+	git init zdiff3 &&
+	(
+		cd zdiff3 &&
+
+		test_write_lines 1 2 3 4 5 6 7 8 9 >basic &&
+		test_write_lines 1 2 3 AA 4 5 BB 6 7 8 >middle-common &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 >interesting &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 >evil &&
+
+		git add basic middle-common interesting evil &&
+		git commit -m base &&
+
+		git branch left &&
+		git branch right &&
+
+		git checkout left &&
+		test_write_lines 1 2 3 4 A B C D E 7 8 9 >basic &&
+		test_write_lines 1 2 3 CC 4 5 DD 6 7 8 >middle-common &&
+		test_write_lines 1 2 3 4 A B C D E F G H I J 7 8 9 >interesting &&
+		test_write_lines 1 2 3 4 X A B C 7 8 9 >evil &&
+		git add -u &&
+		git commit -m letters &&
+
+		git checkout right &&
+		test_write_lines 1 2 3 4 A X C Y E 7 8 9 >basic &&
+		test_write_lines 1 2 3 EE 4 5 FF 6 7 8 >middle-common &&
+		test_write_lines 1 2 3 4 A B C 5 6 G H I J 7 8 9 >interesting &&
+		test_write_lines 1 2 3 4 Y A B C B C 7 8 9 >evil &&
+		git add -u &&
+		git commit -m permuted
+	)
+}
+
+test_expect_success 'check zdiff3 markers' '
+	test_setup_zdiff3 &&
+	(
+		cd zdiff3 &&
+
+		git checkout left^0 &&
+
+		base=$(git rev-parse --short HEAD^1) &&
+		test_must_fail git -c merge.conflictstyle=zdiff3 merge -s recursive right^0 &&
+
+		test_write_lines 1 2 3 4 A \
+				 "<<<<<<< HEAD" B C D \
+				 "||||||| $base" 5 6 \
+				 ======= X C Y \
+				 ">>>>>>> right^0" \
+				 E 7 8 9 \
+				 >expect &&
+		test_cmp expect basic &&
+
+		test_write_lines 1 2 3 \
+				 "<<<<<<< HEAD" CC \
+				 "||||||| $base" AA \
+				 ======= EE \
+				 ">>>>>>> right^0" \
+				 4 5 \
+				 "<<<<<<< HEAD" DD \
+				 "||||||| $base" BB \
+				 ======= FF \
+				 ">>>>>>> right^0" \
+				 6 7 8 \
+				 >expect &&
+		test_cmp expect middle-common &&
+
+		test_write_lines 1 2 3 4 A B C \
+				 "<<<<<<< HEAD" D E F \
+				 "||||||| $base" 5 6 \
+				 ======= 5 6 \
+				 ">>>>>>> right^0" \
+				 G H I J 7 8 9 \
+				 >expect &&
+		test_cmp expect interesting &&
+
+		# Not passing this one yet; the common "B C" lines is still
+		# being left in the conflict blocks on the left and right
+		# sides.
+		test_write_lines 1 2 3 4 \
+				 "<<<<<<< HEAD" X A \
+				 "||||||| $base" 5 6 \
+				 ======= Y A B C \
+				 ">>>>>>> right^0" \
+				 B C 7 8 9 \
+				 >expect &&
+		test_cmp expect evil
 	)
 '
 

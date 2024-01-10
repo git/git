@@ -15,9 +15,19 @@ enum signature_trust_level {
 	TRUST_ULTIMATE,
 };
 
+enum payload_type {
+	SIGNATURE_PAYLOAD_UNDEFINED,
+	SIGNATURE_PAYLOAD_COMMIT,
+	SIGNATURE_PAYLOAD_TAG,
+	SIGNATURE_PAYLOAD_PUSH_CERT,
+};
+
 struct signature_check {
 	char *payload;
-	char *gpg_output;
+	size_t payload_len;
+	enum payload_type payload_type;
+	timestamp_t payload_timestamp;
+	char *output;
 	char *gpg_status;
 
 	/*
@@ -61,12 +71,24 @@ size_t parse_signed_buffer(const char *buf, size_t size);
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
 		const char *signing_key);
 
-int git_gpg_config(const char *, const char *, void *);
+
+/*
+ * Returns corresponding string in lowercase for a given member of
+ * enum signature_trust_level. For example, `TRUST_ULTIMATE` will
+ * return "ultimate".
+ */
+const char *gpg_trust_level_to_str(enum signature_trust_level level);
+
 void set_signing_key(const char *);
 const char *get_signing_key(void);
-int check_signature(const char *payload, size_t plen,
-		    const char *signature, size_t slen,
-		    struct signature_check *sigc);
+
+/*
+ * Returns a textual unique representation of the signing key in use
+ * Either a GPG KeyID or a SSH Key Fingerprint
+ */
+const char *get_signing_key_id(void);
+int check_signature(struct signature_check *sigc,
+		    const char *signature, size_t slen);
 void print_signature_buffer(const struct signature_check *sigc,
 			    unsigned flags);
 

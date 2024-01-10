@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2006 Eric Wong
 test_description='git svn commit-diff clobber'
+
 . ./lib-git-svn.sh
 
 test_expect_success 'initialize repo' '

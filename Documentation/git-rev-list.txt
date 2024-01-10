@@ -9,7 +9,7 @@ git-rev-list - Lists commit objects in reverse chronological order
 SYNOPSIS
 --------
 [verse]
-'git rev-list' [<options>] <commit>... [[--] <path>...]
+'git rev-list' [<options>] <commit>... [--] [<path>...]
 
 DESCRIPTION
 -----------
@@ -17,9 +17,9 @@ DESCRIPTION
 :git-rev-list: 1
 include::rev-list-description.txt[]
 
-'rev-list' is a very essential Git command, since it
+'rev-list' is an essential Git command, since it
 provides the ability to build and traverse commit ancestry graphs. For
-this reason, it has a lot of different options that enables it to be
+this reason, it has a lot of different options that enable it to be
 used by commands as different as 'git bisect' and
 'git repack'.
 

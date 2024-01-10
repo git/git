@@ -1,6 +1,6 @@
 diff.autoRefreshIndex::
 	When using 'git diff' to compare with work tree
-	files, do not consider stat-only change as changed.
+	files, do not consider stat-only changes as changed.
 	Instead, silently run `git update-index --refresh` to
 	update the cached stat information for paths whose
 	contents in the work tree match the contents in the
@@ -51,6 +51,10 @@ Example: The following will count changed files, while ignoring
 directories with less than 10% of the total amount of changed files,
 and accumulating child directory counts in the parent directories:
 `files,10,cumulative`.
+
+diff.statNameWidth::
+	Limit the width of the filename part in --stat output. If set, applies
+	to all commands generating --stat output except format-patch.
 
 diff.statGraphWidth::
 	Limit the width of the graph part in --stat output. If set, applies
@@ -177,21 +181,6 @@ diff.<driver>.wordRegex::
 diff.<driver>.cachetextconv::
 	Set this option to true to make the diff driver cache the text
 	conversion outputs.  See linkgit:gitattributes[5] for details.
-
-diff.tool::
-	Controls which diff tool is used by linkgit:git-difftool[1].
-	This variable overrides the value configured in `merge.tool`.
-	The list below shows the valid built-in values.
-	Any other value is treated as a custom diff tool and requires
-	that a corresponding difftool.<tool>.cmd variable is defined.
-
-diff.guitool::
-	Controls which diff tool is used by linkgit:git-difftool[1] when
-	the -g/--gui flag is specified. This variable overrides the value
-	configured in `merge.guitool`. The list below shows the valid
-	built-in values. Any other value is treated as a custom diff tool
-	and requires that a corresponding difftool.<guitool>.cmd variable
-	is defined.
 
 include::../mergetools-diff.txt[]
 

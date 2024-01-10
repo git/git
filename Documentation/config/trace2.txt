@@ -66,6 +66,6 @@ trace2.destinationDebug::
 
 trace2.maxFiles::
 	Integer.  When writing trace files to a target directory, do not
-	write additional traces if we would exceed this many files. Instead,
+	write additional traces if doing so would exceed this many files. Instead,
 	write a sentinel file that will block further tracing to this
 	directory. Defaults to 0, which disables this check.

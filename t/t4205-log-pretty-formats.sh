@@ -156,7 +156,7 @@ test_expect_success 'NUL termination with --reflog --pretty=oneline' '
 	for r in $revs
 	do
 		git show -s --pretty=oneline "$r" >raw &&
-		cat raw | lf_to_nul || exit 1
+		cat raw | lf_to_nul || return 1
 	done >expect &&
 	# the trailing NUL is already produced so we do not need to
 	# output another one
@@ -576,6 +576,38 @@ test_expect_success 'clean log decoration' '
 	test_cmp expected actual1
 '
 
+test_expect_success 'pretty format %decorate' '
+	git checkout -b foo &&
+	git commit --allow-empty -m "new commit" &&
+	git tag bar &&
+	git branch qux &&
+
+	echo " (HEAD -> foo, tag: bar, qux)" >expect1 &&
+	git log --format="%(decorate)" -1 >actual1 &&
+	test_cmp expect1 actual1 &&
+
+	echo "HEAD -> foo, tag: bar, qux" >expect2 &&
+	git log --format="%(decorate:prefix=,suffix=)" -1 >actual2 &&
+	test_cmp expect2 actual2 &&
+
+	echo "[ bar; qux; foo ]" >expect3 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separator=%x3B ,tag=)" \
+		--decorate-refs=refs/ -1 >actual3 &&
+	test_cmp expect3 actual3 &&
+
+	# Try with a typo (in "separator"), in which case the placeholder should
+	# not be replaced.
+	echo "%(decorate:prefix=[ ,suffix= ],separater=; )" >expect4 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separater=%x3B )" \
+		-1 >actual4 &&
+	test_cmp expect4 actual4 &&
+
+	echo "HEAD->foo bar qux" >expect5 &&
+	git log --format="%(decorate:prefix=,suffix=,separator= ,tag=,pointer=->)" \
+		-1 >actual5 &&
+	test_cmp expect5 actual5
+'
+
 cat >trailers <<EOF
 Signed-off-by: A U Thor <author@example.com>
 Acked-by: A U Thor <author@example.com>
@@ -924,6 +956,36 @@ test_expect_success '%S in git log --format works with other placeholders (part 
 	test_cmp expect actual
 '
 
+test_expect_success 'setup more commits for %S with --bisect' '
+	test_commit four &&
+	test_commit five &&
+
+	head1=$(git rev-parse --verify HEAD~0) &&
+	head2=$(git rev-parse --verify HEAD~1) &&
+	head3=$(git rev-parse --verify HEAD~2) &&
+	head4=$(git rev-parse --verify HEAD~3)
+'
+
+test_expect_success '%S with --bisect labels commits with refs/bisect/bad ref' '
+	git update-ref refs/bisect/bad-$head1 $head1 &&
+	git update-ref refs/bisect/go $head1 &&
+	git update-ref refs/bisect/bad-$head2 $head2 &&
+	git update-ref refs/bisect/b $head3 &&
+	git update-ref refs/bisect/bad-$head4 $head4 &&
+	git update-ref refs/bisect/good-$head4 $head4 &&
+
+	# We expect to see the range of commits betwee refs/bisect/good-$head4
+	# and refs/bisect/bad-$head1. The "source" ref is the nearest bisect ref
+	# from which the commit is reachable.
+	cat >expect <<-EOF &&
+	$head1 refs/bisect/bad-$head1
+	$head2 refs/bisect/bad-$head2
+	$head3 refs/bisect/bad-$head2
+	EOF
+	git log --bisect --format="%H %S" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log --pretty=reference' '
 	git log --pretty="tformat:%h (%s, %as)" >expect &&
 	git log --pretty=reference >actual &&
@@ -976,7 +1038,7 @@ test_expect_success '%(describe) vs git describe' '
 		else
 			: >expect-contains-bad
 		fi &&
-		echo "$hash $desc"
+		echo "$hash $desc" || return 1
 	done >expect &&
 	test_path_exists expect-contains-good &&
 	test_path_exists expect-contains-bad &&
@@ -1000,6 +1062,140 @@ test_expect_success '%(describe:exclude=...) vs git describe --exclude ...' '
 	git describe --exclude "*-exclude" >expect &&
 	git log -1 --format="%(describe:exclude=*-exclude)" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '%(describe:tags) vs git describe --tags' '
+	test_when_finished "git tag -d tagname" &&
+	git tag tagname &&
+	git describe --tags >expect &&
+	git log -1 --format="%(describe:tags)" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '%(describe:abbrev=...) vs git describe --abbrev=...' '
+	test_when_finished "git tag -d tagname" &&
+
+	# Case 1: We have commits between HEAD and the most recent tag
+	#	  reachable from it
+	test_commit --no-tag file &&
+	git describe --abbrev=15 >expect &&
+	git log -1 --format="%(describe:abbrev=15)" >actual &&
+	test_cmp expect actual &&
+
+	# Make sure the hash used is at least 15 digits long
+	sed -e "s/^.*-g\([0-9a-f]*\)$/\1/" <actual >hexpart &&
+	test 16 -le $(wc -c <hexpart) &&
+
+	# Case 2: We have a tag at HEAD, describe directly gives the
+	#	  name of the tag
+	git tag -a -m tagged tagname &&
+	git describe --abbrev=15 >expect &&
+	git log -1 --format="%(describe:abbrev=15)" >actual &&
+	test_cmp expect actual &&
+	test tagname = $(cat actual)
+'
+
+test_expect_success 'log --pretty with space stealing' '
+	printf mm0 >expect &&
+	git log -1 --pretty="format:mm%>>|(1)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with invalid padding format' '
+	printf "%s%%<(20" "$(git rev-parse HEAD)" >expect &&
+	git log -1 --pretty="format:%H%<(20" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with magical wrapping directives' '
+	commit_id=$(git commit-tree HEAD^{tree} -m "describe me") &&
+	git tag describe-me $commit_id &&
+	printf "\n(tag:\ndescribe-me)%%+w(2)" >expect &&
+	git log -1 --pretty="format:%w(1)%+d%+w(2)" $commit_id >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing wrapping directive' '
+	printf "%%w(2147483649,1,1)0" >expect &&
+	git log -1 --pretty="format:%w(2147483649,1,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,2147483649,1)0" >expect &&
+	git log -1 --pretty="format:%w(1,2147483649,1)%x30" >actual &&
+	test_cmp expect actual &&
+	printf "%%w(1,1,2147483649)0" >expect &&
+	git log -1 --pretty="format:%w(1,1,2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success SIZE_T_IS_64BIT 'log --pretty with overflowing padding directive' '
+	printf "%%<(2147483649)0" >expect &&
+	git log -1 --pretty="format:%<(2147483649)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty with padding and preceding control chars' '
+	printf "\20\20   0" >expect &&
+	git log -1 --pretty="format:%x10%x10%>|(4)%x30" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --pretty truncation with control chars' '
+	test_commit "$(printf "\20\20\20\20xxxx")" file contents commit-with-control-chars &&
+	printf "\20\20\20\20x.." >expect &&
+	git log -1 --pretty="format:%<(3,trunc)%s" commit-with-control-chars >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	# We only assert that this command does not crash. This needs to be
+	# executed with the address sanitizer to demonstrate failure.
+	git log -1 --pretty="format:%>(2147483646)%x41%41%>(2147483646)%x41" >/dev/null
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'set up huge commit' '
+	test-tool genzeros 2147483649 | tr "\000" "1" >expect &&
+	huge_commit=$(git commit-tree -F expect HEAD^{tree})
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
+	git log -1 --format="%B%<(1)%x30" $huge_commit >actual &&
+	echo 0 >>expect &&
+	test_cmp expect actual
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message does not cause allocation failure' '
+	test_must_fail git log -1 --format="%<(1)%B" $huge_commit 2>error &&
+	cat >expect <<-EOF &&
+	fatal: number too large to represent as int on this platform: 2147483649
+	EOF
+	test_cmp expect error
+'
+
+# pretty-formats note wide char limitations, and add tests
+test_expect_failure 'wide and decomposed characters column counting' '
+
+# from t/lib-unicode-nfc-nfd.sh hex values converted to octal
+	utf8_nfc=$(printf "\303\251") && # e acute combined.
+	utf8_nfd=$(printf "\145\314\201") && # e with a combining acute (i.e. decomposed)
+	utf8_emoji=$(printf "\360\237\221\250") &&
+
+# replacement character when requesting a wide char fits in a single display colum.
+# "half wide" alternative could be a plain ASCII dot `.`
+	utf8_vert_ell=$(printf "\342\213\256") &&
+
+# use ${xxx} here!
+	nfc10="${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}${utf8_nfc}" &&
+	nfd10="${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}${utf8_nfd}" &&
+	emoji5="${utf8_emoji}${utf8_emoji}${utf8_emoji}${utf8_emoji}${utf8_emoji}" &&
+# emoji5 uses 10 display columns
+
+	test_commit "abcdefghij" &&
+	test_commit --no-tag "${nfc10}" &&
+	test_commit --no-tag "${nfd10}" &&
+	test_commit --no-tag "${emoji5}" &&
+	printf "${utf8_emoji}..${utf8_emoji}${utf8_vert_ell}\n${utf8_nfd}..${utf8_nfd}${utf8_nfd}\n${utf8_nfc}..${utf8_nfc}${utf8_nfc}\na..ij\n" >expected &&
+	git log --format="%<(5,mtrunc)%s" -4 >actual &&
+	test_cmp expected actual
 '
 
 test_done

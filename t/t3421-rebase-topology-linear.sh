@@ -29,7 +29,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_expect_success 'setup branches and remote tracking' '
 	git tag -l >tags &&
@@ -53,7 +52,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -70,7 +68,6 @@ test_run_rebase success --apply
 test_run_rebase success --fork-point
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase failure -p
 
 test_run_rebase () {
 	result=$1
@@ -87,7 +84,6 @@ test_run_rebase success --apply
 test_run_rebase success --fork-point
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -102,7 +98,6 @@ test_run_rebase success --apply
 test_run_rebase success --fork-point
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 #       f
 #      /
@@ -142,7 +137,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -157,7 +151,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -172,7 +165,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -187,7 +179,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 # a---b---c---j!
 #      \
@@ -215,7 +206,6 @@ test_run_rebase () {
 test_run_rebase failure --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase failure -p
 
 test_run_rebase () {
 	result=$1
@@ -229,7 +219,6 @@ test_run_rebase () {
 }
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -243,7 +232,6 @@ test_run_rebase () {
 }
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 test_run_rebase success --rebase-merges
 
 #       m
@@ -283,7 +271,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -298,7 +285,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase failure -p
 
 test_run_rebase () {
 	result=$1
@@ -313,7 +299,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_run_rebase () {
 	result=$1
@@ -329,7 +314,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase failure -p
 
 test_run_rebase () {
 	result=$1
@@ -344,7 +328,6 @@ test_run_rebase () {
 test_run_rebase success --apply
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase failure -p
 
 test_run_rebase () {
 	result=$1
@@ -358,7 +341,6 @@ test_run_rebase () {
 test_run_rebase success ''
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase failure -p
 
 test_run_rebase () {
 	result=$1
@@ -373,6 +355,5 @@ test_run_rebase () {
 test_run_rebase success ''
 test_run_rebase success -m
 test_run_rebase success -i
-test_have_prereq !REBASE_P || test_run_rebase success -p
 
 test_done

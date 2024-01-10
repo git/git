@@ -1,10 +1,11 @@
 #ifndef REFS_REF_CACHE_H
 #define REFS_REF_CACHE_H
 
-#include "cache.h"
+#include "hash-ll.h"
 
 struct ref_dir;
 struct ref_store;
+struct repository;
 
 /*
  * If this ref_cache is filled lazily, this function is used to load
@@ -214,6 +215,7 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname);
  */
 struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,
 					      const char *prefix,
+					      struct repository *repo,
 					      int prime_dir);
 
 #endif /* REFS_REF_CACHE_H */

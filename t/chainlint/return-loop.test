@@ -1,0 +1,6 @@
+while test $i -lt $((num - 5))
+do
+# LINT: "|| return {n}" valid loop escape outside subshell; no "&&" needed
+	git notes add -m "notes for commit$i" HEAD~$i || return 1
+	i=$((i + 1))
+done

@@ -28,7 +28,7 @@ test_cmp_info () {
 	rm -f tmp.expect tmp.actual
 }
 
-quoted_svnrepo="$(echo $svnrepo | sed 's/ /%20/')"
+quoted_svnrepo="$(echo $svnrepo | test_uri_escape)"
 
 test_expect_success 'setup repository and import' '
 	mkdir info &&

@@ -1,9 +1,14 @@
-#include "cache.h"
-#include "blob.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "object-store-ll.h"
 #include "dir.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
+#include "name-hash.h"
+#include "sparse-index.h"
 #include "streaming.h"
 #include "submodule.h"
+#include "symlinks.h"
 #include "progress.h"
 #include "fsmonitor.h"
 #include "entry.h"
@@ -82,11 +87,14 @@ static int create_file(const char *path, unsigned int mode)
 	return open(path, O_WRONLY | O_CREAT | O_EXCL, mode);
 }
 
-void *read_blob_entry(const struct cache_entry *ce, unsigned long *size)
+void *read_blob_entry(const struct cache_entry *ce, size_t *size)
 {
 	enum object_type type;
-	void *blob_data = read_object_file(&ce->oid, &type, size);
+	unsigned long ul;
+	void *blob_data = repo_read_object_file(the_repository, &ce->oid,
+						&type, &ul);
 
+	*size = ul;
 	if (blob_data) {
 		if (type == OBJ_BLOB)
 			return blob_data;
@@ -155,12 +163,11 @@ static int remove_available_paths(struct string_list_item *item, void *cb_data)
 
 	available = string_list_lookup(available_paths, item->string);
 	if (available)
-		available->util = (void *)item->string;
+		available->util = item->util;
 	return !available;
 }
 
-int finish_delayed_checkout(struct checkout *state, int *nr_checkouts,
-			    int show_progress)
+int finish_delayed_checkout(struct checkout *state, int show_progress)
 {
 	int errs = 0;
 	unsigned processed_paths = 0;
@@ -225,7 +232,7 @@ int finish_delayed_checkout(struct checkout *state, int *nr_checkouts,
 						       strlen(path->string), 0);
 				if (ce) {
 					display_progress(progress, ++processed_paths);
-					errs |= checkout_entry(ce, state, NULL, nr_checkouts);
+					errs |= checkout_entry(ce, state, NULL, path->util);
 					filtered_bytes += ce->ce_stat_data.sd_size;
 					display_throughput(progress, filtered_bytes);
 				} else
@@ -264,19 +271,21 @@ void update_ce_after_write(const struct checkout *state, struct cache_entry *ce,
 
 /* Note: ca is used (and required) iff the entry refers to a regular file. */
 static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca,
-		       const struct checkout *state, int to_tempfile)
+		       const struct checkout *state, int to_tempfile,
+		       int *nr_checkouts)
 {
 	unsigned int ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
 	struct delayed_checkout *dco = state->delayed_checkout;
 	int fd, ret, fstat_done = 0;
 	char *new_blob;
 	struct strbuf buf = STRBUF_INIT;
-	unsigned long size;
+	size_t size;
 	ssize_t wrote;
 	size_t newsize = 0;
 	struct stat st;
 	const struct submodule *sub;
 	struct checkout_metadata meta;
+	static int scratch_nr_checkouts;
 
 	clone_checkout_metadata(&meta, &state->meta, &ce->oid);
 
@@ -331,9 +340,15 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 			ret = async_convert_to_working_tree_ca(ca, ce->name,
 							       new_blob, size,
 							       &buf, &meta, dco);
-			if (ret && string_list_has_string(&dco->paths, ce->name)) {
-				free(new_blob);
-				goto delayed;
+			if (ret) {
+				struct string_list_item *item =
+					string_list_lookup(&dco->paths, ce->name);
+				if (item) {
+					item->util = nr_checkouts ? nr_checkouts
+							: &scratch_nr_checkouts;
+					free(new_blob);
+					goto delayed;
+				}
 			}
 		} else {
 			ret = convert_to_working_tree_ca(ca, ce->name, new_blob,
@@ -374,7 +389,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 			return error("cannot create submodule directory %s", path);
 		sub = submodule_from_ce(ce);
 		if (sub)
-			return submodule_move_head(ce->name,
+			return submodule_move_head(ce->name, state->super_prefix,
 				NULL, oid_to_hex(&ce->oid),
 				state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		break;
@@ -390,6 +405,8 @@ finish:
 					   ce->name);
 		update_ce_after_write(state, ce , &st);
 	}
+	if (nr_checkouts)
+		(*nr_checkouts)++;
 delayed:
 	return 0;
 }
@@ -465,7 +482,7 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 			 * no pathname to return.
 			 */
 			BUG("Can't remove entry to a path");
-		unlink_entry(ce);
+		unlink_entry(ce, state->super_prefix);
 		return 0;
 	}
 
@@ -474,7 +491,7 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 			convert_attrs(state->istate, &ca_buf, ce->name);
 			ca = &ca_buf;
 		}
-		return write_entry(ce, topath, ca, state, 1);
+		return write_entry(ce, topath, ca, state, 1, nr_checkouts);
 	}
 
 	strbuf_reset(&path);
@@ -499,10 +516,10 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 				if (!(st.st_mode & S_IFDIR))
 					unlink_or_warn(ce->name);
 
-				return submodule_move_head(ce->name,
+				return submodule_move_head(ce->name, state->super_prefix,
 					NULL, oid_to_hex(&ce->oid), 0);
 			} else
-				return submodule_move_head(ce->name,
+				return submodule_move_head(ce->name, state->super_prefix,
 					"HEAD", oid_to_hex(&ce->oid),
 					state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		}
@@ -538,26 +555,23 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 
 	create_directories(path.buf, path.len, state);
 
-	if (nr_checkouts)
-		(*nr_checkouts)++;
-
 	if (S_ISREG(ce->ce_mode) && !ca) {
 		convert_attrs(state->istate, &ca_buf, ce->name);
 		ca = &ca_buf;
 	}
 
-	if (!enqueue_checkout(ce, ca))
+	if (!enqueue_checkout(ce, ca, nr_checkouts))
 		return 0;
 
-	return write_entry(ce, path.buf, ca, state, 0);
+	return write_entry(ce, path.buf, ca, state, 0, nr_checkouts);
 }
 
-void unlink_entry(const struct cache_entry *ce)
+void unlink_entry(const struct cache_entry *ce, const char *super_prefix)
 {
 	const struct submodule *sub = submodule_from_ce(ce);
 	if (sub) {
 		/* state.force is set at the caller. */
-		submodule_move_head(ce->name, "HEAD", NULL,
+		submodule_move_head(ce->name, super_prefix, "HEAD", NULL,
 				    SUBMODULE_MOVE_HEAD_FORCE);
 	}
 	if (check_leading_path(ce->name, ce_namelen(ce), 1) >= 0)
@@ -565,4 +579,9 @@ void unlink_entry(const struct cache_entry *ce)
 	if (remove_or_warn(ce->ce_mode, ce->name))
 		return;
 	schedule_dir_for_removal(ce->name, ce_namelen(ce));
+}
+
+int remove_or_warn(unsigned int mode, const char *file)
+{
+	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
 }

@@ -15,6 +15,8 @@ filesystem.
     path3/file3 - a file in a directory
     path4       - an empty directory
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup ' '

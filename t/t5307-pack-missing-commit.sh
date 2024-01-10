@@ -2,6 +2,7 @@
 
 test_description='pack should notice missing commit objects'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -11,7 +12,7 @@ test_expect_success setup '
 		git add "file$i" &&
 		test_tick &&
 		git commit -m "$i" &&
-		git tag "tag$i"
+		git tag "tag$i" || return 1
 	done &&
 	obj=$(git rev-parse --verify tag3) &&
 	fanout=$(expr "$obj" : "\(..\)") &&

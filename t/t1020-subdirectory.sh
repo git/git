@@ -6,14 +6,15 @@
 test_description='Try various core-level commands in subdirectory.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success setup '
 	long="a b c d e f g h i j k l m n o p q r s t u v w x y z" &&
-	for c in $long; do echo $c; done >one &&
+	test_write_lines $long >one &&
 	mkdir dir &&
-	for c in x y z $long a b c; do echo $c; done >dir/two &&
+	test_write_lines x y z $long a b c >dir/two &&
 	cp one original.one &&
 	cp dir/two original.two
 '
@@ -22,7 +23,7 @@ test_expect_success 'update-index and ls-files' '
 	git update-index --add one &&
 	case "$(git ls-files)" in
 	one) echo pass one ;;
-	*) echo bad one; exit 1 ;;
+	*) echo bad one; return 1 ;;
 	esac &&
 	(
 		cd dir &&
@@ -34,7 +35,7 @@ test_expect_success 'update-index and ls-files' '
 	) &&
 	case "$(git ls-files)" in
 	dir/two"$LF"one) echo pass both ;;
-	*) echo bad; exit 1 ;;
+	*) echo bad; return 1 ;;
 	esac
 '
 
@@ -57,7 +58,7 @@ test_expect_success 'diff-files' '
 	echo d >>dir/two &&
 	case "$(git diff-files --name-only)" in
 	dir/two"$LF"one) echo pass top ;;
-	*) echo bad top; exit 1 ;;
+	*) echo bad top; return 1 ;;
 	esac &&
 	# diff should not omit leading paths
 	(

@@ -28,14 +28,14 @@ prompt_given ()
 
 test_expect_success 'basic usage requires no repo' '
 	test_expect_code 129 git difftool -h >output &&
-	test_i18ngrep ^usage: output &&
+	test_grep ^usage: output &&
 	# create a ceiling directory to prevent Git from finding a repo
 	mkdir -p not/repo &&
 	test_when_finished rm -r not &&
 	test_expect_code 129 \
 	env GIT_CEILING_DIRECTORIES="$(pwd)/not" \
 	git -C not/repo difftool -h >output &&
-	test_i18ngrep ^usage: output
+	test_grep ^usage: output
 '
 
 # Create a file on main and change it on branch
@@ -152,6 +152,58 @@ test_expect_success 'difftool honors --gui' '
 
 	echo branch >expect &&
 	git difftool --no-prompt --gui branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'difftool with guiDefault auto selects gui tool when there is DISPLAY' '
+	difftool_test_setup &&
+	test_config merge.tool bogus-tool &&
+	test_config diff.tool bogus-tool &&
+	test_config diff.guitool test-tool &&
+	test_config difftool.guiDefault auto &&
+	DISPLAY=SOMETHING && export DISPLAY &&
+
+	echo branch >expect &&
+	git difftool --no-prompt branch >actual &&
+	test_cmp expect actual
+'
+test_expect_success 'difftool with guiDefault auto selects regular tool when no DISPLAY' '
+	difftool_test_setup &&
+	test_config diff.guitool bogus-tool &&
+	test_config diff.tool test-tool &&
+	test_config difftool.guiDefault Auto &&
+	DISPLAY= && export DISPLAY &&
+
+	echo branch >expect &&
+	git difftool --no-prompt branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'difftool with guiDefault true selects gui tool' '
+	difftool_test_setup &&
+	test_config diff.tool bogus-tool &&
+	test_config diff.guitool test-tool &&
+	test_config difftool.guiDefault true &&
+
+	DISPLAY= && export DISPLAY &&
+	echo branch >expect &&
+	git difftool --no-prompt branch >actual &&
+	test_cmp expect actual &&
+
+	DISPLAY=Something && export DISPLAY &&
+	echo branch >expect &&
+	git difftool --no-prompt branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'difftool --no-gui trumps config guiDefault' '
+	difftool_test_setup &&
+	test_config diff.guitool bogus-tool &&
+	test_config diff.tool test-tool &&
+	test_config difftool.guiDefault true &&
+
+	echo branch >expect &&
+	git difftool --no-prompt --no-gui branch >actual &&
 	test_cmp expect actual
 '
 
@@ -636,6 +688,7 @@ test_expect_success 'difftool --no-symlinks detects conflict ' '
 
 test_expect_success 'difftool properly honors gitlink and core.worktree' '
 	test_when_finished rm -rf submod/ule &&
+	test_config_global protocol.file.allow always &&
 	git submodule add ./. submod/ule &&
 	test_config -C submod/ule diff.tool checktrees &&
 	test_config -C submod/ule difftool.checktrees.cmd '\''

@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "advice.h"
 #include "config.h"
 #include "color.h"
+#include "gettext.h"
 #include "help.h"
 #include "string-list.h"
 
@@ -39,9 +41,12 @@ static struct {
 	[ADVICE_ADD_EMPTY_PATHSPEC]			= { "addEmptyPathspec", 1 },
 	[ADVICE_ADD_IGNORED_FILE]			= { "addIgnoredFile", 1 },
 	[ADVICE_AM_WORK_DIR] 				= { "amWorkDir", 1 },
+	[ADVICE_AMBIGUOUS_FETCH_REFSPEC]		= { "ambiguousFetchRefspec", 1 },
 	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { "checkoutAmbiguousRemoteBranchName", 1 },
 	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge", 1 },
 	[ADVICE_DETACHED_HEAD]				= { "detachedHead", 1 },
+	[ADVICE_SUGGEST_DETACHING_HEAD]			= { "suggestDetachingHead", 1 },
+	[ADVICE_DIVERGING]				= { "diverging", 1 },
 	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates", 1 },
 	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated", 1 },
 	[ADVICE_IGNORED_HOOK]				= { "ignoredHook", 1 },
@@ -60,7 +65,7 @@ static struct {
 	[ADVICE_PUSH_NON_FF_MATCHING]			= { "pushNonFFMatching", 1 },
 	[ADVICE_PUSH_UNQUALIFIED_REF_NAME]		= { "pushUnqualifiedRefName", 1 },
 	[ADVICE_PUSH_UPDATE_REJECTED]			= { "pushUpdateRejected", 1 },
-	[ADVICE_RESET_QUIET_WARNING]			= { "resetQuiet", 1 },
+	[ADVICE_RESET_NO_REFRESH_WARNING]		= { "resetNoRefresh", 1 },
 	[ADVICE_RESOLVE_CONFLICT]			= { "resolveConflict", 1 },
 	[ADVICE_RM_HINTS]				= { "rmHints", 1 },
 	[ADVICE_SEQUENCER_IN_USE]			= { "sequencerInUse", 1 },
@@ -70,8 +75,10 @@ static struct {
 	[ADVICE_STATUS_HINTS]				= { "statusHints", 1 },
 	[ADVICE_STATUS_U_OPTION]			= { "statusUoption", 1 },
 	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie", 1 },
+	[ADVICE_SUBMODULES_NOT_UPDATED] 		= { "submodulesNotUpdated", 1 },
 	[ADVICE_UPDATE_SPARSE_PATH]			= { "updateSparsePath", 1 },
 	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor", 1 },
+	[ADVICE_WORKTREE_ADD_ORPHAN]			= { "worktreeAddOrphan", 1 },
 };
 
 static const char turn_off_instructions[] =
@@ -184,9 +191,10 @@ int error_resolve_conflict(const char *me)
 		error(_("Pulling is not possible because you have unmerged files."));
 	else if (!strcmp(me, "revert"))
 		error(_("Reverting is not possible because you have unmerged files."));
+	else if (!strcmp(me, "rebase"))
+		error(_("Rebasing is not possible because you have unmerged files."));
 	else
-		error(_("It is not possible to %s because you have unmerged files."),
-			me);
+		BUG("Unhandled conflict reason '%s'", me);
 
 	if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 		/*
@@ -214,6 +222,14 @@ void NORETURN die_conclude_merge(void)
 
 void NORETURN die_ff_impossible(void)
 {
+	advise_if_enabled(ADVICE_DIVERGING,
+		_("Diverging branches can't be fast-forwarded, you need to either:\n"
+		"\n"
+		"\tgit merge --no-ff\n"
+		"\n"
+		"or:\n"
+		"\n"
+		"\tgit rebase\n"));
 	die(_("Not possible to fast-forward, aborting."));
 }
 
@@ -224,15 +240,16 @@ void advise_on_updating_sparse_paths(struct string_list *pathspec_list)
 	if (!pathspec_list->nr)
 		return;
 
-	fprintf(stderr, _("The following pathspecs didn't match any"
-			  " eligible path, but they do match index\n"
-			  "entries outside the current sparse checkout:\n"));
+	fprintf(stderr, _("The following paths and/or pathspecs matched paths that exist\n"
+			  "outside of your sparse-checkout definition, so will not be\n"
+			  "updated in the index:\n"));
 	for_each_string_list_item(item, pathspec_list)
 		fprintf(stderr, "%s\n", item->string);
 
 	advise_if_enabled(ADVICE_UPDATE_SPARSE_PATH,
-			  _("Disable or modify the sparsity rules if you intend"
-			    " to update such entries."));
+			  _("If you intend to update such entries, try one of the following:\n"
+			    "* Use the --sparse option.\n"
+			    "* Disable or modify the sparsity rules."));
 }
 
 void detach_advice(const char *new_name)
@@ -256,4 +273,23 @@ void detach_advice(const char *new_name)
 	"Turn off this advice by setting config variable advice.detachedHead to false\n\n");
 
 	fprintf(stderr, fmt, new_name);
+}
+
+void advise_on_moving_dirty_path(struct string_list *pathspec_list)
+{
+	struct string_list_item *item;
+
+	if (!pathspec_list->nr)
+		return;
+
+	fprintf(stderr, _("The following paths have been moved outside the\n"
+			  "sparse-checkout definition but are not sparse due to local\n"
+			  "modifications.\n"));
+	for_each_string_list_item(item, pathspec_list)
+		fprintf(stderr, "%s\n", item->string);
+
+	advise_if_enabled(ADVICE_UPDATE_SPARSE_PATH,
+			  _("To correct the sparsity of these paths, do the following:\n"
+			    "* Use \"git add --sparse <paths>\" to update the index\n"
+			    "* Use \"git sparse-checkout reapply\" to apply the sparsity rules"));
 }

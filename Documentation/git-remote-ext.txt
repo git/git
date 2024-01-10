@@ -44,15 +44,15 @@ The following sequences have a special meaning:
 	This argument will not be passed to '<command>'. Instead, it
 	will cause the helper to start by sending git:// service requests to
 	the remote side with the service field set to an appropriate value and
-	the repository field set to rest of the argument. Default is not to send
+	the repository field set to the rest of the argument. Default is not to send
 	such a request.
 +
-This is useful if remote side is git:// server accessed over
+This is useful if the remote side is git:// server accessed over
 some tunnel.
 
 '%V' (must be first characters in argument)::
 	This argument will not be passed to '<command>'. Instead it sets
-	the vhost field in the git:// service request (to rest of the argument).
+	the vhost field in the git:// service request (to the rest of the argument).
 	Default is not to send vhost in such request (if sent).
 
 ENVIRONMENT VARIABLES
@@ -82,12 +82,12 @@ begins with `ext::`.  Examples:
 
 "ext::ssh -i /home/foo/.ssh/somekey user&#64;host.example %S 'foo/repo'"::
 	Like host.example:foo/repo, but use /home/foo/.ssh/somekey as
-	keypair and user as user on remote side. This avoids needing to
+	keypair and user as the user on the remote side. This avoids the need to
 	edit .ssh/config.
 
 "ext::socat -t3600 - ABSTRACT-CONNECT:/git-server %G/somerepo"::
 	Represents repository with path /somerepo accessible over
-	git protocol at abstract namespace address /git-server.
+	git protocol at the abstract namespace address /git-server.
 
 "ext::git-server-alias foo %G/repo"::
 	Represents a repository with path /repo accessed using the

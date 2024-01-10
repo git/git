@@ -13,14 +13,8 @@ test_expect_success setup '
 	echo B B B B B >two &&
 	echo C C C C C >tres &&
 	echo ABC >mouse &&
-	for i in 1 2 3 4 5 6 7 8 9
-	do
-		echo $i
-	done >nine_lines &&
-	for i in 1 2 3 4 5 6 7 8 9 a
-	do
-		echo $i
-	done >ten_lines &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 >nine_lines &&
+	test_write_lines 1 2 3 4 5 6 7 8 9 a >ten_lines &&
 	git add one two tres mouse nine_lines ten_lines &&
 	test_tick &&
 	GIT_AUTHOR_NAME=Initial git commit -m Initial &&
@@ -207,13 +201,13 @@ committer David Reiss <dreiss@facebook.com> 1234567890 +0000
 
 some message
 EOF
-  COMMIT=$(git hash-object -t commit -w badcommit) &&
+  COMMIT=$(git hash-object --literally -t commit -w badcommit) &&
   git --no-pager blame $COMMIT -- uno >/dev/null
 '
 
 test_expect_success 'blame -L with invalid start' '
 	test_must_fail git blame -L5 tres 2>errors &&
-	test_i18ngrep "has only 2 lines" errors
+	test_grep "has only 2 lines" errors
 '
 
 test_expect_success 'blame -L with invalid end' '

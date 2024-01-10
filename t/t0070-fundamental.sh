@@ -6,6 +6,7 @@ test_description='check that the most basic functions work
 Verify wrappers and compatibility functions.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'character classes (isspace, isalpha etc.)' '
@@ -43,13 +44,13 @@ test_expect_success 'incomplete sideband messages are reassembled' '
 test_expect_success 'eof on sideband message is reported' '
 	printf 1234 >input &&
 	test-tool pkt-line receive-sideband <input 2>err &&
-	test_i18ngrep "unexpected disconnect" err
+	test_grep "unexpected disconnect" err
 '
 
 test_expect_success 'missing sideband designator is reported' '
 	printf 0004 >input &&
 	test-tool pkt-line receive-sideband <input 2>err &&
-	test_i18ngrep "missing sideband" err
+	test_grep "missing sideband" err
 '
 
 test_done

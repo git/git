@@ -7,14 +7,16 @@
 */
 
 #include "builtin.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 #define BLKSIZE 512
 
 static const char pack_redundant_usage[] =
-"git pack-redundant [--verbose] [--alt-odb] (--all | <filename.pack>...)";
+"git pack-redundant [--verbose] [--alt-odb] (--all | <pack-filename>...)";
 
 static int load_all_packs, verbose, alt_odb;
 
@@ -101,7 +103,7 @@ static inline struct llist_item *llist_insert(struct llist *list,
 	oidread(&new_item->oid, oid);
 	new_item->next = NULL;
 
-	if (after != NULL) {
+	if (after) {
 		new_item->next = after->next;
 		after->next = new_item;
 		if (after == list->back)
@@ -157,7 +159,7 @@ redo_from_start:
 		if (cmp > 0) /* not in list, since sorted */
 			return prev;
 		if (!cmp) { /* found */
-			if (prev == NULL) {
+			if (!prev) {
 				if (hint != NULL && hint != list->front) {
 					/* we don't know the previous element */
 					hint = NULL;
@@ -219,7 +221,7 @@ static struct pack_list * pack_list_difference(const struct pack_list *A,
 	struct pack_list *ret;
 	const struct pack_list *pl;
 
-	if (A == NULL)
+	if (!A)
 		return NULL;
 
 	pl = B;
@@ -317,7 +319,7 @@ static size_t get_pack_redundancy(struct pack_list *pl)
 	struct pack_list *subset;
 	size_t ret = 0;
 
-	if (pl == NULL)
+	if (!pl)
 		return 0;
 
 	while ((subset = pl->next)) {
@@ -557,7 +559,7 @@ static void load_all(void)
 	}
 }
 
-int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
+int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED)
 {
 	int i;
 	int i_still_use_this = 0;
@@ -603,6 +605,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 			"option, '--i-still-use-this', on the command line\n"
 			"and let us know you still use it by sending an e-mail\n"
 			"to <git@vger.kernel.org>.  Thanks.\n"), stderr);
+		die(_("refusing to run without --i-still-use-this"));
 	}
 
 	if (load_all_packs)
@@ -611,7 +614,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix)
 		while (*(argv + i) != NULL)
 			add_pack_file(*(argv + i++));
 
-	if (local_packs == NULL)
+	if (!local_packs)
 		die("Zero packs found!");
 
 	load_all_objects();

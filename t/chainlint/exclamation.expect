@@ -1,0 +1,4 @@
+if ! condition; then echo nope; else yep; fi &&
+test_prerequisite !MINGW &&
+mail uucp!address &&
+echo !whatever!

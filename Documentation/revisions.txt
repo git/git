@@ -30,10 +30,11 @@ characters and to avoid word splitting.
   explicitly say 'heads/master' to tell Git which one you mean.
   When ambiguous, a '<refname>' is disambiguated by taking the
   first match in the following rules:
-
++
   . If '$GIT_DIR/<refname>' exists, that is what you mean (this is usually
-    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD`, `MERGE_HEAD`
-    and `CHERRY_PICK_HEAD`);
+    useful only for `HEAD`, `FETCH_HEAD`, `ORIG_HEAD`, `MERGE_HEAD`,
+    `REBASE_HEAD`, `REVERT_HEAD`, `CHERRY_PICK_HEAD`, `BISECT_HEAD`
+    and `AUTO_MERGE`);
 
   . otherwise, 'refs/<refname>' if it exists;
 
@@ -44,18 +45,38 @@ characters and to avoid word splitting.
   . otherwise, 'refs/remotes/<refname>' if it exists;
 
   . otherwise, 'refs/remotes/<refname>/HEAD' if it exists.
+
 +
-`HEAD` names the commit on which you based the changes in the working tree.
-`FETCH_HEAD` records the branch which you fetched from a remote repository
-with your last `git fetch` invocation.
-`ORIG_HEAD` is created by commands that move your `HEAD` in a drastic
-way, to record the position of the `HEAD` before their operation, so that
-you can easily change the tip of the branch back to the state before you ran
-them.
-`MERGE_HEAD` records the commit(s) which you are merging into your branch
-when you run `git merge`.
-`CHERRY_PICK_HEAD` records the commit which you are cherry-picking
-when you run `git cherry-pick`.
+  `HEAD`:::
+    names the commit on which you based the changes in the working tree.
+  `FETCH_HEAD`:::
+    records the branch which you fetched from a remote repository with
+    your last `git fetch` invocation.
+  `ORIG_HEAD`:::
+    is created by commands that move your `HEAD` in a drastic way (`git
+    am`, `git merge`, `git rebase`, `git reset`), to record the position
+    of the `HEAD` before their operation, so that you can easily change
+    the tip of the branch back to the state before you ran them.
+  `MERGE_HEAD`:::
+    records the commit(s) which you are merging into your branch when you
+    run `git merge`.
+  `REBASE_HEAD`:::
+    during a rebase, records the commit at which the operation is
+    currently stopped, either because of conflicts or an `edit` command in
+    an interactive rebase.
+  `REVERT_HEAD`:::
+    records the commit which you are reverting when you run `git revert`.
+  `CHERRY_PICK_HEAD`:::
+    records the commit which you are cherry-picking when you run `git
+    cherry-pick`.
+  `BISECT_HEAD`:::
+    records the current commit to be tested when you run `git bisect
+    --no-checkout`.
+  `AUTO_MERGE`:::
+    records a tree object corresponding to the state the
+    'ort' merge strategy wrote to the working tree when a merge operation
+    resulted in conflicts.
+
 +
 Note that any of the 'refs/*' cases above may come either from
 the `$GIT_DIR/refs` directory or from the `$GIT_DIR/packed-refs` file.
@@ -96,19 +117,16 @@ some output processing may assume ref names in UTF-8.
   before the current one.
 
 '[<branchname>]@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
-  The suffix '@\{upstream\}' to a branchname (short form '<branchname>@\{u\}')
-  refers to the branch that the branch specified by branchname is set to build on
-  top of (configured with `branch.<name>.remote` and
-  `branch.<name>.merge`).  A missing branchname defaults to the
-  current one. These suffixes are also accepted when spelled in uppercase, and
-  they mean the same thing no matter the case.
+  A branch B may be set up to build on top of a branch X (configured with
+  `branch.<name>.merge`) at a remote R (configured with
+  `branch.<name>.remote`). B@{u} refers to the remote-tracking branch for
+  the branch X taken from remote R, typically found at `refs/remotes/R/X`.
 
 '[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
   `git push` were run while `branchname` was checked out (or the current
-  `HEAD` if no branchname is specified). Since our push destination is
-  in a remote repository, of course, we report the local tracking branch
-  that corresponds to that branch (i.e., something in `refs/remotes/`).
+  `HEAD` if no branchname is specified). Like for '@\{upstream\}', we report
+  the remote-tracking branch that corresponds to that branch at the remote.
 +
 Here's an example to make it more clear:
 +
@@ -283,7 +301,7 @@ The '..' (two-dot) Range Notation::
  for commits that are reachable from r2 excluding those that are reachable
  from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
 
-The '...' (three-dot) Symmetric Difference Notation::
+The '\...' (three-dot) Symmetric Difference Notation::
  A similar notation 'r1\...r2' is called symmetric difference
  of 'r1' and 'r2' and is defined as
  'r1 r2 --not $(git merge-base --all r1 r2)'.
@@ -366,7 +384,7 @@ Revision Range Summary
 
 '<rev>{caret}!', e.g. 'HEAD{caret}!'::
   A suffix '{caret}' followed by an exclamation mark is the same
-  as giving commit '<rev>' and then all its parents prefixed with
+  as giving commit '<rev>' and all its parents prefixed with
   '{caret}' to exclude them (and their ancestors).
 
 '<rev>{caret}-<n>', e.g. 'HEAD{caret}-, HEAD{caret}-2'::

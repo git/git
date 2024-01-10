@@ -13,7 +13,7 @@ test_expect_success "setup" '
 	do
 		printf "start\ncreate refs/heads/%d PRE\ncommit\n" $i &&
 		printf "start\nupdate refs/heads/%d POST PRE\ncommit\n" $i &&
-		printf "start\ndelete refs/heads/%d POST\ncommit\n" $i
+		printf "start\ndelete refs/heads/%d POST\ncommit\n" $i || return 1
 	done >instructions
 '
 
@@ -22,7 +22,7 @@ test_perf "update-ref" '
 	do
 		git update-ref refs/heads/branch PRE &&
 		git update-ref refs/heads/branch POST PRE &&
-		git update-ref -d refs/heads/branch
+		git update-ref -d refs/heads/branch || return 1
 	done
 '
 

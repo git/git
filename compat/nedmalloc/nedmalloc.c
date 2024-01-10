@@ -323,7 +323,6 @@ static NOINLINE void RemoveCacheEntries(nedpool *p, threadcache *tc, unsigned in
 }
 static void DestroyCaches(nedpool *p) THROWSPEC
 {
-	if(p->caches)
 	{
 		threadcache *tc;
 		int n;

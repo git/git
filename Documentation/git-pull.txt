@@ -105,7 +105,7 @@ Options related to merging
 include::merge-options.txt[]
 
 -r::
---rebase[=false|true|merges|preserve|interactive]::
+--rebase[=false|true|merges|interactive]::
 	When true, rebase the current branch on top of the upstream
 	branch after fetching. If there is a remote-tracking branch
 	corresponding to the upstream branch and the upstream branch
@@ -115,10 +115,6 @@ include::merge-options.txt[]
 When set to `merges`, rebase using `git rebase --rebase-merges` so that
 the local merge commits are included in the rebase (see
 linkgit:git-rebase[1] for details).
-+
-When set to `preserve` (deprecated in favor of `merges`), rebase with the
-`--preserve-merges` option passed to `git rebase` so that locally created
-merge commits will not be flattened.
 +
 When false, merge the upstream branch into the current branch.
 +

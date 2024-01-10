@@ -3,10 +3,12 @@
  */
 #ifndef STREAMING_H
 #define STREAMING_H 1
-#include "cache.h"
+
+#include "object.h"
 
 /* opaque */
 struct git_istream;
+struct stream_filter;
 
 struct git_istream *open_istream(struct repository *, const struct object_id *,
 				 enum object_type *, unsigned long *,

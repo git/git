@@ -69,7 +69,7 @@ int valid_remote_name(const char *name);
 struct strvec;
 /*
  * Determine what <prefix> values to pass to the peer in ref-prefix lines
- * (see Documentation/technical/protocol-v2.txt).
+ * (see linkgit:gitprotocol-v2[5]).
  */
 void refspec_ref_prefixes(const struct refspec *rs,
 			  struct strvec *ref_prefixes);

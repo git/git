@@ -62,75 +62,39 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	rm -fr .git/rebase-* &&
 	git reset --hard commit-new-file-F2-on-topic-branch &&
 	test_commit "commit-new-file-F3-on-topic-branch" F3 32 &&
-	test_when_finished "rm -fr test-bin funny.was.run" &&
+	test_when_finished "rm -fr test-bin" &&
 	mkdir test-bin &&
-	cat >test-bin/git-merge-funny <<-EOF &&
-	#!$SHELL_PATH
-	case "\$1" in --opt) ;; *) exit 2 ;; esac
-	shift &&
-	>funny.was.run &&
-	exec git merge-recursive "\$@"
+
+	write_script test-bin/git-merge-funny <<-\EOF &&
+	printf "[%s]\n" $# "$1" "$2" "$3" "$5" >actual
+	shift 3 &&
+	exec git merge-recursive "$@"
 	EOF
-	chmod +x test-bin/git-merge-funny &&
+
+	cat >expect <<-\EOF &&
+	[7]
+	[--option=arg with space]
+	[--op"tion\]
+	[--new
+	line ]
+	[--]
+	EOF
+
+	rm -f actual &&
 	(
 		PATH=./test-bin:$PATH &&
-		test_must_fail git rebase -s funny -Xopt main topic
+		test_must_fail git rebase -s funny -X"option=arg with space" \
+				-Xop\"tion\\ -X"new${LF}line " main topic
 	) &&
-	test -f funny.was.run &&
-	rm funny.was.run &&
+	test_cmp expect actual &&
+	rm actual &&
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	(
 		PATH=./test-bin:$PATH &&
 		git rebase --continue
 	) &&
-	test -f funny.was.run
-'
-
-test_expect_success 'rebase -i --continue handles merge strategy and options' '
-	rm -fr .git/rebase-* &&
-	git reset --hard commit-new-file-F2-on-topic-branch &&
-	test_commit "commit-new-file-F3-on-topic-branch-for-dash-i" F3 32 &&
-	test_when_finished "rm -fr test-bin funny.was.run funny.args" &&
-	mkdir test-bin &&
-	cat >test-bin/git-merge-funny <<-EOF &&
-	#!$SHELL_PATH
-	echo "\$@" >>funny.args
-	case "\$1" in --opt) ;; *) exit 2 ;; esac
-	case "\$2" in --foo) ;; *) exit 2 ;; esac
-	case "\$4" in --) ;; *) exit 2 ;; esac
-	shift 2 &&
-	>funny.was.run &&
-	exec git merge-recursive "\$@"
-	EOF
-	chmod +x test-bin/git-merge-funny &&
-	(
-		PATH=./test-bin:$PATH &&
-		test_must_fail git rebase -i -s funny -Xopt -Xfoo main topic
-	) &&
-	test -f funny.was.run &&
-	rm funny.was.run &&
-	echo "Resolved" >F2 &&
-	git add F2 &&
-	(
-		PATH=./test-bin:$PATH &&
-		git rebase --continue
-	) &&
-	test -f funny.was.run
-'
-
-test_expect_success REBASE_P 'rebase passes merge strategy options correctly' '
-	rm -fr .git/rebase-* &&
-	git reset --hard commit-new-file-F3-on-topic-branch &&
-	test_commit theirs-to-merge &&
-	git reset --hard HEAD^ &&
-	test_commit some-commit &&
-	test_tick &&
-	git merge --no-ff theirs-to-merge &&
-	FAKE_LINES="1 edit 2 3" git rebase -i -f -p -m \
-		-s recursive --strategy-option=theirs HEAD~2 &&
-	test_commit force-change &&
-	git rebase --continue
+	test_cmp expect actual
 '
 
 test_expect_success 'rebase -r passes merge strategy options correctly' '
@@ -151,15 +115,23 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b with-conflicting-fixup &&
 	test_commit wants-fixup &&
-	test_commit "fixup! wants-fixup" wants-fixup.t 1 wants-fixup-1 &&
-	test_commit "fixup! wants-fixup" wants-fixup.t 2 wants-fixup-2 &&
-	test_commit "fixup! wants-fixup" wants-fixup.t 3 wants-fixup-3 &&
+	test_commit "fixup 1" wants-fixup.t 1 wants-fixup-1 &&
+	test_commit "fixup 2" wants-fixup.t 2 wants-fixup-2 &&
+	test_commit "fixup 3" wants-fixup.t 3 wants-fixup-3 &&
 	test_must_fail env FAKE_LINES="1 fixup 2 squash 4" \
 		git rebase -i HEAD~4 &&
 
 	: now there is a conflict, and comments in the commit message &&
-	git show HEAD >out &&
-	grep "fixup! wants-fixup" out &&
+	test_commit_message HEAD <<-\EOF &&
+	# This is a combination of 2 commits.
+	# This is the 1st commit message:
+
+	wants-fixup
+
+	# The commit message #2 will be skipped:
+
+	# fixup 1
+	EOF
 
 	: skip and continue &&
 	echo "cp \"\$1\" .git/copy.txt" | write_script copy-editor.sh &&
@@ -169,33 +141,49 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	test_path_is_missing .git/copy.txt &&
 
 	: now the comments in the commit message should have been cleaned up &&
-	git show HEAD >out &&
-	! grep "fixup! wants-fixup" out &&
+	test_commit_message HEAD -m wants-fixup &&
 
 	: now, let us ensure that "squash" is handled correctly &&
 	git reset --hard wants-fixup-3 &&
-	test_must_fail env FAKE_LINES="1 squash 4 squash 2 squash 4" \
+	test_must_fail env FAKE_LINES="1 squash 2 squash 1 squash 3 squash 1" \
 		git rebase -i HEAD~4 &&
 
-	: the first squash failed, but there are two more in the chain &&
+	: the second squash failed, but there are two more in the chain &&
 	(test_set_editor "$PWD/copy-editor.sh" &&
 	 test_must_fail git rebase --skip) &&
 
 	: not the final squash, no need to edit the commit message &&
 	test_path_is_missing .git/copy.txt &&
 
-	: The first squash was skipped, therefore: &&
-	git show HEAD >out &&
-	test_i18ngrep "# This is a combination of 2 commits" out &&
-	test_i18ngrep "# This is the commit message #2:" out &&
+	: The first and third squashes succeeded, therefore: &&
+	test_commit_message HEAD <<-\EOF &&
+	# This is a combination of 3 commits.
+	# This is the 1st commit message:
+
+	wants-fixup
+
+	# This is the commit message #2:
+
+	fixup 1
+
+	# This is the commit message #3:
+
+	fixup 2
+	EOF
 
 	(test_set_editor "$PWD/copy-editor.sh" && git rebase --skip) &&
-	git show HEAD >out &&
-	test_i18ngrep ! "# This is a combination" out &&
+	test_commit_message HEAD <<-\EOF &&
+	wants-fixup
+
+	fixup 1
+
+	fixup 2
+	EOF
 
 	: Final squash failed, but there was still a squash &&
-	test_i18ngrep "# This is a combination of 2 commits" .git/copy.txt &&
-	test_i18ngrep "# This is the commit message #2:" .git/copy.txt
+	head -n1 .git/copy.txt >first-line &&
+	test_grep "# This is a combination of 3 commits" first-line &&
+	test_grep "# This is the commit message #3:" .git/copy.txt
 '
 
 test_expect_success 'setup rerere database' '
@@ -268,7 +256,6 @@ test_rerere_autoupdate --apply
 test_rerere_autoupdate -m
 GIT_SEQUENCE_EDITOR=: && export GIT_SEQUENCE_EDITOR
 test_rerere_autoupdate -i
-test_have_prereq !REBASE_P || test_rerere_autoupdate --preserve-merges
 unset GIT_SEQUENCE_EDITOR
 
 test_expect_success 'the todo command "break" works' '
@@ -281,6 +268,24 @@ test_expect_success 'the todo command "break" works' '
 	test_path_is_file execed
 '
 
+test_expect_success 'patch file is removed before break command' '
+	test_when_finished "git rebase --abort" &&
+	cat >todo <<-\EOF &&
+	pick commit-new-file-F2-on-topic-branch
+	break
+	EOF
+
+	(
+		set_replace_editor todo &&
+		test_must_fail git rebase -i --onto commit-new-file-F2 HEAD
+	) &&
+	test_path_is_file .git/rebase-merge/patch &&
+	echo 22>F2 &&
+	git add F2 &&
+	git rebase --continue &&
+	test_path_is_missing .git/rebase-merge/patch
+'
+
 test_expect_success '--reschedule-failed-exec' '
 	test_when_finished "git rebase --abort" &&
 	test_must_fail git rebase -x false --reschedule-failed-exec HEAD^ &&
@@ -289,7 +294,7 @@ test_expect_success '--reschedule-failed-exec' '
 	test_must_fail git -c rebase.rescheduleFailedExec=true \
 		rebase -x false HEAD^ 2>err &&
 	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
-	test_i18ngrep "has been rescheduled" err
+	test_grep "has been rescheduled" err
 '
 
 test_expect_success 'rebase.rescheduleFailedExec only affects `rebase -i`' '
@@ -322,5 +327,31 @@ test_expect_success 'there is no --no-reschedule-failed-exec in an ongoing rebas
 	test_expect_code 129 git rebase --continue --no-reschedule-failed-exec &&
 	test_expect_code 129 git rebase --edit-todo --no-reschedule-failed-exec
 '
+
+test_orig_head_helper () {
+	test_when_finished 'git rebase --abort &&
+		git checkout topic &&
+		git reset --hard commit-new-file-F2-on-topic-branch' &&
+	git update-ref -d ORIG_HEAD &&
+	test_must_fail git rebase "$@" &&
+	test_cmp_rev ORIG_HEAD commit-new-file-F2-on-topic-branch
+}
+
+test_orig_head () {
+	type=$1
+	test_expect_success "rebase $type sets ORIG_HEAD correctly" '
+		git checkout topic &&
+		git reset --hard commit-new-file-F2-on-topic-branch &&
+		test_orig_head_helper $type main
+	'
+
+	test_expect_success "rebase $type <upstream> <branch> sets ORIG_HEAD correctly" '
+		git checkout main &&
+		test_orig_head_helper $type main topic
+	'
+}
+
+test_orig_head --apply
+test_orig_head --merge
 
 test_done

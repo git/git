@@ -13,7 +13,7 @@
 # The head revision is on branch "origin" by default.
 # You can change that with the '-o' option.
 
-use 5.008;
+use 5.008001;
 use strict;
 use warnings;
 use Getopt::Long;
@@ -329,7 +329,7 @@ sub conn {
 			# Use a HTTP Proxy. Only works for HTTP proxies that
 			# don't require user authentication
 			#
-			# See: http://www.ietf.org/rfc/rfc2817.txt
+			# See: https://www.ietf.org/rfc/rfc2817.txt
 
 			$s = IO::Socket::INET->new(PeerHost => $proxyhost, PeerPort => $proxyport);
 			die "Socket to $proxyhost: $!\n" unless defined $s;

@@ -5,6 +5,7 @@
 
 test_description='skip-worktree bit test'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expect.full <<EOF

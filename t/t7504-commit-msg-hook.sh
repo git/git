@@ -5,6 +5,7 @@ test_description='commit-msg hook'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'with no hook' '
@@ -54,15 +55,11 @@ test_expect_success '--no-verify with no hook (editor)' '
 
 '
 
-# now install hook that always succeeds
-HOOKDIR="$(git rev-parse --git-dir)/hooks"
-HOOK="$HOOKDIR/commit-msg"
-mkdir -p "$HOOKDIR"
-cat > "$HOOK" <<EOF
-#!/bin/sh
-exit 0
-EOF
-chmod +x "$HOOK"
+test_expect_success 'setup: commit-msg hook that always succeeds' '
+	test_hook --setup commit-msg <<-\EOF
+	exit 0
+	EOF
+'
 
 test_expect_success 'with succeeding hook' '
 
@@ -98,14 +95,16 @@ test_expect_success '--no-verify with succeeding hook (editor)' '
 
 '
 
-# now a hook that fails
-cat > "$HOOK" <<EOF
-#!/bin/sh
-exit 1
-EOF
+test_expect_success 'setup: commit-msg hook that always fails' '
+	test_hook --clobber commit-msg <<-\EOF
+	exit 1
+	EOF
+'
 
 commit_msg_is () {
-	test "$(git log --pretty=format:%s%b -1)" = "$1"
+	printf "%s" "$1" >expect &&
+	git log --pretty=format:%s%b -1 >actual &&
+	test_cmp expect actual
 }
 
 test_expect_success 'with failing hook' '
@@ -130,6 +129,14 @@ test_expect_success '--no-verify with failing hook' '
 	echo "stuff" >> file &&
 	git add file &&
 	git commit --no-verify -m "stuff"
+
+'
+
+test_expect_success '-n followed by --verify with failing hook' '
+
+	echo "even more" >> file &&
+	git add file &&
+	test_must_fail git commit -n --verify -m "even more"
 
 '
 
@@ -168,8 +175,12 @@ test_expect_success 'merge bypasses failing hook with --no-verify' '
 	commit_msg_is "Merge branch '\''main'\'' into newbranch"
 '
 
+test_expect_success 'setup: commit-msg hook made non-executable' '
+	git_dir="$(git rev-parse --git-dir)" &&
+	chmod -x "$git_dir/hooks/commit-msg"
+'
 
-chmod -x "$HOOK"
+
 test_expect_success POSIXPERM 'with non-executable hook' '
 
 	echo "content" >file &&
@@ -204,13 +215,12 @@ test_expect_success POSIXPERM '--no-verify with non-executable hook (editor)' '
 
 '
 
-# now a hook that edits the commit message
-cat > "$HOOK" <<'EOF'
-#!/bin/sh
-echo "new message" > "$1"
-exit 0
-EOF
-chmod +x "$HOOK"
+test_expect_success 'setup: commit-msg hook that edits the commit message' '
+	test_hook --clobber commit-msg <<-\EOF
+	echo "new message" >"$1"
+	exit 0
+	EOF
+'
 
 test_expect_success 'hook edits commit message' '
 

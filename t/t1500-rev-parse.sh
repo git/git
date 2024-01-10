@@ -4,6 +4,7 @@ test_description='test git rev-parse'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_one () {
@@ -194,7 +195,7 @@ test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
 '
 
 test_expect_success 'rev-parse --show-object-format in repo' '
-	echo "$(test_oid algo)" >expect &&
+	test_oid algo >expect &&
 	git rev-parse --show-object-format >actual &&
 	test_cmp expect actual &&
 	git rev-parse --show-object-format=storage >actual &&
@@ -225,7 +226,8 @@ test_expect_success 'showing the superproject correctly' '
 	test_commit -C super test_commit &&
 	test_create_repo sub &&
 	test_commit -C sub test_commit &&
-	git -C super submodule add ../sub dir/sub &&
+	git -c protocol.file.allow=always \
+		-C super submodule add ../sub dir/sub &&
 	echo $(pwd)/super >expect  &&
 	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out &&
@@ -259,6 +261,29 @@ test_expect_success 'rev-parse --since= unsqueezed ordering' '
 	--max-age=3
 	--max-age=2
 	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --bisect includes bad, excludes good' '
+	test_commit_bulk 6 &&
+
+	git update-ref refs/bisect/bad-1 HEAD~1 &&
+	git update-ref refs/bisect/b HEAD~2 &&
+	git update-ref refs/bisect/bad-3 HEAD~3 &&
+	git update-ref refs/bisect/good-3 HEAD~3 &&
+	git update-ref refs/bisect/bad-4 HEAD~4 &&
+	git update-ref refs/bisect/go HEAD~4 &&
+
+	# Note: refs/bisect/b and refs/bisect/go should be ignored because they
+	# do not match the refs/bisect/bad or refs/bisect/good prefixes.
+	cat >expect <<-EOF &&
+	refs/bisect/bad-1
+	refs/bisect/bad-3
+	refs/bisect/bad-4
+	^refs/bisect/good-3
+	EOF
+
+	git rev-parse --symbolic-full-name --bisect >actual &&
 	test_cmp expect actual
 '
 

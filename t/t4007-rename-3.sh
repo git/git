@@ -6,18 +6,19 @@
 test_description='Rename interaction with pathspec.
 
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
 test_expect_success 'prepare reference tree' '
 	mkdir path0 path1 &&
-	cp "$TEST_DIRECTORY"/lib-diff/COPYING path0/COPYING &&
+	COPYING_test_data >path0/COPYING &&
 	git update-index --add path0/COPYING &&
 	tree=$(git write-tree) &&
-	echo $tree
+	blob=$(git rev-parse :path0/COPYING)
 '
 
-blob=$(git hash-object "$TEST_DIRECTORY/lib-diff/COPYING")
 test_expect_success 'prepare work tree' '
 	cp path0/COPYING path1/COPYING &&
 	git update-index --add --remove path0/COPYING path1/COPYING

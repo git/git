@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use lib (split(/:/, $ENV{GITPERLLIB}));
 
-use 5.008;
+use 5.008001;
 use warnings;
 use strict;
 
@@ -30,6 +30,18 @@ BEGIN { use_ok('Git') }
 # set up
 our $abs_repo_dir = cwd();
 ok(our $r = Git->repository(Directory => "."), "open repository");
+{
+	local $ENV{GIT_TEST_ASSUME_DIFFERENT_OWNER} = 1;
+	my $failed;
+
+	$failed = eval { Git->repository(Directory => $abs_repo_dir) };
+	ok(!$failed, "reject unsafe non-bare repository");
+	like($@, qr/not a git repository/i, "unsafe error message");
+
+	$failed = eval { Git->repository(Directory => "$abs_repo_dir/bare.git") };
+	ok(!$failed, "reject unsafe bare repository");
+	like($@, qr/not a git repository/i, "unsafe error message");
+}
 
 # config
 is($r->config("test.string"), "value", "config scalar: string");

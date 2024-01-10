@@ -4,6 +4,7 @@ test_description='git merge
 
 Testing octopus merge with more than 25 refs.'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -29,8 +30,8 @@ test_expect_success 'merge c1 with c2, c3, c4, ... c29' '
 	refs="" &&
 	while test $i -le 30
 	do
-		refs="$refs c$i"
-		i=$(expr $i + 1)
+		refs="$refs c$i" &&
+		i=$(expr $i + 1) || return 1
 	done &&
 	git merge $refs &&
 	test "$(git rev-parse c1)" != "$(git rev-parse HEAD)" &&

@@ -120,7 +120,7 @@ test_expect_success 'git clean with relative prefix' '
 		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	verbose test "$would_clean" = ../src/part3.c
+	test "$would_clean" = ../src/part3.c
 '
 
 test_expect_success 'git clean with absolute path' '
@@ -133,7 +133,7 @@ test_expect_success 'git clean with absolute path' '
 		grep part3 |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	verbose test "$would_clean" = ../src/part3.c
+	test "$would_clean" = ../src/part3.c
 '
 
 test_expect_success 'git clean with out of work tree relative path' '
@@ -480,6 +480,7 @@ test_expect_success 'should not clean submodules' '
 		git init &&
 		test_commit msg hello.world
 	) &&
+	test_config_global protocol.file.allow always &&
 	git submodule add ./repo/.git sub1 &&
 	git commit -m "sub1" &&
 	git branch before_sub2 &&
@@ -516,8 +517,12 @@ test_expect_success 'nested (empty) git should be kept' '
 	git init empty_repo &&
 	mkdir to_clean &&
 	>to_clean/should_clean.this &&
+	# Note that we put the expect file in the .git directory so that it
+	# does not get cleaned.
+	find empty_repo | sort >.git/expect &&
 	git clean -f -d &&
-	test_path_is_file empty_repo/.git/HEAD &&
+	find empty_repo | sort >actual &&
+	test_cmp .git/expect actual &&
 	test_path_is_missing to_clean
 '
 
@@ -558,10 +563,10 @@ test_expect_success 'giving path in nested git work tree will NOT remove it' '
 		mkdir -p bar/baz &&
 		test_commit msg bar/baz/hello.world
 	) &&
+	find repo | sort >expect &&
 	git clean -f -d repo/bar/baz &&
-	test_path_is_file repo/.git/HEAD &&
-	test_path_is_dir repo/bar/ &&
-	test_path_is_file repo/bar/baz/hello.world
+	find repo | sort >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'giving path to nested .git will not remove it' '
@@ -572,10 +577,10 @@ test_expect_success 'giving path to nested .git will not remove it' '
 		git init &&
 		test_commit msg hello.world
 	) &&
+	find repo | sort >expect &&
 	git clean -f -d repo/.git &&
-	test_path_is_file repo/.git/HEAD &&
-	test_path_is_dir repo/.git/refs &&
-	test_path_is_dir repo/.git/objects &&
+	find repo | sort >actual &&
+	test_cmp expect actual &&
 	test_path_is_dir untracked/
 '
 
@@ -587,9 +592,10 @@ test_expect_success 'giving path to nested .git/ will NOT remove contents' '
 		git init &&
 		test_commit msg hello.world
 	) &&
+	find repo | sort >expect &&
 	git clean -f -d repo/.git/ &&
-	test_path_is_dir repo/.git &&
-	test_path_is_file repo/.git/HEAD &&
+	find repo | sort >actual &&
+	test_cmp expect actual &&
 	test_path_is_dir untracked/
 '
 
@@ -734,7 +740,7 @@ test_expect_success MINGW 'handle clean & core.longpaths = false nicely' '
 	test_must_fail git clean -xdf 2>.git/err &&
 	# grepping for a strerror string is unportable but it is OK here with
 	# MINGW prereq
-	test_i18ngrep "too long" .git/err
+	test_grep "too long" .git/err
 '
 
 test_expect_success 'clean untracked paths by pathspec' '

@@ -8,6 +8,7 @@ test_description='Test git config in different settings'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'clear default config' '
@@ -96,6 +97,23 @@ test_expect_success 'subsections are not canonicalized by git-config' '
 	test_cmp_config one section.subsection.key &&
 	test_cmp_config two section.SubSection.key
 '
+
+test_missing_key () {
+	local key="$1" &&
+	local title="$2" &&
+	test_expect_success "value for $title is not printed" '
+		test_must_fail git config "$key" >out 2>err &&
+		test_must_be_empty out &&
+		test_must_be_empty err
+	'
+}
+
+test_missing_key 'missingsection.missingkey' 'missing section and missing key'
+test_missing_key 'missingsection.penguin' 'missing section and existing key'
+test_missing_key 'section.missingkey' 'existing section and missing key'
+test_missing_key 'section.MissingSubSection.missingkey' 'missing subsection and missing key'
+test_missing_key 'section.SubSection.missingkey' 'existing subsection and missing key'
+test_missing_key 'section.MissingSubSection.key' 'missing subsection and existing key'
 
 cat > .git/config <<\EOF
 [alpha]
@@ -435,7 +453,7 @@ test_expect_success 'get bool variable with empty value' '
 
 test_expect_success 'no arguments, but no crash' '
 	test_must_fail git config >output 2>&1 &&
-	test_i18ngrep usage output
+	test_grep usage output
 '
 
 cat > .git/config << EOF
@@ -616,6 +634,36 @@ test_expect_success 'renaming to bogus section is rejected' '
 	test_must_fail git config --rename-section branch.zwei "bogus name"
 '
 
+test_expect_success 'renaming a section with a long line' '
+	{
+		printf "[b]\\n" &&
+		printf "  c = d %1024s [a] e = f\\n" " " &&
+		printf "[a] g = h\\n"
+	} >y &&
+	git config -f y --rename-section a xyz &&
+	test_must_fail git config -f y b.e
+'
+
+test_expect_success 'renaming an embedded section with a long line' '
+	{
+		printf "[b]\\n" &&
+		printf "  c = d %1024s [a] [foo] e = f\\n" " " &&
+		printf "[a] g = h\\n"
+	} >y &&
+	git config -f y --rename-section a xyz &&
+	test_must_fail git config -f y foo.e
+'
+
+test_expect_success 'renaming a section with an overly-long line' '
+	{
+		printf "[b]\\n" &&
+		printf "  c = d %525000s e" " " &&
+		printf "[a] g = h\\n"
+	} >y &&
+	test_must_fail git config -f y --rename-section a xyz 2>err &&
+	grep "refusing to work with overly long line in .y. on line 2" err
+'
+
 cat >> .git/config << EOF
   [branch "zwei"] a = 1 [branch "vier"]
 EOF
@@ -672,25 +720,25 @@ test_expect_success 'invalid unit' '
 	git config aninvalid.unit "1auto" &&
 	test_cmp_config 1auto aninvalid.unit &&
 	test_must_fail git config --int --get aninvalid.unit 2>actual &&
-	test_i18ngrep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
+	test_grep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
 '
 
 test_expect_success 'invalid unit boolean' '
 	git config commit.gpgsign "1true" &&
 	test_cmp_config 1true commit.gpgsign &&
 	test_must_fail git config --bool --get commit.gpgsign 2>actual &&
-	test_i18ngrep "bad boolean config value .1true. for .commit.gpgsign." actual
+	test_grep "bad boolean config value .1true. for .commit.gpgsign." actual
 '
 
 test_expect_success 'line number is reported correctly' '
 	printf "[bool]\n\tvar\n" >invalid &&
 	test_must_fail git config -f invalid --path bool.var 2>actual &&
-	test_i18ngrep "line 2" actual
+	test_grep "line 2" actual
 '
 
 test_expect_success 'invalid stdin config' '
 	echo "[broken" | test_must_fail git config --list --file - >output 2>&1 &&
-	test_i18ngrep "bad config line 1 in standard input" output
+	test_grep "bad config line 1 in standard input" output
 '
 
 cat > expect << EOF
@@ -717,8 +765,8 @@ test_expect_success bool '
 	rm -f result &&
 	for i in 1 2 3 4
 	do
-	    git config --bool --get bool.true$i >>result
-	    git config --bool --get bool.false$i >>result
+	    git config --bool --get bool.true$i >>result &&
+	    git config --bool --get bool.false$i >>result || return 1
 	done &&
 	test_cmp expect result'
 
@@ -871,7 +919,7 @@ test_expect_success !MINGW 'get --path copes with unset $HOME' '
 		git config --get --path path.normal >>result &&
 		git config --get --path path.trailingtilde >>result
 	) &&
-	test_i18ngrep "[Ff]ailed to expand.*~/" msg &&
+	test_grep "[Ff]ailed to expand.*~/" msg &&
 	test_cmp expect result
 '
 
@@ -901,7 +949,7 @@ test_expect_success 'get --expiry-date' '
 	EOF
 	: "work around heredoc parsing bug fixed in dash 0.5.7 (in ec2c84d)" &&
 	{
-		echo "$rel_out $(git config --expiry-date date.valid1)"
+		echo "$rel_out $(git config --expiry-date date.valid1)" &&
 		git config --expiry-date date.valid2 &&
 		git config --expiry-date date.valid3 &&
 		git config --expiry-date date.valid4 &&
@@ -938,7 +986,7 @@ test_expect_success 'get --type=color barfs on non-color' '
 
 test_expect_success 'set --type=color barfs on non-color' '
 	test_must_fail git config --type=color foo.color "not-a-color" 2>error &&
-	test_i18ngrep "cannot parse color" error
+	test_grep "cannot parse color" error
 '
 
 cat > expect << EOF
@@ -1399,12 +1447,12 @@ test_expect_success 'git --config-env with missing value' '
 
 test_expect_success 'git --config-env fails with invalid parameters' '
 	test_must_fail git --config-env=foo.flag config --bool foo.flag 2>error &&
-	test_i18ngrep "invalid config format: foo.flag" error &&
+	test_grep "invalid config format: foo.flag" error &&
 	test_must_fail git --config-env=foo.flag= config --bool foo.flag 2>error &&
-	test_i18ngrep "missing environment variable name for configuration ${SQ}foo.flag${SQ}" error &&
+	test_grep "missing environment variable name for configuration ${SQ}foo.flag${SQ}" error &&
 	sane_unset NONEXISTENT &&
 	test_must_fail git --config-env=foo.flag=NONEXISTENT config --bool foo.flag 2>error &&
-	test_i18ngrep "missing environment variable ${SQ}NONEXISTENT${SQ} for configuration ${SQ}foo.flag${SQ}" error
+	test_grep "missing environment variable ${SQ}NONEXISTENT${SQ} for configuration ${SQ}foo.flag${SQ}" error
 '
 
 test_expect_success 'git -c and --config-env work together' '
@@ -1457,55 +1505,49 @@ test_expect_success 'git config ignores pairs without count' '
 	test_must_be_empty error
 '
 
-test_expect_success 'git config ignores pairs with zero count' '
-	test_must_fail env \
-		GIT_CONFIG_COUNT=0 \
-		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one
-'
-
 test_expect_success 'git config ignores pairs exceeding count' '
 	GIT_CONFIG_COUNT=1 \
 		GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
 		GIT_CONFIG_KEY_1="pair.two" GIT_CONFIG_VALUE_1="value" \
-		git config --get-regexp "pair.*" >actual &&
+		git config --get-regexp "pair.*" >actual 2>error &&
 	cat >expect <<-EOF &&
 	pair.one value
 	EOF
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_must_be_empty error
 '
 
 test_expect_success 'git config ignores pairs with zero count' '
 	test_must_fail env \
 		GIT_CONFIG_COUNT=0 GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one >error &&
+		git config pair.one 2>error &&
 	test_must_be_empty error
 '
 
 test_expect_success 'git config ignores pairs with empty count' '
 	test_must_fail env \
 		GIT_CONFIG_COUNT= GIT_CONFIG_KEY_0="pair.one" GIT_CONFIG_VALUE_0="value" \
-		git config pair.one >error &&
+		git config pair.one 2>error &&
 	test_must_be_empty error
 '
 
 test_expect_success 'git config fails with invalid count' '
 	test_must_fail env GIT_CONFIG_COUNT=10a git config --list 2>error &&
-	test_i18ngrep "bogus count" error &&
+	test_grep "bogus count" error &&
 	test_must_fail env GIT_CONFIG_COUNT=9999999999999999 git config --list 2>error &&
-	test_i18ngrep "too many entries" error
+	test_grep "too many entries" error
 '
 
 test_expect_success 'git config fails with missing config key' '
 	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_VALUE_0="value" \
 		git config --list 2>error &&
-	test_i18ngrep "missing config key" error
+	test_grep "missing config key" error
 '
 
 test_expect_success 'git config fails with missing config value' '
 	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="pair.one" \
 		git config --list 2>error &&
-	test_i18ngrep "missing config value" error
+	test_grep "missing config value" error
 '
 
 test_expect_success 'git config fails with invalid config pair key' '
@@ -1570,12 +1612,12 @@ test_expect_success 'git config --edit respects core.editor' '
 # malformed configuration files
 test_expect_success 'barf on syntax error' '
 	cat >.git/config <<-\EOF &&
-	# broken section line
+	# broken key=value
 	[section]
 	key garbage
 	EOF
-	test_must_fail git config --get section.key >actual 2>error &&
-	test_i18ngrep " line 3 " error
+	test_must_fail git config --get section.key 2>error &&
+	test_grep " line 3 " error
 '
 
 test_expect_success 'barf on incomplete section header' '
@@ -1584,18 +1626,18 @@ test_expect_success 'barf on incomplete section header' '
 	[section
 	key = value
 	EOF
-	test_must_fail git config --get section.key >actual 2>error &&
-	test_i18ngrep " line 2 " error
+	test_must_fail git config --get section.key 2>error &&
+	test_grep " line 2 " error
 '
 
 test_expect_success 'barf on incomplete string' '
 	cat >.git/config <<-\EOF &&
-	# broken section line
+	# broken value string
 	[section]
 	key = "value string
 	EOF
-	test_must_fail git config --get section.key >actual 2>error &&
-	test_i18ngrep " line 3 " error
+	test_must_fail git config --get section.key 2>error &&
+	test_grep " line 3 " error
 '
 
 test_expect_success 'urlmatch' '
@@ -1623,6 +1665,21 @@ test_expect_success 'urlmatch' '
 		echo http.sslverify false
 	} >expect &&
 	git config --get-urlmatch HTTP https://weak.example.com >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'urlmatch with --show-scope' '
+	cat >.git/config <<-\EOF &&
+	[http "https://weak.example.com"]
+		sslVerify = false
+		cookieFile = /tmp/cookie.txt
+	EOF
+
+	cat >expect <<-EOF &&
+	local	http.cookiefile /tmp/cookie.txt
+	local	http.sslverify false
+	EOF
+	git config --get-urlmatch --show-scope HTTP https://weak.example.com >actual &&
 	test_cmp expect actual
 '
 
@@ -2013,6 +2070,12 @@ test_expect_success '--show-origin blob ref' '
 	test_cmp expect output
 '
 
+test_expect_success '--show-origin with --default' '
+	git config --show-origin --default foo some.key >actual &&
+	echo "command line:	foo" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success '--show-scope with --list' '
 	cat >expect <<-EOF &&
 	global	user.global=true
@@ -2023,8 +2086,17 @@ test_expect_success '--show-scope with --list' '
 	local	user.override=local
 	local	include.path=../include/relative.include
 	local	user.relative=include
+	local	core.repositoryformatversion=1
+	local	extensions.worktreeconfig=true
+	worktree	user.worktree=true
 	command	user.cmdline=true
 	EOF
+	git worktree add wt1 &&
+	# We need these to test for worktree scope, but outside of this
+	# test, this is just noise
+	test_config core.repositoryformatversion 1 &&
+	test_config extensions.worktreeConfig true &&
+	git config --worktree user.worktree true &&
 	git -c user.cmdline=true config --list --show-scope >output &&
 	test_cmp expect output
 '
@@ -2072,13 +2144,20 @@ test_expect_success '--show-scope with --show-origin' '
 	test_cmp expect output
 '
 
-test_expect_success 'override global and system config' '
-	test_when_finished rm -f "$HOME"/.config/git &&
+test_expect_success '--show-scope with --default' '
+	git config --show-scope --default foo some.key >actual &&
+	echo "command	foo" >expect &&
+	test_cmp expect actual
+'
 
+test_expect_success 'override global and system config' '
+	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
 	cat >"$HOME"/.gitconfig <<-EOF &&
 	[home]
 		config = true
 	EOF
+
+	test_when_finished rm -rf \"\$HOME\"/.config/git &&
 	mkdir -p "$HOME"/.config/git &&
 	cat >"$HOME"/.config/git/config <<-EOF &&
 	[xdg]
@@ -2187,17 +2266,17 @@ test_expect_success 'identical mixed --type specifiers are allowed' '
 
 test_expect_success 'non-identical modern --type specifiers are not allowed' '
 	test_must_fail git config --type=int --type=bool section.big 2>error &&
-	test_i18ngrep "only one type at a time" error
+	test_grep "only one type at a time" error
 '
 
 test_expect_success 'non-identical legacy --type specifiers are not allowed' '
 	test_must_fail git config --int --bool section.big 2>error &&
-	test_i18ngrep "only one type at a time" error
+	test_grep "only one type at a time" error
 '
 
 test_expect_success 'non-identical mixed --type specifiers are not allowed' '
 	test_must_fail git config --type=int --bool section.big 2>error &&
-	test_i18ngrep "only one type at a time" error
+	test_grep "only one type at a time" error
 '
 
 test_expect_success '--type allows valid type specifiers' '
@@ -2214,7 +2293,13 @@ test_expect_success 'unset type specifiers may be reset to conflicting ones' '
 
 test_expect_success '--type rejects unknown specifiers' '
 	test_must_fail git config --type=nonsense section.foo 2>error &&
-	test_i18ngrep "unrecognized --type argument" error
+	test_grep "unrecognized --type argument" error
+'
+
+test_expect_success '--type=int requires at least one digit' '
+	test_must_fail git config --type int --default m some.key >out 2>error &&
+	grep "bad numeric config value" error &&
+	test_must_be_empty out
 '
 
 test_expect_success '--replace-all does not invent newlines' '
@@ -2254,7 +2339,7 @@ test_expect_success 'set all config with value-pattern' '
 
 	# multiple matches => failure
 	test_must_fail git config --file=config abc.key three o+ 2>err &&
-	test_i18ngrep "has multiple values" err &&
+	test_grep "has multiple values" err &&
 
 	# multiple values, no match => add
 	git config --file=config abc.key three a+ &&
@@ -2385,6 +2470,124 @@ test_expect_success '--get and --get-all with --fixed-value' '
 	test_must_fail git config --file=config --get-regexp fixed+ "$META" &&
 	git config --file=config --get-regexp --fixed-value fixed+ "$META" &&
 	test_must_fail git config --file=config --get-regexp --fixed-value fixed+ non-existent
+'
+
+test_expect_success 'includeIf.hasconfig:remote.*.url' '
+	git init hasremoteurlTest &&
+	test_when_finished "rm -rf hasremoteurlTest" &&
+
+	cat >include-this <<-\EOF &&
+	[user]
+		this = this-is-included
+	EOF
+	cat >dont-include-that <<-\EOF &&
+	[user]
+		that = that-is-not-included
+	EOF
+	cat >>hasremoteurlTest/.git/config <<-EOF &&
+	[includeIf "hasconfig:remote.*.url:foourl"]
+		path = "$(pwd)/include-this"
+	[includeIf "hasconfig:remote.*.url:barurl"]
+		path = "$(pwd)/dont-include-that"
+	[remote "foo"]
+		url = foourl
+	EOF
+
+	echo this-is-included >expect-this &&
+	git -C hasremoteurlTest config --get user.this >actual-this &&
+	test_cmp expect-this actual-this &&
+
+	test_must_fail git -C hasremoteurlTest config --get user.that
+'
+
+test_expect_success 'includeIf.hasconfig:remote.*.url respects last-config-wins' '
+	git init hasremoteurlTest &&
+	test_when_finished "rm -rf hasremoteurlTest" &&
+
+	cat >include-two-three <<-\EOF &&
+	[user]
+		two = included-config
+		three = included-config
+	EOF
+	cat >>hasremoteurlTest/.git/config <<-EOF &&
+	[remote "foo"]
+		url = foourl
+	[user]
+		one = main-config
+		two = main-config
+	[includeIf "hasconfig:remote.*.url:foourl"]
+		path = "$(pwd)/include-two-three"
+	[user]
+		three = main-config
+	EOF
+
+	echo main-config >expect-main-config &&
+	echo included-config >expect-included-config &&
+
+	git -C hasremoteurlTest config --get user.one >actual &&
+	test_cmp expect-main-config actual &&
+
+	git -C hasremoteurlTest config --get user.two >actual &&
+	test_cmp expect-included-config actual &&
+
+	git -C hasremoteurlTest config --get user.three >actual &&
+	test_cmp expect-main-config actual
+'
+
+test_expect_success 'includeIf.hasconfig:remote.*.url globs' '
+	git init hasremoteurlTest &&
+	test_when_finished "rm -rf hasremoteurlTest" &&
+
+	printf "[user]\ndss = yes\n" >double-star-start &&
+	printf "[user]\ndse = yes\n" >double-star-end &&
+	printf "[user]\ndsm = yes\n" >double-star-middle &&
+	printf "[user]\nssm = yes\n" >single-star-middle &&
+	printf "[user]\nno = no\n" >no &&
+
+	cat >>hasremoteurlTest/.git/config <<-EOF &&
+	[remote "foo"]
+		url = https://foo/bar/baz
+	[includeIf "hasconfig:remote.*.url:**/baz"]
+		path = "$(pwd)/double-star-start"
+	[includeIf "hasconfig:remote.*.url:**/nomatch"]
+		path = "$(pwd)/no"
+	[includeIf "hasconfig:remote.*.url:https:/**"]
+		path = "$(pwd)/double-star-end"
+	[includeIf "hasconfig:remote.*.url:nomatch:/**"]
+		path = "$(pwd)/no"
+	[includeIf "hasconfig:remote.*.url:https:/**/baz"]
+		path = "$(pwd)/double-star-middle"
+	[includeIf "hasconfig:remote.*.url:https:/**/nomatch"]
+		path = "$(pwd)/no"
+	[includeIf "hasconfig:remote.*.url:https://*/bar/baz"]
+		path = "$(pwd)/single-star-middle"
+	[includeIf "hasconfig:remote.*.url:https://*/baz"]
+		path = "$(pwd)/no"
+	EOF
+
+	git -C hasremoteurlTest config --get user.dss &&
+	git -C hasremoteurlTest config --get user.dse &&
+	git -C hasremoteurlTest config --get user.dsm &&
+	git -C hasremoteurlTest config --get user.ssm &&
+	test_must_fail git -C hasremoteurlTest config --get user.no
+'
+
+test_expect_success 'includeIf.hasconfig:remote.*.url forbids remote url in such included files' '
+	git init hasremoteurlTest &&
+	test_when_finished "rm -rf hasremoteurlTest" &&
+
+	cat >include-with-url <<-\EOF &&
+	[remote "bar"]
+		url = barurl
+	EOF
+	cat >>hasremoteurlTest/.git/config <<-EOF &&
+	[includeIf "hasconfig:remote.*.url:foourl"]
+		path = "$(pwd)/include-with-url"
+	EOF
+
+	# test with any Git command
+	test_must_fail git -C hasremoteurlTest status 2>err &&
+	grep "fatal: remote URLs cannot be configured in file directly or indirectly included by includeIf.hasconfig:remote.*.url" err
 '
 
 test_done

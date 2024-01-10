@@ -9,7 +9,9 @@ rebase.stat::
 	rebase. False by default.
 
 rebase.autoSquash::
-	If set to true enable `--autosquash` option by default.
+	If set to true, enable the `--autosquash` option of
+	linkgit:git-rebase[1] by default for interactive mode.
+	This can be overridden with the `--no-autosquash` option.
 
 rebase.autoStash::
 	When set to true, automatically create a temporary stash entry
@@ -20,6 +22,9 @@ rebase.autoStash::
 	This option can be overridden by the `--no-autostash` and
 	`--autostash` options of linkgit:git-rebase[1].
 	Defaults to false.
+
+rebase.updateRefs::
+	If set to true enable `--update-refs` option by default.
 
 rebase.missingCommitsCheck::
 	If set to "warn", git rebase -i will print a warning if some
@@ -64,3 +69,19 @@ rebase.rescheduleFailedExec::
 
 rebase.forkPoint::
 	If set to false set `--no-fork-point` option by default.
+
+rebase.rebaseMerges::
+	Whether and how to set the `--rebase-merges` option by default. Can
+	be `rebase-cousins`, `no-rebase-cousins`, or a boolean. Setting to
+	true or to `no-rebase-cousins` is equivalent to
+	`--rebase-merges=no-rebase-cousins`, setting to `rebase-cousins` is
+	equivalent to `--rebase-merges=rebase-cousins`, and setting to false is
+	equivalent to `--no-rebase-merges`. Passing `--rebase-merges` on the
+	command line, with or without an argument, overrides any
+	`rebase.rebaseMerges` configuration.
+
+rebase.maxLabelLength::
+	When generating label names from commit subjects, truncate the names to
+	this length. By default, the names are truncated to a little less than
+	`NAME_MAX` (to allow e.g. `.lock` files to be written for the
+	corresponding loose refs).

@@ -3,13 +3,16 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
+#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "tree.h"
 #include "cache-tree.h"
 #include "parse-options.h"
+#include "repository.h"
 
 static const char * const write_tree_usage[] = {
 	N_("git write-tree [--missing-ok] [--prefix=<prefix>/]"),
@@ -38,7 +41,11 @@ int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
 	argc = parse_options(argc, argv, cmd_prefix, write_tree_options,
 			     write_tree_usage, 0);
 
-	ret = write_cache_as_tree(&oid, flags, tree_prefix);
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
+	ret = write_index_as_tree(&oid, &the_index, get_index_file(), flags,
+				  tree_prefix);
 	switch (ret) {
 	case 0:
 		printf("%s\n", oid_to_hex(&oid));

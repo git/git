@@ -1089,7 +1089,7 @@ the remote repository URL in the local repository's config file
 like this:
 
 ------------------------------------------------
-$ git config remote.linus.url http://www.kernel.org/pub/scm/git/git.git/
+$ git config remote.linus.url https://git.kernel.org/pub/scm/git/git.git/
 ------------------------------------------------
 
 and use the "linus" keyword with 'git pull' instead of the full URL.

@@ -4,7 +4,7 @@
 	bar |
 	baz &&
 
-# LINT: final line of pipe sequence ('cow') lacking "&&"
+# LINT: final line of pipe sequence ("cow") lacking "&&"
 	fish |
 	cow
 

@@ -1,14 +1,15 @@
 #ifndef HTTP_H
 #define HTTP_H
 
-#include "cache.h"
+struct packed_git;
+
+#include "git-zlib.h"
 
 #include <curl/curl.h>
 #include <curl/easy.h>
 
 #include "strbuf.h"
 #include "remote.h"
-#include "url.h"
 
 #define DEFAULT_MAX_REQUESTS 5
 
@@ -40,7 +41,7 @@ struct buffer {
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_buffer(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
 size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf);
-curlioerr ioctl_buffer(CURL *handle, int cmd, void *clientp);
+int seek_buffer(void *clientp, curl_off_t offset, int origin);
 
 /* Slot lifecycle functions */
 struct active_request_slot *get_active_slot(void);
@@ -163,11 +164,23 @@ struct http_get_options {
  */
 int http_get_strbuf(const char *url, struct strbuf *result, struct http_get_options *options);
 
+/*
+ * Downloads a URL and stores the result in the given file.
+ *
+ * If a previous interrupted download is detected (i.e. a previous temporary
+ * file is still around) the download is resumed.
+ */
+int http_get_file(const char *url, const char *filename,
+		  struct http_get_options *options);
+
 int http_fetch_ref(const char *base, struct ref *ref);
 
 /* Helpers for fetching packs */
 int http_get_info_packs(const char *base_url,
 			struct packed_git **packs_head);
+
+/* Helper for getting Accept-Language header */
+const char *http_get_accept_language_header(void);
 
 struct http_pack_request {
 	char *url;

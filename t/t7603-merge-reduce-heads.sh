@@ -4,6 +4,7 @@ test_description='git merge
 
 Testing octopus merge when reducing parents to independent branches.'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # 0 - 1
@@ -95,7 +96,7 @@ test_expect_success 'setup' '
 		echo $i > $i.c &&
 		git add $i.c &&
 		git commit -m $i &&
-		git tag $i
+		git tag $i || return 1
 	done &&
 	git reset --hard A &&
 	for i in F G H I
@@ -103,7 +104,7 @@ test_expect_success 'setup' '
 		echo $i > $i.c &&
 		git add $i.c &&
 		git commit -m $i &&
-		git tag $i
+		git tag $i || return 1
 	done
 '
 

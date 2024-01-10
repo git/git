@@ -1,20 +1,28 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "object-name.h"
+#include "advice.h"
 #include "config.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"
-#include "blob.h"
 #include "tree-walk.h"
 #include "refs.h"
 #include "remote.h"
 #include "dir.h"
 #include "oid-array.h"
+#include "oidtree.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "pretty.h"
+#include "object-store-ll.h"
+#include "read-cache-ll.h"
 #include "repository.h"
-#include "submodule.h"
+#include "setup.h"
 #include "midx.h"
 #include "commit-reach.h"
+#include "date.h"
 
 static int get_oid_oneline(struct repository *r, const char *, struct object_id *, struct commit_list *);
 
@@ -222,7 +230,7 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 
 static int disambiguate_commit_only(struct repository *r,
 				    const struct object_id *oid,
-				    void *cb_data_unused)
+				    void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_COMMIT;
@@ -230,7 +238,7 @@ static int disambiguate_commit_only(struct repository *r,
 
 static int disambiguate_committish_only(struct repository *r,
 					const struct object_id *oid,
-					void *cb_data_unused)
+					void *cb_data UNUSED)
 {
 	struct object *obj;
 	int kind;
@@ -250,7 +258,7 @@ static int disambiguate_committish_only(struct repository *r,
 
 static int disambiguate_tree_only(struct repository *r,
 				  const struct object_id *oid,
-				  void *cb_data_unused)
+				  void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_TREE;
@@ -258,7 +266,7 @@ static int disambiguate_tree_only(struct repository *r,
 
 static int disambiguate_treeish_only(struct repository *r,
 				     const struct object_id *oid,
-				     void *cb_data_unused)
+				     void *cb_data UNUSED)
 {
 	struct object *obj;
 	int kind;
@@ -278,7 +286,7 @@ static int disambiguate_treeish_only(struct repository *r,
 
 static int disambiguate_blob_only(struct repository *r,
 				  const struct object_id *oid,
-				  void *cb_data_unused)
+				  void *cb_data UNUSED)
 {
 	int kind = oid_object_info(r, oid, NULL);
 	return kind == OBJ_BLOB;
@@ -351,35 +359,120 @@ static int init_object_disambiguation(struct repository *r,
 	return 0;
 }
 
+struct ambiguous_output {
+	const struct disambiguate_state *ds;
+	struct strbuf advice;
+	struct strbuf sb;
+};
+
 static int show_ambiguous_object(const struct object_id *oid, void *data)
 {
-	const struct disambiguate_state *ds = data;
-	struct strbuf desc = STRBUF_INIT;
+	struct ambiguous_output *state = data;
+	const struct disambiguate_state *ds = state->ds;
+	struct strbuf *advice = &state->advice;
+	struct strbuf *sb = &state->sb;
 	int type;
+	const char *hash;
 
 	if (ds->fn && !ds->fn(ds->repo, oid, ds->cb_data))
 		return 0;
 
+	hash = repo_find_unique_abbrev(ds->repo, oid, DEFAULT_ABBREV);
 	type = oid_object_info(ds->repo, oid, NULL);
+
+	if (type < 0) {
+		/*
+		 * TRANSLATORS: This is a line of ambiguous object
+		 * output shown when we cannot look up or parse the
+		 * object in question. E.g. "deadbeef [bad object]".
+		 */
+		strbuf_addf(sb, _("%s [bad object]"), hash);
+		goto out;
+	}
+
+	assert(type == OBJ_TREE || type == OBJ_COMMIT ||
+	       type == OBJ_BLOB || type == OBJ_TAG);
+
 	if (type == OBJ_COMMIT) {
+		struct strbuf date = STRBUF_INIT;
+		struct strbuf msg = STRBUF_INIT;
 		struct commit *commit = lookup_commit(ds->repo, oid);
+
 		if (commit) {
 			struct pretty_print_context pp = {0};
 			pp.date_mode.type = DATE_SHORT;
-			format_commit_message(commit, " %ad - %s", &desc, &pp);
+			repo_format_commit_message(the_repository, commit,
+						   "%ad", &date, &pp);
+			repo_format_commit_message(the_repository, commit,
+						   "%s", &msg, &pp);
 		}
+
+		/*
+		 * TRANSLATORS: This is a line of ambiguous commit
+		 * object output. E.g.:
+		 *
+		 *    "deadbeef commit 2021-01-01 - Some Commit Message"
+		 */
+		strbuf_addf(sb, _("%s commit %s - %s"), hash, date.buf,
+			    msg.buf);
+
+		strbuf_release(&date);
+		strbuf_release(&msg);
 	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(ds->repo, oid);
-		if (!parse_tag(tag) && tag->tag)
-			strbuf_addf(&desc, " %s", tag->tag);
+
+		if (!parse_tag(tag) && tag->tag) {
+			/*
+			 * TRANSLATORS: This is a line of ambiguous
+			 * tag object output. E.g.:
+			 *
+			 *    "deadbeef tag 2022-01-01 - Some Tag Message"
+			 *
+			 * The second argument is the YYYY-MM-DD found
+			 * in the tag.
+			 *
+			 * The third argument is the "tag" string
+			 * from object.c.
+			 */
+			strbuf_addf(sb, _("%s tag %s - %s"), hash,
+				    show_date(tag->date, 0, DATE_MODE(SHORT)),
+				    tag->tag);
+		} else {
+			/*
+			 * TRANSLATORS: This is a line of ambiguous
+			 * tag object output where we couldn't parse
+			 * the tag itself. E.g.:
+			 *
+			 *    "deadbeef [bad tag, could not parse it]"
+			 */
+			strbuf_addf(sb, _("%s [bad tag, could not parse it]"),
+				    hash);
+		}
+	} else if (type == OBJ_TREE) {
+		/*
+		 * TRANSLATORS: This is a line of ambiguous <type>
+		 * object output. E.g. "deadbeef tree".
+		 */
+		strbuf_addf(sb, _("%s tree"), hash);
+	} else if (type == OBJ_BLOB) {
+		/*
+		 * TRANSLATORS: This is a line of ambiguous <type>
+		 * object output. E.g. "deadbeef blob".
+		 */
+		strbuf_addf(sb, _("%s blob"), hash);
 	}
 
-	advise("  %s %s%s",
-	       repo_find_unique_abbrev(ds->repo, oid, DEFAULT_ABBREV),
-	       type_name(type) ? type_name(type) : "unknown type",
-	       desc.buf);
 
-	strbuf_release(&desc);
+out:
+	/*
+	 * TRANSLATORS: This is line item of ambiguous object output
+	 * from describe_ambiguous_object() above. For RTL languages
+	 * you'll probably want to swap the "%s" and leading " " space
+	 * around.
+	 */
+	strbuf_addf(advice, _("  %s\n"), sb->buf);
+
+	strbuf_reset(sb);
 	return 0;
 }
 
@@ -389,7 +482,7 @@ static int collect_ambiguous(const struct object_id *oid, void *data)
 	return 0;
 }
 
-static int repo_collect_ambiguous(struct repository *r,
+static int repo_collect_ambiguous(struct repository *r UNUSED,
 				  const struct object_id *oid,
 				  void *data)
 {
@@ -476,6 +569,11 @@ static enum get_oid_result get_short_oid(struct repository *r,
 
 	if (!quietly && (status == SHORT_NAME_AMBIGUOUS)) {
 		struct oid_array collect = OID_ARRAY_INIT;
+		struct ambiguous_output out = {
+			.ds = &ds,
+			.sb = STRBUF_INIT,
+			.advice = STRBUF_INIT,
+		};
 
 		error(_("short object ID %s is ambiguous"), ds.hex_pfx);
 
@@ -488,13 +586,22 @@ static enum get_oid_result get_short_oid(struct repository *r,
 		if (!ds.ambiguous)
 			ds.fn = NULL;
 
-		advise(_("The candidates are:"));
 		repo_for_each_abbrev(r, ds.hex_pfx, collect_ambiguous, &collect);
 		sort_ambiguous_oid_array(r, &collect);
 
-		if (oid_array_for_each(&collect, show_ambiguous_object, &ds))
+		if (oid_array_for_each(&collect, show_ambiguous_object, &out))
 			BUG("show_ambiguous_object shouldn't return non-zero");
+
+		/*
+		 * TRANSLATORS: The argument is the list of ambiguous
+		 * objects composed in show_ambiguous_object(). See
+		 * its "TRANSLATORS" comments for details.
+		 */
+		advise(_("The candidates are:\n%s"), out.advice.buf);
+
 		oid_array_clear(&collect);
+		strbuf_release(&out.advice);
+		strbuf_release(&out.sb);
 	}
 
 	return status;
@@ -567,7 +674,7 @@ static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
 	return 0;
 }
 
-static int repo_extend_abbrev_len(struct repository *r,
+static int repo_extend_abbrev_len(struct repository *r UNUSED,
 				  const struct object_id *oid,
 				  void *cb_data)
 {
@@ -658,6 +765,21 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 		find_abbrev_len_for_midx(m, mad);
 	for (p = get_packed_git(mad->repo); p; p = p->next)
 		find_abbrev_len_for_pack(p, mad);
+}
+
+void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
+				   const struct object_id *oid, int abbrev_len)
+{
+	int r;
+	strbuf_grow(sb, GIT_MAX_HEXSZ + 1);
+	r = repo_find_unique_abbrev_r(repo, sb->buf + sb->len, oid, abbrev_len);
+	strbuf_setlen(sb, sb->len + r);
+}
+
+void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
+			      int abbrev_len)
+{
+	strbuf_repo_add_unique_abbrev(sb, the_repository, oid, abbrev_len);
 }
 
 int repo_find_unique_abbrev_r(struct repository *r, char *hex,
@@ -800,6 +922,7 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 	char *real_ref = NULL;
 	int refs_found = 0;
 	int at, reflog_len, nth_prior = 0;
+	int fatal = !(flags & GET_OID_QUIETLY);
 
 	if (len == r->hash_algo->hexsz && !get_oid_hex(str, oid)) {
 		if (warn_ambiguous_refs && warn_on_object_refname_ambiguity) {
@@ -854,11 +977,11 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 
 	if (!len && reflog_len)
 		/* allow "@{...}" to mean the current branch reflog */
-		refs_found = repo_dwim_ref(r, "HEAD", 4, oid, &real_ref, 0);
+		refs_found = repo_dwim_ref(r, "HEAD", 4, oid, &real_ref, !fatal);
 	else if (reflog_len)
 		refs_found = repo_dwim_log(r, str, len, oid, &real_ref);
 	else
-		refs_found = repo_dwim_ref(r, str, len, oid, &real_ref, 0);
+		refs_found = repo_dwim_ref(r, str, len, oid, &real_ref, !fatal);
 
 	if (!refs_found)
 		return -1;
@@ -938,7 +1061,7 @@ static enum get_oid_result get_parent(struct repository *r,
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(r, &oid);
-	if (parse_commit(commit))
+	if (repo_parse_commit(r, commit))
 		return MISSING_OBJECT;
 	if (!idx) {
 		oidcpy(result, &commit->object.oid);
@@ -972,7 +1095,7 @@ static enum get_oid_result get_nth_ancestor(struct repository *r,
 		return MISSING_OBJECT;
 
 	while (generation--) {
-		if (parse_commit(commit) || !commit->parents)
+		if (repo_parse_commit(r, commit) || !commit->parents)
 			return MISSING_OBJECT;
 		commit = commit->parents->item;
 	}
@@ -1208,7 +1331,8 @@ struct handle_one_ref_cb {
 };
 
 static int handle_one_ref(const char *path, const struct object_id *oid,
-			  int flag, void *cb_data)
+			  int flag UNUSED,
+			  void *cb_data)
 {
 	struct handle_one_ref_cb *cb = cb_data;
 	struct commit_list **list = cb->list;
@@ -1262,10 +1386,10 @@ static int get_oid_oneline(struct repository *r,
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		if (!parse_object(r, &commit->object.oid))
 			continue;
-		buf = get_commit_buffer(commit, NULL);
+		buf = repo_get_commit_buffer(r, commit, NULL);
 		p = strstr(buf, "\n\n");
 		matches = negative ^ (p && !regexec(&regex, p + 2, 0, NULL, 0));
-		unuse_commit_buffer(commit, buf);
+		repo_unuse_commit_buffer(r, commit, buf);
 
 		if (matches) {
 			oidcpy(oid, &commit->object.oid);
@@ -1286,8 +1410,11 @@ struct grab_nth_branch_switch_cbdata {
 	struct strbuf *sb;
 };
 
-static int grab_nth_branch_switch(struct object_id *ooid, struct object_id *noid,
-				  const char *email, timestamp_t timestamp, int tz,
+static int grab_nth_branch_switch(struct object_id *ooid UNUSED,
+				  struct object_id *noid UNUSED,
+				  const char *email UNUSED,
+				  timestamp_t timestamp UNUSED,
+				  int tz UNUSED,
 				  const char *message, void *cb_data)
 {
 	struct grab_nth_branch_switch_cbdata *cb = cb_data;
@@ -1564,7 +1691,8 @@ void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed)
 	struct interpret_branch_name_options options = {
 		.allowed = allowed
 	};
-	int used = interpret_branch_name(name, len, sb, &options);
+	int used = repo_interpret_branch_name(the_repository, name, len, sb,
+					      &options);
 
 	if (used < 0)
 		used = 0;
@@ -1617,7 +1745,7 @@ int get_oidf(struct object_id *oid, const char *fmt, ...)
 	strbuf_vaddf(&sb, fmt, ap);
 	va_end(ap);
 
-	ret = get_oid(sb.buf, oid);
+	ret = repo_get_oid(the_repository, sb.buf, oid);
 	strbuf_release(&sb);
 
 	return ret;
@@ -1734,7 +1862,8 @@ static void diagnose_invalid_index_path(struct repository *r,
 		pos = -pos - 1;
 	if (pos < istate->cache_nr) {
 		ce = istate->cache[pos];
-		if (ce_namelen(ce) == namelen &&
+		if (!S_ISSPARSEDIR(ce->ce_mode) &&
+		    ce_namelen(ce) == namelen &&
 		    !memcmp(ce->name, filename, namelen))
 			die(_("path '%s' is in the index, but not at stage %d\n"
 			    "hint: Did you mean ':%d:%s'?"),
@@ -1750,7 +1879,8 @@ static void diagnose_invalid_index_path(struct repository *r,
 		pos = -pos - 1;
 	if (pos < istate->cache_nr) {
 		ce = istate->cache[pos];
-		if (ce_namelen(ce) == fullname.len &&
+		if (!S_ISSPARSEDIR(ce->ce_mode) &&
+		    ce_namelen(ce) == fullname.len &&
 		    !memcmp(ce->name, fullname.buf, fullname.len))
 			die(_("path '%s' is in the index, but not '%s'\n"
 			    "hint: Did you mean ':%d:%s' aka ':%d:./%s'?"),
@@ -1783,6 +1913,20 @@ static char *resolve_relative_path(struct repository *r, const char *rel)
 			   rel);
 }
 
+static int reject_tree_in_index(struct repository *repo,
+				int only_to_die,
+				const struct cache_entry *ce,
+				int stage,
+				const char *prefix,
+				const char *cp)
+{
+	if (!S_ISSPARSEDIR(ce->ce_mode))
+		return 0;
+	if (only_to_die)
+		diagnose_invalid_index_path(repo, stage, prefix, cp);
+	return -1;
+}
+
 static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 				  const char *name,
 				  unsigned flags,
@@ -1795,13 +1939,13 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 	const char *cp;
 	int only_to_die = flags & GET_OID_ONLY_TO_DIE;
 
-	if (only_to_die)
-		flags |= GET_OID_QUIETLY;
-
 	memset(oc, 0, sizeof(*oc));
 	oc->mode = S_IFINVALID;
 	strbuf_init(&oc->symlink_path, 0);
 	ret = get_oid_1(repo, name, namelen, oid, flags);
+	if (!ret && flags & GET_OID_REQUIRE_PATH)
+		die(_("<object>:<path> required, only <object> '%s' given"),
+		    name);
 	if (!ret)
 		return ret;
 	/*
@@ -1857,9 +2001,12 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			    memcmp(ce->name, cp, namelen))
 				break;
 			if (ce_stage(ce) == stage) {
+				free(new_path);
+				if (reject_tree_in_index(repo, only_to_die, ce,
+							 stage, prefix, cp))
+					return -1;
 				oidcpy(oid, &ce->oid);
 				oc->mode = ce->ce_mode;
-				free(new_path);
 				return 0;
 			}
 			pos++;
@@ -1932,7 +2079,7 @@ void maybe_die_on_misspelt_object_name(struct repository *r,
 {
 	struct object_context oc;
 	struct object_id oid;
-	get_oid_with_context_1(r, name, GET_OID_ONLY_TO_DIE,
+	get_oid_with_context_1(r, name, GET_OID_ONLY_TO_DIE | GET_OID_QUIETLY,
 			       prefix, &oid, &oc);
 }
 

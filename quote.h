@@ -3,6 +3,8 @@
 
 struct strbuf;
 
+extern int quote_path_fully;
+
 /* Help to copy the thing properly quoted for the shell safety.
  * any single quote is replaced with '\'', any exclamation point
  * is replaced with '\!', and the whole thing is enclosed in a

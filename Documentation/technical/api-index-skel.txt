@@ -1,7 +1,7 @@
 Git API Documents
 =================
 
-Git has grown a set of internal API over time.  This collection
+Git has grown a set of internal APIs over time.  This collection
 documents them.
 
 ////////////////////////////////////////////////////////////////

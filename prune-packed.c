@@ -1,4 +1,7 @@
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "environment.h"
+#include "gettext.h"
+#include "object-store-ll.h"
 #include "packfile.h"
 #include "progress.h"
 #include "prune-packed.h"

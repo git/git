@@ -4,10 +4,6 @@ test_description='git status --porcelain=v2
 
 This test exercises porcelain V2 output for git status.'
 
-
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-
 . ./test-lib.sh
 
 
@@ -110,6 +106,21 @@ test_expect_success 'after first commit, create unstaged changes' '
 	EOF
 
 	git status --porcelain=v2 --branch --untracked-files=all >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'after first commit, stash existing changes' '
+	cat >expect <<-EOF &&
+	# branch.oid $H0
+	# branch.head initial-branch
+	# stash 2
+	EOF
+
+	test_when_finished "git stash pop && git stash pop" &&
+
+	git stash -- file_x &&
+	git stash &&
+	git status --porcelain=v2 --branch --show-stash --untracked-files=no >actual &&
 	test_cmp expect actual
 '
 
@@ -462,6 +473,7 @@ test_expect_success 'create and add submodule, submodule appears clean (A. S...)
 	git checkout initial-branch &&
 	git clone . sub_repo &&
 	git clone . super_repo &&
+	test_config_global protocol.file.allow always &&
 	(	cd super_repo &&
 		git submodule add ../sub_repo sub1 &&
 

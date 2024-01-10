@@ -4,10 +4,13 @@
  * Copyright (c) Junio C Hamano, 2006, 2009
  */
 #include "builtin.h"
+#include "gettext.h"
+#include "hex.h"
 #include "quote.h"
+#include "strbuf.h"
 #include "tree.h"
 #include "parse-options.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 static struct treeent {
 	unsigned mode;
@@ -58,12 +61,12 @@ static void write_tree(struct object_id *oid)
 		strbuf_add(&buf, ent->oid.hash, the_hash_algo->rawsz);
 	}
 
-	write_object_file(buf.buf, buf.len, tree_type, oid);
+	write_object_file(buf.buf, buf.len, OBJ_TREE, oid);
 	strbuf_release(&buf);
 }
 
 static const char *mktree_usage[] = {
-	N_("git mktree [-z] [--missing] [--batch]"),
+	"git mktree [-z] [--missing] [--batch]",
 	NULL
 };
 
@@ -74,6 +77,7 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 	unsigned mode;
 	enum object_type mode_type; /* object type derived from mode */
 	enum object_type obj_type; /* object type derived from sha */
+	struct object_info oi = OBJECT_INFO_INIT;
 	char *path, *to_free = NULL;
 	struct object_id oid;
 
@@ -116,8 +120,14 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 			path, ptr, type_name(mode_type));
 	}
 
-	/* Check the type of object identified by sha1 */
-	obj_type = oid_object_info(the_repository, &oid, NULL);
+	/* Check the type of object identified by oid without fetching objects */
+	oi.typep = &obj_type;
+	if (oid_object_info_extended(the_repository, &oid, &oi,
+				     OBJECT_INFO_LOOKUP_REPLACE |
+				     OBJECT_INFO_QUICK |
+				     OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
+		obj_type = -1;
+
 	if (obj_type < 0) {
 		if (allow_missing) {
 			; /* no problem - missing objects are presumed to be of the right type */

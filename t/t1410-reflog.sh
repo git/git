@@ -7,6 +7,7 @@ test_description='Test prune and reflog expiration'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 check_have () {
@@ -28,7 +29,7 @@ check_fsck () {
 	'')
 		test_must_be_empty fsck.output ;;
 	*)
-		test_i18ngrep "$1" fsck.output ;;
+		test_grep "$1" fsck.output ;;
 	esac
 }
 
@@ -104,6 +105,28 @@ test_expect_success setup '
 
 	git reflog refs/heads/main >output &&
 	test_line_count = 4 output
+'
+
+test_expect_success 'correct usage on sub-command -h' '
+	test_expect_code 129 git reflog expire -h >err &&
+	grep "git reflog expire" err
+'
+
+test_expect_success 'correct usage on "git reflog show -h"' '
+	test_expect_code 129 git reflog show -h >err &&
+	grep -F "git reflog [show]" err
+'
+
+test_expect_success 'pass through -- to sub-command' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo message --a-file contents dash-tag &&
+
+	git -C repo reflog show -- --does-not-exist >out &&
+	test_must_be_empty out &&
+	git -C repo reflog show >expect &&
+	git -C repo reflog show -- --a-file >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success rewind '
@@ -285,9 +308,9 @@ test_expect_success 'git reflog expire unknown reference' '
 	test_config gc.reflogexpireunreachable never &&
 
 	test_must_fail git reflog expire main@{123} 2>stderr &&
-	test_i18ngrep "points nowhere" stderr &&
+	test_grep "points nowhere" stderr &&
 	test_must_fail git reflog expire does-not-exist 2>stderr &&
-	test_i18ngrep "points nowhere" stderr
+	test_grep "points nowhere" stderr
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '
@@ -341,7 +364,7 @@ test_expect_success 'stale dirs do not cause d/f conflicts (reflogs off)' '
 # Each line is 114 characters, so we need 75 to still have a few before the
 # last 8K. The 89-character padding on the final entry lines up our
 # newline exactly.
-test_expect_success SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
+test_expect_success REFFILES,SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
 	git checkout -b reflogskip &&
 	zf=$(test_oid zero_2) &&
 	ident="abc <xyz> 0000000001 +0000" &&
@@ -349,12 +372,12 @@ test_expect_success SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
 		printf "$zf%02d $zf%02d %s\t" $i $(($i+1)) "$ident" &&
 		if test $i = 75; then
 			for j in $(test_seq 1 89); do
-				printf X
+				printf X || return 1
 			done
 		else
 			printf X
 		fi &&
-		printf "\n"
+		printf "\n" || return 1
 	done >.git/logs/refs/heads/reflogskip &&
 	git rev-parse reflogskip@{73} >actual &&
 	echo ${zf}03 >expect &&
@@ -418,8 +441,41 @@ test_expect_success 'expire with multiple worktrees' '
 		test_commit -C link-wt foobar &&
 		test_tick &&
 		git reflog expire --verbose --all --expire=$test_tick &&
-		test_must_be_empty .git/worktrees/link-wt/logs/HEAD
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD >actual &&
+		test_must_be_empty actual
 	)
+'
+
+test_expect_success 'expire one of multiple worktrees' '
+	git init main-wt2 &&
+	(
+		cd main-wt2 &&
+		test_tick &&
+		test_commit foo &&
+		git worktree add link-wt &&
+		test_tick &&
+		test_commit -C link-wt foobar &&
+		test_tick &&
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD \
+			>expect-link-wt &&
+		git reflog expire --verbose --all --expire=$test_tick \
+			--single-worktree &&
+		test-tool ref-store worktree:main for-each-reflog-ent HEAD \
+			>actual-main &&
+		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD \
+			>actual-link-wt &&
+		test_must_be_empty actual-main &&
+		test_cmp expect-link-wt actual-link-wt
+	)
+'
+
+test_expect_success 'empty reflog' '
+	test_when_finished "rm -rf empty" &&
+	git init empty &&
+	test_commit -C empty A &&
+	test-tool ref-store main create-reflog refs/heads/foo &&
+	git -C empty reflog expire --all 2>err &&
+	test_must_be_empty err
 '
 
 test_done

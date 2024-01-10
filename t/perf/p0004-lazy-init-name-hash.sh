@@ -49,7 +49,7 @@ test_perf "single-threaded, $desc" "
 	test-tool lazy-init-name-hash --single --count=$count
 "
 
-test_perf REPO_BIG_ENOUGH_FOR_MULTI "multi-threaded, $desc" "
+test_perf "multi-threaded, $desc" --prereq REPO_BIG_ENOUGH_FOR_MULTI "
 	test-tool lazy-init-name-hash --multi --count=$count
 "
 

@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "path.h"
 #include "quote.h"
+#include "strbuf.h"
 #include "strvec.h"
 
 int quote_path_fully = 1;

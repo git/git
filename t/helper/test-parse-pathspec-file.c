@@ -1,12 +1,11 @@
 #include "test-tool.h"
 #include "parse-options.h"
 #include "pathspec.h"
-#include "gettext.h"
 
 int cmd__parse_pathspec_file(int argc, const char **argv)
 {
 	struct pathspec pathspec;
-	const char *pathspec_from_file = NULL;
+	char *pathspec_from_file = NULL;
 	int pathspec_file_nul = 0, i;
 
 	static const char *const usage[] = {
@@ -29,5 +28,6 @@ int cmd__parse_pathspec_file(int argc, const char **argv)
 		printf("%s\n", pathspec.items[i].original);
 
 	clear_pathspec(&pathspec);
+	free(pathspec_from_file);
 	return 0;
 }

@@ -13,6 +13,7 @@ Unless the directory already exists, in which case we clean up only what we
 wrote.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 corrupt_repo () {

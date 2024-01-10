@@ -3,7 +3,7 @@
 sub2
 sub3
 sub4" &&
-	chks_sub=$(cat <<TXT | sed 's,^,sub dir/,'
+	chks_sub=$(cat <<TXT | sed "s,^,sub dir/,"
 $chks
 TXT
 ) &&
@@ -11,7 +11,7 @@ TXT
 main-sub2
 main-sub3
 main-sub4" &&
-	chkms_sub=$(cat <<TXT | sed 's,^,sub dir/,'
+	chkms_sub=$(cat <<TXT | sed "s,^,sub dir/,"
 $chkms
 TXT
 ) &&

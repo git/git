@@ -2,6 +2,10 @@ diff_cmd () {
 	"$merge_tool_path" "$LOCAL" "$REMOTE"
 }
 
+diff_cmd_help () {
+	echo "Use Guiffy's Diff Tool (requires a graphical session)"
+}
+
 merge_cmd () {
 	if $base_present
 	then
@@ -11,6 +15,10 @@ merge_cmd () {
 		"$merge_tool_path" -m "$LOCAL" \
 		"$REMOTE" "$MERGED"
 	fi
+}
+
+merge_cmd_help () {
+	echo "Use Guiffy's Diff Tool (requires a graphical session)"
 }
 
 exit_code_trustable () {

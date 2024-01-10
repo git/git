@@ -1,7 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "strbuf.h"
+#include "trace2.h"
 #include "trace2/tr2_cfg.h"
 #include "trace2/tr2_sysenv.h"
+#include "wildmatch.h"
 
 static struct strbuf **tr2_cfg_patterns;
 static int tr2_cfg_count_patterns;
@@ -97,7 +100,8 @@ struct tr2_cfg_data {
 /*
  * See if the given config key matches any of our patterns of interest.
  */
-static int tr2_cfg_cb(const char *key, const char *value, void *d)
+static int tr2_cfg_cb(const char *key, const char *value,
+		      const struct config_context *ctx, void *d)
 {
 	struct strbuf **s;
 	struct tr2_cfg_data *data = (struct tr2_cfg_data *)d;
@@ -106,7 +110,8 @@ static int tr2_cfg_cb(const char *key, const char *value, void *d)
 		struct strbuf *buf = *s;
 		int wm = wildmatch(buf->buf, key, WM_CASEFOLD);
 		if (wm == WM_MATCH) {
-			trace2_def_param_fl(data->file, data->line, key, value);
+			trace2_def_param_fl(data->file, data->line, key, value,
+					    ctx->kvi);
 			return 0;
 		}
 	}
@@ -124,8 +129,10 @@ void tr2_cfg_list_config_fl(const char *file, int line)
 
 void tr2_list_env_vars_fl(const char *file, int line)
 {
+	struct key_value_info kvi = KVI_INIT;
 	struct strbuf **s;
 
+	kvi_from_param(&kvi);
 	if (tr2_load_env_vars() <= 0)
 		return;
 
@@ -133,15 +140,19 @@ void tr2_list_env_vars_fl(const char *file, int line)
 		struct strbuf *buf = *s;
 		const char *val = getenv(buf->buf);
 		if (val && *val)
-			trace2_def_param_fl(file, line, buf->buf, val);
+			trace2_def_param_fl(file, line, buf->buf, val, &kvi);
 	}
 }
 
 void tr2_cfg_set_fl(const char *file, int line, const char *key,
 		    const char *value)
 {
+	struct key_value_info kvi = KVI_INIT;
+	struct config_context ctx = {
+		.kvi = &kvi,
+	};
 	struct tr2_cfg_data data = { file, line };
 
 	if (tr2_cfg_load_patterns() > 0)
-		tr2_cfg_cb(key, value, &data);
+		tr2_cfg_cb(key, value, &ctx, &data);
 }

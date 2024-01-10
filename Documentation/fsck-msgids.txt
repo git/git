@@ -1,0 +1,180 @@
+`badDate`::
+	(ERROR) Invalid date format in an author/committer line.
+
+`badDateOverflow`::
+	(ERROR) Invalid date value in an author/committer line.
+
+`badEmail`::
+	(ERROR) Invalid email format in an author/committer line.
+
+`badFilemode`::
+	(INFO) A tree contains a bad filemode entry.
+
+`badName`::
+	(ERROR) An author/committer name is empty.
+
+`badObjectSha1`::
+	(ERROR) An object has a bad sha1.
+
+`badParentSha1`::
+	(ERROR) A commit object has a bad parent sha1.
+
+`badTagName`::
+	(INFO) A tag has an invalid format.
+
+`badTimezone`::
+	(ERROR) Found an invalid time zone in an author/committer line.
+
+`badTree`::
+	(ERROR) A tree cannot be parsed.
+
+`badTreeSha1`::
+	(ERROR) A tree has an invalid format.
+
+`badType`::
+	(ERROR) Found an invalid object type.
+
+`duplicateEntries`::
+	(ERROR) A tree contains duplicate file entries.
+
+`emptyName`::
+	(WARN) A path contains an empty name.
+
+`extraHeaderEntry`::
+	(IGNORE) Extra headers found after `tagger`.
+
+`fullPathname`::
+	(WARN) A path contains the full path starting with "/".
+
+`gitattributesBlob`::
+	(ERROR) A non-blob found at `.gitattributes`.
+
+`gitattributesLarge`::
+	(ERROR) The `.gitattributes` blob is too large.
+
+`gitattributesLineLength`::
+	(ERROR) The `.gitattributes` blob contains too long lines.
+
+`gitattributesMissing`::
+	(ERROR) Unable to read `.gitattributes` blob.
+
+`gitattributesSymlink`::
+	(INFO) `.gitattributes` is a symlink.
+
+`gitignoreSymlink`::
+	(INFO) `.gitignore` is a symlink.
+
+`gitmodulesBlob`::
+	(ERROR) A non-blob found at `.gitmodules`.
+
+`gitmodulesLarge`::
+	(ERROR) The `.gitmodules` file is too large to parse.
+
+`gitmodulesMissing`::
+	(ERROR) Unable to read `.gitmodules` blob.
+
+`gitmodulesName`::
+	(ERROR) A submodule name is invalid.
+
+`gitmodulesParse`::
+	(INFO) Could not parse `.gitmodules` blob.
+
+`gitmodulesLarge`;
+	(ERROR) `.gitmodules` blob is too large to parse.
+
+`gitmodulesPath`::
+	(ERROR) `.gitmodules` path is invalid.
+
+`gitmodulesSymlink`::
+	(ERROR) `.gitmodules` is a symlink.
+
+`gitmodulesUpdate`::
+	(ERROR) Found an invalid submodule update setting.
+
+`gitmodulesUrl`::
+	(ERROR) Found an invalid submodule url.
+
+`hasDot`::
+	(WARN) A tree contains an entry named `.`.
+
+`hasDotdot`::
+	(WARN) A tree contains an entry named `..`.
+
+`hasDotgit`::
+	(WARN) A tree contains an entry named `.git`.
+
+`largePathname`::
+	(WARN) A tree contains an entry with a very long path name. If
+	the value of `fsck.largePathname` contains a colon, that value
+	is used as the maximum allowable length (e.g., "warn:10" would
+	complain about any path component of 11 or more bytes). The
+	default value is 4096.
+
+`mailmapSymlink`::
+	(INFO) `.mailmap` is a symlink.
+
+`missingAuthor`::
+	(ERROR) Author is missing.
+
+`missingCommitter`::
+	(ERROR) Committer is missing.
+
+`missingEmail`::
+	(ERROR) Email is missing in an author/committer line.
+
+`missingNameBeforeEmail`::
+	(ERROR) Missing name before an email in an author/committer line.
+
+`missingObject`::
+	(ERROR) Missing `object` line in tag object.
+
+`missingSpaceBeforeDate`::
+	(ERROR) Missing space before date in an author/committer line.
+
+`missingSpaceBeforeEmail`::
+	(ERROR) Missing space before the email in an author/committer line.
+
+`missingTag`::
+	(ERROR) Unexpected end after `type` line in a tag object.
+
+`missingTagEntry`::
+	(ERROR) Missing `tag` line in a tag object.
+
+`missingTaggerEntry`::
+	(INFO) Missing `tagger` line in a tag object.
+
+`missingTree`::
+	(ERROR) Missing `tree` line in a commit object.
+
+`missingType`::
+	(ERROR) Invalid type value on the `type` line in a tag object.
+
+`missingTypeEntry`::
+	(ERROR) Missing `type` line in a tag object.
+
+`multipleAuthors`::
+	(ERROR) Multiple author lines found in a commit.
+
+`nulInCommit`::
+	(WARN) Found a NUL byte in the commit object body.
+
+`nulInHeader`::
+	(FATAL) NUL byte exists in the object header.
+
+`nullSha1`::
+	(WARN) Tree contains entries pointing to a null sha1.
+
+`treeNotSorted`::
+	(ERROR) A tree is not properly sorted.
+
+`unknownType`::
+	(ERROR) Found an unknown object type.
+
+`unterminatedHeader`::
+	(FATAL) Missing end-of-line in the object header.
+
+`zeroPaddedDate`::
+	(ERROR) Found a zero padded date in an author/committer line.
+
+`zeroPaddedFilemode`::
+	(WARN) Found a zero padded filemode in a tree.

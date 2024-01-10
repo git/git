@@ -45,7 +45,7 @@
  * const char *path;
  *
  * setup_check();
- * git_check_attr(path, check);
+ * git_check_attr(&the_index, path, check);
  * ------------
  *
  * - Act on `.value` member of the result, left in `check->items[]`:
@@ -107,6 +107,18 @@
  * - Free the `attr_check` struct by calling `attr_check_free()`.
  */
 
+/**
+ * The maximum line length for a gitattributes file. If the line exceeds this
+ * length we will ignore it.
+ */
+#define ATTR_MAX_LINE_LENGTH 2048
+
+ /**
+  * The maximum size of the giattributes file. If the file exceeds this size we
+  * will ignore it.
+  */
+#define ATTR_MAX_FILE_SIZE (100 * 1024 * 1024)
+
 struct index_state;
 
 /**
@@ -121,7 +133,12 @@ struct git_attr;
 /* opaque structures used internally for attribute collection */
 struct all_attrs_item;
 struct attr_stack;
-struct index_state;
+
+/*
+ * The textual object name for the tree-ish used by git_check_attr()
+ * to read attributes from (instead of from the working tree).
+ */
+void set_git_attr_source(const char *);
 
 /*
  * Given a string, return the gitattribute object that
@@ -191,7 +208,8 @@ void attr_check_free(struct attr_check *check);
 const char *git_attr_name(const struct git_attr *);
 
 void git_check_attr(struct index_state *istate,
-		    const char *path, struct attr_check *check);
+		    const char *path,
+		    struct attr_check *check);
 
 /*
  * Retrieve all attributes that apply to the specified path.
@@ -208,5 +226,16 @@ enum git_attr_direction {
 void git_attr_set_direction(enum git_attr_direction new_direction);
 
 void attr_start(void);
+
+/* Return the system gitattributes file. */
+const char *git_attr_system_file(void);
+
+/* Return the global gitattributes file, if any. */
+const char *git_attr_global_file(void);
+
+/* Return whether the system gitattributes file is enabled and should be used. */
+int git_attr_system_is_enabled(void);
+
+extern const char *git_attr_tree;
 
 #endif /* ATTR_H */

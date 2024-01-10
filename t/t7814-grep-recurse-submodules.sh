@@ -6,6 +6,7 @@ This test verifies the recurse-submodules feature correctly greps across
 submodules.
 '
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
@@ -196,6 +197,7 @@ test_expect_success !MINGW 'grep recurse submodule colon in name' '
 	git -C "su:b" commit -m "add fi:le" &&
 	test_tick &&
 
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add "../su:b" "su:b" &&
 	git -C parent commit -m "add submodule" &&
 	test_tick &&
@@ -230,6 +232,7 @@ test_expect_success 'grep history with moved submoules' '
 	git -C sub commit -m "add file" &&
 	test_tick &&
 
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add ../sub dir/sub &&
 	git -C parent commit -m "add submodule" &&
 	test_tick &&
@@ -274,6 +277,7 @@ test_expect_success 'grep using relative path' '
 	mkdir parent/src &&
 	echo "(1|2)d(3|4)" >parent/src/file2 &&
 	git -C parent add src/file2 &&
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add ../sub &&
 	git -C parent commit -m "add files and submodule" &&
 	test_tick &&
@@ -316,6 +320,7 @@ test_expect_success 'grep from a subdir' '
 	mkdir parent/src &&
 	echo "(1|2)d(3|4)" >parent/src/file &&
 	git -C parent add src/file &&
+	test_config_global protocol.file.allow always &&
 	git -C parent submodule add ../sub src/sub &&
 	git -C parent submodule add ../sub sub &&
 	git -C parent commit -m "add files and submodules" &&
@@ -343,7 +348,7 @@ test_incompatible_with_recurse_submodules ()
 {
 	test_expect_success "--recurse-submodules and $1 are incompatible" "
 		test_must_fail git grep -e. --recurse-submodules $1 2>actual &&
-		test_i18ngrep 'not supported with --recurse-submodules' actual
+		test_grep 'not supported with --recurse-submodules' actual
 	"
 }
 
@@ -441,4 +446,192 @@ test_expect_success 'grep --recurse-submodules with --cached ignores worktree mo
 	test_must_fail git grep --recurse-submodules --cached "A modified line in submodule" >actual 2>&1 &&
 	test_must_be_empty actual
 '
+
+test_expect_failure 'grep --textconv: superproject .gitattributes does not affect submodules' '
+	reset_and_clean &&
+	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
+	echo "a diff=d2x" >.gitattributes &&
+
+	cat >expect <<-\EOF &&
+	a:(1|2)x(3|4)
+	EOF
+	git grep --textconv --recurse-submodules x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'grep --textconv: superproject .gitattributes (from index) does not affect submodules' '
+	reset_and_clean &&
+	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
+	echo "a diff=d2x" >.gitattributes &&
+	git add .gitattributes &&
+	rm .gitattributes &&
+
+	cat >expect <<-\EOF &&
+	a:(1|2)x(3|4)
+	EOF
+	git grep --textconv --recurse-submodules x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'grep --textconv: superproject .git/info/attributes does not affect submodules' '
+	reset_and_clean &&
+	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
+	super_info="$(git rev-parse --git-path info)" &&
+	super_attr="$super_info/attributes" &&
+	test_when_finished "rm -f \"$super_attr\"" &&
+	mkdir "$super_info" &&
+	echo "a diff=d2x" >"$super_attr" &&
+
+	cat >expect <<-\EOF &&
+	a:(1|2)x(3|4)
+	EOF
+	git grep --textconv --recurse-submodules x >actual &&
+	test_cmp expect actual
+'
+
+# Note: what currently prevents this test from passing is not that the
+# .gitattributes file from "./submodule" is being ignored, but that it is being
+# propagated to the nested "./submodule/sub" files.
+#
+test_expect_failure 'grep --textconv correctly reads submodule .gitattributes' '
+	reset_and_clean &&
+	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
+	echo "a diff=d2x" >submodule/.gitattributes &&
+
+	cat >expect <<-\EOF &&
+	submodule/a:(1|2)x(3|4)
+	EOF
+	git grep --textconv --recurse-submodules x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'grep --textconv correctly reads submodule .gitattributes (from index)' '
+	reset_and_clean &&
+	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
+	echo "a diff=d2x" >submodule/.gitattributes &&
+	git -C submodule add .gitattributes &&
+	rm submodule/.gitattributes &&
+
+	cat >expect <<-\EOF &&
+	submodule/a:(1|2)x(3|4)
+	EOF
+	git grep --textconv --recurse-submodules x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'grep --textconv correctly reads submodule .git/info/attributes' '
+	reset_and_clean &&
+	test_config_global diff.d2x.textconv "sed -e \"s/d/x/\"" &&
+
+	submodule_info="$(git -C submodule rev-parse --path-format=absolute --git-path info)" &&
+	submodule_attr="$submodule_info/attributes" &&
+	test_when_finished "rm -f \"$submodule_attr\"" &&
+	echo "a diff=d2x" >"$submodule_attr" &&
+
+	cat >expect <<-\EOF &&
+	submodule/a:(1|2)x(3|4)
+	EOF
+	git grep --textconv --recurse-submodules x >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'grep saves textconv cache in the appropriate repository' '
+	reset_and_clean &&
+	test_config_global diff.d2x_cached.textconv "sed -e \"s/d/x/\"" &&
+	test_config_global diff.d2x_cached.cachetextconv true &&
+	echo "a diff=d2x_cached" >submodule/.gitattributes &&
+
+	# We only read/write to the textconv cache when grepping from an OID,
+	# as the working tree file might have modifications.
+	git grep --textconv --cached --recurse-submodules x &&
+
+	super_textconv_cache="$(git rev-parse --git-path refs/notes/textconv/d2x_cached)" &&
+	sub_textconv_cache="$(git -C submodule rev-parse \
+			--path-format=absolute --git-path refs/notes/textconv/d2x_cached)" &&
+	test_path_is_missing "$super_textconv_cache" &&
+	test_path_is_file "$sub_textconv_cache"
+'
+
+test_expect_success 'grep partially-cloned submodule' '
+	# Set up clean superproject and submodule for partial cloning.
+	test_config_global protocol.file.allow always &&
+	git init super &&
+	git init super/sub &&
+	(
+		cd super &&
+		test_commit --no-tag "Add file in superproject" \
+			super-file "Some content for super-file" &&
+		test_commit -C sub --no-tag "Add file in submodule" \
+			sub-file "Some content for sub-file" &&
+		git submodule add ./sub &&
+		git commit -m "Add other as submodule sub" &&
+		test_tick &&
+		test_commit -C sub --no-tag --append "Update file in submodule" \
+			sub-file "Some more content for sub-file" &&
+		git add sub &&
+		git commit -m "Update submodule" &&
+		test_tick &&
+		git config --local uploadpack.allowfilter 1 &&
+		git config --local uploadpack.allowanysha1inwant 1 &&
+		git -C sub config --local uploadpack.allowfilter 1 &&
+		git -C sub config --local uploadpack.allowanysha1inwant 1
+	) &&
+	# Clone the superproject & submodule, then make sure we can lazy-fetch submodule objects.
+	git clone --filter=blob:none --also-filter-submodules \
+		--recurse-submodules "file://$(pwd)/super" partial &&
+	(
+		cd partial &&
+		cat >expect <<-\EOF &&
+		HEAD^:sub/sub-file:Some content for sub-file
+		HEAD^:super-file:Some content for super-file
+		EOF
+
+		GIT_TRACE2_EVENT="$(pwd)/trace2.log" git grep -e content \
+			--recurse-submodules HEAD^ >actual &&
+		test_cmp expect actual &&
+		# Verify that we actually fetched data from the promisor remote:
+		grep \"category\":\"promisor\",\"key\":\"fetch_count\",\"value\":\"1\" trace2.log
+	)
+'
+
+test_expect_success 'check scope of core.useReplaceRefs' '
+	git init base &&
+	git init base/sub &&
+
+	echo A >base/a &&
+	echo B >base/b &&
+	echo C >base/sub/c &&
+	echo D >base/sub/d &&
+
+	git -C base/sub add c d &&
+	git -C base/sub commit -m "Add files" &&
+
+	git -C base submodule add ./sub &&
+	git -C base add a b sub &&
+	git -C base commit -m "Add files and submodule" &&
+
+	A=$(git -C base rev-parse HEAD:a) &&
+	B=$(git -C base rev-parse HEAD:b) &&
+	C=$(git -C base/sub rev-parse HEAD:c) &&
+	D=$(git -C base/sub rev-parse HEAD:d) &&
+
+	git -C base replace $A $B &&
+	git -C base/sub replace $C $D &&
+
+	test_must_fail git -C base grep --cached --recurse-submodules A &&
+	test_must_fail git -C base grep --cached --recurse-submodules C &&
+
+	git -C base config core.useReplaceRefs false &&
+	git -C base grep --recurse-submodules A &&
+	test_must_fail git -C base grep --cached --recurse-submodules C &&
+
+	git -C base/sub config core.useReplaceRefs false &&
+	git -C base grep --cached --recurse-submodules A &&
+	git -C base grep --cached --recurse-submodules C &&
+
+	git -C base config --unset core.useReplaceRefs &&
+	test_must_fail git -C base grep --cached --recurse-submodules A &&
+	git -C base grep --cached --recurse-submodules C
+'
+
 test_done

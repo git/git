@@ -5,6 +5,7 @@ test_description='sparse checkout scope tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -25,6 +26,7 @@ test_expect_success 'create feature branch' '
 
 test_expect_success 'perform sparse checkout of main' '
 	git config --local --bool core.sparsecheckout true &&
+	mkdir .git/info &&
 	echo "!/*" >.git/info/sparse-checkout &&
 	echo "/a" >>.git/info/sparse-checkout &&
 	echo "/c" >>.git/info/sparse-checkout &&
@@ -52,9 +54,28 @@ test_expect_success 'return to full checkout of main' '
 	test "$(cat b)" = "modified"
 '
 
+test_expect_success 'skip-worktree on files outside sparse patterns' '
+	git sparse-checkout disable &&
+	git sparse-checkout set --no-cone "a*" &&
+	git checkout-index --all --ignore-skip-worktree-bits &&
+
+	git ls-files -t >output &&
+	! grep ^S output >actual &&
+	test_must_be_empty actual &&
+
+	test_config sparse.expectFilesOutsideOfPatterns true &&
+	cat <<-\EOF >expect &&
+	S b
+	S c
+	EOF
+	git ls-files -t >output &&
+	grep ^S output >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'in partial clone, sparse checkout only fetches needed blobs' '
 	test_create_repo server &&
-	git clone "file://$(pwd)/server" client &&
+	git clone --template= "file://$(pwd)/server" client &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -66,6 +87,7 @@ test_expect_success 'in partial clone, sparse checkout only fetches needed blobs
 	git -C server commit -m message &&
 
 	test_config -C client core.sparsecheckout 1 &&
+	mkdir client/.git/info &&
 	echo "!/*" >client/.git/info/sparse-checkout &&
 	echo "/a" >>client/.git/info/sparse-checkout &&
 	git -C client fetch --filter=blob:none origin &&

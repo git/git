@@ -1,0 +1,6 @@
+public record RIGHT(int comp1, double comp2, String comp3) {
+    static int ONE;
+    static int TWO;
+    static int THREE;
+    static int ChangeMe;
+}

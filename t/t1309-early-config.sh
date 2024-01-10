@@ -2,6 +2,7 @@
 
 test_description='Test read_early_config()'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'read early config' '
@@ -77,7 +78,7 @@ test_with_config () {
 
 test_expect_success 'ignore .git/ with incompatible repository version' '
 	test_with_config "[core]repositoryformatversion = 999999" 2>err &&
-	test_i18ngrep "warning:.* Expected git repo version <= [1-9]" err
+	test_grep "warning:.* Expected git repo version <= [1-9]" err
 '
 
 test_expect_failure 'ignore .git/ with invalid repository version' '

@@ -4,7 +4,7 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
-#include "hash.h"
+#include "hash-ll.h"
 #include "string-list.h"
 
 struct index_state;
@@ -53,7 +53,11 @@ struct delayed_checkout {
 	enum ce_delay_state state;
 	/* List of filter drivers that signaled delayed blobs. */
 	struct string_list filters;
-	/* List of delayed blobs identified by their path. */
+	/*
+	 * List of delayed blobs identified by their path. The `util` member
+	 * holds a counter pointer which must be incremented when/if the
+	 * associated blob gets checked out.
+	 */
 	struct string_list paths;
 };
 
@@ -88,7 +92,7 @@ void convert_attrs(struct index_state *istate,
 		   struct conv_attrs *ca, const char *path);
 
 extern enum eol core_eol;
-extern char *check_roundtrip_encoding;
+extern const char *check_roundtrip_encoding;
 const char *get_cached_convert_stats_ascii(struct index_state *istate,
 					   const char *path);
 const char *get_wt_convert_stats_ascii(const char *path);

@@ -31,7 +31,8 @@ void init_parallel_checkout(void);
  * entry is not eligible for parallel checkout. Otherwise, enqueue the entry
  * for later write and return 0.
  */
-int enqueue_checkout(struct cache_entry *ce, struct conv_attrs *ca);
+int enqueue_checkout(struct cache_entry *ce, struct conv_attrs *ca,
+		     int *checkout_counter);
 size_t pc_queue_size(void);
 
 /*
@@ -68,6 +69,7 @@ struct parallel_checkout_item {
 	struct cache_entry *ce;
 	struct conv_attrs ca;
 	size_t id; /* position in parallel_checkout.items[] of main process */
+	int *checkout_counter;
 
 	/* Output fields, sent from workers. */
 	enum pc_item_status status;

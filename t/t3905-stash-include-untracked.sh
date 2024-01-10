@@ -404,7 +404,7 @@ test_expect_success 'stash show --include-untracked errors on duplicate files' '
 	) &&
 	w_commit=$(git commit-tree -p HEAD -p "$i_commit" -p "$u_commit" -m "WIP on any-branch" "$tree") &&
 	test_must_fail git stash show --include-untracked "$w_commit" 2>err &&
-	test_i18ngrep "worktree and untracked commit have duplicate entries: tracked" err
+	test_grep "worktree and untracked commit have duplicate entries: tracked" err
 '
 
 test_expect_success 'stash show --{include,only}-untracked on stashes without untracked entries' '
@@ -420,6 +420,12 @@ test_expect_success 'stash show --{include,only}-untracked on stashes without un
 
 	git stash show --only-untracked >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'stash -u ignores sub-repository' '
+	test_when_finished "rm -rf sub-repo" &&
+	git init sub-repo &&
+	git stash -u
 '
 
 test_done

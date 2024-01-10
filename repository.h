@@ -1,9 +1,8 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-#include "path.h"
-
 struct config_set;
+struct fsmonitor_settings;
 struct git_hash_algo;
 struct index_state;
 struct lock_file;
@@ -11,6 +10,7 @@ struct pathspec;
 struct raw_object_store;
 struct submodule_cache;
 struct promisor_remote_config;
+struct remote_state;
 
 enum untracked_cache_setting {
 	UNTRACKED_CACHE_KEEP,
@@ -19,7 +19,7 @@ enum untracked_cache_setting {
 };
 
 enum fetch_negotiation_setting {
-	FETCH_NEGOTIATION_DEFAULT,
+	FETCH_NEGOTIATION_CONSECUTIVE,
 	FETCH_NEGOTIATION_SKIPPING,
 	FETCH_NEGOTIATION_NOOP,
 };
@@ -28,19 +28,46 @@ struct repo_settings {
 	int initialized;
 
 	int core_commit_graph;
+	int commit_graph_generation_version;
 	int commit_graph_read_changed_paths;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
 	int command_requires_full_index;
 	int sparse_index;
+	int pack_read_reverse_index;
+	int pack_use_bitmap_boundary_traversal;
+
+	/*
+	 * Does this repository have core.useReplaceRefs=true (on by
+	 * default)? This provides a repository-scoped version of this
+	 * config, though it could be disabled process-wide via some Git
+	 * builtins or the --no-replace-objects option. See
+	 * replace_refs_enabled() for more details.
+	 */
+	int read_replace_refs;
+
+	struct fsmonitor_settings *fsmonitor; /* lazily loaded */
 
 	int index_version;
+	int index_skip_hash;
 	enum untracked_cache_setting core_untracked_cache;
 
 	int pack_use_sparse;
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
 
 	int core_multi_pack_index;
+};
+
+struct repo_path_cache {
+	char *squash_msg;
+	char *merge_msg;
+	char *merge_rr;
+	char *merge_mode;
+	char *merge_head;
+	char *merge_autostash;
+	char *auto_merge;
+	char *fetch_head;
+	char *shallow;
 };
 
 struct repository {
@@ -81,7 +108,7 @@ struct repository {
 	/*
 	 * Contains path to often used file names.
 	 */
-	struct path_cache cached_paths;
+	struct repo_path_cache cached_paths;
 
 	/*
 	 * Path to the repository's graft file.
@@ -127,6 +154,9 @@ struct repository {
 	 */
 	struct index_state *index;
 
+	/* Repository's remotes and associated structures. */
+	struct remote_state *remote_state;
+
 	/* Repository's current hash algorithm, as serialized on disk. */
 	const struct git_hash_algo *hash_algo;
 
@@ -141,12 +171,16 @@ struct repository {
 	struct promisor_remote_config *promisor_remote_config;
 
 	/* Configurations */
+	int repository_format_worktree_config;
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;
 };
 
 extern struct repository *the_repository;
+#ifdef USE_THE_INDEX_VARIABLE
+extern struct index_state the_index;
+#endif
 
 /*
  * Define a custom repository layout. Any field can be NULL, which
@@ -158,6 +192,7 @@ struct set_gitdir_args {
 	const char *graft_file;
 	const char *index_file;
 	const char *alternate_db;
+	int disable_ref_updates;
 };
 
 void repo_set_gitdir(struct repository *repo, const char *root,
@@ -165,6 +200,7 @@ void repo_set_gitdir(struct repository *repo, const char *root,
 void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
 void initialize_the_repository(void);
+RESULT_MUST_BE_USED
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 
 /*
@@ -176,6 +212,7 @@ int repo_init(struct repository *r, const char *gitdir, const char *worktree);
  * Return 0 upon success and a non-zero value upon failure.
  */
 struct object_id;
+RESULT_MUST_BE_USED
 int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
 			const char *path,
@@ -195,9 +232,6 @@ int repo_hold_locked_index(struct repository *repo,
 			   struct lock_file *lf,
 			   int flags);
 
-int repo_read_index_preload(struct repository *,
-			    const struct pathspec *pathspec,
-			    unsigned refresh_flags);
 int repo_read_index_unmerged(struct repository *);
 /*
  * Opportunistically update the index but do not complain if we can't.

@@ -11,7 +11,7 @@ file. The file `/etc/gitconfig` can be used to store a system-wide
 default configuration.
 
 The configuration variables are used by both the Git plumbing
-and the porcelains. The variables are divided into sections, wherein
+and the porcelain commands. The variables are divided into sections, wherein
 the fully qualified variable name of the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive, allow only alphanumeric
@@ -103,7 +103,7 @@ was found.  See below for examples.
 Conditional includes
 ~~~~~~~~~~~~~~~~~~~~
 
-You can include a config file from another conditionally by setting a
+You can conditionally include a config file from another by setting an
 `includeIf.<condition>.path` variable to the name of the file to be
 included.
 
@@ -118,7 +118,7 @@ are:
 	pattern, the include condition is met.
 +
 The .git location may be auto-discovered, or come from `$GIT_DIR`
-environment variable. If the repository is auto discovered via a .git
+environment variable. If the repository is auto-discovered via a .git
 file (e.g. from submodules, or a linked worktree), the .git location
 would be the final location where the .git directory is, not where the
 .git file is.
@@ -158,6 +158,33 @@ example, the pattern `foo/` becomes `foo/**`. In other words, it matches
 all branches that begin with `foo/`. This is useful if your branches are
 organized hierarchically and you would like to apply a configuration to
 all the branches in that hierarchy.
+
+`hasconfig:remote.*.url:`::
+	The data that follows this keyword is taken to
+	be a pattern with standard globbing wildcards and two
+	additional ones, `**/` and `/**`, that can match multiple
+	components. The first time this keyword is seen, the rest of
+	the config files will be scanned for remote URLs (without
+	applying any values). If there exists at least one remote URL
+	that matches this pattern, the include condition is met.
++
+Files included by this option (directly or indirectly) are not allowed
+to contain remote URLs.
++
+Note that unlike other includeIf conditions, resolving this condition
+relies on information that is not yet known at the point of reading the
+condition. A typical use case is this option being present as a
+system-level or global-level config, and the remote URL being in a
+local-level config; hence the need to scan ahead when resolving this
+condition. In order to avoid the chicken-and-egg problem in which
+potentially-included files can affect whether such files are potentially
+included, Git breaks the cycle by prohibiting these files from affecting
+the resolution of these conditions (thus, prohibiting them from
+declaring remote URLs).
++
+As for the naming of this keyword, it is for forwards compatibility with
+a naming scheme that supports more variable-based include conditions,
+but currently Git only supports the exact keyword described above.
 
 A few more notes on matching via `gitdir` and `gitdir/i`:
 
@@ -226,6 +253,14 @@ Example
 ; currently checked out
 [includeIf "onbranch:foo-branch"]
 	path = foo.inc
+
+; include only if a remote with the given URL exists (note
+; that such a URL may be provided later in a file or in a
+; file read after this file is read, as seen in this example)
+[includeIf "hasconfig:remote.*.url:https://example.com/**"]
+	path = foo.inc
+[remote "origin"]
+	url = https://example.com/git
 ----
 
 Values
@@ -262,11 +297,19 @@ color::
        colors (at most two, one for foreground and one for background)
        and attributes (as many as you want), separated by spaces.
 +
-The basic colors accepted are `normal`, `black`, `red`, `green`, `yellow`,
-`blue`, `magenta`, `cyan` and `white`.  The first color given is the
-foreground; the second is the background.  All the basic colors except
-`normal` have a bright variant that can be specified by prefixing the
-color with `bright`, like `brightred`.
+The basic colors accepted are `normal`, `black`, `red`, `green`,
+`yellow`, `blue`, `magenta`, `cyan`, `white` and `default`.  The first
+color given is the foreground; the second is the background.  All the
+basic colors except `normal` and `default` have a bright variant that can
+be specified by prefixing the color with `bright`, like `brightred`.
++
+The color `normal` makes no change to the color. It is the same as an
+empty string, but can be used as the foreground color when specifying a
+background color alone (for example, "normal red").
++
+The color `default` explicitly resets the color to the terminal default,
+for example to specify a cleared background. Although it varies between
+terminals, this is usually not the same as setting to "white black".
 +
 Colors may also be given as numbers between 0 and 255; these use ANSI
 256-color mode (but note that not all terminals may support this).  If
@@ -279,6 +322,11 @@ The position of any attributes with respect to the colors
 (before, after, or in between), doesn't matter. Specific attributes may
 be turned off by prefixing them with `no` or `no-` (e.g., `noreverse`,
 `no-ul`, etc).
++
+The pseudo-attribute `reset` resets all colors and attributes before
+applying the specified coloring. For example, `reset green` will result
+in a green foreground and default background without any active
+attributes.
 +
 An empty color string produces no color effect at all. This can be used
 to avoid coloring specific elements without disabling color entirely.
@@ -304,7 +352,7 @@ path relative to Git's "runtime prefix", i.e. relative to the location
 where Git itself was installed. For example, `%(prefix)/bin/` refers to
 the directory in which the Git executable itself lives. If Git was
 compiled without runtime prefix support, the compiled-in prefix will be
-subsituted instead. In the unlikely event that a literal path needs to
+substituted instead. In the unlikely event that a literal path needs to
 be specified that should _not_ be expanded, it needs to be prefixed by
 `./`, like so: `./%(prefix)/bin`.
 
@@ -323,6 +371,8 @@ other popular tools, and describe them in your documentation.
 
 include::config/advice.txt[]
 
+include::config/attr.txt[]
+
 include::config/core.txt[]
 
 include::config/add.txt[]
@@ -338,6 +388,8 @@ include::config/blame.txt[]
 include::config/branch.txt[]
 
 include::config/browser.txt[]
+
+include::config/bundle.txt[]
 
 include::config/checkout.txt[]
 
@@ -375,6 +427,8 @@ include::config/filter.txt[]
 
 include::config/fsck.txt[]
 
+include::config/fsmonitor--daemon.txt[]
+
 include::config/gc.txt[]
 
 include::config/gitcvs.txt[]
@@ -396,6 +450,8 @@ include::config/http.txt[]
 include::config/i18n.txt[]
 
 include::config/imap.txt[]
+
+include::config/includeif.txt[]
 
 include::config/index.txt[]
 
@@ -447,13 +503,17 @@ include::config/repack.txt[]
 
 include::config/rerere.txt[]
 
-include::config/reset.txt[]
+include::config/revert.txt[]
+
+include::config/safe.txt[]
 
 include::config/sendemail.txt[]
 
 include::config/sequencer.txt[]
 
 include::config/showbranch.txt[]
+
+include::config/sparse.txt[]
 
 include::config/splitindex.txt[]
 

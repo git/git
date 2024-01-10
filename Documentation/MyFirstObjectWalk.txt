@@ -41,6 +41,7 @@ Open up a new file `builtin/walken.c` and set up the command handler:
  */
 
 #include "builtin.h"
+#include "trace.h"
 
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
@@ -49,23 +50,29 @@ int cmd_walken(int argc, const char **argv, const char *prefix)
 }
 ----
 
-NOTE: `trace_printf()` differs from `printf()` in that it can be turned on or
-off at runtime. For the purposes of this tutorial, we will write `walken` as
-though it is intended for use as a "plumbing" command: that is, a command which
-is used primarily in scripts, rather than interactively by humans (a "porcelain"
-command). So we will send our debug output to `trace_printf()` instead. When
-running, enable trace output by setting the environment variable `GIT_TRACE`.
+NOTE: `trace_printf()`, defined in `trace.h`, differs from `printf()` in
+that it can be turned on or off at runtime. For the purposes of this
+tutorial, we will write `walken` as though it is intended for use as
+a "plumbing" command: that is, a command which is used primarily in
+scripts, rather than interactively by humans (a "porcelain" command).
+So we will send our debug output to `trace_printf()` instead.
+When running, enable trace output by setting the environment variable `GIT_TRACE`.
 
 Add usage text and `-h` handling, like all subcommands should consistently do
 (our test suite will notice and complain if you fail to do so).
+We'll need to include the `parse-options.h` header.
 
 ----
+#include "parse-options.h"
+
+...
+
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
 	const char * const walken_usage[] = {
 		N_("git walken"),
 		NULL,
-	}
+	};
 	struct option options[] = {
 		OPT_END()
 	};
@@ -119,7 +126,7 @@ parameters provided by the user over the CLI.
 
 `nr` represents the number of `rev_cmdline_entry` present in the array.
 
-`alloc` is used by the `ALLOC_GROW` macro. Check `cache.h` - this variable is
+`alloc` is used by the `ALLOC_GROW` macro. Check `alloc.h` - this variable is
 used to track the allocated size of the list.
 
 Per entry, we find:
@@ -195,9 +202,14 @@ Similarly to the default values, we don't have anything to do here yet
 ourselves; however, we should call `git_default_config()` if we aren't calling
 any other existing config callbacks.
 
-Add a new function to `builtin/walken.c`:
+Add a new function to `builtin/walken.c`.
+We'll also need to include the `config.h` header:
 
 ----
+#include "config.h"
+
+...
+
 static int git_walken_config(const char *var, const char *value, void *cb)
 {
 	/*
@@ -229,8 +241,14 @@ typically done by calling `repo_init_revisions()` with the repository you intend
 to target, as well as the `prefix` argument of `cmd_walken` and your `rev_info`
 struct.
 
-Add the `struct rev_info` and the `repo_init_revisions()` call:
+Add the `struct rev_info` and the `repo_init_revisions()` call.
+We'll also need to include the `revision.h` header:
+
 ----
+#include "revision.h"
+
+...
+
 int cmd_walken(int argc, const char **argv, const char *prefix)
 {
 	/* This can go wherever you like in your declarations.*/
@@ -325,6 +343,10 @@ the walk loop below the `prepare_revision_walk()` call within your
 `walken_commit_walk()`:
 
 ----
+#include "pretty.h"
+
+...
+
 static void walken_commit_walk(struct rev_info *rev)
 {
 	struct commit *commit;
@@ -506,24 +528,25 @@ function shows that the all-object walk is being performed by
 `traverse_commit_list()` or `traverse_commit_list_filtered()`. Those two
 functions reside in `list-objects.c`; examining the source shows that, despite
 the name, these functions traverse all kinds of objects. Let's have a look at
-the arguments to `traverse_commit_list_filtered()`, which are a superset of the
-arguments to the unfiltered version.
+the arguments to `traverse_commit_list()`.
 
-- `struct list_objects_filter_options *filter_options`: This is a struct which
-  stores a filter-spec as outlined in `Documentation/rev-list-options.txt`.
-- `struct rev_info *revs`: This is the `rev_info` used for the walk.
+- `struct rev_info *revs`: This is the `rev_info` used for the walk. If
+  its `filter` member is not `NULL`, then `filter` contains information for
+  how to filter the object list.
 - `show_commit_fn show_commit`: A callback which will be used to handle each
   individual commit object.
 - `show_object_fn show_object`: A callback which will be used to handle each
   non-commit object (so each blob, tree, or tag).
 - `void *show_data`: A context buffer which is passed in turn to `show_commit`
   and `show_object`.
+
+In addition, `traverse_commit_list_filtered()` has an additional parameter:
+
 - `struct oidset *omitted`: A linked-list of object IDs which the provided
   filter caused to be omitted.
 
-It looks like this `traverse_commit_list_filtered()` uses callbacks we provide
-instead of needing us to call it repeatedly ourselves. Cool! Let's add the
-callbacks first.
+It looks like these methods use callbacks we provide instead of needing us
+to call it repeatedly ourselves. Cool! Let's add the callbacks first.
 
 For the sake of this tutorial, we'll simply keep track of how many of each kind
 of object we find. At file scope in `builtin/walken.c` add the following
@@ -624,9 +647,14 @@ static void walken_object_walk(struct rev_info *rev)
 ----
 
 Let's start by calling just the unfiltered walk and reporting our counts.
-Complete your implementation of `walken_object_walk()`:
+Complete your implementation of `walken_object_walk()`.
+We'll also need to include the `list-objects.h` header.
 
 ----
+#include "list-objects.h"
+
+...
+
 	traverse_commit_list(rev, walken_show_commit, walken_show_object, NULL);
 
 	printf("commits %d\nblobs %d\ntags %d\ntrees %d\n", commit_count,
@@ -691,20 +719,9 @@ help understand. In our case, that means we omit trees and blobs not directly
 referenced by `HEAD` or `HEAD`'s history, because we begin the walk with only
 `HEAD` in the `pending` list.)
 
-First, we'll need to `#include "list-objects-filter-options.h"` and set up the
-`struct list_objects_filter_options` at the top of the function.
-
-----
-static void walken_object_walk(struct rev_info *rev)
-{
-	struct list_objects_filter_options filter_options = {};
-
-	...
-----
-
 For now, we are not going to track the omitted objects, so we'll replace those
 parameters with `NULL`. For the sake of simplicity, we'll add a simple
-build-time branch to use our filter or not. Replace the line calling
+build-time branch to use our filter or not. Preface the line calling
 `traverse_commit_list()` with the following, which will remind us which kind of
 walk we've just performed:
 
@@ -712,19 +729,17 @@ walk we've just performed:
 	if (0) {
 		/* Unfiltered: */
 		trace_printf(_("Unfiltered object walk.\n"));
-		traverse_commit_list(rev, walken_show_commit,
-				walken_show_object, NULL);
 	} else {
 		trace_printf(
 			_("Filtered object walk with filterspec 'tree:1'.\n"));
-		parse_list_objects_filter(&filter_options, "tree:1");
-
-		traverse_commit_list_filtered(&filter_options, rev,
-			walken_show_commit, walken_show_object, NULL, NULL);
+		CALLOC_ARRAY(rev->filter, 1);
+		parse_list_objects_filter(rev->filter, "tree:1");
 	}
+	traverse_commit_list(rev, walken_show_commit,
+			     walken_show_object, NULL);
 ----
 
-`struct list_objects_filter_options` is usually built directly from a command
+The `rev->filter` member is usually built directly from a command
 line argument, so the module provides an easy way to build one from a string.
 Even though we aren't taking user input right now, we can still build one with
 a hardcoded string using `parse_list_objects_filter()`.
@@ -745,6 +760,10 @@ reachable objects are walked in order to populate the list.
 First, add the `struct oidset` and related items we will use to iterate it:
 
 ----
+#include "oidset.h"
+
+...
+
 static void walken_object_walk(
 	...
 
@@ -763,7 +782,7 @@ object:
 ----
 	...
 
-		traverse_commit_list_filtered(&filter_options, rev,
+		traverse_commit_list_filtered(rev,
 			walken_show_commit, walken_show_object, NULL, &omitted);
 
 	...
@@ -796,6 +815,10 @@ just walks of commits. First, we'll make our handlers chattier - modify
 go:
 
 ----
+#include "hex.h"
+
+...
+
 static void walken_show_commit(struct commit *cmt, void *buf)
 {
 	trace_printf("commit: %s\n", oid_to_hex(&cmt->object.oid));

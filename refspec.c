@@ -1,16 +1,20 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hash.h"
+#include "hex.h"
 #include "strvec.h"
 #include "refs.h"
 #include "refspec.h"
+#include "strbuf.h"
 
 static struct refspec_item s_tag_refspec = {
-	0,
-	1,
-	0,
-	0,
-	0,
-	"refs/tags/*",
-	"refs/tags/*"
+	.force = 0,
+	.pattern = 1,
+	.matching = 0,
+	.exact_sha1 = 0,
+	.negative = 0,
+	.src = "refs/tags/*",
+	.dst = "refs/tags/*",
 };
 
 /* See TAG_REFSPEC for the string version */

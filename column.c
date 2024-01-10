@@ -1,7 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "column.h"
 #include "string-list.h"
+#include "pager.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "utf8.h"
@@ -23,7 +24,7 @@ struct column_data {
 /* return length of 's' in letters, ANSI escapes stripped */
 static int item_length(const char *s)
 {
-	return utf8_strnwidth(s, -1, 1);
+	return utf8_strnwidth(s, strlen(s), 1);
 }
 
 /*

@@ -9,8 +9,8 @@ git-push - Update remote refs along with associated objects
 SYNOPSIS
 --------
 [verse]
-'git push' [--all | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
-	   [--repo=<repository>] [-f | --force] [-d | --delete] [--prune] [-v | --verbose]
+'git push' [--all | --branches | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
+	   [--repo=<repository>] [-f | --force] [-d | --delete] [--prune] [-q | --quiet] [-v | --verbose]
 	   [-u | --set-upstream] [-o <string> | --push-option=<string>]
 	   [--[no-]signed|--signed=(true|false|if-asked)]
 	   [--force-with-lease[=<refname>[:<expect>]] [--force-if-includes]]
@@ -37,7 +37,7 @@ the default `<refspec>` by consulting `remote.*.push` configuration,
 and if it is not found, honors `push.default` configuration to decide
 what to push (See linkgit:git-config[1] for the meaning of `push.default`).
 
-When neither the command-line nor the configuration specify what to
+When neither the command-line nor the configuration specifies what to
 push, the default behavior is used, which corresponds to the `simple`
 value for `push.default`: the current branch is pushed to the
 corresponding upstream branch, but as a safety measure, the push is
@@ -48,7 +48,7 @@ local one.
 OPTIONS[[OPTIONS]]
 ------------------
 <repository>::
-	The "remote" repository that is destination of a push
+	The "remote" repository that is the destination of a push
 	operation.  This parameter can be either a URL
 	(see the section <<URLS,GIT URLS>> below) or the name
 	of a remote (see the section <<REMOTES,REMOTES>> below).
@@ -147,6 +147,7 @@ already exists on the remote side.
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 
 --all::
+--branches::
 	Push all branches (i.e. refs under `refs/heads/`); cannot be
 	used with other <refspec>.
 
@@ -409,10 +410,14 @@ Specifying `--no-force-if-includes` disables this behavior.
 	all submodules that changed in the revisions to be pushed will be
 	pushed. If on-demand was not able to push all necessary revisions it will
 	also be aborted and exit with non-zero status. If 'only' is used all
-	submodules will be recursively pushed while the superproject is left
+	submodules will be pushed while the superproject is left
 	unpushed. A value of 'no' or using `--no-recurse-submodules` can be used
 	to override the push.recurseSubmodules configuration variable when no
 	submodule recursion is required.
++
+When using 'on-demand' or 'only', if a submodule has a
+"push.recurseSubmodules={on-demand,only}" or "submodule.recurse" configuration,
+further recursion will occur. In this case, "only" is treated as "on-demand".
 
 --[no-]verify::
 	Toggle the pre-push hook (see linkgit:githooks[5]).  The
@@ -691,6 +696,13 @@ and so would be unreachable.  As such, these commits would be removed by
 a `git gc` command on the origin repository.
 
 include::transfer-data-leaks.txt[]
+
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/push.txt[]
 
 GIT
 ---

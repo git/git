@@ -1,4 +1,7 @@
 (
-?!AMP?!	cat && echo "multi-line	string"
+	cat <<-\TXT && echo "multi-line
+	string" ?!AMP?!
+	fizzle
+	TXT
 	bap
->)
+)

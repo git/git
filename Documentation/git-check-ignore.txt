@@ -33,7 +33,7 @@ OPTIONS
 	Instead of printing the paths that are excluded, for each path
 	that matches an exclude pattern, print the exclude pattern
 	together with the path.  (Matching an exclude pattern usually
-	means the path is excluded, but if the pattern begins with '!'
+	means the path is excluded, but if the pattern begins with "`!`"
 	then it is a negated pattern and matching it means the path is
 	NOT excluded.)
 +
@@ -50,7 +50,7 @@ linkgit:gitignore[5].
 	with a NUL character instead of a linefeed character.
 
 -n, --non-matching::
-	Show given paths which don't match any pattern.	 This only
+	Show given paths which don't match any pattern.  This only
 	makes sense when `--verbose` is enabled, otherwise it would
 	not be possible to distinguish between paths which match a
 	pattern and those which don't.
@@ -77,7 +77,7 @@ If `--verbose` is specified, the output is a series of lines of the form:
 <pathname> is the path of a file being queried, <pattern> is the
 matching pattern, <source> is the pattern's source file, and <linenum>
 is the line number of the pattern within that source.  If the pattern
-contained a `!` prefix or `/` suffix, it will be preserved in the
+contained a "`!`" prefix or "`/`" suffix, it will be preserved in the
 output.  <source> will be an absolute path when referring to the file
 configured by `core.excludesFile`, or relative to the repository root
 when referring to `.git/info/exclude` or a per-directory exclude file.

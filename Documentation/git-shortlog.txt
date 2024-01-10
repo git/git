@@ -8,7 +8,7 @@ git-shortlog - Summarize 'git log' output
 SYNOPSIS
 --------
 [verse]
-'git shortlog' [<options>] [<revision range>] [[--] <path>...]
+'git shortlog' [<options>] [<revision-range>] [[--] <path>...]
 git log --pretty=short | 'git shortlog' [<options>]
 
 DESCRIPTION
@@ -47,6 +47,11 @@ OPTIONS
 
 	Each pretty-printed commit will be rewrapped before it is shown.
 
+--date=<format>::
+	Show dates formatted according to the given date string. (See
+	the `--date` option in the "Commit Formatting" section of
+	linkgit:git-log[1]). Useful with `--group=format:<format>`.
+
 --group=<type>::
 	Group commits based on `<type>`. If no `--group` option is
 	specified, the default is `author`. `<type>` is one of:
@@ -59,6 +64,9 @@ OPTIONS
    example, if your project uses `Reviewed-by` trailers, you might want
    to see who has been reviewing with
    `git shortlog -ns --group=trailer:reviewed-by`.
+ - `format:<format>`, any string accepted by the `--format` option of
+   'git log'. (See the "PRETTY FORMATS" section of
+   linkgit:git-log[1].)
 +
 Note that commits that do not include the trailer will not be counted.
 Likewise, commits with multiple trailers (e.g., multiple signoffs) may
@@ -89,13 +97,13 @@ counts both authors and co-authors.
 If width is `0` (zero) then indent the lines of the output without wrapping
 them.
 
-<revision range>::
+<revision-range>::
 	Show only commits in the specified revision range.  When no
-	<revision range> is specified, it defaults to `HEAD` (i.e. the
+	<revision-range> is specified, it defaults to `HEAD` (i.e. the
 	whole history leading to the current commit).  `origin..HEAD`
 	specifies all the commits reachable from the current commit
 	(i.e. `HEAD`), but not from `origin`. For a complete list of
-	ways to spell <revision range>, see the "Specifying Ranges"
+	ways to spell <revision-range>, see the "Specifying Ranges"
 	section of linkgit:gitrevisions[7].
 
 [--] <path>...::

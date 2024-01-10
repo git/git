@@ -54,6 +54,18 @@ other housekeeping tasks (e.g. rerere, working trees, reflog...) will
 be performed as well.
 
 
+--[no-]cruft::
+	When expiring unreachable objects, pack them separately into a
+	cruft pack instead of storing them as loose objects. `--cruft`
+	is on by default.
+
+--max-cruft-size=<n>::
+	When packing unreachable objects into a cruft pack, limit the
+	size of new cruft packs to be at most `<n>` bytes. Overrides any
+	value specified via the `gc.maxCruftSize` configuration. See
+	the `--max-cruft-size` option of linkgit:git-repack[1] for
+	more.
+
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
 	overridable by the config variable `gc.pruneExpire`).
@@ -73,9 +85,10 @@ be performed as well.
 	instance running on this repository.
 
 --keep-largest-pack::
-	All packs except the largest pack and those marked with a
-	`.keep` files are consolidated into a single pack. When this
-	option is used, `gc.bigPackThreshold` is ignored.
+	All packs except the largest non-cruft pack, any packs marked
+	with a `.keep` file, and any cruft pack(s) are consolidated into
+	a single pack. When this option is used, `gc.bigPackThreshold`
+	is ignored.
 
 AGGRESSIVE
 ----------
@@ -106,8 +119,7 @@ users and their repositories.
 CONFIGURATION
 -------------
 
-The below documentation is the same as what's found in
-linkgit:git-config[1]:
+include::includes/cmd-config-section-all.txt[]
 
 include::config/gc.txt[]
 

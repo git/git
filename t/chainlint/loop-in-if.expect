@@ -3,10 +3,10 @@
 	then
 		while true
 		do
-?!AMP?!			echo "pop"
-			echo "glup"
-?!AMP?!		done
+			echo "pop" ?!AMP?!
+			echo "glup" ?!LOOP?!
+		done ?!AMP?!
 		foo
-?!AMP?!	fi
+	fi ?!AMP?!
 	bar
->)
+)

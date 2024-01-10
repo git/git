@@ -1,0 +1,7 @@
+Git v2.37.7 Release Notes
+=========================
+
+This release merges up the fix that appears in v2.30.9, v2.31.8,
+v2.32.7, v2.33.8, v2.34.8, v2.35.8 and v2.36.6 to address the
+security issues CVE-2023-25652, CVE-2023-25815, and CVE-2023-29007;
+see the release notes for these versions for details.

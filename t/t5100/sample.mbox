@@ -35,7 +35,7 @@ message:
 
 From: Nit Picker <nit.picker@example.net>
 Subject: foo is too old
-Message-Id: <nitpicker.12121212@example.net>
+Message-ID: <nitpicker.12121212@example.net>
 
 Hopefully this would fix the problem stated there.
 
@@ -78,7 +78,7 @@ message:
 
 From: Nit Picker <nit.picker@example.net>
 Subject: foo is too old
-Message-Id: <nitpicker.12121212@example.net>
+Message-ID: <nitpicker.12121212@example.net>
 
 Hopefully this would fix the problem stated there.
 
@@ -508,7 +508,7 @@ From bda@mnsspb.ru Wed Nov 12 17:54:41 2008
 From: Dmitriy Blinov <bda@mnsspb.ru>
 To: navy-patches@dinar.mns.mnsspb.ru
 Date: Wed, 12 Nov 2008 17:54:41 +0300
-Message-Id: <1226501681-24923-1-git-send-email-bda@mnsspb.ru>
+Message-ID: <1226501681-24923-1-git-send-email-bda@mnsspb.ru>
 X-Mailer: git-send-email 1.5.6.5
 MIME-Version: 1.0
 Content-Type: text/plain;

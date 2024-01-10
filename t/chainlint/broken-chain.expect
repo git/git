@@ -1,6 +1,6 @@
 (
 	foo &&
-?!AMP?!	bar
+	bar ?!AMP?!
 	baz &&
 	wop
->)
+)

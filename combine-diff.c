@@ -1,14 +1,18 @@
-#include "cache.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "object-store-ll.h"
 #include "commit.h"
-#include "blob.h"
+#include "convert.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "environment.h"
+#include "hex.h"
+#include "object-name.h"
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "xdiff/xmacros.h"
 #include "log-tree.h"
 #include "refs.h"
+#include "tree.h"
 #include "userdiff.h"
 #include "oid-array.h"
 #include "revision.h"
@@ -195,10 +199,10 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 	struct lline *baseend, *newend = NULL;
 	int i, j, origbaselen = *lenbase;
 
-	if (newline == NULL)
+	if (!newline)
 		return base;
 
-	if (base == NULL) {
+	if (!base) {
 		*lenbase = lennew;
 		return newline;
 	}
@@ -332,7 +336,7 @@ static char *grab_blob(struct repository *r,
 		*size = fill_textconv(r, textconv, df, &blob);
 		free_filespec(df);
 	} else {
-		blob = read_object_file(oid, &type, size);
+		blob = repo_read_object_file(r, oid, &type, size);
 		if (type != OBJ_BLOB)
 			die("object '%s' is not a blob!", oid_to_hex(oid));
 	}
@@ -372,7 +376,7 @@ struct combine_diff_state {
 static void consume_hunk(void *state_,
 			 long ob, long on,
 			 long nb, long nn,
-			 const char *funcline, long funclen)
+			 const char *func UNUSED, long funclen UNUSED)
 {
 	struct combine_diff_state *state = state_;
 
@@ -948,11 +952,11 @@ static void show_combined_header(struct combine_diff_path *elem,
 			 "", elem->path, line_prefix, c_meta, c_reset);
 	printf("%s%sindex ", line_prefix, c_meta);
 	for (i = 0; i < num_parent; i++) {
-		abb = find_unique_abbrev(&elem->parent[i].oid,
-					 abbrev);
+		abb = repo_find_unique_abbrev(the_repository,
+					      &elem->parent[i].oid, abbrev);
 		printf("%s%s", i ? "," : "", abb);
 	}
-	abb = find_unique_abbrev(&elem->oid, abbrev);
+	abb = repo_find_unique_abbrev(the_repository, &elem->oid, abbrev);
 	printf("..%s%s\n", abb, c_reset);
 
 	if (mode_differs) {
@@ -1497,6 +1501,13 @@ void diff_tree_combined(const struct object_id *oid,
 	struct combine_diff_path *p, *paths;
 	int i, num_paths, needsep, show_log_first, num_parent = parents->nr;
 	int need_generic_pathscan;
+
+	if (opt->ignore_regex_nr)
+		die("combined diff and '%s' cannot be used together",
+		    "--ignore-matching-lines");
+	if (opt->close_file)
+		die("combined diff and '%s' cannot be used together",
+		    "--output");
 
 	/* nothing to do, if no parents */
 	if (!num_parent)

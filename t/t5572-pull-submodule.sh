@@ -2,6 +2,9 @@
 
 test_description='pull can handle submodules'
 
+GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
+export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
+
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-submodule-update.sh
 
@@ -48,6 +51,10 @@ then
 	KNOWN_FAILURE_NOFF_MERGE_ATTEMPTS_TO_MERGE_REMOVED_SUBMODULE_FILES=1
 fi
 test_submodule_switch_func "git_pull_noff"
+
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
 
 test_expect_success 'pull --recurse-submodule setup' '
 	test_create_repo child &&
@@ -104,6 +111,32 @@ test_expect_success " --[no-]recurse-submodule and submodule.recurse" '
 	test_path_is_file super/sub/merge_strategy_4.t
 '
 
+test_expect_success "fetch.recurseSubmodules option triggers recursive fetch (but not recursive update)" '
+	test_commit -C child merge_strategy_5 &&
+	# Omit the parent commit, otherwise this passes with the
+	# default "pull" behavior.
+
+	git -C super -c fetch.recursesubmodules=true pull --no-rebase &&
+	# Check that the submodule commit was fetched
+	sub_oid=$(git -C child rev-parse HEAD) &&
+	git -C super/sub cat-file -e $sub_oid &&
+	# Check that the submodule worktree did not update
+	test_path_is_missing super/sub/merge_strategy_5.t
+'
+
+test_expect_success "fetch.recurseSubmodules takes precedence over submodule.recurse" '
+	test_commit -C child merge_strategy_6 &&
+	# Omit the parent commit, otherwise this passes with the
+	# default "pull" behavior.
+
+	git -C super -c submodule.recurse=false -c fetch.recursesubmodules=true pull --no-rebase &&
+	# Check that the submodule commit was fetched
+	sub_oid=$(git -C child rev-parse HEAD) &&
+	git -C super/sub cat-file -e $sub_oid &&
+	# Check that the submodule worktree did not update
+	test_path_is_missing super/sub/merge_strategy_6.t
+'
+
 test_expect_success 'pull --rebase --recurse-submodules (remote superproject submodule changes, local submodule changes)' '
 	# This tests the following scenario :
 	# - local submodule has new commits
@@ -144,7 +177,7 @@ test_expect_success 'pull --rebase --recurse-submodules fails if both sides reco
 	# submodule itself, but the merge strategy in submodules
 	# does not support rebase:
 	test_must_fail git -C super pull --rebase --recurse-submodules 2>err &&
-	test_i18ngrep "locally recorded submodule modifications" err
+	test_grep "locally recorded submodule modifications" err
 '
 
 test_expect_success 'pull --rebase --recurse-submodules (no submodule changes, no fork-point)' '

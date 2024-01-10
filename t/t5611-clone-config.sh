@@ -4,6 +4,7 @@ test_description='tests for git clone -c key=value'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'clone -c sets config in cloned repo' '
@@ -17,7 +18,7 @@ test_expect_success 'clone -c sets config in cloned repo' '
 test_expect_success 'clone -c can set multi-keys' '
 	rm -rf child &&
 	git clone -c core.foo=bar -c core.foo=baz . child &&
-	{ echo bar; echo baz; } >expect &&
+	test_write_lines bar baz >expect &&
 	git --git-dir=child/.git config --get-all core.foo >actual &&
 	test_cmp expect actual
 '
@@ -102,7 +103,7 @@ test_expect_success 'set up shallow repository' '
 test_expect_success 'clone.rejectshallow=true should reject cloning shallow repo' '
 	test_when_finished "rm -rf out" &&
 	test_must_fail git -c clone.rejectshallow=true clone --no-local shallow-repo out 2>err &&
-	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+	test_grep -e "source repository is shallow, reject to clone." err &&
 
 	git -c clone.rejectshallow=false clone --no-local shallow-repo out
 '
@@ -110,7 +111,7 @@ test_expect_success 'clone.rejectshallow=true should reject cloning shallow repo
 test_expect_success 'option --[no-]reject-shallow override clone.rejectshallow config' '
 	test_when_finished "rm -rf out" &&
 	test_must_fail git -c clone.rejectshallow=false clone --reject-shallow --no-local shallow-repo out 2>err &&
-	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+	test_grep -e "source repository is shallow, reject to clone." err &&
 
 	git -c clone.rejectshallow=true clone --no-reject-shallow --no-local shallow-repo out
 '

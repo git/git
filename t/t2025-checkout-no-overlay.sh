@@ -2,6 +2,7 @@
 
 test_description='checkout --no-overlay <tree-ish> -- <pathspec>'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -25,7 +26,7 @@ test_expect_success 'checkout --no-overlay removing last file from directory' '
 
 test_expect_success 'checkout -p --overlay is disallowed' '
 	test_must_fail git checkout -p --overlay HEAD 2>actual &&
-	test_i18ngrep "fatal: -p and --overlay are mutually exclusive" actual
+	test_grep "fatal: options .-p. and .--overlay. cannot be used together" actual
 '
 
 test_expect_success '--no-overlay --theirs with D/F conflict deletes file' '

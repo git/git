@@ -3,16 +3,24 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
-#include "cache.h"
+#define USE_THE_INDEX_VARIABLE
+#include "builtin.h"
+#include "abspath.h"
 #include "config.h"
 #include "commit.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hash.h"
+#include "hex.h"
 #include "refs.h"
 #include "quote.h"
-#include "builtin.h"
+#include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "diff.h"
+#include "read-cache-ll.h"
 #include "revision.h"
+#include "setup.h"
 #include "split-index.h"
 #include "submodule.h"
 #include "commit-reach.h"
@@ -39,7 +47,7 @@ static int abbrev_ref_strict;
 static int output_sq;
 
 static int stuck_long;
-static struct string_list *ref_excludes;
+static struct ref_exclusions ref_excludes = REF_EXCLUSIONS_INIT;
 
 /*
  * Some arguments are relevant "revision" arguments,
@@ -136,7 +144,9 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 			struct object_id discard;
 			char *full;
 
-			switch (dwim_ref(name, strlen(name), &discard, &full, 0)) {
+			switch (repo_dwim_ref(the_repository, name,
+					      strlen(name), &discard, &full,
+					      0)) {
 			case 0:
 				/*
 				 * Not found -- not a ref.  We could
@@ -147,9 +157,12 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 				 */
 				break;
 			case 1: /* happy */
-				if (abbrev_ref)
+				if (abbrev_ref) {
+					char *old = full;
 					full = shorten_unambiguous_ref(full,
 						abbrev_ref_strict);
+					free(old);
+				}
 				show_with_type(type, full);
 				break;
 			default: /* ambiguous */
@@ -162,7 +175,8 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 		}
 	}
 	else if (abbrev)
-		show_with_type(type, find_unique_abbrev(oid, abbrev));
+		show_with_type(type,
+			       repo_find_unique_abbrev(the_repository, oid, abbrev));
 	else
 		show_with_type(type, oid_to_hex(oid));
 }
@@ -187,7 +201,7 @@ static int show_default(void)
 		struct object_id oid;
 
 		def = NULL;
-		if (!get_oid(s, &oid)) {
+		if (!repo_get_oid(the_repository, s, &oid)) {
 			show_rev(NORMAL, &oid, s);
 			return 1;
 		}
@@ -195,21 +209,23 @@ static int show_default(void)
 	return 0;
 }
 
-static int show_reference(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+static int show_reference(const char *refname, const struct object_id *oid,
+			  int flag UNUSED, void *cb_data UNUSED)
 {
-	if (ref_excluded(ref_excludes, refname))
+	if (ref_excluded(&ref_excludes, refname))
 		return 0;
 	show_rev(NORMAL, oid, refname);
 	return 0;
 }
 
-static int anti_reference(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+static int anti_reference(const char *refname, const struct object_id *oid,
+			  int flag UNUSED, void *cb_data UNUSED)
 {
 	show_rev(REVERSED, oid, refname);
 	return 0;
 }
 
-static int show_abbrev(const struct object_id *oid, void *cb_data)
+static int show_abbrev(const struct object_id *oid, void *cb_data UNUSED)
 {
 	show_rev(NORMAL, oid, NULL);
 	return 0;
@@ -277,7 +293,7 @@ static int try_difference(const char *arg)
 		return 0;
 	}
 
-	if (!get_oid_committish(start, &start_oid) && !get_oid_committish(end, &end_oid)) {
+	if (!repo_get_oid_committish(the_repository, start, &start_oid) && !repo_get_oid_committish(the_repository, end, &end_oid)) {
 		show_rev(NORMAL, &end_oid, end);
 		show_rev(symmetric ? NORMAL : REVERSED, &start_oid, start);
 		if (symmetric) {
@@ -289,7 +305,7 @@ static int try_difference(const char *arg)
 				*dotdot = '.';
 				return 0;
 			}
-			exclude = get_merge_bases(a, b);
+			exclude = repo_get_merge_bases(the_repository, a, b);
 			while (exclude) {
 				struct commit *commit = pop_commit(&exclude);
 				show_rev(REVERSED, &commit->object.oid, NULL);
@@ -335,7 +351,7 @@ static int try_parent_shorthands(const char *arg)
 		return 0;
 
 	*dotdot = 0;
-	if (get_oid_committish(arg, &oid) ||
+	if (repo_get_oid_committish(the_repository, arg, &oid) ||
 	    !(commit = lookup_commit_reference(the_repository, &oid))) {
 		*dotdot = '^';
 		return 0;
@@ -476,8 +492,11 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 
 		/* name(s) */
 		s = strpbrk(sb.buf, flag_chars);
-		if (s == NULL)
+		if (!s)
 			s = help;
+
+		if (s == sb.buf)
+			die(_("missing opt-spec before option flags"));
 
 		if (s - sb.buf == 1) /* short option only */
 			o->short_name = *sb.buf;
@@ -525,6 +544,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	strbuf_addstr(&parsed, " --");
 	sq_quote_argv(&parsed, argv);
 	puts(parsed.buf);
+	strbuf_release(&parsed);
 	return 0;
 }
 
@@ -580,7 +600,7 @@ static void handle_ref_opt(const char *pattern, const char *prefix)
 		for_each_glob_ref_in(show_reference, pattern, prefix, NULL);
 	else
 		for_each_ref_in(prefix, show_reference, NULL);
-	clear_ref_exclusion(&ref_excludes);
+	clear_ref_exclusions(&ref_excludes);
 }
 
 enum format_type {
@@ -723,6 +743,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			prefix = setup_git_directory();
 			git_config(git_default_config, NULL);
 			did_repo_setup = 1;
+
+			prepare_repo_settings(the_repository);
+			the_repository->settings.command_requires_full_index = 0;
 		}
 
 		if (!strcmp(arg, "--")) {
@@ -855,11 +878,12 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--all")) {
 				for_each_ref(show_reference, NULL);
-				clear_ref_exclusion(&ref_excludes);
+				clear_ref_exclusions(&ref_excludes);
 				continue;
 			}
 			if (skip_prefix(arg, "--disambiguate=", &arg)) {
-				for_each_abbrev(arg, show_abbrev, NULL);
+				repo_for_each_abbrev(the_repository, arg,
+						     show_abbrev, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
@@ -868,10 +892,16 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
+				if (ref_excludes.hidden_refs_configured)
+					return error(_("options '%s' and '%s' cannot be used together"),
+						     "--exclude-hidden", "--branches");
 				handle_ref_opt(arg, "refs/heads/");
 				continue;
 			}
 			if (opt_with_value(arg, "--tags", &arg)) {
+				if (ref_excludes.hidden_refs_configured)
+					return error(_("options '%s' and '%s' cannot be used together"),
+						     "--exclude-hidden", "--tags");
 				handle_ref_opt(arg, "refs/tags/");
 				continue;
 			}
@@ -880,11 +910,18 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (opt_with_value(arg, "--remotes", &arg)) {
+				if (ref_excludes.hidden_refs_configured)
+					return error(_("options '%s' and '%s' cannot be used together"),
+						     "--exclude-hidden", "--remotes");
 				handle_ref_opt(arg, "refs/remotes/");
 				continue;
 			}
 			if (skip_prefix(arg, "--exclude=", &arg)) {
 				add_ref_exclusion(&ref_excludes, arg);
+				continue;
+			}
+			if (skip_prefix(arg, "--exclude-hidden=", &arg)) {
+				exclude_hidden_refs(&ref_excludes, arg);
 				continue;
 			}
 			if (!strcmp(arg, "--show-toplevel")) {
@@ -989,7 +1026,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--shared-index-path")) {
-				if (read_cache() < 0)
+				if (repo_read_index(the_repository) < 0)
 					die(_("Could not read the index"));
 				if (the_index.split_index) {
 					const struct object_id *oid = &the_index.split_index->base_oid;

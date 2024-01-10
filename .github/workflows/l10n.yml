@@ -2,6 +2,12 @@ name: git-l10n
 
 on: [push, pull_request_target]
 
+# Avoid unnecessary builds. Unlike the main CI jobs, these are not
+# ci-configurable (but could be).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   git-po-helper:
     if: >-
@@ -23,8 +29,8 @@ jobs:
             base=${{ github.event.before }}
             head=${{ github.event.after }}
           fi
-          echo "::set-output name=base::$base"
-          echo "::set-output name=head::$head"
+          echo base=$base >>$GITHUB_OUTPUT
+          echo head=$head >>$GITHUB_OUTPUT
       - name: Run partial clone
         run: |
           git -c init.defaultBranch=master init --bare .

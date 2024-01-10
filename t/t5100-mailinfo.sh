@@ -122,7 +122,7 @@ test_expect_success 'mailinfo unescapes with --mboxrd' '
 	do
 		git mailinfo mboxrd/msg mboxrd/patch \
 		  <mboxrd/$i >mboxrd/out &&
-		test_cmp "$DATA/${i}mboxrd" mboxrd/msg
+		test_cmp "$DATA/${i}mboxrd" mboxrd/msg || return 1
 	done &&
 	sp=" " &&
 	echo "From " >expect &&
@@ -201,13 +201,13 @@ test_expect_success 'mailinfo -b double [PATCH]' '
 	test z"$subj" = z"Subject: message"
 '
 
-test_expect_failure 'mailinfo -b trailing [PATCH]' '
+test_expect_success 'mailinfo -b trailing [PATCH]' '
 	subj="$(echo "Subject: [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"
 '
 
-test_expect_failure 'mailinfo -b separated double [PATCH]' '
+test_expect_success 'mailinfo -b separated double [PATCH]' '
 	subj="$(echo "Subject: [PATCH] [other] [PATCH] message" |
 		git mailinfo -b /dev/null /dev/null)" &&
 	test z"$subj" = z"Subject: [other] message"
@@ -266,6 +266,28 @@ test_expect_success 'mailinfo warn CR in base64 encoded email' '
 	test_must_be_empty quoted-cr/0001.err &&
 	check_quoted_cr_mail quoted-cr/0002 --quoted-cr=strip &&
 	test_must_be_empty quoted-cr/0002.err
+'
+
+test_expect_success 'from line with unterminated quoted string' '
+	echo "From: bob \"unterminated string smith <bob@example.com>" >in &&
+	git mailinfo /dev/null /dev/null <in >actual &&
+	cat >expect <<-\EOF &&
+	Author: bob unterminated string smith
+	Email: bob@example.com
+
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'from line with unterminated comment' '
+	echo "From: bob (unterminated comment smith <bob@example.com>" >in &&
+	git mailinfo /dev/null /dev/null <in >actual &&
+	cat >expect <<-\EOF &&
+	Author: bob (unterminated comment smith
+	Email: bob@example.com
+
+	EOF
+	test_cmp expect actual
 '
 
 test_done

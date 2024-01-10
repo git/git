@@ -94,7 +94,7 @@ int cmd__chmtime(int argc, const char **argv)
 	if (timespec_arg(argv[i], &set_time, &set_eq)) {
 		++i;
 	} else {
-		if (get == 0) {
+		if (get == 0 && verbose == 0) {
 			fprintf(stderr, "Not a base-10 integer: %s\n", argv[i] + 1);
 			goto usage;
 		}
@@ -134,6 +134,21 @@ int cmd__chmtime(int argc, const char **argv)
 		}
 
 		if (utb.modtime != sb.st_mtime && utime(argv[i], &utb) < 0) {
+#ifdef GIT_WINDOWS_NATIVE
+			if (S_ISDIR(sb.st_mode)) {
+				/*
+				 * NEEDSWORK: The Windows version of `utime()`
+				 * (aka `mingw_utime()`) does not correctly
+				 * handle directory arguments, since it uses
+				 * `_wopen()`.  Ignore it for now since this
+				 * is just a test.
+				 */
+				fprintf(stderr,
+					("Failed to modify time on directory %s. "
+					 "Skipping\n"), argv[i]);
+				continue;
+			}
+#endif
 			fprintf(stderr, "Failed to modify time on %s: %s\n",
 			        argv[i], strerror(errno));
 			return 1;

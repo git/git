@@ -1,11 +1,11 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
-#include "cache.h"
-#include "parse-options.h"
+#include "hash-ll.h"
 #include "hashmap.h"
 #include "refspec.h"
 
+struct option;
 struct transport_ls_refs_options;
 
 /**
@@ -22,6 +22,40 @@ enum {
 	REMOTE_REMOTES,
 	REMOTE_BRANCHES
 };
+
+struct rewrite {
+	const char *base;
+	size_t baselen;
+	struct counted_string *instead_of;
+	int instead_of_nr;
+	int instead_of_alloc;
+};
+
+struct rewrites {
+	struct rewrite **rewrite;
+	int rewrite_alloc;
+	int rewrite_nr;
+};
+
+struct remote_state {
+	struct remote **remotes;
+	int remotes_alloc;
+	int remotes_nr;
+	struct hashmap remotes_hash;
+
+	struct hashmap branches_hash;
+
+	struct branch *current_branch;
+	const char *pushremote_name;
+
+	struct rewrites rewrites;
+	struct rewrites rewrites_push;
+
+	int initialized;
+};
+
+void remote_state_clear(struct remote_state *remote_state);
+struct remote_state *remote_state_new(void);
 
 struct remote {
 	struct hashmap_entry ent;
@@ -84,6 +118,7 @@ struct remote {
  * and configuration.
  */
 struct remote *remote_get(const char *name);
+struct remote *remote_get_early(const char *name);
 
 struct remote *pushremote_get(const char *name);
 int remote_is_configured(struct remote *remote, int in_repo);
@@ -173,9 +208,7 @@ struct ref *find_ref_by_name(const struct ref *list, const char *name);
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
-void sort_ref_list(struct ref **, int (*cmp)(const void *, const void *));
 int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
-int ref_compare_name(const void *, const void *);
 
 int check_ref_type(const struct ref *ref, int flags);
 
@@ -202,6 +235,11 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     const struct string_list *server_options,
 			     int stateless_rpc);
 
+/* Used for protocol v2 in order to retrieve refs from a remote */
+struct bundle_list;
+int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
+			  struct bundle_list *bundles, int stateless_rpc);
+
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 
 /*
@@ -212,6 +250,12 @@ int resolve_remote_symref(struct ref *ref, struct ref *list);
  * pointer to the head of the resulting list.
  */
 struct ref *ref_remove_duplicates(struct ref *ref_map);
+
+/*
+ * Check whether a name matches any negative refspec in rs. Returns 1 if the
+ * name matches at least one negative refspec, and 0 otherwise.
+ */
+int omit_name_by_refspec(const char *name, struct refspec *rs);
 
 /*
  * Remove all entries in the input list which match any negative refspec in
@@ -256,6 +300,7 @@ int remote_find_tracking(struct remote *remote, struct refspec_item *refspec);
  * branch_get(name) for "refs/heads/{name}", or with branch_get(NULL) for HEAD.
  */
 struct branch {
+	struct hashmap_entry ent;
 
 	/* The short name of the branch. */
 	const char *name;
@@ -336,7 +381,8 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 		       const char **upstream_name, int for_push,
 		       enum ahead_behind_flags abf);
 int format_tracking_info(struct branch *branch, struct strbuf *sb,
-			 enum ahead_behind_flags abf);
+			 enum ahead_behind_flags abf,
+			 int show_divergence_advice);
 
 struct ref *get_local_heads(void);
 /*
@@ -355,8 +401,6 @@ struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);
 /*
  * Compare-and-swap
  */
-#define CAS_OPT_NAME "force-with-lease"
-
 struct push_cas_option {
 	unsigned use_tracking_for_rest:1;
 	unsigned use_force_if_includes:1;
@@ -373,5 +417,37 @@ int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
 
 int is_empty_cas(const struct push_cas_option *);
 void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
+
+/*
+ * The `url` argument is the URL that navigates to the submodule origin
+ * repo. When relative, this URL is relative to the superproject origin
+ * URL repo. The `up_path` argument, if specified, is the relative
+ * path that navigates from the submodule working tree to the superproject
+ * working tree. Returns the origin URL of the submodule.
+ *
+ * Return either an absolute URL or filesystem path (if the superproject
+ * origin URL is an absolute URL or filesystem path, respectively) or a
+ * relative file system path (if the superproject origin URL is a relative
+ * file system path).
+ *
+ * When the output is a relative file system path, the path is either
+ * relative to the submodule working tree, if up_path is specified, or to
+ * the superproject working tree otherwise.
+ *
+ * NEEDSWORK: This works incorrectly on the domain and protocol part.
+ * remote_url      url              outcome          expectation
+ * http://a.com/b  ../c             http://a.com/c   as is
+ * http://a.com/b/ ../c             http://a.com/c   same as previous line, but
+ *                                                   ignore trailing slash in url
+ * http://a.com/b  ../../c          http://c         error out
+ * http://a.com/b  ../../../c       http:/c          error out
+ * http://a.com/b  ../../../../c    http:c           error out
+ * http://a.com/b  ../../../../../c    .:c           error out
+ * http://a.com/b  http://d.org/e   http://d.org/e   as is
+ * NEEDSWORK: Given how chop_last_dir() works, this function is broken
+ * when a local part has a colon in its path component, too.
+ */
+char *relative_url(const char *remote_url, const char *url,
+		   const char *up_path);
 
 #endif

@@ -8,6 +8,7 @@ test_description='git rebase --merge test'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 T="A quick brown fox
@@ -68,7 +69,7 @@ test_expect_success 'merge and rebase should match' '
 	if test -s difference
 	then
 		cat difference
-		(exit 1)
+		false
 	else
 		echo happy
 	fi
@@ -102,7 +103,7 @@ test_expect_success 'merge and rebase should match' '
 	if test -s difference
 	then
 		cat difference
-		(exit 1)
+		false
 	else
 		echo happy
 	fi
@@ -117,7 +118,7 @@ test_expect_success 'picking rebase' '
 		echo happy
 	else
 		git show-branch
-		(exit 1)
+		false
 	fi &&
 	f=$(git diff-tree --name-only HEAD^ HEAD) &&
 	g=$(git diff-tree --name-only HEAD^^ HEAD^) &&
@@ -127,29 +128,8 @@ test_expect_success 'picking rebase' '
 	*)
 		echo "$f"
 		echo "$g"
-		(exit 1)
+		false
 	esac
-'
-
-test_expect_success 'rebase -s funny -Xopt' '
-	test_when_finished "rm -fr test-bin funny.was.run" &&
-	mkdir test-bin &&
-	cat >test-bin/git-merge-funny <<-EOF &&
-	#!$SHELL_PATH
-	case "\$1" in --opt) ;; *) exit 2 ;; esac
-	shift &&
-	>funny.was.run &&
-	exec git merge-recursive "\$@"
-	EOF
-	chmod +x test-bin/git-merge-funny &&
-	git reset --hard &&
-	git checkout -b test-funny main^ &&
-	test_commit funny &&
-	(
-		PATH=./test-bin:$PATH &&
-		git rebase -s funny -Xopt main
-	) &&
-	test -f funny.was.run
 '
 
 test_expect_success 'rebase --skip works with two conflicts in a row' '
@@ -191,7 +171,7 @@ test_expect_success '--reapply-cherry-picks' '
 
 	# Regular rebase fails, because the 1-11 commit is deduplicated
 	test_must_fail git -C repo rebase --merge main 2> err &&
-	test_i18ngrep "error: could not apply.*add 12 in another branch" err &&
+	test_grep "error: could not apply.*add 12 in another branch" err &&
 	git -C repo rebase --abort &&
 
 	# With --reapply-cherry-picks, it works

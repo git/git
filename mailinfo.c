@@ -1,5 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "gettext.h"
+#include "hex-ll.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "mailinfo.h"
@@ -56,12 +58,13 @@ static void parse_bogus_from(struct mailinfo *mi, const struct strbuf *line)
 
 static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 {
-	int c;
 	int take_next_literally = 0;
+	int depth = 1;
 
 	strbuf_addch(outbuf, '(');
 
-	while ((c = *in++) != 0) {
+	while (*in) {
+		int c = *in++;
 		if (take_next_literally == 1) {
 			take_next_literally = 0;
 		} else {
@@ -70,11 +73,14 @@ static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 				take_next_literally = 1;
 				continue;
 			case '(':
-				in = unquote_comment(outbuf, in);
+				strbuf_addch(outbuf, '(');
+				depth++;
 				continue;
 			case ')':
 				strbuf_addch(outbuf, ')');
-				return in;
+				if (!--depth)
+					return in;
+				continue;
 			}
 		}
 
@@ -86,10 +92,10 @@ static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 
 static const char *unquote_quoted_string(struct strbuf *outbuf, const char *in)
 {
-	int c;
 	int take_next_literally = 0;
 
-	while ((c = *in++) != 0) {
+	while (*in) {
+		int c = *in++;
 		if (take_next_literally == 1) {
 			take_next_literally = 0;
 		} else {
@@ -317,7 +323,7 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
 			pos = strchr(subject->buf + at, ']');
 			if (!pos)
 				break;
-			remove = pos - subject->buf + at + 1;
+			remove = pos - (subject->buf + at) + 1;
 			if (!mi->keep_non_patch_brackets_in_subject ||
 			    (7 <= remove &&
 			     memmem(subject->buf + at, remove, "PATCH", 5)))
@@ -597,7 +603,7 @@ static int check_header(struct mailinfo *mi,
 		ret = 1;
 		goto check_header_out;
 	}
-	if (parse_header(line, "Message-Id", mi, &sb)) {
+	if (parse_header(line, "Message-ID", mi, &sb)) {
 		if (mi->add_message_id)
 			mi->message_id = strbuf_detach(&sb, NULL);
 		ret = 1;
@@ -698,7 +704,7 @@ static int is_scissors_line(const char *line)
 			continue;
 		}
 		last_nonblank = c;
-		if (first_nonblank == NULL)
+		if (!first_nonblank)
 			first_nonblank = c;
 		if (*c == '-') {
 			in_perforation = 1;
@@ -829,7 +835,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 	if (patchbreak(line)) {
 		if (mi->message_id)
 			strbuf_addf(&mi->log_message,
-				    "Message-Id: %s\n", mi->message_id);
+				    "Message-ID: %s\n", mi->message_id);
 		return 1;
 	}
 
@@ -1094,7 +1100,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 			 */
 			lines = strbuf_split(line, '\n');
 			for (it = lines; (sb = *it); it++) {
-				if (*(it + 1) == NULL) /* The last line */
+				if (!*(it + 1)) /* The last line */
 					if (sb->buf[sb->len - 1] != '\n') {
 						/* Partial line, save it for later. */
 						strbuf_addbuf(&prev, sb);
@@ -1239,17 +1245,20 @@ int mailinfo_parse_quoted_cr_action(const char *actionstr, int *action)
 	return 0;
 }
 
-static int git_mailinfo_config(const char *var, const char *value, void *mi_)
+static int git_mailinfo_config(const char *var, const char *value,
+			       const struct config_context *ctx, void *mi_)
 {
 	struct mailinfo *mi = mi_;
 
 	if (!starts_with(var, "mailinfo."))
-		return git_default_config(var, value, NULL);
+		return git_default_config(var, value, ctx, NULL);
 	if (!strcmp(var, "mailinfo.scissors")) {
 		mi->use_scissors = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "mailinfo.quotedcr")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (mailinfo_parse_quoted_cr_action(value, &mi->quoted_cr) != 0)
 			return error(_("bad action '%s' for '%s'"), value, var);
 		return 0;

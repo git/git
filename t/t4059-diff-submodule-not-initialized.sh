@@ -49,7 +49,7 @@ test_expect_success 'setup - submodules' '
 '
 
 test_expect_success 'setup - git submodule add' '
-	git submodule add ./sm2 sm1 &&
+	git -c protocol.file.allow=always submodule add ./sm2 sm1 &&
 	commit_file sm1 .gitmodules &&
 	git diff-tree -p --no-commit-id --submodule=log HEAD -- sm1 >actual &&
 	cat >expected <<-EOF &&

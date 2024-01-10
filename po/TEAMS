@@ -11,9 +11,9 @@ Leader:		Jordi Mas <jmas@softcatala.org>
 Members:	Alex Henrie <alexhenrie24@gmail.com>
 
 Language:	de (German)
-Repository:	https://github.com/ruester/git-po-de
-Leader:		Matthias Rüster <matthias.ruester@gmail.com>
-Members:	Ralf Thielow <ralf.thielow@gmail.com>
+Repository:	https://github.com/ralfth/git
+Leader:		Ralf Thielow <ralf.thielow@gmail.com>
+Members:	Matthias Rüster <matthias.ruester@gmail.com>
 		Phillip Szelat <phillip.szelat@gmail.com>
 
 Language:	el (Greek)
@@ -51,8 +51,8 @@ Repository:	https://github.com/Arusekk/git-po
 Leader:		Arusekk <arek_koz@o2.pl>
 
 Language:	pt_PT (Portuguese - Portugal)
-Repository:	https://github.com/git-l10n-pt-PT/git-po/
-Leader:		Daniel Santos <hello@brighterdan.com>
+Repository:	https://gitlab.com/alexandre1985/git-pt/
+Leader:		Daniel Santos <dacs.git@brilhante.top>
 
 Language:	ru (Russian)
 Repository:	https://github.com/DJm00n/git-po-ru/
@@ -67,16 +67,22 @@ Language:	tr (Turkish)
 Repository:	https://github.com/bitigchi/git-po/
 Leader:		Emir SARI <bitigchi@me.com>
 
+Language:	uk (Ukrainian)
+Repository:	https://github.com/arkid15r/git-ukrainian-l10n/
+Leader:		Arkadii Yakovets <ark@cho.red>
+Members:	Kateryna Golovanova <kate@kgthreads.com>
+
 Language:	vi (Vietnamese)
 Repository:	https://github.com/vnwildman/git/
 Leader:		Trần Ngọc Quân <vnwildman AT gmail.com>
 Members:	Nguyễn Thái Ngọc Duy <pclouds AT gmail.com>
 
 Language:	zh_CN (Simplified Chinese)
-Repository:	https://github.com/fangyi-zhou/git/
-Leader:		Fangyi Zhou <me AT fangyi.io>
+Repository:	https://github.com/dyrone/git/
+Leader:		Teng Long <dyroneteng AT gmail.com>
 Members:	Ray Chen <oldsharp AT gmail.com>
 		依云 <lilydjwg AT gmail.com>
+		Fangyi Zhou <me AT fangyi.io>
 		Jiang Xin <worldhello.net AT gmail.com>
 
 Language:	zh_TW (Traditional Chinese)

@@ -2,6 +2,8 @@
 
 test_description='merge with sparse files'
 
+TEST_CREATE_REPO_NO_TEMPLATE=1
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # test_file $filename $content
@@ -26,6 +28,7 @@ test_expect_success 'setup' '
 	git rm modify_delete &&
 	test_commit_this ours &&
 	git config core.sparseCheckout true &&
+	mkdir .git/info &&
 	echo "/checked-out" >.git/info/sparse-checkout &&
 	git reset --hard &&
 	test_must_fail git merge theirs

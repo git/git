@@ -6,7 +6,7 @@ use warnings;
 my $exit_code = 0;
 sub report {
 	my ($target, $msg) = @_;
-	print "error: $target: $msg\n";
+	print STDERR "error: $target: $msg\n";
 	$exit_code = 1;
 }
 

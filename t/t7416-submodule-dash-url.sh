@@ -1,7 +1,13 @@
 #!/bin/sh
 
 test_description='check handling of disallowed .gitmodule urls'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+
+test_expect_success 'setup' '
+	git config --global protocol.file.allow always
+'
 
 test_expect_success 'create submodule with protected dash in url' '
 	git init upstream &&
@@ -35,7 +41,7 @@ test_expect_success 'remove ./ protection from .gitmodules url' '
 test_expect_success 'clone rejects unprotected dash' '
 	test_when_finished "rm -rf dst" &&
 	test_must_fail git clone --recurse-submodules . dst 2>err &&
-	test_i18ngrep ignoring err
+	test_grep ignoring err
 '
 
 test_expect_success 'fsck rejects unprotected dash' '
@@ -57,7 +63,7 @@ test_expect_success 'trailing backslash is handled correctly' '
 	mv .new .gitmodules &&
 	git commit -am "Add testmodule" &&
 	test_must_fail git clone --verbose --recurse-submodules . dolly 2>err &&
-	test_i18ngrep ! "unknown option" err
+	test_grep ! "unknown option" err
 '
 
 test_expect_success 'fsck rejects missing URL scheme' '

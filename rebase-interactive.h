@@ -16,6 +16,4 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo);
 int todo_list_check_against_backup(struct repository *r,
 				   struct todo_list *todo_list);
 
-int check_todo_list_from_file(struct repository *r);
-
 #endif

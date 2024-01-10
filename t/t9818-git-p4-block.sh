@@ -92,11 +92,11 @@ test_expect_success 'Add some more files' '
 	for i in $(test_seq 0 10)
 	do
 		p4_add_file "included/x$i" &&
-		p4_add_file "excluded/x$i"
+		p4_add_file "excluded/x$i" || return 1
 	done &&
 	for i in $(test_seq 0 10)
 	do
-		p4_add_file "excluded/y$i"
+		p4_add_file "excluded/y$i" || return 1
 	done
 '
 
@@ -123,7 +123,7 @@ test_expect_success 'Create a repo with multiple depot paths' '
 	do
 		for i in $(test_seq 1 10)
 		do
-			p4_add_file "$p/file$p$i"
+			p4_add_file "$p/file$p$i" || return 1
 		done
 	done
 '

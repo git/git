@@ -14,9 +14,9 @@ conflicts before writing them to the rerere database.
 
 Different conflict styles and branch names are normalized by stripping
 the labels from the conflict markers, and removing the common ancestor
-version from the `diff3` conflict style. Branches that are merged
-in different order are normalized by sorting the conflict hunks.  More
-on each of those steps in the following sections.
+version from the `diff3` or `zdiff3` conflict styles.  Branches that
+are merged in different order are normalized by sorting the conflict
+hunks.  More on each of those steps in the following sections.
 
 Once these two normalization operations are applied, a conflict ID is
 calculated based on the normalized conflict, which is later used by
@@ -42,8 +42,8 @@ get a conflict like the following:
     >>>>>>> AC
 
 Doing the analogous with AC2 (forking a branch ABAC2 off of branch AB
-and then merging branch AC2 into it), using the diff3 conflict style,
-we get a conflict like the following:
+and then merging branch AC2 into it), using the diff3 or zdiff3
+conflict style, we get a conflict like the following:
 
     <<<<<<< HEAD
     B
@@ -60,7 +60,7 @@ By resolving this conflict, to leave line D, the user declares:
     what AB and AC wanted to do.
 
 As branch AC2 refers to the same commit as AC, the above implies that
-this is also compatible what AB and AC2 wanted to do.
+this is also compatible with what AB and AC2 wanted to do.
 
 By extension, this means that rerere should recognize that the above
 conflicts are the same.  To do this, the labels on the conflict
@@ -76,7 +76,7 @@ examples would both result in the following normalized conflict:
 Sorting hunks
 ~~~~~~~~~~~~~
 
-As before, lets imagine that a common ancestor had a file with line A
+As before, let's imagine that a common ancestor had a file with line A
 its early part, and line X in its late part.  And then four branches
 are forked that do these things:
 
@@ -99,7 +99,7 @@ conflict to leave line D means that the user declares:
     compatible with what AB and AC wanted to do.
 
 So the conflict we would see when merging AB into ACAB should be
-resolved the same way---it is the resolution that is in line with that
+resolved the same way--it is the resolution that is in line with that
 declaration.
 
 Imagine that similarly previously a branch XYXZ was forked from XY,
@@ -145,7 +145,7 @@ Nested conflicts
 Nested conflicts are handled very similarly to "simple" conflicts.
 Similar to simple conflicts, the conflict is first normalized by
 stripping the labels from conflict markers, stripping the common ancestor
-version, and the sorting the conflict hunks, both for the outer and the
+version, and sorting the conflict hunks, both for the outer and the
 inner conflict.  This is done recursively, so any number of nested
 conflicts can be handled.
 

@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git name-rev' [--tags] [--refs=<pattern>]
-	       ( --all | --stdin | <commit-ish>... )
+	       ( --all | --annotate-stdin | <commit-ish>... )
 
 DESCRIPTION
 -----------
@@ -26,7 +26,7 @@ OPTIONS
 
 --refs=<pattern>::
 	Only use refs whose names match a given shell pattern.  The pattern
-	can be one of branch name, tag name or fully qualified ref name. If
+	can be a branch name, a tag name, or a fully qualified ref name. If
 	given multiple times, use refs whose names match any of the given shell
 	patterns. Use `--no-refs` to clear any previous ref patterns given.
 
@@ -42,11 +42,34 @@ OPTIONS
 --all::
 	List all commits reachable from all refs
 
---stdin::
+--annotate-stdin::
 	Transform stdin by substituting all the 40-character SHA-1
 	hexes (say $hex) with "$hex ($rev_name)".  When used with
 	--name-only, substitute with "$rev_name", omitting $hex
-	altogether.  Intended for the scripter's use.
+	altogether. This option was called `--stdin` in older versions
+	of Git.
++
+For example:
++
+-----------
+$ cat sample.txt
+
+An abbreviated revision 2ae0a9cb82 will not be substituted.
+The full name after substitution is 2ae0a9cb8298185a94e5998086f380a355dd8907,
+while its tree object is 70d105cc79e63b81cfdcb08a15297c23e60b07ad
+
+$ git name-rev --annotate-stdin <sample.txt
+
+An abbreviated revision 2ae0a9cb82 will not be substituted.
+The full name after substitution is 2ae0a9cb8298185a94e5998086f380a355dd8907 (master),
+while its tree object is 70d105cc79e63b81cfdcb08a15297c23e60b07ad
+
+$ git name-rev --name-only --annotate-stdin <sample.txt
+
+An abbreviated revision 2ae0a9cb82 will not be substituted.
+The full name after substitution is master,
+while its tree object is 70d105cc79e63b81cfdcb08a15297c23e60b07ad
+-----------
 
 --name-only::
 	Instead of printing both the SHA-1 and the name, print only
@@ -81,7 +104,7 @@ Now you are wiser, because you know that it happened 940 revisions before v0.99.
 Another nice thing you can do is:
 
 ------------
-% git log | git name-rev --stdin
+% git log | git name-rev --annotate-stdin
 ------------
 
 GIT

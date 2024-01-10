@@ -2,13 +2,13 @@
  * Copyright (c) 2006 Franck Bui-Huu
  * Copyright (c) 2006 Rene Scharfe
  */
-#include "cache.h"
 #include "builtin.h"
 #include "archive.h"
+#include "gettext.h"
 #include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"
-#include "sideband.h"
+#include "repository.h"
 
 static void create_output_file(const char *output_file)
 {
@@ -75,13 +75,13 @@ static int run_remote_archiver(int argc, const char **argv,
 
 #define PARSE_OPT_KEEP_ALL ( PARSE_OPT_KEEP_DASHDASH | 	\
 			     PARSE_OPT_KEEP_ARGV0 | 	\
-			     PARSE_OPT_KEEP_UNKNOWN |	\
+			     PARSE_OPT_KEEP_UNKNOWN_OPT |	\
 			     PARSE_OPT_NO_INTERNAL_HELP	)
 
 int cmd_archive(int argc, const char **argv, const char *prefix)
 {
 	const char *exec = "git-upload-archive";
-	const char *output = NULL;
+	char *output = NULL;
 	const char *remote = NULL;
 	struct option local_opts[] = {
 		OPT_FILENAME('o', "output", &output,
@@ -106,5 +106,6 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
+	UNLEAK(output);
 	return write_archive(argc, argv, prefix, the_repository, output, 0);
 }

@@ -117,7 +117,10 @@ test_expect_success 'atomic push fails if one branch fails' '
 		test_commit five &&
 		git checkout main &&
 		test_commit six &&
-		test_must_fail git push --atomic --all up
+		test_must_fail git push --atomic --all up >output-all 2>&1 &&
+		# --all and --branches have the same behavior when be combined with --atomic
+		test_must_fail git push --atomic --branches up >output-branches 2>&1 &&
+		test_cmp output-all output-branches
 	) &&
 	test_refs main HEAD@{7} &&
 	test_refs second HEAD@{4}
@@ -162,16 +165,10 @@ test_expect_success 'atomic push obeys update hook preventing a branch to be pus
 		test_commit two &&
 		git push --mirror up
 	) &&
-	(
-		cd upstream &&
-		HOOKDIR="$(git rev-parse --git-dir)/hooks" &&
-		HOOK="$HOOKDIR/update" &&
-		mkdir -p "$HOOKDIR" &&
-		write_script "$HOOK" <<-\EOF
-			# only allow update to main from now on
-			test "$1" = "refs/heads/main"
-		EOF
-	) &&
+	test_hook -C upstream update <<-\EOF &&
+	# only allow update to main from now on
+	test "$1" = "refs/heads/main"
+	EOF
 	(
 		cd workbench &&
 		git checkout main &&

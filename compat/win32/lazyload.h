@@ -4,7 +4,7 @@
 /*
  * A pair of macros to simplify loading of DLL functions. Example:
  *
- *   DECLARE_PROC_ADDR(kernel32.dll, BOOL, CreateHardLinkW,
+ *   DECLARE_PROC_ADDR(kernel32.dll, BOOL, WINAPI, CreateHardLinkW,
  *                     LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
  *
  *   if (!INIT_PROC_ADDR(CreateHardLinkW))
@@ -25,10 +25,10 @@ struct proc_addr {
 };
 
 /* Declares a function to be loaded dynamically from a DLL. */
-#define DECLARE_PROC_ADDR(dll, rettype, function, ...) \
+#define DECLARE_PROC_ADDR(dll, rettype, convention, function, ...) \
 	static struct proc_addr proc_addr_##function = \
 	{ #dll, #function, NULL, 0 }; \
-	typedef rettype (WINAPI *proc_type_##function)(__VA_ARGS__); \
+	typedef rettype (convention *proc_type_##function)(__VA_ARGS__); \
 	static proc_type_##function function
 
 /*

@@ -12,12 +12,16 @@ SYNOPSIS
 	[--no-dual-color] [--creation-factor=<factor>]
 	[--left-only | --right-only]
 	( <range1> <range2> | <rev1>...<rev2> | <base> <rev1> <rev2> )
+	[[--] <path>...]
 
 DESCRIPTION
 -----------
 
 This command shows the differences between two versions of a patch
 series, or more generally, two commit ranges (ignoring merge commits).
+
+In the presence of `<path>` arguments, these commit ranges are limited
+accordingly.
 
 To that end, it first finds pairs of commits from both commit ranges
 that correspond with each other. Two commits are said to correspond when
@@ -66,7 +70,7 @@ to revert to color all lines according to the outer diff markers
 	Defaults to 60. Try a larger value if `git range-diff` erroneously
 	considers a large change a total rewrite (deletion of one commit
 	and addition of another), and a smaller one in the reverse case.
-	See the ``Algorithm`` section below for an explanation why this is
+	See the ``Algorithm`` section below for an explanation of why this is
 	needed.
 
 --left-only::
@@ -162,7 +166,7 @@ A typical output of `git range-diff` would look like this:
 
 In this example, there are 3 old and 3 new commits, where the developer
 removed the 3rd, added a new one before the first two, and modified the
-commit message of the 2nd commit as well its diff.
+commit message of the 2nd commit as well as its diff.
 
 When the output goes to a terminal, it is color-coded by default, just
 like regular `git diff`'s output. In addition, the first line (adding a

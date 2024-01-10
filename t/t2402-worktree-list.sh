@@ -5,6 +5,7 @@ test_description='test git worktree list'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -62,6 +63,25 @@ test_expect_success '"list" all worktrees --porcelain' '
 	echo >>expect &&
 	git worktree list --porcelain >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '"list" all worktrees --porcelain -z' '
+	test_when_finished "rm -rf here _actual actual expect &&
+				git worktree prune" &&
+	printf "worktree %sQHEAD %sQbranch %sQQ" \
+		"$(git rev-parse --show-toplevel)" \
+		$(git rev-parse HEAD --symbolic-full-name HEAD) >expect &&
+	git worktree add --detach here main &&
+	printf "worktree %sQHEAD %sQdetachedQQ" \
+		"$(git -C here rev-parse --show-toplevel)" \
+		"$(git rev-parse HEAD)" >>expect &&
+	git worktree list --porcelain -z >_actual &&
+	nul_to_q <_actual >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '"list" -z fails without --porcelain' '
+	test_must_fail git worktree list -z
 '
 
 test_expect_success '"list" all worktrees with locked annotation' '
@@ -123,7 +143,7 @@ test_expect_success '"list" all worktrees --porcelain with prunable' '
 	rm -rf prunable &&
 	git worktree list --porcelain >out &&
 	sed -n "/^worktree .*\/prunable$/,/^$/p" <out >only_prunable &&
-	test_i18ngrep "^prunable gitdir file points to non-existent location$" only_prunable
+	test_grep "^prunable gitdir file points to non-existent location$" only_prunable
 '
 
 test_expect_success '"list" all worktrees with prunable consistent with "prune"' '
@@ -134,9 +154,9 @@ test_expect_success '"list" all worktrees with prunable consistent with "prune"'
 	git worktree list >out &&
 	grep "/prunable  *[0-9a-f].* prunable$" out &&
 	! grep "/unprunable  *[0-9a-f].* unprunable$" out &&
-	git worktree prune --verbose >out &&
-	test_i18ngrep "^Removing worktrees/prunable" out &&
-	test_i18ngrep ! "^Removing worktrees/unprunable" out
+	git worktree prune --verbose 2>out &&
+	test_grep "^Removing worktrees/prunable" out &&
+	test_grep ! "^Removing worktrees/unprunable" out
 '
 
 test_expect_success '"list" --verbose and --porcelain mutually exclusive' '

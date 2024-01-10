@@ -2,7 +2,9 @@
  * Copyright (c) 2005, Junio C Hamano
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "gettext.h"
 #include "lockfile.h"
 
 /*

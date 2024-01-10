@@ -27,13 +27,10 @@ proc do_windows_shortcut {} {
 }
 
 proc do_cygwin_shortcut {} {
-	global argv0 _gitworktree
+	global argv0 _gitworktree oguilib
 
 	if {[catch {
 		set desktop [exec cygpath \
-			--windows \
-			--absolute \
-			--long-name \
 			--desktop]
 		}]} {
 			set desktop .
@@ -48,19 +45,19 @@ proc do_cygwin_shortcut {} {
 			set fn ${fn}.lnk
 		}
 		if {[catch {
-				set sh [exec cygpath \
-					--windows \
-					--absolute \
-					/bin/sh.exe]
-				set me [exec cygpath \
-					--unix \
-					--absolute \
-					$argv0]
-				win32_create_lnk $fn [list \
-					$sh -c \
-					"CHERE_INVOKING=1 source /etc/profile;[sq $me] &" \
-					] \
-					[file normalize $_gitworktree]
+				set repodir [file normalize $_gitworktree]
+				set shargs {-c \
+					"CHERE_INVOKING=1 \
+					source /etc/profile; \
+					git gui"}
+				exec /bin/mkshortcut.exe \
+					--arguments $shargs \
+					--desc "git-gui on $repodir" \
+					--icon $oguilib/git-gui.ico \
+					--name $fn \
+					--show min \
+					--workingdir $repodir \
+					/bin/sh.exe
 			} err]} {
 			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}

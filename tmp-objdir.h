@@ -10,9 +10,11 @@
  *
  * Example:
  *
- *	struct tmp_objdir *t = tmp_objdir_create();
- *	if (!run_command_v_opt_cd_env(cmd, 0, NULL, tmp_objdir_env(t)) &&
- *	    !tmp_objdir_migrate(t))
+ *	struct child_process child = CHILD_PROCESS_INIT;
+ *	struct tmp_objdir *t = tmp_objdir_create("incoming");
+ *	strvec_push(&child.args, cmd);
+ *	strvec_pushv(&child.env, tmp_objdir_env(t));
+ *	if (!run_command(&child)) && !tmp_objdir_migrate(t))
  *		printf("success!\n");
  *	else
  *		die("failed...tmp_objdir will clean up for us");
@@ -22,9 +24,10 @@
 struct tmp_objdir;
 
 /*
- * Create a new temporary object directory; returns NULL on failure.
+ * Create a new temporary object directory with the specified prefix;
+ * returns NULL on failure.
  */
-struct tmp_objdir *tmp_objdir_create(void);
+struct tmp_objdir *tmp_objdir_create(const char *prefix);
 
 /*
  * Return a list of environment strings, suitable for use with
@@ -46,9 +49,37 @@ int tmp_objdir_migrate(struct tmp_objdir *);
 int tmp_objdir_destroy(struct tmp_objdir *);
 
 /*
+ * Remove all objects from the temporary object directory, while leaving it
+ * around so more objects can be added.
+ */
+void tmp_objdir_discard_objects(struct tmp_objdir *);
+
+/*
  * Add the temporary object directory as an alternate object store in the
  * current process.
  */
 void tmp_objdir_add_as_alternate(const struct tmp_objdir *);
+
+/*
+ * Replaces the writable object store in the current process with the temporary
+ * object directory and makes the former main object store an alternate.
+ * If will_destroy is nonzero, the object directory may not be migrated.
+ */
+void tmp_objdir_replace_primary_odb(struct tmp_objdir *, int will_destroy);
+
+/*
+ * If the primary object database was replaced by a temporary object directory,
+ * restore it to its original value while keeping the directory contents around.
+ * Returns NULL if the primary object database was not replaced.
+ */
+struct tmp_objdir *tmp_objdir_unapply_primary_odb(void);
+
+/*
+ * Reapplies the former primary temporary object database, after potentially
+ * changing its relative path.
+ */
+void tmp_objdir_reapply_primary_odb(struct tmp_objdir *, const char *old_cwd,
+		const char *new_cwd);
+
 
 #endif /* TMP_OBJDIR_H */

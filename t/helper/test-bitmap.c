@@ -1,6 +1,7 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "git-compat-util.h"
 #include "pack-bitmap.h"
+#include "setup.h"
 
 static int bitmap_list_commits(void)
 {

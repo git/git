@@ -2,4 +2,4 @@
 	foo || exit 1
 	bar &&
 	baz
->)
+)

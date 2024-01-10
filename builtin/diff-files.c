@@ -3,18 +3,18 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "diff.h"
 #include "diff-merges.h"
 #include "commit.h"
+#include "preload-index.h"
+#include "repository.h"
 #include "revision.h"
-#include "builtin.h"
-#include "submodule.h"
 
 static const char diff_files_usage[] =
 "git diff-files [-q] [-0 | -1 | -2 | -3 | -c | --cc] [<common-diff-options>] [<path>...]"
+"\n"
 COMMON_DIFF_OPTIONS_HELP;
 
 int cmd_diff_files(int argc, const char **argv, const char *prefix)
@@ -27,6 +27,10 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 		usage(diff_files_usage);
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	repo_init_revisions(the_repository, &rev, prefix);
 	rev.abbrev = 0;
 
@@ -75,10 +79,10 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	    (rev.diffopt.output_format & DIFF_FORMAT_PATCH))
 		diff_merges_set_dense_combined_if_unset(&rev);
 
-	if (read_cache_preload(&rev.diffopt.pathspec) < 0) {
-		perror("read_cache_preload");
-		return -1;
-	}
-	result = run_diff_files(&rev, options);
-	return diff_result_code(&rev.diffopt, result);
+	if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0)
+		die_errno("repo_read_index_preload");
+	run_diff_files(&rev, options);
+	result = diff_result_code(&rev.diffopt);
+	release_revisions(&rev);
+	return result;
 }

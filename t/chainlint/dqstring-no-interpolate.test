@@ -1,0 +1,15 @@
+# LINT: regex dollar-sign eol anchor in double-quoted string not special
+grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" out &&
+
+# LINT: escaped "$" not mistaken for variable expansion
+grep "^\\.git\$" output.txt &&
+
+'"
+(
+	cd client$version &&
+# LINT: escaped dollar-sign in double-quoted test body
+	GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. \$(cat ../input)
+) >output &&
+	cut -d ' ' -f 2 <output | sort >actual &&
+	test_cmp expect actual
+"'

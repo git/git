@@ -1,21 +1,24 @@
-#include "builtin.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
-#include "refs.h"
-#include "object-store.h"
+#include "date.h"
+#include "gettext.h"
+#include "hex.h"
+#include "object-store-ll.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
 #include "remote.h"
 #include "connect.h"
 #include "send-pack.h"
-#include "quote.h"
 #include "transport.h"
 #include "version.h"
 #include "oid-array.h"
 #include "gpg-interface.h"
-#include "cache.h"
 #include "shallow.h"
+#include "parse-options.h"
+#include "trace2.h"
+#include "write-or-die.h"
 
 int option_parse_push_signed(const struct option *opt,
 			     const char *arg, int unset)
@@ -42,9 +45,9 @@ int option_parse_push_signed(const struct option *opt,
 static void feed_object(const struct object_id *oid, FILE *fh, int negative)
 {
 	if (negative &&
-	    !has_object_file_with_flags(oid,
-					OBJECT_INFO_SKIP_FETCH_OBJECT |
-					OBJECT_INFO_QUICK))
+	    !repo_has_object_file_with_flags(the_repository, oid,
+					     OBJECT_INFO_SKIP_FETCH_OBJECT |
+					     OBJECT_INFO_QUICK))
 		return;
 
 	if (negative)
@@ -84,6 +87,8 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		strvec_push(&po.args, "--progress");
 	if (is_repository_shallow(the_repository))
 		strvec_push(&po.args, "--shallow");
+	if (args->disable_bitmaps)
+		strvec_push(&po.args, "--no-use-bitmap-index");
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;
 	po.git_cmd = 1;
@@ -264,7 +269,7 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 	return ret;
 }
 
-static int sideband_demux(int in, int out, void *data)
+static int sideband_demux(int in UNUSED, int out, void *data)
 {
 	int *fd = data, ret;
 	if (async_with_fork())
@@ -341,13 +346,13 @@ static int generate_push_cert(struct strbuf *req_buf,
 {
 	const struct ref *ref;
 	struct string_list_item *item;
-	char *signing_key = xstrdup(get_signing_key());
+	char *signing_key_id = xstrdup(get_signing_key_id());
 	const char *cp, *np;
 	struct strbuf cert = STRBUF_INIT;
 	int update_seen = 0;
 
 	strbuf_addstr(&cert, "certificate version 0.1\n");
-	strbuf_addf(&cert, "pusher %s ", signing_key);
+	strbuf_addf(&cert, "pusher %s ", signing_key_id);
 	datestamp(&cert);
 	strbuf_addch(&cert, '\n');
 	if (args->url && *args->url) {
@@ -374,7 +379,7 @@ static int generate_push_cert(struct strbuf *req_buf,
 	if (!update_seen)
 		goto free_return;
 
-	if (sign_buffer(&cert, &cert, signing_key))
+	if (sign_buffer(&cert, &cert, get_signing_key()))
 		die(_("failed to sign the push certificate"));
 
 	packet_buf_write(req_buf, "push-cert%c%s", 0, cap_string);
@@ -386,7 +391,7 @@ static int generate_push_cert(struct strbuf *req_buf,
 	packet_buf_write(req_buf, "push-cert-end\n");
 
 free_return:
-	free(signing_key);
+	free(signing_key_id);
 	strbuf_release(&cert);
 	return update_seen;
 }
@@ -487,6 +492,7 @@ int send_pack(struct send_pack_args *args,
 	struct async demux;
 	const char *push_cert_nonce = NULL;
 	struct packet_reader reader;
+	int use_bitmaps;
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
@@ -497,6 +503,9 @@ int send_pack(struct send_pack_args *args,
 	git_config_get_bool("push.negotiate", &push_negotiate);
 	if (push_negotiate)
 		get_commons_through_negotiation(args->url, remote_refs, &commons);
+
+	if (!git_config_get_bool("push.usebitmaps", &use_bitmaps))
+		args->disable_bitmaps = !use_bitmaps;
 
 	git_config_get_bool("transfer.advertisesid", &advertise_sid);
 
@@ -528,7 +537,7 @@ int send_pack(struct send_pack_args *args,
 		die(_("the receiving end does not support this repository's hash algorithm"));
 
 	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
-		int len;
+		size_t len;
 		push_cert_nonce = server_feature_value("push-cert", &len);
 		if (push_cert_nonce) {
 			reject_invalid_nonce(push_cert_nonce, len);

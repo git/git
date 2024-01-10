@@ -11,9 +11,9 @@ SYNOPSIS
 [verse]
 'git cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
-	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
-	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
-	      [-r <remote>] [-R] [<CVS_module>]
+	      [-C <git-repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
+	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commit-limit>]
+	      [-r <remote>] [-R] [<CVS-module>]
 
 
 DESCRIPTION
@@ -22,7 +22,7 @@ DESCRIPTION
 deprecated; it does not work with cvsps version 3 and later.  If you are
 performing a one-shot import of a CVS repository consider using
 http://cvs2svn.tigris.org/cvs2git.html[cvs2git] or
-http://www.catb.org/esr/cvs-fast-export/[cvs-fast-export].
+https://gitlab.com/esr/cvs-fast-export[cvs-fast-export].
 
 Imports a CVS repository into Git. It will either create a new
 repository, or incrementally import into an existing one.
@@ -59,7 +59,7 @@ OPTIONS
 	from `CVS/Root`. If no such file exists, it checks for the
 	`CVSROOT` environment variable.
 
-<CVS_module>::
+<CVS-module>::
 	The CVS module you want to import. Relative to <CVSROOT>.
 	If not given, 'git cvsimport' tries to read it from
 	`CVS/Repository`.
@@ -221,7 +221,7 @@ Problems related to tags:
 If you suspect that any of these issues may apply to the repository you
 want to import, consider using cvs2git:
 
-* cvs2git (part of cvs2svn), `http://subversion.apache.org/`
+* cvs2git (part of cvs2svn), `https://subversion.apache.org/`
 
 GIT
 ---

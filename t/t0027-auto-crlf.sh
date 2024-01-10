@@ -2,6 +2,7 @@
 
 test_description='CRLF conversion all combinations'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 compare_files () {
@@ -69,7 +70,8 @@ create_NNO_MIX_files () {
 				cp CRLF        ${pfx}_CRLF.txt &&
 				cp CRLF_mix_LF ${pfx}_CRLF_mix_LF.txt &&
 				cp LF_mix_CR   ${pfx}_LF_mix_CR.txt &&
-				cp CRLF_nul    ${pfx}_CRLF_nul.txt
+				cp CRLF_nul    ${pfx}_CRLF_nul.txt ||
+				return 1
 			done
 		done
 	done
@@ -77,12 +79,12 @@ create_NNO_MIX_files () {
 
 check_warning () {
 	case "$1" in
-	LF_CRLF) echo "warning: LF will be replaced by CRLF" >"$2".expect ;;
-	CRLF_LF) echo "warning: CRLF will be replaced by LF" >"$2".expect ;;
-	'')	                                                 >"$2".expect ;;
+	LF_CRLF) echo "LF will be replaced by CRLF" >"$2".expect ;;
+	CRLF_LF) echo "CRLF will be replaced by LF" >"$2".expect ;;
+	'')	                                    >"$2".expect ;;
 	*) echo >&2 "Illegal 1": "$1" ; return false ;;
 	esac
-	grep "will be replaced by" "$2" | sed -e "s/\(.*\) in [^ ]*$/\1/" | uniq  >"$2".actual
+	sed -e "s/^.* \([^ ]* will be replaced by [^ ]*\) .*$/\1/" "$2" | uniq  >"$2".actual
 	test_cmp "$2".expect "$2".actual
 }
 
@@ -100,7 +102,8 @@ commit_check_warn () {
 	do
 		fname=${pfx}_$f.txt &&
 		cp $f $fname &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
+		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err" ||
+		return 1
 	done &&
 	git commit -m "core.autocrlf $crlf" &&
 	check_warning "$lfname" ${pfx}_LF.err &&
@@ -120,15 +123,19 @@ commit_chk_wrnNNO () {
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
 	pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
-	#Commit files on top of existing file
-	create_gitattributes "$attr" $aeol &&
-	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
-	do
-		fname=${pfx}_$f.txt &&
-		cp $f $fname &&
-		printf Z >>"$fname" &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
-	done
+
+	test_expect_success 'setup commit NNO files' '
+		#Commit files on top of existing file
+		create_gitattributes "$attr" $aeol &&
+		for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
+		do
+			fname=${pfx}_$f.txt &&
+			cp $f $fname &&
+			printf Z >>"$fname" &&
+			git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err" ||
+			return 1
+		done
+	'
 
 	test_expect_success "commit NNO files crlf=$crlf attr=$attr LF" '
 		check_warning "$lfwarn" ${pfx}_LF.err
@@ -162,15 +169,19 @@ commit_MIX_chkwrn () {
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
 	pfx=MIX_attr_${attr}_aeol_${aeol}_${crlf}
-	#Commit file with CLRF_mix_LF on top of existing file
-	create_gitattributes "$attr" $aeol &&
-	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
-	do
-		fname=${pfx}_$f.txt &&
-		cp CRLF_mix_LF $fname &&
-		printf Z >>"$fname" &&
-		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
-	done
+
+	test_expect_success 'setup commit file with mixed EOL' '
+		#Commit file with CLRF_mix_LF on top of existing file
+		create_gitattributes "$attr" $aeol &&
+		for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
+		do
+			fname=${pfx}_$f.txt &&
+			cp CRLF_mix_LF $fname &&
+			printf Z >>"$fname" &&
+			git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err" ||
+			return 1
+		done
+	'
 
 	test_expect_success "commit file with mixed EOL onto LF crlf=$crlf attr=$attr" '
 		check_warning "$lfwarn" ${pfx}_LF.err
@@ -288,17 +299,17 @@ checkout_files () {
 	lfmixcrlf=$1 ; shift
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
-	create_gitattributes "$attr" $ident $aeol &&
-	git config core.autocrlf $crlf &&
+	test_expect_success "setup config for checkout attr=$attr ident=$ident aeol=$aeol core.autocrlf=$crlf" '
+		create_gitattributes "$attr" $ident $aeol &&
+		git config core.autocrlf $crlf
+	'
 	pfx=eol_${ceol}_crlf_${crlf}_attr_${attr}_ &&
 	for f in LF CRLF LF_mix_CR CRLF_mix_LF LF_nul
 	do
-		rm crlf_false_attr__$f.txt &&
-		if test -z "$ceol"; then
-			git checkout -- crlf_false_attr__$f.txt
-		else
-			git -c core.eol=$ceol checkout -- crlf_false_attr__$f.txt
-		fi
+		test_expect_success "setup $f checkout ${ceol:+ with -c core.eol=$ceol}"  '
+			rm -f crlf_false_attr__$f.txt &&
+			git ${ceol:+-c core.eol=$ceol} checkout -- crlf_false_attr__$f.txt
+		'
 	done
 
 	test_expect_success "ls-files --eol attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol" '
@@ -311,8 +322,8 @@ checkout_files () {
 		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__CRLF_nul.txt
 		i/-text w/$(stats_ascii $crlfnul) attr/$(attr_ascii $attr $aeol) crlf_false_attr__LF_nul.txt
 		EOF
-		git ls-files --eol crlf_false_attr__* |
-		sed -e "s/	/ /g" -e "s/  */ /g" |
+		git ls-files --eol crlf_false_attr__* >tmp &&
+		sed -e "s/	/ /g" -e "s/  */ /g" tmp |
 		sort >actual &&
 		test_cmp expect actual
 	'
@@ -359,12 +370,12 @@ test_expect_success 'ls-files --eol -o Text/Binary' '
 	i/ w/crlf TeBi_126_CL
 	i/ w/-text TeBi_126_CLC
 	EOF
-	git ls-files --eol -o |
+	git ls-files --eol -o >tmp &&
 	sed -n -e "/TeBi_/{s!attr/[	]*!!g
 	s!	! !g
 	s!  *! !g
 	p
-	}" | sort >actual &&
+	}" tmp | sort >actual &&
 	test_cmp expect actual
 '
 
@@ -386,9 +397,7 @@ test_expect_success 'setup main' '
 	test_tick
 '
 
-# Disable extra chain-linting for the next set of tests. There are many
-# auto-generated ones that are not worth checking over and over.
-GIT_TEST_CHAIN_LINT_HARDER_DEFAULT=0
+
 
 warn_LF_CRLF="LF will be replaced by CRLF"
 warn_CRLF_LF="CRLF will be replaced by LF"
@@ -597,10 +606,13 @@ do
 	# auto: core.autocrlf=false and core.eol unset(or native) uses native eol
 	checkout_files     auto  "$id" ""     false   ""       $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
 	checkout_files     auto  "$id" ""     false   native   $NL   CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	# core.autocrlf false, .gitattributes sets eol
+	checkout_files     ""    "$id" "lf"   false   ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	checkout_files     ""    "$id" "crlf" false   ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
+	# core.autocrlf true, .gitattributes sets eol
+	checkout_files     ""    "$id" "lf"   true    ""       LF    CRLF  CRLF_mix_LF  LF_mix_CR    LF_nul
+	checkout_files     ""    "$id" "crlf" true    ""       CRLF  CRLF  CRLF         CRLF_mix_CR  CRLF_nul
 done
-
-# The rest of the tests are unique; do the usual linting.
-unset GIT_TEST_CHAIN_LINT_HARDER_DEFAULT
 
 # Should be the last test case: remove some files from the worktree
 test_expect_success 'ls-files --eol -d -z' '
@@ -611,8 +623,8 @@ test_expect_success 'ls-files --eol -d -z' '
 	i/lf w/ crlf_false_attr__LF.txt
 	i/mixed w/ crlf_false_attr__CRLF_mix_LF.txt
 	EOF
-	git ls-files --eol -d |
-	sed -e "s!attr/[^	]*!!g" -e "s/	/ /g" -e "s/  */ /g" |
+	git ls-files --eol -d >tmp &&
+	sed -e "s!attr/[^	]*!!g" -e "s/	/ /g" -e "s/  */ /g" tmp |
 	sort >actual &&
 	test_cmp expect actual
 '

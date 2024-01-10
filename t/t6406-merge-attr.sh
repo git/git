@@ -8,6 +8,7 @@ test_description='per path merge controlled by merge attribute'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -55,6 +56,12 @@ test_expect_success setup '
 	) >"$ours+"
 	cat "$ours+" >"$ours"
 	rm -f "$ours+"
+
+	if test -f ./please-abort
+	then
+		echo >>./please-abort killing myself
+		kill -9 $$
+	fi
 	exit "$exit"
 	EOF
 	chmod +x ./custom-merge
@@ -62,10 +69,10 @@ test_expect_success setup '
 
 test_expect_success merge '
 
-	{
-		echo "binary -merge"
-		echo "union merge=union"
-	} >.gitattributes &&
+	cat >.gitattributes <<-\EOF &&
+	binary -merge
+	union merge=union
+	EOF
 
 	if git merge main
 	then
@@ -161,9 +168,27 @@ test_expect_success 'custom merge backend' '
 	rm -f $o $a $b
 '
 
+test_expect_success !WINDOWS 'custom merge driver that is killed with a signal' '
+	test_when_finished "rm -f output please-abort" &&
+
+	git reset --hard anchor &&
+	git config --replace-all \
+	merge.custom.driver "./custom-merge %O %A %B 0 %P" &&
+	git config --replace-all \
+	merge.custom.name "custom merge driver for testing" &&
+
+	>./please-abort &&
+	echo "* merge=custom" >.gitattributes &&
+	test_must_fail git merge main 2>err &&
+	grep "^error: failed to execute internal merge" err &&
+	git ls-files -u >output &&
+	git diff --name-only HEAD >>output &&
+	test_must_be_empty output
+'
+
 test_expect_success 'up-to-date merge without common ancestor' '
-	test_create_repo repo1 &&
-	test_create_repo repo2 &&
+	git init repo1 &&
+	git init repo2 &&
 	test_tick &&
 	(
 		cd repo1 &&
@@ -221,8 +246,13 @@ test_expect_success 'binary files with union attribute' '
 	printf "two\0" >bin.txt &&
 	git commit -am two &&
 
-	test_must_fail git merge bin-main 2>stderr &&
-	grep -i "warning.*cannot merge.*HEAD vs. bin-main" stderr
+	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
+	then
+		test_must_fail git merge bin-main >output
+	else
+		test_must_fail git merge bin-main 2>output
+	fi &&
+	grep -i "warning.*cannot merge.*HEAD vs. bin-main" output
 '
 
 test_done

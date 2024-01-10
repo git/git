@@ -204,4 +204,30 @@ test_expect_success 'Test delete/normalize conflict' '
 	test_path_is_missing file
 '
 
+test_expect_success 'rename/delete vs. renormalization' '
+	git init subrepo &&
+	(
+		cd subrepo &&
+		echo foo >oldfile &&
+		git add oldfile &&
+		git commit -m original &&
+
+		git branch rename &&
+		git branch nuke &&
+
+		git checkout rename &&
+		git mv oldfile newfile &&
+		git commit -m renamed &&
+
+		git checkout nuke &&
+		git rm oldfile &&
+		git commit -m deleted &&
+
+		git checkout rename^0 &&
+		test_must_fail git -c merge.renormalize=true merge nuke >out &&
+
+		grep "rename/delete" out
+	)
+'
+
 test_done

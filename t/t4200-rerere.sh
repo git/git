@@ -365,9 +365,6 @@ test_expect_success 'set up an unresolved merge' '
 	test_might_fail git config --unset rerere.autoupdate &&
 	git reset --hard &&
 	git checkout version2 &&
-	fifth=$(git rev-parse fifth) &&
-	echo "$fifth		branch fifth of ." |
-	git fmt-merge-msg >msg &&
 	ancestor=$(git merge-base version2 fifth) &&
 	test_must_fail git merge-recursive "$ancestor" -- HEAD fifth &&
 
@@ -436,13 +433,13 @@ test_expect_success 'rerere --no-no-rerere-autoupdate' '
 	git update-index --index-info <failedmerge &&
 	cp file3.conflict file3 &&
 	test_must_fail git rerere --no-no-rerere-autoupdate 2>err &&
-	test_i18ngrep [Uu]sage err &&
+	test_grep [Uu]sage err &&
 	test_must_fail git update-index --refresh
 '
 
 test_expect_success 'rerere -h' '
 	test_must_fail git rerere -h >help &&
-	test_i18ngrep [Uu]sage help
+	test_grep [Uu]sage help
 '
 
 concat_insert () {

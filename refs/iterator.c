@@ -3,7 +3,7 @@
  * documentation about the design and use of reference iterators.
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "refs.h"
 #include "refs/refs-internal.h"
 #include "iterator.h"
@@ -51,8 +51,8 @@ static int empty_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	return ref_iterator_abort(ref_iterator);
 }
 
-static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				   struct object_id *peeled)
+static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
+				   struct object_id *peeled UNUSED)
 {
 	BUG("peel called for empty iterator");
 }
@@ -64,9 +64,9 @@ static int empty_ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 static struct ref_iterator_vtable empty_ref_iterator_vtable = {
-	empty_ref_iterator_advance,
-	empty_ref_iterator_peel,
-	empty_ref_iterator_abort
+	.advance = empty_ref_iterator_advance,
+	.peel = empty_ref_iterator_peel,
+	.abort = empty_ref_iterator_abort,
 };
 
 struct ref_iterator *empty_ref_iterator_begin(void)
@@ -201,9 +201,9 @@ static int merge_ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 static struct ref_iterator_vtable merge_ref_iterator_vtable = {
-	merge_ref_iterator_advance,
-	merge_ref_iterator_peel,
-	merge_ref_iterator_abort
+	.advance = merge_ref_iterator_advance,
+	.peel = merge_ref_iterator_peel,
+	.abort = merge_ref_iterator_abort,
 };
 
 struct ref_iterator *merge_ref_iterator_begin(
@@ -238,7 +238,7 @@ struct ref_iterator *merge_ref_iterator_begin(
  */
 static enum iterator_selection overlay_iterator_select(
 		struct ref_iterator *front, struct ref_iterator *back,
-		void *cb_data)
+		void *cb_data UNUSED)
 {
 	int cmp;
 
@@ -378,9 +378,9 @@ static int prefix_ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 static struct ref_iterator_vtable prefix_ref_iterator_vtable = {
-	prefix_ref_iterator_advance,
-	prefix_ref_iterator_peel,
-	prefix_ref_iterator_abort
+	.advance = prefix_ref_iterator_advance,
+	.peel = prefix_ref_iterator_peel,
+	.abort = prefix_ref_iterator_abort,
 };
 
 struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,

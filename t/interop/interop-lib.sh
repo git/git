@@ -68,7 +68,7 @@ generate_wrappers () {
 	wrap_git .bin/git.a "$DIR_A" &&
 	wrap_git .bin/git.b "$DIR_B" &&
 	write_script .bin/git <<-\EOF &&
-	echo >&2 fatal: test tried to run generic git
+	echo >&2 fatal: test tried to run generic git: $*
 	exit 1
 	EOF
 	PATH=$(pwd)/.bin:$PATH

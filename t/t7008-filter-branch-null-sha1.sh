@@ -1,6 +1,7 @@
 #!/bin/sh
 
 test_description='filter-branch removal of trees with null sha1'
+
 . ./test-lib.sh
 
 test_expect_success 'setup: base commits' '

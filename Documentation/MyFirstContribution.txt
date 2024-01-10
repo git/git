@@ -160,10 +160,11 @@ in order to keep the declarations alphabetically sorted:
 int cmd_psuh(int argc, const char **argv, const char *prefix);
 ----
 
-Be sure to `#include "builtin.h"` in your `psuh.c`.
+Be sure to `#include "builtin.h"` in your `psuh.c`. You'll also need to
+`#include "gettext.h"` to use functions related to printing output text.
 
-Go ahead and add some throwaway printf to that function. This is a decent
-starting point as we can now add build rules and register the command.
+Go ahead and add some throwaway printf to the `cmd_psuh` function. This is a
+decent starting point as we can now add build rules and register the command.
 
 NOTE: Your throwaway text, as well as much of the text you will be adding over
 the course of this tutorial, is user-facing. That means it needs to be
@@ -710,13 +711,104 @@ dependencies. `prove` also makes the output nicer.
 Go ahead and commit this change, as well.
 
 [[ready-to-share]]
-== Getting Ready to Share
+== Getting Ready to Share: Anatomy of a Patch Series
 
 You may have noticed already that the Git project performs its code reviews via
 emailed patches, which are then applied by the maintainer when they are ready
-and approved by the community. The Git project does not accept patches from
+and approved by the community. The Git project does not accept contributions from
 pull requests, and the patches emailed for review need to be formatted a
-specific way. At this point the tutorial diverges, in order to demonstrate two
+specific way.
+
+:patch-series: https://lore.kernel.org/git/pull.1218.git.git.1645209647.gitgitgadget@gmail.com/
+:lore: https://lore.kernel.org/git/
+
+Before taking a look at how to convert your commits into emailed patches,
+let's analyze what the end result, a "patch series", looks like. Here is an
+{patch-series}[example] of the summary view for a patch series on the web interface of
+the {lore}[Git mailing list archive]:
+
+----
+2022-02-18 18:40 [PATCH 0/3] libify reflog John Cai via GitGitGadget
+2022-02-18 18:40 ` [PATCH 1/3] reflog: libify delete reflog function and helpers John Cai via GitGitGadget
+2022-02-18 19:10   ` Ævar Arnfjörð Bjarmason [this message]
+2022-02-18 19:39     ` Taylor Blau
+2022-02-18 19:48       ` Ævar Arnfjörð Bjarmason
+2022-02-18 19:35   ` Taylor Blau
+2022-02-21  1:43     ` John Cai
+2022-02-21  1:50       ` Taylor Blau
+2022-02-23 19:50         ` John Cai
+2022-02-18 20:00   ` // other replies elided
+2022-02-18 18:40 ` [PATCH 2/3] reflog: call reflog_delete from reflog.c John Cai via GitGitGadget
+2022-02-18 19:15   ` Ævar Arnfjörð Bjarmason
+2022-02-18 20:26     ` Junio C Hamano
+2022-02-18 18:40 ` [PATCH 3/3] stash: call reflog_delete from reflog.c John Cai via GitGitGadget
+2022-02-18 19:20   ` Ævar Arnfjörð Bjarmason
+2022-02-19  0:21     ` Taylor Blau
+2022-02-22  2:36     ` John Cai
+2022-02-22 10:51       ` Ævar Arnfjörð Bjarmason
+2022-02-18 19:29 ` [PATCH 0/3] libify reflog Ævar Arnfjörð Bjarmason
+2022-02-22 18:30 ` [PATCH v2 0/3] libify reflog John Cai via GitGitGadget
+2022-02-22 18:30   ` [PATCH v2 1/3] stash: add test to ensure reflog --rewrite --updatref behavior John Cai via GitGitGadget
+2022-02-23  8:54     ` Ævar Arnfjörð Bjarmason
+2022-02-23 21:27       ` Junio C Hamano
+// continued
+----
+
+We can note a few things:
+
+- Each commit is sent as a separate email, with the commit message title as
+  subject, prefixed with "[PATCH _i_/_n_]" for the _i_-th commit of an
+  _n_-commit series.
+- Each patch is sent as a reply to an introductory email called the _cover
+  letter_ of the series, prefixed "[PATCH 0/_n_]".
+- Subsequent iterations of the patch series are labelled "PATCH v2", "PATCH
+  v3", etc. in place of "PATCH". For example, "[PATCH v2 1/3]" would be the first of
+  three patches in the second iteration. Each iteration is sent with a new cover
+  letter (like "[PATCH v2 0/3]" above), itself a reply to the cover letter of the
+  previous iteration (more on that below).
+
+NOTE: A single-patch topic is sent with "[PATCH]", "[PATCH v2]", etc. without
+_i_/_n_ numbering (in the above thread overview, no single-patch topic appears,
+though).
+
+[[cover-letter]]
+=== The cover letter
+
+In addition to an email per patch, the Git community also expects your patches
+to come with a cover letter. This is an important component of change
+submission as it explains to the community from a high level what you're trying
+to do, and why, in a way that's more apparent than just looking at your
+patches.
+
+The title of your cover letter should be something which succinctly covers the
+purpose of your entire topic branch. It's often in the imperative mood, just
+like our commit message titles. Here is how we'll title our series:
+
+---
+Add the 'psuh' command
+---
+
+The body of the cover letter is used to give additional context to reviewers.
+Be sure to explain anything your patches don't make clear on their own, but
+remember that since the cover letter is not recorded in the commit history,
+anything that might be useful to future readers of the repository's history
+should also be in your commit messages.
+
+Here's an example body for `psuh`:
+
+----
+Our internal metrics indicate widespread interest in the command
+git-psuh - that is, many users are trying to use it, but finding it is
+unavailable, using some unknown workaround instead.
+
+The following handful of patches add the psuh command and implement some
+handy features on top of it.
+
+This patchset is part of the MyFirstContribution tutorial and should not
+be merged.
+----
+
+At this point the tutorial diverges, in order to demonstrate two
 different methods of formatting your patchset and getting it reviewed.
 
 The first method to be covered is GitGitGadget, which is useful for those
@@ -741,7 +833,7 @@ Johannes Schindelin to make life as a Git contributor easier for those used to
 the GitHub PR workflow. It allows contributors to open pull requests against its
 mirror of the Git project, and does some magic to turn the PR into a set of
 emails and send them out for you. It also runs the Git continuous integration
-suite for you. It's documented at http://gitgitgadget.github.io.
+suite for you. It's documented at https://gitgitgadget.github.io/.
 
 [[create-fork]]
 === Forking `git/git` on GitHub
@@ -808,8 +900,22 @@ https://github.com/gitgitgadget/git and open a PR either with the "New pull
 request" button or the convenient "Compare & pull request" button that may
 appear with the name of your newly pushed branch.
 
-Review the PR's title and description, as it's used by GitGitGadget as the cover
-letter for your change. When you're happy, submit your pull request.
+Review the PR's title and description, as they're used by GitGitGadget
+respectively as the subject and body of the cover letter for your change. Refer
+to <<cover-letter,"The cover letter">> above for advice on how to title your
+submission and what content to include in the description.
+
+NOTE: For single-patch contributions, your commit message should already be
+meaningful and explain at a high level the purpose (what is happening and why)
+of your patch, so you usually do not need any additional context. In that case,
+remove the PR description that GitHub automatically generates from your commit
+message (your PR description should be empty). If you do need to supply even
+more context, you can do so in that space and it will be appended to the email
+that GitGitGadget will send, between the three-dash line and the diffstat
+(see <<single-patch,Bonus Chapter: One-Patch Changes>> for how this looks once
+submitted).
+
+When you're happy, submit your pull request.
 
 [[run-ci-ggg]]
 === Running CI and Getting Ready to Send
@@ -905,19 +1011,34 @@ Sending emails with Git is a two-part process; before you can prepare the emails
 themselves, you'll need to prepare the patches. Luckily, this is pretty simple:
 
 ----
-$ git format-patch --cover-letter -o psuh/ master..psuh
+$ git format-patch --cover-letter -o psuh/ --base=auto psuh@{u}..psuh
 ----
 
-The `--cover-letter` parameter tells `format-patch` to create a cover letter
-template for you. You will need to fill in the template before you're ready
-to send - but for now, the template will be next to your other patches.
+ . The `--cover-letter` option tells `format-patch` to create a
+   cover letter template for you. You will need to fill in the
+   template before you're ready to send - but for now, the template
+   will be next to your other patches.
 
-The `-o psuh/` parameter tells `format-patch` to place the patch files into a
-directory. This is useful because `git send-email` can take a directory and
-send out all the patches from there.
+ . The `-o psuh/` option tells `format-patch` to place the patch
+   files into a directory. This is useful because `git send-email`
+   can take a directory and send out all the patches from there.
 
-`master..psuh` tells `format-patch` to generate patches for the difference
-between `master` and `psuh`. It will make one patch file per commit. After you
+ . The `--base=auto` option tells the command to record the "base
+   commit", on which the recipient is expected to apply the patch
+   series.  The `auto` value will cause `format-patch` to compute
+   the base commit automatically, which is the merge base of tip
+   commit of the remote-tracking branch and the specified revision
+   range.
+
+ . The `psuh@{u}..psuh` option tells `format-patch` to generate
+   patches for the commits you created on the `psuh` branch since it
+   forked from its upstream (which is `origin/master` if you
+   followed the example in the "Set up your workspace" section).  If
+   you are already on the `psuh` branch, you can just say `@{u}`,
+   which means "commits on the current branch since it forked from
+   its upstream", which is the same thing.
+
+The command will make one patch file per commit. After you
 run, you can go have a look at each of the patches with your favorite text
 editor and make sure everything looks alright; however, it's not recommended to
 make code fixups via the patch file. It's a better idea to make the change the
@@ -937,49 +1058,29 @@ but want reviewers to look at what they have so far. You can add this flag with
 Check and make sure that your patches and cover letter template exist in the
 directory you specified - you're nearly ready to send out your review!
 
-[[cover-letter]]
+[[preparing-cover-letter]]
 === Preparing Email
 
-In addition to an email per patch, the Git community also expects your patches
-to come with a cover letter, typically with a subject line [PATCH 0/x] (where
-x is the number of patches you're sending). Since you invoked `format-patch`
-with `--cover-letter`, you've already got a template ready. Open it up in your
-favorite editor.
+Since you invoked `format-patch` with `--cover-letter`, you've already got a
+cover letter template ready. Open it up in your favorite editor.
 
 You should see a number of headers present already. Check that your `From:`
-header is correct. Then modify your `Subject:` to something which succinctly
-covers the purpose of your entire topic branch, for example:
+header is correct. Then modify your `Subject:` (see <<cover-letter,above>> for
+how to choose good title for your patch series):
 
 ----
-Subject: [PATCH 0/7] adding the 'psuh' command
+Subject: [PATCH 0/7] Add the 'psuh' command
 ----
 
 Make sure you retain the ``[PATCH 0/X]'' part; that's what indicates to the Git
-community that this email is the beginning of a review, and many reviewers
-filter their email for this type of flag.
+community that this email is the beginning of a patch series, and many
+reviewers filter their email for this type of flag.
 
 You'll need to add some extra parameters when you invoke `git send-email` to add
 the cover letter.
 
-Next you'll have to fill out the body of your cover letter. This is an important
-component of change submission as it explains to the community from a high level
-what you're trying to do, and why, in a way that's more apparent than just
-looking at your diff. Be sure to explain anything your diff doesn't make clear
-on its own.
-
-Here's an example body for `psuh`:
-
-----
-Our internal metrics indicate widespread interest in the command
-git-psuh - that is, many users are trying to use it, but finding it is
-unavailable, using some unknown workaround instead.
-
-The following handful of patches add the psuh command and implement some
-handy features on top of it.
-
-This patchset is part of the MyFirstContribution tutorial and should not
-be merged.
-----
+Next you'll have to fill out the body of your cover letter. Again, see
+<<cover-letter,above>> for what content to include.
 
 The template created by `git format-patch --cover-letter` includes a diffstat.
 This gives reviewers a summary of what they're in for when reviewing your topic.
@@ -1060,32 +1161,32 @@ all named like `v2-000n-my-commit-subject.patch`. `-v2` will also format
 your patches by prefixing them with "[PATCH v2]" instead of "[PATCH]",
 and your range-diff will be prefaced with "Range-diff against v1".
 
-Afer you run this command, `format-patch` will output the patches to the `psuh/`
+After you run this command, `format-patch` will output the patches to the `psuh/`
 directory, alongside the v1 patches. Using a single directory makes it easy to
 refer to the old v1 patches while proofreading the v2 patches, but you will need
 to be careful to send out only the v2 patches. We will use a pattern like
-"psuh/v2-*.patch" (not "psuh/*.patch", which would match v1 and v2 patches).
+`psuh/v2-*.patch` (not `psuh/*.patch`, which would match v1 and v2 patches).
 
 Edit your cover letter again. Now is a good time to mention what's different
 between your last version and now, if it's something significant. You do not
 need the exact same body in your second cover letter; focus on explaining to
 reviewers the changes you've made that may not be as visible.
 
-You will also need to go and find the Message-Id of your previous cover letter.
+You will also need to go and find the Message-ID of your previous cover letter.
 You can either note it when you send the first series, from the output of `git
 send-email`, or you can look it up on the
 https://lore.kernel.org/git[mailing list]. Find your cover letter in the
-archives, click on it, then click "permalink" or "raw" to reveal the Message-Id
+archives, click on it, then click "permalink" or "raw" to reveal the Message-ID
 header. It should match:
 
 ----
-Message-Id: <foo.12345.author@example.com>
+Message-ID: <foo.12345.author@example.com>
 ----
 
-Your Message-Id is `<foo.12345.author@example.com>`. This example will be used
-below as well; make sure to replace it with the correct Message-Id for your
-**previous cover letter** - that is, if you're sending v2, use the Message-Id
-from v1; if you're sending v3, use the Message-Id from v2.
+Your Message-ID is `<foo.12345.author@example.com>`. This example will be used
+below as well; make sure to replace it with the correct Message-ID for your
+**previous cover letter** - that is, if you're sending v2, use the Message-ID
+from v1; if you're sending v3, use the Message-ID from v2.
 
 While you're looking at the email, you should also note who is CC'd, as it's
 common practice in the mailing list to keep all CCs on a thread. You can add
@@ -1155,6 +1256,38 @@ index 88f126184c..38da593a60 100644
 
 [[now-what]]
 == My Patch Got Emailed - Now What?
+
+Please give reviewers enough time to process your initial patch before
+sending an updated version. That is, resist the temptation to send a new
+version immediately, because others may have already started reviewing
+your initial version.
+
+While waiting for review comments, you may find mistakes in your initial
+patch, or perhaps realize a different and better way to achieve the goal
+of the patch. In this case you may communicate your findings to other
+reviewers as follows:
+
+ - If the mistakes you found are minor, send a reply to your patch as if
+   you were a reviewer and mention that you will fix them in an
+   updated version.
+
+ - On the other hand, if you think you want to change the course so
+   drastically that reviews on the initial patch would be a waste of
+   time (for everyone involved), retract the patch immediately with
+   a reply like "I am working on a much better approach, so please
+   ignore this patch and wait for the updated version."
+
+Now, the above is a good practice if you sent your initial patch
+prematurely without polish.  But a better approach of course is to avoid
+sending your patch prematurely in the first place.
+
+Please be considerate of the time needed by reviewers to examine each
+new version of your patch. Rather than seeing the initial version right
+now (followed by several "oops, I like this version better than the
+previous one" patches over 2 days), reviewers would strongly prefer if a
+single polished version came 2 days later instead, and that version with
+fewer mistakes were the only one they would need to review.
+
 
 [[reviewing]]
 === Responding to Reviews

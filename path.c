@@ -1,16 +1,21 @@
 /*
  * Utilities for paths and pathnames
  */
-#include "cache.h"
+#include "git-compat-util.h"
+#include "abspath.h"
+#include "environment.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "strbuf.h"
 #include "string-list.h"
 #include "dir.h"
 #include "worktree.h"
+#include "setup.h"
 #include "submodule-config.h"
 #include "path.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "lockfile.h"
 #include "exec-cmd.h"
 
@@ -347,7 +352,8 @@ static void init_common_trie(void)
  * Helper function for update_common_dir: returns 1 if the dir
  * prefix is common.
  */
-static int check_common(const char *unmatched, void *value, void *baton)
+static int check_common(const char *unmatched, void *value,
+			void *baton UNUSED)
 {
 	struct common_dir *dir = value;
 
@@ -733,7 +739,7 @@ char *interpolate_path(const char *path, int real_home)
 	struct strbuf user_path = STRBUF_INIT;
 	const char *to_copy = path;
 
-	if (path == NULL)
+	if (!path)
 		goto return_null;
 
 	if (skip_prefix(path, "%(prefix)/", &path))
@@ -901,7 +907,13 @@ int adjust_shared_perm(const char *path)
 	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
 		new_mode |= (new_mode & 0444) >> 2;
-		new_mode |= FORCE_DIR_SET_GID;
+
+		/*
+		 * g+s matters only if any extra access is granted
+		 * based on group membership.
+		 */
+		if (FORCE_DIR_SET_GID && (new_mode & 060))
+			new_mode |= FORCE_DIR_SET_GID;
 	}
 
 	if (((old_mode ^ new_mode) & ~S_IFMT) &&
@@ -1200,6 +1212,26 @@ int normalize_path_copy(char *dst, const char *src)
 	return normalize_path_copy_len(dst, src, NULL);
 }
 
+int strbuf_normalize_path(struct strbuf *src)
+{
+	struct strbuf dst = STRBUF_INIT;
+
+	strbuf_grow(&dst, src->len);
+	if (normalize_path_copy(dst.buf, src->buf) < 0) {
+		strbuf_release(&dst);
+		return -1;
+	}
+
+	/*
+	 * normalize_path does not tell us the new length, so we have to
+	 * compute it by looking for the new NUL it placed
+	 */
+	strbuf_setlen(&dst, strlen(dst.buf));
+	strbuf_swap(src, &dst);
+	strbuf_release(&dst);
+	return 0;
+}
+
 /*
  * path = Canonical absolute path
  * prefixes = string_list containing normalized, absolute paths without
@@ -1225,11 +1257,15 @@ int longest_ancestor_length(const char *path, struct string_list *prefixes)
 		const char *ceil = prefixes->items[i].string;
 		int len = strlen(ceil);
 
-		if (len == 1 && ceil[0] == '/')
-			len = 0; /* root matches anything, with length 0 */
-		else if (!strncmp(path, ceil, len) && path[len] == '/')
-			; /* match of length len */
-		else
+		/*
+		 * For root directories (`/`, `C:/`, `//server/share/`)
+		 * adjust the length to exclude the trailing slash.
+		 */
+		if (len > 0 && ceil[len - 1] == '/')
+			len--;
+
+		if (strncmp(path, ceil, len) ||
+		    path[len] != '/' || !path[len + 1])
 			continue; /* no match */
 
 		if (len > max_len)
@@ -1409,7 +1445,7 @@ int is_ntfs_dotgit(const char *name)
 
 	for (;;) {
 		c = *(name++);
-		if (!c || c == '\\' || c == '/' || c == ':')
+		if (!c || is_xplatform_dir_sep(c) || c == ':')
 			return 1;
 		if (c != '.' && c != ' ')
 			return 0;

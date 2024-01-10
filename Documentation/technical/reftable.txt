@@ -46,7 +46,7 @@ search lookup, and range scans.
 
 Storage in the file is organized into variable sized blocks. Prefix
 compression is used within a single block to reduce disk space. Block
-size and alignment is tunable by the writer.
+size and alignment are tunable by the writer.
 
 Performance
 ^^^^^^^^^^^
@@ -115,7 +115,7 @@ Varint encoding
 Varint encoding is identical to the ofs-delta encoding method used
 within pack files.
 
-Decoder works such as:
+Decoder works as follows:
 
 ....
 val = buf[ptr] & 0x7f
@@ -175,7 +175,7 @@ log_index*
 footer
 ....
 
-in a log-only file the first log block immediately follows the file
+In a log-only file, the first log block immediately follows the file
 header, without padding to block alignment.
 
 Block size
@@ -247,7 +247,7 @@ uint32( hash_id )
 ....
 
 The header is identical to `version_number=1`, with the 4-byte hash ID
-("sha1" for SHA1 and "s256" for SHA-256) append to the header.
+("sha1" for SHA1 and "s256" for SHA-256) appended to the header.
 
 For maximum backward compatibility, it is recommended to use version 1 when
 writing SHA1 reftables.
@@ -288,7 +288,7 @@ The 2-byte `restart_count` stores the number of entries in the
 `restart_count` to binary search between restarts before starting a
 linear scan.
 
-Exactly `restart_count` 3-byte `restart_offset` values precedes the
+Exactly `restart_count` 3-byte `restart_offset` values precede the
 `restart_count`. Offsets are relative to the start of the block and
 refer to the first byte of any `ref_record` whose name has not been
 prefix compressed. Entries in the `restart_offset` list must be sorted,
@@ -443,7 +443,7 @@ Obj block format
 Object blocks are optional. Writers may choose to omit object blocks,
 especially if readers will not use the object name to ref mapping.
 
-Object blocks use unique, abbreviated 2-32 object name keys, mapping to
+Object blocks use unique, abbreviated 2-31 byte object name keys, mapping to
 ref blocks containing references pointing to that object directly, or as
 the peeled value of an annotated tag. Like ref blocks, object blocks use
 the file's standard block size. The abbreviation length is available in

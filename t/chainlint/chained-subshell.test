@@ -1,0 +1,13 @@
+# LINT: start of subshell chained to preceding command
+mkdir sub && (
+	cd sub &&
+	foo the bar
+	nuff said
+) &&
+
+# LINT: preceding command pipes to subshell on same line
+cut "-d " -f actual | (read s1 s2 s3 &&
+test -f $s1
+test $(cat $s2) = tree2path1 &&
+# LINT: closing subshell ")" correctly detected on same line as "$(...)"
+test $(cat $s3) = tree3path1)

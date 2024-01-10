@@ -3,28 +3,34 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-#define USE_THE_INDEX_COMPATIBILITY_MACROS
-#include "cache.h"
+#include "builtin.h"
+#include "abspath.h"
+#include "gettext.h"
+#include "hex.h"
 #include "repository.h"
 #include "config.h"
-#include "blob.h"
-#include "tree.h"
-#include "commit.h"
 #include "tag.h"
 #include "tree-walk.h"
-#include "builtin.h"
 #include "parse-options.h"
 #include "string-list.h"
 #include "run-command.h"
-#include "userdiff.h"
 #include "grep.h"
 #include "quote.h"
 #include "dir.h"
 #include "pathspec.h"
+#include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
-#include "object-store.h"
+#include "object-file.h"
+#include "object-name.h"
+#include "object-store-ll.h"
 #include "packfile.h"
+#include "pager.h"
+#include "path.h"
+#include "read-cache-ll.h"
+#include "write-or-die.h"
+
+static const char *grep_prefix;
 
 static char const * const grep_usage[] = {
 	N_("git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"),
@@ -199,8 +205,8 @@ static void *run(void *arg)
 		grep_source_clear_data(&w->source);
 		work_done(w);
 	}
-	free_grep_patterns(arg);
-	free(arg);
+	free_grep_patterns(opt);
+	free(opt);
 
 	return (void*) (intptr_t) hit;
 }
@@ -281,14 +287,18 @@ static int wait_all(void)
 	return hit;
 }
 
-static int grep_cmd_config(const char *var, const char *value, void *cb)
+static int grep_cmd_config(const char *var, const char *value,
+			   const struct config_context *ctx, void *cb)
 {
-	int st = grep_config(var, value, cb);
-	if (git_color_default_config(var, value, cb) < 0)
+	int st = grep_config(var, value, ctx, cb);
+
+	if (git_color_config(var, value, cb) < 0)
+		st = -1;
+	else if (git_default_config(var, value, ctx, cb) < 0)
 		st = -1;
 
 	if (!strcmp(var, "grep.threads")) {
-		num_threads = git_config_int(var, value);
+		num_threads = git_config_int(var, value, ctx->kvi);
 		if (num_threads < 0)
 			die(_("invalid number of threads specified (%d) for %s"),
 			    num_threads, var);
@@ -315,11 +325,11 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
 	strbuf_reset(out);
 
 	if (opt->null_following_name) {
-		if (opt->relative && opt->prefix_length) {
+		if (opt->relative && grep_prefix) {
 			struct strbuf rel_buf = STRBUF_INIT;
 			const char *rel_name =
 				relative_path(filename + tree_name_len,
-					      opt->prefix, &rel_buf);
+					      grep_prefix, &rel_buf);
 
 			if (tree_name_len)
 				strbuf_add(out, filename, tree_name_len);
@@ -332,8 +342,8 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
 		return;
 	}
 
-	if (opt->relative && opt->prefix_length)
-		quote_path(filename + tree_name_len, opt->prefix, out, 0);
+	if (opt->relative && grep_prefix)
+		quote_path(filename + tree_name_len, grep_prefix, out, 0);
 	else
 		quote_c_style(filename + tree_name_len, out, NULL, 0);
 
@@ -401,7 +411,7 @@ static void append_path(struct grep_opt *opt, const void *data, size_t len)
 
 	if (len == 1 && *(const char *)data == '\0')
 		return;
-	string_list_append(path_list, xstrndup(data, len));
+	string_list_append_nodup(path_list, xstrndup(data, len));
 }
 
 static void run_pager(struct grep_opt *opt, const char *prefix)
@@ -456,6 +466,33 @@ static int grep_submodule(struct grep_opt *opt,
 	 * subrepo's odbs to the in-memory alternates list.
 	 */
 	obj_read_lock();
+
+	/*
+	 * NEEDSWORK: when reading a submodule, the sparsity settings in the
+	 * superproject are incorrectly forgotten or misused. For example:
+	 *
+	 * 1. "command_requires_full_index"
+	 * 	When this setting is turned on for `grep`, only the superproject
+	 *	knows it. All the submodules are read with their own configs
+	 *	and get prepare_repo_settings()'d. Therefore, these submodules
+	 *	"forget" the sparse-index feature switch. As a result, the index
+	 *	of these submodules are expanded unexpectedly.
+	 *
+	 * 2. "core_apply_sparse_checkout"
+	 *	When running `grep` in the superproject, this setting is
+	 *	populated using the superproject's configs. However, once
+	 *	initialized, this config is globally accessible and is read by
+	 *	prepare_repo_settings() for the submodules. For instance, if a
+	 *	submodule is using a sparse-checkout, however, the superproject
+	 *	is not, the result is that the config from the superproject will
+	 *	dictate the behavior for the submodule, making it "forget" its
+	 *	sparse-checkout state.
+	 *
+	 * 3. "core_sparse_checkout_cone"
+	 *	ditto.
+	 *
+	 * Note that this list is not exhaustive.
+	 */
 	repo_read_gitmodules(subrepo, 0);
 
 	/*
@@ -482,7 +519,7 @@ static int grep_submodule(struct grep_opt *opt,
 		object_type = oid_object_info(subrepo, oid, NULL);
 		obj_read_unlock();
 		data = read_object_with_reference(subrepo,
-						  oid, tree_type,
+						  oid, OBJ_TREE,
 						  &size, NULL);
 		if (!data)
 			die(_("unable to read tree (%s)"), oid_to_hex(oid));
@@ -518,8 +555,6 @@ static int grep_cache(struct grep_opt *opt,
 	if (repo_read_index(repo) < 0)
 		die(_("index file corrupt"));
 
-	/* TODO: audit for interaction with sparse-index. */
-	ensure_full_index(repo->index);
 	for (nr = 0; nr < repo->index->cache_nr; nr++) {
 		const struct cache_entry *ce = repo->index->cache[nr];
 
@@ -528,8 +563,21 @@ static int grep_cache(struct grep_opt *opt,
 
 		strbuf_setlen(&name, name_base_len);
 		strbuf_addstr(&name, ce->name);
+		if (S_ISSPARSEDIR(ce->ce_mode)) {
+			enum object_type type;
+			struct tree_desc tree;
+			void *data;
+			unsigned long size;
 
-		if (S_ISREG(ce->ce_mode) &&
+			data = repo_read_object_file(the_repository, &ce->oid,
+						     &type, &size);
+			init_tree_desc(&tree, data, size);
+
+			hit |= grep_tree(opt, pathspec, &tree, &name, 0, 0);
+			strbuf_setlen(&name, name_base_len);
+			strbuf_addstr(&name, ce->name);
+			free(data);
+		} else if (S_ISREG(ce->ce_mode) &&
 		    match_pathspec(repo->index, pathspec, name.buf, name.len, 0, NULL,
 				   S_ISDIR(ce->ce_mode) ||
 				   S_ISGITLINK(ce->ce_mode))) {
@@ -592,7 +640,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			strbuf_addstr(&name, base->buf + tn_len);
 			match = tree_entry_interesting(repo->index,
 						       &entry, &name,
-						       0, pathspec);
+						       pathspec);
 			strbuf_setlen(&name, name_base_len);
 
 			if (match == all_entries_not_interesting)
@@ -612,7 +660,8 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			void *data;
 			unsigned long size;
 
-			data = read_object_file(&entry.oid, &type, &size);
+			data = repo_read_object_file(the_repository,
+						     &entry.oid, &type, &size);
 			if (!data)
 				die(_("unable to read tree (%s)"),
 				    oid_to_hex(&entry.oid));
@@ -651,7 +700,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		int hit, len;
 
 		data = read_object_with_reference(opt->repo,
-						  &obj->oid, tree_type,
+						  &obj->oid, OBJ_TREE,
 						  &size, NULL);
 		if (!data)
 			die(_("unable to read tree (%s)"), oid_to_hex(&obj->oid));
@@ -760,14 +809,20 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 {
 	struct grep_opt *grep_opt = opt->value;
 	int from_stdin;
+	const char *filename = arg;
 	FILE *patterns;
 	int lno = 0;
 	struct strbuf sb = STRBUF_INIT;
 
 	BUG_ON_OPT_NEG(unset);
 
-	from_stdin = !strcmp(arg, "-");
-	patterns = from_stdin ? stdin : fopen(arg, "r");
+	if (!*filename)
+		; /* leave it as-is */
+	else
+		filename = prefix_filename_except_for_dash(grep_prefix, filename);
+
+	from_stdin = !strcmp(filename, "-");
+	patterns = from_stdin ? stdin : fopen(filename, "r");
 	if (!patterns)
 		die_errno(_("cannot open '%s'"), arg);
 	while (strbuf_getline(&sb, patterns) == 0) {
@@ -781,6 +836,8 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
 	if (!from_stdin)
 		fclose(patterns);
 	strbuf_release(&sb);
+	if (filename != arg)
+		free((void *)filename);
 	return 0;
 }
 
@@ -839,11 +896,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	struct grep_opt opt;
 	struct object_array list = OBJECT_ARRAY_INIT;
 	struct pathspec pathspec;
-	struct string_list path_list = STRING_LIST_INIT_NODUP;
+	struct string_list path_list = STRING_LIST_INIT_DUP;
 	int i;
 	int dummy;
 	int use_index = 1;
-	int pattern_type_arg = GREP_PATTERN_TYPE_UNSPECIFIED;
 	int allow_revs;
 
 	struct option options[] = {
@@ -873,20 +929,19 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			 N_("process binary files with textconv filters")),
 		OPT_SET_INT('r', "recursive", &opt.max_depth,
 			    N_("search in subdirectories (default)"), -1),
-		{ OPTION_INTEGER, 0, "max-depth", &opt.max_depth, N_("depth"),
-			N_("descend at most <depth> levels"), PARSE_OPT_NONEG,
-			NULL, 1 },
+		OPT_INTEGER_F(0, "max-depth", &opt.max_depth,
+			N_("descend at most <n> levels"), PARSE_OPT_NONEG),
 		OPT_GROUP(""),
-		OPT_SET_INT('E', "extended-regexp", &pattern_type_arg,
+		OPT_SET_INT('E', "extended-regexp", &opt.pattern_type_option,
 			    N_("use extended POSIX regular expressions"),
 			    GREP_PATTERN_TYPE_ERE),
-		OPT_SET_INT('G', "basic-regexp", &pattern_type_arg,
+		OPT_SET_INT('G', "basic-regexp", &opt.pattern_type_option,
 			    N_("use basic POSIX regular expressions (default)"),
 			    GREP_PATTERN_TYPE_BRE),
-		OPT_SET_INT('F', "fixed-strings", &pattern_type_arg,
+		OPT_SET_INT('F', "fixed-strings", &opt.pattern_type_option,
 			    N_("interpret patterns as fixed strings"),
 			    GREP_PATTERN_TYPE_FIXED),
-		OPT_SET_INT('P', "perl-regexp", &pattern_type_arg,
+		OPT_SET_INT('P', "perl-regexp", &opt.pattern_type_option,
 			    N_("use Perl-compatible regular expressions"),
 			    GREP_PATTERN_TYPE_PCRE),
 		OPT_GROUP(""),
@@ -939,7 +994,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK_F(0, "and", &opt, NULL,
 			N_("combine patterns specified with -e"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, and_callback),
-		OPT_BOOL(0, "or", &dummy, ""),
+		OPT_BOOL_F(0, "or", &dummy, "", PARSE_OPT_NONEG),
 		OPT_CALLBACK_F(0, "not", &opt, NULL, "",
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, not_callback),
 		OPT_CALLBACK_F('(', NULL, &opt, NULL, "",
@@ -960,11 +1015,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		OPT_BOOL_F(0, "ext-grep", &external_grep_allowed__ignored,
 			   N_("allow calling of grep(1) (ignored by this build)"),
 			   PARSE_OPT_NOCOMPLETE),
+		OPT_INTEGER('m', "max-count", &opt.max_count,
+			N_("maximum number of results per file")),
 		OPT_END()
 	};
+	grep_prefix = prefix;
 
-	git_config(grep_cmd_config, NULL);
-	grep_init(&opt, the_repository, prefix);
+	grep_init(&opt, the_repository);
+	git_config(grep_cmd_config, &opt);
 
 	/*
 	 * If there is no -- then the paths must exist in the working
@@ -979,7 +1037,11 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, grep_usage,
 			     PARSE_OPT_KEEP_DASHDASH |
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	grep_commit_pattern_type(pattern_type_arg, &opt);
+
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		the_repository->settings.command_requires_full_index = 0;
+	}
 
 	if (use_index && !startup_info->have_repository) {
 		int fallback = 0;
@@ -1100,6 +1162,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (recurse_submodules && untracked)
 		die(_("--untracked not supported with --recurse-submodules"));
 
+	/*
+	 * Optimize out the case where the amount of matches is limited to zero.
+	 * We do this to keep results consistent with GNU grep(1).
+	 */
+	if (opt.max_count == 0)
+		return 1;
+
 	if (show_in_pager) {
 		if (num_threads > 1)
 			warning(_("invalid option combination, ignoring --threads"));
@@ -1159,19 +1228,17 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			strbuf_addf(&buf, "+/%s%s",
 					strcmp("less", pager) ? "" : "*",
 					opt.pattern_list->pattern);
-			string_list_append(&path_list,
-					   strbuf_detach(&buf, NULL));
+			string_list_append_nodup(&path_list,
+						 strbuf_detach(&buf, NULL));
 		}
 	}
 
 	if (!show_in_pager && !opt.status_only)
 		setup_pager();
 
-	if (!use_index && (untracked || cached))
-		die(_("--cached or --untracked cannot be used with --no-index"));
-
-	if (untracked && cached)
-		die(_("--untracked cannot be used with --cached"));
+	die_for_incompatible_opt3(!use_index, "--no-index",
+				  untracked, "--untracked",
+				  cached, "--cached");
 
 	if (!use_index || untracked) {
 		int use_exclude = (opt_exclude < 0) ? use_index : !!opt_exclude;
@@ -1195,7 +1262,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	if (hit && show_in_pager)
 		run_pager(&opt, prefix);
 	clear_pathspec(&pathspec);
+	string_list_clear(&path_list, 0);
 	free_grep_patterns(&opt);
+	object_array_clear(&list);
 	free_repos();
 	return !hit;
 }

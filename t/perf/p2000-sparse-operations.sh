@@ -43,6 +43,7 @@ test_expect_success 'setup repo and indexes' '
 	done &&
 
 	git sparse-checkout init --cone &&
+	git tag -a v1.0 -m "Final" &&
 	git sparse-checkout set $SPARSE_CONE &&
 	git checkout -b wide $OLD_COMMIT &&
 
@@ -106,9 +107,33 @@ test_perf_on_all () {
 }
 
 test_perf_on_all git status
+test_perf_on_all 'git stash && git stash pop'
+test_perf_on_all 'echo >>new && git stash -u && git stash pop'
 test_perf_on_all git add -A
 test_perf_on_all git add .
 test_perf_on_all git commit -a -m A
 test_perf_on_all git checkout -f -
+test_perf_on_all "git sparse-checkout add f2/f3/f1 && git sparse-checkout set $SPARSE_CONE"
+test_perf_on_all git reset
+test_perf_on_all git reset --hard
+test_perf_on_all git reset -- does-not-exist
+test_perf_on_all git diff
+test_perf_on_all git diff --cached
+test_perf_on_all git blame $SPARSE_CONE/a
+test_perf_on_all git blame $SPARSE_CONE/f3/a
+test_perf_on_all git read-tree -mu HEAD
+test_perf_on_all git checkout-index -f --all
+test_perf_on_all git update-index --add --remove $SPARSE_CONE/a
+test_perf_on_all "git rm -f $SPARSE_CONE/a && git checkout HEAD -- $SPARSE_CONE/a"
+test_perf_on_all git grep --cached bogus -- "f2/f1/f1/*"
+test_perf_on_all git write-tree
+test_perf_on_all git describe --dirty
+test_perf_on_all 'echo >>new && git describe --dirty'
+test_perf_on_all git diff-files
+test_perf_on_all git diff-files -- $SPARSE_CONE/a
+test_perf_on_all git diff-tree HEAD
+test_perf_on_all git diff-tree HEAD -- $SPARSE_CONE/a
+test_perf_on_all "git worktree add ../temp && git worktree remove ../temp"
+test_perf_on_all git check-attr -a -- $SPARSE_CONE/a
 
 test_done

@@ -1,4 +1,4 @@
-# LINT: 'if' cuddled with "(" and ")"; indented with spaces, not tabs
+# LINT: "if" cuddled with "(" and ")"; indented with spaces, not tabs
 (if test -z ""; then
     echo empty
  else

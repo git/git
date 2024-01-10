@@ -204,6 +204,15 @@ representing the status of a single ref. Each line is of the form:
  <flag> <summary> <from> -> <to> [<reason>]
 -------------------------------
 
+When using `--porcelain`, the output format is intended to be
+machine-parseable. In contrast to the human-readable output formats it
+thus prints to standard output instead of standard error. Each line is
+of the form:
+
+-------------------------------
+<flag> <old-object-id> <new-object-id> <local-reference>
+-------------------------------
+
 The status of up-to-date refs is shown only if the --verbose option is
 used.
 
@@ -251,10 +260,10 @@ EXAMPLES
 $ git fetch origin
 ------------------------------------------------
 +
-The above command copies all branches from the remote refs/heads/
-namespace and stores them to the local refs/remotes/origin/ namespace,
-unless the branch.<name>.fetch option is used to specify a non-default
-refspec.
+The above command copies all branches from the remote `refs/heads/`
+namespace and stores them to the local `refs/remotes/origin/` namespace,
+unless the `remote.<repository>.fetch` option is used to specify a
+non-default refspec.
 
 * Using refspecs explicitly:
 +
@@ -285,14 +294,19 @@ linkgit:git-gc[1]).
 
 include::transfer-data-leaks.txt[]
 
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/fetch.txt[]
+
 BUGS
 ----
-Using --recurse-submodules can only fetch new commits in already checked
-out submodules right now. When e.g. upstream added a new submodule in the
-just fetched commits of the superproject the submodule itself cannot be
-fetched, making it impossible to check out that submodule later without
-having to do a fetch again. This is expected to be fixed in a future Git
-version.
+Using --recurse-submodules can only fetch new commits in submodules that are
+present locally e.g. in `$GIT_DIR/modules/`. If the upstream adds a new
+submodule, that submodule cannot be fetched until it is cloned e.g. by `git
+submodule update`. This is expected to be fixed in a future Git version.
 
 SEE ALSO
 --------

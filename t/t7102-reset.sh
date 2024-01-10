@@ -71,6 +71,16 @@ check_changes () {
 	done | test_cmp .cat_expect -
 }
 
+# no negated form for various type of resets
+for opt in soft mixed hard merge keep
+do
+	test_expect_success "no 'git reset --no-$opt'" '
+		test_when_finished "rm -f err" &&
+		test_must_fail git reset --no-$opt 2>err &&
+		grep "error: unknown option .no-$opt." err
+	'
+done
+
 test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard >.actual &&
@@ -462,12 +472,55 @@ test_expect_success 'resetting an unmodified path is a no-op' '
 	git diff-index --cached --exit-code HEAD
 '
 
+test_reset_refreshes_index () {
+
+	# To test whether the index is refreshed in `git reset --mixed` with
+	# the given options, create a scenario where we clearly see different
+	# results depending on whether the refresh occurred or not.
+
+	# Step 0: start with a clean index
+	git reset --hard HEAD &&
+
+	# Step 1: remove file2, but only in the index (no change to worktree)
+	git rm --cached file2 &&
+
+	# Step 2: reset index & leave worktree unchanged from HEAD
+	git $1 reset $2 --mixed HEAD &&
+
+	# Step 3: verify whether the index is refreshed by checking whether
+	# file2 still has staged changes in the index differing from HEAD (if
+	# the refresh occurred, there should be no such changes)
+	git diff-files >output.log &&
+	test_must_be_empty output.log
+}
+
 test_expect_success '--mixed refreshes the index' '
+	# Verify default behavior (without --[no-]refresh or reset.refresh)
+	test_reset_refreshes_index &&
+
+	# With --quiet
+	test_reset_refreshes_index "" --quiet
+'
+
+test_expect_success '--mixed --[no-]refresh sets refresh behavior' '
+	# Verify that --[no-]refresh controls index refresh
+	test_reset_refreshes_index "" --refresh &&
+	! test_reset_refreshes_index "" --no-refresh
+'
+
+test_expect_success '--mixed preserves skip-worktree' '
+	echo 123 >>file2 &&
+	git add file2 &&
+	git update-index --skip-worktree file2 &&
+	git reset --mixed HEAD >output &&
+	test_must_be_empty output &&
+
 	cat >expect <<-\EOF &&
 	Unstaged changes after reset:
 	M	file2
 	EOF
-	echo 123 >>file2 &&
+	git update-index --no-skip-worktree file2 &&
+	git add file2 &&
 	git reset --mixed HEAD >output &&
 	test_cmp expect output
 '
@@ -561,6 +614,14 @@ test_expect_success 'reset --mixed sets up work tree' '
 	) &&
 	git --git-dir=mixed_worktree/.git --work-tree=mixed_worktree reset >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'reset handles --end-of-options' '
+	git update-ref refs/heads/--foo HEAD^ &&
+	git log -1 --format=%s refs/heads/--foo >expect &&
+	git reset --hard --end-of-options --foo &&
+	git log -1 --format=%s HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_done

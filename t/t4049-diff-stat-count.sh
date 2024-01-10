@@ -2,6 +2,8 @@
 # Copyright (c) 2011, Google Inc.
 
 test_description='diff --stat-count'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -51,7 +53,7 @@ test_expect_success 'exclude unmerged entries from total file count' '
 	git rm -f d &&
 	for stage in 1 2 3
 	do
-		sed -e "s/ 0	a/ $stage	d/" x
+		sed -e "s/ 0	a/ $stage	d/" x || return 1
 	done |
 	git update-index --index-info &&
 	echo d >d &&

@@ -1,0 +1,6 @@
+public record RIGHT<A, N extends Number>(A comp1, N comp2, int comp3) {
+    static int ONE;
+    static int TWO;
+    static int THREE;
+    static int ChangeMe;
+}

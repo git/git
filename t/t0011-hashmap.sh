@@ -220,7 +220,7 @@ test_expect_success 'grow / shrink' '
 	for n in $(test_seq 51)
 	do
 		echo put key$n value$n >> in &&
-		echo NULL >> expect
+		echo NULL >> expect || return 1
 	done &&
 	echo size >> in &&
 	echo 64 51 >> expect &&
@@ -231,7 +231,7 @@ test_expect_success 'grow / shrink' '
 	for n in $(test_seq 12)
 	do
 		echo remove key$n >> in &&
-		echo value$n >> expect
+		echo value$n >> expect || return 1
 	done &&
 	echo size >> in &&
 	echo 256 40 >> expect &&

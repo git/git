@@ -137,7 +137,7 @@ test_expect_success 'setup deeper work tree' '
 
 test_expect_success 'add a directory outside the work tree' '(
 	cd tester &&
-	d1="$(cd .. ; pwd)" &&
+	d1="$(cd .. && pwd)" &&
 	test_must_fail git add "$d1"
 )'
 

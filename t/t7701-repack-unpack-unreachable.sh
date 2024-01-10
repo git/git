@@ -5,6 +5,7 @@ test_description='git repack works correctly'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 fsha1=
@@ -35,7 +36,7 @@ test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 	git repack -A -d -l &&
 	# verify objects are packed in repository
 	test 3 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		   egrep "^($fsha1|$csha1|$tsha1) " |
+		   grep -E "^($fsha1|$csha1|$tsha1) " |
 		   sort | uniq | wc -l) &&
 	git show $fsha1 &&
 	git show $csha1 &&
@@ -49,7 +50,7 @@ test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 	git repack -A -d -l &&
 	# verify objects are retained unpacked
 	test 0 = $(git verify-pack -v -- .git/objects/pack/*.idx |
-		   egrep "^($fsha1|$csha1|$tsha1) " |
+		   grep -E "^($fsha1|$csha1|$tsha1) " |
 		   sort | uniq | wc -l) &&
 	git show $fsha1 &&
 	git show $csha1 &&
@@ -110,6 +111,48 @@ test_expect_success 'do not bother loosening old objects' '
 	git repack -A -d --unpack-unreachable=1.hour.ago &&
 	git cat-file -p $obj1 &&
 	test_must_fail git cat-file -p $obj2
+'
+
+test_expect_success 'gc.recentObjectsHook' '
+	obj1=$(echo one | git hash-object -w --stdin) &&
+	obj2=$(echo two | git hash-object -w --stdin) &&
+	obj3=$(echo three | git hash-object -w --stdin) &&
+	pack1=$(echo $obj1 | git pack-objects .git/objects/pack/pack) &&
+	pack2=$(echo $obj2 | git pack-objects .git/objects/pack/pack) &&
+	pack3=$(echo $obj3 | git pack-objects .git/objects/pack/pack) &&
+	git prune-packed &&
+
+	git cat-file -p $obj1 &&
+	git cat-file -p $obj2 &&
+	git cat-file -p $obj3 &&
+
+	# make an unreachable annotated tag object to ensure we rescue objects
+	# which are reachable from non-pruned unreachable objects
+	obj2_tag="$(git mktag <<-EOF
+	object $obj2
+	type blob
+	tag obj2-tag
+	tagger T A Gger <tagger@example.com> 1234567890 -0000
+	EOF
+	)" &&
+
+	obj2_tag_pack="$(echo $obj2_tag | git pack-objects .git/objects/pack/pack)" &&
+	git prune-packed &&
+
+	write_script precious-objects <<-EOF &&
+	echo $obj2_tag
+	EOF
+	git config gc.recentObjectsHook ./precious-objects &&
+
+	test-tool chmtime =-86400 .git/objects/pack/pack-$pack2.pack &&
+	test-tool chmtime =-86400 .git/objects/pack/pack-$pack3.pack &&
+	test-tool chmtime =-86400 .git/objects/pack/pack-$obj2_tag_pack.pack &&
+	git repack -A -d --unpack-unreachable=1.hour.ago &&
+
+	git cat-file -p $obj1 &&
+	git cat-file -p $obj2 &&
+	git cat-file -p $obj2_tag &&
+	test_must_fail git cat-file -p $obj3
 '
 
 test_expect_success 'keep packed objects found only in index' '

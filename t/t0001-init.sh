@@ -2,10 +2,12 @@
 
 test_description='git init'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 check_config () {
-	if test -d "$1" && test -f "$1/config" && test -d "$1/refs"
+	if test_path_is_dir "$1" &&
+	   test_path_is_file "$1/config" && test_path_is_dir "$1/refs"
 	then
 		: happy
 	else
@@ -166,8 +168,8 @@ test_expect_success 'reinit' '
 		git -c init.defaultBranch=initial init >out1 2>err1 &&
 		git init >out2 2>err2
 	) &&
-	test_i18ngrep "Initialized empty" again/out1 &&
-	test_i18ngrep "Reinitialized existing" again/out2 &&
+	test_grep "Initialized empty" again/out1 &&
+	test_grep "Reinitialized existing" again/out2 &&
 	test_must_be_empty again/err1 &&
 	test_must_be_empty again/err2
 '
@@ -330,7 +332,7 @@ test_expect_success 'init with separate gitdir' '
 
 test_expect_success 'explicit bare & --separate-git-dir incompatible' '
 	test_must_fail git init --bare --separate-git-dir goop.git bare.git 2>err &&
-	test_i18ngrep "mutually exclusive" err
+	test_grep "cannot be used together" err
 '
 
 test_expect_success 'implicit bare & --separate-git-dir incompatible' '
@@ -338,7 +340,7 @@ test_expect_success 'implicit bare & --separate-git-dir incompatible' '
 	mkdir -p bare.git &&
 	test_must_fail env GIT_DIR=. \
 		git -C bare.git init --separate-git-dir goop.git 2>err &&
-	test_i18ngrep "incompatible" err
+	test_grep "incompatible" err
 '
 
 test_expect_success 'bare & --separate-git-dir incompatible within worktree' '
@@ -347,7 +349,7 @@ test_expect_success 'bare & --separate-git-dir incompatible within worktree' '
 	git clone --bare . bare.git &&
 	git -C bare.git worktree add --detach ../linkwt &&
 	test_must_fail git -C linkwt init --separate-git-dir seprepo 2>err &&
-	test_i18ngrep "incompatible" err
+	test_grep "incompatible" err
 '
 
 test_lazy_prereq GETCWD_IGNORES_PERMS '
@@ -561,7 +563,7 @@ test_expect_success '--initial-branch' '
 
 	: re-initializing should not change the branch name &&
 	git init --initial-branch=ignore initial-branch-option 2>err &&
-	test_i18ngrep "ignored --initial-branch" err &&
+	test_grep "ignored --initial-branch" err &&
 	git -C initial-branch-option symbolic-ref HEAD >actual &&
 	grep hello actual
 '
@@ -577,7 +579,7 @@ test_expect_success 'advice on unconfigured init.defaultBranch' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= git -c color.advice=always \
 		init unconfigured-default-branch-name 2>err &&
 	test_decode_color <err >decoded &&
-	test_i18ngrep "<YELLOW>hint: " decoded
+	test_grep "<YELLOW>hint: " decoded
 '
 
 test_expect_success 'overridden default main branch name (env)' '
@@ -590,15 +592,20 @@ test_expect_success 'overridden default main branch name (env)' '
 test_expect_success 'invalid default branch name' '
 	test_must_fail env GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME="with space" \
 		git init initial-branch-invalid 2>err &&
-	test_i18ngrep "invalid branch name" err
+	test_grep "invalid branch name" err
 '
 
 test_expect_success 'branch -m with the initial branch' '
 	git init rename-initial &&
 	git -C rename-initial branch -m renamed &&
-	test renamed = $(git -C rename-initial symbolic-ref --short HEAD) &&
+	echo renamed >expect &&
+	git -C rename-initial symbolic-ref --short HEAD >actual &&
+	test_cmp expect actual &&
+
 	git -C rename-initial branch -m renamed again &&
-	test again = $(git -C rename-initial symbolic-ref --short HEAD)
+	echo again >expect &&
+	git -C rename-initial symbolic-ref --short HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_done

@@ -34,6 +34,23 @@ test_expect_success 'ls-files correctly outputs files in submodule' '
 	test_cmp expect actual
 '
 
+test_expect_success '--stage' '
+	GITMODULES_HASH=$(git rev-parse HEAD:.gitmodules) &&
+	A_HASH=$(git rev-parse HEAD:a) &&
+	B_HASH=$(git rev-parse HEAD:b/b) &&
+	C_HASH=$(git -C submodule rev-parse HEAD:c) &&
+
+	cat >expect <<-EOF &&
+	100644 $GITMODULES_HASH 0	.gitmodules
+	100644 $A_HASH 0	a
+	100644 $B_HASH 0	b/b
+	100644 $C_HASH 0	submodule/c
+	EOF
+
+	git ls-files --stage --recurse-submodules >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'ls-files correctly outputs files in submodule with -z' '
 	lf_to_nul >expect <<-\EOF &&
 	.gitmodules
@@ -279,20 +296,52 @@ test_expect_success '--recurse-submodules and relative paths' '
 
 test_expect_success '--recurse-submodules does not support --error-unmatch' '
 	test_must_fail git ls-files --recurse-submodules --error-unmatch 2>actual &&
-	test_i18ngrep "does not support --error-unmatch" actual
+	test_grep "does not support --error-unmatch" actual
+'
+
+test_expect_success '--recurse-submodules parses submodule repo config' '
+	test_config -C submodule index.sparse "invalid non-boolean value" &&
+	test_must_fail git ls-files --recurse-submodules 2>err &&
+	grep "bad boolean config value" err
+'
+
+test_expect_success '--recurse-submodules parses submodule worktree config' '
+	test_config -C submodule extensions.worktreeConfig true &&
+	test_config -C submodule --worktree index.sparse "invalid non-boolean value" &&
+
+	test_must_fail git ls-files --recurse-submodules 2>err &&
+	grep "bad boolean config value" err
+'
+
+test_expect_success '--recurse-submodules submodules ignore super project worktreeConfig extension' '
+	# Enable worktree config in both super project & submodule, set an
+	# invalid config in the submodule worktree config
+	test_config extensions.worktreeConfig true &&
+	test_config -C submodule extensions.worktreeConfig true &&
+	test_config -C submodule --worktree index.sparse "invalid non-boolean value" &&
+
+	# Now, disable the worktree config in the submodule. Note that we need
+	# to manually re-enable extensions.worktreeConfig when the test is
+	# finished, otherwise the test_unconfig of index.sparse will not work.
+	test_unconfig -C submodule extensions.worktreeConfig &&
+	test_when_finished "git -C submodule config extensions.worktreeConfig true" &&
+
+	# With extensions.worktreeConfig disabled in the submodule, the invalid
+	# worktree config is not picked up.
+	git ls-files --recurse-submodules 2>err &&
+	! grep "bad boolean config value" err
 '
 
 test_incompatible_with_recurse_submodules () {
 	test_expect_success "--recurse-submodules and $1 are incompatible" "
 		test_must_fail git ls-files --recurse-submodules $1 2>actual &&
-		test_i18ngrep 'unsupported mode' actual
+		test_grep 'unsupported mode' actual
 	"
 }
 
 test_incompatible_with_recurse_submodules --deleted
 test_incompatible_with_recurse_submodules --modified
 test_incompatible_with_recurse_submodules --others
-test_incompatible_with_recurse_submodules --stage
 test_incompatible_with_recurse_submodules --killed
 test_incompatible_with_recurse_submodules --unmerged
 

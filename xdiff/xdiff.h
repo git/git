@@ -66,6 +66,7 @@ extern "C" {
 
 /* merge output styles */
 #define XDL_MERGE_DIFF3 1
+#define XDL_MERGE_ZEALOUS_DIFF3 2
 
 typedef struct s_mmfile {
 	char *ptr;
@@ -119,6 +120,7 @@ typedef struct s_bdiffparam {
 
 
 #define xdl_malloc(x) xmalloc(x)
+#define xdl_calloc(n, sz) xcalloc(n, sz)
 #define xdl_free(ptr) free(ptr)
 #define xdl_realloc(ptr,x) xrealloc(ptr,x)
 

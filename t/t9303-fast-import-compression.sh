@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='compression setting of fast-import utility'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 import_large () {

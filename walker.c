@@ -1,8 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "hex.h"
 #include "walker.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit.h"
+#include "strbuf.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "tag.h"
@@ -79,7 +82,7 @@ static int process_commit(struct walker *walker, struct commit *commit)
 {
 	struct commit_list *parents;
 
-	if (parse_commit(commit))
+	if (repo_parse_commit(the_repository, commit))
 		return -1;
 
 	while (complete && complete->item->date >= commit->date) {
@@ -93,7 +96,7 @@ static int process_commit(struct walker *walker, struct commit *commit)
 
 	walker_say(walker, "walk %s\n", oid_to_hex(&commit->object.oid));
 
-	if (process(walker, &get_commit_tree(commit)->object))
+	if (process(walker, &repo_get_commit_tree(the_repository, commit)->object))
 		return -1;
 
 	for (parents = commit->parents; parents; parents = parents->next) {
@@ -145,7 +148,7 @@ static int process(struct walker *walker, struct object *obj)
 		return 0;
 	obj->flags |= SEEN;
 
-	if (has_object_file(&obj->oid)) {
+	if (repo_has_object_file(the_repository, &obj->oid)) {
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
 	}
@@ -215,8 +218,10 @@ static int interpret_target(struct walker *walker, char *target, struct object_i
 	return -1;
 }
 
-static int mark_complete(const char *path, const struct object_id *oid,
-			 int flag, void *cb_data)
+static int mark_complete(const char *path UNUSED,
+			 const struct object_id *oid,
+			 int flag UNUSED,
+			 void *cb_data UNUSED)
 {
 	struct commit *commit = lookup_commit_reference_gently(the_repository,
 							       oid, 1);

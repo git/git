@@ -1,6 +1,7 @@
 #!/bin/sh
 
 test_description='test config file include directives'
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Force setup_explicit_git_dir() to run until the end. This is needed

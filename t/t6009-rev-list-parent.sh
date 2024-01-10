@@ -5,6 +5,7 @@ test_description='ancestor culling and limiting by parent number'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 check_revlist () {
@@ -60,6 +61,17 @@ test_expect_success 'setup roots, merges and octopuses' '
 	git merge -m tetrapus sidebranch anotherbranch yetanotherbranch &&
 	git tag tetrapus &&
 	git checkout main
+'
+
+test_expect_success 'parse --max-parents & --min-parents' '
+	test_must_fail git rev-list --max-parents=1q HEAD 2>error &&
+	grep "not an integer" error &&
+
+	test_must_fail git rev-list --min-parents=1q HEAD 2>error &&
+	grep "not an integer" error &&
+
+	git rev-list --max-parents=1 --min-parents=1 HEAD &&
+	git rev-list --max-parents=-1 --min-parents=-1 HEAD
 '
 
 test_expect_success 'rev-list roots' '
@@ -124,7 +136,7 @@ test_expect_success 'dodecapus' '
 		git checkout -b root$i five &&
 		test_commit $i &&
 		roots="$roots root$i" ||
-		return
+		return 1
 	done &&
 	git checkout main &&
 	test_tick &&
@@ -142,8 +154,8 @@ test_expect_success 'ancestors with the same commit time' '
 
 	test_tick_keep=$test_tick &&
 	for i in 1 2 3 4 5 6 7 8; do
-		test_tick=$test_tick_keep
-		test_commit t$i
+		test_tick=$test_tick_keep &&
+		test_commit t$i || return 1
 	done &&
 	git rev-list t1^! --not t$i >result &&
 	test_must_be_empty result

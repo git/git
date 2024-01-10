@@ -1,25 +1,18 @@
 #!/bin/sh
 
-test_description='test cherry-pick and revert with renames
-
-  --
-   + rename2: renames oops to opos
-  +  rename1: renames oops to spoo
-  +  added:   adds extra line to oops
-  ++ initial: has lines in oops
-
-'
+test_description='miscellaneous basic tests for cherry-pick and revert'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
 
 	for l in a b c d e f g h i j k l m n o
 	do
-		echo $l$l$l$l$l$l$l$l$l
+		echo $l$l$l$l$l$l$l$l$l || return 1
 	done >oops &&
 
 	test_tick &&
@@ -50,7 +43,7 @@ test_expect_success 'cherry-pick --nonsense' '
 	git diff --exit-code HEAD &&
 	test_must_fail git cherry-pick --nonsense 2>msg &&
 	git diff --exit-code HEAD "$pos" &&
-	test_i18ngrep "[Uu]sage:" msg
+	test_grep "[Uu]sage:" msg
 '
 
 test_expect_success 'revert --nonsense' '
@@ -59,15 +52,22 @@ test_expect_success 'revert --nonsense' '
 	git diff --exit-code HEAD &&
 	test_must_fail git revert --nonsense 2>msg &&
 	git diff --exit-code HEAD "$pos" &&
-	test_i18ngrep "[Uu]sage:" msg
+	test_grep "[Uu]sage:" msg
 '
+
+# the following two test cherry-pick and revert with renames
+#
+# --
+#  + rename2: renames oops to opos
+# +  rename1: renames oops to spoo
+# +  added:   adds extra line to oops
+# ++ initial: has lines in oops
 
 test_expect_success 'cherry-pick after renaming branch' '
 
 	git checkout rename2 &&
 	git cherry-pick added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename2) &&
-	test -f opos &&
+	test_cmp_rev rename2 HEAD^ &&
 	grep "Add extra line at the end" opos &&
 	git reflog -1 | grep cherry-pick
 
@@ -77,9 +77,9 @@ test_expect_success 'revert after renaming branch' '
 
 	git checkout rename1 &&
 	git revert added &&
-	test $(git rev-parse HEAD^) = $(git rev-parse rename1) &&
-	test -f spoo &&
-	! grep "Add extra line at the end" spoo &&
+	test_cmp_rev rename1 HEAD^ &&
+	test_path_is_file spoo &&
+	test_cmp_rev initial:oops HEAD:spoo &&
 	git reflog -1 | grep revert
 
 '
@@ -99,7 +99,7 @@ test_expect_success 'revert forbidden on dirty working tree' '
 	echo content >extra_file &&
 	git add extra_file &&
 	test_must_fail git revert HEAD 2>errors &&
-	test_i18ngrep "your local changes would be overwritten by " errors
+	test_grep "your local changes would be overwritten by " errors
 
 '
 
@@ -159,6 +159,7 @@ test_expect_success 'cherry-pick works with dirty renamed file' '
 '
 
 test_expect_success 'advice from failed revert' '
+	test_when_finished "git reset --hard" &&
 	test_commit --no-tag "add dream" dream dream &&
 	dream_oid=$(git rev-parse --short HEAD) &&
 	cat <<-EOF >expected &&
@@ -174,4 +175,63 @@ test_expect_success 'advice from failed revert' '
 	test_must_fail git revert HEAD^ 2>actual &&
 	test_cmp expected actual
 '
+
+test_expect_subject () {
+	echo "$1" >expect &&
+	git log -1 --pretty=%s >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'titles of fresh reverts' '
+	test_commit --no-tag A file1 &&
+	test_commit --no-tag B file1 &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Revert \"B\"" &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Reapply \"B\"" &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Revert \"Reapply \"B\"\""
+'
+
+test_expect_success 'title of legacy double revert' '
+	test_commit --no-tag "Revert \"Revert \"B\"\"" file1 &&
+	git revert --no-edit HEAD &&
+	test_expect_subject "Revert \"Revert \"Revert \"B\"\"\""
+'
+
+test_expect_success 'identification of reverted commit (default)' '
+	test_commit to-ident &&
+	test_when_finished "git reset --hard to-ident" &&
+	git checkout --detach to-ident &&
+	git revert --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git rev-parse HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'identification of reverted commit (--reference)' '
+	git checkout --detach to-ident &&
+	git revert --reference --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git show -s --pretty=reference HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'identification of reverted commit (revert.reference)' '
+	git checkout --detach to-ident &&
+	git -c revert.reference=true revert --no-edit HEAD &&
+	git cat-file commit HEAD >actual.raw &&
+	grep "^This reverts " actual.raw >actual &&
+	echo "This reverts commit $(git show -s --pretty=reference HEAD^)." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick is unaware of --reference (for now)' '
+	test_when_finished "git reset --hard" &&
+	test_must_fail git cherry-pick --reference HEAD 2>actual &&
+	grep "^usage: git cherry-pick" actual
+'
+
 test_done

@@ -168,6 +168,9 @@ Supported commands: 'list', 'import'.
 	Can guarantee that when a clone is requested, the received
 	pack is self contained and is connected.
 
+'get'::
+	Can use the 'get' command to download a file from a given URI.
+
 If a helper advertises 'connect', Git will use it if possible and
 fall back to another capability if the helper requests so when
 connecting (see the 'connect' command under COMMANDS).
@@ -417,6 +420,12 @@ Supported if the helper has the "connect" capability.
 	pairs.  After the connection ends, the remote helper exits.
 +
 Supported if the helper has the "stateless-connect" capability.
+
+'get' <uri> <path>::
+	Downloads the file from the given `<uri>` to the given `<path>`. If
+	`<path>.temp` exists, then Git assumes that the `.temp` file is a
+	partial download from a previous attempt and will resume the
+	download from that position.
 
 If a fatal error occurs, the program writes the error message to
 stderr and exits. The caller should expect that a suitable error
