@@ -45,6 +45,9 @@ advice.*::
 		Advice shown when linkgit:git-fetch[1] takes a long time
 		to calculate forced updates after ref updates, or to warn
 		that the check is disabled.
+	forceDeleteBranch::
+		Advice shown when a user tries to delete a not fully merged
+		branch without the force option set.
 	ignoredHook::
 		Advice shown if a hook is ignored because the hook is not
 		set as executable.

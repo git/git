@@ -47,6 +47,7 @@ static struct {
 	[ADVICE_DETACHED_HEAD]				= { "detachedHead", 1 },
 	[ADVICE_DIVERGING]				= { "diverging", 1 },
 	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates", 1 },
+	[ADVICE_FORCE_DELETE_BRANCH]			= { "forceDeleteBranch", 1 },
 	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated", 1 },
 	[ADVICE_IGNORED_HOOK]				= { "ignoredHook", 1 },
 	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity", 1 },
