@@ -308,6 +308,7 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 	struct timeval deadline;
 	int64_t delay = 0;
 	int tries = 0, err;
+	int fd = -1;
 
 	err = gettimeofday(&deadline, NULL);
 	if (err < 0)
@@ -329,9 +330,19 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 		if (tries > 3 && tv_cmp(&now, &deadline) >= 0)
 			goto out;
 
-		err = read_lines(st->list_file, &names);
-		if (err < 0)
-			goto out;
+		fd = open(st->list_file, O_RDONLY);
+		if (fd < 0) {
+			if (errno != ENOENT) {
+				err = REFTABLE_IO_ERROR;
+				goto out;
+			}
+
+			names = reftable_calloc(sizeof(char *));
+		} else {
+			err = fd_read_lines(fd, &names);
+			if (err < 0)
+				goto out;
+		}
 
 		err = reftable_stack_reload_once(st, names, reuse_open);
 		if (!err)
@@ -356,12 +367,16 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 		names = NULL;
 		free_names(names_after);
 		names_after = NULL;
+		close(fd);
+		fd = -1;
 
 		delay = delay + (delay * rand()) / RAND_MAX + 1;
 		sleep_millisec(delay);
 	}
 
 out:
+	if (fd >= 0)
+		close(fd);
 	free_names(names);
 	free_names(names_after);
 	return err;
