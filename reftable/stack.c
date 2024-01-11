@@ -175,6 +175,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 		st->readers_len = 0;
 		FREE_AND_NULL(st->readers);
 	}
+	stat_validity_clear(&st->list_validity);
 	FREE_AND_NULL(st->list_file);
 	FREE_AND_NULL(st->reftable_dir);
 	reftable_free(st);
@@ -374,7 +375,11 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 		sleep_millisec(delay);
 	}
 
+	stat_validity_update(&st->list_validity, fd);
+
 out:
+	if (err)
+		stat_validity_clear(&st->list_validity);
 	if (fd >= 0)
 		close(fd);
 	free_names(names);
@@ -388,8 +393,13 @@ out:
 static int stack_uptodate(struct reftable_stack *st)
 {
 	char **names = NULL;
-	int err = read_lines(st->list_file, &names);
+	int err;
 	int i = 0;
+
+	if (stat_validity_check(&st->list_validity, st->list_file))
+		return 0;
+
+	err = read_lines(st->list_file, &names);
 	if (err < 0)
 		return err;
 
