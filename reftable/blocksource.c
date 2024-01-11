@@ -125,24 +125,23 @@ static struct reftable_block_source_vtable file_vtable = {
 int reftable_block_source_from_file(struct reftable_block_source *bs,
 				    const char *name)
 {
-	struct stat st = { 0 };
-	int err = 0;
-	int fd = open(name, O_RDONLY);
-	struct file_block_source *p = NULL;
+	struct file_block_source *p;
+	struct stat st;
+	int fd;
+
+	fd = open(name, O_RDONLY);
 	if (fd < 0) {
-		if (errno == ENOENT) {
+		if (errno == ENOENT)
 			return REFTABLE_NOT_EXIST_ERROR;
-		}
 		return -1;
 	}
 
-	err = fstat(fd, &st);
-	if (err < 0) {
+	if (fstat(fd, &st) < 0) {
 		close(fd);
 		return REFTABLE_IO_ERROR;
 	}
 
-	p = reftable_calloc(sizeof(struct file_block_source));
+	p = reftable_calloc(sizeof(*p));
 	p->size = st.st_size;
 	p->fd = fd;
 
