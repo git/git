@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2024, #03; Tue, 9)
+Subject: What's cooking in git.git (Jan 2024, #04; Thu, 11)
 X-master-at: a54a84b333adbecf7bc4483c0e36ed5878cac17b
-X-next-at: 5e73029237c4506a7ca4fe5b7157ba7e1fc95d26
+X-next-at: 432eaa2c6beef636b4ea0f011b99512631f565d9
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2024, #03; Tue, 9)
+What's cooking in git.git (Jan 2024, #04; Thu, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,122 +46,115 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* en/header-cleanup (2023-12-26) 12 commits
-  (merged to 'next' on 2023-12-28 at 1ccddc2a10)
- + treewide: remove unnecessary includes in source files
- + treewide: add direct includes currently only pulled in transitively
- + trace2/tr2_tls.h: remove unnecessary include
- + submodule-config.h: remove unnecessary include
- + pkt-line.h: remove unnecessary include
- + line-log.h: remove unnecessary include
- + http.h: remove unnecessary include
- + fsmonitor--daemon.h: remove unnecessary includes
- + blame.h: remove unnecessary includes
- + archive.h: remove unnecessary include
- + treewide: remove unnecessary includes in source files
- + treewide: remove unnecessary includes from header files
-
- Remove unused header "#include".
- source: <pull.1617.v2.git.1703351700.gitgitgadget@gmail.com>
-
-
-* en/sparse-checkout-eoo (2023-12-26) 2 commits
-  (merged to 'next' on 2023-12-28 at 3ddf2ebab6)
- + sparse-checkout: be consistent with end of options markers
- + Merge branch 'jk/end-of-options' into jc/sparse-checkout-set-add-end-of-options
-
- "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
- not handle "--end-of-options" correctly after a recent update.
- source: <pull.1625.v2.git.git.1703619562639.gitgitgadget@gmail.com>
-
-
-* jc/archive-list-with-extra-args (2023-12-21) 1 commit
-  (merged to 'next' on 2023-12-28 at 2d5c20e67f)
- + archive: "--list" does not take further options
-
- "git archive --list extra garbage" silently ignored excess command
- line parameters, which has been corrected.
- source: <xmqqmsu3mnix.fsf@gitster.g>
-
-
-* jc/sparse-checkout-set-default-fix (2023-12-26) 1 commit
-  (merged to 'next' on 2023-12-28 at a558eccf8e)
- + sparse-checkout: use default patterns for 'set' only !stdin
-
- "git sparse-checkout set" added default patterns even when the
- patterns are being fed from the standard input, which has been
- corrected.
- source: <20231221065925.3234048-3-gitster@pobox.com>
-
-
-* ml/doc-merge-updates (2023-12-20) 2 commits
-  (merged to 'next' on 2023-12-28 at 7a6329a219)
- + Documentation/git-merge.txt: use backticks for command wrapping
- + Documentation/git-merge.txt: fix reference to synopsis
-
- Doc update.
- source: <20231220195342.17590-1-mi.al.lohmann@gmail.com>
-
-
-* rs/fast-import-simplify-mempool-allocation (2023-12-26) 1 commit
-  (merged to 'next' on 2023-12-28 at 16e6dd2a69)
- + fast-import: use mem_pool_calloc()
-
- Code simplification.
- source: <50c1f410-ca37-4c1c-a28b-3e9fad49f2b4@web.de>
-
-
-* rs/mem-pool-improvements (2023-12-28) 2 commits
-  (merged to 'next' on 2023-12-28 at aa03d9441c)
- + mem-pool: simplify alignment calculation
- + mem-pool: fix big allocations
-
- MemPool allocator fixes.
- source: <fa89d269-1a23-4ed6-bebc-30c0b629f444@web.de>
-
---------------------------------------------------
 [New Topics]
 
+* cp/t4129-pipefix (2024-01-10) 1 commit
+ - t4129: prevent loss of exit code due to the use of pipes
+
+ Test update.
+
+ Will merge to 'next'.
+ source: <pull.1636.git.1704891257544.gitgitgadget@gmail.com>
+
+
+* rj/advice-delete-branch-not-fully-merged (2024-01-11) 3 commits
+ - branch: make the advice to force-deleting a conditional one
+ - advice: fix an unexpected leading space
+ - advice: sort the advice related lists
+
+ The error message given when "git branch -d branch" fails due to
+ commits unique to the branch has been split into an error and a new
+ conditional advice message.
+
+ Will merge to 'next'?
+ source: <4aedc15c-4b3f-4f5e-abea-581b501600f8@gmail.com>
+
+
+* en/diffcore-delta-final-line-fix (2024-01-11) 1 commit
+ - diffcore-delta: avoid ignoring final 'line' of file
+
+ Rename detection logic ignored the final line of a file if it is an
+ incomplete line.
+
+ Expecting a reroll.
+ cf. <xmqqedenearc.fsf@gitster.g>
+ source: <pull.1637.git.1705006074626.gitgitgadget@gmail.com>
+
+
+* mj/gitweb-unreadable-config-error (2024-01-10) 1 commit
+ - gitweb: die when a configuration file cannot be read
+
+ When given an existing but unreadable file as a configuration file,
+ gitweb behaved as if the file did not exist at all, but now it
+ errors out.  This is a change that may break backward compatibility.
+
+ Will merge to 'next'?
+ source: <20240110225709.30168-1-marcelo.jimenez@gmail.com>
+
+
+* ps/completion-with-reftable-fix (2024-01-11) 2 commits
+ - completion: silence pseudoref existence check
+ - t9902: verify that completion does not print anything
+
+ Completion update to prepare for reftable
+
+ Will merge to 'next'.
+ source: <cover.1704969119.git.ps@pks.im>
+
+
+* ps/p4-use-ref-api (2024-01-11) 1 commit
+ - git-p4: stop reaching into the refdb
+
+ "git p4" update to prepare for reftable
+
+ Will merge to 'next'.
+ source: <33d6a062ec56be33ed50a42a420be0b023f6f4cf.1704980814.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
 * ps/gitlab-ci-static-analysis (2024-01-08) 1 commit
- - ci: add job performing static analysis on GitLab CI
+  (merged to 'next' on 2024-01-10 at 71af34de07)
+ + ci: add job performing static analysis on GitLab CI
 
  GitLab CI update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <1536a5ef07ad24dafb5d685b40099882f89e6cc5.1703761005.git.ps@pks.im>
 
 
 * ps/prompt-parse-HEAD-futureproof (2024-01-08) 2 commits
- - git-prompt: stop manually parsing HEAD with unknown ref formats
- - Merge branch 'ps/refstorage-extension' into ps/prompt-parse-HEAD-futureproof
+  (merged to 'next' on 2024-01-10 at f9515b9d89)
+ + git-prompt: stop manually parsing HEAD with unknown ref formats
+ + Merge branch 'ps/refstorage-extension' into ps/prompt-parse-HEAD-futureproof
  (this branch uses ps/refstorage-extension.)
 
  Futureproof command line prompt support (in contrib/).
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <ef4e36a5a40c369da138242a8fdc9e12a846613b.1704356313.git.ps@pks.im>
 
 
-* ps/reftable-optimize-io (2024-01-08) 4 commits
+* ps/reftable-optimize-io (2024-01-11) 5 commits
  - reftable/blocksource: use mmap to read tables
+ - reftable/blocksource: refactor code to match our coding style
  - reftable/stack: use stat info to avoid re-reading stack list
  - reftable/stack: refactor reloading to use file descriptor
  - reftable/stack: refactor stack reloading to have common exit path
 
  Low-level I/O optimization for reftable.
 
- Will merge to 'next'?
- source: <cover.1704714575.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1704966670.git.ps@pks.im>
 
 
 * rj/clarify-branch-doc-m (2024-01-08) 1 commit
- - branch: clarify <oldbranch> term
+  (merged to 'next' on 2024-01-10 at 432eaa2c6b)
+ + branch: clarify <oldbranch> term
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <d38e5a18-4d85-48f3-bc8b-8ca02ea683a4@gmail.com>
 
 
@@ -197,11 +190,11 @@ Release tarballs are available at:
 
  Tighten URL checks fsck makes in a URL recorded for submodules.
 
- Will merge to 'next'?
+ Expecting a reroll (and review response).
+ cf. <20240110103812.GB16674@coredump.intra.peff.net>
+ cf. <ZZ46MrjSocJl-kpU@tanuki>
  source: <pull.1635.git.1704822817.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ms/rebase-insnformat-doc-fix (2024-01-03) 1 commit
   (merged to 'next' on 2024-01-04 at d68f2be39b)
@@ -235,14 +228,14 @@ Release tarballs are available at:
  source: <20240103224054.1940209-1-delmerico@google.com>
 
 
-* sk/mingw-owner-check-error-message-improvement (2024-01-08) 1 commit
+* sk/mingw-owner-check-error-message-improvement (2024-01-10) 1 commit
  - mingw: give more details about unsafe directory's ownership
 
  In addition to (rather cryptic) Security Identifiers, show username
  and domain in the error message when we barf on mismatch between
  the Git directory and the current user.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20240108173837.20480-2-soekkle@freenet.de>
 
 
@@ -302,6 +295,8 @@ Release tarballs are available at:
  Instead of manually creating refs/ hierarchy on disk upon a
  creation of a secondary worktree, which is only usable via the
  files backend, use the refs API to populate it.
+
+ Needs review.
  source: <cover.1704705733.git.ps@pks.im>
 
 
@@ -356,19 +351,20 @@ Release tarballs are available at:
 
  Move test-ctype helper to the unit-test framework.
 
- Almost there.
+ Expecting a (hopefully small and final) reroll.
  cf. <a087f57c-ce72-45c7-8182-f38d0aca9030@web.de>
  cf. <33c81610-0958-49da-b702-ba8d96ecf1d3@gmail.com>
  source: <20240105161413.10422-1-ach.lumap@gmail.com>
 
 
-* bk/bisect-doc-fix (2023-12-27) 1 commit
+* bk/bisect-doc-fix (2024-01-10) 2 commits
+ - doc: refer to pathspec instead of path
  - doc: use singular form of repeatable path arg
 
  Synopsis fix.
 
- Expecting a reroll.
- source: <3d46bca1-96d4-43ba-a912-1f7c76942287@smtp-relay.sendinblue.com>
+ Will merge to 'next'.
+ source: <20240103040207.661413-1-britton.kerin@gmail.com>
 
 
 * ja/doc-placeholders-fix (2023-12-26) 2 commits
@@ -616,34 +612,3 @@ Release tarballs are available at:
 
  Not ready to be reviewed yet.
  source: <20230824205456.1231371-1-gitster@pobox.com>
-
---------------------------------------------------
-[Discarded]
-
-* jc/sparse-checkout-eoo (2023-12-21) 4 commits
- . sparse-checkout: tighten add_patterns_from_input()
- . sparse-checkout: use default patterns for 'set' only !stdin
- . SQUASH??? end-of-options test
- . sparse-checkout: take care of "--end-of-options" in set/add/check-rules
-
- "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
- not handle "--end-of-options" correctly after a recent update.
-
- Superseded by the en/sparse-checkout-eoo topic.
- source: <20231221065925.3234048-1-gitster@pobox.com>
-
-
-* tb/merge-tree-write-pack (2023-10-23) 5 commits
- . builtin/merge-tree.c: implement support for `--write-pack`
- . bulk-checkin: introduce `index_tree_bulk_checkin_incore()`
- . bulk-checkin: introduce `index_blob_bulk_checkin_incore()`
- . bulk-checkin: generify `stream_blob_to_pack()` for arbitrary types
- . bulk-checkin: extract abstract `bulk_checkin_source`
-
- "git merge-tree" learned "--write-pack" to record its result
- without creating loose objects.
-
- Broken when an object created during a merge is needed to continue merge
- cf. <CABPp-BEfy9VOvimP9==ry_rZXu=metOQ8s=_-XiG_Pdx9c06Ww@mail.gmail.com>
- cf. <ZZWOtnP2IHNldcy6@nand.local>
- source: <cover.1698101088.git.me@ttaylorr.com>
