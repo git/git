@@ -32,7 +32,11 @@ UI, Workflows & Features
    breaking change.  "--ignore-other-worktrees" option is required to
    unbreak you, if you are used to the current behaviour that "-B"
    overrides the safety.
-   (merge b23285a921 jc/checkout-B-branch-in-use later to maint).
+
+ * The builtin_objectmode attribute is populated for each path
+   without adding anything in .gitattributes files, which would be
+   useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
+   to limit to executables.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -63,6 +67,10 @@ Performance, Internal Implementation, Development Support etc.
  * "git clone" has been prepared to allow cloning a repository with
    non-default hash function into a repository that uses the reftable
    backend.
+
+ * Streaming spans of packfile data used to be done only from a
+   single, primary, pack in a repository with multiple packfiles.  It
+   has been extended to allow reuse from other packfiles, too.
 
 
 Fixes since v2.43
@@ -154,6 +162,11 @@ Fixes since v2.43
  * "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
    not handle "--end-of-options" correctly after a recent update.
 
+ * Unlike other environment variables that took the usual
+   true/false/yes/no as well as 0/1, GIT_FLUSH only understood 0/1,
+   which has been corrected.
+   (merge 556e68032f cp/git-flush-is-an-env-bool later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -178,3 +191,7 @@ Fixes since v2.43
    (merge 63956c553d ml/doc-merge-updates later to maint).
    (merge d57c671a51 en/header-cleanup later to maint).
    (merge 5b7eec4bc5 rs/fast-import-simplify-mempool-allocation later to maint).
+   (merge 291873e5d6 js/contributor-docs-updates later to maint).
+   (merge 54d8a2531b jk/t1006-cat-file-objectsize-disk later to maint).
+   (merge 7033d5479b jx/sideband-chomp-newline-fix later to maint).
+   (merge 9cd30af991 ms/rebase-insnformat-doc-fix later to maint).
