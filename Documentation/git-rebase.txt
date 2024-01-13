@@ -523,7 +523,7 @@ See also INCOMPATIBLE OPTIONS below.
 +
 The commit list format can be changed by setting the configuration option
 rebase.instructionFormat.  A customized instruction format will automatically
-have the long commit hash prepended to the format.
+have the commit hash prepended to the format.
 +
 See also INCOMPATIBLE OPTIONS below.
 

@@ -40,7 +40,7 @@ rebase.missingCommitsCheck::
 rebase.instructionFormat::
 	A format string, as specified in linkgit:git-log[1], to be used for the
 	todo list during an interactive rebase.  The format will
-	automatically have the long commit hash prepended to the format.
+	automatically have the commit hash prepended to the format.
 
 rebase.abbreviateCommands::
 	If set to true, `git rebase` will use abbreviated command names in the
