@@ -53,4 +53,62 @@ test_expect_success 'missing sideband designator is reported' '
 	test_grep "missing sideband" err
 '
 
+test_expect_success 'unpack-sideband: --no-chomp-newline' '
+	test_when_finished "rm -f expect-out expect-err" &&
+	test-tool pkt-line send-split-sideband >split-sideband &&
+	test-tool pkt-line unpack-sideband \
+		--no-chomp-newline <split-sideband >out 2>err &&
+	cat >expect-out <<-EOF &&
+		primary: regular output
+	EOF
+	cat >expect-err <<-EOF &&
+		Foo.
+		Bar.
+		Hello, world!
+	EOF
+	test_cmp expect-out out &&
+	test_cmp expect-err err
+'
+
+test_expect_success 'unpack-sideband: --chomp-newline (default)' '
+	test_when_finished "rm -f expect-out expect-err" &&
+	test-tool pkt-line send-split-sideband >split-sideband &&
+	test-tool pkt-line unpack-sideband \
+		--chomp-newline <split-sideband >out 2>err &&
+	printf "primary: regular output" >expect-out &&
+	printf "Foo.Bar.Hello, world!" >expect-err &&
+	test_cmp expect-out out &&
+	test_cmp expect-err err
+'
+
+test_expect_success 'unpack-sideband: packet_reader_read() consumes sideband, no chomp payload' '
+	test_when_finished "rm -f expect-out expect-err" &&
+	test-tool pkt-line send-split-sideband >split-sideband &&
+	test-tool pkt-line unpack-sideband \
+		--reader-use-sideband \
+		--no-chomp-newline <split-sideband >out 2>err &&
+	cat >expect-out <<-EOF &&
+		primary: regular output
+	EOF
+	printf "remote: Foo.        \n"           >expect-err &&
+	printf "remote: Bar.        \n"          >>expect-err &&
+	printf "remote: Hello, world!        \n" >>expect-err &&
+	test_cmp expect-out out &&
+	test_cmp expect-err err
+'
+
+test_expect_success 'unpack-sideband: packet_reader_read() consumes sideband, chomp payload' '
+	test_when_finished "rm -f expect-out expect-err" &&
+	test-tool pkt-line send-split-sideband >split-sideband &&
+	test-tool pkt-line unpack-sideband \
+		--reader-use-sideband \
+		--chomp-newline <split-sideband >out 2>err &&
+	printf "primary: regular output" >expect-out &&
+	printf "remote: Foo.        \n"           >expect-err &&
+	printf "remote: Bar.        \n"          >>expect-err &&
+	printf "remote: Hello, world!        \n" >>expect-err &&
+	test_cmp expect-out out &&
+	test_cmp expect-err err
+'
+
 test_done

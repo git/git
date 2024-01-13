@@ -463,8 +463,32 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 	}
 
 	if ((options & PACKET_READ_CHOMP_NEWLINE) &&
-	    len && buffer[len-1] == '\n')
-		len--;
+	    len && buffer[len-1] == '\n') {
+		if (options & PACKET_READ_USE_SIDEBAND) {
+			int band = *buffer & 0xff;
+			switch (band) {
+			case 1:
+				/* Chomp newline for payload */
+				len--;
+				break;
+			case 2:
+			case 3:
+				/*
+				 * Do not chomp newline for progress and error
+				 * message.
+				 */
+				break;
+			default:
+				/*
+				 * Bad sideband, let's leave it to
+				 * demultiplex_sideband() to catch this error.
+				 */
+				break;
+			}
+		} else {
+			len--;
+		}
+	}
 
 	buffer[len] = 0;
 	if (options & PACKET_READ_REDACT_URI_PATH &&
@@ -593,16 +617,18 @@ void packet_reader_init(struct packet_reader *reader, int fd,
 	reader->options = options;
 	reader->me = "git";
 	reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	strbuf_init(&reader->scratch, 0);
 }
 
 enum packet_read_status packet_reader_read(struct packet_reader *reader)
 {
-	struct strbuf scratch = STRBUF_INIT;
-
 	if (reader->line_peeked) {
 		reader->line_peeked = 0;
 		return reader->status;
 	}
+
+	if (reader->use_sideband)
+		reader->options |= PACKET_READ_USE_SIDEBAND;
 
 	/*
 	 * Consume all progress packets until a primary payload packet is
@@ -621,7 +647,7 @@ enum packet_read_status packet_reader_read(struct packet_reader *reader)
 			break;
 		if (demultiplex_sideband(reader->me, reader->status,
 					 reader->buffer, reader->pktlen, 1,
-					 &scratch, &sideband_type))
+					 &reader->scratch, &sideband_type))
 			break;
 	}
 
