@@ -17,6 +17,7 @@
 #include "utf8.h"
 #include "quote.h"
 #include "read-cache-ll.h"
+#include "refs.h"
 #include "revision.h"
 #include "object-store-ll.h"
 #include "setup.h"
@@ -183,6 +184,15 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 	}
 }
 
+/*
+ * Atribute name cannot begin with "builtin_" which
+ * is a reserved namespace for built in attributes values.
+ */
+static int attr_name_reserved(const char *name)
+{
+	return starts_with(name, "builtin_");
+}
+
 static int attr_name_valid(const char *name, size_t namelen)
 {
 	/*
@@ -315,7 +325,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 			cp++;
 			len--;
 		}
-		if (!attr_name_valid(cp, len)) {
+		if (!attr_name_valid(cp, len) || attr_name_reserved(cp)) {
 			report_invalid_attr(cp, len, src, lineno);
 			return NULL;
 		}
@@ -379,7 +389,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		name += strlen(ATTRIBUTE_MACRO_PREFIX);
 		name += strspn(name, blank);
 		namelen = strcspn(name, blank);
-		if (!attr_name_valid(name, namelen)) {
+		if (!attr_name_valid(name, namelen) || attr_name_reserved(name)) {
 			report_invalid_attr(name, namelen, src, lineno);
 			goto fail_return;
 		}
@@ -1240,6 +1250,85 @@ static struct object_id *default_attr_source(void)
 	return &attr_source;
 }
 
+static const char *interned_mode_string(unsigned int mode)
+{
+	static struct {
+		unsigned int val;
+		char str[7];
+	} mode_string[] = {
+		{ .val = 0040000 },
+		{ .val = 0100644 },
+		{ .val = 0100755 },
+		{ .val = 0120000 },
+		{ .val = 0160000 },
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(mode_string); i++) {
+		if (mode_string[i].val != mode)
+			continue;
+		if (!*mode_string[i].str)
+			snprintf(mode_string[i].str, sizeof(mode_string[i].str),
+				 "%06o", mode);
+		return mode_string[i].str;
+	}
+	BUG("Unsupported mode 0%o", mode);
+}
+
+static const char *builtin_object_mode_attr(struct index_state *istate, const char *path)
+{
+	unsigned int mode;
+
+	if (direction == GIT_ATTR_CHECKIN) {
+		struct object_id oid;
+		struct stat st;
+		if (lstat(path, &st))
+			die_errno(_("unable to stat '%s'"), path);
+		mode = canon_mode(st.st_mode);
+		if (S_ISDIR(mode)) {
+			/*
+			 *`path` is either a directory or it is a submodule,
+			 * in which case it is already indexed as submodule
+			 * or it does not exist in the index yet and we need to
+			 * check if we can resolve to a ref.
+			*/
+			int pos = index_name_pos(istate, path, strlen(path));
+			if (pos >= 0) {
+				 if (S_ISGITLINK(istate->cache[pos]->ce_mode))
+					 mode = istate->cache[pos]->ce_mode;
+			} else if (resolve_gitlink_ref(path, "HEAD", &oid) == 0) {
+				mode = S_IFGITLINK;
+			}
+		}
+	} else {
+		/*
+		 * For GIT_ATTR_CHECKOUT and GIT_ATTR_INDEX we only check
+		 * for mode in the index.
+		 */
+		int pos = index_name_pos(istate, path, strlen(path));
+		if (pos >= 0)
+			mode = istate->cache[pos]->ce_mode;
+		else
+			return ATTR__UNSET;
+	}
+
+	return interned_mode_string(mode);
+}
+
+
+static const char *compute_builtin_attr(struct index_state *istate,
+					  const char *path,
+					  const struct git_attr *attr) {
+	static const struct git_attr *object_mode_attr;
+
+	if (!object_mode_attr)
+		object_mode_attr = git_attr("builtin_objectmode");
+
+	if (attr == object_mode_attr)
+		return builtin_object_mode_attr(istate, path);
+	return ATTR__UNSET;
+}
+
 void git_check_attr(struct index_state *istate,
 		    const char *path,
 		    struct attr_check *check)
@@ -1253,7 +1342,7 @@ void git_check_attr(struct index_state *istate,
 		unsigned int n = check->items[i].attr->attr_nr;
 		const char *value = check->all_attrs[n].value;
 		if (value == ATTR__UNKNOWN)
-			value = ATTR__UNSET;
+			value = compute_builtin_attr(istate, path, check->all_attrs[n].attr);
 		check->items[i].value = value;
 	}
 }

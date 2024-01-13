@@ -100,6 +100,21 @@ for a path to `Unspecified` state.  This can be done by listing
 the name of the attribute prefixed with an exclamation point `!`.
 
 
+RESERVED BUILTIN_* ATTRIBUTES
+-----------------------------
+
+builtin_* is a reserved namespace for builtin attribute values. Any
+user defined attributes under this namespace will be ignored and
+trigger a warning.
+
+`builtin_objectmode`
+~~~~~~~~~~~~~~~~~~~~
+This attribute is for filtering files by their file bit modes (40000,
+120000, 160000, 100755, 100644). e.g. ':(attr:builtin_objectmode=160000)'.
+You may also check these values with `git check-attr builtin_objectmode -- <file>`.
+If the object is not in the index `git check-attr --cached` will return unspecified.
+
+
 EFFECTS
 -------
 
