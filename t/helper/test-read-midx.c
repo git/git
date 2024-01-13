@@ -6,6 +6,7 @@
 #include "pack-bitmap.h"
 #include "packfile.h"
 #include "setup.h"
+#include "gettext.h"
 
 static int read_midx_file(const char *object_dir, int show_objects)
 {
@@ -79,7 +80,7 @@ static int read_midx_checksum(const char *object_dir)
 static int read_midx_preferred_pack(const char *object_dir)
 {
 	struct multi_pack_index *midx = NULL;
-	struct bitmap_index *bitmap = NULL;
+	uint32_t preferred_pack;
 
 	setup_git_directory();
 
@@ -87,23 +88,45 @@ static int read_midx_preferred_pack(const char *object_dir)
 	if (!midx)
 		return 1;
 
-	bitmap = prepare_bitmap_git(the_repository);
-	if (!bitmap)
-		return 1;
-	if (!bitmap_is_midx(bitmap)) {
-		free_bitmap_index(bitmap);
+	if (midx_preferred_pack(midx, &preferred_pack) < 0) {
+		warning(_("could not determine MIDX preferred pack"));
 		return 1;
 	}
 
-	printf("%s\n", midx->pack_names[midx_preferred_pack(bitmap)]);
-	free_bitmap_index(bitmap);
+	printf("%s\n", midx->pack_names[preferred_pack]);
+	return 0;
+}
+
+static int read_midx_bitmapped_packs(const char *object_dir)
+{
+	struct multi_pack_index *midx = NULL;
+	struct bitmapped_pack pack;
+	uint32_t i;
+
+	setup_git_directory();
+
+	midx = load_multi_pack_index(object_dir, 1);
+	if (!midx)
+		return 1;
+
+	for (i = 0; i < midx->num_packs; i++) {
+		if (nth_bitmapped_pack(the_repository, midx, &pack, i) < 0)
+			return 1;
+
+		printf("%s\n", pack_basename(pack.p));
+		printf("  bitmap_pos: %"PRIuMAX"\n", (uintmax_t)pack.bitmap_pos);
+		printf("  bitmap_nr: %"PRIuMAX"\n", (uintmax_t)pack.bitmap_nr);
+	}
+
+	close_midx(midx);
+
 	return 0;
 }
 
 int cmd__read_midx(int argc, const char **argv)
 {
 	if (!(argc == 2 || argc == 3))
-		usage("read-midx [--show-objects|--checksum|--preferred-pack] <object-dir>");
+		usage("read-midx [--show-objects|--checksum|--preferred-pack|--bitmap] <object-dir>");
 
 	if (!strcmp(argv[1], "--show-objects"))
 		return read_midx_file(argv[2], 1);
@@ -111,5 +134,7 @@ int cmd__read_midx(int argc, const char **argv)
 		return read_midx_checksum(argv[2]);
 	else if (!strcmp(argv[1], "--preferred-pack"))
 		return read_midx_preferred_pack(argv[2]);
+	else if (!strcmp(argv[1], "--bitmap"))
+		return read_midx_bitmapped_packs(argv[2]);
 	return read_midx_file(argv[1], 0);
 }

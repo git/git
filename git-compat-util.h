@@ -1015,6 +1015,15 @@ static inline unsigned long cast_size_t_to_ulong(size_t a)
 	return (unsigned long)a;
 }
 
+static inline uint32_t cast_size_t_to_uint32_t(size_t a)
+{
+	if (a != (uint32_t)a)
+		die("object too large to read on this platform: %"
+		    PRIuMAX" is cut off to %u",
+		    (uintmax_t)a, (uint32_t)a);
+	return (uint32_t)a;
+}
+
 static inline int cast_size_t_to_int(size_t a)
 {
 	if (a > INT_MAX)

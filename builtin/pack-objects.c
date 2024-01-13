@@ -218,13 +218,19 @@ static int thin;
 static int num_preferred_base;
 static struct progress *progress_state;
 
-static struct packed_git *reuse_packfile;
+static struct bitmapped_pack *reuse_packfiles;
+static size_t reuse_packfiles_nr;
+static size_t reuse_packfiles_used_nr;
 static uint32_t reuse_packfile_objects;
 static struct bitmap *reuse_packfile_bitmap;
 
 static int use_bitmap_index_default = 1;
 static int use_bitmap_index = -1;
-static int allow_pack_reuse = 1;
+static enum {
+	NO_PACK_REUSE = 0,
+	SINGLE_PACK_REUSE,
+	MULTI_PACK_REUSE,
+} allow_pack_reuse = SINGLE_PACK_REUSE;
 static enum {
 	WRITE_BITMAP_FALSE = 0,
 	WRITE_BITMAP_QUIET,
@@ -1010,7 +1016,9 @@ static off_t find_reused_offset(off_t where)
 	return reused_chunks[lo-1].difference;
 }
 
-static void write_reused_pack_one(size_t pos, struct hashfile *out,
+static void write_reused_pack_one(struct packed_git *reuse_packfile,
+				  size_t pos, struct hashfile *out,
+				  off_t pack_start,
 				  struct pack_window **w_curs)
 {
 	off_t offset, next, cur;
@@ -1020,7 +1028,8 @@ static void write_reused_pack_one(size_t pos, struct hashfile *out,
 	offset = pack_pos_to_offset(reuse_packfile, pos);
 	next = pack_pos_to_offset(reuse_packfile, pos + 1);
 
-	record_reused_object(offset, offset - hashfile_total(out));
+	record_reused_object(offset,
+			     offset - (hashfile_total(out) - pack_start));
 
 	cur = offset;
 	type = unpack_object_header(reuse_packfile, w_curs, &cur, &size);
@@ -1088,41 +1097,93 @@ static void write_reused_pack_one(size_t pos, struct hashfile *out,
 	copy_pack_data(out, reuse_packfile, w_curs, offset, next - offset);
 }
 
-static size_t write_reused_pack_verbatim(struct hashfile *out,
+static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
+					 struct hashfile *out,
+					 off_t pack_start,
 					 struct pack_window **w_curs)
 {
-	size_t pos = 0;
+	size_t pos = reuse_packfile->bitmap_pos;
+	size_t end;
 
-	while (pos < reuse_packfile_bitmap->word_alloc &&
-			reuse_packfile_bitmap->words[pos] == (eword_t)~0)
-		pos++;
+	if (pos % BITS_IN_EWORD) {
+		size_t word_pos = (pos / BITS_IN_EWORD);
+		size_t offset = pos % BITS_IN_EWORD;
+		size_t last;
+		eword_t word = reuse_packfile_bitmap->words[word_pos];
 
-	if (pos) {
-		off_t to_write;
+		if (offset + reuse_packfile->bitmap_nr < BITS_IN_EWORD)
+			last = offset + reuse_packfile->bitmap_nr;
+		else
+			last = BITS_IN_EWORD;
 
-		written = (pos * BITS_IN_EWORD);
-		to_write = pack_pos_to_offset(reuse_packfile, written)
-			- sizeof(struct pack_header);
+		for (; offset < last; offset++) {
+			if (word >> offset == 0)
+				return word_pos;
+			if (!bitmap_get(reuse_packfile_bitmap,
+					word_pos * BITS_IN_EWORD + offset))
+				return word_pos;
+		}
+
+		pos += BITS_IN_EWORD - (pos % BITS_IN_EWORD);
+	}
+
+	/*
+	 * Now we're going to copy as many whole eword_t's as possible.
+	 * "end" is the index of the last whole eword_t we copy, but
+	 * there may be additional bits to process. Those are handled
+	 * individually by write_reused_pack().
+	 *
+	 * Begin by advancing to the first word boundary in range of the
+	 * bit positions occupied by objects in "reuse_packfile". Then
+	 * pick the last word boundary in the same range. If we have at
+	 * least one word's worth of bits to process, continue on.
+	 */
+	end = reuse_packfile->bitmap_pos + reuse_packfile->bitmap_nr;
+	if (end % BITS_IN_EWORD)
+		end -= end % BITS_IN_EWORD;
+	if (pos >= end)
+		return reuse_packfile->bitmap_pos / BITS_IN_EWORD;
+
+	while (pos < end &&
+	       reuse_packfile_bitmap->words[pos / BITS_IN_EWORD] == (eword_t)~0)
+		pos += BITS_IN_EWORD;
+
+	if (pos > end)
+		pos = end;
+
+	if (reuse_packfile->bitmap_pos < pos) {
+		off_t pack_start_off = pack_pos_to_offset(reuse_packfile->p, 0);
+		off_t pack_end_off = pack_pos_to_offset(reuse_packfile->p,
+							pos - reuse_packfile->bitmap_pos);
+
+		written += pos - reuse_packfile->bitmap_pos;
 
 		/* We're recording one chunk, not one object. */
-		record_reused_object(sizeof(struct pack_header), 0);
+		record_reused_object(pack_start_off,
+				     pack_start_off - (hashfile_total(out) - pack_start));
 		hashflush(out);
-		copy_pack_data(out, reuse_packfile, w_curs,
-			sizeof(struct pack_header), to_write);
+		copy_pack_data(out, reuse_packfile->p, w_curs,
+			pack_start_off, pack_end_off - pack_start_off);
 
 		display_progress(progress_state, written);
 	}
-	return pos;
+	if (pos % BITS_IN_EWORD)
+		BUG("attempted to jump past a word boundary to %"PRIuMAX,
+		    (uintmax_t)pos);
+	return pos / BITS_IN_EWORD;
 }
 
-static void write_reused_pack(struct hashfile *f)
+static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
+			      struct hashfile *f)
 {
-	size_t i = 0;
+	size_t i = reuse_packfile->bitmap_pos / BITS_IN_EWORD;
 	uint32_t offset;
+	off_t pack_start = hashfile_total(f) - sizeof(struct pack_header);
 	struct pack_window *w_curs = NULL;
 
 	if (allow_ofs_delta)
-		i = write_reused_pack_verbatim(f, &w_curs);
+		i = write_reused_pack_verbatim(reuse_packfile, f, pack_start,
+					       &w_curs);
 
 	for (; i < reuse_packfile_bitmap->word_alloc; ++i) {
 		eword_t word = reuse_packfile_bitmap->words[i];
@@ -1133,16 +1194,23 @@ static void write_reused_pack(struct hashfile *f)
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
+			if (pos + offset < reuse_packfile->bitmap_pos)
+				continue;
+			if (pos + offset >= reuse_packfile->bitmap_pos + reuse_packfile->bitmap_nr)
+				goto done;
 			/*
 			 * Can use bit positions directly, even for MIDX
 			 * bitmaps. See comment in try_partial_reuse()
 			 * for why.
 			 */
-			write_reused_pack_one(pos + offset, f, &w_curs);
+			write_reused_pack_one(reuse_packfile->p,
+					      pos + offset - reuse_packfile->bitmap_pos,
+					      f, pack_start, &w_curs);
 			display_progress(progress_state, ++written);
 		}
 	}
 
+done:
 	unuse_pack(&w_curs);
 }
 
@@ -1194,9 +1262,14 @@ static void write_pack_file(void)
 
 		offset = write_pack_header(f, nr_remaining);
 
-		if (reuse_packfile) {
+		if (reuse_packfiles_nr) {
 			assert(pack_to_stdout);
-			write_reused_pack(f);
+			for (j = 0; j < reuse_packfiles_nr; j++) {
+				reused_chunks_nr = 0;
+				write_reused_pack(&reuse_packfiles[j], f);
+				if (reused_chunks_nr)
+					reuse_packfiles_used_nr++;
+			}
 			offset = hashfile_total(f);
 		}
 
@@ -3172,7 +3245,19 @@ static int git_pack_config(const char *k, const char *v,
 		return 0;
 	}
 	if (!strcmp(k, "pack.allowpackreuse")) {
-		allow_pack_reuse = git_config_bool(k, v);
+		int res = git_parse_maybe_bool_text(v);
+		if (res < 0) {
+			if (!strcasecmp(v, "single"))
+				allow_pack_reuse = SINGLE_PACK_REUSE;
+			else if (!strcasecmp(v, "multi"))
+				allow_pack_reuse = MULTI_PACK_REUSE;
+			else
+				die(_("invalid pack.allowPackReuse value: '%s'"), v);
+		} else if (res) {
+			allow_pack_reuse = SINGLE_PACK_REUSE;
+		} else {
+			allow_pack_reuse = NO_PACK_REUSE;
+		}
 		return 0;
 	}
 	if (!strcmp(k, "pack.threads")) {
@@ -3931,7 +4016,7 @@ static void loosen_unused_packed_objects(void)
  */
 static int pack_options_allow_reuse(void)
 {
-	return allow_pack_reuse &&
+	return allow_pack_reuse != NO_PACK_REUSE &&
 	       pack_to_stdout &&
 	       !ignore_packed_keep_on_disk &&
 	       !ignore_packed_keep_in_core &&
@@ -3944,13 +4029,18 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 	if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
 		return -1;
 
-	if (pack_options_allow_reuse() &&
-	    !reuse_partial_packfile_from_bitmap(
-			bitmap_git,
-			&reuse_packfile,
-			&reuse_packfile_objects,
-			&reuse_packfile_bitmap)) {
-		assert(reuse_packfile_objects);
+	if (pack_options_allow_reuse())
+		reuse_partial_packfile_from_bitmap(bitmap_git,
+						   &reuse_packfiles,
+						   &reuse_packfiles_nr,
+						   &reuse_packfile_bitmap,
+						   allow_pack_reuse == MULTI_PACK_REUSE);
+
+	if (reuse_packfiles) {
+		reuse_packfile_objects = bitmap_popcount(reuse_packfile_bitmap);
+		if (!reuse_packfile_objects)
+			BUG("expected non-empty reuse bitmap");
+
 		nr_result += reuse_packfile_objects;
 		nr_seen += reuse_packfile_objects;
 		display_progress(progress_state, nr_seen);
@@ -4518,11 +4608,20 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		fprintf_ln(stderr,
 			   _("Total %"PRIu32" (delta %"PRIu32"),"
 			     " reused %"PRIu32" (delta %"PRIu32"),"
-			     " pack-reused %"PRIu32),
+			     " pack-reused %"PRIu32" (from %"PRIuMAX")"),
 			   written, written_delta, reused, reused_delta,
-			   reuse_packfile_objects);
+			   reuse_packfile_objects,
+			   (uintmax_t)reuse_packfiles_used_nr);
+
+	trace2_data_intmax("pack-objects", the_repository, "written", written);
+	trace2_data_intmax("pack-objects", the_repository, "written/delta", written_delta);
+	trace2_data_intmax("pack-objects", the_repository, "reused", reused);
+	trace2_data_intmax("pack-objects", the_repository, "reused/delta", reused_delta);
+	trace2_data_intmax("pack-objects", the_repository, "pack-reused", reuse_packfile_objects);
+	trace2_data_intmax("pack-objects", the_repository, "packs-reused", reuse_packfiles_used_nr);
 
 cleanup:
+	clear_packing_data(&to_pack);
 	list_objects_filter_release(&filter_options);
 	strvec_clear(&rp);
 

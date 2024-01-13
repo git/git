@@ -338,7 +338,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	struct stat st;
 	char *bitmap_name = midx_bitmap_filename(midx);
 	int fd = git_open(bitmap_name);
-	uint32_t i;
+	uint32_t i, preferred_pack;
 	struct packed_git *preferred;
 
 	if (fd < 0) {
@@ -393,7 +393,12 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 		}
 	}
 
-	preferred = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
+	if (midx_preferred_pack(bitmap_git->midx, &preferred_pack) < 0) {
+		warning(_("could not determine MIDX preferred pack"));
+		goto cleanup;
+	}
+
+	preferred = bitmap_git->midx->packs[preferred_pack];
 	if (!is_pack_valid(preferred)) {
 		warning(_("preferred pack (%s) is invalid"),
 			preferred->pack_name);
@@ -1280,6 +1285,8 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		base = fill_in_bitmap(bitmap_git, revs, base, seen);
 	}
 
+	object_list_free(&not_mapped);
+
 	return base;
 }
 
@@ -1834,8 +1841,10 @@ cleanup:
  * -1 means "stop trying further objects"; 0 means we may or may not have
  * reused, but you can keep feeding bits.
  */
-static int try_partial_reuse(struct packed_git *pack,
-			     size_t pos,
+static int try_partial_reuse(struct bitmap_index *bitmap_git,
+			     struct bitmapped_pack *pack,
+			     size_t bitmap_pos,
+			     uint32_t pack_pos,
 			     struct bitmap *reuse,
 			     struct pack_window **w_curs)
 {
@@ -1843,40 +1852,18 @@ static int try_partial_reuse(struct packed_git *pack,
 	enum object_type type;
 	unsigned long size;
 
-	/*
-	 * try_partial_reuse() is called either on (a) objects in the
-	 * bitmapped pack (in the case of a single-pack bitmap) or (b)
-	 * objects in the preferred pack of a multi-pack bitmap.
-	 * Importantly, the latter can pretend as if only a single pack
-	 * exists because:
-	 *
-	 *   - The first pack->num_objects bits of a MIDX bitmap are
-	 *     reserved for the preferred pack, and
-	 *
-	 *   - Ties due to duplicate objects are always resolved in
-	 *     favor of the preferred pack.
-	 *
-	 * Therefore we do not need to ever ask the MIDX for its copy of
-	 * an object by OID, since it will always select it from the
-	 * preferred pack. Likewise, the selected copy of the base
-	 * object for any deltas will reside in the same pack.
-	 *
-	 * This means that we can reuse pos when looking up the bit in
-	 * the reuse bitmap, too, since bits corresponding to the
-	 * preferred pack precede all bits from other packs.
-	 */
+	if (pack_pos >= pack->p->num_objects)
+		return -1; /* not actually in the pack */
 
-	if (pos >= pack->num_objects)
-		return -1; /* not actually in the pack or MIDX preferred pack */
-
-	offset = delta_obj_offset = pack_pos_to_offset(pack, pos);
-	type = unpack_object_header(pack, w_curs, &offset, &size);
+	offset = delta_obj_offset = pack_pos_to_offset(pack->p, pack_pos);
+	type = unpack_object_header(pack->p, w_curs, &offset, &size);
 	if (type < 0)
 		return -1; /* broken packfile, punt */
 
 	if (type == OBJ_REF_DELTA || type == OBJ_OFS_DELTA) {
 		off_t base_offset;
 		uint32_t base_pos;
+		uint32_t base_bitmap_pos;
 
 		/*
 		 * Find the position of the base object so we can look it up
@@ -1886,24 +1873,48 @@ static int try_partial_reuse(struct packed_git *pack,
 		 * and the normal slow path will complain about it in
 		 * more detail.
 		 */
-		base_offset = get_delta_base(pack, w_curs, &offset, type,
+		base_offset = get_delta_base(pack->p, w_curs, &offset, type,
 					     delta_obj_offset);
 		if (!base_offset)
 			return 0;
-		if (offset_to_pack_pos(pack, base_offset, &base_pos) < 0)
-			return 0;
 
-		/*
-		 * We assume delta dependencies always point backwards. This
-		 * lets us do a single pass, and is basically always true
-		 * due to the way OFS_DELTAs work. You would not typically
-		 * find REF_DELTA in a bitmapped pack, since we only bitmap
-		 * packs we write fresh, and OFS_DELTA is the default). But
-		 * let's double check to make sure the pack wasn't written with
-		 * odd parameters.
-		 */
-		if (base_pos >= pos)
-			return 0;
+		offset_to_pack_pos(pack->p, base_offset, &base_pos);
+
+		if (bitmap_is_midx(bitmap_git)) {
+			/*
+			 * Cross-pack deltas are rejected for now, but could
+			 * theoretically be supported in the future.
+			 *
+			 * We would need to ensure that we're sending both
+			 * halves of the delta/base pair, regardless of whether
+			 * or not the two cross a pack boundary. If they do,
+			 * then we must convert the delta to an REF_DELTA to
+			 * refer back to the base in the other pack.
+			 * */
+			if (midx_pair_to_pack_pos(bitmap_git->midx,
+						  pack->pack_int_id,
+						  base_offset,
+						  &base_bitmap_pos) < 0) {
+				return 0;
+			}
+		} else {
+			if (offset_to_pack_pos(pack->p, base_offset,
+					       &base_pos) < 0)
+				return 0;
+			/*
+			 * We assume delta dependencies always point backwards.
+			 * This lets us do a single pass, and is basically
+			 * always true due to the way OFS_DELTAs work. You would
+			 * not typically find REF_DELTA in a bitmapped pack,
+			 * since we only bitmap packs we write fresh, and
+			 * OFS_DELTA is the default). But let's double check to
+			 * make sure the pack wasn't written with odd
+			 * parameters.
+			 */
+			if (base_pos >= pack_pos)
+				return 0;
+			base_bitmap_pos = pack->bitmap_pos + base_pos;
+		}
 
 		/*
 		 * And finally, if we're not sending the base as part of our
@@ -1913,77 +1924,89 @@ static int try_partial_reuse(struct packed_git *pack,
 		 * to REF_DELTA on the fly. Better to just let the normal
 		 * object_entry code path handle it.
 		 */
-		if (!bitmap_get(reuse, base_pos))
+		if (!bitmap_get(reuse, base_bitmap_pos))
 			return 0;
 	}
 
 	/*
 	 * If we got here, then the object is OK to reuse. Mark it.
 	 */
-	bitmap_set(reuse, pos);
+	bitmap_set(reuse, bitmap_pos);
 	return 0;
 }
 
-uint32_t midx_preferred_pack(struct bitmap_index *bitmap_git)
+static void reuse_partial_packfile_from_bitmap_1(struct bitmap_index *bitmap_git,
+						 struct bitmapped_pack *pack,
+						 struct bitmap *reuse)
 {
-	struct multi_pack_index *m = bitmap_git->midx;
-	if (!m)
-		BUG("midx_preferred_pack: requires non-empty MIDX");
-	return nth_midxed_pack_int_id(m, pack_pos_to_midx(bitmap_git->midx, 0));
-}
-
-int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
-				       struct packed_git **packfile_out,
-				       uint32_t *entries,
-				       struct bitmap **reuse_out)
-{
-	struct repository *r = the_repository;
-	struct packed_git *pack;
 	struct bitmap *result = bitmap_git->result;
-	struct bitmap *reuse;
 	struct pack_window *w_curs = NULL;
-	size_t i = 0;
-	uint32_t offset;
-	uint32_t objects_nr;
+	size_t pos = pack->bitmap_pos / BITS_IN_EWORD;
 
-	assert(result);
+	if (!pack->bitmap_pos) {
+		/*
+		 * If we're processing the first (in the case of a MIDX, the
+		 * preferred pack) or the only (in the case of single-pack
+		 * bitmaps) pack, then we can reuse whole words at a time.
+		 *
+		 * This is because we know that any deltas in this range *must*
+		 * have their bases chosen from the same pack, since:
+		 *
+		 * - In the single pack case, there is no other pack to choose
+		 *   them from.
+		 *
+		 * - In the MIDX case, the first pack is the preferred pack, so
+		 *   all ties are broken in favor of that pack (i.e. the one
+		 *   we're currently processing). So any duplicate bases will be
+		 *   resolved in favor of the pack we're processing.
+		 */
+		while (pos < result->word_alloc &&
+		       pos < pack->bitmap_nr / BITS_IN_EWORD &&
+		       result->words[pos] == (eword_t)~0)
+			pos++;
+		memset(reuse->words, 0xFF, pos * sizeof(eword_t));
+	}
 
-	load_reverse_index(r, bitmap_git);
+	for (; pos < result->word_alloc; pos++) {
+		eword_t word = result->words[pos];
+		size_t offset;
 
-	if (bitmap_is_midx(bitmap_git))
-		pack = bitmap_git->midx->packs[midx_preferred_pack(bitmap_git)];
-	else
-		pack = bitmap_git->pack;
-	objects_nr = pack->num_objects;
+		for (offset = 0; offset < BITS_IN_EWORD; offset++) {
+			size_t bit_pos;
+			uint32_t pack_pos;
 
-	while (i < result->word_alloc && result->words[i] == (eword_t)~0)
-		i++;
-
-	/*
-	 * Don't mark objects not in the packfile or preferred pack. This bitmap
-	 * marks objects eligible for reuse, but the pack-reuse code only
-	 * understands how to reuse a single pack. Since the preferred pack is
-	 * guaranteed to have all bases for its deltas (in a multi-pack bitmap),
-	 * we use it instead of another pack. In single-pack bitmaps, the choice
-	 * is made for us.
-	 */
-	if (i > objects_nr / BITS_IN_EWORD)
-		i = objects_nr / BITS_IN_EWORD;
-
-	reuse = bitmap_word_alloc(i);
-	memset(reuse->words, 0xFF, i * sizeof(eword_t));
-
-	for (; i < result->word_alloc; ++i) {
-		eword_t word = result->words[i];
-		size_t pos = (i * BITS_IN_EWORD);
-
-		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
-			if ((word >> offset) == 0)
+			if (word >> offset == 0)
 				break;
 
 			offset += ewah_bit_ctz64(word >> offset);
-			if (try_partial_reuse(pack, pos + offset,
-					      reuse, &w_curs) < 0) {
+
+			bit_pos = pos * BITS_IN_EWORD + offset;
+			if (bit_pos < pack->bitmap_pos)
+				continue;
+			if (bit_pos >= pack->bitmap_pos + pack->bitmap_nr)
+				goto done;
+
+			if (bitmap_is_midx(bitmap_git)) {
+				uint32_t midx_pos;
+				off_t ofs;
+
+				midx_pos = pack_pos_to_midx(bitmap_git->midx, bit_pos);
+				ofs = nth_midxed_offset(bitmap_git->midx, midx_pos);
+
+				if (offset_to_pack_pos(pack->p, ofs, &pack_pos) < 0)
+					BUG("could not find object in pack %s "
+					    "at offset %"PRIuMAX" in MIDX",
+					    pack_basename(pack->p), (uintmax_t)ofs);
+			} else {
+				pack_pos = cast_size_t_to_uint32_t(st_sub(bit_pos, pack->bitmap_pos));
+				if (pack_pos >= pack->p->num_objects)
+					BUG("advanced beyond the end of pack %s (%"PRIuMAX" > %"PRIu32")",
+					    pack_basename(pack->p), (uintmax_t)pack_pos,
+					    pack->p->num_objects);
+			}
+
+			if (try_partial_reuse(bitmap_git, pack, bit_pos,
+					      pack_pos, reuse, &w_curs) < 0) {
 				/*
 				 * try_partial_reuse indicated we couldn't reuse
 				 * any bits, so there is no point in trying more
@@ -2000,11 +2023,97 @@ int reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 
 done:
 	unuse_pack(&w_curs);
+}
 
-	*entries = bitmap_popcount(reuse);
-	if (!*entries) {
-		bitmap_free(reuse);
+static int bitmapped_pack_cmp(const void *va, const void *vb)
+{
+	const struct bitmapped_pack *a = va;
+	const struct bitmapped_pack *b = vb;
+
+	if (a->bitmap_pos < b->bitmap_pos)
 		return -1;
+	if (a->bitmap_pos > b->bitmap_pos)
+		return 1;
+	return 0;
+}
+
+void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
+					struct bitmapped_pack **packs_out,
+					size_t *packs_nr_out,
+					struct bitmap **reuse_out,
+					int multi_pack_reuse)
+{
+	struct repository *r = the_repository;
+	struct bitmapped_pack *packs = NULL;
+	struct bitmap *result = bitmap_git->result;
+	struct bitmap *reuse;
+	size_t i;
+	size_t packs_nr = 0, packs_alloc = 0;
+	size_t word_alloc;
+	uint32_t objects_nr = 0;
+
+	assert(result);
+
+	load_reverse_index(r, bitmap_git);
+
+	if (bitmap_is_midx(bitmap_git)) {
+		for (i = 0; i < bitmap_git->midx->num_packs; i++) {
+			struct bitmapped_pack pack;
+			if (nth_bitmapped_pack(r, bitmap_git->midx, &pack, i) < 0) {
+				warning(_("unable to load pack: '%s', disabling pack-reuse"),
+					bitmap_git->midx->pack_names[i]);
+				free(packs);
+				return;
+			}
+
+			if (!pack.bitmap_nr)
+				continue;
+
+			if (!multi_pack_reuse && pack.bitmap_pos) {
+				/*
+				 * If we're only reusing a single pack, skip
+				 * over any packs which are not positioned at
+				 * the beginning of the MIDX bitmap.
+				 *
+				 * This is consistent with the existing
+				 * single-pack reuse behavior, which only reuses
+				 * parts of the MIDX's preferred pack.
+				 */
+				continue;
+			}
+
+			ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
+			memcpy(&packs[packs_nr++], &pack, sizeof(pack));
+
+			objects_nr += pack.p->num_objects;
+
+			if (!multi_pack_reuse)
+				break;
+		}
+
+		QSORT(packs, packs_nr, bitmapped_pack_cmp);
+	} else {
+		ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
+
+		packs[packs_nr].p = bitmap_git->pack;
+		packs[packs_nr].bitmap_nr = bitmap_git->pack->num_objects;
+		packs[packs_nr].bitmap_pos = 0;
+
+		objects_nr = packs[packs_nr++].bitmap_nr;
+	}
+
+	word_alloc = objects_nr / BITS_IN_EWORD;
+	if (objects_nr % BITS_IN_EWORD)
+		word_alloc++;
+	reuse = bitmap_word_alloc(word_alloc);
+
+	for (i = 0; i < packs_nr; i++)
+		reuse_partial_packfile_from_bitmap_1(bitmap_git, &packs[i], reuse);
+
+	if (bitmap_is_empty(reuse)) {
+		free(packs);
+		bitmap_free(reuse);
+		return;
 	}
 
 	/*
@@ -2012,9 +2121,9 @@ done:
 	 * need to be handled separately.
 	 */
 	bitmap_and_not(result, reuse);
-	*packfile_out = pack;
+	*packs_out = packs;
+	*packs_nr_out = packs_nr;
 	*reuse_out = reuse;
-	return 0;
 }
 
 int bitmap_walk_contains(struct bitmap_index *bitmap_git,
