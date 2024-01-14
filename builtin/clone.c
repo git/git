@@ -1227,9 +1227,18 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 		if (fd > 0)
 			close(fd);
+
+		if (has_filter) {
+			strbuf_addf(&key, "remote.%s.promisor", remote_name);
+			git_config_set(key.buf, "true");
+			strbuf_reset(&key);
+
+			strbuf_addf(&key, "remote.%s.partialclonefilter", remote_name);
+			git_config_set(key.buf, expand_list_objects_filter_spec(&header.filter));
+			strbuf_reset(&key);
+		}
+
 		bundle_header_release(&header);
-		if (has_filter)
-			die(_("cannot clone from filtered bundle"));
 	}
 
 	transport_set_option(transport, TRANS_OPT_KEEP, "yes");
