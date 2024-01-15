@@ -148,7 +148,7 @@ __git_pseudoref_exists ()
 	# platforms.
 	if __git_eread "$__git_repo_path/HEAD" head; then
 		if [ "$head" == "ref: refs/heads/.invalid" ]; then
-			__git rev-parse --verify --quiet "$ref" >/dev/null
+			__git show-ref --exists "$ref"
 			return $?
 		fi
 	fi

@@ -2743,6 +2743,10 @@ test_expect_success '__git_pseudoref_exists' '
 		cd repo &&
 		sane_unset __git_repo_path &&
 
+		# HEAD should exist, even if it points to an unborn branch.
+		__git_pseudoref_exists HEAD >output 2>&1 &&
+		test_must_be_empty output &&
+
 		# HEAD points to an existing branch, so it should exist.
 		test_commit A &&
 		__git_pseudoref_exists HEAD >output 2>&1 &&
