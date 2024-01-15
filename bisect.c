@@ -713,7 +713,7 @@ static int is_expected_rev(const struct object_id *oid)
 }
 
 enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
-				  int no_checkout)
+				  int no_checkout, int force_checkout)
 {
 	struct commit *commit;
 	struct pretty_print_context pp = {0};
@@ -728,8 +728,13 @@ enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
 		cmd.git_cmd = 1;
-		strvec_pushl(&cmd.args, "checkout", "-q",
-			     oid_to_hex(bisect_rev), "--", NULL);
+		if (force_checkout) {
+			strvec_pushl(&cmd.args, "checkout", "-f", "-q",
+					oid_to_hex(bisect_rev), "--", NULL);
+		} else {
+			strvec_pushl(&cmd.args, "checkout", "-q",
+					oid_to_hex(bisect_rev), "--", NULL);
+		}
 		if (run_command(&cmd))
 			/*
 			 * Errors in `run_command()` itself, signaled by res < 0,
@@ -850,7 +855,7 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
 			handle_skipped_merge_base(mb);
 		} else {
 			printf(_("Bisecting: a merge base must be tested\n"));
-			res = bisect_checkout(mb, no_checkout);
+			res = bisect_checkout(mb, no_checkout, 0);
 			if (!res)
 				/* indicate early success */
 				res = BISECT_INTERNAL_SUCCESS_MERGE_BASE;
@@ -1002,7 +1007,7 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
  * the end of bisect_helper::cmd_bisect__helper() helps bypassing
  * all the code related to finding a commit to test.
  */
-enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
+enum bisect_error bisect_next_all(struct repository *r, const char *prefix, int force_checkout)
 {
 	struct strvec rev_argv = STRVEC_INIT;
 	struct rev_info revs = REV_INFO_INIT;
@@ -1104,7 +1109,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 	/* Clean up objects used, as they will be reused. */
 	repo_clear_commit_marks(r, ALL_REV_FLAGS);
 
-	res = bisect_checkout(bisect_rev, no_checkout);
+	res = bisect_checkout(bisect_rev, no_checkout, force_checkout);
 cleanup:
 	release_revisions(&revs);
 	strvec_clear(&rev_argv);

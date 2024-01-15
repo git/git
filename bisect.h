@@ -71,7 +71,7 @@ struct bisect_state {
 	unsigned int nr_bad;
 };
 
-enum bisect_error bisect_next_all(struct repository *r, const char *prefix);
+enum bisect_error bisect_next_all(struct repository *r, const char *prefix, int force_checkout);
 
 int estimate_bisect_steps(int all);
 
@@ -80,6 +80,6 @@ void read_bisect_terms(const char **bad, const char **good);
 int bisect_clean_state(void);
 
 enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
-				  int no_checkout);
+				  int no_checkout, int force_checkout);
 
 #endif

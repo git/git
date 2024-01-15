@@ -1259,4 +1259,113 @@ test_expect_success 'verify correct error message' '
 	grep "git bisect good.*exited with error code" error
 '
 
+test_expect_success 'bisect dirty, explicit ref' '
+	test_when_finished "git bisect reset" &&
+    add_line_into_file "Commit 1" file &&
+    add_line_into_file "Commit 2" file &&
+    add_line_into_file "Commit 3" file &&
+	git bisect start &&
+	git bisect bad HEAD &&
+	echo "modified state" >file &&
+	test_when_finished "git checkout -- file" &&
+	test_must_fail git bisect good HEAD~2
+'
+
+test_expect_success 'bisect dirty good force, explicit ref' '
+	test_when_finished "git bisect reset" &&
+    add_line_into_file "Commit 1" file &&
+    add_line_into_file "Commit 2" file &&
+    add_line_into_file "Commit 3" file &&
+	git bisect start &&
+	git bisect bad HEAD &&
+	echo "modified state" >file &&
+	test_when_finished "git checkout -- file" &&
+	git bisect good --force HEAD~2
+'
+
+test_expect_success 'bisect dirty, implicit ref' '
+	test_when_finished "git bisect reset" &&
+    add_line_into_file "Commit 1" file &&
+    add_line_into_file "Commit 2" file &&
+    add_line_into_file "Commit 3" file &&
+    add_line_into_file "Commit 4" file &&
+    add_line_into_file "Commit 5" file &&
+	git bisect start &&
+	git bisect bad HEAD &&
+	git bisect good HEAD~4 &&
+	echo "modified state" >file &&
+	test_when_finished "git checkout -- file" &&
+	test_must_fail git bisect good &&
+	test_must_fail git bisect bad
+'
+
+test_expect_success 'bisect dirty good force, implicit ref' '
+	test_when_finished "git bisect reset" &&
+    add_line_into_file "Commit 1" file &&
+    add_line_into_file "Commit 2" file &&
+    add_line_into_file "Commit 3" file &&
+    add_line_into_file "Commit 4" file &&
+    add_line_into_file "Commit 5" file &&
+	git bisect start &&
+	git bisect bad HEAD &&
+	git bisect good HEAD~4 &&
+	echo "modified state" >file &&
+	test_when_finished "git checkout -- file" &&
+	git bisect good --force
+'
+
+test_expect_success 'bisect dirty bad force, implicit ref' '
+	test_when_finished "git bisect reset" &&
+    add_line_into_file "Commit 1" file &&
+    add_line_into_file "Commit 2" file &&
+    add_line_into_file "Commit 3" file &&
+    add_line_into_file "Commit 4" file &&
+    add_line_into_file "Commit 5" file &&
+	git bisect start &&
+	git bisect bad HEAD &&
+	git bisect good HEAD~4 &&
+	echo "modified state" >file &&
+	test_when_finished "git checkout -- file" &&
+	git bisect bad --force
+'
+
+test_expect_success 'bisect run dirty' '
+	test_when_finished "git bisect reset" &&
+	test_when_finished "git checkout -- file" &&
+    add_line_into_file "Bisect run 1" file &&
+    add_line_into_file "Bisect run 2" file &&
+    add_line_into_file "Bisect run 3" file &&
+    add_line_into_file "Bisect run 4" file &&
+    add_line_into_file "Bisect run 5" file &&
+	write_script test_script.sh <<-\EOF &&
+	! echo "modified state" >file
+	! grep "Bisect run 3" || exit 126 >/dev/null
+	EOF
+	git bisect start &&
+	git bisect bad HEAD &&
+	git bisect good HEAD~4 &&
+	test_must_fail git bisect run ./test_script.sh
+'
+
+test_expect_success 'bisect run dirty force' '
+	test_when_finished "git bisect reset" &&
+	test_when_finished "git checkout -- file" &&
+    add_line_into_file "Bisect run 1" file &&
+    add_line_into_file "Bisect run 2" file &&
+    add_line_into_file "Bisect run 3" file &&
+    add_line_into_file "Bisect run 4" file &&
+    add_line_into_file "Bisect run 5" file &&
+	write_script test_script.sh <<-\EOF &&
+	! echo "modified state" >file
+	! grep "Bisect run 3" || exit 126 >/dev/null
+	EOF
+	HASH5=$(git rev-parse --verify HEAD) &&
+	git bisect start &&
+	git bisect bad HEAD &&
+	git bisect good HEAD~4 &&
+	echo "doing run\n" &&
+	git bisect run --force ./test_script.sh >my_bisect_log.txt &&
+	grep "$HASH5 is the first bad commit" my_bisect_log.txt
+'
+
 test_done
