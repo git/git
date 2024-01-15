@@ -137,6 +137,7 @@ __git_eread ()
 __git_pseudoref_exists ()
 {
 	local ref=$1
+	local head
 
 	__git_find_repo_path
 
@@ -146,9 +147,8 @@ __git_pseudoref_exists ()
 	# Bash builtins since executing Git commands are expensive on some
 	# platforms.
 	if __git_eread "$__git_repo_path/HEAD" head; then
-		b="${head#ref: }"
-		if [ "$b" == "refs/heads/.invalid" ]; then
-			__git -C "$__git_repo_path" rev-parse --verify --quiet "$ref" 2>/dev/null
+		if [ "$head" == "ref: refs/heads/.invalid" ]; then
+			__git rev-parse --verify --quiet "$ref"
 			return $?
 		fi
 	fi
