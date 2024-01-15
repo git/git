@@ -1,7 +1,8 @@
 advice.*::
 	These variables control various optional help messages designed to
-	aid new users. All 'advice.*' variables default to 'true', and you
-	can tell Git that you do not need help by setting these to 'false':
+	aid new users.  When left unconfigured, Git will give the message
+	alongside instructions on how to squelch it.  You can tell Git
+	that you do not need the help message by setting these to 'false':
 +
 --
 	addEmbeddedRepo::

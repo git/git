@@ -33,50 +33,56 @@ static const char *advise_get_color(enum color_advice ix)
 	return "";
 }
 
+enum advice_level {
+	ADVICE_LEVEL_NONE = 0,
+	ADVICE_LEVEL_DISABLED,
+	ADVICE_LEVEL_ENABLED,
+};
+
 static struct {
 	const char *key;
-	int enabled;
+	enum advice_level level;
 } advice_setting[] = {
-	[ADVICE_ADD_EMBEDDED_REPO]			= { "addEmbeddedRepo", 1 },
-	[ADVICE_ADD_EMPTY_PATHSPEC]			= { "addEmptyPathspec", 1 },
-	[ADVICE_ADD_IGNORED_FILE]			= { "addIgnoredFile", 1 },
-	[ADVICE_AMBIGUOUS_FETCH_REFSPEC]		= { "ambiguousFetchRefspec", 1 },
-	[ADVICE_AM_WORK_DIR] 				= { "amWorkDir", 1 },
-	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { "checkoutAmbiguousRemoteBranchName", 1 },
-	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge", 1 },
-	[ADVICE_DETACHED_HEAD]				= { "detachedHead", 1 },
-	[ADVICE_DIVERGING]				= { "diverging", 1 },
-	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates", 1 },
-	[ADVICE_FORCE_DELETE_BRANCH]			= { "forceDeleteBranch", 1 },
-	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated", 1 },
-	[ADVICE_IGNORED_HOOK]				= { "ignoredHook", 1 },
-	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity", 1 },
-	[ADVICE_NESTED_TAG]				= { "nestedTag", 1 },
-	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning", 1 },
-	[ADVICE_PUSH_ALREADY_EXISTS]			= { "pushAlreadyExists", 1 },
-	[ADVICE_PUSH_FETCH_FIRST]			= { "pushFetchFirst", 1 },
-	[ADVICE_PUSH_NEEDS_FORCE]			= { "pushNeedsForce", 1 },
-	[ADVICE_PUSH_NON_FF_CURRENT]			= { "pushNonFFCurrent", 1 },
-	[ADVICE_PUSH_NON_FF_MATCHING]			= { "pushNonFFMatching", 1 },
-	[ADVICE_PUSH_REF_NEEDS_UPDATE]			= { "pushRefNeedsUpdate", 1 },
-	[ADVICE_PUSH_UNQUALIFIED_REF_NAME]		= { "pushUnqualifiedRefName", 1 },
-	[ADVICE_PUSH_UPDATE_REJECTED]			= { "pushUpdateRejected", 1 },
-	[ADVICE_PUSH_UPDATE_REJECTED_ALIAS]		= { "pushNonFastForward", 1 }, /* backwards compatibility */
-	[ADVICE_RESET_NO_REFRESH_WARNING]		= { "resetNoRefresh", 1 },
-	[ADVICE_RESOLVE_CONFLICT]			= { "resolveConflict", 1 },
-	[ADVICE_RM_HINTS]				= { "rmHints", 1 },
-	[ADVICE_SEQUENCER_IN_USE]			= { "sequencerInUse", 1 },
-	[ADVICE_SET_UPSTREAM_FAILURE]			= { "setUpstreamFailure", 1 },
-	[ADVICE_SKIPPED_CHERRY_PICKS]			= { "skippedCherryPicks", 1 },
-	[ADVICE_STATUS_AHEAD_BEHIND_WARNING]		= { "statusAheadBehindWarning", 1 },
-	[ADVICE_STATUS_HINTS]				= { "statusHints", 1 },
-	[ADVICE_STATUS_U_OPTION]			= { "statusUoption", 1 },
-	[ADVICE_SUBMODULES_NOT_UPDATED] 		= { "submodulesNotUpdated", 1 },
-	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie", 1 },
-	[ADVICE_SUGGEST_DETACHING_HEAD]			= { "suggestDetachingHead", 1 },
-	[ADVICE_UPDATE_SPARSE_PATH]			= { "updateSparsePath", 1 },
-	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor", 1 },
-	[ADVICE_WORKTREE_ADD_ORPHAN]			= { "worktreeAddOrphan", 1 },
+	[ADVICE_ADD_EMBEDDED_REPO]			= { "addEmbeddedRepo" },
+	[ADVICE_ADD_EMPTY_PATHSPEC]			= { "addEmptyPathspec" },
+	[ADVICE_ADD_IGNORED_FILE]			= { "addIgnoredFile" },
+	[ADVICE_AMBIGUOUS_FETCH_REFSPEC]		= { "ambiguousFetchRefspec" },
+	[ADVICE_AM_WORK_DIR] 				= { "amWorkDir" },
+	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { "checkoutAmbiguousRemoteBranchName" },
+	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge" },
+	[ADVICE_DETACHED_HEAD]				= { "detachedHead" },
+	[ADVICE_DIVERGING]				= { "diverging" },
+	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates" },
+	[ADVICE_FORCE_DELETE_BRANCH]			= { "forceDeleteBranch" },
+	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated" },
+	[ADVICE_IGNORED_HOOK]				= { "ignoredHook" },
+	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity" },
+	[ADVICE_NESTED_TAG]				= { "nestedTag" },
+	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning" },
+	[ADVICE_PUSH_ALREADY_EXISTS]			= { "pushAlreadyExists" },
+	[ADVICE_PUSH_FETCH_FIRST]			= { "pushFetchFirst" },
+	[ADVICE_PUSH_NEEDS_FORCE]			= { "pushNeedsForce" },
+	[ADVICE_PUSH_NON_FF_CURRENT]			= { "pushNonFFCurrent" },
+	[ADVICE_PUSH_NON_FF_MATCHING]			= { "pushNonFFMatching" },
+	[ADVICE_PUSH_REF_NEEDS_UPDATE]			= { "pushRefNeedsUpdate" },
+	[ADVICE_PUSH_UNQUALIFIED_REF_NAME]		= { "pushUnqualifiedRefName" },
+	[ADVICE_PUSH_UPDATE_REJECTED]			= { "pushUpdateRejected" },
+	[ADVICE_PUSH_UPDATE_REJECTED_ALIAS]		= { "pushNonFastForward" }, /* backwards compatibility */
+	[ADVICE_RESET_NO_REFRESH_WARNING]		= { "resetNoRefresh" },
+	[ADVICE_RESOLVE_CONFLICT]			= { "resolveConflict" },
+	[ADVICE_RM_HINTS]				= { "rmHints" },
+	[ADVICE_SEQUENCER_IN_USE]			= { "sequencerInUse" },
+	[ADVICE_SET_UPSTREAM_FAILURE]			= { "setUpstreamFailure" },
+	[ADVICE_SKIPPED_CHERRY_PICKS]			= { "skippedCherryPicks" },
+	[ADVICE_STATUS_AHEAD_BEHIND_WARNING]		= { "statusAheadBehindWarning" },
+	[ADVICE_STATUS_HINTS]				= { "statusHints" },
+	[ADVICE_STATUS_U_OPTION]			= { "statusUoption" },
+	[ADVICE_SUBMODULES_NOT_UPDATED] 		= { "submodulesNotUpdated" },
+	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie" },
+	[ADVICE_SUGGEST_DETACHING_HEAD]			= { "suggestDetachingHead" },
+	[ADVICE_UPDATE_SPARSE_PATH]			= { "updateSparsePath" },
+	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor" },
+	[ADVICE_WORKTREE_ADD_ORPHAN]			= { "worktreeAddOrphan" },
 };
 
 static const char turn_off_instructions[] =
@@ -116,13 +122,13 @@ void advise(const char *advice, ...)
 
 int advice_enabled(enum advice_type type)
 {
-	switch(type) {
-	case ADVICE_PUSH_UPDATE_REJECTED:
-		return advice_setting[ADVICE_PUSH_UPDATE_REJECTED].enabled &&
-		       advice_setting[ADVICE_PUSH_UPDATE_REJECTED_ALIAS].enabled;
-	default:
-		return advice_setting[type].enabled;
-	}
+	int enabled = advice_setting[type].level != ADVICE_LEVEL_DISABLED;
+
+	if (type == ADVICE_PUSH_UPDATE_REJECTED)
+		return enabled &&
+		       advice_enabled(ADVICE_PUSH_UPDATE_REJECTED_ALIAS);
+
+	return enabled;
 }
 
 void advise_if_enabled(enum advice_type type, const char *advice, ...)
@@ -133,7 +139,8 @@ void advise_if_enabled(enum advice_type type, const char *advice, ...)
 		return;
 
 	va_start(params, advice);
-	vadvise(advice, 1, advice_setting[type].key, params);
+	vadvise(advice, !advice_setting[type].level, advice_setting[type].key,
+		params);
 	va_end(params);
 }
 
@@ -162,7 +169,9 @@ int git_default_advice_config(const char *var, const char *value)
 	for (i = 0; i < ARRAY_SIZE(advice_setting); i++) {
 		if (strcasecmp(k, advice_setting[i].key))
 			continue;
-		advice_setting[i].enabled = git_config_bool(var, value);
+		advice_setting[i].level = git_config_bool(var, value)
+					  ? ADVICE_LEVEL_ENABLED
+					  : ADVICE_LEVEL_DISABLED;
 		return 0;
 	}
 
