@@ -5,6 +5,12 @@
 
 test_description='test bash completion'
 
+# The Bash completion scripts must not print anything to either stdout or
+# stderr, which we try to verify. When tracing is enabled without support for
+# BASH_XTRACEFD this assertion will fail, so we have to mark the test as
+# untraceable with such ancient Bash versions.
+test_untraceable=UnfortunatelyYes
+
 . ./lib-bash.sh
 
 complete ()
@@ -87,9 +93,11 @@ test_completion ()
 	else
 		sed -e 's/Z$//' |sort >expected
 	fi &&
-	run_completion "$1" &&
+	run_completion "$1" >"$TRASH_DIRECTORY"/bash-completion-output 2>&1 &&
 	sort out >out_sorted &&
-	test_cmp expected out_sorted
+	test_cmp expected out_sorted &&
+	test_must_be_empty "$TRASH_DIRECTORY"/bash-completion-output &&
+	rm "$TRASH_DIRECTORY"/bash-completion-output
 }
 
 # Test __gitcomp.
