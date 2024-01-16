@@ -167,6 +167,12 @@ Fixes since v2.43
    which has been corrected.
    (merge 556e68032f cp/git-flush-is-an-env-bool later to maint).
 
+ * Clearing in-core repository (happens during e.g., "git fetch
+   --recurse-submodules" with commit graph enabled) made in-core
+   commit object in an inconsistent state by discarding the necessary
+   data from commit-graph too early, which has been corrected.
+   (merge d70f554cdf jk/commit-graph-slab-clear-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -195,3 +201,6 @@ Fixes since v2.43
    (merge 54d8a2531b jk/t1006-cat-file-objectsize-disk later to maint).
    (merge 7033d5479b jx/sideband-chomp-newline-fix later to maint).
    (merge 9cd30af991 ms/rebase-insnformat-doc-fix later to maint).
+   (merge 03bcc93769 cp/sideband-array-index-comment-fix later to maint).
+   (merge 993d38a066 jk/index-pack-lsan-false-positive-fix later to maint).
+   (merge 25aec06326 ib/rebase-reschedule-doc later to maint).
