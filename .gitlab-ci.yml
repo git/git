@@ -51,3 +51,13 @@ test:
     paths:
       - t/failed-test-artifacts
     when: on_failure
+
+static-analysis:
+  image: ubuntu:22.04
+  variables:
+    jobname: StaticAnalysis
+  before_script:
+    - ./ci/install-docker-dependencies.sh
+  script:
+    - ./ci/run-static-analysis.sh
+    - ./ci/check-directional-formatting.bash
