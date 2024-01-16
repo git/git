@@ -532,6 +532,76 @@ test_expect_success 'init rejects attempts to initialize with different hash' '
 	test_must_fail git -C sha256 init --object-format=sha1
 '
 
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage is not allowed with repo version 0' '
+	test_when_finished "rm -rf refstorage" &&
+	git init refstorage &&
+	git -C refstorage config extensions.refStorage files &&
+	test_must_fail git -C refstorage rev-parse 2>err &&
+	grep "repo version is 0, but v1-only extension found" err
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage with files backend' '
+	test_when_finished "rm -rf refstorage" &&
+	git init refstorage &&
+	git -C refstorage config core.repositoryformatversion 1 &&
+	git -C refstorage config extensions.refStorage files &&
+	test_commit -C refstorage A &&
+	git -C refstorage rev-parse --verify HEAD
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage with unknown backend' '
+	test_when_finished "rm -rf refstorage" &&
+	git init refstorage &&
+	git -C refstorage config core.repositoryformatversion 1 &&
+	git -C refstorage config extensions.refStorage garbage &&
+	test_must_fail git -C refstorage rev-parse 2>err &&
+	grep "invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}garbage${SQ}" err
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'init with GIT_DEFAULT_REF_FORMAT=files' '
+	test_when_finished "rm -rf refformat" &&
+	GIT_DEFAULT_REF_FORMAT=files git init refformat &&
+	echo 0 >expect &&
+	git -C refformat config core.repositoryformatversion >actual &&
+	test_cmp expect actual &&
+	test_must_fail git -C refformat config extensions.refstorage
+'
+
+test_expect_success 'init with GIT_DEFAULT_REF_FORMAT=garbage' '
+	test_when_finished "rm -rf refformat" &&
+	cat >expect <<-EOF &&
+	fatal: unknown ref storage format ${SQ}garbage${SQ}
+	EOF
+	test_must_fail env GIT_DEFAULT_REF_FORMAT=garbage git init refformat 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'init with --ref-format=files' '
+	test_when_finished "rm -rf refformat" &&
+	git init --ref-format=files refformat &&
+	echo files >expect &&
+	git -C refformat rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-init with same format' '
+	test_when_finished "rm -rf refformat" &&
+	git init --ref-format=files refformat &&
+	git init --ref-format=files refformat &&
+	echo files >expect &&
+	git -C refformat rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'init with --ref-format=garbage' '
+	test_when_finished "rm -rf refformat" &&
+	cat >expect <<-EOF &&
+	fatal: unknown ref storage format ${SQ}garbage${SQ}
+	EOF
+	test_must_fail git init --ref-format=garbage refformat 2>err &&
+	test_cmp expect err
+'
+
 test_expect_success MINGW 'core.hidedotfiles = false' '
 	git config --global core.hidedotfiles false &&
 	rm -rf newdir &&

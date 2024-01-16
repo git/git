@@ -519,7 +519,7 @@ EOF
 
 mv .git/config .git/config-saved
 
-test_expect_success SHA1 'git branch -m q q2 without config should succeed' '
+test_expect_success DEFAULT_REPO_FORMAT 'git branch -m q q2 without config should succeed' '
 	git branch -m q q2 &&
 	git branch -m q2 q
 '

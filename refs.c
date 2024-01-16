@@ -33,15 +33,31 @@
 /*
  * List of all available backends
  */
-static struct ref_storage_be *refs_backends = &refs_be_files;
+static const struct ref_storage_be *refs_backends[] = {
+	[REF_STORAGE_FORMAT_FILES] = &refs_be_files,
+};
 
-static struct ref_storage_be *find_ref_storage_backend(const char *name)
+static const struct ref_storage_be *find_ref_storage_backend(unsigned int ref_storage_format)
 {
-	struct ref_storage_be *be;
-	for (be = refs_backends; be; be = be->next)
-		if (!strcmp(be->name, name))
-			return be;
+	if (ref_storage_format < ARRAY_SIZE(refs_backends))
+		return refs_backends[ref_storage_format];
 	return NULL;
+}
+
+unsigned int ref_storage_format_by_name(const char *name)
+{
+	for (unsigned int i = 0; i < ARRAY_SIZE(refs_backends); i++)
+		if (refs_backends[i] && !strcmp(refs_backends[i]->name, name))
+			return i;
+	return REF_STORAGE_FORMAT_UNKNOWN;
+}
+
+const char *ref_storage_format_to_name(unsigned int ref_storage_format)
+{
+	const struct ref_storage_be *be = find_ref_storage_backend(ref_storage_format);
+	if (!be)
+		return "unknown";
+	return be->name;
 }
 
 /*
@@ -2082,12 +2098,12 @@ static struct ref_store *ref_store_init(struct repository *repo,
 					const char *gitdir,
 					unsigned int flags)
 {
-	const char *be_name = "files";
-	struct ref_storage_be *be = find_ref_storage_backend(be_name);
+	const struct ref_storage_be *be;
 	struct ref_store *refs;
 
+	be = find_ref_storage_backend(repo->ref_storage_format);
 	if (!be)
-		BUG("reference backend %s is unknown", be_name);
+		BUG("reference backend is unknown");
 
 	refs = be->init(repo, gitdir, flags);
 	return refs;

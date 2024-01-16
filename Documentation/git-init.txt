@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git init' [-q | --quiet] [--bare] [--template=<template-directory>]
 	  [--separate-git-dir <git-dir>] [--object-format=<format>]
+	  [--ref-format=<format>]
 	  [-b <branch-name> | --initial-branch=<branch-name>]
 	  [--shared[=<permissions>]] [<directory>]
 
@@ -56,6 +57,12 @@ Specify the given object format (hash algorithm) for the repository.  The valid
 values are 'sha1' and (if enabled) 'sha256'.  'sha1' is the default.
 +
 include::object-format-disclaimer.txt[]
+
+--ref-format=<format>::
+
+Specify the given ref storage format for the repository. The valid values are:
++
+include::ref-storage-format.txt[]
 
 --template=<template-directory>::
 

@@ -3239,7 +3239,6 @@ static int files_init_db(struct ref_store *ref_store, struct strbuf *err UNUSED)
 }
 
 struct ref_storage_be refs_be_files = {
-	.next = NULL,
 	.name = "files",
 	.init = files_ref_store_create,
 	.init_db = files_init_db,

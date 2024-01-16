@@ -71,6 +71,7 @@ static char *remote_name = NULL;
 static char *option_branch = NULL;
 static struct string_list option_not = STRING_LIST_INIT_NODUP;
 static const char *real_git_dir;
+static const char *ref_format;
 static char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress = -1;
@@ -156,6 +157,8 @@ static struct option builtin_clone_options[] = {
 		    N_("any cloned submodules will be shallow")),
 	OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 		   N_("separate git dir from working tree")),
+	OPT_STRING(0, "ref-format", &ref_format, N_("format"),
+		   N_("specify the reference format to use")),
 	OPT_STRING_LIST('c', "config", &option_config, N_("key=value"),
 			N_("set config inside the new repository")),
 	OPT_STRING_LIST(0, "server-option", &server_options,
@@ -931,6 +934,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int submodule_progress;
 	int filter_submodules = 0;
 	int hash_algo;
+	unsigned int ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
 	const int do_not_override_repo_unix_permissions = -1;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
@@ -955,6 +959,12 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		deepen = 1;
 	if (option_single_branch == -1)
 		option_single_branch = deepen ? 1 : 0;
+
+	if (ref_format) {
+		ref_storage_format = ref_storage_format_by_name(ref_format);
+		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format '%s'"), ref_format);
+	}
 
 	if (option_mirror)
 		option_bare = 1;
@@ -1106,7 +1116,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 * repository, and reference backends may persist that information into
 	 * their on-disk data structures.
 	 */
-	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN, NULL,
+	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN,
+		ref_storage_format, NULL,
 		do_not_override_repo_unix_permissions, INIT_DB_QUIET | INIT_DB_SKIP_REFDB);
 
 	if (real_git_dir) {
@@ -1289,9 +1300,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	 * ours to the same thing.
 	 */
 	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
-	initialize_repository_version(hash_algo, 1);
+	initialize_repository_version(hash_algo, the_repository->ref_storage_format, 1);
 	repo_set_hash_algo(the_repository, hash_algo);
-	create_reference_database(NULL, 1);
+	create_reference_database(the_repository->ref_storage_format, NULL, 1);
 
 	/*
 	 * Before fetching from the remote, download and install bundle

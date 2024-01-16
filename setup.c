@@ -591,6 +591,17 @@ static enum extension_result handle_extension(const char *var,
 				     "extensions.objectformat", value);
 		data->hash_algo = format;
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "refstorage")) {
+		unsigned int format;
+
+		if (!value)
+			return config_error_nonbool(var);
+		format = ref_storage_format_by_name(value);
+		if (format == REF_STORAGE_FORMAT_UNKNOWN)
+			return error(_("invalid value for '%s': '%s'"),
+				     "extensions.refstorage", value);
+		data->ref_storage_format = format;
+		return EXTENSION_OK;
 	}
 	return EXTENSION_UNKNOWN;
 }
@@ -1565,6 +1576,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		if (startup_info->have_repository) {
 			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
+			repo_set_ref_storage_format(the_repository,
+						    repo_fmt.ref_storage_format);
 			the_repository->repository_format_worktree_config =
 				repo_fmt.worktree_config;
 			/* take ownership of repo_fmt.partial_clone */
@@ -1658,6 +1671,8 @@ void check_repository_format(struct repository_format *fmt)
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
 	repo_set_hash_algo(the_repository, fmt->hash_algo);
+	repo_set_ref_storage_format(the_repository,
+				    fmt->ref_storage_format);
 	the_repository->repository_format_worktree_config =
 		fmt->worktree_config;
 	the_repository->repository_format_partial_clone =
@@ -1866,12 +1881,15 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 	return 1;
 }
 
-void initialize_repository_version(int hash_algo, int reinit)
+void initialize_repository_version(int hash_algo,
+				   unsigned int ref_storage_format,
+				   int reinit)
 {
 	char repo_version_string[10];
 	int repo_version = GIT_REPO_VERSION;
 
-	if (hash_algo != GIT_HASH_SHA1)
+	if (hash_algo != GIT_HASH_SHA1 ||
+	    ref_storage_format != REF_STORAGE_FORMAT_FILES)
 		repo_version = GIT_REPO_VERSION_READ;
 
 	/* This forces creation of new config file */
@@ -1884,6 +1902,10 @@ void initialize_repository_version(int hash_algo, int reinit)
 			       hash_algos[hash_algo].name);
 	else if (reinit)
 		git_config_set_gently("extensions.objectformat", NULL);
+
+	if (ref_storage_format != REF_STORAGE_FORMAT_FILES)
+		git_config_set("extensions.refstorage",
+			       ref_storage_format_to_name(ref_storage_format));
 }
 
 static int is_reinit(void)
@@ -1898,7 +1920,8 @@ static int is_reinit(void)
 	return ret;
 }
 
-void create_reference_database(const char *initial_branch, int quiet)
+void create_reference_database(unsigned int ref_storage_format,
+			       const char *initial_branch, int quiet)
 {
 	struct strbuf err = STRBUF_INIT;
 	int reinit = is_reinit();
@@ -1918,6 +1941,7 @@ void create_reference_database(const char *initial_branch, int quiet)
 	safe_create_dir(git_path("refs"), 1);
 	adjust_shared_perm(git_path("refs"));
 
+	repo_set_ref_storage_format(the_repository, ref_storage_format);
 	if (refs_init_db(&err))
 		die("failed to set up refs db: %s", err.buf);
 
@@ -2023,7 +2047,7 @@ static int create_default_files(const char *template_path,
 		adjust_shared_perm(get_git_dir());
 	}
 
-	initialize_repository_version(fmt->hash_algo, 0);
+	initialize_repository_version(fmt->hash_algo, fmt->ref_storage_format, 0);
 
 	/* Check filemode trustability */
 	path = git_path_buf(&buf, "config");
@@ -2136,8 +2160,29 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 	}
 }
 
+static void validate_ref_storage_format(struct repository_format *repo_fmt,
+					unsigned int format)
+{
+	const char *name = getenv("GIT_DEFAULT_REF_FORMAT");
+
+	if (repo_fmt->version >= 0 &&
+	    format != REF_STORAGE_FORMAT_UNKNOWN &&
+	    format != repo_fmt->ref_storage_format) {
+		die(_("attempt to reinitialize repository with different reference storage format"));
+	} else if (format != REF_STORAGE_FORMAT_UNKNOWN) {
+		repo_fmt->ref_storage_format = format;
+	} else if (name) {
+		format = ref_storage_format_by_name(name);
+		if (format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format '%s'"), name);
+		repo_fmt->ref_storage_format = format;
+	}
+}
+
 int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, int hash, const char *initial_branch,
+	    const char *template_dir, int hash,
+	    unsigned int ref_storage_format,
+	    const char *initial_branch,
 	    int init_shared_repository, unsigned int flags)
 {
 	int reinit;
@@ -2180,13 +2225,22 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	check_repository_format(&repo_fmt);
 
 	validate_hash_algorithm(&repo_fmt, hash);
+	validate_ref_storage_format(&repo_fmt, ref_storage_format);
 
 	reinit = create_default_files(template_dir, original_git_dir,
 				      &repo_fmt, prev_bare_repository,
 				      init_shared_repository);
 
+	/*
+	 * Now that we have set up both the hash algorithm and the ref storage
+	 * format we can update the repository's settings accordingly.
+	 */
+	repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
+	repo_set_ref_storage_format(the_repository, repo_fmt.ref_storage_format);
+
 	if (!(flags & INIT_DB_SKIP_REFDB))
-		create_reference_database(initial_branch, flags & INIT_DB_QUIET);
+		create_reference_database(repo_fmt.ref_storage_format,
+					  initial_branch, flags & INIT_DB_QUIET);
 	create_object_directory();
 
 	if (get_shared_repository()) {

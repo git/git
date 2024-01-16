@@ -11,6 +11,9 @@ struct string_list;
 struct string_list_item;
 struct worktree;
 
+unsigned int ref_storage_format_by_name(const char *name);
+const char *ref_storage_format_to_name(unsigned int ref_storage_format);
+
 /*
  * Resolve a reference, recursively following symbolic refererences.
  *
