@@ -803,7 +803,8 @@ test_expect_success 'fetch.writeCommitGraph with submodules' '
 		cd super-clone &&
 		rm -rf .git/objects/info &&
 		git -c fetch.writeCommitGraph=true fetch origin &&
-		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain
+		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain &&
+		git -c fetch.writeCommitGraph=true fetch --recurse-submodules origin
 	)
 '
 

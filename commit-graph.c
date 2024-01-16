@@ -806,6 +806,9 @@ struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r)
 
 void close_commit_graph(struct raw_object_store *o)
 {
+	if (!o->commit_graph)
+		return;
+
 	clear_commit_graph_data_slab(&commit_graph_data_slab);
 	free_commit_graph(o->commit_graph);
 	o->commit_graph = NULL;
