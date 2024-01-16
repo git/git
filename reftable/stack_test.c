@@ -462,7 +462,6 @@ static void test_reftable_stack_add(void)
 		refs[i].refname = xstrdup(buf);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
-		refs[i].value.val1 = reftable_malloc(GIT_SHA1_RAWSZ);
 		set_test_hash(refs[i].value.val1, i);
 
 		logs[i].refname = xstrdup(buf);
@@ -599,7 +598,6 @@ static void test_reftable_stack_tombstone(void)
 		refs[i].update_index = i + 1;
 		if (i % 2 == 0) {
 			refs[i].value_type = REFTABLE_REF_VAL1;
-			refs[i].value.val1 = reftable_malloc(GIT_SHA1_RAWSZ);
 			set_test_hash(refs[i].value.val1, i);
 		}
 

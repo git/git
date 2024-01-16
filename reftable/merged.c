@@ -123,12 +123,12 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 		reftable_record_release(&top.rec);
 	}
 
-	reftable_record_copy_from(rec, &entry.rec, hash_size(mi->hash_id));
+	reftable_record_release(rec);
+	*rec = entry.rec;
 
 done:
-	reftable_record_release(&entry.rec);
-	strbuf_release(&mi->entry_key);
-	strbuf_release(&mi->key);
+	if (err)
+		reftable_record_release(&entry.rec);
 	return err;
 }
 

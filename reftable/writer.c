@@ -432,11 +432,11 @@ static int writer_finish_section(struct reftable_writer *w)
 		reftable_free(idx);
 	}
 
-	writer_clear_index(w);
-
 	err = writer_flush_block(w);
 	if (err < 0)
 		return err;
+
+	writer_clear_index(w);
 
 	bstats = writer_reftable_block_stats(w, typ);
 	bstats->index_blocks = w->stats.idx_stats.blocks - before_blocks;

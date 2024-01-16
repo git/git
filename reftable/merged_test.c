@@ -122,13 +122,11 @@ static void readers_destroy(struct reftable_reader **readers, size_t n)
 
 static void test_merged_between(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1, 2, 3, 0 };
-
 	struct reftable_ref_record r1[] = { {
 		.refname = "b",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
-		.value.val1 = hash1,
+		.value.val1 = { 1, 2, 3, 0 },
 	} };
 	struct reftable_ref_record r2[] = { {
 		.refname = "a",
@@ -164,26 +162,24 @@ static void test_merged_between(void)
 
 static void test_merged(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1 };
-	uint8_t hash2[GIT_SHA1_RAWSZ] = { 2 };
 	struct reftable_ref_record r1[] = {
 		{
 			.refname = "a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		},
 		{
 			.refname = "b",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		},
 		{
 			.refname = "c",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		}
 	};
 	struct reftable_ref_record r2[] = { {
@@ -196,13 +192,13 @@ static void test_merged(void)
 			.refname = "c",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash2,
+			.value.val1 = { 2 },
 		},
 		{
 			.refname = "d",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		},
 	};
 

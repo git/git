@@ -76,7 +76,7 @@ int reftable_is_block_type(uint8_t typ)
 	return 0;
 }
 
-uint8_t *reftable_ref_record_val1(const struct reftable_ref_record *rec)
+const unsigned char *reftable_ref_record_val1(const struct reftable_ref_record *rec)
 {
 	switch (rec->value_type) {
 	case REFTABLE_REF_VAL1:
@@ -88,7 +88,7 @@ uint8_t *reftable_ref_record_val1(const struct reftable_ref_record *rec)
 	}
 }
 
-uint8_t *reftable_ref_record_val2(const struct reftable_ref_record *rec)
+const unsigned char *reftable_ref_record_val2(const struct reftable_ref_record *rec)
 {
 	switch (rec->value_type) {
 	case REFTABLE_REF_VAL2:
@@ -219,13 +219,10 @@ static void reftable_ref_record_copy_from(void *rec, const void *src_rec,
 	case REFTABLE_REF_DELETION:
 		break;
 	case REFTABLE_REF_VAL1:
-		ref->value.val1 = reftable_malloc(hash_size);
 		memcpy(ref->value.val1, src->value.val1, hash_size);
 		break;
 	case REFTABLE_REF_VAL2:
-		ref->value.val2.value = reftable_malloc(hash_size);
 		memcpy(ref->value.val2.value, src->value.val2.value, hash_size);
-		ref->value.val2.target_value = reftable_malloc(hash_size);
 		memcpy(ref->value.val2.target_value,
 		       src->value.val2.target_value, hash_size);
 		break;
@@ -242,7 +239,7 @@ static char hexdigit(int c)
 	return 'a' + (c - 10);
 }
 
-static void hex_format(char *dest, uint8_t *src, int hash_size)
+static void hex_format(char *dest, const unsigned char *src, int hash_size)
 {
 	assert(hash_size > 0);
 	if (src) {
@@ -299,11 +296,8 @@ void reftable_ref_record_release(struct reftable_ref_record *ref)
 		reftable_free(ref->value.symref);
 		break;
 	case REFTABLE_REF_VAL2:
-		reftable_free(ref->value.val2.target_value);
-		reftable_free(ref->value.val2.value);
 		break;
 	case REFTABLE_REF_VAL1:
-		reftable_free(ref->value.val1);
 		break;
 	case REFTABLE_REF_DELETION:
 		break;
@@ -394,7 +388,6 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 			return -1;
 		}
 
-		r->value.val1 = reftable_malloc(hash_size);
 		memcpy(r->value.val1, in.buf, hash_size);
 		string_view_consume(&in, hash_size);
 		break;
@@ -404,11 +397,9 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 			return -1;
 		}
 
-		r->value.val2.value = reftable_malloc(hash_size);
 		memcpy(r->value.val2.value, in.buf, hash_size);
 		string_view_consume(&in, hash_size);
 
-		r->value.val2.target_value = reftable_malloc(hash_size);
 		memcpy(r->value.val2.target_value, in.buf, hash_size);
 		string_view_consume(&in, hash_size);
 		break;
@@ -1164,7 +1155,7 @@ int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, 
 		reftable_record_data(a), reftable_record_data(b), hash_size);
 }
 
-static int hash_equal(uint8_t *a, uint8_t *b, int hash_size)
+static int hash_equal(const unsigned char *a, const unsigned char *b, int hash_size)
 {
 	if (a && b)
 		return !memcmp(a, b, hash_size);
