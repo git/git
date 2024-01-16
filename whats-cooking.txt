@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2024, #04; Thu, 11)
-X-master-at: a54a84b333adbecf7bc4483c0e36ed5878cac17b
-X-next-at: 432eaa2c6beef636b4ea0f011b99512631f565d9
+Subject: What's cooking in git.git (Jan 2024, #05; Tue, 16)
+X-master-at: 186b115d3062e6230ee296d1ddaa0c4b72a464b5
+X-next-at: 8c6e9c07ef0bd922be435c0763b0b1b5bc508796
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2024, #04; Thu, 11)
+What's cooking in git.git (Jan 2024, #05; Tue, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,165 +46,7 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* cp/t4129-pipefix (2024-01-10) 1 commit
- - t4129: prevent loss of exit code due to the use of pipes
-
- Test update.
-
- Will merge to 'next'.
- source: <pull.1636.git.1704891257544.gitgitgadget@gmail.com>
-
-
-* rj/advice-delete-branch-not-fully-merged (2024-01-11) 3 commits
- - branch: make the advice to force-deleting a conditional one
- - advice: fix an unexpected leading space
- - advice: sort the advice related lists
-
- The error message given when "git branch -d branch" fails due to
- commits unique to the branch has been split into an error and a new
- conditional advice message.
-
- Will merge to 'next'?
- source: <4aedc15c-4b3f-4f5e-abea-581b501600f8@gmail.com>
-
-
-* en/diffcore-delta-final-line-fix (2024-01-11) 1 commit
- - diffcore-delta: avoid ignoring final 'line' of file
-
- Rename detection logic ignored the final line of a file if it is an
- incomplete line.
-
- Expecting a reroll.
- cf. <xmqqedenearc.fsf@gitster.g>
- source: <pull.1637.git.1705006074626.gitgitgadget@gmail.com>
-
-
-* mj/gitweb-unreadable-config-error (2024-01-10) 1 commit
- - gitweb: die when a configuration file cannot be read
-
- When given an existing but unreadable file as a configuration file,
- gitweb behaved as if the file did not exist at all, but now it
- errors out.  This is a change that may break backward compatibility.
-
- Will merge to 'next'?
- source: <20240110225709.30168-1-marcelo.jimenez@gmail.com>
-
-
-* ps/completion-with-reftable-fix (2024-01-11) 2 commits
- - completion: silence pseudoref existence check
- - t9902: verify that completion does not print anything
-
- Completion update to prepare for reftable
-
- Will merge to 'next'.
- source: <cover.1704969119.git.ps@pks.im>
-
-
-* ps/p4-use-ref-api (2024-01-11) 1 commit
- - git-p4: stop reaching into the refdb
-
- "git p4" update to prepare for reftable
-
- Will merge to 'next'.
- source: <33d6a062ec56be33ed50a42a420be0b023f6f4cf.1704980814.git.ps@pks.im>
-
---------------------------------------------------
-[Cooking]
-
-* ps/gitlab-ci-static-analysis (2024-01-08) 1 commit
-  (merged to 'next' on 2024-01-10 at 71af34de07)
- + ci: add job performing static analysis on GitLab CI
-
- GitLab CI update.
-
- Will merge to 'master'.
- source: <1536a5ef07ad24dafb5d685b40099882f89e6cc5.1703761005.git.ps@pks.im>
-
-
-* ps/prompt-parse-HEAD-futureproof (2024-01-08) 2 commits
-  (merged to 'next' on 2024-01-10 at f9515b9d89)
- + git-prompt: stop manually parsing HEAD with unknown ref formats
- + Merge branch 'ps/refstorage-extension' into ps/prompt-parse-HEAD-futureproof
- (this branch uses ps/refstorage-extension.)
-
- Futureproof command line prompt support (in contrib/).
-
- Will merge to 'master'.
- source: <ef4e36a5a40c369da138242a8fdc9e12a846613b.1704356313.git.ps@pks.im>
-
-
-* ps/reftable-optimize-io (2024-01-11) 5 commits
- - reftable/blocksource: use mmap to read tables
- - reftable/blocksource: refactor code to match our coding style
- - reftable/stack: use stat info to avoid re-reading stack list
- - reftable/stack: refactor reloading to use file descriptor
- - reftable/stack: refactor stack reloading to have common exit path
-
- Low-level I/O optimization for reftable.
-
- Will merge to 'next'.
- source: <cover.1704966670.git.ps@pks.im>
-
-
-* rj/clarify-branch-doc-m (2024-01-08) 1 commit
-  (merged to 'next' on 2024-01-10 at 432eaa2c6b)
- + branch: clarify <oldbranch> term
-
- Doc update.
-
- Will merge to 'master'.
- source: <d38e5a18-4d85-48f3-bc8b-8ca02ea683a4@gmail.com>
-
-
-* tb/fetch-all-configuration (2024-01-08) 1 commit
- - fetch: add new config option fetch.all
-
- "git fetch" learned to pay attention to "fetch.all" configuration
- variable, which pretends as if "--all" was passed from the command
- line when no remote parameter was given.
-
- Will merge to 'next'.
- source: <20240108211832.47362-1-dev@tb6.eu>
-
-
-* rj/advice-disable-how-to-disable (2024-01-09) 3 commits
- - advice: allow disabling the automatic hint in advise_if_enabled()
- - t/test-tool: handle -c <name>=<value> arguments
- - t/test-tool: usage description
-
- All conditional "advice" messages show how to turn them off, which
- becomes repetitive.  Add a configuration variable to omit the
- instruction.
-
- Expecting a reroll.
- cf. <ZZ2QafUf/JxXYZU/@nand.local>
- source: <7c68392c-af2f-4999-ae64-63221bf7833a@gmail.com>
-
-
-* vd/fsck-submodule-url-test (2024-01-09) 3 commits
- - submodule-config.c: strengthen URL fsck check
- - t7450: test submodule urls
- - submodule-config.h: move check_submodule_url
-
- Tighten URL checks fsck makes in a URL recorded for submodules.
-
- Expecting a reroll (and review response).
- cf. <20240110103812.GB16674@coredump.intra.peff.net>
- cf. <ZZ46MrjSocJl-kpU@tanuki>
- source: <pull.1635.git.1704822817.gitgitgadget@gmail.com>
-
-
-* ms/rebase-insnformat-doc-fix (2024-01-03) 1 commit
-  (merged to 'next' on 2024-01-04 at d68f2be39b)
- + Documentation: fix statement about rebase.instructionFormat
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1629.git.git.1704305663254.gitgitgadget@gmail.com>
-
+[Graduated to 'master']
 
 * cp/git-flush-is-an-env-bool (2024-01-04) 1 commit
   (merged to 'next' on 2024-01-04 at b435a96ce8)
@@ -213,30 +55,15 @@ Release tarballs are available at:
  Unlike other environment variables that took the usual
  true/false/yes/no as well as 0/1, GIT_FLUSH only understood 0/1,
  which has been corrected.
-
- Will merge to 'master'.
  source: <pull.1628.v3.git.1704363617842.gitgitgadget@gmail.com>
 
 
-* sd/negotiate-trace-fix (2024-01-03) 1 commit
- - push: region_leave trace for negotiate_using_fetch
+* cp/sideband-array-index-comment-fix (2023-12-28) 1 commit
+  (merged to 'next' on 2024-01-08 at f906bc86f1)
+ + sideband.c: remove redundant 'NEEDSWORK' tag
 
- Tracing fix.
-
- Waiting for a review response.
- cf. <xmqqbka27zu9.fsf@gitster.g>
- source: <20240103224054.1940209-1-delmerico@google.com>
-
-
-* sk/mingw-owner-check-error-message-improvement (2024-01-10) 1 commit
- - mingw: give more details about unsafe directory's ownership
-
- In addition to (rather cryptic) Security Identifiers, show username
- and domain in the error message when we barf on mismatch between
- the Git directory and the current user.
-
- Will merge to 'next'.
- source: <20240108173837.20480-2-soekkle@freenet.de>
+ In-code comment fix.
+ source: <pull.1625.v4.git.1703750460527.gitgitgadget@gmail.com>
 
 
 * ib/rebase-reschedule-doc (2024-01-05) 1 commit
@@ -244,8 +71,6 @@ Release tarballs are available at:
  + rebase: clarify --reschedule-failed-exec default
 
  Doc update.
-
- Will merge to 'master'.
  source: <20240105011424.1443732-2-illia.bobyr@gmail.com>
 
 
@@ -257,8 +82,6 @@ Release tarballs are available at:
  --recurse-submodules" with commit graph enabled) made in-core
  commit object in an inconsistent state by discarding the necessary
  data from commit-graph too early, which has been corrected.
-
- Will merge to 'master'.
  source: <20240105054142.GA2035092@coredump.intra.peff.net>
 
 
@@ -267,52 +90,7 @@ Release tarballs are available at:
  + index-pack: spawn threads atomically
 
  Fix false positive reported by leak sanitizer.
-
- Will merge to 'master'.
  source: <20240105085034.GA3078476@coredump.intra.peff.net>
-
-
-* cp/sideband-array-index-comment-fix (2023-12-28) 1 commit
-  (merged to 'next' on 2024-01-08 at f906bc86f1)
- + sideband.c: remove redundant 'NEEDSWORK' tag
-
- In-code comment fix.
-
- Will merge to 'master'.
- source: <pull.1625.v4.git.1703750460527.gitgitgadget@gmail.com>
-
-
-* ps/worktree-refdb-initialization (2024-01-08) 7 commits
- - builtin/worktree: create refdb via ref backend
- - worktree: expose interface to look up worktree by name
- - builtin/worktree: move setup of commondir file earlier
- - refs/files: skip creation of "refs/{heads,tags}" for worktrees
- - setup: move creation of "refs/" into the files backend
- - refs: prepare `refs_init_db()` for initializing worktree refs
- - Merge branch 'ps/refstorage-extension' into ps/worktree-refdb-initialization
- (this branch uses ps/refstorage-extension.)
-
- Instead of manually creating refs/ hierarchy on disk upon a
- creation of a secondary worktree, which is only usable via the
- files backend, use the refs API to populate it.
-
- Needs review.
- source: <cover.1704705733.git.ps@pks.im>
-
-
-* cp/apply-core-filemode (2023-12-26) 3 commits
- - apply: code simplification
- - apply: correctly reverse patch's pre- and post-image mode bits
- - apply: ignore working tree filemode when !core.filemode
-
- "git apply" on a filesystem without filemode support have learned
- to take a hint from what is in the index for the path, even when
- not working with the "--index" or "--cached" option, when checking
- the executable bit match what is required by the preimage in the
- patch.
-
- Needs review.
- source: <20231226233218.472054-1-gitster@pobox.com>
 
 
 * jk/t1006-cat-file-objectsize-disk (2024-01-03) 2 commits
@@ -322,8 +100,6 @@ Release tarballs are available at:
  + t1006: add tests for %(objectsize:disk)
 
  Test update.
-
- Will merge to 'master'.
  source: <20231221094722.GA570888@coredump.intra.peff.net>
  source: <20240103090152.GB1866508@coredump.intra.peff.net>
 
@@ -341,40 +117,37 @@ Release tarballs are available at:
  + CodingGuidelines: move period inside parentheses
 
  Doc update.
-
- Will merge to 'master'.
  source: <pull.1623.v3.git.1703739324.gitgitgadget@gmail.com>
 
 
-* al/unit-test-ctype (2024-01-05) 1 commit
- - unit-tests: rewrite t/helper/test-ctype.c as a unit test
+* jw/builtin-objectmode-attr (2023-12-28) 1 commit
+  (merged to 'next' on 2024-01-02 at 4c3784b3a1)
+ + attr: add builtin objectmode values support
 
- Move test-ctype helper to the unit-test framework.
-
- Expecting a (hopefully small and final) reroll.
- cf. <a087f57c-ce72-45c7-8182-f38d0aca9030@web.de>
- cf. <33c81610-0958-49da-b702-ba8d96ecf1d3@gmail.com>
- source: <20240105161413.10422-1-ach.lumap@gmail.com>
-
-
-* bk/bisect-doc-fix (2024-01-10) 2 commits
- - doc: refer to pathspec instead of path
- - doc: use singular form of repeatable path arg
-
- Synopsis fix.
-
- Will merge to 'next'.
- source: <20240103040207.661413-1-britton.kerin@gmail.com>
+ The builtin_objectmode attribute is populated for each path
+ without adding anything in .gitattributes files, which would be
+ useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
+ to limit to executables.
+ cf. <xmqq5y0ssknj.fsf@gitster.g>
+ source: <20231116054437.2343549-1-jojwang@google.com>
 
 
-* ja/doc-placeholders-fix (2023-12-26) 2 commits
- - doc: enforce placeholders in documentation
- - doc: enforce dashes in placeholders
+* jx/sideband-chomp-newline-fix (2023-12-18) 3 commits
+  (merged to 'next' on 2024-01-04 at 1237898a22)
+ + pkt-line: do not chomp newlines for sideband messages
+ + pkt-line: memorize sideband fragment in reader
+ + test-pkt-line: add option parser for unpack-sideband
+
+ Sideband demultiplexer fixes.
+ source: <cover.1702823801.git.zhiyou.jx@alibaba-inc.com>
+
+
+* ms/rebase-insnformat-doc-fix (2024-01-03) 1 commit
+  (merged to 'next' on 2024-01-04 at d68f2be39b)
+ + Documentation: fix statement about rebase.instructionFormat
 
  Docfix.
-
- Needs review.
- source: <pull.1626.git.1703539287.gitgitgadget@gmail.com>
+ source: <pull.1629.git.git.1704305663254.gitgitgadget@gmail.com>
 
 
 * ps/refstorage-extension (2024-01-02) 13 commits
@@ -396,8 +169,6 @@ Release tarballs are available at:
 
  Introduce a new extension "refstorage" so that we can mark a
  repository that uses a non-default ref backend, like reftable.
-
- Will merge to 'master'.
  source: <cover.1703833818.git.ps@pks.im>
 
 
@@ -414,8 +185,6 @@ Release tarballs are available at:
  + Merge branch 'ps/reftable-fixes' into ps/reftable-fixes-and-optims
 
  More fixes and optimizations to the reftable backend.
-
- Will merge to 'master'.
  source: <cover.1704262787.git.ps@pks.im>
 
 
@@ -451,10 +220,380 @@ Release tarballs are available at:
  Streaming spans of packfile data used to be done only from a
  single, primary, pack in a repository with multiple packfiles.  It
  has been extended to allow reuse from other packfiles, too.
-
- Will merge to 'master'.
  cf. <ZXurD1NTZ4TAs7WZ@nand.local>
  source: <cover.1702592603.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[New Topics]
+
+* es/some-up-to-date-messages-must-stay (2024-01-12) 1 commit
+  (merged to 'next' on 2024-01-16 at 2b598f7de2)
+ + messages: mark some strings with "up-to-date" not to touch
+
+ Comment updates to help developers not to attempt to modify
+ messages from plumbing commands that must stay constant.
+
+ It might make sense to reassess the plumbing needs every few years,
+ but that should be done as a separate effort.
+
+ Will merge to 'master'.
+ source: <20240112171910.11131-1-ericsunshine@charter.net>
+
+
+* bk/complete-bisect (2024-01-12) 5 commits
+ - completion: custom git-bisect terms
+ - completion: custom git-bisect terms
+ - completion: move to maintain define-before-use
+ - completion: git-log opts to bisect visualize
+ - completion: complete new old actions, start opts
+
+ Command line completion support (in contrib/) has been
+ updated for "git bisect".
+
+ Needs review.
+ source: <20240110020347.673155-1-britton.kerin@gmail.com>
+
+
+* bk/complete-dirname-for-am-and-format-patch (2024-01-12) 1 commit
+ - completion: dir-type optargs for am, format-patch
+
+ Command line completion support (in contrib/) has been
+ updated for a few commands to complete directory names where a
+ directory name is expected.
+
+ Needs review.
+ source: <d37781c3-6af2-409b-95a8-660a9b92d20b@smtp-relay.sendinblue.com>
+
+
+* bk/complete-send-email (2024-01-12) 1 commit
+ - completion: don't complete revs when --no-format-patch
+
+ Command line completion support (in contrib/) has been taught to
+ avoid offering revision names as candidates to "git send-email" when
+ the command is used to send pre-generated files.
+
+ Needs review.
+ source: <a718b5ee-afb0-44bd-a299-3208fac43506@smtp-relay.sendinblue.com>
+
+
+* gt/test-commit-o-i-options (2024-01-16) 2 commits
+ - t7501: add tests for --amend --signoff
+ - t7501: add tests for --include and --only
+
+ A few tests to "git commit -o <pathspec>" and "git commit -i
+ <pathspec>" has been added.
+
+ Expecting a reroll.
+ cf. <xmqq1qah46i0.fsf@gitster.g>
+ source: <20240113042254.38602-1-shyamthakkar001@gmail.com>
+
+
+* jt/tests-with-reftable (2024-01-12) 2 commits
+ - t5541: remove lockfile creation
+ - t1401: remove lockfile creation
+
+ Tweak a few tests not to manually modify the reference database
+ (hence easier to work with other backends like reftable).
+
+ Will merge to 'next'.
+ source: <pull.1634.v2.git.1705004670.gitgitgadget@gmail.com>
+
+
+* la/strvec-comment-fix (2024-01-12) 1 commit
+ - strvec: use correct member name in comments
+
+ Comment fix.
+
+ Will merge to 'next'.
+ source: <pull.1640.git.1705043195997.gitgitgadget@gmail.com>
+
+
+* la/trailer-api (2024-01-12) 10 commits
+ - trailer: delete obsolete argument handling code from API
+ - trailer: move arg handling to interpret-trailers.c
+ - trailer: prepare to move parse_trailers_from_command_line_args() to builtin
+ - trailer: spread usage of "trailer_block" language
+ - trailer: make trailer_info struct private
+ - sequencer: use the trailer iterator
+ - trailer: delete obsolete formatting functions
+ - trailer: unify trailer formatting machinery
+ - trailer: include "trailer" term in API functions
+ - trailer: move process_trailers() to interpret-trailers.c
+
+ Code clean-up.
+
+ Needs review.
+ source: <pull.1632.git.1704869487.gitgitgadget@gmail.com>
+
+
+* ps/tests-with-ref-files-backend (2024-01-12) 6 commits
+ - t: mark tests regarding git-pack-refs(1) to be backend specific
+ - t5526: break test submodule differently
+ - t1419: mark test suite as files-backend specific
+ - t1302: make tests more robust with new extensions
+ - t1301: mark test for `core.sharedRepository` as reffiles specific
+ - t1300: make tests more robust with non-default ref backends
+
+ Prepare existing tests on refs to work better with non-default
+ backends.
+
+ Needs review.
+ source: <cover.1704877233.git.ps@pks.im>
+
+
+* ne/doc-filter-blob-limit-fix (2024-01-16) 1 commit
+ - rev-list-options: fix off-by-one in '--filter=blob:limit=<n>' explainer
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <pull.1645.git.git.1705261850650.gitgitgadget@gmail.com>
+
+
+* ps/commit-graph-write-leakfix (2024-01-15) 1 commit
+ - commit-graph: fix memory leak when not writing graph
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <0feab5e7d5bc6275e2c7671cd8f6786ea86fd610.1702891190.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
+* cp/t4129-pipefix (2024-01-10) 1 commit
+  (merged to 'next' on 2024-01-12 at fd9b72b71a)
+ + t4129: prevent loss of exit code due to the use of pipes
+
+ Test update.
+
+ Will merge to 'master'.
+ source: <pull.1636.git.1704891257544.gitgitgadget@gmail.com>
+
+
+* rj/advice-delete-branch-not-fully-merged (2024-01-11) 3 commits
+ - branch: make the advice to force-deleting a conditional one
+ - advice: fix an unexpected leading space
+ - advice: sort the advice related lists
+ (this branch is used by rj/advice-disable-how-to-disable.)
+
+ The error message given when "git branch -d branch" fails due to
+ commits unique to the branch has been split into an error and a new
+ conditional advice message.
+
+ Will merge to 'next'.
+ source: <4aedc15c-4b3f-4f5e-abea-581b501600f8@gmail.com>
+
+
+* en/diffcore-delta-final-line-fix (2024-01-11) 1 commit
+ - diffcore-delta: avoid ignoring final 'line' of file
+
+ Rename detection logic ignored the final line of a file if it is an
+ incomplete line.
+
+ Expecting a reroll.
+ cf. <xmqqedenearc.fsf@gitster.g>
+ source: <pull.1637.git.1705006074626.gitgitgadget@gmail.com>
+
+
+* mj/gitweb-unreadable-config-error (2024-01-10) 1 commit
+ - gitweb: die when a configuration file cannot be read
+
+ When given an existing but unreadable file as a configuration file,
+ gitweb behaved as if the file did not exist at all, but now it
+ errors out.  This is a change that may break backward compatibility.
+
+ Will merge to 'next'.
+ source: <20240110225709.30168-1-marcelo.jimenez@gmail.com>
+
+
+* ps/completion-with-reftable-fix (2024-01-16) 5 commits
+ - completion: treat dangling symrefs as existing pseudorefs
+ - completion: silence pseudoref existence check
+ - completion: improve existence check for pseudo-refs
+ - t9902: verify that completion does not print anything
+ - completion: discover repo path in `__git_pseudoref_exists ()`
+
+ Completion update to prepare for reftable
+
+ Will merge to 'next'?
+ source: <cover.1705314554.git.ps@pks.im>
+
+
+* ps/p4-use-ref-api (2024-01-11) 1 commit
+  (merged to 'next' on 2024-01-12 at 3f89cf25f6)
+ + git-p4: stop reaching into the refdb
+
+ "git p4" update to prepare for reftable
+
+ Will merge to 'master'.
+ source: <33d6a062ec56be33ed50a42a420be0b023f6f4cf.1704980814.git.ps@pks.im>
+
+
+* ps/gitlab-ci-static-analysis (2024-01-08) 1 commit
+  (merged to 'next' on 2024-01-10 at 71af34de07)
+ + ci: add job performing static analysis on GitLab CI
+
+ GitLab CI update.
+
+ Will merge to 'master'.
+ source: <1536a5ef07ad24dafb5d685b40099882f89e6cc5.1703761005.git.ps@pks.im>
+
+
+* ps/prompt-parse-HEAD-futureproof (2024-01-08) 2 commits
+  (merged to 'next' on 2024-01-10 at f9515b9d89)
+ + git-prompt: stop manually parsing HEAD with unknown ref formats
+ + Merge branch 'ps/refstorage-extension' into ps/prompt-parse-HEAD-futureproof
+
+ Futureproof command line prompt support (in contrib/).
+
+ Will merge to 'master'.
+ source: <ef4e36a5a40c369da138242a8fdc9e12a846613b.1704356313.git.ps@pks.im>
+
+
+* ps/reftable-optimize-io (2024-01-11) 5 commits
+  (merged to 'next' on 2024-01-12 at 4096e880e0)
+ + reftable/blocksource: use mmap to read tables
+ + reftable/blocksource: refactor code to match our coding style
+ + reftable/stack: use stat info to avoid re-reading stack list
+ + reftable/stack: refactor reloading to use file descriptor
+ + reftable/stack: refactor stack reloading to have common exit path
+
+ Low-level I/O optimization for reftable.
+
+ Will merge to 'master'.
+ source: <cover.1704966670.git.ps@pks.im>
+
+
+* rj/clarify-branch-doc-m (2024-01-08) 1 commit
+  (merged to 'next' on 2024-01-10 at 432eaa2c6b)
+ + branch: clarify <oldbranch> term
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <d38e5a18-4d85-48f3-bc8b-8ca02ea683a4@gmail.com>
+
+
+* tb/fetch-all-configuration (2024-01-08) 1 commit
+  (merged to 'next' on 2024-01-12 at 6a05050382)
+ + fetch: add new config option fetch.all
+
+ "git fetch" learned to pay attention to "fetch.all" configuration
+ variable, which pretends as if "--all" was passed from the command
+ line when no remote parameter was given.
+
+ Will merge to 'master'.
+ source: <20240108211832.47362-1-dev@tb6.eu>
+
+
+* rj/advice-disable-how-to-disable (2024-01-15) 1 commit
+ - advice: allow disabling the automatic hint in advise_if_enabled()
+ (this branch uses rj/advice-delete-branch-not-fully-merged.)
+
+ All conditional "advice" messages show how to turn them off, which
+ becomes repetitive.  Add a configuration variable to omit the
+ instruction.
+
+ Will requeue with better dependencies before merging to 'next'.
+ source: <c870a0b6-9fa8-4d00-a5a6-661ca175805f@gmail.com>
+
+
+* vd/fsck-submodule-url-test (2024-01-09) 3 commits
+ - submodule-config.c: strengthen URL fsck check
+ - t7450: test submodule urls
+ - submodule-config.h: move check_submodule_url
+
+ Tighten URL checks fsck makes in a URL recorded for submodules.
+
+ Expecting a reroll (and review response).
+ cf. <20240110103812.GB16674@coredump.intra.peff.net>
+ cf. <ZZ46MrjSocJl-kpU@tanuki>
+ source: <pull.1635.git.1704822817.gitgitgadget@gmail.com>
+
+
+* sd/negotiate-trace-fix (2024-01-03) 1 commit
+ - push: region_leave trace for negotiate_using_fetch
+
+ Tracing fix.
+
+ Waiting for a review response.
+ cf. <xmqqbka27zu9.fsf@gitster.g>
+ source: <20240103224054.1940209-1-delmerico@google.com>
+
+
+* sk/mingw-owner-check-error-message-improvement (2024-01-10) 1 commit
+  (merged to 'next' on 2024-01-12 at 05c56e151b)
+ + mingw: give more details about unsafe directory's ownership
+
+ In addition to (rather cryptic) Security Identifiers, show username
+ and domain in the error message when we barf on mismatch between
+ the Git directory and the current user.
+
+ Will merge to 'master'.
+ source: <20240108173837.20480-2-soekkle@freenet.de>
+
+
+* ps/worktree-refdb-initialization (2024-01-08) 7 commits
+ - builtin/worktree: create refdb via ref backend
+ - worktree: expose interface to look up worktree by name
+ - builtin/worktree: move setup of commondir file earlier
+ - refs/files: skip creation of "refs/{heads,tags}" for worktrees
+ - setup: move creation of "refs/" into the files backend
+ - refs: prepare `refs_init_db()` for initializing worktree refs
+ - Merge branch 'ps/refstorage-extension' into ps/worktree-refdb-initialization
+
+ Instead of manually creating refs/ hierarchy on disk upon a
+ creation of a secondary worktree, which is only usable via the
+ files backend, use the refs API to populate it.
+
+ Will merge to 'next'.
+ source: <cover.1704705733.git.ps@pks.im>
+
+
+* cp/apply-core-filemode (2023-12-26) 3 commits
+ - apply: code simplification
+ - apply: correctly reverse patch's pre- and post-image mode bits
+ - apply: ignore working tree filemode when !core.filemode
+
+ "git apply" on a filesystem without filemode support have learned
+ to take a hint from what is in the index for the path, even when
+ not working with the "--index" or "--cached" option, when checking
+ the executable bit match what is required by the preimage in the
+ patch.
+
+ Needs review.
+ source: <20231226233218.472054-1-gitster@pobox.com>
+
+
+* al/unit-test-ctype (2024-01-16) 1 commit
+ - unit-tests: rewrite t/helper/test-ctype.c as a unit test
+
+ Move test-ctype helper to the unit-test framework.
+
+ Will merge to 'next'.
+ source: <20240112102743.1440-1-ach.lumap@gmail.com>
+
+
+* bk/bisect-doc-fix (2024-01-10) 2 commits
+  (merged to 'next' on 2024-01-12 at bdb3609554)
+ + doc: refer to pathspec instead of path
+ + doc: use singular form of repeatable path arg
+
+ Synopsis fix.
+
+ Will merge to 'master'.
+ source: <20240103040207.661413-1-britton.kerin@gmail.com>
+
+
+* ja/doc-placeholders-fix (2023-12-26) 2 commits
+ - doc: enforce placeholders in documentation
+ - doc: enforce dashes in placeholders
+
+ Docfix.
+
+ Needs review.
+ source: <pull.1626.git.1703539287.gitgitgadget@gmail.com>
 
 
 * jc/bisect-doc (2023-12-09) 1 commit
@@ -464,20 +603,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <xmqqzfyjmk02.fsf@gitster.g>
-
-
-* jw/builtin-objectmode-attr (2023-12-28) 1 commit
-  (merged to 'next' on 2024-01-02 at 4c3784b3a1)
- + attr: add builtin objectmode values support
-
- The builtin_objectmode attribute is populated for each path
- without adding anything in .gitattributes files, which would be
- useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
- to limit to executables.
-
- Will merge to 'master'.
- cf. <xmqq5y0ssknj.fsf@gitster.g>
- source: <20231116054437.2343549-1-jojwang@google.com>
 
 
 * tb/pair-chunk-expect (2023-11-10) 8 commits
@@ -577,29 +702,19 @@ Release tarballs are available at:
  source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
-* jx/remote-archive-over-smart-http (2023-12-14) 4 commits
- - archive: support remote archive from stateless transport
- - transport-helper: call do_take_over() in connect_helper
+* jx/remote-archive-over-smart-http (2024-01-16) 6 commits
  - transport-helper: call do_take_over() in process_connect
+ - transport-helper: call do_take_over() in connect_helper
+ - http-backend: new rpc-service for git-upload-archive
+ - transport-helper: protocol-v2 supports upload-archive
+ - remote-curl: supports git-upload-archive service
  - transport-helper: no connection restriction in connect_helper
 
  "git archive --remote=<remote>" learned to talk over the smart
  http (aka stateless) transport.
 
- Needs review.
- source: <cover.1702562879.git.zhiyou.jx@alibaba-inc.com>
-
-
-* jx/sideband-chomp-newline-fix (2023-12-18) 3 commits
-  (merged to 'next' on 2024-01-04 at 1237898a22)
- + pkt-line: do not chomp newlines for sideband messages
- + pkt-line: memorize sideband fragment in reader
- + test-pkt-line: add option parser for unpack-sideband
-
- Sideband demultiplexer fixes.
-
- Will merge to 'master'.
- source: <cover.1702823801.git.zhiyou.jx@alibaba-inc.com>
+ Will merge to 'next'?
+ source: <cover.1705411391.git.zhiyou.jx@alibaba-inc.com>
 
 
 * jc/rerere-cleanup (2023-08-25) 4 commits
