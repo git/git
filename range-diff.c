@@ -131,15 +131,18 @@ static int read_patches(const char *range, struct string_list *list,
 			if (eol)
 				*eol = '\n';
 			orig_len = len;
-			len = parse_git_diff_header(&root, &linenr, 0, line,
-						    len, size, &patch);
-			if (len < 0) {
+			struct promise_t *parse_git_diff_header_promise = promise_init();
+			parse_git_diff_header(&root, &linenr, 0, line,
+						    len, size, &patch, parse_git_diff_header_promise);
+			promise_assert_finished(parse_git_diff_header_promise);
+			if (parse_git_diff_header_promise->state == PROMISE_FAILURE) {
 				error(_("could not parse git header '%.*s'"),
 				      orig_len, line);
 				FREE_AND_NULL(util);
 				string_list_clear(list, 1);
 				goto cleanup;
 			}
+			int len = parse_git_diff_header_promise->result.success_result;
 			strbuf_addstr(&buf, " ## ");
 			if (patch.is_new > 0)
 				strbuf_addf(&buf, "%s (new)", patch.new_name);
