@@ -344,6 +344,9 @@ macos-*)
 	then
 		MAKEFLAGS="$MAKEFLAGS APPLE_COMMON_CRYPTO_SHA1=Yes"
 	fi
+
+	P4_PATH="$HOME/custom/p4"
+	export PATH="$P4_PATH:$PATH"
 	;;
 esac
 
