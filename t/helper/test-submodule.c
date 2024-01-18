@@ -14,6 +14,13 @@ static const char *submodule_check_name_usage[] = {
 	NULL
 };
 
+#define TEST_TOOL_CHECK_URL_USAGE \
+	"test-tool submodule check-url"
+static const char *submodule_check_url_usage[] = {
+	TEST_TOOL_CHECK_URL_USAGE,
+	NULL
+};
+
 #define TEST_TOOL_IS_ACTIVE_USAGE \
 	"test-tool submodule is-active <name>"
 static const char *submodule_is_active_usage[] = {
@@ -30,17 +37,23 @@ static const char *submodule_resolve_relative_url_usage[] = {
 
 static const char *submodule_usage[] = {
 	TEST_TOOL_CHECK_NAME_USAGE,
+	TEST_TOOL_CHECK_URL_USAGE,
 	TEST_TOOL_IS_ACTIVE_USAGE,
 	TEST_TOOL_RESOLVE_RELATIVE_URL_USAGE,
 	NULL
 };
 
-/* Filter stdin to print only valid names. */
-static int check_name(void)
+typedef int (*check_fn_t)(const char *);
+
+/*
+ * Apply 'check_fn' to each line of stdin, printing values that pass the check
+ * to stdout.
+ */
+static int check_submodule(check_fn_t check_fn)
 {
 	struct strbuf buf = STRBUF_INIT;
 	while (strbuf_getline(&buf, stdin) != EOF) {
-		if (!check_submodule_name(buf.buf))
+		if (!check_fn(buf.buf))
 			printf("%s\n", buf.buf);
 	}
 	strbuf_release(&buf);
@@ -57,7 +70,20 @@ static int cmd__submodule_check_name(int argc, const char **argv)
 	if (argc)
 		usage_with_options(submodule_check_name_usage, options);
 
-	return check_name();
+	return check_submodule(check_submodule_name);
+}
+
+static int cmd__submodule_check_url(int argc, const char **argv)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+	argc = parse_options(argc, argv, "test-tools", options,
+			     submodule_check_url_usage, 0);
+	if (argc)
+		usage_with_options(submodule_check_url_usage, options);
+
+	return check_submodule(check_submodule_url);
 }
 
 static int cmd__submodule_is_active(int argc, const char **argv)
@@ -183,6 +209,7 @@ static int cmd__submodule_config_writeable(int argc, const char **argv UNUSED)
 
 static struct test_cmd cmds[] = {
 	{ "check-name", cmd__submodule_check_name },
+	{ "check-url", cmd__submodule_check_url },
 	{ "is-active", cmd__submodule_is_active },
 	{ "resolve-relative-url", cmd__submodule_resolve_relative_url},
 	{ "config-list", cmd__submodule_config_list },
