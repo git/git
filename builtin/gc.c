@@ -1546,7 +1546,7 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 		char *user_config = NULL, *xdg_config = NULL;
 
 		if (!config_file) {
-			git_global_config(&user_config, &xdg_config);
+			git_global_config_paths(&user_config, &xdg_config);
 			config_file = user_config;
 			if (!user_config)
 				die(_("$HOME not set"));
@@ -1614,7 +1614,7 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 		int rc;
 		char *user_config = NULL, *xdg_config = NULL;
 		if (!config_file) {
-			git_global_config(&user_config, &xdg_config);
+			git_global_config_paths(&user_config, &xdg_config);
 			config_file = user_config;
 			if (!user_config)
 				die(_("$HOME not set"));
