@@ -441,6 +441,28 @@ test_expect_success 'index-pack with --strict' '
 	)
 '
 
+test_expect_success 'index-pack with --strict downgrading fsck msgs' '
+	test_when_finished rm -rf strict &&
+	git init strict &&
+	(
+		cd strict &&
+		test_commit first hello &&
+		cat >commit <<-EOF &&
+		tree $(git rev-parse HEAD^{tree})
+		parent $(git rev-parse HEAD)
+		author A U Thor
+		committer A U Thor
+
+		commit: this is a commit with bad emails
+
+		EOF
+		git hash-object --literally -t commit -w --stdin <commit >commit_list &&
+		PACK=$(git pack-objects test <commit_list) &&
+		test_must_fail git index-pack --strict "test-$PACK.pack" &&
+		git index-pack --strict="missingEmail=ignore" "test-$PACK.pack"
+	)
+'
+
 test_expect_success 'honor pack.packSizeLimit' '
 	git config pack.packSizeLimit 3m &&
 	packname_10=$(git pack-objects test-10 <obj-list) &&
