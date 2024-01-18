@@ -1987,6 +1987,26 @@ char *git_system_config(void)
 	return system_config;
 }
 
+char *git_global_config(void)
+{
+	char *user_config, *xdg_config;
+
+	git_global_config_paths(&user_config, &xdg_config);
+	if (!user_config) {
+		free(xdg_config);
+		return NULL;
+	}
+
+	if (access_or_warn(user_config, R_OK, 0) && xdg_config &&
+	    !access_or_warn(xdg_config, R_OK, 0)) {
+		free(user_config);
+		return xdg_config;
+	} else {
+		free(xdg_config);
+		return user_config;
+	}
+}
+
 void git_global_config_paths(char **user_out, char **xdg_out)
 {
 	char *user_config = xstrdup_or_null(getenv("GIT_CONFIG_GLOBAL"));
