@@ -14,8 +14,10 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-stack.h"
 
 struct reftable_stack {
-	struct stat_validity list_validity;
+	struct stat list_st;
 	char *list_file;
+	int list_fd;
+
 	char *reftable_dir;
 	int disable_auto_compact;
 

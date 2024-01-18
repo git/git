@@ -66,6 +66,7 @@ int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 	strbuf_addstr(&list_file_name, "/tables.list");
 
 	p->list_file = strbuf_detach(&list_file_name, NULL);
+	p->list_fd = -1;
 	p->reftable_dir = xstrdup(dir);
 	p->config = config;
 
@@ -175,7 +176,12 @@ void reftable_stack_destroy(struct reftable_stack *st)
 		st->readers_len = 0;
 		FREE_AND_NULL(st->readers);
 	}
-	stat_validity_clear(&st->list_validity);
+
+	if (st->list_fd >= 0) {
+		close(st->list_fd);
+		st->list_fd = -1;
+	}
+
 	FREE_AND_NULL(st->list_file);
 	FREE_AND_NULL(st->reftable_dir);
 	reftable_free(st);
@@ -375,11 +381,59 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 		sleep_millisec(delay);
 	}
 
-	stat_validity_update(&st->list_validity, fd);
-
 out:
-	if (err)
-		stat_validity_clear(&st->list_validity);
+	/*
+	 * Invalidate the stat cache. It is sufficient to only close the file
+	 * descriptor and keep the cached stat info because we never use the
+	 * latter when the former is negative.
+	 */
+	if (st->list_fd >= 0) {
+		close(st->list_fd);
+		st->list_fd = -1;
+	}
+
+	/*
+	 * Cache stat information in case it provides a useful signal to us.
+	 * According to POSIX, "The st_ino and st_dev fields taken together
+	 * uniquely identify the file within the system." That being said,
+	 * Windows is not POSIX compliant and we do not have these fields
+	 * available. So the information we have there is insufficient to
+	 * determine whether two file descriptors point to the same file.
+	 *
+	 * While we could fall back to using other signals like the file's
+	 * mtime, those are not sufficient to avoid races. We thus refrain from
+	 * using the stat cache on such systems and fall back to the secondary
+	 * caching mechanism, which is to check whether contents of the file
+	 * have changed.
+	 *
+	 * On other systems which are POSIX compliant we must keep the file
+	 * descriptor open. This is to avoid a race condition where two
+	 * processes access the reftable stack at the same point in time:
+	 *
+	 *   1. A reads the reftable stack and caches its stat info.
+	 *
+	 *   2. B updates the stack, appending a new table to "tables.list".
+	 *      This will both use a new inode and result in a different file
+	 *      size, thus invalidating A's cache in theory.
+	 *
+	 *   3. B decides to auto-compact the stack and merges two tables. The
+	 *      file size now matches what A has cached again. Furthermore, the
+	 *      filesystem may decide to recycle the inode number of the file
+	 *      we have replaced in (2) because it is not in use anymore.
+	 *
+	 *   4. A reloads the reftable stack. Neither the inode number nor the
+	 *      file size changed. If the timestamps did not change either then
+	 *      we think the cached copy of our stack is up-to-date.
+	 *
+	 * By keeping the file descriptor open the inode number cannot be
+	 * recycled, mitigating the race.
+	 */
+	if (!err && fd >= 0 && !fstat(fd, &st->list_st) &&
+	    st->list_st.st_dev && st->list_st.st_ino) {
+		st->list_fd = fd;
+		fd = -1;
+	}
+
 	if (fd >= 0)
 		close(fd);
 	free_names(names);
@@ -396,8 +450,39 @@ static int stack_uptodate(struct reftable_stack *st)
 	int err;
 	int i = 0;
 
-	if (stat_validity_check(&st->list_validity, st->list_file))
-		return 0;
+	/*
+	 * When we have cached stat information available then we use it to
+	 * verify whether the file has been rewritten.
+	 *
+	 * Note that we explicitly do not want to use `stat_validity_check()`
+	 * and friends here because they may end up not comparing the `st_dev`
+	 * and `st_ino` fields. These functions thus cannot guarantee that we
+	 * indeed still have the same file.
+	 */
+	if (st->list_fd >= 0) {
+		struct stat list_st;
+
+		if (stat(st->list_file, &list_st) < 0) {
+			/*
+			 * It's fine for "tables.list" to not exist. In that
+			 * case, we have to refresh when the loaded stack has
+			 * any readers.
+			 */
+			if (errno == ENOENT)
+				return !!st->readers_len;
+			return REFTABLE_IO_ERROR;
+		}
+
+		/*
+		 * When "tables.list" refers to the same file we can assume
+		 * that it didn't change. This is because we always use
+		 * rename(3P) to update the file and never write to it
+		 * directly.
+		 */
+		if (st->list_st.st_dev == list_st.st_dev &&
+		    st->list_st.st_ino == list_st.st_ino)
+			return 0;
+	}
 
 	err = read_lines(st->list_file, &names);
 	if (err < 0)
