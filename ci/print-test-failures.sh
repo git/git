@@ -8,7 +8,7 @@
 # Tracing executed commands would produce too much noise in the loop below.
 set +x
 
-cd t/
+cd "${TEST_OUTPUT_DIRECTORY:-t/}"
 
 if ! ls test-results/*.exit >/dev/null 2>/dev/null
 then
