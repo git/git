@@ -15,7 +15,7 @@
 #include "thread-utils.h"
 #include "tree-walk.h"
 #include "url.h"
-#include "credential.h"
+#include "urlmatch.h"
 
 /*
  * submodule cache lookup structure
@@ -350,12 +350,18 @@ int check_submodule_url(const char *url)
 	}
 
 	else if (url_to_curl_url(url, &curl_url)) {
-		struct credential c = CREDENTIAL_INIT;
 		int ret = 0;
-		if (credential_from_url_gently(&c, curl_url, 1) ||
-		    !*c.host)
+		char *normalized = url_normalize(curl_url, NULL);
+		if (normalized) {
+			char *decoded = url_decode(normalized);
+			if (strchr(decoded, '\n'))
+				ret = -1;
+			free(normalized);
+			free(decoded);
+		} else {
 			ret = -1;
-		credential_clear(&c);
+		}
+
 		return ret;
 	}
 

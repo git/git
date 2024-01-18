@@ -63,21 +63,12 @@ test_expect_success 'check urls' '
 	./%0ahost=example.com/foo.git
 	https://one.example.com/evil?%0ahost=two.example.com
 	https:///example.com/foo.git
+	http://example.com:test/foo.git
 	https::example.com/foo.git
 	http:::example.com/foo.git
 	EOF
 
 	test_cmp expect actual
-'
-
-# NEEDSWORK: the URL checked here is not valid (and will not work as a remote if
-# a user attempts to clone it), but the fsck check passes.
-test_expect_failure 'url check misses invalid cases' '
-	test-tool submodule check-url >actual <<-\EOF &&
-	http://example.com:test/foo.git
-	EOF
-
-	test_must_be_empty actual
 '
 
 test_expect_success 'create innocent subrepo' '
