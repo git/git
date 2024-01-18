@@ -978,7 +978,7 @@ test_expect_success !UNICODE_COMPOSITION_SENSITIVE 'Unicode nfc/nfd' '
 	mkdir test_unicode/nfd &&
 	mkdir test_unicode/nfd/d_${utf8_nfd} &&
 
-	git -C test_unicode fsmonitor--daemon stop &&
+	test-tool -C test_unicode fsmonitor-client query --token 0 &&
 
 	if test_have_prereq UNICODE_NFC_PRESERVED
 	then
