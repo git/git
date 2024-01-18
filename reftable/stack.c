@@ -585,7 +585,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 	add->new_tables = NULL;
 	add->new_tables_len = 0;
 
-	err = reftable_stack_reload(add->stack);
+	err = reftable_stack_reload_maybe_reuse(add->stack, 1);
 	if (err)
 		goto done;
 
