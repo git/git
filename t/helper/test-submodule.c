@@ -8,7 +8,7 @@
 #include "submodule.h"
 
 #define TEST_TOOL_CHECK_NAME_USAGE \
-	"test-tool submodule check-name <name>"
+	"test-tool submodule check-name"
 static const char *submodule_check_name_usage[] = {
 	TEST_TOOL_CHECK_NAME_USAGE,
 	NULL
@@ -35,26 +35,15 @@ static const char *submodule_usage[] = {
 	NULL
 };
 
-/*
- * Exit non-zero if any of the submodule names given on the command line is
- * invalid. If no names are given, filter stdin to print only valid names
- * (which is primarily intended for testing).
- */
-static int check_name(int argc, const char **argv)
+/* Filter stdin to print only valid names. */
+static int check_name(void)
 {
-	if (argc > 1) {
-		while (*++argv) {
-			if (check_submodule_name(*argv) < 0)
-				return 1;
-		}
-	} else {
-		struct strbuf buf = STRBUF_INIT;
-		while (strbuf_getline(&buf, stdin) != EOF) {
-			if (!check_submodule_name(buf.buf))
-				printf("%s\n", buf.buf);
-		}
-		strbuf_release(&buf);
+	struct strbuf buf = STRBUF_INIT;
+	while (strbuf_getline(&buf, stdin) != EOF) {
+		if (!check_submodule_name(buf.buf))
+			printf("%s\n", buf.buf);
 	}
+	strbuf_release(&buf);
 	return 0;
 }
 
@@ -68,7 +57,7 @@ static int cmd__submodule_check_name(int argc, const char **argv)
 	if (argc)
 		usage_with_options(submodule_check_name_usage, options);
 
-	return check_name(argc, argv);
+	return check_name();
 }
 
 static int cmd__submodule_is_active(int argc, const char **argv)
