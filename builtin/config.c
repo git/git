@@ -760,7 +760,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		given_config_source.scope = CONFIG_SCOPE_COMMAND;
 	}
 
-
 	if (respect_includes_opt == -1)
 		config_options.respect_includes = !given_config_source.file;
 	else
