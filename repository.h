@@ -68,7 +68,6 @@ struct repo_path_cache {
 	char *merge_mode;
 	char *merge_head;
 	char *merge_autostash;
-	char *auto_merge;
 	char *fetch_head;
 	char *shallow;
 };

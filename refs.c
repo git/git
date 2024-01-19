@@ -1874,7 +1874,6 @@ static int is_special_ref(const char *refname)
 	 * (normal ones).
 	 */
 	static const char * const special_refs[] = {
-		"AUTO_MERGE",
 		"FETCH_HEAD",
 		"MERGE_AUTOSTASH",
 		"MERGE_HEAD",

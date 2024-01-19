@@ -38,6 +38,7 @@
 #include "path.h"
 #include "promisor-remote.h"
 #include "read-cache-ll.h"
+#include "refs.h"
 #include "revision.h"
 #include "sparse-index.h"
 #include "strmap.h"
@@ -4659,9 +4660,6 @@ void merge_switch_to_result(struct merge_options *opt,
 {
 	assert(opt->priv == NULL);
 	if (result->clean >= 0 && update_worktree_and_index) {
-		const char *filename;
-		FILE *fp;
-
 		trace2_region_enter("merge", "checkout", opt->repo);
 		if (checkout(opt, head, result->tree)) {
 			/* failure to function */
@@ -4687,10 +4685,17 @@ void merge_switch_to_result(struct merge_options *opt,
 		trace2_region_leave("merge", "record_conflicted", opt->repo);
 
 		trace2_region_enter("merge", "write_auto_merge", opt->repo);
-		filename = git_path_auto_merge(opt->repo);
-		fp = xfopen(filename, "w");
-		fprintf(fp, "%s\n", oid_to_hex(&result->tree->object.oid));
-		fclose(fp);
+		if (refs_update_ref(get_main_ref_store(opt->repo), "", "AUTO_MERGE",
+				    &result->tree->object.oid, NULL, REF_NO_DEREF,
+				    UPDATE_REFS_MSG_ON_ERR)) {
+			/* failure to function */
+			opt->priv = NULL;
+			result->clean = -1;
+			merge_finalize(opt, result);
+			trace2_region_leave("merge", "write_auto_merge",
+					    opt->repo);
+			return;
+		}
 		trace2_region_leave("merge", "write_auto_merge", opt->repo);
 	}
 	if (display_update_msgs)
