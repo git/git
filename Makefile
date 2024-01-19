@@ -749,6 +749,7 @@ SCRIPTS = $(SCRIPT_SH_GEN) \
 
 ETAGS_TARGET = TAGS
 
+FUZZ_OBJS += oss-fuzz/dummy-cmd-main.o
 FUZZ_OBJS += oss-fuzz/fuzz-commit-graph.o
 FUZZ_OBJS += oss-fuzz/fuzz-pack-headers.o
 FUZZ_OBJS += oss-fuzz/fuzz-pack-idx.o
@@ -758,7 +759,7 @@ fuzz-objs: $(FUZZ_OBJS)
 # Always build fuzz objects even if not testing, to prevent bit-rot.
 all:: $(FUZZ_OBJS)
 
-FUZZ_PROGRAMS += $(patsubst %.o,%,$(FUZZ_OBJS))
+FUZZ_PROGRAMS += $(patsubst %.o,%,$(filter-out %dummy-cmd-main.o,$(FUZZ_OBJS)))
 
 # Empty...
 EXTRA_PROGRAMS =
@@ -3838,15 +3839,16 @@ cover_db_html: cover_db
 #
 # make CC=clang CXX=clang++ \
 #      CFLAGS="-fsanitize=fuzzer-no-link,address" \
-#      LIB_FUZZING_ENGINE="-fsanitize=fuzzer" \
+#      LIB_FUZZING_ENGINE="-fsanitize=fuzzer,address" \
 #      fuzz-all
 #
-FUZZ_CXXFLAGS ?= $(CFLAGS)
+FUZZ_CXXFLAGS ?= $(ALL_CFLAGS)
 
 .PHONY: fuzz-all
 
-$(FUZZ_PROGRAMS): all
-	$(QUIET_LINK)$(CXX) $(FUZZ_CXXFLAGS) $(LIB_OBJS) $(BUILTIN_OBJS) \
-		$(XDIFF_OBJS) $(EXTLIBS) git.o $@.o $(LIB_FUZZING_ENGINE) -o $@
+$(FUZZ_PROGRAMS): %: %.o oss-fuzz/dummy-cmd-main.o $(GITLIBS) GIT-LDFLAGS
+	$(QUIET_LINK)$(CXX) $(FUZZ_CXXFLAGS) -o $@ $(ALL_LDFLAGS) \
+		-Wl,--allow-multiple-definition \
+		$(filter %.o,$^) $(filter %.a,$^) $(LIBS) $(LIB_FUZZING_ENGINE)
 
 fuzz-all: $(FUZZ_PROGRAMS)
