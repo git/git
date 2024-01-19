@@ -4767,7 +4767,8 @@ static int pick_commits(struct repository *r,
 			unlink(rebase_path_author_script());
 			unlink(git_path_merge_head(r));
 			unlink(git_path_auto_merge(r));
-			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
+			refs_delete_ref(get_main_ref_store(r), "", "REBASE_HEAD",
+					NULL, REF_NO_DEREF);
 
 			if (item->command == TODO_BREAK) {
 				if (!opts->verbose)
