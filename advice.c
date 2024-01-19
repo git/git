@@ -79,6 +79,7 @@ static struct {
 	[ADVICE_STATUS_U_OPTION]			= { "statusUoption" },
 	[ADVICE_SUBMODULES_NOT_UPDATED] 		= { "submodulesNotUpdated" },
 	[ADVICE_SUBMODULE_ALTERNATE_ERROR_STRATEGY_DIE] = { "submoduleAlternateErrorStrategyDie" },
+	[ADVICE_SUBMODULE_MERGE_CONFLICT]               = { "submoduleMergeConflict" },
 	[ADVICE_SUGGEST_DETACHING_HEAD]			= { "suggestDetachingHead" },
 	[ADVICE_UPDATE_SPARSE_PATH]			= { "updateSparsePath" },
 	[ADVICE_WAITING_FOR_EDITOR]			= { "waitingForEditor" },

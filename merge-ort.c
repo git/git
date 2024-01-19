@@ -18,6 +18,7 @@
 #include "merge-ort.h"
 
 #include "alloc.h"
+#include "advice.h"
 #include "attr.h"
 #include "cache-tree.h"
 #include "commit.h"
@@ -4556,7 +4557,7 @@ static void print_submodule_conflict_suggestion(struct string_list *csub) {
 		      " - commit the resulting index in the superproject\n"),
 		    tmp.buf, subs.buf);
 
-	printf("%s", msg.buf);
+	advise_if_enabled(ADVICE_SUBMODULE_MERGE_CONFLICT, "%s", msg.buf);
 
 	strbuf_release(&subs);
 	strbuf_release(&tmp);
