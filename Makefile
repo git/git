@@ -749,6 +749,9 @@ SCRIPTS = $(SCRIPT_SH_GEN) \
 
 ETAGS_TARGET = TAGS
 
+# If you add a new fuzzer, please also make sure to run it in
+# ci/run-build-and-minimal-fuzzers.sh so that we make sure it still links and
+# runs in the future.
 FUZZ_OBJS += oss-fuzz/dummy-cmd-main.o
 FUZZ_OBJS += oss-fuzz/fuzz-commit-graph.o
 FUZZ_OBJS += oss-fuzz/fuzz-pack-headers.o

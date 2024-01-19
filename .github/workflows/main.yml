@@ -309,6 +309,17 @@ jobs:
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
+  fuzz-smoke-test:
+    name: fuzz smoke test
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    env:
+      CC: clang
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: ci/install-dependencies.sh
+    - run: ci/run-build-and-minimal-fuzzers.sh
   dockerized:
     name: ${{matrix.vector.jobname}} (${{matrix.vector.image}})
     needs: ci-config
