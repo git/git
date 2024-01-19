@@ -38,6 +38,14 @@ UI, Workflows & Features
    useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
    to limit to executables.
 
+ * "git fetch" learned to pay attention to "fetch.all" configuration
+   variable, which pretends as if "--all" was passed from the command
+   line when no remote parameter was given.
+
+ * In addition to (rather cryptic) Security Identifiers, show username
+   and domain in the error message when we barf on mismatch between
+   the Git directory and the current user on Windows.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -204,3 +212,5 @@ Fixes since v2.43
    (merge 03bcc93769 cp/sideband-array-index-comment-fix later to maint).
    (merge 993d38a066 jk/index-pack-lsan-false-positive-fix later to maint).
    (merge 25aec06326 ib/rebase-reschedule-doc later to maint).
+   (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
+   (merge 9cce3be2df bk/bisect-doc-fix later to maint).
