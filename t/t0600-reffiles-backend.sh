@@ -364,4 +364,21 @@ test_expect_success SYMLINKS 'ref resolution not confused by broken symlinks' '
        test_must_fail git rev-parse --verify broken
 '
 
+test_expect_success 'log diagnoses bogus HEAD hash' '
+	git init empty &&
+	test_when_finished "rm -rf empty" &&
+	echo 1234abcd >empty/.git/refs/heads/main &&
+	test_must_fail git -C empty log 2>stderr &&
+	test_grep broken stderr
+'
+
+test_expect_success 'log diagnoses bogus HEAD symref' '
+	git init empty &&
+	test-tool -C empty ref-store main create-symref HEAD refs/heads/invalid.lock &&
+	test_must_fail git -C empty log 2>stderr &&
+	test_grep broken stderr &&
+	test_must_fail git -C empty log --default totally-bogus 2>stderr &&
+	test_grep broken stderr
+'
+
 test_done
