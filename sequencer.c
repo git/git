@@ -4463,11 +4463,16 @@ static enum todo_command peek_command(struct todo_list *todo_list, int offset)
 	return -1;
 }
 
-void create_autostash(struct repository *r, const char *path)
+static void create_autostash_internal(struct repository *r,
+				      const char *path,
+				      const char *refname)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct lock_file lock_file = LOCK_INIT;
 	int fd;
+
+	if (path && refname)
+		BUG("can only pass path or refname");
 
 	fd = repo_hold_locked_index(r, &lock_file, 0);
 	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
@@ -4495,10 +4500,16 @@ void create_autostash(struct repository *r, const char *path)
 		strbuf_reset(&buf);
 		strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
 
-		if (safe_create_leading_directories_const(path))
-			die(_("Could not create directory for '%s'"),
-			    path);
-		write_file(path, "%s", oid_to_hex(&oid));
+		if (path) {
+			if (safe_create_leading_directories_const(path))
+				die(_("Could not create directory for '%s'"),
+				    path);
+			write_file(path, "%s", oid_to_hex(&oid));
+		} else {
+			refs_update_ref(get_main_ref_store(r), "", refname,
+					&oid, null_oid(), 0, UPDATE_REFS_DIE_ON_ERR);
+		}
+
 		printf(_("Created autostash: %s\n"), buf.buf);
 		if (reset_head(r, &ropts) < 0)
 			die(_("could not reset --hard"));
@@ -4507,6 +4518,16 @@ void create_autostash(struct repository *r, const char *path)
 			die(_("could not read index"));
 	}
 	strbuf_release(&buf);
+}
+
+void create_autostash(struct repository *r, const char *path)
+{
+	create_autostash_internal(r, path, NULL);
+}
+
+void create_autostash_ref(struct repository *r, const char *refname)
+{
+	create_autostash_internal(r, NULL, refname);
 }
 
 static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
@@ -4584,6 +4605,41 @@ int apply_autostash(const char *path)
 int apply_autostash_oid(const char *stash_oid)
 {
 	return apply_save_autostash_oid(stash_oid, 1);
+}
+
+static int apply_save_autostash_ref(struct repository *r, const char *refname,
+				    int attempt_apply)
+{
+	struct object_id stash_oid;
+	char stash_oid_hex[GIT_MAX_HEXSZ + 1];
+	int flag, ret;
+
+	if (!refs_ref_exists(get_main_ref_store(r), refname))
+		return 0;
+
+	if (!refs_resolve_ref_unsafe(get_main_ref_store(r), refname,
+				     RESOLVE_REF_READING, &stash_oid, &flag))
+		return -1;
+	if (flag & REF_ISSYMREF)
+		return error(_("autostash reference is a symref"));
+
+	oid_to_hex_r(stash_oid_hex, &stash_oid);
+	ret = apply_save_autostash_oid(stash_oid_hex, attempt_apply);
+
+	refs_delete_ref(get_main_ref_store(r), "", refname,
+			&stash_oid, REF_NO_DEREF);
+
+	return ret;
+}
+
+int save_autostash_ref(struct repository *r, const char *refname)
+{
+	return apply_save_autostash_ref(r, refname, 0);
+}
+
+int apply_autostash_ref(struct repository *r, const char *refname)
+{
+	return apply_save_autostash_ref(r, refname, 1);
 }
 
 static int checkout_onto(struct repository *r, struct replay_opts *opts,
