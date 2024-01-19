@@ -359,4 +359,9 @@ test_expect_success 'empty reflog' '
 	test_must_be_empty err
 '
 
+test_expect_success SYMLINKS 'ref resolution not confused by broken symlinks' '
+       ln -s does-not-exist .git/refs/heads/broken &&
+       test_must_fail git rev-parse --verify broken
+'
+
 test_done
