@@ -819,7 +819,7 @@ void remove_merge_branch_state(struct repository *r)
 	unlink(git_path_merge_mode(r));
 	refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
 			NULL, REF_NO_DEREF);
-	save_autostash(git_path_merge_autostash(r));
+	save_autostash_ref(r, "MERGE_AUTOSTASH");
 }
 
 void remove_branch_state(struct repository *r, int verbose)

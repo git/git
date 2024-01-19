@@ -1875,7 +1875,6 @@ static int is_special_ref(const char *refname)
 	 */
 	static const char * const special_refs[] = {
 		"FETCH_HEAD",
-		"MERGE_AUTOSTASH",
 		"MERGE_HEAD",
 	};
 	size_t i;

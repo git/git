@@ -1877,7 +1877,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 				     &oid, flags);
 	}
 
-	apply_autostash(git_path_merge_autostash(the_repository));
+	apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 
 cleanup:
 	strbuf_release(&author_ident);
