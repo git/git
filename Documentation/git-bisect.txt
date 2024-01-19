@@ -17,7 +17,7 @@ The command takes various subcommands, and different options depending
 on the subcommand:
 
  git bisect start [--term-(new|bad)=<term-new> --term-(old|good)=<term-old>]
-		  [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]
+		  [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
  git bisect (bad|new|<term-new>) [<rev>]
  git bisect (good|old|<term-old>) [<rev>...]
  git bisect terms [--term-good | --term-bad]
@@ -299,7 +299,7 @@ Cutting down bisection by giving more parameters to bisect start
 
 You can further cut down the number of trials, if you know what part of
 the tree is involved in the problem you are tracking down, by specifying
-path parameters when issuing the `bisect start` command:
+pathspec parameters when issuing the `bisect start` command:
 
 ------------
 $ git bisect start -- arch/i386 include/asm-i386
