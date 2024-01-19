@@ -308,4 +308,55 @@ test_expect_success 'for_each_reflog()' '
 	test_cmp expected actual
 '
 
+# Triggering the bug detected by this test requires a newline to fall
+# exactly BUFSIZ-1 bytes from the end of the file. We don't know
+# what that value is, since it's platform dependent. However, if
+# we choose some value N, we also catch any D which divides N evenly
+# (since we will read backwards in chunks of D). So we choose 8K,
+# which catches glibc (with an 8K BUFSIZ) and *BSD (1K).
+#
+# Each line is 114 characters, so we need 75 to still have a few before the
+# last 8K. The 89-character padding on the final entry lines up our
+# newline exactly.
+test_expect_success SHA1 'parsing reverse reflogs at BUFSIZ boundaries' '
+	git checkout -b reflogskip &&
+	zf=$(test_oid zero_2) &&
+	ident="abc <xyz> 0000000001 +0000" &&
+	for i in $(test_seq 1 75); do
+		printf "$zf%02d $zf%02d %s\t" $i $(($i+1)) "$ident" &&
+		if test $i = 75; then
+			for j in $(test_seq 1 89); do
+				printf X || return 1
+			done
+		else
+			printf X
+		fi &&
+		printf "\n" || return 1
+	done >.git/logs/refs/heads/reflogskip &&
+	git rev-parse reflogskip@{73} >actual &&
+	echo ${zf}03 >expect &&
+	test_cmp expect actual
+'
+
+# This test takes a lock on an individual ref; this is not supported in
+# reftable.
+test_expect_success 'reflog expire operates on symref not referrent' '
+	git branch --create-reflog the_symref &&
+	git branch --create-reflog referrent &&
+	git update-ref referrent HEAD &&
+	git symbolic-ref refs/heads/the_symref refs/heads/referrent &&
+	test_when_finished "rm -f .git/refs/heads/referrent.lock" &&
+	touch .git/refs/heads/referrent.lock &&
+	git reflog expire --expire=all the_symref
+'
+
+test_expect_success 'empty reflog' '
+	test_when_finished "rm -rf empty" &&
+	git init empty &&
+	test_commit -C empty A &&
+	>empty/.git/logs/refs/heads/foo &&
+	git -C empty reflog expire --all 2>err &&
+	test_must_be_empty err
+'
+
 test_done
