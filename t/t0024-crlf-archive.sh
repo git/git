@@ -9,7 +9,7 @@ test_expect_success setup '
 
 	git config core.autocrlf true &&
 
-	printf "CRLF line ending\r\nAnd another\r\n" > sample &&
+	printf "CRLF line ending\r\nAnd another\r\n" >sample &&
 	git add sample &&
 
 	test_tick &&
@@ -19,8 +19,8 @@ test_expect_success setup '
 
 test_expect_success 'tar archive' '
 
-	git archive --format=tar HEAD |
-	( mkdir untarred && cd untarred && "$TAR" -xf - ) &&
+	git archive --format=tar HEAD >test.tar &&
+	( mkdir untarred && cd untarred && "$TAR" -xf ../test.tar ) &&
 
 	test_cmp sample untarred/sample
 
