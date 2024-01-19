@@ -474,7 +474,7 @@ static void print_advice(struct repository *r, int show_hint,
 		 * of the commit itself so remove CHERRY_PICK_HEAD
 		 */
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
-				NULL, 0);
+				NULL, REF_NO_DEREF);
 		return;
 	}
 
@@ -1667,7 +1667,7 @@ static int do_commit(struct repository *r,
 		strbuf_release(&sb);
 		if (!res) {
 			refs_delete_ref(get_main_ref_store(r), "",
-					"CHERRY_PICK_HEAD", NULL, 0);
+					"CHERRY_PICK_HEAD", NULL, REF_NO_DEREF);
 			unlink(git_path_merge_msg(r));
 			if (!is_rebase_i(opts))
 				print_commit_summary(r, NULL, &oid,
@@ -2406,7 +2406,7 @@ static int do_pick_commit(struct repository *r,
 	} else if (allow == 2) {
 		drop_commit = 1;
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
-				NULL, 0);
+				NULL, REF_NO_DEREF);
 		unlink(git_path_merge_msg(r));
 		unlink(git_path_auto_merge(r));
 		fprintf(stderr,
@@ -2802,7 +2802,7 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 
 	if (refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD")) {
 		if (!refs_delete_ref(get_main_ref_store(r), "",
-				     "CHERRY_PICK_HEAD", NULL, 0) &&
+				     "CHERRY_PICK_HEAD", NULL, REF_NO_DEREF) &&
 		    verbose)
 			warning(_("cancelling a cherry picking in progress"));
 		opts.action = REPLAY_PICK;
@@ -2811,7 +2811,7 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 
 	if (refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD")) {
 		if (!refs_delete_ref(get_main_ref_store(r), "", "REVERT_HEAD",
-				     NULL, 0) &&
+				     NULL, REF_NO_DEREF) &&
 		    verbose)
 			warning(_("cancelling a revert in progress"));
 		opts.action = REPLAY_REVERT;
@@ -4116,7 +4116,7 @@ static int do_merge(struct repository *r,
 
 		strbuf_release(&ref_name);
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
-				NULL, 0);
+				NULL, REF_NO_DEREF);
 		rollback_lock_file(&lock);
 
 		ret = run_command(&cmd);
@@ -5108,7 +5108,7 @@ static int commit_staged_changes(struct repository *r,
 		if (refs_ref_exists(get_main_ref_store(r),
 				    "CHERRY_PICK_HEAD") &&
 		    refs_delete_ref(get_main_ref_store(r), "",
-				    "CHERRY_PICK_HEAD", NULL, 0))
+				    "CHERRY_PICK_HEAD", NULL, REF_NO_DEREF))
 			return error(_("could not remove CHERRY_PICK_HEAD"));
 		if (unlink(git_path_merge_msg(r)) && errno != ENOENT)
 			return error_errno(_("could not remove '%s'"),
