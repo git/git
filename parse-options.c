@@ -358,6 +358,7 @@ static enum parse_opt_result parse_long_opt(
 	const char *arg_end = strchrnul(arg, '=');
 	const struct option *abbrev_option = NULL, *ambiguous_option = NULL;
 	enum opt_parsed abbrev_flags = OPT_LONG, ambiguous_flags = OPT_LONG;
+	int allow_abbrev = !(p->flags & PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	for (; options->type != OPTION_END; options++) {
 		const char *rest, *long_name = options->long_name;
@@ -373,7 +374,7 @@ again:
 			rest = NULL;
 		if (!rest) {
 			/* abbreviated? */
-			if (!(p->flags & PARSE_OPT_KEEP_UNKNOWN_OPT) &&
+			if (allow_abbrev &&
 			    !strncmp(long_name, arg, arg_end - arg)) {
 is_abbreviated:
 				if (abbrev_option &&
@@ -397,7 +398,7 @@ is_abbreviated:
 			if (options->flags & PARSE_OPT_NONEG)
 				continue;
 			/* negated and abbreviated very much? */
-			if (starts_with("no-", arg)) {
+			if (allow_abbrev && starts_with("no-", arg)) {
 				flags |= OPT_UNSET;
 				goto is_abbreviated;
 			}
@@ -412,7 +413,8 @@ is_abbreviated:
 			flags |= OPT_UNSET;
 			if (!skip_prefix(arg + 3, long_name, &rest)) {
 				/* abbreviated and negated? */
-				if (starts_with(long_name, arg + 3))
+				if (allow_abbrev &&
+				    starts_with(long_name, arg + 3))
 					goto is_abbreviated;
 				else
 					continue;
