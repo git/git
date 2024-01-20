@@ -137,7 +137,8 @@ advice.*::
 		is asked to update index entries outside the current sparse
 		checkout.
 	diverging::
-		Advice shown when a fast-forward is not possible.
+		Advice shown when a fast-forward is not possible during merge
+		or pull operation.
 	worktreeAddOrphan::
 		Advice shown when a user tries to create a worktree from an
 		invalid reference, to instruct how to create a new unborn

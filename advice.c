@@ -220,18 +220,37 @@ void NORETURN die_conclude_merge(void)
 	die(_("Exiting because of unfinished merge."));
 }
 
-void NORETURN die_ff_impossible(void)
+void NORETURN die_ff_impossible_during_merge(void)
 {
 	advise_if_enabled(ADVICE_DIVERGING,
-		_("Diverging branches can't be fast-forwarded, you need to either:\n"
+		_("Diverging branches can't be fast-forwarded.\n"
+		"Consider the following options:\n"
 		"\n"
+		"To merge changes into your branch:\n"
 		"\tgit merge --no-ff\n"
 		"\n"
-		"or:\n"
-		"\n"
+		"To apply your changes on top:\n"
 		"\tgit rebase\n"));
 	die(_("Not possible to fast-forward, aborting."));
 }
+
+void NORETURN die_ff_impossible_during_pull(const char *upstream_branch_spec)
+{
+	advise_if_enabled(ADVICE_DIVERGING,
+			  _("Diverging branches can't be fast-forwarded. "
+			    "Consider the following options:\n"
+			    "\n"
+			    "To merge remote changes into your branch:\n"
+			    "\tgit merge --no-ff\n"
+			    "\n"
+			    "To apply your changes on top of remote changes:\n"
+			    "\tgit rebase\n"
+			    "\n"
+			    "To discard your local changes and apply the remote changes:\n"
+			    "\tgit reset --hard %s\n"), upstream_branch_spec);
+	die(_("Not possible to fast-forward, aborting."));
+}
+
 
 void advise_on_updating_sparse_paths(struct string_list *pathspec_list)
 {
