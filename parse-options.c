@@ -369,7 +369,11 @@ static enum parse_opt_result parse_long_opt(
 		if (!long_name)
 			continue;
 
-again:
+		if (!starts_with(arg, "no-") &&
+		    !(options->flags & PARSE_OPT_NONEG) &&
+		    skip_prefix(long_name, "no-", &long_name))
+			opt_flags |= OPT_UNSET;
+
 		if (!skip_prefix(arg, long_name, &rest))
 			rest = NULL;
 		if (!rest) {
@@ -403,13 +407,8 @@ is_abbreviated:
 				goto is_abbreviated;
 			}
 			/* negated? */
-			if (!starts_with(arg, "no-")) {
-				if (skip_prefix(long_name, "no-", &long_name)) {
-					opt_flags |= OPT_UNSET;
-					goto again;
-				}
+			if (!starts_with(arg, "no-"))
 				continue;
-			}
 			flags |= OPT_UNSET;
 			if (!skip_prefix(arg + 3, long_name, &rest)) {
 				/* abbreviated and negated? */
