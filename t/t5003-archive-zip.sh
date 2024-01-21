@@ -268,7 +268,7 @@ test_expect_success 'remote archive does not work with protocol v1' '
 '
 
 test_expect_success 'archive remote http repository' '
-	test_must_fail git archive --remote="$HTTPD_URL/auth/smart/bare.git" \
+	git archive --remote="$HTTPD_URL/auth/smart/bare.git" \
 		--output=remote-http.zip HEAD &&
 	test_cmp_bin d.zip remote-http.zip
 '
