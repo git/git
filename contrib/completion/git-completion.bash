@@ -2180,6 +2180,8 @@ _git_log ()
 			--no-walk --no-walk= --do-walk
 			--parents --children
 			--expand-tabs --expand-tabs= --no-expand-tabs
+			--clear-decorations --decorate-refs=
+			--decorate-refs-exclude=
 			$merge
 			$__git_diff_common_options
 			"
