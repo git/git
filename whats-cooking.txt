@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2024, #06; Fri, 19)
+Subject: What's cooking in git.git (Jan 2024, #07; Tue, 23)
 X-master-at: e02ecfcc534e2021aae29077a958dd11c3897e4c
-X-next-at: 4ca1e1f3c373c10320a345031bbeadd1413955dc
+X-next-at: 5fa4633015b7717427c4e333557e072f1a2b5e69
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2024, #06; Fri, 19)
+What's cooking in git.git (Jan 2024, #07; Tue, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,80 +46,78 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* bk/bisect-doc-fix (2024-01-10) 2 commits
-  (merged to 'next' on 2024-01-12 at bdb3609554)
- + doc: refer to pathspec instead of path
- + doc: use singular form of repeatable path arg
+* al/t2400-depipe (2024-01-20) 1 commit
+  (merged to 'next' on 2024-01-22 at a20d4a9a7f)
+ + t2400: avoid losing exit status to pipes
 
- Synopsis fix.
- source: <20240103040207.661413-1-britton.kerin@gmail.com>
+ Coding style fix.
 
-
-* cp/t4129-pipefix (2024-01-10) 1 commit
-  (merged to 'next' on 2024-01-12 at fd9b72b71a)
- + t4129: prevent loss of exit code due to the use of pipes
-
- Test update.
- source: <pull.1636.git.1704891257544.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <20240120021547.199-1-ach.lumap@gmail.com>
 
 
-* ps/gitlab-ci-static-analysis (2024-01-08) 1 commit
-  (merged to 'next' on 2024-01-10 at 71af34de07)
- + ci: add job performing static analysis on GitLab CI
- (this branch is used by ps/gitlab-ci-macos.)
+* kl/allow-working-in-dot-git-in-non-bare-repository (2024-01-20) 1 commit
+ - setup: allow cwd=.git w/ bareRepository=explicit
 
- GitLab CI update.
- source: <1536a5ef07ad24dafb5d685b40099882f89e6cc5.1703761005.git.ps@pks.im>
+ Loosen "disable repository discovery of a bare repository" check,
+ triggered by setting safe.bareRepository configuration variable to
+ 'explicit', to exclude the ".git/" directory inside a non-bare
+ repository from the check.
 
-
-* ps/p4-use-ref-api (2024-01-11) 1 commit
-  (merged to 'next' on 2024-01-12 at 3f89cf25f6)
- + git-p4: stop reaching into the refdb
-
- "git p4" update to prepare for reftable
- source: <33d6a062ec56be33ed50a42a420be0b023f6f4cf.1704980814.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <pull.1645.git.1705709303098.gitgitgadget@gmail.com>
 
 
-* ps/prompt-parse-HEAD-futureproof (2024-01-08) 2 commits
-  (merged to 'next' on 2024-01-10 at f9515b9d89)
- + git-prompt: stop manually parsing HEAD with unknown ref formats
- + Merge branch 'ps/refstorage-extension' into ps/prompt-parse-HEAD-futureproof
+* rs/parse-options-with-keep-unknown-abbrev-fix (2024-01-22) 2 commits
+  (merged to 'next' on 2024-01-23 at a216b482cd)
+ + parse-options: simplify positivation handling
+ + parse-options: fully disable option abbreviation with PARSE_OPT_KEEP_UNKNOWN
 
- Futureproof command line prompt support (in contrib/).
- source: <ef4e36a5a40c369da138242a8fdc9e12a846613b.1704356313.git.ps@pks.im>
+ "git diff --no-rename A B" did not disable rename detection but did
+ not trigger an error from the command line parser.
 
-
-* rj/clarify-branch-doc-m (2024-01-08) 1 commit
-  (merged to 'next' on 2024-01-10 at 432eaa2c6b)
- + branch: clarify <oldbranch> term
-
- Doc update.
- source: <d38e5a18-4d85-48f3-bc8b-8ca02ea683a4@gmail.com>
+ Will merge to 'master'.
+ source: <579fd5bc-3bfd-427f-b22d-dab5e7e56eb2@web.de>
+ source: <fb3c679a-5f00-4934-b028-6b2d081cd5b2@web.de>
 
 
-* sk/mingw-owner-check-error-message-improvement (2024-01-10) 1 commit
-  (merged to 'next' on 2024-01-12 at 05c56e151b)
- + mingw: give more details about unsafe directory's ownership
+* pb/ci-github-skip-logs-for-broken-tests (2024-01-22) 1 commit
+  (merged to 'next' on 2024-01-23 at f5e3ab2092)
+ + ci(github): also skip logs of broken test cases
 
- In addition to (rather cryptic) Security Identifiers, show username
- and domain in the error message when we barf on mismatch between
- the Git directory and the current user on Windows.
- source: <20240108173837.20480-2-soekkle@freenet.de>
+ GitHub CI update.
+
+ Will merge to 'master'.
+ cf. <dbe25fff-e1d4-41f2-8f8f-c538e8c2a77e@github.com>
+ source: <pull.1649.git.git.1705808313306.gitgitgadget@gmail.com>
 
 
-* tb/fetch-all-configuration (2024-01-08) 1 commit
-  (merged to 'next' on 2024-01-12 at 6a05050382)
- + fetch: add new config option fetch.all
+* pb/complete-log-more (2024-01-22) 4 commits
+ - completion: complete missing 'git log' options
+ - completion: complete --encoding
+ - completion: complete --patch-with-raw
+ - completion: complete missing rev-list options
 
- "git fetch" learned to pay attention to "fetch.all" configuration
- variable, which pretends as if "--all" was passed from the command
- line when no remote parameter was given.
- source: <20240108211832.47362-1-dev@tb6.eu>
+ The completion script (in contrib/) learned more options that can
+ be used with "git log".
+
+ Will merge to 'next'.
+ source: <pull.1650.git.git.1705810071.gitgitgadget@gmail.com>
+
+
+* jc/reftable-core-fsync (2024-01-23) 1 commit
+ - reftable: honor core.fsync
+
+ The write codepath for the reftable data learned to honor
+ core.fsync configuration.
+
+ Will merge to 'next'.
+ source: <pull.1654.git.git.1706035870956.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * kh/maintenance-use-xdg-when-it-should (2024-01-18) 4 commits
   (merged to 'next' on 2024-01-19 at 9c8c7b2e9d)
@@ -155,17 +153,23 @@ Release tarballs are available at:
 * ad/custom-merge-placeholder-for-symbolic-pathnames (2024-01-18) 1 commit
  - merge-ll: expose revision names to custom drivers
 
+ The labels on conflict markers for the common ancestor, our version,
+ and the other version are available to custom 3-way merge driver
+ via %S, %X, and %Y placeholders.
+
+ Expecting a reroll.
+ cf. <xmqqcytvei3c.fsf@gitster.g>
  source: <pull.1648.v3.git.git.1705615794307.gitgitgadget@gmail.com>
 
 
-* cp/unit-test-prio-queue (2024-01-17) 2 commits
- - SQUASH???
+* cp/unit-test-prio-queue (2024-01-22) 1 commit
  - tests: move t0009-prio-queue.sh to the new unit testing framework
 
- source: <pull.1642.v3.git.1705502304219.gitgitgadget@gmail.com>
+ Migrate priority queue test to unit testing framework.
+ source: <pull.1642.v4.git.1705865326185.gitgitgadget@gmail.com>
 
 
-* jc/reffiles-tests (2024-01-19) 12 commits
+* jc/reffiles-tests (2024-01-22) 12 commits
  - t5312: move reffiles specific tests to t0601
  - t4202: move reffiles specific tests to t0600
  - t3903: make drop stash test ref backend agnostic
@@ -179,6 +183,10 @@ Release tarballs are available at:
  - remove REFFILES prerequisite for some tests in t1405 and t2017
  - t3210: move to t0601
 
+ Tests on ref API are moved around to prepare for reftable.
+
+ Will merge to 'next'.
+ cf. <Za5TW-q4cKS8pNNc@tanuki>
  source: <pull.1647.v2.git.git.1705695540.gitgitgadget@gmail.com>
 
 
@@ -186,38 +194,62 @@ Release tarballs are available at:
  - revision: implement `git log --merge` also for rebase/cherry_pick/revert
  - revision: ensure MERGE_HEAD is a ref in prepare_show_merge
 
+ "git log --merge" learned to pay attention to CHERRY_PICK_HEAD and
+ other kinds of *_HEAD pseudorefs.
+
+ Comments?
  source: <xmqqzfxa9usx.fsf@gitster.g>
 
 
 * nb/rebase-x-shell-docfix (2024-01-17) 1 commit
- - rebase: fix documentation about used shell in -x
+  (merged to 'next' on 2024-01-22 at db49e10354)
+ + rebase: fix documentation about used shell in -x
 
+ Doc update.
+
+ Will merge to 'master'.
  source: <20240117085347.948960-1-nik.borisov@suse.com>
 
 
 * tc/show-ref-exists-fix (2024-01-18) 1 commit
- - builtin/show-ref: treat directory as non-existing in --exists
+  (merged to 'next' on 2024-01-22 at 831452f2dd)
+ + builtin/show-ref: treat directory as non-existing in --exists
 
+ Update to a new feature recently added, "git show-ref --exists".
+
+ Will merge to 'master'.
  source: <20240110141559.387815-2-toon@iotcl.com>
 
 
-* gt/t0024-style-fixes (2024-01-18) 2 commits
- - t0024: style fix
- - t0024: avoid losing exit status to pipes
+* gt/t0024-style-fixes (2024-01-20) 2 commits
+  (merged to 'next' on 2024-01-22 at 36b46efbd0)
+ + t0024: style fix
+ + t0024: avoid losing exit status to pipes
 
+ Coding style fix.
+
+ Will merge to 'master'.
  source: <20240118215407.8609-1-shyamthakkar001@gmail.com>
 
 
-* jc/majordomo-to-subspace (2024-01-19) 1 commit
- - Docs: majordomo@vger.kernel.org has been decomissioned
+* jc/majordomo-to-subspace (2024-01-20) 1 commit
+  (merged to 'next' on 2024-01-22 at 6a95f43de4)
+ + Docs: majordomo@vger.kernel.org has been decomissioned
 
+ Doc update.
+
+ Will merge to 'master'.
  source: <xmqqmst1hsd6.fsf@gitster.g>
 
 
 * js/oss-fuzz-build-in-ci (2024-01-19) 2 commits
- - ci: build and run minimal fuzzers in GitHub CI
- - fuzz: fix fuzz test build rules
+  (merged to 'next' on 2024-01-22 at 2954da5a39)
+ + ci: build and run minimal fuzzers in GitHub CI
+ + fuzz: fix fuzz test build rules
 
+ oss-fuzz tests are built and run in CI.
+
+ Will merge to 'master'.
  source: <cover.1705700054.git.steadmon@google.com>
 
 
@@ -228,22 +260,33 @@ Release tarballs are available at:
  - refs: make `is_pseudoref_syntax()` stricter
  - refs: expose `is_pseudoref_syntax()`
 
+ "git for-each-ref" filters its output with prefixes given from the
+ command line, but it did not honor an empty string to mean "pass
+ everything", which has been corrected.
+
+ Expecting a reroll.
+ cf. <CAOLa=ZQOcqGBJOSehok4BYGUE8RKtnE9eiJYogeT8E6NWZ25xw@mail.gmail.com>
+ cf. <Za-gF_Hp_lXViGWw@tanuki>
  source: <20240119142705.139374-1-karthik.188@gmail.com>
 
 
 * ps/not-so-many-refs-are-special (2024-01-19) 7 commits
- - Documentation: add "special refs" to the glossary
- - refs: redefine special refs
- - refs: convert MERGE_AUTOSTASH to become a normal pseudo-ref
- - sequencer: introduce functions to handle autostashes via refs
- - refs: convert AUTO_MERGE to become a normal pseudo-ref
- - sequencer: delete REBASE_HEAD in correct repo when picking commits
- - sequencer: clean up pseudo refs with REF_NO_DEREF
+  (merged to 'next' on 2024-01-22 at f70f463847)
+ + Documentation: add "special refs" to the glossary
+ + refs: redefine special refs
+ + refs: convert MERGE_AUTOSTASH to become a normal pseudo-ref
+ + sequencer: introduce functions to handle autostashes via refs
+ + refs: convert AUTO_MERGE to become a normal pseudo-ref
+ + sequencer: delete REBASE_HEAD in correct repo when picking commits
+ + sequencer: clean up pseudo refs with REF_NO_DEREF
 
+ Define "special ref" as a very narrow set that consists of
+ FETCH_HEAD and MERGE_HEAD, and clarify everything else that used to
+ be classified as such are actually just pseudorefs.
+
+ Will merge to 'master'.
  source: <cover.1705659748.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * es/some-up-to-date-messages-must-stay (2024-01-12) 1 commit
   (merged to 'next' on 2024-01-16 at 2b598f7de2)
@@ -399,12 +442,13 @@ Release tarballs are available at:
 
 
 * en/diffcore-delta-final-line-fix (2024-01-18) 1 commit
- - diffcore-delta: avoid ignoring final 'line' of file
+  (merged to 'next' on 2024-01-22 at 7141d202cb)
+ + diffcore-delta: avoid ignoring final 'line' of file
 
  Rename detection logic ignored the final line of a file if it is an
  incomplete line.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1637.v2.git.1705119973690.gitgitgadget@gmail.com>
 
 
@@ -435,8 +479,9 @@ Release tarballs are available at:
 
 
 * ps/reftable-optimize-io (2024-01-18) 7 commits
- - reftable/stack: fix race in up-to-date check
- - reftable/stack: unconditionally reload stack after commit
+  (merged to 'next' on 2024-01-22 at b867e8b9a8)
+ + reftable/stack: fix race in up-to-date check
+ + reftable/stack: unconditionally reload stack after commit
   (merged to 'next' on 2024-01-12 at 4096e880e0)
  + reftable/blocksource: use mmap to read tables
  + reftable/blocksource: refactor code to match our coding style
@@ -446,22 +491,22 @@ Release tarballs are available at:
 
  Low-level I/O optimization for reftable.
 
- The two commits at the tip are new.
- Will merge to 'next' and then to 'master'?
+ Will merge to 'master'.
  source: <cover.1704966670.git.ps@pks.im>
  source: <cover.1705585037.git.ps@pks.im>
 
 
 * rj/advice-disable-how-to-disable (2024-01-16) 2 commits
- - advice: allow disabling the automatic hint in advise_if_enabled()
- - Merge branch 'rj/advice-delete-branch-not-fully-merged' into rj/advice-disable-how-to-disable
+  (merged to 'next' on 2024-01-23 at f456f4937d)
+ + advice: allow disabling the automatic hint in advise_if_enabled()
+ + Merge branch 'rj/advice-delete-branch-not-fully-merged' into rj/advice-disable-how-to-disable
  (this branch uses rj/advice-delete-branch-not-fully-merged.)
 
  All conditional "advice" messages show how to turn them off, which
  becomes repetitive.  Add a configuration variable to omit the
  instruction.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <6a842ef8-b390-4739-9eef-e867d55ed5ea@gmail.com>
 
 
@@ -483,8 +528,7 @@ Release tarballs are available at:
 
  Tracing fix.
 
- Waiting for a review response.
- cf. <xmqqbka27zu9.fsf@gitster.g>
+ Will merge to 'next'?
  source: <20240103224054.1940209-1-delmerico@google.com>
 
 
@@ -646,19 +690,20 @@ Release tarballs are available at:
  source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
-* jx/remote-archive-over-smart-http (2024-01-16) 6 commits
- - transport-helper: call do_take_over() in process_connect
- - transport-helper: call do_take_over() in connect_helper
- - http-backend: new rpc-service for git-upload-archive
- - transport-helper: protocol-v2 supports upload-archive
- - remote-curl: supports git-upload-archive service
- - transport-helper: no connection restriction in connect_helper
+* jx/remote-archive-over-smart-http (2024-01-22) 6 commits
+  (merged to 'next' on 2024-01-23 at 5fa4633015)
+ + transport-helper: call do_take_over() in process_connect
+ + transport-helper: call do_take_over() in connect_helper
+ + http-backend: new rpc-service for git-upload-archive
+ + transport-helper: protocol v2 supports upload-archive
+ + remote-curl: supports git-upload-archive service
+ + transport-helper: no connection restriction in connect_helper
 
  "git archive --remote=<remote>" learned to talk over the smart
  http (aka stateless) transport.
 
- Will merge to 'next'?
- source: <cover.1705411391.git.zhiyou.jx@alibaba-inc.com>
+ Will merge to 'master'.
+ source: <cover.1705841443.git.zhiyou.jx@alibaba-inc.com>
 
 
 * jc/rerere-cleanup (2023-08-25) 4 commits
