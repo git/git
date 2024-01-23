@@ -460,6 +460,7 @@ const char *diff_get_color(int diff_use_color, enum color_diff ix);
 
 const char *diff_line_prefix(struct diff_options *);
 
+const struct strbuf *diff_line_prefix_buf(struct diff_options *);
 
 extern const char mime_boundary_leader[];
 
