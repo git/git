@@ -2309,6 +2309,7 @@ const struct strbuf *diff_line_prefix_buf(struct diff_options *opt)
 		msgbuf->alloc = 1;
 	}
 	else {
+		free(msgbuf);
 		msgbuf = opt->output_prefix(opt, opt->output_prefix_data);
 	}
 	return msgbuf;
