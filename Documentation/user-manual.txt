@@ -124,7 +124,7 @@ Create a new branch head pointing to one of these versions and check it
 out using linkgit:git-switch[1]:
 
 ------------------------------------------------
-$ git switch -c new v2.6.13
+$ git switch -c v2.6.13
 ------------------------------------------------
 
 The working directory then reflects the contents that the project had
