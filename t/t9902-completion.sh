@@ -5,6 +5,12 @@
 
 test_description='test bash completion'
 
+# The Bash completion scripts must not print anything to either stdout or
+# stderr, which we try to verify. When tracing is enabled without support for
+# BASH_XTRACEFD this assertion will fail, so we have to mark the test as
+# untraceable with such ancient Bash versions.
+test_untraceable=UnfortunatelyYes
+
 . ./lib-bash.sh
 
 complete ()
@@ -87,9 +93,11 @@ test_completion ()
 	else
 		sed -e 's/Z$//' |sort >expected
 	fi &&
-	run_completion "$1" &&
+	run_completion "$1" >"$TRASH_DIRECTORY"/bash-completion-output 2>&1 &&
 	sort out >out_sorted &&
-	test_cmp expected out_sorted
+	test_cmp expected out_sorted &&
+	test_must_be_empty "$TRASH_DIRECTORY"/bash-completion-output &&
+	rm "$TRASH_DIRECTORY"/bash-completion-output
 }
 
 # Test __gitcomp.
@@ -1925,6 +1933,14 @@ test_expect_success 'git checkout - --orphan with branch already provided comple
 	EOF
 '
 
+test_expect_success 'git restore completes modified files' '
+	test_commit A a.file &&
+	echo B >a.file &&
+	test_completion "git restore a." <<-\EOF
+	a.file
+	EOF
+'
+
 test_expect_success 'teardown after ref completion' '
 	git branch -d matching-branch &&
 	git tag -d matching-tag &&
@@ -2718,6 +2734,33 @@ test_expect_success '__git_complete' '
 	__git_have_func __git_wrap_git_diff &&
 
 	test_must_fail __git_complete ga missing
+'
+
+test_expect_success '__git_pseudoref_exists' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset __git_repo_path &&
+
+		# HEAD should exist, even if it points to an unborn branch.
+		__git_pseudoref_exists HEAD >output 2>&1 &&
+		test_must_be_empty output &&
+
+		# HEAD points to an existing branch, so it should exist.
+		test_commit A &&
+		__git_pseudoref_exists HEAD >output 2>&1 &&
+		test_must_be_empty output &&
+
+		# CHERRY_PICK_HEAD does not exist, so the existence check should fail.
+		! __git_pseudoref_exists CHERRY_PICK_HEAD >output 2>&1 &&
+		test_must_be_empty output &&
+
+		# CHERRY_PICK_HEAD points to a commit, so it should exist.
+		git update-ref CHERRY_PICK_HEAD A &&
+		__git_pseudoref_exists CHERRY_PICK_HEAD >output 2>&1 &&
+		test_must_be_empty output
+	)
 '
 
 test_done

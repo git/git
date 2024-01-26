@@ -137,6 +137,9 @@ __git_eread ()
 __git_pseudoref_exists ()
 {
 	local ref=$1
+	local head
+
+	__git_find_repo_path
 
 	# If the reftable is in use, we have to shell out to 'git rev-parse'
 	# to determine whether the ref exists instead of looking directly in
@@ -144,9 +147,8 @@ __git_pseudoref_exists ()
 	# Bash builtins since executing Git commands are expensive on some
 	# platforms.
 	if __git_eread "$__git_repo_path/HEAD" head; then
-		b="${head#ref: }"
-		if [ "$b" == "refs/heads/.invalid" ]; then
-			__git -C "$__git_repo_path" rev-parse --verify --quiet "$ref" 2>/dev/null
+		if [ "$head" == "ref: refs/heads/.invalid" ]; then
+			__git show-ref --exists "$ref"
 			return $?
 		fi
 	fi
@@ -1656,7 +1658,6 @@ __git_cherry_pick_inprogress_options=$__git_sequencer_inprogress_options
 
 _git_cherry_pick ()
 {
-	__git_find_repo_path
 	if __git_pseudoref_exists CHERRY_PICK_HEAD; then
 		__gitcomp "$__git_cherry_pick_inprogress_options"
 		return
@@ -2966,7 +2967,6 @@ _git_reset ()
 
 _git_restore ()
 {
-	__git_find_repo_path
 	case "$prev" in
 	-s)
 		__git_complete_refs
@@ -2995,7 +2995,6 @@ __git_revert_inprogress_options=$__git_sequencer_inprogress_options
 
 _git_revert ()
 {
-	__git_find_repo_path
 	if __git_pseudoref_exists REVERT_HEAD; then
 		__gitcomp "$__git_revert_inprogress_options"
 		return
