@@ -33,10 +33,10 @@ struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_stor
 	return (struct ref_store *)res;
 }
 
-static int debug_init_db(struct ref_store *refs, struct strbuf *err)
+static int debug_init_db(struct ref_store *refs, int flags, struct strbuf *err)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
-	int res = drefs->refs->be->init_db(drefs->refs, err);
+	int res = drefs->refs->be->init_db(drefs->refs, flags, err);
 	trace_printf_key(&trace_refs, "init_db: %d\n", res);
 	return res;
 }

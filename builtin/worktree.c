@@ -416,7 +416,6 @@ static int add_worktree(const char *path, const char *refname,
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT, realpath = STRBUF_INIT;
 	const char *name;
-	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strvec child_env = STRVEC_INIT;
 	unsigned int counter = 0;
 	int len, ret;
@@ -424,7 +423,8 @@ static int add_worktree(const char *path, const char *refname,
 	struct commit *commit = NULL;
 	int is_branch = 0;
 	struct strbuf sb_name = STRBUF_INIT;
-	struct worktree **worktrees;
+	struct worktree **worktrees, *wt = NULL;
+	struct ref_store *wt_refs;
 
 	worktrees = get_worktrees();
 	check_candidate_path(path, opts->force, worktrees, "add");
@@ -495,19 +495,31 @@ static int add_worktree(const char *path, const char *refname,
 	strbuf_realpath(&realpath, get_git_common_dir(), 1);
 	write_file(sb_git.buf, "gitdir: %s/worktrees/%s",
 		   realpath.buf, name);
-	/*
-	 * This is to keep resolve_ref() happy. We need a valid HEAD
-	 * or is_git_directory() will reject the directory. Any value which
-	 * looks like an object ID will do since it will be immediately
-	 * replaced by the symbolic-ref or update-ref invocation in the new
-	 * worktree.
-	 */
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s/HEAD", sb_repo.buf);
-	write_file(sb.buf, "%s", oid_to_hex(null_oid()));
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
+
+	/*
+	 * Set up the ref store of the worktree and create the HEAD reference.
+	 */
+	wt = get_linked_worktree(name, 1);
+	if (!wt) {
+		ret = error(_("could not find created worktree '%s'"), name);
+		goto done;
+	}
+	wt_refs = get_worktree_ref_store(wt);
+
+	ret = refs_init_db(wt_refs, REFS_INIT_DB_IS_WORKTREE, &sb);
+	if (ret)
+		goto done;
+
+	if (!is_branch && commit)
+		ret = refs_update_ref(wt_refs, NULL, "HEAD", &commit->object.oid,
+				      NULL, 0, UPDATE_REFS_MSG_ON_ERR);
+	else
+		ret = refs_create_symref(wt_refs, "HEAD", symref.buf, NULL);
+	if (ret)
+		goto done;
 
 	/*
 	 * If the current worktree has sparse-checkout enabled, then copy
@@ -526,22 +538,6 @@ static int add_worktree(const char *path, const char *refname,
 
 	strvec_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
 	strvec_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
-	cp.git_cmd = 1;
-
-	if (!is_branch && commit) {
-		strvec_pushl(&cp.args, "update-ref", "HEAD",
-			     oid_to_hex(&commit->object.oid), NULL);
-	} else {
-		strvec_pushl(&cp.args, "symbolic-ref", "HEAD",
-			     symref.buf, NULL);
-		if (opts->quiet)
-			strvec_push(&cp.args, "--quiet");
-	}
-
-	strvec_pushv(&cp.env, child_env.v);
-	ret = run_command(&cp);
-	if (ret)
-		goto done;
 
 	if (opts->orphan &&
 	    (ret = make_worktree_orphan(refname, opts, &child_env)))
@@ -587,6 +583,7 @@ done:
 	strbuf_release(&sb_git);
 	strbuf_release(&sb_name);
 	strbuf_release(&realpath);
+	free_worktree(wt);
 	return ret;
 }
 

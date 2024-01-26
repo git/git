@@ -1997,11 +1997,9 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 }
 
 /* backend functions */
-int refs_init_db(struct strbuf *err)
+int refs_init_db(struct ref_store *refs, int flags, struct strbuf *err)
 {
-	struct ref_store *refs = get_main_ref_store(the_repository);
-
-	return refs->be->init_db(refs, err);
+	return refs->be->init_db(refs, flags, err);
 }
 
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,

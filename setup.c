@@ -1926,23 +1926,8 @@ void create_reference_database(unsigned int ref_storage_format,
 	struct strbuf err = STRBUF_INIT;
 	int reinit = is_reinit();
 
-	/*
-	 * We need to create a "refs" dir in any case so that older versions of
-	 * Git can tell that this is a repository. This serves two main purposes:
-	 *
-	 * - Clients will know to stop walking the parent-directory chain when
-	 *   detecting the Git repository. Otherwise they may end up detecting
-	 *   a Git repository in a parent directory instead.
-	 *
-	 * - Instead of failing to detect a repository with unknown reference
-	 *   format altogether, old clients will print an error saying that
-	 *   they do not understand the reference format extension.
-	 */
-	safe_create_dir(git_path("refs"), 1);
-	adjust_shared_perm(git_path("refs"));
-
 	repo_set_ref_storage_format(the_repository, ref_storage_format);
-	if (refs_init_db(&err))
+	if (refs_init_db(get_main_ref_store(the_repository), 0, &err))
 		die("failed to set up refs db: %s", err.buf);
 
 	/*
