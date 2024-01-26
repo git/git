@@ -252,7 +252,14 @@ then
 	CI_COMMIT="$CI_COMMIT_SHA"
 	case "$CI_JOB_IMAGE" in
 	macos-*)
-		CI_OS_NAME=osx;;
+		# GitLab CI has Python installed via multiple package managers,
+		# most notably via asdf and Homebrew. Ensure that our builds
+		# pick up the Homebrew one by prepending it to our PATH as the
+		# asdf one breaks tests.
+		export PATH="$(brew --prefix)/bin:$PATH"
+
+		CI_OS_NAME=osx
+		;;
 	alpine:*|fedora:*|ubuntu:*)
 		CI_OS_NAME=linux;;
 	*)
@@ -344,6 +351,9 @@ macos-*)
 	then
 		MAKEFLAGS="$MAKEFLAGS APPLE_COMMON_CRYPTO_SHA1=Yes"
 	fi
+
+	P4_PATH="$HOME/custom/p4"
+	export PATH="$P4_PATH:$PATH"
 	;;
 esac
 
