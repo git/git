@@ -67,6 +67,51 @@ test_expect_success 'maintenance.auto config option' '
 	test_subcommand ! git maintenance run --auto --quiet  <false
 '
 
+test_expect_success 'register uses XDG_CONFIG_HOME config if it exists' '
+	test_when_finished rm -r .config/git/config &&
+	(
+		XDG_CONFIG_HOME=.config &&
+		export XDG_CONFIG_HOME &&
+		mkdir -p $XDG_CONFIG_HOME/git &&
+		>$XDG_CONFIG_HOME/git/config &&
+		git maintenance register &&
+		git config --file=$XDG_CONFIG_HOME/git/config --get maintenance.repo >actual &&
+		pwd >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'register does not need XDG_CONFIG_HOME config to exist' '
+	test_when_finished git maintenance unregister &&
+	test_path_is_missing $XDG_CONFIG_HOME/git/config &&
+	git maintenance register &&
+	git config --global --get maintenance.repo >actual &&
+	pwd >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'unregister uses XDG_CONFIG_HOME config if it exists' '
+	test_when_finished rm -r .config/git/config &&
+	(
+		XDG_CONFIG_HOME=.config &&
+		export XDG_CONFIG_HOME &&
+		mkdir -p $XDG_CONFIG_HOME/git &&
+		>$XDG_CONFIG_HOME/git/config &&
+		git maintenance register &&
+		git maintenance unregister &&
+		test_must_fail git config --file=$XDG_CONFIG_HOME/git/config --get maintenance.repo >actual &&
+		test_must_be_empty actual
+	)
+'
+
+test_expect_success 'unregister does not need XDG_CONFIG_HOME config to exist' '
+	test_path_is_missing $XDG_CONFIG_HOME/git/config &&
+	git maintenance register &&
+	git maintenance unregister &&
+	test_must_fail git config --global --get maintenance.repo >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'maintenance.<task>.enabled' '
 	git config maintenance.gc.enabled false &&
 	git config maintenance.commit-graph.enabled true &&
