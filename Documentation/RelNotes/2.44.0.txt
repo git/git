@@ -46,6 +46,19 @@ UI, Workflows & Features
    and domain in the error message when we barf on mismatch between
    the Git directory and the current user on Windows.
 
+ * The error message given when "git branch -d branch" fails due to
+   commits unique to the branch has been split into an error and a new
+   conditional advice message.
+
+ * When given an existing but unreadable file as a configuration file,
+   gitweb behaved as if the file did not exist at all, but now it
+   errors out.  This is a change that may break backward compatibility.
+
+ * When $HOME/.gitignore is missing but XDG config file available, we
+   should write into the latter, not former.  "git gc" and "git
+   maintenance" wrote into a wrong "global config" file, which have
+   been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -79,6 +92,23 @@ Performance, Internal Implementation, Development Support etc.
  * Streaming spans of packfile data used to be done only from a
    single, primary, pack in a repository with multiple packfiles.  It
    has been extended to allow reuse from other packfiles, too.
+
+ * Comment updates to help developers not to attempt to modify
+   messages from plumbing commands that must stay constant.
+
+   It might make sense to reassess the plumbing needs every few years,
+   but that should be done as a separate effort.
+
+ * Move test-ctype helper to the unit-test framework.
+
+ * Instead of manually creating refs/ hierarchy on disk upon a
+   creation of a secondary worktree, which is only usable via the
+   files backend, use the refs API to populate it.
+
+ * CI for GitLab learned to drive macOS jobs.
+
+ * A few tests to "git commit -o <pathspec>" and "git commit -i
+   <pathspec>" has been added.
 
 
 Fixes since v2.43
@@ -214,3 +244,6 @@ Fixes since v2.43
    (merge 25aec06326 ib/rebase-reschedule-doc later to maint).
    (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
    (merge 9cce3be2df bk/bisect-doc-fix later to maint).
+   (merge 8f50984cf4 ne/doc-filter-blob-limit-fix later to maint).
+   (merge f10b0989b8 la/strvec-comment-fix later to maint).
+   (merge 8430b438f6 vd/fsck-submodule-url-test later to maint).
