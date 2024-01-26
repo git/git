@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2024, #07; Tue, 23)
-X-master-at: e02ecfcc534e2021aae29077a958dd11c3897e4c
-X-next-at: 5fa4633015b7717427c4e333557e072f1a2b5e69
+Subject: What's cooking in git.git (Jan 2024, #08; Fri, 26)
+X-master-at: b50a608ba20348cb3dfc16a696816d51780e3f0f
+X-next-at: 3e4c9d132487b980300188f22102599edd76b6cd
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2024, #07; Tue, 23)
+What's cooking in git.git (Jan 2024, #08; Fri, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,241 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* al/unit-test-ctype (2024-01-16) 1 commit
+  (merged to 'next' on 2024-01-19 at fcdad0d06c)
+ + unit-tests: rewrite t/helper/test-ctype.c as a unit test
+
+ Move test-ctype helper to the unit-test framework.
+ source: <20240112102743.1440-1-ach.lumap@gmail.com>
+
+
+* es/some-up-to-date-messages-must-stay (2024-01-12) 1 commit
+  (merged to 'next' on 2024-01-16 at 2b598f7de2)
+ + messages: mark some strings with "up-to-date" not to touch
+
+ Comment updates to help developers not to attempt to modify
+ messages from plumbing commands that must stay constant.
+
+ It might make sense to reassess the plumbing needs every few years,
+ but that should be done as a separate effort.
+ source: <20240112171910.11131-1-ericsunshine@charter.net>
+
+
+* gt/test-commit-o-i-options (2024-01-17) 2 commits
+  (merged to 'next' on 2024-01-19 at 0377e2c148)
+ + t7501: add tests for --amend --signoff
+ + t7501: add tests for --include and --only
+
+ A few tests to "git commit -o <pathspec>" and "git commit -i
+ <pathspec>" has been added.
+ source: <20240117161421.17333-1-shyamthakkar001@gmail.com>
+
+
+* jt/tests-with-reftable (2024-01-12) 2 commits
+  (merged to 'next' on 2024-01-19 at 498d203a57)
+ + t5541: remove lockfile creation
+ + t1401: remove lockfile creation
+
+ Tweak a few tests not to manually modify the reference database
+ (hence easier to work with other backends like reftable).
+ source: <pull.1634.v2.git.1705004670.gitgitgadget@gmail.com>
+
+
+* kh/maintenance-use-xdg-when-it-should (2024-01-18) 4 commits
+  (merged to 'next' on 2024-01-19 at 9c8c7b2e9d)
+ + maintenance: use XDG config if it exists
+ + config: factor out global config file retrieval
+ + config: rename global config function
+ + config: format newlines
+
+ When $HOME/.gitignore is missing but XDG config file available, we
+ should write into the latter, not former.  "git gc" and "git
+ maintenance" wrote into a wrong "global config" file, which have
+ been corrected.
+ source: <cover.1705593810.git.code@khaugsbakk.name>
+
+
+* la/strvec-comment-fix (2024-01-12) 1 commit
+  (merged to 'next' on 2024-01-19 at 120ef16493)
+ + strvec: use correct member name in comments
+
+ Comment fix.
+ source: <pull.1640.git.1705043195997.gitgitgadget@gmail.com>
+
+
+* mj/gitweb-unreadable-config-error (2024-01-10) 1 commit
+  (merged to 'next' on 2024-01-19 at 790b7a7855)
+ + gitweb: die when a configuration file cannot be read
+
+ When given an existing but unreadable file as a configuration file,
+ gitweb behaved as if the file did not exist at all, but now it
+ errors out.  This is a change that may break backward compatibility.
+ source: <20240110225709.30168-1-marcelo.jimenez@gmail.com>
+
+
+* ne/doc-filter-blob-limit-fix (2024-01-16) 1 commit
+  (merged to 'next' on 2024-01-19 at 4f78975728)
+ + rev-list-options: fix off-by-one in '--filter=blob:limit=<n>' explainer
+
+ Docfix.
+ source: <pull.1645.git.git.1705261850650.gitgitgadget@gmail.com>
+
+
+* ps/commit-graph-write-leakfix (2024-01-15) 1 commit
+  (merged to 'next' on 2024-01-19 at df537fac39)
+ + commit-graph: fix memory leak when not writing graph
+
+ Leakfix.
+ source: <0feab5e7d5bc6275e2c7671cd8f6786ea86fd610.1702891190.git.ps@pks.im>
+
+
+* ps/completion-with-reftable-fix (2024-01-16) 5 commits
+  (merged to 'next' on 2024-01-19 at 8854a7d903)
+ + completion: treat dangling symrefs as existing pseudorefs
+ + completion: silence pseudoref existence check
+ + completion: improve existence check for pseudo-refs
+ + t9902: verify that completion does not print anything
+ + completion: discover repo path in `__git_pseudoref_exists ()`
+
+ Completion update to prepare for reftable
+ source: <cover.1705314554.git.ps@pks.im>
+
+
+* ps/gitlab-ci-macos (2024-01-18) 6 commits
+  (merged to 'next' on 2024-01-19 at a239dc8140)
+ + ci: add macOS jobs to GitLab CI
+ + ci: make p4 setup on macOS more robust
+ + ci: handle TEST_OUTPUT_DIRECTORY when printing test failures
+ + Makefile: detect new Homebrew location for ARM-based Macs
+ + t7527: decrease likelihood of racing with fsmonitor daemon
+ + Merge branch 'ps/gitlab-ci-static-analysis' into ps/gitlab-ci-macos
+
+ CI for GitLab learned to drive macOS jobs.
+ source: <cover.1705573336.git.ps@pks.im>
+
+
+* ps/worktree-refdb-initialization (2024-01-08) 7 commits
+  (merged to 'next' on 2024-01-19 at e8c649a3ac)
+ + builtin/worktree: create refdb via ref backend
+ + worktree: expose interface to look up worktree by name
+ + builtin/worktree: move setup of commondir file earlier
+ + refs/files: skip creation of "refs/{heads,tags}" for worktrees
+ + setup: move creation of "refs/" into the files backend
+ + refs: prepare `refs_init_db()` for initializing worktree refs
+ + Merge branch 'ps/refstorage-extension' into ps/worktree-refdb-initialization
+
+ Instead of manually creating refs/ hierarchy on disk upon a
+ creation of a secondary worktree, which is only usable via the
+ files backend, use the refs API to populate it.
+ source: <cover.1704705733.git.ps@pks.im>
+
+
+* rj/advice-delete-branch-not-fully-merged (2024-01-11) 3 commits
+  (merged to 'next' on 2024-01-19 at 7102eb6b79)
+ + branch: make the advice to force-deleting a conditional one
+ + advice: fix an unexpected leading space
+ + advice: sort the advice related lists
+ (this branch is used by rj/advice-disable-how-to-disable.)
+
+ The error message given when "git branch -d branch" fails due to
+ commits unique to the branch has been split into an error and a new
+ conditional advice message.
+ source: <4aedc15c-4b3f-4f5e-abea-581b501600f8@gmail.com>
+
+
+* vd/fsck-submodule-url-test (2024-01-19) 4 commits
+  (merged to 'next' on 2024-01-19 at dad35ae82c)
+ + submodule-config.c: strengthen URL fsck check
+ + t7450: test submodule urls
+ + test-submodule: remove command line handling for check-name
+ + submodule-config.h: move check_submodule_url
+
+ Tighten URL checks fsck makes in a URL recorded for submodules.
+ source: <pull.1635.v2.git.1705542918.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* jc/coc-whitespace-fix (2024-01-23) 1 commit
+  (merged to 'next' on 2024-01-26 at 6fb290ad59)
+ + CoC: whitespace fix
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <xmqqmssvnb8d.fsf_-_@gitster.g>
+
+
+* jc/ls-files-doc-update (2024-01-25) 1 commit
+  (merged to 'next' on 2024-01-26 at a71aeec3d3)
+ + ls-files: avoid the verb "deprecate" for individual options
+
+ The documentation for the --exclude-per-directory option marked it
+ as deprecated, which confused readers into thinking there may be a
+ plan to remove it in the future, which was not our intention.
+
+ Will merge to 'master'.
+ source: <xmqqjznybfp4.fsf@gitster.g>
+
+
+* jk/fetch-auto-tag-following-fix (2024-01-24) 1 commit
+  (merged to 'next' on 2024-01-26 at d058f1511b)
+ + transport-helper: re-examine object dir after fetching
+
+ Fetching via protocol v0 over Smart HTTP transport sometimes failed
+ to correctly auto-follow tags.
+
+ Will merge to 'master'.
+ source: <20240124010056.GA2603087@coredump.intra.peff.net>
+
+
+* ps/reftable-compacted-tables-permission-fix (2024-01-26) 1 commit
+ - reftable/stack: adjust permissions of compacted tables
+
+ Reftable bugfix.
+
+ Will merge to 'next'.
+ source: <a211818108053754aca002726d0206623a347952.1706263589.git.ps@pks.im>
+
+
+* jc/index-pack-fsck-levels (2024-01-26) 2 commits
+ - index-pack: --fsck-objects to take an optional argument for fsck msgs
+ - index-pack: test and document --strict=<msg-id>=<severity>...
+
+ The "--fsck-objects" option of "git index-pack" now can take the
+ optional parameter to tweak severity of different fsck errors.
+
+ Expecting a reroll.
+ cf. <BF772E83-2BFE-4652-A742-67FADF3D8FE2@gmail.com>
+ source: <pull.1658.v3.git.git.1706302749.gitgitgadget@gmail.com>
+
+
+* zf/subtree-split-fix (2024-01-25) 1 commit
+  (merged to 'next' on 2024-01-26 at a09e02f208)
+ + subtree: fix split processing with multiple subtrees present
+
+ "git subtree" (in contrib/) update.
+
+ Will merge to 'master'.
+ source: <pull.1587.v6.git.1701442494319.gitgitgadget@gmail.com>
+
+
+* ps/reftable-multi-level-indices-fix (2024-01-26) 6 commits
+ - reftable: document reading and writing indices
+ - reftable/writer: fix writing multi-level indices
+ - reftable/writer: simplify writing index records
+ - reftable/writer: use correct type to iterate through index entries
+ - reftable/reader: be more careful about errors in indexed seeks
+ - Merge branch 'jc/reftable-core-fsync' into ps/reftable-multi-level-indices-fix
+ (this branch uses jc/reftable-core-fsync.)
+
+ Write multi-level indices for reftable has been corrected.
+ source: <cover.1706263918.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * al/t2400-depipe (2024-01-20) 1 commit
   (merged to 'next' on 2024-01-22 at a20d4a9a7f)
@@ -59,14 +293,15 @@ Release tarballs are available at:
 
 
 * kl/allow-working-in-dot-git-in-non-bare-repository (2024-01-20) 1 commit
- - setup: allow cwd=.git w/ bareRepository=explicit
+  (merged to 'next' on 2024-01-24 at e77b796e11)
+ + setup: allow cwd=.git w/ bareRepository=explicit
 
  Loosen "disable repository discovery of a bare repository" check,
  triggered by setting safe.bareRepository configuration variable to
  'explicit', to exclude the ".git/" directory inside a non-bare
  repository from the check.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1645.git.1705709303098.gitgitgadget@gmail.com>
 
 
@@ -95,71 +330,41 @@ Release tarballs are available at:
 
 
 * pb/complete-log-more (2024-01-22) 4 commits
- - completion: complete missing 'git log' options
- - completion: complete --encoding
- - completion: complete --patch-with-raw
- - completion: complete missing rev-list options
+  (merged to 'next' on 2024-01-24 at 081d2a92fa)
+ + completion: complete missing 'git log' options
+ + completion: complete --encoding
+ + completion: complete --patch-with-raw
+ + completion: complete missing rev-list options
 
  The completion script (in contrib/) learned more options that can
  be used with "git log".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1650.git.git.1705810071.gitgitgadget@gmail.com>
 
 
 * jc/reftable-core-fsync (2024-01-23) 1 commit
- - reftable: honor core.fsync
+  (merged to 'next' on 2024-01-24 at cea12beddb)
+ + reftable: honor core.fsync
+ (this branch is used by ps/reftable-multi-level-indices-fix.)
 
  The write codepath for the reftable data learned to honor
  core.fsync configuration.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1654.git.git.1706035870956.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
-* kh/maintenance-use-xdg-when-it-should (2024-01-18) 4 commits
-  (merged to 'next' on 2024-01-19 at 9c8c7b2e9d)
- + maintenance: use XDG config if it exists
- + config: factor out global config file retrieval
- + config: rename global config function
- + config: format newlines
-
- When $HOME/.gitignore is missing but XDG config file available, we
- should write into the latter, not former.  "git gc" and "git
- maintenance" wrote into a wrong "global config" file, which have
- been corrected.
-
- Will merge to 'master'.
- source: <cover.1705593810.git.code@khaugsbakk.name>
-
-
-* ps/gitlab-ci-macos (2024-01-18) 6 commits
-  (merged to 'next' on 2024-01-19 at a239dc8140)
- + ci: add macOS jobs to GitLab CI
- + ci: make p4 setup on macOS more robust
- + ci: handle TEST_OUTPUT_DIRECTORY when printing test failures
- + Makefile: detect new Homebrew location for ARM-based Macs
- + t7527: decrease likelihood of racing with fsmonitor daemon
- + Merge branch 'ps/gitlab-ci-static-analysis' into ps/gitlab-ci-macos
-
- CI for GitLab learned to drive macOS jobs.
-
- Will merge to 'master'.
- source: <cover.1705573336.git.ps@pks.im>
-
-
-* ad/custom-merge-placeholder-for-symbolic-pathnames (2024-01-18) 1 commit
- - merge-ll: expose revision names to custom drivers
+* ad/custom-merge-placeholder-for-symbolic-pathnames (2024-01-24) 1 commit
+  (merged to 'next' on 2024-01-24 at d9cf4e227d)
+ + merge-ll: expose revision names to custom drivers
 
  The labels on conflict markers for the common ancestor, our version,
  and the other version are available to custom 3-way merge driver
  via %S, %X, and %Y placeholders.
 
- Expecting a reroll.
- cf. <xmqqcytvei3c.fsf@gitster.g>
- source: <pull.1648.v3.git.git.1705615794307.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1648.v4.git.git.1706126951879.gitgitgadget@gmail.com>
 
 
 * cp/unit-test-prio-queue (2024-01-22) 1 commit
@@ -170,22 +375,23 @@ Release tarballs are available at:
 
 
 * jc/reffiles-tests (2024-01-22) 12 commits
- - t5312: move reffiles specific tests to t0601
- - t4202: move reffiles specific tests to t0600
- - t3903: make drop stash test ref backend agnostic
- - t1503: move reffiles specific tests to t0600
- - t1415: move reffiles specific tests to t0601
- - t1410: move reffiles specific tests to t0600
- - t1406: move reffiles specific tests to t0600
- - t1405: move reffiles specific tests to t0601
- - t1404: move reffiles specific tests to t0600
- - t1414: convert test to use Git commands instead of writing refs manually
- - remove REFFILES prerequisite for some tests in t1405 and t2017
- - t3210: move to t0601
+  (merged to 'next' on 2024-01-24 at 0d1aaa6807)
+ + t5312: move reffiles specific tests to t0601
+ + t4202: move reffiles specific tests to t0600
+ + t3903: make drop stash test ref backend agnostic
+ + t1503: move reffiles specific tests to t0600
+ + t1415: move reffiles specific tests to t0601
+ + t1410: move reffiles specific tests to t0600
+ + t1406: move reffiles specific tests to t0600
+ + t1405: move reffiles specific tests to t0601
+ + t1404: move reffiles specific tests to t0600
+ + t1414: convert test to use Git commands instead of writing refs manually
+ + remove REFFILES prerequisite for some tests in t1405 and t2017
+ + t3210: move to t0601
 
  Tests on ref API are moved around to prepare for reftable.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <Za5TW-q4cKS8pNNc@tanuki>
  source: <pull.1647.v2.git.git.1705695540.gitgitgadget@gmail.com>
 
@@ -253,21 +459,19 @@ Release tarballs are available at:
  source: <cover.1705700054.git.steadmon@google.com>
 
 
-* kn/for-all-refs (2024-01-19) 5 commits
+* kn/for-all-refs (2024-01-24) 4 commits
  - for-each-ref: avoid filtering on empty pattern
  - refs: introduce `refs_for_each_all_refs()`
  - refs: extract out `loose_fill_ref_dir_regular_file()`
- - refs: make `is_pseudoref_syntax()` stricter
- - refs: expose `is_pseudoref_syntax()`
+ - refs: introduce `is_pseudoref()` and `is_headref()`
 
  "git for-each-ref" filters its output with prefixes given from the
  command line, but it did not honor an empty string to mean "pass
  everything", which has been corrected.
 
- Expecting a reroll.
- cf. <CAOLa=ZQOcqGBJOSehok4BYGUE8RKtnE9eiJYogeT8E6NWZ25xw@mail.gmail.com>
- cf. <Za-gF_Hp_lXViGWw@tanuki>
- source: <20240119142705.139374-1-karthik.188@gmail.com>
+ Expecting a reroll?
+ cf. <xmqqfrymeega.fsf@gitster.g>
+ source: <20240124152726.124873-1-karthik.188@gmail.com>
 
 
 * ps/not-so-many-refs-are-special (2024-01-19) 7 commits
@@ -286,20 +490,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1705659748.git.ps@pks.im>
-
-
-* es/some-up-to-date-messages-must-stay (2024-01-12) 1 commit
-  (merged to 'next' on 2024-01-16 at 2b598f7de2)
- + messages: mark some strings with "up-to-date" not to touch
-
- Comment updates to help developers not to attempt to modify
- messages from plumbing commands that must stay constant.
-
- It might make sense to reassess the plumbing needs every few years,
- but that should be done as a separate effort.
-
- Will merge to 'master'.
- source: <20240112171910.11131-1-ericsunshine@charter.net>
 
 
 * bk/complete-bisect (2024-01-18) 5 commits
@@ -339,40 +529,6 @@ Release tarballs are available at:
  source: <a718b5ee-afb0-44bd-a299-3208fac43506@smtp-relay.sendinblue.com>
 
 
-* gt/test-commit-o-i-options (2024-01-17) 2 commits
-  (merged to 'next' on 2024-01-19 at 0377e2c148)
- + t7501: add tests for --amend --signoff
- + t7501: add tests for --include and --only
-
- A few tests to "git commit -o <pathspec>" and "git commit -i
- <pathspec>" has been added.
-
- Will merge to 'master'.
- source: <20240117161421.17333-1-shyamthakkar001@gmail.com>
-
-
-* jt/tests-with-reftable (2024-01-12) 2 commits
-  (merged to 'next' on 2024-01-19 at 498d203a57)
- + t5541: remove lockfile creation
- + t1401: remove lockfile creation
-
- Tweak a few tests not to manually modify the reference database
- (hence easier to work with other backends like reftable).
-
- Will merge to 'master'.
- source: <pull.1634.v2.git.1705004670.gitgitgadget@gmail.com>
-
-
-* la/strvec-comment-fix (2024-01-12) 1 commit
-  (merged to 'next' on 2024-01-19 at 120ef16493)
- + strvec: use correct member name in comments
-
- Comment fix.
-
- Will merge to 'master'.
- source: <pull.1640.git.1705043195997.gitgitgadget@gmail.com>
-
-
 * la/trailer-api (2024-01-12) 10 commits
  - trailer: delete obsolete argument handling code from API
  - trailer: move arg handling to interpret-trailers.c
@@ -387,11 +543,12 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Needs review.
+ Expecting a (hopefully final and small) reroll.
+ cf. <owlysf2l2bnj.fsf@fine.c.googlers.com>
  source: <pull.1632.git.1704869487.gitgitgadget@gmail.com>
 
 
-* ps/tests-with-ref-files-backend (2024-01-12) 6 commits
+* ps/tests-with-ref-files-backend (2024-01-24) 6 commits
  - t: mark tests regarding git-pack-refs(1) to be backend specific
  - t5526: break test submodule differently
  - t1419: mark test suite as files-backend specific
@@ -403,42 +560,7 @@ Release tarballs are available at:
  backends.
 
  Needs review.
- source: <cover.1704877233.git.ps@pks.im>
-
-
-* ne/doc-filter-blob-limit-fix (2024-01-16) 1 commit
-  (merged to 'next' on 2024-01-19 at 4f78975728)
- + rev-list-options: fix off-by-one in '--filter=blob:limit=<n>' explainer
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1645.git.git.1705261850650.gitgitgadget@gmail.com>
-
-
-* ps/commit-graph-write-leakfix (2024-01-15) 1 commit
-  (merged to 'next' on 2024-01-19 at df537fac39)
- + commit-graph: fix memory leak when not writing graph
-
- Leakfix.
-
- Will merge to 'master'.
- source: <0feab5e7d5bc6275e2c7671cd8f6786ea86fd610.1702891190.git.ps@pks.im>
-
-
-* rj/advice-delete-branch-not-fully-merged (2024-01-11) 3 commits
-  (merged to 'next' on 2024-01-19 at 7102eb6b79)
- + branch: make the advice to force-deleting a conditional one
- + advice: fix an unexpected leading space
- + advice: sort the advice related lists
- (this branch is used by rj/advice-disable-how-to-disable.)
-
- The error message given when "git branch -d branch" fails due to
- commits unique to the branch has been split into an error and a new
- conditional advice message.
-
- Will merge to 'master'.
- source: <4aedc15c-4b3f-4f5e-abea-581b501600f8@gmail.com>
+ source: <cover.1706085756.git.ps@pks.im>
 
 
 * en/diffcore-delta-final-line-fix (2024-01-18) 1 commit
@@ -450,32 +572,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1637.v2.git.1705119973690.gitgitgadget@gmail.com>
-
-
-* mj/gitweb-unreadable-config-error (2024-01-10) 1 commit
-  (merged to 'next' on 2024-01-19 at 790b7a7855)
- + gitweb: die when a configuration file cannot be read
-
- When given an existing but unreadable file as a configuration file,
- gitweb behaved as if the file did not exist at all, but now it
- errors out.  This is a change that may break backward compatibility.
-
- Will merge to 'master'.
- source: <20240110225709.30168-1-marcelo.jimenez@gmail.com>
-
-
-* ps/completion-with-reftable-fix (2024-01-16) 5 commits
-  (merged to 'next' on 2024-01-19 at 8854a7d903)
- + completion: treat dangling symrefs as existing pseudorefs
- + completion: silence pseudoref existence check
- + completion: improve existence check for pseudo-refs
- + t9902: verify that completion does not print anything
- + completion: discover repo path in `__git_pseudoref_exists ()`
-
- Completion update to prepare for reftable
-
- Will merge to 'master'.
- source: <cover.1705314554.git.ps@pks.im>
 
 
 * ps/reftable-optimize-io (2024-01-18) 7 commits
@@ -500,7 +596,6 @@ Release tarballs are available at:
   (merged to 'next' on 2024-01-23 at f456f4937d)
  + advice: allow disabling the automatic hint in advise_if_enabled()
  + Merge branch 'rj/advice-delete-branch-not-fully-merged' into rj/advice-disable-how-to-disable
- (this branch uses rj/advice-delete-branch-not-fully-merged.)
 
  All conditional "advice" messages show how to turn them off, which
  becomes repetitive.  Add a configuration variable to omit the
@@ -510,44 +605,14 @@ Release tarballs are available at:
  source: <6a842ef8-b390-4739-9eef-e867d55ed5ea@gmail.com>
 
 
-* vd/fsck-submodule-url-test (2024-01-19) 4 commits
-  (merged to 'next' on 2024-01-19 at dad35ae82c)
- + submodule-config.c: strengthen URL fsck check
- + t7450: test submodule urls
- + test-submodule: remove command line handling for check-name
- + submodule-config.h: move check_submodule_url
-
- Tighten URL checks fsck makes in a URL recorded for submodules.
-
- Will merge to 'master'.
- source: <pull.1635.v2.git.1705542918.gitgitgadget@gmail.com>
-
-
 * sd/negotiate-trace-fix (2024-01-03) 1 commit
- - push: region_leave trace for negotiate_using_fetch
+  (merged to 'next' on 2024-01-24 at 6305853ab2)
+ + push: region_leave trace for negotiate_using_fetch
 
  Tracing fix.
 
- Will merge to 'next'?
- source: <20240103224054.1940209-1-delmerico@google.com>
-
-
-* ps/worktree-refdb-initialization (2024-01-08) 7 commits
-  (merged to 'next' on 2024-01-19 at e8c649a3ac)
- + builtin/worktree: create refdb via ref backend
- + worktree: expose interface to look up worktree by name
- + builtin/worktree: move setup of commondir file earlier
- + refs/files: skip creation of "refs/{heads,tags}" for worktrees
- + setup: move creation of "refs/" into the files backend
- + refs: prepare `refs_init_db()` for initializing worktree refs
- + Merge branch 'ps/refstorage-extension' into ps/worktree-refdb-initialization
-
- Instead of manually creating refs/ hierarchy on disk upon a
- creation of a secondary worktree, which is only usable via the
- files backend, use the refs API to populate it.
-
  Will merge to 'master'.
- source: <cover.1704705733.git.ps@pks.im>
+ source: <20240103224054.1940209-1-delmerico@google.com>
 
 
 * cp/apply-core-filemode (2023-12-26) 3 commits
@@ -563,16 +628,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20231226233218.472054-1-gitster@pobox.com>
-
-
-* al/unit-test-ctype (2024-01-16) 1 commit
-  (merged to 'next' on 2024-01-19 at fcdad0d06c)
- + unit-tests: rewrite t/helper/test-ctype.c as a unit test
-
- Move test-ctype helper to the unit-test framework.
-
- Will merge to 'master'.
- source: <20240112102743.1440-1-ach.lumap@gmail.com>
 
 
 * ja/doc-placeholders-fix (2023-12-26) 2 commits
@@ -633,7 +688,7 @@ Release tarballs are available at:
  on systems whose "char" is unsigned; update the implementation and
  bump the format version to 2.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1705442923.git.me@ttaylorr.com>
 
 
