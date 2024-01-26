@@ -1851,6 +1851,7 @@ int cmd_main(int argc, const char **argv)
 
 		if (oideq(&ref->old_oid, &ref->peer_ref->new_oid)) {
 			if (push_verbosely)
+				/* stable plumbing output; do not modify or localize */
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			if (helper_status)
 				printf("ok %s up to date\n", ref->name);
@@ -1871,6 +1872,7 @@ int cmd_main(int argc, const char **argv)
 				 * commits at the remote end and likely
 				 * we were not up to date to begin with.
 				 */
+				/* stable plumbing output; do not modify or localize */
 				error("remote '%s' is not an ancestor of\n"
 				      "local '%s'.\n"
 				      "Maybe you are not up-to-date and "
