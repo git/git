@@ -51,13 +51,6 @@ struct bitmap_index {
 	struct packed_git *pack;
 	struct multi_pack_index *midx;
 
-	/*
-	 * Mark the first `reuse_objects` in the packfile as reused:
-	 * they will be sent as-is without using them for repacking
-	 * calculations
-	 */
-	uint32_t reuse_objects;
-
 	/* mmapped buffer of the whole bitmap index */
 	unsigned char *map;
 	size_t map_size; /* size of the mmaped buffer */
