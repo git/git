@@ -945,4 +945,10 @@ test_expect_success 'check the input format when --stdin is passed' '
 	test_cmp expect actual
 '
 
+test_expect_success '--merge-base with tree OIDs' '
+	git merge-tree --merge-base=side1^ side1 side3 >with-commits &&
+	git merge-tree --merge-base=side1^^{tree} side1^{tree} side3^{tree} >with-trees &&
+	test_cmp with-commits with-trees
+'
+
 test_done
