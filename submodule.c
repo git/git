@@ -2146,10 +2146,27 @@ int submodule_move_head(const char *path,
 		if (old_head) {
 			if (!submodule_uses_gitfile(path))
 				absorb_git_dir_into_superproject(path);
+			else {
+				char *dotgit = xstrfmt("%s/.git", path);
+				char *git_dir = xstrdup(read_gitfile(dotgit));
+
+				free(dotgit);
+				if (validate_submodule_git_dir(git_dir,
+							       sub->name) < 0)
+					die(_("refusing to create/use '%s' in "
+					      "another submodule's git dir"),
+					    git_dir);
+				free(git_dir);
+			}
 		} else {
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
 						 sub->name);
+			if (validate_submodule_git_dir(gitdir.buf,
+						       sub->name) < 0)
+				die(_("refusing to create/use '%s' in another "
+				      "submodule's git dir"),
+				    gitdir.buf);
 			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
 			strbuf_release(&gitdir);
 
