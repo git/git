@@ -59,6 +59,10 @@ UI, Workflows & Features
    maintenance" wrote into a wrong "global config" file, which have
    been corrected.
 
+ * Define "special ref" as a very narrow set that consists of
+   FETCH_HEAD and MERGE_HEAD, and clarify everything else that used to
+   be classified as such are actually just pseudorefs.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -211,6 +215,16 @@ Fixes since v2.43
    data from commit-graph too early, which has been corrected.
    (merge d70f554cdf jk/commit-graph-slab-clear-fix later to maint).
 
+ * Update to a new feature recently added, "git show-ref --exists".
+   (merge 0aabeaa562 tc/show-ref-exists-fix later to maint).
+
+ * oss-fuzz tests are built and run in CI.
+   (merge c4a9cf1df3 js/oss-fuzz-build-in-ci later to maint).
+
+ * Rename detection logic ignored the final line of a file if it is an
+   incomplete line.
+   (merge 1c5bc6971e en/diffcore-delta-final-line-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -247,3 +261,5 @@ Fixes since v2.43
    (merge 8f50984cf4 ne/doc-filter-blob-limit-fix later to maint).
    (merge f10b0989b8 la/strvec-comment-fix later to maint).
    (merge 8430b438f6 vd/fsck-submodule-url-test later to maint).
+   (merge f10031fadd nb/rebase-x-shell-docfix later to maint).
+   (merge af3d2c160f jc/majordomo-to-subspace later to maint).
