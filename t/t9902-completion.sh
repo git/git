@@ -2583,6 +2583,35 @@ test_expect_success 'git config - variable name include' '
 	EOF
 '
 
+test_expect_success 'setup for git config submodule tests' '
+	test_create_repo sub &&
+	test_commit -C sub initial &&
+	git submodule add ./sub
+'
+
+test_expect_success 'git config - variable name - submodule' '
+	test_completion "git config submodule." <<-\EOF
+	submodule.active Z
+	submodule.alternateErrorStrategy Z
+	submodule.alternateLocation Z
+	submodule.fetchJobs Z
+	submodule.propagateBranches Z
+	submodule.recurse Z
+	submodule.sub.Z
+	EOF
+'
+
+test_expect_success 'git config - variable name - submodule names' '
+	test_completion "git config submodule.sub." <<-\EOF
+	submodule.sub.url Z
+	submodule.sub.update Z
+	submodule.sub.branch Z
+	submodule.sub.fetchRecurseSubmodules Z
+	submodule.sub.ignore Z
+	submodule.sub.active Z
+	EOF
+'
+
 test_expect_success 'git config - value' '
 	test_completion "git config color.pager " <<-\EOF
 	false Z
