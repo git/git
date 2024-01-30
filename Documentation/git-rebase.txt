@@ -966,10 +966,9 @@ The interactive rebase will stop when a command fails (i.e. exits with
 non-0 status) to give you an opportunity to fix the problem. You can
 continue with `git rebase --continue`.
 
-The "exec" command launches the command in a shell (the one specified
-in `$SHELL`, or the default shell if `$SHELL` is not set), so you can
-use shell features (like "cd", ">", ";" ...). The command is run from
-the root of the working tree.
+The "exec" command launches the command in a shell (the default one, usually
+/bin/sh), so you can use shell features (like "cd", ">", ";" ...). The command
+is run from the root of the working tree.
 
 ----------------------------------
 $ git rebase -i --exec "make test"
