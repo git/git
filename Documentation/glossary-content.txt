@@ -638,6 +638,20 @@ The most notable example is `HEAD`.
 	An <<def_object,object>> used to temporarily store the contents of a
 	<<def_dirty,dirty>> working directory and the index for future reuse.
 
+[[def_special_ref]]special ref::
+	A ref that has different semantics than normal refs. These refs can be
+	accessed via normal Git commands but may not behave the same as a
+	normal ref in some cases.
++
+The following special refs are known to Git:
+
+ - "`FETCH_HEAD`" is written by linkgit:git-fetch[1] or linkgit:git-pull[1]. It
+   may refer to multiple object IDs. Each object ID is annotated with metadata
+   indicating where it was fetched from and its fetch status.
+
+ - "`MERGE_HEAD`" is written by linkgit:git-merge[1] when resolving merge
+   conflicts. It contains all commit IDs which are being merged.
+
 [[def_submodule]]submodule::
 	A <<def_repository,repository>> that holds the history of a
 	separate project inside another repository (the latter of

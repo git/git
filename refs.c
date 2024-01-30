@@ -1839,13 +1839,10 @@ done:
 static int is_special_ref(const char *refname)
 {
 	/*
-	 * Special references get written and read directly via the filesystem
-	 * by the subsystems that create them. Thus, they must not go through
-	 * the reference backend but must instead be read directly. It is
-	 * arguable whether this behaviour is sensible, or whether it's simply
-	 * a leaky abstraction enabled by us only having a single reference
-	 * backend implementation. But at least for a subset of references it
-	 * indeed does make sense to treat them specially:
+	 * Special references are refs that have different semantics compared
+	 * to "normal" refs. These refs can thus not be stored in the ref
+	 * backend, but must always be accessed via the filesystem. The
+	 * following refs are special:
 	 *
 	 * - FETCH_HEAD may contain multiple object IDs, and each one of them
 	 *   carries additional metadata like where it came from.
@@ -1853,30 +1850,12 @@ static int is_special_ref(const char *refname)
 	 * - MERGE_HEAD may contain multiple object IDs when merging multiple
 	 *   heads.
 	 *
-	 * There are some exceptions that you might expect to see on this list
-	 * but which are handled exclusively via the reference backend:
-	 *
-	 * - BISECT_EXPECTED_REV
-	 *
-	 * - CHERRY_PICK_HEAD
-	 *
-	 * - HEAD
-	 *
-	 * - ORIG_HEAD
-	 *
-	 * - "rebase-apply/" and "rebase-merge/" contain all of the state for
-	 *   rebases, including some reference-like files. These are
-	 *   exclusively read and written via the filesystem and never go
-	 *   through the refdb.
-	 *
-	 * Writing or deleting references must consistently go either through
-	 * the filesystem (special refs) or through the reference backend
-	 * (normal ones).
+	 * Reading, writing or deleting references must consistently go either
+	 * through the filesystem (special refs) or through the reference
+	 * backend (normal ones).
 	 */
 	static const char * const special_refs[] = {
-		"AUTO_MERGE",
 		"FETCH_HEAD",
-		"MERGE_AUTOSTASH",
 		"MERGE_HEAD",
 	};
 	size_t i;

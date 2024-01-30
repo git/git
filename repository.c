@@ -262,8 +262,6 @@ static void repo_clear_path_cache(struct repo_path_cache *cache)
 	FREE_AND_NULL(cache->merge_rr);
 	FREE_AND_NULL(cache->merge_mode);
 	FREE_AND_NULL(cache->merge_head);
-	FREE_AND_NULL(cache->merge_autostash);
-	FREE_AND_NULL(cache->auto_merge);
 	FREE_AND_NULL(cache->fetch_head);
 	FREE_AND_NULL(cache->shallow);
 }
