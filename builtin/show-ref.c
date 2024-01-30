@@ -238,7 +238,7 @@ static int cmd_show_ref__exists(const char **refs)
 	if (refs_read_raw_ref(get_main_ref_store(the_repository), ref,
 			      &unused_oid, &unused_referent, &unused_type,
 			      &failure_errno)) {
-		if (failure_errno == ENOENT) {
+		if (failure_errno == ENOENT || failure_errno == EISDIR) {
 			error(_("reference does not exist"));
 			ret = 2;
 		} else {

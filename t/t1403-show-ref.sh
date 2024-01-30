@@ -262,9 +262,9 @@ test_expect_success '--exists with non-commit object' '
 
 test_expect_success '--exists with directory fails with generic error' '
 	cat >expect <<-EOF &&
-	error: failed to look up reference: Is a directory
+	error: reference does not exist
 	EOF
-	test_expect_code 1 git show-ref --exists refs/heads 2>err &&
+	test_expect_code 2 git show-ref --exists refs/heads 2>err &&
 	test_cmp expect err
 '
 
