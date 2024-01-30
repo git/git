@@ -66,6 +66,7 @@ int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 	strbuf_addstr(&list_file_name, "/tables.list");
 
 	p->list_file = strbuf_detach(&list_file_name, NULL);
+	p->list_fd = -1;
 	p->reftable_dir = xstrdup(dir);
 	p->config = config;
 
@@ -175,6 +176,12 @@ void reftable_stack_destroy(struct reftable_stack *st)
 		st->readers_len = 0;
 		FREE_AND_NULL(st->readers);
 	}
+
+	if (st->list_fd >= 0) {
+		close(st->list_fd);
+		st->list_fd = -1;
+	}
+
 	FREE_AND_NULL(st->list_file);
 	FREE_AND_NULL(st->reftable_dir);
 	reftable_free(st);
@@ -304,69 +311,134 @@ static int tv_cmp(struct timeval *a, struct timeval *b)
 static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 					     int reuse_open)
 {
-	struct timeval deadline = { 0 };
-	int err = gettimeofday(&deadline, NULL);
+	char **names = NULL, **names_after = NULL;
+	struct timeval deadline;
 	int64_t delay = 0;
-	int tries = 0;
+	int tries = 0, err;
+	int fd = -1;
+
+	err = gettimeofday(&deadline, NULL);
 	if (err < 0)
-		return err;
-
+		goto out;
 	deadline.tv_sec += 3;
+
 	while (1) {
-		char **names = NULL;
-		char **names_after = NULL;
-		struct timeval now = { 0 };
-		int err = gettimeofday(&now, NULL);
-		int err2 = 0;
-		if (err < 0) {
-			return err;
-		}
+		struct timeval now;
 
-		/* Only look at deadlines after the first few times. This
-		   simplifies debugging in GDB */
+		err = gettimeofday(&now, NULL);
+		if (err < 0)
+			goto out;
+
+		/*
+		 * Only look at deadlines after the first few times. This
+		 * simplifies debugging in GDB.
+		 */
 		tries++;
-		if (tries > 3 && tv_cmp(&now, &deadline) >= 0) {
-			break;
+		if (tries > 3 && tv_cmp(&now, &deadline) >= 0)
+			goto out;
+
+		fd = open(st->list_file, O_RDONLY);
+		if (fd < 0) {
+			if (errno != ENOENT) {
+				err = REFTABLE_IO_ERROR;
+				goto out;
+			}
+
+			names = reftable_calloc(sizeof(char *));
+		} else {
+			err = fd_read_lines(fd, &names);
+			if (err < 0)
+				goto out;
 		}
 
-		err = read_lines(st->list_file, &names);
-		if (err < 0) {
-			free_names(names);
-			return err;
-		}
 		err = reftable_stack_reload_once(st, names, reuse_open);
-		if (err == 0) {
-			free_names(names);
+		if (!err)
 			break;
-		}
-		if (err != REFTABLE_NOT_EXIST_ERROR) {
-			free_names(names);
-			return err;
-		}
+		if (err != REFTABLE_NOT_EXIST_ERROR)
+			goto out;
 
-		/* err == REFTABLE_NOT_EXIST_ERROR can be caused by a concurrent
-		   writer. Check if there was one by checking if the name list
-		   changed.
-		*/
-		err2 = read_lines(st->list_file, &names_after);
-		if (err2 < 0) {
-			free_names(names);
-			return err2;
-		}
-
+		/*
+		 * REFTABLE_NOT_EXIST_ERROR can be caused by a concurrent
+		 * writer. Check if there was one by checking if the name list
+		 * changed.
+		 */
+		err = read_lines(st->list_file, &names_after);
+		if (err < 0)
+			goto out;
 		if (names_equal(names_after, names)) {
-			free_names(names);
-			free_names(names_after);
-			return err;
+			err = REFTABLE_NOT_EXIST_ERROR;
+			goto out;
 		}
+
 		free_names(names);
+		names = NULL;
 		free_names(names_after);
+		names_after = NULL;
+		close(fd);
+		fd = -1;
 
 		delay = delay + (delay * rand()) / RAND_MAX + 1;
 		sleep_millisec(delay);
 	}
 
-	return 0;
+out:
+	/*
+	 * Invalidate the stat cache. It is sufficient to only close the file
+	 * descriptor and keep the cached stat info because we never use the
+	 * latter when the former is negative.
+	 */
+	if (st->list_fd >= 0) {
+		close(st->list_fd);
+		st->list_fd = -1;
+	}
+
+	/*
+	 * Cache stat information in case it provides a useful signal to us.
+	 * According to POSIX, "The st_ino and st_dev fields taken together
+	 * uniquely identify the file within the system." That being said,
+	 * Windows is not POSIX compliant and we do not have these fields
+	 * available. So the information we have there is insufficient to
+	 * determine whether two file descriptors point to the same file.
+	 *
+	 * While we could fall back to using other signals like the file's
+	 * mtime, those are not sufficient to avoid races. We thus refrain from
+	 * using the stat cache on such systems and fall back to the secondary
+	 * caching mechanism, which is to check whether contents of the file
+	 * have changed.
+	 *
+	 * On other systems which are POSIX compliant we must keep the file
+	 * descriptor open. This is to avoid a race condition where two
+	 * processes access the reftable stack at the same point in time:
+	 *
+	 *   1. A reads the reftable stack and caches its stat info.
+	 *
+	 *   2. B updates the stack, appending a new table to "tables.list".
+	 *      This will both use a new inode and result in a different file
+	 *      size, thus invalidating A's cache in theory.
+	 *
+	 *   3. B decides to auto-compact the stack and merges two tables. The
+	 *      file size now matches what A has cached again. Furthermore, the
+	 *      filesystem may decide to recycle the inode number of the file
+	 *      we have replaced in (2) because it is not in use anymore.
+	 *
+	 *   4. A reloads the reftable stack. Neither the inode number nor the
+	 *      file size changed. If the timestamps did not change either then
+	 *      we think the cached copy of our stack is up-to-date.
+	 *
+	 * By keeping the file descriptor open the inode number cannot be
+	 * recycled, mitigating the race.
+	 */
+	if (!err && fd >= 0 && !fstat(fd, &st->list_st) &&
+	    st->list_st.st_dev && st->list_st.st_ino) {
+		st->list_fd = fd;
+		fd = -1;
+	}
+
+	if (fd >= 0)
+		close(fd);
+	free_names(names);
+	free_names(names_after);
+	return err;
 }
 
 /* -1 = error
@@ -375,8 +447,44 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 static int stack_uptodate(struct reftable_stack *st)
 {
 	char **names = NULL;
-	int err = read_lines(st->list_file, &names);
+	int err;
 	int i = 0;
+
+	/*
+	 * When we have cached stat information available then we use it to
+	 * verify whether the file has been rewritten.
+	 *
+	 * Note that we explicitly do not want to use `stat_validity_check()`
+	 * and friends here because they may end up not comparing the `st_dev`
+	 * and `st_ino` fields. These functions thus cannot guarantee that we
+	 * indeed still have the same file.
+	 */
+	if (st->list_fd >= 0) {
+		struct stat list_st;
+
+		if (stat(st->list_file, &list_st) < 0) {
+			/*
+			 * It's fine for "tables.list" to not exist. In that
+			 * case, we have to refresh when the loaded stack has
+			 * any readers.
+			 */
+			if (errno == ENOENT)
+				return !!st->readers_len;
+			return REFTABLE_IO_ERROR;
+		}
+
+		/*
+		 * When "tables.list" refers to the same file we can assume
+		 * that it didn't change. This is because we always use
+		 * rename(3P) to update the file and never write to it
+		 * directly.
+		 */
+		if (st->list_st.st_dev == list_st.st_dev &&
+		    st->list_st.st_ino == list_st.st_ino)
+			return 0;
+	}
+
+	err = read_lines(st->list_file, &names);
 	if (err < 0)
 		return err;
 
@@ -559,7 +667,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 	add->new_tables = NULL;
 	add->new_tables_len = 0;
 
-	err = reftable_stack_reload(add->stack);
+	err = reftable_stack_reload_maybe_reuse(add->stack, 1);
 	if (err)
 		goto done;
 
