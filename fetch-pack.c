@@ -2216,7 +2216,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 					   the_repository, "%d",
 					   negotiation_round);
 	}
-	trace2_region_enter("fetch-pack", "negotiate_using_fetch", the_repository);
+	trace2_region_leave("fetch-pack", "negotiate_using_fetch", the_repository);
 	trace2_data_intmax("negotiate_using_fetch", the_repository,
 			   "total_rounds", negotiation_round);
 	clear_common_flag(acked_commits);
