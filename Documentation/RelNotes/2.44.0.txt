@@ -63,6 +63,17 @@ UI, Workflows & Features
    FETCH_HEAD and MERGE_HEAD, and clarify everything else that used to
    be classified as such are actually just pseudorefs.
 
+ * All conditional "advice" messages show how to turn them off, which
+   becomes repetitive.  Setting advice.* configuration explicitly on
+   now omits the instruction part.
+
+ * The "disable repository discovery of a bare repository" check,
+   triggered by setting safe.bareRepository configuration variable to
+   'explicit', has been loosened to exclude the ".git/" directory inside
+   a non-bare repository from the check.  So you can do "cd .git &&
+   git cmd" to run a Git command that works on a bare repository without
+   explicitly specifying $GIT_DIR now.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -225,6 +236,17 @@ Fixes since v2.43
    incomplete line.
    (merge 1c5bc6971e en/diffcore-delta-final-line-fix later to maint).
 
+ * GitHub CI update.
+   (merge 0188b2c8e0 pb/ci-github-skip-logs-for-broken-tests later to maint).
+
+ * "git diff --no-rename A B" did not disable rename detection but did
+   not trigger an error from the command line parser.
+   (merge 457f96252f rs/parse-options-with-keep-unknown-abbrev-fix later to maint).
+
+ * "git archive --remote=<remote>" learned to talk over the smart
+   http (aka stateless) transport.
+   (merge 176cd68634 jx/remote-archive-over-smart-http later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -263,3 +285,4 @@ Fixes since v2.43
    (merge 8430b438f6 vd/fsck-submodule-url-test later to maint).
    (merge f10031fadd nb/rebase-x-shell-docfix later to maint).
    (merge af3d2c160f jc/majordomo-to-subspace later to maint).
+   (merge ee9895b0ff sd/negotiate-trace-fix later to maint).
