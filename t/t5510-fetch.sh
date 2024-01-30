@@ -169,6 +169,7 @@ test_expect_success REFFILES 'fetch --prune fails to delete branches' '
 	git clone . prune-fail &&
 	cd prune-fail &&
 	git update-ref refs/remotes/origin/extrabranch main &&
+	git pack-refs --all &&
 	: this will prevent --prune from locking packed-refs for deleting refs, but adding loose refs still succeeds  &&
 	>.git/packed-refs.new &&
 
@@ -802,7 +803,8 @@ test_expect_success 'fetch.writeCommitGraph with submodules' '
 		cd super-clone &&
 		rm -rf .git/objects/info &&
 		git -c fetch.writeCommitGraph=true fetch origin &&
-		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain
+		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain &&
+		git -c fetch.writeCommitGraph=true fetch --recurse-submodules origin
 	)
 '
 

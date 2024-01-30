@@ -708,30 +708,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	if (use_global_config) {
-		char *user_config, *xdg_config;
-
-		git_global_config(&user_config, &xdg_config);
-		if (!user_config)
-			/*
-			 * It is unknown if HOME/.gitconfig exists, so
-			 * we do not know if we should write to XDG
-			 * location; error out even if XDG_CONFIG_HOME
-			 * is set and points at a sane location.
-			 */
+		given_config_source.file = git_global_config();
+		if (!given_config_source.file)
 			die(_("$HOME not set"));
-
 		given_config_source.scope = CONFIG_SCOPE_GLOBAL;
-
-		if (access_or_warn(user_config, R_OK, 0) &&
-		    xdg_config && !access_or_warn(xdg_config, R_OK, 0)) {
-			given_config_source.file = xdg_config;
-			free(user_config);
-		} else {
-			given_config_source.file = user_config;
-			free(xdg_config);
-		}
-	}
-	else if (use_system_config) {
+	} else if (use_system_config) {
 		given_config_source.file = git_system_config();
 		given_config_source.scope = CONFIG_SCOPE_SYSTEM;
 	} else if (use_local_config) {
@@ -759,7 +740,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	} else if (given_config_source.blob) {
 		given_config_source.scope = CONFIG_SCOPE_COMMAND;
 	}
-
 
 	if (respect_includes_opt == -1)
 		config_options.respect_includes = !given_config_source.file;

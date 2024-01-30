@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-use 5.008;
+use 5.008001;
 use lib (split(/:/, $ENV{GITPERLLIB}));
 use strict;
 use warnings;

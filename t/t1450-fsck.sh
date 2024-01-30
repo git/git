@@ -15,6 +15,7 @@ test_expect_success setup '
 	git config --unset i18n.commitencoding &&
 	git checkout HEAD^0 &&
 	test_commit B fileB two &&
+	orig_head=$(git rev-parse HEAD) &&
 	git tag -d A B &&
 	git reflog expire --expire=now --all
 '
@@ -115,15 +116,15 @@ test_expect_success 'zlib corrupt loose object output ' '
 '
 
 test_expect_success 'branch pointing to non-commit' '
-	git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
+	tree_oid=$(git rev-parse --verify HEAD^{tree}) &&
 	test_when_finished "git update-ref -d refs/heads/invalid" &&
+	test-tool ref-store main update-ref msg refs/heads/invalid $tree_oid $ZERO_OID REF_SKIP_OID_VERIFICATION &&
 	test_must_fail git fsck 2>out &&
 	test_grep "not a commit" out
 '
 
-test_expect_success 'HEAD link pointing at a funny object' '
-	test_when_finished "mv .git/SAVED_HEAD .git/HEAD" &&
-	mv .git/HEAD .git/SAVED_HEAD &&
+test_expect_success REFFILES 'HEAD link pointing at a funny object' '
+	test_when_finished "git update-ref HEAD $orig_head" &&
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
@@ -131,27 +132,25 @@ test_expect_success 'HEAD link pointing at a funny object' '
 '
 
 test_expect_success 'HEAD link pointing at a funny place' '
-	test_when_finished "mv .git/SAVED_HEAD .git/HEAD" &&
-	mv .git/HEAD .git/SAVED_HEAD &&
-	echo "ref: refs/funny/place" >.git/HEAD &&
+	test_when_finished "git update-ref --no-deref HEAD $orig_head" &&
+	test-tool ref-store main create-symref HEAD refs/funny/place &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
 	test_grep "HEAD points to something strange" out
 '
 
-test_expect_success 'HEAD link pointing at a funny object (from different wt)' '
-	test_when_finished "mv .git/SAVED_HEAD .git/HEAD" &&
-	test_when_finished "rm -rf .git/worktrees wt" &&
+test_expect_success REFFILES 'HEAD link pointing at a funny object (from different wt)' '
+	test_when_finished "git update-ref HEAD $orig_head" &&
+	test_when_finished "git worktree remove -f wt" &&
 	git worktree add wt &&
-	mv .git/HEAD .git/SAVED_HEAD &&
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail git -C wt fsck 2>out &&
 	test_grep "main-worktree/HEAD: detached HEAD points" out
 '
 
-test_expect_success 'other worktree HEAD link pointing at a funny object' '
-	test_when_finished "rm -rf .git/worktrees other" &&
+test_expect_success REFFILES 'other worktree HEAD link pointing at a funny object' '
+	test_when_finished "git worktree remove -f other" &&
 	git worktree add other &&
 	echo $ZERO_OID >.git/worktrees/other/HEAD &&
 	test_must_fail git fsck 2>out &&
@@ -159,17 +158,18 @@ test_expect_success 'other worktree HEAD link pointing at a funny object' '
 '
 
 test_expect_success 'other worktree HEAD link pointing at missing object' '
-	test_when_finished "rm -rf .git/worktrees other" &&
+	test_when_finished "git worktree remove -f other" &&
 	git worktree add other &&
-	echo "Contents missing from repo" | git hash-object --stdin >.git/worktrees/other/HEAD &&
+	object_id=$(echo "Contents missing from repo" | git hash-object --stdin) &&
+	test-tool -C other ref-store main update-ref msg HEAD $object_id "" REF_NO_DEREF,REF_SKIP_OID_VERIFICATION &&
 	test_must_fail git fsck 2>out &&
 	test_grep "worktrees/other/HEAD: invalid sha1 pointer" out
 '
 
 test_expect_success 'other worktree HEAD link pointing at a funny place' '
-	test_when_finished "rm -rf .git/worktrees other" &&
+	test_when_finished "git worktree remove -f other" &&
 	git worktree add other &&
-	echo "ref: refs/funny/place" >.git/worktrees/other/HEAD &&
+	git -C other symbolic-ref HEAD refs/funny/place &&
 	test_must_fail git fsck 2>out &&
 	test_grep "worktrees/other/HEAD points to something strange" out
 '
@@ -391,7 +391,7 @@ test_expect_success 'tag pointing to nonexistent' '
 
 	tag=$(git hash-object -t tag -w --stdin <invalid-tag) &&
 	test_when_finished "remove_object $tag" &&
-	echo $tag >.git/refs/tags/invalid &&
+	git update-ref refs/tags/invalid $tag &&
 	test_when_finished "git update-ref -d refs/tags/invalid" &&
 	test_must_fail git fsck --tags >out &&
 	test_grep "broken link" out
@@ -411,7 +411,7 @@ test_expect_success 'tag pointing to something else than its type' '
 
 	tag=$(git hash-object -t tag -w --stdin <wrong-tag) &&
 	test_when_finished "remove_object $tag" &&
-	echo $tag >.git/refs/tags/wrong &&
+	git update-ref refs/tags/wrong $tag &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags
 '
@@ -428,7 +428,7 @@ test_expect_success 'tag with incorrect tag name & missing tagger' '
 
 	tag=$(git hash-object --literally -t tag -w --stdin <wrong-tag) &&
 	test_when_finished "remove_object $tag" &&
-	echo $tag >.git/refs/tags/wrong &&
+	git update-ref refs/tags/wrong $tag &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	git fsck --tags 2>out &&
 
@@ -452,7 +452,7 @@ test_expect_success 'tag with bad tagger' '
 
 	tag=$(git hash-object --literally -t tag -w --stdin <wrong-tag) &&
 	test_when_finished "remove_object $tag" &&
-	echo $tag >.git/refs/tags/wrong &&
+	git update-ref refs/tags/wrong $tag &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
 	test_grep "error in tag .*: invalid author/committer" out
@@ -471,7 +471,7 @@ test_expect_success 'tag with NUL in header' '
 
 	tag=$(git hash-object --literally -t tag -w --stdin <tag-NUL-header) &&
 	test_when_finished "remove_object $tag" &&
-	echo $tag >.git/refs/tags/wrong &&
+	git update-ref refs/tags/wrong $tag &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
 	test_grep "error in tag $tag.*unterminated header: NUL at offset" out

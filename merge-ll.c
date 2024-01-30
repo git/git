@@ -301,7 +301,7 @@ static int read_merge_config(const char *var, const char *value,
 
 	if (!strcmp("driver", key)) {
 		if (!value)
-			return error("%s: lacks value", var);
+			return config_error_nonbool(var);
 		/*
 		 * merge.<name>.driver specifies the command line:
 		 *

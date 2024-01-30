@@ -3,8 +3,8 @@
 
 /*
  * JSON data structures are defined at:
- * [1] http://www.ietf.org/rfc/rfc7159.txt
- * [2] http://json.org/
+ * [1] https://www.ietf.org/rfc/rfc7159.txt
+ * [2] https://www.json.org/
  *
  * The JSON-writer API allows one to build JSON data structures using a
  * simple wrapper around a "struct strbuf" buffer.  It is intended as a

@@ -118,6 +118,7 @@ struct remote {
  * and configuration.
  */
 struct remote *remote_get(const char *name);
+struct remote *remote_get_early(const char *name);
 
 struct remote *pushremote_get(const char *name);
 int remote_is_configured(struct remote *remote, int in_repo);
@@ -400,8 +401,6 @@ struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);
 /*
  * Compare-and-swap
  */
-#define CAS_OPT_NAME "force-with-lease"
-
 struct push_cas_option {
 	unsigned use_tracking_for_rest:1;
 	unsigned use_force_if_includes:1;

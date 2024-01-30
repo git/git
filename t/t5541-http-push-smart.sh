@@ -232,8 +232,9 @@ test_expect_success 'push --atomic fails on server-side errors' '
 	test_config -C "$d" http.receivepack true &&
 	up="$HTTPD_URL"/smart/atomic-branches.git &&
 
-	# break ref updates for other on the remote site
-	mkdir "$d/refs/heads/other.lock" &&
+	# Create d/f conflict to break ref updates for other on the remote site.
+	git -C "$d" update-ref -d refs/heads/other &&
+	git -C "$d" update-ref refs/heads/other/conflict HEAD &&
 
 	# add the new commit to other
 	git branch -f other collateral &&
@@ -241,18 +242,9 @@ test_expect_success 'push --atomic fails on server-side errors' '
 	# --atomic should cause entire push to be rejected
 	test_must_fail git push --atomic "$up" atomic other 2>output  &&
 
-	# the new branch should not have been created upstream
+	# The atomic and other branches should not be created upstream.
 	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
-
-	# upstream should still reflect atomic2, the last thing we pushed
-	# successfully
-	git rev-parse atomic2 >expected &&
-	# ...to other.
-	git -C "$d" rev-parse refs/heads/other >actual &&
-	test_cmp expected actual &&
-
-	# the new branch should not have been created upstream
-	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+	test_must_fail git -C "$d" show-ref --verify refs/heads/other &&
 
 	# the failed refs should be indicated to the user
 	grep "^ ! .*rejected.* other -> other .*atomic transaction failed" output &&

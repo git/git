@@ -11,14 +11,12 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "reftable-blocksource.h"
 #include "reftable-error.h"
-#include "reftable-merged.h"
 #include "reftable-record.h"
 #include "reftable-tests.h"
 #include "reftable-writer.h"
 #include "reftable-iterator.h"
 #include "reftable-reader.h"
 #include "reftable-stack.h"
-#include "reftable-generic.h"
 
 #include <stddef.h>
 #include <stdio.h>

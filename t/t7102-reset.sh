@@ -616,4 +616,12 @@ test_expect_success 'reset --mixed sets up work tree' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'reset handles --end-of-options' '
+	git update-ref refs/heads/--foo HEAD^ &&
+	git log -1 --format=%s refs/heads/--foo >expect &&
+	git reset --hard --end-of-options --foo &&
+	git log -1 --format=%s HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done

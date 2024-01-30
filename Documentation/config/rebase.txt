@@ -9,7 +9,9 @@ rebase.stat::
 	rebase. False by default.
 
 rebase.autoSquash::
-	If set to true enable `--autosquash` option by default.
+	If set to true, enable the `--autosquash` option of
+	linkgit:git-rebase[1] by default for interactive mode.
+	This can be overridden with the `--no-autosquash` option.
 
 rebase.autoStash::
 	When set to true, automatically create a temporary stash entry
@@ -38,7 +40,7 @@ rebase.missingCommitsCheck::
 rebase.instructionFormat::
 	A format string, as specified in linkgit:git-log[1], to be used for the
 	todo list during an interactive rebase.  The format will
-	automatically have the long commit hash prepended to the format.
+	automatically have the commit hash prepended to the format.
 
 rebase.abbreviateCommands::
 	If set to true, `git rebase` will use abbreviated command names in the

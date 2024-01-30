@@ -151,6 +151,21 @@ void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 	init_recursive_mutex(&pdata->odb_lock);
 }
 
+void clear_packing_data(struct packing_data *pdata)
+{
+	if (!pdata)
+		return;
+
+	free(pdata->cruft_mtime);
+	free(pdata->in_pack);
+	free(pdata->in_pack_by_idx);
+	free(pdata->in_pack_pos);
+	free(pdata->index);
+	free(pdata->layer);
+	free(pdata->objects);
+	free(pdata->tree_depth);
+}
+
 struct object_entry *packlist_alloc(struct packing_data *pdata,
 				    const struct object_id *oid)
 {

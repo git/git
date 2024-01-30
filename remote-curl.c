@@ -8,11 +8,9 @@
 #include "strbuf.h"
 #include "walker.h"
 #include "http.h"
-#include "exec-cmd.h"
 #include "run-command.h"
 #include "pkt-line.h"
 #include "string-list.h"
-#include "sideband.h"
 #include "strvec.h"
 #include "credential.h"
 #include "oid-array.h"
@@ -22,6 +20,7 @@
 #include "quote.h"
 #include "trace2.h"
 #include "transport.h"
+#include "url.h"
 #include "write-or-die.h"
 
 static struct remote *remote;
@@ -1564,8 +1563,11 @@ int cmd_main(int argc, const char **argv)
 		if (buf.len == 0)
 			break;
 		if (starts_with(buf.buf, "fetch ")) {
-			if (nongit)
-				die(_("remote-curl: fetch attempted without a local repo"));
+			if (nongit) {
+				setup_git_directory_gently(&nongit);
+				if (nongit)
+					die(_("remote-curl: fetch attempted without a local repo"));
+			}
 			parse_fetch(&buf);
 
 		} else if (!strcmp(buf.buf, "list") || starts_with(buf.buf, "list ")) {

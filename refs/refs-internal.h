@@ -529,7 +529,9 @@ typedef struct ref_store *ref_store_init_fn(struct repository *repo,
 					    const char *gitdir,
 					    unsigned int flags);
 
-typedef int ref_init_db_fn(struct ref_store *refs, struct strbuf *err);
+typedef int ref_init_db_fn(struct ref_store *refs,
+			   int flags,
+			   struct strbuf *err);
 
 typedef int ref_transaction_prepare_fn(struct ref_store *refs,
 				       struct ref_transaction *transaction,
@@ -553,8 +555,6 @@ typedef int create_symref_fn(struct ref_store *ref_store,
 			     const char *ref_target,
 			     const char *refs_heads_master,
 			     const char *logmsg);
-typedef int delete_refs_fn(struct ref_store *ref_store, const char *msg,
-			   struct string_list *refnames, unsigned int flags);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
@@ -665,7 +665,6 @@ typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refnam
 				 struct strbuf *referent);
 
 struct ref_storage_be {
-	struct ref_storage_be *next;
 	const char *name;
 	ref_store_init_fn *init;
 	ref_init_db_fn *init_db;
@@ -677,7 +676,6 @@ struct ref_storage_be {
 
 	pack_refs_fn *pack_refs;
 	create_symref_fn *create_symref;
-	delete_refs_fn *delete_refs;
 	rename_ref_fn *rename_ref;
 	copy_ref_fn *copy_ref;
 

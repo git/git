@@ -30,15 +30,12 @@
 #include "pager.h"
 #include "path.h"
 #include "utf8.h"
-#include "dir.h"
 #include "color.h"
-#include "replace-object.h"
 #include "refs.h"
 #include "setup.h"
 #include "strvec.h"
 #include "trace2.h"
 #include "wildmatch.h"
-#include "worktree.h"
 #include "ws.h"
 #include "write-or-die.h"
 
@@ -97,7 +94,6 @@ static long config_file_ftell(struct config_source *conf)
 {
 	return ftell(conf->u.file);
 }
-
 
 static int config_buf_fgetc(struct config_source *conf)
 {
@@ -1386,10 +1382,15 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "core.checkstat")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (!strcasecmp(value, "default"))
 			check_stat = 1;
 		else if (!strcasecmp(value, "minimal"))
 			check_stat = 0;
+		else
+			return error(_("invalid value for '%s': '%s'"),
+				     var, value);
 	}
 
 	if (!strcmp(var, "core.quotepath")) {
@@ -1546,12 +1547,12 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.checkroundtripencoding")) {
-		check_roundtrip_encoding = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.checkroundtripencoding"))
+		return git_config_string(&check_roundtrip_encoding, var, value);
 
 	if (!strcmp(var, "core.notesref")) {
+		if (!value)
+			return config_error_nonbool(var);
 		notes_ref_name = xstrdup(value);
 		return 0;
 	}
@@ -1619,6 +1620,8 @@ static int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.createobject")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (!strcmp(value, "rename"))
 			object_creation_mode = OBJECT_CREATION_USES_RENAMES;
 		else if (!strcmp(value, "link"))
@@ -1984,7 +1987,27 @@ char *git_system_config(void)
 	return system_config;
 }
 
-void git_global_config(char **user_out, char **xdg_out)
+char *git_global_config(void)
+{
+	char *user_config, *xdg_config;
+
+	git_global_config_paths(&user_config, &xdg_config);
+	if (!user_config) {
+		free(xdg_config);
+		return NULL;
+	}
+
+	if (access_or_warn(user_config, R_OK, 0) && xdg_config &&
+	    !access_or_warn(xdg_config, R_OK, 0)) {
+		free(user_config);
+		return xdg_config;
+	} else {
+		free(xdg_config);
+		return user_config;
+	}
+}
+
+void git_global_config_paths(char **user_out, char **xdg_out)
 {
 	char *user_config = xstrdup_or_null(getenv("GIT_CONFIG_GLOBAL"));
 	char *xdg_config = NULL;
@@ -2037,7 +2060,7 @@ static int do_git_config_sequence(const struct config_options *opts,
 							 data, CONFIG_SCOPE_SYSTEM,
 							 NULL);
 
-	git_global_config(&user_config, &xdg_config);
+	git_global_config_paths(&user_config, &xdg_config);
 
 	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
 		ret += git_config_from_file_with_options(fn, xdg_config, data,
@@ -3414,7 +3437,6 @@ out_free:
 write_err_out:
 	ret = write_error(get_lock_file_path(&lock));
 	goto out_free;
-
 }
 
 void git_config_set_multivar_in_file(const char *config_filename,

@@ -540,17 +540,17 @@ test_expect_success 'detect low chunk count' '
 
 test_expect_success 'detect missing OID fanout chunk' '
 	corrupt_graph_and_verify $GRAPH_BYTE_OID_FANOUT_ID "\0" \
-		"missing the OID Fanout chunk"
+		"commit-graph required OID fanout chunk missing or corrupted"
 '
 
 test_expect_success 'detect missing OID lookup chunk' '
 	corrupt_graph_and_verify $GRAPH_BYTE_OID_LOOKUP_ID "\0" \
-		"missing the OID Lookup chunk"
+		"commit-graph required OID lookup chunk missing or corrupted"
 '
 
 test_expect_success 'detect missing commit data chunk' '
 	corrupt_graph_and_verify $GRAPH_BYTE_COMMIT_DATA_ID "\0" \
-		"missing the Commit Data chunk"
+		"commit-graph required commit data chunk missing or corrupted"
 '
 
 test_expect_success 'detect incorrect fanout' '
@@ -560,7 +560,7 @@ test_expect_success 'detect incorrect fanout' '
 
 test_expect_success 'detect incorrect fanout final value' '
 	corrupt_graph_and_verify $GRAPH_BYTE_FANOUT2 "\01" \
-		"oid table and fanout disagree on size"
+		"OID lookup chunk is the wrong size"
 '
 
 test_expect_success 'detect incorrect OID order' '
@@ -842,7 +842,7 @@ test_expect_success 'reader notices too-small oid fanout chunk' '
 	check_corrupt_chunk OIDF clear $(printf "000000%02x" $(test_seq 250)) &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph oid fanout chunk is wrong size
-	error: commit-graph is missing the OID Fanout chunk
+	error: commit-graph required OID fanout chunk missing or corrupted
 	EOF
 	test_cmp expect.err err
 '
@@ -850,7 +850,8 @@ test_expect_success 'reader notices too-small oid fanout chunk' '
 test_expect_success 'reader notices fanout/lookup table mismatch' '
 	check_corrupt_chunk OIDF 1020 "FFFFFFFF" &&
 	cat >expect.err <<-\EOF &&
-	error: commit-graph oid table and fanout disagree on size
+	error: commit-graph OID lookup chunk is the wrong size
+	error: commit-graph required OID lookup chunk missing or corrupted
 	EOF
 	test_cmp expect.err err
 '
@@ -866,6 +867,7 @@ test_expect_success 'reader notices out-of-bounds fanout' '
 	check_corrupt_chunk OIDF 0 $(printf "%02x000000" $(test_seq 0 254)) &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph fanout values out of order
+	error: commit-graph required OID fanout chunk missing or corrupted
 	EOF
 	test_cmp expect.err err
 '
@@ -874,7 +876,7 @@ test_expect_success 'reader notices too-small commit data chunk' '
 	check_corrupt_chunk CDAT clear 00000000 &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph commit data chunk is wrong size
-	error: commit-graph is missing the Commit Data chunk
+	error: commit-graph required commit data chunk missing or corrupted
 	EOF
 	test_cmp expect.err err
 '
@@ -909,10 +911,10 @@ test_expect_success 'stale commit cannot be parsed when given directly' '
 
 		# Verify that it is possible to read the commit from the
 		# commit graph when not being paranoid, ...
-		GIT_COMMIT_GRAPH_PARANOIA=false git rev-list B &&
+		git rev-list B &&
 		# ... but parsing the commit when double checking that
 		# it actually exists in the object database should fail.
-		test_must_fail git rev-list -1 B
+		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git rev-list -1 B
 	)
 '
 
@@ -936,9 +938,9 @@ test_expect_success 'stale commit cannot be parsed when traversing graph' '
 
 		# Again, we should be able to parse the commit when not
 		# being paranoid about commit graph staleness...
-		GIT_COMMIT_GRAPH_PARANOIA=false git rev-parse HEAD~2 &&
+		git rev-parse HEAD~2 &&
 		# ... but fail when we are paranoid.
-		test_must_fail git rev-parse HEAD~2 2>error &&
+		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git rev-parse HEAD~2 2>error &&
 		grep "error: commit $oid exists in commit-graph but not in the object database" error
 	)
 '

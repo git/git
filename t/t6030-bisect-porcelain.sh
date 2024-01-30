@@ -170,6 +170,12 @@ test_expect_success 'bisect reset when not bisecting' '
 	cmp branch.expect branch.output
 '
 
+test_expect_success 'bisect reset cleans up even when not bisecting' '
+	echo garbage >.git/BISECT_LOG &&
+	git bisect reset &&
+	test_path_is_missing .git/BISECT_LOG
+'
+
 test_expect_success 'bisect reset removes packed refs' '
 	git bisect reset &&
 	git bisect start &&
@@ -1176,7 +1182,7 @@ test_expect_success 'git bisect reset cleans bisection state properly' '
 	git bisect bad $HASH4 &&
 	git bisect reset &&
 	test -z "$(git for-each-ref "refs/bisect/*")" &&
-	test_path_is_missing ".git/BISECT_EXPECTED_REV" &&
+	test_ref_missing BISECT_EXPECTED_REV &&
 	test_path_is_missing ".git/BISECT_ANCESTORS_OK" &&
 	test_path_is_missing ".git/BISECT_LOG" &&
 	test_path_is_missing ".git/BISECT_RUN" &&

@@ -11,7 +11,6 @@
 #include "csum-file.h"
 #include "pack.h"
 #include "strbuf.h"
-#include "string-list.h"
 #include "tmp-objdir.h"
 #include "packfile.h"
 #include "object-file.h"

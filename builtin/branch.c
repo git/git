@@ -17,16 +17,14 @@
 #include "remote.h"
 #include "parse-options.h"
 #include "branch.h"
-#include "diff.h"
 #include "path.h"
-#include "revision.h"
 #include "string-list.h"
 #include "column.h"
 #include "utf8.h"
-#include "wt-status.h"
 #include "ref-filter.h"
 #include "worktree.h"
 #include "help.h"
+#include "advice.h"
 #include "commit-reach.h"
 
 static const char * const builtin_branch_usage[] = {
@@ -45,7 +43,6 @@ static const char *head;
 static struct object_id head_oid;
 static int recurse_submodules = 0;
 static int submodule_propagate_branches = 0;
-static int omit_empty = 0;
 
 static int branch_use_color = -1;
 static char branch_colors[][COLOR_MAXLEN] = {
@@ -194,9 +191,10 @@ static int check_branch_commit(const char *branchname, const char *refname,
 		return -1;
 	}
 	if (!force && !branch_merged(kinds, branchname, rev, head_rev)) {
-		error(_("the branch '%s' is not fully merged.\n"
-		      "If you are sure you want to delete it, "
-		      "run 'git branch -D %s'"), branchname, branchname);
+		error(_("the branch '%s' is not fully merged"), branchname);
+		advise_if_enabled(ADVICE_FORCE_DELETE_BRANCH,
+				  _("If you are sure you want to delete it, "
+				  "run 'git branch -D %s'"), branchname);
 		return -1;
 	}
 	return 0;
@@ -438,8 +436,6 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 {
 	int i;
 	struct ref_array array;
-	struct strbuf out = STRBUF_INIT;
-	struct strbuf err = STRBUF_INIT;
 	int maxwidth = 0;
 	const char *remote_prefix = "";
 	char *to_free = NULL;
@@ -469,24 +465,27 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	filter_ahead_behind(the_repository, format, &array);
 	ref_array_sort(sorting, &array);
 
-	for (i = 0; i < array.nr; i++) {
-		strbuf_reset(&err);
-		strbuf_reset(&out);
-		if (format_ref_array_item(array.items[i], format, &out, &err))
-			die("%s", err.buf);
-		if (column_active(colopts)) {
-			assert(!filter->verbose && "--column and --verbose are incompatible");
-			 /* format to a string_list to let print_columns() do its job */
+	if (column_active(colopts)) {
+		struct strbuf out = STRBUF_INIT, err = STRBUF_INIT;
+
+		assert(!filter->verbose && "--column and --verbose are incompatible");
+
+		for (i = 0; i < array.nr; i++) {
+			strbuf_reset(&err);
+			strbuf_reset(&out);
+			if (format_ref_array_item(array.items[i], format, &out, &err))
+				die("%s", err.buf);
+
+			/* format to a string_list to let print_columns() do its job */
 			string_list_append(output, out.buf);
-		} else {
-			fwrite(out.buf, 1, out.len, stdout);
-			if (out.len || !omit_empty)
-				putchar('\n');
 		}
+
+		strbuf_release(&err);
+		strbuf_release(&out);
+	} else {
+		print_formatted_ref_array(&array, format);
 	}
 
-	strbuf_release(&err);
-	strbuf_release(&out);
 	ref_array_clear(&array);
 	free(to_free);
 }
@@ -737,7 +736,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BIT('D', NULL, &delete, N_("delete branch (even if not merged)"), 2),
 		OPT_BIT('m', "move", &rename, N_("move/rename a branch and its reflog"), 1),
 		OPT_BIT('M', NULL, &rename, N_("move/rename a branch, even if target exists"), 2),
-		OPT_BOOL(0, "omit-empty",  &omit_empty,
+		OPT_BOOL(0, "omit-empty",  &format.array_opts.omit_empty,
 			N_("do not output a newline after empty formatted refs")),
 		OPT_BIT('c', "copy", &copy, N_("copy a branch and its reflog"), 1),
 		OPT_BIT('C', NULL, &copy, N_("copy a branch, even if target exists"), 2),
@@ -767,7 +766,13 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_branch_usage, options);
 
+	/*
+	 * Try to set sort keys from config. If config does not set any,
+	 * fall back on default (refname) sorting.
+	 */
 	git_config(git_branch_config, &sorting_options);
+	if (!sorting_options.nr)
+		string_list_append(&sorting_options, "refname");
 
 	track = git_branch_track;
 

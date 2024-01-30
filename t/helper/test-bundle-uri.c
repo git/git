@@ -5,9 +5,7 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "transport.h"
-#include "ref-filter.h"
 #include "remote.h"
-#include "refs.h"
 
 enum input_mode {
 	KEY_VALUE_PAIRS,

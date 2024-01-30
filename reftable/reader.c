@@ -16,7 +16,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "record.h"
 #include "reftable-error.h"
 #include "reftable-generic.h"
-#include "tree.h"
 
 uint64_t block_source_size(struct reftable_block_source *source)
 {
@@ -224,10 +223,9 @@ struct table_iter {
 	struct block_iter bi;
 	int is_finished;
 };
-#define TABLE_ITER_INIT                          \
-	{                                        \
-		.bi = {.last_key = STRBUF_INIT } \
-	}
+#define TABLE_ITER_INIT { \
+	.bi = BLOCK_ITER_INIT \
+}
 
 static void table_iter_copy_from(struct table_iter *dest,
 				 struct table_iter *src)

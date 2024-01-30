@@ -103,7 +103,7 @@ Just in case you are doing something exotic, it should be
 noted that all of the <commit> in the above description, except
 in the `--merge-base` case and in the last two forms that use `..`
 notations, can be any <tree>. A tree of interest is the one pointed to
-by the special ref `AUTO_MERGE`, which is written by the 'ort' merge
+by the ref named `AUTO_MERGE`, which is written by the 'ort' merge
 strategy upon hitting merge conflicts (see linkgit:git-merge[1]).
 Comparing the working tree with `AUTO_MERGE` shows changes you've made
 so far to resolve textual conflicts (see the examples below).

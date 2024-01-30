@@ -18,18 +18,16 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "git-compat-util.h"
 #include "config.h"
 #include "credential.h"
-#include "exec-cmd.h"
 #include "gettext.h"
 #include "run-command.h"
 #include "parse-options.h"
 #include "setup.h"
-#include "strbuf.h"
 #if defined(NO_OPENSSL) && !defined(HAVE_OPENSSL_CSPRNG)
 typedef void *SSL;
 #endif
@@ -860,7 +858,7 @@ static void imap_close_store(struct imap_store *ctx)
 
 /*
  * hexchar() and cram() functions are based on the code from the isync
- * project (http://isync.sf.net/).
+ * project (https://isync.sourceforge.io/).
  */
 static char hexchar(unsigned int b)
 {
@@ -1346,7 +1344,7 @@ static int git_imap_config(const char *var, const char *val,
 		server.port = git_config_int(var, val, ctx->kvi);
 	else if (!strcmp("imap.host", var)) {
 		if (!val) {
-			git_die_config("imap.host", "Missing value for 'imap.host'");
+			return config_error_nonbool(var);
 		} else {
 			if (starts_with(val, "imap:"))
 				val += 5;

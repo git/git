@@ -610,8 +610,8 @@ Approach #3 (external editor)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following Thunderbird extensions are needed:
-AboutConfig from http://aboutconfig.mozdev.org/ and
-External Editor from http://globs.org/articles.php?lng=en&pg=8
+AboutConfig from https://mjg.github.io/AboutConfig/ and
+External Editor from https://globs.org/articles.php?lng=en&pg=8
 
 1. Prepare the patch as a text file using your method of choice.
 

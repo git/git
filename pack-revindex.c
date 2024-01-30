@@ -520,19 +520,12 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
 	return 0;
 }
 
-int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
+static int midx_key_to_pack_pos(struct multi_pack_index *m,
+				struct midx_pack_key *key,
+				uint32_t *pos)
 {
-	struct midx_pack_key key;
 	uint32_t *found;
 
-	if (!m->revindex_data)
-		BUG("midx_to_pack_pos: reverse index not yet loaded");
-	if (m->num_objects <= at)
-		BUG("midx_to_pack_pos: out-of-bounds object at %"PRIu32, at);
-
-	key.pack = nth_midxed_pack_int_id(m, at);
-	key.offset = nth_midxed_offset(m, at);
-	key.midx = m;
 	/*
 	 * The preferred pack sorts first, so determine its identifier by
 	 * looking at the first object in pseudo-pack order.
@@ -542,14 +535,43 @@ int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
 	 * implicitly is preferred (and includes all its objects, since ties are
 	 * broken first by pack identifier).
 	 */
-	key.preferred_pack = nth_midxed_pack_int_id(m, pack_pos_to_midx(m, 0));
+	if (midx_preferred_pack(key->midx, &key->preferred_pack) < 0)
+		return error(_("could not determine preferred pack"));
 
-	found = bsearch(&key, m->revindex_data, m->num_objects,
-			sizeof(*m->revindex_data), midx_pack_order_cmp);
+	found = bsearch(key, m->revindex_data, m->num_objects,
+			sizeof(*m->revindex_data),
+			midx_pack_order_cmp);
 
 	if (!found)
-		return error("bad offset for revindex");
+		return -1;
 
 	*pos = found - m->revindex_data;
 	return 0;
+}
+
+int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
+{
+	struct midx_pack_key key;
+
+	if (!m->revindex_data)
+		BUG("midx_to_pack_pos: reverse index not yet loaded");
+	if (m->num_objects <= at)
+		BUG("midx_to_pack_pos: out-of-bounds object at %"PRIu32, at);
+
+	key.pack = nth_midxed_pack_int_id(m, at);
+	key.offset = nth_midxed_offset(m, at);
+	key.midx = m;
+
+	return midx_key_to_pack_pos(m, &key, pos);
+}
+
+int midx_pair_to_pack_pos(struct multi_pack_index *m, uint32_t pack_int_id,
+			  off_t ofs, uint32_t *pos)
+{
+	struct midx_pack_key key = {
+		.pack = pack_int_id,
+		.offset = ofs,
+		.midx = m,
+	};
+	return midx_key_to_pack_pos(m, &key, pos);
 }

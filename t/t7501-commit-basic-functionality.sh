@@ -3,8 +3,7 @@
 # Copyright (c) 2007 Kristian Høgsberg <krh@redhat.com>
 #
 
-# FIXME: Test the various index usages, -i and -o, test reflog,
-# signoff
+# FIXME: Test the various index usages, test reflog
 
 test_description='git commit'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -92,6 +91,34 @@ test_expect_success '--long fails with nothing to commit' '
 	test_must_fail git commit -m initial --long
 '
 
+test_expect_success 'fail to commit untracked file (even with --include/--only)' '
+	echo content >baz &&
+	error="error: pathspec .baz. did not match any file(s) known to git" &&
+
+	test_must_fail git commit -m "baz" baz 2>err &&
+	test_grep -e "$error" err &&
+
+	test_must_fail git commit --only -m "baz" baz 2>err &&
+	test_grep -e "$error" err &&
+
+	# TODO: as for --include, the below command will fail because
+	# nothing is staged. If something was staged, it would not fail
+	# even though the provided pathspec does not match any tracked
+	# path. (However, the untracked paths that match the pathspec are
+	# not committed and only the staged changes get committed.)
+	# In either cases, no error is returned to stderr like in (--only
+	# and without --only/--include) cases. In a similar manner,
+	# "git add -u baz" also does not error out.
+	#
+	# Therefore, the below test is just to document the current behavior
+	# and is not an endorsement to the current behavior, and we may
+	# want to fix this. And when that happens, this test should be
+	# updated accordingly.
+
+	test_must_fail git commit --include -m "baz" baz 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'setup: non-initial commit' '
 	echo bongo bongo bongo >file &&
 	git commit -m next -a
@@ -115,6 +142,51 @@ test_expect_success '--porcelain with stuff to commit returns ok' '
 test_expect_success '--long with stuff to commit returns ok' '
 	echo bongo bongo bongo >>file &&
 	git commit -m next -a --long
+'
+
+for opt in "" "-o" "--only"
+do
+	test_expect_success 'exclude additional staged changes when given pathspec' '
+		echo content >>file &&
+		echo content >>baz &&
+		git add baz &&
+		git commit $opt -m "file" file &&
+
+		git diff --name-only >actual &&
+		test_must_be_empty actual &&
+
+		test_write_lines baz >expect &&
+		git diff --name-only --cached >actual &&
+		test_cmp expect actual &&
+
+		test_write_lines file >expect &&
+		git diff --name-only HEAD^ HEAD >actual &&
+		test_cmp expect actual
+	'
+done
+
+test_expect_success '-i/--include includes staged changes' '
+	echo content >>file &&
+	echo content >>baz &&
+	git add file &&
+
+	# baz is in the index, therefore, it will be committed
+	git commit --include -m "file and baz" baz  &&
+
+	git diff --name-only HEAD >remaining &&
+	test_must_be_empty remaining &&
+
+	test_write_lines baz file >expect &&
+	git diff --name-only HEAD^ HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--include and --only do not mix' '
+	test_when_finished "git reset --hard" &&
+	echo content >>file &&
+	echo content >>baz &&
+	test_must_fail git commit --include --only -m "file baz" file baz 2>actual &&
+	test_grep -e "fatal: options .-i/--include. and .-o/--only. cannot be used together" actual
 '
 
 test_expect_success 'commit message from non-existing file' '
@@ -387,6 +459,28 @@ test_expect_success 'amend commit to fix date' '
 	git cat-file -p HEAD >current &&
 	test_cmp expected current
 
+'
+
+test_expect_success 'amend commit to add signoff' '
+
+	test_commit "msg" file content &&
+	git commit --amend --signoff &&
+	test_commit_message HEAD <<-EOF
+	msg
+
+	Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
+'
+
+test_expect_success 'amend does not add signoff if it already exists' '
+
+	test_commit --signoff "tenor" file newcontent &&
+	git commit --amend --signoff &&
+	test_commit_message HEAD <<-EOF
+	tenor
+
+	Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	EOF
 '
 
 test_expect_success 'commit mentions forced date in output' '

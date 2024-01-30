@@ -450,7 +450,7 @@ For C programs:
    one of the approved headers that includes it first for you.  (The
    approved headers currently include "builtin.h",
    "t/helper/test-tool.h", "xdiff/xinclude.h", or
-   "reftable/system.h").  You do not have to include more than one of
+   "reftable/system.h".)  You do not have to include more than one of
    these.
 
  - A C file must directly include the header files that declare the
@@ -490,7 +490,7 @@ For Perl programs:
 
  - Most of the C guidelines above apply.
 
- - We try to support Perl 5.8 and later ("use Perl 5.008").
+ - We try to support Perl 5.8.1 and later ("use Perl 5.008001").
 
  - use strict and use warnings are strongly preferred.
 
@@ -518,7 +518,7 @@ For Perl programs:
 
 For Python scripts:
 
- - We follow PEP-8 (http://www.python.org/dev/peps/pep-0008/).
+ - We follow PEP-8 (https://peps.python.org/pep-0008/).
 
  - As a minimum, we aim to be compatible with Python 2.7.
 
@@ -578,7 +578,7 @@ Externally Visible Names
    . The variable name describes the effect of tweaking this knob.
 
    The section and variable names that consist of multiple words are
-   formed by concatenating the words without punctuations (e.g. `-`),
+   formed by concatenating the words without punctuation marks (e.g. `-`),
    and are broken using bumpyCaps in documentation as a hint to the
    reader.
 

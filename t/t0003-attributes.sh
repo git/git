@@ -19,6 +19,20 @@ attr_check () {
 	test_must_be_empty err
 }
 
+attr_check_object_mode_basic () {
+	path="$1" &&
+	expect="$2" &&
+	check_opts="$3" &&
+	git check-attr $check_opts builtin_objectmode -- "$path" >actual 2>err &&
+	echo "$path: builtin_objectmode: $expect" >expect &&
+	test_cmp expect actual
+}
+
+attr_check_object_mode () {
+	attr_check_object_mode_basic "$@" &&
+	test_must_be_empty err
+}
+
 attr_check_quote () {
 	path="$1" quoted_path="$2" expect="$3" &&
 
@@ -555,6 +569,68 @@ test_expect_success EXPENSIVE 'large attributes file ignored in index' '
 	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
 	git check-attr --cached --all path >/dev/null 2>err &&
 	echo "warning: ignoring overly large gitattributes blob ${SQ}.gitattributes${SQ}" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'builtin object mode attributes work (dir and regular paths)' '
+	>normal &&
+	attr_check_object_mode normal 100644 &&
+	mkdir dir &&
+	attr_check_object_mode dir 040000
+'
+
+test_expect_success POSIXPERM 'builtin object mode attributes work (executable)' '
+	>exec &&
+	chmod +x exec &&
+	attr_check_object_mode exec 100755
+'
+
+test_expect_success SYMLINKS 'builtin object mode attributes work (symlinks)' '
+	ln -s to_sym sym &&
+	attr_check_object_mode sym 120000
+'
+
+test_expect_success 'native object mode attributes work with --cached' '
+	>normal &&
+	git add normal &&
+	empty_blob=$(git rev-parse :normal) &&
+	git update-index --index-info <<-EOF &&
+	100755 $empty_blob 0	exec
+	120000 $empty_blob 0	symlink
+	EOF
+	attr_check_object_mode normal 100644 --cached &&
+	attr_check_object_mode exec 100755 --cached &&
+	attr_check_object_mode symlink 120000 --cached
+'
+
+test_expect_success 'check object mode attributes work for submodules' '
+	mkdir sub &&
+	(
+		cd sub &&
+		git init &&
+		mv .git .real &&
+		echo "gitdir: .real" >.git &&
+		test_commit first
+	) &&
+	attr_check_object_mode sub 160000 &&
+	attr_check_object_mode sub unspecified --cached &&
+	git add sub &&
+	attr_check_object_mode sub 160000 --cached
+'
+
+test_expect_success 'we do not allow user defined builtin_* attributes' '
+	echo "foo* builtin_foo" >.gitattributes &&
+	git add .gitattributes 2>actual &&
+	echo "builtin_foo is not a valid attribute name: .gitattributes:1" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'user defined builtin_objectmode values are ignored' '
+	echo "foo* builtin_objectmode=12345" >.gitattributes &&
+	git add .gitattributes &&
+	>foo_1 &&
+	attr_check_object_mode_basic foo_1 100644 &&
+	echo "builtin_objectmode is not a valid attribute name: .gitattributes:1" >expect &&
 	test_cmp expect err
 '
 

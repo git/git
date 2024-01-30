@@ -10,7 +10,6 @@
 #include "pkt-line.h"
 #include "commit.h"
 #include "tag.h"
-#include "exec-cmd.h"
 #include "pack.h"
 #include "sideband.h"
 #include "fetch-pack.h"
@@ -18,7 +17,6 @@
 #include "run-command.h"
 #include "connect.h"
 #include "trace2.h"
-#include "transport.h"
 #include "version.h"
 #include "oid-array.h"
 #include "oidset.h"
@@ -1862,6 +1860,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 static int fetch_pack_config_cb(const char *var, const char *value,
 				const struct config_context *ctx, void *cb)
 {
+	const char *msg_id;
+
 	if (strcmp(var, "fetch.fsck.skiplist") == 0) {
 		const char *path;
 
@@ -1873,12 +1873,14 @@ static int fetch_pack_config_cb(const char *var, const char *value,
 		return 0;
 	}
 
-	if (skip_prefix(var, "fetch.fsck.", &var)) {
-		if (is_valid_msg_type(var, value))
+	if (skip_prefix(var, "fetch.fsck.", &msg_id)) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (is_valid_msg_type(msg_id, value))
 			strbuf_addf(&fsck_msg_types, "%c%s=%s",
-				fsck_msg_types.len ? ',' : '=', var, value);
+				fsck_msg_types.len ? ',' : '=', msg_id, value);
 		else
-			warning("Skipping unknown msg id '%s'", var);
+			warning("Skipping unknown msg id '%s'", msg_id);
 		return 0;
 	}
 

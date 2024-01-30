@@ -142,4 +142,7 @@ uint32_t pack_pos_to_midx(struct multi_pack_index *m, uint32_t pos);
  */
 int midx_to_pack_pos(struct multi_pack_index *midx, uint32_t at, uint32_t *pos);
 
+int midx_pair_to_pack_pos(struct multi_pack_index *midx, uint32_t pack_id,
+			  off_t ofs, uint32_t *pos);
+
 #endif

@@ -420,9 +420,9 @@ static void prepare_checked_out_branches(void)
 		wt_status_state_free_buffers(&state);
 
 		if (wt_status_check_bisect(wt, &state) &&
-		    state.branch) {
+		    state.bisecting_from) {
 			struct strbuf ref = STRBUF_INIT;
-			strbuf_addf(&ref, "refs/heads/%s", state.branch);
+			strbuf_addf(&ref, "refs/heads/%s", state.bisecting_from);
 			old = strmap_put(&current_checked_out_branches,
 					 ref.buf,
 					 xstrdup(wt->path));
@@ -817,8 +817,9 @@ void remove_merge_branch_state(struct repository *r)
 	unlink(git_path_merge_rr(r));
 	unlink(git_path_merge_msg(r));
 	unlink(git_path_merge_mode(r));
-	unlink(git_path_auto_merge(r));
-	save_autostash(git_path_merge_autostash(r));
+	refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
+			NULL, REF_NO_DEREF);
+	save_autostash_ref(r, "MERGE_AUTOSTASH");
 }
 
 void remove_branch_state(struct repository *r, int verbose)

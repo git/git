@@ -16,17 +16,12 @@
 #include "editor.h"
 #include "environment.h"
 #include "diff.h"
-#include "diffcore.h"
 #include "commit.h"
 #include "gettext.h"
 #include "revision.h"
 #include "wt-status.h"
 #include "run-command.h"
-#include "hook.h"
-#include "refs.h"
-#include "log-tree.h"
 #include "strbuf.h"
-#include "utf8.h"
 #include "object-name.h"
 #include "parse-options.h"
 #include "path.h"
@@ -35,9 +30,6 @@
 #include "string-list.h"
 #include "rerere.h"
 #include "unpack-trees.h"
-#include "quote.h"
-#include "submodule.h"
-#include "gpg-interface.h"
 #include "column.h"
 #include "sequencer.h"
 #include "sparse-index.h"
@@ -900,7 +892,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		strbuf_stripspace(&sb, '\0');
 
 	if (signoff)
-		append_signoff(&sb, ignore_non_trailer(sb.buf, sb.len), 0);
+		append_signoff(&sb, ignored_log_message_bytes(sb.buf, sb.len), 0);
 
 	if (fwrite(sb.buf, 1, sb.len, s->fp) < sb.len)
 		die_errno(_("could not write commit template"));
@@ -1885,7 +1877,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 				     &oid, flags);
 	}
 
-	apply_autostash(git_path_merge_autostash(the_repository));
+	apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 
 cleanup:
 	strbuf_release(&author_ident);

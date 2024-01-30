@@ -373,7 +373,8 @@ try_remove_previous () {
 
 # Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH [REPOSITORY]
 process_subtree_split_trailer () {
-	assert test $# = 2 -o $# = 3
+	assert test $# -ge 2
+	assert test $# -le 3
 	b="$1"
 	sq="$2"
 	repository=""
@@ -402,7 +403,8 @@ process_subtree_split_trailer () {
 
 # Usage: find_latest_squash DIR [REPOSITORY]
 find_latest_squash () {
-	assert test $# = 1 -o $# = 2
+	assert test $# -ge 1
+	assert test $# -le 2
 	dir="$1"
 	repository=""
 	if test "$#" = 2
@@ -455,7 +457,8 @@ find_latest_squash () {
 
 # Usage: find_existing_splits DIR REV [REPOSITORY]
 find_existing_splits () {
-	assert test $# = 2 -o $# = 3
+	assert test $# -ge 2
+	assert test $# -le 3
 	debug "Looking for prior splits..."
 	local indent=$(($indent + 1))
 
@@ -489,13 +492,13 @@ find_existing_splits () {
 			;;
 		END)
 			debug "Main is: '$main'"
-			if test -z "$main" -a -n "$sub"
+			if test -z "$main" && test -n "$sub"
 			then
 				# squash commits refer to a subtree
 				debug "  Squash: $sq from $sub"
 				cache_set "$sq" "$sub"
 			fi
-			if test -n "$main" -a -n "$sub"
+			if test -n "$main" && test -n "$sub"
 			then
 				debug "  Prior: $main -> $sub"
 				cache_set $main $sub
@@ -638,10 +641,16 @@ subtree_for_commit () {
 	while read mode type tree name
 	do
 		assert test "$name" = "$dir"
-		assert test "$type" = "tree" -o "$type" = "commit"
-		test "$type" = "commit" && continue  # ignore submodules
-		echo $tree
-		break
+
+		case "$type" in
+		commit)
+			continue;; # ignore submodules
+		tree)
+			echo $tree
+			break;;
+		*)
+			die "fatal: tree entry is of type ${type}, expected tree or commit";;
+		esac
 	done || exit $?
 }
 
@@ -916,7 +925,7 @@ cmd_split () {
 	if test $# -eq 0
 	then
 		rev=$(git rev-parse HEAD)
-	elif test $# -eq 1 -o $# -eq 2
+	elif test $# -eq 1 || test $# -eq 2
 	then
 		rev=$(git rev-parse -q --verify "$1^{commit}") ||
 			die "fatal: '$1' does not refer to a commit"
@@ -1006,8 +1015,11 @@ cmd_split () {
 
 # Usage: cmd_merge REV [REPOSITORY]
 cmd_merge () {
-	test $# -eq 1 -o $# -eq 2 ||
+	if test $# -lt 1 || test $# -gt 2
+	then
 		die "fatal: you must provide exactly one revision, and optionally a repository. Got: '$*'"
+	fi
+
 	rev=$(git rev-parse -q --verify "$1^{commit}") ||
 		die "fatal: '$1' does not refer to a commit"
 	repository=""

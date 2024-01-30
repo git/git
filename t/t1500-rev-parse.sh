@@ -208,6 +208,23 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
+test_expect_success 'rev-parse --show-ref-format' '
+	test_detect_ref_format >expect &&
+	git rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --show-ref-format with invalid storage' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config extensions.refstorage broken &&
+		test_must_fail git rev-parse --show-ref-format 2>err &&
+		grep "error: invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}broken${SQ}" err
+	)
+'
+
 test_expect_success '--show-toplevel from subdir of working tree' '
 	pwd >expect &&
 	git -C sub/dir rev-parse --show-toplevel >actual &&

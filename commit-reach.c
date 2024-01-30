@@ -4,7 +4,6 @@
 #include "decorate.h"
 #include "hex.h"
 #include "prio-queue.h"
-#include "tree.h"
 #include "ref-filter.h"
 #include "revision.h"
 #include "tag.h"

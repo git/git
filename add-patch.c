@@ -12,7 +12,6 @@
 #include "strvec.h"
 #include "pathspec.h"
 #include "color.h"
-#include "diff.h"
 #include "compat/terminal.h"
 #include "prompt.h"
 

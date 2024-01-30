@@ -202,6 +202,8 @@ current branch integrates with) obviously do not work, as there is no
 [[def_gitfile]]gitfile::
 	A plain file `.git` at the root of a working tree that
 	points at the directory that is the real repository.
+	For proper use see linkgit:git-worktree[1] or linkgit:git-submodule[1].
+	For syntax see linkgit:gitrepository-layout[5].
 
 [[def_grafts]]grafts::
 	Grafts enable two otherwise different lines of development to be joined
@@ -311,6 +313,12 @@ This commit is referred to as a "merge commit", or sometimes just a
 
 [[def_octopus]]octopus::
 	To <<def_merge,merge>> more than two <<def_branch,branches>>.
+
+[[def_orphan]]orphan::
+	The act of getting on a <<def_branch,branch>> that does not
+	exist yet (i.e., an <<def_unborn,unborn>> branch).  After
+	such an operation, the commit first created becomes a commit
+	without a parent, starting a new history.
 
 [[def_origin]]origin::
 	The default upstream <<def_repository,repository>>. Most projects have
@@ -630,6 +638,20 @@ The most notable example is `HEAD`.
 	An <<def_object,object>> used to temporarily store the contents of a
 	<<def_dirty,dirty>> working directory and the index for future reuse.
 
+[[def_special_ref]]special ref::
+	A ref that has different semantics than normal refs. These refs can be
+	accessed via normal Git commands but may not behave the same as a
+	normal ref in some cases.
++
+The following special refs are known to Git:
+
+ - "`FETCH_HEAD`" is written by linkgit:git-fetch[1] or linkgit:git-pull[1]. It
+   may refer to multiple object IDs. Each object ID is annotated with metadata
+   indicating where it was fetched from and its fetch status.
+
+ - "`MERGE_HEAD`" is written by linkgit:git-merge[1] when resolving merge
+   conflicts. It contains all commit IDs which are being merged.
+
 [[def_submodule]]submodule::
 	A <<def_repository,repository>> that holds the history of a
 	separate project inside another repository (the latter of
@@ -694,6 +716,18 @@ The most notable example is `HEAD`.
 	a tag object that points to a tag object that points to a tree
 	object,
 	etc.
+
+[[def_unborn]]unborn::
+	The <<def_HEAD,HEAD>> can point at a <<def_branch,branch>>
+	that does not yet exist and that does not have any commit on
+	it yet, and such a branch is called an unborn branch.  The
+	most typical way users encounter an unborn branch is by
+	creating a repository anew without cloning from elsewhere.
+	The HEAD would point at the 'main' (or 'master', depending
+	on your configuration) branch that is yet to be born.  Also
+	some operations can get you on an unborn branch with their
+	<<def_orphan,orphan>> option.
+
 
 [[def_unmerged_index]]unmerged index::
 	An <<def_index,index>> which contains unmerged

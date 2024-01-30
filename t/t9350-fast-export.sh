@@ -791,4 +791,14 @@ test_expect_success 'fast-export --first-parent outputs all revisions output by 
 	)
 '
 
+test_expect_success 'fast-export handles --end-of-options' '
+	git update-ref refs/heads/nodash HEAD &&
+	git update-ref refs/heads/--dashes HEAD &&
+	git fast-export --end-of-options nodash >expect &&
+	git fast-export --end-of-options --dashes >actual.raw &&
+	# fix up lines which mention the ref for comparison
+	sed s/--dashes/nodash/ <actual.raw >actual &&
+	test_cmp expect actual
+'
+
 test_done

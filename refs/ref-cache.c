@@ -1,5 +1,4 @@
 #include "../git-compat-util.h"
-#include "../alloc.h"
 #include "../hash.h"
 #include "../refs.h"
 #include "../repository.h"

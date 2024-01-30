@@ -26,7 +26,6 @@
 #include "tag.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
-#include "run-command.h"
 #include "shortlog.h"
 #include "remote.h"
 #include "string-list.h"
@@ -36,7 +35,6 @@
 #include "streaming.h"
 #include "version.h"
 #include "mailmap.h"
-#include "gpg-interface.h"
 #include "progress.h"
 #include "commit-slab.h"
 #include "repository.h"
@@ -594,8 +592,11 @@ static int git_log_config(const char *var, const char *value,
 			decoration_style = 0; /* maybe warn? */
 		return 0;
 	}
-	if (!strcmp(var, "log.diffmerges"))
+	if (!strcmp(var, "log.diffmerges")) {
+		if (!value)
+			return config_error_nonbool(var);
 		return diff_merges_config(value);
+	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
@@ -1364,6 +1365,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	pp.date_mode.type = DATE_RFC2822;
 	pp.rev = rev;
 	pp.print_email_subject = 1;
+	pp.encode_email_headers = rev->encode_email_headers;
 	pp_user_info(&pp, NULL, &sb, committer, encoding);
 	prepare_cover_text(&pp, description_file, branch_name, &sb,
 			   encoding, need_8bit_cte);

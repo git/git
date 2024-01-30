@@ -248,7 +248,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	int verbose = 0;
 	reflog_expiry_should_prune_fn *should_prune_fn = should_expire_reflog_ent;
 	const struct option options[] = {
-		OPT_BIT(0, "dry-run", &flags, N_("do not actually prune any entries"),
+		OPT_BIT('n', "dry-run", &flags, N_("do not actually prune any entries"),
 			EXPIRE_REFLOGS_DRY_RUN),
 		OPT_BIT(0, "rewrite", &flags,
 			N_("rewrite the old SHA1 with the new SHA1 of the entry that now precedes it"),
@@ -368,7 +368,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 	int verbose = 0;
 
 	const struct option options[] = {
-		OPT_BIT(0, "dry-run", &flags, N_("do not actually prune any entries"),
+		OPT_BIT('n', "dry-run", &flags, N_("do not actually prune any entries"),
 			EXPIRE_REFLOGS_DRY_RUN),
 		OPT_BIT(0, "rewrite", &flags,
 			N_("rewrite the old SHA1 with the new SHA1 of the entry that now precedes it"),

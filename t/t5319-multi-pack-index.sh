@@ -1157,4 +1157,53 @@ test_expect_success 'reader notices too-small revindex chunk' '
 	test_cmp expect.err err
 '
 
+test_expect_success 'reader notices out-of-bounds fanout' '
+	# This is similar to the out-of-bounds fanout test in t5318. The values
+	# in adjacent entries should be large but not identical (they
+	# are used as hi/lo starts for a binary search, which would then abort
+	# immediately).
+	corrupt_chunk OIDF 0 $(printf "%02x000000" $(test_seq 0 254)) &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	error: oid fanout out of order: fanout[254] = fe000000 > 5c = fanout[255]
+	fatal: multi-pack-index required OID fanout chunk missing or corrupted
+	EOF
+	test_cmp expect err
+'
+
+test_expect_success 'bitmapped packs are stored via the BTMP chunk' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		for i in 1 2 3 4 5
+		do
+			test_commit "$i" &&
+			git repack -d || return 1
+		done &&
+
+		find $objdir/pack -type f -name "*.idx" | xargs -n 1 basename |
+		sort >packs &&
+
+		git multi-pack-index write --stdin-packs <packs &&
+		test_must_fail test-tool read-midx --bitmap $objdir 2>err &&
+		cat >expect <<-\EOF &&
+		error: MIDX does not contain the BTMP chunk
+		EOF
+		test_cmp expect err &&
+
+		git multi-pack-index write --stdin-packs --bitmap \
+			--preferred-pack="$(head -n1 <packs)" <packs  &&
+		test-tool read-midx --bitmap $objdir >actual &&
+		for i in $(test_seq $(wc -l <packs))
+		do
+			sed -ne "${i}s/\.idx$/\.pack/p" packs &&
+			echo "  bitmap_pos: $((($i - 1) * 3))" &&
+			echo "  bitmap_nr: 3" || return 1
+		done >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done

@@ -16,12 +16,10 @@
 #include "refs.h"
 #include "url.h"
 #include "utf8.h"
-#include "decorate.h"
 #include "oidset.h"
 #include "packfile.h"
 #include "submodule-config.h"
 #include "config.h"
-#include "credential.h"
 #include "help.h"
 
 static ssize_t max_tree_entry_len = 4096;
@@ -1048,138 +1046,6 @@ done:
 	return ret;
 }
 
-static int starts_with_dot_slash(const char *const path)
-{
-	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_SLASH |
-				PATH_MATCH_XPLATFORM);
-}
-
-static int starts_with_dot_dot_slash(const char *const path)
-{
-	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH |
-				PATH_MATCH_XPLATFORM);
-}
-
-static int submodule_url_is_relative(const char *url)
-{
-	return starts_with_dot_slash(url) || starts_with_dot_dot_slash(url);
-}
-
-/*
- * Count directory components that a relative submodule URL should chop
- * from the remote_url it is to be resolved against.
- *
- * In other words, this counts "../" components at the start of a
- * submodule URL.
- *
- * Returns the number of directory components to chop and writes a
- * pointer to the next character of url after all leading "./" and
- * "../" components to out.
- */
-static int count_leading_dotdots(const char *url, const char **out)
-{
-	int result = 0;
-	while (1) {
-		if (starts_with_dot_dot_slash(url)) {
-			result++;
-			url += strlen("../");
-			continue;
-		}
-		if (starts_with_dot_slash(url)) {
-			url += strlen("./");
-			continue;
-		}
-		*out = url;
-		return result;
-	}
-}
-/*
- * Check whether a transport is implemented by git-remote-curl.
- *
- * If it is, returns 1 and writes the URL that would be passed to
- * git-remote-curl to the "out" parameter.
- *
- * Otherwise, returns 0 and leaves "out" untouched.
- *
- * Examples:
- *   http::https://example.com/repo.git -> 1, https://example.com/repo.git
- *   https://example.com/repo.git -> 1, https://example.com/repo.git
- *   git://example.com/repo.git -> 0
- *
- * This is for use in checking for previously exploitable bugs that
- * required a submodule URL to be passed to git-remote-curl.
- */
-static int url_to_curl_url(const char *url, const char **out)
-{
-	/*
-	 * We don't need to check for case-aliases, "http.exe", and so
-	 * on because in the default configuration, is_transport_allowed
-	 * prevents URLs with those schemes from being cloned
-	 * automatically.
-	 */
-	if (skip_prefix(url, "http::", out) ||
-	    skip_prefix(url, "https::", out) ||
-	    skip_prefix(url, "ftp::", out) ||
-	    skip_prefix(url, "ftps::", out))
-		return 1;
-	if (starts_with(url, "http://") ||
-	    starts_with(url, "https://") ||
-	    starts_with(url, "ftp://") ||
-	    starts_with(url, "ftps://")) {
-		*out = url;
-		return 1;
-	}
-	return 0;
-}
-
-static int check_submodule_url(const char *url)
-{
-	const char *curl_url;
-
-	if (looks_like_command_line_option(url))
-		return -1;
-
-	if (submodule_url_is_relative(url) || starts_with(url, "git://")) {
-		char *decoded;
-		const char *next;
-		int has_nl;
-
-		/*
-		 * This could be appended to an http URL and url-decoded;
-		 * check for malicious characters.
-		 */
-		decoded = url_decode(url);
-		has_nl = !!strchr(decoded, '\n');
-
-		free(decoded);
-		if (has_nl)
-			return -1;
-
-		/*
-		 * URLs which escape their root via "../" can overwrite
-		 * the host field and previous components, resolving to
-		 * URLs like https::example.com/submodule.git and
-		 * https:///example.com/submodule.git that were
-		 * susceptible to CVE-2020-11008.
-		 */
-		if (count_leading_dotdots(url, &next) > 0 &&
-		    (*next == ':' || *next == '/'))
-			return -1;
-	}
-
-	else if (url_to_curl_url(url, &curl_url)) {
-		struct credential c = CREDENTIAL_INIT;
-		int ret = 0;
-		if (credential_from_url_gently(&c, curl_url, 1) ||
-		    !*c.host)
-			ret = -1;
-		credential_clear(&c);
-		return ret;
-	}
-
-	return 0;
-}
-
 struct fsck_gitmodules_data {
 	const struct object_id *oid;
 	struct fsck_options *options;
@@ -1403,6 +1269,8 @@ int git_fsck_config(const char *var, const char *value,
 		    const struct config_context *ctx, void *cb)
 {
 	struct fsck_options *options = cb;
+	const char *msg_id;
+
 	if (strcmp(var, "fsck.skiplist") == 0) {
 		const char *path;
 		struct strbuf sb = STRBUF_INIT;
@@ -1416,8 +1284,10 @@ int git_fsck_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (skip_prefix(var, "fsck.", &var)) {
-		fsck_set_msg_type(options, var, value);
+	if (skip_prefix(var, "fsck.", &msg_id)) {
+		if (!value)
+			return config_error_nonbool(var);
+		fsck_set_msg_type(options, msg_id, value);
 		return 0;
 	}
 

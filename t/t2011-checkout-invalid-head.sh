@@ -18,18 +18,18 @@ test_expect_success 'checkout should not start branch from a tree' '
 	test_must_fail git checkout -b newbranch main^{tree}
 '
 
-test_expect_success 'checkout main from invalid HEAD' '
+test_expect_success REFFILES 'checkout main from invalid HEAD' '
 	echo $ZERO_OID >.git/HEAD &&
 	git checkout main --
 '
 
-test_expect_success 'checkout notices failure to lock HEAD' '
+test_expect_success REFFILES 'checkout notices failure to lock HEAD' '
 	test_when_finished "rm -f .git/HEAD.lock" &&
 	>.git/HEAD.lock &&
 	test_must_fail git checkout -b other
 '
 
-test_expect_success 'create ref directory/file conflict scenario' '
+test_expect_success REFFILES 'create ref directory/file conflict scenario' '
 	git update-ref refs/heads/outer/inner main &&
 
 	# do not rely on symbolic-ref to get a known state,
@@ -39,26 +39,26 @@ test_expect_success 'create ref directory/file conflict scenario' '
 	}
 '
 
-test_expect_success 'checkout away from d/f HEAD (unpacked, to branch)' '
+test_expect_success REFFILES 'checkout away from d/f HEAD (unpacked, to branch)' '
 	reset_to_df &&
 	git checkout main
 '
 
-test_expect_success 'checkout away from d/f HEAD (unpacked, to detached)' '
+test_expect_success REFFILES 'checkout away from d/f HEAD (unpacked, to detached)' '
 	reset_to_df &&
 	git checkout --detach main
 '
 
-test_expect_success 'pack refs' '
+test_expect_success REFFILES 'pack refs' '
 	git pack-refs --all --prune
 '
 
-test_expect_success 'checkout away from d/f HEAD (packed, to branch)' '
+test_expect_success REFFILES 'checkout away from d/f HEAD (packed, to branch)' '
 	reset_to_df &&
 	git checkout main
 '
 
-test_expect_success 'checkout away from d/f HEAD (packed, to detached)' '
+test_expect_success REFFILES 'checkout away from d/f HEAD (packed, to detached)' '
 	reset_to_df &&
 	git checkout --detach main
 '

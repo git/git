@@ -424,7 +424,7 @@ test_expect_success 'refuse to switch to branch checked out elsewhere' '
 	test_grep "already used by worktree at" err
 '
 
-test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
+test_expect_success REFFILES,MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
 	git checkout main &&
 	mv .git/logs actual_logs &&
 	cmd //c "mklink /D .git\logs ..\actual_logs" &&

@@ -9,6 +9,7 @@
 #include "tar.h"
 #include "archive.h"
 #include "object-store-ll.h"
+#include "strbuf.h"
 #include "streaming.h"
 #include "run-command.h"
 #include "write-or-die.h"

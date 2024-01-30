@@ -9,6 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #ifndef REFTABLE_RECORD_H
 #define REFTABLE_RECORD_H
 
+#include "hash-ll.h"
 #include <stdint.h>
 
 /*
@@ -38,10 +39,10 @@ struct reftable_ref_record {
 #define REFTABLE_NR_REF_VALUETYPES 4
 	} value_type;
 	union {
-		uint8_t *val1; /* malloced hash. */
+		unsigned char val1[GIT_MAX_RAWSZ];
 		struct {
-			uint8_t *value; /* first value, malloced hash  */
-			uint8_t *target_value; /* second value, malloced hash */
+			unsigned char value[GIT_MAX_RAWSZ]; /* first hash  */
+			unsigned char target_value[GIT_MAX_RAWSZ]; /* second hash */
 		} val2;
 		char *symref; /* referent, malloced 0-terminated string */
 	} value;
@@ -49,11 +50,11 @@ struct reftable_ref_record {
 
 /* Returns the first hash, or NULL if `rec` is not of type
  * REFTABLE_REF_VAL1 or REFTABLE_REF_VAL2. */
-uint8_t *reftable_ref_record_val1(const struct reftable_ref_record *rec);
+const unsigned char *reftable_ref_record_val1(const struct reftable_ref_record *rec);
 
 /* Returns the second hash, or NULL if `rec` is not of type
  * REFTABLE_REF_VAL2. */
-uint8_t *reftable_ref_record_val2(const struct reftable_ref_record *rec);
+const unsigned char *reftable_ref_record_val2(const struct reftable_ref_record *rec);
 
 /* returns whether 'ref' represents a deletion */
 int reftable_ref_record_is_deletion(const struct reftable_ref_record *ref);

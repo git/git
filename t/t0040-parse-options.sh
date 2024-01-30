@@ -376,7 +376,7 @@ test_expect_success 'OPT_CMDMODE() detects incompatibility (1)' '
 	test_must_be_empty output &&
 	test_grep "mode1" output.err &&
 	test_grep "mode2" output.err &&
-	test_grep "is incompatible with" output.err
+	test_grep "cannot be used together" output.err
 '
 
 test_expect_success 'OPT_CMDMODE() detects incompatibility (2)' '
@@ -384,7 +384,7 @@ test_expect_success 'OPT_CMDMODE() detects incompatibility (2)' '
 	test_must_be_empty output &&
 	test_grep "mode2" output.err &&
 	test_grep "set23" output.err &&
-	test_grep "is incompatible with" output.err
+	test_grep "cannot be used together" output.err
 '
 
 test_expect_success 'OPT_CMDMODE() detects incompatibility (3)' '
@@ -392,7 +392,7 @@ test_expect_success 'OPT_CMDMODE() detects incompatibility (3)' '
 	test_must_be_empty output &&
 	test_grep "mode2" output.err &&
 	test_grep "set23" output.err &&
-	test_grep "is incompatible with" output.err
+	test_grep "cannot be used together" output.err
 '
 
 test_expect_success 'OPT_CMDMODE() detects incompatibility (4)' '
@@ -401,7 +401,7 @@ test_expect_success 'OPT_CMDMODE() detects incompatibility (4)' '
 	test_must_be_empty output &&
 	test_grep "mode2" output.err &&
 	test_grep "mode34.3" output.err &&
-	test_grep "is incompatible with" output.err
+	test_grep "cannot be used together" output.err
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '

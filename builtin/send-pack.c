@@ -1,19 +1,14 @@
 #include "builtin.h"
 #include "config.h"
-#include "commit.h"
 #include "hex.h"
-#include "refs.h"
 #include "pkt-line.h"
-#include "sideband.h"
 #include "run-command.h"
 #include "remote.h"
 #include "connect.h"
 #include "send-pack.h"
 #include "quote.h"
 #include "transport.h"
-#include "version.h"
 #include "oid-array.h"
-#include "gpg-interface.h"
 #include "gettext.h"
 #include "protocol.h"
 #include "parse-options.h"
@@ -135,21 +130,18 @@ static int send_pack_config(const char *k, const char *v,
 			    const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(k, "push.gpgsign")) {
-		const char *value;
-		if (!git_config_get_value("push.gpgsign", &value)) {
-			switch (git_parse_maybe_bool(value)) {
-			case 0:
-				args.push_cert = SEND_PACK_PUSH_CERT_NEVER;
-				break;
-			case 1:
-				args.push_cert = SEND_PACK_PUSH_CERT_ALWAYS;
-				break;
-			default:
-				if (value && !strcasecmp(value, "if-asked"))
-					args.push_cert = SEND_PACK_PUSH_CERT_IF_ASKED;
-				else
-					return error(_("invalid value for '%s'"), k);
-			}
+		switch (git_parse_maybe_bool(v)) {
+		case 0:
+			args.push_cert = SEND_PACK_PUSH_CERT_NEVER;
+			break;
+		case 1:
+			args.push_cert = SEND_PACK_PUSH_CERT_ALWAYS;
+			break;
+		default:
+			if (!strcasecmp(v, "if-asked"))
+				args.push_cert = SEND_PACK_PUSH_CERT_IF_ASKED;
+			else
+				return error(_("invalid value for '%s'"), k);
 		}
 	}
 	return git_default_config(k, v, ctx, cb);
@@ -208,7 +200,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stateless-rpc", &stateless_rpc, N_("use stateless RPC protocol")),
 		OPT_BOOL(0, "stdin", &from_stdin, N_("read refs from stdin")),
 		OPT_BOOL(0, "helper-status", &helper_status, N_("print status from remote helper")),
-		OPT_CALLBACK_F(0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
+		OPT_CALLBACK_F(0, "force-with-lease", &cas, N_("<refname>:<expect>"),
 		  N_("require old value of ref to be at this value"),
 		  PARSE_OPT_OPTARG, parseopt_push_cas_option),
 		OPT_BOOL(0, TRANS_OPT_FORCE_IF_INCLUDES, &force_if_includes,
@@ -341,6 +333,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!ret && !transport_refs_pushed(remote_refs))
+		/* stable plumbing output; do not modify or localize */
 		fprintf(stderr, "Everything up-to-date\n");
 
 	return ret;

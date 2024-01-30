@@ -4,12 +4,9 @@
 #include "hex.h"
 #include "object-store-ll.h"
 #include "commit.h"
-#include "tag.h"
 #include "diff.h"
 #include "revision.h"
-#include "list-objects.h"
 #include "progress.h"
-#include "pack-revindex.h"
 #include "pack.h"
 #include "pack-bitmap.h"
 #include "hash-lookup.h"
@@ -198,6 +195,13 @@ struct bb_commit {
 	unsigned idx; /* within selected array */
 };
 
+static void clear_bb_commit(struct bb_commit *commit)
+{
+	free_commit_list(commit->reverse_edges);
+	bitmap_free(commit->commit_mask);
+	bitmap_free(commit->bitmap);
+}
+
 define_commit_slab(bb_data, struct bb_commit);
 
 struct bitmap_builder {
@@ -339,7 +343,7 @@ next:
 
 static void bitmap_builder_clear(struct bitmap_builder *bb)
 {
-	clear_bb_data(&bb->data);
+	deep_clear_bb_data(&bb->data, clear_bb_commit);
 	free(bb->commits);
 	bb->commits_nr = bb->commits_alloc = 0;
 }

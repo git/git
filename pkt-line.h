@@ -2,7 +2,6 @@
 #define PKTLINE_H
 
 #include "strbuf.h"
-#include "sideband.h"
 
 /*
  * Write a packetized stream, where each line is preceded by
@@ -85,6 +84,7 @@ void packet_fflush(FILE *f);
 #define PACKET_READ_DIE_ON_ERR_PACKET    (1u<<2)
 #define PACKET_READ_GENTLE_ON_READ_ERROR (1u<<3)
 #define PACKET_READ_REDACT_URI_PATH      (1u<<4)
+#define PACKET_READ_USE_SIDEBAND         (1u<<5)
 int packet_read(int fd, char *buffer, unsigned size, int options);
 
 /*
@@ -194,6 +194,9 @@ struct packet_reader {
 
 	/* hash algorithm in use */
 	const struct git_hash_algo *hash_algo;
+
+	/* hold temporary sideband message */
+	struct strbuf scratch;
 };
 
 /*

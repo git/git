@@ -2265,7 +2265,7 @@ test_expect_success REFFILES 'log diagnoses bogus HEAD hash' '
 
 test_expect_success REFFILES 'log diagnoses bogus HEAD symref' '
 	git init empty &&
-	echo "ref: refs/heads/invalid.lock" > empty/.git/HEAD &&
+	test-tool -C empty ref-store main create-symref HEAD refs/heads/invalid.lock &&
 	test_must_fail git -C empty log 2>stderr &&
 	test_grep broken stderr &&
 	test_must_fail git -C empty log --default totally-bogus 2>stderr &&

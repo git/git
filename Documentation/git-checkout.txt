@@ -63,7 +63,9 @@ $ git checkout <branch>
 ------------
 +
 that is to say, the branch is not reset/created unless "git checkout" is
-successful.
+successful (e.g., when the branch is in use in another worktree, not
+just the current branch stays the same, but the branch is not reset to
+the start-point, either).
 
 'git checkout' --detach [<branch>]::
 'git checkout' [--detach] <commit>::
@@ -215,7 +217,7 @@ variable.
 	below for details.
 
 --orphan <new-branch>::
-	Create a new 'orphan' branch, named `<new-branch>`, started from
+	Create a new unborn branch, named `<new-branch>`, started from
 	`<start-point>` and switch to it.  The first commit made on this
 	new branch will have no parents and it will be the root of a new
 	history totally disconnected from all the other branches and

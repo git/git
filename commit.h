@@ -294,8 +294,8 @@ const char *find_header_mem(const char *msg, size_t len,
 const char *find_commit_header(const char *msg, const char *key,
 			       size_t *out_len);
 
-/* Find the end of the log message, the right place for a new trailer. */
-size_t ignore_non_trailer(const char *buf, size_t len);
+/* Find the number of bytes to ignore from the end of a log message. */
+size_t ignored_log_message_bytes(const char *buf, size_t len);
 
 typedef int (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
 				void *cb_data);

@@ -41,7 +41,8 @@ test_expect_success FILEMODE 'same mode (index only)' '
 	chmod +x file &&
 	git add file &&
 	git apply --cached patch-0.txt &&
-	git ls-files -s file | grep "^100755"
+	git ls-files -s file >ls-files-output &&
+	test_grep "^100755" ls-files-output
 '
 
 test_expect_success FILEMODE 'mode update (no index)' '
@@ -60,7 +61,8 @@ test_expect_success FILEMODE 'mode update (with index)' '
 test_expect_success FILEMODE 'mode update (index only)' '
 	git reset --hard &&
 	git apply --cached patch-1.txt &&
-	git ls-files -s file | grep "^100755"
+	git ls-files -s file >ls-files-output &&
+	test_grep "^100755" ls-files-output
 '
 
 test_expect_success FILEMODE 'empty mode is rejected' '

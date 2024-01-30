@@ -4,7 +4,6 @@
 #include "strbuf.h"
 #include "run-command.h"
 #include "alias.h"
-#include "prompt.h"
 
 #define COMMAND_DIR "git-shell-commands"
 #define HELP_COMMAND COMMAND_DIR "/help"

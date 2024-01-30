@@ -122,6 +122,40 @@ __git ()
 		${__git_dir:+--git-dir="$__git_dir"} "$@" 2>/dev/null
 }
 
+# Helper function to read the first line of a file into a variable.
+# __git_eread requires 2 arguments, the file path and the name of the
+# variable, in that order.
+#
+# This is taken from git-prompt.sh.
+__git_eread ()
+{
+	test -r "$1" && IFS=$'\r\n' read -r "$2" <"$1"
+}
+
+# Runs git in $__git_repo_path to determine whether a pseudoref exists.
+# 1: The pseudo-ref to search
+__git_pseudoref_exists ()
+{
+	local ref=$1
+	local head
+
+	__git_find_repo_path
+
+	# If the reftable is in use, we have to shell out to 'git rev-parse'
+	# to determine whether the ref exists instead of looking directly in
+	# the filesystem to determine whether the ref exists. Otherwise, use
+	# Bash builtins since executing Git commands are expensive on some
+	# platforms.
+	if __git_eread "$__git_repo_path/HEAD" head; then
+		if [ "$head" == "ref: refs/heads/.invalid" ]; then
+			__git show-ref --exists "$ref"
+			return $?
+		fi
+	fi
+
+	[ -f "$__git_repo_path/$ref" ]
+}
+
 # Removes backslash escaping, single quotes and double quotes from a word,
 # stores the result in the variable $dequoted_word.
 # 1: The word to dequote.
@@ -1624,8 +1658,7 @@ __git_cherry_pick_inprogress_options=$__git_sequencer_inprogress_options
 
 _git_cherry_pick ()
 {
-	__git_find_repo_path
-	if [ -f "$__git_repo_path"/CHERRY_PICK_HEAD ]; then
+	if __git_pseudoref_exists CHERRY_PICK_HEAD; then
 		__gitcomp "$__git_cherry_pick_inprogress_options"
 		return
 	fi
@@ -2067,7 +2100,7 @@ _git_log ()
 	__git_find_repo_path
 
 	local merge=""
-	if [ -f "$__git_repo_path/MERGE_HEAD" ]; then
+	if __git_pseudoref_exists MERGE_HEAD; then
 		merge="--merge"
 	fi
 	case "$prev,$cur" in
@@ -2952,7 +2985,7 @@ _git_restore ()
 		__gitcomp_builtin restore
 		;;
 	*)
-		if __git rev-parse --verify --quiet HEAD >/dev/null; then
+		if __git_pseudoref_exists HEAD; then
 			__git_complete_index_file "--modified"
 		fi
 	esac
@@ -2962,8 +2995,7 @@ __git_revert_inprogress_options=$__git_sequencer_inprogress_options
 
 _git_revert ()
 {
-	__git_find_repo_path
-	if [ -f "$__git_repo_path"/REVERT_HEAD ]; then
+	if __git_pseudoref_exists REVERT_HEAD; then
 		__gitcomp "$__git_revert_inprogress_options"
 		return
 	fi
@@ -3084,12 +3116,119 @@ __gitcomp_directories ()
 			COMPREPLY+=("$c/")
 			_found=1
 		fi
-	done < <(git ls-tree -z -d --name-only HEAD $_tmp_dir)
+	done < <(__git ls-tree -z -d --name-only HEAD $_tmp_dir)
 
 	if [[ $_found == 0 ]] && [[ "$cur" =~ /$ ]]; then
 		# No possible further completions any deeper, so assume we're at
 		# a leaf directory and just consider it complete
 		__gitcomp_direct_append "$cur "
+	elif [[ $_found == 0 ]]; then
+		# No possible completions found.  Avoid falling back to
+		# bash's default file and directory completion, because all
+		# valid completions have already been searched and the
+		# fallbacks can do nothing but mislead.  In fact, they can
+		# mislead in three different ways:
+		#    1) Fallback file completion makes no sense when asking
+		#       for directory completions, as this function does.
+		#    2) Fallback directory completion is bad because
+		#       e.g. "/pro" is invalid and should NOT complete to
+		#       "/proc".
+		#    3) Fallback file/directory completion only completes
+		#       on paths that exist in the current working tree,
+		#       i.e. which are *already* part of their
+		#       sparse-checkout.  Thus, normal file and directory
+		#       completion is always useless for "git
+		#       sparse-checkout add" and is also probelmatic for
+		#       "git sparse-checkout set" unless using it to
+		#       strictly narrow the checkout.
+		COMPREPLY=( "" )
+	fi
+}
+
+# In non-cone mode, the arguments to {set,add} are supposed to be
+# patterns, relative to the toplevel directory.  These can be any kind
+# of general pattern, like 'subdir/*.c' and we can't complete on all
+# of those.  However, if the user presses Tab to get tab completion, we
+# presume that they are trying to provide a pattern that names a specific
+# path.
+__gitcomp_slash_leading_paths ()
+{
+	local dequoted_word pfx="" cur_ toplevel
+
+	# Since we are dealing with a sparse-checkout, subdirectories may not
+	# exist in the local working copy.  Therefore, we want to run all
+	# ls-files commands relative to the repository toplevel.
+	toplevel="$(git rev-parse --show-toplevel)/"
+
+	__git_dequote "$cur"
+
+	# If the paths provided by the user already start with '/', then
+	# they are considered relative to the toplevel of the repository
+	# already.  If they do not start with /, then we need to adjust
+	# them to start with the appropriate prefix.
+	case "$cur" in
+	/*)
+		cur="${cur:1}"
+		;;
+	*)
+		pfx="$(__git rev-parse --show-prefix)"
+	esac
+
+	# Since sparse-index is limited to cone-mode, in non-cone-mode the
+	# list of valid paths is precisely the cached files in the index.
+	#
+	# NEEDSWORK:
+	#   1) We probably need to take care of cases where ls-files
+	#      responds with special quoting.
+	#   2) We probably need to take care of cases where ${cur} has
+	#      some kind of special quoting.
+	#   3) On top of any quoting from 1 & 2, we have to provide an extra
+	#      level of quoting for any paths that contain a '*', '?', '\',
+	#      '[', ']', or leading '#' or '!' since those will be
+	#      interpreted by sparse-checkout as something other than a
+	#      literal path character.
+	# Since there are two types of quoting here, this might get really
+	# complex.  For now, just punt on all of this...
+	completions="$(__git -C "${toplevel}" -c core.quotePath=false \
+			 ls-files --cached -- "${pfx}${cur}*" \
+			 | sed -e s%^%/% -e 's%$% %')"
+	# Note, above, though that we needed all of the completions to be
+	# prefixed with a '/', and we want to add a space so that bash
+	# completion will actually complete an entry and let us move on to
+	# the next one.
+
+	# Return what we've found.
+	if test -n "$completions"; then
+		# We found some completions; return them
+		local IFS=$'\n'
+		COMPREPLY=($completions)
+	else
+		# Do NOT fall back to bash-style all-local-files-and-dirs
+		# when we find no match.  Such options are worse than
+		# useless:
+		#     1. "git sparse-checkout add" needs paths that are NOT
+		#        currently in the working copy.  "git
+		#        sparse-checkout set" does as well, except in the
+		#        special cases when users are only trying to narrow
+		#        their sparse checkout to a subset of what they
+		#        already have.
+		#
+		#     2. A path like '.config' is ambiguous as to whether
+		#        the user wants all '.config' files throughout the
+		#        tree, or just the one under the current directory.
+		#        It would result in a warning from the
+		#        sparse-checkout command due to this.  As such, all
+		#        completions of paths should be prefixed with a
+		#        '/'.
+		#
+		#     3. We don't want paths prefixed with a '/' to
+		#        complete files in the system root directory, we
+		#        want it to complete on files relative to the
+		#        repository root.
+		#
+		# As such, make sure that NO completions are offered rather
+		# than falling back to bash's default completions.
+		COMPREPLY=( "" )
 	fi
 }
 
@@ -3097,6 +3236,7 @@ _git_sparse_checkout ()
 {
 	local subcommands="list init set disable add reapply"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	local using_cone=true
 	if [ -z "$subcommand" ]; then
 		__gitcomp "$subcommands"
 		return
@@ -3107,9 +3247,18 @@ _git_sparse_checkout ()
 		__gitcomp_builtin sparse-checkout_$subcommand "" "--"
 		;;
 	set,*|add,*)
-		if [ "$(__git config core.sparseCheckoutCone)" == "true" ] ||
-		[ -n "$(__git_find_on_cmdline --cone)" ]; then
+		if [[ "$(__git config core.sparseCheckout)" == "true" &&
+		      "$(__git config core.sparseCheckoutCone)" == "false" &&
+		      -z "$(__git_find_on_cmdline --cone)" ]]; then
+			using_cone=false
+		fi
+		if [[ -n "$(__git_find_on_cmdline --no-cone)" ]]; then
+			using_cone=false
+		fi
+		if [[ "$using_cone" == "true" ]]; then
 			__gitcomp_directories
+		else
+			 __gitcomp_slash_leading_paths
 		fi
 	esac
 }
@@ -3592,7 +3741,7 @@ __gitk_main ()
 	__git_find_repo_path
 
 	local merge=""
-	if [ -f "$__git_repo_path/MERGE_HEAD" ]; then
+	if __git_pseudoref_exists MERGE_HEAD; then
 		merge="--merge"
 	fi
 	case "$cur" in

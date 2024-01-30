@@ -2,7 +2,6 @@
 #include "bloom.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "revision.h"
 #include "hashmap.h"
 #include "commit-graph.h"
 #include "commit.h"

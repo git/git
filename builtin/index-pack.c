@@ -8,11 +8,9 @@
 #include "csum-file.h"
 #include "blob.h"
 #include "commit.h"
-#include "tag.h"
 #include "tree.h"
 #include "progress.h"
 #include "fsck.h"
-#include "exec-cmd.h"
 #include "strbuf.h"
 #include "streaming.h"
 #include "thread-utils.h"
@@ -1257,6 +1255,7 @@ static void resolve_deltas(void)
 	base_cache_limit = delta_base_cache_limit * nr_threads;
 	if (nr_threads > 1 || getenv("GIT_FORCE_THREADS")) {
 		init_thread();
+		work_lock();
 		for (i = 0; i < nr_threads; i++) {
 			int ret = pthread_create(&thread_data[i].thread, NULL,
 						 threaded_second_pass, thread_data + i);
@@ -1264,6 +1263,7 @@ static void resolve_deltas(void)
 				die(_("unable to create thread: %s"),
 				    strerror(ret));
 		}
+		work_unlock();
 		for (i = 0; i < nr_threads; i++)
 			pthread_join(thread_data[i].thread, NULL);
 		cleanup_thread();

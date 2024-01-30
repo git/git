@@ -31,6 +31,33 @@ void fill_stat_data(struct stat_data *sd, struct stat *st)
 	sd->sd_size = munge_st_size(st->st_size);
 }
 
+static void set_times(struct stat *st, const struct stat_data *sd)
+{
+	st->st_ctime = sd->sd_ctime.sec;
+	st->st_mtime = sd->sd_mtime.sec;
+#ifdef NO_NSEC
+	; /* nothing */
+#else
+#ifdef USE_ST_TIMESPEC
+	st->st_ctimespec.tv_nsec = sd->sd_ctime.nsec;
+	st->st_mtimespec.tv_nsec = sd->sd_mtime.nsec;
+#else
+	st->st_ctim.tv_nsec = sd->sd_ctime.nsec;
+	st->st_mtim.tv_nsec = sd->sd_mtime.nsec;
+#endif
+#endif
+}
+
+void fake_lstat_data(const struct stat_data *sd, struct stat *st)
+{
+	set_times(st, sd);
+	st->st_dev = sd->sd_dev;
+	st->st_ino = sd->sd_ino;
+	st->st_uid = sd->sd_uid;
+	st->st_gid = sd->sd_gid;
+	st->st_size = sd->sd_size;
+}
+
 int match_stat_data(const struct stat_data *sd, struct stat *st)
 {
 	int changed = 0;

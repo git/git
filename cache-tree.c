@@ -11,7 +11,6 @@
 #include "read-cache-ll.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
-#include "sparse-index.h"
 #include "trace.h"
 #include "trace2.h"
 

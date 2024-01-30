@@ -7,7 +7,6 @@
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
-#include "refs.h"
 #include "refspec.h"
 #include "run-command.h"
 #include "remote.h"
@@ -392,7 +391,7 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 	if (!is_empty_cas(&cas)) {
 		if (!transport->smart_options)
 			die("underlying transport does not support --%s option",
-			    CAS_OPT_NAME);
+			    "force-with-lease");
 		transport->smart_options->cas = &cas;
 	}
 
@@ -526,26 +525,21 @@ static int git_push_config(const char *k, const char *v,
 			*flags |= TRANSPORT_PUSH_AUTO_UPSTREAM;
 		return 0;
 	} else if (!strcmp(k, "push.gpgsign")) {
-		const char *value;
-		if (!git_config_get_value("push.gpgsign", &value)) {
-			switch (git_parse_maybe_bool(value)) {
-			case 0:
-				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_NEVER);
-				break;
-			case 1:
-				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_ALWAYS);
-				break;
-			default:
-				if (value && !strcasecmp(value, "if-asked"))
-					set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_IF_ASKED);
-				else
-					return error(_("invalid value for '%s'"), k);
-			}
+		switch (git_parse_maybe_bool(v)) {
+		case 0:
+			set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_NEVER);
+			break;
+		case 1:
+			set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_ALWAYS);
+			break;
+		default:
+			if (!strcasecmp(v, "if-asked"))
+				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_IF_ASKED);
+			else
+				return error(_("invalid value for '%s'"), k);
 		}
 	} else if (!strcmp(k, "push.recursesubmodules")) {
-		const char *value;
-		if (!git_config_get_value("push.recursesubmodules", &value))
-			recurse_submodules = parse_push_recurse_submodules_arg(k, value);
+		recurse_submodules = parse_push_recurse_submodules_arg(k, v);
 	} else if (!strcmp(k, "submodule.recurse")) {
 		int val = git_config_bool(k, v) ?
 			RECURSE_SUBMODULES_ON_DEMAND : RECURSE_SUBMODULES_OFF;
@@ -604,7 +598,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
 		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
-		OPT_CALLBACK_F(0, CAS_OPT_NAME, &cas, N_("<refname>:<expect>"),
+		OPT_CALLBACK_F(0, "force-with-lease", &cas, N_("<refname>:<expect>"),
 			       N_("require old value of ref to be at this value"),
 			       PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option),
 		OPT_BIT(0, TRANS_OPT_FORCE_IF_INCLUDES, &flags,
@@ -639,8 +633,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		: &push_options_config);
 	set_push_cert_flags(&flags, push_cert);
 
-	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
-		die(_("options '%s' and '%s' cannot be used together"), "--delete", "--all/--branches/--mirror/--tags");
+	die_for_incompatible_opt4(deleterefs, "--delete",
+				  tags, "--tags",
+				  flags & TRANSPORT_PUSH_ALL, "--all/--branches",
+				  flags & TRANSPORT_PUSH_MIRROR, "--mirror");
 	if (deleterefs && argc < 2)
 		die(_("--delete doesn't make sense without any refs"));
 
@@ -677,19 +673,13 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
 
 	if (flags & TRANSPORT_PUSH_ALL) {
-		if (tags)
-			die(_("options '%s' and '%s' cannot be used together"), "--all", "--tags");
 		if (argc >= 2)
 			die(_("--all can't be combined with refspecs"));
 	}
 	if (flags & TRANSPORT_PUSH_MIRROR) {
-		if (tags)
-			die(_("options '%s' and '%s' cannot be used together"), "--mirror", "--tags");
 		if (argc >= 2)
 			die(_("--mirror can't be combined with refspecs"));
 	}
-	if ((flags & TRANSPORT_PUSH_ALL) && (flags & TRANSPORT_PUSH_MIRROR))
-		die(_("options '%s' and '%s' cannot be used together"), "--all", "--mirror");
 
 	if (!is_empty_cas(&cas) && (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES))
 		cas.use_force_if_includes = 1;

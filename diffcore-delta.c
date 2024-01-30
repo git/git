@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "diff.h"
 #include "diffcore.h"
 
 /*
@@ -158,6 +157,10 @@ static struct spanhash_top *hash_chars(struct repository *r,
 		hash = add_spanhash(hash, hashval, n);
 		n = 0;
 		accum1 = accum2 = 0;
+	}
+	if (n > 0) {
+		hashval = (accum1 + accum2 * 0x61) % HASHBASE;
+		hash = add_spanhash(hash, hashval, n);
 	}
 	QSORT(hash->data, (size_t)1ul << hash->alloc_log2, spanhash_cmp);
 	return hash;

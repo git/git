@@ -221,7 +221,9 @@ test_expect_success 'clone of empty repo propagates name of default branch' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone "file://$(pwd)/file_empty_parent" file_empty_child &&
-	grep "refs/heads/mydefaultbranch" file_empty_child/.git/HEAD
+	echo refs/heads/mydefaultbranch >expect &&
+	git -C file_empty_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '...but not if explicitly forbidden by config' '
@@ -234,7 +236,9 @@ test_expect_success '...but not if explicitly forbidden by config' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone "file://$(pwd)/file_empty_parent" file_empty_child &&
-	! grep "refs/heads/mydefaultbranch" file_empty_child/.git/HEAD
+	echo refs/heads/main >expect &&
+	git -C file_empty_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'bare clone propagates empty default branch' '
@@ -247,7 +251,9 @@ test_expect_success 'bare clone propagates empty default branch' '
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone --bare \
 		"file://$(pwd)/file_empty_parent" file_empty_child.git &&
-	grep "refs/heads/mydefaultbranch" file_empty_child.git/HEAD
+	echo "refs/heads/mydefaultbranch" >expect &&
+	git -C file_empty_child.git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
@@ -265,7 +271,9 @@ test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone "file://$(pwd)/file_unborn_parent" \
 		file_unborn_child 2>stderr &&
-	grep "refs/heads/mydefaultbranch" file_unborn_child/.git/HEAD &&
+	echo "refs/heads/mydefaultbranch" >expect &&
+	git -C file_unborn_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
 	grep "warning: remote HEAD refers to nonexistent ref" stderr
 '
 
@@ -295,7 +303,9 @@ test_expect_success 'bare clone propagates unborn HEAD from non-empty repo' '
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone --bare "file://$(pwd)/file_unborn_parent" \
 		file_unborn_child.git 2>stderr &&
-	grep "refs/heads/mydefaultbranch" file_unborn_child.git/HEAD &&
+	echo "refs/heads/mydefaultbranch" >expect &&
+	git -C file_unborn_child.git symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
 	! grep "warning:" stderr
 '
 
@@ -315,7 +325,9 @@ test_expect_success 'defaulted HEAD uses remote branch if available' '
 	git -c init.defaultBranch=branchwithstuff -c protocol.version=2 \
 		clone "file://$(pwd)/file_unborn_parent" \
 		file_unborn_child 2>stderr &&
-	grep "refs/heads/branchwithstuff" file_unborn_child/.git/HEAD &&
+	echo "refs/heads/branchwithstuff" >expect &&
+	git -C file_unborn_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
 	test_path_is_file file_unborn_child/stuff.t &&
 	! grep "warning:" stderr
 '

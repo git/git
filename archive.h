@@ -1,7 +1,6 @@
 #ifndef ARCHIVE_H
 #define ARCHIVE_H
 
-#include "object-name.h"
 #include "pathspec.h"
 #include "string-list.h"
 

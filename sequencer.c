@@ -15,10 +15,8 @@
 #include "pager.h"
 #include "commit.h"
 #include "sequencer.h"
-#include "tag.h"
 #include "run-command.h"
 #include "hook.h"
-#include "exec-cmd.h"
 #include "utf8.h"
 #include "cache-tree.h"
 #include "diff.h"
@@ -39,7 +37,6 @@
 #include "notes-utils.h"
 #include "sigchain.h"
 #include "unpack-trees.h"
-#include "worktree.h"
 #include "oidmap.h"
 #include "oidset.h"
 #include "commit-slab.h"
@@ -238,34 +235,29 @@ static int git_sequencer_config(const char *k, const char *v,
 				const struct config_context *ctx, void *cb)
 {
 	struct replay_opts *opts = cb;
-	int status;
 
 	if (!strcmp(k, "commit.cleanup")) {
-		const char *s;
+		if (!v)
+			return config_error_nonbool(k);
 
-		status = git_config_string(&s, k, v);
-		if (status)
-			return status;
-
-		if (!strcmp(s, "verbatim")) {
+		if (!strcmp(v, "verbatim")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_NONE;
 			opts->explicit_cleanup = 1;
-		} else if (!strcmp(s, "whitespace")) {
+		} else if (!strcmp(v, "whitespace")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SPACE;
 			opts->explicit_cleanup = 1;
-		} else if (!strcmp(s, "strip")) {
+		} else if (!strcmp(v, "strip")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_ALL;
 			opts->explicit_cleanup = 1;
-		} else if (!strcmp(s, "scissors")) {
+		} else if (!strcmp(v, "scissors")) {
 			opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_SCISSORS;
 			opts->explicit_cleanup = 1;
 		} else {
 			warning(_("invalid commit message cleanup mode '%s'"),
-				  s);
+				  v);
 		}
 
-		free((char *)s);
-		return status;
+		return 0;
 	}
 
 	if (!strcmp(k, "commit.gpgsign")) {
@@ -345,7 +337,7 @@ static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 	if (ignore_footer)
 		sb->buf[sb->len - ignore_footer] = saved_char;
 
-	if (info.trailer_start == info.trailer_end)
+	if (info.trailer_block_start == info.trailer_block_end)
 		return 0;
 
 	for (i = 0; i < info.trailer_nr; i++)
@@ -482,7 +474,7 @@ static void print_advice(struct repository *r, int show_hint,
 		 * of the commit itself so remove CHERRY_PICK_HEAD
 		 */
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
-				NULL, 0);
+				NULL, REF_NO_DEREF);
 		return;
 	}
 
@@ -1675,7 +1667,7 @@ static int do_commit(struct repository *r,
 		strbuf_release(&sb);
 		if (!res) {
 			refs_delete_ref(get_main_ref_store(r), "",
-					"CHERRY_PICK_HEAD", NULL, 0);
+					"CHERRY_PICK_HEAD", NULL, REF_NO_DEREF);
 			unlink(git_path_merge_msg(r));
 			if (!is_rebase_i(opts))
 				print_commit_summary(r, NULL, &oid,
@@ -2414,9 +2406,10 @@ static int do_pick_commit(struct repository *r,
 	} else if (allow == 2) {
 		drop_commit = 1;
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
-				NULL, 0);
+				NULL, REF_NO_DEREF);
 		unlink(git_path_merge_msg(r));
-		unlink(git_path_auto_merge(r));
+		refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
+				NULL, REF_NO_DEREF);
 		fprintf(stderr,
 			_("dropping %s %s -- patch contents already upstream\n"),
 			oid_to_hex(&commit->object.oid), msg.subject);
@@ -2810,7 +2803,7 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 
 	if (refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD")) {
 		if (!refs_delete_ref(get_main_ref_store(r), "",
-				     "CHERRY_PICK_HEAD", NULL, 0) &&
+				     "CHERRY_PICK_HEAD", NULL, REF_NO_DEREF) &&
 		    verbose)
 			warning(_("cancelling a cherry picking in progress"));
 		opts.action = REPLAY_PICK;
@@ -2819,14 +2812,15 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 
 	if (refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD")) {
 		if (!refs_delete_ref(get_main_ref_store(r), "", "REVERT_HEAD",
-				     NULL, 0) &&
+				     NULL, REF_NO_DEREF) &&
 		    verbose)
 			warning(_("cancelling a revert in progress"));
 		opts.action = REPLAY_REVERT;
 		need_cleanup = 1;
 	}
 
-	unlink(git_path_auto_merge(r));
+	refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
+			NULL, REF_NO_DEREF);
 
 	if (!need_cleanup)
 		return;
@@ -4124,7 +4118,7 @@ static int do_merge(struct repository *r,
 
 		strbuf_release(&ref_name);
 		refs_delete_ref(get_main_ref_store(r), "", "CHERRY_PICK_HEAD",
-				NULL, 0);
+				NULL, REF_NO_DEREF);
 		rollback_lock_file(&lock);
 
 		ret = run_command(&cmd);
@@ -4469,11 +4463,16 @@ static enum todo_command peek_command(struct todo_list *todo_list, int offset)
 	return -1;
 }
 
-void create_autostash(struct repository *r, const char *path)
+static void create_autostash_internal(struct repository *r,
+				      const char *path,
+				      const char *refname)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct lock_file lock_file = LOCK_INIT;
 	int fd;
+
+	if (path && refname)
+		BUG("can only pass path or refname");
 
 	fd = repo_hold_locked_index(r, &lock_file, 0);
 	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
@@ -4501,10 +4500,16 @@ void create_autostash(struct repository *r, const char *path)
 		strbuf_reset(&buf);
 		strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
 
-		if (safe_create_leading_directories_const(path))
-			die(_("Could not create directory for '%s'"),
-			    path);
-		write_file(path, "%s", oid_to_hex(&oid));
+		if (path) {
+			if (safe_create_leading_directories_const(path))
+				die(_("Could not create directory for '%s'"),
+				    path);
+			write_file(path, "%s", oid_to_hex(&oid));
+		} else {
+			refs_update_ref(get_main_ref_store(r), "", refname,
+					&oid, null_oid(), 0, UPDATE_REFS_DIE_ON_ERR);
+		}
+
 		printf(_("Created autostash: %s\n"), buf.buf);
 		if (reset_head(r, &ropts) < 0)
 			die(_("could not reset --hard"));
@@ -4513,6 +4518,16 @@ void create_autostash(struct repository *r, const char *path)
 			die(_("could not read index"));
 	}
 	strbuf_release(&buf);
+}
+
+void create_autostash(struct repository *r, const char *path)
+{
+	create_autostash_internal(r, path, NULL);
+}
+
+void create_autostash_ref(struct repository *r, const char *refname)
+{
+	create_autostash_internal(r, NULL, refname);
 }
 
 static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply)
@@ -4590,6 +4605,41 @@ int apply_autostash(const char *path)
 int apply_autostash_oid(const char *stash_oid)
 {
 	return apply_save_autostash_oid(stash_oid, 1);
+}
+
+static int apply_save_autostash_ref(struct repository *r, const char *refname,
+				    int attempt_apply)
+{
+	struct object_id stash_oid;
+	char stash_oid_hex[GIT_MAX_HEXSZ + 1];
+	int flag, ret;
+
+	if (!refs_ref_exists(get_main_ref_store(r), refname))
+		return 0;
+
+	if (!refs_resolve_ref_unsafe(get_main_ref_store(r), refname,
+				     RESOLVE_REF_READING, &stash_oid, &flag))
+		return -1;
+	if (flag & REF_ISSYMREF)
+		return error(_("autostash reference is a symref"));
+
+	oid_to_hex_r(stash_oid_hex, &stash_oid);
+	ret = apply_save_autostash_oid(stash_oid_hex, attempt_apply);
+
+	refs_delete_ref(get_main_ref_store(r), "", refname,
+			&stash_oid, REF_NO_DEREF);
+
+	return ret;
+}
+
+int save_autostash_ref(struct repository *r, const char *refname)
+{
+	return apply_save_autostash_ref(r, refname, 0);
+}
+
+int apply_autostash_ref(struct repository *r, const char *refname)
+{
+	return apply_save_autostash_ref(r, refname, 1);
 }
 
 static int checkout_onto(struct repository *r, struct replay_opts *opts,
@@ -4774,8 +4824,10 @@ static int pick_commits(struct repository *r,
 			}
 			unlink(rebase_path_author_script());
 			unlink(git_path_merge_head(r));
-			unlink(git_path_auto_merge(r));
-			delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
+			refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
+					NULL, REF_NO_DEREF);
+			refs_delete_ref(get_main_ref_store(r), "", "REBASE_HEAD",
+					NULL, REF_NO_DEREF);
 
 			if (item->command == TODO_BREAK) {
 				if (!opts->verbose)
@@ -5116,7 +5168,7 @@ static int commit_staged_changes(struct repository *r,
 		if (refs_ref_exists(get_main_ref_store(r),
 				    "CHERRY_PICK_HEAD") &&
 		    refs_delete_ref(get_main_ref_store(r), "",
-				    "CHERRY_PICK_HEAD", NULL, 0))
+				    "CHERRY_PICK_HEAD", NULL, REF_NO_DEREF))
 			return error(_("could not remove CHERRY_PICK_HEAD"));
 		if (unlink(git_path_merge_msg(r)) && errno != ENOENT)
 			return error_errno(_("could not remove '%s'"),
@@ -5130,7 +5182,8 @@ static int commit_staged_changes(struct repository *r,
 		return error(_("could not commit staged changes."));
 	unlink(rebase_path_amend());
 	unlink(git_path_merge_head(r));
-	unlink(git_path_auto_merge(r));
+	refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
+			NULL, REF_NO_DEREF);
 	if (final_fixup) {
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());

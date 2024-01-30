@@ -8,14 +8,10 @@
 #include "parse-options.h"
 #include "pathspec.h"
 #include "repository.h"
-#include "run-command.h"
 #include "strbuf.h"
 #include "string-list.h"
-#include "cache-tree.h"
 #include "lockfile.h"
-#include "resolve-undo.h"
 #include "unpack-trees.h"
-#include "wt-status.h"
 #include "quote.h"
 #include "setup.h"
 #include "sparse-index.h"
@@ -777,8 +773,7 @@ static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_add_options,
-			     builtin_sparse_checkout_add_usage,
-			     PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     builtin_sparse_checkout_add_usage, 0);
 
 	sanitize_paths(argc, argv, prefix, add_opts.skip_checks);
 
@@ -824,8 +819,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_set_options,
-			     builtin_sparse_checkout_set_usage,
-			     PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     builtin_sparse_checkout_set_usage, 0);
 
 	if (update_modes(&set_opts.cone_mode, &set_opts.sparse_index))
 		return 1;
@@ -835,7 +829,7 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 	 * non-cone mode, if nothing is specified, manually select just the
 	 * top-level directory (much as 'init' would do).
 	 */
-	if (!core_sparse_checkout_cone && argc == 0) {
+	if (!core_sparse_checkout_cone && !set_opts.use_stdin && argc == 0) {
 		argv = default_patterns;
 		argc = default_patterns_nr;
 	} else {
@@ -996,8 +990,7 @@ static int sparse_checkout_check_rules(int argc, const char **argv, const char *
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_check_rules_options,
-			     builtin_sparse_checkout_check_rules_usage,
-			     PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     builtin_sparse_checkout_check_rules_usage, 0);
 
 	if (check_rules_opts.rules_file && check_rules_opts.cone_mode < 0)
 		check_rules_opts.cone_mode = 1;

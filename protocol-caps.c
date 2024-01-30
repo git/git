@@ -3,7 +3,6 @@
 #include "gettext.h"
 #include "hex.h"
 #include "pkt-line.h"
-#include "strvec.h"
 #include "hash-ll.h"
 #include "hex.h"
 #include "object.h"

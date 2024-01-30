@@ -5,6 +5,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "path.h"
 #include "pretty.h"
 #include "setup.h"
@@ -17,7 +18,6 @@
 #include "archive.h"
 #include "parse-options.h"
 #include "unpack-trees.h"
-#include "dir.h"
 #include "quote.h"
 
 static char const * const archive_usage[] = {
@@ -685,6 +685,8 @@ static int parse_archive_args(int argc, const char **argv,
 		base = "";
 
 	if (list) {
+		if (argc)
+			die(_("extra command line parameter '%s'"), *argv);
 		for (i = 0; i < nr_archivers; i++)
 			if (!is_remote || archivers[i]->flags & ARCHIVER_REMOTE)
 				printf("%s\n", archivers[i]->name);
