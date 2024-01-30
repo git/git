@@ -39,8 +39,8 @@ Those wishing to help with error message, usage and informational message
 string translations (localization l10) should see [po/README.md][]
 (a `po` file is a Portable Object file that holds the translations).
 
-To subscribe to the list, send an email with just "subscribe git" in
-the body to majordomo@vger.kernel.org (not the Git list). The mailing
+To subscribe to the list, send an email to <git+subscribe@vger.kernel.org>
+(see https://subspace.kernel.org/subscribing.html for details). The mailing
 list archives are available at <https://lore.kernel.org/git/>,
 <https://marc.info/?l=git> and other archival sites.
 
