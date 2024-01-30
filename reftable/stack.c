@@ -1018,6 +1018,14 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 		unlink(new_table_path.buf);
 		goto done;
 	}
+
+	err = fsync_component(FSYNC_COMPONENT_REFERENCE, lock_file_fd);
+	if (err < 0) {
+		err = REFTABLE_IO_ERROR;
+		unlink(new_table_path.buf);
+		goto done;
+	}
+
 	err = close(lock_file_fd);
 	lock_file_fd = -1;
 	if (err < 0) {
