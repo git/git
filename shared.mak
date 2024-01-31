@@ -108,3 +108,9 @@ endif
 define mkdir_p_parent_template
 $(if $(wildcard $(@D)),,$(QUIET_MKDIR_P_PARENT)$(shell mkdir -p $(@D)))
 endef
+
+## Getting sick of writing -L$(SOMELIBDIR) $(CC_LD_DYNPATH)$(SOMELIBDIR)?
+## Write $(call libpath_template,$(SOMELIBDIR)) instead, perhaps?
+define libpath_template
+-L$(1) $(CC_LD_DYNPATH)$(1)
+endef
