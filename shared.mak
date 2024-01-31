@@ -111,6 +111,8 @@ endef
 
 ## Getting sick of writing -L$(SOMELIBDIR) $(CC_LD_DYNPATH)$(SOMELIBDIR)?
 ## Write $(call libpath_template,$(SOMELIBDIR)) instead, perhaps?
+## With CC_LD_DYNPATH set to either an empty string or to "-L", the
+## the directory is not shown the second time.
 define libpath_template
--L$(1) $(CC_LD_DYNPATH)$(1)
+-L$(1) $(if $(filter-out -L,$(CC_LD_DYNPATH)),$(CC_LD_DYNPATH)$(1))
 endef
