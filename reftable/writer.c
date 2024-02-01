@@ -391,6 +391,24 @@ static int writer_finish_section(struct reftable_writer *w)
 	if (err < 0)
 		return err;
 
+	/*
+	 * When the section we are about to index has a lot of blocks then the
+	 * index itself may span across multiple blocks, as well. This would
+	 * require a linear scan over index blocks only to find the desired
+	 * indexed block, which is inefficient. Instead, we write a multi-level
+	 * index where index records of level N+1 will refer to index blocks of
+	 * level N. This isn't constant time, either, but at least logarithmic.
+	 *
+	 * This loop handles writing this multi-level index. Note that we write
+	 * the lowest-level index pointing to the indexed blocks first. We then
+	 * continue writing additional index levels until the current level has
+	 * less blocks than the threshold so that the highest level will be at
+	 * the end of the index section.
+	 *
+	 * Readers are thus required to start reading the index section from
+	 * its end, which is why we set `index_start` to the beginning of the
+	 * last index section.
+	 */
 	while (w->index_len > threshold) {
 		struct reftable_index_record *idx = NULL;
 		size_t i, idx_len;
@@ -427,6 +445,11 @@ static int writer_finish_section(struct reftable_writer *w)
 		reftable_free(idx);
 	}
 
+	/*
+	 * The index may still contain a number of index blocks lower than the
+	 * threshold. Clear it so that these entries don't leak into the next
+	 * index section.
+	 */
 	writer_clear_index(w);
 
 	bstats = writer_reftable_block_stats(w, typ);
