@@ -412,26 +412,14 @@ static int writer_finish_section(struct reftable_writer *w)
 					.idx = idx[i],
 				},
 			};
-			if (block_writer_add(w->block_writer, &rec) == 0) {
-				continue;
-			}
 
-			err = writer_flush_block(w);
+			err = writer_add_record(w, &rec);
 			if (err < 0)
 				return err;
-
-			writer_reinit_block_writer(w, BLOCK_TYPE_INDEX);
-
-			err = block_writer_add(w->block_writer, &rec);
-			if (err != 0) {
-				/* write into fresh block should always succeed
-				 */
-				abort();
-			}
 		}
-		for (i = 0; i < idx_len; i++) {
+
+		for (i = 0; i < idx_len; i++)
 			strbuf_release(&idx[i].last_key);
-		}
 		reftable_free(idx);
 	}
 
