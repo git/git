@@ -79,8 +79,13 @@ OPTIONS
 	to force the version for the generated pack index, and to force
 	64-bit index entries on objects located above the given offset.
 
---strict::
-	Die, if the pack contains broken objects or links.
+--strict[=<msg-id>=<severity>...]::
+	Die, if the pack contains broken objects or links. An optional
+	comma-separated list of `<msg-id>=<severity>` can be passed to change
+	the severity of some possible issues, e.g.,
+	 `--strict="missingEmail=ignore,badTagName=error"`. See the entry for the
+	`fsck.<msg-id>` configuration options in linkgit:git-fsck[1] for more
+	information on the possible values of `<msg-id>` and `<severity>`.
 
 --progress-title::
 	For internal use only.
