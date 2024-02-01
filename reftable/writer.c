@@ -379,20 +379,21 @@ int reftable_writer_add_logs(struct reftable_writer *w,
 
 static int writer_finish_section(struct reftable_writer *w)
 {
+	struct reftable_block_stats *bstats = NULL;
 	uint8_t typ = block_writer_type(w->block_writer);
 	uint64_t index_start = 0;
 	int max_level = 0;
-	int threshold = w->opts.unpadded ? 1 : 3;
+	size_t threshold = w->opts.unpadded ? 1 : 3;
 	int before_blocks = w->stats.idx_stats.blocks;
-	int err = writer_flush_block(w);
-	int i = 0;
-	struct reftable_block_stats *bstats = NULL;
+	int err;
+
+	err = writer_flush_block(w);
 	if (err < 0)
 		return err;
 
 	while (w->index_len > threshold) {
 		struct reftable_index_record *idx = NULL;
-		int idx_len = 0;
+		size_t i, idx_len;
 
 		max_level++;
 		index_start = w->next;
@@ -630,11 +631,8 @@ done:
 
 static void writer_clear_index(struct reftable_writer *w)
 {
-	int i = 0;
-	for (i = 0; i < w->index_len; i++) {
+	for (size_t i = 0; i < w->index_len; i++)
 		strbuf_release(&w->index[i].last_key);
-	}
-
 	FREE_AND_NULL(w->index);
 	w->index_len = 0;
 	w->index_cap = 0;
