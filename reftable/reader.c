@@ -509,6 +509,9 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		goto done;
 
 	err = reader_seek_linear(&index_iter, &want_index);
+	if (err < 0)
+		goto done;
+
 	while (1) {
 		err = table_iter_next(&index_iter, &index_result);
 		table_iter_block_done(&index_iter);
