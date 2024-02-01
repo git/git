@@ -418,14 +418,14 @@ static int writer_finish_section(struct reftable_writer *w)
 				return err;
 		}
 
+		err = writer_flush_block(w);
+		if (err < 0)
+			return err;
+
 		for (i = 0; i < idx_len; i++)
 			strbuf_release(&idx[i].last_key);
 		reftable_free(idx);
 	}
-
-	err = writer_flush_block(w);
-	if (err < 0)
-		return err;
 
 	writer_clear_index(w);
 
