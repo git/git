@@ -74,6 +74,13 @@ UI, Workflows & Features
    git cmd" to run a Git command that works on a bare repository without
    explicitly specifying $GIT_DIR now.
 
+ * The completion script (in contrib/) learned more options that can
+   be used with "git log".
+
+ * The labels on conflict markers for the common ancestor, our version,
+   and the other version are available to custom 3-way merge driver
+   via %S, %X, and %Y placeholders.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -124,6 +131,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * A few tests to "git commit -o <pathspec>" and "git commit -i
    <pathspec>" has been added.
+
+ * Tests on ref API are moved around to prepare for reftable.
 
 
 Fixes since v2.43
@@ -247,6 +256,15 @@ Fixes since v2.43
    http (aka stateless) transport.
    (merge 176cd68634 jx/remote-archive-over-smart-http later to maint).
 
+ * Fetching via protocol v0 over Smart HTTP transport sometimes failed
+   to correctly auto-follow tags.
+   (merge fba732c462 jk/fetch-auto-tag-following-fix later to maint).
+
+ * The documentation for the --exclude-per-directory option marked it
+   as deprecated, which confused readers into thinking there may be a
+   plan to remove it in the future, which was not our intention.
+   (merge 0009542cab jc/ls-files-doc-update later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
    (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
@@ -286,3 +304,4 @@ Fixes since v2.43
    (merge f10031fadd nb/rebase-x-shell-docfix later to maint).
    (merge af3d2c160f jc/majordomo-to-subspace later to maint).
    (merge ee9895b0ff sd/negotiate-trace-fix later to maint).
+   (merge 976d0251ce jc/coc-whitespace-fix later to maint).
