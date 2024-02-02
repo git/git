@@ -385,6 +385,46 @@ test_expect_success 'split sub dir/ with --rejoin' '
 	)
 '
 
+# Tests that commits from other subtrees are not processed as
+# part of a split.
+#
+# This test performs the following:
+# - Creates Repo with subtrees 'subA' and 'subB'
+# - Creates commits in the repo including changes to subtrees
+# - Runs the following 'split' and commit' commands in order:
+# 	- Perform 'split' on subtree A
+# 	- Perform 'split' on subtree B
+# 	- Create new commits with changes to subtree A and B
+# 	- Perform split on subtree A
+# 	- Check that the commits in subtree B are not processed
+#			as part of the subtree A split
+test_expect_success 'split with multiple subtrees' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/subA" &&
+	subtree_test_create_repo "$test_count/subB" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/subA" subA1 &&
+	test_create_commit "$test_count/subA" subA2 &&
+	test_create_commit "$test_count/subA" subA3 &&
+	test_create_commit "$test_count/subB" subB1 &&
+	git -C "$test_count" fetch ./subA HEAD &&
+	git -C "$test_count" subtree add --prefix=subADir FETCH_HEAD &&
+	git -C "$test_count" fetch ./subB HEAD &&
+	git -C "$test_count" subtree add --prefix=subBDir FETCH_HEAD &&
+	test_create_commit "$test_count" subADir/main-subA1 &&
+	test_create_commit "$test_count" subBDir/main-subB1 &&
+	git -C "$test_count" subtree split --prefix=subADir \
+		--squash --rejoin -m "Sub A Split 1" &&
+	git -C "$test_count" subtree split --prefix=subBDir \
+		--squash --rejoin -m "Sub B Split 1" &&
+	test_create_commit "$test_count" subADir/main-subA2 &&
+	test_create_commit "$test_count" subBDir/main-subB2 &&
+	git -C "$test_count" subtree split --prefix=subADir \
+		--squash --rejoin -m "Sub A Split 2" &&
+	test "$(git -C "$test_count" subtree split --prefix=subBDir \
+		--squash --rejoin -d -m "Sub B Split 1" 2>&1 | grep -w "\[1\]")" = ""
+'
+
 test_expect_success 'split sub dir/ with --rejoin from scratch' '
 	subtree_test_create_repo "$test_count" &&
 	test_create_commit "$test_count" main1 &&
