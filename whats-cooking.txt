@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2024, #01; Fri, 2)
+Subject: What's cooking in git.git (Feb 2024, #02; Fri, 2)
 X-master-at: 2a540e432fe5dff3cfa9d3bf7ca56db2ad12ebb9
-X-next-at: 05954cdfa36fd5c325af9dde784879dcc78384ff
+X-next-at: 8838dd21e8a4ec1324377ffcfa90413844ca3674
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2024, #01; Fri, 2)
+What's cooking in git.git (Feb 2024, #02; Fri, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,152 +46,7 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ad/custom-merge-placeholder-for-symbolic-pathnames (2024-01-24) 1 commit
-  (merged to 'next' on 2024-01-24 at d9cf4e227d)
- + merge-ll: expose revision names to custom drivers
-
- The labels on conflict markers for the common ancestor, our version,
- and the other version are available to custom 3-way merge driver
- via %S, %X, and %Y placeholders.
- source: <pull.1648.v4.git.git.1706126951879.gitgitgadget@gmail.com>
-
-
-* jc/coc-whitespace-fix (2024-01-23) 1 commit
-  (merged to 'next' on 2024-01-26 at 6fb290ad59)
- + CoC: whitespace fix
-
- Docfix.
- source: <xmqqmssvnb8d.fsf_-_@gitster.g>
-
-
-* jc/ls-files-doc-update (2024-01-25) 1 commit
-  (merged to 'next' on 2024-01-26 at a71aeec3d3)
- + ls-files: avoid the verb "deprecate" for individual options
-
- The documentation for the --exclude-per-directory option marked it
- as deprecated, which confused readers into thinking there may be a
- plan to remove it in the future, which was not our intention.
- source: <xmqqjznybfp4.fsf@gitster.g>
-
-
-* jc/reffiles-tests (2024-01-22) 12 commits
-  (merged to 'next' on 2024-01-24 at 0d1aaa6807)
- + t5312: move reffiles specific tests to t0601
- + t4202: move reffiles specific tests to t0600
- + t3903: make drop stash test ref backend agnostic
- + t1503: move reffiles specific tests to t0600
- + t1415: move reffiles specific tests to t0601
- + t1410: move reffiles specific tests to t0600
- + t1406: move reffiles specific tests to t0600
- + t1405: move reffiles specific tests to t0601
- + t1404: move reffiles specific tests to t0600
- + t1414: convert test to use Git commands instead of writing refs manually
- + remove REFFILES prerequisite for some tests in t1405 and t2017
- + t3210: move to t0601
-
- Tests on ref API are moved around to prepare for reftable.
- cf. <Za5TW-q4cKS8pNNc@tanuki>
- source: <pull.1647.v2.git.git.1705695540.gitgitgadget@gmail.com>
-
-
-* jk/fetch-auto-tag-following-fix (2024-01-24) 1 commit
-  (merged to 'next' on 2024-01-26 at d058f1511b)
- + transport-helper: re-examine object dir after fetching
-
- Fetching via protocol v0 over Smart HTTP transport sometimes failed
- to correctly auto-follow tags.
- source: <20240124010056.GA2603087@coredump.intra.peff.net>
-
-
-* jx/remote-archive-over-smart-http (2024-01-22) 6 commits
-  (merged to 'next' on 2024-01-23 at 5fa4633015)
- + transport-helper: call do_take_over() in process_connect
- + transport-helper: call do_take_over() in connect_helper
- + http-backend: new rpc-service for git-upload-archive
- + transport-helper: protocol v2 supports upload-archive
- + remote-curl: supports git-upload-archive service
- + transport-helper: no connection restriction in connect_helper
-
- "git archive --remote=<remote>" learned to talk over the smart
- http (aka stateless) transport.
- source: <cover.1705841443.git.zhiyou.jx@alibaba-inc.com>
-
-
-* kl/allow-working-in-dot-git-in-non-bare-repository (2024-01-20) 1 commit
-  (merged to 'next' on 2024-01-24 at e77b796e11)
- + setup: allow cwd=.git w/ bareRepository=explicit
-
- The "disable repository discovery of a bare repository" check,
- triggered by setting safe.bareRepository configuration variable to
- 'explicit', has been loosened to exclude the ".git/" directory inside
- a non-bare repository from the check.  So you can do "cd .git &&
- git cmd" to run a Git command that works on a bare repository without
- explicitly specifying $GIT_DIR now.
- source: <pull.1645.git.1705709303098.gitgitgadget@gmail.com>
-
-
-* pb/ci-github-skip-logs-for-broken-tests (2024-01-22) 1 commit
-  (merged to 'next' on 2024-01-23 at f5e3ab2092)
- + ci(github): also skip logs of broken test cases
-
- GitHub CI update.
- cf. <dbe25fff-e1d4-41f2-8f8f-c538e8c2a77e@github.com>
- source: <pull.1649.git.git.1705808313306.gitgitgadget@gmail.com>
-
-
-* pb/complete-log-more (2024-01-22) 4 commits
-  (merged to 'next' on 2024-01-24 at 081d2a92fa)
- + completion: complete missing 'git log' options
- + completion: complete --encoding
- + completion: complete --patch-with-raw
- + completion: complete missing rev-list options
-
- The completion script (in contrib/) learned more options that can
- be used with "git log".
- source: <pull.1650.git.git.1705810071.gitgitgadget@gmail.com>
-
-
-* rj/advice-disable-how-to-disable (2024-01-16) 2 commits
-  (merged to 'next' on 2024-01-23 at f456f4937d)
- + advice: allow disabling the automatic hint in advise_if_enabled()
- + Merge branch 'rj/advice-delete-branch-not-fully-merged' into rj/advice-disable-how-to-disable
-
- All conditional "advice" messages show how to turn them off, which
- becomes repetitive.  Setting advice.* configuration explicitly on
- now omits the instruction part.
- source: <6a842ef8-b390-4739-9eef-e867d55ed5ea@gmail.com>
-
-
-* rs/parse-options-with-keep-unknown-abbrev-fix (2024-01-22) 2 commits
-  (merged to 'next' on 2024-01-23 at a216b482cd)
- + parse-options: simplify positivation handling
- + parse-options: fully disable option abbreviation with PARSE_OPT_KEEP_UNKNOWN
-
- "git diff --no-rename A B" did not disable rename detection but did
- not trigger an error from the command line parser.
- source: <579fd5bc-3bfd-427f-b22d-dab5e7e56eb2@web.de>
- source: <fb3c679a-5f00-4934-b028-6b2d081cd5b2@web.de>
-
-
-* sd/negotiate-trace-fix (2024-01-03) 1 commit
-  (merged to 'next' on 2024-01-24 at 6305853ab2)
- + push: region_leave trace for negotiate_using_fetch
-
- Tracing fix.
- source: <20240103224054.1940209-1-delmerico@google.com>
-
-
-* zf/subtree-split-fix (2024-01-25) 1 commit
-  (merged to 'next' on 2024-01-26 at a09e02f208)
- + subtree: fix split processing with multiple subtrees present
-
- "git subtree" (in contrib/) update.
- source: <pull.1587.v6.git.1701442494319.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
+[Cooking]
 
 * jc/t0091-with-unknown-git (2024-01-30) 1 commit
   (merged to 'next' on 2024-01-31 at 3dfcad1b18)
@@ -336,8 +191,6 @@ Release tarballs are available at:
  Will merge to 'next'.
  source: <pull.1649.git.1706897095273.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jc/comment-style-fixes (2024-01-29) 3 commits
   (merged to 'next' on 2024-01-30 at a58d48a9ce)
@@ -359,12 +212,13 @@ Release tarballs are available at:
  "git diff --no-index file1 file2" segfaulted while invoking the
  external diff driver, which has been corrected.
 
- Reverted out of 'next' for now, seems to break "win test (n)" jobs.
- cf. <xmqqh6irwtkd.fsf@gitster.g>
+ Will merge to 'next'.
  source: <20240129015708.GA1762343@coredump.intra.peff.net>
 
 
-* jk/unit-tests-buildfix (2024-01-31) 3 commits
+* jk/unit-tests-buildfix (2024-02-02) 4 commits
+  (merged to 'next' on 2024-02-02 at 8838dd21e8)
+ + t/Makefile: say the default target upfront
   (merged to 'next' on 2024-01-31 at 00df31c4c8)
  + t/Makefile: get UNIT_TESTS list from C sources
  + Makefile: remove UNIT_TEST_BIN directory with "make clean"
@@ -374,6 +228,7 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20240130053714.GA165967@coredump.intra.peff.net>
+ source: <xmqqjznmtjr9.fsf@gitster.g>
 
 
 * js/merge-tree-3-trees (2024-01-29) 1 commit
