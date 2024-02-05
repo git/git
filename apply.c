@@ -26,6 +26,7 @@
 #include "object-file.h"
 #include "parse-options.h"
 #include "path.h"
+#include "promise.h"
 #include "quote.h"
 #include "read-cache.h"
 #include "rerere.h"
@@ -1316,13 +1317,14 @@ static int check_header_line(int linenr, struct patch *patch)
 	return 0;
 }
 
-int parse_git_diff_header(struct strbuf *root,
+void parse_git_diff_header(struct strbuf *root,
 			  int *linenr,
 			  int p_value,
 			  const char *line,
 			  int len,
 			  unsigned int size,
-			  struct patch *patch)
+			  struct patch *patch,
+			  struct promise_t* return_promise)
 {
 	unsigned long offset;
 	struct gitdiff_data parse_hdr_state;
@@ -1386,10 +1388,12 @@ int parse_git_diff_header(struct strbuf *root,
 			if (len < oplen || memcmp(p->str, line, oplen))
 				continue;
 			res = p->fn(&parse_hdr_state, line + oplen, patch);
-			if (res < 0)
-				return -1;
-			if (check_header_line(*linenr, patch))
-				return -1;
+			if (res < 0) {
+				PROMISE_THROW(return_promise, APPLY_ERR_GENERIC, "operation for \"%s\" failed with code: %d", p->str, res);
+			}
+			if (check_header_line(*linenr, patch)) {
+				PROMISE_THROW(return_promise, APPLY_ERR_GENERIC, "invalid header lines");
+			}
 			if (res > 0)
 				goto done;
 			break;
@@ -1399,25 +1403,25 @@ int parse_git_diff_header(struct strbuf *root,
 done:
 	if (!patch->old_name && !patch->new_name) {
 		if (!patch->def_name) {
-			error(Q_("git diff header lacks filename information when removing "
-				 "%d leading pathname component (line %d)",
-				 "git diff header lacks filename information when removing "
-				 "%d leading pathname components (line %d)",
-				 parse_hdr_state.p_value),
-			      parse_hdr_state.p_value, *linenr);
-			return -128;
+			PROMISE_THROW(return_promise, -128,
+				Q_("git diff header lacks filename information when removing "
+					"%d leading pathname component (line %d)",
+					"git diff header lacks filename information when removing "
+					"%d leading pathname components (line %d)",
+					parse_hdr_state.p_value),
+					parse_hdr_state.p_value, *linenr
+			);
 		}
 		patch->old_name = xstrdup(patch->def_name);
 		patch->new_name = xstrdup(patch->def_name);
 	}
 	if ((!patch->new_name && !patch->is_delete) ||
 	    (!patch->old_name && !patch->is_new)) {
-		error(_("git diff header lacks filename information "
+		PROMISE_THROW(return_promise, -128, _("git diff header lacks filename information "
 			"(line %d)"), *linenr);
-		return -128;
 	}
 	patch->is_toplevel_relative = 1;
-	return offset;
+	PROMISE_SUCCEED(return_promise, offset);
 }
 
 static int parse_num(const char *line, unsigned long *p)
@@ -1539,16 +1543,17 @@ static int parse_fragment_header(const char *line, int len, struct fragment *fra
 /*
  * Find file diff header
  *
- * Returns:
+ * Resolves promise with:
  *  -1 if no header was found
  *  -128 in case of error
  *   the size of the header in bytes (called "offset") otherwise
  */
-static int find_header(struct apply_state *state,
+static void find_header(struct apply_state *state,
 		       const char *line,
 		       unsigned long size,
 		       int *hdrsize,
-		       struct patch *patch)
+		       struct patch *patch,
+			   struct promise_t* return_promise)
 {
 	unsigned long offset, len;
 
@@ -1577,9 +1582,8 @@ static int find_header(struct apply_state *state,
 			struct fragment dummy;
 			if (parse_fragment_header(line, len, &dummy) < 0)
 				continue;
-			error(_("patch fragment without header at line %d: %.*s"),
+			PROMISE_THROW(return_promise, -128, _("patch fragment without header at line %d: %.*s"),
 				     state->linenr, (int)len-1, line);
-			return -128;
 		}
 
 		if (size < len + 6)
@@ -1590,15 +1594,25 @@ static int find_header(struct apply_state *state,
 		 * or mode change, so we handle that specially
 		 */
 		if (!memcmp("diff --git ", line, 11)) {
-			int git_hdr_len = parse_git_diff_header(&state->root, &state->linenr,
+			int git_hdr_len;
+			struct promise_t *parse_git_diff_header_promise = promise_init();
+			parse_git_diff_header(&state->root, &state->linenr,
 								state->p_value, line, len,
-								size, patch);
-			if (git_hdr_len < 0)
-				return -128;
+								size, patch, parse_git_diff_header_promise);
+			promise_assert_finished(parse_git_diff_header_promise);
+
+			if (parse_git_diff_header_promise->state == PROMISE_FAILURE) {
+				PROMISE_BUBBLE_UP(return_promise, parse_git_diff_header_promise,
+						 _("could not find file diff header"));
+			}
+
+			git_hdr_len = parse_git_diff_header_promise->result.success_result;
+			promise_release(parse_git_diff_header_promise);
 			if (git_hdr_len <= len)
 				continue;
 			*hdrsize = git_hdr_len;
-			return offset;
+			PROMISE_SUCCEED(return_promise, offset);
+			return;
 		}
 
 		/* --- followed by +++ ? */
@@ -1615,13 +1629,14 @@ static int find_header(struct apply_state *state,
 			continue;
 
 		/* Ok, we'll consider it a patch */
-		if (parse_traditional_patch(state, line, line+len, patch))
-			return -128;
+		if (parse_traditional_patch(state, line, line+len, patch)) {
+			PROMISE_THROW(return_promise, -128, "could not parse traditional patch");
+		}
 		*hdrsize = len + nextlen;
 		state->linenr += 2;
-		return offset;
+		PROMISE_SUCCEED(return_promise, offset);
 	}
-	return -1;
+	PROMISE_THROW(return_promise, APPLY_ERR_GENERIC, "no lines to read");
 }
 
 static void record_ws_error(struct apply_state *state,
@@ -2129,19 +2144,29 @@ static int use_patch(struct apply_state *state, struct patch *p)
  * reading after seeing a single patch (i.e. changes to a single file).
  * Create fragments (i.e. patch hunks) and hang them to the given patch.
  *
- * Returns:
+ * Resolves promise with:
  *   -1 if no header was found or parse_binary() failed,
  *   -128 on another error,
  *   the number of bytes consumed otherwise,
  *     so that the caller can call us again for the next patch.
  */
-static int parse_chunk(struct apply_state *state, char *buffer, unsigned long size, struct patch *patch)
+static void parse_chunk(struct apply_state *state, char *buffer, unsigned long size, struct patch *patch, struct promise_t* return_promise)
 {
-	int hdrsize, patchsize;
-	int offset = find_header(state, buffer, size, &hdrsize, patch);
+	int hdrsize = -1, patchsize, offset;
+	struct promise_t *find_header_promise = promise_init();
+	find_header(state, buffer, size, &hdrsize, patch, find_header_promise);
+	promise_assert_finished(find_header_promise);
 
-	if (offset < 0)
-		return offset;
+	if (find_header_promise->state == PROMISE_FAILURE) {
+		PROMISE_BUBBLE_UP(return_promise, find_header_promise, _("could not find header"));
+	}
+
+	offset = find_header_promise->result.success_result;
+	promise_release(find_header_promise);
+
+	if (offset < 0) {
+		PROMISE_SUCCEED(return_promise, offset);
+	}
 
 	prefix_patch(state, patch);
 
@@ -2159,8 +2184,9 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 				       size - offset - hdrsize,
 				       patch);
 
-	if (patchsize < 0)
-		return -128;
+	if (patchsize < 0) {
+		PROMISE_THROW(return_promise, -128, _("could not parse patch"));
+	}
 
 	if (!patchsize) {
 		static const char git_binary[] = "GIT binary patch\n";
@@ -2173,8 +2199,9 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 			state->linenr++;
 			used = parse_binary(state, buffer + hd + llen,
 					    size - hd - llen, patch);
-			if (used < 0)
-				return -1;
+			if (used < 0) {
+				PROMISE_THROW(return_promise, -1, _("could not parse binary patch"));
+			}
 			if (used)
 				patchsize = used + llen;
 			else
@@ -2205,12 +2232,11 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 		 */
 		if ((state->apply || state->check) &&
 		    (!patch->is_binary && !metadata_changes(patch))) {
-			error(_("patch with only garbage at line %d"), state->linenr);
-			return -128;
+			PROMISE_THROW(return_promise, -128, _("patch with only garbage at line %d"), state->linenr);
 		}
 	}
 
-	return offset + hdrsize + patchsize;
+	PROMISE_SUCCEED(return_promise, offset + hdrsize + patchsize);
 }
 
 static void reverse_patches(struct patch *p)
@@ -4755,21 +4781,36 @@ static int apply_patch(struct apply_state *state,
 		return -128;
 	offset = 0;
 	while (offset < buf.len) {
-		struct patch *patch;
 		int nr;
+		struct patch *patch;
+		struct promise_t *parse_chunk_promise;
 
 		CALLOC_ARRAY(patch, 1);
 		patch->inaccurate_eof = !!(options & APPLY_OPT_INACCURATE_EOF);
 		patch->recount =  !!(options & APPLY_OPT_RECOUNT);
-		nr = parse_chunk(state, buf.buf + offset, buf.len - offset, patch);
-		if (nr < 0) {
+
+		parse_chunk_promise = promise_init();
+		parse_chunk(state, buf.buf + offset, buf.len - offset, patch, parse_chunk_promise);
+
+		promise_assert_finished(parse_chunk_promise);
+
+		if (parse_chunk_promise->state == PROMISE_FAILURE) {
+			int nr;
+			nr = parse_chunk_promise->result.failure_result.status;
 			free_patch(patch);
 			if (nr == -128) {
+				error("\n\t%s", parse_chunk_promise->result.failure_result.message.buf);
+				promise_release(parse_chunk_promise);
 				res = -128;
 				goto end;
 			}
+			promise_release(parse_chunk_promise);
 			break;
 		}
+
+		nr = parse_chunk_promise->result.success_result;
+		promise_release(parse_chunk_promise);
+
 		if (state->apply_in_reverse)
 			reverse_patches(patch);
 		if (use_patch(state, patch)) {
