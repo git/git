@@ -58,6 +58,22 @@ test_expect_success 'preferred pack is reused for single-pack reuse' '
 	test_pack_objects_reused_all 3 1
 '
 
+test_expect_success 'multi-pack reuse is disabled by default' '
+	test_pack_objects_reused_all 3 1
+'
+
+test_expect_success 'feature.experimental implies multi-pack reuse' '
+	test_config feature.experimental true &&
+
+	test_pack_objects_reused_all 6 2
+'
+
+test_expect_success 'multi-pack reuse can be disabled with feature.experimental' '
+	test_config feature.experimental true &&
+	test_config pack.allowPackReuse single &&
+
+	test_pack_objects_reused_all 3 1
+'
 
 test_expect_success 'enable multi-pack reuse' '
 	git config pack.allowPackReuse multi
