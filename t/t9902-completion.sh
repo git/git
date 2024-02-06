@@ -1264,6 +1264,77 @@ test_expect_success 'git switch - with no options, complete local branches and u
 	EOF
 '
 
+test_expect_success 'git bisect - when not bisecting, complete only replay and start subcommands' '
+	test_completion "git bisect " <<-\EOF
+	replay Z
+	start Z
+	EOF
+'
+
+test_expect_success 'setup for git-bisect tests requiring a repo' '
+	git init git-bisect &&
+	(
+		cd git-bisect &&
+		echo "initial contents" >file &&
+		git add file &&
+		git commit -am "Initial commit" &&
+		git tag initial &&
+		echo "new line" >>file &&
+		git commit -am "First change" &&
+		echo "another new line" >>file &&
+		git commit -am "Second change" &&
+		git tag final
+	)
+'
+
+test_expect_success 'git bisect - start subcommand arguments before double-dash are completed as revs' '
+	(
+		cd git-bisect &&
+		test_completion "git bisect start " <<-\EOF
+		HEAD Z
+		final Z
+		initial Z
+		master Z
+		EOF
+	)
+'
+
+# Note that these arguments are <pathspec>s, which in practice the fallback
+# completion (not the git completion) later ends up completing as paths.
+test_expect_success 'git bisect - start subcommand arguments after double-dash are not completed' '
+	(
+		cd git-bisect &&
+		test_completion "git bisect start final initial -- " ""
+	)
+'
+
+test_expect_success 'setup for git-bisect tests requiring ongoing bisection' '
+	(
+		cd git-bisect &&
+		git bisect start --term-new=custom_new --term-old=custom_old final initial
+	)
+'
+
+test_expect_success 'git-bisect - when bisecting all subcommands are candidates' '
+	(
+		cd git-bisect &&
+		test_completion "git bisect " <<-\EOF
+		start Z
+		bad Z
+		new Z
+		good Z
+		old Z
+		skip Z
+		reset Z
+		visualize Z
+		replay Z
+		log Z
+		run Z
+		help Z
+		EOF
+	)
+'
+
 test_expect_success 'git checkout - completes refs and unique remote branches for DWIM' '
 	test_completion "git checkout " <<-\EOF
 	HEAD Z
