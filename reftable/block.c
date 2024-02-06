@@ -51,12 +51,7 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	if (2 + 3 * rlen + n > w->block_size - w->next)
 		return -1;
 	if (is_restart) {
-		if (w->restart_len == w->restart_cap) {
-			w->restart_cap = w->restart_cap * 2 + 1;
-			w->restarts = reftable_realloc(
-				w->restarts, sizeof(uint32_t) * w->restart_cap);
-		}
-
+		REFTABLE_ALLOC_GROW(w->restarts, w->restart_len + 1, w->restart_cap);
 		w->restarts[w->restart_len++] = w->next;
 	}
 

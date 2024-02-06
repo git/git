@@ -231,14 +231,10 @@ static void test_merged(void)
 	while (len < 100) { /* cap loops/recursion. */
 		struct reftable_ref_record ref = { NULL };
 		int err = reftable_iterator_next_ref(&it, &ref);
-		if (err > 0) {
+		if (err > 0)
 			break;
-		}
-		if (len == cap) {
-			cap = 2 * cap + 1;
-			out = reftable_realloc(
-				out, sizeof(struct reftable_ref_record) * cap);
-		}
+
+		REFTABLE_ALLOC_GROW(out, len + 1, cap);
 		out[len++] = ref;
 	}
 	reftable_iterator_destroy(&it);
@@ -368,14 +364,10 @@ static void test_merged_logs(void)
 	while (len < 100) { /* cap loops/recursion. */
 		struct reftable_log_record log = { NULL };
 		int err = reftable_iterator_next_log(&it, &log);
-		if (err > 0) {
+		if (err > 0)
 			break;
-		}
-		if (len == cap) {
-			cap = 2 * cap + 1;
-			out = reftable_realloc(
-				out, sizeof(struct reftable_log_record) * cap);
-		}
+
+		REFTABLE_ALLOC_GROW(out, len + 1, cap);
 		out[len++] = log;
 	}
 	reftable_iterator_destroy(&it);

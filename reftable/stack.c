@@ -551,7 +551,7 @@ struct reftable_addition {
 	struct reftable_stack *stack;
 
 	char **new_tables;
-	int new_tables_len;
+	size_t new_tables_len, new_tables_cap;
 	uint64_t next_update_index;
 };
 
@@ -602,8 +602,9 @@ done:
 
 static void reftable_addition_close(struct reftable_addition *add)
 {
-	int i = 0;
 	struct strbuf nm = STRBUF_INIT;
+	size_t i;
+
 	for (i = 0; i < add->new_tables_len; i++) {
 		stack_filename(&nm, add->stack, add->new_tables[i]);
 		unlink(nm.buf);
@@ -613,6 +614,7 @@ static void reftable_addition_close(struct reftable_addition *add)
 	reftable_free(add->new_tables);
 	add->new_tables = NULL;
 	add->new_tables_len = 0;
+	add->new_tables_cap = 0;
 
 	delete_tempfile(&add->lock_file);
 	strbuf_release(&nm);
@@ -631,8 +633,8 @@ int reftable_addition_commit(struct reftable_addition *add)
 {
 	struct strbuf table_list = STRBUF_INIT;
 	int lock_file_fd = get_tempfile_fd(add->lock_file);
-	int i = 0;
 	int err = 0;
+	size_t i;
 
 	if (add->new_tables_len == 0)
 		goto done;
@@ -660,12 +662,12 @@ int reftable_addition_commit(struct reftable_addition *add)
 	}
 
 	/* success, no more state to clean up. */
-	for (i = 0; i < add->new_tables_len; i++) {
+	for (i = 0; i < add->new_tables_len; i++)
 		reftable_free(add->new_tables[i]);
-	}
 	reftable_free(add->new_tables);
 	add->new_tables = NULL;
 	add->new_tables_len = 0;
+	add->new_tables_cap = 0;
 
 	err = reftable_stack_reload_maybe_reuse(add->stack, 1);
 	if (err)
@@ -792,11 +794,9 @@ int reftable_addition_add(struct reftable_addition *add,
 		goto done;
 	}
 
-	add->new_tables = reftable_realloc(add->new_tables,
-					   sizeof(*add->new_tables) *
-						   (add->new_tables_len + 1));
-	add->new_tables[add->new_tables_len] = strbuf_detach(&next_name, NULL);
-	add->new_tables_len++;
+	REFTABLE_ALLOC_GROW(add->new_tables, add->new_tables_len + 1,
+			    add->new_tables_cap);
+	add->new_tables[add->new_tables_len++] = strbuf_detach(&next_name, NULL);
 done:
 	if (tab_fd > 0) {
 		close(tab_fd);
@@ -1367,17 +1367,12 @@ static int stack_check_addition(struct reftable_stack *st,
 	while (1) {
 		struct reftable_ref_record ref = { NULL };
 		err = reftable_iterator_next_ref(&it, &ref);
-		if (err > 0) {
+		if (err > 0)
 			break;
-		}
 		if (err < 0)
 			goto done;
 
-		if (len >= cap) {
-			cap = 2 * cap + 1;
-			refs = reftable_realloc(refs, cap * sizeof(refs[0]));
-		}
-
+		REFTABLE_ALLOC_GROW(refs, len + 1, cap);
 		refs[len++] = ref;
 	}
 

@@ -53,6 +53,17 @@ void *reftable_realloc(void *p, size_t sz);
 void reftable_free(void *p);
 void *reftable_calloc(size_t sz);
 
+#define REFTABLE_REALLOC_ARRAY(x, alloc) (x) = reftable_realloc((x), st_mult(sizeof(*(x)), (alloc)))
+#define REFTABLE_ALLOC_GROW(x, nr, alloc) \
+	do { \
+		if ((nr) > alloc) { \
+			alloc = 2 * (alloc) + 1; \
+			if (alloc < (nr)) \
+				alloc = (nr); \
+			REFTABLE_REALLOC_ARRAY(x, alloc); \
+		} \
+	} while (0)
+
 /* Find the longest shared prefix size of `a` and `b` */
 struct strbuf;
 int common_prefix_size(struct strbuf *a, struct strbuf *b);

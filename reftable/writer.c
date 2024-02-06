@@ -200,12 +200,7 @@ static void writer_index_hash(struct reftable_writer *w, struct strbuf *hash)
 		return;
 	}
 
-	if (key->offset_len == key->offset_cap) {
-		key->offset_cap = 2 * key->offset_cap + 1;
-		key->offsets = reftable_realloc(
-			key->offsets, sizeof(uint64_t) * key->offset_cap);
-	}
-
+	REFTABLE_ALLOC_GROW(key->offsets, key->offset_len + 1, key->offset_cap);
 	key->offsets[key->offset_len++] = off;
 }
 
@@ -674,12 +669,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	if (err < 0)
 		return err;
 
-	if (w->index_cap == w->index_len) {
-		w->index_cap = 2 * w->index_cap + 1;
-		w->index = reftable_realloc(
-			w->index,
-			sizeof(struct reftable_index_record) * w->index_cap);
-	}
+	REFTABLE_ALLOC_GROW(w->index, w->index_len + 1, w->index_cap);
 
 	ir.offset = w->next;
 	strbuf_reset(&ir.last_key);

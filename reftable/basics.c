@@ -89,17 +89,13 @@ void parse_names(char *buf, int size, char ***namesp)
 			next = end;
 		}
 		if (p < next) {
-			if (names_len == names_cap) {
-				names_cap = 2 * names_cap + 1;
-				names = reftable_realloc(
-					names, names_cap * sizeof(*names));
-			}
+			REFTABLE_ALLOC_GROW(names, names_len + 1, names_cap);
 			names[names_len++] = xstrdup(p);
 		}
 		p = next + 1;
 	}
 
-	names = reftable_realloc(names, (names_len + 1) * sizeof(*names));
+	REFTABLE_REALLOC_ARRAY(names, names_len + 1);
 	names[names_len] = NULL;
 	*namesp = names;
 }
