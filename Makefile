@@ -1590,7 +1590,7 @@ endif
 
 ifdef LIBPCREDIR
 	BASIC_CFLAGS += -I$(LIBPCREDIR)/include
-	EXTLIBS += -L$(LIBPCREDIR)/$(lib) $(CC_LD_DYNPATH)$(LIBPCREDIR)/$(lib)
+	EXTLIBS += $(call libpath_template,$(LIBPCREDIR)/$(lib))
 endif
 
 ifdef HAVE_ALLOCA_H
@@ -1610,7 +1610,7 @@ else
 	ifdef CURLDIR
 		# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
 		CURL_CFLAGS = -I$(CURLDIR)/include
-		CURL_LIBCURL = -L$(CURLDIR)/$(lib) $(CC_LD_DYNPATH)$(CURLDIR)/$(lib)
+		CURL_LIBCURL = $(call libpath_template,$(CURLDIR)/$(lib))
 	else
 		CURL_CFLAGS =
 		CURL_LIBCURL =
@@ -1646,7 +1646,7 @@ else
 	ifndef NO_EXPAT
 		ifdef EXPATDIR
 			BASIC_CFLAGS += -I$(EXPATDIR)/include
-			EXPAT_LIBEXPAT = -L$(EXPATDIR)/$(lib) $(CC_LD_DYNPATH)$(EXPATDIR)/$(lib) -lexpat
+			EXPAT_LIBEXPAT = $(call libpath_template,$(EXPATDIR)/$(lib)) -lexpat
 		else
 			EXPAT_LIBEXPAT = -lexpat
 		endif
@@ -1659,7 +1659,7 @@ IMAP_SEND_LDFLAGS += $(OPENSSL_LINK) $(OPENSSL_LIBSSL) $(LIB_4_CRYPTO)
 
 ifdef ZLIB_PATH
 	BASIC_CFLAGS += -I$(ZLIB_PATH)/include
-	EXTLIBS += -L$(ZLIB_PATH)/$(lib) $(CC_LD_DYNPATH)$(ZLIB_PATH)/$(lib)
+	EXTLIBS += $(call libpath_template,$(ZLIB_PATH)/$(lib))
 endif
 EXTLIBS += -lz
 
@@ -1667,7 +1667,7 @@ ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
 		BASIC_CFLAGS += -I$(OPENSSLDIR)/include
-		OPENSSL_LINK = -L$(OPENSSLDIR)/$(lib) $(CC_LD_DYNPATH)$(OPENSSLDIR)/$(lib)
+		OPENSSL_LINK = $(call libpath_template,$(OPENSSLDIR)/$(lib))
 	else
 		OPENSSL_LINK =
 	endif
@@ -1694,7 +1694,7 @@ ifndef NO_ICONV
 	ifdef NEEDS_LIBICONV
 		ifdef ICONVDIR
 			BASIC_CFLAGS += -I$(ICONVDIR)/include
-			ICONV_LINK = -L$(ICONVDIR)/$(lib) $(CC_LD_DYNPATH)$(ICONVDIR)/$(lib)
+			ICONV_LINK = $(call libpath_template,$(ICONVDIR)/$(lib))
 		else
 			ICONV_LINK =
 		endif
