@@ -1271,6 +1271,17 @@ test_expect_success 'git bisect - when not bisecting, complete only replay and s
 	EOF
 '
 
+test_expect_success 'git bisect - complete options to start subcommand' '
+	test_completion "git bisect start --" <<-\EOF
+	--term-new Z
+	--term-bad Z
+	--term-old Z
+	--term-good Z
+	--no-checkout Z
+	--first-parent Z
+	EOF
+'
+
 test_expect_success 'setup for git-bisect tests requiring a repo' '
 	git init git-bisect &&
 	(

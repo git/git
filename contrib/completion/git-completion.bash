@@ -1478,7 +1478,7 @@ _git_bisect ()
 	start)
 		case "$cur" in
 		--*)
-			__gitcomp "--term-new --term-bad --term-old --term-good"
+			__gitcomp "--first-parent --no-checkout --term-new --term-bad --term-old --term-good"
 			return
 			;;
 		*)
