@@ -1259,45 +1259,22 @@ reftable_record_vtable(struct reftable_record *rec)
 	abort();
 }
 
-struct reftable_record reftable_new_record(uint8_t typ)
+void reftable_record_init(struct reftable_record *rec, uint8_t typ)
 {
-	struct reftable_record clean = {
-		.type = typ,
-	};
+	memset(rec, 0, sizeof(*rec));
+	rec->type = typ;
 
-	/* the following is involved, but the naive solution (just return
-	 * `clean` as is, except for BLOCK_TYPE_INDEX), returns a garbage
-	 * clean.u.obj.offsets pointer on Windows VS CI.  Go figure.
-	 */
 	switch (typ) {
-	case BLOCK_TYPE_OBJ:
-	{
-		struct reftable_obj_record obj = { 0 };
-		clean.u.obj = obj;
-		break;
-	}
-	case BLOCK_TYPE_INDEX:
-	{
-		struct reftable_index_record idx = {
-			.last_key = STRBUF_INIT,
-		};
-		clean.u.idx = idx;
-		break;
-	}
 	case BLOCK_TYPE_REF:
-	{
-		struct reftable_ref_record ref = { 0 };
-		clean.u.ref = ref;
-		break;
-	}
 	case BLOCK_TYPE_LOG:
-	{
-		struct reftable_log_record log = { 0 };
-		clean.u.log = log;
-		break;
+	case BLOCK_TYPE_OBJ:
+		return;
+	case BLOCK_TYPE_INDEX:
+		strbuf_init(&rec->u.idx.last_key, 0);
+		return;
+	default:
+		BUG("unhandled record type");
 	}
-	}
-	return clean;
 }
 
 void reftable_record_print(struct reftable_record *rec, int hash_size)

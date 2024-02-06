@@ -444,13 +444,13 @@ static int reader_start(struct reftable_reader *r, struct table_iter *ti,
 static int reader_seek_linear(struct table_iter *ti,
 			      struct reftable_record *want)
 {
-	struct reftable_record rec =
-		reftable_new_record(reftable_record_type(want));
 	struct strbuf want_key = STRBUF_INIT;
 	struct strbuf got_key = STRBUF_INIT;
 	struct table_iter next = TABLE_ITER_INIT;
+	struct reftable_record rec;
 	int err = -1;
 
+	reftable_record_init(&rec, reftable_record_type(want));
 	reftable_record_key(want, &want_key);
 
 	while (1) {

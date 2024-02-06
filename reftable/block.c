@@ -382,23 +382,23 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 		.key = *want,
 		.r = br,
 	};
-	struct reftable_record rec = reftable_new_record(block_reader_type(br));
-	int err = 0;
 	struct block_iter next = BLOCK_ITER_INIT;
+	struct reftable_record rec;
+	int err = 0, i;
 
-	int i = binsearch(br->restart_count, &restart_key_less, &args);
 	if (args.error) {
 		err = REFTABLE_FORMAT_ERROR;
 		goto done;
 	}
 
-	it->br = br;
-	if (i > 0) {
-		i--;
-		it->next_off = block_reader_restart_offset(br, i);
-	} else {
+	i = binsearch(br->restart_count, &restart_key_less, &args);
+	if (i > 0)
+		it->next_off = block_reader_restart_offset(br, i - 1);
+	else
 		it->next_off = br->header_off + 4;
-	}
+	it->br = br;
+
+	reftable_record_init(&rec, block_reader_type(br));
 
 	/* We're looking for the last entry less/equal than the wanted key, so
 	   we have to go one entry too far and then back up.

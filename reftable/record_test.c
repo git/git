@@ -16,11 +16,11 @@
 
 static void test_copy(struct reftable_record *rec)
 {
-	struct reftable_record copy = { 0 };
+	struct reftable_record copy;
 	uint8_t typ;
 
 	typ = reftable_record_type(rec);
-	copy = reftable_new_record(typ);
+	reftable_record_init(&copy, typ);
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
 	/* do it twice to catch memory leaks */
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);

@@ -21,11 +21,11 @@ static int merged_iter_init(struct merged_iter *mi)
 {
 	for (size_t i = 0; i < mi->stack_len; i++) {
 		struct pq_entry e = {
-			.rec = reftable_new_record(mi->typ),
 			.index = i,
 		};
 		int err;
 
+		reftable_record_init(&e.rec, mi->typ);
 		err = iterator_next(&mi->stack[i], &e.rec);
 		if (err < 0)
 			return err;
@@ -57,10 +57,12 @@ static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
 					       size_t idx)
 {
 	struct pq_entry e = {
-		.rec = reftable_new_record(mi->typ),
 		.index = idx,
 	};
-	int err = iterator_next(&mi->stack[idx], &e.rec);
+	int err;
+
+	reftable_record_init(&e.rec, mi->typ);
+	err = iterator_next(&mi->stack[idx], &e.rec);
 	if (err < 0)
 		return err;
 
