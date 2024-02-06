@@ -93,10 +93,12 @@ merged_table_from_records(struct reftable_ref_record **refs,
 	int i = 0;
 	struct reftable_merged_table *mt = NULL;
 	int err;
-	struct reftable_table *tabs =
-		reftable_calloc(n * sizeof(struct reftable_table));
-	*readers = reftable_calloc(n * sizeof(struct reftable_reader *));
-	*source = reftable_calloc(n * sizeof(**source));
+	struct reftable_table *tabs;
+
+	REFTABLE_CALLOC_ARRAY(tabs, n);
+	REFTABLE_CALLOC_ARRAY(*readers, n);
+	REFTABLE_CALLOC_ARRAY(*source, n);
+
 	for (i = 0; i < n; i++) {
 		write_test_table(&buf[i], refs[i], sizes[i]);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
@@ -266,10 +268,12 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 	int i = 0;
 	struct reftable_merged_table *mt = NULL;
 	int err;
-	struct reftable_table *tabs =
-		reftable_calloc(n * sizeof(struct reftable_table));
-	*readers = reftable_calloc(n * sizeof(struct reftable_reader *));
-	*source = reftable_calloc(n * sizeof(**source));
+	struct reftable_table *tabs;
+
+	REFTABLE_CALLOC_ARRAY(tabs, n);
+	REFTABLE_CALLOC_ARRAY(*readers, n);
+	REFTABLE_CALLOC_ARRAY(*source, n);
+
 	for (i = 0; i < n; i++) {
 		write_test_log_table(&buf[i], logs[i], sizes[i], i + 1);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
@@ -412,7 +416,7 @@ static void test_default_write_opts(void)
 	};
 	int err;
 	struct reftable_block_source source = { NULL };
-	struct reftable_table *tab = reftable_calloc(sizeof(*tab) * 1);
+	struct reftable_table *tab = reftable_calloc(1, sizeof(*tab));
 	uint32_t hash_id;
 	struct reftable_reader *rd = NULL;
 	struct reftable_merged_table *merged = NULL;

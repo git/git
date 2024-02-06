@@ -539,8 +539,7 @@ static int reader_seek_indexed(struct reftable_reader *r,
 
 	if (err == 0) {
 		struct table_iter empty = TABLE_ITER_INIT;
-		struct table_iter *malloced =
-			reftable_calloc(sizeof(struct table_iter));
+		struct table_iter *malloced = reftable_calloc(1, sizeof(*malloced));
 		*malloced = empty;
 		table_iter_copy_from(malloced, &next);
 		iterator_from_table_iter(it, malloced);
@@ -635,8 +634,7 @@ void reader_close(struct reftable_reader *r)
 int reftable_new_reader(struct reftable_reader **p,
 			struct reftable_block_source *src, char const *name)
 {
-	struct reftable_reader *rd =
-		reftable_calloc(sizeof(struct reftable_reader));
+	struct reftable_reader *rd = reftable_calloc(1, sizeof(*rd));
 	int err = init_reader(rd, src, name);
 	if (err == 0) {
 		*p = rd;
@@ -711,7 +709,7 @@ static int reftable_reader_refs_for_unindexed(struct reftable_reader *r,
 					      uint8_t *oid)
 {
 	struct table_iter ti_empty = TABLE_ITER_INIT;
-	struct table_iter *ti = reftable_calloc(sizeof(struct table_iter));
+	struct table_iter *ti = reftable_calloc(1, sizeof(*ti));
 	struct filtering_ref_iterator *filter = NULL;
 	struct filtering_ref_iterator empty = FILTERING_REF_ITERATOR_INIT;
 	int oid_len = hash_size(r->hash_id);

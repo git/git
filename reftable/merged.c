@@ -190,7 +190,7 @@ int reftable_new_merged_table(struct reftable_merged_table **dest,
 		}
 	}
 
-	m = reftable_calloc(sizeof(struct reftable_merged_table));
+	REFTABLE_CALLOC_ARRAY(m, 1);
 	m->stack = stack;
 	m->stack_len = n;
 	m->min = first_min;
@@ -240,7 +240,7 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 				    struct reftable_record *rec)
 {
 	struct reftable_iterator *iters = reftable_calloc(
-		sizeof(struct reftable_iterator) * mt->stack_len);
+		mt->stack_len, sizeof(*iters));
 	struct merged_iter merged = {
 		.stack = iters,
 		.typ = reftable_record_type(rec),

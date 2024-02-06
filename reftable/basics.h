@@ -51,8 +51,10 @@ int names_length(char **names);
 void *reftable_malloc(size_t sz);
 void *reftable_realloc(void *p, size_t sz);
 void reftable_free(void *p);
-void *reftable_calloc(size_t sz);
+void *reftable_calloc(size_t nelem, size_t elsize);
 
+#define REFTABLE_ALLOC_ARRAY(x, alloc) (x) = reftable_malloc(st_mult(sizeof(*(x)), (alloc)))
+#define REFTABLE_CALLOC_ARRAY(x, alloc) (x) = reftable_calloc((alloc), sizeof(*(x)))
 #define REFTABLE_REALLOC_ARRAY(x, alloc) (x) = reftable_realloc((x), st_mult(sizeof(*(x)), (alloc)))
 #define REFTABLE_ALLOC_GROW(x, nr, alloc) \
 	do { \

@@ -140,8 +140,8 @@ int validate_ref_record_addition(struct reftable_table tab,
 {
 	struct modification mod = {
 		.tab = tab,
-		.add = reftable_calloc(sizeof(char *) * sz),
-		.del = reftable_calloc(sizeof(char *) * sz),
+		.add = reftable_calloc(sz, sizeof(*mod.add)),
+		.del = reftable_calloc(sz, sizeof(*mod.del)),
 	};
 	int i = 0;
 	int err = 0;

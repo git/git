@@ -143,8 +143,10 @@ int block_writer_finish(struct block_writer *w)
 		int block_header_skip = 4 + w->header_off;
 		uLongf src_len = w->next - block_header_skip;
 		uLongf dest_cap = src_len * 1.001 + 12;
+		uint8_t *compressed;
 
-		uint8_t *compressed = reftable_malloc(dest_cap);
+		REFTABLE_ALLOC_ARRAY(compressed, dest_cap);
+
 		while (1) {
 			uLongf out_dest_len = dest_cap;
 			int zresult = compress2(compressed, &out_dest_len,
@@ -201,9 +203,9 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		uLongf dst_len = sz - block_header_skip; /* total size of dest
 							    buffer. */
 		uLongf src_len = block->len - block_header_skip;
-		/* Log blocks specify the *uncompressed* size in their header.
-		 */
-		uncompressed = reftable_malloc(sz);
+
+		/* Log blocks specify the *uncompressed* size in their header. */
+		REFTABLE_ALLOC_ARRAY(uncompressed, sz);
 
 		/* Copy over the block header verbatim. It's not compressed. */
 		memcpy(uncompressed, block->data, block_header_skip);

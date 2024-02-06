@@ -36,7 +36,7 @@ static void test_block_read_write(void)
 	int j = 0;
 	struct strbuf want = STRBUF_INIT;
 
-	block.data = reftable_calloc(block_size);
+	REFTABLE_CALLOC_ARRAY(block.data, block_size);
 	block.len = block_size;
 	block.source = malloc_block_source();
 	block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,

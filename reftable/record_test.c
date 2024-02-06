@@ -231,8 +231,8 @@ static void test_reftable_log_record_roundtrip(void)
 				.value_type = REFTABLE_LOG_UPDATE,
 				.value = {
 					.update = {
-						.new_hash = reftable_calloc(GIT_SHA1_RAWSZ),
-						.old_hash = reftable_calloc(GIT_SHA1_RAWSZ),
+						.new_hash = reftable_calloc(GIT_SHA1_RAWSZ, 1),
+						.old_hash = reftable_calloc(GIT_SHA1_RAWSZ, 1),
 						.name = xstrdup("old name"),
 						.email = xstrdup("old@email"),
 						.message = xstrdup("old message"),

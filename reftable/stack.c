@@ -50,8 +50,7 @@ static ssize_t reftable_fd_write(void *arg, const void *data, size_t sz)
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 		       struct reftable_write_options config)
 {
-	struct reftable_stack *p =
-		reftable_calloc(sizeof(struct reftable_stack));
+	struct reftable_stack *p = reftable_calloc(1, sizeof(*p));
 	struct strbuf list_file_name = STRBUF_INIT;
 	int err = 0;
 
@@ -94,7 +93,7 @@ static int fd_read_lines(int fd, char ***namesp)
 		goto done;
 	}
 
-	buf = reftable_malloc(size + 1);
+	REFTABLE_ALLOC_ARRAY(buf, size + 1);
 	if (read_in_full(fd, buf, size) != size) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -114,7 +113,7 @@ int read_lines(const char *filename, char ***namesp)
 	int err = 0;
 	if (fd < 0) {
 		if (errno == ENOENT) {
-			*namesp = reftable_calloc(sizeof(char *));
+			REFTABLE_CALLOC_ARRAY(*namesp, 1);
 			return 0;
 		}
 
@@ -191,8 +190,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 static struct reftable_reader **stack_copy_readers(struct reftable_stack *st,
 						   int cur_len)
 {
-	struct reftable_reader **cur =
-		reftable_calloc(sizeof(struct reftable_reader *) * cur_len);
+	struct reftable_reader **cur = reftable_calloc(cur_len, sizeof(*cur));
 	int i = 0;
 	for (i = 0; i < cur_len; i++) {
 		cur[i] = st->readers[i];
@@ -208,9 +206,9 @@ static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 	int err = 0;
 	int names_len = names_length(names);
 	struct reftable_reader **new_readers =
-		reftable_calloc(sizeof(struct reftable_reader *) * names_len);
+		reftable_calloc(names_len, sizeof(*new_readers));
 	struct reftable_table *new_tables =
-		reftable_calloc(sizeof(struct reftable_table) * names_len);
+		reftable_calloc(names_len, sizeof(*new_tables));
 	int new_readers_len = 0;
 	struct reftable_merged_table *new_merged = NULL;
 	struct strbuf table_path = STRBUF_INIT;
@@ -344,7 +342,7 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 				goto out;
 			}
 
-			names = reftable_calloc(sizeof(char *));
+			REFTABLE_CALLOC_ARRAY(names, 1);
 		} else {
 			err = fd_read_lines(fd, &names);
 			if (err < 0)
@@ -686,7 +684,7 @@ int reftable_stack_new_addition(struct reftable_addition **dest,
 {
 	int err = 0;
 	struct reftable_addition empty = REFTABLE_ADDITION_INIT;
-	*dest = reftable_calloc(sizeof(**dest));
+	REFTABLE_CALLOC_ARRAY(*dest, 1);
 	**dest = empty;
 	err = reftable_stack_init_addition(*dest, st);
 	if (err) {
@@ -871,7 +869,7 @@ static int stack_write_compact(struct reftable_stack *st,
 {
 	int subtabs_len = last - first + 1;
 	struct reftable_table *subtabs = reftable_calloc(
-		sizeof(struct reftable_table) * (last - first + 1));
+		last - first + 1, sizeof(*subtabs));
 	struct reftable_merged_table *mt = NULL;
 	int err = 0;
 	struct reftable_iterator it = { NULL };
@@ -979,9 +977,9 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 	int compact_count = last - first + 1;
 	char **listp = NULL;
 	char **delete_on_success =
-		reftable_calloc(sizeof(char *) * (compact_count + 1));
+		reftable_calloc(compact_count + 1, sizeof(*delete_on_success));
 	char **subtable_locks =
-		reftable_calloc(sizeof(char *) * (compact_count + 1));
+		reftable_calloc(compact_count + 1, sizeof(*subtable_locks));
 	int i = 0;
 	int j = 0;
 	int is_empty_table = 0;
@@ -1204,7 +1202,7 @@ int fastlog2(uint64_t sz)
 
 struct segment *sizes_to_segments(int *seglen, uint64_t *sizes, int n)
 {
-	struct segment *segs = reftable_calloc(sizeof(struct segment) * n);
+	struct segment *segs = reftable_calloc(n, sizeof(*segs));
 	int next = 0;
 	struct segment cur = { 0 };
 	int i = 0;
@@ -1268,7 +1266,7 @@ struct segment suggest_compaction_segment(uint64_t *sizes, int n)
 static uint64_t *stack_table_sizes_for_compaction(struct reftable_stack *st)
 {
 	uint64_t *sizes =
-		reftable_calloc(sizeof(uint64_t) * st->merged->stack_len);
+		reftable_calloc(st->merged->stack_len, sizeof(*sizes));
 	int version = (st->config.hash_id == GIT_SHA1_FORMAT_ID) ? 1 : 2;
 	int overhead = header_size(version) - 1;
 	int i = 0;
