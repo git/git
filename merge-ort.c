@@ -2642,7 +2642,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 			oidcpy(&ci->stages[i].oid, null_oid());
 		}
 
-		// Now we want to focus on new_ci, so reassign ci to it
+		/* Now we want to focus on new_ci, so reassign ci to it. */
 		ci = new_ci;
 	}
 
