@@ -1202,12 +1202,11 @@ int fastlog2(uint64_t sz)
 	return l - 1;
 }
 
-struct segment *sizes_to_segments(int *seglen, uint64_t *sizes, int n)
+struct segment *sizes_to_segments(size_t *seglen, uint64_t *sizes, size_t n)
 {
 	struct segment *segs = reftable_calloc(n, sizeof(*segs));
-	int next = 0;
 	struct segment cur = { 0 };
-	int i = 0;
+	size_t next = 0, i;
 
 	if (n == 0) {
 		*seglen = 0;
@@ -1233,29 +1232,27 @@ struct segment *sizes_to_segments(int *seglen, uint64_t *sizes, int n)
 	return segs;
 }
 
-struct segment suggest_compaction_segment(uint64_t *sizes, int n)
+struct segment suggest_compaction_segment(uint64_t *sizes, size_t n)
 {
-	int seglen = 0;
-	struct segment *segs = sizes_to_segments(&seglen, sizes, n);
 	struct segment min_seg = {
 		.log = 64,
 	};
-	int i = 0;
-	for (i = 0; i < seglen; i++) {
-		if (segment_size(&segs[i]) == 1) {
-			continue;
-		}
+	struct segment *segs;
+	size_t seglen = 0, i;
 
-		if (segs[i].log < min_seg.log) {
+	segs = sizes_to_segments(&seglen, sizes, n);
+	for (i = 0; i < seglen; i++) {
+		if (segment_size(&segs[i]) == 1)
+			continue;
+
+		if (segs[i].log < min_seg.log)
 			min_seg = segs[i];
-		}
 	}
 
 	while (min_seg.start > 0) {
-		int prev = min_seg.start - 1;
-		if (fastlog2(min_seg.bytes) < fastlog2(sizes[prev])) {
+		size_t prev = min_seg.start - 1;
+		if (fastlog2(min_seg.bytes) < fastlog2(sizes[prev]))
 			break;
-		}
 
 		min_seg.start = prev;
 		min_seg.bytes += sizes[prev];
