@@ -8,6 +8,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "stack.h"
 
+#include "../write-or-die.h"
 #include "system.h"
 #include "merged.h"
 #include "reader.h"
@@ -16,7 +17,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-record.h"
 #include "reftable-merged.h"
 #include "writer.h"
-
 #include "tempfile.h"
 
 static int stack_try_add(struct reftable_stack *st,
@@ -45,6 +45,13 @@ static ssize_t reftable_fd_write(void *arg, const void *data, size_t sz)
 {
 	int *fdp = (int *)arg;
 	return write_in_full(*fdp, data, sz);
+}
+
+static int reftable_fd_flush(void *arg)
+{
+	int *fdp = (int *)arg;
+
+	return fsync_component(FSYNC_COMPONENT_REFERENCE, *fdp);
 }
 
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
@@ -653,6 +660,9 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 	}
 
+	fsync_component_or_die(FSYNC_COMPONENT_REFERENCE, lock_file_fd,
+			       get_tempfile_path(add->lock_file));
+
 	err = rename_tempfile(&add->lock_file, add->stack->list_file);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
@@ -747,7 +757,7 @@ int reftable_addition_add(struct reftable_addition *add,
 			goto done;
 		}
 	}
-	wr = reftable_new_writer(reftable_fd_write, &tab_fd,
+	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd,
 				 &add->stack->config);
 	err = write_table(wr, arg);
 	if (err < 0)
@@ -839,7 +849,7 @@ static int stack_compact_locked(struct reftable_stack *st, int first, int last,
 	strbuf_addstr(temp_tab, ".temp.XXXXXX");
 
 	tab_fd = mkstemp(temp_tab->buf);
-	wr = reftable_new_writer(reftable_fd_write, &tab_fd, &st->config);
+	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd, &st->config);
 
 	err = stack_write_compact(st, wr, first, last, config);
 	if (err < 0)
@@ -1116,6 +1126,14 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 		unlink(new_table_path.buf);
 		goto done;
 	}
+
+	err = fsync_component(FSYNC_COMPONENT_REFERENCE, lock_file_fd);
+	if (err < 0) {
+		err = REFTABLE_IO_ERROR;
+		unlink(new_table_path.buf);
+		goto done;
+	}
+
 	err = close(lock_file_fd);
 	lock_file_fd = -1;
 	if (err < 0) {
