@@ -966,6 +966,7 @@ done:
 static int stack_compact_range(struct reftable_stack *st, int first, int last,
 			       struct reftable_log_expiry_config *expiry)
 {
+	char **delete_on_success = NULL, **subtable_locks = NULL, **listp = NULL;
 	struct strbuf temp_tab_file_name = STRBUF_INIT;
 	struct strbuf new_table_name = STRBUF_INIT;
 	struct strbuf lock_file_name = STRBUF_INIT;
@@ -974,12 +975,7 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 	int err = 0;
 	int have_lock = 0;
 	int lock_file_fd = -1;
-	int compact_count = last - first + 1;
-	char **listp = NULL;
-	char **delete_on_success =
-		reftable_calloc(compact_count + 1, sizeof(*delete_on_success));
-	char **subtable_locks =
-		reftable_calloc(compact_count + 1, sizeof(*subtable_locks));
+	int compact_count;
 	int i = 0;
 	int j = 0;
 	int is_empty_table = 0;
@@ -988,6 +984,10 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 		err = 0;
 		goto done;
 	}
+
+	compact_count = last - first + 1;
+	REFTABLE_CALLOC_ARRAY(delete_on_success, compact_count + 1);
+	REFTABLE_CALLOC_ARRAY(subtable_locks, compact_count + 1);
 
 	st->stats.attempts++;
 
@@ -1146,12 +1146,14 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 done:
 	free_names(delete_on_success);
 
-	listp = subtable_locks;
-	while (*listp) {
-		unlink(*listp);
-		listp++;
+	if (subtable_locks) {
+		listp = subtable_locks;
+		while (*listp) {
+			unlink(*listp);
+			listp++;
+		}
+		free_names(subtable_locks);
 	}
-	free_names(subtable_locks);
 	if (lock_file_fd >= 0) {
 		close(lock_file_fd);
 		lock_file_fd = -1;
