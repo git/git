@@ -19,24 +19,23 @@ https://developers.google.com/open-source/licenses/bsd
 
 static int merged_iter_init(struct merged_iter *mi)
 {
-	int i = 0;
-	for (i = 0; i < mi->stack_len; i++) {
-		struct reftable_record rec = reftable_new_record(mi->typ);
-		int err = iterator_next(&mi->stack[i], &rec);
-		if (err < 0) {
-			return err;
-		}
+	for (size_t i = 0; i < mi->stack_len; i++) {
+		struct pq_entry e = {
+			.rec = reftable_new_record(mi->typ),
+			.index = i,
+		};
+		int err;
 
+		err = iterator_next(&mi->stack[i], &e.rec);
+		if (err < 0)
+			return err;
 		if (err > 0) {
 			reftable_iterator_destroy(&mi->stack[i]);
-			reftable_record_release(&rec);
-		} else {
-			struct pq_entry e = {
-				.rec = rec,
-				.index = i,
-			};
-			merged_iter_pqueue_add(&mi->pq, &e);
+			reftable_record_release(&e.rec);
+			continue;
 		}
+
+		merged_iter_pqueue_add(&mi->pq, &e);
 	}
 
 	return 0;
