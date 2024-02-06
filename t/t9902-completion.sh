@@ -1321,9 +1321,12 @@ test_expect_success 'git-bisect - when bisecting all subcommands are candidates'
 		test_completion "git bisect " <<-\EOF
 		start Z
 		bad Z
+		custom_new Z
+		custom_old Z
 		new Z
 		good Z
 		old Z
+		terms Z
 		skip Z
 		reset Z
 		visualize Z
@@ -1331,6 +1334,18 @@ test_expect_success 'git-bisect - when bisecting all subcommands are candidates'
 		log Z
 		run Z
 		help Z
+		EOF
+	)
+'
+
+test_expect_success 'git-bisect - options to terms subcommand are candidates' '
+	(
+		cd git-bisect &&
+		test_completion "git bisect terms --" <<-\EOF
+		--term-bad Z
+		--term-good Z
+		--term-new Z
+		--term-old Z
 		EOF
 	)
 '

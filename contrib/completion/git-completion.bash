@@ -1449,7 +1449,20 @@ _git_bisect ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="start bad new good old skip reset visualize replay log run help"
+	__git_find_repo_path
+
+	# If a bisection is in progress get the terms being used.
+	local term_bad term_good
+	if [ -f "$__git_repo_path"/BISECT_TERMS ]; then
+		term_bad=$(__git bisect terms --term-bad)
+		term_good=$(__git bisect terms --term-good)
+	fi
+
+	# We will complete any custom terms, but still always complete the
+	# more usual bad/new/good/old because git bisect gives a good error
+	# message if these are given when not in use, and that's better than
+	# silent refusal to complete if the user is confused.
+	local subcommands="start bad new $term_bad good old $term_good terms skip reset visualize replay log run help"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		__git_find_repo_path
@@ -1462,7 +1475,22 @@ _git_bisect ()
 	fi
 
 	case "$subcommand" in
-	bad|new|good|old|reset|skip|start)
+	start)
+		case "$cur" in
+		--*)
+			__gitcomp "--term-new --term-bad --term-old --term-good"
+			return
+			;;
+		*)
+			__git_complete_refs
+			;;
+		esac
+		;;
+	terms)
+		__gitcomp "--term-good --term-old --term-bad --term-new"
+		return
+		;;
+	bad|new|"$term_bad"|good|old|"$term_good"|reset|skip)
 		__git_complete_refs
 		;;
 	*)
