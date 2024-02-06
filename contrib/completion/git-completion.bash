@@ -1490,6 +1490,10 @@ _git_bisect ()
 		__gitcomp "--term-good --term-old --term-bad --term-new"
 		return
 		;;
+	visualize)
+		__git_complete_log_opts
+		return
+		;;
 	bad|new|"$term_bad"|good|old|"$term_good"|reset|skip)
 		__git_complete_refs
 		;;

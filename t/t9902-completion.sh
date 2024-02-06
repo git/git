@@ -1361,6 +1361,21 @@ test_expect_success 'git-bisect - options to terms subcommand are candidates' '
 	)
 '
 
+test_expect_success 'git-bisect - git-log options to visualize subcommand are candidates' '
+	(
+		cd git-bisect &&
+		# The completion used for git-log and here does not complete
+		# every git-log option, so rather than hope to stay in sync
+		# with exactly what it does we will just spot-test here.
+		test_completion "git bisect visualize --sta" <<-\EOF &&
+		--stat Z
+		EOF
+		test_completion "git bisect visualize --summar" <<-\EOF
+		--summary Z
+		EOF
+	)
+'
+
 test_expect_success 'git checkout - completes refs and unique remote branches for DWIM' '
 	test_completion "git checkout " <<-\EOF
 	HEAD Z
