@@ -849,6 +849,12 @@ static int stack_compact_locked(struct reftable_stack *st, int first, int last,
 	strbuf_addstr(temp_tab, ".temp.XXXXXX");
 
 	tab_fd = mkstemp(temp_tab->buf);
+	if (st->config.default_permissions &&
+	    chmod(temp_tab->buf, st->config.default_permissions) < 0) {
+		err = REFTABLE_IO_ERROR;
+		goto done;
+	}
+
 	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd, &st->config);
 
 	err = stack_write_compact(st, wr, first, last, config);
