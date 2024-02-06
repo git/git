@@ -5,6 +5,11 @@
 
 test_description='test bash completion'
 
+# Override environment and always use master for the default initial branch
+# name for these tests, so that rev completion candidates are as expected.
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./lib-bash.sh
 
 complete ()
