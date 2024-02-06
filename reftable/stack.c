@@ -24,7 +24,8 @@ static int stack_try_add(struct reftable_stack *st,
 					    void *arg),
 			 void *arg);
 static int stack_write_compact(struct reftable_stack *st,
-			       struct reftable_writer *wr, int first, int last,
+			       struct reftable_writer *wr,
+			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *config);
 static int stack_check_addition(struct reftable_stack *st,
 				const char *new_tab_name);
@@ -820,7 +821,8 @@ uint64_t reftable_stack_next_update_index(struct reftable_stack *st)
 	return 1;
 }
 
-static int stack_compact_locked(struct reftable_stack *st, int first, int last,
+static int stack_compact_locked(struct reftable_stack *st,
+				size_t first, size_t last,
 				struct strbuf *temp_tab,
 				struct reftable_log_expiry_config *config)
 {
@@ -864,22 +866,21 @@ done:
 }
 
 static int stack_write_compact(struct reftable_stack *st,
-			       struct reftable_writer *wr, int first, int last,
+			       struct reftable_writer *wr,
+			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *config)
 {
 	int subtabs_len = last - first + 1;
 	struct reftable_table *subtabs = reftable_calloc(
 		last - first + 1, sizeof(*subtabs));
 	struct reftable_merged_table *mt = NULL;
-	int err = 0;
 	struct reftable_iterator it = { NULL };
 	struct reftable_ref_record ref = { NULL };
 	struct reftable_log_record log = { NULL };
-
 	uint64_t entries = 0;
+	int err = 0;
 
-	int i = 0, j = 0;
-	for (i = first, j = 0; i <= last; i++) {
+	for (size_t i = first, j = 0; i <= last; i++) {
 		struct reftable_reader *t = st->readers[i];
 		reftable_table_from_reader(&subtabs[j++], t);
 		st->stats.bytes += t->size;
@@ -963,7 +964,8 @@ done:
 }
 
 /* <  0: error. 0 == OK, > 0 attempt failed; could retry. */
-static int stack_compact_range(struct reftable_stack *st, int first, int last,
+static int stack_compact_range(struct reftable_stack *st,
+			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *expiry)
 {
 	char **delete_on_success = NULL, **subtable_locks = NULL, **listp = NULL;
@@ -972,12 +974,10 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 	struct strbuf lock_file_name = STRBUF_INIT;
 	struct strbuf ref_list_contents = STRBUF_INIT;
 	struct strbuf new_table_path = STRBUF_INIT;
+	size_t i, j, compact_count;
 	int err = 0;
 	int have_lock = 0;
 	int lock_file_fd = -1;
-	int compact_count;
-	int i = 0;
-	int j = 0;
 	int is_empty_table = 0;
 
 	if (first > last || (!expiry && first == last)) {
@@ -1172,17 +1172,17 @@ done:
 int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config)
 {
-	return stack_compact_range(st, 0, st->merged->stack_len - 1, config);
+	return stack_compact_range(st, 0, st->merged->stack_len ?
+			st->merged->stack_len - 1 : 0, config);
 }
 
-static int stack_compact_range_stats(struct reftable_stack *st, int first,
-				     int last,
+static int stack_compact_range_stats(struct reftable_stack *st,
+				     size_t first, size_t last,
 				     struct reftable_log_expiry_config *config)
 {
 	int err = stack_compact_range(st, first, last, config);
-	if (err > 0) {
+	if (err > 0)
 		st->stats.failures++;
-	}
 	return err;
 }
 
