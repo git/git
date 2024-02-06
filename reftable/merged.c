@@ -45,11 +45,10 @@ static int merged_iter_init(struct merged_iter *mi)
 static void merged_iter_close(void *p)
 {
 	struct merged_iter *mi = p;
-	int i = 0;
+
 	merged_iter_pqueue_release(&mi->pq);
-	for (i = 0; i < mi->stack_len; i++) {
+	for (size_t i = 0; i < mi->stack_len; i++)
 		reftable_iterator_destroy(&mi->stack[i]);
-	}
 	reftable_free(mi->stack);
 	strbuf_release(&mi->key);
 	strbuf_release(&mi->entry_key);
@@ -168,14 +167,14 @@ static void iterator_from_merged_iter(struct reftable_iterator *it,
 }
 
 int reftable_new_merged_table(struct reftable_merged_table **dest,
-			      struct reftable_table *stack, int n,
+			      struct reftable_table *stack, size_t n,
 			      uint32_t hash_id)
 {
 	struct reftable_merged_table *m = NULL;
 	uint64_t last_max = 0;
 	uint64_t first_min = 0;
-	int i = 0;
-	for (i = 0; i < n; i++) {
+
+	for (size_t i = 0; i < n; i++) {
 		uint64_t min = reftable_table_min_update_index(&stack[i]);
 		uint64_t max = reftable_table_max_update_index(&stack[i]);
 

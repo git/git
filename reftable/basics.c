@@ -64,12 +64,11 @@ void free_names(char **a)
 	reftable_free(a);
 }
 
-int names_length(char **names)
+size_t names_length(char **names)
 {
 	char **p = names;
-	for (; *p; p++) {
-		/* empty */
-	}
+	while (*p)
+		p++;
 	return p - names;
 }
 

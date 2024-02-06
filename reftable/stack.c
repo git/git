@@ -202,18 +202,18 @@ static struct reftable_reader **stack_copy_readers(struct reftable_stack *st,
 static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 				      int reuse_open)
 {
-	int cur_len = !st->merged ? 0 : st->merged->stack_len;
+	size_t cur_len = !st->merged ? 0 : st->merged->stack_len;
 	struct reftable_reader **cur = stack_copy_readers(st, cur_len);
-	int err = 0;
-	int names_len = names_length(names);
+	size_t names_len = names_length(names);
 	struct reftable_reader **new_readers =
 		reftable_calloc(names_len, sizeof(*new_readers));
 	struct reftable_table *new_tables =
 		reftable_calloc(names_len, sizeof(*new_tables));
-	int new_readers_len = 0;
+	size_t new_readers_len = 0;
 	struct reftable_merged_table *new_merged = NULL;
 	struct strbuf table_path = STRBUF_INIT;
-	int i;
+	int err = 0;
+	size_t i;
 
 	while (*names) {
 		struct reftable_reader *rd = NULL;
@@ -221,11 +221,10 @@ static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 
 		/* this is linear; we assume compaction keeps the number of
 		   tables under control so this is not quadratic. */
-		int j = 0;
-		for (j = 0; reuse_open && j < cur_len; j++) {
-			if (cur[j] && 0 == strcmp(cur[j]->name, name)) {
-				rd = cur[j];
-				cur[j] = NULL;
+		for (i = 0; reuse_open && i < cur_len; i++) {
+			if (cur[i] && 0 == strcmp(cur[i]->name, name)) {
+				rd = cur[i];
+				cur[i] = NULL;
 				break;
 			}
 		}
@@ -870,7 +869,7 @@ static int stack_write_compact(struct reftable_stack *st,
 			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *config)
 {
-	int subtabs_len = last - first + 1;
+	size_t subtabs_len = last - first + 1;
 	struct reftable_table *subtabs = reftable_calloc(
 		last - first + 1, sizeof(*subtabs));
 	struct reftable_merged_table *mt = NULL;

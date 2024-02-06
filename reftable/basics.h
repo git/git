@@ -44,7 +44,7 @@ void parse_names(char *buf, int size, char ***namesp);
 int names_equal(char **a, char **b);
 
 /* returns the array size of a NULL-terminated array of strings. */
-int names_length(char **names);
+size_t names_length(char **names);
 
 /* Allocation routines; they invoke the functions set through
  * reftable_set_alloc() */

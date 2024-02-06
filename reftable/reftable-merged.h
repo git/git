@@ -33,7 +33,7 @@ struct reftable_table;
    the stack array.
 */
 int reftable_new_merged_table(struct reftable_merged_table **dest,
-			      struct reftable_table *stack, int n,
+			      struct reftable_table *stack, size_t n,
 			      uint32_t hash_id);
 
 /* returns an iterator positioned just before 'name' */
