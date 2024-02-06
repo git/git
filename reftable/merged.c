@@ -238,50 +238,38 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 				    struct reftable_iterator *it,
 				    struct reftable_record *rec)
 {
-	struct reftable_iterator *iters = reftable_calloc(
-		mt->stack_len, sizeof(*iters));
 	struct merged_iter merged = {
-		.stack = iters,
 		.typ = reftable_record_type(rec),
 		.hash_id = mt->hash_id,
 		.suppress_deletions = mt->suppress_deletions,
 		.key = STRBUF_INIT,
 		.entry_key = STRBUF_INIT,
 	};
-	int n = 0;
-	int err = 0;
-	int i = 0;
-	for (i = 0; i < mt->stack_len && err == 0; i++) {
-		int e = reftable_table_seek_record(&mt->stack[i], &iters[n],
-						   rec);
-		if (e < 0) {
-			err = e;
-		}
-		if (e == 0) {
-			n++;
-		}
-	}
-	if (err < 0) {
-		int i = 0;
-		for (i = 0; i < n; i++) {
-			reftable_iterator_destroy(&iters[i]);
-		}
-		reftable_free(iters);
-		return err;
+	struct merged_iter *p;
+	int err;
+
+	REFTABLE_CALLOC_ARRAY(merged.stack, mt->stack_len);
+	for (size_t i = 0; i < mt->stack_len; i++) {
+		err = reftable_table_seek_record(&mt->stack[i],
+						 &merged.stack[merged.stack_len], rec);
+		if (err < 0)
+			goto out;
+		if (!err)
+			merged.stack_len++;
 	}
 
-	merged.stack_len = n;
 	err = merged_iter_init(&merged);
-	if (err < 0) {
+	if (err < 0)
+		goto out;
+
+	p = reftable_malloc(sizeof(struct merged_iter));
+	*p = merged;
+	iterator_from_merged_iter(it, p);
+
+out:
+	if (err < 0)
 		merged_iter_close(&merged);
-		return err;
-	} else {
-		struct merged_iter *p =
-			reftable_malloc(sizeof(struct merged_iter));
-		*p = merged;
-		iterator_from_merged_iter(it, p);
-	}
-	return 0;
+	return err;
 }
 
 int reftable_merged_table_seek_ref(struct reftable_merged_table *mt,
