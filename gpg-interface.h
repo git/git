@@ -66,7 +66,7 @@ size_t parse_signed_buffer(const char *buf, size_t size);
  * Create a detached signature for the contents of "buffer" and append
  * it after "signature"; "buffer" and "signature" can be the same
  * strbuf instance, which would cause the detached signature appended
- * at the end.
+ * at the end.  Returns 0 on success, non-zero on failure.
  */
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
 		const char *signing_key);
