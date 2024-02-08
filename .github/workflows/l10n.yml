@@ -91,7 +91,7 @@ jobs:
           cat git-po-helper.out
           exit $exit_code
       - name: Create comment in pull request for report
-        uses: mshick/add-pr-comment@v1
+        uses: mshick/add-pr-comment@v2
         if: >-
           always() &&
           github.event_name == 'pull_request_target' &&
