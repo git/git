@@ -3,6 +3,7 @@
 #include "fsmonitor.h"
 #include "fsmonitor-path-utils.h"
 #include "fsm-path-utils-linux.h"
+#include "gettext.h"
 #include <errno.h>
 #include <mntent.h>
 #include <sys/mount.h>

@@ -1,7 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "config.h"
 #include "fsmonitor.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
+#include "gettext.h"
+#include "simple-ipc.h"
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/inotify.h>
@@ -129,15 +132,15 @@ static void remove_watch(struct watch_entry *w,
 	hashmap_entry_init(&k1.ent, memhash(&w->wd, sizeof(int)));
 	w1 = hashmap_remove_entry(&data->watches, &k1, ent, NULL);
 	if (!w1)
-		BUG("Double remove of watch for '%s'", w->dir);
+		BUG("double remove of watch for '%s'", w->dir);
 
 	if (w1->cookie)
-		BUG("Removing watch for '%s' which has a pending rename", w1->dir);
+		BUG("removing watch for '%s' which has a pending rename", w1->dir);
 
 	hashmap_entry_init(&k2.ent, memhash(w->dir, strlen(w->dir)));
 	w2 = hashmap_remove_entry(&data->revwatches, &k2, ent, NULL);
 	if (!w2)
-		BUG("Double remove of reverse watch for '%s'", w->dir);
+		BUG("double remove of reverse watch for '%s'", w->dir);
 
 	/* w1->dir and w2->dir are interned strings, we don't own them */
 	free(w1);
@@ -187,7 +190,7 @@ static void add_dir_rename(uint32_t cookie, const char *path,
 	hashmap_entry_init(&k.ent, memhash(path, strlen(path)));
 	w = hashmap_get_entry(&data->revwatches, &k, ent, NULL);
 	if (!w) /* should never happen */
-		BUG("No watch for '%s'", path);
+		BUG("no watch for '%s'", path);
 	w->cookie = cookie;
 
 	/* add the pending rename to match against later */
@@ -224,10 +227,10 @@ static void rename_dir(uint32_t cookie, const char *path,
 			remove_watch(w, data);
 			add_watch(path, data);
 		} else {
-			BUG("No matching watch");
+			BUG("no matching watch");
 		}
 	} else {
-		BUG("No matching cookie");
+		BUG("no matching cookie");
 	}
 }
 
@@ -249,7 +252,7 @@ static int register_inotify(const char *path,
 	if (!dir)
 		return error_errno("opendir('%s') failed", path);
 
-	while ((de = readdir_skip_dot_and_dotdot(dir)) != NULL) {
+	while ((de = readdir_skip_dot_and_dotdot(dir))) {
 		strbuf_reset(&current);
 		strbuf_addf(&current, "%s/%s", path, de->d_name);
 		if (lstat(current.buf, &fs)) {
@@ -353,7 +356,7 @@ static void log_mask_set(const char *path, u_int32_t mask)
 	if (mask & IN_IGNORED)
 		strbuf_addstr(&msg, "IN_IGNORED|");
 	if (mask & IN_ISDIR)
-		strbuf_addstr(&msg, "IN_ISDIR|");
+		strbuf_addstr(&msg, "IN_ISDIR");
 
 	trace_printf_key(&trace_fsmonitor, "inotify_event: '%s', mask=%#8.8x %s",
 				path, mask, msg.buf);
@@ -373,8 +376,10 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 	data->shutdown = SHUTDOWN_ERROR;
 
 	fd = inotify_init1(O_NONBLOCK);
-	if (fd < 0)
+	if (fd < 0) {
+		FREE_AND_NULL(data);
 		return error_errno("inotify_init1() failed");
+	}
 
 	data->fd_inotify = fd;
 
@@ -386,12 +391,10 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 		ret = -1;
 	else if (register_inotify(state->path_worktree_watch.buf, state, NULL))
 		ret = -1;
-	else if (state->nr_paths_watching > 1) {
-		if (add_watch(state->path_gitdir_watch.buf, data))
-			ret = -1;
-		else if (register_inotify(state->path_gitdir_watch.buf, state, NULL))
-			ret = -1;
-	}
+	else if (state->nr_paths_watching > 1 &&
+		 (add_watch(state->path_gitdir_watch.buf, data) ||
+		  register_inotify(state->path_gitdir_watch.buf, state, NULL)))
+		ret = -1;
 
 	if (!ret) {
 		state->listen_error_code = 0;
@@ -449,80 +452,80 @@ static int process_event(const char *path,
 	const char *last_sep;
 
 	switch (fsmonitor_classify_path_absolute(state, path)) {
-		case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
-		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
-			/* Use just the filename of the cookie file. */
-			last_sep = find_last_dir_sep(path);
-			string_list_append(cookie_list,
-					last_sep ? last_sep + 1 : path);
-			break;
-		case IS_INSIDE_DOT_GIT:
-		case IS_INSIDE_GITDIR:
-			break;
-		case IS_DOT_GIT:
-		case IS_GITDIR:
-			/*
-			* If .git directory is deleted or renamed away,
-			* we have to quit.
-			*/
-			if (em_dir_deleted(event->mask)) {
-				trace_printf_key(&trace_fsmonitor,
-						"event: gitdir removed");
-				state->listen_data->shutdown = SHUTDOWN_FORCE;
-				goto done;
-			}
-
-			if (em_dir_renamed(event->mask)) {
-				trace_printf_key(&trace_fsmonitor,
-						"event: gitdir renamed");
-				state->listen_data->shutdown = SHUTDOWN_FORCE;
-				goto done;
-			}
-			break;
-		case IS_WORKDIR_PATH:
-			/* normal events in the working directory */
-			if (trace_pass_fl(&trace_fsmonitor))
-				log_mask_set(path, event->mask);
-
-			rel = path + state->path_worktree_watch.len + 1;
-			fsmonitor_batch__add_path(batch, rel);
-
-			if (em_dir_deleted(event->mask))
-				break;
-
-			/* received IN_MOVE_FROM, add tracking for expected IN_MOVE_TO */
-			if (em_rename_dir_from(event->mask))
-				add_dir_rename(event->cookie, path, state->listen_data);
-
-			/* received IN_MOVE_TO, update watch to reflect new path */
-			if (em_rename_dir_to(event->mask)) {
-				rename_dir(event->cookie, path, state->listen_data);
-				if (register_inotify(path, state, batch)) {
-					state->listen_data->shutdown = SHUTDOWN_ERROR;
-					goto done;
-				}
-			}
-
-			if (em_dir_created(event->mask)) {
-				if (add_watch(path, state->listen_data)) {
-					state->listen_data->shutdown = SHUTDOWN_ERROR;
-					goto done;
-				}
-				if (register_inotify(path, state, batch)) {
-					state->listen_data->shutdown = SHUTDOWN_ERROR;
-					goto done;
-				}
-			}
-			break;
-		case IS_OUTSIDE_CONE:
-		default:
+	case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
+	case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
+		/* Use just the filename of the cookie file. */
+		last_sep = find_last_dir_sep(path);
+		string_list_append(cookie_list,
+				last_sep ? last_sep + 1 : path);
+		break;
+	case IS_INSIDE_DOT_GIT:
+	case IS_INSIDE_GITDIR:
+		break;
+	case IS_DOT_GIT:
+	case IS_GITDIR:
+		/*
+		* If .git directory is deleted or renamed away,
+		* we have to quit.
+		*/
+		if (em_dir_deleted(event->mask)) {
 			trace_printf_key(&trace_fsmonitor,
-					"ignoring '%s'", path);
+					"event: gitdir removed");
+			state->listen_data->shutdown = SHUTDOWN_FORCE;
+			goto done;
+		}
+
+		if (em_dir_renamed(event->mask)) {
+			trace_printf_key(&trace_fsmonitor,
+					"event: gitdir renamed");
+			state->listen_data->shutdown = SHUTDOWN_FORCE;
+			goto done;
+		}
+		break;
+	case IS_WORKDIR_PATH:
+		/* normal events in the working directory */
+		if (trace_pass_fl(&trace_fsmonitor))
+			log_mask_set(path, event->mask);
+
+		rel = path + state->path_worktree_watch.len + 1;
+		fsmonitor_batch__add_path(batch, rel);
+
+		if (em_dir_deleted(event->mask))
 			break;
+
+		/* received IN_MOVE_FROM, add tracking for expected IN_MOVE_TO */
+		if (em_rename_dir_from(event->mask))
+			add_dir_rename(event->cookie, path, state->listen_data);
+
+		/* received IN_MOVE_TO, update watch to reflect new path */
+		if (em_rename_dir_to(event->mask)) {
+			rename_dir(event->cookie, path, state->listen_data);
+			if (register_inotify(path, state, batch)) {
+				state->listen_data->shutdown = SHUTDOWN_ERROR;
+				goto done;
+			}
+		}
+
+		if (em_dir_created(event->mask)) {
+			if (add_watch(path, state->listen_data)) {
+				state->listen_data->shutdown = SHUTDOWN_ERROR;
+				goto done;
+			}
+			if (register_inotify(path, state, batch)) {
+				state->listen_data->shutdown = SHUTDOWN_ERROR;
+				goto done;
+			}
+		}
+		break;
+	case IS_OUTSIDE_CONE:
+	default:
+		trace_printf_key(&trace_fsmonitor,
+				"ignoring '%s'", path);
+		break;
 	}
 	return 0;
-done:
-	return -1;
+	done:
+		return -1;
 }
 
 /*
@@ -531,7 +534,7 @@ done:
  */
 static void handle_events(struct fsmonitor_daemon_state *state)
 {
-	 /* See https://man7.org/linux/man-pages/man7/inotify.7.html */
+	/* See https://man7.org/linux/man-pages/man7/inotify.7.html */
 	char buf[4096]
 		__attribute__ ((aligned(__alignof__(struct inotify_event))));
 
@@ -539,13 +542,12 @@ static void handle_events(struct fsmonitor_daemon_state *state)
 	struct fsmonitor_batch *batch = NULL;
 	struct string_list cookie_list = STRING_LIST_INIT_DUP;
 	struct watch_entry k, *w;
-	struct strbuf path;
 	const struct inotify_event *event;
 	int fd = state->listen_data->fd_inotify;
 	ssize_t len;
 	char *ptr, *p;
 
-	strbuf_init(&path, PATH_MAX);
+	struct strbuf path = STRBUF_INIT;
 
 	for(;;) {
 		len = read(fd, buf, sizeof(buf));
@@ -581,7 +583,7 @@ static void handle_events(struct fsmonitor_daemon_state *state)
 
 			w = hashmap_get_entry(&watches, &k, ent, NULL);
 			if (!w) /* should never happen */
-				BUG("No watch for '%s'", event->name);
+				BUG("no watch for '%s'", event->name);
 
 			/* directory watch was removed */
 			if (em_remove_watch(event->mask)) {

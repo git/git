@@ -1,10 +1,12 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "hex.h"
 #include "strbuf.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"
 #include "fsmonitor-path-utils.h"
+#include "gettext.h"
+#include "path.h"
 
 static GIT_PATH_FUNC(fsmonitor_ipc__get_default_path, "fsmonitor--daemon.ipc")
 
@@ -17,7 +19,7 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 	unsigned char hash[GIT_MAX_RAWSZ];
 
 	if (!r)
-		BUG("No repository passed into fsmonitor_ipc__get_path");
+		BUG("no repository passed into fsmonitor_ipc__get_path");
 
 	if (ipc_path)
 		return ipc_path;

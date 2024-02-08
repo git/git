@@ -1,6 +1,9 @@
+#include "git-compat-util.h"
+#include "config.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"
 #include "fsmonitor-path-utils.h"
+#include <stdint.h>
 
  /*
  * For the builtin FSMonitor, we create the Unix domain socket for the
