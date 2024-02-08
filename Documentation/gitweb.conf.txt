@@ -343,7 +343,7 @@ $home_link_str::
 	Label for the "home link" at the top of all pages, leading to `$home_link`
 	(usually the main gitweb page, which contains the projects list).  It is
 	used as the first component of gitweb's "breadcrumb trail":
-	`<home link> / <project> / <action>`.  Can be set at build time using
+	`<home-link> / <project> / <action>`.  Can be set at build time using
 	the `GITWEB_HOME_LINK_STR` variable.  By default it is set to "projects",
 	as this link leads to the list of projects.  Another popular choice is to
 	set it to the name of site.  Note that it is treated as raw HTML so it
@@ -604,9 +604,9 @@ Many gitweb features can be enabled (or disabled) and configured using the
 Each `%feature` hash element is a hash reference and has the following
 structure:
 ----------------------------------------------------------------------
-"<feature_name>" => {
-	"sub" => <feature-sub (subroutine)>,
-	"override" => <allow-override (boolean)>,
+"<feature-name>" => {
+	"sub" => <feature-sub-(subroutine)>,
+	"override" => <allow-override-(boolean)>,
 	"default" => [ <options>... ]
 },
 ----------------------------------------------------------------------
@@ -614,7 +614,7 @@ Some features cannot be overridden per project.  For those
 features the structure of appropriate `%feature` hash element has a simpler
 form:
 ----------------------------------------------------------------------
-"<feature_name>" => {
+"<feature-name>" => {
 	"override" => 0,
 	"default" => [ <options>... ]
 },

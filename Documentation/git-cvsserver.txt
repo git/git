@@ -197,7 +197,7 @@ allowing access over SSH.
 5. Clients should now be able to check out the project. Use the CVS 'module'
    name to indicate what Git 'head' you want to check out.  This also sets the
    name of your newly checked-out directory, unless you tell it otherwise with
-   `-d <dir_name>`.  For example, this checks out 'master' branch to the
+   `-d <dir-name>`.  For example, this checks out 'master' branch to the
    `project-master` directory:
 +
 ------
@@ -224,7 +224,7 @@ the database to work reliably (otherwise you need to make sure
 that the database is up to date any time 'git-cvsserver' is executed).
 
 By default it uses SQLite databases in the Git directory, named
-`gitcvs.<module_name>.sqlite`. Note that the SQLite backend creates
+`gitcvs.<module-name>.sqlite`. Note that the SQLite backend creates
 temporary files in the same directory as the database file on
 write so it might not be enough to grant the users using
 'git-cvsserver' write access to the database file without granting

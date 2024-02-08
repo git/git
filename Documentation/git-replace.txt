@@ -114,11 +114,11 @@ FORMATS
 The following formats are available:
 
 * 'short':
-	<replaced sha1>
+	<replaced-sha1>
 * 'medium':
-	<replaced sha1> -> <replacement sha1>
+	<replaced-sha1> -> <replacement-sha1>
 * 'long':
-	<replaced sha1> (<replaced type>) -> <replacement sha1> (<replacement type>)
+	<replaced-sha1> (<replaced-type>) -> <replacement-sha1> (<replacement-type>)
 
 CREATING REPLACEMENT OBJECTS
 ----------------------------

@@ -37,12 +37,12 @@ COMMANDS
 	argument.  Normally this command initializes the current
 	directory.
 
--T<trunk_subdir>;;
---trunk=<trunk_subdir>;;
--t<tags_subdir>;;
---tags=<tags_subdir>;;
--b<branches_subdir>;;
---branches=<branches_subdir>;;
+-T<trunk-subdir>;;
+--trunk=<trunk-subdir>;;
+-t<tags-subdir>;;
+--tags=<tags-subdir>;;
+-b<branches-subdir>;;
+--branches=<branches-subdir>;;
 -s;;
 --stdlayout;;
 	These are optional command-line options for init.  Each of
@@ -726,9 +726,9 @@ ADVANCED OPTIONS
 	when tracking a single URL.  The 'log' and 'dcommit' commands
 	no longer require this switch as an argument.
 
--R<remote name>::
---svn-remote <remote name>::
-	Specify the [svn-remote "<remote name>"] section to use,
+-R<remote-name>::
+--svn-remote <remote-name>::
+	Specify the [svn-remote "<remote-name>"] section to use,
 	this allows SVN multiple repositories to be tracked.
 	Default: "svn"
 
