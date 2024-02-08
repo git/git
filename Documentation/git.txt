@@ -177,6 +177,11 @@ If you just want to run git as if it was started in `<path>` then use
 	Do not use replacement refs to replace Git objects. See
 	linkgit:git-replace[1] for more information.
 
+--no-lazy-fetch::
+	Do not fetch missing objects from the promisor remote on
+	demand.  Useful together with `git cat-file -e <object>` to
+	see if the object is locally available.
+
 --literal-pathspecs::
 	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
 	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
