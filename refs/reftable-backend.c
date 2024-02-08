@@ -1503,7 +1503,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	 */
 	ret = reftable_merged_table_seek_log(mt, &it, arg->oldname);
 	if (ret < 0)
-		return ret;
+		goto done;
 
 	while (1) {
 		ret = reftable_iterator_next_log(&it, &old_log);
