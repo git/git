@@ -1356,6 +1356,52 @@ test_expect_success '--no-sort without subsequent --sort prints expected refs' '
 	test_cmp expected actual
 '
 
+test_expect_success 'set up custom date sorting' '
+	# Dates:
+	# - Wed Feb 07 2024 21:34:20 +0000
+	# - Tue Dec 14 1999 00:05:22 +0000
+	# - Fri Jun 04 2021 11:26:51 +0000
+	# - Mon Jan 22 2007 16:44:01 GMT+0000
+	i=1 &&
+	for when in 1707341660 945129922 1622806011 1169484241
+	do
+		GIT_COMMITTER_DATE="@$when +0000" \
+		GIT_COMMITTER_EMAIL="user@example.com" \
+		git tag -m "tag $when" custom-dates-$i &&
+		i=$(($i+1)) || return 1
+	done
+'
+
+test_expect_success 'sort by date defaults to full timestamp' '
+	cat >expected <<-\EOF &&
+	945129922 refs/tags/custom-dates-2
+	1169484241 refs/tags/custom-dates-4
+	1622806011 refs/tags/custom-dates-3
+	1707341660 refs/tags/custom-dates-1
+	EOF
+
+	git for-each-ref \
+		--format="%(creatordate:unix) %(refname)" \
+		--sort=creatordate \
+		"refs/tags/custom-dates-*" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'sort by custom date format' '
+	cat >expected <<-\EOF &&
+	00:05:22 refs/tags/custom-dates-2
+	11:26:51 refs/tags/custom-dates-3
+	16:44:01 refs/tags/custom-dates-4
+	21:34:20 refs/tags/custom-dates-1
+	EOF
+
+	git for-each-ref \
+		--format="%(creatordate:format:%H:%M:%S) %(refname)" \
+		--sort="creatordate:format:%H:%M:%S" \
+		"refs/tags/custom-dates-*" >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'do not dereference NULL upon %(HEAD) on unborn branch' '
 	test_when_finished "git checkout main" &&
 	git for-each-ref --format="%(HEAD) %(refname:short)" refs/heads/ >actual &&

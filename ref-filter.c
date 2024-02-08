@@ -1611,6 +1611,12 @@ static void grab_date(const char *buf, struct atom_value *v, const char *atomnam
 	if (formatp) {
 		formatp++;
 		parse_date_format(formatp, &date_mode);
+
+		/*
+		 * If this is a sort field and a format was specified, we'll
+		 * want to compare formatted date by string value.
+		 */
+		v->atom->type = FIELD_STR;
 	}
 
 	if (!eoemail)
