@@ -84,6 +84,13 @@ UI, Workflows & Features
  * The write codepath for the reftable data learned to honor
    core.fsync configuration.
 
+ * The "--fsck-objects" option of "git index-pack" now can take the
+   optional parameter to tweak severity of different fsck errors.
+
+ * The wincred credential backend has been taught to support oauth
+   refresh token the same way as credential-cache and
+   credential-libsecret backends.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -140,6 +147,9 @@ Performance, Internal Implementation, Development Support etc.
  * The Makefile often had to say "-L$(path) -R$(path)" that repeats
    the path to the same library directory for link time and runtime.
    A Makefile template is used to reduce such repetition.
+
+ * The priority queue test has been migrated to the unit testing
+   framework.
 
 
 Fixes since v2.43
@@ -283,6 +293,10 @@ Fixes since v2.43
  * Cirrus CI jobs started breaking because we specified version of
    FreeBSD that is no longer available, which has been corrected.
    (merge 81fffb66d3 cb/use-freebsd-13-2-at-cirrus-ci later to maint).
+
+ * A caller called index_file_exists() that takes a string expressed
+   as <ptr, length> with a wrong length, which has been corrected.
+   (merge 156e28b36d jh/sparse-index-expand-to-path-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 50f1abcff6 js/packfile-h-typofix later to maint).
