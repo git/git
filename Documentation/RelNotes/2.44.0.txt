@@ -157,7 +157,6 @@ Fixes since v2.43
 
  * The way CI testing used "prove" could lead to running the test
    suite twice needlessly, which has been corrected.
-   (merge e7e03ef995 js/ci-discard-prove-state later to maint).
 
  * Update ref-related tests.
 
@@ -168,75 +167,59 @@ Fixes since v2.43
    (ab)use of it in "git send-email".  Bump the minimum version
    requirement for Perl to 5.8.1 (from September 2002) to allow
    simplifying our implementation.
-   (merge 6ff658cc78 tz/send-email-negatable-options later to maint).
 
  * Earlier we stopped relying on commit-graph that (still) records
    information about commits that are lost from the object store,
    which has negative performance implications.  The default has been
    flipped to disable this pessimization.
-   (merge b1df3b3867 ps/commit-graph-less-paranoid later to maint).
 
  * Stale URLs have been updated to their current counterparts (or
    archive.org) and HTTP links are replaced with working HTTPS links.
-   (merge 62b4f7b9c6 js/update-urls-in-doc-and-comment later to maint).
 
  * trace2 streams used to record the URLs that potentially embed
    authentication material, which has been corrected.
-   (merge 16fa3eebc0 jh/trace2-redact-auth later to maint).
 
  * The sample pre-commit hook that tries to catch introduction of new
    paths that use potentially non-portable characters did not notice
    an existing path getting renamed to such a problematic path, when
    rename detection was enabled.
-   (merge d9fd71fa2a jp/use-diff-index-in-pre-commit-sample later to maint).
 
  * The command line parser for the "log" family of commands was too
    loose when parsing certain numbers, e.g., silently ignoring the
    extra 'q' in "git log -n 1q" without complaining, which has been
    tightened up.
-   (merge 71a1e94821 jc/revision-parse-int later to maint).
 
  * "git $cmd --end-of-options --rev -- --path" for some $cmd failed
    to interpret "--rev" as a rev, and "--path" as a path.  This was
    fixed for many programs like "reset" and "checkout".
-   (merge 9385174627 jk/end-of-options later to maint).
 
  * "git bisect reset" has been taught to clean up state files and refs
    even when BISECT_START file is gone.
-   (merge daaa03e54c jk/bisect-reset-fix later to maint).
 
  * Some codepaths did not correctly parse configuration variables
    specified with valueless "true", which has been corrected.
-   (merge d49cb162fa jk/implicit-true later to maint).
 
  * Code clean-up for sanity checking of command line options for "git
    show-ref".
-   (merge 7382497372 rs/show-ref-incompatible-options later to maint).
 
  * The code to parse the From e-mail header has been updated to avoid
    recursion.
-   (merge dee182941f jk/mailinfo-iterative-unquote-comment later to maint).
 
  * "git fetch --atomic" issued an unnecessary empty error message,
    which has been corrected.
-   (merge 18ce48918c jx/fetch-atomic-error-message-fix later to maint).
 
  * Command line completion script (in contrib/) learned to work better
    with the reftable backend.
-   (merge 44dbb3bf29 sh/completion-with-reftable later to maint).
 
  * "git status" is taught to show both the branch being bisected and
    being rebased when both are in effect at the same time.
-   (merge 990adccbdf rj/status-bisect-while-rebase later to maint).
 
  * "git archive --list extra garbage" silently ignored excess command
    line parameters, which has been corrected.
-   (merge d6b6cd1393 jc/archive-list-with-extra-args later to maint).
 
  * "git sparse-checkout set" added default patterns even when the
    patterns are being fed from the standard input, which has been
    corrected.
-   (merge 53ded839ae jc/sparse-checkout-set-default-fix later to maint).
 
  * "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
    not handle "--end-of-options" correctly after a recent update.
@@ -244,13 +227,11 @@ Fixes since v2.43
  * Unlike other environment variables that took the usual
    true/false/yes/no as well as 0/1, GIT_FLUSH only understood 0/1,
    which has been corrected.
-   (merge 556e68032f cp/git-flush-is-an-env-bool later to maint).
 
  * Clearing in-core repository (happens during e.g., "git fetch
    --recurse-submodules" with commit graph enabled) made in-core
    commit object in an inconsistent state by discarding the necessary
    data from commit-graph too early, which has been corrected.
-   (merge d70f554cdf jk/commit-graph-slab-clear-fix later to maint).
 
  * Update to a new feature recently added, "git show-ref --exists".
    (merge 0aabeaa562 tc/show-ref-exists-fix later to maint).
@@ -299,36 +280,6 @@ Fixes since v2.43
    (merge 156e28b36d jh/sparse-index-expand-to-path-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 50f1abcff6 js/packfile-h-typofix later to maint).
-   (merge cbf498eb53 jb/reflog-expire-delete-dry-run-options later to maint).
-   (merge 7854bf4960 rs/i18n-cannot-be-used-together later to maint).
-   (merge cd3c28c53a rs/column-leakfix later to maint).
-   (merge 866a1b9026 ps/ref-tests-update-more later to maint).
-   (merge e4299d26d4 mk/doc-gitfile-more later to maint).
-   (merge 792b86283b rs/incompatible-options-messages later to maint).
-   (merge ea8f9494ab jk/config-cleanup later to maint).
-   (merge d1bd3a8c34 jk/mailinfo-oob-read-fix later to maint).
-   (merge c0cadb0576 ps/reftable-fixes later to maint).
-   (merge 647b5e0998 ps/chainlint-self-check-update later to maint).
-   (merge 68fcebfb1a es/add-doc-list-short-form-of-all-in-synopsis later to maint).
-   (merge bc62d27d5c jc/doc-most-refs-are-not-that-special later to maint).
-   (merge 6d6f1cd7ee jc/doc-misspelt-refs-fix later to maint).
-   (merge 37e8d795be sp/test-i18ngrep later to maint).
-   (merge fbc6526ea6 rs/t6300-compressed-size-fix later to maint).
-   (merge 45184afb4d rs/rebase-use-strvec-pushf later to maint).
-   (merge a762af3dfd jc/retire-cas-opt-name-constant later to maint).
-   (merge de7c27a186 la/trailer-cleanups later to maint).
-   (merge d44b517137 jc/orphan-unborn later to maint).
-   (merge 63956c553d ml/doc-merge-updates later to maint).
-   (merge d57c671a51 en/header-cleanup later to maint).
-   (merge 5b7eec4bc5 rs/fast-import-simplify-mempool-allocation later to maint).
-   (merge 291873e5d6 js/contributor-docs-updates later to maint).
-   (merge 54d8a2531b jk/t1006-cat-file-objectsize-disk later to maint).
-   (merge 7033d5479b jx/sideband-chomp-newline-fix later to maint).
-   (merge 9cd30af991 ms/rebase-insnformat-doc-fix later to maint).
-   (merge 03bcc93769 cp/sideband-array-index-comment-fix later to maint).
-   (merge 993d38a066 jk/index-pack-lsan-false-positive-fix later to maint).
-   (merge 25aec06326 ib/rebase-reschedule-doc later to maint).
    (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
    (merge 9cce3be2df bk/bisect-doc-fix later to maint).
    (merge 8f50984cf4 ne/doc-filter-blob-limit-fix later to maint).
