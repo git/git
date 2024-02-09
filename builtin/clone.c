@@ -791,6 +791,8 @@ static int git_clone_config(const char *k, const char *v,
 			    const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(k, "clone.defaultremotename")) {
+		if (!v)
+			return config_error_nonbool(k);
 		free(remote_name);
 		remote_name = xstrdup(v);
 	}

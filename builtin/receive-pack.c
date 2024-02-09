@@ -142,6 +142,7 @@ static enum deny_action parse_deny_action(const char *var, const char *value)
 static int receive_pack_config(const char *var, const char *value,
 			       const struct config_context *ctx, void *cb)
 {
+	const char *msg_id;
 	int status = parse_hide_refs_config(var, value, "receive", &hidden_refs);
 
 	if (status)
@@ -178,12 +179,14 @@ static int receive_pack_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (skip_prefix(var, "receive.fsck.", &var)) {
-		if (is_valid_msg_type(var, value))
+	if (skip_prefix(var, "receive.fsck.", &msg_id)) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (is_valid_msg_type(msg_id, value))
 			strbuf_addf(&fsck_msg_types, "%c%s=%s",
-				fsck_msg_types.len ? ',' : '=', var, value);
+				fsck_msg_types.len ? ',' : '=', msg_id, value);
 		else
-			warning("skipping unknown msg id '%s'", var);
+			warning("skipping unknown msg id '%s'", msg_id);
 		return 0;
 	}
 

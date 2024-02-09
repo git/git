@@ -1202,6 +1202,8 @@ static int git_checkout_config(const char *var, const char *value,
 	struct checkout_opts *opts = cb;
 
 	if (!strcmp(var, "diff.ignoresubmodules")) {
+		if (!value)
+			return config_error_nonbool(var);
 		handle_ignore_submodules_arg(&opts->diff_options, value);
 		return 0;
 	}
