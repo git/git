@@ -58,12 +58,13 @@ static void parse_bogus_from(struct mailinfo *mi, const struct strbuf *line)
 
 static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 {
-	int c;
 	int take_next_literally = 0;
+	int depth = 1;
 
 	strbuf_addch(outbuf, '(');
 
-	while ((c = *in++) != 0) {
+	while (*in) {
+		int c = *in++;
 		if (take_next_literally == 1) {
 			take_next_literally = 0;
 		} else {
@@ -72,11 +73,14 @@ static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 				take_next_literally = 1;
 				continue;
 			case '(':
-				in = unquote_comment(outbuf, in);
+				strbuf_addch(outbuf, '(');
+				depth++;
 				continue;
 			case ')':
 				strbuf_addch(outbuf, ')');
-				return in;
+				if (!--depth)
+					return in;
+				continue;
 			}
 		}
 
@@ -88,10 +92,10 @@ static const char *unquote_comment(struct strbuf *outbuf, const char *in)
 
 static const char *unquote_quoted_string(struct strbuf *outbuf, const char *in)
 {
-	int c;
 	int take_next_literally = 0;
 
-	while ((c = *in++) != 0) {
+	while (*in) {
+		int c = *in++;
 		if (take_next_literally == 1) {
 			take_next_literally = 0;
 		} else {
