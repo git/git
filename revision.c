@@ -2728,7 +2728,8 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--branches")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --branches"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--branches");
 		handle_refs(refs, revs, *flags, refs_for_each_branch_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--bisect")) {
@@ -2739,12 +2740,14 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		revs->bisect = 1;
 	} else if (!strcmp(arg, "--tags")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --tags"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--tags");
 		handle_refs(refs, revs, *flags, refs_for_each_tag_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--remotes")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --remotes"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--remotes");
 		handle_refs(refs, revs, *flags, refs_for_each_remote_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
@@ -2762,21 +2765,24 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 	} else if (skip_prefix(arg, "--branches=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --branches"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--branches");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/heads/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --tags"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--tags");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/tags/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --remotes"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--remotes");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/remotes/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
@@ -3055,8 +3061,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		revs->grep_filter.ignore_locale = 1;
 	compile_grep_patterns(&revs->grep_filter);
 
-	if (revs->reverse && revs->reflog_info)
-		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--walk-reflogs");
 	if (revs->reflog_info && revs->limited)
 		die("cannot combine --walk-reflogs with history-limiting options");
 	if (revs->rewrite_parents && revs->children.name)
@@ -3067,11 +3071,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	/*
 	 * Limitations on the graph functionality
 	 */
-	if (revs->reverse && revs->graph)
-		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--graph");
+	die_for_incompatible_opt3(!!revs->graph, "--graph",
+				  !!revs->reverse, "--reverse",
+				  !!revs->reflog_info, "--walk-reflogs");
 
-	if (revs->reflog_info && revs->graph)
-		die(_("options '%s' and '%s' cannot be used together"), "--walk-reflogs", "--graph");
 	if (revs->no_walk && revs->graph)
 		die(_("options '%s' and '%s' cannot be used together"), "--no-walk", "--graph");
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
