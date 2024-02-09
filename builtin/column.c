@@ -56,5 +56,7 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 		string_list_append(&list, sb.buf);
 
 	print_columns(&list, colopts, &copts);
+	strbuf_release(&sb);
+	string_list_clear(&list, 0);
 	return 0;
 }
