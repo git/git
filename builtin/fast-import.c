@@ -2809,8 +2809,7 @@ static void parse_new_tag(const char *arg)
 	enum object_type type;
 	const char *v;
 
-	t = mem_pool_alloc(&fi_mem_pool, sizeof(struct tag));
-	memset(t, 0, sizeof(struct tag));
+	t = mem_pool_calloc(&fi_mem_pool, 1, sizeof(struct tag));
 	t->name = mem_pool_strdup(&fi_mem_pool, arg);
 	if (last_tag)
 		last_tag->next_tag = t;
