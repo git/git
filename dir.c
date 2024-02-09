@@ -16,7 +16,6 @@
 #include "object-file.h"
 #include "object-store-ll.h"
 #include "path.h"
-#include "attr.h"
 #include "refs.h"
 #include "wildmatch.h"
 #include "pathspec.h"

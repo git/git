@@ -4,7 +4,6 @@
 #include "copy.h"
 #include "environment.h"
 #include "gettext.h"
-#include "object-store-ll.h"
 #include "refs.h"
 #include "run-command.h"
 #include "hashmap.h"

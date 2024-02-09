@@ -1,12 +1,12 @@
 #include "git-compat-util.h"
 #include "config.h"
-#include "exec-cmd.h"
 #include "gettext.h"
 #include "hex.h"
 #include "http.h"
 #include "walker.h"
 #include "setup.h"
 #include "strvec.h"
+#include "url.h"
 #include "urlmatch.h"
 #include "trace2.h"
 

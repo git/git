@@ -11,7 +11,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "constants.h"
 #include "iter.h"
 #include "pq.h"
-#include "reader.h"
 #include "record.h"
 #include "generic.h"
 #include "reftable-merged.h"

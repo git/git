@@ -11,7 +11,6 @@
 #include "preload-index.h"
 #include "repository.h"
 #include "revision.h"
-#include "submodule.h"
 
 static const char diff_files_usage[] =
 "git diff-files [-q] [-0 | -1 | -2 | -3 | -c | --cc] [<common-diff-options>] [<path>...]"

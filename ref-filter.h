@@ -3,7 +3,6 @@
 
 #include "gettext.h"
 #include "oid-array.h"
-#include "refs.h"
 #include "commit.h"
 #include "string-list.h"
 #include "strvec.h"

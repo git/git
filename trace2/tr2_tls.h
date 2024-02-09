@@ -1,7 +1,6 @@
 #ifndef TR2_TLS_H
 #define TR2_TLS_H
 
-#include "strbuf.h"
 #include "trace2/tr2_ctr.h"
 #include "trace2/tr2_tmr.h"
 

@@ -2,7 +2,6 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 #include "git-compat-util.h"
-#include "diff.h"
 #include "diffcore.h"
 #include "hash.h"
 #include "object.h"

@@ -18,7 +18,6 @@
 #include "object-store-ll.h"
 #include "path.h"
 #include "tag.h"
-#include "run-command.h"
 #include "parse-options.h"
 #include "diff.h"
 #include "revision.h"

@@ -2,8 +2,6 @@
 #include "parse-options.h"
 #include "abspath.h"
 #include "parse.h"
-#include "commit.h"
-#include "color.h"
 #include "gettext.h"
 #include "strbuf.h"
 #include "string-list.h"

@@ -9,8 +9,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include "tree.h"
 
-#include "basics.h"
-#include "record.h"
 #include "test_framework.h"
 #include "reftable-tests.h"
 

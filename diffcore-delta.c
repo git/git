@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "diff.h"
 #include "diffcore.h"
 
 /*

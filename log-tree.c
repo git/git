@@ -2,6 +2,7 @@
 #include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
+#include "diffcore.h"
 #include "environment.h"
 #include "hex.h"
 #include "object-name.h"

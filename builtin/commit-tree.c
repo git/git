@@ -11,9 +11,6 @@
 #include "object-store-ll.h"
 #include "repository.h"
 #include "commit.h"
-#include "tree.h"
-#include "utf8.h"
-#include "gpg-interface.h"
 #include "parse-options.h"
 
 static const char * const commit_tree_usage[] = {

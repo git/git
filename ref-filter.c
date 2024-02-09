@@ -22,16 +22,13 @@
 #include "ref-filter.h"
 #include "revision.h"
 #include "utf8.h"
-#include "version.h"
 #include "versioncmp.h"
 #include "trailer.h"
 #include "wt-status.h"
 #include "commit-slab.h"
-#include "commit-graph.h"
 #include "commit-reach.h"
 #include "worktree.h"
 #include "hashmap.h"
-#include "strvec.h"
 
 static struct ref_msg {
 	const char *gone;

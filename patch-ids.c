@@ -2,7 +2,6 @@
 #include "diff.h"
 #include "commit.h"
 #include "hash.h"
-#include "hash-lookup.h"
 #include "hex.h"
 #include "patch-ids.h"
 

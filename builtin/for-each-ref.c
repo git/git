@@ -1,13 +1,12 @@
 #include "builtin.h"
+#include "commit.h"
 #include "config.h"
 #include "gettext.h"
-#include "refs.h"
 #include "object.h"
 #include "parse-options.h"
 #include "ref-filter.h"
 #include "strbuf.h"
 #include "strvec.h"
-#include "commit-reach.h"
 
 static char const * const for_each_ref_usage[] = {
 	N_("git for-each-ref [<options>] [<pattern>]"),

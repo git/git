@@ -1,6 +1,4 @@
 #include "git-compat-util.h"
-#include "run-command.h"
-#include "xdiff-interface.h"
 #include "merge-ll.h"
 #include "blob.h"
 #include "merge-blobs.h"

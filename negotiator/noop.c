@@ -1,6 +1,5 @@
 #include "git-compat-util.h"
 #include "noop.h"
-#include "../commit.h"
 #include "../fetch-negotiator.h"
 
 static void known_common(struct fetch_negotiator *n UNUSED,

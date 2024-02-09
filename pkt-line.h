@@ -2,7 +2,6 @@
 #define PKTLINE_H
 
 #include "strbuf.h"
-#include "sideband.h"
 
 /*
  * Write a packetized stream, where each line is preceded by

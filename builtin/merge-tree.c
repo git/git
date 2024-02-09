@@ -13,7 +13,6 @@
 #include "parse-options.h"
 #include "repository.h"
 #include "blob.h"
-#include "exec-cmd.h"
 #include "merge-blobs.h"
 #include "quote.h"
 #include "tree.h"

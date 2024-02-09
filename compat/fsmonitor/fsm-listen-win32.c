@@ -4,6 +4,7 @@
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
 #include "gettext.h"
+#include "simple-ipc.h"
 #include "trace2.h"
 
 /*

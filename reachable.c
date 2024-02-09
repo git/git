@@ -2,7 +2,6 @@
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
-#include "tag.h"
 #include "commit.h"
 #include "blob.h"
 #include "diff.h"

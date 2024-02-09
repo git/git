@@ -12,7 +12,6 @@
 #include "base85.h"
 #include "config.h"
 #include "object-store-ll.h"
-#include "blob.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"

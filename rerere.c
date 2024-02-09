@@ -12,12 +12,10 @@
 #include "dir.h"
 #include "resolve-undo.h"
 #include "merge-ll.h"
-#include "attr.h"
 #include "path.h"
 #include "pathspec.h"
 #include "object-file.h"
 #include "object-store-ll.h"
-#include "hash-lookup.h"
 #include "strmap.h"
 
 #define RESOLVED 0

@@ -1,6 +1,5 @@
 #include "git-compat-util.h"
 #include "blob.h"
-#include "repository.h"
 #include "alloc.h"
 
 const char *blob_type = "blob";

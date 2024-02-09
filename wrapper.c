@@ -5,7 +5,6 @@
 #include "abspath.h"
 #include "parse.h"
 #include "gettext.h"
-#include "repository.h"
 #include "strbuf.h"
 #include "trace2.h"
 

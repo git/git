@@ -1,6 +1,4 @@
 #include "git-compat-util.h"
-#include "diff.h"
-#include "diffcore.h"
 #include "gettext.h"
 #include "hash.h"
 #include "hex.h"
@@ -13,7 +11,6 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
-#include "dir.h"
 
 static const char *merge_argument(struct commit *commit)
 {

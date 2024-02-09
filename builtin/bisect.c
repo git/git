@@ -7,7 +7,6 @@
 #include "parse-options.h"
 #include "bisect.h"
 #include "refs.h"
-#include "dir.h"
 #include "strvec.h"
 #include "run-command.h"
 #include "oid-array.h"

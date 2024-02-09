@@ -2,7 +2,6 @@
 #include "object-store-ll.h"
 #include "commit.h"
 #include "convert.h"
-#include "blob.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "environment.h"
