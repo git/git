@@ -202,6 +202,8 @@ current branch integrates with) obviously do not work, as there is no
 [[def_gitfile]]gitfile::
 	A plain file `.git` at the root of a working tree that
 	points at the directory that is the real repository.
+	For proper use see linkgit:git-worktree[1] or linkgit:git-submodule[1].
+	For syntax see linkgit:gitrepository-layout[5].
 
 [[def_grafts]]grafts::
 	Grafts enable two otherwise different lines of development to be joined
