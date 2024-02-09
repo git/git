@@ -323,7 +323,7 @@ method _write_local_path {args} {
 }
 
 method _git_init {} {
-	if {[catch {file mkdir $local_path} err]} {
+	if {[catch {git init $local_path} err]} {
 		error_popup [strcat \
 			[mc "Failed to create repository %s:" $local_path] \
 			"\n\n$err"]
@@ -331,13 +331,6 @@ method _git_init {} {
 	}
 
 	if {[catch {cd $local_path} err]} {
-		error_popup [strcat \
-			[mc "Failed to create repository %s:" $local_path] \
-			"\n\n$err"]
-		return 0
-	}
-
-	if {[catch {git init} err]} {
 		error_popup [strcat \
 			[mc "Failed to create repository %s:" $local_path] \
 			"\n\n$err"]
