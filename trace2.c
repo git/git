@@ -20,6 +20,7 @@
 #include "trace2/tr2_tmr.h"
 
 static int trace2_enabled;
+static int trace2_redact = 1;
 
 static int tr2_next_child_id; /* modify under lock */
 static int tr2_next_exec_id; /* modify under lock */
@@ -227,6 +228,8 @@ void trace2_initialize_fl(const char *file, int line)
 	if (!tr2_tgt_want_builtins())
 		return;
 	trace2_enabled = 1;
+	if (!git_env_bool("GIT_TRACE2_REDACT", 1))
+		trace2_redact = 0;
 
 	tr2_sid_get();
 
@@ -247,12 +250,93 @@ int trace2_is_enabled(void)
 	return trace2_enabled;
 }
 
+/*
+ * Redacts an argument, i.e. ensures that no password in
+ * https://user:password@host/-style URLs is logged.
+ *
+ * Returns the original if nothing needed to be redacted.
+ * Returns a pointer that needs to be `free()`d otherwise.
+ */
+static const char *redact_arg(const char *arg)
+{
+	const char *p, *colon;
+	size_t at;
+
+	if (!trace2_redact ||
+	    (!skip_prefix(arg, "https://", &p) &&
+	     !skip_prefix(arg, "http://", &p)))
+		return arg;
+
+	at = strcspn(p, "@/");
+	if (p[at] != '@')
+		return arg;
+
+	colon = memchr(p, ':', at);
+	if (!colon)
+		return arg;
+
+	return xstrfmt("%.*s:<REDACTED>%s", (int)(colon - arg), arg, p + at);
+}
+
+/*
+ * Redacts arguments in an argument list.
+ *
+ * Returns the original if nothing needed to be redacted.
+ * Otherwise, returns a new array that needs to be released
+ * via `free_redacted_argv()`.
+ */
+static const char **redact_argv(const char **argv)
+{
+	int i, j;
+	const char *redacted = NULL;
+	const char **ret;
+
+	if (!trace2_redact)
+		return argv;
+
+	for (i = 0; argv[i]; i++)
+		if ((redacted = redact_arg(argv[i])) != argv[i])
+			break;
+
+	if (!argv[i])
+		return argv;
+
+	for (j = 0; argv[j]; j++)
+		; /* keep counting */
+
+	ALLOC_ARRAY(ret, j + 1);
+	ret[j] = NULL;
+
+	for (j = 0; j < i; j++)
+		ret[j] = argv[j];
+	ret[i] = redacted;
+	for (++i; argv[i]; i++) {
+		redacted = redact_arg(argv[i]);
+		ret[i] = redacted ? redacted : argv[i];
+	}
+
+	return ret;
+}
+
+static void free_redacted_argv(const char **redacted, const char **argv)
+{
+	int i;
+
+	if (redacted != argv) {
+		for (i = 0; argv[i]; i++)
+			if (redacted[i] != argv[i])
+				free((void *)redacted[i]);
+		free((void *)redacted);
+	}
+}
+
 void trace2_cmd_start_fl(const char *file, int line, const char **argv)
 {
 	struct tr2_tgt *tgt_j;
 	int j;
 	uint64_t us_now;
 	uint64_t us_elapsed_absolute;
+	const char **redacted;
 
 	if (!trace2_enabled)
 		return;
@@ -260,10 +344,14 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
 	us_now = getnanotime() / 1000;
 	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
+	redacted = redact_argv(argv);
+
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_start_fl)
 			tgt_j->pfn_start_fl(file, line, us_elapsed_absolute,
-					    argv);
+					    redacted);
+
+	free_redacted_argv(redacted, argv);
 }
 
 void trace2_cmd_exit_fl(const char *file, int line, int code)
@@ -409,6 +497,7 @@ void trace2_child_start_fl(const char *file, int line,
 	int j;
 	uint64_t us_now;
 	uint64_t us_elapsed_absolute;
+	const char **orig_argv = cmd->args.v;
 
 	if (!trace2_enabled)
 		return;
@@ -419,10 +508,24 @@ void trace2_child_start_fl(const char *file, int line,
 	cmd->trace2_child_id = tr2tls_locked_increment(&tr2_next_child_id);
 	cmd->trace2_child_us_start = us_now;
 
+	/*
+	 * The `pfn_child_start_fl` API takes a `struct child_process`
+	 * rather than a simple `argv` for the child because some
+	 * targets make use of the additional context bits/values. So
+	 * temporarily replace the original argv (inside the `strvec`)
+	 * with a possibly redacted version.
+	 */
+	cmd->args.v = redact_argv(orig_argv);
+
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_child_start_fl)
 			tgt_j->pfn_child_start_fl(file, line,
 						  us_elapsed_absolute, cmd);
+
+	if (cmd->args.v != orig_argv) {
+		free_redacted_argv(cmd->args.v, orig_argv);
+		cmd->args.v = orig_argv;
+	}
 }
 
 void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
@@ -493,6 +596,7 @@ int trace2_exec_fl(const char *file, int line, const char *exe,
 	int exec_id;
 	uint64_t us_now;
 	uint64_t us_elapsed_absolute;
+	const char **redacted;
 
 	if (!trace2_enabled)
 		return -1;
@@ -502,10 +606,14 @@ int trace2_exec_fl(const char *file, int line, const char *exe,
 
 	exec_id = tr2tls_locked_increment(&tr2_next_exec_id);
 
+	redacted = redact_argv(argv);
+
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_exec_fl)
 			tgt_j->pfn_exec_fl(file, line, us_elapsed_absolute,
-					   exec_id, exe, argv);
+					   exec_id, exe, redacted);
+
+	free_redacted_argv(redacted, argv);
 
 	return exec_id;
 }
@@ -637,13 +745,19 @@ void trace2_def_param_fl(const char *file, int line, const char *param,
 {
 	struct tr2_tgt *tgt_j;
 	int j;
+	const char *redacted;
 
 	if (!trace2_enabled)
 		return;
 
+	redacted = redact_arg(value);
+
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_param_fl)
-			tgt_j->pfn_param_fl(file, line, param, value, kvi);
+			tgt_j->pfn_param_fl(file, line, param, redacted, kvi);
+
+	if (redacted != value)
+		free((void *)redacted);
 }
 
 void trace2_def_repo_fl(const char *file, int line, struct repository *repo)
