@@ -140,6 +140,6 @@ advice.*::
 		Advice shown when a fast-forward is not possible.
 	worktreeAddOrphan::
 		Advice shown when a user tries to create a worktree from an
-		invalid reference, to instruct how to create a new orphan
+		invalid reference, to instruct how to create a new unborn
 		branch instead.
 --

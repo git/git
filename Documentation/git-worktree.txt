@@ -99,7 +99,7 @@ command will refuse to create the worktree (unless `--force` is used).
 If `<commit-ish>` is omitted, neither `--detach`, or `--orphan` is
 used, and there are no valid local branches (or remote branches if
 `--guess-remote` is specified) then, as a convenience, the new worktree is
-associated with a new orphan branch named `<branch>` (after
+associated with a new unborn branch named `<branch>` (after
 `$(basename <path>)` if neither `-b` or `-B` is used) as if `--orphan` was
 passed to the command. In the event the repository has a remote and
 `--guess-remote` is used, but no remote or local branches exist, then the
@@ -234,7 +234,7 @@ This can also be set up as the default behaviour by using the
 
 --orphan::
 	With `add`, make the new worktree and index empty, associating
-	the worktree with a new orphan/unborn branch named `<new-branch>`.
+	the worktree with a new unborn branch named `<new-branch>`.
 
 --porcelain::
 	With `list`, output in an easy-to-parse format for scripts.

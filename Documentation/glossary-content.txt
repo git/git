@@ -314,6 +314,12 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_octopus]]octopus::
 	To <<def_merge,merge>> more than two <<def_branch,branches>>.
 
+[[def_orphan]]orphan::
+	The act of getting on a <<def_branch,branch>> that does not
+	exist yet (i.e., an <<def_unborn,unborn>> branch).  After
+	such an operation, the commit first created becomes a commit
+	without a parent, starting a new history.
+
 [[def_origin]]origin::
 	The default upstream <<def_repository,repository>>. Most projects have
 	at least one upstream project which they track. By default
@@ -696,6 +702,18 @@ The most notable example is `HEAD`.
 	a tag object that points to a tag object that points to a tree
 	object,
 	etc.
+
+[[def_unborn]]unborn::
+	The <<def_HEAD,HEAD>> can point at a <<def_branch,branch>>
+	that does not yet exist and that does not have any commit on
+	it yet, and such a branch is called an unborn branch.  The
+	most typical way users encounter an unborn branch is by
+	creating a repository anew without cloning from elsewhere.
+	The HEAD would point at the 'main' (or 'master', depending
+	on your configuration) branch that is yet to be born.  Also
+	some operations can get you on an unborn branch with their
+	<<def_orphan,orphan>> option.
+
 
 [[def_unmerged_index]]unmerged index::
 	An <<def_index,index>> which contains unmerged
