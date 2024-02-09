@@ -1,8 +1,8 @@
-sha1_file ( ) {
+sha1_file() {
 	echo "$*" | sed "s#..#.git/objects/&/#"
 } &&
 
-remove_object ( ) {
+remove_object() {
 	file=$(sha1_file "$*") &&
 	test -e "$file" ?!AMP?!
 	rm -f "$file"

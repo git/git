@@ -4,6 +4,7 @@
 		echo a &&
 		echo b
 	) >file &&
+
 	cd foo &&
 	(
 		echo a ?!AMP?!

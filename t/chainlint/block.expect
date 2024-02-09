@@ -12,9 +12,9 @@
 ) &&
 
 {
-	echo a ; ?!AMP?! echo b
+	echo a; ?!AMP?! echo b
 } &&
-{ echo a ; ?!AMP?! echo b ; } &&
+{ echo a; ?!AMP?! echo b; } &&
 
 {
 	echo "${var}9" &&

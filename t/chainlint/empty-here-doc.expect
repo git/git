@@ -1,4 +1,4 @@
-git ls-tree $tree path > current &&
-cat > expected <<\EOF &&
+git ls-tree $tree path >current &&
+cat >expected <<\EOF &&
 EOF
 test_output
