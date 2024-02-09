@@ -83,7 +83,7 @@ void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int wid
  * BOM must not be used [1]. The same applies for the UTF-32 equivalents.
  * The function returns true if this rule is violated.
  *
- * [1] http://unicode.org/faq/utf_bom.html#bom10
+ * [1] https://unicode.org/faq/utf_bom.html#bom10
  */
 int has_prohibited_utf_bom(const char *enc, const char *data, size_t len);
 
@@ -99,8 +99,8 @@ int has_prohibited_utf_bom(const char *enc, const char *data, size_t len);
  * Therefore, strictly requiring a BOM seems to be the safest option for
  * content in Git.
  *
- * [1] http://unicode.org/faq/utf_bom.html#gen6
- * [2] http://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
+ * [1] https://unicode.org/faq/utf_bom.html#gen6
+ * [2] https://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
  *     Section 3.10, D98, page 132
  * [3] https://encoding.spec.whatwg.org/#utf-16le
  */

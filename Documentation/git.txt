@@ -1071,7 +1071,7 @@ Authors
 -------
 Git was started by Linus Torvalds, and is currently maintained by Junio
 C Hamano. Numerous contributions have come from the Git mailing list
-<git@vger.kernel.org>.  http://www.openhub.net/p/git/contributors/summary
+<git@vger.kernel.org>.  https://openhub.net/p/git/contributors/summary
 gives you a more complete list of contributors.
 
 If you have a clone of git.git itself, the

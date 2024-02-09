@@ -1025,7 +1025,7 @@ C<:warndie> handlers added by Paul Evans <leonerd@leonerd.org.uk>
 
 =head1 MAINTAINER
 
-Shlomi Fish, L<http://www.shlomifish.org/> .
+Shlomi Fish, L<https://www.shlomifish.org/> .
 
 =head1 PAST MAINTAINERS
 

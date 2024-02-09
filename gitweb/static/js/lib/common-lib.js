@@ -123,8 +123,8 @@ function addCssRule(selector, style) {
  * NOTE that there are limits and differences compared to native
  * getElementsByClassName as defined by e.g.:
  *   https://developer.mozilla.org/en/DOM/document.getElementsByClassName
- *   http://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#dom-getelementsbyclassname
- *   http://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#dom-document-getelementsbyclassname
+ *   https://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#dom-getelementsbyclassname
+ *   https://www.whatwg.org/specs/web-apps/current-work/multipage/dom.html#dom-document-getelementsbyclassname
  *
  * Namely, this implementation supports only single class name as
  * argument and not set of space-separated tokens representing classes,
@@ -133,11 +133,11 @@ function addCssRule(selector, style) {
  * (via getElementsByTagName).
  *
  * Based on
- *   http://code.google.com/p/getelementsbyclassname/
+ *   https://code.google.com/p/getelementsbyclassname/
  *   http://www.dustindiaz.com/getelementsbyclass/
- *   http://stackoverflow.com/questions/1818865/do-we-have-getelementsbyclassname-in-javascript
+ *   https://stackoverflow.com/questions/1818865/do-we-have-getelementsbyclassname-in-javascript
  *
- * See also http://ejohn.org/blog/getelementsbyclassname-speed-comparison/
+ * See also https://johnresig.com/blog/getelementsbyclassname-speed-comparison/
  *
  * @param {String} class: name of _single_ class to find
  * @param {String} [taghint] limit search to given tags
