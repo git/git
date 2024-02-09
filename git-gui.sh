@@ -1215,6 +1215,9 @@ if {[catch {
 	load_config 1
 	apply_config
 	choose_repository::pick
+	if {![file isdirectory $_gitdir]} {
+		exit 1
+	}
 	set picked 1
 }
 
