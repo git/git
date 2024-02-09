@@ -469,11 +469,11 @@ test_expect_success 'expire one of multiple worktrees' '
 	)
 '
 
-test_expect_success REFFILES 'empty reflog' '
+test_expect_success 'empty reflog' '
 	test_when_finished "rm -rf empty" &&
 	git init empty &&
 	test_commit -C empty A &&
-	>empty/.git/logs/refs/heads/foo &&
+	test-tool ref-store main create-reflog refs/heads/foo &&
 	git -C empty reflog expire --all 2>err &&
 	test_must_be_empty err
 '
