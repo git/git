@@ -7,7 +7,7 @@
 #
 # This program is licensed under the GPLv2
 
-use 5.008;
+use 5.008001;
 use strict;
 use warnings;
 # handle ACL in file access tests
