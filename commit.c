@@ -577,7 +577,7 @@ int repo_parse_commit_internal(struct repository *r,
 		static int commit_graph_paranoia = -1;
 
 		if (commit_graph_paranoia == -1)
-			commit_graph_paranoia = git_env_bool(GIT_COMMIT_GRAPH_PARANOIA, 1);
+			commit_graph_paranoia = git_env_bool(GIT_COMMIT_GRAPH_PARANOIA, 0);
 
 		if (commit_graph_paranoia && !has_object(r, &item->object.oid, 0)) {
 			unparse_commit(r, &item->object.oid);
