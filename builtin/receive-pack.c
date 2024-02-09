@@ -718,35 +718,29 @@ leave:
 static int check_cert_push_options(const struct string_list *push_options)
 {
 	const char *buf = push_cert.buf;
-	int len = push_cert.len;
 
-	char *option;
-	const char *next_line;
+	const char *option;
+	size_t optionlen;
 	int options_seen = 0;
 
 	int retval = 1;
 
-	if (!len)
+	if (!*buf)
 		return 1;
 
-	while ((option = find_header(buf, len, "push-option", &next_line))) {
-		len -= (next_line - buf);
-		buf = next_line;
+	while ((option = find_commit_header(buf, "push-option", &optionlen))) {
+		buf = option + optionlen + 1;
 		options_seen++;
 		if (options_seen > push_options->nr
-		    || strcmp(option,
-			      push_options->items[options_seen - 1].string)) {
-			retval = 0;
-			goto leave;
-		}
-		free(option);
+		    || strncmp(push_options->items[options_seen - 1].string,
+			       option, optionlen)
+		    || push_options->items[options_seen - 1].string[optionlen])
+			return 0;
 	}
 
 	if (options_seen != push_options->nr)
 		retval = 0;
 
-leave:
-	free(option);
 	return retval;
 }
 
