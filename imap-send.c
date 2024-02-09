@@ -1346,7 +1346,7 @@ static int git_imap_config(const char *var, const char *val,
 		server.port = git_config_int(var, val, ctx->kvi);
 	else if (!strcmp("imap.host", var)) {
 		if (!val) {
-			git_die_config("imap.host", "Missing value for 'imap.host'");
+			return config_error_nonbool(var);
 		} else {
 			if (starts_with(val, "imap:"))
 				val += 5;

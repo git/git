@@ -1392,6 +1392,9 @@ static int git_default_core_config(const char *var, const char *value,
 			check_stat = 1;
 		else if (!strcasecmp(value, "minimal"))
 			check_stat = 0;
+		else
+			return error(_("invalid value for '%s': '%s'"),
+				     var, value);
 	}
 
 	if (!strcmp(var, "core.quotepath")) {
@@ -1548,12 +1551,8 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.checkroundtripencoding")) {
-		if (!value)
-			return config_error_nonbool(var);
-		check_roundtrip_encoding = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "core.checkroundtripencoding"))
+		return git_config_string(&check_roundtrip_encoding, var, value);
 
 	if (!strcmp(var, "core.notesref")) {
 		if (!value)
