@@ -28,7 +28,7 @@ static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 	   "    [--no-checkout] [--first-parent] [<bad> [<good>...]] [--]" \
 	   "    [<pathspec>...]")
 #define BUILTIN_GIT_BISECT_STATE_USAGE \
-	N_("git bisect (good|bad) [<rev>...]")
+	N_("git bisect (good|bad) [-f] [<rev>...]")
 #define BUILTIN_GIT_BISECT_TERMS_USAGE \
 	"git bisect terms [--term-good | --term-bad]"
 #define BUILTIN_GIT_BISECT_SKIP_USAGE \
@@ -44,7 +44,7 @@ static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 #define BUILTIN_GIT_BISECT_LOG_USAGE \
 	"git bisect log"
 #define BUILTIN_GIT_BISECT_RUN_USAGE \
-	N_("git bisect run <cmd> [<arg>...]")
+	N_("git bisect run [-f] <cmd> [<arg>...]")
 
 static const char * const git_bisect_usage[] = {
 	BUILTIN_GIT_BISECT_START_USAGE,
@@ -650,7 +650,7 @@ static int bisect_successful(struct bisect_terms *terms)
 	return res;
 }
 
-static enum bisect_error bisect_next(struct bisect_terms *terms, const char *prefix)
+static enum bisect_error bisect_next(struct bisect_terms *terms, const char *prefix, int force_checkout)
 {
 	enum bisect_error res;
 
@@ -661,7 +661,7 @@ static enum bisect_error bisect_next(struct bisect_terms *terms, const char *pre
 		return BISECT_FAILED;
 
 	/* Perform all bisection computation */
-	res = bisect_next_all(the_repository, prefix);
+	res = bisect_next_all(the_repository, prefix, force_checkout);
 
 	if (res == BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND) {
 		res = bisect_successful(terms);
@@ -673,14 +673,14 @@ static enum bisect_error bisect_next(struct bisect_terms *terms, const char *pre
 	return res;
 }
 
-static enum bisect_error bisect_auto_next(struct bisect_terms *terms, const char *prefix)
+static enum bisect_error bisect_auto_next(struct bisect_terms *terms, const char *prefix, int force_checkout)
 {
 	if (bisect_next_check(terms, NULL)) {
 		bisect_print_status(terms);
 		return BISECT_OK;
 	}
 
-	return bisect_next(terms, prefix);
+	return bisect_next(terms, prefix, force_checkout);
 }
 
 static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
@@ -874,7 +874,7 @@ finish:
 	if (res)
 		return res;
 
-	res = bisect_auto_next(terms, NULL);
+	res = bisect_auto_next(terms, NULL, 0);
 	if (!is_bisect_success(res))
 		bisect_clean_state();
 	return res;
@@ -916,7 +916,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 				      const char **argv)
 {
 	const char *state;
-	int i, verify_expected = 1;
+	int i, force_checkout = 0, verify_expected = 1;
 	struct object_id oid, expected;
 	struct oid_array revs = OID_ARRAY_INIT;
 
@@ -933,6 +933,13 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 
 	argv++;
 	argc--;
+
+	if (argc > 0 && (!strcmp(argv[0], "--force") || !strcmp(argv[0], "-f"))) {
+		force_checkout = 1;
+		argv++;
+		argc--;
+	}
+
 	if (argc > 1 && !strcmp(state, terms->term_bad))
 		return error(_("'git bisect %s' can take only one argument."), terms->term_bad);
 
@@ -988,7 +995,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 	}
 
 	oid_array_clear(&revs);
-	return bisect_auto_next(terms, NULL);
+	return bisect_auto_next(terms, NULL, force_checkout);
 }
 
 static enum bisect_error bisect_log(void)
@@ -1077,7 +1084,7 @@ static enum bisect_error bisect_replay(struct bisect_terms *terms, const char *f
 	if (res)
 		return BISECT_FAILED;
 
-	return bisect_auto_next(terms, NULL);
+	return bisect_auto_next(terms, NULL, 0);
 }
 
 static enum bisect_error bisect_skip(struct bisect_terms *terms, int argc,
@@ -1172,7 +1179,7 @@ static int do_bisect_run(const char *command)
 	return run_command(&cmd);
 }
 
-static int verify_good(const struct bisect_terms *terms, const char *command)
+static int verify_good(const struct bisect_terms *terms, const char *command, int force_checkout)
 {
 	int rc;
 	enum bisect_error res;
@@ -1188,13 +1195,13 @@ static int verify_good(const struct bisect_terms *terms, const char *command)
 	if (read_ref(no_checkout ? "BISECT_HEAD" : "HEAD", &current_rev))
 		return -1;
 
-	res = bisect_checkout(&good_rev, no_checkout);
+	res = bisect_checkout(&good_rev, no_checkout, force_checkout);
 	if (res != BISECT_OK)
 		return -1;
 
 	rc = do_bisect_run(command);
 
-	res = bisect_checkout(&current_rev, no_checkout);
+	res = bisect_checkout(&current_rev, no_checkout, force_checkout);
 	if (res != BISECT_OK)
 		return -1;
 
@@ -1208,6 +1215,7 @@ static int bisect_run(struct bisect_terms *terms, int argc, const char **argv)
 	const char *new_state;
 	int temporary_stdout_fd, saved_stdout;
 	int is_first_run = 1;
+	int force_checkout = 0;
 
 	if (bisect_next_check(terms, NULL))
 		return BISECT_FAILED;
@@ -1217,8 +1225,14 @@ static int bisect_run(struct bisect_terms *terms, int argc, const char **argv)
 		return BISECT_FAILED;
 	}
 
+	if (argc > 0 && (!strcmp(argv[0], "--force") || !strcmp(argv[0], "-f"))) {
+		force_checkout = 1;
+		argv++;
+		argc--;
+	}
 	sq_quote_argv(&command, argv);
 	strbuf_ltrim(&command);
+
 	while (1) {
 		res = do_bisect_run(command.buf);
 
@@ -1230,7 +1244,7 @@ static int bisect_run(struct bisect_terms *terms, int argc, const char **argv)
 		 * missing or non-executable script.
 		 */
 		if (is_first_run && (res == 126 || res == 127)) {
-			int rc = verify_good(terms, command.buf);
+			int rc = verify_good(terms, command.buf, force_checkout);
 			is_first_run = 0;
 			if (rc < 0 || 128 <= rc) {
 				error(_("unable to verify %s on good"
@@ -1270,7 +1284,11 @@ static int bisect_run(struct bisect_terms *terms, int argc, const char **argv)
 		saved_stdout = dup(1);
 		dup2(temporary_stdout_fd, 1);
 
-		res = bisect_state(terms, 1, &new_state);
+		if (force_checkout) {
+			res = bisect_state(terms, 2, (const char *[]){ new_state, "--force" });
+		} else {
+			res = bisect_state(terms, 1, &new_state);
+		}
 
 		fflush(stdout);
 		dup2(saved_stdout, 1);
@@ -1341,7 +1359,7 @@ static int cmd_bisect__next(int argc, const char **argv UNUSED, const char *pref
 		return error(_("'%s' requires 0 arguments"),
 			     "git bisect next");
 	get_terms(&terms);
-	res = bisect_next(&terms, prefix);
+	res = bisect_next(&terms, prefix, 0);
 	free_terms(&terms);
 	return res;
 }
