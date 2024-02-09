@@ -279,7 +279,8 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 
 	opt_name = optnamearg(opt, arg, flags);
 	other_opt_name = optnamearg(elem->opt, elem->arg, elem->flags);
-	error(_("%s is incompatible with %s"), opt_name, other_opt_name);
+	error(_("options '%s' and '%s' cannot be used together"),
+	      opt_name, other_opt_name);
 	free(opt_name);
 	free(other_opt_name);
 	return -1;

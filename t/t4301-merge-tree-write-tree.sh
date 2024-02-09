@@ -887,7 +887,7 @@ test_expect_success '--stdin with both a successful and a conflicted merge' '
 test_expect_success '--merge-base is incompatible with --stdin' '
 	test_must_fail git merge-tree --merge-base=side1 --stdin 2>expect &&
 
-	grep "^fatal: --merge-base is incompatible with --stdin" expect
+	grep "^fatal: .*merge-base.*stdin.* cannot be used together" expect
 '
 
 # specify merge-base as parent of branch2
