@@ -355,9 +355,21 @@ If you like, you can put extra tags at the end:
   patch after a detailed analysis.
 . `Tested-by:` is used to indicate that the person applied the patch
   and found it to have the desired effect.
+. `Co-authored-by:` is used to indicate that people exchanged drafts
+   of a patch before submitting it.
+. `Helped-by:` is used to credit someone who suggested ideas for
+  changes without providing the precise changes in patch form.
+. `Mentored-by:` is used to credit someone with helping develop a
+  patch as part of a mentorship program (e.g., GSoC or Outreachy).
+. `Suggested-by:` is used to credit someone with suggesting the idea
+  for a patch.
 
-You can also create your own tag or use one that's in common usage
-such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
+While you can also create your own trailer if the situation warrants it, we
+encourage you to instead use one of the common trailers in this project
+highlighted above.
+
+Only capitalize the very first letter of tags, i.e. favor
+"Signed-off-by" over "Signed-Off-By" and "Acked-by:" over "Acked-By".
 
 [[git-tools]]
 === Generate your patch using Git tools out of your commits.
@@ -570,7 +582,7 @@ their trees themselves.
   master).
 
 * Read the Git mailing list, the maintainer regularly posts messages
-  entitled "What's cooking in git.git" and "What's in git.git" giving
+  entitled "What's cooking in git.git" giving
   the status of various proposed changes.
 
 == GitHub CI[[GHCI]]
@@ -590,11 +602,12 @@ After the initial setup, CI will run whenever you push new changes
 to your fork of Git on GitHub.  You can monitor the test state of all your
 branches here: `https://github.com/<Your GitHub handle>/git/actions/workflows/main.yml`
 
-If a branch did not pass all test cases then it is marked with a red
-cross. In that case you can click on the failing job and navigate to
-"ci/run-build-and-tests.sh" and/or "ci/print-test-failures.sh". You
-can also download "Artifacts" which are tarred (or zipped) archives
-with test data relevant for debugging.
+If a branch does not pass all test cases then it will be marked with a
+red +x+, instead of a green check. In that case, you can click on the
+failing job and navigate to "ci/run-build-and-tests.sh" and/or
+"ci/print-test-failures.sh". You can also download "Artifacts" which
+are zip archives containing tarred (or zipped) archives with test data
+relevant for debugging.
 
 Then fix the problem and push your fix to your GitHub fork. This will
 trigger a new CI build to ensure all tests pass.
@@ -686,7 +699,7 @@ message to an external program, and this is a handy way to drive
 `git am`.  However, if the message is MIME encoded, what is
 piped into the program is the representation you see in your
 `*Article*` buffer after unwrapping MIME.  This is often not what
-you would want for two reasons.  It tends to screw up non ASCII
+you would want for two reasons.  It tends to screw up non-ASCII
 characters (most notably in people's names), and also
 whitespaces (fatal in patches).  Running "C-u g" to display the
 message in raw form before using "|" to run the pipe can work
