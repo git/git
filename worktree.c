@@ -395,9 +395,9 @@ int is_worktree_being_bisected(const struct worktree *wt,
 
 	memset(&state, 0, sizeof(state));
 	found_bisect = wt_status_check_bisect(wt, &state) &&
-		       state.branch &&
+		       state.bisecting_from &&
 		       skip_prefix(target, "refs/heads/", &target) &&
-		       !strcmp(state.branch, target);
+		       !strcmp(state.bisecting_from, target);
 	wt_status_state_free_buffers(&state);
 	return found_bisect;
 }

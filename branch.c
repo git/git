@@ -420,9 +420,9 @@ static void prepare_checked_out_branches(void)
 		wt_status_state_free_buffers(&state);
 
 		if (wt_status_check_bisect(wt, &state) &&
-		    state.branch) {
+		    state.bisecting_from) {
 			struct strbuf ref = STRBUF_INIT;
-			strbuf_addf(&ref, "refs/heads/%s", state.branch);
+			strbuf_addf(&ref, "refs/heads/%s", state.bisecting_from);
 			old = strmap_put(&current_checked_out_branches,
 					 ref.buf,
 					 xstrdup(wt->path));
