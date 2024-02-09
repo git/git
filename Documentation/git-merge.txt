@@ -196,7 +196,7 @@ happens:
    can inspect the stages with `git ls-files -u`).  The working
    tree files contain the result of the merge operation; i.e. 3-way
    merge results with familiar conflict markers `<<<` `===` `>>>`.
-5. A special ref `AUTO_MERGE` is written, pointing to a tree
+5. A ref named `AUTO_MERGE` is written, pointing to a tree
    corresponding to the current content of the working tree (including
    conflict markers for textual conflicts).  Note that this ref is only
    written when the 'ort' merge strategy is used (the default).
