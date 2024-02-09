@@ -170,6 +170,12 @@ test_expect_success 'bisect reset when not bisecting' '
 	cmp branch.expect branch.output
 '
 
+test_expect_success 'bisect reset cleans up even when not bisecting' '
+	echo garbage >.git/BISECT_LOG &&
+	git bisect reset &&
+	test_path_is_missing .git/BISECT_LOG
+'
+
 test_expect_success 'bisect reset removes packed refs' '
 	git bisect reset &&
 	git bisect start &&
