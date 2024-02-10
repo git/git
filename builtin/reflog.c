@@ -96,8 +96,7 @@ static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
 		reflog_expire_cfg_tail = &reflog_expire_cfg;
 
 	for (ent = reflog_expire_cfg; ent; ent = ent->next)
-		if (!strncmp(ent->pattern, pattern, len) &&
-		    ent->pattern[len] == '\0')
+		if (!xstrncmpz(ent->pattern, pattern, len))
 			return ent;
 
 	FLEX_ALLOC_MEM(ent, pattern, pattern, len);

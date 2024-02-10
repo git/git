@@ -1028,7 +1028,7 @@ static int read_convert_config(const char *var, const char *value,
 	if (parse_config_key(var, "filter", &name, &namelen, &key) < 0 || !name)
 		return 0;
 	for (drv = user_convert; drv; drv = drv->next)
-		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
+		if (!xstrncmpz(drv->name, name, namelen))
 			break;
 	if (!drv) {
 		CALLOC_ARRAY(drv, 1);
