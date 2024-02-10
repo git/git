@@ -2803,6 +2803,19 @@ __git_complete_config_variable_name ()
 		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_" "${sfx:- }"
 		return
 		;;
+	submodule.*.*)
+		local pfx="${cur_%.*}."
+		cur_="${cur_##*.}"
+		__gitcomp "url update branch fetchRecurseSubmodules ignore active" "$pfx" "$cur_" "$sfx"
+		return
+		;;
+	submodule.*)
+		local pfx="${cur_%.*}."
+		cur_="${cur_#*.}"
+		__gitcomp_nl "$(__git config -f "$(__git rev-parse --show-toplevel)/.gitmodules" --get-regexp 'submodule.*.path' | awk -F. '{print $2}')" "$pfx" "$cur_" "."
+		__gitcomp_nl_append $'alternateErrorStrategy\nfetchJobs\nactive\nalternateLocation\nrecurse\npropagateBranches' "$pfx" "$cur_" "${sfx:- }"
+		return
+		;;
 	url.*.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_##*.}"
