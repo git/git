@@ -2589,7 +2589,7 @@ test_expect_success 'setup for git config submodule tests' '
 	git submodule add ./sub
 '
 
-test_expect_success 'git config - variable name - submodule' '
+test_expect_success 'git config - variable name - submodule and __git_compute_first_level_config_vars_for_section' '
 	test_completion "git config submodule." <<-\EOF
 	submodule.active Z
 	submodule.alternateErrorStrategy Z
