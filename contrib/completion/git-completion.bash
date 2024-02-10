@@ -2596,6 +2596,13 @@ __git_compute_config_vars ()
 	__git_config_vars="$(git help --config-for-completion)"
 }
 
+__git_config_vars_all=
+__git_compute_config_vars_all ()
+{
+	test -n "$__git_config_vars_all" ||
+	__git_config_vars_all="$(git --no-pager help --config)"
+}
+
 __git_compute_first_level_config_vars_for_section ()
 {
 	local section="$1"
@@ -2603,6 +2610,15 @@ __git_compute_first_level_config_vars_for_section ()
 	local this_section="__git_first_level_config_vars_for_section_${section}"
 	test -n "${!this_section}" ||
 	printf -v "__git_first_level_config_vars_for_section_${section}" %s "$(echo "$__git_config_vars" | grep -E "^${section}\.[a-z]" | awk -F. '{print $2}')"
+}
+
+__git_compute_second_level_config_vars_for_section ()
+{
+	local section="$1"
+	__git_compute_config_vars_all
+	local this_section="__git_second_level_config_vars_for_section_${section}"
+	test -n "${!this_section}" ||
+	printf -v "__git_second_level_config_vars_for_section_${section}" %s "$(echo "$__git_config_vars_all" | grep -E "^${section}\.<" | awk -F. '{print $3}')"
 }
 
 __git_config_sections=
@@ -2749,10 +2765,13 @@ __git_complete_config_variable_name ()
 	done
 
 	case "$cur_" in
-	branch.*.*)
+	branch.*.*|guitool.*.*|difftool.*.*|man.*.*|mergetool.*.*|remote.*.*|submodule.*.*|url.*.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_##*.}"
-		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_" "$sfx"
+		local section="${pfx%.*.}"
+		__git_compute_second_level_config_vars_for_section "${section}"
+		local this_section="__git_second_level_config_vars_for_section_${section}"
+		__gitcomp "${!this_section}" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	branch.*)
@@ -2765,47 +2784,11 @@ __git_complete_config_variable_name ()
 		__gitcomp_nl_append "${!this_section}" "$pfx" "$cur_" "${sfx:- }"
 		return
 		;;
-	guitool.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "
-			argPrompt cmd confirm needsFile noConsole noRescan
-			prompt revPrompt revUnmerged title
-			" "$pfx" "$cur_" "$sfx"
-		return
-		;;
-	difftool.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
-		return
-		;;
-	man.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
-		return
-		;;
-	mergetool.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_" "$sfx"
-		return
-		;;
 	pager.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_#*.}"
 		__git_compute_all_commands
 		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_" "${sfx:- }"
-		return
-		;;
-	remote.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "
-			url proxy fetch push mirror skipDefaultUpdate
-			receivepack uploadpack tagOpt pushurl
-			" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	remote.*)
@@ -2818,12 +2801,6 @@ __git_complete_config_variable_name ()
 		__gitcomp_nl_append "${!this_section}" "$pfx" "$cur_" "${sfx:- }"
 		return
 		;;
-	submodule.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "url update branch fetchRecurseSubmodules ignore active" "$pfx" "$cur_" "$sfx"
-		return
-		;;
 	submodule.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_#*.}"
@@ -2832,12 +2809,6 @@ __git_complete_config_variable_name ()
 		__git_compute_first_level_config_vars_for_section "${section}"
 		local this_section="__git_first_level_config_vars_for_section_${section}"
 		__gitcomp_nl_append "${!this_section}" "$pfx" "$cur_" "${sfx:- }"
-		return
-		;;
-	url.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	*.*)
