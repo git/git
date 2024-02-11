@@ -21,12 +21,11 @@ static struct {
 	.result = RESULT_NONE,
 };
 
-#ifndef _MSC_VER
-#define make_relative(location) location
-#else
 /*
  * Visual C interpolates the absolute Windows path for `__FILE__`,
  * but we want to see relative paths, as verified by t0080.
+ * There are other compilers that do the same, and are not for
+ * Windows.
  */
 #include "dir.h"
 
@@ -34,32 +33,66 @@ static const char *make_relative(const char *location)
 {
 	static char prefix[] = __FILE__, buf[PATH_MAX], *p;
 	static size_t prefix_len;
+	static int need_bs_to_fs = -1;
 
-	if (!prefix_len) {
+	/* one-time preparation */
+	if (need_bs_to_fs < 0) {
 		size_t len = strlen(prefix);
-		const char *needle = "\\t\\unit-tests\\test-lib.c";
+		char needle[] = "t\\unit-tests\\test-lib.c";
 		size_t needle_len = strlen(needle);
 
-		if (len < needle_len || strcmp(needle, prefix + len - needle_len))
-			die("unexpected suffix of '%s'", prefix);
+		if (len < needle_len)
+			die("unexpected prefix '%s'", prefix);
 
-		/* let it end in a directory separator */
-		prefix_len = len - needle_len + 1;
+		/*
+		 * The path could be relative (t/unit-tests/test-lib.c)
+		 * or full (/home/user/git/t/unit-tests/test-lib.c).
+		 * Check the slash between "t" and "unit-tests".
+		 */
+		prefix_len = len - needle_len;
+		if (prefix[prefix_len + 1] == '/') {
+			/* Oh, we're not Windows */
+			for (size_t i = 0; i < needle_len; i++)
+				if (needle[i] == '\\')
+					needle[i] = '/';
+			need_bs_to_fs = 0;
+		} else {
+			need_bs_to_fs = 1;
+		}
+
+		/*
+		 * prefix_len == 0 if the compiler gives paths relative
+		 * to the root of the working tree.  Otherwise, we want
+		 * to see that we did find the needle[] at a directory
+		 * boundary.  Again we rely on that needle[] begins with
+		 * "t" followed by the directory separator.
+		 */
+		if (fspathcmp(needle, prefix + prefix_len) ||
+		    (prefix_len && prefix[prefix_len - 1] != needle[1]))
+			die("unexpected suffix of '%s'", prefix);
 	}
 
-	/* Does it not start with the expected prefix? */
-	if (fspathncmp(location, prefix, prefix_len))
+	/*
+	 * Does it not start with the expected prefix?
+	 * Return it as-is without making it worse.
+	 */
+	if (prefix_len && fspathncmp(location, prefix, prefix_len))
 		return location;
 
-	strlcpy(buf, location + prefix_len, sizeof(buf));
+	/*
+	 * If we do not need to munge directory separator, we can return
+	 * the substring at the tail of the location.
+	 */
+	if (!need_bs_to_fs)
+		return location + prefix_len;
+
 	/* convert backslashes to forward slashes */
+	strlcpy(buf, location + prefix_len, sizeof(buf));
 	for (p = buf; *p; p++)
 		if (*p == '\\')
 			*p = '/';
-
 	return buf;
 }
-#endif
 
 static void msg_with_prefix(const char *prefix, const char *format, va_list ap)
 {
