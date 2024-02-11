@@ -28,6 +28,7 @@
 #include "run-command.h"
 #include "parse-options.h"
 #include "setup.h"
+#include "strbuf.h"
 #if defined(NO_OPENSSL) && !defined(HAVE_OPENSSL_CSPRNG)
 typedef void *SSL;
 #endif

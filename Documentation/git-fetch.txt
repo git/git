@@ -186,8 +186,8 @@ origin:
 ------------------------------------------------
 $ git fetch origin --prune --prune-tags
 $ git fetch origin --prune 'refs/tags/*:refs/tags/*'
-$ git fetch <url of origin> --prune --prune-tags
-$ git fetch <url of origin> --prune 'refs/tags/*:refs/tags/*'
+$ git fetch <url-of-origin> --prune --prune-tags
+$ git fetch <url-of-origin> --prune 'refs/tags/*:refs/tags/*'
 ------------------------------------------------
 
 OUTPUT

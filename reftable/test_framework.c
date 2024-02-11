@@ -20,3 +20,8 @@ ssize_t strbuf_add_void(void *b, const void *data, size_t sz)
 	strbuf_add(b, data, sz);
 	return sz;
 }
+
+int noop_flush(void *arg)
+{
+	return 0;
+}

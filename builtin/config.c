@@ -710,6 +710,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (use_global_config) {
 		given_config_source.file = git_global_config();
 		if (!given_config_source.file)
+			/*
+			 * It is unknown if HOME/.gitconfig exists, so
+			 * we do not know if we should write to XDG
+			 * location; error out even if XDG_CONFIG_HOME
+			 * is set and points at a sane location.
+			 */
 			die(_("$HOME not set"));
 		given_config_source.scope = CONFIG_SCOPE_GLOBAL;
 	} else if (use_system_config) {

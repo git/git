@@ -210,7 +210,7 @@ annotated.
 
 . Each blame entry always starts with a line of:
 
-	<40-byte hex sha1> <sourceline> <resultline> <num_lines>
+	<40-byte-hex-sha1> <sourceline> <resultline> <num-lines>
 +
 Line numbers count from 1.
 

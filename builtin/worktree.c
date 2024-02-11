@@ -848,21 +848,21 @@ static int add(int ac, const char **av, const char *prefix)
 		const char *s = worktree_basename(path, &n);
 		new_branch = xstrndup(s, n);
 	} else if (opts.orphan) {
-		// No-op
+		; /* no-op */
 	} else if (opts.detach) {
-		// Check HEAD
+		/* Check HEAD */
 		if (!strcmp(branch, "HEAD"))
 			can_use_local_refs(&opts);
 	} else if (ac < 2 && new_branch) {
-		// DWIM: Infer --orphan when repo has no refs.
+		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = dwim_orphan(&opts, !!opt_track, 0);
 	} else if (ac < 2) {
-		// DWIM: Guess branch name from path.
+		/* DWIM: Guess branch name from path. */
 		const char *s = dwim_branch(path, &new_branch);
 		if (s)
 			branch = s;
 
-		// DWIM: Infer --orphan when repo has no refs.
+		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
 	} else if (ac == 2) {
 		struct object_id oid;

@@ -733,4 +733,22 @@ test_expect_success 'no empty path components' '
 	! grep "//" log
 '
 
+test_expect_success 'tag following always works over v0 http' '
+	upstream=$HTTPD_DOCUMENT_ROOT_PATH/tags &&
+	git init "$upstream" &&
+	(
+		cd "$upstream" &&
+		git commit --allow-empty -m base &&
+		git tag not-annotated &&
+		git tag -m foo annotated
+	) &&
+	git init tags &&
+	git -C tags -c protocol.version=0 \
+		fetch --depth 1 $HTTPD_URL/smart/tags \
+		refs/tags/annotated:refs/tags/annotated &&
+	git -C "$upstream" for-each-ref refs/tags >expect &&
+	git -C tags for-each-ref >actual &&
+	test_cmp expect actual
+'
+
 test_done

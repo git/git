@@ -90,7 +90,7 @@ instead.  `--no-symlinks` is the default on Windows.
 --extcmd=<command>::
 	Specify a custom command for viewing diffs.
 	'git-difftool' ignores the configured defaults and runs
-	`$command $LOCAL $REMOTE` when this option is specified.
+	`<command> $LOCAL $REMOTE` when this option is specified.
 	Additionally, `$BASE` is set in the environment.
 
 -g::

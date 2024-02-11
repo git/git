@@ -17,6 +17,7 @@
 #include "refspec.h"
 #include "transport-internal.h"
 #include "protocol.h"
+#include "packfile.h"
 
 static int debug;
 
@@ -432,6 +433,8 @@ static int fetch_with_fetch(struct transport *transport,
 			warning(_("%s unexpectedly said: '%s'"), data->name, buf.buf);
 	}
 	strbuf_release(&buf);
+
+	reprepare_packed_git(the_repository);
 	return 0;
 }
 
