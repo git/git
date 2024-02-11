@@ -579,8 +579,9 @@ void expand_to_path(struct index_state *istate,
 		replace++;
 		temp = *replace;
 		*replace = '\0';
+		substr_len = replace - path_mutable.buf;
 		if (index_file_exists(istate, path_mutable.buf,
-				      path_mutable.len, icase)) {
+				      substr_len, icase)) {
 			/*
 			 * We found a parent directory in the name-hash
 			 * hashtable, because only sparse directory entries
@@ -593,7 +594,6 @@ void expand_to_path(struct index_state *istate,
 		}
 
 		*replace = temp;
-		substr_len = replace - path_mutable.buf;
 	}
 
 cleanup:

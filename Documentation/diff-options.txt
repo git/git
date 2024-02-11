@@ -299,7 +299,7 @@ and accumulating child directory counts in the parent directories:
 	Synonym for --dirstat=cumulative
 
 --dirstat-by-file[=<param1,param2>...]::
-	Synonym for --dirstat=files,param1,param2...
+	Synonym for --dirstat=files,<param1>,<param2>...
 
 --summary::
 	Output a condensed summary of extended header information

@@ -121,6 +121,7 @@ static struct strbuf reftable_empty_strbuf = STRBUF_INIT;
 
 struct reftable_writer *
 reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
+		    int (*flush_func)(void *),
 		    void *writer_arg, struct reftable_write_options *opts)
 {
 	struct reftable_writer *wp =
@@ -136,6 +137,7 @@ reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 	wp->write = writer_func;
 	wp->write_arg = writer_arg;
 	wp->opts = *opts;
+	wp->flush = flush_func;
 	writer_reinit_block_writer(wp, BLOCK_TYPE_REF);
 
 	return wp;
@@ -602,6 +604,12 @@ int reftable_writer_close(struct reftable_writer *w)
 
 	put_be32(p, crc32(0, footer, p - footer));
 	p += 4;
+
+	err = w->flush(w->write_arg);
+	if (err < 0) {
+		err = REFTABLE_IO_ERROR;
+		goto done;
+	}
 
 	err = padded_write(w, footer, footer_size(writer_version(w)), 0);
 	if (err < 0)

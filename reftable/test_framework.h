@@ -56,4 +56,6 @@ void set_test_hash(uint8_t *p, int i);
  */
 ssize_t strbuf_add_void(void *b, const void *data, size_t sz);
 
+int noop_flush(void *);
+
 #endif

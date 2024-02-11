@@ -42,7 +42,7 @@ static void write_test_table(struct strbuf *buf,
 		}
 	}
 
-	w = reftable_new_writer(&strbuf_add_void, buf, &opts);
+	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
 	reftable_writer_set_limits(w, min, max);
 
 	for (i = 0; i < n; i++) {
@@ -70,7 +70,7 @@ static void write_test_log_table(struct strbuf *buf,
 		.exact_log_message = 1,
 	};
 	struct reftable_writer *w = NULL;
-	w = reftable_new_writer(&strbuf_add_void, buf, &opts);
+	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
 	reftable_writer_set_limits(w, update_index, update_index);
 
 	for (i = 0; i < n; i++) {
@@ -412,7 +412,7 @@ static void test_default_write_opts(void)
 	struct reftable_write_options opts = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &buf, &opts);
+		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 
 	struct reftable_ref_record rec = {
 		.refname = "master",

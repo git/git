@@ -116,7 +116,7 @@ include::rerere-options.txt[]
 
 --reference::
 	Instead of starting the body of the log message with "This
-	reverts <full object name of the commit being reverted>.",
+	reverts <full-object-name-of-the-commit-being-reverted>.",
 	refer to the commit using "--pretty=reference" format
 	(cf. linkgit:git-log[1]).  The `revert.reference`
 	configuration variable can be used to enable this option by
@@ -149,7 +149,7 @@ While git creates a basic commit message automatically, it is
 _strongly_ recommended to explain why the original commit is being
 reverted.
 In addition, repeatedly reverting reverts will result in increasingly
-unwieldy subject lines, for example 'Reapply "Reapply "<original subject>""'.
+unwieldy subject lines, for example 'Reapply "Reapply "<original-subject>""'.
 Please consider rewording these to be shorter and more unique.
 
 CONFIGURATION

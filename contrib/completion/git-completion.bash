@@ -1808,7 +1808,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--output= --output-indicator-context=
 			--output-indicator-new= --output-indicator-old=
 			--ws-error-highlight=
-			--pickaxe-all --pickaxe-regex
+			--pickaxe-all --pickaxe-regex --patch-with-raw
 "
 
 # Options for diff/difftool
@@ -2072,6 +2072,16 @@ __git_log_common_options="
 	--min-age= --until= --before=
 	--min-parents= --max-parents=
 	--no-min-parents --no-max-parents
+	--alternate-refs --ancestry-path
+	--author-date-order --basic-regexp
+	--bisect --boundary --exclude-first-parent-only
+	--exclude-hidden --extended-regexp
+	--fixed-strings --grep-reflog
+	--ignore-missing --left-only --perl-regexp
+	--reflog --regexp-ignore-case --remove-empty
+	--right-only --show-linear-break
+	--show-notes-by-default --show-pulls
+	--since-as-filter --single-worktree
 "
 # Options that go well for log and gitk (not shortlog)
 __git_log_gitk_options="
@@ -2087,6 +2097,7 @@ __git_log_shortlog_options="
 # Options accepted by log and show
 __git_log_show_options="
 	--diff-merges --diff-merges= --no-diff-merges --dd --remerge-diff
+	--encoding=
 "
 
 __git_diff_merges_opts="off none on first-parent 1 separate m combined c dense-combined cc remerge r"
@@ -2170,6 +2181,8 @@ _git_log ()
 			--no-walk --no-walk= --do-walk
 			--parents --children
 			--expand-tabs --expand-tabs= --no-expand-tabs
+			--clear-decorations --decorate-refs=
+			--decorate-refs-exclude=
 			$merge
 			$__git_diff_common_options
 			"

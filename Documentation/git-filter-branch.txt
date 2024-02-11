@@ -14,7 +14,7 @@ SYNOPSIS
 	[--msg-filter <command>] [--commit-filter <command>]
 	[--tag-name-filter <command>] [--prune-empty]
 	[--original <namespace>] [-d <directory>] [-f | --force]
-	[--state-branch <branch>] [--] [<rev-list options>...]
+	[--state-branch <branch>] [--] [<rev-list-options>...]
 
 WARNING
 -------
@@ -32,7 +32,7 @@ listed there as reasonably possible.
 DESCRIPTION
 -----------
 Lets you rewrite Git revision history by rewriting the branches mentioned
-in the <rev-list options>, applying custom filters on each revision.
+in the <rev-list-options>, applying custom filters on each revision.
 Those filters can modify each tree (e.g. removing a file or running
 a perl rewrite on all files) or information about each commit.
 Otherwise, all information (including original commit times or merge
@@ -624,7 +624,7 @@ with:
      real backup; it dereferences tags first.)
 
   ** Running git-filter-branch with either --tags or --all in your
-     <rev-list options>.  In order to retain annotated tags as
+     <rev-list-options>.  In order to retain annotated tags as
      annotated, you must use --tag-name-filter (and must not have
      restored from refs/original/ in a previously botched rewrite).
 

@@ -245,20 +245,20 @@ diffcore-pickaxe: For Detecting Addition/Deletion of Specified String
 
 This transformation limits the set of filepairs to those that change
 specified strings between the preimage and the postimage in a certain
-way.  -S<block of text> and -G<regular expression> options are used to
+way.  -S<block-of-text> and -G<regular-expression> options are used to
 specify different ways these strings are sought.
 
-"-S<block of text>" detects filepairs whose preimage and postimage
+"-S<block-of-text>" detects filepairs whose preimage and postimage
 have different number of occurrences of the specified block of text.
 By definition, it will not detect in-file moves.  Also, when a
 changeset moves a file wholesale without affecting the interesting
 string, diffcore-rename kicks in as usual, and `-S` omits the filepair
 (since the number of occurrences of that string didn't change in that
 rename-detected filepair).  When used with `--pickaxe-regex`, treat
-the <block of text> as an extended POSIX regular expression to match,
+the <block-of-text> as an extended POSIX regular expression to match,
 instead of a literal string.
 
-"-G<regular expression>" (mnemonic: grep) detects filepairs whose
+"-G<regular-expression>" (mnemonic: grep) detects filepairs whose
 textual diff has an added or a deleted line that matches the given
 regular expression.  This means that it will detect in-file (or what
 rename-detection considers the same file) moves, which is noise.  The
