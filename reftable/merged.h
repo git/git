@@ -31,8 +31,6 @@ struct merged_iter {
 	uint8_t typ;
 	int suppress_deletions;
 	struct merged_iter_pqueue pq;
-	struct strbuf key;
-	struct strbuf entry_key;
 };
 
 void merged_table_release(struct reftable_merged_table *mt);
