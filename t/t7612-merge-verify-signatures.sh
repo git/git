@@ -41,54 +41,54 @@ test_expect_success GPG 'create signed commits' '
 test_expect_success GPG 'merge unsigned commit with verification' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git merge --ff-only --verify-signatures side-unsigned 2>mergeerror &&
-	test_i18ngrep "does not have a GPG signature" mergeerror
+	test_grep "does not have a GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge unsigned commit with merge.verifySignatures=true' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config merge.verifySignatures true &&
 	test_must_fail git merge --ff-only side-unsigned 2>mergeerror &&
-	test_i18ngrep "does not have a GPG signature" mergeerror
+	test_grep "does not have a GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge commit with bad signature with verification' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git merge --ff-only --verify-signatures $(cat forged.commit) 2>mergeerror &&
-	test_i18ngrep "has a bad GPG signature" mergeerror
+	test_grep "has a bad GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge commit with bad signature with merge.verifySignatures=true' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config merge.verifySignatures true &&
 	test_must_fail git merge --ff-only $(cat forged.commit) 2>mergeerror &&
-	test_i18ngrep "has a bad GPG signature" mergeerror
+	test_grep "has a bad GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge commit with untrusted signature with verification' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_must_fail git merge --ff-only --verify-signatures side-untrusted 2>mergeerror &&
-	test_i18ngrep "has an untrusted GPG signature" mergeerror
+	test_grep "has an untrusted GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge commit with untrusted signature with verification and high minTrustLevel' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config gpg.minTrustLevel marginal &&
 	test_must_fail git merge --ff-only --verify-signatures side-untrusted 2>mergeerror &&
-	test_i18ngrep "has an untrusted GPG signature" mergeerror
+	test_grep "has an untrusted GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge commit with untrusted signature with verification and low minTrustLevel' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config gpg.minTrustLevel undefined &&
 	git merge --ff-only --verify-signatures side-untrusted >mergeoutput &&
-	test_i18ngrep "has a good GPG signature" mergeoutput
+	test_grep "has a good GPG signature" mergeoutput
 '
 
 test_expect_success GPG 'merge commit with untrusted signature with merge.verifySignatures=true' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config merge.verifySignatures true &&
 	test_must_fail git merge --ff-only side-untrusted 2>mergeerror &&
-	test_i18ngrep "has an untrusted GPG signature" mergeerror
+	test_grep "has an untrusted GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge commit with untrusted signature with merge.verifySignatures=true and minTrustLevel' '
@@ -96,20 +96,20 @@ test_expect_success GPG 'merge commit with untrusted signature with merge.verify
 	test_config merge.verifySignatures true &&
 	test_config gpg.minTrustLevel marginal &&
 	test_must_fail git merge --ff-only side-untrusted 2>mergeerror &&
-	test_i18ngrep "has an untrusted GPG signature" mergeerror
+	test_grep "has an untrusted GPG signature" mergeerror
 '
 
 test_expect_success GPG 'merge signed commit with verification' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	git merge --verbose --ff-only --verify-signatures side-signed >mergeoutput &&
-	test_i18ngrep "has a good GPG signature" mergeoutput
+	test_grep "has a good GPG signature" mergeoutput
 '
 
 test_expect_success GPG 'merge signed commit with merge.verifySignatures=true' '
 	test_when_finished "git reset --hard && git checkout initial" &&
 	test_config merge.verifySignatures true &&
 	git merge --verbose --ff-only side-signed >mergeoutput &&
-	test_i18ngrep "has a good GPG signature" mergeoutput
+	test_grep "has a good GPG signature" mergeoutput
 '
 
 test_expect_success GPG 'merge commit with bad signature without verification' '
@@ -133,7 +133,7 @@ test_expect_success GPG 'merge unsigned commit into unborn branch' '
 	test_when_finished "git checkout initial" &&
 	git checkout --orphan unborn &&
 	test_must_fail git merge --verify-signatures side-unsigned 2>mergeerror &&
-	test_i18ngrep "does not have a GPG signature" mergeerror
+	test_grep "does not have a GPG signature" mergeerror
 '
 
 test_done

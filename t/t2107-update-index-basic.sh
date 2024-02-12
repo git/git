@@ -14,7 +14,7 @@ test_expect_success 'update-index --nonsense fails' '
 
 test_expect_success 'update-index --nonsense dumps usage' '
 	test_expect_code 129 git update-index --nonsense 2>err &&
-	test_i18ngrep "[Uu]sage: git update-index" err
+	test_grep "[Uu]sage: git update-index" err
 '
 
 test_expect_success 'update-index -h with corrupt index' '
@@ -25,7 +25,7 @@ test_expect_success 'update-index -h with corrupt index' '
 		>.git/index &&
 		test_expect_code 129 git update-index -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage: git update-index" broken/usage
+	test_grep "[Uu]sage: git update-index" broken/usage
 '
 
 test_expect_success '--cacheinfo complains of missing arguments' '
@@ -109,6 +109,37 @@ test_expect_success '--chmod=+x and chmod=-x in the same argument list' '
 	EOF
 	git ls-files --stage A B >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--index-version' '
+	git commit --allow-empty -m snap &&
+	git reset --hard &&
+	git rm -f -r --cached . &&
+
+	# The default index version is 2 --- update this test
+	# when you change it in the code
+	git update-index --show-index-version >actual &&
+	echo 2 >expect &&
+	test_cmp expect actual &&
+
+	# The next test wants us to be using version 2
+	git update-index --index-version 2 &&
+
+	git update-index --index-version 4 --verbose >actual &&
+	echo "index-version: was 2, set to 4" >expect &&
+	test_cmp expect actual &&
+
+	git update-index --index-version 4 --verbose >actual &&
+	echo "index-version: was 4, set to 4" >expect &&
+	test_cmp expect actual &&
+
+	git update-index --index-version 2 --verbose >actual &&
+	echo "index-version: was 4, set to 2" >expect &&
+	test_cmp expect actual &&
+
+	# non-verbose should be silent
+	git update-index --index-version 4 >actual &&
+	test_must_be_empty actual
 '
 
 test_done

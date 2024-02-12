@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "sigchain.h"
 
 #define SIGCHAIN_MAX_SIGNALS 32

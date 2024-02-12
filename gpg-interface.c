@@ -1,18 +1,20 @@
 #include "git-compat-util.h"
 #include "commit.h"
 #include "config.h"
+#include "date.h"
 #include "gettext.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "dir.h"
 #include "ident.h"
 #include "gpg-interface.h"
+#include "path.h"
 #include "sigchain.h"
 #include "tempfile.h"
 #include "alias.h"
-#include "wrapper.h"
 
-static int git_gpg_config(const char *, const char *, void *);
+static int git_gpg_config(const char *, const char *,
+			  const struct config_context *, void *);
 
 static void gpg_interface_lazy_init(void)
 {
@@ -584,8 +586,8 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 		}
 	}
 
-	strbuf_stripspace(&ssh_keygen_out, 0);
-	strbuf_stripspace(&ssh_keygen_err, 0);
+	strbuf_stripspace(&ssh_keygen_out, '\0');
+	strbuf_stripspace(&ssh_keygen_err, '\0');
 	/* Add stderr outputs to show the user actual ssh-keygen errors */
 	strbuf_add(&ssh_keygen_out, ssh_principals_err.buf, ssh_principals_err.len);
 	strbuf_add(&ssh_keygen_out, ssh_keygen_err.buf, ssh_keygen_err.len);
@@ -718,7 +720,9 @@ void set_signing_key(const char *key)
 	configured_signing_key = xstrdup(key);
 }
 
-static int git_gpg_config(const char *var, const char *value, void *cb UNUSED)
+static int git_gpg_config(const char *var, const char *value,
+			  const struct config_context *ctx UNUSED,
+			  void *cb UNUSED)
 {
 	struct gpg_format *fmt = NULL;
 	char *fmtname = NULL;
@@ -757,23 +761,14 @@ static int git_gpg_config(const char *var, const char *value, void *cb UNUSED)
 		return 0;
 	}
 
-	if (!strcmp(var, "gpg.ssh.defaultkeycommand")) {
-		if (!value)
-			return config_error_nonbool(var);
+	if (!strcmp(var, "gpg.ssh.defaultkeycommand"))
 		return git_config_string(&ssh_default_key_command, var, value);
-	}
 
-	if (!strcmp(var, "gpg.ssh.allowedsignersfile")) {
-		if (!value)
-			return config_error_nonbool(var);
+	if (!strcmp(var, "gpg.ssh.allowedsignersfile"))
 		return git_config_pathname(&ssh_allowed_signers, var, value);
-	}
 
-	if (!strcmp(var, "gpg.ssh.revocationfile")) {
-		if (!value)
-			return config_error_nonbool(var);
+	if (!strcmp(var, "gpg.ssh.revocationfile"))
 		return git_config_pathname(&ssh_revocation_file, var, value);
-	}
 
 	if (!strcmp(var, "gpg.program") || !strcmp(var, "gpg.openpgp.program"))
 		fmtname = "openpgp";

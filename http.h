@@ -10,7 +10,6 @@ struct packed_git;
 
 #include "strbuf.h"
 #include "remote.h"
-#include "url.h"
 
 #define DEFAULT_MAX_REQUESTS 5
 

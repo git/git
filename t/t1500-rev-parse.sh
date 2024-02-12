@@ -208,6 +208,23 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
+test_expect_success 'rev-parse --show-ref-format' '
+	test_detect_ref_format >expect &&
+	git rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --show-ref-format with invalid storage' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config extensions.refstorage broken &&
+		test_must_fail git rev-parse --show-ref-format 2>err &&
+		grep "error: invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}broken${SQ}" err
+	)
+'
+
 test_expect_success '--show-toplevel from subdir of working tree' '
 	pwd >expect &&
 	git -C sub/dir rev-parse --show-toplevel >actual &&
@@ -261,6 +278,29 @@ test_expect_success 'rev-parse --since= unsqueezed ordering' '
 	--max-age=3
 	--max-age=2
 	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --bisect includes bad, excludes good' '
+	test_commit_bulk 6 &&
+
+	git update-ref refs/bisect/bad-1 HEAD~1 &&
+	git update-ref refs/bisect/b HEAD~2 &&
+	git update-ref refs/bisect/bad-3 HEAD~3 &&
+	git update-ref refs/bisect/good-3 HEAD~3 &&
+	git update-ref refs/bisect/bad-4 HEAD~4 &&
+	git update-ref refs/bisect/go HEAD~4 &&
+
+	# Note: refs/bisect/b and refs/bisect/go should be ignored because they
+	# do not match the refs/bisect/bad or refs/bisect/good prefixes.
+	cat >expect <<-EOF &&
+	refs/bisect/bad-1
+	refs/bisect/bad-3
+	refs/bisect/bad-4
+	^refs/bisect/good-3
+	EOF
+
+	git rev-parse --symbolic-full-name --bisect >actual &&
 	test_cmp expect actual
 '
 

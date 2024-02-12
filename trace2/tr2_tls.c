@@ -1,5 +1,5 @@
 #include "git-compat-util.h"
-#include "alloc.h"
+#include "strbuf.h"
 #include "thread-utils.h"
 #include "trace.h"
 #include "trace2/tr2_tls.h"

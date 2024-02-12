@@ -809,6 +809,11 @@ my_match_and_clean () {
 		status --porcelain=v2 >actual.without &&
 	test_cmp actual.with actual.without &&
 
+	git -C super --no-optional-locks diff-index --name-status HEAD >actual.with &&
+	git -C super --no-optional-locks -c core.fsmonitor=false \
+		diff-index --name-status HEAD >actual.without &&
+	test_cmp actual.with actual.without &&
+
 	git -C super/dir_1/dir_2/sub reset --hard &&
 	git -C super/dir_1/dir_2/sub clean -d -f
 }
@@ -973,7 +978,7 @@ test_expect_success !UNICODE_COMPOSITION_SENSITIVE 'Unicode nfc/nfd' '
 	mkdir test_unicode/nfd &&
 	mkdir test_unicode/nfd/d_${utf8_nfd} &&
 
-	git -C test_unicode fsmonitor--daemon stop &&
+	test-tool -C test_unicode fsmonitor-client query --token 0 &&
 
 	if test_have_prereq UNICODE_NFC_PRESERVED
 	then

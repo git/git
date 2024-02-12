@@ -6,20 +6,26 @@
  * an insanely large number of attributes.
  */
 
-#include "cache.h"
-#include "alloc.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
 #include "exec-cmd.h"
 #include "attr.h"
 #include "dir.h"
 #include "gettext.h"
+#include "path.h"
 #include "utf8.h"
 #include "quote.h"
+#include "read-cache-ll.h"
+#include "refs.h"
 #include "revision.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "setup.h"
 #include "thread-utils.h"
+#include "tree-walk.h"
+#include "object-name.h"
+
+const char *git_attr_tree;
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -178,6 +184,15 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 	}
 }
 
+/*
+ * Atribute name cannot begin with "builtin_" which
+ * is a reserved namespace for built in attributes values.
+ */
+static int attr_name_reserved(const char *name)
+{
+	return starts_with(name, "builtin_");
+}
+
 static int attr_name_valid(const char *name, size_t namelen)
 {
 	/*
@@ -310,7 +325,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 			cp++;
 			len--;
 		}
-		if (!attr_name_valid(cp, len)) {
+		if (!attr_name_valid(cp, len) || attr_name_reserved(cp)) {
 			report_invalid_attr(cp, len, src, lineno);
 			return NULL;
 		}
@@ -374,7 +389,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		name += strlen(ATTRIBUTE_MACRO_PREFIX);
 		name += strspn(name, blank);
 		namelen = strcspn(name, blank);
-		if (!attr_name_valid(name, namelen)) {
+		if (!attr_name_valid(name, namelen) || attr_name_reserved(name)) {
 			report_invalid_attr(name, namelen, src, lineno);
 			goto fail_return;
 		}
@@ -804,35 +819,56 @@ static struct attr_stack *read_attr_from_blob(struct index_state *istate,
 static struct attr_stack *read_attr_from_index(struct index_state *istate,
 					       const char *path, unsigned flags)
 {
+	struct attr_stack *stack = NULL;
 	char *buf;
 	unsigned long size;
+	int sparse_dir_pos = -1;
 
 	if (!istate)
 		return NULL;
 
 	/*
-	 * The .gitattributes file only applies to files within its
-	 * parent directory. In the case of cone-mode sparse-checkout,
-	 * the .gitattributes file is sparse if and only if all paths
-	 * within that directory are also sparse. Thus, don't load the
-	 * .gitattributes file since it will not matter.
-	 *
-	 * In the case of a sparse index, it is critical that we don't go
-	 * looking for a .gitattributes file, as doing so would cause the
-	 * index to expand.
+	 * When handling sparse-checkouts, .gitattributes files
+	 * may reside within a sparse directory. We distinguish
+	 * whether a path exists directly in the index or not by
+	 * evaluating if 'pos' is negative.
+	 * If 'pos' is negative, the path is not directly present
+	 * in the index and is likely within a sparse directory.
+	 * For paths not in the index, The absolute value of 'pos'
+	 * minus 1 gives us the position where the path would be
+	 * inserted in lexicographic order within the index.
+	 * We then subtract another 1 from this value
+	 * (sparse_dir_pos = -pos - 2) to find the position of the
+	 * last index entry which is lexicographically smaller than
+	 * the path. This would be the sparse directory containing
+	 * the path. By identifying the sparse directory containing
+	 * the path, we can correctly read the attributes specified
+	 * in the .gitattributes file from the tree object of the
+	 * sparse directory.
 	 */
-	if (!path_in_cone_mode_sparse_checkout(path, istate))
-		return NULL;
+	if (!path_in_cone_mode_sparse_checkout(path, istate)) {
+		int pos = index_name_pos_sparse(istate, path, strlen(path));
 
-	buf = read_blob_data_from_index(istate, path, &size);
-	if (!buf)
-		return NULL;
-	if (size >= ATTR_MAX_FILE_SIZE) {
-		warning(_("ignoring overly large gitattributes blob '%s'"), path);
-		return NULL;
+		if (pos < 0)
+			sparse_dir_pos = -pos - 2;
 	}
 
-	return read_attr_from_buf(buf, path, flags);
+	if (sparse_dir_pos >= 0 &&
+	    S_ISSPARSEDIR(istate->cache[sparse_dir_pos]->ce_mode) &&
+	    !strncmp(istate->cache[sparse_dir_pos]->name, path, ce_namelen(istate->cache[sparse_dir_pos]))) {
+		const char *relative_path = path + ce_namelen(istate->cache[sparse_dir_pos]);
+		stack = read_attr_from_blob(istate, &istate->cache[sparse_dir_pos]->oid, relative_path, flags);
+	} else {
+		buf = read_blob_data_from_index(istate, path, &size);
+		if (!buf)
+			return NULL;
+		if (size >= ATTR_MAX_FILE_SIZE) {
+			warning(_("ignoring overly large gitattributes blob '%s'"), path);
+			return NULL;
+		}
+		stack = read_attr_from_buf(buf, path, flags);
+	}
+	return stack;
 }
 
 static struct attr_stack *read_attr(struct index_state *istate,
@@ -868,7 +904,7 @@ static struct attr_stack *read_attr(struct index_state *istate,
 	return res;
 }
 
-static const char *git_etc_gitattributes(void)
+const char *git_attr_system_file(void)
 {
 	static const char *system_wide;
 	if (!system_wide)
@@ -876,7 +912,7 @@ static const char *git_etc_gitattributes(void)
 	return system_wide;
 }
 
-static const char *get_home_gitattributes(void)
+const char *git_attr_global_file(void)
 {
 	if (!git_attributes_file)
 		git_attributes_file = xdg_config_home("attributes");
@@ -884,7 +920,7 @@ static const char *get_home_gitattributes(void)
 	return git_attributes_file;
 }
 
-static int git_attr_system(void)
+int git_attr_system_is_enabled(void)
 {
 	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
 }
@@ -918,14 +954,14 @@ static void bootstrap_attr_stack(struct index_state *istate,
 	push_stack(stack, e, NULL, 0);
 
 	/* system-wide frame */
-	if (git_attr_system()) {
-		e = read_attr_from_file(git_etc_gitattributes(), flags);
+	if (git_attr_system_is_enabled()) {
+		e = read_attr_from_file(git_attr_system_file(), flags);
 		push_stack(stack, e, NULL, 0);
 	}
 
 	/* home directory */
-	if (get_home_gitattributes()) {
-		e = read_attr_from_file(get_home_gitattributes(), flags);
+	if (git_attr_global_file()) {
+		e = read_attr_from_file(git_attr_global_file(), flags);
 		push_stack(stack, e, NULL, 0);
 	}
 
@@ -1169,11 +1205,136 @@ static void collect_some_attrs(struct index_state *istate,
 	fill(path, pathlen, basename_offset, check->stack, check->all_attrs, rem);
 }
 
+static const char *default_attr_source_tree_object_name;
+static int ignore_bad_attr_tree;
+
+void set_git_attr_source(const char *tree_object_name)
+{
+	default_attr_source_tree_object_name = xstrdup(tree_object_name);
+}
+
+static void compute_default_attr_source(struct object_id *attr_source)
+{
+	if (!default_attr_source_tree_object_name)
+		default_attr_source_tree_object_name = getenv(GIT_ATTR_SOURCE_ENVIRONMENT);
+
+	if (!default_attr_source_tree_object_name && git_attr_tree) {
+		default_attr_source_tree_object_name = git_attr_tree;
+		ignore_bad_attr_tree = 1;
+	}
+
+	if (!default_attr_source_tree_object_name &&
+	    startup_info->have_repository &&
+	    is_bare_repository()) {
+		default_attr_source_tree_object_name = "HEAD";
+		ignore_bad_attr_tree = 1;
+	}
+
+	if (!default_attr_source_tree_object_name || !is_null_oid(attr_source))
+		return;
+
+	if (repo_get_oid_treeish(the_repository,
+				 default_attr_source_tree_object_name,
+				 attr_source) && !ignore_bad_attr_tree)
+		die(_("bad --attr-source or GIT_ATTR_SOURCE"));
+}
+
+static struct object_id *default_attr_source(void)
+{
+	static struct object_id attr_source;
+
+	if (is_null_oid(&attr_source))
+		compute_default_attr_source(&attr_source);
+	if (is_null_oid(&attr_source))
+		return NULL;
+	return &attr_source;
+}
+
+static const char *interned_mode_string(unsigned int mode)
+{
+	static struct {
+		unsigned int val;
+		char str[7];
+	} mode_string[] = {
+		{ .val = 0040000 },
+		{ .val = 0100644 },
+		{ .val = 0100755 },
+		{ .val = 0120000 },
+		{ .val = 0160000 },
+	};
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(mode_string); i++) {
+		if (mode_string[i].val != mode)
+			continue;
+		if (!*mode_string[i].str)
+			snprintf(mode_string[i].str, sizeof(mode_string[i].str),
+				 "%06o", mode);
+		return mode_string[i].str;
+	}
+	BUG("Unsupported mode 0%o", mode);
+}
+
+static const char *builtin_object_mode_attr(struct index_state *istate, const char *path)
+{
+	unsigned int mode;
+
+	if (direction == GIT_ATTR_CHECKIN) {
+		struct object_id oid;
+		struct stat st;
+		if (lstat(path, &st))
+			die_errno(_("unable to stat '%s'"), path);
+		mode = canon_mode(st.st_mode);
+		if (S_ISDIR(mode)) {
+			/*
+			 *`path` is either a directory or it is a submodule,
+			 * in which case it is already indexed as submodule
+			 * or it does not exist in the index yet and we need to
+			 * check if we can resolve to a ref.
+			*/
+			int pos = index_name_pos(istate, path, strlen(path));
+			if (pos >= 0) {
+				 if (S_ISGITLINK(istate->cache[pos]->ce_mode))
+					 mode = istate->cache[pos]->ce_mode;
+			} else if (resolve_gitlink_ref(path, "HEAD", &oid) == 0) {
+				mode = S_IFGITLINK;
+			}
+		}
+	} else {
+		/*
+		 * For GIT_ATTR_CHECKOUT and GIT_ATTR_INDEX we only check
+		 * for mode in the index.
+		 */
+		int pos = index_name_pos(istate, path, strlen(path));
+		if (pos >= 0)
+			mode = istate->cache[pos]->ce_mode;
+		else
+			return ATTR__UNSET;
+	}
+
+	return interned_mode_string(mode);
+}
+
+
+static const char *compute_builtin_attr(struct index_state *istate,
+					  const char *path,
+					  const struct git_attr *attr) {
+	static const struct git_attr *object_mode_attr;
+
+	if (!object_mode_attr)
+		object_mode_attr = git_attr("builtin_objectmode");
+
+	if (attr == object_mode_attr)
+		return builtin_object_mode_attr(istate, path);
+	return ATTR__UNSET;
+}
+
 void git_check_attr(struct index_state *istate,
-		    const struct object_id *tree_oid, const char *path,
+		    const char *path,
 		    struct attr_check *check)
 {
 	int i;
+	const struct object_id *tree_oid = default_attr_source();
 
 	collect_some_attrs(istate, tree_oid, path, check);
 
@@ -1181,15 +1342,16 @@ void git_check_attr(struct index_state *istate,
 		unsigned int n = check->items[i].attr->attr_nr;
 		const char *value = check->all_attrs[n].value;
 		if (value == ATTR__UNKNOWN)
-			value = ATTR__UNSET;
+			value = compute_builtin_attr(istate, path, check->all_attrs[n].attr);
 		check->items[i].value = value;
 	}
 }
 
-void git_all_attrs(struct index_state *istate, const struct object_id *tree_oid,
+void git_all_attrs(struct index_state *istate,
 		   const char *path, struct attr_check *check)
 {
 	int i;
+	const struct object_id *tree_oid = default_attr_source();
 
 	attr_check_reset(check);
 	collect_some_attrs(istate, tree_oid, path, check);

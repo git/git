@@ -130,6 +130,14 @@ void parse_pathspec_file(struct pathspec *pathspec,
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src);
 void clear_pathspec(struct pathspec *);
 
+/*
+ * Add a human-readable string to "out" representing the PATHSPEC_* flags set
+ * in "magic". The result is suitable for error messages, but not for
+ * parsing as pathspec magic itself (you get 'icase' with quotes, not
+ * :(icase)).
+ */
+void pathspec_magic_names(unsigned magic, struct strbuf *out);
+
 static inline int ps_strncmp(const struct pathspec_item *item,
 			     const char *s1, const char *s2, size_t n)
 {

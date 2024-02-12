@@ -14,12 +14,12 @@ receive.autogc::
 
 receive.certNonceSeed::
 	By setting this variable to a string, `git receive-pack`
-	will accept a `git push --signed` and verifies it by using
+	will accept a `git push --signed` and verify it by using
 	a "nonce" protected by HMAC using this string as a secret
 	key.
 
 receive.certNonceSlop::
-	When a `git push --signed` sent a push certificate with a
+	When a `git push --signed` sends a push certificate with a
 	"nonce" that was issued by a receive-pack serving the same
 	repository within this many seconds, export the "nonce"
 	found in the certificate to `GIT_PUSH_CERT_NONCE` to the

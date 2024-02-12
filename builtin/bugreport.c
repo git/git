@@ -11,7 +11,6 @@
 #include "diagnose.h"
 #include "object-file.h"
 #include "setup.h"
-#include "wrapper.h"
 
 static void get_system_info(struct strbuf *sys_info)
 {
@@ -126,6 +125,11 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, bugreport_options,
 			     bugreport_usage, 0);
+
+	if (argc) {
+		error(_("unknown argument `%s'"), argv[0]);
+		usage(bugreport_usage[0]);
+	}
 
 	/* Prepare the path to put the result */
 	prefixed_filename = prefix_filename(prefix,

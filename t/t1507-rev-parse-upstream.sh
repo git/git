@@ -5,6 +5,7 @@ test_description='test <branch>@{upstream} syntax'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 
@@ -97,7 +98,8 @@ test_expect_success 'my-side@{u} resolves to correct commit' '
 	commit_subject my-side >actual &&
 	test_cmp expect actual &&
 	echo 5 >expect &&
-	commit_subject my-side@{u} >actual
+	commit_subject my-side@{u} >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'not-tracking@{u} fails' '

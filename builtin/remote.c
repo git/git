@@ -2,6 +2,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "path.h"
 #include "transport.h"
 #include "remote.h"
 #include "string-list.h"
@@ -10,7 +11,7 @@
 #include "rebase.h"
 #include "refs.h"
 #include "refspec.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "strvec.h"
 #include "commit-reach.h"
 #include "progress.h"
@@ -167,10 +168,9 @@ static int add(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOL('f', "fetch", &fetch, N_("fetch the remote branches")),
 		OPT_SET_INT(0, "tags", &fetch_tags,
-			    N_("import all tags and associated objects when fetching"),
+			    N_("import all tags and associated objects when fetching\n"
+			       "or do not fetch any tag at all (--no-tags)"),
 			    TAGS_SET),
-		OPT_SET_INT(0, NULL, &fetch_tags,
-			    N_("or do not fetch any tag at all (--no-tags)"), TAGS_UNSET),
 		OPT_STRING_LIST('t', "track", &track, N_("branch"),
 				N_("branch(es) to track")),
 		OPT_STRING('m', "master", &master, N_("branch"), N_("master branch")),
@@ -268,6 +268,7 @@ static const char *abbrev_ref(const char *name, const char *prefix)
 #define abbrev_branch(name) abbrev_ref((name), "refs/heads/")
 
 static int config_read_branches(const char *key, const char *value,
+				const struct config_context *ctx UNUSED,
 				void *data UNUSED)
 {
 	const char *orig_key = key;
@@ -645,17 +646,19 @@ struct push_default_info
 };
 
 static int config_read_push_default(const char *key, const char *value,
-	void *cb)
+	const struct config_context *ctx, void *cb)
 {
+	const struct key_value_info *kvi = ctx->kvi;
+
 	struct push_default_info* info = cb;
 	if (strcmp(key, "remote.pushdefault") ||
 	    !value || strcmp(value, info->old_name))
 		return 0;
 
-	info->scope = current_config_scope();
+	info->scope = kvi->scope;
 	strbuf_reset(&info->origin);
-	strbuf_addstr(&info->origin, current_config_name());
-	info->linenr = current_config_line();
+	strbuf_addstr(&info->origin, config_origin_type_name(kvi->origin_type));
+	info->linenr = kvi->linenr;
 
 	return 0;
 }
@@ -1494,7 +1497,9 @@ static int prune(int argc, const char **argv, const char *prefix)
 	return result;
 }
 
-static int get_remote_default(const char *key, const char *value UNUSED, void *priv)
+static int get_remote_default(const char *key, const char *value UNUSED,
+			      const struct config_context *ctx UNUSED,
+			      void *priv)
 {
 	if (strcmp(key, "remotes.default") == 0) {
 		int *found = priv;

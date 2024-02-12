@@ -3,11 +3,10 @@
 #include "gettext.h"
 #include "hex.h"
 #include "pkt-line.h"
-#include "strvec.h"
-#include "hash.h"
+#include "hash-ll.h"
 #include "hex.h"
 #include "object.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "string-list.h"
 #include "strbuf.h"
 

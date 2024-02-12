@@ -172,7 +172,7 @@ test_expect_success 'find string value for a key' '
 
 test_expect_success 'check line error when NULL string is queried' '
 	test_expect_code 128 test-tool config get_string case.foo 2>result &&
-	test_i18ngrep "fatal: .*case\.foo.*\.git/config.*line 7" result
+	test_grep "fatal: .*case\.foo.*\.git/config.*line 7" result
 '
 
 test_expect_success 'find integer if value is non parse-able' '
@@ -342,14 +342,14 @@ test_expect_success 'check line errors for malformed values' '
 		br
 	EOF
 	test_expect_code 128 git br 2>result &&
-	test_i18ngrep "missing value for .alias\.br" result &&
-	test_i18ngrep "fatal: .*\.git/config" result &&
-	test_i18ngrep "fatal: .*line 2" result
+	test_grep "missing value for .alias\.br" result &&
+	test_grep "fatal: .*\.git/config" result &&
+	test_grep "fatal: .*line 2" result
 '
 
 test_expect_success 'error on modifying repo config without repo' '
 	nongit test_must_fail git config a.b c 2>err &&
-	test_i18ngrep "not in a git directory" err
+	test_grep "not in a git directory" err
 '
 
 cmdline_config="'foo.bar=from-cmdline'"

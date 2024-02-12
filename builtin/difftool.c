@@ -12,25 +12,25 @@
  * Copyright (C) 2016 Johannes Schindelin
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "config.h"
-#include "builtin.h"
+#include "copy.h"
 #include "run-command.h"
 #include "environment.h"
-#include "exec-cmd.h"
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
+#include "read-cache-ll.h"
+#include "sparse-index.h"
 #include "strvec.h"
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "dir.h"
 #include "entry.h"
 #include "setup.h"
-#include "wrapper.h"
 
 static int trust_exit_code;
 
@@ -39,14 +39,15 @@ static const char *const builtin_difftool_usage[] = {
 	NULL
 };
 
-static int difftool_config(const char *var, const char *value, void *cb)
+static int difftool_config(const char *var, const char *value,
+			   const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "difftool.trustexitcode")) {
 		trust_exit_code = git_config_bool(var, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 static int print_tool_help(void)

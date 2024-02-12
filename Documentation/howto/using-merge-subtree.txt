@@ -11,7 +11,7 @@ Message-ID: <BAYC1-PASMTP12374B54BA370A1E1C6E78AE4E0@CEZ.ICE>
 How to use the subtree merge strategy
 =====================================
 
-There are situations where you want to include contents in your project
+There are situations where you want to include content in your project
 from an independently developed project. You can just pull from the
 other project as long as there are no conflicting paths.
 

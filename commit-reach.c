@@ -1,11 +1,9 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "commit.h"
 #include "commit-graph.h"
 #include "decorate.h"
 #include "hex.h"
 #include "prio-queue.h"
-#include "tree.h"
 #include "ref-filter.h"
 #include "revision.h"
 #include "tag.h"
@@ -174,6 +172,7 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 			for (k = bases; k; k = k->next)
 				end = k;
 		}
+		free_commit_list(ret);
 		ret = new_commits;
 	}
 	return ret;
@@ -943,6 +942,8 @@ struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
 			prio_queue_put(&queue, p);
 		}
 	}
+
+	clear_prio_queue(&queue);
 
 	clear_commit_marks_many(nr_to, to, PARENT1);
 	clear_commit_marks_many(nr_from, from, PARENT2);

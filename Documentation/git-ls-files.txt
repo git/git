@@ -25,12 +25,12 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-This merges the file listing in the index with the actual working
+This command merges the file listing in the index with the actual working
 directory list, and shows different combinations of the two.
 
-One or more of the options below may be used to determine the files
+Several flags can be used to determine which files are
 shown, and each file may be printed multiple times if there are
-multiple entries in the index or multiple statuses are applicable for
+multiple entries in the index or if multiple statuses are applicable for
 the relevant file selection options.
 
 OPTIONS
@@ -62,7 +62,7 @@ OPTIONS
 	matching an exclude pattern.  When showing "other" files
 	(i.e. when used with '-o'), show only those matched by an
 	exclude pattern.  Standard ignore rules are not automatically
-	activated, therefore at least one of the `--exclude*` options
+	activated; therefore, at least one of the `--exclude*` options
 	is required.
 
 -s::
@@ -119,8 +119,10 @@ OPTIONS
 
 --exclude-per-directory=<file>::
 	Read additional exclude patterns that apply only to the
-	directory and its subdirectories in <file>.  Deprecated; use
-	--exclude-standard instead.
+	directory and its subdirectories in <file>.  If you are
+	trying to emulate the way Porcelain commands work, using
+	the `--exclude-standard` option instead is easier and more
+	thorough.
 
 --exclude-standard::
 	Add the standard Git exclusions: .git/info/exclude, .gitignore
@@ -141,7 +143,7 @@ OPTIONS
 	Show status tags together with filenames.  Note that for
 	scripting purposes, linkgit:git-status[1] `--porcelain` and
 	linkgit:git-diff-files[1] `--name-status` are almost always
-	superior alternatives, and users should look at
+	superior alternatives; users should look at
 	linkgit:git-status[1] `--short` or linkgit:git-diff[1]
 	`--name-status` for more user-friendly alternatives.
 +
@@ -270,8 +272,14 @@ interpolated.  The following "fieldname" are understood:
 
 objectmode::
 	The mode of the file which is recorded in the index.
+objecttype::
+	The object type of the file which is recorded in the index.
 objectname::
 	The name of the file which is recorded in the index.
+objectsize[:padded]::
+	The object size of the file which is recorded in the index
+	("-" if the object is a `commit` or `tree`).
+	It also supports a padded format of size with "%(objectsize:padded)".
 stage::
 	The stage of the file which is recorded in the index.
 eolinfo:index::
@@ -292,9 +300,8 @@ traversing the directory tree and finding files to show when the
 flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
 
-Generally, you should just use --exclude-standard, but for historical
-reasons the exclude patterns can be specified from the following
-places, in order:
+These exclude patterns can be specified from the following places,
+in order:
 
   1. The command-line flag --exclude=<pattern> specifies a
      single pattern.  Patterns are ordered in the same order
@@ -315,6 +322,18 @@ from the file specified with --exclude-from is relative to the
 top of the directory tree.  A pattern read from a file specified
 by --exclude-per-directory is relative to the directory that the
 pattern file appears in.
+
+Generally, you should be able to use `--exclude-standard` when you
+want the exclude rules applied the same way as what Porcelain
+commands do.  To emulate what `--exclude-standard` specifies, you
+can give `--exclude-per-directory=.gitignore`, and then specify:
+
+  1. The file specified by the `core.excludesfile` configuration
+     variable, if exists, or the `$XDG_CONFIG_HOME/git/ignore` file.
+
+  2. The `$GIT_DIR/info/exclude` file.
+
+via the `--exclude-from=` option.
 
 SEE ALSO
 --------

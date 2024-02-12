@@ -5,6 +5,7 @@ test_description='tests for git branch --track'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -21,7 +22,7 @@ test_expect_success 'checkout --track -b creates a new tracking branch' '
 
 test_expect_success 'checkout --track -b rejects an extra path argument' '
 	test_must_fail git checkout --track -b branch2 main one.t 2>err &&
-	test_i18ngrep "cannot be used with updating paths" err
+	test_grep "cannot be used with updating paths" err
 '
 
 test_expect_success 'checkout --track -b overrides autoSetupMerge=inherit' '

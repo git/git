@@ -1,11 +1,11 @@
 #include "builtin.h"
-#include "alloc.h"
 #include "config.h"
 #include "entry.h"
 #include "gettext.h"
 #include "parallel-checkout.h"
 #include "parse-options.h"
 #include "pkt-line.h"
+#include "read-cache-ll.h"
 
 static void packet_to_pc_item(const char *buffer, int len,
 			      struct parallel_checkout_item *pc_item)

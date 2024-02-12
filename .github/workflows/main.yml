@@ -5,9 +5,23 @@ on: [push, pull_request]
 env:
   DEVELOPER: 1
 
+# If more than one workflow run is triggered for the very same commit hash
+# (which happens when multiple branches pointing to the same commit), only
+# the first one is allowed to run, the second will be kept in the "queued"
+# state. This allows a successful completion of the first run to be reused
+# in the second run via the `skip-if-redundant` logic in the `config` job.
+#
+# The only caveat is that if a workflow run is triggered for the same commit
+# hash that another run is already being held, that latter run will be
+# canceled. For more details about the `concurrency` attribute, see:
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.sha }}
+
 jobs:
   ci-config:
     name: config
+    if: vars.CI_BRANCHES == '' || contains(vars.CI_BRANCHES, github.ref_name)
     runs-on: ubuntu-latest
     outputs:
       enabled: ${{ steps.check-ref.outputs.enabled }}${{ steps.skip-if-redundant.outputs.enabled }}
@@ -30,10 +44,13 @@ jobs:
         name: check whether CI is enabled for ref
         run: |
           enabled=yes
-          if test -x config-repo/ci/config/allow-ref &&
-             ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+          if test -x config-repo/ci/config/allow-ref
           then
-            enabled=no
+            echo "::warning::ci/config/allow-ref is deprecated; use CI_BRANCHES instead"
+            if ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+            then
+              enabled=no
+            fi
           fi
 
           skip_concurrent=yes
@@ -246,9 +263,6 @@ jobs:
       fail-fast: false
       matrix:
         vector:
-          - jobname: linux-clang
-            cc: clang
-            pool: ubuntu-latest
           - jobname: linux-sha256
             cc: clang
             pool: ubuntu-latest
@@ -262,22 +276,19 @@ jobs:
             pool: ubuntu-20.04
           - jobname: osx-clang
             cc: clang
-            pool: macos-12
+            pool: macos-13
           - jobname: osx-gcc
             cc: gcc
-            cc_package: gcc-9
-            pool: macos-12
+            cc_package: gcc-13
+            pool: macos-13
           - jobname: linux-gcc-default
             cc: gcc
             pool: ubuntu-latest
           - jobname: linux-leaks
             cc: gcc
             pool: ubuntu-latest
-          - jobname: linux-asan
-            cc: gcc
-            pool: ubuntu-latest
-          - jobname: linux-ubsan
-            cc: gcc
+          - jobname: linux-asan-ubsan
+            cc: clang
             pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
@@ -298,6 +309,17 @@ jobs:
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
+  fuzz-smoke-test:
+    name: fuzz smoke test
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    env:
+      CC: clang
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: ci/install-dependencies.sh
+    - run: ci/run-build-and-minimal-fuzzers.sh
   dockerized:
     name: ${{matrix.vector.jobname}} (${{matrix.vector.image}})
     needs: ci-config

@@ -3,45 +3,101 @@ Submitting Patches
 
 == Guidelines
 
-Here are some guidelines for people who want to contribute their code to this
-software. There is also a link:MyFirstContribution.html[step-by-step tutorial]
+Here are some guidelines for contributing back to this
+project. There is also a link:MyFirstContribution.html[step-by-step tutorial]
 available which covers many of these same guidelines.
 
-[[base-branch]]
-=== Decide what to base your work on.
+[[choose-starting-point]]
+=== Choose a starting point.
 
-In general, always base your work on the oldest branch that your
-change is relevant to.
+As a preliminary step, you must first choose a starting point for your
+work. Typically this means choosing a branch, although technically
+speaking it is actually a particular commit (typically the HEAD, or tip,
+of the branch).
 
-* A bugfix should be based on `maint` in general. If the bug is not
-  present in `maint`, base it on `master`. For a bug that's not yet
-  in `master`, find the topic that introduces the regression, and
-  base your work on the tip of the topic.
+There are several important branches to be aware of. Namely, there are
+four integration branches as discussed in linkgit:gitworkflows[7]:
 
-* A new feature should be based on `master` in general. If the new
-  feature depends on other topics that are in `next`, but not in
-  `master`, fork a branch from the tip of `master`, merge these topics
-  to the branch, and work on that branch.  You can remind yourself of
-  how you prepared the base with `git log --first-parent master..`.
+* maint
+* master
+* next
+* seen
 
-* Corrections and enhancements to a topic not yet in `master` should
-  be based on the tip of that topic. If the topic has not been merged
-  to `next`, it's alright to add a note to squash minor corrections
-  into the series.
+The branches lower on the list are typically descendants of the ones
+that come before it. For example, `maint` is an "older" branch than
+`master` because `master` usually has patches (commits) on top of
+`maint`.
 
-* In the exceptional case that a new feature depends on several topics
-  not in `master`, start working on `next` or `seen` privately and
-  send out patches only for discussion. Once your new feature starts
-  to stabilize, you would have to rebase it (see the "depends on other
-  topics" above).
+There are also "topic" branches, which contain work from other
+contributors.  Topic branches are created by the Git maintainer (in
+their fork) to organize the current set of incoming contributions on
+the mailing list, and are itemized in the regular "What's cooking in
+git.git" announcements.  To find the tip of a topic branch, run `git log
+--first-parent master..seen` and look for the merge commit. The second
+parent of this commit is the tip of the topic branch.
 
-* Some parts of the system have dedicated maintainers with their own
-  repositories (see the section "Subsystems" below).  Changes to
-  these parts should be based on their trees.
+There is one guiding principle for choosing the right starting point: in
+general, always base your work on the oldest integration branch that
+your change is relevant to (see "Merge upwards" in
+linkgit:gitworkflows[7]).  What this principle means is that for the
+vast majority of cases, the starting point for new work should be the
+latest HEAD commit of `maint` or `master` based on the following cases:
 
-To find the tip of a topic branch, run `git log --first-parent
-master..seen` and look for the merge commit. The second parent of this
-commit is the tip of the topic branch.
+* If you are fixing bugs in the released version, use `maint` as the
+  starting point (which may mean you have to fix things without using
+  new API features on the cutting edge that recently appeared in
+  `master` but were not available in the released version).
+
+* Otherwise (such as if you are adding new features) use `master`.
+
+
+NOTE: In exceptional cases, a bug that was introduced in an old
+version may have to be fixed for users of releases that are much older
+than the recent releases.  `git describe --contains X` may describe
+`X` as `v2.30.0-rc2-gXXXXXX` for the commit `X` that introduced the
+bug, and the bug may be so high-impact that we may need to issue a new
+maintenance release for Git 2.30.x series, when "Git 2.41.0" is the
+current release.  In such a case, you may want to use the tip of the
+maintenance branch for the 2.30.x series, which may be available in the
+`maint-2.30` branch in https://github.com/gitster/git[the maintainer's
+"broken out" repo].
+
+This also means that `next` or `seen` are inappropriate starting points
+for your work, if you want your work to have a realistic chance of
+graduating to `master`.  They are simply not designed to be used as a
+base for new work; they are only there to make sure that topics in
+flight work well together. This is why both `next` and `seen` are
+frequently re-integrated with incoming patches on the mailing list and
+force-pushed to replace previous versions of themselves. A topic that is
+literally built on top of `next` cannot be merged to `master` without
+dragging in all the other topics in `next`, some of which may not be
+ready.
+
+For example, if you are making tree-wide changes, while somebody else is
+also making their own tree-wide changes, your work may have severe
+overlap with the other person's work.  This situation may tempt you to
+use `next` as your starting point (because it would have the other
+person's work included in it), but doing so would mean you'll not only
+depend on the other person's work, but all the other random things from
+other contributors that are already integrated into `next`.  And as soon
+as `next` is updated with a new version, all of your work will need to
+be rebased anyway in order for them to be cleanly applied by the
+maintainer.
+
+Under truly exceptional circumstances where you absolutely must depend
+on a select few topic branches that are already in `next` but not in
+`master`, you may want to create your own custom base-branch by forking
+`master` and merging the required topic branches into it. You could then
+work on top of this base-branch.  But keep in mind that this base-branch
+would only be known privately to you.  So when you are ready to send
+your patches to the list, be sure to communicate how you created it in
+your cover letter.  This critical piece of information would allow
+others to recreate your base-branch on their end in order for them to
+try out your work.
+
+Finally, note that some parts of the system have dedicated maintainers
+with their own separate source code repositories (see the section
+"Subsystems" below).
 
 [[separate-commits]]
 === Make separate commits for logically separate changes.
@@ -210,7 +266,7 @@ date)", like this:
 	noticed that ...
 ....
 
-The "Copy commit summary" command of gitk can be used to obtain this
+The "Copy commit reference" command of gitk can be used to obtain this
 format (with the subject enclosed in a pair of double-quotes), or this
 invocation of `git show`:
 
@@ -299,9 +355,21 @@ If you like, you can put extra tags at the end:
   patch after a detailed analysis.
 . `Tested-by:` is used to indicate that the person applied the patch
   and found it to have the desired effect.
+. `Co-authored-by:` is used to indicate that people exchanged drafts
+   of a patch before submitting it.
+. `Helped-by:` is used to credit someone who suggested ideas for
+  changes without providing the precise changes in patch form.
+. `Mentored-by:` is used to credit someone with helping develop a
+  patch as part of a mentorship program (e.g., GSoC or Outreachy).
+. `Suggested-by:` is used to credit someone with suggesting the idea
+  for a patch.
 
-You can also create your own tag or use one that's in common usage
-such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
+While you can also create your own trailer if the situation warrants it, we
+encourage you to instead use one of the common trailers in this project
+highlighted above.
+
+Only capitalize the very first letter of tags, i.e. favor
+"Signed-off-by" over "Signed-Off-By" and "Acked-by:" over "Acked-By".
 
 [[git-tools]]
 === Generate your patch using Git tools out of your commits.
@@ -317,10 +385,13 @@ Please make sure your patch does not add commented out debugging code,
 or include any extra files which do not relate to what your patch
 is trying to achieve. Make sure to review
 your patch after generating it, to ensure accuracy.  Before
-sending out, please make sure it cleanly applies to the base you
-have chosen in the "Decide what to base your work on" section,
-and unless it targets the `master` branch (which is the default),
-mark your patches as such.
+sending out, please make sure it cleanly applies to the starting point you
+have chosen in the "Choose a starting point" section.
+
+NOTE: From the perspective of those reviewing your patch, the `master`
+branch is the default expected starting point.  So if you have chosen a
+different starting point, please communicate this choice in your cover
+letter.
 
 
 [[send-patches]]
@@ -334,8 +405,8 @@ mailing list{security-ml}, instead of the public mailing list.
 
 Learn to use format-patch and send-email if possible.  These commands
 are optimized for the workflow of sending patches, avoiding many ways
-your existing e-mail client that is optimized for "multipart/*" mime
-type e-mails to corrupt and render your patches unusable.
+your existing e-mail client (often optimized for "multipart/*" MIME
+type e-mails) might render your patches unusable.
 
 People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
@@ -456,8 +527,8 @@ repositories.
 
 	git://git.ozlabs.org/~paulus/gitk
 
-   Those who are interested in improve gitk can volunteer to help Paul
-   in maintaining it cf. <YntxL/fTplFm8lr6@cleo>.
+   Those who are interested in improving gitk can volunteer to help Paul
+   maintain it, cf. <YntxL/fTplFm8lr6@cleo>.
 
 - `po/` comes from the localization coordinator, Jiang Xin:
 
@@ -497,7 +568,7 @@ help you find out who they are.
 
 In any time between the (2)-(3) cycle, the maintainer may pick it up
 from the list and queue it to `seen`, in order to make it easier for
-people play with it without having to pick up and apply the patch to
+people to play with it without having to pick up and apply the patch to
 their trees themselves.
 
 [[patch-status]]
@@ -511,7 +582,7 @@ their trees themselves.
   master).
 
 * Read the Git mailing list, the maintainer regularly posts messages
-  entitled "What's cooking in git.git" and "What's in git.git" giving
+  entitled "What's cooking in git.git" giving
   the status of various proposed changes.
 
 == GitHub CI[[GHCI]]
@@ -531,11 +602,12 @@ After the initial setup, CI will run whenever you push new changes
 to your fork of Git on GitHub.  You can monitor the test state of all your
 branches here: `https://github.com/<Your GitHub handle>/git/actions/workflows/main.yml`
 
-If a branch did not pass all test cases then it is marked with a red
-cross. In that case you can click on the failing job and navigate to
-"ci/run-build-and-tests.sh" and/or "ci/print-test-failures.sh". You
-can also download "Artifacts" which are tarred (or zipped) archives
-with test data relevant for debugging.
+If a branch does not pass all test cases then it will be marked with a
+red +x+, instead of a green check. In that case, you can click on the
+failing job and navigate to "ci/run-build-and-tests.sh" and/or
+"ci/print-test-failures.sh". You can also download "Artifacts" which
+are zip archives containing tarred (or zipped) archives with test data
+relevant for debugging.
 
 Then fix the problem and push your fix to your GitHub fork. This will
 trigger a new CI build to ensure all tests pass.
@@ -627,7 +699,7 @@ message to an external program, and this is a handy way to drive
 `git am`.  However, if the message is MIME encoded, what is
 piped into the program is the representation you see in your
 `*Article*` buffer after unwrapping MIME.  This is often not what
-you would want for two reasons.  It tends to screw up non ASCII
+you would want for two reasons.  It tends to screw up non-ASCII
 characters (most notably in people's names), and also
 whitespaces (fatal in patches).  Running "C-u g" to display the
 message in raw form before using "|" to run the pipe can work

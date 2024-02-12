@@ -4,28 +4,28 @@
 #
 # Translators:
 # Alexander Golubev <fatzer2@gmail.com>, 2020
-# Dimitriy Ryazantcev <DJm00n@mail.ru>, 2014-2022
+# Dimitriy Ryazantcev <DJm00n@mail.ru>, 2014-2023
 # insolor, 2014
 # insolor, 2014
 # Sergey Alyoshin <alyoshin.s@gmail.com>, 2020-2021
 # Sergey Kuznetsov <votkinsk@gmail.com>, 2021-2022
-# Чук Таблицоменделеев <aurum444an@gmail.com>, 2019
+# Чук Таблицоменделеев (Aurum79) <aurum444an@gmail.com>, 2019
 msgid ""
 msgstr ""
 "Project-Id-Version: Git Russian Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2022-06-26 20:30+0800\n"
+"POT-Creation-Date: 2023-06-30 12:55+0300\n"
 "PO-Revision-Date: 2014-02-18 23:30+0000\n"
-"Last-Translator: Dimitriy Ryazantcev <DJm00n@mail.ru>, 2014-2022\n"
-"Language-Team: Russian (http://www.transifex.com/djm00n/git-po-ru/language/"
+"Last-Translator: Dimitriy Ryazantcev <DJm00n@mail.ru>, 2014-2023\n"
+"Language-Team: Russian (http://app.transifex.com/djm00n/git-po-ru/language/"
 "ru/)\n"
-"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n"
-"%100>=11 && n%100<=14)? 2 : 3);\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -53,7 +53,7 @@ msgstr " не удалось проиндексировать «%s»"
 msgid "could not write index"
 msgstr "не удалось записать индекс"
 
-#, c-format, perl-format
+#, c-format
 msgid "updated %d path\n"
 msgid_plural "updated %d paths\n"
 msgstr[0] "обновлён %d путь\n"
@@ -61,7 +61,7 @@ msgstr[1] "обновлено %d пути\n"
 msgstr[2] "обновлено %d путей\n"
 msgstr[3] "обновлено %d пути\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "note: %s is untracked now.\n"
 msgstr "примечание: %s теперь неотслеживаемый.\n"
 
@@ -75,7 +75,7 @@ msgstr "Обратить изменения"
 msgid "Could not parse HEAD^{tree}"
 msgstr "Не удалось разобрать HEAD^{tree}"
 
-#, c-format, perl-format
+#, c-format
 msgid "reverted %d path\n"
 msgid_plural "reverted %d paths\n"
 msgstr[0] "обращены изменения %d пути\n"
@@ -90,7 +90,7 @@ msgstr "Нет неотслеживаемых файлов.\n"
 msgid "Add untracked"
 msgstr "Добавить неотслеживаемый"
 
-#, c-format, perl-format
+#, c-format
 msgid "added %d path\n"
 msgid_plural "added %d paths\n"
 msgstr[0] "добавлен %d путь\n"
@@ -188,19 +188,19 @@ msgstr "не удалось обновить индекс"
 msgid "Bye.\n"
 msgstr "До свидания.\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage mode change [y,n,q,a,d%s,?]? "
 msgstr "Проиндексировать изменение режима доступа [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage deletion [y,n,q,a,d%s,?]? "
 msgstr "Проиндексировать удаление [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage addition [y,n,q,a,d%s,?]? "
 msgstr "Добавить к индексу [y,n,q,a,d%s,?]?"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Индексировать этот блок [y,n,q,a,d%s,?]? "
 
@@ -224,19 +224,19 @@ msgstr ""
 "a - индексировать этот и остальные блоки файла\n"
 "d - пропустить этот и остальные блоки файла\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash mode change [y,n,q,a,d%s,?]? "
 msgstr "Спрятать изменение режима доступа [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash deletion [y,n,q,a,d%s,?]? "
 msgstr "Спрятать удаление файла [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash addition [y,n,q,a,d%s,?]? "
 msgstr "Добавить к спрятанному [y,n,q,a,d%s,?]?"
 
-#, c-format, perl-format
+#, c-format
 msgid "Stash this hunk [y,n,q,a,d%s,?]? "
 msgstr "Спрятать этот блок [y,n,q,a,d%s,?]? "
 
@@ -259,19 +259,19 @@ msgstr ""
 "a - спрятать этот и остальные блоки файла\n"
 "d - пропустить этот и остальные блоки файла\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage mode change [y,n,q,a,d%s,?]? "
 msgstr "Убрать изменения режима доступа из индекса [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage deletion [y,n,q,a,d%s,?]? "
 msgstr "Убрать удаление из индекса [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage addition [y,n,q,a,d%s,?]? "
 msgstr "Убрать из индекса [y,n,q,a,d%s,?]?"
 
-#, c-format, perl-format
+#, c-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
 msgstr "Убрать из индекса этот блок [y,n,q,a,d%s,?]? "
 
@@ -289,25 +289,25 @@ msgid ""
 "a - unstage this hunk and all later hunks in the file\n"
 "d - do not unstage this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - убрать из индекса этот блок\n"
+"y - убрать этот блок из индекса\n"
 "n - пропустить этот блок\n"
 "q - выход; пропустить этот и все последующие блоки\n"
 "a - убрать из индекса этот и остальные блоки файла\n"
 "d - пропустить этот и остальные блоки файла\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index [y,n,q,a,d%s,?]? "
 msgstr "Применить изменение режима доступа к индексу [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index [y,n,q,a,d%s,?]? "
 msgstr "Применить удаление к индексу [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index [y,n,q,a,d%s,?]? "
 msgstr "Применить добавление к индексу [y,n,q,a,d%s,?]?"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index [y,n,q,a,d%s,?]? "
 msgstr "Принять этот блок в индекс [y,n,q,a,d%s,?]? "
 
@@ -331,21 +331,21 @@ msgstr ""
 "a - принять этот и остальные блоки файла\n"
 "d - пропустить этот и остальные блоки файла\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from worktree [y,n,q,a,d%s,?]? "
 msgstr "Отменить изменения режима доступа в рабочем каталоге [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from worktree [y,n,q,a,d%s,?]? "
 msgstr "Отменить удаление в рабочем каталоге [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from worktree [y,n,q,a,d%s,?]? "
 msgstr "Отменить добавления из рабочего каталога [y,n,q,a,d%s,?]?"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from worktree [y,n,q,a,d%s,?]? "
-msgstr "Отбросить этот блок из рабочего дерева [y,n,q,a,d%s,?]?"
+msgstr "Отбросить этот блок из рабочего каталога [y,n,q,a,d%s,?]?"
 
 msgid ""
 "If the patch applies cleanly, the edited hunk will immediately be marked for "
@@ -360,29 +360,29 @@ msgid ""
 "a - discard this hunk and all later hunks in the file\n"
 "d - do not discard this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - отбросить этот блок из рабочего дерева\n"
+"y - отбросить этот блок из рабочего каталога\n"
 "n - пропустить этот блок\n"
 "q - выход; пропустить этот и все последующие блоки\n"
 "a - отбросить этот и остальные блоки файла\n"
 "d - пропустить этот и остальные блоки файла\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
-"Отменить изменения режима доступа в индексе и рабочем каталоге [y,n,q,a,d"
-"%s,?]? "
+"Отменить изменения режима доступа в индексе и рабочем каталоге [y,n,q,a,"
+"d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Отменить удаление в индексе и рабочем каталоге [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard addition from index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Отменить добавление в индекс и рабочий каталог [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
-msgstr "Отбросить этот блок из индекса рабочего дерева [y,n,q,a,d%s,?]? "
+msgstr "Отбросить этот блок из индекса рабочего каталога [y,n,q,a,d%s,?]? "
 
 msgid ""
 "y - discard this hunk from index and worktree\n"
@@ -391,27 +391,27 @@ msgid ""
 "a - discard this hunk and all later hunks in the file\n"
 "d - do not discard this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - отбросить этот блок из рабочего дерева\n"
+"y - отбросить этот блок из рабочего каталога\n"
 "n - пропустить этот блок\n"
 "q - выход; пропустить этот и все последующие блоки\n"
 "a - отбросить этот и остальные блоки файла\n"
 "d - пропустить этот и остальные блоки файла\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply mode change to index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
-"Применить изменения режима доступа к индексу и рабочему каталогу [y,n,q,a,d"
-"%s,?]? "
+"Применить изменения режима доступа к индексу и рабочему каталогу [y,n,q,a,"
+"d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply deletion to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Применить удаление к индексу и рабочему каталогу [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply addition to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Применить добавление к индексу и рабочему каталогу [y,n,q,a,d%s,?]? "
 
-#, c-format, perl-format
+#, c-format
 msgid "Apply this hunk to index and worktree [y,n,q,a,d%s,?]? "
 msgstr "Принять этот блок в индекс и рабочий каталог [y,n,q,a,d%s,?]? "
 
@@ -422,11 +422,27 @@ msgid ""
 "a - apply this hunk and all later hunks in the file\n"
 "d - do not apply this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - принять этот блок в индекс и рабочее дерево\n"
+"y - принять этот блок в индекс и рабочий каталог\n"
 "n - пропустить этот блок\n"
 "q - выход; пропустить этот и все последующие блоки\n"
 "a - принять этот и остальные блоки файла\n"
 "d - пропустить этот и остальные блоки файла\n"
+
+#, c-format
+msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
+msgstr ""
+
+#, c-format
+msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
+msgstr ""
+
+#, c-format
+msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
+msgstr ""
+
+#, c-format
+msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
+msgstr "Принять этот блок в рабочий каталог [y,n,q,a,d%s,?]? "
 
 msgid ""
 "y - apply this hunk to worktree\n"
@@ -435,7 +451,7 @@ msgid ""
 "a - apply this hunk and all later hunks in the file\n"
 "d - do not apply this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - принять этот блок в рабочее дерево\n"
+"y - принять этот блок в рабочий каталог\n"
 "n - пропустить этот блок\n"
 "q - выход; пропустить этот и все последующие блоки\n"
 "a - принять этот и остальные блоки файла\n"
@@ -445,10 +461,6 @@ msgstr ""
 msgid "could not parse hunk header '%.*s'"
 msgstr "не удалось разобрать заголовок блока изменений «%.*s»"
 
-#, c-format
-msgid "could not parse colored hunk header '%.*s'"
-msgstr "не удалось разобрать цветной заголовок блока изменений «%.*s»"
-
 msgid "could not parse diff"
 msgstr "не удалось разобрать список изменений (diff)"
 
@@ -457,15 +469,18 @@ msgstr "не удалось разобрать цветной список из�
 
 #, c-format
 msgid "failed to run '%s'"
-msgstr ""
+msgstr "не удалось запустить «%s»"
 
 msgid "mismatched output from interactive.diffFilter"
-msgstr ""
+msgstr "несовпадение вывода из interactive.diffFilter"
 
 msgid ""
 "Your filter must maintain a one-to-one correspondence\n"
 "between its input and output lines."
 msgstr ""
+"Ваш фильтр должен поддерживать соответствие\n"
+"один-к-одному между его входными и выходными\n"
+"строками."
 
 #, c-format
 msgid ""
@@ -504,8 +519,6 @@ msgstr ""
 "Чтобы убрать «%c»-строки, удалите их.\n"
 "Строки, начинающиеся с %cбудут удалены.\n"
 
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: 'it' refers to the patch mentioned in the previous messages.
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
 "edit again.  If all lines of the hunk are removed, then the edit is\n"
@@ -517,22 +530,13 @@ msgstr ""
 "и блок останется без изменений.\n"
 
 msgid "could not parse hunk header"
-msgstr ""
+msgstr "не удалось разобрать заголовок блока изменений"
 
 msgid "'git apply --cached' failed"
-msgstr ""
+msgstr "сбой при выполнении «git apply --cached»"
 
-#. #-#-#-#-#  add-patch.c.po  #-#-#-#-#
 #. TRANSLATORS: do not translate [y/n]
 #. The program will only accept that input at this point.
-#. Consider translating (saying "no" discards!) as
-#. (saying "n" for "no" discards!) if the translation
-#. of the word "no" does not start with n.
-#.
-#. #-#-#-#-#  git-add--interactive.perl.po  #-#-#-#-#
-#. TRANSLATORS: do not translate [y/n]
-#. The program will only accept that input
-#. at this point.
 #. Consider translating (saying "no" discards!) as
 #. (saying "n" for "no" discards!) if the translation
 #. of the word "no" does not start with n.
@@ -543,7 +547,7 @@ msgstr ""
 "«нет»!) [y/n]? "
 
 msgid "The selected hunks do not apply to the index!"
-msgstr ""
+msgstr "Выбранные блоки не применяются без ошибок к индексу!"
 
 msgid "Apply them to the worktree anyway? "
 msgstr "Все равно применить их к рабочему каталогу? "
@@ -562,15 +566,24 @@ msgid ""
 "e - manually edit the current hunk\n"
 "? - print help\n"
 msgstr ""
+"j - не принимать решение по этому блоку, перейти на следующий нерешенный\n"
+"J - не принимать решение по этому блоку, перейти на следующий\n"
+"k - не принимать решение по этому блоку, перейти на предыдущий нерешенный\n"
+"K - не принимать решение по этому блоку, перейти на предыдущий\n"
+"g - выбрать блок изменений на который нужно перейти\n"
+"/ - поиск блока изменений с помощью регулярного выражения\n"
+"s - разделить текущий блок на блоки меньшего размера\n"
+"e - вручную отредактировать текущий блок\n"
+"? - вывести справку\n"
 
 msgid "No previous hunk"
-msgstr ""
+msgstr "Нет предыдущего блока"
 
 msgid "No next hunk"
-msgstr ""
+msgstr "Не следующего блока"
 
 msgid "No other hunks to goto"
-msgstr ""
+msgstr "Нет других блоков для перехода"
 
 msgid "go to which hunk (<ret> to see more)? "
 msgstr "на какой блок перейти (нажмите <ввод> чтобы увидеть еще)? "
@@ -580,41 +593,41 @@ msgstr "на какой блок перейти? "
 
 #, c-format
 msgid "Invalid number: '%s'"
-msgstr ""
+msgstr "Недопустимый номер: «%s»"
 
 #, c-format
 msgid "Sorry, only %d hunk available."
 msgid_plural "Sorry, only %d hunks available."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Простите, но только %d блок изменений доступнен."
+msgstr[1] "Простите, но только %d блока изменений доступно."
+msgstr[2] "Простите, но только %d блоков изменений доступно."
+msgstr[3] "Простите, но только %d блока изменений доступно."
 
 msgid "No other hunks to search"
-msgstr ""
+msgstr "Нет других блоков для поиска"
 
 msgid "search for regex? "
 msgstr "искать с помощью регулярного выражения? "
 
 #, c-format
 msgid "Malformed search regexp %s: %s"
-msgstr ""
+msgstr "Регулярное выражение для поиска в неправильном формате %s: %s"
 
 msgid "No hunk matches the given pattern"
-msgstr ""
+msgstr "Не найдены блоки, которые соответствуют указанному шаблону"
 
 msgid "Sorry, cannot split this hunk"
 msgstr ""
 
 #, c-format
 msgid "Split into %d hunks."
-msgstr ""
+msgstr "Разбито на %d блока изменений."
 
 msgid "Sorry, cannot edit this hunk"
 msgstr ""
 
 msgid "'git apply' failed"
-msgstr ""
+msgstr "сбой при выполнении «git apply»"
 
 #, c-format
 msgid ""
@@ -665,6 +678,16 @@ msgstr "Перед слиянием, выполните коммит ваших 
 
 msgid "Exiting because of unfinished merge."
 msgstr "Выход из-за незавершенного слияния."
+
+msgid ""
+"Diverging branches can't be fast-forwarded, you need to either:\n"
+"\n"
+"\tgit merge --no-ff\n"
+"\n"
+"or:\n"
+"\n"
+"\tgit rebase\n"
+msgstr ""
 
 msgid "Not possible to fast-forward, aborting."
 msgstr "Быстрая перемотка невозможна, отменяем."
@@ -724,19 +747,35 @@ msgstr ""
 "advice.detachedHead в значение false\n"
 "\n"
 
+#, c-format
+msgid ""
+"The following paths have been moved outside the\n"
+"sparse-checkout definition but are not sparse due to local\n"
+"modifications.\n"
+msgstr ""
+
+msgid ""
+"To correct the sparsity of these paths, do the following:\n"
+"* Use \"git add --sparse <paths>\" to update the index\n"
+"* Use \"git sparse-checkout reapply\" to apply the sparsity rules"
+msgstr ""
+
 msgid "cmdline ends with \\"
 msgstr "командная строка заканчивается символом \\"
 
 msgid "unclosed quote"
 msgstr "пропущена закрывающая кавычка"
 
+msgid "too many arguments"
+msgstr ""
+
 #, c-format
 msgid "unrecognized whitespace option '%s'"
-msgstr "неопознанная опция для пробелов «%s»"
+msgstr "неопознанный параметр для пробелов «%s»"
 
 #, c-format
 msgid "unrecognized whitespace ignore option '%s'"
-msgstr "неопознанная опция для игнорирования пробелов «%s»"
+msgstr "неопознанный параметр для игнорирования пробелов «%s»"
 
 #, c-format
 msgid "options '%s' and '%s' cannot be used together"
@@ -1101,6 +1140,10 @@ msgid "cannot open %s"
 msgstr "не удалось открыть %s"
 
 #, c-format
+msgid "cannot unlink '%s'"
+msgstr ""
+
+#, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "Блок №%d применен без ошибок."
 
@@ -1256,6 +1299,10 @@ msgid "unsupported file mode: 0%o (SHA1: %s)"
 msgstr "неподдерживаемый режим доступа к файлу: 0%o (SHA1: %s)"
 
 #, c-format
+msgid "deflate error (%d)"
+msgstr "ошибка сжатия (%d)"
+
+#, c-format
 msgid "unable to start '%s' filter"
 msgstr "не удалось запустить фильтр «%s»"
 
@@ -1273,10 +1320,6 @@ msgstr "путь не является действительным UTF-8: %s"
 #, c-format
 msgid "path too long (%d chars, SHA1: %s): %s"
 msgstr "путь слишком длинный (%d символов, SHA1: %s): %s"
-
-#, c-format
-msgid "deflate error (%d)"
-msgstr "ошибка сжатия (%d)"
 
 #, c-format
 msgid "timestamp too large for this system: %<PRIuMAX>"
@@ -1298,6 +1341,10 @@ msgid "cannot read '%s'"
 msgstr "не удалось прочитать «%s»"
 
 #, c-format
+msgid "pathspec '%s' matches files outside the current directory"
+msgstr ""
+
+#, c-format
 msgid "pathspec '%s' did not match any files"
 msgstr "спецификатор пути «%s» не соответствует ни одному файлу"
 
@@ -1312,9 +1359,6 @@ msgstr "недопустимое имя объекта: %s"
 #, c-format
 msgid "not a tree object: %s"
 msgstr "недействительный объект дерева: %s"
-
-msgid "current working directory is untracked"
-msgstr "текущий рабочий каталог не отслеживается"
 
 #, c-format
 msgid "File not found: %s"
@@ -1366,6 +1410,12 @@ msgstr "читать .gitattributes в рабочем каталоге"
 msgid "report archived files on stderr"
 msgstr "отчет об архивированных файлах в stderr"
 
+msgid "time"
+msgstr "время"
+
+msgid "set modification time of archive entries"
+msgstr ""
+
 msgid "set compression level"
 msgstr ""
 
@@ -1406,6 +1456,13 @@ msgstr "Аргумент не поддерживается для формата
 msgid "%.*s is not a valid attribute name"
 msgstr "%.*s не является допустимым именем атрибута"
 
+msgid "unable to add additional attribute"
+msgstr ""
+
+#, c-format
+msgid "ignoring overly long attributes line %d"
+msgstr ""
+
 #, c-format
 msgid "%s not allowed: %s:%d"
 msgstr "%s не разрешено: %s:%d"
@@ -1417,6 +1474,21 @@ msgstr ""
 "Отрицающие шаблоны в атрибутах git игнорируются.\n"
 "Используйте «\\!» для буквального использования символа в значении "
 "«восклицательный знак»."
+
+#, c-format
+msgid "cannot fstat gitattributes file '%s'"
+msgstr ""
+
+#, c-format
+msgid "ignoring overly large gitattributes file '%s'"
+msgstr ""
+
+#, c-format
+msgid "ignoring overly large gitattributes blob '%s'"
+msgstr ""
+
+msgid "bad --attr-source or GIT_ATTR_SOURCE"
+msgstr ""
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -1514,7 +1586,6 @@ msgstr[3] "(примерно %d шагов)"
 
 #. TRANSLATORS: the last %s will be replaced with "(roughly %d
 #. steps)" translation.
-#.
 #, c-format
 msgid "Bisecting: %d revision left to test after this %s\n"
 msgid_plural "Bisecting: %d revisions left to test after this %s\n"
@@ -1525,9 +1596,6 @@ msgstr[3] "Бинарный поиск: %d редакций осталось п�
 
 msgid "--contents and --reverse do not blend well."
 msgstr "--contents и --reverse не очень сочетаются."
-
-msgid "cannot use --contents with final commit object name"
-msgstr "нельзя использовать --contents с указанием финального имени объекта"
 
 msgid "--reverse and --first-parent together require specified latest commit"
 msgstr ""
@@ -1597,20 +1665,17 @@ msgstr ""
 #. TRANSLATORS: This is a line listing a remote with duplicate
 #. refspecs in the advice message below. For RTL languages you'll
 #. probably want to swap the "%s" and leading "  " space around.
-#.
 #. #-#-#-#-#  object-name.c.po  #-#-#-#-#
 #. TRANSLATORS: This is line item of ambiguous object output
 #. from describe_ambiguous_object() above. For RTL languages
 #. you'll probably want to swap the "%s" and leading " " space
 #. around.
-#.
 #, c-format
 msgid "  %s\n"
 msgstr ""
 
 #. TRANSLATORS: The second argument is a \n-delimited list of
 #. duplicate refspecs, composed above.
-#.
 #, c-format
 msgid ""
 "There are multiple remotes whose fetch refspecs map to the remote\n"
@@ -1680,8 +1745,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"You may try updating the submodules using 'git checkout %s && git submodule "
-"update --init'"
+"You may try updating the submodules using 'git checkout --no-recurse-"
+"submodules %s && git submodule update --init'"
 msgstr ""
 
 #, c-format
@@ -1691,10 +1756,6 @@ msgstr ""
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "«%s» уже находится на «%s»"
-
-#, c-format
-msgid "HEAD of working tree %s is not updated"
-msgstr "HEAD рабочего каталога %s не обновлён"
 
 msgid "git add [<options>] [--] <pathspec>..."
 msgstr "git add [<опции>] [--] <спецификатор-пути>..."
@@ -1716,6 +1777,11 @@ msgstr "удалить «%s»\n"
 
 msgid "Unstaged changes after refreshing the index:"
 msgstr "Непроиндексированные изменения после обновления индекса:"
+
+msgid ""
+"the add.interactive.useBuiltin setting has been removed!\n"
+"See its entry in 'git help config' for details."
+msgstr ""
 
 msgid "Could not read the index"
 msgstr "Не удалось прочитать индекс"
@@ -2006,7 +2072,6 @@ msgstr "Тело коммита:"
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
 #. in your translation. The program will only accept English
 #. input at this point.
-#.
 #, c-format
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr ""
@@ -2102,6 +2167,9 @@ msgstr "git am [<опции>] (--continue | --skip | --abort)"
 
 msgid "run interactively"
 msgstr "запустить в интерактивном режиме"
+
+msgid "bypass pre-applypatch and applypatch-msg hooks"
+msgstr ""
 
 msgid "historical option -- no-op"
 msgstr "историческая опция — ничего не делает"
@@ -2245,31 +2313,24 @@ msgstr "git archive: ошибка протокола"
 msgid "git archive: expected a flush"
 msgstr "git archive: ожидался сброс буфера"
 
-msgid "git bisect--helper --bisect-reset [<commit>]"
-msgstr ""
-
 msgid ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}"
-"=<term>] [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] "
-"[<paths>...]"
-msgstr ""
-"git bisect--helper --bisect-start [--term-{new,bad}=<термин> --term-{old,"
-"good}=<термин>] [--no-checkout] [--first-parent] [<плохая-редация> [<хорошая-"
-"редация>...]] [--] [<пути>...]"
-
-msgid "git bisect--helper --bisect-state (bad|new) [<rev>]"
+"git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]    [--no-"
+"checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
 msgstr ""
 
-msgid "git bisect--helper --bisect-state (good|old) [<rev>...]"
+msgid "git bisect (good|bad) [<rev>...]"
 msgstr ""
 
-msgid "git bisect--helper --bisect-replay <filename>"
+msgid "git bisect skip [(<rev>|<range>)...]"
 msgstr ""
 
-msgid "git bisect--helper --bisect-skip [(<rev>|<range>)...]"
+msgid "git bisect reset [<commit>]"
 msgstr ""
 
-msgid "git bisect--helper --bisect-run <cmd>..."
+msgid "git bisect replay <logfile>"
+msgstr ""
+
+msgid "git bisect run <cmd>..."
 msgstr ""
 
 #, c-format
@@ -2348,7 +2409,6 @@ msgstr ""
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
-#.
 msgid "Are you sure [Y/n]? "
 msgstr "Вы уверены [Y - да/n - нет]? "
 
@@ -2406,9 +2466,6 @@ msgstr ""
 msgid "checking out '%s' failed. Try 'git bisect start <valid-branch>'."
 msgstr ""
 
-msgid "won't bisect on cg-seek'ed tree"
-msgstr "нельзя выполнить двоичный поиск на дереве после cg-seek"
-
 msgid "bad HEAD - strange symbolic ref"
 msgstr ""
 
@@ -2422,7 +2479,6 @@ msgstr ""
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
 #. translation. The program will only accept English input
 #. at this point.
-#.
 msgid "Do you want me to do it for you [Y/n]? "
 msgstr "Вы уверены, что хотите, чтобы я сделал это [Y] - да/[n] - нет? "
 
@@ -2460,7 +2516,7 @@ msgid "bisect run failed: no command provided."
 msgstr "сбой при выполнении двоичного поиска: не передана команда."
 
 #, c-format
-msgid "unable to verify '%s' on good revision"
+msgid "unable to verify %s on good revision"
 msgstr ""
 
 #, c-format
@@ -2468,7 +2524,7 @@ msgid "bogus exit code %d for good revision"
 msgstr ""
 
 #, c-format
-msgid "bisect run failed: exit code %d from '%s' is < 0 or >= 128"
+msgid "bisect run failed: exit code %d from %s is < 0 or >= 128"
 msgstr ""
 
 #, c-format
@@ -2478,73 +2534,47 @@ msgstr ""
 msgid "bisect run cannot continue any more"
 msgstr "bisect run больше не может продолжать"
 
-#, c-format
 msgid "bisect run success"
 msgstr "bisect run выполнен успешно"
 
-#, c-format
 msgid "bisect found first bad commit"
 msgstr ""
 
 #, c-format
-msgid ""
-"bisect run failed: 'git bisect--helper --bisect-state %s' exited with error "
-"code %d"
+msgid "bisect run failed: 'git bisect %s' exited with error code %d"
 msgstr ""
 
-msgid "reset the bisection state"
+#, c-format
+msgid "'%s' requires either no argument or a commit"
 msgstr ""
 
-msgid "check whether bad or good terms exist"
+#, c-format
+msgid "'%s' requires 0 or 1 argument"
 msgstr ""
 
-msgid "print out the bisect terms"
-msgstr ""
-
-msgid "start the bisect session"
-msgstr ""
-
-msgid "find the next bisection commit"
-msgstr ""
-
-msgid "mark the state of ref (or refs)"
-msgstr ""
-
-msgid "list the bisection steps so far"
-msgstr ""
-
-msgid "replay the bisection process from the given file"
-msgstr ""
-
-msgid "skip some commits for checkout"
-msgstr ""
-
-msgid "visualize the bisection"
-msgstr ""
-
-msgid "use <cmd>... to automatically bisect"
-msgstr ""
-
-msgid "no log for BISECT_WRITE"
-msgstr ""
-
-msgid "--bisect-reset requires either no argument or a commit"
-msgstr ""
-
-msgid "--bisect-terms requires 0 or 1 argument"
-msgstr ""
-
-msgid "--bisect-next requires 0 arguments"
-msgstr ""
-
-msgid "--bisect-log requires 0 arguments"
+#, c-format
+msgid "'%s' requires 0 arguments"
 msgstr ""
 
 msgid "no logfile given"
 msgstr ""
 
+#, c-format
+msgid "'%s' failed: no command provided."
+msgstr ""
+
+msgid "need a command"
+msgstr ""
+
+#, c-format
+msgid "unknown command: '%s'"
+msgstr ""
+
 msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] <file>"
 msgstr "git blame [<опции>] [<опции-редакции>] [<редакция>] [--] <файл>"
+
+msgid "git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>"
+msgstr ""
 
 msgid "<rev-opts> are documented in git-rev-list(1)"
 msgstr "<опции-rev-list> документированы в git-rev-list(1)"
@@ -2659,7 +2689,6 @@ msgstr ""
 #. among various forms of relative timestamps, but
 #. your language may need more or fewer display
 #. columns.
-#.
 msgid "4 years, 11 months ago"
 msgstr "4 года и 11 месяцев назад"
 
@@ -2734,9 +2763,6 @@ msgstr "Не удалось обновить файл конфигурации"
 msgid "cannot use -a with -d"
 msgstr "нельзя использовать одновременно ключи -a и -d"
 
-msgid "Couldn't look up commit object for HEAD"
-msgstr "Не удалось найти объект коммита для HEAD"
-
 #, c-format
 msgid "Cannot delete branch '%s' checked out at '%s'"
 msgstr "Нельзя удалить ветку «%s» т.к. она активна на «%s»"
@@ -2744,6 +2770,12 @@ msgstr "Нельзя удалить ветку «%s» т.к. она активн
 #, c-format
 msgid "remote-tracking branch '%s' not found."
 msgstr "внешняя отслеживаемая ветка «%s» не найдена."
+
+#, c-format
+msgid ""
+"branch '%s' not found.\n"
+"Did you forget --remote?"
+msgstr ""
 
 #, c-format
 msgid "branch '%s' not found."
@@ -2775,19 +2807,21 @@ msgstr "Производится перемещение ветки %s на %s"
 msgid "Branch %s is being bisected at %s"
 msgstr "Производится двоичный поиск в ветке %s на %s"
 
-msgid "cannot copy the current branch while not on any."
-msgstr ""
-"невозможно скопировать текущую ветку, если вы не находитесь ни на одной из "
-"веток."
-
-msgid "cannot rename the current branch while not on any."
-msgstr ""
-"невозможно переименовать текущую ветку, если вы не находитесь ни на одной из "
-"них."
+#, c-format
+msgid "HEAD of working tree %s is not updated"
+msgstr "HEAD рабочего каталога %s не обновлён"
 
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "Недействительное имя ветки: «%s»"
+
+#, c-format
+msgid "No commit on branch '%s' yet."
+msgstr "Еще нет коммита на ветке «%s»."
+
+#, c-format
+msgid "No branch named '%s'."
+msgstr "Нет ветки с именем «%s»."
 
 msgid "Branch rename failed"
 msgstr "Сбой переименования ветки"
@@ -2877,6 +2911,9 @@ msgstr "переместить/переименовать ветки и ее ж�
 msgid "move/rename a branch, even if target exists"
 msgstr "переместить/переименовать ветку, даже если целевое имя уже существует"
 
+msgid "do not output a newline after empty formatted refs"
+msgstr ""
+
 msgid "copy a branch and its reflog"
 msgstr "скопировать ветку и её журнал ссылок"
 
@@ -2945,13 +2982,15 @@ msgstr "Нельзя дать описание отсоединённому ук
 msgid "cannot edit description of more than one branch"
 msgstr "нельзя изменить описание более одной ветки за раз"
 
-#, c-format
-msgid "No commit on branch '%s' yet."
-msgstr "Еще нет коммита на ветке «%s»."
+msgid "cannot copy the current branch while not on any."
+msgstr ""
+"невозможно скопировать текущую ветку, если вы не находитесь ни на одной из "
+"веток."
 
-#, c-format
-msgid "No branch named '%s'."
-msgstr "Нет ветки с именем «%s»."
+msgid "cannot rename the current branch while not on any."
+msgstr ""
+"невозможно переименовать текущую ветку, если вы не находитесь ни на одной из "
+"них."
 
 msgid "too many branches for a copy operation"
 msgstr "слишком много веток для операции копирования"
@@ -3017,7 +3056,9 @@ msgstr ""
 msgid "not run from a git repository - no hooks to show\n"
 msgstr ""
 
-msgid "git bugreport [-o|--output-directory <file>] [-s|--suffix <format>]"
+msgid ""
+"git bugreport [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"              [--diagnose[=<mode>]]"
 msgstr ""
 
 msgid ""
@@ -3038,14 +3079,25 @@ msgid ""
 "You can delete any lines you don't wish to share.\n"
 msgstr ""
 
-msgid "specify a destination for the bugreport file"
+msgid "mode"
+msgstr "режим"
+
+msgid ""
+"create an additional zip archive of detailed diagnostics (default 'stats')"
 msgstr ""
 
-msgid "specify a strftime format suffix for the filename"
+msgid "specify a destination for the bugreport file(s)"
+msgstr ""
+
+msgid "specify a strftime format suffix for the filename(s)"
 msgstr ""
 
 #, c-format
 msgid "could not create leading directories for '%s'"
+msgstr ""
+
+#, c-format
+msgid "unable to create diagnostics archive %s"
 msgstr ""
 
 msgid "System Info"
@@ -3062,16 +3114,21 @@ msgstr ""
 msgid "Created new report at '%s'.\n"
 msgstr ""
 
-msgid "git bundle create [<options>] <file> <git-rev-list args>"
+msgid ""
+"git bundle create [-q | --quiet | --progress]\n"
+"                  [--version=<version>] <file> <git-rev-list-args>"
 msgstr ""
 
-msgid "git bundle verify [<options>] <file>"
+msgid "git bundle verify [-q | --quiet] <file>"
 msgstr ""
 
 msgid "git bundle list-heads <file> [<refname>...]"
 msgstr ""
 
-msgid "git bundle unbundle <file> [<refname>...]"
+msgid "git bundle unbundle [--progress] <file> [<refname>...]"
+msgstr ""
+
+msgid "need a <file> argument"
 msgstr ""
 
 msgid "do not show progress meter"
@@ -3080,11 +3137,11 @@ msgstr "не выводить прогресс выполнения"
 msgid "show progress meter"
 msgstr "показать прогресс выполнения"
 
-msgid "show progress meter during object writing phase"
-msgstr "показать прогресс выполнения во время записи объектов"
+msgid "historical; same as --progress"
+msgstr ""
 
-msgid "similar to --all-progress when progress meter is shown"
-msgstr "похоже на --all-progress при включенном прогрессе выполнения"
+msgid "historical; does nothing"
+msgstr ""
 
 msgid "specify bundle format version"
 msgstr ""
@@ -3104,10 +3161,6 @@ msgstr "Требуется репозиторий для распаковки."
 
 msgid "Unbundling objects"
 msgstr ""
-
-#, c-format
-msgid "Unknown subcommand: %s"
-msgstr "Неизвестная подкоманда: %s"
 
 #, c-format
 msgid "cannot read object %s '%s'"
@@ -3131,10 +3184,6 @@ msgstr ""
 msgid "%s takes no arguments"
 msgstr ""
 
-#, c-format
-msgid "unknown command: '%s'"
-msgstr ""
-
 msgid "only one batch option may be specified"
 msgstr ""
 
@@ -3151,7 +3200,7 @@ msgid ""
 "git cat-file (--batch | --batch-check | --batch-command) [--batch-all-"
 "objects]\n"
 "             [--buffer] [--follow-symlinks] [--unordered]\n"
-"             [--textconv | --filters]"
+"             [--textconv | --filters] [-z]"
 msgstr ""
 
 msgid ""
@@ -3180,6 +3229,9 @@ msgstr "показать размер объекта"
 msgid "allow -s and -t to work with broken/corrupt objects"
 msgstr "разрешить -s и -t работать с повреждёнными объектами"
 
+msgid "use mail map file"
+msgstr ""
+
 msgid "Batch objects requested on stdin (or --batch-all-objects)"
 msgstr ""
 
@@ -3187,6 +3239,9 @@ msgid "show full <object> or <rev> contents"
 msgstr ""
 
 msgid "like --batch, but don't emit <contents>"
+msgstr ""
+
+msgid "stdin is NUL-terminated"
 msgstr ""
 
 msgid "read commands from stdin"
@@ -3250,18 +3305,18 @@ msgstr ""
 msgid "<object> required with '-%c'"
 msgstr ""
 
-msgid "too many arguments"
-msgstr ""
-
 #, c-format
 msgid "only two arguments allowed in <type> <object> mode, not %d"
 msgstr ""
 
-msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
-msgstr "git check-attr [-a | --all | <атрибут>...] [--] <путь>..."
+msgid ""
+"git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
+"<pathname>..."
+msgstr ""
 
-msgid "git check-attr --stdin [-z] [-a | --all | <attr>...]"
-msgstr "git check-attr --stdin [-z] [-a | --all | <атрибут>...]"
+msgid ""
+"git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
+msgstr ""
 
 msgid "report all attributes set on file"
 msgstr "вывести все атрибуты установленные для файла"
@@ -3274,6 +3329,12 @@ msgstr "прочитать имена файлов из стандартного
 
 msgid "terminate input and output records by a NUL character"
 msgstr "окончание ввода и вывода записей по НУЛЕВОМУ символу"
+
+msgid "<tree-ish>"
+msgstr ""
+
+msgid "which tree-ish to check attributes at"
+msgstr ""
 
 msgid "suppress progress reporting"
 msgstr "не выводить прогресс выполнения"
@@ -3787,9 +3848,9 @@ msgid "use overlay mode"
 msgstr ""
 
 msgid ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] <paths>..."
+"git clean [-d] [-f] [-i] [-n] [-q] [-e <pattern>] [-x | -X] [--] "
+"[<pathspec>...]"
 msgstr ""
-"git clean [-d] [-f] [-i] [-n] [-q] [-e <шаблон>] [-x | -X] [--] <пути>..."
 
 #, c-format
 msgid "Removing %s\n"
@@ -3853,7 +3914,7 @@ msgstr ""
 "*          - выбрать все элементы\n"
 "           - (пусто) завершить выделение\n"
 
-#, c-format, perl-format
+#, c-format
 msgid "Huh (%s)?\n"
 msgstr "Хм (%s)?\n"
 
@@ -4006,9 +4067,6 @@ msgstr "глубина"
 msgid "create a shallow clone of that depth"
 msgstr "сделать частичный клон указанной глубины"
 
-msgid "time"
-msgstr "время"
-
 msgid "create a shallow clone since a specific time"
 msgstr "сделать частичный клон до определенного времени"
 
@@ -4062,6 +4120,12 @@ msgstr ""
 msgid "initialize sparse-checkout file to include only files at root"
 msgstr ""
 
+msgid "uri"
+msgstr ""
+
+msgid "a URI for downloading bundles before fetching from origin remote"
+msgstr ""
+
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr "информация: Не удалось добавить альтернативу для «%s»: %s\n"
@@ -4075,7 +4139,15 @@ msgid "%s exists and is not a directory"
 msgstr "%s уже существует и не является каталогом"
 
 #, c-format
+msgid "'%s' is a symlink, refusing to clone with --local"
+msgstr ""
+
+#, c-format
 msgid "failed to start iterator over '%s'"
+msgstr ""
+
+#, c-format
+msgid "symlink '%s' exists, refusing to clone with --local"
 msgstr ""
 
 #, c-format
@@ -4124,10 +4196,8 @@ msgstr "не удалось обновить %s"
 msgid "failed to initialize sparse-checkout"
 msgstr ""
 
-msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
+msgid "remote HEAD refers to nonexistent ref, unable to checkout"
 msgstr ""
-"внешний HEAD ссылается на несуществующую ссылку, нельзя переключиться на "
-"такое состояние.\n"
 
 msgid "unable to checkout working tree"
 msgstr "не удалось переключиться на версию в рабочем каталоге"
@@ -4147,8 +4217,9 @@ msgstr "Слишком много аргументов."
 msgid "You must specify a repository to clone."
 msgstr "Вы должны указать репозиторий для клонирования."
 
-#, c-format
-msgid "options '%s' and '%s %s' cannot be used together"
+msgid ""
+"--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-"
+"exclude"
 msgstr ""
 
 #, c-format
@@ -4227,6 +4298,16 @@ msgstr "--local игнорируется"
 msgid "cannot clone from filtered bundle"
 msgstr ""
 
+msgid "failed to initialize the repo, skipping bundle URI"
+msgstr ""
+
+#, c-format
+msgid "failed to fetch objects from bundle URI '%s'"
+msgstr ""
+
+msgid "failed to fetch advertised bundles"
+msgstr ""
+
 msgid "remote transport reported error"
 msgstr ""
 
@@ -4262,13 +4343,16 @@ msgid "--command must be the first argument"
 msgstr "параметр --command должен быть первым"
 
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]"
 msgstr ""
 
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
-"paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
+"git commit-graph write [--object-dir <dir>] [--append]\n"
+"                       [--split[=<strategy>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
+"                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
+"[no-]progress]\n"
+"                       <split options>"
 msgstr ""
 
 msgid "dir"
@@ -4337,13 +4421,12 @@ msgstr ""
 msgid "Collecting commits from input"
 msgstr ""
 
-#, c-format
-msgid "unrecognized subcommand: %s"
+msgid "git commit-tree <tree> [(-p <parent>)...]"
 msgstr ""
 
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
-"<file>)...] <tree>"
+"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]\n"
+"                [(-F <file>)...] <tree>"
 msgstr ""
 
 #, c-format
@@ -4386,11 +4469,20 @@ msgstr "необходимо указать одно дерево"
 msgid "git commit-tree: failed to read"
 msgstr "git commit-tree: сбой при чтении"
 
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<опции>] [--] <спецификатор-пути>..."
+msgid ""
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
+"reword):]<commit>)]\n"
+"           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
+"           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
+"           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
+"           [-i | -o] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
+"           [--] [<pathspec>...]"
+msgstr ""
 
-msgid "git status [<options>] [--] <pathspec>..."
-msgstr "git status [<опции>] [--] <спецификатор-пути>..."
+msgid "git status [<options>] [--] [<pathspec>...]"
+msgstr ""
 
 msgid ""
 "You asked to amend the most recent commit, but doing so would make\n"
@@ -4672,9 +4764,6 @@ msgstr "показать статус в длинном формате (по у�
 msgid "terminate entries with NUL"
 msgstr "завершать записи НУЛЕВЫМ байтом"
 
-msgid "mode"
-msgstr "режим"
-
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "показать неотслеживаемые файлы, опциональные режимы: all (все), normal (как "
@@ -4747,7 +4836,6 @@ msgstr "использовать сообщение указанного ком�
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
 #. and only translate <commit>.
-#.
 msgid "[(amend|reword):]commit"
 msgstr ""
 
@@ -5136,11 +5224,16 @@ msgstr ""
 msgid "unable to get credential storage lock in %d ms"
 msgstr ""
 
-msgid "git describe [<options>] [<commit-ish>...]"
-msgstr "git describe [<опции>] [<указатель-коммита>...]"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"
+msgstr ""
 
-msgid "git describe [<options>] --dirty"
-msgstr "git describe [<опции>] --dirty"
+msgid ""
+"git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]"
+msgstr ""
+
+msgid "git describe <blob>"
+msgstr ""
 
 msgid "head"
 msgstr "указатель на ветку"
@@ -5262,12 +5355,29 @@ msgstr "Имена не найдены, не могу ничего описат�
 msgid "option '%s' and commit-ishes cannot be used together"
 msgstr ""
 
+msgid ""
+"git diagnose [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"             [--mode=<mode>]"
+msgstr ""
+
+msgid "specify a destination for the diagnostics archive"
+msgstr ""
+
+msgid "specify a strftime format suffix for the filename"
+msgstr ""
+
+msgid "specify the content of the diagnostic archive"
+msgstr ""
+
 msgid "--merge-base only works with two commits"
 msgstr ""
 
 #, c-format
 msgid "'%s': not a regular file or symlink"
 msgstr "«%s»: не является обычным файлом или символьной ссылкой"
+
+msgid "no merge given, only parents."
+msgstr ""
 
 #, c-format
 msgid "invalid option: %s"
@@ -5380,25 +5490,6 @@ msgstr "не передана <утилита> для --tool=<утилита>"
 msgid "no <cmd> given for --extcmd=<cmd>"
 msgstr "не передана <команда> для --extcmd=<команда>"
 
-msgid "git env--helper --type=[bool|ulong] <options> <env-var>"
-msgstr ""
-
-msgid "default for git_env_*(...) to fall back on"
-msgstr ""
-
-msgid "be quiet only use git_env_*() value as exit code"
-msgstr ""
-
-#, c-format
-msgid "option `--default' expects a boolean value with `--type=bool`, not `%s`"
-msgstr ""
-
-#, c-format
-msgid ""
-"option `--default' expects an unsigned long value with `--type=ulong`, not `"
-"%s`"
-msgstr ""
-
 msgid "git fast-export [<rev-list-opts>]"
 msgstr ""
 
@@ -5507,6 +5598,161 @@ msgstr "git fetch --all [<опции>]"
 msgid "fetch.parallel cannot be negative"
 msgstr ""
 
+msgid "couldn't find remote ref HEAD"
+msgstr ""
+
+#, c-format
+msgid "From %.*s\n"
+msgstr "Из %.*s\n"
+
+#, c-format
+msgid "object %s not found"
+msgstr "объект %s не найден"
+
+msgid "[up to date]"
+msgstr "[актуально]"
+
+msgid "[rejected]"
+msgstr "[отклонено]"
+
+msgid "can't fetch into checked-out branch"
+msgstr ""
+
+msgid "[tag update]"
+msgstr "[обновление метки]"
+
+msgid "unable to update local ref"
+msgstr "не удалось обновить локальную ссылку"
+
+msgid "would clobber existing tag"
+msgstr ""
+
+msgid "[new tag]"
+msgstr "[новая метка]"
+
+msgid "[new branch]"
+msgstr "[новая ветка]"
+
+msgid "[new ref]"
+msgstr "[новая ссылка]"
+
+msgid "forced update"
+msgstr "принудительное обновление"
+
+msgid "non-fast-forward"
+msgstr "без быстрой перемотки"
+
+#, c-format
+msgid "cannot open '%s'"
+msgstr "не удалось открыть «%s»"
+
+msgid ""
+"fetch normally indicates which branches had a forced update,\n"
+"but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
+"flag or run 'git config fetch.showForcedUpdates true'"
+msgstr ""
+
+#, c-format
+msgid ""
+"it took %.2f seconds to check forced updates; you can use\n"
+"'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates "
+"false'\n"
+"to avoid this check\n"
+msgstr ""
+
+#, c-format
+msgid "%s did not send all necessary objects\n"
+msgstr "%s не отправил все необходимые объекты\n"
+
+#, c-format
+msgid "rejected %s because shallow roots are not allowed to be updated"
+msgstr ""
+
+#, c-format
+msgid ""
+"some local refs could not be updated; try running\n"
+" 'git remote prune %s' to remove any old, conflicting branches"
+msgstr ""
+"не удалось обновить некоторые локальные ссылки; попробуйте запустить «git "
+"remote prune %s», чтобы почистить старые, конфликтующие ветки"
+
+#, c-format
+msgid "   (%s will become dangling)"
+msgstr "   (%s будет висящей веткой)"
+
+#, c-format
+msgid "   (%s has become dangling)"
+msgstr "   (%s стала висящей веткой)"
+
+msgid "[deleted]"
+msgstr "[удалено]"
+
+msgid "(none)"
+msgstr "(нет)"
+
+#, c-format
+msgid "refusing to fetch into branch '%s' checked out at '%s'"
+msgstr ""
+
+#, c-format
+msgid "option \"%s\" value \"%s\" is not valid for %s"
+msgstr ""
+
+#, c-format
+msgid "option \"%s\" is ignored for %s\n"
+msgstr ""
+
+#, c-format
+msgid "%s is not a valid object"
+msgstr ""
+
+#, c-format
+msgid "the object %s does not exist"
+msgstr ""
+
+msgid "multiple branches detected, incompatible with --set-upstream"
+msgstr ""
+
+#, c-format
+msgid ""
+"could not set upstream of HEAD to '%s' from '%s' when it does not point to "
+"any branch."
+msgstr ""
+
+msgid "not setting upstream for a remote remote-tracking branch"
+msgstr ""
+
+msgid "not setting upstream for a remote tag"
+msgstr ""
+
+msgid "unknown branch type"
+msgstr ""
+
+msgid ""
+"no source branch found;\n"
+"you need to specify exactly one branch with the --set-upstream option"
+msgstr ""
+
+#, c-format
+msgid "Fetching %s\n"
+msgstr "Извлечение из %s\n"
+
+#, c-format
+msgid "could not fetch %s"
+msgstr ""
+
+#, c-format
+msgid "could not fetch '%s' (exit code: %d)\n"
+msgstr ""
+
+msgid ""
+"no remote repository specified; please specify either a URL or a\n"
+"remote name from which new revisions should be fetched"
+msgstr ""
+
+msgid "you need to specify a tag name"
+msgstr ""
+
 msgid "fetch from all remotes"
 msgstr "извлечь со всех внешних репозиториев"
 
@@ -5611,164 +5857,6 @@ msgstr ""
 msgid "accept refspecs from stdin"
 msgstr ""
 
-msgid "couldn't find remote ref HEAD"
-msgstr ""
-
-#, c-format
-msgid "object %s not found"
-msgstr "объект %s не найден"
-
-msgid "[up to date]"
-msgstr "[актуально]"
-
-msgid "[rejected]"
-msgstr "[отклонено]"
-
-msgid "can't fetch in current branch"
-msgstr "нельзя извлечь текущую ветку"
-
-msgid "checked out in another worktree"
-msgstr ""
-
-msgid "[tag update]"
-msgstr "[обновление метки]"
-
-msgid "unable to update local ref"
-msgstr "не удалось обновить локальную ссылку"
-
-msgid "would clobber existing tag"
-msgstr ""
-
-msgid "[new tag]"
-msgstr "[новая метка]"
-
-msgid "[new branch]"
-msgstr "[новая ветка]"
-
-msgid "[new ref]"
-msgstr "[новая ссылка]"
-
-msgid "forced update"
-msgstr "принудительное обновление"
-
-msgid "non-fast-forward"
-msgstr "без быстрой перемотки"
-
-#, c-format
-msgid "cannot open '%s'"
-msgstr "не удалось открыть «%s»"
-
-msgid ""
-"fetch normally indicates which branches had a forced update,\n"
-"but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
-"flag or run 'git config fetch.showForcedUpdates true'"
-msgstr ""
-
-#, c-format
-msgid ""
-"it took %.2f seconds to check forced updates; you can use\n"
-"'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates "
-"false'\n"
-"to avoid this check\n"
-msgstr ""
-
-#, c-format
-msgid "%s did not send all necessary objects\n"
-msgstr "%s не отправил все необходимые объекты\n"
-
-#, c-format
-msgid "rejected %s because shallow roots are not allowed to be updated"
-msgstr ""
-
-#, c-format
-msgid "From %.*s\n"
-msgstr "Из %.*s\n"
-
-#, c-format
-msgid ""
-"some local refs could not be updated; try running\n"
-" 'git remote prune %s' to remove any old, conflicting branches"
-msgstr ""
-"не удалось обновить некоторые локальные ссылки; попробуйте запустить «git "
-"remote prune %s», чтобы почистить старые, конфликтующие ветки"
-
-#, c-format
-msgid "   (%s will become dangling)"
-msgstr "   (%s будет висящей веткой)"
-
-#, c-format
-msgid "   (%s has become dangling)"
-msgstr "   (%s стала висящей веткой)"
-
-msgid "[deleted]"
-msgstr "[удалено]"
-
-msgid "(none)"
-msgstr "(нет)"
-
-#, c-format
-msgid "refusing to fetch into branch '%s' checked out at '%s'"
-msgstr ""
-
-#, c-format
-msgid "option \"%s\" value \"%s\" is not valid for %s"
-msgstr ""
-
-#, c-format
-msgid "option \"%s\" is ignored for %s\n"
-msgstr ""
-
-#, c-format
-msgid "%s is not a valid object"
-msgstr ""
-
-#, c-format
-msgid "the object %s does not exist"
-msgstr ""
-
-msgid "multiple branches detected, incompatible with --set-upstream"
-msgstr ""
-
-#, c-format
-msgid ""
-"could not set upstream of HEAD to '%s' from '%s' when it does not point to "
-"any branch."
-msgstr ""
-
-msgid "not setting upstream for a remote remote-tracking branch"
-msgstr ""
-
-msgid "not setting upstream for a remote tag"
-msgstr ""
-
-msgid "unknown branch type"
-msgstr ""
-
-msgid ""
-"no source branch found;\n"
-"you need to specify exactly one branch with the --set-upstream option"
-msgstr ""
-
-#, c-format
-msgid "Fetching %s\n"
-msgstr "Извлечение из %s\n"
-
-#, c-format
-msgid "could not fetch %s"
-msgstr ""
-
-#, c-format
-msgid "could not fetch '%s' (exit code: %d)\n"
-msgstr ""
-
-msgid ""
-"no remote repository specified; please specify either a URL or a\n"
-"remote name from which new revisions should be fetched"
-msgstr ""
-
-msgid "you need to specify a tag name"
-msgstr ""
-
 msgid "--negotiate-only needs one or more --negotiation-tip=*"
 msgstr ""
 
@@ -5777,6 +5865,10 @@ msgstr ""
 
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "--unshallow не имеет смысла на полном репозитории"
+
+#, c-format
+msgid "failed to fetch bundles from '%s'"
+msgstr ""
 
 msgid "fetch --all does not take a repository argument"
 msgstr "fetch --all не принимает имя репозитория как аргумент"
@@ -5878,7 +5970,13 @@ msgstr "вывод только ссылок, которые содержат к
 msgid "print only refs which don't contain the commit"
 msgstr "вывод только ссылок, которые не содержат коммит"
 
-msgid "git for-each-repo --config=<config> <command-args>"
+msgid "read reference patterns from stdin"
+msgstr ""
+
+msgid "unknown arguments supplied with --stdin"
+msgstr ""
+
+msgid "git for-each-repo --config=<config> [--] <arguments>"
 msgstr ""
 
 msgid "config"
@@ -5888,6 +5986,10 @@ msgid "config key storing a list of repository paths"
 msgstr ""
 
 msgid "missing --config=<config>"
+msgstr ""
+
+#, c-format
+msgid "got bad config --config=%s"
 msgstr ""
 
 msgid "unknown"
@@ -6034,18 +6136,35 @@ msgstr "%s: отсоединённый указатель HEAD ни на что 
 msgid "notice: %s points to an unborn branch (%s)"
 msgstr ""
 
-msgid "Checking cache tree"
+#, c-format
+msgid "Checking cache tree of %s"
 msgstr ""
 
 #, c-format
-msgid "%s: invalid sha1 pointer in cache-tree"
+msgid "%s: invalid sha1 pointer in cache-tree of %s"
 msgstr ""
 
 msgid "non-tree in cache-tree"
 msgstr ""
 
-msgid "git fsck [<options>] [<object>...]"
-msgstr "git fsck [<опции>] [<объект>...]"
+#, c-format
+msgid "%s: invalid sha1 pointer in resolve-undo of %s"
+msgstr ""
+
+#, c-format
+msgid "unable to load rev-index for pack '%s'"
+msgstr ""
+
+#, c-format
+msgid "invalid rev-index for pack '%s'"
+msgstr ""
+
+msgid ""
+"git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
+"         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
+"         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
+"         [--[no-]name-objects] [<object>...]"
+msgstr ""
 
 msgid "show unreachable objects"
 msgstr "показать недоступные объекты"
@@ -6098,12 +6217,6 @@ msgid "git fsmonitor--daemon start [<options>]"
 msgstr ""
 
 msgid "git fsmonitor--daemon run [<options>]"
-msgstr ""
-
-msgid "git fsmonitor--daemon stop"
-msgstr ""
-
-msgid "git fsmonitor--daemon status"
 msgstr ""
 
 #, c-format
@@ -6342,7 +6455,19 @@ msgstr ""
 msgid "use at most one of --auto and --schedule=<frequency>"
 msgstr ""
 
-msgid "failed to run 'git config'"
+#, c-format
+msgid "unable to add '%s' value of '%s'"
+msgstr ""
+
+msgid "return success even if repository was not registered"
+msgstr ""
+
+#, c-format
+msgid "unable to unset '%s' value of '%s'"
+msgstr ""
+
+#, c-format
+msgid "repository '%s' is not registered"
 msgstr ""
 
 #, c-format
@@ -6369,10 +6494,13 @@ msgstr ""
 msgid "failed to run 'crontab -l'; your system might not support 'cron'"
 msgstr ""
 
-msgid "failed to run 'crontab'; your system might not support 'cron'"
+msgid "failed to create crontab temporary file"
 msgstr ""
 
-msgid "failed to open stdin of 'crontab'"
+msgid "failed to open temporary file"
+msgstr ""
+
+msgid "failed to run 'crontab'; your system might not support 'cron'"
 msgstr ""
 
 msgid "'crontab' died"
@@ -6421,10 +6549,6 @@ msgstr ""
 msgid "git maintenance <subcommand> [<options>]"
 msgstr ""
 
-#, c-format
-msgid "invalid subcommand: %s"
-msgstr ""
-
 msgid "git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"
 msgstr "git grep [<опции>] [-e] <шаблон> [<редакция>...] [[--] <путь>...]"
 
@@ -6440,7 +6564,6 @@ msgstr "указано недопустимое количество поток�
 #. TRANSLATORS: %s is the configuration
 #. variable for tweaking threads, currently
 #. grep.threads
-#.
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "нет поддержки потоков, игнорирование %s"
@@ -6595,6 +6718,9 @@ msgstr "показать совпадающие файлы с помощью п�
 msgid "allow calling of grep(1) (ignored by this build)"
 msgstr "разрешить вызов grep(1) (игнорируется в этой сборке)"
 
+msgid "maximum number of results per file"
+msgstr ""
+
 msgid "no pattern given"
 msgstr ""
 
@@ -6630,11 +6756,12 @@ msgid "both --cached and trees are given"
 msgstr ""
 
 msgid ""
-"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
-"[--] <file>..."
+"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n"
+"                [--stdin [--literally]] [--] <file>..."
 msgstr ""
-"git hash-object [-t <тип>] [-w] [--path=<файл> | --no-filters] [--stdin] "
-"[--] <файл>..."
+
+msgid "git hash-object [-t <type>] [-w] --stdin-paths [--no-filters]"
+msgstr ""
 
 msgid "object type"
 msgstr "тип объекта"
@@ -6683,10 +6810,16 @@ msgstr ""
 msgid "print list of useful guides"
 msgstr "вывести список полезных руководств"
 
+msgid "print list of user-facing repository, command and file interfaces"
+msgstr ""
+
+msgid "print list of file formats, protocols and other developer interfaces"
+msgstr ""
+
 msgid "print all configuration variable names"
 msgstr ""
 
-msgid "git help [[-i|--info] [-m|--man] [-w|--web]] [<command>]"
+msgid "git help [[-i|--info] [-m|--man] [-w|--web]] [<command>|<doc>]"
 msgstr ""
 
 #, c-format
@@ -6756,10 +6889,15 @@ msgstr "использование: %s%s"
 msgid "'git help config' for more information"
 msgstr ""
 
-msgid "git hook run [--ignore-missing] <hook-name> [-- <hook-args>]"
+msgid ""
+"git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-"
+"args>]"
 msgstr ""
 
 msgid "silently ignore missing requested <hook-name>"
+msgstr ""
+
+msgid "file to read into hooks' stdin"
 msgstr ""
 
 #, c-format
@@ -7065,11 +7203,11 @@ msgid "Initialized empty Git repository in %s%s\n"
 msgstr "Инициализирован пустой репозиторий Git в %s%s\n"
 
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
-"shared[=<permissions>]] [<directory>]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
+"         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
+"         [-b <branch-name> | --initial-branch=<branch-name>]\n"
+"         [--shared[=<permissions>]] [<directory>]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<каталог-шаблонов>] [--"
-"shared[=<права-доступа>]] [<каталог>]"
 
 msgid "permissions"
 msgstr "права-доступа"
@@ -7111,11 +7249,10 @@ msgid "--separate-git-dir incompatible with bare repository"
 msgstr ""
 
 msgid ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<token>[(=|:)<value>])...] [<file>...]"
+"git interpret-trailers [--in-place] [--trim-empty]\n"
+"                       [(--trailer <token>[(=|:)<value>])...]\n"
+"                       [--parse] [<file>...]"
 msgstr ""
-"git interpret-trailers [--in-place] [--trim-empty] [(--trailer "
-"<ключ>[(=|:)<значение>])...] [<файл>...]"
 
 msgid "edit files in place"
 msgstr "редактировать файлы на месте"
@@ -7172,7 +7309,7 @@ msgstr "не выводить список изменений"
 msgid "show source"
 msgstr "показать источник"
 
-msgid "use mail map file"
+msgid "clear all previously-defined decoration filters"
 msgstr ""
 
 msgid "only decorate refs that match <pattern>"
@@ -7422,6 +7559,9 @@ msgstr ""
 msgid "percentage by which creation is weighted"
 msgstr ""
 
+msgid "show in-body From: even if identical to the e-mail header"
+msgstr ""
+
 #, c-format
 msgid "invalid ident line: %s"
 msgstr "неправильная строка идентификации: %s"
@@ -7481,6 +7621,18 @@ msgid ""
 msgstr ""
 "Не удалось найти отслеживаемую внешнюю ветку, укажите <вышестоящую-ветку> "
 "вручную.\n"
+
+#, c-format
+msgid "bad ls-files format: element '%s' does not start with '('"
+msgstr ""
+
+#, c-format
+msgid "bad ls-files format: element '%s' does not end in ')'"
+msgstr ""
+
+#, c-format
+msgid "bad ls-files format: %%%.*s"
+msgstr ""
 
 msgid "git ls-files [<options>] [<file>...]"
 msgstr "git ls-files [<опции>] [<файл>...]"
@@ -7569,9 +7721,14 @@ msgid "show sparse directories in the presence of a sparse index"
 msgstr ""
 
 msgid ""
+"--format cannot be used with -s, -o, -k, -t, --resolve-undo, --deduplicate, "
+"--eol"
+msgstr ""
+
+msgid ""
 "git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"              [-q | --quiet] [--exit-code] [--get-url]\n"
-"              [--symref] [<repository> [<refs>...]]"
+"              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
+"              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
 
 msgid "do not print remote URL"
@@ -7704,11 +7861,11 @@ msgstr "git merge-base [-a | --all] <коммит> <коммит>..."
 msgid "git merge-base [-a | --all] --octopus <commit>..."
 msgstr "git merge-base [-a | --all] --octopus <коммит>..."
 
-msgid "git merge-base --independent <commit>..."
-msgstr "git merge-base --independent <коммит>..."
-
 msgid "git merge-base --is-ancestor <commit> <commit>"
 msgstr "git merge-base --is-ancestor <коммит> <коммит>"
+
+msgid "git merge-base --independent <commit>..."
+msgstr "git merge-base --independent <коммит>..."
 
 msgid "git merge-base --fork-point <ref> [<commit>]"
 msgstr "git merge-base --fork-point <ссылка> [<коммит>]"
@@ -7788,6 +7945,56 @@ msgstr "не удалось распознать ссылку «%s»"
 #, c-format
 msgid "Merging %s with %s\n"
 msgstr "Слияние %s и %s\n"
+
+msgid "not something we can merge"
+msgstr "не является тем, что можно слить"
+
+msgid "refusing to merge unrelated histories"
+msgstr "отказ слияния несвязанных историй изменений"
+
+msgid "failure to merge"
+msgstr ""
+
+msgid "git merge-tree [--write-tree] [<options>] <branch1> <branch2>"
+msgstr ""
+
+msgid "git merge-tree [--trivial-merge] <base-tree> <branch1> <branch2>"
+msgstr ""
+
+msgid "do a real merge instead of a trivial merge"
+msgstr ""
+
+msgid "do a trivial merge only"
+msgstr ""
+
+msgid "also show informational/conflict messages"
+msgstr ""
+
+msgid "list filenames without modes/oids/stages"
+msgstr ""
+
+msgid "allow merging unrelated histories"
+msgstr "разрешить слияние несвязанных историй изменений"
+
+msgid "perform multiple merges, one per line of input"
+msgstr ""
+
+msgid "specify a merge-base for the merge"
+msgstr ""
+
+msgid "--trivial-merge is incompatible with all other options"
+msgstr ""
+
+msgid "--merge-base is incompatible with --stdin"
+msgstr ""
+
+#, c-format
+msgid "malformed input line: '%s'."
+msgstr "неправильная введенная строка: «%s»."
+
+#, c-format
+msgid "merging cannot continue; got unclean result of %d"
+msgstr ""
 
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<опции>] [<коммит>...]"
@@ -7869,9 +8076,6 @@ msgstr ""
 
 msgid "continue the current in-progress merge"
 msgstr "продолжить выполнение происходящего слияния"
-
-msgid "allow merging unrelated histories"
-msgstr "разрешить слияние несвязанных историй изменений"
 
 msgid "bypass pre-merge-commit and commit-msg hooks"
 msgstr ""
@@ -7994,9 +8198,6 @@ msgstr "не удалось закрыть «%s»"
 msgid "not something we can merge in %s: %s"
 msgstr "не является тем, что можно слить в %s: %s"
 
-msgid "not something we can merge"
-msgstr "не является тем, что можно слить"
-
 msgid "--abort expects no arguments"
 msgstr "опция --abort не принимает аргументы"
 
@@ -8046,12 +8247,15 @@ msgstr "%s не является тем, что можно слить"
 msgid "Can merge only exactly one commit into empty head"
 msgstr "Можно только один коммит в пустую ветку."
 
-msgid "refusing to merge unrelated histories"
-msgstr "отказ слияния несвязанных историй изменений"
-
 #, c-format
 msgid "Updating %s..%s\n"
 msgstr "Обновление %s..%s\n"
+
+#, c-format
+msgid ""
+"Your local changes to the following files would be overwritten by merge:\n"
+"  %s"
+msgstr ""
 
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
@@ -8086,6 +8290,10 @@ msgid "Automatic merge went well; stopped before committing as requested\n"
 msgstr ""
 "Автоматическое слияние прошло успешно; как и запрашивали, остановлено перед "
 "выполнением коммита\n"
+
+#, c-format
+msgid "When finished, apply stashed changes with `git stash pop`\n"
+msgstr ""
 
 #, c-format
 msgid "warning: tag input does not pass fsck: %s"
@@ -8201,6 +8409,9 @@ msgstr "Проверка переименования из «%s» в «%s»\n"
 msgid "bad source"
 msgstr "плохой источник"
 
+msgid "destination exists"
+msgstr "целевой путь уже существует"
+
 msgid "can not move directory into itself"
 msgstr "нельзя переместить каталог в самого себя"
 
@@ -8216,9 +8427,6 @@ msgstr "не под версионным контролем"
 msgid "conflicted"
 msgstr ""
 
-msgid "destination exists"
-msgstr "целевой путь уже существует"
-
 #, c-format
 msgid "overwriting '%s'"
 msgstr "перезапись «%s»"
@@ -8231,6 +8439,9 @@ msgstr "несколько источников для одного целево
 
 msgid "destination directory does not exist"
 msgstr "целевой каталог не существует"
+
+msgid "destination exists in the index"
+msgstr ""
 
 #, c-format
 msgid "%s, source=%s, destination=%s"
@@ -8399,16 +8610,11 @@ msgid "cannot read note data from non-blob object '%s'."
 msgstr "не удалось прочитать данные заметки из недвоичного объекта «%s»."
 
 #, c-format
-msgid "malformed input line: '%s'."
-msgstr "неправильная введенная строка: «%s»."
-
-#, c-format
 msgid "failed to copy notes from '%s' to '%s'"
 msgstr "не удалось скопировать заметку из «%s» в «%s»"
 
 #. TRANSLATORS: the first %s will be replaced by a git
 #. notes command: 'add', 'merge', 'remove', etc.
-#.
 #, c-format
 msgid "refusing to %s notes in %s (outside of refs/notes/)"
 msgstr "отказ в перезаписи %s заметок в %s (за пределами refs/notes/)"
@@ -8590,20 +8796,15 @@ msgid "use notes from <notes-ref>"
 msgstr "использовать заметку из <ссылка-на-заметку>"
 
 #, c-format
-msgid "unknown subcommand: %s"
-msgstr "неизвестная подкоманда: %s"
+msgid "unknown subcommand: `%s'"
+msgstr ""
+
+msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
+msgstr ""
 
 msgid ""
-"git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"
+"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
 msgstr ""
-"git pack-objects --stdout [<опции>...] [< <список-ссылок> | < <список-"
-"объектов>]"
-
-msgid ""
-"git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"
-msgstr ""
-"git pack-objects [<опции>...] <имя-базы> [< <список-ссылок> | < <список-"
-"объектов>]"
 
 #, c-format
 msgid ""
@@ -8781,6 +8982,12 @@ msgstr "неподдерживаемая версия индекса %s"
 #, c-format
 msgid "bad index version '%s'"
 msgstr "плохая версия индекса «%s»"
+
+msgid "show progress meter during object writing phase"
+msgstr "показать прогресс выполнения во время записи объектов"
+
+msgid "similar to --all-progress when progress meter is shown"
+msgstr "похоже на --all-progress при включенном прогрессе выполнения"
 
 msgid "<version>[,<offset>]"
 msgstr ""
@@ -8967,14 +9174,29 @@ msgid ""
 "to <git@vger.kernel.org>.  Thanks.\n"
 msgstr ""
 
-msgid "git pack-refs [<options>]"
-msgstr "git pack-refs [<опции>]"
+msgid "refusing to run without --i-still-use-this"
+msgstr ""
+
+msgid "git pack-refs [--all] [--no-prune]"
+msgstr ""
 
 msgid "pack everything"
 msgstr "паковать всё"
 
 msgid "prune loose refs (default)"
 msgstr "почистить слабые ссылки (по умолчанию)"
+
+msgid "git patch-id [--stable | --unstable | --verbatim]"
+msgstr ""
+
+msgid "use the unstable patch-id algorithm"
+msgstr ""
+
+msgid "use the stable patch-id algorithm"
+msgstr ""
+
+msgid "don't strip whitespace from the patch"
+msgstr ""
 
 msgid "git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"
 msgstr ""
@@ -9114,8 +9336,8 @@ msgstr ""
 msgid "pull with rebase"
 msgstr "получение с перемещением"
 
-msgid "please commit or stash them."
-msgstr "сделайте коммит или спрячьте их."
+msgid "Please commit or stash them."
+msgstr "Сделайте коммит или спрячьте их."
 
 #, c-format
 msgid ""
@@ -9175,9 +9397,8 @@ msgstr ""
 
 msgid ""
 "\n"
-"To avoid automatically configuring upstream branches when their name\n"
-"doesn't match the local branch, see option 'simple' of branch."
-"autoSetupMerge\n"
+"To avoid automatically configuring an upstream branch when its name\n"
+"won't match the local branch, see option 'simple' of branch.autoSetupMerge\n"
 "in 'git help config'.\n"
 msgstr ""
 
@@ -9321,6 +9542,11 @@ msgstr "Отправка в %s\n"
 msgid "failed to push some refs to '%s'"
 msgstr "не удалось отправить некоторые ссылки в «%s»"
 
+msgid ""
+"recursing into submodule with push.recurseSubmodules=only; using on-demand "
+"instead"
+msgstr ""
+
 #, c-format
 msgid "invalid value for '%s'"
 msgstr ""
@@ -9328,8 +9554,8 @@ msgstr ""
 msgid "repository"
 msgstr "репозиторий"
 
-msgid "push all refs"
-msgstr "отправить все ссылки"
+msgid "push all branches"
+msgstr ""
 
 msgid "mirror all refs"
 msgstr "сделать зеркало всех ссылок"
@@ -9337,8 +9563,8 @@ msgstr "сделать зеркало всех ссылок"
 msgid "delete refs"
 msgstr "удалить ссылки"
 
-msgid "push tags (can't be used with --all or --mirror)"
-msgstr "отправить метки (нельзя использовать вместе с --all или --mirror)"
+msgid "push tags (can't be used with --all or --branches or --mirror)"
+msgstr ""
 
 msgid "force updates"
 msgstr "принудительное обновление"
@@ -9441,19 +9667,25 @@ msgid "only emit output related to the second range"
 msgstr ""
 
 #, c-format
+msgid "not a revision: '%s'"
+msgstr ""
+
+#, c-format
 msgid "not a commit range: '%s'"
 msgstr ""
 
-msgid "single arg format must be symmetric range"
+#, c-format
+msgid "not a symmetric range: '%s'"
 msgstr ""
 
 msgid "need two commit ranges"
 msgstr ""
 
 msgid ""
-"git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>) "
-"[-u | -i]] [--no-sparse-checkout] [--index-output=<file>] (--empty | <tree-"
-"ish1> [<tree-ish2> [<tree-ish3>]])"
+"git read-tree [(-m [--trivial] [--aggressive] | --reset | --"
+"prefix=<prefix>)\n"
+"              [-u | -i]] [--index-output=<file>] [--no-sparse-checkout]\n"
+"              (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"
 msgstr ""
 
 msgid "write resulting index to <file>"
@@ -9542,7 +9774,7 @@ msgid "%s requires the merge backend"
 msgstr ""
 
 #, c-format
-msgid "could not get 'onto': '%s'"
+msgid "invalid onto: '%s'"
 msgstr ""
 
 #, c-format
@@ -9582,13 +9814,26 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "Unknown rebase-merges mode: %s"
+msgstr ""
+
+#, c-format
 msgid "could not switch to %s"
+msgstr ""
+
+msgid "apply options and merge options cannot be used together"
 msgstr ""
 
 #, c-format
 msgid ""
-"unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and \"ask"
-"\"."
+"unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and "
+"\"ask\"."
+msgstr ""
+
+msgid ""
+"--rebase-merges with an empty string argument is deprecated and will stop "
+"working in a future version of Git. Use --rebase-merges without an argument "
+"instead, which does the same thing."
 msgstr ""
 
 #, c-format
@@ -9693,6 +9938,9 @@ msgstr ""
 msgid "move commits that begin with squash!/fixup! under -i"
 msgstr ""
 
+msgid "update branches that point to commits that are being rebased"
+msgstr ""
+
 msgid "add exec lines after each commit of the editable list"
 msgstr ""
 
@@ -9779,14 +10027,22 @@ msgstr ""
 msgid "switch `C' expects a numerical value"
 msgstr ""
 
-#, c-format
-msgid "Unknown mode: %s"
-msgstr ""
-
 msgid "--strategy requires --merge or --interactive"
 msgstr ""
 
-msgid "apply options and merge options cannot be used together"
+msgid ""
+"apply options are incompatible with rebase.autoSquash.  Consider adding --no-"
+"autosquash"
+msgstr ""
+
+msgid ""
+"apply options are incompatible with rebase.rebaseMerges.  Consider adding --"
+"no-rebase-merges"
+msgstr ""
+
+msgid ""
+"apply options are incompatible with rebase.updateRefs.  Consider adding --no-"
+"update-refs"
 msgstr ""
 
 #, c-format
@@ -9811,7 +10067,7 @@ msgstr ""
 msgid "No such ref: %s"
 msgstr "Нет такой ссылки: %s"
 
-msgid "Could not resolve HEAD to a revision"
+msgid "Could not resolve HEAD to a commit"
 msgstr ""
 
 #, c-format
@@ -9825,9 +10081,6 @@ msgstr ""
 #, c-format
 msgid "Does not point to a valid commit '%s'"
 msgstr ""
-
-msgid "Please commit or stash them."
-msgstr "Сделайте коммит или спрячьте их."
 
 msgid "HEAD is up to date."
 msgstr "HEAD уже в актуальном состоянии."
@@ -10203,6 +10456,9 @@ msgstr " новая (следующее извлечение сохранит е
 msgid " tracked"
 msgstr " отслеживается"
 
+msgid " skipped"
+msgstr ""
+
 msgid " stale (use 'git remote prune' to remove)"
 msgstr " недействительна (используйте «git remote prune», чтобы удалить)"
 
@@ -10287,7 +10543,6 @@ msgstr "(нет URL)"
 #. TRANSLATORS: the colon ':' should align
 #. with the one in " Fetch URL: %s"
 #. translation.
-#.
 #, c-format
 msgid "  Push  URL: %s"
 msgstr "    URL для отправки: %s"
@@ -10472,6 +10727,10 @@ msgstr ""
 msgid "could not close refs snapshot tempfile"
 msgstr ""
 
+#, c-format
+msgid "could not remove stale bitmap: %s"
+msgstr ""
+
 msgid "pack everything in a single pack"
 msgstr "упаковать всё в один пакет"
 
@@ -10484,7 +10743,7 @@ msgstr ""
 msgid "approxidate"
 msgstr "примерная-дата"
 
-msgid "with -C, expire objects older than this"
+msgid "with --cruft, expire objects older than this"
 msgstr ""
 
 msgid "remove redundant packs, and run git-prune-packed"
@@ -10544,6 +10803,9 @@ msgstr ""
 msgid "write a multi-pack index of the resulting packs"
 msgstr ""
 
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr ""
+
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "нельзя удалять пакеты в precious-objects репозитории"
 
@@ -10555,7 +10817,11 @@ msgid "pack prefix %s does not begin with objdir %s"
 msgstr ""
 
 #, c-format
-msgid "missing required file: %s"
+msgid "renaming pack to '%s' failed"
+msgstr ""
+
+#, c-format
+msgid "pack-objects did not write a '%s' file for pack %s-%s"
 msgstr ""
 
 #, c-format
@@ -10743,8 +11009,9 @@ msgstr ""
 msgid "only one pattern can be given with -l"
 msgstr ""
 
-msgid "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
-msgstr "git rerere [clear | forget <путь>... | status | remaining | diff | gc]"
+msgid ""
+"git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]"
+msgstr ""
 
 msgid "register clean resolutions in index"
 msgstr "записать чистые разрешения конфликтов в индекс"
@@ -10866,6 +11133,10 @@ msgstr "Не удалось записать новый файл индекса.
 msgid "unable to get disk usage of %s"
 msgstr ""
 
+#, c-format
+msgid "invalid value for '%s': '%s', the only allowed format is '%s'"
+msgstr ""
+
 msgid "rev-list does not support display of notes"
 msgstr "rev-list не поддерживает отображение заметок"
 
@@ -10889,6 +11160,9 @@ msgid "premature end of input"
 msgstr ""
 
 msgid "no usage string given before the `--' separator"
+msgstr ""
+
+msgid "missing opt-spec before option flags"
 msgstr ""
 
 msgid "Needed a single revision"
@@ -10938,6 +11212,15 @@ msgstr ""
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr ""
 
+msgid "--exclude-hidden cannot be used together with --branches"
+msgstr ""
+
+msgid "--exclude-hidden cannot be used together with --tags"
+msgstr ""
+
+msgid "--exclude-hidden cannot be used together with --remotes"
+msgstr ""
+
 msgid "this operation must be run in a work tree"
 msgstr ""
 
@@ -10945,17 +11228,21 @@ msgstr ""
 msgid "unknown mode for --show-object-format: %s"
 msgstr ""
 
-msgid "git revert [<options>] <commit-ish>..."
-msgstr "git revert [<опции>] <указатель-коммита>..."
+msgid ""
+"git revert [--[no-]edit] [-n] [-m <parent-number>] [-s] [-S[<keyid>]] "
+"<commit>..."
+msgstr ""
 
-msgid "git revert <subcommand>"
-msgstr "git revert <подкоманда>"
+msgid "git revert (--continue | --skip | --abort | --quit)"
+msgstr ""
 
-msgid "git cherry-pick [<options>] <commit-ish>..."
-msgstr "git cherry-pick [<опции>] <указатель-коммита>..."
+msgid ""
+"git cherry-pick [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]\n"
+"                [-S[<keyid>]] <commit>..."
+msgstr ""
 
-msgid "git cherry-pick <subcommand>"
-msgstr "git cherry-pick <подкоманда>"
+msgid "git cherry-pick (--continue | --skip | --abort | --quit)"
+msgstr ""
 
 #, c-format
 msgid "option `%s' expects a number greater than zero"
@@ -11017,8 +11304,11 @@ msgstr "сбой обращения изменений коммита"
 msgid "cherry-pick failed"
 msgstr "сбой при копировании коммита"
 
-msgid "git rm [<options>] [--] <file>..."
-msgstr "git rm [<опции>] [--] <файл>..."
+msgid ""
+"git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
+"       [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
+"       [--] [<pathspec>...]"
+msgstr ""
 
 msgid ""
 "the following file has staged content different from both the\n"
@@ -11101,11 +11391,15 @@ msgid ""
 "git send-pack [--mirror] [--dry-run] [--force]\n"
 "              [--receive-pack=<git-receive-pack>]\n"
 "              [--verbose] [--thin] [--atomic]\n"
+"              [--[no-]signed | --signed=(true|false|if-asked)]\n"
 "              [<host>:]<directory> (--all | <ref>...)"
 msgstr ""
 
 msgid "remote name"
 msgstr "имя внешнего репозитория"
+
+msgid "push all refs"
+msgstr "отправить все ссылки"
 
 msgid "use stateless RPC protocol"
 msgstr "протокол без сохранения состояния для RPC"
@@ -11125,7 +11419,8 @@ msgstr "git log --pretty=short | git shortlog [<опции>]"
 msgid "using multiple --group options with stdin is not supported"
 msgstr ""
 
-msgid "using --group=trailer with stdin is not supported"
+#, c-format
+msgid "using %s with stdin is not supported"
 msgstr ""
 
 #, c-format
@@ -11163,7 +11458,8 @@ msgid ""
 "git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
 "                [--more=<n> | --list | --independent | --merge-base]\n"
-"                [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"                [--no-name | --sha1-name] [--topics]\n"
+"                [(<rev> | <glob>)...]"
 msgstr ""
 
 msgid "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"
@@ -11270,11 +11566,10 @@ msgid "Unknown hash algorithm"
 msgstr ""
 
 msgid ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference]\n"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
+"             [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<шаблон>...]"
 
 msgid "git show-ref --exclude-existing[=<pattern>]"
 msgstr "git show-ref --exclude-existing[=<шаблон>]"
@@ -11305,7 +11600,9 @@ msgid "show refs from stdin that aren't in local repository"
 msgstr ""
 "вывести ссылки со стандартного ввода, которых нет в локальном репозитории"
 
-msgid "git sparse-checkout (init|list|set|add|reapply|disable) <options>"
+msgid ""
+"git sparse-checkout (init | list | set | add | reapply | disable | check-"
+"rules) [<options>]"
 msgstr ""
 
 msgid "this worktree is not sparse"
@@ -11413,57 +11710,59 @@ msgstr ""
 msgid "error while refreshing working directory"
 msgstr ""
 
-msgid "git stash list [<options>]"
-msgstr "git stash list [<опции>]"
-
-msgid "git stash show [<options>] [<stash>]"
-msgstr "git stash show [<опциии>] [<спрятанные-изменения>]"
-
-msgid "git stash drop [-q|--quiet] [<stash>]"
-msgstr "git stash drop [-q|--quiet] [<спрятанные-изменения>]"
-
-msgid "git stash ( pop | apply ) [--index] [-q|--quiet] [<stash>]"
+msgid ""
+"git sparse-checkout check-rules [-z] [--skip-checks][--[no-]cone] [--rules-"
+"file <file>]"
 msgstr ""
-"git stash ( pop | apply ) [--index] [-q|--quiet] [<спрятанные-изменения>]"
+
+msgid "terminate input and output files by a NUL character"
+msgstr ""
+
+msgid "when used with --rules-file interpret patterns as cone mode patterns"
+msgstr ""
+
+msgid "use patterns in <file> instead of the current ones."
+msgstr ""
+
+msgid "git stash list [<log-options>]"
+msgstr ""
+
+msgid ""
+"git stash show [-u | --include-untracked | --only-untracked] [<diff-"
+"options>] [<stash>]"
+msgstr ""
+
+msgid "git stash drop [-q | --quiet] [<stash>]"
+msgstr ""
+
+msgid "git stash pop [--index] [-q | --quiet] [<stash>]"
+msgstr ""
+
+msgid "git stash apply [--index] [-q | --quiet] [<stash>]"
+msgstr ""
 
 msgid "git stash branch <branchname> [<stash>]"
 msgstr "git stash branch <имя-ветки> [<спрятанные-изменения>]"
 
+msgid "git stash store [(-m | --message) <message>] [-q | --quiet] <commit>"
+msgstr ""
+
 msgid ""
-"git stash [push [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
+"git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q "
+"| --quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [(-m | --message) "
+"<message>]\n"
 "          [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 "          [--] [<pathspec>...]]"
 msgstr ""
 
 msgid ""
-"git stash save [-p|--patch] [-S|--staged] [-k|--[no-]keep-index] [-q|--"
-"quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [<message>]"
+"git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | "
+"--quiet]\n"
+"          [-u | --include-untracked] [-a | --all] [<message>]"
 msgstr ""
 
-msgid "git stash pop [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash pop [--index] [-q|--quiet] [<спрятанные-изменения>]"
-
-msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
-msgstr "git stash apply [--index] [-q|--quiet] [<спрятанные-изменения>]"
-
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message <сообщение>] [-q|--quiet] <коммит>"
-
-msgid ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <message>]\n"
-"          [--] [<pathspec>...]]"
-msgstr ""
-"git stash [push [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"          [-u|--include-untracked] [-a|--all] [-m|--message <сообщение>]\n"
-"          [--] [<спецификатор-пути>...]]"
-
-msgid ""
-"git stash save [-p|--patch] [-k|--[no-]keep-index] [-q|--quiet]\n"
-"               [-u|--include-untracked] [-a|--all] [<message>]"
+msgid "git stash create [<message>]"
 msgstr ""
 
 #, c-format
@@ -11637,16 +11936,14 @@ msgid "Expecting a full ref name, got %s"
 msgstr "Ожидалось полное имя ссылки, а получено %s"
 
 #, c-format
+msgid "could not get a repository handle for submodule '%s'"
+msgstr ""
+
+#, c-format
 msgid ""
 "could not look up configuration '%s'. Assuming this repository is its own "
 "authoritative upstream."
 msgstr ""
-
-msgid "alternative anchor for relative paths"
-msgstr "альтернативный символ для относительных путей"
-
-msgid "git submodule--helper list [--prefix=<path>] [<path>...]"
-msgstr "git submodule--helper list [--prefix=<путь>] [<путь>...]"
 
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
@@ -11675,7 +11972,7 @@ msgstr ""
 msgid "recurse into nested submodules"
 msgstr "проходить вглубь вложенных подмодулей"
 
-msgid "git submodule--helper foreach [--quiet] [--recursive] [--] <command>"
+msgid "git submodule foreach [--quiet] [--recursive] [--] <command>"
 msgstr ""
 
 #, c-format
@@ -11697,7 +11994,7 @@ msgstr "Сбой регистрации режима обновления для
 msgid "suppress output for initializing a submodule"
 msgstr ""
 
-msgid "git submodule--helper init [<options>] [<path>]"
+msgid "git submodule init [<options>] [<path>]"
 msgstr ""
 
 #, c-format
@@ -11722,9 +12019,6 @@ msgstr ""
 
 msgid "git submodule status [--quiet] [--cached] [--recursive] [<path>...]"
 msgstr "git submodule status [--quiet] [--cached] [--recursive] [<путь>...]"
-
-msgid "git submodule--helper name <path>"
-msgstr "git submodule--helper name <путь>"
 
 #, c-format
 msgid "* %s %s(blob)->%s(submodule)"
@@ -11758,7 +12052,7 @@ msgstr ""
 msgid "limit the summary size"
 msgstr ""
 
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule summary [<options>] [<commit>] [--] [<path>]"
 msgstr ""
 
 msgid "could not fetch a revision for HEAD"
@@ -11773,18 +12067,14 @@ msgid "failed to register url for submodule path '%s'"
 msgstr ""
 
 #, c-format
-msgid "failed to get the default remote for submodule '%s'"
-msgstr ""
-
-#, c-format
 msgid "failed to update remote for submodule '%s'"
 msgstr ""
 
 msgid "suppress output of synchronizing submodule url"
 msgstr ""
 
-msgid "git submodule--helper sync [--quiet] [--recursive] [<path>]"
-msgstr "git submodule--helper sync [--quiet] [--recursive] [<путь>]"
+msgid "git submodule sync [--quiet] [--recursive] [<path>]"
+msgstr ""
 
 #, c-format
 msgid ""
@@ -11838,6 +12128,10 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "could not get a repository handle for gitdir '%s'"
+msgstr ""
+
+#, c-format
 msgid "submodule '%s' cannot add alternate: %s"
 msgstr "подмодулю «%s» не удалось добавить альтернативу: %s"
 
@@ -11866,6 +12160,9 @@ msgstr ""
 msgid "could not get submodule directory for '%s'"
 msgstr "не удалось получить каталог для подмодуля «%s»"
 
+msgid "alternative anchor for relative paths"
+msgstr "альтернативный символ для относительных путей"
+
 msgid "where the new submodule will be cloned to"
 msgstr "куда должен быть склонирован новый подмодуль"
 
@@ -11888,10 +12185,6 @@ msgid ""
 "git submodule--helper clone [--prefix=<path>] [--quiet] [--reference "
 "<repository>] [--name <name>] [--depth <depth>] [--single-branch] [--filter "
 "<filter-spec>] --url <url> --path <path>"
-msgstr ""
-
-#, c-format
-msgid "Invalid update mode '%s' for submodule path '%s'"
 msgstr ""
 
 #, c-format
@@ -11964,16 +12257,16 @@ msgid ""
 msgstr ""
 
 #, c-format
+msgid "could not initialize submodule at path '%s'"
+msgstr ""
+
+#, c-format
 msgid ""
 "Submodule (%s) branch configured to inherit branch from superproject, but "
 "the superproject is not on any branch"
 msgstr ""
 "Ветка подмодуля (%s) настроена на наследование ветки из родительского "
 "проекта, но он не находится ни на одной ветке"
-
-#, c-format
-msgid "could not get a repository handle for submodule '%s'"
-msgstr ""
 
 #, c-format
 msgid "Unable to find current revision in submodule path '%s'"
@@ -12006,14 +12299,14 @@ msgstr ""
 msgid "don't fetch new objects from the remote site"
 msgstr ""
 
-msgid "path into the working tree"
-msgstr "путь в рабочем каталоге"
+msgid "use the 'checkout' update strategy (default)"
+msgstr ""
 
-msgid "path into the working tree, across nested submodule boundaries"
-msgstr "путь в рабочем каталоге, в пределах границ подмодуля"
+msgid "use the 'merge' update strategy"
+msgstr ""
 
-msgid "rebase, merge, checkout or none"
-msgstr "rebase, merge, checkout или none"
+msgid "use the 'rebase' update strategy"
+msgstr ""
 
 msgid "create a shallow clone truncated to the specified number of revisions"
 msgstr ""
@@ -12029,6 +12322,9 @@ msgstr ""
 msgid "don't print cloning progress"
 msgstr "вы выводить прогресс клонирования"
 
+msgid "disallow cloning into non-empty directory, implies --init"
+msgstr ""
+
 msgid ""
 "git submodule [--quiet] update [--init [--filter=<filter-spec>]] [--remote] "
 "[-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-"
@@ -12036,34 +12332,13 @@ msgid ""
 "[--] [<path>...]"
 msgstr ""
 
-msgid "bad value for update parameter"
-msgstr "плохое значение для параметра update"
-
-msgid "recurse into submodules"
-msgstr "рекурсивно по подмодулям"
-
-msgid "git submodule--helper absorb-git-dirs [<options>] [<path>...]"
-msgstr "git submodule--helper absorb-git-dirs [<опции>] [<путь>...]"
-
-msgid "check if it is safe to write to the .gitmodules file"
-msgstr ""
-
-msgid "unset the config in the .gitmodules file"
-msgstr ""
-
-msgid "git submodule--helper config <name> [<value>]"
-msgstr "git submodule--helper config <имя> [<значение>]"
-
-msgid "git submodule--helper config --unset <name>"
-msgstr "git submodule--helper config --unset <имя>"
-
-msgid "please make sure that the .gitmodules file is in the working tree"
+msgid "git submodule absorbgitdirs [<options>] [<path>...]"
 msgstr ""
 
 msgid "suppress output for setting url of a submodule"
 msgstr ""
 
-msgid "git submodule--helper set-url [--quiet] <path> <newurl>"
+msgid "git submodule set-url [--quiet] <path> <newurl>"
 msgstr ""
 
 msgid "set the default tracking branch to master"
@@ -12072,11 +12347,10 @@ msgstr ""
 msgid "set the default tracking branch"
 msgstr ""
 
-msgid "git submodule--helper set-branch [-q|--quiet] (-d|--default) <path>"
+msgid "git submodule set-branch [-q|--quiet] (-d|--default) <path>"
 msgstr ""
 
-msgid ""
-"git submodule--helper set-branch [-q|--quiet] (-b|--branch) <branch> <path>"
+msgid "git submodule set-branch [-q|--quiet] (-b|--branch) <branch> <path>"
 msgstr ""
 
 msgid "--branch or --default required"
@@ -12130,6 +12404,9 @@ msgstr ""
 msgid "unable to checkout submodule '%s'"
 msgstr ""
 
+msgid "please make sure that the .gitmodules file is in the working tree"
+msgstr ""
+
 #, c-format
 msgid "Failed to add submodule '%s'"
 msgstr ""
@@ -12164,7 +12441,7 @@ msgid ""
 "path"
 msgstr ""
 
-msgid "git submodule--helper add [<options>] [--] <repository> [<path>]"
+msgid "git submodule add [<options>] [--] <repository> [<path>]"
 msgstr ""
 
 msgid "Relative path can only be used from the toplevel of the working tree"
@@ -12180,19 +12457,17 @@ msgstr ""
 msgid "'%s' is not a valid submodule name"
 msgstr ""
 
-#, c-format
-msgid "%s doesn't support --super-prefix"
-msgstr "%s не поддерживает параметр --super-prefix"
+msgid "git submodule--helper <command>"
+msgstr ""
 
-#, c-format
-msgid "'%s' is not a valid submodule--helper subcommand"
-msgstr "«%s» не является подкомандой submodule--helper"
+msgid "git symbolic-ref [-m <reason>] <name> <ref>"
+msgstr ""
 
-msgid "git symbolic-ref [<options>] <name> [<ref>]"
-msgstr "git symbolic-ref [<опции>] <имя> [<ссылка>]"
+msgid "git symbolic-ref [-q] [--short] [--no-recurse] <name>"
+msgstr ""
 
-msgid "git symbolic-ref -d [-q] <name>"
-msgstr "git symbolic-ref -d [-q] <имя>"
+msgid "git symbolic-ref --delete [-q] <name>"
+msgstr ""
 
 msgid "suppress error message for non-symbolic (detached) refs"
 msgstr ""
@@ -12204,6 +12479,9 @@ msgstr "удалить символьные ссылки"
 msgid "shorten ref output"
 msgstr "укороченный вывод ссылок"
 
+msgid "recursively dereference (default)"
+msgstr ""
+
 msgid "reason"
 msgstr "причина"
 
@@ -12211,18 +12489,18 @@ msgid "reason of the update"
 msgstr "причина обновления"
 
 msgid ""
-"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
-"        <tagname> [<head>]"
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
+"        <tagname> [<commit> | <object>]"
 msgstr ""
 
 msgid "git tag -d <tagname>..."
 msgstr "git tag -d <имя-метки>..."
 
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
-"points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
-"[<pattern>...]"
+"git tag [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]\n"
+"        [--points-at <object>] [--column[=<options>] | --no-column]\n"
+"        [--create-reflog] [--sort=<key>] [--format=<format>]\n"
+"        [--merged <commit>] [--no-merged <commit>] [<pattern>...]"
 msgstr ""
 
 msgid "git tag -v [--format=<format>] <tagname>..."
@@ -12362,6 +12640,16 @@ msgstr "Метка «%s» обновлена (была %s)\n"
 
 msgid "pack exceeds maximum allowed size"
 msgstr "размер пакета превышает максимальный допустимый"
+
+msgid "failed to write object in stream"
+msgstr ""
+
+#, c-format
+msgid "inflate returned (%d)"
+msgstr ""
+
+msgid "invalid blob object from stream"
+msgstr ""
 
 msgid "Unpacking objects"
 msgstr "Распаковка объектов"
@@ -12592,8 +12880,10 @@ msgstr "прочитать обновления из стандартного в
 msgid "update the info files from scratch"
 msgstr "обновить информацию о серверах с нуля"
 
-msgid "git upload-pack [<options>] <dir>"
-msgstr "git upload-pack [<опции>] <каталог>"
+msgid ""
+"git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
+"                [--advertise-refs] <directory>"
+msgstr ""
 
 msgid "quit after a single request/response exchange"
 msgstr "выход после обмена одним запросом/ответом"
@@ -12607,8 +12897,8 @@ msgstr "не проверять <каталог>/.git/ если <каталог>
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "прервать передачу после <кол> секунд простоя"
 
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <коммит>..."
+msgid "git verify-commit [-v | --verbose] [--raw] <commit>..."
+msgstr ""
 
 msgid "print commit contents"
 msgstr "вывести содержимое коммита"
@@ -12616,8 +12906,8 @@ msgstr "вывести содержимое коммита"
 msgid "print raw gpg status output"
 msgstr "выводить сырой вывод статуса от gpg"
 
-msgid "git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."
-msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] <пакет>..."
+msgid "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."
+msgstr ""
 
 msgid "verbose"
 msgstr "быть многословнее"
@@ -12625,35 +12915,37 @@ msgstr "быть многословнее"
 msgid "show statistics only"
 msgstr "вывести только статистику"
 
-msgid "git verify-tag [-v | --verbose] [--format=<format>] <tag>..."
-msgstr "git verify-tag [-v | --verbose] [--format=<формат>] <метка>..."
+msgid "git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."
+msgstr ""
 
 msgid "print tag contents"
 msgstr "вывести содержимое метки"
 
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
-msgstr "git worktree add [<опции>] <путь> [<указатель-коммита>]"
+msgid ""
+"git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n"
+"                 [-b <new-branch>] <path> [<commit-ish>]"
+msgstr ""
 
-msgid "git worktree list [<options>]"
-msgstr "git worktree list [<опции>]"
+msgid "git worktree list [-v | --porcelain [-z]]"
+msgstr ""
 
-msgid "git worktree lock [<options>] <path>"
-msgstr "git worktree lock [<опции>] <путь>"
+msgid "git worktree lock [--reason <string>] <worktree>"
+msgstr ""
 
 msgid "git worktree move <worktree> <new-path>"
 msgstr "git worktree move <рабочий-каталог> <новый-путь>"
 
-msgid "git worktree prune [<options>]"
-msgstr "git worktree prune [<опции>]"
+msgid "git worktree prune [-n] [-v] [--expire <expire>]"
+msgstr ""
 
-msgid "git worktree remove [<options>] <worktree>"
-msgstr "git worktree remove [<опции>] <рабочий-каталог>"
+msgid "git worktree remove [-f] <worktree>"
+msgstr ""
 
 msgid "git worktree repair [<path>...]"
 msgstr ""
 
-msgid "git worktree unlock <path>"
-msgstr "git worktree unlock <путь>"
+msgid "git worktree unlock <worktree>"
+msgstr ""
 
 #, c-format
 msgid "Removing %s/%s: %s"
@@ -12722,7 +13014,7 @@ msgstr "Готовится рабочая копия (отсоединённый
 
 msgid "checkout <branch> even if already checked out in other worktree"
 msgstr ""
-"переключиться на <ветка> даже если она уже активна в другом рабочесм каталоге"
+"переключиться на <ветка> даже если она уже активна в другом рабочем каталоге"
 
 msgid "create a new branch"
 msgstr "создать новую ветку"
@@ -12866,6 +13158,62 @@ msgstr "вывести объект дерева для подкаталога �
 msgid "only useful for debugging"
 msgstr "используется только при отладке"
 
+msgid "core.fsyncMethod = batch is unsupported on this platform"
+msgstr ""
+
+#, c-format
+msgid "could not parse bundle list key %s with value '%s'"
+msgstr ""
+
+#, c-format
+msgid "bundle list at '%s' has no mode"
+msgstr ""
+
+msgid "failed to create temporary file"
+msgstr ""
+
+msgid "insufficient capabilities"
+msgstr ""
+
+#, c-format
+msgid "file downloaded from '%s' is not a bundle"
+msgstr ""
+
+msgid "failed to store maximum creation token"
+msgstr ""
+
+#, c-format
+msgid "unrecognized bundle mode from URI '%s'"
+msgstr ""
+
+#, c-format
+msgid "exceeded bundle URI recursion limit (%d)"
+msgstr ""
+
+#, c-format
+msgid "failed to download bundle from URI '%s'"
+msgstr ""
+
+#, c-format
+msgid "file at URI '%s' is not a bundle or bundle list"
+msgstr ""
+
+#, c-format
+msgid "bundle-uri: unexpected argument: '%s'"
+msgstr ""
+
+msgid "bundle-uri: expected flush after arguments"
+msgstr ""
+
+msgid "bundle-uri: got an empty line"
+msgstr ""
+
+msgid "bundle-uri: line is not of the form 'key=value'"
+msgstr ""
+
+msgid "bundle-uri: line has empty key or value"
+msgstr ""
+
 #, c-format
 msgid "unrecognized bundle hash algorithm: %s"
 msgstr ""
@@ -12886,6 +13234,11 @@ msgid "Repository lacks these prerequisite commits:"
 msgstr "В репозитории отсутствуют необходимые коммиты:"
 
 msgid "need a repository to verify a bundle"
+msgstr ""
+
+msgid ""
+"some prerequisite commits exist in the object store, but are not connected "
+"to the repository's history"
 msgstr ""
 
 #, c-format
@@ -13072,6 +13425,9 @@ msgstr "Очень простой сервер для Git репозиторие
 msgid "Give an object a human readable name based on an available ref"
 msgstr "Присвоение объекту удобочитаемое имя на основе доступной ссылки"
 
+msgid "Generate a zip archive of diagnostic information"
+msgstr ""
+
 msgid "Show changes between commits, commit and working tree, etc"
 msgstr "Вывод разницы между коммитами, коммитом и рабочим каталогом и т.д."
 
@@ -13205,8 +13561,8 @@ msgid "The standard helper program to use with git-merge-index"
 msgstr ""
 "Стандартная программа-помощник для использования совместно с git-merge-index"
 
-msgid "Show three-way merge without touching index"
-msgstr "Вывод трёхходового слияние без затрагивания индекса"
+msgid "Perform merge without touching index or working tree"
+msgstr ""
 
 msgid "Run merge conflict resolution tools to resolve merge conflicts"
 msgstr "Запуск инструментов разрешения конфликтов слияния"
@@ -13405,6 +13761,9 @@ msgstr "Проверка файлов упакованных архивов Git"
 msgid "Check the GPG signature of tags"
 msgstr "Проверка подписи GPG меток"
 
+msgid "Display version information about Git"
+msgstr ""
+
 msgid "Show logs with difference each commit introduces"
 msgstr "Вывод журнала с изменениями, которые вводил каждый из коммитов"
 
@@ -13438,6 +13797,24 @@ msgstr "Полезный минимум команд для каждодневн
 msgid "Frequently asked questions about using Git"
 msgstr ""
 
+msgid "The bundle file format"
+msgstr ""
+
+msgid "Chunk-based file formats"
+msgstr ""
+
+msgid "Git commit-graph format"
+msgstr ""
+
+msgid "Git index format"
+msgstr ""
+
+msgid "Git pack format"
+msgstr ""
+
+msgid "Git cryptographic signature formats"
+msgstr ""
+
 msgid "A Git Glossary"
 msgstr "Глоссарий Git"
 
@@ -13458,6 +13835,21 @@ msgstr "Определение свойств подмодулей"
 
 msgid "Git namespaces"
 msgstr "Пространства имён Git"
+
+msgid "Protocol v0 and v1 capabilities"
+msgstr ""
+
+msgid "Things common to various protocols"
+msgstr ""
+
+msgid "Git HTTP-based protocols"
+msgstr ""
+
+msgid "How packs are transferred over-the-wire"
+msgstr ""
+
+msgid "Git Wire Protocol, Version 2"
+msgstr ""
 
 msgid "Helper programs to interact with remote repositories"
 msgstr ""
@@ -13482,6 +13874,9 @@ msgstr "Веб интерфейс Git (веб-интерфейс для Git ре
 
 msgid "An overview of recommended workflows with Git"
 msgstr "Обзор рекомендуемых последовательностей выполняемых действий с Git"
+
+msgid "A tool for managing large Git repositories"
+msgstr ""
 
 msgid "commit-graph file is too small"
 msgstr "файл commit-graph слишком маленький"
@@ -13724,6 +14119,14 @@ msgid "no libc information available\n"
 msgstr ""
 
 #, c-format
+msgid "could not determine free disk size for '%s'"
+msgstr ""
+
+#, c-format
+msgid "could not get info for '%s'"
+msgstr ""
+
+#, c-format
 msgid "[GLE %ld] health thread could not open '%ls'"
 msgstr ""
 
@@ -13745,6 +14148,10 @@ msgstr ""
 
 #, c-format
 msgid "health thread wait failed [GLE %ld]"
+msgstr ""
+
+#, c-format
+msgid "Invalid path: %s"
 msgstr ""
 
 msgid "Unable to create FSEventStream."
@@ -13775,6 +14182,30 @@ msgstr ""
 
 #, c-format
 msgid "could not read directory changes [GLE %ld]"
+msgstr ""
+
+#, c-format
+msgid "opendir('%s') failed"
+msgstr ""
+
+#, c-format
+msgid "lstat('%s') failed"
+msgstr ""
+
+#, c-format
+msgid "strbuf_readlink('%s') failed"
+msgstr ""
+
+#, c-format
+msgid "closedir('%s') failed"
+msgstr ""
+
+#, c-format
+msgid "[GLE %ld] unable to open for read '%ls'"
+msgstr ""
+
+#, c-format
+msgid "[GLE %ld] unable to get protocol information for '%ls'"
 msgstr ""
 
 #, c-format
@@ -14047,7 +14478,7 @@ msgstr ""
 msgid "bad zlib compression level %d"
 msgstr "неправильный уровень сжатия zlib %d"
 
-msgid "core.commentChar should only be one character"
+msgid "core.commentChar should only be one ASCII character"
 msgstr ""
 
 #, c-format
@@ -14159,6 +14590,10 @@ msgid "invalid section name: %s"
 msgstr ""
 
 #, c-format
+msgid "refusing to work with overly long line in '%s' on line %<PRIuMAX>"
+msgstr ""
+
+#, c-format
 msgid "missing value for '%s'"
 msgstr ""
 
@@ -14213,13 +14648,20 @@ msgid "unknown object format '%s' specified by server"
 msgstr ""
 
 #, c-format
+msgid "error on bundle-uri response line %d: %s"
+msgstr ""
+
+msgid "expected flush after bundle-uri listing"
+msgstr ""
+
+msgid "expected response end packet after ref listing"
+msgstr ""
+
+#, c-format
 msgid "invalid ls-refs response: %s"
 msgstr ""
 
 msgid "expected flush after ref listing"
-msgstr ""
-
-msgid "expected response end packet after ref listing"
 msgstr ""
 
 #, c-format
@@ -14304,175 +14746,6 @@ msgstr "сбой записи в rev-list"
 
 msgid "failed to close rev-list's stdin"
 msgstr "сбой закрытия стандартного ввода у rev-list"
-
-#, c-format
-msgid "'%s' does not exist"
-msgstr "«%s» не существует"
-
-msgid "need a working directory"
-msgstr ""
-
-msgid "could not find enlistment root"
-msgstr ""
-
-#, c-format
-msgid "could not switch to '%s'"
-msgstr ""
-
-#, c-format
-msgid "could not configure %s=%s"
-msgstr ""
-
-msgid "could not configure log.excludeDecoration"
-msgstr ""
-
-msgid "Scalar enlistments require a worktree"
-msgstr ""
-
-#, c-format
-msgid "could not open directory '%s'"
-msgstr "не удалось открыть каталог «%s»"
-
-#, c-format
-msgid "skipping '%s', which is neither file nor directory"
-msgstr ""
-
-#, c-format
-msgid "could not determine free disk size for '%s'"
-msgstr ""
-
-#, c-format
-msgid "could not get info for '%s'"
-msgstr ""
-
-#, c-format
-msgid "remote HEAD is not a branch: '%.*s'"
-msgstr ""
-
-msgid "failed to get default branch name from remote; using local default"
-msgstr ""
-
-msgid "failed to get default branch name"
-msgstr ""
-
-msgid "failed to unregister repository"
-msgstr ""
-
-msgid "failed to delete enlistment directory"
-msgstr ""
-
-msgid "branch to checkout after clone"
-msgstr ""
-
-msgid "when cloning, create full working directory"
-msgstr ""
-
-msgid "only download metadata for the branch that will be checked out"
-msgstr ""
-
-msgid "scalar clone [<options>] [--] <repo> [<dir>]"
-msgstr ""
-
-#, c-format
-msgid "cannot deduce worktree name from '%s'"
-msgstr ""
-
-#, c-format
-msgid "directory '%s' exists already"
-msgstr ""
-
-#, c-format
-msgid "failed to get default branch for '%s'"
-msgstr ""
-
-#, c-format
-msgid "could not configure remote in '%s'"
-msgstr ""
-
-#, c-format
-msgid "could not configure '%s'"
-msgstr ""
-
-msgid "partial clone failed; attempting full clone"
-msgstr ""
-
-msgid "could not configure for full clone"
-msgstr ""
-
-msgid "scalar diagnose [<enlistment>]"
-msgstr ""
-
-#, c-format
-msgid "could not create directory for '%s'"
-msgstr ""
-
-msgid "could not duplicate stdout"
-msgstr ""
-
-msgid "failed to write archive"
-msgstr ""
-
-msgid "`scalar list` does not take arguments"
-msgstr ""
-
-msgid "scalar register [<enlistment>]"
-msgstr ""
-
-msgid "reconfigure all registered enlistments"
-msgstr ""
-
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr ""
-
-msgid "--all or <enlistment>, but not both"
-msgstr ""
-
-#, c-format
-msgid "git repository gone in '%s'"
-msgstr ""
-
-msgid ""
-"scalar run <task> [<enlistment>]\n"
-"Tasks:\n"
-msgstr ""
-
-#, c-format
-msgid "no such task: '%s'"
-msgstr ""
-
-msgid "scalar unregister [<enlistment>]"
-msgstr ""
-
-msgid "scalar delete <enlistment>"
-msgstr ""
-
-msgid "refusing to delete current working directory"
-msgstr ""
-
-msgid "include Git version"
-msgstr ""
-
-msgid "include Git's build options"
-msgstr ""
-
-msgid "scalar verbose [-v | --verbose] [--build-options]"
-msgstr ""
-
-msgid "-C requires a <directory>"
-msgstr ""
-
-#, c-format
-msgid "could not change to '%s'"
-msgstr ""
-
-msgid "-c requires a <key>=<value> argument"
-msgstr ""
-
-msgid ""
-"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
-"\n"
-"Commands:\n"
-msgstr ""
 
 #, c-format
 msgid "illegal crlf_action %d"
@@ -14687,6 +14960,32 @@ msgstr ""
 
 #, c-format
 msgid "Marked %d islands, done.\n"
+msgstr ""
+
+#, c-format
+msgid "invalid --%s value '%s'"
+msgstr ""
+
+#, c-format
+msgid "could not archive missing directory '%s'"
+msgstr ""
+
+#, c-format
+msgid "could not open directory '%s'"
+msgstr "не удалось открыть каталог «%s»"
+
+#, c-format
+msgid "skipping '%s', which is neither file nor directory"
+msgstr ""
+
+msgid "could not duplicate stdout"
+msgstr ""
+
+#, c-format
+msgid "could not add directory '%s' to archiver"
+msgstr ""
+
+msgid "failed to write archive"
 msgstr ""
 
 msgid "--merge-base does not work with ranges"
@@ -14949,6 +15248,9 @@ msgid "prepend an additional prefix to every line of output"
 msgstr ""
 
 msgid "do not show any source or destination prefix"
+msgstr ""
+
+msgid "use default prefixes a/ and b/"
 msgstr ""
 
 msgid "show context between diff hunks up to the specified number of lines"
@@ -15238,6 +15540,14 @@ msgstr "не удалось переместить каталог git с «%s» 
 msgid "hint: Waiting for your editor to close the file...%c"
 msgstr "подсказка: Ожидание, пока вы закроете редактор с файлом...%c"
 
+#, c-format
+msgid "could not write to '%s'"
+msgstr "не удалось записать в «%s»"
+
+#, c-format
+msgid "could not edit '%s'"
+msgstr ""
+
 msgid "Filtering content"
 msgstr "Фильтруется содержимое"
 
@@ -15268,6 +15578,9 @@ msgstr "git fetch-pack: ожидается ACK/NAK, а получено «%s»"
 
 msgid "unable to write to remote"
 msgstr ""
+
+msgid "Server supports filter"
+msgstr "Сервер поддерживает фильтрацию"
 
 #, c-format
 msgid "invalid shallow line: %s"
@@ -15379,9 +15692,6 @@ msgstr ""
 msgid "Server does not support shallow requests"
 msgstr "Сервер не поддерживает частичные запросы"
 
-msgid "Server supports filter"
-msgstr "Сервер поддерживает фильтрацию"
-
 msgid "unable to write request to remote"
 msgstr ""
 
@@ -15403,14 +15713,12 @@ msgstr ""
 
 #. TRANSLATORS: The parameter will be 'ready', a protocol
 #. keyword.
-#.
 #, c-format
 msgid "expected packfile to be sent after '%s'"
 msgstr ""
 
 #. TRANSLATORS: The parameter will be 'ready', a protocol
 #. keyword.
-#.
 #, c-format
 msgid "expected no other sections to be sent after no '%s'"
 msgstr ""
@@ -15481,7 +15789,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"repository '%s' is incompatible with fsmonitor due to lack of Unix sockets"
+"socket directory '%s' is incompatible with fsmonitor due to lack of Unix "
+"sockets support"
 msgstr ""
 
 msgid ""
@@ -15490,8 +15799,7 @@ msgid ""
 "           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
 "bare]\n"
 "           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--super-prefix=<path>] [--config-env=<name>=<envvar>]\n"
-"           <command> [<args>]"
+"           [--config-env=<name>=<envvar>] <command> [<args>]"
 msgstr ""
 
 msgid ""
@@ -15519,15 +15827,15 @@ msgid "no namespace given for --namespace\n"
 msgstr ""
 
 #, c-format
-msgid "no prefix given for --super-prefix\n"
-msgstr ""
-
-#, c-format
 msgid "-c expects a configuration string\n"
 msgstr ""
 
 #, c-format
 msgid "no config key given for --config-env\n"
+msgstr ""
+
+#, c-format
+msgid "no attribute source given for --attr-source\n"
 msgstr ""
 
 #, c-format
@@ -15626,8 +15934,11 @@ msgstr ""
 msgid "gpg.ssh.defaultKeyCommand failed: %s %s"
 msgstr ""
 
-msgid "gpg failed to sign the data"
-msgstr "gpg не удалось подписать данные"
+#, c-format
+msgid ""
+"gpg failed to sign the data:\n"
+"%s"
+msgstr ""
 
 msgid "user.signingKey needs to be set for ssh signing"
 msgstr ""
@@ -15706,6 +16017,12 @@ msgstr ""
 msgid "Low-level Commands / Internal Helpers"
 msgstr "Низкоуровневые команды / Внутренние вспомогательные"
 
+msgid "User-facing repository, command and file interfaces"
+msgstr ""
+
+msgid "Developer-facing file formats, protocols and other interfaces"
+msgstr ""
+
 #, c-format
 msgid "available git commands in '%s'"
 msgstr "доступные команды git в «%s»"
@@ -15717,6 +16034,12 @@ msgid "These are common Git commands used in various situations:"
 msgstr "Стандартные команды Git используемые в различных ситуациях:"
 
 msgid "The Git concept guides are:"
+msgstr ""
+
+msgid "User-facing repository, command and file interfaces:"
+msgstr ""
+
+msgid "File formats, protocols and other developer interfaces:"
 msgstr ""
 
 msgid "External commands"
@@ -15778,8 +16101,8 @@ msgstr[3] ""
 "\n"
 "Самые похожие команды:"
 
-msgid "git version [<options>]"
-msgstr "git version [<options>]"
+msgid "git version [--build-options]"
+msgstr ""
 
 #, c-format
 msgid "%s: %s - %s"
@@ -15813,10 +16136,6 @@ msgstr ""
 "исполняемый.\n"
 "Вы можете отключить это предупреждение с помощью команды «git config advice."
 "ignoredHook false»."
-
-#, c-format
-msgid "Couldn't start hook '%s'\n"
-msgstr ""
 
 #, c-format
 msgid "argument to --packfile must be a valid hash (got '%s')"
@@ -16002,14 +16321,12 @@ msgid "quoted CRLF detected"
 msgstr ""
 
 #, c-format
-msgid ""
-"Your local changes to the following files would be overwritten by merge:\n"
-"  %s"
-msgstr ""
-
-#, c-format
 msgid "Failed to merge submodule %s (not checked out)"
 msgstr "Не удалось слить подмодуль %s (состояние не забрано)"
+
+#, c-format
+msgid "Failed to merge submodule %s (no merge base)"
+msgstr ""
 
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
@@ -16029,24 +16346,8 @@ msgstr ""
 
 #, c-format
 msgid ""
-"Failed to merge submodule %s, but a possible merge resolution exists:\n"
-"%s\n"
+"Failed to merge submodule %s, but a possible merge resolution exists: %s"
 msgstr ""
-
-#, c-format
-msgid ""
-"If this is correct simply add it to the index for example\n"
-"by using:\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"which will accept this suggestion.\n"
-msgstr ""
-"Если оно верное, то просто добавьте его в индекс, например так:\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"тем самым принимая это предположение.\n"
 
 #, c-format
 msgid ""
@@ -16174,15 +16475,33 @@ msgid ""
 "of %s left in tree."
 msgstr ""
 
+#. TRANSLATORS: This is a line of advice to resolve a merge
+#. conflict in a submodule. The first argument is the submodule
+#. name, and the second argument is the abbreviated id of the
+#. commit that needs to be merged.  For example:
+#.  - go to submodule (mysubmodule), and either merge commit abc1234"
 #, c-format
 msgid ""
-"Note: %s not up to date and in way of checking out conflicted version; old "
-"copy renamed to %s"
+" - go to submodule (%s), and either merge commit %s\n"
+"   or update to an existing commit which has merged those changes\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Recursive merging with submodules currently only supports trivial cases.\n"
+"Please manually handle the merging of each conflicted submodule.\n"
+"This can be accomplished with the following steps:\n"
+"%s - come back to superproject and run:\n"
+"\n"
+"      git add %s\n"
+"\n"
+"   to record the above merge or update\n"
+" - resolve any other conflicts in the superproject\n"
+" - commit the resulting index in the superproject\n"
 msgstr ""
 
 #. TRANSLATORS: The %s arguments are: 1) tree hash of a merge
 #. base, and 2-3) the trees for the two trees we're merging.
-#.
 #, c-format
 msgid "collecting merge info failed for trees %s, %s, %s"
 msgstr ""
@@ -16247,6 +16566,21 @@ msgstr "Не удалось слить подмодуль %s (нельзя сд�
 
 msgid "Found a possible merge resolution for the submodule:\n"
 msgstr "Найдено возможное разрешение слиятия для подмодуля:\n"
+
+#, c-format
+msgid ""
+"If this is correct simply add it to the index for example\n"
+"by using:\n"
+"\n"
+"  git update-index --cacheinfo 160000 %s \"%s\"\n"
+"\n"
+"which will accept this suggestion.\n"
+msgstr ""
+"Если оно верное, то просто добавьте его в индекс, например так:\n"
+"\n"
+"  git update-index --cacheinfo 160000 %s \"%s\"\n"
+"\n"
+"тем самым принимая это предположение.\n"
 
 #, c-format
 msgid "Failed to merge submodule %s (multiple merges found)"
@@ -16316,8 +16650,8 @@ msgstr "Отказ потери неотслеживаемого файла %s; 
 
 #, c-format
 msgid ""
-"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename \"%s"
-"\"->\"%s\" in \"%s\"%s"
+"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename "
+"\"%s\"->\"%s\" in \"%s\"%s"
 msgstr ""
 "КОНФЛИКТ (переименование/переименование): Переименование «%s»→«%s» в ветке "
 "«%s» и переименование «%s»→«%s» в ветке «%s»%s"
@@ -16612,7 +16946,6 @@ msgstr "Отказ в перезаписи заметок в %s (за преде
 #. TRANSLATORS: The first %s is the name of
 #. the environment variable, the second %s is
 #. its value.
-#.
 #, c-format
 msgid "Bad %s value: '%s'"
 msgstr "Неправильное значение переменной %s: «%s»"
@@ -16627,10 +16960,6 @@ msgstr ""
 
 #, c-format
 msgid "%s: ignoring alternate object stores, nesting too deep"
-msgstr ""
-
-#, c-format
-msgid "unable to normalize object directory: %s"
 msgstr ""
 
 msgid "unable to fdopen alternates lockfile"
@@ -16692,6 +17021,10 @@ msgid "garbage at end of loose object '%s'"
 msgstr ""
 
 #, c-format
+msgid "unable to open loose object %s"
+msgstr ""
+
+#, c-format
 msgid "unable to parse %s header"
 msgstr ""
 
@@ -16707,15 +17040,11 @@ msgid "header for %s too long, exceeds %d bytes"
 msgstr ""
 
 #, c-format
-msgid "failed to read object %s"
+msgid "loose object %s (stored in %s) is corrupt"
 msgstr ""
 
 #, c-format
 msgid "replacement %s not found for %s"
-msgstr ""
-
-#, c-format
-msgid "loose object %s (stored in %s) is corrupt"
 msgstr ""
 
 #, c-format
@@ -16728,9 +17057,6 @@ msgstr ""
 
 #, c-format
 msgid "unable to set permission to '%s'"
-msgstr ""
-
-msgid "file write error"
 msgstr ""
 
 msgid "error when closing loose object file"
@@ -16759,13 +17085,30 @@ msgid "confused by unstable object source data for %s"
 msgstr ""
 
 #, c-format
+msgid "write stream object %ld != %<PRIuMAX>"
+msgstr ""
+
+#, c-format
+msgid "unable to stream deflate new object (%d)"
+msgstr ""
+
+#, c-format
+msgid "deflateEnd on stream object failed (%d)"
+msgstr ""
+
+#, c-format
+msgid "unable to create directory %s"
+msgstr ""
+
+#, c-format
 msgid "cannot read object for %s"
 msgstr ""
 
-msgid "corrupt commit"
+#, c-format
+msgid "object fails fsck: %s"
 msgstr ""
 
-msgid "corrupt tag"
+msgid "refusing to create malformed object"
 msgstr ""
 
 #, c-format
@@ -16815,7 +17158,6 @@ msgstr ""
 #. TRANSLATORS: This is a line of ambiguous object
 #. output shown when we cannot look up or parse the
 #. object in question. E.g. "deadbeef [bad object]".
-#.
 #, c-format
 msgid "%s [bad object]"
 msgstr ""
@@ -16824,7 +17166,6 @@ msgstr ""
 #. object output. E.g.:
 #. *
 #.    "deadbeef commit 2021-01-01 - Some Commit Message"
-#.
 #, c-format
 msgid "%s commit %s - %s"
 msgstr ""
@@ -16839,7 +17180,6 @@ msgstr ""
 #. *
 #. The third argument is the "tag" string
 #. from object.c.
-#.
 #, c-format
 msgid "%s tag %s - %s"
 msgstr ""
@@ -16849,21 +17189,18 @@ msgstr ""
 #. the tag itself. E.g.:
 #. *
 #.    "deadbeef [bad tag, could not parse it]"
-#.
 #, c-format
 msgid "%s [bad tag, could not parse it]"
 msgstr ""
 
 #. TRANSLATORS: This is a line of ambiguous <type>
 #. object output. E.g. "deadbeef tree".
-#.
 #, c-format
 msgid "%s tree"
 msgstr ""
 
 #. TRANSLATORS: This is a line of ambiguous <type>
 #. object output. E.g. "deadbeef blob".
-#.
 #, c-format
 msgid "%s blob"
 msgstr ""
@@ -16875,7 +17212,6 @@ msgstr ""
 #. TRANSLATORS: The argument is the list of ambiguous
 #. objects composed in show_ambiguous_object(). See
 #. its "TRANSLATORS" comments for details.
-#.
 #, c-format
 msgid ""
 "The candidates are:\n"
@@ -16967,6 +17303,52 @@ msgstr "не удалось разобрать объект: %s"
 msgid "hash mismatch %s"
 msgstr "несоответствие хэш-кода %s"
 
+msgid "trying to write commit not in index"
+msgstr ""
+
+msgid "failed to load bitmap index (corrupted?)"
+msgstr ""
+
+msgid "corrupted bitmap index (too small)"
+msgstr ""
+
+msgid "corrupted bitmap index file (wrong header)"
+msgstr ""
+
+#, c-format
+msgid "unsupported version '%d' for bitmap index file"
+msgstr ""
+
+msgid "corrupted bitmap index file (too short to fit hash cache)"
+msgstr ""
+
+msgid "corrupted bitmap index file (too short to fit lookup table)"
+msgstr ""
+
+#, c-format
+msgid "duplicate entry in bitmap index: '%s'"
+msgstr ""
+
+#, c-format
+msgid "corrupt ewah bitmap: truncated header for entry %d"
+msgstr ""
+
+#, c-format
+msgid "corrupt ewah bitmap: commit index %u out of range"
+msgstr ""
+
+msgid "corrupted bitmap pack index"
+msgstr ""
+
+msgid "invalid XOR offset in bitmap pack index"
+msgstr ""
+
+msgid "cannot fstat bitmap file"
+msgstr ""
+
+msgid "checksum doesn't match in MIDX and bitmap"
+msgstr ""
+
 msgid "multi-pack bitmap is missing required reverse index"
 msgstr ""
 
@@ -16978,8 +17360,59 @@ msgstr ""
 msgid "preferred pack (%s) is invalid"
 msgstr ""
 
+msgid "corrupt bitmap lookup table: triplet position out of index"
+msgstr ""
+
+msgid "corrupt bitmap lookup table: xor chain exceeds entry count"
+msgstr ""
+
 #, c-format
-msgid "could not find %s in pack %s at offset %<PRIuMAX>"
+msgid "corrupt bitmap lookup table: commit index %u out of range"
+msgstr ""
+
+#, c-format
+msgid "corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""
+msgstr ""
+
+#, c-format
+msgid "object '%s' not found in type bitmaps"
+msgstr ""
+
+#, c-format
+msgid "object '%s' does not have a unique type"
+msgstr ""
+
+#, c-format
+msgid "object '%s': real type '%s', expected: '%s'"
+msgstr ""
+
+#, c-format
+msgid "object not in bitmap: '%s'"
+msgstr ""
+
+msgid "failed to load bitmap indexes"
+msgstr ""
+
+msgid "you must specify exactly one commit to test"
+msgstr ""
+
+#, c-format
+msgid "commit '%s' doesn't have an indexed bitmap"
+msgstr ""
+
+msgid "mismatch in bitmap results"
+msgstr ""
+
+#, c-format
+msgid "could not find '%s' in pack '%s' at offset %<PRIuMAX>"
+msgstr ""
+
+#, c-format
+msgid "unable to get disk usage of '%s'"
+msgstr ""
+
+#, c-format
+msgid "bitmap file '%s' has invalid checksum"
 msgstr ""
 
 #, c-format
@@ -17020,6 +17453,13 @@ msgstr ""
 
 #, c-format
 msgid "reverse-index file %s has unsupported hash id %<PRIu32>"
+msgstr ""
+
+msgid "invalid checksum"
+msgstr ""
+
+#, c-format
+msgid "invalid rev-index position at %<PRIu64>: %<PRIu32> != %<PRIu32>"
 msgstr ""
 
 msgid "cannot both write and verify reverse index"
@@ -17104,6 +17544,9 @@ msgstr "имелось в виду `--%s` (с двумя дефисами)?"
 msgid "alias of --%s"
 msgstr ""
 
+msgid "need a subcommand"
+msgstr ""
+
 #, c-format
 msgid "unknown option `%s'"
 msgstr ""
@@ -17125,7 +17568,6 @@ msgstr "использование: %s"
 
 #. TRANSLATORS: the colon here should align with the
 #. one in "usage: %s" translation.
-#.
 #, c-format
 msgid "   or: %s"
 msgstr "          или: %s"
@@ -17148,7 +17590,6 @@ msgstr "          или: %s"
 #. function. The "%s" is a line in the (hopefully already
 #. translated) N_() usage string, which contained embedded
 #. newlines before we split it up.
-#.
 #, c-format
 msgid "%*s%s"
 msgstr ""
@@ -17173,6 +17614,9 @@ msgid "be more quiet"
 msgstr "тихий режим"
 
 msgid "use <n> digits to display object names"
+msgstr ""
+
+msgid "prefixed path to initial superproject"
 msgstr ""
 
 msgid "how to strip spaces and #comments from message"
@@ -17320,6 +17764,10 @@ msgstr ""
 
 #, c-format
 msgid "promisor remote name cannot begin with '/': %s"
+msgstr ""
+
+#, c-format
+msgid "could not fetch %s from promisor remote"
 msgstr ""
 
 msgid "object-info: expected flush after arguments"
@@ -17537,9 +17985,12 @@ msgid ""
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
 "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"        create a merge commit using the original merge commit's\n"
+"        message (or the oneline, if no original merge commit was\n"
+"        specified); use -c <commit> to reword the commit message\n"
+"u, update-ref <ref> = track a placeholder for the <ref> to be updated\n"
+"                      to this position in the new commits. The <ref> is\n"
+"                      updated at the end of the rebase\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -17637,6 +18088,14 @@ msgid "ahead %d, behind %d"
 msgstr "впереди %d, позади %d"
 
 #, c-format
+msgid "%%(%.*s) does not take arguments"
+msgstr ""
+
+#, c-format
+msgid "unrecognized %%(%.*s) argument: %s"
+msgstr ""
+
+#, c-format
 msgid "expected format: %%(color:<color>)"
 msgstr "ожидаемый формат: %%(color:<color>)"
 
@@ -17651,22 +18110,6 @@ msgstr "Ожидается целочисленное значение refname:l
 #, c-format
 msgid "Integer value expected refname:rstrip=%s"
 msgstr "Ожидается целочисленное значение refname:rstrip=%s"
-
-#, c-format
-msgid "unrecognized %%(%s) argument: %s"
-msgstr "неопознанный аргумент %%(%s): %s"
-
-#, c-format
-msgid "%%(objecttype) does not take arguments"
-msgstr ""
-
-#, c-format
-msgid "%%(deltabase) does not take arguments"
-msgstr ""
-
-#, c-format
-msgid "%%(body) does not take arguments"
-msgstr "параметр %%(body) не принимает аргументы"
 
 #, c-format
 msgid "expected %%(trailers:key=<value>)"
@@ -17685,10 +18128,6 @@ msgid "positive value expected '%s' in %%(%s)"
 msgstr ""
 
 #, c-format
-msgid "unrecognized email option: %s"
-msgstr ""
-
-#, c-format
 msgid "expected format: %%(align:<width>,<position>)"
 msgstr "ожидаемый формат: %%(align:<width>,<position>)"
 
@@ -17701,11 +18140,15 @@ msgid "unrecognized width:%s"
 msgstr "неопознанная ширина:%s"
 
 #, c-format
+msgid "unrecognized %%(%s) argument: %s"
+msgstr "неопознанный аргумент %%(%s): %s"
+
+#, c-format
 msgid "positive width expected with the %%(align) atom"
 msgstr "ожидается положительная ширина с указанием частицы %%(align)"
 
 #, c-format
-msgid "%%(rest) does not take arguments"
+msgid "expected format: %%(ahead-behind:<committish>)"
 msgstr ""
 
 #, c-format
@@ -17997,6 +18440,13 @@ msgstr ""
 msgid "http transport does not support %s"
 msgstr ""
 
+msgid "protocol error: expected '<url> <path>', missing space"
+msgstr ""
+
+#, c-format
+msgid "failed to download file at URL '%s'"
+msgstr ""
+
 msgid "git-http-push failed"
 msgstr ""
 
@@ -18063,7 +18513,6 @@ msgstr "src refspec %s соответствует более чем одному
 #. TRANSLATORS: "matches '%s'%" is the <dst> part of "git push
 #. <remote> <src>:<dst>" push, and "being pushed ('%s')" is
 #. the <src>.
-#.
 #, c-format
 msgid ""
 "The destination you provided is not a full refname (i.e.,\n"
@@ -18306,10 +18755,6 @@ msgid "no remembered resolution for '%s'"
 msgstr ""
 
 #, c-format
-msgid "cannot unlink '%s'"
-msgstr ""
-
-#, c-format
 msgid "Updated preimage for '%s'"
 msgstr ""
 
@@ -18332,6 +18777,21 @@ msgstr ""
 msgid "failed to find tree of %s"
 msgstr "не удалось найти дерево для %s"
 
+#, c-format
+msgid "unsupported section for hidden refs: %s"
+msgstr ""
+
+msgid "--exclude-hidden= passed more than once"
+msgstr ""
+
+#, c-format
+msgid "resolve-undo records `%s` which is missing"
+msgstr ""
+
+#, c-format
+msgid "could not get commit for ancestry-path argument %s"
+msgstr ""
+
 msgid "--unpacked=<packfile> no longer supported"
 msgstr ""
 
@@ -18350,6 +18810,175 @@ msgstr ""
 
 #, c-format
 msgid "cannot create async thread: %s"
+msgstr ""
+
+#, c-format
+msgid "'%s' does not exist"
+msgstr "«%s» не существует"
+
+#, c-format
+msgid "could not switch to '%s'"
+msgstr ""
+
+msgid "need a working directory"
+msgstr ""
+
+msgid "Scalar enlistments require a worktree"
+msgstr ""
+
+#, c-format
+msgid "could not configure %s=%s"
+msgstr ""
+
+msgid "could not configure log.excludeDecoration"
+msgstr ""
+
+msgid "could not add enlistment"
+msgstr ""
+
+msgid "could not set recommended config"
+msgstr ""
+
+msgid "could not turn on maintenance"
+msgstr ""
+
+msgid "could not start the FSMonitor daemon"
+msgstr ""
+
+msgid "could not turn off maintenance"
+msgstr ""
+
+msgid "could not remove enlistment"
+msgstr ""
+
+#, c-format
+msgid "remote HEAD is not a branch: '%.*s'"
+msgstr ""
+
+msgid "failed to get default branch name from remote; using local default"
+msgstr ""
+
+msgid "failed to get default branch name"
+msgstr ""
+
+msgid "failed to unregister repository"
+msgstr ""
+
+msgid "failed to stop the FSMonitor daemon"
+msgstr ""
+
+msgid "failed to delete enlistment directory"
+msgstr ""
+
+msgid "branch to checkout after clone"
+msgstr ""
+
+msgid "when cloning, create full working directory"
+msgstr ""
+
+msgid "only download metadata for the branch that will be checked out"
+msgstr ""
+
+msgid "scalar clone [<options>] [--] <repo> [<dir>]"
+msgstr ""
+
+#, c-format
+msgid "cannot deduce worktree name from '%s'"
+msgstr ""
+
+#, c-format
+msgid "directory '%s' exists already"
+msgstr ""
+
+#, c-format
+msgid "failed to get default branch for '%s'"
+msgstr ""
+
+#, c-format
+msgid "could not configure remote in '%s'"
+msgstr ""
+
+#, c-format
+msgid "could not configure '%s'"
+msgstr ""
+
+msgid "partial clone failed; attempting full clone"
+msgstr ""
+
+msgid "could not configure for full clone"
+msgstr ""
+
+msgid "scalar diagnose [<enlistment>]"
+msgstr ""
+
+msgid "`scalar list` does not take arguments"
+msgstr ""
+
+msgid "scalar register [<enlistment>]"
+msgstr ""
+
+msgid "reconfigure all registered enlistments"
+msgstr ""
+
+msgid "scalar reconfigure [--all | <enlistment>]"
+msgstr ""
+
+msgid "--all or <enlistment>, but not both"
+msgstr ""
+
+#, c-format
+msgid "could not remove stale scalar.repo '%s'"
+msgstr ""
+
+#, c-format
+msgid "removing stale scalar.repo '%s'"
+msgstr ""
+
+#, c-format
+msgid "git repository gone in '%s'"
+msgstr ""
+
+msgid ""
+"scalar run <task> [<enlistment>]\n"
+"Tasks:\n"
+msgstr ""
+
+#, c-format
+msgid "no such task: '%s'"
+msgstr ""
+
+msgid "scalar unregister [<enlistment>]"
+msgstr ""
+
+msgid "scalar delete <enlistment>"
+msgstr ""
+
+msgid "refusing to delete current working directory"
+msgstr ""
+
+msgid "include Git version"
+msgstr ""
+
+msgid "include Git's build options"
+msgstr ""
+
+msgid "scalar verbose [-v | --verbose] [--build-options]"
+msgstr ""
+
+msgid "-C requires a <directory>"
+msgstr ""
+
+#, c-format
+msgid "could not change to '%s'"
+msgstr ""
+
+msgid "-c requires a <key>=<value> argument"
+msgstr ""
+
+msgid ""
+"scalar [-C <directory>] [-c <key>=<value>] <command> [<options>]\n"
+"\n"
+"Commands:\n"
 msgstr ""
 
 msgid "unexpected flush packet while reading remote unpack status"
@@ -18442,10 +19071,6 @@ msgid "could not lock '%s'"
 msgstr "не удалось заблокировать «%s»"
 
 #, c-format
-msgid "could not write to '%s'"
-msgstr "не удалось записать в «%s»"
-
-#, c-format
 msgid "could not write eol to '%s'"
 msgstr "не удалось записать eol в «%s»"
 
@@ -18460,13 +19085,8 @@ msgstr "ваши локальные изменения будут перезап
 msgid "commit your changes or stash them to proceed."
 msgstr "для продолжения закоммитьте ваши изменения или спрячьте их."
 
-#, c-format
-msgid "%s: fast-forward"
-msgstr "%s: быстрая перемотка"
-
 #. TRANSLATORS: %s will be "revert", "cherry-pick" or
 #. "rebase".
-#.
 #, c-format
 msgid "%s: Unable to write new index file"
 msgstr "%s: Не удалось записать файл индекса"
@@ -18726,6 +19346,22 @@ msgid "git %s: failed to refresh the index"
 msgstr "git %s: сбой обновления индекса"
 
 #, c-format
+msgid "'%s' is not a valid label"
+msgstr ""
+
+#, c-format
+msgid "'%s' is not a valid refname"
+msgstr ""
+
+#, c-format
+msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
+msgstr ""
+
+#, c-format
+msgid "invalid command '%.*s'"
+msgstr ""
+
+#, c-format
 msgid "%s does not accept arguments: '%s'"
 msgstr "параметр %s не принимает аргументы: «%s»"
 
@@ -18795,11 +19431,8 @@ msgstr ""
 msgid "could not create sequencer directory '%s'"
 msgstr "не удалось создать каталог для указателя следования коммитов «%s»"
 
-msgid "could not lock HEAD"
-msgstr "не удалось заблокировать HEAD"
-
 msgid "no cherry-pick or revert in progress"
-msgstr "копирование или обращение изменений коммита уже выполняются"
+msgstr "копирование или обращение изменений коммита сейчас не выполняются"
 
 msgid "cannot resolve HEAD"
 msgstr "не удалось определить HEAD"
@@ -18885,38 +19518,32 @@ msgstr ""
 "  git rebase --continue\n"
 "\n"
 
-msgid "and made changes to the index and/or the working tree\n"
-msgstr "и были сделаны изменения в индексе и/или в рабочем каталоге\n"
+msgid "and made changes to the index and/or the working tree.\n"
+msgstr ""
 
 #, c-format
 msgid ""
 "execution succeeded: %s\n"
-"but left changes to the index and/or the working tree\n"
+"but left changes to the index and/or the working tree.\n"
 "Commit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
 msgstr ""
-"успешное выполнение: %s\n"
-"но остались изменения в индексе и/или в рабочем каталоге\n"
-"Сделайте коммит или спрячьте ваши изменения, а затем выполните\n"
-"\n"
-"  git rebase --continue\n"
-"\n"
 
 #, c-format
 msgid "illegal label name: '%.*s'"
 msgstr ""
+
+#, c-format
+msgid "could not resolve '%s'"
+msgstr "не удалось распознать «%s»"
 
 msgid "writing fake root commit"
 msgstr "запись поддельного корневого коммита"
 
 msgid "writing squash-onto"
 msgstr "запить уплотнить-над"
-
-#, c-format
-msgid "could not resolve '%s'"
-msgstr "не удалось распознать «%s»"
 
 msgid "cannot merge without a current revision"
 msgstr "нельзя слить без текущей редакции"
@@ -18942,6 +19569,23 @@ msgstr "не удалось даже попытаться слить «%.*s»"
 
 msgid "merge: Unable to write new index file"
 msgstr "слияние: Не удалось записать файл индекса"
+
+#, c-format
+msgid ""
+"another 'rebase' process appears to be running; '%s.lock' already exists"
+msgstr ""
+
+#, c-format
+msgid ""
+"Updated the following refs with %s:\n"
+"%s"
+msgstr ""
+
+#, c-format
+msgid ""
+"Failed to update the following refs with %s:\n"
+"%s"
+msgstr ""
 
 msgid "Cannot autostash"
 msgstr "Не удалось автоматически спрятать изменения"
@@ -19100,6 +19744,10 @@ msgid "the script was already rearranged."
 msgstr "сценарий уже был перестроен."
 
 #, c-format
+msgid "update-refs file at '%s' is invalid"
+msgstr ""
+
+#, c-format
 msgid "'%s' is outside repository at '%s'"
 msgstr ""
 
@@ -19225,10 +19873,14 @@ msgstr ""
 
 #, c-format
 msgid ""
-"unsafe repository ('%s' is owned by someone else)\n"
-"To add an exception for this directory, call:\n"
+"detected dubious ownership in repository at '%s'\n"
+"%sTo add an exception for this directory, call:\n"
 "\n"
 "\tgit config --global --add safe.directory %s"
+msgstr ""
+
+#, c-format
+msgid "cannot use bare repository '%s' (safe.bareRepository is '%s')"
 msgstr ""
 
 #, c-format
@@ -19299,15 +19951,11 @@ msgstr[2] "%u байтов/с"
 msgstr[3] "%u байта/с"
 
 #, c-format
-msgid "could not edit '%s'"
-msgstr ""
-
-#, c-format
 msgid "ignoring suspicious submodule name: %s"
 msgstr "игнорирую подозрительный подмодуль с именем: %s"
 
 msgid "negative values not allowed for submodule.fetchJobs"
-msgstr "нельзя использовать отприцательные значения для submodule.fetchJobs"
+msgstr "нельзя использовать отрицательные значения для submodule.fetchJobs"
 
 #, c-format
 msgid "ignoring '%s' which may be interpreted as a command-line option: %s"
@@ -19470,6 +20118,25 @@ msgstr "ls-tree вернул неожиданный код %d"
 
 #, c-format
 msgid "failed to lstat '%s'"
+msgstr ""
+
+msgid "no remote configured to get bundle URIs from"
+msgstr ""
+
+#, c-format
+msgid "remote '%s' has no configured URL"
+msgstr ""
+
+msgid "could not get the bundle-uri list"
+msgstr ""
+
+msgid "test-tool cache-tree <options> (control|prime|update)"
+msgstr ""
+
+msgid "clear the cache tree before each iteration"
+msgstr ""
+
+msgid "number of entries in the cache tree to invalidate (default 0)"
 msgstr ""
 
 msgid "unhandled options"
@@ -19806,6 +20473,12 @@ msgstr "Прерываю."
 msgid "failed to push all needed submodules"
 msgstr ""
 
+msgid "bundle-uri operation not supported by protocol"
+msgstr ""
+
+msgid "could not retrieve server-advertised bundle-uri list"
+msgstr ""
+
 msgid "too-short tree object"
 msgstr "слишком  короткий объект дерева"
 
@@ -20076,6 +20749,18 @@ msgstr "неправильный номер порта"
 
 msgid "invalid '..' path segment"
 msgstr "неправильная часть пути «..»"
+
+msgid "usage: "
+msgstr ""
+
+msgid "fatal: "
+msgstr ""
+
+msgid "error: "
+msgstr ""
+
+msgid "warning: "
+msgstr ""
 
 msgid "Fetching objects"
 msgstr ""
@@ -20530,14 +21215,16 @@ msgstr "Игнорируемые файлы"
 
 #, c-format
 msgid ""
-"It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
-"may speed it up, but you have to be careful not to forget to add\n"
-"new files yourself (see 'git help status')."
+"It took %.2f seconds to enumerate untracked files,\n"
+"but the results were cached, and subsequent runs may be faster."
 msgstr ""
-"%.2f сек занял вывод списка неотслеживаемых файлов.\n"
-"«status -uno» возможно ускорит это, но будьте внимательны\n"
-"и не забудьте добавить новые файлы вручную\n"
-"(смотрите «git help status» для подробностей)."
+
+#, c-format
+msgid "It took %.2f seconds to enumerate untracked files."
+msgstr ""
+
+msgid "See 'git help status' for information on how to improve this."
+msgstr ""
 
 #, c-format
 msgid "Untracked files not listed%s"
@@ -20686,296 +21373,6 @@ msgstr "Вам нужно запускать эту команду находя�
 
 msgid "Unable to determine absolute path of git directory"
 msgstr "Не удалось определить абсолютный путь к каталогу git"
-
-#. TRANSLATORS: you can adjust this to align "git add -i" status menu
-#, perl-format
-msgid "%12s %12s %s"
-msgstr "%12s %12s %s"
-
-#, perl-format
-msgid "touched %d path\n"
-msgid_plural "touched %d paths\n"
-msgstr[0] "тронут %d путь\n"
-msgstr[1] "тронуты %d пути\n"
-msgstr[2] "тронуты %d путей\n"
-msgstr[3] "тронуты %d пути\n"
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for staging."
-msgstr ""
-"Если патч применяется без ошибок, то изменённый блок будет сразу помечен для "
-"индексирования."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for stashing."
-msgstr ""
-"Если патч применяется без ошибок, то изменённый блок будет сразу помечен для "
-"прятанья."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for unstaging."
-msgstr ""
-"Если патч применяется без ошибок, то изменённый блок будет сразу помечен для "
-"убирания из индекса."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for applying."
-msgstr ""
-"Если патч применяется без ошибок, то изменённый блок будет сразу помечен для "
-"применения."
-
-msgid ""
-"If the patch applies cleanly, the edited hunk will immediately be\n"
-"marked for discarding."
-msgstr ""
-"Если патч применяется без ошибок, то изменённый блок будет сразу помечен для "
-"отмены изменений."
-
-#, perl-format
-msgid "failed to open hunk edit file for writing: %s"
-msgstr "не удалось открыть файл редактирования блока изменений для записи: %s"
-
-#, perl-format
-msgid ""
-"---\n"
-"To remove '%s' lines, make them ' ' lines (context).\n"
-"To remove '%s' lines, delete them.\n"
-"Lines starting with %s will be removed.\n"
-msgstr ""
-"---\n"
-"Чтобы удалить «%s» строки, сделайте их ' ' строками (контекст).\n"
-"Чтобы удалить «%s» строки, удалите их.\n"
-"Строки, начинающиеся с %s будут удалены.\n"
-
-#, perl-format
-msgid "failed to open hunk edit file for reading: %s"
-msgstr "не удалось открыть файл редактирования блока изменений для чтения: %s"
-
-msgid ""
-"y - stage this hunk\n"
-"n - do not stage this hunk\n"
-"q - quit; do not stage this hunk or any of the remaining ones\n"
-"a - stage this hunk and all later hunks in the file\n"
-"d - do not stage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - индексировать этот блок\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все оставшиеся блоки\n"
-"a - индексировать этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"y - stash this hunk\n"
-"n - do not stash this hunk\n"
-"q - quit; do not stash this hunk or any of the remaining ones\n"
-"a - stash this hunk and all later hunks in the file\n"
-"d - do not stash this hunk or any of the later hunks in the file"
-msgstr ""
-"y - спрятать этот блок\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все последующие блоки\n"
-"a - спрятать этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"y - unstage this hunk\n"
-"n - do not unstage this hunk\n"
-"q - quit; do not unstage this hunk or any of the remaining ones\n"
-"a - unstage this hunk and all later hunks in the file\n"
-"d - do not unstage this hunk or any of the later hunks in the file"
-msgstr ""
-"y - убрать из индекса этот блок\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все последующие блоки\n"
-"a - убрать из индекса этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"y - apply this hunk to index\n"
-"n - do not apply this hunk to index\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - принять этот блок в индекс\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все последующие блоки\n"
-"a - принять этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"y - discard this hunk from worktree\n"
-"n - do not discard this hunk from worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - отбросить этот блок из рабочего дерева\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все последующие блоки\n"
-"a - отбросить этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"y - discard this hunk from index and worktree\n"
-"n - do not discard this hunk from index and worktree\n"
-"q - quit; do not discard this hunk or any of the remaining ones\n"
-"a - discard this hunk and all later hunks in the file\n"
-"d - do not discard this hunk or any of the later hunks in the file"
-msgstr ""
-"y - отбросить этот блок из индекса и рабочего дерева\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все последующие блоки\n"
-"a - отбросить этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"y - apply this hunk to index and worktree\n"
-"n - do not apply this hunk to index and worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - принять этот блок в индекс и рабочее дерево\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все последующие блоки\n"
-"a - принять этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"y - apply this hunk to worktree\n"
-"n - do not apply this hunk to worktree\n"
-"q - quit; do not apply this hunk or any of the remaining ones\n"
-"a - apply this hunk and all later hunks in the file\n"
-"d - do not apply this hunk or any of the later hunks in the file"
-msgstr ""
-"y - принять этот блок в рабочее дерево\n"
-"n - пропустить этот блок\n"
-"q - выход; пропустить этот и все последующие блоки\n"
-"a - принять этот и остальные блоки файла\n"
-"d - пропустить этот и остальные блоки файла"
-
-msgid ""
-"g - select a hunk to go to\n"
-"/ - search for a hunk matching the given regex\n"
-"j - leave this hunk undecided, see next undecided hunk\n"
-"J - leave this hunk undecided, see next hunk\n"
-"k - leave this hunk undecided, see previous undecided hunk\n"
-"K - leave this hunk undecided, see previous hunk\n"
-"s - split the current hunk into smaller hunks\n"
-"e - manually edit the current hunk\n"
-"? - print help\n"
-msgstr ""
-"g - выбрать блок изменений на который нужно перейти\n"
-"/ - поиск блока изменений с помощью регулярного выражения\n"
-"j - не принимать решение по этому блоку, перейти на следующий нерешенный\n"
-"J - не принимать решение по этому блоку, перейти на следующий\n"
-"k - не принимать решение по этому блоку, перейти на предыдущий нерешенный\n"
-"K - не принимать решение по этому блоку, перейти на предыдущий\n"
-"s - разделить текущий блок на блоки меньшего размера\n"
-"e - вручную отредактировать текущий блок\n"
-"? - вывести справку\n"
-
-msgid "The selected hunks do not apply to the index!\n"
-msgstr "Выбранные блоки не применяются без ошибок к индексу!\n"
-
-#, perl-format
-msgid "ignoring unmerged: %s\n"
-msgstr "игнорирую не слитое: %s\n"
-
-#, perl-format
-msgid "Apply mode change to worktree [y,n,q,a,d%s,?]? "
-msgstr ""
-
-#, perl-format
-msgid "Apply deletion to worktree [y,n,q,a,d%s,?]? "
-msgstr ""
-
-#, perl-format
-msgid "Apply addition to worktree [y,n,q,a,d%s,?]? "
-msgstr ""
-
-#, perl-format
-msgid "Apply this hunk to worktree [y,n,q,a,d%s,?]? "
-msgstr "Принять этот блок в рабочее дерево [y,n,q,a,d%s,?]? "
-
-msgid "No other hunks to goto\n"
-msgstr ""
-
-#, perl-format
-msgid "Invalid number: '%s'\n"
-msgstr "Неверный номер: «%s»\n"
-
-#, perl-format
-msgid "Sorry, only %d hunk available.\n"
-msgid_plural "Sorry, only %d hunks available.\n"
-msgstr[0] "Простите, но только %d блок изменений доступен.\n"
-msgstr[1] "Простите, но только %d блока изменений доступно.\n"
-msgstr[2] "Простите, но только %d блоков изменений доступно.\n"
-msgstr[3] "Простите, но только %d блока изменений доступно.\n"
-
-msgid "No other hunks to search\n"
-msgstr ""
-
-#, perl-format
-msgid "Malformed search regexp %s: %s\n"
-msgstr "Регулярное выражение для поиска в неверном формате %s: %s\n"
-
-msgid "No hunk matches the given pattern\n"
-msgstr "Не найдены блоки, которые соответствуют указанному шаблону\n"
-
-msgid "No previous hunk\n"
-msgstr "Нет предыдущего блока\n"
-
-msgid "No next hunk\n"
-msgstr "Не следующего блока\n"
-
-msgid "Sorry, cannot split this hunk\n"
-msgstr ""
-
-#, perl-format
-msgid "Split into %d hunk.\n"
-msgid_plural "Split into %d hunks.\n"
-msgstr[0] "Разбито на %d блок изменений.\n"
-msgstr[1] "Разбито на %d блока изменений.\n"
-msgstr[2] "Разбито на %d блоков изменений.\n"
-msgstr[3] "Разбито на %d блока изменений.\n"
-
-msgid "Sorry, cannot edit this hunk\n"
-msgstr ""
-
-#. TRANSLATORS: please do not translate the command names
-#. 'status', 'update', 'revert', etc.
-msgid ""
-"status        - show paths with changes\n"
-"update        - add working tree state to the staged set of changes\n"
-"revert        - revert staged set of changes back to the HEAD version\n"
-"patch         - pick hunks and update selectively\n"
-"diff          - view diff between HEAD and index\n"
-"add untracked - add contents of untracked files to the staged set of "
-"changes\n"
-msgstr ""
-"status        - показать пути с изменениями\n"
-"update        - добавить состояние рабочей копии в индекс\n"
-"revert        - вернуть проиндексированный набор изменений к HEAD-версии\n"
-"patch         - выбрать и выборочно обновить блоки\n"
-"diff          - просмотреть различия между HEAD и индексом\n"
-"add untracked - добавить содержимое неотслеживаемых файлов в индекс\n"
-
-msgid "missing --"
-msgstr "отсутствует --"
-
-#, perl-format
-msgid "unknown --patch mode: %s"
-msgstr "неизвестный режим для --patch: %s"
-
-#, perl-format
-msgid "invalid argument %s, expecting --"
-msgstr "недопустимый аргумент %s, ожидается --"
 
 msgid "local zone differs from GMT by a non-minute interval\n"
 msgstr "локальный часовой пояс отличается от GMT на не минутный интервал\n"
@@ -21255,12 +21652,16 @@ msgid "(%s) Could not execute '%s'"
 msgstr "(%s) Не удалось выполнить «%s»"
 
 #, perl-format
-msgid "(%s) Adding %s: %s from: '%s'\n"
-msgstr "(%s) Добавление %s: %s из: «%s»\n"
+msgid "(%s) Malformed output from '%s'"
+msgstr ""
 
 #, perl-format
 msgid "(%s) failed to close pipe to '%s'"
 msgstr "(%s) не удалось закрыть поток к «%s»"
+
+#, perl-format
+msgid "(%s) Adding %s: %s from: '%s'\n"
+msgstr "(%s) Добавление %s: %s из: «%s»\n"
 
 msgid "cannot send message as 7bit"
 msgstr "не удалось отправить сообщение в 7 битной кодировке"

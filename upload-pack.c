@@ -7,15 +7,12 @@
 #include "pkt-line.h"
 #include "sideband.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "oid-array.h"
-#include "tag.h"
 #include "object.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
-#include "list-objects.h"
-#include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "run-command.h"
 #include "connect.h"
@@ -24,16 +21,13 @@
 #include "string-list.h"
 #include "strvec.h"
 #include "trace2.h"
-#include "prio-queue.h"
 #include "protocol.h"
-#include "quote.h"
 #include "upload-pack.h"
-#include "serve.h"
 #include "commit-graph.h"
 #include "commit-reach.h"
 #include "shallow.h"
-#include "wrapper.h"
 #include "write-or-die.h"
+#include "json-writer.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -69,7 +63,7 @@ struct upload_pack_data {
 	struct object_array have_obj;
 	struct oid_array haves;					/* v2 only */
 	struct string_list wanted_refs;				/* v2 only */
-	struct string_list hidden_refs;
+	struct strvec hidden_refs;
 
 	struct object_array shallows;
 	struct string_list deepen_not;
@@ -120,13 +114,14 @@ struct upload_pack_data {
 	unsigned allow_ref_in_want : 1;				/* v2 only */
 	unsigned allow_sideband_all : 1;			/* v2 only */
 	unsigned advertise_sid : 1;
+	unsigned sent_capabilities : 1;
 };
 
 static void upload_pack_data_init(struct upload_pack_data *data)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
 	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
-	struct string_list hidden_refs = STRING_LIST_INIT_DUP;
+	struct strvec hidden_refs = STRVEC_INIT;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
 	struct oid_array haves = OID_ARRAY_INIT;
@@ -161,7 +156,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 {
 	string_list_clear(&data->symref, 1);
 	string_list_clear(&data->wanted_refs, 1);
-	string_list_clear(&data->hidden_refs, 0);
+	strvec_clear(&data->hidden_refs);
 	object_array_clear(&data->want_obj);
 	object_array_clear(&data->have_obj);
 	oid_array_clear(&data->haves);
@@ -601,11 +596,36 @@ static int get_common_commits(struct upload_pack_data *data,
 	}
 }
 
+static int allow_hidden_refs(enum allow_uor allow_uor)
+{
+	if ((allow_uor & ALLOW_ANY_SHA1) == ALLOW_ANY_SHA1)
+		return 1;
+	return !(allow_uor & (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
+}
+
+static void for_each_namespaced_ref_1(each_ref_fn fn,
+				      struct upload_pack_data *data)
+{
+	const char **excludes = NULL;
+	/*
+	 * If `data->allow_uor` allows fetching hidden refs, we need to
+	 * mark all references (including hidden ones), to check in
+	 * `is_our_ref()` below.
+	 *
+	 * Otherwise, we only care about whether each reference's object
+	 * has the OUR_REF bit set or not, so do not need to visit
+	 * hidden references.
+	 */
+	if (allow_hidden_refs(data->allow_uor))
+		excludes = hidden_refs_to_excludes(&data->hidden_refs);
+
+	for_each_namespaced_ref(excludes, fn, data);
+}
+
+
 static int is_our_ref(struct object *o, enum allow_uor allow_uor)
 {
-	int allow_hidden_ref = (allow_uor &
-				(ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
-	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
+	return o->flags & ((allow_hidden_refs(allow_uor) ? 0 : HIDDEN_REF) | OUR_REF);
 }
 
 /*
@@ -776,11 +796,12 @@ error:
 	for (i = 0; i < data->want_obj.nr; i++) {
 		struct object *o = data->want_obj.objects[i].item;
 		if (!is_our_ref(o, data->allow_uor)) {
+			error("git upload-pack: not our ref %s",
+			      oid_to_hex(&o->oid));
 			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
 					    oid_to_hex(&o->oid));
-			die("git upload-pack: not our ref %s",
-			    oid_to_hex(&o->oid));
+			exit(128);
 		}
 	}
 }
@@ -854,7 +875,7 @@ static void deepen(struct upload_pack_data *data, int depth)
 		 * marked with OUR_REF.
 		 */
 		head_ref_namespaced(check_ref, data);
-		for_each_namespaced_ref(check_ref, data);
+		for_each_namespaced_ref_1(check_ref, data);
 
 		get_reachable_list(data, &reachable_shallows);
 		result = get_shallow_commits(&reachable_shallows,
@@ -1169,7 +1190,7 @@ static void receive_needs(struct upload_pack_data *data,
 
 /* return non-zero if the ref is hidden, otherwise 0 */
 static int mark_our_ref(const char *refname, const char *refname_full,
-			const struct object_id *oid, const struct string_list *hidden_refs)
+			const struct object_id *oid, const struct strvec *hidden_refs)
 {
 	struct object *o = lookup_unknown_object(the_repository, oid);
 
@@ -1206,18 +1227,17 @@ static void format_session_id(struct strbuf *buf, struct upload_pack_data *d) {
 		strbuf_addf(buf, " session-id=%s", trace2_session_id());
 }
 
-static int send_ref(const char *refname, const struct object_id *oid,
-		    int flag UNUSED, void *cb_data)
+static void write_v0_ref(struct upload_pack_data *data,
+			const char *refname, const char *refname_nons,
+			const struct object_id *oid)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow deepen-since deepen-not"
 		" deepen-relative no-progress include-tag multi_ack_detailed";
-	const char *refname_nons = strip_namespace(refname);
 	struct object_id peeled;
-	struct upload_pack_data *data = cb_data;
 
 	if (mark_our_ref(refname_nons, refname, oid, &data->hidden_refs))
-		return 0;
+		return;
 
 	if (capabilities) {
 		struct strbuf symref_info = STRBUF_INIT;
@@ -1240,12 +1260,20 @@ static int send_ref(const char *refname, const struct object_id *oid,
 			     git_user_agent_sanitized());
 		strbuf_release(&symref_info);
 		strbuf_release(&session_id);
+		data->sent_capabilities = 1;
 	} else {
 		packet_fwrite_fmt(stdout, "%s %s\n", oid_to_hex(oid), refname_nons);
 	}
 	capabilities = NULL;
 	if (!peel_iterated_oid(oid, &peeled))
 		packet_fwrite_fmt(stdout, "%s %s^{}\n", oid_to_hex(&peeled), refname_nons);
+	return;
+}
+
+static int send_ref(const char *refname, const struct object_id *oid,
+		    int flag UNUSED, void *cb_data)
+{
+	write_v0_ref(cb_data, refname, strip_namespace(refname), oid);
 	return 0;
 }
 
@@ -1267,7 +1295,8 @@ static int find_symref(const char *refname,
 }
 
 static int parse_object_filter_config(const char *var, const char *value,
-				       struct upload_pack_data *data)
+				      const struct key_value_info *kvi,
+				      struct upload_pack_data *data)
 {
 	struct strbuf buf = STRBUF_INIT;
 	const char *sub, *key;
@@ -1294,14 +1323,17 @@ static int parse_object_filter_config(const char *var, const char *value,
 		}
 		string_list_insert(&data->allowed_filters, buf.buf)->util =
 			(void *)(intptr_t)1;
-		data->tree_filter_max_depth = git_config_ulong(var, value);
+		data->tree_filter_max_depth = git_config_ulong(var, value,
+							       kvi);
 	}
 
 	strbuf_release(&buf);
 	return 0;
 }
 
-static int upload_pack_config(const char *var, const char *value, void *cb_data)
+static int upload_pack_config(const char *var, const char *value,
+			      const struct config_context *ctx,
+			      void *cb_data)
 {
 	struct upload_pack_data *data = cb_data;
 
@@ -1321,7 +1353,7 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 		else
 			data->allow_uor &= ~ALLOW_ANY_SHA1;
 	} else if (!strcmp("uploadpack.keepalive", var)) {
-		data->keepalive = git_config_int(var, value);
+		data->keepalive = git_config_int(var, value, ctx->kvi);
 		if (!data->keepalive)
 			data->keepalive = -1;
 	} else if (!strcmp("uploadpack.allowfilter", var)) {
@@ -1336,13 +1368,15 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 		data->advertise_sid = git_config_bool(var, value);
 	}
 
-	if (parse_object_filter_config(var, value, data) < 0)
+	if (parse_object_filter_config(var, value, ctx->kvi, data) < 0)
 		return -1;
 
 	return parse_hide_refs_config(var, value, "uploadpack", &data->hidden_refs);
 }
 
-static int upload_pack_protected_config(const char *var, const char *value, void *cb_data)
+static int upload_pack_protected_config(const char *var, const char *value,
+					const struct config_context *ctx UNUSED,
+					void *cb_data)
 {
 	struct upload_pack_data *data = cb_data;
 
@@ -1378,7 +1412,11 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 		if (advertise_refs)
 			data.no_done = 1;
 		head_ref_namespaced(send_ref, &data);
-		for_each_namespaced_ref(send_ref, &data);
+		for_each_namespaced_ref_1(send_ref, &data);
+		if (!data.sent_capabilities) {
+			const char *refname = "capabilities^{}";
+			write_v0_ref(&data, refname, refname, null_oid());
+		}
 		/*
 		 * fflush stdout before calling advertise_shallow_grafts because send_ref
 		 * uses stdio.
@@ -1388,7 +1426,7 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 		packet_flush(1);
 	} else {
 		head_ref_namespaced(check_ref, &data);
-		for_each_namespaced_ref(check_ref, &data);
+		for_each_namespaced_ref_1(check_ref, &data);
 	}
 
 	if (!advertise_refs) {
@@ -1453,7 +1491,7 @@ static int parse_want(struct packet_writer *writer, const char *line,
 
 static int parse_want_ref(struct packet_writer *writer, const char *line,
 			  struct string_list *wanted_refs,
-			  struct string_list *hidden_refs,
+			  struct strvec *hidden_refs,
 			  struct object_array *want_obj)
 {
 	const char *refname_nons;
@@ -1507,6 +1545,30 @@ static int parse_have(const char *line, struct oid_array *haves)
 	}
 
 	return 0;
+}
+
+static void trace2_fetch_info(struct upload_pack_data *data)
+{
+	struct json_writer jw = JSON_WRITER_INIT;
+
+	jw_object_begin(&jw, 0);
+	jw_object_intmax(&jw, "haves", data->haves.nr);
+	jw_object_intmax(&jw, "wants", data->want_obj.nr);
+	jw_object_intmax(&jw, "want-refs", data->wanted_refs.nr);
+	jw_object_intmax(&jw, "depth", data->depth);
+	jw_object_intmax(&jw, "shallows", data->shallows.nr);
+	jw_object_bool(&jw, "deepen-since", data->deepen_since);
+	jw_object_intmax(&jw, "deepen-not", data->deepen_not.nr);
+	jw_object_bool(&jw, "deepen-relative", data->deepen_relative);
+	if (data->filter_options.choice)
+		jw_object_string(&jw, "filter", list_object_filter_config_name(data->filter_options.choice));
+	else
+		jw_object_null(&jw, "filter");
+	jw_end(&jw);
+
+	trace2_data_json("upload-pack", the_repository, "fetch-info", &jw);
+
+	jw_release(&jw);
 }
 
 static void process_args(struct packet_reader *request,
@@ -1597,6 +1659,9 @@ static void process_args(struct packet_reader *request,
 
 	if (request->status != PACKET_READ_FLUSH)
 		die(_("expected flush after fetch arguments"));
+
+	if (trace2_is_enabled())
+		trace2_fetch_info(data);
 }
 
 static int process_haves(struct upload_pack_data *data, struct oid_array *common)

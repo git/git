@@ -30,7 +30,7 @@ pkt-line Format
 ---------------
 
 The descriptions below build on the pkt-line format described in
-linkgit:gitprotocol-common[5]. When the grammar indicate `PKT-LINE(...)`, unless
+linkgit:gitprotocol-common[5]. When the grammar indicates `PKT-LINE(...)`, unless
 otherwise noted the usual pkt-line LF rules apply: the sender SHOULD
 include a LF, but the receiver MUST NOT complain if it is not present.
 
@@ -137,7 +137,7 @@ an absolute path in the remote filesystem.
 		    v
     ssh user@example.com "git-upload-pack '/project.git'"
 
-In a "user@host:path" format URI, its relative to the user's home
+In a "user@host:path" format URI, it's relative to the user's home
 directory, because the Git client will run:
 
      git clone user@example.com:project.git
@@ -325,7 +325,7 @@ a positive depth, this step is skipped.
 
 If the client has requested a positive depth, the server will compute
 the set of commits which are no deeper than the desired depth. The set
-of commits start at the client's wants.
+of commits starts at the client's wants.
 
 The server writes 'shallow' lines for each
 commit whose parents will not be sent as a result. The server writes

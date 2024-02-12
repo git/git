@@ -3,7 +3,6 @@
  * data.
  */
 #include "git-compat-util.h"
-#include "hashmap.h"
 #include "object.h"
 #include "decorate.h"
 
@@ -81,4 +80,19 @@ void *lookup_decoration(struct decoration *n, const struct object *obj)
 		if (++j == n->size)
 			j = 0;
 	}
+}
+
+void clear_decoration(struct decoration *n, void (*free_cb)(void *))
+{
+	if (free_cb) {
+		unsigned int i;
+		for (i = 0; i < n->size; i++) {
+			void *d = n->entries[i].decoration;
+			if (d)
+				free_cb(d);
+		}
+	}
+
+	FREE_AND_NULL(n->entries);
+	n->size = n->nr = 0;
 }

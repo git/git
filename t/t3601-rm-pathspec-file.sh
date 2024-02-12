@@ -67,14 +67,14 @@ test_expect_success 'error conditions' '
 	echo fileA.t >list &&
 
 	test_must_fail git rm --pathspec-from-file=list -- fileA.t 2>err &&
-	test_i18ngrep -e ".--pathspec-from-file. and pathspec arguments cannot be used together" err &&
+	test_grep -e ".--pathspec-from-file. and pathspec arguments cannot be used together" err &&
 
 	test_must_fail git rm --pathspec-file-nul 2>err &&
-	test_i18ngrep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
+	test_grep -e "the option .--pathspec-file-nul. requires .--pathspec-from-file." err &&
 
 	>empty_list &&
 	test_must_fail git rm --pathspec-from-file=empty_list 2>err &&
-	test_i18ngrep -e "No pathspec was given. Which files should I remove?" err
+	test_grep -e "No pathspec was given. Which files should I remove?" err
 '
 
 test_done

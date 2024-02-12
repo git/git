@@ -35,7 +35,7 @@ push.default::
 
 * `tracking` - This is a deprecated synonym for `upstream`.
 
-* `simple` - pushes the current branch with the same name on the remote.
+* `simple` - push the current branch with the same name on the remote.
 +
 If you are working on a centralized workflow (pushing to the same repository you
 pull from, which is typically `origin`), then you need to configure an upstream
@@ -67,7 +67,7 @@ new default).
 --
 
 push.followTags::
-	If set to true enable `--follow-tags` option by default.  You
+	If set to true, enable `--follow-tags` option by default.  You
 	may override this configuration at time of push by specifying
 	`--no-follow-tags`.
 

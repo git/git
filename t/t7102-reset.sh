@@ -71,6 +71,16 @@ check_changes () {
 	done | test_cmp .cat_expect -
 }
 
+# no negated form for various type of resets
+for opt in soft mixed hard merge keep
+do
+	test_expect_success "no 'git reset --no-$opt'" '
+		test_when_finished "rm -f err" &&
+		test_must_fail git reset --no-$opt 2>err &&
+		grep "error: unknown option .no-$opt." err
+	'
+done
+
 test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard >.actual &&
@@ -604,6 +614,14 @@ test_expect_success 'reset --mixed sets up work tree' '
 	) &&
 	git --git-dir=mixed_worktree/.git --work-tree=mixed_worktree reset >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'reset handles --end-of-options' '
+	git update-ref refs/heads/--foo HEAD^ &&
+	git log -1 --format=%s refs/heads/--foo >expect &&
+	git reset --hard --end-of-options --foo &&
+	git log -1 --format=%s HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_done

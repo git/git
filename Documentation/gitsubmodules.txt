@@ -78,7 +78,7 @@ Submodule operations can be configured using the following mechanisms
 
  * The command line for those commands that support taking submodules
    as part of their pathspecs. Most commands have a boolean flag
-   `--recurse-submodules` which specify whether to recurse into submodules.
+   `--recurse-submodules` which specifies whether to recurse into submodules.
    Examples are `grep` and `checkout`.
    Some commands take enums, such as `fetch` and `push`, where you can
    specify how submodules are affected.
@@ -151,7 +151,7 @@ the superproject's `$GIT_DIR/config` file, so the superproject's history
 is not affected. This can be undone using `git submodule init`.
 
  * Deleted submodule: A submodule can be deleted by running
-`git rm <submodule path> && git commit`. This can be undone
+`git rm <submodule-path> && git commit`. This can be undone
 using `git revert`.
 +
 The deletion removes the superproject's tracking data, which are
@@ -192,7 +192,7 @@ For example:
   [submodule "baz"]
     url = https://example.org/baz
 
-In the above config only the submodule 'bar' and 'baz' are active,
+In the above config only the submodules 'bar' and 'baz' are active,
 'bar' due to (1) and 'baz' due to (3). 'foo' is inactive because
 (1) takes precedence over (3)
 
@@ -229,7 +229,7 @@ Workflow for a third party library
   git submodule add <URL> <path>
 
   # Occasionally update the submodule to a new version:
-  git -C <path> checkout <new version>
+  git -C <path> checkout <new-version>
   git add <path>
   git commit -m "update submodule to new version"
 
@@ -274,7 +274,7 @@ will not be checked out by default; you can instruct `clone` to recurse
 into submodules. The `init` and `update` subcommands of `git submodule`
 will maintain submodules checked out and at an appropriate revision in
 your working tree. Alternatively you can set `submodule.recurse` to have
-`checkout` recursing into submodules (note that `submodule.recurse` also
+`checkout` recurse into submodules (note that `submodule.recurse` also
 affects other Git commands, see linkgit:git-config[1] for a complete list).
 
 

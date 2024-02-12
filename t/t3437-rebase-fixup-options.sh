@@ -21,21 +21,6 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 EMPTY=""
 
-# test_commit_message <rev> -m <msg>
-# test_commit_message <rev> <path>
-# Verify that the commit message of <rev> matches
-# <msg> or the content of <path>.
-test_commit_message () {
-	git show --no-patch --pretty=format:%B "$1" >actual &&
-	case "$2" in
-	-m)
-		echo "$3" >expect &&
-		test_cmp expect actual ;;
-	*)
-		test_cmp "$2" actual ;;
-	esac
-}
-
 get_author () {
 	rev="$1" &&
 	git log -1 --pretty=format:"%an %ae %at" "$rev"

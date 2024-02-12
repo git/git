@@ -39,7 +39,7 @@ test_expect_success 'clone -o' '
 test_expect_success 'rejects invalid -o/--origin' '
 
 	test_must_fail git clone -o "bad...name" parent clone-bad-name 2>err &&
-	test_i18ngrep "'\''bad...name'\'' is not a valid remote name" err
+	test_grep "'\''bad...name'\'' is not a valid remote name" err
 
 '
 
@@ -56,7 +56,7 @@ test_expect_success 'disallows --bare with --separate-git-dir' '
 
 	test_must_fail git clone --bare --separate-git-dir dot-git-destiation parent clone-bare-sgd 2>err &&
 	test_debug "cat err" &&
-	test_i18ngrep -e "options .--bare. and .--separate-git-dir. cannot be used together" err
+	test_grep -e "options .--bare. and .--separate-git-dir. cannot be used together" err
 
 '
 
@@ -64,14 +64,14 @@ test_expect_success 'disallows --bundle-uri with shallow options' '
 	for option in --depth=1 --shallow-since=01-01-2000 --shallow-exclude=HEAD
 	do
 		test_must_fail git clone --bundle-uri=bundle $option from to 2>err &&
-		grep "bundle-uri is incompatible" err || return 1
+		grep "bundle-uri.* cannot be used together" err || return 1
 	done
 '
 
 test_expect_success 'reject cloning shallow repository' '
 	test_when_finished "rm -rf repo" &&
 	test_must_fail git clone --reject-shallow shallow-repo out 2>err &&
-	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+	test_grep -e "source repository is shallow, reject to clone." err &&
 
 	git clone --no-reject-shallow shallow-repo repo
 '
@@ -79,7 +79,7 @@ test_expect_success 'reject cloning shallow repository' '
 test_expect_success 'reject cloning non-local shallow repository' '
 	test_when_finished "rm -rf repo" &&
 	test_must_fail git clone --reject-shallow --no-local shallow-repo out 2>err &&
-	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+	test_grep -e "source repository is shallow, reject to clone." err &&
 
 	git clone --no-reject-shallow --no-local shallow-repo repo
 '
@@ -120,6 +120,16 @@ test_expect_success 'prefers -c config over --template config' '
 
 '
 
+test_expect_failure 'prefers --template config even for core.bare' '
+
+	template="$TRASH_DIRECTORY/template-with-bare-config" &&
+	mkdir "$template" &&
+	git config --file "$template/config" core.bare true &&
+	git clone "--template=$template" parent clone-bare-config &&
+	test "$(git -C clone-bare-config config --local core.bare)" = "true" &&
+	test_path_is_file clone-bare-config/HEAD
+'
+
 test_expect_success 'prefers config "clone.defaultRemoteName" over default' '
 
 	test_config_global clone.defaultRemoteName from_config &&
@@ -139,7 +149,7 @@ test_expect_success 'redirected clone does not show progress' '
 
 	git clone "file://$(pwd)/parent" clone-redirected >out 2>err &&
 	! grep % err &&
-	test_i18ngrep ! "Checking connectivity" err
+	test_grep ! "Checking connectivity" err
 
 '
 

@@ -7,8 +7,7 @@
 #include "hex.h"
 #include "repository.h"
 #include "object-name.h"
-#include "object-store.h"
-#include "pkt-line.h"
+#include "object-store-ll.h"
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
@@ -23,10 +22,11 @@
 #include "advice.h"
 #include "refs.h"
 #include "commit-reach.h"
-#include "run-command.h"
 #include "setup.h"
 #include "shallow.h"
+#include "tree.h"
 #include "hook.h"
+#include "parse.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -96,6 +96,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 static timestamp_t parse_commit_date(const char *buf, const char *tail)
 {
 	const char *dateptr;
+	const char *eol;
 
 	if (buf + 6 >= tail)
 		return 0;
@@ -107,16 +108,56 @@ static timestamp_t parse_commit_date(const char *buf, const char *tail)
 		return 0;
 	if (memcmp(buf, "committer", 9))
 		return 0;
-	while (buf < tail && *buf++ != '>')
-		/* nada */;
-	if (buf >= tail)
+
+	/*
+	 * Jump to end-of-line so that we can walk backwards to find the
+	 * end-of-email ">". This is more forgiving of malformed cases
+	 * because unexpected characters tend to be in the name and email
+	 * fields.
+	 */
+	eol = memchr(buf, '\n', tail - buf);
+	if (!eol)
 		return 0;
-	dateptr = buf;
-	while (buf < tail && *buf++ != '\n')
-		/* nada */;
-	if (buf >= tail)
+	dateptr = eol;
+	while (dateptr > buf && dateptr[-1] != '>')
+		dateptr--;
+	if (dateptr == buf)
 		return 0;
-	/* dateptr < buf && buf[-1] == '\n', so parsing will stop at buf-1 */
+
+	/*
+	 * Trim leading whitespace, but make sure we have at least one
+	 * non-whitespace character, as parse_timestamp() will otherwise walk
+	 * right past the newline we found in "eol" when skipping whitespace
+	 * itself.
+	 *
+	 * In theory it would be sufficient to allow any character not matched
+	 * by isspace(), but there's a catch: our isspace() does not
+	 * necessarily match the behavior of parse_timestamp(), as the latter
+	 * is implemented by system routines which match more exotic control
+	 * codes, or even locale-dependent sequences.
+	 *
+	 * Since we expect the timestamp to be a number, we can check for that.
+	 * Anything else (e.g., a non-numeric token like "foo") would just
+	 * cause parse_timestamp() to return 0 anyway.
+	 */
+	while (dateptr < eol && isspace(*dateptr))
+		dateptr++;
+	if (!isdigit(*dateptr) && *dateptr != '-')
+		return 0;
+
+	/*
+	 * We know there is at least one digit (or dash), so we'll begin
+	 * parsing there and stop at worst case at eol.
+	 *
+	 * Note that we may feed parse_timestamp() extra characters here if the
+	 * commit is malformed, and it will parse as far as it can. For
+	 * example, "123foo456" would return "123". That might be questionable
+	 * (versus returning "0"), but it would help in a hypothetical case
+	 * like "123456+0100", where the whitespace from the timezone is
+	 * missing. Since such syntactic errors may be baked into history and
+	 * hard to correct now, let's err on trying to make our best guess
+	 * here, rather than insist on perfect syntax.
+	 */
 	return parse_timestamp(dateptr, NULL, 10);
 }
 
@@ -474,7 +515,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 		 * The clone is shallow if nr_parent < 0, and we must
 		 * not traverse its real parents even when we unhide them.
 		 */
-		if (graft && (graft->nr_parent < 0 || grafts_replace_parents))
+		if (graft && (graft->nr_parent < 0 || !grafts_keep_true_parents))
 			continue;
 		new_parent = lookup_commit(r, &parent);
 		if (!new_parent)
@@ -530,8 +571,21 @@ int repo_parse_commit_internal(struct repository *r,
 		return -1;
 	if (item->object.parsed)
 		return 0;
-	if (use_commit_graph && parse_commit_in_graph(r, item))
+	if (use_commit_graph && parse_commit_in_graph(r, item)) {
+		static int commit_graph_paranoia = -1;
+
+		if (commit_graph_paranoia == -1)
+			commit_graph_paranoia = git_env_bool(GIT_COMMIT_GRAPH_PARANOIA, 0);
+
+		if (commit_graph_paranoia && !has_object(r, &item->object.oid, 0)) {
+			unparse_commit(r, &item->object.oid);
+			return quiet_on_missing ? -1 :
+				error(_("commit %s exists in commit-graph but not in the object database"),
+				      oid_to_hex(&item->object.oid));
+		}
+
 		return 0;
+	}
 
 	if (oid_object_info_extended(r, &item->object.oid, &oi, flags) < 0)
 		return quiet_on_missing ? -1 :
@@ -1727,7 +1781,7 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
  * Returns the number of bytes from the tail to ignore, to be fed as
  * the second parameter to append_signoff().
  */
-size_t ignore_non_trailer(const char *buf, size_t len)
+size_t ignored_log_message_bytes(const char *buf, size_t len)
 {
 	size_t boc = 0;
 	size_t bol = 0;

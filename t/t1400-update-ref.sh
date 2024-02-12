@@ -9,8 +9,6 @@ test_description='Test git update-ref and basic ref logging'
 Z=$ZERO_OID
 
 m=refs/heads/main
-n_dir=refs/heads/gu
-n=$n_dir/fixes
 outside=refs/foo
 bare=bare-repo
 
@@ -62,10 +60,10 @@ test_expect_success "delete $m without oldvalue verification" '
 	test_must_fail git show-ref --verify -q $m
 '
 
-test_expect_success "fail to create $n" '
-	test_when_finished "rm -f .git/$n_dir" &&
-	touch .git/$n_dir &&
-	test_must_fail git update-ref $n $A
+test_expect_success "fail to create $n due to file/directory conflict" '
+	test_when_finished "git update-ref -d refs/heads/gu" &&
+	git update-ref refs/heads/gu $A &&
+	test_must_fail git update-ref refs/heads/gu/fixes $A
 '
 
 test_expect_success "create $m (by HEAD)" '
@@ -92,7 +90,8 @@ test_expect_success "deleting current branch adds message to HEAD's log" '
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-$m -d $m &&
 	test_must_fail git show-ref --verify -q $m &&
-	grep "delete-$m$" .git/logs/HEAD
+	test-tool ref-store main for-each-reflog-ent HEAD >actual &&
+	grep "delete-$m$" actual
 '
 
 test_expect_success "deleting by HEAD adds message to HEAD's log" '
@@ -101,7 +100,8 @@ test_expect_success "deleting by HEAD adds message to HEAD's log" '
 	git symbolic-ref HEAD $m &&
 	git update-ref -m delete-by-head -d HEAD &&
 	test_must_fail git show-ref --verify -q $m &&
-	grep "delete-by-head$" .git/logs/HEAD
+	test-tool ref-store main for-each-reflog-ent HEAD >actual &&
+	grep "delete-by-head$" actual
 '
 
 test_expect_success 'update-ref does not create reflogs by default' '
@@ -132,7 +132,7 @@ test_expect_success 'creates no reflog in bare repository' '
 
 test_expect_success 'core.logAllRefUpdates=true creates reflog in bare repository' '
 	test_when_finished "git -C $bare config --unset core.logAllRefUpdates && \
-		rm $bare/logs/$m" &&
+		test-tool ref-store main delete-reflog $m" &&
 	git -C $bare config core.logAllRefUpdates true &&
 	git -C $bare update-ref $m $bareB &&
 	git -C $bare rev-parse $bareB >expect &&
@@ -221,27 +221,27 @@ test_expect_success 'delete symref without dereference when the referred ref is 
 '
 
 test_expect_success 'update-ref -d is not confused by self-reference' '
+	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF refs/heads/self" &&
 	git symbolic-ref refs/heads/self refs/heads/self &&
-	test_when_finished "rm -f .git/refs/heads/self" &&
-	test_path_is_file .git/refs/heads/self &&
+	git symbolic-ref --no-recurse refs/heads/self &&
 	test_must_fail git update-ref -d refs/heads/self &&
-	test_path_is_file .git/refs/heads/self
+	git symbolic-ref --no-recurse refs/heads/self
 '
 
 test_expect_success 'update-ref --no-deref -d can delete self-reference' '
+	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF refs/heads/self" &&
 	git symbolic-ref refs/heads/self refs/heads/self &&
-	test_when_finished "rm -f .git/refs/heads/self" &&
-	test_path_is_file .git/refs/heads/self &&
+	git symbolic-ref --no-recurse refs/heads/self &&
 	git update-ref --no-deref -d refs/heads/self &&
 	test_must_fail git show-ref --verify -q refs/heads/self
 '
 
-test_expect_success 'update-ref --no-deref -d can delete reference to bad ref' '
+test_expect_success REFFILES 'update-ref --no-deref -d can delete reference to bad ref' '
 	>.git/refs/heads/bad &&
 	test_when_finished "rm -f .git/refs/heads/bad" &&
 	git symbolic-ref refs/heads/ref-to-bad refs/heads/bad &&
 	test_when_finished "git update-ref -d refs/heads/ref-to-bad" &&
-	test_path_is_file .git/refs/heads/ref-to-bad &&
+	git symbolic-ref --no-recurse refs/heads/ref-to-bad &&
 	git update-ref --no-deref -d refs/heads/ref-to-bad &&
 	test_must_fail git show-ref --verify -q refs/heads/ref-to-bad
 '
@@ -265,7 +265,10 @@ test_expect_success "(not) changed .git/$m" '
 	! test $B = $(git show-ref -s --verify $m)
 '
 
-rm -f .git/logs/refs/heads/main
+test_expect_success "clean up reflog" '
+	test-tool ref-store main delete-reflog $m
+'
+
 test_expect_success "create $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
@@ -285,7 +288,7 @@ test_expect_success "set $m (logged by touch)" '
 	test $A = $(git show-ref -s --verify $m)
 '
 
-test_expect_success 'empty directory removal' '
+test_expect_success REFFILES 'empty directory removal' '
 	git branch d1/d2/r1 HEAD &&
 	git branch d1/r2 HEAD &&
 	test_path_is_file .git/refs/heads/d1/d2/r1 &&
@@ -297,7 +300,7 @@ test_expect_success 'empty directory removal' '
 	test_path_is_file .git/logs/refs/heads/d1/r2
 '
 
-test_expect_success 'symref empty directory removal' '
+test_expect_success REFFILES 'symref empty directory removal' '
 	git branch e1/e2/r1 HEAD &&
 	git branch e1/r2 HEAD &&
 	git checkout e1/e2/r1 &&
@@ -318,7 +321,7 @@ $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150260 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success "verifying $m's log (logged by touch)" '
-	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
+	test_when_finished "git update-ref -d $m && git reflog expire --expire=all --all && rm -rf actual expect" &&
 	test-tool ref-store main for-each-reflog-ent $m >actual &&
 	test_cmp actual expect
 '
@@ -348,20 +351,34 @@ $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 +0000	Switch
 $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success "verifying $m's log (logged by config)" '
-	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
+	test_when_finished "git update-ref -d $m && git reflog expire --expire=all --all && rm -rf actual expect" &&
 	test-tool ref-store main for-each-reflog-ent $m >actual &&
 	test_cmp actual expect
 '
 
 test_expect_success 'set up for querying the reflog' '
+	git update-ref -d $m &&
+	test-tool ref-store main delete-reflog $m &&
+
+	GIT_COMMITTER_DATE="1117150320 -0500" git update-ref $m $C &&
+	GIT_COMMITTER_DATE="1117150350 -0500" git update-ref $m $A &&
+	GIT_COMMITTER_DATE="1117150380 -0500" git update-ref $m $B &&
+	GIT_COMMITTER_DATE="1117150680 -0500" git update-ref $m $F &&
+	GIT_COMMITTER_DATE="1117150980 -0500" git update-ref $m $E &&
 	git update-ref $m $D &&
-	cat >.git/logs/$m <<-EOF
+	# Delete the last reflog entry so that the tip of m and the reflog for
+	# it disagree.
+	git reflog delete $m@{0} &&
+
+	cat >expect <<-EOF &&
 	$Z $C $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
 	$C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150350 -0500
 	$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
-	$F $Z $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
-	$Z $E $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 -0500
+	$B $F $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
+	$F $E $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 -0500
 	EOF
+	test-tool ref-store main for-each-reflog-ent $m >actual &&
+	test_cmp expect actual
 '
 
 ed="Thu, 26 May 2005 18:32:00 -0500"
@@ -409,13 +426,12 @@ test_expect_success 'Query "main@{2005-05-26 23:33:01}" (middle of history with 
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "main@{2005-05-26 23:33:01}" >o 2>e &&
 	echo "$B" >expect &&
-	test_cmp expect o &&
-	test_i18ngrep -F "warning: log for ref $m has gap after $gd" e
+	test_cmp expect o
 '
 test_expect_success 'Query "main@{2005-05-26 23:38:00}" (middle of history)' '
 	test_when_finished "rm -f o e" &&
 	git rev-parse --verify "main@{2005-05-26 23:38:00}" >o 2>e &&
-	echo "$Z" >expect &&
+	echo "$F" >expect &&
 	test_cmp expect o &&
 	test_must_be_empty e
 '
@@ -431,10 +447,27 @@ test_expect_success 'Query "main@{2005-05-28}" (past end of history)' '
 	git rev-parse --verify "main@{2005-05-28}" >o 2>e &&
 	echo "$D" >expect &&
 	test_cmp expect o &&
-	test_i18ngrep -F "warning: log for ref $m unexpectedly ended on $ld" e
+	test_grep -F "warning: log for ref $m unexpectedly ended on $ld" e
 '
 
-rm -f .git/$m .git/logs/$m expect
+rm -f expect
+git update-ref -d $m
+
+test_expect_success REFFILES 'query reflog with gap' '
+	test_when_finished "git update-ref -d $m" &&
+
+	git update-ref $m $F &&
+	cat >.git/logs/$m <<-EOF &&
+	$Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
+	$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
+	$D $F $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
+	EOF
+
+	git rev-parse --verify "main@{2005-05-26 23:33:01}" >actual 2>stderr &&
+	echo "$B" >expect &&
+	test_cmp expect actual &&
+	test_grep -F "warning: log for ref $m has gap after $gd" stderr
+'
 
 test_expect_success 'creating initial files' '
 	test_when_finished rm -f M &&
@@ -486,7 +519,7 @@ test_expect_success 'git cat-file blob main@{2005-05-26 23:42}:F (expect OTHER)'
 test_expect_success 'given old value for missing pseudoref, do not create' '
 	test_must_fail git update-ref PSEUDOREF $A $B 2>err &&
 	test_must_fail git rev-parse PSEUDOREF &&
-	test_i18ngrep "unable to resolve reference" err
+	test_grep "unable to resolve reference" err
 '
 
 test_expect_success 'create pseudoref' '
@@ -507,7 +540,7 @@ test_expect_success 'overwrite pseudoref with correct old value' '
 test_expect_success 'do not overwrite pseudoref with wrong old value' '
 	test_must_fail git update-ref PSEUDOREF $D $E 2>err &&
 	test $C = $(git rev-parse PSEUDOREF) &&
-	test_i18ngrep "cannot lock ref.*expected" err
+	test_grep "cannot lock ref.*expected" err
 '
 
 test_expect_success 'delete pseudoref' '
@@ -519,7 +552,7 @@ test_expect_success 'do not delete pseudoref with wrong old value' '
 	git update-ref PSEUDOREF $A &&
 	test_must_fail git update-ref -d PSEUDOREF $B 2>err &&
 	test $A = $(git rev-parse PSEUDOREF) &&
-	test_i18ngrep "cannot lock ref.*expected" err
+	test_grep "cannot lock ref.*expected" err
 '
 
 test_expect_success 'delete pseudoref with correct old value' '
@@ -536,7 +569,7 @@ test_expect_success 'do not overwrite pseudoref with old OID zero' '
 	test_when_finished git update-ref -d PSEUDOREF &&
 	test_must_fail git update-ref PSEUDOREF $B $Z 2>err &&
 	test $A = $(git rev-parse PSEUDOREF) &&
-	test_i18ngrep "already exists" err
+	test_grep "already exists" err
 '
 
 # Test --stdin
@@ -556,7 +589,7 @@ test_expect_success 'stdin test setup' '
 
 test_expect_success '-z fails without --stdin' '
 	test_must_fail git update-ref -z $m $m $m 2>err &&
-	test_i18ngrep "usage: git update-ref" err
+	test_grep "usage: git update-ref" err
 '
 
 test_expect_success 'stdin works with no input' '
@@ -674,7 +707,7 @@ test_expect_success 'stdin fails with duplicate refs' '
 	create $a $m
 	EOF
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	test_i18ngrep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed" err
+	test_grep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed" err
 '
 
 test_expect_success 'stdin create ref works' '
@@ -1107,7 +1140,7 @@ test_expect_success 'stdin -z fails option with unknown name' '
 test_expect_success 'stdin -z fails with duplicate refs' '
 	printf $F "create $a" "$m" "create $b" "$m" "create $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	test_i18ngrep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed" err
+	test_grep "fatal: multiple updates for ref '"'"'$a'"'"' not allowed" err
 '
 
 test_expect_success 'stdin -z create ref works' '
@@ -1338,7 +1371,7 @@ test_expect_success 'fails with duplicate HEAD update' '
 	update HEAD $B
 	EOF
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	test_i18ngrep "fatal: multiple updates for '\''HEAD'\'' (including one via its referent .refs/heads/target1.) are not allowed" err &&
+	test_grep "fatal: multiple updates for '\''HEAD'\'' (including one via its referent .refs/heads/target1.) are not allowed" err &&
 	echo "refs/heads/target1" >expect &&
 	git symbolic-ref HEAD >actual &&
 	test_cmp expect actual &&
@@ -1355,7 +1388,7 @@ test_expect_success 'fails with duplicate ref update via symref' '
 	update refs/heads/symref2 $B
 	EOF
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	test_i18ngrep "fatal: multiple updates for '\''refs/heads/target2'\'' (including one via symref .refs/heads/symref2.) are not allowed" err &&
+	test_grep "fatal: multiple updates for '\''refs/heads/target2'\'' (including one via symref .refs/heads/symref2.) are not allowed" err &&
 	echo "refs/heads/target2" >expect &&
 	git symbolic-ref refs/heads/symref2 >actual &&
 	test_cmp expect actual &&
@@ -1635,7 +1668,7 @@ test_expect_success PIPE 'transaction flushes status updates' '
 	test_cmp expected actual
 '
 
-test_expect_success 'directory not created deleting packed ref' '
+test_expect_success REFFILES 'directory not created deleting packed ref' '
 	git branch d1/d2/r1 HEAD &&
 	git pack-refs --all &&
 	test_path_is_missing .git/refs/heads/d1/d2 &&

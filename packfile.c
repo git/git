@@ -1,5 +1,4 @@
-#include "cache.h"
-#include "alloc.h"
+#include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
@@ -10,7 +9,6 @@
 #include "mergesort.h"
 #include "packfile.h"
 #include "delta.h"
-#include "streaming.h"
 #include "hash-lookup.h"
 #include "commit.h"
 #include "object.h"
@@ -19,12 +17,11 @@
 #include "tree-walk.h"
 #include "tree.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "midx.h"
 #include "commit-graph.h"
 #include "pack-revindex.h"
 #include "promisor-remote.h"
-#include "wrapper.h"
 
 char *odb_pack_name(struct strbuf *buf,
 		    const unsigned char *hash,
@@ -186,7 +183,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 		     */
 		    (sizeof(off_t) <= 4))
 			return error("pack too large for current definition of off_t in %s", path);
-		p->crc_offset = 8 + 4 * 256 + nr * hashsz;
+		p->crc_offset = st_add(8 + 4 * 256, st_mult(nr, hashsz));
 	}
 
 	p->index_version = version;
@@ -381,7 +378,7 @@ void close_object_store(struct raw_object_store *o)
 
 void unlink_pack_path(const char *pack_name, int force_delete)
 {
-	static const char *exts[] = {".pack", ".idx", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes"};
+	static const char *exts[] = {".idx", ".pack", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes"};
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	size_t plen;
@@ -753,7 +750,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	p->pack_local = local;
 	p->mtime = st.st_mtime;
 	if (path_len < the_hash_algo->hexsz ||
-	    get_sha1_hex(path + path_len - the_hash_algo->hexsz, p->hash))
+	    get_hash_hex(path + path_len - the_hash_algo->hexsz, p->hash))
 		hashclr(p->hash);
 	return p;
 }
@@ -1920,10 +1917,10 @@ int nth_packed_object_id(struct object_id *oid,
 		return -1;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		oidread(oid, index + (hashsz + 4) * n + 4);
+		oidread(oid, index + st_add(st_mult(hashsz + 4, n), 4));
 	} else {
 		index += 8;
-		oidread(oid, index + hashsz * n);
+		oidread(oid, index + st_mult(hashsz, n));
 	}
 	return 0;
 }
@@ -1948,14 +1945,15 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 	const unsigned int hashsz = the_hash_algo->rawsz;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		return ntohl(*((uint32_t *)(index + (hashsz + 4) * (size_t)n)));
+		return ntohl(*((uint32_t *)(index + st_mult(hashsz + 4, n))));
 	} else {
 		uint32_t off;
-		index += 8 + (size_t)p->num_objects * (hashsz + 4);
-		off = ntohl(*((uint32_t *)(index + 4 * n)));
+		index += st_add(8, st_mult(p->num_objects, hashsz + 4));
+		off = ntohl(*((uint32_t *)(index + st_mult(4, n))));
 		if (!(off & 0x80000000))
 			return off;
-		index += (size_t)p->num_objects * 4 + (off & 0x7fffffff) * 8;
+		index += st_add(st_mult(p->num_objects, 4),
+				st_mult(off & 0x7fffffff, 8));
 		check_pack_index_ptr(p, index);
 		return get_be64(index);
 	}

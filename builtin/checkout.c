@@ -1,7 +1,6 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "advice.h"
-#include "blob.h"
 #include "branch.h"
 #include "cache-tree.h"
 #include "checkout.h"
@@ -13,21 +12,23 @@
 #include "gettext.h"
 #include "hex.h"
 #include "hook.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "lockfile.h"
 #include "mem-pool.h"
 #include "merge-recursive.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "parse-options.h"
+#include "path.h"
+#include "preload-index.h"
+#include "read-cache.h"
 #include "refs.h"
 #include "remote.h"
 #include "resolve-undo.h"
 #include "revision.h"
-#include "run-command.h"
 #include "setup.h"
 #include "submodule.h"
-#include "submodule-config.h"
+#include "symlinks.h"
 #include "trace2.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -519,6 +520,15 @@ static int checkout_paths(const struct checkout_opts *opts,
 			    "--merge", "--conflict", "--staged");
 	}
 
+	/*
+	 * recreating unmerged index entries and writing out data from
+	 * unmerged index entries would make no sense when checking out
+	 * of a tree-ish.
+	 */
+	if ((opts->merge || opts->writeout_stage) && opts->source_tree)
+		die(_("'%s', '%s', or '%s' cannot be used when checking out of a tree"),
+		    "--merge", "--ours", "--theirs");
+
 	if (opts->patch_mode) {
 		enum add_p_mode patch_mode;
 		const char *rev = new_branch_info->name;
@@ -556,6 +566,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 
 	if (opts->source_tree)
 		read_tree_some(opts->source_tree, &opts->pathspec);
+	if (opts->merge)
+		unmerge_index(&the_index, &opts->pathspec, CE_MATCHED);
 
 	ps_matched = xcalloc(opts->pathspec.nr, 1);
 
@@ -578,10 +590,6 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return 1;
 	}
 	free(ps_matched);
-
-	/* "checkout -m path" to recreate conflicted state */
-	if (opts->merge)
-		unmerge_marked_index(&the_index);
 
 	/* Any unmerged paths? */
 	for (pos = 0; pos < the_index.cache_nr; pos++) {
@@ -860,7 +868,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 * entries in the index.
 			 */
 
-			add_files_to_cache(NULL, NULL, 0);
+			add_files_to_cache(the_repository, NULL, NULL, 0, 0);
 			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
 			work = write_in_core_index_as_tree(the_repository);
@@ -912,7 +920,7 @@ static void report_tracking(struct branch_info *new_branch_info)
 	struct strbuf sb = STRBUF_INIT;
 	struct branch *branch = branch_get(new_branch_info->name);
 
-	if (!format_tracking_info(branch, &sb, AHEAD_BEHIND_FULL))
+	if (!format_tracking_info(branch, &sb, AHEAD_BEHIND_FULL, 1))
 		return;
 	fputs(sb.buf, stdout);
 	strbuf_release(&sb);
@@ -1185,11 +1193,14 @@ static int switch_branches(const struct checkout_opts *opts,
 	return ret || writeout_error;
 }
 
-static int git_checkout_config(const char *var, const char *value, void *cb)
+static int git_checkout_config(const char *var, const char *value,
+			       const struct config_context *ctx, void *cb)
 {
 	struct checkout_opts *opts = cb;
 
 	if (!strcmp(var, "diff.ignoresubmodules")) {
+		if (!value)
+			return config_error_nonbool(var);
 		handle_ignore_submodules_arg(&opts->diff_options, value);
 		return 0;
 	}
@@ -1201,7 +1212,7 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 	if (starts_with(var, "submodule."))
 		return git_default_submodule_config(var, value, NULL);
 
-	return git_xmerge_config(var, value, NULL);
+	return git_xmerge_config(var, value, ctx, NULL);
 }
 
 static void setup_new_branch_info_and_source_tree(
@@ -1504,6 +1515,26 @@ static void die_if_some_operation_in_progress(void)
 	wt_status_state_free_buffers(&state);
 }
 
+/*
+ * die if attempting to checkout an existing branch that is in use
+ * in another worktree, unless ignore-other-wortrees option is given.
+ * The check is bypassed when the branch is already the current one,
+ * as it will not make things any worse.
+ */
+static void die_if_switching_to_a_branch_in_use(struct checkout_opts *opts,
+						const char *full_ref)
+{
+	int flags;
+	char *head_ref;
+
+	if (opts->ignore_other_worktrees)
+		return;
+	head_ref = resolve_refdup("HEAD", 0, NULL, &flags);
+	if (head_ref && (!(flags & REF_ISSYMREF) || strcmp(head_ref, full_ref)))
+		die_if_checked_out(full_ref, 1);
+	free(head_ref);
+}
+
 static int checkout_branch(struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
@@ -1564,14 +1595,15 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (!opts->can_switch_when_in_progress)
 		die_if_some_operation_in_progress();
 
-	if (new_branch_info->path && !opts->force_detach && !opts->new_branch &&
-	    !opts->ignore_other_worktrees) {
-		int flag;
-		char *head_ref = resolve_refdup("HEAD", 0, NULL, &flag);
-		if (head_ref &&
-		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new_branch_info->path)))
-			die_if_checked_out(new_branch_info->path, 1);
-		free(head_ref);
+	/* "git checkout <branch>" */
+	if (new_branch_info->path && !opts->force_detach && !opts->new_branch)
+		die_if_switching_to_a_branch_in_use(opts, new_branch_info->path);
+
+	/* "git checkout -B <branch>" */
+	if (opts->new_branch_force) {
+		char *full_ref = xstrfmt("refs/heads/%s", opts->new_branch);
+		die_if_switching_to_a_branch_in_use(opts, full_ref);
+		free(full_ref);
 	}
 
 	if (!new_branch_info->commit && opts->new_branch) {
@@ -1615,7 +1647,7 @@ static struct option *add_common_switch_branch_options(
 			parse_opt_tracking_mode),
 		OPT__FORCE(&opts->force, N_("force checkout (throw away local modifications)"),
 			   PARSE_OPT_NOCOMPLETE),
-		OPT_STRING(0, "orphan", &opts->new_orphan_branch, N_("new-branch"), N_("new unparented branch")),
+		OPT_STRING(0, "orphan", &opts->new_orphan_branch, N_("new-branch"), N_("new unborn branch")),
 		OPT_BOOL_F(0, "overwrite-ignore", &opts->overwrite_ignore,
 			   N_("update ignored files (default)"),
 			   PARSE_OPT_NOCOMPLETE),
@@ -1688,8 +1720,13 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 
 	if (opts->conflict_style) {
+		struct key_value_info kvi = KVI_INIT;
+		struct config_context ctx = {
+			.kvi = &kvi,
+		};
 		opts->merge = 1; /* implied */
-		git_xmerge_config("merge.conflictstyle", opts->conflict_style, NULL);
+		git_xmerge_config("merge.conflictstyle", opts->conflict_style,
+				  &ctx, NULL);
 	}
 	if (opts->force) {
 		opts->discard_changes = 1;

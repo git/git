@@ -178,7 +178,7 @@ test_expect_success 'merge-recursive, when index==head but head!=HEAD' '
 	test_when_finished "git clean -fd" &&  # Do not leave untracked around
 	# Merge B & F, with B as "head"
 	git merge-recursive A -- B F > out &&
-	test_i18ngrep "Already up to date" out
+	test_grep "Already up to date" out
 '
 
 test_expect_success 'recursive, when file has staged changes not matching HEAD nor what a merge would give' '
@@ -194,7 +194,7 @@ test_expect_success 'recursive, when file has staged changes not matching HEAD n
 	test_must_fail git merge -s recursive E^0 2>err &&
 	git rev-parse --verify :subdir/a >actual &&
 	test_cmp expect actual &&
-	test_i18ngrep "changes to the following files would be overwritten" err
+	test_grep "changes to the following files would be overwritten" err
 '
 
 test_expect_success 'recursive, when file has staged changes matching what a merge would give' '
@@ -210,7 +210,7 @@ test_expect_success 'recursive, when file has staged changes matching what a mer
 	test_must_fail git merge -s recursive E^0 2>err &&
 	git rev-parse --verify :subdir/a >actual &&
 	test_cmp expect actual &&
-	test_i18ngrep "changes to the following files would be overwritten" err
+	test_grep "changes to the following files would be overwritten" err
 '
 
 test_expect_success 'octopus, unrelated file touched' '

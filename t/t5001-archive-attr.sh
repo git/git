@@ -138,7 +138,7 @@ test_expect_success 'git archive with worktree attributes, bare' '
 '
 
 test_expect_missing	bare-worktree/ignored
-test_expect_exists	bare-worktree/ignored-by-tree
+test_expect_missing	bare-worktree/ignored-by-tree
 test_expect_exists	bare-worktree/ignored-by-worktree
 
 test_expect_success 'export-subst' '

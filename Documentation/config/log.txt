@@ -9,7 +9,7 @@ log.date::
 	`--date` option.  See linkgit:git-log[1] for details.
 +
 If the format is set to "auto:foo" and the pager is in use, format
-"foo" will be the used for the date format. Otherwise "default" will
+"foo" will be used for the date format. Otherwise, "default" will
 be used.
 
 log.decorate::

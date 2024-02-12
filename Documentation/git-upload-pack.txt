@@ -26,7 +26,7 @@ OPTIONS
 -------
 
 --[no-]strict::
-	Do not try <directory>/.git/ if <directory> is no Git directory.
+	Do not try <directory>/.git/ if <directory> is not a Git directory.
 
 --timeout=<n>::
 	Interrupt transfer after <n> seconds of inactivity.

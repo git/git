@@ -6,17 +6,18 @@
 #include "tag.h"
 #include "blob.h"
 #include "http.h"
-#include "refs.h"
 #include "diff.h"
 #include "revision.h"
-#include "exec-cmd.h"
 #include "remote.h"
 #include "list-objects.h"
 #include "setup.h"
 #include "sigchain.h"
 #include "strvec.h"
+#include "tree.h"
+#include "tree-walk.h"
+#include "url.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit-reach.h"
 
 #ifdef EXPAT_NEEDS_XMLPARSE_H
@@ -781,7 +782,7 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 static void one_remote_ref(const char *refname);
 
 static void
-xml_start_tag(void *userData, const char *name, const char **atts)
+xml_start_tag(void *userData, const char *name, const char **atts UNUSED)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
 	const char *c = strchr(name, ':');
@@ -1850,6 +1851,7 @@ int cmd_main(int argc, const char **argv)
 
 		if (oideq(&ref->old_oid, &ref->peer_ref->new_oid)) {
 			if (push_verbosely)
+				/* stable plumbing output; do not modify or localize */
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			if (helper_status)
 				printf("ok %s up to date\n", ref->name);
@@ -1870,6 +1872,7 @@ int cmd_main(int argc, const char **argv)
 				 * commits at the remote end and likely
 				 * we were not up to date to begin with.
 				 */
+				/* stable plumbing output; do not modify or localize */
 				error("remote '%s' is not an ancestor of\n"
 				      "local '%s'.\n"
 				      "Maybe you are not up-to-date and "

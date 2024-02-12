@@ -14,6 +14,7 @@ SYNOPSIS
 		   [--points-at=<object>]
 		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
+		   [--exclude=<pattern> ...]
 
 DESCRIPTION
 -----------
@@ -50,17 +51,14 @@ OPTIONS
 	key.
 
 --format=<format>::
-	A string that interpolates `%(fieldname)` from a ref being shown
-	and the object it points at.  If `fieldname`
-	is prefixed with an asterisk (`*`) and the ref points
-	at a tag object, use the value for the field in the object
-	which the tag object refers to (instead of the field in the tag object).
-	When unspecified, `<format>` defaults to
-	`%(objectname) SPC %(objecttype) TAB %(refname)`.
-	It also interpolates `%%` to `%`, and `%xx` where `xx`
-	are hex digits interpolates to character with hex code
-	`xx`; for example `%00` interpolates to `\0` (NUL),
-	`%09` to `\t` (TAB) and `%0a` to `\n` (LF).
+	A string that interpolates `%(fieldname)` from a ref being shown and
+	the object it points at. In addition, the string literal `%%`
+	renders as `%` and `%xx` - where `xx` are hex digits - renders as
+	the character with hex code `xx`. For example, `%00` interpolates to
+	`\0` (NUL), `%09` to `\t` (TAB), and `%0a` to `\n` (LF).
++
+When unspecified, `<format>` defaults to `%(objectname) SPC %(objecttype)
+TAB %(refname)`.
 
 --color[=<when>]::
 	Respect any colors specified in the `--format` option. The
@@ -101,6 +99,11 @@ OPTIONS
 --omit-empty::
 	Do not print a newline after formatted refs where the format expands
 	to the empty string.
+
+--exclude=<pattern>::
+	If one or more patterns are given, only refs which do not match
+	any excluded pattern(s) are shown. Matching is done using the
+	same rules as `<pattern>` above.
 
 FIELD NAMES
 -----------
@@ -221,6 +224,33 @@ symref::
 	`:lstrip` and `:rstrip` options in the same way as `refname`
 	above.
 
+signature::
+	The GPG signature of a commit.
+
+signature:grade::
+	Show "G" for a good (valid) signature, "B" for a bad
+	signature, "U" for a good signature with unknown validity, "X"
+	for a good signature that has expired, "Y" for a good
+	signature made by an expired key, "R" for a good signature
+	made by a revoked key, "E" if the signature cannot be
+	checked (e.g. missing key) and "N" for no signature.
+
+signature:signer::
+	The signer of the GPG signature of a commit.
+
+signature:key::
+	The key of the GPG signature of a commit.
+
+signature:fingerprint::
+	The fingerprint of the GPG signature of a commit.
+
+signature:primarykeyfingerprint::
+	The primary key fingerprint of the GPG signature of a commit.
+
+signature:trustlevel::
+	The trust level of the GPG signature of a commit. Possible
+	outputs are `ultimate`, `fully`, `marginal`, `never` and `undefined`.
+
 worktreepath::
 	The absolute path to the worktree in which the ref is checked
 	out, if it is checked out in any linked worktree. Empty string
@@ -230,6 +260,29 @@ ahead-behind:<committish>::
 	Two integers, separated by a space, demonstrating the number of
 	commits ahead and behind, respectively, when comparing the output
 	ref to the `<committish>` specified in the format.
+
+describe[:options]::
+	A human-readable name, like linkgit:git-describe[1];
+	empty string for undescribable commits. The `describe` string may
+	be followed by a colon and one or more comma-separated options.
++
+--
+tags=<bool-value>;;
+	Instead of only considering annotated tags, consider
+	lightweight tags as well; see the corresponding option in
+	linkgit:git-describe[1] for details.
+abbrev=<number>;;
+	Use at least <number> hexadecimal digits; see the corresponding
+	option in linkgit:git-describe[1] for details.
+match=<pattern>;;
+	Only consider tags matching the given `glob(7)` pattern,
+	excluding the "refs/tags/" prefix; see the corresponding option
+	in linkgit:git-describe[1] for details.
+exclude=<pattern>;;
+	Do not consider tags matching the given `glob(7)` pattern,
+	excluding the "refs/tags/" prefix; see the corresponding option
+	in linkgit:git-describe[1] for details.
+--
 
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
@@ -242,12 +295,20 @@ fields will correspond to the appropriate date or name-email-date tuple
 from the `committer` or `tagger` fields depending on the object type.
 These are intended for working on a mix of annotated and lightweight tags.
 
+For tag objects, a `fieldname` prefixed with an asterisk (`*`) expands to
+the `fieldname` value of the peeled object, rather than that of the tag
+object itself.
+
 Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,
 and `date` to extract the named component.  For email fields (`authoremail`,
 `committeremail` and `taggeremail`), `:trim` can be appended to get the email
 without angle brackets, and `:localpart` to get the part before the `@` symbol
-out of the trimmed email.
+out of the trimmed email. In addition to these, the `:mailmap` option and the
+corresponding `:mailmap,trim` and `:mailmap,localpart` can be used (order does
+not matter) to get values of the name and email according to the .mailmap file
+or according to the file set in the mailmap.file or mailmap.blob configuration
+variable (see linkgit:gitmailmap[5]).
 
 The raw data in an object is `raw`.
 

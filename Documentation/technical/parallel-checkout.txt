@@ -63,7 +63,7 @@ improvements over the sequential code, but there was still too much lock
 contention. A `perf` profiling indicated that around 20% of the runtime
 during a local Linux clone (on an SSD) was spent in locking functions.
 For this reason this approach was rejected in favor of using multiple
-child processes, which led to a better performance.
+child processes, which led to better performance.
 
 Multi-Process Solution
 ----------------------
@@ -126,7 +126,7 @@ Then, for each assigned item, each worker:
 
 * W5: Writes the result to the file descriptor opened at W2.
 
-* W6: Calls `fstat()` or lstat()` on the just-written path, and sends
+* W6: Calls `fstat()` or `lstat()` on the just-written path, and sends
   the result back to the main process, together with the end status of
   the operation and the item's identification number.
 
@@ -148,7 +148,7 @@ information, the main process handles the results in two steps:
 
 - First, it updates the in-memory index with the `lstat()` information
   sent by the workers. (This must be done first as this information
-  might me required in the following step.)
+  might be required in the following step.)
 
 - Then it writes the items which collided on disk (i.e. items marked
   with `PC_ITEM_COLLIDED`). More on this below.
@@ -185,7 +185,7 @@ quite straightforward: for each parallel-eligible entry, the main
 process must remove all files that prevent this entry from being written
 (before enqueueing it). This includes any non-directory file in the
 leading path of the entry. Later, when a worker gets assigned the entry,
-it looks again for the non-directories files and for an already existing
+it looks again for the non-directory files and for an already existing
 file at the entry's path. If any of these checks finds something, the
 worker knows that there was a path collision.
 
@@ -232,7 +232,7 @@ conversion and re-encoding, are eligible for parallel checkout.
 Ineligible entries are checked out by the classic sequential codepath
 *before* spawning workers.
 
-Note: submodules's files are also eligible for parallel checkout (as
+Note: submodules' files are also eligible for parallel checkout (as
 long as they don't fall into any of the excluding categories mentioned
 above). But since each submodule is checked out in its own child
 process, we don't mix the superproject's and the submodules' files in

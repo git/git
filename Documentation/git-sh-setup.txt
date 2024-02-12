@@ -22,7 +22,7 @@ The 'git sh-setup' scriptlet is designed to be sourced (using
 the normal Git directories and a few helper shell functions.
 
 Before sourcing it, your script should set up a few variables;
-`USAGE` (and `LONG_USAGE`, if any) is used to define message
+`USAGE` (and `LONG_USAGE`, if any) is used to define the message
 given by `usage()` shell function.  `SUBDIRECTORY_OK` can be set
 if the script can run from a subdirectory of the working tree
 (some commands do not).

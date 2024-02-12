@@ -3,13 +3,15 @@
  * declaration matches the definition in this file.
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
 #include "repository.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "config.h"
 #include "object.h"
 #include "lockfile.h"
+#include "path.h"
+#include "read-cache-ll.h"
 #include "remote.h"
 #include "setup.h"
 #include "submodule-config.h"
@@ -102,6 +104,11 @@ void repo_set_hash_algo(struct repository *repo, int hash_algo)
 	repo->hash_algo = &hash_algos[hash_algo];
 }
 
+void repo_set_ref_storage_format(struct repository *repo, unsigned int format)
+{
+	repo->ref_storage_format = format;
+}
+
 /*
  * Attempt to resolve and set the provided 'gitdir' for repository 'repo'.
  * Return 0 upon success and a non-zero value upon failure.
@@ -182,6 +189,8 @@ int repo_init(struct repository *repo,
 		goto error;
 
 	repo_set_hash_algo(repo, format.hash_algo);
+	repo_set_ref_storage_format(repo, format.ref_storage_format);
+	repo->repository_format_worktree_config = format.worktree_config;
 
 	/* take ownership of format.partial_clone */
 	repo->repository_format_partial_clone = format.partial_clone;
@@ -253,8 +262,6 @@ static void repo_clear_path_cache(struct repo_path_cache *cache)
 	FREE_AND_NULL(cache->merge_rr);
 	FREE_AND_NULL(cache->merge_mode);
 	FREE_AND_NULL(cache->merge_head);
-	FREE_AND_NULL(cache->merge_autostash);
-	FREE_AND_NULL(cache->auto_merge);
 	FREE_AND_NULL(cache->fetch_head);
 	FREE_AND_NULL(cache->shallow);
 }

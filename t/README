@@ -32,7 +32,7 @@ the tests.
     ok 2 - plain with GIT_WORK_TREE
     ok 3 - plain bare
 
-Since the tests all output TAP (see http://testanything.org) they can
+Since the tests all output TAP (see https://testanything.org) they can
 be run with any TAP harness. Here's an example of parallel testing
 powered by a recent version of prove(1):
 
@@ -262,8 +262,8 @@ The argument for --run, <test-selector>, is a list of description
 substrings or globs or individual test numbers or ranges with an
 optional negation prefix (of '!') that define what tests in a test
 suite to include (or exclude, if negated) in the run.  A range is two
-numbers separated with a dash and matches a range of tests with both
-ends been included.  You may omit the first or the second number to
+numbers separated with a dash and specifies an inclusive range of tests
+to run.  You may omit the first or the second number to
 mean "from the first test" or "up to the very last test" respectively.
 
 The argument to --run is split on commas into separate strings,
@@ -274,10 +274,10 @@ text that you want to match includes a comma, use the glob character
 on all tests that match either the glob *rebase* or the glob
 *merge?cherry-pick*.
 
-If --run starts with an unprefixed number or range the initial
-set of tests to run is empty. If the first item starts with '!'
+If --run starts with an unprefixed number or range, the initial
+set of tests to run is empty.  If the first item starts with '!',
 all the tests are added to the initial set.  After initial set is
-determined every test number or range is added or excluded from
+determined, every test number or range is added or excluded from
 the set one by one, from left to right.
 
 For example, to run only tests up to a specific test (21), one
@@ -442,6 +442,10 @@ GIT_TEST_INDEX_VERSION=<n> exercises the index read/write code path
 for the index version specified.  Can be set to any valid version
 (currently 2, 3, or 4).
 
+GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=<boolean> if enabled will
+use the boundary-based bitmap traversal algorithm. See the documentation
+of `pack.useBitmapBoundaryTraversal` for more details.
+
 GIT_TEST_PACK_SPARSE=<boolean> if disabled will default the pack-objects
 builtin to use the non-sparse object walk. This can still be overridden by
 the --sparse command-line argument.
@@ -474,6 +478,9 @@ is used.
 GIT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
 use in the test scripts. Recognized values for <hash-algo> are "sha1"
 and "sha256".
+
+GIT_TEST_DEFAULT_REF_FORMAT=<format> specifies which ref storage format
+to use in the test scripts. Recognized values for <format> are "files".
 
 GIT_TEST_NO_WRITE_REV_INDEX=<boolean>, when true disables the
 'pack.writeReverseIndex' setting.
@@ -575,11 +582,11 @@ This test harness library does the following things:
 
 Recommended style
 -----------------
-Here are some recommented styles when writing test case.
 
- - Keep test title the same line with test helper function itself.
+ - Keep the test_expect_* function call and test title on
+   the same line.
 
-   Take test_expect_success helper for example, write it like:
+   For example, with test_expect_success, write it like:
 
   test_expect_success 'test title' '
       ... test body ...
@@ -591,10 +598,9 @@ Here are some recommented styles when writing test case.
       'test title' \
       '... test body ...'
 
+ - End the line with an opening single quote.
 
- - End the line with a single quote.
-
- - Indent the body of here-document, and use "<<-" instead of "<<"
+ - Indent here-document bodies, and use "<<-" instead of "<<"
    to strip leading TABs used for indentation:
 
   test_expect_success 'test something' '
@@ -620,7 +626,7 @@ Here are some recommented styles when writing test case.
   '
 
  - Quote or escape the EOF delimiter that begins a here-document if
-   there is no parameter and other expansion in it, to signal readers
+   there is no parameter or other expansion in it, to signal readers
    that they can skim it more casually:
 
   cmd <<-\EOF
@@ -634,7 +640,7 @@ Do's & don'ts
 Here are a few examples of things you probably should and shouldn't do
 when writing tests.
 
-Here are the "do's:"
+The "do's:"
 
  - Put all code inside test_expect_success and other assertions.
 
@@ -884,7 +890,7 @@ see test-lib-functions.sh for the full list and their options.
    rare case where your test depends on more than one:
 
 	test_expect_success PERL,PYTHON 'yo dawg' \
-	    ' test $(perl -E 'print eval "1 +" . qx[python -c "print 2"]') == "4" '
+	    ' test $(perl -E '\''print eval "1 +" . qx[python -c "print(2)"]'\'') = "4" '
 
  - test_expect_failure [<prereq>] <message> <script>
 
@@ -1098,6 +1104,12 @@ see test-lib-functions.sh for the full list and their options.
    the symbolic link in the file system and a part that does; then only
    the latter part need be protected by a SYMLINKS prerequisite (see below).
 
+ - test_path_is_executable
+
+   This tests whether a file is executable and prints an error message
+   if not. This must be used only under the POSIXPERM prerequisite
+   (see below).
+
  - test_oid_init
 
    This function loads facts and useful object IDs related to the hash
@@ -1227,8 +1239,8 @@ and it knows that the object ID of an empty tree is a certain
 because the things the very basic core test tries to achieve is
 to serve as a basis for people who are changing the Git internals
 drastically.  For these people, after making certain changes,
-not seeing failures from the basic test _is_ a failure.  And
-such drastic changes to the core Git that even changes these
+not seeing failures from the basic test _is_ a failure.  Any
+Git core changes so drastic that they change even these
 otherwise supposedly stable object IDs should be accompanied by
 an update to t0000-basic.sh.
 
@@ -1238,7 +1250,7 @@ knowledge of the core Git internals.  If all the test scripts
 hardcoded the object IDs like t0000-basic.sh does, that defeats
 the purpose of t0000-basic.sh, which is to isolate that level of
 validation in one place.  Your test also ends up needing
-updating when such a change to the internal happens, so do _not_
+an update whenever the internals change, so do _not_
 do it and leave the low level of validation to t0000-basic.sh.
 
 Test coverage
@@ -1269,7 +1281,7 @@ Devel::Cover module. To install it do:
    sudo aptitude install libdevel-cover-perl
 
    # From the CPAN with cpanminus
-   curl -L http://cpanmin.us | perl - --sudo --self-upgrade
+   curl -L https://cpanmin.us/ | perl - --sudo --self-upgrade
    cpanm --sudo Devel::Cover
 
 Then, at the top-level:

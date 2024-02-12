@@ -19,6 +19,20 @@ attr_check () {
 	test_must_be_empty err
 }
 
+attr_check_object_mode_basic () {
+	path="$1" &&
+	expect="$2" &&
+	check_opts="$3" &&
+	git check-attr $check_opts builtin_objectmode -- "$path" >actual 2>err &&
+	echo "$path: builtin_objectmode: $expect" >expect &&
+	test_cmp expect actual
+}
+
+attr_check_object_mode () {
+	attr_check_object_mode_basic "$@" &&
+	test_must_be_empty err
+}
+
 attr_check_quote () {
 	path="$1" quoted_path="$2" expect="$3" &&
 
@@ -30,8 +44,21 @@ attr_check_quote () {
 attr_check_source () {
 	path="$1" expect="$2" source="$3" git_opts="$4" &&
 
-	git $git_opts check-attr --source $source test -- "$path" >actual 2>err &&
 	echo "$path: test: $expect" >expect &&
+
+	git $git_opts check-attr --source $source test -- "$path" >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err &&
+
+	git $git_opts --attr-source="$source" check-attr test -- "$path" >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+
+	git $git_opts -c "attr.tree=$source" check-attr test -- "$path" >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+
+	GIT_ATTR_SOURCE="$source" git $git_opts check-attr test -- "$path" >actual 2>err &&
 	test_cmp expect actual &&
 	test_must_be_empty err
 }
@@ -250,7 +277,7 @@ test_expect_success 'root subdir attribute test' '
 test_expect_success 'negative patterns' '
 	echo "!f test=bar" >.gitattributes &&
 	git check-attr test -- '"'"'!f'"'"' 2>errors &&
-	test_i18ngrep "Negative patterns are ignored" errors
+	test_grep "Negative patterns are ignored" errors
 '
 
 test_expect_success 'patterns starting with exclamation' '
@@ -330,6 +357,74 @@ test_expect_success 'bare repository: check that .gitattribute is ignored' '
 		attr_check a/c/f unspecified &&
 		attr_check a/i unspecified &&
 		attr_check subdir/a/i unspecified
+	)
+'
+
+bad_attr_source_err="fatal: bad --attr-source or GIT_ATTR_SOURCE"
+
+test_expect_success '--attr-source is bad' '
+	test_when_finished rm -rf empty &&
+	git init empty &&
+	(
+		cd empty &&
+		echo "$bad_attr_source_err" >expect_err &&
+		test_must_fail git --attr-source=HEAD check-attr test -- f/path 2>err &&
+		test_cmp expect_err err
+	)
+'
+
+test_expect_success 'attr.tree when HEAD is unborn' '
+	test_when_finished rm -rf empty &&
+	git init empty &&
+	(
+		cd empty &&
+		echo "f/path: test: unspecified" >expect &&
+		git -c attr.tree=HEAD check-attr test -- f/path >actual 2>err &&
+		test_must_be_empty err &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'bad attr source defaults to reading .gitattributes file' '
+	test_when_finished rm -rf empty &&
+	git init empty &&
+	(
+		cd empty &&
+		echo "f/path test=val" >.gitattributes &&
+		echo "f/path: test: val" >expect &&
+		git -c attr.tree=HEAD check-attr test -- f/path >actual 2>err &&
+		test_must_be_empty err &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'bare repo defaults to reading .gitattributes from HEAD' '
+	test_when_finished rm -rf test bare_with_gitattribute &&
+	git init test &&
+	test_commit -C test gitattributes .gitattributes "f/path test=val" &&
+	git clone --bare test bare_with_gitattribute &&
+	echo "f/path: test: val" >expect &&
+	git -C bare_with_gitattribute check-attr test -- f/path >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'precedence of --attr-source, GIT_ATTR_SOURCE, then attr.tree' '
+	test_when_finished rm -rf empty &&
+	git init empty &&
+	(
+		cd empty &&
+		git checkout -b attr-source &&
+		test_commit "val1" .gitattributes "f/path test=val1" &&
+		git checkout -b attr-tree &&
+		test_commit "val2" .gitattributes "f/path test=val2" &&
+		git checkout attr-source &&
+		echo "f/path: test: val1" >expect &&
+		GIT_ATTR_SOURCE=attr-source git -c attr.tree=attr-tree --attr-source=attr-source \
+		check-attr test -- f/path >actual &&
+		test_cmp expect actual &&
+		GIT_ATTR_SOURCE=attr-source git -c attr.tree=attr-tree \
+		check-attr test -- f/path >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -415,7 +510,7 @@ test_expect_success SYMLINKS 'symlinks not respected in-tree' '
 	mkdir subdir &&
 	ln -s ../attr subdir/.gitattributes &&
 	attr_check_basic subdir/file unspecified &&
-	test_i18ngrep "unable to access.*gitattributes" err
+	test_grep "unable to access.*gitattributes" err
 '
 
 test_expect_success 'large attributes line ignored in tree' '
@@ -474,6 +569,68 @@ test_expect_success EXPENSIVE 'large attributes file ignored in index' '
 	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
 	git check-attr --cached --all path >/dev/null 2>err &&
 	echo "warning: ignoring overly large gitattributes blob ${SQ}.gitattributes${SQ}" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'builtin object mode attributes work (dir and regular paths)' '
+	>normal &&
+	attr_check_object_mode normal 100644 &&
+	mkdir dir &&
+	attr_check_object_mode dir 040000
+'
+
+test_expect_success POSIXPERM 'builtin object mode attributes work (executable)' '
+	>exec &&
+	chmod +x exec &&
+	attr_check_object_mode exec 100755
+'
+
+test_expect_success SYMLINKS 'builtin object mode attributes work (symlinks)' '
+	ln -s to_sym sym &&
+	attr_check_object_mode sym 120000
+'
+
+test_expect_success 'native object mode attributes work with --cached' '
+	>normal &&
+	git add normal &&
+	empty_blob=$(git rev-parse :normal) &&
+	git update-index --index-info <<-EOF &&
+	100755 $empty_blob 0	exec
+	120000 $empty_blob 0	symlink
+	EOF
+	attr_check_object_mode normal 100644 --cached &&
+	attr_check_object_mode exec 100755 --cached &&
+	attr_check_object_mode symlink 120000 --cached
+'
+
+test_expect_success 'check object mode attributes work for submodules' '
+	mkdir sub &&
+	(
+		cd sub &&
+		git init &&
+		mv .git .real &&
+		echo "gitdir: .real" >.git &&
+		test_commit first
+	) &&
+	attr_check_object_mode sub 160000 &&
+	attr_check_object_mode sub unspecified --cached &&
+	git add sub &&
+	attr_check_object_mode sub 160000 --cached
+'
+
+test_expect_success 'we do not allow user defined builtin_* attributes' '
+	echo "foo* builtin_foo" >.gitattributes &&
+	git add .gitattributes 2>actual &&
+	echo "builtin_foo is not a valid attribute name: .gitattributes:1" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'user defined builtin_objectmode values are ignored' '
+	echo "foo* builtin_objectmode=12345" >.gitattributes &&
+	git add .gitattributes &&
+	>foo_1 &&
+	attr_check_object_mode_basic foo_1 100644 &&
+	echo "builtin_objectmode is not a valid attribute name: .gitattributes:1" >expect &&
 	test_cmp expect err
 '
 

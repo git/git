@@ -40,7 +40,7 @@ test_expect_success 'fetch conflict: config vs. config' '
 		"+refs/heads/branch2:refs/remotes/origin/branch1" && (
 		cd ccc &&
 		test_must_fail git fetch origin 2>error &&
-		test_i18ngrep "fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1" error
+		test_grep "fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1" error
 	)
 '
 
@@ -67,7 +67,7 @@ test_expect_success 'fetch conflict: arg vs. arg' '
 		test_must_fail git fetch origin \
 			refs/heads/*:refs/remotes/origin/* \
 			refs/heads/branch2:refs/remotes/origin/branch1 2>error &&
-		test_i18ngrep "fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1" error
+		test_grep "fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1" error
 	)
 '
 
@@ -78,8 +78,8 @@ test_expect_success 'fetch conflict: criss-cross args' '
 		git fetch origin \
 			refs/heads/branch1:refs/remotes/origin/branch2 \
 			refs/heads/branch2:refs/remotes/origin/branch1 2>error &&
-		test_i18ngrep "warning: refs/remotes/origin/branch1 usually tracks refs/heads/branch1, not refs/heads/branch2" error &&
-		test_i18ngrep "warning: refs/remotes/origin/branch2 usually tracks refs/heads/branch2, not refs/heads/branch1" error
+		test_grep "warning: refs/remotes/origin/branch1 usually tracks refs/heads/branch1, not refs/heads/branch2" error &&
+		test_grep "warning: refs/remotes/origin/branch2 usually tracks refs/heads/branch2, not refs/heads/branch1" error
 	)
 '
 

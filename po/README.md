@@ -412,7 +412,7 @@ There are some conventions that l10n contributors must follow:
 - Do not use non-ASCII characters in the subject of a commit.
 
 - The length of commit subject (first line of the commit log) should
-  be less than 50 characters, and the length of other lines of the
+  be no more than 50 characters, and the length of other lines of the
   commit log should be no more than 72 characters.
 
 - Add "Signed-off-by" trailer to your commit log, like other commits

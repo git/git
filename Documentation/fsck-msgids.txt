@@ -103,6 +103,13 @@
 `hasDotgit`::
 	(WARN) A tree contains an entry named `.git`.
 
+`largePathname`::
+	(WARN) A tree contains an entry with a very long path name. If
+	the value of `fsck.largePathname` contains a colon, that value
+	is used as the maximum allowable length (e.g., "warn:10" would
+	complain about any path component of 11 or more bytes). The
+	default value is 4096.
+
 `mailmapSymlink`::
 	(INFO) `.mailmap` is a symlink.
 
@@ -125,7 +132,7 @@
 	(ERROR) Missing space before date in an author/committer line.
 
 `missingSpaceBeforeEmail`::
-	(ERROR) Missing space before the email in author/committer line.
+	(ERROR) Missing space before the email in an author/committer line.
 
 `missingTag`::
 	(ERROR) Unexpected end after `type` line in a tag object.
@@ -167,7 +174,7 @@
 	(FATAL) Missing end-of-line in the object header.
 
 `zeroPaddedDate`::
-	(ERROR) Found a zero padded date in an author/commiter line.
+	(ERROR) Found a zero padded date in an author/committer line.
 
 `zeroPaddedFilemode`::
 	(WARN) Found a zero padded filemode in a tree.

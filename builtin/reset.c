@@ -13,12 +13,11 @@
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "lockfile.h"
-#include "tag.h"
 #include "object.h"
 #include "pretty.h"
-#include "run-command.h"
 #include "refs.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -26,11 +25,12 @@
 #include "branch.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "unpack-trees.h"
 #include "cache-tree.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
-#include "submodule-config.h"
 #include "trace.h"
 #include "trace2.h"
 #include "dir.h"
@@ -312,12 +312,13 @@ static int reset_refs(const char *rev, const struct object_id *oid)
 	return update_ref_status;
 }
 
-static int git_reset_config(const char *var, const char *value, void *cb)
+static int git_reset_config(const char *var, const char *value,
+			    const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "submodule.recurse"))
 		return git_default_submodule_config(var, value, cb);
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 int cmd_reset(int argc, const char **argv, const char *prefix)
@@ -334,18 +335,25 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_BOOL(0, "no-refresh", &no_refresh,
 				N_("skip refreshing the index after reset")),
-		OPT_SET_INT(0, "mixed", &reset_type,
-						N_("reset HEAD and index"), MIXED),
-		OPT_SET_INT(0, "soft", &reset_type, N_("reset only HEAD"), SOFT),
-		OPT_SET_INT(0, "hard", &reset_type,
-				N_("reset HEAD, index and working tree"), HARD),
-		OPT_SET_INT(0, "merge", &reset_type,
-				N_("reset HEAD, index and working tree"), MERGE),
-		OPT_SET_INT(0, "keep", &reset_type,
-				N_("reset HEAD but keep local changes"), KEEP),
+		OPT_SET_INT_F(0, "mixed", &reset_type,
+			      N_("reset HEAD and index"),
+			      MIXED, PARSE_OPT_NONEG),
+		OPT_SET_INT_F(0, "soft", &reset_type,
+			      N_("reset only HEAD"),
+			      SOFT, PARSE_OPT_NONEG),
+		OPT_SET_INT_F(0, "hard", &reset_type,
+			      N_("reset HEAD, index and working tree"),
+			      HARD, PARSE_OPT_NONEG),
+		OPT_SET_INT_F(0, "merge", &reset_type,
+			      N_("reset HEAD, index and working tree"),
+			      MERGE, PARSE_OPT_NONEG),
+		OPT_SET_INT_F(0, "keep", &reset_type,
+			      N_("reset HEAD but keep local changes"),
+			      KEEP, PARSE_OPT_NONEG),
 		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
-			    "reset", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
+			       "reset", "control recursive updating of submodules",
+			       PARSE_OPT_OPTARG,
+			       option_parse_recurse_submodules_worktree_updater),
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
 				N_("record only the fact that removed paths will be added later")),

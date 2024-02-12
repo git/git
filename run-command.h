@@ -503,7 +503,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts);
  * exception of GIT_CONFIG_PARAMETERS and GIT_CONFIG_COUNT (which cause the
  * corresponding environment variables to be unset in the subprocess) and adds
  * an environment variable pointing to new_git_dir. See local_repo_env in
- * cache.h for more information.
+ * environment.h for more information.
  */
 void prepare_other_repo_env(struct strvec *env, const char *new_git_dir);
 
@@ -563,5 +563,7 @@ enum start_bg_result start_bg_command(struct child_process *cmd,
 				      start_bg_wait_cb *wait_cb,
 				      void *cb_data,
 				      unsigned int timeout_sec);
+
+int sane_execvp(const char *file, char *const argv[]);
 
 #endif

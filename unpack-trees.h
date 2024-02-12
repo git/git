@@ -1,13 +1,13 @@
 #ifndef UNPACK_TREES_H
 #define UNPACK_TREES_H
 
-#include "cache.h"
 #include "convert.h"
+#include "read-cache-ll.h"
 #include "strvec.h"
 #include "string-list.h"
 #include "tree-walk.h"
 
-#define MAX_UNPACK_TREES MAX_TRAVERSE_TREES
+#define MAX_UNPACK_TREES 8
 
 struct cache_entry;
 struct unpack_trees_options;

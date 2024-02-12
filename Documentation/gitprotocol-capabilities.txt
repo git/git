@@ -30,7 +30,7 @@ to be in effect. The client MUST NOT ask for capabilities the server
 did not say it supports.
 
 Server MUST diagnose and abort if capabilities it does not understand
-was sent.  Server MUST NOT ignore capabilities that client requested
+were sent.  Server MUST NOT ignore capabilities that client requested
 and server advertised.  As a consequence of these rules, server MUST
 NOT advertise capabilities it does not understand.
 
@@ -61,8 +61,8 @@ complete cut across the DAG, or the client has said "done".
 Without multi_ack, a client sends have lines in --date-order until
 the server has found a common base.  That means the client will send
 have lines that are already known by the server to be common, because
-they overlap in time with another branch that the server hasn't found
-a common base on yet.
+they overlap in time with another branch on which the server hasn't found
+a common base yet.
 
 For example suppose the client has commits in caps that the server
 doesn't and the server has commits in lower case that the client
@@ -88,7 +88,7 @@ interleaved with S-R-Q.
 
 multi_ack_detailed
 ------------------
-This is an extension of multi_ack that permits client to better
+This is an extension of multi_ack that permits the client to better
 understand the server's in-memory state. See linkgit:gitprotocol-pack[5],
 section "Packfile Negotiation" for more information.
 
@@ -135,7 +135,7 @@ to disable the feature in a backwards-compatible manner.
 side-band, side-band-64k
 ------------------------
 
-This capability means that server can send, and client understand multiplexed
+This capability means that the server can send, and the client can understand, multiplexed
 progress reports and error info interleaved with the packfile itself.
 
 These two options are mutually exclusive. A modern client always
@@ -163,14 +163,14 @@ Further, with side-band and its up to 1000-byte messages, it's actually
 same deal, you have up to 65519 bytes of data and 1 byte for the stream
 code.
 
-The client MUST send only maximum of one of "side-band" and "side-
-band-64k".  Server MUST diagnose it as an error if client requests
+The client MUST send only one of "side-band" and "side-
+band-64k".  The server MUST diagnose it as an error if client requests
 both.
 
 ofs-delta
 ---------
 
-Server can send, and client understand PACKv2 with delta referring to
+The server can send, and the client can understand, PACKv2 with delta referring to
 its base by position in pack rather than by an obj-id.  That is, they can
 send/read OBJ_OFS_DELTA (aka type 6) in a packfile.
 
@@ -252,7 +252,7 @@ the current shallow boundary, instead of the depth from remote refs.
 no-progress
 -----------
 
-The client was started with "git clone -q" or something, and doesn't
+The client was started with "git clone -q" or something similar, and doesn't
 want that side band 2.  Basically the client just says "I do not
 wish to receive stream 2 on sideband, so do not send it to me, and if
 you did, I will drop it on the floor anyway".  However, the sideband
@@ -273,7 +273,7 @@ request include-tag only has to do with the client's desires for tag
 data, whether or not a server had advertised objects in the
 refs/tags/* namespace.
 
-Servers MUST pack the tags if their referrant is packed and the client
+Servers MUST pack the tags if their referent is packed and the client
 has requested include-tags.
 
 Clients MUST be prepared for the case where a server has ignored
@@ -378,7 +378,7 @@ fetch-pack may send "filter" commands to request a partial clone
 or partial fetch and request that the server omit various objects
 from the packfile.
 
-session-id=<session id>
+session-id=<session-id>
 -----------------------
 
 The server may advertise a session ID that can be used to identify this process

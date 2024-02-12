@@ -42,11 +42,15 @@ test_expect_success setup '
 	#!/bin/sh
 
 	orig="$1" ours="$2" theirs="$3" exit="$4" path=$5
+	orig_name="$6" our_name="$7" their_name="$8"
 	(
 		echo "orig is $orig"
 		echo "ours is $ours"
 		echo "theirs is $theirs"
 		echo "path is $path"
+		echo "orig_name is $orig_name"
+		echo "our_name is $our_name"
+		echo "their_name is $their_name"
 		echo "=== orig ==="
 		cat "$orig"
 		echo "=== ours ==="
@@ -56,6 +60,12 @@ test_expect_success setup '
 	) >"$ours+"
 	cat "$ours+" >"$ours"
 	rm -f "$ours+"
+
+	if test -f ./please-abort
+	then
+		echo >>./please-abort killing myself
+		kill -9 $$
+	fi
 	exit "$exit"
 	EOF
 	chmod +x ./custom-merge
@@ -115,7 +125,7 @@ test_expect_success 'custom merge backend' '
 
 	git reset --hard anchor &&
 	git config --replace-all \
-	merge.custom.driver "./custom-merge %O %A %B 0 %P" &&
+	merge.custom.driver "./custom-merge %O %A %B 0 %P %S %X %Y" &&
 	git config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
@@ -126,7 +136,8 @@ test_expect_success 'custom merge backend' '
 	o=$(git unpack-file main^:text) &&
 	a=$(git unpack-file side^:text) &&
 	b=$(git unpack-file main:text) &&
-	sh -c "./custom-merge $o $a $b 0 text" &&
+	base_revid=$(git rev-parse --short main^) &&
+	sh -c "./custom-merge $o $a $b 0 text $base_revid HEAD main" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
 	rm -f $o $a $b
@@ -136,7 +147,7 @@ test_expect_success 'custom merge backend' '
 
 	git reset --hard anchor &&
 	git config --replace-all \
-	merge.custom.driver "./custom-merge %O %A %B 1 %P" &&
+	merge.custom.driver "./custom-merge %O %A %B 1 %P %S %X %Y" &&
 	git config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
@@ -153,13 +164,32 @@ test_expect_success 'custom merge backend' '
 	o=$(git unpack-file main^:text) &&
 	a=$(git unpack-file anchor:text) &&
 	b=$(git unpack-file main:text) &&
-	sh -c "./custom-merge $o $a $b 0 text" &&
+	base_revid=$(git rev-parse --short main^) &&
+	sh -c "./custom-merge $o $a $b 0 text $base_revid HEAD main" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
 	sed -e 1,3d -e 4q $a >check-3 &&
 	echo "path is text" >expect &&
 	cmp expect check-3 &&
 	rm -f $o $a $b
+'
+
+test_expect_success !WINDOWS 'custom merge driver that is killed with a signal' '
+	test_when_finished "rm -f output please-abort" &&
+
+	git reset --hard anchor &&
+	git config --replace-all \
+	merge.custom.driver "./custom-merge %O %A %B 0 %P %S %X %Y" &&
+	git config --replace-all \
+	merge.custom.name "custom merge driver for testing" &&
+
+	>./please-abort &&
+	echo "* merge=custom" >.gitattributes &&
+	test_must_fail git merge main 2>err &&
+	grep "^error: failed to execute internal merge" err &&
+	git ls-files -u >output &&
+	git diff --name-only HEAD >>output &&
+	test_must_be_empty output
 '
 
 test_expect_success 'up-to-date merge without common ancestor' '

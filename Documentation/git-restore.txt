@@ -78,6 +78,8 @@ all modified paths.
 --theirs::
 	When restoring files in the working tree from the index, use
 	stage #2 ('ours') or #3 ('theirs') for unmerged paths.
+	This option cannot be used when checking out paths from a
+	tree-ish (i.e. with the `--source` option).
 +
 Note that during `git rebase` and `git pull --rebase`, 'ours' and
 'theirs' may appear swapped. See the explanation of the same options
@@ -87,6 +89,8 @@ in linkgit:git-checkout[1] for details.
 --merge::
 	When restoring files on the working tree from the index,
 	recreate the conflicted merge in the unmerged paths.
+	This option cannot be used when checking out paths from a
+	tree-ish (i.e. with the `--source` option).
 
 --conflict=<style>::
 	The same as `--merge` option above, but changes the way the
@@ -101,7 +105,7 @@ in linkgit:git-checkout[1] for details.
 	specified. Unmerged paths on the working tree are left alone.
 
 --ignore-skip-worktree-bits::
-	In sparse checkout mode, by default is to only update entries
+	In sparse checkout mode, the default is to only update entries
 	matched by `<pathspec>` and sparse patterns in
 	$GIT_DIR/info/sparse-checkout. This option ignores the sparse
 	patterns and unconditionally restores any files in
@@ -195,7 +199,7 @@ the same as using linkgit:git-reset[1])
 $ git restore --staged hello.c
 ------------
 
-or you can restore both the index and the working tree (this the same
+or you can restore both the index and the working tree (this is the same
 as using linkgit:git-checkout[1])
 
 ------------

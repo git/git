@@ -432,7 +432,7 @@ mongoose_conf() {
 # Mongoose web server configuration file.
 # Lines starting with '#' and empty lines are ignored.
 # For detailed description of every option, visit
-# http://code.google.com/p/mongoose/wiki/MongooseManual
+# https://code.google.com/p/mongoose/wiki/MongooseManual
 
 root		$root
 ports		$port
@@ -458,7 +458,7 @@ plackup_conf () {
 #!$PERL
 
 # gitweb - simple web interface to track changes in git repositories
-#          PSGI wrapper and server starter (see http://plackperl.org)
+#          PSGI wrapper and server starter (see https://plackperl.org)
 
 use strict;
 

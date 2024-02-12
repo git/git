@@ -157,6 +157,23 @@ test_expect_success 'clone --mirror does not repeat tags' '
 
 '
 
+test_expect_success 'clone with files ref format' '
+	test_when_finished "rm -rf ref-storage" &&
+	git clone --ref-format=files --mirror src ref-storage &&
+	echo files >expect &&
+	git -C ref-storage rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone with garbage ref format' '
+	cat >expect <<-EOF &&
+	fatal: unknown ref storage format ${SQ}garbage${SQ}
+	EOF
+	test_must_fail git clone --ref-format=garbage --mirror src ref-storage 2>err &&
+	test_cmp expect err &&
+	test_path_is_missing ref-storage
+'
+
 test_expect_success 'clone to destination with trailing /' '
 
 	git clone src target-1/ &&
@@ -630,7 +647,7 @@ test_expect_success 'clone on case-insensitive fs' '
 test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
 	grep X icasefs/warning &&
 	grep x icasefs/warning &&
-	test_i18ngrep "the following paths have collided" icasefs/warning
+	test_grep "the following paths have collided" icasefs/warning
 '
 
 test_expect_success 'clone with GIT_DEFAULT_HASH' '
@@ -696,7 +713,7 @@ test_expect_success 'partial clone: warn if server does not support object filte
 
 	git clone --filter=blob:limit=0 "file://$(pwd)/server" client 2> err &&
 
-	test_i18ngrep "filtering not recognized by server" err
+	test_grep "filtering not recognized by server" err
 '
 
 test_expect_success 'batch missing blob request during checkout' '
@@ -767,7 +784,7 @@ test_expect_success 'reject cloning shallow repository using HTTP' '
 	test_when_finished "rm -rf repo" &&
 	git clone --bare --no-local --depth=1 src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	test_must_fail git -c protocol.version=2 clone --reject-shallow $HTTPD_URL/smart/repo.git repo 2>err &&
-	test_i18ngrep -e "source repository is shallow, reject to clone." err &&
+	test_grep -e "source repository is shallow, reject to clone." err &&
 
 	git clone --no-reject-shallow $HTTPD_URL/smart/repo.git repo
 '

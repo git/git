@@ -325,6 +325,7 @@ void trace2_thread_exit_fl(const char *file, int line);
 
 #define trace2_thread_exit() trace2_thread_exit_fl(__FILE__, __LINE__)
 
+struct key_value_info;
 /*
  * Emits a "def_param" message containing a key/value pair.
  *
@@ -334,10 +335,10 @@ void trace2_thread_exit_fl(const char *file, int line);
  * `core.abbrev`, `status.showUntrackedFiles`, or `--no-ahead-behind`.
  */
 void trace2_def_param_fl(const char *file, int line, const char *param,
-			 const char *value);
+			 const char *value, const struct key_value_info *kvi);
 
-#define trace2_def_param(param, value) \
-	trace2_def_param_fl(__FILE__, __LINE__, (param), (value))
+#define trace2_def_param(param, value, kvi) \
+	trace2_def_param_fl(__FILE__, __LINE__, (param), (value), (kvi))
 
 /*
  * Tell trace2 about a newly instantiated repo object and assign
@@ -540,7 +541,7 @@ void trace2_timer_stop(enum trace2_timer_id tid);
  * elsewhere as array indexes).
  *
  * Any values added to this enum be also be added to the
- * `tr2_counter_metadata[]` in `trace2/tr2_tr2_ctr.c`.
+ * `tr2_counter_metadata[]` in `trace2/tr2_ctr.c`.
  */
 enum trace2_counter_id {
 	/*
@@ -550,6 +551,12 @@ enum trace2_counter_id {
 	 */
 	TRACE2_COUNTER_ID_TEST1 = 0, /* emits summary event only */
 	TRACE2_COUNTER_ID_TEST2,     /* emits summary and thread events */
+
+	TRACE2_COUNTER_ID_PACKED_REFS_JUMPS, /* counts number of jumps */
+
+	/* counts number of fsyncs */
+	TRACE2_COUNTER_ID_FSYNC_WRITEOUT_ONLY,
+	TRACE2_COUNTER_ID_FSYNC_HARDWARE_FLUSH,
 
 	/* Add additional counter definitions before here. */
 	TRACE2_NUMBER_OF_COUNTERS

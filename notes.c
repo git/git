@@ -4,9 +4,7 @@
 #include "hex.h"
 #include "notes.h"
 #include "object-name.h"
-#include "object-store.h"
-#include "blob.h"
-#include "tree.h"
+#include "object-store-ll.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "tree-walk.h"
@@ -974,7 +972,9 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	free(globs_copy);
 }
 
-static int notes_display_config(const char *k, const char *v, void *cb)
+static int notes_display_config(const char *k, const char *v,
+				const struct config_context *ctx UNUSED,
+				void *cb)
 {
 	int *load_refs = cb;
 

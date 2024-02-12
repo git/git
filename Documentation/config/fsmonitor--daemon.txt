@@ -1,5 +1,5 @@
 fsmonitor.allowRemote::
-    By default, the fsmonitor daemon refuses to work against network-mounted
+    By default, the fsmonitor daemon refuses to work with network-mounted
     repositories. Setting `fsmonitor.allowRemote` to `true` overrides this
     behavior.  Only respected when `core.fsmonitor` is set to `true`.
 

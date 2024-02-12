@@ -771,7 +771,7 @@ test_expect_success 'fetching submodule into a broken repository' '
 	git -C dst fetch --recurse-submodules &&
 
 	# Break the receiving submodule
-	rm -f dst/sub/.git/HEAD &&
+	rm -r dst/sub/.git/objects &&
 
 	# NOTE: without the fix the following tests will recurse forever!
 	# They should terminate with an error.
@@ -1178,6 +1178,19 @@ test_expect_success 'fetch --all with --recurse-submodules with multiple' '
 	) &&
 	grep "Fetching submodule sub" fetch-log >fetch-subs &&
 	test_line_count = 2 fetch-subs
+'
+
+test_expect_success "fetch --all with --no-recurse-submodules only fetches superproject" '
+	test_when_finished "rm -rf src_clone" &&
+
+	git clone --recurse-submodules src src_clone &&
+	(
+		cd src_clone &&
+		git remote add secondary ../src &&
+		git config submodule.recurse true &&
+		git fetch --all --no-recurse-submodules 2>../fetch-log
+	) &&
+	! grep "Fetching submodule" fetch-log
 '
 
 test_done

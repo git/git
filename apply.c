@@ -7,12 +7,11 @@
  *
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
+#include "base85.h"
 #include "config.h"
-#include "object-store.h"
-#include "blob.h"
+#include "object-store-ll.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
@@ -20,17 +19,22 @@
 #include "gettext.h"
 #include "hex.h"
 #include "xdiff-interface.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "lockfile.h"
+#include "name-hash.h"
 #include "object-name.h"
 #include "object-file.h"
 #include "parse-options.h"
+#include "path.h"
 #include "quote.h"
+#include "read-cache.h"
 #include "rerere.h"
 #include "apply.h"
 #include "entry.h"
 #include "setup.h"
-#include "wrapper.h"
+#include "symlinks.h"
+#include "wildmatch.h"
+#include "ws.h"
 
 struct gitdiff_data {
 	struct strbuf *root;
@@ -407,9 +411,10 @@ static void say_patch_name(FILE *output, const char *fmt, struct patch *patch)
 
 static int read_patch_file(struct strbuf *sb, int fd)
 {
-	if (strbuf_read(sb, fd, 0) < 0 || sb->len >= MAX_APPLY_SIZE)
-		return error_errno("git apply: failed to read");
-
+	if (strbuf_read(sb, fd, 0) < 0)
+		return error_errno(_("failed to read patch"));
+	else if (sb->len >= MAX_APPLY_SIZE)
+		return error(_("patch too large"));
 	/*
 	 * Make sure that we have some slop in the buffer
 	 * so that we can do speculative "memcmp" etc, and

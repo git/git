@@ -1,23 +1,22 @@
 #include "git-compat-util.h"
-#include "alloc.h"
+#include "diffcore.h"
 #include "line-range.h"
 #include "hex.h"
 #include "tag.h"
-#include "blob.h"
 #include "tree.h"
 #include "diff.h"
 #include "commit.h"
 #include "decorate.h"
+#include "repository.h"
 #include "revision.h"
 #include "xdiff-interface.h"
 #include "strbuf.h"
 #include "log-tree.h"
-#include "graph.h"
-#include "userdiff.h"
 #include "line-log.h"
 #include "setup.h"
 #include "strvec.h"
 #include "bloom.h"
+#include "tree-walk.h"
 
 static void range_set_grow(struct range_set *rs, size_t extra)
 {
@@ -1325,4 +1324,14 @@ int line_log_filter(struct rev_info *rev)
 	rev->commits = out;
 
 	return 0;
+}
+
+static void free_void_line_log_data(void *data)
+{
+	free_line_log_data(data);
+}
+
+void line_log_free(struct rev_info *rev)
+{
+	clear_decoration(&rev->line_log_data, free_void_line_log_data);
 }

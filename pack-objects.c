@@ -1,10 +1,9 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "object.h"
 #include "pack.h"
 #include "pack-objects.h"
 #include "packfile.h"
-#include "config.h"
+#include "parse.h"
 
 static uint32_t locate_object_entry_hash(struct packing_data *pdata,
 					 const struct object_id *oid,
@@ -150,6 +149,21 @@ void prepare_packing_data(struct repository *r, struct packing_data *pdata)
 	pdata->oe_delta_size_limit = git_env_ulong("GIT_TEST_OE_DELTA_SIZE",
 						   1UL << OE_DELTA_SIZE_BITS);
 	init_recursive_mutex(&pdata->odb_lock);
+}
+
+void clear_packing_data(struct packing_data *pdata)
+{
+	if (!pdata)
+		return;
+
+	free(pdata->cruft_mtime);
+	free(pdata->in_pack);
+	free(pdata->in_pack_by_idx);
+	free(pdata->in_pack_pos);
+	free(pdata->index);
+	free(pdata->layer);
+	free(pdata->objects);
+	free(pdata->tree_depth);
 }
 
 struct object_entry *packlist_alloc(struct packing_data *pdata,

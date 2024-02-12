@@ -56,7 +56,7 @@ test_expect_success 'git diff --no-index executed outside repo gives correct err
 		export GIT_CEILING_DIRECTORIES &&
 		cd non/git &&
 		test_must_fail git diff --no-index a 2>actual.err &&
-		test_i18ngrep "usage: git diff --no-index" actual.err
+		test_grep "usage: git diff --no-index" actual.err
 	)
 '
 
@@ -203,6 +203,97 @@ test_expect_success POSIXPERM,SYMLINKS 'diff --no-index normalizes: mode not lik
 	EOF
 	test_expect_code 1 git -c core.abbrev=no diff --no-index x z >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success POSIXPERM 'external diff with mode-only change' '
+	echo content >not-executable &&
+	echo content >executable &&
+	chmod +x executable &&
+	echo executable executable $(test_oid zero) 100755 \
+		not-executable $(test_oid zero) 100644 not-executable \
+		>expect &&
+	test_expect_code 1 git -c diff.external=echo diff \
+		--no-index executable not-executable >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "diff --no-index treats '-' as stdin" '
+	cat >expect <<-EOF &&
+	diff --git a/- b/a/1
+	index $ZERO_OID..$(git hash-object --stdin <a/1) 100644
+	--- a/-
+	+++ b/a/1
+	@@ -1 +1 @@
+	-x
+	+1
+	EOF
+
+	test_write_lines x | test_expect_code 1 \
+		git -c core.abbrev=no diff --no-index -- - a/1 >actual &&
+	test_cmp expect actual &&
+
+	test_write_lines 1 | git diff --no-index -- a/1 - >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success "diff --no-index -R treats '-' as stdin" '
+	cat >expect <<-EOF &&
+	diff --git b/a/1 a/-
+	index $(git hash-object --stdin <a/1)..$ZERO_OID 100644
+	--- b/a/1
+	+++ a/-
+	@@ -1 +1 @@
+	-1
+	+x
+	EOF
+
+	test_write_lines x | test_expect_code 1 \
+		git -c core.abbrev=no diff --no-index -R -- - a/1 >actual &&
+	test_cmp expect actual &&
+
+	test_write_lines 1 | git diff --no-index -R -- a/1 - >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'diff --no-index refuses to diff stdin and a directory' '
+	test_must_fail git diff --no-index -- - a </dev/null 2>err &&
+	grep "fatal: cannot compare stdin to a directory" err
+'
+
+test_expect_success PIPE 'diff --no-index refuses to diff a named pipe and a directory' '
+	test_when_finished "rm -f pipe" &&
+	mkfifo pipe &&
+	test_must_fail git diff --no-index -- pipe a 2>err &&
+	grep "fatal: cannot compare a named pipe to a directory" err
+'
+
+test_expect_success PIPE,SYMLINKS 'diff --no-index reads from pipes' '
+	test_when_finished "rm -f old new new-link" &&
+	mkfifo old &&
+	mkfifo new &&
+	ln -s new new-link &&
+	{
+		(test_write_lines a b c >old) &
+	} &&
+	test_when_finished "kill $! || :" &&
+	{
+		(test_write_lines a x c >new) &
+	} &&
+	test_when_finished "kill $! || :" &&
+
+	cat >expect <<-EOF &&
+	diff --git a/old b/new-link
+	--- a/old
+	+++ b/new-link
+	@@ -1,3 +1,3 @@
+	 a
+	-b
+	+x
+	 c
+	EOF
+
+	test_expect_code 1 git diff --no-index old new-link >actual &&
+	test_cmp expect actual
 '
 
 test_done

@@ -1,8 +1,11 @@
 #!/bin/sh
 
 test_description='rev-list combining bitmaps and filters'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bitmap.sh
+
 
 test_expect_success 'set up bitmapped repo' '
 	# one commit will have bitmaps, the other will not
@@ -139,6 +142,19 @@ test_expect_success 'combine filter with --filter-provided-objects' '
 		test "$objecttype" = blob || return 1
 		test "$objectsize" -le 1000 || return 1
 	done <objects
+'
+
+test_expect_success 'bitmap traversal with --unpacked' '
+	git repack -adb &&
+	test_commit unpacked &&
+
+	git rev-list --objects --no-object-names unpacked^.. >expect.raw &&
+	sort expect.raw >expect &&
+
+	git rev-list --use-bitmap-index --objects --all --unpacked >actual.raw &&
+	sort actual.raw >actual &&
+
+	test_cmp expect actual
 '
 
 test_done

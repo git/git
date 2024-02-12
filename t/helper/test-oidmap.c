@@ -2,6 +2,7 @@
 #include "hex.h"
 #include "object-name.h"
 #include "oidmap.h"
+#include "repository.h"
 #include "setup.h"
 #include "strbuf.h"
 #include "string-list.h"

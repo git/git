@@ -1,13 +1,17 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "refs.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "cache-tree.h"
 #include "mergesort.h"
+#include "commit.h"
 #include "convert.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "gettext.h"
 #include "hex.h"
+#include "path.h"
+#include "read-cache.h"
+#include "revision.h"
 #include "setup.h"
 #include "tag.h"
 #include "trace2.h"
@@ -2804,7 +2808,9 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 			parent_oid = &head_oid;
 		}
 
-		setup_work_tree();
+		if (!sb->contents_from)
+			setup_work_tree();
+
 		sb->final = fake_working_tree_commit(sb->repo,
 						     &sb->revs->diffopt,
 						     sb->path, sb->contents_from,

@@ -4,7 +4,6 @@
 #include "http.h"
 #include "config.h"
 #include "pack.h"
-#include "sideband.h"
 #include "run-command.h"
 #include "url.h"
 #include "urlmatch.h"
@@ -15,10 +14,9 @@
 #include "trace.h"
 #include "transport.h"
 #include "packfile.h"
-#include "protocol.h"
 #include "string-list.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);
 static int trace_curl_data = 1;
@@ -196,7 +194,7 @@ static inline int is_hdr_continuation(const char *ptr, const size_t size)
 	return size && (*ptr == ' ' || *ptr == '\t');
 }
 
-static size_t fwrite_wwwauth(char *ptr, size_t eltsize, size_t nmemb, void *p)
+static size_t fwrite_wwwauth(char *ptr, size_t eltsize, size_t nmemb, void *p UNUSED)
 {
 	size_t size = eltsize * nmemb;
 	struct strvec *values = &http_auth.wwwauth_headers;
@@ -295,7 +293,8 @@ exit:
 	return size;
 }
 
-size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf)
+size_t fwrite_null(char *ptr UNUSED, size_t eltsize UNUSED, size_t nmemb,
+		   void *data UNUSED)
 {
 	return nmemb;
 }
@@ -363,7 +362,8 @@ static void process_curl_messages(void)
 	}
 }
 
-static int http_options(const char *var, const char *value, void *cb)
+static int http_options(const char *var, const char *value,
+			const struct config_context *ctx, void *data)
 {
 	if (!strcmp("http.version", var)) {
 		return git_config_string(&curl_http_version, var, value);
@@ -413,21 +413,21 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp("http.minsessions", var)) {
-		min_curl_sessions = git_config_int(var, value);
+		min_curl_sessions = git_config_int(var, value, ctx->kvi);
 		if (min_curl_sessions > 1)
 			min_curl_sessions = 1;
 		return 0;
 	}
 	if (!strcmp("http.maxrequests", var)) {
-		max_requests = git_config_int(var, value);
+		max_requests = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp("http.lowspeedlimit", var)) {
-		curl_low_speed_limit = (long)git_config_int(var, value);
+		curl_low_speed_limit = (long)git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp("http.lowspeedtime", var)) {
-		curl_low_speed_time = (long)git_config_int(var, value);
+		curl_low_speed_time = (long)git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -463,7 +463,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	if (!strcmp("http.postbuffer", var)) {
-		http_post_buffer = git_config_ssize_t(var, value);
+		http_post_buffer = git_config_ssize_t(var, value, ctx->kvi);
 		if (http_post_buffer < 0)
 			warning(_("negative value for http.postBuffer; defaulting to %d"), LARGE_PACKET_MAX);
 		if (http_post_buffer < LARGE_PACKET_MAX)
@@ -534,7 +534,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	/* Fall back on the default ones */
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, data);
 }
 
 static int curl_empty_auth_enabled(void)
@@ -736,17 +736,43 @@ static int redact_sensitive_header(struct strbuf *header, size_t offset)
 	return ret;
 }
 
+static int match_curl_h2_trace(const char *line, const char **out)
+{
+	const char *p;
+
+	/*
+	 * curl prior to 8.1.0 gives us:
+	 *
+	 *     h2h3 [<header-name>: <header-val>]
+	 *
+	 * Starting in 8.1.0, the first token became just "h2".
+	 */
+	if (skip_iprefix(line, "h2h3 [", out) ||
+	    skip_iprefix(line, "h2 [", out))
+		return 1;
+
+	/*
+	 * curl 8.3.0 uses:
+	 *   [HTTP/2] [<stream-id>] [<header-name>: <header-val>]
+	 * where <stream-id> is numeric.
+	 */
+	if (skip_iprefix(line, "[HTTP/2] [", &p)) {
+		while (isdigit(*p))
+			p++;
+		if (skip_prefix(p, "] [", out))
+			return 1;
+	}
+
+	return 0;
+}
+
 /* Redact headers in info */
 static void redact_sensitive_info_header(struct strbuf *header)
 {
 	const char *sensitive_header;
 
-	/*
-	 * curl's h2h3 prints headers in info, e.g.:
-	 *   h2h3 [<header-name>: <header-val>]
-	 */
 	if (trace_curl_redact &&
-	    skip_iprefix(header->buf, "h2h3 [", &sensitive_header)) {
+	    match_curl_h2_trace(header->buf, &sensitive_header)) {
 		if (redact_sensitive_header(header, sensitive_header - header->buf)) {
 			/* redaction ate our closing bracket */
 			strbuf_addch(header, ']');
@@ -819,7 +845,9 @@ static void curl_dump_info(char *data, size_t size)
 	strbuf_release(&buf);
 }
 
-static int curl_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
+static int curl_trace(CURL *handle UNUSED, curl_infotype type,
+		      char *data, size_t size,
+		      void *userp UNUSED)
 {
 	const char *text;
 	enum { NO_FILTER = 0, DO_FILTER = 1 };
@@ -1872,7 +1900,7 @@ static void write_accept_language(struct strbuf *buf)
 	 * MAX_DECIMAL_PLACES must not be larger than 3. If it is larger than
 	 * that, q-value will be smaller than 0.001, the minimum q-value the
 	 * HTTP specification allows. See
-	 * http://tools.ietf.org/html/rfc7231#section-5.3.1 for q-value.
+	 * https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.1 for q-value.
 	 */
 	const int MAX_DECIMAL_PLACES = 3;
 	const int MAX_LANGUAGE_TAGS = 1000;

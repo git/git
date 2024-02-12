@@ -12,8 +12,10 @@ SYNOPSIS
 'git checkout' [-q] [-f] [-m] --detach [<branch>]
 'git checkout' [-q] [-f] [-m] [--detach] <commit>
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
-'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
+'git checkout' [-f] <tree-ish> [--] <pathspec>...
+'git checkout' [-f] <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...
+'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] --pathspec-from-file=<file> [--pathspec-file-nul]
 'git checkout' (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
 
 DESCRIPTION
@@ -41,7 +43,7 @@ $ git checkout -b <branch> --track <remote>/<branch>
 You could omit `<branch>`, in which case the command degenerates to
 "check out the current branch", which is a glorified no-op with
 rather expensive side-effects to show only the tracking information,
-if exists, for the current branch.
+if it exists, for the current branch.
 
 'git checkout' -b|-B <new-branch> [<start-point>]::
 
@@ -61,7 +63,9 @@ $ git checkout <branch>
 ------------
 +
 that is to say, the branch is not reset/created unless "git checkout" is
-successful.
+successful (e.g., when the branch is in use in another worktree, not
+just the current branch stays the same, but the branch is not reset to
+the start-point, either).
 
 'git checkout' --detach [<branch>]::
 'git checkout' [--detach] <commit>::
@@ -213,7 +217,7 @@ variable.
 	below for details.
 
 --orphan <new-branch>::
-	Create a new 'orphan' branch, named `<new-branch>`, started from
+	Create a new unborn branch, named `<new-branch>`, started from
 	`<start-point>` and switch to it.  The first commit made on this
 	new branch will have no parents and it will be the root of a new
 	history totally disconnected from all the other branches and
@@ -260,7 +264,8 @@ and mark the resolved paths with `git add` (or `git rm` if the merge
 should result in deletion of the path).
 +
 When checking out paths from the index, this option lets you recreate
-the conflicted merge in the specified paths.
+the conflicted merge in the specified paths.  This option cannot be
+used when checking out paths from a tree-ish.
 +
 When switching branches with `--merge`, staged changes may be lost.
 

@@ -26,7 +26,7 @@ with --name-only).
 
 For plain blobs, it shows the plain contents.
 
-The command takes options applicable to the 'git diff-tree' command to
+Some options that 'git log' command understands can be used to
 control how the changes the commit introduces are shown.
 
 This manual page describes only the most frequently used options.
@@ -61,7 +61,7 @@ EXAMPLES
 --------
 
 `git show v1.0.0`::
-	Shows the tag `v1.0.0`, along with the object the tags
+	Shows the tag `v1.0.0`, along with the object the tag
 	points at.
 
 `git show v1.0.0^{tree}`::

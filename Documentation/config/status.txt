@@ -47,7 +47,7 @@ status.showUntrackedFiles::
 	contain only untracked files, are shown with the directory name
 	only. Showing untracked files means that Git needs to lstat() all
 	the files in the whole repository, which might be slow on some
-	systems. So, this variable controls how the commands displays
+	systems. So, this variable controls how the commands display
 	the untracked files. Possible values are:
 +
 --
@@ -62,7 +62,7 @@ of linkgit:git-status[1] and linkgit:git-commit[1].
 
 status.submoduleSummary::
 	Defaults to false.
-	If this is set to a non zero number or true (identical to -1 or an
+	If this is set to a non-zero number or true (identical to -1 or an
 	unlimited number), the submodule summary will be enabled and a
 	summary of commits for modified submodules will be shown (see
 	--summary-limit option of linkgit:git-submodule[1]). Please note

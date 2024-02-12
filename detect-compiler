@@ -17,7 +17,15 @@ get_family() {
 }
 
 get_version() {
-	get_version_line | sed 's/^.* version \([0-9][^ ]*\).*/\1/'
+	# A string that begins with a digit up to the next SP
+	ver=$(get_version_line | sed 's/^.* version \([0-9][^ ]*\).*/\1/')
+
+	# There are known -variant suffixes that do not affect the
+	# meaning of the main version number.  Strip them.
+	ver=${ver%-win32}
+	ver=${ver%-posix}
+
+	echo "$ver"
 }
 
 print_flags() {

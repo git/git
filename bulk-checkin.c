@@ -2,7 +2,6 @@
  * Copyright (c) 2011, Google Inc.
  */
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "bulk-checkin.h"
 #include "environment.h"
 #include "gettext.h"
@@ -12,12 +11,10 @@
 #include "csum-file.h"
 #include "pack.h"
 #include "strbuf.h"
-#include "string-list.h"
 #include "tmp-objdir.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store.h"
-#include "wrapper.h"
+#include "object-store-ll.h"
 
 static int odb_transaction_nesting;
 
@@ -157,10 +154,10 @@ static int already_written(struct bulk_checkin_packfile *state, struct object_id
  * status before calling us just in case we ask it to call us again
  * with a new pack.
  */
-static int stream_to_pack(struct bulk_checkin_packfile *state,
-			  git_hash_ctx *ctx, off_t *already_hashed_to,
-			  int fd, size_t size, enum object_type type,
-			  const char *path, unsigned flags)
+static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
+			       git_hash_ctx *ctx, off_t *already_hashed_to,
+			       int fd, size_t size, const char *path,
+			       unsigned flags)
 {
 	git_zstream s;
 	unsigned char ibuf[16384];
@@ -172,7 +169,7 @@ static int stream_to_pack(struct bulk_checkin_packfile *state,
 
 	git_deflate_init(&s, pack_compression_level);
 
-	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), type, size);
+	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), OBJ_BLOB, size);
 	s.next_out = obuf + hdrlen;
 	s.avail_out = sizeof(obuf) - hdrlen;
 
@@ -249,11 +246,10 @@ static void prepare_to_stream(struct bulk_checkin_packfile *state,
 		die_errno("unable to write pack header");
 }
 
-static int deflate_to_pack(struct bulk_checkin_packfile *state,
-			   struct object_id *result_oid,
-			   int fd, size_t size,
-			   enum object_type type, const char *path,
-			   unsigned flags)
+static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
+				struct object_id *result_oid,
+				int fd, size_t size,
+				const char *path, unsigned flags)
 {
 	off_t seekback, already_hashed_to;
 	git_hash_ctx ctx;
@@ -267,9 +263,10 @@ static int deflate_to_pack(struct bulk_checkin_packfile *state,
 		return error("cannot find the current offset");
 
 	header_len = format_object_header((char *)obuf, sizeof(obuf),
-					  type, size);
+					  OBJ_BLOB, size);
 	the_hash_algo->init_fn(&ctx);
 	the_hash_algo->update_fn(&ctx, obuf, header_len);
+	the_hash_algo->init_fn(&checkpoint.ctx);
 
 	/* Note: idx is non-NULL when we are writing */
 	if ((flags & HASH_WRITE_OBJECT) != 0)
@@ -284,8 +281,8 @@ static int deflate_to_pack(struct bulk_checkin_packfile *state,
 			idx->offset = state->offset;
 			crc32_begin(state->f);
 		}
-		if (!stream_to_pack(state, &ctx, &already_hashed_to,
-				    fd, size, type, path, flags))
+		if (!stream_blob_to_pack(state, &ctx, &already_hashed_to,
+					 fd, size, path, flags))
 			break;
 		/*
 		 * Writing this object to the current pack will make
@@ -352,12 +349,12 @@ void fsync_loose_object_bulk_checkin(int fd, const char *filename)
 	}
 }
 
-int index_bulk_checkin(struct object_id *oid,
-		       int fd, size_t size, enum object_type type,
-		       const char *path, unsigned flags)
+int index_blob_bulk_checkin(struct object_id *oid,
+			    int fd, size_t size,
+			    const char *path, unsigned flags)
 {
-	int status = deflate_to_pack(&bulk_checkin_packfile, oid, fd, size, type,
-				     path, flags);
+	int status = deflate_blob_to_pack(&bulk_checkin_packfile, oid, fd, size,
+					  path, flags);
 	if (!odb_transaction_nesting)
 		flush_bulk_checkin_packfile(&bulk_checkin_packfile);
 	return status;

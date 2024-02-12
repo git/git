@@ -348,7 +348,7 @@ test_incompatible_with_recurse_submodules ()
 {
 	test_expect_success "--recurse-submodules and $1 are incompatible" "
 		test_must_fail git grep -e. --recurse-submodules $1 2>actual &&
-		test_i18ngrep 'not supported with --recurse-submodules' actual
+		test_grep 'not supported with --recurse-submodules' actual
 	"
 }
 
@@ -592,6 +592,46 @@ test_expect_success 'grep partially-cloned submodule' '
 		# Verify that we actually fetched data from the promisor remote:
 		grep \"category\":\"promisor\",\"key\":\"fetch_count\",\"value\":\"1\" trace2.log
 	)
+'
+
+test_expect_success 'check scope of core.useReplaceRefs' '
+	git init base &&
+	git init base/sub &&
+
+	echo A >base/a &&
+	echo B >base/b &&
+	echo C >base/sub/c &&
+	echo D >base/sub/d &&
+
+	git -C base/sub add c d &&
+	git -C base/sub commit -m "Add files" &&
+
+	git -C base submodule add ./sub &&
+	git -C base add a b sub &&
+	git -C base commit -m "Add files and submodule" &&
+
+	A=$(git -C base rev-parse HEAD:a) &&
+	B=$(git -C base rev-parse HEAD:b) &&
+	C=$(git -C base/sub rev-parse HEAD:c) &&
+	D=$(git -C base/sub rev-parse HEAD:d) &&
+
+	git -C base replace $A $B &&
+	git -C base/sub replace $C $D &&
+
+	test_must_fail git -C base grep --cached --recurse-submodules A &&
+	test_must_fail git -C base grep --cached --recurse-submodules C &&
+
+	git -C base config core.useReplaceRefs false &&
+	git -C base grep --recurse-submodules A &&
+	test_must_fail git -C base grep --cached --recurse-submodules C &&
+
+	git -C base/sub config core.useReplaceRefs false &&
+	git -C base grep --cached --recurse-submodules A &&
+	git -C base grep --cached --recurse-submodules C &&
+
+	git -C base config --unset core.useReplaceRefs &&
+	test_must_fail git -C base grep --cached --recurse-submodules A &&
+	git -C base grep --cached --recurse-submodules C
 '
 
 test_done

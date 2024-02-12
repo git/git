@@ -88,7 +88,7 @@ PATTERN FORMAT
    Put a backslash ("`\`") in front of the first "`!`" for patterns
    that begin with a literal "`!`", for example, "`\!important!.txt`".
 
- - The slash '/' is used as the directory separator. Separators may
+ - The slash "`/`" is used as the directory separator. Separators may
    occur at the beginning, middle or end of the `.gitignore` search pattern.
 
  - If there is a separator at the beginning or middle (or both) of the
@@ -146,7 +146,9 @@ The purpose of gitignore files is to ensure that certain files
 not tracked by Git remain untracked.
 
 To stop tracking a file that is currently tracked, use
-'git rm --cached'.
+'git rm --cached' to remove the file from the index. The filename
+can then be added to the `.gitignore` file to stop the file from
+being reintroduced in later commits.
 
 Git does not follow symbolic links when accessing a `.gitignore` file in
 the working tree. This keeps behavior consistent when the file is
@@ -172,10 +174,10 @@ EXAMPLES
    is not relevant  if there is already a middle slash in
    the pattern.
 
- - The pattern "foo/*", matches "foo/test.json"
-   (a regular file), "foo/bar" (a directory), but it does not match
-   "foo/bar/hello.c" (a regular file), as the asterisk in the
-   pattern does not match "bar/hello.c" which has a slash in it.
+ - The pattern `foo/*`, matches `foo/test.json`
+   (a regular file), `foo/bar` (a directory), but it does not match
+   `foo/bar/hello.c` (a regular file), as the asterisk in the
+   pattern does not match `bar/hello.c` which has a slash in it.
 
 --------------------------------------------------------------
     $ git status

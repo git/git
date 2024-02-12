@@ -32,7 +32,7 @@ static void test_block_read_write(void)
 	int i = 0;
 	int n;
 	struct block_reader br = { 0 };
-	struct block_iter it = { .last_key = STRBUF_INIT };
+	struct block_iter it = BLOCK_ITER_INIT;
 	int j = 0;
 	struct strbuf want = STRBUF_INIT;
 
@@ -49,13 +49,11 @@ static void test_block_read_write(void)
 
 	for (i = 0; i < N; i++) {
 		char name[100];
-		uint8_t hash[GIT_SHA1_RAWSZ];
 		snprintf(name, sizeof(name), "branch%02d", i);
-		memset(hash, i, sizeof(hash));
 
 		rec.u.ref.refname = name;
 		rec.u.ref.value_type = REFTABLE_REF_VAL1;
-		rec.u.ref.value.val1 = hash;
+		memset(rec.u.ref.value.val1, i, GIT_SHA1_RAWSZ);
 
 		names[i] = xstrdup(name);
 		n = block_writer_add(&bw, &rec);
@@ -87,7 +85,7 @@ static void test_block_read_write(void)
 	block_iter_close(&it);
 
 	for (i = 0; i < N; i++) {
-		struct block_iter it = { .last_key = STRBUF_INIT };
+		struct block_iter it = BLOCK_ITER_INIT;
 		strbuf_reset(&want);
 		strbuf_addstr(&want, names[i]);
 

@@ -1,13 +1,13 @@
 /*
  * Builtin help command
  */
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "config.h"
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "pager.h"
 #include "parse-options.h"
+#include "path.h"
 #include "run-command.h"
 #include "config-list.h"
 #include "help.h"
@@ -397,7 +397,8 @@ static int add_man_viewer_info(const char *var, const char *value)
 	return 0;
 }
 
-static int git_help_config(const char *var, const char *value, void *cb)
+static int git_help_config(const char *var, const char *value,
+			   const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "help.format")) {
 		if (!value)
@@ -420,7 +421,7 @@ static int git_help_config(const char *var, const char *value, void *cb)
 	if (starts_with(var, "man."))
 		return add_man_viewer_info(var, value);
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 static struct cmdnames main_cmds, other_cmds;

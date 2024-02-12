@@ -9,7 +9,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include "test_framework.h"
 
-#include "basics.h"
 
 void set_test_hash(uint8_t *p, int i)
 {
@@ -20,4 +19,9 @@ ssize_t strbuf_add_void(void *b, const void *data, size_t sz)
 {
 	strbuf_add(b, data, sz);
 	return sz;
+}
+
+int noop_flush(void *arg)
+{
+	return 0;
 }

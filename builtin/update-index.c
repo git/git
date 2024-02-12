@@ -4,25 +4,29 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "bulk-checkin.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
-#include "builtin.h"
 #include "object-file.h"
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "read-cache.h"
+#include "repository.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "split-index.h"
+#include "symlinks.h"
 #include "fsmonitor.h"
 #include "write-or-die.h"
 
@@ -605,9 +609,6 @@ static const char * const update_index_usage[] = {
 	NULL
 };
 
-static struct object_id head_oid;
-static struct object_id merge_head_oid;
-
 static struct cache_entry *read_one_ent(const char *which,
 					struct object_id *ent, const char *path,
 					int namelen, int stage)
@@ -638,84 +639,17 @@ static struct cache_entry *read_one_ent(const char *which,
 
 static int unresolve_one(const char *path)
 {
-	int namelen = strlen(path);
-	int pos;
-	int ret = 0;
-	struct cache_entry *ce_2 = NULL, *ce_3 = NULL;
+	struct string_list_item *item;
+	int res = 0;
 
-	/* See if there is such entry in the index. */
-	pos = index_name_pos(&the_index, path, namelen);
-	if (0 <= pos) {
-		/* already merged */
-		pos = unmerge_index_entry_at(&the_index, pos);
-		if (pos < the_index.cache_nr) {
-			const struct cache_entry *ce = the_index.cache[pos];
-			if (ce_stage(ce) &&
-			    ce_namelen(ce) == namelen &&
-			    !memcmp(ce->name, path, namelen))
-				return 0;
-		}
-		/* no resolve-undo information; fall back */
-	} else {
-		/* If there isn't, either it is unmerged, or
-		 * resolved as "removed" by mistake.  We do not
-		 * want to do anything in the former case.
-		 */
-		pos = -pos-1;
-		if (pos < the_index.cache_nr) {
-			const struct cache_entry *ce = the_index.cache[pos];
-			if (ce_namelen(ce) == namelen &&
-			    !memcmp(ce->name, path, namelen)) {
-				fprintf(stderr,
-					"%s: skipping still unmerged path.\n",
-					path);
-				goto free_return;
-			}
-		}
-	}
-
-	/* Grab blobs from given path from HEAD and MERGE_HEAD,
-	 * stuff HEAD version in stage #2,
-	 * stuff MERGE_HEAD version in stage #3.
-	 */
-	ce_2 = read_one_ent("our", &head_oid, path, namelen, 2);
-	ce_3 = read_one_ent("their", &merge_head_oid, path, namelen, 3);
-
-	if (!ce_2 || !ce_3) {
-		ret = -1;
-		goto free_return;
-	}
-	if (oideq(&ce_2->oid, &ce_3->oid) &&
-	    ce_2->ce_mode == ce_3->ce_mode) {
-		fprintf(stderr, "%s: identical in both, skipping.\n",
-			path);
-		goto free_return;
-	}
-
-	remove_file_from_index(&the_index, path);
-	if (add_index_entry(&the_index, ce_2, ADD_CACHE_OK_TO_ADD)) {
-		error("%s: cannot add our version to the index.", path);
-		ret = -1;
-		goto free_return;
-	}
-	if (!add_index_entry(&the_index, ce_3, ADD_CACHE_OK_TO_ADD))
-		return 0;
-	error("%s: cannot add their version to the index.", path);
-	ret = -1;
- free_return:
-	discard_cache_entry(ce_2);
-	discard_cache_entry(ce_3);
-	return ret;
-}
-
-static void read_head_pointers(void)
-{
-	if (read_ref("HEAD", &head_oid))
-		die("No HEAD -- no initial commit yet?");
-	if (read_ref("MERGE_HEAD", &merge_head_oid)) {
-		fprintf(stderr, "Not in the middle of a merge.\n");
-		exit(0);
-	}
+	if (!the_index.resolve_undo)
+		return res;
+	item = string_list_lookup(the_index.resolve_undo, path);
+	if (!item)
+		return res; /* no resolve-undo record for the path */
+	res = unmerge_index_entry(&the_index, path, item->util, 0);
+	FREE_AND_NULL(item->util);
+	return res;
 }
 
 static int do_unresolve(int ac, const char **av,
@@ -723,11 +657,6 @@ static int do_unresolve(int ac, const char **av,
 {
 	int i;
 	int err = 0;
-
-	/* Read HEAD and MERGE_HEAD; if MERGE_HEAD does not exist, we
-	 * are not doing a merge, so exit with success status.
-	 */
-	read_head_pointers();
 
 	for (i = 1; i < ac; i++) {
 		const char *arg = av[i];
@@ -747,6 +676,7 @@ static int do_reupdate(const char **paths,
 	int pos;
 	int has_head = 1;
 	struct pathspec pathspec;
+	struct object_id head_oid;
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD,
@@ -852,7 +782,7 @@ static int chmod_callback(const struct option *opt,
 	return 0;
 }
 
-static int resolve_undo_clear_callback(const struct option *opt,
+static int resolve_undo_clear_callback(const struct option *opt UNUSED,
 				const char *arg, int unset)
 {
 	BUG_ON_OPT_NEG(unset);
@@ -886,7 +816,7 @@ static int parse_new_style_cacheinfo(const char *arg,
 }
 
 static enum parse_opt_result cacheinfo_callback(
-	struct parse_opt_ctx_t *ctx, const struct option *opt,
+	struct parse_opt_ctx_t *ctx, const struct option *opt UNUSED,
 	const char *arg, int unset)
 {
 	struct object_id oid;
@@ -1086,6 +1016,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			resolve_undo_clear_callback),
 		OPT_INTEGER(0, "index-version", &preferred_index_format,
 			N_("write index in this format")),
+		OPT_SET_INT(0, "show-index-version", &preferred_index_format,
+			    N_("report on-disk index format version"), -1),
 		OPT_BOOL(0, "split-index", &split_index,
 			N_("enable or disable split index")),
 		OPT_BOOL(0, "untracked-cache", &untracked_cache,
@@ -1178,15 +1110,20 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 	getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
 	if (preferred_index_format) {
-		if (preferred_index_format < INDEX_FORMAT_LB ||
-		    INDEX_FORMAT_UB < preferred_index_format)
+		if (preferred_index_format < 0) {
+			printf(_("%d\n"), the_index.version);
+		} else if (preferred_index_format < INDEX_FORMAT_LB ||
+			   INDEX_FORMAT_UB < preferred_index_format) {
 			die("index-version %d not in range: %d..%d",
 			    preferred_index_format,
 			    INDEX_FORMAT_LB, INDEX_FORMAT_UB);
-
-		if (the_index.version != preferred_index_format)
-			the_index.cache_changed |= SOMETHING_CHANGED;
-		the_index.version = preferred_index_format;
+		} else {
+			if (the_index.version != preferred_index_format)
+				the_index.cache_changed |= SOMETHING_CHANGED;
+			report(_("index-version: was %d, set to %d"),
+			       the_index.version, preferred_index_format);
+			the_index.version = preferred_index_format;
+		}
 	}
 
 	if (read_from_stdin) {

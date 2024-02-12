@@ -1,20 +1,17 @@
 /*
  * Various trivial helper wrappers around standard functions
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
-#include "config.h"
+#include "parse.h"
 #include "gettext.h"
+#include "strbuf.h"
 #include "trace2.h"
-#include "wrapper.h"
-
-static intmax_t count_fsync_writeout_only;
-static intmax_t count_fsync_hardware_flush;
 
 #ifdef HAVE_RTLGENRANDOM
 /* This is required to get access to RtlGenRandom. */
 #define SystemFunction036 NTAPI SystemFunction036
-#include <NTSecAPI.h>
+#include <ntsecapi.h>
 #undef SystemFunction036
 #endif
 
@@ -549,7 +546,7 @@ int git_fsync(int fd, enum fsync_action action)
 {
 	switch (action) {
 	case FSYNC_WRITEOUT_ONLY:
-		count_fsync_writeout_only += 1;
+		trace2_counter_add(TRACE2_COUNTER_ID_FSYNC_WRITEOUT_ONLY, 1);
 
 #ifdef __APPLE__
 		/*
@@ -581,7 +578,7 @@ int git_fsync(int fd, enum fsync_action action)
 		return -1;
 
 	case FSYNC_HARDWARE_FLUSH:
-		count_fsync_hardware_flush += 1;
+		trace2_counter_add(TRACE2_COUNTER_ID_FSYNC_HARDWARE_FLUSH, 1);
 
 		/*
 		 * On macOS, a special fcntl is required to really flush the
@@ -596,18 +593,6 @@ int git_fsync(int fd, enum fsync_action action)
 	default:
 		BUG("unexpected git_fsync(%d) call", action);
 	}
-}
-
-static void log_trace_fsync_if(const char *key, intmax_t value)
-{
-	if (value)
-		trace2_data_intmax("fsync", the_repository, key, value);
-}
-
-void trace_git_fsync_stats(void)
-{
-	log_trace_fsync_if("fsync/writeout-only", count_fsync_writeout_only);
-	log_trace_fsync_if("fsync/hardware-flush", count_fsync_hardware_flush);
 }
 
 static int warn_if_unremovable(const char *op, const char *file, int rc)
@@ -643,11 +628,6 @@ int unlink_or_warn(const char *file)
 int rmdir_or_warn(const char *file)
 {
 	return warn_if_unremovable("rmdir", file, rmdir(file));
-}
-
-int remove_or_warn(unsigned int mode, const char *file)
-{
-	return S_ISGITLINK(mode) ? rmdir_or_warn(file) : unlink_or_warn(file);
 }
 
 static int access_error_is_ok(int err, unsigned flag)
@@ -831,4 +811,14 @@ int csprng_bytes(void *buf, size_t len)
 	close(fd);
 	return 0;
 #endif
+}
+
+uint32_t git_rand(void)
+{
+	uint32_t result;
+
+	if (csprng_bytes(&result, sizeof(result)) < 0)
+		die(_("unable to get random bytes"));
+
+	return result;
 }

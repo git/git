@@ -8,6 +8,7 @@ test_description='git rebase --merge test'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 T="A quick brown fox
@@ -170,7 +171,7 @@ test_expect_success '--reapply-cherry-picks' '
 
 	# Regular rebase fails, because the 1-11 commit is deduplicated
 	test_must_fail git -C repo rebase --merge main 2> err &&
-	test_i18ngrep "error: could not apply.*add 12 in another branch" err &&
+	test_grep "error: could not apply.*add 12 in another branch" err &&
 	git -C repo rebase --abort &&
 
 	# With --reapply-cherry-picks, it works

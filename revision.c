@@ -1,12 +1,12 @@
-#include "cache.h"
-#include "alloc.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "oidset.h"
 #include "tag.h"
 #include "blob.h"
 #include "tree.h"
@@ -21,17 +21,17 @@
 #include "reflog-walk.h"
 #include "patch-ids.h"
 #include "decorate.h"
-#include "log-tree.h"
 #include "string-list.h"
 #include "line-log.h"
 #include "mailmap.h"
 #include "commit-slab.h"
-#include "dir.h"
 #include "cache-tree.h"
 #include "bisect.h"
 #include "packfile.h"
 #include "worktree.h"
+#include "read-cache.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "strvec.h"
 #include "trace2.h"
 #include "commit-reach.h"
@@ -44,6 +44,7 @@
 #include "list-objects-filter-options.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
+#include "wildmatch.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -1110,6 +1111,9 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 
 	if (commit->object.flags & ADDED)
 		return 0;
+	if (revs->do_not_die_on_missing_objects &&
+	    oidset_contains(&revs->missing_commits, &commit->object.oid))
+		return 0;
 	commit->object.flags |= ADDED;
 
 	if (revs->include_check &&
@@ -1166,7 +1170,8 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 	for (parent = commit->parents; parent; parent = parent->next) {
 		struct commit *p = parent->item;
 		int gently = revs->ignore_missing_links ||
-			     revs->exclude_promisor_objects;
+			     revs->exclude_promisor_objects ||
+			     revs->do_not_die_on_missing_objects;
 		if (repo_parse_commit_gently(revs->repo, p, gently) < 0) {
 			if (revs->exclude_promisor_objects &&
 			    is_promisor_object(&p->object.oid)) {
@@ -1174,7 +1179,11 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 					break;
 				continue;
 			}
-			return -1;
+
+			if (revs->do_not_die_on_missing_objects)
+				oidset_insert(&revs->missing_commits, &p->object.oid);
+			else
+				return -1; /* corrupt repository */
 		}
 		if (revs->sources) {
 			char **slot = revision_sources_at(revs->sources, p);
@@ -1558,7 +1567,7 @@ void init_ref_exclusions(struct ref_exclusions *exclusions)
 void clear_ref_exclusions(struct ref_exclusions *exclusions)
 {
 	string_list_clear(&exclusions->excluded_refs, 0);
-	string_list_clear(&exclusions->hidden_refs, 0);
+	strvec_clear(&exclusions->hidden_refs);
 	exclusions->hidden_refs_configured = 0;
 }
 
@@ -1572,7 +1581,9 @@ struct exclude_hidden_refs_cb {
 	const char *section;
 };
 
-static int hide_refs_config(const char *var, const char *value, void *cb_data)
+static int hide_refs_config(const char *var, const char *value,
+			    const struct config_context *ctx UNUSED,
+			    void *cb_data)
 {
 	struct exclude_hidden_refs_cb *cb = cb_data;
 	cb->exclusions->hidden_refs_configured = 1;
@@ -2195,39 +2206,6 @@ static void read_pathspec_from_stdin(struct strbuf *sb,
 		strvec_push(prune, sb->buf);
 }
 
-static void read_revisions_from_stdin(struct rev_info *revs,
-				      struct strvec *prune)
-{
-	struct strbuf sb;
-	int seen_dashdash = 0;
-	int save_warning;
-
-	save_warning = warn_on_object_refname_ambiguity;
-	warn_on_object_refname_ambiguity = 0;
-
-	strbuf_init(&sb, 1000);
-	while (strbuf_getline(&sb, stdin) != EOF) {
-		int len = sb.len;
-		if (!len)
-			break;
-		if (sb.buf[0] == '-') {
-			if (len == 2 && sb.buf[1] == '-') {
-				seen_dashdash = 1;
-				break;
-			}
-			die("options not supported in --stdin mode");
-		}
-		if (handle_revision_arg(sb.buf, revs, 0,
-					REVARG_CANNOT_BE_FILENAME))
-			die("bad revision '%s'", sb.buf);
-	}
-	if (seen_dashdash)
-		read_pathspec_from_stdin(&sb, prune);
-
-	strbuf_release(&sb);
-	warn_on_object_refname_ambiguity = save_warning;
-}
-
 static void add_grep(struct rev_info *revs, const char *ptn, enum grep_pat_token what)
 {
 	append_grep_pattern(&revs->grep_filter, ptn, "command line", 0, what);
@@ -2241,6 +2219,27 @@ static void add_header_grep(struct rev_info *revs, enum grep_header_field field,
 static void add_message_grep(struct rev_info *revs, const char *pattern)
 {
 	add_grep(revs, pattern, GREP_PATTERN_BODY);
+}
+
+static int parse_count(const char *arg)
+{
+	int count;
+
+	if (strtol_i(arg, 10, &count) < 0)
+		die("'%s': not an integer", arg);
+	return count;
+}
+
+static timestamp_t parse_age(const char *arg)
+{
+	timestamp_t num;
+	char *p;
+
+	errno = 0;
+	num = parse_timestamp(arg, &p, 10);
+	if (errno || *p || p == arg)
+		die("'%s': not a number of seconds since epoch", arg);
+	return num;
 }
 
 static int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
@@ -2269,29 +2268,27 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	}
 
 	if ((argcount = parse_long_opt("max-count", argv, &optarg))) {
-		revs->max_count = atoi(optarg);
+		revs->max_count = parse_count(optarg);
 		revs->no_walk = 0;
 		return argcount;
 	} else if ((argcount = parse_long_opt("skip", argv, &optarg))) {
-		revs->skip_count = atoi(optarg);
+		revs->skip_count = parse_count(optarg);
 		return argcount;
 	} else if ((*arg == '-') && isdigit(arg[1])) {
 		/* accept -<digit>, like traditional "head" */
-		if (strtol_i(arg + 1, 10, &revs->max_count) < 0 ||
-		    revs->max_count < 0)
-			die("'%s': not a non-negative integer", arg + 1);
+		revs->max_count = parse_count(arg + 1);
 		revs->no_walk = 0;
 	} else if (!strcmp(arg, "-n")) {
 		if (argc <= 1)
 			return error("-n requires an argument");
-		revs->max_count = atoi(argv[1]);
+		revs->max_count = parse_count(argv[1]);
 		revs->no_walk = 0;
 		return 2;
 	} else if (skip_prefix(arg, "-n", &optarg)) {
-		revs->max_count = atoi(optarg);
+		revs->max_count = parse_count(optarg);
 		revs->no_walk = 0;
 	} else if ((argcount = parse_long_opt("max-age", argv, &optarg))) {
-		revs->max_age = atoi(optarg);
+		revs->max_age = parse_age(optarg);
 		return argcount;
 	} else if ((argcount = parse_long_opt("since", argv, &optarg))) {
 		revs->max_age = approxidate(optarg);
@@ -2303,7 +2300,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->max_age = approxidate(optarg);
 		return argcount;
 	} else if ((argcount = parse_long_opt("min-age", argv, &optarg))) {
-		revs->min_age = atoi(optarg);
+		revs->min_age = parse_age(optarg);
 		return argcount;
 	} else if ((argcount = parse_long_opt("before", argv, &optarg))) {
 		revs->min_age = approxidate(optarg);
@@ -2391,11 +2388,11 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--no-merges")) {
 		revs->max_parents = 1;
 	} else if (skip_prefix(arg, "--min-parents=", &optarg)) {
-		revs->min_parents = atoi(optarg);
+		revs->min_parents = parse_count(optarg);
 	} else if (!strcmp(arg, "--no-min-parents")) {
 		revs->min_parents = 0;
 	} else if (skip_prefix(arg, "--max-parents=", &optarg)) {
-		revs->max_parents = atoi(optarg);
+		revs->max_parents = parse_count(optarg);
 	} else if (!strcmp(arg, "--no-max-parents")) {
 		revs->max_parents = -1;
 	} else if (!strcmp(arg, "--boundary")) {
@@ -2404,8 +2401,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->left_right = 1;
 	} else if (!strcmp(arg, "--left-only")) {
 		if (revs->right_only)
-			die("--left-only is incompatible with --right-only"
-			    " or --cherry");
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--left-only", "--right-only/--cherry");
 		revs->left_only = 1;
 	} else if (!strcmp(arg, "--right-only")) {
 		if (revs->left_only)
@@ -2513,6 +2510,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->break_bar = xstrdup(optarg);
 		revs->track_linear = 1;
 		revs->track_first_time = 1;
+	} else if (!strcmp(arg, "--show-notes-by-default")) {
+		revs->show_notes_by_default = 1;
 	} else if (skip_prefix(arg, "--show-notes=", &optarg) ||
 		   skip_prefix(arg, "--notes=", &optarg)) {
 		if (starts_with(arg, "--show-notes=") &&
@@ -2670,7 +2669,7 @@ static int for_each_bisect_ref(struct ref_store *refs, each_ref_fn fn,
 	struct strbuf bisect_refs = STRBUF_INIT;
 	int status;
 	strbuf_addf(&bisect_refs, "refs/bisect/%s", term);
-	status = refs_for_each_fullref_in(refs, bisect_refs.buf, fn, cb_data);
+	status = refs_for_each_fullref_in(refs, bisect_refs.buf, NULL, fn, cb_data);
 	strbuf_release(&bisect_refs);
 	return status;
 }
@@ -2727,7 +2726,8 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--branches")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --branches"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--branches");
 		handle_refs(refs, revs, *flags, refs_for_each_branch_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--bisect")) {
@@ -2738,12 +2738,14 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		revs->bisect = 1;
 	} else if (!strcmp(arg, "--tags")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --tags"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--tags");
 		handle_refs(refs, revs, *flags, refs_for_each_tag_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--remotes")) {
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --remotes"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--remotes");
 		handle_refs(refs, revs, *flags, refs_for_each_remote_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
@@ -2761,21 +2763,24 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 	} else if (skip_prefix(arg, "--branches=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --branches"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--branches");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/heads/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --tags"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--tags");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/tags/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
-			return error(_("--exclude-hidden cannot be used together with --remotes"));
+			return error(_("options '%s' and '%s' cannot be used together"),
+				     "--exclude-hidden", "--remotes");
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, optarg, "refs/remotes/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
@@ -2814,6 +2819,53 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 	}
 
 	return 1;
+}
+
+static void read_revisions_from_stdin(struct rev_info *revs,
+				      struct strvec *prune)
+{
+	struct strbuf sb;
+	int seen_dashdash = 0;
+	int seen_end_of_options = 0;
+	int save_warning;
+	int flags = 0;
+
+	save_warning = warn_on_object_refname_ambiguity;
+	warn_on_object_refname_ambiguity = 0;
+
+	strbuf_init(&sb, 1000);
+	while (strbuf_getline(&sb, stdin) != EOF) {
+		if (!sb.len)
+			break;
+
+		if (!strcmp(sb.buf, "--")) {
+			seen_dashdash = 1;
+			break;
+		}
+
+		if (!seen_end_of_options && sb.buf[0] == '-') {
+			const char *argv[] = { sb.buf, NULL };
+
+			if (!strcmp(sb.buf, "--end-of-options")) {
+				seen_end_of_options = 1;
+				continue;
+			}
+
+			if (handle_revision_pseudo_opt(revs, argv, &flags) > 0)
+				continue;
+
+			die(_("invalid option '%s' in --stdin mode"), sb.buf);
+		}
+
+		if (handle_revision_arg(sb.buf, revs, flags,
+					REVARG_CANNOT_BE_FILENAME))
+			die("bad revision '%s'", sb.buf);
+	}
+	if (seen_dashdash)
+		read_pathspec_from_stdin(&sb, prune);
+
+	strbuf_release(&sb);
+	warn_on_object_refname_ambiguity = save_warning;
 }
 
 static void NORETURN diagnose_missing_default(const char *def)
@@ -2952,7 +3004,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (!revs->def)
 		revs->def = opt ? opt->def : NULL;
 	if (opt && opt->tweak)
-		opt->tweak(revs, opt);
+		opt->tweak(revs);
 	if (revs->show_merge)
 		prepare_show_merge(revs);
 	if (revs->def && !revs->pending.nr && !revs->rev_input_given) {
@@ -3007,8 +3059,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		revs->grep_filter.ignore_locale = 1;
 	compile_grep_patterns(&revs->grep_filter);
 
-	if (revs->reverse && revs->reflog_info)
-		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--walk-reflogs");
 	if (revs->reflog_info && revs->limited)
 		die("cannot combine --walk-reflogs with history-limiting options");
 	if (revs->rewrite_parents && revs->children.name)
@@ -3019,11 +3069,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	/*
 	 * Limitations on the graph functionality
 	 */
-	if (revs->reverse && revs->graph)
-		die(_("options '%s' and '%s' cannot be used together"), "--reverse", "--graph");
+	die_for_incompatible_opt3(!!revs->graph, "--graph",
+				  !!revs->reverse, "--reverse",
+				  !!revs->reflog_info, "--walk-reflogs");
 
-	if (revs->reflog_info && revs->graph)
-		die(_("options '%s' and '%s' cannot be used together"), "--walk-reflogs", "--graph");
 	if (revs->no_walk && revs->graph)
 		die(_("options '%s' and '%s' cannot be used together"), "--no-walk", "--graph");
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
@@ -3035,6 +3084,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (revs->expand_tabs_in_log < 0)
 		revs->expand_tabs_in_log = revs->expand_tabs_in_log_default;
+
+	if (!revs->show_notes_given && revs->show_notes_by_default) {
+		enable_default_display_notes(&revs->notes_opt, &revs->show_notes);
+		revs->show_notes_given = 1;
+	}
 
 	return left;
 }
@@ -3058,6 +3112,11 @@ static void release_revisions_mailmap(struct string_list *mailmap)
 
 static void release_revisions_topo_walk_info(struct topo_walk_info *info);
 
+static void free_void_commit_list(void *list)
+{
+	free_commit_list(list);
+}
+
 void release_revisions(struct rev_info *revs)
 {
 	free_commit_list(revs->commits);
@@ -3075,6 +3134,11 @@ void release_revisions(struct rev_info *revs)
 	diff_free(&revs->pruning);
 	reflog_walk_info_release(revs->reflog_info);
 	release_revisions_topo_walk_info(revs->topo_walk_info);
+	clear_decoration(&revs->children, free_void_commit_list);
+	clear_decoration(&revs->merge_simplification, free);
+	clear_decoration(&revs->treesame, free);
+	line_log_free(revs);
+	oidset_clear(&revs->missing_commits);
 }
 
 static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)
@@ -3765,6 +3829,8 @@ int prepare_revision_walk(struct rev_info *revs)
 		for_each_packed_object(mark_uninteresting, revs,
 				       FOR_EACH_OBJECT_PROMISOR_ONLY);
 	}
+
+	oidset_init(&revs->missing_commits, 0);
 
 	if (!revs->reflog_info)
 		prepare_to_use_bloom_filter(revs);

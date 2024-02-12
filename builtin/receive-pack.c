@@ -22,7 +22,6 @@
 #include "connected.h"
 #include "strvec.h"
 #include "version.h"
-#include "tag.h"
 #include "gpg-interface.h"
 #include "sigchain.h"
 #include "fsck.h"
@@ -30,15 +29,16 @@
 #include "oidset.h"
 #include "packfile.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "protocol.h"
 #include "commit-reach.h"
+#include "server-info.h"
 #include "trace.h"
 #include "trace2.h"
 #include "worktree.h"
 #include "shallow.h"
 #include "parse-options.h"
-#include "wrapper.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -89,7 +89,7 @@ static struct object_id push_cert_oid;
 static struct signature_check sigcheck;
 static const char *push_cert_nonce;
 static const char *cert_nonce_seed;
-static struct string_list hidden_refs = STRING_LIST_INIT_DUP;
+static struct strvec hidden_refs = STRVEC_INIT;
 
 static const char *NONCE_UNSOLICITED = "UNSOLICITED";
 static const char *NONCE_BAD = "BAD";
@@ -138,8 +138,10 @@ static enum deny_action parse_deny_action(const char *var, const char *value)
 	return DENY_IGNORE;
 }
 
-static int receive_pack_config(const char *var, const char *value, void *cb)
+static int receive_pack_config(const char *var, const char *value,
+			       const struct config_context *ctx, void *cb)
 {
+	const char *msg_id;
 	int status = parse_hide_refs_config(var, value, "receive", &hidden_refs);
 
 	if (status)
@@ -156,12 +158,12 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	}
 
 	if (strcmp(var, "receive.unpacklimit") == 0) {
-		receive_unpack_limit = git_config_int(var, value);
+		receive_unpack_limit = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
 	if (strcmp(var, "transfer.unpacklimit") == 0) {
-		transfer_unpack_limit = git_config_int(var, value);
+		transfer_unpack_limit = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -176,12 +178,14 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (skip_prefix(var, "receive.fsck.", &var)) {
-		if (is_valid_msg_type(var, value))
+	if (skip_prefix(var, "receive.fsck.", &msg_id)) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (is_valid_msg_type(msg_id, value))
 			strbuf_addf(&fsck_msg_types, "%c%s=%s",
-				fsck_msg_types.len ? ',' : '=', var, value);
+				fsck_msg_types.len ? ',' : '=', msg_id, value);
 		else
-			warning("skipping unknown msg id '%s'", var);
+			warning("skipping unknown msg id '%s'", msg_id);
 		return 0;
 	}
 
@@ -229,7 +233,7 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		return git_config_string(&cert_nonce_seed, var, value);
 
 	if (strcmp(var, "receive.certnonceslop") == 0) {
-		nonce_stamp_slop_limit = git_config_ulong(var, value);
+		nonce_stamp_slop_limit = git_config_ulong(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -244,12 +248,12 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 	}
 
 	if (strcmp(var, "receive.keepalive") == 0) {
-		keepalive_in_sec = git_config_int(var, value);
+		keepalive_in_sec = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
 	if (strcmp(var, "receive.maxinputsize") == 0) {
-		max_input_size = git_config_int64(var, value);
+		max_input_size = git_config_int64(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -265,7 +269,7 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 static void show_ref(const char *path, const struct object_id *oid)
@@ -336,7 +340,9 @@ static void write_head_info(void)
 {
 	static struct oidset seen = OIDSET_INIT;
 
-	for_each_ref(show_ref_cb, &seen);
+	refs_for_each_fullref_in(get_main_ref_store(the_repository), "",
+				 hidden_refs_to_excludes(&hidden_refs),
+				 show_ref_cb, &seen);
 	for_each_alternate_ref(show_one_alternate_ref, &seen);
 	oidset_clear(&seen);
 	if (!sent_capabilities)
@@ -2523,10 +2529,10 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	if (cert_nonce_seed)
 		push_cert_nonce = prepare_push_cert_nonce(service_dir, time(NULL));
 
-	if (0 <= transfer_unpack_limit)
-		unpack_limit = transfer_unpack_limit;
-	else if (0 <= receive_unpack_limit)
+	if (0 <= receive_unpack_limit)
 		unpack_limit = receive_unpack_limit;
+	else if (0 <= transfer_unpack_limit)
+		unpack_limit = transfer_unpack_limit;
 
 	switch (determine_protocol_version_server()) {
 	case protocol_v2:
@@ -2618,7 +2624,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		packet_flush(1);
 	oid_array_clear(&shallow);
 	oid_array_clear(&ref);
-	string_list_clear(&hidden_refs, 0);
+	strvec_clear(&hidden_refs);
 	free((void *)push_cert_nonce);
 	return 0;
 }

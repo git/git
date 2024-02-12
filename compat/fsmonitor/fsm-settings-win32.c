@@ -1,7 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "repository.h"
-#include "fsmonitor.h"
+#include "fsmonitor-ll.h"
 #include "fsmonitor-settings.h"
 #include "fsmonitor-path-utils.h"
 
@@ -25,7 +25,7 @@ static enum fsmonitor_reason check_vfs4git(struct repository *r)
 	return FSMONITOR_REASON_OK;
 }
 
-enum fsmonitor_reason fsm_os__incompatible(struct repository *r, int ipc)
+enum fsmonitor_reason fsm_os__incompatible(struct repository *r, int ipc UNUSED)
 {
 	enum fsmonitor_reason reason;
 

@@ -5,13 +5,14 @@
 #include "refs.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "repository.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "hex.h"
 #include "xdiff-interface.h"
-#include "ll-merge.h"
+#include "merge-ll.h"
 #include "dir.h"
 #include "notes.h"
 #include "notes-merge.h"
@@ -19,7 +20,6 @@
 #include "trace.h"
 #include "notes-utils.h"
 #include "commit-reach.h"
-#include "wrapper.h"
 
 struct notes_merge_pair {
 	struct object_id obj, base, local, remote;

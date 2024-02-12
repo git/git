@@ -118,7 +118,7 @@ test_index_version () {
 		fi &&
 		git add a &&
 		echo $EXPECTED_OUTPUT_VERSION >expect &&
-		test-tool index-version <.git/index >actual &&
+		git update-index --show-index-version >actual &&
 		test_cmp expect actual
 	)
 }

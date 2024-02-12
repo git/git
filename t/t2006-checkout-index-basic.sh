@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'checkout-index --gobbledegook' '
 	test_expect_code 129 git checkout-index --gobbledegook 2>err &&
-	test_i18ngrep "[Uu]sage" err
+	test_grep "[Uu]sage" err
 '
 
 test_expect_success 'checkout-index -h in broken repository' '
@@ -19,18 +19,18 @@ test_expect_success 'checkout-index -h in broken repository' '
 		>.git/index &&
 		test_expect_code 129 git checkout-index -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage" broken/usage
+	test_grep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'checkout-index reports errors (cmdline)' '
 	test_must_fail git checkout-index -- does-not-exist 2>stderr &&
-	test_i18ngrep not.in.the.cache stderr
+	test_grep not.in.the.cache stderr
 '
 
 test_expect_success 'checkout-index reports errors (stdin)' '
 	echo does-not-exist |
 	test_must_fail git checkout-index --stdin 2>stderr &&
-	test_i18ngrep not.in.the.cache stderr
+	test_grep not.in.the.cache stderr
 '
 for mode in 'case' 'utf-8'
 do
@@ -88,8 +88,8 @@ test_expect_success 'checkout-index --temp correctly reports error on missing bl
 	git update-index --index-info <objs &&
 
 	test_must_fail git checkout-index --temp symlink file 2>stderr &&
-	test_i18ngrep "unable to read sha1 file of file ($missing_blob)" stderr &&
-	test_i18ngrep "unable to read sha1 file of symlink ($missing_blob)" stderr
+	test_grep "unable to read sha1 file of file ($missing_blob)" stderr &&
+	test_grep "unable to read sha1 file of symlink ($missing_blob)" stderr
 '
 
 test_expect_success 'checkout-index --temp correctly reports error for submodules' '
@@ -98,7 +98,7 @@ test_expect_success 'checkout-index --temp correctly reports error for submodule
 	git submodule add ./sub &&
 	git commit -m sub &&
 	test_must_fail git checkout-index --temp sub 2>stderr &&
-	test_i18ngrep "cannot create temporary submodule sub" stderr
+	test_grep "cannot create temporary submodule sub" stderr
 '
 
 test_done

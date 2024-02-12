@@ -141,6 +141,7 @@ struct credential {
 	char *protocol;
 	char *host;
 	char *path;
+	char *oauth_refresh_token;
 	timestamp_t password_expiry_utc;
 };
 
@@ -210,6 +211,6 @@ void credential_from_url(struct credential *, const char *url);
 int credential_from_url_gently(struct credential *, const char *url, int quiet);
 
 int credential_match(const struct credential *want,
-		     const struct credential *have);
+		     const struct credential *have, int match_password);
 
 #endif /* CREDENTIAL_H */

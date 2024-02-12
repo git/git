@@ -1,5 +1,6 @@
-#include "cache.h"
-#include "wrapper.h"
+#include "git-compat-util.h"
+#include "copy.h"
+#include "path.h"
 
 int copy_fd(int ifd, int ofd)
 {

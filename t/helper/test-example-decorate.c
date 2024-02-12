@@ -2,6 +2,7 @@
 #include "git-compat-util.h"
 #include "object.h"
 #include "decorate.h"
+#include "repository.h"
 
 int cmd__example_decorate(int argc UNUSED, const char **argv UNUSED)
 {
@@ -70,6 +71,8 @@ int cmd__example_decorate(int argc UNUSED, const char **argv UNUSED)
 	}
 	if (objects_noticed != 2)
 		BUG("should have 2 objects");
+
+	clear_decoration(&n, NULL);
 
 	return 0;
 }

@@ -541,7 +541,7 @@ DISCUSSION
 ----------
 
 Though not required, it's a good idea to begin the commit message
-with a single short (less than 50 character) line summarizing the
+with a single short (no more than 50 characters) line summarizing the
 change, followed by a blank line and then a more thorough description.
 The text up to the first blank line in a commit message is treated
 as the commit title, and that title is used throughout Git.

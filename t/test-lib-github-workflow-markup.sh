@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see http://www.gnu.org/licenses/ .
+# along with this program.  If not, see https://www.gnu.org/licenses/ .
 #
 # The idea is for `test-lib.sh` to source this file when run in GitHub
 # workflows; these functions will then override (empty) functions
@@ -42,8 +42,8 @@ finalize_test_case_output () {
 	fixed)
 		echo >>$github_markup_output "::notice::fixed: $this_test.$test_count $1"
 		;;
-	ok)
-		# Exit without printing the "ok" tests
+	ok|broken)
+		# Exit without printing the "ok" or ""broken" tests
 		return
 		;;
 	esac

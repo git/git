@@ -5,6 +5,9 @@
 
 test_description='Test built-in diff output engine.
 
+We happen to know that all diff plumbing and diff Porcelain share the
+same command line parser, so testing one should be sufficient; pick
+diff-files as a representative.
 '
 
 TEST_PASSES_SANITIZE_LEAK=true
@@ -16,9 +19,11 @@ Line 2
 line 3'
 cat path0 >path1
 chmod +x path1
+mkdir path2
+>path2/path3
 
 test_expect_success 'update-index --add two files with and without +x.' '
-	git update-index --add path0 path1
+	git update-index --add path0 path1 path2/path3
 '
 
 mv path0 path0-
@@ -90,5 +95,32 @@ test_expect_success 'git diff-files --patch --no-patch does not show the patch' 
 	test_must_be_empty actual &&
 	test_must_be_empty err
 '
+
+
+# Smudge path2/path3 so that dirstat has something to show
+date >path2/path3
+
+for format in stat raw numstat shortstat summary \
+	dirstat cumulative dirstat-by-file \
+	patch-with-raw patch-with-stat compact-summary
+do
+	test_expect_success "--no-patch in 'git diff-files --no-patch --$format' is a no-op" '
+		git diff-files --no-patch "--$format" >actual &&
+		git diff-files "--$format" >expect &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "--no-patch clears all previous ones" '
+		git diff-files --$format -s -p >actual &&
+		git diff-files -p >expect &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "--no-patch in 'git diff --no-patch --$format' is a no-op" '
+		git diff --no-patch "--$format" >actual &&
+		git diff "--$format" >expect &&
+		test_cmp expect actual
+	'
+done
 
 test_done

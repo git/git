@@ -9,10 +9,26 @@ TEST_PASSES_SANITIZE_LEAK=true
 # When the limit is 1, `git receive-pack` will call `git index-pack`.
 # When the limit is 10000, `git receive-pack` will call `git unpack-objects`.
 
+validate_store_type () {
+	git -C dest count-objects -v >actual &&
+	case "$store_type" in
+	index)
+		grep "^count: 0$" actual ;;
+	unpack)
+		grep "^packs: 0$" actual ;;
+	esac || {
+		echo "store_type is $store_type"
+		cat actual
+		false;
+	}
+}
+
 test_pack_input_limit () {
-	case "$1" in
-	index) unpack_limit=1 ;;
-	unpack) unpack_limit=10000 ;;
+	store_type=$1
+
+	case "$store_type" in
+	index) unpack_limit=1 other_limit=10000 ;;
+	unpack) unpack_limit=10000 other_limit=1 ;;
 	esac
 
 	test_expect_success 'prepare destination repository' '
@@ -43,6 +59,19 @@ test_pack_input_limit () {
 		git --git-dir=dest config receive.maxInputSize 0 &&
 		git push dest HEAD
 	'
+
+	test_expect_success 'prepare destination repository (once more)' '
+		rm -fr dest &&
+		git --bare init dest
+	'
+
+	test_expect_success 'receive trumps transfer' '
+		git --git-dir=dest config receive.unpacklimit "$unpack_limit" &&
+		git --git-dir=dest config transfer.unpacklimit "$other_limit" &&
+		git push dest HEAD &&
+		validate_store_type
+	'
+
 }
 
 test_expect_success "create known-size (1024 bytes) commit" '

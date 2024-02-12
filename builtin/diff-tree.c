@@ -1,14 +1,15 @@
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "config.h"
 #include "diff.h"
 #include "commit.h"
 #include "gettext.h"
 #include "hex.h"
 #include "log-tree.h"
-#include "builtin.h"
-#include "submodule.h"
+#include "read-cache-ll.h"
 #include "repository.h"
+#include "revision.h"
+#include "tree.h"
 
 static struct rev_info log_tree_opt;
 
@@ -97,7 +98,7 @@ static const char diff_tree_usage[] =
 "  --root        include the initial commit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
 
-static void diff_tree_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
+static void diff_tree_tweak_rev(struct rev_info *rev)
 {
 	if (!rev->diffopt.output_format) {
 		if (rev->dense_combined_merges)
@@ -121,6 +122,10 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		usage(diff_tree_usage);
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	repo_init_revisions(the_repository, opt, prefix);
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
@@ -226,5 +231,5 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		diff_free(&opt->diffopt);
 	}
 
-	return diff_result_code(&opt->diffopt, 0);
+	return diff_result_code(&opt->diffopt);
 }

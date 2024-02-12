@@ -2,7 +2,7 @@
 #include "environment.h"
 #include "tag.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
@@ -10,7 +10,6 @@
 #include "gpg-interface.h"
 #include "hex.h"
 #include "packfile.h"
-#include "wrapper.h"
 
 const char *tag_type = "tag";
 

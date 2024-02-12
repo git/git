@@ -1,9 +1,9 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "config.h"
 #include "commit.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "utf8.h"
 #include "diff.h"
@@ -18,6 +18,7 @@
 #include "gpg-interface.h"
 #include "trailer.h"
 #include "run-command.h"
+#include "object-name.h"
 
 /*
  * The limit for formatting directives, which enable the caller to append
@@ -56,6 +57,7 @@ static void save_user_format(struct rev_info *rev, const char *cp, int is_tforma
 }
 
 static int git_pretty_formats_config(const char *var, const char *value,
+				     const struct config_context *ctx UNUSED,
 				     void *cb UNUSED)
 {
 	struct cmt_fmt_map *commit_format = NULL;
@@ -1250,6 +1252,27 @@ static int format_trailer_match_cb(const struct strbuf *key, void *ud)
 	return 0;
 }
 
+static struct strbuf *expand_string_arg(struct strbuf *sb,
+					const char *argval, size_t arglen)
+{
+	char *fmt = xstrndup(argval, arglen);
+	const char *format = fmt;
+
+	strbuf_reset(sb);
+	while (strbuf_expand_step(sb, &format)) {
+		size_t len;
+
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(sb, '%');
+		else if ((len = strbuf_expand_literal(sb, format)))
+			format += len;
+		else
+			strbuf_addch(sb, '%');
+	}
+	free(fmt);
+	return sb;
+}
+
 int format_set_trailers_options(struct process_trailer_options *opts,
 				struct string_list *filter_list,
 				struct strbuf *sepbuf,
@@ -1278,21 +1301,9 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 			opts->filter_data = filter_list;
 			opts->only_trailers = 1;
 		} else if (match_placeholder_arg_value(*arg, "separator", arg, &argval, &arglen)) {
-			char *fmt;
-
-			strbuf_reset(sepbuf);
-			fmt = xstrndup(argval, arglen);
-			strbuf_expand(sepbuf, fmt, strbuf_expand_literal_cb, NULL);
-			free(fmt);
-			opts->separator = sepbuf;
+			opts->separator = expand_string_arg(sepbuf, argval, arglen);
 		} else if (match_placeholder_arg_value(*arg, "key_value_separator", arg, &argval, &arglen)) {
-			char *fmt;
-
-			strbuf_reset(kvsepbuf);
-			fmt = xstrndup(argval, arglen);
-			strbuf_expand(kvsepbuf, fmt, strbuf_expand_literal_cb, NULL);
-			free(fmt);
-			opts->key_value_separator = kvsepbuf;
+			opts->key_value_separator = expand_string_arg(kvsepbuf, argval, arglen);
 		} else if (!match_placeholder_bool_arg(*arg, "only", arg, &opts->only_trailers) &&
 			   !match_placeholder_bool_arg(*arg, "unfold", arg, &opts->unfold) &&
 			   !match_placeholder_bool_arg(*arg, "keyonly", arg, &opts->key_only) &&
@@ -1373,6 +1384,44 @@ static size_t parse_describe_args(const char *start, struct strvec *args)
 	return arg - start;
 }
 
+
+static int parse_decoration_option(const char **arg,
+				   const char *name,
+				   char **opt)
+{
+	const char *argval;
+	size_t arglen;
+
+	if (match_placeholder_arg_value(*arg, name, arg, &argval, &arglen)) {
+		struct strbuf sb = STRBUF_INIT;
+
+		expand_string_arg(&sb, argval, arglen);
+		*opt = strbuf_detach(&sb, NULL);
+		return 1;
+	}
+	return 0;
+}
+
+static void parse_decoration_options(const char **arg,
+				     struct decoration_options *opts)
+{
+	while (parse_decoration_option(arg, "prefix", &opts->prefix) ||
+	       parse_decoration_option(arg, "suffix", &opts->suffix) ||
+	       parse_decoration_option(arg, "separator", &opts->separator) ||
+	       parse_decoration_option(arg, "pointer", &opts->pointer) ||
+	       parse_decoration_option(arg, "tag", &opts->tag))
+		;
+}
+
+static void free_decoration_options(const struct decoration_options *opts)
+{
+	free(opts->prefix);
+	free(opts->suffix);
+	free(opts->separator);
+	free(opts->pointer);
+	free(opts->tag);
+}
+
 static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 				const char *placeholder,
 				void *context)
@@ -1386,7 +1435,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	char **slot;
 
 	/* these are independent of the commit */
-	res = strbuf_expand_literal_cb(sb, placeholder, NULL);
+	res = strbuf_expand_literal(sb, placeholder);
 	if (res)
 		return res;
 
@@ -1526,11 +1575,18 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		strbuf_addstr(sb, get_revision_mark(NULL, commit));
 		return 1;
 	case 'd':
-		format_decorations(sb, commit, c->auto_color);
+		format_decorations(sb, commit, c->auto_color, NULL);
 		return 1;
 	case 'D':
-		format_decorations_extended(sb, commit, c->auto_color, "", ", ", "");
-		return 1;
+		{
+			const struct decoration_options opts = {
+				.prefix = "",
+				.suffix = ""
+			};
+
+			format_decorations(sb, commit, c->auto_color, &opts);
+			return 1;
+		}
 	case 'S':		/* tag/branch like --source */
 		if (!(c->pretty_ctx->rev && c->pretty_ctx->rev->sources))
 			return 0;
@@ -1625,6 +1681,23 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			return 0;
 		}
 		return 2;
+	}
+
+	if (skip_prefix(placeholder, "(decorate", &arg)) {
+		struct decoration_options opts = { NULL };
+		size_t ret = 0;
+
+		if (*arg == ':') {
+			arg++;
+			parse_decoration_options(&arg, &opts);
+		}
+		if (*arg == ')') {
+			format_decorations(sb, commit, c->auto_color, &opts);
+			ret = arg - placeholder + 1;
+		}
+
+		free_decoration_options(&opts);
+		return ret;
 	}
 
 	/* For the rest we have to parse the commit header. */
@@ -1804,7 +1877,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 
 static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 				 const char *placeholder,
-				 void *context)
+				 struct format_commit_context *context)
 {
 	size_t consumed, orig_len;
 	enum {
@@ -1843,10 +1916,10 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	}
 
 	orig_len = sb->len;
-	if (((struct format_commit_context *)context)->flush_type != no_flush)
-		consumed = format_and_pad_commit(sb, placeholder, context);
-	else
+	if (context->flush_type == no_flush)
 		consumed = format_commit_one(sb, placeholder, context);
+	else
+		consumed = format_and_pad_commit(sb, placeholder, context);
 	if (magic == NO_MAGIC)
 		return consumed;
 
@@ -1862,41 +1935,38 @@ static size_t format_commit_item(struct strbuf *sb, /* in UTF-8 */
 	return consumed + 1;
 }
 
-static size_t userformat_want_item(struct strbuf *sb UNUSED,
-				   const char *placeholder,
-				   void *context)
-{
-	struct userformat_want *w = context;
-
-	if (*placeholder == '+' || *placeholder == '-' || *placeholder == ' ')
-		placeholder++;
-
-	switch (*placeholder) {
-	case 'N':
-		w->notes = 1;
-		break;
-	case 'S':
-		w->source = 1;
-		break;
-	case 'd':
-	case 'D':
-		w->decorate = 1;
-		break;
-	}
-	return 0;
-}
-
 void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 {
-	struct strbuf dummy = STRBUF_INIT;
-
 	if (!fmt) {
 		if (!user_format)
 			return;
 		fmt = user_format;
 	}
-	strbuf_expand(&dummy, fmt, userformat_want_item, w);
-	strbuf_release(&dummy);
+	while ((fmt = strchr(fmt, '%'))) {
+		fmt++;
+		if (skip_prefix(fmt, "%", &fmt))
+			continue;
+
+		if (*fmt == '+' || *fmt == '-' || *fmt == ' ')
+			fmt++;
+
+		switch (*fmt) {
+		case 'N':
+			w->notes = 1;
+			break;
+		case 'S':
+			w->source = 1;
+			break;
+		case 'd':
+		case 'D':
+			w->decorate = 1;
+			break;
+		case '(':
+			if (starts_with(fmt + 1, "decorate"))
+				w->decorate = 1;
+			break;
+		}
+	}
 }
 
 void repo_format_commit_message(struct repository *r,
@@ -1913,7 +1983,16 @@ void repo_format_commit_message(struct repository *r,
 	const char *output_enc = pretty_ctx->output_encoding;
 	const char *utf8 = "UTF-8";
 
-	strbuf_expand(sb, format, format_commit_item, &context);
+	while (strbuf_expand_step(sb, &format)) {
+		size_t len;
+
+		if (skip_prefix(format, "%", &format))
+			strbuf_addch(sb, '%');
+		else if ((len = format_commit_item(sb, format, &context)))
+			format += len;
+		else
+			strbuf_addch(sb, '%');
+	}
 	rewrap_message_tail(sb, &context, 0, 0, 0);
 
 	/*

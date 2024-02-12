@@ -3,7 +3,7 @@ git-hash-object(1)
 
 NAME
 ----
-git-hash-object - Compute object ID and optionally creates a blob from a file
+git-hash-object - Compute object ID and optionally create an object from a file
 
 
 SYNOPSIS
@@ -25,7 +25,8 @@ OPTIONS
 -------
 
 -t <type>::
-	Specify the type (default: "blob").
+	Specify the type of object to be created (default: "blob"). Possible
+	values are `commit`, `tree`, `blob`, and `tag`.
 
 -w::
 	Actually write the object into the object database.
@@ -38,10 +39,10 @@ OPTIONS
 	of from the command-line.
 
 --path::
-	Hash object as it were located at the given path. The location of
-	file does not directly influence on the hash value, but path is
-	used to determine what Git filters should be applied to the object
-	before it can be placed to the object database, and, as result of
+	Hash object as if it were located at the given path. The location of
+	the file does not directly influence the hash value, but the path is
+	used to determine which Git filters should be applied to the object
+	before it can be placed in the object database.  As a result of
 	applying filters, the actual blob put into the object database may
 	differ from the given file. This option is mainly useful for hashing
 	temporary files located outside of the working directory or files

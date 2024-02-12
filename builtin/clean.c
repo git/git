@@ -9,11 +9,13 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
-#include "cache.h"
 #include "config.h"
 #include "dir.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "path.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 #include "setup.h"
 #include "string-list.h"
 #include "quote.h"
@@ -102,7 +104,8 @@ struct menu_stuff {
 
 define_list_config_array(color_interactive_slots);
 
-static int git_clean_config(const char *var, const char *value, void *cb)
+static int git_clean_config(const char *var, const char *value,
+			    const struct config_context *ctx, void *cb)
 {
 	const char *slot_name;
 
@@ -129,8 +132,10 @@ static int git_clean_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	/* inspect the color.ui config variable and others */
-	return git_color_default_config(var, value, cb);
+	if (git_color_config(var, value, cb) < 0)
+		return -1;
+
+	return git_default_config(var, value, ctx, cb);
 }
 
 static const char *clean_get_color(enum color_clean ix)
@@ -966,7 +971,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
 	if (ignored && ignored_only)
-		die(_("-x and -X cannot be used together"));
+		die(_("options '%s' and '%s' cannot be used together"), "-x", "-X");
 	if (!ignored)
 		setup_standard_excludes(&dir);
 	if (ignored_only)

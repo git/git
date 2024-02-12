@@ -153,7 +153,7 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 '
 
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper: our output' '
-	test_i18ngrep "Updates were rejected because" \
+	test_grep "Updates were rejected because" \
 		output
 '
 
@@ -232,8 +232,9 @@ test_expect_success 'push --atomic fails on server-side errors' '
 	test_config -C "$d" http.receivepack true &&
 	up="$HTTPD_URL"/smart/atomic-branches.git &&
 
-	# break ref updates for other on the remote site
-	mkdir "$d/refs/heads/other.lock" &&
+	# Create d/f conflict to break ref updates for other on the remote site.
+	git -C "$d" update-ref -d refs/heads/other &&
+	git -C "$d" update-ref refs/heads/other/conflict HEAD &&
 
 	# add the new commit to other
 	git branch -f other collateral &&
@@ -241,18 +242,9 @@ test_expect_success 'push --atomic fails on server-side errors' '
 	# --atomic should cause entire push to be rejected
 	test_must_fail git push --atomic "$up" atomic other 2>output  &&
 
-	# the new branch should not have been created upstream
+	# The atomic and other branches should not be created upstream.
 	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
-
-	# upstream should still reflect atomic2, the last thing we pushed
-	# successfully
-	git rev-parse atomic2 >expected &&
-	# ...to other.
-	git -C "$d" rev-parse refs/heads/other >actual &&
-	test_cmp expected actual &&
-
-	# the new branch should not have been created upstream
-	test_must_fail git -C "$d" show-ref --verify refs/heads/atomic &&
+	test_must_fail git -C "$d" show-ref --verify refs/heads/other &&
 
 	# the failed refs should be indicated to the user
 	grep "^ ! .*rejected.* other -> other .*atomic transaction failed" output &&
@@ -297,7 +289,7 @@ test_expect_success TTY 'push shows progress when stderr is a tty' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_commit noisy &&
 	test_terminal git push >output 2>&1 &&
-	test_i18ngrep "^Writing objects" output
+	test_grep "^Writing objects" output
 '
 
 test_expect_success TTY 'push --quiet silences status and progress' '
@@ -311,16 +303,16 @@ test_expect_success TTY 'push --no-progress silences progress but not status' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_commit no-progress &&
 	test_terminal git push --no-progress >output 2>&1 &&
-	test_i18ngrep "^To http" output &&
-	test_i18ngrep ! "^Writing objects" output
+	test_grep "^To http" output &&
+	test_grep ! "^Writing objects" output
 '
 
 test_expect_success 'push --progress shows progress to non-tty' '
 	cd "$ROOT_PATH"/test_repo_clone &&
 	test_commit progress &&
 	git push --progress >output 2>&1 &&
-	test_i18ngrep "^To http" output &&
-	test_i18ngrep "^Writing objects" output
+	test_grep "^To http" output &&
+	test_grep "^Writing objects" output
 '
 
 test_expect_success 'http push gives sane defaults to reflog' '
@@ -489,10 +481,10 @@ test_expect_success 'colorize errors/hints' '
 		-c color.push=always \
 		push origin origin/main^:main 2>act &&
 	test_decode_color <act >decoded &&
-	test_i18ngrep "<RED>.*rejected.*<RESET>" decoded &&
-	test_i18ngrep "<RED>error: failed to push some refs" decoded &&
-	test_i18ngrep "<YELLOW>hint: " decoded &&
-	test_i18ngrep ! "^hint: " decoded
+	test_grep "<RED>.*rejected.*<RESET>" decoded &&
+	test_grep "<RED>error: failed to push some refs" decoded &&
+	test_grep "<YELLOW>hint: " decoded &&
+	test_grep ! "^hint: " decoded
 '
 
 test_expect_success 'report error server does not provide ref status' '

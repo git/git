@@ -5,29 +5,50 @@ test_description='git bugreport'
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
-# Headers "[System Info]" will be followed by a non-empty line if we put some
-# information there; we can make sure all our headers were followed by some
-# information to check if the command was successful.
-HEADER_PATTERN="^\[.*\]$"
+test_expect_success 'create a report' '
+	git bugreport -s format &&
+	test_file_not_empty git-bugreport-format.txt
+'
 
-check_all_headers_populated () {
-	while read -r line
-	do
-		if test "$(grep "$HEADER_PATTERN" "$line")"
-		then
-			echo "$line"
-			read -r nextline
-			if test -z "$nextline"; then
-				return 1;
-			fi
-		fi
-	done
-}
+test_expect_success 'report contains wanted template (before first section)' '
+	sed -ne "/^\[/q;p" git-bugreport-format.txt >actual &&
+	cat >expect <<-\EOF &&
+	Thank you for filling out a Git bug report!
+	Please answer the following questions to help us understand your issue.
 
-test_expect_success 'creates a report with content in the right places' '
-	test_when_finished rm git-bugreport-check-headers.txt &&
-	git bugreport -s check-headers &&
-	check_all_headers_populated <git-bugreport-check-headers.txt
+	What did you do before the bug happened? (Steps to reproduce your issue)
+
+	What did you expect to happen? (Expected behavior)
+
+	What happened instead? (Actual behavior)
+
+	What'\''s different between what you expected and what actually happened?
+
+	Anything else you want to add:
+
+	Please review the rest of the bug report below.
+	You can delete any lines you don'\''t wish to share.
+
+
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'sanity check "System Info" section' '
+	test_when_finished rm -f git-bugreport-format.txt &&
+
+	sed -ne "/^\[System Info\]$/,/^$/p" <git-bugreport-format.txt >system &&
+
+	# The beginning should match "git version --build-options" verbatim,
+	# but rather than checking bit-for-bit equality, just test some basics.
+	grep "git version " system &&
+	grep "shell-path: ." system &&
+
+	# After the version, there should be some more info.
+	# This is bound to differ from environment to environment,
+	# so we just do some rather high-level checks.
+	grep "uname: ." system &&
+	grep "compiler info: ." system
 '
 
 test_expect_success 'dies if file with same name as report already exists' '
@@ -44,7 +65,14 @@ test_expect_success '--output-directory puts the report in the provided dir' '
 
 test_expect_success 'incorrect arguments abort with usage' '
 	test_must_fail git bugreport --false 2>output &&
-	test_i18ngrep usage output &&
+	test_grep usage output &&
+	test_path_is_missing git-bugreport-*
+'
+
+test_expect_success 'incorrect positional arguments abort with usage and hint' '
+	test_must_fail git bugreport false 2>output &&
+	test_grep usage output &&
+	test_grep false output &&
 	test_path_is_missing git-bugreport-*
 '
 

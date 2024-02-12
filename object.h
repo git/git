@@ -1,9 +1,10 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "hash.h"
+#include "hash-ll.h"
 
 struct buffer_slab;
+struct repository;
 
 struct parsed_object_pool {
 	struct object **obj_hash;
@@ -56,6 +57,8 @@ struct object_array {
 };
 
 #define OBJECT_ARRAY_INIT { 0 }
+
+void object_array_init(struct object_array *array);
 
 /*
  * object flag allocation:

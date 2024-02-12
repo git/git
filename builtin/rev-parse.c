@@ -4,20 +4,21 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "commit.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hash.h"
 #include "hex.h"
 #include "refs.h"
 #include "quote.h"
-#include "builtin.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "diff.h"
+#include "read-cache-ll.h"
 #include "revision.h"
 #include "setup.h"
 #include "split-index.h"
@@ -156,9 +157,12 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 				 */
 				break;
 			case 1: /* happy */
-				if (abbrev_ref)
+				if (abbrev_ref) {
+					char *old = full;
 					full = shorten_unambiguous_ref(full,
 						abbrev_ref_strict);
+					free(old);
+				}
 				show_with_type(type, full);
 				break;
 			default: /* ambiguous */
@@ -221,7 +225,7 @@ static int anti_reference(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int show_abbrev(const struct object_id *oid, void *cb_data)
+static int show_abbrev(const struct object_id *oid, void *cb_data UNUSED)
 {
 	show_rev(NORMAL, oid, NULL);
 	return 0;
@@ -889,13 +893,15 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
 				if (ref_excludes.hidden_refs_configured)
-					return error(_("--exclude-hidden cannot be used together with --branches"));
+					return error(_("options '%s' and '%s' cannot be used together"),
+						     "--exclude-hidden", "--branches");
 				handle_ref_opt(arg, "refs/heads/");
 				continue;
 			}
 			if (opt_with_value(arg, "--tags", &arg)) {
 				if (ref_excludes.hidden_refs_configured)
-					return error(_("--exclude-hidden cannot be used together with --tags"));
+					return error(_("options '%s' and '%s' cannot be used together"),
+						     "--exclude-hidden", "--tags");
 				handle_ref_opt(arg, "refs/tags/");
 				continue;
 			}
@@ -905,7 +911,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (opt_with_value(arg, "--remotes", &arg)) {
 				if (ref_excludes.hidden_refs_configured)
-					return error(_("--exclude-hidden cannot be used together with --remotes"));
+					return error(_("options '%s' and '%s' cannot be used together"),
+						     "--exclude-hidden", "--remotes");
 				handle_ref_opt(arg, "refs/remotes/");
 				continue;
 			}
@@ -1053,6 +1060,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 					die(_("unknown mode for --show-object-format: %s"),
 					    arg);
 				puts(the_hash_algo->name);
+				continue;
+			}
+			if (!strcmp(arg, "--show-ref-format")) {
+				puts(ref_storage_format_to_name(the_repository->ref_storage_format));
 				continue;
 			}
 			if (!strcmp(arg, "--end-of-options")) {

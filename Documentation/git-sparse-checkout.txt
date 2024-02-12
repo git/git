@@ -286,7 +286,7 @@ patterns in non-cone mode has a number of shortcomings:
     problem above?  Also, if it suggests paths, what if the user has a
     file or directory that begins with either a '!' or '#' or has a '*',
     '\', '?', '[', or ']' in its name?  And if it suggests paths, will
-    it complete "/pro" to "/proc" (in the root filesytem) rather than to
+    it complete "/pro" to "/proc" (in the root filesystem) rather than to
     "/progress.txt" in the current directory?  (Note that users are
     likely to want to start paths with a leading '/' in non-cone mode,
     for the same reason that .gitignore files often have one.)

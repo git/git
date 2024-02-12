@@ -6,9 +6,8 @@
  * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "convert.h"
 #include "environment.h"
@@ -16,33 +15,26 @@
 #include "hex.h"
 #include "string-list.h"
 #include "lockfile.h"
-#include "delta.h"
 #include "pack.h"
-#include "blob.h"
 #include "commit.h"
 #include "run-command.h"
-#include "tag.h"
-#include "tree.h"
-#include "tree-walk.h"
 #include "refs.h"
-#include "pack-revindex.h"
-#include "hash-lookup.h"
 #include "bulk-checkin.h"
 #include "repository.h"
 #include "replace-object.h"
 #include "streaming.h"
 #include "dir.h"
 #include "list.h"
-#include "mergesort.h"
 #include "quote.h"
 #include "packfile.h"
 #include "object-file.h"
 #include "object-store.h"
+#include "oidtree.h"
+#include "path.h"
 #include "promisor-remote.h"
 #include "setup.h"
 #include "submodule.h"
 #include "fsck.h"
-#include "wrapper.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32
@@ -2306,11 +2298,11 @@ int repo_has_object_file(struct repository *r,
  * report the minimal fsck error here, and rely on the caller to
  * give more context.
  */
-static int hash_format_check_report(struct fsck_options *opts,
-				     const struct object_id *oid,
-				     enum object_type object_type,
-				     enum fsck_msg_type msg_type,
-				     enum fsck_msg_id msg_id,
+static int hash_format_check_report(struct fsck_options *opts UNUSED,
+				     const struct object_id *oid UNUSED,
+				     enum object_type object_type UNUSED,
+				     enum fsck_msg_type msg_type UNUSED,
+				     enum fsck_msg_id msg_id UNUSED,
 				     const char *message)
 {
 	error(_("object fails fsck: %s"), message);
@@ -2446,11 +2438,11 @@ static int index_core(struct index_state *istate,
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-static int index_stream(struct object_id *oid, int fd, size_t size,
-			enum object_type type, const char *path,
-			unsigned flags)
+static int index_blob_stream(struct object_id *oid, int fd, size_t size,
+			     const char *path,
+			     unsigned flags)
 {
-	return index_bulk_checkin(oid, fd, size, type, path, flags);
+	return index_blob_bulk_checkin(oid, fd, size, path, flags);
 }
 
 int index_fd(struct index_state *istate, struct object_id *oid,
@@ -2472,8 +2464,8 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	else
-		ret = index_stream(oid, fd, xsize_t(st->st_size), type, path,
-				   flags);
+		ret = index_blob_stream(oid, fd, xsize_t(st->st_size), path,
+					flags);
 	close(fd);
 	return ret;
 }

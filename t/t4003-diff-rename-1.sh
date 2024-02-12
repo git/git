@@ -11,20 +11,20 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 
-test_expect_success \
-    'prepare reference tree' \
-    'COPYING_test_data >COPYING &&
-     echo frotz >rezrov &&
-    git update-index --add COPYING rezrov &&
-    tree=$(git write-tree) &&
-    echo $tree'
+test_expect_success 'prepare reference tree' '
+	COPYING_test_data >COPYING &&
+	echo frotz >rezrov &&
+	git update-index --add COPYING rezrov &&
+	tree=$(git write-tree) &&
+	echo $tree
+'
 
-test_expect_success \
-    'prepare work tree' \
-    'sed -e 's/HOWEVER/However/' <COPYING >COPYING.1 &&
-    sed -e 's/GPL/G.P.L/g' <COPYING >COPYING.2 &&
-    rm -f COPYING &&
-    git update-index --add --remove COPYING COPYING.?'
+test_expect_success 'prepare work tree' '
+	sed -e 's/HOWEVER/However/' <COPYING >COPYING.1 &&
+	sed -e 's/GPL/G.P.L/g' <COPYING >COPYING.2 &&
+	rm -f COPYING &&
+	git update-index --add --remove COPYING COPYING.?
+'
 
 # tree has COPYING and rezrov.  work tree has COPYING.1 and COPYING.2,
 # both are slightly edited, and unchanged rezrov.  So we say you
@@ -57,14 +57,14 @@ rename to COPYING.2
 +	This file is licensed under the G.P.L v2, or a later version
 EOF
 
-test_expect_success \
-    'validate output from rename/copy detection (#1)' \
-    'compare_diff_patch current expected'
+test_expect_success 'validate output from rename/copy detection (#1)' '
+	compare_diff_patch current expected
+'
 
-test_expect_success \
-    'prepare work tree again' \
-    'mv COPYING.2 COPYING &&
-     git update-index --add --remove COPYING COPYING.1 COPYING.2'
+test_expect_success 'prepare work tree again' '
+	mv COPYING.2 COPYING &&
+	git update-index --add --remove COPYING COPYING.1 COPYING.2
+'
 
 # tree has COPYING and rezrov.  work tree has COPYING and COPYING.1,
 # both are slightly edited, and unchanged rezrov.  So we say you
@@ -95,14 +95,14 @@ copy to COPYING.1
 + However, in order to allow a migration to GPLv3 if that seems like
 EOF
 
-test_expect_success \
-    'validate output from rename/copy detection (#2)' \
-    'compare_diff_patch current expected'
+test_expect_success 'validate output from rename/copy detection (#2)' '
+	compare_diff_patch current expected
+'
 
-test_expect_success \
-    'prepare work tree once again' \
-    'COPYING_test_data >COPYING &&
-     git update-index --add --remove COPYING COPYING.1'
+test_expect_success 'prepare work tree once again' '
+	COPYING_test_data >COPYING &&
+	git update-index --add --remove COPYING COPYING.1
+'
 
 # tree has COPYING and rezrov.  work tree has COPYING and COPYING.1,
 # but COPYING is not edited.  We say you copy-and-edit COPYING.1; this
@@ -123,8 +123,8 @@ copy to COPYING.1
 + However, in order to allow a migration to GPLv3 if that seems like
 EOF
 
-test_expect_success \
-    'validate output from rename/copy detection (#3)' \
-    'compare_diff_patch current expected'
+test_expect_success 'validate output from rename/copy detection (#3)' '
+	compare_diff_patch current expected
+'
 
 test_done

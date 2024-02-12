@@ -89,9 +89,7 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len)
 	struct mp_block *p = NULL;
 	void *r;
 
-	/* round up to a 'GIT_MAX_ALIGNMENT' alignment */
-	if (len & (GIT_MAX_ALIGNMENT - 1))
-		len += GIT_MAX_ALIGNMENT - (len & (GIT_MAX_ALIGNMENT - 1));
+	len = DIV_ROUND_UP(len, GIT_MAX_ALIGNMENT) * GIT_MAX_ALIGNMENT;
 
 	if (pool->mp_block &&
 	    pool->mp_block->end - pool->mp_block->next_free >= len)
@@ -99,9 +97,9 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len)
 
 	if (!p) {
 		if (len >= (pool->block_alloc / 2))
-			return mem_pool_alloc_block(pool, len, pool->mp_block);
-
-		p = mem_pool_alloc_block(pool, pool->block_alloc, NULL);
+			p = mem_pool_alloc_block(pool, len, pool->mp_block);
+		else
+			p = mem_pool_alloc_block(pool, pool->block_alloc, NULL);
 	}
 
 	r = p->next_free;

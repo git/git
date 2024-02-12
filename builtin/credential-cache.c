@@ -1,13 +1,12 @@
 #include "builtin.h"
 #include "gettext.h"
 #include "parse-options.h"
-#include "wrapper.h"
+#include "path.h"
+#include "strbuf.h"
 #include "write-or-die.h"
 
 #ifndef NO_UNIX_SOCKETS
 
-#include "credential.h"
-#include "string-list.h"
 #include "unix-socket.h"
 #include "run-command.h"
 

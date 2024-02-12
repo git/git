@@ -5,7 +5,7 @@ Tools for developing Git
 [[summary]]
 == Summary
 
-This document gathers tips, scripts and configuration file to help people
+This document gathers tips, scripts, and configuration files to help people
 working on Git's codebase use their favorite tools while following Git's
 coding style.
 
@@ -32,7 +32,7 @@ information on using the script.
 
 This is adapted from Linux's suggestion in its CodingStyle document:
 
-- To follow rules of the CodingGuideline, it's useful to put the following in
+- To follow the rules in CodingGuidelines, it's useful to put the following in
 GIT_CHECKOUT/.dir-locals.el, assuming you use cperl-mode:
 ----
 ;; note the first part is useful for C editing, too

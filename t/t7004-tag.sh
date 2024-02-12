@@ -1862,6 +1862,51 @@ test_expect_success 'option override configured sort' '
 	test_cmp expect actual
 '
 
+test_expect_success '--no-sort cancels config sort keys' '
+	test_config tag.sort "-refname" &&
+
+	# objecttype is identical for all of them, so sort falls back on
+	# default (ascending refname)
+	git tag -l \
+		--no-sort \
+		--sort="objecttype" \
+		"foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.3
+	foo1.6
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--no-sort cancels command line sort keys' '
+	# objecttype is identical for all of them, so sort falls back on
+	# default (ascending refname)
+	git tag -l \
+		--sort="-refname" \
+		--no-sort \
+		--sort="objecttype" \
+		"foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.3
+	foo1.6
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--no-sort without subsequent --sort prints expected tags' '
+	# Sort the results with `sort` for a consistent comparison against
+	# expected
+	git tag -l --no-sort "foo*" | sort >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.3
+	foo1.6
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'invalid sort parameter on command line' '
 	test_must_fail git tag -l --sort=notvalid "foo*" >actual
 '
@@ -2186,6 +2231,25 @@ test_expect_success 'Does --[no-]contains stop at commits? Yes!' '
 	v0.2
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'If tag is created then tag message file is unlinked' '
+	test_when_finished "git tag -d foo" &&
+	write_script fakeeditor <<-\EOF &&
+	echo Message >.git/TAG_EDITMSG
+	EOF
+	GIT_EDITOR=./fakeeditor git tag -a foo &&
+	test_path_is_missing .git/TAG_EDITMSG
+'
+
+test_expect_success 'If tag cannot be created then tag message file is not unlinked' '
+	test_when_finished "git tag -d foo/bar && rm .git/TAG_EDITMSG" &&
+	write_script fakeeditor <<-\EOF &&
+	echo Message >.git/TAG_EDITMSG
+	EOF
+	git tag foo/bar &&
+	test_must_fail env GIT_EDITOR=./fakeeditor git tag -a foo &&
+	test_path_exists .git/TAG_EDITMSG
 '
 
 test_done

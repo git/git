@@ -33,19 +33,19 @@ git subtree split --prefix=<prefix> [<commit>]
 git subtree pull  --prefix=<prefix> <repository> <ref>
 git subtree push  --prefix=<prefix> <repository> <refspec>
 --
-h,help        show the help
-q             quiet
-d             show debug messages
+h,help!       show the help
+q,quiet!      quiet
+d,debug!      show debug messages
 P,prefix=     the name of the subdir to split out
  options for 'split' (also: 'push')
 annotate=     add a prefix to commit message of new commits
-b,branch=     create a new branch from the split subtree
+b,branch!=    create a new branch from the split subtree
 ignore-joins  ignore prior --rejoin commits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
  options for 'add' and 'merge' (also: 'pull', 'split --rejoin', and 'push --rejoin')
 squash        merge subtree changes as a single commit
-m,message=    use the given message as the commit message for the merge commit
+m,message!=   use the given message as the commit message for the merge commit
 "
 
 indent=0
@@ -373,7 +373,8 @@ try_remove_previous () {
 
 # Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH [REPOSITORY]
 process_subtree_split_trailer () {
-	assert test $# = 2 -o $# = 3
+	assert test $# -ge 2
+	assert test $# -le 3
 	b="$1"
 	sq="$2"
 	repository=""
@@ -402,7 +403,8 @@ process_subtree_split_trailer () {
 
 # Usage: find_latest_squash DIR [REPOSITORY]
 find_latest_squash () {
-	assert test $# = 1 -o $# = 2
+	assert test $# -ge 1
+	assert test $# -le 2
 	dir="$1"
 	repository=""
 	if test "$#" = 2
@@ -455,7 +457,8 @@ find_latest_squash () {
 
 # Usage: find_existing_splits DIR REV [REPOSITORY]
 find_existing_splits () {
-	assert test $# = 2 -o $# = 3
+	assert test $# -ge 2
+	assert test $# -le 3
 	debug "Looking for prior splits..."
 	local indent=$(($indent + 1))
 
@@ -489,13 +492,13 @@ find_existing_splits () {
 			;;
 		END)
 			debug "Main is: '$main'"
-			if test -z "$main" -a -n "$sub"
+			if test -z "$main" && test -n "$sub"
 			then
 				# squash commits refer to a subtree
 				debug "  Squash: $sq from $sub"
 				cache_set "$sq" "$sub"
 			fi
-			if test -n "$main" -a -n "$sub"
+			if test -n "$main" && test -n "$sub"
 			then
 				debug "  Prior: $main -> $sub"
 				cache_set $main $sub
@@ -638,10 +641,16 @@ subtree_for_commit () {
 	while read mode type tree name
 	do
 		assert test "$name" = "$dir"
-		assert test "$type" = "tree" -o "$type" = "commit"
-		test "$type" = "commit" && continue  # ignore submodules
-		echo $tree
-		break
+
+		case "$type" in
+		commit)
+			continue;; # ignore submodules
+		tree)
+			echo $tree
+			break;;
+		*)
+			die "fatal: tree entry is of type ${type}, expected tree or commit";;
+		esac
 	done || exit $?
 }
 
@@ -776,6 +785,22 @@ ensure_valid_ref_format () {
 	assert test $# = 1
 	git check-ref-format "refs/heads/$1" ||
 		die "fatal: '$1' does not look like a ref"
+}
+
+# Usage: check if a commit from another subtree should be
+# ignored from processing for splits
+should_ignore_subtree_split_commit () {
+	assert test $# = 1
+	local rev="$1"
+	if test -n "$(git log -1 --grep="git-subtree-dir:" $rev)"
+	then
+		if test -z "$(git log -1 --grep="git-subtree-mainline:" $rev)" &&
+			test -z "$(git log -1 --grep="git-subtree-dir: $arg_prefix$" $rev)"
+		then
+			return 0
+		fi
+	fi
+	return 1
 }
 
 # Usage: process_split_commit REV PARENTS
@@ -916,7 +941,7 @@ cmd_split () {
 	if test $# -eq 0
 	then
 		rev=$(git rev-parse HEAD)
-	elif test $# -eq 1 -o $# -eq 2
+	elif test $# -eq 1 || test $# -eq 2
 	then
 		rev=$(git rev-parse -q --verify "$1^{commit}") ||
 			die "fatal: '$1' does not refer to a commit"
@@ -963,7 +988,19 @@ cmd_split () {
 	eval "$grl" |
 	while read rev parents
 	do
-		process_split_commit "$rev" "$parents"
+		if should_ignore_subtree_split_commit "$rev"
+		then
+			continue
+		fi
+		parsedparents=''
+		for parent in $parents
+		do
+			if ! should_ignore_subtree_split_commit "$parent"
+			then
+				parsedparents="$parsedparents$parent "
+			fi
+		done
+		process_split_commit "$rev" "$parsedparents"
 	done || exit $?
 
 	latest_new=$(cache_get latest_new) || exit $?
@@ -1006,8 +1043,11 @@ cmd_split () {
 
 # Usage: cmd_merge REV [REPOSITORY]
 cmd_merge () {
-	test $# -eq 1 -o $# -eq 2 ||
+	if test $# -lt 1 || test $# -gt 2
+	then
 		die "fatal: you must provide exactly one revision, and optionally a repository. Got: '$*'"
+	fi
+
 	rev=$(git rev-parse -q --verify "$1^{commit}") ||
 		die "fatal: '$1' does not refer to a commit"
 	repository=""

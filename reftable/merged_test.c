@@ -12,7 +12,6 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "basics.h"
 #include "blocksource.h"
-#include "constants.h"
 #include "reader.h"
 #include "record.h"
 #include "test_framework.h"
@@ -43,7 +42,7 @@ static void write_test_table(struct strbuf *buf,
 		}
 	}
 
-	w = reftable_new_writer(&strbuf_add_void, buf, &opts);
+	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
 	reftable_writer_set_limits(w, min, max);
 
 	for (i = 0; i < n; i++) {
@@ -71,7 +70,7 @@ static void write_test_log_table(struct strbuf *buf,
 		.exact_log_message = 1,
 	};
 	struct reftable_writer *w = NULL;
-	w = reftable_new_writer(&strbuf_add_void, buf, &opts);
+	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
 	reftable_writer_set_limits(w, update_index, update_index);
 
 	for (i = 0; i < n; i++) {
@@ -123,13 +122,11 @@ static void readers_destroy(struct reftable_reader **readers, size_t n)
 
 static void test_merged_between(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1, 2, 3, 0 };
-
 	struct reftable_ref_record r1[] = { {
 		.refname = "b",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
-		.value.val1 = hash1,
+		.value.val1 = { 1, 2, 3, 0 },
 	} };
 	struct reftable_ref_record r2[] = { {
 		.refname = "a",
@@ -165,26 +162,24 @@ static void test_merged_between(void)
 
 static void test_merged(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1 };
-	uint8_t hash2[GIT_SHA1_RAWSZ] = { 2 };
 	struct reftable_ref_record r1[] = {
 		{
 			.refname = "a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		},
 		{
 			.refname = "b",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		},
 		{
 			.refname = "c",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		}
 	};
 	struct reftable_ref_record r2[] = { {
@@ -197,13 +192,13 @@ static void test_merged(void)
 			.refname = "c",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash2,
+			.value.val1 = { 2 },
 		},
 		{
 			.refname = "d",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = hash1,
+			.value.val1 = { 1 },
 		},
 	};
 
@@ -417,7 +412,7 @@ static void test_default_write_opts(void)
 	struct reftable_write_options opts = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &buf, &opts);
+		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 
 	struct reftable_ref_record rec = {
 		.refname = "master",

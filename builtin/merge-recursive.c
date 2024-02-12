@@ -1,12 +1,10 @@
-#include "cache.h"
 #include "builtin.h"
 #include "advice.h"
-#include "commit.h"
 #include "gettext.h"
-#include "tag.h"
+#include "hash.h"
 #include "merge-recursive.h"
 #include "object-name.h"
-#include "xdiff-interface.h"
+#include "repository.h"
 
 static const char builtin_merge_recursive_usage[] =
 	"git %s <base>... -- <head> <remote> ...";

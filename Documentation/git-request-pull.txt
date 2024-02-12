@@ -16,7 +16,7 @@ DESCRIPTION
 Generate a request asking your upstream project to pull changes into
 their tree.  The request, printed to the standard output,
 begins with the branch description, summarizes
-the changes and indicates from where they can be pulled.
+the changes, and indicates from where they can be pulled.
 
 The upstream project is expected to have the commit named by
 `<start>` and the output asks it to integrate the changes you made
@@ -50,7 +50,7 @@ EXAMPLES
 --------
 
 Imagine that you built your work on your `master` branch on top of
-the `v1.0` release, and want it to be integrated to the project.
+the `v1.0` release, and want it to be integrated into the project.
 First you push that change to your public repository for others to
 see:
 

@@ -24,7 +24,7 @@ OPTIONS
 	An object to treat as the head of an unreachability trace.
 +
 If no objects are given, 'git fsck' defaults to using the
-index file, all SHA-1 references in `refs` namespace, and all reflogs
+index file, all SHA-1 references in the `refs` namespace, and all reflogs
 (unless --no-reflogs is given) as heads.
 
 --unreachable::
@@ -64,7 +64,7 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 --connectivity-only::
 	Check only the connectivity of reachable objects, making sure
 	that any objects referenced by a reachable tag, commit, or tree
-	is present. This speeds up the operation by avoiding reading
+	are present. This speeds up the operation by avoiding reading
 	blobs entirely (though it does still check that referenced blobs
 	exist). This will detect corruption in commits and trees, but
 	not do any semantic checks (e.g., for format errors). Corruption
@@ -79,7 +79,7 @@ care about this output and want to speed it up further.
 	recorded with g+w bit set, which was created by older
 	versions of Git.  Existing repositories, including the
 	Linux kernel, Git itself, and sparse repository have old
-	objects that triggers this check, but it is recommended
+	objects that trigger this check, but it is recommended
 	to check new projects with this flag.
 
 --verbose::

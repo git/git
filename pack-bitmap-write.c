@@ -1,23 +1,22 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit.h"
-#include "tag.h"
 #include "diff.h"
 #include "revision.h"
-#include "list-objects.h"
 #include "progress.h"
-#include "pack-revindex.h"
 #include "pack.h"
 #include "pack-bitmap.h"
 #include "hash-lookup.h"
 #include "pack-objects.h"
+#include "path.h"
 #include "commit-reach.h"
 #include "prio-queue.h"
 #include "trace2.h"
+#include "tree.h"
+#include "tree-walk.h"
 
 struct bitmapped_commit {
 	struct commit *commit;
@@ -196,6 +195,13 @@ struct bb_commit {
 	unsigned idx; /* within selected array */
 };
 
+static void clear_bb_commit(struct bb_commit *commit)
+{
+	free_commit_list(commit->reverse_edges);
+	bitmap_free(commit->commit_mask);
+	bitmap_free(commit->bitmap);
+}
+
 define_commit_slab(bb_data, struct bb_commit);
 
 struct bitmap_builder {
@@ -337,7 +343,7 @@ next:
 
 static void bitmap_builder_clear(struct bitmap_builder *bb)
 {
-	clear_bb_data(&bb->data);
+	deep_clear_bb_data(&bb->data, clear_bb_commit);
 	free(bb->commits);
 	bb->commits_nr = bb->commits_alloc = 0;
 }
@@ -411,15 +417,19 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 
 		if (old_bitmap && mapping) {
 			struct ewah_bitmap *old = bitmap_for_commit(old_bitmap, c);
+			struct bitmap *remapped = bitmap_new();
 			/*
 			 * If this commit has an old bitmap, then translate that
 			 * bitmap and add its bits to this one. No need to walk
 			 * parents or the tree for this commit.
 			 */
-			if (old && !rebuild_bitmap(mapping, old, ent->bitmap)) {
+			if (old && !rebuild_bitmap(mapping, old, remapped)) {
+				bitmap_or(ent->bitmap, remapped);
+				bitmap_free(remapped);
 				reused_bitmaps_nr++;
 				continue;
 			}
+			bitmap_free(remapped);
 		}
 
 		/*

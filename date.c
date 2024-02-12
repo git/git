@@ -4,10 +4,11 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 
-#include "cache.h"
+#include "git-compat-util.h"
 #include "date.h"
 #include "gettext.h"
 #include "pager.h"
+#include "strbuf.h"
 
 /*
  * This is like mktime, but without normalization of tm_wday and tm_yday.

@@ -1,6 +1,6 @@
 diff.autoRefreshIndex::
 	When using 'git diff' to compare with work tree
-	files, do not consider stat-only change as changed.
+	files, do not consider stat-only changes as changed.
 	Instead, silently run `git update-index --refresh` to
 	update the cached stat information for paths whose
 	contents in the work tree match the contents in the
@@ -51,6 +51,10 @@ Example: The following will count changed files, while ignoring
 directories with less than 10% of the total amount of changed files,
 and accumulating child directory counts in the parent directories:
 `files,10,cumulative`.
+
+diff.statNameWidth::
+	Limit the width of the filename part in --stat output. If set, applies
+	to all commands generating --stat output except format-patch.
 
 diff.statGraphWidth::
 	Limit the width of the graph part in --stat output. If set, applies

@@ -10,6 +10,10 @@ test_description='git repack works correctly'
 commit_and_pack () {
 	test_commit "$@" 1>&2 &&
 	incrpackid=$(git pack-objects --all --unpacked --incremental .git/objects/pack/pack </dev/null) &&
+	# Remove any loose object(s) created by test_commit, since they have
+	# already been packed. Leaving these around can create subtly different
+	# packs with `pack-objects`'s `--unpacked` option.
+	git prune-packed 1>&2 &&
 	echo pack-${incrpackid}.pack
 }
 
@@ -209,6 +213,8 @@ test_expect_success 'repack --keep-pack' '
 	test_create_repo keep-pack &&
 	(
 		cd keep-pack &&
+		# avoid producing different packs due to delta/base choices
+		git config pack.window 0 &&
 		P1=$(commit_and_pack 1) &&
 		P2=$(commit_and_pack 2) &&
 		P3=$(commit_and_pack 3) &&
@@ -220,7 +226,58 @@ test_expect_success 'repack --keep-pack' '
 		grep -q $P1 new-counts &&
 		grep -q $P4 new-counts &&
 		test_line_count = 3 new-counts &&
+		git fsck &&
+
+		P5=$(commit_and_pack --no-tag 5) &&
+		git reset --hard HEAD^ &&
+		git reflog expire --all --expire=all &&
+		rm -f ".git/objects/pack/${P5%.pack}.idx" &&
+		rm -f ".git/objects/info/commit-graph" &&
+		for from in $(find .git/objects/pack -type f -name "${P5%.pack}.*")
+		do
+			to="$(dirname "$from")/.tmp-1234-$(basename "$from")" &&
+			mv "$from" "$to" || return 1
+		done &&
+
+		# A .idx file without a .pack should not stop us from
+		# repacking what we can.
+		touch .git/objects/pack/pack-does-not-exist.idx &&
+
+		git repack --cruft -d --keep-pack $P1 --keep-pack $P4 &&
+
+		ls .git/objects/pack/*.pack >newer-counts &&
+		test_cmp new-counts newer-counts &&
 		git fsck
+	)
+'
+
+test_expect_success 'repacking fails when missing .pack actually means missing objects' '
+	test_create_repo idx-without-pack &&
+	(
+		cd idx-without-pack &&
+
+		# Avoid producing different packs due to delta/base choices
+		git config pack.window 0 &&
+		P1=$(commit_and_pack 1) &&
+		P2=$(commit_and_pack 2) &&
+		P3=$(commit_and_pack 3) &&
+		P4=$(commit_and_pack 4) &&
+		ls .git/objects/pack/*.pack >old-counts &&
+		test_line_count = 4 old-counts &&
+
+		# Remove one .pack file
+		rm .git/objects/pack/$P2 &&
+
+		ls .git/objects/pack/*.pack >before-pack-dir &&
+
+		test_must_fail git fsck &&
+		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git repack --cruft -d 2>err &&
+		grep "bad object" err &&
+
+		# Before failing, the repack did not modify the
+		# pack directory.
+		ls .git/objects/pack/*.pack >after-pack-dir &&
+		test_cmp before-pack-dir after-pack-dir
 	)
 '
 
@@ -268,6 +325,203 @@ test_expect_success 'auto-bitmaps do not complain if unavailable' '
 	test_must_be_empty stderr &&
 	find bare.git/objects/pack -type f -name "*.bitmap" >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'repacking with a filter works' '
+	git -C bare.git repack -a -d &&
+	test_stdout_line_count = 1 ls bare.git/objects/pack/*.pack &&
+	git -C bare.git -c repack.writebitmaps=false repack -a -d --filter=blob:none &&
+	test_stdout_line_count = 2 ls bare.git/objects/pack/*.pack &&
+	commit_pack=$(test-tool -C bare.git find-pack -c 1 HEAD) &&
+	blob_pack=$(test-tool -C bare.git find-pack -c 1 HEAD:file1) &&
+	test "$commit_pack" != "$blob_pack" &&
+	tree_pack=$(test-tool -C bare.git find-pack -c 1 HEAD^{tree}) &&
+	test "$tree_pack" = "$commit_pack" &&
+	blob_pack2=$(test-tool -C bare.git find-pack -c 1 HEAD:file2) &&
+	test "$blob_pack2" = "$blob_pack"
+'
+
+test_expect_success '--filter fails with --write-bitmap-index' '
+	test_must_fail \
+		env GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0 \
+		git -C bare.git repack -a -d --write-bitmap-index --filter=blob:none
+'
+
+test_expect_success 'repacking with two filters works' '
+	git init two-filters &&
+	(
+		cd two-filters &&
+		mkdir subdir &&
+		test_commit foo &&
+		test_commit subdir_bar subdir/bar &&
+		test_commit subdir_baz subdir/baz
+	) &&
+	git clone --no-local --bare two-filters two-filters.git &&
+	(
+		cd two-filters.git &&
+		test_stdout_line_count = 1 ls objects/pack/*.pack &&
+		git -c repack.writebitmaps=false repack -a -d \
+			--filter=blob:none --filter=tree:1 &&
+		test_stdout_line_count = 2 ls objects/pack/*.pack &&
+		commit_pack=$(test-tool find-pack -c 1 HEAD) &&
+		blob_pack=$(test-tool find-pack -c 1 HEAD:foo.t) &&
+		root_tree_pack=$(test-tool find-pack -c 1 HEAD^{tree}) &&
+		subdir_tree_hash=$(git ls-tree --object-only HEAD -- subdir) &&
+		subdir_tree_pack=$(test-tool find-pack -c 1 "$subdir_tree_hash") &&
+
+		# Root tree and subdir tree are not in the same packfiles
+		test "$commit_pack" != "$blob_pack" &&
+		test "$commit_pack" = "$root_tree_pack" &&
+		test "$blob_pack" = "$subdir_tree_pack"
+	)
+'
+
+prepare_for_keep_packs () {
+	git init keep-packs &&
+	(
+		cd keep-packs &&
+		test_commit foo &&
+		test_commit bar
+	) &&
+	git clone --no-local --bare keep-packs keep-packs.git &&
+	(
+		cd keep-packs.git &&
+
+		# Create two packs
+		# The first pack will contain all of the objects except one blob
+		git rev-list --objects --all >objs &&
+		grep -v "bar.t" objs | git pack-objects pack &&
+		# The second pack will contain the excluded object and be kept
+		packid=$(grep "bar.t" objs | git pack-objects pack) &&
+		>pack-$packid.keep &&
+
+		# Replace the existing pack with the 2 new ones
+		rm -f objects/pack/pack* &&
+		mv pack-* objects/pack/
+	)
+}
+
+test_expect_success '--filter works with .keep packs' '
+	prepare_for_keep_packs &&
+	(
+		cd keep-packs.git &&
+
+		foo_pack=$(test-tool find-pack -c 1 HEAD:foo.t) &&
+		bar_pack=$(test-tool find-pack -c 1 HEAD:bar.t) &&
+		head_pack=$(test-tool find-pack -c 1 HEAD) &&
+
+		test "$foo_pack" != "$bar_pack" &&
+		test "$foo_pack" = "$head_pack" &&
+
+		git -c repack.writebitmaps=false repack -a -d --filter=blob:none &&
+
+		foo_pack_1=$(test-tool find-pack -c 1 HEAD:foo.t) &&
+		bar_pack_1=$(test-tool find-pack -c 1 HEAD:bar.t) &&
+		head_pack_1=$(test-tool find-pack -c 1 HEAD) &&
+
+		# Object bar is still only in the old .keep pack
+		test "$foo_pack_1" != "$foo_pack" &&
+		test "$bar_pack_1" = "$bar_pack" &&
+		test "$head_pack_1" != "$head_pack" &&
+
+		test "$foo_pack_1" != "$bar_pack_1" &&
+		test "$foo_pack_1" != "$head_pack_1" &&
+		test "$bar_pack_1" != "$head_pack_1"
+	)
+'
+
+test_expect_success '--filter works with --pack-kept-objects and .keep packs' '
+	rm -rf keep-packs keep-packs.git &&
+	prepare_for_keep_packs &&
+	(
+		cd keep-packs.git &&
+
+		foo_pack=$(test-tool find-pack -c 1 HEAD:foo.t) &&
+		bar_pack=$(test-tool find-pack -c 1 HEAD:bar.t) &&
+		head_pack=$(test-tool find-pack -c 1 HEAD) &&
+
+		test "$foo_pack" != "$bar_pack" &&
+		test "$foo_pack" = "$head_pack" &&
+
+		git -c repack.writebitmaps=false repack -a -d --filter=blob:none \
+			--pack-kept-objects &&
+
+		foo_pack_1=$(test-tool find-pack -c 1 HEAD:foo.t) &&
+		test-tool find-pack -c 2 HEAD:bar.t >bar_pack_1 &&
+		head_pack_1=$(test-tool find-pack -c 1 HEAD) &&
+
+		test "$foo_pack_1" != "$foo_pack" &&
+		test "$foo_pack_1" != "$bar_pack" &&
+		test "$head_pack_1" != "$head_pack" &&
+
+		# Object bar is in both the old .keep pack and the new
+		# pack that contained the filtered out objects
+		grep "$bar_pack" bar_pack_1 &&
+		grep "$foo_pack_1" bar_pack_1 &&
+		test "$foo_pack_1" != "$head_pack_1"
+	)
+'
+
+test_expect_success '--filter-to stores filtered out objects' '
+	git -C bare.git repack -a -d &&
+	test_stdout_line_count = 1 ls bare.git/objects/pack/*.pack &&
+
+	git init --bare filtered.git &&
+	git -C bare.git -c repack.writebitmaps=false repack -a -d \
+		--filter=blob:none \
+		--filter-to=../filtered.git/objects/pack/pack &&
+	test_stdout_line_count = 1 ls bare.git/objects/pack/pack-*.pack &&
+	test_stdout_line_count = 1 ls filtered.git/objects/pack/pack-*.pack &&
+
+	commit_pack=$(test-tool -C bare.git find-pack -c 1 HEAD) &&
+	blob_pack=$(test-tool -C bare.git find-pack -c 0 HEAD:file1) &&
+	blob_hash=$(git -C bare.git rev-parse HEAD:file1) &&
+	test -n "$blob_hash" &&
+	blob_pack=$(test-tool -C filtered.git find-pack -c 1 $blob_hash) &&
+
+	echo $(pwd)/filtered.git/objects >bare.git/objects/info/alternates &&
+	blob_pack=$(test-tool -C bare.git find-pack -c 1 HEAD:file1) &&
+	blob_content=$(git -C bare.git show $blob_hash) &&
+	test "$blob_content" = "content1"
+'
+
+test_expect_success '--filter works with --max-pack-size' '
+	rm -rf filtered.git &&
+	git init --bare filtered.git &&
+	git init max-pack-size &&
+	(
+		cd max-pack-size &&
+		test_commit base &&
+		# two blobs which exceed the maximum pack size
+		test-tool genrandom foo 1048576 >foo &&
+		git hash-object -w foo &&
+		test-tool genrandom bar 1048576 >bar &&
+		git hash-object -w bar &&
+		git add foo bar &&
+		git commit -m "adding foo and bar"
+	) &&
+	git clone --no-local --bare max-pack-size max-pack-size.git &&
+	(
+		cd max-pack-size.git &&
+		git -c repack.writebitmaps=false repack -a -d --filter=blob:none \
+			--max-pack-size=1M \
+			--filter-to=../filtered.git/objects/pack/pack &&
+		echo $(cd .. && pwd)/filtered.git/objects >objects/info/alternates &&
+
+		# Check that the 3 blobs are in different packfiles in filtered.git
+		test_stdout_line_count = 3 ls ../filtered.git/objects/pack/pack-*.pack &&
+		test_stdout_line_count = 1 ls objects/pack/pack-*.pack &&
+		foo_pack=$(test-tool find-pack -c 1 HEAD:foo) &&
+		bar_pack=$(test-tool find-pack -c 1 HEAD:bar) &&
+		base_pack=$(test-tool find-pack -c 1 HEAD:base.t) &&
+		test "$foo_pack" != "$bar_pack" &&
+		test "$foo_pack" != "$base_pack" &&
+		test "$bar_pack" != "$base_pack" &&
+		for pack in "$foo_pack" "$bar_pack" "$base_pack"
+		do
+			case "$foo_pack" in */filtered.git/objects/pack/*) true ;; *) return 1 ;; esac
+		done
+	)
 '
 
 objdir=.git/objects
@@ -460,10 +714,10 @@ test_expect_success '--write-midx -b packs non-kept objects' '
 '
 
 test_expect_success '--write-midx removes stale pack-based bitmaps' '
-       rm -fr repo &&
-       git init repo &&
-       test_when_finished "rm -fr repo" &&
-       (
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
 		cd repo &&
 		test_commit base &&
 		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Ab &&
@@ -477,7 +731,7 @@ test_expect_success '--write-midx removes stale pack-based bitmaps' '
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 		test_path_is_missing $pack_bitmap
-       )
+	)
 '
 
 test_expect_success '--write-midx with --pack-kept-objects' '
@@ -574,127 +828,6 @@ test_expect_success '-n overrides repack.updateServerInfo=true' '
 	test_server_info_cleanup &&
 	git -C update-server-info -c repack.updateServerInfo=true repack -n &&
 	test_server_info_missing
-'
-
-test_expect_success '--expire-to stores pruned objects (now)' '
-	git init expire-to-now &&
-	(
-		cd expire-to-now &&
-
-		git branch -M main &&
-
-		test_commit base &&
-
-		git checkout -b cruft &&
-		test_commit --no-tag cruft &&
-
-		git rev-list --objects --no-object-names main..cruft >moved.raw &&
-		sort moved.raw >moved.want &&
-
-		git rev-list --all --objects --no-object-names >expect.raw &&
-		sort expect.raw >expect &&
-
-		git checkout main &&
-		git branch -D cruft &&
-		git reflog expire --all --expire=all &&
-
-		git init --bare expired.git &&
-		git repack -d \
-			--cruft --cruft-expiration="now" \
-			--expire-to="expired.git/objects/pack/pack" &&
-
-		expired="$(ls expired.git/objects/pack/pack-*.idx)" &&
-		test_path_is_file "${expired%.idx}.mtimes" &&
-
-		# Since the `--cruft-expiration` is "now", the effective
-		# behavior is to move _all_ unreachable objects out to
-		# the location in `--expire-to`.
-		git show-index <$expired >expired.raw &&
-		cut -d" " -f2 expired.raw | sort >expired.objects &&
-		git rev-list --all --objects --no-object-names \
-			>remaining.objects &&
-
-		# ...in other words, the combined contents of this
-		# repository and expired.git should be the same as the
-		# set of objects we started with.
-		cat expired.objects remaining.objects | sort >actual &&
-		test_cmp expect actual &&
-
-		# The "moved" objects (i.e., those in expired.git)
-		# should be the same as the cruft objects which were
-		# expired in the previous step.
-		test_cmp moved.want expired.objects
-	)
-'
-
-test_expect_success '--expire-to stores pruned objects (5.minutes.ago)' '
-	git init expire-to-5.minutes.ago &&
-	(
-		cd expire-to-5.minutes.ago &&
-
-		git branch -M main &&
-
-		test_commit base &&
-
-		# Create two classes of unreachable objects, one which
-		# is older than 5 minutes (stale), and another which is
-		# newer (recent).
-		for kind in stale recent
-		do
-			git checkout -b $kind main &&
-			test_commit --no-tag $kind || return 1
-		done &&
-
-		git rev-list --objects --no-object-names main..stale >in &&
-		stale="$(git pack-objects $objdir/pack/pack <in)" &&
-		mtime="$(test-tool chmtime --get =-600 $objdir/pack/pack-$stale.pack)" &&
-
-		# expect holds the set of objects we expect to find in
-		# this repository after repacking
-		git rev-list --objects --no-object-names recent >expect.raw &&
-		sort expect.raw >expect &&
-
-		# moved.want holds the set of objects we expect to find
-		# in expired.git
-		git rev-list --objects --no-object-names main..stale >out &&
-		sort out >moved.want &&
-
-		git checkout main &&
-		git branch -D stale recent &&
-		git reflog expire --all --expire=all &&
-		git prune-packed &&
-
-		git init --bare expired.git &&
-		git repack -d \
-			--cruft --cruft-expiration=5.minutes.ago \
-			--expire-to="expired.git/objects/pack/pack" &&
-
-		# Some of the remaining objects in this repository are
-		# unreachable, so use `cat-file --batch-all-objects`
-		# instead of `rev-list` to get their names
-		git cat-file --batch-all-objects --batch-check="%(objectname)" \
-			>remaining.objects &&
-		sort remaining.objects >actual &&
-		test_cmp expect actual &&
-
-		(
-			cd expired.git &&
-
-			expired="$(ls objects/pack/pack-*.mtimes)" &&
-			test-tool pack-mtimes $(basename $expired) >out &&
-			cut -d" " -f1 out | sort >../moved.got &&
-
-			# Ensure that there are as many objects with the
-			# expected mtime as were moved to expired.git.
-			#
-			# In other words, ensure that the recorded
-			# mtimes of any moved objects was written
-			# correctly.
-			grep " $mtime$" out >matching &&
-			test_line_count = $(wc -l <../moved.want) matching
-		) &&
-		test_cmp moved.want moved.got
-	)
 '
 
 test_done

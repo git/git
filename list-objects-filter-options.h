@@ -3,7 +3,6 @@
 
 #include "gettext.h"
 #include "object.h"
-#include "string-list.h"
 #include "strbuf.h"
 
 struct option;

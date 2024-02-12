@@ -13,6 +13,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "commit.h"
+#include "repository.h"
 #include "tag.h"
 #include "alloc.h"
 

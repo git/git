@@ -35,7 +35,7 @@ Replacement references will be used by default by all Git commands
 except those doing reachability traversal (prune, pack transfer and
 fsck).
 
-It is possible to disable use of replacement references for any
+It is possible to disable the use of replacement references for any
 command using the `--no-replace-objects` option just after 'git'.
 
 For example if commit 'foo' has been replaced by commit 'bar':
@@ -111,14 +111,14 @@ OPTIONS
 FORMATS
 -------
 
-The following format are available:
+The following formats are available:
 
 * 'short':
-	<replaced sha1>
+	<replaced-sha1>
 * 'medium':
-	<replaced sha1> -> <replacement sha1>
+	<replaced-sha1> -> <replacement-sha1>
 * 'long':
-	<replaced sha1> (<replaced type>) -> <replacement sha1> (<replacement type>)
+	<replaced-sha1> (<replaced-type>) -> <replacement-sha1> (<replacement-type>)
 
 CREATING REPLACEMENT OBJECTS
 ----------------------------

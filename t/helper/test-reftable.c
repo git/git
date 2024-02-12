@@ -1,3 +1,4 @@
+#include "reftable/system.h"
 #include "reftable/reftable-tests.h"
 #include "test-tool.h"
 

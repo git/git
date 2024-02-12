@@ -195,7 +195,7 @@ test_expect_success 'A^! and A^-<n> (unmodified)' '
 
 test_expect_success 'A^{/..} is not mistaken for a range' '
 	test_must_fail git range-diff topic^.. topic^{/..} -- 2>error &&
-	test_i18ngrep "not a commit range" error
+	test_grep "not a commit range" error
 '
 
 test_expect_success 'trivial reordering' '
@@ -537,7 +537,7 @@ do
 			main..unmodified >actual &&
 		test_when_finished "rm 000?-*" &&
 		test_line_count = 5 actual &&
-		test_i18ngrep "^Range-diff:$" 0000-* &&
+		test_grep "^Range-diff:$" 0000-* &&
 		grep "= 1: .* s/5/A" 0000-* &&
 		grep "= 2: .* s/4/A" 0000-* &&
 		grep "= 3: .* s/11/B" 0000-* &&
@@ -549,7 +549,7 @@ test_expect_success 'format-patch --range-diff as commentary' '
 	git format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
 	test_when_finished "rm 0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff:$" 0001-* &&
+	test_grep "^Range-diff:$" 0001-* &&
 	grep "> 1: .* new message" 0001-*
 '
 
@@ -557,7 +557,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a non-integer' 
 	git format-patch --range-diff=HEAD~1 -v2.9 HEAD~1 >actual &&
 	test_when_finished "rm v2.9-0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff:$" v2.9-0001-* &&
+	test_grep "^Range-diff:$" v2.9-0001-* &&
 	grep "> 1: .* new message" v2.9-0001-*
 '
 
@@ -565,7 +565,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a integer' '
 	git format-patch --range-diff=HEAD~1 -v2 HEAD~1 >actual &&
 	test_when_finished "rm v2-0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff ..* v1:$" v2-0001-* &&
+	test_grep "^Range-diff ..* v1:$" v2-0001-* &&
 	grep "> 1: .* new message" v2-0001-*
 '
 
@@ -573,7 +573,7 @@ test_expect_success 'format-patch --range-diff with v0' '
 	git format-patch --range-diff=HEAD~1 -v0 HEAD~1 >actual &&
 	test_when_finished "rm v0-0001-*" &&
 	test_line_count = 1 actual &&
-	test_i18ngrep "^Range-diff:$" v0-0001-* &&
+	test_grep "^Range-diff:$" v0-0001-* &&
 	grep "> 1: .* new message" v0-0001-*
 '
 
@@ -662,6 +662,20 @@ test_expect_success 'range-diff with multiple --notes' '
 	test_cmp expect actual
 '
 
+# `range-diff` should act like `log` with regards to notes
+test_expect_success 'range-diff with --notes=custom does not show default notes' '
+	git notes add -m "topic note" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	git notes --ref=custom add -m "topic note" topic &&
+	git notes --ref=custom add -m "unmodified note" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	test_when_finished git notes --ref=custom remove topic unmodified &&
+	git range-diff --notes=custom main..topic main..unmodified \
+		>actual &&
+	! grep "## Notes ##" actual &&
+	grep "## Notes (custom) ##" actual
+'
+
 test_expect_success 'format-patch --range-diff does not compare notes by default' '
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
@@ -670,13 +684,27 @@ test_expect_success 'format-patch --range-diff does not compare notes by default
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
 	grep "= 4: .* s/12/B" 0000-* &&
 	! grep "Notes" 0000-* &&
 	! grep "note" 0000-*
+'
+
+test_expect_success 'format-patch --notes=custom --range-diff only compares custom notes' '
+	git notes add -m "topic note" topic &&
+	git notes --ref=custom add -m "topic note (custom)" topic &&
+	git notes add -m "unmodified note" unmodified &&
+	git notes --ref=custom add -m "unmodified note (custom)" unmodified &&
+	test_when_finished git notes remove topic unmodified &&
+	test_when_finished git notes --ref=custom remove topic unmodified &&
+	git format-patch --notes=custom --cover-letter --range-diff=$prev \
+		main..unmodified >actual &&
+	test_when_finished "rm 000?-*" &&
+	grep "## Notes (custom) ##" 0000-* &&
+	! grep "## Notes ##" 0000-*
 '
 
 test_expect_success 'format-patch --range-diff with --no-notes' '
@@ -687,7 +715,7 @@ test_expect_success 'format-patch --range-diff with --no-notes' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
@@ -704,7 +732,7 @@ test_expect_success 'format-patch --range-diff with --notes' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
@@ -733,7 +761,7 @@ test_expect_success 'format-patch --range-diff with format.notes config' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&
@@ -764,7 +792,7 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 		main..unmodified >actual &&
 	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
-	test_i18ngrep "^Range-diff:$" 0000-* &&
+	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
 	grep "= 2: .* s/4/A" 0000-* &&
 	grep "= 3: .* s/11/B" 0000-* &&

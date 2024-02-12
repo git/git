@@ -5,6 +5,12 @@
 
 test_description='test bash completion'
 
+# The Bash completion scripts must not print anything to either stdout or
+# stderr, which we try to verify. When tracing is enabled without support for
+# BASH_XTRACEFD this assertion will fail, so we have to mark the test as
+# untraceable with such ancient Bash versions.
+test_untraceable=UnfortunatelyYes
+
 . ./lib-bash.sh
 
 complete ()
@@ -87,9 +93,11 @@ test_completion ()
 	else
 		sed -e 's/Z$//' |sort >expected
 	fi &&
-	run_completion "$1" &&
+	run_completion "$1" >"$TRASH_DIRECTORY"/bash-completion-output 2>&1 &&
 	sort out >out_sorted &&
-	test_cmp expected out_sorted
+	test_cmp expected out_sorted &&
+	test_must_be_empty "$TRASH_DIRECTORY"/bash-completion-output &&
+	rm "$TRASH_DIRECTORY"/bash-completion-output
 }
 
 # Test __gitcomp.
@@ -405,40 +413,40 @@ test_expect_success '__gitdir - remote as argument' '
 
 test_expect_success '__git_dequote - plain unquoted word' '
 	__git_dequote unquoted-word &&
-	verbose test unquoted-word = "$dequoted_word"
+	test unquoted-word = "$dequoted_word"
 '
 
 # input:    b\a\c\k\'\\\"s\l\a\s\h\es
 # expected: back'\"slashes
 test_expect_success '__git_dequote - backslash escaped' '
 	__git_dequote "b\a\c\k\\'\''\\\\\\\"s\l\a\s\h\es" &&
-	verbose test "back'\''\\\"slashes" = "$dequoted_word"
+	test "back'\''\\\"slashes" = "$dequoted_word"
 '
 
 # input:    sin'gle\' '"quo'ted
 # expected: single\ "quoted
 test_expect_success '__git_dequote - single quoted' '
 	__git_dequote "'"sin'gle\\\\' '\\\"quo'ted"'" &&
-	verbose test '\''single\ "quoted'\'' = "$dequoted_word"
+	test '\''single\ "quoted'\'' = "$dequoted_word"
 '
 
 # input:    dou"ble\\" "\"\quot"ed
 # expected: double\ "\quoted
 test_expect_success '__git_dequote - double quoted' '
 	__git_dequote '\''dou"ble\\" "\"\quot"ed'\'' &&
-	verbose test '\''double\ "\quoted'\'' = "$dequoted_word"
+	test '\''double\ "\quoted'\'' = "$dequoted_word"
 '
 
 # input: 'open single quote
 test_expect_success '__git_dequote - open single quote' '
 	__git_dequote "'\''open single quote" &&
-	verbose test "open single quote" = "$dequoted_word"
+	test "open single quote" = "$dequoted_word"
 '
 
 # input: "open double quote
 test_expect_success '__git_dequote - open double quote' '
 	__git_dequote "\"open double quote" &&
-	verbose test "open double quote" = "$dequoted_word"
+	test "open double quote" = "$dequoted_word"
 '
 
 
@@ -616,7 +624,7 @@ test_expect_success '__git_is_configured_remote' '
 	test_when_finished "git remote remove remote_2" &&
 	git remote add remote_2 git://remote_2 &&
 	(
-		verbose __git_is_configured_remote remote_2 &&
+		__git_is_configured_remote remote_2 &&
 		test_must_fail __git_is_configured_remote non-existent
 	)
 '
@@ -1571,7 +1579,7 @@ test_expect_success FUNNYNAMES,!CYGWIN 'cone mode sparse-checkout completes dire
 	)
 '
 
-test_expect_success 'non-cone mode sparse-checkout uses bash completion' '
+test_expect_success 'non-cone mode sparse-checkout gives rooted paths' '
 	# reset sparse-checkout repo to non-cone mode
 	git -C sparse-checkout sparse-checkout disable &&
 	git -C sparse-checkout sparse-checkout set --no-cone &&
@@ -1581,7 +1589,12 @@ test_expect_success 'non-cone mode sparse-checkout uses bash completion' '
 		# expected to be empty since we have not configured
 		# custom completion for non-cone mode
 		test_completion "git sparse-checkout set f" <<-\EOF
-
+		/folder1/0/1/t.txt Z
+		/folder1/expected Z
+		/folder1/out Z
+		/folder1/out_sorted Z
+		/folder2/0/t.txt Z
+		/folder3/t.txt Z
 		EOF
 	)
 '
@@ -1622,14 +1635,22 @@ test_expect_success 'git checkout - with -d, complete only references' '
 '
 
 test_expect_success 'git switch - with --track, complete only remote branches' '
-	test_completion "git switch --track " <<-\EOF
+	test_completion "git switch --track " <<-\EOF &&
+	other/branch-in-other Z
+	other/main-in-other Z
+	EOF
+	test_completion "git switch -t " <<-\EOF
 	other/branch-in-other Z
 	other/main-in-other Z
 	EOF
 '
 
 test_expect_success 'git checkout - with --track, complete only remote branches' '
-	test_completion "git checkout --track " <<-\EOF
+	test_completion "git checkout --track " <<-\EOF &&
+	other/branch-in-other Z
+	other/main-in-other Z
+	EOF
+	test_completion "git checkout -t " <<-\EOF
 	other/branch-in-other Z
 	other/main-in-other Z
 	EOF
@@ -1909,6 +1930,14 @@ test_expect_success 'git checkout - --orphan with branch already provided comple
 	matching-tag Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	EOF
+'
+
+test_expect_success 'git restore completes modified files' '
+	test_commit A a.file &&
+	echo B >a.file &&
+	test_completion "git restore a." <<-\EOF
+	a.file
 	EOF
 '
 
@@ -2456,6 +2485,24 @@ test_expect_success 'completion used <cmd> completion for alias: !f() { : git <c
 	EOF
 '
 
+test_expect_success 'completion used <cmd> completion for alias: !f() { : <cmd> ; ... }' '
+	test_config alias.co "!f() { : checkout ; if ... } f" &&
+	test_completion "git co m" <<-\EOF
+	main Z
+	mybranch Z
+	mytag Z
+	EOF
+'
+
+test_expect_success 'completion used <cmd> completion for alias: !f() { : <cmd>; ... }' '
+	test_config alias.co "!f() { : checkout; if ... } f" &&
+	test_completion "git co m" <<-\EOF
+	main Z
+	mybranch Z
+	mytag Z
+	EOF
+'
+
 test_expect_success 'completion without explicit _git_xxx function' '
 	test_completion "git version --" <<-\EOF
 	--build-options Z
@@ -2596,30 +2643,30 @@ test_expect_success 'options with value' '
 test_expect_success 'sourcing the completion script clears cached commands' '
 	(
 		__git_compute_all_commands &&
-		verbose test -n "$__git_all_commands" &&
+		test -n "$__git_all_commands" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-		verbose test -z "$__git_all_commands"
+		test -z "$__git_all_commands"
 	)
 '
 
 test_expect_success 'sourcing the completion script clears cached merge strategies' '
 	(
 		__git_compute_merge_strategies &&
-		verbose test -n "$__git_merge_strategies" &&
+		test -n "$__git_merge_strategies" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-		verbose test -z "$__git_merge_strategies"
+		test -z "$__git_merge_strategies"
 	)
 '
 
 test_expect_success 'sourcing the completion script clears cached --options' '
 	(
 		__gitcomp_builtin checkout &&
-		verbose test -n "$__gitcomp_builtin_checkout" &&
+		test -n "$__gitcomp_builtin_checkout" &&
 		__gitcomp_builtin notes_edit &&
-		verbose test -n "$__gitcomp_builtin_notes_edit" &&
+		test -n "$__gitcomp_builtin_notes_edit" &&
 		. "$GIT_BUILD_DIR/contrib/completion/git-completion.bash" &&
-		verbose test -z "$__gitcomp_builtin_checkout" &&
-		verbose test -z "$__gitcomp_builtin_notes_edit"
+		test -z "$__gitcomp_builtin_checkout" &&
+		test -z "$__gitcomp_builtin_notes_edit"
 	)
 '
 
@@ -2687,6 +2734,33 @@ test_expect_success '__git_complete' '
 	__git_have_func __git_wrap_git_diff &&
 
 	test_must_fail __git_complete ga missing
+'
+
+test_expect_success '__git_pseudoref_exists' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset __git_repo_path &&
+
+		# HEAD should exist, even if it points to an unborn branch.
+		__git_pseudoref_exists HEAD >output 2>&1 &&
+		test_must_be_empty output &&
+
+		# HEAD points to an existing branch, so it should exist.
+		test_commit A &&
+		__git_pseudoref_exists HEAD >output 2>&1 &&
+		test_must_be_empty output &&
+
+		# CHERRY_PICK_HEAD does not exist, so the existence check should fail.
+		! __git_pseudoref_exists CHERRY_PICK_HEAD >output 2>&1 &&
+		test_must_be_empty output &&
+
+		# CHERRY_PICK_HEAD points to a commit, so it should exist.
+		git update-ref CHERRY_PICK_HEAD A &&
+		__git_pseudoref_exists CHERRY_PICK_HEAD >output 2>&1 &&
+		test_must_be_empty output
+	)
 '
 
 test_done

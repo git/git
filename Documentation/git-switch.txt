@@ -59,13 +59,18 @@ out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 -c <new-branch>::
 --create <new-branch>::
 	Create a new branch named `<new-branch>` starting at
-	`<start-point>` before switching to the branch. This is a
-	convenient shortcut for:
+	`<start-point>` before switching to the branch. This is the
+	transactional equivalent of
 +
 ------------
 $ git branch <new-branch>
 $ git switch <new-branch>
 ------------
++
+that is to say, the branch is not reset/created unless "git switch" is
+successful (e.g., when the branch is in use in another worktree, not
+just the current branch stays the same, but the branch is not reset to
+the start-point, either).
 
 -C <new-branch>::
 --force-create <new-branch>::
@@ -171,7 +176,7 @@ name, the guessing is aborted.  You can explicitly give a name with
 	`branch.autoSetupMerge` configuration variable is true.
 
 --orphan <new-branch>::
-	Create a new 'orphan' branch, named `<new-branch>`. All
+	Create a new unborn branch, named `<new-branch>`. All
 	tracked files are removed.
 
 --ignore-other-worktrees::

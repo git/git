@@ -1,18 +1,20 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "repository.h"
-#include "cache.h"
 #include "config.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "path.h"
 #include "pathspec.h"
+#include "preload-index.h"
 #include "dir.h"
+#include "read-cache.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "string-list.h"
@@ -20,13 +22,12 @@
 #include "remote.h"
 #include "refs.h"
 #include "refspec.h"
-#include "connect.h"
 #include "revision.h"
 #include "diffcore.h"
 #include "diff.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "advice.h"
 #include "branch.h"
 #include "list-objects-filter-options.h"
@@ -627,7 +628,6 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	char *displaypath;
 	struct strvec diff_files_args = STRVEC_INIT;
 	struct rev_info rev = REV_INFO_INIT;
-	int diff_files_result;
 	struct strbuf buf = STRBUF_INIT;
 	const char *git_dir;
 	struct setup_revision_opt opt = {
@@ -667,9 +667,9 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = 0;
 	setup_revisions(diff_files_args.nr, diff_files_args.v, &rev, &opt);
-	diff_files_result = run_diff_files(&rev, 0);
+	run_diff_files(&rev, 0);
 
-	if (!diff_result_code(&rev.diffopt, diff_files_result)) {
+	if (!diff_result_code(&rev.diffopt)) {
 		print_status(flags, ' ', path, ce_oid,
 			     displaypath);
 	} else if (!(flags & OPT_CACHED)) {
@@ -1139,7 +1139,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 	}
 
 	if (diff_cmd == DIFF_INDEX)
-		run_diff_index(&rev, info->cached);
+		run_diff_index(&rev, info->cached ? DIFF_INDEX_CACHED : 0);
 	else
 		run_diff_files(&rev, 0);
 	prepare_submodule_summary(info, &list);
@@ -2024,13 +2024,16 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
 	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
-		if (starts_with_dot_slash(sub->url) ||
-		    starts_with_dot_dot_slash(sub->url)) {
+		if (sub->url && (starts_with_dot_slash(sub->url) ||
+				 starts_with_dot_dot_slash(sub->url))) {
 			url = resolve_relative_url(sub->url, NULL, 0);
 			need_free_url = 1;
 		} else
 			url = sub->url;
 	}
+
+	if (!url)
+		die(_("cannot clone submodule '%s' without a URL"), sub->name);
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/.git", ce->name);
@@ -2189,12 +2192,13 @@ static int update_clone_task_finished(int result,
 }
 
 static int git_update_clone_config(const char *var, const char *value,
+				   const struct config_context *ctx,
 				   void *cb)
 {
 	int *max_jobs = cb;
 
 	if (!strcmp(var, "submodule.fetchjobs"))
-		*max_jobs = parse_submodule_fetchjobs(var, value);
+		*max_jobs = parse_submodule_fetchjobs(var, value, ctx->kvi);
 	return 0;
 }
 
@@ -2884,7 +2888,7 @@ cleanup:
 
 static int module_set_url(int argc, const char **argv, const char *prefix)
 {
-	int quiet = 0;
+	int quiet = 0, ret;
 	const char *newurl;
 	const char *path;
 	char *config_name;
@@ -2896,20 +2900,29 @@ static int module_set_url(int argc, const char **argv, const char *prefix)
 		N_("git submodule set-url [--quiet] <path> <newurl>"),
 		NULL
 	};
+	const struct submodule *sub;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	if (argc != 2 || !(path = argv[0]) || !(newurl = argv[1]))
 		usage_with_options(usage, options);
 
-	config_name = xstrfmt("submodule.%s.url", path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
 
-	config_set_in_gitmodules_file_gently(config_name, newurl);
-	sync_submodule(path, prefix, NULL, quiet ? OPT_QUIET : 0);
+	if (!sub)
+		die(_("no submodule mapping found in .gitmodules for path '%s'"),
+		    path);
+
+	config_name = xstrfmt("submodule.%s.url", sub->name);
+	ret = config_set_in_gitmodules_file_gently(config_name, newurl);
+
+	if (!ret) {
+		repo_read_gitmodules(the_repository, 0);
+		sync_submodule(sub->path, prefix, NULL, quiet ? OPT_QUIET : 0);
+	}
 
 	free(config_name);
-
-	return 0;
+	return !!ret;
 }
 
 static int module_set_branch(int argc, const char **argv, const char *prefix)
@@ -2936,6 +2949,7 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 		N_("git submodule set-branch [-q|--quiet] (-b|--branch) <branch> <path>"),
 		NULL
 	};
+	const struct submodule *sub;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
@@ -2948,7 +2962,13 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 	if (argc != 1 || !(path = argv[0]))
 		usage_with_options(usage, options);
 
-	config_name = xstrfmt("submodule.%s.branch", path);
+	sub = submodule_from_path(the_repository, null_oid(), path);
+
+	if (!sub)
+		die(_("no submodule mapping found in .gitmodules for path '%s'"),
+		    path);
+
+	config_name = xstrfmt("submodule.%s.branch", sub->name);
 	ret = config_set_in_gitmodules_file_gently(config_name, opt_branch);
 
 	free(config_name);

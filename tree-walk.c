@@ -1,15 +1,15 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "tree-walk.h"
-#include "alloc.h"
 #include "dir.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "trace2.h"
 #include "tree.h"
 #include "pathspec.h"
 #include "json-writer.h"
+#include "environment.h"
 
 static const char *get_mode(const char *str, unsigned int *modep)
 {
@@ -435,20 +435,23 @@ static inline int prune_traversal(struct index_state *istate,
 	if (still_interesting < 0)
 		return still_interesting;
 	return tree_entry_interesting(istate, e, base,
-				      0, info->pathspec);
+				      info->pathspec);
 }
 
 int traverse_trees(struct index_state *istate,
 		   int n, struct tree_desc *t,
 		   struct traverse_info *info)
 {
-	int error = 0;
-	struct name_entry entry[MAX_TRAVERSE_TREES];
+	int ret = 0;
+	struct name_entry *entry;
 	int i;
-	struct tree_desc_x tx[ARRAY_SIZE(entry)];
+	struct tree_desc_x *tx;
 	struct strbuf base = STRBUF_INIT;
 	int interesting = 1;
 	char *traverse_path;
+
+	if (traverse_trees_cur_depth > max_allowed_tree_depth)
+		return error("exceeded maximum allowed tree depth");
 
 	traverse_trees_count++;
 	traverse_trees_cur_depth++;
@@ -456,8 +459,8 @@ int traverse_trees(struct index_state *istate,
 	if (traverse_trees_cur_depth > traverse_trees_max_depth)
 		traverse_trees_max_depth = traverse_trees_cur_depth;
 
-	if (n >= ARRAY_SIZE(entry))
-		BUG("traverse_trees() called with too many trees (%d)", n);
+	ALLOC_ARRAY(entry, n);
+	ALLOC_ARRAY(tx, n);
 
 	for (i = 0; i < n; i++) {
 		tx[i].d = t[i];
@@ -540,7 +543,7 @@ int traverse_trees(struct index_state *istate,
 		if (interesting) {
 			trees_used = info->fn(n, mask, dirmask, entry, info);
 			if (trees_used < 0) {
-				error = trees_used;
+				ret = trees_used;
 				if (!info->show_all_errors)
 					break;
 			}
@@ -552,12 +555,14 @@ int traverse_trees(struct index_state *istate,
 	}
 	for (i = 0; i < n; i++)
 		free_extended_entry(tx + i);
+	free(tx);
+	free(entry);
 	free(traverse_path);
 	info->traverse_path = NULL;
 	strbuf_release(&base);
 
 	traverse_trees_cur_depth--;
-	return error;
+	return ret;
 }
 
 struct dir_state {
@@ -1016,17 +1021,17 @@ static int match_wildcard_base(const struct pathspec_item *item,
 /*
  * Is a tree entry interesting given the pathspec we have?
  *
- * Pre-condition: either baselen == base_offset (i.e. empty path)
+ * Pre-condition: either baselen == 0 (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
  */
 static enum interesting do_match(struct index_state *istate,
 				 const struct name_entry *entry,
-				 struct strbuf *base, int base_offset,
+				 struct strbuf *base,
 				 const struct pathspec *ps,
 				 int exclude)
 {
 	int i;
-	int pathlen, baselen = base->len - base_offset;
+	int pathlen, baselen = base->len;
 	enum interesting never_interesting = ps->has_wildcard ?
 		entry_not_interesting : all_entries_not_interesting;
 
@@ -1044,7 +1049,7 @@ static enum interesting do_match(struct index_state *istate,
 		    !(ps->magic & PATHSPEC_MAXDEPTH) ||
 		    ps->max_depth == -1)
 			return all_entries_interesting;
-		return within_depth(base->buf + base_offset, baselen,
+		return within_depth(base->buf, baselen,
 				    !!S_ISDIR(entry->mode),
 				    ps->max_depth) ?
 			entry_interesting : entry_not_interesting;
@@ -1055,7 +1060,7 @@ static enum interesting do_match(struct index_state *istate,
 	for (i = ps->nr - 1; i >= 0; i--) {
 		const struct pathspec_item *item = ps->items+i;
 		const char *match = item->match;
-		const char *base_str = base->buf + base_offset;
+		const char *base_str = base->buf;
 		int matchlen = item->len, matched = 0;
 
 		if ((!exclude &&   item->magic & PATHSPEC_EXCLUDE) ||
@@ -1148,9 +1153,9 @@ match_wildcards:
 
 		strbuf_add(base, entry->path, pathlen);
 
-		if (!git_fnmatch(item, match, base->buf + base_offset,
+		if (!git_fnmatch(item, match, base->buf,
 				 item->nowildcard_len)) {
-			strbuf_setlen(base, base_offset + baselen);
+			strbuf_setlen(base, baselen);
 			goto interesting;
 		}
 
@@ -1162,13 +1167,13 @@ match_wildcards:
 		 * be performed in the submodule itself.
 		 */
 		if (ps->recurse_submodules && S_ISGITLINK(entry->mode) &&
-		    !ps_strncmp(item, match, base->buf + base_offset,
+		    !ps_strncmp(item, match, base->buf,
 				item->nowildcard_len)) {
-			strbuf_setlen(base, base_offset + baselen);
+			strbuf_setlen(base, baselen);
 			goto interesting;
 		}
 
-		strbuf_setlen(base, base_offset + baselen);
+		strbuf_setlen(base, baselen);
 
 		/*
 		 * Match all directories. We'll try to match files
@@ -1204,9 +1209,9 @@ interesting:
 				return entry_interesting;
 
 			strbuf_add(base, entry->path, pathlen);
-			ret = match_pathspec_attrs(istate, base->buf + base_offset,
-						   base->len - base_offset, item);
-			strbuf_setlen(base, base_offset + baselen);
+			ret = match_pathspec_attrs(istate, base->buf,
+						   base->len, item);
+			strbuf_setlen(base, baselen);
 			if (!ret)
 				continue;
 		}
@@ -1218,16 +1223,16 @@ interesting:
 /*
  * Is a tree entry interesting given the pathspec we have?
  *
- * Pre-condition: either baselen == base_offset (i.e. empty path)
+ * Pre-condition: either baselen == 0 (i.e. empty path)
  * or base[baselen-1] == '/' (i.e. with trailing slash).
  */
 enum interesting tree_entry_interesting(struct index_state *istate,
 					const struct name_entry *entry,
-					struct strbuf *base, int base_offset,
+					struct strbuf *base,
 					const struct pathspec *ps)
 {
 	enum interesting positive, negative;
-	positive = do_match(istate, entry, base, base_offset, ps, 0);
+	positive = do_match(istate, entry, base, ps, 0);
 
 	/*
 	 * case | entry | positive | negative | result
@@ -1264,7 +1269,7 @@ enum interesting tree_entry_interesting(struct index_state *istate,
 	    positive <= entry_not_interesting) /* #1, #2, #11, #12 */
 		return positive;
 
-	negative = do_match(istate, entry, base, base_offset, ps, 1);
+	negative = do_match(istate, entry, base, ps, 1);
 
 	/* #8, #18 */
 	if (positive == all_entries_interesting &&

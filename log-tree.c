@@ -2,10 +2,11 @@
 #include "commit-reach.h"
 #include "config.h"
 #include "diff.h"
+#include "diffcore.h"
 #include "environment.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "repository.h"
 #include "tmp-objdir.h"
 #include "commit.h"
@@ -16,6 +17,7 @@
 #include "reflog-walk.h"
 #include "refs.h"
 #include "replace-object.h"
+#include "revision.h"
 #include "string-list.h"
 #include "color.h"
 #include "gpg-interface.h"
@@ -24,6 +26,8 @@
 #include "help.h"
 #include "range-diff.h"
 #include "strmap.h"
+#include "tree.h"
+#include "wildmatch.h"
 #include "write-or-die.h"
 
 static struct decoration name_decoration = { "object names" };
@@ -155,7 +159,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 
 	if (starts_with(refname, git_replace_ref_base)) {
 		struct object_id original_oid;
-		if (!read_replace_refs)
+		if (!replace_refs_enabled(the_repository))
 			return 0;
 		if (get_oid_hex(refname + strlen(git_replace_ref_base),
 				&original_oid)) {
@@ -300,25 +304,42 @@ static void show_name(struct strbuf *sb, const struct name_decoration *decoratio
 
 /*
  * The caller makes sure there is no funny color before calling.
- * format_decorations_extended makes sure the same after return.
+ * format_decorations ensures the same after return.
  */
-void format_decorations_extended(struct strbuf *sb,
+void format_decorations(struct strbuf *sb,
 			const struct commit *commit,
 			int use_color,
-			const char *prefix,
-			const char *separator,
-			const char *suffix)
+			const struct decoration_options *opts)
 {
 	const struct name_decoration *decoration;
 	const struct name_decoration *current_and_HEAD;
-	const char *color_commit =
-		diff_get_color(use_color, DIFF_COMMIT);
-	const char *color_reset =
-		decorate_get_color(use_color, DECORATION_NONE);
+	const char *color_commit, *color_reset;
+
+	const char *prefix = " (";
+	const char *suffix = ")";
+	const char *separator = ", ";
+	const char *pointer = " -> ";
+	const char *tag = "tag: ";
 
 	decoration = get_name_decoration(&commit->object);
 	if (!decoration)
 		return;
+
+	if (opts) {
+		if (opts->prefix)
+			prefix = opts->prefix;
+		if (opts->suffix)
+			suffix = opts->suffix;
+		if (opts->separator)
+			separator = opts->separator;
+		if (opts->pointer)
+			pointer = opts->pointer;
+		if (opts->tag)
+			tag = opts->tag;
+	}
+
+	color_commit = diff_get_color(use_color, DIFF_COMMIT);
+	color_reset = decorate_get_color(use_color, DECORATION_NONE);
 
 	current_and_HEAD = current_pointed_by_HEAD(decoration);
 	while (decoration) {
@@ -328,31 +349,44 @@ void format_decorations_extended(struct strbuf *sb,
 		 * appeared, skipping the entry for current.
 		 */
 		if (decoration != current_and_HEAD) {
-			strbuf_addstr(sb, color_commit);
-			strbuf_addstr(sb, prefix);
-			strbuf_addstr(sb, color_reset);
-			strbuf_addstr(sb, decorate_get_color(use_color, decoration->type));
-			if (decoration->type == DECORATION_REF_TAG)
-				strbuf_addstr(sb, "tag: ");
+			const char *color =
+				decorate_get_color(use_color, decoration->type);
 
+			if (*prefix) {
+				strbuf_addstr(sb, color_commit);
+				strbuf_addstr(sb, prefix);
+				strbuf_addstr(sb, color_reset);
+			}
+
+			if (*tag && decoration->type == DECORATION_REF_TAG) {
+				strbuf_addstr(sb, color);
+				strbuf_addstr(sb, tag);
+				strbuf_addstr(sb, color_reset);
+			}
+
+			strbuf_addstr(sb, color);
 			show_name(sb, decoration);
+			strbuf_addstr(sb, color_reset);
 
 			if (current_and_HEAD &&
 			    decoration->type == DECORATION_REF_HEAD) {
-				strbuf_addstr(sb, " -> ");
+				strbuf_addstr(sb, color_commit);
+				strbuf_addstr(sb, pointer);
 				strbuf_addstr(sb, color_reset);
 				strbuf_addstr(sb, decorate_get_color(use_color, current_and_HEAD->type));
 				show_name(sb, current_and_HEAD);
+				strbuf_addstr(sb, color_reset);
 			}
-			strbuf_addstr(sb, color_reset);
 
 			prefix = separator;
 		}
 		decoration = decoration->next;
 	}
-	strbuf_addstr(sb, color_commit);
-	strbuf_addstr(sb, suffix);
-	strbuf_addstr(sb, color_reset);
+	if (*suffix) {
+		strbuf_addstr(sb, color_commit);
+		strbuf_addstr(sb, suffix);
+		strbuf_addstr(sb, color_reset);
+	}
 }
 
 void show_decorations(struct rev_info *opt, struct commit *commit)
@@ -367,7 +401,7 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 	}
 	if (!opt->show_decorations)
 		return;
-	format_decorations(&sb, commit, opt->diffopt.use_color);
+	format_decorations(&sb, commit, opt->diffopt.use_color, NULL);
 	fputs(sb.buf, opt->diffopt.file);
 	strbuf_release(&sb);
 }

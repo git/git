@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "cache.h"
+#include "hash-ll.h"
 
 #define NUM_SECONDS 3
 

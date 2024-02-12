@@ -6,7 +6,6 @@
 #include "object-name.h"
 #include "refs.h"
 #include "reset.h"
-#include "run-command.h"
 #include "tree-walk.h"
 #include "tree.h"
 #include "unpack-trees.h"

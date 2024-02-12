@@ -4,14 +4,13 @@
  * Copyright (C) 2007 Johannes E. Schindelin
  */
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"
@@ -26,7 +25,6 @@
 #include "quote.h"
 #include "remote.h"
 #include "blob.h"
-#include "commit-slab.h"
 
 static const char *fast_export_usage[] = {
 	N_("git fast-export [<rev-list-opts>]"),
@@ -34,9 +32,9 @@ static const char *fast_export_usage[] = {
 };
 
 static int progress;
-static enum { SIGNED_TAG_ABORT, VERBATIM, WARN, WARN_STRIP, STRIP } signed_tag_mode = SIGNED_TAG_ABORT;
-static enum { TAG_FILTERING_ABORT, DROP, REWRITE } tag_of_filtered_mode = TAG_FILTERING_ABORT;
-static enum { REENCODE_ABORT, REENCODE_YES, REENCODE_NO } reencode_mode = REENCODE_ABORT;
+static enum signed_tag_mode { SIGNED_TAG_ABORT, VERBATIM, WARN, WARN_STRIP, STRIP } signed_tag_mode = SIGNED_TAG_ABORT;
+static enum tag_of_filtered_mode { TAG_FILTERING_ABORT, DROP, REWRITE } tag_of_filtered_mode = TAG_FILTERING_ABORT;
+static enum reencode_mode { REENCODE_ABORT, REENCODE_YES, REENCODE_NO } reencode_mode = REENCODE_ABORT;
 static int fake_missing_tagger;
 static int use_done_feature;
 static int no_data;
@@ -54,16 +52,18 @@ static struct revision_sources revision_sources;
 static int parse_opt_signed_tag_mode(const struct option *opt,
 				     const char *arg, int unset)
 {
+	enum signed_tag_mode *val = opt->value;
+
 	if (unset || !strcmp(arg, "abort"))
-		signed_tag_mode = SIGNED_TAG_ABORT;
+		*val = SIGNED_TAG_ABORT;
 	else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore"))
-		signed_tag_mode = VERBATIM;
+		*val = VERBATIM;
 	else if (!strcmp(arg, "warn"))
-		signed_tag_mode = WARN;
+		*val = WARN;
 	else if (!strcmp(arg, "warn-strip"))
-		signed_tag_mode = WARN_STRIP;
+		*val = WARN_STRIP;
 	else if (!strcmp(arg, "strip"))
-		signed_tag_mode = STRIP;
+		*val = STRIP;
 	else
 		return error("Unknown signed-tags mode: %s", arg);
 	return 0;
@@ -72,12 +72,14 @@ static int parse_opt_signed_tag_mode(const struct option *opt,
 static int parse_opt_tag_of_filtered_mode(const struct option *opt,
 					  const char *arg, int unset)
 {
+	enum tag_of_filtered_mode *val = opt->value;
+
 	if (unset || !strcmp(arg, "abort"))
-		tag_of_filtered_mode = TAG_FILTERING_ABORT;
+		*val = TAG_FILTERING_ABORT;
 	else if (!strcmp(arg, "drop"))
-		tag_of_filtered_mode = DROP;
+		*val = DROP;
 	else if (!strcmp(arg, "rewrite"))
-		tag_of_filtered_mode = REWRITE;
+		*val = REWRITE;
 	else
 		return error("Unknown tag-of-filtered mode: %s", arg);
 	return 0;
@@ -86,21 +88,23 @@ static int parse_opt_tag_of_filtered_mode(const struct option *opt,
 static int parse_opt_reencode_mode(const struct option *opt,
 				   const char *arg, int unset)
 {
+	enum reencode_mode *val = opt->value;
+
 	if (unset) {
-		reencode_mode = REENCODE_ABORT;
+		*val = REENCODE_ABORT;
 		return 0;
 	}
 
 	switch (git_parse_maybe_bool(arg)) {
 	case 0:
-		reencode_mode = REENCODE_NO;
+		*val = REENCODE_NO;
 		break;
 	case 1:
-		reencode_mode = REENCODE_YES;
+		*val = REENCODE_YES;
 		break;
 	default:
 		if (!strcasecmp(arg, "abort"))
-			reencode_mode = REENCODE_ABORT;
+			*val = REENCODE_ABORT;
 		else
 			return error("Unknown reencoding mode: %s", arg);
 	}

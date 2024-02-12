@@ -1,7 +1,10 @@
 #!/bin/sh
 
 test_description='split commit graph'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-chunk.sh
 
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
@@ -281,7 +284,33 @@ test_expect_success 'verify hashes along chain, even in shallow' '
 		corrupt_file "$base_file" $(test_oid shallow) "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "incorrect checksum" err
+		test_grep "incorrect checksum" err
+	)
+'
+
+test_expect_success 'verify notices chain slice which is bogus (base)' '
+	git clone --no-hardlinks . verify-chain-bogus-base &&
+	(
+		cd verify-chain-bogus-base &&
+		git commit-graph verify &&
+		base_file=$graphdir/graph-$(sed -n 1p $graphdir/commit-graph-chain).graph &&
+		echo "garbage" >$base_file &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		grep "commit-graph file is too small" err
+	)
+'
+
+test_expect_success 'verify notices chain slice which is bogus (tip)' '
+	git clone --no-hardlinks . verify-chain-bogus-tip &&
+	(
+		cd verify-chain-bogus-tip &&
+		git commit-graph verify &&
+		tip_file=$graphdir/graph-$(sed -n 2p $graphdir/commit-graph-chain).graph &&
+		echo "garbage" >$tip_file &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		grep "commit-graph file is too small" err
 	)
 '
 
@@ -291,11 +320,11 @@ test_expect_success 'verify --shallow does not check base contents' '
 		cd verify-shallow &&
 		git commit-graph verify &&
 		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$base_file" 1000 "\01" &&
+		corrupt_file "$base_file" 1500 "\01" &&
 		git commit-graph verify --shallow &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "incorrect checksum" err
+		test_grep "incorrect checksum" err
 	)
 '
 
@@ -306,24 +335,51 @@ test_expect_success 'warn on base graph chunk incorrect' '
 		git commit-graph verify &&
 		base_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
 		corrupt_file "$base_file" $(test_oid base) "\01" &&
-		git commit-graph verify --shallow 2>test_err &&
+		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "commit-graph chain does not match" err
+		test_grep "commit-graph chain does not match" err
 	)
 '
 
-test_expect_success 'verify after commit-graph-chain corruption' '
-	git clone --no-hardlinks . verify-chain &&
+test_expect_success 'verify after commit-graph-chain corruption (base)' '
+	git clone --no-hardlinks . verify-chain-base &&
 	(
-		cd verify-chain &&
-		corrupt_file "$graphdir/commit-graph-chain" 60 "G" &&
-		git commit-graph verify 2>test_err &&
+		cd verify-chain-base &&
+		corrupt_file "$graphdir/commit-graph-chain" 30 "G" &&
+		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "invalid commit-graph chain" err &&
-		corrupt_file "$graphdir/commit-graph-chain" 60 "A" &&
-		git commit-graph verify 2>test_err &&
+		test_grep "invalid commit-graph chain" err &&
+		corrupt_file "$graphdir/commit-graph-chain" 30 "A" &&
+		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "unable to find all commit-graph files" err
+		test_grep "unable to find all commit-graph files" err
+	)
+'
+
+test_expect_success 'verify after commit-graph-chain corruption (tip)' '
+	git clone --no-hardlinks . verify-chain-tip &&
+	(
+		cd verify-chain-tip &&
+		corrupt_file "$graphdir/commit-graph-chain" 70 "G" &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_grep "invalid commit-graph chain" err &&
+		corrupt_file "$graphdir/commit-graph-chain" 70 "A" &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		test_grep "unable to find all commit-graph files" err
+	)
+'
+
+test_expect_success 'verify notices too-short chain file' '
+	git clone --no-hardlinks . verify-chain-short &&
+	(
+		cd verify-chain-short &&
+		git commit-graph verify &&
+		echo "garbage" >$graphdir/commit-graph-chain &&
+		test_must_fail git commit-graph verify 2>test_err &&
+		grep -v "^+" test_err >err &&
+		grep "commit-graph chain file too small" err
 	)
 '
 
@@ -338,10 +394,23 @@ test_expect_success 'verify across alternates' '
 		test_commit extra &&
 		git commit-graph write --reachable --split &&
 		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$tip_file" 100 "\01" &&
+		corrupt_file "$tip_file" 1500 "\01" &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
-		test_i18ngrep "commit-graph has incorrect fanout value" err
+		test_grep "incorrect checksum" err
+	)
+'
+
+test_expect_success 'reader bounds-checks base-graph chunk' '
+	git clone --no-hardlinks . corrupt-base-chunk &&
+	(
+		cd corrupt-base-chunk &&
+		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_chunk_file "$tip_file" BASE clear 01020304 &&
+		git -c core.commitGraph=false log >expect.out &&
+		git -c core.commitGraph=true log >out 2>err &&
+		test_cmp expect.out out &&
+		grep "commit-graph base graphs chunk is too small" err
 	)
 '
 
@@ -351,8 +420,9 @@ test_expect_success 'add octopus merge' '
 	git branch merge/octopus &&
 	git commit-graph write --reachable --split &&
 	git commit-graph verify --progress 2>err &&
-	test_line_count = 3 err &&
-	test_i18ngrep ! warning err &&
+	test_line_count = 1 err &&
+	grep "Verifying commits in commit graph: 100% (18/18)" err &&
+	test_grep ! warning err &&
 	test_line_count = 3 $graphdir/commit-graph-chain
 '
 
@@ -454,7 +524,7 @@ test_expect_success 'prevent regression for duplicate commits across layers' '
 	git init dup &&
 	git -C dup commit --allow-empty -m one &&
 	git -C dup -c core.commitGraph=false commit-graph write --split=no-merge --reachable 2>err &&
-	test_i18ngrep "attempting to write a commit-graph" err &&
+	test_grep "attempting to write a commit-graph" err &&
 	git -C dup commit-graph write --split=no-merge --reachable &&
 	git -C dup commit --allow-empty -m two &&
 	git -C dup commit-graph write --split=no-merge --reachable &&

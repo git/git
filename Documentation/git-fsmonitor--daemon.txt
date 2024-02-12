@@ -70,10 +70,10 @@ the change (as happening against the super repo).  However, the client
 will properly ignore these extra events, so performance may be affected
 but it will not cause an incorrect result.
 
-By default, the fsmonitor daemon refuses to work against network-mounted
+By default, the fsmonitor daemon refuses to work with network-mounted
 repositories; this may be overridden by setting `fsmonitor.allowRemote` to
 `true`. Note, however, that the fsmonitor daemon is not guaranteed to work
-correctly with all network-mounted repositories and such use is considered
+correctly with all network-mounted repositories, so such use is considered
 experimental.
 
 On Mac OS, the inter-process communication (IPC) between various Git
@@ -83,10 +83,10 @@ but not on network-mounted filesystems, NTFS, or FAT32.  Other filesystems
 may or may not have the needed support; the fsmonitor daemon is not guaranteed
 to work with these filesystems and such use is considered experimental.
 
-By default, the socket is created in the `.git` directory, however, if the
-`.git` directory is on a network-mounted filesystem, it will be instead be
+By default, the socket is created in the `.git` directory.  However, if the
+`.git` directory is on a network-mounted filesystem, it will instead be
 created at `$HOME/.git-fsmonitor-*` unless `$HOME` itself is on a
-network-mounted filesystem in which case you must set the configuration
+network-mounted filesystem, in which case you must set the configuration
 variable `fsmonitor.socketDir` to the path of a directory on a Mac OS native
 filesystem in which to create the socket file.
 

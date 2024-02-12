@@ -1,12 +1,12 @@
 #ifndef MIDX_H
 #define MIDX_H
 
-#include "repository.h"
 #include "string-list.h"
 
 struct object_id;
 struct pack_entry;
 struct repository;
+struct bitmapped_pack;
 
 #define GIT_TEST_MULTI_PACK_INDEX "GIT_TEST_MULTI_PACK_INDEX"
 #define GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP \
@@ -28,15 +28,21 @@ struct multi_pack_index {
 	unsigned char num_chunks;
 	uint32_t num_packs;
 	uint32_t num_objects;
+	int preferred_pack_idx;
 
 	int local;
 
 	const unsigned char *chunk_pack_names;
+	size_t chunk_pack_names_len;
+	const uint32_t *chunk_bitmapped_packs;
+	size_t chunk_bitmapped_packs_len;
 	const uint32_t *chunk_oid_fanout;
 	const unsigned char *chunk_oid_lookup;
 	const unsigned char *chunk_object_offsets;
 	const unsigned char *chunk_large_offsets;
+	size_t chunk_large_offsets_len;
 	const unsigned char *chunk_revindex;
+	size_t chunk_revindex_len;
 
 	const char **pack_names;
 	struct packed_git **packs;
@@ -55,6 +61,8 @@ void get_midx_rev_filename(struct strbuf *out, struct multi_pack_index *m);
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);
+int nth_bitmapped_pack(struct repository *r, struct multi_pack_index *m,
+		       struct bitmapped_pack *bp, uint32_t pack_int_id);
 int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32_t *result);
 off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos);
 uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos);
@@ -62,7 +70,11 @@ struct object_id *nth_midxed_object_oid(struct object_id *oid,
 					struct multi_pack_index *m,
 					uint32_t n);
 int fill_midx_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e, struct multi_pack_index *m);
-int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name);
+int midx_contains_pack(struct multi_pack_index *m,
+		       const char *idx_or_pack_name);
+int midx_locate_pack(struct multi_pack_index *m, const char *idx_or_pack_name,
+		     uint32_t *pos);
+int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id);
 int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local);
 
 /*

@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "object-name.h"
 #include "advice.h"
 #include "config.h"
@@ -8,17 +8,18 @@
 #include "tag.h"
 #include "commit.h"
 #include "tree.h"
-#include "blob.h"
 #include "tree-walk.h"
 #include "refs.h"
 #include "remote.h"
 #include "dir.h"
 #include "oid-array.h"
+#include "oidtree.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "pretty.h"
+#include "object-store-ll.h"
+#include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
-#include "submodule.h"
 #include "midx.h"
 #include "commit-reach.h"
 #include "date.h"
@@ -764,6 +765,21 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 		find_abbrev_len_for_midx(m, mad);
 	for (p = get_packed_git(mad->repo); p; p = p->next)
 		find_abbrev_len_for_pack(p, mad);
+}
+
+void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
+				   const struct object_id *oid, int abbrev_len)
+{
+	int r;
+	strbuf_grow(sb, GIT_MAX_HEXSZ + 1);
+	r = repo_find_unique_abbrev_r(repo, sb->buf + sb->len, oid, abbrev_len);
+	strbuf_setlen(sb, sb->len + r);
+}
+
+void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
+			      int abbrev_len)
+{
+	strbuf_repo_add_unique_abbrev(sb, the_repository, oid, abbrev_len);
 }
 
 int repo_find_unique_abbrev_r(struct repository *r, char *hex,

@@ -3,9 +3,10 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include "cache.h"
-#include "alloc.h"
+#include "git-compat-util.h"
+#include "bulk-checkin.h"
 #include "config.h"
+#include "date.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "hex.h"
@@ -15,21 +16,25 @@
 #include "refs.h"
 #include "dir.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "oid-array.h"
 #include "tree.h"
 #include "commit.h"
-#include "blob.h"
 #include "environment.h"
 #include "gettext.h"
 #include "mem-pool.h"
+#include "name-hash.h"
 #include "object-name.h"
+#include "path.h"
+#include "preload-index.h"
+#include "read-cache.h"
 #include "resolve-undo.h"
-#include "run-command.h"
+#include "revision.h"
 #include "strbuf.h"
 #include "trace2.h"
 #include "varint.h"
 #include "split-index.h"
+#include "symlinks.h"
 #include "utf8.h"
 #include "fsmonitor.h"
 #include "thread-utils.h"
@@ -38,7 +43,6 @@
 #include "csum-file.h"
 #include "promisor-remote.h"
 #include "hook.h"
-#include "wrapper.h"
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
@@ -173,61 +177,6 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 		add_index_entry(istate, new_entry, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
 
-void fill_stat_data(struct stat_data *sd, struct stat *st)
-{
-	sd->sd_ctime.sec = (unsigned int)st->st_ctime;
-	sd->sd_mtime.sec = (unsigned int)st->st_mtime;
-	sd->sd_ctime.nsec = ST_CTIME_NSEC(*st);
-	sd->sd_mtime.nsec = ST_MTIME_NSEC(*st);
-	sd->sd_dev = st->st_dev;
-	sd->sd_ino = st->st_ino;
-	sd->sd_uid = st->st_uid;
-	sd->sd_gid = st->st_gid;
-	sd->sd_size = st->st_size;
-}
-
-int match_stat_data(const struct stat_data *sd, struct stat *st)
-{
-	int changed = 0;
-
-	if (sd->sd_mtime.sec != (unsigned int)st->st_mtime)
-		changed |= MTIME_CHANGED;
-	if (trust_ctime && check_stat &&
-	    sd->sd_ctime.sec != (unsigned int)st->st_ctime)
-		changed |= CTIME_CHANGED;
-
-#ifdef USE_NSEC
-	if (check_stat && sd->sd_mtime.nsec != ST_MTIME_NSEC(*st))
-		changed |= MTIME_CHANGED;
-	if (trust_ctime && check_stat &&
-	    sd->sd_ctime.nsec != ST_CTIME_NSEC(*st))
-		changed |= CTIME_CHANGED;
-#endif
-
-	if (check_stat) {
-		if (sd->sd_uid != (unsigned int) st->st_uid ||
-			sd->sd_gid != (unsigned int) st->st_gid)
-			changed |= OWNER_CHANGED;
-		if (sd->sd_ino != (unsigned int) st->st_ino)
-			changed |= INODE_CHANGED;
-	}
-
-#ifdef USE_STDEV
-	/*
-	 * st_dev breaks on network filesystems where different
-	 * clients will have different views of what "device"
-	 * the filesystem is on
-	 */
-	if (check_stat && sd->sd_dev != (unsigned int) st->st_dev)
-			changed |= INODE_CHANGED;
-#endif
-
-	if (sd->sd_size != (unsigned int) st->st_size)
-		changed |= DATA_CHANGED;
-
-	return changed;
-}
-
 /*
  * This only updates the "non-critical" parts of the directory
  * cache, ie the parts that aren't tracked by GIT, and only used
@@ -244,6 +193,33 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
 		ce_mark_uptodate(ce);
 		mark_fsmonitor_valid(istate, ce);
 	}
+}
+
+static unsigned int st_mode_from_ce(const struct cache_entry *ce)
+{
+	extern int trust_executable_bit, has_symlinks;
+
+	switch (ce->ce_mode & S_IFMT) {
+	case S_IFLNK:
+		return has_symlinks ? S_IFLNK : (S_IFREG | 0644);
+	case S_IFREG:
+		return (ce->ce_mode & (trust_executable_bit ? 0755 : 0644)) | S_IFREG;
+	case S_IFGITLINK:
+		return S_IFDIR | 0755;
+	case S_IFDIR:
+		return ce->ce_mode;
+	default:
+		BUG("unsupported ce_mode: %o", ce->ce_mode);
+	}
+}
+
+int fake_lstat(const struct cache_entry *ce, struct stat *st)
+{
+	fake_lstat_data(&ce->ce_stat_data, st);
+	st->st_mode = st_mode_from_ce(ce);
+
+	/* always succeed as lstat() replacement */
+	return 0;
 }
 
 static int ce_compare_data(struct index_state *istate,
@@ -498,75 +474,8 @@ int ie_modified(struct index_state *istate,
 	return 0;
 }
 
-int base_name_compare(const char *name1, size_t len1, int mode1,
-		      const char *name2, size_t len2, int mode2)
-{
-	unsigned char c1, c2;
-	size_t len = len1 < len2 ? len1 : len2;
-	int cmp;
-
-	cmp = memcmp(name1, name2, len);
-	if (cmp)
-		return cmp;
-	c1 = name1[len];
-	c2 = name2[len];
-	if (!c1 && S_ISDIR(mode1))
-		c1 = '/';
-	if (!c2 && S_ISDIR(mode2))
-		c2 = '/';
-	return (c1 < c2) ? -1 : (c1 > c2) ? 1 : 0;
-}
-
-/*
- * df_name_compare() is identical to base_name_compare(), except it
- * compares conflicting directory/file entries as equal. Note that
- * while a directory name compares as equal to a regular file, they
- * then individually compare _differently_ to a filename that has
- * a dot after the basename (because '\0' < '.' < '/').
- *
- * This is used by routines that want to traverse the git namespace
- * but then handle conflicting entries together when possible.
- */
-int df_name_compare(const char *name1, size_t len1, int mode1,
-		    const char *name2, size_t len2, int mode2)
-{
-	unsigned char c1, c2;
-	size_t len = len1 < len2 ? len1 : len2;
-	int cmp;
-
-	cmp = memcmp(name1, name2, len);
-	if (cmp)
-		return cmp;
-	/* Directories and files compare equal (same length, same name) */
-	if (len1 == len2)
-		return 0;
-	c1 = name1[len];
-	if (!c1 && S_ISDIR(mode1))
-		c1 = '/';
-	c2 = name2[len];
-	if (!c2 && S_ISDIR(mode2))
-		c2 = '/';
-	if (c1 == '/' && !c2)
-		return 0;
-	if (c2 == '/' && !c1)
-		return 0;
-	return c1 - c2;
-}
-
-int name_compare(const char *name1, size_t len1, const char *name2, size_t len2)
-{
-	size_t min_len = (len1 < len2) ? len1 : len2;
-	int cmp = memcmp(name1, name2, min_len);
-	if (cmp)
-		return cmp;
-	if (len1 < len2)
-		return -1;
-	if (len1 > len2)
-		return 1;
-	return 0;
-}
-
-int cache_name_stage_compare(const char *name1, int len1, int stage1, const char *name2, int len2, int stage2)
+static int cache_name_stage_compare(const char *name1, int len1, int stage1,
+				    const char *name2, int len2, int stage2)
 {
 	int cmp;
 
@@ -579,6 +488,16 @@ int cache_name_stage_compare(const char *name1, int len1, int stage1, const char
 	if (stage1 > stage2)
 		return 1;
 	return 0;
+}
+
+int cmp_cache_name_compare(const void *a_, const void *b_)
+{
+	const struct cache_entry *ce1, *ce2;
+
+	ce1 = *((const struct cache_entry **)a_);
+	ce2 = *((const struct cache_entry **)b_);
+	return cache_name_stage_compare(ce1->name, ce1->ce_namelen, ce_stage(ce1),
+				  ce2->name, ce2->ce_namelen, ce_stage(ce2));
 }
 
 static int index_name_stage_pos(struct index_state *istate,
@@ -2340,6 +2259,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (fd < 0) {
 		if (!must_exist && errno == ENOENT) {
 			set_new_index_sparsity(istate);
+			istate->initialized = 1;
 			return 0;
 		}
 		die_errno(_("%s: index file open failed"), path);
@@ -2509,12 +2429,14 @@ int read_index_from(struct index_state *istate, const char *path,
 
 	base_oid_hex = oid_to_hex(&split_index->base_oid);
 	base_path = xstrfmt("%s/sharedindex.%s", gitdir, base_oid_hex);
-	trace2_region_enter_printf("index", "shared/do_read_index",
-				   the_repository, "%s", base_path);
-	ret = do_read_index(split_index->base, base_path, 0);
-	trace2_region_leave_printf("index", "shared/do_read_index",
-				   the_repository, "%s", base_path);
-	if (!ret) {
+	if (file_exists(base_path)) {
+		trace2_region_enter_printf("index", "shared/do_read_index",
+					the_repository, "%s", base_path);
+
+		ret = do_read_index(split_index->base, base_path, 0);
+		trace2_region_leave_printf("index", "shared/do_read_index",
+					the_repository, "%s", base_path);
+	} else {
 		char *path_copy = xstrdup(path);
 		char *base_path2 = xstrfmt("%s/sharedindex.%s",
 					   dirname(path_copy), base_oid_hex);
@@ -3589,35 +3511,6 @@ void *read_blob_data_from_index(struct index_state *istate,
 	return data;
 }
 
-void stat_validity_clear(struct stat_validity *sv)
-{
-	FREE_AND_NULL(sv->sd);
-}
-
-int stat_validity_check(struct stat_validity *sv, const char *path)
-{
-	struct stat st;
-
-	if (stat(path, &st) < 0)
-		return sv->sd == NULL;
-	if (!sv->sd)
-		return 0;
-	return S_ISREG(st.st_mode) && !match_stat_data(sv->sd, &st);
-}
-
-void stat_validity_update(struct stat_validity *sv, int fd)
-{
-	struct stat st;
-
-	if (fstat(fd, &st) < 0 || !S_ISREG(st.st_mode))
-		stat_validity_clear(sv);
-	else {
-		if (!sv->sd)
-			CALLOC_ARRAY(sv->sd, 1);
-		fill_stat_data(sv->sd, &st);
-	}
-}
-
 void move_index_extensions(struct index_state *dst, struct index_state *src)
 {
 	dst->untracked = src->untracked;
@@ -3860,4 +3753,241 @@ void prefetch_cache_entries(const struct index_state *istate,
 	promisor_remote_get_direct(the_repository,
 				   to_fetch.oid, to_fetch.nr);
 	oid_array_clear(&to_fetch);
+}
+
+static int read_one_entry_opt(struct index_state *istate,
+			      const struct object_id *oid,
+			      struct strbuf *base,
+			      const char *pathname,
+			      unsigned mode, int opt)
+{
+	int len;
+	struct cache_entry *ce;
+
+	if (S_ISDIR(mode))
+		return READ_TREE_RECURSIVE;
+
+	len = strlen(pathname);
+	ce = make_empty_cache_entry(istate, base->len + len);
+
+	ce->ce_mode = create_ce_mode(mode);
+	ce->ce_flags = create_ce_flags(1);
+	ce->ce_namelen = base->len + len;
+	memcpy(ce->name, base->buf, base->len);
+	memcpy(ce->name + base->len, pathname, len+1);
+	oidcpy(&ce->oid, oid);
+	return add_index_entry(istate, ce, opt);
+}
+
+static int read_one_entry(const struct object_id *oid, struct strbuf *base,
+			  const char *pathname, unsigned mode,
+			  void *context)
+{
+	struct index_state *istate = context;
+	return read_one_entry_opt(istate, oid, base, pathname,
+				  mode,
+				  ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
+}
+
+/*
+ * This is used when the caller knows there is no existing entries at
+ * the stage that will conflict with the entry being added.
+ */
+static int read_one_entry_quick(const struct object_id *oid, struct strbuf *base,
+				const char *pathname, unsigned mode,
+				void *context)
+{
+	struct index_state *istate = context;
+	return read_one_entry_opt(istate, oid, base, pathname,
+				  mode, ADD_CACHE_JUST_APPEND);
+}
+
+/*
+ * Read the tree specified with --with-tree option
+ * (typically, HEAD) into stage #1 and then
+ * squash them down to stage #0.  This is used for
+ * --error-unmatch to list and check the path patterns
+ * that were given from the command line.  We are not
+ * going to write this index out.
+ */
+void overlay_tree_on_index(struct index_state *istate,
+			   const char *tree_name, const char *prefix)
+{
+	struct tree *tree;
+	struct object_id oid;
+	struct pathspec pathspec;
+	struct cache_entry *last_stage0 = NULL;
+	int i;
+	read_tree_fn_t fn = NULL;
+	int err;
+
+	if (repo_get_oid(the_repository, tree_name, &oid))
+		die("tree-ish %s not found.", tree_name);
+	tree = parse_tree_indirect(&oid);
+	if (!tree)
+		die("bad tree-ish %s", tree_name);
+
+	/* Hoist the unmerged entries up to stage #3 to make room */
+	/* TODO: audit for interaction with sparse-index. */
+	ensure_full_index(istate);
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		if (!ce_stage(ce))
+			continue;
+		ce->ce_flags |= CE_STAGEMASK;
+	}
+
+	if (prefix) {
+		static const char *(matchbuf[1]);
+		matchbuf[0] = NULL;
+		parse_pathspec(&pathspec, PATHSPEC_ALL_MAGIC,
+			       PATHSPEC_PREFER_CWD, prefix, matchbuf);
+	} else
+		memset(&pathspec, 0, sizeof(pathspec));
+
+	/*
+	 * See if we have cache entry at the stage.  If so,
+	 * do it the original slow way, otherwise, append and then
+	 * sort at the end.
+	 */
+	for (i = 0; !fn && i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
+		if (ce_stage(ce) == 1)
+			fn = read_one_entry;
+	}
+
+	if (!fn)
+		fn = read_one_entry_quick;
+	err = read_tree(the_repository, tree, &pathspec, fn, istate);
+	clear_pathspec(&pathspec);
+	if (err)
+		die("unable to read tree entries %s", tree_name);
+
+	/*
+	 * Sort the cache entry -- we need to nuke the cache tree, though.
+	 */
+	if (fn == read_one_entry_quick) {
+		cache_tree_free(&istate->cache_tree);
+		QSORT(istate->cache, istate->cache_nr, cmp_cache_name_compare);
+	}
+
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		switch (ce_stage(ce)) {
+		case 0:
+			last_stage0 = ce;
+			/* fallthru */
+		default:
+			continue;
+		case 1:
+			/*
+			 * If there is stage #0 entry for this, we do not
+			 * need to show it.  We use CE_UPDATE bit to mark
+			 * such an entry.
+			 */
+			if (last_stage0 &&
+			    !strcmp(last_stage0->name, ce->name))
+				ce->ce_flags |= CE_UPDATE;
+		}
+	}
+}
+
+struct update_callback_data {
+	struct index_state *index;
+	int include_sparse;
+	int flags;
+	int add_errors;
+};
+
+static int fix_unmerged_status(struct diff_filepair *p,
+			       struct update_callback_data *data)
+{
+	if (p->status != DIFF_STATUS_UNMERGED)
+		return p->status;
+	if (!(data->flags & ADD_CACHE_IGNORE_REMOVAL) && !p->two->mode)
+		/*
+		 * This is not an explicit add request, and the
+		 * path is missing from the working tree (deleted)
+		 */
+		return DIFF_STATUS_DELETED;
+	else
+		/*
+		 * Either an explicit add request, or path exists
+		 * in the working tree.  An attempt to explicitly
+		 * add a path that does not exist in the working tree
+		 * will be caught as an error by the caller immediately.
+		 */
+		return DIFF_STATUS_MODIFIED;
+}
+
+static void update_callback(struct diff_queue_struct *q,
+			    struct diff_options *opt UNUSED, void *cbdata)
+{
+	int i;
+	struct update_callback_data *data = cbdata;
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		const char *path = p->one->path;
+
+		if (!data->include_sparse &&
+		    !path_in_sparse_checkout(path, data->index))
+			continue;
+
+		switch (fix_unmerged_status(p, data)) {
+		default:
+			die(_("unexpected diff status %c"), p->status);
+		case DIFF_STATUS_MODIFIED:
+		case DIFF_STATUS_TYPE_CHANGED:
+			if (add_file_to_index(data->index, path, data->flags)) {
+				if (!(data->flags & ADD_CACHE_IGNORE_ERRORS))
+					die(_("updating files failed"));
+				data->add_errors++;
+			}
+			break;
+		case DIFF_STATUS_DELETED:
+			if (data->flags & ADD_CACHE_IGNORE_REMOVAL)
+				break;
+			if (!(data->flags & ADD_CACHE_PRETEND))
+				remove_file_from_index(data->index, path);
+			if (data->flags & (ADD_CACHE_PRETEND|ADD_CACHE_VERBOSE))
+				printf(_("remove '%s'\n"), path);
+			break;
+		}
+	}
+}
+
+int add_files_to_cache(struct repository *repo, const char *prefix,
+		       const struct pathspec *pathspec, int include_sparse,
+		       int flags)
+{
+	struct update_callback_data data;
+	struct rev_info rev;
+
+	memset(&data, 0, sizeof(data));
+	data.index = repo->index;
+	data.include_sparse = include_sparse;
+	data.flags = flags;
+
+	repo_init_revisions(repo, &rev, prefix);
+	setup_revisions(0, NULL, &rev, NULL);
+	if (pathspec)
+		copy_pathspec(&rev.prune_data, pathspec);
+	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
+	rev.diffopt.format_callback = update_callback;
+	rev.diffopt.format_callback_data = &data;
+	rev.diffopt.flags.override_submodule_config = 1;
+	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
+
+	/*
+	 * Use an ODB transaction to optimize adding multiple objects.
+	 * This function is invoked from commands other than 'add', which
+	 * may not have their own transaction active.
+	 */
+	begin_odb_transaction();
+	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
+	end_odb_transaction();
+
+	release_revisions(&rev);
+	return !!data.add_errors;
 }

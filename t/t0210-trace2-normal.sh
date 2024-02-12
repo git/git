@@ -2,7 +2,7 @@
 
 test_description='test trace2 facility (normal target)'
 
-TEST_PASSES_SANITIZE_LEAK=true
+TEST_PASSES_SANITIZE_LEAK=false
 . ./test-lib.sh
 
 # Turn off any inherited trace2 settings for this test.
@@ -281,6 +281,24 @@ test_expect_success 'using global config with include' '
 		atexit elapsed:_TIME_ code:0
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success 'unsafe URLs are redacted by default' '
+	test_when_finished \
+		"rm -r trace.normal unredacted.normal clone clone2" &&
+
+	test_config_global \
+		"url.$(pwd).insteadOf" https://user:pwd@example.com/ &&
+	test_config_global trace2.configParams "core.*,remote.*.url" &&
+
+	GIT_TRACE2="$(pwd)/trace.normal" \
+		git clone https://user:pwd@example.com/ clone &&
+	! grep user:pwd trace.normal &&
+
+	GIT_TRACE2_REDACT=0 GIT_TRACE2="$(pwd)/unredacted.normal" \
+		git clone https://user:pwd@example.com/ clone2 &&
+	grep "start .* clone https://user:pwd@example.com" unredacted.normal &&
+	grep "remote.origin.url=https://user:pwd@example.com" unredacted.normal
 '
 
 test_done

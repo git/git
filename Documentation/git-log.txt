@@ -120,11 +120,11 @@ By default, `git log` does not generate any diff output. The options
 below can be used to show the changes made by each commit.
 
 Note that unless one of `--diff-merges` variants (including short
-`-m`, `-c`, and `--cc` options) is explicitly given, merge commits
+`-m`, `-c`, `--cc`, and `--dd` options) is explicitly given, merge commits
 will not show a diff, even if a diff format like `--patch` is
 selected, nor will they match search options like `-S`. The exception
 is when `--first-parent` is in use, in which case `first-parent` is
-the default format.
+the default format for merge commits.
 
 :git-log: 1
 :diff-merges-default: `off`

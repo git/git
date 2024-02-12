@@ -1,6 +1,8 @@
 #include "git-compat-util.h"
 #include "config.h"
+#include "repository.h"
 #include "run-command.h"
+#include "strbuf.h"
 #include "quote.h"
 #include "version.h"
 #include "trace2/tr2_dst.h"
@@ -85,7 +87,7 @@ static void fn_version_fl(const char *file, int line)
 }
 
 static void fn_start_fl(const char *file, int line,
-			uint64_t us_elapsed_absolute, const char **argv)
+			uint64_t us_elapsed_absolute UNUSED, const char **argv)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
 
@@ -214,7 +216,7 @@ static void fn_alias_fl(const char *file, int line, const char *alias,
 }
 
 static void fn_child_start_fl(const char *file, int line,
-			      uint64_t us_elapsed_absolute,
+			      uint64_t us_elapsed_absolute UNUSED,
 			      const struct child_process *cmd)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
@@ -242,7 +244,8 @@ static void fn_child_start_fl(const char *file, int line,
 }
 
 static void fn_child_exit_fl(const char *file, int line,
-			     uint64_t us_elapsed_absolute, int cid, int pid,
+			     uint64_t us_elapsed_absolute UNUSED,
+			     int cid, int pid,
 			     int code, uint64_t us_elapsed_child)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
@@ -255,7 +258,8 @@ static void fn_child_exit_fl(const char *file, int line,
 }
 
 static void fn_child_ready_fl(const char *file, int line,
-			      uint64_t us_elapsed_absolute, int cid, int pid,
+			      uint64_t us_elapsed_absolute UNUSED,
+			      int cid, int pid,
 			      const char *ready, uint64_t us_elapsed_child)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
@@ -267,7 +271,8 @@ static void fn_child_ready_fl(const char *file, int line,
 	strbuf_release(&buf_payload);
 }
 
-static void fn_exec_fl(const char *file, int line, uint64_t us_elapsed_absolute,
+static void fn_exec_fl(const char *file, int line,
+		       uint64_t us_elapsed_absolute UNUSED,
 		       int exec_id, const char *exe, const char **argv)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
@@ -283,8 +288,8 @@ static void fn_exec_fl(const char *file, int line, uint64_t us_elapsed_absolute,
 }
 
 static void fn_exec_result_fl(const char *file, int line,
-			      uint64_t us_elapsed_absolute, int exec_id,
-			      int code)
+			      uint64_t us_elapsed_absolute UNUSED,
+			      int exec_id, int code)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
 
@@ -296,10 +301,10 @@ static void fn_exec_result_fl(const char *file, int line,
 }
 
 static void fn_param_fl(const char *file, int line, const char *param,
-			const char *value)
+			const char *value, const struct key_value_info *kvi)
 {
 	struct strbuf buf_payload = STRBUF_INIT;
-	enum config_scope scope = current_config_scope();
+	enum config_scope scope = kvi->scope;
 	const char *scope_name = config_scope_name(scope);
 
 	strbuf_addf(&buf_payload, "def_param scope:%s %s=%s", scope_name, param,
@@ -320,7 +325,8 @@ static void fn_repo_fl(const char *file, int line,
 }
 
 static void fn_printf_va_fl(const char *file, int line,
-			    uint64_t us_elapsed_absolute, const char *fmt,
+			    uint64_t us_elapsed_absolute UNUSED,
+			    const char *fmt,
 			    va_list ap)
 {
 	struct strbuf buf_payload = STRBUF_INIT;

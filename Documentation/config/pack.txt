@@ -28,11 +28,17 @@ all existing objects. You can force recompression by passing the -F option
 to linkgit:git-repack[1].
 
 pack.allowPackReuse::
-	When true, and when reachability bitmaps are enabled,
-	pack-objects will try to send parts of the bitmapped packfile
-	verbatim. This can reduce memory and CPU usage to serve fetches,
-	but might result in sending a slightly larger pack. Defaults to
-	true.
+	When true or "single", and when reachability bitmaps are
+	enabled, pack-objects will try to send parts of the bitmapped
+	packfile verbatim. When "multi", and when a multi-pack
+	reachability bitmap is available, pack-objects will try to send
+	parts of all packs in the MIDX.
++
+	If only a single pack bitmap is available, and
+	`pack.allowPackReuse` is set to "multi", reuse parts of just the
+	bitmapped packfile. This can reduce memory and CPU usage to
+	serve fetches, but might result in sending a slightly larger
+	pack. Defaults to true.
 
 pack.island::
 	An extended regular expression configuring a set of delta
@@ -74,7 +80,7 @@ pack.threads::
 	warning. This is meant to reduce packing time on multiprocessor
 	machines. The required amount of memory for the delta search window
 	is however multiplied by the number of threads.
-	Specifying 0 will cause Git to auto-detect the number of CPU's
+	Specifying 0 will cause Git to auto-detect the number of CPUs
 	and set the number of threads accordingly.
 
 pack.indexVersion::
@@ -83,11 +89,11 @@ pack.indexVersion::
 	the new pack index with capabilities for packs larger than 4 GB
 	as well as proper protection against the repacking of corrupted
 	packs.  Version 2 is the default.  Note that version 2 is enforced
-	and this config option ignored whenever the corresponding pack is
+	and this config option is ignored whenever the corresponding pack is
 	larger than 2 GB.
 +
 If you have an old Git that does not understand the version 2 `*.idx` file,
-cloning or fetching over a non native protocol (e.g. "http")
+cloning or fetching over a non-native protocol (e.g. "http")
 that will copy both `*.pack` file and corresponding `*.idx` file from the
 other side may give you a repository that cannot be accessed with your
 older version of Git. If the `*.pack` file is smaller than 2 GB, however,
@@ -102,8 +108,8 @@ pack.packSizeLimit::
 	in the creation of multiple packfiles.
 +
 Note that this option is rarely useful, and may result in a larger total
-on-disk size (because Git will not store deltas between packs), as well
-as worse runtime performance (object lookup within multiple packs is
+on-disk size (because Git will not store deltas between packs) and
+worse runtime performance (object lookup within multiple packs is
 slower than a single pack, and optimizations like reachability bitmaps
 cannot cope with multiple packs).
 +
@@ -122,6 +128,23 @@ pack.useBitmaps::
 	to stdout (e.g., during the server side of a fetch). Defaults to
 	true. You should not generally need to turn this off unless
 	you are debugging pack bitmaps.
+
+pack.useBitmapBoundaryTraversal::
+	When true, Git will use an experimental algorithm for computing
+	reachability queries with bitmaps. Instead of building up
+	complete bitmaps for all of the negated tips and then OR-ing
+	them together, consider negated tips with existing bitmaps as
+	additive (i.e. OR-ing them into the result if they exist,
+	ignoring them otherwise), and build up a bitmap at the boundary
+	instead.
++
+When using this algorithm, Git may include too many objects as a result
+of not opening up trees belonging to certain UNINTERESTING commits. This
+inexactness matches the non-bitmap traversal algorithm.
++
+In many cases, this can provide a speed-up over the exact algorithm,
+particularly when there is poor bitmap coverage of the negated side of
+the query.
 
 pack.useSparse::
 	When true, git will default to using the '--sparse' option in

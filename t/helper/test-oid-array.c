@@ -1,10 +1,10 @@
 #include "test-tool.h"
-#include "cache.h"
 #include "hex.h"
 #include "oid-array.h"
 #include "setup.h"
+#include "strbuf.h"
 
-static int print_oid(const struct object_id *oid, void *data)
+static int print_oid(const struct object_id *oid, void *data UNUSED)
 {
 	puts(oid_to_hex(oid));
 	return 0;

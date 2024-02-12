@@ -1,10 +1,11 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "copy.h"
 #include "pkt-line.h"
 #include "gettext.h"
 #include "hex.h"
 #include "run-command.h"
+#include "sideband.h"
 #include "trace.h"
-#include "wrapper.h"
 #include "write-or-die.h"
 
 char packet_buffer[LARGE_PACKET_MAX];
@@ -372,10 +373,14 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 	return ret;
 }
 
-int packet_length(const char lenbuf_hex[4])
+int packet_length(const char lenbuf_hex[4], size_t size)
 {
-	int val = hex2chr(lenbuf_hex);
-	return (val < 0) ? val : (val << 8) | hex2chr(lenbuf_hex + 2);
+	if (size < 4)
+		BUG("buffer too small");
+	return	hexval(lenbuf_hex[0]) << 12 |
+		hexval(lenbuf_hex[1]) <<  8 |
+		hexval(lenbuf_hex[2]) <<  4 |
+		hexval(lenbuf_hex[3]);
 }
 
 static char *find_packfile_uri_path(const char *buffer)
@@ -418,7 +423,7 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 		return PACKET_READ_EOF;
 	}
 
-	len = packet_length(linelen);
+	len = packet_length(linelen, sizeof(linelen));
 
 	if (len < 0) {
 		if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
@@ -458,8 +463,32 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 	}
 
 	if ((options & PACKET_READ_CHOMP_NEWLINE) &&
-	    len && buffer[len-1] == '\n')
-		len--;
+	    len && buffer[len-1] == '\n') {
+		if (options & PACKET_READ_USE_SIDEBAND) {
+			int band = *buffer & 0xff;
+			switch (band) {
+			case 1:
+				/* Chomp newline for payload */
+				len--;
+				break;
+			case 2:
+			case 3:
+				/*
+				 * Do not chomp newline for progress and error
+				 * message.
+				 */
+				break;
+			default:
+				/*
+				 * Bad sideband, let's leave it to
+				 * demultiplex_sideband() to catch this error.
+				 */
+				break;
+			}
+		} else {
+			len--;
+		}
+	}
 
 	buffer[len] = 0;
 	if (options & PACKET_READ_REDACT_URI_PATH &&
@@ -588,16 +617,18 @@ void packet_reader_init(struct packet_reader *reader, int fd,
 	reader->options = options;
 	reader->me = "git";
 	reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	strbuf_init(&reader->scratch, 0);
 }
 
 enum packet_read_status packet_reader_read(struct packet_reader *reader)
 {
-	struct strbuf scratch = STRBUF_INIT;
-
 	if (reader->line_peeked) {
 		reader->line_peeked = 0;
 		return reader->status;
 	}
+
+	if (reader->use_sideband)
+		reader->options |= PACKET_READ_USE_SIDEBAND;
 
 	/*
 	 * Consume all progress packets until a primary payload packet is
@@ -616,7 +647,7 @@ enum packet_read_status packet_reader_read(struct packet_reader *reader)
 			break;
 		if (demultiplex_sideband(reader->me, reader->status,
 					 reader->buffer, reader->pktlen, 1,
-					 &scratch, &sideband_type))
+					 &reader->scratch, &sideband_type))
 			break;
 	}
 

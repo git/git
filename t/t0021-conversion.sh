@@ -263,7 +263,7 @@ test_expect_success 'required filter with absent clean field' '
 
 	echo test >test.ac &&
 	test_must_fail git add test.ac 2>stderr &&
-	test_i18ngrep "fatal: test.ac: clean filter .absentclean. failed" stderr
+	test_grep "fatal: test.ac: clean filter .absentclean. failed" stderr
 '
 
 test_expect_success 'required filter with absent smudge field' '
@@ -276,7 +276,7 @@ test_expect_success 'required filter with absent smudge field' '
 	git add test.as &&
 	rm -f test.as &&
 	test_must_fail git checkout -- test.as 2>stderr &&
-	test_i18ngrep "fatal: test.as: smudge filter absentsmudge failed" stderr
+	test_grep "fatal: test.as: smudge filter absentsmudge failed" stderr
 '
 
 test_expect_success 'filtering large input to small output should use little memory' '
@@ -733,7 +733,7 @@ test_expect_success 'process filter should restart after unexpected write failur
 		git checkout --quiet --no-progress . 2>git-stderr.log &&
 
 		grep "smudge write error" git-stderr.log &&
-		test_i18ngrep "error: external filter" git-stderr.log &&
+		test_grep "error: external filter" git-stderr.log &&
 
 		cat >expected.log <<-EOF &&
 			START

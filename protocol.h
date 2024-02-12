@@ -18,7 +18,7 @@
  * with Linus Torvalds <torvalds@osdl.org> as the point of
  * contact. September 2005.
  *
- * See http://www.iana.org/assignments/port-numbers
+ * See https://www.iana.org/assignments/port-numbers
  */
 #define DEFAULT_GIT_PORT 9418
 

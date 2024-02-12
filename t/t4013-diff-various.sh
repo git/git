@@ -178,32 +178,29 @@ process_diffs () {
 V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
 while read magic cmd
 do
-	status=success
 	case "$magic" in
 	'' | '#'*)
 		continue ;;
-	:*)
-		magic=${magic#:}
+	:noellipses)
+		magic=noellipses
 		label="$magic-$cmd"
-		case "$magic" in
-		noellipses) ;;
-		failure)
-			status=failure
-			magic=
-			label="$cmd" ;;
-		*)
-			BUG "unknown magic $magic" ;;
-		esac ;;
+		;;
+	:*)
+		BUG "unknown magic $magic"
+		;;
 	*)
-		cmd="$magic $cmd" magic=
-		label="$cmd" ;;
+		cmd="$magic $cmd"
+		magic=
+		label="$cmd"
+		;;
 	esac
+
 	test=$(echo "$label" | sed -e 's|[/ ][/ ]*|_|g')
 	pfx=$(printf "%04d" $test_count)
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 
-	test_expect_$status "git $cmd # magic is ${magic:-(not used)}" '
+	test_expect_success "git $cmd # magic is ${magic:-(not used)}" '
 		{
 			echo "$ git $cmd"
 			case "$magic" in
@@ -473,6 +470,14 @@ test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
 	test_cmp expected actual
 '
 
+test_expect_success 'log --dd matches --diff-merges=1 -p' '
+	git log --diff-merges=1 -p master >result &&
+	process_diffs result >expected &&
+	git log --dd master >result &&
+	process_diffs result >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'deny wrong log.diffMerges config' '
 	test_config log.diffMerges wrong-value &&
 	test_expect_code 128 git log
@@ -514,7 +519,7 @@ test_expect_success 'log -S requires an argument' '
 '
 
 test_expect_success 'diff --cached on unborn branch' '
-	echo ref: refs/heads/unborn >.git/HEAD &&
+	git symbolic-ref HEAD refs/heads/unborn &&
 	git diff --cached >result &&
 	process_diffs result >actual &&
 	process_diffs "$TEST_DIRECTORY/t4013/diff.diff_--cached" >expected &&
@@ -613,7 +618,7 @@ test_expect_success 'diff -I<regex> --stat' '
 
 test_expect_success 'diff -I<regex>: detect malformed regex' '
 	test_expect_code 129 git diff --ignore-matching-lines="^[124-9" 2>error &&
-	test_i18ngrep "invalid regex given to -I: " error
+	test_grep "invalid regex given to -I: " error
 '
 
 # check_prefix <patch> <src> <dst>
@@ -656,6 +661,12 @@ test_expect_success 'diff respects diff.mnemonicprefix' '
 test_expect_success 'diff --default-prefix overrides diff.mnemonicprefix' '
 	git -c diff.mnemonicprefix diff --default-prefix >actual &&
 	check_prefix actual a/file0 b/file0
+'
+
+test_expect_success 'diff --no-renames cannot be abbreviated' '
+	test_expect_code 129 git diff --no-rename >actual 2>error &&
+	test_must_be_empty actual &&
+	grep "invalid option: --no-rename" error
 '
 
 test_done

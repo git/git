@@ -576,6 +576,38 @@ test_expect_success 'clean log decoration' '
 	test_cmp expected actual1
 '
 
+test_expect_success 'pretty format %decorate' '
+	git checkout -b foo &&
+	git commit --allow-empty -m "new commit" &&
+	git tag bar &&
+	git branch qux &&
+
+	echo " (HEAD -> foo, tag: bar, qux)" >expect1 &&
+	git log --format="%(decorate)" -1 >actual1 &&
+	test_cmp expect1 actual1 &&
+
+	echo "HEAD -> foo, tag: bar, qux" >expect2 &&
+	git log --format="%(decorate:prefix=,suffix=)" -1 >actual2 &&
+	test_cmp expect2 actual2 &&
+
+	echo "[ bar; qux; foo ]" >expect3 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separator=%x3B ,tag=)" \
+		--decorate-refs=refs/ -1 >actual3 &&
+	test_cmp expect3 actual3 &&
+
+	# Try with a typo (in "separator"), in which case the placeholder should
+	# not be replaced.
+	echo "%(decorate:prefix=[ ,suffix= ],separater=; )" >expect4 &&
+	git log --format="%(decorate:prefix=[ ,suffix= ],separater=%x3B )" \
+		-1 >actual4 &&
+	test_cmp expect4 actual4 &&
+
+	echo "HEAD->foo bar qux" >expect5 &&
+	git log --format="%(decorate:prefix=,suffix=,separator= ,tag=,pointer=->)" \
+		-1 >actual5 &&
+	test_cmp expect5 actual5
+'
+
 cat >trailers <<EOF
 Signed-off-by: A U Thor <author@example.com>
 Acked-by: A U Thor <author@example.com>
@@ -924,6 +956,36 @@ test_expect_success '%S in git log --format works with other placeholders (part 
 	test_cmp expect actual
 '
 
+test_expect_success 'setup more commits for %S with --bisect' '
+	test_commit four &&
+	test_commit five &&
+
+	head1=$(git rev-parse --verify HEAD~0) &&
+	head2=$(git rev-parse --verify HEAD~1) &&
+	head3=$(git rev-parse --verify HEAD~2) &&
+	head4=$(git rev-parse --verify HEAD~3)
+'
+
+test_expect_success '%S with --bisect labels commits with refs/bisect/bad ref' '
+	git update-ref refs/bisect/bad-$head1 $head1 &&
+	git update-ref refs/bisect/go $head1 &&
+	git update-ref refs/bisect/bad-$head2 $head2 &&
+	git update-ref refs/bisect/b $head3 &&
+	git update-ref refs/bisect/bad-$head4 $head4 &&
+	git update-ref refs/bisect/good-$head4 $head4 &&
+
+	# We expect to see the range of commits betwee refs/bisect/good-$head4
+	# and refs/bisect/bad-$head1. The "source" ref is the nearest bisect ref
+	# from which the commit is reachable.
+	cat >expect <<-EOF &&
+	$head1 refs/bisect/bad-$head1
+	$head2 refs/bisect/bad-$head2
+	$head3 refs/bisect/bad-$head2
+	EOF
+	git log --bisect --format="%H %S" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'log --pretty=reference' '
 	git log --pretty="tformat:%h (%s, %as)" >expect &&
 	git log --pretty=reference >actual &&
@@ -1012,10 +1074,25 @@ test_expect_success '%(describe:tags) vs git describe --tags' '
 
 test_expect_success '%(describe:abbrev=...) vs git describe --abbrev=...' '
 	test_when_finished "git tag -d tagname" &&
+
+	# Case 1: We have commits between HEAD and the most recent tag
+	#	  reachable from it
+	test_commit --no-tag file &&
+	git describe --abbrev=15 >expect &&
+	git log -1 --format="%(describe:abbrev=15)" >actual &&
+	test_cmp expect actual &&
+
+	# Make sure the hash used is at least 15 digits long
+	sed -e "s/^.*-g\([0-9a-f]*\)$/\1/" <actual >hexpart &&
+	test 16 -le $(wc -c <hexpart) &&
+
+	# Case 2: We have a tag at HEAD, describe directly gives the
+	#	  name of the tag
 	git tag -a -m tagged tagname &&
 	git describe --abbrev=15 >expect &&
 	git log -1 --format="%(describe:abbrev=15)" >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test tagname = $(cat actual)
 '
 
 test_expect_success 'log --pretty with space stealing' '

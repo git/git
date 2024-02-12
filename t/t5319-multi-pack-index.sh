@@ -2,6 +2,7 @@
 
 test_description='multi-pack-indexes'
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-chunk.sh
 
 GIT_TEST_MULTI_PACK_INDEX=0
 objdir=.git/objects
@@ -279,13 +280,13 @@ test_expect_success 'warn on improper hash version' '
 		cd sha1 &&
 		mv ../mpi-sha256 .git/objects/pack/multi-pack-index &&
 		git log -1 2>err &&
-		test_i18ngrep "multi-pack-index hash version 2 does not match version 1" err
+		test_grep "multi-pack-index hash version 2 does not match version 1" err
 	) &&
 	(
 		cd sha256 &&
 		mv ../mpi-sha1 .git/objects/pack/multi-pack-index &&
 		git log -1 2>err &&
-		test_i18ngrep "multi-pack-index hash version 1 does not match version 2" err
+		test_grep "multi-pack-index hash version 1 does not match version 2" err
 	)
 '
 
@@ -386,7 +387,7 @@ corrupt_midx_and_verify() {
 	printf "$DATA" | dd of="$FILE" bs=1 seek="$POS" conv=notrunc &&
 	test_must_fail $COMMAND 2>test_err &&
 	grep -v "^+" test_err >err &&
-	test_i18ngrep "$GREPSTR" err
+	test_grep "$GREPSTR" err
 }
 
 test_expect_success 'verify bad signature' '
@@ -438,7 +439,7 @@ test_expect_success 'verify extended chunk count' '
 
 test_expect_success 'verify missing required chunk' '
 	corrupt_midx_and_verify $MIDX_BYTE_CHUNK_ID "\01" $objdir \
-		"missing required"
+		"required pack-name chunk missing"
 '
 
 test_expect_success 'verify invalid chunk offset' '
@@ -485,11 +486,23 @@ test_expect_success 'git-fsck incorrect offset' '
 	git -c core.multiPackIndex=false fsck
 '
 
+test_expect_success 'git fsck shows MIDX output with --progress' '
+	git fsck --progress 2>err &&
+	grep "Verifying OID order in multi-pack-index" err &&
+	grep "Verifying object offsets" err
+'
+
+test_expect_success 'git fsck suppresses MIDX output with --no-progress' '
+	git fsck --no-progress 2>err &&
+	! grep "Verifying OID order in multi-pack-index" err &&
+	! grep "Verifying object offsets" err
+'
+
 test_expect_success 'corrupt MIDX is not reused' '
 	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
 		"incorrect object offset" &&
 	git multi-pack-index write 2>err &&
-	test_i18ngrep checksum.mismatch err &&
+	test_grep checksum.mismatch err &&
 	git multi-pack-index verify
 '
 
@@ -1019,7 +1032,7 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 
 test_expect_success 'usage shown without sub-command' '
 	test_expect_code 129 git multi-pack-index 2>err &&
-	! test_i18ngrep "unrecognized subcommand" err
+	! test_grep "unrecognized subcommand" err
 '
 
 test_expect_success 'complains when run outside of a repository' '
@@ -1040,6 +1053,156 @@ test_expect_success 'repack with delta islands' '
 
 		git multi-pack-index write &&
 		git -c repack.useDeltaIslands=true multi-pack-index repack
+	)
+'
+
+corrupt_chunk () {
+	midx=.git/objects/pack/multi-pack-index &&
+	test_when_finished "rm -rf $midx" &&
+	git repack -ad --write-midx &&
+	corrupt_chunk_file $midx "$@"
+}
+
+test_expect_success 'reader notices too-small oid fanout chunk' '
+	corrupt_chunk OIDF clear 00000000 &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	error: multi-pack-index OID fanout is of the wrong size
+	fatal: multi-pack-index required OID fanout chunk missing or corrupted
+	EOF
+	test_cmp expect err
+'
+
+test_expect_success 'reader notices too-small oid lookup chunk' '
+	corrupt_chunk OIDL clear 00000000 &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	error: multi-pack-index OID lookup chunk is the wrong size
+	fatal: multi-pack-index required OID lookup chunk missing or corrupted
+	EOF
+	test_cmp expect err
+'
+
+test_expect_success 'reader notices too-small pack names chunk' '
+	# There is no NUL to terminate the name here, so the
+	# chunk is too short.
+	corrupt_chunk PNAM clear 70656666 &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	fatal: multi-pack-index pack-name chunk is too short
+	EOF
+	test_cmp expect err
+'
+
+test_expect_success 'reader handles unaligned chunks' '
+	# A 9-byte PNAM means all of the subsequent chunks
+	# will no longer be 4-byte aligned, but it is still
+	# a valid one-pack chunk on its own (it is "foo.pack\0").
+	corrupt_chunk PNAM clear 666f6f2e7061636b00 &&
+	git -c core.multipackindex=false log >expect.out &&
+	git -c core.multipackindex=true log >out 2>err &&
+	test_cmp expect.out out &&
+	cat >expect.err <<-\EOF &&
+	error: chunk id 4f494446 not 4-byte aligned
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices too-small object offset chunk' '
+	corrupt_chunk OOFF clear 00000000 &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	error: multi-pack-index object offset chunk is the wrong size
+	fatal: multi-pack-index required object offsets chunk missing or corrupted
+	EOF
+	test_cmp expect err
+'
+
+test_expect_success 'reader bounds-checks large offset table' '
+	# re-use the objects64 dir here to cheaply get access to a midx
+	# with large offsets.
+	git init repo &&
+	test_when_finished "rm -rf repo" &&
+	(
+		cd repo &&
+		(cd ../objects64 && pwd) >.git/objects/info/alternates &&
+		git multi-pack-index --object-dir=../objects64 write &&
+		midx=../objects64/pack/multi-pack-index &&
+		corrupt_chunk_file $midx LOFF clear &&
+		# using only %(objectsize) is important here; see the commit
+		# message for more details
+		test_must_fail git cat-file --batch-all-objects \
+			--batch-check="%(objectsize)" 2>err &&
+		cat >expect <<-\EOF &&
+		fatal: multi-pack-index large offset out of bounds
+		EOF
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'reader notices too-small revindex chunk' '
+	# We only get a revindex with bitmaps (and likewise only
+	# load it when they are asked for).
+	test_config repack.writeBitmaps true &&
+	corrupt_chunk RIDX clear 00000000 &&
+	git -c core.multipackIndex=false rev-list \
+		--all --use-bitmap-index >expect.out &&
+	git -c core.multipackIndex=true rev-list \
+		--all --use-bitmap-index >out 2>err &&
+	test_cmp expect.out out &&
+	cat >expect.err <<-\EOF &&
+	error: multi-pack-index reverse-index chunk is the wrong size
+	warning: multi-pack bitmap is missing required reverse index
+	EOF
+	test_cmp expect.err err
+'
+
+test_expect_success 'reader notices out-of-bounds fanout' '
+	# This is similar to the out-of-bounds fanout test in t5318. The values
+	# in adjacent entries should be large but not identical (they
+	# are used as hi/lo starts for a binary search, which would then abort
+	# immediately).
+	corrupt_chunk OIDF 0 $(printf "%02x000000" $(test_seq 0 254)) &&
+	test_must_fail git log 2>err &&
+	cat >expect <<-\EOF &&
+	error: oid fanout out of order: fanout[254] = fe000000 > 5c = fanout[255]
+	fatal: multi-pack-index required OID fanout chunk missing or corrupted
+	EOF
+	test_cmp expect err
+'
+
+test_expect_success 'bitmapped packs are stored via the BTMP chunk' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		for i in 1 2 3 4 5
+		do
+			test_commit "$i" &&
+			git repack -d || return 1
+		done &&
+
+		find $objdir/pack -type f -name "*.idx" | xargs -n 1 basename |
+		sort >packs &&
+
+		git multi-pack-index write --stdin-packs <packs &&
+		test_must_fail test-tool read-midx --bitmap $objdir 2>err &&
+		cat >expect <<-\EOF &&
+		error: MIDX does not contain the BTMP chunk
+		EOF
+		test_cmp expect err &&
+
+		git multi-pack-index write --stdin-packs --bitmap \
+			--preferred-pack="$(head -n1 <packs)" <packs  &&
+		test-tool read-midx --bitmap $objdir >actual &&
+		for i in $(test_seq $(wc -l <packs))
+		do
+			sed -ne "${i}s/\.idx$/\.pack/p" packs &&
+			echo "  bitmap_pos: $((($i - 1) * 3))" &&
+			echo "  bitmap_nr: 3" || return 1
+		done >expect &&
+		test_cmp expect actual
 	)
 '
 

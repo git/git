@@ -1,5 +1,5 @@
 #include "builtin.h"
-#include "cache.h"
+#include "copy.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
@@ -7,17 +7,15 @@
 #include "parse-options.h"
 #include "bisect.h"
 #include "refs.h"
-#include "dir.h"
 #include "strvec.h"
 #include "run-command.h"
 #include "oid-array.h"
+#include "path.h"
 #include "prompt.h"
 #include "quote.h"
 #include "revision.h"
-#include "wrapper.h"
 
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
-static GIT_PATH_FUNC(git_path_bisect_expected_rev, "BISECT_EXPECTED_REV")
 static GIT_PATH_FUNC(git_path_bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
 static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
@@ -26,7 +24,7 @@ static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 
 #define BUILTIN_GIT_BISECT_START_USAGE \
-	N_("git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]" \
+	N_("git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]" \
 	   "    [--no-checkout] [--first-parent] [<bad> [<good>...]] [--]" \
 	   "    [<pathspec>...]")
 #define BUILTIN_GIT_BISECT_STATE_USAGE \
@@ -46,7 +44,7 @@ static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 #define BUILTIN_GIT_BISECT_LOG_USAGE \
 	"git bisect log"
 #define BUILTIN_GIT_BISECT_RUN_USAGE \
-	N_("git bisect run <cmd>...")
+	N_("git bisect run <cmd> [<arg>...]")
 
 static const char * const git_bisect_usage[] = {
 	BUILTIN_GIT_BISECT_START_USAGE,
@@ -233,11 +231,10 @@ static int bisect_reset(const char *commit)
 	struct strbuf branch = STRBUF_INIT;
 
 	if (!commit) {
-		if (strbuf_read_file(&branch, git_path_bisect_start(), 0) < 1) {
+		if (!strbuf_read_file(&branch, git_path_bisect_start(), 0))
 			printf(_("We are not bisecting.\n"));
-			return 0;
-		}
-		strbuf_rtrim(&branch);
+		else
+			strbuf_rtrim(&branch);
 	} else {
 		struct object_id oid;
 
@@ -246,7 +243,7 @@ static int bisect_reset(const char *commit)
 		strbuf_addstr(&branch, commit);
 	}
 
-	if (!ref_exists("BISECT_HEAD")) {
+	if (branch.len && !ref_exists("BISECT_HEAD")) {
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
 		cmd.git_cmd = 1;
@@ -921,7 +918,6 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 	const char *state;
 	int i, verify_expected = 1;
 	struct object_id oid, expected;
-	struct strbuf buf = STRBUF_INIT;
 	struct oid_array revs = OID_ARRAY_INIT;
 
 	if (!argc)
@@ -976,10 +972,8 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 		oid_array_append(&revs, &commit->object.oid);
 	}
 
-	if (strbuf_read_file(&buf, git_path_bisect_expected_rev(), 0) < the_hash_algo->hexsz ||
-	    get_oid_hex(buf.buf, &expected) < 0)
+	if (read_ref("BISECT_EXPECTED_REV", &expected))
 		verify_expected = 0; /* Ignore invalid file contents */
-	strbuf_release(&buf);
 
 	for (i = 0; i < revs.nr; i++) {
 		if (bisect_write(state, oid_to_hex(&revs.oid[i]), terms, 0)) {
@@ -988,7 +982,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 		}
 		if (verify_expected && !oideq(&revs.oid[i], &expected)) {
 			unlink_or_warn(git_path_bisect_ancestors_ok());
-			unlink_or_warn(git_path_bisect_expected_rev());
+			delete_ref(NULL, "BISECT_EXPECTED_REV", NULL, REF_NO_DEREF);
 			verify_expected = 0;
 		}
 	}

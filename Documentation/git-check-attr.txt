@@ -29,7 +29,7 @@ OPTIONS
 
 --stdin::
 	Read pathnames from the standard input, one per line,
-	instead of from the command-line.
+	instead of from the command line.
 
 -z::
 	The output format is modified to be machine-parsable.
@@ -38,7 +38,7 @@ OPTIONS
 
 --source=<tree-ish>::
 	Check attributes against the specified tree-ish. It is common to
-	specify the source tree by naming a commit, branch or tag associated
+	specify the source tree by naming a commit, branch, or tag associated
 	with it.
 
 \--::
@@ -60,7 +60,7 @@ unless `-z` is in effect, in which case NUL is used as delimiter:
 
 
 <path> is the path of a file being queried, <attribute> is an attribute
-being queried and <info> can be either:
+being queried, and <info> can be either:
 
 'unspecified';; when the attribute is not defined for the path.
 'unset';;	when the attribute is defined as false.

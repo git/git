@@ -155,12 +155,4 @@ int read_branch_desc(struct strbuf *, const char *branch_name);
  */
 void die_if_checked_out(const char *branch, int ignore_current_worktree);
 
-/*
- * Update all per-worktree HEADs pointing at the old ref to point the new ref.
- * This will be used when renaming a branch. Returns 0 if successful, non-zero
- * otherwise.
- */
-int replace_each_worktree_head_symref(const char *oldref, const char *newref,
-				      const char *logmsg);
-
 #endif

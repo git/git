@@ -197,4 +197,15 @@ test_expect_success '"add -u non-existent" should fail' '
 	! grep "non-existent" actual
 '
 
+test_expect_success '"commit -a" implies "add -u" if index becomes empty' '
+	git rm -rf \* &&
+	git commit -m clean-slate &&
+	test_commit file1 &&
+	rm file1.t &&
+	test_tick &&
+	git commit -a -m remove &&
+	git ls-tree HEAD: >out &&
+	test_must_be_empty out
+'
+
 test_done

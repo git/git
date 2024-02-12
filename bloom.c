@@ -2,10 +2,10 @@
 #include "bloom.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "revision.h"
 #include "hashmap.h"
 #include "commit-graph.h"
 #include "commit.h"
+#include "commit-slab.h"
 
 define_commit_slab(bloom_filter_slab, struct bloom_filter);
 
@@ -26,6 +26,26 @@ static uint32_t rotate_left(uint32_t value, int32_t count)
 static inline unsigned char get_bitmask(uint32_t pos)
 {
 	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
+}
+
+static int check_bloom_offset(struct commit_graph *g, uint32_t pos,
+			      uint32_t offset)
+{
+	/*
+	 * Note that we allow offsets equal to the data size, which would set
+	 * our pointers at one past the end of the chunk memory. This is
+	 * necessary because the on-disk index points to the end of the
+	 * entries (so we can compute size by comparing adjacent ones). And
+	 * naturally the final entry's end is one-past-the-end of the chunk.
+	 */
+	if (offset <= g->chunk_bloom_data_size - BLOOMDATA_CHUNK_HEADER_SIZE)
+		return 0;
+
+	warning("ignoring out-of-range offset (%"PRIuMAX") for changed-path"
+		" filter at pos %"PRIuMAX" of %s (chunk size: %"PRIuMAX")",
+		(uintmax_t)offset, (uintmax_t)pos,
+		g->filename, (uintmax_t)g->chunk_bloom_data_size);
+	return -1;
 }
 
 static int load_bloom_filter_from_graph(struct commit_graph *g,
@@ -49,6 +69,20 @@ static int load_bloom_filter_from_graph(struct commit_graph *g,
 		start_index = get_be32(g->chunk_bloom_indexes + 4 * (lex_pos - 1));
 	else
 		start_index = 0;
+
+	if (check_bloom_offset(g, lex_pos, end_index) < 0 ||
+	    check_bloom_offset(g, lex_pos - 1, start_index) < 0)
+		return 0;
+
+	if (end_index < start_index) {
+		warning("ignoring decreasing changed-path index offsets"
+			" (%"PRIuMAX" > %"PRIuMAX") for positions"
+			" %"PRIuMAX" and %"PRIuMAX" of %s",
+			(uintmax_t)start_index, (uintmax_t)end_index,
+			(uintmax_t)(lex_pos-1), (uintmax_t)lex_pos,
+			g->filename);
+		return 0;
+	}
 
 	filter->len = end_index - start_index;
 	filter->data = (unsigned char *)(g->chunk_bloom_data +

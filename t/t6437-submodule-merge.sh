@@ -8,6 +8,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
 export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
 
@@ -479,7 +480,7 @@ test_expect_merge_algorithm failure success !FAIL_PREREQS 'directory/submodule c
 		# We do not want files within the submodule to prevent the
 		# merge from starting; we should not be writing to such paths
 		# anyway.
-		test_i18ngrep ! "refusing to lose untracked file at" err
+		test_grep ! "refusing to lose untracked file at" err
 	)
 '
 

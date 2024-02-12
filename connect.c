@@ -12,6 +12,7 @@
 #include "url.h"
 #include "string-list.h"
 #include "oid-array.h"
+#include "path.h"
 #include "transport.h"
 #include "trace2.h"
 #include "strbuf.h"
@@ -964,7 +965,7 @@ static struct child_process *git_tcp_connect(int fd[2], char *host, int flags)
 static char *git_proxy_command;
 
 static int git_proxy_command_options(const char *var, const char *value,
-		void *cb)
+		const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "core.gitproxy")) {
 		const char *for_pos;
@@ -1010,7 +1011,7 @@ static int git_proxy_command_options(const char *var, const char *value,
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 
 static int git_use_proxy(const char *host)

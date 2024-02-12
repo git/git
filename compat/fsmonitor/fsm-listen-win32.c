@@ -1,9 +1,10 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
-#include "fsmonitor.h"
+#include "fsmonitor-ll.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
 #include "gettext.h"
+#include "simple-ipc.h"
 #include "trace2.h"
 
 /*
@@ -289,8 +290,7 @@ void fsm_listen__stop_async(struct fsmonitor_daemon_state *state)
 	SetEvent(state->listen_data->hListener[LISTENER_SHUTDOWN]);
 }
 
-static struct one_watch *create_watch(struct fsmonitor_daemon_state *state,
-				      const char *path)
+static struct one_watch *create_watch(const char *path)
 {
 	struct one_watch *watch = NULL;
 	DWORD desired_access = FILE_LIST_DIRECTORY;
@@ -361,8 +361,7 @@ static void destroy_watch(struct one_watch *watch)
 	free(watch);
 }
 
-static int start_rdcw_watch(struct fsm_listen_data *data,
-			    struct one_watch *watch)
+static int start_rdcw_watch(struct one_watch *watch)
 {
 	DWORD dwNotifyFilter =
 		FILE_NOTIFY_CHANGE_FILE_NAME |
@@ -735,11 +734,11 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 
 	state->listen_error_code = 0;
 
-	if (start_rdcw_watch(data, data->watch_worktree) == -1)
+	if (start_rdcw_watch(data->watch_worktree) == -1)
 		goto force_error_stop;
 
 	if (data->watch_gitdir &&
-	    start_rdcw_watch(data, data->watch_gitdir) == -1)
+	    start_rdcw_watch(data->watch_gitdir) == -1)
 		goto force_error_stop;
 
 	for (;;) {
@@ -755,7 +754,7 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 			}
 			if (result == -2) {
 				/* retryable error */
-				if (start_rdcw_watch(data, data->watch_worktree) == -1)
+				if (start_rdcw_watch(data->watch_worktree) == -1)
 					goto force_error_stop;
 				continue;
 			}
@@ -763,7 +762,7 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 			/* have data */
 			if (process_worktree_events(state) == LISTENER_SHUTDOWN)
 				goto force_shutdown;
-			if (start_rdcw_watch(data, data->watch_worktree) == -1)
+			if (start_rdcw_watch(data->watch_worktree) == -1)
 				goto force_error_stop;
 			continue;
 		}
@@ -776,7 +775,7 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 			}
 			if (result == -2) {
 				/* retryable error */
-				if (start_rdcw_watch(data, data->watch_gitdir) == -1)
+				if (start_rdcw_watch(data->watch_gitdir) == -1)
 					goto force_error_stop;
 				continue;
 			}
@@ -784,7 +783,7 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 			/* have data */
 			if (process_gitdir_events(state) == LISTENER_SHUTDOWN)
 				goto force_shutdown;
-			if (start_rdcw_watch(data, data->watch_gitdir) == -1)
+			if (start_rdcw_watch(data->watch_gitdir) == -1)
 				goto force_error_stop;
 			continue;
 		}
@@ -821,16 +820,14 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 
 	data->hEventShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-	data->watch_worktree = create_watch(state,
-					    state->path_worktree_watch.buf);
+	data->watch_worktree = create_watch(state->path_worktree_watch.buf);
 	if (!data->watch_worktree)
 		goto failed;
 
 	check_for_shortnames(data->watch_worktree);
 
 	if (state->nr_paths_watching > 1) {
-		data->watch_gitdir = create_watch(state,
-						  state->path_gitdir_watch.buf);
+		data->watch_gitdir = create_watch(state->path_gitdir_watch.buf);
 		if (!data->watch_gitdir)
 			goto failed;
 	}

@@ -1,8 +1,9 @@
 #define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
-#include "cache.h"
 #include "dir.h"
 #include "hex.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 #include "setup.h"
 
 static int compare_untracked(const void *a_, const void *b_)

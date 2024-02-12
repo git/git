@@ -3,7 +3,7 @@
 #include "string-list.h"
 #include "mailmap.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "setup.h"
 
 const char *git_mailmap_file;

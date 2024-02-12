@@ -17,7 +17,6 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "ewok.h"
 
 #define EWAH_MASK(x) ((eword_t)1 << (x % BITS_IN_EWORD))
@@ -168,6 +167,15 @@ size_t bitmap_popcount(struct bitmap *self)
 		count += ewah_bit_popcount64(self->words[i]);
 
 	return count;
+}
+
+int bitmap_is_empty(struct bitmap *self)
+{
+	size_t i;
+	for (i = 0; i < self->word_alloc; i++)
+		if (self->words[i])
+			return 0;
+	return 1;
 }
 
 int bitmap_equals(struct bitmap *self, struct bitmap *other)

@@ -7,22 +7,25 @@
 
 typedef gcry_md_hd_t gcrypt_SHA256_CTX;
 
-inline void gcrypt_SHA256_Init(gcrypt_SHA256_CTX *ctx)
+static inline void gcrypt_SHA256_Init(gcrypt_SHA256_CTX *ctx)
 {
-	gcry_md_open(ctx, GCRY_MD_SHA256, 0);
+	gcry_error_t err = gcry_md_open(ctx, GCRY_MD_SHA256, 0);
+	if (err)
+		die("gcry_md_open: %s", gcry_strerror(err));
 }
 
-inline void gcrypt_SHA256_Update(gcrypt_SHA256_CTX *ctx, const void *data, size_t len)
+static inline void gcrypt_SHA256_Update(gcrypt_SHA256_CTX *ctx, const void *data, size_t len)
 {
 	gcry_md_write(*ctx, data, len);
 }
 
-inline void gcrypt_SHA256_Final(unsigned char *digest, gcrypt_SHA256_CTX *ctx)
+static inline void gcrypt_SHA256_Final(unsigned char *digest, gcrypt_SHA256_CTX *ctx)
 {
 	memcpy(digest, gcry_md_read(*ctx, GCRY_MD_SHA256), SHA256_DIGEST_SIZE);
+	gcry_md_close(*ctx);
 }
 
-inline void gcrypt_SHA256_Clone(gcrypt_SHA256_CTX *dst, const gcrypt_SHA256_CTX *src)
+static inline void gcrypt_SHA256_Clone(gcrypt_SHA256_CTX *dst, const gcrypt_SHA256_CTX *src)
 {
 	gcry_md_copy(dst, *src);
 }

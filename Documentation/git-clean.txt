@@ -103,7 +103,7 @@ filter by pattern::
    This shows the files and directories to be deleted and issues an
    "Input ignore patterns>>" prompt. You can input space-separated
    patterns to exclude files and directories from deletion.
-   E.g. "*.c *.h" will excludes files end with ".c" and ".h" from
+   E.g. "*.c *.h" will exclude files ending with ".c" and ".h" from
    deletion. When you are satisfied with the filtered result, press
    ENTER (empty) back to the main menu.
 
@@ -127,7 +127,7 @@ ask each::
 
 quit::
 
-  This lets you quit without do cleaning.
+  This lets you quit without doing any cleaning.
 
 help::
 

@@ -28,9 +28,9 @@ and `diff.c` for examples.
 
 * `struct ll_merge_options`
 
-Check ll-merge.h for details.
+Check merge-ll.h for details.
 
 Low-level (single file) merge
 -----------------------------
 
-Check ll-merge.h for details.
+Check merge-ll.h for details.

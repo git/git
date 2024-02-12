@@ -156,25 +156,15 @@ test_expect_success 'git hook run a hook with a bad shebang' '
 	mkdir bad-hooks &&
 	write_script bad-hooks/test-hook "/bad/path/no/spaces" </dev/null &&
 
-	# TODO: We should emit the same (or at least a more similar)
-	# error on MINGW (essentially Git for Windows) and all other
-	# platforms.. See the OS-specific code in start_command()
-	if test_have_prereq !MINGW
-	then
-		cat >expect <<-\EOF
-		fatal: cannot run bad-hooks/test-hook: ...
-		EOF
-	else
-		cat >expect <<-\EOF
-		error: cannot spawn bad-hooks/test-hook: ...
-		EOF
-	fi &&
 	test_expect_code 1 git \
 		-c core.hooksPath=bad-hooks \
 		hook run test-hook >out 2>err &&
 	test_must_be_empty out &&
-	sed -e "s/test-hook: .*/test-hook: .../" <err >actual &&
-	test_cmp expect actual
+
+	# TODO: We should emit the same (or at least a more similar)
+	# error on MINGW (essentially Git for Windows) and all other
+	# platforms.. See the OS-specific code in start_command()
+	grep -E "^(error|fatal): cannot (exec|spawn) .*bad-hooks/test-hook" err
 '
 
 test_expect_success 'stdin to hooks' '

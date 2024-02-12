@@ -3,10 +3,7 @@
 
 #ifdef HAVE_FSMONITOR_DAEMON_BACKEND
 
-#include "cache.h"
-#include "dir.h"
-#include "run-command.h"
-#include "simple-ipc.h"
+#include "hashmap.h"
 #include "thread-utils.h"
 #include "fsmonitor-path-utils.h"
 
@@ -100,7 +97,7 @@ struct fsmonitor_daemon_state {
  * to only mean an external GITDIR referenced by a ".git" file.
  *
  * The platform FS event backends will receive watch-specific
- * relative paths (except for those OS's that always emit absolute
+ * relative paths (except for those OSes that always emit absolute
  * paths).  We use the following enum and routines to classify each
  * path so that we know how to handle it.  There is a slight asymmetry
  * here because ".git/" is inside the working directory and the

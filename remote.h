@@ -1,6 +1,7 @@
 #ifndef REMOTE_H
 #define REMOTE_H
 
+#include "hash-ll.h"
 #include "hashmap.h"
 #include "refspec.h"
 
@@ -117,6 +118,7 @@ struct remote {
  * and configuration.
  */
 struct remote *remote_get(const char *name);
+struct remote *remote_get_early(const char *name);
 
 struct remote *pushremote_get(const char *name);
 int remote_is_configured(struct remote *remote, int in_repo);
@@ -379,7 +381,8 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 		       const char **upstream_name, int for_push,
 		       enum ahead_behind_flags abf);
 int format_tracking_info(struct branch *branch, struct strbuf *sb,
-			 enum ahead_behind_flags abf);
+			 enum ahead_behind_flags abf,
+			 int show_divergence_advice);
 
 struct ref *get_local_heads(void);
 /*
@@ -398,8 +401,6 @@ struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);
 /*
  * Compare-and-swap
  */
-#define CAS_OPT_NAME "force-with-lease"
-
 struct push_cas_option {
 	unsigned use_tracking_for_rest:1;
 	unsigned use_force_if_includes:1;

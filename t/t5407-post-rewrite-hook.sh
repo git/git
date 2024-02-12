@@ -17,6 +17,12 @@ test_expect_success 'setup' '
 	git checkout A^0 &&
 	test_commit E bar E &&
 	test_commit F foo F &&
+	git checkout B &&
+	git merge E &&
+	git tag merge-E &&
+	test_commit G G &&
+	test_commit H H &&
+	test_commit I I &&
 	git checkout main &&
 
 	test_hook --setup post-rewrite <<-EOF
@@ -172,6 +178,48 @@ test_fail_interactive_rebase () {
 		test_must_fail git rebase -i "$@"
 	)
 }
+
+test_expect_success 'git rebase with failed pick' '
+	clear_hook_input &&
+	cat >todo <<-\EOF &&
+	exec >bar
+	merge -C merge-E E
+	exec >G
+	pick G
+	exec >H 2>I
+	pick H
+	fixup I
+	EOF
+
+	(
+		set_replace_editor todo &&
+		test_must_fail git rebase -i D D 2>err
+	) &&
+	grep "would be overwritten" err &&
+	rm bar &&
+
+	test_must_fail git rebase --continue 2>err &&
+	grep "would be overwritten" err &&
+	rm G &&
+
+	test_must_fail git rebase --continue 2>err &&
+	grep "would be overwritten" err &&
+	rm H &&
+
+	test_must_fail git rebase --continue 2>err &&
+	grep "would be overwritten" err &&
+	rm I &&
+
+	git rebase --continue &&
+	echo rebase >expected.args &&
+	cat >expected.data <<-EOF &&
+	$(git rev-parse merge-E) $(git rev-parse HEAD~2)
+	$(git rev-parse G) $(git rev-parse HEAD~1)
+	$(git rev-parse H) $(git rev-parse HEAD)
+	$(git rev-parse I) $(git rev-parse HEAD)
+	EOF
+	verify_hook_input
+'
 
 test_expect_success 'git rebase -i (unchanged)' '
 	git reset --hard D &&

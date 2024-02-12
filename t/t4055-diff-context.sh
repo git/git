@@ -74,13 +74,13 @@ test_expect_success 'plumbing not affected' '
 test_expect_success 'non-integer config parsing' '
 	git config diff.context no &&
 	test_must_fail git diff 2>output &&
-	test_i18ngrep "bad numeric config value" output
+	test_grep "bad numeric config value" output
 '
 
 test_expect_success 'negative integer config parsing' '
 	git config diff.context -1 &&
 	test_must_fail git diff 2>output &&
-	test_i18ngrep "bad config variable" output
+	test_grep "bad config variable" output
 '
 
 test_expect_success '-U0 is valid, so is diff.context=0' '

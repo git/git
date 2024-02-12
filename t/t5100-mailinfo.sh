@@ -268,4 +268,26 @@ test_expect_success 'mailinfo warn CR in base64 encoded email' '
 	test_must_be_empty quoted-cr/0002.err
 '
 
+test_expect_success 'from line with unterminated quoted string' '
+	echo "From: bob \"unterminated string smith <bob@example.com>" >in &&
+	git mailinfo /dev/null /dev/null <in >actual &&
+	cat >expect <<-\EOF &&
+	Author: bob unterminated string smith
+	Email: bob@example.com
+
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'from line with unterminated comment' '
+	echo "From: bob (unterminated comment smith <bob@example.com>" >in &&
+	git mailinfo /dev/null /dev/null <in >actual &&
+	cat >expect <<-\EOF &&
+	Author: bob (unterminated comment smith
+	Email: bob@example.com
+
+	EOF
+	test_cmp expect actual
+'
+
 test_done

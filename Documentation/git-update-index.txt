@@ -49,7 +49,7 @@ OPTIONS
 --remove::
 	If a specified file is in the index but is missing then it's
 	removed.
-	Default behavior is to ignore removed file.
+	Default behavior is to ignore removed files.
 
 --refresh::
 	Looks at the current index and checks to see if merges or
@@ -95,7 +95,7 @@ OPTIONS
 	the index.  If you want to change the working tree file,
 	you need to unset the bit to tell Git.  This is
 	sometimes helpful when working with a big project on a
-	filesystem that has very slow lstat(2) system call
+	filesystem that has a very slow lstat(2) system call
 	(e.g. cifs).
 +
 Git will fail (gracefully) in case it needs to modify this file
@@ -108,7 +108,7 @@ you will need to handle the situation manually.
 	without regard to the "assume unchanged" setting.
 
 --[no-]skip-worktree::
-	When one of these flags is specified, the object name recorded
+	When one of these flags is specified, the object names recorded
 	for the paths are not updated. Instead, these options
 	set and unset the "skip-worktree" bit for the paths. See
 	section "Skip-worktree bit" below for more information.
@@ -119,7 +119,7 @@ you will need to handle the situation manually.
 	the `--remove` option was specified.
 
 --[no-]fsmonitor-valid::
-	When one of these flags is specified, the object name recorded
+	When one of these flags is specified, the object names recorded
 	for the paths are not updated. Instead, these options
 	set and unset the "fsmonitor valid" bit for the paths. See
 	section "File System Monitor" below for more information.
@@ -127,7 +127,7 @@ you will need to handle the situation manually.
 -g::
 --again::
 	Runs 'git update-index' itself on the paths whose index
-	entries are different from those from the `HEAD` commit.
+	entries are different from those of the `HEAD` commit.
 
 --unresolve::
 	Restores the 'unmerged' or 'needs updating' state of a
@@ -151,24 +151,30 @@ you will need to handle the situation manually.
 	automatically removed with warning messages.
 
 --stdin::
-	Instead of taking list of paths from the command line,
-	read list of paths from the standard input.  Paths are
+	Instead of taking a list of paths from the command line,
+	read a list of paths from the standard input.  Paths are
 	separated by LF (i.e. one path per line) by default.
 
 --verbose::
-        Report what is being added and removed from index.
+	Report what is being added and removed from the index.
 
 --index-version <n>::
 	Write the resulting index out in the named on-disk format version.
-	Supported versions are 2, 3 and 4. The current default version is 2
+	Supported versions are 2, 3, and 4. The current default version is 2
 	or 3, depending on whether extra features are used, such as
-	`git add -N`.
+	`git add -N`.  With `--verbose`, also report the version the index
+	file uses before and after this command.
 +
 Version 4 performs a simple pathname compression that reduces index
 size by 30%-50% on large repositories, which results in faster load
-time. Version 4 is relatively young (first released in 1.8.0 in
-October 2012). Other Git implementations such as JGit and libgit2
-may not support it yet.
+time.  Git supports it since version 1.8.0, released in October 2012,
+and support for it was added to libgit2 in 2016 and to JGit in 2020.
+Older versions of this manual page called it "relatively young", but
+it should be considered mature technology these days.
+
+--show-index-version::
+	Report the index format version used by the on-disk index file.
+	See `--index-version` above.
 
 -z::
 	Only meaningful with `--stdin` or `--index-info`; paths are

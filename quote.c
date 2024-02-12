@@ -1,5 +1,4 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "path.h"
 #include "quote.h"
 #include "strbuf.h"

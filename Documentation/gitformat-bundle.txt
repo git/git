@@ -67,7 +67,7 @@ A Git bundle consists of several parts.
 * "Capabilities", which are only in the v3 format, indicate functionality that
 	the bundle requires to be read properly.
 
-* "Prerequisites" lists the objects that are NOT included in the bundle and the
+* "Prerequisites" list the objects that are NOT included in the bundle and the
   reader of the bundle MUST already have, in order to use the data in the
   bundle. The objects stored in the bundle may refer to prerequisite objects and
   anything reachable from them (e.g. a tree object in the bundle can reference
@@ -86,10 +86,10 @@ In the bundle format, there can be a comment following a prerequisite obj-id.
 This is a comment and it has no specific meaning. The writer of the bundle MAY
 put any string here. The reader of the bundle MUST ignore the comment.
 
-Note on the shallow clone and a Git bundle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Note on shallow clones and Git bundles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Note that the prerequisites does not represent a shallow-clone boundary. The
+Note that the prerequisites do not represent a shallow-clone boundary. The
 semantics of the prerequisites and the shallow-clone boundaries are different,
 and the Git bundle v2 format cannot represent a shallow clone repository.
 

@@ -17,8 +17,8 @@ $GIT_DIR/objects/pack/multi-pack-index
 DESCRIPTION
 -----------
 
-The Git pack format is now Git stores most of its primary repository
-data. Over the lietime af a repository loose objects (if any) and
+The Git pack format is how Git stores most of its primary repository
+data. Over the lifetime of a repository, loose objects (if any) and
 smaller packs are consolidated into larger pack(s). See
 linkgit:git-gc[1] and linkgit:git-pack-objects[1].
 
@@ -48,7 +48,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
      Observation: we cannot have more than 4G versions ;-) and
      more than 4G objects in a pack.
 
-   - The header is followed by number of object entries, each of
+   - The header is followed by a number of object entries, each of
      which looks like this:
 
      (undeltified representation)
@@ -62,7 +62,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
 	 is an OBJ_OFS_DELTA object
      compressed delta data
 
-     Observation: length of each object is encoded in a variable
+     Observation: the length of each object is encoded in a variable
      length format and is not constrained to 32-bit or anything.
 
   - The trailer records a pack checksum of all of the above.
@@ -117,7 +117,7 @@ the delta data is a sequence of instructions to reconstruct the object
 from the base object. If the base object is deltified, it must be
 converted to canonical form first. Each instruction appends more and
 more data to the target object until it's complete. There are two
-supported instructions so far: one for copy a byte range from the
+supported instructions so far: one for copying a byte range from the
 source object and one for inserting new data embedded in the
 instruction itself.
 
@@ -137,7 +137,7 @@ copy. Offset and size are in little-endian order.
 
 All offset and size bytes are optional. This is to reduce the
 instruction size when encoding small offsets or sizes. The first seven
-bits in the first octet determines which of the next seven octets is
+bits in the first octet determine which of the next seven octets is
 present. If bit zero is set, offset1 is present. If bit one is set
 offset2 is present and so on.
 
@@ -161,9 +161,9 @@ converted to 0x10000.
   | 0xxxxxxx |    data    |
   +----------+============+
 
-This is the instruction to construct target object without the base
+This is the instruction to construct the target object without the base
 object. The following data is appended to the target object. The first
-seven bits of the first octet determines the size of data in
+seven bits of the first octet determine the size of data in
 bytes. The size must be non-zero.
 
 ==== Reserved instruction
@@ -294,7 +294,7 @@ Pack file entry: <+
 
   - The same trailer as a v1 pack file:
 
-    A copy of the pack checksum at the end of
+    A copy of the pack checksum at the end of the
     corresponding packfile.
 
     Index checksum of all of the above.
@@ -390,10 +390,20 @@ CHUNK LOOKUP:
 CHUNK DATA:
 
 	Packfile Names (ID: {'P', 'N', 'A', 'M'})
-	    Stores the packfile names as concatenated, null-terminated strings.
-	    Packfiles must be listed in lexicographic order for fast lookups by
-	    name. This is the only chunk not guaranteed to be a multiple of four
-	    bytes in length, so should be the last chunk for alignment reasons.
+	    Store the names of packfiles as a sequence of NUL-terminated
+	    strings. There is no extra padding between the filenames,
+	    and they are listed in lexicographic order. The chunk itself
+	    is padded at the end with between 0 and 3 NUL bytes to make the
+	    chunk size a multiple of 4 bytes.
+
+	Bitmapped Packfiles (ID: {'B', 'T', 'M', 'P'})
+	    Stores a table of two 4-byte unsigned integers in network order.
+	    Each table entry corresponds to a single pack (in the order that
+	    they appear above in the `PNAM` chunk). The values for each table
+	    entry are as follows:
+	    - The first bit position (in pseudo-pack order, see below) to
+	      contain an object from that pack.
+	    - The number of bits whose objects are selected from that pack.
 
 	OID Fanout (ID: {'O', 'I', 'D', 'F'})
 	    The ith entry, F[i], stores the number of OIDs with first
@@ -508,6 +518,73 @@ packs arranged in MIDX order (with the preferred pack coming first).
 The MIDX's reverse index is stored in the optional 'RIDX' chunk within
 the MIDX itself.
 
+=== `BTMP` chunk
+
+The Bitmapped Packfiles (`BTMP`) chunk encodes additional information
+about the objects in the multi-pack index's reachability bitmap. Recall
+that objects from the MIDX are arranged in "pseudo-pack" order (see
+above) for reachability bitmaps.
+
+From the example above, suppose we have packs "a", "b", and "c", with
+10, 15, and 20 objects, respectively. In pseudo-pack order, those would
+be arranged as follows:
+
+    |a,0|a,1|...|a,9|b,0|b,1|...|b,14|c,0|c,1|...|c,19|
+
+When working with single-pack bitmaps (or, equivalently, multi-pack
+reachability bitmaps with a preferred pack), linkgit:git-pack-objects[1]
+performs ``verbatim'' reuse, attempting to reuse chunks of the bitmapped
+or preferred packfile instead of adding objects to the packing list.
+
+When a chunk of bytes is reused from an existing pack, any objects
+contained therein do not need to be added to the packing list, saving
+memory and CPU time. But a chunk from an existing packfile can only be
+reused when the following conditions are met:
+
+  - The chunk contains only objects which were requested by the caller
+    (i.e. does not contain any objects which the caller didn't ask for
+    explicitly or implicitly).
+
+  - All objects stored in non-thin packs as offset- or reference-deltas
+    also include their base object in the resulting pack.
+
+The `BTMP` chunk encodes the necessary information in order to implement
+multi-pack reuse over a set of packfiles as described above.
+Specifically, the `BTMP` chunk encodes three pieces of information (all
+32-bit unsigned integers in network byte-order) for each packfile `p`
+that is stored in the MIDX, as follows:
+
+`bitmap_pos`:: The first bit position (in pseudo-pack order) in the
+  multi-pack index's reachability bitmap occupied by an object from `p`.
+
+`bitmap_nr`:: The number of bit positions (including the one at
+  `bitmap_pos`) that encode objects from that pack `p`.
+
+For example, the `BTMP` chunk corresponding to the above example (with
+packs ``a'', ``b'', and ``c'') would look like:
+
+[cols="1,2,2"]
+|===
+| |`bitmap_pos` |`bitmap_nr`
+
+|packfile ``a''
+|`0`
+|`10`
+
+|packfile ``b''
+|`10`
+|`15`
+
+|packfile ``c''
+|`25`
+|`20`
+|===
+
+With this information in place, we can treat each packfile as
+individually reusable in the same fashion as verbatim pack reuse is
+performed on individual packs prior to the implementation of the `BTMP`
+chunk.
+
 == cruft packs
 
 The cruft packs feature offer an alternative to Git's traditional mechanism of
@@ -588,50 +665,16 @@ later on.
 It is linkgit:git-gc[1] that is typically responsible for removing expired
 unreachable objects.
 
-=== Caution for mixed-version environments
-
-Repositories that have cruft packs in them will continue to work with any older
-version of Git. Note, however, that previous versions of Git which do not
-understand the `.mtimes` file will use the cruft pack's mtime as the mtime for
-all of the objects in it. In other words, do not expect older (pre-cruft pack)
-versions of Git to interpret or even read the contents of the `.mtimes` file.
-
-Note that having mixed versions of Git GC-ing the same repository can lead to
-unreachable objects never being completely pruned. This can happen under the
-following circumstances:
-
-  - An older version of Git running GC explodes the contents of an existing
-    cruft pack loose, using the cruft pack's mtime.
-  - A newer version running GC collects those loose objects into a cruft pack,
-    where the .mtime file reflects the loose object's actual mtimes, but the
-    cruft pack mtime is "now".
-
-Repeating this process will lead to unreachable objects not getting pruned as a
-result of repeatedly resetting the objects' mtimes to the present time.
-
-If you are GC-ing repositories in a mixed version environment, consider omitting
-the `--cruft` option when using linkgit:git-repack[1] and linkgit:git-gc[1], and
-setting the `gc.cruftPacks` configuration to "false" until all writers
-understand cruft packs.
-
 === Alternatives
 
 Notable alternatives to this design include:
 
-  - The location of the per-object mtime data, and
-  - Storing unreachable objects in multiple cruft packs.
+  - The location of the per-object mtime data.
 
 On the location of mtime data, a new auxiliary file tied to the pack was chosen
 to avoid complicating the `.idx` format. If the `.idx` format were ever to gain
 support for optional chunks of data, it may make sense to consolidate the
 `.mtimes` format into the `.idx` itself.
-
-Storing unreachable objects among multiple cruft packs (e.g., creating a new
-cruft pack during each repacking operation including only unreachable objects
-which aren't already stored in an earlier cruft pack) is significantly more
-complicated to construct, and so aren't pursued here. The obvious drawback to
-the current implementation is that the entire cruft pack must be re-written from
-scratch.
 
 GIT
 ---

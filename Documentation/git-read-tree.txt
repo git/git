@@ -25,15 +25,15 @@ fast-forward (i.e. 2-way) merge, or a 3-way merge, with the `-m`
 flag.  When used with `-m`, the `-u` flag causes it to also update
 the files in the work tree with the result of the merge.
 
-Trivial merges are done by 'git read-tree' itself.  Only conflicting paths
-will be in unmerged state when 'git read-tree' returns.
+Only trivial merges are done by 'git read-tree' itself.  Only conflicting paths
+will be in an unmerged state when 'git read-tree' returns.
 
 OPTIONS
 -------
 -m::
 	Perform a merge, not just a read.  The command will
 	refuse to run if your index file has unmerged entries,
-	indicating that you have not finished previous merge you
+	indicating that you have not finished a previous merge you
 	started.
 
 --reset::

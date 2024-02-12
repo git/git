@@ -1,12 +1,12 @@
 #include "builtin.h"
-#include "cache.h"
 #include "gettext.h"
 #include "hex.h"
 #include "transport.h"
+#include "pkt-line.h"
 #include "ref-filter.h"
 #include "remote.h"
-#include "refs.h"
 #include "parse-options.h"
+#include "wildmatch.h"
 
 static const char * const ls_remote_usage[] = {
 	N_("git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
@@ -57,6 +57,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	struct transport *transport;
 	const struct ref *ref;
 	struct ref_array ref_array;
+	struct ref_sorting *sorting;
 	struct string_list sorting_options = STRING_LIST_INIT_DUP;
 
 	struct option options[] = {
@@ -140,13 +141,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		item->symref = xstrdup_or_null(ref->symref);
 	}
 
-	if (sorting_options.nr) {
-		struct ref_sorting *sorting;
-
-		sorting = ref_sorting_options(&sorting_options);
-		ref_array_sort(sorting, &ref_array);
-		ref_sorting_release(sorting);
-	}
+	sorting = ref_sorting_options(&sorting_options);
+	ref_array_sort(sorting, &ref_array);
 
 	for (i = 0; i < ref_array.nr; i++) {
 		const struct ref_array_item *ref = ref_array.items[i];
@@ -156,6 +152,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		status = 0; /* we found something */
 	}
 
+	ref_sorting_release(sorting);
 	ref_array_clear(&ref_array);
 	if (transport_disconnect(transport))
 		status = 1;

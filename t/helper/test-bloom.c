@@ -2,6 +2,7 @@
 #include "bloom.h"
 #include "hex.h"
 #include "commit.h"
+#include "repository.h"
 #include "setup.h"
 
 static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
@@ -39,7 +40,6 @@ static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
 {
 	struct commit *c;
 	struct bloom_filter *filter;
-	setup_git_directory();
 	c = lookup_commit(the_repository, commit_oid);
 	filter = get_or_compute_bloom_filter(the_repository, c, 1,
 					     &settings,

@@ -12,7 +12,7 @@ SYNOPSIS
 'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--no-verify]
 	 [--[no-]3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
-	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
+	 [--whitespace=<action>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
 	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [--quoted-cr=<action>]
@@ -22,8 +22,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Splits mail messages in a mailbox into commit log message,
-authorship information and patches, and applies them to the
+Splits mail messages in a mailbox into commit log messages,
+authorship information, and patches, and applies them to the
 current branch. You could think of it as a reverse operation
 of linkgit:git-format-patch[1] run on a branch with a straight
 history without merges.
@@ -69,7 +69,7 @@ OPTIONS
 --empty=(stop|drop|keep)::
 	By default, or when the option is set to 'stop', the command
 	errors out on an input e-mail message lacking a patch
-	and stops into the middle of the current am session. When this
+	and stops in the middle of the current am session. When this
 	option is set to 'drop', skip such an e-mail message instead.
 	When this option is set to 'keep', create an empty commit,
 	recording the contents of the e-mail message as its log.
@@ -94,7 +94,7 @@ OPTIONS
 	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
-	`i18n.commitEncoding` can be used to specify project's
+	`i18n.commitEncoding` can be used to specify the project's
 	preferred encoding if it is not UTF-8).
 +
 This was optional in prior versions of git, but now it is the
@@ -118,7 +118,7 @@ include::rerere-options.txt[]
 
 --ignore-space-change::
 --ignore-whitespace::
---whitespace=<option>::
+--whitespace=<action>::
 -C<n>::
 -p<n>::
 --directory=<dir>::
@@ -134,7 +134,7 @@ include::rerere-options.txt[]
 	automatically. This option allows the user to bypass the automatic
 	detection and specify the patch format that the patch(es) should be
 	interpreted as. Valid formats are mbox, mboxrd,
-	stgit, stgit-series and hg.
+	stgit, stgit-series, and hg.
 
 -i::
 --interactive::
@@ -192,7 +192,7 @@ include::rerere-options.txt[]
 
 --abort::
 	Restore the original branch and abort the patching operation.
-	Revert contents of files involved in the am operation to their
+	Revert the contents of files involved in the am operation to their
 	pre-am state.
 
 --quit::

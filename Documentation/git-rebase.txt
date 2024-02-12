@@ -289,7 +289,7 @@ See also INCOMPATIBLE OPTIONS below.
 +
 See also INCOMPATIBLE OPTIONS below.
 
---empty={drop,keep,ask}::
+--empty=(drop|keep|ask)::
 	How to handle commits that are not empty to start and are not
 	clean cherry-picks of any upstream commit, but which become
 	empty after rebasing (because they contain a subset of already
@@ -523,7 +523,7 @@ See also INCOMPATIBLE OPTIONS below.
 +
 The commit list format can be changed by setting the configuration option
 rebase.instructionFormat.  A customized instruction format will automatically
-have the long commit hash prepended to the format.
+have the commit hash prepended to the format.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -589,21 +589,27 @@ See also INCOMPATIBLE OPTIONS below.
 
 --autosquash::
 --no-autosquash::
-	When the commit log message begins with "squash! ..." or "fixup! ..."
-	or "amend! ...", and there is already a commit in the todo list that
-	matches the same `...`, automatically modify the todo list of
-	`rebase -i`, so that the commit marked for squashing comes right after
-	the commit to be modified, and change the action of the moved commit
-	from `pick` to `squash` or `fixup` or `fixup -C` respectively. A commit
-	matches the `...` if the commit subject matches, or if the `...` refers
-	to the commit's hash. As a fall-back, partial matches of the commit
-	subject work, too. The recommended way to create fixup/amend/squash
-	commits is by using the `--fixup`, `--fixup=amend:` or `--fixup=reword:`
-	and `--squash` options respectively of linkgit:git-commit[1].
+	Automatically squash commits with specially formatted messages into
+	previous commits being rebased.  If a commit message starts with
+	"squash! ", "fixup! " or "amend! ", the remainder of the subject line
+	is taken as a commit specifier, which matches a previous commit if it
+	matches the subject line or the hash of that commit.  If no commit
+	matches fully, matches of the specifier with the start of commit
+	subjects are considered.
 +
-If the `--autosquash` option is enabled by default using the
-configuration variable `rebase.autoSquash`, this option can be
-used to override and disable this setting.
+In the rebase todo list, the actions of squash, fixup and amend commits are
+changed from `pick` to `squash`, `fixup` or `fixup -C`, respectively, and they
+are moved right after the commit they modify.  The `--interactive` option can
+be used to review and edit the todo list before proceeding.
++
+The recommended way to create commits with squash markers is by using the
+`--squash`, `--fixup`, `--fixup=amend:` or `--fixup=reword:` options of
+linkgit:git-commit[1], which take the target commit as an argument and
+automatically fill in the subject line of the new commit from that.
++
+Settting configuration variable `rebase.autoSquash` to true enables
+auto-squashing by default for interactive rebase.  The `--no-autosquash`
+option can be used to override that setting.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -620,13 +626,16 @@ See also INCOMPATIBLE OPTIONS below.
 	Automatically reschedule `exec` commands that failed. This only makes
 	sense in interactive mode (or when an `--exec` option was provided).
 +
-Even though this option applies once a rebase is started, it's set for
-the whole rebase at the start based on either the
-`rebase.rescheduleFailedExec` configuration (see linkgit:git-config[1]
-or "CONFIGURATION" below) or whether this option is
-provided. Otherwise an explicit `--no-reschedule-failed-exec` at the
-start would be overridden by the presence of
-`rebase.rescheduleFailedExec=true` configuration.
+This option applies once a rebase is started. It is preserved for the whole
+rebase based on, in order, the command line option provided to the initial `git
+rebase`, the `rebase.rescheduleFailedExec` configuration (see
+linkgit:git-config[1] or "CONFIGURATION" below), or it defaults to false.
++
+Recording this option for the whole rebase is a convenience feature. Otherwise
+an explicit `--no-reschedule-failed-exec` at the start would be overridden by
+the presence of a `rebase.rescheduleFailedExec=true` configuration when `git
+rebase --continue` is invoked. Currently, you cannot pass
+`--[no-]reschedule-failed-exec` to `git rebase --continue`.
 
 --update-refs::
 --no-update-refs::
@@ -695,7 +704,7 @@ be dropped automatically with `--no-keep-empty`).
 Similar to the apply backend, by default the merge backend drops
 commits that become empty unless `-i`/`--interactive` is specified (in
 which case it stops and asks the user what to do).  The merge backend
-also has an `--empty={drop,keep,ask}` option for changing the behavior
+also has an `--empty=(drop|keep|ask)` option for changing the behavior
 of handling commits that become empty.
 
 Directory rename detection
@@ -957,10 +966,9 @@ The interactive rebase will stop when a command fails (i.e. exits with
 non-0 status) to give you an opportunity to fix the problem. You can
 continue with `git rebase --continue`.
 
-The "exec" command launches the command in a shell (the one specified
-in `$SHELL`, or the default shell if `$SHELL` is not set), so you can
-use shell features (like "cd", ">", ";" ...). The command is run from
-the root of the working tree.
+The "exec" command launches the command in a shell (the default one, usually
+/bin/sh), so you can use shell features (like "cd", ">", ";" ...). The command
+is run from the root of the working tree.
 
 ----------------------------------
 $ git rebase -i --exec "make test"

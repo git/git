@@ -68,7 +68,7 @@ format.encodeEmailHeaders::
 	Defaults to true.
 
 format.pretty::
-	The default pretty format for log/show/whatchanged command,
+	The default pretty format for log/show/whatchanged command.
 	See linkgit:git-log[1], linkgit:git-show[1],
 	linkgit:git-whatchanged[1].
 
@@ -119,7 +119,7 @@ format.notes::
 	`--notes=<ref>`, where `ref` is the non-boolean value. Defaults
 	to false.
 +
-If one wishes to use the ref `ref/notes/true`, please use that literal
+If one wishes to use the ref `refs/notes/true`, please use that literal
 instead.
 +
 This configuration can be specified multiple times in order to allow

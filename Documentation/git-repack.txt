@@ -74,6 +74,17 @@ to the new separate pack will be written.
 	immediately instead of waiting for the next `git gc` invocation.
 	Only useful with `--cruft -d`.
 
+--max-cruft-size=<n>::
+	Repack cruft objects into packs as large as `<n>` bytes before
+	creating new packs. As long as there are enough cruft packs
+	smaller than `<n>`, repacking will cause a new cruft pack to
+	be created containing objects from any combined cruft packs,
+	along with any new unreachable objects. Cruft packs larger than
+	`<n>` will not be modified. When the new cruft pack is larger
+	than `<n>` bytes, it will be split into multiple packs, all of
+	which are guaranteed to be at most `<n>` bytes in size. Only
+	useful with `--cruft -d`.
+
 --expire-to=<dir>::
 	Write a cruft pack containing pruned objects (if any) to the
 	directory `<dir>`. This option is useful for keeping a copy of
@@ -143,6 +154,29 @@ depth is 4095.
 	a larger and slower repository; see the discussion in
 	`pack.packSizeLimit`.
 
+--filter=<filter-spec>::
+	Remove objects matching the filter specification from the
+	resulting packfile and put them into a separate packfile. Note
+	that objects used in the working directory are not filtered
+	out. So for the split to fully work, it's best to perform it
+	in a bare repo and to use the `-a` and `-d` options along with
+	this option.  Also `--no-write-bitmap-index` (or the
+	`repack.writebitmaps` config option set to `false`) should be
+	used otherwise writing bitmap index will fail, as it supposes
+	a single packfile containing all the objects. See
+	linkgit:git-rev-list[1] for valid `<filter-spec>` forms.
+
+--filter-to=<dir>::
+	Write the pack containing filtered out objects to the
+	directory `<dir>`. Only useful with `--filter`. This can be
+	used for putting the pack on a separate object directory that
+	is accessed through the Git alternates mechanism. **WARNING:**
+	If the packfile containing the filtered out objects is not
+	accessible, the repo can become corrupt as it might not be
+	possible to access the objects in that packfile. See the
+	`objects` and `objects/info/alternates` sections of
+	linkgit:gitrepository-layout[5].
+
 -b::
 --write-bitmap-index::
 	Write a reachability bitmap index as part of the repack. This
@@ -165,7 +199,7 @@ depth is 4095.
 	Exclude the given pack from repacking. This is the equivalent
 	of having `.keep` file on the pack. `<pack-name>` is the
 	pack file name without leading directory (e.g. `pack-123.pack`).
-	The option could be specified multiple times to keep multiple
+	The option can be specified multiple times to keep multiple
 	packs.
 
 --unpack-unreachable=<when>::
@@ -186,7 +220,7 @@ depth is 4095.
 	Pass the `--delta-islands` option to `git-pack-objects`, see
 	linkgit:git-pack-objects[1].
 
--g=<factor>::
+-g<factor>::
 --geometric=<factor>::
 	Arrange resulting pack structure so that each successive pack
 	contains at least `<factor>` times the number of objects as the
@@ -203,11 +237,8 @@ uniquely by the set of packs being "rolled-up"; in other words, the
 packs determined to need to be combined in order to restore a geometric
 progression.
 +
-When `--unpacked` is specified, loose objects are implicitly included in
-this "roll-up", without respect to their reachability. This is subject
-to change in the future. This option (implying a drastically different
-repack mode) is not guaranteed to work with all other combinations of
-option to `git repack`.
+Loose objects are implicitly included in this "roll-up", without respect to
+their reachability. This is subject to change in the future.
 +
 When writing a multi-pack bitmap, `git repack` selects the largest resulting
 pack as the preferred pack for object selection by the MIDX (see

@@ -119,15 +119,10 @@ static void test_reftable_ref_record_roundtrip(void)
 		case REFTABLE_REF_DELETION:
 			break;
 		case REFTABLE_REF_VAL1:
-			in.u.ref.value.val1 = reftable_malloc(GIT_SHA1_RAWSZ);
 			set_hash(in.u.ref.value.val1, 1);
 			break;
 		case REFTABLE_REF_VAL2:
-			in.u.ref.value.val2.value =
-				reftable_malloc(GIT_SHA1_RAWSZ);
 			set_hash(in.u.ref.value.val2.value, 1);
-			in.u.ref.value.val2.target_value =
-				reftable_malloc(GIT_SHA1_RAWSZ);
 			set_hash(in.u.ref.value.val2.target_value, 2);
 			break;
 		case REFTABLE_REF_SYMREF:

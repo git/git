@@ -736,3 +736,9 @@ core.abbrev::
 	If set to "no", no abbreviation is made and the object names
 	are shown in their full length.
 	The minimum length is 4.
+
+core.maxTreeDepth::
+	The maximum depth Git is willing to recurse while traversing a
+	tree (e.g., "a/b/cde/f" has a depth of 4). This is a fail-safe
+	to allow Git to abort cleanly, and should not generally need to
+	be adjusted. The default is 4096.

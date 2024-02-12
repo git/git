@@ -33,6 +33,15 @@ test_expect_success 'clone with path bundle' '
 	test_cmp expect actual
 '
 
+test_expect_success 'clone with path bundle and non-default hash' '
+	test_when_finished "rm -rf clone-path-non-default-hash" &&
+	GIT_DEFAULT_HASH=sha256 git clone --bundle-uri="clone-from/B.bundle" \
+		clone-from clone-path-non-default-hash &&
+	git -C clone-path-non-default-hash rev-parse refs/bundles/topic >actual &&
+	git -C clone-from rev-parse topic >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'clone with file:// bundle' '
 	git clone --bundle-uri="file://$(pwd)/clone-from/B.bundle" \
 		clone-from clone-file &&
@@ -282,6 +291,15 @@ test_expect_success 'clone HTTP bundle' '
 	test_cmp expect actual &&
 
 	test_config -C clone-http log.excludedecoration refs/bundle/
+'
+
+test_expect_success 'clone HTTP bundle with non-default hash' '
+	test_when_finished "rm -rf clone-http-non-default-hash" &&
+	GIT_DEFAULT_HASH=sha256 git clone --bundle-uri="$HTTPD_URL/B.bundle" \
+		"$HTTPD_URL/smart/fetch.git" clone-http-non-default-hash &&
+	git -C clone-http-non-default-hash rev-parse refs/bundles/topic >actual &&
+	git -C clone-from rev-parse topic >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'clone bundle list (HTTP, no heuristic)' '

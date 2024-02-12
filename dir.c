@@ -7,26 +7,29 @@
  */
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "convert.h"
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
+#include "name-hash.h"
 #include "object-file.h"
-#include "object-store.h"
-#include "attr.h"
+#include "object-store-ll.h"
+#include "path.h"
 #include "refs.h"
 #include "wildmatch.h"
 #include "pathspec.h"
 #include "utf8.h"
 #include "varint.h"
 #include "ewah/ewok.h"
-#include "fsmonitor.h"
+#include "fsmonitor-ll.h"
+#include "read-cache-ll.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "submodule-config.h"
+#include "symlinks.h"
 #include "trace2.h"
-#include "wrapper.h"
+#include "tree.h"
 
 /*
  * Tells read_directory_recursive how a file or directory should be treated.
@@ -372,7 +375,7 @@ static int match_pathspec_item(struct index_state *istate,
 		return 0;
 
 	if (item->attr_match_nr &&
-	    !match_pathspec_attrs(istate, name, namelen, item))
+	    !match_pathspec_attrs(istate, name - prefix, namelen + prefix, item))
 		return 0;
 
 	/* If the match was just the prefix, we matched */
@@ -2175,7 +2178,8 @@ static int exclude_matches_pathspec(const char *path, int pathlen,
 		       PATHSPEC_LITERAL |
 		       PATHSPEC_GLOB |
 		       PATHSPEC_ICASE |
-		       PATHSPEC_EXCLUDE);
+		       PATHSPEC_EXCLUDE |
+		       PATHSPEC_ATTR);
 
 	for (i = 0; i < pathspec->nr; i++) {
 		const struct pathspec_item *item = &pathspec->items[i];
@@ -2229,6 +2233,39 @@ static int get_index_dtype(struct index_state *istate,
 		return DT_DIR;
 	}
 	return DT_UNKNOWN;
+}
+
+unsigned char get_dtype(struct dirent *e, struct strbuf *path,
+			int follow_symlink)
+{
+	struct stat st;
+	unsigned char dtype = DTYPE(e);
+	size_t base_path_len;
+
+	if (dtype != DT_UNKNOWN && !(follow_symlink && dtype == DT_LNK))
+		return dtype;
+
+	/*
+	 * d_type unknown or unfollowed symlink, try to fall back on [l]stat
+	 * results. If [l]stat fails, explicitly set DT_UNKNOWN.
+	 */
+	base_path_len = path->len;
+	strbuf_addstr(path, e->d_name);
+	if ((follow_symlink && stat(path->buf, &st)) ||
+	    (!follow_symlink && lstat(path->buf, &st)))
+		goto cleanup;
+
+	/* determine d_type from st_mode */
+	if (S_ISREG(st.st_mode))
+		dtype = DT_REG;
+	else if (S_ISDIR(st.st_mode))
+		dtype = DT_DIR;
+	else if (S_ISLNK(st.st_mode))
+		dtype = DT_LNK;
+
+cleanup:
+	strbuf_setlen(path, base_path_len);
+	return dtype;
 }
 
 static int resolve_dtype(int dtype, struct index_state *istate,

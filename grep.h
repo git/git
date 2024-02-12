@@ -202,7 +202,9 @@ struct grep_opt {
 	.output = std_output, \
 }
 
-int grep_config(const char *var, const char *value, void *);
+struct config_context;
+int grep_config(const char *var, const char *value,
+		const struct config_context *ctx, void *data);
 void grep_init(struct grep_opt *, struct repository *repo);
 
 void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);

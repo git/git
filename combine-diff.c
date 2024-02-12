@@ -1,8 +1,7 @@
-#include "cache.h"
-#include "object-store.h"
+#include "git-compat-util.h"
+#include "object-store-ll.h"
 #include "commit.h"
 #include "convert.h"
-#include "blob.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "environment.h"
@@ -13,10 +12,10 @@
 #include "xdiff/xmacros.h"
 #include "log-tree.h"
 #include "refs.h"
+#include "tree.h"
 #include "userdiff.h"
 #include "oid-array.h"
 #include "revision.h"
-#include "wrapper.h"
 
 static int compare_paths(const struct combine_diff_path *one,
 			  const struct diff_filespec *two)

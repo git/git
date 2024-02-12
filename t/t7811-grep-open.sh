@@ -63,7 +63,7 @@ test_expect_success SIMPLEPAGER 'git grep -O' '
 
 test_expect_success 'git grep -O --cached' '
 	test_must_fail git grep --cached -O GREP_PATTERN >out 2>msg &&
-	test_i18ngrep open-files-in-pager msg
+	test_grep open-files-in-pager msg
 '
 
 test_expect_success 'git grep -O --no-index' '

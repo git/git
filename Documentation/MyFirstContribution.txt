@@ -35,8 +35,9 @@ announcements, design discussions, and more take place. Those interested in
 contributing are welcome to post questions here. The Git list requires
 plain-text-only emails and prefers inline and bottom-posting when replying to
 mail; you will be CC'd in all replies to you. Optionally, you can subscribe to
-the list by sending an email to majordomo@vger.kernel.org with "subscribe git"
-in the body. The https://lore.kernel.org/git[archive] of this mailing list is
+the list by sending an email to <git+subscribe@vger.kernel.org>
+(see https://subspace.kernel.org/subscribing.html for details).
+The https://lore.kernel.org/git[archive] of this mailing list is
 available to view in a browser.
 
 ==== https://groups.google.com/forum/#!forum/git-mentoring[git-mentoring@googlegroups.com]
@@ -160,10 +161,11 @@ in order to keep the declarations alphabetically sorted:
 int cmd_psuh(int argc, const char **argv, const char *prefix);
 ----
 
-Be sure to `#include "builtin.h"` in your `psuh.c`.
+Be sure to `#include "builtin.h"` in your `psuh.c`. You'll also need to
+`#include "gettext.h"` to use functions related to printing output text.
 
-Go ahead and add some throwaway printf to that function. This is a decent
-starting point as we can now add build rules and register the command.
+Go ahead and add some throwaway printf to the `cmd_psuh` function. This is a
+decent starting point as we can now add build rules and register the command.
 
 NOTE: Your throwaway text, as well as much of the text you will be adding over
 the course of this tutorial, is user-facing. That means it needs to be
@@ -832,7 +834,7 @@ Johannes Schindelin to make life as a Git contributor easier for those used to
 the GitHub PR workflow. It allows contributors to open pull requests against its
 mirror of the Git project, and does some magic to turn the PR into a set of
 emails and send them out for you. It also runs the Git continuous integration
-suite for you. It's documented at http://gitgitgadget.github.io.
+suite for you. It's documented at https://gitgitgadget.github.io/.
 
 [[create-fork]]
 === Forking `git/git` on GitHub
@@ -1255,6 +1257,38 @@ index 88f126184c..38da593a60 100644
 
 [[now-what]]
 == My Patch Got Emailed - Now What?
+
+Please give reviewers enough time to process your initial patch before
+sending an updated version. That is, resist the temptation to send a new
+version immediately, because others may have already started reviewing
+your initial version.
+
+While waiting for review comments, you may find mistakes in your initial
+patch, or perhaps realize a different and better way to achieve the goal
+of the patch. In this case you may communicate your findings to other
+reviewers as follows:
+
+ - If the mistakes you found are minor, send a reply to your patch as if
+   you were a reviewer and mention that you will fix them in an
+   updated version.
+
+ - On the other hand, if you think you want to change the course so
+   drastically that reviews on the initial patch would be a waste of
+   time (for everyone involved), retract the patch immediately with
+   a reply like "I am working on a much better approach, so please
+   ignore this patch and wait for the updated version."
+
+Now, the above is a good practice if you sent your initial patch
+prematurely without polish.  But a better approach of course is to avoid
+sending your patch prematurely in the first place.
+
+Please be considerate of the time needed by reviewers to examine each
+new version of your patch. Rather than seeing the initial version right
+now (followed by several "oops, I like this version better than the
+previous one" patches over 2 days), reviewers would strongly prefer if a
+single polished version came 2 days later instead, and that version with
+fewer mistakes were the only one they would need to review.
+
 
 [[reviewing]]
 === Responding to Reviews

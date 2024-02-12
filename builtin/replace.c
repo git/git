@@ -8,22 +8,23 @@
  * git-tag.sh and mktag.c by Linus Torvalds.
  */
 
-#include "cache.h"
-#include "config.h"
 #include "builtin.h"
+#include "config.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
 #include "parse-options.h"
+#include "path.h"
 #include "run-command.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "replace-object.h"
 #include "repository.h"
 #include "tag.h"
+#include "wildmatch.h"
 
 static const char * const git_replace_usage[] = {
 	N_("git replace [-f] <object> <replacement>"),
@@ -48,7 +49,7 @@ struct show_data {
 
 static int show_reference(struct repository *r, const char *refname,
 			  const struct object_id *oid,
-			  int flag, void *cb_data)
+			  int flag UNUSED, void *cb_data)
 {
 	struct show_data *data = cb_data;
 
@@ -408,7 +409,7 @@ struct check_mergetag_data {
 	const char **argv;
 };
 
-static int check_one_mergetag(struct commit *commit,
+static int check_one_mergetag(struct commit *commit UNUSED,
 			       struct commit_extra_header *extra,
 			       void *data)
 {
@@ -566,7 +567,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	read_replace_refs = 0;
+	disable_replace_refs();
 	git_config(git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_replace_usage, 0);

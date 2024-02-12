@@ -1,5 +1,4 @@
 #include "builtin.h"
-#include "alloc.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
@@ -15,6 +14,7 @@
 #include "hash-lookup.h"
 #include "commit-slab.h"
 #include "commit-graph.h"
+#include "wildmatch.h"
 
 /*
  * One day.  See the 'name a rev shortly after epoch' test in t6120 when
@@ -573,17 +573,17 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 				   N_("ignore refs matching <pattern>")),
 		OPT_GROUP(""),
 		OPT_BOOL(0, "all", &all, N_("list all commits reachable from all refs")),
-		OPT_BOOL(0, "stdin", &transform_stdin, N_("deprecated: use --annotate-stdin instead")),
+		OPT_BOOL_F(0,
+			   "stdin",
+			   &transform_stdin,
+			   N_("deprecated: use --annotate-stdin instead"),
+			   PARSE_OPT_HIDDEN),
 		OPT_BOOL(0, "annotate-stdin", &annotate_stdin, N_("annotate text from stdin")),
 		OPT_BOOL(0, "undefined", &allow_undefined, N_("allow to print `undefined` names (default)")),
 		OPT_BOOL(0, "always",     &always,
 			   N_("show abbreviated commit object as fallback")),
-		{
-			/* A Hidden OPT_BOOL */
-			OPTION_SET_INT, 0, "peel-tag", &peel_tag, NULL,
-			N_("dereference tags in the input (internal use)"),
-			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN, NULL, 1,
-		},
+		OPT_HIDDEN_BOOL(0, "peel-tag", &peel_tag,
+			   N_("dereference tags in the input (internal use)")),
 		OPT_END(),
 	};
 

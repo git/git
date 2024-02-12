@@ -1,16 +1,16 @@
 #include "builtin.h"
+#include "commit.h"
 #include "config.h"
-#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "lockfile.h"
 #include "parse-options.h"
 #include "repository.h"
 #include "commit-graph.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "progress.h"
 #include "replace-object.h"
+#include "strbuf.h"
 #include "tag.h"
 #include "trace2.h"
 
@@ -21,7 +21,7 @@
 	N_("git commit-graph write [--object-dir <dir>] [--append]\n" \
 	   "                       [--split[=<strategy>]] [--reachable | --stdin-packs | --stdin-commits]\n" \
 	   "                       [--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]\n" \
-	   "                       <split options>")
+	   "                       <split-options>")
 
 static const char * builtin_commit_graph_verify_usage[] = {
 	BUILTIN_COMMIT_GRAPH_VERIFY_USAGE,
@@ -68,10 +68,12 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 	struct commit_graph *graph = NULL;
 	struct object_directory *odb = NULL;
 	char *graph_name;
-	int open_ok;
+	char *chain_name;
+	enum { OPENED_NONE, OPENED_GRAPH, OPENED_CHAIN } opened = OPENED_NONE;
 	int fd;
 	struct stat st;
 	int flags = 0;
+	int incomplete_chain = 0;
 	int ret;
 
 	static struct option builtin_commit_graph_verify_options[] = {
@@ -101,24 +103,39 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 
 	odb = find_odb(the_repository, opts.obj_dir);
 	graph_name = get_commit_graph_filename(odb);
-	open_ok = open_commit_graph(graph_name, &fd, &st);
-	if (!open_ok && errno != ENOENT)
+	chain_name = get_commit_graph_chain_filename(odb);
+	if (open_commit_graph(graph_name, &fd, &st))
+		opened = OPENED_GRAPH;
+	else if (errno != ENOENT)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
+	else if (open_commit_graph_chain(chain_name, &fd, &st))
+		opened = OPENED_CHAIN;
+	else if (errno != ENOENT)
+		die_errno(_("could not open commit-graph chain '%s'"), chain_name);
 
 	FREE_AND_NULL(graph_name);
+	FREE_AND_NULL(chain_name);
 	FREE_AND_NULL(options);
 
-	if (open_ok)
+	if (opened == OPENED_NONE)
+		return 0;
+	else if (opened == OPENED_GRAPH)
 		graph = load_commit_graph_one_fd_st(the_repository, fd, &st, odb);
 	else
-		graph = read_commit_graph_one(the_repository, odb);
+		graph = load_commit_graph_chain_fd_st(the_repository, fd, &st,
+						      &incomplete_chain);
 
-	/* Return failure if open_ok predicted success */
 	if (!graph)
-		return !!open_ok;
+		return 1;
 
 	ret = verify_commit_graph(the_repository, graph, flags);
 	free_commit_graph(graph);
+
+	if (incomplete_chain) {
+		error("one or more commit-graph chain files could not be loaded");
+		ret |= 1;
+	}
+
 	return ret;
 }
 
@@ -186,10 +203,11 @@ static int write_option_max_new_filters(const struct option *opt,
 }
 
 static int git_commit_graph_write_config(const char *var, const char *value,
+					 const struct config_context *ctx,
 					 void *cb UNUSED)
 {
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
-		write_opts.max_new_filters = git_config_int(var, value);
+		write_opts.max_new_filters = git_config_int(var, value, ctx->kvi);
 	/*
 	 * No need to fall-back to 'git_default_config', since this was already
 	 * called in 'cmd_commit_graph()'.
@@ -309,6 +327,7 @@ cleanup:
 	FREE_AND_NULL(options);
 	string_list_clear(&pack_indexes, 0);
 	strbuf_release(&buf);
+	oidset_clear(&commits);
 	return result;
 }
 
@@ -324,7 +343,7 @@ int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config, NULL);
 
-	read_replace_refs = 0;
+	disable_replace_refs();
 	save_commit_buffer = 0;
 
 	argc = parse_options(argc, argv, prefix, options,

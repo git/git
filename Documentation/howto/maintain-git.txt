@@ -104,7 +104,7 @@ by doing the following:
    files in mbox format).
 
  - Write his own patches to address issues raised on the list but
-   nobody has stepped up solving.  Send it out just like other
+   nobody has stepped up to solve.  Send it out just like other
    contributors do, and pick them up just like patches from other
    contributors (see above).
 
@@ -411,13 +411,13 @@ Preparing a "merge-fix"
 
 A merge of two topics may not textually conflict but still have
 conflict at the semantic level. A classic example is for one topic
-to rename an variable and all its uses, while another topic adds a
+to rename a variable and all its uses, while another topic adds a
 new use of the variable under its old name. When these two topics
 are merged together, the reference to the variable newly added by
 the latter topic will still use the old name in the result.
 
 The Meta/Reintegrate script that is used by redo-jch and redo-seen
-scripts implements a crude but usable way to work this issue around.
+scripts implements a crude but usable way to work around this issue.
 When the script merges branch $X, it checks if "refs/merge-fix/$X"
 exists, and if so, the effect of it is squashed into the result of
 the mechanical merge.  In other words,

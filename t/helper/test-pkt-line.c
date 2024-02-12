@@ -1,7 +1,9 @@
 #include "git-compat-util.h"
 #include "test-tool.h"
 #include "pkt-line.h"
+#include "sideband.h"
 #include "write-or-die.h"
+#include "parse-options.h"
 
 static void pack_line(const char *line)
 {
@@ -64,12 +66,33 @@ static void unpack(void)
 	}
 }
 
-static void unpack_sideband(void)
+static void unpack_sideband(int argc, const char **argv)
 {
 	struct packet_reader reader;
-	packet_reader_init(&reader, 0, NULL, 0,
-			   PACKET_READ_GENTLE_ON_EOF |
-			   PACKET_READ_CHOMP_NEWLINE);
+	int options = PACKET_READ_GENTLE_ON_EOF;
+	int chomp_newline = 1;
+	int reader_use_sideband = 0;
+	const char *const unpack_sideband_usage[] = {
+		"test_tool unpack_sideband [options...]", NULL
+	};
+	struct option cmd_options[] = {
+		OPT_BOOL(0, "reader-use-sideband", &reader_use_sideband,
+			 "set use_sideband bit for packet reader (Default: off)"),
+		OPT_BOOL(0, "chomp-newline", &chomp_newline,
+			 "chomp newline in packet (Default: on)"),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, "", cmd_options, unpack_sideband_usage,
+			     0);
+	if (argc > 0)
+		usage_msg_opt(_("too many arguments"), unpack_sideband_usage,
+			      cmd_options);
+
+	if (chomp_newline)
+		options |= PACKET_READ_CHOMP_NEWLINE;
+	packet_reader_init(&reader, 0, NULL, 0, options);
+	reader.use_sideband = reader_use_sideband;
 
 	while (packet_reader_read(&reader) != PACKET_READ_EOF) {
 		int band;
@@ -79,6 +102,17 @@ static void unpack_sideband(void)
 		case PACKET_READ_EOF:
 			break;
 		case PACKET_READ_NORMAL:
+			/*
+			 * When the "use_sideband" field of the reader is turned
+			 * on, sideband packets other than the payload have been
+			 * parsed and consumed in packet_reader_read(), and only
+			 * the payload arrives here.
+			 */
+			if (reader.use_sideband) {
+				write_or_die(1, reader.line, reader.pktlen - 1);
+				break;
+			}
+
 			band = reader.line[0] & 0xff;
 			if (band < 1 || band > 2)
 				continue; /* skip non-sideband packets */
@@ -97,14 +131,30 @@ static void unpack_sideband(void)
 
 static int send_split_sideband(void)
 {
+	const char *foo = "Foo.\n";
+	const char *bar = "Bar.\n";
 	const char *part1 = "Hello,";
 	const char *primary = "\001primary: regular output\n";
 	const char *part2 = " world!\n";
 
+	/* Each sideband message has a trailing newline character. */
+	send_sideband(1, 2, foo, strlen(foo), LARGE_PACKET_MAX);
+	send_sideband(1, 2, bar, strlen(bar), LARGE_PACKET_MAX);
+
+	/*
+	 * One sideband message is divided into part1 and part2
+	 * by the primary message.
+	 */
 	send_sideband(1, 2, part1, strlen(part1), LARGE_PACKET_MAX);
 	packet_write(1, primary, strlen(primary));
 	send_sideband(1, 2, part2, strlen(part2), LARGE_PACKET_MAX);
 	packet_response_end(1);
+
+	/*
+	 * We use unpack_sideband() to consume packets. A flush packet
+	 * is required to end parsing.
+	 */
+	packet_flush(1);
 
 	return 0;
 }
@@ -126,7 +176,7 @@ int cmd__pkt_line(int argc, const char **argv)
 	else if (!strcmp(argv[1], "unpack"))
 		unpack();
 	else if (!strcmp(argv[1], "unpack-sideband"))
-		unpack_sideband();
+		unpack_sideband(argc - 1, argv + 1);
 	else if (!strcmp(argv[1], "send-split-sideband"))
 		send_split_sideband();
 	else if (!strcmp(argv[1], "receive-sideband"))

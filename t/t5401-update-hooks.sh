@@ -133,10 +133,8 @@ test_expect_success 'pre-receive hook that forgets to read its input' '
 	EOF
 	rm -f victim.git/hooks/update victim.git/hooks/post-update &&
 
-	for v in $(test_seq 100 999)
-	do
-		git branch branch_$v main || return
-	done &&
+	printf "create refs/heads/branch_%d main\n" $(test_seq 100 999) >input &&
+	git update-ref --stdin <input &&
 	git push ./victim.git "+refs/heads/*:refs/heads/*"
 '
 

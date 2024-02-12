@@ -18,7 +18,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-'git merge-base' finds best common ancestor(s) between two commits to use
+'git merge-base' finds the best common ancestor(s) between two commits to use
 in a three-way merge.  One common ancestor is 'better' than another common
 ancestor if the latter is an ancestor of the former.  A common ancestor
 that does not have any better common ancestor is a 'best common
@@ -28,7 +28,7 @@ merge base for a pair of commits.
 OPERATION MODES
 ---------------
 
-As the most common special case, specifying only two commits on the
+In the most common special case, specifying only two commits on the
 command line means computing the merge base between the given two commits.
 
 More generally, among the two commits to compute the merge base from,
@@ -64,7 +64,7 @@ from linkgit:git-show-branch[1] when used with the `--merge-base` option.
 	the two commits, but also takes into account the reflog of
 	<ref> to see if the history leading to <commit> forked from
 	an earlier incarnation of the branch <ref> (see discussion
-	on this mode below).
+	of this mode below).
 
 OPTIONS
 -------
@@ -88,7 +88,7 @@ For example, with this topology:
 
 the merge base between 'A' and 'B' is '1'.
 
-Given three commits 'A', 'B' and 'C', `git merge-base A B C` will compute the
+Given three commits 'A', 'B', and 'C', `git merge-base A B C` will compute the
 merge base between 'A' and a hypothetical commit 'M', which is a merge
 between 'B' and 'C'.  For example, with this topology:
 
@@ -130,7 +130,7 @@ When the history involves criss-cross merges, there can be more than one
 ---2---o---o---B
 ....
 
-both '1' and '2' are merge-bases of A and B.  Neither one is better than
+both '1' and '2' are merge bases of A and B.  Neither one is better than
 the other (both are 'best' merge bases).  When the `--all` option is not given,
 it is unspecified which best one is output.
 
@@ -204,7 +204,7 @@ will find B0, and
 
     $ git rebase --onto origin/master $fork_point topic
 
-will replay D0, D1 and D on top of B to create a new history of this
+will replay D0, D1, and D on top of B to create a new history of this
 shape:
 
 ....

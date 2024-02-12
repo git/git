@@ -218,6 +218,13 @@ test_expect_success GPG 'amending already signed commit' '
 	! grep "BAD signature from" actual
 '
 
+test_expect_success GPG2 'bare signature' '
+	git verify-commit fifth-signed 2>expect &&
+	echo >>expect &&
+	git log -1 --format="%GG" fifth-signed >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success GPG 'show good signature with custom format' '
 	cat >expect <<-\EOF &&
 	G

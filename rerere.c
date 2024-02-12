@@ -1,23 +1,22 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
+#include "copy.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "string-list.h"
+#include "read-cache-ll.h"
 #include "rerere.h"
 #include "xdiff-interface.h"
 #include "dir.h"
 #include "resolve-undo.h"
-#include "ll-merge.h"
-#include "attr.h"
+#include "merge-ll.h"
+#include "path.h"
 #include "pathspec.h"
 #include "object-file.h"
-#include "object-store.h"
-#include "hash-lookup.h"
+#include "object-store-ll.h"
 #include "strmap.h"
-#include "wrapper.h"
 
 #define RESOLVED 0
 #define PUNTED 1
@@ -203,7 +202,7 @@ static void read_rr(struct repository *r, struct string_list *rr)
 		const unsigned hexsz = the_hash_algo->hexsz;
 
 		/* There has to be the hash, tab, path and then NUL */
-		if (buf.len < hexsz + 2 || get_sha1_hex(buf.buf, hash))
+		if (buf.len < hexsz + 2 || get_hash_hex(buf.buf, hash))
 			die(_("corrupt MERGE_RR"));
 
 		if (buf.buf[hexsz] != '.') {
@@ -1111,7 +1110,7 @@ int rerere_forget(struct repository *r, struct pathspec *pathspec)
 	 * recover the original conflicted state and then
 	 * find the conflicted paths.
 	 */
-	unmerge_index(r->index, pathspec);
+	unmerge_index(r->index, pathspec, 0);
 	find_conflict(r, &conflict);
 	for (i = 0; i < conflict.nr; i++) {
 		struct string_list_item *it = &conflict.items[i];

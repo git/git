@@ -1,12 +1,12 @@
 #define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
-#include "cache.h"
 #include "config.h"
 #include "dir.h"
 #include "gettext.h"
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "submodule.h"
 #include "write-or-die.h"
 

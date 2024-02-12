@@ -1,19 +1,13 @@
 #include "git-compat-util.h"
-#include "alloc.h"
-#include "attr.h"
 #include "object.h"
-#include "blob.h"
 #include "commit.h"
 #include "gettext.h"
 #include "hex.h"
 #include "tag.h"
 #include "tree.h"
-#include "delta.h"
 #include "pack.h"
 #include "tree-walk.h"
 #include "diff.h"
-#include "revision.h"
-#include "list-objects.h"
 #include "progress.h"
 #include "refs.h"
 #include "khash.h"
@@ -341,7 +335,9 @@ static void free_remote_islands(kh_str_t *remote_islands)
 	kh_destroy_str(remote_islands);
 }
 
-static int island_config_callback(const char *k, const char *v, void *cb)
+static int island_config_callback(const char *k, const char *v,
+				  const struct config_context *ctx UNUSED,
+				  void *cb)
 {
 	struct island_load_data *ild = cb;
 

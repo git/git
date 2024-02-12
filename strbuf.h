@@ -1,12 +1,20 @@
 #ifndef STRBUF_H
 #define STRBUF_H
 
+/*
+ * NOTE FOR STRBUF DEVELOPERS
+ *
+ * strbuf is a low-level primitive; as such it should interact only
+ * with other low-level primitives. Do not introduce new functions
+ * which interact with higher-level APIs.
+ */
+
 struct string_list;
 
 /**
- * strbuf's are meant to be used with all the usual C string and memory
+ * strbufs are meant to be used with all the usual C string and memory
  * APIs. Given that the length of the buffer is known, it's often better to
- * use the mem* functions than a str* one (memchr vs. strchr e.g.).
+ * use the mem* functions than a str* one (e.g., memchr vs. strchr).
  * Though, one has to be careful about the fact that str* functions often
  * stop on NULs and that strbufs may have embedded NULs.
  *
@@ -16,7 +24,7 @@ struct string_list;
  * strbufs have some invariants that are very important to keep in mind:
  *
  *  - The `buf` member is never NULL, so it can be used in any usual C
- *    string operations safely. strbuf's _have_ to be initialized either by
+ *    string operations safely. strbufs _have_ to be initialized either by
  *    `strbuf_init()` or by `= STRBUF_INIT` before the invariants, though.
  *
  *    Do *not* assume anything on what `buf` really is (e.g. if it is
@@ -29,7 +37,7 @@ struct string_list;
  *
  *  - The `buf` member is a byte array that has at least `len + 1` bytes
  *    allocated. The extra byte is used to store a `'\0'`, allowing the
- *    `buf` member to be a valid C-string. Every strbuf function ensure this
+ *    `buf` member to be a valid C-string. All strbuf functions ensure this
  *    invariant is preserved.
  *
  *    NOTE: It is OK to "play" with the buffer directly if you work it this
@@ -72,10 +80,6 @@ struct strbuf {
 extern char strbuf_slopbuf[];
 #define STRBUF_INIT  { .buf = strbuf_slopbuf }
 
-/*
- * Predeclare this here, since cache.h includes this file before it defines the
- * struct.
- */
 struct object_id;
 
 /**
@@ -283,7 +287,8 @@ void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
  * by a comment character and a blank.
  */
 void strbuf_add_commented_lines(struct strbuf *out,
-				const char *buf, size_t size);
+				const char *buf, size_t size,
+				char comment_line_char);
 
 
 /**
@@ -318,58 +323,19 @@ const char *strbuf_join_argv(struct strbuf *buf, int argc,
 			     const char **argv, char delim);
 
 /**
- * This function can be used to expand a format string containing
- * placeholders. To that end, it parses the string and calls the specified
- * function for every percent sign found.
- *
- * The callback function is given a pointer to the character after the `%`
- * and a pointer to the struct strbuf.  It is expected to add the expanded
- * version of the placeholder to the strbuf, e.g. to add a newline
- * character if the letter `n` appears after a `%`.  The function returns
- * the length of the placeholder recognized and `strbuf_expand()` skips
- * over it.
- *
- * The format `%%` is automatically expanded to a single `%` as a quoting
- * mechanism; callers do not need to handle the `%` placeholder themselves,
- * and the callback function will not be invoked for this placeholder.
- *
- * All other characters (non-percent and not skipped ones) are copied
- * verbatim to the strbuf.  If the callback returned zero, meaning that the
- * placeholder is unknown, then the percent sign is copied, too.
- *
- * In order to facilitate caching and to make it possible to give
- * parameters to the callback, `strbuf_expand()` passes a context
- * pointer with any kind of data.
+ * Used with `strbuf_expand_step` to expand the literals %n and %x
+ * followed by two hexadecimal digits. Returns the number of recognized
+ * characters.
  */
-typedef size_t (*expand_fn_t) (struct strbuf *sb,
-			       const char *placeholder,
-			       void *context);
-void strbuf_expand(struct strbuf *sb,
-		   const char *format,
-		   expand_fn_t fn,
-		   void *context);
+size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder);
 
 /**
- * Used as callback for `strbuf_expand` to only expand literals
- * (i.e. %n and %xNN). The context argument is ignored.
+ * If the string pointed to by `formatp` contains a percent sign ("%"),
+ * advance it to point to the character following the next one and
+ * return 1, otherwise return 0.  Append the substring before that
+ * percent sign to `sb`, or the whole string if there is none.
  */
-size_t strbuf_expand_literal_cb(struct strbuf *sb,
-				const char *placeholder,
-				void *context);
-
-/**
- * Used as callback for `strbuf_expand()`, expects an array of
- * struct strbuf_expand_dict_entry as context, i.e. pairs of
- * placeholder and replacement string.  The array needs to be
- * terminated by an entry with placeholder set to NULL.
- */
-struct strbuf_expand_dict_entry {
-	const char *placeholder;
-	const char *value;
-};
-size_t strbuf_expand_dict_cb(struct strbuf *sb,
-			     const char *placeholder,
-			     void *context);
+int strbuf_expand_step(struct strbuf *sb, const char **formatp);
 
 /**
  * Append the contents of one strbuf to another, quoting any
@@ -412,8 +378,8 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
  * Add a formatted string prepended by a comment character and a
  * blank to the buffer.
  */
-__attribute__((format (printf, 2, 3)))
-void strbuf_commented_addf(struct strbuf *sb, const char *fmt, ...);
+__attribute__((format (printf, 3, 4)))
+void strbuf_commented_addf(struct strbuf *sb, char comment_line_char, const char *fmt, ...);
 
 __attribute__((format (printf,2,0)))
 void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
@@ -476,6 +442,18 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
 ssize_t strbuf_write(struct strbuf *sb, FILE *stream);
 
 /**
+ * Read from a FILE * until the specified terminator is encountered,
+ * overwriting the existing contents of the strbuf.
+ *
+ * Reading stops after the terminator or at EOF.  The terminator is
+ * removed from the buffer before returning.  If the terminator is LF
+ * and if it is preceded by a CR, then the whole CRLF is stripped.
+ * Returns 0 unless there was nothing left before EOF, in which case
+ * it returns `EOF`.
+ */
+int strbuf_getdelim_strip_crlf(struct strbuf *sb, FILE *fp, int term);
+
+/**
  * Read a line from a FILE *, overwriting the existing contents of
  * the strbuf.  The strbuf_getline*() family of functions share
  * this signature, but have different line termination conventions.
@@ -528,28 +506,6 @@ int strbuf_getwholeline_fd(struct strbuf *sb, int fd, int term);
 int strbuf_getcwd(struct strbuf *sb);
 
 /**
- * Add a path to a buffer, converting a relative path to an
- * absolute one in the process.  Symbolic links are not
- * resolved.
- */
-void strbuf_add_absolute_path(struct strbuf *sb, const char *path);
-
-/**
- * Canonize `path` (make it absolute, resolve symlinks, remove extra
- * slashes) and append it to `sb`.  Die with an informative error
- * message if there is a problem.
- *
- * The directory part of `path` (i.e., everything up to the last
- * dir_sep) must denote a valid, existing directory, but the last
- * component need not exist.
- *
- * Callers that don't mind links should use the more lightweight
- * strbuf_add_absolute_path() instead.
- */
-void strbuf_add_real_path(struct strbuf *sb, const char *path);
-
-
-/**
  * Normalize in-place the path contained in the strbuf. See
  * normalize_path_copy() for details. If an error occurs, the contents of "sb"
  * are left untouched, and -1 is returned.
@@ -557,10 +513,11 @@ void strbuf_add_real_path(struct strbuf *sb, const char *path);
 int strbuf_normalize_path(struct strbuf *sb);
 
 /**
- * Strip whitespace from a buffer. The second parameter controls if
- * comments are considered contents to be removed or not.
+ * Strip whitespace from a buffer. If comment_line_char is non-NUL,
+ * then lines beginning with that character are considered comments,
+ * thus removed.
  */
-void strbuf_stripspace(struct strbuf *buf, int skip_comments);
+void strbuf_stripspace(struct strbuf *buf, char comment_line_char);
 
 static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
 {
@@ -630,16 +587,6 @@ void strbuf_add_separated_string_list(struct strbuf *str,
  */
 void strbuf_list_free(struct strbuf **list);
 
-/**
- * Add the abbreviation, as generated by repo_find_unique_abbrev(), of `sha1` to
- * the strbuf `sb`.
- */
-struct repository;
-void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
-				   const struct object_id *oid, int abbrev_len);
-void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
-			      int abbrev_len);
-
 /*
  * Remove the filename from the provided path string. If the path
  * contains a trailing separator, then the path is considered a directory
@@ -704,9 +651,6 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
 
 typedef int (*char_predicate)(char ch);
 
-int is_rfc3986_unreserved(char ch);
-int is_rfc3986_reserved_or_unreserved(char ch);
-
 void strbuf_addstr_urlencode(struct strbuf *sb, const char *name,
 			     char_predicate allow_unencoded_fn);
 
@@ -726,5 +670,37 @@ __attribute__((format (printf, 1, 0)))
 char *xstrvfmt(const char *fmt, va_list ap);
 __attribute__((format (printf, 1, 2)))
 char *xstrfmt(const char *fmt, ...);
+
+int starts_with(const char *str, const char *prefix);
+int istarts_with(const char *str, const char *prefix);
+
+/*
+ * If the string "str" is the same as the string in "prefix", then the "arg"
+ * parameter is set to the "def" parameter and 1 is returned.
+ * If the string "str" begins with the string found in "prefix" and then a
+ * "=" sign, then the "arg" parameter is set to "str + strlen(prefix) + 1"
+ * (i.e., to the point in the string right after the prefix and the "=" sign),
+ * and 1 is returned.
+ *
+ * Otherwise, return 0 and leave "arg" untouched.
+ *
+ * When we accept both a "--key" and a "--key=<val>" option, this function
+ * can be used instead of !strcmp(arg, "--key") and then
+ * skip_prefix(arg, "--key=", &arg) to parse such an option.
+ */
+int skip_to_optional_arg_default(const char *str, const char *prefix,
+				 const char **arg, const char *def);
+
+static inline int skip_to_optional_arg(const char *str, const char *prefix,
+				       const char **arg)
+{
+	return skip_to_optional_arg_default(str, prefix, arg, "");
+}
+
+static inline int ends_with(const char *str, const char *suffix)
+{
+	size_t len;
+	return strip_suffix(str, suffix, &len);
+}
 
 #endif /* STRBUF_H */

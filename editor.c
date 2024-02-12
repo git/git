@@ -6,11 +6,11 @@
 #include "environment.h"
 #include "gettext.h"
 #include "pager.h"
+#include "path.h"
 #include "strbuf.h"
 #include "strvec.h"
 #include "run-command.h"
 #include "sigchain.h"
-#include "wrapper.h"
 
 #ifndef DEFAULT_EDITOR
 #define DEFAULT_EDITOR "vi"

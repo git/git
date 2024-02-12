@@ -8,6 +8,7 @@ test_description='git branch assorted tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
@@ -24,10 +25,10 @@ test_expect_success 'prepare a trivial repository' '
 
 test_expect_success 'git branch --help should not have created a bogus branch' '
 	test_might_fail git branch --man --help </dev/null >/dev/null 2>&1 &&
-	test_path_is_missing .git/refs/heads/--help
+	test_ref_missing refs/heads/--help
 '
 
-test_expect_success 'branch -h in broken repository' '
+test_expect_success REFFILES 'branch -h in broken repository' '
 	mkdir broken &&
 	(
 		cd broken &&
@@ -35,11 +36,12 @@ test_expect_success 'branch -h in broken repository' '
 		>.git/refs/heads/main &&
 		test_expect_code 129 git branch -h >usage 2>&1
 	) &&
-	test_i18ngrep "[Uu]sage" broken/usage
+	test_grep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'git branch abc should create a branch' '
-	git branch abc && test_path_is_file .git/refs/heads/abc
+	git branch abc &&
+	test_ref_exists refs/heads/abc
 '
 
 test_expect_success 'git branch abc should fail when abc exists' '
@@ -60,11 +62,13 @@ test_expect_success 'git branch --force abc should succeed when abc exists' '
 '
 
 test_expect_success 'git branch a/b/c should create a branch' '
-	git branch a/b/c && test_path_is_file .git/refs/heads/a/b/c
+	git branch a/b/c &&
+	test_ref_exists refs/heads/a/b/c
 '
 
 test_expect_success 'git branch mb main... should create a branch' '
-	git branch mb main... && test_path_is_file .git/refs/heads/mb
+	git branch mb main... &&
+	test_ref_exists refs/heads/mb
 '
 
 test_expect_success 'git branch HEAD should fail' '
@@ -72,19 +76,19 @@ test_expect_success 'git branch HEAD should fail' '
 '
 
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$HEAD refs/heads/d/e/f@{0}: branch: Created from main
 EOF
 test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
-	test_path_is_file .git/refs/heads/d/e/f &&
-	test_path_is_file .git/logs/refs/heads/d/e/f &&
-	test_cmp expect .git/logs/refs/heads/d/e/f
+	test_ref_exists refs/heads/d/e/f &&
+	git reflog show --no-abbrev-commit refs/heads/d/e/f >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git branch -d d/e/f should delete a branch and a log' '
 	git branch -d d/e/f &&
-	test_path_is_missing .git/refs/heads/d/e/f &&
+	test_ref_missing refs/heads/d/e/f &&
 	test_must_fail git reflog exists refs/heads/d/e/f
 '
 
@@ -102,7 +106,7 @@ test_expect_success 'git branch l should work after branch l/m has been deleted'
 
 test_expect_success 'git branch -m dumps usage' '
 	test_expect_code 128 git branch -m 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch -m m broken_symref should work' '
@@ -199,10 +203,9 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	test $(git rev-parse --abbrev-ref HEAD) = bam
 '
 
-test_expect_success 'git branch -M baz bam should add entries to .git/logs/HEAD' '
-	msg="Branch: renamed refs/heads/baz to refs/heads/bam" &&
-	grep " $ZERO_OID.*$msg$" .git/logs/HEAD &&
-	grep "^$ZERO_OID.*$msg$" .git/logs/HEAD
+test_expect_success 'git branch -M baz bam should add entries to HEAD reflog' '
+	git reflog show HEAD >actual &&
+	grep "HEAD@{0}: Branch: renamed refs/heads/baz to refs/heads/bam" actual
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '
@@ -211,17 +214,20 @@ test_expect_success 'git branch -M should leave orphaned HEAD alone' '
 		cd orphan &&
 		test_commit initial &&
 		git checkout --orphan lonely &&
-		grep lonely .git/HEAD &&
-		test_path_is_missing .git/refs/head/lonely &&
+		git symbolic-ref HEAD >expect &&
+		echo refs/heads/lonely >actual &&
+		test_cmp expect actual &&
+		test_ref_missing refs/head/lonely &&
 		git branch -M main mistress &&
-		grep lonely .git/HEAD
+		git symbolic-ref HEAD >expect &&
+		test_cmp expect actual
 	)
 '
 
 test_expect_success 'resulting reflog can be shown by log -g' '
 	oid=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
-	HEAD@{0} $oid $msg
+	HEAD@{0} $oid Branch: renamed refs/heads/baz to refs/heads/bam
 	HEAD@{2} $oid checkout: moving from foo to baz
 	EOF
 	git log -g --format="%gd %H %gs" -2 HEAD >actual &&
@@ -236,6 +242,21 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 	test $(git -C bazdir rev-parse --abbrev-ref HEAD) = bam &&
 	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam &&
 	rm -r bazdir bazdir2 &&
+	git worktree prune
+'
+
+test_expect_success REFFILES 'git branch -M fails if updating any linked working tree fails' '
+	git worktree add -b baz bazdir1 &&
+	git worktree add -f bazdir2 baz &&
+	touch .git/worktrees/bazdir1/HEAD.lock &&
+	test_must_fail git branch -M baz bam &&
+	test $(git -C bazdir2 rev-parse --abbrev-ref HEAD) = bam &&
+	git branch -M bam baz &&
+	rm .git/worktrees/bazdir1/HEAD.lock &&
+	touch .git/worktrees/bazdir2/HEAD.lock &&
+	test_must_fail git branch -M baz bam &&
+	test $(git -C bazdir1 rev-parse --abbrev-ref HEAD) = bam &&
+	rm -rf bazdir1 bazdir2 &&
 	git worktree prune
 '
 
@@ -275,12 +296,26 @@ test_expect_success 'git branch -M topic topic should work when main is checked 
 test_expect_success 'git branch -M and -C fail on detached HEAD' '
 	git checkout HEAD^{} &&
 	test_when_finished git checkout - &&
-	echo "fatal: cannot rename the current branch while not on any." >expect &&
+	echo "fatal: cannot rename the current branch while not on any" >expect &&
 	test_must_fail git branch -M must-fail 2>err &&
 	test_cmp expect err &&
-	echo "fatal: cannot copy the current branch while not on any." >expect &&
+	echo "fatal: cannot copy the current branch while not on any" >expect &&
 	test_must_fail git branch -C must-fail 2>err &&
 	test_cmp expect err
+'
+
+test_expect_success 'git branch -m should work with orphan branches' '
+	test_when_finished git checkout - &&
+	test_when_finished git worktree remove -f wt &&
+	git worktree add wt --detach &&
+	# rename orphan in another worktreee
+	git -C wt checkout --orphan orphan-foo-wt &&
+	git branch -m orphan-foo-wt orphan-bar-wt &&
+	test orphan-bar-wt=$(git -C orphan-worktree branch --show-current) &&
+	# rename orphan in the current worktree
+	git checkout --orphan orphan-foo &&
+	git branch -m orphan-foo orphan-bar &&
+	test orphan-bar=$(git branch --show-current)
 '
 
 test_expect_success 'git branch -d on orphan HEAD (merged)' '
@@ -484,7 +519,7 @@ EOF
 
 mv .git/config .git/config-saved
 
-test_expect_success SHA1 'git branch -m q q2 without config should succeed' '
+test_expect_success DEFAULT_REPO_FORMAT 'git branch -m q q2 without config should succeed' '
 	git branch -m q q2 &&
 	git branch -m q2 q
 '
@@ -551,12 +586,12 @@ EOF
 
 test_expect_success 'git branch -c dumps usage' '
 	test_expect_code 128 git branch -c 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch --copy dumps usage' '
 	test_expect_code 128 git branch --copy 2>err &&
-	test_i18ngrep "branch name required" err
+	test_grep "branch name required" err
 '
 
 test_expect_success 'git branch -c d e should work' '
@@ -666,7 +701,8 @@ test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' 
 
 test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
 	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
-	! grep "$msg$" .git/logs/HEAD
+	git reflog HEAD >actual &&
+	! grep "$msg$" actual
 '
 
 test_expect_success 'git branch -C main should work when main is checked out' '
@@ -769,26 +805,26 @@ test_expect_success 'deleting a symref' '
 	git symbolic-ref refs/heads/symref refs/heads/target &&
 	echo "Deleted branch symref (was refs/heads/target)." >expect &&
 	git branch -d symref >actual &&
-	test_path_is_file .git/refs/heads/target &&
-	test_path_is_missing .git/refs/heads/symref &&
+	test_ref_exists refs/heads/target &&
+	test_ref_missing refs/heads/symref &&
 	test_cmp expect actual
 '
 
 test_expect_success 'deleting a dangling symref' '
 	git symbolic-ref refs/heads/dangling-symref nowhere &&
-	test_path_is_file .git/refs/heads/dangling-symref &&
+	git symbolic-ref --no-recurse refs/heads/dangling-symref &&
 	echo "Deleted branch dangling-symref (was nowhere)." >expect &&
 	git branch -d dangling-symref >actual &&
-	test_path_is_missing .git/refs/heads/dangling-symref &&
+	test_ref_missing refs/heads/dangling-symref &&
 	test_cmp expect actual
 '
 
 test_expect_success 'deleting a self-referential symref' '
 	git symbolic-ref refs/heads/self-reference refs/heads/self-reference &&
-	test_path_is_file .git/refs/heads/self-reference &&
+	test_ref_exists refs/heads/self-reference &&
 	echo "Deleted branch self-reference (was refs/heads/self-reference)." >expect &&
 	git branch -d self-reference >actual &&
-	test_path_is_missing .git/refs/heads/self-reference &&
+	test_ref_missing refs/heads/self-reference &&
 	test_cmp expect actual
 '
 
@@ -796,18 +832,18 @@ test_expect_success 'renaming a symref is not allowed' '
 	git symbolic-ref refs/heads/topic refs/heads/main &&
 	test_must_fail git branch -m topic new-topic &&
 	git symbolic-ref refs/heads/topic &&
-	test_path_is_file .git/refs/heads/main &&
-	test_path_is_missing .git/refs/heads/new-topic
+	test_ref_exists refs/heads/main &&
+	test_ref_missing refs/heads/new-topic
 '
 
-test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for u is a symlink' '
+test_expect_success SYMLINKS,REFFILES 'git branch -m u v should fail when the reflog for u is a symlink' '
 	git branch --create-reflog u &&
 	mv .git/logs/refs/heads/u real-u &&
 	ln -s real-u .git/logs/refs/heads/u &&
 	test_must_fail git branch -m u v
 '
 
-test_expect_success SYMLINKS 'git branch -m with symlinked .git/refs' '
+test_expect_success SYMLINKS,REFFILES 'git branch -m with symlinked .git/refs' '
 	test_when_finished "rm -rf subdir" &&
 	git init --bare subdir &&
 
@@ -912,7 +948,19 @@ test_expect_success 'test deleting branch without config' '
 test_expect_success 'deleting currently checked out branch fails' '
 	git worktree add -b my7 my7 &&
 	test_must_fail git -C my7 branch -d my7 &&
-	test_must_fail git branch -d my7 &&
+	test_must_fail git branch -d my7 2>actual &&
+	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
+	rm -r my7 &&
+	git worktree prune
+'
+
+test_expect_success 'deleting in-use branch fails' '
+	git worktree add my7 &&
+	test_commit -C my7 bt7 &&
+	git -C my7 bisect start HEAD HEAD~2 &&
+	test_must_fail git -C my7 branch -d my7 &&
+	test_must_fail git branch -d my7 2>actual &&
+	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
 	rm -r my7 &&
 	git worktree prune
 '
@@ -982,7 +1030,7 @@ test_expect_success '--set-upstream-to fails on multiple branches' '
 test_expect_success '--set-upstream-to fails on detached HEAD' '
 	git checkout HEAD^{} &&
 	test_when_finished git checkout - &&
-	echo "fatal: could not set upstream of HEAD to main when it does not point to any branch." >expect &&
+	echo "fatal: could not set upstream of HEAD to main when it does not point to any branch" >expect &&
 	test_must_fail git branch --set-upstream-to main 2>err &&
 	test_cmp expect err
 '
@@ -995,7 +1043,7 @@ test_expect_success '--set-upstream-to fails on a missing dst branch' '
 
 test_expect_success '--set-upstream-to fails on a missing src branch' '
 	test_must_fail git branch --set-upstream-to does-not-exist main 2>err &&
-	test_i18ngrep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
+	test_grep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
 '
 
 test_expect_success '--set-upstream-to fails on a non-ref' '
@@ -1009,7 +1057,7 @@ test_expect_success '--set-upstream-to fails on locked config' '
 	>.git/config.lock &&
 	git branch locked &&
 	test_must_fail git branch --set-upstream-to locked 2>err &&
-	test_i18ngrep "could not lock config file .git/config" err
+	test_grep "could not lock config file .git/config" err
 '
 
 test_expect_success 'use --set-upstream-to modify HEAD' '
@@ -1030,7 +1078,7 @@ test_expect_success 'use --set-upstream-to modify a particular branch' '
 '
 
 test_expect_success '--unset-upstream should fail if given a non-existent branch' '
-	echo "fatal: Branch '"'"'i-dont-exist'"'"' has no upstream information" >expect &&
+	echo "fatal: branch '"'"'i-dont-exist'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream i-dont-exist 2>err &&
 	test_cmp expect err
 '
@@ -1040,7 +1088,7 @@ test_expect_success '--unset-upstream should fail if config is locked' '
 	git branch --set-upstream-to locked &&
 	>.git/config.lock &&
 	test_must_fail git branch --unset-upstream 2>err &&
-	test_i18ngrep "could not lock config file .git/config" err
+	test_grep "could not lock config file .git/config" err
 '
 
 test_expect_success 'test --unset-upstream on HEAD' '
@@ -1052,7 +1100,7 @@ test_expect_success 'test --unset-upstream on HEAD' '
 	test_must_fail git config branch.main.remote &&
 	test_must_fail git config branch.main.merge &&
 	# fail for a branch without upstream set
-	echo "fatal: Branch '"'"'main'"'"' has no upstream information" >expect &&
+	echo "fatal: branch '"'"'main'"'"' has no upstream information" >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
 	test_cmp expect err
 '
@@ -1066,7 +1114,7 @@ test_expect_success '--unset-upstream should fail on multiple branches' '
 test_expect_success '--unset-upstream should fail on detached HEAD' '
 	git checkout HEAD^{} &&
 	test_when_finished git checkout - &&
-	echo "fatal: could not unset upstream of HEAD when it does not point to any branch." >expect &&
+	echo "fatal: could not unset upstream of HEAD when it does not point to any branch" >expect &&
 	test_must_fail git branch --unset-upstream 2>err &&
 	test_cmp expect err
 '
@@ -1095,14 +1143,14 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$HEAD refs/heads/g/h/i@{0}: branch: Created from main
 EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git checkout -b g/h/i -l main &&
-	test_path_is_file .git/refs/heads/g/h/i &&
-	test_path_is_file .git/logs/refs/heads/g/h/i &&
-	test_cmp expect .git/logs/refs/heads/g/h/i
+	test_ref_exists refs/heads/g/h/i &&
+	git reflog show --no-abbrev-commit refs/heads/g/h/i >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'checkout -b makes reflog by default' '
@@ -1476,7 +1524,7 @@ test_expect_success '--list during rebase' '
 	set_fake_editor &&
 	git rebase -i HEAD~2 &&
 	git branch --list >actual &&
-	test_i18ngrep "rebasing main" actual
+	test_grep "rebasing main" actual
 '
 
 test_expect_success '--list during rebase from detached HEAD' '
@@ -1488,7 +1536,7 @@ test_expect_success '--list during rebase from detached HEAD' '
 	set_fake_editor &&
 	git rebase -i HEAD~2 &&
 	git branch --list >actual &&
-	test_i18ngrep "rebasing detached HEAD $oid" actual
+	test_grep "rebasing detached HEAD $oid" actual
 '
 
 test_expect_success 'tracking with unexpected .fetch refspec' '
@@ -1528,9 +1576,10 @@ test_expect_success 'tracking with unexpected .fetch refspec' '
 
 test_expect_success 'configured committerdate sort' '
 	git init -b main sort &&
+	test_config -C sort branch.sort "committerdate" &&
+
 	(
 		cd sort &&
-		git config branch.sort committerdate &&
 		test_commit initial &&
 		git checkout -b a &&
 		test_commit a &&
@@ -1550,9 +1599,10 @@ test_expect_success 'configured committerdate sort' '
 '
 
 test_expect_success 'option override configured sort' '
+	test_config -C sort branch.sort "committerdate" &&
+
 	(
 		cd sort &&
-		git config branch.sort committerdate &&
 		git branch --sort=refname >actual &&
 		cat >expect <<-\EOF &&
 		  a
@@ -1564,10 +1614,70 @@ test_expect_success 'option override configured sort' '
 	)
 '
 
-test_expect_success 'invalid sort parameter in configuration' '
+test_expect_success '--no-sort cancels config sort keys' '
+	test_config -C sort branch.sort "-refname" &&
+
 	(
 		cd sort &&
-		git config branch.sort "v:notvalid" &&
+
+		# objecttype is identical for all of them, so sort falls back on
+		# default (ascending refname)
+		git branch \
+			--no-sort \
+			--sort="objecttype" >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		* b
+		  c
+		  main
+		EOF
+		test_cmp expect actual
+	)
+
+'
+
+test_expect_success '--no-sort cancels command line sort keys' '
+	(
+		cd sort &&
+
+		# objecttype is identical for all of them, so sort falls back on
+		# default (ascending refname)
+		git branch \
+			--sort="-refname" \
+			--no-sort \
+			--sort="objecttype" >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		* b
+		  c
+		  main
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--no-sort without subsequent --sort prints expected branches' '
+	(
+		cd sort &&
+
+		# Sort the results with `sort` for a consistent comparison
+		# against expected
+		git branch --no-sort | sort >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		  c
+		  main
+		* b
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'invalid sort parameter in configuration' '
+	test_config -C sort branch.sort "v:notvalid" &&
+
+	(
+		cd sort &&
 
 		# this works in the "listing" mode, so bad sort key
 		# is a dying offence.

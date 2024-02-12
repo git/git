@@ -15,13 +15,22 @@ test_expect_success 'empty name and missing email' '
 		sane_unset GIT_AUTHOR_EMAIL &&
 		GIT_AUTHOR_NAME= &&
 		test_must_fail git commit --allow-empty -m foo 2>err &&
-		test_i18ngrep ! "(null)" err
+		test_grep ! "(null)" err
 	)
 '
 
 test_expect_success 'commit rejects all-crud name' '
-	test_must_fail env GIT_AUTHOR_NAME=" .;<>" \
+	test_must_fail env GIT_AUTHOR_NAME=" ,;<>" \
 		git commit --allow-empty -m foo
+'
+
+test_expect_success 'commit does not strip trailing dot' '
+	author_name="Pat Doe Jr." &&
+	env GIT_AUTHOR_NAME="$author_name" \
+		git commit --allow-empty -m foo &&
+	git log -1 --format=%an >actual &&
+	echo "$author_name" >expected &&
+	test_cmp actual expected
 '
 
 # We must test the actual error message here, as an unwanted
@@ -31,8 +40,8 @@ test_expect_success 'empty configured name does not auto-detect' '
 		sane_unset GIT_AUTHOR_NAME &&
 		test_must_fail \
 			git -c user.name= commit --allow-empty -m foo 2>err &&
-		test_i18ngrep "empty ident name" err &&
-		test_i18ngrep "Author identity unknown" err
+		test_grep "empty ident name" err &&
+		test_grep "Author identity unknown" err
 	)
 '
 
@@ -41,8 +50,8 @@ test_expect_success 'empty configured name does not auto-detect for committer' '
 		sane_unset GIT_COMMITTER_NAME &&
 		test_must_fail \
 			git -c user.name= commit --allow-empty -m foo 2>err &&
-		test_i18ngrep "empty ident name" err &&
-		test_i18ngrep "Committer identity unknown" err
+		test_grep "empty ident name" err &&
+		test_grep "Committer identity unknown" err
 	)
 '
 

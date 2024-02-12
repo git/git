@@ -13,7 +13,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-reader.h"
 #include "merged.h"
 #include "basics.h"
-#include "constants.h"
 #include "record.h"
 #include "test_framework.h"
 #include "reftable-tests.h"
@@ -78,7 +77,7 @@ static void test_read_file(void)
 	int i = 0;
 
 	EXPECT(fd > 0);
-	n = write(fd, out, strlen(out));
+	n = write_in_full(fd, out, strlen(out));
 	EXPECT(n == strlen(out));
 	err = close(fd);
 	EXPECT(err >= 0);
@@ -289,6 +288,61 @@ static void test_reftable_stack_transaction_api(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_transaction_api_performs_auto_compaction(void)
+{
+	char *dir = get_tmp_dir(__LINE__);
+	struct reftable_write_options cfg = {0};
+	struct reftable_addition *add = NULL;
+	struct reftable_stack *st = NULL;
+	int i, n = 20, err;
+
+	err = reftable_new_stack(&st, dir, cfg);
+	EXPECT_ERR(err);
+
+	for (i = 0; i <= n; i++) {
+		struct reftable_ref_record ref = {
+			.update_index = reftable_stack_next_update_index(st),
+			.value_type = REFTABLE_REF_SYMREF,
+			.value.symref = "master",
+		};
+		char name[100];
+
+		snprintf(name, sizeof(name), "branch%04d", i);
+		ref.refname = name;
+
+		/*
+		 * Disable auto-compaction for all but the last runs. Like this
+		 * we can ensure that we indeed honor this setting and have
+		 * better control over when exactly auto compaction runs.
+		 */
+		st->disable_auto_compact = i != n;
+
+		err = reftable_stack_new_addition(&add, st);
+		EXPECT_ERR(err);
+
+		err = reftable_addition_add(add, &write_test_ref, &ref);
+		EXPECT_ERR(err);
+
+		err = reftable_addition_commit(add);
+		EXPECT_ERR(err);
+
+		reftable_addition_destroy(add);
+
+		/*
+		 * The stack length should grow continuously for all runs where
+		 * auto compaction is disabled. When enabled, we should merge
+		 * all tables in the stack.
+		 */
+		if (i != n)
+			EXPECT(st->merged->stack_len == i + 1);
+		else
+			EXPECT(st->merged->stack_len == 1);
+	}
+
+	reftable_stack_destroy(st);
+	clear_dir(dir);
+}
+
 static void test_reftable_stack_validate_refname(void)
 {
 	struct reftable_write_options cfg = { 0 };
@@ -389,14 +443,15 @@ static void test_reftable_stack_add(void)
 	int err = 0;
 	struct reftable_write_options cfg = {
 		.exact_log_message = 1,
+		.default_permissions = 0660,
 	};
 	struct reftable_stack *st = NULL;
 	char *dir = get_tmp_dir(__LINE__);
-
 	struct reftable_ref_record refs[2] = { { NULL } };
 	struct reftable_log_record logs[2] = { { NULL } };
+	struct strbuf path = STRBUF_INIT;
+	struct stat stat_result;
 	int N = ARRAY_SIZE(refs);
-
 
 	err = reftable_new_stack(&st, dir, cfg);
 	EXPECT_ERR(err);
@@ -408,7 +463,6 @@ static void test_reftable_stack_add(void)
 		refs[i].refname = xstrdup(buf);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
-		refs[i].value.val1 = reftable_malloc(GIT_SHA1_RAWSZ);
 		set_test_hash(refs[i].value.val1, i);
 
 		logs[i].refname = xstrdup(buf);
@@ -456,12 +510,32 @@ static void test_reftable_stack_add(void)
 		reftable_log_record_release(&dest);
 	}
 
+#ifndef GIT_WINDOWS_NATIVE
+	strbuf_addstr(&path, dir);
+	strbuf_addstr(&path, "/tables.list");
+	err = stat(path.buf, &stat_result);
+	EXPECT(!err);
+	EXPECT((stat_result.st_mode & 0777) == cfg.default_permissions);
+
+	strbuf_reset(&path);
+	strbuf_addstr(&path, dir);
+	strbuf_addstr(&path, "/");
+	/* do not try at home; not an external API for reftable. */
+	strbuf_addstr(&path, st->readers[0]->name);
+	err = stat(path.buf, &stat_result);
+	EXPECT(!err);
+	EXPECT((stat_result.st_mode & 0777) == cfg.default_permissions);
+#else
+	(void) stat_result;
+#endif
+
 	/* cleanup */
 	reftable_stack_destroy(st);
 	for (i = 0; i < N; i++) {
 		reftable_ref_record_release(&refs[i]);
 		reftable_log_record_release(&logs[i]);
 	}
+	strbuf_release(&path);
 	clear_dir(dir);
 }
 
@@ -545,7 +619,6 @@ static void test_reftable_stack_tombstone(void)
 		refs[i].update_index = i + 1;
 		if (i % 2 == 0) {
 			refs[i].value_type = REFTABLE_REF_VAL1;
-			refs[i].value.val1 = reftable_malloc(GIT_SHA1_RAWSZ);
 			set_test_hash(refs[i].value.val1, i);
 		}
 
@@ -850,6 +923,54 @@ static void test_reftable_stack_auto_compaction(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_add_performs_auto_compaction(void)
+{
+	struct reftable_write_options cfg = { 0 };
+	struct reftable_stack *st = NULL;
+	struct strbuf refname = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err, i, n = 20;
+
+	err = reftable_new_stack(&st, dir, cfg);
+	EXPECT_ERR(err);
+
+	for (i = 0; i <= n; i++) {
+		struct reftable_ref_record ref = {
+			.update_index = reftable_stack_next_update_index(st),
+			.value_type = REFTABLE_REF_SYMREF,
+			.value.symref = "master",
+		};
+
+		/*
+		 * Disable auto-compaction for all but the last runs. Like this
+		 * we can ensure that we indeed honor this setting and have
+		 * better control over when exactly auto compaction runs.
+		 */
+		st->disable_auto_compact = i != n;
+
+		strbuf_reset(&refname);
+		strbuf_addf(&refname, "branch-%04d", i);
+		ref.refname = refname.buf;
+
+		err = reftable_stack_add(st, &write_test_ref, &ref);
+		EXPECT_ERR(err);
+
+		/*
+		 * The stack length should grow continuously for all runs where
+		 * auto compaction is disabled. When enabled, we should merge
+		 * all tables in the stack.
+		 */
+		if (i != n)
+			EXPECT(st->merged->stack_len == i + 1);
+		else
+			EXPECT(st->merged->stack_len == 1);
+	}
+
+	reftable_stack_destroy(st);
+	strbuf_release(&refname);
+	clear_dir(dir);
+}
+
 static void test_reftable_stack_compaction_concurrent(void)
 {
 	struct reftable_write_options cfg = { 0 };
@@ -960,6 +1081,7 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_add);
 	RUN_TEST(test_reftable_stack_add_one);
 	RUN_TEST(test_reftable_stack_auto_compaction);
+	RUN_TEST(test_reftable_stack_add_performs_auto_compaction);
 	RUN_TEST(test_reftable_stack_compaction_concurrent);
 	RUN_TEST(test_reftable_stack_compaction_concurrent_clean);
 	RUN_TEST(test_reftable_stack_hash_id);
@@ -967,6 +1089,7 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_log_normalize);
 	RUN_TEST(test_reftable_stack_tombstone);
 	RUN_TEST(test_reftable_stack_transaction_api);
+	RUN_TEST(test_reftable_stack_transaction_api_performs_auto_compaction);
 	RUN_TEST(test_reftable_stack_update_index_check);
 	RUN_TEST(test_reftable_stack_uptodate);
 	RUN_TEST(test_reftable_stack_validate_refname);

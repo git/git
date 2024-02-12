@@ -59,6 +59,13 @@ be performed as well.
 	cruft pack instead of storing them as loose objects. `--cruft`
 	is on by default.
 
+--max-cruft-size=<n>::
+	When packing unreachable objects into a cruft pack, limit the
+	size of new cruft packs to be at most `<n>` bytes. Overrides any
+	value specified via the `gc.maxCruftSize` configuration. See
+	the `--max-cruft-size` option of linkgit:git-repack[1] for
+	more.
+
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
 	overridable by the config variable `gc.pruneExpire`).

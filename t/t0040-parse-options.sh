@@ -13,29 +13,36 @@ usage: test-tool parse-options <options>
 
     A helper function for the parse-options API.
 
-    --yes                 get a boolean
+    --[no-]yes            get a boolean
     -D, --no-doubt        begins with 'no-'
+    --doubt               opposite of --no-doubt
     -B, --no-fear         be brave
-    -b, --boolean         increment by one
-    -4, --or4             bitwise-or boolean with ...0100
-    --neg-or4             same as --no-or4
+    -b, --[no-]boolean    increment by one
+    -4, --[no-]or4        bitwise-or boolean with ...0100
+    --[no-]neg-or4        same as --no-or4
 
-    -i, --integer <n>     get a integer
+    -i, --[no-]integer <n>
+                          get a integer
     -j <n>                get a integer, too
     -m, --magnitude <n>   get a magnitude
-    --set23               set integer to 23
+    --[no-]set23          set integer to 23
     --mode1               set integer to 1 (cmdmode option)
     --mode2               set integer to 2 (cmdmode option)
-    -L, --length <str>    get length of <str>
-    -F, --file <file>     set file to <file>
+    --[no-]mode34 (3|4)   set integer to 3 or 4 (cmdmode option)
+    -L, --[no-]length <str>
+                          get length of <str>
+    -F, --[no-]file <file>
+                          set file to <file>
 
 String options
-    -s, --string <string>
+    -s, --[no-]string <string>
                           get a string
-    --string2 <str>       get another string
-    --st <st>             get another string (pervert ordering)
+    --[no-]string2 <str>  get another string
+    --[no-]st <st>        get another string (pervert ordering)
     -o <str>              get another string
-    --list <str>          add str to list
+    --longhelp            help text of this entry
+                          spans multiple lines
+    --[no-]list <str>     add str to list
 
 Magic arguments
     -NUM                  set integer to NUM
@@ -44,16 +51,17 @@ Magic arguments
     --no-ambiguous        negative ambiguity
 
 Standard options
-    --abbrev[=<n>]        use <n> digits to display object names
-    -v, --verbose         be verbose
-    -n, --dry-run         dry run
-    -q, --quiet           be quiet
-    --expect <string>     expected output in the variable dump
+    --[no-]abbrev[=<n>]   use <n> digits to display object names
+    -v, --[no-]verbose    be verbose
+    -n, --[no-]dry-run    dry run
+    -q, --[no-]quiet      be quiet
+    --[no-]expect <string>
+                          expected output in the variable dump
 
 Alias
-    -A, --alias-source <string>
+    -A, --[no-]alias-source <string>
                           get a string
-    -Z, --alias-target <string>
+    -Z, --[no-]alias-target <string>
                           alias of --alias-source
 
 EOF
@@ -359,19 +367,41 @@ test_expect_success 'OPT_NEGBIT() works' '
 '
 
 test_expect_success 'OPT_CMDMODE() works' '
-	test-tool parse-options --expect="integer: 1" --mode1
+	test-tool parse-options --expect="integer: 1" --mode1 &&
+	test-tool parse-options --expect="integer: 3" --mode34=3
 '
 
-test_expect_success 'OPT_CMDMODE() detects incompatibility' '
+test_expect_success 'OPT_CMDMODE() detects incompatibility (1)' '
 	test_must_fail test-tool parse-options --mode1 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "incompatible with --mode" output.err
+	test_grep "mode1" output.err &&
+	test_grep "mode2" output.err &&
+	test_grep "cannot be used together" output.err
 '
 
-test_expect_success 'OPT_CMDMODE() detects incompatibility with something else' '
+test_expect_success 'OPT_CMDMODE() detects incompatibility (2)' '
 	test_must_fail test-tool parse-options --set23 --mode2 >output 2>output.err &&
 	test_must_be_empty output &&
-	test_i18ngrep "incompatible with something else" output.err
+	test_grep "mode2" output.err &&
+	test_grep "set23" output.err &&
+	test_grep "cannot be used together" output.err
+'
+
+test_expect_success 'OPT_CMDMODE() detects incompatibility (3)' '
+	test_must_fail test-tool parse-options --mode2 --set23 >output 2>output.err &&
+	test_must_be_empty output &&
+	test_grep "mode2" output.err &&
+	test_grep "set23" output.err &&
+	test_grep "cannot be used together" output.err
+'
+
+test_expect_success 'OPT_CMDMODE() detects incompatibility (4)' '
+	test_must_fail test-tool parse-options --mode2 --mode34=3 \
+		>output 2>output.err &&
+	test_must_be_empty output &&
+	test_grep "mode2" output.err &&
+	test_grep "mode34.3" output.err &&
+	test_grep "cannot be used together" output.err
 '
 
 test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '

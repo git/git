@@ -18,7 +18,7 @@ test_expect_success 'extra delim packet in v2 ls-refs args' '
 	} >input &&
 	test_must_fail env GIT_PROTOCOL=version=2 \
 		git upload-pack . <input 2>err &&
-	test_i18ngrep "expected flush after ls-refs arguments" err
+	test_grep "expected flush after ls-refs arguments" err
 '
 
 test_expect_success 'extra delim packet in v2 fetch args' '
@@ -31,7 +31,7 @@ test_expect_success 'extra delim packet in v2 fetch args' '
 	} >input &&
 	test_must_fail env GIT_PROTOCOL=version=2 \
 		git upload-pack . <input 2>err &&
-	test_i18ngrep "expected flush after fetch arguments" err
+	test_grep "expected flush after fetch arguments" err
 '
 
 test_expect_success 'bogus symref in v0 capabilities' '

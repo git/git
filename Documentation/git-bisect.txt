@@ -16,8 +16,8 @@ DESCRIPTION
 The command takes various subcommands, and different options depending
 on the subcommand:
 
- git bisect start [--term-{new,bad}=<term> --term-{old,good}=<term>]
-		  [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]
+ git bisect start [--term-(new|bad)=<term-new> --term-(old|good)=<term-old>]
+		  [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
  git bisect (bad|new|<term-new>) [<rev>]
  git bisect (good|old|<term-old>) [<rev>...]
  git bisect terms [--term-good | --term-bad]
@@ -26,7 +26,7 @@ on the subcommand:
  git bisect (visualize|view)
  git bisect replay <logfile>
  git bisect log
- git bisect run <cmd>...
+ git bisect run <cmd> [<arg>...]
  git bisect help
 
 This command uses a binary search algorithm to find which commit in
@@ -204,9 +204,14 @@ as an alternative to `visualize`):
 $ git bisect visualize
 ------------
 
-If the `DISPLAY` environment variable is not set, 'git log' is used
-instead.  You can also give command-line options such as `-p` and
-`--stat`.
+Git detects a graphical environment through various environment variables:
+`DISPLAY`, which is set in X Window System environments on Unix systems.
+`SESSIONNAME`, which is set under Cygwin in interactive desktop sessions.
+`MSYSTEM`, which is set under Msys2 and Git for Windows.
+`SECURITYSESSIONID`, which may be set on macOS in interactive desktop sessions.
+
+If none of these environment variables is set, 'git log' is used instead.
+You can also give command-line options such as `-p` and `--stat`.
 
 ------------
 $ git bisect visualize --stat
@@ -294,7 +299,7 @@ Cutting down bisection by giving more parameters to bisect start
 
 You can further cut down the number of trials, if you know what part of
 the tree is involved in the problem you are tracking down, by specifying
-path parameters when issuing the `bisect start` command:
+pathspec parameters when issuing the `bisect start` command:
 
 ------------
 $ git bisect start -- arch/i386 include/asm-i386
@@ -357,7 +362,7 @@ OPTIONS
 --no-checkout::
 +
 Do not checkout the new working tree at each iteration of the bisection
-process. Instead just update a special reference named `BISECT_HEAD` to make
+process. Instead just update the reference named `BISECT_HEAD` to make
 it point to the commit that should be tested.
 +
 This option may be useful when the test you would perform in each step

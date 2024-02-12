@@ -3,9 +3,10 @@
 
 #include "gettext.h"
 #include "oid-array.h"
-#include "refs.h"
 #include "commit.h"
 #include "string-list.h"
+#include "strvec.h"
+#include "commit-reach.h"
 
 /* Quoting styles */
 #define QUOTE_NONE 0
@@ -59,6 +60,7 @@ struct ref_array {
 
 struct ref_filter {
 	const char **name_patterns;
+	struct strvec exclude;
 	struct oid_array points_at;
 	struct commit_list *with_commit;
 	struct commit_list *no_commit;
@@ -73,6 +75,11 @@ struct ref_filter {
 		lines;
 	int abbrev,
 		verbose;
+
+	struct {
+		struct contains_cache contains_cache;
+		struct contains_cache no_contains_cache;
+	} internal;
 };
 
 struct ref_format {
@@ -90,8 +97,17 @@ struct ref_format {
 
 	/* List of bases for ahead-behind counts. */
 	struct string_list bases;
+
+	struct {
+		int max_count;
+		int omit_empty;
+	} array_opts;
 };
 
+#define REF_FILTER_INIT { \
+	.points_at = OID_ARRAY_INIT, \
+	.exclude = STRVEC_INIT, \
+}
 #define REF_FORMAT_INIT {             \
 	.use_color = -1,              \
 	.bases = STRING_LIST_INIT_DUP, \
@@ -109,6 +125,9 @@ struct ref_format {
 #define OPT_REF_SORT(var) \
 	OPT_STRING_LIST(0, "sort", (var), \
 			N_("key"), N_("field name to sort on"))
+#define OPT_REF_FILTER_EXCLUDE(var) \
+	OPT_STRVEC(0, "exclude", &(var)->exclude, \
+		   N_("pattern"), N_("exclude refs which match pattern"))
 
 /*
  * API for filtering a set of refs. Based on the type of refs the user
@@ -117,6 +136,14 @@ struct ref_format {
  * filtered refs in the ref_array structure.
  */
 int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type);
+/*
+ * Filter refs using the given ref_filter and type, sort the contents
+ * according to the given ref_sorting, format the filtered refs with the
+ * given ref_format, and print them to stdout.
+ */
+void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
+			    struct ref_sorting *sorting,
+			    struct ref_format *format);
 /*  Clear all memory allocated to ref_array */
 void ref_array_clear(struct ref_array *array);
 /*  Used to verify if the given format is correct and to parse out the used atoms */
@@ -140,6 +167,12 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 char *get_head_description(void);
 /*  Set up translated strings in the output. */
 void setup_ref_filter_porcelain_msg(void);
+
+/*
+ * Print up to maxcount ref_array elements to stdout using the given
+ * ref_format.
+ */
+void print_formatted_ref_array(struct ref_array *array, struct ref_format *format);
 
 /*
  * Print a single ref, outside of any ref-filter. Note that the
@@ -166,5 +199,8 @@ struct ref_array_item *ref_array_push(struct ref_array *array,
 void filter_ahead_behind(struct repository *r,
 			 struct ref_format *format,
 			 struct ref_array *array);
+
+void ref_filter_init(struct ref_filter *filter);
+void ref_filter_clear(struct ref_filter *filter);
 
 #endif /*  REF_FILTER_H  */

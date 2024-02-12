@@ -21,7 +21,7 @@ test_expect_success '"git log :/" should not be ambiguous' '
 test_expect_success '"git log :/a" should be ambiguous (applied both rev and worktree)' '
 	: >a &&
 	test_must_fail git log :/a 2>error &&
-	test_i18ngrep ambiguous error
+	test_grep ambiguous error
 '
 
 test_expect_success '"git log :/a -- " should not be ambiguous' '
@@ -65,7 +65,7 @@ test_expect_success '"git log :/in" should not be ambiguous' '
 
 test_expect_success '"git log :" should be ambiguous' '
 	test_must_fail git log : 2>error &&
-	test_i18ngrep ambiguous error
+	test_grep ambiguous error
 '
 
 test_expect_success 'git log -- :' '
@@ -104,7 +104,7 @@ test_expect_success '"git log :(exclude)sub --" must resolve as an object' '
 
 test_expect_success '"git log :(unknown-magic) complains of bogus magic' '
 	test_must_fail git log ":(unknown-magic)" 2>error &&
-	test_i18ngrep pathspec.magic error
+	test_grep pathspec.magic error
 '
 
 test_expect_success 'command line pathspec parsing for "git log"' '

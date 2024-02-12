@@ -24,7 +24,7 @@ test_expect_success setup '
 test_expect_success 'detect rewrite' '
 
 	actual=$(git diff-files -B --summary test) &&
-	verbose expr "$actual" : " rewrite test ([0-9]*%)$"
+	expr "$actual" : " rewrite test ([0-9]*%)$"
 
 '
 

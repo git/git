@@ -42,7 +42,7 @@ both the "smart" and "dumb" HTTP protocols used by Git operate
 by appending additional path components onto the end of the user
 supplied `$GIT_URL` string.
 
-An example of a dumb client requesting for a loose object:
+An example of a dumb client requesting a loose object:
 
   $GIT_URL:     http://example.com:8080/git/repo.git
   URL request:  http://example.com:8080/git/repo.git/objects/d0/49f6c27a2244e12041955e262a404c7faba355
@@ -379,7 +379,7 @@ C: Place any object seen into set `advertised`.
 C: Build an empty set, `common`, to hold the objects that are later
    determined to be on both ends.
 
-C: Build a set, `want`, of the objects from `advertised` the client
+C: Build a set, `want`, of the objects from `advertised` that the client
    wants to fetch, based on what it saw during ref discovery.
 
 C: Start a queue, `c_pending`, ordered by commit time (popping newest
@@ -391,14 +391,14 @@ C: Start a queue, `c_pending`, ordered by commit time (popping newest
 
 C: Send one `$GIT_URL/git-upload-pack` request:
 
-   C: 0032want <want #1>...............................
-   C: 0032want <want #2>...............................
+   C: 0032want <want-#1>...............................
+   C: 0032want <want-#2>...............................
    ....
-   C: 0032have <common #1>.............................
-   C: 0032have <common #2>.............................
+   C: 0032have <common-#1>.............................
+   C: 0032have <common-#2>.............................
    ....
-   C: 0032have <have #1>...............................
-   C: 0032have <have #2>...............................
+   C: 0032have <have-#1>...............................
+   C: 0032have <have-#2>...............................
    ....
    C: 0000
 
@@ -423,7 +423,7 @@ multiple commands. Object names MUST be given using the object format
 negotiated through the `object-format` capability (default SHA-1).
 
 The `have` list is created by popping the first 32 commits
-from `c_pending`.  Less can be supplied if `c_pending` empties.
+from `c_pending`.  Fewer can be supplied if `c_pending` empties.
 
 If the client has sent 256 "have" commits and has not yet
 received one of those back from `s_common`, or the client has
@@ -512,7 +512,7 @@ Within the command portion of the request body clients SHOULD send
 the id obtained through ref discovery as old_id.
 
   update_request  =  command_list
-		     "PACK" <binary data>
+		     "PACK" <binary-data>
 
   command_list    =  PKT-LINE(command NUL cap_list LF)
 		     *(command_pkt)
@@ -529,8 +529,8 @@ TODO: Document this further.
 REFERENCES
 ----------
 
-http://www.ietf.org/rfc/rfc1738.txt[RFC 1738: Uniform Resource Locators (URL)]
-http://www.ietf.org/rfc/rfc2616.txt[RFC 2616: Hypertext Transfer Protocol -- HTTP/1.1]
+https://www.ietf.org/rfc/rfc1738.txt[RFC 1738: Uniform Resource Locators (URL)]
+https://www.ietf.org/rfc/rfc2616.txt[RFC 2616: Hypertext Transfer Protocol -- HTTP/1.1]
 
 SEE ALSO
 --------

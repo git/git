@@ -1,15 +1,14 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "environment.h"
+#include "path.h"
 #include "pkt-line.h"
 #include "protocol.h"
 #include "run-command.h"
 #include "setup.h"
 #include "strbuf.h"
 #include "string-list.h"
-#include "wrapper.h"
 
 #ifdef NO_INITGROUPS
 #define initgroups(x, y) (0) /* nothing */
@@ -143,42 +142,6 @@ static void NORETURN daemon_die(const char *err, va_list params)
 	exit(1);
 }
 
-struct expand_path_context {
-	const char *directory;
-	struct hostinfo *hostinfo;
-};
-
-static size_t expand_path(struct strbuf *sb, const char *placeholder, void *ctx)
-{
-	struct expand_path_context *context = ctx;
-	struct hostinfo *hi = context->hostinfo;
-
-	switch (placeholder[0]) {
-	case 'H':
-		strbuf_addbuf(sb, &hi->hostname);
-		return 1;
-	case 'C':
-		if (placeholder[1] == 'H') {
-			strbuf_addstr(sb, get_canon_hostname(hi));
-			return 2;
-		}
-		break;
-	case 'I':
-		if (placeholder[1] == 'P') {
-			strbuf_addstr(sb, get_ip_address(hi));
-			return 2;
-		}
-		break;
-	case 'P':
-		strbuf_addbuf(sb, &hi->tcp_port);
-		return 1;
-	case 'D':
-		strbuf_addstr(sb, context->directory);
-		return 1;
-	}
-	return 0;
-}
-
 static const char *path_ok(const char *directory, struct hostinfo *hi)
 {
 	static char rpath[PATH_MAX];
@@ -222,10 +185,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 	}
 	else if (interpolated_path && hi->saw_extended_args) {
 		struct strbuf expanded_path = STRBUF_INIT;
-		struct expand_path_context context;
-
-		context.directory = directory;
-		context.hostinfo = hi;
+		const char *format = interpolated_path;
 
 		if (*dir != '/') {
 			/* Allow only absolute */
@@ -233,8 +193,24 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 			return NULL;
 		}
 
-		strbuf_expand(&expanded_path, interpolated_path,
-			      expand_path, &context);
+		while (strbuf_expand_step(&expanded_path, &format)) {
+			if (skip_prefix(format, "%", &format))
+				strbuf_addch(&expanded_path, '%');
+			else if (skip_prefix(format, "H", &format))
+				strbuf_addbuf(&expanded_path, &hi->hostname);
+			else if (skip_prefix(format, "CH", &format))
+				strbuf_addstr(&expanded_path,
+					      get_canon_hostname(hi));
+			else if (skip_prefix(format, "IP", &format))
+				strbuf_addstr(&expanded_path,
+					      get_ip_address(hi));
+			else if (skip_prefix(format, "P", &format))
+				strbuf_addbuf(&expanded_path, &hi->tcp_port);
+			else if (skip_prefix(format, "D", &format))
+				strbuf_addstr(&expanded_path, directory);
+			else
+				strbuf_addch(&expanded_path, '%');
+		}
 
 		rlen = strlcpy(interp_path, expanded_path.buf,
 			       sizeof(interp_path));
@@ -1267,19 +1243,20 @@ static int serve(struct string_list *listen_addr, int listen_port,
 int cmd_main(int argc, const char **argv)
 {
 	int listen_port = 0;
-	struct string_list listen_addr = STRING_LIST_INIT_NODUP;
+	struct string_list listen_addr = STRING_LIST_INIT_DUP;
 	int serve_mode = 0, inetd_mode = 0;
 	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
 	struct credentials *cred = NULL;
 	int i;
+	int ret;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		const char *v;
 
 		if (skip_prefix(arg, "--listen=", &v)) {
-			string_list_append(&listen_addr, xstrdup_tolower(v));
+			string_list_append_nodup(&listen_addr, xstrdup_tolower(v));
 			continue;
 		}
 		if (skip_prefix(arg, "--port=", &v)) {
@@ -1461,22 +1438,26 @@ int cmd_main(int argc, const char **argv)
 			die_errno("failed to redirect stderr to /dev/null");
 	}
 
-	if (inetd_mode || serve_mode)
-		return execute();
+	if (inetd_mode || serve_mode) {
+		ret = execute();
+	} else {
+		if (detach) {
+			if (daemonize())
+				die("--detach not supported on this platform");
+		}
 
-	if (detach) {
-		if (daemonize())
-			die("--detach not supported on this platform");
+		if (pid_file)
+			write_file(pid_file, "%"PRIuMAX, (uintmax_t) getpid());
+
+		/* prepare argv for serving-processes */
+		strvec_push(&cld_argv, argv[0]); /* git-daemon */
+		strvec_push(&cld_argv, "--serve");
+		for (i = 1; i < argc; ++i)
+			strvec_push(&cld_argv, argv[i]);
+
+		ret = serve(&listen_addr, listen_port, cred);
 	}
 
-	if (pid_file)
-		write_file(pid_file, "%"PRIuMAX, (uintmax_t) getpid());
-
-	/* prepare argv for serving-processes */
-	strvec_push(&cld_argv, argv[0]); /* git-daemon */
-	strvec_push(&cld_argv, "--serve");
-	for (i = 1; i < argc; ++i)
-		strvec_push(&cld_argv, argv[i]);
-
-	return serve(&listen_addr, listen_port, cred);
+	string_list_clear(&listen_addr, 0);
+	return ret;
 }

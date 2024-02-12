@@ -85,6 +85,7 @@ check_describe e-1-gHASH --tags HEAD^^
 check_describe c-2-gHASH --tags HEAD^^2
 check_describe B --tags HEAD^^2^
 check_describe e --tags HEAD^^^
+check_describe e --tags --exact-match HEAD^^^
 
 check_describe heads/main --all HEAD
 check_describe tags/c-6-gHASH --all HEAD^
@@ -95,6 +96,13 @@ check_describe A-3-gHASH --long HEAD^^2
 
 check_describe c-7-gHASH --tags
 check_describe e-3-gHASH --first-parent --tags
+
+check_describe c-7-gHASH --tags --no-exact-match HEAD
+check_describe e-3-gHASH --first-parent --tags --no-exact-match HEAD
+
+test_expect_success '--exact-match failure' '
+	test_must_fail git describe --exact-match HEAD 2>err
+'
 
 test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
 	echo "A^0" >expect &&
@@ -384,7 +392,7 @@ test_expect_success 'describe directly tagged blob' '
 test_expect_success 'describe tag object' '
 	git tag test-blob-1 -a -m msg unique-file:file &&
 	test_must_fail git describe test-blob-1 2>actual &&
-	test_i18ngrep "fatal: test-blob-1 is neither a commit nor blob" actual
+	test_grep "fatal: test-blob-1 is neither a commit nor blob" actual
 '
 
 test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '

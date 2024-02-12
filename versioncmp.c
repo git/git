@@ -1,6 +1,8 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
+#include "strbuf.h"
 #include "string-list.h"
+#include "versioncmp.h"
 
 /*
  * versioncmp(): copied from string/strverscmp.c in glibc commit

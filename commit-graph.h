@@ -1,12 +1,18 @@
 #ifndef COMMIT_GRAPH_H
 #define COMMIT_GRAPH_H
 
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "oidset.h"
 
 #define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
 #define GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE "GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE"
 #define GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS"
+
+/*
+ * This environment variable controls whether commits looked up via the
+ * commit graph will be double checked to exist in the object database.
+ */
+#define GIT_COMMIT_GRAPH_PARANOIA "GIT_COMMIT_GRAPH_PARANOIA"
 
 /*
  * This method is only used to enhance coverage of the commit-graph
@@ -26,6 +32,7 @@ struct string_list;
 char *get_commit_graph_filename(struct object_directory *odb);
 char *get_commit_graph_chain_filename(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
+int open_commit_graph_chain(const char *chain_file, int *fd, struct stat *st);
 
 /*
  * Given a commit struct, try to fill the commit struct info, including:
@@ -93,10 +100,14 @@ struct commit_graph {
 	const unsigned char *chunk_commit_data;
 	const unsigned char *chunk_generation_data;
 	const unsigned char *chunk_generation_data_overflow;
+	size_t chunk_generation_data_overflow_size;
 	const unsigned char *chunk_extra_edges;
+	size_t chunk_extra_edges_size;
 	const unsigned char *chunk_base_graphs;
+	size_t chunk_base_graphs_size;
 	const unsigned char *chunk_bloom_indexes;
 	const unsigned char *chunk_bloom_data;
+	size_t chunk_bloom_data_size;
 
 	struct topo_level_slab *topo_levels;
 	struct bloom_filter_settings *bloom_filter_settings;
@@ -105,6 +116,9 @@ struct commit_graph {
 struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 						 int fd, struct stat *st,
 						 struct object_directory *odb);
+struct commit_graph *load_commit_graph_chain_fd_st(struct repository *r,
+						   int fd, struct stat *st,
+						   int *incomplete_chain);
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
 

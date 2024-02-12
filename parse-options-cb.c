@@ -3,6 +3,7 @@
 #include "branch.h"
 #include "commit.h"
 #include "color.h"
+#include "date.h"
 #include "environment.h"
 #include "gettext.h"
 #include "object-name.h"
@@ -226,7 +227,9 @@ int parse_opt_strvec(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
+int parse_opt_noop_cb(const struct option *opt UNUSED,
+		      const char *arg UNUSED,
+		      int unset UNUSED)
 {
 	return 0;
 }

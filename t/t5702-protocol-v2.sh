@@ -189,8 +189,8 @@ test_expect_success 'warn if using server-option with ls-remote with legacy prot
 	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -c protocol.version=0 \
 		ls-remote -o hello -o world "file://$(pwd)/file_parent" main 2>err &&
 
-	test_i18ngrep "see protocol.version in" err &&
-	test_i18ngrep "server options require protocol version 2 or later" err
+	test_grep "see protocol.version in" err &&
+	test_grep "server options require protocol version 2 or later" err
 '
 
 test_expect_success 'clone with file:// using protocol v2' '
@@ -221,7 +221,9 @@ test_expect_success 'clone of empty repo propagates name of default branch' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone "file://$(pwd)/file_empty_parent" file_empty_child &&
-	grep "refs/heads/mydefaultbranch" file_empty_child/.git/HEAD
+	echo refs/heads/mydefaultbranch >expect &&
+	git -C file_empty_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success '...but not if explicitly forbidden by config' '
@@ -234,7 +236,9 @@ test_expect_success '...but not if explicitly forbidden by config' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone "file://$(pwd)/file_empty_parent" file_empty_child &&
-	! grep "refs/heads/mydefaultbranch" file_empty_child/.git/HEAD
+	echo refs/heads/main >expect &&
+	git -C file_empty_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'bare clone propagates empty default branch' '
@@ -247,7 +251,9 @@ test_expect_success 'bare clone propagates empty default branch' '
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone --bare \
 		"file://$(pwd)/file_empty_parent" file_empty_child.git &&
-	grep "refs/heads/mydefaultbranch" file_empty_child.git/HEAD
+	echo "refs/heads/mydefaultbranch" >expect &&
+	git -C file_empty_child.git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
@@ -265,7 +271,9 @@ test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone "file://$(pwd)/file_unborn_parent" \
 		file_unborn_child 2>stderr &&
-	grep "refs/heads/mydefaultbranch" file_unborn_child/.git/HEAD &&
+	echo "refs/heads/mydefaultbranch" >expect &&
+	git -C file_unborn_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
 	grep "warning: remote HEAD refers to nonexistent ref" stderr
 '
 
@@ -295,7 +303,9 @@ test_expect_success 'bare clone propagates unborn HEAD from non-empty repo' '
 	git -c init.defaultBranch=main -c protocol.version=2 \
 		clone --bare "file://$(pwd)/file_unborn_parent" \
 		file_unborn_child.git 2>stderr &&
-	grep "refs/heads/mydefaultbranch" file_unborn_child.git/HEAD &&
+	echo "refs/heads/mydefaultbranch" >expect &&
+	git -C file_unborn_child.git symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
 	! grep "warning:" stderr
 '
 
@@ -315,7 +325,9 @@ test_expect_success 'defaulted HEAD uses remote branch if available' '
 	git -c init.defaultBranch=branchwithstuff -c protocol.version=2 \
 		clone "file://$(pwd)/file_unborn_parent" \
 		file_unborn_child 2>stderr &&
-	grep "refs/heads/branchwithstuff" file_unborn_child/.git/HEAD &&
+	echo "refs/heads/branchwithstuff" >expect &&
+	git -C file_unborn_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
 	test_path_is_file file_unborn_child/stuff.t &&
 	! grep "warning:" stderr
 '
@@ -377,8 +389,8 @@ test_expect_success 'warn if using server-option with fetch with legacy protocol
 	test_must_fail env GIT_TEST_PROTOCOL_VERSION=0 git -C temp_child -c protocol.version=0 \
 		fetch -o hello -o world "file://$(pwd)/file_parent" main 2>err &&
 
-	test_i18ngrep "see protocol.version in" err &&
-	test_i18ngrep "server options require protocol version 2 or later" err
+	test_grep "see protocol.version in" err &&
+	test_grep "server options require protocol version 2 or later" err
 '
 
 test_expect_success 'server-options are sent when cloning' '
@@ -399,8 +411,8 @@ test_expect_success 'warn if using server-option with clone with legacy protocol
 		clone --server-option=hello --server-option=world \
 		"file://$(pwd)/file_parent" myclone 2>err &&
 
-	test_i18ngrep "see protocol.version in" err &&
-	test_i18ngrep "server options require protocol version 2 or later" err
+	test_grep "see protocol.version in" err &&
+	test_grep "server options require protocol version 2 or later" err
 '
 
 test_expect_success 'upload-pack respects config using protocol v2' '
@@ -495,7 +507,7 @@ test_expect_success 'partial clone warns if filter is not advertised' '
 	git -C server config uploadpack.allowfilter 0 &&
 	git -c protocol.version=2 \
 		clone --filter=blob:none "file://$(pwd)/server" client 2>err &&
-	test_i18ngrep "filtering not recognized by server, ignoring" err
+	test_grep "filtering not recognized by server, ignoring" err
 '
 
 test_expect_success 'even with handcrafted request, filter does not work if not advertised' '
@@ -736,7 +748,7 @@ test_expect_success 'file:// --negotiate-only with protocol v0' '
 		--negotiate-only \
 		--negotiation-tip=$(git -C client rev-parse HEAD) \
 		origin 2>err &&
-	test_i18ngrep "negotiate-only requires protocol v2" err
+	test_grep "negotiate-only requires protocol v2" err
 '
 
 test_expect_success 'push with custom path does not request v2' '
@@ -809,7 +821,7 @@ test_expect_success 'clone repository with http:// using protocol v2 with incomp
 	# Server responded using protocol v2
 	grep "git< version 2" log &&
 	# Client reported appropriate failure
-	test_i18ngrep "bytes of length header were received" err
+	test_grep "bytes of length header were received" err
 '
 
 test_expect_success 'clone repository with http:// using protocol v2 with incomplete pktline body' '
@@ -826,7 +838,7 @@ test_expect_success 'clone repository with http:// using protocol v2 with incomp
 	# Server responded using protocol v2
 	grep "git< version 2" log &&
 	# Client reported appropriate failure
-	test_i18ngrep "bytes of body are still expected" err
+	test_grep "bytes of body are still expected" err
 '
 
 test_expect_success 'clone with http:// using protocol v2 and invalid parameters' '
@@ -973,7 +985,7 @@ test_expect_success 'when server sends "ready", expect DELIM' '
 
 	test_must_fail git -C http_child -c protocol.version=2 \
 		fetch "$HTTPD_URL/one_time_perl/http_parent" 2> err &&
-	test_i18ngrep "expected packfile to be sent after .ready." err
+	test_grep "expected packfile to be sent after .ready." err
 '
 
 test_expect_success 'when server does not send "ready", expect FLUSH' '
@@ -1001,7 +1013,7 @@ test_expect_success 'when server does not send "ready", expect FLUSH' '
 		fetch "$HTTPD_URL/one_time_perl/http_parent" 2> err &&
 	grep "fetch< .*acknowledgments" log &&
 	! grep "fetch< .*ready" log &&
-	test_i18ngrep "expected no other sections to be sent after no .ready." err
+	test_grep "expected no other sections to be sent after no .ready." err
 '
 
 configure_exclusion () {
@@ -1111,7 +1123,7 @@ test_expect_success 'fetching with valid packfile URI but invalid hash fails' '
 		git -c protocol.version=2 \
 		-c fetch.uriprotocols=http,https \
 		clone "$HTTPD_URL/smart/http_parent" http_child 2>err &&
-	test_i18ngrep "pack downloaded from.*does not match expected hash" err
+	test_grep "pack downloaded from.*does not match expected hash" err
 '
 
 test_expect_success 'packfile-uri with transfer.fsckobjects' '
@@ -1165,7 +1177,7 @@ test_expect_success 'packfile-uri with transfer.fsckobjects fails on bad object'
 	test_must_fail git -c protocol.version=2 -c transfer.fsckobjects=1 \
 		-c fetch.uriprotocols=http,https \
 		clone "$HTTPD_URL/smart/http_parent" http_child 2>error &&
-	test_i18ngrep "invalid author/committer line - missing email" error
+	test_grep "invalid author/committer line - missing email" error
 '
 
 test_expect_success 'packfile-uri with transfer.fsckobjects succeeds when .gitmodules is separate from tree' '
@@ -1213,7 +1225,7 @@ test_expect_success 'packfile-uri with transfer.fsckobjects fails when .gitmodul
 	test_must_fail git -c protocol.version=2 -c transfer.fsckobjects=1 \
 		-c fetch.uriprotocols=http,https \
 		clone "$HTTPD_URL/smart/http_parent" http_child 2>err &&
-	test_i18ngrep "disallowed submodule name" err
+	test_grep "disallowed submodule name" err
 '
 
 test_expect_success 'packfile-uri path redacted in trace' '
@@ -1296,7 +1308,7 @@ test_expect_success 'http:// --negotiate-only without wait-for-done support' '
 		--negotiate-only \
 		--negotiation-tip=$(git -C client rev-parse HEAD) \
 		origin 2>err &&
-	test_i18ngrep "server does not support wait-for-done" err
+	test_grep "server does not support wait-for-done" err
 '
 
 test_expect_success 'http:// --negotiate-only with protocol v0' '
@@ -1310,7 +1322,7 @@ test_expect_success 'http:// --negotiate-only with protocol v0' '
 		--negotiate-only \
 		--negotiation-tip=$(git -C client rev-parse HEAD) \
 		origin 2>err &&
-	test_i18ngrep "negotiate-only requires protocol v2" err
+	test_grep "negotiate-only requires protocol v2" err
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

@@ -6,7 +6,6 @@
  */
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "alloc.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -14,7 +13,7 @@
 #include "refs.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "pager.h"
 #include "color.h"
 #include "commit.h"
@@ -27,7 +26,6 @@
 #include "tag.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
-#include "run-command.h"
 #include "shortlog.h"
 #include "remote.h"
 #include "string-list.h"
@@ -37,13 +35,13 @@
 #include "streaming.h"
 #include "version.h"
 #include "mailmap.h"
-#include "gpg-interface.h"
 #include "progress.h"
 #include "commit-slab.h"
 #include "repository.h"
 #include "commit-reach.h"
 #include "range-diff.h"
 #include "tmp-objdir.h"
+#include "tree.h"
 #include "write-or-die.h"
 
 #define MAIL_DEFAULT_WRAP 72
@@ -118,16 +116,19 @@ static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
 static struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
 static struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
 
-static int clear_decorations_callback(const struct option *opt,
-					    const char *arg, int unset)
+static int clear_decorations_callback(const struct option *opt UNUSED,
+				      const char *arg, int unset)
 {
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
 	string_list_clear(&decorate_refs_include, 0);
 	string_list_clear(&decorate_refs_exclude, 0);
 	use_default_decoration_filter = 0;
 	return 0;
 }
 
-static int decorate_callback(const struct option *opt, const char *arg, int unset)
+static int decorate_callback(const struct option *opt UNUSED, const char *arg,
+			     int unset)
 {
 	if (unset)
 		decoration_style = 0;
@@ -173,16 +174,15 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 	if (default_follow)
 		rev->diffopt.flags.default_follow_renames = 1;
 	rev->verbose_header = 1;
+	init_diffstat_widths(&rev->diffopt);
 	rev->diffopt.flags.recursive = 1;
-	rev->diffopt.stat_width = -1; /* use full terminal width */
-	rev->diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
+	rev->diffopt.flags.allow_textconv = 1;
 	rev->abbrev_commit = default_abbrev_commit;
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	rev->patch_name_max = fmt_patch_name_max;
 	rev->show_signature = default_show_signature;
 	rev->encode_email_headers = default_encode_email_headers;
-	rev->diffopt.flags.allow_textconv = 1;
 
 	if (default_date_mode)
 		parse_date_format(default_date_mode, &rev->date_mode);
@@ -549,7 +549,7 @@ static int cmd_log_walk_no_free(struct rev_info *rev)
 	    rev->diffopt.flags.check_failed) {
 		return 02;
 	}
-	return diff_result_code(&rev->diffopt, 0);
+	return diff_result_code(&rev->diffopt);
 }
 
 static int cmd_log_walk(struct rev_info *rev)
@@ -563,7 +563,8 @@ static int cmd_log_walk(struct rev_info *rev)
 	return retval;
 }
 
-static int git_log_config(const char *var, const char *value, void *cb)
+static int git_log_config(const char *var, const char *value,
+			  const struct config_context *ctx, void *cb)
 {
 	const char *slot_name;
 
@@ -572,7 +573,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "format.subjectprefix"))
 		return git_config_string(&fmt_patch_subject_prefix, var, value);
 	if (!strcmp(var, "format.filenamemaxlength")) {
-		fmt_patch_name_max = git_config_int(var, value);
+		fmt_patch_name_max = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp(var, "format.encodeemailheaders")) {
@@ -591,8 +592,11 @@ static int git_log_config(const char *var, const char *value, void *cb)
 			decoration_style = 0; /* maybe warn? */
 		return 0;
 	}
-	if (!strcmp(var, "log.diffmerges"))
+	if (!strcmp(var, "log.diffmerges")) {
+		if (!value)
+			return config_error_nonbool(var);
 		return diff_merges_config(value);
+	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
@@ -612,7 +616,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_diff_ui_config(var, value, cb);
+	return git_diff_ui_config(var, value, ctx, cb);
 }
 
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
@@ -717,8 +721,7 @@ static int show_tree_object(const struct object_id *oid UNUSED,
 	return 0;
 }
 
-static void show_setup_revisions_tweak(struct rev_info *rev,
-				       struct setup_revision_opt *opt)
+static void show_setup_revisions_tweak(struct rev_info *rev)
 {
 	if (rev->first_parent_only)
 		diff_merges_default_to_first_parent(rev);
@@ -861,11 +864,10 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	return cmd_log_deinit(cmd_log_walk(&rev), &rev);
 }
 
-static void log_setup_revisions_tweak(struct rev_info *rev,
-				      struct setup_revision_opt *opt)
+static void log_setup_revisions_tweak(struct rev_info *rev)
 {
 	if (rev->diffopt.flags.default_follow_renames &&
-	    rev->prune_data.nr == 1)
+	    diff_check_follow_pathspec(&rev->prune_data, 0))
 		rev->diffopt.flags.follow_renames = 1;
 
 	if (rev->first_parent_only)
@@ -978,7 +980,8 @@ static enum cover_from_description parse_cover_from_description(const char *arg)
 		die(_("%s: invalid cover from description mode"), arg);
 }
 
-static int git_format_config(const char *var, const char *value, void *cb)
+static int git_format_config(const char *var, const char *value,
+			     const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "format.headers")) {
 		if (!value)
@@ -1107,7 +1110,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "diff.noprefix"))
 		return 0;
 
-	return git_log_config(var, value, cb);
+	return git_log_config(var, value, ctx, cb);
 }
 
 static const char *output_directory = NULL;
@@ -1253,7 +1256,15 @@ static void show_diffstat(struct rev_info *rev,
 	fprintf(rev->diffopt.file, "\n");
 }
 
+static void read_desc_file(struct strbuf *buf, const char *desc_file)
+{
+	if (strbuf_read_file(buf, desc_file, 0) < 0)
+		die_errno(_("unable to read branch description file '%s'"),
+			  desc_file);
+}
+
 static void prepare_cover_text(struct pretty_print_context *pp,
+			       const char *description_file,
 			       const char *branch_name,
 			       struct strbuf *sb,
 			       const char *encoding,
@@ -1267,7 +1278,9 @@ static void prepare_cover_text(struct pretty_print_context *pp,
 	if (cover_from_description_mode == COVER_FROM_NONE)
 		goto do_pp;
 
-	if (branch_name && *branch_name)
+	if (description_file && *description_file)
+		read_desc_file(&description_sb, description_file);
+	else if (branch_name && *branch_name)
 		read_branch_desc(&description_sb, branch_name);
 	if (!description_sb.len)
 		goto do_pp;
@@ -1313,6 +1326,7 @@ static void get_notes_args(struct strvec *arg, struct rev_info *rev)
 static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			      struct commit *origin,
 			      int nr, struct commit **list,
+			      const char *description_file,
 			      const char *branch_name,
 			      int quiet)
 {
@@ -1351,8 +1365,10 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	pp.date_mode.type = DATE_RFC2822;
 	pp.rev = rev;
 	pp.print_email_subject = 1;
+	pp.encode_email_headers = rev->encode_email_headers;
 	pp_user_info(&pp, NULL, &sb, committer, encoding);
-	prepare_cover_text(&pp, branch_name, &sb, encoding, need_8bit_cte);
+	prepare_cover_text(&pp, description_file, branch_name, &sb,
+			   encoding, need_8bit_cte);
 	fprintf(rev->diffopt.file, "%s\n", sb.buf);
 
 	strbuf_release(&sb);
@@ -1405,7 +1421,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	}
 }
 
-static const char *clean_message_id(const char *msg_id)
+static char *clean_message_id(const char *msg_id)
 {
 	char ch;
 	const char *a, *z, *m;
@@ -1423,7 +1439,7 @@ static const char *clean_message_id(const char *msg_id)
 	if (!z)
 		die(_("insane in-reply-to: %s"), msg_id);
 	if (++z == m)
-		return a;
+		return xstrdup(a);
 	return xmemdupz(a, z - a);
 }
 
@@ -1468,17 +1484,14 @@ static int subject_prefix = 0;
 static int subject_prefix_callback(const struct option *opt, const char *arg,
 			    int unset)
 {
-	BUG_ON_OPT_NEG(unset);
-	subject_prefix = 1;
-	((struct rev_info *)opt->value)->subject_prefix = arg;
-	return 0;
-}
+	struct strbuf *sprefix;
 
-static int rfc_callback(const struct option *opt, const char *arg, int unset)
-{
 	BUG_ON_OPT_NEG(unset);
-	BUG_ON_OPT_ARG(arg);
-	return subject_prefix_callback(opt, "RFC PATCH", unset);
+	sprefix = opt->value;
+	subject_prefix = 1;
+	strbuf_reset(sprefix);
+	strbuf_addstr(sprefix, arg);
+	return 0;
 }
 
 static int numbered_cmdline_opt = 0;
@@ -1555,7 +1568,8 @@ static int inline_callback(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-static int header_callback(const struct option *opt, const char *arg, int unset)
+static int header_callback(const struct option *opt UNUSED, const char *arg,
+			   int unset)
 {
 	if (unset) {
 		string_list_clear(&extra_hdr, 0);
@@ -1564,24 +1578,6 @@ static int header_callback(const struct option *opt, const char *arg, int unset)
 	} else {
 		add_header(arg);
 	}
-	return 0;
-}
-
-static int to_callback(const struct option *opt, const char *arg, int unset)
-{
-	if (unset)
-		string_list_clear(&extra_to, 0);
-	else
-		string_list_append(&extra_to, arg);
-	return 0;
-}
-
-static int cc_callback(const struct option *opt, const char *arg, int unset)
-{
-	if (unset)
-		string_list_clear(&extra_cc, 0);
-	else
-		string_list_append(&extra_cc, arg);
 	return 0;
 }
 
@@ -1893,6 +1889,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	const char *reroll_count = NULL;
 	char *cover_from_description_arg = NULL;
+	char *description_file = NULL;
 	char *branch_name = NULL;
 	char *base_commit = NULL;
 	struct base_tree_info bases;
@@ -1907,6 +1904,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf rdiff_title = STRBUF_INIT;
 	struct strbuf sprefix = STRBUF_INIT;
 	int creation_factor = -1;
+	int rfc = 0;
 
 	const struct option builtin_format_patch_options[] = {
 		OPT_CALLBACK_F('n', "numbered", &numbered, NULL,
@@ -1930,13 +1928,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    N_("mark the series as Nth re-roll")),
 		OPT_INTEGER(0, "filename-max-length", &fmt_patch_name_max,
 			    N_("max length of output filename")),
-		OPT_CALLBACK_F(0, "rfc", &rev, NULL,
-			    N_("use [RFC PATCH] instead of [PATCH]"),
-			    PARSE_OPT_NOARG | PARSE_OPT_NONEG, rfc_callback),
+		OPT_BOOL(0, "rfc", &rfc, N_("use [RFC PATCH] instead of [PATCH]")),
 		OPT_STRING(0, "cover-from-description", &cover_from_description_arg,
 			    N_("cover-from-description-mode"),
 			    N_("generate parts of a cover letter based on a branch's description")),
-		OPT_CALLBACK_F(0, "subject-prefix", &rev, N_("prefix"),
+		OPT_FILENAME(0, "description-file", &description_file,
+			     N_("use branch description from file")),
+		OPT_CALLBACK_F(0, "subject-prefix", &sprefix, N_("prefix"),
 			    N_("use [<prefix>] instead of [PATCH]"),
 			    PARSE_OPT_NONEG, subject_prefix_callback),
 		OPT_CALLBACK_F('o', "output-directory", &output_directory,
@@ -1957,8 +1955,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(N_("Messaging")),
 		OPT_CALLBACK(0, "add-header", NULL, N_("header"),
 			    N_("add email header"), header_callback),
-		OPT_CALLBACK(0, "to", NULL, N_("email"), N_("add To: header"), to_callback),
-		OPT_CALLBACK(0, "cc", NULL, N_("email"), N_("add Cc: header"), cc_callback),
+		OPT_STRING_LIST(0, "to", &extra_to, N_("email"), N_("add To: header")),
+		OPT_STRING_LIST(0, "cc", &extra_cc, N_("email"), N_("add Cc: header")),
 		OPT_CALLBACK_F(0, "from", &from, N_("ident"),
 			    N_("set From address to <ident> (or committer ident if absent)"),
 			    PARSE_OPT_OPTARG, from_callback),
@@ -2016,11 +2014,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.max_parents = 1;
 	rev.diffopt.flags.recursive = 1;
 	rev.diffopt.no_free = 1;
-	rev.subject_prefix = fmt_patch_subject_prefix;
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
 
+	strbuf_addstr(&sprefix, fmt_patch_subject_prefix);
 	if (format_no_prefix)
 		diff_set_noprefix(&rev.diffopt);
 
@@ -2048,12 +2046,15 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_from_description_arg)
 		cover_from_description_mode = parse_cover_from_description(cover_from_description_arg);
 
+	if (rfc)
+		strbuf_insertstr(&sprefix, 0, "RFC ");
+
 	if (reroll_count) {
-		strbuf_addf(&sprefix, "%s v%s",
-			    rev.subject_prefix, reroll_count);
+		strbuf_addf(&sprefix, " v%s", reroll_count);
 		rev.reroll_count = reroll_count;
-		rev.subject_prefix = sprefix.buf;
 	}
+
+	rev.subject_prefix = sprefix.buf;
 
 	for (i = 0; i < extra_hdr.nr; i++) {
 		strbuf_addstr(&buf, extra_hdr.items[i].string);
@@ -2309,11 +2310,11 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (in_reply_to || thread || cover_letter) {
 		rev.ref_message_ids = xmalloc(sizeof(*rev.ref_message_ids));
-		string_list_init_nodup(rev.ref_message_ids);
+		string_list_init_dup(rev.ref_message_ids);
 	}
 	if (in_reply_to) {
-		const char *msgid = clean_message_id(in_reply_to);
-		string_list_append(rev.ref_message_ids, msgid);
+		char *msgid = clean_message_id(in_reply_to);
+		string_list_append_nodup(rev.ref_message_ids, msgid);
 	}
 	rev.numbered_files = just_numbers;
 	rev.patch_suffix = fmt_patch_suffix;
@@ -2321,7 +2322,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, !!output_directory,
-				  origin, nr, list, branch_name, quiet);
+				  origin, nr, list, description_file, branch_name, quiet);
 		print_bases(&bases, rev.diffopt.file);
 		print_signature(rev.diffopt.file);
 		total++;
@@ -2369,8 +2370,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				    && (!cover_letter || rev.nr > 1))
 					free(rev.message_id);
 				else
-					string_list_append(rev.ref_message_ids,
-							   rev.message_id);
+					string_list_append_nodup(rev.ref_message_ids,
+								 rev.message_id);
 			}
 			gen_message_id(&rev, oid_to_hex(&commit->object.oid));
 		}
@@ -2419,6 +2420,7 @@ done:
 	strbuf_release(&rdiff_title);
 	strbuf_release(&sprefix);
 	free(to_free);
+	free(rev.message_id);
 	if (rev.ref_message_ids)
 		string_list_clear(rev.ref_message_ids, 0);
 	free(rev.ref_message_ids);

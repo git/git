@@ -66,11 +66,11 @@ test_expect_success 'create empty remote repository' '
 	setup_post_update_server_info_hook "$HTTPD_DOCUMENT_ROOT_PATH/empty.git"
 '
 
-test_expect_success 'empty dumb HTTP repository has default hash algorithm' '
+test_expect_success 'empty dumb HTTP repository falls back to SHA1' '
 	test_when_finished "rm -fr clone-empty" &&
 	git clone $HTTPD_URL/dumb/empty.git clone-empty &&
 	git -C clone-empty rev-parse --show-object-format >empty-format &&
-	test "$(cat empty-format)" = "$(test_oid algo)"
+	test "$(cat empty-format)" = sha1
 '
 
 setup_askpass_helper
@@ -376,7 +376,7 @@ test_expect_success 'git client send an empty Accept-Language' '
 
 test_expect_success 'remote-http complains cleanly about malformed urls' '
 	test_must_fail git remote-http http::/example.com/repo.git 2>stderr &&
-	test_i18ngrep "url has no scheme" stderr
+	test_grep "url has no scheme" stderr
 '
 
 # NEEDSWORK: Writing commands to git-remote-curl can race against the latter
@@ -385,7 +385,7 @@ test_expect_success 'remote-http complains cleanly about malformed urls' '
 test_expect_success 'remote-http complains cleanly about empty scheme' '
 	test_must_fail ok=sigpipe git ls-remote \
 		http::${HTTPD_URL#http}/dumb/repo.git 2>stderr &&
-	test_i18ngrep "url has no scheme" stderr
+	test_grep "url has no scheme" stderr
 '
 
 test_expect_success 'redirects can be forbidden/allowed' '
@@ -397,7 +397,7 @@ test_expect_success 'redirects can be forbidden/allowed' '
 
 test_expect_success 'redirects are reported to stderr' '
 	# just look for a snippet of the redirected-to URL
-	test_i18ngrep /dumb/ stderr
+	test_grep /dumb/ stderr
 '
 
 test_expect_success 'non-initial redirects can be forbidden' '
@@ -466,7 +466,7 @@ test_expect_success 'can redirect through non-"info/refs?service=git-upload-pack
 
 test_expect_success 'print HTTP error when any intermediate redirect throws error' '
 	test_must_fail git clone "$HTTPD_URL/redir-to/502" 2> stderr &&
-	test_i18ngrep "unable to access.*/redir-to/502" stderr
+	test_grep "unable to access.*/redir-to/502" stderr
 '
 
 test_expect_success 'fetching via http alternates works' '

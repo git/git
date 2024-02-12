@@ -1,22 +1,16 @@
 #include "git-compat-util.h"
-#include "alloc.h"
 #include "dir.h"
 #include "gettext.h"
 #include "hex.h"
-#include "tag.h"
 #include "commit.h"
-#include "tree.h"
-#include "blob.h"
 #include "diff.h"
-#include "tree-walk.h"
 #include "revision.h"
-#include "list-objects.h"
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "oidmap.h"
 #include "oidset.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 
 /* Remember to update object flag allocation in object.h */
 /*

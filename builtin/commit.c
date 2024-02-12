@@ -6,7 +6,7 @@
  */
 
 #define USE_THE_INDEX_VARIABLE
-#include "cache.h"
+#include "builtin.h"
 #include "advice.h"
 #include "config.h"
 #include "lockfile.h"
@@ -15,29 +15,24 @@
 #include "dir.h"
 #include "editor.h"
 #include "environment.h"
-#include "builtin.h"
 #include "diff.h"
-#include "diffcore.h"
 #include "commit.h"
 #include "gettext.h"
 #include "revision.h"
 #include "wt-status.h"
 #include "run-command.h"
-#include "hook.h"
-#include "refs.h"
-#include "log-tree.h"
 #include "strbuf.h"
-#include "utf8.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
+#include "preload-index.h"
+#include "read-cache.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "unpack-trees.h"
-#include "quote.h"
-#include "submodule.h"
-#include "gpg-interface.h"
 #include "column.h"
 #include "sequencer.h"
+#include "sparse-index.h"
 #include "mailmap.h"
 #include "help.h"
 #include "commit-reach.h"
@@ -447,11 +442,12 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	if (all || (also && pathspec.nr)) {
 		repo_hold_locked_index(the_repository, &index_lock,
 				       LOCK_DIE_ON_ERROR);
-		add_files_to_cache(also ? prefix : NULL, &pathspec, 0);
+		add_files_to_cache(the_repository, also ? prefix : NULL,
+				   &pathspec, 0, 0);
 		refresh_cache_or_die(refresh_flags);
 		cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, 0))
-			die(_("unable to write new_index file"));
+			die(_("unable to write new index file"));
 		commit_style = COMMIT_NORMAL;
 		ret = get_lock_file_path(&index_lock);
 		goto out;
@@ -475,7 +471,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 			cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock,
 				       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-			die(_("unable to write new_index file"));
+			die(_("unable to write new index file"));
 		commit_style = COMMIT_AS_IS;
 		ret = get_index_file();
 		goto out;
@@ -523,7 +519,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
 	cache_tree_update(&the_index, WRITE_TREE_SILENT);
 	if (write_locked_index(&the_index, &index_lock, 0))
-		die(_("unable to write new_index file"));
+		die(_("unable to write new index file"));
 
 	hold_lock_file_for_update(&false_lock,
 				  git_path("next-index-%"PRIuMAX,
@@ -763,7 +759,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			struct commit *c;
 			c = lookup_commit_reference_by_name(squash_message);
 			if (!c)
-				die(_("could not lookup commit %s"), squash_message);
+				die(_("could not lookup commit '%s'"), squash_message);
 			ctx.output_encoding = get_commit_output_encoding();
 			repo_format_commit_message(the_repository, c,
 						   "squash! %s\n\n", &sb,
@@ -798,7 +794,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		char *fmt;
 		commit = lookup_commit_reference_by_name(fixup_commit);
 		if (!commit)
-			die(_("could not lookup commit %s"), fixup_commit);
+			die(_("could not lookup commit '%s'"), fixup_commit);
 		ctx.output_encoding = get_commit_output_encoding();
 		fmt = xstrfmt("%s! %%s\n\n", fixup_prefix);
 		repo_format_commit_message(the_repository, commit, fmt, &sb,
@@ -893,10 +889,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	s->hints = 0;
 
 	if (clean_message_contents)
-		strbuf_stripspace(&sb, 0);
+		strbuf_stripspace(&sb, '\0');
 
 	if (signoff)
-		append_signoff(&sb, ignore_non_trailer(sb.buf, sb.len), 0);
+		append_signoff(&sb, ignored_log_message_bytes(sb.buf, sb.len), 0);
 
 	if (fwrite(sb.buf, 1, sb.len, s->fp) < sb.len)
 		die_errno(_("could not write commit template"));
@@ -998,11 +994,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct object_id oid;
 		const char *parent = "HEAD";
 
-		if (!the_index.cache_nr) {
-			discard_index(&the_index);
-			if (repo_read_index(the_repository) < 0)
-				die(_("Cannot read index"));
-		}
+		if (!the_index.initialized && repo_read_index(the_repository) < 0)
+			die(_("Cannot read index"));
 
 		if (amend)
 			parent = "HEAD^1";
@@ -1043,7 +1036,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct child_process run_trailer = CHILD_PROCESS_INIT;
 
 		strvec_pushl(&run_trailer.args, "interpret-trailers",
-			     "--in-place", git_path_commit_editmsg(), NULL);
+			     "--in-place", "--no-divider",
+			     git_path_commit_editmsg(), NULL);
 		strvec_pushv(&run_trailer.args, trailer_args.v);
 		run_trailer.git_cmd = 1;
 		if (run_command(&run_trailer))
@@ -1189,7 +1183,7 @@ static const char *read_commit_message(const char *name)
 
 	commit = lookup_commit_reference_by_name(name);
 	if (!commit)
-		die(_("could not lookup commit %s"), name);
+		die(_("could not lookup commit '%s'"), name);
 	out_enc = get_commit_output_encoding();
 	return repo_logmsg_reencode(the_repository, commit, NULL, out_enc);
 }
@@ -1405,7 +1399,8 @@ static int parse_status_slot(const char *slot)
 	return LOOKUP_CONFIG(color_status_slots, slot);
 }
 
-static int git_status_config(const char *k, const char *v, void *cb)
+static int git_status_config(const char *k, const char *v,
+			     const struct config_context *ctx, void *cb)
 {
 	struct wt_status *s = cb;
 	const char *slot_name;
@@ -1414,7 +1409,8 @@ static int git_status_config(const char *k, const char *v, void *cb)
 		return git_column_config(k, v, "status", &s->colopts);
 	if (!strcmp(k, "status.submodulesummary")) {
 		int is_bool;
-		s->submodule_summary = git_config_bool_or_int(k, v, &is_bool);
+		s->submodule_summary = git_config_bool_or_int(k, v, ctx->kvi,
+							      &is_bool);
 		if (is_bool && s->submodule_summary)
 			s->submodule_summary = -1;
 		return 0;
@@ -1474,11 +1470,11 @@ static int git_status_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "diff.renamelimit")) {
 		if (s->rename_limit == -1)
-			s->rename_limit = git_config_int(k, v);
+			s->rename_limit = git_config_int(k, v, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp(k, "status.renamelimit")) {
-		s->rename_limit = git_config_int(k, v);
+		s->rename_limit = git_config_int(k, v, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp(k, "diff.renames")) {
@@ -1490,7 +1486,7 @@ static int git_status_config(const char *k, const char *v, void *cb)
 		s->detect_rename = git_config_rename(k, v);
 		return 0;
 	}
-	return git_diff_ui_config(k, v, NULL);
+	return git_diff_ui_config(k, v, ctx, NULL);
 }
 
 int cmd_status(int argc, const char **argv, const char *prefix)
@@ -1605,7 +1601,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int git_commit_config(const char *k, const char *v, void *cb)
+static int git_commit_config(const char *k, const char *v,
+			     const struct config_context *ctx, void *cb)
 {
 	struct wt_status *s = cb;
 
@@ -1623,11 +1620,12 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "commit.verbose")) {
 		int is_bool;
-		config_commit_verbose = git_config_bool_or_int(k, v, &is_bool);
+		config_commit_verbose = git_config_bool_or_int(k, v, ctx->kvi,
+							       &is_bool);
 		return 0;
 	}
 
-	return git_status_config(k, v, s);
+	return git_status_config(k, v, ctx, s);
 }
 
 int cmd_commit(int argc, const char **argv, const char *prefix)
@@ -1856,7 +1854,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	if (commit_index_files())
 		die(_("repository has been updated, but unable to write\n"
-		      "new_index file. Check that disk is not full and quota is\n"
+		      "new index file. Check that disk is not full and quota is\n"
 		      "not exceeded, and then \"git restore --staged :/\" to recover."));
 
 	git_test_write_commit_graph_or_die();
@@ -1879,7 +1877,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 				     &oid, flags);
 	}
 
-	apply_autostash(git_path_merge_autostash(the_repository));
+	apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 
 cleanup:
 	strbuf_release(&author_ident);

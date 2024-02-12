@@ -1,5 +1,5 @@
 #include "git-compat-util.h"
-#include "hex.h"
+#include "hex-ll.h"
 #include "strbuf.h"
 #include "url.h"
 

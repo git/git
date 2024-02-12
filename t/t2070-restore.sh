@@ -137,11 +137,78 @@ test_expect_success 'restore --staged invalidates cache tree for deletions' '
 	test_must_fail git rev-parse HEAD:new1
 '
 
-test_expect_success 'restore with merge options rejects --staged' '
+test_expect_success 'restore --merge to unresolve' '
+	O=$(echo original | git hash-object -w --stdin) &&
+	A=$(echo ourside | git hash-object -w --stdin) &&
+	B=$(echo theirside | git hash-object -w --stdin) &&
+	{
+		echo "100644 $O 1	file" &&
+		echo "100644 $A 2	file" &&
+		echo "100644 $B 3	file"
+	} | git update-index --index-info &&
+	echo nothing >file &&
+	git restore --worktree --merge file &&
+	cat >expect <<-\EOF &&
+	<<<<<<< ours
+	ourside
+	=======
+	theirside
+	>>>>>>> theirs
+	EOF
+	test_cmp expect file
+'
+
+test_expect_success 'restore --merge to unresolve after (mistaken) resolution' '
+	O=$(echo original | git hash-object -w --stdin) &&
+	A=$(echo ourside | git hash-object -w --stdin) &&
+	B=$(echo theirside | git hash-object -w --stdin) &&
+	{
+		echo "100644 $O 1	file" &&
+		echo "100644 $A 2	file" &&
+		echo "100644 $B 3	file"
+	} | git update-index --index-info &&
+	echo nothing >file &&
+	git add file &&
+	git restore --worktree --merge file &&
+	cat >expect <<-\EOF &&
+	<<<<<<< ours
+	ourside
+	=======
+	theirside
+	>>>>>>> theirs
+	EOF
+	test_cmp expect file
+'
+
+test_expect_success 'restore --merge to unresolve after (mistaken) resolution' '
+	O=$(echo original | git hash-object -w --stdin) &&
+	A=$(echo ourside | git hash-object -w --stdin) &&
+	B=$(echo theirside | git hash-object -w --stdin) &&
+	{
+		echo "100644 $O 1	file" &&
+		echo "100644 $A 2	file" &&
+		echo "100644 $B 3	file"
+	} | git update-index --index-info &&
+	git rm -f file &&
+	git restore --worktree --merge file &&
+	cat >expect <<-\EOF &&
+	<<<<<<< ours
+	ourside
+	=======
+	theirside
+	>>>>>>> theirs
+	EOF
+	test_cmp expect file
+'
+
+test_expect_success 'restore with merge options are incompatible with certain options' '
 	for opts in \
 		"--staged --ours" \
 		"--staged --theirs" \
 		"--staged --merge" \
+		"--source=HEAD --ours" \
+		"--source=HEAD --theirs" \
+		"--source=HEAD --merge" \
 		"--staged --conflict=diff3" \
 		"--staged --worktree --ours" \
 		"--staged --worktree --theirs" \
@@ -149,7 +216,7 @@ test_expect_success 'restore with merge options rejects --staged' '
 		"--staged --worktree --conflict=zdiff3"
 	do
 		test_must_fail git restore $opts . 2>err &&
-		grep "cannot be used with --staged" err || return
+		grep "cannot be used" err || return
 	done
 '
 

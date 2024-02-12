@@ -33,9 +33,9 @@ config file would appear like this:
 ------------
 
 The `<pushurl>` is used for pushes only. It is optional and defaults
-to `<URL>`. Pushing to a remote affects all defined pushurls or to all
+to `<URL>`. Pushing to a remote affects all defined pushurls or all
 defined urls if no pushurls are defined. Fetch, however, will only
-fetch from the first defined url if muliple urls are defined.
+fetch from the first defined url if multiple urls are defined.
 
 Named file in `$GIT_DIR/remotes`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -48,7 +48,7 @@ provide a refspec on the command line.  This file should have the
 following format:
 
 ------------
-	URL: one of the above URL format
+	URL: one of the above URL formats
 	Push: <refspec>
 	Pull: <refspec>
 

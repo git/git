@@ -44,7 +44,7 @@ commit_peeling_shows_parents ()
 	_parent_number=$(( $_parent_number + 1 ))
     done &&
     test_must_fail git rev-parse --verify $_commit^$_parent_number 2>err &&
-    test_i18ngrep "Needed a single revision" err
+    test_grep "Needed a single revision" err
 }
 
 commit_has_parents ()
@@ -62,59 +62,59 @@ HASH6=
 HASH7=
 
 test_expect_success 'set up buggy branch' '
-     echo "line 1" >>hello &&
-     echo "line 2" >>hello &&
-     echo "line 3" >>hello &&
-     echo "line 4" >>hello &&
-     add_and_commit_file hello "4 lines" &&
-     HASH1=$(git rev-parse --verify HEAD) &&
-     echo "line BUG" >>hello &&
-     echo "line 6" >>hello &&
-     echo "line 7" >>hello &&
-     echo "line 8" >>hello &&
-     add_and_commit_file hello "4 more lines with a BUG" &&
-     HASH2=$(git rev-parse --verify HEAD) &&
-     echo "line 9" >>hello &&
-     echo "line 10" >>hello &&
-     add_and_commit_file hello "2 more lines" &&
-     HASH3=$(git rev-parse --verify HEAD) &&
-     echo "line 11" >>hello &&
-     add_and_commit_file hello "1 more line" &&
-     HASH4=$(git rev-parse --verify HEAD) &&
-     sed -e "s/BUG/5/" hello >hello.new &&
-     mv hello.new hello &&
-     add_and_commit_file hello "BUG fixed" &&
-     HASH5=$(git rev-parse --verify HEAD) &&
-     echo "line 12" >>hello &&
-     echo "line 13" >>hello &&
-     add_and_commit_file hello "2 more lines" &&
-     HASH6=$(git rev-parse --verify HEAD) &&
-     echo "line 14" >>hello &&
-     echo "line 15" >>hello &&
-     echo "line 16" >>hello &&
-     add_and_commit_file hello "again 3 more lines" &&
-     HASH7=$(git rev-parse --verify HEAD)
+	echo "line 1" >>hello &&
+	echo "line 2" >>hello &&
+	echo "line 3" >>hello &&
+	echo "line 4" >>hello &&
+	add_and_commit_file hello "4 lines" &&
+	HASH1=$(git rev-parse --verify HEAD) &&
+	echo "line BUG" >>hello &&
+	echo "line 6" >>hello &&
+	echo "line 7" >>hello &&
+	echo "line 8" >>hello &&
+	add_and_commit_file hello "4 more lines with a BUG" &&
+	HASH2=$(git rev-parse --verify HEAD) &&
+	echo "line 9" >>hello &&
+	echo "line 10" >>hello &&
+	add_and_commit_file hello "2 more lines" &&
+	HASH3=$(git rev-parse --verify HEAD) &&
+	echo "line 11" >>hello &&
+	add_and_commit_file hello "1 more line" &&
+	HASH4=$(git rev-parse --verify HEAD) &&
+	sed -e "s/BUG/5/" hello >hello.new &&
+	mv hello.new hello &&
+	add_and_commit_file hello "BUG fixed" &&
+	HASH5=$(git rev-parse --verify HEAD) &&
+	echo "line 12" >>hello &&
+	echo "line 13" >>hello &&
+	add_and_commit_file hello "2 more lines" &&
+	HASH6=$(git rev-parse --verify HEAD) &&
+	echo "line 14" >>hello &&
+	echo "line 15" >>hello &&
+	echo "line 16" >>hello &&
+	add_and_commit_file hello "again 3 more lines" &&
+	HASH7=$(git rev-parse --verify HEAD)
 '
 
 test_expect_success 'replace the author' '
-     git cat-file commit $HASH2 | grep "author A U Thor" &&
-     R=$(git cat-file commit $HASH2 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
-     git cat-file commit $R | grep "author O Thor" &&
-     git update-ref refs/replace/$HASH2 $R &&
-     git show HEAD~5 | grep "O Thor" &&
-     git show $HASH2 | grep "O Thor"
+	git cat-file commit $HASH2 | grep "author A U Thor" &&
+	R=$(git cat-file commit $HASH2 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
+	git cat-file commit $R | grep "author O Thor" &&
+	git update-ref refs/replace/$HASH2 $R &&
+	git show HEAD~5 | grep "O Thor" &&
+	git show $HASH2 | grep "O Thor"
 '
 
 test_expect_success 'test --no-replace-objects option' '
-     git cat-file commit $HASH2 | grep "author O Thor" &&
-     git --no-replace-objects cat-file commit $HASH2 | grep "author A U Thor" &&
-     git show $HASH2 | grep "O Thor" &&
-     git --no-replace-objects show $HASH2 | grep "A U Thor"
+	git cat-file commit $HASH2 | grep "author O Thor" &&
+	git --no-replace-objects cat-file commit $HASH2 | grep "author A U Thor" &&
+	git show $HASH2 | grep "O Thor" &&
+	git --no-replace-objects show $HASH2 | grep "A U Thor"
 '
 
 test_expect_success 'test GIT_NO_REPLACE_OBJECTS env variable' '
-     GIT_NO_REPLACE_OBJECTS=1 git cat-file commit $HASH2 | grep "author A U Thor" &&
-     GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 | grep "A U Thor"
+	GIT_NO_REPLACE_OBJECTS=1 git cat-file commit $HASH2 | grep "author A U Thor" &&
+	GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 | grep "A U Thor"
 '
 
 test_expect_success 'test core.usereplacerefs config option' '
@@ -132,64 +132,64 @@ tagger T A Gger <> 0 +0000
 EOF
 
 test_expect_success 'tag replaced commit' '
-     git update-ref refs/tags/mytag $(git mktag <tag.sig)
+	git update-ref refs/tags/mytag $(git mktag <tag.sig)
 '
 
 test_expect_success '"git fsck" works' '
-     git fsck main >fsck_main.out &&
-     test_i18ngrep "dangling commit $R" fsck_main.out &&
-     test_i18ngrep "dangling tag $(git show-ref -s refs/tags/mytag)" fsck_main.out &&
-     test -z "$(git fsck)"
+	git fsck main >fsck_main.out &&
+	test_grep "dangling commit $R" fsck_main.out &&
+	test_grep "dangling tag $(git show-ref -s refs/tags/mytag)" fsck_main.out &&
+	test -z "$(git fsck)"
 '
 
 test_expect_success 'repack, clone and fetch work' '
-     git repack -a -d &&
-     git clone --no-hardlinks . clone_dir &&
-     (
-	  cd clone_dir &&
-	  git show HEAD~5 | grep "A U Thor" &&
-	  git show $HASH2 | grep "A U Thor" &&
-	  git cat-file commit $R &&
-	  git repack -a -d &&
-	  test_must_fail git cat-file commit $R &&
-	  git fetch ../ "refs/replace/*:refs/replace/*" &&
-	  git show HEAD~5 | grep "O Thor" &&
-	  git show $HASH2 | grep "O Thor" &&
-	  git cat-file commit $R
-     )
+	git repack -a -d &&
+	git clone --no-hardlinks . clone_dir &&
+	(
+		cd clone_dir &&
+		git show HEAD~5 | grep "A U Thor" &&
+		git show $HASH2 | grep "A U Thor" &&
+		git cat-file commit $R &&
+		git repack -a -d &&
+		test_must_fail git cat-file commit $R &&
+		git fetch ../ "refs/replace/*:refs/replace/*" &&
+		git show HEAD~5 | grep "O Thor" &&
+		git show $HASH2 | grep "O Thor" &&
+		git cat-file commit $R
+	)
 '
 
 test_expect_success '"git replace" listing and deleting' '
-     test "$HASH2" = "$(git replace -l)" &&
-     test "$HASH2" = "$(git replace)" &&
-     aa=${HASH2%??????????????????????????????????????} &&
-     test "$HASH2" = "$(git replace --list "$aa*")" &&
-     test_must_fail git replace -d $R &&
-     test_must_fail git replace --delete &&
-     test_must_fail git replace -l -d $HASH2 &&
-     git replace -d $HASH2 &&
-     git show $HASH2 | grep "A U Thor" &&
-     test -z "$(git replace -l)"
+	test "$HASH2" = "$(git replace -l)" &&
+	test "$HASH2" = "$(git replace)" &&
+	aa=${HASH2%??????????????????????????????????????} &&
+	test "$HASH2" = "$(git replace --list "$aa*")" &&
+	test_must_fail git replace -d $R &&
+	test_must_fail git replace --delete &&
+	test_must_fail git replace -l -d $HASH2 &&
+	git replace -d $HASH2 &&
+	git show $HASH2 | grep "A U Thor" &&
+	test -z "$(git replace -l)"
 '
 
 test_expect_success '"git replace" replacing' '
-     git replace $HASH2 $R &&
-     git show $HASH2 | grep "O Thor" &&
-     test_must_fail git replace $HASH2 $R &&
-     git replace -f $HASH2 $R &&
-     test_must_fail git replace -f &&
-     test "$HASH2" = "$(git replace)"
+	git replace $HASH2 $R &&
+	git show $HASH2 | grep "O Thor" &&
+	test_must_fail git replace $HASH2 $R &&
+	git replace -f $HASH2 $R &&
+	test_must_fail git replace -f &&
+	test "$HASH2" = "$(git replace)"
 '
 
 test_expect_success '"git replace" resolves sha1' '
-     SHORTHASH2=$(git rev-parse --short=8 $HASH2) &&
-     git replace -d $SHORTHASH2 &&
-     git replace $SHORTHASH2 $R &&
-     git show $HASH2 | grep "O Thor" &&
-     test_must_fail git replace $HASH2 $R &&
-     git replace -f $HASH2 $R &&
-     test_must_fail git replace --force &&
-     test "$HASH2" = "$(git replace)"
+	SHORTHASH2=$(git rev-parse --short=8 $HASH2) &&
+	git replace -d $SHORTHASH2 &&
+	git replace $SHORTHASH2 $R &&
+	git show $HASH2 | grep "O Thor" &&
+	test_must_fail git replace $HASH2 $R &&
+	git replace -f $HASH2 $R &&
+	test_must_fail git replace --force &&
+	test "$HASH2" = "$(git replace)"
 '
 
 # This creates a side branch where the bug in H2
@@ -207,79 +207,79 @@ test_expect_success '"git replace" resolves sha1' '
 # Then we replace H6 with P6.
 #
 test_expect_success 'create parallel branch without the bug' '
-     git replace -d $HASH2 &&
-     git show $HASH2 | grep "A U Thor" &&
-     git checkout $HASH1 &&
-     git cherry-pick $HASH2 &&
-     git show $HASH5 | git apply &&
-     git commit --amend -m "hello: 4 more lines WITHOUT the bug" hello &&
-     PARA2=$(git rev-parse --verify HEAD) &&
-     git cherry-pick $HASH3 &&
-     PARA3=$(git rev-parse --verify HEAD) &&
-     git cherry-pick $HASH4 &&
-     PARA4=$(git rev-parse --verify HEAD) &&
-     git cherry-pick $HASH6 &&
-     PARA6=$(git rev-parse --verify HEAD) &&
-     git replace $HASH6 $PARA6 &&
-     git checkout main &&
-     cur=$(git rev-parse --verify HEAD) &&
-     test "$cur" = "$HASH7" &&
-     git log --pretty=oneline | grep $PARA2 &&
-     git remote add cloned ./clone_dir
+	git replace -d $HASH2 &&
+	git show $HASH2 | grep "A U Thor" &&
+	git checkout $HASH1 &&
+	git cherry-pick $HASH2 &&
+	git show $HASH5 | git apply &&
+	git commit --amend -m "hello: 4 more lines WITHOUT the bug" hello &&
+	PARA2=$(git rev-parse --verify HEAD) &&
+	git cherry-pick $HASH3 &&
+	PARA3=$(git rev-parse --verify HEAD) &&
+	git cherry-pick $HASH4 &&
+	PARA4=$(git rev-parse --verify HEAD) &&
+	git cherry-pick $HASH6 &&
+	PARA6=$(git rev-parse --verify HEAD) &&
+	git replace $HASH6 $PARA6 &&
+	git checkout main &&
+	cur=$(git rev-parse --verify HEAD) &&
+	test "$cur" = "$HASH7" &&
+	git log --pretty=oneline | grep $PARA2 &&
+	git remote add cloned ./clone_dir
 '
 
 test_expect_success 'push to cloned repo' '
-     git push cloned $HASH6^:refs/heads/parallel &&
-     (
-	  cd clone_dir &&
-	  git checkout parallel &&
-	  git log --pretty=oneline | grep $PARA2
-     )
+	git push cloned $HASH6^:refs/heads/parallel &&
+	(
+		cd clone_dir &&
+		git checkout parallel &&
+		git log --pretty=oneline | grep $PARA2
+	)
 '
 
 test_expect_success 'push branch with replacement' '
-     git cat-file commit $PARA3 | grep "author A U Thor" &&
-     S=$(git cat-file commit $PARA3 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
-     git cat-file commit $S | grep "author O Thor" &&
-     git replace $PARA3 $S &&
-     git show $HASH6~2 | grep "O Thor" &&
-     git show $PARA3 | grep "O Thor" &&
-     git push cloned $HASH6^:refs/heads/parallel2 &&
-     (
-	  cd clone_dir &&
-	  git checkout parallel2 &&
-	  git log --pretty=oneline | grep $PARA3 &&
-	  git show $PARA3 | grep "A U Thor"
-     )
+	git cat-file commit $PARA3 | grep "author A U Thor" &&
+	S=$(git cat-file commit $PARA3 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
+	git cat-file commit $S | grep "author O Thor" &&
+	git replace $PARA3 $S &&
+	git show $HASH6~2 | grep "O Thor" &&
+	git show $PARA3 | grep "O Thor" &&
+	git push cloned $HASH6^:refs/heads/parallel2 &&
+	(
+		cd clone_dir &&
+		git checkout parallel2 &&
+		git log --pretty=oneline | grep $PARA3 &&
+		git show $PARA3 | grep "A U Thor"
+	)
 '
 
 test_expect_success 'fetch branch with replacement' '
-     git branch tofetch $HASH6 &&
-     (
-	  cd clone_dir &&
-	  git fetch origin refs/heads/tofetch:refs/heads/parallel3 &&
-	  git log --pretty=oneline parallel3 >output.txt &&
-	  ! grep $PARA3 output.txt &&
-	  git show $PARA3 >para3.txt &&
-	  grep "A U Thor" para3.txt &&
-	  git fetch origin "refs/replace/*:refs/replace/*" &&
-	  git log --pretty=oneline parallel3 >output.txt &&
-	  grep $PARA3 output.txt &&
-	  git show $PARA3 >para3.txt &&
-	  grep "O Thor" para3.txt
-     )
+	git branch tofetch $HASH6 &&
+	(
+		cd clone_dir &&
+		git fetch origin refs/heads/tofetch:refs/heads/parallel3 &&
+		git log --pretty=oneline parallel3 >output.txt &&
+		! grep $PARA3 output.txt &&
+		git show $PARA3 >para3.txt &&
+		grep "A U Thor" para3.txt &&
+		git fetch origin "refs/replace/*:refs/replace/*" &&
+		git log --pretty=oneline parallel3 >output.txt &&
+		grep $PARA3 output.txt &&
+		git show $PARA3 >para3.txt &&
+		grep "O Thor" para3.txt
+	)
 '
 
 test_expect_success 'bisect and replacements' '
-     git bisect start $HASH7 $HASH1 &&
-     test "$PARA3" = "$(git rev-parse --verify HEAD)" &&
-     git bisect reset &&
-     GIT_NO_REPLACE_OBJECTS=1 git bisect start $HASH7 $HASH1 &&
-     test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
-     git bisect reset &&
-     git --no-replace-objects bisect start $HASH7 $HASH1 &&
-     test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
-     git bisect reset
+	git bisect start $HASH7 $HASH1 &&
+	test "$PARA3" = "$(git rev-parse --verify HEAD)" &&
+	git bisect reset &&
+	GIT_NO_REPLACE_OBJECTS=1 git bisect start $HASH7 $HASH1 &&
+	test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
+	git bisect reset &&
+	git --no-replace-objects bisect start $HASH7 $HASH1 &&
+	test "$HASH4" = "$(git rev-parse --verify HEAD)" &&
+	git bisect reset
 '
 
 test_expect_success 'index-pack and replacements' '
@@ -490,9 +490,9 @@ test_expect_success '--convert-graft-file' '
 		$(git rev-parse HEAD^^ HEAD^ HEAD^^ HEAD^2) \
 		>.git/info/grafts &&
 	git status 2>stderr &&
-	test_i18ngrep "hint:.*grafts is deprecated" stderr &&
+	test_grep "hint:.*grafts is deprecated" stderr &&
 	git replace --convert-graft-file 2>stderr &&
-	test_i18ngrep ! "hint:.*grafts is deprecated" stderr &&
+	test_grep ! "hint:.*grafts is deprecated" stderr &&
 	test_path_is_missing .git/info/grafts &&
 
 	: verify that the history is now "grafted" &&
@@ -503,8 +503,8 @@ test_expect_success '--convert-graft-file' '
 	test_when_finished "rm -f .git/info/grafts" &&
 	echo $EMPTY_BLOB $EMPTY_TREE >.git/info/grafts &&
 	test_must_fail git replace --convert-graft-file 2>err &&
-	test_i18ngrep "$EMPTY_BLOB $EMPTY_TREE" err &&
-	test_i18ngrep "$EMPTY_BLOB $EMPTY_TREE" .git/info/grafts
+	test_grep "$EMPTY_BLOB $EMPTY_TREE" err &&
+	test_grep "$EMPTY_BLOB $EMPTY_TREE" .git/info/grafts
 '
 
 test_done

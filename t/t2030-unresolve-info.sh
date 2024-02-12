@@ -37,11 +37,17 @@ prime_resolve_undo () {
 	git checkout second^0 &&
 	test_tick &&
 	test_must_fail git merge third^0 &&
-	echo merge does not leave anything &&
 	check_resolve_undo empty &&
-	echo different >fi/le &&
-	git add fi/le &&
-	echo resolving records &&
+
+	# how should the conflict be resolved?
+	case "$1" in
+	remove)
+		rm -f file/le && git rm fi/le
+		;;
+	*) # modify
+		echo different >fi/le && git add fi/le
+		;;
+	esac
 	check_resolve_undo recorded fi/le initial:fi/le second:fi/le third:fi/le
 }
 
@@ -122,6 +128,37 @@ test_expect_success 'add records checkout -m undoes' '
 test_expect_success 'unmerge with plumbing' '
 	prime_resolve_undo &&
 	git update-index --unresolve fi/le &&
+	git ls-files --resolve-undo fi/le >actual &&
+	test_must_be_empty actual &&
+	git ls-files -u >actual &&
+	test_line_count = 3 actual
+'
+
+test_expect_success 'unmerge can be done even after committing' '
+	prime_resolve_undo &&
+	git commit -m "record to nuke MERGE_HEAD" &&
+	git update-index --unresolve fi/le &&
+	git ls-files --resolve-undo fi/le >actual &&
+	test_must_be_empty actual &&
+	git ls-files -u >actual &&
+	test_line_count = 3 actual
+'
+
+test_expect_success 'unmerge removal' '
+	prime_resolve_undo remove &&
+	git update-index --unresolve fi/le &&
+	git ls-files --resolve-undo fi/le >actual &&
+	test_must_be_empty actual &&
+	git ls-files -u >actual &&
+	test_line_count = 3 actual
+'
+
+test_expect_success 'unmerge removal after committing' '
+	prime_resolve_undo remove &&
+	git commit -m "record to nuke MERGE_HEAD" &&
+	git update-index --unresolve fi/le &&
+	git ls-files --resolve-undo fi/le >actual &&
+	test_must_be_empty actual &&
 	git ls-files -u >actual &&
 	test_line_count = 3 actual
 '
@@ -191,7 +228,7 @@ test_expect_success 'rerere forget (add-add conflict)' '
 	git commit -m "add differently" &&
 	test_must_fail git merge fifth &&
 	git rerere forget add-differently 2>actual &&
-	test_i18ngrep "no remembered" actual
+	test_grep "no remembered" actual
 '
 
 test_expect_success 'resolve-undo keeps blobs from gc' '

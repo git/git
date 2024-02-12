@@ -802,7 +802,7 @@ test_submodule_recursing_with_args_common () {
 			git branch -t no_submodule origin/no_submodule &&
 			$command no_submodule &&
 			test_superproject_content origin/no_submodule &&
-			! test_path_is_dir sub1 &&
+			test_path_is_missing sub1 &&
 			test_must_fail git config -f .git/modules/sub1/config core.worktree &&
 			test_must_fail git config -f .git/modules/sub1/modules/sub2/config core.worktree
 		)
@@ -830,7 +830,7 @@ test_submodule_recursing_with_args_common () {
 			cd submodule_update &&
 			git branch -t invalid_sub1 origin/invalid_sub1 &&
 			test_must_fail $command invalid_sub1 2>err &&
-			test_i18ngrep sub1 err &&
+			test_grep sub1 err &&
 			test_superproject_content origin/add_sub1 &&
 			test_submodule_content sub1 origin/add_sub1
 		)

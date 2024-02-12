@@ -6,10 +6,10 @@ license that can be found in the LICENSE file or at
 https://developers.google.com/open-source/licenses/bsd
 */
 
+#include "system.h"
 #include "reftable-malloc.h"
 
 #include "basics.h"
-#include "system.h"
 
 static void *(*reftable_malloc_ptr)(size_t sz);
 static void *(*reftable_realloc_ptr)(void *, size_t);

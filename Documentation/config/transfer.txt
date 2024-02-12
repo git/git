@@ -7,7 +7,7 @@ transfer.credentialsInUrl::
 	and any other direct use of the configured URL.
 +
 Note that this is currently limited to detecting credentials in
-`remote.<name>.url` configuration, it won't detect credentials in
+`remote.<name>.url` configuration; it won't detect credentials in
 `remote.<name>.pushurl` configuration.
 +
 You might want to enable this to prevent inadvertent credentials
@@ -21,12 +21,12 @@ exposure, e.g. because:
   system.
 * The git programs will pass the full URL to one another as arguments
   on the command-line, meaning the credentials will be exposed to other
-  users on OS's or systems that allow other users to see the full
+  unprivileged users on systems that allow them to see the full
   process list of other users. On linux the "hidepid" setting
   documented in procfs(5) allows for configuring this behavior.
 +
 If such concerns don't apply to you then you probably don't need to be
-concerned about credentials exposure due to storing that sensitive
+concerned about credentials exposure due to storing sensitive
 data in git's configuration files. If you do want to use this, set
 `transfer.credentialsInUrl` to one of these values:
 +

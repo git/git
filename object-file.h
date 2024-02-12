@@ -4,6 +4,8 @@
 #include "git-zlib.h"
 #include "object.h"
 
+struct index_state;
+
 /*
  * Set this to 0 to prevent oid_object_info_extended() from fetching missing
  * blobs. This has a difference only if extensions.partialClone is set.

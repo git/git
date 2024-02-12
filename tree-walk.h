@@ -1,11 +1,10 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
-#include "hash.h"
+#include "hash-ll.h"
 
 struct index_state;
-
-#define MAX_TRAVERSE_TREES 8
+struct repository;
 
 /**
  * The tree walking API is used to traverse and inspect trees.
@@ -223,7 +222,7 @@ enum interesting {
 
 enum interesting tree_entry_interesting(struct index_state *istate,
 					const struct name_entry *,
-					struct strbuf *, int,
+					struct strbuf *,
 					const struct pathspec *ps);
 
 #endif

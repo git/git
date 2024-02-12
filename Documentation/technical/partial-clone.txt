@@ -3,7 +3,7 @@ Partial Clone Design Notes
 
 The "Partial Clone" feature is a performance optimization for Git that
 allows Git to function without having a complete copy of the repository.
-The goal of this work is to allow Git better handle extremely large
+The goal of this work is to allow Git to better handle extremely large
 repositories.
 
 During clone and fetch operations, Git downloads the complete contents
@@ -256,7 +256,7 @@ remote in a specific order.
 - Dynamic object fetching currently uses the existing pack protocol V0
   which means that each object is requested via fetch-pack.  The server
   will send a full set of info/refs when the connection is established.
-  If there are large number of refs, this may incur significant overhead.
+  If there are a large number of refs, this may incur significant overhead.
 
 
 Future Work
@@ -265,7 +265,7 @@ Future Work
 - Improve the way to specify the order in which promisor remotes are
   tried.
 +
-For example this could allow to specify explicitly something like:
+For example this could allow specifying explicitly something like:
 "When fetching from this remote, I want to use these promisor remotes
 in this order, though, when pushing or fetching to that remote, I want
 to use those promisor remotes in that order."
@@ -322,7 +322,7 @@ Footnotes
 
 [a] expensive-to-modify list of missing objects:  Earlier in the design of
     partial clone we discussed the need for a single list of missing objects.
-    This would essentially be a sorted linear list of OIDs that the were
+    This would essentially be a sorted linear list of OIDs that were
     omitted by the server during a clone or subsequent fetches.
 
 This file would need to be loaded into memory on every object lookup.

@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "refs.h"
 #include "notes-utils.h"
-#include "repository.h"
+#include "strbuf.h"
 
 void create_notes_commit(struct repository *r,
 			 struct notes_tree *t,
@@ -93,7 +93,9 @@ static combine_notes_fn parse_combine_notes_fn(const char *v)
 		return NULL;
 }
 
-static int notes_rewrite_config(const char *k, const char *v, void *cb)
+static int notes_rewrite_config(const char *k, const char *v,
+				const struct config_context *ctx UNUSED,
+				void *cb)
 {
 	struct notes_rewrite_cfg *c = cb;
 	if (starts_with(k, "notes.rewrite.") && !strcmp(k+14, c->cmd)) {
@@ -109,6 +111,8 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 		}
 		return 0;
 	} else if (!c->refs_from_env && !strcmp(k, "notes.rewriteref")) {
+		if (!v)
+			return config_error_nonbool(k);
 		/* note that a refs/ prefix is implied in the
 		 * underlying for_each_glob_ref */
 		if (starts_with(v, "refs/notes/"))

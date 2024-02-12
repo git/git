@@ -1,12 +1,12 @@
 #include "git-compat-util.h"
+#include "gettext.h"
 #include "config.h"
 #include "hex.h"
-#include "object-store.h"
+#include "object-store-ll.h"
+#include "strbuf.h"
 #include "xdiff-interface.h"
 #include "xdiff/xtypes.h"
 #include "xdiff/xdiffi.h"
-#include "xdiff/xemit.h"
-#include "xdiff/xmacros.h"
 #include "xdiff/xutils.h"
 
 struct xdiff_emit_state {
@@ -307,11 +307,12 @@ int xdiff_compare_lines(const char *l1, long s1,
 
 int git_xmerge_style = -1;
 
-int git_xmerge_config(const char *var, const char *value, void *cb)
+int git_xmerge_config(const char *var, const char *value,
+		      const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "merge.conflictstyle")) {
 		if (!value)
-			die("'%s' is not a boolean", var);
+			return config_error_nonbool(var);
 		if (!strcmp(value, "diff3"))
 			git_xmerge_style = XDL_MERGE_DIFF3;
 		else if (!strcmp(value, "zdiff3"))
@@ -323,9 +324,9 @@ int git_xmerge_config(const char *var, const char *value, void *cb)
 		 * git-completion.bash when you add new merge config
 		 */
 		else
-			die("unknown style '%s' given for '%s'",
-			    value, var);
+			return error(_("unknown style '%s' given for '%s'"),
+				     value, var);
 		return 0;
 	}
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
