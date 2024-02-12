@@ -508,8 +508,38 @@ static int reader_seek_indexed(struct reftable_reader *r,
 	if (err < 0)
 		goto done;
 
+	/*
+	 * The index may consist of multiple levels, where each level may have
+	 * multiple index blocks. We start by doing a linear search in the
+	 * highest layer that identifies the relevant index block as well as
+	 * the record inside that block that corresponds to our wanted key.
+	 */
 	err = reader_seek_linear(&index_iter, &want_index);
+	if (err < 0)
+		goto done;
+
+	/*
+	 * Traverse down the levels until we find a non-index entry.
+	 */
 	while (1) {
+		/*
+		 * In case we seek a record that does not exist the index iter
+		 * will tell us that the iterator is over. This works because
+		 * the last index entry of the current level will contain the
+		 * last key it knows about. So in case our seeked key is larger
+		 * than the last indexed key we know that it won't exist.
+		 *
+		 * There is one subtlety in the layout of the index section
+		 * that makes this work as expected: the highest-level index is
+		 * at end of the section and will point backwards and thus we
+		 * start reading from the end of the index section, not the
+		 * beginning.
+		 *
+		 * If that wasn't the case and the order was reversed then the
+		 * linear seek would seek into the lower levels and traverse
+		 * all levels of the index only to find out that the key does
+		 * not exist.
+		 */
 		err = table_iter_next(&index_iter, &index_result);
 		table_iter_block_done(&index_iter);
 		if (err != 0)
