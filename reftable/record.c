@@ -377,10 +377,11 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 
 	assert(hash_size > 0);
 
-	r->refname = reftable_realloc(r->refname, key.len + 1);
+	r->refname = reftable_malloc(key.len + 1);
 	memcpy(r->refname, key.buf, key.len);
-	r->update_index = update_index;
 	r->refname[key.len] = 0;
+
+	r->update_index = update_index;
 	r->value_type = val_type;
 	switch (val_type) {
 	case REFTABLE_REF_VAL1:
