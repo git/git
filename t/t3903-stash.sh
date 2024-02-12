@@ -1516,4 +1516,56 @@ test_expect_success 'restore untracked files even when we hit conflicts' '
 	)
 '
 
+test_expect_success 'stash create reports a locked index' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A A.file &&
+		echo change >A.file &&
+		touch .git/index.lock &&
+
+		cat >expect <<-EOF &&
+		error: could not write index
+		EOF
+		test_must_fail git stash create 2>err &&
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'stash push reports a locked index' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A A.file &&
+		echo change >A.file &&
+		touch .git/index.lock &&
+
+		cat >expect <<-EOF &&
+		error: could not write index
+		EOF
+		test_must_fail git stash push 2>err &&
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'stash apply reports a locked index' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A A.file &&
+		echo change >A.file &&
+		git stash push &&
+		touch .git/index.lock &&
+
+		cat >expect <<-EOF &&
+		error: could not write index
+		EOF
+		test_must_fail git stash apply 2>err &&
+		test_cmp expect err
+	)
+'
+
 test_done
