@@ -357,24 +357,32 @@ static int table_iter_next(struct table_iter *ti, struct reftable_record *rec)
 
 	while (1) {
 		struct table_iter next = TABLE_ITER_INIT;
-		int err = 0;
-		if (ti->is_finished) {
+		int err;
+
+		if (ti->is_finished)
 			return 1;
-		}
 
+		/*
+		 * Check whether the current block still has more records. If
+		 * so, return it. If the iterator returns positive then the
+		 * current block has been exhausted.
+		 */
 		err = table_iter_next_in_block(ti, rec);
-		if (err <= 0) {
+		if (err <= 0)
+			return err;
+
+		/*
+		 * Otherwise, we need to continue to the next block in the
+		 * table and retry. If there are no more blocks then the
+		 * iterator is drained.
+		 */
+		err = table_iter_next_block(&next, ti);
+		table_iter_block_done(ti);
+		if (err) {
+			ti->is_finished = 1;
 			return err;
 		}
 
-		err = table_iter_next_block(&next, ti);
-		if (err != 0) {
-			ti->is_finished = 1;
-		}
-		table_iter_block_done(ti);
-		if (err != 0) {
-			return err;
-		}
 		table_iter_copy_from(ti, &next);
 		block_iter_close(&next.bi);
 	}
