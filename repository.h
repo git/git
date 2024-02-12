@@ -39,6 +39,7 @@ struct repo_settings {
 	int sparse_index;
 	int pack_read_reverse_index;
 	int pack_use_bitmap_boundary_traversal;
+	int pack_use_multi_pack_reuse;
 
 	/*
 	 * Does this repository have core.useReplaceRefs=true (on by

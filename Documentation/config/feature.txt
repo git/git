@@ -17,6 +17,9 @@ skipping more commits at a time, reducing the number of round trips.
 +
 * `pack.useBitmapBoundaryTraversal=true` may improve bitmap traversal times by
 walking fewer objects.
++
+* `pack.allowPackReuse=multi` may improve the time it takes to create a pack by
+reusing objects from multiple packs instead of just one.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the
