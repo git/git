@@ -107,6 +107,14 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 		struct pq_entry top = merged_iter_pqueue_top(mi->pq);
 		int cmp;
 
+		/*
+		 * When the next entry comes from the same queue as the current
+		 * entry then it must by definition be larger. This avoids a
+		 * comparison in the most common case.
+		 */
+		if (top.index == entry.index)
+			break;
+
 		cmp = reftable_record_cmp(&top.rec, &entry.rec);
 		if (cmp > 0)
 			break;
