@@ -174,6 +174,14 @@ test_expect_success 'show-ref --verify HEAD' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'show-ref --verify pseudorefs' '
+	git update-ref CHERRY_PICK_HEAD HEAD $ZERO_OID &&
+	test_when_finished "git update-ref -d CHERRY_PICK_HEAD" &&
+	git show-ref -s --verify HEAD >actual &&
+	git show-ref -s --verify CHERRY_PICK_HEAD >expect &&
+	test_cmp actual expect
+'
+
 test_expect_success 'show-ref --verify with dangling ref' '
 	sha1_file() {
 		echo "$*" | sed "s#..#.git/objects/&/#"
