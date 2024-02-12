@@ -732,7 +732,7 @@ static void test_sizes_to_segments(void)
 	uint64_t sizes[] = { 2, 3, 4, 5, 7, 9 };
 	/* .................0  1  2  3  4  5 */
 
-	int seglen = 0;
+	size_t seglen = 0;
 	struct segment *segs =
 		sizes_to_segments(&seglen, sizes, ARRAY_SIZE(sizes));
 	EXPECT(segs[2].log == 3);
@@ -747,7 +747,7 @@ static void test_sizes_to_segments(void)
 
 static void test_sizes_to_segments_empty(void)
 {
-	int seglen = 0;
+	size_t seglen = 0;
 	struct segment *segs = sizes_to_segments(&seglen, NULL, 0);
 	EXPECT(seglen == 0);
 	reftable_free(segs);
@@ -756,8 +756,7 @@ static void test_sizes_to_segments_empty(void)
 static void test_sizes_to_segments_all_equal(void)
 {
 	uint64_t sizes[] = { 5, 5 };
-
-	int seglen = 0;
+	size_t seglen = 0;
 	struct segment *segs =
 		sizes_to_segments(&seglen, sizes, ARRAY_SIZE(sizes));
 	EXPECT(seglen == 1);

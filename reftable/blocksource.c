@@ -29,7 +29,7 @@ static int strbuf_read_block(void *v, struct reftable_block *dest, uint64_t off,
 {
 	struct strbuf *b = v;
 	assert(off + size <= b->len);
-	dest->data = reftable_calloc(size);
+	REFTABLE_CALLOC_ARRAY(dest->data, size);
 	memcpy(dest->data, b->buf + off, size);
 	dest->len = size;
 	return size;
@@ -132,7 +132,7 @@ int reftable_block_source_from_file(struct reftable_block_source *bs,
 		return REFTABLE_IO_ERROR;
 	}
 
-	p = reftable_calloc(sizeof(*p));
+	REFTABLE_CALLOC_ARRAY(p, 1);
 	p->size = st.st_size;
 	p->data = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);

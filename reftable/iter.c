@@ -160,8 +160,7 @@ int new_indexed_table_ref_iter(struct indexed_table_ref_iter **dest,
 			       int oid_len, uint64_t *offsets, int offset_len)
 {
 	struct indexed_table_ref_iter empty = INDEXED_TABLE_REF_ITER_INIT;
-	struct indexed_table_ref_iter *itr =
-		reftable_calloc(sizeof(struct indexed_table_ref_iter));
+	struct indexed_table_ref_iter *itr = reftable_calloc(1, sizeof(*itr));
 	int err = 0;
 
 	*itr = empty;

@@ -56,7 +56,9 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 	int i = 0, n;
 	struct reftable_log_record log = { NULL };
 	const struct reftable_stats *stats = NULL;
-	*names = reftable_calloc(sizeof(char *) * (N + 1));
+
+	REFTABLE_CALLOC_ARRAY(*names, N + 1);
+
 	reftable_writer_set_limits(w, update_index, update_index);
 	for (i = 0; i < N; i++) {
 		char name[100];
@@ -188,7 +190,7 @@ static void test_log_overflow(void)
 static void test_log_write_read(void)
 {
 	int N = 2;
-	char **names = reftable_calloc(sizeof(char *) * (N + 1));
+	char **names = reftable_calloc(N + 1, sizeof(*names));
 	int err;
 	struct reftable_write_options opts = {
 		.block_size = 256,
@@ -519,7 +521,7 @@ static void test_table_read_write_seek_index(void)
 static void test_table_refs_for(int indexed)
 {
 	int N = 50;
-	char **want_names = reftable_calloc(sizeof(char *) * (N + 1));
+	char **want_names = reftable_calloc(N + 1, sizeof(*want_names));
 	int want_names_len = 0;
 	uint8_t want_hash[GIT_SHA1_RAWSZ];
 

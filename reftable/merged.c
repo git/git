@@ -19,24 +19,23 @@ https://developers.google.com/open-source/licenses/bsd
 
 static int merged_iter_init(struct merged_iter *mi)
 {
-	int i = 0;
-	for (i = 0; i < mi->stack_len; i++) {
-		struct reftable_record rec = reftable_new_record(mi->typ);
-		int err = iterator_next(&mi->stack[i], &rec);
-		if (err < 0) {
-			return err;
-		}
+	for (size_t i = 0; i < mi->stack_len; i++) {
+		struct pq_entry e = {
+			.index = i,
+		};
+		int err;
 
+		reftable_record_init(&e.rec, mi->typ);
+		err = iterator_next(&mi->stack[i], &e.rec);
+		if (err < 0)
+			return err;
 		if (err > 0) {
 			reftable_iterator_destroy(&mi->stack[i]);
-			reftable_record_release(&rec);
-		} else {
-			struct pq_entry e = {
-				.rec = rec,
-				.index = i,
-			};
-			merged_iter_pqueue_add(&mi->pq, &e);
+			reftable_record_release(&e.rec);
+			continue;
 		}
+
+		merged_iter_pqueue_add(&mi->pq, &e);
 	}
 
 	return 0;
@@ -45,11 +44,10 @@ static int merged_iter_init(struct merged_iter *mi)
 static void merged_iter_close(void *p)
 {
 	struct merged_iter *mi = p;
-	int i = 0;
+
 	merged_iter_pqueue_release(&mi->pq);
-	for (i = 0; i < mi->stack_len; i++) {
+	for (size_t i = 0; i < mi->stack_len; i++)
 		reftable_iterator_destroy(&mi->stack[i]);
-	}
 	reftable_free(mi->stack);
 	strbuf_release(&mi->key);
 	strbuf_release(&mi->entry_key);
@@ -59,10 +57,12 @@ static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
 					       size_t idx)
 {
 	struct pq_entry e = {
-		.rec = reftable_new_record(mi->typ),
 		.index = idx,
 	};
-	int err = iterator_next(&mi->stack[idx], &e.rec);
+	int err;
+
+	reftable_record_init(&e.rec, mi->typ);
+	err = iterator_next(&mi->stack[idx], &e.rec);
 	if (err < 0)
 		return err;
 
@@ -168,14 +168,14 @@ static void iterator_from_merged_iter(struct reftable_iterator *it,
 }
 
 int reftable_new_merged_table(struct reftable_merged_table **dest,
-			      struct reftable_table *stack, int n,
+			      struct reftable_table *stack, size_t n,
 			      uint32_t hash_id)
 {
 	struct reftable_merged_table *m = NULL;
 	uint64_t last_max = 0;
 	uint64_t first_min = 0;
-	int i = 0;
-	for (i = 0; i < n; i++) {
+
+	for (size_t i = 0; i < n; i++) {
 		uint64_t min = reftable_table_min_update_index(&stack[i]);
 		uint64_t max = reftable_table_max_update_index(&stack[i]);
 
@@ -190,7 +190,7 @@ int reftable_new_merged_table(struct reftable_merged_table **dest,
 		}
 	}
 
-	m = reftable_calloc(sizeof(struct reftable_merged_table));
+	REFTABLE_CALLOC_ARRAY(m, 1);
 	m->stack = stack;
 	m->stack_len = n;
 	m->min = first_min;
@@ -239,50 +239,38 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 				    struct reftable_iterator *it,
 				    struct reftable_record *rec)
 {
-	struct reftable_iterator *iters = reftable_calloc(
-		sizeof(struct reftable_iterator) * mt->stack_len);
 	struct merged_iter merged = {
-		.stack = iters,
 		.typ = reftable_record_type(rec),
 		.hash_id = mt->hash_id,
 		.suppress_deletions = mt->suppress_deletions,
 		.key = STRBUF_INIT,
 		.entry_key = STRBUF_INIT,
 	};
-	int n = 0;
-	int err = 0;
-	int i = 0;
-	for (i = 0; i < mt->stack_len && err == 0; i++) {
-		int e = reftable_table_seek_record(&mt->stack[i], &iters[n],
-						   rec);
-		if (e < 0) {
-			err = e;
-		}
-		if (e == 0) {
-			n++;
-		}
-	}
-	if (err < 0) {
-		int i = 0;
-		for (i = 0; i < n; i++) {
-			reftable_iterator_destroy(&iters[i]);
-		}
-		reftable_free(iters);
-		return err;
+	struct merged_iter *p;
+	int err;
+
+	REFTABLE_CALLOC_ARRAY(merged.stack, mt->stack_len);
+	for (size_t i = 0; i < mt->stack_len; i++) {
+		err = reftable_table_seek_record(&mt->stack[i],
+						 &merged.stack[merged.stack_len], rec);
+		if (err < 0)
+			goto out;
+		if (!err)
+			merged.stack_len++;
 	}
 
-	merged.stack_len = n;
 	err = merged_iter_init(&merged);
-	if (err < 0) {
+	if (err < 0)
+		goto out;
+
+	p = reftable_malloc(sizeof(struct merged_iter));
+	*p = merged;
+	iterator_from_merged_iter(it, p);
+
+out:
+	if (err < 0)
 		merged_iter_close(&merged);
-		return err;
-	} else {
-		struct merged_iter *p =
-			reftable_malloc(sizeof(struct merged_iter));
-		*p = merged;
-		iterator_from_merged_iter(it, p);
-	}
-	return 0;
+	return err;
 }
 
 int reftable_merged_table_seek_ref(struct reftable_merged_table *mt,

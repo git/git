@@ -49,7 +49,7 @@ static int padded_write(struct reftable_writer *w, uint8_t *data, size_t len,
 {
 	int n = 0;
 	if (w->pending_padding > 0) {
-		uint8_t *zeroed = reftable_calloc(w->pending_padding);
+		uint8_t *zeroed = reftable_calloc(w->pending_padding, sizeof(*zeroed));
 		int n = w->write(w->write_arg, zeroed, w->pending_padding);
 		if (n < 0)
 			return n;
@@ -124,8 +124,7 @@ reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 		    int (*flush_func)(void *),
 		    void *writer_arg, struct reftable_write_options *opts)
 {
-	struct reftable_writer *wp =
-		reftable_calloc(sizeof(struct reftable_writer));
+	struct reftable_writer *wp = reftable_calloc(1, sizeof(*wp));
 	strbuf_init(&wp->block_writer_data.last_key, 0);
 	options_set_defaults(opts);
 	if (opts->block_size >= (1 << 24)) {
@@ -133,7 +132,7 @@ reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 		abort();
 	}
 	wp->last_key = reftable_empty_strbuf;
-	wp->block = reftable_calloc(opts->block_size);
+	REFTABLE_CALLOC_ARRAY(wp->block, opts->block_size);
 	wp->write = writer_func;
 	wp->write_arg = writer_arg;
 	wp->opts = *opts;
@@ -202,12 +201,7 @@ static void writer_index_hash(struct reftable_writer *w, struct strbuf *hash)
 		return;
 	}
 
-	if (key->offset_len == key->offset_cap) {
-		key->offset_cap = 2 * key->offset_cap + 1;
-		key->offsets = reftable_realloc(
-			key->offsets, sizeof(uint64_t) * key->offset_cap);
-	}
-
+	REFTABLE_ALLOC_GROW(key->offsets, key->offset_len + 1, key->offset_cap);
 	key->offsets[key->offset_len++] = off;
 }
 
@@ -691,12 +685,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	if (err < 0)
 		return err;
 
-	if (w->index_cap == w->index_len) {
-		w->index_cap = 2 * w->index_cap + 1;
-		w->index = reftable_realloc(
-			w->index,
-			sizeof(struct reftable_index_record) * w->index_cap);
-	}
+	REFTABLE_ALLOC_GROW(w->index, w->index_len + 1, w->index_cap);
 
 	ir.offset = w->next;
 	strbuf_reset(&ir.last_key);
