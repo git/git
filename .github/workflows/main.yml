@@ -189,7 +189,7 @@ jobs:
         repository: git/git
         definitionId: 9
     - name: add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: copy dlls to root
       shell: cmd
       run: compat\vcbuild\vcpkg_copy_dlls.bat release ${{ matrix.arch }}-windows
