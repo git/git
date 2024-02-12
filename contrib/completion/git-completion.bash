@@ -1483,12 +1483,32 @@ _git_bisect ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="start bad good skip reset visualize replay log run"
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	__git_find_repo_path
+
+	# If a bisection is in progress get the terms being used.
+	local term_bad term_good
+	if [ -f "$__git_repo_path"/BISECT_TERMS ]; then
+		term_bad=$(__git bisect terms --term-bad)
+		term_good=$(__git bisect terms --term-good)
+	fi
+
+	# We will complete any custom terms, but still always complete the
+	# more usual bad/new/good/old because git bisect gives a good error
+	# message if these are given when not in use, and that's better than
+	# silent refusal to complete if the user is confused.
+	#
+	# We want to recognize 'view' but not complete it, because it overlaps
+	# with 'visualize' too much and is just an alias for it.
+	#
+	local completable_subcommands="start bad new $term_bad good old $term_good terms skip reset visualize replay log run help"
+	local all_subcommands="$completable_subcommands view"
+
+	local subcommand="$(__git_find_on_cmdline "$all_subcommands")"
+
 	if [ -z "$subcommand" ]; then
 		__git_find_repo_path
 		if [ -f "$__git_repo_path"/BISECT_START ]; then
-			__gitcomp "$subcommands"
+			__gitcomp "$completable_subcommands"
 		else
 			__gitcomp "replay start"
 		fi
@@ -1496,7 +1516,26 @@ _git_bisect ()
 	fi
 
 	case "$subcommand" in
-	bad|good|reset|skip|start)
+	start)
+		case "$cur" in
+		--*)
+			__gitcomp "--first-parent --no-checkout --term-new --term-bad --term-old --term-good"
+			return
+			;;
+		*)
+			__git_complete_refs
+			;;
+		esac
+		;;
+	terms)
+		__gitcomp "--term-good --term-old --term-bad --term-new"
+		return
+		;;
+	visualize|view)
+		__git_complete_log_opts
+		return
+		;;
+	bad|new|"$term_bad"|good|old|"$term_good"|reset|skip)
 		__git_complete_refs
 		;;
 	*)
@@ -2105,10 +2144,12 @@ __git_diff_merges_opts="off none on first-parent 1 separate m combined c dense-c
 __git_log_pretty_formats="oneline short medium full fuller reference email raw format: tformat: mboxrd"
 __git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default human raw unix auto: format:"
 
-_git_log ()
+# Complete porcelain (i.e. not git-rev-list) options and at least some
+# option arguments accepted by git-log.  Note that this same set of options
+# are also accepted by some other git commands besides git-log.
+__git_complete_log_opts ()
 {
-	__git_has_doubledash && return
-	__git_find_repo_path
+	COMPREPLY=()
 
 	local merge=""
 	if __git_pseudoref_exists MERGE_HEAD; then
@@ -2204,6 +2245,16 @@ _git_log ()
 		return
 		;;
 	esac
+}
+
+_git_log ()
+{
+	__git_has_doubledash && return
+	__git_find_repo_path
+
+	__git_complete_log_opts
+        [ ${#COMPREPLY[@]} -eq 0 ] || return
+
 	__git_complete_revlist
 }
 
