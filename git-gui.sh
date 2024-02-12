@@ -744,27 +744,8 @@ proc sq {value} {
 proc load_current_branch {} {
 	global current_branch is_detached
 
-	set fd [safe_open_file [gitdir HEAD] r]
-	fconfigure $fd -translation binary -encoding utf-8
-	if {[gets $fd ref] < 1} {
-		set ref {}
-	}
-	close $fd
-
-	set pfx {ref: refs/heads/}
-	set len [string length $pfx]
-	if {[string equal -length $len $pfx $ref]} {
-		# We're on a branch.  It might not exist.  But
-		# HEAD looks good enough to be a branch.
-		#
-		set current_branch [string range $ref $len end]
-		set is_detached 0
-	} else {
-		# Assume this is a detached head.
-		#
-		set current_branch HEAD
-		set is_detached 1
-	}
+	set current_branch [git branch --show-current]
+	set is_detached [expr [string length $current_branch] == 0]
 }
 
 auto_load tk_optionMenu
