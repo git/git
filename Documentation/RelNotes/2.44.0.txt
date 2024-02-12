@@ -91,6 +91,14 @@ UI, Workflows & Features
    refresh token the same way as credential-cache and
    credential-libsecret backends.
 
+ * Command line completion support (in contrib/) has been
+   updated for "git bisect".
+
+ * "git branch" and friends learned to use the formatted text as
+   sorting key, not the underlying timestamp value, when the --sort
+   option is used with author or committer timestamp with a format
+   specifier (e.g., "--sort=creatordate:format:%H:%M:%S").
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -150,6 +158,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The priority queue test has been migrated to the unit testing
    framework.
+
+ * Setting `feature.experimental` opts the user into multi-pack reuse
+   experiment
 
 
 Fixes since v2.43
@@ -279,6 +290,17 @@ Fixes since v2.43
    as <ptr, length> with a wrong length, which has been corrected.
    (merge 156e28b36d jh/sparse-index-expand-to-path-fix later to maint).
 
+ * A failed "git tag -s" did not necessarily result in an error
+   depending on the crypto backend, which has been corrected.
+   (merge 6931049c32 jc/sign-buffer-failure-propagation-fix later to maint).
+
+ * "git stash" sometimes was silent even when it failed due to
+   unwritable index file, which has been corrected.
+   (merge d2058cb2f0 ps/report-failure-from-git-stash later to maint).
+
+ * "git show-ref --verify" did not show things like "CHERRY_PICK_HEAD",
+   which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
    (merge 9cce3be2df bk/bisect-doc-fix later to maint).
@@ -293,3 +315,5 @@ Fixes since v2.43
    (merge 36c9c44fa4 tb/pack-bitmap-drop-unused-struct-member later to maint).
    (merge 19ed0dff8f js/win32-retry-pipe-write-on-enospc later to maint).
    (merge 3cb4384683 jc/t0091-with-unknown-git later to maint).
+   (merge 841dbd40a3 jc/bisect-doc later to maint).
+   (merge 78307f1a89 pb/template-for-single-commit-pr later to maint).
