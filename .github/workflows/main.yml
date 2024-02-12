@@ -266,6 +266,9 @@ jobs:
           - jobname: linux-sha256
             cc: clang
             pool: ubuntu-latest
+          - jobname: linux-reftable
+            cc: clang
+            pool: ubuntu-latest
           - jobname: linux-gcc
             cc: gcc
             cc_package: gcc-8
@@ -277,6 +280,9 @@ jobs:
           - jobname: osx-clang
             cc: clang
             pool: macos-13
+          - jobname: osx-reftable
+            cc: clang
+            pool: macos-13
           - jobname: osx-gcc
             cc: gcc
             cc_package: gcc-13
@@ -285,6 +291,9 @@ jobs:
             cc: gcc
             pool: ubuntu-latest
           - jobname: linux-leaks
+            cc: gcc
+            pool: ubuntu-latest
+          - jobname: linux-reftable-leaks
             cc: gcc
             pool: ubuntu-latest
           - jobname: linux-asan-ubsan
