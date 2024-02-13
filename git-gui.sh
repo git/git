@@ -992,6 +992,8 @@ if {$_git eq {}} {
 ##
 ## version check
 
+set MIN_GIT_VERSION 2.36
+
 if {[catch {set _git_version [git --version]} err]} {
 	catch {wm withdraw .}
 	tk_messageBox \
@@ -1002,9 +1004,10 @@ if {[catch {set _git_version [git --version]} err]} {
 
 $err
 
-[appname] requires Git 1.5.0 or later."
+[appname] requires Git $MIN_GIT_VERSION or later."
 	exit 1
 }
+
 if {![regsub {^git version } $_git_version {} _git_version]} {
 	catch {wm withdraw .}
 	tk_messageBox \
@@ -1029,25 +1032,19 @@ proc get_trimmed_version {s} {
 set _real_git_version $_git_version
 set _git_version [get_trimmed_version $_git_version]
 
-if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
+if {[catch {set vcheck [package vcompare $_git_version $MIN_GIT_VERSION]}] ||
+	[expr $vcheck < 0] } {
+
+	set msg1 [mc "Insufficient git version, require: "]
+	set msg2 [mc "git returned:"]
+	set message "$msg1 $MIN_GIT_VERSION\n$msg2 $_real_git_version"
 	catch {wm withdraw .}
-	if {[tk_messageBox \
-		-icon warning \
-		-type yesno \
-		-default no \
-		-title "[appname]: warning" \
-		-message [mc "Git version cannot be determined.
-
-%s claims it is version '%s'.
-
-%s requires at least Git 1.5.0 or later.
-
-Assume '%s' is version 1.5.0?
-" $_git $_real_git_version [appname] $_real_git_version]] eq {yes}} {
-		set _git_version 1.5.0
-	} else {
-		exit 1
-	}
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title [mc "git-gui: fatal error"] \
+		-message $message
+	exit 1
 }
 unset _real_git_version
 
@@ -1093,20 +1090,6 @@ proc git-version {args} {
 	}
 
 	}
-}
-
-if {[git-version < 1.5]} {
-	catch {wm withdraw .}
-	tk_messageBox \
-		-icon error \
-		-type ok \
-		-title [mc "git-gui: fatal error"] \
-		-message "[appname] requires Git 1.5.0 or later.
-
-You are using [git-version]:
-
-[git --version]"
-	exit 1
 }
 
 ######################################################################
