@@ -182,6 +182,8 @@ void print_columns(const struct string_list *list, unsigned int colopts,
 {
 	struct column_options nopts;
 
+	if (opts && (0 > opts->padding))
+		BUG("padding must be non-negative");
 	if (!list->nr)
 		return;
 	assert((colopts & COL_ENABLE_MASK) != COL_AUTO);
@@ -361,6 +363,8 @@ int run_column_filter(int colopts, const struct column_options *opts)
 {
 	struct strvec *argv;
 
+	if (opts && (0 > opts->padding))
+		BUG("padding must be non-negative");
 	if (fd_out != -1)
 		return -1;
 
