@@ -60,7 +60,7 @@ static void test_pq(void)
 		if (last) {
 			EXPECT(strcmp(last, rec->u.ref.refname) < 0);
 		}
-		// this is names[i], so don't dealloc.
+		/* this is names[i], so don't dealloc. */
 		last = rec->u.ref.refname;
 		rec->u.ref.refname = NULL;
 		reftable_record_release(rec);
