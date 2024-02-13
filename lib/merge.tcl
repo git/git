@@ -112,16 +112,7 @@ method _start {} {
 	close $fh
 	set _last_merged_branch $branch
 
-	if {[git-version >= "2.5.0"]} {
-		set cmd [list git merge --strategy=recursive FETCH_HEAD]
-	} else {
-		set cmd [list git]
-		lappend cmd merge
-		lappend cmd --strategy=recursive
-		lappend cmd [git_redir [list fmt-merge-msg] [list <[gitdir FETCH_HEAD]]]
-		lappend cmd HEAD
-		lappend cmd $name
-	}
+	set cmd [list git merge --strategy=recursive FETCH_HEAD]
 
 	ui_status [mc "Merging %s and %s..." $current_branch $stitle]
 	set cons [console::new [mc "Merge"] "merge $stitle"]
