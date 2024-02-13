@@ -470,7 +470,7 @@ method _load {jump} {
 	$w_path conf -text [escape_path $path]
 
 	set do_textconv 0
-	if {![is_config_false gui.textconv] && [git-version >= 1.7.2]} {
+	if {![is_config_false gui.textconv]} {
 		set filter [gitattr $path diff set]
 		set textconv [get_config [join [list diff $filter textconv] .]]
 		if {$filter ne {set} && $textconv ne {}} {
@@ -807,9 +807,7 @@ method _read_blame {fd cur_w cur_d} {
 				# thorough copy search; insert before the threshold
 				set original_options [linsert $original_options 0 -C]
 			}
-			if {[git-version >= 1.5.3]} {
-				lappend original_options -w ; # ignore indentation changes
-			}
+			lappend original_options -w ; # ignore indentation changes
 
 			_exec_blame $this $w_amov @amov_data \
 				$original_options \
@@ -857,9 +855,7 @@ method _fullcopyblame {} {
 	set threshold [get_config gui.copyblamethreshold]
 	set original_options [list -C -C "-C$threshold"]
 
-	if {[git-version >= 1.5.3]} {
-		lappend original_options -w ; # ignore indentation changes
-	}
+	lappend original_options -w ; # ignore indentation changes
 
 	# Find the line range
 	set pos @$::cursorX,$::cursorY
