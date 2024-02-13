@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2024, #04; Thu, 8)
-X-master-at: 5216f8f5c4089ec29ce49afa147434c23e0f0163
-X-next-at: 5546620c9085abb7ffcf1203c4e150d0cc96ba91
+Subject: What's cooking in git.git (Feb 2024, #05; Tue, 13)
+X-master-at: 2996f11c1d11ab68823f0939b6469dedc2b9ab90
+X-next-at: d0d6417c1e3e625e276a94050391e37766a706c2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2024, #04; Thu, 8)
+What's cooking in git.git (Feb 2024, #05; Tue, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,9 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-The preview release Git 2.44-rc0 has been tagged.  Let's see how
-well this pre-release period goes; unlike previous cycles, I planned
-only for one release candidate in the middle of next week until the
-final release around the 20th.
+Git 2.44-rc1 will be tagged soon.  This round, let's try having just
+one release candidate before the final, which is expected to be
+tagged on or around 20th.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,75 +52,87 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cp/unit-test-prio-queue (2024-01-22) 1 commit
-  (merged to 'next' on 2024-02-01 at 38aa6559b0)
- + tests: move t0009-prio-queue.sh to the new unit testing framework
+* bk/complete-bisect (2024-02-06) 7 commits
+  (merged to 'next' on 2024-02-07 at ac95a595b7)
+ + completion: bisect: recognize but do not complete view subcommand
+ + completion: bisect: complete log opts for visualize subcommand
+ + completion: new function __git_complete_log_opts
+ + completion: bisect: complete missing --first-parent and - -no-checkout options
+ + completion: bisect: complete custom terms and related options
+ + completion: bisect: complete bad, new, old, and help subcommands
+ + completion: tests: always use 'master' for default initial branch name
 
- The priority queue test has been migrated to the unit testing
- framework.
- source: <pull.1642.v4.git.1705865326185.gitgitgadget@gmail.com>
-
-
-* ja/doc-placeholders-fix (2023-12-26) 2 commits
-  (merged to 'next' on 2024-02-05 at 047da8cbb0)
- + doc: enforce placeholders in documentation
- + doc: enforce dashes in placeholders
-
- Docfix.
- source: <pull.1626.git.1703539287.gitgitgadget@gmail.com>
+ Command line completion support (in contrib/) has been
+ updated for "git bisect".
+ source: <20240206215048.488344-1-britton.kerin@gmail.com>
 
 
-* jc/index-pack-fsck-levels (2024-02-01) 2 commits
-  (merged to 'next' on 2024-02-02 at 0e4ef26aa1)
- + index-pack: --fsck-objects to take an optional argument for fsck msgs
- + index-pack: test and document --strict=<msg-id>=<severity>...
+* jc/bisect-doc (2024-02-07) 2 commits
+  (merged to 'next' on 2024-02-07 at 914fa6775f)
+ + bisect: document command line arguments for "bisect start"
+ + bisect: document "terms" subcommand more fully
 
- The "--fsck-objects" option of "git index-pack" now can take the
- optional parameter to tweak severity of different fsck errors.
- source: <pull.1658.v4.git.git.1706751483.gitgitgadget@gmail.com>
-
-
-* jh/sparse-index-expand-to-path-fix (2024-02-02) 1 commit
-  (merged to 'next' on 2024-02-06 at 17ec59dd9a)
- + sparse-index: pass string length to index_file_exists()
-
- A caller called index_file_exists() that takes a string expressed
- as <ptr, length> with a wrong length, which has been corrected.
- source: <pull.1649.git.1706897095273.gitgitgadget@gmail.com>
+ Doc update.
+ source: <20240207214436.538586-1-gitster@pobox.com>
 
 
-* jk/unit-tests-buildfix (2024-02-02) 4 commits
-  (merged to 'next' on 2024-02-02 at 8838dd21e8)
- + t/Makefile: say the default target upfront
-  (merged to 'next' on 2024-01-31 at 00df31c4c8)
- + t/Makefile: get UNIT_TESTS list from C sources
- + Makefile: remove UNIT_TEST_BIN directory with "make clean"
- + Makefile: use mkdir_p_parent_template for UNIT_TEST_BIN
- (this branch is used by js/unit-test-suite-runner.)
+* jc/sign-buffer-failure-propagation-fix (2024-02-07) 2 commits
+  (merged to 'next' on 2024-02-08 at badb96b5ac)
+ + ssh signing: signal an error with a negative return value
+  (merged to 'next' on 2024-02-07 at 2cedac9d38)
+ + tag: fix sign_buffer() call to create a signed tag
 
- Build dependency around unit tests has been fixed.
- source: <20240130053714.GA165967@coredump.intra.peff.net>
- source: <xmqqjznmtjr9.fsf@gitster.g>
+ A failed "git tag -s" did not necessarily result in an error
+ depending on the crypto backend, which has been corrected.
+ source: <xmqq4jek9ko1.fsf@gitster.g>
+ source: <xmqq5xyzr6tm.fsf@gitster.g>
 
 
-* mh/credential-oauth-refresh-token-with-wincred (2024-01-29) 1 commit
-  (merged to 'next' on 2024-02-05 at 68880a751a)
- + credential/wincred: store oauth_refresh_token
+* pb/template-for-single-commit-pr (2024-02-06) 1 commit
+  (merged to 'next' on 2024-02-07 at 2a56c8eb13)
+ + .github/PULL_REQUEST_TEMPLATE.md: add a note about single-commit PRs
 
- The wincred credential backend has been taught to support oauth refresh
- token the same way as credential-cache and credential-libsecret backends.
- source: <pull.1534.v3.git.1706477103039.gitgitgadget@gmail.com>
+ Doc update.
+ source: <pull.1665.v2.git.git.1707225612576.gitgitgadget@gmail.com>
 
 
-* pb/imap-send-wo-curl-build-fix (2024-02-01) 1 commit
-  (merged to 'next' on 2024-02-05 at 18368f61a7)
- + imap-send: add missing "strbuf.h" include under NO_CURL
+* ps/reftable-multi-level-indices-fix (2024-02-01) 6 commits
+  (merged to 'next' on 2024-02-07 at 143f47a079)
+ + reftable: document reading and writing indices
+ + reftable/writer: fix writing multi-level indices
+ + reftable/writer: simplify writing index records
+ + reftable/writer: use correct type to iterate through index entries
+ + reftable/reader: be more careful about errors in indexed seeks
+ + Merge branch 'jc/reftable-core-fsync' into ps/reftable-multi-level-indices-fix
 
- Build fix.
- source: <pull.1664.git.git.1706833113569.gitgitgadget@gmail.com>
+ Write multi-level indices for reftable has been corrected.
+ source: <cover.1706773842.git.ps@pks.im>
 
---------------------------------------------------
-[New Topics]
+
+* ps/reftable-styles (2024-02-06) 9 commits
+  (merged to 'next' on 2024-02-07 at 18670512e2)
+ + reftable/record: improve semantics when initializing records
+ + reftable/merged: refactor initialization of iterators
+ + reftable/merged: refactor seeking of records
+ + reftable/stack: use `size_t` to track stack length
+ + reftable/stack: use `size_t` to track stack slices during compaction
+ + reftable/stack: index segments with `size_t`
+ + reftable/stack: fix parameter validation when compacting range
+ + reftable: introduce macros to allocate arrays
+ + reftable: introduce macros to grow arrays
+
+ Code clean-up in various reftable code paths.
+ source: <cover.1707200355.git.ps@pks.im>
+
+
+* ps/report-failure-from-git-stash (2024-02-06) 1 commit
+  (merged to 'next' on 2024-02-07 at a8a3f91f61)
+ + builtin/stash: report failure to write to index
+
+ "git stash" sometimes was silent even when it failed due to
+ unwritable index file, which has been corrected.
+ source: <cb098cf88cbfcbf7c4872f8887856629b909cb91.1707197653.git.ps@pks.im>
+
 
 * pw/show-ref-pseudorefs (2024-02-07) 2 commits
   (merged to 'next' on 2024-02-08 at 7e9f850dba)
@@ -130,41 +141,172 @@ Release tarballs are available at:
 
  "git show-ref --verify" did not show things like "CHERRY_PICK_HEAD",
  which has been corrected.
-
- Will merge to 'master'.
  source: <pull.1654.git.1707324277.gitgitgadget@gmail.com>
 
 
+* tb/multi-pack-reuse-experiment (2024-02-05) 2 commits
+  (merged to 'next' on 2024-02-08 at e92afaa170)
+ + pack-objects: enable multi-pack reuse via `feature.experimental`
+ + t5332-multi-pack-reuse.sh: extract pack-objects helper functions
+
+ Setting `feature.experimental` opts the user into multi-pack reuse
+ experiment
+
+ Will cook in 'next'.
+ source: <cover.1707173415.git.me@ttaylorr.com>
+
+
 * vd/for-each-ref-sort-with-formatted-timestamp (2024-02-07) 1 commit
- - ref-filter.c: sort formatted dates by byte value
+  (merged to 'next' on 2024-02-08 at 5f86cad208)
+ + ref-filter.c: sort formatted dates by byte value
 
  "git branch" and friends learned to use the formatted text as
  sorting key, not the underlying timestamp value, when the --sort
  option is used with author or committer timestamp with a format
  specifier (e.g., "--sort=creatordate:format:%H:%M:%S").
-
- Will merge to 'next'.
  source: <pull.1655.git.1707357439586.gitgitgadget@gmail.com>
 
+--------------------------------------------------
+[New Topics]
+
+* ps/ref-tests-update-even-more (2024-02-09) 7 commits
+ - t7003: ensure filter-branch prunes reflogs with the reftable backend
+ - t2011: exercise D/F conflicts with HEAD with the reftable backend
+ - t1405: remove unneeded cleanup step
+ - t1404: make D/F conflict tests compatible with reftable backend
+ - t1400: exercise reflog with gaps with reftable backend
+ - t0410: enable tests with extensions with non-default repo format
+ - t: move tests exercising the "files" backend
+
+ More tests that are marked as "ref-files only" have been updated to
+ improve test coverage of reftable backend.
+
+ Needs review.
+ source: <cover.1707463221.git.ps@pks.im>
+
+
+* pw/gc-during-rebase (2024-02-09) 1 commit
+  (merged to 'next' on 2024-02-12 at d54c5ce325)
+ + prune: mark rebase autostash and orig-head as reachable
+
+ The sequencer machinery does not use the ref API and instead
+ records names of certain objects it needs for its correct operation
+ in temporary files, which makes these objects susceptible to loss
+ by garbage collection.  These temporary files have been added as
+ starting points for reachability analysis to fix this.
+
+ Will merge to 'master'.
+ source: <pull.1656.v2.git.1707495579886.gitgitgadget@gmail.com>
+
+
+* rs/receive-pack-remove-find-header (2024-02-12) 2 commits
+  (merged to 'next' on 2024-02-12 at f1bf281e10)
+ + receive-pack: use find_commit_header() in check_nonce()
+ + receive-pack: use find_commit_header() in check_cert_push_options()
+
+ Code simplification.
+
+ Will merge to 'master'.
+ source: <8b350cae-2180-4ac7-a911-d40043576445@web.de>
+
+
+* cp/git-flush-is-an-env-bool (2024-02-13) 1 commit
+  (merged to 'next' on 2024-02-13 at c0850f5675)
+ + write-or-die: fix the polarity of GIT_FLUSH environment variable
+
+ Recent conversion to allow more than 0/1 in GIT_FLUSH broke the
+ mechanism by flipping what yes/no means by mistake, which has been
+ corrected.
+
+ Will merge to 'master' and then to 'maint'
+ source: <xmqqbk8k5eo0.fsf@gitster.g>
+
+
+* jc/unit-tests-make-relative-fix (2024-02-12) 1 commit
+  (merged to 'next' on 2024-02-12 at 554eddef80)
+ + unit-tests: do show relative file paths on non-Windows, too
+
+ The mechanism to report the filename in the source code, used by
+ the unit-test machinery, assumed that the compiler expanded __FILE__
+ to the path to the source given to the $(CC), but some compilers
+ give full path, breaking the output.  This has been corrected.
+
+ Will merge to 'master'.
+ source: <xmqqle7r9enn.fsf_-_@gitster.g>
+
+
+* js/github-actions-update (2024-02-12) 2 commits
+  (merged to 'next' on 2024-02-12 at f52de8b126)
+ + ci(linux32): add a note about Actions that must not be updated
+ + ci: bump remaining outdated Actions versions
+ (this branch uses jc/github-actions-update.)
+
+ Update remaining GitHub Actions jobs to avoid warnings against
+ using deprecated version of Node.js.
+
+ Will merge to 'master'.
+ source: <pull.1660.v2.git.1707653489.gitgitgadget@gmail.com>
+
+
+* rs/use-xstrncmpz (2024-02-12) 1 commit
+  (merged to 'next' on 2024-02-12 at 37e5f0fc14)
+ + use xstrncmpz()
+
+ Code clean-up.
+
+ Will cook in 'next'.
+ source: <954b75d0-1504-4f57-b34e-e770a4b7b3ea@web.de>
+
+
+* kn/for-all-refs (2024-02-12) 6 commits
+ - for-each-ref: add new option to include root refs
+ - ref-filter: rename 'FILTER_REFS_ALL' to 'FILTER_REFS_REGULAR'
+ - refs: introduce `refs_for_each_include_root_refs()`
+ - refs: extract out `loose_fill_ref_dir_regular_file()`
+ - refs: introduce `is_pseudoref()` and `is_headref()`
+ - Merge branch 'ps/reftable-backend' into kn/for-all-refs
+ (this branch uses ps/reftable-backend.)
+
+ "git for-each-ref" filters its output with prefixes given from the
+ command line, but it did not honor an empty string to mean "pass
+ everything", which has been corrected.
+
+ Needs review.
+ source: <20240211183923.131278-1-karthik.188@gmail.com>
+
+
+* kh/column-reject-negative-padding (2024-02-13) 2 commits
+ - column: guard against negative padding
+ - column: disallow negative padding
+
+ "git column" has been taught to reject negative padding value, as
+ it would lead to nonsense behaviour including division by zero.
+
+ Will merge to 'next'?
+ source: <cover.1707839454.git.code@khaugsbakk.name>
+
+--------------------------------------------------
+[Cooking]
 
 * vn/rebase-with-cherry-pick-authorship (2024-02-08) 1 commit
- - sequencer: unset GIT_CHERRY_PICK_HELP for 'exec' commands
+  (merged to 'next' on 2024-02-09 at ed35d33595)
+ + sequencer: unset GIT_CHERRY_PICK_HELP for 'exec' commands
 
  "git cherry-pick" invoked during "git rebase -i" session lost
  the authorship information, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <0adb1068-ef10-44ed-ad1d-e0927a09245d@gmail.com>
 
 
-* jc/no-lazy-fetch (2024-02-08) 1 commit
+* jc/no-lazy-fetch (2024-02-13) 1 commit
  - git: --no-lazy-fetch option
 
  "git --no-lazy-fetch cmd" allows to run "cmd" while disabling lazy
  fetching of objects from the promisor remote, which may be handy
  for debugging.
 
- Needs review.
+ Will merge to 'next'.
  source: <xmqq1q9mmtpw.fsf@gitster.g>
 
 
@@ -174,23 +316,19 @@ Release tarballs are available at:
  Adjust use of "rev-list --missing" in an existing tests so that it
  does not depend on a buggy failure mode.
 
- Needs review.
+ Will merge to 'next'.
  source: <xmqq7cjemttr.fsf@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
-* gt/at-is-synonym-for-head-in-add-patch (2024-02-03) 3 commits
- - SQUASH???
+* gt/at-is-synonym-for-head-in-add-patch (2024-02-13) 2 commits
+ - add -p tests: remove PERL prerequisites
  - add-patch: classify '@' as a synonym for 'HEAD'
- - add-patch: remove unnecessary NEEDSWORK comment
 
  Teach "git checkout -p" and friends that "@" is a synonym for
  "HEAD".
 
- Expecting a reroll.
- cf. <xmqqil31dqx6.fsf@gitster.g>
- source: <20240202150434.11256-1-shyamthakkar001@gmail.com>
+ Will merge to 'next'?
+ source: <20240211202035.7196-2-shyamthakkar001@gmail.com>
 
 
 * js/unit-test-suite-runner (2024-02-03) 7 commits
@@ -210,62 +348,15 @@ Release tarballs are available at:
  source: <cover.1706921262.git.steadmon@google.com>
 
 
-* jc/sign-buffer-failure-propagation-fix (2024-02-07) 2 commits
-  (merged to 'next' on 2024-02-08 at badb96b5ac)
- + ssh signing: signal an error with a negative return value
-  (merged to 'next' on 2024-02-07 at 2cedac9d38)
- + tag: fix sign_buffer() call to create a signed tag
-
- A failed "git tag -s" did not necessarily result in an error
- depending on the crypto backend, which has been corrected.
-
- Will merge to 'master'.
- source: <xmqq4jek9ko1.fsf@gitster.g>
- source: <xmqq5xyzr6tm.fsf@gitster.g>
-
-
 * js/check-null-from-read-object-file (2024-02-06) 1 commit
- - Always check the return value of `repo_read_object_file()`
+  (merged to 'next' on 2024-02-12 at 3a18369516)
+ + Always check the return value of `repo_read_object_file()`
 
  The code paths that call repo_read_object_file() have been
  tightened to react to errors.
 
- Waiting for review responses.
- cf. <CAO_smVhrMn=-uF1B6+RA8A+VLCEN=o57zbQPtr8hpxRKY=qJRQ@mail.gmail.com>
+ Will merge to 'master'.
  source: <pull.1650.git.1707143753726.gitgitgadget@gmail.com>
-
-
-* pb/template-for-single-commit-pr (2024-02-06) 1 commit
-  (merged to 'next' on 2024-02-07 at 2a56c8eb13)
- + .github/PULL_REQUEST_TEMPLATE.md: add a note about single-commit PRs
-
- Doc update.
-
- Will merge to 'master'.
- source: <pull.1665.v2.git.git.1707225612576.gitgitgadget@gmail.com>
-
-
-* ps/report-failure-from-git-stash (2024-02-06) 1 commit
-  (merged to 'next' on 2024-02-07 at a8a3f91f61)
- + builtin/stash: report failure to write to index
-
- "git stash" sometimes was silent even when it failed due to
- unwritable index file, which has been corrected.
-
- Will merge to 'master'.
- source: <cb098cf88cbfcbf7c4872f8887856629b909cb91.1707197653.git.ps@pks.im>
-
-
-* tb/multi-pack-reuse-experiment (2024-02-05) 2 commits
-  (merged to 'next' on 2024-02-08 at e92afaa170)
- + pack-objects: enable multi-pack reuse via `feature.experimental`
- + t5332-multi-pack-reuse.sh: extract pack-objects helper functions
-
- Setting `feature.experimental` opts the user into multi-pack reuse
- experiment
-
- Will merge to 'master'.
- source: <cover.1707173415.git.me@ttaylorr.com>
 
 
 * ps/reftable-backend (2024-02-07) 3 commits
@@ -274,6 +365,7 @@ Release tarballs are available at:
   (merged to 'next' on 2024-02-07 at 1115200acb)
  + ci: add jobs to test with the reftable backend
  + refs: introduce reftable backend
+ (this branch is used by kn/for-all-refs.)
 
  Integrate the reftable code into the refs framework as a backend.
 
@@ -296,39 +388,21 @@ Release tarballs are available at:
  source: <20240208135055.2705260-1-christian.couder@gmail.com>
 
 
-* ps/reftable-iteration-perf (2024-02-01) 7 commits
- - reftable/reader: add comments to `table_iter_next()`
- - reftable/record: don't try to reallocate ref record name
- - reftable/block: swap buffers instead of copying
- - reftable/pq: allocation-less comparison of entry keys
- - reftable/merged: skip comparison for records of the same subiter
- - reftable/merged: allocation-less dropping of shadowed records
- - reftable/record: introduce function to compare records by key
+* ps/reftable-iteration-perf (2024-02-12) 7 commits
+  (merged to 'next' on 2024-02-12 at 6abaf58383)
+ + reftable/reader: add comments to `table_iter_next()`
+ + reftable/record: don't try to reallocate ref record name
+ + reftable/block: swap buffers instead of copying
+ + reftable/pq: allocation-less comparison of entry keys
+ + reftable/merged: skip comparison for records of the same subiter
+ + reftable/merged: allocation-less dropping of shadowed records
+ + reftable/record: introduce function to compare records by key
 
  The code to iterate over refs with the reftable backend has seen
  some optimization.
 
- Expecting a reroll.
- cf. <Zbx6aDzXpYy4Is2t@tanuki>
- source: <cover.1706782841.git.ps@pks.im>
-
-
-* ps/reftable-styles (2024-02-06) 9 commits
-  (merged to 'next' on 2024-02-07 at 18670512e2)
- + reftable/record: improve semantics when initializing records
- + reftable/merged: refactor initialization of iterators
- + reftable/merged: refactor seeking of records
- + reftable/stack: use `size_t` to track stack length
- + reftable/stack: use `size_t` to track stack slices during compaction
- + reftable/stack: index segments with `size_t`
- + reftable/stack: fix parameter validation when compacting range
- + reftable: introduce macros to allocate arrays
- + reftable: introduce macros to grow arrays
-
- Code clean-up in various reftable code paths.
-
- Will merge to 'master'.
- source: <cover.1707200355.git.ps@pks.im>
+ Will cook in 'next'.
+ source: <cover.1707726654.git.ps@pks.im>
 
 
 * jc/github-actions-update (2024-02-02) 3 commits
@@ -336,6 +410,7 @@ Release tarballs are available at:
  + Merge branch 'jc/maint-github-actions-update' into jc/github-actions-update
  + GitHub Actions: update to github-script@v7
  + GitHub Actions: update to checkout@v4
+ (this branch is used by js/github-actions-update.)
 
  Squelch node.js 16 deprecation warnings from GitHub Actions CI
  by updating actions/github-script and actions/checkout that use
@@ -364,19 +439,19 @@ Release tarballs are available at:
  source: <pull.1651.v2.git.1707324461.gitgitgadget@gmail.com>
 
 
-* pb/complete-config (2024-01-29) 5 commits
- - completion: add an use _ _git_compute_second_level_config_vars_for_section
- - builtin/help: add --config-all-for-completion
- - completion: add and use _ _git_compute_first_level_config_vars_for_section
- - completion: complete 'submodule.*' config variables
- - completion: add space after config variable names also in Bash 3
+* pb/complete-config (2024-02-12) 4 commits
+  (merged to 'next' on 2024-02-13 at d09f5e469a)
+ + completion: add and use __git_compute_second_level_config_vars_for_section
+ + completion: add and use __git_compute_first_level_config_vars_for_section
+ + completion: complete 'submodule.*' config variables
+ + completion: add space after config variable names also in Bash 3
 
  The command line completion script (in contrib/) learned to
  complete configuration variable names better.
 
- Needs review.
- cf. <xmqq8r3w53nc.fsf@gitster.g>
- source: <pull.1660.v2.git.git.1706534881.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ cf. <Zcs34kGTqTbIana6@tanuki>
+ source: <pull.1660.v3.git.git.1707589943.gitgitgadget@gmail.com>
 
 
 * rj/complete-reflog (2024-01-26) 4 commits
@@ -392,48 +467,17 @@ Release tarballs are available at:
  source: <98daf977-dbad-4d3b-a293-6a769895088f@gmail.com>
 
 
-* ps/reftable-multi-level-indices-fix (2024-02-01) 6 commits
-  (merged to 'next' on 2024-02-07 at 143f47a079)
- + reftable: document reading and writing indices
- + reftable/writer: fix writing multi-level indices
- + reftable/writer: simplify writing index records
- + reftable/writer: use correct type to iterate through index entries
- + reftable/reader: be more careful about errors in indexed seeks
- + Merge branch 'jc/reftable-core-fsync' into ps/reftable-multi-level-indices-fix
-
- Write multi-level indices for reftable has been corrected.
-
- Will merge to 'master'.
- source: <cover.1706773842.git.ps@pks.im>
-
-
-* ml/log-merge-with-cherry-pick-and-other-pseudo-heads (2024-02-08) 2 commits
- - revision: implement `git log --merge` also for rebase/cherry_pick/revert
+* ml/log-merge-with-cherry-pick-and-other-pseudo-heads (2024-02-12) 2 commits
+ - revision: implement `git log --merge` also for rebase/cherry-pick/revert
  - revision: ensure MERGE_HEAD is a ref in prepare_show_merge
 
  "git log --merge" learned to pay attention to CHERRY_PICK_HEAD and
  other kinds of *_HEAD pseudorefs.
 
- Will merge to 'next'?
- source: <20240117081405.14012-1-mi.al.lohmann@gmail.com>
- source: <dfb582cf-b1e4-414d-bfe1-0f93d910ec54@kdbg.org>
-
-
-* bk/complete-bisect (2024-02-06) 7 commits
-  (merged to 'next' on 2024-02-07 at ac95a595b7)
- + completion: bisect: recognize but do not complete view subcommand
- + completion: bisect: complete log opts for visualize subcommand
- + completion: new function __git_complete_log_opts
- + completion: bisect: complete missing --first-parent and - -no-checkout options
- + completion: bisect: complete custom terms and related options
- + completion: bisect: complete bad, new, old, and help subcommands
- + completion: tests: always use 'master' for default initial branch name
-
- Command line completion support (in contrib/) has been
- updated for "git bisect".
-
- Will merge to 'master'.
- source: <20240206215048.488344-1-britton.kerin@gmail.com>
+ Expecting a reroll.
+ cf. <790a3f11-5a8c-42f2-7a35-f2900c0299b4@gmail.com>
+ cf. <8384d1dc-b6c4-b853-9bf6-3d7ccee86d12@gmail.com>
+ source: <20240210-ml-log-merge-with-cherry-pick-and-other-pseudo-heads-v4-0-3bc9e62808f4@gmail.com>
 
 
 * bk/complete-dirname-for-am-and-format-patch (2024-01-12) 1 commit
@@ -509,17 +553,6 @@ Release tarballs are available at:
  Will cook in 'next'.
  cf. <xmqqzfwb53a9.fsf@gitster.g>
  source: <20231226233218.472054-1-gitster@pobox.com>
-
-
-* jc/bisect-doc (2024-02-07) 2 commits
-  (merged to 'next' on 2024-02-07 at 914fa6775f)
- + bisect: document command line arguments for "bisect start"
- + bisect: document "terms" subcommand more fully
-
- Doc update.
-
- Will merge to 'master'.
- source: <20240207214436.538586-1-gitster@pobox.com>
 
 
 * tb/path-filter-fix (2024-01-31) 16 commits
@@ -617,21 +650,6 @@ Release tarballs are available at:
  Retracted for now.
  cf. <ZcFjkfbsBfk7JQIH@nand.local>
  source: <cover.1699569246.git.me@ttaylorr.com>
-
-
-* kn/for-all-refs (2024-01-29) 4 commits
-  (merged to 'next' on 2024-01-30 at e7a9234a8b)
- + for-each-ref: avoid filtering on empty pattern
- + refs: introduce `refs_for_each_all_refs()`
- + refs: extract out `loose_fill_ref_dir_regular_file()`
- + refs: introduce `is_pseudoref()` and `is_headref()`
-
- "git for-each-ref" filters its output with prefixes given from the
- command line, but it did not honor an empty string to mean "pass
- everything", which has been corrected.
-
- Reverted out of 'next' to revamp its UI.
- source: <20240129113527.607022-1-karthik.188@gmail.com>
 
 
 * ak/color-decorate-symbols (2023-10-23) 7 commits
