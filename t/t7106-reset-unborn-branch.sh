@@ -34,7 +34,7 @@ test_expect_success 'reset $file' '
 	test_cmp expect actual
 '
 
-test_expect_success PERL 'reset -p' '
+test_expect_success 'reset -p' '
 	rm .git/index &&
 	git add a &&
 	echo y >yes &&
