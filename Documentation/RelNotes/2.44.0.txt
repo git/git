@@ -162,6 +162,15 @@ Performance, Internal Implementation, Development Support etc.
  * Setting `feature.experimental` opts the user into multi-pack reuse
    experiment
 
+ * Squelch node.js 16 deprecation warnings from GitHub Actions CI
+   by updating actions/github-script and actions/checkout that use
+   node.js 20.
+
+ * The mechanism to report the filename in the source code, used by
+   the unit-test machinery, assumed that the compiler expanded __FILE__
+   to the path to the source given to the $(CC), but some compilers
+   give full path, breaking the output.  This has been corrected.
+
 
 Fixes since v2.43
 -----------------
@@ -300,6 +309,11 @@ Fixes since v2.43
 
  * "git show-ref --verify" did not show things like "CHERRY_PICK_HEAD",
    which has been corrected.
+
+ * Recent conversion to allow more than 0/1 in GIT_FLUSH broke the
+   mechanism by flipping what yes/no means by mistake, which has been
+   corrected.
+   (merge b40ba17e44 cp/git-flush-is-an-env-bool later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
