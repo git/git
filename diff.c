@@ -4384,7 +4384,8 @@ static void run_external_diff(const char *pgm,
 		add_external_diff_name(o->repo, &cmd.args, two);
 		if (other) {
 			strvec_push(&cmd.args, other);
-			strvec_push(&cmd.args, xfrm_msg);
+			if (xfrm_msg)
+				strvec_push(&cmd.args, xfrm_msg);
 		}
 	}
 
