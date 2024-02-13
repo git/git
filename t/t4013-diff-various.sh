@@ -663,4 +663,10 @@ test_expect_success 'diff --default-prefix overrides diff.mnemonicprefix' '
 	check_prefix actual a/file0 b/file0
 '
 
+test_expect_success 'diff --no-renames cannot be abbreviated' '
+	test_expect_code 129 git diff --no-rename >actual 2>error &&
+	test_must_be_empty actual &&
+	grep "invalid option: --no-rename" error
+'
+
 test_done
