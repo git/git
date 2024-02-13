@@ -1029,50 +1029,6 @@ if {[catch {set vcheck [package vcompare $_git_version $MIN_GIT_VERSION]}] ||
 }
 unset _real_git_version
 
-proc git-version {args} {
-	global _git_version
-
-	switch [llength $args] {
-	0 {
-		return $_git_version
-	}
-
-	2 {
-		set op [lindex $args 0]
-		set vr [lindex $args 1]
-		set cm [package vcompare $_git_version $vr]
-		return [expr $cm $op 0]
-	}
-
-	4 {
-		set type [lindex $args 0]
-		set name [lindex $args 1]
-		set parm [lindex $args 2]
-		set body [lindex $args 3]
-
-		if {($type ne {proc} && $type ne {method})} {
-			error "Invalid arguments to git-version"
-		}
-		if {[llength $body] < 2 || [lindex $body end-1] ne {default}} {
-			error "Last arm of $type $name must be default"
-		}
-
-		foreach {op vr cb} [lrange $body 0 end-2] {
-			if {[git-version $op $vr]} {
-				return [uplevel [list $type $name $parm $cb]]
-			}
-		}
-
-		return [uplevel [list $type $name $parm [lindex $body end]]]
-	}
-
-	default {
-		error "git-version >= x"
-	}
-
-	}
-}
-
 ######################################################################
 ##
 ## configure our library
