@@ -18,20 +18,20 @@
  */
 void maybe_flush_or_die(FILE *f, const char *desc)
 {
-	static int skip_stdout_flush = -1;
-
 	if (f == stdout) {
-		if (skip_stdout_flush < 0) {
-			skip_stdout_flush = git_env_bool("GIT_FLUSH", -1);
-			if (skip_stdout_flush < 0) {
+		static int force_flush_stdout = -1;
+
+		if (force_flush_stdout < 0) {
+			force_flush_stdout = git_env_bool("GIT_FLUSH", -1);
+			if (force_flush_stdout < 0) {
 				struct stat st;
 				if (fstat(fileno(stdout), &st))
-					skip_stdout_flush = 0;
+					force_flush_stdout = 1;
 				else
-					skip_stdout_flush = S_ISREG(st.st_mode);
+					force_flush_stdout = !S_ISREG(st.st_mode);
 			}
 		}
-		if (skip_stdout_flush && !ferror(f))
+		if (!force_flush_stdout && !ferror(f))
 			return;
 	}
 	if (fflush(f)) {
