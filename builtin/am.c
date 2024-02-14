@@ -36,6 +36,7 @@
 #include "mailinfo.h"
 #include "apply.h"
 #include "string-list.h"
+#include "packfile.h"
 #include "pager.h"
 #include "path.h"
 #include "repository.h"
@@ -2411,6 +2412,10 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		am_load(&state);
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (state.quiet) {
+		strvec_push(&state.git_apply_opts, "--quiet");
+	}
 
 	if (binary >= 0)
 		fprintf_ln(stderr, _("The -b/--binary option has been a no-op for long time, and\n"
