@@ -44,14 +44,27 @@ void parse_names(char *buf, int size, char ***namesp);
 int names_equal(char **a, char **b);
 
 /* returns the array size of a NULL-terminated array of strings. */
-int names_length(char **names);
+size_t names_length(char **names);
 
 /* Allocation routines; they invoke the functions set through
  * reftable_set_alloc() */
 void *reftable_malloc(size_t sz);
 void *reftable_realloc(void *p, size_t sz);
 void reftable_free(void *p);
-void *reftable_calloc(size_t sz);
+void *reftable_calloc(size_t nelem, size_t elsize);
+
+#define REFTABLE_ALLOC_ARRAY(x, alloc) (x) = reftable_malloc(st_mult(sizeof(*(x)), (alloc)))
+#define REFTABLE_CALLOC_ARRAY(x, alloc) (x) = reftable_calloc((alloc), sizeof(*(x)))
+#define REFTABLE_REALLOC_ARRAY(x, alloc) (x) = reftable_realloc((x), st_mult(sizeof(*(x)), (alloc)))
+#define REFTABLE_ALLOC_GROW(x, nr, alloc) \
+	do { \
+		if ((nr) > alloc) { \
+			alloc = 2 * (alloc) + 1; \
+			if (alloc < (nr)) \
+				alloc = (nr); \
+			REFTABLE_REALLOC_ARRAY(x, alloc); \
+		} \
+	} while (0)
 
 /* Find the longest shared prefix size of `a` and `b` */
 struct strbuf;

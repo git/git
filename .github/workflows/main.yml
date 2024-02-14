@@ -343,7 +343,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       if: matrix.vector.jobname != 'linux32'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
       if: matrix.vector.jobname == 'linux32'
     - run: ci/install-docker-dependencies.sh
     - run: ci/run-build-and-tests.sh
@@ -358,7 +358,7 @@ jobs:
         path: ${{env.FAILED_TEST_ARTIFACTS}}
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname == 'linux32'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}

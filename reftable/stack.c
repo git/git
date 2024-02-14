@@ -24,7 +24,8 @@ static int stack_try_add(struct reftable_stack *st,
 					    void *arg),
 			 void *arg);
 static int stack_write_compact(struct reftable_stack *st,
-			       struct reftable_writer *wr, int first, int last,
+			       struct reftable_writer *wr,
+			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *config);
 static int stack_check_addition(struct reftable_stack *st,
 				const char *new_tab_name);
@@ -57,8 +58,7 @@ static int reftable_fd_flush(void *arg)
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 		       struct reftable_write_options config)
 {
-	struct reftable_stack *p =
-		reftable_calloc(sizeof(struct reftable_stack));
+	struct reftable_stack *p = reftable_calloc(1, sizeof(*p));
 	struct strbuf list_file_name = STRBUF_INIT;
 	int err = 0;
 
@@ -101,7 +101,7 @@ static int fd_read_lines(int fd, char ***namesp)
 		goto done;
 	}
 
-	buf = reftable_malloc(size + 1);
+	REFTABLE_ALLOC_ARRAY(buf, size + 1);
 	if (read_in_full(fd, buf, size) != size) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -121,7 +121,7 @@ int read_lines(const char *filename, char ***namesp)
 	int err = 0;
 	if (fd < 0) {
 		if (errno == ENOENT) {
-			*namesp = reftable_calloc(sizeof(char *));
+			REFTABLE_CALLOC_ARRAY(*namesp, 1);
 			return 0;
 		}
 
@@ -198,8 +198,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 static struct reftable_reader **stack_copy_readers(struct reftable_stack *st,
 						   int cur_len)
 {
-	struct reftable_reader **cur =
-		reftable_calloc(sizeof(struct reftable_reader *) * cur_len);
+	struct reftable_reader **cur = reftable_calloc(cur_len, sizeof(*cur));
 	int i = 0;
 	for (i = 0; i < cur_len; i++) {
 		cur[i] = st->readers[i];
@@ -210,18 +209,18 @@ static struct reftable_reader **stack_copy_readers(struct reftable_stack *st,
 static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 				      int reuse_open)
 {
-	int cur_len = !st->merged ? 0 : st->merged->stack_len;
+	size_t cur_len = !st->merged ? 0 : st->merged->stack_len;
 	struct reftable_reader **cur = stack_copy_readers(st, cur_len);
-	int err = 0;
-	int names_len = names_length(names);
+	size_t names_len = names_length(names);
 	struct reftable_reader **new_readers =
-		reftable_calloc(sizeof(struct reftable_reader *) * names_len);
+		reftable_calloc(names_len, sizeof(*new_readers));
 	struct reftable_table *new_tables =
-		reftable_calloc(sizeof(struct reftable_table) * names_len);
-	int new_readers_len = 0;
+		reftable_calloc(names_len, sizeof(*new_tables));
+	size_t new_readers_len = 0;
 	struct reftable_merged_table *new_merged = NULL;
 	struct strbuf table_path = STRBUF_INIT;
-	int i;
+	int err = 0;
+	size_t i;
 
 	while (*names) {
 		struct reftable_reader *rd = NULL;
@@ -229,11 +228,10 @@ static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 
 		/* this is linear; we assume compaction keeps the number of
 		   tables under control so this is not quadratic. */
-		int j = 0;
-		for (j = 0; reuse_open && j < cur_len; j++) {
-			if (cur[j] && 0 == strcmp(cur[j]->name, name)) {
-				rd = cur[j];
-				cur[j] = NULL;
+		for (i = 0; reuse_open && i < cur_len; i++) {
+			if (cur[i] && 0 == strcmp(cur[i]->name, name)) {
+				rd = cur[i];
+				cur[i] = NULL;
 				break;
 			}
 		}
@@ -351,7 +349,7 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 				goto out;
 			}
 
-			names = reftable_calloc(sizeof(char *));
+			REFTABLE_CALLOC_ARRAY(names, 1);
 		} else {
 			err = fd_read_lines(fd, &names);
 			if (err < 0)
@@ -558,7 +556,7 @@ struct reftable_addition {
 	struct reftable_stack *stack;
 
 	char **new_tables;
-	int new_tables_len;
+	size_t new_tables_len, new_tables_cap;
 	uint64_t next_update_index;
 };
 
@@ -609,8 +607,9 @@ done:
 
 static void reftable_addition_close(struct reftable_addition *add)
 {
-	int i = 0;
 	struct strbuf nm = STRBUF_INIT;
+	size_t i;
+
 	for (i = 0; i < add->new_tables_len; i++) {
 		stack_filename(&nm, add->stack, add->new_tables[i]);
 		unlink(nm.buf);
@@ -620,6 +619,7 @@ static void reftable_addition_close(struct reftable_addition *add)
 	reftable_free(add->new_tables);
 	add->new_tables = NULL;
 	add->new_tables_len = 0;
+	add->new_tables_cap = 0;
 
 	delete_tempfile(&add->lock_file);
 	strbuf_release(&nm);
@@ -638,8 +638,8 @@ int reftable_addition_commit(struct reftable_addition *add)
 {
 	struct strbuf table_list = STRBUF_INIT;
 	int lock_file_fd = get_tempfile_fd(add->lock_file);
-	int i = 0;
 	int err = 0;
+	size_t i;
 
 	if (add->new_tables_len == 0)
 		goto done;
@@ -670,12 +670,12 @@ int reftable_addition_commit(struct reftable_addition *add)
 	}
 
 	/* success, no more state to clean up. */
-	for (i = 0; i < add->new_tables_len; i++) {
+	for (i = 0; i < add->new_tables_len; i++)
 		reftable_free(add->new_tables[i]);
-	}
 	reftable_free(add->new_tables);
 	add->new_tables = NULL;
 	add->new_tables_len = 0;
+	add->new_tables_cap = 0;
 
 	err = reftable_stack_reload_maybe_reuse(add->stack, 1);
 	if (err)
@@ -694,7 +694,7 @@ int reftable_stack_new_addition(struct reftable_addition **dest,
 {
 	int err = 0;
 	struct reftable_addition empty = REFTABLE_ADDITION_INIT;
-	*dest = reftable_calloc(sizeof(**dest));
+	REFTABLE_CALLOC_ARRAY(*dest, 1);
 	**dest = empty;
 	err = reftable_stack_init_addition(*dest, st);
 	if (err) {
@@ -802,11 +802,9 @@ int reftable_addition_add(struct reftable_addition *add,
 		goto done;
 	}
 
-	add->new_tables = reftable_realloc(add->new_tables,
-					   sizeof(*add->new_tables) *
-						   (add->new_tables_len + 1));
-	add->new_tables[add->new_tables_len] = strbuf_detach(&next_name, NULL);
-	add->new_tables_len++;
+	REFTABLE_ALLOC_GROW(add->new_tables, add->new_tables_len + 1,
+			    add->new_tables_cap);
+	add->new_tables[add->new_tables_len++] = strbuf_detach(&next_name, NULL);
 done:
 	if (tab_fd > 0) {
 		close(tab_fd);
@@ -832,7 +830,8 @@ uint64_t reftable_stack_next_update_index(struct reftable_stack *st)
 	return 1;
 }
 
-static int stack_compact_locked(struct reftable_stack *st, int first, int last,
+static int stack_compact_locked(struct reftable_stack *st,
+				size_t first, size_t last,
 				struct strbuf *temp_tab,
 				struct reftable_log_expiry_config *config)
 {
@@ -882,22 +881,21 @@ done:
 }
 
 static int stack_write_compact(struct reftable_stack *st,
-			       struct reftable_writer *wr, int first, int last,
+			       struct reftable_writer *wr,
+			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *config)
 {
-	int subtabs_len = last - first + 1;
+	size_t subtabs_len = last - first + 1;
 	struct reftable_table *subtabs = reftable_calloc(
-		sizeof(struct reftable_table) * (last - first + 1));
+		last - first + 1, sizeof(*subtabs));
 	struct reftable_merged_table *mt = NULL;
-	int err = 0;
 	struct reftable_iterator it = { NULL };
 	struct reftable_ref_record ref = { NULL };
 	struct reftable_log_record log = { NULL };
-
 	uint64_t entries = 0;
+	int err = 0;
 
-	int i = 0, j = 0;
-	for (i = first, j = 0; i <= last; i++) {
+	for (size_t i = first, j = 0; i <= last; i++) {
 		struct reftable_reader *t = st->readers[i];
 		reftable_table_from_reader(&subtabs[j++], t);
 		st->stats.bytes += t->size;
@@ -981,31 +979,30 @@ done:
 }
 
 /* <  0: error. 0 == OK, > 0 attempt failed; could retry. */
-static int stack_compact_range(struct reftable_stack *st, int first, int last,
+static int stack_compact_range(struct reftable_stack *st,
+			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *expiry)
 {
+	char **delete_on_success = NULL, **subtable_locks = NULL, **listp = NULL;
 	struct strbuf temp_tab_file_name = STRBUF_INIT;
 	struct strbuf new_table_name = STRBUF_INIT;
 	struct strbuf lock_file_name = STRBUF_INIT;
 	struct strbuf ref_list_contents = STRBUF_INIT;
 	struct strbuf new_table_path = STRBUF_INIT;
+	size_t i, j, compact_count;
 	int err = 0;
 	int have_lock = 0;
 	int lock_file_fd = -1;
-	int compact_count = last - first + 1;
-	char **listp = NULL;
-	char **delete_on_success =
-		reftable_calloc(sizeof(char *) * (compact_count + 1));
-	char **subtable_locks =
-		reftable_calloc(sizeof(char *) * (compact_count + 1));
-	int i = 0;
-	int j = 0;
 	int is_empty_table = 0;
 
 	if (first > last || (!expiry && first == last)) {
 		err = 0;
 		goto done;
 	}
+
+	compact_count = last - first + 1;
+	REFTABLE_CALLOC_ARRAY(delete_on_success, compact_count + 1);
+	REFTABLE_CALLOC_ARRAY(subtable_locks, compact_count + 1);
 
 	st->stats.attempts++;
 
@@ -1172,12 +1169,14 @@ static int stack_compact_range(struct reftable_stack *st, int first, int last,
 done:
 	free_names(delete_on_success);
 
-	listp = subtable_locks;
-	while (*listp) {
-		unlink(*listp);
-		listp++;
+	if (subtable_locks) {
+		listp = subtable_locks;
+		while (*listp) {
+			unlink(*listp);
+			listp++;
+		}
+		free_names(subtable_locks);
 	}
-	free_names(subtable_locks);
 	if (lock_file_fd >= 0) {
 		close(lock_file_fd);
 		lock_file_fd = -1;
@@ -1196,17 +1195,17 @@ done:
 int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config)
 {
-	return stack_compact_range(st, 0, st->merged->stack_len - 1, config);
+	return stack_compact_range(st, 0, st->merged->stack_len ?
+			st->merged->stack_len - 1 : 0, config);
 }
 
-static int stack_compact_range_stats(struct reftable_stack *st, int first,
-				     int last,
+static int stack_compact_range_stats(struct reftable_stack *st,
+				     size_t first, size_t last,
 				     struct reftable_log_expiry_config *config)
 {
 	int err = stack_compact_range(st, first, last, config);
-	if (err > 0) {
+	if (err > 0)
 		st->stats.failures++;
-	}
 	return err;
 }
 
@@ -1226,12 +1225,11 @@ int fastlog2(uint64_t sz)
 	return l - 1;
 }
 
-struct segment *sizes_to_segments(int *seglen, uint64_t *sizes, int n)
+struct segment *sizes_to_segments(size_t *seglen, uint64_t *sizes, size_t n)
 {
-	struct segment *segs = reftable_calloc(sizeof(struct segment) * n);
-	int next = 0;
+	struct segment *segs = reftable_calloc(n, sizeof(*segs));
 	struct segment cur = { 0 };
-	int i = 0;
+	size_t next = 0, i;
 
 	if (n == 0) {
 		*seglen = 0;
@@ -1257,29 +1255,27 @@ struct segment *sizes_to_segments(int *seglen, uint64_t *sizes, int n)
 	return segs;
 }
 
-struct segment suggest_compaction_segment(uint64_t *sizes, int n)
+struct segment suggest_compaction_segment(uint64_t *sizes, size_t n)
 {
-	int seglen = 0;
-	struct segment *segs = sizes_to_segments(&seglen, sizes, n);
 	struct segment min_seg = {
 		.log = 64,
 	};
-	int i = 0;
-	for (i = 0; i < seglen; i++) {
-		if (segment_size(&segs[i]) == 1) {
-			continue;
-		}
+	struct segment *segs;
+	size_t seglen = 0, i;
 
-		if (segs[i].log < min_seg.log) {
+	segs = sizes_to_segments(&seglen, sizes, n);
+	for (i = 0; i < seglen; i++) {
+		if (segment_size(&segs[i]) == 1)
+			continue;
+
+		if (segs[i].log < min_seg.log)
 			min_seg = segs[i];
-		}
 	}
 
 	while (min_seg.start > 0) {
-		int prev = min_seg.start - 1;
-		if (fastlog2(min_seg.bytes) < fastlog2(sizes[prev])) {
+		size_t prev = min_seg.start - 1;
+		if (fastlog2(min_seg.bytes) < fastlog2(sizes[prev]))
 			break;
-		}
 
 		min_seg.start = prev;
 		min_seg.bytes += sizes[prev];
@@ -1292,7 +1288,7 @@ struct segment suggest_compaction_segment(uint64_t *sizes, int n)
 static uint64_t *stack_table_sizes_for_compaction(struct reftable_stack *st)
 {
 	uint64_t *sizes =
-		reftable_calloc(sizeof(uint64_t) * st->merged->stack_len);
+		reftable_calloc(st->merged->stack_len, sizeof(*sizes));
 	int version = (st->config.hash_id == GIT_SHA1_FORMAT_ID) ? 1 : 2;
 	int overhead = header_size(version) - 1;
 	int i = 0;
@@ -1391,17 +1387,12 @@ static int stack_check_addition(struct reftable_stack *st,
 	while (1) {
 		struct reftable_ref_record ref = { NULL };
 		err = reftable_iterator_next_ref(&it, &ref);
-		if (err > 0) {
+		if (err > 0)
 			break;
-		}
 		if (err < 0)
 			goto done;
 
-		if (len >= cap) {
-			cap = 2 * cap + 1;
-			refs = reftable_realloc(refs, cap * sizeof(refs[0]));
-		}
-
+		REFTABLE_ALLOC_GROW(refs, len + 1, cap);
 		refs[len++] = ref;
 	}
 

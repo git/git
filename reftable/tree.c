@@ -20,8 +20,8 @@ struct tree_node *tree_search(void *key, struct tree_node **rootp,
 		if (!insert) {
 			return NULL;
 		} else {
-			struct tree_node *n =
-				reftable_calloc(sizeof(struct tree_node));
+			struct tree_node *n;
+			REFTABLE_CALLOC_ARRAY(n, 1);
 			n->key = key;
 			*rootp = n;
 			return *rootp;

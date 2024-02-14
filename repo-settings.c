@@ -45,6 +45,7 @@ void prepare_repo_settings(struct repository *r)
 	if (experimental) {
 		r->settings.fetch_negotiation_algorithm = FETCH_NEGOTIATION_SKIPPING;
 		r->settings.pack_use_bitmap_boundary_traversal = 1;
+		r->settings.pack_use_multi_pack_reuse = 1;
 
 		/*
 		 * Force enable the builtin FSMonitor (unless the repo
