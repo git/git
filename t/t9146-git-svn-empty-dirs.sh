@@ -20,11 +20,7 @@ test_expect_success 'empty directories exist' '
 		cd cloned &&
 		for i in a b c d d/e d/e/f "weird file name"
 		do
-			if ! test -d "$i"
-			then
-				echo >&2 "$i does not exist" &&
-				exit 1
-			fi
+			test_path_is_dir "$i" || exit 1
 		done
 	)
 '
@@ -37,11 +33,7 @@ test_expect_success 'option automkdirs set to false' '
 		git svn fetch &&
 		for i in a b c d d/e d/e/f "weird file name"
 		do
-			if test -d "$i"
-			then
-				echo >&2 "$i exists" &&
-				exit 1
-			fi
+			test_path_is_missing "$i" || exit 1
 		done
 	)
 '
@@ -52,7 +44,7 @@ test_expect_success 'more emptiness' '
 
 test_expect_success 'git svn rebase creates empty directory' '
 	( cd cloned && git svn rebase ) &&
-	test -d cloned/"! !"
+	test_path_is_dir cloned/"! !"
 '
 
 test_expect_success 'git svn mkdirs recreates empty directories' '
@@ -62,11 +54,7 @@ test_expect_success 'git svn mkdirs recreates empty directories' '
 		git svn mkdirs &&
 		for i in a b c d d/e d/e/f "weird file name" "! !"
 		do
-			if ! test -d "$i"
-			then
-				echo >&2 "$i does not exist" &&
-				exit 1
-			fi
+			test_path_is_dir "$i" || exit 1
 		done
 	)
 '
@@ -78,25 +66,13 @@ test_expect_success 'git svn mkdirs -r works' '
 		git svn mkdirs -r7 &&
 		for i in a b c d d/e d/e/f "weird file name"
 		do
-			if ! test -d "$i"
-			then
-				echo >&2 "$i does not exist" &&
-				exit 1
-			fi
+			test_path_is_dir "$i" || exit 1
 		done &&
 
-		if test -d "! !"
-		then
-			echo >&2 "$i should not exist" &&
-			exit 1
-		fi &&
+		test_path_is_missing "! !" || exit 1 &&
 
 		git svn mkdirs -r8 &&
-		if ! test -d "! !"
-		then
-			echo >&2 "$i not exist" &&
-			exit 1
-		fi
+		test_path_is_dir "! !" || exit 1
 	)
 '
 
@@ -114,11 +90,7 @@ test_expect_success 'empty directories in trunk exist' '
 		cd trunk &&
 		for i in a "weird file name"
 		do
-			if ! test -d "$i"
-			then
-				echo >&2 "$i does not exist" &&
-				exit 1
-			fi
+			test_path_is_dir "$i" || exit 1
 		done
 	)
 '
@@ -129,7 +101,7 @@ test_expect_success 'remove a top-level directory from svn' '
 
 test_expect_success 'removed top-level directory does not exist' '
 	git svn clone "$svnrepo" removed &&
-	test ! -e removed/d
+	test_path_is_missing removed/d
 
 '
 unhandled=.git/svn/refs/remotes/git-svn/unhandled.log
@@ -143,15 +115,11 @@ test_expect_success 'git svn gc-ed files work' '
 			svn_cmd mkdir -m gz "$svnrepo"/gz &&
 			git reset --hard $(git rev-list HEAD | tail -1) &&
 			git svn rebase &&
-			test -f "$unhandled".gz &&
-			test -f "$unhandled" &&
+			test_path_is_file "$unhandled".gz &&
+			test_path_is_file "$unhandled" &&
 			for i in a b c "weird file name" gz "! !"
 			do
-				if ! test -d "$i"
-				then
-					echo >&2 "$i does not exist" &&
-					exit 1
-				fi
+				test_path_is_dir "$i" || exit 1
 			done
 		fi
 	)
