@@ -99,6 +99,9 @@ UI, Workflows & Features
    option is used with author or committer timestamp with a format
    specifier (e.g., "--sort=creatordate:format:%H:%M:%S").
 
+ * The command line completion script (in contrib/) learned to
+   complete configuration variable names better.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -307,8 +310,24 @@ Fixes since v2.43
    mechanism by flipping what yes/no means by mistake, which has been
    corrected.
 
+ * The sequencer machinery does not use the ref API and instead
+   records names of certain objects it needs for its correct operation
+   in temporary files, which makes these objects susceptible to loss
+   by garbage collection.  These temporary files have been added as
+   starting points for reachability analysis to fix this.
+   (merge bc7f5db896 pw/gc-during-rebase later to maint).
+
+ * "git cherry-pick" invoked during "git rebase -i" session lost
+   the authorship information, which has been corrected.
+   (merge e4301f73ff vn/rebase-with-cherry-pick-authorship later to maint).
+
+ * The code paths that call repo_read_object_file() have been
+   tightened to react to errors.
+   (merge 568459bf5e js/check-null-from-read-object-file later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
    (merge 9cce3be2df bk/bisect-doc-fix later to maint).
    (merge 8430b438f6 vd/fsck-submodule-url-test later to maint).
    (merge 3cb4384683 jc/t0091-with-unknown-git later to maint).
+   (merge 020456cb74 rs/receive-pack-remove-find-header later to maint).
