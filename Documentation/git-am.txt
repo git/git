@@ -128,6 +128,9 @@ include::rerere-options.txt[]
 	These flags are passed to the 'git apply' (see linkgit:git-apply[1])
 	program that applies
 	the patch.
++
+Valid <action> for the `--whitespace` option are:
+`nowarn`, `warn`, `fix`, `error`, and `error-all`.
 
 --patch-format::
 	By default the command will try to detect the patch format
