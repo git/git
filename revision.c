@@ -385,7 +385,7 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 
 	if (!object) {
 		if (revs->ignore_missing)
-			return object;
+			return NULL;
 		if (revs->exclude_promisor_objects && is_promisor_object(oid))
 			return NULL;
 		die("bad object %s", name);
