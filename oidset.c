@@ -23,6 +23,16 @@ int oidset_insert(struct oidset *set, const struct object_id *oid)
 	return !added;
 }
 
+void oidset_insert_from_set(struct oidset *dest, struct oidset *src)
+{
+	struct oidset_iter iter;
+	struct object_id *src_oid;
+
+	oidset_iter_init(src, &iter);
+	while ((src_oid = oidset_iter_next(&iter)))
+		oidset_insert(dest, src_oid);
+}
+
 int oidset_remove(struct oidset *set, const struct object_id *oid)
 {
 	khiter_t pos = kh_get_oid_set(&set->set, *oid);
