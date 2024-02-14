@@ -153,6 +153,18 @@ test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 	git rebase --continue
 '
 
+test_expect_success 'cherry-pick works with rebase --exec' '
+	test_when_finished "git cherry-pick --abort; \
+			    git rebase --abort; \
+			    git checkout primary" &&
+	echo "exec git cherry-pick G" >todo &&
+	(
+		set_replace_editor todo &&
+		test_must_fail git rebase -i D D
+	) &&
+	test_cmp_rev G CHERRY_PICK_HEAD
+'
+
 test_expect_success 'rebase -x with empty command fails' '
 	test_when_finished "git rebase --abort ||:" &&
 	test_must_fail env git rebase -x "" @ 2>actual &&

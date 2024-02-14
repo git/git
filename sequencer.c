@@ -3641,6 +3641,7 @@ static int do_exec(struct repository *r, const char *command_line)
 	fprintf(stderr, _("Executing: %s\n"), command_line);
 	cmd.use_shell = 1;
 	strvec_push(&cmd.args, command_line);
+	strvec_push(&cmd.env, "GIT_CHERRY_PICK_HELP");
 	status = run_command(&cmd);
 
 	/* force re-reading of the cache */
