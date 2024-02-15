@@ -520,7 +520,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
 	if (write_locked_index(&the_index, &lock,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
-		die(_("Unable to write index."));
+		die(_("could not write index"));
 }
 
 static int do_apply_stash(const char *prefix, struct stash_info *info,
@@ -537,7 +537,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	repo_read_index_preload(the_repository, NULL, 0);
 	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
 					 NULL, NULL, NULL))
-		return -1;
+		return error(_("could not write index"));
 
 	if (write_index_as_tree(&c_tree, &the_index, get_index_file(), 0,
 				NULL))
@@ -1364,7 +1364,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	repo_read_index_preload(the_repository, NULL, 0);
 	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
 					 NULL, NULL, NULL) < 0) {
-		ret = -1;
+		ret = error(_("could not write index"));
 		goto done;
 	}
 
@@ -1555,7 +1555,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 
 	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
 					 NULL, NULL, NULL)) {
-		ret = -1;
+		ret = error(_("could not write index"));
 		goto done;
 	}
 

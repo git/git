@@ -75,13 +75,9 @@ void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry
 {
 	int i = 0;
 
-	if (pq->len == pq->cap) {
-		pq->cap = 2 * pq->cap + 1;
-		pq->heap = reftable_realloc(pq->heap,
-					    pq->cap * sizeof(struct pq_entry));
-	}
-
+	REFTABLE_ALLOC_GROW(pq->heap, pq->len + 1, pq->cap);
 	pq->heap[pq->len++] = *e;
+
 	i = pq->len - 1;
 	while (i > 0) {
 		int j = (i - 1) / 2;

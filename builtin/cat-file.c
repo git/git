@@ -221,6 +221,10 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 								     &type,
 								     &size);
 				const char *target;
+
+				if (!buffer)
+					die(_("unable to read %s"), oid_to_hex(&oid));
+
 				if (!skip_prefix(buffer, "object ", &target) ||
 				    get_oid_hex(target, &blob_oid))
 					die("%s not a valid tag", oid_to_hex(&oid));
@@ -416,6 +420,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 
 		contents = repo_read_object_file(the_repository, oid, &type,
 						 &size);
+		if (!contents)
+			die("object %s disappeared", oid_to_hex(oid));
 
 		if (use_mailmap) {
 			size_t s = size;
@@ -423,8 +429,6 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 			size = cast_size_t_to_ulong(s);
 		}
 
-		if (!contents)
-			die("object %s disappeared", oid_to_hex(oid));
 		if (type != data->type)
 			die("object %s changed type!?", oid_to_hex(oid));
 		if (data->info.sizep && size != data->size && !use_mailmap)
@@ -481,6 +485,8 @@ static void batch_object_write(const char *obj_name,
 
 			buf = repo_read_object_file(the_repository, &data->oid, &data->type,
 						    &data->size);
+			if (!buf)
+				die(_("unable to read %s"), oid_to_hex(&data->oid));
 			buf = replace_idents_using_mailmap(buf, &s);
 			data->size = cast_size_t_to_ulong(s);
 

@@ -91,6 +91,17 @@ UI, Workflows & Features
    refresh token the same way as credential-cache and
    credential-libsecret backends.
 
+ * Command line completion support (in contrib/) has been
+   updated for "git bisect".
+
+ * "git branch" and friends learned to use the formatted text as
+   sorting key, not the underlying timestamp value, when the --sort
+   option is used with author or committer timestamp with a format
+   specifier (e.g., "--sort=creatordate:format:%H:%M:%S").
+
+ * The command line completion script (in contrib/) learned to
+   complete configuration variable names better.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -150,6 +161,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * The priority queue test has been migrated to the unit testing
    framework.
+
+ * Setting `feature.experimental` opts the user into multi-pack reuse
+   experiment
+
+ * Squelch node.js 16 deprecation warnings from GitHub Actions CI
+   by updating actions/github-script and actions/checkout that use
+   node.js 20.
+
+ * The mechanism to report the filename in the source code, used by
+   the unit-test machinery, assumed that the compiler expanded __FILE__
+   to the path to the source given to the $(CC), but some compilers
+   give full path, breaking the output.  This has been corrected.
 
 
 Fixes since v2.43
@@ -234,21 +257,18 @@ Fixes since v2.43
    data from commit-graph too early, which has been corrected.
 
  * Update to a new feature recently added, "git show-ref --exists".
-   (merge 0aabeaa562 tc/show-ref-exists-fix later to maint).
 
  * oss-fuzz tests are built and run in CI.
    (merge c4a9cf1df3 js/oss-fuzz-build-in-ci later to maint).
 
  * Rename detection logic ignored the final line of a file if it is an
    incomplete line.
-   (merge 1c5bc6971e en/diffcore-delta-final-line-fix later to maint).
 
  * GitHub CI update.
    (merge 0188b2c8e0 pb/ci-github-skip-logs-for-broken-tests later to maint).
 
  * "git diff --no-rename A B" did not disable rename detection but did
    not trigger an error from the command line parser.
-   (merge 457f96252f rs/parse-options-with-keep-unknown-abbrev-fix later to maint).
 
  * "git archive --remote=<remote>" learned to talk over the smart
    http (aka stateless) transport.
@@ -265,11 +285,9 @@ Fixes since v2.43
 
  * "git diff --no-index file1 file2" segfaulted while invoking the
    external diff driver, which has been corrected.
-   (merge 85a9a63c92 jk/diff-external-with-no-index later to maint).
 
  * Rewrite //-comments to /* comments */ in files whose comments
    prevalently use the latter.
-   (merge de65079d7b jc/comment-style-fixes later to maint).
 
  * Cirrus CI jobs started breaking because we specified version of
    FreeBSD that is no longer available, which has been corrected.
@@ -279,17 +297,37 @@ Fixes since v2.43
    as <ptr, length> with a wrong length, which has been corrected.
    (merge 156e28b36d jh/sparse-index-expand-to-path-fix later to maint).
 
+ * A failed "git tag -s" did not necessarily result in an error
+   depending on the crypto backend, which has been corrected.
+
+ * "git stash" sometimes was silent even when it failed due to
+   unwritable index file, which has been corrected.
+
+ * "git show-ref --verify" did not show things like "CHERRY_PICK_HEAD",
+   which has been corrected.
+
+ * Recent conversion to allow more than 0/1 in GIT_FLUSH broke the
+   mechanism by flipping what yes/no means by mistake, which has been
+   corrected.
+
+ * The sequencer machinery does not use the ref API and instead
+   records names of certain objects it needs for its correct operation
+   in temporary files, which makes these objects susceptible to loss
+   by garbage collection.  These temporary files have been added as
+   starting points for reachability analysis to fix this.
+   (merge bc7f5db896 pw/gc-during-rebase later to maint).
+
+ * "git cherry-pick" invoked during "git rebase -i" session lost
+   the authorship information, which has been corrected.
+   (merge e4301f73ff vn/rebase-with-cherry-pick-authorship later to maint).
+
+ * The code paths that call repo_read_object_file() have been
+   tightened to react to errors.
+   (merge 568459bf5e js/check-null-from-read-object-file later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
    (merge 9cce3be2df bk/bisect-doc-fix later to maint).
-   (merge 8f50984cf4 ne/doc-filter-blob-limit-fix later to maint).
-   (merge f10b0989b8 la/strvec-comment-fix later to maint).
    (merge 8430b438f6 vd/fsck-submodule-url-test later to maint).
-   (merge f10031fadd nb/rebase-x-shell-docfix later to maint).
-   (merge af3d2c160f jc/majordomo-to-subspace later to maint).
-   (merge ee9895b0ff sd/negotiate-trace-fix later to maint).
-   (merge 976d0251ce jc/coc-whitespace-fix later to maint).
-   (merge 9023198280 jt/p4-spell-re-with-raw-string later to maint).
-   (merge 36c9c44fa4 tb/pack-bitmap-drop-unused-struct-member later to maint).
-   (merge 19ed0dff8f js/win32-retry-pipe-write-on-enospc later to maint).
    (merge 3cb4384683 jc/t0091-with-unknown-git later to maint).
+   (merge 020456cb74 rs/receive-pack-remove-find-header later to maint).

@@ -1483,12 +1483,32 @@ _git_bisect ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="start bad good skip reset visualize replay log run"
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	__git_find_repo_path
+
+	# If a bisection is in progress get the terms being used.
+	local term_bad term_good
+	if [ -f "$__git_repo_path"/BISECT_TERMS ]; then
+		term_bad=$(__git bisect terms --term-bad)
+		term_good=$(__git bisect terms --term-good)
+	fi
+
+	# We will complete any custom terms, but still always complete the
+	# more usual bad/new/good/old because git bisect gives a good error
+	# message if these are given when not in use, and that's better than
+	# silent refusal to complete if the user is confused.
+	#
+	# We want to recognize 'view' but not complete it, because it overlaps
+	# with 'visualize' too much and is just an alias for it.
+	#
+	local completable_subcommands="start bad new $term_bad good old $term_good terms skip reset visualize replay log run help"
+	local all_subcommands="$completable_subcommands view"
+
+	local subcommand="$(__git_find_on_cmdline "$all_subcommands")"
+
 	if [ -z "$subcommand" ]; then
 		__git_find_repo_path
 		if [ -f "$__git_repo_path"/BISECT_START ]; then
-			__gitcomp "$subcommands"
+			__gitcomp "$completable_subcommands"
 		else
 			__gitcomp "replay start"
 		fi
@@ -1496,7 +1516,26 @@ _git_bisect ()
 	fi
 
 	case "$subcommand" in
-	bad|good|reset|skip|start)
+	start)
+		case "$cur" in
+		--*)
+			__gitcomp "--first-parent --no-checkout --term-new --term-bad --term-old --term-good"
+			return
+			;;
+		*)
+			__git_complete_refs
+			;;
+		esac
+		;;
+	terms)
+		__gitcomp "--term-good --term-old --term-bad --term-new"
+		return
+		;;
+	visualize|view)
+		__git_complete_log_opts
+		return
+		;;
+	bad|new|"$term_bad"|good|old|"$term_good"|reset|skip)
 		__git_complete_refs
 		;;
 	*)
@@ -2105,10 +2144,12 @@ __git_diff_merges_opts="off none on first-parent 1 separate m combined c dense-c
 __git_log_pretty_formats="oneline short medium full fuller reference email raw format: tformat: mboxrd"
 __git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default human raw unix auto: format:"
 
-_git_log ()
+# Complete porcelain (i.e. not git-rev-list) options and at least some
+# option arguments accepted by git-log.  Note that this same set of options
+# are also accepted by some other git commands besides git-log.
+__git_complete_log_opts ()
 {
-	__git_has_doubledash && return
-	__git_find_repo_path
+	COMPREPLY=()
 
 	local merge=""
 	if __git_pseudoref_exists MERGE_HEAD; then
@@ -2204,6 +2245,16 @@ _git_log ()
 		return
 		;;
 	esac
+}
+
+_git_log ()
+{
+	__git_has_doubledash && return
+	__git_find_repo_path
+
+	__git_complete_log_opts
+        [ ${#COMPREPLY[@]} -eq 0 ] || return
+
 	__git_complete_revlist
 }
 
@@ -2609,6 +2660,31 @@ __git_compute_config_vars ()
 	__git_config_vars="$(git help --config-for-completion)"
 }
 
+__git_config_vars_all=
+__git_compute_config_vars_all ()
+{
+	test -n "$__git_config_vars_all" ||
+	__git_config_vars_all="$(git --no-pager help --config)"
+}
+
+__git_compute_first_level_config_vars_for_section ()
+{
+	local section="$1"
+	__git_compute_config_vars
+	local this_section="__git_first_level_config_vars_for_section_${section}"
+	test -n "${!this_section}" ||
+	printf -v "__git_first_level_config_vars_for_section_${section}" %s "$(echo "$__git_config_vars" | grep -E "^${section}\.[a-z]" | awk -F. '{print $2}')"
+}
+
+__git_compute_second_level_config_vars_for_section ()
+{
+	local section="$1"
+	__git_compute_config_vars_all
+	local this_section="__git_second_level_config_vars_for_section_${section}"
+	test -n "${!this_section}" ||
+	printf -v "__git_second_level_config_vars_for_section_${section}" %s "$(echo "$__git_config_vars_all" | grep -E "^${section}\.<" | awk -F. '{print $3}')"
+}
+
 __git_config_sections=
 __git_compute_config_sections ()
 {
@@ -2753,73 +2829,50 @@ __git_complete_config_variable_name ()
 	done
 
 	case "$cur_" in
-	branch.*.*)
+	branch.*.*|guitool.*.*|difftool.*.*|man.*.*|mergetool.*.*|remote.*.*|submodule.*.*|url.*.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_##*.}"
-		__gitcomp "remote pushRemote merge mergeOptions rebase" "$pfx" "$cur_" "$sfx"
+		local section="${pfx%.*.}"
+		__git_compute_second_level_config_vars_for_section "${section}"
+		local this_section="__git_second_level_config_vars_for_section_${section}"
+		__gitcomp "${!this_section}" "$pfx" "$cur_" "$sfx"
 		return
 		;;
 	branch.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_#*.}"
+		local section="${pfx%.}"
 		__gitcomp_direct "$(__git_heads "$pfx" "$cur_" ".")"
-		__gitcomp_nl_append $'autoSetupMerge\nautoSetupRebase\n' "$pfx" "$cur_" "${sfx- }"
-		return
-		;;
-	guitool.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "
-			argPrompt cmd confirm needsFile noConsole noRescan
-			prompt revPrompt revUnmerged title
-			" "$pfx" "$cur_" "$sfx"
-		return
-		;;
-	difftool.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
-		return
-		;;
-	man.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "cmd path" "$pfx" "$cur_" "$sfx"
-		return
-		;;
-	mergetool.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "cmd path trustExitCode" "$pfx" "$cur_" "$sfx"
+		__git_compute_first_level_config_vars_for_section "${section}"
+		local this_section="__git_first_level_config_vars_for_section_${section}"
+		__gitcomp_nl_append "${!this_section}" "$pfx" "$cur_" "${sfx:- }"
 		return
 		;;
 	pager.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_#*.}"
 		__git_compute_all_commands
-		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_" "${sfx- }"
-		return
-		;;
-	remote.*.*)
-		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "
-			url proxy fetch push mirror skipDefaultUpdate
-			receivepack uploadpack tagOpt pushurl
-			" "$pfx" "$cur_" "$sfx"
+		__gitcomp_nl "$__git_all_commands" "$pfx" "$cur_" "${sfx:- }"
 		return
 		;;
 	remote.*)
 		local pfx="${cur_%.*}."
 		cur_="${cur_#*.}"
+		local section="${pfx%.}"
 		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
-		__gitcomp_nl_append "pushDefault" "$pfx" "$cur_" "${sfx- }"
+		__git_compute_first_level_config_vars_for_section "${section}"
+		local this_section="__git_first_level_config_vars_for_section_${section}"
+		__gitcomp_nl_append "${!this_section}" "$pfx" "$cur_" "${sfx:- }"
 		return
 		;;
-	url.*.*)
+	submodule.*)
 		local pfx="${cur_%.*}."
-		cur_="${cur_##*.}"
-		__gitcomp "insteadOf pushInsteadOf" "$pfx" "$cur_" "$sfx"
+		cur_="${cur_#*.}"
+		local section="${pfx%.}"
+		__gitcomp_nl "$(__git config -f "$(__git rev-parse --show-toplevel)/.gitmodules" --get-regexp 'submodule.*.path' | awk -F. '{print $2}')" "$pfx" "$cur_" "."
+		__git_compute_first_level_config_vars_for_section "${section}"
+		local this_section="__git_first_level_config_vars_for_section_${section}"
+		__gitcomp_nl_append "${!this_section}" "$pfx" "$cur_" "${sfx:- }"
 		return
 		;;
 	*.*)
