@@ -1497,6 +1497,10 @@ msgid "unable to stat '%s'"
 msgstr "не вдалося виконати stat для \"%s\""
 
 #, c-format
+msgid "unable to read %s"
+msgstr "не вдалося прочитати %s"
+
+#, c-format
 msgid "Badly quoted content in file '%s': %s"
 msgstr "Невірно процитований вміст у файлі \"%s\": %s"
 
@@ -6799,6 +6803,10 @@ msgid "unable to read tree (%s)"
 msgstr "не вдалося прочитати дерево (%s)"
 
 #, c-format
+msgid "unable to read tree %s"
+msgstr "не вдалося прочитати дерево %s"
+
+#, c-format
 msgid "unable to grep from object of type %s"
 msgstr "не вдалося виконати grep для об’єкта типу %s"
 
@@ -7209,10 +7217,6 @@ msgstr "серйозне неспівпадіння під час розпаку
 #, c-format
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "ВИЯВЛЕНО SHA1 КОЛІЗІЮ З %s!"
-
-#, c-format
-msgid "unable to read %s"
-msgstr "не вдалося прочитати %s"
 
 #, c-format
 msgid "cannot read existing object info %s"
@@ -15959,7 +15963,7 @@ msgid "synonym for --dirstat=cumulative"
 msgstr "синонім для --dirstat=cumulative"
 
 msgid "synonym for --dirstat=files,param1,param2..."
-msgstr "синонім для --dirstat=files,параметр1,параметр2..."
+msgstr "синонім для --dirstat=files,param1,param2..."
 
 msgid "warn if changes introduce conflict markers or whitespace errors"
 msgstr ""
