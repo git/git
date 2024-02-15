@@ -137,22 +137,6 @@ test_expect_success POSIXPERM 'info/refs respects umask in unshared repo' '
 	test_cmp expect actual
 '
 
-test_expect_success REFFILES,POSIXPERM 'git reflog expire honors core.sharedRepository' '
-	umask 077 &&
-	git config core.sharedRepository group &&
-	git reflog expire --all &&
-	actual="$(ls -l .git/logs/refs/heads/main)" &&
-	case "$actual" in
-	-rw-rw-*)
-		: happy
-		;;
-	*)
-		echo Ooops, .git/logs/refs/heads/main is not 066x [$actual]
-		false
-		;;
-	esac
-'
-
 test_expect_success POSIXPERM 'forced modes' '
 	test_when_finished "rm -rf new" &&
 	mkdir -p templates/hooks &&

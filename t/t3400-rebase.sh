@@ -424,16 +424,6 @@ test_expect_success 'refuse to switch to branch checked out elsewhere' '
 	test_grep "already used by worktree at" err
 '
 
-test_expect_success REFFILES,MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
-	git checkout main &&
-	mv .git/logs actual_logs &&
-	cmd //c "mklink /D .git\logs ..\actual_logs" &&
-	git rebase -f HEAD^ &&
-	test -L .git/logs &&
-	rm .git/logs &&
-	mv actual_logs .git/logs
-'
-
 test_expect_success 'rebase when inside worktree subdirectory' '
 	git init main-wt &&
 	(

@@ -288,33 +288,6 @@ test_expect_success "set $m (logged by touch)" '
 	test $A = $(git show-ref -s --verify $m)
 '
 
-test_expect_success REFFILES 'empty directory removal' '
-	git branch d1/d2/r1 HEAD &&
-	git branch d1/r2 HEAD &&
-	test_path_is_file .git/refs/heads/d1/d2/r1 &&
-	test_path_is_file .git/logs/refs/heads/d1/d2/r1 &&
-	git branch -d d1/d2/r1 &&
-	test_must_fail git show-ref --verify -q refs/heads/d1/d2 &&
-	test_must_fail git show-ref --verify -q logs/refs/heads/d1/d2 &&
-	test_path_is_file .git/refs/heads/d1/r2 &&
-	test_path_is_file .git/logs/refs/heads/d1/r2
-'
-
-test_expect_success REFFILES 'symref empty directory removal' '
-	git branch e1/e2/r1 HEAD &&
-	git branch e1/r2 HEAD &&
-	git checkout e1/e2/r1 &&
-	test_when_finished "git checkout main" &&
-	test_path_is_file .git/refs/heads/e1/e2/r1 &&
-	test_path_is_file .git/logs/refs/heads/e1/e2/r1 &&
-	git update-ref -d HEAD &&
-	test_must_fail git show-ref --verify -q refs/heads/e1/e2 &&
-	test_must_fail git show-ref --verify -q logs/refs/heads/e1/e2 &&
-	test_path_is_file .git/refs/heads/e1/r2 &&
-	test_path_is_file .git/logs/refs/heads/e1/r2 &&
-	test_path_is_file .git/logs/HEAD
-'
-
 cat >expect <<EOF
 $Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	Initial Creation
 $A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150260 +0000	Switch
@@ -1666,15 +1639,6 @@ test_expect_success PIPE 'transaction flushes status updates' '
 	read line <&8 &&
 	echo "$line" >actual &&
 	test_cmp expected actual
-'
-
-test_expect_success REFFILES 'directory not created deleting packed ref' '
-	git branch d1/d2/r1 HEAD &&
-	git pack-refs --all &&
-	test_path_is_missing .git/refs/heads/d1/d2 &&
-	git update-ref -d refs/heads/d1/d2/r1 &&
-	test_path_is_missing .git/refs/heads/d1/d2 &&
-	test_path_is_missing .git/refs/heads/d1
 '
 
 test_done
