@@ -50,6 +50,7 @@ helper_test_clean() {
 	reject $1 https example.com user-overwrite
 	reject $1 https example.com user-erase1
 	reject $1 https example.com user-erase2
+	reject $1 https victim.example.com user
 	reject $1 http path.tld user
 	reject $1 https timeout.tld user
 	reject $1 https sso.tld
