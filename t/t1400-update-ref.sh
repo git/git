@@ -426,15 +426,15 @@ test_expect_success 'Query "main@{2005-05-28}" (past end of history)' '
 rm -f expect
 git update-ref -d $m
 
-test_expect_success REFFILES 'query reflog with gap' '
+test_expect_success 'query reflog with gap' '
 	test_when_finished "git update-ref -d $m" &&
 
-	git update-ref $m $F &&
-	cat >.git/logs/$m <<-EOF &&
-	$Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
-	$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
-	$D $F $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
-	EOF
+	GIT_COMMITTER_DATE="1117150320 -0500" git update-ref $m $A &&
+	GIT_COMMITTER_DATE="1117150380 -0500" git update-ref $m $B &&
+	GIT_COMMITTER_DATE="1117150480 -0500" git update-ref $m $C &&
+	GIT_COMMITTER_DATE="1117150580 -0500" git update-ref $m $D &&
+	GIT_COMMITTER_DATE="1117150680 -0500" git update-ref $m $F &&
+	git reflog delete $m@{2} &&
 
 	git rev-parse --verify "main@{2005-05-26 23:33:01}" >actual 2>stderr &&
 	echo "$B" >expect &&
