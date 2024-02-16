@@ -174,8 +174,10 @@ If you just want to run git as if it was started in `<path>` then use
 	directory.
 
 --no-replace-objects::
-	Do not use replacement refs to replace Git objects. See
-	linkgit:git-replace[1] for more information.
+	Do not use replacement refs to replace Git objects.
+	This is equivalent to exporting the `GIT_NO_REPLACE_OBJECTS`
+	environment variable with any value.
+	See linkgit:git-replace[1] for more information.
 
 --no-lazy-fetch::
 	Do not fetch missing objects from the promisor remote on
@@ -872,6 +874,10 @@ for full details.
 	cookies, the "Authorization:" header, the "Proxy-Authorization:"
 	header and packfile URIs. Set this Boolean environment variable to false to prevent this
 	redaction.
+
+`GIT_NO_REPLACE_OBJECTS`::
+	Setting and exporting this environment variable tells Git to
+	ignore replacement refs and do not replace Git objects.
 
 `GIT_LITERAL_PATHSPECS`::
 	Setting this Boolean environment variable to true will cause Git to treat all
