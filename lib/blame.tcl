@@ -63,7 +63,7 @@ field tooltip_timer     {} ; # Current timer event for our tooltip
 field tooltip_commit    {} ; # Commit(s) in tooltip
 
 constructor new {i_commit i_path i_jump} {
-	global cursor_ptr M1B M1T have_tk85 use_ttk NS
+	global cursor_ptr M1B M1T NS
 	variable active_color
 	variable group_colors
 
@@ -203,9 +203,8 @@ constructor new {i_commit i_path i_jump} {
 		-width 80 \
 		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
-	if {$have_tk85} {
 		$w_file configure -inactiveselectbackground darkblue
-	}
+
 	$w_file tag conf found \
 		-background yellow
 
@@ -1298,7 +1297,7 @@ method _open_tooltip {cur_w} {
 	# On MacOS raising a window causes it to acquire focus.
 	# Tk 8.5 on MacOS seems to properly support wm transient,
 	# so we can safely counter the effect there.
-	if {$::have_tk85 && [is_MacOSX]} {
+	if {[is_MacOSX]} {
 		update
 		if {$w eq {}} {
 			raise .

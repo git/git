@@ -1268,8 +1268,6 @@ citool {
 ##
 ## execution environment
 
-set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
-
 # Suggest our implementation of askpass, if none is set
 if {![info exists env(SSH_ASKPASS)]} {
 	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
@@ -3363,28 +3361,18 @@ unset i
 
 # -- Diff and Commit Area
 #
-if {$have_tk85} {
-	${NS}::panedwindow .vpane.lower -orient vertical
-	${NS}::frame .vpane.lower.commarea
-	${NS}::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
-	.vpane.lower add .vpane.lower.diff
-	.vpane.lower add .vpane.lower.commarea
-	.vpane add .vpane.lower
-	if {$use_ttk} {
-		.vpane.lower pane .vpane.lower.diff -weight 1
-		.vpane.lower pane .vpane.lower.commarea -weight 0
-	} else {
-		.vpane.lower paneconfigure .vpane.lower.diff -stretch always
-		.vpane.lower paneconfigure .vpane.lower.commarea -stretch never
-	}
+${NS}::panedwindow .vpane.lower -orient vertical
+${NS}::frame .vpane.lower.commarea
+${NS}::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
+.vpane.lower add .vpane.lower.diff
+.vpane.lower add .vpane.lower.commarea
+.vpane add .vpane.lower
+if {$use_ttk} {
+	.vpane.lower pane .vpane.lower.diff -weight 1
+	.vpane.lower pane .vpane.lower.commarea -weight 0
 } else {
-	frame .vpane.lower -height 300 -width 400
-	frame .vpane.lower.commarea
-	frame .vpane.lower.diff -relief sunken -borderwidth 1
-	pack .vpane.lower.diff -fill both -expand 1
-	pack .vpane.lower.commarea -side bottom -fill x
-	.vpane add .vpane.lower
-	.vpane paneconfigure .vpane.lower -sticky nsew
+	.vpane.lower paneconfigure .vpane.lower.diff -stretch always
+	.vpane.lower paneconfigure .vpane.lower.commarea -stretch never
 }
 
 # -- Commit Area Buttons
