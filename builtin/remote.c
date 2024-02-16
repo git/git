@@ -150,7 +150,7 @@ static int parse_mirror_opt(const struct option *opt, const char *arg, int not)
 	else if (!strcmp(arg, "push"))
 		*mirror = MIRROR_PUSH;
 	else
-		return error(_("unknown mirror argument: %s"), arg);
+		return error(_("unknown --mirror argument: %s"), arg);
 	return 0;
 }
 
