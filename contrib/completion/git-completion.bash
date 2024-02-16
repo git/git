@@ -2673,7 +2673,8 @@ __git_compute_first_level_config_vars_for_section ()
 	__git_compute_config_vars
 	local this_section="__git_first_level_config_vars_for_section_${section}"
 	test -n "${!this_section}" ||
-	printf -v "__git_first_level_config_vars_for_section_${section}" %s "$(echo "$__git_config_vars" | grep -E "^${section}\.[a-z]" | awk -F. '{print $2}')"
+	printf -v "__git_first_level_config_vars_for_section_${section}" %s \
+		"$(echo "$__git_config_vars" | awk -F. "/^${section}\.[a-z]/ { print \$2 }")"
 }
 
 __git_compute_second_level_config_vars_for_section ()
@@ -2682,7 +2683,8 @@ __git_compute_second_level_config_vars_for_section ()
 	__git_compute_config_vars_all
 	local this_section="__git_second_level_config_vars_for_section_${section}"
 	test -n "${!this_section}" ||
-	printf -v "__git_second_level_config_vars_for_section_${section}" %s "$(echo "$__git_config_vars_all" | grep -E "^${section}\.<" | awk -F. '{print $3}')"
+	printf -v "__git_second_level_config_vars_for_section_${section}" %s \
+		"$(echo "$__git_config_vars_all" | awk -F. "/^${section}\.</ { print \$3 }")"
 }
 
 __git_config_sections=
