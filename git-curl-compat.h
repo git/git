@@ -75,6 +75,13 @@
 #endif
 
 /**
+ * CURLOPT_UNIX_SOCKET_PATH was added in 7.40.0, released in January 2015.
+ */
+#if LIBCURL_VERSION_NUM >= 0x074000
+#define GIT_CURL_HAVE_CURLOPT_UNIX_SOCKET_PATH 1
+#endif
+
+/**
  * CURL_HTTP_VERSION_2 was added in 7.43.0, released in June 2015.
  *
  * The CURL_HTTP_VERSION_2 alias (but not CURL_HTTP_VERSION_2_0) has
