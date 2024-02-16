@@ -98,7 +98,6 @@ jobs:
           env.COMMENT_BODY != ''
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-token-user-login: 'github-actions[bot]'
           message: >
             ${{ steps.check-commits.outcome == 'failure' && 'Errors and warnings' || 'Warnings' }}
             found by [git-po-helper](https://github.com/git-l10n/git-po-helper#readme) in workflow
