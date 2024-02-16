@@ -15952,8 +15952,8 @@ msgstr "машинний вивід --stat"
 msgid "output only the last line of --stat"
 msgstr "вивести лише останній рядок --stat"
 
-msgid "<param1,param2>..."
-msgstr "<параметр1,параметр2>..."
+msgid "<param1>,<param2>..."
+msgstr "<параметр1>,<параметр2>..."
 
 msgid ""
 "output the distribution of relative amount of changes for each sub-directory"
@@ -15962,8 +15962,8 @@ msgstr "вивести розподіл відносної кількості з
 msgid "synonym for --dirstat=cumulative"
 msgstr "синонім для --dirstat=cumulative"
 
-msgid "synonym for --dirstat=files,param1,param2..."
-msgstr "синонім для --dirstat=files,param1,param2..."
+msgid "synonym for --dirstat=files,<param1>,<param2>..."
+msgstr "синонім для --dirstat=files,<параметр1>,<параметр2>..."
 
 msgid "warn if changes introduce conflict markers or whitespace errors"
 msgstr ""
