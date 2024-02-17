@@ -182,7 +182,8 @@ static OSStatus delete_internet_password(void)
 	if (!protocol || !host)
 		return -1;
 
-	attrs = CREATE_SEC_ATTRIBUTES(NULL);
+	attrs = CREATE_SEC_ATTRIBUTES(kSecMatchLimit, kSecMatchLimitAll,
+				      NULL);
 	result = SecItemDelete(attrs);
 	CFRelease(attrs);
 
