@@ -6,16 +6,22 @@
 #define ENCODING kCFStringEncodingUTF8
 static CFStringRef protocol; /* Stores constant strings - not memory managed */
 static CFStringRef host;
+static CFNumberRef port;
 static CFStringRef path;
 static CFStringRef username;
 static CFDataRef password;
-static CFNumberRef port;
+static CFDataRef password_expiry_utc;
+static CFDataRef oauth_refresh_token;
 
 static void clear_credential(void)
 {
 	if (host) {
 		CFRelease(host);
 		host = NULL;
+	}
+	if (port) {
+		CFRelease(port);
+		port = NULL;
 	}
 	if (path) {
 		CFRelease(path);
@@ -29,11 +35,17 @@ static void clear_credential(void)
 		CFRelease(password);
 		password = NULL;
 	}
-	if (port) {
-		CFRelease(port);
-		port = NULL;
+	if (password_expiry_utc) {
+		CFRelease(password_expiry_utc);
+		password_expiry_utc = NULL;
+	}
+	if (oauth_refresh_token) {
+		CFRelease(oauth_refresh_token);
+		oauth_refresh_token = NULL;
 	}
 }
+
+#define STRING_WITH_LENGTH(s) s, sizeof(s) - 1
 
 __attribute__((format (printf, 1, 2), __noreturn__))
 static void die(const char *err, ...)
@@ -197,9 +209,27 @@ static OSStatus delete_ref(const void *itemRef)
 		CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue);
 		result = SecItemCopyMatching(query, (CFTypeRef *)&data);
 		if (!result) {
-			if (CFEqual(data, password))
+			CFDataRef kc_password;
+			const UInt8 *raw_data;
+			const UInt8 *line;
+
+			/* Don't match appended metadata */
+			raw_data = CFDataGetBytePtr(data);
+			line = memchr(raw_data, '\n', CFDataGetLength(data));
+			if (line)
+				kc_password = CFDataCreateWithBytesNoCopy(
+						kCFAllocatorDefault,
+						raw_data,
+						line - raw_data,
+						kCFAllocatorNull);
+			else
+				kc_password = data;
+
+			if (CFEqual(kc_password, password))
 				result = SecItemDelete(delete_query);
 
+			if (line)
+				CFRelease(kc_password);
 			CFRelease(data);
 		}
 
@@ -250,6 +280,7 @@ static OSStatus delete_internet_password(void)
 
 static OSStatus add_internet_password(void)
 {
+	CFMutableDataRef data;
 	CFDictionaryRef attrs;
 	OSStatus result;
 
@@ -257,7 +288,23 @@ static OSStatus add_internet_password(void)
 	if (!protocol || !host || !username || !password)
 		return -1;
 
-	attrs = CREATE_SEC_ATTRIBUTES(kSecValueData, password,
+	data = CFDataCreateMutableCopy(kCFAllocatorDefault, 0, password);
+	if (password_expiry_utc) {
+		CFDataAppendBytes(data,
+		    (const UInt8 *)STRING_WITH_LENGTH("\npassword_expiry_utc="));
+		CFDataAppendBytes(data,
+				  CFDataGetBytePtr(password_expiry_utc),
+				  CFDataGetLength(password_expiry_utc));
+	}
+	if (oauth_refresh_token) {
+		CFDataAppendBytes(data,
+		    (const UInt8 *)STRING_WITH_LENGTH("\noauth_refresh_token="));
+		CFDataAppendBytes(data,
+				  CFDataGetBytePtr(oauth_refresh_token),
+				  CFDataGetLength(oauth_refresh_token));
+	}
+
+	attrs = CREATE_SEC_ATTRIBUTES(kSecValueData, data,
 				      NULL);
 
 	result = SecItemAdd(attrs, NULL);
@@ -268,6 +315,7 @@ static OSStatus add_internet_password(void)
 		CFRelease(query);
 	}
 
+	CFRelease(data);
 	CFRelease(attrs);
 
 	return result;
@@ -339,6 +387,14 @@ static void read_credential(void)
 			password = CFDataCreate(kCFAllocatorDefault,
 						(UInt8 *)v,
 						strlen(v));
+		else if (!strcmp(buf, "password_expiry_utc"))
+			password_expiry_utc = CFDataCreate(kCFAllocatorDefault,
+							   (UInt8 *)v,
+							   strlen(v));
+		else if (!strcmp(buf, "oauth_refresh_token"))
+			oauth_refresh_token = CFDataCreate(kCFAllocatorDefault,
+							   (UInt8 *)v,
+							   strlen(v));
 		/*
 		 * Ignore other lines; we don't know what they mean, but
 		 * this future-proofs us when later versions of git do
