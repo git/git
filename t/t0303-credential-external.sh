@@ -32,9 +32,24 @@ commands.
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-credential.sh
 
+# If we're not given a specific external helper to run against,
+# there isn't much to test. But we can still run through our
+# battery of tests with a fake helper and check that the
+# test themselves are self-consistent and clean up after
+# themselves.
+#
+# We'll use the "store" helper, since we can easily inspect
+# its state by looking at the on-disk file. But since it doesn't
+# implement any caching or expiry logic, we'll cheat and override
+# the "check" function to just report all results as OK.
 if test -z "$GIT_TEST_CREDENTIAL_HELPER"; then
-	skip_all="used to test external credential helpers"
-	test_done
+	GIT_TEST_CREDENTIAL_HELPER=store
+	GIT_TEST_CREDENTIAL_HELPER_TIMEOUT=store
+	check () {
+		test "$1" = "approve" || return 0
+		git -c credential.helper=store credential approve
+	}
+	check_cleanup=t
 fi
 
 test -z "$GIT_TEST_CREDENTIAL_HELPER_SETUP" ||
@@ -58,5 +73,12 @@ fi
 # and don't leave cruft in the helper's storage, which
 # might be long-term system storage
 helper_test_clean "$GIT_TEST_CREDENTIAL_HELPER"
+
+if test "$check_cleanup" = "t"
+then
+	test_expect_success 'test cleanup removes everything' '
+		test_must_be_empty "$HOME/.git-credentials"
+	'
+fi
 
 test_done
