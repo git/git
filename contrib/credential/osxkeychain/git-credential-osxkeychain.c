@@ -169,9 +169,55 @@ out:
 	return result;
 }
 
+static OSStatus delete_ref(const void *itemRef)
+{
+	CFArrayRef item_ref_list;
+	CFDictionaryRef delete_query;
+	OSStatus result;
+
+	item_ref_list = CFArrayCreate(kCFAllocatorDefault,
+				      &itemRef,
+				      1,
+				      &kCFTypeArrayCallBacks);
+	delete_query = create_dictionary(kCFAllocatorDefault,
+					 kSecClass, kSecClassInternetPassword,
+					 kSecMatchItemList, item_ref_list,
+					 NULL);
+
+	if (password) {
+		/* We only want to delete items with a matching password */
+		CFIndex capacity;
+		CFMutableDictionaryRef query;
+		CFDataRef data;
+
+		capacity = CFDictionaryGetCount(delete_query) + 1;
+		query = CFDictionaryCreateMutableCopy(kCFAllocatorDefault,
+						      capacity,
+						      delete_query);
+		CFDictionarySetValue(query, kSecReturnData, kCFBooleanTrue);
+		result = SecItemCopyMatching(query, (CFTypeRef *)&data);
+		if (!result) {
+			if (CFEqual(data, password))
+				result = SecItemDelete(delete_query);
+
+			CFRelease(data);
+		}
+
+		CFRelease(query);
+	} else {
+		result = SecItemDelete(delete_query);
+	}
+
+	CFRelease(delete_query);
+	CFRelease(item_ref_list);
+
+	return result;
+}
+
 static OSStatus delete_internet_password(void)
 {
 	CFDictionaryRef attrs;
+	CFArrayRef refs;
 	OSStatus result;
 
 	/*
@@ -183,9 +229,17 @@ static OSStatus delete_internet_password(void)
 		return -1;
 
 	attrs = CREATE_SEC_ATTRIBUTES(kSecMatchLimit, kSecMatchLimitAll,
+				      kSecReturnRef, kCFBooleanTrue,
 				      NULL);
-	result = SecItemDelete(attrs);
+	result = SecItemCopyMatching(attrs, (CFTypeRef *)&refs);
 	CFRelease(attrs);
+
+	if (!result) {
+		for (CFIndex i = 0; !result && i < CFArrayGetCount(refs); i++)
+			result = delete_ref(CFArrayGetValueAtIndex(refs, i));
+
+		CFRelease(refs);
+	}
 
 	/* We consider not found to not be an error */
 	if (result == errSecItemNotFound)
