@@ -3,7 +3,7 @@ Git v2.44 Release Notes
 
 Backward Compatibility Notes
 
- * "git chekcout -B <branch>" used to allow switching to a branch that
+ * "git checkout -B <branch>" used to allow switching to a branch that
    is in use on another worktree, but this was by mistake.  The users
    need to use "--ignore-other-worktrees" option.
 
@@ -54,7 +54,7 @@ UI, Workflows & Features
    gitweb behaved as if the file did not exist at all, but now it
    errors out.  This is a change that may break backward compatibility.
 
- * When $HOME/.gitignore is missing but XDG config file available, we
+ * When $HOME/.gitconfig is missing but XDG config file is available, we
    should write into the latter, not former.  "git gc" and "git
    maintenance" wrote into a wrong "global config" file, which have
    been corrected.
