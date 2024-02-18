@@ -916,13 +916,11 @@ proc apply_config {} {
 	set use_ttk 0
 	set NS {}
 	if {$repo_config(gui.usettk)} {
-		set use_ttk [package vsatisfies [package provide Tk] 8.5]
-		if {$use_ttk} {
-			set NS ttk
-			bind [winfo class .] <<ThemeChanged>> [list InitTheme]
-			pave_toplevel .
-			color::sync_with_theme
-		}
+		set use_ttk 1
+		set NS ttk
+		bind [winfo class .] <<ThemeChanged>> [list InitTheme]
+		pave_toplevel .
+		color::sync_with_theme
 	}
 
 	global comment_string
