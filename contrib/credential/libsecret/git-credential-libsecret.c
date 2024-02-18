@@ -164,6 +164,9 @@ static int keyring_get(struct credential *c)
 			if (g_strv_length(parts) >= 1) {
 				g_free(c->password);
 				c->password = g_strdup(parts[0]);
+			} else {
+				g_free(c->password);
+				c->password = g_strdup("");
 			}
 			for (int i = 1; i < g_strv_length(parts); i++) {
 				if (g_str_has_prefix(parts[i], "password_expiry_utc=")) {
