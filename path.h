@@ -181,6 +181,7 @@ const char *git_path_shallow(struct repository *r);
 int ends_with_path_components(const char *path, const char *components);
 int validate_headref(const char *ref);
 
+int calc_shared_perm(int mode);
 int adjust_shared_perm(const char *path);
 
 char *interpolate_path(const char *path, int real_home);
