@@ -1,7 +1,7 @@
 # Bulgarian translation of git po-file.
-# Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023.
+# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
 # ========================
 # DICTIONARY TO MERGE IN GIT GUI
 # ------------------------
@@ -141,6 +141,8 @@
 # midx, multi-pack index - файл с индекса за множество пакети
 # overlay mode - припокриващ режим (при изтеглянe)
 # incremental file нарастващ файл
+# commit-graph граф с подавания
+# commit-graph chain верига на гра̀фа с подавания
 # split (commit-graphr) раздробен (граф с подавания)
 # clobber (a tag) презаписвам (етикет)
 # blame извеждане на авторство
@@ -207,6 +209,15 @@
 # master/main branch основен клон
 # unborn/orphan branch неродѐн клон (а не несъздаден) - клон без никакви подавания, включително и началното
 # parse анализ, анализирам
+# reinitialize repository зануляване на хранилището и инициализиране
+# replay изпълняване/прилагане наново
+# BTMP chunk откъс за побитова маска
+# OID fanout chunk откъс за разпределянето
+# OID lookup chunk  откъс за търсенето
+# autostash автоматично скатано
+# symref файл с указател (regular file that stores a string that begins with ref: refs/)
+#
+#
 #
 # ------------------------
 # „$var“ - може да не сработва за shell има gettext и eval_gettext - проверка - намират се лесно по „$
@@ -233,10 +244,10 @@
 # for i in `sort -u FILES`; do cnt=`grep $i FILES | wc -l`; echo $cnt $i ;done | sort -n
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.43\n"
+"Project-Id-Version: git 2.44\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-11-17 15:49+0100\n"
-"PO-Revision-Date: 2023-11-18 13:23+0100\n"
+"POT-Creation-Date: 2024-02-16 09:33+0100\n"
+"PO-Revision-Date: 2024-02-16 09:38+0100\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -1691,6 +1702,10 @@ msgid "Unexpected option --output"
 msgstr "Неочаквана опция „--output“"
 
 #, c-format
+msgid "extra command line parameter '%s'"
+msgstr "излишна опция или стойност на командния ред: „%s“"
+
+#, c-format
 msgid "Unknown archive format '%s'"
 msgstr "Непознат формат на архив: „%s“"
 
@@ -1736,6 +1751,14 @@ msgid "bad --attr-source or GIT_ATTR_SOURCE"
 msgstr ""
 "неправилна стойност за опцията „--attr-source“ или променливата "
 "„GIT_ATTR_SOURCE“"
+
+#, c-format
+msgid "unable to stat '%s'"
+msgstr "„stat“ не може да се изпълни върху „%s“"
+
+#, c-format
+msgid "unable to read %s"
+msgstr "обектът „%s“ не може да бъде прочетен"
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -3074,12 +3097,13 @@ msgid "couldn't look up commit object for '%s'"
 msgstr "обектът-подаване за „%s“ не може да се открие"
 
 #, c-format
-msgid ""
-"the branch '%s' is not fully merged.\n"
-"If you are sure you want to delete it, run 'git branch -D %s'"
+msgid "the branch '%s' is not fully merged"
+msgstr "клонът „%s“ не е слят напълно"
+
+#, c-format
+msgid "If you are sure you want to delete it, run 'git branch -D %s'"
 msgstr ""
-"клонът „%s“ не е слят напълно.  Ако сте сигурни, че искате\n"
-"да го изтриете, изпълнете:\n"
+"Ако сте сигурни, че искате да го изтриете, изпълнете:\n"
 "\n"
 "    git branch -D %s"
 
@@ -3126,7 +3150,7 @@ msgstr "подаването, сочено от указателя „HEAD“, �
 
 #, c-format
 msgid "HEAD (%s) points outside of refs/heads/"
-msgstr "„HEAD“ (%s) сочи извън директорията „refs/heads“"
+msgstr "„HEAD“ (%s) сочи извън директорията „refs/heads/“"
 
 #, c-format
 msgid "branch %s is being rebased at %s"
@@ -4138,8 +4162,8 @@ msgstr "принудително изтегляне (вашите промѐн
 msgid "new-branch"
 msgstr "НОВ_КЛОН"
 
-msgid "new unparented branch"
-msgstr "нов клон без родител"
+msgid "new unborn branch"
+msgstr "нов неродѐн клон"
 
 msgid "update ignored files (default)"
 msgstr "обновяване на игнорираните файлове (стандартно)"
@@ -4392,9 +4416,6 @@ msgstr ""
 "което изисква някоя от опциите „-i“, „-n“ или „-f“.  Няма да се извърши "
 "изчистване"
 
-msgid "-x and -X cannot be used together"
-msgstr "опциите „-x“ и „-X“ са несъвместими"
-
 msgid "git clone [<options>] [--] <repo> [<dir>]"
 msgstr "git clone [ОПЦИЯ…] [--] ХРАНИЛИЩЕ [ДИРЕКТОРИЯ]"
 
@@ -4485,6 +4506,9 @@ msgstr "СЛУЖЕБНА_ДИРЕКТОРИЯ"
 
 msgid "separate git dir from working tree"
 msgstr "отделна СЛУЖЕБНА_ДИРЕКТОРИЯ за git извън работното дърво"
+
+msgid "specify the reference format to use"
+msgstr "указване на форма̀та за указател"
 
 msgid "key=value"
 msgstr "КЛЮЧ=СТОЙНОСТ"
@@ -4613,12 +4637,9 @@ msgstr "Прекалено много аргументи."
 msgid "You must specify a repository to clone."
 msgstr "Трябва да укажете кое хранилище искате да клонирате."
 
-msgid ""
-"--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-"
-"exclude"
-msgstr ""
-"опцията „--bundle-uri“ е несъвместима с „--depth“, „--shallow-since“ и „--"
-"shallow-exclude“"
+#, c-format
+msgid "unknown ref storage format '%s'"
+msgstr "непознат формат на съхранение: „%s“"
 
 #, c-format
 msgid "repository '%s' does not exist"
@@ -4756,7 +4777,7 @@ msgid ""
 "--stdin-commits]\n"
 "                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
 "[no-]progress]\n"
-"                       <split options>"
+"                       <split-options>"
 msgstr ""
 "git commit-graph write [--object-dir ДИРЕКТОРИЯ] [--append]\n"
 "                       [--split[=СТРАТЕГИЯ]] [--reachable|--stdin-packs|--"
@@ -7145,6 +7166,10 @@ msgid "unable to read tree (%s)"
 msgstr "дървото не може да бъде прочетено (%s)"
 
 #, c-format
+msgid "unable to read tree %s"
+msgstr "дървото не може да бъде прочетено: %s"
+
+#, c-format
 msgid "unable to grep from object of type %s"
 msgstr "не може да се изпълни „grep“ от обект от вида %s"
 
@@ -7566,10 +7591,6 @@ msgstr ""
 "СЪВПАДЕНИЕ НА СТОЙНОСТИТЕ ЗА СУМИТЕ ЗА SHA1: „%s“ НА ДВА РАЗЛИЧНИ ОБЕКТА!"
 
 #, c-format
-msgid "unable to read %s"
-msgstr "обектът „%s“ не може да бъде прочетен"
-
-#, c-format
 msgid "cannot read existing object info %s"
 msgstr "съществуващият обект в „%s“ не може да бъде прочетен"
 
@@ -7711,6 +7732,7 @@ msgstr "грешка при проверка с „fsck“ на пакетнит
 msgid ""
 "git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
 "         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
+"         [--ref-format=<format>]\n"
 "         [-b <branch-name> | --initial-branch=<branch-name>]\n"
 "         [--shared[=<permissions>]] [<directory>]"
 msgstr ""
@@ -8449,6 +8471,14 @@ msgstr ""
 "git merge-file [ОПЦИЯ…] [-L ИМЕ_1 [-L ОРИГИНАЛ [-L ИМЕ_2]]] ФАЙЛ_1 ОРИГ_ФАЙЛ "
 "ФАЙЛ_2"
 
+msgid ""
+"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
+"\"histogram\""
+msgstr ""
+"опцията приема следните варианти за алгоритъм за разлики: „myers“ (по "
+"Майерс), „minimal“ (минимизиране на разликите), „patience“ (пасианс) и "
+"„histogram“ (хистограмен)"
+
 msgid "send results to standard output"
 msgstr "извеждане на резултатите на стандартния изход"
 
@@ -8469,6 +8499,12 @@ msgstr "при конфликти да се ползва чуждата верс
 
 msgid "for conflicts, use a union version"
 msgstr "при конфликти да се ползва обединена версия"
+
+msgid "<algorithm>"
+msgstr "АЛГОРИТЪМ"
+
+msgid "choose a diff algorithm"
+msgstr "избор на АЛГОРИТЪМа за разлики"
 
 msgid "for conflicts, use this marker size"
 msgstr "при конфликти да се ползва маркер с такъв БРОЙ знаци"
@@ -8561,9 +8597,6 @@ msgstr "„--trivial-merge“ е несъвместима с другите оп
 msgid "unknown strategy option: -X%s"
 msgstr "непозната опция за стратегия: -X%s"
 
-msgid "--merge-base is incompatible with --stdin"
-msgstr "опциите „--merge-base“ и „--stdin“ са несъвместими"
-
 #, c-format
 msgid "malformed input line: '%s'."
 msgstr "входен ред с неправилен формат: „%s“."
@@ -8606,7 +8639,7 @@ msgstr "(псевдоним на „--stat“)"
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr ""
 "добавяне (на максимум такъв БРОЙ) записи от съкратения журнал в съобщението "
-"за подаване"
+"за подаване със сливане"
 
 msgid "create a single commit instead of doing a merge"
 msgstr "създаване на едно подаване вместо извършване на сливане"
@@ -9523,6 +9556,11 @@ msgid "inconsistency with delta count"
 msgstr "неправилен брой разлики"
 
 #, c-format
+msgid "invalid pack.allowPackReuse value: '%s'"
+msgstr ""
+"неправилна стойност за преизползването на пакети „pack.allowPackReuse“: „%s“"
+
+#, c-format
 msgid ""
 "value of uploadpack.blobpackfileuri must be of the form '<object-hash> <pack-"
 "hash> <uri>' (got '%s')"
@@ -9795,10 +9833,10 @@ msgstr "Изброяване на обектите"
 #, c-format
 msgid ""
 "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>), pack-"
-"reused %<PRIu32>"
+"reused %<PRIu32> (from %<PRIuMAX>)"
 msgstr ""
 "Общо: %<PRIu32> (разлики: %<PRIu32>), преизползвани: %<PRIu32> (разлики: "
-"%<PRIu32>), преизползвани при пакетиране: %<PRIu32>"
+"%<PRIu32>), преизползвани при пакетиране: %<PRIu32> (от %<PRIuMAX>)"
 
 msgid ""
 "'git pack-redundant' is nominated for removal.\n"
@@ -10790,13 +10828,6 @@ msgstr ""
 
 msgid "switch `C' expects a numerical value"
 msgstr "опцията „C“ очаква число за аргумент"
-
-msgid ""
-"apply options are incompatible with rebase.autoSquash.  Consider adding --no-"
-"autosquash"
-msgstr ""
-"опциите за прилагане са несъвместими с „rebase.autoSquash“.  Пробвайте да "
-"добавите опцията „--no-autosquash“"
 
 msgid ""
 "apply options are incompatible with rebase.rebaseMerges.  Consider adding --"
@@ -11823,6 +11854,76 @@ msgstr "опцията „--convert-graft-file“ не приема аргуме
 msgid "only one pattern can be given with -l"
 msgstr "опцията „-l“ приема точно един шаблон"
 
+msgid "need some commits to replay"
+msgstr "необходимо е да има подавания за прилагане отново"
+
+msgid "--onto and --advance are incompatible"
+msgstr "опциите „--onto“ и „--advance“ са несъвместими"
+
+msgid "all positive revisions given must be references"
+msgstr "всички зададени положителни версии трябва да са указатели"
+
+msgid "argument to --advance must be a reference"
+msgstr "аргументът към „--advance“ трябва да е указател"
+
+msgid ""
+"cannot advance target with multiple sources because ordering would be ill-"
+"defined"
+msgstr ""
+"цели с множество източници не може да се придвижат напред, защото подредбата "
+"не е добре дефинирана"
+
+msgid ""
+"cannot implicitly determine whether this is an --advance or --onto operation"
+msgstr ""
+"не може да се определи дали това действие е за „--advance“ или „--onto“"
+
+msgid ""
+"cannot advance target with multiple source branches because ordering would "
+"be ill-defined"
+msgstr ""
+"цели с множество клони-източници не може да се придвижат напред, защото "
+"подредбата не е добре дефинирана"
+
+msgid "cannot implicitly determine correct base for --onto"
+msgstr "правилната база за „--onto“ не може да се определи"
+
+msgid ""
+"(EXPERIMENTAL!) git replay ([--contained] --onto <newbase> | --advance "
+"<branch>) <revision-range>..."
+msgstr ""
+"(ЕКСПЕРИМЕНТАЛНО!) git replay ([--contained] --onto НОВА_БАЗА | --advance "
+"КЛОН) ДИАПАЗОН_ПОДАВАНИЯ…"
+
+msgid "make replay advance given branch"
+msgstr "прилагането наново придвижва дадения КЛОН напред"
+
+msgid "replay onto given commit"
+msgstr "прилагането наново върху даденото ПОДАВАНЕ"
+
+msgid "advance all branches contained in revision-range"
+msgstr "придвижване на всички КЛОНи в ДИАПАЗОНа_ПОДАВАНИЯ"
+
+msgid "option --onto or --advance is mandatory"
+msgstr "изисква се някоя от опциите „--onto“ или „--advance“"
+
+#, c-format
+msgid ""
+"some rev walking options will be overridden as '%s' bit in 'struct rev_info' "
+"will be forced"
+msgstr ""
+"някои опции за проследяване на указатели ще бъдат променени, защото битът "
+"„%s“ в структурата „struct rev_info“ има превес"
+
+msgid "error preparing revisions"
+msgstr "грешка при подготовката на версии"
+
+msgid "replaying down to root commit is not supported yet!"
+msgstr "не се поддържа прилагане наново и на началното подаване!"
+
+msgid "replaying merge commits is not supported yet!"
+msgstr "не се поддържа прилагане наново и на подавания със сливане!"
+
 msgid ""
 "git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]"
 msgstr "git rerere [clear|forget ПЪТ…|diff|status|remaining|gc]"
@@ -12030,15 +12131,6 @@ msgstr "опцията „--prefix“ изисква аргумент"
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr "непознат режим за „--abbrev-ref“: „%s“"
 
-msgid "--exclude-hidden cannot be used together with --branches"
-msgstr "опциите „--exclude-hidden“ и „--branches“ са несъвместими"
-
-msgid "--exclude-hidden cannot be used together with --tags"
-msgstr "опциите „--exclude-hidden“ и „--tags“ са несъвместими"
-
-msgid "--exclude-hidden cannot be used together with --remotes"
-msgstr "опциите „--exclude-hidden“ и „--remotes“ са несъвместими"
-
 msgid "this operation must be run in a work tree"
 msgstr "тази команда трябва да се изпълни в работно дърво"
 
@@ -12242,7 +12334,7 @@ msgid "git shortlog [<options>] [<revision-range>] [[--] <path>...]"
 msgstr "git shortlog [ОПЦИЯ…] [ДИАПАЗОН_НА_ВЕРСИИТЕ] [[--] [ПЪТ…]]"
 
 msgid "git log --pretty=short | git shortlog [<options>]"
-msgstr "git log --pretty=short|git shortlog [ОПЦИЯ…]"
+msgstr "git log --pretty=short | git shortlog [ОПЦИЯ…]"
 
 msgid "using multiple --group options with stdin is not supported"
 msgstr "повече от една опции „--group“ са несъвместими със стандартния вход"
@@ -12454,10 +12546,6 @@ msgid "show refs from stdin that aren't in local repository"
 msgstr ""
 "извеждане на указателите приети от стандартния вход, които липсват в "
 "локалното хранилище"
-
-#, c-format
-msgid "only one of '%s', '%s' or '%s' can be given"
-msgstr "опциите „%s“, „%s“ и „%s“ са несъвместими"
 
 msgid ""
 "git sparse-checkout (init | list | set | add | reapply | disable | check-"
@@ -13951,7 +14039,7 @@ msgstr "Липсва клон-източник, затова се приема �
 
 #, c-format
 msgid ""
-"If you meant to create a worktree containing a new orphan branch\n"
+"If you meant to create a worktree containing a new unborn branch\n"
 "(branch with no commits) for this repository, you can do so\n"
 "using the --orphan flag:\n"
 "\n"
@@ -13965,7 +14053,7 @@ msgstr ""
 
 #, c-format
 msgid ""
-"If you meant to create a worktree containing a new orphan branch\n"
+"If you meant to create a worktree containing a new unborn branch\n"
 "(branch with no commits) for this repository, you can do so\n"
 "using the --orphan flag:\n"
 "\n"
@@ -14035,6 +14123,10 @@ msgid "initializing"
 msgstr "инициализация"
 
 #, c-format
+msgid "could not find created worktree '%s'"
+msgstr "създаденото в „%s“ работно дърво липсва"
+
+#, c-format
 msgid "Preparing worktree (new branch '%s')"
 msgstr "Приготвяне на работното дърво (нов клон „%s“)"
 
@@ -14076,10 +14168,6 @@ msgstr ""
 "доставете\n"
 "обектите от отдалеченото хранилище"
 
-#, c-format
-msgid "'%s' and '%s' cannot be used together"
-msgstr "опциите „%s“ и „%s“ са несъвместими"
-
 msgid "checkout <branch> even if already checked out in other worktree"
 msgstr "Изтегляне КЛОНа, дори и да е изтеглен в друго работно дърво"
 
@@ -14089,7 +14177,7 @@ msgstr "създаване на нов клон"
 msgid "create or reset a branch"
 msgstr "създаване или зануляване на клони"
 
-msgid "create unborn/orphaned branch"
+msgid "create unborn branch"
 msgstr "създаване на неродѐн клон"
 
 msgid "populate the new working tree"
@@ -14112,11 +14200,8 @@ msgid "options '%s', '%s', and '%s' cannot be used together"
 msgstr "опциите „%s“, „%s“ и „%s“ са несъвместими"
 
 #, c-format
-msgid "options '%s', and '%s' cannot be used together"
-msgstr "опциите „%s“ и „%s“ са несъвместими"
-
-msgid "<commit-ish>"
-msgstr "ПОДАВАНЕ"
+msgid "option '%s' and commit-ish cannot be used together"
+msgstr "опциите „%s“ и указателите към подавания са несъвместими"
 
 msgid "added with --lock"
 msgstr "добавена с „--lock“"
@@ -14753,6 +14838,11 @@ msgstr "Пакетиране на непакетираните обекти в �
 msgid "Create, list, delete refs to replace objects"
 msgstr "Създаване, извеждане, изтриване на указатели за замяна на обекти"
 
+msgid "EXPERIMENTAL: Replay commits on a new base, works with bare repos too"
+msgstr ""
+"ЕКСПЕРИМЕНТАЛНО: прилагане на подавания върху нова база, работи и с голи "
+"хранилища"
+
 msgid "Generates a summary of pending changes"
 msgstr "Обобщение на предстоящите промѐни"
 
@@ -14991,6 +15081,36 @@ msgstr "Инструмент за управление на големи хра�
 msgid "commit-graph file is too small"
 msgstr "файлът за гра̀фа с подаванията е твърде малък"
 
+msgid "commit-graph oid fanout chunk is wrong size"
+msgstr "откъсът за разпределянето в гра̀фа с подаванията е прекалено малък"
+
+msgid "commit-graph fanout values out of order"
+msgstr ""
+"стойностите за откъс за разпределяне в гра̀фа с подаванията не са подредени"
+
+msgid "commit-graph OID lookup chunk is the wrong size"
+msgstr "откъсът за търсенето в гра̀фа с подаванията е прекалено малък"
+
+msgid "commit-graph commit data chunk is wrong size"
+msgstr ""
+"откъсът за данните за подаванията в гра̀фа с подаванията е с неправилен размер"
+
+msgid "commit-graph generations chunk is wrong size"
+msgstr "откъсът за поколенията в гра̀фа с подаванията е с неправилен размер"
+
+msgid "commit-graph changed-path index chunk is too small"
+msgstr ""
+"откъсът за индекса с промѐни в пътищата в гра̀фа с подаванията е прекалено "
+"малък"
+
+#, c-format
+msgid ""
+"ignoring too-small changed-path chunk (%<PRIuMAX> < %<PRIuMAX>) in commit-"
+"graph file"
+msgstr ""
+"прескачане на прекалено малък откъс за индекса с промѐни (%<PRIuMAX> < "
+"%<PRIuMAX>) в пътищата в гра̀фа с подаванията"
+
 #, c-format
 msgid "commit-graph signature %X does not match signature %X"
 msgstr "отпечатъкът на гра̀фа с подаванията %X не съвпада с %X"
@@ -15007,6 +15127,19 @@ msgstr "версията на контролната сума на гра̀фа 
 msgid "commit-graph file is too small to hold %u chunks"
 msgstr "файлът с гра̀фа на подаванията е твърде малък, за да съдържа %u откъси"
 
+msgid "commit-graph required OID fanout chunk missing or corrupted"
+msgstr ""
+"откъсът за разпределянето необходимо на гра̀фа с подаванията липсва или е "
+"повреден"
+
+msgid "commit-graph required OID lookup chunk missing or corrupted"
+msgstr ""
+"откъсът за търсенето необходимо на гра̀фа с подаванията липсва или е повреден"
+
+msgid "commit-graph required commit data chunk missing or corrupted"
+msgstr ""
+"откъсът за данните необходими на гра̀фа с подаванията липсва или е повреден"
+
 msgid "commit-graph has no base graphs chunk"
 msgstr "базовият откъс липсва в гра̀фа с подаванията"
 
@@ -15019,6 +15152,9 @@ msgstr "веригата на гра̀фа с подаванията не съв
 #, c-format
 msgid "commit count in base graph too high: %<PRIuMAX>"
 msgstr "броят подавания в основния граф е прекалено голям: %<PRIuMAX>"
+
+msgid "commit-graph chain file too small"
+msgstr "веригата на гра̀фа с подаванията е твърде малка"
 
 #, c-format
 msgid "invalid commit-graph chain: line '%s' not a hash"
@@ -15038,11 +15174,15 @@ msgstr "подаването „%s“ не може да бъде открито
 
 msgid "commit-graph requires overflow generation data but has none"
 msgstr ""
-"графът с подаванията изисква генериране на данни за отместването, но такива "
-"липсват"
+"графът с подаванията изисква данни за прелелите поколения, но такива липсват"
 
 msgid "commit-graph overflow generation data is too small"
 msgstr "прекалено малко данни за прелелите поколения в гра̀фа с подаванията"
+
+msgid "commit-graph extra-edges pointer out of bounds"
+msgstr ""
+"указателят за допълнителните ребра в гра̀фа с подаванията е извън позволения "
+"диапазон"
 
 msgid "Loading known commits in commit graph"
 msgstr "Зареждане на познатите подавания в гра̀фа с подаванията"
@@ -16245,6 +16385,10 @@ msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "Непозната стойност „%s“ за настройката „diff.submodule“"
 
 #, c-format
+msgid "unknown value for config '%s': %s"
+msgstr "непозната стойност за настройката „%s“: „%s“"
+
+#, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
 "%s"
@@ -16323,14 +16467,6 @@ msgstr "неправилен аргумент за „--color-moved“: „%s“
 msgid "invalid mode '%s' in --color-moved-ws"
 msgstr "неправилен режим „%s“ за „ --color-moved-ws“"
 
-msgid ""
-"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
-"\"histogram\""
-msgstr ""
-"опцията приема следните варианти за алгоритъм за разлики: „myers“ (по "
-"Майерс), „minimal“ (минимизиране на разликите), „patience“ (пасианс) и "
-"„histogram“ (хистограмен)"
-
 #, c-format
 msgid "invalid argument to %s"
 msgstr "неправилен аргумент към „%s“"
@@ -16374,8 +16510,8 @@ msgstr "„--stat“ във формат за четене от програма
 msgid "output only the last line of --stat"
 msgstr "извеждане само на последния ред на „--stat“"
 
-msgid "<param1,param2>..."
-msgstr "ПАРАМЕТЪР_1, ПАРАМЕТЪР_2, …"
+msgid "<param1>,<param2>..."
+msgstr "ПАРАМЕТЪР_1,ПАРАМЕТЪР_2,…"
 
 msgid ""
 "output the distribution of relative amount of changes for each sub-directory"
@@ -16384,8 +16520,8 @@ msgstr "извеждане на разпределението на промѐ
 msgid "synonym for --dirstat=cumulative"
 msgstr "псевдоним на „--dirstat=cumulative“"
 
-msgid "synonym for --dirstat=files,param1,param2..."
-msgstr "псевдоним на „--dirstat=ФАЙЛ…,ПАРАМЕТЪР_1,ПАРАМЕТЪР_2,…“"
+msgid "synonym for --dirstat=files,<param1>,<param2>..."
+msgstr "псевдоним на „--dirstat=files,ПАРАМЕТЪР_1,ПАРАМЕТЪР_2,…“"
 
 msgid "warn if changes introduce conflict markers or whitespace errors"
 msgstr ""
@@ -16568,12 +16704,6 @@ msgstr "разлика чрез алгоритъм за подредба кат�
 
 msgid "generate diff using the \"histogram diff\" algorithm"
 msgstr "разлика по хистограмния алгоритъм"
-
-msgid "<algorithm>"
-msgstr "АЛГОРИТЪМ"
-
-msgid "choose a diff algorithm"
-msgstr "избор на АЛГОРИТЪМа за разлики"
 
 msgid "<text>"
 msgstr "ТЕКСТ"
@@ -18093,6 +18223,13 @@ msgid "multi-pack-index OID fanout is of the wrong size"
 msgstr ""
 "неправилен размер на откъса за разпределянето в индекса за множество пакети"
 
+#, c-format
+msgid ""
+"oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
+msgstr ""
+"неправилна подредба на откъси (OID fanout): fanout[%d] = %<PRIx32> > "
+"%<PRIx32> = fanout[%d]"
+
 msgid "multi-pack-index OID lookup chunk is the wrong size"
 msgstr "неправилен размер на откъса за търсенето в индекса за множество пакети"
 
@@ -18148,6 +18285,14 @@ msgstr ""
 msgid "bad pack-int-id: %u (%u total packs)"
 msgstr ""
 "неправилен идентификатор на пакет (pack-int-id): %u (от общо %u пакети)"
+
+msgid "MIDX does not contain the BTMP chunk"
+msgstr ""
+"липсва откъс за побитова маска във файла за индекса за множество пакети"
+
+#, c-format
+msgid "could not load bitmapped pack %<PRIu32>"
+msgstr "пакетът за битови маски %<PRIu32> не може да се отвори"
 
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
 msgstr ""
@@ -18240,13 +18385,6 @@ msgstr "неправилна сума за проверка"
 
 msgid "Looking for referenced packfiles"
 msgstr "Търсене на указаните пакетни файлове"
-
-#, c-format
-msgid ""
-"oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
-msgstr ""
-"неправилна подредба на откъси (OID fanout): fanout[%d] = %<PRIx32> > "
-"%<PRIx32> = fanout[%d]"
 
 msgid "the midx contains no oid"
 msgstr "във файла с индекса за множество пакети няма идентификатори на обекти"
@@ -18792,6 +18930,11 @@ msgstr "задължителният обратен индекс липсва в
 msgid "could not open pack %s"
 msgstr "пакетът „%s“ не може да се отвори"
 
+msgid "could not determine MIDX preferred pack"
+msgstr ""
+"предпочитаният пакет за файла с индекса за множество пакети не може да се "
+"определи"
+
 #, c-format
 msgid "preferred pack (%s) is invalid"
 msgstr "предпочитаният пакет „%s“ е неправилен"
@@ -18817,6 +18960,11 @@ msgid "corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""
 msgstr ""
 "повредена битова маска във формат EWAH: отрязана заглавна част за битовата "
 "маска на подаване „%s“"
+
+#, c-format
+msgid "unable to load pack: '%s', disabling pack-reuse"
+msgstr ""
+"пакетът не може да се зареди: „%s“, преизползването на пакети се изключва"
 
 #, c-format
 msgid "object '%s' not found in type bitmaps"
@@ -18917,6 +19065,9 @@ msgid "multi-pack-index reverse-index chunk is the wrong size"
 msgstr ""
 "неправилен размер на откъс за обратен индекс в индекса за множество пакети"
 
+msgid "could not determine preferred pack"
+msgstr "предпочитаният пакет не може да се определи"
+
 msgid "cannot both write and verify reverse index"
 msgstr "обратният индекс не може едновременно да се записва и да се проверява"
 
@@ -18986,10 +19137,6 @@ msgstr "опцията „%s“ не е налична"
 msgid "%s expects a non-negative integer value with an optional k/m/g suffix"
 msgstr ""
 "„%s“ очаква неотрицателно цяло число, евентуално със суфикс „k“/„m“/„g“"
-
-#, c-format
-msgid "%s is incompatible with %s"
-msgstr "опциите „%s“ и „%s“ са несъвместими"
 
 #, c-format
 msgid "ambiguous option: %s (could be --%s%s or --%s%s)"
@@ -19314,10 +19461,6 @@ msgstr "файлът „%s“ не може да бъде индексиран"
 #, c-format
 msgid "unable to add '%s' to index"
 msgstr "„%s“ не може да се добави в индекса"
-
-#, c-format
-msgid "unable to stat '%s'"
-msgstr "„stat“ не може да се изпълни върху „%s“"
 
 #, c-format
 msgid "'%s' appears as both a file and as a directory"
@@ -19864,7 +20007,7 @@ msgstr "неправилно име на клон: „%s = %s“"
 
 #, c-format
 msgid "ignoring dangling symref %s"
-msgstr "игнориране на указател на обект извън клон „%s“"
+msgstr "игнориране на файл с указател на обект извън клон „%s“"
 
 #, c-format
 msgid "log for ref %s has gap after %s"
@@ -19903,10 +20046,6 @@ msgstr "„%s“ съществува, не може да се създаде �
 #, c-format
 msgid "cannot process '%s' and '%s' at the same time"
 msgstr "невъзможно е едновременно да се обработват „%s“ и „%s“"
-
-#, c-format
-msgid "could not remove reference %s"
-msgstr "Указателят „%s“ не може да бъде изтрит"
 
 #, c-format
 msgid "could not delete reference %s: %s"
@@ -21333,6 +21472,9 @@ msgstr "Конфликти при прилагането на автоматич
 msgid "Autostash exists; creating a new stash entry."
 msgstr "Вече има запис за автоматично скатано, затова се създава нов запис."
 
+msgid "autostash reference is a symref"
+msgstr "указателят за автоматично скатано e файл с указател"
+
 msgid "could not detach HEAD"
 msgstr "указателят „HEAD“ не може да се отдели"
 
@@ -21657,6 +21799,10 @@ msgid "invalid initial branch name: '%s'"
 msgstr "неправилно име на първоначалния клон: „%s“"
 
 #, c-format
+msgid "re-init: ignored --initial-branch=%s"
+msgstr "re-init: „--initial-branch=%s“ се пропуска"
+
+#, c-format
 msgid "unable to handle file type %d"
 msgstr "файлове от вид %d не се поддържат"
 
@@ -21666,16 +21812,17 @@ msgstr "„%s“ не може да се премести в „%s“"
 
 msgid "attempt to reinitialize repository with different hash"
 msgstr ""
-"опит за повторно задаване на първото подаване в хранилището с различна "
-"контролна сума"
+"опит за зануляване на хранилището и инициализиране с различна контролна сума"
+
+msgid ""
+"attempt to reinitialize repository with different reference storage format"
+msgstr ""
+"опит за зануляване на хранилището и инициализиране с различен формат на "
+"съхраняване"
 
 #, c-format
 msgid "%s already exists"
 msgstr "Директорията „%s“ вече съществува"
-
-#, c-format
-msgid "re-init: ignored --initial-branch=%s"
-msgstr "re-init: „--initial-branch=%s“ се пропуска"
 
 #, c-format
 msgid "Reinitialized existing shared Git repository in %s%s\n"
@@ -21948,12 +22095,6 @@ msgstr ""
 "какъв брой записи в кеша на обектите-дървета да се отбележат като невалидни "
 "(стандартно е 0)"
 
-msgid "unhandled options"
-msgstr "неподдържани опции"
-
-msgid "error preparing revisions"
-msgstr "грешка при подготовката на версии"
-
 #, c-format
 msgid "commit %s is not marked reachable"
 msgstr "подаването „%s“ не е отбелязано като достижимо"
@@ -22110,9 +22251,6 @@ msgstr "протоколът не поддържа задаването на п�
 msgid "invalid remote service path"
 msgstr "неправилен път на отдалечената услуга"
 
-msgid "operation not supported by protocol"
-msgstr "опцията не се поддържа от протокола"
-
 #, c-format
 msgid "can't connect to subservice %s"
 msgstr "неуспешно свързване към подуслугата „%s“"
@@ -22248,10 +22386,6 @@ msgid "support for protocol v2 not implemented yet"
 msgstr "протокол версия 2 все още не се поддържа"
 
 #, c-format
-msgid "unknown value for config '%s': %s"
-msgstr "непозната стойност за настройката „%s“: „%s“"
-
-#, c-format
 msgid "transport '%s' not allowed"
 msgstr "преносът по „%s“ не е позволен"
 
@@ -22303,6 +22437,9 @@ msgid "could not retrieve server-advertised bundle-uri list"
 msgstr ""
 "спъсъкът с адреси на пратки обявени за налични от сървъра не може да се "
 "получи "
+
+msgid "operation not supported by protocol"
+msgstr "опцията не се поддържа от протокола"
 
 msgid "too-short tree object"
 msgstr "прекалено кратък обект-дърво"
@@ -23146,6 +23283,10 @@ msgstr "освен това в индекса има неподадени про
 #, c-format
 msgid "cannot %s: Your index contains uncommitted changes."
 msgstr "не може да извършите „%s“, защото в индекса има неподадени промѐни."
+
+#, c-format
+msgid "unknown style '%s' given for '%s'"
+msgstr "непознат стил „%s“ за „%s“"
 
 msgid ""
 "Error: Your local changes to the following files would be overwritten by "

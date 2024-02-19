@@ -63,9 +63,10 @@ jobs:
             origin \
             ${{ github.ref }} \
             $args
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v5
         with:
           go-version: '>=1.16'
+          cache: false
       - name: Install git-po-helper
         run: go install github.com/git-l10n/git-po-helper@main
       - name: Install other dependencies
@@ -91,14 +92,13 @@ jobs:
           cat git-po-helper.out
           exit $exit_code
       - name: Create comment in pull request for report
-        uses: mshick/add-pr-comment@v1
+        uses: mshick/add-pr-comment@v2
         if: >-
           always() &&
           github.event_name == 'pull_request_target' &&
           env.COMMENT_BODY != ''
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          repo-token-user-login: 'github-actions[bot]'
           message: >
             ${{ steps.check-commits.outcome == 'failure' && 'Errors and warnings' || 'Warnings' }}
             found by [git-po-helper](https://github.com/git-l10n/git-po-helper#readme) in workflow
