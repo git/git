@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2024, #06; Thu, 15)
-X-master-at: 3e0d3cd5c7def4808247caf168e17f2bbf47892b
-X-next-at: 4c4623230009152fbd5fe219d2adafef26b50c0f
+Subject: What's cooking in git.git (Feb 2024, #07; Tue, 20)
+X-master-at: f41f85c9ec8d4d46de0fd5fded88db94d3ec8c11
+X-next-at: e91efceb0f2ddd49aa201fe3bd057235203b2dcd
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2024, #06; Thu, 15)
+What's cooking in git.git (Feb 2024, #07; Tue, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,9 +17,8 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.44-rc1 has been tagged.  This round, let's try having just one
-release candidate before the final, which is expected to be tagged
-on or around 20th.
+Git 2.44-rc2 has been tagged to fix a regression discovered the last
+minute.  The final release is postponed until later this week.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,7 +49,101 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* la/trailer-cleanups (2024-02-19) 1 commit
+ - trailer: fix comment/cut-line regression with opts->no_divider
+
+ Fix to an already-graduated topic.
+ source: <20240220010936.GA1793660@coredump.intra.peff.net>
+
+--------------------------------------------------
 [New Topics]
+
+* as/option-names-in-messages (2024-02-16) 5 commits
+ - revision.c: trivial fix to message
+ - builtin/clone.c: trivial fix of message
+ - builtin/remote.c: trivial fix of error message
+ - transport-helper.c: trivial fix of error message
+ - rebase: trivial fix of error message
+
+ Error message updates.
+
+ Expecting a reroll.
+ source: <20240216101647.28837-1-ash@kambanaria.org>
+
+
+* bb/completion-no-grep-into-awk (2024-02-16) 1 commit
+  (merged to 'next' on 2024-02-19 at 8373f95424)
+ + completion: use awk for filtering the config entries
+
+ Some parts of command line completion script (in contrib/) have
+ been micro-optimized.
+
+ Will cook in 'next'.
+ source: <20240216171046.927552-1-dev+git@drbeat.li>
+
+
+* jb/doc-interactive-singlekey-do-not-need-perl (2024-02-19) 1 commit
+  (merged to 'next' on 2024-02-19 at 9eda75497d)
+ + doc: remove outdated information about interactive.singleKey
+
+ Doc clean-up.
+
+ Will cook in 'next'.
+ source: <20240218030327.40453-1-julio.bacel@gmail.com>
+
+
+* jk/t0303-clean (2024-02-19) 2 commits
+  (merged to 'next' on 2024-02-19 at f57b65215f)
+ + t0303: check that helper_test_clean removes all credentials
+ + Merge branch 'ba/credential-test-clean-fix' into jk/t0303-clean
+ (this branch uses ba/credential-test-clean-fix.)
+
+ Test clean-up.
+
+ Will cook in 'next'.
+ source: <20240217045814.GA539459@coredump.intra.peff.net>
+
+
+* km/mergetool-vimdiff-layout-fallback (2024-02-19) 1 commit
+  (merged to 'next' on 2024-02-19 at bf7f086f05)
+ + mergetools: vimdiff: use correct tool's name when reading mergetool config
+
+ Variants of vimdiff learned to honor mergetool.<variant>.layout settings.
+
+ Will cook in 'next'.
+ source: <20240217162718.21272-1-kipras@kipras.org>
+
+
+* mh/libsecret-empty-password-fix (2024-02-19) 1 commit
+  (merged to 'next' on 2024-02-19 at b2e17695ca)
+ + libsecret: retrieve empty password
+
+ Credential helper based on libsecret (in contrib/) has been updated.
+
+ Will cook in 'next'.
+ source: <pull.1676.v2.git.git.1708375258296.gitgitgadget@gmail.com>
+
+
+* ps/reflog-list (2024-02-19) 7 commits
+  (merged to 'next' on 2024-02-19 at 6c491b5079)
+ + builtin/reflog: introduce subcommand to list reflogs
+ + refs: stop resolving ref corresponding to reflogs
+ + refs: drop unused params from the reflog iterator callback
+ + refs/files: sort reflogs returned by the reflog iterator
+ + dir-iterator: support iteration in sorted order
+ + dir-iterator: pass name to `prepare_next_entry_data()` directly
+ + Merge branch 'ps/reftable-backend' into ps/reflog-list
+ (this branch uses ps/reftable-backend.)
+
+ "git reflog" learned a "list" subcommand that enumerates known reflogs.
+
+ Will cook in 'next'.
+ source: <cover.1708353264.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * jh/fsmonitor-icase-corner-case-fix (2024-02-14) 11 commits
  - t7527: update case-insenstive fsmonitor test
@@ -116,32 +209,36 @@ Release tarballs are available at:
 
 
 * rj/tag-column-fix (2024-02-14) 1 commit
- - tag: error when git-column fails
+  (merged to 'next' on 2024-02-19 at 9aa52b4ffb)
+ + tag: error when git-column fails
 
  "git tag --column" failed to check the exit status of its "git
  column" invocation, which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <59df085d-0de8-45b1-9b8b-c69e91e56a1f@gmail.com>
 
 
 * jc/am-whitespace-doc (2024-02-14) 1 commit
- - doc: add shortcut to "am --whitespace=<action>"
+  (merged to 'next' on 2024-02-19 at 492f0f9174)
+ + doc: add shortcut to "am --whitespace=<action>"
 
  "git am --help" now tells readers what actions are available in
  "git am --whitespace=<action>", in addition to saying that the
  option is passed through to the underlying "git apply".
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <xmqqplwyvqby.fsf@gitster.g>
 
 
 * ba/credential-test-clean-fix (2024-02-15) 1 commit
- - t/lib-credential: clean additional credential
+  (merged to 'next' on 2024-02-19 at 290708b10a)
+ + t/lib-credential: clean additional credential
+ (this branch is used by jk/t0303-clean.)
 
  Test clean-up.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1664.git.1707959036807.gitgitgadget@gmail.com>
 
 
@@ -154,117 +251,6 @@ Release tarballs are available at:
  May want to roll it into the base topic.
  source: <cover.1706921262.git.steadmon@google.com>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* cp/git-flush-is-an-env-bool (2024-02-13) 1 commit
-  (merged to 'next' on 2024-02-13 at c0850f5675)
- + write-or-die: fix the polarity of GIT_FLUSH environment variable
-
- Recent conversion to allow more than 0/1 in GIT_FLUSH broke the
- mechanism by flipping what yes/no means by mistake, which has been
- corrected.
-
- Will merge to 'master' and then to 'maint'
- source: <xmqqbk8k5eo0.fsf@gitster.g>
-
-
-* jc/github-actions-update (2024-02-02) 3 commits
-  (merged to 'next' on 2024-02-07 at 2cd6caaf70)
- + Merge branch 'jc/maint-github-actions-update' into jc/github-actions-update
- + GitHub Actions: update to github-script@v7
- + GitHub Actions: update to checkout@v4
- (this branch is used by js/github-actions-update.)
-
- Squelch node.js 16 deprecation warnings from GitHub Actions CI
- by updating actions/github-script and actions/checkout that use
- node.js 20.
- source: <20240202203935.1240458-1-gitster@pobox.com>
-
-
-* jc/unit-tests-make-relative-fix (2024-02-12) 1 commit
-  (merged to 'next' on 2024-02-12 at 554eddef80)
- + unit-tests: do show relative file paths on non-Windows, too
-
- The mechanism to report the filename in the source code, used by
- the unit-test machinery, assumed that the compiler expanded __FILE__
- to the path to the source given to the $(CC), but some compilers
- give full path, breaking the output.  This has been corrected.
- source: <xmqqle7r9enn.fsf_-_@gitster.g>
-
-
-* js/check-null-from-read-object-file (2024-02-06) 1 commit
-  (merged to 'next' on 2024-02-12 at 3a18369516)
- + Always check the return value of `repo_read_object_file()`
-
- The code paths that call repo_read_object_file() have been
- tightened to react to errors.
- source: <pull.1650.git.1707143753726.gitgitgadget@gmail.com>
-
-
-* js/github-actions-update (2024-02-12) 2 commits
-  (merged to 'next' on 2024-02-12 at f52de8b126)
- + ci(linux32): add a note about Actions that must not be updated
- + ci: bump remaining outdated Actions versions
- (this branch uses jc/github-actions-update.)
-
- Update remaining GitHub Actions jobs to avoid warnings against
- using deprecated version of Node.js.
- source: <pull.1660.v2.git.1707653489.gitgitgadget@gmail.com>
-
-
-* jx/dirstat-parseopt-help (2024-02-14) 1 commit
-  (merged to 'next' on 2024-02-14 at 901101e5f5)
- + diff: mark param1 and param2 as placeholders
-
- The mark-up of diff options has been updated to help translators.
- source: <3a82f72f33663f162aa41cb20c0fb3b6786971c9.1707900029.git.worldhello.net@gmail.com>
-
-
-* pb/complete-config (2024-02-12) 4 commits
-  (merged to 'next' on 2024-02-13 at d09f5e469a)
- + completion: add and use __git_compute_second_level_config_vars_for_section
- + completion: add and use __git_compute_first_level_config_vars_for_section
- + completion: complete 'submodule.*' config variables
- + completion: add space after config variable names also in Bash 3
-
- The command line completion script (in contrib/) learned to
- complete configuration variable names better.
- cf. <Zcs34kGTqTbIana6@tanuki>
- source: <pull.1660.v3.git.git.1707589943.gitgitgadget@gmail.com>
-
-
-* pw/gc-during-rebase (2024-02-09) 1 commit
-  (merged to 'next' on 2024-02-12 at d54c5ce325)
- + prune: mark rebase autostash and orig-head as reachable
-
- The sequencer machinery does not use the ref API and instead
- records names of certain objects it needs for its correct operation
- in temporary files, which makes these objects susceptible to loss
- by garbage collection.  These temporary files have been added as
- starting points for reachability analysis to fix this.
- source: <pull.1656.v2.git.1707495579886.gitgitgadget@gmail.com>
-
-
-* rs/receive-pack-remove-find-header (2024-02-12) 2 commits
-  (merged to 'next' on 2024-02-12 at f1bf281e10)
- + receive-pack: use find_commit_header() in check_nonce()
- + receive-pack: use find_commit_header() in check_cert_push_options()
-
- Code simplification.
- source: <8b350cae-2180-4ac7-a911-d40043576445@web.de>
-
-
-* vn/rebase-with-cherry-pick-authorship (2024-02-08) 1 commit
-  (merged to 'next' on 2024-02-09 at ed35d33595)
- + sequencer: unset GIT_CHERRY_PICK_HELP for 'exec' commands
-
- "git cherry-pick" invoked during "git rebase -i" session lost
- the authorship information, which has been corrected.
- source: <0adb1068-ef10-44ed-ad1d-e0927a09245d@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * ps/ref-tests-update-even-more (2024-02-15) 7 commits
   (merged to 'next' on 2024-02-15 at 064b2b4089)
@@ -322,17 +308,17 @@ Release tarballs are available at:
  source: <cover.1707839454.git.code@khaugsbakk.name>
 
 
-* jc/no-lazy-fetch (2024-02-13) 1 commit
+* jc/no-lazy-fetch (2024-02-16) 3 commits
+ - git: extend --no-lazy-fetch to work across subprocesses
+ - git: document GIT_NO_REPLACE_OBJECTS environment variable
   (merged to 'next' on 2024-02-13 at 7c7136e547)
  + git: --no-lazy-fetch option
 
  "git --no-lazy-fetch cmd" allows to run "cmd" while disabling lazy
  fetching of objects from the promisor remote, which may be handy
  for debugging.
-
- May want to do the environment variable thing as well.
- cf. <20240215053056.GD2821179@coredump.intra.peff.net>
  source: <xmqq1q9mmtpw.fsf@gitster.g>
+ source: <xmqqv86pslos.fsf@gitster.g>
 
 
 * jc/t9210-lazy-fix (2024-02-08) 1 commit
@@ -383,7 +369,7 @@ Release tarballs are available at:
   (merged to 'next' on 2024-02-07 at 1115200acb)
  + ci: add jobs to test with the reftable backend
  + refs: introduce reftable backend
- (this branch is used by kn/for-all-refs.)
+ (this branch is used by kn/for-all-refs and ps/reflog-list.)
 
  Integrate the reftable code into the refs framework as a backend.
 
@@ -493,26 +479,7 @@ Release tarballs are available at:
  source: <a718b5ee-afb0-44bd-a299-3208fac43506@smtp-relay.sendinblue.com>
 
 
-* la/trailer-api (2024-02-06) 28 commits
- - trailer: introduce "template" term for readability
- - trailer_set_*(): put out parameter at the end
- - trailer: unify "--trailer ..." arg handling
- - trailer: deprecate "new_trailer_item" struct from API
- - trailer_add_arg_item(): drop new_trailer_item usage
- - trailer: add new helper functions to API
- - trailer: prepare to delete "parse_trailers_from_command_line_args()"
- - trailer: spread usage of "trailer_block" language
- - trailer: retire trailer_info_get() from API
- - trailer: make trailer_info struct private
- - sequencer: use the trailer iterator
- - trailer: teach iterator about non-trailer lines
- - trailer: finish formatting unification
- - format_trailer_info(): avoid double-printing the separator
- - format_trailer_info(): teach it about opts->trim_empty
- - trailer: begin formatting unification
- - format_trailer_info(): append newline for non-trailer lines
- - format_trailer_info(): drop redundant unfold_value()
- - format_trailer_info(): use trailer_item objects
+* la/trailer-api (2024-02-16) 9 commits
  - format_trailers_from_commit(): indirectly call trailer_info_get()
  - format_trailer_info(): move "fast path" to caller
  - format_trailers(): use strbuf instead of FILE
@@ -524,7 +491,7 @@ Release tarballs are available at:
  - trailer: free trailer_info _after_ all related usage
 
  Code clean-up.
- source: <pull.1632.v4.git.1707196348.gitgitgadget@gmail.com>
+ source: <pull.1632.v5.git.1708124950.gitgitgadget@gmail.com>
 
 
 * cp/apply-core-filemode (2023-12-26) 3 commits
