@@ -837,16 +837,15 @@ static size_t find_end_of_log_message(const char *input, int no_divider)
 	/* Assume the naive end of the input is already what we want. */
 	end = strlen(input);
 
-	if (no_divider)
-		return end;
-
 	/* Optionally skip over any patch part ("---" line and below). */
-	for (s = input; *s; s = next_line(s)) {
-		const char *v;
+	if (!no_divider) {
+		for (s = input; *s; s = next_line(s)) {
+			const char *v;
 
-		if (skip_prefix(s, "---", &v) && isspace(*v)) {
-			end = s - input;
-			break;
+			if (skip_prefix(s, "---", &v) && isspace(*v)) {
+				end = s - input;
+				break;
+			}
 		}
 	}
 
