@@ -91,6 +91,19 @@ then
 	# ignore the error from the above --- run_merge_tool
 	# will diagnose unusable tool by itself
 	run_merge_tool "$merge_tool" false
+
+	status=$?
+	if test $status -ge 126
+	then
+		# Command not found (127), not executable (126) or
+		# exited via a signal (>= 128).
+		exit $status
+	fi
+
+	if test "$GIT_DIFFTOOL_TRUST_EXIT_CODE" = true
+	then
+		exit $status
+	fi
 else
 	# Launch the merge tool on each path provided by 'git diff'
 	while test $# -gt 6
