@@ -331,3 +331,4 @@ Fixes since v2.43
    (merge 8430b438f6 vd/fsck-submodule-url-test later to maint).
    (merge 3cb4384683 jc/t0091-with-unknown-git later to maint).
    (merge 020456cb74 rs/receive-pack-remove-find-header later to maint).
+   (merge bc47139f4f la/trailer-cleanups later to maint).
