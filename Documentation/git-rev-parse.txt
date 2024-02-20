@@ -9,7 +9,7 @@ git-rev-parse - Pick out and massage parameters
 SYNOPSIS
 --------
 [verse]
-'git rev-parse' [<options>] <args>...
+'git rev-parse' [<options>] <arg>...
 
 DESCRIPTION
 -----------
@@ -130,7 +130,7 @@ for another option.
 	'git diff-{asterisk}'). In contrast to the `--sq-quote` option,
 	the command input is still interpreted as usual.
 
---short[=length]::
+--short[=<length>]::
 	Same as `--verify` but shortens the object name to a unique
 	prefix with at least `length` characters. The minimum length
 	is 4, the default is the effective value of the `core.abbrev`
@@ -165,9 +165,9 @@ Options for Objects
 --all::
 	Show all refs found in `refs/`.
 
---branches[=pattern]::
---tags[=pattern]::
---remotes[=pattern]::
+--branches[=<pattern>]::
+--tags[=<pattern>]::
+--remotes[=<pattern>]::
 	Show all branches, tags, or remote-tracking branches,
 	respectively (i.e., refs found in `refs/heads`,
 	`refs/tags`, or `refs/remotes`, respectively).
@@ -176,7 +176,7 @@ If a `pattern` is given, only refs matching the given shell glob are
 shown.  If the pattern does not contain a globbing character (`?`,
 `*`, or `[`), it is turned into a prefix match by appending `/*`.
 
---glob=pattern::
+--glob=<pattern>::
 	Show all refs matching the shell glob pattern `pattern`. If
 	the pattern does not start with `refs/`, this is automatically
 	prepended.  If the pattern does not contain a globbing
@@ -197,7 +197,7 @@ respectively, and they must begin with `refs/` when applied to `--glob`
 or `--all`. If a trailing '/{asterisk}' is intended, it must be given
 explicitly.
 
---exclude-hidden=[fetch|receive|uploadpack]::
+--exclude-hidden=(fetch|receive|uploadpack)::
 	Do not include refs that would be hidden by `git-fetch`,
 	`git-receive-pack` or `git-upload-pack` by consulting the appropriate
 	`fetch.hideRefs`, `receive.hideRefs` or `uploadpack.hideRefs`
@@ -314,17 +314,17 @@ The following options are unaffected by `--path-format`:
 Other Options
 ~~~~~~~~~~~~~
 
---since=datestring::
---after=datestring::
+--since=<datestring>::
+--after=<datestring>::
 	Parse the date string, and output the corresponding
 	--max-age= parameter for 'git rev-list'.
 
---until=datestring::
---before=datestring::
+--until=<datestring>::
+--before=<datestring>::
 	Parse the date string, and output the corresponding
 	--min-age= parameter for 'git rev-list'.
 
-<args>...::
+<arg>...::
 	Flags and parameters to be parsed.
 
 
