@@ -8,7 +8,7 @@ gitk - The Git repository browser
 SYNOPSIS
 --------
 [verse]
-'gitk' [<options>] [<revision range>] [--] [<path>...]
+'gitk' [<options>] [<revision-range>] [--] [<path>...]
 
 DESCRIPTION
 -----------
@@ -124,7 +124,7 @@ gitk-specific options
 	range to show.  The command is expected to print on its
 	standard output a list of additional revisions to be shown,
 	one per line.  Use this instead of explicitly specifying a
-	'<revision range>' if the set of commits to show may vary
+	'<revision-range>' if the set of commits to show may vary
 	between refreshes.
 
 --select-commit=<ref>::

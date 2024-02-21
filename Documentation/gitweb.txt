@@ -305,7 +305,7 @@ pathnames.  In most general form such path_info (component) based gitweb URL
 looks like this:
 
 -----------------------------------------------------------------------
-.../gitweb.cgi/<repo>/<action>/<revision_from>:/<path_from>..<revision_to>:/<path_to>?<arguments>
+.../gitweb.cgi/<repo>/<action>/<revision-from>:/<path-from>..<revision-to>:/<path-to>?<arguments>
 -----------------------------------------------------------------------
 
 

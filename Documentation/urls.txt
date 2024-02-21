@@ -73,8 +73,8 @@ use will be rewritten into URLs that work), you can create a
 configuration section of the form:
 
 ------------
-	[url "<actual url base>"]
-		insteadOf = <other url base>
+	[url "<actual-url-base>"]
+		insteadOf = <other-url-base>
 ------------
 
 For example, with this:
@@ -92,8 +92,8 @@ If you want to rewrite URLs for push only, you can create a
 configuration section of the form:
 
 ------------
-	[url "<actual url base>"]
-		pushInsteadOf = <other url base>
+	[url "<actual-url-base>"]
+		pushInsteadOf = <other-url-base>
 ------------
 
 For example, with this:

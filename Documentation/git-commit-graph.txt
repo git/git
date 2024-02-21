@@ -13,7 +13,7 @@ SYNOPSIS
 'git commit-graph write' [--object-dir <dir>] [--append]
 			[--split[=<strategy>]] [--reachable | --stdin-packs | --stdin-commits]
 			[--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]
-			<split options>
+			<split-options>
 
 
 DESCRIPTION

@@ -1543,19 +1543,18 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 
 	if (!found) {
 		int rc;
-		char *user_config = NULL, *xdg_config = NULL;
+		char *global_config_file = NULL;
 
 		if (!config_file) {
-			git_global_config(&user_config, &xdg_config);
-			config_file = user_config;
-			if (!user_config)
-				die(_("$HOME not set"));
+			global_config_file = git_global_config();
+			config_file = global_config_file;
 		}
+		if (!config_file)
+			die(_("$HOME not set"));
 		rc = git_config_set_multivar_in_file_gently(
 			config_file, "maintenance.repo", maintpath,
 			CONFIG_REGEX_NONE, 0);
-		free(user_config);
-		free(xdg_config);
+		free(global_config_file);
 
 		if (rc)
 			die(_("unable to add '%s' value of '%s'"),
@@ -1612,18 +1611,18 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 
 	if (found) {
 		int rc;
-		char *user_config = NULL, *xdg_config = NULL;
+		char *global_config_file = NULL;
+
 		if (!config_file) {
-			git_global_config(&user_config, &xdg_config);
-			config_file = user_config;
-			if (!user_config)
-				die(_("$HOME not set"));
+			global_config_file = git_global_config();
+			config_file = global_config_file;
 		}
+		if (!config_file)
+			die(_("$HOME not set"));
 		rc = git_config_set_multivar_in_file_gently(
 			config_file, key, NULL, maintpath,
 			CONFIG_FLAGS_MULTI_REPLACE | CONFIG_FLAGS_FIXED_VALUE);
-		free(user_config);
-		free(xdg_config);
+		free(global_config_file);
 
 		if (rc &&
 		    (!force || rc == CONFIG_NOTHING_SET))

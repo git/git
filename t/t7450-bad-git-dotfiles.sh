@@ -45,6 +45,32 @@ test_expect_success 'check names' '
 	test_cmp expect actual
 '
 
+test_expect_success 'check urls' '
+	cat >expect <<-\EOF &&
+	./bar/baz/foo.git
+	https://example.com/foo.git
+	http://example.com:80/deeper/foo.git
+	EOF
+
+	test-tool submodule check-url >actual <<-\EOF &&
+	./bar/baz/foo.git
+	https://example.com/foo.git
+	http://example.com:80/deeper/foo.git
+	-a./foo
+	../../..//test/foo.git
+	../../../../../:localhost:8080/foo.git
+	..\../.\../:example.com/foo.git
+	./%0ahost=example.com/foo.git
+	https://one.example.com/evil?%0ahost=two.example.com
+	https:///example.com/foo.git
+	http://example.com:test/foo.git
+	https::example.com/foo.git
+	http:::example.com/foo.git
+	EOF
+
+	test_cmp expect actual
+'
+
 test_expect_success 'create innocent subrepo' '
 	git init innocent &&
 	git -C innocent commit --allow-empty -m foo

@@ -947,10 +947,10 @@ ifdef::git-rev-list[]
 +
 The form '--filter=blob:none' omits all blobs.
 +
-The form '--filter=blob:limit=<n>[kmg]' omits blobs larger than n bytes
-or units.  n may be zero.  The suffixes k, m, and g can be used to name
-units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same
-as 'blob:limit=1024'.
+The form '--filter=blob:limit=<n>[kmg]' omits blobs of size at least n
+bytes or units.  n may be zero.  The suffixes k, m, and g can be used
+to name units in KiB, MiB, or GiB.  For example, 'blob:limit=1k'
+is the same as 'blob:limit=1024'.
 +
 The form '--filter=object:type=(tag|commit|tree|blob)' omits all objects
 which are not of the requested type.

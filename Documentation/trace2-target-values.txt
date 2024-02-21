@@ -5,7 +5,7 @@
 * `<absolute-pathname>` - Writes to the file in append mode. If the target
 already exists and is a directory, the traces will be written to files (one
 per process) underneath the given directory.
-* `af_unix:[<socket_type>:]<absolute-pathname>` - Write to a
+* `af_unix:[<socket-type>:]<absolute-pathname>` - Write to a
 Unix DomainSocket (on platforms that support them).  Socket
 type can be either `stream` or `dgram`; if omitted Git will
 try both.

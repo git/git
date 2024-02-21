@@ -58,6 +58,13 @@ struct worktree *find_worktree(struct worktree **list,
 			       const char *arg);
 
 /*
+ * Look up the worktree corresponding to `id`, or NULL of no such worktree
+ * exists.
+ */
+struct worktree *get_linked_worktree(const char *id,
+				     int skip_reading_head);
+
+/*
  * Return the worktree corresponding to `path`, or NULL if no such worktree
  * exists.
  */
@@ -133,6 +140,11 @@ void repair_worktrees(worktree_repair_fn, void *cb_data);
  * user-data.
  */
 void repair_worktree_at_path(const char *, worktree_repair_fn, void *cb_data);
+
+/*
+ * Free up the memory for a worktree.
+ */
+void free_worktree(struct worktree *);
 
 /*
  * Free up the memory for worktree(s)

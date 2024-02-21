@@ -333,4 +333,14 @@ test_expect_success 'never change active branch' '
 	test_cmp_rev not-the-feature-branch unrelated-onto-branch
 '
 
+test_expect_success 'autostash commit is marked as reachable' '
+	echo changed >file0 &&
+	git rebase --autostash --exec "git prune --expire=now" \
+		feature-branch^ feature-branch &&
+	# git rebase succeeds if the stash cannot be applied so we need to check
+	# the contents of file0
+	echo changed >expect &&
+	test_cmp expect file0
+'
+
 test_done

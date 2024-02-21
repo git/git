@@ -158,6 +158,9 @@ static void show_list(const char *debug, int counted, int nr,
 		const char *subject_start;
 		int subject_len;
 
+		if (!buf)
+			die(_("unable to read %s"), oid_to_hex(&commit->object.oid));
+
 		fprintf(stderr, "%c%c%c ",
 			(commit_flags & TREESAME) ? ' ' : 'T',
 			(commit_flags & UNINTERESTING) ? 'U' : ' ',

@@ -42,8 +42,8 @@ finalize_test_case_output () {
 	fixed)
 		echo >>$github_markup_output "::notice::fixed: $this_test.$test_count $1"
 		;;
-	ok)
-		# Exit without printing the "ok" tests
+	ok|broken)
+		# Exit without printing the "ok" or ""broken" tests
 		return
 		;;
 	esac

@@ -30,7 +30,7 @@ static void test_conflict(void)
 	struct reftable_write_options opts = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &buf, &opts);
+		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 	struct reftable_ref_record rec = {
 		.refname = "a/b",
 		.value_type = REFTABLE_REF_SYMREF,

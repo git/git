@@ -1245,6 +1245,7 @@ static const char PACKED_REFS_HEADER[] =
 	"# pack-refs with: peeled fully-peeled sorted \n";
 
 static int packed_init_db(struct ref_store *ref_store UNUSED,
+			  int flags UNUSED,
 			  struct strbuf *err UNUSED)
 {
 	/* Nothing to do. */

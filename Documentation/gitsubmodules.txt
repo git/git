@@ -151,7 +151,7 @@ the superproject's `$GIT_DIR/config` file, so the superproject's history
 is not affected. This can be undone using `git submodule init`.
 
  * Deleted submodule: A submodule can be deleted by running
-`git rm <submodule path> && git commit`. This can be undone
+`git rm <submodule-path> && git commit`. This can be undone
 using `git revert`.
 +
 The deletion removes the superproject's tracking data, which are
@@ -229,7 +229,7 @@ Workflow for a third party library
   git submodule add <URL> <path>
 
   # Occasionally update the submodule to a new version:
-  git -C <path> checkout <new version>
+  git -C <path> checkout <new-version>
   git add <path>
   git commit -m "update submodule to new version"
 

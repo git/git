@@ -476,7 +476,7 @@ static void finish(struct commit *head_commit,
 	run_hooks_l("post-merge", squash ? "1" : "0", NULL);
 
 	if (new_head)
-		apply_autostash(git_path_merge_autostash(the_repository));
+		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 	strbuf_release(&reflog_message);
 }
 
@@ -1315,7 +1315,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (abort_current_merge) {
 		int nargc = 2;
 		const char *nargv[] = {"reset", "--merge", NULL};
-		struct strbuf stash_oid = STRBUF_INIT;
+		char stash_oid_hex[GIT_MAX_HEXSZ + 1];
+		struct object_id stash_oid = {0};
 
 		if (orig_argc != 2)
 			usage_msg_opt(_("--abort expects no arguments"),
@@ -1324,17 +1325,17 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (!file_exists(git_path_merge_head(the_repository)))
 			die(_("There is no merge to abort (MERGE_HEAD missing)."));
 
-		if (read_oneliner(&stash_oid, git_path_merge_autostash(the_repository),
-		    READ_ONELINER_SKIP_IF_EMPTY))
-			unlink(git_path_merge_autostash(the_repository));
+		if (!read_ref("MERGE_AUTOSTASH", &stash_oid))
+			delete_ref("", "MERGE_AUTOSTASH", &stash_oid, REF_NO_DEREF);
 
 		/* Invoke 'git reset --merge' */
 		ret = cmd_reset(nargc, nargv, prefix);
 
-		if (stash_oid.len)
-			apply_autostash_oid(stash_oid.buf);
+		if (!is_null_oid(&stash_oid)) {
+			oid_to_hex_r(stash_oid_hex, &stash_oid);
+			apply_autostash_oid(stash_oid_hex);
+		}
 
-		strbuf_release(&stash_oid);
 		goto done;
 	}
 
@@ -1563,13 +1564,12 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		}
 
 		if (autostash)
-			create_autostash(the_repository,
-					 git_path_merge_autostash(the_repository));
+			create_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 		if (checkout_fast_forward(the_repository,
 					  &head_commit->object.oid,
 					  &commit->object.oid,
 					  overwrite_ignore)) {
-			apply_autostash(git_path_merge_autostash(the_repository));
+			apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 			ret = 1;
 			goto done;
 		}
@@ -1655,8 +1655,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		die_ff_impossible();
 
 	if (autostash)
-		create_autostash(the_repository,
-				 git_path_merge_autostash(the_repository));
+		create_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 
 	/* We are going to make a new commit. */
 	git_committer_info(IDENT_STRICT);
@@ -1741,7 +1740,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		else
 			fprintf(stderr, _("Merge with strategy %s failed.\n"),
 				use_strategies[0]->name);
-		apply_autostash(git_path_merge_autostash(the_repository));
+		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 		ret = 2;
 		goto done;
 	} else if (best_strategy == wt_strategy)

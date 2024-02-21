@@ -185,9 +185,9 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
 static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			mmbuffer_t *result,
 			const char *path,
-			mmfile_t *orig, const char *orig_name UNUSED,
-			mmfile_t *src1, const char *name1 UNUSED,
-			mmfile_t *src2, const char *name2 UNUSED,
+			mmfile_t *orig, const char *orig_name,
+			mmfile_t *src1, const char *name1,
+			mmfile_t *src2, const char *name2,
 			const struct ll_merge_options *opts,
 			int marker_size)
 {
@@ -222,6 +222,12 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			strbuf_addf(&cmd, "%d", marker_size);
 		else if (skip_prefix(format, "P", &format))
 			sq_quote_buf(&cmd, path);
+		else if (skip_prefix(format, "S", &format))
+			sq_quote_buf(&cmd, orig_name ? orig_name : "");
+		else if (skip_prefix(format, "X", &format))
+			sq_quote_buf(&cmd, name1 ? name1 : "");
+		else if (skip_prefix(format, "Y", &format))
+			sq_quote_buf(&cmd, name2 ? name2 : "");
 		else
 			strbuf_addch(&cmd, '%');
 	}
@@ -315,7 +321,12 @@ static int read_merge_config(const char *var, const char *value,
 		 *    %B - temporary file name for the other branches' version.
 		 *    %L - conflict marker length
 		 *    %P - the original path (safely quoted for the shell)
+		 *    %S - the revision for the merge base
+		 *    %X - the revision for our version
+		 *    %Y - the revision for their version
 		 *
+		 * If the file is not named indentically in all versions, then each
+		 * revision is joined with the corresponding path, separated by a colon.
 		 * The external merge driver should write the results in the
 		 * file named by %A, and signal that it has done with zero exit
 		 * status.

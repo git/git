@@ -689,8 +689,8 @@ def setP4ExecBit(file, mode):
 
     if not isModeExec(mode):
         p4Type = getP4OpenedType(file)
-        p4Type = re.sub('^([cku]?)x(.*)', '\\1\\2', p4Type)
-        p4Type = re.sub('(.*?\+.*?)x(.*?)', '\\1\\2', p4Type)
+        p4Type = re.sub(r'^([cku]?)x(.*)', r'\1\2', p4Type)
+        p4Type = re.sub(r'(.*?\+.*?)x(.*?)', r'\1\2', p4Type)
         if p4Type[-1] == "+":
             p4Type = p4Type[0:-1]
 
@@ -701,7 +701,7 @@ def getP4OpenedType(file):
     """Returns the perforce file type for the given file."""
 
     result = p4_read_pipe(["opened", wildcard_encode(file)])
-    match = re.match(".*\((.+)\)( \*exclusive\*)?\r?$", result)
+    match = re.match(r".*\((.+)\)( \*exclusive\*)?\r?$", result)
     if match:
         return match.group(1)
     else:
@@ -757,7 +757,7 @@ def parseDiffTreeEntry(entry):
 
     global _diff_tree_pattern
     if not _diff_tree_pattern:
-        _diff_tree_pattern = re.compile(':(\d+) (\d+) (\w+) (\w+) ([A-Z])(\d+)?\t(.*?)((\t(.*))|$)')
+        _diff_tree_pattern = re.compile(r':(\d+) (\d+) (\w+) (\w+) ([A-Z])(\d+)?\t(.*?)((\t(.*))|$)')
 
     match = _diff_tree_pattern.match(entry)
     if match:
@@ -918,9 +918,9 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
             if len(result) > 0:
                 data = result[0].get('data')
                 if data:
-                    m = re.search('Too many rows scanned \(over (\d+)\)', data)
+                    m = re.search(r'Too many rows scanned \(over (\d+)\)', data)
                     if not m:
-                        m = re.search('Request too large \(over (\d+)\)', data)
+                        m = re.search(r'Request too large \(over (\d+)\)', data)
 
                     if m:
                         limit = int(m.group(1))
@@ -1452,7 +1452,7 @@ def wildcard_encode(path):
 
 
 def wildcard_present(path):
-    m = re.search("[*#@%]", path)
+    m = re.search(r"[*#@%]", path)
     return m is not None
 
 
@@ -3048,7 +3048,7 @@ class P4Sync(Command, P4UserMap):
             # Preserve everything in relative path name except leading
             # //depot/; just look at first prefix as they all should
             # be in the same depot.
-            depot = re.sub("^(//[^/]+/).*", r'\1', prefixes[0])
+            depot = re.sub(r"^(//[^/]+/).*", r'\1', prefixes[0])
             if p4PathStartsWith(path, depot):
                 path = path[len(depot):]
 
@@ -3603,7 +3603,7 @@ class P4Sync(Command, P4UserMap):
                     commitFound = True
                 else:
                     gitCommit = read_pipe(["git", "rev-list", "--max-count=1",
-                        "--reverse", ":/\[git-p4:.*change = %d\]" % changelist], ignore_error=True)
+                        "--reverse", r":/\[git-p4:.*change = %d\]" % changelist], ignore_error=True)
                     if len(gitCommit) == 0:
                         print("importing label %s: could not find git commit for changelist %d" % (name, changelist))
                     else:
@@ -4182,7 +4182,7 @@ class P4Sync(Command, P4UserMap):
                 if len(self.changesFile) == 0:
                     revision = "#head"
 
-            p = re.sub("\.\.\.$", "", p)
+            p = re.sub(r"\.\.\.$", "", p)
             if not p.endswith("/"):
                 p += "/"
 
@@ -4292,7 +4292,7 @@ class P4Rebase(Command):
             die("Cannot find upstream branchpoint for rebase")
 
         # the branchpoint may be p4/foo~3, so strip off the parent
-        upstream = re.sub("~[0-9]+$", "", upstream)
+        upstream = re.sub(r"~[0-9]+$", "", upstream)
 
         print("Rebasing the current branch onto %s" % upstream)
         oldHead = read_pipe(["git", "rev-parse", "HEAD"]).strip()
@@ -4321,8 +4321,8 @@ class P4Clone(P4Sync):
     def defaultDestination(self, args):
         # TODO: use common prefix of args?
         depotPath = args[0]
-        depotDir = re.sub("(@[^@]*)$", "", depotPath)
-        depotDir = re.sub("(#[^#]*)$", "", depotDir)
+        depotDir = re.sub(r"(@[^@]*)$", "", depotPath)
+        depotDir = re.sub(r"(#[^#]*)$", "", depotDir)
         depotDir = re.sub(r"\.\.\.$", "", depotDir)
         depotDir = re.sub(r"/$", "", depotDir)
         return os.path.split(depotDir)[1]

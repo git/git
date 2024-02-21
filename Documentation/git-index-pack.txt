@@ -79,8 +79,13 @@ OPTIONS
 	to force the version for the generated pack index, and to force
 	64-bit index entries on objects located above the given offset.
 
---strict::
-	Die, if the pack contains broken objects or links.
+--strict[=<msg-id>=<severity>...]::
+	Die, if the pack contains broken objects or links. An optional
+	comma-separated list of `<msg-id>=<severity>` can be passed to change
+	the severity of some possible issues, e.g.,
+	 `--strict="missingEmail=ignore,badTagName=error"`. See the entry for the
+	`fsck.<msg-id>` configuration options in linkgit:git-fsck[1] for more
+	information on the possible values of `<msg-id>` and `<severity>`.
 
 --progress-title::
 	For internal use only.
@@ -91,13 +96,18 @@ default and "Indexing objects" when `--stdin` is specified.
 --check-self-contained-and-connected::
 	Die if the pack contains broken links. For internal use only.
 
---fsck-objects::
-	For internal use only.
+--fsck-objects[=<msg-id>=<severity>...]::
+	Die if the pack contains broken objects, but unlike `--strict`, don't
+	choke on broken links. If the pack contains a tree pointing to a
+	.gitmodules blob that does not exist, prints the hash of that blob
+	(for the caller to check) after the hash that goes into the name of the
+	pack/idx file (see "Notes").
 +
-Die if the pack contains broken objects. If the pack contains a tree
-pointing to a .gitmodules blob that does not exist, prints the hash of
-that blob (for the caller to check) after the hash that goes into the
-name of the pack/idx file (see "Notes").
+An optional comma-separated list of `<msg-id>=<severity>` can be passed to
+change the severity of some possible issues, e.g.,
+`--fsck-objects="missingEmail=ignore,badTagName=ignore"`. See the entry for the
+`fsck.<msg-id>` configuration options in linkgit:git-fsck[1] for more
+information on the possible values of `<msg-id>` and `<severity>`.
 
 --threads=<n>::
 	Specifies the number of threads to spawn when resolving

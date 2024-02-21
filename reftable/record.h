@@ -69,9 +69,6 @@ struct reftable_record_vtable {
 /* returns true for recognized block types. Block start with the block type. */
 int reftable_is_block_type(uint8_t typ);
 
-/* return an initialized record for the given type */
-struct reftable_record reftable_new_record(uint8_t typ);
-
 /* Encode `key` into `dest`. Sets `is_restart` to indicate a restart. Returns
  * number of bytes written. */
 int reftable_encode_key(int *is_restart, struct string_view dest,
@@ -100,8 +97,8 @@ struct reftable_obj_record {
 /* record is a generic wrapper for different types of records. It is normally
  * created on the stack, or embedded within another struct. If the type is
  * known, a fresh instance can be initialized explicitly. Otherwise, use
- * reftable_new_record() to initialize generically (as the index_record is not
- * valid as 0-initialized structure)
+ * `reftable_record_init()` to initialize generically (as the index_record is
+ * not valid as 0-initialized structure)
  */
 struct reftable_record {
 	uint8_t type;
@@ -112,6 +109,9 @@ struct reftable_record {
 		struct reftable_index_record idx;
 	} u;
 };
+
+/* Initialize the reftable record for the given type */
+void reftable_record_init(struct reftable_record *rec, uint8_t typ);
 
 /* see struct record_vtable */
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);

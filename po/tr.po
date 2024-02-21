@@ -1,8 +1,8 @@
 # Turkish translations for Git
 # Git Türkçe çevirileri
-# Copyright (C) 2020-2023 Emir SARI <emir_sari@icloud.com>
+# Copyright (C) 2020-2024 Emir SARI <emir_sari@icloud.com>
 # This file is distributed under the same license as the Git package.
-# Emir SARI <emir_sari@icloud.com>, 2020-2023
+# Emir SARI <emir_sari@icloud.com>, 2020-2024
 #
 # ######################################################### #
 #     Git Türkçe kavramlar dizini / Git Turkish Glossary    #
@@ -27,6 +27,7 @@
 # detached HEAD               | ayrık HEAD                  #
 # dirty                       | kirli                       #
 # evil merge                  | uğursuz birleştirme         #
+# fanout                      | çıkış sayısı                #
 # fast-forward                | ileri sarım/sarmak          #
 # fetch                       | getirme(k)                  #
 # fixup                       | düzeltmek                   #
@@ -48,10 +49,10 @@
 # pathspec                    | yol belirteci               #
 # pattern                     | dizgi                       #
 # porcelain                   | okunabilir                  #
-# prune                       | budamak                     #
+# prune                       | buda(mak)                     #
 # pseudoref                   | yalancıktan başvuru         #
-# pull                        | çekme(k)                    #
-# push                        | itme(k)                     #
+# pull                        | çek(mek)                    #
+# push                        | it(mek)                     #
 # rebase                      | yeniden temellendirme(k)    #
 # record                      | kayıt yaz(mak)              #
 # ref                         | başvuru                     #
@@ -85,6 +86,7 @@
 # trailer                     | artbilgi                    #
 # tree                        | ağaç                        #
 # treeish                     | ağacımsı                    #
+# unborn                      | henüz doğmamış (dal)        #
 # unstage                     | hazırlıktan çıkar(mak)      #
 # upstream                    | üstkaynak                   #
 # worktree/working tree       | çalışma ağacı               #
@@ -94,8 +96,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2023-11-09 11:15+0300\n"
-"PO-Revision-Date: 2023-11 13:00+0300\n"
+"POT-Creation-Date: 2024-02-16 22:04+0300\n"
+"PO-Revision-Date: 2024-02-16 22:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
 "Language: tr\n"
@@ -1500,6 +1502,10 @@ msgid "Unexpected option --output"
 msgstr "Beklenmedik seçenek --output"
 
 #, c-format
+msgid "extra command line parameter '%s'"
+msgstr "fazladan komut satırı parametresi '%s'"
+
+#, c-format
 msgid "Unknown archive format '%s'"
 msgstr "Bilinmeyen arşiv biçimi '%s'"
 
@@ -1543,6 +1549,14 @@ msgstr "pek büyük gitattributes ikili nesnesi '%s' yok sayılıyor"
 
 msgid "bad --attr-source or GIT_ATTR_SOURCE"
 msgstr "hatalı --attr-source veya GIT_ATTR_SOURCE"
+
+#, c-format
+msgid "unable to stat '%s'"
+msgstr "'%s' dosyasının bilgileri alınamıyor"
+
+#, c-format
+msgid "unable to read %s"
+msgstr "%s okunamıyor"
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -2823,12 +2837,12 @@ msgid "couldn't look up commit object for '%s'"
 msgstr "'%s' için işleme nesnesi aranamadı"
 
 #, c-format
-msgid ""
-"the branch '%s' is not fully merged.\n"
-"If you are sure you want to delete it, run 'git branch -D %s'"
-msgstr ""
-"'%s' dalı tümüyle birleştirilmemiş.\n"
-"Eğer silmek istediğinizden eminseniz 'git branch -D %s' çalıştırın."
+msgid "the branch '%s' is not fully merged"
+msgstr "'%s' dalı tümüyle birleştirilmedi"
+
+#, c-format
+msgid "If you are sure you want to delete it, run 'git branch -D %s'"
+msgstr "Onu silmek istediğinizden eminseniz 'git branch -D %s' çalıştırın."
 
 msgid "update of config-file failed"
 msgstr "config-file güncellenemedi"
@@ -3863,8 +3877,8 @@ msgstr "zorla çıkış yap (yerel değişiklikleri çöpe at)"
 msgid "new-branch"
 msgstr "yeni dal"
 
-msgid "new unparented branch"
-msgstr "yeni üst ögesi olmayan dal"
+msgid "new unborn branch"
+msgstr "yeni henüz doğmamış dal"
 
 msgid "update ignored files (default)"
 msgstr "yok sayılan dosyaları güncelle (öntanımlı)"
@@ -4115,9 +4129,6 @@ msgstr ""
 "clean.requireForce öntanımlı olarak 'true' ve ne -i ne -n ne de -f verilmiş; "
 "temizleme reddediliyor"
 
-msgid "-x and -X cannot be used together"
-msgstr "-x ve -X birlikte kullanılamaz"
-
 msgid "git clone [<options>] [--] <repo> [<dir>]"
 msgstr "git clone [<seçenekler>] [--] <depo> [<dizin>]"
 
@@ -4204,6 +4215,9 @@ msgstr "git dizini"
 
 msgid "separate git dir from working tree"
 msgstr "git dizinini çalışma ağacından ayır"
+
+msgid "specify the reference format to use"
+msgstr "kullanılacak başvuru biçimini belirt"
 
 msgid "key=value"
 msgstr "anahtar=değer"
@@ -4322,11 +4336,9 @@ msgstr "Çok fazla argüman."
 msgid "You must specify a repository to clone."
 msgstr "Klonlamak için bir depo belirtmelisiniz."
 
-msgid ""
-"--bundle-uri is incompatible with --depth, --shallow-since, and --shallow-"
-"exclude"
-msgstr ""
-"--bundle-uri; --depth, --shallow-since ve --shallow-exclude ile uyumsuz"
+#, c-format
+msgid "unknown ref storage format '%s'"
+msgstr "bilinmeyen başvuru depolama biçimi '%s'"
 
 #, c-format
 msgid "repository '%s' does not exist"
@@ -4454,11 +4466,11 @@ msgid ""
 "--stdin-commits]\n"
 "                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
 "[no-]progress]\n"
-"                       <split options>"
+"                       <split-options>"
 msgstr ""
 "git commit-graph write [--object-dir <dizin>] [--append]\n"
-"                       [--split[=<<strateji>]] [--reachable | --stdin-packs "
-"| --stdin-commits]\n"
+"                       [--split[=<strateji>]] [--reachable | --stdin-packs | "
+"--stdin-commits]\n"
 "                       [--changed-paths] [--[no-]max-new-filters <n>] [--"
 "[no-]progress]\n"
 "                       <bölme-seçenekleri>"
@@ -6778,6 +6790,10 @@ msgid "unable to read tree (%s)"
 msgstr "ağaç okunamıyor (%s)"
 
 #, c-format
+msgid "unable to read tree %s"
+msgstr "%s ağacı okunamıyor"
+
+#, c-format
 msgid "unable to grep from object of type %s"
 msgstr "%s türündeki bir nesneden grep yapılamıyor"
 
@@ -7190,10 +7206,6 @@ msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "%s İLE SHA1 ÇARPIŞMASI BULUNDU!"
 
 #, c-format
-msgid "unable to read %s"
-msgstr "%s okunamıyor"
-
-#, c-format
 msgid "cannot read existing object info %s"
 msgstr "var olan nesne bilgisi %s okunamıyor"
 
@@ -7333,13 +7345,15 @@ msgstr "paket nesnelerinde fsck hatası"
 msgid ""
 "git init [-q | --quiet] [--bare] [--template=<template-directory>]\n"
 "         [--separate-git-dir <git-dir>] [--object-format=<format>]\n"
+"         [--ref-format=<format>]\n"
 "         [-b <branch-name> | --initial-branch=<branch-name>]\n"
 "         [--shared[=<permissions>]] [<directory>]"
 msgstr ""
 "git init [-q | --quiet] [--bare] [--template=<şablon-dizini>]\n"
 "         [--separate-git-dir <git-dizini>] [--object-format=<biçim>]\n"
+"         [--ref-format=<biçim>]\n"
 "         [-b <dal-adı> | --initial-branch=<dal-adı>]\n"
-"         [--shared[=<izinler>]] [<dizin>]"
+"         [--shared[=<izin>]] [<dizin>]"
 
 msgid "permissions"
 msgstr "izinler"
@@ -8039,6 +8053,13 @@ msgstr ""
 "git merge-file [<seçenekler>] [-L <ad1> [-L <orij> [-L <ad2>]]] <dosya1> "
 "<orij-dosya> <dosya2>"
 
+msgid ""
+"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
+"\"histogram\""
+msgstr ""
+"diff-algorithm seçeneği şunları kabul eder: \"myers\", \"minimal\", "
+"\"patience\" ve \"histogram\""
+
 msgid "send results to standard output"
 msgstr "sonuçları standart çıktıya gönder"
 
@@ -8059,6 +8080,12 @@ msgstr "çakışmalarda onların sürümünü kullan"
 
 msgid "for conflicts, use a union version"
 msgstr "çakışmalarda birlik olmuş bir sürüm kullan"
+
+msgid "<algorithm>"
+msgstr "<algoritma>"
+
+msgid "choose a diff algorithm"
+msgstr "bir diff algoritması seç"
 
 msgid "for conflicts, use this marker size"
 msgstr "çakışmalarda bu imleyici boyutunu kullan"
@@ -8149,9 +8176,6 @@ msgstr "--trivial-merge, tüm diğer seçeneklerle uyumsuz"
 #, c-format
 msgid "unknown strategy option: -X%s"
 msgstr "bilinmeyen strateji seçeneği: -X%s"
-
-msgid "--merge-base is incompatible with --stdin"
-msgstr "--merge-base, --stdin ile uyumsuz"
 
 #, c-format
 msgid "malformed input line: '%s'."
@@ -9078,6 +9102,10 @@ msgid "inconsistency with delta count"
 msgstr "delta sayımında tutarsızlık"
 
 #, c-format
+msgid "invalid pack.allowPackReuse value: '%s'"
+msgstr "geçersiz pack.allowPackReuse değeri: '%s'"
+
+#, c-format
 msgid ""
 "value of uploadpack.blobpackfileuri must be of the form '<object-hash> <pack-"
 "hash> <uri>' (got '%s')"
@@ -9332,10 +9360,10 @@ msgstr "Nesneler ortaya dökülüyor"
 #, c-format
 msgid ""
 "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>), pack-"
-"reused %<PRIu32>"
+"reused %<PRIu32> (from %<PRIuMAX>)"
 msgstr ""
 "Toplam %<PRIu32> (delta %<PRIu32>), yeniden kullanılan %<PRIu32> (delta "
-"%<PRIu32>), yeniden kullanılan paket %<PRIu32>"
+"%<PRIu32>), yeniden kullanılan paket %<PRIu32> (%<PRIuMAX> konumundan)"
 
 msgid ""
 "'git pack-redundant' is nominated for removal.\n"
@@ -10299,13 +10327,6 @@ msgid "switch `C' expects a numerical value"
 msgstr "'C' anahtarı sayısal bir değer bekliyor"
 
 msgid ""
-"apply options are incompatible with rebase.autoSquash.  Consider adding --no-"
-"autosquash"
-msgstr ""
-"seçenekleri uygula, rebase.autoSquash ile uyumlu değil. --no-autosquash "
-"eklemeyi düşünün"
-
-msgid ""
 "apply options are incompatible with rebase.rebaseMerges.  Consider adding --"
 "no-rebase-merges"
 msgstr ""
@@ -10717,10 +10738,10 @@ msgid_plural ""
 "Note: Some branches outside the refs/remotes/ hierarchy were not removed;\n"
 "to delete them, use:"
 msgstr[0] ""
-"Not: refs/remotes hiyerarşisi dışındaki bir dal kaldırılmadı;\n"
+"Not: refs/remotes/ hiyerarşisi dışındaki bir dal kaldırılmadı;\n"
 "onu silmek için şunu kullanın:"
 msgstr[1] ""
-"Not: refs/remotes hiyerarşisi dışındaki bazı dallar kaldırılmadı;\n"
+"Not: refs/remotes/ hiyerarşisi dışındaki bazı dallar kaldırılmadı;\n"
 "onları silmek için şunu kullanın:"
 
 #, c-format
@@ -11298,6 +11319,76 @@ msgstr "--convert-graft-file argüman almaz"
 msgid "only one pattern can be given with -l"
 msgstr "-l ile yalnızca bir dizgi verilebilir"
 
+msgid "need some commits to replay"
+msgstr "yeniden oynatmak için birkaç işleme gerekli"
+
+msgid "--onto and --advance are incompatible"
+msgstr "--onto ve --advance birbiriyle uyumsuz"
+
+msgid "all positive revisions given must be references"
+msgstr "verilen tüm pozitif revizyonlar, başvuru olmalı"
+
+msgid "argument to --advance must be a reference"
+msgstr "--advance'a olan argüman bir başvuru olmalı"
+
+msgid ""
+"cannot advance target with multiple sources because ordering would be ill-"
+"defined"
+msgstr ""
+"birden çok kaynaklı hedef ilerletilemiyor; çünkü sıralama hatalı tanımlanmış "
+"olurdu"
+
+msgid ""
+"cannot implicitly determine whether this is an --advance or --onto operation"
+msgstr ""
+"bunun --advance veya --onto işlemi olup olmadığı örtük olarak algılanamıyor"
+
+msgid ""
+"cannot advance target with multiple source branches because ordering would "
+"be ill-defined"
+msgstr ""
+"birden çok kaynak dallı hedef ilerletilemiyor; çünkü sıralama hatalı "
+"tanımlanmış olurdu"
+
+msgid "cannot implicitly determine correct base for --onto"
+msgstr "--onto için olan doğru temel örtük olarak algılanamıyor"
+
+msgid ""
+"(EXPERIMENTAL!) git replay ([--contained] --onto <newbase> | --advance "
+"<branch>) <revision-range>..."
+msgstr ""
+"(DENEYSEL!) git replay ([--contained] --onto <yeni-temel> | --advance <dal>) "
+"<revizyon-erimi>..."
+
+msgid "make replay advance given branch"
+msgstr "verilen dalı önceden yeniden oynat"
+
+msgid "replay onto given commit"
+msgstr "verilen işlemeye yeniden oynat"
+
+msgid "advance all branches contained in revision-range"
+msgstr "revizyon eriminde içerilen tüm dalları ilerlet"
+
+msgid "option --onto or --advance is mandatory"
+msgstr "--onto veya --advance seçeneğinin kullanımı zorunlu"
+
+#, c-format
+msgid ""
+"some rev walking options will be overridden as '%s' bit in 'struct rev_info' "
+"will be forced"
+msgstr ""
+"'struct rev_info' içindeki '%s' biti zorlanacağından kimi revizyon yürütme "
+"seçenekleri geçersiz kılınacak"
+
+msgid "error preparing revisions"
+msgstr "revizyonlar hazırlanırken hata"
+
+msgid "replaying down to root commit is not supported yet!"
+msgstr "kök işlemeye kadar yeniden oynatma henüz desteklenmiyor!"
+
+msgid "replaying merge commits is not supported yet!"
+msgstr "birleştirme işlemelerini yeniden oynatma henüz desteklenmiyor!"
+
 msgid ""
 "git rerere [clear | forget <pathspec>... | diff | status | remaining | gc]"
 msgstr ""
@@ -11505,15 +11596,6 @@ msgstr "--prefix bir argüman gerektiriyor"
 #, c-format
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr "--abbrev-ref için bilinmeyen kip: %s"
-
-msgid "--exclude-hidden cannot be used together with --branches"
-msgstr "--exclude-hidden, --branches ile birlikte kullanılamıyor"
-
-msgid "--exclude-hidden cannot be used together with --tags"
-msgstr "--exclude-hidden, --tags ile birlikte kullanılamıyor"
-
-msgid "--exclude-hidden cannot be used together with --remotes"
-msgstr "--exclude-hidden, --remotes ile birlikte kullanılamıyor"
 
 msgid "this operation must be run in a work tree"
 msgstr "bu işlem bir çalışma ağacı içinde çalıştırılmalı"
@@ -11919,9 +12001,6 @@ msgstr "sonuçları stdout'a yazdırma (--verify ile birlikte kullanışlı)"
 
 msgid "show refs from stdin that aren't in local repository"
 msgstr "stdin'den yerel bir depoda olmayan başvuruları göster"
-
-msgid "only one of '%s', '%s' or '%s' can be given"
-msgstr "yalnızca '%s', '%s' veya '%s' arasından biri verilebilir"
 
 msgid ""
 "git sparse-checkout (init | list | set | add | reapply | disable | check-"
@@ -13366,29 +13445,29 @@ msgstr "Olası kaynak dal yok, '--orphan' anlamı çıkarılıyor"
 
 #, c-format
 msgid ""
-"If you meant to create a worktree containing a new orphan branch\n"
+"If you meant to create a worktree containing a new unborn branch\n"
 "(branch with no commits) for this repository, you can do so\n"
 "using the --orphan flag:\n"
 "\n"
 "    git worktree add --orphan -b %s %s\n"
 msgstr ""
-"Bu depo için yeni bir yetim dal içeren (işlemesiz dal) bir\n"
-"çalışma ağacı oluşturmak istediyseniz bunu --orphan bayrağı\n"
-"ile yapabilirsiniz:\n"
+"Bu depo için henüz doğmamış bir dal (işleme içermeyen dal) içeren\n"
+"bir çalışma ağacı oluşturmak istediyseniz bunu --orphan bayrağını\n"
+"kullanarak yapabilirsiniz:\n"
 "\n"
 "    git worktree add --orphan -b %s %s\n"
 
 #, c-format
 msgid ""
-"If you meant to create a worktree containing a new orphan branch\n"
+"If you meant to create a worktree containing a new unborn branch\n"
 "(branch with no commits) for this repository, you can do so\n"
 "using the --orphan flag:\n"
 "\n"
 "    git worktree add --orphan %s\n"
 msgstr ""
-"Bu depo için yeni bir yetim dal içeren (işlemesiz dal) bir\n"
-"çalışma ağacı oluşturmak istediyseniz bunu --orphan bayrağı\n"
-"ile yapabilirsiniz:\n"
+"Bu depo için henüz doğmamış bir dal (işleme içermeyen dal) içeren\n"
+"bir çalışma ağacı oluşturmak istediyseniz bunu --orphan bayrağını\n"
+"kullanarak yapabilirsiniz:\n"
 "\n"
 "    git worktree add --orphan %s\n"
 
@@ -13447,6 +13526,10 @@ msgid "initializing"
 msgstr "ilklendiriliyor"
 
 #, c-format
+msgid "could not find created worktree '%s'"
+msgstr "oluşturulan '%s' çalışma ağacı bulunamadı"
+
+#, c-format
 msgid "Preparing worktree (new branch '%s')"
 msgstr "Çalışma ağacı hazırlanıyor (yeni dal '%s')"
 
@@ -13483,10 +13566,6 @@ msgstr ""
 "Bir uzak konum olmasına rağmen hiçbir yerel/uzak başvuru yok, durduruluyor;\n"
 "geçersiz kılmak veya önce bir uzak konum getirmek için 'add -f' kullanın"
 
-#, c-format
-msgid "'%s' and '%s' cannot be used together"
-msgstr "'%s' ve '%s' birlikte kullanılamaz"
-
 msgid "checkout <branch> even if already checked out in other worktree"
 msgstr "diğer çalışma ağacında çıkış yapılmış olsa bile <dal> çıkışını yap"
 
@@ -13496,8 +13575,8 @@ msgstr "yeni bir dal oluştur"
 msgid "create or reset a branch"
 msgstr "yeni bir dal oluştur veya sıfırla"
 
-msgid "create unborn/orphaned branch"
-msgstr "doğmamış/yetim bırakılmış dal oluştur"
+msgid "create unborn branch"
+msgstr "henüz doğmamış dal oluştur"
 
 msgid "populate the new working tree"
 msgstr "yeni çalışma ağacını doldur"
@@ -13519,11 +13598,8 @@ msgid "options '%s', '%s', and '%s' cannot be used together"
 msgstr "'%s', '%s' ve '%s' seçenekleri birlikte kullanılamaz"
 
 #, c-format
-msgid "options '%s', and '%s' cannot be used together"
-msgstr "'%s' ve '%s' seçenekleri birlikte kullanılamaz"
-
-msgid "<commit-ish>"
-msgstr "<işlememsi>"
+msgid "option '%s' and commit-ish cannot be used together"
+msgstr "'%s' seçeneği ve işlememsiler birlikte kullanılamaz"
 
 msgid "added with --lock"
 msgstr "--lock ile eklendi"
@@ -14135,6 +14211,10 @@ msgstr "Bir depodaki paketlenmemiş nesneleri paketle"
 msgid "Create, list, delete refs to replace objects"
 msgstr "Nesne değiştirmek için başvurular oluştur, sil, listele"
 
+msgid "EXPERIMENTAL: Replay commits on a new base, works with bare repos too"
+msgstr ""
+"DENEYSEL: İşlemeleri yeni temelde yeniden oynat, çıplak depolarla da çalışır"
+
 msgid "Generates a summary of pending changes"
 msgstr "Bekleyen değişikliklerin bir özetini çıkart"
 
@@ -14373,6 +14453,32 @@ msgstr "Büyük Git depolarını yönetmek için bir araç"
 msgid "commit-graph file is too small"
 msgstr "commit-graph dosyası pek küçük"
 
+msgid "commit-graph oid fanout chunk is wrong size"
+msgstr "commit-graph OID çıkış sayısı iri parçası boyutu yanlış"
+
+msgid "commit-graph fanout values out of order"
+msgstr "commit-graph çıkış sayısı değerleri sırasız: fanout[%d] = %u != %u"
+
+msgid "commit-graph OID lookup chunk is the wrong size"
+msgstr "commit-graph OID arama iri parçası boyutu yanlış"
+
+msgid "commit-graph commit data chunk is wrong size"
+msgstr "commit-graph işleme verisi iri parçası boyutu yanlış"
+
+msgid "commit-graph generations chunk is wrong size"
+msgstr "commit-graph kuşaklar iri parçası boyutu yanlış"
+
+msgid "commit-graph changed-path index chunk is too small"
+msgstr "commit-graph changed-path indeksi iri parçası boyutu pek küçük"
+
+#, c-format
+msgid ""
+"ignoring too-small changed-path chunk (%<PRIuMAX> < %<PRIuMAX>) in commit-"
+"graph file"
+msgstr ""
+"commit-graph dosyasındaki pek küçük changed-path iri parçası (%<PRIuMAX> < "
+"%<PRIuMAX>) yok sayılıyor"
+
 #, c-format
 msgid "commit-graph signature %X does not match signature %X"
 msgstr "commit-graph imzası %X, %X ile eşleşmiyor"
@@ -14389,6 +14495,17 @@ msgstr "commit-graph sağlama sürümü %X, %X ile eşleşmiyor"
 msgid "commit-graph file is too small to hold %u chunks"
 msgstr "commit-graph dosyası %u iri parça tutmak için pek küçük"
 
+msgid "commit-graph required OID fanout chunk missing or corrupted"
+msgstr ""
+"commit-graph'ten gerekli OID çıkış sayısı iri parçası eksik veya hasarlı"
+
+msgid "commit-graph required OID lookup chunk missing or corrupted"
+msgstr "commit-graph'ten gerekli OID arama iri parçası eksik veya hasarlı"
+
+msgid "commit-graph required commit data chunk missing or corrupted"
+msgstr ""
+"commit-graph'ten gerekli OID çıkış sayısı iri parçası eksik veya hasarlı"
+
 msgid "commit-graph has no base graphs chunk"
 msgstr "commit-graph temel grafiği iri parçasına iye değil"
 
@@ -14401,6 +14518,9 @@ msgstr "commit-graph zinciri eşleşmiyor"
 #, c-format
 msgid "commit count in base graph too high: %<PRIuMAX>"
 msgstr "temel grafikteki işleme sayısı pek yüksek: %<PRIuMAX>"
+
+msgid "commit-graph chain file too small"
+msgstr "commit-graph zincir dosyası pek küçük"
 
 #, c-format
 msgid "invalid commit-graph chain: line '%s' not a hash"
@@ -14421,6 +14541,9 @@ msgstr "commit-graph, taşım oluşturma verisi gerektiriyor; ancak hiç yok"
 
 msgid "commit-graph overflow generation data is too small"
 msgstr "commit-graph, taşım üretim verisi pek küçük"
+
+msgid "commit-graph extra-edges pointer out of bounds"
+msgstr "commit-graph extra-edges işaretçisi sınırlar dışında"
 
 msgid "Loading known commits in commit graph"
 msgstr "İşleme grafiğindeki bilinen işlemeler yükleniyor"
@@ -15563,6 +15686,10 @@ msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "'diff.submodule' yapılandırma değişkeni için bilinmeyen değer: '%s'"
 
 #, c-format
+msgid "unknown value for config '%s': %s"
+msgstr "'%s' yapılandırması için bilinmeyen değer: %s"
+
+#, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
 "%s"
@@ -15642,13 +15769,6 @@ msgstr "hatalı --color-moved argümanı: %s"
 msgid "invalid mode '%s' in --color-moved-ws"
 msgstr "--color-moved-ws içinde geçersiz kip '%s'"
 
-msgid ""
-"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
-"\"histogram\""
-msgstr ""
-"diff-algorithm seçeneği şunları kabul eder: \"myers\", \"minimal\", "
-"\"patience\" ve \"histogram\""
-
 #, c-format
 msgid "invalid argument to %s"
 msgstr "%s için geçersiz argüman"
@@ -15692,8 +15812,8 @@ msgstr "makinede okunabilen --stat"
 msgid "output only the last line of --stat"
 msgstr "--stat'ın yalnızca son satırını çıktı ver"
 
-msgid "<param1,param2>..."
-msgstr "<param1,param2>..."
+msgid "<param1>,<param2>..."
+msgstr "<param1>,<param2>..."
 
 msgid ""
 "output the distribution of relative amount of changes for each sub-directory"
@@ -15703,8 +15823,8 @@ msgstr ""
 msgid "synonym for --dirstat=cumulative"
 msgstr "--dirstat=cumulative eşanlamlısı"
 
-msgid "synonym for --dirstat=files,param1,param2..."
-msgstr "--dirstat=files,param1,param2... eşanlamlısı"
+msgid "synonym for --dirstat=files,<param1>,<param2>..."
+msgstr "--dirstat=files,<param1>,<param2>... eşanlamlısı"
 
 msgid "warn if changes introduce conflict markers or whitespace errors"
 msgstr ""
@@ -15878,12 +15998,6 @@ msgstr "diff'i \"patience diff\" algoritmasını kullanarak oluştur"
 
 msgid "generate diff using the \"histogram diff\" algorithm"
 msgstr "diff'i \"histogram diff\" algoritmasını kullanarak oluştur"
-
-msgid "<algorithm>"
-msgstr "<algoritma>"
-
-msgid "choose a diff algorithm"
-msgstr "bir diff algoritması seç"
 
 msgid "<text>"
 msgstr "<metin>"
@@ -17367,7 +17481,13 @@ msgid "failed to read the cache"
 msgstr "önbellek okunamadı"
 
 msgid "multi-pack-index OID fanout is of the wrong size"
-msgstr "multi-pack-index OID ikiye bölümünün boyutu hatalı"
+msgstr "multi-pack-index OID çıkış sayısı boyutu yanlış"
+
+#, c-format
+msgid ""
+"oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
+msgstr ""
+"oid çıkış sayısı sırasız: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
 
 msgid "multi-pack-index OID lookup chunk is the wrong size"
 msgstr "multi-pack-index OID arama iri parçası yanlış boyutlu"
@@ -17414,6 +17534,13 @@ msgstr "multi-pack-index paket adlarının sırasız: '%s' şundan önce: '%s'"
 #, c-format
 msgid "bad pack-int-id: %u (%u total packs)"
 msgstr "hatalı pack-int-id: %u (%u toplam paket)"
+
+msgid "MIDX does not contain the BTMP chunk"
+msgstr "MIDX, BTMP iri parçasını içermiyor"
+
+#, c-format
+msgid "could not load bitmapped pack %<PRIu32>"
+msgstr "biteşlemli %<PRIu32> paketi yüklenemedi"
 
 msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
 msgstr "multi-pack-index bir 64 bit ofset depoluyor; ancak off_t pek küçük"
@@ -17497,11 +17624,6 @@ msgstr "yanlış sağlama toplamı"
 
 msgid "Looking for referenced packfiles"
 msgstr "Başvurulmuş paket dosyaları aranıyor"
-
-#, c-format
-msgid ""
-"oid fanout out of order: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
-msgstr "oid fanout sırasız: fanout[%d] = %<PRIx32> > %<PRIx32> = fanout[%d]"
 
 msgid "the midx contains no oid"
 msgstr "midx bir oid içermiyor"
@@ -18022,9 +18144,12 @@ msgstr "çoklu paket biteşlemi gereken ters indeksi içermiyor"
 msgid "could not open pack %s"
 msgstr "%s paketi açılamadı"
 
+msgid "could not determine MIDX preferred pack"
+msgstr "MIDX yeğlenen paketi algılanamadı"
+
 #, c-format
 msgid "preferred pack (%s) is invalid"
-msgstr "tercih edilen (%s) paket geçersiz"
+msgstr "yeğlenen paket (%s) geçersiz"
 
 msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "hasarlı biteşlem arama tablosu: üçlü konum indeks dışında"
@@ -18040,6 +18165,10 @@ msgstr "hasarlı biteşlem arama tablosu: işleme indeksi %u, erim dışında"
 msgid "corrupt ewah bitmap: truncated header for bitmap of commit \"%s\""
 msgstr ""
 "hasarlı ewah biteşlemi: \"%s\" işlemesinin biteşleminde kısaltılmış üstbilgi"
+
+#, c-format
+msgid "unable to load pack: '%s', disabling pack-reuse"
+msgstr "paket yüklenemiyor: '%s', pack-reuse devre dışı bırakılıyor"
 
 #, c-format
 msgid "object '%s' not found in type bitmaps"
@@ -18132,6 +18261,9 @@ msgstr "%<PRIu64> konumunda geçersiz rev-index konumu: %<PRIu32> != %<PRIu32>"
 msgid "multi-pack-index reverse-index chunk is the wrong size"
 msgstr "multi-pack-index reverse-index iri parçası yanlış boyutlu"
 
+msgid "could not determine preferred pack"
+msgstr "yeğlenen paket algılanamadı"
+
 msgid "cannot both write and verify reverse index"
 msgstr "ters indeks dosyası hem yazılıp hem doğrulanamıyor"
 
@@ -18193,10 +18325,6 @@ msgstr "%s kullanılabilir değil"
 #, c-format
 msgid "%s expects a non-negative integer value with an optional k/m/g suffix"
 msgstr "%s negatif olmayan bir tamsayı bekliyor, isteğe bağlı k/m/g eki ile"
-
-#, c-format
-msgid "%s is incompatible with %s"
-msgstr "%s, %s ile uyumsuz"
 
 #, c-format
 msgid "ambiguous option: %s (could be --%s%s or --%s%s)"
@@ -18510,10 +18638,6 @@ msgstr "'%s' dosyası indekslenemiyor"
 #, c-format
 msgid "unable to add '%s' to index"
 msgstr "'%s' indekse eklenemiyor"
-
-#, c-format
-msgid "unable to stat '%s'"
-msgstr "'%s' dosyasının bilgileri alınamıyor"
 
 #, c-format
 msgid "'%s' appears as both a file and as a directory"
@@ -19085,10 +19209,6 @@ msgstr "'%s' mevcut; '%s' oluşturulamıyor"
 #, c-format
 msgid "cannot process '%s' and '%s' at the same time"
 msgstr "'%s' ve '%s' aynı anda işlenemiyor"
-
-#, c-format
-msgid "could not remove reference %s"
-msgstr "%s başvurusu kaldırılamadı"
 
 #, c-format
 msgid "could not delete reference %s: %s"
@@ -20446,6 +20566,9 @@ msgstr "Kendiliğinden zulalama çakışmalara neden oldu."
 msgid "Autostash exists; creating a new stash entry."
 msgstr "Kendiliğinden zulalama mevcut; yeni bir zula girdisi oluşturuluyor."
 
+msgid "autostash reference is a symref"
+msgstr "kendiliğinden zulalama başvurusu bir sembol başvurusu"
+
 msgid "could not detach HEAD"
 msgstr "HEAD ayrılamadı"
 
@@ -20757,6 +20880,10 @@ msgid "invalid initial branch name: '%s'"
 msgstr "geçersiz başlangıç dalı adı: '%s'"
 
 #, c-format
+msgid "re-init: ignored --initial-branch=%s"
+msgstr "re-init: --initial-branch=%s yok sayıldı"
+
+#, c-format
 msgid "unable to handle file type %d"
 msgstr "%d dosya türü ele alınamıyor"
 
@@ -20767,13 +20894,14 @@ msgstr "%s şuraya taşınamıyor: %s"
 msgid "attempt to reinitialize repository with different hash"
 msgstr "depoyu başka bir sağlama ile yeniden ilklendirme deneniyor"
 
+msgid ""
+"attempt to reinitialize repository with different reference storage format"
+msgstr ""
+"depo başka bir başvuru depolama biçimiyle yeniden ilklendirilmeye çalışılıyor"
+
 #, c-format
 msgid "%s already exists"
 msgstr "%s halihazırda var"
-
-#, c-format
-msgid "re-init: ignored --initial-branch=%s"
-msgstr "re-init: --initial-branch=%s yok sayıldı"
 
 #, c-format
 msgid "Reinitialized existing shared Git repository in %s%s\n"
@@ -21039,12 +21167,6 @@ msgstr "her bir yinelemeden önce önbellek ağacını temizle"
 msgid "number of entries in the cache tree to invalidate (default 0)"
 msgstr "önbellek ağacındaki geçersizleştirilecek girdi sayısı (öntanımlı 0)"
 
-msgid "unhandled options"
-msgstr "beklenmeyen seçenekler"
-
-msgid "error preparing revisions"
-msgstr "revizyonlar hazırlanırken hata"
-
 #, c-format
 msgid "commit %s is not marked reachable"
 msgstr "%s işlemesi ulaşılabilir olarak imlenmedi"
@@ -21198,9 +21320,6 @@ msgstr "uzak servis yolu ayarlama protokol tarafından desteklenmiyor"
 msgid "invalid remote service path"
 msgstr "geçersiz uzak konum servis yolu"
 
-msgid "operation not supported by protocol"
-msgstr "işlem protokol tarafından desteklenmiyor"
-
 #, c-format
 msgid "can't connect to subservice %s"
 msgstr "%s altservisine bağlanılamıyor"
@@ -21331,10 +21450,6 @@ msgid "support for protocol v2 not implemented yet"
 msgstr "protokol v2 desteği henüz yerine getirilmedi"
 
 #, c-format
-msgid "unknown value for config '%s': %s"
-msgstr "'%s' yapılandırması için bilinmeyen değer: %s"
-
-#, c-format
 msgid "transport '%s' not allowed"
 msgstr "'%s' taşıyıcısına izin verilmiyor"
 
@@ -21386,6 +21501,9 @@ msgstr "bundle-uri işlemi protokol tarafından desteklenmiyor"
 
 msgid "could not retrieve server-advertised bundle-uri list"
 msgstr "sunucu tarafından tanıtılan bundle-uri listesi alınamadı"
+
+msgid "operation not supported by protocol"
+msgstr "işlem protokol tarafından desteklenmiyor"
 
 msgid "too-short tree object"
 msgstr "ağaç nesnesi çok kısa"
@@ -22209,6 +22327,10 @@ msgstr "Ek olarak, indeksiniz işlenmemiş değişiklikler içeriyor."
 #, c-format
 msgid "cannot %s: Your index contains uncommitted changes."
 msgstr "%s yapılamıyor: İndeksiniz işlenmemiş değişiklikler içeriyor."
+
+#, c-format
+msgid "unknown style '%s' given for '%s'"
+msgstr "'%s' bilinmeyen biçemi şunun için verildi: '%s'"
 
 msgid ""
 "Error: Your local changes to the following files would be overwritten by "

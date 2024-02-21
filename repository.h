@@ -39,6 +39,7 @@ struct repo_settings {
 	int sparse_index;
 	int pack_read_reverse_index;
 	int pack_use_bitmap_boundary_traversal;
+	int pack_use_multi_pack_reuse;
 
 	/*
 	 * Does this repository have core.useReplaceRefs=true (on by
@@ -67,8 +68,6 @@ struct repo_path_cache {
 	char *merge_rr;
 	char *merge_mode;
 	char *merge_head;
-	char *merge_autostash;
-	char *auto_merge;
 	char *fetch_head;
 	char *shallow;
 };

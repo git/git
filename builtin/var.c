@@ -90,7 +90,7 @@ static char *git_config_val_global(int ident_flag UNUSED)
 	char *user, *xdg;
 	size_t unused;
 
-	git_global_config(&user, &xdg);
+	git_global_config_paths(&user, &xdg);
 	if (xdg && *xdg) {
 		normalize_path_copy(xdg, xdg);
 		strbuf_addf(&buf, "%s\n", xdg);

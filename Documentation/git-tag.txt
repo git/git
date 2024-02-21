@@ -224,7 +224,7 @@ it in the repository configuration as follows:
 
 -------------------------------------
 [user]
-    signingKey = <gpg-key_id>
+    signingKey = <gpg-key-id>
 -------------------------------------
 
 `pager.tag` is only respected when listing tags, i.e., when `-l` is

@@ -309,7 +309,7 @@ Line                                     Notes
 ------------------------------------------------------------
 # branch.oid <commit> | (initial)        Current commit.
 # branch.head <branch> | (detached)      Current branch.
-# branch.upstream <upstream_branch>      If upstream is set.
+# branch.upstream <upstream-branch>      If upstream is set.
 # branch.ab +<ahead> -<behind>           If upstream is set and
 					 the commit is present.
 ------------------------------------------------------------
@@ -502,7 +502,7 @@ results, so it could be faster on subsequent runs.
 	usually worth the additional size.
 
 * `core.untrackedCache=true` and `core.fsmonitor=true` or
-	`core.fsmonitor=<hook_command_pathname>` (see
+	`core.fsmonitor=<hook-command-pathname>` (see
 	linkgit:git-update-index[1]): enable both the untracked cache
 	and FSMonitor features and only search directories that have
 	been modified since the previous `git status` command.  This

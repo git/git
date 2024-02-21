@@ -7,7 +7,7 @@ workflow:
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_REF_PROTECTED == "true"
 
-test:
+test:linux:
   image: $image
   before_script:
     - ./ci/install-docker-dependencies.sh
@@ -47,6 +47,38 @@ test:
         image: fedora:latest
       - jobname: linux-musl
         image: alpine:latest
+  artifacts:
+    paths:
+      - t/failed-test-artifacts
+    when: on_failure
+
+test:osx:
+  image: $image
+  tags:
+    - saas-macos-medium-m1
+  variables:
+    TEST_OUTPUT_DIRECTORY: "/Volumes/RAMDisk"
+  before_script:
+    # Create a 4GB RAM disk that we use to store test output on. This small hack
+    # significantly speeds up tests by more than a factor of 2 because the
+    # macOS runners use network-attached storage as disks, which is _really_
+    # slow with the many small writes that our tests do.
+    - sudo diskutil apfs create $(hdiutil attach -nomount ram://8192000) RAMDisk
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-build-and-tests.sh
+  after_script:
+    - |
+      if test "$CI_JOB_STATUS" != 'success'
+      then
+        ./ci/print-test-failures.sh
+        mv "$TEST_OUTPUT_DIRECTORY"/failed-test-artifacts t/
+      fi
+  parallel:
+    matrix:
+      - jobname: osx-clang
+        image: macos-13-xcode-14
+        CC: clang
   artifacts:
     paths:
       - t/failed-test-artifacts

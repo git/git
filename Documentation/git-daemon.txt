@@ -18,7 +18,7 @@ SYNOPSIS
 	     [--allow-override=<service>] [--forbid-override=<service>]
 	     [--access-hook=<path>] [--[no-]informative-errors]
 	     [--inetd |
-	      [--listen=<host_or_ipaddr>] [--port=<n>]
+	      [--listen=<host-or-ipaddr>] [--port=<n>]
 	      [--user=<user> [--group=<group>]]]
 	     [--log-destination=(stderr|syslog|none)]
 	     [<directory>...]
@@ -86,10 +86,10 @@ OPTIONS
 	Incompatible with --detach, --port, --listen, --user and --group
 	options.
 
---listen=<host_or_ipaddr>::
+--listen=<host-or-ipaddr>::
 	Listen on a specific IP address or hostname.  IP addresses can
 	be either an IPv4 address or an IPv6 address if supported.  If IPv6
-	is not supported, then --listen=hostname is also not supported and
+	is not supported, then --listen=<hostname> is also not supported and
 	--listen must be given an IPv4 address.
 	Can be given more than once.
 	Incompatible with `--inetd` option.
@@ -141,8 +141,8 @@ otherwise `stderr`.
 	specified with no parameter, a request to
 	git://host/{tilde}alice/foo is taken as a request to access
 	'foo' repository in the home directory of user `alice`.
-	If `--user-path=path` is specified, the same request is
-	taken as a request to access `path/foo` repository in
+	If `--user-path=<path>` is specified, the same request is
+	taken as a request to access `<path>/foo` repository in
 	the home directory of user `alice`.
 
 --verbose::

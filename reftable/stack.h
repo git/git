@@ -14,7 +14,10 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-stack.h"
 
 struct reftable_stack {
+	struct stat list_st;
 	char *list_file;
+	int list_fd;
+
 	char *reftable_dir;
 	int disable_auto_compact;
 
@@ -29,13 +32,13 @@ struct reftable_stack {
 int read_lines(const char *filename, char ***lines);
 
 struct segment {
-	int start, end;
+	size_t start, end;
 	int log;
 	uint64_t bytes;
 };
 
 int fastlog2(uint64_t sz);
-struct segment *sizes_to_segments(int *seglen, uint64_t *sizes, int n);
-struct segment suggest_compaction_segment(uint64_t *sizes, int n);
+struct segment *sizes_to_segments(size_t *seglen, uint64_t *sizes, size_t n);
+struct segment suggest_compaction_segment(uint64_t *sizes, size_t n);
 
 #endif

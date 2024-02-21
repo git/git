@@ -359,9 +359,11 @@ In any case, a field name that refers to a field inapplicable to
 the object referred by the ref does not cause an error.  It
 returns an empty string instead.
 
-As a special case for the date-type fields, you may specify a format for
-the date by adding `:` followed by date format name (see the
-values the `--date` option to linkgit:git-rev-list[1] takes).
+As a special case for the date-type fields, you may specify a format for the
+date by adding `:` followed by date format name (see the values the `--date`
+option to linkgit:git-rev-list[1] takes). If this formatting is provided in
+a `--sort` key, references will be sorted according to the byte-value of the
+formatted string rather than the numeric value of the underlying timestamp.
 
 Some atoms like %(align) and %(if) always require a matching %(end).
 We call them "opening atoms" and sometimes denote them as %($open).

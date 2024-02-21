@@ -3218,21 +3218,46 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	return -1;
 }
 
-static int files_init_db(struct ref_store *ref_store, struct strbuf *err UNUSED)
+static int files_init_db(struct ref_store *ref_store,
+			 int flags,
+			 struct strbuf *err UNUSED)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "init_db");
 	struct strbuf sb = STRBUF_INIT;
 
 	/*
-	 * Create .git/refs/{heads,tags}
+	 * We need to create a "refs" dir in any case so that older versions of
+	 * Git can tell that this is a repository. This serves two main purposes:
+	 *
+	 * - Clients will know to stop walking the parent-directory chain when
+	 *   detecting the Git repository. Otherwise they may end up detecting
+	 *   a Git repository in a parent directory instead.
+	 *
+	 * - Instead of failing to detect a repository with unknown reference
+	 *   format altogether, old clients will print an error saying that
+	 *   they do not understand the reference format extension.
 	 */
-	files_ref_path(refs, &sb, "refs/heads");
+	strbuf_addf(&sb, "%s/refs", ref_store->gitdir);
 	safe_create_dir(sb.buf, 1);
+	adjust_shared_perm(sb.buf);
 
-	strbuf_reset(&sb);
-	files_ref_path(refs, &sb, "refs/tags");
-	safe_create_dir(sb.buf, 1);
+	/*
+	 * There is no need to create directories for common refs when creating
+	 * a worktree ref store.
+	 */
+	if (!(flags & REFS_INIT_DB_IS_WORKTREE)) {
+		/*
+		 * Create .git/refs/{heads,tags}
+		 */
+		strbuf_reset(&sb);
+		files_ref_path(refs, &sb, "refs/heads");
+		safe_create_dir(sb.buf, 1);
+
+		strbuf_reset(&sb);
+		files_ref_path(refs, &sb, "refs/tags");
+		safe_create_dir(sb.buf, 1);
+	}
 
 	strbuf_release(&sb);
 	return 0;

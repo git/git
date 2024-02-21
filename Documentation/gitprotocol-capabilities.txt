@@ -378,7 +378,7 @@ fetch-pack may send "filter" commands to request a partial clone
 or partial fetch and request that the server omit various objects
 from the packfile.
 
-session-id=<session id>
+session-id=<session-id>
 -----------------------
 
 The server may advertise a session ID that can be used to identify this process

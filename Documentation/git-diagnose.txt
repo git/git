@@ -45,7 +45,7 @@ OPTIONS
 -s <format>::
 --suffix <format>::
 	Specify an alternate suffix for the diagnostics archive name, to create
-	a file named 'git-diagnostics-<formatted suffix>'. This should take the
+	a file named 'git-diagnostics-<formatted-suffix>'. This should take the
 	form of a strftime(3) format string; the current local time will be
 	used.
 

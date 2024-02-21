@@ -2255,23 +2255,6 @@ test_expect_success 'log on empty repo fails' '
 	test_grep does.not.have.any.commits stderr
 '
 
-test_expect_success REFFILES 'log diagnoses bogus HEAD hash' '
-	git init empty &&
-	test_when_finished "rm -rf empty" &&
-	echo 1234abcd >empty/.git/refs/heads/main &&
-	test_must_fail git -C empty log 2>stderr &&
-	test_grep broken stderr
-'
-
-test_expect_success REFFILES 'log diagnoses bogus HEAD symref' '
-	git init empty &&
-	test-tool -C empty ref-store main create-symref HEAD refs/heads/invalid.lock &&
-	test_must_fail git -C empty log 2>stderr &&
-	test_grep broken stderr &&
-	test_must_fail git -C empty log --default totally-bogus 2>stderr &&
-	test_grep broken stderr
-'
-
 test_expect_success 'log does not default to HEAD when rev input is given' '
 	git log --branches=does-not-exist >actual &&
 	test_must_be_empty actual

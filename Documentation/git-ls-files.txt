@@ -119,8 +119,10 @@ OPTIONS
 
 --exclude-per-directory=<file>::
 	Read additional exclude patterns that apply only to the
-	directory and its subdirectories in <file>.  Deprecated; use
-	--exclude-standard instead.
+	directory and its subdirectories in <file>.  If you are
+	trying to emulate the way Porcelain commands work, using
+	the `--exclude-standard` option instead is easier and more
+	thorough.
 
 --exclude-standard::
 	Add the standard Git exclusions: .git/info/exclude, .gitignore
@@ -298,9 +300,8 @@ traversing the directory tree and finding files to show when the
 flags --others or --ignored are specified.  linkgit:gitignore[5]
 specifies the format of exclude patterns.
 
-Generally, you should just use --exclude-standard, but for historical
-reasons the exclude patterns can be specified from the following
-places, in order:
+These exclude patterns can be specified from the following places,
+in order:
 
   1. The command-line flag --exclude=<pattern> specifies a
      single pattern.  Patterns are ordered in the same order
@@ -321,6 +322,18 @@ from the file specified with --exclude-from is relative to the
 top of the directory tree.  A pattern read from a file specified
 by --exclude-per-directory is relative to the directory that the
 pattern file appears in.
+
+Generally, you should be able to use `--exclude-standard` when you
+want the exclude rules applied the same way as what Porcelain
+commands do.  To emulate what `--exclude-standard` specifies, you
+can give `--exclude-per-directory=.gitignore`, and then specify:
+
+  1. The file specified by the `core.excludesfile` configuration
+     variable, if exists, or the `$XDG_CONFIG_HOME/git/ignore` file.
+
+  2. The `$GIT_DIR/info/exclude` file.
+
+via the `--exclude-from=` option.
 
 SEE ALSO
 --------

@@ -243,7 +243,7 @@ named remote is not being used both values will be the same.
 Information about what is to be pushed is provided on the hook's standard
 input with lines of the form:
 
-  <local ref> SP <local object name> SP <remote ref> SP <remote object name> LF
+  <local-ref> SP <local-object-name> SP <remote-ref> SP <remote-object-name> LF
 
 For instance, if the command +git push origin master:foreign+ were run the
 hook would receive a line like the following:
@@ -251,9 +251,9 @@ hook would receive a line like the following:
   refs/heads/master 67890 refs/heads/foreign 12345
 
 although the full object name would be supplied.  If the foreign ref does not
-yet exist the `<remote object name>` will be the all-zeroes object name.  If a
-ref is to be deleted, the `<local ref>` will be supplied as `(delete)` and the
-`<local object name>` will be the all-zeroes object name.  If the local commit
+yet exist the `<remote-object-name>` will be the all-zeroes object name.  If a
+ref is to be deleted, the `<local-ref>` will be supplied as `(delete)` and the
+`<local-object-name>` will be the all-zeroes object name.  If the local commit
 was specified by something other than a name which could be expanded (such as
 `HEAD~`, or an object name) it will be supplied as it was originally given.
 

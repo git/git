@@ -106,9 +106,8 @@ test_expect_success LONG_REF 'we can parse long symbolic ref' '
 '
 
 test_expect_success 'symbolic-ref reports failure in exit code' '
-	test_when_finished "rm -f .git/HEAD.lock" &&
-	>.git/HEAD.lock &&
-	test_must_fail git symbolic-ref HEAD refs/heads/whatever
+	# Create d/f conflict to simulate failure.
+	test_must_fail git symbolic-ref refs/heads refs/heads/foo
 '
 
 test_expect_success 'symbolic-ref writes reflog entry' '

@@ -199,7 +199,7 @@ which can be used to limit the refs sent from the server.
 
 Additional features not supported in the base command will be advertised
 as the value of the command in the capability advertisement in the form
-of a space separated list of features: "<command>=<feature 1> <feature 2>"
+of a space separated list of features: "<command>=<feature-1> <feature-2>"
 
 ls-refs takes in the following arguments:
 
@@ -245,7 +245,7 @@ addition of future extensions.
 
 Additional features not supported in the base command will be advertised
 as the value of the command in the capability advertisement in the form
-of a space separated list of features: "<command>=<feature 1> <feature 2>"
+of a space separated list of features: "<command>=<feature-1> <feature-2>"
 
 A `fetch` request can take the following arguments:
 
@@ -363,7 +363,7 @@ can be included in the client's request as well as the potential
 addition of the 'packfile-uris' section in the server's response as
 explained below.
 
-    packfile-uris <comma-separated list of protocols>
+    packfile-uris <comma-separated-list-of-protocols>
 	Indicates to the server that the client is willing to receive
 	URIs of any of the given protocols in place of objects in the
 	sent packfile. Before performing the connectivity check, the
@@ -534,7 +534,7 @@ with objects using hash algorithm X.  If not specified, the server is assumed to
 only handle SHA-1.  If the client would like to use a hash algorithm other than
 SHA-1, it should specify its object-format string.
 
-session-id=<session id>
+session-id=<session-id>
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 The server may advertise a session ID that can be used to identify this process

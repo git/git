@@ -386,8 +386,8 @@ The remaining data of each directory block is grouped by type:
 	long, "REUC" extension that is M-bytes long, followed by "EOIE",
 	then the hash would be:
 
-	Hash("TREE" + <binary representation of N> +
-		"REUC" + <binary representation of M>)
+	Hash("TREE" + <binary-representation-of-N> +
+		"REUC" + <binary-representation-of-M>)
 
 == Index Entry Offset Table
 

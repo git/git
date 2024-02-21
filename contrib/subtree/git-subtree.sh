@@ -787,6 +787,22 @@ ensure_valid_ref_format () {
 		die "fatal: '$1' does not look like a ref"
 }
 
+# Usage: check if a commit from another subtree should be
+# ignored from processing for splits
+should_ignore_subtree_split_commit () {
+	assert test $# = 1
+	local rev="$1"
+	if test -n "$(git log -1 --grep="git-subtree-dir:" $rev)"
+	then
+		if test -z "$(git log -1 --grep="git-subtree-mainline:" $rev)" &&
+			test -z "$(git log -1 --grep="git-subtree-dir: $arg_prefix$" $rev)"
+		then
+			return 0
+		fi
+	fi
+	return 1
+}
+
 # Usage: process_split_commit REV PARENTS
 process_split_commit () {
 	assert test $# = 2
@@ -972,7 +988,19 @@ cmd_split () {
 	eval "$grl" |
 	while read rev parents
 	do
-		process_split_commit "$rev" "$parents"
+		if should_ignore_subtree_split_commit "$rev"
+		then
+			continue
+		fi
+		parsedparents=''
+		for parent in $parents
+		do
+			if ! should_ignore_subtree_split_commit "$parent"
+			then
+				parsedparents="$parsedparents$parent "
+			fi
+		done
+		process_split_commit "$rev" "$parsedparents"
 	done || exit $?
 
 	latest_new=$(cache_get latest_new) || exit $?

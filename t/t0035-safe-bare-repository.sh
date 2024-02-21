@@ -78,4 +78,12 @@ test_expect_success 'no trace when GIT_DIR is explicitly provided' '
 	expect_accepted_explicit "$pwd/outer-repo/bare-repo"
 '
 
+test_expect_success 'no trace when "bare repository" is .git' '
+	expect_accepted_implicit -C outer-repo/.git
+'
+
+test_expect_success 'no trace when "bare repository" is a subdir of .git' '
+	expect_accepted_implicit -C outer-repo/.git/objects
+'
+
 test_done

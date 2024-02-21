@@ -24,6 +24,7 @@
 #include "ref-filter.h"
 #include "worktree.h"
 #include "help.h"
+#include "advice.h"
 #include "commit-reach.h"
 
 static const char * const builtin_branch_usage[] = {
@@ -190,9 +191,10 @@ static int check_branch_commit(const char *branchname, const char *refname,
 		return -1;
 	}
 	if (!force && !branch_merged(kinds, branchname, rev, head_rev)) {
-		error(_("the branch '%s' is not fully merged.\n"
-		      "If you are sure you want to delete it, "
-		      "run 'git branch -D %s'"), branchname, branchname);
+		error(_("the branch '%s' is not fully merged"), branchname);
+		advise_if_enabled(ADVICE_FORCE_DELETE_BRANCH,
+				  _("If you are sure you want to delete it, "
+				  "run 'git branch -D %s'"), branchname);
 		return -1;
 	}
 	return 0;

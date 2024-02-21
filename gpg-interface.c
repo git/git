@@ -1078,7 +1078,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 		if (strstr(signer_stderr.buf, "usage:"))
 			error(_("ssh-keygen -Y sign is needed for ssh signing (available in openssh version 8.2p1+)"));
 
-		error("%s", signer_stderr.buf);
+		ret = error("%s", signer_stderr.buf);
 		goto out;
 	}
 

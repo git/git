@@ -121,13 +121,12 @@ test_expect_success 'min/max age uses entry date to limit' '
 
 # Create a situation where the reflog and ref database disagree about the latest
 # state of HEAD.
-test_expect_success REFFILES 'walk prefers reflog to ref tip' '
+test_expect_success 'walk prefers reflog to ref tip' '
+	test_commit A &&
+	test_commit B &&
+	git reflog delete HEAD@{0} &&
 	head=$(git rev-parse HEAD) &&
-	one=$(git rev-parse one) &&
-	ident="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" &&
-	echo "$head $one $ident	broken reflog entry" >>.git/logs/HEAD &&
-
-	echo $one >expect &&
+	git rev-parse A >expect &&
 	git log -g --format=%H -1 >actual &&
 	test_cmp expect actual
 '

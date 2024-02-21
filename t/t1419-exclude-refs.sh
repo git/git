@@ -8,6 +8,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+if test_have_prereq !REFFILES
+then
+	skip_all='skipping `git for-each-ref --exclude` tests; need files backend'
+	test_done
+fi
+
 for_each_ref__exclude () {
 	GIT_TRACE2_PERF=1 test-tool ref-store main \
 		for-each-ref--exclude "$@" >actual.raw
