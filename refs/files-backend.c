@@ -2129,17 +2129,9 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 	while ((ok = dir_iterator_advance(diter)) == ITER_OK) {
 		if (!S_ISREG(diter->st.st_mode))
 			continue;
-		if (diter->basename[0] == '.')
+		if (check_refname_format(diter->basename,
+					 REFNAME_ALLOW_ONELEVEL))
 			continue;
-		if (ends_with(diter->basename, ".lock"))
-			continue;
-
-		if (!refs_resolve_ref_unsafe(iter->ref_store,
-					     diter->relative_path, 0,
-					     NULL, NULL)) {
-			error("bad ref for %s", diter->path.buf);
-			continue;
-		}
 
 		iter->base.refname = diter->relative_path;
 		return ITER_OK;

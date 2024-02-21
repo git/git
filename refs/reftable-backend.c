@@ -1616,11 +1616,9 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		if (iter->last_name && !strcmp(iter->log.refname, iter->last_name))
 			continue;
 
-		if (!refs_resolve_ref_unsafe(&iter->refs->base, iter->log.refname,
-					     0, NULL, NULL)) {
-			error(_("bad ref for %s"), iter->log.refname);
+		if (check_refname_format(iter->log.refname,
+					 REFNAME_ALLOW_ONELEVEL))
 			continue;
-		}
 
 		free(iter->last_name);
 		iter->last_name = xstrdup(iter->log.refname);
