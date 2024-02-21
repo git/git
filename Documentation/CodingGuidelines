@@ -666,6 +666,11 @@ Writing Documentation:
    <new-branch-name>
    --template=<template-directory>
 
+ When a placeholder is cited in text paragraph, it is enclosed in angle
+ brackets to remind the reader the reference in the synopsis section.
+ For better visibility, the placeholder is typeset in italics:
+   The _<file>_ to be added.
+
  Possibility of multiple occurrences is indicated by three dots:
    <file>...
    (One or more of <file>.)
@@ -750,6 +755,8 @@ Writing Documentation:
       `--pretty=oneline`
    Incorrect:
       `\--pretty=oneline`
+
+A placeholder is not enclosed in backticks, as it is not a literal.
 
  If some place in the documentation needs to typeset a command usage
  example with inline substitutions, it is fine to use +monospaced and
