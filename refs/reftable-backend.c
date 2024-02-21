@@ -479,7 +479,7 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 	int ret;
 
 	iter = xcalloc(1, sizeof(*iter));
-	base_ref_iterator_init(&iter->base, &reftable_ref_iterator_vtable, 1);
+	base_ref_iterator_init(&iter->base, &reftable_ref_iterator_vtable);
 	iter->prefix = prefix;
 	iter->base.oid = &iter->oid;
 	iter->flags = flags;
@@ -532,7 +532,7 @@ static struct ref_iterator *reftable_be_iterator_begin(struct ref_store *ref_sto
 	 * single iterator.
 	 */
 	worktree_iter = ref_iterator_for_stack(refs, refs->worktree_stack, prefix, flags);
-	return merge_ref_iterator_begin(1, &worktree_iter->base, &main_iter->base,
+	return merge_ref_iterator_begin(&worktree_iter->base, &main_iter->base,
 					ref_iterator_select, NULL);
 }
 
@@ -1680,7 +1680,7 @@ static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftabl
 	int ret;
 
 	iter = xcalloc(1, sizeof(*iter));
-	base_ref_iterator_init(&iter->base, &reftable_reflog_iterator_vtable, 1);
+	base_ref_iterator_init(&iter->base, &reftable_reflog_iterator_vtable);
 	iter->refs = refs;
 	iter->base.oid = &iter->oid;
 
@@ -1715,7 +1715,7 @@ static struct ref_iterator *reftable_be_reflog_iterator_begin(struct ref_store *
 
 	worktree_iter = reflog_iterator_for_stack(refs, refs->worktree_stack);
 
-	return merge_ref_iterator_begin(1, &worktree_iter->base, &main_iter->base,
+	return merge_ref_iterator_begin(&worktree_iter->base, &main_iter->base,
 					ref_iterator_select, NULL);
 }
 
