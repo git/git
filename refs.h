@@ -535,11 +535,18 @@ int for_each_reflog_ent(const char *refname, each_reflog_ent_fn fn, void *cb_dat
 int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void *cb_data);
 
 /*
+ * The signature for the callback function for the {refs_,}for_each_reflog()
+ * functions below. The memory pointed to by the refname argument is only
+ * guaranteed to be valid for the duration of a single callback invocation.
+ */
+typedef int each_reflog_fn(const char *refname, void *cb_data);
+
+/*
  * Calls the specified function for each reflog file until it returns nonzero,
  * and returns the value. Reflog file order is unspecified.
  */
-int refs_for_each_reflog(struct ref_store *refs, each_ref_fn fn, void *cb_data);
-int for_each_reflog(each_ref_fn fn, void *cb_data);
+int refs_for_each_reflog(struct ref_store *refs, each_reflog_fn fn, void *cb_data);
+int for_each_reflog(each_reflog_fn fn, void *cb_data);
 
 #define REFNAME_ALLOW_ONELEVEL 1
 #define REFNAME_REFSPEC_PATTERN 2

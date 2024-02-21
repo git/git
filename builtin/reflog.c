@@ -60,8 +60,7 @@ struct worktree_reflogs {
 	struct string_list reflogs;
 };
 
-static int collect_reflog(const char *ref, const struct object_id *oid UNUSED,
-			  int flags UNUSED, void *cb_data)
+static int collect_reflog(const char *ref, void *cb_data)
 {
 	struct worktree_reflogs *cb = cb_data;
 	struct worktree *worktree = cb->worktree;
