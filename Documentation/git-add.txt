@@ -63,7 +63,7 @@ OPTIONS
 	to ignore removed files; use `--no-all` option if you want
 	to add modified or new files but ignore removed ones.
 +
-For more details about the <pathspec> syntax, see the 'pathspec' entry
+For more details about the _<pathspec>_ syntax, see the 'pathspec' entry
 in linkgit:gitglossary[7].
 
 -n::
@@ -119,10 +119,10 @@ apply to the index. See EDITING PATCHES below.
 -u::
 --update::
 	Update the index just where it already has an entry matching
-	<pathspec>.  This removes as well as modifies index entries to
+	_<pathspec>_.  This removes as well as modifies index entries to
 	match the working tree, but adds no new files.
 +
-If no <pathspec> is given when `-u` option is used, all
+If no _<pathspec>_ is given when `-u` option is used, all
 tracked files in the entire working tree are updated (old versions
 of Git used to limit the update to the current directory and its
 subdirectories).
@@ -131,11 +131,11 @@ subdirectories).
 --all::
 --no-ignore-removal::
 	Update the index not only where the working tree has a file
-	matching <pathspec> but also where the index already has an
+	matching _<pathspec>_ but also where the index already has an
 	entry. This adds, modifies, and removes index entries to
 	match the working tree.
 +
-If no <pathspec> is given when `-A` option is used, all
+If no _<pathspec>_ is given when `-A` option is used, all
 files in the entire working tree are updated (old versions
 of Git used to limit the update to the current directory and its
 subdirectories).
@@ -145,11 +145,11 @@ subdirectories).
 	Update the index by adding new files that are unknown to the
 	index and files modified in the working tree, but ignore
 	files that have been removed from the working tree.  This
-	option is a no-op when no <pathspec> is used.
+	option is a no-op when no _<pathspec>_ is used.
 +
 This option is primarily to help users who are used to older
-versions of Git, whose "git add <pathspec>..." was a synonym
-for "git add --no-all <pathspec>...", i.e. ignored removed files.
+versions of Git, whose "git add _<pathspec>_..." was a synonym
+for "git add --no-all _<pathspec>_...", i.e. ignored removed files.
 
 -N::
 --intent-to-add::
@@ -198,8 +198,8 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	unchanged.
 
 --pathspec-from-file=<file>::
-	Pathspec is passed in `<file>` instead of commandline args. If
-	`<file>` is exactly `-` then standard input is used. Pathspec
+	Pathspec is passed in _<file>_ instead of commandline args. If
+	_<file>_ is exactly `-` then standard input is used. Pathspec
 	elements are separated by LF or CR/LF. Pathspec elements can be
 	quoted as explained for the configuration variable `core.quotePath`
 	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
