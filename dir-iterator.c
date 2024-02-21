@@ -94,15 +94,15 @@ static int pop_level(struct dir_iterator_int *iter)
 
 /*
  * Populate iter->base with the necessary information on the next iteration
- * entry, represented by the given dirent de. Return 0 on success and -1
+ * entry, represented by the given name. Return 0 on success and -1
  * otherwise, setting errno accordingly.
  */
 static int prepare_next_entry_data(struct dir_iterator_int *iter,
-				   struct dirent *de)
+				   const char *name)
 {
 	int err, saved_errno;
 
-	strbuf_addstr(&iter->base.path, de->d_name);
+	strbuf_addstr(&iter->base.path, name);
 	/*
 	 * We have to reset these because the path strbuf might have
 	 * been realloc()ed at the previous strbuf_addstr().
@@ -159,7 +159,7 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
 
-		if (prepare_next_entry_data(iter, de)) {
+		if (prepare_next_entry_data(iter, de->d_name)) {
 			if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
 				goto error_out;
 			continue;
