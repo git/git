@@ -74,7 +74,7 @@ test_expect_success 'verify_ref(new-main)' '
 '
 
 test_expect_success 'for_each_reflog()' '
-	$RUN for-each-reflog | sort -k2 | cut -d" " -f 2- >actual &&
+	$RUN for-each-reflog | cut -d" " -f 2- >actual &&
 	cat >expected <<-\EOF &&
 	HEAD 0x1
 	refs/heads/main 0x0
