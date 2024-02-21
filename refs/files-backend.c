@@ -2210,32 +2210,6 @@ static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
 	return ref_iterator;
 }
 
-static enum iterator_selection reflog_iterator_select(
-	struct ref_iterator *iter_worktree,
-	struct ref_iterator *iter_common,
-	void *cb_data UNUSED)
-{
-	if (iter_worktree) {
-		/*
-		 * We're a bit loose here. We probably should ignore
-		 * common refs if they are accidentally added as
-		 * per-worktree refs.
-		 */
-		return ITER_SELECT_0;
-	} else if (iter_common) {
-		if (parse_worktree_ref(iter_common->refname, NULL, NULL,
-				       NULL) == REF_WORKTREE_SHARED)
-			return ITER_SELECT_1;
-
-		/*
-		 * The main ref store may contain main worktree's
-		 * per-worktree refs, which should be ignored
-		 */
-		return ITER_SKIP_1;
-	} else
-		return ITER_DONE;
-}
-
 static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_store)
 {
 	struct files_ref_store *refs =
@@ -2246,9 +2220,9 @@ static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_st
 		return reflog_iterator_begin(ref_store, refs->gitcommondir);
 	} else {
 		return merge_ref_iterator_begin(
-			0, reflog_iterator_begin(ref_store, refs->base.gitdir),
+			1, reflog_iterator_begin(ref_store, refs->base.gitdir),
 			reflog_iterator_begin(ref_store, refs->gitcommondir),
-			reflog_iterator_select, refs);
+			ref_iterator_select, refs);
 	}
 }
 

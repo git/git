@@ -98,6 +98,49 @@ struct merge_ref_iterator {
 	struct ref_iterator **current;
 };
 
+enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
+					    struct ref_iterator *iter_common,
+					    void *cb_data UNUSED)
+{
+	if (iter_worktree && !iter_common) {
+		/*
+		 * Return the worktree ref if there are no more common refs.
+		 */
+		return ITER_SELECT_0;
+	} else if (iter_common) {
+		/*
+		 * In case we have pending worktree and common refs we need to
+		 * yield them based on their lexicographical order. Worktree
+		 * refs that have the same name as common refs shadow the
+		 * latter.
+		 */
+		if (iter_worktree) {
+			int cmp = strcmp(iter_worktree->refname,
+					 iter_common->refname);
+			if (cmp < 0)
+				return ITER_SELECT_0;
+			else if (!cmp)
+				return ITER_SELECT_0_SKIP_1;
+		}
+
+		 /*
+		  * We now know that the lexicographically-next ref is a common
+		  * ref. When the common ref is a shared one we return it.
+		  */
+		if (parse_worktree_ref(iter_common->refname, NULL, NULL,
+				       NULL) == REF_WORKTREE_SHARED)
+			return ITER_SELECT_1;
+
+		/*
+		 * Otherwise, if the common ref is a per-worktree ref we skip
+		 * it because it would belong to the main worktree, not ours.
+		 */
+		return ITER_SKIP_1;
+	} else {
+		return ITER_DONE;
+	}
+}
+
 static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 {
 	struct merge_ref_iterator *iter =

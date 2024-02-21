@@ -387,6 +387,15 @@ typedef enum iterator_selection ref_iterator_select_fn(
 		void *cb_data);
 
 /*
+ * An implementation of ref_iterator_select_fn that merges worktree and common
+ * refs. Per-worktree refs from the common iterator are ignored, worktree refs
+ * override common refs. Refs are selected lexicographically.
+ */
+enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
+					    struct ref_iterator *iter_common,
+					    void *cb_data);
+
+/*
  * Iterate over the entries from iter0 and iter1, with the values
  * interleaved as directed by the select function. The iterator takes
  * ownership of iter0 and iter1 and frees them when the iteration is
