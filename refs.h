@@ -1023,4 +1023,7 @@ extern struct ref_namespace_info ref_namespace[NAMESPACE__COUNT];
  */
 void update_ref_namespace(enum ref_namespace namespace, char *ref);
 
+int is_pseudoref(struct ref_store *refs, const char *refname);
+int is_headref(struct ref_store *refs, const char *refname);
+
 #endif /* REFS_H */
