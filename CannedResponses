@@ -1,0 +1,95 @@
+----------------------------------------------------------------
+[the structure of a log message]
+
+The usual way to compose a log message of this project is to
+
+ - Give an observation on how the current system work in the present
+   tense (so no need to say "Currently X is Y", just "X is Y"), and
+   discuss what you perceive as a problem in it.
+
+ - Propose a solution (optional---often, problem description
+   trivially leads to an obvious solution in reader's minds).
+
+ - Give commands to the codebase to "become like so".
+
+in this order.
+
+To those who have been intimately following the discussion, it often
+is understandable without some of the above, but we are not writing
+for those who review the patches.  We are primarily writing for future
+readers of "git log" who are not aware of the review discussion we
+have on list, so we should give something to prepare them by setting
+the stage and stating the objective first, before going into how the
+patch solved it.
+
+------------------------------------------------------------------------
+[polish your history]
+
+We frown upon a patch series that makes mistakes in an earlier step,
+only to fix them in a later step.  The "git rebase -i" command helps
+us pretend to be more perfect developers than we actually are,
+whipping your patch series into a shape that builds one small step
+on top of another in a logical succession.  Such a patch series is
+easier to understand than a history that faithfully records all the
+stumbles the developer made until they reached the final solution.
+
+------------------------------------------------------------------------
+[not just respond, update the patches]
+
+Not limited to this one, but when a reviewer says "this is not
+clear", it is often not a request to only clarify something, which
+is clear to any intelligent user of the end product, to a clueless
+reviewer, whose intelligence is below the target audience, in an
+e-mail response.  It is pointing out that the end product, either the
+patch text or the proposed log message, is not clear to target
+audience and needs update.
+
+----------------------------------------------------------------
+[make us come to you, begging]
+
+I've seen from time to time people ask "I am thinking of doing this;
+will a patch be accepted?  If so, I'll work on it." before showing
+any work, and my response always has been:
+
+ (1) We don't know how useful and interesting your contribution would
+     be for our audience, until we see it; and
+
+ (2) If you truly believe in your work (find it useful, find writing
+     it fun, etc.), that would be incentive enough for you to work
+     on it, whether or not the result will land in my tree.  You
+     should instead aim for something so brilliant that we would
+     come to you begging for your permission to include it in our
+     project.
+
+----------------------------------------------------------------
+[mailing list is the primary place]
+
+One thing to note is that I do not respond to a pull request in private,
+and Github pull request, as I understand it, is very private in nature.
+The patches are to be reviewed on the main mailing list first.
+
+It's OK to say "these patches are also available in my repository at
+Github whose URL is this" in the commentary part of the final submission
+message after the list reaches consensus that your change is a good thing,
+and that may reduce the chance of mistakes when I accept the patches
+especially if the series is large, so I am not saying that repositories
+people have Github have no value to my workflow.  But it will not come
+into the picture before the final submission phase.
+
+----------------------------------------------------------------
+[going incremental after hitting next]
+
+Once a commit hits 'next', it gets improved only by piling incremental
+updates on top with explanation.  The idea is: if all of us thought it
+has seen enough eyeballs and is good enough for 'next', yet we later
+find there was something we all missed, that is worth a separate
+explanation, e.g., "The primary motivation behind the series is still
+good, but for such and such reasons we missed this case we are
+fixing."
+
+Unless it turns out that the approach was fundamentally wrong and such
+an incremental update boils down to almost reverting the earlier one
+entirely and replacing it with the newer one.  In such a case, we do
+revert the earlier and replace it with the newer, in 'next'.
+
+----------------------------------------------------------------
