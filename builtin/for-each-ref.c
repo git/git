@@ -97,7 +97,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	}
 
 	filter.match_as_path = 1;
-	filter_and_format_refs(&filter, FILTER_REFS_ALL, sorting, &format);
+	filter_and_format_refs(&filter, FILTER_REFS_REGULAR, sorting, &format);
 
 	ref_filter_clear(&filter);
 	ref_sorting_release(sorting);
