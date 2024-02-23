@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2024, #07; Tue, 20)
-X-master-at: f41f85c9ec8d4d46de0fd5fded88db94d3ec8c11
-X-next-at: e91efceb0f2ddd49aa201fe3bd057235203b2dcd
+Subject: What's cooking in git.git (Feb 2024, #08; Thu, 22)
+X-master-at: 3c2a3fdc388747b9eaf4a4a4f2035c1c9ddb26d0
+X-next-at: e034bb2e1d470dd9e12a63da2b6b7e5d3a25a721
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2024, #07; Tue, 20)
+What's cooking in git.git (Feb 2024, #08; Thu, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,8 +17,8 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.44-rc2 has been tagged to fix a regression discovered the last
-minute.  The final release is postponed until later this week.
+Git 2.44 has been tagged, after fixing a last minute regression.
+Git 2.43.3 also has been tagged for the same fix.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,16 +49,81 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* la/trailer-cleanups (2024-02-19) 1 commit
- - trailer: fix comment/cut-line regression with opts->no_divider
+* ps/difftool-dir-diff-exit-code (2024-02-20) 1 commit
+  (merged to 'next' on 2024-02-21 at a7bbef5a5f)
+ + git-difftool--helper: honor `--trust-exit-code` with `--dir-diff`
 
- Fix to an already-graduated topic.
- source: <20240220010936.GA1793660@coredump.intra.peff.net>
+ "git difftool --dir-diff" learned to honor the "--trust-exit-code"
+ option; it used to always exit with 0 and signalled success.
+
+ Will cook in 'next'.
+ source: <0fac668f8fc021af9f9c4df5134da59816307ccc.1708423309.git.ps@pks.im>
+
+
+* ds/doc-send-email-capitalization (2024-02-20) 1 commit
+  (merged to 'next' on 2024-02-21 at c4aac4b993)
+ + documentation: send-email: use camel case consistently
+
+ Doc update.
+
+ Will cook in 'next'.
+ source: <88f1fe08c3047e14090957093ee8d98b0f60cb6c.1708467601.git.dsimic@manjaro.org>
+
+
+* ja/docfixes (2024-02-20) 3 commits
+  (merged to 'next' on 2024-02-21 at 6d778ca672)
+ + doc: end sentences with full-stop
+ + doc: close unclosed angle-bracket of a placeholder in git-clone doc
+ + doc: git-rev-parse: enforce command-line description syntax
+
+ Doc update.
+
+ Will cook in 'next'.
+ source: <pull.1670.git.1708468374.gitgitgadget@gmail.com>
+
+
+* hs/rebase-not-in-progress (2024-02-21) 1 commit
+ - rebase: make warning less passive aggressive
+
+ Error message update.
+
+ Will merge to 'next'.
+ source: <pull.1669.v2.git.1708537097448.gitgitgadget@gmail.com>
+
+
+* jw/remote-doc-typofix (2024-02-21) 1 commit
+ - git-remote.txt: fix typo
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <20240221083554.5255-1-jwilk@jwilk.net>
+
+
+* ja/doc-placeholders-markup-rules (2024-02-21) 1 commit
+ - doc: clarify the format of placeholders
+
+ The way placeholders are to be marked-up in documentation have been
+ specified; use "_<placeholder>_" to typeset the word inside a pair
+ of <angle-brakets> emphasized.
+
+ Will merge to 'next'.
+ source: <pull.1671.git.1708550340094.gitgitgadget@gmail.com>
+
+
+* jc/doc-add-placeholder-fix (2024-02-21) 1 commit
+ - doc: apply the new placeholder rules to git-add documentation
+
+ Practice the new mark-up rule for <placeholders> with "git add"
+ documentation page.
+
+ Will merge to 'next'.
+ source: <xmqqbk89molz.fsf@gitster.g>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * as/option-names-in-messages (2024-02-16) 5 commits
  - revision.c: trivial fix to message
@@ -126,24 +191,23 @@ Release tarballs are available at:
  source: <pull.1676.v2.git.git.1708375258296.gitgitgadget@gmail.com>
 
 
-* ps/reflog-list (2024-02-19) 7 commits
-  (merged to 'next' on 2024-02-19 at 6c491b5079)
- + builtin/reflog: introduce subcommand to list reflogs
- + refs: stop resolving ref corresponding to reflogs
- + refs: drop unused params from the reflog iterator callback
- + refs/files: sort reflogs returned by the reflog iterator
- + dir-iterator: support iteration in sorted order
- + dir-iterator: pass name to `prepare_next_entry_data()` directly
+* ps/reflog-list (2024-02-21) 9 commits
+ - builtin/reflog: introduce subcommand to list reflogs
+ - refs: stop resolving ref corresponding to reflogs
+ - refs: drop unused params from the reflog iterator callback
+ - refs: always treat iterators as ordered
+ - refs/files: sort merged worktree and common reflogs
+ - refs/files: sort reflogs returned by the reflog iterator
+ - dir-iterator: support iteration in sorted order
+ - dir-iterator: pass name to `prepare_next_entry_data()` directly
  + Merge branch 'ps/reftable-backend' into ps/reflog-list
  (this branch uses ps/reftable-backend.)
 
  "git reflog" learned a "list" subcommand that enumerates known reflogs.
 
- Will cook in 'next'.
- source: <cover.1708353264.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1708518982.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * jh/fsmonitor-icase-corner-case-fix (2024-02-14) 11 commits
  - t7527: update case-insenstive fsmonitor test
@@ -202,9 +266,12 @@ Release tarballs are available at:
 
 
 * cp/t9146-use-test-path-helpers (2024-02-14) 1 commit
- - t9146: replace test -d/-e/-f with appropriate test_path_is_* function
+  (merged to 'next' on 2024-02-21 at 0b8356ef33)
+ + t9146: replace test -d/-e/-f with appropriate test_path_is_* function
 
  Test script clean-up.
+
+ Will cook in 'next'.
  source: <pull.1661.v3.git.1707933048210.gitgitgadget@gmail.com>
 
 
@@ -292,7 +359,7 @@ Release tarballs are available at:
  command line, but it did not honor an empty string to mean "pass
  everything", which has been corrected.
 
- Will merge to 'next'?
+ Expecting a reroll?
  source: <20240211183923.131278-1-karthik.188@gmail.com>
 
 
@@ -378,17 +445,18 @@ Release tarballs are available at:
 
 
 * cc/rev-list-allow-missing-tips (2024-02-14) 4 commits
- - rev-list: allow missing tips with --missing=[print|allow*]
- - t6022: fix 'test' style and 'even though' typo
- - oidset: refactor oidset_insert_from_set()
- - revision: clarify a 'return NULL' in get_reference()
+  (merged to 'next' on 2024-02-21 at 9b63eec23f)
+ + rev-list: allow missing tips with --missing=[print|allow*]
+ + t6022: fix 'test' style and 'even though' typo
+ + oidset: refactor oidset_insert_from_set()
+ + revision: clarify a 'return NULL' in get_reference()
  (this branch uses jc/t9210-lazy-fix.)
 
- "git rev-list --missing=print" have learned to optionally take
+ "git rev-list --missing=print" has learned to optionally take
  "--allow-missing-tips", which allows the objects at the starting
  points to be missing.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20240214142513.4002639-1-christian.couder@gmail.com>
 
 
@@ -410,7 +478,7 @@ Release tarballs are available at:
  source: <cover.1707726654.git.ps@pks.im>
 
 
-* js/merge-tree-3-trees (2024-02-07) 6 commits
+* js/merge-tree-3-trees (2024-02-22) 6 commits
  - cache-tree: avoid an unnecessary check
  - Always check `parse_tree*()`'s return value
  - t4301: verify that merge-tree fails on missing blob objects
@@ -422,11 +490,9 @@ Release tarballs are available at:
  "git merge-tree" has learned that the three trees involved in the
  3-way merge only need to be trees, not necessarily commits.
 
- Expecting a reroll.
- cf. <CAPig+cSs8MFkLasTULh7tybrFm7SwaT+JeR7HnXjh+-agCHYMw@mail.gmail.com>
- cf. <CAPig+cSJz3U+vT==NhX5hcrTjsCggnAzhzQOvZcSXbcEGuYaKQ@mail.gmail.com>
- source: <pull.1647.v2.git.1706474063109.gitgitgadget@gmail.com>
- source: <pull.1651.v2.git.1707324461.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1647.git.1706277694231.gitgitgadget@gmail.com>
+ source: <pull.1651.v3.git.1708612605.gitgitgadget@gmail.com>
 
 
 * rj/complete-reflog (2024-01-26) 4 commits
@@ -438,7 +504,8 @@ Release tarballs are available at:
  The command line completion script (in contrib/) learned to
  complete "git reflog" better.
 
- Needs review.
+ Expecting a reroll.
+ cf. <dd106d87-3363-426a-90a2-16e1f2d04661@gmail.com>
  source: <98daf977-dbad-4d3b-a293-6a769895088f@gmail.com>
 
 
@@ -474,23 +541,26 @@ Release tarballs are available at:
  avoid offering revision names as candidates to "git send-email" when
  the command is used to send pre-generated files.
 
- Needs review.
- cf. <xmqq4jej6i1b.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <CAC4O8c88Z3ZqxH2VVaNPpEGB3moL5dJcg3cOWuLWwQ_hLrJMtA@mail.gmail.com>
  source: <a718b5ee-afb0-44bd-a299-3208fac43506@smtp-relay.sendinblue.com>
 
 
 * la/trailer-api (2024-02-16) 9 commits
- - format_trailers_from_commit(): indirectly call trailer_info_get()
- - format_trailer_info(): move "fast path" to caller
- - format_trailers(): use strbuf instead of FILE
- - trailer_info_get(): reorder parameters
- - trailer: start preparing for formatting unification
- - trailer: move interpret_trailers() to interpret-trailers.c
- - trailer: prepare to expose functions as part of API
- - shortlog: add test for de-duplicating folded trailers
- - trailer: free trailer_info _after_ all related usage
+  (merged to 'next' on 2024-02-21 at 631e28bbbc)
+ + format_trailers_from_commit(): indirectly call trailer_info_get()
+ + format_trailer_info(): move "fast path" to caller
+ + format_trailers(): use strbuf instead of FILE
+ + trailer_info_get(): reorder parameters
+ + trailer: start preparing for formatting unification
+ + trailer: move interpret_trailers() to interpret-trailers.c
+ + trailer: prepare to expose functions as part of API
+ + shortlog: add test for de-duplicating folded trailers
+ + trailer: free trailer_info _after_ all related usage
 
  Code clean-up.
+
+ Will cook in 'next'.
  source: <pull.1632.v5.git.1708124950.gitgitgadget@gmail.com>
 
 
