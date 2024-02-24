@@ -1,7 +1,6 @@
 #ifndef COMPAT_DISK_H
 #define COMPAT_DISK_H
 
-#include "git-compat-util.h"
 #include "abspath.h"
 #include "gettext.h"
 
