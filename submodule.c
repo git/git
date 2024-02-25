@@ -1687,8 +1687,6 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 		task = get_fetch_task_from_changed(spf, err);
 
 	if (task) {
-		struct strbuf submodule_prefix = STRBUF_INIT;
-
 		child_process_init(cp);
 		cp->dir = task->repo->gitdir;
 		prepare_submodule_repo_env_in_gitdir(&cp->env);
@@ -1698,15 +1696,11 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 			strvec_pushv(&cp->args, task->git_args.v);
 		strvec_pushv(&cp->args, spf->args.v);
 		strvec_push(&cp->args, task->default_argv);
-		strvec_push(&cp->args, "--submodule-prefix");
+		strvec_pushf(&cp->args, "--submodule-prefix=%s%s/",
+			     spf->prefix, task->sub->path);
 
-		strbuf_addf(&submodule_prefix, "%s%s/",
-						spf->prefix,
-						task->sub->path);
-		strvec_push(&cp->args, submodule_prefix.buf);
 		*task_cb = task;
 
-		strbuf_release(&submodule_prefix);
 		string_list_insert(&spf->seen_submodule_names, task->sub->name);
 		return 1;
 	}
@@ -1714,11 +1708,7 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 	if (spf->oid_fetch_tasks_nr) {
 		struct fetch_task *task =
 			spf->oid_fetch_tasks[spf->oid_fetch_tasks_nr - 1];
-		struct strbuf submodule_prefix = STRBUF_INIT;
 		spf->oid_fetch_tasks_nr--;
-
-		strbuf_addf(&submodule_prefix, "%s%s/",
-			    spf->prefix, task->sub->path);
 
 		child_process_init(cp);
 		prepare_submodule_repo_env_in_gitdir(&cp->env);
@@ -1728,8 +1718,8 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 		strvec_init(&cp->args);
 		strvec_pushv(&cp->args, spf->args.v);
 		strvec_push(&cp->args, "on-demand");
-		strvec_push(&cp->args, "--submodule-prefix");
-		strvec_push(&cp->args, submodule_prefix.buf);
+		strvec_pushf(&cp->args, "--submodule-prefix=%s%s/",
+			     spf->prefix, task->sub->path);
 
 		/* NEEDSWORK: have get_default_remote from submodule--helper */
 		strvec_push(&cp->args, "origin");
@@ -1737,7 +1727,6 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 					  append_oid_to_argv, &cp->args);
 
 		*task_cb = task;
-		strbuf_release(&submodule_prefix);
 		return 1;
 	}
 
