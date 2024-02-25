@@ -107,6 +107,45 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len)
 	return r;
 }
 
+static char *mem_pool_strvfmt(struct mem_pool *pool, const char *fmt,
+			      va_list ap)
+{
+	struct mp_block *block = pool->mp_block;
+	char *next_free = block ? block->next_free : NULL;
+	size_t available = block ? block->end - block->next_free : 0;
+	va_list cp;
+	int len, len2;
+	char *ret;
+
+	va_copy(cp, ap);
+	len = vsnprintf(next_free, available, fmt, cp);
+	va_end(cp);
+	if (len < 0)
+		BUG("your vsnprintf is broken (returned %d)", len);
+
+	ret = mem_pool_alloc(pool, len + 1);  /* 1 for NUL */
+
+	/* Shortcut; relies on mem_pool_alloc() not touching buffer contents. */
+	if (ret == next_free)
+		return ret;
+
+	len2 = vsnprintf(ret, len + 1, fmt, ap);
+	if (len2 != len)
+		BUG("your vsnprintf is broken (returns inconsistent lengths)");
+	return ret;
+}
+
+char *mem_pool_strfmt(struct mem_pool *pool, const char *fmt, ...)
+{
+	va_list ap;
+	char *ret;
+
+	va_start(ap, fmt);
+	ret = mem_pool_strvfmt(pool, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
 void *mem_pool_calloc(struct mem_pool *pool, size_t count, size_t size)
 {
 	size_t len = st_mult(count, size);
