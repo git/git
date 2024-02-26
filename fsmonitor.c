@@ -196,8 +196,10 @@ static size_t handle_path_with_trailing_slash(
  * do not know it is case-correct or -incorrect.
  *
  * Assume it is case-correct and try an exact match.
+ *
+ * Return the number of cache-entries that we invalidated.
  */
-static void handle_path_without_trailing_slash(
+static size_t handle_path_without_trailing_slash(
 	struct index_state *istate, const char *name, int pos)
 {
 	/*
@@ -218,7 +220,9 @@ static void handle_path_without_trailing_slash(
 		 * at that directory. (That is, assume no D/F conflicts.)
 		 */
 		istate->cache[pos]->ce_flags &= ~CE_FSMONITOR_VALID;
+		return 1;
 	} else {
+		size_t nr_in_cone;
 		struct strbuf work_path = STRBUF_INIT;
 
 		/*
@@ -232,8 +236,10 @@ static void handle_path_without_trailing_slash(
 		strbuf_add(&work_path, name, strlen(name));
 		strbuf_addch(&work_path, '/');
 		pos = index_name_pos(istate, work_path.buf, work_path.len);
-		handle_path_with_trailing_slash(istate, work_path.buf, pos);
+		nr_in_cone = handle_path_with_trailing_slash(
+			istate, work_path.buf, pos);
 		strbuf_release(&work_path);
+		return nr_in_cone;
 	}
 }
 
