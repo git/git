@@ -183,6 +183,22 @@ static int query_fsmonitor_hook(struct repository *r,
 	return result;
 }
 
+/*
+ * Invalidate the FSM bit on this CE.  This is like mark_fsmonitor_invalid()
+ * but we've already handled the untracked-cache, so let's not repeat that
+ * work.  This also lets us have a different trace message so that we can
+ * see everything that was done as part of the refresh-callback.
+ */
+static void invalidate_ce_fsm(struct cache_entry *ce)
+{
+	if (ce->ce_flags & CE_FSMONITOR_VALID) {
+		trace_printf_key(&trace_fsmonitor,
+				 "fsmonitor_refresh_callback INV: '%s'",
+				 ce->name);
+		ce->ce_flags &= ~CE_FSMONITOR_VALID;
+	}
+}
+
 static size_t handle_path_with_trailing_slash(
 	struct index_state *istate, const char *name, int pos);
 
@@ -219,7 +235,7 @@ static size_t handle_path_without_trailing_slash(
 		 * cache-entry with the same pathname, nor for a cone
 		 * at that directory. (That is, assume no D/F conflicts.)
 		 */
-		istate->cache[pos]->ce_flags &= ~CE_FSMONITOR_VALID;
+		invalidate_ce_fsm(istate->cache[pos]);
 		return 1;
 	} else {
 		size_t nr_in_cone;
@@ -297,7 +313,7 @@ static size_t handle_path_with_trailing_slash(
 	for (i = pos; i < istate->cache_nr; i++) {
 		if (!starts_with(istate->cache[i]->name, name))
 			break;
-		istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+		invalidate_ce_fsm(istate->cache[i]);
 		nr_in_cone++;
 	}
 
