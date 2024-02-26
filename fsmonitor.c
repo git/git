@@ -253,11 +253,20 @@ static void handle_path_without_trailing_slash(
  * same way and just invalidate the cache-entry and the untracked
  * cache (and in this case, the forward cache-entry scan won't find
  * anything and it doesn't hurt to let it run).
+ *
+ * Return the number of cache-entries that we invalidated.  We will
+ * use this later to determine if we need to attempt a second
+ * case-insensitive search on case-insensitive file systems.  That is,
+ * if the search using the observed-case in the FSEvent yields any
+ * results, we assume the prefix is case-correct.  If there are no
+ * matches, we still don't know if the observed path is simply
+ * untracked or case-incorrect.
  */
-static void handle_path_with_trailing_slash(
+static size_t handle_path_with_trailing_slash(
 	struct index_state *istate, const char *name, int pos)
 {
 	int i;
+	size_t nr_in_cone = 0;
 
 	/*
 	 * Mark the untracked cache dirty for this directory path
@@ -276,7 +285,10 @@ static void handle_path_with_trailing_slash(
 		if (!starts_with(istate->cache[i]->name, name))
 			break;
 		istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+		nr_in_cone++;
 	}
+
+	return nr_in_cone;
 }
 
 static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
