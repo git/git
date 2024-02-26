@@ -183,6 +183,43 @@ static int query_fsmonitor_hook(struct repository *r,
 	return result;
 }
 
+static void handle_path_without_trailing_slash(
+	struct index_state *istate, const char *name, int pos)
+{
+	int i;
+
+	if (pos >= 0) {
+		/*
+		 * We have an exact match for this path and can just
+		 * invalidate it.
+		 */
+		istate->cache[pos]->ce_flags &= ~CE_FSMONITOR_VALID;
+	} else {
+		/*
+		 * The path is not a tracked file -or- it is a
+		 * directory event on a platform that cannot
+		 * distinguish between file and directory events in
+		 * the event handler, such as Windows.
+		 *
+		 * Scan as if it is a directory and invalidate the
+		 * cone under it.  (But remember to ignore items
+		 * between "name" and "name/", such as "name-" and
+		 * "name.".
+		 */
+		int len = strlen(name);
+		pos = -pos - 1;
+
+		for (i = pos; i < istate->cache_nr; i++) {
+			if (!starts_with(istate->cache[i]->name, name))
+				break;
+			if ((unsigned char)istate->cache[i]->name[len] > '/')
+				break;
+			if (istate->cache[i]->name[len] == '/')
+				istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+		}
+	}
+}
+
 /*
  * The daemon can decorate directory events, such as a move or rename,
  * by adding a trailing slash to the observed name.  Use this to
@@ -225,7 +262,7 @@ static void handle_path_with_trailing_slash(
 
 static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 {
-	int i, len = strlen(name);
+	int len = strlen(name);
 	int pos = index_name_pos(istate, name, len);
 
 	trace_printf_key(&trace_fsmonitor,
@@ -240,34 +277,8 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 		 * for the untracked cache.
 		 */
 		name[len - 1] = '\0';
-	} else if (pos >= 0) {
-		/*
-		 * We have an exact match for this path and can just
-		 * invalidate it.
-		 */
-		istate->cache[pos]->ce_flags &= ~CE_FSMONITOR_VALID;
 	} else {
-		/*
-		 * The path is not a tracked file -or- it is a
-		 * directory event on a platform that cannot
-		 * distinguish between file and directory events in
-		 * the event handler, such as Windows.
-		 *
-		 * Scan as if it is a directory and invalidate the
-		 * cone under it.  (But remember to ignore items
-		 * between "name" and "name/", such as "name-" and
-		 * "name.".
-		 */
-		pos = -pos - 1;
-
-		for (i = pos; i < istate->cache_nr; i++) {
-			if (!starts_with(istate->cache[i]->name, name))
-				break;
-			if ((unsigned char)istate->cache[i]->name[len] > '/')
-				break;
-			if (istate->cache[i]->name[len] == '/')
-				istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
-		}
+		handle_path_without_trailing_slash(istate, name, pos);
 	}
 
 	/*
