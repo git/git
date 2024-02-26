@@ -1109,6 +1109,21 @@ int read_ref_at(struct ref_store *refs, const char *refname,
 	refs_for_each_reflog_ent_reverse(refs, refname, read_ref_at_ent, &cb);
 
 	if (!cb.reccnt) {
+		if (cnt == 0) {
+			/*
+			 * The caller asked for ref@{0}, and we had no entries.
+			 * It's a bit subtle, but in practice all callers have
+			 * prepped the "oid" field with the current value of
+			 * the ref, which is the most reasonable fallback.
+			 *
+			 * We'll put dummy values into the out-parameters (so
+			 * they're not just uninitialized garbage), and the
+			 * caller can take our return value as a hint that
+			 * we did not find any such reflog.
+			 */
+			set_read_ref_cutoffs(&cb, 0, 0, "empty reflog");
+			return 1;
+		}
 		if (flags & GET_OID_QUIETLY)
 			exit(128);
 		else

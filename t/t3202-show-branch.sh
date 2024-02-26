@@ -279,8 +279,8 @@ test_expect_success '--reflog shows reflog entries' '
 
 test_expect_success '--reflog handles missing reflog' '
 	git reflog expire --expire=now branch &&
-	test_must_fail git show-branch --reflog branch 2>err &&
-	grep "log .* is empty" err
+	git show-branch --reflog branch >actual &&
+	test_must_be_empty actual
 '
 
 test_done

@@ -440,7 +440,20 @@ int refs_create_reflog(struct ref_store *refs, const char *refname,
 		       struct strbuf *err);
 int safe_create_reflog(const char *refname, struct strbuf *err);
 
-/** Reads log for the value of ref during at_time. **/
+/**
+ * Reads log for the value of ref during at_time (in which case "cnt" should be
+ * negative) or the reflog "cnt" entries from the top (in which case "at_time"
+ * should be 0).
+ *
+ * If we found the reflog entry in question, returns 0 (and details of the
+ * entry can be found in the out-parameters).
+ *
+ * If we ran out of reflog entries, the out-parameters are filled with the
+ * details of the oldest entry we did find, and the function returns 1. Note
+ * that there is one important special case here! If the reflog was empty
+ * and the caller asked for the 0-th cnt, we will return "1" but leave the
+ * "oid" field untouched.
+ **/
 int read_ref_at(struct ref_store *refs,
 		const char *refname, unsigned int flags,
 		timestamp_t at_time, int cnt,
