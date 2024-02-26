@@ -1083,7 +1083,7 @@ static int read_ref_at_ent_oldest(struct object_id *ooid, struct object_id *noid
 
 	set_read_ref_cutoffs(cb, timestamp, tz, message);
 	oidcpy(cb->oid, ooid);
-	if (is_null_oid(cb->oid))
+	if (cb->at_time && is_null_oid(cb->oid))
 		oidcpy(cb->oid, noid);
 	/* We just want the first entry */
 	return 1;

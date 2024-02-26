@@ -103,7 +103,7 @@ test_expect_success 'create path with @' '
 check "@:normal" blob content
 check "@:fun@ny" blob content
 
-test_expect_failure '@{1} works with only one reflog entry' '
+test_expect_success '@{1} works with only one reflog entry' '
 	git checkout -B newbranch main &&
 	git reflog expire --expire=now refs/heads/newbranch &&
 	git commit --allow-empty -m "first after expiration" &&
