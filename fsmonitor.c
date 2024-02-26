@@ -183,6 +183,35 @@ static int query_fsmonitor_hook(struct repository *r,
 	return result;
 }
 
+static void handle_path_with_trailing_slash(
+	struct index_state *istate, const char *name, int pos)
+{
+	int i;
+
+	/*
+	 * The daemon can decorate directory events, such as
+	 * moves or renames, with a trailing slash if the OS
+	 * FS Event contains sufficient information, such as
+	 * MacOS.
+	 *
+	 * Use this to invalidate the entire cone under that
+	 * directory.
+	 *
+	 * We do not expect an exact match because the index
+	 * does not normally contain directory entries, so we
+	 * start at the insertion point and scan.
+	 */
+	if (pos < 0)
+		pos = -pos - 1;
+
+	/* Mark all entries for the folder invalid */
+	for (i = pos; i < istate->cache_nr; i++) {
+		if (!starts_with(istate->cache[i]->name, name))
+			break;
+		istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+	}
+}
+
 static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 {
 	int i, len = strlen(name);
@@ -193,28 +222,7 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 			 name, pos);
 
 	if (name[len - 1] == '/') {
-		/*
-		 * The daemon can decorate directory events, such as
-		 * moves or renames, with a trailing slash if the OS
-		 * FS Event contains sufficient information, such as
-		 * MacOS.
-		 *
-		 * Use this to invalidate the entire cone under that
-		 * directory.
-		 *
-		 * We do not expect an exact match because the index
-		 * does not normally contain directory entries, so we
-		 * start at the insertion point and scan.
-		 */
-		if (pos < 0)
-			pos = -pos - 1;
-
-		/* Mark all entries for the folder invalid */
-		for (i = pos; i < istate->cache_nr; i++) {
-			if (!starts_with(istate->cache[i]->name, name))
-				break;
-			istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
-		}
+		handle_path_with_trailing_slash(istate, name, pos);
 
 		/*
 		 * We need to remove the traling "/" from the path
