@@ -183,11 +183,23 @@ static int query_fsmonitor_hook(struct repository *r,
 	return result;
 }
 
+static size_t handle_path_with_trailing_slash(
+	struct index_state *istate, const char *name, int pos);
+
+/*
+ * The daemon sent an observed pathname without a trailing slash.
+ * (This is the normal case.)  We do not know if it is a tracked or
+ * untracked file, a sparse-directory, or a populated directory (on a
+ * platform such as Windows where FSEvents are not qualified).
+ *
+ * The pathname contains the observed case reported by the FS. We
+ * do not know it is case-correct or -incorrect.
+ *
+ * Assume it is case-correct and try an exact match.
+ */
 static void handle_path_without_trailing_slash(
 	struct index_state *istate, const char *name, int pos)
 {
-	int i;
-
 	/*
 	 * Mark the untracked cache dirty for this path (regardless of
 	 * whether or not we find an exact match for it in the index).
@@ -200,33 +212,28 @@ static void handle_path_without_trailing_slash(
 
 	if (pos >= 0) {
 		/*
-		 * We have an exact match for this path and can just
-		 * invalidate it.
+		 * An exact match on a tracked file. We assume that we
+		 * do not need to scan forward for a sparse-directory
+		 * cache-entry with the same pathname, nor for a cone
+		 * at that directory. (That is, assume no D/F conflicts.)
 		 */
 		istate->cache[pos]->ce_flags &= ~CE_FSMONITOR_VALID;
 	} else {
-		/*
-		 * The path is not a tracked file -or- it is a
-		 * directory event on a platform that cannot
-		 * distinguish between file and directory events in
-		 * the event handler, such as Windows.
-		 *
-		 * Scan as if it is a directory and invalidate the
-		 * cone under it.  (But remember to ignore items
-		 * between "name" and "name/", such as "name-" and
-		 * "name.".
-		 */
-		int len = strlen(name);
-		pos = -pos - 1;
+		struct strbuf work_path = STRBUF_INIT;
 
-		for (i = pos; i < istate->cache_nr; i++) {
-			if (!starts_with(istate->cache[i]->name, name))
-				break;
-			if ((unsigned char)istate->cache[i]->name[len] > '/')
-				break;
-			if (istate->cache[i]->name[len] == '/')
-				istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
-		}
+		/*
+		 * The negative "pos" gives us the suggested insertion
+		 * point for the pathname (without the trailing slash).
+		 * We need to see if there is a directory with that
+		 * prefix, but there can be lots of pathnames between
+		 * "foo" and "foo/" like "foo-" or "foo-bar", so we
+		 * don't want to do our own scan.
+		 */
+		strbuf_add(&work_path, name, strlen(name));
+		strbuf_addch(&work_path, '/');
+		pos = index_name_pos(istate, work_path.buf, work_path.len);
+		handle_path_with_trailing_slash(istate, work_path.buf, pos);
+		strbuf_release(&work_path);
 	}
 }
 
