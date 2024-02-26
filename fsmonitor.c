@@ -308,16 +308,21 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 {
 	int len = strlen(name);
 	int pos = index_name_pos(istate, name, len);
+	size_t nr_in_cone;
 
 	trace_printf_key(&trace_fsmonitor,
 			 "fsmonitor_refresh_callback '%s' (pos %d)",
 			 name, pos);
 
-	if (name[len - 1] == '/') {
-		handle_path_with_trailing_slash(istate, name, pos);
-	} else {
-		handle_path_without_trailing_slash(istate, name, pos);
-	}
+	if (name[len - 1] == '/')
+		nr_in_cone = handle_path_with_trailing_slash(istate, name, pos);
+	else
+		nr_in_cone = handle_path_without_trailing_slash(istate, name, pos);
+
+	if (nr_in_cone)
+		trace_printf_key(&trace_fsmonitor,
+				 "fsmonitor_refresh_callback CNT: %d",
+				 (int)nr_in_cone);
 }
 
 /*
