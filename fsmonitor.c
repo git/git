@@ -271,21 +271,16 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 
 	if (name[len - 1] == '/') {
 		handle_path_with_trailing_slash(istate, name, pos);
-
-		/*
-		 * We need to remove the traling "/" from the path
-		 * for the untracked cache.
-		 */
-		name[len - 1] = '\0';
 	} else {
 		handle_path_without_trailing_slash(istate, name, pos);
 	}
 
 	/*
 	 * Mark the untracked cache dirty even if it wasn't found in the index
-	 * as it could be a new untracked file.
+	 * as it could be a new untracked file.  (Let the untracked cache
+	 * layer silently deal with any trailing slash.)
 	 */
-	untracked_cache_invalidate_path(istate, name, 0);
+	untracked_cache_invalidate_trimmed_path(istate, name, 0);
 }
 
 /*
