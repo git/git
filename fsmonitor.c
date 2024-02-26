@@ -5,6 +5,7 @@
 #include "ewah/ewok.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"
+#include "name-hash.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "trace2.h"
@@ -203,6 +204,113 @@ static size_t handle_path_with_trailing_slash(
 	struct index_state *istate, const char *name, int pos);
 
 /*
+ * Use the name-hash to do a case-insensitive cache-entry lookup with
+ * the pathname and invalidate the cache-entry.
+ *
+ * Returns the number of cache-entries that we invalidated.
+ */
+static size_t handle_using_name_hash_icase(
+	struct index_state *istate, const char *name)
+{
+	struct cache_entry *ce = NULL;
+
+	ce = index_file_exists(istate, name, strlen(name), 1);
+	if (!ce)
+		return 0;
+
+	/*
+	 * A case-insensitive search in the name-hash using the
+	 * observed pathname found a cache-entry, so the observed path
+	 * is case-incorrect.  Invalidate the cache-entry and use the
+	 * correct spelling from the cache-entry to invalidate the
+	 * untracked-cache.  Since we now have sparse-directories in
+	 * the index, the observed pathname may represent a regular
+	 * file or a sparse-index directory.
+	 *
+	 * Note that we should not have seen FSEvents for a
+	 * sparse-index directory, but we handle it just in case.
+	 *
+	 * Either way, we know that there are not any cache-entries for
+	 * children inside the cone of the directory, so we don't need to
+	 * do the usual scan.
+	 */
+	trace_printf_key(&trace_fsmonitor,
+			 "fsmonitor_refresh_callback MAP: '%s' '%s'",
+			 name, ce->name);
+
+	/*
+	 * NEEDSWORK: We used the name-hash to find the correct
+	 * case-spelling of the pathname in the cache-entry[], so
+	 * technically this is a tracked file or a sparse-directory.
+	 * It should not have any entries in the untracked-cache, so
+	 * we should not need to use the case-corrected spelling to
+	 * invalidate the the untracked-cache.  So we may not need to
+	 * do this.  For now, I'm going to be conservative and always
+	 * do it; we can revisit this later.
+	 */
+	untracked_cache_invalidate_trimmed_path(istate, ce->name, 0);
+
+	invalidate_ce_fsm(ce);
+	return 1;
+}
+
+/*
+ * Use the dir-name-hash to find the correct-case spelling of the
+ * directory.  Use the canonical spelling to invalidate all of the
+ * cache-entries within the matching cone.
+ *
+ * Returns the number of cache-entries that we invalidated.
+ */
+static size_t handle_using_dir_name_hash_icase(
+	struct index_state *istate, const char *name)
+{
+	struct strbuf canonical_path = STRBUF_INIT;
+	int pos;
+	size_t len = strlen(name);
+	size_t nr_in_cone;
+
+	if (name[len - 1] == '/')
+		len--;
+
+	if (!index_dir_find(istate, name, len, &canonical_path))
+		return 0; /* name is untracked */
+
+	if (!memcmp(name, canonical_path.buf, canonical_path.len)) {
+		strbuf_release(&canonical_path);
+		/*
+		 * NEEDSWORK: Our caller already tried an exact match
+		 * and failed to find one.  They called us to do an
+		 * ICASE match, so we should never get an exact match,
+		 * so we could promote this to a BUG() here if we
+		 * wanted to.  It doesn't hurt anything to just return
+		 * 0 and go on because we should never get here.  Or we
+		 * could just get rid of the memcmp() and this "if"
+		 * clause completely.
+		 */
+		BUG("handle_using_dir_name_hash_icase(%s) did not exact match",
+		    name);
+	}
+
+	trace_printf_key(&trace_fsmonitor,
+			 "fsmonitor_refresh_callback MAP: '%s' '%s'",
+			 name, canonical_path.buf);
+
+	/*
+	 * The dir-name-hash only tells us the corrected spelling of
+	 * the prefix.  We have to use this canonical path to do a
+	 * lookup in the cache-entry array so that we repeat the
+	 * original search using the case-corrected spelling.
+	 */
+	strbuf_addch(&canonical_path, '/');
+	pos = index_name_pos(istate, canonical_path.buf,
+			     canonical_path.len);
+	nr_in_cone = handle_path_with_trailing_slash(
+		istate, canonical_path.buf, pos);
+	strbuf_release(&canonical_path);
+	return nr_in_cone;
+}
+
+/*
  * The daemon sent an observed pathname without a trailing slash.
  * (This is the normal case.)  We do not know if it is a tracked or
  * untracked file, a sparse-directory, or a populated directory (on a
@@ -334,6 +442,19 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 		nr_in_cone = handle_path_with_trailing_slash(istate, name, pos);
 	else
 		nr_in_cone = handle_path_without_trailing_slash(istate, name, pos);
+
+	/*
+	 * If we did not find an exact match for this pathname or any
+	 * cache-entries with this directory prefix and we're on a
+	 * case-insensitive file system, try again using the name-hash
+	 * and dir-name-hash.
+	 */
+	if (!nr_in_cone && ignore_case) {
+		nr_in_cone = handle_using_name_hash_icase(istate, name);
+		if (!nr_in_cone)
+			nr_in_cone = handle_using_dir_name_hash_icase(
+				istate, name);
+	}
 
 	if (nr_in_cone)
 		trace_printf_key(&trace_fsmonitor,

@@ -1051,7 +1051,7 @@ test_expect_success 'split-index and FSMonitor work well together' '
 #
 # The setup is a little contrived.
 #
-test_expect_failure CASE_INSENSITIVE_FS 'fsmonitor subdir case wrong on disk' '
+test_expect_success CASE_INSENSITIVE_FS 'fsmonitor subdir case wrong on disk' '
 	test_when_finished "stop_daemon_delete_repo subdir_case_wrong" &&
 
 	git init subdir_case_wrong &&
@@ -1116,19 +1116,19 @@ test_expect_failure CASE_INSENSITIVE_FS 'fsmonitor subdir case wrong on disk' '
 
 	grep -q "dir1/DIR2/dir3/file3.*pos -3" "$PWD/subdir_case_wrong.log1" &&
 
+	# Verify that we get a mapping event to correct the case.
+	grep -q "MAP:.*dir1/DIR2/dir3/file3.*dir1/dir2/dir3/file3" \
+		"$PWD/subdir_case_wrong.log1" &&
+
 	# The refresh-callbacks should have caused "git status" to clear
 	# the CE_FSMONITOR_VALID bit on each of those files and caused
 	# the worktree scan to visit them and mark them as modified.
 	grep -q " M AAA" "$PWD/subdir_case_wrong.out" &&
 	grep -q " M zzz" "$PWD/subdir_case_wrong.out" &&
-
-	# Expect Breakage: with the case confusion, the "(pos -3)" causes
-	# the client to not clear the CE_FSMONITOR_VALID bit and therefore
-	# status will not rescan the file and therefore not report it as dirty.
 	grep -q " M dir1/dir2/dir3/file3" "$PWD/subdir_case_wrong.out"
 '
 
-test_expect_failure CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
+test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
 	test_when_finished "stop_daemon_delete_repo file_case_wrong" &&
 
 	git init file_case_wrong &&
@@ -1242,14 +1242,20 @@ test_expect_failure CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
 	GIT_TRACE_FSMONITOR="$PWD/file_case_wrong-try3.log" \
 		git -C file_case_wrong --no-optional-locks status --short \
 			>"$PWD/file_case_wrong-try3.out" &&
+
+	# Verify that we get a mapping event to correct the case.
+	grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir3/FILE-3-A.*dir1/dir2/dir3/file-3-a" \
+		"$PWD/file_case_wrong-try3.log" &&
+	grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir4/file-4-a.*dir1/dir2/dir4/FILE-4-A" \
+		"$PWD/file_case_wrong-try3.log" &&
+
 	# FSEvents are in observed case.
 	grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos -3" "$PWD/file_case_wrong-try3.log" &&
 	grep -q "fsmonitor_refresh_callback.*file-4-a.*pos -9" "$PWD/file_case_wrong-try3.log" &&
 
-	# Expect Breakage: with the case confusion, the "(pos-3)" and
-	# "(pos -9)" causes the client to not clear the CE_FSMONITOR_VALID
-	# bit and therefore status will not rescan the files and therefore
-	# not report them as dirty.
+	# The refresh-callbacks should have caused "git status" to clear
+	# the CE_FSMONITOR_VALID bit on each of those files and caused
+	# the worktree scan to visit them and mark them as modified.
 	grep -q " M dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-try3.out" &&
 	grep -q " M dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-try3.out"
 '
