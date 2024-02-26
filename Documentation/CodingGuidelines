@@ -446,12 +446,41 @@ For C programs:
    detail.
 
  - The first #include in C files, except in platform specific compat/
-   implementations and sha1dc/, must be either "git-compat-util.h" or
-   one of the approved headers that includes it first for you.  (The
-   approved headers currently include "builtin.h",
-   "t/helper/test-tool.h", "xdiff/xinclude.h", or
-   "reftable/system.h".)  You do not have to include more than one of
-   these.
+   implementations and sha1dc/, must be <git-compat-util.h>.  This
+   header file insulates other header files and source files from
+   platform differences, like which system header files must be
+   included in what order, and what C preprocessor feature macros must
+   be defined to trigger certain features we expect out of the system.
+   A collorary to this is that C files should not directly include
+   system header files themselves.
+
+   There are some exceptions, because certain group of files that
+   implement an API all have to include the same header file that
+   defines the API and it is convenient to include <git-compat-util.h>
+   there.  Namely:
+
+   - the implementation of the built-in commands in the "builtin/"
+     directory that include "builtin.h" for the cmd_foo() prototype
+     definition,
+
+   - the test helper programs in the "t/helper/" directory that include
+     "t/helper/test-tool.h" for the cmd__foo() prototype definition,
+
+   - the xdiff implementation in the "xdiff/" directory that includes
+     "xdiff/xinclude.h" for the xdiff machinery internals,
+
+   - the unit test programs in "t/unit-tests/" directory that include
+     "t/unit-tests/test-lib.h" that gives them the unit-tests
+     framework, and
+
+   - the source files that implement reftable in the "reftable/"
+     directory that include "reftable/system.h" for the reftable
+     internals,
+
+   are allowed to assume that they do not have to include
+   <git-compat-util.h> themselves, as it is included as the first
+   '#include' in these header files.  These headers must be the first
+   header file to be "#include"d in them, though.
 
  - A C file must directly include the header files that declare the
    functions and the types it uses, except for the functions and types
