@@ -188,6 +188,16 @@ static void handle_path_without_trailing_slash(
 {
 	int i;
 
+	/*
+	 * Mark the untracked cache dirty for this path (regardless of
+	 * whether or not we find an exact match for it in the index).
+	 * Since the path is unqualified (no trailing slash hint in the
+	 * FSEvent), it may refer to a file or directory. So we should
+	 * not assume one or the other and should always let the untracked
+	 * cache decide what needs to invalidated.
+	 */
+	untracked_cache_invalidate_trimmed_path(istate, name, 0);
+
 	if (pos >= 0) {
 		/*
 		 * We have an exact match for this path and can just
@@ -249,6 +259,15 @@ static void handle_path_with_trailing_slash(
 {
 	int i;
 
+	/*
+	 * Mark the untracked cache dirty for this directory path
+	 * (regardless of whether or not we find an exact match for it
+	 * in the index or find it to be proper prefix of one or more
+	 * files in the index), since the FSEvent is hinting that
+	 * there may be changes on or within the directory.
+	 */
+	untracked_cache_invalidate_trimmed_path(istate, name, 0);
+
 	if (pos < 0)
 		pos = -pos - 1;
 
@@ -274,13 +293,6 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 	} else {
 		handle_path_without_trailing_slash(istate, name, pos);
 	}
-
-	/*
-	 * Mark the untracked cache dirty even if it wasn't found in the index
-	 * as it could be a new untracked file.  (Let the untracked cache
-	 * layer silently deal with any trailing slash.)
-	 */
-	untracked_cache_invalidate_trimmed_path(istate, name, 0);
 }
 
 /*
