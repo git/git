@@ -5,7 +5,7 @@ test_description='git reset --patch'
 TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-patch-mode.sh
 
-test_expect_success PERL 'setup' '
+test_expect_success 'setup' '
 	mkdir dir &&
 	echo parent > dir/foo &&
 	echo dummy > bar &&
@@ -19,42 +19,46 @@ test_expect_success PERL 'setup' '
 
 # note: bar sorts before foo, so the first 'n' is always to skip 'bar'
 
-test_expect_success PERL 'saying "n" does nothing' '
+test_expect_success 'saying "n" does nothing' '
 	set_and_save_state dir/foo work work &&
 	test_write_lines n n | git reset -p &&
 	verify_saved_state dir/foo &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p' '
-	test_write_lines n y | git reset -p >output &&
-	verify_state dir/foo work head &&
-	verify_saved_state bar &&
-	test_grep "Unstage" output
-'
+for opt in "HEAD" "@" ""
+do
+	test_expect_success "git reset -p $opt" '
+		set_and_save_state dir/foo work work &&
+		test_write_lines n y | git reset -p $opt >output &&
+		verify_state dir/foo work head &&
+		verify_saved_state bar &&
+		test_grep "Unstage" output
+	'
+done
 
-test_expect_success PERL 'git reset -p HEAD^' '
+test_expect_success 'git reset -p HEAD^' '
 	test_write_lines n y | git reset -p HEAD^ >output &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar &&
 	test_grep "Apply" output
 '
 
-test_expect_success PERL 'git reset -p HEAD^^{tree}' '
+test_expect_success 'git reset -p HEAD^^{tree}' '
 	test_write_lines n y | git reset -p HEAD^^{tree} >output &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar &&
 	test_grep "Apply" output
 '
 
-test_expect_success PERL 'git reset -p HEAD^:dir/foo (blob fails)' '
+test_expect_success 'git reset -p HEAD^:dir/foo (blob fails)' '
 	set_and_save_state dir/foo work work &&
 	test_must_fail git reset -p HEAD^:dir/foo &&
 	verify_saved_state dir/foo &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p aaaaaaaa (unknown fails)' '
+test_expect_success 'git reset -p aaaaaaaa (unknown fails)' '
 	set_and_save_state dir/foo work work &&
 	test_must_fail git reset -p aaaaaaaa &&
 	verify_saved_state dir/foo &&
@@ -66,27 +70,27 @@ test_expect_success PERL 'git reset -p aaaaaaaa (unknown fails)' '
 # dir/foo.  There's always an extra 'n' to reject edits to dir/foo in
 # the failure case (and thus get out of the loop).
 
-test_expect_success PERL 'git reset -p dir' '
+test_expect_success 'git reset -p dir' '
 	set_state dir/foo work work &&
 	test_write_lines y n | git reset -p dir &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p -- foo (inside dir)' '
+test_expect_success 'git reset -p -- foo (inside dir)' '
 	set_state dir/foo work work &&
 	test_write_lines y n | (cd dir && git reset -p -- foo) &&
 	verify_state dir/foo work head &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'git reset -p HEAD^ -- dir' '
+test_expect_success 'git reset -p HEAD^ -- dir' '
 	test_write_lines y n | git reset -p HEAD^ -- dir &&
 	verify_state dir/foo work parent &&
 	verify_saved_state bar
 '
 
-test_expect_success PERL 'none of this moved HEAD' '
+test_expect_success 'none of this moved HEAD' '
 	verify_saved_head
 '
 

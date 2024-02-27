@@ -281,7 +281,9 @@ static void parse_args(struct pathspec *pathspec,
 			verify_filename(prefix, argv[0], 1);
 		}
 	}
-	*rev_ret = rev;
+
+	/* treat '@' as a shortcut for 'HEAD' */
+	*rev_ret = !strcmp("@", rev) ? "HEAD" : rev;
 
 	parse_pathspec(pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
