@@ -47,8 +47,7 @@ int type_from_string_gently(const char *str, ssize_t len, int gentle)
 		len = strlen(str);
 
 	for (i = 1; i < ARRAY_SIZE(object_type_strings); i++)
-		if (!strncmp(str, object_type_strings[i], len) &&
-		    object_type_strings[i][len] == '\0')
+		if (!xstrncmpz(object_type_strings[i], str, len))
 			return i;
 
 	if (gentle)

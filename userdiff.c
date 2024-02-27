@@ -323,8 +323,7 @@ static int userdiff_find_by_namelen_cb(struct userdiff_driver *driver,
 {
 	struct find_by_namelen_data *cb_data = priv;
 
-	if (!strncmp(driver->name, cb_data->name, cb_data->len) &&
-	    !driver->name[cb_data->len]) {
+	if (!xstrncmpz(driver->name, cb_data->name, cb_data->len)) {
 		cb_data->driver = driver;
 		return 1; /* tell the caller to stop iterating */
 	}
