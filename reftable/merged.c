@@ -49,8 +49,6 @@ static void merged_iter_close(void *p)
 	for (size_t i = 0; i < mi->stack_len; i++)
 		reftable_iterator_destroy(&mi->stack[i]);
 	reftable_free(mi->stack);
-	strbuf_release(&mi->key);
-	strbuf_release(&mi->entry_key);
 }
 
 static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
@@ -105,14 +103,19 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	  such a deployment, the loop below must be changed to collect all
 	  entries for the same key, and return new the newest one.
 	*/
-	reftable_record_key(&entry.rec, &mi->entry_key);
 	while (!merged_iter_pqueue_is_empty(mi->pq)) {
 		struct pq_entry top = merged_iter_pqueue_top(mi->pq);
-		int cmp = 0;
+		int cmp;
 
-		reftable_record_key(&top.rec, &mi->key);
+		/*
+		 * When the next entry comes from the same queue as the current
+		 * entry then it must by definition be larger. This avoids a
+		 * comparison in the most common case.
+		 */
+		if (top.index == entry.index)
+			break;
 
-		cmp = strbuf_cmp(&mi->key, &mi->entry_key);
+		cmp = reftable_record_cmp(&top.rec, &entry.rec);
 		if (cmp > 0)
 			break;
 
@@ -243,8 +246,6 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 		.typ = reftable_record_type(rec),
 		.hash_id = mt->hash_id,
 		.suppress_deletions = mt->suppress_deletions,
-		.key = STRBUF_INIT,
-		.entry_key = STRBUF_INIT,
 	};
 	struct merged_iter *p;
 	int err;

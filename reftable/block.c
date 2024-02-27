@@ -339,8 +339,7 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 		return -1;
 	string_view_consume(&in, n);
 
-	strbuf_reset(&it->last_key);
-	strbuf_addbuf(&it->last_key, &it->key);
+	strbuf_swap(&it->last_key, &it->key);
 	it->next_off += start.len - in.len;
 	return 0;
 }

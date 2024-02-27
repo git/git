@@ -377,10 +377,11 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 
 	assert(hash_size > 0);
 
-	r->refname = reftable_realloc(r->refname, key.len + 1);
+	r->refname = reftable_malloc(key.len + 1);
 	memcpy(r->refname, key.buf, key.len);
-	r->update_index = update_index;
 	r->refname[key.len] = 0;
+
+	r->update_index = update_index;
 	r->value_type = val_type;
 	switch (val_type) {
 	case REFTABLE_REF_VAL1:
@@ -430,13 +431,19 @@ static int reftable_ref_record_is_deletion_void(const void *p)
 		(const struct reftable_ref_record *)p);
 }
 
-
 static int reftable_ref_record_equal_void(const void *a,
 					  const void *b, int hash_size)
 {
 	struct reftable_ref_record *ra = (struct reftable_ref_record *) a;
 	struct reftable_ref_record *rb = (struct reftable_ref_record *) b;
 	return reftable_ref_record_equal(ra, rb, hash_size);
+}
+
+static int reftable_ref_record_cmp_void(const void *_a, const void *_b)
+{
+	const struct reftable_ref_record *a = _a;
+	const struct reftable_ref_record *b = _b;
+	return strcmp(a->refname, b->refname);
 }
 
 static void reftable_ref_record_print_void(const void *rec,
@@ -455,6 +462,7 @@ static struct reftable_record_vtable reftable_ref_record_vtable = {
 	.release = &reftable_ref_record_release_void,
 	.is_deletion = &reftable_ref_record_is_deletion_void,
 	.equal = &reftable_ref_record_equal_void,
+	.cmp = &reftable_ref_record_cmp_void,
 	.print = &reftable_ref_record_print_void,
 };
 
@@ -627,6 +635,25 @@ static int reftable_obj_record_equal_void(const void *a, const void *b, int hash
 	return 1;
 }
 
+static int reftable_obj_record_cmp_void(const void *_a, const void *_b)
+{
+	const struct reftable_obj_record *a = _a;
+	const struct reftable_obj_record *b = _b;
+	int cmp;
+
+	cmp = memcmp(a->hash_prefix, b->hash_prefix,
+		     a->hash_prefix_len > b->hash_prefix_len ?
+		     a->hash_prefix_len : b->hash_prefix_len);
+	if (cmp)
+		return cmp;
+
+	/*
+	 * When the prefix is the same then the object record that is longer is
+	 * considered to be bigger.
+	 */
+	return a->hash_prefix_len - b->hash_prefix_len;
+}
+
 static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.key = &reftable_obj_record_key,
 	.type = BLOCK_TYPE_OBJ,
@@ -637,6 +664,7 @@ static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.release = &reftable_obj_record_release,
 	.is_deletion = &not_a_deletion,
 	.equal = &reftable_obj_record_equal_void,
+	.cmp = &reftable_obj_record_cmp_void,
 	.print = &reftable_obj_record_print,
 };
 
@@ -955,6 +983,22 @@ static int reftable_log_record_equal_void(const void *a,
 					 hash_size);
 }
 
+static int reftable_log_record_cmp_void(const void *_a, const void *_b)
+{
+	const struct reftable_log_record *a = _a;
+	const struct reftable_log_record *b = _b;
+	int cmp = strcmp(a->refname, b->refname);
+	if (cmp)
+		return cmp;
+
+	/*
+	 * Note that the comparison here is reversed. This is because the
+	 * update index is reversed when comparing keys. For reference, see how
+	 * we handle this in reftable_log_record_key()`.
+	 */
+	return b->update_index - a->update_index;
+}
+
 int reftable_log_record_equal(const struct reftable_log_record *a,
 			      const struct reftable_log_record *b, int hash_size)
 {
@@ -1004,6 +1048,7 @@ static struct reftable_record_vtable reftable_log_record_vtable = {
 	.release = &reftable_log_record_release_void,
 	.is_deletion = &reftable_log_record_is_deletion_void,
 	.equal = &reftable_log_record_equal_void,
+	.cmp = &reftable_log_record_cmp_void,
 	.print = &reftable_log_record_print_void,
 };
 
@@ -1079,6 +1124,13 @@ static int reftable_index_record_equal(const void *a, const void *b, int hash_si
 	return ia->offset == ib->offset && !strbuf_cmp(&ia->last_key, &ib->last_key);
 }
 
+static int reftable_index_record_cmp(const void *_a, const void *_b)
+{
+	const struct reftable_index_record *a = _a;
+	const struct reftable_index_record *b = _b;
+	return strbuf_cmp(&a->last_key, &b->last_key);
+}
+
 static void reftable_index_record_print(const void *rec, int hash_size)
 {
 	const struct reftable_index_record *idx = rec;
@@ -1096,6 +1148,7 @@ static struct reftable_record_vtable reftable_index_record_vtable = {
 	.release = &reftable_index_record_release,
 	.is_deletion = &not_a_deletion,
 	.equal = &reftable_index_record_equal,
+	.cmp = &reftable_index_record_cmp,
 	.print = &reftable_index_record_print,
 };
 
@@ -1147,6 +1200,14 @@ int reftable_record_is_deletion(struct reftable_record *rec)
 {
 	return reftable_record_vtable(rec)->is_deletion(
 		reftable_record_data(rec));
+}
+
+int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b)
+{
+	if (a->type != b->type)
+		BUG("cannot compare reftable records of different type");
+	return reftable_record_vtable(a)->cmp(
+		reftable_record_data(a), reftable_record_data(b));
 }
 
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size)

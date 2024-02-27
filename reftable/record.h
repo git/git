@@ -62,6 +62,12 @@ struct reftable_record_vtable {
 	/* Are two records equal? This assumes they have the same type. Returns 0 for non-equal. */
 	int (*equal)(const void *a, const void *b, int hash_size);
 
+	/*
+	 * Compare keys of two records with each other. The records must have
+	 * the same type.
+	 */
+	int (*cmp)(const void *a, const void *b);
+
 	/* Print on stdout, for debugging. */
 	void (*print)(const void *rec, int hash_size);
 };
@@ -114,6 +120,7 @@ struct reftable_record {
 void reftable_record_init(struct reftable_record *rec, uint8_t typ);
 
 /* see struct record_vtable */
+int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b);
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
 void reftable_record_print(struct reftable_record *rec, int hash_size);
 void reftable_record_key(struct reftable_record *rec, struct strbuf *dest);
