@@ -1,0 +1,40 @@
+Git v2.45 Release Notes
+=======================
+
+Backward Compatibility Notes
+
+UI, Workflows & Features
+
+ * Integrate the reftable code into the refs framework as a backend.
+   With "git init --ref-format=reftable", hopefully it would be a lot
+   more efficient to manage a repository with many references.
+
+ * "git checkout -p" and friends learned that that "@" is a synonym
+   for "HEAD".
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The code to iterate over refs with the reftable backend has seen
+   some optimization.
+
+ * More tests that are marked as "ref-files only" have been updated to
+   improve test coverage of reftable backend.
+
+
+Fixes since v2.44
+-----------------
+
+ * "git apply" on a filesystem without filemode support have learned
+   to take a hint from what is in the index for the path, even when
+   not working with the "--index" or "--cached" option, when checking
+   the executable bit match what is required by the preimage in the
+   patch.
+   (merge 45b625142d cp/apply-core-filemode later to maint).
+
+ * "git column" has been taught to reject negative padding value, as
+   it would lead to nonsense behaviour including division by zero.
+   (merge 76fb807faa kh/column-reject-negative-padding later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge f0e578c69c rs/use-xstrncmpz later to maint).
