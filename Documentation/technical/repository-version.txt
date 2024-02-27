@@ -103,5 +103,6 @@ GIT_COMMON_DIR/worktrees/<id>/config.worktree)
 
 ==== `refStorage`
 
-Specifies the file format for the ref database. The only valid value
-is `files` (loose references with a packed-refs file).
+Specifies the file format for the ref database. The valid values are
+`files` (loose references with a packed-refs file) and `reftable` (see
+Documentation/technical/reftable.txt).

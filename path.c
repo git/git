@@ -871,7 +871,7 @@ const char *enter_repo(const char *path, int strict)
 	return NULL;
 }
 
-static int calc_shared_perm(int mode)
+int calc_shared_perm(int mode)
 {
 	int tweak;
 
