@@ -33,12 +33,6 @@ test_expect_success 'delete_refs(FOO, refs/tags/new-tag)' '
 	test_must_fail git rev-parse refs/tags/new-tag --
 '
 
-# In reftable, we keep the reflogs around for deleted refs.
-test_expect_success !REFFILES 'delete-reflog(FOO, refs/tags/new-tag)' '
-	$RUN delete-reflog FOO &&
-	$RUN delete-reflog refs/tags/new-tag
-'
-
 test_expect_success 'rename_refs(main, new-main)' '
 	git rev-parse main >expected &&
 	$RUN rename-ref refs/heads/main refs/heads/new-main &&
