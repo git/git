@@ -607,7 +607,7 @@ The recommended way to create commits with squash markers is by using the
 linkgit:git-commit[1], which take the target commit as an argument and
 automatically fill in the subject line of the new commit from that.
 +
-Settting configuration variable `rebase.autoSquash` to true enables
+Setting configuration variable `rebase.autoSquash` to true enables
 auto-squashing by default for interactive rebase.  The `--no-autosquash`
 option can be used to override that setting.
 +
