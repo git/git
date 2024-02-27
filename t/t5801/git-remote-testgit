@@ -12,6 +12,11 @@ url=$2
 
 dir="$GIT_DIR/testgit/$alias"
 
+if ! git rev-parse --is-inside-git-dir
+then
+	exit 1
+fi
+
 h_refspec="refs/heads/*:refs/testgit/$alias/heads/*"
 t_refspec="refs/tags/*:refs/testgit/$alias/tags/*"
 
