@@ -189,6 +189,9 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-lazy-fetch")) {
 			fetch_if_missing = 0;
+			setenv(NO_LAZY_FETCH_ENVIRONMENT, "1", 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-replace-objects")) {
 			disable_replace_refs();
 			setenv(NO_REPLACE_OBJECTS_ENVIRONMENT, "1", 1);

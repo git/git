@@ -183,6 +183,8 @@ If you just want to run git as if it was started in `<path>` then use
 	Do not fetch missing objects from the promisor remote on
 	demand.  Useful together with `git cat-file -e <object>` to
 	see if the object is locally available.
+	This is equivalent to setting the `GIT_NO_LAZY_FETCH`
+	environment variable to `1`.
 
 --literal-pathspecs::
 	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
@@ -899,6 +901,11 @@ for full details.
 `GIT_ICASE_PATHSPECS`::
 	Setting this Boolean environment variable to true will cause Git to treat all
 	pathspecs as case-insensitive.
+
+`GIT_NO_LAZY_FETCH`::
+	Setting this Boolean environment variable to true tells Git
+	not to lazily fetch missing objects from the promisor remote
+	on demand.
 
 `GIT_REFLOG_ACTION`::
 	When a ref is updated, reflog entries are created to keep
