@@ -567,13 +567,6 @@ static int move_to_original_branch(struct rebase_options *opts)
 	return ret;
 }
 
-static const char *resolvemsg =
-N_("Resolve all conflicts manually, mark them as resolved with\n"
-"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
-"To abort and get back to the state before \"git rebase\", run "
-"\"git rebase --abort\".");
-
 static int run_am(struct rebase_options *opts)
 {
 	struct child_process am = CHILD_PROCESS_INIT;
@@ -587,7 +580,7 @@ static int run_am(struct rebase_options *opts)
 		     opts->reflog_action);
 	if (opts->action == ACTION_CONTINUE) {
 		strvec_push(&am.args, "--resolved");
-		strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		strvec_pushf(&am.args, "--resolvemsg=%s", rebase_resolvemsg);
 		if (opts->gpg_sign_opt)
 			strvec_push(&am.args, opts->gpg_sign_opt);
 		status = run_command(&am);
@@ -598,7 +591,7 @@ static int run_am(struct rebase_options *opts)
 	}
 	if (opts->action == ACTION_SKIP) {
 		strvec_push(&am.args, "--skip");
-		strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+		strvec_pushf(&am.args, "--resolvemsg=%s", rebase_resolvemsg);
 		status = run_command(&am);
 		if (status)
 			return status;
@@ -672,7 +665,7 @@ static int run_am(struct rebase_options *opts)
 
 	strvec_pushv(&am.args, opts->git_am_opts.v);
 	strvec_push(&am.args, "--rebasing");
-	strvec_pushf(&am.args, "--resolvemsg=%s", resolvemsg);
+	strvec_pushf(&am.args, "--resolvemsg=%s", rebase_resolvemsg);
 	strvec_push(&am.args, "--patch-format=mboxrd");
 	if (opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE)
 		strvec_push(&am.args, "--rerere-autoupdate");
@@ -700,7 +693,6 @@ static int run_specific_rebase(struct rebase_options *opts)
 
 	if (opts->type == REBASE_MERGE) {
 		/* Run sequencer-based rebase */
-		setenv("GIT_CHERRY_PICK_HELP", resolvemsg, 1);
 		if (!(opts->flags & REBASE_INTERACTIVE_EXPLICIT))
 			setenv("GIT_SEQUENCE_EDITOR", ":", 1);
 		if (opts->gpg_sign_opt) {

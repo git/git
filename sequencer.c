@@ -461,10 +461,22 @@ static void free_message(struct commit *commit, struct commit_message *msg)
 	repo_unuse_commit_buffer(the_repository, commit, msg->message);
 }
 
+const char *rebase_resolvemsg =
+N_("Resolve all conflicts manually, mark them as resolved with\n"
+"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
+"You can instead skip this commit: run \"git rebase --skip\".\n"
+"To abort and get back to the state before \"git rebase\", run "
+"\"git rebase --abort\".");
+
 static void print_advice(struct repository *r, int show_hint,
 			 struct replay_opts *opts)
 {
-	char *msg = getenv("GIT_CHERRY_PICK_HELP");
+	const char *msg;
+
+	if (is_rebase_i(opts))
+		msg = rebase_resolvemsg;
+	else
+		msg = getenv("GIT_CHERRY_PICK_HELP");
 
 	if (msg) {
 		advise("%s\n", msg);

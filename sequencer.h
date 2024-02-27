@@ -14,6 +14,8 @@ const char *rebase_path_todo(void);
 const char *rebase_path_todo_backup(void);
 const char *rebase_path_dropped(void);
 
+extern const char *rebase_resolvemsg;
+
 #define APPEND_SIGNOFF_DEDUP (1u << 0)
 
 enum replay_action {
