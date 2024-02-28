@@ -175,24 +175,26 @@ static int merge_bases_many(struct repository *r,
 	return 0;
 }
 
-struct commit_list *get_octopus_merge_bases(struct commit_list *in)
+int get_octopus_merge_bases(struct commit_list *in, struct commit_list **result)
 {
-	struct commit_list *i, *j, *k, *ret = NULL;
+	struct commit_list *i, *j, *k;
 
 	if (!in)
-		return ret;
+		return 0;
 
-	commit_list_insert(in->item, &ret);
+	commit_list_insert(in->item, result);
 
 	for (i = in->next; i; i = i->next) {
 		struct commit_list *new_commits = NULL, *end = NULL;
 
-		for (j = ret; j; j = j->next) {
+		for (j = *result; j; j = j->next) {
 			struct commit_list *bases = NULL;
 			if (repo_get_merge_bases(the_repository, i->item,
 						 j->item, &bases) < 0) {
 				free_commit_list(bases);
-				return NULL;
+				free_commit_list(*result);
+				*result = NULL;
+				return -1;
 			}
 			if (!new_commits)
 				new_commits = bases;
@@ -201,10 +203,10 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 			for (k = bases; k; k = k->next)
 				end = k;
 		}
-		free_commit_list(ret);
-		ret = new_commits;
+		free_commit_list(*result);
+		*result = new_commits;
 	}
-	return ret;
+	return 0;
 }
 
 static int remove_redundant_no_gen(struct repository *r,
