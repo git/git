@@ -1841,31 +1841,23 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 int upload_pack_advertise(struct repository *r,
 			  struct strbuf *value)
 {
+	struct upload_pack_data data;
+
+	upload_pack_data_init(&data);
+	get_upload_pack_config(r, &data);
+
 	if (value) {
-		int allow_filter_value;
-		int allow_ref_in_want;
-		int allow_sideband_all_value;
 		char *str = NULL;
 
 		strbuf_addstr(value, "shallow wait-for-done");
 
-		if (!repo_config_get_bool(r,
-					 "uploadpack.allowfilter",
-					 &allow_filter_value) &&
-		    allow_filter_value)
+		if (data.allow_filter)
 			strbuf_addstr(value, " filter");
 
-		if (!repo_config_get_bool(r,
-					 "uploadpack.allowrefinwant",
-					 &allow_ref_in_want) &&
-		    allow_ref_in_want)
+		if (data.allow_ref_in_want)
 			strbuf_addstr(value, " ref-in-want");
 
-		if (git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		    (!repo_config_get_bool(r,
-					   "uploadpack.allowsidebandall",
-					   &allow_sideband_all_value) &&
-		     allow_sideband_all_value))
+		if (data.allow_sideband_all)
 			strbuf_addstr(value, " sideband-all");
 
 		if (!repo_config_get_string(r,
@@ -1876,6 +1868,8 @@ int upload_pack_advertise(struct repository *r,
 			free(str);
 		}
 	}
+
+	upload_pack_data_clear(&data);
 
 	return 1;
 }
