@@ -52,7 +52,8 @@ static int queue_has_nonstale(struct prio_queue *queue)
 static struct commit_list *paint_down_to_common(struct repository *r,
 						struct commit *one, int n,
 						struct commit **twos,
-						timestamp_t min_generation)
+						timestamp_t min_generation,
+						int ignore_missing_commits)
 {
 	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 	struct commit_list *result = NULL;
@@ -107,6 +108,13 @@ static struct commit_list *paint_down_to_common(struct repository *r,
 			if (repo_parse_commit(r, p)) {
 				clear_prio_queue(&queue);
 				free_commit_list(result);
+				/*
+				 * At this stage, we know that the commit is
+				 * missing: `repo_parse_commit()` uses
+				 * `OBJECT_INFO_DIE_IF_CORRUPT` and therefore
+				 * corrupt commits would already have been
+				 * dispatched with a `die()`.
+				 */
 				return NULL;
 			}
 			p->object.flags |= flags;
@@ -142,7 +150,7 @@ static struct commit_list *merge_bases_many(struct repository *r,
 			return NULL;
 	}
 
-	list = paint_down_to_common(r, one, n, twos, 0);
+	list = paint_down_to_common(r, one, n, twos, 0, 0);
 
 	while (list) {
 		struct commit *commit = pop_commit(&list);
@@ -213,7 +221,7 @@ static int remove_redundant_no_gen(struct repository *r,
 				min_generation = curr_generation;
 		}
 		common = paint_down_to_common(r, array[i], filled,
-					      work, min_generation);
+					      work, min_generation, 0);
 		if (array[i]->object.flags & PARENT2)
 			redundant[i] = 1;
 		for (j = 0; j < filled; j++)
@@ -503,7 +511,7 @@ int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
 
 	bases = paint_down_to_common(r, commit,
 				     nr_reference, reference,
-				     generation);
+				     generation, ignore_missing_commits);
 	if (commit->object.flags & PARENT2)
 		ret = 1;
 	clear_commit_marks(commit, all_flags);
