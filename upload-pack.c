@@ -61,7 +61,6 @@ struct upload_pack_data {
 	struct string_list symref;				/* v0 only */
 	struct object_array want_obj;
 	struct object_array have_obj;
-	struct oid_array haves;					/* v2 only */
 	struct string_list wanted_refs;				/* v2 only */
 	struct strvec hidden_refs;
 
@@ -113,6 +112,7 @@ struct upload_pack_data {
 	unsigned done : 1;					/* v2 only */
 	unsigned allow_ref_in_want : 1;				/* v2 only */
 	unsigned allow_sideband_all : 1;			/* v2 only */
+	unsigned seen_haves : 1;				/* v2 only */
 	unsigned advertise_sid : 1;
 	unsigned sent_capabilities : 1;
 };
@@ -124,7 +124,6 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	struct strvec hidden_refs = STRVEC_INIT;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
-	struct oid_array haves = OID_ARRAY_INIT;
 	struct object_array shallows = OBJECT_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 	struct string_list uri_protocols = STRING_LIST_INIT_DUP;
@@ -137,7 +136,6 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->hidden_refs = hidden_refs;
 	data->want_obj = want_obj;
 	data->have_obj = have_obj;
-	data->haves = haves;
 	data->shallows = shallows;
 	data->deepen_not = deepen_not;
 	data->uri_protocols = uri_protocols;
@@ -159,7 +157,6 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	strvec_clear(&data->hidden_refs);
 	object_array_clear(&data->want_obj);
 	object_array_clear(&data->have_obj);
-	oid_array_clear(&data->haves);
 	object_array_clear(&data->shallows);
 	string_list_clear(&data->deepen_not, 0);
 	object_array_clear(&data->extra_edge_obj);
@@ -1532,15 +1529,14 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 	return 0;
 }
 
-static int parse_have(const char *line, struct oid_array *haves)
+static int parse_have(const char *line, struct upload_pack_data *data)
 {
 	const char *arg;
 	if (skip_prefix(line, "have ", &arg)) {
 		struct object_id oid;
 
-		if (get_oid_hex(arg, &oid))
-			die("git upload-pack: expected SHA1 object, got '%s'", arg);
-		oid_array_append(haves, &oid);
+		got_oid(data, arg, &oid);
+		data->seen_haves = 1;
 		return 1;
 	}
 
@@ -1552,7 +1548,7 @@ static void trace2_fetch_info(struct upload_pack_data *data)
 	struct json_writer jw = JSON_WRITER_INIT;
 
 	jw_object_begin(&jw, 0);
-	jw_object_intmax(&jw, "haves", data->haves.nr);
+	jw_object_intmax(&jw, "haves", data->have_obj.nr);
 	jw_object_intmax(&jw, "wants", data->want_obj.nr);
 	jw_object_intmax(&jw, "want-refs", data->wanted_refs.nr);
 	jw_object_intmax(&jw, "depth", data->depth);
@@ -1586,7 +1582,7 @@ static void process_args(struct packet_reader *request,
 				   &data->hidden_refs, &data->want_obj))
 			continue;
 		/* process have line */
-		if (parse_have(arg, &data->haves))
+		if (parse_have(arg, data))
 			continue;
 
 		/* process args like thin-pack */
@@ -1664,27 +1660,7 @@ static void process_args(struct packet_reader *request,
 		trace2_fetch_info(data);
 }
 
-static int process_haves(struct upload_pack_data *data, struct oid_array *common)
-{
-	int i;
-
-	/* Process haves */
-	for (i = 0; i < data->haves.nr; i++) {
-		const struct object_id *oid = &data->haves.oid[i];
-
-		if (!repo_has_object_file_with_flags(the_repository, oid,
-						     OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
-			continue;
-
-		oid_array_append(common, oid);
-
-		do_got_oid(data, oid);
-	}
-
-	return 0;
-}
-
-static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
+static int send_acks(struct upload_pack_data *data, struct object_array *acks)
 {
 	int i;
 
@@ -1696,7 +1672,7 @@ static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
 
 	for (i = 0; i < acks->nr; i++) {
 		packet_writer_write(&data->writer, "ACK %s\n",
-				    oid_to_hex(&acks->oid[i]));
+				    oid_to_hex(&acks->objects[i].item->oid));
 	}
 
 	if (!data->wait_for_done && ok_to_give_up(data)) {
@@ -1710,13 +1686,11 @@ static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
 
 static int process_haves_and_send_acks(struct upload_pack_data *data)
 {
-	struct oid_array common = OID_ARRAY_INIT;
 	int ret = 0;
 
-	process_haves(data, &common);
 	if (data->done) {
 		ret = 1;
-	} else if (send_acks(data, &common)) {
+	} else if (send_acks(data, &data->have_obj)) {
 		packet_writer_delim(&data->writer);
 		ret = 1;
 	} else {
@@ -1725,8 +1699,6 @@ static int process_haves_and_send_acks(struct upload_pack_data *data)
 		ret = 0;
 	}
 
-	oid_array_clear(&data->haves);
-	oid_array_clear(&common);
 	return ret;
 }
 
@@ -1796,7 +1768,7 @@ int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
 				 * they didn't want anything.
 				 */
 				state = FETCH_DONE;
-			} else if (data.haves.nr) {
+			} else if (data.seen_haves) {
 				/*
 				 * Request had 'have' lines, so lets ACK them.
 				 */
