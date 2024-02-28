@@ -1390,6 +1390,8 @@ static void get_upload_pack_config(struct repository *r,
 {
 	repo_config(r, upload_pack_config, data);
 	git_protected_config(upload_pack_protected_config, data);
+
+	data->allow_sideband_all |= git_env_bool("GIT_TEST_SIDEBAND_ALL", 0);
 }
 
 void upload_pack(const int advertise_refs, const int stateless_rpc,
@@ -1639,8 +1641,7 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
-		if ((git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		     data->allow_sideband_all) &&
+		if (data->allow_sideband_all &&
 		    !strcmp(arg, "sideband-all")) {
 			data->writer.use_sideband = 1;
 			continue;
