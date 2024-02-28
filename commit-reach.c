@@ -461,17 +461,13 @@ static int get_merge_bases_many_0(struct repository *r,
 	return 0;
 }
 
-struct commit_list *repo_get_merge_bases_many(struct repository *r,
-					      struct commit *one,
-					      int n,
-					      struct commit **twos)
+int repo_get_merge_bases_many(struct repository *r,
+			      struct commit *one,
+			      int n,
+			      struct commit **twos,
+			      struct commit_list **result)
 {
-	struct commit_list *result = NULL;
-	if (get_merge_bases_many_0(r, one, n, twos, 1, &result) < 0) {
-		free_commit_list(result);
-		return NULL;
-	}
-	return result;
+	return get_merge_bases_many_0(r, one, n, twos, 1, result);
 }
 
 struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,

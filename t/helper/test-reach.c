@@ -115,9 +115,12 @@ int cmd__reach(int ac, const char **av)
 	else if (!strcmp(av[1], "is_descendant_of"))
 		printf("%s(A,X):%d\n", av[1], repo_is_descendant_of(r, A, X));
 	else if (!strcmp(av[1], "get_merge_bases_many")) {
-		struct commit_list *list = repo_get_merge_bases_many(the_repository,
-								     A, X_nr,
-								     X_array);
+		struct commit_list *list = NULL;
+		if (repo_get_merge_bases_many(the_repository,
+					      A, X_nr,
+					      X_array,
+					      &list) < 0)
+			exit(128);
 		printf("%s(A,X):\n", av[1]);
 		print_sorted_commit_ids(list);
 	} else if (!strcmp(av[1], "reduce_heads")) {

@@ -1658,7 +1658,7 @@ static struct commit *get_base_commit(const char *base_commit,
 		struct branch *curr_branch = branch_get(NULL);
 		const char *upstream = branch_get_upstream(curr_branch, NULL);
 		if (upstream) {
-			struct commit_list *base_list;
+			struct commit_list *base_list = NULL;
 			struct commit *commit;
 			struct object_id oid;
 
@@ -1669,11 +1669,12 @@ static struct commit *get_base_commit(const char *base_commit,
 					return NULL;
 			}
 			commit = lookup_commit_or_die(&oid, "upstream base");
-			base_list = repo_get_merge_bases_many(the_repository,
-							      commit, total,
-							      list);
-			/* There should be one and only one merge base. */
-			if (!base_list || base_list->next) {
+			if (repo_get_merge_bases_many(the_repository,
+						      commit, total,
+						      list,
+						      &base_list) < 0 ||
+			    /* There should be one and only one merge base. */
+			    !base_list || base_list->next) {
 				if (die_on_failure) {
 					die(_("could not find exact merge base"));
 				} else {

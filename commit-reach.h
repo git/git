@@ -13,9 +13,10 @@ int repo_get_merge_bases(struct repository *r,
 			 struct commit *rev1,
 			 struct commit *rev2,
 			 struct commit_list **result);
-struct commit_list *repo_get_merge_bases_many(struct repository *r,
-					      struct commit *one, int n,
-					      struct commit **twos);
+int repo_get_merge_bases_many(struct repository *r,
+			      struct commit *one, int n,
+			      struct commit **twos,
+			      struct commit_list **result);
 /* To be used only when object flags after this call no longer matter */
 struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
 						    struct commit *one, int n,
