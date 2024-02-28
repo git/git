@@ -409,37 +409,38 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 	return remove_redundant_no_gen(r, array, cnt);
 }
 
-static struct commit_list *get_merge_bases_many_0(struct repository *r,
-						  struct commit *one,
-						  int n,
-						  struct commit **twos,
-						  int cleanup)
+static int get_merge_bases_many_0(struct repository *r,
+				  struct commit *one,
+				  int n,
+				  struct commit **twos,
+				  int cleanup,
+				  struct commit_list **result)
 {
 	struct commit_list *list;
 	struct commit **rslt;
-	struct commit_list *result = NULL;
 	int cnt, i;
 
-	if (merge_bases_many(r, one, n, twos, &result) < 0)
-		return NULL;
+	if (merge_bases_many(r, one, n, twos, result) < 0)
+		return -1;
 	for (i = 0; i < n; i++) {
 		if (one == twos[i])
-			return result;
+			return 0;
 	}
-	if (!result || !result->next) {
+	if (!*result || !(*result)->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
 			clear_commit_marks_many(n, twos, all_flags);
 		}
-		return result;
+		return 0;
 	}
 
 	/* There are more than one */
-	cnt = commit_list_count(result);
+	cnt = commit_list_count(*result);
 	CALLOC_ARRAY(rslt, cnt);
-	for (list = result, i = 0; list; list = list->next)
+	for (list = *result, i = 0; list; list = list->next)
 		rslt[i++] = list->item;
-	free_commit_list(result);
+	free_commit_list(*result);
+	*result = NULL;
 
 	clear_commit_marks(one, all_flags);
 	clear_commit_marks_many(n, twos, all_flags);
@@ -447,13 +448,12 @@ static struct commit_list *get_merge_bases_many_0(struct repository *r,
 	cnt = remove_redundant(r, rslt, cnt);
 	if (cnt < 0) {
 		free(rslt);
-		return NULL;
+		return -1;
 	}
-	result = NULL;
 	for (i = 0; i < cnt; i++)
-		commit_list_insert_by_date(rslt[i], &result);
+		commit_list_insert_by_date(rslt[i], result);
 	free(rslt);
-	return result;
+	return 0;
 }
 
 struct commit_list *repo_get_merge_bases_many(struct repository *r,
@@ -461,7 +461,12 @@ struct commit_list *repo_get_merge_bases_many(struct repository *r,
 					      int n,
 					      struct commit **twos)
 {
-	return get_merge_bases_many_0(r, one, n, twos, 1);
+	struct commit_list *result = NULL;
+	if (get_merge_bases_many_0(r, one, n, twos, 1, &result) < 0) {
+		free_commit_list(result);
+		return NULL;
+	}
+	return result;
 }
 
 struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
@@ -469,14 +474,24 @@ struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
 						    int n,
 						    struct commit **twos)
 {
-	return get_merge_bases_many_0(r, one, n, twos, 0);
+	struct commit_list *result = NULL;
+	if (get_merge_bases_many_0(r, one, n, twos, 0, &result) < 0) {
+		free_commit_list(result);
+		return NULL;
+	}
+	return result;
 }
 
 struct commit_list *repo_get_merge_bases(struct repository *r,
 					 struct commit *one,
 					 struct commit *two)
 {
-	return get_merge_bases_many_0(r, one, 1, &two, 1);
+	struct commit_list *result = NULL;
+	if (get_merge_bases_many_0(r, one, 1, &two, 1, &result) < 0) {
+		free_commit_list(result);
+		return NULL;
+	}
+	return result;
 }
 
 /*
