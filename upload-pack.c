@@ -28,6 +28,7 @@
 #include "shallow.h"
 #include "write-or-die.h"
 #include "json-writer.h"
+#include "strmap.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -61,7 +62,7 @@ struct upload_pack_data {
 	struct string_list symref;				/* v0 only */
 	struct object_array want_obj;
 	struct object_array have_obj;
-	struct string_list wanted_refs;				/* v2 only */
+	struct strmap wanted_refs;				/* v2 only */
 	struct strvec hidden_refs;
 
 	struct object_array shallows;
@@ -120,7 +121,7 @@ struct upload_pack_data {
 static void upload_pack_data_init(struct upload_pack_data *data)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
-	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
+	struct strmap wanted_refs = STRMAP_INIT;
 	struct strvec hidden_refs = STRVEC_INIT;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
@@ -153,7 +154,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 static void upload_pack_data_clear(struct upload_pack_data *data)
 {
 	string_list_clear(&data->symref, 1);
-	string_list_clear(&data->wanted_refs, 1);
+	strmap_clear(&data->wanted_refs, 1);
 	strvec_clear(&data->hidden_refs);
 	object_array_clear(&data->want_obj);
 	object_array_clear(&data->have_obj);
@@ -1488,14 +1489,13 @@ static int parse_want(struct packet_writer *writer, const char *line,
 }
 
 static int parse_want_ref(struct packet_writer *writer, const char *line,
-			  struct string_list *wanted_refs,
+			  struct strmap *wanted_refs,
 			  struct strvec *hidden_refs,
 			  struct object_array *want_obj)
 {
 	const char *refname_nons;
 	if (skip_prefix(line, "want-ref ", &refname_nons)) {
 		struct object_id oid;
-		struct string_list_item *item;
 		struct object *o = NULL;
 		struct strbuf refname = STRBUF_INIT;
 
@@ -1507,8 +1507,11 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 		}
 		strbuf_release(&refname);
 
-		item = string_list_append(wanted_refs, refname_nons);
-		item->util = oiddup(&oid);
+		if (strmap_put(wanted_refs, refname_nons, oiddup(&oid))) {
+			packet_writer_error(writer, "duplicate want-ref %s",
+					    refname_nons);
+			die("duplicate want-ref %s", refname_nons);
+		}
 
 		if (!starts_with(refname_nons, "refs/tags/")) {
 			struct commit *commit = lookup_commit_in_graph(the_repository, &oid);
@@ -1551,7 +1554,7 @@ static void trace2_fetch_info(struct upload_pack_data *data)
 	jw_object_begin(&jw, 0);
 	jw_object_intmax(&jw, "haves", data->have_obj.nr);
 	jw_object_intmax(&jw, "wants", data->want_obj.nr);
-	jw_object_intmax(&jw, "want-refs", data->wanted_refs.nr);
+	jw_object_intmax(&jw, "want-refs", strmap_get_size(&data->wanted_refs));
 	jw_object_intmax(&jw, "depth", data->depth);
 	jw_object_intmax(&jw, "shallows", data->shallows.nr);
 	jw_object_bool(&jw, "deepen-since", data->deepen_since);
@@ -1705,17 +1708,18 @@ static int process_haves_and_send_acks(struct upload_pack_data *data)
 
 static void send_wanted_ref_info(struct upload_pack_data *data)
 {
-	const struct string_list_item *item;
+	struct hashmap_iter iter;
+	const struct strmap_entry *e;
 
-	if (!data->wanted_refs.nr)
+	if (strmap_empty(&data->wanted_refs))
 		return;
 
 	packet_writer_write(&data->writer, "wanted-refs\n");
 
-	for_each_string_list_item(item, &data->wanted_refs) {
+	strmap_for_each_entry(&data->wanted_refs, &iter, e) {
 		packet_writer_write(&data->writer, "%s %s\n",
-				    oid_to_hex(item->util),
-				    item->string);
+				    oid_to_hex(e->value),
+				    e->key);
 	}
 
 	packet_writer_delim(&data->writer);
