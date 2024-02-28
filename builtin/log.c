@@ -1704,11 +1704,11 @@ static struct commit *get_base_commit(const char *base_commit,
 	 */
 	while (rev_nr > 1) {
 		for (i = 0; i < rev_nr / 2; i++) {
-			struct commit_list *merge_base;
-			merge_base = repo_get_merge_bases(the_repository,
-							  rev[2 * i],
-							  rev[2 * i + 1]);
-			if (!merge_base || merge_base->next) {
+			struct commit_list *merge_base = NULL;
+			if (repo_get_merge_bases(the_repository,
+						 rev[2 * i],
+						 rev[2 * i + 1], &merge_base) < 0 ||
+			    !merge_base || merge_base->next) {
 				if (die_on_failure) {
 					die(_("failed to find exact merge base"));
 				} else {

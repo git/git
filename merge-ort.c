@@ -5068,7 +5068,11 @@ static void merge_ort_internal(struct merge_options *opt,
 	struct strbuf merge_base_abbrev = STRBUF_INIT;
 
 	if (!merge_bases) {
-		merge_bases = repo_get_merge_bases(the_repository, h1, h2);
+		if (repo_get_merge_bases(the_repository, h1, h2,
+					 &merge_bases) < 0) {
+			result->clean = -1;
+			return;
+		}
 		/* See merge-ort.h:merge_incore_recursive() declaration NOTE */
 		merge_bases = reverse_commit_list(merge_bases);
 	}

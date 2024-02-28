@@ -188,9 +188,12 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 		struct commit_list *new_commits = NULL, *end = NULL;
 
 		for (j = ret; j; j = j->next) {
-			struct commit_list *bases;
-			bases = repo_get_merge_bases(the_repository, i->item,
-						     j->item);
+			struct commit_list *bases = NULL;
+			if (repo_get_merge_bases(the_repository, i->item,
+						 j->item, &bases) < 0) {
+				free_commit_list(bases);
+				return NULL;
+			}
 			if (!new_commits)
 				new_commits = bases;
 			else
@@ -482,16 +485,12 @@ struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
 	return result;
 }
 
-struct commit_list *repo_get_merge_bases(struct repository *r,
-					 struct commit *one,
-					 struct commit *two)
+int repo_get_merge_bases(struct repository *r,
+			 struct commit *one,
+			 struct commit *two,
+			 struct commit_list **result)
 {
-	struct commit_list *result = NULL;
-	if (get_merge_bases_many_0(r, one, 1, &two, 1, &result) < 0) {
-		free_commit_list(result);
-		return NULL;
-	}
-	return result;
+	return get_merge_bases_many_0(r, one, 1, &two, 1, result);
 }
 
 /*

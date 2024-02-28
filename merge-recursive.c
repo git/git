@@ -3633,7 +3633,9 @@ static int merge_recursive_internal(struct merge_options *opt,
 	}
 
 	if (!merge_bases) {
-		merge_bases = repo_get_merge_bases(the_repository, h1, h2);
+		if (repo_get_merge_bases(the_repository, h1, h2,
+					 &merge_bases) < 0)
+			return -1;
 		merge_bases = reverse_commit_list(merge_bases);
 	}
 

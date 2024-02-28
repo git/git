@@ -9,9 +9,10 @@ struct ref_filter;
 struct object_id;
 struct object_array;
 
-struct commit_list *repo_get_merge_bases(struct repository *r,
-					 struct commit *rev1,
-					 struct commit *rev2);
+int repo_get_merge_bases(struct repository *r,
+			 struct commit *rev1,
+			 struct commit *rev2,
+			 struct commit_list **result);
 struct commit_list *repo_get_merge_bases_many(struct repository *r,
 					      struct commit *one, int n,
 					      struct commit **twos);
