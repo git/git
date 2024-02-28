@@ -12,6 +12,9 @@ UI, Workflows & Features
  * "git checkout -p" and friends learned that that "@" is a synonym
    for "HEAD".
 
+ * Variants of vimdiff learned to honor mergetool.<variant>.layout
+   settings.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -20,6 +23,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * More tests that are marked as "ref-files only" have been updated to
    improve test coverage of reftable backend.
+
+ * Some parts of command line completion script (in contrib/) have
+   been micro-optimized.
 
 
 Fixes since v2.44
@@ -36,5 +42,20 @@ Fixes since v2.44
    it would lead to nonsense behaviour including division by zero.
    (merge 76fb807faa kh/column-reject-negative-padding later to maint).
 
+ * "git am --help" now tells readers what actions are available in
+   "git am --whitespace=<action>", in addition to saying that the
+   option is passed through to the underlying "git apply".
+   (merge a171dac734 jc/am-whitespace-doc later to maint).
+
+ * "git tag --column" failed to check the exit status of its "git
+   column" invocation, which has been corrected.
+   (merge 92e66478fc rj/tag-column-fix later to maint).
+
+ * Credential helper based on libsecret (in contrib/) has been updated
+   to handle an empty password correctly.
+   (merge 8f1f2023b7 mh/libsecret-empty-password-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
+   (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
+   (merge 64562d784d jb/doc-interactive-singlekey-do-not-need-perl later to maint).
