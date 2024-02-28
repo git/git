@@ -113,6 +113,7 @@ struct upload_pack_data {
 	unsigned done : 1;					/* v2 only */
 	unsigned allow_ref_in_want : 1;				/* v2 only */
 	unsigned allow_sideband_all : 1;			/* v2 only */
+	unsigned allow_packfile_uris : 1;			/* v2 only */
 	unsigned advertise_sid : 1;
 	unsigned sent_capabilities : 1;
 };
@@ -1362,6 +1363,9 @@ static int upload_pack_config(const char *var, const char *value,
 		data->allow_ref_in_want = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
 		data->allow_sideband_all = git_config_bool(var, value);
+	} else if (!strcmp("uploadpack.blobpackfileuri", var)) {
+		if (value)
+			data->allow_packfile_uris = 1;
 	} else if (!strcmp("core.precomposeunicode", var)) {
 		precomposed_unicode = git_config_bool(var, value);
 	} else if (!strcmp("transfer.advertisesid", var)) {
@@ -1647,7 +1651,8 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
-		if (skip_prefix(arg, "packfile-uris ", &p)) {
+		if (data->allow_packfile_uris &&
+		    skip_prefix(arg, "packfile-uris ", &p)) {
 			string_list_split(&data->uri_protocols, p, ',', -1);
 			continue;
 		}
@@ -1847,8 +1852,6 @@ int upload_pack_advertise(struct repository *r,
 	get_upload_pack_config(r, &data);
 
 	if (value) {
-		char *str = NULL;
-
 		strbuf_addstr(value, "shallow wait-for-done");
 
 		if (data.allow_filter)
@@ -1860,13 +1863,8 @@ int upload_pack_advertise(struct repository *r,
 		if (data.allow_sideband_all)
 			strbuf_addstr(value, " sideband-all");
 
-		if (!repo_config_get_string(r,
-					    "uploadpack.blobpackfileuri",
-					    &str) &&
-		    str) {
+		if (data.allow_packfile_uris)
 			strbuf_addstr(value, " packfile-uris");
-			free(str);
-		}
 	}
 
 	upload_pack_data_clear(&data);

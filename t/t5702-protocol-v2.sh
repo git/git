@@ -778,6 +778,25 @@ test_expect_success 'archive with custom path does not request v2' '
 	! grep ^GIT_PROTOCOL env.trace
 '
 
+test_expect_success 'reject client packfile-uris if not advertised' '
+	{
+		packetize command=fetch &&
+		packetize object-format=$(test_oid algo) &&
+		printf 0001 &&
+		packetize packfile-uris https &&
+		packetize done &&
+		printf 0000
+	} >input &&
+	test_must_fail env GIT_PROTOCOL=version=2 \
+		git upload-pack client <input &&
+	test_must_fail env GIT_PROTOCOL=version=2 \
+		git -c uploadpack.blobpackfileuri \
+		upload-pack client <input &&
+	GIT_PROTOCOL=version=2 \
+		git -c uploadpack.blobpackfileuri=anything \
+		upload-pack client <input
+'
+
 # Test protocol v2 with 'http://' transport
 #
 . "$TEST_DIRECTORY"/lib-httpd.sh
