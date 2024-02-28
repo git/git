@@ -1973,8 +1973,12 @@ static void prepare_show_merge(struct rev_info *revs)
 	if (repo_get_oid(the_repository, "HEAD", &oid))
 		die("--merge without HEAD?");
 	head = lookup_commit_or_die(&oid, "HEAD");
-	if (repo_get_oid(the_repository, "MERGE_HEAD", &oid))
+	if (read_ref_full("MERGE_HEAD",
+			RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+			&oid, NULL))
 		die("--merge without MERGE_HEAD?");
+	if (is_null_oid(&oid))
+		die(_("MERGE_HEAD exists but is a symbolic ref"));
 	other = lookup_commit_or_die(&oid, "MERGE_HEAD");
 	add_pending_object(revs, &head->object, "HEAD");
 	add_pending_object(revs, &other->object, "MERGE_HEAD");
