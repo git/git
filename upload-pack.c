@@ -526,8 +526,6 @@ static int get_common_commits(struct upload_pack_data *data,
 	int got_other = 0;
 	int sent_ready = 0;
 
-	save_commit_buffer = 0;
-
 	for (;;) {
 		const char *arg;
 

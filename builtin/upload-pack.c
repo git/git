@@ -8,6 +8,7 @@
 #include "replace-object.h"
 #include "upload-pack.h"
 #include "serve.h"
+#include "commit.h"
 
 static const char * const upload_pack_usage[] = {
 	N_("git-upload-pack [--[no-]strict] [--timeout=<n>] [--stateless-rpc]\n"
@@ -37,6 +38,7 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("upload-pack");
 	disable_replace_refs();
+	save_commit_buffer = 0;
 
 	argc = parse_options(argc, argv, prefix, options, upload_pack_usage, 0);
 
