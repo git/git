@@ -1646,6 +1646,9 @@ static void process_args(struct packet_reader *request,
 		}
 
 		if (skip_prefix(arg, "packfile-uris ", &p)) {
+			if (data->uri_protocols.nr)
+				send_err_and_die(data,
+						 "multiple packfile-uris lines forbidden");
 			string_list_split(&data->uri_protocols, p, ',', -1);
 			continue;
 		}

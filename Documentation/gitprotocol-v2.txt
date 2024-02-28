@@ -362,7 +362,8 @@ included in the client's request:
 If the 'packfile-uris' feature is advertised, the following argument
 can be included in the client's request as well as the potential
 addition of the 'packfile-uris' section in the server's response as
-explained below.
+explained below. Note that at most one `packfile-uris` line can be sent
+to the server.
 
     packfile-uris <comma-separated-list-of-protocols>
 	Indicates to the server that the client is willing to receive
