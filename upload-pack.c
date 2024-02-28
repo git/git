@@ -470,7 +470,8 @@ static int do_got_oid(struct upload_pack_data *data, const struct object_id *oid
 {
 	int we_knew_they_have = 0;
 	struct object *o = parse_object_with_flags(the_repository, oid,
-						   PARSE_OBJECT_SKIP_HASH_CHECK);
+						   PARSE_OBJECT_SKIP_HASH_CHECK |
+						   PARSE_OBJECT_DISCARD_TREE);
 
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
@@ -1150,7 +1151,8 @@ static void receive_needs(struct upload_pack_data *data,
 		}
 
 		o = parse_object_with_flags(the_repository, &oid_buf,
-					    PARSE_OBJECT_SKIP_HASH_CHECK);
+					    PARSE_OBJECT_SKIP_HASH_CHECK |
+					    PARSE_OBJECT_DISCARD_TREE);
 		if (!o) {
 			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
@@ -1467,7 +1469,8 @@ static int parse_want(struct packet_writer *writer, const char *line,
 			    "expected to get oid, not '%s'", line);
 
 		o = parse_object_with_flags(the_repository, &oid,
-					    PARSE_OBJECT_SKIP_HASH_CHECK);
+					    PARSE_OBJECT_SKIP_HASH_CHECK |
+					    PARSE_OBJECT_DISCARD_TREE);
 
 		if (!o) {
 			packet_writer_error(writer,
