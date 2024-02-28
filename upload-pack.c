@@ -65,7 +65,7 @@ struct upload_pack_data {
 	struct strvec hidden_refs;
 
 	struct object_array shallows;
-	struct string_list deepen_not;
+	struct oid_array deepen_not;
 	struct object_array extra_edge_obj;
 	int depth;
 	timestamp_t deepen_since;
@@ -125,7 +125,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
 	struct object_array shallows = OBJECT_ARRAY_INIT;
-	struct string_list deepen_not = STRING_LIST_INIT_DUP;
+	struct oid_array deepen_not = OID_ARRAY_INIT;
 	struct string_list uri_protocols = STRING_LIST_INIT_DUP;
 	struct object_array extra_edge_obj = OBJECT_ARRAY_INIT;
 	struct string_list allowed_filters = STRING_LIST_INIT_DUP;
@@ -158,7 +158,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	object_array_clear(&data->want_obj);
 	object_array_clear(&data->have_obj);
 	object_array_clear(&data->shallows);
-	string_list_clear(&data->deepen_not, 0);
+	oid_array_clear(&data->deepen_not);
 	object_array_clear(&data->extra_edge_obj);
 	list_objects_filter_release(&data->filter_options);
 	string_list_clear(&data->allowed_filters, 0);
@@ -926,8 +926,8 @@ static int send_shallow_list(struct upload_pack_data *data)
 		if (data->deepen_not.nr) {
 			strvec_push(&av, "--not");
 			for (i = 0; i < data->deepen_not.nr; i++) {
-				struct string_list_item *s = data->deepen_not.items + i;
-				strvec_push(&av, s->string);
+				struct object_id *oid = data->deepen_not.oid + i;
+				strvec_push(&av, oid_to_hex(oid));
 			}
 			strvec_push(&av, "--not");
 		}
@@ -1004,7 +1004,7 @@ static int process_deepen_since(const char *line, timestamp_t *deepen_since, int
 	return 0;
 }
 
-static int process_deepen_not(const char *line, struct string_list *deepen_not, int *deepen_rev_list)
+static int process_deepen_not(const char *line, struct oid_array *deepen_not, int *deepen_rev_list)
 {
 	const char *arg;
 	if (skip_prefix(line, "deepen-not ", &arg)) {
@@ -1012,7 +1012,7 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 		struct object_id oid;
 		if (expand_ref(the_repository, arg, strlen(arg), &oid, &ref) != 1)
 			die("git upload-pack: ambiguous deepen-not: %s", line);
-		string_list_append(deepen_not, ref);
+		oid_array_append(deepen_not, &oid);
 		free(ref);
 		*deepen_rev_list = 1;
 		return 1;
