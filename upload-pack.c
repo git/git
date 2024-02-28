@@ -65,7 +65,7 @@ struct upload_pack_data {
 	struct strvec hidden_refs;
 
 	struct object_array shallows;
-	struct oid_array deepen_not;
+	struct oidset deepen_not;
 	struct object_array extra_edge_obj;
 	int depth;
 	timestamp_t deepen_since;
@@ -125,7 +125,7 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
 	struct object_array shallows = OBJECT_ARRAY_INIT;
-	struct oid_array deepen_not = OID_ARRAY_INIT;
+	struct oidset deepen_not = OID_ARRAY_INIT;
 	struct string_list uri_protocols = STRING_LIST_INIT_DUP;
 	struct object_array extra_edge_obj = OBJECT_ARRAY_INIT;
 	struct string_list allowed_filters = STRING_LIST_INIT_DUP;
@@ -158,7 +158,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	object_array_clear(&data->want_obj);
 	object_array_clear(&data->have_obj);
 	object_array_clear(&data->shallows);
-	oid_array_clear(&data->deepen_not);
+	oidset_clear(&data->deepen_not);
 	object_array_clear(&data->extra_edge_obj);
 	list_objects_filter_release(&data->filter_options);
 	string_list_clear(&data->allowed_filters, 0);
@@ -923,12 +923,13 @@ static int send_shallow_list(struct upload_pack_data *data)
 		strvec_push(&av, "rev-list");
 		if (data->deepen_since)
 			strvec_pushf(&av, "--max-age=%"PRItime, data->deepen_since);
-		if (data->deepen_not.nr) {
+		if (oidset_size(&data->deepen_not)) {
+			const struct object_id *oid;
+			struct oidset_iter iter;
 			strvec_push(&av, "--not");
-			for (i = 0; i < data->deepen_not.nr; i++) {
-				struct object_id *oid = data->deepen_not.oid + i;
+			oidset_iter_init(&data->deepen_not, &iter);
+			while ((oid = oidset_iter_next(&iter)))
 				strvec_push(&av, oid_to_hex(oid));
-			}
 			strvec_push(&av, "--not");
 		}
 		for (i = 0; i < data->want_obj.nr; i++) {
@@ -1004,7 +1005,7 @@ static int process_deepen_since(const char *line, timestamp_t *deepen_since, int
 	return 0;
 }
 
-static int process_deepen_not(const char *line, struct oid_array *deepen_not, int *deepen_rev_list)
+static int process_deepen_not(const char *line, struct oidset *deepen_not, int *deepen_rev_list)
 {
 	const char *arg;
 	if (skip_prefix(line, "deepen-not ", &arg)) {
@@ -1012,7 +1013,7 @@ static int process_deepen_not(const char *line, struct oid_array *deepen_not, in
 		struct object_id oid;
 		if (expand_ref(the_repository, arg, strlen(arg), &oid, &ref) != 1)
 			die("git upload-pack: ambiguous deepen-not: %s", line);
-		oid_array_append(deepen_not, &oid);
+		oidset_insert(deepen_not, &oid);
 		free(ref);
 		*deepen_rev_list = 1;
 		return 1;
@@ -1554,7 +1555,7 @@ static void trace2_fetch_info(struct upload_pack_data *data)
 	jw_object_intmax(&jw, "depth", data->depth);
 	jw_object_intmax(&jw, "shallows", data->shallows.nr);
 	jw_object_bool(&jw, "deepen-since", data->deepen_since);
-	jw_object_intmax(&jw, "deepen-not", data->deepen_not.nr);
+	jw_object_intmax(&jw, "deepen-not", oidset_size(&data->deepen_not));
 	jw_object_bool(&jw, "deepen-relative", data->deepen_relative);
 	if (data->filter_options.choice)
 		jw_object_string(&jw, "filter", list_object_filter_config_name(data->filter_options.choice));
