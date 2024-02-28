@@ -30,7 +30,8 @@ int repo_in_merge_bases(struct repository *r,
 			struct commit *reference);
 int repo_in_merge_bases_many(struct repository *r,
 			     struct commit *commit,
-			     int nr_reference, struct commit **reference);
+			     int nr_reference, struct commit **reference,
+			     int ignore_missing_commits);
 
 /*
  * Takes a list of commits and returns a new list where those

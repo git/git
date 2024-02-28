@@ -466,7 +466,7 @@ int repo_is_descendant_of(struct repository *r,
 
 			other = with_commit->item;
 			with_commit = with_commit->next;
-			if (repo_in_merge_bases_many(r, other, 1, &commit))
+			if (repo_in_merge_bases_many(r, other, 1, &commit, 0))
 				return 1;
 		}
 		return 0;
@@ -477,17 +477,18 @@ int repo_is_descendant_of(struct repository *r,
  * Is "commit" an ancestor of one of the "references"?
  */
 int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
-			     int nr_reference, struct commit **reference)
+			     int nr_reference, struct commit **reference,
+			     int ignore_missing_commits)
 {
 	struct commit_list *bases;
 	int ret = 0, i;
 	timestamp_t generation, max_generation = GENERATION_NUMBER_ZERO;
 
 	if (repo_parse_commit(r, commit))
-		return ret;
+		return ignore_missing_commits ? 0 : -1;
 	for (i = 0; i < nr_reference; i++) {
 		if (repo_parse_commit(r, reference[i]))
-			return ret;
+			return ignore_missing_commits ? 0 : -1;
 
 		generation = commit_graph_generation(reference[i]);
 		if (generation > max_generation)
