@@ -130,41 +130,49 @@ static int paint_down_to_common(struct repository *r,
 	return 0;
 }
 
-static struct commit_list *merge_bases_many(struct repository *r,
-					    struct commit *one, int n,
-					    struct commit **twos)
+static int merge_bases_many(struct repository *r,
+			    struct commit *one, int n,
+			    struct commit **twos,
+			    struct commit_list **result)
 {
 	struct commit_list *list = NULL;
-	struct commit_list *result = NULL;
 	int i;
 
 	for (i = 0; i < n; i++) {
-		if (one == twos[i])
+		if (one == twos[i]) {
 			/*
 			 * We do not mark this even with RESULT so we do not
 			 * have to clean it up.
 			 */
-			return commit_list_insert(one, &result);
+			*result = commit_list_insert(one, result);
+			return 0;
+		}
 	}
 
+	if (!one)
+		return 0;
 	if (repo_parse_commit(r, one))
-		return NULL;
+		return error(_("could not parse commit %s"),
+			     oid_to_hex(&one->object.oid));
 	for (i = 0; i < n; i++) {
+		if (!twos[i])
+			return 0;
 		if (repo_parse_commit(r, twos[i]))
-			return NULL;
+			return error(_("could not parse commit %s"),
+				     oid_to_hex(&twos[i]->object.oid));
 	}
 
 	if (paint_down_to_common(r, one, n, twos, 0, 0, &list)) {
 		free_commit_list(list);
-		return NULL;
+		return -1;
 	}
 
 	while (list) {
 		struct commit *commit = pop_commit(&list);
 		if (!(commit->object.flags & STALE))
-			commit_list_insert_by_date(commit, &result);
+			commit_list_insert_by_date(commit, result);
 	}
-	return result;
+	return 0;
 }
 
 struct commit_list *get_octopus_merge_bases(struct commit_list *in)
@@ -409,10 +417,11 @@ static struct commit_list *get_merge_bases_many_0(struct repository *r,
 {
 	struct commit_list *list;
 	struct commit **rslt;
-	struct commit_list *result;
+	struct commit_list *result = NULL;
 	int cnt, i;
 
-	result = merge_bases_many(r, one, n, twos);
+	if (merge_bases_many(r, one, n, twos, &result) < 0)
+		return NULL;
 	for (i = 0; i < n; i++) {
 		if (one == twos[i])
 			return result;
