@@ -1385,9 +1385,10 @@ static int upload_pack_protected_config(const char *var, const char *value,
 	return 0;
 }
 
-static void get_upload_pack_config(struct upload_pack_data *data)
+static void get_upload_pack_config(struct repository *r,
+				   struct upload_pack_data *data)
 {
-	git_config(upload_pack_config, data);
+	repo_config(r, upload_pack_config, data);
 	git_protected_config(upload_pack_protected_config, data);
 }
 
@@ -1398,7 +1399,7 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 	struct upload_pack_data data;
 
 	upload_pack_data_init(&data);
-	get_upload_pack_config(&data);
+	get_upload_pack_config(the_repository, &data);
 
 	data.stateless_rpc = stateless_rpc;
 	data.timeout = timeout;
@@ -1771,7 +1772,7 @@ enum fetch_state {
 	FETCH_DONE,
 };
 
-int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
+int upload_pack_v2(struct repository *r, struct packet_reader *request)
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
@@ -1780,7 +1781,7 @@ int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
 
 	upload_pack_data_init(&data);
 	data.use_sideband = LARGE_PACKET_MAX;
-	get_upload_pack_config(&data);
+	get_upload_pack_config(r, &data);
 
 	while (state != FETCH_DONE) {
 		switch (state) {
