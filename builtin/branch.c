@@ -158,6 +158,8 @@ static int branch_merged(int kind, const char *name,
 
 	merged = reference_rev ? repo_in_merge_bases(the_repository, rev,
 						     reference_rev) : 0;
+	if (merged < 0)
+		exit(128);
 
 	/*
 	 * After the safety valve is fully redefined to "check with
@@ -166,9 +168,13 @@ static int branch_merged(int kind, const char *name,
 	 * any of the following code, but during the transition period,
 	 * a gentle reminder is in order.
 	 */
-	if ((head_rev != reference_rev) &&
-	    (head_rev ? repo_in_merge_bases(the_repository, rev, head_rev) : 0) != merged) {
-		if (merged)
+	if (head_rev != reference_rev) {
+		int expect = head_rev ? repo_in_merge_bases(the_repository, rev, head_rev) : 0;
+		if (expect < 0)
+			exit(128);
+		if (expect == merged)
+			; /* okay */
+		else if (merged)
 			warning(_("deleting branch '%s' that has been merged to\n"
 				"         '%s', but not yet merged to HEAD"),
 				name, reference_name);

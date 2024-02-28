@@ -100,12 +100,16 @@ static int handle_octopus(int count, const char **args, int show_all)
 static int handle_is_ancestor(int argc, const char **argv)
 {
 	struct commit *one, *two;
+	int ret;
 
 	if (argc != 2)
 		die("--is-ancestor takes exactly two commits");
 	one = get_commit_reference(argv[0]);
 	two = get_commit_reference(argv[1]);
-	if (repo_in_merge_bases(the_repository, one, two))
+	ret = repo_in_merge_bases(the_repository, one, two);
+	if (ret < 0)
+		exit(128);
+	if (ret)
 		return 0;
 	else
 		return 1;

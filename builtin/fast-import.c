@@ -1625,6 +1625,7 @@ static int update_branch(struct branch *b)
 		oidclr(&old_oid);
 	if (!force_update && !is_null_oid(&old_oid)) {
 		struct commit *old_cmit, *new_cmit;
+		int ret;
 
 		old_cmit = lookup_commit_reference_gently(the_repository,
 							  &old_oid, 0);
@@ -1633,7 +1634,10 @@ static int update_branch(struct branch *b)
 		if (!old_cmit || !new_cmit)
 			return error("Branch %s is missing commits.", b->name);
 
-		if (!repo_in_merge_bases(the_repository, old_cmit, new_cmit)) {
+		ret = repo_in_merge_bases(the_repository, old_cmit, new_cmit);
+		if (ret < 0)
+			exit(128);
+		if (!ret) {
 			warning("Not updating %s"
 				" (new tip %s does not contain %s)",
 				b->name, oid_to_hex(&b->oid),

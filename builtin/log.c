@@ -1625,7 +1625,7 @@ static struct commit *get_base_commit(const char *base_commit,
 {
 	struct commit *base = NULL;
 	struct commit **rev;
-	int i = 0, rev_nr = 0, auto_select, die_on_failure;
+	int i = 0, rev_nr = 0, auto_select, die_on_failure, ret;
 
 	switch (auto_base) {
 	case AUTO_BASE_NEVER:
@@ -1725,7 +1725,10 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!repo_in_merge_bases(the_repository, base, rev[0])) {
+	ret = repo_in_merge_bases(the_repository, base, rev[0]);
+	if (ret < 0)
+		exit(128);
+	if (!ret) {
 		if (die_on_failure) {
 			die(_("base commit should be the ancestor of revision list"));
 		} else {

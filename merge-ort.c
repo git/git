@@ -542,6 +542,7 @@ enum conflict_and_info_types {
 	CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE,
 	CONFLICT_SUBMODULE_MAY_HAVE_REWINDS,
 	CONFLICT_SUBMODULE_NULL_MERGE_BASE,
+	CONFLICT_SUBMODULE_CORRUPT,
 
 	/* Keep this entry _last_ in the list */
 	NB_CONFLICT_TYPES,
@@ -594,7 +595,9 @@ static const char *type_short_descriptions[] = {
 	[CONFLICT_SUBMODULE_MAY_HAVE_REWINDS] =
 		"CONFLICT (submodule may have rewinds)",
 	[CONFLICT_SUBMODULE_NULL_MERGE_BASE] =
-		"CONFLICT (submodule lacks merge base)"
+		"CONFLICT (submodule lacks merge base)",
+	[CONFLICT_SUBMODULE_CORRUPT] =
+		"CONFLICT (submodule corrupt)"
 };
 
 struct logical_conflict_info {
@@ -1708,7 +1711,14 @@ static int find_first_merges(struct repository *repo,
 		die("revision walk setup failed");
 	while ((commit = get_revision(&revs)) != NULL) {
 		struct object *o = &(commit->object);
-		if (repo_in_merge_bases(repo, b, commit))
+		int ret = repo_in_merge_bases(repo, b, commit);
+
+		if (ret < 0) {
+			object_array_clear(&merges);
+			release_revisions(&revs);
+			return ret;
+		}
+		if (ret > 0)
 			add_object_array(o, NULL, &merges);
 	}
 	reset_revision_walk();
@@ -1723,9 +1733,17 @@ static int find_first_merges(struct repository *repo,
 		contains_another = 0;
 		for (j = 0; j < merges.nr; j++) {
 			struct commit *m2 = (struct commit *) merges.objects[j].item;
-			if (i != j && repo_in_merge_bases(repo, m2, m1)) {
-				contains_another = 1;
-				break;
+			if (i != j) {
+				int ret = repo_in_merge_bases(repo, m2, m1);
+				if (ret < 0) {
+					object_array_clear(&merges);
+					release_revisions(&revs);
+					return ret;
+				}
+				if (ret > 0) {
+					contains_another = 1;
+					break;
+				}
 			}
 		}
 
@@ -1747,7 +1765,7 @@ static int merge_submodule(struct merge_options *opt,
 {
 	struct repository subrepo;
 	struct strbuf sb = STRBUF_INIT;
-	int ret = 0;
+	int ret = 0, ret2;
 	struct commit *commit_o, *commit_a, *commit_b;
 	int parent_count;
 	struct object_array merges;
@@ -1794,8 +1812,26 @@ static int merge_submodule(struct merge_options *opt,
 	}
 
 	/* check whether both changes are forward */
-	if (!repo_in_merge_bases(&subrepo, commit_o, commit_a) ||
-	    !repo_in_merge_bases(&subrepo, commit_o, commit_b)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_o, commit_a);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		goto cleanup;
+	}
+	if (ret2 > 0)
+		ret2 = repo_in_merge_bases(&subrepo, commit_o, commit_b);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		goto cleanup;
+	}
+	if (!ret2) {
 		path_msg(opt, CONFLICT_SUBMODULE_MAY_HAVE_REWINDS, 0,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s "
@@ -1805,7 +1841,16 @@ static int merge_submodule(struct merge_options *opt,
 	}
 
 	/* Case #1: a is contained in b or vice versa */
-	if (repo_in_merge_bases(&subrepo, commit_a, commit_b)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_a, commit_b);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		goto cleanup;
+	}
+	if (ret2 > 0) {
 		oidcpy(result, b);
 		path_msg(opt, INFO_SUBMODULE_FAST_FORWARDING, 1,
 			 path, NULL, NULL, NULL,
@@ -1814,7 +1859,16 @@ static int merge_submodule(struct merge_options *opt,
 		ret = 1;
 		goto cleanup;
 	}
-	if (repo_in_merge_bases(&subrepo, commit_b, commit_a)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_b, commit_a);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		goto cleanup;
+	}
+	if (ret2 > 0) {
 		oidcpy(result, a);
 		path_msg(opt, INFO_SUBMODULE_FAST_FORWARDING, 1,
 			 path, NULL, NULL, NULL,
@@ -1839,6 +1893,13 @@ static int merge_submodule(struct merge_options *opt,
 	parent_count = find_first_merges(&subrepo, path, commit_a, commit_b,
 					 &merges);
 	switch (parent_count) {
+	case -1:
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		break;
 	case 0:
 		path_msg(opt, CONFLICT_SUBMODULE_FAILED_TO_MERGE, 0,
 			 path, NULL, NULL, NULL,
