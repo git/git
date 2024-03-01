@@ -105,7 +105,6 @@ instead.  `--no-symlinks` is the default on Windows.
 	`merge.tool` until a tool is found.
 
 --[no-]trust-exit-code::
-	'git-difftool' invokes a diff tool individually on each file.
 	Errors reported by the diff tool are ignored by default.
 	Use `--trust-exit-code` to make 'git-difftool' exit when an
 	invoked diff tool returns a non-zero exit code.
