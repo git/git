@@ -15,6 +15,8 @@ UI, Workflows & Features
  * Variants of vimdiff learned to honor mergetool.<variant>.layout
    settings.
 
+ * "git reflog" learned a "list" subcommand that enumerates known reflogs.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -26,6 +28,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Some parts of command line completion script (in contrib/) have
    been micro-optimized.
+
+ * The way placeholders are to be marked-up in documentation have been
+   specified; use "_<placeholder>_" to typeset the word inside a pair
+   of <angle-brakets> emphasized.
 
 
 Fixes since v2.44
@@ -55,7 +61,16 @@ Fixes since v2.44
    to handle an empty password correctly.
    (merge 8f1f2023b7 mh/libsecret-empty-password-fix later to maint).
 
+ * "git difftool --dir-diff" learned to honor the "--trust-exit-code"
+   option; it used to always exit with 0 and signalled success.
+   (merge eb84c8b6ce ps/difftool-dir-diff-exit-code later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
    (merge 64562d784d jb/doc-interactive-singlekey-do-not-need-perl later to maint).
+   (merge c431a235e2 cp/t9146-use-test-path-helpers later to maint).
+   (merge 82d75402d5 ds/doc-send-email-capitalization later to maint).
+   (merge 41bff66e35 jc/doc-add-placeholder-fix later to maint).
+   (merge 6835f0efe9 jw/remote-doc-typofix later to maint).
+   (merge 244001aa20 hs/rebase-not-in-progress later to maint).
