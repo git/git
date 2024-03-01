@@ -94,8 +94,9 @@ void parse_trailers(const struct process_trailer_options *,
 		    const char *str,
 		    struct list_head *head);
 
-void trailer_info_get(struct trailer_info *info, const char *str,
-		      const struct process_trailer_options *opts);
+void trailer_info_get(const struct process_trailer_options *,
+		      const char *str,
+		      struct trailer_info *);
 
 void trailer_info_release(struct trailer_info *info);
 

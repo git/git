@@ -997,7 +997,7 @@ void parse_trailers(const struct process_trailer_options *opts,
 	struct strbuf val = STRBUF_INIT;
 	size_t i;
 
-	trailer_info_get(info, str, opts);
+	trailer_info_get(opts, str, info);
 
 	for (i = 0; i < info->trailer_nr; i++) {
 		int separator_pos;
@@ -1032,8 +1032,9 @@ void free_trailers(struct list_head *trailers)
 	}
 }
 
-void trailer_info_get(struct trailer_info *info, const char *str,
-		      const struct process_trailer_options *opts)
+void trailer_info_get(const struct process_trailer_options *opts,
+		      const char *str,
+		      struct trailer_info *info)
 {
 	size_t end_of_log_message = 0, trailer_block_start = 0;
 	struct strbuf **trailer_lines, **ptr;
@@ -1150,7 +1151,7 @@ void format_trailers_from_commit(const struct process_trailer_options *opts,
 {
 	struct trailer_info info;
 
-	trailer_info_get(&info, msg, opts);
+	trailer_info_get(opts, msg, &info);
 	format_trailer_info(opts, &info, msg, out);
 	trailer_info_release(&info);
 }
@@ -1161,7 +1162,7 @@ void trailer_iterator_init(struct trailer_iterator *iter, const char *msg)
 	strbuf_init(&iter->key, 0);
 	strbuf_init(&iter->val, 0);
 	opts.no_divider = 1;
-	trailer_info_get(&iter->internal.info, msg, &opts);
+	trailer_info_get(&opts, msg, &iter->internal.info);
 	iter->internal.cur = 0;
 }
 
