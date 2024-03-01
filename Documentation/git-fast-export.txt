@@ -48,7 +48,7 @@ When asking to 'abort' (which is the default), this program will die
 when encountering such a tag.  With 'drop' it will omit such tags from
 the output.  With 'rewrite', if the tagged object is a commit, it will
 rewrite the tag to tag an ancestor commit (via parent rewriting; see
-linkgit:git-rev-list[1])
+linkgit:git-rev-list[1]).
 
 -M::
 -C::
