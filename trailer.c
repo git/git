@@ -1176,10 +1176,10 @@ void trailer_info_release(struct trailer_info *info)
 	free(info->trailers);
 }
 
-static void format_trailer_info(struct strbuf *out,
+static void format_trailer_info(const struct process_trailer_options *opts,
 				const struct trailer_info *info,
 				const char *msg,
-				const struct process_trailer_options *opts)
+				struct strbuf *out)
 {
 	size_t origlen = out->len;
 	size_t i;
@@ -1237,13 +1237,14 @@ static void format_trailer_info(struct strbuf *out,
 
 }
 
-void format_trailers_from_commit(struct strbuf *out, const char *msg,
-				 const struct process_trailer_options *opts)
+void format_trailers_from_commit(const struct process_trailer_options *opts,
+				 const char *msg,
+				 struct strbuf *out)
 {
 	struct trailer_info info;
 
 	trailer_info_get(&info, msg, opts);
-	format_trailer_info(out, &info, msg, opts);
+	format_trailer_info(opts, &info, msg, out);
 	trailer_info_release(&info);
 }
 

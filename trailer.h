@@ -101,8 +101,9 @@ void trailer_info_release(struct trailer_info *info);
  *     only the trailer block itself, even if the "only_trailers" option is not
  *     set.
  */
-void format_trailers_from_commit(struct strbuf *out, const char *msg,
-				 const struct process_trailer_options *opts);
+void format_trailers_from_commit(const struct process_trailer_options *opts,
+				 const char *msg,
+				 struct strbuf *out);
 
 /*
  * An interface for iterating over the trailers found in a particular commit
