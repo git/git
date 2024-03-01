@@ -1594,10 +1594,6 @@ struct ref_iterator *refs_ref_iterator_begin(
 	if (trim)
 		iter = prefix_ref_iterator_begin(iter, "", trim);
 
-	/* Sanity check for subclasses: */
-	if (!iter->ordered)
-		BUG("reference iterator is not ordered");
-
 	return iter;
 }
 
@@ -2516,18 +2512,33 @@ cleanup:
 	return ret;
 }
 
-int refs_for_each_reflog(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+struct do_for_each_reflog_help {
+	each_reflog_fn *fn;
+	void *cb_data;
+};
+
+static int do_for_each_reflog_helper(struct repository *r UNUSED,
+				     const char *refname,
+				     const struct object_id *oid UNUSED,
+				     int flags,
+				     void *cb_data)
+{
+	struct do_for_each_reflog_help *hp = cb_data;
+	return hp->fn(refname, hp->cb_data);
+}
+
+int refs_for_each_reflog(struct ref_store *refs, each_reflog_fn fn, void *cb_data)
 {
 	struct ref_iterator *iter;
-	struct do_for_each_ref_help hp = { fn, cb_data };
+	struct do_for_each_reflog_help hp = { fn, cb_data };
 
 	iter = refs->be->reflog_iterator_begin(refs);
 
 	return do_for_each_repo_ref_iterator(the_repository, iter,
-					     do_for_each_ref_helper, &hp);
+					     do_for_each_reflog_helper, &hp);
 }
 
-int for_each_reflog(each_ref_fn fn, void *cb_data)
+int for_each_reflog(each_reflog_fn fn, void *cb_data)
 {
 	return refs_for_each_reflog(get_main_ref_store(the_repository), fn, cb_data);
 }

@@ -312,13 +312,6 @@ enum do_for_each_ref_flags {
  */
 struct ref_iterator {
 	struct ref_iterator_vtable *vtable;
-
-	/*
-	 * Does this `ref_iterator` iterate over references in order
-	 * by refname?
-	 */
-	unsigned int ordered : 1;
-
 	const char *refname;
 	const struct object_id *oid;
 	unsigned int flags;
@@ -387,14 +380,21 @@ typedef enum iterator_selection ref_iterator_select_fn(
 		void *cb_data);
 
 /*
+ * An implementation of ref_iterator_select_fn that merges worktree and common
+ * refs. Per-worktree refs from the common iterator are ignored, worktree refs
+ * override common refs. Refs are selected lexicographically.
+ */
+enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
+					    struct ref_iterator *iter_common,
+					    void *cb_data);
+
+/*
  * Iterate over the entries from iter0 and iter1, with the values
  * interleaved as directed by the select function. The iterator takes
  * ownership of iter0 and iter1 and frees them when the iteration is
- * over. A derived class should set `ordered` to 1 or 0 based on
- * whether it generates its output in order by reference name.
+ * over.
  */
 struct ref_iterator *merge_ref_iterator_begin(
-		int ordered,
 		struct ref_iterator *iter0, struct ref_iterator *iter1,
 		ref_iterator_select_fn *select, void *cb_data);
 
@@ -423,8 +423,6 @@ struct ref_iterator *overlay_ref_iterator_begin(
  * As an convenience to callers, if prefix is the empty string and
  * trim is zero, this function returns iter0 directly, without
  * wrapping it.
- *
- * The resulting ref_iterator is ordered if iter0 is.
  */
 struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 					       const char *prefix,
@@ -435,14 +433,11 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 /*
  * Base class constructor for ref_iterators. Initialize the
  * ref_iterator part of iter, setting its vtable pointer as specified.
- * `ordered` should be set to 1 if the iterator will iterate over
- * references in order by refname; otherwise it should be set to 0.
  * This is meant to be called only by the initializers of derived
  * classes.
  */
 void base_ref_iterator_init(struct ref_iterator *iter,
-			    struct ref_iterator_vtable *vtable,
-			    int ordered);
+			    struct ref_iterator_vtable *vtable);
 
 /*
  * Base class destructor for ref_iterators. Destroy the ref_iterator

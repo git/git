@@ -221,15 +221,21 @@ static int cmd_verify_ref(struct ref_store *refs, const char **argv)
 	return ret;
 }
 
+static int each_reflog(const char *refname, void *cb_data UNUSED)
+{
+	printf("%s\n", refname);
+	return 0;
+}
+
 static int cmd_for_each_reflog(struct ref_store *refs,
 			       const char **argv UNUSED)
 {
-	return refs_for_each_reflog(refs, each_ref, NULL);
+	return refs_for_each_reflog(refs, each_reflog, NULL);
 }
 
-static int each_reflog(struct object_id *old_oid, struct object_id *new_oid,
-		       const char *committer, timestamp_t timestamp,
-		       int tz, const char *msg, void *cb_data UNUSED)
+static int each_reflog_ent(struct object_id *old_oid, struct object_id *new_oid,
+			   const char *committer, timestamp_t timestamp,
+			   int tz, const char *msg, void *cb_data UNUSED)
 {
 	printf("%s %s %s %" PRItime " %+05d%s%s", oid_to_hex(old_oid),
 	       oid_to_hex(new_oid), committer, timestamp, tz,
@@ -241,14 +247,14 @@ static int cmd_for_each_reflog_ent(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
 
-	return refs_for_each_reflog_ent(refs, refname, each_reflog, refs);
+	return refs_for_each_reflog_ent(refs, refname, each_reflog_ent, refs);
 }
 
 static int cmd_for_each_reflog_ent_reverse(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
 
-	return refs_for_each_reflog_ent_reverse(refs, refname, each_reflog, refs);
+	return refs_for_each_reflog_ent_reverse(refs, refname, each_reflog_ent, refs);
 }
 
 static int cmd_reflog_exists(struct ref_store *refs, const char **argv)

@@ -1111,7 +1111,7 @@ static struct ref_iterator *packed_ref_iterator_begin(
 
 	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
-	base_ref_iterator_init(ref_iterator, &packed_ref_iterator_vtable, 1);
+	base_ref_iterator_init(ref_iterator, &packed_ref_iterator_vtable);
 
 	if (exclude_patterns)
 		populate_excluded_jump_list(iter, snapshot, exclude_patterns);

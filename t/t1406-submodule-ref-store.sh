@@ -63,11 +63,11 @@ test_expect_success 'verify_ref(new-main)' '
 '
 
 test_expect_success 'for_each_reflog()' '
-	$RUN for-each-reflog | sort | cut -d" " -f 2- >actual &&
+	$RUN for-each-reflog >actual &&
 	cat >expected <<-\EOF &&
-	HEAD 0x1
-	refs/heads/main 0x0
-	refs/heads/new-main 0x0
+	HEAD
+	refs/heads/main
+	refs/heads/new-main
 	EOF
 	test_cmp expected actual
 '

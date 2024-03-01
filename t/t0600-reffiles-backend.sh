@@ -287,23 +287,23 @@ test_expect_success 'for_each_reflog()' '
 	mkdir -p     .git/worktrees/wt/logs/refs/bisect &&
 	echo $ZERO_OID > .git/worktrees/wt/logs/refs/bisect/wt-random &&
 
-	$RWT for-each-reflog | cut -d" " -f 2- | sort >actual &&
+	$RWT for-each-reflog >actual &&
 	cat >expected <<-\EOF &&
-	HEAD 0x1
-	PSEUDO-WT 0x0
-	refs/bisect/wt-random 0x0
-	refs/heads/main 0x0
-	refs/heads/wt-main 0x0
+	HEAD
+	PSEUDO-WT
+	refs/bisect/wt-random
+	refs/heads/main
+	refs/heads/wt-main
 	EOF
 	test_cmp expected actual &&
 
-	$RMAIN for-each-reflog | cut -d" " -f 2- | sort >actual &&
+	$RMAIN for-each-reflog >actual &&
 	cat >expected <<-\EOF &&
-	HEAD 0x1
-	PSEUDO-MAIN 0x0
-	refs/bisect/random 0x0
-	refs/heads/main 0x0
-	refs/heads/wt-main 0x0
+	HEAD
+	PSEUDO-MAIN
+	refs/bisect/random
+	refs/heads/main
+	refs/heads/wt-main
 	EOF
 	test_cmp expected actual
 '
