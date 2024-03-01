@@ -1254,7 +1254,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		die(_("options '%s' and '%s' cannot be used together"), "--root", "--fork-point");
 
 	if (options.action != ACTION_NONE && !in_progress)
-		die(_("No rebase in progress?"));
+		die(_("no rebase in progress"));
 
 	if (options.action == ACTION_EDIT_TODO && !is_merge(&options))
 		die(_("The --edit-todo action can only be used during "
