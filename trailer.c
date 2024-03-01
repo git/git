@@ -144,12 +144,12 @@ static char last_non_space_char(const char *s)
 	return '\0';
 }
 
-static void print_tok_val(FILE *outfile, const char *tok, const char *val)
+static void print_tok_val(struct strbuf *out, const char *tok, const char *val)
 {
 	char c;
 
 	if (!tok) {
-		fprintf(outfile, "%s\n", val);
+		strbuf_addf(out, "%s\n", val);
 		return;
 	}
 
@@ -157,13 +157,14 @@ static void print_tok_val(FILE *outfile, const char *tok, const char *val)
 	if (!c)
 		return;
 	if (strchr(separators, c))
-		fprintf(outfile, "%s%s\n", tok, val);
+		strbuf_addf(out, "%s%s\n", tok, val);
 	else
-		fprintf(outfile, "%s%c %s\n", tok, separators[0], val);
+		strbuf_addf(out, "%s%c %s\n", tok, separators[0], val);
 }
 
 void format_trailers(const struct process_trailer_options *opts,
-		     struct list_head *trailers, FILE *outfile)
+		     struct list_head *trailers,
+		     struct strbuf *out)
 {
 	struct list_head *pos;
 	struct trailer_item *item;
@@ -171,7 +172,7 @@ void format_trailers(const struct process_trailer_options *opts,
 		item = list_entry(pos, struct trailer_item, list);
 		if ((!opts->trim_empty || strlen(item->value) > 0) &&
 		    (!opts->only_trailers || item->token))
-			print_tok_val(outfile, item->token, item->value);
+			print_tok_val(out, item->token, item->value);
 	}
 }
 
