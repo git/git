@@ -1111,13 +1111,12 @@ void process_trailers(const char *file,
 	}
 
 	print_all(outfile, &head, opts);
-
 	free_all(&head);
-	trailer_info_release(&info);
 
 	/* Print the lines after the trailers as is */
 	if (!opts->only_trailers)
 		fwrite(sb.buf + info.trailer_block_end, 1, sb.len - info.trailer_block_end, outfile);
+	trailer_info_release(&info);
 
 	if (opts->in_place)
 		if (rename_tempfile(&trailers_tempfile, file))
