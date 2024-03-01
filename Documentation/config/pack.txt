@@ -34,11 +34,10 @@ pack.allowPackReuse::
 	reachability bitmap is available, pack-objects will try to send
 	parts of all packs in the MIDX.
 +
-	If only a single pack bitmap is available, and
-	`pack.allowPackReuse` is set to "multi", reuse parts of just the
-	bitmapped packfile. This can reduce memory and CPU usage to
-	serve fetches, but might result in sending a slightly larger
-	pack. Defaults to true.
+If only a single pack bitmap is available, and `pack.allowPackReuse`
+is set to "multi", reuse parts of just the bitmapped packfile. This
+can reduce memory and CPU usage to serve fetches, but might result in
+sending a slightly larger pack. Defaults to true.
 
 pack.island::
 	An extended regular expression configuring a set of delta
