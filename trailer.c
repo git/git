@@ -1140,9 +1140,11 @@ void format_trailers_from_commit(const struct process_trailer_options *opts,
 				 const char *msg,
 				 struct strbuf *out)
 {
+	LIST_HEAD(trailer_objects);
 	struct trailer_info info;
 
-	trailer_info_get(opts, msg, &info);
+	parse_trailers(opts, &info, msg, &trailer_objects);
+
 	/* If we want the whole block untouched, we can take the fast path. */
 	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
 	    !opts->separator && !opts->key_only && !opts->value_only &&
@@ -1152,6 +1154,7 @@ void format_trailers_from_commit(const struct process_trailer_options *opts,
 	} else
 		format_trailer_info(opts, &info, out);
 
+	free_trailers(&trailer_objects);
 	trailer_info_release(&info);
 }
 
