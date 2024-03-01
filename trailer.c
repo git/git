@@ -1087,20 +1087,10 @@ void trailer_info_release(struct trailer_info *info)
 
 static void format_trailer_info(const struct process_trailer_options *opts,
 				const struct trailer_info *info,
-				const char *msg,
 				struct strbuf *out)
 {
 	size_t origlen = out->len;
 	size_t i;
-
-	/* If we want the whole block untouched, we can take the fast path. */
-	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
-	    !opts->separator && !opts->key_only && !opts->value_only &&
-	    !opts->key_value_separator) {
-		strbuf_add(out, msg + info->trailer_block_start,
-			   info->trailer_block_end - info->trailer_block_start);
-		return;
-	}
 
 	for (i = 0; i < info->trailer_nr; i++) {
 		char *trailer = info->trailers[i];
@@ -1153,7 +1143,15 @@ void format_trailers_from_commit(const struct process_trailer_options *opts,
 	struct trailer_info info;
 
 	trailer_info_get(opts, msg, &info);
-	format_trailer_info(opts, &info, msg, out);
+	/* If we want the whole block untouched, we can take the fast path. */
+	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
+	    !opts->separator && !opts->key_only && !opts->value_only &&
+	    !opts->key_value_separator) {
+		strbuf_add(out, msg + info.trailer_block_start,
+			   info.trailer_block_end - info.trailer_block_start);
+	} else
+		format_trailer_info(opts, &info, out);
+
 	trailer_info_release(&info);
 }
 
