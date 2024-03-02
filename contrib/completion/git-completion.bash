@@ -554,6 +554,26 @@ __gitcomp_file ()
 	true
 }
 
+# Find the current subcommand for commands that follow the syntax:
+#
+#    git <command> <subcommand>
+#
+# 1: List of possible subcommands.
+# 2: Optional subcommand to return when none is found.
+__git_find_subcommand ()
+{
+	local subcommand subcommands="$1" default_subcommand="$2"
+
+	for subcommand in $subcommands; do
+		if [ "$subcommand" = "${words[__git_cmd_idx+1]}" ]; then
+			echo $subcommand
+			return
+		fi
+	done
+
+	echo $default_subcommand
+}
+
 # Execute 'git ls-files', unless the --committable option is specified, in
 # which case it runs 'git diff-index' to find out the files that can be
 # committed.  It return paths relative to the directory specified in the first
