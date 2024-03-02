@@ -2626,7 +2626,10 @@ test_expect_success 'git reflog show' '
 	shown Z
 	EOF
 	test_completion "git reflog show sho" "shown " &&
-	test_completion "git reflog shown sho" "shown "
+	test_completion "git reflog shown sho" "shown " &&
+	test_completion "git reflog --unt" "--until=" &&
+	test_completion "git reflog show --unt" "--until=" &&
+	test_completion "git reflog shown --unt" "--until="
 '
 
 test_expect_success 'options with value' '

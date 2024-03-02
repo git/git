@@ -2407,6 +2407,16 @@ _git_rebase ()
 _git_reflog ()
 {
 	local subcommands="show delete expire"
+	local subcommand="$(__git_find_subcommand "$subcommands" "show")"
+
+	case "$subcommand,$cur" in
+	show,--*)
+		__gitcomp "
+			$__git_log_common_options
+			"
+		return
+		;;
+	esac
 
 	__git_complete_refs
 
