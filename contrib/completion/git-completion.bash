@@ -2445,14 +2445,22 @@ _git_rebase ()
 
 _git_reflog ()
 {
-	local subcommands="show delete expire"
-	local subcommand="$(__git_find_subcommand "$subcommands" "show")"
+	local subcommands subcommand
+
+	__git_resolve_builtins "reflog"
+
+	subcommands="$___git_resolved_builtins"
+	subcommand="$(__git_find_subcommand "$subcommands" "show")"
 
 	case "$subcommand,$cur" in
 	show,--*)
 		__gitcomp "
 			$__git_log_common_options
 			"
+		return
+		;;
+	$subcommand,--*)
+		__gitcomp_builtin "reflog_$subcommand"
 		return
 		;;
 	esac
