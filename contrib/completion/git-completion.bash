@@ -2407,12 +2407,11 @@ _git_rebase ()
 _git_reflog ()
 {
 	local subcommands="show delete expire"
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 
-	if [ -z "$subcommand" ]; then
-		__gitcomp "$subcommands"
-	else
-		__git_complete_refs
+	__git_complete_refs
+
+	if [ $((cword - __git_cmd_idx)) -eq 1 ]; then
+		__gitcompappend "$subcommands" "" "$cur" " "
 	fi
 }
 
