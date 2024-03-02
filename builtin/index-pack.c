@@ -1524,14 +1524,12 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	struct strbuf pack_name = STRBUF_INIT;
 	struct strbuf index_name = STRBUF_INIT;
 	struct strbuf rev_index_name = STRBUF_INIT;
-	int err;
 
 	if (!from_stdin) {
 		close(input_fd);
 	} else {
 		fsync_component_or_die(FSYNC_COMPONENT_PACK, output_fd, curr_pack_name);
-		err = close(output_fd);
-		if (err)
+		if (close(output_fd))
 			die_errno(_("error while closing pack file"));
 	}
 
@@ -1566,17 +1564,8 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		write_or_die(1, buf.buf, buf.len);
 		strbuf_release(&buf);
 
-		/*
-		 * Let's just mimic git-unpack-objects here and write
-		 * the last part of the input buffer to stdout.
-		 */
-		while (input_len) {
-			err = xwrite(1, input_buffer + input_offset, input_len);
-			if (err <= 0)
-				break;
-			input_len -= err;
-			input_offset += err;
-		}
+		/* Write the last part of the buffer to stdout */
+		write_in_full(1, input_buffer + input_offset, input_len);
 	}
 
 	strbuf_release(&rev_index_name);
