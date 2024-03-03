@@ -10,8 +10,7 @@ static void test_ctype_##func(void) { \
 		if (!check_int(func(i), ==, !!memchr(string, i, len))) \
 			test_msg("       i: 0x%02x", i); \
 	} \
-	if (!check(!func(EOF))) \
-			test_msg("      i: 0x%02x (EOF)", EOF); \
+	check(!func(EOF)); \
 }
 
 #define TEST_CHAR_CLASS(class) TEST(test_ctype_##class(), #class " works")
