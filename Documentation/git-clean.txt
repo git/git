@@ -49,6 +49,8 @@ OPTIONS
 -n::
 --dry-run::
 	Don't actually remove anything, just show what would be done.
+	Configuration variable clean.requireForce is ignored, as
+	nothing will be deleted anyway.
 
 -q::
 --quiet::
