@@ -391,8 +391,6 @@ is_abbreviated:
 					ambiguous_option = abbrev_option;
 					ambiguous_flags = abbrev_flags;
 				}
-				if (*arg_end)
-					p->opt = arg_end + 1;
 				abbrev_option = options;
 				abbrev_flags = flags ^ opt_flags;
 				continue;
@@ -441,8 +439,11 @@ is_abbreviated:
 			abbrev_option->long_name);
 		return PARSE_OPT_HELP;
 	}
-	if (abbrev_option)
+	if (abbrev_option) {
+		if (*arg_end)
+			p->opt = arg_end + 1;
 		return get_value(p, abbrev_option, abbrev_flags);
+	}
 	return PARSE_OPT_UNKNOWN;
 }
 
