@@ -363,7 +363,7 @@ static void register_abbrev(struct parse_opt_ctx_t *p,
 	if (p->flags & PARSE_OPT_KEEP_UNKNOWN_OPT)
 		return;
 	if (abbrev->option &&
-	    !is_alias(p, abbrev->option, option)) {
+	    !(abbrev->flags == flags && is_alias(p, abbrev->option, option))) {
 		/*
 		 * If this is abbreviated, it is
 		 * ambiguous. So when there is no
@@ -406,7 +406,6 @@ static enum parse_opt_result parse_long_opt(
 			if (!strncmp(long_name, arg, arg_end - arg)) {
 				register_abbrev(p, options, flags ^ opt_flags,
 						&abbrev, &ambiguous);
-				continue;
 			}
 			/* negation allowed? */
 			if (options->flags & PARSE_OPT_NONEG)
