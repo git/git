@@ -391,7 +391,7 @@ is_abbreviated:
 					ambiguous_option = abbrev_option;
 					ambiguous_flags = abbrev_flags;
 				}
-				if (!(flags & OPT_UNSET) && *arg_end)
+				if (*arg_end)
 					p->opt = arg_end + 1;
 				abbrev_option = options;
 				abbrev_flags = flags ^ opt_flags;
@@ -412,7 +412,8 @@ is_abbreviated:
 			if (!skip_prefix(arg + 3, long_name, &rest)) {
 				/* abbreviated and negated? */
 				if (allow_abbrev &&
-				    starts_with(long_name, arg + 3))
+				    !strncmp(long_name, arg + 3,
+					     arg_end - arg - 3))
 					goto is_abbreviated;
 				else
 					continue;
