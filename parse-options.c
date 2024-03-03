@@ -382,28 +382,42 @@ static enum parse_opt_result parse_long_opt(
 	const struct option *options)
 {
 	const char *arg_end = strchrnul(arg, '=');
+	const char *arg_start = arg;
+	enum opt_parsed flags = OPT_LONG;
+	int arg_starts_with_no_no = 0;
 	struct parsed_option abbrev = { .option = NULL, .flags = OPT_LONG };
 	struct parsed_option ambiguous = { .option = NULL, .flags = OPT_LONG };
 
+	if (skip_prefix(arg_start, "no-", &arg_start)) {
+		if (skip_prefix(arg_start, "no-", &arg_start))
+			arg_starts_with_no_no = 1;
+		else
+			flags |= OPT_UNSET;
+	}
+
 	for (; options->type != OPTION_END; options++) {
 		const char *rest, *long_name = options->long_name;
-		enum opt_parsed flags = OPT_LONG, opt_flags = OPT_LONG;
+		enum opt_parsed opt_flags = OPT_LONG;
+		int allow_unset = !(options->flags & PARSE_OPT_NONEG);
 
 		if (options->type == OPTION_SUBCOMMAND)
 			continue;
 		if (!long_name)
 			continue;
 
-		if (!starts_with(arg, "no-") &&
-		    !(options->flags & PARSE_OPT_NONEG) &&
-		    skip_prefix(long_name, "no-", &long_name))
+		if (skip_prefix(long_name, "no-", &long_name))
 			opt_flags |= OPT_UNSET;
+		else if (arg_starts_with_no_no)
+			continue;
 
-		if (!skip_prefix(arg, long_name, &rest))
+		if (((flags ^ opt_flags) & OPT_UNSET) && !allow_unset)
+			continue;
+
+		if (!skip_prefix(arg_start, long_name, &rest))
 			rest = NULL;
 		if (!rest) {
 			/* abbreviated? */
-			if (!strncmp(long_name, arg, arg_end - arg)) {
+			if (!strncmp(long_name, arg_start, arg_end - arg_start)) {
 				register_abbrev(p, options, flags ^ opt_flags,
 						&abbrev, &ambiguous);
 			}
@@ -412,24 +426,10 @@ static enum parse_opt_result parse_long_opt(
 				continue;
 			/* negated and abbreviated very much? */
 			if (starts_with("no-", arg)) {
-				flags |= OPT_UNSET;
-				register_abbrev(p, options, flags ^ opt_flags,
+				register_abbrev(p, options, OPT_UNSET ^ opt_flags,
 						&abbrev, &ambiguous);
-				continue;
 			}
-			/* negated? */
-			if (!starts_with(arg, "no-"))
-				continue;
-			flags |= OPT_UNSET;
-			if (!skip_prefix(arg + 3, long_name, &rest)) {
-				/* abbreviated and negated? */
-				if (!strncmp(long_name, arg + 3,
-					     arg_end - arg - 3))
-					register_abbrev(p, options,
-							flags ^ opt_flags,
-							&abbrev, &ambiguous);
-				continue;
-			}
+			continue;
 		}
 		if (*rest) {
 			if (*rest != '=')
