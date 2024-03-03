@@ -407,6 +407,12 @@ test_expect_success 'clean.requireForce and -f' '
 
 '
 
+test_expect_success 'clean.requireForce and --interactive' '
+	git clean --interactive </dev/null >output 2>error &&
+	test_grep ! "requireForce is true and" error &&
+	test_grep "\*\*\* Commands \*\*\*" output
+'
+
 test_expect_success 'core.excludesfile' '
 
 	echo excludes >excludes &&

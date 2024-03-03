@@ -950,13 +950,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, builtin_clean_usage,
 			     0);
 
-	/* Dry run won't remove anything, so requiring force makes no sense */
-	if (dry_run)
-		require_force = 0;
-
-	if (require_force != 0 && !force && !interactive)
-		die(_("clean.requireForce is true and neither -f nor -i given:"
-				  " refusing to clean"));
+	if (require_force != 0 && !force && !interactive && !dry_run)
+		die(_("clean.requireForce is true and -f not given: refusing to clean"));
 
 	if (force > 1)
 		rm_flags = 0;
