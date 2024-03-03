@@ -8,7 +8,7 @@ static void test_ctype_##func(void) { \
 		BUILD_ASSERT_OR_ZERO(sizeof(string[0]) == sizeof(char)); \
 	for (int i = 0; i < 256; i++) { \
 		if (!check_int(func(i), ==, !!memchr(string, i, len))) \
-			test_msg("       i: 0x%02x", i); \
+			test_msg("      i: 0x%02x", i); \
 	} \
 	check(!func(EOF)); \
 }
