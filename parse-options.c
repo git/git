@@ -413,30 +413,23 @@ static enum parse_opt_result parse_long_opt(
 		if (((flags ^ opt_flags) & OPT_UNSET) && !allow_unset)
 			continue;
 
-		if (!skip_prefix(arg_start, long_name, &rest))
-			rest = NULL;
-		if (!rest) {
-			/* abbreviated? */
-			if (!strncmp(long_name, arg_start, arg_end - arg_start)) {
-				register_abbrev(p, options, flags ^ opt_flags,
-						&abbrev, &ambiguous);
-			}
-			/* negation allowed? */
-			if (options->flags & PARSE_OPT_NONEG)
+		if (skip_prefix(arg_start, long_name, &rest)) {
+			if (*rest == '=')
+				p->opt = rest + 1;
+			else if (*rest)
 				continue;
-			/* negated and abbreviated very much? */
-			if (starts_with("no-", arg)) {
-				register_abbrev(p, options, OPT_UNSET ^ opt_flags,
-						&abbrev, &ambiguous);
-			}
-			continue;
+			return get_value(p, options, flags ^ opt_flags);
 		}
-		if (*rest) {
-			if (*rest != '=')
-				continue;
-			p->opt = rest + 1;
-		}
-		return get_value(p, options, flags ^ opt_flags);
+
+		/* abbreviated? */
+		if (!strncmp(long_name, arg_start, arg_end - arg_start))
+			register_abbrev(p, options, flags ^ opt_flags,
+					&abbrev, &ambiguous);
+
+		/* negated and abbreviated very much? */
+		if (allow_unset && starts_with("no-", arg))
+			register_abbrev(p, options, OPT_UNSET ^ opt_flags,
+					&abbrev, &ambiguous);
 	}
 
 	if (disallow_abbreviated_options && (ambiguous.option || abbrev.option))
