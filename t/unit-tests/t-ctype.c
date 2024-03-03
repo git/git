@@ -1,23 +1,13 @@
 #include "test-lib.h"
 
-static int is_in(const char *s, int ch)
-{
-	/*
-	 * We can't find NUL using strchr. Accept it as the first
-	 * character in the spec -- there are no empty classes.
-	 */
-	if (ch == '\0')
-		return ch == *s;
-	if (*s == '\0')
-		s++;
-	return !!strchr(s, ch);
-}
-
 /* Macro to test a character type */
 #define TEST_CTYPE_FUNC(func, string) \
 static void test_ctype_##func(void) { \
+	size_t len = ARRAY_SIZE(string) - 1 + \
+		BUILD_ASSERT_OR_ZERO(ARRAY_SIZE(string) > 0) + \
+		BUILD_ASSERT_OR_ZERO(sizeof(string[0]) == sizeof(char)); \
 	for (int i = 0; i < 256; i++) { \
-		if (!check_int(func(i), ==, is_in(string, i))) \
+		if (!check_int(func(i), ==, !!memchr(string, i, len))) \
 			test_msg("       i: 0x%02x", i); \
 	} \
 	if (!check(!func(EOF))) \
