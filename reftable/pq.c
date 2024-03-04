@@ -20,16 +20,6 @@ int pq_less(struct pq_entry *a, struct pq_entry *b)
 	return cmp < 0;
 }
 
-struct pq_entry merged_iter_pqueue_top(struct merged_iter_pqueue pq)
-{
-	return pq.heap[0];
-}
-
-int merged_iter_pqueue_is_empty(struct merged_iter_pqueue pq)
-{
-	return pq.len == 0;
-}
-
 struct pq_entry merged_iter_pqueue_remove(struct merged_iter_pqueue *pq)
 {
 	int i = 0;

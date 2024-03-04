@@ -1176,11 +1176,6 @@ void reftable_record_key(struct reftable_record *rec, struct strbuf *dest)
 	reftable_record_vtable(rec)->key(reftable_record_data(rec), dest);
 }
 
-uint8_t reftable_record_type(struct reftable_record *rec)
-{
-	return rec->type;
-}
-
 int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
 			   int hash_size)
 {
@@ -1300,12 +1295,6 @@ int reftable_log_record_compare_key(const void *a, const void *b)
 int reftable_log_record_is_deletion(const struct reftable_log_record *log)
 {
 	return (log->value_type == REFTABLE_LOG_DELETION);
-}
-
-void string_view_consume(struct string_view *s, int n)
-{
-	s->buf += n;
-	s->len -= n;
 }
 
 static void *reftable_record_data(struct reftable_record *rec)

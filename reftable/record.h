@@ -25,7 +25,11 @@ struct string_view {
 };
 
 /* Advance `s.buf` by `n`, and decrease length. */
-void string_view_consume(struct string_view *s, int n);
+static inline void string_view_consume(struct string_view *s, int n)
+{
+	s->buf += n;
+	s->len -= n;
+}
 
 /* utilities for de/encoding varints */
 
@@ -127,7 +131,6 @@ int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b);
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
 void reftable_record_print(struct reftable_record *rec, int hash_size);
 void reftable_record_key(struct reftable_record *rec, struct strbuf *dest);
-uint8_t reftable_record_type(struct reftable_record *rec);
 void reftable_record_copy_from(struct reftable_record *rec,
 			       struct reftable_record *src, int hash_size);
 uint8_t reftable_record_val_type(struct reftable_record *rec);
@@ -137,6 +140,11 @@ int reftable_record_decode(struct reftable_record *rec, struct strbuf key,
 			   uint8_t extra, struct string_view src,
 			   int hash_size);
 int reftable_record_is_deletion(struct reftable_record *rec);
+
+static inline uint8_t reftable_record_type(struct reftable_record *rec)
+{
+	return rec->type;
+}
 
 /* frees and zeroes out the embedded record */
 void reftable_record_release(struct reftable_record *rec);
