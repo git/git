@@ -52,7 +52,7 @@ test_expect_success 'shared=all' '
 	test 2 = $(git config core.sharedrepository)
 '
 
-test_expect_failure 'template can set core.bare' '
+test_expect_success 'template cannot set core.bare' '
 	test_when_finished "rm -rf subdir" &&
 	test_when_finished "rm -rf templates" &&
 	test_config core.bare true &&
@@ -60,18 +60,7 @@ test_expect_failure 'template can set core.bare' '
 	mkdir -p templates/ &&
 	cp .git/config templates/config &&
 	git init --template=templates subdir &&
-	test_path_exists subdir/HEAD
-'
-
-test_expect_success 'template can set core.bare but overridden by command line' '
-	test_when_finished "rm -rf subdir" &&
-	test_when_finished "rm -rf templates" &&
-	test_config core.bare true &&
-	umask 0022 &&
-	mkdir -p templates/ &&
-	cp .git/config templates/config &&
-	git init --no-bare --template=templates subdir &&
-	test_path_exists subdir/.git/HEAD
+	test_path_is_missing subdir/HEAD
 '
 
 test_expect_success POSIXPERM 'update-server-info honors core.sharedRepository' '
