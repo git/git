@@ -14,7 +14,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 int pq_less(struct pq_entry *a, struct pq_entry *b)
 {
-	int cmp = reftable_record_cmp(&a->rec, &b->rec);
+	int cmp = reftable_record_cmp(a->rec, b->rec);
 	if (cmp == 0)
 		return a->index > b->index;
 	return cmp < 0;
@@ -82,10 +82,6 @@ void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry
 
 void merged_iter_pqueue_release(struct merged_iter_pqueue *pq)
 {
-	int i = 0;
-	for (i = 0; i < pq->len; i++) {
-		reftable_record_release(&pq->heap[i].rec);
-	}
 	FREE_AND_NULL(pq->heap);
-	pq->len = pq->cap = 0;
+	memset(pq, 0, sizeof(*pq));
 }

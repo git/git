@@ -17,8 +17,13 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-error.h"
 #include "system.h"
 
+struct merged_subiter {
+	struct reftable_iterator iter;
+	struct reftable_record rec;
+};
+
 struct merged_iter {
-	struct reftable_iterator *stack;
+	struct merged_subiter *subiters;
 	struct merged_iter_pqueue pq;
 	uint32_t hash_id;
 	size_t stack_len;
@@ -32,16 +37,18 @@ static int merged_iter_init(struct merged_iter *mi)
 	for (size_t i = 0; i < mi->stack_len; i++) {
 		struct pq_entry e = {
 			.index = i,
+			.rec = &mi->subiters[i].rec,
 		};
 		int err;
 
-		reftable_record_init(&e.rec, mi->typ);
-		err = iterator_next(&mi->stack[i], &e.rec);
+		reftable_record_init(&mi->subiters[i].rec, mi->typ);
+		err = iterator_next(&mi->subiters[i].iter,
+				    &mi->subiters[i].rec);
 		if (err < 0)
 			return err;
 		if (err > 0) {
-			reftable_iterator_destroy(&mi->stack[i]);
-			reftable_record_release(&e.rec);
+			reftable_iterator_destroy(&mi->subiters[i].iter);
+			reftable_record_release(&mi->subiters[i].rec);
 			continue;
 		}
 
@@ -56,9 +63,11 @@ static void merged_iter_close(void *p)
 	struct merged_iter *mi = p;
 
 	merged_iter_pqueue_release(&mi->pq);
-	for (size_t i = 0; i < mi->stack_len; i++)
-		reftable_iterator_destroy(&mi->stack[i]);
-	reftable_free(mi->stack);
+	for (size_t i = 0; i < mi->stack_len; i++) {
+		reftable_iterator_destroy(&mi->subiters[i].iter);
+		reftable_record_release(&mi->subiters[i].rec);
+	}
+	reftable_free(mi->subiters);
 }
 
 static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
@@ -66,17 +75,16 @@ static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
 {
 	struct pq_entry e = {
 		.index = idx,
+		.rec = &mi->subiters[idx].rec,
 	};
 	int err;
 
-	reftable_record_init(&e.rec, mi->typ);
-	err = iterator_next(&mi->stack[idx], &e.rec);
+	err = iterator_next(&mi->subiters[idx].iter, &mi->subiters[idx].rec);
 	if (err < 0)
 		return err;
-
 	if (err > 0) {
-		reftable_iterator_destroy(&mi->stack[idx]);
-		reftable_record_release(&e.rec);
+		reftable_iterator_destroy(&mi->subiters[idx].iter);
+		reftable_record_release(&mi->subiters[idx].rec);
 		return 0;
 	}
 
@@ -86,7 +94,7 @@ static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
 
 static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
 {
-	if (iterator_is_null(&mi->stack[idx]))
+	if (iterator_is_null(&mi->subiters[idx].iter))
 		return 0;
 	return merged_iter_advance_nonnull_subiter(mi, idx);
 }
@@ -121,25 +129,19 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 		struct pq_entry top = merged_iter_pqueue_top(mi->pq);
 		int cmp;
 
-		cmp = reftable_record_cmp(&top.rec, &entry.rec);
+		cmp = reftable_record_cmp(top.rec, entry.rec);
 		if (cmp > 0)
 			break;
 
 		merged_iter_pqueue_remove(&mi->pq);
 		err = merged_iter_advance_subiter(mi, top.index);
 		if (err < 0)
-			goto done;
-		reftable_record_release(&top.rec);
+			return err;
 	}
 
-	reftable_record_release(rec);
-	*rec = entry.rec;
 	mi->advance_index = entry.index;
-
-done:
-	if (err)
-		reftable_record_release(&entry.rec);
-	return err;
+	SWAP(*rec, *entry.rec);
+	return 0;
 }
 
 static int merged_iter_next(struct merged_iter *mi, struct reftable_record *rec)
@@ -257,10 +259,10 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 	struct merged_iter *p;
 	int err;
 
-	REFTABLE_CALLOC_ARRAY(merged.stack, mt->stack_len);
+	REFTABLE_CALLOC_ARRAY(merged.subiters, mt->stack_len);
 	for (size_t i = 0; i < mt->stack_len; i++) {
 		err = reftable_table_seek_record(&mt->stack[i],
-						 &merged.stack[merged.stack_len], rec);
+						 &merged.subiters[merged.stack_len].iter, rec);
 		if (err < 0)
 			goto out;
 		if (!err)

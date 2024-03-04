@@ -13,7 +13,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 struct pq_entry {
 	size_t index;
-	struct reftable_record rec;
+	struct reftable_record *rec;
 };
 
 struct merged_iter_pqueue {
