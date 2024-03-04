@@ -17,6 +17,15 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-error.h"
 #include "system.h"
 
+struct merged_iter {
+	struct reftable_iterator *stack;
+	uint32_t hash_id;
+	size_t stack_len;
+	uint8_t typ;
+	int suppress_deletions;
+	struct merged_iter_pqueue pq;
+};
+
 static int merged_iter_init(struct merged_iter *mi)
 {
 	for (size_t i = 0; i < mi->stack_len; i++) {
