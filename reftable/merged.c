@@ -148,25 +148,17 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	return 0;
 }
 
-static int merged_iter_next(struct merged_iter *mi, struct reftable_record *rec)
-{
-	while (1) {
-		int err = merged_iter_next_entry(mi, rec);
-		if (err == 0 && mi->suppress_deletions &&
-		    reftable_record_is_deletion(rec)) {
-			continue;
-		}
-
-		return err;
-	}
-}
-
 static int merged_iter_next_void(void *p, struct reftable_record *rec)
 {
 	struct merged_iter *mi = p;
-	if (merged_iter_pqueue_is_empty(mi->pq) && mi->advance_index < 0)
-		return 1;
-	return merged_iter_next(mi, rec);
+	while (1) {
+		int err = merged_iter_next_entry(mi, rec);
+		if (err)
+			return err;
+		if (mi->suppress_deletions && reftable_record_is_deletion(rec))
+			continue;
+		return 0;
+	}
 }
 
 static struct reftable_iterator_vtable merged_iter_vtable = {
