@@ -87,16 +87,36 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 				  struct reftable_record *rec)
 {
 	struct pq_entry entry = { 0 };
-	int err = 0;
+	int err = 0, empty;
+
+	empty = merged_iter_pqueue_is_empty(mi->pq);
 
 	if (mi->advance_index >= 0) {
+		/*
+		 * When there are no pqueue entries then we only have a single
+		 * subiter left. There is no need to use the pqueue in that
+		 * case anymore as we know that the subiter will return entries
+		 * in the correct order already.
+		 *
+		 * While this may sound like a very specific edge case, it may
+		 * happen more frequently than you think. Most repositories
+		 * will end up having a single large base table that contains
+		 * most of the refs. It's thus likely that we exhaust all
+		 * subiters but the one from that base ref.
+		 */
+		if (empty)
+			return iterator_next(&mi->subiters[mi->advance_index].iter,
+					     rec);
+
 		err = merged_iter_advance_subiter(mi, mi->advance_index);
 		if (err < 0)
 			return err;
+		if (!err)
+			empty = 0;
 		mi->advance_index = -1;
 	}
 
-	if (merged_iter_pqueue_is_empty(mi->pq))
+	if (empty)
 		return 1;
 
 	entry = merged_iter_pqueue_remove(&mi->pq);
