@@ -159,19 +159,18 @@ int reftable_encode_key(int *restart, struct string_view dest,
 	return start.len - dest.len;
 }
 
-int reftable_decode_key(struct strbuf *key, uint8_t *extra,
-			struct strbuf last_key, struct string_view in)
+int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
+			struct string_view in)
 {
 	int start_len = in.len;
 	uint64_t prefix_len = 0;
 	uint64_t suffix_len = 0;
-	int n = get_var_int(&prefix_len, &in);
+	int n;
+
+	n = get_var_int(&prefix_len, &in);
 	if (n < 0)
 		return -1;
 	string_view_consume(&in, n);
-
-	if (prefix_len > last_key.len)
-		return -1;
 
 	n = get_var_int(&suffix_len, &in);
 	if (n <= 0)
@@ -181,12 +180,12 @@ int reftable_decode_key(struct strbuf *key, uint8_t *extra,
 	*extra = (uint8_t)(suffix_len & 0x7);
 	suffix_len >>= 3;
 
-	if (in.len < suffix_len)
+	if (in.len < suffix_len ||
+	    prefix_len > last_key->len)
 		return -1;
 
-	strbuf_reset(key);
-	strbuf_add(key, last_key.buf, prefix_len);
-	strbuf_add(key, in.buf, suffix_len);
+	strbuf_setlen(last_key, prefix_len);
+	strbuf_add(last_key, in.buf, suffix_len);
 	string_view_consume(&in, suffix_len);
 
 	return start_len - in.len;

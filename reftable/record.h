@@ -81,9 +81,12 @@ int reftable_encode_key(int *is_restart, struct string_view dest,
 			struct strbuf prev_key, struct strbuf key,
 			uint8_t extra);
 
-/* Decode into `key` and `extra` from `in` */
-int reftable_decode_key(struct strbuf *key, uint8_t *extra,
-			struct strbuf last_key, struct string_view in);
+/*
+ * Decode into `last_key` and `extra` from `in`. `last_key` is expected to
+ * contain the decoded key of the preceding record, if any.
+ */
+int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
+			struct string_view in);
 
 /* reftable_index_record are used internally to speed up lookups. */
 struct reftable_index_record {
