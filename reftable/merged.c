@@ -19,11 +19,12 @@ https://developers.google.com/open-source/licenses/bsd
 
 struct merged_iter {
 	struct reftable_iterator *stack;
+	struct merged_iter_pqueue pq;
 	uint32_t hash_id;
 	size_t stack_len;
 	uint8_t typ;
 	int suppress_deletions;
-	struct merged_iter_pqueue pq;
+	ssize_t advance_index;
 };
 
 static int merged_iter_init(struct merged_iter *mi)
@@ -96,13 +97,17 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	struct pq_entry entry = { 0 };
 	int err = 0;
 
+	if (mi->advance_index >= 0) {
+		err = merged_iter_advance_subiter(mi, mi->advance_index);
+		if (err < 0)
+			return err;
+		mi->advance_index = -1;
+	}
+
 	if (merged_iter_pqueue_is_empty(mi->pq))
 		return 1;
 
 	entry = merged_iter_pqueue_remove(&mi->pq);
-	err = merged_iter_advance_subiter(mi, entry.index);
-	if (err < 0)
-		return err;
 
 	/*
 	  One can also use reftable as datacenter-local storage, where the ref
@@ -115,14 +120,6 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	while (!merged_iter_pqueue_is_empty(mi->pq)) {
 		struct pq_entry top = merged_iter_pqueue_top(mi->pq);
 		int cmp;
-
-		/*
-		 * When the next entry comes from the same queue as the current
-		 * entry then it must by definition be larger. This avoids a
-		 * comparison in the most common case.
-		 */
-		if (top.index == entry.index)
-			break;
 
 		cmp = reftable_record_cmp(&top.rec, &entry.rec);
 		if (cmp > 0)
@@ -137,6 +134,7 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 
 	reftable_record_release(rec);
 	*rec = entry.rec;
+	mi->advance_index = entry.index;
 
 done:
 	if (err)
@@ -160,9 +158,8 @@ static int merged_iter_next(struct merged_iter *mi, struct reftable_record *rec)
 static int merged_iter_next_void(void *p, struct reftable_record *rec)
 {
 	struct merged_iter *mi = p;
-	if (merged_iter_pqueue_is_empty(mi->pq))
+	if (merged_iter_pqueue_is_empty(mi->pq) && mi->advance_index < 0)
 		return 1;
-
 	return merged_iter_next(mi, rec);
 }
 
@@ -255,6 +252,7 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 		.typ = reftable_record_type(rec),
 		.hash_id = mt->hash_id,
 		.suppress_deletions = mt->suppress_deletions,
+		.advance_index = -1,
 	};
 	struct merged_iter *p;
 	int err;
