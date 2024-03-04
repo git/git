@@ -46,11 +46,8 @@ static int merged_iter_init(struct merged_iter *mi)
 				    &mi->subiters[i].rec);
 		if (err < 0)
 			return err;
-		if (err > 0) {
-			reftable_iterator_destroy(&mi->subiters[i].iter);
-			reftable_record_release(&mi->subiters[i].rec);
+		if (err > 0)
 			continue;
-		}
 
 		merged_iter_pqueue_add(&mi->pq, &e);
 	}
@@ -79,13 +76,8 @@ static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
 	int err;
 
 	err = iterator_next(&mi->subiters[idx].iter, &mi->subiters[idx].rec);
-	if (err < 0)
+	if (err)
 		return err;
-	if (err > 0) {
-		reftable_iterator_destroy(&mi->subiters[idx].iter);
-		reftable_record_release(&mi->subiters[idx].rec);
-		return 0;
-	}
 
 	merged_iter_pqueue_add(&mi->pq, &e);
 	return 0;
