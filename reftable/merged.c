@@ -70,8 +70,7 @@ static void merged_iter_close(void *p)
 	reftable_free(mi->subiters);
 }
 
-static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
-					       size_t idx)
+static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
 {
 	struct pq_entry e = {
 		.index = idx,
@@ -90,13 +89,6 @@ static int merged_iter_advance_nonnull_subiter(struct merged_iter *mi,
 
 	merged_iter_pqueue_add(&mi->pq, &e);
 	return 0;
-}
-
-static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
-{
-	if (iterator_is_null(&mi->subiters[idx].iter))
-		return 0;
-	return merged_iter_advance_nonnull_subiter(mi, idx);
 }
 
 static int merged_iter_next_entry(struct merged_iter *mi,
