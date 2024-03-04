@@ -368,16 +368,24 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 	struct reftable_ref_record *r = rec;
 	struct string_view start = in;
 	uint64_t update_index = 0;
-	int n = get_var_int(&update_index, &in);
+	const char *refname = NULL;
+	size_t refname_cap = 0;
+	int n;
+
+	assert(hash_size > 0);
+
+	n = get_var_int(&update_index, &in);
 	if (n < 0)
 		return n;
 	string_view_consume(&in, n);
 
+	SWAP(refname, r->refname);
+	SWAP(refname_cap, r->refname_cap);
 	reftable_ref_record_release(r);
+	SWAP(r->refname, refname);
+	SWAP(r->refname_cap, refname_cap);
 
-	assert(hash_size > 0);
-
-	r->refname = reftable_malloc(key.len + 1);
+	REFTABLE_ALLOC_GROW(r->refname, key.len + 1, r->refname_cap);
 	memcpy(r->refname, key.buf, key.len);
 	r->refname[key.len] = 0;
 
