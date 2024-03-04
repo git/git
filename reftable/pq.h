@@ -12,7 +12,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "record.h"
 
 struct pq_entry {
-	int index;
+	size_t index;
 	struct reftable_record rec;
 };
 
