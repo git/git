@@ -1575,7 +1575,7 @@ struct reftable_reflog_iterator {
 	struct reftable_ref_store *refs;
 	struct reftable_iterator iter;
 	struct reftable_log_record log;
-	char *last_name;
+	struct strbuf last_name;
 	int err;
 };
 
@@ -1594,15 +1594,15 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		 * we've already produced this name. This could be faster by
 		 * seeking directly to reflog@update_index==0.
 		 */
-		if (iter->last_name && !strcmp(iter->log.refname, iter->last_name))
+		if (!strcmp(iter->log.refname, iter->last_name.buf))
 			continue;
 
 		if (check_refname_format(iter->log.refname,
 					 REFNAME_ALLOW_ONELEVEL))
 			continue;
 
-		free(iter->last_name);
-		iter->last_name = xstrdup(iter->log.refname);
+		strbuf_reset(&iter->last_name);
+		strbuf_addstr(&iter->last_name, iter->log.refname);
 		iter->base.refname = iter->log.refname;
 
 		break;
@@ -1635,7 +1635,7 @@ static int reftable_reflog_iterator_abort(struct ref_iterator *ref_iterator)
 		(struct reftable_reflog_iterator *)ref_iterator;
 	reftable_log_record_release(&iter->log);
 	reftable_iterator_destroy(&iter->iter);
-	free(iter->last_name);
+	strbuf_release(&iter->last_name);
 	free(iter);
 	return ITER_DONE;
 }
@@ -1655,6 +1655,7 @@ static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftabl
 
 	iter = xcalloc(1, sizeof(*iter));
 	base_ref_iterator_init(&iter->base, &reftable_reflog_iterator_vtable);
+	strbuf_init(&iter->last_name, 0);
 	iter->refs = refs;
 
 	ret = refs->err;
