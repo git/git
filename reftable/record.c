@@ -896,10 +896,19 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 		goto done;
 	string_view_consume(&in, n);
 
-	r->value.update.name =
-		reftable_realloc(r->value.update.name, dest.len + 1);
-	memcpy(r->value.update.name, dest.buf, dest.len);
-	r->value.update.name[dest.len] = 0;
+	/*
+	 * In almost all cases we can expect the reflog name to not change for
+	 * reflog entries as they are tied to the local identity, not to the
+	 * target commits. As an optimization for this common case we can thus
+	 * skip copying over the name in case it's accurate already.
+	 */
+	if (!r->value.update.name ||
+	    strcmp(r->value.update.name, dest.buf)) {
+		r->value.update.name =
+			reftable_realloc(r->value.update.name, dest.len + 1);
+		memcpy(r->value.update.name, dest.buf, dest.len);
+		r->value.update.name[dest.len] = 0;
+	}
 
 	strbuf_reset(&dest);
 	n = decode_string(&dest, in);
@@ -907,10 +916,14 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 		goto done;
 	string_view_consume(&in, n);
 
-	r->value.update.email =
-		reftable_realloc(r->value.update.email, dest.len + 1);
-	memcpy(r->value.update.email, dest.buf, dest.len);
-	r->value.update.email[dest.len] = 0;
+	/* Same as above, but for the reflog email. */
+	if (!r->value.update.email ||
+	    strcmp(r->value.update.email, dest.buf)) {
+		r->value.update.email =
+			reftable_realloc(r->value.update.email, dest.len + 1);
+		memcpy(r->value.update.email, dest.buf, dest.len);
+		r->value.update.email[dest.len] = 0;
+	}
 
 	ts = 0;
 	n = get_var_int(&ts, &in);
