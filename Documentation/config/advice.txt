@@ -129,6 +129,9 @@ advice.*::
 	submoduleAlternateErrorStrategyDie::
 		Advice shown when a submodule.alternateErrorStrategy option
 		configured to "die" causes a fatal error.
+	submoduleMergeConflict::
+		Advice shown when a non-trivial submodule merge conflict is
+		encountered.
 	submodulesNotUpdated::
 		Advice shown when a user runs a submodule command that fails
 		because `git submodule update --init` was not run.
