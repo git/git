@@ -1034,6 +1034,15 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 						len, str,
 						show_date(co_time, co_tz, DATE_MODE(RFC2822)));
 				}
+			} else if (nth == co_cnt && !is_null_oid(oid)) {
+				/*
+				 * We were asked for the Nth reflog (counting
+				 * from 0), but there were only N entries.
+				 * read_ref_at() will have returned "1" to tell
+				 * us it did not find an entry, but it did
+				 * still fill in the oid with the "old" value,
+				 * which we can use.
+				 */
 			} else {
 				if (flags & GET_OID_QUIETLY) {
 					exit(128);
