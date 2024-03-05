@@ -96,6 +96,7 @@ struct reftable_log_record {
 			uint64_t time;
 			int16_t tz_offset;
 			char *message;
+			size_t message_cap;
 		} update;
 	} value;
 };

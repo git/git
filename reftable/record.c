@@ -871,6 +871,7 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 		switch (r->value_type) {
 		case REFTABLE_LOG_UPDATE:
 			FREE_AND_NULL(r->value.update.message);
+			r->value.update.message_cap = 0;
 			FREE_AND_NULL(r->value.update.email);
 			FREE_AND_NULL(r->value.update.name);
 			break;
@@ -943,8 +944,8 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 		goto done;
 	string_view_consume(&in, n);
 
-	r->value.update.message =
-		reftable_realloc(r->value.update.message, dest.len + 1);
+	REFTABLE_ALLOC_GROW(r->value.update.message, dest.len + 1,
+			    r->value.update.message_cap);
 	memcpy(r->value.update.message, dest.buf, dest.len);
 	r->value.update.message[dest.len] = 0;
 
