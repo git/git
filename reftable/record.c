@@ -861,7 +861,7 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 	if (key.len <= 9 || key.buf[key.len - 9] != 0)
 		return REFTABLE_FORMAT_ERROR;
 
-	r->refname = reftable_realloc(r->refname, key.len - 8);
+	REFTABLE_ALLOC_GROW(r->refname, key.len - 8, r->refname_cap);
 	memcpy(r->refname, key.buf, key.len - 8);
 	ts = get_be64(key.buf + key.len - 8);
 

@@ -74,6 +74,7 @@ int reftable_ref_record_equal(const struct reftable_ref_record *a,
 /* reftable_log_record holds a reflog entry */
 struct reftable_log_record {
 	char *refname;
+	size_t refname_cap;
 	uint64_t update_index; /* logical timestamp of a transactional update.
 				*/
 
