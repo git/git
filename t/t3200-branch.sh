@@ -1722,4 +1722,14 @@ test_expect_success '--track overrides branch.autoSetupMerge' '
 	test_cmp_config "" --default "" branch.foo5.merge
 '
 
+test_expect_success 'errors if given a bad branch name' '
+	cat <<-\EOF >expect &&
+	fatal: '\''foo..bar'\'' is not a valid branch name
+	hint: See `man git check-ref-format`
+	hint: Disable this message with "git config advice.refSyntax false"
+	EOF
+	test_must_fail git branch foo..bar >actual 2>&1 &&
+	test_cmp expect actual
+'
+
 test_done

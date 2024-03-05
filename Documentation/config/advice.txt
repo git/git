@@ -94,6 +94,9 @@ advice.*::
 		`pushNonFFCurrent`, `pushNonFFMatching`, `pushAlreadyExists`,
 		`pushFetchFirst`, `pushNeedsForce`, and `pushRefNeedsUpdate`
 		simultaneously.
+	refSyntax::
+		Shown when the user provides an illegal ref name, to
+		tell the user about the ref syntax documentation.
 	resetNoRefresh::
 		Shown when linkgit:git-reset[1] takes more than 2
 		seconds to refresh the index after reset, to tell the user
