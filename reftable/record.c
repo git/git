@@ -763,16 +763,10 @@ static void reftable_log_record_copy_from(void *rec, const void *src_rec,
 				xstrdup(dst->value.update.message);
 		}
 
-		if (dst->value.update.new_hash) {
-			REFTABLE_ALLOC_ARRAY(dst->value.update.new_hash, hash_size);
-			memcpy(dst->value.update.new_hash,
-			       src->value.update.new_hash, hash_size);
-		}
-		if (dst->value.update.old_hash) {
-			REFTABLE_ALLOC_ARRAY(dst->value.update.old_hash, hash_size);
-			memcpy(dst->value.update.old_hash,
-			       src->value.update.old_hash, hash_size);
-		}
+		memcpy(dst->value.update.new_hash,
+		       src->value.update.new_hash, hash_size);
+		memcpy(dst->value.update.old_hash,
+		       src->value.update.old_hash, hash_size);
 		break;
 	}
 }
@@ -790,8 +784,6 @@ void reftable_log_record_release(struct reftable_log_record *r)
 	case REFTABLE_LOG_DELETION:
 		break;
 	case REFTABLE_LOG_UPDATE:
-		reftable_free(r->value.update.new_hash);
-		reftable_free(r->value.update.old_hash);
 		reftable_free(r->value.update.name);
 		reftable_free(r->value.update.email);
 		reftable_free(r->value.update.message);
@@ -808,33 +800,20 @@ static uint8_t reftable_log_record_val_type(const void *rec)
 	return reftable_log_record_is_deletion(log) ? 0 : 1;
 }
 
-static uint8_t zero[GIT_SHA256_RAWSZ] = { 0 };
-
 static int reftable_log_record_encode(const void *rec, struct string_view s,
 				      int hash_size)
 {
 	const struct reftable_log_record *r = rec;
 	struct string_view start = s;
 	int n = 0;
-	uint8_t *oldh = NULL;
-	uint8_t *newh = NULL;
 	if (reftable_log_record_is_deletion(r))
 		return 0;
-
-	oldh = r->value.update.old_hash;
-	newh = r->value.update.new_hash;
-	if (!oldh) {
-		oldh = zero;
-	}
-	if (!newh) {
-		newh = zero;
-	}
 
 	if (s.len < 2 * hash_size)
 		return -1;
 
-	memcpy(s.buf, oldh, hash_size);
-	memcpy(s.buf + hash_size, newh, hash_size);
+	memcpy(s.buf, r->value.update.old_hash, hash_size);
+	memcpy(s.buf + hash_size, r->value.update.new_hash, hash_size);
 	string_view_consume(&s, 2 * hash_size);
 
 	n = encode_string(r->value.update.name ? r->value.update.name : "", s);
@@ -891,8 +870,6 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 	if (val_type != r->value_type) {
 		switch (r->value_type) {
 		case REFTABLE_LOG_UPDATE:
-			FREE_AND_NULL(r->value.update.old_hash);
-			FREE_AND_NULL(r->value.update.new_hash);
 			FREE_AND_NULL(r->value.update.message);
 			FREE_AND_NULL(r->value.update.email);
 			FREE_AND_NULL(r->value.update.name);
@@ -908,11 +885,6 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 
 	if (in.len < 2 * hash_size)
 		return REFTABLE_FORMAT_ERROR;
-
-	r->value.update.old_hash =
-		reftable_realloc(r->value.update.old_hash, hash_size);
-	r->value.update.new_hash =
-		reftable_realloc(r->value.update.new_hash, hash_size);
 
 	memcpy(r->value.update.old_hash, in.buf, hash_size);
 	memcpy(r->value.update.new_hash, in.buf + hash_size, hash_size);
@@ -983,17 +955,6 @@ static int null_streq(char *a, char *b)
 	return 0 == strcmp(a, b);
 }
 
-static int zero_hash_eq(uint8_t *a, uint8_t *b, int sz)
-{
-	if (!a)
-		a = zero;
-
-	if (!b)
-		b = zero;
-
-	return !memcmp(a, b, sz);
-}
-
 static int reftable_log_record_equal_void(const void *a,
 					  const void *b, int hash_size)
 {
@@ -1037,10 +998,10 @@ int reftable_log_record_equal(const struct reftable_log_record *a,
 				  b->value.update.email) &&
 		       null_streq(a->value.update.message,
 				  b->value.update.message) &&
-		       zero_hash_eq(a->value.update.old_hash,
-				    b->value.update.old_hash, hash_size) &&
-		       zero_hash_eq(a->value.update.new_hash,
-				    b->value.update.new_hash, hash_size);
+		       !memcmp(a->value.update.old_hash,
+			       b->value.update.old_hash, hash_size) &&
+		       !memcmp(a->value.update.new_hash,
+			       b->value.update.new_hash, hash_size);
 	}
 
 	abort();

@@ -88,8 +88,8 @@ struct reftable_log_record {
 
 	union {
 		struct {
-			uint8_t *new_hash;
-			uint8_t *old_hash;
+			unsigned char new_hash[GIT_MAX_RAWSZ];
+			unsigned char old_hash[GIT_MAX_RAWSZ];
 			char *name;
 			char *email;
 			uint64_t time;

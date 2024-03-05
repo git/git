@@ -183,8 +183,6 @@ static void test_reftable_log_record_roundtrip(void)
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value = {
 				.update = {
-					.old_hash = reftable_malloc(GIT_SHA1_RAWSZ),
-					.new_hash = reftable_malloc(GIT_SHA1_RAWSZ),
 					.name = xstrdup("han-wen"),
 					.email = xstrdup("hanwen@google.com"),
 					.message = xstrdup("test"),
@@ -202,13 +200,6 @@ static void test_reftable_log_record_roundtrip(void)
 			.refname = xstrdup("branch"),
 			.update_index = 33,
 			.value_type = REFTABLE_LOG_UPDATE,
-			.value = {
-				.update = {
-					.old_hash = reftable_malloc(GIT_SHA1_RAWSZ),
-					.new_hash = reftable_malloc(GIT_SHA1_RAWSZ),
-					/* rest of fields left empty. */
-				},
-			},
 		}
 	};
 	set_test_hash(in[0].value.update.new_hash, 1);
@@ -231,8 +222,6 @@ static void test_reftable_log_record_roundtrip(void)
 				.value_type = REFTABLE_LOG_UPDATE,
 				.value = {
 					.update = {
-						.new_hash = reftable_calloc(GIT_SHA1_RAWSZ, 1),
-						.old_hash = reftable_calloc(GIT_SHA1_RAWSZ, 1),
 						.name = xstrdup("old name"),
 						.email = xstrdup("old@email"),
 						.message = xstrdup("old message"),
