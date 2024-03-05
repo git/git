@@ -2628,6 +2628,12 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       each_ref_fn cb,
 				       void *cb_data)
 {
+	if (filter->kind == FILTER_REFS_KIND_MASK) {
+		/* In this case, we want to print all refs including root refs. */
+		return refs_for_each_include_root_refs(get_main_ref_store(the_repository),
+						       cb, cb_data);
+	}
+
 	if (!filter->match_as_path) {
 		/*
 		 * in this case, the patterns are applied after
@@ -2750,6 +2756,9 @@ static int ref_kind_from_refname(const char *refname)
 			return ref_kind[i].kind;
 	}
 
+	if (is_pseudoref(get_main_ref_store(the_repository), refname))
+		return FILTER_REFS_PSEUDOREFS;
+
 	return FILTER_REFS_OTHERS;
 }
 
@@ -2781,7 +2790,16 @@ static struct ref_array_item *apply_ref_filter(const char *refname, const struct
 
 	/* Obtain the current ref kind from filter_ref_kind() and ignore unwanted refs. */
 	kind = filter_ref_kind(filter, refname);
-	if (!(kind & filter->kind))
+
+	/*
+	 * Generally HEAD refs are printed with special description denoting a rebase,
+	 * detached state and so forth. This is useful when only printing the HEAD ref
+	 * But when it is being printed along with other pseudorefs, it makes sense to
+	 * keep the formatting consistent. So we mask the type to act like a pseudoref.
+	 */
+	if (filter->kind == FILTER_REFS_KIND_MASK && kind == FILTER_REFS_DETACHED_HEAD)
+		kind = FILTER_REFS_PSEUDOREFS;
+	else if (!(kind & filter->kind))
 		return NULL;
 
 	if (!filter_pattern_match(filter, refname))
@@ -3047,9 +3065,15 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 			ret = for_each_fullref_in("refs/remotes/", fn, cb_data);
 		else if (filter->kind == FILTER_REFS_TAGS)
 			ret = for_each_fullref_in("refs/tags/", fn, cb_data);
-		else if (filter->kind & FILTER_REFS_ALL)
+		else if (filter->kind & FILTER_REFS_REGULAR)
 			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
-		if (!ret && (filter->kind & FILTER_REFS_DETACHED_HEAD))
+
+		/*
+		 * When printing all ref types, HEAD is already included,
+		 * so we don't want to print HEAD again.
+		 */
+		if (!ret && (filter->kind != FILTER_REFS_KIND_MASK) &&
+		    (filter->kind & FILTER_REFS_DETACHED_HEAD))
 			head_ref(fn, cb_data);
 	}
 

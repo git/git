@@ -399,6 +399,12 @@ int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data);
 int for_each_rawref(each_ref_fn fn, void *cb_data);
 
 /*
+ * Iterates over all refs including root refs, i.e. pseudorefs and HEAD.
+ */
+int refs_for_each_include_root_refs(struct ref_store *refs, each_ref_fn fn,
+				    void *cb_data);
+
+/*
  * Normalizes partial refs to their fully qualified form.
  * Will prepend <prefix> to the <pattern> if it doesn't start with 'refs/'.
  * <prefix> will default to 'refs/' if NULL.
@@ -1042,5 +1048,8 @@ extern struct ref_namespace_info ref_namespace[NAMESPACE__COUNT];
  * variables. Modify a namespace as specified by its ref_namespace key.
  */
 void update_ref_namespace(enum ref_namespace namespace, char *ref);
+
+int is_pseudoref(struct ref_store *refs, const char *refname);
+int is_headref(struct ref_store *refs, const char *refname);
 
 #endif /* REFS_H */

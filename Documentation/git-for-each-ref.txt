@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>]
-		   [ --stdin | <pattern>... ]
+		   [--include-root-refs] [ --stdin | <pattern>... ]
 		   [--points-at=<object>]
 		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
@@ -104,6 +104,9 @@ TAB %(refname)`.
 	If one or more patterns are given, only refs which do not match
 	any excluded pattern(s) are shown. Matching is done using the
 	same rules as `<pattern>` above.
+
+--include-root-refs::
+	List root refs (HEAD and pseudorefs) apart from regular refs.
 
 FIELD NAMES
 -----------

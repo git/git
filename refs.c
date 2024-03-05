@@ -860,6 +860,47 @@ static int is_pseudoref_syntax(const char *refname)
 	return 1;
 }
 
+int is_pseudoref(struct ref_store *refs, const char *refname)
+{
+	static const char *const irregular_pseudorefs[] = {
+		"AUTO_MERGE",
+		"BISECT_EXPECTED_REV",
+		"NOTES_MERGE_PARTIAL",
+		"NOTES_MERGE_REF",
+		"MERGE_AUTOSTASH",
+	};
+	struct object_id oid;
+	size_t i;
+
+	if (!is_pseudoref_syntax(refname))
+		return 0;
+
+	if (ends_with(refname, "_HEAD")) {
+		refs_resolve_ref_unsafe(refs, refname,
+					RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+					&oid, NULL);
+		return !is_null_oid(&oid);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(irregular_pseudorefs); i++)
+		if (!strcmp(refname, irregular_pseudorefs[i])) {
+			refs_resolve_ref_unsafe(refs, refname,
+						RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+						&oid, NULL);
+			return !is_null_oid(&oid);
+		}
+
+	return 0;
+}
+
+int is_headref(struct ref_store *refs, const char *refname)
+{
+	if (!strcmp(refname, "HEAD"))
+		return refs_ref_exists(refs, refname);
+
+	return 0;
+}
+
 static int is_current_worktree_ref(const char *ref) {
 	return is_pseudoref_syntax(ref) || is_per_worktree_ref(ref);
 }
@@ -1713,6 +1754,13 @@ int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 int for_each_rawref(each_ref_fn fn, void *cb_data)
 {
 	return refs_for_each_rawref(get_main_ref_store(the_repository), fn, cb_data);
+}
+
+int refs_for_each_include_root_refs(struct ref_store *refs, each_ref_fn fn,
+				    void *cb_data)
+{
+	return do_for_each_ref(refs, "", NULL, fn, 0,
+			       DO_FOR_EACH_INCLUDE_ROOT_REFS, cb_data);
 }
 
 static int qsort_strcmp(const void *va, const void *vb)

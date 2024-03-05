@@ -279,18 +279,18 @@ test_expect_success 'setup worktree' '
 # direct FS access for creating the reflogs. 3) PSEUDO-WT and refs/bisect/random
 # do not create reflogs by default, so it is not testing a realistic scenario.
 test_expect_success 'for_each_reflog()' '
-	echo $ZERO_OID > .git/logs/PSEUDO-MAIN &&
+	echo $ZERO_OID >.git/logs/PSEUDO_MAIN_HEAD &&
 	mkdir -p     .git/logs/refs/bisect &&
-	echo $ZERO_OID > .git/logs/refs/bisect/random &&
+	echo $ZERO_OID >.git/logs/refs/bisect/random &&
 
-	echo $ZERO_OID > .git/worktrees/wt/logs/PSEUDO-WT &&
+	echo $ZERO_OID >.git/worktrees/wt/logs/PSEUDO_WT_HEAD &&
 	mkdir -p     .git/worktrees/wt/logs/refs/bisect &&
-	echo $ZERO_OID > .git/worktrees/wt/logs/refs/bisect/wt-random &&
+	echo $ZERO_OID >.git/worktrees/wt/logs/refs/bisect/wt-random &&
 
 	$RWT for-each-reflog >actual &&
 	cat >expected <<-\EOF &&
 	HEAD
-	PSEUDO-WT
+	PSEUDO_WT_HEAD
 	refs/bisect/wt-random
 	refs/heads/main
 	refs/heads/wt-main
@@ -300,7 +300,7 @@ test_expect_success 'for_each_reflog()' '
 	$RMAIN for-each-reflog >actual &&
 	cat >expected <<-\EOF &&
 	HEAD
-	PSEUDO-MAIN
+	PSEUDO_MAIN_HEAD
 	refs/bisect/random
 	refs/heads/main
 	refs/heads/wt-main

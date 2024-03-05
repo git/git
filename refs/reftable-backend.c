@@ -364,12 +364,15 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			break;
 
 		/*
-		 * The files backend only lists references contained in
-		 * "refs/". We emulate the same behaviour here and thus skip
-		 * all references that don't start with this prefix.
+		 * The files backend only lists references contained in "refs/" unless
+		 * the root refs are to be included. We emulate the same behaviour here.
 		 */
-		if (!starts_with(iter->ref.refname, "refs/"))
+		if (!starts_with(iter->ref.refname, "refs/") &&
+		    !(iter->flags & DO_FOR_EACH_INCLUDE_ROOT_REFS &&
+		     (is_pseudoref(&iter->refs->base, iter->ref.refname) ||
+		      is_headref(&iter->refs->base, iter->ref.refname)))) {
 			continue;
+		}
 
 		if (iter->prefix &&
 		    strncmp(iter->prefix, iter->ref.refname, strlen(iter->prefix))) {
