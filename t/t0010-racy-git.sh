@@ -10,25 +10,24 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 for trial in 0 1 2 3 4
 do
-	rm -f .git/index
-	echo frotz >infocom
-	git update-index --add infocom
-	echo xyzzy >infocom
+	test_expect_success "Racy git trial #$trial part A" '
+		rm -f .git/index &&
+		echo frotz >infocom &&
+		git update-index --add infocom &&
+		echo xyzzy >infocom &&
 
-	files=$(git diff-files -p)
-	test_expect_success \
-	"Racy GIT trial #$trial part A" \
-	'test "" != "$files"'
-
+		git diff-files -p >out &&
+		test_file_not_empty out
+	'
 	sleep 1
-	echo xyzzy >cornerstone
-	git update-index --add cornerstone
 
-	files=$(git diff-files -p)
-	test_expect_success \
-	"Racy GIT trial #$trial part B" \
-	'test "" != "$files"'
+	test_expect_success "Racy git trial #$trial part B" '
+		echo xyzzy >cornerstone &&
+		git update-index --add cornerstone &&
 
+		git diff-files -p >out &&
+		test_file_not_empty out
+	'
 done
 
 test_done
