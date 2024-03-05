@@ -521,7 +521,7 @@ core.editor::
 
 core.commentChar::
 	Commands such as `commit` and `tag` that let you edit
-	messages consider a line that begins with this character
+	messages consider a line that begins with this ASCII character
 	commented, and removes them after the editor returns
 	(default '#').
 +
