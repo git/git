@@ -17,6 +17,13 @@ UI, Workflows & Features
 
  * "git reflog" learned a "list" subcommand that enumerates known reflogs.
 
+ * When a merge conflicted at a submodule, merge-ort backend used to
+   unconditionally give a lengthy message to suggest how to resolve
+   it.  Now the message can be squelched as an advice message.
+
+ * "git for-each-ref" learned "--include-root-refs" option to show
+   even the stuff outside the 'refs/' hierarchy.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -65,6 +72,28 @@ Fixes since v2.44
    option; it used to always exit with 0 and signalled success.
    (merge eb84c8b6ce ps/difftool-dir-diff-exit-code later to maint).
 
+ * The code incorrectly attempted to use textconv cache when asked,
+   even when we are not running in a repository, which has been
+   corrected.
+   (merge affe355fe7 jk/textconv-cache-outside-repo-fix later to maint).
+
+ * Remove an empty file that shouldn't have been added in the first
+   place.
+   (merge 4f66942215 js/remove-cruft-files later to maint).
+
+ * The logic to access reflog entries by date and number had ugly
+   corner cases at the boundaries, which have been cleaned up.
+   (merge 5edd126720 jk/reflog-special-cases-fix later to maint).
+
+ * An error message from "git upload-pack", which responds to "git
+   fetch" requests, had a trialing NUL in it, which has been
+   corrected.
+   (merge 3f4c7a0805 sg/upload-pack-error-message-fix later to maint).
+
+ * Clarify wording in the CodingGuidelines that requires <git-compat-util.h>
+   to be the first header file.
+   (merge 4e89f0e07c jc/doc-compat-util later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -74,3 +103,8 @@ Fixes since v2.44
    (merge 41bff66e35 jc/doc-add-placeholder-fix later to maint).
    (merge 6835f0efe9 jw/remote-doc-typofix later to maint).
    (merge 244001aa20 hs/rebase-not-in-progress later to maint).
+   (merge 2ca6c07db2 jc/no-include-of-compat-util-from-headers later to maint).
+   (merge 87bd7fbb9c rs/fetch-simplify-with-starts-with later to maint).
+   (merge f39addd0d9 rs/name-rev-with-mempool later to maint).
+   (merge 9a97b43e03 rs/submodule-prefix-simplify later to maint).
+   (merge 40b8076462 ak/rebase-autosquash later to maint).
