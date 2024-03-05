@@ -75,7 +75,7 @@ advice.*::
 		non-fast-forward update to the current branch.
 	pushNonFFMatching::
 		Shown when the user ran linkgit:git-push[1] and pushed
-		'matching refs' explicitly (i.e. used `:`, or
+		"matching refs" explicitly (i.e. used `:`, or
 		specified a refspec that isn't the current branch) and
 		it resulted in a non-fast-forward error.
 	pushRefNeedsUpdate::
