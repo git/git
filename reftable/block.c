@@ -291,9 +291,8 @@ static int restart_key_less(size_t idx, void *args)
 	/* the restart key is verbatim in the block, so this could avoid the
 	   alloc for decoding the key */
 	struct strbuf rkey = STRBUF_INIT;
-	struct strbuf last_key = STRBUF_INIT;
 	uint8_t unused_extra;
-	int n = reftable_decode_key(&rkey, &unused_extra, last_key, in);
+	int n = reftable_decode_key(&rkey, &unused_extra, in);
 	int result;
 	if (n < 0) {
 		a->error = 1;
@@ -326,35 +325,34 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 	if (it->next_off >= it->br->block_len)
 		return 1;
 
-	n = reftable_decode_key(&it->key, &extra, it->last_key, in);
+	n = reftable_decode_key(&it->last_key, &extra, in);
 	if (n < 0)
 		return -1;
-
-	if (!it->key.len)
+	if (!it->last_key.len)
 		return REFTABLE_FORMAT_ERROR;
 
 	string_view_consume(&in, n);
-	n = reftable_record_decode(rec, it->key, extra, in, it->br->hash_size);
+	n = reftable_record_decode(rec, it->last_key, extra, in, it->br->hash_size);
 	if (n < 0)
 		return -1;
 	string_view_consume(&in, n);
 
-	strbuf_swap(&it->last_key, &it->key);
 	it->next_off += start.len - in.len;
 	return 0;
 }
 
 int block_reader_first_key(struct block_reader *br, struct strbuf *key)
 {
-	struct strbuf empty = STRBUF_INIT;
-	int off = br->header_off + 4;
+	int off = br->header_off + 4, n;
 	struct string_view in = {
 		.buf = br->block.data + off,
 		.len = br->block_len - off,
 	};
-
 	uint8_t extra = 0;
-	int n = reftable_decode_key(key, &extra, empty, in);
+
+	strbuf_reset(key);
+
+	n = reftable_decode_key(key, &extra, in);
 	if (n < 0)
 		return n;
 	if (!key->len)
@@ -371,7 +369,6 @@ int block_iter_seek(struct block_iter *it, struct strbuf *want)
 void block_iter_close(struct block_iter *it)
 {
 	strbuf_release(&it->last_key);
-	strbuf_release(&it->key);
 }
 
 int block_reader_seek(struct block_reader *br, struct block_iter *it,
@@ -408,8 +405,8 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 		if (err < 0)
 			goto done;
 
-		reftable_record_key(&rec, &it->key);
-		if (err > 0 || strbuf_cmp(&it->key, want) >= 0) {
+		reftable_record_key(&rec, &it->last_key);
+		if (err > 0 || strbuf_cmp(&it->last_key, want) >= 0) {
 			err = 0;
 			goto done;
 		}
