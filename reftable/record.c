@@ -374,7 +374,7 @@ static int reftable_ref_record_encode(const void *rec, struct string_view s,
 
 static int reftable_ref_record_decode(void *rec, struct strbuf key,
 				      uint8_t val_type, struct string_view in,
-				      int hash_size)
+				      int hash_size, struct strbuf *scratch)
 {
 	struct reftable_ref_record *r = rec;
 	struct string_view start = in;
@@ -425,13 +425,12 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 		break;
 
 	case REFTABLE_REF_SYMREF: {
-		struct strbuf dest = STRBUF_INIT;
-		int n = decode_string(&dest, in);
+		int n = decode_string(scratch, in);
 		if (n < 0) {
 			return -1;
 		}
 		string_view_consume(&in, n);
-		r->value.symref = dest.buf;
+		r->value.symref = strbuf_detach(scratch, NULL);
 	} break;
 
 	case REFTABLE_REF_DELETION:
@@ -579,7 +578,7 @@ static int reftable_obj_record_encode(const void *rec, struct string_view s,
 
 static int reftable_obj_record_decode(void *rec, struct strbuf key,
 				      uint8_t val_type, struct string_view in,
-				      int hash_size)
+				      int hash_size, struct strbuf *scratch UNUSED)
 {
 	struct string_view start = in;
 	struct reftable_obj_record *r = rec;
@@ -849,13 +848,12 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
 
 static int reftable_log_record_decode(void *rec, struct strbuf key,
 				      uint8_t val_type, struct string_view in,
-				      int hash_size)
+				      int hash_size, struct strbuf *scratch)
 {
 	struct string_view start = in;
 	struct reftable_log_record *r = rec;
 	uint64_t max = 0;
 	uint64_t ts = 0;
-	struct strbuf dest = STRBUF_INIT;
 	int n;
 
 	if (key.len <= 9 || key.buf[key.len - 9] != 0)
@@ -892,7 +890,7 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 
 	string_view_consume(&in, 2 * hash_size);
 
-	n = decode_string(&dest, in);
+	n = decode_string(scratch, in);
 	if (n < 0)
 		goto done;
 	string_view_consume(&in, n);
@@ -904,26 +902,25 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 	 * skip copying over the name in case it's accurate already.
 	 */
 	if (!r->value.update.name ||
-	    strcmp(r->value.update.name, dest.buf)) {
+	    strcmp(r->value.update.name, scratch->buf)) {
 		r->value.update.name =
-			reftable_realloc(r->value.update.name, dest.len + 1);
-		memcpy(r->value.update.name, dest.buf, dest.len);
-		r->value.update.name[dest.len] = 0;
+			reftable_realloc(r->value.update.name, scratch->len + 1);
+		memcpy(r->value.update.name, scratch->buf, scratch->len);
+		r->value.update.name[scratch->len] = 0;
 	}
 
-	strbuf_reset(&dest);
-	n = decode_string(&dest, in);
+	n = decode_string(scratch, in);
 	if (n < 0)
 		goto done;
 	string_view_consume(&in, n);
 
 	/* Same as above, but for the reflog email. */
 	if (!r->value.update.email ||
-	    strcmp(r->value.update.email, dest.buf)) {
+	    strcmp(r->value.update.email, scratch->buf)) {
 		r->value.update.email =
-			reftable_realloc(r->value.update.email, dest.len + 1);
-		memcpy(r->value.update.email, dest.buf, dest.len);
-		r->value.update.email[dest.len] = 0;
+			reftable_realloc(r->value.update.email, scratch->len + 1);
+		memcpy(r->value.update.email, scratch->buf, scratch->len);
+		r->value.update.email[scratch->len] = 0;
 	}
 
 	ts = 0;
@@ -938,22 +935,19 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 	r->value.update.tz_offset = get_be16(in.buf);
 	string_view_consume(&in, 2);
 
-	strbuf_reset(&dest);
-	n = decode_string(&dest, in);
+	n = decode_string(scratch, in);
 	if (n < 0)
 		goto done;
 	string_view_consume(&in, n);
 
-	REFTABLE_ALLOC_GROW(r->value.update.message, dest.len + 1,
+	REFTABLE_ALLOC_GROW(r->value.update.message, scratch->len + 1,
 			    r->value.update.message_cap);
-	memcpy(r->value.update.message, dest.buf, dest.len);
-	r->value.update.message[dest.len] = 0;
+	memcpy(r->value.update.message, scratch->buf, scratch->len);
+	r->value.update.message[scratch->len] = 0;
 
-	strbuf_release(&dest);
 	return start.len - in.len;
 
 done:
-	strbuf_release(&dest);
 	return REFTABLE_FORMAT_ERROR;
 }
 
@@ -1093,7 +1087,7 @@ static int reftable_index_record_encode(const void *rec, struct string_view out,
 
 static int reftable_index_record_decode(void *rec, struct strbuf key,
 					uint8_t val_type, struct string_view in,
-					int hash_size)
+					int hash_size, struct strbuf *scratch UNUSED)
 {
 	struct string_view start = in;
 	struct reftable_index_record *r = rec;
@@ -1174,10 +1168,12 @@ uint8_t reftable_record_val_type(struct reftable_record *rec)
 }
 
 int reftable_record_decode(struct reftable_record *rec, struct strbuf key,
-			   uint8_t extra, struct string_view src, int hash_size)
+			   uint8_t extra, struct string_view src, int hash_size,
+			   struct strbuf *scratch)
 {
 	return reftable_record_vtable(rec)->decode(reftable_record_data(rec),
-						   key, extra, src, hash_size);
+						   key, extra, src, hash_size,
+						   scratch);
 }
 
 void reftable_record_release(struct reftable_record *rec)
