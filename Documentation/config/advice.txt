@@ -2,14 +2,14 @@ advice.*::
 	These variables control various optional help messages designed to
 	aid new users.  When left unconfigured, Git will give the message
 	alongside instructions on how to squelch it.  You can tell Git
-	that you do not need the help message by setting these to 'false':
+	that you do not need the help message by setting these to `false`:
 +
 --
 	addEmbeddedRepo::
 		Shown when the user accidentally adds one
 		git repo inside of another.
 	addEmptyPathspec::
-		Shown when the user runs the add command without providing
+		Shown when the user runs `git add` without providing
 		the pathspec parameter.
 	addIgnoredFile::
 		Shown when the user attempts to add an ignored file to
@@ -75,7 +75,7 @@ advice.*::
 		non-fast-forward update to the current branch.
 	pushNonFFMatching::
 		Shown when the user ran linkgit:git-push[1] and pushed
-		'matching refs' explicitly (i.e. used ':', or
+		'matching refs' explicitly (i.e. used `:`, or
 		specified a refspec that isn't the current branch) and
 		it resulted in a non-fast-forward error.
 	pushRefNeedsUpdate::
@@ -87,12 +87,12 @@ advice.*::
 		guess based on the source and destination refs what
 		remote ref namespace the source belongs in, but where
 		we can still suggest that the user push to either
-		refs/heads/* or refs/tags/* based on the type of the
+		`refs/heads/*` or `refs/tags/*` based on the type of the
 		source object.
 	pushUpdateRejected::
-		Set this variable to 'false' if you want to disable
-		'pushNonFFCurrent', 'pushNonFFMatching', 'pushAlreadyExists',
-		'pushFetchFirst', 'pushNeedsForce', and 'pushRefNeedsUpdate'
+		Set this variable to `false` if you want to disable
+		`pushNonFFCurrent`, `pushNonFFMatching`, `pushAlreadyExists`,
+		`pushFetchFirst`, `pushNeedsForce`, and `pushRefNeedsUpdate`
 		simultaneously.
 	resetNoRefresh::
 		Shown when linkgit:git-reset[1] takes more than 2
