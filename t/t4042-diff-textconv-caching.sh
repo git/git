@@ -118,4 +118,26 @@ test_expect_success 'log notes cache and still use cache for -p' '
 	git log --no-walk -p refs/notes/textconv/magic HEAD
 '
 
+test_expect_success 'caching is silently ignored outside repo' '
+	mkdir -p non-repo &&
+	echo one >non-repo/one &&
+	echo two >non-repo/two &&
+	echo "* diff=test" >attr &&
+	test_expect_code 1 \
+	nongit git -c core.attributesFile="$PWD/attr" \
+		   -c diff.test.textconv="tr a-z A-Z <" \
+		   -c diff.test.cachetextconv=true \
+		   diff --no-index one two >actual &&
+	cat >expect <<-\EOF &&
+	diff --git a/one b/two
+	index 5626abf..f719efd 100644
+	--- a/one
+	+++ b/two
+	@@ -1 +1 @@
+	-ONE
+	+TWO
+	EOF
+	test_cmp expect actual
+'
+
 test_done
