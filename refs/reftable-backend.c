@@ -1682,7 +1682,7 @@ static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftabl
 	if (ret)
 		goto done;
 
-	ret = reftable_stack_reload(refs->main_stack);
+	ret = reftable_stack_reload(stack);
 	if (ret < 0)
 		goto done;
 
