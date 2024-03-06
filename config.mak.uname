@@ -638,6 +638,18 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
 	SHELL_PATH = /usr/coreutils/bin/bash
 endif
+ifeq ($(uname_S),OS/390)
+	NO_SYS_POLL_H = YesPlease
+	NO_STRCASESTR = YesPlease
+	NO_REGEX = YesPlease
+	NO_MMAP = YesPlease
+	NO_NSEC = YesPlease
+	NO_STRLCPY = YesPlease
+	NO_MEMMEM = YesPlease
+	NO_GECOS_IN_PWENT = YesPlease
+	HAVE_STRINGS_H = YesPlease
+	NEEDS_MODE_TRANSLATION = YesPlease
+endif
 ifeq ($(uname_S),MINGW)
 	ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
 		$(error "Building with MSys is no longer supported")
