@@ -332,7 +332,6 @@ test_expect_success 'ref transaction: empty transaction in empty repo' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	test_commit -C repo --no-tag A &&
-	COMMIT=$(git -C repo rev-parse HEAD) &&
 	git -C repo update-ref -d refs/heads/main &&
 	test-tool -C repo ref-store main delete-refs REF_NO_DEREF msg HEAD &&
 	git -C repo update-ref --stdin <<-EOF
