@@ -827,51 +827,56 @@ uint64_t reftable_stack_next_update_index(struct reftable_stack *st)
 
 static int stack_compact_locked(struct reftable_stack *st,
 				size_t first, size_t last,
-				struct strbuf *temp_tab,
-				struct reftable_log_expiry_config *config)
+				struct reftable_log_expiry_config *config,
+				struct tempfile **tab_file_out)
 {
 	struct strbuf next_name = STRBUF_INIT;
-	int tab_fd = -1;
+	struct strbuf tab_file_path = STRBUF_INIT;
 	struct reftable_writer *wr = NULL;
-	int err = 0;
+	struct tempfile *tab_file;
+	int tab_fd, err = 0;
 
 	format_name(&next_name,
 		    reftable_reader_min_update_index(st->readers[first]),
 		    reftable_reader_max_update_index(st->readers[last]));
+	stack_filename(&tab_file_path, st, next_name.buf);
+	strbuf_addstr(&tab_file_path, ".temp.XXXXXX");
 
-	stack_filename(temp_tab, st, next_name.buf);
-	strbuf_addstr(temp_tab, ".temp.XXXXXX");
+	tab_file = mks_tempfile(tab_file_path.buf);
+	if (!tab_file) {
+		err = REFTABLE_IO_ERROR;
+		goto done;
+	}
+	tab_fd = get_tempfile_fd(tab_file);
 
-	tab_fd = mkstemp(temp_tab->buf);
 	if (st->config.default_permissions &&
-	    chmod(temp_tab->buf, st->config.default_permissions) < 0) {
+	    chmod(get_tempfile_path(tab_file), st->config.default_permissions) < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd, &st->config);
-
+	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush,
+				 &tab_fd, &st->config);
 	err = stack_write_compact(st, wr, first, last, config);
 	if (err < 0)
 		goto done;
+
 	err = reftable_writer_close(wr);
 	if (err < 0)
 		goto done;
 
-	err = close(tab_fd);
-	tab_fd = 0;
+	err = close_tempfile_gently(tab_file);
+	if (err < 0)
+		goto done;
+
+	*tab_file_out = tab_file;
+	tab_file = NULL;
 
 done:
+	delete_tempfile(&tab_file);
 	reftable_writer_free(wr);
-	if (tab_fd > 0) {
-		close(tab_fd);
-		tab_fd = 0;
-	}
-	if (err != 0 && temp_tab->len > 0) {
-		unlink(temp_tab->buf);
-		strbuf_release(temp_tab);
-	}
 	strbuf_release(&next_name);
+	strbuf_release(&tab_file_path);
 	return err;
 }
 
@@ -979,12 +984,12 @@ static int stack_compact_range(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *expiry)
 {
 	struct strbuf tables_list_buf = STRBUF_INIT;
-	struct strbuf new_table_temp_path = STRBUF_INIT;
 	struct strbuf new_table_name = STRBUF_INIT;
 	struct strbuf new_table_path = STRBUF_INIT;
 	struct strbuf table_name = STRBUF_INIT;
 	struct lock_file tables_list_lock = LOCK_INIT;
 	struct lock_file *table_locks = NULL;
+	struct tempfile *new_table = NULL;
 	int is_empty_table = 0, err = 0;
 	size_t i;
 
@@ -1059,7 +1064,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * these tables may end up with an empty new table in case tombstones
 	 * end up cancelling out all refs in that range.
 	 */
-	err = stack_compact_locked(st, first, last, &new_table_temp_path, expiry);
+	err = stack_compact_locked(st, first, last, expiry, &new_table);
 	if (err < 0) {
 		if (err != REFTABLE_EMPTY_TABLE_ERROR)
 			goto done;
@@ -1099,7 +1104,7 @@ static int stack_compact_range(struct reftable_stack *st,
 		strbuf_addstr(&new_table_name, ".ref");
 		stack_filename(&new_table_path, st, new_table_name.buf);
 
-		err = rename(new_table_temp_path.buf, new_table_path.buf);
+		err = rename_tempfile(&new_table, new_table_path.buf);
 		if (err < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
@@ -1166,9 +1171,10 @@ done:
 		rollback_lock_file(&table_locks[i - first]);
 	reftable_free(table_locks);
 
+	delete_tempfile(&new_table);
 	strbuf_release(&new_table_name);
 	strbuf_release(&new_table_path);
-	strbuf_release(&new_table_temp_path);
+
 	strbuf_release(&tables_list_buf);
 	strbuf_release(&table_name);
 	return err;
