@@ -321,11 +321,11 @@ static inline int commit_lock_file_to(struct lock_file *lk, const char *path)
  * Roll back `lk`: close the file descriptor and/or file pointer and
  * remove the lockfile. It is a NOOP to call `rollback_lock_file()`
  * for a `lock_file` object that has already been committed or rolled
- * back.
+ * back. No error will be returned in this case.
  */
-static inline void rollback_lock_file(struct lock_file *lk)
+static inline int rollback_lock_file(struct lock_file *lk)
 {
-	delete_tempfile(&lk->tempfile);
+	return delete_tempfile(&lk->tempfile);
 }
 
 #endif /* LOCKFILE_H */
