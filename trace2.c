@@ -433,6 +433,9 @@ void trace2_cmd_name_fl(const char *file, int line, const char *name)
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_command_name_fl)
 			tgt_j->pfn_command_name_fl(file, line, name, hierarchy);
+
+	trace2_cmd_list_config();
+	trace2_cmd_list_env_vars();
 }
 
 void trace2_cmd_mode_fl(const char *file, int line, const char *mode)
