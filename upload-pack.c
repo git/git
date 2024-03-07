@@ -28,6 +28,7 @@
 #include "shallow.h"
 #include "write-or-die.h"
 #include "json-writer.h"
+#include "strmap.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -61,12 +62,11 @@ struct upload_pack_data {
 	struct string_list symref;				/* v0 only */
 	struct object_array want_obj;
 	struct object_array have_obj;
-	struct oid_array haves;					/* v2 only */
-	struct string_list wanted_refs;				/* v2 only */
+	struct strmap wanted_refs;				/* v2 only */
 	struct strvec hidden_refs;
 
 	struct object_array shallows;
-	struct string_list deepen_not;
+	struct oidset deepen_not;
 	struct object_array extra_edge_obj;
 	int depth;
 	timestamp_t deepen_since;
@@ -113,6 +113,7 @@ struct upload_pack_data {
 	unsigned done : 1;					/* v2 only */
 	unsigned allow_ref_in_want : 1;				/* v2 only */
 	unsigned allow_sideband_all : 1;			/* v2 only */
+	unsigned seen_haves : 1;				/* v2 only */
 	unsigned advertise_sid : 1;
 	unsigned sent_capabilities : 1;
 };
@@ -120,13 +121,12 @@ struct upload_pack_data {
 static void upload_pack_data_init(struct upload_pack_data *data)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
-	struct string_list wanted_refs = STRING_LIST_INIT_DUP;
+	struct strmap wanted_refs = STRMAP_INIT;
 	struct strvec hidden_refs = STRVEC_INIT;
 	struct object_array want_obj = OBJECT_ARRAY_INIT;
 	struct object_array have_obj = OBJECT_ARRAY_INIT;
-	struct oid_array haves = OID_ARRAY_INIT;
 	struct object_array shallows = OBJECT_ARRAY_INIT;
-	struct string_list deepen_not = STRING_LIST_INIT_DUP;
+	struct oidset deepen_not = OID_ARRAY_INIT;
 	struct string_list uri_protocols = STRING_LIST_INIT_DUP;
 	struct object_array extra_edge_obj = OBJECT_ARRAY_INIT;
 	struct string_list allowed_filters = STRING_LIST_INIT_DUP;
@@ -137,7 +137,6 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 	data->hidden_refs = hidden_refs;
 	data->want_obj = want_obj;
 	data->have_obj = have_obj;
-	data->haves = haves;
 	data->shallows = shallows;
 	data->deepen_not = deepen_not;
 	data->uri_protocols = uri_protocols;
@@ -155,13 +154,12 @@ static void upload_pack_data_init(struct upload_pack_data *data)
 static void upload_pack_data_clear(struct upload_pack_data *data)
 {
 	string_list_clear(&data->symref, 1);
-	string_list_clear(&data->wanted_refs, 1);
+	strmap_clear(&data->wanted_refs, 1);
 	strvec_clear(&data->hidden_refs);
 	object_array_clear(&data->want_obj);
 	object_array_clear(&data->have_obj);
-	oid_array_clear(&data->haves);
 	object_array_clear(&data->shallows);
-	string_list_clear(&data->deepen_not, 0);
+	oidset_clear(&data->deepen_not);
 	object_array_clear(&data->extra_edge_obj);
 	list_objects_filter_release(&data->filter_options);
 	string_list_clear(&data->allowed_filters, 0);
@@ -471,7 +469,9 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 static int do_got_oid(struct upload_pack_data *data, const struct object_id *oid)
 {
 	int we_knew_they_have = 0;
-	struct object *o = parse_object(the_repository, oid);
+	struct object *o = parse_object_with_flags(the_repository, oid,
+						   PARSE_OBJECT_SKIP_HASH_CHECK |
+						   PARSE_OBJECT_DISCARD_TREE);
 
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
@@ -527,8 +527,6 @@ static int get_common_commits(struct upload_pack_data *data,
 	int got_common = 0;
 	int got_other = 0;
 	int sent_ready = 0;
-
-	save_commit_buffer = 0;
 
 	for (;;) {
 		const char *arg;
@@ -926,12 +924,13 @@ static int send_shallow_list(struct upload_pack_data *data)
 		strvec_push(&av, "rev-list");
 		if (data->deepen_since)
 			strvec_pushf(&av, "--max-age=%"PRItime, data->deepen_since);
-		if (data->deepen_not.nr) {
+		if (oidset_size(&data->deepen_not)) {
+			const struct object_id *oid;
+			struct oidset_iter iter;
 			strvec_push(&av, "--not");
-			for (i = 0; i < data->deepen_not.nr; i++) {
-				struct string_list_item *s = data->deepen_not.items + i;
-				strvec_push(&av, s->string);
-			}
+			oidset_iter_init(&data->deepen_not, &iter);
+			while ((oid = oidset_iter_next(&iter)))
+				strvec_push(&av, oid_to_hex(oid));
 			strvec_push(&av, "--not");
 		}
 		for (i = 0; i < data->want_obj.nr; i++) {
@@ -1007,7 +1006,7 @@ static int process_deepen_since(const char *line, timestamp_t *deepen_since, int
 	return 0;
 }
 
-static int process_deepen_not(const char *line, struct string_list *deepen_not, int *deepen_rev_list)
+static int process_deepen_not(const char *line, struct oidset *deepen_not, int *deepen_rev_list)
 {
 	const char *arg;
 	if (skip_prefix(line, "deepen-not ", &arg)) {
@@ -1015,7 +1014,7 @@ static int process_deepen_not(const char *line, struct string_list *deepen_not, 
 		struct object_id oid;
 		if (expand_ref(the_repository, arg, strlen(arg), &oid, &ref) != 1)
 			die("git upload-pack: ambiguous deepen-not: %s", line);
-		string_list_append(deepen_not, ref);
+		oidset_insert(deepen_not, &oid);
 		free(ref);
 		*deepen_rev_list = 1;
 		return 1;
@@ -1151,7 +1150,9 @@ static void receive_needs(struct upload_pack_data *data,
 			free(client_sid);
 		}
 
-		o = parse_object(the_repository, &oid_buf);
+		o = parse_object_with_flags(the_repository, &oid_buf,
+					    PARSE_OBJECT_SKIP_HASH_CHECK |
+					    PARSE_OBJECT_DISCARD_TREE);
 		if (!o) {
 			packet_writer_error(&data->writer,
 					    "upload-pack: not our ref %s",
@@ -1468,7 +1469,8 @@ static int parse_want(struct packet_writer *writer, const char *line,
 			    "expected to get oid, not '%s'", line);
 
 		o = parse_object_with_flags(the_repository, &oid,
-					    PARSE_OBJECT_SKIP_HASH_CHECK);
+					    PARSE_OBJECT_SKIP_HASH_CHECK |
+					    PARSE_OBJECT_DISCARD_TREE);
 
 		if (!o) {
 			packet_writer_error(writer,
@@ -1490,14 +1492,13 @@ static int parse_want(struct packet_writer *writer, const char *line,
 }
 
 static int parse_want_ref(struct packet_writer *writer, const char *line,
-			  struct string_list *wanted_refs,
+			  struct strmap *wanted_refs,
 			  struct strvec *hidden_refs,
 			  struct object_array *want_obj)
 {
 	const char *refname_nons;
 	if (skip_prefix(line, "want-ref ", &refname_nons)) {
 		struct object_id oid;
-		struct string_list_item *item;
 		struct object *o = NULL;
 		struct strbuf refname = STRBUF_INIT;
 
@@ -1509,8 +1510,11 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 		}
 		strbuf_release(&refname);
 
-		item = string_list_append(wanted_refs, refname_nons);
-		item->util = oiddup(&oid);
+		if (strmap_put(wanted_refs, refname_nons, oiddup(&oid))) {
+			packet_writer_error(writer, "duplicate want-ref %s",
+					    refname_nons);
+			die("duplicate want-ref %s", refname_nons);
+		}
 
 		if (!starts_with(refname_nons, "refs/tags/")) {
 			struct commit *commit = lookup_commit_in_graph(the_repository, &oid);
@@ -1532,15 +1536,14 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 	return 0;
 }
 
-static int parse_have(const char *line, struct oid_array *haves)
+static int parse_have(const char *line, struct upload_pack_data *data)
 {
 	const char *arg;
 	if (skip_prefix(line, "have ", &arg)) {
 		struct object_id oid;
 
-		if (get_oid_hex(arg, &oid))
-			die("git upload-pack: expected SHA1 object, got '%s'", arg);
-		oid_array_append(haves, &oid);
+		got_oid(data, arg, &oid);
+		data->seen_haves = 1;
 		return 1;
 	}
 
@@ -1552,13 +1555,13 @@ static void trace2_fetch_info(struct upload_pack_data *data)
 	struct json_writer jw = JSON_WRITER_INIT;
 
 	jw_object_begin(&jw, 0);
-	jw_object_intmax(&jw, "haves", data->haves.nr);
+	jw_object_intmax(&jw, "haves", data->have_obj.nr);
 	jw_object_intmax(&jw, "wants", data->want_obj.nr);
-	jw_object_intmax(&jw, "want-refs", data->wanted_refs.nr);
+	jw_object_intmax(&jw, "want-refs", strmap_get_size(&data->wanted_refs));
 	jw_object_intmax(&jw, "depth", data->depth);
 	jw_object_intmax(&jw, "shallows", data->shallows.nr);
 	jw_object_bool(&jw, "deepen-since", data->deepen_since);
-	jw_object_intmax(&jw, "deepen-not", data->deepen_not.nr);
+	jw_object_intmax(&jw, "deepen-not", oidset_size(&data->deepen_not));
 	jw_object_bool(&jw, "deepen-relative", data->deepen_relative);
 	if (data->filter_options.choice)
 		jw_object_string(&jw, "filter", list_object_filter_config_name(data->filter_options.choice));
@@ -1586,7 +1589,7 @@ static void process_args(struct packet_reader *request,
 				   &data->hidden_refs, &data->want_obj))
 			continue;
 		/* process have line */
-		if (parse_have(arg, &data->haves))
+		if (parse_have(arg, data))
 			continue;
 
 		/* process args like thin-pack */
@@ -1646,6 +1649,9 @@ static void process_args(struct packet_reader *request,
 		}
 
 		if (skip_prefix(arg, "packfile-uris ", &p)) {
+			if (data->uri_protocols.nr)
+				send_err_and_die(data,
+						 "multiple packfile-uris lines forbidden");
 			string_list_split(&data->uri_protocols, p, ',', -1);
 			continue;
 		}
@@ -1664,27 +1670,7 @@ static void process_args(struct packet_reader *request,
 		trace2_fetch_info(data);
 }
 
-static int process_haves(struct upload_pack_data *data, struct oid_array *common)
-{
-	int i;
-
-	/* Process haves */
-	for (i = 0; i < data->haves.nr; i++) {
-		const struct object_id *oid = &data->haves.oid[i];
-
-		if (!repo_has_object_file_with_flags(the_repository, oid,
-						     OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT))
-			continue;
-
-		oid_array_append(common, oid);
-
-		do_got_oid(data, oid);
-	}
-
-	return 0;
-}
-
-static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
+static int send_acks(struct upload_pack_data *data, struct object_array *acks)
 {
 	int i;
 
@@ -1696,7 +1682,7 @@ static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
 
 	for (i = 0; i < acks->nr; i++) {
 		packet_writer_write(&data->writer, "ACK %s\n",
-				    oid_to_hex(&acks->oid[i]));
+				    oid_to_hex(&acks->objects[i].item->oid));
 	}
 
 	if (!data->wait_for_done && ok_to_give_up(data)) {
@@ -1710,13 +1696,11 @@ static int send_acks(struct upload_pack_data *data, struct oid_array *acks)
 
 static int process_haves_and_send_acks(struct upload_pack_data *data)
 {
-	struct oid_array common = OID_ARRAY_INIT;
 	int ret = 0;
 
-	process_haves(data, &common);
 	if (data->done) {
 		ret = 1;
-	} else if (send_acks(data, &common)) {
+	} else if (send_acks(data, &data->have_obj)) {
 		packet_writer_delim(&data->writer);
 		ret = 1;
 	} else {
@@ -1725,24 +1709,23 @@ static int process_haves_and_send_acks(struct upload_pack_data *data)
 		ret = 0;
 	}
 
-	oid_array_clear(&data->haves);
-	oid_array_clear(&common);
 	return ret;
 }
 
 static void send_wanted_ref_info(struct upload_pack_data *data)
 {
-	const struct string_list_item *item;
+	struct hashmap_iter iter;
+	const struct strmap_entry *e;
 
-	if (!data->wanted_refs.nr)
+	if (strmap_empty(&data->wanted_refs))
 		return;
 
 	packet_writer_write(&data->writer, "wanted-refs\n");
 
-	for_each_string_list_item(item, &data->wanted_refs) {
+	strmap_for_each_entry(&data->wanted_refs, &iter, e) {
 		packet_writer_write(&data->writer, "%s %s\n",
-				    oid_to_hex(item->util),
-				    item->string);
+				    oid_to_hex(e->value),
+				    e->key);
 	}
 
 	packet_writer_delim(&data->writer);
@@ -1796,7 +1779,7 @@ int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
 				 * they didn't want anything.
 				 */
 				state = FETCH_DONE;
-			} else if (data.haves.nr) {
+			} else if (data.seen_haves) {
 				/*
 				 * Request had 'have' lines, so lets ACK them.
 				 */

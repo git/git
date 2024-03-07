@@ -381,7 +381,8 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 
 	object = parse_object_with_flags(revs->repo, oid,
 					 revs->verify_objects ? 0 :
-					 PARSE_OBJECT_SKIP_HASH_CHECK);
+					 PARSE_OBJECT_SKIP_HASH_CHECK |
+					 PARSE_OBJECT_DISCARD_TREE);
 
 	if (!object) {
 		if (revs->ignore_missing)

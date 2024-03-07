@@ -346,7 +346,8 @@ the 'wanted-refs' section in the server's response as explained below.
     want-ref <ref>
 	Indicates to the server that the client wants to retrieve a
 	particular ref, where <ref> is the full name of a ref on the
-	server.
+	server.  It is a protocol error to send want-ref for the
+	same ref more than once.
 
 If the 'sideband-all' feature is advertised, the following argument can be
 included in the client's request:
@@ -361,7 +362,8 @@ included in the client's request:
 If the 'packfile-uris' feature is advertised, the following argument
 can be included in the client's request as well as the potential
 addition of the 'packfile-uris' section in the server's response as
-explained below.
+explained below. Note that at most one `packfile-uris` line can be sent
+to the server.
 
     packfile-uris <comma-separated-list-of-protocols>
 	Indicates to the server that the client is willing to receive

@@ -197,6 +197,7 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet);
  */
 enum parse_object_flags {
 	PARSE_OBJECT_SKIP_HASH_CHECK = 1 << 0,
+	PARSE_OBJECT_DISCARD_TREE = 1 << 1,
 };
 struct object *parse_object(struct repository *r, const struct object_id *oid);
 struct object *parse_object_with_flags(struct repository *r,
