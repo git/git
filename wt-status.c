@@ -1107,12 +1107,15 @@ void wt_status_append_cut_line(struct strbuf *buf)
 	strbuf_add_commented_lines(buf, explanation, strlen(explanation), comment_line_char);
 }
 
-void wt_status_add_cut_line(FILE *fp)
+void wt_status_add_cut_line(struct wt_status *s)
 {
 	struct strbuf buf = STRBUF_INIT;
 
+	if (s->added_cut_line)
+		return;
+	s->added_cut_line = 1;
 	wt_status_append_cut_line(&buf);
-	fputs(buf.buf, fp);
+	fputs(buf.buf, s->fp);
 	strbuf_release(&buf);
 }
 
@@ -1143,11 +1146,12 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	 * file (and even the "auto" setting won't work, since it
 	 * will have checked isatty on stdout). But we then do want
 	 * to insert the scissor line here to reliably remove the
-	 * diff before committing.
+	 * diff before committing, if we didn't already include one
+	 * before.
 	 */
 	if (s->fp != stdout) {
 		rev.diffopt.use_color = 0;
-		wt_status_add_cut_line(s->fp);
+		wt_status_add_cut_line(s);
 	}
 	if (s->verbose > 1 && s->committable) {
 		/* print_updated() printed a header, so do we */

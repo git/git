@@ -736,6 +736,11 @@ test_expect_success 'message shows date when it is explicitly set' '
 	  .git/COMMIT_EDITMSG
 '
 
+test_expect_success 'message does not have multiple scissors lines' '
+	git commit --cleanup=scissors -v --allow-empty -e -m foo &&
+	test $(grep -c -e "--- >8 ---" .git/COMMIT_EDITMSG) -eq 1
+'
+
 test_expect_success AUTOIDENT 'message shows committer when it is automatic' '
 
 	echo >>negative &&

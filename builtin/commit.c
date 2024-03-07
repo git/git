@@ -738,7 +738,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	const char *hook_arg2 = NULL;
 	int clean_message_contents = (cleanup_mode != COMMIT_MSG_CLEANUP_NONE);
 	int old_display_comment_prefix;
-	int merge_contains_scissors = 0;
 	int invoked_hook;
 
 	/* This checks and barfs if author is badly specified */
@@ -842,7 +841,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		    wt_status_locate_end(sb.buf + merge_msg_start,
 					 sb.len - merge_msg_start) <
 				sb.len - merge_msg_start)
-			merge_contains_scissors = 1;
+			s->added_cut_line = 1;
 	} else if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
 			die_errno(_("could not read SQUASH_MSG"));
@@ -925,9 +924,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			  " yourself if you want to.\n"
 			  "An empty message aborts the commit.\n");
 		if (whence != FROM_COMMIT) {
-			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS &&
-				!merge_contains_scissors)
-				wt_status_add_cut_line(s->fp);
+			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
+				wt_status_add_cut_line(s);
 			status_printf_ln(
 				s, GIT_COLOR_NORMAL,
 				whence == FROM_MERGE ?
@@ -947,8 +945,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_ALL)
 			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_all, comment_line_char);
 		else if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
-			if (whence == FROM_COMMIT && !merge_contains_scissors)
-				wt_status_add_cut_line(s->fp);
+			if (whence == FROM_COMMIT)
+				wt_status_add_cut_line(s);
 		} else /* COMMIT_MSG_CLEANUP_SPACE, that is. */
 			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_space, comment_line_char);
 
