@@ -114,6 +114,7 @@ struct upload_pack_data {
 	unsigned allow_ref_in_want : 1;				/* v2 only */
 	unsigned allow_sideband_all : 1;			/* v2 only */
 	unsigned seen_haves : 1;				/* v2 only */
+	unsigned allow_packfile_uris : 1;			/* v2 only */
 	unsigned advertise_sid : 1;
 	unsigned sent_capabilities : 1;
 };
@@ -1363,6 +1364,9 @@ static int upload_pack_config(const char *var, const char *value,
 		data->allow_ref_in_want = git_config_bool(var, value);
 	} else if (!strcmp("uploadpack.allowsidebandall", var)) {
 		data->allow_sideband_all = git_config_bool(var, value);
+	} else if (!strcmp("uploadpack.blobpackfileuri", var)) {
+		if (value)
+			data->allow_packfile_uris = 1;
 	} else if (!strcmp("core.precomposeunicode", var)) {
 		precomposed_unicode = git_config_bool(var, value);
 	} else if (!strcmp("transfer.advertisesid", var)) {
@@ -1386,10 +1390,13 @@ static int upload_pack_protected_config(const char *var, const char *value,
 	return 0;
 }
 
-static void get_upload_pack_config(struct upload_pack_data *data)
+static void get_upload_pack_config(struct repository *r,
+				   struct upload_pack_data *data)
 {
-	git_config(upload_pack_config, data);
+	repo_config(r, upload_pack_config, data);
 	git_protected_config(upload_pack_protected_config, data);
+
+	data->allow_sideband_all |= git_env_bool("GIT_TEST_SIDEBAND_ALL", 0);
 }
 
 void upload_pack(const int advertise_refs, const int stateless_rpc,
@@ -1399,7 +1406,7 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 	struct upload_pack_data data;
 
 	upload_pack_data_init(&data);
-	get_upload_pack_config(&data);
+	get_upload_pack_config(the_repository, &data);
 
 	data.stateless_rpc = stateless_rpc;
 	data.timeout = timeout;
@@ -1641,14 +1648,14 @@ static void process_args(struct packet_reader *request,
 			continue;
 		}
 
-		if ((git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		     data->allow_sideband_all) &&
+		if (data->allow_sideband_all &&
 		    !strcmp(arg, "sideband-all")) {
 			data->writer.use_sideband = 1;
 			continue;
 		}
 
-		if (skip_prefix(arg, "packfile-uris ", &p)) {
+		if (data->allow_packfile_uris &&
+		    skip_prefix(arg, "packfile-uris ", &p)) {
 			if (data->uri_protocols.nr)
 				send_err_and_die(data,
 						 "multiple packfile-uris lines forbidden");
@@ -1754,7 +1761,7 @@ enum fetch_state {
 	FETCH_DONE,
 };
 
-int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
+int upload_pack_v2(struct repository *r, struct packet_reader *request)
 {
 	enum fetch_state state = FETCH_PROCESS_ARGS;
 	struct upload_pack_data data;
@@ -1763,7 +1770,7 @@ int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
 
 	upload_pack_data_init(&data);
 	data.use_sideband = LARGE_PACKET_MAX;
-	get_upload_pack_config(&data);
+	get_upload_pack_config(r, &data);
 
 	while (state != FETCH_DONE) {
 		switch (state) {
@@ -1822,41 +1829,28 @@ int upload_pack_v2(struct repository *r UNUSED, struct packet_reader *request)
 int upload_pack_advertise(struct repository *r,
 			  struct strbuf *value)
 {
-	if (value) {
-		int allow_filter_value;
-		int allow_ref_in_want;
-		int allow_sideband_all_value;
-		char *str = NULL;
+	struct upload_pack_data data;
 
+	upload_pack_data_init(&data);
+	get_upload_pack_config(r, &data);
+
+	if (value) {
 		strbuf_addstr(value, "shallow wait-for-done");
 
-		if (!repo_config_get_bool(r,
-					 "uploadpack.allowfilter",
-					 &allow_filter_value) &&
-		    allow_filter_value)
+		if (data.allow_filter)
 			strbuf_addstr(value, " filter");
 
-		if (!repo_config_get_bool(r,
-					 "uploadpack.allowrefinwant",
-					 &allow_ref_in_want) &&
-		    allow_ref_in_want)
+		if (data.allow_ref_in_want)
 			strbuf_addstr(value, " ref-in-want");
 
-		if (git_env_bool("GIT_TEST_SIDEBAND_ALL", 0) ||
-		    (!repo_config_get_bool(r,
-					   "uploadpack.allowsidebandall",
-					   &allow_sideband_all_value) &&
-		     allow_sideband_all_value))
+		if (data.allow_sideband_all)
 			strbuf_addstr(value, " sideband-all");
 
-		if (!repo_config_get_string(r,
-					    "uploadpack.blobpackfileuri",
-					    &str) &&
-		    str) {
+		if (data.allow_packfile_uris)
 			strbuf_addstr(value, " packfile-uris");
-			free(str);
-		}
 	}
+
+	upload_pack_data_clear(&data);
 
 	return 1;
 }
