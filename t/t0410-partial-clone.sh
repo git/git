@@ -665,6 +665,21 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
 	grep "[?]$FILE_HASH" out &&
 
+	# The no-lazy-fetch mechanism prevents Git from fetching
+	test_must_fail env GIT_NO_LAZY_FETCH=1 \
+		git -C partial.git cat-file -e "$FILE_HASH" &&
+
+	# The same with command line option to "git"
+	test_must_fail git --no-lazy-fetch -C partial.git cat-file -e "$FILE_HASH" &&
+
+	# The same, forcing a subprocess via an alias
+	test_must_fail git --no-lazy-fetch -C partial.git \
+		-c alias.foo="!git cat-file" foo -e "$FILE_HASH" &&
+
+	# Sanity check that the file is still missing
+	git -C partial.git rev-list --objects --missing=print HEAD >out &&
+	grep "[?]$FILE_HASH" out &&
+
 	git -C full cat-file -s "$FILE_HASH" >expect &&
 	test-tool partial-clone object-info partial.git "$FILE_HASH" >actual &&
 	test_cmp expect actual &&

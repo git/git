@@ -4,6 +4,7 @@
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "help.h"
+#include "object-file.h"
 #include "pager.h"
 #include "read-cache-ll.h"
 #include "run-command.h"
@@ -184,6 +185,11 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			use_pager = 1;
 		} else if (!strcmp(cmd, "-P") || !strcmp(cmd, "--no-pager")) {
 			use_pager = 0;
+			if (envchanged)
+				*envchanged = 1;
+		} else if (!strcmp(cmd, "--no-lazy-fetch")) {
+			fetch_if_missing = 0;
+			setenv(NO_LAZY_FETCH_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-replace-objects")) {
