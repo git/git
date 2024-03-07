@@ -328,6 +328,18 @@ test_expect_success 'ref transaction: writes are synced' '
 	EOF
 '
 
+test_expect_success 'ref transaction: empty transaction in empty repo' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo --no-tag A &&
+	git -C repo update-ref -d refs/heads/main &&
+	test-tool -C repo ref-store main delete-refs REF_NO_DEREF msg HEAD &&
+	git -C repo update-ref --stdin <<-EOF
+	prepare
+	commit
+	EOF
+'
+
 test_expect_success 'pack-refs: compacts tables' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&

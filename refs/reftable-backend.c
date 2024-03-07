@@ -781,6 +781,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 				      &head_referent, &head_type);
 	if (ret < 0)
 		goto done;
+	ret = 0;
 
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *u = transaction->updates[i];
