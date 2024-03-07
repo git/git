@@ -737,8 +737,9 @@ int reftable_addition_add(struct reftable_addition *add,
 	struct strbuf tab_file_name = STRBUF_INIT;
 	struct strbuf next_name = STRBUF_INIT;
 	struct reftable_writer *wr = NULL;
+	struct tempfile *tab_file = NULL;
 	int err = 0;
-	int tab_fd = 0;
+	int tab_fd;
 
 	strbuf_reset(&next_name);
 	format_name(&next_name, add->next_update_index, add->next_update_index);
@@ -746,17 +747,20 @@ int reftable_addition_add(struct reftable_addition *add,
 	stack_filename(&temp_tab_file_name, add->stack, next_name.buf);
 	strbuf_addstr(&temp_tab_file_name, ".temp.XXXXXX");
 
-	tab_fd = mkstemp(temp_tab_file_name.buf);
-	if (tab_fd < 0) {
+	tab_file = mks_tempfile(temp_tab_file_name.buf);
+	if (!tab_file) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 	if (add->stack->config.default_permissions) {
-		if (chmod(temp_tab_file_name.buf, add->stack->config.default_permissions)) {
+		if (chmod(get_tempfile_path(tab_file),
+			  add->stack->config.default_permissions)) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
 	}
+	tab_fd = get_tempfile_fd(tab_file);
+
 	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd,
 				 &add->stack->config);
 	err = write_table(wr, arg);
@@ -771,14 +775,13 @@ int reftable_addition_add(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 
-	err = close(tab_fd);
-	tab_fd = 0;
+	err = close_tempfile_gently(tab_file);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	err = stack_check_addition(add->stack, temp_tab_file_name.buf);
+	err = stack_check_addition(add->stack, get_tempfile_path(tab_file));
 	if (err < 0)
 		goto done;
 
@@ -789,14 +792,13 @@ int reftable_addition_add(struct reftable_addition *add,
 
 	format_name(&next_name, wr->min_update_index, wr->max_update_index);
 	strbuf_addstr(&next_name, ".ref");
-
 	stack_filename(&tab_file_name, add->stack, next_name.buf);
 
 	/*
 	  On windows, this relies on rand() picking a unique destination name.
 	  Maybe we should do retry loop as well?
 	 */
-	err = rename(temp_tab_file_name.buf, tab_file_name.buf);
+	err = rename_tempfile(&tab_file, tab_file_name.buf);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -806,14 +808,7 @@ int reftable_addition_add(struct reftable_addition *add,
 			    add->new_tables_cap);
 	add->new_tables[add->new_tables_len++] = strbuf_detach(&next_name, NULL);
 done:
-	if (tab_fd > 0) {
-		close(tab_fd);
-		tab_fd = 0;
-	}
-	if (temp_tab_file_name.len > 0) {
-		unlink(temp_tab_file_name.buf);
-	}
-
+	delete_tempfile(&tab_file);
 	strbuf_release(&temp_tab_file_name);
 	strbuf_release(&tab_file_name);
 	strbuf_release(&next_name);
