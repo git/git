@@ -1889,6 +1889,13 @@ void initialize_repository_version(int hash_algo,
 	char repo_version_string[10];
 	int repo_version = GIT_REPO_VERSION;
 
+	/*
+	 * Note that we initialize the repository version to 1 when the ref
+	 * storage format is unknown. This is on purpose so that we can add the
+	 * correct object format to the config during git-clone(1). The format
+	 * version will get adjusted by git-clone(1) once it has learned about
+	 * the remote repository's format.
+	 */
 	if (hash_algo != GIT_HASH_SHA1 ||
 	    ref_storage_format != REF_STORAGE_FORMAT_FILES)
 		repo_version = GIT_REPO_VERSION_READ;
@@ -1898,7 +1905,7 @@ void initialize_repository_version(int hash_algo,
 		  "%d", repo_version);
 	git_config_set("core.repositoryformatversion", repo_version_string);
 
-	if (hash_algo != GIT_HASH_SHA1)
+	if (hash_algo != GIT_HASH_SHA1 && hash_algo != GIT_HASH_UNKNOWN)
 		git_config_set("extensions.objectformat",
 			       hash_algos[hash_algo].name);
 	else if (reinit)

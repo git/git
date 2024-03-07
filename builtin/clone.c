@@ -927,6 +927,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	struct ref *mapped_refs = NULL;
 	const struct ref *ref;
 	struct strbuf key = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
 	struct strbuf branch_top = STRBUF_INIT, reflog_msg = STRBUF_INIT;
 	struct transport *transport = NULL;
 	const char *src_ref_prefix = "refs/heads/";
@@ -1125,6 +1126,50 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		free((char *)git_dir);
 		git_dir = real_git_dir;
 	}
+
+	/*
+	 * We have a chicken-and-egg situation between initializing the refdb
+	 * and spawning transport helpers:
+	 *
+	 *   - Initializing the refdb requires us to know about the object
+	 *     format. We thus have to spawn the transport helper to learn
+	 *     about it.
+	 *
+	 *   - The transport helper may want to access the Git repository. But
+	 *     because the refdb has not been initialized, we don't have "HEAD"
+	 *     or "refs/". Thus, the helper cannot find the Git repository.
+	 *
+	 * Ideally, we would have structured the helper protocol such that it's
+	 * mandatory for the helper to first announce its capabilities without
+	 * yet assuming a fully initialized repository. Like that, we could
+	 * have added a "lazy-refdb-init" capability that announces whether the
+	 * helper is ready to handle not-yet-initialized refdbs. If any helper
+	 * didn't support them, we would have fully initialized the refdb with
+	 * the SHA1 object format, but later on bailed out if we found out that
+	 * the remote repository used a different object format.
+	 *
+	 * But we didn't, and thus we use the following workaround to partially
+	 * initialize the repository's refdb such that it can be discovered by
+	 * Git commands. To do so, we:
+	 *
+	 *   - Create an invalid HEAD ref pointing at "refs/heads/.invalid".
+	 *
+	 *   - Create the "refs/" directory.
+	 *
+	 *   - Set up the ref storage format and repository version as
+	 *     required.
+	 *
+	 * This is sufficient for Git commands to discover the Git directory.
+	 */
+	initialize_repository_version(GIT_HASH_UNKNOWN,
+				      the_repository->ref_storage_format, 1);
+
+	strbuf_addf(&buf, "%s/HEAD", git_dir);
+	write_file(buf.buf, "ref: refs/heads/.invalid");
+
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "%s/refs", git_dir);
+	safe_create_dir(buf.buf, 1);
 
 	/*
 	 * additional config can be injected with -c, make sure it's included
@@ -1454,6 +1499,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	free(remote_name);
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_top);
+	strbuf_release(&buf);
 	strbuf_release(&key);
 	free_refs(mapped_refs);
 	free_refs(remote_head_points_at);
