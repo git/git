@@ -24,6 +24,16 @@ UI, Workflows & Features
  * "git for-each-ref" learned "--include-root-refs" option to show
    even the stuff outside the 'refs/' hierarchy.
 
+ * "git rev-list --missing=print" has learned to optionally take
+   "--allow-missing-tips", which allows the objects at the starting
+   points to be missing.
+
+ * "git merge-tree" has learned that the three trees involved in the
+   3-way merge only need to be trees, not necessarily commits.
+
+ * "git log --merge" learned to pay attention to CHERRY_PICK_HEAD and
+   other kinds of *_HEAD pseudorefs.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -39,6 +49,10 @@ Performance, Internal Implementation, Development Support etc.
  * The way placeholders are to be marked-up in documentation have been
    specified; use "_<placeholder>_" to typeset the word inside a pair
    of <angle-brakets> emphasized.
+
+ * "git --no-lazy-fetch cmd" allows to run "cmd" while disabling lazy
+   fetching of objects from the promisor remote, which may be handy
+   for debugging.
 
 
 Fixes since v2.44
@@ -94,6 +108,25 @@ Fixes since v2.44
    to be the first header file.
    (merge 4e89f0e07c jc/doc-compat-util later to maint).
 
+ * "git commit -v --cleanup=scissors" used to add the scissors line
+   twice in the log message buffer, which has been corrected.
+   (merge e90cc075cc jt/commit-redundant-scissors-fix later to maint).
+
+ * A custom remote helper no longer cannot access the newly created
+   repository during "git clone", which is a regression in Git 2.44.
+   This has been corrected.
+   (merge 199f44cb2e ps/remote-helper-repo-initialization-fix later to maint).
+
+ * Various parts of upload-pack has been updated to bound the resource
+   consumption relative to the size of the repository to protect from
+   abusive clients.
+   (merge 6cd05e768b jk/upload-pack-bounded-resources later to maint).
+
+ * The upload-pack program, when talking over v2, accepted the
+   packfile-uris protocol extension from the client, even if it did
+   not advertise the capability, which has been corrected.
+   (merge a922bfa3b5 jk/upload-pack-v2-capability-cleanup later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -108,3 +141,4 @@ Fixes since v2.44
    (merge f39addd0d9 rs/name-rev-with-mempool later to maint).
    (merge 9a97b43e03 rs/submodule-prefix-simplify later to maint).
    (merge 40b8076462 ak/rebase-autosquash later to maint).
+   (merge 3223204456 eg/add-uflags later to maint).
