@@ -470,7 +470,7 @@ test_expect_success 'expect def_params during shell alias expansion' '
 	grep "d1|main|def_param|.*|ENV_PROP_FOO:blue" actual
 '
 
-test_expect_failure 'expect def_params during nested git alias expansion' '
+test_expect_success 'expect def_params during nested git alias expansion' '
 	test_when_finished "rm prop.perf actual" &&
 
 	test_config_global "trace2.configParams" "cfg.prop.*" &&
