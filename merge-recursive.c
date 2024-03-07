@@ -405,7 +405,8 @@ static inline int merge_detect_rename(struct merge_options *opt)
 
 static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
 {
-	parse_tree(tree);
+	if (parse_tree(tree) < 0)
+		exit(128);
 	init_tree_desc(desc, tree->buffer, tree->size);
 }
 

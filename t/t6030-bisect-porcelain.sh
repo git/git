@@ -878,7 +878,7 @@ test_expect_success 'broken branch creation' '
 
 echo "" > expected.ok
 cat > expected.missing-tree.default <<EOF
-fatal: unable to read tree $deleted
+fatal: unable to read tree ($deleted)
 EOF
 
 test_expect_success 'bisect fails if tree is broken on start commit' '

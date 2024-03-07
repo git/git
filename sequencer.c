@@ -707,6 +707,8 @@ static int do_recursive_merge(struct repository *r,
 	o.show_rename_progress = 1;
 
 	head_tree = parse_tree_indirect(head);
+	if (!head_tree)
+		return error(_("unable to read tree (%s)"), oid_to_hex(head));
 	next_tree = next ? repo_get_commit_tree(r, next) : empty_tree(r);
 	base_tree = base ? repo_get_commit_tree(r, base) : empty_tree(r);
 
@@ -3882,6 +3884,8 @@ static int do_reset(struct repository *r,
 	}
 
 	tree = parse_tree_indirect(&oid);
+	if (!tree)
+		return error(_("unable to read tree (%s)"), oid_to_hex(&oid));
 	prime_cache_tree(r, r->index, tree);
 
 	if (write_locked_index(r->index, &lock, COMMIT_LOCK) < 0)

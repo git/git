@@ -945,4 +945,37 @@ test_expect_success 'check the input format when --stdin is passed' '
 	test_cmp expect actual
 '
 
+test_expect_success '--merge-base with tree OIDs' '
+	git merge-tree --merge-base=side1^ side1 side3 >with-commits &&
+	git merge-tree --merge-base=side1^^{tree} side1^{tree} side3^{tree} >with-trees &&
+	test_cmp with-commits with-trees
+'
+
+test_expect_success 'error out on missing tree objects' '
+	git init --bare missing-tree.git &&
+	git rev-list side3 >list &&
+	git rev-parse side3^: >>list &&
+	git pack-objects missing-tree.git/objects/pack/side3-tree-is-missing <list &&
+	side3=$(git rev-parse side3) &&
+	test_must_fail git --git-dir=missing-tree.git merge-tree $side3^ $side3 >actual 2>err &&
+	test_grep "Could not read $(git rev-parse $side3:)" err &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'error out on missing blob objects' '
+	echo 1 | git hash-object -w --stdin >blob1 &&
+	echo 2 | git hash-object -w --stdin >blob2 &&
+	echo 3 | git hash-object -w --stdin >blob3 &&
+	printf "100644 blob $(cat blob1)\tblob\n" | git mktree >tree1 &&
+	printf "100644 blob $(cat blob2)\tblob\n" | git mktree >tree2 &&
+	printf "100644 blob $(cat blob3)\tblob\n" | git mktree >tree3 &&
+	git init --bare missing-blob.git &&
+	cat blob1 blob3 tree1 tree2 tree3 |
+	git pack-objects missing-blob.git/objects/pack/side1-whatever-is-missing &&
+	test_must_fail git --git-dir=missing-blob.git >actual 2>err \
+		merge-tree --merge-base=$(cat tree1) $(cat tree2) $(cat tree3) &&
+	test_grep "unable to read blob object $(cat blob2)" err &&
+	test_must_be_empty actual
+'
+
 test_done
