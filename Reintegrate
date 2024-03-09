@@ -164,7 +164,33 @@ no)
 		prev_cut=
 	}
 
+	detach () {
+		if original_branch=$(git symbolic-ref HEAD 2>/dev/null)
+		then
+			original_branch=${original_branch#refs/heads/}
+			git checkout --quiet --detach
+			into="--into $original_branch"
+		else
+			original_branch=
+			into=
+		fi
+
+	}
+
+	leave () {
+		if test -n "$original_branch" && ! git symbolic-ref HEAD 2>/dev/null
+		then
+			git checkout --quiet -B "$original_branch"
+		fi
+		if test -n "$1"
+		then
+			exit "$1"
+		fi
+	}
+
+	detach
 	cut_seen=0 prev_cut= count_since_last_cut=0 cocci_count=0
+
 	while read branch eh
 	do
 		case "$branch" in '###') cut_seen=$(( $cut_seen + 1 )) ;; esac
@@ -206,13 +232,13 @@ no)
 				cat contrib/coccinelle/*.patch >cocci.patch
 				if ! test -s cocci.patch
 				then
-					exit 0
+					leave 0
 				fi
-				git apply --index -3 cocci.patch || exit
+				git apply --index -3 cocci.patch || leave $?
 				rm cocci.patch
 				git diff --quiet HEAD && continue
 			fi
-			git commit -m "$cocci_mark" || exit
+			git commit -m "$cocci_mark" || leave $?
 
 			mark_cut
 			continue
@@ -228,7 +254,7 @@ no)
 			save=$(git rev-parse --verify HEAD) &&
 			tip=$(git rev-parse --verify "$branch^0") &&
 			mb=$(git merge-base "$tip" "$save") ||
-			exit
+			leave $?
 
 			test "$mb" = "$tip" && continue
 
@@ -237,13 +263,13 @@ no)
 
 			rebuild=$(git config "branch.$branch.rebuild" || :)
 
-			GIT_EDITOR=: git merge --no-ff $rebuild $accept_rerere --edit "$branch" ||
+			GIT_EDITOR=: git merge --no-ff $into $rebuild $accept_rerere --edit "$branch" ||
 			accept_rerere ||
-			exit
+			leave $?
 
-			annotate_merge "$branch" || exit
+			annotate_merge "$branch" || leave $?
 			test -z "$edit" ||
-			git commit --amend || exit
+			git commit --amend || leave $?
 
 			this=$(git rev-parse --verify HEAD)
 			if test "$this" = "$save"
@@ -254,7 +280,7 @@ no)
 				echo >&2 "Fixing up the merge"
 				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
 				git diff --stat HEAD &&
-				GIT_EDITOR=: git commit --amend -a || exit
+				GIT_EDITOR=: git commit --amend -a || leave $?
 			fi
 			;;
 		pick" "*)
@@ -262,13 +288,14 @@ no)
 
 			mark_cut
 
-			git cherry-pick "$branch" || exit ;;
-		*) echo >&2 "Eh? $branch $eh"; exit ;;
+			git cherry-pick "$branch" || leave $? ;;
+		*) echo >&2 "Eh? $branch $eh"; leave $? ;;
 		esac
 
-		eval "$exec" || exit
+		eval "$exec" || leave $?
 	done
-	exit
+	leave $?
+	;;
 esac
 
 if test -n "$update" && test $# = 0
