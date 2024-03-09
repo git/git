@@ -1426,13 +1426,14 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			/* FIXME: bug, what if modes didn't match? */
 			result->clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
-			result->clean = merge_submodule(opt, &result->blob.oid,
-							o->path,
-							&o->oid,
-							&a->oid,
-							&b->oid);
-			if (result->clean < 0)
+			int clean = merge_submodule(opt, &result->blob.oid,
+						    o->path,
+						    &o->oid,
+						    &a->oid,
+						    &b->oid);
+			if (clean < 0)
 				return -1;
+			result->clean = clean;
 		} else if (S_ISLNK(a->mode)) {
 			switch (opt->recursive_variant) {
 			case MERGE_VARIANT_NORMAL:
