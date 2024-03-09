@@ -1819,6 +1819,7 @@ static int merge_submodule(struct merge_options *opt,
 			 _("Failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (ret2 > 0)
@@ -1829,6 +1830,7 @@ static int merge_submodule(struct merge_options *opt,
 			 _("Failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (!ret2) {
@@ -1848,6 +1850,7 @@ static int merge_submodule(struct merge_options *opt,
 			 _("Failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (ret2 > 0) {
@@ -1866,6 +1869,7 @@ static int merge_submodule(struct merge_options *opt,
 			 _("Failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (ret2 > 0) {
@@ -1899,6 +1903,7 @@ static int merge_submodule(struct merge_options *opt,
 			 _("Failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
+		ret = -1;
 		break;
 	case 0:
 		path_msg(opt, CONFLICT_SUBMODULE_FAILED_TO_MERGE, 0,

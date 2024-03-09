@@ -1246,12 +1246,14 @@ static int merge_submodule(struct merge_options *opt,
 	ret2 = repo_in_merge_bases(&subrepo, commit_base, commit_a);
 	if (ret2 < 0) {
 		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (ret2 > 0)
 		ret2 = repo_in_merge_bases(&subrepo, commit_base, commit_b);
 	if (ret2 < 0) {
 		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (!ret2) {
@@ -1263,6 +1265,7 @@ static int merge_submodule(struct merge_options *opt,
 	ret2 = repo_in_merge_bases(&subrepo, commit_a, commit_b);
 	if (ret2 < 0) {
 		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (ret2) {
@@ -1281,6 +1284,7 @@ static int merge_submodule(struct merge_options *opt,
 	ret2 = repo_in_merge_bases(&subrepo, commit_b, commit_a);
 	if (ret2 < 0) {
 		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
 		goto cleanup;
 	}
 	if (ret2) {
@@ -1312,6 +1316,10 @@ static int merge_submodule(struct merge_options *opt,
 	parent_count = find_first_merges(&subrepo, &merges, path,
 					 commit_a, commit_b);
 	switch (parent_count) {
+	case -1:
+		output(opt, 1,_("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
+		break;
 	case 0:
 		output(opt, 1, _("Failed to merge submodule %s (merge following commits not found)"), path);
 		break;
