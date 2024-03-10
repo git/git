@@ -156,7 +156,7 @@ objects from the source repository into a pack in the cloned repository.
 
 --[no-]reject-shallow::
 	Fail if the source repository is a shallow repository.
-	The 'clone.rejectShallow' configuration variable can be used to
+	The `clone.rejectShallow` configuration variable can be used to
 	specify the default.
 
 --bare::
@@ -263,7 +263,7 @@ corresponding `--mirror` and `--no-tags` options instead.
 	branch remote's `HEAD` points at.
 	Further fetches into the resulting repository will only update the
 	remote-tracking branch for the branch this option was used for the
-	initial cloning.  If the HEAD at the remote did not point at any
+	initial cloning.  If the `HEAD` at the remote did not point at any
 	branch when `--single-branch` clone was made, no remote-tracking
 	branch is created.
 
