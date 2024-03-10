@@ -60,7 +60,7 @@ include::object-format-disclaimer.txt[]
 
 --ref-format=<format>::
 
-Specify the given ref storage format for the repository. The valid values are:
+Specify the given ref storage _<format>_ for the repository. The valid values are:
 +
 include::ref-storage-format.txt[]
 
@@ -81,7 +81,7 @@ If this is a reinitialization, the repository will be moved to the specified pat
 -b <branch-name>::
 --initial-branch=<branch-name>::
 
-Use the specified name for the initial branch in the newly created
+Use _<branch-name>_ for the initial branch in the newly created
 repository.  If not specified, fall back to the default name (currently
 `master`, but this is subject to change in the future; the name can be
 customized via the `init.defaultBranch` configuration variable).
@@ -119,8 +119,8 @@ Same as `group`, but make the repository readable by all users.
 
 '<perm>'::
 
-'<perm>' is a 3-digit octal number prefixed with `0` and each file
-will have mode '<perm>'. '<perm>' will override users'`umask(2)`
+_<perm>_ is a 3-digit octal number prefixed with `0` and each file
+will have mode _<perm>_. _<perm>_ will override users'`umask(2)`
 value (and not only loosen permissions as `group` and `all`
 do). `0640` will create a repository which is group-readable, but
 not group-writable or accessible to others. `0660` will create a repo
@@ -133,7 +133,7 @@ By default, the configuration flag `receive.denyNonFastForwards` is enabled
 in shared repositories, so that you cannot force a non fast-forwarding push
 into it.
 
-If you provide a 'directory', the command is run inside it. If this directory
+If you provide a _<directory>_, the command is run inside it. If this directory
 does not exist, it will be created.
 
 TEMPLATE DIRECTORY
