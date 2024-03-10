@@ -185,6 +185,8 @@ CONFIGURATION
 
 include::includes/cmd-config-section-all.txt[]
 
+:git-init:
+
 include::config/init.txt[]
 
 GIT
