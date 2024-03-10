@@ -99,12 +99,14 @@ The option can have the following values, defaulting to `group` if no value
 is given:
 +
 --
-'umask' (or 'false')::
+umask::
+false::
 
 Use permissions reported by umask(2). The default, when `--shared` is not
 specified.
 
-'group' (or 'true')::
+group::
+true::
 
 Make the repository group-writable, (and g+sx, since the git group may not be
 the primary group of all users). This is used to loosen the permissions of an
@@ -113,11 +115,13 @@ permission bits (e.g. if umask is `0022`, using `group` will not remove read
 privileges from other (non-group) users). See `0xxx` for how to exactly specify
 the repository permissions.
 
-'all' (or 'world' or 'everybody')::
+all::
+world::
+everybody::
 
 Same as `group`, but make the repository readable by all users.
 
-'<perm>'::
+<perm>::
 
 _<perm>_ is a 3-digit octal number prefixed with `0` and each file
 will have mode _<perm>_. _<perm>_ will override users'`umask(2)`
