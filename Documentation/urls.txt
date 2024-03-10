@@ -61,9 +61,9 @@ attempts to use the `remote-<transport>` remote helper, if one
 exists. To explicitly request a remote helper, the following syntax
 may be used:
 
-- <transport>::<address>
+- _<transport>_::_<address>_
 
-where <address> may be a path, a server and path, or an arbitrary
+where _<address>_ may be a path, a server and path, or an arbitrary
 URL-like string recognized by the specific remote helper being
 invoked. See linkgit:gitremote-helpers[7] for details.
 
