@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2024, #02; Thu, 7)
-X-master-at: e09f1254c54329773904fe25d7c545a1fb4fa920
-X-next-at: c1ea87d7ee147b4fd526f238b8e20889c532d10d
+Subject: What's cooking in git.git (Mar 2024, #03; Mon, 11)
+X-master-at: 945115026aa63df4ab849ab14a04da31623abece
+X-next-at: 1203cff8ae1e19af27c286764313c3e3f54ef01e
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2024, #02; Thu, 7)
+What's cooking in git.git (Mar 2024, #03; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,291 +50,137 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/rebase-autosquash (2024-02-27) 1 commit
-  (merged to 'next' on 2024-03-01 at 57a34830b7)
- + rebase: fix typo in autosquash documentation
+* es/config-doc-sort-sections (2024-02-29) 1 commit
+  (merged to 'next' on 2024-03-04 at 0752144ed7)
+ + docs: sort configuration variable groupings alphabetically
 
- Originally merged to 'next' on 2024-02-27
-
- Typofix.
- source: <pull.1676.git.1709015578890.gitgitgadget@gmail.com>
+ Doc updates.
+ source: <20240229190229.20222-1-ericsunshine@charter.net>
 
 
-* cc/rev-list-allow-missing-tips (2024-02-28) 5 commits
-  (merged to 'next' on 2024-03-01 at fd7b109d04)
- + revision: fix --missing=[print|allow*] for annotated tags
-  (merged to 'next' on 2024-03-01 at ac0fc94378)
- + rev-list: allow missing tips with --missing=[print|allow*]
- + t6022: fix 'test' style and 'even though' typo
- + oidset: refactor oidset_insert_from_set()
- + revision: clarify a 'return NULL' in get_reference()
-
- Originally merged to 'next' on 2024-02-28
-
- "git rev-list --missing=print" has learned to optionally take
- "--allow-missing-tips", which allows the objects at the starting
- points to be missing.
- source: <20240214142513.4002639-1-christian.couder@gmail.com>
-
-
-* eg/add-uflags (2024-02-29) 1 commit
-  (merged to 'next' on 2024-03-01 at 5dbc997561)
- + add: use unsigned type for collection of bits
+* js/merge-base-with-missing-commit (2024-03-09) 13 commits
+  (merged to 'next' on 2024-03-09 at caa7a7baaa)
+ + merge-ort/merge-recursive: do report errors in `merge_submodule()`
+ + merge-recursive: prepare for `merge_submodule()` to report errors
+  (merged to 'next' on 2024-03-01 at 3e3eabaee9)
+ + commit-reach(repo_get_merge_bases_many_dirty): pass on errors
+ + commit-reach(repo_get_merge_bases_many): pass on "missing commits" errors
+ + commit-reach(get_octopus_merge_bases): pass on "missing commits" errors
+ + commit-reach(repo_get_merge_bases): pass on "missing commits" errors
+ + commit-reach(get_merge_bases_many_0): pass on "missing commits" errors
+ + commit-reach(merge_bases_many): pass on "missing commits" errors
+ + commit-reach(paint_down_to_common): start reporting errors
+ + commit-reach(paint_down_to_common): prepare for handling shallow commits
+ + commit-reach(repo_in_merge_bases_many): report missing commits
+ + commit-reach(repo_in_merge_bases_many): optionally expect missing commits
+ + commit-reach(paint_down_to_common): plug two memory leaks
 
  Originally merged to 'next' on 2024-02-29
 
- Code clean-up practice.
- source: <20240229194444.8499-2-giganteeugenio2@gmail.com>
+ Make sure failure return from merge_bases_many() is properly caught.
+ source: <pull.1657.v4.git.1709113457.gitgitgadget@gmail.com>
+ source: <pull.1686.git.1709993397.gitgitgadget@gmail.com>
 
 
-* jc/doc-compat-util (2024-02-27) 1 commit
-  (merged to 'next' on 2024-03-01 at 89b76c65d7)
- + doc: clarify the wording on <git-compat-util.h> requirement
+* kh/doc-dashed-commands-have-not-worked-for-a-long-time (2024-03-01) 1 commit
+  (merged to 'next' on 2024-03-04 at 7e070c67f9)
+ + gitcli: drop mention of “non-dashed form”
 
- Originally merged to 'next' on 2024-02-27
+ Doc update.
+ source: <5b34bc4e22816f7f19bd26c15a08fe4c749b72f8.1709316230.git.code@khaugsbakk.name>
 
- Clarify wording in the CodingGuidelines that requires <git-compat-util.h>
- to be the first header file.
- source: <xmqqle76kdpr.fsf_-_@gitster.g>
 
+* rs/t-ctype-simplify (2024-03-03) 4 commits
+  (merged to 'next' on 2024-03-04 at 9bd84a8877)
+ + t-ctype: avoid duplicating class names
+ + t-ctype: align output of i
+ + t-ctype: simplify EOF check
+ + t-ctype: allow NUL anywhere in the specification string
 
-* jc/no-include-of-compat-util-from-headers (2024-02-24) 1 commit
-  (merged to 'next' on 2024-03-01 at ebb921087e)
- + compat: drop inclusion of <git-compat-util.h>
+ Code simplification to one unit-test program.
+ source: <20240303101330.20187-1-l.s.r@web.de>
 
- Originally merged to 'next' on 2024-02-26
 
- Header file clean-up.
- source: <xmqqwmqtli18.fsf@gitster.g>
+* sj/t9117-path-is-file (2024-03-04) 1 commit
+  (merged to 'next' on 2024-03-04 at de5f6a74cb)
+ + t9117: prefer test_path_* helper functions
 
-
-* jc/no-lazy-fetch (2024-02-27) 3 commits
-  (merged to 'next' on 2024-03-01 at 14303cdbfe)
- + git: extend --no-lazy-fetch to work across subprocesses
- + git: document GIT_NO_REPLACE_OBJECTS environment variable
- + git: --no-lazy-fetch option
-
- Originally merged to 'next' on 2024-02-29
-
- "git --no-lazy-fetch cmd" allows to run "cmd" while disabling lazy
- fetching of objects from the promisor remote, which may be handy
- for debugging.
- source: <xmqq1q8xx38i.fsf@gitster.g>
- source: <xmqq1q9cl3xv.fsf@gitster.g>
- source: <xmqq1q9mmtpw.fsf@gitster.g>
-
-
-* jk/reflog-special-cases-fix (2024-02-26) 3 commits
-  (merged to 'next' on 2024-03-01 at 2b67f6e668)
- + read_ref_at(): special-case ref@{0} for an empty reflog
- + get_oid_basic(): special-case ref@{n} for oldest reflog entry
- + Revert "refs: allow @{n} to work with n-sized reflog"
-
- Originally merged to 'next' on 2024-02-27
-
- The logic to access reflog entries by date and number had ugly
- corner cases at the boundaries, which have been cleaned up.
- source: <20240226100010.GA1214708@coredump.intra.peff.net>
-
-
-* jk/textconv-cache-outside-repo-fix (2024-02-26) 1 commit
-  (merged to 'next' on 2024-03-01 at 8508b83758)
- + userdiff: skip textconv caching when not in a repository
-
- Originally merged to 'next' on 2024-02-26
-
- The code incorrectly attempted to use textconv cache when asked,
- even when we are not running in a repository, which has been
- corrected.
- source: <20240226102729.GB2685773@coredump.intra.peff.net>
-
-
-* jk/upload-pack-bounded-resources (2024-02-28) 9 commits
-  (merged to 'next' on 2024-03-01 at b70b6f0913)
- + upload-pack: free tree buffers after parsing
- + upload-pack: use PARSE_OBJECT_SKIP_HASH_CHECK in more places
- + upload-pack: always turn off save_commit_buffer
- + upload-pack: disallow object-info capability by default
- + upload-pack: accept only a single packfile-uri line
- + upload-pack: use a strmap for want-ref lines
- + upload-pack: use oidset for deepen_not list
- + upload-pack: switch deepen-not list to an oid_array
- + upload-pack: drop separate v2 "haves" array
-
- Originally merged to 'next' on 2024-02-29
-
- Various parts of upload-pack has been updated to bound the resource
- consumption relative to the size of the repository to protect from
- abusive clients.
- source: <20240228223700.GA1157826@coredump.intra.peff.net>
-
-
-* jk/upload-pack-v2-capability-cleanup (2024-02-29) 4 commits
-  (merged to 'next' on 2024-03-01 at 2750893db7)
- + upload-pack: only accept packfile-uris if we advertised it
- + upload-pack: use existing config mechanism for advertisement
- + upload-pack: centralize setup of sideband-all config
- + upload-pack: use repository struct to get config
-
- Originally merged to 'next' on 2024-02-29
-
- The upload-pack program, when talking over v2, accepted the
- packfile-uris protocol extension from the client, even if it did
- not advertise the capability, which has been corrected.
- source: <20240228224625.GA1158651@coredump.intra.peff.net>
-
-
-* js/merge-tree-3-trees (2024-02-23) 7 commits
-  (merged to 'next' on 2024-03-01 at a75dc95f04)
- + fill_tree_descriptor(): mark error message for translation
- + cache-tree: avoid an unnecessary check
- + Always check `parse_tree*()`'s return value
- + t4301: verify that merge-tree fails on missing blob objects
- + merge-ort: do check `parse_tree()`'s return value
- + merge-tree: fail with a non-zero exit code on missing tree objects
- + merge-tree: accept 3 trees as arguments
-
- Originally merged to 'next' on 2024-02-28
-
- "git merge-tree" has learned that the three trees involved in the
- 3-way merge only need to be trees, not necessarily commits.
- source: <pull.1647.git.1706277694231.gitgitgadget@gmail.com>
- source: <pull.1651.v4.git.1708677266.gitgitgadget@gmail.com>
-
-
-* js/remove-cruft-files (2024-02-26) 1 commit
-  (merged to 'next' on 2024-03-01 at 63100a274b)
- + neue: remove a bogus empty file
-
- Originally merged to 'next' on 2024-02-26
-
- Remove an empty file that shouldn't have been added in the first
- place.
- source: <pull.1674.git.1708958183225.gitgitgadget@gmail.com>
-
-
-* jt/commit-redundant-scissors-fix (2024-02-27) 2 commits
-  (merged to 'next' on 2024-03-01 at e5983498f1)
- + commit: unify logic to avoid multiple scissors lines when merging
- + commit: avoid redundant scissor line with --cleanup=scissors -v
-
- Originally merged to 'next' on 2024-02-29
-
- "git commit -v --cleanup=scissors" used to add the scissors line
- twice in the log message buffer, which has been corrected.
- source: <Zd2eLxPelxvP8FDk@localhost>
-
-
-* kn/for-all-refs (2024-02-23) 6 commits
-  (merged to 'next' on 2024-03-01 at 76a1297ace)
- + for-each-ref: add new option to include root refs
- + ref-filter: rename 'FILTER_REFS_ALL' to 'FILTER_REFS_REGULAR'
- + refs: introduce `refs_for_each_include_root_refs()`
- + refs: extract out `loose_fill_ref_dir_regular_file()`
- + refs: introduce `is_pseudoref()` and `is_headref()`
- + Merge branch 'ps/reftable-backend' into kn/for-all-refs
-
- Originally merged to 'next' on 2024-02-27
-
- "git for-each-ref" learned "--include-root-refs" option to show
- even the stuff outside the 'refs/' hierarchy.
- source: <20240223100112.44127-1-karthik.188@gmail.com>
-
-
-* ml/log-merge-with-cherry-pick-and-other-pseudo-heads (2024-02-28) 2 commits
-  (merged to 'next' on 2024-03-01 at 339111ec08)
- + revision: implement `git log --merge` also for rebase/cherry-pick/revert
- + revision: ensure MERGE_HEAD is a ref in prepare_show_merge
-
- Originally merged to 'next' on 2024-02-29
-
- "git log --merge" learned to pay attention to CHERRY_PICK_HEAD and
- other kinds of *_HEAD pseudorefs.
- source: <20240228-ml-log-merge-with-cherry-pick-and-other-pseudo-heads-v6-0-8ec34c052b39@gmail.com>
-
-
-* pb/ort-make-submodule-conflict-message-an-advice (2024-02-26) 1 commit
-  (merged to 'next' on 2024-03-01 at df880cde2e)
- + merge-ort: turn submodule conflict suggestions into an advice
-
- Originally merged to 'next' on 2024-02-27
-
- When a merge conflicted at a submodule, merge-ort backend used to
- unconditionally give a lengthy message to suggest how to resolve
- it.  Now the message can be squelched as an advice message.
- source: <pull.1661.v2.git.git.1708954048301.gitgitgadget@gmail.com>
-
-
-* ps/reftable-repo-init-fix (2024-02-27) 2 commits
-  (merged to 'next' on 2024-03-01 at abbf85051b)
- + refs/reftable: don't fail empty transactions in repo without HEAD
- + Merge branch 'ps/remote-helper-repo-initialization-fix' into ps/reftable-repo-init-fix
- (this branch uses ps/remote-helper-repo-initialization-fix.)
-
- Originally merged to 'next' on 2024-02-29
-
- Clear the fallout from a fix for 2.44 regression.
- source: <95be968e10bd02c64448786e690bbefe5c082577.1709041721.git.ps@pks.im>
-
-
-* ps/remote-helper-repo-initialization-fix (2024-02-27) 1 commit
-  (merged to 'next' on 2024-03-01 at 7b79ffbd8f)
- + builtin/clone: allow remote helpers to detect repo
- (this branch is used by ps/reftable-repo-init-fix.)
-
- Originally merged to 'next' on 2024-02-29
-
- A custom remote helper no longer cannot access the newly created
- repository during "git clone", which is a regression in Git 2.44.
- This has been corrected.
- source: <9d888adf92e9a8af7c18847219f97d3e595e3e36.1709041721.git.ps@pks.im>
-
-
-* rs/fetch-simplify-with-starts-with (2024-02-26) 1 commit
-  (merged to 'next' on 2024-03-01 at 000e015fff)
- + fetch: convert strncmp() with strlen() to starts_with()
-
- Originally merged to 'next' on 2024-02-27
-
- Code simplification.
- source: <cb94b938-03f9-4dd3-84c1-f5244ca81be3@web.de>
-
-
-* rs/name-rev-with-mempool (2024-02-26) 2 commits
-  (merged to 'next' on 2024-03-01 at d53eac1836)
- + name-rev: use mem_pool_strfmt()
- + mem-pool: add mem_pool_strfmt()
-
- Originally merged to 'next' on 2024-02-27
-
- Many small allocations "git name-rev" makes have been updated to
- allocate from a mem-pool.
- source: <20240225113947.89357-1-l.s.r@web.de>
-
-
-* rs/submodule-prefix-simplify (2024-02-26) 1 commit
-  (merged to 'next' on 2024-03-01 at 05d4d90201)
- + submodule: use strvec_pushf() for --submodule-prefix
-
- Originally merged to 'next' on 2024-02-27
-
- Code simplification.
- source: <8cd983fb-32b9-41c6-a9e7-a485b190488c@web.de>
-
-
-* sg/upload-pack-error-message-fix (2024-02-26) 1 commit
-  (merged to 'next' on 2024-03-01 at b94664a7a0)
- + upload-pack: don't send null character in abort message to the client
-
- Originally merged to 'next' on 2024-02-27
-
- An error message from "git upload-pack", which responds to "git
- fetch" requests, had a trialing NUL in it, which has been
- corrected.
- source: <20240225183452.1939334-1-szeder.dev@gmail.com>
+ GSoC practice to replace "test -f" with "test_path_is_file".
+ source: <20240304095436.56399-2-shejialuo@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* jc/safe-implicit-bare (2024-03-11) 1 commit
+ - setup: notice more types of implicit bare repositories
+
+ Users with safe.bareRepository=explicit can still work from within
+ $GIT_DIR of a seconary worktree (which resides at .git/worktrees/$name/)
+ of the primary worktree without explicitly specifying the $GIT_DIR
+ environment variable or the --git-dir=<path> option.
+
+ Will merge to 'next'.
+ source: <xmqq5xxv0ywi.fsf_-_@gitster.g>
+
+
+* pw/checkout-conflict-errorfix (2024-03-08) 4 commits
+ - checkout: cleanup --conflict=<style> parsing
+ - merge options: add a conflict style member
+ - merge-ll: introduce LL_MERGE_OPTIONS_INIT
+ - xdiff-interface: refactor parsing of merge.conflictstyle
+
+ "git checkout --conflict=bad" reported a bad conflictStyle as if it
+ were given to a configuration variable; it has been corrected to
+ report that the command line option is bad.
+
+ Expecting a reroll.
+ cf. <1fb1c84a-b6b3-4e3e-896f-5fb93cff57a6@gmail.com>
+ source: <pull.1684.git.1709907270.gitgitgadget@gmail.com>
+
+
+* bl/cherry-pick-empty (2024-03-11) 7 commits
+ - cherry-pick: add `--empty` for more robust redundant commit handling
+ - cherry-pick: enforce `--keep-redundant-commits` incompatibility
+ - sequencer: do not require `allow_empty` for redundant commit options
+ - sequencer: treat error reading HEAD as unborn branch
+ - rebase: update `--empty=ask` to `--empty=stop`
+ - docs: clean up `--empty` formatting in git-rebase(1) and git-am (1)
+ - docs: address inaccurate `--empty` default with `--exec`
+
+ source: <20240119060721.3734775-2-brianmlyles@gmail.com>
+
+
+* ie/config-includeif-hostname (2024-03-10) 1 commit
+ - config: learn the "hostname:" includeIf condition
+
+ source: <20240309181828.45496-2-ignacio@iencinas.com>
+
+
+* ja/doc-markup-fixes (2024-03-11) 6 commits
+ - doc: git-clone: format placeholders
+ - doc: git-clone: format verbatim words
+ - doc: git-init: rework config item init.templateDir
+ - doc: git-init: rework definition lists
+ - doc: git-init: format placeholders
+ - doc: git-init: format verbatim parts
+
+ source: <pull.1687.git.1710097830.gitgitgadget@gmail.com>
+
+
+* jk/doc-remote-helper-object-format-option (2024-03-10) 2 commits
+ - doc/gitremote-helpers: match object-format option docs to code
+ - t5801: fix object-format handling in git-remote-testgit
+
+ source: <20240307084735.GA2072130@coredump.intra.peff.net>
+
+
+* pb/ci-win-artifact-names-fix (2024-03-11) 1 commit
+ - ci(github): make Windows test artifacts name unique
+
+ source: <pull.1688.git.1710101097072.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ag/t0010-modernize (2024-03-05) 1 commit
   (merged to 'next' on 2024-03-07 at 38339abc2d)
@@ -392,11 +238,12 @@ Release tarballs are available at:
 
 
 * jk/doc-remote-helpers-markup-fix (2024-03-07) 1 commit
- - doc/gitremote-helpers: fix missing single-quote
+  (merged to 'next' on 2024-03-08 at 2cded1c696)
+ + doc/gitremote-helpers: fix missing single-quote
 
  Doc mark-up fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240307084313.GA2072022@coredump.intra.peff.net>
 
 
@@ -468,7 +315,10 @@ Release tarballs are available at:
  The code to iterate over reflogs in the reftable has been optimized
  to reduce memory allocation and deallocation.
 
- Needs review.
+ Reviewed-by: Josh Steadmon <steadmon@google.com>
+ cf. <Ze9eX-aaWoVaqsPP@google.com>
+
+ Will merge to 'next'?
  source: <cover.1709640322.git.ps@pks.im>
 
 
@@ -479,28 +329,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <pull.1682.v2.git.git.1709756493673.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* es/config-doc-sort-sections (2024-02-29) 1 commit
-  (merged to 'next' on 2024-03-04 at 0752144ed7)
- + docs: sort configuration variable groupings alphabetically
-
- Doc updates.
-
- Will merge to 'master'.
- source: <20240229190229.20222-1-ericsunshine@charter.net>
-
-
-* kh/doc-dashed-commands-have-not-worked-for-a-long-time (2024-03-01) 1 commit
-  (merged to 'next' on 2024-03-04 at 7e070c67f9)
- + gitcli: drop mention of “non-dashed form”
-
- Doc update.
-
- Will merge to 'master'.
- source: <5b34bc4e22816f7f19bd26c15a08fe4c749b72f8.1709316230.git.code@khaugsbakk.name>
 
 
 * jc/xwrite-cleanup (2024-03-02) 3 commits
@@ -554,9 +382,10 @@ Release tarballs are available at:
 
 
 * jh/trace2-missing-def-param-fix (2024-03-07) 3 commits
- - trace2: emit 'def_param' set with 'cmd_name' event
- - trace2: avoid emitting 'def_param' set more than once
- - t0211: demonstrate missing 'def_param' events for certain commands
+  (merged to 'next' on 2024-03-08 at a797cfea3c)
+ + trace2: emit 'def_param' set with 'cmd_name' event
+ + trace2: avoid emitting 'def_param' set more than once
+ + t0211: demonstrate missing 'def_param' events for certain commands
 
  Some trace2 events that lacked def_param have learned to show it,
  enriching the output.
@@ -564,7 +393,7 @@ Release tarballs are available at:
  Reviewed-by: Josh Steadmon <steadmon@google.com>
  cf. <ZejkVOVQBZhLVfHW@google.com>
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1679.v2.git.1709824949.gitgitgadget@gmail.com>
 
 
@@ -597,16 +426,6 @@ Release tarballs are available at:
  source: <20240303121944.20627-1-l.s.r@web.de>
 
 
-* sj/t9117-path-is-file (2024-03-04) 1 commit
-  (merged to 'next' on 2024-03-04 at de5f6a74cb)
- + t9117: prefer test_path_* helper functions
-
- GSoC practice to replace "test -f" with "test_path_is_file".
-
- Will merge to 'master'.
- source: <20240304095436.56399-2-shejialuo@gmail.com>
-
-
 * vm/t7301-use-test-path-helpers (2024-03-06) 1 commit
   (merged to 'next' on 2024-03-07 at e638654635)
  + t7301: use test_path_is_(missing|file)
@@ -618,38 +437,15 @@ Release tarballs are available at:
 
 
 * cw/git-std-lib (2024-02-28) 4 commits
- . SQUASH??? get rid of apparent debugging crufts
- . test-stdlib: show that git-std-lib is independent
- . git-std-lib: introduce Git Standard Library
- . pager: include stdint.h because uintmax_t is used
+ - SQUASH??? get rid of apparent debugging crufts
+ - test-stdlib: show that git-std-lib is independent
+ - git-std-lib: introduce Git Standard Library
+ - pager: include stdint.h because uintmax_t is used
 
  Split libgit.a out to a separate git-std-lib tor easier reuse.
 
  Expecting a reroll.
  source: <cover.1696021277.git.jonathantanmy@google.com>
-
-
-* js/merge-base-with-missing-commit (2024-02-29) 11 commits
-  (merged to 'next' on 2024-03-01 at 3e3eabaee9)
- + commit-reach(repo_get_merge_bases_many_dirty): pass on errors
- + commit-reach(repo_get_merge_bases_many): pass on "missing commits" errors
- + commit-reach(get_octopus_merge_bases): pass on "missing commits" errors
- + commit-reach(repo_get_merge_bases): pass on "missing commits" errors
- + commit-reach(get_merge_bases_many_0): pass on "missing commits" errors
- + commit-reach(merge_bases_many): pass on "missing commits" errors
- + commit-reach(paint_down_to_common): start reporting errors
- + commit-reach(paint_down_to_common): prepare for handling shallow commits
- + commit-reach(repo_in_merge_bases_many): report missing commits
- + commit-reach(repo_in_merge_bases_many): optionally expect missing commits
- + commit-reach(paint_down_to_common): plug two memory leaks
-
- Originally merged to 'next' on 2024-02-29
-
- Make sure failure return from merge_bases_many() is properly caught.
-
- Needs an incremental fix-up.
- cf.<20240301065805.GB2680308@coredump.intra.peff.net>
- source: <pull.1657.v4.git.1709113457.gitgitgadget@gmail.com>
 
 
 * rj/complete-worktree-paths-fix (2024-02-27) 1 commit
@@ -664,26 +460,14 @@ Release tarballs are available at:
  source: <b8f09e20-d0d3-4e0b-afe2-31affeb61052@gmail.com>
 
 
-* rs/t-ctype-simplify (2024-03-03) 4 commits
-  (merged to 'next' on 2024-03-04 at 9bd84a8877)
- + t-ctype: avoid duplicating class names
- + t-ctype: align output of i
- + t-ctype: simplify EOF check
- + t-ctype: allow NUL anywhere in the specification string
-
- Code simplification to one unit-test program.
-
- Will merge to 'master'.
- source: <20240303101330.20187-1-l.s.r@web.de>
-
-
 * pw/rebase-i-ignore-cherry-pick-help-environment (2024-02-27) 1 commit
- - rebase -i: stop setting GIT_CHERRY_PICK_HELP
+  (merged to 'next' on 2024-03-08 at e806ee9493)
+ + rebase -i: stop setting GIT_CHERRY_PICK_HELP
 
  Code simplification by getting rid of code that sets an environment
  variable that is no longer used.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1678.git.1709042783847.gitgitgadget@gmail.com>
 
 
@@ -870,40 +654,41 @@ Release tarballs are available at:
 
 
 * eb/hash-transition (2023-10-02) 30 commits
- - t1016-compatObjectFormat: add tests to verify the conversion between objects
- - t1006: test oid compatibility with cat-file
- - t1006: rename sha1 to oid
- - test-lib: compute the compatibility hash so tests may use it
- - builtin/ls-tree: let the oid determine the output algorithm
- - object-file: handle compat objects in check_object_signature
- - tree-walk: init_tree_desc take an oid to get the hash algorithm
- - builtin/cat-file: let the oid determine the output algorithm
- - rev-parse: add an --output-object-format parameter
- - repository: implement extensions.compatObjectFormat
- - object-file: update object_info_extended to reencode objects
- - object-file-convert: convert commits that embed signed tags
- - object-file-convert: convert commit objects when writing
- - object-file-convert: don't leak when converting tag objects
- - object-file-convert: convert tag objects when writing
- - object-file-convert: add a function to convert trees between algorithms
- - object: factor out parse_mode out of fast-import and tree-walk into in object.h
- - cache: add a function to read an OID of a specific algorithm
- - tag: sign both hashes
- - commit: export add_header_signature to support handling signatures on tags
- - commit: convert mergetag before computing the signature of a commit
- - commit: write commits for both hashes
- - object-file: add a compat_oid_in parameter to write_object_file_flags
- - object-file: update the loose object map when writing loose objects
- - loose: compatibilty short name support
- - loose: add a mapping between SHA-1 and SHA-256 for loose objects
- - repository: add a compatibility hash algorithm
- - object-names: support input of oids in any supported hash
- - oid-array: teach oid-array to handle multiple kinds of oids
- - object-file-convert: stubs for converting from one object format to another
+  (merged to 'next' on 2024-03-11 at 9cff2e4ab7)
+ + t1016-compatObjectFormat: add tests to verify the conversion between objects
+ + t1006: test oid compatibility with cat-file
+ + t1006: rename sha1 to oid
+ + test-lib: compute the compatibility hash so tests may use it
+ + builtin/ls-tree: let the oid determine the output algorithm
+ + object-file: handle compat objects in check_object_signature
+ + tree-walk: init_tree_desc take an oid to get the hash algorithm
+ + builtin/cat-file: let the oid determine the output algorithm
+ + rev-parse: add an --output-object-format parameter
+ + repository: implement extensions.compatObjectFormat
+ + object-file: update object_info_extended to reencode objects
+ + object-file-convert: convert commits that embed signed tags
+ + object-file-convert: convert commit objects when writing
+ + object-file-convert: don't leak when converting tag objects
+ + object-file-convert: convert tag objects when writing
+ + object-file-convert: add a function to convert trees between algorithms
+ + object: factor out parse_mode out of fast-import and tree-walk into in object.h
+ + cache: add a function to read an OID of a specific algorithm
+ + tag: sign both hashes
+ + commit: export add_header_signature to support handling signatures on tags
+ + commit: convert mergetag before computing the signature of a commit
+ + commit: write commits for both hashes
+ + object-file: add a compat_oid_in parameter to write_object_file_flags
+ + object-file: update the loose object map when writing loose objects
+ + loose: compatibilty short name support
+ + loose: add a mapping between SHA-1 and SHA-256 for loose objects
+ + repository: add a compatibility hash algorithm
+ + object-names: support input of oids in any supported hash
+ + oid-array: teach oid-array to handle multiple kinds of oids
+ + object-file-convert: stubs for converting from one object format to another
 
  Teach a repository to work with both SHA-1 and SHA-256 hash algorithms.
 
- Will merge to and cook in 'next'.
+ Will cook in 'next'.
  cf. <xmqqv86z5359.fsf@gitster.g>
  source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
