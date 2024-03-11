@@ -1052,7 +1052,7 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 {
 	struct object_id oid;
 	struct rev_collect revs;
-	struct commit_list *bases;
+	struct commit_list *bases = NULL;
 	int i;
 	struct commit *ret = NULL;
 	char *full_refname;
@@ -1077,8 +1077,9 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	for (i = 0; i < revs.nr; i++)
 		revs.commit[i]->object.flags &= ~TMP_MARK;
 
-	bases = repo_get_merge_bases_many(the_repository, commit, revs.nr,
-					  revs.commit);
+	if (repo_get_merge_bases_many(the_repository, commit, revs.nr,
+				      revs.commit, &bases) < 0)
+		exit(128);
 
 	/*
 	 * There should be one and only one merge base, when we found

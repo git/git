@@ -1513,13 +1513,20 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (!remoteheads)
 		; /* already up-to-date */
-	else if (!remoteheads->next)
-		common = repo_get_merge_bases(the_repository, head_commit,
-					      remoteheads->item);
-	else {
+	else if (!remoteheads->next) {
+		if (repo_get_merge_bases(the_repository, head_commit,
+					 remoteheads->item, &common) < 0) {
+			ret = 2;
+			goto done;
+		}
+	} else {
 		struct commit_list *list = remoteheads;
 		commit_list_insert(head_commit, &list);
-		common = get_octopus_merge_bases(list);
+		if (get_octopus_merge_bases(list, &common) < 0) {
+			free(list);
+			ret = 2;
+			goto done;
+		}
 		free(list);
 	}
 
@@ -1626,7 +1633,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		struct commit_list *j;
 
 		for (j = remoteheads; j; j = j->next) {
-			struct commit_list *common_one;
+			struct commit_list *common_one = NULL;
 			struct commit *common_item;
 
 			/*
@@ -1634,9 +1641,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			 * merge_bases again, otherwise "git merge HEAD^
 			 * HEAD^^" would be missed.
 			 */
-			common_one = repo_get_merge_bases(the_repository,
-							  head_commit,
-							  j->item);
+			if (repo_get_merge_bases(the_repository, head_commit,
+						 j->item, &common_one) < 0)
+				exit(128);
+
 			common_item = common_one->item;
 			free_commit_list(common_one);
 			if (!oideq(&common_item->object.oid, &j->item->object.oid)) {

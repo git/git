@@ -297,7 +297,7 @@ static int try_difference(const char *arg)
 		show_rev(NORMAL, &end_oid, end);
 		show_rev(symmetric ? NORMAL : REVERSED, &start_oid, start);
 		if (symmetric) {
-			struct commit_list *exclude;
+			struct commit_list *exclude = NULL;
 			struct commit *a, *b;
 			a = lookup_commit_reference(the_repository, &start_oid);
 			b = lookup_commit_reference(the_repository, &end_oid);
@@ -305,7 +305,8 @@ static int try_difference(const char *arg)
 				*dotdot = '.';
 				return 0;
 			}
-			exclude = repo_get_merge_bases(the_repository, a, b);
+			if (repo_get_merge_bases(the_repository, a, b, &exclude) < 0)
+				exit(128);
 			while (exclude) {
 				struct commit *commit = pop_commit(&exclude);
 				show_rev(REVERSED, &commit->object.oid, NULL);

@@ -592,7 +592,12 @@ static void show_submodule_header(struct diff_options *o,
 	     (!is_null_oid(two) && !*right))
 		message = "(commits not present)";
 
-	*merge_bases = repo_get_merge_bases(sub, *left, *right);
+	*merge_bases = NULL;
+	if (repo_get_merge_bases(sub, *left, *right, merge_bases) < 0) {
+		message = "(corrupt repository)";
+		goto output_header;
+	}
+
 	if (*merge_bases) {
 		if ((*merge_bases)->item == *left)
 			fast_forward = 1;

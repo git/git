@@ -867,7 +867,8 @@ static int can_fast_forward(struct commit *onto, struct commit *upstream,
 	if (!upstream)
 		goto done;
 
-	merge_bases = repo_get_merge_bases(the_repository, upstream, head);
+	if (repo_get_merge_bases(the_repository, upstream, head, &merge_bases) < 0)
+		exit(128);
 	if (!merge_bases || merge_bases->next)
 		goto done;
 
@@ -886,8 +887,9 @@ static void fill_branch_base(struct rebase_options *options,
 {
 	struct commit_list *merge_bases = NULL;
 
-	merge_bases = repo_get_merge_bases(the_repository, options->onto,
-					   options->orig_head);
+	if (repo_get_merge_bases(the_repository, options->onto,
+				 options->orig_head, &merge_bases) < 0)
+		exit(128);
 	if (!merge_bases || merge_bases->next)
 		oidcpy(branch_base, null_oid());
 	else

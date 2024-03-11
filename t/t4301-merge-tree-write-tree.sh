@@ -978,4 +978,16 @@ test_expect_success 'error out on missing blob objects' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'error out on missing commits as well' '
+	git init --bare missing-commit.git &&
+	git rev-list --objects side1 side3 >list-including-initial &&
+	grep -v ^$(git rev-parse side1^) <list-including-initial >list &&
+	git pack-objects missing-commit.git/objects/pack/missing-initial <list &&
+	side1=$(git rev-parse side1) &&
+	side3=$(git rev-parse side3) &&
+	test_must_fail git --git-dir=missing-commit.git \
+		merge-tree --allow-unrelated-histories $side1 $side3 >actual &&
+	test_must_be_empty actual
+'
+
 test_done

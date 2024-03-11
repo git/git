@@ -3912,7 +3912,7 @@ static int do_merge(struct repository *r,
 	int run_commit_flags = 0;
 	struct strbuf ref_name = STRBUF_INIT;
 	struct commit *head_commit, *merge_commit, *i;
-	struct commit_list *bases, *j;
+	struct commit_list *bases = NULL, *j;
 	struct commit_list *to_merge = NULL, **tail = &to_merge;
 	const char *strategy = !opts->xopts.nr &&
 		(!opts->strategy ||
@@ -4138,7 +4138,11 @@ static int do_merge(struct repository *r,
 	}
 
 	merge_commit = to_merge->item;
-	bases = repo_get_merge_bases(r, head_commit, merge_commit);
+	if (repo_get_merge_bases(r, head_commit, merge_commit, &bases) < 0) {
+		ret = -1;
+		goto leave_merge;
+	}
+
 	if (bases && oideq(&merge_commit->object.oid,
 			   &bases->item->object.oid)) {
 		ret = 0;
