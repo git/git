@@ -127,6 +127,9 @@ Fixes since v2.44
    not advertise the capability, which has been corrected.
    (merge a922bfa3b5 jk/upload-pack-v2-capability-cleanup later to maint).
 
+ * Make sure failure return from merge_bases_many() is properly caught.
+   (merge 25fd20eb44 js/merge-base-with-missing-commit later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -142,3 +145,4 @@ Fixes since v2.44
    (merge 9a97b43e03 rs/submodule-prefix-simplify later to maint).
    (merge 40b8076462 ak/rebase-autosquash later to maint).
    (merge 3223204456 eg/add-uflags later to maint).
+   (merge 5f78d52dce es/config-doc-sort-sections later to maint).
