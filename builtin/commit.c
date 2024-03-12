@@ -684,9 +684,10 @@ static void adjust_comment_line_char(const struct strbuf *sb)
 	char *candidate;
 	const char *p;
 
-	comment_line_char = candidates[0];
-	if (!memchr(sb->buf, comment_line_char, sb->len))
+	if (!memchr(sb->buf, candidates[0], sb->len)) {
+		comment_line_char = candidates[0];
 		return;
+	}
 
 	p = sb->buf;
 	candidate = strchr(candidates, *p);
