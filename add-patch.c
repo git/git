@@ -1139,7 +1139,7 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 	for (i = 0; i < s->buf.len; ) {
 		size_t next = find_next_line(&s->buf, i);
 
-		if (s->buf.buf[i] != comment_line_char)
+		if (!starts_with(s->buf.buf + i, comment_line_str))
 			strbuf_add(&s->plain, s->buf.buf + i, next - i);
 		i = next;
 	}

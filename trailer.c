@@ -1013,7 +1013,7 @@ static void parse_trailers(struct trailer_info *info,
 	for (i = 0; i < info->trailer_nr; i++) {
 		int separator_pos;
 		char *trailer = info->trailers[i];
-		if (trailer[0] == comment_line_char)
+		if (starts_with(trailer, comment_line_str))
 			continue;
 		separator_pos = find_separator(trailer, separators);
 		if (separator_pos >= 1) {
