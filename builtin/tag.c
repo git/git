@@ -310,7 +310,7 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 
 	if (opt->cleanup_mode != CLEANUP_NONE)
 		strbuf_stripspace(buf,
-		  opt->cleanup_mode == CLEANUP_ALL ? comment_line_char : '\0');
+		  opt->cleanup_mode == CLEANUP_ALL ? comment_line_str : NULL);
 
 	if (!opt->message_given && !buf->len)
 		die(_("no tag message?"));

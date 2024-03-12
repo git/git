@@ -1001,10 +1001,10 @@ static size_t cleanup(char *line, size_t len)
  *
  * If last line does not have a newline at the end, one is added.
  *
- * Pass a non-NUL comment_prefix to skip every line starting
+ * Pass a non-NULL comment_prefix to skip every line starting
  * with it.
  */
-void strbuf_stripspace(struct strbuf *sb, char comment_prefix)
+void strbuf_stripspace(struct strbuf *sb, const char *comment_prefix)
 {
 	size_t empties = 0;
 	size_t i, j, len, newlen;
@@ -1018,7 +1018,7 @@ void strbuf_stripspace(struct strbuf *sb, char comment_prefix)
 		len = eol ? eol - (sb->buf + i) + 1 : sb->len - i;
 
 		if (comment_prefix && len &&
-		    sb->buf[i] == comment_prefix) {
+		    starts_with(sb->buf + i, comment_prefix)) {
 			newlen = 0;
 			continue;
 		}

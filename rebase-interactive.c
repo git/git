@@ -130,7 +130,7 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 	if (launch_sequence_editor(todo_file, &new_todo->buf, NULL))
 		return -2;
 
-	strbuf_stripspace(&new_todo->buf, comment_line_char);
+	strbuf_stripspace(&new_todo->buf, comment_line_str);
 	if (initial && new_todo->buf.len == 0)
 		return -3;
 

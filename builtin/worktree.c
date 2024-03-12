@@ -657,7 +657,7 @@ static int can_use_local_refs(const struct add_opts *opts)
 			strbuf_add_real_path(&path, get_worktree_git_dir(NULL));
 			strbuf_addstr(&path, "/HEAD");
 			strbuf_read_file(&contents, path.buf, 64);
-			strbuf_stripspace(&contents, 0);
+			strbuf_stripspace(&contents, NULL);
 			strbuf_strip_suffix(&contents, "\n");
 
 			warning(_("HEAD points to an invalid (or orphaned) reference.\n"
