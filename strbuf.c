@@ -361,10 +361,10 @@ static void add_lines(struct strbuf *out,
 void strbuf_add_commented_lines(struct strbuf *out, const char *buf,
 				size_t size, char comment_line_char)
 {
-	static char prefix[2];
+	char prefix[2];
 
-	if (prefix[0] != comment_line_char)
-		xsnprintf(prefix, sizeof(prefix), "%c", comment_line_char);
+	prefix[0] = comment_line_char;
+	prefix[1] = '\0';
 	add_lines(out, prefix, buf, size, 1);
 }
 
