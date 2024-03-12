@@ -321,7 +321,7 @@ static void credit_people(struct strbuf *out,
 	     skip_prefix(me, them->items->string, &me) &&
 	     starts_with(me, " <")))
 		return;
-	strbuf_addf(out, "\n%c %s ", comment_line_char, label);
+	strbuf_addf(out, "\n%s %s ", comment_line_str, label);
 	add_people_count(out, them);
 }
 

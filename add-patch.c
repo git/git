@@ -1114,10 +1114,10 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 				"To remove '%c' lines, make them ' ' lines "
 				"(context).\n"
 				"To remove '%c' lines, delete them.\n"
-				"Lines starting with %c will be removed.\n"),
+				"Lines starting with %s will be removed.\n"),
 			      s->mode->is_reverse ? '+' : '-',
 			      s->mode->is_reverse ? '-' : '+',
-			      comment_line_char);
+			      comment_line_str);
 	strbuf_commented_addf(&s->buf, comment_line_str, "%s",
 			      _(s->mode->edit_hunk_hint));
 	/*

@@ -670,8 +670,8 @@ static int edit_branch_description(const char *branch_name)
 	strbuf_commented_addf(&buf, comment_line_str,
 		    _("Please edit the description for the branch\n"
 		      "  %s\n"
-		      "Lines starting with '%c' will be stripped.\n"),
-		    branch_name, comment_line_char);
+		      "Lines starting with '%s' will be stripped.\n"),
+		    branch_name, comment_line_str);
 	write_file_buf(edit_description(), buf.buf, buf.len);
 	strbuf_reset(&buf);
 	if (launch_editor(edit_description(), &buf, NULL)) {

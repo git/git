@@ -158,11 +158,11 @@ static int do_sign(struct strbuf *buffer)
 
 static const char tag_template[] =
 	N_("\nWrite a message for tag:\n  %s\n"
-	"Lines starting with '%c' will be ignored.\n");
+	"Lines starting with '%s' will be ignored.\n");
 
 static const char tag_template_nocleanup[] =
 	N_("\nWrite a message for tag:\n  %s\n"
-	"Lines starting with '%c' will be kept; you may remove them"
+	"Lines starting with '%s' will be kept; you may remove them"
 	" yourself if you want to.\n");
 
 static int git_tag_config(const char *var, const char *value,
@@ -292,10 +292,10 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 			strbuf_addch(&buf, '\n');
 			if (opt->cleanup_mode == CLEANUP_ALL)
 				strbuf_commented_addf(&buf, comment_line_str,
-				      _(tag_template), tag, comment_line_char);
+				      _(tag_template), tag, comment_line_str);
 			else
 				strbuf_commented_addf(&buf, comment_line_str,
-				      _(tag_template_nocleanup), tag, comment_line_char);
+				      _(tag_template_nocleanup), tag, comment_line_str);
 			write_or_die(fd, buf.buf, buf.len);
 			strbuf_release(&buf);
 		}

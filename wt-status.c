@@ -70,7 +70,7 @@ static void status_vprintf(struct wt_status *s, int at_bol, const char *color,
 	strbuf_vaddf(&sb, fmt, ap);
 	if (!sb.len) {
 		if (s->display_comment_prefix) {
-			strbuf_addch(&sb, comment_line_char);
+			strbuf_addstr(&sb, comment_line_str);
 			if (!trail)
 				strbuf_addch(&sb, ' ');
 		}
@@ -85,7 +85,7 @@ static void status_vprintf(struct wt_status *s, int at_bol, const char *color,
 
 		strbuf_reset(&linebuf);
 		if (at_bol && s->display_comment_prefix) {
-			strbuf_addch(&linebuf, comment_line_char);
+			strbuf_addstr(&linebuf, comment_line_str);
 			if (*line != '\n' && *line != '\t')
 				strbuf_addch(&linebuf, ' ');
 		}
@@ -1090,7 +1090,7 @@ size_t wt_status_locate_end(const char *s, size_t len)
 	const char *p;
 	struct strbuf pattern = STRBUF_INIT;
 
-	strbuf_addf(&pattern, "\n%c %s", comment_line_char, cut_line);
+	strbuf_addf(&pattern, "\n%s %s", comment_line_str, cut_line);
 	if (starts_with(s, pattern.buf + 1))
 		len = 0;
 	else if ((p = strstr(s, pattern.buf)))
@@ -1214,8 +1214,8 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
 				 "%s%.*s", comment_line_string,
 				 (int)(ep - cp), cp);
 	if (s->display_comment_prefix)
-		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "%c",
-				 comment_line_char);
+		color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "%s",
+				 comment_line_str);
 	else
 		fputs("\n", s->fp);
 	strbuf_release(&sb);
