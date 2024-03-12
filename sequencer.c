@@ -1779,6 +1779,8 @@ static const char *command_to_string(const enum todo_command command)
 {
 	if (command < TODO_COMMENT)
 		return todo_command_info[command].str;
+	if (command == TODO_COMMENT)
+		return comment_line_str;
 	die(_("unknown command: %d"), command);
 }
 
@@ -1786,7 +1788,7 @@ static char command_to_char(const enum todo_command command)
 {
 	if (command < TODO_COMMENT)
 		return todo_command_info[command].c;
-	return comment_line_char;
+	return 0;
 }
 
 static int is_noop(const enum todo_command command)
