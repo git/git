@@ -359,16 +359,16 @@ static void add_lines(struct strbuf *out,
 }
 
 void strbuf_add_commented_lines(struct strbuf *out, const char *buf,
-				size_t size, char comment_line_char)
+				size_t size, char comment_prefix)
 {
 	char prefix[2];
 
-	prefix[0] = comment_line_char;
+	prefix[0] = comment_prefix;
 	prefix[1] = '\0';
 	add_lines(out, prefix, buf, size, 1);
 }
 
-void strbuf_commented_addf(struct strbuf *sb, char comment_line_char,
+void strbuf_commented_addf(struct strbuf *sb, char comment_prefix,
 			   const char *fmt, ...)
 {
 	va_list params;
@@ -379,7 +379,7 @@ void strbuf_commented_addf(struct strbuf *sb, char comment_line_char,
 	strbuf_vaddf(&buf, fmt, params);
 	va_end(params);
 
-	strbuf_add_commented_lines(sb, buf.buf, buf.len, comment_line_char);
+	strbuf_add_commented_lines(sb, buf.buf, buf.len, comment_prefix);
 	if (incomplete_line)
 		sb->buf[--sb->len] = '\0';
 
@@ -1001,10 +1001,10 @@ static size_t cleanup(char *line, size_t len)
  *
  * If last line does not have a newline at the end, one is added.
  *
- * Pass a non-NUL comment_line_char to skip every line starting
+ * Pass a non-NUL comment_prefix to skip every line starting
  * with it.
  */
-void strbuf_stripspace(struct strbuf *sb, char comment_line_char)
+void strbuf_stripspace(struct strbuf *sb, char comment_prefix)
 {
 	size_t empties = 0;
 	size_t i, j, len, newlen;
@@ -1017,8 +1017,8 @@ void strbuf_stripspace(struct strbuf *sb, char comment_line_char)
 		eol = memchr(sb->buf + i, '\n', sb->len - i);
 		len = eol ? eol - (sb->buf + i) + 1 : sb->len - i;
 
-		if (comment_line_char && len &&
-		    sb->buf[i] == comment_line_char) {
+		if (comment_prefix && len &&
+		    sb->buf[i] == comment_prefix) {
 			newlen = 0;
 			continue;
 		}
