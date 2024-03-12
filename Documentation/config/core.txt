@@ -523,7 +523,9 @@ core.commentChar::
 	Commands such as `commit` and `tag` that let you edit
 	messages consider a line that begins with this character
 	commented, and removes them after the editor returns
-	(default '#').
+	(default '#'). Note that this option can take values larger than
+	a byte (whether a single multi-byte character, or you
+	could even go wild with a multi-character sequence).
 +
 If set to "auto", `git-commit` would select a character that is not
 the beginning character of any line in existing commit messages.

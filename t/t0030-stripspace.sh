@@ -403,7 +403,12 @@ test_expect_success 'strip comments with changed comment char' '
 
 test_expect_success 'newline as commentchar is forbidden' '
 	test_must_fail git -c core.commentChar="$LF" stripspace -s 2>err &&
-	grep "core.commentChar cannot be newline" err
+	grep "core.commentChar cannot contain newline" err
+'
+
+test_expect_success 'empty commentchar is forbidden' '
+	test_must_fail git -c core.commentchar= stripspace -s 2>err &&
+	grep "core.commentChar must have at least one character" err
 '
 
 test_expect_success '-c with single line' '
