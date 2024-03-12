@@ -673,6 +673,7 @@ char *xstrfmt(const char *fmt, ...);
 
 int starts_with(const char *str, const char *prefix);
 int istarts_with(const char *str, const char *prefix);
+int starts_with_mem(const char *str, size_t len, const char *prefix);
 
 /*
  * If the string "str" is the same as the string in "prefix", then the "arg"

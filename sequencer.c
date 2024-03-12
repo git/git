@@ -1840,7 +1840,7 @@ static int is_fixup_flag(enum todo_command command, unsigned flag)
 static void add_commented_lines(struct strbuf *buf, const void *str, size_t len)
 {
 	const char *s = str;
-	while (len > 0 && s[0] == comment_line_char) {
+	while (starts_with_mem(s, len, comment_line_str)) {
 		size_t count;
 		const char *n = memchr(s, '\n', len);
 		if (!n)
@@ -2562,7 +2562,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	/* left-trim */
 	bol += strspn(bol, " \t");
 
-	if (bol == eol || *bol == '\r' || *bol == comment_line_char) {
+	if (bol == eol || *bol == '\r' || starts_with_mem(bol, eol - bol, comment_line_str)) {
 		item->command = TODO_COMMENT;
 		item->commit = NULL;
 		item->arg_offset = bol - buf;

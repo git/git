@@ -882,7 +882,7 @@ static size_t find_trailer_block_start(const char *buf, size_t len)
 
 	/* The first paragraph is the title and cannot be trailers */
 	for (s = buf; s < buf + len; s = next_line(s)) {
-		if (s[0] == comment_line_char)
+		if (starts_with_mem(s, buf + len - s, comment_line_str))
 			continue;
 		if (is_blank_line(s))
 			break;
@@ -902,7 +902,7 @@ static size_t find_trailer_block_start(const char *buf, size_t len)
 		const char **p;
 		ssize_t separator_pos;
 
-		if (bol[0] == comment_line_char) {
+		if (starts_with_mem(bol, buf + len - bol, comment_line_str)) {
 			non_trailer_lines += possible_continuation_lines;
 			possible_continuation_lines = 0;
 			continue;
