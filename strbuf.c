@@ -368,7 +368,7 @@ void strbuf_add_commented_lines(struct strbuf *out, const char *buf,
 	add_lines(out, prefix, buf, size, 1);
 }
 
-void strbuf_commented_addf(struct strbuf *sb, char comment_prefix,
+void strbuf_commented_addf(struct strbuf *sb, const char *comment_prefix,
 			   const char *fmt, ...)
 {
 	va_list params;
@@ -379,7 +379,13 @@ void strbuf_commented_addf(struct strbuf *sb, char comment_prefix,
 	strbuf_vaddf(&buf, fmt, params);
 	va_end(params);
 
-	strbuf_add_commented_lines(sb, buf.buf, buf.len, comment_prefix);
+	/*
+	 * TODO Our commented_lines helper does not yet understand
+	 * comment strings. But since we know that the strings are
+	 * always single-char, we can cheat for the moment, and
+	 * fix this later.
+	 */
+	strbuf_add_commented_lines(sb, buf.buf, buf.len, comment_prefix[0]);
 	if (incomplete_line)
 		sb->buf[--sb->len] = '\0';
 
