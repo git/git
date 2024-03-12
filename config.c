@@ -1566,6 +1566,8 @@ static int git_default_core_config(const char *var, const char *value,
 		else if (!strcasecmp(value, "auto"))
 			auto_comment_line_char = 1;
 		else if (value[0] && !value[1]) {
+			if (value[0] == '\n')
+				return error(_("core.commentChar cannot be newline"));
 			comment_line_char = value[0];
 			auto_comment_line_char = 0;
 		} else
