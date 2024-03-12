@@ -69,13 +69,24 @@ test_expect_success 'replace with non-match (actually matching)' '
 
 cat > expect << EOF
 [section]
-	penguin = very blue
 	Movie = BadPhysics
 	UPPERCASE = true
-	penguin = kingpin
+	penguin = gentoo #Pygoscelis papua
+	disposition = peckish #find fish
+	foo = bar ## abc
 [Sections]
 	WhatEver = Second
 EOF
+test_expect_success 'append comments' '
+	git config --replace-all --comment="Pygoscelis papua" section.penguin gentoo &&
+	git config --comment="find fish" section.disposition peckish &&
+	git config --comment="# abc" section.foo bar &&
+	test_cmp expect .git/config
+'
+
+test_expect_success 'Prohibited LF in comment' '
+	test_must_fail git config --comment="a${LF}b" section.k v
+'
 
 test_expect_success 'non-match result' 'test_cmp expect .git/config'
 
