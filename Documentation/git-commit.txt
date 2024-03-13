@@ -347,6 +347,8 @@ The possible options are:
 	- 'normal' - Shows untracked files and directories
 	- 'all'    - Also shows individual files in untracked directories.
 
+All usual spellings for Boolean value `true` are taken as `normal`
+and `false` as `no`.
 The default can be changed using the status.showUntrackedFiles
 configuration variable documented in linkgit:git-config[1].
 --

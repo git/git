@@ -1163,6 +1163,17 @@ static enum untracked_status_type parse_untracked_setting_name(const char *u)
 	 * Please update $__git_untracked_file_modes in
 	 * git-completion.bash when you add new options
 	 */
+	switch (git_parse_maybe_bool(u)) {
+	case 0:
+		u = "no";
+		break;
+	case 1:
+		u = "normal";
+		break;
+	default:
+		break;
+	}
+
 	if (!strcmp(u, "no"))
 		return SHOW_NO_UNTRACKED_FILES;
 	else if (!strcmp(u, "normal"))
@@ -1469,8 +1480,6 @@ static int git_status_config(const char *k, const char *v,
 	if (!strcmp(k, "status.showuntrackedfiles")) {
 		enum untracked_status_type u;
 
-		if (!v)
-			return config_error_nonbool(k);
 		u = parse_untracked_setting_name(v);
 		if (u == SHOW_UNTRACKED_FILES_ERROR)
 			return error(_("Invalid untracked files mode '%s'"), v);

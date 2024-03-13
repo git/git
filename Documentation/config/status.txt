@@ -57,6 +57,8 @@ status.showUntrackedFiles::
 --
 +
 If this variable is not specified, it defaults to 'normal'.
+All usual spellings for Boolean value `true` are taken as `normal`
+and `false` as `no`.
 This variable can be overridden with the -u|--untracked-files option
 of linkgit:git-status[1] and linkgit:git-commit[1].
 
