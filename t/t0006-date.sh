@@ -46,6 +46,7 @@ check_show () {
 TIME='1466000000 +0200'
 check_show iso8601 "$TIME" '2016-06-15 16:13:20 +0200'
 check_show iso8601-strict "$TIME" '2016-06-15T16:13:20+02:00'
+check_show iso8601-strict "$(echo "$TIME" | sed 's/+0200$/+0000/')" '2016-06-15T14:13:20Z'
 check_show rfc2822 "$TIME" 'Wed, 15 Jun 2016 16:13:20 +0200'
 check_show short "$TIME" '2016-06-15'
 check_show default "$TIME" 'Wed Jun 15 16:13:20 2016 +0200'
