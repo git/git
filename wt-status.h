@@ -23,7 +23,8 @@ enum color_wt_status {
 };
 
 enum untracked_status_type {
-	SHOW_NO_UNTRACKED_FILES,
+	SHOW_UNTRACKED_FILES_ERROR = -1,
+	SHOW_NO_UNTRACKED_FILES = 0,
 	SHOW_NORMAL_UNTRACKED_FILES,
 	SHOW_ALL_UNTRACKED_FILES
 };
