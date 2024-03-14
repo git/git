@@ -401,7 +401,7 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 	     const struct ll_merge_options *opts)
 {
 	struct attr_check *check = load_merge_attributes();
-	static const struct ll_merge_options default_opts;
+	static const struct ll_merge_options default_opts = LL_MERGE_OPTIONS_INIT;
 	const char *ll_driver_name = NULL;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	const struct ll_merge_driver *driver;

@@ -262,7 +262,7 @@ static int checkout_merged(int pos, const struct checkout *state,
 	mmbuffer_t result_buf;
 	struct object_id threeway[3];
 	unsigned mode = 0;
-	struct ll_merge_options ll_opts;
+	struct ll_merge_options ll_opts = LL_MERGE_OPTIONS_INIT;
 	int renormalize = 0;
 
 	memset(threeway, 0, sizeof(threeway));
@@ -284,7 +284,6 @@ static int checkout_merged(int pos, const struct checkout *state,
 	read_mmblob(&ours, &threeway[1]);
 	read_mmblob(&theirs, &threeway[2]);
 
-	memset(&ll_opts, 0, sizeof(ll_opts));
 	git_config_get_bool("merge.renormalize", &renormalize);
 	ll_opts.renormalize = renormalize;
 	merge_status = ll_merge(&result_buf, path, &ancestor, "base",

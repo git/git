@@ -82,6 +82,8 @@ struct ll_merge_options {
 	long xdl_opts;
 };
 
+#define LL_MERGE_OPTIONS_INIT {0}
+
 enum ll_merge_result {
 	LL_MERGE_ERROR = -1,
 	LL_MERGE_OK = 0,

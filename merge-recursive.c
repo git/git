@@ -1047,7 +1047,7 @@ static int merge_3way(struct merge_options *opt,
 		      const int extra_marker_size)
 {
 	mmfile_t orig, src1, src2;
-	struct ll_merge_options ll_opts = {0};
+	struct ll_merge_options ll_opts = LL_MERGE_OPTIONS_INIT;
 	char *base, *name1, *name2;
 	enum ll_merge_result merge_status;
 
