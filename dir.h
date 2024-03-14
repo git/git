@@ -576,6 +576,13 @@ int cmp_dir_entry(const void *p1, const void *p2);
 int check_dir_entry_contains(const struct dir_entry *out, const struct dir_entry *in);
 
 void untracked_cache_invalidate_path(struct index_state *, const char *, int safe_path);
+/*
+ * Invalidate the untracked-cache for this path, but first strip
+ * off a trailing slash, if present.
+ */
+void untracked_cache_invalidate_trimmed_path(struct index_state *,
+					     const char *path,
+					     int safe_path);
 void untracked_cache_remove_from_index(struct index_state *, const char *);
 void untracked_cache_add_to_index(struct index_state *, const char *);
 
