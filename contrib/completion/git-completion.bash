@@ -454,16 +454,18 @@ fi
 
 # This function is equivalent to
 #
-#    __gitcomp "$(git xxx --git-completion-helper) ..."
+#    ___git_resolved_builtins=$(git xxx --git-completion-helper)
 #
-# except that the output is cached. Accept 1-3 arguments:
+# except that the result of the execution is cached.
+#
+# Accept 1-3 arguments:
 # 1: the git command to execute, this is also the cache key
+#    (use "_" when the command contains spaces, e.g. "remote add"
+#    becomes "remote_add")
 # 2: extra options to be added on top (e.g. negative forms)
 # 3: options to be excluded
-__gitcomp_builtin ()
+__git_resolve_builtins ()
 {
-	# spaces must be replaced with underscore for multi-word
-	# commands, e.g. "git remote add" becomes remote_add.
 	local cmd="$1"
 	local incl="${2-}"
 	local excl="${3-}"
@@ -489,7 +491,24 @@ __gitcomp_builtin ()
 		eval "$var=\"$options\""
 	fi
 
-	__gitcomp "$options"
+	___git_resolved_builtins="$options"
+}
+
+# This function is equivalent to
+#
+#    __gitcomp "$(git xxx --git-completion-helper) ..."
+#
+# except that the output is cached. Accept 1-3 arguments:
+# 1: the git command to execute, this is also the cache key
+#    (use "_" when the command contains spaces, e.g. "remote add"
+#    becomes "remote_add")
+# 2: extra options to be added on top (e.g. negative forms)
+# 3: options to be excluded
+__gitcomp_builtin ()
+{
+	__git_resolve_builtins "$1" "$2" "$3"
+
+	__gitcomp "$___git_resolved_builtins"
 }
 
 # Variation of __gitcomp_nl () that appends to the existing list of
@@ -554,6 +573,26 @@ __gitcomp_file ()
 	compopt -o filenames +o nospace 2>/dev/null ||
 	compgen -f /non-existing-dir/ >/dev/null ||
 	true
+}
+
+# Find the current subcommand for commands that follow the syntax:
+#
+#    git <command> <subcommand>
+#
+# 1: List of possible subcommands.
+# 2: Optional subcommand to return when none is found.
+__git_find_subcommand ()
+{
+	local subcommand subcommands="$1" default_subcommand="$2"
+
+	for subcommand in $subcommands; do
+		if [ "$subcommand" = "${words[__git_cmd_idx+1]}" ]; then
+			echo $subcommand
+			return
+		fi
+	done
+
+	echo $default_subcommand
 }
 
 # Execute 'git ls-files', unless the --committable option is specified, in
@@ -2471,13 +2510,30 @@ _git_rebase ()
 
 _git_reflog ()
 {
-	local subcommands="show delete expire"
-	local subcommand="$(__git_find_on_cmdline "$subcommands")"
+	local subcommands subcommand
 
-	if [ -z "$subcommand" ]; then
-		__gitcomp "$subcommands"
-	else
-		__git_complete_refs
+	__git_resolve_builtins "reflog"
+
+	subcommands="$___git_resolved_builtins"
+	subcommand="$(__git_find_subcommand "$subcommands" "show")"
+
+	case "$subcommand,$cur" in
+	show,--*)
+		__gitcomp "
+			$__git_log_common_options
+			"
+		return
+		;;
+	$subcommand,--*)
+		__gitcomp_builtin "reflog_$subcommand"
+		return
+		;;
+	esac
+
+	__git_complete_refs
+
+	if [ $((cword - __git_cmd_idx)) -eq 1 ]; then
+		__gitcompappend "$subcommands" "" "$cur" " "
 	fi
 }
 
