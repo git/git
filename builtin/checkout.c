@@ -91,7 +91,7 @@ struct checkout_opts {
 	int new_branch_log;
 	enum branch_track track;
 	struct diff_options diff_options;
-	char *conflict_style;
+	int conflict_style;
 
 	int branch_exists;
 	const char *prefix;
@@ -99,6 +99,8 @@ struct checkout_opts {
 	const char *from_treeish;
 	struct tree *source_tree;
 };
+
+#define CHECKOUT_OPTS_INIT { .conflict_style = -1 }
 
 struct branch_info {
 	char *name; /* The short name used */
@@ -251,7 +253,8 @@ static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
 }
 
 static int checkout_merged(int pos, const struct checkout *state,
-			   int *nr_checkouts, struct mem_pool *ce_mem_pool)
+			   int *nr_checkouts, struct mem_pool *ce_mem_pool,
+			   int conflict_style)
 {
 	struct cache_entry *ce = the_index.cache[pos];
 	const char *path = ce->name;
@@ -286,6 +289,7 @@ static int checkout_merged(int pos, const struct checkout *state,
 
 	git_config_get_bool("merge.renormalize", &renormalize);
 	ll_opts.renormalize = renormalize;
+	ll_opts.conflict_style = conflict_style;
 	merge_status = ll_merge(&result_buf, path, &ancestor, "base",
 				&ours, "ours", &theirs, "theirs",
 				state->istate, &ll_opts);
@@ -416,7 +420,8 @@ static int checkout_worktree(const struct checkout_opts *opts,
 			else if (opts->merge)
 				errs |= checkout_merged(pos, &state,
 							&nr_unmerged,
-							&ce_mem_pool);
+							&ce_mem_pool,
+							opts->conflict_style);
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
@@ -886,6 +891,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			}
 			o.branch1 = new_branch_info->name;
 			o.branch2 = "local";
+			o.conflict_style = opts->conflict_style;
 			ret = merge_trees(&o,
 					  new_tree,
 					  work,
@@ -1616,6 +1622,21 @@ static int checkout_branch(struct checkout_opts *opts,
 	return switch_branches(opts, new_branch_info);
 }
 
+static int parse_opt_conflict(const struct option *o, const char *arg, int unset)
+{
+	struct checkout_opts *opts = o->value;
+
+	if (unset) {
+		opts->conflict_style = -1;
+		return 0;
+	}
+	opts->conflict_style = parse_conflict_style_name(arg);
+	if (opts->conflict_style < 0)
+		return error(_("unknown conflict style '%s'"), arg);
+
+	return 0;
+}
+
 static struct option *add_common_options(struct checkout_opts *opts,
 					 struct option *prevopts)
 {
@@ -1626,8 +1647,9 @@ static struct option *add_common_options(struct checkout_opts *opts,
 			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
 		OPT_BOOL(0, "progress", &opts->show_progress, N_("force progress reporting")),
 		OPT_BOOL('m', "merge", &opts->merge, N_("perform a 3-way merge with the new branch")),
-		OPT_STRING(0, "conflict", &opts->conflict_style, N_("style"),
-			   N_("conflict style (merge, diff3, or zdiff3)")),
+		OPT_CALLBACK(0, "conflict", opts, N_("style"),
+			     N_("conflict style (merge, diff3, or zdiff3)"),
+			     parse_opt_conflict),
 		OPT_END()
 	};
 	struct option *newopts = parse_options_concat(prevopts, options);
@@ -1718,15 +1740,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			opts->show_progress = isatty(2);
 	}
 
-	if (opts->conflict_style) {
-		struct key_value_info kvi = KVI_INIT;
-		struct config_context ctx = {
-			.kvi = &kvi,
-		};
+	if (opts->conflict_style >= 0)
 		opts->merge = 1; /* implied */
-		git_xmerge_config("merge.conflictstyle", opts->conflict_style,
-				  &ctx, NULL);
-	}
+
 	if (opts->force) {
 		opts->discard_changes = 1;
 		opts->ignore_unmerged_opt = "--force";
@@ -1891,7 +1907,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 int cmd_checkout(int argc, const char **argv, const char *prefix)
 {
-	struct checkout_opts opts;
+	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
 	struct option *options;
 	struct option checkout_options[] = {
 		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),
@@ -1907,7 +1923,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	int ret;
 	struct branch_info new_branch_info = { 0 };
 
-	memset(&opts, 0, sizeof(opts));
 	opts.dwim_new_local_branch = 1;
 	opts.switch_branch_doing_nothing_is_ok = 1;
 	opts.only_merge_on_switching_branches = 0;
@@ -1946,7 +1961,7 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 int cmd_switch(int argc, const char **argv, const char *prefix)
 {
-	struct checkout_opts opts;
+	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
 	struct option *options = NULL;
 	struct option switch_options[] = {
 		OPT_STRING('c', "create", &opts.new_branch, N_("branch"),
@@ -1962,7 +1977,6 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 	int ret;
 	struct branch_info new_branch_info = { 0 };
 
-	memset(&opts, 0, sizeof(opts));
 	opts.dwim_new_local_branch = 1;
 	opts.accept_ref = 1;
 	opts.accept_pathspec = 0;
@@ -1988,7 +2002,7 @@ int cmd_switch(int argc, const char **argv, const char *prefix)
 
 int cmd_restore(int argc, const char **argv, const char *prefix)
 {
-	struct checkout_opts opts;
+	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
 	struct option *options;
 	struct option restore_options[] = {
 		OPT_STRING('s', "source", &opts.from_treeish, "<tree-ish>",
@@ -2005,7 +2019,6 @@ int cmd_restore(int argc, const char **argv, const char *prefix)
 	int ret;
 	struct branch_info new_branch_info = { 0 };
 
-	memset(&opts, 0, sizeof(opts));
 	opts.accept_ref = 0;
 	opts.accept_pathspec = 1;
 	opts.empty_pathspec_ok = 0;

@@ -631,6 +631,12 @@ test_expect_success 'checkout --conflict=diff3' '
 	test_cmp merged file
 '
 
+test_expect_success 'checkout with invalid conflict style' '
+	test_must_fail git checkout --conflict=bad 2>actual -- file &&
+	echo "error: unknown conflict style ${SQ}bad${SQ}" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'failing checkout -b should not break working tree' '
 	git clean -fd &&  # Remove untracked files in the way
 	git reset --hard main &&
