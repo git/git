@@ -16,10 +16,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-iterator.h"
 #include "reftable-generic.h"
 
-/* Returns true for a zeroed out iterator, such as the one returned from
- * iterator_destroy. */
-int iterator_is_null(struct reftable_iterator *it);
-
 /* iterator that produces only ref records that point to `oid` */
 struct filtering_ref_iterator {
 	int double_check;

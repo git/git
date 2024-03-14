@@ -9,7 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #ifndef MERGED_H
 #define MERGED_H
 
-#include "pq.h"
+#include "system.h"
 
 struct reftable_merged_table {
 	struct reftable_table *stack;
@@ -22,15 +22,6 @@ struct reftable_merged_table {
 
 	uint64_t min;
 	uint64_t max;
-};
-
-struct merged_iter {
-	struct reftable_iterator *stack;
-	uint32_t hash_id;
-	size_t stack_len;
-	uint8_t typ;
-	int suppress_deletions;
-	struct merged_iter_pqueue pq;
 };
 
 void merged_table_release(struct reftable_merged_table *mt);

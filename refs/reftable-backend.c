@@ -346,6 +346,7 @@ struct reftable_ref_iterator {
 	struct object_id oid;
 
 	const char *prefix;
+	size_t prefix_len;
 	unsigned int flags;
 	int err;
 };
@@ -374,8 +375,8 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			continue;
 		}
 
-		if (iter->prefix &&
-		    strncmp(iter->prefix, iter->ref.refname, strlen(iter->prefix))) {
+		if (iter->prefix_len &&
+		    strncmp(iter->prefix, iter->ref.refname, iter->prefix_len)) {
 			iter->err = 1;
 			break;
 		}
@@ -484,6 +485,7 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 	iter = xcalloc(1, sizeof(*iter));
 	base_ref_iterator_init(&iter->base, &reftable_ref_iterator_vtable);
 	iter->prefix = prefix;
+	iter->prefix_len = prefix ? strlen(prefix) : 0;
 	iter->base.oid = &iter->oid;
 	iter->flags = flags;
 	iter->refs = refs;
