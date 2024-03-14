@@ -25,7 +25,7 @@
 #include "help.h"
 #include "prompt.h"
 
-static int force = -1; /* unset */
+static int require_force = -1; /* unset */
 static int interactive;
 static struct string_list del_list = STRING_LIST_INIT_DUP;
 static unsigned int colopts;
@@ -128,7 +128,7 @@ static int git_clean_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "clean.requireforce")) {
-		force = !git_config_bool(var, value);
+		require_force = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -920,7 +920,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 {
 	int i, res;
 	int dry_run = 0, remove_directories = 0, quiet = 0, ignored = 0;
-	int ignored_only = 0, config_set = 0, errors = 0, gone = 1;
+	int ignored_only = 0, force = 0, errors = 0, gone = 1;
 	int rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
 	struct strbuf abs_path = STRBUF_INIT;
 	struct dir_struct dir = DIR_INIT;
@@ -946,22 +946,12 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_clean_config, NULL);
-	if (force < 0)
-		force = 0;
-	else
-		config_set = 1;
 
 	argc = parse_options(argc, argv, prefix, options, builtin_clean_usage,
 			     0);
 
-	if (!interactive && !dry_run && !force) {
-		if (config_set)
-			die(_("clean.requireForce set to true and neither -i, -n, nor -f given; "
-				  "refusing to clean"));
-		else
-			die(_("clean.requireForce defaults to true and neither -i, -n, nor -f given;"
-				  " refusing to clean"));
-	}
+	if (require_force != 0 && !force && !interactive && !dry_run)
+		die(_("clean.requireForce is true and -f not given: refusing to clean"));
 
 	if (force > 1)
 		rm_flags = 0;

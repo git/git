@@ -37,7 +37,7 @@ OPTIONS
 --force::
 	If the Git configuration variable clean.requireForce is not set
 	to false, 'git clean' will refuse to delete files or directories
-	unless given -f or -i.  Git will refuse to modify untracked
+	unless given -f.  Git will refuse to modify untracked
 	nested git repositories (directories with a .git subdirectory)
 	unless a second -f is given.
 
@@ -45,10 +45,14 @@ OPTIONS
 --interactive::
 	Show what would be done and clean files interactively. See
 	``Interactive mode'' for details.
+	Configuration variable `clean.requireForce` is ignored, as
+	this mode gives its own safety protection by going interactive.
 
 -n::
 --dry-run::
 	Don't actually remove anything, just show what would be done.
+	Configuration variable `clean.requireForce` is ignored, as
+	nothing will be deleted anyway.
 
 -q::
 --quiet::
