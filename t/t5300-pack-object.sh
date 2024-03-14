@@ -465,7 +465,7 @@ test_with_bad_commit () {
 	must_pass_arg="$2" &&
 	(
 		cd strict &&
-		test_expect_fail git index-pack "$must_fail_arg" "test-$(cat pack-name).pack"
+		test_must_fail git index-pack "$must_fail_arg" "test-$(cat pack-name).pack" &&
 		git index-pack "$must_pass_arg" "test-$(cat pack-name).pack"
 	)
 }
