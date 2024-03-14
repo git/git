@@ -3629,7 +3629,7 @@ __git_complete_worktree_paths ()
 	# Generate completion reply from worktree list skipping the first
 	# entry: it's the path of the main worktree, which can't be moved,
 	# removed, locked, etc.
-	__gitcomp_nl "$(git worktree list --porcelain |
+	__gitcomp_nl "$(__git worktree list --porcelain |
 		sed -n -e '2,$ s/^worktree //p')"
 }
 
