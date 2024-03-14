@@ -54,6 +54,13 @@ Performance, Internal Implementation, Development Support etc.
    fetching of objects from the promisor remote, which may be handy
    for debugging.
 
+ * The implementation in "git clean" that makes "-n" and "-i" ignore
+   clean.requireForce has been simplified, together with the
+   documentation.
+
+ * The code to iterate over refs with the reftable backend has seen
+   some optimization.
+
 
 Fixes since v2.44
 -----------------
@@ -129,6 +136,31 @@ Fixes since v2.44
 
  * Make sure failure return from merge_bases_many() is properly caught.
    (merge 25fd20eb44 js/merge-base-with-missing-commit later to maint).
+
+ * FSMonitor client code was confused when FSEvents were given in a
+   different case on a case-insensitive filesystem, which has been
+   corrected.
+   (merge 29c139ce78 jh/fsmonitor-icase-corner-case-fix later to maint).
+
+ * The "core.commentChar" configuration variable only allows an ASCII
+   character, which was not clearly documented, which has been
+   corrected.
+   (merge fb7c556f58 kh/doc-commentchar-is-a-byte later to maint).
+
+ * With release 2.44 we got rid of all uses of test_i18ngrep and there
+   is no in-flight topic that adds a new use of it.  Make a call to
+   test_i18ngrep a hard failure, so that we can remove it at the end
+   of this release cycle.
+   (merge 381a83dfa3 jc/test-i18ngrep later to maint).
+
+ * The command line completion script (in contrib/) learned to
+   complete "git reflog" better.
+   (merge 1284f9cc11 rj/complete-reflog later to maint).
+
+ * The logic to complete the command line arguments to "git worktree"
+   subcommand (in contrib/) has been updated to correctly honor things
+   like "git -C dir" etc.
+   (merge 3574816d98 rj/complete-worktree-paths-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
