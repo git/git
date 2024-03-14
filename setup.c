@@ -1968,7 +1968,6 @@ void create_reference_database(unsigned int ref_storage_format,
 static int create_default_files(const char *template_path,
 				const char *original_git_dir,
 				const struct repository_format *fmt,
-				int prev_bare_repository,
 				int init_shared_repository)
 {
 	struct stat st1;
@@ -2003,34 +2002,8 @@ static int create_default_files(const char *template_path,
 	 */
 	if (init_shared_repository != -1)
 		set_shared_repository(init_shared_repository);
-	/*
-	 * TODO: heed core.bare from config file in templates if no
-	 *       command-line override given
-	 */
-	is_bare_repository_cfg = prev_bare_repository || !work_tree;
-	/* TODO (continued):
-	 *
-	 * Unfortunately, the line above is equivalent to
-	 *    is_bare_repository_cfg = !work_tree;
-	 * which ignores the config entirely even if no `--[no-]bare`
-	 * command line option was present.
-	 *
-	 * To see why, note that before this function, there was this call:
-	 *    prev_bare_repository = is_bare_repository()
-	 * expanding the right hand side:
-	 *                 = is_bare_repository_cfg && !get_git_work_tree()
-	 *                 = is_bare_repository_cfg && !work_tree
-	 * note that the last simplification above is valid because nothing
-	 * calls repo_init() or set_git_work_tree() between any of the
-	 * relevant calls in the code, and thus the !get_git_work_tree()
-	 * calls will return the same result each time.  So, what we are
-	 * interested in computing is the right hand side of the line of
-	 * code just above this comment:
-	 *     prev_bare_repository || !work_tree
-	 *        = is_bare_repository_cfg && !work_tree || !work_tree
-	 *        = !work_tree
-	 * because "A && !B || !B == !B" for all boolean values of A & B.
-	 */
+
+	is_bare_repository_cfg = !work_tree;
 
 	/*
 	 * We would have created the above under user's umask -- under
@@ -2182,7 +2155,6 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	int exist_ok = flags & INIT_DB_EXIST_OK;
 	char *original_git_dir = real_pathdup(git_dir, 1);
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
-	int prev_bare_repository;
 
 	if (real_git_dir) {
 		struct stat st;
@@ -2208,7 +2180,6 @@ int init_db(const char *git_dir, const char *real_git_dir,
 
 	safe_create_dir(git_dir, 0);
 
-	prev_bare_repository = is_bare_repository();
 
 	/* Check to see if the repository version is right.
 	 * Note that a newly created repository does not have
@@ -2221,8 +2192,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	validate_ref_storage_format(&repo_fmt, ref_storage_format);
 
 	reinit = create_default_files(template_dir, original_git_dir,
-				      &repo_fmt, prev_bare_repository,
-				      init_shared_repository);
+				      &repo_fmt, init_shared_repository);
 
 	/*
 	 * Now that we have set up both the hash algorithm and the ref storage
