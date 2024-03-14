@@ -1966,6 +1966,7 @@ static int merge_3way(struct merge_options *opt,
 	ll_opts.renormalize = opt->renormalize;
 	ll_opts.extra_marker_size = extra_marker_size;
 	ll_opts.xdl_opts = opt->xdl_opts;
+	ll_opts.conflict_style = opt->conflict_style;
 
 	if (opt->priv->call_depth) {
 		ll_opts.virtual_ancestor = 1;

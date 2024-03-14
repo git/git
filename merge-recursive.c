@@ -1054,6 +1054,7 @@ static int merge_3way(struct merge_options *opt,
 	ll_opts.renormalize = opt->renormalize;
 	ll_opts.extra_marker_size = extra_marker_size;
 	ll_opts.xdl_opts = opt->xdl_opts;
+	ll_opts.conflict_style = opt->conflict_style;
 
 	if (opt->priv->call_depth) {
 		ll_opts.virtual_ancestor = 1;
@@ -3898,6 +3899,8 @@ void init_merge_options(struct merge_options *opt,
 	strbuf_init(&opt->obuf, 0);
 
 	opt->renormalize = 0;
+
+	opt->conflict_style = -1;
 
 	merge_recursive_config(opt);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");

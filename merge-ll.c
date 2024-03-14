@@ -128,7 +128,9 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 	xmp.level = XDL_MERGE_ZEALOUS;
 	xmp.favor = opts->variant;
 	xmp.xpp.flags = opts->xdl_opts;
-	if (git_xmerge_style >= 0)
+	if (opts->conflict_style >= 0)
+		xmp.style = opts->conflict_style;
+	else if (git_xmerge_style >= 0)
 		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
 		xmp.marker_size = marker_size;
