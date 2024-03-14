@@ -100,7 +100,7 @@ struct checkout_opts {
 	struct tree *source_tree;
 };
 
-#define CHECKOUT_OPTS_INIT { .conflict_style = -1 }
+#define CHECKOUT_OPTS_INIT { .conflict_style = -1, .merge = -1 }
 
 struct branch_info {
 	char *name; /* The short name used */
@@ -1633,6 +1633,9 @@ static int parse_opt_conflict(const struct option *o, const char *arg, int unset
 	opts->conflict_style = parse_conflict_style_name(arg);
 	if (opts->conflict_style < 0)
 		return error(_("unknown conflict style '%s'"), arg);
+	/* --conflict overrides a previous --no-merge */
+	if (!opts->merge)
+		opts->merge = -1;
 
 	return 0;
 }
@@ -1740,8 +1743,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			opts->show_progress = isatty(2);
 	}
 
-	if (opts->conflict_style >= 0)
-		opts->merge = 1; /* implied */
+	/* --conflicts implies --merge */
+	if (opts->merge == -1)
+		opts->merge = opts->conflict_style >= 0;
 
 	if (opts->force) {
 		opts->discard_changes = 1;
