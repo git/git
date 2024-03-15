@@ -43,7 +43,7 @@ rsync --exclude-from t/t1509/excludes -Ha . "$R$(pwd)"
 # env might slip through, see test-lib.sh, unset.*PERL_PATH
 sed 's|^PERL_PATH=.*|PERL_PATH=/bin/true|' GIT-BUILD-OPTIONS > "$R$(pwd)/GIT-BUILD-OPTIONS"
 for cmd in git $BB;do 
-	ldd $cmd | grep '/' | sed 's,.*\s\(/[^ ]*\).*,\1,' | while read i; do
+	ldd $cmd | sed -n '/\//s,.*\s\(/[^ ]*\).*,\1,p' | while read i; do
 		mkdir -p "$R$(dirname $i)"
 		cp "$i" "$R/$i"
 	done
