@@ -40,7 +40,7 @@ test_expect_success 'final setup + check rev-parse --git-dir' '
 
 test_expect_success 'check hash-object' '
 	echo "foo" >bar &&
-	SHA=$(cat bar | git hash-object -w --stdin) &&
+	SHA=$(git hash-object -w --stdin <bar) &&
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
