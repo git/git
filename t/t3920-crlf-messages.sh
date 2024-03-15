@@ -97,7 +97,7 @@ test_expect_success 'branch: --verbose works with messages using CRLF' '
 	git branch -v >tmp &&
 	# Remove first two columns, and the line for the currently checked out branch
 	current=$(git branch --show-current) &&
-	grep -v $current <tmp | awk "{\$1=\$2=\"\"}1"  >actual &&
+	awk "/$current/ { next } { \$1 = \$2 = \"\" } 1" <tmp >actual &&
 	test_cmp expect actual
 '
 
