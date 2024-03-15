@@ -2358,7 +2358,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (skip_prefix(arg, "--ancestry-path=", &optarg)) {
 		struct commit *c;
 		struct object_id oid;
-		const char *msg = _("could not get commit for ancestry-path argument %s");
+		const char *msg = _("could not get commit for --ancestry-path argument %s");
 
 		revs->ancestry_path = 1;
 		revs->simplify_history = 0;

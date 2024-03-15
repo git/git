@@ -116,7 +116,7 @@ static struct option builtin_clone_options[] = {
 	OPT_HIDDEN_BOOL(0, "naked", &option_bare,
 			N_("create a bare repository")),
 	OPT_BOOL(0, "mirror", &option_mirror,
-		 N_("create a mirror repository (implies bare)")),
+		 N_("create a mirror repository (implies --bare)")),
 	OPT_BOOL('l', "local", &option_local,
 		N_("to clone from a local repository")),
 	OPT_BOOL(0, "no-hardlinks", &option_no_hardlinks,
