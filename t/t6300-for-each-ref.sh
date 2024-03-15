@@ -1446,19 +1446,7 @@ test_trailer_option () {
 	'
 }
 
-# Just like test_trailer_option, but expect failure instead of success.
-test_trailer_option_expect_failure () {
-	title=$1 option=$2
-	cat >expect
-	test_expect_failure "$title" '
-		git for-each-ref --format="%($option)" refs/heads/main >actual &&
-		test_cmp expect actual &&
-		git for-each-ref --format="%(contents:$option)" refs/heads/main >actual &&
-		test_cmp expect actual
-	'
-}
-
-test_trailer_option_expect_failure '%(trailers:unfold) unfolds trailers' \
+test_trailer_option '%(trailers:unfold) unfolds trailers' \
 	'trailers:unfold' <<-EOF
 	$(unfold <trailers)
 
@@ -1542,7 +1530,7 @@ test_trailer_option '%(trailers:key=foo,unfold) properly unfolds' \
 
 	EOF
 
-test_trailer_option_expect_failure '%(trailers:key=foo,only=no) also includes nontrailer lines' \
+test_trailer_option '%(trailers:key=foo,only=no) also includes nontrailer lines' \
 	'trailers:key=Signed-off-by,only=no' <<-EOF
 	Signed-off-by: A U Thor <author@example.com>
 	$(grep patch.description <trailers)

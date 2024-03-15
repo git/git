@@ -675,7 +675,7 @@ test_expect_success '%(trailers:only=no,only=true) shows only "key: value" trail
 	test_cmp expect actual
 '
 
-test_expect_failure '%(trailers:unfold) unfolds trailers' '
+test_expect_success '%(trailers:unfold) unfolds trailers' '
 	git log --no-walk --pretty="%(trailers:unfold)" >actual &&
 	{
 		unfold <trailers &&
@@ -737,7 +737,7 @@ test_expect_success '%(trailers:key=foo,unfold) properly unfolds' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'pretty format %(trailers:key=foo,only=no) also includes nontrailer lines' '
+test_expect_success 'pretty format %(trailers:key=foo,only=no) also includes nontrailer lines' '
 	git log --no-walk --pretty="format:%(trailers:key=Acked-by,only=no)" >actual &&
 	{
 		echo "Acked-by: A U Thor <author@example.com>" &&
@@ -752,7 +752,7 @@ test_expect_success '%(trailers:key) without value is error' '
 	test_cmp expect actual
 '
 
-test_expect_failure '%(trailers:keyonly) shows only keys' '
+test_expect_success '%(trailers:keyonly) shows only keys' '
 	git log --no-walk --pretty="format:%(trailers:keyonly)" >actual &&
 	test_write_lines \
 		"Signed-off-by" \
@@ -774,7 +774,7 @@ test_expect_success '%(trailers:key=foo,valueonly) shows only value' '
 	test_cmp expect actual
 '
 
-test_expect_failure '%(trailers:valueonly) shows only values' '
+test_expect_success '%(trailers:valueonly) shows only values' '
 	git log --no-walk --pretty="format:%(trailers:valueonly)" >actual &&
 	test_write_lines \
 		"A U Thor <author@example.com>" \
@@ -813,7 +813,7 @@ test_expect_success 'pretty format %(trailers:separator=X,unfold) changes separa
 	test_cmp expect actual
 '
 
-test_expect_failure 'pretty format %(trailers:key_value_separator) changes key-value separator' '
+test_expect_success 'pretty format %(trailers:key_value_separator) changes key-value separator' '
 	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00)X" >actual &&
 	(
 		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&
@@ -824,7 +824,7 @@ test_expect_failure 'pretty format %(trailers:key_value_separator) changes key-v
 	test_cmp expect actual
 '
 
-test_expect_failure 'pretty format %(trailers:key_value_separator,unfold) changes key-value separator' '
+test_expect_success 'pretty format %(trailers:key_value_separator,unfold) changes key-value separator' '
 	git log --no-walk --pretty=format:"X%(trailers:key_value_separator=%x00,unfold)X" >actual &&
 	(
 		printf "XSigned-off-by\0A U Thor <author@example.com>\n" &&

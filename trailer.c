@@ -1124,9 +1124,10 @@ static void format_trailer_info(const struct process_trailer_options *opts,
 				strbuf_addbuf(out, opts->separator);
 			}
 			strbuf_addstr(out, item->value);
-			if (opts->separator) {
+			if (opts->separator)
 				strbuf_rtrim(out);
-			}
+			else
+				strbuf_addch(out, '\n');
 		}
 	}
 }
