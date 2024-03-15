@@ -1101,9 +1101,6 @@ static void format_trailer_info(const struct process_trailer_options *opts,
 			strbuf_addstr(&val, item->value);
 
 			if (!opts->filter || opts->filter(&tok, opts->filter_data)) {
-				if (opts->unfold)
-					unfold_value(&val);
-
 				if (opts->separator && out->len != origlen)
 					strbuf_addbuf(out, opts->separator);
 				if (!opts->value_only)
