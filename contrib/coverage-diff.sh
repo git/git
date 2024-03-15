@@ -74,8 +74,7 @@ do
 	sort >uncovered_lines.txt
 
 	comm -12 uncovered_lines.txt new_lines.txt |
-	sed -e 's/$/\)/' |
-	sed -e 's/^/ /' >uncovered_new_lines.txt
+	sed -e 's/$/\)/' -e 's/^/ /' >uncovered_new_lines.txt
 
 	grep -q '[^[:space:]]' <uncovered_new_lines.txt &&
 	echo $file >>coverage-data.txt &&
@@ -91,11 +90,7 @@ cat coverage-data.txt
 
 echo "Commits introducing uncovered code:"
 
-commit_list=$(cat coverage-data.txt |
-	grep -E '^[0-9a-f]{7,} ' |
-	awk '{print $1;}' |
-	sort |
-	uniq)
+commit_list=$(awk '/^[0-9a-f]{7,}/ { print $1 }' coverage-data.txt | sort -u)
 
 (
 	for commit in $commit_list
