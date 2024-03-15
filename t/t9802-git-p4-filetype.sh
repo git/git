@@ -175,7 +175,7 @@ test_expect_success 'keyword file create' '
 		cp k-text-k k-text-ko &&
 		p4 add -t text+ko k-text-ko &&
 
-		cat k-text-k | iconv -f ascii -t utf-16 >k-utf16-k &&
+		iconv -f ascii -t utf-16 <k-text-k >k-utf16-k &&
 		p4 add -t utf16+k k-utf16-k &&
 
 		cp k-utf16-k k-utf16-ko &&

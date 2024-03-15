@@ -236,7 +236,7 @@ EOF
 
 test_expect_success 'set up faked signed tag' '
 
-	cat signed-tag-import | git fast-import
+	git fast-import <signed-tag-import
 
 '
 
