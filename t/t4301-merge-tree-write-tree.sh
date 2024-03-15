@@ -313,7 +313,7 @@ test_expect_success 'rename/add handling' '
 		# First, check that the bar that appears at stage 3 does not
 		# correspond to an individual blob anywhere in history
 		#
-		hash=$(cat out | tr "\0" "\n" | head -n 3 | grep 3.bar | cut -f 2 -d " ") &&
+		hash=$(tr "\0" "\n" <out | head -n 3 | grep 3.bar | cut -f 2 -d " ") &&
 		git rev-list --objects --all >all_blobs &&
 		! grep $hash all_blobs &&
 
@@ -380,7 +380,7 @@ test_expect_success SYMLINKS 'rename/add, where add is a mode conflict' '
 		# First, check that the bar that appears at stage 3 does not
 		# correspond to an individual blob anywhere in history
 		#
-		hash=$(cat out | tr "\0" "\n" | head -n 3 | grep 3.bar | cut -f 2 -d " ") &&
+		hash=$(tr "\0" "\n" <out | head -n 3 | grep 3.bar | cut -f 2 -d " ") &&
 		git rev-list --objects --all >all_blobs &&
 		! grep $hash all_blobs &&
 
@@ -630,8 +630,8 @@ test_expect_success 'mod6: chains of rename/rename(1to2) and add/add via collidi
 		# conflict entries do not appear as individual blobs anywhere
 		# in history.
 		#
-		hash1=$(cat out | tr "\0" "\n" | head | grep 2.four | cut -f 2 -d " ") &&
-		hash2=$(cat out | tr "\0" "\n" | head | grep 3.two | cut -f 2 -d " ") &&
+		hash1=$(tr "\0" "\n" <out | head | grep 2.four | cut -f 2 -d " ") &&
+		hash2=$(tr "\0" "\n" <out | head | grep 3.two | cut -f 2 -d " ") &&
 		git rev-list --objects --all >all_blobs &&
 		! grep $hash1 all_blobs &&
 		! grep $hash2 all_blobs &&
