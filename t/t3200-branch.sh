@@ -576,7 +576,7 @@ EOF
 
 	# ...and that the comments for those sections are also
 	# preserved.
-	cat config.branch | sed "s/\"source\"/\"dest\"/" >expect &&
+	sed "s/\"source\"/\"dest\"/" config.branch >expect &&
 	sed -n -e "/Note the lack/,\$p" .git/config >actual &&
 	test_cmp expect actual
 '
