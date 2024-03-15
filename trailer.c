@@ -144,38 +144,6 @@ static char last_non_space_char(const char *s)
 	return '\0';
 }
 
-static void print_tok_val(struct strbuf *out, const char *tok, const char *val)
-{
-	char c;
-
-	if (!tok) {
-		strbuf_addf(out, "%s\n", val);
-		return;
-	}
-
-	c = last_non_space_char(tok);
-	if (!c)
-		return;
-	if (strchr(separators, c))
-		strbuf_addf(out, "%s%s\n", tok, val);
-	else
-		strbuf_addf(out, "%s%c %s\n", tok, separators[0], val);
-}
-
-void format_trailers(const struct process_trailer_options *opts,
-		     struct list_head *trailers,
-		     struct strbuf *out)
-{
-	struct list_head *pos;
-	struct trailer_item *item;
-	list_for_each(pos, trailers) {
-		item = list_entry(pos, struct trailer_item, list);
-		if ((!opts->trim_empty || strlen(item->value) > 0) &&
-		    (!opts->only_trailers || item->token))
-			print_tok_val(out, item->token, item->value);
-	}
-}
-
 static struct trailer_item *trailer_from_arg(struct arg_item *arg_tok)
 {
 	struct trailer_item *new_item = xcalloc(1, sizeof(*new_item));
@@ -1084,9 +1052,9 @@ void trailer_info_release(struct trailer_info *info)
 	free(info->trailers);
 }
 
-static void format_trailer_info(const struct process_trailer_options *opts,
-				struct list_head *trailers,
-				struct strbuf *out)
+void format_trailer_info(const struct process_trailer_options *opts,
+			 struct list_head *trailers,
+			 struct strbuf *out)
 {
 	size_t origlen = out->len;
 	struct list_head *pos;
@@ -1100,6 +1068,15 @@ static void format_trailer_info(const struct process_trailer_options *opts,
 			strbuf_addstr(&tok, item->token);
 			strbuf_addstr(&val, item->value);
 
+			/*
+			 * Skip key/value pairs where the value was empty. This
+			 * can happen from trailers specified without a
+			 * separator, like `--trailer "Reviewed-by"` (no
+			 * corresponding value).
+			 */
+			if (opts->trim_empty && !strlen(item->value))
+				continue;
+
 			if (!opts->filter || opts->filter(&tok, opts->filter_data)) {
 				if (opts->separator && out->len != origlen)
 					strbuf_addbuf(out, opts->separator);
@@ -1108,8 +1085,11 @@ static void format_trailer_info(const struct process_trailer_options *opts,
 				if (!opts->key_only && !opts->value_only) {
 					if (opts->key_value_separator)
 						strbuf_addbuf(out, opts->key_value_separator);
-					else
-						strbuf_addstr(out, ": ");
+					else {
+						char c = last_non_space_char(tok.buf);
+						if (c && !strchr(separators, c))
+							strbuf_addf(out, "%c ", separators[0]);
+					}
 				}
 				if (!opts->key_only)
 					strbuf_addbuf(out, &val);

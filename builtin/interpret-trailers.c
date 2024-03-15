@@ -171,7 +171,7 @@ static void interpret_trailers(const struct process_trailer_options *opts,
 	}
 
 	/* Print trailer block. */
-	format_trailers(opts, &head, &trailer_block);
+	format_trailer_info(opts, &head, &trailer_block);
 	free_trailers(&head);
 	fwrite(trailer_block.buf, 1, trailer_block.len, outfile);
 	strbuf_release(&trailer_block);
