@@ -75,13 +75,13 @@ test_expect_success 'git branch HEAD should fail' '
 	test_must_fail git branch HEAD
 '
 
-cat >expect <<EOF
-$HEAD refs/heads/d/e/f@{0}: branch: Created from main
-EOF
 test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
 	test_ref_exists refs/heads/d/e/f &&
+	cat >expect <<-EOF &&
+	$HEAD refs/heads/d/e/f@{0}: branch: Created from main
+	EOF
 	git reflog show --no-abbrev-commit refs/heads/d/e/f >actual &&
 	test_cmp expect actual
 '
@@ -440,10 +440,10 @@ test_expect_success 'git branch --list -v with --abbrev' '
 
 test_expect_success 'git branch --column' '
 	COLUMNS=81 git branch --column=column >actual &&
-	cat >expect <<\EOF &&
-  a/b/c   bam     foo     l     * main    n       o/p     r
-  abc     bar     j/k     m/m     mb      o/o     q       topic
-EOF
+	cat >expect <<-\EOF &&
+	  a/b/c   bam     foo     l     * main    n       o/p     r
+	  abc     bar     j/k     m/m     mb      o/o     q       topic
+	EOF
 	test_cmp expect actual
 '
 
@@ -453,25 +453,25 @@ test_expect_success 'git branch --column with an extremely long branch name' '
 	test_when_finished "git branch -d $long" &&
 	git branch $long &&
 	COLUMNS=80 git branch --column=column >actual &&
-	cat >expect <<EOF &&
-  a/b/c
-  abc
-  bam
-  bar
-  foo
-  j/k
-  l
-  m/m
-* main
-  mb
-  n
-  o/o
-  o/p
-  q
-  r
-  topic
-  $long
-EOF
+	cat >expect <<-EOF &&
+	  a/b/c
+	  abc
+	  bam
+	  bar
+	  foo
+	  j/k
+	  l
+	  m/m
+	* main
+	  mb
+	  n
+	  o/o
+	  o/p
+	  q
+	  r
+	  topic
+	  $long
+	EOF
 	test_cmp expect actual
 '
 
@@ -481,10 +481,10 @@ test_expect_success 'git branch with column.*' '
 	COLUMNS=80 git branch >actual &&
 	git config --unset column.branch &&
 	git config --unset column.ui &&
-	cat >expect <<\EOF &&
-  a/b/c   bam   foo   l   * main   n     o/p   r
-  abc     bar   j/k   m/m   mb     o/o   q     topic
-EOF
+	cat >expect <<-\EOF &&
+	  a/b/c   bam   foo   l   * main   n     o/p   r
+	  abc     bar   j/k   m/m   mb     o/o   q     topic
+	EOF
 	test_cmp expect actual
 '
 
@@ -496,39 +496,36 @@ test_expect_success 'git branch -v with column.ui ignored' '
 	git config column.ui column &&
 	COLUMNS=80 git branch -v | cut -c -8 | sed "s/ *$//" >actual &&
 	git config --unset column.ui &&
-	cat >expect <<\EOF &&
-  a/b/c
-  abc
-  bam
-  bar
-  foo
-  j/k
-  l
-  m/m
-* main
-  mb
-  n
-  o/o
-  o/p
-  q
-  r
-  topic
-EOF
+	cat >expect <<-\EOF &&
+	  a/b/c
+	  abc
+	  bam
+	  bar
+	  foo
+	  j/k
+	  l
+	  m/m
+	* main
+	  mb
+	  n
+	  o/o
+	  o/p
+	  q
+	  r
+	  topic
+	EOF
 	test_cmp expect actual
 '
 
-mv .git/config .git/config-saved
-
 test_expect_success DEFAULT_REPO_FORMAT 'git branch -m q q2 without config should succeed' '
+	test_when_finished mv .git/config-saved .git/config &&
+	mv .git/config .git/config-saved &&
 	git branch -m q q2 &&
 	git branch -m q2 q
 '
 
-mv .git/config-saved .git/config
-
-git config branch.s/s.dummy Hello
-
 test_expect_success 'git branch -m s/s s should work when s/t is deleted' '
+	git config branch.s/s.dummy Hello &&
 	git branch --create-reflog s/s &&
 	git reflog exists refs/heads/s/s &&
 	git branch --create-reflog s/t &&
@@ -1112,14 +1109,14 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 	test_cmp expect actual
 "
 
-# Keep this test last, as it changes the current branch
-cat >expect <<EOF
-$HEAD refs/heads/g/h/i@{0}: branch: Created from main
-EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
+	test_when_finished git checkout main &&
 	GIT_COMMITTER_DATE="2005-05-26 23:30" \
 	git checkout -b g/h/i -l main &&
 	test_ref_exists refs/heads/g/h/i &&
+	cat >expect <<-EOF &&
+	$HEAD refs/heads/g/h/i@{0}: branch: Created from main
+	EOF
 	git reflog show --no-abbrev-commit refs/heads/g/h/i >actual &&
 	test_cmp expect actual
 '
@@ -1694,6 +1691,16 @@ test_expect_success '--track overrides branch.autoSetupMerge' '
 	git branch --no-track foo5 my1 &&
 	test_cmp_config "" --default "" branch.foo5.remote &&
 	test_cmp_config "" --default "" branch.foo5.merge
+'
+
+test_expect_success 'errors if given a bad branch name' '
+	cat <<-\EOF >expect &&
+	fatal: '\''foo..bar'\'' is not a valid branch name
+	hint: See `man git check-ref-format`
+	hint: Disable this message with "git config advice.refSyntax false"
+	EOF
+	test_must_fail git branch foo..bar >actual 2>&1 &&
+	test_cmp expect actual
 '
 
 test_done

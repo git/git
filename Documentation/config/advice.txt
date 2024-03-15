@@ -2,27 +2,27 @@ advice.*::
 	These variables control various optional help messages designed to
 	aid new users.  When left unconfigured, Git will give the message
 	alongside instructions on how to squelch it.  You can tell Git
-	that you do not need the help message by setting these to 'false':
+	that you do not need the help message by setting these to `false`:
 +
 --
 	addEmbeddedRepo::
-		Advice on what to do when you've accidentally added one
+		Shown when the user accidentally adds one
 		git repo inside of another.
 	addEmptyPathspec::
-		Advice shown if a user runs the add command without providing
+		Shown when the user runs `git add` without providing
 		the pathspec parameter.
 	addIgnoredFile::
-		Advice shown if a user attempts to add an ignored file to
+		Shown when the user attempts to add an ignored file to
 		the index.
 	amWorkDir::
-		Advice that shows the location of the patch file when
-		linkgit:git-am[1] fails to apply it.
+		Shown when linkgit:git-am[1] fails to apply a patch
+		file, to tell the user the location of the file.
 	ambiguousFetchRefspec::
-		Advice shown when a fetch refspec for multiple remotes maps to
+		Shown when a fetch refspec for multiple remotes maps to
 		the same remote-tracking branch namespace and causes branch
 		tracking set-up to fail.
 	checkoutAmbiguousRemoteBranchName::
-		Advice shown when the argument to
+		Shown when the argument to
 		linkgit:git-checkout[1] and linkgit:git-switch[1]
 		ambiguously resolves to a
 		remote tracking branch on more than one remote in
@@ -33,31 +33,31 @@ advice.*::
 		to be used by default in some situations where this
 		advice would be printed.
 	commitBeforeMerge::
-		Advice shown when linkgit:git-merge[1] refuses to
+		Shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwriting local changes.
 	detachedHead::
-		Advice shown when you used
+		Shown when the user uses
 		linkgit:git-switch[1] or linkgit:git-checkout[1]
-		to move to the detached HEAD state, to instruct how to
-		create a local branch after the fact.
+		to move to the detached HEAD state, to tell the user how
+		to create a local branch after the fact.
 	diverging::
-		Advice shown when a fast-forward is not possible.
+		Shown when a fast-forward is not possible.
 	fetchShowForcedUpdates::
-		Advice shown when linkgit:git-fetch[1] takes a long time
+		Shown when linkgit:git-fetch[1] takes a long time
 		to calculate forced updates after ref updates, or to warn
 		that the check is disabled.
 	forceDeleteBranch::
-		Advice shown when a user tries to delete a not fully merged
+		Shown when the user tries to delete a not fully merged
 		branch without the force option set.
 	ignoredHook::
-		Advice shown if a hook is ignored because the hook is not
+		Shown when a hook is ignored because the hook is not
 		set as executable.
 	implicitIdentity::
-		Advice on how to set your identity configuration when
-		your information is guessed from the system username and
-		domain name.
+		Shown when the user's information is guessed from the
+		system username and domain name, to tell the user how to
+		set their identity configuration.
 	nestedTag::
-		Advice shown if a user attempts to recursively tag a tag object.
+		Shown when a user attempts to recursively tag a tag object.
 	pushAlreadyExists::
 		Shown when linkgit:git-push[1] rejects an update that
 		does not qualify for fast-forwarding (e.g., a tag.)
@@ -71,12 +71,12 @@ advice.*::
 		object that is not a commit-ish, or make the remote
 		ref point at an object that is not a commit-ish.
 	pushNonFFCurrent::
-		Advice shown when linkgit:git-push[1] fails due to a
+		Shown when linkgit:git-push[1] fails due to a
 		non-fast-forward update to the current branch.
 	pushNonFFMatching::
-		Advice shown when you ran linkgit:git-push[1] and pushed
-		'matching refs' explicitly (i.e. you used ':', or
-		specified a refspec that isn't your current branch) and
+		Shown when the user ran linkgit:git-push[1] and pushed
+		"matching refs" explicitly (i.e. used `:`, or
+		specified a refspec that isn't the current branch) and
 		it resulted in a non-fast-forward error.
 	pushRefNeedsUpdate::
 		Shown when linkgit:git-push[1] rejects a forced update of
@@ -87,25 +87,28 @@ advice.*::
 		guess based on the source and destination refs what
 		remote ref namespace the source belongs in, but where
 		we can still suggest that the user push to either
-		refs/heads/* or refs/tags/* based on the type of the
+		`refs/heads/*` or `refs/tags/*` based on the type of the
 		source object.
 	pushUpdateRejected::
-		Set this variable to 'false' if you want to disable
-		'pushNonFFCurrent', 'pushNonFFMatching', 'pushAlreadyExists',
-		'pushFetchFirst', 'pushNeedsForce', and 'pushRefNeedsUpdate'
+		Set this variable to `false` if you want to disable
+		`pushNonFFCurrent`, `pushNonFFMatching`, `pushAlreadyExists`,
+		`pushFetchFirst`, `pushNeedsForce`, and `pushRefNeedsUpdate`
 		simultaneously.
+	refSyntax::
+		Shown when the user provides an illegal ref name, to
+		tell the user about the ref syntax documentation.
 	resetNoRefresh::
-		Advice to consider using the `--no-refresh` option to
-		linkgit:git-reset[1] when the command takes more than 2 seconds
-		to refresh the index after reset.
+		Shown when linkgit:git-reset[1] takes more than 2
+		seconds to refresh the index after reset, to tell the user
+		that they can use the `--no-refresh` option.
 	resolveConflict::
-		Advice shown by various commands when conflicts
+		Shown by various commands when conflicts
 		prevent the operation from being performed.
 	rmHints::
-		In case of failure in the output of linkgit:git-rm[1],
-		show directions on how to proceed from the current state.
+		Shown on failure in the output of linkgit:git-rm[1], to
+		give directions on how to proceed from the current state.
 	sequencerInUse::
-		Advice shown when a sequencer command is already in progress.
+		Shown when a sequencer command is already in progress.
 	skippedCherryPicks::
 		Shown when linkgit:git-rebase[1] skips a commit that has already
 		been cherry-picked onto the upstream branch.
@@ -123,30 +126,30 @@ advice.*::
 		by linkgit:git-switch[1] or
 		linkgit:git-checkout[1] when switching branches.
 	statusUoption::
-		Advise to consider using the `-u` option to linkgit:git-status[1]
-		when the command takes more than 2 seconds to enumerate untracked
-		files.
+		Shown when linkgit:git-status[1] takes more than 2
+		seconds to enumerate untracked files, to tell the user that
+		they can use the `-u` option.
 	submoduleAlternateErrorStrategyDie::
-		Advice shown when a submodule.alternateErrorStrategy option
+		Shown when a submodule.alternateErrorStrategy option
 		configured to "die" causes a fatal error.
 	submoduleMergeConflict::
 		Advice shown when a non-trivial submodule merge conflict is
 		encountered.
 	submodulesNotUpdated::
-		Advice shown when a user runs a submodule command that fails
+		Shown when a user runs a submodule command that fails
 		because `git submodule update --init` was not run.
 	suggestDetachingHead::
-		Advice shown when linkgit:git-switch[1] refuses to detach HEAD
+		Shown when linkgit:git-switch[1] refuses to detach HEAD
 		without the explicit `--detach` option.
 	updateSparsePath::
-		Advice shown when either linkgit:git-add[1] or linkgit:git-rm[1]
+		Shown when either linkgit:git-add[1] or linkgit:git-rm[1]
 		is asked to update index entries outside the current sparse
 		checkout.
 	waitingForEditor::
-		Print a message to the terminal whenever Git is waiting for
-		editor input from the user.
+		Shown when Git is waiting for editor input. Relevant
+		when e.g. the editor is not launched inside the terminal.
 	worktreeAddOrphan::
-		Advice shown when a user tries to create a worktree from an
-		invalid reference, to instruct how to create a new unborn
+		Shown when the user tries to create a worktree from an
+		invalid reference, to tell the user how to create a new unborn
 		branch instead.
 --
