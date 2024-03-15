@@ -1085,21 +1085,21 @@ void trailer_info_release(struct trailer_info *info)
 }
 
 static void format_trailer_info(const struct process_trailer_options *opts,
-				const struct trailer_info *info,
+				struct list_head *trailers,
 				struct strbuf *out)
 {
 	size_t origlen = out->len;
-	size_t i;
+	struct list_head *pos;
+	struct trailer_item *item;
 
-	for (i = 0; i < info->trailer_nr; i++) {
-		char *trailer = info->trailers[i];
-		ssize_t separator_pos = find_separator(trailer, separators);
-
-		if (separator_pos >= 1) {
+	list_for_each(pos, trailers) {
+		item = list_entry(pos, struct trailer_item, list);
+		if (item->token) {
 			struct strbuf tok = STRBUF_INIT;
 			struct strbuf val = STRBUF_INIT;
+			strbuf_addstr(&tok, item->token);
+			strbuf_addstr(&val, item->value);
 
-			parse_trailer(&tok, &val, NULL, trailer, separator_pos);
 			if (!opts->filter || opts->filter(&tok, opts->filter_data)) {
 				if (opts->unfold)
 					unfold_value(&val);
@@ -1126,13 +1126,12 @@ static void format_trailer_info(const struct process_trailer_options *opts,
 			if (opts->separator && out->len != origlen) {
 				strbuf_addbuf(out, opts->separator);
 			}
-			strbuf_addstr(out, trailer);
+			strbuf_addstr(out, item->value);
 			if (opts->separator) {
 				strbuf_rtrim(out);
 			}
 		}
 	}
-
 }
 
 void format_trailers_from_commit(const struct process_trailer_options *opts,
@@ -1151,7 +1150,7 @@ void format_trailers_from_commit(const struct process_trailer_options *opts,
 		strbuf_add(out, msg + info.trailer_block_start,
 			   info.trailer_block_end - info.trailer_block_start);
 	} else
-		format_trailer_info(opts, &info, out);
+		format_trailer_info(opts, &trailer_objects, out);
 
 	free_trailers(&trailer_objects);
 	trailer_info_release(&info);
