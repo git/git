@@ -663,6 +663,41 @@ test_expect_success 'diff --default-prefix overrides diff.mnemonicprefix' '
 	check_prefix actual a/file0 b/file0
 '
 
+test_expect_success 'diff respects diff.srcprefix' '
+	git -c diff.srcprefix=x/ diff >actual &&
+	check_prefix actual x/file0 b/file0
+'
+
+test_expect_success 'diff respects diff.dstprefix' '
+	git -c diff.dstprefix=y/ diff >actual &&
+	check_prefix actual a/file0 y/file0
+'
+
+test_expect_success 'diff --src-prefix overrides diff.srcprefix' '
+	git -c diff.srcprefix=y/ diff --src-prefix=z/ >actual &&
+	check_prefix actual z/file0 b/file0
+'
+
+test_expect_success 'diff --dst-prefix overrides diff.dstprefix' '
+	git -c diff.dstprefix=y/ diff --dst-prefix=z/ >actual &&
+	check_prefix actual a/file0 z/file0
+'
+
+test_expect_success 'diff.{src,dst}prefix ignored with diff.noprefix' '
+	git -c diff.dstprefix=y/ -c diff.srcprefix=x/ -c diff.noprefix diff >actual &&
+	check_prefix actual file0 file0
+'
+
+test_expect_success 'diff.{src,dst}prefix ignored with diff.mnemonicprefix' '
+	git -c diff.dstprefix=x/ -c diff.srcprefix=y/ -c diff.mnemonicprefix diff >actual &&
+	check_prefix actual i/file0 w/file0
+'
+
+test_expect_success 'diff.{src,dst}prefix ignored with --default-prefix' '
+	git -c diff.dstprefix=x/ -c diff.srcprefix=y/ diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
 test_expect_success 'diff --no-renames cannot be abbreviated' '
 	test_expect_code 129 git diff --no-rename >actual 2>error &&
 	test_must_be_empty actual &&
