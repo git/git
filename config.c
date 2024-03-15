@@ -3043,12 +3043,9 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 			break;
 		}
 
-	if (comment) {
-		if (strchr(comment, '\n'))
-			die(_("multi-line comments are not permitted: '%s'"), comment);
-		else
-			strbuf_addf(&sb, "%s #%s\n", quote, comment);
-	} else
+	if (comment)
+		strbuf_addf(&sb, "%s %s\n", quote, comment);
+	else
 		strbuf_addf(&sb, "%s\n", quote);
 
 	ret = write_in_full(fd, sb.buf, sb.len);
@@ -3213,6 +3210,17 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	char *contents = NULL;
 	size_t contents_sz;
 	struct config_store_data store = CONFIG_STORE_INIT;
+
+	if (comment) {
+		/*
+		 * The front-end must have massaged the comment string
+		 * properly before calling us.
+		 */
+		if (strchr(comment, '\n'))
+			BUG("multi-line comments are not permitted: '%s'", comment);
+		if (comment[0] != '#')
+			BUG("comment should begin with '#': '%s'", comment);
+	}
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);

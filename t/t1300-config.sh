@@ -71,16 +71,17 @@ cat > expect << EOF
 [section]
 	Movie = BadPhysics
 	UPPERCASE = true
-	penguin = gentoo #Pygoscelis papua
-	disposition = peckish #find fish
-	foo = bar ## abc
+	penguin = gentoo # Pygoscelis papua
+	disposition = peckish # find fish
+	foo = bar #abc
 [Sections]
 	WhatEver = Second
 EOF
+
 test_expect_success 'append comments' '
 	git config --replace-all --comment="Pygoscelis papua" section.penguin gentoo &&
 	git config --comment="find fish" section.disposition peckish &&
-	git config --comment="# abc" section.foo bar &&
+	git config --comment="#abc" section.foo bar &&
 	test_cmp expect .git/config
 '
 

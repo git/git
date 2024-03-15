@@ -174,7 +174,7 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
 	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)")),
 	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
-	OPT_STRING(0, "comment", &comment, N_("value"), N_("human-readable comment string (# will be prepended automatically)")),
+	OPT_STRING(0, "comment", &comment, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
 	OPT_END(),
 };
 
@@ -800,9 +800,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 
 	if (comment &&
-		!(actions & (ACTION_ADD|ACTION_SET|ACTION_SET_ALL|ACTION_REPLACE_ALL))) {
-			error(_("--comment is only applicable to add/set/replace operations"));
-			usage_builtin_config();
+	    !(actions & (ACTION_ADD|ACTION_SET|ACTION_SET_ALL|ACTION_REPLACE_ALL))) {
+		error(_("--comment is only applicable to add/set/replace operations"));
+		usage_builtin_config();
 	}
 
 	/* check usage of --fixed-value */
@@ -839,6 +839,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 
 		flags |= CONFIG_FLAGS_FIXED_VALUE;
+	}
+
+	if (comment) {
+		if (strchr(comment, '\n'))
+			die(_("no multi-line comment allowed: '%s'"), comment);
+		if (comment[0] != '#')
+			comment = xstrfmt("# %s", comment);
 	}
 
 	if (actions & PAGING_ACTIONS)
