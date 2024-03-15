@@ -3044,7 +3044,7 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 		}
 
 	if (comment)
-		strbuf_addf(&sb, "%s %s\n", quote, comment);
+		strbuf_addf(&sb, "%s%s\n", quote, comment);
 	else
 		strbuf_addf(&sb, "%s\n", quote);
 
@@ -3173,6 +3173,62 @@ void git_config_set(const char *key, const char *value)
 }
 
 /*
+ * The ownership rule is that the caller will own the string
+ * if it receives a piece of memory different from what it passed
+ * as the parameter.
+ */
+const char *git_config_prepare_comment_string(const char *comment)
+{
+	size_t leading_blanks;
+
+	if (!comment)
+		return NULL;
+
+	if (strchr(comment, '\n'))
+		die(_("no multi-line comment allowed: '%s'"), comment);
+
+	/*
+	 * If it begins with one or more leading whitespace characters
+	 * followed by '#", the comment string is used as-is.
+	 *
+	 * If it begins with '#', a SP is inserted between the comment
+	 * and the value the comment is about.
+	 *
+	 * Otherwise, the value is followed by a SP followed by '#'
+	 * followed by SP and then the comment string comes.
+	 */
+
+	leading_blanks = strspn(comment, " \t");
+	if (leading_blanks && comment[leading_blanks] == '#')
+		; /* use it as-is */
+	else if (comment[0] == '#')
+		comment = xstrfmt(" %s", comment);
+	else
+		comment = xstrfmt(" # %s", comment);
+
+	return comment;
+}
+
+static void validate_comment_string(const char *comment)
+{
+	size_t leading_blanks;
+
+	if (!comment)
+		return;
+	/*
+	 * The front-end must have massaged the comment string
+	 * properly before calling us.
+	 */
+	if (strchr(comment, '\n'))
+		BUG("multi-line comments are not permitted: '%s'", comment);
+
+	leading_blanks = strspn(comment, " \t");
+	if (!leading_blanks || comment[leading_blanks] != '#')
+		BUG("comment must begin with one or more SP followed by '#': '%s'",
+		    comment);
+}
+
+/*
  * If value==NULL, unset in (remove from) config,
  * if value_pattern!=NULL, disregard key/value pairs where value does not match.
  * if value_pattern==CONFIG_REGEX_NONE, do not match any existing values
@@ -3211,16 +3267,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	size_t contents_sz;
 	struct config_store_data store = CONFIG_STORE_INIT;
 
-	if (comment) {
-		/*
-		 * The front-end must have massaged the comment string
-		 * properly before calling us.
-		 */
-		if (strchr(comment, '\n'))
-			BUG("multi-line comments are not permitted: '%s'", comment);
-		if (comment[0] != '#')
-			BUG("comment should begin with '#': '%s'", comment);
-	}
+	validate_comment_string(comment);
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);

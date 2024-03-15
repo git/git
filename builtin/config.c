@@ -841,12 +841,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		flags |= CONFIG_FLAGS_FIXED_VALUE;
 	}
 
-	if (comment) {
-		if (strchr(comment, '\n'))
-			die(_("no multi-line comment allowed: '%s'"), comment);
-		if (comment[0] != '#')
-			comment = xstrfmt("# %s", comment);
-	}
+	comment = git_config_prepare_comment_string(comment);
 
 	if (actions & PAGING_ACTIONS)
 		setup_auto_pager("config", 1);

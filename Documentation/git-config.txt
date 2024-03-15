@@ -89,9 +89,15 @@ OPTIONS
 
 --comment <message>::
 	Append a comment at the end of new or modified lines.
-	Unless _<message>_ begins with "#", a string "# " (hash
-	followed by a space) is prepended to it. The _<message>_ must not
-	contain linefeed characters (no multi-line comments are permitted).
+
+	If _<message>_ begins with one or more whitespaces followed
+	by "#", it is used as-is.  If it begins with "#", a space is
+	prepended before it is used.  Otherwise, a string " # " (a
+	space followed by a hash followed by a space) is prepended
+	to it.  And the resulting string is placed immediately after
+	the value defined for the variable.  The _<message>_ must
+	not contain linefeed characters (no multi-line comments are
+	permitted).
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
