@@ -34,6 +34,9 @@ UI, Workflows & Features
  * "git log --merge" learned to pay attention to CHERRY_PICK_HEAD and
    other kinds of *_HEAD pseudorefs.
 
+ * Platform specific tweaks for OS/390 has been added to
+   config.mak.uname.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -60,6 +63,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to iterate over refs with the reftable backend has seen
    some optimization.
+
+ * Uses of xwrite() helper have been audited and updated for better
+   error checking and simpler code.
 
 
 Fixes since v2.44
@@ -162,6 +168,11 @@ Fixes since v2.44
    like "git -C dir" etc.
    (merge 3574816d98 rj/complete-worktree-paths-fix later to maint).
 
+ * When git refuses to create a branch because the proposed branch
+   name is not a valid refname, an advice message is given to refer
+   the user to exact naming rules.
+   (merge 8fbd903e58 kh/branch-ref-syntax-advice later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -178,3 +189,4 @@ Fixes since v2.44
    (merge 40b8076462 ak/rebase-autosquash later to maint).
    (merge 3223204456 eg/add-uflags later to maint).
    (merge 5f78d52dce es/config-doc-sort-sections later to maint).
+   (merge 781fb7b4c2 as/option-names-in-messages later to maint).
