@@ -108,7 +108,7 @@ diff.mnemonicPrefix::
 `git diff --no-index a b`;;
 	compares two non-git things (1) and (2).
 
-diff.noprefix::
+diff.noPrefix::
 	If set, 'git diff' does not show any source or destination prefix.
 
 diff.srcPrefix::
