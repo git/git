@@ -202,7 +202,7 @@ endif::git-pull[]
 	destination of an explicit refspec; see `--prune`).
 
 ifndef::git-pull[]
---recurse-submodules[=yes|on-demand|no]::
+--recurse-submodules[=(yes|on-demand|no)]::
 	This option controls if and under what conditions new commits of
 	submodules should be fetched too. When recursing through submodules,
 	`git fetch` always attempts to fetch "changed" submodules, that is, a

@@ -9,7 +9,7 @@ git-send-email - Send a collection of patches as emails
 SYNOPSIS
 --------
 [verse]
-'git send-email' [<options>] <file|directory>...
+'git send-email' [<options>] (<file>|<directory>)...
 'git send-email' [<options>] <format-patch-options>
 'git send-email' --dump-aliases
 
@@ -278,7 +278,7 @@ must be used for each option.
 	if a username is not specified (with `--smtp-user` or `sendemail.smtpUser`),
 	then authentication is not attempted.
 
---smtp-debug=0|1::
+--smtp-debug=(0|1)::
 	Enable (1) or disable (0) debug output. If enabled, SMTP
 	commands and replies will be printed. Useful to debug TLS
 	connection and authentication problems.
@@ -301,7 +301,9 @@ must be used for each option.
 Automating
 ~~~~~~~~~~
 
---no-[to|cc|bcc]::
+--no-to::
+--no-cc::
+--no-bcc::
 	Clears any list of "To:", "Cc:", "Bcc:" addresses previously
 	set via config.
 
