@@ -31,16 +31,18 @@ static void test_prio_queue(int *input, int *result, size_t input_size)
 			get = prio_queue_get(&pq);
 			if (!check(peek == get))
 				return;
-			if(!check_int(result[j++], ==, show(get)))
-				test_msg("failed at result[] index %d", j-1);
+			if (!check_int(result[j], ==, show(get)))
+				test_msg("      j: %d", j);
+			j++;
 			break;
 		case DUMP:
 			while ((peek = prio_queue_peek(&pq))) {
 				get = prio_queue_get(&pq);
 				if (!check(peek == get))
 					return;
-				if(!check_int(result[j++], ==, show(get)))
-					test_msg("failed at result[] index %d", j-1);
+				if (!check_int(result[j], ==, show(get)))
+					test_msg("      j: %d", j);
+				j++;
 			}
 			break;
 		case STACK:
