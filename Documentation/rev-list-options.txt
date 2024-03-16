@@ -316,12 +316,12 @@ list.
 With `--pretty` format other than `oneline` and `reference` (for obvious reasons),
 this causes the output to have two extra lines of information
 taken from the reflog.  The reflog designator in the output may be shown
-as `ref@{Nth}` (where `Nth` is the reverse-chronological index in the
-reflog) or as `ref@{timestamp}` (with the timestamp for that entry),
+as `ref@{<Nth>}` (where _<Nth>_ is the reverse-chronological index in the
+reflog) or as `ref@{<timestamp>}` (with the _<timestamp>_ for that entry),
 depending on a few rules:
 +
 --
-1. If the starting point is specified as `ref@{Nth}`, show the index
+1. If the starting point is specified as `ref@{<Nth>}`, show the index
    format.
 +
 2. If the starting point was specified as `ref@{now}`, show the

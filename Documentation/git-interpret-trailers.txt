@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git interpret-trailers' [--in-place] [--trim-empty]
-			[(--trailer (<key>|<keyAlias>)[(=|:)<value>])...]
+			[(--trailer (<key>|<key-alias>)[(=|:)<value>])...]
 			[--parse] [<file>...]
 
 DESCRIPTION
@@ -67,9 +67,9 @@ key: value
 This means that the trimmed <key> and <value> will be separated by
 `': '` (one colon followed by one space).
 
-For convenience, a <keyAlias> can be configured to make using `--trailer`
+For convenience, a <key-alias> can be configured to make using `--trailer`
 shorter to type on the command line. This can be configured using the
-'trailer.<keyAlias>.key' configuration variable. The <keyAlias> must be a prefix
+'trailer.<key-alias>.key' configuration variable. The <keyAlias> must be a prefix
 of the full <key> string, although case sensitivity does not matter. For
 example, if you have
 
