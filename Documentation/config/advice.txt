@@ -56,6 +56,8 @@ advice.*::
 		Shown when the user's information is guessed from the
 		system username and domain name, to tell the user how to
 		set their identity configuration.
+	mergeConflict::
+		Shown when various commands stop because of conflicts.
 	nestedTag::
 		Shown when a user attempts to recursively tag a tag object.
 	pushAlreadyExists::
