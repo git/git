@@ -67,6 +67,9 @@ Performance, Internal Implementation, Development Support etc.
  * Uses of xwrite() helper have been audited and updated for better
    error checking and simpler code.
 
+ * Some trace2 events that lacked def_param have learned to show it,
+   enriching the output.
+
 
 Fixes since v2.44
 -----------------
@@ -173,6 +176,10 @@ Fixes since v2.44
    the user to exact naming rules.
    (merge 8fbd903e58 kh/branch-ref-syntax-advice later to maint).
 
+ * Code simplification by getting rid of code that sets an environment
+   variable that is no longer used.
+   (merge 72a8d3f027 pw/rebase-i-ignore-cherry-pick-help-environment later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -190,3 +197,4 @@ Fixes since v2.44
    (merge 3223204456 eg/add-uflags later to maint).
    (merge 5f78d52dce es/config-doc-sort-sections later to maint).
    (merge 781fb7b4c2 as/option-names-in-messages later to maint).
+   (merge 51d41dc243 jk/doc-remote-helpers-markup-fix later to maint).
