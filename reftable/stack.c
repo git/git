@@ -737,8 +737,9 @@ int reftable_addition_add(struct reftable_addition *add,
 	struct strbuf tab_file_name = STRBUF_INIT;
 	struct strbuf next_name = STRBUF_INIT;
 	struct reftable_writer *wr = NULL;
+	struct tempfile *tab_file = NULL;
 	int err = 0;
-	int tab_fd = 0;
+	int tab_fd;
 
 	strbuf_reset(&next_name);
 	format_name(&next_name, add->next_update_index, add->next_update_index);
@@ -746,17 +747,20 @@ int reftable_addition_add(struct reftable_addition *add,
 	stack_filename(&temp_tab_file_name, add->stack, next_name.buf);
 	strbuf_addstr(&temp_tab_file_name, ".temp.XXXXXX");
 
-	tab_fd = mkstemp(temp_tab_file_name.buf);
-	if (tab_fd < 0) {
+	tab_file = mks_tempfile(temp_tab_file_name.buf);
+	if (!tab_file) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 	if (add->stack->config.default_permissions) {
-		if (chmod(temp_tab_file_name.buf, add->stack->config.default_permissions)) {
+		if (chmod(get_tempfile_path(tab_file),
+			  add->stack->config.default_permissions)) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
 	}
+	tab_fd = get_tempfile_fd(tab_file);
+
 	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd,
 				 &add->stack->config);
 	err = write_table(wr, arg);
@@ -771,14 +775,13 @@ int reftable_addition_add(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 
-	err = close(tab_fd);
-	tab_fd = 0;
+	err = close_tempfile_gently(tab_file);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	err = stack_check_addition(add->stack, temp_tab_file_name.buf);
+	err = stack_check_addition(add->stack, get_tempfile_path(tab_file));
 	if (err < 0)
 		goto done;
 
@@ -789,14 +792,13 @@ int reftable_addition_add(struct reftable_addition *add,
 
 	format_name(&next_name, wr->min_update_index, wr->max_update_index);
 	strbuf_addstr(&next_name, ".ref");
-
 	stack_filename(&tab_file_name, add->stack, next_name.buf);
 
 	/*
 	  On windows, this relies on rand() picking a unique destination name.
 	  Maybe we should do retry loop as well?
 	 */
-	err = rename(temp_tab_file_name.buf, tab_file_name.buf);
+	err = rename_tempfile(&tab_file, tab_file_name.buf);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -806,14 +808,7 @@ int reftable_addition_add(struct reftable_addition *add,
 			    add->new_tables_cap);
 	add->new_tables[add->new_tables_len++] = strbuf_detach(&next_name, NULL);
 done:
-	if (tab_fd > 0) {
-		close(tab_fd);
-		tab_fd = 0;
-	}
-	if (temp_tab_file_name.len > 0) {
-		unlink(temp_tab_file_name.buf);
-	}
-
+	delete_tempfile(&tab_file);
 	strbuf_release(&temp_tab_file_name);
 	strbuf_release(&tab_file_name);
 	strbuf_release(&next_name);
@@ -832,51 +827,56 @@ uint64_t reftable_stack_next_update_index(struct reftable_stack *st)
 
 static int stack_compact_locked(struct reftable_stack *st,
 				size_t first, size_t last,
-				struct strbuf *temp_tab,
-				struct reftable_log_expiry_config *config)
+				struct reftable_log_expiry_config *config,
+				struct tempfile **tab_file_out)
 {
 	struct strbuf next_name = STRBUF_INIT;
-	int tab_fd = -1;
+	struct strbuf tab_file_path = STRBUF_INIT;
 	struct reftable_writer *wr = NULL;
-	int err = 0;
+	struct tempfile *tab_file;
+	int tab_fd, err = 0;
 
 	format_name(&next_name,
 		    reftable_reader_min_update_index(st->readers[first]),
 		    reftable_reader_max_update_index(st->readers[last]));
+	stack_filename(&tab_file_path, st, next_name.buf);
+	strbuf_addstr(&tab_file_path, ".temp.XXXXXX");
 
-	stack_filename(temp_tab, st, next_name.buf);
-	strbuf_addstr(temp_tab, ".temp.XXXXXX");
+	tab_file = mks_tempfile(tab_file_path.buf);
+	if (!tab_file) {
+		err = REFTABLE_IO_ERROR;
+		goto done;
+	}
+	tab_fd = get_tempfile_fd(tab_file);
 
-	tab_fd = mkstemp(temp_tab->buf);
 	if (st->config.default_permissions &&
-	    chmod(temp_tab->buf, st->config.default_permissions) < 0) {
+	    chmod(get_tempfile_path(tab_file), st->config.default_permissions) < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd, &st->config);
-
+	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush,
+				 &tab_fd, &st->config);
 	err = stack_write_compact(st, wr, first, last, config);
 	if (err < 0)
 		goto done;
+
 	err = reftable_writer_close(wr);
 	if (err < 0)
 		goto done;
 
-	err = close(tab_fd);
-	tab_fd = 0;
+	err = close_tempfile_gently(tab_file);
+	if (err < 0)
+		goto done;
+
+	*tab_file_out = tab_file;
+	tab_file = NULL;
 
 done:
+	delete_tempfile(&tab_file);
 	reftable_writer_free(wr);
-	if (tab_fd > 0) {
-		close(tab_fd);
-		tab_fd = 0;
-	}
-	if (err != 0 && temp_tab->len > 0) {
-		unlink(temp_tab->buf);
-		strbuf_release(temp_tab);
-	}
 	strbuf_release(&next_name);
+	strbuf_release(&tab_file_path);
 	return err;
 }
 
@@ -983,212 +983,200 @@ static int stack_compact_range(struct reftable_stack *st,
 			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *expiry)
 {
-	char **delete_on_success = NULL, **subtable_locks = NULL, **listp = NULL;
-	struct strbuf temp_tab_file_name = STRBUF_INIT;
+	struct strbuf tables_list_buf = STRBUF_INIT;
 	struct strbuf new_table_name = STRBUF_INIT;
-	struct strbuf lock_file_name = STRBUF_INIT;
-	struct strbuf ref_list_contents = STRBUF_INIT;
 	struct strbuf new_table_path = STRBUF_INIT;
-	size_t i, j, compact_count;
-	int err = 0;
-	int have_lock = 0;
-	int lock_file_fd = -1;
-	int is_empty_table = 0;
+	struct strbuf table_name = STRBUF_INIT;
+	struct lock_file tables_list_lock = LOCK_INIT;
+	struct lock_file *table_locks = NULL;
+	struct tempfile *new_table = NULL;
+	int is_empty_table = 0, err = 0;
+	size_t i;
 
 	if (first > last || (!expiry && first == last)) {
 		err = 0;
 		goto done;
 	}
 
-	compact_count = last - first + 1;
-	REFTABLE_CALLOC_ARRAY(delete_on_success, compact_count + 1);
-	REFTABLE_CALLOC_ARRAY(subtable_locks, compact_count + 1);
-
 	st->stats.attempts++;
 
-	strbuf_reset(&lock_file_name);
-	strbuf_addstr(&lock_file_name, st->list_file);
-	strbuf_addstr(&lock_file_name, ".lock");
-
-	lock_file_fd =
-		open(lock_file_name.buf, O_EXCL | O_CREAT | O_WRONLY, 0666);
-	if (lock_file_fd < 0) {
-		if (errno == EEXIST) {
+	/*
+	 * Hold the lock so that we can read "tables.list" and lock all tables
+	 * which are part of the user-specified range.
+	 */
+	err = hold_lock_file_for_update(&tables_list_lock, st->list_file,
+					LOCK_NO_DEREF);
+	if (err < 0) {
+		if (errno == EEXIST)
 			err = 1;
-		} else {
+		else
 			err = REFTABLE_IO_ERROR;
-		}
 		goto done;
 	}
-	/* Don't want to write to the lock for now.  */
-	close(lock_file_fd);
-	lock_file_fd = -1;
 
-	have_lock = 1;
 	err = stack_uptodate(st);
-	if (err != 0)
+	if (err)
 		goto done;
 
-	for (i = first, j = 0; i <= last; i++) {
-		struct strbuf subtab_file_name = STRBUF_INIT;
-		struct strbuf subtab_lock = STRBUF_INIT;
-		int sublock_file_fd = -1;
+	/*
+	 * Lock all tables in the user-provided range. This is the slice of our
+	 * stack which we'll compact.
+	 */
+	REFTABLE_CALLOC_ARRAY(table_locks, last - first + 1);
+	for (i = first; i <= last; i++) {
+		stack_filename(&table_name, st, reader_name(st->readers[i]));
 
-		stack_filename(&subtab_file_name, st,
-			       reader_name(st->readers[i]));
-
-		strbuf_reset(&subtab_lock);
-		strbuf_addbuf(&subtab_lock, &subtab_file_name);
-		strbuf_addstr(&subtab_lock, ".lock");
-
-		sublock_file_fd = open(subtab_lock.buf,
-				       O_EXCL | O_CREAT | O_WRONLY, 0666);
-		if (sublock_file_fd >= 0) {
-			close(sublock_file_fd);
-		} else if (sublock_file_fd < 0) {
-			if (errno == EEXIST) {
+		err = hold_lock_file_for_update(&table_locks[i - first],
+						table_name.buf, LOCK_NO_DEREF);
+		if (err < 0) {
+			if (errno == EEXIST)
 				err = 1;
-			} else {
+			else
 				err = REFTABLE_IO_ERROR;
-			}
-		}
-
-		subtable_locks[j] = subtab_lock.buf;
-		delete_on_success[j] = subtab_file_name.buf;
-		j++;
-
-		if (err != 0)
-			goto done;
-	}
-
-	err = unlink(lock_file_name.buf);
-	if (err < 0)
-		goto done;
-	have_lock = 0;
-
-	err = stack_compact_locked(st, first, last, &temp_tab_file_name,
-				   expiry);
-	/* Compaction + tombstones can create an empty table out of non-empty
-	 * tables. */
-	is_empty_table = (err == REFTABLE_EMPTY_TABLE_ERROR);
-	if (is_empty_table) {
-		err = 0;
-	}
-	if (err < 0)
-		goto done;
-
-	lock_file_fd =
-		open(lock_file_name.buf, O_EXCL | O_CREAT | O_WRONLY, 0666);
-	if (lock_file_fd < 0) {
-		if (errno == EEXIST) {
-			err = 1;
-		} else {
-			err = REFTABLE_IO_ERROR;
-		}
-		goto done;
-	}
-	have_lock = 1;
-	if (st->config.default_permissions) {
-		if (chmod(lock_file_name.buf, st->config.default_permissions) < 0) {
-			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
-	}
 
-	format_name(&new_table_name, st->readers[first]->min_update_index,
-		    st->readers[last]->max_update_index);
-	strbuf_addstr(&new_table_name, ".ref");
-
-	stack_filename(&new_table_path, st, new_table_name.buf);
-
-	if (!is_empty_table) {
-		/* retry? */
-		err = rename(temp_tab_file_name.buf, new_table_path.buf);
+		/*
+		 * We need to close the lockfiles as we might otherwise easily
+		 * run into file descriptor exhaustion when we compress a lot
+		 * of tables.
+		 */
+		err = close_lock_file_gently(&table_locks[i - first]);
 		if (err < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
 	}
 
-	for (i = 0; i < first; i++) {
-		strbuf_addstr(&ref_list_contents, st->readers[i]->name);
-		strbuf_addstr(&ref_list_contents, "\n");
-	}
-	if (!is_empty_table) {
-		strbuf_addbuf(&ref_list_contents, &new_table_name);
-		strbuf_addstr(&ref_list_contents, "\n");
-	}
-	for (i = last + 1; i < st->merged->stack_len; i++) {
-		strbuf_addstr(&ref_list_contents, st->readers[i]->name);
-		strbuf_addstr(&ref_list_contents, "\n");
-	}
-
-	err = write_in_full(lock_file_fd, ref_list_contents.buf, ref_list_contents.len);
+	/*
+	 * We have locked all tables in our range and can thus release the
+	 * "tables.list" lock while compacting the locked tables. This allows
+	 * concurrent updates to the stack to proceed.
+	 */
+	err = rollback_lock_file(&tables_list_lock);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
-		unlink(new_table_path.buf);
 		goto done;
 	}
 
-	err = fsync_component(FSYNC_COMPONENT_REFERENCE, lock_file_fd);
+	/*
+	 * Compact the now-locked tables into a new table. Note that compacting
+	 * these tables may end up with an empty new table in case tombstones
+	 * end up cancelling out all refs in that range.
+	 */
+	err = stack_compact_locked(st, first, last, expiry, &new_table);
 	if (err < 0) {
-		err = REFTABLE_IO_ERROR;
-		unlink(new_table_path.buf);
+		if (err != REFTABLE_EMPTY_TABLE_ERROR)
+			goto done;
+		is_empty_table = 1;
+	}
+
+	/*
+	 * Now that we have written the new, compacted table we need to re-lock
+	 * "tables.list". We'll then replace the compacted range of tables with
+	 * the new table.
+	 */
+	err = hold_lock_file_for_update(&tables_list_lock, st->list_file,
+					LOCK_NO_DEREF);
+	if (err < 0) {
+		if (errno == EEXIST)
+			err = 1;
+		else
+			err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	err = close(lock_file_fd);
-	lock_file_fd = -1;
-	if (err < 0) {
-		err = REFTABLE_IO_ERROR;
-		unlink(new_table_path.buf);
-		goto done;
-	}
-
-	err = rename(lock_file_name.buf, st->list_file);
-	if (err < 0) {
-		err = REFTABLE_IO_ERROR;
-		unlink(new_table_path.buf);
-		goto done;
-	}
-	have_lock = 0;
-
-	/* Reload the stack before deleting. On windows, we can only delete the
-	   files after we closed them.
-	*/
-	err = reftable_stack_reload_maybe_reuse(st, first < last);
-
-	listp = delete_on_success;
-	while (*listp) {
-		if (strcmp(*listp, new_table_path.buf)) {
-			unlink(*listp);
+	if (st->config.default_permissions) {
+		if (chmod(get_lock_file_path(&tables_list_lock),
+			  st->config.default_permissions) < 0) {
+			err = REFTABLE_IO_ERROR;
+			goto done;
 		}
-		listp++;
+	}
+
+	/*
+	 * If the resulting compacted table is not empty, then we need to move
+	 * it into place now.
+	 */
+	if (!is_empty_table) {
+		format_name(&new_table_name, st->readers[first]->min_update_index,
+			    st->readers[last]->max_update_index);
+		strbuf_addstr(&new_table_name, ".ref");
+		stack_filename(&new_table_path, st, new_table_name.buf);
+
+		err = rename_tempfile(&new_table, new_table_path.buf);
+		if (err < 0) {
+			err = REFTABLE_IO_ERROR;
+			goto done;
+		}
+	}
+
+	/*
+	 * Write the new "tables.list" contents with the compacted table we
+	 * have just written. In case the compacted table became empty we
+	 * simply skip writing it.
+	 */
+	for (i = 0; i < first; i++)
+		strbuf_addf(&tables_list_buf, "%s\n", st->readers[i]->name);
+	if (!is_empty_table)
+		strbuf_addf(&tables_list_buf, "%s\n", new_table_name.buf);
+	for (i = last + 1; i < st->merged->stack_len; i++)
+		strbuf_addf(&tables_list_buf, "%s\n", st->readers[i]->name);
+
+	err = write_in_full(get_lock_file_fd(&tables_list_lock),
+			    tables_list_buf.buf, tables_list_buf.len);
+	if (err < 0) {
+		err = REFTABLE_IO_ERROR;
+		unlink(new_table_path.buf);
+		goto done;
+	}
+
+	err = fsync_component(FSYNC_COMPONENT_REFERENCE, get_lock_file_fd(&tables_list_lock));
+	if (err < 0) {
+		err = REFTABLE_IO_ERROR;
+		unlink(new_table_path.buf);
+		goto done;
+	}
+
+	err = commit_lock_file(&tables_list_lock);
+	if (err < 0) {
+		err = REFTABLE_IO_ERROR;
+		unlink(new_table_path.buf);
+		goto done;
+	}
+
+	/*
+	 * Reload the stack before deleting the compacted tables. We can only
+	 * delete the files after we closed them on Windows, so this needs to
+	 * happen first.
+	 */
+	err = reftable_stack_reload_maybe_reuse(st, first < last);
+	if (err < 0)
+		goto done;
+
+	/*
+	 * Delete the old tables. They may still be in use by concurrent
+	 * readers, so it is expected that unlinking tables may fail.
+	 */
+	for (i = first; i <= last; i++) {
+		struct lock_file *table_lock = &table_locks[i - first];
+		char *table_path = get_locked_file_path(table_lock);
+		unlink(table_path);
+		free(table_path);
 	}
 
 done:
-	free_names(delete_on_success);
+	rollback_lock_file(&tables_list_lock);
+	for (i = first; table_locks && i <= last; i++)
+		rollback_lock_file(&table_locks[i - first]);
+	reftable_free(table_locks);
 
-	if (subtable_locks) {
-		listp = subtable_locks;
-		while (*listp) {
-			unlink(*listp);
-			listp++;
-		}
-		free_names(subtable_locks);
-	}
-	if (lock_file_fd >= 0) {
-		close(lock_file_fd);
-		lock_file_fd = -1;
-	}
-	if (have_lock) {
-		unlink(lock_file_name.buf);
-	}
+	delete_tempfile(&new_table);
 	strbuf_release(&new_table_name);
 	strbuf_release(&new_table_path);
-	strbuf_release(&ref_list_contents);
-	strbuf_release(&temp_tab_file_name);
-	strbuf_release(&lock_file_name);
+
+	strbuf_release(&tables_list_buf);
+	strbuf_release(&table_name);
 	return err;
 }
 
