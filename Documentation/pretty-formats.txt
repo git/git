@@ -302,8 +302,8 @@ option is given with no value, it's enabled.
 ** 'keyonly[=<bool>]': only show the key part of the trailer.
 ** 'valueonly[=<bool>]': only show the value part of the trailer.
 ** 'key_value_separator=<sep>': specify a separator inserted between
-   trailer lines. When this option is not given each trailer key-value
-   pair is separated by ": ". Otherwise it shares the same semantics
+   the key and value of each trailer. When this option is not given each trailer
+   key-value pair is separated by ": ". Otherwise it shares the same semantics
    as 'separator=<sep>' above.
 
 NOTE: Some placeholders may depend on other options given to the
