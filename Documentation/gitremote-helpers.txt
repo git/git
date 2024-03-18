@@ -526,7 +526,7 @@ set by Git if the remote helper has the 'option' capability.
 'option pushcert' {'true'|'false'}::
 	GPG sign pushes.
 
-'option push-option <string>::
+'option push-option' <string>::
 	Transmit <string> as a push option. As the push option
 	must not contain LF or NUL characters, the string is not encoded.
 
