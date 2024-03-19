@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2024, #04; Fri, 15)
-X-master-at: 2953d95d402b6bff1a59c4712f4d46f1b9ea137f
-X-next-at: cdc2e80fe5f5dd8f872f21cdcd608126da6ccc7e
+Subject: What's cooking in git.git (Mar 2024, #05; Tue, 19)
+X-master-at: 3bd955d26919e149552f34aacf8a4e6368c26cec
+X-next-at: fe251e3e4dec6a6d677e61d53b316c06da172af2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2024, #04; Fri, 15)
+What's cooking in git.git (Mar 2024, #05; Tue, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,199 +48,167 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ag/t0010-modernize (2024-03-05) 1 commit
-  (merged to 'next' on 2024-03-07 at 38339abc2d)
- + tests: modernize the test script t0010-racy-git.sh
+* jh/trace2-missing-def-param-fix (2024-03-07) 3 commits
+  (merged to 'next' on 2024-03-08 at a797cfea3c)
+ + trace2: emit 'def_param' set with 'cmd_name' event
+ + trace2: avoid emitting 'def_param' set more than once
+ + t0211: demonstrate missing 'def_param' events for certain commands
 
- GSoC practice to modernize a test script.
- source: <pull.1675.v3.git.1709676557639.gitgitgadget@gmail.com>
+ Some trace2 events that lacked def_param have learned to show it,
+ enriching the output.
 
-
-* as/option-names-in-messages (2024-03-05) 4 commits
-  (merged to 'next' on 2024-03-07 at 73ab51faba)
- + revision.c: trivial fix to message
- + builtin/clone.c: trivial fix of message
- + builtin/remote.c: trivial fix of error message
- + transport-helper.c: trivial fix of error message
-
- Error message updates.
- source: <20240216101647.28837-1-ash@kambanaria.org>
+ Reviewed-by: Josh Steadmon <steadmon@google.com>
+ cf. <ZejkVOVQBZhLVfHW@google.com>
+ source: <pull.1679.v2.git.1709824949.gitgitgadget@gmail.com>
 
 
-* gt/core-bare-in-templates (2024-03-04) 1 commit
-  (merged to 'next' on 2024-03-06 at e54ac5acf9)
- + setup: remove unnecessary variable
+* jk/doc-remote-helpers-markup-fix (2024-03-07) 1 commit
+  (merged to 'next' on 2024-03-08 at 2cded1c696)
+ + doc/gitremote-helpers: fix missing single-quote
 
- Code simplification.
- source: <20240304151811.511780-1-shyamthakkar001@gmail.com>
-
-
-* hd/config-mak-os390 (2024-03-06) 1 commit
-  (merged to 'next' on 2024-03-07 at 289d3ab691)
- + build: support z/OS (OS/390).
-
- Platform specific tweaks for OS/390 has been added to
- config.mak.uname.
- source: <pull.1663.v4.git.git.1709703857881.gitgitgadget@gmail.com>
+ Doc mark-up fix.
+ source: <20240307084313.GA2072022@coredump.intra.peff.net>
 
 
-* jc/test-i18ngrep (2024-03-02) 1 commit
-  (merged to 'next' on 2024-03-06 at 2c57ebc706)
- + test_i18ngrep: hard deprecate and forbid its use
+* pw/rebase-i-ignore-cherry-pick-help-environment (2024-02-27) 1 commit
+  (merged to 'next' on 2024-03-08 at e806ee9493)
+ + rebase -i: stop setting GIT_CHERRY_PICK_HELP
 
- With release 2.44 we got rid of all uses of test_i18ngrep and there
- is no in-flight topic that adds a new use of it.  Make a call to
- test_i18ngrep a hard failure, so that we can remove it at the end
- of this release cycle.
- source: <xmqq5xy4zhdc.fsf@gitster.g>
-
-
-* jc/xwrite-cleanup (2024-03-02) 3 commits
-  (merged to 'next' on 2024-03-07 at 43e66f7e4d)
- + repack: check error writing to pack-objects subprocess
- + sideband: avoid short write(2)
- + unpack: replace xwrite() loop with write_in_full()
-
- Uses of xwrite() helper have been audited and updated for better
- error checking and simpler code.
- source: <20240302190348.3946569-1-gitster@pobox.com>
-
-
-* jh/fsmonitor-icase-corner-case-fix (2024-03-06) 14 commits
-  (merged to 'next' on 2024-03-06 at 356eafea7e)
- + fsmonitor: support case-insensitive events
- + fsmonitor: refactor bit invalidation in refresh callback
- + fsmonitor: trace the new invalidated cache-entry count
- + fsmonitor: return invalidated cache-entry count on non-directory event
- + fsmonitor: remove custom loop from non-directory path handler
- + fsmonitor: return invalidated cache-entry count on directory event
- + fsmonitor: move untracked-cache invalidation into helper functions
- + fsmonitor: refactor untracked-cache invalidation
- + dir: create untracked_cache_invalidate_trimmed_path()
- + fsmonitor: refactor refresh callback for non-directory events
- + fsmonitor: clarify handling of directory events in callback helper
- + fsmonitor: refactor refresh callback on directory events
- + t7527: add case-insensitve test for FSMonitor
- + name-hash: add index_dir_find()
-
- FSMonitor client code was confused when FSEvents were given in a
- different case on a case-insensitive filesystem, which has been
- corrected.
-
- Acked-by: Patrick Steinhardt <ps@pks.im>
- cf. <ZehofMaSZyUq8S1N@tanuki>
- source: <pull.1662.v3.git.1708983565.gitgitgadget@gmail.com>
-
-
-* kh/branch-ref-syntax-advice (2024-03-05) 5 commits
-  (merged to 'next' on 2024-03-07 at 914f01967b)
- + branch: advise about ref syntax rules
- + advice: use double quotes for regular quoting
- + advice: use backticks for verbatim
- + advice: make all entries stylistically consistent
- + t3200: improve test style
-
- When git refuses to create a branch because the proposed branch
- name is not a valid refname, an advice message is given to refer
- the user to exact naming rules.
- source: <cover.1709670287.git.code@khaugsbakk.name>
-
-
-* kh/doc-commentchar-is-a-byte (2024-03-05) 1 commit
-  (merged to 'next' on 2024-03-06 at 5941655c04)
- + config: document `core.commentChar` as ASCII-only
-
- The "core.commentChar" configuration variable only allows an ASCII
- character, which was not clearly documented, which has been
- corrected.
- source: <9633f9be5ddd9ab3df4b79ee934e1ed47e90bd1d.1709656683.git.code@khaugsbakk.name>
-
-
-* la/trailer-api (2024-03-01) 9 commits
-  (merged to 'next' on 2024-03-06 at f119923ff6)
- + format_trailers_from_commit(): indirectly call trailer_info_get()
- + format_trailer_info(): move "fast path" to caller
- + format_trailers(): use strbuf instead of FILE
- + trailer_info_get(): reorder parameters
- + trailer: move interpret_trailers() to interpret-trailers.c
- + trailer: reorder format_trailers_from_commit() parameters
- + trailer: rename functions to use 'trailer'
- + shortlog: add test for de-duplicating folded trailers
- + trailer: free trailer_info _after_ all related usage
-
- Trailer API updates.
-
- Acked-by: Christian Couder <christian.couder@gmail.com>
- cf. <CAP8UFD1Zd+9q0z1JmfOf60S2vn5-sD3SafDvAJUzRFwHJKcb8A@mail.gmail.com>
- source: <pull.1632.v6.git.1709252086.gitgitgadget@gmail.com>
-
-
-* ps/reftable-iteration-perf-part2 (2024-03-04) 13 commits
-  (merged to 'next' on 2024-03-06 at e8ba314585)
- + refs/reftable: precompute prefix length
- + reftable: allow inlining of a few functions
- + reftable/record: decode keys in place
- + reftable/record: reuse refname when copying
- + reftable/record: reuse refname when decoding
- + reftable/merged: avoid duplicate pqueue emptiness check
- + reftable/merged: circumvent pqueue with single subiter
- + reftable/merged: handle subiter cleanup on close only
- + reftable/merged: remove unnecessary null check for subiters
- + reftable/merged: make subiters own their records
- + reftable/merged: advance subiter on subsequent iteration
- + reftable/merged: make `merged_iter` structure private
- + reftable/pq: use `size_t` to track iterator index
- (this branch is used by ps/reftable-reflog-iteration-perf.)
-
- The code to iterate over refs with the reftable backend has seen
- some optimization.
- source: <cover.1709548907.git.ps@pks.im>
-
-
-* rj/complete-reflog (2024-03-03) 5 commits
-  (merged to 'next' on 2024-03-06 at 0f1a25debc)
- + completion: reflog subcommands and options
- + completion: factor out __git_resolve_builtins
- + completion: introduce __git_find_subcommand
- + completion: reflog show <log-options>
- + completion: reflog with implicit "show"
-
- The command line completion script (in contrib/) learned to
- complete "git reflog" better.
- source: <ea6c8890-9ff3-46c9-b933-6a52083b1001@gmail.com>
-
-
-* rj/complete-worktree-paths-fix (2024-02-27) 1 commit
-  (merged to 'next' on 2024-03-06 at b6ba949383)
- + completion: fix __git_complete_worktree_paths
-
- The logic to complete the command line arguments to "git worktree"
- subcommand (in contrib/) has been updated to correctly honor things
- like "git -C dir" etc.
- source: <b8f09e20-d0d3-4e0b-afe2-31affeb61052@gmail.com>
-
-
-* so/clean-dry-run-without-force (2024-03-04) 2 commits
-  (merged to 'next' on 2024-03-06 at ccf2e123be)
- + clean: further clean-up of implementation around "--force"
- + clean: improve -n and -f implementation and documentation
-
- The implementation in "git clean" that makes "-n" and "-i" ignore
- clean.requireForce has been simplified, together with the
- documentation.
- source: <87le6ziqzb.fsf_-_@osv.gnss.ru>
- source: <20240303220600.2491792-1-gitster@pobox.com>
-
-
-* vm/t7301-use-test-path-helpers (2024-03-06) 1 commit
-  (merged to 'next' on 2024-03-07 at e638654635)
- + t7301: use test_path_is_(missing|file)
-
- GSoC practice to replace "test -f" with "test_path_is_file".
- source: <20240304171732.64457-2-vincenzo.mezzela@gmail.com>
+ Code simplification by getting rid of code that sets an environment
+ variable that is no longer used.
+ source: <pull.1678.git.1709042783847.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* bb/sh-scripts-cleanup (2024-03-16) 22 commits
+  (merged to 'next' on 2024-03-18 at 4501a04796)
+ + git-quiltimport: avoid an unnecessary subshell
+ + contrib/coverage-diff: avoid redundant pipelines
+ + t/t9*: merge "grep | sed" pipelines
+ + t/t8*: merge "grep | sed" pipelines
+ + t/t5*: merge a "grep | sed" pipeline
+ + t/t4*: merge a "grep | sed" pipeline
+ + t/t3*: merge a "grep | awk" pipeline
+ + t/t1*: merge a "grep | sed" pipeline
+ + t/t9*: avoid redundant uses of cat
+ + t/t8*: avoid redundant use of cat
+ + t/t7*: avoid redundant use of cat
+ + t/t6*: avoid redundant uses of cat
+ + t/t5*: avoid redundant uses of cat
+ + t/t4*: avoid redundant uses of cat
+ + t/t3*: avoid redundant uses of cat
+ + t/t1*: avoid redundant uses of cat
+ + t/t0*: avoid redundant uses of cat
+ + t/perf: avoid redundant use of cat
+ + t/annotate-tests.sh: avoid redundant use of cat
+ + t/lib-cvs.sh: avoid redundant use of cat
+ + contrib/subtree/t: avoid redundant use of cat
+ + doc: avoid redundant use of cat
+
+ Shell scripts clean-up.
+
+ Will merge to 'master'.
+ source: <20240315194620.10713-1-dev+git@drbeat.li>
+
+
+* bl/doc-config-fixes (2024-03-16) 2 commits
+  (merged to 'next' on 2024-03-18 at a9038d5a9e)
+ + docs: fix typo in git-config `--default`
+ + docs: clarify file options in git-config `--edit`
+
+ A few typoes in "git config --help" have been corrected.
+
+ Will merge to 'master'.
+ source: <20240316050149.1182867-2-brianmlyles@gmail.com>
+
+
+* bl/doc-key-val-sep-fix (2024-03-18) 2 commits
+  (merged to 'next' on 2024-03-18 at b2e1babb85)
+ + docs: adjust trailer `separator` and `key_value_separator` language
+ + docs: correct trailer `key_value_separator` description
+
+ The documentation for "%(trailers[:options])" placeholder in the
+ "--pretty" option of commands in the "git log" family has been
+ updated.
+
+ Will merge to 'master'.
+ source: <20240316035612.752910-1-brianmlyles@gmail.com>
+
+
+* ja/doc-formatting-fix (2024-03-16) 2 commits
+  (merged to 'next' on 2024-03-18 at edde7a576d)
+ + doc: fix some placeholders formating
+ + doc: format alternatives in synopsis
+
+ Documentation mark-up fix.
+
+ Will merge to 'master'.
+ source: <pull.1697.git.1710602501.gitgitgadget@gmail.com>
+
+
+* la/hide-trailer-info (2024-03-16) 7 commits
+ - trailer: retire trailer_info_get() from API
+ - trailer: make trailer_info struct private
+ - trailer: make parse_trailers() return trailer_info pointer
+ - interpret-trailers: access trailer_info with new helpers
+ - sequencer: use the trailer iterator
+ - trailer: teach iterator about non-trailer lines
+ - Merge branch 'la/format-trailer-info' into la/hide-trailer-info
+ (this branch uses la/format-trailer-info.)
+
+ The trailer API has been reshuffled a bit.
+ source: <pull.1696.git.1710570428.gitgitgadget@gmail.com>
+
+
+* pb/advice-merge-conflict (2024-03-18) 2 commits
+ - builtin/am: allow disabling conflict advice
+ - sequencer: allow disabling conflict advice
+
+ Hints that suggest what to do after resolving conflicts can now be
+ squelched by disabling advice.mergeConflict.
+
+ Will merge to 'next'?
+ source: <pull.1682.v3.git.1710623790.gitgitgadget@gmail.com>
+
+
+* rs/t-prio-queue-fixes (2024-03-18) 2 commits
+ - t-prio-queue: check result array bounds
+ - t-prio-queue: shorten array index message
+
+ Test clean-up.
+
+ Will merge to 'next'.
+ source: <9bf36cc8-ff27-44df-b2fb-9f959c781269@web.de>
+
+
+* ps/pack-refs-auto (2024-03-18) 16 commits
+ - builtin/gc: pack refs when using `git maintenance run --auto`
+ - builtin/gc: forward git-gc(1)'s `--auto` flag when packing refs
+ - t6500: extract objects with "17" prefix
+ - builtin/gc: move `struct maintenance_run_opts`
+ - builtin/pack-refs: introduce new "--auto" flag
+ - builtin/pack-refs: release allocated memory
+ - refs/reftable: expose auto compaction via new flag
+ - refs: remove `PACK_REFS_ALL` flag
+ - refs: move `struct pack_refs_opts` to where it's used
+ - t/helper: drop pack-refs wrapper
+ - refs/reftable: print errors on compaction failure
+ - reftable/stack: gracefully handle failed auto-compaction due to locks
+ - reftable/stack: use error codes when locking fails during compaction
+ - reftable/error: discern locked/outdated errors
+ - reftable/stack: fix error handling in `reftable_stack_init_addition()`
+ - Merge branch 'ps/reftable-stack-tempfile' into ps/pack-refs-auto
+ (this branch uses ps/reftable-stack-tempfile.)
+
+ "git pack-refs" learned the "--auto" option, which is a useful
+ addition to be triggered from "git gc --auto".
+
+ Needs review.
+ source: <cover.1710706118.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * bb/iso-strict-utc (2024-03-13) 1 commit
   (merged to 'next' on 2024-03-14 at d2ac616873)
@@ -277,13 +245,14 @@ Release tarballs are available at:
  source: <20240313173214.962532-1-gitster@pobox.com>
 
 
-* js/bugreport-no-suffix-fix (2024-03-14) 1 commit
- - bugreport.c: fix a crash in `git bugreport` with `--no-suffix` option
+* js/bugreport-no-suffix-fix (2024-03-16) 1 commit
+  (merged to 'next' on 2024-03-18 at 180db8ec38)
+ + bugreport.c: fix a crash in `git bugreport` with `--no-suffix` option
 
  "git bugreport --no-suffix" was not supported and instead
  segfaulted, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <9c6f3f5203ae26c501a5711e2610573130bfd550.1710388817.git.gitgitgadget@gmail.com>
 
 
@@ -298,13 +267,15 @@ Release tarballs are available at:
  source: <pull.1686.git.git.1710279251901.gitgitgadget@gmail.com>
 
 
-* ph/diff-src-dst-prefix-config (2024-03-15) 1 commit
+* ph/diff-src-dst-prefix-config (2024-03-18) 2 commits
+ - diff.*Prefix: use camelCase in the doc and test titles
  - diff: add diff.srcPrefix and diff.dstPrefix configuration variables
 
  "git diff" and friends learned two extra configuration variables.
 
- What's the status of this thing?
+ Will merge to 'next'.
  source: <20240315010310.GA1901653@quokka>
+ source: <xmqq8r2ioh19.fsf@gitster.g>
 
 
 * ps/clone-with-includeif-onbranch (2024-03-12) 1 commit
@@ -357,11 +328,12 @@ Release tarballs are available at:
 
 
 * jc/index-pack-fsck-levels (2024-03-15) 1 commit
- - t5300: fix test_with_bad_commit()
+  (merged to 'next' on 2024-03-18 at 243c5f4125)
+ + t5300: fix test_with_bad_commit()
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1688.git.git.1710478646776.gitgitgadget@gmail.com>
 
 
@@ -371,6 +343,7 @@ Release tarballs are available at:
  - format_trailer_info(): append newline for non-trailer lines
  - format_trailer_info(): drop redundant unfold_value()
  - format_trailer_info(): use trailer_item objects
+ (this branch is used by la/hide-trailer-info.)
 
  The code to format trailers have been cleaned up.
 
@@ -391,8 +364,6 @@ Release tarballs are available at:
  cf. <xmqq8r2jp2eq.fsf@gitster.g>
  source: <pull.1681.v2.git.1709824540636.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jc/safe-implicit-bare (2024-03-11) 1 commit
   (merged to 'next' on 2024-03-14 at e8bdbed1a4)
@@ -475,9 +446,8 @@ Release tarballs are available at:
  exchange between the Git itself and its remote helpers did not
  quite match.
 
- What's the conclusion of this one???
- cf. <20240312074513.GA47852@coredump.intra.peff.net>
- cf. <87ttl99e0b.fsf@gmail.froward.int.ebiederm.org>
+ Expecting a reroll.
+ cf. <20240318085208.GA604917@coredump.intra.peff.net>
  source: <20240307084735.GA2072130@coredump.intra.peff.net>
 
 
@@ -527,16 +497,6 @@ Release tarballs are available at:
  Waiting for the discussion to settle.
  cf. <20240315081041.GA1753560@coredump.intra.peff.net>
  source: <20240312091013.GA95442@coredump.intra.peff.net>
-
-
-* jk/doc-remote-helpers-markup-fix (2024-03-07) 1 commit
-  (merged to 'next' on 2024-03-08 at 2cded1c696)
- + doc/gitremote-helpers: fix missing single-quote
-
- Doc mark-up fix.
-
- Will merge to 'master'.
- source: <20240307084313.GA2072022@coredump.intra.peff.net>
 
 
 * js/build-fuzz-more-often (2024-03-05) 3 commits
@@ -596,28 +556,13 @@ Release tarballs are available at:
  source: <pull.1682.v2.git.git.1709756493673.gitgitgadget@gmail.com>
 
 
-* jh/trace2-missing-def-param-fix (2024-03-07) 3 commits
-  (merged to 'next' on 2024-03-08 at a797cfea3c)
- + trace2: emit 'def_param' set with 'cmd_name' event
- + trace2: avoid emitting 'def_param' set more than once
- + t0211: demonstrate missing 'def_param' events for certain commands
-
- Some trace2 events that lacked def_param have learned to show it,
- enriching the output.
-
- Reviewed-by: Josh Steadmon <steadmon@google.com>
- cf. <ZejkVOVQBZhLVfHW@google.com>
-
- Will merge to 'master'.
- source: <pull.1679.v2.git.1709824949.gitgitgadget@gmail.com>
-
-
 * ps/reftable-stack-tempfile (2024-03-07) 4 commits
   (merged to 'next' on 2024-03-13 at dcfb0cde8c)
  + reftable/stack: register compacted tables as tempfiles
  + reftable/stack: register lockfiles during compaction
  + reftable/stack: register new tables as tempfiles
  + lockfile: report when rollback fails
+ (this branch is used by ps/pack-refs-auto.)
 
  The code in reftable backend that creates new table files works
  better with the tempfile framework to avoid leaving cruft after a
@@ -656,17 +601,6 @@ Release tarballs are available at:
 
  Expecting a reroll.
  source: <cover.1696021277.git.jonathantanmy@google.com>
-
-
-* pw/rebase-i-ignore-cherry-pick-help-environment (2024-02-27) 1 commit
-  (merged to 'next' on 2024-03-08 at e806ee9493)
- + rebase -i: stop setting GIT_CHERRY_PICK_HELP
-
- Code simplification by getting rid of code that sets an environment
- variable that is no longer used.
-
- Will merge to 'master'.
- source: <pull.1678.git.1709042783847.gitgitgadget@gmail.com>
 
 
 * js/cmake-with-test-tool (2024-02-23) 2 commits
