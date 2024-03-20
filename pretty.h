@@ -35,7 +35,7 @@ struct pretty_print_context {
 	 */
 	enum cmit_fmt fmt;
 	int abbrev;
-	const char *after_subject;
+	char *after_subject;
 	int preserve_subject;
 	struct date_mode date_mode;
 	unsigned date_mode_explicit:1;

@@ -1370,6 +1370,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			   encoding, need_8bit_cte);
 	fprintf(rev->diffopt.file, "%s\n", sb.buf);
 
+	free(pp.after_subject);
 	strbuf_release(&sb);
 
 	shortlog_init(&log);
