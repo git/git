@@ -245,7 +245,6 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 
 	ctx.fmt = CMIT_FMT_USERFORMAT;
 	ctx.abbrev = log->abbrev;
-	ctx.print_email_subject = 1;
 	ctx.date_mode = log->date_mode;
 	ctx.output_encoding = get_log_output_encoding();
 
