@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2024, #05; Tue, 19)
+Subject: What's cooking in git.git (Mar 2024, #06; Wed, 20)
 X-master-at: 3bd955d26919e149552f34aacf8a4e6368c26cec
 X-next-at: fe251e3e4dec6a6d677e61d53b316c06da172af2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2024, #05; Tue, 19)
+What's cooking in git.git (Mar 2024, #06; Wed, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,40 +46,61 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* jh/trace2-missing-def-param-fix (2024-03-07) 3 commits
-  (merged to 'next' on 2024-03-08 at a797cfea3c)
- + trace2: emit 'def_param' set with 'cmd_name' event
- + trace2: avoid emitting 'def_param' set more than once
- + t0211: demonstrate missing 'def_param' events for certain commands
+* dg/myfirstobjectwalk-updates (2024-03-19) 5 commits
+ - MyFirstObjectWalk: add stderr to pipe processing
+ - MyFirstObjectWalk: fix description for counting omitted objects
+ - MyFirstObjectWalk: fix filtered object walk
+ - MyFirstObjectWalk: fix misspelled "builtins/"
+ - MyFirstObjectWalk: use additional arg in config_fn_t
 
- Some trace2 events that lacked def_param have learned to show it,
- enriching the output.
+ Update a more recent tutorial doc.
 
- Reviewed-by: Josh Steadmon <steadmon@google.com>
- cf. <ZejkVOVQBZhLVfHW@google.com>
- source: <pull.1679.v2.git.1709824949.gitgitgadget@gmail.com>
-
-
-* jk/doc-remote-helpers-markup-fix (2024-03-07) 1 commit
-  (merged to 'next' on 2024-03-08 at 2cded1c696)
- + doc/gitremote-helpers: fix missing single-quote
-
- Doc mark-up fix.
- source: <20240307084313.GA2072022@coredump.intra.peff.net>
+ Needs review.
+ source: <cover.1710840596.git.dirk@gouders.net>
 
 
-* pw/rebase-i-ignore-cherry-pick-help-environment (2024-02-27) 1 commit
-  (merged to 'next' on 2024-03-08 at e806ee9493)
- + rebase -i: stop setting GIT_CHERRY_PICK_HELP
+* ds/config-internal-whitespace-fix (2024-03-19) 4 commits
+ - config.txt: describe handling of whitespace further
+ - t1300: add more tests for whitespace and inline comments
+ - config: really keep value-internal whitespace verbatim
+ - config: minor addition of whitespace
 
- Code simplification by getting rid of code that sets an environment
- variable that is no longer used.
- source: <pull.1678.git.1709042783847.gitgitgadget@gmail.com>
+ "git config" corrupted literal HT characters written in the
+ configuration file as part of a value, which has been corrected.
+
+ Expecting a reroll.  Almost there.
+ source: <cover.1710800549.git.dsimic@manjaro.org>
+
+
+* jc/apply-parse-diff-git-header-names-fix (2024-03-19) 1 commit
+ - apply: parse names out of "diff --git" more carefully
+
+ "git apply" failed to extract the filename the patch applied to,
+ when the change was about an empty file created in or deleted from
+ a directory whose name ends with a SP, which has been corrected.
+
+ Needs review.
+ source: <xmqqfrwlltjn.fsf@gitster.g>
+
+
+* jk/pretty-subject-cleanup (2024-03-19) 6 commits
+ - format-patch: simplify after-subject MIME header handling
+ - format-patch: return an allocated string from log_write_email_headers()
+ - log: do not set up extra_headers for non-email formats
+ - pretty: drop print_email_subject flag
+ - pretty: split oneline and email subject printing
+ - shortlog: stop setting pp.print_email_subject
+
+ Code clean-up in the "git log" machinery that implements custom log
+ message formatting.
+
+ Will merge to 'next'.
+ source: <20240320002555.GB903718@coredump.intra.peff.net>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * bb/sh-scripts-cleanup (2024-03-16) 22 commits
   (merged to 'next' on 2024-03-18 at 4501a04796)
@@ -207,8 +228,6 @@ Release tarballs are available at:
  Needs review.
  source: <cover.1710706118.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * bb/iso-strict-utc (2024-03-13) 1 commit
   (merged to 'next' on 2024-03-14 at d2ac616873)
@@ -402,24 +421,28 @@ Release tarballs are available at:
  - docs: clean up `--empty` formatting in git-rebase(1) and git-am (1)
  - docs: address inaccurate `--empty` default with `--exec`
 
- "cherry-pick" told to keep redundant commits needs to be allowed to
- create empty commits to do its job, but it required the user to
- give the --allow-empty option, which was unnecessary.  Its UI has
- also been tweaked a bit.
+ Allow git-cherry-pick(1) to automatically drop redundant commits via
+ a new `--empty` option, similar to the `--empty` options for
+ git-rebase(1) and git-am(1). Includes a soft deprecation of
+ `--keep-redundant-commits` as well as some related docs changes and
+ sequencer code cleanup.
 
- Comments?
+ Expecting a reroll.
+ cf. <17be81eb83ff314d.70b1dd9aae081c6e.203dcd72f6563036@zivdesk>
  source: <20240119060721.3734775-2-brianmlyles@gmail.com>
 
 
-* ie/config-includeif-hostname (2024-03-10) 1 commit
+* ie/config-includeif-hostname (2024-03-19) 2 commits
  - config: learn the "hostname:" includeIf condition
+ - t: add a test helper for getting hostname
 
  The conditional inclusion mechanism for configuration files learned
  to switch on the hostname.
 
  Expecting a reroll.
- cf. <fda3e8f4-fd9e-4a43-a307-c6607d982436@iencinas.com>
- source: <20240309181828.45496-2-ignacio@iencinas.com>
+ cf. <20240319210428.GC1159535@coredump.intra.peff.net>
+ cf. <20240320001934.GA903718@coredump.intra.peff.net>
+ source: <20240319183722.211300-1-ignacio@iencinas.com>
 
 
 * ja/doc-markup-fixes (2024-03-11) 6 commits

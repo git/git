@@ -6,15 +6,14 @@ Welcome to the Git development community.
 This message is written by the maintainer and talks about how Git
 project is managed, and how you can work with it.
 
-The current maintainer is Junio C Hamano <gitster@pobox.com>; please
-do not send any message to this address unless it also goes to the
-mailing list, because it is likely that such a message will not be
-seen by any human being.  Spam filters learned that legitimate
-messages to the address come only from a very few sender addresses
-that are known to be good, and messages from all others are likely to
-be spam unless they are also sent to the mailing list at the same time
-(i.e. "Reply-all" to the list message would reach the mailbox, but
-"Reply" will likely be thrown into the spam folder).
+The current maintainer is Junio C Hamano <gitster@pobox.com>.  Spam
+filters learned that legitimate messages come only from a very few
+sender addresses that are known to be good to this address, and all
+other messages are likely to be spam unless they are also sent to the
+mailing list at the same time (i.e. "Reply-all" to the list message
+would reach the mailbox, but "Reply" will likely be thrown into the
+spam folder), so please do not send a message to this address unless
+it is also sent to the mailing list as well.
 
 
 * Mailing list and the community
@@ -45,9 +44,9 @@ becomes calmer before sending such a reminder.
 
 The list archive is available at a few public sites:
 
-        http://lore.kernel.org/git/
-        http://marc.info/?l=git
-        http://www.spinics.net/lists/git/
+        https://lore.kernel.org/git/
+        https://marc.info/?l=git
+        https://www.spinics.net/lists/git/
 
 For those who prefer to read it over NNTP:
 
@@ -60,7 +59,7 @@ When you point at a message in a mailing list archive, using its
 message ID is often the most robust (if not very friendly) way to do
 so, like this:
 
-	http://lore.kernel.org/git/Pine.LNX.4.58.0504150753440.7211@ppc970.osdl.org
+	https://lore.kernel.org/git/Pine.LNX.4.58.0504150753440.7211@ppc970.osdl.org
 
 Often these web interfaces accept the message ID with enclosing <>
 stripped (like the above example to point at one of the most important
@@ -70,11 +69,11 @@ Some members of the development community can sometimes be found on
 the #git and #git-devel IRC channels on Libera Chat.  Their logs are
 available at:
 
-        http://colabti.org/irclogger/irclogger_log/git
-        http://colabti.org/irclogger/irclogger_log/git-devel
+        https://colabti.org/ircloggy/git/last
+        https://colabti.org/ircloggy/git-devel/last
 
 There is a volunteer-run newsletter to serve our community ("Git Rev
-News" http://git.github.io/rev_news/).
+News" https://git.github.io/rev_news/).
 
 Git is a member project of software freedom conservancy, a non-profit
 organization (https://sfconservancy.org/).  To reach a committee of
@@ -94,8 +93,8 @@ your bug report with just "git does not work".  "I used git in this
 way, but it did not work" is not much better, neither is "I used git
 in this way, and X happend, which is broken".  It often is that git is
 correct to cause X happen in such a case, and it is your expectation
-that is broken. People would not know what other result Y you expected
-to see instead of X, if you left it unsaid.
+that is broken.  People would not know what other result Y you
+expected to see instead of X, if you left it unsaid.
 
 Please remember to always state
 
@@ -110,7 +109,7 @@ Please remember to always state
 
  - how the last two are different.
 
-See http://www.chiark.greenend.org.uk/~sgtatham/bugs.html for further
+See https://www.chiark.greenend.org.uk/~sgtatham/bugs.html for further
 hints.  Our `git bugreport` tool gives you a handy way you can use to
 make sure you do not forget these points when filing a bug report.
 
@@ -145,9 +144,9 @@ individual topics broken out:
 
 A few web interfaces are found at:
 
-  http://git.kernel.org/pub/scm/git/git.git
+  https://git.kernel.org/pub/scm/git/git.git
   https://kernel.googlesource.com/pub/scm/git/git
-  http://repo.or.cz/w/alt-git.git
+  https://repo.or.cz/w/alt-git.git
 
 Preformatted documentation from the tip of the "master" branch can be
 found in:
@@ -168,77 +167,81 @@ There are four "integration" branches in git.git repository that track
 the source tree of git: "master", "maint", "next", and "seen".  They
 however almost never get new commits made directly on them.  Instead,
 a branch is forked from either "master" or "maint" for each "topic",
-whether it is a new feature or fix for a bug, and holds a set of
-commits that belong to the same theme, and then such a "topic branch"
-is merged to these integration branches.
+whether it is a new feature or a fix for a bug, and holds a set of
+commits that belong to the same theme.  Such a "topic branch" is then
+merged to these integration branches.
 
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a
 "feature release" is cut from the tip of this branch.  They used to be
-named with three dotted decimal digits (e.g. "1.8.5"), but we have
+named with three dotted decimal digits (e.g., "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
-three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
+three-dotted decimal digits that ends with ".0" (e.g., "1.9.0").
 
-The last such release was 2.40 done on Mar 13rd, 2023.  You can expect
+The last such release was 2.44 done on Feb 22nd, 2024.  We aim to keep
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
 "master" at that point.  Obvious and safe fixes after a feature
 release are merged to this branch and maintenance releases are cut
-from it.  Usually these fixes are merged to the "master" branch first,
-several days before merged to the "maint" branch, to reduce the chance
-of last-minute issues, but things like embargoed security fixes may
-first appear in the maintenance tracks and merged up to "master" at
-the same time.  The maintenance releases used to be named with
-four dotted decimal, named after the feature release they are updates
-to (e.g. "1.8.5.1" was the first maintenance release for "1.8.5"
-feature release).  These days, maintenance releases are named by
-incrementing the last digit of three-dotted decimal name (e.g.
-"2.29.2" was the second maintenance release for the "2.29" series).
+from it.  Usually the topic branches that contain these fixes are
+merged to the "master" branch first, before getting merged to the
+"maint" branch, to reduce the chance of last-minute issues, but
+things like embargoed security fixes may first appear in the "maint"
+and merged up to "master" at the same time.  The maintenance releases
+used to be named with four dotted decimal, named after the feature
+release they are updates to (e.g., "1.8.5.1" was the first maintenance
+release for "1.8.5" feature release).  These days, maintenance releases
+are named by incrementing the last digit of three-dotted decimal name
+(e.g., "2.43.2" was the second maintenance release for the "2.43" series).
 
-New features never go to the "maint" branch.  It is merged into
+New features almost never go to the "maint" branch.  It is merged into
 "master" primarily to propagate the description in the release notes
 forward.
 
-A new development does not usually happen on "master". When you send a
-series of patches, after review on the mailing list, a separate topic
-branch is forked from the tip of "master" (or somewhere older, especially
-when the topic is about fixing an earlier bug) and your patches are queued
-there, and kept out of "master" while people test it out. The quality of
-topic branches are judged primarily by the mailing list discussions.
+When you send a series of patches, after review discussions on the
+mailing list, a separate topic branch is forked from the tip of
+"master" (or somewhere older, especially when the topic is about
+fixing an earlier bug) and your patches are applied on that topic
+branch, and kept out of "master" while people test it out.  The
+quality of topic branches are judged primarily by the mailing list
+discussions.
 
-Topic branches that are in good shape are merged to the "next" branch. In
-general, the "next" branch always contains the tip of "master".  It might
-not be quite rock-solid, but is expected to work more or less without major
-breakage. The "next" branch is where new and exciting things take place. A
-topic that is in "next" is expected to be polished to perfection before it
-is merged to "master".  Please help this process by building & using the
-"next" branch for your daily work, and reporting any new bugs you find to
-the mailing list, before the breakage is merged down to the "master".
+Topic branches that are in good shape are merged to the "next" branch.
+The "next" branch is where new and exciting things take place.  In
+general, the "next" branch always contains the tip of "master".  It
+might not be quite rock-solid, but is expected to work more or less
+without major breakage.  A topic that is in "next" is expected to be
+polished to perfection before it is merged to "master".  Please help
+this process by building & using the "next" branch for your daily
+work, and reporting any new bugs you find to the mailing list, before
+the breakage is merged down to the "master".
 
-The "seen" (formerly "pu", proposed updates) branch bundles all the
-remaining topic branches the maintainer happens to have seen.  There
-is no guarantee that the maintainer has enough bandwidth to pick up any
-and all topics that are remotely promising from the list traffic, so
-please do not read too much into a topic being on (or not on) the "seen"
-branch.  This branch is mainly to remind the maintainer that the topics
-in them may turn out to be interesting when they are polished, nothing
-more, but can be used by contributors to anticipate what topics from
-others may cause conflict with your work, and find people who are working.
-on these topics to talk to before the potential conflicts get out of
-control. The topics on this branch aren't usually complete, well tested,
-or well documented and they often need further work.  When a topic that
-was in "seen" proves to be in a testable shape, it is merged to "next".
+The "seen" (formerly "pu", proposed updates) branch bundles the
+remaining topic branches the maintainer happens to have seen to remind
+the maintainer that the topics in them might become interesting when
+they are polished.
 
-You can run "git log --first-parent master..seen" to see what topics are
-currently in flight.  Sometimes, an idea that looked promising turns out
-to be not so good and the topic can be dropped from "seen" in such a case.
-The output of the above "git log" talks about a "jch" branch, which is an
-early part of the "seen" branch; that branch contains all topics that
-are in "next" and a bit more (but not all of "seen") and is used by the
-maintainer for his daily work.  Using the tip of this branch, instead of
-'next', as your daily driver is also recommended.
+The contributors can use it to anticipate what topics from others
+may cause conflict with their own work, and find people who are
+working on these topics to talk to before the potential conflicts
+get out of control.  It would be a good idea to fork from maint or
+master to grow a topic and to test (1) it by itself, (2) a temporary
+merge of it to 'next' and (3) a temporary merge to it to 'seen',
+before publishing it.
+
+Consider that a topic only in "seen" is not part of "git" yet.  When a
+topic that was in "seen" proves to be in a testable shape, it is
+merged to "next".
+
+You can run "git log --first-parent master..seen" to see what topics
+are currently in flight.  Sometimes, a topic that looked promising
+proves to be a bad idea and the topic gets dropped from "seen" in such
+a case.  The output of the above "git log" talks about a "jch" branch,
+which is an early part of the "seen" branch; that branch contains all
+topics that are in "next" and a bit more (but not all of "seen") and
+is used by the maintainer for his daily work.
 
 The two branches "master" and "maint" are never rewound, and "next"
 usually will not be either.  After a feature release is made from
@@ -249,10 +252,15 @@ get ejected from "next" when this happens.
 
 A natural consequence of how "next" and "seen" bundles topics together
 is that until a topic is merged to "next", updates to it is expected
-by replacing the patch(es) in the topic with an improved version,
-and once a topic is merged to "next", updates to it needs to come as
+by replacing the patch(es) in the topic with an improved version, and
+once a topic is merged to "next", updates to it needs to come as
 incremental patches, pointing out what was wrong in the previous
-patches and how the problem was corrected.
+patches and how the problem was corrected.  The idea is that if many
+reviewers thought it has seen enough eyeballs and is good enough for
+"next", yet we later find that there was something we all missed, that
+is worth a separate explanation, e.g., "The primary motivation behind
+the series is still good, but for such and such reasons we missed this
+case we are fixing.", hence we prefer follow-up incremental patches.
 
 Note that being in "next" is not a guarantee to appear in the next
 release, nor even in any future release.  There were cases that topics
