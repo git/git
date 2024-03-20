@@ -211,14 +211,9 @@ static int set_option(const char *name, const char *value)
 		options.filter = xstrdup(value);
 		return 0;
 	} else if (!strcmp(name, "object-format")) {
-		int algo;
 		options.object_format = 1;
-		if (strcmp(value, "true")) {
-			algo = hash_algo_by_name(value);
-			if (algo == GIT_HASH_UNKNOWN)
-				die("unknown object format '%s'", value);
-			options.hash_algo = &hash_algos[algo];
-		}
+		if (strcmp(value, "true"))
+			die(_("unknown value for object-format: %s"), value);
 		return 0;
 	} else {
 		return 1 /* unsupported */;
