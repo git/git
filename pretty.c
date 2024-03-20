@@ -2091,19 +2091,14 @@ void pp_email_subject(struct pretty_print_context *pp,
 				pp->preserve_subject ? "\n" : " ");
 
 	strbuf_grow(sb, title.len + 1024);
-	if (pp->print_email_subject) {
-		if (pp->rev)
-			fmt_output_email_subject(sb, pp->rev);
-		if (pp->encode_email_headers &&
-		    needs_rfc2047_encoding(title.buf, title.len))
-			add_rfc2047(sb, title.buf, title.len,
-						encoding, RFC2047_SUBJECT);
-		else
-			strbuf_add_wrapped_bytes(sb, title.buf, title.len,
+	fmt_output_email_subject(sb, pp->rev);
+	if (pp->encode_email_headers &&
+	    needs_rfc2047_encoding(title.buf, title.len))
+		add_rfc2047(sb, title.buf, title.len,
+			    encoding, RFC2047_SUBJECT);
+	else
+		strbuf_add_wrapped_bytes(sb, title.buf, title.len,
 					 -last_line_length(sb), 1, max_length);
-	} else {
-		strbuf_addbuf(sb, &title);
-	}
 	strbuf_addch(sb, '\n');
 
 	if (need_8bit_cte == 0) {
@@ -2319,7 +2314,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	}
 
 	pp_header(pp, encoding, commit, &msg, sb);
-	if (pp->fmt != CMIT_FMT_ONELINE && !pp->print_email_subject) {
+	if (pp->fmt != CMIT_FMT_ONELINE && !cmit_fmt_is_mail(pp->fmt)) {
 		strbuf_addch(sb, '\n');
 	}
 
