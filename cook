@@ -1110,6 +1110,9 @@ if ($wildo) {
 	wildo($fd);
 } elsif ($havedone) {
 	havedone();
+} elsif (@ARGV) {
+	print STDERR "$0 does not take extra args: @ARGV\n";
+	exit 1;
 } else {
 	doit();
 }
