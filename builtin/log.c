@@ -1297,7 +1297,7 @@ static void prepare_cover_text(struct pretty_print_context *pp,
 		subject = subject_sb.buf;
 
 do_pp:
-	pp_title_line(pp, &subject, sb, encoding, need_8bit_cte);
+	pp_email_subject(pp, &subject, sb, encoding, need_8bit_cte);
 	pp_remainder(pp, &body, sb, 0);
 
 	strbuf_release(&description_sb);

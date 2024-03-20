@@ -96,13 +96,13 @@ void pp_user_info(struct pretty_print_context *pp, const char *what,
 			const char *encoding);
 
 /*
- * Format title line of commit message taken from "msg_p" and
+ * Format subject line of commit message taken from "msg_p" and
  * put it into "sb".
  * First line of "msg_p" is also affected.
  */
-void pp_title_line(struct pretty_print_context *pp, const char **msg_p,
-			struct strbuf *sb, const char *encoding,
-			int need_8bit_cte);
+void pp_email_subject(struct pretty_print_context *pp, const char **msg_p,
+		      struct strbuf *sb, const char *encoding,
+		      int need_8bit_cte);
 
 /*
  * Get current state of commit message from "msg_p" and continue formatting

@@ -2077,11 +2077,11 @@ static void pp_header(struct pretty_print_context *pp,
 	}
 }
 
-void pp_title_line(struct pretty_print_context *pp,
-		   const char **msg_p,
-		   struct strbuf *sb,
-		   const char *encoding,
-		   int need_8bit_cte)
+void pp_email_subject(struct pretty_print_context *pp,
+		      const char **msg_p,
+		      struct strbuf *sb,
+		      const char *encoding,
+		      int need_8bit_cte)
 {
 	static const int max_length = 78; /* per rfc2047 */
 	struct strbuf title;
@@ -2126,9 +2126,8 @@ void pp_title_line(struct pretty_print_context *pp,
 	if (pp->after_subject) {
 		strbuf_addstr(sb, pp->after_subject);
 	}
-	if (cmit_fmt_is_mail(pp->fmt)) {
-		strbuf_addch(sb, '\n');
-	}
+
+	strbuf_addch(sb, '\n');
 
 	if (pp->in_body_headers.nr) {
 		int i;
@@ -2328,8 +2327,11 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	msg = skip_blank_lines(msg);
 
 	/* These formats treat the title line specially. */
-	if (pp->fmt == CMIT_FMT_ONELINE || cmit_fmt_is_mail(pp->fmt))
-		pp_title_line(pp, &msg, sb, encoding, need_8bit_cte);
+	if (pp->fmt == CMIT_FMT_ONELINE) {
+		msg = format_subject(sb, msg, " ");
+		strbuf_addch(sb, '\n');
+	} else if (cmit_fmt_is_mail(pp->fmt))
+		pp_email_subject(pp, &msg, sb, encoding, need_8bit_cte);
 
 	beginning_of_body = sb->len;
 	if (pp->fmt != CMIT_FMT_ONELINE)
