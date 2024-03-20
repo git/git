@@ -1210,11 +1210,8 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 	data->get_refs_list_called = 1;
 	helper = get_helper(transport);
 
-	if (data->object_format) {
-		write_constant(helper->in, "option object-format\n");
-		if (recvline(data, &buf) || strcmp(buf.buf, "ok"))
-			exit(128);
-	}
+	if (data->object_format)
+		set_helper_option(transport, "object-format", "true");
 
 	if (data->push && for_push)
 		write_constant(helper->in, "list for-push\n");
