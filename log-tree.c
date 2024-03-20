@@ -678,7 +678,6 @@ void show_log(struct rev_info *opt)
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev_commit = opt->abbrev_commit ? opt->abbrev : the_hash_algo->hexsz;
-	const char *extra_headers = opt->extra_headers;
 	struct pretty_print_context ctx = {0};
 
 	opt->loginfo = NULL;
@@ -739,7 +738,7 @@ void show_log(struct rev_info *opt)
 	 */
 
 	if (cmit_fmt_is_mail(opt->commit_format)) {
-		log_write_email_headers(opt, commit, &extra_headers,
+		log_write_email_headers(opt, commit, &ctx.after_subject,
 					&ctx.need_8bit_cte, 1);
 		ctx.rev = opt;
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
@@ -807,7 +806,6 @@ void show_log(struct rev_info *opt)
 	ctx.date_mode = opt->date_mode;
 	ctx.date_mode_explicit = opt->date_mode_explicit;
 	ctx.abbrev = opt->diffopt.abbrev;
-	ctx.after_subject = extra_headers;
 	ctx.preserve_subject = opt->preserve_subject;
 	ctx.encode_email_headers = opt->encode_email_headers;
 	ctx.reflog_info = opt->reflog_info;
