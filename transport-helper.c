@@ -1211,15 +1211,15 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 	helper = get_helper(transport);
 
 	if (data->object_format) {
-		write_str_in_full(helper->in, "option object-format\n");
+		write_constant(helper->in, "option object-format\n");
 		if (recvline(data, &buf) || strcmp(buf.buf, "ok"))
 			exit(128);
 	}
 
 	if (data->push && for_push)
-		write_str_in_full(helper->in, "list for-push\n");
+		write_constant(helper->in, "list for-push\n");
 	else
-		write_str_in_full(helper->in, "list\n");
+		write_constant(helper->in, "list\n");
 
 	while (1) {
 		char *eov, *eon;
