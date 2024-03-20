@@ -474,11 +474,14 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			     int *need_8bit_cte_p,
 			     int maybe_multipart)
 {
-	char *extra_headers = xstrdup_or_null(opt->extra_headers);
+	struct strbuf headers = STRBUF_INIT;
 	const char *name = oid_to_hex(opt->zero_commit ?
 				      null_oid() : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
+
+	if (opt->extra_headers)
+		strbuf_addstr(&headers, opt->extra_headers);
 
 	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
 	graph_show_oneline(opt->graph);
@@ -496,15 +499,13 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		graph_show_oneline(opt->graph);
 	}
 	if (opt->mime_boundary && maybe_multipart) {
-		struct strbuf subject_buffer = STRBUF_INIT;
 		static struct strbuf buffer = STRBUF_INIT;
 		struct strbuf filename =  STRBUF_INIT;
 		*need_8bit_cte_p = -1; /* NEVER */
 
 		strbuf_reset(&buffer);
 
-		strbuf_addf(&subject_buffer,
-			 "%s"
+		strbuf_addf(&headers,
 			 "MIME-Version: 1.0\n"
 			 "Content-Type: multipart/mixed;"
 			 " boundary=\"%s%s\"\n"
@@ -515,11 +516,8 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 "Content-Type: text/plain; "
 			 "charset=UTF-8; format=fixed\n"
 			 "Content-Transfer-Encoding: 8bit\n\n",
-			 extra_headers ? extra_headers : "",
 			 mime_boundary_leader, opt->mime_boundary,
 			 mime_boundary_leader, opt->mime_boundary);
-		free(extra_headers);
-		extra_headers = strbuf_detach(&subject_buffer, NULL);
 
 		if (opt->numbered_files)
 			strbuf_addf(&filename, "%d", opt->nr);
@@ -539,7 +537,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		opt->diffopt.stat_sep = buffer.buf;
 		strbuf_release(&filename);
 	}
-	*extra_headers_p = extra_headers;
+	*extra_headers_p = headers.len ? strbuf_detach(&headers, NULL) : NULL;
 }
 
 static void show_sig_lines(struct rev_info *opt, int status, const char *bol)
