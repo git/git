@@ -468,8 +468,6 @@ static void test_reftable_stack_add(void)
 		logs[i].refname = xstrdup(buf);
 		logs[i].update_index = N + i + 1;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
-
-		logs[i].value.update.new_hash = reftable_malloc(GIT_SHA1_RAWSZ);
 		logs[i].value.update.email = xstrdup("identity@invalid");
 		set_test_hash(logs[i].value.update.new_hash, i);
 	}
@@ -547,16 +545,17 @@ static void test_reftable_stack_log_normalize(void)
 	};
 	struct reftable_stack *st = NULL;
 	char *dir = get_tmp_dir(__LINE__);
-
-	uint8_t h1[GIT_SHA1_RAWSZ] = { 0x01 }, h2[GIT_SHA1_RAWSZ] = { 0x02 };
-
-	struct reftable_log_record input = { .refname = "branch",
-					     .update_index = 1,
-					     .value_type = REFTABLE_LOG_UPDATE,
-					     .value = { .update = {
-								.new_hash = h1,
-								.old_hash = h2,
-							} } };
+	struct reftable_log_record input = {
+		.refname = "branch",
+		.update_index = 1,
+		.value_type = REFTABLE_LOG_UPDATE,
+		.value = {
+			.update = {
+				.new_hash = { 1 },
+				.old_hash = { 2 },
+			},
+		},
+	};
 	struct reftable_log_record dest = {
 		.update_index = 0,
 	};
@@ -627,8 +626,6 @@ static void test_reftable_stack_tombstone(void)
 		logs[i].update_index = 42;
 		if (i % 2 == 0) {
 			logs[i].value_type = REFTABLE_LOG_UPDATE;
-			logs[i].value.update.new_hash =
-				reftable_malloc(GIT_SHA1_RAWSZ);
 			set_test_hash(logs[i].value.update.new_hash, i);
 			logs[i].value.update.email =
 				xstrdup("identity@invalid");
@@ -810,7 +807,6 @@ static void test_reflog_expire(void)
 		logs[i].update_index = i;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.time = i;
-		logs[i].value.update.new_hash = reftable_malloc(GIT_SHA1_RAWSZ);
 		logs[i].value.update.email = xstrdup("identity@invalid");
 		set_test_hash(logs[i].value.update.new_hash, i);
 	}

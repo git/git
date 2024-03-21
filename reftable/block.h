@@ -84,10 +84,12 @@ struct block_iter {
 
 	/* key for last entry we read. */
 	struct strbuf last_key;
+	struct strbuf scratch;
 };
 
 #define BLOCK_ITER_INIT { \
 	.last_key = STRBUF_INIT, \
+	.scratch = STRBUF_INIT, \
 }
 
 /* initializes a block reader. */

@@ -99,6 +99,7 @@ static void set_hash(uint8_t *h, int j)
 
 static void test_reftable_ref_record_roundtrip(void)
 {
+	struct strbuf scratch = STRBUF_INIT;
 	int i = 0;
 
 	for (i = REFTABLE_REF_DELETION; i < REFTABLE_NR_REF_VALUETYPES; i++) {
@@ -140,7 +141,7 @@ static void test_reftable_ref_record_roundtrip(void)
 		EXPECT(n > 0);
 
 		/* decode into a non-zero reftable_record to test for leaks. */
-		m = reftable_record_decode(&out, key, i, dest, GIT_SHA1_RAWSZ);
+		m = reftable_record_decode(&out, key, i, dest, GIT_SHA1_RAWSZ, &scratch);
 		EXPECT(n == m);
 
 		EXPECT(reftable_ref_record_equal(&in.u.ref, &out.u.ref,
@@ -150,6 +151,8 @@ static void test_reftable_ref_record_roundtrip(void)
 		strbuf_release(&key);
 		reftable_record_release(&out);
 	}
+
+	strbuf_release(&scratch);
 }
 
 static void test_reftable_log_record_equal(void)
@@ -175,7 +178,6 @@ static void test_reftable_log_record_equal(void)
 static void test_reftable_log_record_roundtrip(void)
 {
 	int i;
-
 	struct reftable_log_record in[] = {
 		{
 			.refname = xstrdup("refs/heads/master"),
@@ -183,8 +185,6 @@ static void test_reftable_log_record_roundtrip(void)
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value = {
 				.update = {
-					.old_hash = reftable_malloc(GIT_SHA1_RAWSZ),
-					.new_hash = reftable_malloc(GIT_SHA1_RAWSZ),
 					.name = xstrdup("han-wen"),
 					.email = xstrdup("hanwen@google.com"),
 					.message = xstrdup("test"),
@@ -202,15 +202,10 @@ static void test_reftable_log_record_roundtrip(void)
 			.refname = xstrdup("branch"),
 			.update_index = 33,
 			.value_type = REFTABLE_LOG_UPDATE,
-			.value = {
-				.update = {
-					.old_hash = reftable_malloc(GIT_SHA1_RAWSZ),
-					.new_hash = reftable_malloc(GIT_SHA1_RAWSZ),
-					/* rest of fields left empty. */
-				},
-			},
 		}
 	};
+	struct strbuf scratch = STRBUF_INIT;
+
 	set_test_hash(in[0].value.update.new_hash, 1);
 	set_test_hash(in[0].value.update.old_hash, 2);
 	set_test_hash(in[2].value.update.new_hash, 3);
@@ -231,8 +226,6 @@ static void test_reftable_log_record_roundtrip(void)
 				.value_type = REFTABLE_LOG_UPDATE,
 				.value = {
 					.update = {
-						.new_hash = reftable_calloc(GIT_SHA1_RAWSZ, 1),
-						.old_hash = reftable_calloc(GIT_SHA1_RAWSZ, 1),
 						.name = xstrdup("old name"),
 						.email = xstrdup("old@email"),
 						.message = xstrdup("old message"),
@@ -252,7 +245,7 @@ static void test_reftable_log_record_roundtrip(void)
 		EXPECT(n >= 0);
 		valtype = reftable_record_val_type(&rec);
 		m = reftable_record_decode(&out, key, valtype, dest,
-					   GIT_SHA1_RAWSZ);
+					   GIT_SHA1_RAWSZ, &scratch);
 		EXPECT(n == m);
 
 		EXPECT(reftable_log_record_equal(&in[i], &out.u.log,
@@ -261,6 +254,8 @@ static void test_reftable_log_record_roundtrip(void)
 		strbuf_release(&key);
 		reftable_record_release(&out);
 	}
+
+	strbuf_release(&scratch);
 }
 
 static void test_u24_roundtrip(void)
@@ -310,23 +305,27 @@ static void test_reftable_obj_record_roundtrip(void)
 {
 	uint8_t testHash1[GIT_SHA1_RAWSZ] = { 1, 2, 3, 4, 0 };
 	uint64_t till9[] = { 1, 2, 3, 4, 500, 600, 700, 800, 9000 };
-	struct reftable_obj_record recs[3] = { {
-						       .hash_prefix = testHash1,
-						       .hash_prefix_len = 5,
-						       .offsets = till9,
-						       .offset_len = 3,
-					       },
-					       {
-						       .hash_prefix = testHash1,
-						       .hash_prefix_len = 5,
-						       .offsets = till9,
-						       .offset_len = 9,
-					       },
-					       {
-						       .hash_prefix = testHash1,
-						       .hash_prefix_len = 5,
-					       } };
+	struct reftable_obj_record recs[3] = {
+		{
+			.hash_prefix = testHash1,
+			.hash_prefix_len = 5,
+			.offsets = till9,
+			.offset_len = 3,
+		},
+		{
+			.hash_prefix = testHash1,
+			.hash_prefix_len = 5,
+			.offsets = till9,
+			.offset_len = 9,
+		},
+		{
+			.hash_prefix = testHash1,
+			.hash_prefix_len = 5,
+		},
+	};
+	struct strbuf scratch = STRBUF_INIT;
 	int i = 0;
+
 	for (i = 0; i < ARRAY_SIZE(recs); i++) {
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
@@ -350,13 +349,15 @@ static void test_reftable_obj_record_roundtrip(void)
 		EXPECT(n > 0);
 		extra = reftable_record_val_type(&in);
 		m = reftable_record_decode(&out, key, extra, dest,
-					   GIT_SHA1_RAWSZ);
+					   GIT_SHA1_RAWSZ, &scratch);
 		EXPECT(n == m);
 
 		EXPECT(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
 		strbuf_release(&key);
 		reftable_record_release(&out);
 	}
+
+	strbuf_release(&scratch);
 }
 
 static void test_reftable_index_record_roundtrip(void)
@@ -373,6 +374,7 @@ static void test_reftable_index_record_roundtrip(void)
 		.buf = buffer,
 		.len = sizeof(buffer),
 	};
+	struct strbuf scratch = STRBUF_INIT;
 	struct strbuf key = STRBUF_INIT;
 	struct reftable_record out = {
 		.type = BLOCK_TYPE_INDEX,
@@ -390,13 +392,15 @@ static void test_reftable_index_record_roundtrip(void)
 	EXPECT(n > 0);
 
 	extra = reftable_record_val_type(&in);
-	m = reftable_record_decode(&out, key, extra, dest, GIT_SHA1_RAWSZ);
+	m = reftable_record_decode(&out, key, extra, dest, GIT_SHA1_RAWSZ,
+				   &scratch);
 	EXPECT(m == n);
 
 	EXPECT(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
 
 	reftable_record_release(&out);
 	strbuf_release(&key);
+	strbuf_release(&scratch);
 	strbuf_release(&in.u.idx.last_key);
 }
 

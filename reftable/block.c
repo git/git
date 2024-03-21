@@ -332,7 +332,8 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 		return REFTABLE_FORMAT_ERROR;
 
 	string_view_consume(&in, n);
-	n = reftable_record_decode(rec, it->last_key, extra, in, it->br->hash_size);
+	n = reftable_record_decode(rec, it->last_key, extra, in, it->br->hash_size,
+				   &it->scratch);
 	if (n < 0)
 		return -1;
 	string_view_consume(&in, n);
@@ -369,6 +370,7 @@ int block_iter_seek(struct block_iter *it, struct strbuf *want)
 void block_iter_close(struct block_iter *it)
 {
 	strbuf_release(&it->last_key);
+	strbuf_release(&it->scratch);
 }
 
 int block_reader_seek(struct block_reader *br, struct block_iter *it,

@@ -55,7 +55,8 @@ struct reftable_record_vtable {
 
 	/* decode data from `src` into the record. */
 	int (*decode)(void *rec, struct strbuf key, uint8_t extra,
-		      struct string_view src, int hash_size);
+		      struct string_view src, int hash_size,
+		      struct strbuf *scratch);
 
 	/* deallocate and null the record. */
 	void (*release)(void *rec);
@@ -138,7 +139,7 @@ int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
 			   int hash_size);
 int reftable_record_decode(struct reftable_record *rec, struct strbuf key,
 			   uint8_t extra, struct string_view src,
-			   int hash_size);
+			   int hash_size, struct strbuf *scratch);
 int reftable_record_is_deletion(struct reftable_record *rec);
 
 static inline uint8_t reftable_record_type(struct reftable_record *rec)
