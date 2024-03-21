@@ -1093,8 +1093,11 @@ size_t wt_status_locate_end(const char *s, size_t len)
 	strbuf_addf(&pattern, "\n%c %s", comment_line_char, cut_line);
 	if (starts_with(s, pattern.buf + 1))
 		len = 0;
-	else if ((p = strstr(s, pattern.buf)))
-		len = p - s + 1;
+	else if ((p = strstr(s, pattern.buf))) {
+		size_t newlen = p - s + 1;
+		if (newlen < len)
+			len = newlen;
+	}
 	strbuf_release(&pattern);
 	return len;
 }
