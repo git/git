@@ -102,9 +102,9 @@ its source repository, you can simply run `git repack -a` to copy all
 objects from the source repository into a pack in the cloned repository.
 
 --reference[-if-able] <repository>::
-	If the reference repository is on the local machine,
+	If the reference _<repository>_ is on the local machine,
 	automatically setup `.git/objects/info/alternates` to
-	obtain objects from the reference repository.  Using
+	obtain objects from the reference _<repository>_.  Using
 	an already existing repository as an alternate will
 	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
@@ -156,13 +156,13 @@ objects from the source repository into a pack in the cloned repository.
 
 --[no-]reject-shallow::
 	Fail if the source repository is a shallow repository.
-	The 'clone.rejectShallow' configuration variable can be used to
+	The `clone.rejectShallow` configuration variable can be used to
 	specify the default.
 
 --bare::
 	Make a 'bare' Git repository.  That is, instead of
-	creating `<directory>` and placing the administrative
-	files in `<directory>/.git`, make the `<directory>`
+	creating _<directory>_ and placing the administrative
+	files in `<directory>/.git`, make the _<directory>_
 	itself the `$GIT_DIR`. This obviously implies the `--no-checkout`
 	because there is nowhere to check out the working tree.
 	Also the branch heads at the remote are copied directly
@@ -180,11 +180,11 @@ objects from the source repository into a pack in the cloned repository.
 --filter=<filter-spec>::
 	Use the partial clone feature and request that the server sends
 	a subset of reachable objects according to a given object filter.
-	When using `--filter`, the supplied `<filter-spec>` is used for
+	When using `--filter`, the supplied _<filter-spec>_ is used for
 	the partial clone filter. For example, `--filter=blob:none` will
 	filter out all blobs (file contents) until needed by Git. Also,
 	`--filter=blob:limit=<size>` will filter out all blobs of size
-	at least `<size>`. For more details on filter specifications, see
+	at least _<size>_. For more details on filter specifications, see
 	the `--filter` option in linkgit:git-rev-list[1].
 
 --also-filter-submodules::
@@ -203,13 +203,13 @@ objects from the source repository into a pack in the cloned repository.
 -o <name>::
 --origin <name>::
 	Instead of using the remote name `origin` to keep track of the upstream
-	repository, use `<name>`.  Overrides `clone.defaultRemoteName` from the
+	repository, use _<name>_.  Overrides `clone.defaultRemoteName` from the
 	config.
 
 -b <name>::
 --branch <name>::
 	Instead of pointing the newly created HEAD to the branch pointed
-	to by the cloned repository's HEAD, point to `<name>` branch
+	to by the cloned repository's HEAD, point to _<name>_ branch
 	instead. In a non-bare repository, this is the branch that will
 	be checked out.
 	`--branch` can also take tags and detaches the HEAD at that commit
@@ -230,7 +230,7 @@ objects from the source repository into a pack in the cloned repository.
 	Set a configuration variable in the newly-created repository;
 	this takes effect immediately after the repository is
 	initialized, but before the remote history is fetched or any
-	files checked out.  The key is in the same format as expected by
+	files checked out.  The _<key>_ is in the same format as expected by
 	linkgit:git-config[1] (e.g., `core.eol=true`). If multiple
 	values are given for the same key, each value will be written to
 	the config file. This makes it safe, for example, to add
@@ -263,7 +263,7 @@ corresponding `--mirror` and `--no-tags` options instead.
 	branch remote's `HEAD` points at.
 	Further fetches into the resulting repository will only update the
 	remote-tracking branch for the branch this option was used for the
-	initial cloning.  If the HEAD at the remote did not point at any
+	initial cloning.  If the `HEAD` at the remote did not point at any
 	branch when `--single-branch` clone was made, no remote-tracking
 	branch is created.
 
@@ -281,7 +281,7 @@ branch of some repository for search indexing.
 
 --recurse-submodules[=<pathspec>]::
 	After the clone is created, initialize and clone submodules
-	within based on the provided pathspec.  If no pathspec is
+	within based on the provided _<pathspec>_.  If no _=<pathspec>_ is
 	provided, all submodules are initialized and cloned.
 	This option can be given multiple times for pathspecs consisting
 	of multiple entries.  The resulting clone has `submodule.active` set to
@@ -323,20 +323,20 @@ include::ref-storage-format.txt[]
 	Defaults to the `submodule.fetchJobs` option.
 
 <repository>::
-	The (possibly remote) repository to clone from.  See the
+	The (possibly remote) _<repository>_ to clone from.  See the
 	<<URLS,GIT URLS>> section below for more information on specifying
 	repositories.
 
 <directory>::
 	The name of a new directory to clone into.  The "humanish"
-	part of the source repository is used if no directory is
+	part of the source repository is used if no _<directory>_ is
 	explicitly given (`repo` for `/path/to/repo.git` and `foo`
 	for `host.xz:foo/.git`).  Cloning into an existing directory
 	is only allowed if the directory is empty.
 
 --bundle-uri=<uri>::
 	Before fetching from the remote, fetch a bundle from the given
-	`<uri>` and unbundle the data into the local repository. The refs
+	_<uri>_ and unbundle the data into the local repository. The refs
 	in the bundle will be stored under the hidden `refs/bundle/*`
 	namespace. This option is incompatible with `--depth`,
 	`--shallow-since`, and `--shallow-exclude`.
