@@ -269,7 +269,7 @@ int reopen_tempfile(struct tempfile *tempfile);
  * `delete_tempfile()` for a `tempfile` object that has already been
  * deleted or renamed.
  */
-void delete_tempfile(struct tempfile **tempfile_p);
+int delete_tempfile(struct tempfile **tempfile_p);
 
 /*
  * Close the file descriptor and/or file pointer if they are still
