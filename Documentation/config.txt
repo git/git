@@ -369,19 +369,17 @@ inventing new variables for use in your own tool, make sure their
 names do not conflict with those that are used by Git itself and
 other popular tools, and describe them in your documentation.
 
-include::config/advice.txt[]
-
-include::config/attr.txt[]
-
-include::config/core.txt[]
-
 include::config/add.txt[]
+
+include::config/advice.txt[]
 
 include::config/alias.txt[]
 
 include::config/am.txt[]
 
 include::config/apply.txt[]
+
+include::config/attr.txt[]
 
 include::config/blame.txt[]
 
@@ -405,9 +403,11 @@ include::config/commit.txt[]
 
 include::config/commitgraph.txt[]
 
-include::config/credential.txt[]
-
 include::config/completion.txt[]
+
+include::config/core.txt[]
+
+include::config/credential.txt[]
 
 include::config/diff.txt[]
 
@@ -421,9 +421,9 @@ include::config/feature.txt[]
 
 include::config/fetch.txt[]
 
-include::config/format.txt[]
-
 include::config/filter.txt[]
+
+include::config/format.txt[]
 
 include::config/fsck.txt[]
 
@@ -435,9 +435,9 @@ include::config/gitcvs.txt[]
 
 include::config/gitweb.txt[]
 
-include::config/grep.txt[]
-
 include::config/gpg.txt[]
+
+include::config/grep.txt[]
 
 include::config/gui.txt[]
 
@@ -519,9 +519,9 @@ include::config/splitindex.txt[]
 
 include::config/ssh.txt[]
 
-include::config/status.txt[]
-
 include::config/stash.txt[]
+
+include::config/status.txt[]
 
 include::config/submodule.txt[]
 

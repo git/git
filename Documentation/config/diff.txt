@@ -223,5 +223,5 @@ diff.colorMoved::
 
 diff.colorMovedWS::
 	When moved lines are colored using e.g. the `diff.colorMoved` setting,
-	this option controls the `<mode>` how spaces are treated
-	for details of valid modes see '--color-moved-ws' in linkgit:git-diff[1].
+	this option controls the `<mode>` how spaces are treated.
+	For details of valid modes see '--color-moved-ws' in linkgit:git-diff[1].

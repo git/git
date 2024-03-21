@@ -25,7 +25,11 @@ struct string_view {
 };
 
 /* Advance `s.buf` by `n`, and decrease length. */
-void string_view_consume(struct string_view *s, int n);
+static inline void string_view_consume(struct string_view *s, int n)
+{
+	s->buf += n;
+	s->len -= n;
+}
 
 /* utilities for de/encoding varints */
 
@@ -62,6 +66,12 @@ struct reftable_record_vtable {
 	/* Are two records equal? This assumes they have the same type. Returns 0 for non-equal. */
 	int (*equal)(const void *a, const void *b, int hash_size);
 
+	/*
+	 * Compare keys of two records with each other. The records must have
+	 * the same type.
+	 */
+	int (*cmp)(const void *a, const void *b);
+
 	/* Print on stdout, for debugging. */
 	void (*print)(const void *rec, int hash_size);
 };
@@ -75,9 +85,12 @@ int reftable_encode_key(int *is_restart, struct string_view dest,
 			struct strbuf prev_key, struct strbuf key,
 			uint8_t extra);
 
-/* Decode into `key` and `extra` from `in` */
-int reftable_decode_key(struct strbuf *key, uint8_t *extra,
-			struct strbuf last_key, struct string_view in);
+/*
+ * Decode into `last_key` and `extra` from `in`. `last_key` is expected to
+ * contain the decoded key of the preceding record, if any.
+ */
+int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
+			struct string_view in);
 
 /* reftable_index_record are used internally to speed up lookups. */
 struct reftable_index_record {
@@ -114,10 +127,10 @@ struct reftable_record {
 void reftable_record_init(struct reftable_record *rec, uint8_t typ);
 
 /* see struct record_vtable */
+int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b);
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
 void reftable_record_print(struct reftable_record *rec, int hash_size);
 void reftable_record_key(struct reftable_record *rec, struct strbuf *dest);
-uint8_t reftable_record_type(struct reftable_record *rec);
 void reftable_record_copy_from(struct reftable_record *rec,
 			       struct reftable_record *src, int hash_size);
 uint8_t reftable_record_val_type(struct reftable_record *rec);
@@ -127,6 +140,11 @@ int reftable_record_decode(struct reftable_record *rec, struct strbuf key,
 			   uint8_t extra, struct string_view src,
 			   int hash_size);
 int reftable_record_is_deletion(struct reftable_record *rec);
+
+static inline uint8_t reftable_record_type(struct reftable_record *rec)
+{
+	return rec->type;
+}
 
 /* frees and zeroes out the embedded record */
 void reftable_record_release(struct reftable_record *rec);

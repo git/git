@@ -1526,6 +1526,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	    starts_with(name, "refs/heads/")) {
 		struct object *old_object, *new_object;
 		struct commit *old_commit, *new_commit;
+		int ret2;
 
 		old_object = parse_object(the_repository, old_oid);
 		new_object = parse_object(the_repository, new_oid);
@@ -1539,7 +1540,10 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		}
 		old_commit = (struct commit *)old_object;
 		new_commit = (struct commit *)new_object;
-		if (!repo_in_merge_bases(the_repository, old_commit, new_commit)) {
+		ret2 = repo_in_merge_bases(the_repository, old_commit, new_commit);
+		if (ret2 < 0)
+			exit(128);
+		if (!ret2) {
 			rp_error("denying non-fast-forward %s"
 				 " (you should pull first)", name);
 			ret = "non-fast-forward";

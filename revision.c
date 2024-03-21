@@ -381,13 +381,18 @@ static struct object *get_reference(struct rev_info *revs, const char *name,
 
 	object = parse_object_with_flags(revs->repo, oid,
 					 revs->verify_objects ? 0 :
-					 PARSE_OBJECT_SKIP_HASH_CHECK);
+					 PARSE_OBJECT_SKIP_HASH_CHECK |
+					 PARSE_OBJECT_DISCARD_TREE);
 
 	if (!object) {
 		if (revs->ignore_missing)
-			return object;
+			return NULL;
 		if (revs->exclude_promisor_objects && is_promisor_object(oid))
 			return NULL;
+		if (revs->do_not_die_on_missing_objects) {
+			oidset_insert(&revs->missing_commits, oid);
+			return NULL;
+		}
 		die("bad object %s", name);
 	}
 	object->flags |= flags;
@@ -415,15 +420,21 @@ static struct commit *handle_commit(struct rev_info *revs,
 	 */
 	while (object->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *) object;
+		struct object_id *oid;
 		if (revs->tag_objects && !(flags & UNINTERESTING))
 			add_pending_object(revs, object, tag->tag);
-		object = parse_object(revs->repo, get_tagged_oid(tag));
+		oid = get_tagged_oid(tag);
+		object = parse_object(revs->repo, oid);
 		if (!object) {
 			if (revs->ignore_missing_links || (flags & UNINTERESTING))
 				return NULL;
 			if (revs->exclude_promisor_objects &&
 			    is_promisor_object(&tag->tagged->oid))
 				return NULL;
+			if (revs->do_not_die_on_missing_objects && oid) {
+				oidset_insert(&revs->missing_commits, oid);
+				return NULL;
+			}
 			die("bad object %s", oid_to_hex(&tag->tagged->oid));
 		}
 		object->flags |= flags;
@@ -1686,9 +1697,7 @@ static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
 	return 0;
 }
 
-static int handle_one_reflog(const char *refname_in_wt,
-			     const struct object_id *oid UNUSED,
-			     int flag UNUSED, void *cb_data)
+static int handle_one_reflog(const char *refname_in_wt, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	struct strbuf refname = STRBUF_INIT;
@@ -1947,6 +1956,7 @@ void repo_init_revisions(struct repository *r,
 	init_display_notes(&revs->notes_opt);
 	list_objects_filter_init(&revs->filter);
 	init_ref_exclusions(&revs->ref_excludes);
+	oidset_init(&revs->missing_commits, 0);
 }
 
 static void add_pending_commit_list(struct rev_info *revs,
@@ -1961,11 +1971,31 @@ static void add_pending_commit_list(struct rev_info *revs,
 	}
 }
 
+static const char *lookup_other_head(struct object_id *oid)
+{
+	int i;
+	static const char *const other_head[] = {
+		"MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "REBASE_HEAD"
+	};
+
+	for (i = 0; i < ARRAY_SIZE(other_head); i++)
+		if (!read_ref_full(other_head[i],
+				RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+				oid, NULL)) {
+			if (is_null_oid(oid))
+				die(_("%s exists but is a symbolic ref"), other_head[i]);
+			return other_head[i];
+		}
+
+	die(_("--merge requires one of the pseudorefs MERGE_HEAD, CHERRY_PICK_HEAD, REVERT_HEAD or REBASE_HEAD"));
+}
+
 static void prepare_show_merge(struct rev_info *revs)
 {
-	struct commit_list *bases;
+	struct commit_list *bases = NULL;
 	struct commit *head, *other;
 	struct object_id oid;
+	const char *other_name;
 	const char **prune = NULL;
 	int i, prune_num = 1; /* counting terminating NULL */
 	struct index_state *istate = revs->repo->index;
@@ -1973,12 +2003,12 @@ static void prepare_show_merge(struct rev_info *revs)
 	if (repo_get_oid(the_repository, "HEAD", &oid))
 		die("--merge without HEAD?");
 	head = lookup_commit_or_die(&oid, "HEAD");
-	if (repo_get_oid(the_repository, "MERGE_HEAD", &oid))
-		die("--merge without MERGE_HEAD?");
-	other = lookup_commit_or_die(&oid, "MERGE_HEAD");
+	other_name = lookup_other_head(&oid);
+	other = lookup_commit_or_die(&oid, other_name);
 	add_pending_object(revs, &head->object, "HEAD");
-	add_pending_object(revs, &other->object, "MERGE_HEAD");
-	bases = repo_get_merge_bases(the_repository, head, other);
+	add_pending_object(revs, &other->object, other_name);
+	if (repo_get_merge_bases(the_repository, head, other, &bases) < 0)
+		exit(128);
 	add_rev_cmdline_list(revs, bases, REV_CMD_MERGE_BASE, UNINTERESTING | BOTTOM);
 	add_pending_commit_list(revs, bases, UNINTERESTING | BOTTOM);
 	free_commit_list(bases);
@@ -2066,14 +2096,17 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 	} else {
 		/* A...B -- find merge bases between the two */
 		struct commit *a, *b;
-		struct commit_list *exclude;
+		struct commit_list *exclude = NULL;
 
 		a = lookup_commit_reference(revs->repo, &a_obj->oid);
 		b = lookup_commit_reference(revs->repo, &b_obj->oid);
 		if (!a || !b)
 			return dotdot_missing(arg, dotdot, revs, symmetric);
 
-		exclude = repo_get_merge_bases(the_repository, a, b);
+		if (repo_get_merge_bases(the_repository, a, b, &exclude) < 0) {
+			free_commit_list(exclude);
+			return -1;
+		}
 		add_rev_cmdline_list(revs, exclude, REV_CMD_MERGE_BASE,
 				     flags_exclude);
 		add_pending_commit_list(revs, exclude, flags_exclude);
@@ -2178,13 +2211,18 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 	if (revarg_opt & REVARG_COMMITTISH)
 		get_sha1_flags |= GET_OID_COMMITTISH;
 
+	/*
+	 * Even if revs->do_not_die_on_missing_objects is set, we
+	 * should error out if we can't even get an oid, as
+	 * `--missing=print` should be able to report missing oids.
+	 */
 	if (get_oid_with_context(revs->repo, arg, get_sha1_flags, &oid, &oc))
 		return revs->ignore_missing ? 0 : -1;
 	if (!cant_be_filename)
 		verify_non_filename(revs->prefix, arg);
 	object = get_reference(revs, arg, &oid, flags ^ local_flags);
 	if (!object)
-		return revs->ignore_missing ? 0 : -1;
+		return (revs->ignore_missing || revs->do_not_die_on_missing_objects) ? 0 : -1;
 	add_rev_cmdline(revs, object, arg_, REV_CMD_REV, flags ^ local_flags);
 	add_pending_object_with_path(revs, object, arg, oc.mode, oc.path);
 	free(oc.path);
@@ -2320,7 +2358,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (skip_prefix(arg, "--ancestry-path=", &optarg)) {
 		struct commit *c;
 		struct object_id oid;
-		const char *msg = _("could not get commit for ancestry-path argument %s");
+		const char *msg = _("could not get commit for --ancestry-path argument %s");
 
 		revs->ancestry_path = 1;
 		revs->simplify_history = 0;
@@ -3829,8 +3867,6 @@ int prepare_revision_walk(struct rev_info *revs)
 		for_each_packed_object(mark_uninteresting, revs,
 				       FOR_EACH_OBJECT_PROMISOR_ONLY);
 	}
-
-	oidset_init(&revs->missing_commits, 0);
 
 	if (!revs->reflog_info)
 		prepare_to_use_bloom_filter(revs);

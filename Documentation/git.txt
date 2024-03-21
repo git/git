@@ -174,8 +174,17 @@ If you just want to run git as if it was started in `<path>` then use
 	directory.
 
 --no-replace-objects::
-	Do not use replacement refs to replace Git objects. See
-	linkgit:git-replace[1] for more information.
+	Do not use replacement refs to replace Git objects.
+	This is equivalent to exporting the `GIT_NO_REPLACE_OBJECTS`
+	environment variable with any value.
+	See linkgit:git-replace[1] for more information.
+
+--no-lazy-fetch::
+	Do not fetch missing objects from the promisor remote on
+	demand.  Useful together with `git cat-file -e <object>` to
+	see if the object is locally available.
+	This is equivalent to setting the `GIT_NO_LAZY_FETCH`
+	environment variable to `1`.
 
 --literal-pathspecs::
 	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
@@ -872,6 +881,10 @@ for full details.
 	header and packfile URIs. Set this Boolean environment variable to false to prevent this
 	redaction.
 
+`GIT_NO_REPLACE_OBJECTS`::
+	Setting and exporting this environment variable tells Git to
+	ignore replacement refs and do not replace Git objects.
+
 `GIT_LITERAL_PATHSPECS`::
 	Setting this Boolean environment variable to true will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,
@@ -892,6 +905,11 @@ for full details.
 `GIT_ICASE_PATHSPECS`::
 	Setting this Boolean environment variable to true will cause Git to treat all
 	pathspecs as case-insensitive.
+
+`GIT_NO_LAZY_FETCH`::
+	Setting this Boolean environment variable to true tells Git
+	not to lazily fetch missing objects from the promisor remote
+	on demand.
 
 `GIT_REFLOG_ACTION`::
 	When a ref is updated, reflog entries are created to keep

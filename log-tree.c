@@ -1011,7 +1011,7 @@ static int do_remerge_diff(struct rev_info *opt,
 			   struct object_id *oid)
 {
 	struct merge_options o;
-	struct commit_list *bases;
+	struct commit_list *bases = NULL;
 	struct merge_result res = {0};
 	struct pretty_print_context ctx = {0};
 	struct commit *parent1 = parents->item;
@@ -1036,7 +1036,8 @@ static int do_remerge_diff(struct rev_info *opt,
 	/* Parse the relevant commits and get the merge bases */
 	parse_commit_or_die(parent1);
 	parse_commit_or_die(parent2);
-	bases = repo_get_merge_bases(the_repository, parent1, parent2);
+	if (repo_get_merge_bases(the_repository, parent1, parent2, &bases) < 0)
+		exit(128);
 
 	/* Re-merge the parents */
 	merge_incore_recursive(&o, bases, parent1, parent2, &res);

@@ -220,7 +220,7 @@ int demultiplex_sideband(const char *me, int status,
 			}
 
 			strbuf_addch(scratch, *brk);
-			xwrite(2, scratch->buf, scratch->len);
+			write_in_full(2, scratch->buf, scratch->len);
 			strbuf_reset(scratch);
 
 			b = brk + 1;
@@ -247,7 +247,7 @@ cleanup:
 		die("%s", scratch->buf);
 	if (scratch->len) {
 		strbuf_addch(scratch, '\n');
-		xwrite(2, scratch->buf, scratch->len);
+		write_in_full(2, scratch->buf, scratch->len);
 	}
 	strbuf_release(scratch);
 	return 1;

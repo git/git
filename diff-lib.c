@@ -570,7 +570,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 {
 	int i;
 	struct commit *mb_child[2] = {0};
-	struct commit_list *merge_bases;
+	struct commit_list *merge_bases = NULL;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *obj = revs->pending.objects[i].item;
@@ -597,7 +597,8 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 		mb_child[1] = lookup_commit_reference(the_repository, &oid);
 	}
 
-	merge_bases = repo_get_merge_bases(the_repository, mb_child[0], mb_child[1]);
+	if (repo_get_merge_bases(the_repository, mb_child[0], mb_child[1], &merge_bases) < 0)
+		exit(128);
 	if (!merge_bases)
 		die(_("no merge base found"));
 	if (merge_bases->next)

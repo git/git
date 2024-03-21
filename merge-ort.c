@@ -18,6 +18,7 @@
 #include "merge-ort.h"
 
 #include "alloc.h"
+#include "advice.h"
 #include "attr.h"
 #include "cache-tree.h"
 #include "commit.h"
@@ -542,6 +543,7 @@ enum conflict_and_info_types {
 	CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE,
 	CONFLICT_SUBMODULE_MAY_HAVE_REWINDS,
 	CONFLICT_SUBMODULE_NULL_MERGE_BASE,
+	CONFLICT_SUBMODULE_CORRUPT,
 
 	/* Keep this entry _last_ in the list */
 	NB_CONFLICT_TYPES,
@@ -594,7 +596,9 @@ static const char *type_short_descriptions[] = {
 	[CONFLICT_SUBMODULE_MAY_HAVE_REWINDS] =
 		"CONFLICT (submodule may have rewinds)",
 	[CONFLICT_SUBMODULE_NULL_MERGE_BASE] =
-		"CONFLICT (submodule lacks merge base)"
+		"CONFLICT (submodule lacks merge base)",
+	[CONFLICT_SUBMODULE_CORRUPT] =
+		"CONFLICT (submodule corrupt)"
 };
 
 struct logical_conflict_info {
@@ -1657,9 +1661,10 @@ static int collect_merge_info(struct merge_options *opt,
 	info.data = opt;
 	info.show_all_errors = 1;
 
-	parse_tree(merge_base);
-	parse_tree(side1);
-	parse_tree(side2);
+	if (parse_tree(merge_base) < 0 ||
+	    parse_tree(side1) < 0 ||
+	    parse_tree(side2) < 0)
+		return -1;
 	init_tree_desc(t + 0, merge_base->buffer, merge_base->size);
 	init_tree_desc(t + 1, side1->buffer, side1->size);
 	init_tree_desc(t + 2, side2->buffer, side2->size);
@@ -1708,7 +1713,14 @@ static int find_first_merges(struct repository *repo,
 		die("revision walk setup failed");
 	while ((commit = get_revision(&revs)) != NULL) {
 		struct object *o = &(commit->object);
-		if (repo_in_merge_bases(repo, b, commit))
+		int ret = repo_in_merge_bases(repo, b, commit);
+
+		if (ret < 0) {
+			object_array_clear(&merges);
+			release_revisions(&revs);
+			return ret;
+		}
+		if (ret > 0)
 			add_object_array(o, NULL, &merges);
 	}
 	reset_revision_walk();
@@ -1723,9 +1735,17 @@ static int find_first_merges(struct repository *repo,
 		contains_another = 0;
 		for (j = 0; j < merges.nr; j++) {
 			struct commit *m2 = (struct commit *) merges.objects[j].item;
-			if (i != j && repo_in_merge_bases(repo, m2, m1)) {
-				contains_another = 1;
-				break;
+			if (i != j) {
+				int ret = repo_in_merge_bases(repo, m2, m1);
+				if (ret < 0) {
+					object_array_clear(&merges);
+					release_revisions(&revs);
+					return ret;
+				}
+				if (ret > 0) {
+					contains_another = 1;
+					break;
+				}
 			}
 		}
 
@@ -1747,7 +1767,7 @@ static int merge_submodule(struct merge_options *opt,
 {
 	struct repository subrepo;
 	struct strbuf sb = STRBUF_INIT;
-	int ret = 0;
+	int ret = 0, ret2;
 	struct commit *commit_o, *commit_a, *commit_b;
 	int parent_count;
 	struct object_array merges;
@@ -1794,8 +1814,28 @@ static int merge_submodule(struct merge_options *opt,
 	}
 
 	/* check whether both changes are forward */
-	if (!repo_in_merge_bases(&subrepo, commit_o, commit_a) ||
-	    !repo_in_merge_bases(&subrepo, commit_o, commit_b)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_o, commit_a);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (ret2 > 0)
+		ret2 = repo_in_merge_bases(&subrepo, commit_o, commit_b);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (!ret2) {
 		path_msg(opt, CONFLICT_SUBMODULE_MAY_HAVE_REWINDS, 0,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s "
@@ -1805,7 +1845,17 @@ static int merge_submodule(struct merge_options *opt,
 	}
 
 	/* Case #1: a is contained in b or vice versa */
-	if (repo_in_merge_bases(&subrepo, commit_a, commit_b)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_a, commit_b);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (ret2 > 0) {
 		oidcpy(result, b);
 		path_msg(opt, INFO_SUBMODULE_FAST_FORWARDING, 1,
 			 path, NULL, NULL, NULL,
@@ -1814,7 +1864,17 @@ static int merge_submodule(struct merge_options *opt,
 		ret = 1;
 		goto cleanup;
 	}
-	if (repo_in_merge_bases(&subrepo, commit_b, commit_a)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_b, commit_a);
+	if (ret2 < 0) {
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (ret2 > 0) {
 		oidcpy(result, a);
 		path_msg(opt, INFO_SUBMODULE_FAST_FORWARDING, 1,
 			 path, NULL, NULL, NULL,
@@ -1839,6 +1899,14 @@ static int merge_submodule(struct merge_options *opt,
 	parent_count = find_first_merges(&subrepo, path, commit_a, commit_b,
 					 &merges);
 	switch (parent_count) {
+	case -1:
+		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+			 path, NULL, NULL, NULL,
+			 _("Failed to merge submodule %s "
+			   "(repository corrupt)"),
+			 path);
+		ret = -1;
+		break;
 	case 0:
 		path_msg(opt, CONFLICT_SUBMODULE_FAILED_TO_MERGE, 0,
 			 path, NULL, NULL, NULL,
@@ -4376,9 +4444,11 @@ static int checkout(struct merge_options *opt,
 	unpack_opts.verbose_update = (opt->verbosity > 2);
 	unpack_opts.fn = twoway_merge;
 	unpack_opts.preserve_ignored = 0; /* FIXME: !opts->overwrite_ignore */
-	parse_tree(prev);
+	if (parse_tree(prev) < 0)
+		return -1;
 	init_tree_desc(&trees[0], prev->buffer, prev->size);
-	parse_tree(next);
+	if (parse_tree(next) < 0)
+		return -1;
 	init_tree_desc(&trees[1], next->buffer, next->size);
 
 	ret = unpack_trees(2, trees, &unpack_opts);
@@ -4556,7 +4626,7 @@ static void print_submodule_conflict_suggestion(struct string_list *csub) {
 		      " - commit the resulting index in the superproject\n"),
 		    tmp.buf, subs.buf);
 
-	printf("%s", msg.buf);
+	advise_if_enabled(ADVICE_SUBMODULE_MERGE_CONFLICT, "%s", msg.buf);
 
 	strbuf_release(&subs);
 	strbuf_release(&tmp);
@@ -4982,6 +5052,9 @@ redo:
 
 	if (result->clean >= 0) {
 		result->tree = parse_tree_indirect(&working_tree_oid);
+		if (!result->tree)
+			die(_("unable to read tree (%s)"),
+			    oid_to_hex(&working_tree_oid));
 		/* existence of conflicted entries implies unclean */
 		result->clean &= strmap_empty(&opt->priv->conflicted);
 	}
@@ -5007,7 +5080,11 @@ static void merge_ort_internal(struct merge_options *opt,
 	struct strbuf merge_base_abbrev = STRBUF_INIT;
 
 	if (!merge_bases) {
-		merge_bases = repo_get_merge_bases(the_repository, h1, h2);
+		if (repo_get_merge_bases(the_repository, h1, h2,
+					 &merge_bases) < 0) {
+			result->clean = -1;
+			return;
+		}
 		/* See merge-ort.h:merge_incore_recursive() declaration NOTE */
 		merge_bases = reverse_commit_list(merge_bases);
 	}

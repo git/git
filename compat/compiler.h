@@ -1,7 +1,6 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
-#include "git-compat-util.h"
 #include "strbuf.h"
 
 #ifdef __GLIBC__

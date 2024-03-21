@@ -292,7 +292,7 @@ static int read_merge_config(const char *var, const char *value,
 	 * after seeing merge.<name>.var1.
 	 */
 	for (fn = ll_user_merge; fn; fn = fn->next)
-		if (!strncmp(fn->name, name, namelen) && !fn->name[namelen])
+		if (!xstrncmpz(fn->name, name, namelen))
 			break;
 	if (!fn) {
 		CALLOC_ARRAY(fn, 1);

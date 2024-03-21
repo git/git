@@ -1,30 +1,19 @@
 #include "test-lib.h"
 
-static int is_in(const char *s, int ch)
-{
-	/*
-	 * We can't find NUL using strchr. Accept it as the first
-	 * character in the spec -- there are no empty classes.
-	 */
-	if (ch == '\0')
-		return ch == *s;
-	if (*s == '\0')
-		s++;
-	return !!strchr(s, ch);
-}
-
-/* Macro to test a character type */
-#define TEST_CTYPE_FUNC(func, string) \
-static void test_ctype_##func(void) { \
-	for (int i = 0; i < 256; i++) { \
-		if (!check_int(func(i), ==, is_in(string, i))) \
-			test_msg("       i: 0x%02x", i); \
+#define TEST_CHAR_CLASS(class, string) do { \
+	size_t len = ARRAY_SIZE(string) - 1 + \
+		BUILD_ASSERT_OR_ZERO(ARRAY_SIZE(string) > 0) + \
+		BUILD_ASSERT_OR_ZERO(sizeof(string[0]) == sizeof(char)); \
+	int skip = test__run_begin(); \
+	if (!skip) { \
+		for (int i = 0; i < 256; i++) { \
+			if (!check_int(class(i), ==, !!memchr(string, i, len)))\
+				test_msg("      i: 0x%02x", i); \
+		} \
+		check(!class(EOF)); \
 	} \
-	if (!check(!func(EOF))) \
-			test_msg("      i: 0x%02x (EOF)", EOF); \
-}
-
-#define TEST_CHAR_CLASS(class) TEST(test_ctype_##class(), #class " works")
+	test__run_end(!skip, TEST_LOCATION(), #class " works"); \
+} while (0)
 
 #define DIGIT "0123456789"
 #define LOWER "abcdefghijklmnopqrstuvwxyz"
@@ -44,37 +33,21 @@ static void test_ctype_##func(void) { \
 	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" \
 	"\x7f"
 
-TEST_CTYPE_FUNC(isdigit, DIGIT)
-TEST_CTYPE_FUNC(isspace, " \n\r\t")
-TEST_CTYPE_FUNC(isalpha, LOWER UPPER)
-TEST_CTYPE_FUNC(isalnum, LOWER UPPER DIGIT)
-TEST_CTYPE_FUNC(is_glob_special, "*?[\\")
-TEST_CTYPE_FUNC(is_regex_special, "$()*+.?[\\^{|")
-TEST_CTYPE_FUNC(is_pathspec_magic, "!\"#%&',-/:;<=>@_`~")
-TEST_CTYPE_FUNC(isascii, ASCII)
-TEST_CTYPE_FUNC(islower, LOWER)
-TEST_CTYPE_FUNC(isupper, UPPER)
-TEST_CTYPE_FUNC(iscntrl, CNTRL)
-TEST_CTYPE_FUNC(ispunct, PUNCT)
-TEST_CTYPE_FUNC(isxdigit, DIGIT "abcdefABCDEF")
-TEST_CTYPE_FUNC(isprint, LOWER UPPER DIGIT PUNCT " ")
-
 int cmd_main(int argc, const char **argv) {
-	/* Run all character type tests */
-	TEST_CHAR_CLASS(isspace);
-	TEST_CHAR_CLASS(isdigit);
-	TEST_CHAR_CLASS(isalpha);
-	TEST_CHAR_CLASS(isalnum);
-	TEST_CHAR_CLASS(is_glob_special);
-	TEST_CHAR_CLASS(is_regex_special);
-	TEST_CHAR_CLASS(is_pathspec_magic);
-	TEST_CHAR_CLASS(isascii);
-	TEST_CHAR_CLASS(islower);
-	TEST_CHAR_CLASS(isupper);
-	TEST_CHAR_CLASS(iscntrl);
-	TEST_CHAR_CLASS(ispunct);
-	TEST_CHAR_CLASS(isxdigit);
-	TEST_CHAR_CLASS(isprint);
+	TEST_CHAR_CLASS(isspace, " \n\r\t");
+	TEST_CHAR_CLASS(isdigit, DIGIT);
+	TEST_CHAR_CLASS(isalpha, LOWER UPPER);
+	TEST_CHAR_CLASS(isalnum, LOWER UPPER DIGIT);
+	TEST_CHAR_CLASS(is_glob_special, "*?[\\");
+	TEST_CHAR_CLASS(is_regex_special, "$()*+.?[\\^{|");
+	TEST_CHAR_CLASS(is_pathspec_magic, "!\"#%&',-/:;<=>@_`~");
+	TEST_CHAR_CLASS(isascii, ASCII);
+	TEST_CHAR_CLASS(islower, LOWER);
+	TEST_CHAR_CLASS(isupper, UPPER);
+	TEST_CHAR_CLASS(iscntrl, CNTRL);
+	TEST_CHAR_CLASS(ispunct, PUNCT);
+	TEST_CHAR_CLASS(isxdigit, DIGIT "abcdefABCDEF");
+	TEST_CHAR_CLASS(isprint, LOWER UPPER DIGIT PUNCT " ");
 
 	return test_done();
 }

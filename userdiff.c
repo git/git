@@ -3,6 +3,7 @@
 #include "userdiff.h"
 #include "attr.h"
 #include "strbuf.h"
+#include "environment.h"
 
 static struct userdiff_driver *drivers;
 static int ndrivers;
@@ -323,8 +324,7 @@ static int userdiff_find_by_namelen_cb(struct userdiff_driver *driver,
 {
 	struct find_by_namelen_data *cb_data = priv;
 
-	if (!strncmp(driver->name, cb_data->name, cb_data->len) &&
-	    !driver->name[cb_data->len]) {
+	if (!xstrncmpz(driver->name, cb_data->name, cb_data->len)) {
 		cb_data->driver = driver;
 		return 1; /* tell the caller to stop iterating */
 	}
@@ -460,7 +460,8 @@ struct userdiff_driver *userdiff_get_textconv(struct repository *r,
 	if (!driver->textconv)
 		return NULL;
 
-	if (driver->textconv_want_cache && !driver->textconv_cache) {
+	if (driver->textconv_want_cache && !driver->textconv_cache &&
+	    have_git_dir()) {
 		struct notes_cache *c = xmalloc(sizeof(*c));
 		struct strbuf name = STRBUF_INIT;
 

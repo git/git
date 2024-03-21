@@ -14,31 +14,10 @@ https://developers.google.com/open-source/licenses/bsd
 
 int pq_less(struct pq_entry *a, struct pq_entry *b)
 {
-	struct strbuf ak = STRBUF_INIT;
-	struct strbuf bk = STRBUF_INIT;
-	int cmp = 0;
-	reftable_record_key(&a->rec, &ak);
-	reftable_record_key(&b->rec, &bk);
-
-	cmp = strbuf_cmp(&ak, &bk);
-
-	strbuf_release(&ak);
-	strbuf_release(&bk);
-
+	int cmp = reftable_record_cmp(a->rec, b->rec);
 	if (cmp == 0)
 		return a->index > b->index;
-
 	return cmp < 0;
-}
-
-struct pq_entry merged_iter_pqueue_top(struct merged_iter_pqueue pq)
-{
-	return pq.heap[0];
-}
-
-int merged_iter_pqueue_is_empty(struct merged_iter_pqueue pq)
-{
-	return pq.len == 0;
 }
 
 struct pq_entry merged_iter_pqueue_remove(struct merged_iter_pqueue *pq)
@@ -93,10 +72,6 @@ void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry
 
 void merged_iter_pqueue_release(struct merged_iter_pqueue *pq)
 {
-	int i = 0;
-	for (i = 0; i < pq->len; i++) {
-		reftable_record_release(&pq->heap[i].rec);
-	}
 	FREE_AND_NULL(pq->heap);
-	pq->len = pq->cap = 0;
+	memset(pq, 0, sizeof(*pq));
 }

@@ -530,7 +530,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			struct column_options copts;
 			memset(&copts, 0, sizeof(copts));
 			copts.padding = 2;
-			run_column_filter(colopts, &copts);
+			if (run_column_filter(colopts, &copts))
+				die(_("could not start 'git column'"));
 		}
 		filter.name_patterns = argv;
 		ret = list_tags(&filter, sorting, &format);

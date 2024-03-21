@@ -229,6 +229,38 @@ static void add_per_worktree_entries_to_dir(struct ref_dir *dir, const char *dir
 	}
 }
 
+static void loose_fill_ref_dir_regular_file(struct files_ref_store *refs,
+					    const char *refname,
+					    struct ref_dir *dir)
+{
+	struct object_id oid;
+	int flag;
+
+	if (!refs_resolve_ref_unsafe(&refs->base, refname, RESOLVE_REF_READING,
+				     &oid, &flag)) {
+		oidclr(&oid);
+		flag |= REF_ISBROKEN;
+	} else if (is_null_oid(&oid)) {
+		/*
+		 * It is so astronomically unlikely
+		 * that null_oid is the OID of an
+		 * actual object that we consider its
+		 * appearance in a loose reference
+		 * file to be repo corruption
+		 * (probably due to a software bug).
+		 */
+		flag |= REF_ISBROKEN;
+	}
+
+	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
+		if (!refname_is_safe(refname))
+			die("loose refname is dangerous: %s", refname);
+		oidclr(&oid);
+		flag |= REF_BAD_NAME | REF_ISBROKEN;
+	}
+	add_entry_to_dir(dir, create_ref_entry(refname, &oid, flag));
+}
+
 /*
  * Read the loose references from the namespace dirname into dir
  * (without recursing).  dirname must end with '/'.  dir must be the
@@ -257,8 +289,6 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	strbuf_add(&refname, dirname, dirnamelen);
 
 	while ((de = readdir(d)) != NULL) {
-		struct object_id oid;
-		int flag;
 		unsigned char dtype;
 
 		if (de->d_name[0] == '.')
@@ -274,33 +304,7 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 					 create_dir_entry(dir->cache, refname.buf,
 							  refname.len));
 		} else if (dtype == DT_REG) {
-			if (!refs_resolve_ref_unsafe(&refs->base,
-						     refname.buf,
-						     RESOLVE_REF_READING,
-						     &oid, &flag)) {
-				oidclr(&oid);
-				flag |= REF_ISBROKEN;
-			} else if (is_null_oid(&oid)) {
-				/*
-				 * It is so astronomically unlikely
-				 * that null_oid is the OID of an
-				 * actual object that we consider its
-				 * appearance in a loose reference
-				 * file to be repo corruption
-				 * (probably due to a software bug).
-				 */
-				flag |= REF_ISBROKEN;
-			}
-
-			if (check_refname_format(refname.buf,
-						 REFNAME_ALLOW_ONELEVEL)) {
-				if (!refname_is_safe(refname.buf))
-					die("loose refname is dangerous: %s", refname.buf);
-				oidclr(&oid);
-				flag |= REF_BAD_NAME | REF_ISBROKEN;
-			}
-			add_entry_to_dir(dir,
-					 create_ref_entry(refname.buf, &oid, flag));
+			loose_fill_ref_dir_regular_file(refs, refname.buf, dir);
 		}
 		strbuf_setlen(&refname, dirnamelen);
 	}
@@ -311,9 +315,59 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	add_per_worktree_entries_to_dir(dir, dirname);
 }
 
-static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
+/*
+ * Add pseudorefs to the ref dir by parsing the directory for any files
+ * which follow the pseudoref syntax.
+ */
+static void add_pseudoref_and_head_entries(struct ref_store *ref_store,
+					 struct ref_dir *dir,
+					 const char *dirname)
+{
+	struct files_ref_store *refs =
+		files_downcast(ref_store, REF_STORE_READ, "fill_ref_dir");
+	struct strbuf path = STRBUF_INIT, refname = STRBUF_INIT;
+	struct dirent *de;
+	size_t dirnamelen;
+	DIR *d;
+
+	files_ref_path(refs, &path, dirname);
+
+	d = opendir(path.buf);
+	if (!d) {
+		strbuf_release(&path);
+		return;
+	}
+
+	strbuf_addstr(&refname, dirname);
+	dirnamelen = refname.len;
+
+	while ((de = readdir(d)) != NULL) {
+		unsigned char dtype;
+
+		if (de->d_name[0] == '.')
+			continue;
+		if (ends_with(de->d_name, ".lock"))
+			continue;
+		strbuf_addstr(&refname, de->d_name);
+
+		dtype = get_dtype(de, &path, 1);
+		if (dtype == DT_REG && (is_pseudoref(ref_store, de->d_name) ||
+								is_headref(ref_store, de->d_name)))
+			loose_fill_ref_dir_regular_file(refs, refname.buf, dir);
+
+		strbuf_setlen(&refname, dirnamelen);
+	}
+	strbuf_release(&refname);
+	strbuf_release(&path);
+	closedir(d);
+}
+
+static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
+					     unsigned int flags)
 {
 	if (!refs->loose) {
+		struct ref_dir *dir;
+
 		/*
 		 * Mark the top-level directory complete because we
 		 * are about to read the only subdirectory that can
@@ -324,12 +378,17 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
 		/* We're going to fill the top level ourselves: */
 		refs->loose->root->flag &= ~REF_INCOMPLETE;
 
+		dir = get_ref_dir(refs->loose->root);
+
+		if (flags & DO_FOR_EACH_INCLUDE_ROOT_REFS)
+			add_pseudoref_and_head_entries(dir->cache->ref_store, dir,
+						       refs->loose->root->name);
+
 		/*
 		 * Add an incomplete entry for "refs/" (to be filled
 		 * lazily):
 		 */
-		add_entry_to_dir(get_ref_dir(refs->loose->root),
-				 create_dir_entry(refs->loose, "refs/", 5));
+		add_entry_to_dir(dir, create_dir_entry(refs->loose, "refs/", 5));
 	}
 	return refs->loose;
 }
@@ -857,7 +916,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 	 * disk, and re-reads it if not.
 	 */
 
-	loose_iter = cache_ref_iterator_begin(get_loose_ref_cache(refs),
+	loose_iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, flags),
 					      prefix, ref_store->repo, 1);
 
 	/*
@@ -879,8 +938,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 
 	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
-	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable,
-			       overlay_iter->ordered);
+	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable);
 	iter->iter0 = overlay_iter;
 	iter->repo = ref_store->repo;
 	iter->flags = flags;
@@ -1218,7 +1276,7 @@ static int files_pack_refs(struct ref_store *ref_store,
 
 	packed_refs_lock(refs->packed_ref_store, LOCK_DIE_ON_ERROR, &err);
 
-	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL,
+	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, 0), NULL,
 					the_repository, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		/*
@@ -2116,10 +2174,8 @@ static int files_for_each_reflog_ent(struct ref_store *ref_store,
 
 struct files_reflog_iterator {
 	struct ref_iterator base;
-
 	struct ref_store *ref_store;
 	struct dir_iterator *dir_iterator;
-	struct object_id oid;
 };
 
 static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
@@ -2130,25 +2186,13 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 	int ok;
 
 	while ((ok = dir_iterator_advance(diter)) == ITER_OK) {
-		int flags;
-
 		if (!S_ISREG(diter->st.st_mode))
 			continue;
-		if (diter->basename[0] == '.')
+		if (check_refname_format(diter->basename,
+					 REFNAME_ALLOW_ONELEVEL))
 			continue;
-		if (ends_with(diter->basename, ".lock"))
-			continue;
-
-		if (!refs_resolve_ref_unsafe(iter->ref_store,
-					     diter->relative_path, 0,
-					     &iter->oid, &flags)) {
-			error("bad ref for %s", diter->path.buf);
-			continue;
-		}
 
 		iter->base.refname = diter->relative_path;
-		iter->base.oid = &iter->oid;
-		iter->base.flags = flags;
 		return ITER_OK;
 	}
 
@@ -2193,7 +2237,7 @@ static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
 
 	strbuf_addf(&sb, "%s/logs", gitdir);
 
-	diter = dir_iterator_begin(sb.buf, 0);
+	diter = dir_iterator_begin(sb.buf, DIR_ITERATOR_SORTED);
 	if (!diter) {
 		strbuf_release(&sb);
 		return empty_ref_iterator_begin();
@@ -2202,38 +2246,12 @@ static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
 	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 
-	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable, 0);
+	base_ref_iterator_init(ref_iterator, &files_reflog_iterator_vtable);
 	iter->dir_iterator = diter;
 	iter->ref_store = ref_store;
 	strbuf_release(&sb);
 
 	return ref_iterator;
-}
-
-static enum iterator_selection reflog_iterator_select(
-	struct ref_iterator *iter_worktree,
-	struct ref_iterator *iter_common,
-	void *cb_data UNUSED)
-{
-	if (iter_worktree) {
-		/*
-		 * We're a bit loose here. We probably should ignore
-		 * common refs if they are accidentally added as
-		 * per-worktree refs.
-		 */
-		return ITER_SELECT_0;
-	} else if (iter_common) {
-		if (parse_worktree_ref(iter_common->refname, NULL, NULL,
-				       NULL) == REF_WORKTREE_SHARED)
-			return ITER_SELECT_1;
-
-		/*
-		 * The main ref store may contain main worktree's
-		 * per-worktree refs, which should be ignored
-		 */
-		return ITER_SKIP_1;
-	} else
-		return ITER_DONE;
 }
 
 static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_store)
@@ -2246,9 +2264,9 @@ static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_st
 		return reflog_iterator_begin(ref_store, refs->gitcommondir);
 	} else {
 		return merge_ref_iterator_begin(
-			0, reflog_iterator_begin(ref_store, refs->base.gitdir),
+			reflog_iterator_begin(ref_store, refs->base.gitdir),
 			reflog_iterator_begin(ref_store, refs->gitcommondir),
-			reflog_iterator_select, refs);
+			ref_iterator_select, refs);
 	}
 }
 

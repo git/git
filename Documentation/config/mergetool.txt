@@ -45,14 +45,21 @@ mergetool.meld.useAutoMerge::
 	value of `false` avoids using `--auto-merge` altogether, and is the
 	default value.
 
-mergetool.vimdiff.layout::
-	The vimdiff backend uses this variable to control how its split
-	windows appear. Applies even if you are using Neovim (`nvim`) or
-	gVim (`gvim`) as the merge tool. See BACKEND SPECIFIC HINTS section
-ifndef::git-mergetool[]
-	in linkgit:git-mergetool[1].
+mergetool.<vimdiff variant>.layout::
+	Configure the split window layout for vimdiff's `<variant>`, which is any of `vimdiff`,
+	`nvimdiff`, `gvimdiff`.
+	Upon launching `git mergetool` with `--tool=<variant>` (or without `--tool`
+	if `merge.tool` is configured as `<variant>`), Git will consult
+	`mergetool.<variant>.layout` to determine the tool's layout. If the
+	variant-specific configuration is not available, `vimdiff`'s is used as
+	fallback.  If that too is not available, a default layout with 4 windows
+	will be used.  To configure the layout, see the `BACKEND SPECIFIC HINTS`
+ifdef::git-mergetool[]
+	section.
 endif::[]
-	for details.
+ifndef::git-mergetool[]
+	section in linkgit:git-mergetool[1].
+endif::[]
 
 mergetool.hideResolved::
 	During a merge, Git will automatically resolve as many conflicts as

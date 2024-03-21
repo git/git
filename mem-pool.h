@@ -48,6 +48,11 @@ char *mem_pool_strdup(struct mem_pool *pool, const char *str);
 char *mem_pool_strndup(struct mem_pool *pool, const char *str, size_t len);
 
 /*
+ * Allocate memory from the memory pool and format a string into it.
+ */
+char *mem_pool_strfmt(struct mem_pool *pool, const char *fmt, ...);
+
+/*
  * Move the memory associated with the 'src' pool to the 'dst' pool. The 'src'
  * pool will be empty and not contain any memory. It still needs to be free'd
  * with a call to `mem_pool_discard`.

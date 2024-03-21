@@ -396,10 +396,7 @@ test_expect_success '--prune-empty is able to prune entire branch' '
 	git branch prune-entire B &&
 	git filter-branch -f --prune-empty --index-filter "git update-index --remove A.t B.t" prune-entire &&
 	test_must_fail git rev-parse refs/heads/prune-entire &&
-	if test_have_prereq REFFILES
-	then
-		test_must_fail git reflog exists refs/heads/prune-entire
-	fi
+	test_must_fail git reflog exists refs/heads/prune-entire
 '
 
 test_expect_success '--remap-to-ancestor with filename filters' '

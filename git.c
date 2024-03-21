@@ -4,6 +4,7 @@
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "help.h"
+#include "object-file.h"
 #include "pager.h"
 #include "read-cache-ll.h"
 #include "run-command.h"
@@ -184,6 +185,11 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			use_pager = 1;
 		} else if (!strcmp(cmd, "-P") || !strcmp(cmd, "--no-pager")) {
 			use_pager = 0;
+			if (envchanged)
+				*envchanged = 1;
+		} else if (!strcmp(cmd, "--no-lazy-fetch")) {
+			fetch_if_missing = 0;
+			setenv(NO_LAZY_FETCH_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-replace-objects")) {
@@ -373,8 +379,6 @@ static int handle_alias(int *argcp, const char ***argv)
 			strvec_pushv(&child.args, (*argv) + 1);
 
 			trace2_cmd_alias(alias_command, child.args.v);
-			trace2_cmd_list_config();
-			trace2_cmd_list_env_vars();
 			trace2_cmd_name("_run_shell_alias_");
 
 			ret = run_command(&child);
@@ -411,8 +415,6 @@ static int handle_alias(int *argcp, const char ***argv)
 		COPY_ARRAY(new_argv + count, *argv + 1, *argcp);
 
 		trace2_cmd_alias(alias_command, new_argv);
-		trace2_cmd_list_config();
-		trace2_cmd_list_env_vars();
 
 		*argv = new_argv;
 		*argcp += count - 1;
@@ -462,8 +464,6 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 
 	trace_argv_printf(argv, "trace: built-in: git");
 	trace2_cmd_name(p->cmd);
-	trace2_cmd_list_config();
-	trace2_cmd_list_env_vars();
 
 	validate_cache_entries(the_repository->index);
 	status = p->fn(argc, argv, prefix);

@@ -1263,9 +1263,8 @@ test_cmp_bin () {
 	cmp "$@"
 }
 
-# Deprecated - do not use this in new code
 test_i18ngrep () {
-	test_grep "$@"
+	BUG "do not use test_i18ngrep---use test_grep instead"
 }
 
 test_grep () {

@@ -159,19 +159,18 @@ int reftable_encode_key(int *restart, struct string_view dest,
 	return start.len - dest.len;
 }
 
-int reftable_decode_key(struct strbuf *key, uint8_t *extra,
-			struct strbuf last_key, struct string_view in)
+int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
+			struct string_view in)
 {
 	int start_len = in.len;
 	uint64_t prefix_len = 0;
 	uint64_t suffix_len = 0;
-	int n = get_var_int(&prefix_len, &in);
+	int n;
+
+	n = get_var_int(&prefix_len, &in);
 	if (n < 0)
 		return -1;
 	string_view_consume(&in, n);
-
-	if (prefix_len > last_key.len)
-		return -1;
 
 	n = get_var_int(&suffix_len, &in);
 	if (n <= 0)
@@ -181,12 +180,12 @@ int reftable_decode_key(struct strbuf *key, uint8_t *extra,
 	*extra = (uint8_t)(suffix_len & 0x7);
 	suffix_len >>= 3;
 
-	if (in.len < suffix_len)
+	if (in.len < suffix_len ||
+	    prefix_len > last_key->len)
 		return -1;
 
-	strbuf_reset(key);
-	strbuf_add(key, last_key.buf, prefix_len);
-	strbuf_add(key, in.buf, suffix_len);
+	strbuf_setlen(last_key, prefix_len);
+	strbuf_add(last_key, in.buf, suffix_len);
 	string_view_consume(&in, suffix_len);
 
 	return start_len - in.len;
@@ -205,14 +204,26 @@ static void reftable_ref_record_copy_from(void *rec, const void *src_rec,
 {
 	struct reftable_ref_record *ref = rec;
 	const struct reftable_ref_record *src = src_rec;
+	char *refname = NULL;
+	size_t refname_cap = 0;
+
 	assert(hash_size > 0);
 
-	/* This is simple and correct, but we could probably reuse the hash
-	 * fields. */
+	SWAP(refname, ref->refname);
+	SWAP(refname_cap, ref->refname_cap);
 	reftable_ref_record_release(ref);
+	SWAP(ref->refname, refname);
+	SWAP(ref->refname_cap, refname_cap);
+
 	if (src->refname) {
-		ref->refname = xstrdup(src->refname);
+		size_t refname_len = strlen(src->refname);
+
+		REFTABLE_ALLOC_GROW(ref->refname, refname_len + 1,
+				    ref->refname_cap);
+		memcpy(ref->refname, src->refname, refname_len);
+		ref->refname[refname_len] = 0;
 	}
+
 	ref->update_index = src->update_index;
 	ref->value_type = src->value_type;
 	switch (src->value_type) {
@@ -368,19 +379,28 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 	struct reftable_ref_record *r = rec;
 	struct string_view start = in;
 	uint64_t update_index = 0;
-	int n = get_var_int(&update_index, &in);
+	const char *refname = NULL;
+	size_t refname_cap = 0;
+	int n;
+
+	assert(hash_size > 0);
+
+	n = get_var_int(&update_index, &in);
 	if (n < 0)
 		return n;
 	string_view_consume(&in, n);
 
+	SWAP(refname, r->refname);
+	SWAP(refname_cap, r->refname_cap);
 	reftable_ref_record_release(r);
+	SWAP(r->refname, refname);
+	SWAP(r->refname_cap, refname_cap);
 
-	assert(hash_size > 0);
-
-	r->refname = reftable_realloc(r->refname, key.len + 1);
+	REFTABLE_ALLOC_GROW(r->refname, key.len + 1, r->refname_cap);
 	memcpy(r->refname, key.buf, key.len);
-	r->update_index = update_index;
 	r->refname[key.len] = 0;
+
+	r->update_index = update_index;
 	r->value_type = val_type;
 	switch (val_type) {
 	case REFTABLE_REF_VAL1:
@@ -430,13 +450,19 @@ static int reftable_ref_record_is_deletion_void(const void *p)
 		(const struct reftable_ref_record *)p);
 }
 
-
 static int reftable_ref_record_equal_void(const void *a,
 					  const void *b, int hash_size)
 {
 	struct reftable_ref_record *ra = (struct reftable_ref_record *) a;
 	struct reftable_ref_record *rb = (struct reftable_ref_record *) b;
 	return reftable_ref_record_equal(ra, rb, hash_size);
+}
+
+static int reftable_ref_record_cmp_void(const void *_a, const void *_b)
+{
+	const struct reftable_ref_record *a = _a;
+	const struct reftable_ref_record *b = _b;
+	return strcmp(a->refname, b->refname);
 }
 
 static void reftable_ref_record_print_void(const void *rec,
@@ -455,6 +481,7 @@ static struct reftable_record_vtable reftable_ref_record_vtable = {
 	.release = &reftable_ref_record_release_void,
 	.is_deletion = &reftable_ref_record_is_deletion_void,
 	.equal = &reftable_ref_record_equal_void,
+	.cmp = &reftable_ref_record_cmp_void,
 	.print = &reftable_ref_record_print_void,
 };
 
@@ -627,6 +654,25 @@ static int reftable_obj_record_equal_void(const void *a, const void *b, int hash
 	return 1;
 }
 
+static int reftable_obj_record_cmp_void(const void *_a, const void *_b)
+{
+	const struct reftable_obj_record *a = _a;
+	const struct reftable_obj_record *b = _b;
+	int cmp;
+
+	cmp = memcmp(a->hash_prefix, b->hash_prefix,
+		     a->hash_prefix_len > b->hash_prefix_len ?
+		     a->hash_prefix_len : b->hash_prefix_len);
+	if (cmp)
+		return cmp;
+
+	/*
+	 * When the prefix is the same then the object record that is longer is
+	 * considered to be bigger.
+	 */
+	return a->hash_prefix_len - b->hash_prefix_len;
+}
+
 static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.key = &reftable_obj_record_key,
 	.type = BLOCK_TYPE_OBJ,
@@ -637,6 +683,7 @@ static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.release = &reftable_obj_record_release,
 	.is_deletion = &not_a_deletion,
 	.equal = &reftable_obj_record_equal_void,
+	.cmp = &reftable_obj_record_cmp_void,
 	.print = &reftable_obj_record_print,
 };
 
@@ -955,6 +1002,22 @@ static int reftable_log_record_equal_void(const void *a,
 					 hash_size);
 }
 
+static int reftable_log_record_cmp_void(const void *_a, const void *_b)
+{
+	const struct reftable_log_record *a = _a;
+	const struct reftable_log_record *b = _b;
+	int cmp = strcmp(a->refname, b->refname);
+	if (cmp)
+		return cmp;
+
+	/*
+	 * Note that the comparison here is reversed. This is because the
+	 * update index is reversed when comparing keys. For reference, see how
+	 * we handle this in reftable_log_record_key()`.
+	 */
+	return b->update_index - a->update_index;
+}
+
 int reftable_log_record_equal(const struct reftable_log_record *a,
 			      const struct reftable_log_record *b, int hash_size)
 {
@@ -1004,6 +1067,7 @@ static struct reftable_record_vtable reftable_log_record_vtable = {
 	.release = &reftable_log_record_release_void,
 	.is_deletion = &reftable_log_record_is_deletion_void,
 	.equal = &reftable_log_record_equal_void,
+	.cmp = &reftable_log_record_cmp_void,
 	.print = &reftable_log_record_print_void,
 };
 
@@ -1079,6 +1143,13 @@ static int reftable_index_record_equal(const void *a, const void *b, int hash_si
 	return ia->offset == ib->offset && !strbuf_cmp(&ia->last_key, &ib->last_key);
 }
 
+static int reftable_index_record_cmp(const void *_a, const void *_b)
+{
+	const struct reftable_index_record *a = _a;
+	const struct reftable_index_record *b = _b;
+	return strbuf_cmp(&a->last_key, &b->last_key);
+}
+
 static void reftable_index_record_print(const void *rec, int hash_size)
 {
 	const struct reftable_index_record *idx = rec;
@@ -1096,17 +1167,13 @@ static struct reftable_record_vtable reftable_index_record_vtable = {
 	.release = &reftable_index_record_release,
 	.is_deletion = &not_a_deletion,
 	.equal = &reftable_index_record_equal,
+	.cmp = &reftable_index_record_cmp,
 	.print = &reftable_index_record_print,
 };
 
 void reftable_record_key(struct reftable_record *rec, struct strbuf *dest)
 {
 	reftable_record_vtable(rec)->key(reftable_record_data(rec), dest);
-}
-
-uint8_t reftable_record_type(struct reftable_record *rec)
-{
-	return rec->type;
 }
 
 int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
@@ -1147,6 +1214,14 @@ int reftable_record_is_deletion(struct reftable_record *rec)
 {
 	return reftable_record_vtable(rec)->is_deletion(
 		reftable_record_data(rec));
+}
+
+int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b)
+{
+	if (a->type != b->type)
+		BUG("cannot compare reftable records of different type");
+	return reftable_record_vtable(a)->cmp(
+		reftable_record_data(a), reftable_record_data(b));
 }
 
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size)
@@ -1220,12 +1295,6 @@ int reftable_log_record_compare_key(const void *a, const void *b)
 int reftable_log_record_is_deletion(const struct reftable_log_record *log)
 {
 	return (log->value_type == REFTABLE_LOG_DELETION);
-}
-
-void string_view_consume(struct string_view *s, int n)
-{
-	s->buf += n;
-	s->len -= n;
 }
 
 static void *reftable_record_data(struct reftable_record *rec)

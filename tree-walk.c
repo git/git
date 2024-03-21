@@ -100,7 +100,7 @@ void *fill_tree_descriptor(struct repository *r,
 	if (oid) {
 		buf = read_object_with_reference(r, oid, OBJ_TREE, &size, NULL);
 		if (!buf)
-			die("unable to read tree %s", oid_to_hex(oid));
+			die(_("unable to read tree (%s)"), oid_to_hex(oid));
 	}
 	init_tree_desc(desc, buf, size);
 	return buf;

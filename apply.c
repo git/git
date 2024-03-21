@@ -77,7 +77,8 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 		return 0;
 	}
 	/*
-	 * Please update $__git_whitespacelist in git-completion.bash
+	 * Please update $__git_whitespacelist in git-completion.bash,
+	 * Documentation/git-apply.txt, and Documentation/git-am.txt
 	 * when you add new options.
 	 */
 	return error(_("unrecognized whitespace option '%s'"), option);
@@ -2219,7 +2220,8 @@ static void reverse_patches(struct patch *p)
 		struct fragment *frag = p->fragments;
 
 		SWAP(p->new_name, p->old_name);
-		SWAP(p->new_mode, p->old_mode);
+		if (p->new_mode)
+			SWAP(p->new_mode, p->old_mode);
 		SWAP(p->is_new, p->is_delete);
 		SWAP(p->lines_added, p->lines_deleted);
 		SWAP(p->old_oid_prefix, p->new_oid_prefix);
@@ -3777,8 +3779,17 @@ static int check_preimage(struct apply_state *state,
 		return error_errno("%s", old_name);
 	}
 
-	if (!state->cached && !previous)
-		st_mode = ce_mode_from_stat(*ce, st->st_mode);
+	if (!state->cached && !previous) {
+		if (*ce && !(*ce)->ce_mode)
+			BUG("ce_mode == 0 for path '%s'", old_name);
+
+		if (trust_executable_bit)
+			st_mode = ce_mode_from_stat(*ce, st->st_mode);
+		else if (*ce)
+			st_mode = (*ce)->ce_mode;
+		else
+			st_mode = patch->old_mode;
+	}
 
 	if (patch->is_new < 0)
 		patch->is_new = 0;

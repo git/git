@@ -24,8 +24,9 @@ enum fetch_negotiation_setting {
 	FETCH_NEGOTIATION_NOOP,
 };
 
-#define REF_STORAGE_FORMAT_UNKNOWN 0
-#define REF_STORAGE_FORMAT_FILES   1
+#define REF_STORAGE_FORMAT_UNKNOWN  0
+#define REF_STORAGE_FORMAT_FILES    1
+#define REF_STORAGE_FORMAT_REFTABLE 2
 
 struct repo_settings {
 	int initialized;

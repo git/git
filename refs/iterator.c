@@ -25,11 +25,9 @@ int ref_iterator_abort(struct ref_iterator *ref_iterator)
 }
 
 void base_ref_iterator_init(struct ref_iterator *iter,
-			    struct ref_iterator_vtable *vtable,
-			    int ordered)
+			    struct ref_iterator_vtable *vtable)
 {
 	iter->vtable = vtable;
-	iter->ordered = !!ordered;
 	iter->refname = NULL;
 	iter->oid = NULL;
 	iter->flags = 0;
@@ -74,7 +72,7 @@ struct ref_iterator *empty_ref_iterator_begin(void)
 	struct empty_ref_iterator *iter = xcalloc(1, sizeof(*iter));
 	struct ref_iterator *ref_iterator = &iter->base;
 
-	base_ref_iterator_init(ref_iterator, &empty_ref_iterator_vtable, 1);
+	base_ref_iterator_init(ref_iterator, &empty_ref_iterator_vtable);
 	return ref_iterator;
 }
 
@@ -97,6 +95,49 @@ struct merge_ref_iterator {
 	 */
 	struct ref_iterator **current;
 };
+
+enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
+					    struct ref_iterator *iter_common,
+					    void *cb_data UNUSED)
+{
+	if (iter_worktree && !iter_common) {
+		/*
+		 * Return the worktree ref if there are no more common refs.
+		 */
+		return ITER_SELECT_0;
+	} else if (iter_common) {
+		/*
+		 * In case we have pending worktree and common refs we need to
+		 * yield them based on their lexicographical order. Worktree
+		 * refs that have the same name as common refs shadow the
+		 * latter.
+		 */
+		if (iter_worktree) {
+			int cmp = strcmp(iter_worktree->refname,
+					 iter_common->refname);
+			if (cmp < 0)
+				return ITER_SELECT_0;
+			else if (!cmp)
+				return ITER_SELECT_0_SKIP_1;
+		}
+
+		 /*
+		  * We now know that the lexicographically-next ref is a common
+		  * ref. When the common ref is a shared one we return it.
+		  */
+		if (parse_worktree_ref(iter_common->refname, NULL, NULL,
+				       NULL) == REF_WORKTREE_SHARED)
+			return ITER_SELECT_1;
+
+		/*
+		 * Otherwise, if the common ref is a per-worktree ref we skip
+		 * it because it would belong to the main worktree, not ours.
+		 */
+		return ITER_SKIP_1;
+	} else {
+		return ITER_DONE;
+	}
+}
 
 static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 {
@@ -207,7 +248,6 @@ static struct ref_iterator_vtable merge_ref_iterator_vtable = {
 };
 
 struct ref_iterator *merge_ref_iterator_begin(
-		int ordered,
 		struct ref_iterator *iter0, struct ref_iterator *iter1,
 		ref_iterator_select_fn *select, void *cb_data)
 {
@@ -222,7 +262,7 @@ struct ref_iterator *merge_ref_iterator_begin(
 	 * references through only if they exist in both iterators.
 	 */
 
-	base_ref_iterator_init(ref_iterator, &merge_ref_iterator_vtable, ordered);
+	base_ref_iterator_init(ref_iterator, &merge_ref_iterator_vtable);
 	iter->iter0 = iter0;
 	iter->iter1 = iter1;
 	iter->select = select;
@@ -271,12 +311,9 @@ struct ref_iterator *overlay_ref_iterator_begin(
 	} else if (is_empty_ref_iterator(back)) {
 		ref_iterator_abort(back);
 		return front;
-	} else if (!front->ordered || !back->ordered) {
-		BUG("overlay_ref_iterator requires ordered inputs");
 	}
 
-	return merge_ref_iterator_begin(1, front, back,
-					overlay_iterator_select, NULL);
+	return merge_ref_iterator_begin(front, back, overlay_iterator_select, NULL);
 }
 
 struct prefix_ref_iterator {
@@ -315,16 +352,12 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 		if (cmp > 0) {
 			/*
-			 * If the source iterator is ordered, then we
+			 * As the source iterator is ordered, we
 			 * can stop the iteration as soon as we see a
 			 * refname that comes after the prefix:
 			 */
-			if (iter->iter0->ordered) {
-				ok = ref_iterator_abort(iter->iter0);
-				break;
-			} else {
-				continue;
-			}
+			ok = ref_iterator_abort(iter->iter0);
+			break;
 		}
 
 		if (iter->trim) {
@@ -396,7 +429,7 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 	CALLOC_ARRAY(iter, 1);
 	ref_iterator = &iter->base;
 
-	base_ref_iterator_init(ref_iterator, &prefix_ref_iterator_vtable, iter0->ordered);
+	base_ref_iterator_init(ref_iterator, &prefix_ref_iterator_vtable);
 
 	iter->iter0 = iter0;
 	iter->prefix = xstrdup(prefix);

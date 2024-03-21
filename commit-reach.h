@@ -9,18 +9,21 @@ struct ref_filter;
 struct object_id;
 struct object_array;
 
-struct commit_list *repo_get_merge_bases(struct repository *r,
-					 struct commit *rev1,
-					 struct commit *rev2);
-struct commit_list *repo_get_merge_bases_many(struct repository *r,
-					      struct commit *one, int n,
-					      struct commit **twos);
+int repo_get_merge_bases(struct repository *r,
+			 struct commit *rev1,
+			 struct commit *rev2,
+			 struct commit_list **result);
+int repo_get_merge_bases_many(struct repository *r,
+			      struct commit *one, int n,
+			      struct commit **twos,
+			      struct commit_list **result);
 /* To be used only when object flags after this call no longer matter */
-struct commit_list *repo_get_merge_bases_many_dirty(struct repository *r,
-						    struct commit *one, int n,
-						    struct commit **twos);
+int repo_get_merge_bases_many_dirty(struct repository *r,
+				    struct commit *one, int n,
+				    struct commit **twos,
+				    struct commit_list **result);
 
-struct commit_list *get_octopus_merge_bases(struct commit_list *in);
+int get_octopus_merge_bases(struct commit_list *in, struct commit_list **result);
 
 int repo_is_descendant_of(struct repository *r,
 			  struct commit *commit,
@@ -30,7 +33,8 @@ int repo_in_merge_bases(struct repository *r,
 			struct commit *reference);
 int repo_in_merge_bases_many(struct repository *r,
 			     struct commit *commit,
-			     int nr_reference, struct commit **reference);
+			     int nr_reference, struct commit **reference,
+			     int ignore_missing_commits);
 
 /*
  * Takes a list of commits and returns a new list where those

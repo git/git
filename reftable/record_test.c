@@ -295,7 +295,8 @@ static void test_key_roundtrip(void)
 	EXPECT(!restart);
 	EXPECT(n > 0);
 
-	m = reftable_decode_key(&roundtrip, &rt_extra, last_key, dest);
+	strbuf_addstr(&roundtrip, "refs/heads/master");
+	m = reftable_decode_key(&roundtrip, &rt_extra, dest);
 	EXPECT(n == m);
 	EXPECT(0 == strbuf_cmp(&key, &roundtrip));
 	EXPECT(rt_extra == extra);

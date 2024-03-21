@@ -16,11 +16,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reader.h"
 #include "reftable-error.h"
 
-int iterator_is_null(struct reftable_iterator *it)
-{
-	return !it->ops;
-}
-
 static void filtering_ref_iterator_close(void *iter_arg)
 {
 	struct filtering_ref_iterator *fri = iter_arg;

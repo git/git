@@ -91,58 +91,67 @@ test_expect_success 'difftool forwards arguments to diff' '
 	rm for-diff
 '
 
-test_expect_success 'difftool ignores exit code' '
-	test_config difftool.error.cmd false &&
-	git difftool -y -t error branch
-'
+for opt in '' '--dir-diff'
+do
+	test_expect_success "difftool ${opt} ignores exit code" "
+		test_config difftool.error.cmd false &&
+		git difftool ${opt} -y -t error branch
+	"
 
-test_expect_success 'difftool forwards exit code with --trust-exit-code' '
-	test_config difftool.error.cmd false &&
-	test_must_fail git difftool -y --trust-exit-code -t error branch
-'
+	test_expect_success "difftool ${opt} forwards exit code with --trust-exit-code" "
+		test_config difftool.error.cmd false &&
+		test_must_fail git difftool ${opt} -y --trust-exit-code -t error branch
+	"
 
-test_expect_success 'difftool forwards exit code with --trust-exit-code for built-ins' '
-	test_config difftool.vimdiff.path false &&
-	test_must_fail git difftool -y --trust-exit-code -t vimdiff branch
-'
+	test_expect_success "difftool ${opt} forwards exit code with --trust-exit-code for built-ins" "
+		test_config difftool.vimdiff.path false &&
+		test_must_fail git difftool ${opt} -y --trust-exit-code -t vimdiff branch
+	"
 
-test_expect_success 'difftool honors difftool.trustExitCode = true' '
-	test_config difftool.error.cmd false &&
-	test_config difftool.trustExitCode true &&
-	test_must_fail git difftool -y -t error branch
-'
+	test_expect_success "difftool ${opt} honors difftool.trustExitCode = true" "
+		test_config difftool.error.cmd false &&
+		test_config difftool.trustExitCode true &&
+		test_must_fail git difftool ${opt} -y -t error branch
+	"
 
-test_expect_success 'difftool honors difftool.trustExitCode = false' '
-	test_config difftool.error.cmd false &&
-	test_config difftool.trustExitCode false &&
-	git difftool -y -t error branch
-'
+	test_expect_success "difftool ${opt} honors difftool.trustExitCode = false" "
+		test_config difftool.error.cmd false &&
+		test_config difftool.trustExitCode false &&
+		git difftool ${opt} -y -t error branch
+	"
 
-test_expect_success 'difftool ignores exit code with --no-trust-exit-code' '
-	test_config difftool.error.cmd false &&
-	test_config difftool.trustExitCode true &&
-	git difftool -y --no-trust-exit-code -t error branch
-'
+	test_expect_success "difftool ${opt} ignores exit code with --no-trust-exit-code" "
+		test_config difftool.error.cmd false &&
+		test_config difftool.trustExitCode true &&
+		git difftool ${opt} -y --no-trust-exit-code -t error branch
+	"
 
-test_expect_success 'difftool stops on error with --trust-exit-code' '
-	test_when_finished "rm -f for-diff .git/fail-right-file" &&
-	test_when_finished "git reset -- for-diff" &&
-	write_script .git/fail-right-file <<-\EOF &&
-	echo failed
-	exit 1
-	EOF
-	>for-diff &&
-	git add for-diff &&
-	test_must_fail git difftool -y --trust-exit-code \
-		--extcmd .git/fail-right-file branch >actual &&
-	test_line_count = 1 actual
-'
+	test_expect_success "difftool ${opt} stops on error with --trust-exit-code" "
+		test_when_finished 'rm -f for-diff .git/fail-right-file' &&
+		test_when_finished 'git reset -- for-diff' &&
+		write_script .git/fail-right-file <<-\EOF &&
+		echo failed
+		exit 1
+		EOF
+		>for-diff &&
+		git add for-diff &&
+		test_must_fail git difftool ${opt} -y --trust-exit-code \
+			--extcmd .git/fail-right-file branch >actual &&
+		test_line_count = 1 actual
+	"
 
-test_expect_success 'difftool honors exit status if command not found' '
-	test_config difftool.nonexistent.cmd i-dont-exist &&
-	test_config difftool.trustExitCode false &&
-	test_must_fail git difftool -y -t nonexistent branch
-'
+	test_expect_success "difftool ${opt} honors exit status if command not found" "
+		test_config difftool.nonexistent.cmd i-dont-exist &&
+		test_config difftool.trustExitCode false &&
+		if test "${opt}" = '--dir-diff'
+		then
+			expected_code=127
+		else
+			expected_code=128
+		fi &&
+		test_expect_code \${expected_code} git difftool ${opt} -y -t nonexistent branch
+	"
+done
 
 test_expect_success 'difftool honors --gui' '
 	difftool_test_setup &&

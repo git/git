@@ -448,9 +448,8 @@ static void filter_prefetch_refspec(struct refspec *rs)
 			continue;
 		if (!rs->items[i].dst ||
 		    (rs->items[i].src &&
-		     !strncmp(rs->items[i].src,
-			      ref_namespace[NAMESPACE_TAGS].ref,
-			      strlen(ref_namespace[NAMESPACE_TAGS].ref)))) {
+		     starts_with(rs->items[i].src,
+				 ref_namespace[NAMESPACE_TAGS].ref))) {
 			int j;
 
 			free(rs->items[i].src);
@@ -982,6 +981,8 @@ static int update_local_ref(struct ref *ref,
 		uint64_t t_before = getnanotime();
 		fast_forward = repo_in_merge_bases(the_repository, current,
 						   updated);
+		if (fast_forward < 0)
+			exit(128);
 		forced_updates_ms += (getnanotime() - t_before) / 1000000;
 	} else {
 		fast_forward = 1;

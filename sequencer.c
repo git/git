@@ -332,7 +332,7 @@ static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 		sb->buf[sb->len - ignore_footer] = '\0';
 	}
 
-	trailer_info_get(&info, sb->buf, &opts);
+	trailer_info_get(&opts, sb->buf, &info);
 
 	if (ignore_footer)
 		sb->buf[sb->len - ignore_footer] = saved_char;
@@ -461,10 +461,22 @@ static void free_message(struct commit *commit, struct commit_message *msg)
 	repo_unuse_commit_buffer(the_repository, commit, msg->message);
 }
 
+const char *rebase_resolvemsg =
+N_("Resolve all conflicts manually, mark them as resolved with\n"
+"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
+"You can instead skip this commit: run \"git rebase --skip\".\n"
+"To abort and get back to the state before \"git rebase\", run "
+"\"git rebase --abort\".");
+
 static void print_advice(struct repository *r, int show_hint,
 			 struct replay_opts *opts)
 {
-	char *msg = getenv("GIT_CHERRY_PICK_HELP");
+	const char *msg;
+
+	if (is_rebase_i(opts))
+		msg = rebase_resolvemsg;
+	else
+		msg = getenv("GIT_CHERRY_PICK_HELP");
 
 	if (msg) {
 		advise("%s\n", msg);
@@ -707,6 +719,8 @@ static int do_recursive_merge(struct repository *r,
 	o.show_rename_progress = 1;
 
 	head_tree = parse_tree_indirect(head);
+	if (!head_tree)
+		return error(_("unable to read tree (%s)"), oid_to_hex(head));
 	next_tree = next ? repo_get_commit_tree(r, next) : empty_tree(r);
 	base_tree = base ? repo_get_commit_tree(r, base) : empty_tree(r);
 
@@ -3882,6 +3896,8 @@ static int do_reset(struct repository *r,
 	}
 
 	tree = parse_tree_indirect(&oid);
+	if (!tree)
+		return error(_("unable to read tree (%s)"), oid_to_hex(&oid));
 	prime_cache_tree(r, r->index, tree);
 
 	if (write_locked_index(r->index, &lock, COMMIT_LOCK) < 0)
@@ -3908,7 +3924,7 @@ static int do_merge(struct repository *r,
 	int run_commit_flags = 0;
 	struct strbuf ref_name = STRBUF_INIT;
 	struct commit *head_commit, *merge_commit, *i;
-	struct commit_list *bases, *j;
+	struct commit_list *bases = NULL, *j;
 	struct commit_list *to_merge = NULL, **tail = &to_merge;
 	const char *strategy = !opts->xopts.nr &&
 		(!opts->strategy ||
@@ -4134,7 +4150,11 @@ static int do_merge(struct repository *r,
 	}
 
 	merge_commit = to_merge->item;
-	bases = repo_get_merge_bases(r, head_commit, merge_commit);
+	if (repo_get_merge_bases(r, head_commit, merge_commit, &bases) < 0) {
+		ret = -1;
+		goto leave_merge;
+	}
+
 	if (bases && oideq(&merge_commit->object.oid,
 			   &bases->item->object.oid)) {
 		ret = 0;
