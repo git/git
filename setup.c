@@ -1243,6 +1243,32 @@ static const char *allowed_bare_repo_to_string(
 	return NULL;
 }
 
+static int is_implicit_bare_repo(const char *path)
+{
+	/*
+	 * what we found is a ".git" directory at the root of
+	 * the working tree.
+	 */
+	if (ends_with_path_components(path, ".git"))
+		return 1;
+
+	/*
+	 * we are inside $GIT_DIR of a secondary worktree of a
+	 * non-bare repository.
+	 */
+	if (strstr(path, "/.git/worktrees/"))
+		return 1;
+
+	/*
+	 * we are inside $GIT_DIR of a worktree of a non-embedded
+	 * submodule, whose superproject is not a bare repository.
+	 */
+	if (strstr(path, "/.git/modules/"))
+		return 1;
+
+	return 0;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -1372,7 +1398,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		if (is_git_directory(dir->buf)) {
 			trace2_data_string("setup", NULL, "implicit-bare-repository", dir->buf);
 			if (get_allowed_bare_repo() == ALLOWED_BARE_REPO_EXPLICIT &&
-			    !ends_with_path_components(dir->buf, ".git"))
+			    !is_implicit_bare_repo(dir->buf))
 				return GIT_DIR_DISALLOWED_BARE;
 			if (!ensure_valid_ownership(NULL, NULL, dir->buf, report))
 				return GIT_DIR_INVALID_OWNERSHIP;
