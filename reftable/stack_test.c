@@ -38,7 +38,17 @@ static int count_dir_entries(const char *dirname)
 		return 0;
 
 	while ((d = readdir(dir))) {
-		if (!strcmp(d->d_name, "..") || !strcmp(d->d_name, "."))
+		/*
+		 * Besides skipping over "." and "..", we also need to
+		 * skip over other files that have a leading ".". This
+		 * is due to behaviour of NFS, which will rename files
+		 * to ".nfs*" to emulate delete-on-last-close.
+		 *
+		 * In any case this should be fine as the reftable
+		 * library will never write files with leading dots
+		 * anyway.
+		 */
+		if (starts_with(d->d_name, "."))
 			continue;
 		len++;
 	}
