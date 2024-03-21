@@ -22,9 +22,10 @@ multivalued.
 Syntax
 ~~~~~~
 
-The syntax is fairly flexible and permissive; whitespaces are mostly
-ignored.  The '#' and ';' characters begin comments to the end of line,
-blank lines are ignored.
+The syntax is fairly flexible and permissive.  Whitespace characters,
+which in this context are the space character (SP) and the horizontal
+tabulation (HT), are mostly ignored.  The '#' and ';' characters begin
+comments to the end of line.  Blank lines are ignored.
 
 The file consists of sections and variables.  A section begins with
 the name of the section in square brackets and continues until the next
@@ -63,16 +64,17 @@ the variable is the boolean "true").
 The variable names are case-insensitive, allow only alphanumeric characters
 and `-`, and must start with an alphabetic character.
 
-A line that defines a value can be continued to the next line by
-ending it with a `\`; the backslash and the end-of-line are
-stripped.  Leading whitespaces after 'name =', the remainder of the
-line after the first comment character '#' or ';', and trailing
-whitespaces of the line are discarded unless they are enclosed in
-double quotes.  Internal whitespaces within the value are retained
-verbatim.
+Whitespace characters surrounding `name`, `=` and `value` are discarded.
+Internal whitespace characters within 'value' are retained verbatim.
+Comments starting with either `#` or `;` and extending to the end of line
+are discarded.  A line that defines a value can be continued to the next
+line by ending it with a backslash (`\`);  the backslash and the end-of-line
+characters are discarded.
 
-Inside double quotes, double quote `"` and backslash `\` characters
-must be escaped: use `\"` for `"` and `\\` for `\`.
+If `value` needs to contain leading or trailing whitespace characters,
+it must be enclosed in double quotation marks (`"`).  Inside double quotation
+marks, double quote (`"`) and backslash (`\`) characters must be escaped:
+use `\"` for `"` and `\\` for `\`.
 
 The following escape sequences (beside `\"` and `\\`) are recognized:
 `\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
