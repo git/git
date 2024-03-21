@@ -588,6 +588,8 @@ static int reftable_obj_record_decode(void *rec, struct strbuf key,
 	uint64_t last;
 	int j;
 
+	reftable_obj_record_release(r);
+
 	REFTABLE_ALLOC_ARRAY(r->hash_prefix, key.len);
 	memcpy(r->hash_prefix, key.buf, key.len);
 	r->hash_prefix_len = key.len;

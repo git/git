@@ -301,7 +301,7 @@ static int restart_key_less(size_t idx, void *args)
 
 	result = strbuf_cmp(&a->key, &rkey);
 	strbuf_release(&rkey);
-	return result;
+	return result < 0;
 }
 
 void block_iter_copy_from(struct block_iter *dest, struct block_iter *src)
