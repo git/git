@@ -44,26 +44,26 @@ syntaxes may be used:
 
 ifndef::git-clone[]
 These two syntaxes are mostly equivalent, except when cloning, when
-the former implies --local option. See linkgit:git-clone[1] for
+the former implies `--local` option. See linkgit:git-clone[1] for
 details.
 endif::git-clone[]
 
 ifdef::git-clone[]
 These two syntaxes are mostly equivalent, except the former implies
---local option.
+`--local` option.
 endif::git-clone[]
 
-'git clone', 'git fetch' and 'git pull', but not 'git push', will also
+`git clone`, `git fetch` and `git pull`, but not `git push`, will also
 accept a suitable bundle file. See linkgit:git-bundle[1].
 
 When Git doesn't know how to handle a certain transport protocol, it
-attempts to use the 'remote-<transport>' remote helper, if one
+attempts to use the `remote-<transport>` remote helper, if one
 exists. To explicitly request a remote helper, the following syntax
 may be used:
 
-- <transport>::<address>
+- _<transport>_::_<address>_
 
-where <address> may be a path, a server and path, or an arbitrary
+where _<address>_ may be a path, a server and path, or an arbitrary
 URL-like string recognized by the specific remote helper being
 invoked. See linkgit:gitremote-helpers[7] for details.
 

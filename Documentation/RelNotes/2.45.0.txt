@@ -37,6 +37,14 @@ UI, Workflows & Features
  * Platform specific tweaks for OS/390 has been added to
    config.mak.uname.
 
+ * Users with safe.bareRepository=explicit can still work from within
+   $GIT_DIR of a seconary worktree (which resides at .git/worktrees/$name/)
+   of the primary worktree without explicitly specifying the $GIT_DIR
+   environment variable or the --git-dir=<path> option.
+
+ * The output format for dates "iso-strict" has been tweaked to show
+   a time in the Zulu timezone with "Z" suffix, instead of "+00:00".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -69,6 +77,21 @@ Performance, Internal Implementation, Development Support etc.
 
  * Some trace2 events that lacked def_param have learned to show it,
    enriching the output.
+
+ * The parse-options code that deals with abbreviated long option
+   names have been cleaned up.
+
+ * The code in reftable backend that creates new table files works
+   better with the tempfile framework to avoid leaving cruft after a
+   failure.
+
+ * The reftable code has its own custom binary search function whose
+   comparison callback has an unusual interface, which caused the
+   binary search to degenerate into a linear search, which has been
+   corrected.
+
+ * The code to iterate over reflogs in the reftable has been optimized
+   to reduce memory allocation and deallocation.
 
 
 Fixes since v2.44
@@ -180,6 +203,17 @@ Fixes since v2.44
    variable that is no longer used.
    (merge 72a8d3f027 pw/rebase-i-ignore-cherry-pick-help-environment later to maint).
 
+ * The code to find the effective end of log message can fall into an
+   endless loop, which has been corrected.
+   (merge 2541cba2d6 fs/find-end-of-log-message-fix later to maint).
+
+ * Mark-ups used in the documentation has been improved for
+   consistency.
+   (merge 45d5ed3e50 ja/doc-markup-fixes later to maint).
+
+ * The status.showUntrackedFiles configuration variable was
+   incorrectly documented to accept "false", which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -198,3 +232,4 @@ Fixes since v2.44
    (merge 5f78d52dce es/config-doc-sort-sections later to maint).
    (merge 781fb7b4c2 as/option-names-in-messages later to maint).
    (merge 51d41dc243 jk/doc-remote-helpers-markup-fix later to maint).
+   (merge e1aaf309db pb/ci-win-artifact-names-fix later to maint).

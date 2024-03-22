@@ -171,23 +171,6 @@ static int should_write_log(struct ref_store *refs, const char *refname)
 	}
 }
 
-static void clear_reftable_log_record(struct reftable_log_record *log)
-{
-	switch (log->value_type) {
-	case REFTABLE_LOG_UPDATE:
-		/*
-		 * When we write log records, the hashes are owned by the
-		 * caller and thus shouldn't be free'd.
-		 */
-		log->value.update.old_hash = NULL;
-		log->value.update.new_hash = NULL;
-		break;
-	case REFTABLE_LOG_DELETION:
-		break;
-	}
-	reftable_log_record_release(log);
-}
-
 static void fill_reftable_log_record(struct reftable_log_record *log)
 {
 	const char *info = git_committer_info(0);
@@ -1106,8 +1089,8 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			fill_reftable_log_record(log);
 			log->update_index = ts;
 			log->refname = xstrdup(u->refname);
-			log->value.update.new_hash = u->new_oid.hash;
-			log->value.update.old_hash = tx_update->current_oid.hash;
+			memcpy(log->value.update.new_hash, u->new_oid.hash, GIT_MAX_RAWSZ);
+			memcpy(log->value.update.old_hash, tx_update->current_oid.hash, GIT_MAX_RAWSZ);
 			log->value.update.message =
 				xstrndup(u->msg, arg->refs->write_options.block_size / 2);
 		}
@@ -1162,7 +1145,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 done:
 	assert(ret != REFTABLE_API_ERROR);
 	for (i = 0; i < logs_nr; i++)
-		clear_reftable_log_record(&logs[i]);
+		reftable_log_record_release(&logs[i]);
 	free(logs);
 	return ret;
 }
@@ -1279,13 +1262,13 @@ static int write_create_symref_table(struct reftable_writer *writer, void *cb_da
 	log.update_index = ts;
 	log.value.update.message = xstrndup(create->logmsg,
 					    create->refs->write_options.block_size / 2);
-	log.value.update.new_hash = new_oid.hash;
+	memcpy(log.value.update.new_hash, new_oid.hash, GIT_MAX_RAWSZ);
 	if (refs_resolve_ref_unsafe(&create->refs->base, create->refname,
 				    RESOLVE_REF_READING, &old_oid, NULL))
-		log.value.update.old_hash = old_oid.hash;
+		memcpy(log.value.update.old_hash, old_oid.hash, GIT_MAX_RAWSZ);
 
 	ret = reftable_writer_add_log(writer, &log);
-	clear_reftable_log_record(&log);
+	reftable_log_record_release(&log);
 	return ret;
 }
 
@@ -1424,7 +1407,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		logs[logs_nr].update_index = deletion_ts;
 		logs[logs_nr].value.update.message =
 			xstrndup(arg->logmsg, arg->refs->write_options.block_size / 2);
-		logs[logs_nr].value.update.old_hash = old_ref.value.val1;
+		memcpy(logs[logs_nr].value.update.old_hash, old_ref.value.val1, GIT_MAX_RAWSZ);
 		logs_nr++;
 
 		ret = read_ref_without_reload(arg->stack, "HEAD", &head_oid, &head_referent, &head_type);
@@ -1456,7 +1439,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	logs[logs_nr].update_index = creation_ts;
 	logs[logs_nr].value.update.message =
 		xstrndup(arg->logmsg, arg->refs->write_options.block_size / 2);
-	logs[logs_nr].value.update.new_hash = old_ref.value.val1;
+	memcpy(logs[logs_nr].value.update.new_hash, old_ref.value.val1, GIT_MAX_RAWSZ);
 	logs_nr++;
 
 	/*
@@ -1519,10 +1502,6 @@ done:
 	for (i = 0; i < logs_nr; i++) {
 		if (!strcmp(logs[i].refname, "HEAD"))
 			continue;
-		if (logs[i].value.update.old_hash == old_ref.value.val1)
-			logs[i].value.update.old_hash = NULL;
-		if (logs[i].value.update.new_hash == old_ref.value.val1)
-			logs[i].value.update.new_hash = NULL;
 		logs[i].refname = NULL;
 		reftable_log_record_release(&logs[i]);
 	}
@@ -1600,7 +1579,7 @@ struct reftable_reflog_iterator {
 	struct reftable_ref_store *refs;
 	struct reftable_iterator iter;
 	struct reftable_log_record log;
-	char *last_name;
+	struct strbuf last_name;
 	int err;
 };
 
@@ -1619,15 +1598,15 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		 * we've already produced this name. This could be faster by
 		 * seeking directly to reflog@update_index==0.
 		 */
-		if (iter->last_name && !strcmp(iter->log.refname, iter->last_name))
+		if (!strcmp(iter->log.refname, iter->last_name.buf))
 			continue;
 
 		if (check_refname_format(iter->log.refname,
 					 REFNAME_ALLOW_ONELEVEL))
 			continue;
 
-		free(iter->last_name);
-		iter->last_name = xstrdup(iter->log.refname);
+		strbuf_reset(&iter->last_name);
+		strbuf_addstr(&iter->last_name, iter->log.refname);
 		iter->base.refname = iter->log.refname;
 
 		break;
@@ -1660,7 +1639,7 @@ static int reftable_reflog_iterator_abort(struct ref_iterator *ref_iterator)
 		(struct reftable_reflog_iterator *)ref_iterator;
 	reftable_log_record_release(&iter->log);
 	reftable_iterator_destroy(&iter->iter);
-	free(iter->last_name);
+	strbuf_release(&iter->last_name);
 	free(iter);
 	return ITER_DONE;
 }
@@ -1680,13 +1659,14 @@ static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftabl
 
 	iter = xcalloc(1, sizeof(*iter));
 	base_ref_iterator_init(&iter->base, &reftable_reflog_iterator_vtable);
+	strbuf_init(&iter->last_name, 0);
 	iter->refs = refs;
 
 	ret = refs->err;
 	if (ret)
 		goto done;
 
-	ret = reftable_stack_reload(refs->main_stack);
+	ret = reftable_stack_reload(stack);
 	if (ret < 0)
 		goto done;
 
@@ -2184,7 +2164,7 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 			dest->value_type = REFTABLE_LOG_DELETION;
 		} else {
 			if ((flags & EXPIRE_REFLOGS_REWRITE) && last_hash)
-				dest->value.update.old_hash = last_hash;
+				memcpy(dest->value.update.old_hash, last_hash, GIT_MAX_RAWSZ);
 			last_hash = logs[i].value.update.new_hash;
 		}
 	}

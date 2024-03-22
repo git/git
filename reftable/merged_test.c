@@ -289,16 +289,13 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 
 static void test_merged_logs(void)
 {
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1 };
-	uint8_t hash2[GIT_SHA1_RAWSZ] = { 2 };
-	uint8_t hash3[GIT_SHA1_RAWSZ] = { 3 };
 	struct reftable_log_record r1[] = {
 		{
 			.refname = "a",
 			.update_index = 2,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
-				.old_hash = hash2,
+				.old_hash = { 2 },
 				/* deletion */
 				.name = "jane doe",
 				.email = "jane@invalid",
@@ -310,8 +307,8 @@ static void test_merged_logs(void)
 			.update_index = 1,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
-				.old_hash = hash1,
-				.new_hash = hash2,
+				.old_hash = { 1 },
+				.new_hash = { 2 },
 				.name = "jane doe",
 				.email = "jane@invalid",
 				.message = "message1",
@@ -324,7 +321,7 @@ static void test_merged_logs(void)
 			.update_index = 3,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
-				.new_hash = hash3,
+				.new_hash = { 3 },
 				.name = "jane doe",
 				.email = "jane@invalid",
 				.message = "message3",

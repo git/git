@@ -472,7 +472,7 @@ again, because your configuration may already be caching `git status`
 results, so it could be faster on subsequent runs.
 
 * The `--untracked-files=no` flag or the
-	`status.showUntrackedfiles=false` config (see above for both):
+	`status.showUntrackedFiles=no` config (see above for both):
 	indicate that `git status` should not report untracked
 	files. This is the fastest option. `git status` will not list
 	the untracked files, so you need to be careful to remember if

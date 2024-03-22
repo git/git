@@ -77,18 +77,15 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 	}
 
 	for (i = 0; i < N; i++) {
-		uint8_t hash[GIT_SHA256_RAWSZ] = { 0 };
 		char name[100];
 		int n;
-
-		set_test_hash(hash, i);
 
 		snprintf(name, sizeof(name), "refs/heads/branch%02d", i);
 
 		log.refname = name;
 		log.update_index = update_index;
 		log.value_type = REFTABLE_LOG_UPDATE;
-		log.value.update.new_hash = hash;
+		set_test_hash(log.value.update.new_hash, i);
 		log.value.update.message = "message";
 
 		n = reftable_writer_add_log(w, &log);
@@ -137,13 +134,10 @@ static void test_log_buffer_size(void)
 	/* This tests buffer extension for log compression. Must use a random
 	   hash, to ensure that the compressed part is larger than the original.
 	*/
-	uint8_t hash1[GIT_SHA1_RAWSZ], hash2[GIT_SHA1_RAWSZ];
 	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
-		hash1[i] = (uint8_t)(git_rand() % 256);
-		hash2[i] = (uint8_t)(git_rand() % 256);
+		log.value.update.old_hash[i] = (uint8_t)(git_rand() % 256);
+		log.value.update.new_hash[i] = (uint8_t)(git_rand() % 256);
 	}
-	log.value.update.old_hash = hash1;
-	log.value.update.new_hash = hash2;
 	reftable_writer_set_limits(w, update_index, update_index);
 	err = reftable_writer_add_log(w, &log);
 	EXPECT_ERR(err);
@@ -161,25 +155,26 @@ static void test_log_overflow(void)
 		.block_size = ARRAY_SIZE(msg),
 	};
 	int err;
-	struct reftable_log_record
-		log = { .refname = "refs/heads/master",
-			.update_index = 0xa,
-			.value_type = REFTABLE_LOG_UPDATE,
-			.value = { .update = {
-					   .name = "Han-Wen Nienhuys",
-					   .email = "hanwen@google.com",
-					   .tz_offset = 100,
-					   .time = 0x5e430672,
-					   .message = msg,
-				   } } };
+	struct reftable_log_record log = {
+		.refname = "refs/heads/master",
+		.update_index = 0xa,
+		.value_type = REFTABLE_LOG_UPDATE,
+		.value = {
+			.update = {
+				.old_hash = { 1 },
+				.new_hash = { 2 },
+				.name = "Han-Wen Nienhuys",
+				.email = "hanwen@google.com",
+				.tz_offset = 100,
+				.time = 0x5e430672,
+				.message = msg,
+			},
+		},
+	};
 	struct reftable_writer *w =
 		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 
-	uint8_t hash1[GIT_SHA1_RAWSZ]  = {1}, hash2[GIT_SHA1_RAWSZ] = { 2 };
-
 	memset(msg, 'x', sizeof(msg) - 1);
-	log.value.update.old_hash = hash1;
-	log.value.update.new_hash = hash2;
 	reftable_writer_set_limits(w, update_index, update_index);
 	err = reftable_writer_add_log(w, &log);
 	EXPECT(err == REFTABLE_ENTRY_TOO_BIG_ERROR);
@@ -219,16 +214,13 @@ static void test_log_write_read(void)
 		EXPECT_ERR(err);
 	}
 	for (i = 0; i < N; i++) {
-		uint8_t hash1[GIT_SHA1_RAWSZ], hash2[GIT_SHA1_RAWSZ];
 		struct reftable_log_record log = { NULL };
-		set_test_hash(hash1, i);
-		set_test_hash(hash2, i + 1);
 
 		log.refname = names[i];
 		log.update_index = i;
 		log.value_type = REFTABLE_LOG_UPDATE;
-		log.value.update.old_hash = hash1;
-		log.value.update.new_hash = hash2;
+		set_test_hash(log.value.update.old_hash, i);
+		set_test_hash(log.value.update.new_hash, i + 1);
 
 		err = reftable_writer_add_log(w, &log);
 		EXPECT_ERR(err);
@@ -298,18 +290,15 @@ static void test_log_zlib_corruption(void)
 	struct reftable_writer *w =
 		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 	const struct reftable_stats *stats = NULL;
-	uint8_t hash1[GIT_SHA1_RAWSZ] = { 1 };
-	uint8_t hash2[GIT_SHA1_RAWSZ] = { 2 };
 	char message[100] = { 0 };
 	int err, i, n;
-
 	struct reftable_log_record log = {
 		.refname = "refname",
 		.value_type = REFTABLE_LOG_UPDATE,
 		.value = {
 			.update = {
-				.new_hash = hash1,
-				.old_hash = hash2,
+				.new_hash = { 1 },
+				.old_hash = { 2 },
 				.name = "My Name",
 				.email = "myname@invalid",
 				.message = message,
@@ -821,13 +810,12 @@ static void test_write_multiple_indices(void)
 	}
 
 	for (i = 0; i < 100; i++) {
-		unsigned char hash[GIT_SHA1_RAWSZ] = {i};
 		struct reftable_log_record log = {
 			.update_index = 1,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
-				.old_hash = hash,
-				.new_hash = hash,
+				.old_hash = { i },
+				.new_hash = { i },
 			},
 		};
 

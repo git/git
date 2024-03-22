@@ -350,98 +350,107 @@ static int is_alias(struct parse_opt_ctx_t *ctx,
 	return 0;
 }
 
+struct parsed_option {
+	const struct option *option;
+	enum opt_parsed flags;
+};
+
+static void register_abbrev(struct parse_opt_ctx_t *p,
+			    const struct option *option, enum opt_parsed flags,
+			    struct parsed_option *abbrev,
+			    struct parsed_option *ambiguous)
+{
+	if (p->flags & PARSE_OPT_KEEP_UNKNOWN_OPT)
+		return;
+	if (abbrev->option &&
+	    !(abbrev->flags == flags && is_alias(p, abbrev->option, option))) {
+		/*
+		 * If this is abbreviated, it is
+		 * ambiguous. So when there is no
+		 * exact match later, we need to
+		 * error out.
+		 */
+		ambiguous->option = abbrev->option;
+		ambiguous->flags = abbrev->flags;
+	}
+	abbrev->option = option;
+	abbrev->flags = flags;
+}
+
 static enum parse_opt_result parse_long_opt(
 	struct parse_opt_ctx_t *p, const char *arg,
 	const struct option *options)
 {
 	const char *arg_end = strchrnul(arg, '=');
-	const struct option *abbrev_option = NULL, *ambiguous_option = NULL;
-	enum opt_parsed abbrev_flags = OPT_LONG, ambiguous_flags = OPT_LONG;
-	int allow_abbrev = !(p->flags & PARSE_OPT_KEEP_UNKNOWN_OPT);
+	const char *arg_start = arg;
+	enum opt_parsed flags = OPT_LONG;
+	int arg_starts_with_no_no = 0;
+	struct parsed_option abbrev = { .option = NULL, .flags = OPT_LONG };
+	struct parsed_option ambiguous = { .option = NULL, .flags = OPT_LONG };
+
+	if (skip_prefix(arg_start, "no-", &arg_start)) {
+		if (skip_prefix(arg_start, "no-", &arg_start))
+			arg_starts_with_no_no = 1;
+		else
+			flags |= OPT_UNSET;
+	}
 
 	for (; options->type != OPTION_END; options++) {
 		const char *rest, *long_name = options->long_name;
-		enum opt_parsed flags = OPT_LONG, opt_flags = OPT_LONG;
+		enum opt_parsed opt_flags = OPT_LONG;
+		int allow_unset = !(options->flags & PARSE_OPT_NONEG);
 
 		if (options->type == OPTION_SUBCOMMAND)
 			continue;
 		if (!long_name)
 			continue;
 
-		if (!starts_with(arg, "no-") &&
-		    !(options->flags & PARSE_OPT_NONEG) &&
-		    skip_prefix(long_name, "no-", &long_name))
+		if (skip_prefix(long_name, "no-", &long_name))
 			opt_flags |= OPT_UNSET;
+		else if (arg_starts_with_no_no)
+			continue;
 
-		if (!skip_prefix(arg, long_name, &rest))
-			rest = NULL;
-		if (!rest) {
-			/* abbreviated? */
-			if (allow_abbrev &&
-			    !strncmp(long_name, arg, arg_end - arg)) {
-is_abbreviated:
-				if (abbrev_option &&
-				    !is_alias(p, abbrev_option, options)) {
-					/*
-					 * If this is abbreviated, it is
-					 * ambiguous. So when there is no
-					 * exact match later, we need to
-					 * error out.
-					 */
-					ambiguous_option = abbrev_option;
-					ambiguous_flags = abbrev_flags;
-				}
-				if (!(flags & OPT_UNSET) && *arg_end)
-					p->opt = arg_end + 1;
-				abbrev_option = options;
-				abbrev_flags = flags ^ opt_flags;
+		if (((flags ^ opt_flags) & OPT_UNSET) && !allow_unset)
+			continue;
+
+		if (skip_prefix(arg_start, long_name, &rest)) {
+			if (*rest == '=')
+				p->opt = rest + 1;
+			else if (*rest)
 				continue;
-			}
-			/* negation allowed? */
-			if (options->flags & PARSE_OPT_NONEG)
-				continue;
-			/* negated and abbreviated very much? */
-			if (allow_abbrev && starts_with("no-", arg)) {
-				flags |= OPT_UNSET;
-				goto is_abbreviated;
-			}
-			/* negated? */
-			if (!starts_with(arg, "no-"))
-				continue;
-			flags |= OPT_UNSET;
-			if (!skip_prefix(arg + 3, long_name, &rest)) {
-				/* abbreviated and negated? */
-				if (allow_abbrev &&
-				    starts_with(long_name, arg + 3))
-					goto is_abbreviated;
-				else
-					continue;
-			}
+			return get_value(p, options, flags ^ opt_flags);
 		}
-		if (*rest) {
-			if (*rest != '=')
-				continue;
-			p->opt = rest + 1;
-		}
-		return get_value(p, options, flags ^ opt_flags);
+
+		/* abbreviated? */
+		if (!strncmp(long_name, arg_start, arg_end - arg_start))
+			register_abbrev(p, options, flags ^ opt_flags,
+					&abbrev, &ambiguous);
+
+		/* negated and abbreviated very much? */
+		if (allow_unset && starts_with("no-", arg))
+			register_abbrev(p, options, OPT_UNSET ^ opt_flags,
+					&abbrev, &ambiguous);
 	}
 
-	if (disallow_abbreviated_options && (ambiguous_option || abbrev_option))
+	if (disallow_abbreviated_options && (ambiguous.option || abbrev.option))
 		die("disallowed abbreviated or ambiguous option '%.*s'",
 		    (int)(arg_end - arg), arg);
 
-	if (ambiguous_option) {
+	if (ambiguous.option) {
 		error(_("ambiguous option: %s "
 			"(could be --%s%s or --%s%s)"),
 			arg,
-			(ambiguous_flags & OPT_UNSET) ?  "no-" : "",
-			ambiguous_option->long_name,
-			(abbrev_flags & OPT_UNSET) ?  "no-" : "",
-			abbrev_option->long_name);
+			(ambiguous.flags & OPT_UNSET) ?  "no-" : "",
+			ambiguous.option->long_name,
+			(abbrev.flags & OPT_UNSET) ?  "no-" : "",
+			abbrev.option->long_name);
 		return PARSE_OPT_HELP;
 	}
-	if (abbrev_option)
-		return get_value(p, abbrev_option, abbrev_flags);
+	if (abbrev.option) {
+		if (*arg_end)
+			p->opt = arg_end + 1;
+		return get_value(p, abbrev.option, abbrev.flags);
+	}
 	return PARSE_OPT_UNKNOWN;
 }
 

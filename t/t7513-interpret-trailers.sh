@@ -1935,4 +1935,18 @@ test_expect_success 'suppressing --- does not disable cut-line handling' '
 	test_cmp expected actual
 '
 
+test_expect_success 'handling of --- lines in conjunction with cut-lines' '
+	echo "my-trailer: here" >expected &&
+
+	git interpret-trailers --parse >actual <<-\EOF &&
+	subject
+
+	my-trailer: here
+	---
+	# ------------------------ >8 ------------------------
+	EOF
+
+	test_cmp expected actual
+'
+
 test_done
