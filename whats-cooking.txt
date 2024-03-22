@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2024, #06; Wed, 20)
-X-master-at: 3bd955d26919e149552f34aacf8a4e6368c26cec
-X-next-at: fe251e3e4dec6a6d677e61d53b316c06da172af2
+Subject: What's cooking in git.git (Mar 2024, #07; Fri, 22)
+X-master-at: 11c821f2f2a31e70fb5cc449f9a29401c333aad2
+X-next-at: 2796f347adbd255e43ba5d93f092851042834c28
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2024, #06; Wed, 20)
+What's cooking in git.git (Mar 2024, #07; Fri, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,254 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* bb/iso-strict-utc (2024-03-13) 1 commit
+  (merged to 'next' on 2024-03-14 at d2ac616873)
+ + date: make "iso-strict" conforming for the UTC timezone
+
+ The output format for dates "iso-strict" has been tweaked to show
+ a time in the Zulu timezone with "Z" suffix, instead of "+00:00".
+ source: <20240313225423.11373-1-dev+git@drbeat.li>
+
+
+* bb/t0006-negative-tz-offset (2024-03-14) 1 commit
+  (merged to 'next' on 2024-03-14 at 3f4751b6b2)
+ + t0006: add more tests with a negative TZ offset
+
+ More tests on showing time with negative TZ offset.
+ source: <20240314085512.1827031-1-dev+git@drbeat.li>
+
+
+* dg/user-manual-hash-example (2024-03-12) 1 commit
+  (merged to 'next' on 2024-03-14 at 767800d3a7)
+ + Documentation/user-manual.txt: example for generating object hashes
+
+ User manual (the original one) update.
+ source: <20240312104238.4920-2-dirk@gouders.net>
+
+
+* fs/find-end-of-log-message-fix (2024-03-07) 1 commit
+  (merged to 'next' on 2024-03-13 at 2bed63caaf)
+ + wt-status: don't find scissors line beyond buf len
+
+ The code to find the effective end of log message can fall into an
+ endless loop, which has been corrected.
+ cf. <08b9b37d-f0f8-4c1a-b72e-194202ff3d9f@nutanix.com>
+ source: <20240307183743.219951-1-flosch@nutanix.com>
+
+
+* ja/doc-markup-fixes (2024-03-11) 6 commits
+  (merged to 'next' on 2024-03-14 at 4d1c26143f)
+ + doc: git-clone: format placeholders
+ + doc: git-clone: format verbatim words
+ + doc: git-init: rework config item init.templateDir
+ + doc: git-init: rework definition lists
+ + doc: git-init: format placeholders
+ + doc: git-init: format verbatim parts
+
+ Mark-ups used in the documentation has been improved for
+ consistency.
+ source: <pull.1687.git.1710097830.gitgitgadget@gmail.com>
+
+
+* jc/safe-implicit-bare (2024-03-11) 1 commit
+  (merged to 'next' on 2024-03-14 at e8bdbed1a4)
+ + setup: notice more types of implicit bare repositories
+
+ Users with safe.bareRepository=explicit can still work from within
+ $GIT_DIR of a seconary worktree (which resides at .git/worktrees/$name/)
+ of the primary worktree without explicitly specifying the $GIT_DIR
+ environment variable or the --git-dir=<path> option.
+ source: <xmqq5xxv0ywi.fsf_-_@gitster.g>
+
+
+* jw/doc-show-untracked-files-fix (2024-03-13) 1 commit
+  (merged to 'next' on 2024-03-14 at 091f64ad6c)
+ + doc: status.showUntrackedFiles does not take "false"
+
+ The status.showUntrackedFiles configuration variable was
+ incorrectly documented to accept "false", which has been corrected.
+ source: <pull.1686.git.git.1710279251901.gitgitgadget@gmail.com>
+
+
+* pb/ci-win-artifact-names-fix (2024-03-11) 1 commit
+  (merged to 'next' on 2024-03-14 at 5076389536)
+ + ci(github): make Windows test artifacts name unique
+
+ CI update.
+ source: <pull.1688.git.1710101097072.gitgitgadget@gmail.com>
+
+
+* ps/reftable-block-search-fix (2024-03-07) 2 commits
+  (merged to 'next' on 2024-03-13 at 34938e24ab)
+ + reftable/block: fix binary search over restart counter
+ + reftable/record: fix memory leak when decoding object records
+
+ The reftable code has its own custom binary search function whose
+ comparison callback has an unusual interface, which caused the
+ binary search to degenerate into a linear search, which has been
+ corrected.
+ source: <cover.1709843663.git.ps@pks.im>
+
+
+* ps/reftable-reflog-iteration-perf (2024-03-05) 8 commits
+  (merged to 'next' on 2024-03-14 at 72465c29be)
+ + refs/reftable: track last log record name via strbuf
+ + reftable/record: use scratch buffer when decoding records
+ + reftable/record: reuse message when decoding log records
+ + reftable/record: reuse refnames when decoding log records
+ + reftable/record: avoid copying author info
+ + reftable/record: convert old and new object IDs to arrays
+ + refs/reftable: reload correct stack when creating reflog iter
+ + Merge branch 'ps/reftable-iteration-perf-part2' into ps/reftable-reflog-iteration-perf
+
+ The code to iterate over reflogs in the reftable has been optimized
+ to reduce memory allocation and deallocation.
+
+ Reviewed-by: Josh Steadmon <steadmon@google.com>
+ cf. <Ze9eX-aaWoVaqsPP@google.com>
+ source: <cover.1709640322.git.ps@pks.im>
+
+
+* ps/reftable-stack-tempfile (2024-03-07) 4 commits
+  (merged to 'next' on 2024-03-13 at dcfb0cde8c)
+ + reftable/stack: register compacted tables as tempfiles
+ + reftable/stack: register lockfiles during compaction
+ + reftable/stack: register new tables as tempfiles
+ + lockfile: report when rollback fails
+ (this branch is used by ps/pack-refs-auto.)
+
+ The code in reftable backend that creates new table files works
+ better with the tempfile framework to avoid leaving cruft after a
+ failure.
+ source: <cover.1709816483.git.ps@pks.im>
+
+
+* rs/opt-parse-long-fixups (2024-03-03) 6 commits
+  (merged to 'next' on 2024-03-13 at 3755b50794)
+ + parse-options: rearrange long_name matching code
+ + parse-options: normalize arg and long_name before comparison
+ + parse-options: detect ambiguous self-negation
+ + parse-options: factor out register_abbrev() and struct parsed_option
+ + parse-options: set arg of abbreviated option lazily
+ + parse-options: recognize abbreviated negated option with arg
+
+ The parse-options code that deals with abbreviated long option
+ names have been cleaned up.
+
+ Reviewed-by: Josh Steadmon <steadmon@google.com>
+ cf. <ZfDM5Or3EKw7Q9SA@google.com>
+ source: <20240303121944.20627-1-l.s.r@web.de>
+
+--------------------------------------------------
 [New Topics]
+
+* jk/doc-remote-helpers-markup-fix (2024-03-20) 1 commit
+ - doc/gitremote-helpers: fix more missing single-quotes
+
+ Documentation mark-up fix.
+
+ Will merge to 'next'.
+ source: <20240320091748.GA2444639@coredump.intra.peff.net>
+
+
+* jk/drop-hg-to-git (2024-03-20) 1 commit
+  (merged to 'next' on 2024-03-21 at 603d614310)
+ + contrib: drop hg-to-git script
+
+ Remove an ancient and not well maintained Hg-to-git migration
+ script from contrib/.
+
+ Acked-by: Stelian Pop <stelian@popies.net>
+ cf. <37e4cd61-b370-437e-bd42-f98f47d3ad32@popies.net>
+
+ Will merge to 'master'.
+ source: <20240320094824.GA2445978@coredump.intra.peff.net>
+
+
+* ps/reftable-unit-test-nfs-workaround (2024-03-21) 1 commit
+ - reftable: fix tests being broken by NFS' delete-after-close semantics
+
+ A unit test for reftable code tried to enumerate all files in a
+ directory after reftable operations and expected to see nothing but
+ the files it wanted to leave there, but was fooled by .nfs* cruft
+ files left, which has been corrected.
+
+ Will merge to 'next'.
+ source: <8ac5e94a3930cdd2aee9ea86acda3155674b635c.1711035529.git.ps@pks.im>
+
+
+* ps/t7800-variable-interpolation-fix (2024-03-22) 3 commits
+ - t/README: document how to loop around test cases
+ - t7800: use single quotes for test bodies
+ - t7800: improve test descriptions with empty arguments
+
+ Fix the way recently added tests interpolate variables defined
+ outside them, and document the best practice to help future
+ developers.
+
+ Will merge to 'next'.
+ source: <cover.1711074118.git.ps@pks.im>
+
+
+* tb/pseudo-merge-reachability-bitmap (2024-03-20) 24 commits
+ - t/perf: implement performace tests for pseudo-merge bitmaps
+ - pseudo-merge: implement support for finding existing merges
+ - ewah: `bitmap_equals_ewah()`
+ - pack-bitmap: extra trace2 information
+ - pack-bitmap.c: use pseudo-merges during traversal
+ - t/test-lib-functions.sh: support `--date` in `test_commit_bulk()`
+ - pack-bitmap: implement test helpers for pseudo-merge
+ - ewah: implement `ewah_bitmap_popcount()`
+ - pseudo-merge: implement support for reading pseudo-merge commits
+ - pack-bitmap.c: read pseudo-merge extension
+ - pseudo-merge: scaffolding for reads
+ - pack-bitmap: extract `read_bitmap()` function
+ - pack-bitmap-write.c: write pseudo-merge table
+ - pack-bitmap-write.c: select pseudo-merge commits
+ - pseudo-merge: implement support for selecting pseudo-merge commits
+ - pack-bitmap: make `bitmap_writer_push_bitmapped_commit()` public
+ - pack-bitmap: implement `bitmap_writer_has_bitmapped_object_id()`
+ - pack-bitmap-write: support storing pseudo-merge commits
+ - pseudo-merge.ch: initial commit
+ - pack-bitmap: move some initialization to `bitmap_writer_init()`
+ - pack-bitmap: drop unused `max_bitmaps` parameter
+ - ewah: implement `ewah_bitmap_is_subset()`
+ - config: repo_config_get_expiry()
+ - Documentation/technical: describe pseudo-merge bitmaps format
+
+ The pack-bitmap machinery has been extended to write bitmaps for
+ pseudo-merges, which are imaginary commits which act as octopus
+ merges covering groups of the un-bitmapped parts of history at
+ reference tips.  This is good for ... what ...?
+
+ Expecting a reroll.
+ cf. <ZfyxCLpjbaScIdWA@nand.local>
+ source: <cover.1710972293.git.me@ttaylorr.com>
+
+
+* jc/release-notes-entry-experiment (2024-03-22) 1 commit
+ - SubmittingPatches: release-notes entry experiment
+
+ Introduce an experimental protocol for contributors to propose the
+ topic description to be used in the "What's cooking" report, the
+ merge commit message for the topic, and in the release notes and
+ document it in the SubmittingPatches document.
+
+ source: <xmqqcyrn58mf.fsf@gitster.g>
+
+
+* jk/rebase-apply-leakfix (2024-03-22) 1 commit
+ - rebase: use child_process_clear() to clean
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <20240322103502.GA2045297@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
 
 * dg/myfirstobjectwalk-updates (2024-03-19) 5 commits
  - MyFirstObjectWalk: add stderr to pipe processing
@@ -61,7 +308,7 @@ Release tarballs are available at:
  source: <cover.1710840596.git.dirk@gouders.net>
 
 
-* ds/config-internal-whitespace-fix (2024-03-19) 4 commits
+* ds/config-internal-whitespace-fix (2024-03-21) 4 commits
  - config.txt: describe handling of whitespace further
  - t1300: add more tests for whitespace and inline comments
  - config: really keep value-internal whitespace verbatim
@@ -70,8 +317,8 @@ Release tarballs are available at:
  "git config" corrupted literal HT characters written in the
  configuration file as part of a value, which has been corrected.
 
- Expecting a reroll.  Almost there.
- source: <cover.1710800549.git.dsimic@manjaro.org>
+ Will merge to 'next'.
+ source: <cover.1711001016.git.dsimic@manjaro.org>
 
 
 * jc/apply-parse-diff-git-header-names-fix (2024-03-19) 1 commit
@@ -85,22 +332,22 @@ Release tarballs are available at:
  source: <xmqqfrwlltjn.fsf@gitster.g>
 
 
-* jk/pretty-subject-cleanup (2024-03-19) 6 commits
- - format-patch: simplify after-subject MIME header handling
- - format-patch: return an allocated string from log_write_email_headers()
- - log: do not set up extra_headers for non-email formats
- - pretty: drop print_email_subject flag
- - pretty: split oneline and email subject printing
- - shortlog: stop setting pp.print_email_subject
+* jk/pretty-subject-cleanup (2024-03-22) 7 commits
+  (merged to 'next' on 2024-03-22 at 2796f347ad)
+ + format-patch: fix leak of empty header string
+ + format-patch: simplify after-subject MIME header handling
+ + format-patch: return an allocated string from log_write_email_headers()
+ + log: do not set up extra_headers for non-email formats
+ + pretty: drop print_email_subject flag
+ + pretty: split oneline and email subject printing
+ + shortlog: stop setting pp.print_email_subject
 
  Code clean-up in the "git log" machinery that implements custom log
  message formatting.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240320002555.GB903718@coredump.intra.peff.net>
 
---------------------------------------------------
-[Cooking]
 
 * bb/sh-scripts-cleanup (2024-03-16) 22 commits
   (merged to 'next' on 2024-03-18 at 4501a04796)
@@ -194,12 +441,13 @@ Release tarballs are available at:
 
 
 * rs/t-prio-queue-fixes (2024-03-18) 2 commits
- - t-prio-queue: check result array bounds
- - t-prio-queue: shorten array index message
+  (merged to 'next' on 2024-03-21 at 0730741187)
+ + t-prio-queue: check result array bounds
+ + t-prio-queue: shorten array index message
 
  Test clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <9bf36cc8-ff27-44df-b2fb-9f959c781269@web.de>
 
 
@@ -220,39 +468,18 @@ Release tarballs are available at:
  - reftable/error: discern locked/outdated errors
  - reftable/stack: fix error handling in `reftable_stack_init_addition()`
  - Merge branch 'ps/reftable-stack-tempfile' into ps/pack-refs-auto
- (this branch uses ps/reftable-stack-tempfile.)
 
  "git pack-refs" learned the "--auto" option, which is a useful
  addition to be triggered from "git gc --auto".
 
- Needs review.
+ Being reviewed (Karthik e.g. <CAOLa=ZS6uF3fuor3V2F_GM__JNRpUAyLcrVDbCHsJ6JStL96cA@mail.gmail.com>)
  source: <cover.1710706118.git.ps@pks.im>
 
 
-* bb/iso-strict-utc (2024-03-13) 1 commit
-  (merged to 'next' on 2024-03-14 at d2ac616873)
- + date: make "iso-strict" conforming for the UTC timezone
-
- The output format for dates "iso-strict" has been tweaked to show
- a time in the Zulu timezone with "Z" suffix, instead of "+00:00".
-
- Will merge to 'master'.
- source: <20240313225423.11373-1-dev+git@drbeat.li>
-
-
-* dg/user-manual-hash-example (2024-03-12) 1 commit
-  (merged to 'next' on 2024-03-14 at 767800d3a7)
- + Documentation/user-manual.txt: example for generating object hashes
-
- User manual (the original one) update.
-
- Will merge to 'master'.
- source: <20240312104238.4920-2-dirk@gouders.net>
-
-
 * jc/show-untracked-false (2024-03-13) 2 commits
- - status: allow --untracked=false and friends
- - status: unify parsing of --untracked= and status.showUntrackedFiles
+  (merged to 'next' on 2024-03-21 at 6d1f5603c6)
+ + status: allow --untracked=false and friends
+ + status: unify parsing of --untracked= and status.showUntrackedFiles
 
  The status.showUntrackedFiles configuration variable had a name
  that tempts users to set a Boolean value expressed in our usual
@@ -260,7 +487,7 @@ Release tarballs are available at:
  corrected so "true" and its synonyms are taken as "normal", while
  "false" and its synonyms are taken as "no".
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20240313173214.962532-1-gitster@pobox.com>
 
 
@@ -275,24 +502,14 @@ Release tarballs are available at:
  source: <9c6f3f5203ae26c501a5711e2610573130bfd550.1710388817.git.gitgitgadget@gmail.com>
 
 
-* jw/doc-show-untracked-files-fix (2024-03-13) 1 commit
-  (merged to 'next' on 2024-03-14 at 091f64ad6c)
- + doc: status.showUntrackedFiles does not take "false"
-
- The status.showUntrackedFiles configuration variable was
- incorrectly documented to accept "false", which has been corrected.
-
- Will merge to 'master'.
- source: <pull.1686.git.git.1710279251901.gitgitgadget@gmail.com>
-
-
 * ph/diff-src-dst-prefix-config (2024-03-18) 2 commits
- - diff.*Prefix: use camelCase in the doc and test titles
- - diff: add diff.srcPrefix and diff.dstPrefix configuration variables
+  (merged to 'next' on 2024-03-21 at 96801520db)
+ + diff.*Prefix: use camelCase in the doc and test titles
+ + diff: add diff.srcPrefix and diff.dstPrefix configuration variables
 
  "git diff" and friends learned two extra configuration variables.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240315010310.GA1901653@quokka>
  source: <xmqq8r2ioh19.fsf@gitster.g>
 
@@ -307,16 +524,6 @@ Release tarballs are available at:
  source: <0bede59a53862585c49bc635f82e44e983144a7f.1710246859.git.ps@pks.im>
 
 
-* bb/t0006-negative-tz-offset (2024-03-14) 1 commit
-  (merged to 'next' on 2024-03-14 at 3f4751b6b2)
- + t0006: add more tests with a negative TZ offset
-
- More tests on showing time with negative TZ offset.
-
- Will merge to 'master'.
- source: <20240314085512.1827031-1-dev+git@drbeat.li>
-
-
 * rj/restore-plug-leaks (2024-03-14) 1 commit
   (merged to 'next' on 2024-03-15 at ac10ae7892)
  + checkout: plug some leaks in git-restore
@@ -328,11 +535,12 @@ Release tarballs are available at:
 
 
 * bt/fuzz-config-parse (2024-03-15) 1 commit
- - fuzz: add fuzzer for config parsing
+  (merged to 'next' on 2024-03-21 at 6e9f331d68)
+ + fuzz: add fuzzer for config parsing
 
  A new fuzz target that exercises config parsing code.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1692.v2.git.1710481652130.gitgitgadget@gmail.com>
 
 
@@ -384,39 +592,27 @@ Release tarballs are available at:
  source: <pull.1681.v2.git.1709824540636.gitgitgadget@gmail.com>
 
 
-* jc/safe-implicit-bare (2024-03-11) 1 commit
-  (merged to 'next' on 2024-03-14 at e8bdbed1a4)
- + setup: notice more types of implicit bare repositories
-
- Users with safe.bareRepository=explicit can still work from within
- $GIT_DIR of a seconary worktree (which resides at .git/worktrees/$name/)
- of the primary worktree without explicitly specifying the $GIT_DIR
- environment variable or the --git-dir=<path> option.
-
- Will merge to 'master'.
- source: <xmqq5xxv0ywi.fsf_-_@gitster.g>
-
-
 * pw/checkout-conflict-errorfix (2024-03-14) 5 commits
- - checkout: fix interaction between --conflict and --merge
- - checkout: cleanup --conflict=<style> parsing
- - merge options: add a conflict style member
- - merge-ll: introduce LL_MERGE_OPTIONS_INIT
- - xdiff-interface: refactor parsing of merge.conflictstyle
+  (merged to 'next' on 2024-03-22 at 9977ac6c75)
+ + checkout: fix interaction between --conflict and --merge
+ + checkout: cleanup --conflict=<style> parsing
+ + merge options: add a conflict style member
+ + merge-ll: introduce LL_MERGE_OPTIONS_INIT
+ + xdiff-interface: refactor parsing of merge.conflictstyle
 
  "git checkout --conflict=bad" reported a bad conflictStyle as if it
  were given to a configuration variable; it has been corrected to
  report that the command line option is bad.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1684.v2.git.1710435907.gitgitgadget@gmail.com>
 
 
-* bl/cherry-pick-empty (2024-03-11) 7 commits
+* bl/cherry-pick-empty (2024-03-20) 7 commits
  - cherry-pick: add `--empty` for more robust redundant commit handling
  - cherry-pick: enforce `--keep-redundant-commits` incompatibility
  - sequencer: do not require `allow_empty` for redundant commit options
- - sequencer: treat error reading HEAD as unborn branch
+ - sequencer: handle unborn branch with `--allow-empty`
  - rebase: update `--empty=ask` to `--empty=stop`
  - docs: clean up `--empty` formatting in git-rebase(1) and git-am (1)
  - docs: address inaccurate `--empty` default with `--exec`
@@ -427,8 +623,7 @@ Release tarballs are available at:
  `--keep-redundant-commits` as well as some related docs changes and
  sequencer code cleanup.
 
- Expecting a reroll.
- cf. <17be81eb83ff314d.70b1dd9aae081c6e.203dcd72f6563036@zivdesk>
+ Will merge to 'next'?
  source: <20240119060721.3734775-2-brianmlyles@gmail.com>
 
 
@@ -445,55 +640,15 @@ Release tarballs are available at:
  source: <20240319183722.211300-1-ignacio@iencinas.com>
 
 
-* ja/doc-markup-fixes (2024-03-11) 6 commits
-  (merged to 'next' on 2024-03-14 at 4d1c26143f)
- + doc: git-clone: format placeholders
- + doc: git-clone: format verbatim words
- + doc: git-init: rework config item init.templateDir
- + doc: git-init: rework definition lists
- + doc: git-init: format placeholders
- + doc: git-init: format verbatim parts
-
- Mark-ups used in the documentation has been improved for
- consistency.
-
- Will merge to 'master'.
- source: <pull.1687.git.1710097830.gitgitgadget@gmail.com>
-
-
-* jk/doc-remote-helper-object-format-option (2024-03-10) 2 commits
- - doc/gitremote-helpers: match object-format option docs to code
- - t5801: fix object-format handling in git-remote-testgit
+* jk/remote-helper-object-format-option-fix (2024-03-20) 3 commits
+ - transport-helper: send "true" value for object-format option
+ - transport-helper: drop "object-format <algo>" option
+ - transport-helper: use write helpers more consistently
 
  The implementation and documentation of "object-format" option
  exchange between the Git itself and its remote helpers did not
  quite match.
-
- Expecting a reroll.
- cf. <20240318085208.GA604917@coredump.intra.peff.net>
- source: <20240307084735.GA2072130@coredump.intra.peff.net>
-
-
-* pb/ci-win-artifact-names-fix (2024-03-11) 1 commit
-  (merged to 'next' on 2024-03-14 at 5076389536)
- + ci(github): make Windows test artifacts name unique
-
- CI update.
-
- Will merge to 'master'.
- source: <pull.1688.git.1710101097072.gitgitgadget@gmail.com>
-
-
-* fs/find-end-of-log-message-fix (2024-03-07) 1 commit
-  (merged to 'next' on 2024-03-13 at 2bed63caaf)
- + wt-status: don't find scissors line beyond buf len
-
- The code to find the effective end of log message can fall into an
- endless loop, which has been corrected.
-
- Will merge to 'master'.
- cf. <08b9b37d-f0f8-4c1a-b72e-194202ff3d9f@nutanix.com>
- source: <20240307183743.219951-1-flosch@nutanix.com>
+ source: <20240320093226.GA2445531@coredump.intra.peff.net>
 
 
 * jk/core-comment-string (2024-03-12) 16 commits
@@ -535,41 +690,6 @@ Release tarballs are available at:
  source: <cover.1709673020.git.steadmon@google.com>
 
 
-* ps/reftable-block-search-fix (2024-03-07) 2 commits
-  (merged to 'next' on 2024-03-13 at 34938e24ab)
- + reftable/block: fix binary search over restart counter
- + reftable/record: fix memory leak when decoding object records
-
- The reftable code has its own custom binary search function whose
- comparison callback has an unusual interface, which caused the
- binary search to degenerate into a linear search, which has been
- corrected.
-
- Will merge to 'master'.
- source: <cover.1709843663.git.ps@pks.im>
-
-
-* ps/reftable-reflog-iteration-perf (2024-03-05) 8 commits
-  (merged to 'next' on 2024-03-14 at 72465c29be)
- + refs/reftable: track last log record name via strbuf
- + reftable/record: use scratch buffer when decoding records
- + reftable/record: reuse message when decoding log records
- + reftable/record: reuse refnames when decoding log records
- + reftable/record: avoid copying author info
- + reftable/record: convert old and new object IDs to arrays
- + refs/reftable: reload correct stack when creating reflog iter
- + Merge branch 'ps/reftable-iteration-perf-part2' into ps/reftable-reflog-iteration-perf
-
- The code to iterate over reflogs in the reftable has been optimized
- to reduce memory allocation and deallocation.
-
- Reviewed-by: Josh Steadmon <steadmon@google.com>
- cf. <Ze9eX-aaWoVaqsPP@google.com>
-
- Will merge to 'master'.
- source: <cover.1709640322.git.ps@pks.im>
-
-
 * sj/userdiff-c-sharp (2024-03-06) 1 commit
  - userdiff: better method/property matching for C#
 
@@ -577,41 +697,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <pull.1682.v2.git.git.1709756493673.gitgitgadget@gmail.com>
-
-
-* ps/reftable-stack-tempfile (2024-03-07) 4 commits
-  (merged to 'next' on 2024-03-13 at dcfb0cde8c)
- + reftable/stack: register compacted tables as tempfiles
- + reftable/stack: register lockfiles during compaction
- + reftable/stack: register new tables as tempfiles
- + lockfile: report when rollback fails
- (this branch is used by ps/pack-refs-auto.)
-
- The code in reftable backend that creates new table files works
- better with the tempfile framework to avoid leaving cruft after a
- failure.
-
- Will merge to 'master'.
- source: <cover.1709816483.git.ps@pks.im>
-
-
-* rs/opt-parse-long-fixups (2024-03-03) 6 commits
-  (merged to 'next' on 2024-03-13 at 3755b50794)
- + parse-options: rearrange long_name matching code
- + parse-options: normalize arg and long_name before comparison
- + parse-options: detect ambiguous self-negation
- + parse-options: factor out register_abbrev() and struct parsed_option
- + parse-options: set arg of abbreviated option lazily
- + parse-options: recognize abbreviated negated option with arg
-
- The parse-options code that deals with abbreviated long option
- names have been cleaned up.
-
- Reviewed-by: Josh Steadmon <steadmon@google.com>
- cf. <ZfDM5Or3EKw7Q9SA@google.com>
-
- Will merge to 'master'.
- source: <20240303121944.20627-1-l.s.r@web.de>
 
 
 * cw/git-std-lib (2024-02-28) 4 commits
@@ -742,8 +827,7 @@ Release tarballs are available at:
 
  Teach a repository to work with both SHA-1 and SHA-256 hash algorithms.
 
- Will cook in 'next'.
- cf. <xmqqv86z5359.fsf@gitster.g>
+ Will merge to 'master'?
  source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
