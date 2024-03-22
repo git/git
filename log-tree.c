@@ -480,7 +480,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 
 	*need_8bit_cte_p = 0; /* unknown */
 
-	if (opt->extra_headers)
+	if (opt->extra_headers && *opt->extra_headers)
 		strbuf_addstr(&headers, opt->extra_headers);
 
 	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
