@@ -653,7 +653,7 @@ static int run_am(struct rebase_options *opts)
 		status = error_errno(_("could not open '%s' for writing"),
 				     rebased_patches);
 		free(rebased_patches);
-		strvec_clear(&am.args);
+		child_process_clear(&am);
 		return status;
 	}
 
@@ -676,7 +676,7 @@ static int run_am(struct rebase_options *opts)
 		struct reset_head_opts ropts = { 0 };
 		unlink(rebased_patches);
 		free(rebased_patches);
-		strvec_clear(&am.args);
+		child_process_clear(&am);
 
 		ropts.oid = &opts->orig_head->object.oid;
 		ropts.branch = opts->head_name;
@@ -699,7 +699,7 @@ static int run_am(struct rebase_options *opts)
 		status = error_errno(_("could not open '%s' for reading"),
 				     rebased_patches);
 		free(rebased_patches);
-		strvec_clear(&am.args);
+		child_process_clear(&am);
 		return status;
 	}
 
