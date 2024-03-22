@@ -4,7 +4,7 @@ insert_final_newline = true
 
 # The settings for C (*.c and *.h) files are mirrored in .clang-format.  Keep
 # them in sync.
-[*.{c,h,sh,perl,pl,pm,txt}]
+[{*.{c,h,sh,perl,pl,pm,txt},config.mak.*,Makefile}]
 indent_style = tab
 tab_width = 8
 
