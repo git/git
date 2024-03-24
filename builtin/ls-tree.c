@@ -100,19 +100,12 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 		return 0;
 
 	while (strbuf_expand_step(&sb, &format)) {
-		const char *end;
 		size_t len;
 
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(&sb, '%');
 		else if ((len = strbuf_expand_literal(&sb, format)))
 			format += len;
-		else if (*format != '(')
-			die(_("bad ls-tree format: element '%s' "
-			      "does not start with '('"), format);
-		else if (!(end = strchr(format + 1, ')')))
-			die(_("bad ls-tree format: element '%s' "
-			      "does not end in ')'"), format);
 		else if (skip_prefix(format, "(objectmode)", &format))
 			strbuf_addf(&sb, "%06o", mode);
 		else if (skip_prefix(format, "(objecttype)", &format))
@@ -135,8 +128,7 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 			strbuf_setlen(base, baselen);
 			strbuf_release(&sbuf);
 		} else
-			die(_("bad ls-tree format: %%%.*s"),
-			    (int)(end - format + 1), format);
+			strbuf_expand_bad_format(format, "ls-tree");
 	}
 	strbuf_addch(&sb, options->null_termination ? '\0' : '\n');
 	fwrite(sb.buf, sb.len, 1, stdout);

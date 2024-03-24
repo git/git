@@ -338,6 +338,11 @@ size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder);
 int strbuf_expand_step(struct strbuf *sb, const char **formatp);
 
 /**
+ * Used with `strbuf_expand_step` to report unknown placeholders.
+ */
+void strbuf_expand_bad_format(const char *format, const char *command);
+
+/**
  * Append the contents of one strbuf to another, quoting any
  * percent signs ("%") into double-percents ("%%") in the
  * destination. This is useful for literal data to be fed to either
