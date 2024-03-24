@@ -32,6 +32,13 @@ the tests.
     ok 2 - plain with GIT_WORK_TREE
     ok 3 - plain bare
 
+t/Makefile defines a target for each test file, such that you can also use
+shell pattern matching to run a subset of the tests:
+
+    make *checkout*
+
+will run all tests with 'checkout' in their filename.
+
 Since the tests all output TAP (see https://testanything.org) they can
 be run with any TAP harness. Here's an example of parallel testing
 powered by a recent version of prove(1):
