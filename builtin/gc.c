@@ -206,6 +206,16 @@ struct maintenance_run_opts {
 	enum schedule_priority schedule;
 };
 
+static int pack_refs_condition(void)
+{
+	/*
+	 * The auto-repacking logic for refs is handled by the ref backends and
+	 * exposed via `git pack-refs --auto`. We thus always return truish
+	 * here and let the backend decide for us.
+	 */
+	return 1;
+}
+
 static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -1298,7 +1308,7 @@ static struct maintenance_task tasks[] = {
 	[TASK_PACK_REFS] = {
 		"pack-refs",
 		maintenance_task_pack_refs,
-		NULL,
+		pack_refs_condition,
 	},
 };
 

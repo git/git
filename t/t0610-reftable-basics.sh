@@ -387,7 +387,7 @@ test_expect_success 'pack-refs: compaction raises locking errors' '
 	test_cmp expect err
 '
 
-for command in pack-refs gc
+for command in pack-refs gc "maintenance run --task=pack-refs"
 do
 test_expect_success "$command: auto compaction" '
 	test_when_finished "rm -rf repo" &&

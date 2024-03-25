@@ -370,4 +370,14 @@ test_expect_success 'pack-refs does not drop broken refs during deletion' '
 	test_cmp expect actual
 '
 
+test_expect_success 'maintenance --auto unconditionally packs loose refs' '
+	git update-ref refs/heads/something HEAD &&
+	test_path_is_file .git/refs/heads/something &&
+	git rev-parse refs/heads/something >expect &&
+	git maintenance run --task=pack-refs --auto &&
+	test_path_is_missing .git/refs/heads/something &&
+	git rev-parse refs/heads/something >actual &&
+	test_cmp expect actual
+'
+
 test_done
