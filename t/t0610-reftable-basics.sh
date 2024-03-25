@@ -375,6 +375,18 @@ test_expect_success 'pack-refs: compacts tables' '
 	test_line_count = 1 repo/.git/reftable/tables.list
 '
 
+test_expect_success 'pack-refs: compaction raises locking errors' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo A &&
+	touch repo/.git/reftable/tables.list.lock &&
+	cat >expect <<-EOF &&
+	error: unable to compact stack: data is locked
+	EOF
+	test_must_fail git -C repo pack-refs 2>err &&
+	test_cmp expect err
+'
+
 test_expect_success 'pack-refs: prunes stale tables' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
