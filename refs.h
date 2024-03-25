@@ -66,12 +66,6 @@ const char *ref_storage_format_to_name(unsigned int ref_storage_format);
 #define RESOLVE_REF_NO_RECURSE 0x02
 #define RESOLVE_REF_ALLOW_BAD_NAME 0x04
 
-struct pack_refs_opts {
-	unsigned int flags;
-	struct ref_exclusions *exclusions;
-	struct string_list *includes;
-};
-
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
 				    int resolve_flags,
@@ -432,6 +426,12 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
  */
 #define PACK_REFS_PRUNE 0x0001
 #define PACK_REFS_ALL   0x0002
+
+struct pack_refs_opts {
+	unsigned int flags;
+	struct ref_exclusions *exclusions;
+	struct string_list *includes;
+};
 
 /*
  * Write a packed-refs file for the current repository.
