@@ -131,20 +131,36 @@ effect to your index in a row.
 	even without this option.  Note also, that use of this option only
 	keeps commits that were initially empty (i.e. the commit recorded the
 	same tree as its parent).  Commits which are made empty due to a
-	previous commit are dropped.  To force the inclusion of those commits
-	use `--keep-redundant-commits`.
+	previous commit will cause the cherry-pick to fail.  To force the
+	inclusion of those commits, use `--empty=keep`.
 
 --allow-empty-message::
 	By default, cherry-picking a commit with an empty message will fail.
 	This option overrides that behavior, allowing commits with empty
 	messages to be cherry picked.
 
+--empty=(drop|keep|stop)::
+	How to handle commits being cherry-picked that are redundant with
+	changes already in the current history.
++
+--
+`drop`;;
+	The commit will be dropped.
+`keep`;;
+	The commit will be kept. Implies `--allow-empty`.
+`stop`;;
+	The cherry-pick will stop when the commit is applied, allowing
+	you to examine the commit. This is the default behavior.
+--
++
+Note that `--empty=drop` and `--empty=stop` only specify how to handle a
+commit that was not initially empty, but rather became empty due to a previous
+commit. Commits that were initially empty will still cause the cherry-pick to
+fail unless one of `--empty=keep` or `--allow-empty` are specified.
++
+
 --keep-redundant-commits::
-	If a commit being cherry picked duplicates a commit already in the
-	current history, it will become empty.  By default these
-	redundant commits cause `cherry-pick` to stop so the user can
-	examine the commit. This option overrides that behavior and
-	creates an empty commit object.  Implies `--allow-empty`.
+	Deprecated synonym for `--empty=keep`.
 
 --strategy=<strategy>::
 	Use the given merge strategy.  Should only be used once.
