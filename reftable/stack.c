@@ -973,7 +973,15 @@ done:
 	return err;
 }
 
-/* <  0: error. 0 == OK, > 0 attempt failed; could retry. */
+/*
+ * Compact all tables in the range `[first, last)` into a single new table.
+ *
+ * This function returns `0` on success or a code `< 0` on failure. When the
+ * stack or any of the tables in the specified range are already locked then
+ * this function returns `REFTABLE_LOCK_ERROR`. This is a benign error that
+ * callers can either ignore, or they may choose to retry compaction after some
+ * amount of time.
+ */
 static int stack_compact_range(struct reftable_stack *st,
 			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *expiry)
@@ -1003,7 +1011,7 @@ static int stack_compact_range(struct reftable_stack *st,
 					LOCK_NO_DEREF);
 	if (err < 0) {
 		if (errno == EEXIST)
-			err = 1;
+			err = REFTABLE_LOCK_ERROR;
 		else
 			err = REFTABLE_IO_ERROR;
 		goto done;
@@ -1025,7 +1033,7 @@ static int stack_compact_range(struct reftable_stack *st,
 						table_name.buf, LOCK_NO_DEREF);
 		if (err < 0) {
 			if (errno == EEXIST)
-				err = 1;
+				err = REFTABLE_LOCK_ERROR;
 			else
 				err = REFTABLE_IO_ERROR;
 			goto done;
@@ -1075,7 +1083,7 @@ static int stack_compact_range(struct reftable_stack *st,
 					LOCK_NO_DEREF);
 	if (err < 0) {
 		if (errno == EEXIST)
-			err = 1;
+			err = REFTABLE_LOCK_ERROR;
 		else
 			err = REFTABLE_IO_ERROR;
 		goto done;
@@ -1187,7 +1195,7 @@ static int stack_compact_range_stats(struct reftable_stack *st,
 				     struct reftable_log_expiry_config *config)
 {
 	int err = stack_compact_range(st, first, last, config);
-	if (err > 0)
+	if (err == REFTABLE_LOCK_ERROR)
 		st->stats.failures++;
 	return err;
 }
