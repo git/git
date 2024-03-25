@@ -214,6 +214,18 @@ Fixes since v2.44
  * The status.showUntrackedFiles configuration variable was
    incorrectly documented to accept "false", which has been corrected.
 
+ * Leaks from "git restore" have been plugged.
+   (merge 2f64da0790 rj/restore-plug-leaks later to maint).
+
+ * "git bugreport --no-suffix" was not supported and instead
+   segfaulted, which has been corrected.
+   (merge b3b57c69da js/bugreport-no-suffix-fix later to maint).
+
+ * The documentation for "%(trailers[:options])" placeholder in the
+   "--pretty" option of commands in the "git log" family has been
+   updated.
+   (merge bff85a338c bl/doc-key-val-sep-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -233,3 +245,6 @@ Fixes since v2.44
    (merge 781fb7b4c2 as/option-names-in-messages later to maint).
    (merge 51d41dc243 jk/doc-remote-helpers-markup-fix later to maint).
    (merge e1aaf309db pb/ci-win-artifact-names-fix later to maint).
+   (merge ad538c61da jc/index-pack-fsck-levels later to maint).
+   (merge 67471bc704 ja/doc-formatting-fix later to maint).
+   (merge 86f9ce7dd6 bl/doc-config-fixes later to maint).
