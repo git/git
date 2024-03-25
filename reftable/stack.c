@@ -529,9 +529,9 @@ int reftable_stack_add(struct reftable_stack *st,
 {
 	int err = stack_try_add(st, write, arg);
 	if (err < 0) {
-		if (err == REFTABLE_LOCK_ERROR) {
+		if (err == REFTABLE_OUTDATED_ERROR) {
 			/* Ignore error return, we want to propagate
-			   REFTABLE_LOCK_ERROR.
+			   REFTABLE_OUTDATED_ERROR.
 			*/
 			reftable_stack_reload(st);
 		}
@@ -591,7 +591,7 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 	if (err > 0) {
-		err = REFTABLE_LOCK_ERROR;
+		err = REFTABLE_OUTDATED_ERROR;
 		goto done;
 	}
 

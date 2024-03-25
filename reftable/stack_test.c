@@ -232,7 +232,7 @@ static void test_reftable_stack_uptodate(void)
 	EXPECT_ERR(err);
 
 	err = reftable_stack_add(st2, &write_test_ref, &ref2);
-	EXPECT(err == REFTABLE_LOCK_ERROR);
+	EXPECT(err == REFTABLE_OUTDATED_ERROR);
 
 	err = reftable_stack_reload(st2);
 	EXPECT_ERR(err);
