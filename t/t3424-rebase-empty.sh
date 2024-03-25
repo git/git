@@ -167,4 +167,42 @@ test_expect_success 'rebase --merge does not leave state laying around' '
 	test_path_is_missing .git/MERGE_MSG
 '
 
+test_expect_success 'rebase --exec --empty=drop' '
+	git checkout -B testing localmods &&
+	git rebase --exec "true" --empty=drop upstream &&
+
+	test_write_lines D C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase --exec --empty=keep' '
+	git checkout -B testing localmods &&
+	git rebase --exec "true" --empty=keep upstream &&
+
+	test_write_lines D C2 C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase --exec uses default of --empty=keep' '
+	git checkout -B testing localmods &&
+	git rebase --exec "true" upstream &&
+
+	test_write_lines D C2 C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rebase --exec --empty=ask' '
+	git checkout -B testing localmods &&
+	test_must_fail git rebase --exec "true" --empty=ask upstream &&
+
+	git rebase --skip &&
+
+	test_write_lines D C B A >expect &&
+	git log --format=%s >actual &&
+	test_cmp expect actual
+'
+
 test_done

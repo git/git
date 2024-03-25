@@ -295,11 +295,11 @@ See also INCOMPATIBLE OPTIONS below.
 	empty after rebasing (because they contain a subset of already
 	upstream changes).  With drop (the default), commits that
 	become empty are dropped.  With keep, such commits are kept.
-	With ask (implied by `--interactive`), the rebase will halt when
-	an empty commit is applied allowing you to choose whether to
-	drop it, edit files more, or just commit the empty changes.
-	Other options, like `--exec`, will use the default of drop unless
-	`-i`/`--interactive` is explicitly specified.
+	With ask, the rebase will halt when an empty commit is applied
+	allowing you to choose whether to drop it, edit files more, or just
+	commit the empty changes.
+	When the `-i`/`--interactive` option is used, the default becomes ask.
+	Otherwise, when the `--exec` option is used, the default becomes keep.
 +
 Note that commits which start empty are kept (unless `--no-keep-empty`
 is specified), and commits which are clean cherry-picks (as determined
