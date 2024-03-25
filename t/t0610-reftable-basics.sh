@@ -387,6 +387,40 @@ test_expect_success 'pack-refs: compaction raises locking errors' '
 	test_cmp expect err
 '
 
+test_expect_success 'pack-refs: auto compaction' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit A &&
+
+		# The tables should have been auto-compacted, and thus auto
+		# compaction should not have to do anything.
+		ls -1 .git/reftable >tables-expect &&
+		test_line_count = 4 tables-expect &&
+		git pack-refs --auto &&
+		ls -1 .git/reftable >tables-actual &&
+		test_cmp tables-expect tables-actual &&
+
+		# Lock all tables write some refs. Auto-compaction will be
+		# unable to compact tables and thus fails gracefully, leaving
+		# the stack in a sub-optimal state.
+		ls .git/reftable/*.ref |
+		while read table
+		do
+			touch "$table.lock" || exit 1
+		done &&
+		git branch B &&
+		git branch C &&
+		rm .git/reftable/*.lock &&
+		test_line_count = 5 .git/reftable/tables.list &&
+
+		git pack-refs --auto &&
+		test_line_count = 1 .git/reftable/tables.list
+	)
+'
+
 test_expect_success 'pack-refs: prunes stale tables' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&

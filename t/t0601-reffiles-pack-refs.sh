@@ -164,6 +164,13 @@ test_expect_success 'test --exclude takes precedence over --include' '
 	git pack-refs --include "refs/heads/pack*" --exclude "refs/heads/pack*" &&
 	test -f .git/refs/heads/dont_pack5'
 
+test_expect_success '--auto packs and prunes refs as usual' '
+	git branch auto &&
+	test_path_is_file .git/refs/heads/auto &&
+	git pack-refs --auto --all &&
+	test_path_is_missing .git/refs/heads/auto
+'
+
 test_expect_success 'see if up-to-date packed refs are preserved' '
 	git branch q &&
 	git pack-refs --all --prune &&
