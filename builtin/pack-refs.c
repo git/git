@@ -13,15 +13,17 @@ static char const * const pack_refs_usage[] = {
 
 int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 {
-	unsigned int flags = PACK_REFS_PRUNE;
-	static struct ref_exclusions excludes = REF_EXCLUSIONS_INIT;
-	static struct string_list included_refs = STRING_LIST_INIT_NODUP;
-	struct pack_refs_opts pack_refs_opts = { .exclusions = &excludes,
-						 .includes = &included_refs,
-						 .flags = flags };
-	static struct string_list option_excluded_refs = STRING_LIST_INIT_NODUP;
+	struct ref_exclusions excludes = REF_EXCLUSIONS_INIT;
+	struct string_list included_refs = STRING_LIST_INIT_NODUP;
+	struct pack_refs_opts pack_refs_opts = {
+		.exclusions = &excludes,
+		.includes = &included_refs,
+		.flags = PACK_REFS_PRUNE,
+	};
+	struct string_list option_excluded_refs = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
 	int pack_all = 0;
+	int ret;
 
 	struct option opts[] = {
 		OPT_BOOL(0, "all",   &pack_all, N_("pack everything")),
@@ -45,5 +47,10 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	if (!pack_refs_opts.includes->nr)
 		string_list_append(pack_refs_opts.includes, "refs/tags/*");
 
-	return refs_pack_refs(get_main_ref_store(the_repository), &pack_refs_opts);
+	ret = refs_pack_refs(get_main_ref_store(the_repository), &pack_refs_opts);
+
+	clear_ref_exclusions(&excludes);
+	string_list_clear(&included_refs, 0);
+	string_list_clear(&option_excluded_refs, 0);
+	return ret;
 }
