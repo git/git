@@ -212,6 +212,9 @@ static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *
 
 	cmd.git_cmd = 1;
 	strvec_pushl(&cmd.args, "pack-refs", "--all", "--prune", NULL);
+	if (opts->auto_flag)
+		strvec_push(&cmd.args, "--auto");
+
 	return run_command(&cmd);
 }
 
@@ -572,7 +575,7 @@ done:
 	return ret;
 }
 
-static void gc_before_repack(void)
+static void gc_before_repack(struct maintenance_run_opts *opts)
 {
 	/*
 	 * We may be called twice, as both the pre- and
@@ -583,7 +586,7 @@ static void gc_before_repack(void)
 	if (done++)
 		return;
 
-	if (pack_refs && maintenance_task_pack_refs(NULL))
+	if (pack_refs && maintenance_task_pack_refs(opts))
 		die(FAILED_RUN, "pack-refs");
 
 	if (prune_reflogs) {
@@ -599,7 +602,6 @@ static void gc_before_repack(void)
 int cmd_gc(int argc, const char **argv, const char *prefix)
 {
 	int aggressive = 0;
-	int auto_gc = 0;
 	int quiet = 0;
 	int force = 0;
 	const char *name;
@@ -608,6 +610,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	int keep_largest_pack = -1;
 	timestamp_t dummy;
 	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
+	struct maintenance_run_opts opts = {0};
 
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
@@ -618,7 +621,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		OPT_MAGNITUDE(0, "max-cruft-size", &max_cruft_size,
 			      N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL(0, "aggressive", &aggressive, N_("be more thorough (increased runtime)")),
-		OPT_BOOL_F(0, "auto", &auto_gc, N_("enable auto-gc mode"),
+		OPT_BOOL_F(0, "auto", &opts.auto_flag, N_("enable auto-gc mode"),
 			   PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL_F(0, "force", &force,
 			   N_("force running gc even if there may be another gc running"),
@@ -663,7 +666,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (quiet)
 		strvec_push(&repack, "-q");
 
-	if (auto_gc) {
+	if (opts.auto_flag) {
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
@@ -688,7 +691,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 			if (lock_repo_for_gc(force, &pid))
 				return 0;
-			gc_before_repack(); /* dies on failure */
+			gc_before_repack(&opts); /* dies on failure */
 			delete_tempfile(&pidfile);
 
 			/*
@@ -713,7 +716,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	name = lock_repo_for_gc(force, &pid);
 	if (name) {
-		if (auto_gc)
+		if (opts.auto_flag)
 			return 0; /* be quiet on --auto */
 		die(_("gc is already running on machine '%s' pid %"PRIuMAX" (use --force if not)"),
 		    name, (uintmax_t)pid);
@@ -728,7 +731,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		atexit(process_log_file_at_exit);
 	}
 
-	gc_before_repack();
+	gc_before_repack(&opts);
 
 	if (!repository_format_precious_objects) {
 		struct child_process repack_cmd = CHILD_PROCESS_INIT;
@@ -783,7 +786,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 					     !quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 
-	if (auto_gc && too_many_loose_objects())
+	if (opts.auto_flag && too_many_loose_objects())
 		warning(_("There are too many unreachable loose objects; "
 			"run 'git prune' to remove them."));
 

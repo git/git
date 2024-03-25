@@ -387,7 +387,9 @@ test_expect_success 'pack-refs: compaction raises locking errors' '
 	test_cmp expect err
 '
 
-test_expect_success 'pack-refs: auto compaction' '
+for command in pack-refs gc
+do
+test_expect_success "$command: auto compaction" '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -395,13 +397,23 @@ test_expect_success 'pack-refs: auto compaction' '
 
 		test_commit A &&
 
+		# We need a bit of setup to ensure that git-gc(1) actually
+		# triggers, and that it does not write anything to the refdb.
+		git config gc.auto 1 &&
+		git config gc.autoDetach 0 &&
+		git config gc.reflogExpire never &&
+		git config gc.reflogExpireUnreachable never &&
+		test_oid blob17_1 | git hash-object -w --stdin &&
+
 		# The tables should have been auto-compacted, and thus auto
 		# compaction should not have to do anything.
 		ls -1 .git/reftable >tables-expect &&
 		test_line_count = 4 tables-expect &&
-		git pack-refs --auto &&
+		git $command --auto &&
 		ls -1 .git/reftable >tables-actual &&
 		test_cmp tables-expect tables-actual &&
+
+		test_oid blob17_2 | git hash-object -w --stdin &&
 
 		# Lock all tables write some refs. Auto-compaction will be
 		# unable to compact tables and thus fails gracefully, leaving
@@ -416,10 +428,11 @@ test_expect_success 'pack-refs: auto compaction' '
 		rm .git/reftable/*.lock &&
 		test_line_count = 5 .git/reftable/tables.list &&
 
-		git pack-refs --auto &&
+		git $command --auto &&
 		test_line_count = 1 .git/reftable/tables.list
 	)
 '
+done
 
 test_expect_success 'pack-refs: prunes stale tables' '
 	test_when_finished "rm -rf repo" &&
