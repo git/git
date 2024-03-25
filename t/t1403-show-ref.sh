@@ -286,4 +286,24 @@ test_expect_success '--exists with existing special ref' '
 	git show-ref --exists FETCH_HEAD
 '
 
+test_expect_success '--symbolic-name with a non symbolic ref' '
+	commit_oid=$(git rev-parse refs/heads/$GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME) &&
+	cat >expect <<-EOF &&
+	$commit_oid refs/heads/$GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+	EOF
+	git show-ref --symbolic-name refs/heads/$GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--symbolic-name with symbolic ref' '
+	test_when_finished "git symbolic-ref -d refs/heads/SYMBOLIC_REF_A" &&
+	commit_oid=$(git rev-parse refs/heads/$GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME) &&
+	cat >expect <<-EOF &&
+	$commit_oid refs/heads/SYMBOLIC_REF_A ref:refs/heads/$GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+	EOF
+	git symbolic-ref refs/heads/SYMBOLIC_REF_A refs/heads/$GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME &&
+	git show-ref --symbolic-name SYMBOLIC_REF_A >actual &&
+	test_cmp expect actual
+'
+
 test_done
