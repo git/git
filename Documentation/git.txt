@@ -960,7 +960,7 @@ will never be returned from the commit-graph at the cost of performance.
 `GIT_PROTOCOL`::
 	For internal use only.  Used in handshaking the wire protocol.
 	Contains a colon ':' separated list of keys with optional values
-	'key[=value]'.  Presence of unknown keys and values must be
+	'<key>[=<value>]'.  Presence of unknown keys and values must be
 	ignored.
 +
 Note that servers may need to be configured to allow this variable to
