@@ -58,6 +58,14 @@ test_expect_success 'alias user-defined format' '
 	test_cmp expected actual
 '
 
+test_expect_success 'alias user-defined format is matched case-insensitively' '
+	git log --pretty="format:%h" >expected &&
+	test_config pretty.testone "format:%h" &&
+	test_config pretty.testtwo testOne &&
+	git log --pretty=testTwo >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'alias user-defined tformat with %s (ISO8859-1 encoding)' '
 	test_config i18n.logOutputEncoding $test_encoding &&
 	git log --oneline >expected-s &&
