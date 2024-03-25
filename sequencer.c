@@ -772,29 +772,42 @@ static struct object_id *get_cache_tree_oid(struct index_state *istate)
 static int is_index_unchanged(struct repository *r)
 {
 	struct object_id head_oid, *cache_tree_oid;
+	const struct object_id *head_tree_oid;
 	struct commit *head_commit;
 	struct index_state *istate = r->index;
+	const char *head_name;
 
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
-		return error(_("could not resolve HEAD commit"));
+	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL)) {
+		/* Check to see if this is an unborn branch */
+		head_name = resolve_ref_unsafe("HEAD",
+			RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+			&head_oid, NULL);
+		if (!head_name ||
+			!starts_with(head_name, "refs/heads/") ||
+			!is_null_oid(&head_oid))
+			return error(_("could not resolve HEAD commit"));
+		head_tree_oid = the_hash_algo->empty_tree;
+	} else {
+		head_commit = lookup_commit(r, &head_oid);
 
-	head_commit = lookup_commit(r, &head_oid);
+		/*
+		 * If head_commit is NULL, check_commit, called from
+		 * lookup_commit, would have indicated that head_commit is not
+		 * a commit object already.  repo_parse_commit() will return failure
+		 * without further complaints in such a case.  Otherwise, if
+		 * the commit is invalid, repo_parse_commit() will complain.  So
+		 * there is nothing for us to say here.  Just return failure.
+		 */
+		if (repo_parse_commit(r, head_commit))
+			return -1;
 
-	/*
-	 * If head_commit is NULL, check_commit, called from
-	 * lookup_commit, would have indicated that head_commit is not
-	 * a commit object already.  repo_parse_commit() will return failure
-	 * without further complaints in such a case.  Otherwise, if
-	 * the commit is invalid, repo_parse_commit() will complain.  So
-	 * there is nothing for us to say here.  Just return failure.
-	 */
-	if (repo_parse_commit(r, head_commit))
-		return -1;
+		head_tree_oid = get_commit_tree_oid(head_commit);
+	}
 
 	if (!(cache_tree_oid = get_cache_tree_oid(istate)))
 		return -1;
 
-	return oideq(cache_tree_oid, get_commit_tree_oid(head_commit));
+	return oideq(cache_tree_oid, head_tree_oid);
 }
 
 static int write_author_script(const char *message)
