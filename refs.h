@@ -422,8 +422,12 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
 /*
  * Flags for controlling behaviour of pack_refs()
  * PACK_REFS_PRUNE: Prune loose refs after packing
+ * PACK_REFS_AUTO: Pack refs on a best effort basis. The heuristics and end
+ *                 result are decided by the ref backend. Backends may ignore
+ *                 this flag and fall back to a normal repack.
  */
-#define PACK_REFS_PRUNE 0x0001
+#define PACK_REFS_PRUNE (1 << 0)
+#define PACK_REFS_AUTO  (1 << 1)
 
 struct pack_refs_opts {
 	unsigned int flags;
