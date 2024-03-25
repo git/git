@@ -32,11 +32,16 @@ test_expect_success 'prepare a trivial repository' '
 	HEAD=$(git rev-parse --verify HEAD)
 '
 
-test_expect_success 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
-	N=`find .git/refs -type f | wc -l` &&
+test_expect_success 'pack-refs --prune --all' '
+	test_path_is_missing .git/packed-refs &&
+	git pack-refs --no-prune --all &&
+	test_path_is_file .git/packed-refs &&
+	N=$(find .git/refs -type f | wc -l) &&
 	test "$N" != 0 &&
-	test-tool ref-store main pack-refs PACK_REFS_PRUNE,PACK_REFS_ALL &&
-	N=`find .git/refs -type f` &&
+
+	git pack-refs --prune --all &&
+	test_path_is_file .git/packed-refs &&
+	N=$(find .git/refs -type f) &&
 	test -z "$N"
 '
 
