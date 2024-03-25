@@ -275,7 +275,8 @@ Valid `<type>`'s include:
 -e::
 --edit::
 	Opens an editor to modify the specified config file; either
-	`--system`, `--global`, or repository (default).
+	`--system`, `--global`, `--local` (default), `--worktree`, or
+	`--file <config-file>`.
 
 --[no-]includes::
 	Respect `include.*` directives in config files when looking up
@@ -285,7 +286,7 @@ Valid `<type>`'s include:
 
 --default <value>::
   When using `--get`, and the requested variable is not found, behave as if
-  <value> were the value assigned to the that variable.
+  <value> were the value assigned to that variable.
 
 CONFIGURATION
 -------------
