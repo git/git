@@ -167,6 +167,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 				"--ff", opts->allow_ff,
 				"--rerere-autoupdate", opts->allow_rerere_auto == RERERE_AUTOUPDATE,
 				"--no-rerere-autoupdate", opts->allow_rerere_auto == RERERE_NOAUTOUPDATE,
+				"--keep-redundant-commits", opts->keep_redundant_commits,
 				NULL);
 	}
 

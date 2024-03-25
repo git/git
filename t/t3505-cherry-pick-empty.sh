@@ -99,4 +99,18 @@ test_expect_success 'cherry-pick a no-op with --keep-redundant' '
 	test_cmp expect actual
 '
 
+test_expect_success '--keep-redundant-commits is incompatible with operations' '
+	test_must_fail git cherry-pick HEAD 2>output &&
+	test_grep "The previous cherry-pick is now empty" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --continue 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --continue" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --skip 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --skip" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --abort 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --abort" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --quit 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --quit" output &&
+	git cherry-pick --abort
+'
+
 test_done
