@@ -986,7 +986,7 @@ test_expect_success 'L: nested tree copy does not corrupt deltas' '
 	test_when_finished "git update-ref -d refs/heads/L2" &&
 	git fast-import <input &&
 	git ls-tree L2 g/b/ >tmp &&
-	cat tmp | cut -f 2 >actual &&
+	cut -f 2 <tmp >actual &&
 	test_cmp expect actual &&
 	git fsck $(git rev-parse L2)
 '
@@ -2007,12 +2007,11 @@ test_expect_success 'Q: verify first notes commit' '
 '
 
 test_expect_success 'Q: verify first notes tree' '
-	cat >expect.unsorted <<-EOF &&
+	sort >expect <<-EOF &&
 	100644 blob $commit1
 	100644 blob $commit2
 	100644 blob $commit3
 	EOF
-	cat expect.unsorted | sort >expect &&
 	git cat-file -p refs/notes/foobar~2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
 	test_cmp expect actual
 '
@@ -2048,12 +2047,11 @@ test_expect_success 'Q: verify second notes commit' '
 '
 
 test_expect_success 'Q: verify second notes tree' '
-	cat >expect.unsorted <<-EOF &&
+	sort >expect <<-EOF &&
 	100644 blob $commit1
 	100644 blob $commit2
 	100644 blob $commit3
 	EOF
-	cat expect.unsorted | sort >expect &&
 	git cat-file -p refs/notes/foobar^^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
 	test_cmp expect actual
 '
@@ -2088,10 +2086,9 @@ test_expect_success 'Q: verify third notes commit' '
 '
 
 test_expect_success 'Q: verify third notes tree' '
-	cat >expect.unsorted <<-EOF &&
+	sort >expect <<-EOF &&
 	100644 blob $commit1
 	EOF
-	cat expect.unsorted | sort >expect &&
 	git cat-file -p refs/notes/foobar2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
 	test_cmp expect actual
 '
@@ -2115,10 +2112,9 @@ test_expect_success 'Q: verify fourth notes commit' '
 '
 
 test_expect_success 'Q: verify fourth notes tree' '
-	cat >expect.unsorted <<-EOF &&
+	sort >expect <<-EOF &&
 	100644 blob $commit2
 	EOF
-	cat expect.unsorted | sort >expect &&
 	git cat-file -p refs/notes/foobar^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
 	test_cmp expect actual
 '

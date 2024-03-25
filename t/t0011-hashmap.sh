@@ -239,7 +239,7 @@ test_expect_success 'grow / shrink' '
 	echo value40 >> expect &&
 	echo size >> in &&
 	echo 64 39 >> expect &&
-	cat in | test-tool hashmap > out &&
+	test-tool hashmap <in >out &&
 	test_cmp expect out
 
 '

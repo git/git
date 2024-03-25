@@ -418,7 +418,7 @@ test_expect_success 'description with Jobs and values on separate lines' '
 			marshal_dump job0 <change &&
 			marshal_dump job1 <change
 		) | sort >jobs &&
-		cat jobname1 jobname2 | sort >expected &&
+		sort jobname1 jobname2 >expected &&
 		test_cmp expected jobs
 	)
 '

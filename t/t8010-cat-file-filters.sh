@@ -43,7 +43,7 @@ test_expect_success 'cat-file --textconv --path=<path> works' '
 	sha1=$(git rev-parse -q --verify HEAD:world.txt) &&
 	test_config diff.txt.textconv "tr A-Za-z N-ZA-Mn-za-m <" &&
 	git cat-file --textconv --path=hello.txt $sha1 >rot13 &&
-	test uryyb = "$(cat rot13 | remove_cr)"
+	test uryyb = "$(remove_cr <rot13)"
 '
 
 test_expect_success '--path=<path> complains without --textconv/--filters' '

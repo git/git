@@ -48,7 +48,7 @@ test_expect_success '--expire-to stores pruned objects (now)' '
 		# ...in other words, the combined contents of this
 		# repository and expired.git should be the same as the
 		# set of objects we started with.
-		cat expired.objects remaining.objects | sort >actual &&
+		sort expired.objects remaining.objects >actual &&
 		test_cmp expect actual &&
 
 		# The "moved" objects (i.e., those in expired.git)

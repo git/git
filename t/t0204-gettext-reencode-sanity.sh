@@ -82,7 +82,7 @@ test_expect_success GETTEXT_ISO_LOCALE 'gettext.c: git init UTF-8 -> ISO-8859-1'
     printf "Bjó til tóma Git lind" >expect &&
     LANGUAGE=is LC_ALL="$is_IS_iso_locale" git init repo >actual &&
     test_when_finished "rm -rf repo" &&
-    grep "^$(cat expect | iconv -f UTF-8 -t ISO8859-1) " actual
+    grep "^$(iconv -f UTF-8 -t ISO8859-1 <expect) " actual
 '
 
 test_done

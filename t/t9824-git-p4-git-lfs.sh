@@ -17,8 +17,8 @@ test_file_in_lfs () {
 	sed -n '2,2 p' "$FILE" | grep "^oid " &&
 	sed -n '3,3 p' "$FILE" | grep "^size " &&
 	test_line_count = 3 "$FILE" &&
-	cat "$FILE" | grep "size $SIZE" &&
-	HASH=$(cat "$FILE" | grep "oid sha256:" | sed -e "s/oid sha256://g") &&
+	grep "size $SIZE" "$FILE" &&
+	HASH=$(sed -ne "/oid sha256:/s/oid sha256://gp" "$FILE") &&
 	LFS_FILE=".git/lfs/objects/$(echo "$HASH" | cut -c1-2)/$(echo "$HASH" | cut -c3-4)/$HASH" &&
 	echo $EXPECTED_CONTENT >expect &&
 	test_path_is_file "$FILE" &&
