@@ -28,7 +28,7 @@ SYNOPSIS
 	   [-f <file>] [-e] <pattern>
 	   [--and|--or|--not|(|)|-e <pattern>...]
 	   [--recurse-submodules] [--parent-basename <basename>]
-	   [ [--[no-]exclude-standard] [--cached | --no-index | --untracked] | <tree>...]
+	   [ [--[no-]exclude-standard] [--cached | --untracked | --no-index] | <tree>...]
 	   [--] [<pathspec>...]
 
 DESCRIPTION
@@ -45,12 +45,20 @@ OPTIONS
 	Instead of searching tracked files in the working tree, search
 	blobs registered in the index file.
 
---no-index::
-	Search files in the current directory that is not managed by Git.
-
 --untracked::
 	In addition to searching in the tracked files in the working
 	tree, search also in untracked files.
+
+--no-index::
+	Search files in the current directory that is not managed by Git,
+	or by ignoring that the current directory is managed by Git.  This
+	is rather similar to running the regular `grep(1)` utility with its
+	`-r` option specified, but with some additional benefits, such as
+	using pathspec patterns to limit paths;  see the 'pathspec' entry
+	in linkgit:gitglossary[7] for more information.
++
+This option cannot be used together with `--cached` or `--untracked`.
+See also `grep.fallbackToNoIndex` in 'CONFIGURATION' below.
 
 --no-exclude-standard::
 	Also search in ignored files by not honoring the `.gitignore`
@@ -248,8 +256,8 @@ providing this option will cause it to die.
 	a non-zero status.
 
 --threads <num>::
-	Number of grep worker threads to use.
-	See `grep.threads` in 'CONFIGURATION' for more information.
+	Number of `grep` worker threads to use.  See 'NOTES ON THREADS'
+	and `grep.threads` in 'CONFIGURATION' for more information.
 
 -f <file>::
 	Read patterns from <file>, one per line.
@@ -336,9 +344,9 @@ The `--threads` option (and the `grep.threads` configuration) will be ignored wh
 `--open-files-in-pager` is used, forcing a single-threaded execution.
 
 When grepping the object store (with `--cached` or giving tree objects), running
-with multiple threads might perform slower than single threaded if `--textconv`
-is given and there are too many text conversions. So if you experience low
-performance in this case, it might be desirable to use `--threads=1`.
+with multiple threads might perform slower than single-threaded if `--textconv`
+is given and there are too many text conversions.  Thus, if low performance is
+experienced in this case, it might be desirable to use `--threads=1`.
 
 CONFIGURATION
 -------------
