@@ -12,7 +12,7 @@
 static const char * const show_ref_usage[] = {
 	N_("git show-ref [--head] [-d | --dereference]\n"
 	   "             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
-	   "             [--heads] [--] [<pattern>...]"),
+	   "             [--heads] [--symbolic-name] [--] [<pattern>...]"),
 	N_("git show-ref --verify [-q | --quiet] [-d | --dereference]\n"
 	   "             [-s | --hash[=<n>]] [--abbrev[=<n>]]\n"
 	   "             [--] [<ref>...]"),
@@ -26,10 +26,13 @@ struct show_one_options {
 	int hash_only;
 	int abbrev;
 	int deref_tags;
+	int symbolic_name;
 };
 
 static void show_one(const struct show_one_options *opts,
-		     const char *refname, const struct object_id *oid)
+		     const char *refname,
+		     const char *referent,
+		     const struct object_id *oid, const int is_symref)
 {
 	const char *hex;
 	struct object_id peeled;
@@ -44,7 +47,9 @@ static void show_one(const struct show_one_options *opts,
 	hex = repo_find_unique_abbrev(the_repository, oid, opts->abbrev);
 	if (opts->hash_only)
 		printf("%s\n", hex);
-	else
+	else if (opts->symbolic_name & is_symref) {
+		printf("%s %s ref:%s\n", hex, refname, referent);
+	} else
 		printf("%s %s\n", hex, refname);
 
 	if (!opts->deref_tags)
@@ -63,8 +68,11 @@ struct show_ref_data {
 	int show_head;
 };
 
-static int show_ref(const char *refname, const struct object_id *oid,
-		    int flag UNUSED, void *cbdata)
+static int show_ref_referent(struct repository *repo UNUSED,
+			     const char *refname,
+			     const char *referent,
+			     const struct object_id *oid,
+			     int flag, void *cbdata)
 {
 	struct show_ref_data *data = cbdata;
 
@@ -91,9 +99,15 @@ static int show_ref(const char *refname, const struct object_id *oid,
 match:
 	data->found_match++;
 
-	show_one(data->show_one_opts, refname, oid);
+	show_one(data->show_one_opts, refname, referent, oid, flag & REF_ISSYMREF);
 
 	return 0;
+}
+
+static int show_ref(const char *refname, const struct object_id *oid,
+		    int flag, void *cbdata)
+{
+	return show_ref_referent(NULL, refname, NULL, oid, flag, cbdata);
 }
 
 static int add_existing(const char *refname,
@@ -171,10 +185,11 @@ static int cmd_show_ref__verify(const struct show_one_options *show_one_opts,
 
 	while (*refs) {
 		struct object_id oid;
+		int flags = 0;
 
 		if ((starts_with(*refs, "refs/") || refname_is_safe(*refs)) &&
-		    !read_ref(*refs, &oid)) {
-			show_one(show_one_opts, *refs, &oid);
+		    !read_ref_full(*refs, 0, &oid, &flags)) {
+			show_one(show_one_opts, *refs, NULL, &oid, flags & REF_ISSYMREF);
 		}
 		else if (!show_one_opts->quiet)
 			die("'%s' - not a valid ref", *refs);
@@ -208,11 +223,11 @@ static int cmd_show_ref__patterns(const struct patterns_options *opts,
 		head_ref(show_ref, &show_ref_data);
 	if (opts->heads_only || opts->tags_only) {
 		if (opts->heads_only)
-			for_each_fullref_in("refs/heads/", show_ref, &show_ref_data);
+			for_each_ref_all("refs/heads/", show_ref_referent, &show_ref_data);
 		if (opts->tags_only)
-			for_each_fullref_in("refs/tags/", show_ref, &show_ref_data);
+			for_each_ref_all("refs/tags/", show_ref_referent, &show_ref_data);
 	} else {
-		for_each_ref(show_ref, &show_ref_data);
+		for_each_ref_all("", show_ref_referent, &show_ref_data);
 	}
 	if (!show_ref_data.found_match)
 		return 1;
@@ -289,6 +304,7 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "tags", &patterns_opts.tags_only, N_("only show tags (can be combined with heads)")),
 		OPT_BOOL(0, "heads", &patterns_opts.heads_only, N_("only show heads (can be combined with tags)")),
 		OPT_BOOL(0, "exists", &exists, N_("check for reference existence without resolving")),
+		OPT_BOOL(0, "symbolic-name", &show_one_opts.symbolic_name, N_("print out symbolic reference values")),
 		OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
 			    "requires exact ref path")),
 		OPT_HIDDEN_BOOL('h', NULL, &patterns_opts.show_head,

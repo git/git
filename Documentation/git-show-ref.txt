@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git show-ref' [--head] [-d | --dereference]
 	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]
-	     [--heads] [--] [<pattern>...]
+	     [--heads] [--symbolic-name] [--] [<pattern>...]
 'git show-ref' --verify [-q | --quiet] [-d | --dereference]
 	     [-s | --hash[=<n>]] [--abbrev[=<n>]]
 	     [--] [<ref>...]
@@ -57,6 +57,11 @@ OPTIONS
 
 	Dereference tags into object IDs as well. They will be shown with `^{}`
 	appended.
+
+--symbolic-name::
+
+	Print out the value the reference points to without dereferencing. This
+	is useful to know the reference that a symbolic ref is pointing to.
 
 -s::
 --hash[=<n>]::
@@ -143,6 +148,20 @@ $ git show-ref --heads --hash
 2e3ba0114a1f52b47df29743d6915d056be13278
 185008ae97960c8d551adcd9e23565194651b5d1
 03adf42c988195b50e1a1935ba5fcbc39b2b029b
+...
+-----------------------------------------------------------------------------
+
+When using `--symbolic-name`, the output is in the format:
+
+-----------
+<oid> SP <ref> SP <symbolic-name>
+-----------
+
+For example,
+
+-----------------------------------------------------------------------------
+$ git show-ref --symbolic-name
+b75428bae1d090f60bdd4b67185f814bc8f0819d refs/heads/SYMBOLIC_REF ref:refs/heads/main
 ...
 -----------------------------------------------------------------------------
 

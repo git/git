@@ -1734,6 +1734,12 @@ int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_dat
 				    DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
+int for_each_ref_all(const char *prefix, each_repo_ref_fn fn, void *cb_data)
+{
+	return do_for_each_repo_ref(the_repository, prefix, fn, 0,
+				    0, cb_data);
+}
+
 int for_each_namespaced_ref(const char **exclude_patterns,
 			    each_ref_fn fn, void *cb_data)
 {
