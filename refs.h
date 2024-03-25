@@ -422,10 +422,8 @@ void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
 /*
  * Flags for controlling behaviour of pack_refs()
  * PACK_REFS_PRUNE: Prune loose refs after packing
- * PACK_REFS_ALL:   Pack _all_ refs, not just tags and already packed refs
  */
 #define PACK_REFS_PRUNE 0x0001
-#define PACK_REFS_ALL   0x0002
 
 struct pack_refs_opts {
 	unsigned int flags;

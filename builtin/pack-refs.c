@@ -21,9 +21,10 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 						 .flags = flags };
 	static struct string_list option_excluded_refs = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
+	int pack_all = 0;
 
 	struct option opts[] = {
-		OPT_BIT(0, "all",   &pack_refs_opts.flags, N_("pack everything"), PACK_REFS_ALL),
+		OPT_BOOL(0, "all",   &pack_all, N_("pack everything")),
 		OPT_BIT(0, "prune", &pack_refs_opts.flags, N_("prune loose refs (default)"), PACK_REFS_PRUNE),
 		OPT_STRING_LIST(0, "include", pack_refs_opts.includes, N_("pattern"),
 			N_("references to include")),
@@ -38,7 +39,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	for_each_string_list_item(item, &option_excluded_refs)
 		add_ref_exclusion(pack_refs_opts.exclusions, item->string);
 
-	if (pack_refs_opts.flags & PACK_REFS_ALL)
+	if (pack_all)
 		string_list_append(pack_refs_opts.includes, "*");
 
 	if (!pack_refs_opts.includes->nr)
