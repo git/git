@@ -340,6 +340,26 @@ test_expect_success 'ref transaction: empty transaction in empty repo' '
 	EOF
 '
 
+test_expect_success 'ref transaction: fails gracefully when auto compaction fails' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit A &&
+		for i in $(test_seq 10)
+		do
+			git branch branch-$i &&
+			for table in .git/reftable/*.ref
+			do
+				touch "$table.lock" || exit 1
+			done ||
+			exit 1
+		done &&
+		test_line_count = 13 .git/reftable/tables.list
+	)
+'
+
 test_expect_success 'pack-refs: compacts tables' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
