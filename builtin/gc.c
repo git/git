@@ -180,7 +180,32 @@ static void gc_config(void)
 	git_config(git_default_config, NULL);
 }
 
-struct maintenance_run_opts;
+enum schedule_priority {
+	SCHEDULE_NONE = 0,
+	SCHEDULE_WEEKLY = 1,
+	SCHEDULE_DAILY = 2,
+	SCHEDULE_HOURLY = 3,
+};
+
+static enum schedule_priority parse_schedule(const char *value)
+{
+	if (!value)
+		return SCHEDULE_NONE;
+	if (!strcasecmp(value, "hourly"))
+		return SCHEDULE_HOURLY;
+	if (!strcasecmp(value, "daily"))
+		return SCHEDULE_DAILY;
+	if (!strcasecmp(value, "weekly"))
+		return SCHEDULE_WEEKLY;
+	return SCHEDULE_NONE;
+}
+
+struct maintenance_run_opts {
+	int auto_flag;
+	int quiet;
+	enum schedule_priority schedule;
+};
+
 static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -773,26 +798,6 @@ static const char *const builtin_maintenance_run_usage[] = {
 	NULL
 };
 
-enum schedule_priority {
-	SCHEDULE_NONE = 0,
-	SCHEDULE_WEEKLY = 1,
-	SCHEDULE_DAILY = 2,
-	SCHEDULE_HOURLY = 3,
-};
-
-static enum schedule_priority parse_schedule(const char *value)
-{
-	if (!value)
-		return SCHEDULE_NONE;
-	if (!strcasecmp(value, "hourly"))
-		return SCHEDULE_HOURLY;
-	if (!strcasecmp(value, "daily"))
-		return SCHEDULE_DAILY;
-	if (!strcasecmp(value, "weekly"))
-		return SCHEDULE_WEEKLY;
-	return SCHEDULE_NONE;
-}
-
 static int maintenance_opt_schedule(const struct option *opt, const char *arg,
 				    int unset)
 {
@@ -808,12 +813,6 @@ static int maintenance_opt_schedule(const struct option *opt, const char *arg,
 
 	return 0;
 }
-
-struct maintenance_run_opts {
-	int auto_flag;
-	int quiet;
-	enum schedule_priority schedule;
-};
 
 /* Remember to update object flag allocation in object.h */
 #define SEEN		(1u<<0)
