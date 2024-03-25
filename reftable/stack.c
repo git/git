@@ -590,8 +590,7 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 	err = stack_uptodate(st);
 	if (err < 0)
 		goto done;
-
-	if (err > 1) {
+	if (err > 0) {
 		err = REFTABLE_LOCK_ERROR;
 		goto done;
 	}
@@ -713,10 +712,6 @@ static int stack_try_add(struct reftable_stack *st,
 	int err = reftable_stack_init_addition(&add, st);
 	if (err < 0)
 		goto done;
-	if (err > 0) {
-		err = REFTABLE_LOCK_ERROR;
-		goto done;
-	}
 
 	err = reftable_addition_add(&add, write_table, arg);
 	if (err < 0)
