@@ -1734,34 +1734,25 @@ static int allow_empty(struct repository *r,
 	int index_unchanged, originally_empty;
 
 	/*
-	 * Four cases:
+	 * For a commit that is initially empty, allow_empty determines if it
+	 * should be kept or not
 	 *
-	 * (1) we do not allow empty at all and error out.
-	 *
-	 * (2) we allow ones that were initially empty, and
-	 *     just drop the ones that become empty
-	 *
-	 * (3) we allow ones that were initially empty, but
-	 *     halt for the ones that become empty;
-	 *
-	 * (4) we allow both.
+	 * For a commit that becomes empty, keep_redundant_commits and
+	 * drop_redundant_commits determine whether the commit should be kept or
+	 * dropped. If neither is specified, halt.
 	 */
-	if (!opts->allow_empty)
-		return 0; /* let "git commit" barf as necessary */
-
 	index_unchanged = is_index_unchanged(r);
 	if (index_unchanged < 0)
 		return index_unchanged;
 	if (!index_unchanged)
 		return 0; /* we do not have to say --allow-empty */
 
-	if (opts->keep_redundant_commits)
-		return 1;
-
 	originally_empty = is_original_commit_empty(commit);
 	if (originally_empty < 0)
 		return originally_empty;
 	if (originally_empty)
+		return opts->allow_empty;
+	else if (opts->keep_redundant_commits)
 		return 1;
 	else if (opts->drop_redundant_commits)
 		return 2;
