@@ -64,9 +64,9 @@ OPTIONS
 --recurse-submodules::
 	Recursively search in each submodule that is active and
 	checked out in the repository.  When used in combination with the
-	<tree> option the prefix of all submodule output will be the name of
-	the parent project's <tree> object. This option has no effect
-	if `--no-index` is given.
+	_<tree>_ option the prefix of all submodule output will be the name of
+	the parent project's _<tree>_ object.  This option cannot be used together
+	with `--untracked`, and it has no effect if `--no-index` is specified.
 
 -a::
 --text::
@@ -178,7 +178,7 @@ providing this option will cause it to die.
 	Use \0 as the delimiter for pathnames in the output, and print
 	them verbatim. Without this option, pathnames with "unusual"
 	characters are quoted as explained for the configuration
-	variable core.quotePath (see linkgit:git-config[1]).
+	variable `core.quotePath` (see linkgit:git-config[1]).
 
 -o::
 --only-matching::
@@ -332,7 +332,7 @@ EXAMPLES
 NOTES ON THREADS
 ----------------
 
-The `--threads` option (and the grep.threads configuration) will be ignored when
+The `--threads` option (and the `grep.threads` configuration) will be ignored when
 `--open-files-in-pager` is used, forcing a single-threaded execution.
 
 When grepping the object store (with `--cached` or giving tree objects), running
