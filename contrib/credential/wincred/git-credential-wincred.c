@@ -13,7 +13,7 @@
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 __attribute__((format (printf, 1, 2)))
-static void die(const char *err, ...)
+static void NORETURN die(const char *err, ...)
 {
 	char msg[4096];
 	va_list params;

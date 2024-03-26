@@ -207,7 +207,7 @@ static const char *fmt_with_err(char *buf, int n, const char *fmt)
 	return buf;
 }
 
-void NORETURN die_errno(const char *fmt, ...)
+void NORETURN die_errno(const char *err, ...)
 {
 	char buf[1024];
 	va_list params;
@@ -218,8 +218,8 @@ void NORETURN die_errno(const char *fmt, ...)
 		exit(128);
 	}
 
-	va_start(params, fmt);
-	die_routine(fmt_with_err(buf, sizeof(buf), fmt), params);
+	va_start(params, err);
+	die_routine(fmt_with_err(buf, sizeof(buf), err), params);
 	va_end(params);
 }
 
