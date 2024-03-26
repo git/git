@@ -795,7 +795,7 @@ static int is_literal_ssh_key(const char *string, const char **key)
 {
 	if (skip_prefix(string, "key::", key))
 		return 1;
-	if (starts_with(string, "ssh-")) {
+	if (starts_with(string, "ssh-") || starts_with(string, "ecdsa-sha2-")) {
 		*key = string;
 		return 1;
 	}
