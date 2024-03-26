@@ -72,6 +72,14 @@ struct pack_refs_opts {
 	struct string_list *includes;
 };
 
+const char *refs_resolve_ref_unsafe_with_referent(struct ref_store *refs,
+				    const char *refname,
+				    char **referent,
+				    int resolve_flags,
+				    struct object_id *oid,
+				    int *flags);
+
+
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
 				    int resolve_flags,
@@ -310,6 +318,7 @@ typedef int each_ref_fn(const char *refname,
  */
 typedef int each_repo_ref_fn(struct repository *r,
 			     const char *refname,
+			     const char *referent,
 			     const struct object_id *oid,
 			     int flags,
 			     void *cb_data);

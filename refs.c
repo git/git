@@ -1664,6 +1664,7 @@ struct do_for_each_ref_help {
 
 static int do_for_each_ref_helper(struct repository *r UNUSED,
 				  const char *refname,
+				  const char *referent,
 				  const struct object_id *oid,
 				  int flags,
 				  void *cb_data)
@@ -1926,8 +1927,9 @@ int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
 	return ref_store->be->read_symbolic_ref(ref_store, refname, referent);
 }
 
-const char *refs_resolve_ref_unsafe(struct ref_store *refs,
+const char *refs_resolve_ref_unsafe_with_referent(struct ref_store *refs,
 				    const char *refname,
+				    char **referent,
 				    int resolve_flags,
 				    struct object_id *oid,
 				    int *flags)
@@ -1989,6 +1991,8 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 		}
 
 		*flags |= read_flags;
+		if (referent && read_flags & REF_ISSYMREF && sb_refname.len > 0)
+			*referent = sb_refname.buf;
 
 		if (!(read_flags & REF_ISSYMREF)) {
 			if (*flags & REF_BAD_NAME) {
@@ -2013,6 +2017,19 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 	}
 
 	return NULL;
+
+}
+
+const char *refs_resolve_ref_unsafe(struct ref_store *refs,
+				    const char *refname,
+				    int resolve_flags,
+				    struct object_id *oid,
+				    int *flags)
+{
+	return refs_resolve_ref_unsafe_with_referent(refs, refname, NULL,
+						     resolve_flags,
+						     oid,
+						     flags);
 }
 
 /* backend functions */
@@ -2562,6 +2579,7 @@ struct do_for_each_reflog_help {
 
 static int do_for_each_reflog_helper(struct repository *r UNUSED,
 				     const char *refname,
+				     const char *referent,
 				     const struct object_id *oid UNUSED,
 				     int flags,
 				     void *cb_data)
