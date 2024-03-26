@@ -459,7 +459,7 @@ const char *fmt_ident(const char *name, const char *email,
 	int want_name = !(flag & IDENT_NO_NAME);
 
 	struct strbuf *ident = &ident_pool[index];
-	index = (index + 1) % ARRAY_SIZE(ident_pool);
+	index ^= 1;
 
 	if (!email) {
 		if (whose_ident == WANT_AUTHOR_IDENT && git_author_email.len)

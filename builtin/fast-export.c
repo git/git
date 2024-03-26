@@ -591,8 +591,8 @@ static void anonymize_ident_line(const char **beg, const char **end)
 	struct ident_split split;
 	const char *end_of_header;
 
-	out = &buffers[which_buffer++];
-	which_buffer %= ARRAY_SIZE(buffers);
+	out = &buffers[which_buffer];
+	which_buffer ^= 1;
 	strbuf_reset(out);
 
 	/* skip "committer", "author", "tagger", etc */
