@@ -1431,8 +1431,8 @@ static int parse_num(const char *line, unsigned long *p)
 	return ptr - line;
 }
 
-static int parse_range(const char *line, int len, int offset, const char *expect,
-		       unsigned long *p1, unsigned long *p2)
+int parse_fragment_range(const char *line, int len, int offset, const char *expect,
+			 unsigned long *p1, unsigned long *p2)
 {
 	int digits, ex;
 
@@ -1531,8 +1531,8 @@ static int parse_fragment_header(const char *line, int len, struct fragment *fra
 		return -1;
 
 	/* Figure out the number of lines in a fragment */
-	offset = parse_range(line, len, 4, " +", &fragment->oldpos, &fragment->oldlines);
-	offset = parse_range(line, len, offset, " @@", &fragment->newpos, &fragment->newlines);
+	offset = parse_fragment_range(line, len, 4, " +", &fragment->oldpos, &fragment->oldlines);
+	offset = parse_fragment_range(line, len, offset, " @@", &fragment->newpos, &fragment->newlines);
 
 	return offset;
 }

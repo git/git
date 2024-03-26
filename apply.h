@@ -187,3 +187,7 @@ int apply_all_patches(struct apply_state *state,
 		      int options);
 
 #endif
+
+
+int parse_fragment_range(const char *line, int len, int offset, const char *expect,
+		       unsigned long *p1, unsigned long *p2);
