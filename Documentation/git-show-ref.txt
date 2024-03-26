@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git show-ref' [--head] [-d | --dereference]
 	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]
-	     [--heads] [--] [<pattern>...]
+	     [--heads] [--symbolic-name] [--] [<pattern>...]
 'git show-ref' --verify [-q | --quiet] [-d | --dereference]
 	     [-s | --hash[=<n>]] [--abbrev[=<n>]]
 	     [--] [<ref>...]

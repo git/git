@@ -235,8 +235,9 @@ static void loose_fill_ref_dir_regular_file(struct files_ref_store *refs,
 {
 	struct object_id oid;
 	int flag;
+	char *referent;
 
-	if (!refs_resolve_ref_unsafe(&refs->base, refname, RESOLVE_REF_READING,
+	if (!refs_resolve_ref_unsafe_with_referent(&refs->base, refname, &referent, RESOLVE_REF_READING,
 				     &oid, &flag)) {
 		oidclr(&oid);
 		flag |= REF_ISBROKEN;
@@ -258,7 +259,7 @@ static void loose_fill_ref_dir_regular_file(struct files_ref_store *refs,
 		oidclr(&oid);
 		flag |= REF_BAD_NAME | REF_ISBROKEN;
 	}
-	add_entry_to_dir(dir, create_ref_entry(refname, &oid, flag));
+	add_entry_to_dir(dir, create_ref_entry(refname, referent, &oid, flag));
 }
 
 /*
@@ -843,6 +844,7 @@ static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			continue;
 
 		iter->base.refname = iter->iter0->refname;
+		iter->base.referent = iter->iter0->referent;
 		iter->base.oid = iter->iter0->oid;
 		iter->base.flags = iter->iter0->flags;
 		return ITER_OK;
