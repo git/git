@@ -31,6 +31,9 @@ merge.ff::
 	a case (equivalent to giving the `--no-ff` option from the command
 	line). When set to `only`, only such fast-forward merges are
 	allowed (equivalent to giving the `--ff-only` option from the
+	command line). When set to `one-only`, fast-forward merge allowed
+	only for one commit, in other way extra merge commit should be
+	created (equivalent to giving the `--ff-one-only` option from the
 	command line).
 
 merge.verifySignatures::
