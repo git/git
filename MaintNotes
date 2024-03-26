@@ -34,8 +34,8 @@ and Documentation/CodingGuidelines to familiarize yourself with the
 project convention.
 
 If you sent a patch and you did not hear any response from anybody for
-several days, it could be that your patch was totally uninteresting,
-but it also is possible that it was simply lost in the noise.  Please
+several days, it does not necessarily mean that your patch was totally
+uninteresting; it may merely mean that it was lost in the noise.  Please
 do not hesitate to send a reminder message in such a case.  Messages
 getting lost in the noise may be a sign that those who can evaluate
 your patch don't have enough mental/time bandwidth to process them
