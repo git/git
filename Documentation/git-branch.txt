@@ -73,6 +73,7 @@ overridden by using the `--track` and `--no-track` options, and
 changed later using `git branch --set-upstream-to`.
 
 With a `-m` or `-M` option, <oldbranch> will be renamed to <newbranch>.
+If the <oldbranch> argument is missing it defaults to the current branch.
 If <oldbranch> had a corresponding reflog, it is renamed to match
 <newbranch>, and a reflog entry is created to remember the branch
 renaming. If <newbranch> exists, -M must be used to force the rename
