@@ -8,7 +8,7 @@ Backward compatibility notes
    symbolic links are ignored.
 
  * "git apply --3way" used to first attempt a straight application,
-   and only fell back to the 3-way merge algorithm when the stright
+   and only fell back to the 3-way merge algorithm when the straight
    application failed.  Starting with this version, the command will
    first try the 3-way merge algorithm and only when it fails (either
    resulting with conflict or the base versions of blobs are missing),
