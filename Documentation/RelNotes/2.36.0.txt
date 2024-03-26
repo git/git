@@ -97,7 +97,7 @@ UI, Workflows & Features
    implementation detail, except for "git reset", to emit messages;
    now "git reset" part has also been squelched.
 
- * "git ls-tree" learns "--oid-only" option, similar to "--name-only",
+ * "git ls-tree" learns "--object-only" option, similar to "--name-only",
    and more generalized "--format" option.
 
  * "git fetch --refetch" learned to fetch everything without telling
