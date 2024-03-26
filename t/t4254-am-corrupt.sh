@@ -60,7 +60,14 @@ test_expect_success setup '
 test_expect_success 'try to apply corrupted patch' '
 	test_when_finished "git am --abort" &&
 	test_must_fail git -c advice.amWorkDir=false am bad-patch.diff 2>actual &&
-	echo "error: git diff header lacks filename information (line 4)" >expected &&
+	space=" " &&
+	echo \
+"error:$space
+	could not find header
+caused by:
+	could not find file diff header
+caused by:
+	git diff header lacks filename information (line 4)" >expected &&
 	test_path_is_file f &&
 	test_cmp expected actual
 '

@@ -5,6 +5,10 @@
 #include "lockfile.h"
 #include "string-list.h"
 #include "strmap.h"
+#include "promise.h"
+
+/* Error codes (must be less than 0) */
+#define APPLY_ERR_GENERIC -1
 
 struct repository;
 
@@ -165,13 +169,14 @@ int check_apply_state(struct apply_state *state, int force_apply);
  *
  * Returns -1 on failure, the length of the parsed header otherwise.
  */
-int parse_git_diff_header(struct strbuf *root,
+void parse_git_diff_header(struct strbuf *root,
 			  int *linenr,
 			  int p_value,
 			  const char *line,
 			  int len,
 			  unsigned int size,
-			  struct patch *patch);
+			  struct patch *patch,
+			  struct promise_t *promise);
 
 void release_patch(struct patch *patch);
 

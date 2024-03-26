@@ -121,8 +121,8 @@ static int read_patches(const char *range, struct string_list *list,
 		if (starts_with(line, "diff --git")) {
 			struct patch patch = { 0 };
 			struct strbuf root = STRBUF_INIT;
+			struct promise_t *parse_git_diff_header_promise = promise_init();
 			int linenr = 0;
-			int orig_len;
 
 			in_header = 0;
 			strbuf_addch(&buf, '\n');
@@ -130,16 +130,20 @@ static int read_patches(const char *range, struct string_list *list,
 				util->diff_offset = buf.len;
 			if (eol)
 				*eol = '\n';
-			orig_len = len;
-			len = parse_git_diff_header(&root, &linenr, 0, line,
-						    len, size, &patch);
-			if (len < 0) {
+			parse_git_diff_header(&root, &linenr, 0, line,
+						    len, size, &patch, parse_git_diff_header_promise);
+			promise_assert_finished(parse_git_diff_header_promise);
+			if (parse_git_diff_header_promise->state == PROMISE_FAILURE) {
+				int orig_len = len;
 				error(_("could not parse git header '%.*s'"),
 				      orig_len, line);
 				FREE_AND_NULL(util);
 				string_list_clear(list, 1);
+				promise_release(parse_git_diff_header_promise);
 				goto cleanup;
 			}
+			len = parse_git_diff_header_promise->result.success_result;
+			promise_release(parse_git_diff_header_promise);
 			strbuf_addstr(&buf, " ## ");
 			if (patch.is_new > 0)
 				strbuf_addf(&buf, "%s (new)", patch.new_name);
