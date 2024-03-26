@@ -444,6 +444,11 @@ static inline int needs_hiding(const char *path)
 static int set_hidden_flag(const wchar_t *path, int set)
 {
 	DWORD original = GetFileAttributesW(path), modified;
+	if (original == INVALID_FILE_ATTRIBUTES) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+
 	if (set)
 		modified = original | FILE_ATTRIBUTE_HIDDEN;
 	else
