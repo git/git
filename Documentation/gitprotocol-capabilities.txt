@@ -73,7 +73,7 @@ doesn't, as in the following diagram:
      /              /
     a -- b -- c -- d -- E -- F
        \
-	+--- Q -- R -- S
+        +--- Q -- R -- S
 
 If the client wants x,y and starts out by saying have F,S, the server
 doesn't know what F,S is.  Eventually the client says "have d" and
