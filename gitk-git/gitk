@@ -512,6 +512,34 @@ proc getcommits {selid} {
     }
 }
 
+proc fetch {} {
+    global bgcolor NS fetch_output
+
+    set fetch_output {}
+    if {[catch {exec sh -c "git fetch -v 2>&1"} fetch_output]} {
+    }
+
+    set w .about
+    if {[winfo exists $w]} {
+	raise $w
+	return
+    }
+    ttk_toplevel $w
+    wm title $w [mc "Fetch"]
+    make_transient $w .
+    message $w.m -text [mc " $fetch_output "] \
+	    -justify left -aspect 600 -border 2 -bg $bgcolor -relief groove
+    pack $w.m -side top -fill x -padx 2 -pady 2
+    ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
+    pack $w.ok -side bottom
+    bind $w <Visibility> "focus $w.ok"
+    bind $w <Key-Escape> "destroy $w"
+    bind $w <Key-Return> "destroy $w"
+    tk::PlaceWindow $w widget .
+
+    reloadcommits
+}
+
 proc updatecommits {} {
     global curview vcanopt vorigargs vfilelimit viewinstances
     global viewactive viewcomplete tclencoding
@@ -2109,6 +2137,7 @@ proc makewindow {} {
         mc "&File" cascade {
             {mc "&Update" command updatecommits -accelerator F5}
             {mc "&Reload" command reloadcommits -accelerator Shift-F5}
+            {mc "&Fetch" command fetch -accelerator F7}
             {mc "Reread re&ferences" command rereadrefs}
             {mc "&List references" command showrefs -accelerator F2}
             {xx "" separator}
@@ -2629,6 +2658,7 @@ proc makewindow {} {
     bindkey f nextfile
     bind . <F5> updatecommits
     bindmodfunctionkey Shift 5 reloadcommits
+    bind . <F7> fetch
     bind . <F2> showrefs
     bindmodfunctionkey Shift 4 {newview 0}
     bind . <F4> edit_or_newview
@@ -3148,6 +3178,7 @@ proc keys {} {
 [mc "<%s-KP->	Decrease font size" $M1T]
 [mc "<%s-minus>	Decrease font size" $M1T]
 [mc "<F5>		Update"]
+[mc "<F7>		Fetch"]
 " \
             -justify left -bg $bgcolor -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
