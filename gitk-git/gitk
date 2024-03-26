@@ -12687,7 +12687,7 @@ catch {
     wm iconphoto . -default gitlogo gitlogo32
 }
 # wait for the window to become visible
-tkwait visibility .
+if {![winfo viewable .]} {tkwait visibility .}
 set_window_title
 update
 readrefs
