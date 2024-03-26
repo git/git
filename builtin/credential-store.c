@@ -188,7 +188,7 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 
 	umask(077);
 
-	argc = parse_options(argc, (const char **)argv, prefix, options, usage, 0);
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
 	if (argc != 1)
 		usage_with_options(usage, options);
 	op = argv[0];
