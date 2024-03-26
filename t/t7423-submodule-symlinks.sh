@@ -14,15 +14,16 @@ test_expect_success 'prepare' '
 	git commit -m submodule
 '
 
-test_expect_failure SYMLINKS 'git submodule update must not create submodule behind symlink' '
+test_expect_success SYMLINKS 'git submodule update must not create submodule behind symlink' '
 	rm -rf a b &&
 	mkdir b &&
 	ln -s b a &&
+	test_path_is_missing b/sm &&
 	test_must_fail git submodule update &&
 	test_path_is_missing b/sm
 '
 
-test_expect_failure SYMLINKS,CASE_INSENSITIVE_FS 'git submodule update must not create submodule behind symlink on case insensitive fs' '
+test_expect_success SYMLINKS,CASE_INSENSITIVE_FS 'git submodule update must not create submodule behind symlink on case insensitive fs' '
 	rm -rf a b &&
 	mkdir b &&
 	ln -s b A &&
@@ -46,7 +47,7 @@ test_expect_success SYMLINKS 'git restore --recurse-submodules must not be confu
 	test_path_is_missing a/target/submodule_file
 '
 
-test_expect_failure SYMLINKS 'git restore --recurse-submodules must not migrate git dir of symlinked repo' '
+test_expect_success SYMLINKS 'git restore --recurse-submodules must not migrate git dir of symlinked repo' '
 	prepare_symlink_to_repo &&
 	rm -rf .git/modules &&
 	test_must_fail git restore --recurse-submodules a/sm &&
@@ -55,7 +56,7 @@ test_expect_failure SYMLINKS 'git restore --recurse-submodules must not migrate 
 	test_path_is_missing a/target/submodule_file
 '
 
-test_expect_failure SYMLINKS 'git checkout -f --recurse-submodules must not migrate git dir of symlinked repo when removing submodule' '
+test_expect_success SYMLINKS 'git checkout -f --recurse-submodules must not migrate git dir of symlinked repo when removing submodule' '
 	prepare_symlink_to_repo &&
 	rm -rf .git/modules &&
 	test_must_fail git checkout -f --recurse-submodules initial &&

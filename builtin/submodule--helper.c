@@ -294,6 +294,9 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *displaypath;
 
+	if (validate_submodule_path(path) < 0)
+		exit(128);
+
 	displaypath = get_submodule_displaypath(path, info->prefix);
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
@@ -619,6 +622,9 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	struct setup_revision_opt opt = {
 		.free_removed_argv_elements = 1,
 	};
+
+	if (validate_submodule_path(path) < 0)
+		exit(128);
 
 	if (!submodule_from_path(the_repository, null_oid(), path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -1220,6 +1226,9 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (!is_submodule_active(the_repository, path))
 		return;
 
+	if (validate_submodule_path(path) < 0)
+		exit(128);
+
 	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (sub && sub->url) {
@@ -1359,6 +1368,9 @@ static void deinit_submodule(const char *path, const char *prefix,
 	struct child_process cp_config = CHILD_PROCESS_INIT;
 	struct strbuf sb_config = STRBUF_INIT;
 	char *sub_git_dir = xstrfmt("%s/.git", path);
+
+	if (validate_submodule_path(path) < 0)
+		exit(128);
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
 
@@ -1673,6 +1685,9 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *clone_data_path = clone_data->path;
 	char *to_free = NULL;
+
+	if (validate_submodule_path(clone_data_path) < 0)
+		exit(128);
 
 	if (!is_absolute_path(clone_data->path))
 		clone_data_path = to_free = xstrfmt("%s/%s", get_git_work_tree(),
@@ -2542,6 +2557,9 @@ static int update_submodule(struct update_data *update_data)
 {
 	int ret;
 
+	if (validate_submodule_path(update_data->sm_path) < 0)
+		return -1;
+
 	ret = determine_submodule_update_strategy(the_repository,
 						  update_data->just_cloned,
 						  update_data->sm_path,
@@ -2649,11 +2667,20 @@ static int update_submodules(struct update_data *update_data)
 
 	for (i = 0; i < suc.update_clone_nr; i++) {
 		struct update_clone_data ucd = suc.update_clone[i];
-		int code;
+		int code = 128;
 
 		oidcpy(&update_data->oid, &ucd.oid);
 		update_data->just_cloned = ucd.just_cloned;
 		update_data->sm_path = ucd.sub->path;
+
+		/*
+		 * Verify that the submodule path does not contain any
+		 * symlinks; if it does, it might have been tampered with.
+		 * TODO: allow exempting it via
+		 * `safe.submodule.path` or something
+		 */
+		if (validate_submodule_path(update_data->sm_path) < 0)
+			goto fail;
 
 		code = ensure_core_worktree(update_data->sm_path);
 		if (code)
@@ -3360,6 +3387,9 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	 */
 	normalize_path_copy(add_data.sm_path, add_data.sm_path);
 	strip_dir_trailing_slashes(add_data.sm_path);
+
+	if (validate_submodule_path(add_data.sm_path) < 0)
+		exit(128);
 
 	die_on_index_match(add_data.sm_path, force);
 	die_on_repo_without_commits(add_data.sm_path);
