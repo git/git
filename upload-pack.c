@@ -1794,7 +1794,7 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 			} else {
 				/*
 				 * Request had 'want's but no 'have's so we can
-				 * immedietly go to construct and send a pack.
+				 * immediately go to construct and send a pack.
 				 */
 				state = FETCH_SEND_PACK;
 			}
