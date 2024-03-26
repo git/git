@@ -4,7 +4,7 @@
 void jw_init(struct json_writer *jw)
 {
 	struct json_writer blank = JSON_WRITER_INIT;
-	memcpy(jw, &blank, sizeof(*jw));;
+	memcpy(jw, &blank, sizeof(*jw));
 }
 
 void jw_release(struct json_writer *jw)
