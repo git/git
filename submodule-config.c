@@ -583,6 +583,13 @@ static int parse_config(const char *var, const char *value,
 					     me->gitmodules_oid,
 					     name.buf);
 
+	/*
+	 * FIXME me->overwrite=1 is only meant to overwrite existing submodule
+	 * configurations when we're reading from another .gitmodules (e.g. from
+	 * another commit), but it also unintentionally changes behavior when
+	 * there are multiple configurations in a single .gitmodules - instead
+	 * of respecting the first value, we now respect the last value.
+	 */
 	if (!strcmp(item.buf, "path")) {
 		if (!value)
 			ret = config_error_nonbool(var);
