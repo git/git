@@ -51,6 +51,7 @@ static int configured;
 static const char *git_generated_prefixes[] = {
 	"Signed-off-by: ",
 	"(cherry picked from commit ",
+	"Cherry-Picked-From-Commit: ",
 	NULL
 };
 
