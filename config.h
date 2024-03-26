@@ -277,6 +277,14 @@ int git_config_bool_or_int(const char *, const char *,
 int git_config_bool(const char *, const char *);
 
 /**
+ * Parse a string into a boolean value, respecting keywords like "true" and
+ * "false". Integer values are converted into true/false values (when they
+ * are non-zero or zero, respectively). Other values results in default. If
+ * parsing is successful, the return value is the result.
+ */
+int git_config_bool_or_default(const char *, const char *, int);
+
+/**
  * Allocates and copies the value string into the `dest` parameter; if no
  * string is given, prints an error message and returns -1.
  */
