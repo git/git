@@ -7,8 +7,8 @@ Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
 
-Git is an Open Source project covered by the GNU General Public
-License version 2 (some parts of it are under different licenses,
+Git is an Open Source project covered by the [GNU General Public
+License version 2][] (some parts of it are under different licenses,
 compatible with the GPLv2). It was originally written by Linus
 Torvalds with help of a group of hackers around the net.
 
@@ -65,6 +65,7 @@ and the name as (depending on your mood):
    works for you. Angels sing, and a light suddenly fills the room.
  - "goddamn idiotic truckload of sh*t": when it breaks
 
+[GNU General Public License version 2]: COPYING
 [INSTALL]: INSTALL
 [Documentation/gittutorial.txt]: Documentation/gittutorial.txt
 [Documentation/giteveryday.txt]: Documentation/giteveryday.txt
