@@ -48,7 +48,7 @@ binary); this organization makes it easy for people reading the code
 to find things.
 
 See the CodingGuidelines document for other guidance on what we consider
-good practice in C and shell, and api-builtin.txt for the support
+good practice in C and shell, and builtin.h for the support
 functions available to built-in commands written in C.
 
 What every extension command needs
