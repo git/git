@@ -39,25 +39,31 @@
 # unstaged (*) and staged (+) changes will be shown next to the branch
 # name.  You can configure this per-repository with the
 # bash.showDirtyState variable, which defaults to true once
-# GIT_PS1_SHOWDIRTYSTATE is enabled.
+# GIT_PS1_SHOWDIRTYSTATE is enabled. Variables GIT_PS1_UNSTAGED_SYMBOL
+# and GIT_PS1_STAGED_SYMBOL can be used to change the shown symbol.
 #
 # You can also see if currently something is stashed, by setting
 # GIT_PS1_SHOWSTASHSTATE to a nonempty value. If something is stashed,
-# then a '$' will be shown next to the branch name.
+# then a '$' will be shown next to the branch name. Variable
+# GIT_PS1_STASH_SYMBOL can be used to change the shown symbol.
 #
 # If you would like to see if there're untracked files, then you can set
 # GIT_PS1_SHOWUNTRACKEDFILES to a nonempty value. If there're untracked
 # files, then a '%' will be shown next to the branch name.  You can
 # configure this per-repository with the bash.showUntrackedFiles
 # variable, which defaults to true once GIT_PS1_SHOWUNTRACKEDFILES is
-# enabled.
+# enabled. Variable GIT_PS1_UNTRACKED_SYMBOL can be used to change the
+# shown symbol.
 #
 # If you would like to see the difference between HEAD and its upstream,
 # set GIT_PS1_SHOWUPSTREAM="auto".  A "<" indicates you are behind, ">"
 # indicates you are ahead, "<>" indicates you have diverged and "="
-# indicates that there is no difference. You can further control
-# behaviour by setting GIT_PS1_SHOWUPSTREAM to a space-separated list
-# of values:
+# indicates that there is no difference. Symbols can be configured by
+# setting variables GIT_PS1_UPSTREAM_NOT_PRESENT_SYMBOL,
+# GIT_PS1_UPSTREAM_EQUAL_SYMBOL, GIT_PS1_UPSTREAM_AHEAD_SYMBOL,
+# GIT_PS1_UPSTREAM_BEHIND_SYMBOL, GIT_PS1_UPSTREAM_DIVERGED_SYMBOL
+# You can further control behaviour by setting GIT_PS1_SHOWUPSTREAM to a
+# space-separated list of values:
 #
 #     verbose       show number of commits ahead/behind (+/-) upstream
 #     name          if verbose, then also show the upstream abbrev name
@@ -206,15 +212,15 @@ __git_ps1_show_upstream ()
 	if [[ -z "$verbose" ]]; then
 		case "$count" in
 		"") # no upstream
-			p="" ;;
+			p="${GIT_PS1_UPSTREAM_NOT_PRESENT_SYMBOL-}" ;;
 		"0	0") # equal to upstream
-			p="=" ;;
+			p="${GIT_PS1_UPSTREAM_EQUAL_SYMBOL-"="}" ;;
 		"0	"*) # ahead of upstream
-			p=">" ;;
+			p="${GIT_PS1_UPSTREAM_AHEAD_SYMBOL-">"}" ;;
 		*"	0") # behind upstream
-			p="<" ;;
+			p="${GIT_PS1_UPSTREAM_BEHIND_SYMBOL-"<"}" ;;
 		*)	    # diverged from upstream
-			p="<>" ;;
+			p="${GIT_PS1_UPSTREAM_DIVERGED_SYMBOL-"<>"}" ;;
 		esac
 	else # verbose, set upstream instead of p
 		case "$count" in
@@ -552,8 +558,8 @@ __git_ps1 ()
 		if [ -n "${GIT_PS1_SHOWDIRTYSTATE-}" ] &&
 		   [ "$(git config --bool bash.showDirtyState)" != "false" ]
 		then
-			git diff --no-ext-diff --quiet || w="*"
-			git diff --no-ext-diff --cached --quiet || i="+"
+			git diff --no-ext-diff --quiet || w="${GIT_PS1_UNSTAGED_SYMBOL-"*"}"
+			git diff --no-ext-diff --cached --quiet || i="${GIT_PS1_STAGED_SYMBOL-"+"}"
 			if [ -z "$short_sha" ] && [ -z "$i" ]; then
 				i="#"
 			fi
@@ -561,14 +567,17 @@ __git_ps1 ()
 		if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ] &&
 		   git rev-parse --verify --quiet refs/stash >/dev/null
 		then
-			s="$"
+			s="${GIT_PS1_STASH_SYMBOL-"$"}"
 		fi
 
 		if [ -n "${GIT_PS1_SHOWUNTRACKEDFILES-}" ] &&
 		   [ "$(git config --bool bash.showUntrackedFiles)" != "false" ] &&
 		   git ls-files --others --exclude-standard --directory --no-empty-directory --error-unmatch -- ':/*' >/dev/null 2>/dev/null
 		then
-			u="%${ZSH_VERSION+%}"
+			u="${GIT_PS1_UNTRACKED_SYMBOL-"%"}"
+			if [ -n "$ZSH_VERSION" ] && [ "$u" = "%" ]; then
+				u="%%"
+			fi
 		fi
 
 		if [ -n "${GIT_PS1_COMPRESSSPARSESTATE-}" ] &&
