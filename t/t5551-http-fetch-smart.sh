@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: ${HTTP_PROTO:=HTTP}
+: ${HTTP_PROTO:=HTTP/1.1}
 test_description="test smart fetching over http via http-backend ($HTTP_PROTO)"
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -33,35 +33,71 @@ test_expect_success 'create http-accessible bare repository' '
 setup_askpass_helper
 
 test_expect_success 'clone http repository' '
-	cat >exp <<-\EOF &&
-	> GET /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1
-	> Accept: */*
-	> Accept-Encoding: ENCODINGS
-	> Accept-Language: ko-KR, *;q=0.9
-	> Pragma: no-cache
-	< HTTP/1.1 200 OK
-	< Pragma: no-cache
-	< Cache-Control: no-cache, max-age=0, must-revalidate
-	< Content-Type: application/x-git-upload-pack-advertisement
-	> POST /smart/repo.git/git-upload-pack HTTP/1.1
-	> Accept-Encoding: ENCODINGS
-	> Content-Type: application/x-git-upload-pack-request
-	> Accept: application/x-git-upload-pack-result
-	> Accept-Language: ko-KR, *;q=0.9
-	> Content-Length: xxx
-	< HTTP/1.1 200 OK
-	< Pragma: no-cache
-	< Cache-Control: no-cache, max-age=0, must-revalidate
-	< Content-Type: application/x-git-upload-pack-result
+	if test_have_prereq HTTP2 && test "$HTTPD_PROTO" = "https"
+	then
+		# ALPN lets us immediately use HTTP/2; likewise, POSTs with
+		# bodies can use it because they do not need to upgrade
+		INITIAL_PROTO=HTTP/2
+	else
+		# either we are not using HTTP/2, or the initial
+		# request is sent via HTTP/1.1 and asks for upgrade
+		INITIAL_PROTO=HTTP/1.1
+	fi &&
+
+	cat >exp.raw <<-EOF &&
+	> GET /smart/repo.git/info/refs?service=git-upload-pack $INITIAL_PROTO
+	> accept: */*
+	> accept-encoding: ENCODINGS
+	> accept-language: ko-KR, *;q=0.9
+	> pragma: no-cache
+	{V2} > git-protocol: version=2
+	< $HTTP_PROTO 200 OK
+	< pragma: no-cache
+	< cache-control: no-cache, max-age=0, must-revalidate
+	< content-type: application/x-git-upload-pack-advertisement
+	> POST /smart/repo.git/git-upload-pack $INITIAL_PROTO
+	> accept-encoding: ENCODINGS
+	> content-type: application/x-git-upload-pack-request
+	> accept: application/x-git-upload-pack-result
+	> accept-language: ko-KR, *;q=0.9
+	{V2} > git-protocol: version=2
+	> content-length: xxx
+	< $INITIAL_PROTO 200 OK
+	< pragma: no-cache
+	< cache-control: no-cache, max-age=0, must-revalidate
+	< content-type: application/x-git-upload-pack-result
+	{V2} > POST /smart/repo.git/git-upload-pack $INITIAL_PROTO
+	{V2} > accept-encoding: ENCODINGS
+	{V2} > content-type: application/x-git-upload-pack-request
+	{V2} > accept: application/x-git-upload-pack-result
+	{V2} > accept-language: ko-KR, *;q=0.9
+	{V2} > git-protocol: version=2
+	{V2} > content-length: xxx
+	{V2} < $INITIAL_PROTO 200 OK
+	{V2} < pragma: no-cache
+	{V2} < cache-control: no-cache, max-age=0, must-revalidate
+	{V2} < content-type: application/x-git-upload-pack-result
 	EOF
 
-	GIT_TRACE_CURL=true GIT_TEST_PROTOCOL_VERSION=0 LANGUAGE="ko_KR.UTF-8" \
+	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
+	then
+		sed "/^{V2}/d" <exp.raw >exp
+	else
+		sed "s/^{V2} //" <exp.raw >exp
+	fi &&
+
+	GIT_TRACE_CURL=true LANGUAGE="ko_KR.UTF-8" \
 		git clone --quiet $HTTPD_URL/smart/repo.git clone 2>err &&
 	test_cmp file clone/file &&
 	tr '\''\015'\'' Q <err |
+	perl -pe '\''
+		s/(Send|Recv) header: ([A-Za-z0-9-]+):/
+		"$1 header: " . lc($2) . ":"
+		/e;
+	'\'' |
 	sed -e "
 		s/Q\$//
-		/^[*] /d
+		/^[^<=]/d
 		/^== Info:/d
 		/^=> Send header, /d
 		/^=> Send header:$/d
@@ -71,6 +107,8 @@ test_expect_success 'clone http repository' '
 		s/= Recv header://
 		/^<= Recv data/d
 		/^=> Send data/d
+		/^<= Recv SSL data/d
+		/^=> Send SSL data/d
 		/^$/d
 		/^< $/d
 
@@ -78,36 +116,35 @@ test_expect_success 'clone http repository' '
 			s/^/> /
 		}
 
-		/^> User-Agent: /d
-		/^> Host: /d
+		/^< HTTP/ {
+			s/200$/200 OK/
+		}
+		/^< HTTP\\/1.1 101/d
+		/^[><] connection: /d
+		/^[><] upgrade: /d
+		/^> http2-settings: /d
+
+		/^> user-agent: /d
+		/^> host: /d
 		/^> POST /,$ {
 			/^> Accept: [*]\\/[*]/d
 		}
-		s/^> Content-Length: .*/> Content-Length: xxx/
+		s/^> content-length: .*/> content-length: xxx/
 		/^> 00..want /d
 		/^> 00.*done/d
 
-		/^< Server: /d
-		/^< Expires: /d
-		/^< Date: /d
-		/^< Content-Length: /d
-		/^< Transfer-Encoding: /d
+		/^< server: /d
+		/^< expires: /d
+		/^< date: /d
+		/^< content-length: /d
+		/^< transfer-encoding: /d
 	" >actual &&
 
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		sed -e "s/^> Accept-Encoding: .*/> Accept-Encoding: ENCODINGS/" \
-				actual >actual.smudged &&
-		test_cmp exp actual.smudged &&
+	sed -e "s/^> accept-encoding: .*/> accept-encoding: ENCODINGS/" \
+			actual >actual.smudged &&
+	test_cmp exp actual.smudged &&
 
-		grep "Accept-Encoding:.*gzip" actual >actual.gzip &&
-		test_line_count = 2 actual.gzip &&
-
-		grep "Accept-Language: ko-KR, *" actual >actual.language &&
-		test_line_count = 2 actual.language
-	fi
+	grep "accept-encoding:.*gzip" actual >actual.gzip
 '
 
 test_expect_success 'fetch changes via http' '
@@ -119,19 +156,9 @@ test_expect_success 'fetch changes via http' '
 '
 
 test_expect_success 'used upload-pack service' '
-	cat >exp <<-\EOF &&
-	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-	GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/1.1 200
-	POST /smart/repo.git/git-upload-pack HTTP/1.1 200
-	EOF
-
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		check_access_log exp
-	fi
+	strip_access_log >log &&
+	grep "GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/[0-9.]* 200" log &&
+	grep "POST /smart/repo.git/git-upload-pack HTTP/[0-9.]* 200" log
 '
 
 test_expect_success 'follow redirects (301)' '
@@ -280,21 +307,23 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
 	EOF
 	sort >expect_cookies.txt <<-\EOF &&
-
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies/repo.git/	FALSE	0	name	value
 	127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
 	EOF
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
-	git ls-remote $HTTPD_URL/smart_cookies/repo.git main &&
 
-	# NEEDSWORK: If the overspecification of the expected result is reduced, we
-	# might be able to run this test in all protocol versions.
-	if test "$GIT_TEST_PROTOCOL_VERSION" = 0
-	then
-		tail -3 cookies.txt | sort >cookies_tail.txt &&
-		test_cmp expect_cookies.txt cookies_tail.txt
-	fi
+	test_when_finished "
+		git --git-dir=\"\$HTTPD_DOCUMENT_ROOT_PATH/repo.git\" \
+			tag -d cookie-tag
+	" &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		tag -m "foo" cookie-tag &&
+	git fetch $HTTPD_URL/smart_cookies/repo.git cookie-tag &&
+
+	grep "^[^#]" cookies.txt | sort >cookies_stripped.txt &&
+	test_cmp expect_cookies.txt cookies_stripped.txt
 '
 
 test_expect_success 'transfer.hiderefs works over smart-http' '
@@ -664,6 +693,15 @@ test_expect_success 'push warns or fails when using username:password' '
 		push $url_userpass 2>err &&
 	grep "fatal: $message" err >warnings &&
 	test_line_count -ge 1 warnings
+'
+
+test_expect_success 'no empty path components' '
+	# In the URL, add a trailing slash, and see if git appends yet another
+	# slash.
+	git clone $HTTPD_URL/smart/repo.git/ clone-with-slash &&
+
+	strip_access_log >log &&
+	! grep "//" log
 '
 
 test_done
