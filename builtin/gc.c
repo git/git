@@ -42,6 +42,8 @@
 #include "setup.h"
 #include "trace2.h"
 
+#include <revision.h>
+
 #define FAILED_RUN "failed to run %s"
 
 static const char * const builtin_gc_usage[] = {
@@ -218,14 +220,29 @@ static int pack_refs_condition(void)
 
 static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts)
 {
-	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	cmd.git_cmd = 1;
-	strvec_pushl(&cmd.args, "pack-refs", "--all", "--prune", NULL);
-	if (opts->auto_flag)
-		strvec_push(&cmd.args, "--auto");
+	//following coding convention in pack-refs.c
+	int ret;
 
-	return run_command(&cmd);
+	struct ref_exclusions excludes = REF_EXCLUSIONS_INIT;
+	struct string_list included_refs = STRING_LIST_INIT_NODUP;
+
+	//default flag is to prune
+	struct pack_refs_opts pack_refs_opts = {
+		.exclusions = &excludes,
+		.includes = &included_refs,
+		.flags = PACK_REFS_PRUNE,
+	};
+
+
+	//--all flag
+	string_list_append(pack_refs_opts.includes, "*");
+
+	ret = refs_pack_refs(get_main_ref_store(the_repository), &pack_refs_opts);
+
+	//same as run_command return since ret is directly returned in cmd_pack_refs
+	return ret;
+
 }
 
 static int too_many_loose_objects(void)
