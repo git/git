@@ -848,7 +848,7 @@ those lines without having to recompile.
 With only that change, run again (but save yourself some scrollback):
 
 ----
-$ GIT_TRACE=1 ./bin-wrappers/git walken | head -n 10
+$ GIT_TRACE=1 ./bin-wrappers/git walken 2>&1 | head -n 10
 ----
 
 Take a look at the top commit with `git show` and the object ID you printed; it
@@ -876,7 +876,7 @@ of the first handful:
 
 ----
 $ make
-$ GIT_TRACE=1 ./bin-wrappers git walken | tail -n 10
+$ GIT_TRACE=1 ./bin-wrappers/git walken 2>&1 | tail -n 10
 ----
 
 The last commit object given should have the same OID as the one we saw at the
