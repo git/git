@@ -210,13 +210,14 @@ We'll also need to include the `config.h` header:
 
 ...
 
-static int git_walken_config(const char *var, const char *value, void *cb)
+static int git_walken_config(const char *var, const char *value,
+			     const struct config_context *ctx, void *cb)
 {
 	/*
 	 * For now, we don't have any custom configuration, so fall back to
 	 * the default config.
 	 */
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 ----
 
@@ -389,10 +390,11 @@ modifying `rev_info.grep_filter`, which is a `struct grep_opt`.
 First some setup. Add `grep_config()` to `git_walken_config()`:
 
 ----
-static int git_walken_config(const char *var, const char *value, void *cb)
+static int git_walken_config(const char *var, const char *value,
+			     const struct config_context *ctx, void *cb)
 {
-	grep_config(var, value, cb);
-	return git_default_config(var, value, cb);
+	grep_config(var, value, ctx, cb);
+	return git_default_config(var, value, ctx, cb);
 }
 ----
 
