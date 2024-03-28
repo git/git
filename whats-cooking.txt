@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2024, #08; Tue, 26)
-X-master-at: c75fd8d8150afdf836b63a8e0534d9b9e3e111ba
-X-next-at: e103d9ffe4204bcd16a16bb8522827b4e6855422
+Subject: What's cooking in git.git (Mar 2024, #09; Thu, 28)
+X-master-at: d6fd04375f9196f8b203d442f235bd96a1a068cc
+X-next-at: 09a8706636d10c491176b8b1cd6519f7300911bf
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2024, #08; Tue, 26)
+What's cooking in git.git (Mar 2024, #09; Thu, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,143 +48,199 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bb/sh-scripts-cleanup (2024-03-16) 22 commits
-  (merged to 'next' on 2024-03-18 at 4501a04796)
- + git-quiltimport: avoid an unnecessary subshell
- + contrib/coverage-diff: avoid redundant pipelines
- + t/t9*: merge "grep | sed" pipelines
- + t/t8*: merge "grep | sed" pipelines
- + t/t5*: merge a "grep | sed" pipeline
- + t/t4*: merge a "grep | sed" pipeline
- + t/t3*: merge a "grep | awk" pipeline
- + t/t1*: merge a "grep | sed" pipeline
- + t/t9*: avoid redundant uses of cat
- + t/t8*: avoid redundant use of cat
- + t/t7*: avoid redundant use of cat
- + t/t6*: avoid redundant uses of cat
- + t/t5*: avoid redundant uses of cat
- + t/t4*: avoid redundant uses of cat
- + t/t3*: avoid redundant uses of cat
- + t/t1*: avoid redundant uses of cat
- + t/t0*: avoid redundant uses of cat
- + t/perf: avoid redundant use of cat
- + t/annotate-tests.sh: avoid redundant use of cat
- + t/lib-cvs.sh: avoid redundant use of cat
- + contrib/subtree/t: avoid redundant use of cat
- + doc: avoid redundant use of cat
+* bt/fuzz-config-parse (2024-03-15) 1 commit
+  (merged to 'next' on 2024-03-21 at 6e9f331d68)
+ + fuzz: add fuzzer for config parsing
 
- Shell scripts clean-up.
- source: <20240315194620.10713-1-dev+git@drbeat.li>
+ A new fuzz target that exercises config parsing code has been
+ added.
+ source: <pull.1692.v2.git.1710481652130.gitgitgadget@gmail.com>
 
 
-* bl/doc-config-fixes (2024-03-16) 2 commits
-  (merged to 'next' on 2024-03-18 at a9038d5a9e)
- + docs: fix typo in git-config `--default`
- + docs: clarify file options in git-config `--edit`
+* eb/hash-transition (2023-10-02) 30 commits
+  (merged to 'next' on 2024-03-11 at 9cff2e4ab7)
+ + t1016-compatObjectFormat: add tests to verify the conversion between objects
+ + t1006: test oid compatibility with cat-file
+ + t1006: rename sha1 to oid
+ + test-lib: compute the compatibility hash so tests may use it
+ + builtin/ls-tree: let the oid determine the output algorithm
+ + object-file: handle compat objects in check_object_signature
+ + tree-walk: init_tree_desc take an oid to get the hash algorithm
+ + builtin/cat-file: let the oid determine the output algorithm
+ + rev-parse: add an --output-object-format parameter
+ + repository: implement extensions.compatObjectFormat
+ + object-file: update object_info_extended to reencode objects
+ + object-file-convert: convert commits that embed signed tags
+ + object-file-convert: convert commit objects when writing
+ + object-file-convert: don't leak when converting tag objects
+ + object-file-convert: convert tag objects when writing
+ + object-file-convert: add a function to convert trees between algorithms
+ + object: factor out parse_mode out of fast-import and tree-walk into in object.h
+ + cache: add a function to read an OID of a specific algorithm
+ + tag: sign both hashes
+ + commit: export add_header_signature to support handling signatures on tags
+ + commit: convert mergetag before computing the signature of a commit
+ + commit: write commits for both hashes
+ + object-file: add a compat_oid_in parameter to write_object_file_flags
+ + object-file: update the loose object map when writing loose objects
+ + loose: compatibilty short name support
+ + loose: add a mapping between SHA-1 and SHA-256 for loose objects
+ + repository: add a compatibility hash algorithm
+ + object-names: support input of oids in any supported hash
+ + oid-array: teach oid-array to handle multiple kinds of oids
+ + object-file-convert: stubs for converting from one object format to another
 
- A few typoes in "git config --help" have been corrected.
- source: <20240316050149.1182867-2-brianmlyles@gmail.com>
-
-
-* bl/doc-key-val-sep-fix (2024-03-18) 2 commits
-  (merged to 'next' on 2024-03-18 at b2e1babb85)
- + docs: adjust trailer `separator` and `key_value_separator` language
- + docs: correct trailer `key_value_separator` description
-
- The documentation for "%(trailers[:options])" placeholder in the
- "--pretty" option of commands in the "git log" family has been
- updated.
- source: <20240316035612.752910-1-brianmlyles@gmail.com>
-
-
-* ja/doc-formatting-fix (2024-03-16) 2 commits
-  (merged to 'next' on 2024-03-18 at edde7a576d)
- + doc: fix some placeholders formating
- + doc: format alternatives in synopsis
-
- Documentation mark-up fix.
- source: <pull.1697.git.1710602501.gitgitgadget@gmail.com>
-
-
-* jc/index-pack-fsck-levels (2024-03-15) 1 commit
-  (merged to 'next' on 2024-03-18 at 243c5f4125)
- + t5300: fix test_with_bad_commit()
-
- Test fix.
- source: <pull.1688.git.git.1710478646776.gitgitgadget@gmail.com>
-
-
-* js/bugreport-no-suffix-fix (2024-03-16) 1 commit
-  (merged to 'next' on 2024-03-18 at 180db8ec38)
- + bugreport.c: fix a crash in `git bugreport` with `--no-suffix` option
-
- "git bugreport --no-suffix" was not supported and instead
- segfaulted, which has been corrected.
- source: <9c6f3f5203ae26c501a5711e2610573130bfd550.1710388817.git.gitgitgadget@gmail.com>
+ Work to support a repository that work with both SHA-1 and SHA-256
+ hash algorithms has started.
+ source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
-* rj/restore-plug-leaks (2024-03-14) 1 commit
-  (merged to 'next' on 2024-03-15 at ac10ae7892)
- + checkout: plug some leaks in git-restore
+* jc/show-untracked-false (2024-03-13) 2 commits
+  (merged to 'next' on 2024-03-21 at 6d1f5603c6)
+ + status: allow --untracked=false and friends
+ + status: unify parsing of --untracked= and status.showUntrackedFiles
 
- Leaks from "git restore" have been plugged.
- source: <64c1c3cc-51d7-4168-9731-4389889e1449@gmail.com>
+ The status.showUntrackedFiles configuration variable had a name
+ that tempts users to set a Boolean value expressed in our usual
+ "false", "off", and "0", but it only took "no".  This has been
+ corrected so "true" and its synonyms are taken as "normal", while
+ "false" and its synonyms are taken as "no".
+ source: <20240313173214.962532-1-gitster@pobox.com>
+
+
+* jk/drop-hg-to-git (2024-03-20) 1 commit
+  (merged to 'next' on 2024-03-21 at 603d614310)
+ + contrib: drop hg-to-git script
+
+ Remove an ancient and not well maintained Hg-to-git migration
+ script from contrib/.
+
+ Acked-by: Stelian Pop <stelian@popies.net>
+ cf. <37e4cd61-b370-437e-bd42-f98f47d3ad32@popies.net>
+ source: <20240320094824.GA2445978@coredump.intra.peff.net>
+
+
+* ph/diff-src-dst-prefix-config (2024-03-18) 2 commits
+  (merged to 'next' on 2024-03-21 at 96801520db)
+ + diff.*Prefix: use camelCase in the doc and test titles
+ + diff: add diff.srcPrefix and diff.dstPrefix configuration variables
+
+ "git diff" and friends learned two extra configuration variables,
+ diff.srcPrefix and diff.dstPrefix.
+ source: <20240315010310.GA1901653@quokka>
+ source: <xmqq8r2ioh19.fsf@gitster.g>
+
+
+* rs/t-prio-queue-fixes (2024-03-18) 2 commits
+  (merged to 'next' on 2024-03-21 at 0730741187)
+ + t-prio-queue: check result array bounds
+ + t-prio-queue: shorten array index message
+
+ Test clean-up.
+ source: <9bf36cc8-ff27-44df-b2fb-9f959c781269@web.de>
 
 --------------------------------------------------
 [New Topics]
 
+* ew/khash-to-khashl (2024-03-28) 3 commits
+ - khashl: fix ensemble lookups on empty table
+ - treewide: switch to khashl for memory savings
+ - list-objects-filter: use kh_size API
+
+ The hashtable library "khash.h" has been replaced with "khashl.h"
+ that has better memory usage characteristics.
+
+ Needs review.
+ source: <20240328101356.300374-1-e@80x24.org>
+
+
+* ps/reftable-block-iteration-optim (2024-03-27) 9 commits
+ - reftable/block: reuse `zstream` state on inflation
+ - reftable/block: open-code call to `uncompress2()`
+ - reftable/block: reuse uncompressed blocks
+ - reftable/reader: iterate to next block in place
+ - reftable/block: move ownership of block reader into `struct table_iter`
+ - reftable/block: introduce `block_reader_release()`
+ - reftable/block: better grouping of functions
+ - reftable/block: merge `block_iter_seek()` and `block_reader_seek()`
+ - reftable/block: rename `block_reader_start()`
+
+ The code to iterate over reftable blocks has seen some optimization
+ to reduce memory allocation and deallocation.
+
+ Needs review.
+ source: <cover.1711519925.git.ps@pks.im>
+
+
+* rj/add-p-explicit-reshow (2024-03-28) 2 commits
+ - add-patch: do not print hunks repeatedly
+ - add-patch: introduce 'p' in interactive-patch
+
+ "git add -p" and other "interactive hunk selection" UI has learned to
+ skip showing the hunk immediately after it has already been shown, and
+ an additional action to explicitly ask to reshow the current hunk.
+
+ Will merge to 'next'?
+ source: <60d978d0-f69a-4b65-b4ba-d30dac8f112a@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * az/grep-group-error-message-update (2024-03-25) 1 commit
- - grep: improve errors for unmatched ( and )
+  (merged to 'next' on 2024-03-27 at 567bf00ed4)
+ + grep: improve errors for unmatched ( and )
 
  Error message clarification.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <tkz3a5jkalcz5ajemx4b4x42pe6kv45sfmgpin4zeai3moq42o@tarta.nabijaczleweli.xyz>
 
 
-* bc/credential-scheme-enhancement (2024-03-25) 13 commits
- - credential: add support for multistage credential rounds
- - strvec: implement swapping two strvecs
- - t5563: refactor for multi-stage authentication
- - docs: set a limit on credential line length
- - credential: enable state capability
- - credential: add an argument to keep state
- - http: add support for authtype and credential
- - docs: indicate new credential protocol fields
- - credential: gate new fields on capability
- - credential: add a field for pre-encoded credentials
- - http: use new headers for each object request
- - remote-curl: reset headers on new request
- - credential: add an authtype field
+* bc/credential-scheme-enhancement (2024-03-27) 12 commits
+ . credential: add support for multistage credential rounds
+ . t5563: refactor for multi-stage authentication
+ . docs: set a limit on credential line length
+ . credential: enable state capability
+ . credential: add an argument to keep state
+ . http: add support for authtype and credential
+ . docs: indicate new credential protocol fields
+ . credential: gate new fields on capability
+ . credential: add a field for pre-encoded credentials
+ . http: use new headers for each object request
+ . remote-curl: reset headers on new request
+ . credential: add an authtype field
 
  The credential helper protocol, together with the HTTP layer, have
  been enhanced to support authentication schemes different from
  username & password pair, like Bearer and NTLM.
 
- Needs review.
+ Expecting a reroll.
+ cf. <ZgSQ5o_KyqDaxz1m@tapette.crustytoothpaste.net>
  source: <20240324011301.1553072-1-sandals@crustytoothpaste.net>
 
 
 * bl/pretty-shorthand-config-fix (2024-03-25) 2 commits
- - pretty: find pretty formats case-insensitively
- - pretty: update tests to use `test_config`
+  (merged to 'next' on 2024-03-28 at e2749914ab)
+ + pretty: find pretty formats case-insensitively
+ + pretty: update tests to use `test_config`
 
  The "--pretty=<shortHand>" option of the commands in the "git log"
  family, defined as "[pretty] shortHand = <expansion>" should have
  been looked up case insensitively, but was not, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240324214316.917513-1-brianmlyles@gmail.com>
 
 
 * ds/grep-doc-updates (2024-03-25) 2 commits
- - grep docs: describe --no-index further and improve formatting a bit
- - grep docs: describe --recurse-submodules further and improve formatting a bit
+  (merged to 'next' on 2024-03-27 at 681f08cbc5)
+ + grep docs: describe --no-index further and improve formatting a bit
+ + grep docs: describe --recurse-submodules further and improve formatting a bit
 
  Documentation updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1711398665.git.dsimic@manjaro.org>
 
 
@@ -212,12 +268,13 @@ Release tarballs are available at:
 
 
 * pb/test-scripts-are-build-targets (2024-03-25) 1 commit
- - t/README: mention test files are make targets
+  (merged to 'next' on 2024-03-27 at 9ef22a39b6)
+ + t/README: mention test files are make targets
 
  The README now gives a hint on running individual tests in the "t/"
  directory with "make t<num>-*.sh t<num>-*.sh".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1701.git.1711293246094.gitgitgadget@gmail.com>
 
 
@@ -237,25 +294,25 @@ Release tarballs are available at:
 
 
 * rs/midx-use-strvec-pushf (2024-03-25) 1 commit
- - midx: use strvec_pushf() for pack-objects base name
+  (merged to 'next' on 2024-03-27 at 16969df3e8)
+ + midx: use strvec_pushf() for pack-objects base name
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <9483038c-9529-4243-9b9a-97254fac29c1@web.de>
 
 
 * rs/strbuf-expand-bad-format (2024-03-25) 2 commits
- - cat-file: use strbuf_expand_bad_format()
- - factor out strbuf_expand_bad_format()
+  (merged to 'next' on 2024-03-27 at 1f9dbf70a0)
+ + cat-file: use strbuf_expand_bad_format()
+ + factor out strbuf_expand_bad_format()
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <27cdcde7-74bc-4ee8-bc84-9a6046292cae@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * jk/doc-remote-helpers-markup-fix (2024-03-20) 1 commit
   (merged to 'next' on 2024-03-25 at 7c3dd28ca5)
@@ -265,20 +322,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20240320091748.GA2444639@coredump.intra.peff.net>
-
-
-* jk/drop-hg-to-git (2024-03-20) 1 commit
-  (merged to 'next' on 2024-03-21 at 603d614310)
- + contrib: drop hg-to-git script
-
- Remove an ancient and not well maintained Hg-to-git migration
- script from contrib/.
-
- Acked-by: Stelian Pop <stelian@popies.net>
- cf. <37e4cd61-b370-437e-bd42-f98f47d3ad32@popies.net>
-
- Will merge to 'master'.
- source: <20240320094824.GA2445978@coredump.intra.peff.net>
 
 
 * ps/reftable-unit-test-nfs-workaround (2024-03-21) 1 commit
@@ -334,10 +377,10 @@ Release tarballs are available at:
  - config: repo_config_get_expiry()
  - Documentation/technical: describe pseudo-merge bitmaps format
 
- The pack-bitmap machinery has been extended to write bitmaps for
- pseudo-merges, which are imaginary commits which act as octopus
- merges covering groups of the un-bitmapped parts of history at
- reference tips.  This is good for ... what ...?
+ The pack-bitmap machinery learned to write pseudo-merge bitmaps,
+ which act as imaginary octopus merges covering un-bitmapped
+ reference tips. This enhances bitmap coverage, and thus,
+ performance, for repositories with many references using bitmaps.
 
  Expecting a reroll.
  cf. <ZfyxCLpjbaScIdWA@nand.local>
@@ -345,14 +388,15 @@ Release tarballs are available at:
 
 
 * jc/release-notes-entry-experiment (2024-03-26) 1 commit
- - SubmittingPatches: release-notes entry experiment
+  (merged to 'next' on 2024-03-27 at 74ebe224e9)
+ + SubmittingPatches: release-notes entry experiment
 
  Introduce an experimental protocol for contributors to propose the
  topic description to be used in the "What's cooking" report, the
  merge commit message for the topic, and in the release notes and
  document it in the SubmittingPatches document.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq8r26eyva.fsf@gitster.g>
 
 
@@ -366,7 +410,7 @@ Release tarballs are available at:
  source: <20240322103502.GA2045297@coredump.intra.peff.net>
 
 
-* dg/myfirstobjectwalk-updates (2024-03-26) 5 commits
+* dg/myfirstobjectwalk-updates (2024-03-27) 5 commits
  - MyFirstObjectWalk: add stderr to pipe processing
  - MyFirstObjectWalk: fix description for counting omitted objects
  - MyFirstObjectWalk: fix filtered object walk
@@ -375,9 +419,8 @@ Release tarballs are available at:
 
  Update a more recent tutorial doc.
 
- Waiting for the final Ack.
- cf. <xmqqo7b1apx3.fsf@gitster.g>
- source: <cover.1711368498.git.dirk@gouders.net>
+ Will merge to 'next'?
+ source: <cover.1711537370.git.dirk@gouders.net>
 
 
 * ds/config-internal-whitespace-fix (2024-03-21) 4 commits
@@ -394,14 +437,18 @@ Release tarballs are available at:
  source: <cover.1711001016.git.dsimic@manjaro.org>
 
 
-* jc/apply-parse-diff-git-header-names-fix (2024-03-19) 1 commit
- - apply: parse names out of "diff --git" more carefully
+* jc/apply-parse-diff-git-header-names-fix (2024-03-28) 2 commits
+  (merged to 'next' on 2024-03-28 at a35de15836)
+ + t4126: make sure a directory with SP at the end is usable
+  (merged to 'next' on 2024-03-27 at d586367985)
+ + apply: parse names out of "diff --git" more carefully
 
  "git apply" failed to extract the filename the patch applied to,
  when the change was about an empty file created in or deleted from
  a directory whose name ends with a SP, which has been corrected.
 
- Needs review.
+ Will merge to 'master'.
+ source: <xmqqh6gqt674.fsf_-_@gitster.g>
  source: <xmqqfrwlltjn.fsf@gitster.g>
 
 
@@ -433,6 +480,8 @@ Release tarballs are available at:
  (this branch uses la/format-trailer-info.)
 
  The trailer API has been reshuffled a bit.
+
+ Needs review.
  source: <pull.1696.git.1710570428.gitgitgadget@gmail.com>
 
 
@@ -449,17 +498,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1682.v3.git.1710623790.gitgitgadget@gmail.com>
-
-
-* rs/t-prio-queue-fixes (2024-03-18) 2 commits
-  (merged to 'next' on 2024-03-21 at 0730741187)
- + t-prio-queue: check result array bounds
- + t-prio-queue: shorten array index message
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <9bf36cc8-ff27-44df-b2fb-9f959c781269@web.de>
 
 
 * ps/pack-refs-auto (2024-03-25) 16 commits
@@ -490,33 +528,6 @@ Release tarballs are available at:
  source: <cover.1711360631.git.ps@pks.im>
 
 
-* jc/show-untracked-false (2024-03-13) 2 commits
-  (merged to 'next' on 2024-03-21 at 6d1f5603c6)
- + status: allow --untracked=false and friends
- + status: unify parsing of --untracked= and status.showUntrackedFiles
-
- The status.showUntrackedFiles configuration variable had a name
- that tempts users to set a Boolean value expressed in our usual
- "false", "off", and "0", but it only took "no".  This has been
- corrected so "true" and its synonyms are taken as "normal", while
- "false" and its synonyms are taken as "no".
-
- Will merge to 'master'.
- source: <20240313173214.962532-1-gitster@pobox.com>
-
-
-* ph/diff-src-dst-prefix-config (2024-03-18) 2 commits
-  (merged to 'next' on 2024-03-21 at 96801520db)
- + diff.*Prefix: use camelCase in the doc and test titles
- + diff: add diff.srcPrefix and diff.dstPrefix configuration variables
-
- "git diff" and friends learned two extra configuration variables.
-
- Will merge to 'master'.
- source: <20240315010310.GA1901653@quokka>
- source: <xmqq8r2ioh19.fsf@gitster.g>
-
-
 * ps/clone-with-includeif-onbranch (2024-03-12) 1 commit
   (merged to 'next' on 2024-03-25 at 8d11bd8bd4)
  + t5601: exercise clones with "includeIf.*.onbranch"
@@ -527,23 +538,13 @@ Release tarballs are available at:
  source: <0bede59a53862585c49bc635f82e44e983144a7f.1710246859.git.ps@pks.im>
 
 
-* bt/fuzz-config-parse (2024-03-15) 1 commit
-  (merged to 'next' on 2024-03-21 at 6e9f331d68)
- + fuzz: add fuzzer for config parsing
-
- A new fuzz target that exercises config parsing code.
-
- Will merge to 'master'.
- source: <pull.1692.v2.git.1710481652130.gitgitgadget@gmail.com>
-
-
 * ds/doc-config-reflow (2024-03-14) 1 commit
  - config.txt: perform some minor reformatting
 
  Reflow a paragraph in the documentation source without any effect
  to the formatted text.
 
- Comments?
+ Will discard.
  source: <97bdaf075bf5a68554cca1731eca78aff2662907.1710444774.git.dsimic@manjaro.org>
 
 
@@ -562,16 +563,16 @@ Release tarballs are available at:
 
 
 * rs/config-comment (2024-03-15) 3 commits
- - config: allow tweaking whitespace between value and comment
- - config: fix --comment formatting
- - config: add --comment option to add a comment
+  (merged to 'next' on 2024-03-28 at 83eaadc2b6)
+ + config: allow tweaking whitespace between value and comment
+ + config: fix --comment formatting
+ + config: add --comment option to add a comment
 
  "git config" learned "--comment=<message>" option to leave a
  comment immediately after the "variable = value" on the same line
  in the configuration file.
 
- Waiting for review response.
- cf. <xmqq8r2jp2eq.fsf@gitster.g>
+ Will merge to 'master'.
  source: <pull.1681.v2.git.1709824540636.gitgitgadget@gmail.com>
 
 
@@ -592,13 +593,14 @@ Release tarballs are available at:
 
 
 * bl/cherry-pick-empty (2024-03-25) 7 commits
- - cherry-pick: add `--empty` for more robust redundant commit handling
- - cherry-pick: enforce `--keep-redundant-commits` incompatibility
- - sequencer: do not require `allow_empty` for redundant commit options
- - sequencer: handle unborn branch with `--allow-empty`
- - rebase: update `--empty=ask` to `--empty=stop`
- - docs: clean up `--empty` formatting in git-rebase(1) and git-am(1)
- - docs: address inaccurate `--empty` default with `--exec`
+  (merged to 'next' on 2024-03-28 at 22e8e4a68e)
+ + cherry-pick: add `--empty` for more robust redundant commit handling
+ + cherry-pick: enforce `--keep-redundant-commits` incompatibility
+ + sequencer: do not require `allow_empty` for redundant commit options
+ + sequencer: handle unborn branch with `--allow-empty`
+ + rebase: update `--empty=ask` to `--empty=stop`
+ + docs: clean up `--empty` formatting in git-rebase(1) and git-am(1)
+ + docs: address inaccurate `--empty` default with `--exec`
 
  Allow git-cherry-pick(1) to automatically drop redundant commits via
  a new `--empty` option, similar to the `--empty` options for
@@ -606,7 +608,7 @@ Release tarballs are available at:
  `--keep-redundant-commits` as well as some related docs changes and
  sequencer code cleanup.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <a397f3dd-e4e1-4275-b17d-1daca9e166fe@gmail.com>
  source: <20240119060721.3734775-2-brianmlyles@gmail.com>
 
@@ -625,40 +627,45 @@ Release tarballs are available at:
 
 
 * jk/remote-helper-object-format-option-fix (2024-03-20) 3 commits
- - transport-helper: send "true" value for object-format option
- - transport-helper: drop "object-format <algo>" option
- - transport-helper: use write helpers more consistently
+  (merged to 'next' on 2024-03-27 at 5c9d5be660)
+ + transport-helper: send "true" value for object-format option
+ + transport-helper: drop "object-format <algo>" option
+ + transport-helper: use write helpers more consistently
 
  The implementation and documentation of "object-format" option
  exchange between the Git itself and its remote helpers did not
  quite match.
+
+ Will merge to 'master'.
  source: <20240320093226.GA2445531@coredump.intra.peff.net>
 
 
-* jk/core-comment-string (2024-03-12) 16 commits
- - config: allow multi-byte core.commentChar
- - environment: drop comment_line_char compatibility macro
- - wt-status: drop custom comment-char stringification
- - sequencer: handle multi-byte comment characters when writing todo list
- - find multi-byte comment chars in unterminated buffers
- - find multi-byte comment chars in NUL-terminated strings
- - prefer comment_line_str to comment_line_char for printing
- - strbuf: accept a comment string for strbuf_add_commented_lines()
- - strbuf: accept a comment string for strbuf_commented_addf()
- - strbuf: accept a comment string for strbuf_stripspace()
- - environment: store comment_line_char as a string
- - strbuf: avoid shadowing global comment_line_char name
- - commit: refactor base-case of adjust_comment_line_char()
- - strbuf: avoid static variables in strbuf_add_commented_lines()
- - strbuf: simplify comment-handling in add_lines() helper
- - config: forbid newline as core.commentChar
+* jk/core-comment-string (2024-03-27) 17 commits
+  (merged to 'next' on 2024-03-28 at fbf8eb9331)
+ + config: add core.commentString
+ + config: allow multi-byte core.commentChar
+ + environment: drop comment_line_char compatibility macro
+ + wt-status: drop custom comment-char stringification
+ + sequencer: handle multi-byte comment characters when writing todo list
+ + find multi-byte comment chars in unterminated buffers
+ + find multi-byte comment chars in NUL-terminated strings
+ + prefer comment_line_str to comment_line_char for printing
+ + strbuf: accept a comment string for strbuf_add_commented_lines()
+ + strbuf: accept a comment string for strbuf_commented_addf()
+ + strbuf: accept a comment string for strbuf_stripspace()
+ + environment: store comment_line_char as a string
+ + strbuf: avoid shadowing global comment_line_char name
+ + commit: refactor base-case of adjust_comment_line_char()
+ + strbuf: avoid static variables in strbuf_add_commented_lines()
+ + strbuf: simplify comment-handling in add_lines() helper
+ + config: forbid newline as core.commentChar
 
  core.commentChar used to be limited to a single byte, but has been
  updated to allow an arbitrary multi-byte sequence.
 
- Waiting for the discussion to settle.
- cf. <20240315081041.GA1753560@coredump.intra.peff.net>
+ Will merge to 'master'.
  source: <20240312091013.GA95442@coredump.intra.peff.net>
+ source: <20240327081922.GA830163@coredump.intra.peff.net>
 
 
 * js/build-fuzz-more-often (2024-03-05) 3 commits
@@ -670,17 +677,18 @@ Release tarballs are available at:
  that are used in fuzzer tests, to make sure at least they build
  without bitrot, in Linux CI runs.
 
- Comments?
+ Stalled.
+ cf. <xmqq1q7w8xx6.fsf@gitster.g>
  source: <cover.1709673020.git.steadmon@google.com>
 
 
-* sj/userdiff-c-sharp (2024-03-06) 1 commit
+* sj/userdiff-c-sharp (2024-03-28) 1 commit
  - userdiff: better method/property matching for C#
 
  The userdiff patterns for C# has been updated.
 
  Needs review.
- source: <pull.1682.v2.git.git.1709756493673.gitgitgadget@gmail.com>
+ source: <pull.1682.v4.git.git.1711653257043.gitgitgadget@gmail.com>
 
 
 * cw/git-std-lib (2024-02-28) 4 commits
@@ -774,45 +782,6 @@ Release tarballs are available at:
  Waiting for a final ack?
  cf. <ZcFjkfbsBfk7JQIH@nand.local>
  source: <cover.1706741516.git.me@ttaylorr.com>
-
-
-* eb/hash-transition (2023-10-02) 30 commits
-  (merged to 'next' on 2024-03-11 at 9cff2e4ab7)
- + t1016-compatObjectFormat: add tests to verify the conversion between objects
- + t1006: test oid compatibility with cat-file
- + t1006: rename sha1 to oid
- + test-lib: compute the compatibility hash so tests may use it
- + builtin/ls-tree: let the oid determine the output algorithm
- + object-file: handle compat objects in check_object_signature
- + tree-walk: init_tree_desc take an oid to get the hash algorithm
- + builtin/cat-file: let the oid determine the output algorithm
- + rev-parse: add an --output-object-format parameter
- + repository: implement extensions.compatObjectFormat
- + object-file: update object_info_extended to reencode objects
- + object-file-convert: convert commits that embed signed tags
- + object-file-convert: convert commit objects when writing
- + object-file-convert: don't leak when converting tag objects
- + object-file-convert: convert tag objects when writing
- + object-file-convert: add a function to convert trees between algorithms
- + object: factor out parse_mode out of fast-import and tree-walk into in object.h
- + cache: add a function to read an OID of a specific algorithm
- + tag: sign both hashes
- + commit: export add_header_signature to support handling signatures on tags
- + commit: convert mergetag before computing the signature of a commit
- + commit: write commits for both hashes
- + object-file: add a compat_oid_in parameter to write_object_file_flags
- + object-file: update the loose object map when writing loose objects
- + loose: compatibilty short name support
- + loose: add a mapping between SHA-1 and SHA-256 for loose objects
- + repository: add a compatibility hash algorithm
- + object-names: support input of oids in any supported hash
- + oid-array: teach oid-array to handle multiple kinds of oids
- + object-file-convert: stubs for converting from one object format to another
-
- Teach a repository to work with both SHA-1 and SHA-256 hash algorithms.
-
- Will merge to 'master'?
- source: <878r8l929e.fsf@gmail.froward.int.ebiederm.org>
 
 
 * jc/rerere-cleanup (2023-08-25) 4 commits
