@@ -1,0 +1,22 @@
+using System;
+
+class Example : IDisposable
+{
+    string Method(int RIGHT)
+    {
+        new Example();
+        new Example(
+            );
+        new Example { };
+        using (this)
+        {
+        }
+        var def =
+            this is default(
+                Example);
+
+        return "ChangeMe";
+    }
+
+    public void Dispose() {}
+}

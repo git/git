@@ -1,0 +1,11 @@
+class @Some_Type
+{
+    @Some_Type @Method_With_Underscore(int RIGHT)
+    {
+        // Filler
+        // Filler
+        
+        // ChangeMe
+        return new @Some_Type();
+    }
+}

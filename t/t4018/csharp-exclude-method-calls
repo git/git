@@ -1,0 +1,15 @@
+class Example
+{
+    string Method(int RIGHT)
+    {
+        MethodCall();
+        MethodCall(1, 2);
+        MethodCall(
+            1, 2);
+
+        return "ChangeMe";
+    }
+
+    string MethodCall(int a = 0, int b = 0) => "test";
+    string GenericMethodCall<T, T2>() => "test";
+}

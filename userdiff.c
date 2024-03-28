@@ -90,12 +90,46 @@ PATTERNS("cpp",
 	 "|\\.[0-9][0-9]*([Ee][-+]?[0-9]+)?[fFlL]?"
 	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->\\*?|\\.\\*|<=>"),
 PATTERNS("csharp",
-	 /* Keywords */
-	 "!^[ \t]*(do|while|for|if|else|instanceof|new|return|switch|case|throw|catch|using)\n"
-	 /* Methods and constructors */
-	 "^[ \t]*(((static|public|internal|private|protected|new|virtual|sealed|override|unsafe|async)[ \t]+)*[][<>@.~_[:alnum:]]+[ \t]+[<>@._[:alnum:]]+[ \t]*\\(.*\\))[ \t]*$\n"
-	 /* Properties */
-	 "^[ \t]*(((static|public|internal|private|protected|new|virtual|sealed|override|unsafe)[ \t]+)*[][<>@.~_[:alnum:]]+[ \t]+[@._[:alnum:]]+)[ \t]*$\n"
+	 /*
+	  * Jump over reserved keywords which are illegal method names, but which
+	  * can be followed by parentheses without special characters in between,
+	  * making them look like methods.
+	  */
+	 "!(^|[ \t]+)" /* Start of line or whitespace. */
+		"(do|while|for|foreach|if|else|new|default|return|switch|case|throw"
+		"|catch|using|lock|fixed)"
+		"([ \t(]+|$)\n" /* Whitespace, "(", or end of line. */
+	 /*
+	  * Methods/constructors:
+	  * The strategy is to identify a minimum of two groups (any combination
+	  * of keywords/type/name) before the opening parenthesis, and without
+	  * final unexpected characters, normally only used in ordinary statements.
+	  */
+	 "^[ \t]*" /* Remove leading whitespace. */
+		"(" /* Start chunk header capture. */
+		"(" /* Group of keywords/type/names. */
+		"([][[:alnum:]@_<>.]|, [ |\t]*)+" /* Space only allowed after ",". */
+		"[ \t]+" /* One required space forces a minimum of two items. */
+		"([][[:alnum:]@_<>.]|, [ |\t]*)+"
+		"[ \t]*" /* Optional space before parameters start. */
+		")+"
+		"\\(" /* Start of method parameters. */
+		"[^;]*" /* Allow complex parameters, but exclude statements (;). */
+		")$\n" /* Close chunk header capture. */
+	 /*
+	  * Properties:
+	  * As with methods, expect a minimum of two groups. But, more trivial than
+	  * methods, the vast majority of properties long enough to be worth
+	  * showing a chunk header for don't include "=:;,()" on the line they are
+	  * defined, since they don't have a parameter list.
+	  */
+	 "^[ \t]*("
+		"("
+		"([][[:alnum:]@_<>.]|, [ |\t]*)+[ \t]+"
+		"([][[:alnum:]@_<>.]|, [ |\t]*)+[ \t]*"
+		")+" /* Up to here, same as methods regex. */
+		"[^;=:,()]*" /* Compared to methods, no parameter list allowed. */
+		")$\n"
 	 /* Type definitions */
 	 "^[ \t]*(((static|public|internal|private|protected|new|unsafe|sealed|abstract|partial)[ \t]+)*(class|enum|interface|struct|record)[ \t]+.*)$\n"
 	 /* Namespace */
