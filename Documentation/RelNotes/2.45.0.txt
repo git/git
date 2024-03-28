@@ -45,6 +45,18 @@ UI, Workflows & Features
  * The output format for dates "iso-strict" has been tweaked to show
    a time in the Zulu timezone with "Z" suffix, instead of "+00:00".
 
+ * "git diff" and friends learned two extra configuration variables,
+   diff.srcPrefix and diff.dstPrefix.
+
+ * The status.showUntrackedFiles configuration variable had a name
+   that tempts users to set a Boolean value expressed in our usual
+   "false", "off", and "0", but it only took "no".  This has been
+   corrected so "true" and its synonyms are taken as "normal", while
+   "false" and its synonyms are taken as "no".
+
+ * Remove an ancient and not well maintained Hg-to-git migration
+   script from contrib/.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -92,6 +104,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to iterate over reflogs in the reftable has been optimized
    to reduce memory allocation and deallocation.
+
+ * Work to support a repository that work with both SHA-1 and SHA-256
+   hash algorithms has started.
+
+ * A new fuzz target that exercises config parsing code has been
+   added.
 
 
 Fixes since v2.44
