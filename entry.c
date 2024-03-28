@@ -541,6 +541,20 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 			/* If it is a gitlink, leave it alone! */
 			if (S_ISGITLINK(ce->ce_mode))
 				return 0;
+			/*
+			 * We must avoid replacing submodules' leading
+			 * directories with symbolic links, lest recursive
+			 * clones can write into arbitrary locations.
+			 *
+			 * Technically, this logic is not limited
+			 * to recursive clones, or for that matter to
+			 * submodules' paths colliding with symbolic links'
+			 * paths. Yet it strikes a balance in favor of
+			 * simplicity, and if paths are colliding, we might
+			 * just as well keep the directories during a clone.
+			 */
+			if (state->clone && S_ISLNK(ce->ce_mode))
+				return 0;
 			remove_subtree(&path);
 		} else if (unlink(path.buf))
 			return error_errno("unable to unlink old '%s'", path.buf);

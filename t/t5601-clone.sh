@@ -633,6 +633,21 @@ test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
 	test_i18ngrep "the following paths have collided" icasefs/warning
 '
 
+test_expect_success CASE_INSENSITIVE_FS,SYMLINKS \
+		'colliding symlink/directory keeps directory' '
+	git init icasefs-colliding-symlink &&
+	(
+		cd icasefs-colliding-symlink &&
+		a=$(printf a | git hash-object -w --stdin) &&
+		printf "100644 %s 0\tA/dir/b\n120000 %s 0\ta\n" $a $a >idx &&
+		git update-index --index-info <idx &&
+		test_tick &&
+		git commit -m initial
+	) &&
+	git clone icasefs-colliding-symlink icasefs-colliding-symlink-clone &&
+	test_file_not_empty icasefs-colliding-symlink-clone/A/dir/b
+'
+
 test_expect_success 'clone with GIT_DEFAULT_HASH' '
 	(
 		sane_unset GIT_DEFAULT_HASH &&

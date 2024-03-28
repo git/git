@@ -1222,8 +1222,8 @@ test_expect_success CASE_INSENSITIVE_FS,SYMLINKS \
 	) &&
 
 	test_path_is_missing "$tell_tale_path" &&
-	test_must_fail git clone --recursive captain hooked 2>err &&
-	grep "directory not empty" err &&
+	git clone --recursive captain hooked 2>err &&
+	! grep HOOK-RUN err &&
 	test_path_is_missing "$tell_tale_path"
 '
 
