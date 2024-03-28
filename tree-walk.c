@@ -11,35 +11,19 @@
 #include "json-writer.h"
 #include "environment.h"
 
-static const char *get_mode(const char *str, unsigned int *modep)
-{
-	unsigned char c;
-	unsigned int mode = 0;
-
-	if (*str == ' ')
-		return NULL;
-
-	while ((c = *str++) != ' ') {
-		if (c < '0' || c > '7')
-			return NULL;
-		mode = (mode << 3) + (c - '0');
-	}
-	*modep = mode;
-	return str;
-}
-
 static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size, struct strbuf *err)
 {
 	const char *path;
-	unsigned int mode, len;
-	const unsigned hashsz = the_hash_algo->rawsz;
+	unsigned int len;
+	uint16_t mode;
+	const unsigned hashsz = desc->algo->rawsz;
 
 	if (size < hashsz + 3 || buf[size - (hashsz + 1)]) {
 		strbuf_addstr(err, _("too-short tree object"));
 		return -1;
 	}
 
-	path = get_mode(buf, &mode);
+	path = parse_mode(buf, &mode);
 	if (!path) {
 		strbuf_addstr(err, _("malformed mode in tree entry"));
 		return -1;
@@ -54,15 +38,19 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 	desc->entry.path = path;
 	desc->entry.mode = (desc->flags & TREE_DESC_RAW_MODES) ? mode : canon_mode(mode);
 	desc->entry.pathlen = len - 1;
-	oidread(&desc->entry.oid, (const unsigned char *)path + len);
+	oidread_algop(&desc->entry.oid, (const unsigned char *)path + len,
+		      desc->algo);
 
 	return 0;
 }
 
-static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer,
-				   unsigned long size, struct strbuf *err,
+static int init_tree_desc_internal(struct tree_desc *desc,
+				   const struct object_id *oid,
+				   const void *buffer, unsigned long size,
+				   struct strbuf *err,
 				   enum tree_desc_flags flags)
 {
+	desc->algo = (oid && oid->algo) ? &hash_algos[oid->algo] : the_hash_algo;
 	desc->buffer = buffer;
 	desc->size = size;
 	desc->flags = flags;
@@ -71,19 +59,21 @@ static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer,
 	return 0;
 }
 
-void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long size)
+void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
+		    const void *buffer, unsigned long size)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (init_tree_desc_internal(desc, buffer, size, &err, 0))
+	if (init_tree_desc_internal(desc, tree_oid, buffer, size, &err, 0))
 		die("%s", err.buf);
 	strbuf_release(&err);
 }
 
-int init_tree_desc_gently(struct tree_desc *desc, const void *buffer, unsigned long size,
+int init_tree_desc_gently(struct tree_desc *desc, const struct object_id *oid,
+			  const void *buffer, unsigned long size,
 			  enum tree_desc_flags flags)
 {
 	struct strbuf err = STRBUF_INIT;
-	int result = init_tree_desc_internal(desc, buffer, size, &err, flags);
+	int result = init_tree_desc_internal(desc, oid, buffer, size, &err, flags);
 	if (result)
 		error("%s", err.buf);
 	strbuf_release(&err);
@@ -102,7 +92,7 @@ void *fill_tree_descriptor(struct repository *r,
 		if (!buf)
 			die(_("unable to read tree (%s)"), oid_to_hex(oid));
 	}
-	init_tree_desc(desc, buf, size);
+	init_tree_desc(desc, oid, buf, size);
 	return buf;
 }
 
@@ -119,7 +109,7 @@ static void entry_extract(struct tree_desc *t, struct name_entry *a)
 static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err)
 {
 	const void *buf = desc->buffer;
-	const unsigned char *end = (const unsigned char *)desc->entry.path + desc->entry.pathlen + 1 + the_hash_algo->rawsz;
+	const unsigned char *end = (const unsigned char *)desc->entry.path + desc->entry.pathlen + 1 + desc->algo->rawsz;
 	unsigned long size = desc->size;
 	unsigned long len = end - (const unsigned char *)buf;
 
@@ -633,7 +623,7 @@ int get_tree_entry(struct repository *r,
 		retval = -1;
 	} else {
 		struct tree_desc t;
-		init_tree_desc(&t, tree, size);
+		init_tree_desc(&t, tree_oid, tree, size);
 		retval = find_tree_entry(r, &t, name, oid, mode);
 	}
 	free(tree);
@@ -676,7 +666,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 	struct tree_desc t;
 	int follows_remaining = GET_TREE_ENTRY_FOLLOW_SYMLINKS_MAX_LINKS;
 
-	init_tree_desc(&t, NULL, 0UL);
+	init_tree_desc(&t, NULL, NULL, 0UL);
 	strbuf_addstr(&namebuf, name);
 	oidcpy(&current_tree_oid, tree_oid);
 
@@ -712,7 +702,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 				goto done;
 
 			/* descend */
-			init_tree_desc(&t, tree, size);
+			init_tree_desc(&t, &current_tree_oid, tree, size);
 		}
 
 		/* Handle symlinks to e.g. a//b by removing leading slashes */
@@ -746,7 +736,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 			free(parent->tree);
 			parents_nr--;
 			parent = &parents[parents_nr - 1];
-			init_tree_desc(&t, parent->tree, parent->size);
+			init_tree_desc(&t, &parent->oid, parent->tree, parent->size);
 			strbuf_remove(&namebuf, 0, remainder ? 3 : 2);
 			continue;
 		}
@@ -826,7 +816,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 			contents_start = contents;
 
 			parent = &parents[parents_nr - 1];
-			init_tree_desc(&t, parent->tree, parent->size);
+			init_tree_desc(&t, &parent->oid, parent->tree, parent->size);
 			strbuf_splice(&namebuf, 0, len,
 				      contents_start, link_len);
 			if (remainder)

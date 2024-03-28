@@ -591,6 +591,25 @@ static enum extension_result handle_extension(const char *var,
 				     "extensions.objectformat", value);
 		data->hash_algo = format;
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "compatobjectformat")) {
+		struct string_list_item *item;
+		int format;
+
+		if (!value)
+			return config_error_nonbool(var);
+		format = hash_algo_by_name(value);
+		if (format == GIT_HASH_UNKNOWN)
+			return error(_("invalid value for '%s': '%s'"),
+				     "extensions.compatobjectformat", value);
+		/* For now only support compatObjectFormat being specified once. */
+		for_each_string_list_item(item, &data->v1_only_extensions) {
+			if (!strcmp(item->string, "compatobjectformat"))
+				return error(_("'%s' already specified as '%s'"),
+					"extensions.compatobjectformat",
+					hash_algos[data->compat_hash_algo].name);
+		}
+		data->compat_hash_algo = format;
+		return EXTENSION_OK;
 	} else if (!strcmp(ext, "refstorage")) {
 		unsigned int format;
 
@@ -1603,6 +1622,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		if (startup_info->have_repository) {
 			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
+			repo_set_compat_hash_algo(the_repository,
+						  repo_fmt.compat_hash_algo);
 			repo_set_ref_storage_format(the_repository,
 						    repo_fmt.ref_storage_format);
 			the_repository->repository_format_worktree_config =
@@ -1698,6 +1719,7 @@ void check_repository_format(struct repository_format *fmt)
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
 	repo_set_hash_algo(the_repository, fmt->hash_algo);
+	repo_set_compat_hash_algo(the_repository, fmt->compat_hash_algo);
 	repo_set_ref_storage_format(the_repository,
 				    fmt->ref_storage_format);
 	the_repository->repository_format_worktree_config =

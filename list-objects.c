@@ -102,7 +102,7 @@ static void process_tree_contents(struct traversal_context *ctx,
 	enum interesting match = ctx->revs->diffopt.pathspec.nr == 0 ?
 		all_entries_interesting : entry_not_interesting;
 
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
 		if (match != all_entries_interesting) {

@@ -115,6 +115,7 @@ struct repository_format {
 	int worktree_config;
 	int is_bare;
 	int hash_algo;
+	int compat_hash_algo;
 	unsigned int ref_storage_format;
 	int sparse_index;
 	char *work_tree;

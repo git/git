@@ -447,7 +447,7 @@ static int update_one(struct cache_tree *it,
 		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
 				 OBJ_TREE, &it->oid);
 	} else if (write_object_file_flags(buffer.buf, buffer.len, OBJ_TREE,
-					   &it->oid, flags & WRITE_TREE_SILENT
+					   &it->oid, NULL, flags & WRITE_TREE_SILENT
 					   ? HASH_SILENT : 0)) {
 		strbuf_release(&buffer);
 		return -1;
@@ -769,7 +769,7 @@ static void prime_cache_tree_rec(struct repository *r,
 
 	oidcpy(&it->oid, &tree->object.oid);
 
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	cnt = 0;
 	while (tree_entry(&desc, &entry)) {
 		if (!S_ISDIR(entry.mode))

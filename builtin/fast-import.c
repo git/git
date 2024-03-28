@@ -1236,20 +1236,6 @@ static void *gfi_unpack_entry(
 	return unpack_entry(the_repository, p, oe->idx.offset, &type, sizep);
 }
 
-static const char *get_mode(const char *str, uint16_t *modep)
-{
-	unsigned char c;
-	uint16_t mode = 0;
-
-	while ((c = *str++) != ' ') {
-		if (c < '0' || c > '7')
-			return NULL;
-		mode = (mode << 3) + (c - '0');
-	}
-	*modep = mode;
-	return str;
-}
-
 static void load_tree(struct tree_entry *root)
 {
 	struct object_id *oid = &root->versions[1].oid;
@@ -1287,7 +1273,7 @@ static void load_tree(struct tree_entry *root)
 		t->entries[t->entry_count++] = e;
 
 		e->tree = NULL;
-		c = get_mode(c, &e->versions[1].mode);
+		c = parse_mode(c, &e->versions[1].mode);
 		if (!c)
 			die("Corrupt mode in %s", oid_to_hex(oid));
 		e->versions[0].mode = e->versions[1].mode;
@@ -2280,7 +2266,7 @@ static void file_change_m(const char *p, struct branch *b)
 	struct object_id oid;
 	uint16_t mode, inline_data = 0;
 
-	p = get_mode(p, &mode);
+	p = parse_mode(p, &mode);
 	if (!p)
 		die("Corrupt mode: %s", command_buf.buf);
 	switch (mode) {

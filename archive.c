@@ -339,7 +339,8 @@ int write_archive_entries(struct archiver_args *args,
 		opts.src_index = args->repo->index;
 		opts.dst_index = args->repo->index;
 		opts.fn = oneway_merge;
-		init_tree_desc(&t, args->tree->buffer, args->tree->size);
+		init_tree_desc(&t, &args->tree->object.oid,
+			       args->tree->buffer, args->tree->size);
 		if (unpack_trees(1, &t, &opts))
 			return -1;
 		git_attr_set_direction(GIT_ATTR_INDEX);

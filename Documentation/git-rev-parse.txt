@@ -159,6 +159,18 @@ for another option.
 	unfortunately named tag "master"), and shows them as full
 	refnames (e.g. "refs/heads/master").
 
+--output-object-format=(sha1|sha256|storage)::
+
+	Allow oids to be input from any object format that the current
+	repository supports.
+
+	Specifying "sha1" translates if necessary and returns a sha1 oid.
+
+	Specifying "sha256" translates if necessary and returns a sha256 oid.
+
+	Specifying "storage" translates if necessary and returns an oid in
+	encoded in the storage hash algorithm.
+
 Options for Objects
 ~~~~~~~~~~~~~~~~~~~
 

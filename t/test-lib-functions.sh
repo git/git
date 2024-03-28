@@ -1655,7 +1655,16 @@ test_set_hash () {
 
 # Detect the hash algorithm in use.
 test_detect_hash () {
-	test_hash_algo="${GIT_TEST_DEFAULT_HASH:-sha1}"
+	case "$GIT_TEST_DEFAULT_HASH" in
+	"sha256")
+	    test_hash_algo=sha256
+	    test_compat_hash_algo=sha1
+	    ;;
+	*)
+	    test_hash_algo=sha1
+	    test_compat_hash_algo=sha256
+	    ;;
+	esac
 }
 
 # Detect the hash algorithm in use.
@@ -1712,6 +1721,12 @@ test_oid () {
 	local algo="${test_hash_algo}" &&
 
 	case "$1" in
+	--hash=storage)
+		algo="$test_hash_algo" &&
+		shift;;
+	--hash=compat)
+		algo="$test_compat_hash_algo" &&
+		shift;;
 	--hash=*)
 		algo="${1#--hash=}" &&
 		shift;;

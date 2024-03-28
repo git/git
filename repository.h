@@ -163,6 +163,9 @@ struct repository {
 	/* Repository's current hash algorithm, as serialized on disk. */
 	const struct git_hash_algo *hash_algo;
 
+	/* Repository's compatibility hash algorithm. */
+	const struct git_hash_algo *compat_hash_algo;
+
 	/* Repository's reference storage format, as serialized on disk. */
 	unsigned int ref_storage_format;
 
@@ -205,6 +208,7 @@ void repo_set_gitdir(struct repository *repo, const char *root,
 		     const struct set_gitdir_args *extra_args);
 void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
+void repo_set_compat_hash_algo(struct repository *repo, int compat_algo);
 void repo_set_ref_storage_format(struct repository *repo, unsigned int format);
 void initialize_the_repository(void);
 RESULT_MUST_BE_USED

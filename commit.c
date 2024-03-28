@@ -27,6 +27,7 @@
 #include "tree.h"
 #include "hook.h"
 #include "parse.h"
+#include "object-file-convert.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -1113,12 +1114,11 @@ static const char *gpg_sig_headers[] = {
 	"gpgsig-sha256",
 };
 
-int sign_with_header(struct strbuf *buf, const char *keyid)
+int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct git_hash_algo *algo)
 {
-	struct strbuf sig = STRBUF_INIT;
 	int inspos, copypos;
 	const char *eoh;
-	const char *gpg_sig_header = gpg_sig_headers[hash_algo_by_ptr(the_hash_algo)];
+	const char *gpg_sig_header = gpg_sig_headers[hash_algo_by_ptr(algo)];
 	int gpg_sig_header_len = strlen(gpg_sig_header);
 
 	/* find the end of the header */
@@ -1128,15 +1128,8 @@ int sign_with_header(struct strbuf *buf, const char *keyid)
 	else
 		inspos = eoh - buf->buf + 1;
 
-	if (!keyid || !*keyid)
-		keyid = get_signing_key();
-	if (sign_buffer(buf, &sig, keyid)) {
-		strbuf_release(&sig);
-		return -1;
-	}
-
-	for (copypos = 0; sig.buf[copypos]; ) {
-		const char *bol = sig.buf + copypos;
+	for (copypos = 0; sig->buf[copypos]; ) {
+		const char *bol = sig->buf + copypos;
 		const char *eol = strchrnul(bol, '\n');
 		int len = (eol - bol) + !!*eol;
 
@@ -1149,11 +1142,17 @@ int sign_with_header(struct strbuf *buf, const char *keyid)
 		inspos += len;
 		copypos += len;
 	}
-	strbuf_release(&sig);
 	return 0;
 }
 
-
+static int sign_commit_to_strbuf(struct strbuf *sig, struct strbuf *buf, const char *keyid)
+{
+	if (!keyid || !*keyid)
+		keyid = get_signing_key();
+	if (sign_buffer(buf, sig, keyid))
+		return -1;
+	return 0;
+}
 
 int parse_signed_commit(const struct commit *commit,
 			struct strbuf *payload, struct strbuf *signature,
@@ -1367,6 +1366,39 @@ void append_merge_tag_headers(struct commit_list *parents,
 		handle_signed_tag(parent, tail);
 		parents = parents->next;
 	}
+}
+
+static int convert_commit_extra_headers(struct commit_extra_header *orig,
+					struct commit_extra_header **result)
+{
+	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
+	const struct git_hash_algo *algo = the_repository->hash_algo;
+	struct commit_extra_header *extra = NULL, **tail = &extra;
+	struct strbuf out = STRBUF_INIT;
+	while (orig) {
+		struct commit_extra_header *new;
+		CALLOC_ARRAY(new, 1);
+		if (!strcmp(orig->key, "mergetag")) {
+			if (convert_object_file(&out, algo, compat,
+						orig->value, orig->len,
+						OBJ_TAG, 1)) {
+				free(new);
+				free_commit_extra_headers(extra);
+				return -1;
+			}
+			new->key = xstrdup("mergetag");
+			new->value = strbuf_detach(&out, &new->len);
+		} else {
+			new->key = xstrdup(orig->key);
+			new->len = orig->len;
+			new->value = xmemdupz(orig->value, orig->len);
+		}
+		*tail = new;
+		tail = &new->next;
+		orig = orig->next;
+	}
+	*result = extra;
+	return 0;
 }
 
 static void add_extra_header(struct strbuf *buffer,
@@ -1612,6 +1644,49 @@ N_("Warning: commit message did not conform to UTF-8.\n"
    "You may want to amend it after fixing the message, or set the config\n"
    "variable i18n.commitEncoding to the encoding your project uses.\n");
 
+static void write_commit_tree(struct strbuf *buffer, const char *msg, size_t msg_len,
+			      const struct object_id *tree,
+			      const struct object_id *parents, size_t parents_len,
+			      const char *author, const char *committer,
+			      struct commit_extra_header *extra)
+{
+	int encoding_is_utf8;
+	size_t i;
+
+	/* Not having i18n.commitencoding is the same as having utf-8 */
+	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
+
+	strbuf_grow(buffer, 8192); /* should avoid reallocs for the headers */
+	strbuf_addf(buffer, "tree %s\n", oid_to_hex(tree));
+
+	/*
+	 * NOTE! This ordering means that the same exact tree merged with a
+	 * different order of parents will be a _different_ changeset even
+	 * if everything else stays the same.
+	 */
+	for (i = 0; i < parents_len; i++)
+		strbuf_addf(buffer, "parent %s\n", oid_to_hex(&parents[i]));
+
+	/* Person/date information */
+	if (!author)
+		author = git_author_info(IDENT_STRICT);
+	strbuf_addf(buffer, "author %s\n", author);
+	if (!committer)
+		committer = git_committer_info(IDENT_STRICT);
+	strbuf_addf(buffer, "committer %s\n", committer);
+	if (!encoding_is_utf8)
+		strbuf_addf(buffer, "encoding %s\n", git_commit_encoding);
+
+	while (extra) {
+		add_extra_header(buffer, extra);
+		extra = extra->next;
+	}
+	strbuf_addch(buffer, '\n');
+
+	/* And add the comment */
+	strbuf_add(buffer, msg, msg_len);
+}
+
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
 			 struct commit_list *parents, struct object_id *ret,
@@ -1619,63 +1694,119 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 			 const char *sign_commit,
 			 struct commit_extra_header *extra)
 {
-	int result;
+	struct repository *r = the_repository;
+	int result = 0;
 	int encoding_is_utf8;
-	struct strbuf buffer;
+	struct strbuf buffer = STRBUF_INIT, compat_buffer = STRBUF_INIT;
+	struct strbuf sig = STRBUF_INIT, compat_sig = STRBUF_INIT;
+	struct object_id *parent_buf = NULL, *compat_oid = NULL;
+	struct object_id compat_oid_buf;
+	size_t i, nparents;
+
+	/* Not having i18n.commitencoding is the same as having utf-8 */
+	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
 
 	assert_oid_type(tree, OBJ_TREE);
 
 	if (memchr(msg, '\0', msg_len))
 		return error("a NUL byte in commit log message not allowed.");
 
-	/* Not having i18n.commitencoding is the same as having utf-8 */
-	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
-
-	strbuf_init(&buffer, 8192); /* should avoid reallocs for the headers */
-	strbuf_addf(&buffer, "tree %s\n", oid_to_hex(tree));
-
-	/*
-	 * NOTE! This ordering means that the same exact tree merged with a
-	 * different order of parents will be a _different_ changeset even
-	 * if everything else stays the same.
-	 */
+	nparents = commit_list_count(parents);
+	CALLOC_ARRAY(parent_buf, nparents);
+	i = 0;
 	while (parents) {
 		struct commit *parent = pop_commit(&parents);
-		strbuf_addf(&buffer, "parent %s\n",
-			    oid_to_hex(&parent->object.oid));
+		oidcpy(&parent_buf[i++], &parent->object.oid);
 	}
 
-	/* Person/date information */
-	if (!author)
-		author = git_author_info(IDENT_STRICT);
-	strbuf_addf(&buffer, "author %s\n", author);
-	if (!committer)
-		committer = git_committer_info(IDENT_STRICT);
-	strbuf_addf(&buffer, "committer %s\n", committer);
-	if (!encoding_is_utf8)
-		strbuf_addf(&buffer, "encoding %s\n", git_commit_encoding);
-
-	while (extra) {
-		add_extra_header(&buffer, extra);
-		extra = extra->next;
-	}
-	strbuf_addch(&buffer, '\n');
-
-	/* And add the comment */
-	strbuf_add(&buffer, msg, msg_len);
-
-	/* And check the encoding */
-	if (encoding_is_utf8 && !verify_utf8(&buffer))
-		fprintf(stderr, _(commit_utf8_warn));
-
-	if (sign_commit && sign_with_header(&buffer, sign_commit)) {
+	write_commit_tree(&buffer, msg, msg_len, tree, parent_buf, nparents, author, committer, extra);
+	if (sign_commit && sign_commit_to_strbuf(&sig, &buffer, sign_commit)) {
 		result = -1;
 		goto out;
 	}
+	if (r->compat_hash_algo) {
+		struct commit_extra_header *compat_extra = NULL;
+		struct object_id mapped_tree;
+		struct object_id *mapped_parents;
 
-	result = write_object_file(buffer.buf, buffer.len, OBJ_COMMIT, ret);
+		CALLOC_ARRAY(mapped_parents, nparents);
+
+		if (repo_oid_to_algop(r, tree, r->compat_hash_algo, &mapped_tree)) {
+			result = -1;
+			free(mapped_parents);
+			goto out;
+		}
+		for (i = 0; i < nparents; i++)
+			if (repo_oid_to_algop(r, &parent_buf[i], r->compat_hash_algo, &mapped_parents[i])) {
+				result = -1;
+				free(mapped_parents);
+				goto out;
+			}
+		if (convert_commit_extra_headers(extra, &compat_extra)) {
+			result = -1;
+			free(mapped_parents);
+			goto out;
+		}
+		write_commit_tree(&compat_buffer, msg, msg_len, &mapped_tree,
+				  mapped_parents, nparents, author, committer, compat_extra);
+		free_commit_extra_headers(compat_extra);
+		free(mapped_parents);
+
+		if (sign_commit && sign_commit_to_strbuf(&compat_sig, &compat_buffer, sign_commit)) {
+			result = -1;
+			goto out;
+		}
+	}
+
+	if (sign_commit) {
+		struct sig_pairs {
+			struct strbuf *sig;
+			const struct git_hash_algo *algo;
+		} bufs [2] = {
+			{ &compat_sig, r->compat_hash_algo },
+			{ &sig, r->hash_algo },
+		};
+		int i;
+
+		/*
+		 * We write algorithms in the order they were implemented in
+		 * Git to produce a stable hash when multiple algorithms are
+		 * used.
+		 */
+		if (r->compat_hash_algo && hash_algo_by_ptr(bufs[0].algo) > hash_algo_by_ptr(bufs[1].algo))
+			SWAP(bufs[0], bufs[1]);
+
+		/*
+		 * We traverse each algorithm in order, and apply the signature
+		 * to each buffer.
+		 */
+		for (i = 0; i < ARRAY_SIZE(bufs); i++) {
+			if (!bufs[i].algo)
+				continue;
+			add_header_signature(&buffer, bufs[i].sig, bufs[i].algo);
+			if (r->compat_hash_algo)
+				add_header_signature(&compat_buffer, bufs[i].sig, bufs[i].algo);
+		}
+	}
+
+	/* And check the encoding. */
+	if (encoding_is_utf8 && (!verify_utf8(&buffer) || !verify_utf8(&compat_buffer)))
+		fprintf(stderr, _(commit_utf8_warn));
+
+	if (r->compat_hash_algo) {
+		hash_object_file(r->compat_hash_algo, compat_buffer.buf, compat_buffer.len,
+			OBJ_COMMIT, &compat_oid_buf);
+		compat_oid = &compat_oid_buf;
+	}
+
+	result = write_object_file_flags(buffer.buf, buffer.len, OBJ_COMMIT,
+					 ret, compat_oid, 0);
 out:
+	free(parent_buf);
 	strbuf_release(&buffer);
+	strbuf_release(&compat_buffer);
+	strbuf_release(&sig);
+	strbuf_release(&compat_sig);
 	return result;
 }
 

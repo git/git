@@ -706,7 +706,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 			       NULL);
 	if (parse_tree(tree) < 0)
 		return 128;
-	init_tree_desc(&tree_desc, tree->buffer, tree->size);
+	init_tree_desc(&tree_desc, &tree->object.oid, tree->buffer, tree->size);
 	switch (unpack_trees(1, &tree_desc, &opts)) {
 	case -2:
 		*writeout_error = 1;
@@ -826,11 +826,13 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			die(_("unable to parse commit %s"),
 				oid_to_hex(old_commit_oid));
 
-		init_tree_desc(&trees[0], tree->buffer, tree->size);
+		init_tree_desc(&trees[0], &tree->object.oid,
+			       tree->buffer, tree->size);
 		if (parse_tree(new_tree) < 0)
 			exit(128);
 		tree = new_tree;
-		init_tree_desc(&trees[1], tree->buffer, tree->size);
+		init_tree_desc(&trees[1], &tree->object.oid,
+			       tree->buffer, tree->size);
 
 		ret = unpack_trees(2, trees, &topts);
 		clear_unpack_trees_porcelain(&topts);

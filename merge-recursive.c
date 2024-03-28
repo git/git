@@ -407,7 +407,7 @@ static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
 {
 	if (parse_tree(tree) < 0)
 		exit(128);
-	init_tree_desc(desc, tree->buffer, tree->size);
+	init_tree_desc(desc, &tree->object.oid, tree->buffer, tree->size);
 }
 
 static int unpack_trees_start(struct merge_options *opt,

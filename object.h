@@ -190,6 +190,24 @@ void *create_object(struct repository *r, const struct object_id *oid, void *obj
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
 
+
+static inline const char *parse_mode(const char *str, uint16_t *modep)
+{
+	unsigned char c;
+	unsigned int mode = 0;
+
+	if (*str == ' ')
+		return NULL;
+
+	while ((c = *str++) != ' ') {
+		if (c < '0' || c > '7')
+			return NULL;
+		mode = (mode << 3) + (c - '0');
+	}
+	*modep = mode;
+	return str;
+}
+
 /*
  * Returns the object, having parsed it to find out what it is.
  *

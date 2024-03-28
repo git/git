@@ -375,6 +375,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	struct ls_tree_cmdmode_to_fmt *m2f = ls_tree_cmdmode_format;
+	struct object_context obj_context;
 	int ret;
 
 	git_config(git_default_config, NULL);
@@ -406,7 +407,9 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			ls_tree_usage, ls_tree_options);
 	if (argc < 1)
 		usage_with_options(ls_tree_usage, ls_tree_options);
-	if (repo_get_oid(the_repository, argv[0], &oid))
+	if (get_oid_with_context(the_repository, argv[0],
+				 GET_OID_HASH_ANY, &oid,
+				 &obj_context))
 		die("Not a valid object name %s", argv[0]);
 
 	/*

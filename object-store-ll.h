@@ -26,6 +26,9 @@ struct object_directory {
 	uint32_t loose_objects_subdir_seen[8]; /* 256 bits */
 	struct oidtree *loose_objects_cache;
 
+	/* Map between object IDs for loose objects. */
+	struct loose_object_map *loose_map;
+
 	/*
 	 * This is a temporary object store created by the tmp_objdir
 	 * facility. Disable ref updates since the objects in the store
@@ -252,11 +255,11 @@ void hash_object_file(const struct git_hash_algo *algo, const void *buf,
 
 int write_object_file_flags(const void *buf, unsigned long len,
 			    enum object_type type, struct object_id *oid,
-			    unsigned flags);
+			    struct object_id *comapt_oid_in, unsigned flags);
 static inline int write_object_file(const void *buf, unsigned long len,
 				    enum object_type type, struct object_id *oid)
 {
-	return write_object_file_flags(buf, len, type, oid, 0);
+	return write_object_file_flags(buf, len, type, oid, NULL, 0);
 }
 
 int write_object_file_literally(const void *buf, unsigned long len,

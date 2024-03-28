@@ -677,7 +677,8 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	cache_tree_free(&the_index.cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		parse_tree(trees[i]);
-		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
+		init_tree_desc(t+i, &trees[i]->object.oid,
+			       trees[i]->buffer, trees[i]->size);
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;

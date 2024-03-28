@@ -740,7 +740,7 @@ static int checkout(int submodule_progress, int filter_submodules)
 		die(_("unable to parse commit %s"), oid_to_hex(&oid));
 	if (parse_tree(tree) < 0)
 		exit(128);
-	init_tree_desc(&t, tree->buffer, tree->size);
+	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts) < 0)
 		die(_("unable to checkout working tree"));
 

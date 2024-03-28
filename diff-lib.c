@@ -562,7 +562,7 @@ static int diff_cache(struct rev_info *revs,
 	opts.pathspec = &revs->diffopt.pathspec;
 	opts.pathspec->recursive = 1;
 
-	init_tree_desc(&t, tree->buffer, tree->size);
+	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	return unpack_trees(1, &t, &opts);
 }
 
