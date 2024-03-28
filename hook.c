@@ -7,20 +7,24 @@ const char *find_hook(const char *name)
 {
 	static struct strbuf path = STRBUF_INIT;
 
+	int found_hook;
+
 	strbuf_reset(&path);
 	strbuf_git_path(&path, "hooks/%s", name);
-	if (access(path.buf, X_OK) < 0) {
+	found_hook = access(path.buf, X_OK) >= 0;
+#ifdef STRIP_EXTENSION
+	if (!found_hook) {
 		int err = errno;
 
-#ifdef STRIP_EXTENSION
 		strbuf_addstr(&path, STRIP_EXTENSION);
-		if (access(path.buf, X_OK) >= 0)
-			return path.buf;
-		if (errno == EACCES)
-			err = errno;
+		found_hook = access(path.buf, X_OK) >= 0;
+		if (!found_hook)
+			errno = err;
+	}
 #endif
 
-		if (err == EACCES && advice_enabled(ADVICE_IGNORED_HOOK)) {
+	if (!found_hook) {
+		if (errno == EACCES && advice_enabled(ADVICE_IGNORED_HOOK)) {
 			static struct string_list advise_given = STRING_LIST_INIT_DUP;
 
 			if (!string_list_lookup(&advise_given, name)) {
