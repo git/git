@@ -1157,22 +1157,45 @@ static void handle_ignored_arg(struct wt_status *s)
 		die(_("Invalid ignored mode '%s'"), ignored_arg);
 }
 
-static void handle_untracked_files_arg(struct wt_status *s)
+static enum untracked_status_type parse_untracked_setting_name(const char *u)
 {
-	if (!untracked_files_arg)
-		; /* default already initialized */
-	else if (!strcmp(untracked_files_arg, "no"))
-		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "normal"))
-		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "all"))
-		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
 	/*
 	 * Please update $__git_untracked_file_modes in
 	 * git-completion.bash when you add new options
 	 */
+	switch (git_parse_maybe_bool(u)) {
+	case 0:
+		u = "no";
+		break;
+	case 1:
+		u = "normal";
+		break;
+	default:
+		break;
+	}
+
+	if (!strcmp(u, "no"))
+		return SHOW_NO_UNTRACKED_FILES;
+	else if (!strcmp(u, "normal"))
+		return SHOW_NORMAL_UNTRACKED_FILES;
+	else if (!strcmp(u, "all"))
+		return SHOW_ALL_UNTRACKED_FILES;
 	else
-		die(_("Invalid untracked files mode '%s'"), untracked_files_arg);
+		return SHOW_UNTRACKED_FILES_ERROR;
+}
+
+static void handle_untracked_files_arg(struct wt_status *s)
+{
+	enum untracked_status_type u;
+
+	if (!untracked_files_arg)
+		return; /* default already initialized */
+
+	u = parse_untracked_setting_name(untracked_files_arg);
+	if (u == SHOW_UNTRACKED_FILES_ERROR)
+		die(_("Invalid untracked files mode '%s'"),
+		    untracked_files_arg);
+	s->show_untracked_files = u;
 }
 
 static const char *read_commit_message(const char *name)
@@ -1455,16 +1478,12 @@ static int git_status_config(const char *k, const char *v,
 		return 0;
 	}
 	if (!strcmp(k, "status.showuntrackedfiles")) {
-		if (!v)
-			return config_error_nonbool(k);
-		else if (!strcmp(v, "no"))
-			s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
-		else if (!strcmp(v, "normal"))
-			s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
-		else if (!strcmp(v, "all"))
-			s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
-		else
+		enum untracked_status_type u;
+
+		u = parse_untracked_setting_name(v);
+		if (u == SHOW_UNTRACKED_FILES_ERROR)
 			return error(_("Invalid untracked files mode '%s'"), v);
+		s->show_untracked_files = u;
 		return 0;
 	}
 	if (!strcmp(k, "diff.renamelimit")) {
