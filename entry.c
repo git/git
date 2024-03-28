@@ -454,7 +454,7 @@ static void mark_colliding_entries(const struct checkout *state,
 			continue;
 
 		if ((trust_ino && !match_stat_data(&dup->ce_stat_data, st)) ||
-		    (!trust_ino && !fspathcmp(ce->name, dup->name))) {
+		    paths_collide(ce->name, dup->name)) {
 			dup->ce_flags |= CE_MATCHED;
 			break;
 		}
