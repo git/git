@@ -19,11 +19,13 @@ static int show(int *v)
 	return v ? *v : MISSING;
 }
 
-static void test_prio_queue(int *input, int *result, size_t input_size)
+static void test_prio_queue(int *input, size_t input_size,
+			    int *result, size_t result_size)
 {
 	struct prio_queue pq = { intcmp };
+	int j = 0;
 
-	for (int i = 0, j = 0; i < input_size; i++) {
+	for (int i = 0; i < input_size; i++) {
 		void *peek, *get;
 		switch(input[i]) {
 		case GET:
@@ -31,16 +33,22 @@ static void test_prio_queue(int *input, int *result, size_t input_size)
 			get = prio_queue_get(&pq);
 			if (!check(peek == get))
 				return;
-			if(!check_int(result[j++], ==, show(get)))
-				test_msg("failed at result[] index %d", j-1);
+			if (!check_uint(j, <, result_size))
+				break;
+			if (!check_int(result[j], ==, show(get)))
+				test_msg("      j: %d", j);
+			j++;
 			break;
 		case DUMP:
 			while ((peek = prio_queue_peek(&pq))) {
 				get = prio_queue_get(&pq);
 				if (!check(peek == get))
 					return;
-				if(!check_int(result[j++], ==, show(get)))
-					test_msg("failed at result[] index %d", j-1);
+				if (!check_uint(j, <, result_size))
+					break;
+				if (!check_int(result[j], ==, show(get)))
+					test_msg("      j: %d", j);
+				j++;
 			}
 			break;
 		case STACK:
@@ -54,6 +62,7 @@ static void test_prio_queue(int *input, int *result, size_t input_size)
 			break;
 		}
 	}
+	check_uint(j, ==, result_size);
 	clear_prio_queue(&pq);
 }
 
@@ -77,7 +86,8 @@ static void test_prio_queue(int *input, int *result, size_t input_size)
 {								\
 	int input[] = {INPUT};					\
 	int result[] = {RESULT};				\
-	test_prio_queue(input, result, ARRAY_SIZE(input));	\
+	test_prio_queue(input, ARRAY_SIZE(input),		\
+			result, ARRAY_SIZE(result));		\
 }
 
 TEST_INPUT(BASIC_INPUT, BASIC_RESULT, basic)
