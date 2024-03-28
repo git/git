@@ -633,8 +633,8 @@ check_prefix () {
 	test_cmp expect actual.paths
 }
 
-test_expect_success 'diff-files does not respect diff.noprefix' '
-	git -c diff.noprefix diff-files -p >actual &&
+test_expect_success 'diff-files does not respect diff.noPrefix' '
+	git -c diff.noPrefix diff-files -p >actual &&
 	check_prefix actual a/file0 b/file0
 '
 
@@ -643,23 +643,58 @@ test_expect_success 'diff-files respects --no-prefix' '
 	check_prefix actual file0 file0
 '
 
-test_expect_success 'diff respects diff.noprefix' '
-	git -c diff.noprefix diff >actual &&
+test_expect_success 'diff respects diff.noPrefix' '
+	git -c diff.noPrefix diff >actual &&
 	check_prefix actual file0 file0
 '
 
-test_expect_success 'diff --default-prefix overrides diff.noprefix' '
-	git -c diff.noprefix diff --default-prefix >actual &&
+test_expect_success 'diff --default-prefix overrides diff.noPrefix' '
+	git -c diff.noPrefix diff --default-prefix >actual &&
 	check_prefix actual a/file0 b/file0
 '
 
-test_expect_success 'diff respects diff.mnemonicprefix' '
-	git -c diff.mnemonicprefix diff >actual &&
+test_expect_success 'diff respects diff.mnemonicPrefix' '
+	git -c diff.mnemonicPrefix diff >actual &&
 	check_prefix actual i/file0 w/file0
 '
 
-test_expect_success 'diff --default-prefix overrides diff.mnemonicprefix' '
-	git -c diff.mnemonicprefix diff --default-prefix >actual &&
+test_expect_success 'diff --default-prefix overrides diff.mnemonicPrefix' '
+	git -c diff.mnemonicPrefix diff --default-prefix >actual &&
+	check_prefix actual a/file0 b/file0
+'
+
+test_expect_success 'diff respects diff.srcPrefix' '
+	git -c diff.srcPrefix=x/ diff >actual &&
+	check_prefix actual x/file0 b/file0
+'
+
+test_expect_success 'diff respects diff.dstPrefix' '
+	git -c diff.dstPrefix=y/ diff >actual &&
+	check_prefix actual a/file0 y/file0
+'
+
+test_expect_success 'diff --src-prefix overrides diff.srcPrefix' '
+	git -c diff.srcPrefix=y/ diff --src-prefix=z/ >actual &&
+	check_prefix actual z/file0 b/file0
+'
+
+test_expect_success 'diff --dst-prefix overrides diff.dstPrefix' '
+	git -c diff.dstPrefix=y/ diff --dst-prefix=z/ >actual &&
+	check_prefix actual a/file0 z/file0
+'
+
+test_expect_success 'diff.{src,dst}Prefix ignored with diff.noPrefix' '
+	git -c diff.dstPrefix=y/ -c diff.srcPrefix=x/ -c diff.noPrefix diff >actual &&
+	check_prefix actual file0 file0
+'
+
+test_expect_success 'diff.{src,dst}Prefix ignored with diff.mnemonicPrefix' '
+	git -c diff.dstPrefix=x/ -c diff.srcPrefix=y/ -c diff.mnemonicPrefix diff >actual &&
+	check_prefix actual i/file0 w/file0
+'
+
+test_expect_success 'diff.{src,dst}Prefix ignored with --default-prefix' '
+	git -c diff.dstPrefix=x/ -c diff.srcPrefix=y/ diff --default-prefix >actual &&
 	check_prefix actual a/file0 b/file0
 '
 
