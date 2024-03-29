@@ -641,15 +641,15 @@ Writing Documentation:
   - Prefer succinctness and matter-of-factly describing functionality
     in the abstract.  E.g.
 
-     --short:: Emit output in the short-format.
+     `--short`:: Emit output in the short-format.
 
     and avoid something like these overly verbose alternatives:
 
-     --short:: Use this to emit output in the short-format.
-     --short:: You can use this to get output in the short-format.
-     --short:: A user who prefers shorter output could....
-     --short:: Should a person and/or program want shorter output, he
-               she/they/it can...
+     `--short`:: Use this to emit output in the short-format.
+     `--short`:: You can use this to get output in the short-format.
+     `--short`:: A user who prefers shorter output could....
+     `--short`:: Should a person and/or program want shorter output, he
+                 she/they/it can...
 
     This practice often eliminates the need to involve human actors in
     your description, but it is a good practice regardless of the
@@ -659,12 +659,12 @@ Writing Documentation:
     addressing the hypothetical user, and possibly "we" when
     discussing how the program might react to the user.  E.g.
 
-      You can use this option instead of --xyz, but we might remove
+      You can use this option instead of `--xyz`, but we might remove
       support for it in future versions.
 
     while keeping in mind that you can probably be less verbose, e.g.
 
-      Use this instead of --xyz. This option might be removed in future
+      Use this instead of `--xyz`. This option might be removed in future
       versions.
 
   - If you still need to refer to an example person that is
@@ -682,85 +682,12 @@ Writing Documentation:
  The same general rule as for code applies -- imitate the existing
  conventions.
 
- A few commented examples follow to provide reference when writing or
- modifying command usage strings and synopsis sections in the manual
- pages:
 
- Placeholders are spelled in lowercase and enclosed in angle brackets:
-   <file>
-   --sort=<key>
-   --abbrev[=<n>]
+Markup:
 
- If a placeholder has multiple words, they are separated by dashes:
-   <new-branch-name>
-   --template=<template-directory>
-
- When a placeholder is cited in text paragraph, it is enclosed in angle
- brackets to remind the reader the reference in the synopsis section.
- For better visibility, the placeholder is typeset in italics:
-   The _<file>_ to be added.
-
- Possibility of multiple occurrences is indicated by three dots:
-   <file>...
-   (One or more of <file>.)
-
- Optional parts are enclosed in square brackets:
-   [<file>...]
-   (Zero or more of <file>.)
-
-   --exec-path[=<path>]
-   (Option with an optional argument.  Note that the "=" is inside the
-   brackets.)
-
-   [<patch>...]
-   (Zero or more of <patch>.  Note that the dots are inside, not
-   outside the brackets.)
-
- Multiple alternatives are indicated with vertical bars:
-   [-q | --quiet]
-   [--utf8 | --no-utf8]
-
- Use spacing around "|" token(s), but not immediately after opening or
- before closing a [] or () pair:
-   Do: [-q | --quiet]
-   Don't: [-q|--quiet]
-
- Don't use spacing around "|" tokens when they're used to separate the
- alternate arguments of an option:
-    Do: --track[=(direct|inherit)]
-    Don't: --track[=(direct | inherit)]
-
- Parentheses are used for grouping:
-   [(<rev> | <range>)...]
-   (Any number of either <rev> or <range>.  Parens are needed to make
-   it clear that "..." pertains to both <rev> and <range>.)
-
-   [(-p <parent>)...]
-   (Any number of option -p, each with one <parent> argument.)
-
-   git remote set-head <name> (-a | -d | <branch>)
-   (One and only one of "-a", "-d" or "<branch>" _must_ (no square
-   brackets) be provided.)
-
- And a somewhat more contrived example:
-   --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]
-   Here "=" is outside the brackets, because "--diff-filter=" is a
-   valid usage.  "*" has its own pair of brackets, because it can
-   (optionally) be specified only when one or more of the letters is
-   also provided.
-
-  A note on notation:
-   Use 'git' (all lowercase) when talking about commands i.e. something
-   the user would type into a shell and use 'Git' (uppercase first letter)
-   when talking about the version control system and its properties.
-
- A few commented examples follow to provide reference when writing or
- modifying paragraphs or option/command explanations that contain options
- or commands:
-
- Literal examples (e.g. use of command-line options, command names,
+ Literal parts (e.g. use of command-line options, command names,
  branch names, URLs, pathnames (files and directories), configuration and
- environment variables) must be typeset in monospace (i.e. wrapped with
+ environment variables) must be typeset as verbatim (i.e. wrapped with
  backticks):
    `--pretty=oneline`
    `git rev-list`
@@ -769,6 +696,7 @@ Writing Documentation:
    `.git/config`
    `GIT_DIR`
    `HEAD`
+   `umask`(2)
 
  An environment variable must be prefixed with "$" only when referring to its
  value and not when referring to the variable itself, in this case there is
@@ -785,7 +713,96 @@ Writing Documentation:
    Incorrect:
       `\--pretty=oneline`
 
-A placeholder is not enclosed in backticks, as it is not a literal.
+ Placeholders are spelled in lowercase and enclosed in
+ angle brackets surrounded by underscores:
+   _<file>_
+   _<commit>_
+
+ If a placeholder has multiple words, they are separated by dashes:
+   _<new-branch-name>_
+   _<template-directory>_
+
+ A placeholder is not enclosed in backticks, as it is not a literal.
+
+ When needed, use a distinctive identifier for placeholders, usually
+ made of a qualification and a type:
+   _<git-dir>_
+   _<key-id>_
+
+ When literal and placeholders are mixed, each markup is applied for
+ each sub-entity. If they are stuck, a special markup, called
+ unconstrained formatting is required.
+ Unconstrained formating for placeholders is __<like-this>__
+ Unconstrained formatting for literal formatting is ++like this++
+   `--jobs` _<n>_
+   ++--sort=++__<key>__
+   __<directory>__++/.git++
+   ++remote.++__<name>__++.mirror++
+
+ caveat: ++ unconstrained format is not verbatim and may expand
+ content. Use Asciidoc escapes inside them.
+
+Synopsis Syntax
+
+ Syntax grammar is formatted neither as literal nor as placeholder.
+
+ A few commented examples follow to provide reference when writing or
+ modifying command usage strings and synopsis sections in the manual
+ pages:
+
+ Possibility of multiple occurrences is indicated by three dots:
+   _<file>_...
+   (One or more of <file>.)
+
+ Optional parts are enclosed in square brackets:
+   [_<file>_...]
+   (Zero or more of <file>.)
+
+   ++--exec-path++[++=++__<path>__]
+   (Option with an optional argument.  Note that the "=" is inside the
+   brackets.)
+
+   [_<patch>_...]
+   (Zero or more of <patch>.  Note that the dots are inside, not
+   outside the brackets.)
+
+ Multiple alternatives are indicated with vertical bars:
+   [`-q` | `--quiet`]
+   [`--utf8` | `--no-utf8`]
+
+ Use spacing around "|" token(s), but not immediately after opening or
+ before closing a [] or () pair:
+   Do: [`-q` | `--quiet`]
+   Don't: [`-q`|`--quiet`]
+
+ Don't use spacing around "|" tokens when they're used to separate the
+ alternate arguments of an option:
+    Do: ++--track++[++=++(`direct`|`inherit`)]`
+    Don't: ++--track++[++=++(`direct` | `inherit`)]
+
+ Parentheses are used for grouping:
+   [(_<rev>_ | _<range>_)...]
+   (Any number of either <rev> or <range>.  Parens are needed to make
+   it clear that "..." pertains to both <rev> and <range>.)
+
+   [(`-p` _<parent>_)...]
+   (Any number of option -p, each with one <parent> argument.)
+
+   `git remote set-head` _<name>_ (`-a` | `-d` | _<branch>_)
+   (One and only one of "-a", "-d" or "<branch>" _must_ (no square
+   brackets) be provided.)
+
+ And a somewhat more contrived example:
+   `--diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]`
+   Here "=" is outside the brackets, because "--diff-filter=" is a
+   valid usage.  "*" has its own pair of brackets, because it can
+   (optionally) be specified only when one or more of the letters is
+   also provided.
+
+  A note on notation:
+   Use 'git' (all lowercase) when talking about commands i.e. something
+   the user would type into a shell and use 'Git' (uppercase first letter)
+   when talking about the version control system and its properties.
 
  If some place in the documentation needs to typeset a command usage
  example with inline substitutions, it is fine to use +monospaced and
