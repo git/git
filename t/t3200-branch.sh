@@ -1154,9 +1154,9 @@ test_expect_success 'avoid ambiguous track and advise' '
 	hint: tracking ref '\''refs/heads/main'\'':
 	hint:   ambi1
 	hint:   ambi2
-	hint: ''
+	hint:
 	hint: This is typically a configuration error.
-	hint: ''
+	hint:
 	hint: To support setting up tracking branches, ensure that
 	hint: different remotes'\'' fetch refspecs map into different
 	hint: tracking namespaces.
