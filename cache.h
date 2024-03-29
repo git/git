@@ -656,6 +656,7 @@ int path_inside_repo(const char *prefix, const char *path);
 #define INIT_DB_QUIET 0x0001
 #define INIT_DB_EXIST_OK 0x0002
 
+const char *get_template_dir(const char *option_template);
 int init_db(const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash_algo,
 	    const char *initial_branch, unsigned int flags);

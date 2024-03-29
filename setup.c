@@ -6,6 +6,7 @@
 #include "chdir-notify.h"
 #include "promisor-remote.h"
 #include "quote.h"
+#include "exec-cmd.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
@@ -1719,4 +1720,35 @@ int daemonize(void)
 	sanitize_stdfds();
 	return 0;
 #endif
+}
+
+#ifndef DEFAULT_GIT_TEMPLATE_DIR
+#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
+#endif
+
+const char *get_template_dir(const char *option_template)
+{
+	const char *template_dir = option_template;
+
+	if (!template_dir)
+		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
+	if (!template_dir) {
+		static const char *init_template_dir;
+		static int initialized;
+
+		if (!initialized) {
+			git_config_get_pathname("init.templatedir",
+						&init_template_dir);
+			initialized = 1;
+		}
+		template_dir = init_template_dir;
+	}
+	if (!template_dir) {
+		static char *dir;
+
+		if (!dir)
+			dir = system_path(DEFAULT_GIT_TEMPLATE_DIR);
+		template_dir = dir;
+	}
+	return template_dir;
 }
