@@ -1726,6 +1726,31 @@ int daemonize(void)
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
 #endif
 
+struct template_dir_cb_data {
+	char *path;
+	int initialized;
+};
+
+static int template_dir_cb(const char *key, const char *value, void *d)
+{
+	struct template_dir_cb_data *data = d;
+
+	if (strcmp(key, "init.templatedir"))
+		return 0;
+
+	if (!value) {
+		data->path = NULL;
+	} else {
+		char *path = NULL;
+
+		FREE_AND_NULL(data->path);
+		if (!git_config_pathname((const char **)&path, key, value))
+			data->path = path ? path : xstrdup(value);
+	}
+
+	return 0;
+}
+
 const char *get_template_dir(const char *option_template)
 {
 	const char *template_dir = option_template;
@@ -1733,15 +1758,13 @@ const char *get_template_dir(const char *option_template)
 	if (!template_dir)
 		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
 	if (!template_dir) {
-		static const char *init_template_dir;
-		static int initialized;
+		static struct template_dir_cb_data data;
 
-		if (!initialized) {
-			git_config_get_pathname("init.templatedir",
-						&init_template_dir);
-			initialized = 1;
+		if (!data.initialized) {
+			git_protected_config(template_dir_cb, &data);
+			data.initialized = 1;
 		}
-		template_dir = init_template_dir;
+		template_dir = data.path;
 	}
 	if (!template_dir) {
 		static char *dir;
