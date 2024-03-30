@@ -28,6 +28,16 @@ test_expect_success 'Test of git add' '
 	touch foo && git add foo
 '
 
+test_expect_success 'Test with no pathspecs' '
+	cat >expect <<-EOF &&
+	Nothing specified, nothing added.
+	hint: Maybe you wanted to say ${SQ}git add .${SQ}?
+	hint: Disable this message with "git config advice.addEmptyPathspec false"
+	EOF
+	git add 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'Post-check that foo is in the index' '
 	git ls-files foo | grep foo
 '
