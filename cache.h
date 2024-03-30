@@ -656,6 +656,7 @@ int path_inside_repo(const char *prefix, const char *path);
 #define INIT_DB_QUIET 0x0001
 #define INIT_DB_EXIST_OK 0x0002
 
+const char *get_template_dir(const char *option_template);
 int init_db(const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash_algo,
 	    const char *initial_branch, unsigned int flags);
@@ -1783,6 +1784,20 @@ void fflush_or_die(FILE *f);
 int copy_fd(int ifd, int ofd);
 int copy_file(const char *dst, const char *src, int mode);
 int copy_file_with_time(const char *dst, const char *src, int mode);
+
+/*
+ * Compare the file mode and contents of two given files.
+ *
+ * If both files are actually symbolic links, the function returns 1 if the link
+ * targets are identical or 0 if they are not.
+ *
+ * If any of the two files cannot be accessed or in case of read failures, this
+ * function returns 0.
+ *
+ * If the file modes and contents are identical, the function returns 1,
+ * otherwise it returns 0.
+ */
+int do_files_match(const char *path1, const char *path2);
 
 void write_or_die(int fd, const void *buf, size_t count);
 void fsync_or_die(int fd, const char *);

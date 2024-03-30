@@ -11,10 +11,6 @@
 #include "parse-options.h"
 #include "worktree.h"
 
-#ifndef DEFAULT_GIT_TEMPLATE_DIR
-#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
-#endif
-
 #ifdef NO_TRUSTABLE_FILEMODE
 #define TEST_FILEMODE 0
 #else
@@ -93,8 +89,9 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 	}
 }
 
-static void copy_templates(const char *template_dir, const char *init_template_dir)
+static void copy_templates(const char *option_template)
 {
+	const char *template_dir = get_template_dir(option_template);
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf template_path = STRBUF_INIT;
 	size_t template_len;
@@ -103,16 +100,8 @@ static void copy_templates(const char *template_dir, const char *init_template_d
 	DIR *dir;
 	char *to_free = NULL;
 
-	if (!template_dir)
-		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
-	if (!template_dir)
-		template_dir = init_template_dir;
-	if (!template_dir)
-		template_dir = to_free = system_path(DEFAULT_GIT_TEMPLATE_DIR);
-	if (!template_dir[0]) {
-		free(to_free);
+	if (!template_dir || !*template_dir)
 		return;
-	}
 
 	strbuf_addstr(&template_path, template_dir);
 	strbuf_complete(&template_path, '/');
@@ -200,7 +189,6 @@ static int create_default_files(const char *template_path,
 	int reinit;
 	int filemode;
 	struct strbuf err = STRBUF_INIT;
-	const char *init_template_dir = NULL;
 	const char *work_tree = get_git_work_tree();
 
 	/*
@@ -212,9 +200,7 @@ static int create_default_files(const char *template_path,
 	 * values (since we've just potentially changed what's available on
 	 * disk).
 	 */
-	git_config_get_pathname("init.templatedir", &init_template_dir);
-	copy_templates(template_path, init_template_dir);
-	free((char *)init_template_dir);
+	copy_templates(template_path);
 	git_config_clear();
 	reset_shared_repository();
 	git_config(git_default_config, NULL);
