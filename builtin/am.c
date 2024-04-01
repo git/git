@@ -1150,19 +1150,23 @@ static const char *msgnum(const struct am_state *state)
 static void NORETURN die_user_resolve(const struct am_state *state)
 {
 	if (state->resolvemsg) {
-		printf_ln("%s", state->resolvemsg);
+		advise_if_enabled(ADVICE_MERGE_CONFLICT, "%s", state->resolvemsg);
 	} else {
 		const char *cmdline = state->interactive ? "git am -i" : "git am";
+		struct strbuf sb = STRBUF_INIT;
 
-		printf_ln(_("When you have resolved this problem, run \"%s --continue\"."), cmdline);
-		printf_ln(_("If you prefer to skip this patch, run \"%s --skip\" instead."), cmdline);
+		strbuf_addf(&sb, _("When you have resolved this problem, run \"%s --continue\".\n"), cmdline);
+		strbuf_addf(&sb, _("If you prefer to skip this patch, run \"%s --skip\" instead.\n"), cmdline);
 
 		if (advice_enabled(ADVICE_AM_WORK_DIR) &&
 		    is_empty_or_missing_file(am_path(state, "patch")) &&
 		    !repo_index_has_changes(the_repository, NULL, NULL))
-			printf_ln(_("To record the empty patch as an empty commit, run \"%s --allow-empty\"."), cmdline);
+			strbuf_addf(&sb, _("To record the empty patch as an empty commit, run \"%s --allow-empty\".\n"), cmdline);
 
-		printf_ln(_("To restore the original branch and stop patching, run \"%s --abort\"."), cmdline);
+		strbuf_addf(&sb, _("To restore the original branch and stop patching, run \"%s --abort\"."), cmdline);
+
+		advise_if_enabled(ADVICE_MERGE_CONFLICT, "%s", sb.buf);
+		strbuf_release(&sb);
 	}
 
 	exit(128);

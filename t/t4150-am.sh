@@ -1224,8 +1224,8 @@ test_expect_success 'record as an empty commit when meeting e-mail message that 
 
 test_expect_success 'skip an empty patch in the middle of an am session' '
 	git checkout empty-commit^ &&
-	test_must_fail git am empty-commit.patch >err &&
-	grep "Patch is empty." err &&
+	test_must_fail git am empty-commit.patch >out 2>err &&
+	grep "Patch is empty." out &&
 	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
 	git am --skip &&
 	test_path_is_missing .git/rebase-apply &&
@@ -1236,8 +1236,8 @@ test_expect_success 'skip an empty patch in the middle of an am session' '
 
 test_expect_success 'record an empty patch as an empty commit in the middle of an am session' '
 	git checkout empty-commit^ &&
-	test_must_fail git am empty-commit.patch >err &&
-	grep "Patch is empty." err &&
+	test_must_fail git am empty-commit.patch >out 2>err &&
+	grep "Patch is empty." out &&
 	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
 	git am --allow-empty >output &&
 	grep "No changes - recorded it as an empty commit." output &&

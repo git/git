@@ -479,7 +479,7 @@ static void print_advice(struct repository *r, int show_hint,
 		msg = getenv("GIT_CHERRY_PICK_HELP");
 
 	if (msg) {
-		advise("%s\n", msg);
+		advise_if_enabled(ADVICE_MERGE_CONFLICT, "%s", msg);
 		/*
 		 * A conflict has occurred but the porcelain
 		 * (typically rebase --interactive) wants to take care
@@ -492,22 +492,25 @@ static void print_advice(struct repository *r, int show_hint,
 
 	if (show_hint) {
 		if (opts->no_commit)
-			advise(_("after resolving the conflicts, mark the corrected paths\n"
-				 "with 'git add <paths>' or 'git rm <paths>'"));
+			advise_if_enabled(ADVICE_MERGE_CONFLICT,
+					  _("after resolving the conflicts, mark the corrected paths\n"
+					    "with 'git add <paths>' or 'git rm <paths>'"));
 		else if (opts->action == REPLAY_PICK)
-			advise(_("After resolving the conflicts, mark them with\n"
-				 "\"git add/rm <pathspec>\", then run\n"
-				 "\"git cherry-pick --continue\".\n"
-				 "You can instead skip this commit with \"git cherry-pick --skip\".\n"
-				 "To abort and get back to the state before \"git cherry-pick\",\n"
-				 "run \"git cherry-pick --abort\"."));
+			advise_if_enabled(ADVICE_MERGE_CONFLICT,
+					  _("After resolving the conflicts, mark them with\n"
+					    "\"git add/rm <pathspec>\", then run\n"
+					    "\"git cherry-pick --continue\".\n"
+					    "You can instead skip this commit with \"git cherry-pick --skip\".\n"
+					    "To abort and get back to the state before \"git cherry-pick\",\n"
+					    "run \"git cherry-pick --abort\"."));
 		else if (opts->action == REPLAY_REVERT)
-			advise(_("After resolving the conflicts, mark them with\n"
-				 "\"git add/rm <pathspec>\", then run\n"
-				 "\"git revert --continue\".\n"
-				 "You can instead skip this commit with \"git revert --skip\".\n"
-				 "To abort and get back to the state before \"git revert\",\n"
-				 "run \"git revert --abort\"."));
+			advise_if_enabled(ADVICE_MERGE_CONFLICT,
+					  _("After resolving the conflicts, mark them with\n"
+					    "\"git add/rm <pathspec>\", then run\n"
+					    "\"git revert --continue\".\n"
+					    "You can instead skip this commit with \"git revert --skip\".\n"
+					    "To abort and get back to the state before \"git revert\",\n"
+					    "run \"git revert --abort\"."));
 		else
 			BUG("unexpected pick action in print_advice()");
 	}

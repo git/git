@@ -59,7 +59,7 @@ test_expect_success setup '
 # Also, it had the unwanted side-effect of deleting f.
 test_expect_success 'try to apply corrupted patch' '
 	test_when_finished "git am --abort" &&
-	test_must_fail git -c advice.amWorkDir=false am bad-patch.diff 2>actual &&
+	test_must_fail git -c advice.amWorkDir=false -c advice.mergeConflict=false am bad-patch.diff 2>actual &&
 	echo "error: git diff header lacks filename information (line 4)" >expected &&
 	test_path_is_file f &&
 	test_cmp expected actual
