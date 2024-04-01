@@ -11,6 +11,98 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+test_expect_success 'setup whitespace config' '
+	sed -e "s/^|//" \
+	    -e "s/[$]$//" \
+	    -e "s/X/	/g" >.git/config <<-\EOF
+	[section]
+	|	solid = rock
+	|	sparse = big XX blue
+	|	sparseAndTail = big XX blue $
+	|	sparseAndTailQuoted = "big XX blue "
+	|	sparseAndBiggerTail = big XX blue X X
+	|	sparseAndBiggerTailQuoted = "big XX blue X X"
+	|	sparseAndBiggerTailQuotedPlus = "big XX blue X X"X $
+	|	headAndTail = Xbig blue $
+	|	headAndTailQuoted = "Xbig blue "
+	|	headAndTailQuotedPlus = "Xbig blue " $
+	|	annotated = big blueX# to be discarded
+	|	annotatedQuoted = "big blue"X# to be discarded
+	EOF
+'
+
+test_expect_success 'no internal whitespace' '
+	echo "rock" >expect &&
+	git config --get section.solid >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'internal whitespace' '
+	echo "big QQ blue" | q_to_tab >expect &&
+	git config --get section.sparse >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'internal and trailing whitespace' '
+	echo "big QQ blue" | q_to_tab >expect &&
+	git config --get section.sparseAndTail >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'internal and trailing whitespace, all quoted' '
+	echo "big QQ blue " | q_to_tab >expect &&
+	git config --get section.sparseAndTailQuoted >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'internal and more trailing whitespace' '
+	echo "big QQ blue" | q_to_tab >expect &&
+	git config --get section.sparseAndBiggerTail >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'internal and more trailing whitespace, all quoted' '
+	echo "big QQ blue Q Q" | q_to_tab >expect &&
+	git config --get section.sparseAndBiggerTailQuoted >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'internal and more trailing whitespace, not all quoted' '
+	echo "big QQ blue Q Q" | q_to_tab >expect &&
+	git config --get section.sparseAndBiggerTailQuotedPlus >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'leading and trailing whitespace' '
+	echo "big blue" >expect &&
+	git config --get section.headAndTail >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'leading and trailing whitespace, all quoted' '
+	echo "Qbig blue " | q_to_tab >expect &&
+	git config --get section.headAndTailQuoted >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'leading and trailing whitespace, not all quoted' '
+	echo "Qbig blue " | q_to_tab >expect &&
+	git config --get section.headAndTailQuotedPlus >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'inline comment' '
+	echo "big blue" >expect &&
+	git config --get section.annotated >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'inline comment, quoted' '
+	echo "big blue" >expect &&
+	git config --get section.annotatedQuoted >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'clear default config' '
 	rm -f .git/config
 '
@@ -1066,9 +1158,25 @@ test_expect_success '--null --get-regexp' '
 	test_cmp expect result
 '
 
-test_expect_success 'inner whitespace kept verbatim' '
-	git config section.val "foo 	  bar" &&
-	test_cmp_config "foo 	  bar" section.val
+test_expect_success 'inner whitespace kept verbatim, spaces only' '
+	echo "foo   bar" >expect &&
+	git config section.val "foo   bar" &&
+	git config --get section.val >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'inner whitespace kept verbatim, horizontal tabs only' '
+	echo "fooQQbar" | q_to_tab >expect &&
+	git config section.val "$(cat expect)" &&
+	git config --get section.val >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'inner whitespace kept verbatim, horizontal tabs and spaces' '
+	echo "foo Q  bar" | q_to_tab >expect &&
+	git config section.val "$(cat expect)" &&
+	git config --get section.val >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success SYMLINKS 'symlinked configuration' '
