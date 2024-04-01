@@ -528,7 +528,7 @@ __git_ps1 ()
 	fi
 
 	local conflict="" # state indicator for unresolved conflicts
-	if [[ "${GIT_PS1_SHOWCONFLICTSTATE}" == "yes" ]] &&
+	if [[ "${GIT_PS1_SHOWCONFLICTSTATE-}" == "yes" ]] &&
 	   [[ $(git ls-files --unmerged 2>/dev/null) ]]; then
 		conflict="|CONFLICT"
 	fi
