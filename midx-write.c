@@ -1349,6 +1349,24 @@ static int compare_by_mtime(const void *a_, const void *b_)
 	return 0;
 }
 
+static int want_included_pack(struct repository *r,
+			      struct multi_pack_index *m,
+			      int pack_kept_objects,
+			      uint32_t pack_int_id)
+{
+	struct packed_git *p;
+	if (prepare_midx_pack(r, m, pack_int_id))
+		return 0;
+	p = m->packs[pack_int_id];
+	if (!pack_kept_objects && p->pack_keep)
+		return 0;
+	if (p->is_cruft)
+		return 0;
+	if (open_pack_index(p) || !p->num_objects)
+		return 0;
+	return 1;
+}
+
 static int fill_included_packs_all(struct repository *r,
 				   struct multi_pack_index *m,
 				   unsigned char *include_pack)
@@ -1359,11 +1377,7 @@ static int fill_included_packs_all(struct repository *r,
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
 	for (i = 0; i < m->num_packs; i++) {
-		if (prepare_midx_pack(r, m, i))
-			continue;
-		if (!pack_kept_objects && m->packs[i]->pack_keep)
-			continue;
-		if (m->packs[i]->is_cruft)
+		if (!want_included_pack(r, m, pack_kept_objects, i))
 			continue;
 
 		include_pack[i] = 1;
@@ -1410,13 +1424,7 @@ static int fill_included_packs_batch(struct repository *r,
 		struct packed_git *p = m->packs[pack_int_id];
 		size_t expected_size;
 
-		if (!p)
-			continue;
-		if (!pack_kept_objects && p->pack_keep)
-			continue;
-		if (p->is_cruft)
-			continue;
-		if (open_pack_index(p) || !p->num_objects)
+		if (!want_included_pack(r, m, pack_kept_objects, pack_int_id))
 			continue;
 
 		expected_size = st_mult(p->pack_size,
