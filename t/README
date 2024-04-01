@@ -724,6 +724,26 @@ The "do's:"
    Note that we still &&-chain the loop to propagate failures from
    earlier commands.
 
+ - Repeat tests with slightly different arguments in a loop.
+
+   In some cases it may make sense to re-run the same set of tests with
+   different options or commands to ensure that the command behaves
+   despite the different parameters. This can be achieved by looping
+   around a specific parameter:
+
+	for arg in '' "--foo"
+	do
+		test_expect_success "test command ${arg:-without arguments}" '
+			command $arg
+		'
+	done
+
+   Note that while the test title uses double quotes ("), the test body
+   should continue to use single quotes (') to avoid breakage in case the
+   values contain e.g. quoting characters. The loop variable will be
+   accessible regardless of the single quotes as the test body is passed
+   to `eval`.
+
 
 And here are the "don'ts:"
 
