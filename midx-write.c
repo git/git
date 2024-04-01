@@ -1367,11 +1367,11 @@ static int want_included_pack(struct repository *r,
 	return 1;
 }
 
-static int fill_included_packs_all(struct repository *r,
-				   struct multi_pack_index *m,
-				   unsigned char *include_pack)
+static void fill_included_packs_all(struct repository *r,
+				    struct multi_pack_index *m,
+				    unsigned char *include_pack)
 {
-	uint32_t i, count = 0;
+	uint32_t i;
 	int pack_kept_objects = 0;
 
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
@@ -1381,18 +1381,15 @@ static int fill_included_packs_all(struct repository *r,
 			continue;
 
 		include_pack[i] = 1;
-		count++;
 	}
-
-	return count < 2;
 }
 
-static int fill_included_packs_batch(struct repository *r,
-				     struct multi_pack_index *m,
-				     unsigned char *include_pack,
-				     size_t batch_size)
+static void fill_included_packs_batch(struct repository *r,
+				      struct multi_pack_index *m,
+				      unsigned char *include_pack,
+				      size_t batch_size)
 {
-	uint32_t i, packs_to_repack;
+	uint32_t i;
 	size_t total_size;
 	struct repack_info *pack_info;
 	int pack_kept_objects = 0;
@@ -1418,7 +1415,6 @@ static int fill_included_packs_batch(struct repository *r,
 	QSORT(pack_info, m->num_packs, compare_by_mtime);
 
 	total_size = 0;
-	packs_to_repack = 0;
 	for (i = 0; total_size < batch_size && i < m->num_packs; i++) {
 		int pack_int_id = pack_info[i].pack_int_id;
 		struct packed_git *p = m->packs[pack_int_id];
@@ -1434,23 +1430,17 @@ static int fill_included_packs_batch(struct repository *r,
 		if (expected_size >= batch_size)
 			continue;
 
-		packs_to_repack++;
 		total_size += expected_size;
 		include_pack[pack_int_id] = 1;
 	}
 
 	free(pack_info);
-
-	if (packs_to_repack < 2)
-		return 1;
-
-	return 0;
 }
 
 int midx_repack(struct repository *r, const char *object_dir, size_t batch_size, unsigned flags)
 {
 	int result = 0;
-	uint32_t i;
+	uint32_t i, packs_to_repack = 0;
 	unsigned char *include_pack;
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	FILE *cmd_in;
@@ -1469,10 +1459,16 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 
 	CALLOC_ARRAY(include_pack, m->num_packs);
 
-	if (batch_size) {
-		if (fill_included_packs_batch(r, m, include_pack, batch_size))
-			goto cleanup;
-	} else if (fill_included_packs_all(r, m, include_pack))
+	if (batch_size)
+		fill_included_packs_batch(r, m, include_pack, batch_size);
+	else
+		fill_included_packs_all(r, m, include_pack);
+
+	for (i = 0; i < m->num_packs; i++) {
+		if (include_pack[i])
+			packs_to_repack++;
+	}
+	if (packs_to_repack <= 1)
 		goto cleanup;
 
 	repo_config_get_bool(r, "repack.usedeltabaseoffset", &delta_base_offset);
