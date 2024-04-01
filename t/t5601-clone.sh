@@ -776,6 +776,18 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
+test_expect_success 'clone with includeIf' '
+	test_when_finished "rm -rf repo \"$HTTPD_DOCUMENT_ROOT_PATH/repo.git\"" &&
+	git clone --bare --no-local src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+
+	test_when_finished "rm \"$HOME\"/.gitconfig" &&
+	cat >"$HOME"/.gitconfig <<-EOF &&
+	[includeIf "onbranch:something"]
+		path = /does/not/exist.inc
+	EOF
+	git clone $HTTPD_URL/smart/repo.git repo
+'
+
 test_expect_success 'partial clone using HTTP' '
 	partial_clone "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"
 '
