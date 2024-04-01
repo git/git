@@ -57,6 +57,9 @@ UI, Workflows & Features
  * Remove an ancient and not well maintained Hg-to-git migration
    script from contrib/.
 
+ * Hints that suggest what to do after resolving conflicts can now be
+   squelched by disabling advice.mergeConflict.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -110,6 +113,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * A new fuzz target that exercises config parsing code has been
    added.
+
+ * Fix the way recently added tests interpolate variables defined
+   outside them, and document the best practice to help future
+   developers.
 
 
 Fixes since v2.44
@@ -243,6 +250,25 @@ Fixes since v2.44
    "--pretty" option of commands in the "git log" family has been
    updated.
    (merge bff85a338c bl/doc-key-val-sep-fix later to maint).
+
+ * "git checkout --conflict=bad" reported a bad conflictStyle as if it
+   were given to a configuration variable; it has been corrected to
+   report that the command line option is bad.
+   (merge 5a99c1ac1a pw/checkout-conflict-errorfix later to maint).
+
+ * Code clean-up in the "git log" machinery that implements custom log
+   message formatting.
+   (merge 1c10b8e5b0 jk/pretty-subject-cleanup later to maint).
+
+ * "git config" corrupted literal HT characters written in the
+   configuration file as part of a value, which has been corrected.
+   (merge e6895c3f97 ds/config-internal-whitespace-fix later to maint).
+
+ * A unit test for reftable code tried to enumerate all files in a
+   directory after reftable operations and expected to see nothing but
+   the files it wanted to leave there, but was fooled by .nfs* cruft
+   files left, which has been corrected.
+   (merge 0068aa7946 ps/reftable-unit-test-nfs-workaround later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
