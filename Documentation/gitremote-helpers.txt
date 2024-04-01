@@ -479,14 +479,14 @@ set by Git if the remote helper has the 'option' capability.
 'option depth' <depth>::
 	Deepens the history of a shallow repository.
 
-'option deepen-since <timestamp>::
+'option deepen-since' <timestamp>::
 	Deepens the history of a shallow repository based on time.
 
-'option deepen-not <ref>::
+'option deepen-not' <ref>::
 	Deepens the history of a shallow repository excluding ref.
 	Multiple options add up.
 
-'option deepen-relative {'true'|'false'}::
+'option deepen-relative' {'true'|'false'}::
 	Deepens the history of a shallow repository relative to
 	current boundary. Only valid when used with "option depth".
 
