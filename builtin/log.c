@@ -1297,7 +1297,7 @@ static void prepare_cover_text(struct pretty_print_context *pp,
 		subject = subject_sb.buf;
 
 do_pp:
-	pp_title_line(pp, &subject, sb, encoding, need_8bit_cte);
+	pp_email_subject(pp, &subject, sb, encoding, need_8bit_cte);
 	pp_remainder(pp, &body, sb, 0);
 
 	strbuf_release(&description_sb);
@@ -1364,13 +1364,13 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	pp.fmt = CMIT_FMT_EMAIL;
 	pp.date_mode.type = DATE_RFC2822;
 	pp.rev = rev;
-	pp.print_email_subject = 1;
 	pp.encode_email_headers = rev->encode_email_headers;
 	pp_user_info(&pp, NULL, &sb, committer, encoding);
 	prepare_cover_text(&pp, description_file, branch_name, &sb,
 			   encoding, need_8bit_cte);
 	fprintf(rev->diffopt.file, "%s\n", sb.buf);
 
+	free(pp.after_subject);
 	strbuf_release(&sb);
 
 	shortlog_init(&log);
