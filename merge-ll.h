@@ -78,9 +78,14 @@ struct ll_merge_options {
 	 */
 	unsigned extra_marker_size;
 
+	/* Override the global conflict style. */
+	int conflict_style;
+
 	/* Extra xpparam_t flags as defined in xdiff/xdiff.h. */
 	long xdl_opts;
 };
+
+#define LL_MERGE_OPTIONS_INIT { .conflict_style = -1 }
 
 enum ll_merge_result {
 	LL_MERGE_ERROR = -1,

@@ -31,6 +31,7 @@ struct merge_options {
 
 	/* xdiff-related options (patience, ignore whitespace, ours/theirs) */
 	long xdl_opts;
+	int conflict_style;
 	enum {
 		MERGE_VARIANT_NORMAL = 0,
 		MERGE_VARIANT_OURS,

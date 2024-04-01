@@ -1048,13 +1048,14 @@ static int merge_3way(struct merge_options *opt,
 		      const int extra_marker_size)
 {
 	mmfile_t orig, src1, src2;
-	struct ll_merge_options ll_opts = {0};
+	struct ll_merge_options ll_opts = LL_MERGE_OPTIONS_INIT;
 	char *base, *name1, *name2;
 	enum ll_merge_result merge_status;
 
 	ll_opts.renormalize = opt->renormalize;
 	ll_opts.extra_marker_size = extra_marker_size;
 	ll_opts.xdl_opts = opt->xdl_opts;
+	ll_opts.conflict_style = opt->conflict_style;
 
 	if (opt->priv->call_depth) {
 		ll_opts.virtual_ancestor = 1;
@@ -3946,6 +3947,8 @@ void init_merge_options(struct merge_options *opt,
 	strbuf_init(&opt->obuf, 0);
 
 	opt->renormalize = 0;
+
+	opt->conflict_style = -1;
 
 	merge_recursive_config(opt);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
