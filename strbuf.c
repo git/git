@@ -442,6 +442,26 @@ size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder)
 	return 0;
 }
 
+void strbuf_expand_bad_format(const char *format, const char *command)
+{
+	const char *end;
+
+	if (*format != '(')
+		/* TRANSLATORS: The first %s is a command like "ls-tree". */
+		die(_("bad %s format: element '%s' does not start with '('"),
+		    command, format);
+
+	end = strchr(format + 1, ')');
+	if (!end)
+		/* TRANSLATORS: The first %s is a command like "ls-tree". */
+		die(_("bad %s format: element '%s' does not end in ')'"),
+		    command, format);
+
+	/* TRANSLATORS: %s is a command like "ls-tree". */
+	die(_("bad %s format: %%%.*s"),
+	    command, (int)(end - format + 1), format);
+}
+
 void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src)
 {
 	size_t i, len = src->len;

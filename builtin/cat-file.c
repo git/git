@@ -314,8 +314,8 @@ static int is_atom(const char *atom, const char *s, int slen)
 	return alen == slen && !memcmp(atom, s, alen);
 }
 
-static void expand_atom(struct strbuf *sb, const char *atom, int len,
-			struct expand_data *data)
+static int expand_atom(struct strbuf *sb, const char *atom, int len,
+		       struct expand_data *data)
 {
 	if (is_atom("objectname", atom, len)) {
 		if (!data->mark_query)
@@ -347,7 +347,8 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 			strbuf_addstr(sb,
 				      oid_to_hex(&data->delta_base_oid));
 	} else
-		die("unknown format element: %.*s", len, atom);
+		return 0;
+	return 1;
 }
 
 static void expand_format(struct strbuf *sb, const char *start,
@@ -358,12 +359,11 @@ static void expand_format(struct strbuf *sb, const char *start,
 
 		if (skip_prefix(start, "%", &start) || *start != '(')
 			strbuf_addch(sb, '%');
-		else if (!(end = strchr(start + 1, ')')))
-			die("format element '%s' does not end in ')'", start);
-		else {
-			expand_atom(sb, start + 1, end - start - 1, data);
+		else if ((end = strchr(start + 1, ')')) &&
+			 expand_atom(sb, start + 1, end - start - 1, data))
 			start = end + 1;
-		}
+		else
+			strbuf_expand_bad_format(start, "cat-file");
 	}
 }
 
