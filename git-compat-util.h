@@ -218,6 +218,18 @@ struct strbuf;
 #define GIT_WINDOWS_NATIVE
 #endif
 
+#if defined(NO_UNIX_SOCKETS) || !defined(GIT_WINDOWS_NATIVE)
+static inline int _have_unix_sockets(void)
+{
+#if defined(NO_UNIX_SOCKETS)
+	return 0;
+#else
+	return 1;
+#endif
+}
+#define have_unix_sockets _have_unix_sockets
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>

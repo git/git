@@ -3158,3 +3158,22 @@ int uname(struct utsname *buf)
 		  "%u", (v >> 16) & 0x7fff);
 	return 0;
 }
+
+int mingw_have_unix_sockets(void)
+{
+	SC_HANDLE scm, srvc;
+	SERVICE_STATUS_PROCESS status;
+	DWORD bytes;
+	int ret = 0;
+	scm = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+	if (scm) {
+		srvc = OpenServiceA(scm, "afunix", SERVICE_QUERY_STATUS);
+		if (srvc) {
+			if(QueryServiceStatusEx(srvc, SC_STATUS_PROCESS_INFO, (LPBYTE)&status, sizeof(SERVICE_STATUS_PROCESS), &bytes))
+				ret = status.dwCurrentState == SERVICE_RUNNING;
+			CloseServiceHandle(srvc);
+		}
+		CloseServiceHandle(scm);
+	}
+	return ret;
+}
