@@ -34,15 +34,15 @@ static void test_binsearch(void)
 
 	int i = 0;
 	for (i = 1; i < 11; i++) {
-		int res;
+		size_t res;
+
 		args.key = i;
 		res = binsearch(sz, &binsearch_func, &args);
 
 		if (res < sz) {
 			EXPECT(args.key < arr[res]);
-			if (res > 0) {
+			if (res > 0)
 				EXPECT(args.key >= arr[res - 1]);
-			}
 		} else {
 			EXPECT(args.key == 10 || args.key == 11);
 		}

@@ -28,7 +28,7 @@ void put_be16(uint8_t *out, uint16_t i);
  * Contrary to bsearch(3), this returns something useful if the argument is not
  * found.
  */
-int binsearch(size_t sz, int (*f)(size_t k, void *args), void *args);
+size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args);
 
 /*
  * Frees a NULL terminated array of malloced strings. The array itself is also

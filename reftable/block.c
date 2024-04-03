@@ -382,7 +382,8 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 	};
 	struct block_iter next = BLOCK_ITER_INIT;
 	struct reftable_record rec;
-	int err = 0, i;
+	int err = 0;
+	size_t i;
 
 	if (args.error) {
 		err = REFTABLE_FORMAT_ERROR;

@@ -27,7 +27,7 @@ void put_be16(uint8_t *out, uint16_t i)
 	out[1] = (uint8_t)(i & 0xff);
 }
 
-int binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
+size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
 {
 	size_t lo = 0;
 	size_t hi = sz;

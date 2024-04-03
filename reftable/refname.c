@@ -33,10 +33,9 @@ static int modification_has_ref(struct modification *mod, const char *name)
 			.names = mod->add,
 			.want = name,
 		};
-		int idx = binsearch(mod->add_len, find_name, &arg);
-		if (idx < mod->add_len && !strcmp(mod->add[idx], name)) {
+		size_t idx = binsearch(mod->add_len, find_name, &arg);
+		if (idx < mod->add_len && !strcmp(mod->add[idx], name))
 			return 0;
-		}
 	}
 
 	if (mod->del_len > 0) {
@@ -44,10 +43,9 @@ static int modification_has_ref(struct modification *mod, const char *name)
 			.names = mod->del,
 			.want = name,
 		};
-		int idx = binsearch(mod->del_len, find_name, &arg);
-		if (idx < mod->del_len && !strcmp(mod->del[idx], name)) {
+		size_t idx = binsearch(mod->del_len, find_name, &arg);
+		if (idx < mod->del_len && !strcmp(mod->del[idx], name))
 			return 1;
-		}
 	}
 
 	err = reftable_table_read_ref(&mod->tab, name, &ref);
@@ -77,7 +75,7 @@ static int modification_has_ref_with_prefix(struct modification *mod,
 			.names = mod->add,
 			.want = prefix,
 		};
-		int idx = binsearch(mod->add_len, find_name, &arg);
+		size_t idx = binsearch(mod->add_len, find_name, &arg);
 		if (idx < mod->add_len &&
 		    !strncmp(prefix, mod->add[idx], strlen(prefix)))
 			goto done;
@@ -96,11 +94,10 @@ static int modification_has_ref_with_prefix(struct modification *mod,
 				.names = mod->del,
 				.want = ref.refname,
 			};
-			int idx = binsearch(mod->del_len, find_name, &arg);
+			size_t idx = binsearch(mod->del_len, find_name, &arg);
 			if (idx < mod->del_len &&
-			    !strcmp(ref.refname, mod->del[idx])) {
+			    !strcmp(ref.refname, mod->del[idx]))
 				continue;
-			}
 		}
 
 		if (strncmp(ref.refname, prefix, strlen(prefix))) {
