@@ -84,7 +84,7 @@ test_expect_success 'cherry-pick a commit that becomes no-op (prep)' '
 	git commit -m "add file2 on the side"
 '
 
-test_expect_success 'cherry-pick a no-op without --keep-redundant' '
+test_expect_success 'cherry-pick a no-op with neither --keep-redundant nor --empty' '
 	git reset --hard &&
 	git checkout fork^0 &&
 	test_must_fail git cherry-pick main
@@ -97,6 +97,55 @@ test_expect_success 'cherry-pick a no-op with --keep-redundant' '
 	git show -s --format=%s >actual &&
 	echo "add file2 on main" >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success '--keep-redundant-commits is incompatible with operations' '
+	test_must_fail git cherry-pick HEAD 2>output &&
+	test_grep "The previous cherry-pick is now empty" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --continue 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --continue" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --skip 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --skip" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --abort 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --abort" output &&
+	test_must_fail git cherry-pick --keep-redundant-commits --quit 2>output &&
+	test_grep "fatal: cherry-pick: --keep-redundant-commits cannot be used with --quit" output &&
+	git cherry-pick --abort
+'
+
+test_expect_success '--empty is incompatible with operations' '
+	test_must_fail git cherry-pick HEAD 2>output &&
+	test_grep "The previous cherry-pick is now empty" output &&
+	test_must_fail git cherry-pick --empty=stop --continue 2>output &&
+	test_grep "fatal: cherry-pick: --empty cannot be used with --continue" output &&
+	test_must_fail git cherry-pick --empty=stop --skip 2>output &&
+	test_grep "fatal: cherry-pick: --empty cannot be used with --skip" output &&
+	test_must_fail git cherry-pick --empty=stop --abort 2>output &&
+	test_grep "fatal: cherry-pick: --empty cannot be used with --abort" output &&
+	test_must_fail git cherry-pick --empty=stop --quit 2>output &&
+	test_grep "fatal: cherry-pick: --empty cannot be used with --quit" output &&
+	git cherry-pick --abort
+'
+
+test_expect_success 'cherry-pick a no-op with --empty=stop' '
+	git reset --hard &&
+	git checkout fork^0 &&
+	test_must_fail git cherry-pick --empty=stop main 2>output &&
+	test_grep "The previous cherry-pick is now empty" output
+'
+
+test_expect_success 'cherry-pick a no-op with --empty=drop' '
+	git reset --hard &&
+	git checkout fork^0 &&
+	git cherry-pick --empty=drop main &&
+	test_commit_message HEAD -m "add file2 on the side"
+'
+
+test_expect_success 'cherry-pick a no-op with --empty=keep' '
+	git reset --hard &&
+	git checkout fork^0 &&
+	git cherry-pick --empty=keep main &&
+	test_commit_message HEAD -m "add file2 on main"
 '
 
 test_done
