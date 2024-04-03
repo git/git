@@ -147,7 +147,7 @@ static struct cmt_fmt_map *find_commit_format_recursive(const char *sought,
 	for (i = 0; i < commit_formats_len; i++) {
 		size_t match_len;
 
-		if (!starts_with(commit_formats[i].name, sought))
+		if (!istarts_with(commit_formats[i].name, sought))
 			continue;
 
 		match_len = strlen(commit_formats[i].name);

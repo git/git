@@ -30,40 +30,46 @@ test_expect_success 'set up basic repos' '
 	>bar &&
 	git add foo &&
 	test_tick &&
-	git config i18n.commitEncoding $test_encoding &&
+	test_config i18n.commitEncoding $test_encoding &&
 	commit_msg $test_encoding | git commit -F - &&
 	git add bar &&
 	test_tick &&
-	git commit -m "add bar" &&
-	git config --unset i18n.commitEncoding
+	git commit -m "add bar"
 '
 
 test_expect_success 'alias builtin format' '
 	git log --pretty=oneline >expected &&
-	git config pretty.test-alias oneline &&
+	test_config pretty.test-alias oneline &&
 	git log --pretty=test-alias >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'alias masking builtin format' '
 	git log --pretty=oneline >expected &&
-	git config pretty.oneline "%H" &&
+	test_config pretty.oneline "%H" &&
 	git log --pretty=oneline >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'alias user-defined format' '
 	git log --pretty="format:%h" >expected &&
-	git config pretty.test-alias "format:%h" &&
+	test_config pretty.test-alias "format:%h" &&
 	git log --pretty=test-alias >actual &&
 	test_cmp expected actual
 '
 
+test_expect_success 'alias user-defined format is matched case-insensitively' '
+	git log --pretty="format:%h" >expected &&
+	test_config pretty.testone "format:%h" &&
+	test_config pretty.testtwo testOne &&
+	git log --pretty=testTwo >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'alias user-defined tformat with %s (ISO8859-1 encoding)' '
-	git config i18n.logOutputEncoding $test_encoding &&
+	test_config i18n.logOutputEncoding $test_encoding &&
 	git log --oneline >expected-s &&
 	git log --pretty="tformat:%h %s" >actual-s &&
-	git config --unset i18n.logOutputEncoding &&
 	test_cmp expected-s actual-s
 '
 
@@ -75,34 +81,34 @@ test_expect_success 'alias user-defined tformat with %s (utf-8 encoding)' '
 
 test_expect_success 'alias user-defined tformat' '
 	git log --pretty="tformat:%h" >expected &&
-	git config pretty.test-alias "tformat:%h" &&
+	test_config pretty.test-alias "tformat:%h" &&
 	git log --pretty=test-alias >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'alias non-existent format' '
-	git config pretty.test-alias format-that-will-never-exist &&
+	test_config pretty.test-alias format-that-will-never-exist &&
 	test_must_fail git log --pretty=test-alias
 '
 
 test_expect_success 'alias of an alias' '
 	git log --pretty="tformat:%h" >expected &&
-	git config pretty.test-foo "tformat:%h" &&
-	git config pretty.test-bar test-foo &&
+	test_config pretty.test-foo "tformat:%h" &&
+	test_config pretty.test-bar test-foo &&
 	git log --pretty=test-bar >actual && test_cmp expected actual
 '
 
 test_expect_success 'alias masking an alias' '
 	git log --pretty=format:"Two %H" >expected &&
-	git config pretty.duplicate "format:One %H" &&
-	git config --add pretty.duplicate "format:Two %H" &&
+	test_config pretty.duplicate "format:One %H" &&
+	test_config pretty.duplicate "format:Two %H" --add &&
 	git log --pretty=duplicate >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'alias loop' '
-	git config pretty.test-foo test-bar &&
-	git config pretty.test-bar test-foo &&
+	test_config pretty.test-foo test-bar &&
+	test_config pretty.test-bar test-foo &&
 	test_must_fail git log --pretty=test-foo
 '
 
