@@ -287,23 +287,32 @@ static int restart_needle_less(size_t idx, void *_args)
 		.buf = args->reader->block.data + off,
 		.len = args->reader->block_len - off,
 	};
-	struct strbuf kth_restart_key = STRBUF_INIT;
-	uint8_t unused_extra;
-	int result, n;
+	uint64_t prefix_len, suffix_len;
+	uint8_t extra;
+	int n;
 
 	/*
-	 * TODO: The restart key is verbatim in the block, so we can in theory
-	 * avoid decoding the key and thus save some allocations.
+	 * Records at restart points are stored without prefix compression, so
+	 * there is no need to fully decode the record key here. This removes
+	 * the need for allocating memory.
 	 */
-	n = reftable_decode_key(&kth_restart_key, &unused_extra, in);
-	if (n < 0) {
+	n = reftable_decode_keylen(in, &prefix_len, &suffix_len, &extra);
+	if (n < 0 || prefix_len) {
 		args->error = 1;
 		return -1;
 	}
 
-	result = strbuf_cmp(&args->needle, &kth_restart_key);
-	strbuf_release(&kth_restart_key);
-	return result < 0;
+	string_view_consume(&in, n);
+	if (suffix_len > in.len) {
+		args->error = 1;
+		return -1;
+	}
+
+	n = memcmp(args->needle.buf, in.buf,
+		   args->needle.len < suffix_len ? args->needle.len : suffix_len);
+	if (n)
+		return n < 0;
+	return args->needle.len < suffix_len;
 }
 
 void block_iter_copy_from(struct block_iter *dest, struct block_iter *src)
