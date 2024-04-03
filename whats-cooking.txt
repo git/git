@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2024, #01; Mon, 1)
-X-master-at: d6fd04375f9196f8b203d442f235bd96a1a068cc
-X-next-at: 09a8706636d10c491176b8b1cd6519f7300911bf
+Subject: What's cooking in git.git (Apr 2024, #02; Wed, 3)
+X-master-at: 7774cfed6261ce2900c84e55906da708c711d601
+X-next-at: 4b32163adf4863c6df3bb6b43540fa2ca3494e28
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2024, #01; Mon, 1)
+What's cooking in git.git (Apr 2024, #02; Wed, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,63 +46,367 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* az/grep-group-error-message-update (2024-03-25) 1 commit
+  (merged to 'next' on 2024-03-27 at 567bf00ed4)
+ + grep: improve errors for unmatched ( and )
+
+ Error message clarification.
+ source: <tkz3a5jkalcz5ajemx4b4x42pe6kv45sfmgpin4zeai3moq42o@tarta.nabijaczleweli.xyz>
+
+
+* bl/cherry-pick-empty (2024-03-25) 7 commits
+  (merged to 'next' on 2024-03-28 at 22e8e4a68e)
+ + cherry-pick: add `--empty` for more robust redundant commit handling
+ + cherry-pick: enforce `--keep-redundant-commits` incompatibility
+ + sequencer: do not require `allow_empty` for redundant commit options
+ + sequencer: handle unborn branch with `--allow-empty`
+ + rebase: update `--empty=ask` to `--empty=stop`
+ + docs: clean up `--empty` formatting in git-rebase(1) and git-am(1)
+ + docs: address inaccurate `--empty` default with `--exec`
+
+ Allow git-cherry-pick(1) to automatically drop redundant commits via
+ a new `--empty` option, similar to the `--empty` options for
+ git-rebase(1) and git-am(1). Includes a soft deprecation of
+ `--keep-redundant-commits` as well as some related docs changes and
+ sequencer code cleanup.
+ cf. <a397f3dd-e4e1-4275-b17d-1daca9e166fe@gmail.com>
+ source: <20240119060721.3734775-2-brianmlyles@gmail.com>
+
+
+* bl/pretty-shorthand-config-fix (2024-03-25) 2 commits
+  (merged to 'next' on 2024-03-28 at e2749914ab)
+ + pretty: find pretty formats case-insensitively
+ + pretty: update tests to use `test_config`
+
+ The "--pretty=<shortHand>" option of the commands in the "git log"
+ family, defined as "[pretty] shortHand = <expansion>" should have
+ been looked up case insensitively, but was not, which has been
+ corrected.
+ source: <20240324214316.917513-1-brianmlyles@gmail.com>
+
+
+* ds/config-internal-whitespace-fix (2024-03-21) 4 commits
+  (merged to 'next' on 2024-03-25 at f3393cabe5)
+ + config.txt: describe handling of whitespace further
+ + t1300: add more tests for whitespace and inline comments
+ + config: really keep value-internal whitespace verbatim
+ + config: minor addition of whitespace
+
+ "git config" corrupted literal HT characters written in the
+ configuration file as part of a value, which has been corrected.
+ source: <cover.1711001016.git.dsimic@manjaro.org>
+
+
+* ds/grep-doc-updates (2024-03-25) 2 commits
+  (merged to 'next' on 2024-03-27 at 681f08cbc5)
+ + grep docs: describe --no-index further and improve formatting a bit
+ + grep docs: describe --recurse-submodules further and improve formatting a bit
+
+ Documentation updates.
+ source: <cover.1711398665.git.dsimic@manjaro.org>
+
+
+* jc/release-notes-entry-experiment (2024-03-26) 1 commit
+  (merged to 'next' on 2024-03-27 at 74ebe224e9)
+ + SubmittingPatches: release-notes entry experiment
+
+ Introduce an experimental protocol for contributors to propose the
+ topic description to be used in the "What's cooking" report, the
+ merge commit message for the topic, and in the release notes and
+ document it in the SubmittingPatches document.
+ source: <xmqq8r26eyva.fsf@gitster.g>
+
+
+* jk/doc-remote-helpers-markup-fix (2024-03-20) 1 commit
+  (merged to 'next' on 2024-03-25 at 7c3dd28ca5)
+ + doc/gitremote-helpers: fix more missing single-quotes
+
+ Documentation mark-up fix.
+ source: <20240320091748.GA2444639@coredump.intra.peff.net>
+
+
+* jk/pretty-subject-cleanup (2024-03-22) 7 commits
+  (merged to 'next' on 2024-03-22 at 2796f347ad)
+ + format-patch: fix leak of empty header string
+ + format-patch: simplify after-subject MIME header handling
+ + format-patch: return an allocated string from log_write_email_headers()
+ + log: do not set up extra_headers for non-email formats
+ + pretty: drop print_email_subject flag
+ + pretty: split oneline and email subject printing
+ + shortlog: stop setting pp.print_email_subject
+
+ Code clean-up in the "git log" machinery that implements custom log
+ message formatting.
+ source: <20240320002555.GB903718@coredump.intra.peff.net>
+
+
+* jk/rebase-apply-leakfix (2024-03-22) 1 commit
+  (merged to 'next' on 2024-03-25 at f9358272af)
+ + rebase: use child_process_clear() to clean
+
+ Leakfix.
+ source: <20240322103502.GA2045297@coredump.intra.peff.net>
+
+
+* jk/remote-helper-object-format-option-fix (2024-03-20) 3 commits
+  (merged to 'next' on 2024-03-27 at 5c9d5be660)
+ + transport-helper: send "true" value for object-format option
+ + transport-helper: drop "object-format <algo>" option
+ + transport-helper: use write helpers more consistently
+
+ The implementation and documentation of "object-format" option
+ exchange between the Git itself and its remote helpers did not
+ quite match, which has been corrected.
+ source: <20240320093226.GA2445531@coredump.intra.peff.net>
+
+
+* pb/advice-merge-conflict (2024-03-18) 2 commits
+  (merged to 'next' on 2024-03-25 at 4414e31d81)
+ + builtin/am: allow disabling conflict advice
+ + sequencer: allow disabling conflict advice
+
+ Hints that suggest what to do after resolving conflicts can now be
+ squelched by disabling advice.mergeConflict.
+
+ Acked-by: Phillip Wood <phillip.wood123@gmail.com>
+ cf. <e040c631-42d9-4501-a7b8-046f8dac6309@gmail.com>
+ source: <pull.1682.v3.git.1710623790.gitgitgadget@gmail.com>
+
+
+* pb/test-scripts-are-build-targets (2024-03-25) 1 commit
+  (merged to 'next' on 2024-03-27 at 9ef22a39b6)
+ + t/README: mention test files are make targets
+
+ The t/README file now gives a hint on running individual tests in
+ the "t/" directory with "make t<num>-*.sh t<num>-*.sh".
+ source: <pull.1701.git.1711293246094.gitgitgadget@gmail.com>
+
+
+* ps/clone-with-includeif-onbranch (2024-03-12) 1 commit
+  (merged to 'next' on 2024-03-25 at 8d11bd8bd4)
+ + t5601: exercise clones with "includeIf.*.onbranch"
+
+ An additional test to demonstrate that clone would not choke on a
+ global configuration file that uses includeIf.onbranch:*.path.
+ source: <0bede59a53862585c49bc635f82e44e983144a7f.1710246859.git.ps@pks.im>
+
+
+* ps/reftable-unit-test-nfs-workaround (2024-03-21) 1 commit
+  (merged to 'next' on 2024-03-25 at 4d3d391330)
+ + reftable: fix tests being broken by NFS' delete-after-close semantics
+
+ A unit test for reftable code tried to enumerate all files in a
+ directory after reftable operations and expected to see nothing but
+ the files it wanted to leave there, but was fooled by .nfs* cruft
+ files left, which has been corrected.
+ source: <8ac5e94a3930cdd2aee9ea86acda3155674b635c.1711035529.git.ps@pks.im>
+
+
+* ps/t7800-variable-interpolation-fix (2024-03-22) 3 commits
+  (merged to 'next' on 2024-03-25 at e7b1ec4df4)
+ + t/README: document how to loop around test cases
+ + t7800: use single quotes for test bodies
+ + t7800: improve test descriptions with empty arguments
+
+ Fix the way recently added tests interpolate variables defined
+ outside them, and document the best practice to help future
+ developers.
+ source: <cover.1711074118.git.ps@pks.im>
+
+
+* pw/checkout-conflict-errorfix (2024-03-14) 5 commits
+  (merged to 'next' on 2024-03-22 at 9977ac6c75)
+ + checkout: fix interaction between --conflict and --merge
+ + checkout: cleanup --conflict=<style> parsing
+ + merge options: add a conflict style member
+ + merge-ll: introduce LL_MERGE_OPTIONS_INIT
+ + xdiff-interface: refactor parsing of merge.conflictstyle
+
+ "git checkout --conflict=bad" reported a bad conflictStyle as if it
+ were given to a configuration variable; it has been corrected to
+ report that the command line option is bad.
+ source: <pull.1684.v2.git.1710435907.gitgitgadget@gmail.com>
+
+
+* rs/midx-use-strvec-pushf (2024-03-25) 1 commit
+  (merged to 'next' on 2024-03-27 at 16969df3e8)
+ + midx: use strvec_pushf() for pack-objects base name
+ (this branch is used by tb/midx-write.)
+
+ Code clean-up.
+ source: <9483038c-9529-4243-9b9a-97254fac29c1@web.de>
+
+
+* rs/strbuf-expand-bad-format (2024-03-25) 2 commits
+  (merged to 'next' on 2024-03-27 at 1f9dbf70a0)
+ + cat-file: use strbuf_expand_bad_format()
+ + factor out strbuf_expand_bad_format()
+
+ Code clean-up.
+ source: <27cdcde7-74bc-4ee8-bc84-9a6046292cae@web.de>
+
+--------------------------------------------------
 [New Topics]
 
+* kn/clarify-update-ref-doc (2024-04-02) 2 commits
+  (merged to 'next' on 2024-04-02 at d1b9c5aa67)
+ + githooks: use {old,new}-oid instead of {old,new}-value
+ + update-ref: use {old,new}-oid instead of {old,new}value
+
+ Doc update, as a preparation to enhance "git update-ref --stdin".
+
+ Will merge to 'master'.
+ source: <20240402064915.191104-1-knayak@gitlab.com>
+
+
+* vs/complete-with-set-u-fix (2024-04-01) 2 commits
+  (merged to 'next' on 2024-04-02 at d8f6a511e8)
+ + completion: protect prompt against unset SHOWUPSTREAM in nounset mode
+ + completion: fix prompt with unset SHOWCONFLICTSTATE in nounset mode
+
+ Another "set -u" fix for the bash prompt (in contrib/) script.
+
+ Will merge to 'master'.
+ source: <20240401190751.8676-1-ville.skytta@iki.fi>
+
+
+* ba/osxkeychain-updates (2024-04-01) 4 commits
+ - osxkeychain: store new attributes
+ - osxkeychain: erase matching passwords only
+ - osxkeychain: erase all matching credentials
+ - osxkeychain: replace deprecated SecKeychain API
+
+ Update osxkeychain backend with features required for the recent
+ credential subsystem.
+
+ Will merge to 'next'?
+ source: <pull.1667.git.1708212896.gitgitgadget@gmail.com>
+
+
+* rs/imap-send-use-xsnprintf (2024-04-02) 1 commit
+ - imap-send: use xsnprintf to format command
+
+ Code clean-up and duplicate reduction.
+
+ Will merge to 'next'.
+ source: <f9ad9f41-5b9b-474e-9818-f91fc937daae@web.de>
+
+
+* tb/midx-write (2024-04-01) 5 commits
+ - midx-write.c: use `--stdin-packs` when repacking
+ - midx-write.c: check count of packs to repack after grouping
+ - midx-write.c: factor out common want_included_pack() routine
+ - midx-write: move writing-related functions from midx.c
+ - Merge branch 'rs/midx-use-strvec-pushf' into tb/midx-write
+
+ Code clean-up by splitting code responsible for writing midx files
+ into its own file.
+
+ Will merge to 'next'?
+ source: <cover.1712006190.git.me@ttaylorr.com>
+
+
+* jc/t2104-style-update (2024-04-02) 1 commit
+  (merged to 'next' on 2024-04-03 at 0449835479)
+ + t2104: style fixes
+
+ Coding style fixes.
+
+ Will merge to 'master'.
+ source: <xmqqmsqb4ngg.fsf@gitster.g>
+
+
+* rs/t-prio-queue-cleanup (2024-04-02) 1 commit
+ - t-prio-queue: simplify using compound literals
+
+ t-prio-queue test has been cleaned up by using C99 compound
+ literals; this is meant to also serve as a weather-balloon to smoke
+ out folks with compilers who have trouble compiling code that uses
+ the feature.
+
+ Will merge to 'next'?
+ source: <520da361-1b80-4ba3-87b2-86d6fdfc18b5@web.de>
+
+
+* jk/libcurl-8.7-regression-workaround (2024-04-02) 2 commits
+ - INSTALL: bump libcurl version to 7.21.3
+ - http: reset POSTFIELDSIZE when clearing curl handle
+
+ Fix was added to work around a regression in libcURL 8.7.0 (which has
+ already been fixed in their tip of the tree).
+
+ Expecting a reroll.
+ cf. <20240403032045.GA1559972@coredump.intra.peff.net>
+ source: <20240402200254.GA874754@coredump.intra.peff.net>
+
+
+* tb/t7700-fixup (2024-04-03) 1 commit
+ - t/t7700-repack.sh: fix test breakages with `GIT_TEST_MULTI_PACK_INDEX=1 `
+
+ source: <7e8d435d58eea19d2aae0be366720f5956d29a5d.1712075189.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[Cooking]
+
 * es/test-cron-safety (2024-03-31) 1 commit
- - test-lib: fix non-functioning GIT_TEST_MAINT_SCHEDULER fallback
+  (merged to 'next' on 2024-04-02 at e383c8cfb2)
+ + test-lib: fix non-functioning GIT_TEST_MAINT_SCHEDULER fallback
 
  The test script had an incomplete and ineffective attempt to avoid
  clobbering the testing user's real crontab (and its equivalents),
  which has been completed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240329222703.9343-1-ericsunshine@charter.net>
 
 
-* gt/add-u-commit-i-pathspec-check (2024-03-29) 3 commits
+* gt/add-u-commit-i-pathspec-check (2024-04-03) 3 commits
  - builtin/add: error out when passing untracked path with -u
  - builtin/commit: error out when passing untracked path with -i
- - read-cache: optionally collect pathspec matching info
+ - revision: optionally record matches with pathspec elements
 
  "git add -u <pathspec>" and "git commit [-i] <pathspec>" did not
  diagnose a pathspec element that did not match any files in certain
  situations, unlike "git add <pathspec>" did.
 
- Comments?
- source: <20240318155219.494206-2-shyamthakkar001@gmail.com>
+ Will merge to 'next'?
+ source: <20240402213640.139682-2-shyamthakkar001@gmail.com>
 
 
 * jc/advice-sans-trailing-whitespace (2024-03-29) 1 commit
- - advice: omit trailing whitespace
+  (merged to 'next' on 2024-04-02 at 3cb0fda1bf)
+ + advice: omit trailing whitespace
 
  The "hint:" messages given by the advice mechanism, when given a
  message with a blank line, left a line with trailing whitespace,
  which has been cleansed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq4jcooddp.fsf@gitster.g>
 
 
-* jt/reftable-geometric-compaction (2024-03-29) 3 commits
- - reftable/stack: make segment end inclusive
- - reftable/stack: use geometric table compaction
- - reftable/stack: add env to disable autocompaction
+* jt/reftable-geometric-compaction (2024-04-03) 2 commits
+ . reftable/stack: use geometric table compaction
+ . reftable/stack: add env to disable autocompaction
 
  The strategy to compat multiple tables of reftables after many
  operations accumulate many entries has been improved to avoid
  accumulating too many tables uncollected.
 
- Will merge to 'next'?
- cf. <Zfzd_yxeXWWTJdyP@tanuki>
- source: <pull.1683.v3.git.1711685809.gitgitgadget@gmail.com>
+ Expecting a reroll.
+ cf. <b24jjzw72rlcpctteokr5yfbuwuy2cc3qvibzhuju4gbj63lfa@gbtsmvufyuhd>
+ source: <pull.1683.v4.git.1712103636.gitgitgadget@gmail.com>
 
 
 * ds/typofix-core-config-doc (2024-03-31) 1 commit
- - config: fix some small capitalization issues, as spotted
+  (merged to 'next' on 2024-04-02 at 79496fcfc4)
+ + config: fix some small capitalization issues, as spotted
 
  Typofix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <26135b06c48565ee8ac6dcfc1ef5431511e6202c.1711918168.git.dsimic@manjaro.org>
 
 
@@ -113,32 +417,32 @@ Release tarballs are available at:
  HEAD state, gave the tracking information for the 'foo' branch,
  which was pointless.
 
- Comments?
+ Will merge to 'next'?
  source: <xmqqa5mfl7ud.fsf@gitster.g>
 
 
 * rj/use-adv-if-enabled (2024-03-30) 3 commits
- - add: use advise_if_enabled for ADVICE_ADD_EMBEDDED_REPO
- - add: use advise_if_enabled for ADVICE_ADD_EMPTY_PATHSPEC
- - add: use advise_if_enabled for ADVICE_ADD_IGNORED_FILE
+  (merged to 'next' on 2024-04-02 at 31d4453035)
+ + add: use advise_if_enabled for ADVICE_ADD_EMBEDDED_REPO
+ + add: use advise_if_enabled for ADVICE_ADD_EMPTY_PATHSPEC
+ + add: use advise_if_enabled for ADVICE_ADD_IGNORED_FILE
 
  Use advice_if_enabled() API to rewrite a simple pattern to
  call advise() after checking advice_enabled().
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <46fba030-d7aa-49d2-88fa-e506850f7b6a@gmail.com>
 
 
 * rs/mem-pool-size-t-safety (2024-03-31) 1 commit
- - mem-pool: use st_add() in mem_pool_strvfmt()
+  (merged to 'next' on 2024-04-02 at 3517d48210)
+ + mem-pool: use st_add() in mem_pool_strvfmt()
 
  size_t arithmetic safety.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <bbe00b9e-64d8-4ec8-a2b9-2c6917c72dbd@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * ew/khash-to-khashl (2024-03-28) 3 commits
  - khashl: fix ensemble lookups on empty table
@@ -171,25 +475,16 @@ Release tarballs are available at:
 
 
 * rj/add-p-explicit-reshow (2024-03-29) 2 commits
- - add-patch: do not print hunks repeatedly
- - add-patch: introduce 'p' in interactive-patch
+  (merged to 'next' on 2024-04-02 at 05c7e930af)
+ + add-patch: do not print hunks repeatedly
+ + add-patch: introduce 'p' in interactive-patch
 
  "git add -p" and other "interactive hunk selection" UI has learned to
  skip showing the hunk immediately after it has already been shown, and
  an additional action to explicitly ask to reshow the current hunk.
 
- Will merge to 'next'?
- source: <a9c515fe-6664-4b5d-abca-d88fdd32a883@gmail.com>
-
-
-* az/grep-group-error-message-update (2024-03-25) 1 commit
-  (merged to 'next' on 2024-03-27 at 567bf00ed4)
- + grep: improve errors for unmatched ( and )
-
- Error message clarification.
-
  Will merge to 'master'.
- source: <tkz3a5jkalcz5ajemx4b4x42pe6kv45sfmgpin4zeai3moq42o@tarta.nabijaczleweli.xyz>
+ source: <a9c515fe-6664-4b5d-abca-d88fdd32a883@gmail.com>
 
 
 * bc/credential-scheme-enhancement (2024-03-27) 12 commits
@@ -215,67 +510,33 @@ Release tarballs are available at:
  source: <20240324011301.1553072-1-sandals@crustytoothpaste.net>
 
 
-* bl/pretty-shorthand-config-fix (2024-03-25) 2 commits
-  (merged to 'next' on 2024-03-28 at e2749914ab)
- + pretty: find pretty formats case-insensitively
- + pretty: update tests to use `test_config`
-
- The "--pretty=<shortHand>" option of the commands in the "git log"
- family, defined as "[pretty] shortHand = <expansion>" should have
- been looked up case insensitively, but was not, which has been
- corrected.
-
- Will merge to 'master'.
- source: <20240324214316.917513-1-brianmlyles@gmail.com>
-
-
-* ds/grep-doc-updates (2024-03-25) 2 commits
-  (merged to 'next' on 2024-03-27 at 681f08cbc5)
- + grep docs: describe --no-index further and improve formatting a bit
- + grep docs: describe --recurse-submodules further and improve formatting a bit
-
- Documentation updates.
-
- Will merge to 'master'.
- source: <cover.1711398665.git.dsimic@manjaro.org>
-
-
 * ja/doc-markup-updates (2024-03-29) 5 commits
- - doc: git-clone: do not autoreference the manpage in itself
- - doc: git-clone: apply new documentation formatting guidelines
- - doc: git-init: apply new documentation formatting guidelines
- - doc: allow literal and emphasis format in doc vs help tests
- - doc: rework CodingGuidelines with new formatting rules
+  (merged to 'next' on 2024-04-02 at 69b015d7ce)
+ + doc: git-clone: do not autoreference the manpage in itself
+ + doc: git-clone: apply new documentation formatting guidelines
+ + doc: git-init: apply new documentation formatting guidelines
+ + doc: allow literal and emphasis format in doc vs help tests
+ + doc: rework CodingGuidelines with new formatting rules
 
  Documentation rules has been explicitly described how to mark-up
  literal parts and a few manual pages have been updated as examples.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1702.v2.git.1711711181.gitgitgadget@gmail.com>
 
 
 * mg/editorconfig-makefile (2024-03-23) 1 commit
- - editorconfig: add Makefiles to "text files"
+  (merged to 'next' on 2024-04-02 at 907b55579e)
+ + editorconfig: add Makefiles to "text files"
 
  The .editorconfig file has been taught that a Makefile uses HT
  indentation.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20240322221813.13019-1-mg@max.gautier.name>
 
 
-* pb/test-scripts-are-build-targets (2024-03-25) 1 commit
-  (merged to 'next' on 2024-03-27 at 9ef22a39b6)
- + t/README: mention test files are make targets
-
- The README now gives a hint on running individual tests in the "t/"
- directory with "make t<num>-*.sh t<num>-*.sh".
-
- Will merge to 'master'.
- source: <pull.1701.git.1711293246094.gitgitgadget@gmail.com>
-
-
-* ps/reftable-binsearch-updates (2024-03-25) 7 commits
+* ps/reftable-binsearch-updates (2024-04-03) 7 commits
  - reftable/block: avoid decoding keys when searching restart points
  - reftable/record: extract function to decode key lengths
  - reftable/block: fix error handling when searching restart points
@@ -286,66 +547,8 @@ Release tarballs are available at:
 
  Reftable code clean-up and some bugfixes.
 
- Needs review.
- source: <cover.1711361340.git.ps@pks.im>
-
-
-* rs/midx-use-strvec-pushf (2024-03-25) 1 commit
-  (merged to 'next' on 2024-03-27 at 16969df3e8)
- + midx: use strvec_pushf() for pack-objects base name
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <9483038c-9529-4243-9b9a-97254fac29c1@web.de>
-
-
-* rs/strbuf-expand-bad-format (2024-03-25) 2 commits
-  (merged to 'next' on 2024-03-27 at 1f9dbf70a0)
- + cat-file: use strbuf_expand_bad_format()
- + factor out strbuf_expand_bad_format()
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <27cdcde7-74bc-4ee8-bc84-9a6046292cae@web.de>
-
-
-* jk/doc-remote-helpers-markup-fix (2024-03-20) 1 commit
-  (merged to 'next' on 2024-03-25 at 7c3dd28ca5)
- + doc/gitremote-helpers: fix more missing single-quotes
-
- Documentation mark-up fix.
-
- Will merge to 'master'.
- source: <20240320091748.GA2444639@coredump.intra.peff.net>
-
-
-* ps/reftable-unit-test-nfs-workaround (2024-03-21) 1 commit
-  (merged to 'next' on 2024-03-25 at 4d3d391330)
- + reftable: fix tests being broken by NFS' delete-after-close semantics
-
- A unit test for reftable code tried to enumerate all files in a
- directory after reftable operations and expected to see nothing but
- the files it wanted to leave there, but was fooled by .nfs* cruft
- files left, which has been corrected.
-
- Will merge to 'master'.
- source: <8ac5e94a3930cdd2aee9ea86acda3155674b635c.1711035529.git.ps@pks.im>
-
-
-* ps/t7800-variable-interpolation-fix (2024-03-22) 3 commits
-  (merged to 'next' on 2024-03-25 at e7b1ec4df4)
- + t/README: document how to loop around test cases
- + t7800: use single quotes for test bodies
- + t7800: improve test descriptions with empty arguments
-
- Fix the way recently added tests interpolate variables defined
- outside them, and document the best practice to help future
- developers.
-
- Will merge to 'master'.
- source: <cover.1711074118.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1712123093.git.ps@pks.im>
 
 
 * tb/pseudo-merge-reachability-bitmap (2024-03-20) 24 commits
@@ -384,58 +587,23 @@ Release tarballs are available at:
  source: <cover.1710972293.git.me@ttaylorr.com>
 
 
-* jc/release-notes-entry-experiment (2024-03-26) 1 commit
-  (merged to 'next' on 2024-03-27 at 74ebe224e9)
- + SubmittingPatches: release-notes entry experiment
-
- Introduce an experimental protocol for contributors to propose the
- topic description to be used in the "What's cooking" report, the
- merge commit message for the topic, and in the release notes and
- document it in the SubmittingPatches document.
-
- Will merge to 'master'.
- source: <xmqq8r26eyva.fsf@gitster.g>
-
-
-* jk/rebase-apply-leakfix (2024-03-22) 1 commit
-  (merged to 'next' on 2024-03-25 at f9358272af)
- + rebase: use child_process_clear() to clean
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20240322103502.GA2045297@coredump.intra.peff.net>
-
-
 * dg/myfirstobjectwalk-updates (2024-03-27) 5 commits
- - MyFirstObjectWalk: add stderr to pipe processing
- - MyFirstObjectWalk: fix description for counting omitted objects
- - MyFirstObjectWalk: fix filtered object walk
- - MyFirstObjectWalk: fix misspelled "builtins/"
- - MyFirstObjectWalk: use additional arg in config_fn_t
+  (merged to 'next' on 2024-04-02 at effa6a98a6)
+ + MyFirstObjectWalk: add stderr to pipe processing
+ + MyFirstObjectWalk: fix description for counting omitted objects
+ + MyFirstObjectWalk: fix filtered object walk
+ + MyFirstObjectWalk: fix misspelled "builtins/"
+ + MyFirstObjectWalk: use additional arg in config_fn_t
 
  Update a more recent tutorial doc.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1711537370.git.dirk@gouders.net>
 
 
-* ds/config-internal-whitespace-fix (2024-03-21) 4 commits
-  (merged to 'next' on 2024-03-25 at f3393cabe5)
- + config.txt: describe handling of whitespace further
- + t1300: add more tests for whitespace and inline comments
- + config: really keep value-internal whitespace verbatim
- + config: minor addition of whitespace
-
- "git config" corrupted literal HT characters written in the
- configuration file as part of a value, which has been corrected.
-
- Will merge to 'master'.
- source: <cover.1711001016.git.dsimic@manjaro.org>
-
-
 * jc/apply-parse-diff-git-header-names-fix (2024-03-29) 3 commits
- - t4126: fix "funny directory name" test on Windows (again)
+  (merged to 'next' on 2024-04-02 at d1fa726c41)
+ + t4126: fix "funny directory name" test on Windows (again)
   (merged to 'next' on 2024-03-28 at a35de15836)
  + t4126: make sure a directory with SP at the end is usable
   (merged to 'next' on 2024-03-27 at d586367985)
@@ -445,27 +613,10 @@ Release tarballs are available at:
  when the change was about an empty file created in or deleted from
  a directory whose name ends with a SP, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqqfrwlltjn.fsf@gitster.g>
  source: <xmqqh6gqt674.fsf_-_@gitster.g>
  source: <xmqq5xx50x8p.fsf_-_@gitster.g>
-
-
-* jk/pretty-subject-cleanup (2024-03-22) 7 commits
-  (merged to 'next' on 2024-03-22 at 2796f347ad)
- + format-patch: fix leak of empty header string
- + format-patch: simplify after-subject MIME header handling
- + format-patch: return an allocated string from log_write_email_headers()
- + log: do not set up extra_headers for non-email formats
- + pretty: drop print_email_subject flag
- + pretty: split oneline and email subject printing
- + shortlog: stop setting pp.print_email_subject
-
- Code clean-up in the "git log" machinery that implements custom log
- message formatting.
-
- Will merge to 'master'.
- source: <20240320002555.GB903718@coredump.intra.peff.net>
 
 
 * la/hide-trailer-info (2024-03-16) 7 commits
@@ -484,38 +635,24 @@ Release tarballs are available at:
  source: <pull.1696.git.1710570428.gitgitgadget@gmail.com>
 
 
-* pb/advice-merge-conflict (2024-03-18) 2 commits
-  (merged to 'next' on 2024-03-25 at 4414e31d81)
- + builtin/am: allow disabling conflict advice
- + sequencer: allow disabling conflict advice
-
- Hints that suggest what to do after resolving conflicts can now be
- squelched by disabling advice.mergeConflict.
-
- Acked-by: Phillip Wood <phillip.wood123@gmail.com>
- cf. <e040c631-42d9-4501-a7b8-046f8dac6309@gmail.com>
-
- Will merge to 'master'.
- source: <pull.1682.v3.git.1710623790.gitgitgadget@gmail.com>
-
-
 * ps/pack-refs-auto (2024-03-25) 16 commits
- - builtin/gc: pack refs when using `git maintenance run --auto`
- - builtin/gc: forward git-gc(1)'s `--auto` flag when packing refs
- - t6500: extract objects with "17" prefix
- - builtin/gc: move `struct maintenance_run_opts`
- - builtin/pack-refs: introduce new "--auto" flag
- - builtin/pack-refs: release allocated memory
- - refs/reftable: expose auto compaction via new flag
- - refs: remove `PACK_REFS_ALL` flag
- - refs: move `struct pack_refs_opts` to where it's used
- - t/helper: drop pack-refs wrapper
- - refs/reftable: print errors on compaction failure
- - reftable/stack: gracefully handle failed auto-compaction due to locks
- - reftable/stack: use error codes when locking fails during compaction
- - reftable/error: discern locked/outdated errors
- - reftable/stack: fix error handling in `reftable_stack_init_addition()`
- - Merge branch 'ps/reftable-stack-tempfile' into ps/pack-refs-auto
+  (merged to 'next' on 2024-04-02 at 1d76dc3648)
+ + builtin/gc: pack refs when using `git maintenance run --auto`
+ + builtin/gc: forward git-gc(1)'s `--auto` flag when packing refs
+ + t6500: extract objects with "17" prefix
+ + builtin/gc: move `struct maintenance_run_opts`
+ + builtin/pack-refs: introduce new "--auto" flag
+ + builtin/pack-refs: release allocated memory
+ + refs/reftable: expose auto compaction via new flag
+ + refs: remove `PACK_REFS_ALL` flag
+ + refs: move `struct pack_refs_opts` to where it's used
+ + t/helper: drop pack-refs wrapper
+ + refs/reftable: print errors on compaction failure
+ + reftable/stack: gracefully handle failed auto-compaction due to locks
+ + reftable/stack: use error codes when locking fails during compaction
+ + reftable/error: discern locked/outdated errors
+ + reftable/stack: fix error handling in `reftable_stack_init_addition()`
+ + Merge branch 'ps/reftable-stack-tempfile' into ps/pack-refs-auto
 
  "git pack-refs" learned the "--auto" option, which is a useful
  addition to be triggered from "git gc --auto".
@@ -523,18 +660,8 @@ Release tarballs are available at:
  Acked-by: Karthik Nayak <karthik.188@gmail.com>
  cf. <CAOLa=ZRAEA7rSUoYL0h-2qfEELdbPHbeGpgBJRqesyhHi9Q6WQ@mail.gmail.com>
 
- Will merge to 'next'.
- source: <cover.1711360631.git.ps@pks.im>
-
-
-* ps/clone-with-includeif-onbranch (2024-03-12) 1 commit
-  (merged to 'next' on 2024-03-25 at 8d11bd8bd4)
- + t5601: exercise clones with "includeIf.*.onbranch"
-
- An additional test to demonstrate something I am not sure what.
-
  Will merge to 'master'.
- source: <0bede59a53862585c49bc635f82e44e983144a7f.1710246859.git.ps@pks.im>
+ source: <cover.1711360631.git.ps@pks.im>
 
 
 * ds/doc-config-reflow (2024-03-14) 1 commit
@@ -575,43 +702,6 @@ Release tarballs are available at:
  source: <pull.1681.v2.git.1709824540636.gitgitgadget@gmail.com>
 
 
-* pw/checkout-conflict-errorfix (2024-03-14) 5 commits
-  (merged to 'next' on 2024-03-22 at 9977ac6c75)
- + checkout: fix interaction between --conflict and --merge
- + checkout: cleanup --conflict=<style> parsing
- + merge options: add a conflict style member
- + merge-ll: introduce LL_MERGE_OPTIONS_INIT
- + xdiff-interface: refactor parsing of merge.conflictstyle
-
- "git checkout --conflict=bad" reported a bad conflictStyle as if it
- were given to a configuration variable; it has been corrected to
- report that the command line option is bad.
-
- Will merge to 'master'.
- source: <pull.1684.v2.git.1710435907.gitgitgadget@gmail.com>
-
-
-* bl/cherry-pick-empty (2024-03-25) 7 commits
-  (merged to 'next' on 2024-03-28 at 22e8e4a68e)
- + cherry-pick: add `--empty` for more robust redundant commit handling
- + cherry-pick: enforce `--keep-redundant-commits` incompatibility
- + sequencer: do not require `allow_empty` for redundant commit options
- + sequencer: handle unborn branch with `--allow-empty`
- + rebase: update `--empty=ask` to `--empty=stop`
- + docs: clean up `--empty` formatting in git-rebase(1) and git-am(1)
- + docs: address inaccurate `--empty` default with `--exec`
-
- Allow git-cherry-pick(1) to automatically drop redundant commits via
- a new `--empty` option, similar to the `--empty` options for
- git-rebase(1) and git-am(1). Includes a soft deprecation of
- `--keep-redundant-commits` as well as some related docs changes and
- sequencer code cleanup.
-
- Will merge to 'master'.
- cf. <a397f3dd-e4e1-4275-b17d-1daca9e166fe@gmail.com>
- source: <20240119060721.3734775-2-brianmlyles@gmail.com>
-
-
 * ie/config-includeif-hostname (2024-03-19) 2 commits
  - config: learn the "hostname:" includeIf condition
  - t: add a test helper for getting hostname
@@ -623,20 +713,6 @@ Release tarballs are available at:
  cf. <20240319210428.GC1159535@coredump.intra.peff.net>
  cf. <20240320001934.GA903718@coredump.intra.peff.net>
  source: <20240319183722.211300-1-ignacio@iencinas.com>
-
-
-* jk/remote-helper-object-format-option-fix (2024-03-20) 3 commits
-  (merged to 'next' on 2024-03-27 at 5c9d5be660)
- + transport-helper: send "true" value for object-format option
- + transport-helper: drop "object-format <algo>" option
- + transport-helper: use write helpers more consistently
-
- The implementation and documentation of "object-format" option
- exchange between the Git itself and its remote helpers did not
- quite match.
-
- Will merge to 'master'.
- source: <20240320093226.GA2445531@coredump.intra.peff.net>
 
 
 * jk/core-comment-string (2024-03-27) 17 commits
@@ -681,13 +757,13 @@ Release tarballs are available at:
  source: <cover.1709673020.git.steadmon@google.com>
 
 
-* sj/userdiff-c-sharp (2024-03-28) 1 commit
+* sj/userdiff-c-sharp (2024-04-03) 1 commit
  - userdiff: better method/property matching for C#
 
  The userdiff patterns for C# has been updated.
 
- Needs review.
- source: <pull.1682.v4.git.git.1711653257043.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1682.v5.git.git.1712180564927.gitgitgadget@gmail.com>
 
 
 * cw/git-std-lib (2024-02-28) 4 commits
