@@ -459,6 +459,18 @@ an explanation of changes between each iteration can be kept in
 Git-notes and inserted automatically following the three-dash
 line via `git format-patch --notes`.
 
+[[the-topic-summary]]
+*This is EXPERIMENTAL*.
+
+When sending a topic, you can propose a one-paragraph summary that
+should appear in the "What's cooking" report when it is picked up to
+explain the topic.  If you choose to do so, please write a 2-5 line
+paragraph that will fit well in our release notes (see many bulleted
+entries in the Documentation/RelNotes/* files for examples), and make
+it the first paragraph of the cover letter.  For a single-patch
+series, use the space between the three-dash line and the diffstat, as
+described earlier.
+
 [[attachment]]
 Do not attach the patch as a MIME attachment, compressed or not.
 Do not let your e-mail client send quoted-printable.  Do not let
