@@ -60,6 +60,12 @@ UI, Workflows & Features
  * Hints that suggest what to do after resolving conflicts can now be
    squelched by disabling advice.mergeConflict.
 
+ * Allow git-cherry-pick(1) to automatically drop redundant commits via
+   a new `--empty` option, similar to the `--empty` options for
+   git-rebase(1) and git-am(1). Includes a soft deprecation of
+   `--keep-redundant-commits` as well as some related docs changes and
+   sequencer code cleanup.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -117,6 +123,15 @@ Performance, Internal Implementation, Development Support etc.
  * Fix the way recently added tests interpolate variables defined
    outside them, and document the best practice to help future
    developers.
+
+ * Introduce an experimental protocol for contributors to propose the
+   topic description to be used in the "What's cooking" report, the
+   merge commit message for the topic, and in the release notes and
+   document it in the SubmittingPatches document.
+
+ * The t/README file now gives a hint on running individual tests in
+   the "t/" directory with "make t<num>-*.sh t<num>-*.sh".
+   (merge 8d383806fc pb/test-scripts-are-build-targets later to maint).
 
 
 Fixes since v2.44
@@ -270,6 +285,16 @@ Fixes since v2.44
    files left, which has been corrected.
    (merge 0068aa7946 ps/reftable-unit-test-nfs-workaround later to maint).
 
+ * The implementation and documentation of "object-format" option
+   exchange between the Git itself and its remote helpers did not
+   quite match, which has been corrected.
+
+ * The "--pretty=<shortHand>" option of the commands in the "git log"
+   family, defined as "[pretty] shortHand = <expansion>" should have
+   been looked up case insensitively, but was not, which has been
+   corrected.
+   (merge f999d5188b bl/pretty-shorthand-config-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -292,3 +317,5 @@ Fixes since v2.44
    (merge ad538c61da jc/index-pack-fsck-levels later to maint).
    (merge 67471bc704 ja/doc-formatting-fix later to maint).
    (merge 86f9ce7dd6 bl/doc-config-fixes later to maint).
+   (merge 0d527842b7 az/grep-group-error-message-update later to maint).
+   (merge 7c43bdf07b rs/strbuf-expand-bad-format later to maint).
