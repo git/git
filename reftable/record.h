@@ -86,6 +86,12 @@ int reftable_encode_key(int *is_restart, struct string_view dest,
 			struct strbuf prev_key, struct strbuf key,
 			uint8_t extra);
 
+/* Decode a record's key lengths. */
+int reftable_decode_keylen(struct string_view in,
+			   uint64_t *prefix_len,
+			   uint64_t *suffix_len,
+			   uint8_t *extra);
+
 /*
  * Decode into `last_key` and `extra` from `in`. `last_key` is expected to
  * contain the decoded key of the preceding record, if any.
