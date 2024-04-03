@@ -273,34 +273,36 @@ void block_reader_start(struct block_reader *br, struct block_iter *it)
 	it->next_off = br->header_off + 4;
 }
 
-struct restart_find_args {
+struct restart_needle_less_args {
 	int error;
-	struct strbuf key;
-	struct block_reader *r;
+	struct strbuf needle;
+	struct block_reader *reader;
 };
 
-static int restart_key_less(size_t idx, void *args)
+static int restart_needle_less(size_t idx, void *_args)
 {
-	struct restart_find_args *a = args;
-	uint32_t off = block_reader_restart_offset(a->r, idx);
+	struct restart_needle_less_args *args = _args;
+	uint32_t off = block_reader_restart_offset(args->reader, idx);
 	struct string_view in = {
-		.buf = a->r->block.data + off,
-		.len = a->r->block_len - off,
+		.buf = args->reader->block.data + off,
+		.len = args->reader->block_len - off,
 	};
-
-	/* the restart key is verbatim in the block, so this could avoid the
-	   alloc for decoding the key */
-	struct strbuf rkey = STRBUF_INIT;
+	struct strbuf kth_restart_key = STRBUF_INIT;
 	uint8_t unused_extra;
-	int n = reftable_decode_key(&rkey, &unused_extra, in);
-	int result;
+	int result, n;
+
+	/*
+	 * TODO: The restart key is verbatim in the block, so we can in theory
+	 * avoid decoding the key and thus save some allocations.
+	 */
+	n = reftable_decode_key(&kth_restart_key, &unused_extra, in);
 	if (n < 0) {
-		a->error = 1;
+		args->error = 1;
 		return -1;
 	}
 
-	result = strbuf_cmp(&a->key, &rkey);
-	strbuf_release(&rkey);
+	result = strbuf_cmp(&args->needle, &kth_restart_key);
+	strbuf_release(&kth_restart_key);
 	return result < 0;
 }
 
@@ -376,9 +378,9 @@ void block_iter_close(struct block_iter *it)
 int block_reader_seek(struct block_reader *br, struct block_iter *it,
 		      struct strbuf *want)
 {
-	struct restart_find_args args = {
-		.key = *want,
-		.r = br,
+	struct restart_needle_less_args args = {
+		.needle = *want,
+		.reader = br,
 	};
 	struct block_iter next = BLOCK_ITER_INIT;
 	struct reftable_record rec;
@@ -390,7 +392,38 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 		goto done;
 	}
 
-	i = binsearch(br->restart_count, &restart_key_less, &args);
+	/*
+	 * Perform a binary search over the block's restart points, which
+	 * avoids doing a linear scan over the whole block. Like this, we
+	 * identify the section of the block that should contain our key.
+	 *
+	 * Note that we explicitly search for the first restart point _greater_
+	 * than the sought-after record, not _greater or equal_ to it. In case
+	 * the sought-after record is located directly at the restart point we
+	 * would otherwise start doing the linear search at the preceding
+	 * restart point. While that works alright, we would end up scanning
+	 * too many record.
+	 */
+	i = binsearch(br->restart_count, &restart_needle_less, &args);
+
+	/*
+	 * Now there are multiple cases:
+	 *
+	 *   - `i == 0`: The wanted record is smaller than the record found at
+	 *     the first restart point. As the first restart point is the first
+	 *     record in the block, our wanted record cannot be located in this
+	 *     block at all. We still need to position the iterator so that the
+	 *     next call to `block_iter_next()` will yield an end-of-iterator
+	 *     signal.
+	 *
+	 *   - `i == restart_count`: The wanted record was not found at any of
+	 *     the restart points. As there is no restart point at the end of
+	 *     the section the record may thus be contained in the last block.
+	 *
+	 *   - `i > 0`: The wanted record must be contained in the section
+	 *     before the found restart point. We thus do a linear search
+	 *     starting from the preceding restart point.
+	 */
 	if (i > 0)
 		it->next_off = block_reader_restart_offset(br, i - 1);
 	else
@@ -399,20 +432,33 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 
 	reftable_record_init(&rec, block_reader_type(br));
 
-	/* We're looking for the last entry less/equal than the wanted key, so
-	   we have to go one entry too far and then back up.
-	*/
+	/*
+	 * We're looking for the last entry less than the wanted key so that
+	 * the next call to `block_reader_next()` would yield the wanted
+	 * record. We thus don't want to position our reader at the sought
+	 * after record, but one before. To do so, we have to go one entry too
+	 * far and then back up.
+	 */
 	while (1) {
 		block_iter_copy_from(&next, it);
 		err = block_iter_next(&next, &rec);
 		if (err < 0)
 			goto done;
-
-		reftable_record_key(&rec, &it->last_key);
-		if (err > 0 || strbuf_cmp(&it->last_key, want) >= 0) {
+		if (err > 0) {
 			err = 0;
 			goto done;
 		}
+
+		/*
+		 * Check whether the current key is greater or equal to the
+		 * sought-after key. In case it is greater we know that the
+		 * record does not exist in the block and can thus abort early.
+		 * In case it is equal to the sought-after key we have found
+		 * the desired record.
+		 */
+		reftable_record_key(&rec, &it->last_key);
+		if (strbuf_cmp(&it->last_key, want) >= 0)
+			goto done;
 
 		block_iter_copy_from(it, &next);
 	}
