@@ -127,7 +127,16 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 		if (diff_can_quit_early(&revs->diffopt))
 			break;
 
-		if (!ce_path_match(istate, ce, &revs->prune_data, NULL))
+		/*
+		 * NEEDSWORK:
+		 * Here we filter with pathspec but the result is further
+		 * filtered out when --relative is in effect.  To end-users,
+		 * a pathspec element that matched only to paths outside the
+		 * current directory is like not matching anything at all;
+		 * the handling of ps_matched[] here may become problematic
+		 * if/when we add the "--error-unmatch" option to "git diff".
+		 */
+		if (!ce_path_match(istate, ce, &revs->prune_data, revs->ps_matched))
 			continue;
 
 		if (revs->diffopt.prefix &&
