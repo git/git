@@ -30,6 +30,7 @@ GIT_DIR="$url/.git"
 export GIT_DIR
 
 force=
+object_format=
 
 mkdir -p "$dir"
 
@@ -61,7 +62,8 @@ do
 		echo
 		;;
 	list)
-		echo ":object-format $(git rev-parse --show-object-format=storage)"
+		test -n "$object_format" &&
+			echo ":object-format $(git rev-parse --show-object-format=storage)"
 		git for-each-ref --format='? %(refname)' 'refs/heads/' 'refs/tags/'
 		head=$(git symbolic-ref HEAD)
 		echo "@$head HEAD"
