@@ -12,40 +12,47 @@ https://developers.google.com/open-source/licenses/bsd
 #include "test_framework.h"
 #include "reftable-tests.h"
 
-struct binsearch_args {
-	int key;
-	int *arr;
+struct integer_needle_lesseq_args {
+	int needle;
+	int *haystack;
 };
 
-static int binsearch_func(size_t i, void *void_args)
+static int integer_needle_lesseq(size_t i, void *_args)
 {
-	struct binsearch_args *args = void_args;
-
-	return args->key < args->arr[i];
+	struct integer_needle_lesseq_args *args = _args;
+	return args->needle <= args->haystack[i];
 }
 
 static void test_binsearch(void)
 {
-	int arr[] = { 2, 4, 6, 8, 10 };
-	size_t sz = ARRAY_SIZE(arr);
-	struct binsearch_args args = {
-		.arr = arr,
+	int haystack[] = { 2, 4, 6, 8, 10 };
+	struct {
+		int needle;
+		size_t expected_idx;
+	} testcases[] = {
+		{-9000, 0},
+		{-1, 0},
+		{0, 0},
+		{2, 0},
+		{3, 1},
+		{4, 1},
+		{7, 3},
+		{9, 4},
+		{10, 4},
+		{11, 5},
+		{9000, 5},
 	};
+	size_t i = 0;
 
-	int i = 0;
-	for (i = 1; i < 11; i++) {
-		size_t res;
+	for (i = 0; i < ARRAY_SIZE(testcases); i++) {
+		struct integer_needle_lesseq_args args = {
+			.haystack = haystack,
+			.needle = testcases[i].needle,
+		};
+		size_t idx;
 
-		args.key = i;
-		res = binsearch(sz, &binsearch_func, &args);
-
-		if (res < sz) {
-			EXPECT(args.key < arr[res]);
-			if (res > 0)
-				EXPECT(args.key >= arr[res - 1]);
-		} else {
-			EXPECT(args.key == 10 || args.key == 11);
-		}
+		idx = binsearch(ARRAY_SIZE(haystack), &integer_needle_lesseq, &args);
+		EXPECT(idx == testcases[i].expected_idx);
 	}
 }
 
