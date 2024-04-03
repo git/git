@@ -39,8 +39,11 @@ size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
 	 */
 	while (hi - lo > 1) {
 		size_t mid = lo + (hi - lo) / 2;
+		int ret = f(mid, args);
+		if (ret < 0)
+			return sz;
 
-		if (f(mid, args))
+		if (ret > 0)
 			hi = mid;
 		else
 			lo = mid;

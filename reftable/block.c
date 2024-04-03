@@ -387,11 +387,6 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 	int err = 0;
 	size_t i;
 
-	if (args.error) {
-		err = REFTABLE_FORMAT_ERROR;
-		goto done;
-	}
-
 	/*
 	 * Perform a binary search over the block's restart points, which
 	 * avoids doing a linear scan over the whole block. Like this, we
@@ -405,6 +400,10 @@ int block_reader_seek(struct block_reader *br, struct block_iter *it,
 	 * too many record.
 	 */
 	i = binsearch(br->restart_count, &restart_needle_less, &args);
+	if (args.error) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
 
 	/*
 	 * Now there are multiple cases:
