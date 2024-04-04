@@ -311,6 +311,7 @@ typedef int each_ref_fn(const char *refname,
  */
 typedef int each_repo_ref_fn(struct repository *r,
 			     const char *refname,
+			     const char *referent,
 			     const struct object_id *oid,
 			     int flags,
 			     void *cb_data);

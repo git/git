@@ -48,6 +48,7 @@ struct show_data {
 };
 
 static int show_reference(struct repository *r, const char *refname,
+			  const char *referent UNUSED,
 			  const struct object_id *oid,
 			  int flag UNUSED, void *cb_data)
 {

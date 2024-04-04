@@ -1664,6 +1664,7 @@ struct do_for_each_ref_help {
 
 static int do_for_each_ref_helper(struct repository *r UNUSED,
 				  const char *refname,
+				  const char *referent,
 				  const struct object_id *oid,
 				  int flags,
 				  void *cb_data)
@@ -2565,6 +2566,7 @@ struct do_for_each_reflog_help {
 
 static int do_for_each_reflog_helper(struct repository *r UNUSED,
 				     const char *refname,
+				     const char *referent,
 				     const struct object_id *oid UNUSED,
 				     int flags,
 				     void *cb_data)
