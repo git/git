@@ -1430,7 +1430,7 @@ void print_commit_summary(struct repository *r,
 	diff_setup_done(&rev.diffopt);
 
 	refs = get_main_ref_store(r);
-	head = refs_resolve_ref_unsafe(refs, "HEAD", 0, NULL, NULL);
+	head = refs_resolve_ref_unsafe(refs, "HEAD", NULL, 0, NULL, NULL);
 	if (!head)
 		die(_("unable to resolve HEAD after creating commit"));
 	if (!strcmp(head, "HEAD"))
@@ -4651,7 +4651,7 @@ static int apply_save_autostash_ref(struct repository *r, const char *refname,
 	if (!refs_ref_exists(get_main_ref_store(r), refname))
 		return 0;
 
-	if (!refs_resolve_ref_unsafe(get_main_ref_store(r), refname,
+	if (!refs_resolve_ref_unsafe(get_main_ref_store(r), refname, NULL,
 				     RESOLVE_REF_READING, &stash_oid, &flag))
 		return -1;
 	if (flag & REF_ISSYMREF)

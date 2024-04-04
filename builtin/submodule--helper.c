@@ -45,7 +45,7 @@ static int repo_get_default_remote(struct repository *repo, char **default_remot
 	char *dest = NULL;
 	struct strbuf sb = STRBUF_INIT;
 	struct ref_store *store = get_main_ref_store(repo);
-	const char *refname = refs_resolve_ref_unsafe(store, "HEAD", 0, NULL,
+	const char *refname = refs_resolve_ref_unsafe(store, "HEAD", NULL, 0, NULL,
 						      NULL);
 
 	if (!refname)

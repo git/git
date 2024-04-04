@@ -342,6 +342,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 	while (!iter->err) {
 		int flags = 0;
+		char **symref = NULL;
 
 		iter->err = reftable_iterator_next_ref(&iter->iter, &iter->ref);
 		if (iter->err)
@@ -377,7 +378,10 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			oidread(&iter->oid, iter->ref.value.val2.value);
 			break;
 		case REFTABLE_REF_SYMREF:
-			if (!refs_resolve_ref_unsafe(&iter->refs->base, iter->ref.refname,
+			if (!iter->ref.value.symref)
+				symref = &iter->ref.value.symref;
+
+			if (!refs_resolve_ref_unsafe(&iter->refs->base, iter->ref.refname, symref,
 						     RESOLVE_REF_READING, &iter->oid, &flags))
 				oidclr(&iter->oid);
 			break;
@@ -406,6 +410,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 				continue;
 
 		iter->base.refname = iter->ref.refname;
+		iter->base.referent = iter->ref.value.symref;
 		iter->base.oid = &iter->oid;
 		iter->base.flags = flags;
 
@@ -877,7 +882,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			 * so it is safe to call `refs_resolve_ref_unsafe()`
 			 * here without causing races.
 			 */
-			const char *resolved = refs_resolve_ref_unsafe(&refs->base, u->refname, 0,
+			const char *resolved = refs_resolve_ref_unsafe(&refs->base, u->refname, NULL, 0,
 								       &current_oid, NULL);
 
 			if (u->flags & REF_NO_DEREF) {
@@ -1252,7 +1257,7 @@ static int write_create_symref_table(struct reftable_writer *writer, void *cb_da
 	 * never happens.
 	 */
 	if (!create->logmsg ||
-	    !refs_resolve_ref_unsafe(&create->refs->base, create->target,
+	    !refs_resolve_ref_unsafe(&create->refs->base, create->target, NULL,
 				     RESOLVE_REF_READING, &new_oid, NULL) ||
 	    !should_write_log(&create->refs->base, create->refname))
 		return 0;
@@ -1263,7 +1268,7 @@ static int write_create_symref_table(struct reftable_writer *writer, void *cb_da
 	log.value.update.message = xstrndup(create->logmsg,
 					    create->refs->write_options.block_size / 2);
 	memcpy(log.value.update.new_hash, new_oid.hash, GIT_MAX_RAWSZ);
-	if (refs_resolve_ref_unsafe(&create->refs->base, create->refname,
+	if (refs_resolve_ref_unsafe(&create->refs->base, create->refname, NULL,
 				    RESOLVE_REF_READING, &old_oid, NULL))
 		memcpy(log.value.update.old_hash, old_oid.hash, GIT_MAX_RAWSZ);
 

@@ -71,9 +71,10 @@ struct pack_refs_opts {
 	struct ref_exclusions *exclusions;
 	struct string_list *includes;
 };
-
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
+
 				    const char *refname,
+				    char **referent,
 				    int resolve_flags,
 				    struct object_id *oid,
 				    int *flags);
