@@ -47,7 +47,7 @@ ubuntu-*)
 	mkdir --parents "$CUSTOM_PATH"
 	wget --quiet --directory-prefix="$CUSTOM_PATH" \
 		"$P4WHENCE/bin.linux26x86_64/p4d" "$P4WHENCE/bin.linux26x86_64/p4"
-	chmod u+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4"
+	chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4"
 
 	wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
 	tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
