@@ -7,9 +7,6 @@
 
 P4WHENCE=https://cdist2.perforce.com/perforce/r21.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
-UBUNTU_COMMON_PKGS="make libssl-dev libcurl4-openssl-dev libexpat-dev
- tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl
- libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl"
 
 # Make sudo a no-op and execute the command directly when running as root.
 # While using sudo would be fine on most platforms when we are root already,
@@ -25,8 +22,13 @@ fi
 case "$distro" in
 ubuntu-*)
 	sudo apt-get -q update
-	sudo apt-get -q -y install language-pack-is libsvn-perl apache2 \
-		$UBUNTU_COMMON_PKGS $CC_PACKAGE $PYTHON_PACKAGE
+	sudo apt-get -q -y install \
+		language-pack-is libsvn-perl apache2 \
+		make libssl-dev libcurl4-openssl-dev libexpat-dev \
+		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
+		libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl \
+		$CC_PACKAGE $PYTHON_PACKAGE
+
 	mkdir --parents "$P4_PATH"
 	pushd "$P4_PATH"
 		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4d"
@@ -34,6 +36,7 @@ ubuntu-*)
 		chmod u+x p4d
 		chmod u+x p4
 	popd
+
 	mkdir --parents "$GIT_LFS_PATH"
 	pushd "$GIT_LFS_PATH"
 		wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
@@ -82,10 +85,6 @@ Documentation)
 
 	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
 	sudo gem install --version 1.5.8 asciidoctor
-	;;
-linux-gcc-default)
-	sudo apt-get -q update
-	sudo apt-get -q -y install $UBUNTU_COMMON_PKGS
 	;;
 esac
 
