@@ -186,4 +186,12 @@ int apply_all_patches(struct apply_state *state,
 		      int argc, const char **argv,
 		      int options);
 
+/*
+ * exposed only for tests; do not call this as it not
+ * a part of the API
+ */
+extern int apply_parse_fragment_range(const char *line, int len, int offset,
+				      const char *expect, unsigned long *p1,
+				      unsigned long *p2);
+
 #endif
