@@ -5,6 +5,8 @@
 
 . ${0%/*}/lib.sh
 
+begin_group "Install dependencies"
+
 P4WHENCE=https://cdist2.perforce.com/perforce/r21.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 
@@ -20,14 +22,27 @@ then
 fi
 
 case "$distro" in
+alpine-*)
+	apk add --update shadow sudo build-base curl-dev openssl-dev expat-dev gettext \
+		pcre2-dev python3 musl-libintl perl-utils ncurses \
+		apache2 apache2-http2 apache2-proxy apache2-ssl apache2-webdav apr-util-dbd_sqlite3 \
+		bash cvs gnupg perl-cgi perl-dbd-sqlite >/dev/null
+	;;
+fedora-*)
+	dnf -yq update >/dev/null &&
+	dnf -yq install make gcc findutils diffutils perl python3 gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
+	;;
 ubuntu-*)
+	# Required so that apt doesn't wait for user input on certain packages.
+	export DEBIAN_FRONTEND=noninteractive
+
 	sudo apt-get -q update
 	sudo apt-get -q -y install \
-		language-pack-is libsvn-perl apache2 \
-		make libssl-dev libcurl4-openssl-dev libexpat-dev \
+		language-pack-is libsvn-perl apache2 cvs cvsps git gnupg subversion \
+		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
-		libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl \
-		$CC_PACKAGE $PYTHON_PACKAGE
+		libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
+		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
 	mkdir --parents "$CUSTOM_PATH"
 	wget --quiet --directory-prefix="$CUSTOM_PATH" \
@@ -38,6 +53,13 @@ ubuntu-*)
 	tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
 		-C "$CUSTOM_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
 	rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+	;;
+ubuntu32-*)
+	sudo linux32 --32bit i386 sh -c '
+		apt update >/dev/null &&
+		apt install -y build-essential libcurl4-openssl-dev \
+			libssl-dev libexpat-dev gettext python >/dev/null
+	'
 	;;
 macos-*)
 	export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1
@@ -98,3 +120,5 @@ then
 else
 	echo >&2 "WARNING: git-lfs wasn't installed, see above for clues why"
 fi
+
+end_group "Install dependencies"
