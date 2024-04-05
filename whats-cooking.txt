@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2024, #02; Wed, 3)
-X-master-at: 7774cfed6261ce2900c84e55906da708c711d601
-X-next-at: 4b32163adf4863c6df3bb6b43540fa2ca3494e28
+Subject: What's cooking in git.git (Apr 2024, #03; Fri, 5)
+X-master-at: 19981daefd7c147444462739375462b49412ce33
+X-next-at: 6705b92e7a998ba6c9ef97c43fa7dc2dcf631e7a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2024, #02; Wed, 3)
+What's cooking in git.git (Apr 2024, #03; Fri, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,207 +48,134 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* az/grep-group-error-message-update (2024-03-25) 1 commit
-  (merged to 'next' on 2024-03-27 at 567bf00ed4)
- + grep: improve errors for unmatched ( and )
+* jk/core-comment-string (2024-03-27) 17 commits
+  (merged to 'next' on 2024-03-28 at fbf8eb9331)
+ + config: add core.commentString
+ + config: allow multi-byte core.commentChar
+ + environment: drop comment_line_char compatibility macro
+ + wt-status: drop custom comment-char stringification
+ + sequencer: handle multi-byte comment characters when writing todo list
+ + find multi-byte comment chars in unterminated buffers
+ + find multi-byte comment chars in NUL-terminated strings
+ + prefer comment_line_str to comment_line_char for printing
+ + strbuf: accept a comment string for strbuf_add_commented_lines()
+ + strbuf: accept a comment string for strbuf_commented_addf()
+ + strbuf: accept a comment string for strbuf_stripspace()
+ + environment: store comment_line_char as a string
+ + strbuf: avoid shadowing global comment_line_char name
+ + commit: refactor base-case of adjust_comment_line_char()
+ + strbuf: avoid static variables in strbuf_add_commented_lines()
+ + strbuf: simplify comment-handling in add_lines() helper
+ + config: forbid newline as core.commentChar
 
- Error message clarification.
- source: <tkz3a5jkalcz5ajemx4b4x42pe6kv45sfmgpin4zeai3moq42o@tarta.nabijaczleweli.xyz>
-
-
-* bl/cherry-pick-empty (2024-03-25) 7 commits
-  (merged to 'next' on 2024-03-28 at 22e8e4a68e)
- + cherry-pick: add `--empty` for more robust redundant commit handling
- + cherry-pick: enforce `--keep-redundant-commits` incompatibility
- + sequencer: do not require `allow_empty` for redundant commit options
- + sequencer: handle unborn branch with `--allow-empty`
- + rebase: update `--empty=ask` to `--empty=stop`
- + docs: clean up `--empty` formatting in git-rebase(1) and git-am(1)
- + docs: address inaccurate `--empty` default with `--exec`
-
- Allow git-cherry-pick(1) to automatically drop redundant commits via
- a new `--empty` option, similar to the `--empty` options for
- git-rebase(1) and git-am(1). Includes a soft deprecation of
- `--keep-redundant-commits` as well as some related docs changes and
- sequencer code cleanup.
- cf. <a397f3dd-e4e1-4275-b17d-1daca9e166fe@gmail.com>
- source: <20240119060721.3734775-2-brianmlyles@gmail.com>
-
-
-* bl/pretty-shorthand-config-fix (2024-03-25) 2 commits
-  (merged to 'next' on 2024-03-28 at e2749914ab)
- + pretty: find pretty formats case-insensitively
- + pretty: update tests to use `test_config`
-
- The "--pretty=<shortHand>" option of the commands in the "git log"
- family, defined as "[pretty] shortHand = <expansion>" should have
- been looked up case insensitively, but was not, which has been
- corrected.
- source: <20240324214316.917513-1-brianmlyles@gmail.com>
+ core.commentChar used to be limited to a single byte, but has been
+ updated to allow an arbitrary multi-byte sequence.
+ source: <20240312091013.GA95442@coredump.intra.peff.net>
+ source: <20240327081922.GA830163@coredump.intra.peff.net>
 
 
-* ds/config-internal-whitespace-fix (2024-03-21) 4 commits
-  (merged to 'next' on 2024-03-25 at f3393cabe5)
- + config.txt: describe handling of whitespace further
- + t1300: add more tests for whitespace and inline comments
- + config: really keep value-internal whitespace verbatim
- + config: minor addition of whitespace
+* rs/config-comment (2024-03-15) 3 commits
+  (merged to 'next' on 2024-03-28 at 83eaadc2b6)
+ + config: allow tweaking whitespace between value and comment
+ + config: fix --comment formatting
+ + config: add --comment option to add a comment
 
- "git config" corrupted literal HT characters written in the
- configuration file as part of a value, which has been corrected.
- source: <cover.1711001016.git.dsimic@manjaro.org>
-
-
-* ds/grep-doc-updates (2024-03-25) 2 commits
-  (merged to 'next' on 2024-03-27 at 681f08cbc5)
- + grep docs: describe --no-index further and improve formatting a bit
- + grep docs: describe --recurse-submodules further and improve formatting a bit
-
- Documentation updates.
- source: <cover.1711398665.git.dsimic@manjaro.org>
+ "git config" learned "--comment=<message>" option to leave a
+ comment immediately after the "variable = value" on the same line
+ in the configuration file.
+ source: <pull.1681.v2.git.1709824540636.gitgitgadget@gmail.com>
 
 
-* jc/release-notes-entry-experiment (2024-03-26) 1 commit
-  (merged to 'next' on 2024-03-27 at 74ebe224e9)
- + SubmittingPatches: release-notes entry experiment
+* rs/retire-mksnpath (2024-04-04) 1 commit
+ - apply: replace mksnpath() with a mkpathdup() call
 
- Introduce an experimental protocol for contributors to propose the
- topic description to be used in the "What's cooking" report, the
- merge commit message for the topic, and in the release notes and
- document it in the SubmittingPatches document.
- source: <xmqq8r26eyva.fsf@gitster.g>
+ Replace the only remaining caller of mksnpath() with mkpathdup() to
+ lift the hardcoded path length limit, and retire the function.
 
-
-* jk/doc-remote-helpers-markup-fix (2024-03-20) 1 commit
-  (merged to 'next' on 2024-03-25 at 7c3dd28ca5)
- + doc/gitremote-helpers: fix more missing single-quotes
-
- Documentation mark-up fix.
- source: <20240320091748.GA2444639@coredump.intra.peff.net>
-
-
-* jk/pretty-subject-cleanup (2024-03-22) 7 commits
-  (merged to 'next' on 2024-03-22 at 2796f347ad)
- + format-patch: fix leak of empty header string
- + format-patch: simplify after-subject MIME header handling
- + format-patch: return an allocated string from log_write_email_headers()
- + log: do not set up extra_headers for non-email formats
- + pretty: drop print_email_subject flag
- + pretty: split oneline and email subject printing
- + shortlog: stop setting pp.print_email_subject
-
- Code clean-up in the "git log" machinery that implements custom log
- message formatting.
- source: <20240320002555.GB903718@coredump.intra.peff.net>
-
-
-* jk/rebase-apply-leakfix (2024-03-22) 1 commit
-  (merged to 'next' on 2024-03-25 at f9358272af)
- + rebase: use child_process_clear() to clean
-
- Leakfix.
- source: <20240322103502.GA2045297@coredump.intra.peff.net>
-
-
-* jk/remote-helper-object-format-option-fix (2024-03-20) 3 commits
-  (merged to 'next' on 2024-03-27 at 5c9d5be660)
- + transport-helper: send "true" value for object-format option
- + transport-helper: drop "object-format <algo>" option
- + transport-helper: use write helpers more consistently
-
- The implementation and documentation of "object-format" option
- exchange between the Git itself and its remote helpers did not
- quite match, which has been corrected.
- source: <20240320093226.GA2445531@coredump.intra.peff.net>
-
-
-* pb/advice-merge-conflict (2024-03-18) 2 commits
-  (merged to 'next' on 2024-03-25 at 4414e31d81)
- + builtin/am: allow disabling conflict advice
- + sequencer: allow disabling conflict advice
-
- Hints that suggest what to do after resolving conflicts can now be
- squelched by disabling advice.mergeConflict.
-
- Acked-by: Phillip Wood <phillip.wood123@gmail.com>
- cf. <e040c631-42d9-4501-a7b8-046f8dac6309@gmail.com>
- source: <pull.1682.v3.git.1710623790.gitgitgadget@gmail.com>
-
-
-* pb/test-scripts-are-build-targets (2024-03-25) 1 commit
-  (merged to 'next' on 2024-03-27 at 9ef22a39b6)
- + t/README: mention test files are make targets
-
- The t/README file now gives a hint on running individual tests in
- the "t/" directory with "make t<num>-*.sh t<num>-*.sh".
- source: <pull.1701.git.1711293246094.gitgitgadget@gmail.com>
-
-
-* ps/clone-with-includeif-onbranch (2024-03-12) 1 commit
-  (merged to 'next' on 2024-03-25 at 8d11bd8bd4)
- + t5601: exercise clones with "includeIf.*.onbranch"
-
- An additional test to demonstrate that clone would not choke on a
- global configuration file that uses includeIf.onbranch:*.path.
- source: <0bede59a53862585c49bc635f82e44e983144a7f.1710246859.git.ps@pks.im>
-
-
-* ps/reftable-unit-test-nfs-workaround (2024-03-21) 1 commit
-  (merged to 'next' on 2024-03-25 at 4d3d391330)
- + reftable: fix tests being broken by NFS' delete-after-close semantics
-
- A unit test for reftable code tried to enumerate all files in a
- directory after reftable operations and expected to see nothing but
- the files it wanted to leave there, but was fooled by .nfs* cruft
- files left, which has been corrected.
- source: <8ac5e94a3930cdd2aee9ea86acda3155674b635c.1711035529.git.ps@pks.im>
-
-
-* ps/t7800-variable-interpolation-fix (2024-03-22) 3 commits
-  (merged to 'next' on 2024-03-25 at e7b1ec4df4)
- + t/README: document how to loop around test cases
- + t7800: use single quotes for test bodies
- + t7800: improve test descriptions with empty arguments
-
- Fix the way recently added tests interpolate variables defined
- outside them, and document the best practice to help future
- developers.
- source: <cover.1711074118.git.ps@pks.im>
-
-
-* pw/checkout-conflict-errorfix (2024-03-14) 5 commits
-  (merged to 'next' on 2024-03-22 at 9977ac6c75)
- + checkout: fix interaction between --conflict and --merge
- + checkout: cleanup --conflict=<style> parsing
- + merge options: add a conflict style member
- + merge-ll: introduce LL_MERGE_OPTIONS_INIT
- + xdiff-interface: refactor parsing of merge.conflictstyle
-
- "git checkout --conflict=bad" reported a bad conflictStyle as if it
- were given to a configuration variable; it has been corrected to
- report that the command line option is bad.
- source: <pull.1684.v2.git.1710435907.gitgitgadget@gmail.com>
-
-
-* rs/midx-use-strvec-pushf (2024-03-25) 1 commit
-  (merged to 'next' on 2024-03-27 at 16969df3e8)
- + midx: use strvec_pushf() for pack-objects base name
- (this branch is used by tb/midx-write.)
-
- Code clean-up.
- source: <9483038c-9529-4243-9b9a-97254fac29c1@web.de>
-
-
-* rs/strbuf-expand-bad-format (2024-03-25) 2 commits
-  (merged to 'next' on 2024-03-27 at 1f9dbf70a0)
- + cat-file: use strbuf_expand_bad_format()
- + factor out strbuf_expand_bad_format()
-
- Code clean-up.
- source: <27cdcde7-74bc-4ee8-bc84-9a6046292cae@web.de>
+ Expecting a retitle and reroll?
+ cf. <xmqqo7aozuih.fsf@gitster.g>
+ source: <df774306-f29b-4a75-a282-59db89812b9a@web.de>
 
 --------------------------------------------------
 [New Topics]
+
+* ma/win32-unix-domain-socket (2024-04-03) 1 commit
+ - Win32: detect unix socket support at runtime
+
+ Windows binary used to decide the use of unix-domain socket at
+ build time, but it learned to make the decision at runtime instead.
+
+ Will merge to 'next'.
+ source: <pull.1708.git.1712158923106.gitgitgadget@gmail.com>
+
+
+* ps/reftable-write-optim (2024-04-03) 11 commits
+ - reftable/block: reuse compressed array
+ - reftable/block: reuse zstream when writing log blocks
+ - reftable/writer: reset `last_key` instead of releasing it
+ - reftable/writer: unify releasing memory
+ - reftable/writer: refactorings for `writer_flush_nonempty_block()`
+ - reftable/writer: refactorings for `writer_add_record()`
+ - refs/reftable: don't recompute committer ident
+ - reftable: remove name checks
+ - refs/reftable: skip duplicate name checks
+ - refs/reftable: perform explicit D/F check when writing symrefs
+ - refs/reftable: fix D/F conflict error message on ref copy
+
+ Code to write out reftable has seen some optimization and
+ simplification.
+
+ Expecting a reroll.
+ cf. <Zg6SVcGC8kSGSYh-@tanuki>
+ source: <cover.1712209149.git.ps@pks.im>
+
+
+* ds/send-email-per-message-block (2024-04-05) 2 commits
+ - SQUASH??? switch to separator semantics
+ - send-email: make it easy to discern the messages for each patch
+
+ "git send-email" learned to separate its reports on each message it
+ sends out with an extra blank line in between.
+
+ Expecting a reroll.
+ cf. <8d47bd687f2ad80bbc1e1c86ae337327@manjaro.org>
+ source: <0e087ed992def0746f3d437253248904c2126464.1712262791.git.dsimic@manjaro.org>
+
+
+* ds/fetch-config-parse-microfix (2024-04-05) 1 commit
+ - fetch: return when parsing submodule.recurse
+
+ A config parser callback function fell through instead of returning
+ after recognising and processing a variable, wasting cycles, which
+ has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1709.git.1712285542303.gitgitgadget@gmail.com>
+
+
+* rs/apply-lift-path-length-limit (2024-04-05) 2 commits
+ - path: remove mksnpath()
+ - apply: avoid fixed-size buffer in create_one_file()
+
+ "git apply" has been updated to lift the hardcoded pathname length
+ limit, which in turn allowed a mksnpath() function that is no
+ longer used.
+
+ Will merge to 'next'.
+ source: <df774306-f29b-4a75-a282-59db89812b9a@web.de>
+
+
+* rs/apply-reject-fd-leakfix (2024-04-05) 1 commit
+ - apply: don't leak fd on fdopen() error
+
+ A file descriptor leak in an error codepath, used when "git apply
+ --reject" fails to create the *.rej file, has been corrected.
+
+ Will merge to 'next'.
+ source: <5ba55ee4-94c7-4094-a744-584fc623b391@web.de>
+
+--------------------------------------------------
+[Cooking]
 
 * kn/clarify-update-ref-doc (2024-04-02) 2 commits
   (merged to 'next' on 2024-04-02 at d1b9c5aa67)
@@ -286,25 +213,27 @@ Release tarballs are available at:
 
 
 * rs/imap-send-use-xsnprintf (2024-04-02) 1 commit
- - imap-send: use xsnprintf to format command
+  (merged to 'next' on 2024-04-04 at 789ad853e1)
+ + imap-send: use xsnprintf to format command
 
  Code clean-up and duplicate reduction.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <f9ad9f41-5b9b-474e-9818-f91fc937daae@web.de>
 
 
 * tb/midx-write (2024-04-01) 5 commits
- - midx-write.c: use `--stdin-packs` when repacking
- - midx-write.c: check count of packs to repack after grouping
- - midx-write.c: factor out common want_included_pack() routine
- - midx-write: move writing-related functions from midx.c
- - Merge branch 'rs/midx-use-strvec-pushf' into tb/midx-write
+  (merged to 'next' on 2024-04-05 at b4870116f7)
+ + midx-write.c: use `--stdin-packs` when repacking
+ + midx-write.c: check count of packs to repack after grouping
+ + midx-write.c: factor out common want_included_pack() routine
+ + midx-write: move writing-related functions from midx.c
+ + Merge branch 'rs/midx-use-strvec-pushf' into tb/midx-write
 
  Code clean-up by splitting code responsible for writing midx files
  into its own file.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1712006190.git.me@ttaylorr.com>
 
 
@@ -319,14 +248,15 @@ Release tarballs are available at:
 
 
 * rs/t-prio-queue-cleanup (2024-04-02) 1 commit
- - t-prio-queue: simplify using compound literals
+  (merged to 'next' on 2024-04-04 at 7961c838ac)
+ + t-prio-queue: simplify using compound literals
 
  t-prio-queue test has been cleaned up by using C99 compound
  literals; this is meant to also serve as a weather-balloon to smoke
  out folks with compilers who have trouble compiling code that uses
  the feature.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <520da361-1b80-4ba3-87b2-86d6fdfc18b5@web.de>
 
 
@@ -347,8 +277,6 @@ Release tarballs are available at:
 
  source: <7e8d435d58eea19d2aae0be366720f5956d29a5d.1712075189.git.me@ttaylorr.com>
 
---------------------------------------------------
-[Cooking]
 
 * es/test-cron-safety (2024-03-31) 1 commit
   (merged to 'next' on 2024-04-02 at e383c8cfb2)
@@ -371,7 +299,7 @@ Release tarballs are available at:
  diagnose a pathspec element that did not match any files in certain
  situations, unlike "git add <pathspec>" did.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20240402213640.139682-2-shyamthakkar001@gmail.com>
 
 
@@ -387,17 +315,19 @@ Release tarballs are available at:
  source: <xmqq4jcooddp.fsf@gitster.g>
 
 
-* jt/reftable-geometric-compaction (2024-04-03) 2 commits
- . reftable/stack: use geometric table compaction
- . reftable/stack: add env to disable autocompaction
+* jt/reftable-geometric-compaction (2024-04-05) 4 commits
+ - reftable/stack: use geometric table compaction
+ - reftable/stack: add env to disable autocompaction
+ - reftable/stack: allow disabling of auto-compaction
+ - Merge branch 'ps/pack-refs-auto' into jt/reftable-geometric-compaction
+ (this branch uses ps/pack-refs-auto.)
 
- The strategy to compat multiple tables of reftables after many
+ The strategy to compact multiple tables of reftables after many
  operations accumulate many entries has been improved to avoid
  accumulating too many tables uncollected.
 
- Expecting a reroll.
- cf. <b24jjzw72rlcpctteokr5yfbuwuy2cc3qvibzhuju4gbj63lfa@gbtsmvufyuhd>
- source: <pull.1683.v4.git.1712103636.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1683.v5.git.1712255369.gitgitgadget@gmail.com>
 
 
 * ds/typofix-core-config-doc (2024-03-31) 1 commit
@@ -411,13 +341,17 @@ Release tarballs are available at:
 
 
 * jc/checkout-detach-wo-tracking-report (2024-03-30) 1 commit
- - checkout: omit "tracking" information on a detached HEAD
+  (merged to 'next' on 2024-04-04 at 161eca247d)
+ + checkout: omit "tracking" information on a detached HEAD
 
  "git checkout/switch --detach foo", after switching to the detached
  HEAD state, gave the tracking information for the 'foo' branch,
  which was pointless.
 
- Will merge to 'next'?
+ Tested-by: M Hickford <mirth.hickford@gmail.com>
+ cf. <CAGJzqsmE9FDEBn=u3ge4LA3ha4fDbm4OWiuUbMaztwjELBd7ug@mail.gmail.com>
+
+ Will merge to 'master'.
  source: <xmqqa5mfl7ud.fsf@gitster.g>
 
 
@@ -537,17 +471,18 @@ Release tarballs are available at:
 
 
 * ps/reftable-binsearch-updates (2024-04-03) 7 commits
- - reftable/block: avoid decoding keys when searching restart points
- - reftable/record: extract function to decode key lengths
- - reftable/block: fix error handling when searching restart points
- - reftable/block: refactor binary search over restart points
- - reftable/refname: refactor binary search over refnames
- - reftable/basics: improve `binsearch()` test
- - reftable/basics: fix return type of `binsearch()` to be `size_t`
+  (merged to 'next' on 2024-04-04 at 40e6d5a36b)
+ + reftable/block: avoid decoding keys when searching restart points
+ + reftable/record: extract function to decode key lengths
+ + reftable/block: fix error handling when searching restart points
+ + reftable/block: refactor binary search over restart points
+ + reftable/refname: refactor binary search over refnames
+ + reftable/basics: improve `binsearch()` test
+ + reftable/basics: fix return type of `binsearch()` to be `size_t`
 
  Reftable code clean-up and some bugfixes.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1712123093.git.ps@pks.im>
 
 
@@ -653,6 +588,7 @@ Release tarballs are available at:
  + reftable/error: discern locked/outdated errors
  + reftable/stack: fix error handling in `reftable_stack_init_addition()`
  + Merge branch 'ps/reftable-stack-tempfile' into ps/pack-refs-auto
+ (this branch is used by jt/reftable-geometric-compaction.)
 
  "git pack-refs" learned the "--auto" option, which is a useful
  addition to be triggered from "git gc --auto".
@@ -688,20 +624,6 @@ Release tarballs are available at:
  source: <pull.1694.git.1710485706.gitgitgadget@gmail.com>
 
 
-* rs/config-comment (2024-03-15) 3 commits
-  (merged to 'next' on 2024-03-28 at 83eaadc2b6)
- + config: allow tweaking whitespace between value and comment
- + config: fix --comment formatting
- + config: add --comment option to add a comment
-
- "git config" learned "--comment=<message>" option to leave a
- comment immediately after the "variable = value" on the same line
- in the configuration file.
-
- Will merge to 'master'.
- source: <pull.1681.v2.git.1709824540636.gitgitgadget@gmail.com>
-
-
 * ie/config-includeif-hostname (2024-03-19) 2 commits
  - config: learn the "hostname:" includeIf condition
  - t: add a test helper for getting hostname
@@ -713,34 +635,6 @@ Release tarballs are available at:
  cf. <20240319210428.GC1159535@coredump.intra.peff.net>
  cf. <20240320001934.GA903718@coredump.intra.peff.net>
  source: <20240319183722.211300-1-ignacio@iencinas.com>
-
-
-* jk/core-comment-string (2024-03-27) 17 commits
-  (merged to 'next' on 2024-03-28 at fbf8eb9331)
- + config: add core.commentString
- + config: allow multi-byte core.commentChar
- + environment: drop comment_line_char compatibility macro
- + wt-status: drop custom comment-char stringification
- + sequencer: handle multi-byte comment characters when writing todo list
- + find multi-byte comment chars in unterminated buffers
- + find multi-byte comment chars in NUL-terminated strings
- + prefer comment_line_str to comment_line_char for printing
- + strbuf: accept a comment string for strbuf_add_commented_lines()
- + strbuf: accept a comment string for strbuf_commented_addf()
- + strbuf: accept a comment string for strbuf_stripspace()
- + environment: store comment_line_char as a string
- + strbuf: avoid shadowing global comment_line_char name
- + commit: refactor base-case of adjust_comment_line_char()
- + strbuf: avoid static variables in strbuf_add_commented_lines()
- + strbuf: simplify comment-handling in add_lines() helper
- + config: forbid newline as core.commentChar
-
- core.commentChar used to be limited to a single byte, but has been
- updated to allow an arbitrary multi-byte sequence.
-
- Will merge to 'master'.
- source: <20240312091013.GA95442@coredump.intra.peff.net>
- source: <20240327081922.GA830163@coredump.intra.peff.net>
 
 
 * js/build-fuzz-more-often (2024-03-05) 3 commits
