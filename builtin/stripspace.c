@@ -13,7 +13,7 @@ static void comment_lines(struct strbuf *buf)
 	size_t len;
 
 	msg = strbuf_detach(buf, &len);
-	strbuf_add_commented_lines(buf, msg, len, comment_line_char);
+	strbuf_add_commented_lines(buf, msg, len, comment_line_str);
 	free(msg);
 }
 
@@ -59,7 +59,7 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
 
 	if (mode == STRIP_DEFAULT || mode == STRIP_COMMENTS)
 		strbuf_stripspace(&buf,
-			  mode == STRIP_COMMENTS ? comment_line_char : '\0');
+			  mode == STRIP_COMMENTS ? comment_line_str : NULL);
 	else
 		comment_lines(&buf);
 

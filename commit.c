@@ -1928,7 +1928,8 @@ size_t ignored_log_message_bytes(const char *buf, size_t len)
 		else
 			next_line++;
 
-		if (buf[bol] == comment_line_char || buf[bol] == '\n') {
+		if (starts_with_mem(buf + bol, cutoff - bol, comment_line_str) ||
+		    buf[bol] == '\n') {
 			/* is this the first of the run of comments? */
 			if (!boc)
 				boc = bol;
