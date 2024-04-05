@@ -1131,7 +1131,7 @@ static int run_proc_receive_hook(struct command *commands,
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	/* Version negotiaton */
+	/* Version negotiation */
 	packet_reader_init(&reader, proc.out, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_GENTLE_ON_EOF);

@@ -84,7 +84,7 @@ const char *precompose_string_if_needed(const char *in)
 		out = reencode_string_iconv(in, inlen, ic_prec, 0, &outlen);
 		if (out) {
 			if (outlen == inlen && !memcmp(in, out, outlen))
-				free(out); /* no need to return indentical */
+				free(out); /* no need to return identical */
 			else
 				in = out;
 		}

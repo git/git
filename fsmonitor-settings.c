@@ -7,7 +7,7 @@
 #include "fsmonitor-path-utils.h"
 
 /*
- * We keep this structure defintion private and have getters
+ * We keep this structure definition private and have getters
  * for all fields so that we can lazy load it as needed.
  */
 struct fsmonitor_settings {

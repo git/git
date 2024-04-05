@@ -11,7 +11,7 @@
  * The callers that care if (any) rebase is requested should say
  *   if (REBASE_TRUE <= rebase_parse_value(string))
  *
- * The callers that want to differenciate an unrecognised value and
+ * The callers that want to differentiate an unrecognised value and
  * false can do so by treating _INVALID and _FALSE differently.
  */
 enum rebase_type rebase_parse_value(const char *value)
