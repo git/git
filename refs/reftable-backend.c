@@ -1203,9 +1203,16 @@ static int reftable_be_pack_refs(struct ref_store *ref_store,
 	if (!stack)
 		stack = refs->main_stack;
 
-	ret = reftable_stack_compact_all(stack, NULL);
-	if (ret)
+	if (opts->flags & PACK_REFS_AUTO)
+		ret = reftable_stack_auto_compact(stack);
+	else
+		ret = reftable_stack_compact_all(stack, NULL);
+	if (ret < 0) {
+		ret = error(_("unable to compact stack: %s"),
+			    reftable_error_str(ret));
 		goto out;
+	}
+
 	ret = reftable_stack_clean(stack);
 	if (ret)
 		goto out;
