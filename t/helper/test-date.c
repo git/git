@@ -52,7 +52,7 @@ static void show_dates(const char **argv, const char *format)
 			arg++;
 		tz = atoi(arg);
 
-		printf("%s -> %s\n", *argv, show_date(t, tz, &mode));
+		printf("%s -> %s\n", *argv, show_date(t, tz, mode));
 	}
 
 	date_mode_release(&mode);
