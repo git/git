@@ -66,6 +66,13 @@ UI, Workflows & Features
    `--keep-redundant-commits` as well as some related docs changes and
    sequencer code cleanup.
 
+ * "git config" learned "--comment=<message>" option to leave a
+   comment immediately after the "variable = value" on the same line
+   in the configuration file.
+
+ * core.commentChar used to be limited to a single byte, but has been
+   updated to allow an arbitrary multi-byte sequence.
+
 
 Performance, Internal Implementation, Development Support etc.
 
