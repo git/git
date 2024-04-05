@@ -2046,7 +2046,7 @@ void submodule_unset_core_worktree(const struct submodule *sub)
 	submodule_name_to_gitdir(&config_path, the_repository, sub->name);
 	strbuf_addstr(&config_path, "/config");
 
-	if (git_config_set_in_file_gently(config_path.buf, "core.worktree", NULL))
+	if (git_config_set_in_file_gently(config_path.buf, "core.worktree", NULL, NULL))
 		warning(_("Could not unset core.worktree setting in submodule '%s'"),
 			  sub->path);
 

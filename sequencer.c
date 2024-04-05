@@ -3484,57 +3484,57 @@ static int save_opts(struct replay_opts *opts)
 
 	if (opts->no_commit)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.no-commit", "true");
+					"options.no-commit", NULL, "true");
 	if (opts->edit >= 0)
-		res |= git_config_set_in_file_gently(opts_file, "options.edit",
+		res |= git_config_set_in_file_gently(opts_file, "options.edit", NULL,
 						     opts->edit ? "true" : "false");
 	if (opts->allow_empty)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.allow-empty", "true");
+					"options.allow-empty", NULL, "true");
 	if (opts->allow_empty_message)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.allow-empty-message", "true");
+				"options.allow-empty-message", NULL, "true");
 	if (opts->drop_redundant_commits)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.drop-redundant-commits", "true");
+				"options.drop-redundant-commits", NULL, "true");
 	if (opts->keep_redundant_commits)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.keep-redundant-commits", "true");
+				"options.keep-redundant-commits", NULL, "true");
 	if (opts->signoff)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.signoff", "true");
+					"options.signoff", NULL, "true");
 	if (opts->record_origin)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.record-origin", "true");
+					"options.record-origin", NULL, "true");
 	if (opts->allow_ff)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.allow-ff", "true");
+					"options.allow-ff", NULL, "true");
 	if (opts->mainline) {
 		struct strbuf buf = STRBUF_INIT;
 		strbuf_addf(&buf, "%d", opts->mainline);
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.mainline", buf.buf);
+					"options.mainline", NULL, buf.buf);
 		strbuf_release(&buf);
 	}
 	if (opts->strategy)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.strategy", opts->strategy);
+					"options.strategy", NULL, opts->strategy);
 	if (opts->gpg_sign)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.gpg-sign", opts->gpg_sign);
+					"options.gpg-sign", NULL, opts->gpg_sign);
 	for (size_t i = 0; i < opts->xopts.nr; i++)
 		res |= git_config_set_multivar_in_file_gently(opts_file,
 				"options.strategy-option",
-				opts->xopts.v[i], "^$", 0);
+				opts->xopts.v[i], "^$", NULL, 0);
 	if (opts->allow_rerere_auto)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.allow-rerere-auto",
+				"options.allow-rerere-auto", NULL,
 				opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
 				"true" : "false");
 
 	if (opts->explicit_cleanup)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.default-msg-cleanup",
+				"options.default-msg-cleanup", NULL,
 				describe_cleanup_mode(opts->default_msg_cleanup));
 	return res;
 }

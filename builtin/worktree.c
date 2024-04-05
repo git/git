@@ -365,12 +365,12 @@ static void copy_filtered_worktree_config(const char *worktree_git_dir)
 		if (!git_configset_get_bool(&cs, "core.bare", &bare) &&
 			bare &&
 			git_config_set_multivar_in_file_gently(
-				to_file, "core.bare", NULL, "true", 0))
+				to_file, "core.bare", NULL, "true", NULL, 0))
 			error(_("failed to unset '%s' in '%s'"),
 				"core.bare", to_file);
 		if (!git_configset_get(&cs, "core.worktree") &&
 			git_config_set_in_file_gently(to_file,
-							"core.worktree", NULL))
+							"core.worktree", NULL, NULL))
 			error(_("failed to unset '%s' in '%s'"),
 				"core.worktree", to_file);
 

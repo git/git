@@ -9,9 +9,9 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git config' [<file-option>] [--type=<type>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
-'git config' [<file-option>] [--type=<type>] --add <name> <value>
-'git config' [<file-option>] [--type=<type>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
+'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
+'git config' [<file-option>] [--type=<type>] [--comment=<message>] --add <name> <value>
+'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
 'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get <name> [<value-pattern>]
 'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get-all <name> [<value-pattern>]
 'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] [--name-only] --get-regexp <name-regex> [<value-pattern>]
@@ -86,6 +86,18 @@ OPTIONS
 	Adds a new line to the option without altering any existing
 	values.  This is the same as providing '^$' as the `value-pattern`
 	in `--replace-all`.
+
+--comment <message>::
+	Append a comment at the end of new or modified lines.
+
+	If _<message>_ begins with one or more whitespaces followed
+	by "#", it is used as-is.  If it begins with "#", a space is
+	prepended before it is used.  Otherwise, a string " # " (a
+	space followed by a hash followed by a space) is prepended
+	to it.  And the resulting string is placed immediately after
+	the value defined for the variable.  The _<message>_ must
+	not contain linefeed characters (no multi-line comments are
+	permitted).
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
