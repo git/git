@@ -192,6 +192,18 @@ For shell scripts specifically (not exhaustive):
    so we write "variable=value" and then "export variable" on two
    separate lines.
 
+ - Some versions of dash have broken variable assignment when prefixed
+   with "local", "export", and "readonly", in that the value to be
+   assigned goes through field splitting at $IFS unless quoted.
+
+	(incorrect)
+	local variable=$value
+	local variable=$(command args)
+
+	(correct)
+	local variable="$value"
+	local variable="$(command args)"
+
  - Use octal escape sequences (e.g. "\302\242"), not hexadecimal (e.g.
    "\xc2\xa2") in printf format strings, since hexadecimal escape
    sequences are not portable.
