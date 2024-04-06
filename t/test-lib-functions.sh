@@ -1765,7 +1765,7 @@ test_parse_ls_tree_oids () {
 # Choose a port number based on the test script's number and store it in
 # the given variable name, unless that variable already contains a number.
 test_set_port () {
-	local var=$1 port
+	local var="$1" port
 
 	if test $# -ne 1 || test -z "$var"
 	then
