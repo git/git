@@ -729,7 +729,7 @@ static int submodule_create_branch(struct repository *r,
 }
 
 void create_branches_recursively(struct repository *r, const char *name,
-				 const char *start_commitish,
+				 const char *start_committish,
 				 const char *tracking_name, int force,
 				 int reflog, int quiet, enum branch_track track,
 				 int dry_run)
@@ -739,8 +739,8 @@ void create_branches_recursively(struct repository *r, const char *name,
 	struct object_id super_oid;
 	struct submodule_entry_list submodule_entry_list;
 
-	/* Perform dwim on start_commitish to get super_oid and branch_point. */
-	dwim_branch_start(r, start_commitish, BRANCH_TRACK_NEVER,
+	/* Perform dwim on start_committish to get super_oid and branch_point. */
+	dwim_branch_start(r, start_committish, BRANCH_TRACK_NEVER,
 			  &branch_point, &super_oid);
 
 	/*
@@ -763,7 +763,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 				submodule_entry_list.entries[i].submodule->name);
 			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
 				advise(_("You may try updating the submodules using 'git checkout --no-recurse-submodules %s && git submodule update --init'"),
-				       start_commitish);
+				       start_committish);
 			exit(code);
 		}
 
@@ -778,7 +778,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 			    name);
 	}
 
-	create_branch(r, name, start_commitish, force, 0, reflog, quiet,
+	create_branch(r, name, start_committish, force, 0, reflog, quiet,
 		      BRANCH_TRACK_NEVER, dry_run);
 	if (dry_run)
 		return;

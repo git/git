@@ -20,7 +20,7 @@
 # clone                       | klon(lamak)                 #
 # commit (ad)                 | işleme                      #
 # commit (eyl.)               | işlemek                     #
-# commitish                   | işlememsi                   #
+# commit-ish                  | işlememsi                   #
 # conflict                    | çakışma                     #
 # cruft                       | süprüntü                    #
 # dangling object             | sallanan nesne              #
