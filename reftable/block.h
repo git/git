@@ -19,6 +19,9 @@ https://developers.google.com/open-source/licenses/bsd
  */
 struct block_writer {
 	z_stream *zstream;
+	unsigned char *compressed;
+	size_t compressed_cap;
+
 	uint8_t *buf;
 	uint32_t block_size;
 

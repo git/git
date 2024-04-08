@@ -150,7 +150,6 @@ int block_writer_finish(struct block_writer *w)
 	if (block_writer_type(w) == BLOCK_TYPE_LOG) {
 		int block_header_skip = 4 + w->header_off;
 		uLongf src_len = w->next - block_header_skip, compressed_len;
-		unsigned char *compressed;
 		int ret;
 
 		ret = deflateReset(w->zstream);
@@ -163,9 +162,9 @@ int block_writer_finish(struct block_writer *w)
 		 * is guaranteed to return `Z_STREAM_END`.
 		 */
 		compressed_len = deflateBound(w->zstream, src_len);
-		REFTABLE_ALLOC_ARRAY(compressed, compressed_len);
+		REFTABLE_ALLOC_GROW(w->compressed, compressed_len, w->compressed_cap);
 
-		w->zstream->next_out = compressed;
+		w->zstream->next_out = w->compressed;
 		w->zstream->avail_out = compressed_len;
 		w->zstream->next_in = w->buf + block_header_skip;
 		w->zstream->avail_in = src_len;
@@ -177,21 +176,17 @@ int block_writer_finish(struct block_writer *w)
 		 * guaranteed to succeed according to the zlib documentation.
 		 */
 		ret = deflate(w->zstream, Z_FINISH);
-		if (ret != Z_STREAM_END) {
-			reftable_free(compressed);
+		if (ret != Z_STREAM_END)
 			return REFTABLE_ZLIB_ERROR;
-		}
 
 		/*
 		 * Overwrite the uncompressed data we have already written and
 		 * adjust the `next` pointer to point right after the
 		 * compressed data.
 		 */
-		memcpy(w->buf + block_header_skip, compressed,
+		memcpy(w->buf + block_header_skip, w->compressed,
 		       w->zstream->total_out);
 		w->next = w->zstream->total_out + block_header_skip;
-
-		reftable_free(compressed);
 	}
 
 	return w->next;
@@ -450,6 +445,7 @@ void block_writer_release(struct block_writer *bw)
 	deflateEnd(bw->zstream);
 	FREE_AND_NULL(bw->zstream);
 	FREE_AND_NULL(bw->restarts);
+	FREE_AND_NULL(bw->compressed);
 	strbuf_release(&bw->last_key);
 	/* the block is not owned. */
 }
