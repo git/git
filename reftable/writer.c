@@ -149,11 +149,21 @@ void reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
 	w->max_update_index = max;
 }
 
+static void writer_release(struct reftable_writer *w)
+{
+	if (w) {
+		reftable_free(w->block);
+		w->block = NULL;
+		block_writer_release(&w->block_writer_data);
+		w->block_writer = NULL;
+		writer_clear_index(w);
+		strbuf_release(&w->last_key);
+	}
+}
+
 void reftable_writer_free(struct reftable_writer *w)
 {
-	if (!w)
-		return;
-	reftable_free(w->block);
+	writer_release(w);
 	reftable_free(w);
 }
 
@@ -643,16 +653,13 @@ int reftable_writer_close(struct reftable_writer *w)
 	}
 
 done:
-	/* free up memory. */
-	block_writer_release(&w->block_writer_data);
-	writer_clear_index(w);
-	strbuf_release(&w->last_key);
+	writer_release(w);
 	return err;
 }
 
 static void writer_clear_index(struct reftable_writer *w)
 {
-	for (size_t i = 0; i < w->index_len; i++)
+	for (size_t i = 0; w->index && i < w->index_len; i++)
 		strbuf_release(&w->index[i].last_key);
 	FREE_AND_NULL(w->index);
 	w->index_len = 0;
