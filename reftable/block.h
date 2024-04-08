@@ -66,6 +66,10 @@ struct block_reader {
 	struct reftable_block block;
 	int hash_size;
 
+	/* Uncompressed data for log entries. */
+	unsigned char *uncompressed_data;
+	size_t uncompressed_cap;
+
 	/* size of the data, excluding restart data. */
 	uint32_t block_len;
 	uint8_t *restart_bytes;

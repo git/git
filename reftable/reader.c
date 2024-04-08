@@ -459,6 +459,8 @@ static int reader_seek_linear(struct table_iter *ti,
 		 * we would not do a linear search there anymore.
 		 */
 		memset(&next.br.block, 0, sizeof(next.br.block));
+		next.br.uncompressed_data = NULL;
+		next.br.uncompressed_cap = 0;
 
 		err = table_iter_next_block(&next);
 		if (err < 0)
@@ -599,25 +601,28 @@ static int reader_seek_internal(struct reftable_reader *r,
 	struct reftable_reader_offsets *offs =
 		reader_offsets_for(r, reftable_record_type(rec));
 	uint64_t idx = offs->index_offset;
-	struct table_iter ti = TABLE_ITER_INIT;
-	int err = 0;
+	struct table_iter ti = TABLE_ITER_INIT, *p;
+	int err;
+
 	if (idx > 0)
 		return reader_seek_indexed(r, it, rec);
 
 	err = reader_start(r, &ti, reftable_record_type(rec), 0);
 	if (err < 0)
-		return err;
+		goto out;
+
 	err = reader_seek_linear(&ti, rec);
 	if (err < 0)
-		return err;
-	else {
-		struct table_iter *p =
-			reftable_malloc(sizeof(struct table_iter));
-		*p = ti;
-		iterator_from_table_iter(it, p);
-	}
+		goto out;
 
-	return 0;
+	REFTABLE_ALLOC_ARRAY(p, 1);
+	*p = ti;
+	iterator_from_table_iter(it, p);
+
+out:
+	if (err)
+		table_iter_close(&ti);
+	return err;
 }
 
 static int reader_seek(struct reftable_reader *r, struct reftable_iterator *it,

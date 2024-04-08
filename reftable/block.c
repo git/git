@@ -186,7 +186,6 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	uint16_t restart_count = 0;
 	uint32_t restart_start = 0;
 	uint8_t *restart_bytes = NULL;
-	uint8_t *uncompressed = NULL;
 
 	reftable_block_done(&br->block);
 
@@ -202,14 +201,15 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		uLongf src_len = block->len - block_header_skip;
 
 		/* Log blocks specify the *uncompressed* size in their header. */
-		REFTABLE_ALLOC_ARRAY(uncompressed, sz);
+		REFTABLE_ALLOC_GROW(br->uncompressed_data, sz,
+				    br->uncompressed_cap);
 
 		/* Copy over the block header verbatim. It's not compressed. */
-		memcpy(uncompressed, block->data, block_header_skip);
+		memcpy(br->uncompressed_data, block->data, block_header_skip);
 
 		/* Uncompress */
 		if (Z_OK !=
-		    uncompress2(uncompressed + block_header_skip, &dst_len,
+		    uncompress2(br->uncompressed_data + block_header_skip, &dst_len,
 				block->data + block_header_skip, &src_len)) {
 			err = REFTABLE_ZLIB_ERROR;
 			goto done;
@@ -222,10 +222,8 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 
 		/* We're done with the input data. */
 		reftable_block_done(block);
-		block->data = uncompressed;
-		uncompressed = NULL;
+		block->data = br->uncompressed_data;
 		block->len = sz;
-		block->source = malloc_block_source();
 		full_block_size = src_len + block_header_skip;
 	} else if (full_block_size == 0) {
 		full_block_size = sz;
@@ -254,12 +252,12 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	br->restart_bytes = restart_bytes;
 
 done:
-	reftable_free(uncompressed);
 	return err;
 }
 
 void block_reader_release(struct block_reader *br)
 {
+	reftable_free(br->uncompressed_data);
 	reftable_block_done(&br->block);
 }
 
