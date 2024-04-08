@@ -18,6 +18,7 @@ https://developers.google.com/open-source/licenses/bsd
  * allocation overhead.
  */
 struct block_writer {
+	z_stream *zstream;
 	uint8_t *buf;
 	uint32_t block_size;
 
