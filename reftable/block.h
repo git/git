@@ -84,16 +84,18 @@ int block_reader_init(struct block_reader *br, struct reftable_block *bl,
 void block_reader_release(struct block_reader *br);
 
 /* Returns the block type (eg. 'r' for refs) */
-uint8_t block_reader_type(struct block_reader *r);
+uint8_t block_reader_type(const struct block_reader *r);
 
 /* Decodes the first key in the block */
-int block_reader_first_key(struct block_reader *br, struct strbuf *key);
+int block_reader_first_key(const struct block_reader *br, struct strbuf *key);
 
 /* Iterate over entries in a block */
 struct block_iter {
 	/* offset within the block of the next entry to read. */
 	uint32_t next_off;
-	struct block_reader *br;
+	const unsigned char *block;
+	size_t block_len;
+	int hash_size;
 
 	/* key for last entry we read. */
 	struct strbuf last_key;
@@ -106,16 +108,19 @@ struct block_iter {
 }
 
 /* Position `it` at start of the block */
-void block_iter_seek_start(struct block_iter *it, struct block_reader *br);
+void block_iter_seek_start(struct block_iter *it, const struct block_reader *br);
 
 /* Position `it` to the `want` key in the block */
-int block_iter_seek_key(struct block_iter *it, struct block_reader *br,
+int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 			struct strbuf *want);
 
-void block_iter_copy_from(struct block_iter *dest, struct block_iter *src);
+void block_iter_copy_from(struct block_iter *dest, const struct block_iter *src);
 
 /* return < 0 for error, 0 for OK, > 0 for EOF. */
 int block_iter_next(struct block_iter *it, struct reftable_record *rec);
+
+/* Reset the block iterator to pristine state without releasing its memory. */
+void block_iter_reset(struct block_iter *it);
 
 /* deallocate memory for `it`. The block reader and its block is left intact. */
 void block_iter_close(struct block_iter *it);

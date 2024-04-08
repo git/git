@@ -261,12 +261,12 @@ void block_reader_release(struct block_reader *br)
 	reftable_block_done(&br->block);
 }
 
-uint8_t block_reader_type(struct block_reader *r)
+uint8_t block_reader_type(const struct block_reader *r)
 {
 	return r->block.data[r->header_off];
 }
 
-int block_reader_first_key(struct block_reader *br, struct strbuf *key)
+int block_reader_first_key(const struct block_reader *br, struct strbuf *key)
 {
 	int off = br->header_off + 4, n;
 	struct string_view in = {
@@ -286,14 +286,16 @@ int block_reader_first_key(struct block_reader *br, struct strbuf *key)
 	return 0;
 }
 
-static uint32_t block_reader_restart_offset(struct block_reader *br, int i)
+static uint32_t block_reader_restart_offset(const struct block_reader *br, int i)
 {
 	return get_be24(br->restart_bytes + 3 * i);
 }
 
-void block_iter_seek_start(struct block_iter *it, struct block_reader *br)
+void block_iter_seek_start(struct block_iter *it, const struct block_reader *br)
 {
-	it->br = br;
+	it->block = br->block.data;
+	it->block_len = br->block_len;
+	it->hash_size = br->hash_size;
 	strbuf_reset(&it->last_key);
 	it->next_off = br->header_off + 4;
 }
@@ -301,7 +303,7 @@ void block_iter_seek_start(struct block_iter *it, struct block_reader *br)
 struct restart_needle_less_args {
 	int error;
 	struct strbuf needle;
-	struct block_reader *reader;
+	const struct block_reader *reader;
 };
 
 static int restart_needle_less(size_t idx, void *_args)
@@ -340,9 +342,11 @@ static int restart_needle_less(size_t idx, void *_args)
 	return args->needle.len < suffix_len;
 }
 
-void block_iter_copy_from(struct block_iter *dest, struct block_iter *src)
+void block_iter_copy_from(struct block_iter *dest, const struct block_iter *src)
 {
-	dest->br = src->br;
+	dest->block = src->block;
+	dest->block_len = src->block_len;
+	dest->hash_size = src->hash_size;
 	dest->next_off = src->next_off;
 	strbuf_reset(&dest->last_key);
 	strbuf_addbuf(&dest->last_key, &src->last_key);
@@ -351,14 +355,14 @@ void block_iter_copy_from(struct block_iter *dest, struct block_iter *src)
 int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 {
 	struct string_view in = {
-		.buf = it->br->block.data + it->next_off,
-		.len = it->br->block_len - it->next_off,
+		.buf = (unsigned char *) it->block + it->next_off,
+		.len = it->block_len - it->next_off,
 	};
 	struct string_view start = in;
 	uint8_t extra = 0;
 	int n = 0;
 
-	if (it->next_off >= it->br->block_len)
+	if (it->next_off >= it->block_len)
 		return 1;
 
 	n = reftable_decode_key(&it->last_key, &extra, in);
@@ -368,7 +372,7 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 		return REFTABLE_FORMAT_ERROR;
 
 	string_view_consume(&in, n);
-	n = reftable_record_decode(rec, it->last_key, extra, in, it->br->hash_size,
+	n = reftable_record_decode(rec, it->last_key, extra, in, it->hash_size,
 				   &it->scratch);
 	if (n < 0)
 		return -1;
@@ -378,13 +382,22 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 	return 0;
 }
 
+void block_iter_reset(struct block_iter *it)
+{
+	strbuf_reset(&it->last_key);
+	it->next_off = 0;
+	it->block = NULL;
+	it->block_len = 0;
+	it->hash_size = 0;
+}
+
 void block_iter_close(struct block_iter *it)
 {
 	strbuf_release(&it->last_key);
 	strbuf_release(&it->scratch);
 }
 
-int block_iter_seek_key(struct block_iter *it, struct block_reader *br,
+int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 			struct strbuf *want)
 {
 	struct restart_needle_less_args args = {
@@ -436,7 +449,9 @@ int block_iter_seek_key(struct block_iter *it, struct block_reader *br,
 		it->next_off = block_reader_restart_offset(br, i - 1);
 	else
 		it->next_off = br->header_off + 4;
-	it->br = br;
+	it->block = br->block.data;
+	it->block_len = br->block_len;
+	it->hash_size = br->hash_size;
 
 	reftable_record_init(&rec, block_reader_type(br));
 
