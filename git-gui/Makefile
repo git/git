@@ -107,12 +107,12 @@ endif
 
 ifeq ($(uname_S),Darwin)
 	TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
-	ifeq ($(shell echo "$(uname_R)" | awk -F. '{if ($$1 >= 9) print "y"}')_$(shell test -d $(TKFRAMEWORK) || echo n),y_n)
+        ifeq ($(shell echo "$(uname_R)" | awk -F. '{if ($$1 >= 9) print "y"}')_$(shell test -d $(TKFRAMEWORK) || echo n),y_n)
 		TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish.app
-		ifeq ($(shell test -d $(TKFRAMEWORK) || echo n),n)
+                ifeq ($(shell test -d $(TKFRAMEWORK) || echo n),n)
 			TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish\ Shell.app
-		endif
-	endif
+                endif
+        endif
 	TKEXECUTABLE = $(shell basename "$(TKFRAMEWORK)" .app)
 endif
 
@@ -143,9 +143,9 @@ ifeq ($(exedir),$(gg_libdir))
 endif
 gg_libdir_sed_in := $(gg_libdir)
 ifeq ($(uname_S),Darwin)
-	ifeq ($(shell test -d $(TKFRAMEWORK) && echo y),y)
+        ifeq ($(shell test -d $(TKFRAMEWORK) && echo y),y)
 		GITGUI_MACOSXAPP := YesPlease
-	endif
+        endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
@@ -220,9 +220,9 @@ ifdef NO_MSGFMT
 	MSGFMT ?= $(TCL_PATH) po/po2msg.sh
 else
 	MSGFMT ?= msgfmt
-	ifneq ($(shell $(MSGFMT) --tcl -l C -d . /dev/null 2>/dev/null; echo $$?),0)
+        ifneq ($(shell $(MSGFMT) --tcl -l C -d . /dev/null 2>/dev/null; echo $$?),0)
 		MSGFMT := $(TCL_PATH) po/po2msg.sh
-	endif
+        endif
 endif
 
 msgsdir     = $(gg_libdir)/msgs
