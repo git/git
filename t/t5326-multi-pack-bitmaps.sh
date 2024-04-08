@@ -434,6 +434,27 @@ test_expect_success 'tagged commits are selected for bitmapping' '
 	)
 '
 
+test_expect_success 'do not follow replace objects for MIDX bitmap' '
+	rm -fr repo &&
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit A &&
+		test_commit B &&
+		git checkout --orphan=orphan A &&
+		test_commit orphan &&
+
+		git replace A HEAD &&
+		git repack -ad --write-midx --write-bitmap-index &&
+
+		# generating reachability bitmaps with replace refs
+		# enabled will result in broken clones
+		git clone --no-local --bare . clone.git
+	)
+'
+
 corrupt_file () {
 	chmod a+w "$1" &&
 	printf "bogus" | dd of="$1" bs=1 seek="12" conv=notrunc
