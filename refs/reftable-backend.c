@@ -1217,6 +1217,7 @@ out:
 struct write_create_symref_arg {
 	struct reftable_ref_store *refs;
 	struct reftable_stack *stack;
+	struct strbuf *err;
 	const char *refname;
 	const char *target;
 	const char *logmsg;
@@ -1238,6 +1239,11 @@ static int write_create_symref_table(struct reftable_writer *writer, void *cb_da
 	int ret;
 
 	reftable_writer_set_limits(writer, ts, ts);
+
+	ret = refs_verify_refname_available(&create->refs->base, create->refname,
+					    NULL, NULL, create->err);
+	if (ret < 0)
+		return ret;
 
 	ret = reftable_writer_add_ref(writer, &ref);
 	if (ret)
@@ -1280,12 +1286,14 @@ static int reftable_be_create_symref(struct ref_store *ref_store,
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_WRITE, "create_symref");
 	struct reftable_stack *stack = stack_for(refs, refname, &refname);
+	struct strbuf err = STRBUF_INIT;
 	struct write_create_symref_arg arg = {
 		.refs = refs,
 		.stack = stack,
 		.refname = refname,
 		.target = target,
 		.logmsg = logmsg,
+		.err = &err,
 	};
 	int ret;
 
@@ -1301,9 +1309,15 @@ static int reftable_be_create_symref(struct ref_store *ref_store,
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
-	if (ret)
-		error("unable to write symref for %s: %s", refname,
-		      reftable_error_str(ret));
+	if (ret) {
+		if (err.len)
+			error("%s", err.buf);
+		else
+			error("unable to write symref for %s: %s", refname,
+			      reftable_error_str(ret));
+	}
+
+	strbuf_release(&err);
 	return ret;
 }
 
