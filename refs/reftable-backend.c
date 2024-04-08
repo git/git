@@ -18,6 +18,7 @@
 #include "../reftable/reftable-merged.h"
 #include "../setup.h"
 #include "../strmap.h"
+#include "parse.h"
 #include "refs-internal.h"
 
 /*
@@ -247,6 +248,8 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->write_options.block_size = 4096;
 	refs->write_options.hash_id = repo->hash_algo->format_id;
 	refs->write_options.default_permissions = calc_shared_perm(0666 & ~mask);
+	refs->write_options.disable_auto_compact =
+		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
 
 	/*
 	 * Set up the main reftable stack that is hosted in GIT_COMMON_DIR.

@@ -299,6 +299,27 @@ test_expect_success 'ref transaction: writes cause auto-compaction' '
 	test_line_count = 1 repo/.git/reftable/tables.list
 '
 
+test_expect_success 'ref transaction: env var disables compaction' '
+	test_when_finished "rm -rf repo" &&
+
+	git init repo &&
+	test_commit -C repo A &&
+
+	start=$(wc -l <repo/.git/reftable/tables.list) &&
+	iterations=5 &&
+	expected=$((start + iterations)) &&
+
+	for i in $(test_seq $iterations)
+	do
+		GIT_TEST_REFTABLE_AUTOCOMPACTION=false \
+		git -C repo update-ref branch-$i HEAD || return 1
+	done &&
+	test_line_count = $expected repo/.git/reftable/tables.list &&
+
+	git -C repo update-ref foo HEAD &&
+	test_line_count -lt $expected repo/.git/reftable/tables.list
+'
+
 check_fsync_events () {
 	local trace="$1" &&
 	shift &&
