@@ -1351,7 +1351,8 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	/*
 	 * Verify that the new refname is available.
 	 */
-	string_list_insert(&skip, arg->oldname);
+	if (arg->delete_old)
+		string_list_insert(&skip, arg->oldname);
 	ret = refs_verify_refname_available(&arg->refs->base, arg->newname,
 					    NULL, &skip, &errbuf);
 	if (ret < 0) {
