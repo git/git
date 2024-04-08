@@ -483,7 +483,7 @@ static int reader_seek_linear(struct table_iter *ti,
 		table_iter_copy_from(ti, &next);
 	}
 
-	err = block_iter_seek(&ti->bi, &want_key);
+	err = block_iter_seek_key(&ti->bi, ti->bi.br, &want_key);
 	if (err < 0)
 		goto done;
 	err = 0;
@@ -558,7 +558,7 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		if (err != 0)
 			goto done;
 
-		err = block_iter_seek(&next.bi, &want_index.u.idx.last_key);
+		err = block_iter_seek_key(&next.bi, next.bi.br, &want_index.u.idx.last_key);
 		if (err < 0)
 			goto done;
 

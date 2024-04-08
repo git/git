@@ -101,8 +101,8 @@ int block_reader_init(struct block_reader *br, struct reftable_block *bl,
 void block_iter_seek_start(struct block_iter *it, struct block_reader *br);
 
 /* Position `it` to the `want` key in the block */
-int block_reader_seek(struct block_reader *br, struct block_iter *it,
-		      struct strbuf *want);
+int block_iter_seek_key(struct block_iter *it, struct block_reader *br,
+			struct strbuf *want);
 
 /* Returns the block type (eg. 'r' for refs) */
 uint8_t block_reader_type(struct block_reader *r);
@@ -114,9 +114,6 @@ void block_iter_copy_from(struct block_iter *dest, struct block_iter *src);
 
 /* return < 0 for error, 0 for OK, > 0 for EOF. */
 int block_iter_next(struct block_iter *it, struct reftable_record *rec);
-
-/* Seek to `want` with in the block pointed to by `it` */
-int block_iter_seek(struct block_iter *it, struct strbuf *want);
 
 /* deallocate memory for `it`. The block reader and its block is left intact. */
 void block_iter_close(struct block_iter *it);

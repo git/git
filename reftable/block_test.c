@@ -89,7 +89,7 @@ static void test_block_read_write(void)
 		strbuf_reset(&want);
 		strbuf_addstr(&want, names[i]);
 
-		n = block_reader_seek(&br, &it, &want);
+		n = block_iter_seek_key(&it, &br, &want);
 		EXPECT(n == 0);
 
 		n = block_iter_next(&it, &rec);
@@ -98,7 +98,7 @@ static void test_block_read_write(void)
 		EXPECT_STREQ(names[i], rec.u.ref.refname);
 
 		want.len--;
-		n = block_reader_seek(&br, &it, &want);
+		n = block_iter_seek_key(&it, &br, &want);
 		EXPECT(n == 0);
 
 		n = block_iter_next(&it, &rec);

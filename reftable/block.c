@@ -373,19 +373,14 @@ int block_reader_first_key(struct block_reader *br, struct strbuf *key)
 	return 0;
 }
 
-int block_iter_seek(struct block_iter *it, struct strbuf *want)
-{
-	return block_reader_seek(it->br, it, want);
-}
-
 void block_iter_close(struct block_iter *it)
 {
 	strbuf_release(&it->last_key);
 	strbuf_release(&it->scratch);
 }
 
-int block_reader_seek(struct block_reader *br, struct block_iter *it,
-		      struct strbuf *want)
+int block_iter_seek_key(struct block_iter *it, struct block_reader *br,
+			struct strbuf *want)
 {
 	struct restart_needle_less_args args = {
 		.needle = *want,
