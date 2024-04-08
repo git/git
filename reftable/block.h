@@ -81,6 +81,8 @@ int block_reader_init(struct block_reader *br, struct reftable_block *bl,
 		      uint32_t header_off, uint32_t table_block_size,
 		      int hash_size);
 
+void block_reader_release(struct block_reader *br);
+
 /* Returns the block type (eg. 'r' for refs) */
 uint8_t block_reader_type(struct block_reader *r);
 

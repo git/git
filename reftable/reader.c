@@ -253,7 +253,7 @@ static void table_iter_block_done(struct table_iter *ti)
 	if (!ti->bi.br) {
 		return;
 	}
-	reftable_block_done(&ti->bi.br->block);
+	block_reader_release(ti->bi.br);
 	FREE_AND_NULL(ti->bi.br);
 
 	ti->bi.last_key.len = 0;

@@ -256,6 +256,11 @@ done:
 	return err;
 }
 
+void block_reader_release(struct block_reader *br)
+{
+	reftable_block_done(&br->block);
+}
+
 uint8_t block_reader_type(struct block_reader *r)
 {
 	return r->block.data[r->header_off];
