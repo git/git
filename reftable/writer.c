@@ -109,7 +109,7 @@ static void writer_reinit_block_writer(struct reftable_writer *w, uint8_t typ)
 		block_start = header_size(writer_version(w));
 	}
 
-	strbuf_release(&w->last_key);
+	strbuf_reset(&w->last_key);
 	block_writer_init(&w->block_writer_data, typ, w->block,
 			  w->opts.block_size, block_start,
 			  hash_size(w->opts.hash_id));
@@ -478,7 +478,7 @@ static int writer_finish_section(struct reftable_writer *w)
 	bstats->max_index_level = max_level;
 
 	/* Reinit lastKey, as the next section can start with any key. */
-	w->last_key.len = 0;
+	strbuf_reset(&w->last_key);
 
 	return 0;
 }
