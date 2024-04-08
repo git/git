@@ -71,9 +71,10 @@ struct pack_refs_opts {
 	struct ref_exclusions *exclusions;
 	struct string_list *includes;
 };
-
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
+
 				    const char *refname,
+				    char **referent,
 				    int resolve_flags,
 				    struct object_id *oid,
 				    int *flags);
@@ -310,6 +311,7 @@ typedef int each_ref_fn(const char *refname,
  */
 typedef int each_repo_ref_fn(struct repository *r,
 			     const char *refname,
+			     const char *referent,
 			     const struct object_id *oid,
 			     int flags,
 			     void *cb_data);
@@ -335,7 +337,6 @@ int refs_for_each_branch_ref(struct ref_store *refs,
 			     each_ref_fn fn, void *cb_data);
 int refs_for_each_remote_ref(struct ref_store *refs,
 			     each_ref_fn fn, void *cb_data);
-
 /* just iterates the head ref. */
 int head_ref(each_ref_fn fn, void *cb_data);
 
@@ -379,6 +380,7 @@ int for_each_tag_ref(each_ref_fn fn, void *cb_data);
 int for_each_branch_ref(each_ref_fn fn, void *cb_data);
 int for_each_remote_ref(each_ref_fn fn, void *cb_data);
 int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data);
+int for_each_ref_all(const char *prefix, each_repo_ref_fn fn, void *cb_data);
 
 /* iterates all refs that match the specified glob pattern. */
 int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
