@@ -209,7 +209,8 @@ static int writer_add_record(struct reftable_writer *w,
 			     struct reftable_record *rec)
 {
 	struct strbuf key = STRBUF_INIT;
-	int err = -1;
+	int err;
+
 	reftable_record_key(rec, &key);
 	if (strbuf_cmp(&w->last_key, &key) >= 0) {
 		err = REFTABLE_API_ERROR;
@@ -218,27 +219,42 @@ static int writer_add_record(struct reftable_writer *w,
 
 	strbuf_reset(&w->last_key);
 	strbuf_addbuf(&w->last_key, &key);
-	if (!w->block_writer) {
+	if (!w->block_writer)
 		writer_reinit_block_writer(w, reftable_record_type(rec));
-	}
 
-	assert(block_writer_type(w->block_writer) == reftable_record_type(rec));
+	if (block_writer_type(w->block_writer) != reftable_record_type(rec))
+		BUG("record of type %d added to writer of type %d",
+		    reftable_record_type(rec), block_writer_type(w->block_writer));
 
-	if (block_writer_add(w->block_writer, rec) == 0) {
+	/*
+	 * Try to add the record to the writer. If this succeeds then we're
+	 * done. Otherwise the block writer may have hit the block size limit
+	 * and needs to be flushed.
+	 */
+	if (!block_writer_add(w->block_writer, rec)) {
 		err = 0;
 		goto done;
 	}
 
+	/*
+	 * The current block is full, so we need to flush and reinitialize the
+	 * writer to start writing the next block.
+	 */
 	err = writer_flush_block(w);
-	if (err < 0) {
+	if (err < 0)
 		goto done;
-	}
-
 	writer_reinit_block_writer(w, reftable_record_type(rec));
+
+	/*
+	 * Try to add the record to the writer again. If this still fails then
+	 * the record does not fit into the block size.
+	 *
+	 * TODO: it would be great to have `block_writer_add()` return proper
+	 *       error codes so that we don't have to second-guess the failure
+	 *       mode here.
+	 */
 	err = block_writer_add(w->block_writer, rec);
-	if (err == -1) {
-		/* we are writing into memory, so an error can only mean it
-		 * doesn't fit. */
+	if (err) {
 		err = REFTABLE_ENTRY_TOO_BIG_ERROR;
 		goto done;
 	}
