@@ -195,10 +195,10 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	}
 
 	if (typ == BLOCK_TYPE_LOG) {
-		int block_header_skip = 4 + header_off;
-		uLongf dst_len = sz - block_header_skip; /* total size of dest
-							    buffer. */
-		uLongf src_len = block->len - block_header_skip;
+		uint32_t block_header_skip = 4 + header_off;
+		uLong dst_len = sz - block_header_skip;
+		uLong src_len = block->len - block_header_skip;
+		z_stream stream = {0};
 
 		/* Log blocks specify the *uncompressed* size in their header. */
 		REFTABLE_ALLOC_GROW(br->uncompressed_data, sz,
@@ -207,15 +207,33 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		/* Copy over the block header verbatim. It's not compressed. */
 		memcpy(br->uncompressed_data, block->data, block_header_skip);
 
-		/* Uncompress */
-		if (Z_OK !=
-		    uncompress2(br->uncompressed_data + block_header_skip, &dst_len,
-				block->data + block_header_skip, &src_len)) {
+		err = inflateInit(&stream);
+		if (err != Z_OK) {
 			err = REFTABLE_ZLIB_ERROR;
 			goto done;
 		}
 
-		if (dst_len + block_header_skip != sz) {
+		stream.next_in = block->data + block_header_skip;
+		stream.avail_in = src_len;
+		stream.next_out = br->uncompressed_data + block_header_skip;
+		stream.avail_out = dst_len;
+
+		/*
+		 * We know both input as well as output size, and we know that
+		 * the sizes should never be bigger than `uInt_MAX` because
+		 * blocks can at most be 16MB large. We can thus use `Z_FINISH`
+		 * here to instruct zlib to inflate the data in one go, which
+		 * is more efficient than using `Z_NO_FLUSH`.
+		 */
+		err = inflate(&stream, Z_FINISH);
+		inflateEnd(&stream);
+		if (err != Z_STREAM_END) {
+			err = REFTABLE_ZLIB_ERROR;
+			goto done;
+		}
+		err = 0;
+
+		if (stream.total_out + block_header_skip != sz) {
 			err = REFTABLE_FORMAT_ERROR;
 			goto done;
 		}
@@ -224,7 +242,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		reftable_block_done(block);
 		block->data = br->uncompressed_data;
 		block->len = sz;
-		full_block_size = src_len + block_header_skip;
+		full_block_size = src_len + block_header_skip - stream.avail_in;
 	} else if (full_block_size == 0) {
 		full_block_size = sz;
 	} else if (sz < full_block_size && sz < block->len &&
