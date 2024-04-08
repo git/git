@@ -315,7 +315,7 @@ static void test_reftable_stack_transaction_api_performs_auto_compaction(void)
 		 * we can ensure that we indeed honor this setting and have
 		 * better control over when exactly auto compaction runs.
 		 */
-		st->disable_auto_compact = i != n;
+		st->config.disable_auto_compact = i != n;
 
 		err = reftable_stack_new_addition(&add, st);
 		EXPECT_ERR(err);
@@ -487,6 +487,7 @@ static void test_reftable_stack_add(void)
 	struct reftable_write_options cfg = {
 		.exact_log_message = 1,
 		.default_permissions = 0660,
+		.disable_auto_compact = 1,
 	};
 	struct reftable_stack *st = NULL;
 	char *dir = get_tmp_dir(__LINE__);
@@ -498,7 +499,6 @@ static void test_reftable_stack_add(void)
 
 	err = reftable_new_stack(&st, dir, cfg);
 	EXPECT_ERR(err);
-	st->disable_auto_compact = 1;
 
 	for (i = 0; i < N; i++) {
 		char buf[256];
@@ -925,7 +925,9 @@ static void test_empty_add(void)
 
 static void test_reftable_stack_auto_compaction(void)
 {
-	struct reftable_write_options cfg = { 0 };
+	struct reftable_write_options cfg = {
+		.disable_auto_compact = 1,
+	};
 	struct reftable_stack *st = NULL;
 	char *dir = get_tmp_dir(__LINE__);
 
@@ -935,7 +937,6 @@ static void test_reftable_stack_auto_compaction(void)
 	err = reftable_new_stack(&st, dir, cfg);
 	EXPECT_ERR(err);
 
-	st->disable_auto_compact = 1; /* call manually below for coverage. */
 	for (i = 0; i < N; i++) {
 		char name[100];
 		struct reftable_ref_record ref = {
@@ -984,7 +985,7 @@ static void test_reftable_stack_add_performs_auto_compaction(void)
 		 * we can ensure that we indeed honor this setting and have
 		 * better control over when exactly auto compaction runs.
 		 */
-		st->disable_auto_compact = i != n;
+		st->config.disable_auto_compact = i != n;
 
 		strbuf_reset(&refname);
 		strbuf_addf(&refname, "branch-%04d", i);

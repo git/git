@@ -19,7 +19,6 @@ struct reftable_stack {
 	int list_fd;
 
 	char *reftable_dir;
-	int disable_auto_compact;
 
 	struct reftable_write_options config;
 
