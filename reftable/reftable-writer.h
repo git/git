@@ -38,10 +38,6 @@ struct reftable_write_options {
 	/* Default mode for creating files. If unset, use 0666 (+umask) */
 	unsigned int default_permissions;
 
-	/* boolean: do not check ref names for validity or dir/file conflicts.
-	 */
-	unsigned skip_name_check : 1;
-
 	/* boolean: copy log messages exactly. If unset, check that the message
 	 *   is a single line, and add '\n' if missing.
 	 */

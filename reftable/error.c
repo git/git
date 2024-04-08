@@ -27,8 +27,6 @@ const char *reftable_error_str(int err)
 		return "misuse of the reftable API";
 	case REFTABLE_ZLIB_ERROR:
 		return "zlib failure";
-	case REFTABLE_NAME_CONFLICT:
-		return "file/directory conflict";
 	case REFTABLE_EMPTY_TABLE_ERROR:
 		return "wrote empty table";
 	case REFTABLE_REFNAME_ERROR:

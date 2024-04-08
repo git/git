@@ -13,7 +13,6 @@ int cmd__reftable(int argc, const char **argv)
 	readwrite_test_main(argc, argv);
 	merged_test_main(argc, argv);
 	stack_test_main(argc, argv);
-	refname_test_main(argc, argv);
 	return 0;
 }
 
