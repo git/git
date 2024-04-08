@@ -659,58 +659,74 @@ static void writer_clear_index(struct reftable_writer *w)
 	w->index_cap = 0;
 }
 
-static const int debug = 0;
-
 static int writer_flush_nonempty_block(struct reftable_writer *w)
 {
+	struct reftable_index_record index_record = {
+		.last_key = STRBUF_INIT,
+	};
 	uint8_t typ = block_writer_type(w->block_writer);
-	struct reftable_block_stats *bstats =
-		writer_reftable_block_stats(w, typ);
-	uint64_t block_typ_off = (bstats->blocks == 0) ? w->next : 0;
-	int raw_bytes = block_writer_finish(w->block_writer);
-	int padding = 0;
-	int err = 0;
-	struct reftable_index_record ir = { .last_key = STRBUF_INIT };
+	struct reftable_block_stats *bstats;
+	int raw_bytes, padding = 0, err;
+	uint64_t block_typ_off;
+
+	/*
+	 * Finish the current block. This will cause the block writer to emit
+	 * restart points and potentially compress records in case we are
+	 * writing a log block.
+	 *
+	 * Note that this is still happening in memory.
+	 */
+	raw_bytes = block_writer_finish(w->block_writer);
 	if (raw_bytes < 0)
 		return raw_bytes;
 
-	if (!w->opts.unpadded && typ != BLOCK_TYPE_LOG) {
+	/*
+	 * By default, all records except for log records are padded to the
+	 * block size.
+	 */
+	if (!w->opts.unpadded && typ != BLOCK_TYPE_LOG)
 		padding = w->opts.block_size - raw_bytes;
-	}
 
-	if (block_typ_off > 0) {
+	bstats = writer_reftable_block_stats(w, typ);
+	block_typ_off = (bstats->blocks == 0) ? w->next : 0;
+	if (block_typ_off > 0)
 		bstats->offset = block_typ_off;
-	}
-
 	bstats->entries += w->block_writer->entries;
 	bstats->restarts += w->block_writer->restart_len;
 	bstats->blocks++;
 	w->stats.blocks++;
 
-	if (debug) {
-		fprintf(stderr, "block %c off %" PRIu64 " sz %d (%d)\n", typ,
-			w->next, raw_bytes,
-			get_be24(w->block + w->block_writer->header_off + 1));
-	}
-
-	if (w->next == 0) {
+	/*
+	 * If this is the first block we're writing to the table then we need
+	 * to also write the reftable header.
+	 */
+	if (!w->next)
 		writer_write_header(w, w->block);
-	}
 
 	err = padded_write(w, w->block, raw_bytes, padding);
 	if (err < 0)
 		return err;
 
+	/*
+	 * Add an index record for every block that we're writing. If we end up
+	 * having more than a threshold of index records we will end up writing
+	 * an index section in `writer_finish_section()`. Each index record
+	 * contains the last record key of the block it is indexing as well as
+	 * the offset of that block.
+	 *
+	 * Note that this also applies when flushing index blocks, in which
+	 * case we will end up with a multi-level index.
+	 */
 	REFTABLE_ALLOC_GROW(w->index, w->index_len + 1, w->index_cap);
-
-	ir.offset = w->next;
-	strbuf_reset(&ir.last_key);
-	strbuf_addbuf(&ir.last_key, &w->block_writer->last_key);
-	w->index[w->index_len] = ir;
-
+	index_record.offset = w->next;
+	strbuf_reset(&index_record.last_key);
+	strbuf_addbuf(&index_record.last_key, &w->block_writer->last_key);
+	w->index[w->index_len] = index_record;
 	w->index_len++;
+
 	w->next += padding + raw_bytes;
 	w->block_writer = NULL;
+
 	return 0;
 }
 
