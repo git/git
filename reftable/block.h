@@ -121,8 +121,6 @@ void block_iter_seek_start(struct block_iter *it, const struct block_reader *br)
 int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 			struct strbuf *want);
 
-void block_iter_copy_from(struct block_iter *dest, const struct block_iter *src);
-
 /* return < 0 for error, 0 for OK, > 0 for EOF. */
 int block_iter_next(struct block_iter *it, struct reftable_record *rec);
 

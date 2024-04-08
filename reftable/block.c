@@ -365,16 +365,6 @@ static int restart_needle_less(size_t idx, void *_args)
 	return args->needle.len < suffix_len;
 }
 
-void block_iter_copy_from(struct block_iter *dest, const struct block_iter *src)
-{
-	dest->block = src->block;
-	dest->block_len = src->block_len;
-	dest->hash_size = src->hash_size;
-	dest->next_off = src->next_off;
-	strbuf_reset(&dest->last_key);
-	strbuf_addbuf(&dest->last_key, &src->last_key);
-}
-
 int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 {
 	struct string_view in = {
@@ -427,7 +417,6 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 		.needle = *want,
 		.reader = br,
 	};
-	struct block_iter next = BLOCK_ITER_INIT;
 	struct reftable_record rec;
 	int err = 0;
 	size_t i;
@@ -486,11 +475,13 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 	 * far and then back up.
 	 */
 	while (1) {
-		block_iter_copy_from(&next, it);
-		err = block_iter_next(&next, &rec);
+		size_t prev_off = it->next_off;
+
+		err = block_iter_next(it, &rec);
 		if (err < 0)
 			goto done;
 		if (err > 0) {
+			it->next_off = prev_off;
 			err = 0;
 			goto done;
 		}
@@ -501,18 +492,23 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 		 * record does not exist in the block and can thus abort early.
 		 * In case it is equal to the sought-after key we have found
 		 * the desired record.
+		 *
+		 * Note that we store the next record's key record directly in
+		 * `last_key` without restoring the key of the preceding record
+		 * in case we need to go one record back. This is safe to do as
+		 * `block_iter_next()` would return the ref whose key is equal
+		 * to `last_key` now, and naturally all keys share a prefix
+		 * with themselves.
 		 */
 		reftable_record_key(&rec, &it->last_key);
-		if (strbuf_cmp(&it->last_key, want) >= 0)
+		if (strbuf_cmp(&it->last_key, want) >= 0) {
+			it->next_off = prev_off;
 			goto done;
-
-		block_iter_copy_from(it, &next);
+		}
 	}
 
 done:
-	block_iter_close(&next);
 	reftable_record_release(&rec);
-
 	return err;
 }
 
