@@ -198,7 +198,6 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		uint32_t block_header_skip = 4 + header_off;
 		uLong dst_len = sz - block_header_skip;
 		uLong src_len = block->len - block_header_skip;
-		z_stream stream = {0};
 
 		/* Log blocks specify the *uncompressed* size in their header. */
 		REFTABLE_ALLOC_GROW(br->uncompressed_data, sz,
@@ -207,16 +206,21 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		/* Copy over the block header verbatim. It's not compressed. */
 		memcpy(br->uncompressed_data, block->data, block_header_skip);
 
-		err = inflateInit(&stream);
+		if (!br->zstream) {
+			REFTABLE_CALLOC_ARRAY(br->zstream, 1);
+			err = inflateInit(br->zstream);
+		} else {
+			err = inflateReset(br->zstream);
+		}
 		if (err != Z_OK) {
 			err = REFTABLE_ZLIB_ERROR;
 			goto done;
 		}
 
-		stream.next_in = block->data + block_header_skip;
-		stream.avail_in = src_len;
-		stream.next_out = br->uncompressed_data + block_header_skip;
-		stream.avail_out = dst_len;
+		br->zstream->next_in = block->data + block_header_skip;
+		br->zstream->avail_in = src_len;
+		br->zstream->next_out = br->uncompressed_data + block_header_skip;
+		br->zstream->avail_out = dst_len;
 
 		/*
 		 * We know both input as well as output size, and we know that
@@ -225,15 +229,14 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		 * here to instruct zlib to inflate the data in one go, which
 		 * is more efficient than using `Z_NO_FLUSH`.
 		 */
-		err = inflate(&stream, Z_FINISH);
-		inflateEnd(&stream);
+		err = inflate(br->zstream, Z_FINISH);
 		if (err != Z_STREAM_END) {
 			err = REFTABLE_ZLIB_ERROR;
 			goto done;
 		}
 		err = 0;
 
-		if (stream.total_out + block_header_skip != sz) {
+		if (br->zstream->total_out + block_header_skip != sz) {
 			err = REFTABLE_FORMAT_ERROR;
 			goto done;
 		}
@@ -242,7 +245,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		reftable_block_done(block);
 		block->data = br->uncompressed_data;
 		block->len = sz;
-		full_block_size = src_len + block_header_skip - stream.avail_in;
+		full_block_size = src_len + block_header_skip - br->zstream->avail_in;
 	} else if (full_block_size == 0) {
 		full_block_size = sz;
 	} else if (sz < full_block_size && sz < block->len &&
@@ -275,6 +278,8 @@ done:
 
 void block_reader_release(struct block_reader *br)
 {
+	inflateEnd(br->zstream);
+	reftable_free(br->zstream);
 	reftable_free(br->uncompressed_data);
 	reftable_block_done(&br->block);
 }

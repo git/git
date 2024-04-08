@@ -56,6 +56,8 @@ int block_writer_finish(struct block_writer *w);
 /* clears out internally allocated block_writer members. */
 void block_writer_release(struct block_writer *bw);
 
+struct z_stream;
+
 /* Read a block. */
 struct block_reader {
 	/* offset of the block header; nonzero for the first block in a
@@ -67,6 +69,7 @@ struct block_reader {
 	int hash_size;
 
 	/* Uncompressed data for log entries. */
+	z_stream *zstream;
 	unsigned char *uncompressed_data;
 	size_t uncompressed_cap;
 

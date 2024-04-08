@@ -459,6 +459,7 @@ static int reader_seek_linear(struct table_iter *ti,
 		 * we would not do a linear search there anymore.
 		 */
 		memset(&next.br.block, 0, sizeof(next.br.block));
+		next.br.zstream = NULL;
 		next.br.uncompressed_data = NULL;
 		next.br.uncompressed_cap = 0;
 
