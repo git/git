@@ -69,7 +69,7 @@ static void test_block_read_write(void)
 
 	block_reader_init(&br, &block, header_off, block_size, GIT_SHA1_RAWSZ);
 
-	block_reader_start(&br, &it);
+	block_iter_seek_start(&it, &br);
 
 	while (1) {
 		int r = block_iter_next(&it, &rec);

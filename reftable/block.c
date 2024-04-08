@@ -266,7 +266,7 @@ static uint32_t block_reader_restart_offset(struct block_reader *br, int i)
 	return get_be24(br->restart_bytes + 3 * i);
 }
 
-void block_reader_start(struct block_reader *br, struct block_iter *it)
+void block_iter_seek_start(struct block_iter *it, struct block_reader *br)
 {
 	it->br = br;
 	strbuf_reset(&it->last_key);

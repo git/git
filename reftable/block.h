@@ -98,7 +98,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *bl,
 		      int hash_size);
 
 /* Position `it` at start of the block */
-void block_reader_start(struct block_reader *br, struct block_iter *it);
+void block_iter_seek_start(struct block_iter *it, struct block_reader *br);
 
 /* Position `it` to the `want` key in the block */
 int block_reader_seek(struct block_reader *br, struct block_iter *it,

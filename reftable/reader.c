@@ -345,7 +345,7 @@ static int table_iter_next_block(struct table_iter *dest,
 		*brp = br;
 
 		dest->is_finished = 0;
-		block_reader_start(brp, &dest->bi);
+		block_iter_seek_start(&dest->bi, brp);
 	}
 	return 0;
 }
@@ -429,7 +429,7 @@ static int reader_table_iter_at(struct reftable_reader *r,
 	ti->r = r;
 	ti->typ = block_reader_type(brp);
 	ti->block_off = off;
-	block_reader_start(brp, &ti->bi);
+	block_iter_seek_start(&ti->bi, brp);
 	return 0;
 }
 
