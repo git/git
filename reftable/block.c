@@ -188,6 +188,8 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	uint8_t *restart_bytes = NULL;
 	uint8_t *uncompressed = NULL;
 
+	reftable_block_done(&br->block);
+
 	if (!reftable_is_block_type(typ)) {
 		err =  REFTABLE_FORMAT_ERROR;
 		goto done;

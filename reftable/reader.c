@@ -312,26 +312,20 @@ static void table_iter_close(struct table_iter *ti)
 	block_iter_close(&ti->bi);
 }
 
-static int table_iter_next_block(struct table_iter *dest,
-				 struct table_iter *src)
+static int table_iter_next_block(struct table_iter *ti)
 {
-	uint64_t next_block_off = src->block_off + src->br.full_block_size;
+	uint64_t next_block_off = ti->block_off + ti->br.full_block_size;
 	int err;
 
-	dest->r = src->r;
-	dest->typ = src->typ;
-	dest->block_off = next_block_off;
-
-	err = reader_init_block_reader(src->r, &dest->br, next_block_off, src->typ);
+	err = reader_init_block_reader(ti->r, &ti->br, next_block_off, ti->typ);
 	if (err > 0)
-		dest->is_finished = 1;
-	if (err) {
-		table_iter_block_done(dest);
+		ti->is_finished = 1;
+	if (err)
 		return err;
-	}
 
-	dest->is_finished = 0;
-	block_iter_seek_start(&dest->bi, &dest->br);
+	ti->block_off = next_block_off;
+	ti->is_finished = 0;
+	block_iter_seek_start(&ti->bi, &ti->br);
 
 	return 0;
 }
@@ -342,7 +336,6 @@ static int table_iter_next(struct table_iter *ti, struct reftable_record *rec)
 		return REFTABLE_API_ERROR;
 
 	while (1) {
-		struct table_iter next = TABLE_ITER_INIT;
 		int err;
 
 		if (ti->is_finished)
@@ -362,14 +355,11 @@ static int table_iter_next(struct table_iter *ti, struct reftable_record *rec)
 		 * table and retry. If there are no more blocks then the
 		 * iterator is drained.
 		 */
-		err = table_iter_next_block(&next, ti);
+		err = table_iter_next_block(ti);
 		if (err) {
 			ti->is_finished = 1;
 			return err;
 		}
-
-		table_iter_close(ti);
-		*ti = next;
 	}
 }
 
@@ -453,9 +443,24 @@ static int reader_seek_linear(struct table_iter *ti,
 	 * have no other way to do this.
 	 */
 	while (1) {
-		struct table_iter next = TABLE_ITER_INIT;
+		struct table_iter next = *ti;
 
-		err = table_iter_next_block(&next, ti);
+		/*
+		 * We must be careful to not modify underlying data of `ti`
+		 * because we may find that `next` does not contain our desired
+		 * block, but that `ti` does. In that case, we would discard
+		 * `next` and continue with `ti`.
+		 *
+		 * This also means that we cannot reuse allocated memory for
+		 * `next` here. While it would be great if we could, it should
+		 * in practice not be too bad given that we should only ever
+		 * end up doing linear seeks with at most three blocks. As soon
+		 * as we have more than three blocks we would have an index, so
+		 * we would not do a linear search there anymore.
+		 */
+		memset(&next.br.block, 0, sizeof(next.br.block));
+
+		err = table_iter_next_block(&next);
 		if (err < 0)
 			goto done;
 		if (err > 0)
