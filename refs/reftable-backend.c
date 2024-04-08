@@ -247,6 +247,11 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->write_options.block_size = 4096;
 	refs->write_options.hash_id = repo->hash_algo->format_id;
 	refs->write_options.default_permissions = calc_shared_perm(0666 & ~mask);
+	/*
+	 * We verify names via `refs_verify_refname_available()`, so there is
+	 * no need to do the same checks in the reftable library again.
+	 */
+	refs->write_options.skip_name_check = 1;
 
 	/*
 	 * Set up the main reftable stack that is hosted in GIT_COMMON_DIR.
