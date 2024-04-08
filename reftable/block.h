@@ -76,6 +76,17 @@ struct block_reader {
 	uint32_t full_block_size;
 };
 
+/* initializes a block reader. */
+int block_reader_init(struct block_reader *br, struct reftable_block *bl,
+		      uint32_t header_off, uint32_t table_block_size,
+		      int hash_size);
+
+/* Returns the block type (eg. 'r' for refs) */
+uint8_t block_reader_type(struct block_reader *r);
+
+/* Decodes the first key in the block */
+int block_reader_first_key(struct block_reader *br, struct strbuf *key);
+
 /* Iterate over entries in a block */
 struct block_iter {
 	/* offset within the block of the next entry to read. */
@@ -92,23 +103,12 @@ struct block_iter {
 	.scratch = STRBUF_INIT, \
 }
 
-/* initializes a block reader. */
-int block_reader_init(struct block_reader *br, struct reftable_block *bl,
-		      uint32_t header_off, uint32_t table_block_size,
-		      int hash_size);
-
 /* Position `it` at start of the block */
 void block_iter_seek_start(struct block_iter *it, struct block_reader *br);
 
 /* Position `it` to the `want` key in the block */
 int block_iter_seek_key(struct block_iter *it, struct block_reader *br,
 			struct strbuf *want);
-
-/* Returns the block type (eg. 'r' for refs) */
-uint8_t block_reader_type(struct block_reader *r);
-
-/* Decodes the first key in the block */
-int block_reader_first_key(struct block_reader *br, struct strbuf *key);
 
 void block_iter_copy_from(struct block_iter *dest, struct block_iter *src);
 

@@ -175,11 +175,6 @@ int block_writer_finish(struct block_writer *w)
 	return w->next;
 }
 
-uint8_t block_reader_type(struct block_reader *r)
-{
-	return r->block.data[r->header_off];
-}
-
 int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		      uint32_t header_off, uint32_t table_block_size,
 		      int hash_size)
@@ -259,6 +254,31 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 done:
 	reftable_free(uncompressed);
 	return err;
+}
+
+uint8_t block_reader_type(struct block_reader *r)
+{
+	return r->block.data[r->header_off];
+}
+
+int block_reader_first_key(struct block_reader *br, struct strbuf *key)
+{
+	int off = br->header_off + 4, n;
+	struct string_view in = {
+		.buf = br->block.data + off,
+		.len = br->block_len - off,
+	};
+	uint8_t extra = 0;
+
+	strbuf_reset(key);
+
+	n = reftable_decode_key(key, &extra, in);
+	if (n < 0)
+		return n;
+	if (!key->len)
+		return REFTABLE_FORMAT_ERROR;
+
+	return 0;
 }
 
 static uint32_t block_reader_restart_offset(struct block_reader *br, int i)
@@ -350,26 +370,6 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 	string_view_consume(&in, n);
 
 	it->next_off += start.len - in.len;
-	return 0;
-}
-
-int block_reader_first_key(struct block_reader *br, struct strbuf *key)
-{
-	int off = br->header_off + 4, n;
-	struct string_view in = {
-		.buf = br->block.data + off,
-		.len = br->block_len - off,
-	};
-	uint8_t extra = 0;
-
-	strbuf_reset(key);
-
-	n = reftable_decode_key(key, &extra, in);
-	if (n < 0)
-		return n;
-	if (!key->len)
-		return REFTABLE_FORMAT_ERROR;
-
 	return 0;
 }
 
