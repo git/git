@@ -105,8 +105,7 @@ test_expect_reftable_perms () {
 		test_when_finished "rm -rf repo" &&
 		(
 			umask $umask &&
-			git init --shared=$shared repo &&
-			test 1 = "$(git -C repo config core.sharedrepository)"
+			git init --shared=$shared repo
 		) &&
 		test_expect_perms "$expect" repo/.git/reftable/tables.list &&
 		for table in repo/.git/reftable/*.ref
@@ -122,9 +121,9 @@ test_expect_reftable_perms () {
 			umask $umask &&
 			git init --shared=$shared repo &&
 			test_commit -C repo A &&
-			test_line_count = 3 repo/.git/reftable/tables.list
+			test_line_count = 3 repo/.git/reftable/tables.list &&
+			git -C repo pack-refs
 		) &&
-		git -C repo pack-refs &&
 		test_expect_perms "$expect" repo/.git/reftable/tables.list &&
 		for table in repo/.git/reftable/*.ref
 		do
@@ -134,8 +133,17 @@ test_expect_reftable_perms () {
 	'
 }
 
-test_expect_reftable_perms 002 true "-rw-rw-r--"
-test_expect_reftable_perms 022 true "-rw-rw-r--"
+test_expect_reftable_perms 002 umask "-rw-rw-r--"
+test_expect_reftable_perms 022 umask "-rw-r--r--"
+test_expect_reftable_perms 027 umask "-rw-r-----"
+
+test_expect_reftable_perms 002 group "-rw-rw-r--"
+test_expect_reftable_perms 022 group "-rw-rw-r--"
+test_expect_reftable_perms 027 group "-rw-rw----"
+
+test_expect_reftable_perms 002 world "-rw-rw-r--"
+test_expect_reftable_perms 022 world "-rw-rw-r--"
+test_expect_reftable_perms 027 world "-rw-rw-r--"
 
 test_expect_success 'clone: can clone reftable repository' '
 	test_when_finished "rm -rf repo clone" &&
