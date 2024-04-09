@@ -15,6 +15,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+# This test script contains test cases that need to create symbolic links. To
+# make sure that these test cases are exercised in Git for Windows, where (for
+# historical reasons) `ln -s` creates copies by default, let's specifically ask
+# for `ln -s` to create symbolic links whenever possible.
+if test_have_prereq MINGW
+then
+	MSYS=${MSYS+$MSYS }winsymlinks:nativestrict
+	export MSYS
+fi
 
 compare_head()
 {
