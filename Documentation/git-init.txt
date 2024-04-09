@@ -9,11 +9,11 @@ git-init - Create an empty Git repository or reinitialize an existing one
 SYNOPSIS
 --------
 [verse]
-'git init' [-q | --quiet] [--bare] [--template=<template-directory>]
-	  [--separate-git-dir <git-dir>] [--object-format=<format>]
-	  [--ref-format=<format>]
-	  [-b <branch-name> | --initial-branch=<branch-name>]
-	  [--shared[=<permissions>]] [<directory>]
+`git init` [`-q` | `--quiet`] [`--bare`] [++--template=++__<template-directory>__]
+	  [`--separate-git-dir` _<git-dir>_] [++--object-format=++__<format>__]
+	  [++--ref-format=++__<format>__]
+	  [`-b` _<branch-name>_ | ++--initial-branch=++__<branch-name>__]
+	  [++--shared++[++=++__<permissions>__]] [_<directory>_]
 
 
 DESCRIPTION
@@ -41,35 +41,35 @@ the repository to another place if `--separate-git-dir` is given).
 OPTIONS
 -------
 
--q::
---quiet::
+`-q`::
+`--quiet`::
 
 Only print error and warning messages; all other output will be suppressed.
 
---bare::
+`--bare`::
 
 Create a bare repository. If `GIT_DIR` environment is not set, it is set to the
 current working directory.
 
---object-format=<format>::
+++--object-format=++__<format>__::
 
 Specify the given object _<format>_ (hash algorithm) for the repository.  The valid
 values are `sha1` and (if enabled) `sha256`.  `sha1` is the default.
 +
 include::object-format-disclaimer.txt[]
 
---ref-format=<format>::
+++--ref-format=++__<format>__::
 
 Specify the given ref storage _<format>_ for the repository. The valid values are:
 +
 include::ref-storage-format.txt[]
 
---template=<template-directory>::
+++--template=++__<template-directory>__::
 
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
---separate-git-dir=<git-dir>::
+++--separate-git-dir=++__<git-dir>__::
 
 Instead of initializing the repository as a directory to either `$GIT_DIR` or
 `./.git/`, create a text file there containing the path to the actual
@@ -78,53 +78,53 @@ repository.
 +
 If this is a reinitialization, the repository will be moved to the specified path.
 
--b <branch-name>::
---initial-branch=<branch-name>::
+`-b` _<branch-name>_::
+++--initial-branch=++__<branch-name>__::
 
 Use _<branch-name>_ for the initial branch in the newly created
 repository.  If not specified, fall back to the default name (currently
 `master`, but this is subject to change in the future; the name can be
 customized via the `init.defaultBranch` configuration variable).
 
---shared[=(false|true|umask|group|all|world|everybody|<perm>)]::
+++--shared++[++=++(`false`|`true`|`umask`|`group`|`all`|`world`|`everybody`|_<perm>_)]::
 
 Specify that the Git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that
 repository.  When specified, the config variable `core.sharedRepository` is
 set so that files and directories under `$GIT_DIR` are created with the
 requested permissions.  When not specified, Git will use permissions reported
-by `umask(2)`.
+by `umask`(2).
 +
 The option can have the following values, defaulting to `group` if no value
 is given:
 +
 --
-umask::
-false::
+`umask`::
+`false`::
 
-Use permissions reported by umask(2). The default, when `--shared` is not
+Use permissions reported by `umask`(2). The default, when `--shared` is not
 specified.
 
-group::
-true::
+`group`::
+`true`::
 
-Make the repository group-writable, (and g+sx, since the git group may not be
+Make the repository group-writable, (and `g+sx`, since the git group may not be
 the primary group of all users). This is used to loosen the permissions of an
-otherwise safe umask(2) value. Note that the umask still applies to the other
+otherwise safe `umask`(2) value. Note that the umask still applies to the other
 permission bits (e.g. if umask is `0022`, using `group` will not remove read
 privileges from other (non-group) users). See `0xxx` for how to exactly specify
 the repository permissions.
 
-all::
-world::
-everybody::
+`all`::
+`world`::
+`everybody`::
 
 Same as `group`, but make the repository readable by all users.
 
-<perm>::
+_<perm>_::
 
 _<perm>_ is a 3-digit octal number prefixed with `0` and each file
-will have mode _<perm>_. _<perm>_ will override users'`umask(2)`
+will have mode _<perm>_. _<perm>_ will override users' `umask`(2)
 value (and not only loosen permissions as `group` and `all`
 do). `0640` will create a repository which is group-readable, but
 not group-writable or accessible to others. `0660` will create a repo

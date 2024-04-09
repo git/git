@@ -15,14 +15,14 @@ should be used with caution on unsecured networks.
 
 The following syntaxes may be used with them:
 
-- ssh://{startsb}user@{endsb}host.xz{startsb}:port{endsb}/path/to/repo.git/
-- git://host.xz{startsb}:port{endsb}/path/to/repo.git/
-- http{startsb}s{endsb}://host.xz{startsb}:port{endsb}/path/to/repo.git/
-- ftp{startsb}s{endsb}://host.xz{startsb}:port{endsb}/path/to/repo.git/
+- ++ssh://++{startsb}__<user>__++@++{endsb}__<host>__{startsb}++:++__<port>__{endsb}++/++__<path-to-git-repo>__
+- ++git://++__<host>__{startsb}:__<port>__{endsb}++/++__<path-to-git-repo>__
+- ++http++{startsb}++s++{endsb}++://++__<host>__{startsb}++:++__<port>__{endsb}++/++__<path-to-git-repo>__
+- ++ftp++{startsb}++s++{endsb}++://++__<host>__{startsb}++:++__<port>__{endsb}++/++__<path-to-git-repo>__
 
 An alternative scp-like syntax may also be used with the ssh protocol:
 
-- {startsb}user@{endsb}host.xz:path/to/repo.git/
+- {startsb}__<user>__++@++{endsb}__<host>__++:/++__<path-to-git-repo>__
 
 This syntax is only recognized if there are no slashes before the
 first colon. This helps differentiate a local path that contains a
@@ -30,17 +30,17 @@ colon. For example the local path `foo:bar` could be specified as an
 absolute path or `./foo:bar` to avoid being misinterpreted as an ssh
 url.
 
-The ssh and git protocols additionally support ~username expansion:
+The ssh and git protocols additionally support ++~++__<username>__ expansion:
 
-- ssh://{startsb}user@{endsb}host.xz{startsb}:port{endsb}/~{startsb}user{endsb}/path/to/repo.git/
-- git://host.xz{startsb}:port{endsb}/~{startsb}user{endsb}/path/to/repo.git/
-- {startsb}user@{endsb}host.xz:/~{startsb}user{endsb}/path/to/repo.git/
+- ++ssh://++{startsb}__<user>__++@++{endsb}__<host>__{startsb}++:++__<port>__{endsb}++/~++__<user>__++/++__<path-to-git-repo>__
+- ++git://++__<host>__{startsb}++:++__<port>__{endsb}++/~++__<user>__++/++__<path-to-git-repo>__
+- {startsb}__<user>__++@++{endsb}__<host>__++:~++__<user>__++/++__<path-to-git-repo>__
 
 For local repositories, also supported by Git natively, the following
 syntaxes may be used:
 
-- /path/to/repo.git/
-- \file:///path/to/repo.git/
+- `/path/to/repo.git/`
+- ++file:///path/to/repo.git/++
 
 ifndef::git-clone[]
 These two syntaxes are mostly equivalent, except when cloning, when
@@ -57,11 +57,11 @@ endif::git-clone[]
 accept a suitable bundle file. See linkgit:git-bundle[1].
 
 When Git doesn't know how to handle a certain transport protocol, it
-attempts to use the `remote-<transport>` remote helper, if one
+attempts to use the `remote-`{empty}__<transport>__ remote helper, if one
 exists. To explicitly request a remote helper, the following syntax
 may be used:
 
-- _<transport>_::_<address>_
+- _<transport>_::__<address>__
 
 where _<address>_ may be a path, a server and path, or an arbitrary
 URL-like string recognized by the specific remote helper being
@@ -72,10 +72,11 @@ you want to use a different format for them (such that the URLs you
 use will be rewritten into URLs that work), you can create a
 configuration section of the form:
 
-------------
-	[url "<actual-url-base>"]
-		insteadOf = <other-url-base>
-------------
+[verse]
+--
+	[url "__<actual-url-base>__"]
+		insteadOf = _<other-url-base>_
+--
 
 For example, with this:
 
@@ -91,10 +92,11 @@ rewritten in any context that takes a URL to be "git://git.host.xz/repo.git".
 If you want to rewrite URLs for push only, you can create a
 configuration section of the form:
 
-------------
-	[url "<actual-url-base>"]
-		pushInsteadOf = <other-url-base>
-------------
+[verse]
+--
+	[url "__<actual-url-base>__"]
+		pushInsteadOf = _<other-url-base>_
+--
 
 For example, with this:
 
