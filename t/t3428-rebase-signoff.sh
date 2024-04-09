@@ -38,8 +38,8 @@ test_expect_success 'setup' '
 
 # We configure an alias to do the rebase --signoff so that
 # on the next subtest we can show that --no-signoff overrides the alias
-test_expect_success 'rebase --signoff adds a sign-off line' '
-	git rbs HEAD^ &&
+test_expect_success 'rebase --apply --signoff adds a sign-off line' '
+	git rbs --apply HEAD^ &&
 	test_commit_message HEAD expected-signed
 '
 
