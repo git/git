@@ -1292,8 +1292,15 @@ static char *git_header_name(int p_value,
 				return NULL; /* no postimage name */
 			second = skip_tree_prefix(p_value, name + len + 1,
 						  line_len - (len + 1));
+			/*
+			 * If we are at the SP at the end of a directory,
+			 * skip_tree_prefix() may return NULL as that makes
+			 * it appears as if we have an absolute path.
+			 * Keep going to find another SP.
+			 */
 			if (!second)
-				return NULL;
+				continue;
+
 			/*
 			 * Does len bytes starting at "name" and "second"
 			 * (that are separated by one HT or SP we just
