@@ -73,6 +73,12 @@ UI, Workflows & Features
  * core.commentChar used to be limited to a single byte, but has been
    updated to allow an arbitrary multi-byte sequence.
 
+ * "git add -p" and other "interactive hunk selection" UI has learned to
+   skip showing the hunk immediately after it has already been shown, and
+   an additional action to explicitly ask to reshow the current hunk.
+
+ * "git pack-refs" learned the "--auto" option, which is a useful
+   addition to be triggered from "git gc --auto".
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -139,6 +145,16 @@ Performance, Internal Implementation, Development Support etc.
  * The t/README file now gives a hint on running individual tests in
    the "t/" directory with "make t<num>-*.sh t<num>-*.sh".
    (merge 8d383806fc pb/test-scripts-are-build-targets later to maint).
+
+ * The "hint:" messages given by the advice mechanism, when given a
+   message with a blank line, left a line with trailing whitespace,
+   which has been cleansed.
+
+ * Documentation rules has been explicitly described how to mark-up
+   literal parts and a few manual pages have been updated as examples.
+
+ * The .editorconfig file has been taught that a Makefile uses HT
+   indentation.
 
 
 Fixes since v2.44
@@ -301,6 +317,23 @@ Fixes since v2.44
    been looked up case insensitively, but was not, which has been
    corrected.
    (merge f999d5188b bl/pretty-shorthand-config-fix later to maint).
+
+ * "git apply" failed to extract the filename the patch applied to,
+   when the change was about an empty file created in or deleted from
+   a directory whose name ends with a SP, which has been corrected.
+   (merge 776ffd1a30 jc/apply-parse-diff-git-header-names-fix later to maint).
+
+ * Update a more recent tutorial doc.
+   (merge 95ab557b4b dg/myfirstobjectwalk-updates later to maint).
+
+ * The test script had an incomplete and ineffective attempt to avoid
+   clobbering the testing user's real crontab (and its equivalents),
+   which has been completed.
+   (merge 73cb87773b es/test-cron-safety later to maint).
+
+ * Use advice_if_enabled() API to rewrite a simple pattern to
+   call advise() after checking advice_enabled().
+   (merge 6412d01527 rj/use-adv-if-enabled later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
