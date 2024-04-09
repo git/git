@@ -348,6 +348,7 @@ patch::
        K - leave this hunk undecided, see previous hunk
        s - split the current hunk into smaller hunks
        e - manually edit the current hunk
+       p - print the current hunk
        ? - print help
 +
 After deciding the fate for all hunks, if there is any hunk

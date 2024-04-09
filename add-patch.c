@@ -1388,13 +1388,14 @@ N_("j - leave this hunk undecided, see next undecided hunk\n"
    "/ - search for a hunk matching the given regex\n"
    "s - split the current hunk into smaller hunks\n"
    "e - manually edit the current hunk\n"
+   "p - print the current hunk\n"
    "? - print help\n");
 
 static int patch_update_file(struct add_p_state *s,
 			     struct file_diff *file_diff)
 {
 	size_t hunk_index = 0;
-	ssize_t i, undecided_previous, undecided_next;
+	ssize_t i, undecided_previous, undecided_next, rendered_hunk_index = -1;
 	struct hunk *hunk;
 	char ch;
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -1447,8 +1448,11 @@ static int patch_update_file(struct add_p_state *s,
 
 		strbuf_reset(&s->buf);
 		if (file_diff->hunk_nr) {
-			render_hunk(s, hunk, 0, colored, &s->buf);
-			fputs(s->buf.buf, stdout);
+			if (rendered_hunk_index != hunk_index) {
+				render_hunk(s, hunk, 0, colored, &s->buf);
+				fputs(s->buf.buf, stdout);
+				rendered_hunk_index = hunk_index;
+			}
 
 			strbuf_reset(&s->buf);
 			if (undecided_previous >= 0) {
@@ -1480,6 +1484,7 @@ static int patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_EDIT;
 				strbuf_addstr(&s->buf, ",e");
 			}
+			strbuf_addstr(&s->buf, ",p");
 		}
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
@@ -1644,13 +1649,15 @@ soft_increment:
 			hunk_index = i;
 		} else if (s->answer.buf[0] == 's') {
 			size_t splittable_into = hunk->splittable_into;
-			if (!(permitted & ALLOW_SPLIT))
+			if (!(permitted & ALLOW_SPLIT)) {
 				err(s, _("Sorry, cannot split this hunk"));
-			else if (!split_hunk(s, file_diff,
-					     hunk - file_diff->hunk))
+			} else if (!split_hunk(s, file_diff,
+					     hunk - file_diff->hunk)) {
 				color_fprintf_ln(stdout, s->s.header_color,
 						 _("Split into %d hunks."),
 						 (int)splittable_into);
+				rendered_hunk_index = -1;
+			}
 		} else if (s->answer.buf[0] == 'e') {
 			if (!(permitted & ALLOW_EDIT))
 				err(s, _("Sorry, cannot edit this hunk"));
@@ -1658,6 +1665,8 @@ soft_increment:
 				hunk->use = USE_HUNK;
 				goto soft_increment;
 			}
+		} else if (s->answer.buf[0] == 'p') {
+			rendered_hunk_index = -1;
 		} else {
 			const char *p = _(help_patch_remainder), *eol = p;
 
