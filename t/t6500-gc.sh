@@ -11,23 +11,7 @@ test_expect_success 'setup' '
 	# behavior, make sure we always pack everything to one pack by
 	# default
 	git config gc.bigPackThreshold 2g &&
-
-	# These are simply values which, when hashed as a blob with a newline,
-	# produce a hash where the first byte is 0x17 in their respective
-	# algorithms.
-	test_oid_cache <<-EOF
-	obj1 sha1:263
-	obj1 sha256:34
-
-	obj2 sha1:410
-	obj2 sha256:174
-
-	obj3 sha1:523
-	obj3 sha256:313
-
-	obj4 sha1:790
-	obj4 sha256:481
-	EOF
+	test_oid_init
 '
 
 test_expect_success 'gc empty repository' '
@@ -114,8 +98,8 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 		# We need to create two object whose sha1s start with 17
 		# since this is what git gc counts.  As it happens, these
 		# two blobs will do so.
-		test_commit "$(test_oid obj1)" &&
-		test_commit "$(test_oid obj2)" &&
+		test_commit "$(test_oid blob17_1)" &&
+		test_commit "$(test_oid blob17_2)" &&
 
 		git gc --auto >../out.actual 2>../err.actual
 	) &&
@@ -146,13 +130,13 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 	# We need to create two object whose sha1s start with 17
 	# since this is what git gc counts.  As it happens, these
 	# two blobs will do so.
-	test_commit "$(test_oid obj1)" &&
-	test_commit "$(test_oid obj2)" &&
+	test_commit "$(test_oid blob17_1)" &&
+	test_commit "$(test_oid blob17_2)" &&
 	# Our first gc will create a pack; our second will create a second pack
 	git gc --auto &&
 	ls .git/objects/pack/pack-*.pack | sort >existing_packs &&
-	test_commit "$(test_oid obj3)" &&
-	test_commit "$(test_oid obj4)" &&
+	test_commit "$(test_oid blob17_3)" &&
+	test_commit "$(test_oid blob17_4)" &&
 
 	git gc --auto 2>err &&
 	test_grep ! "^warning:" err &&

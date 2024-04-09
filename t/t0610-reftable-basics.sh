@@ -340,6 +340,26 @@ test_expect_success 'ref transaction: empty transaction in empty repo' '
 	EOF
 '
 
+test_expect_success 'ref transaction: fails gracefully when auto compaction fails' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit A &&
+		for i in $(test_seq 10)
+		do
+			git branch branch-$i &&
+			for table in .git/reftable/*.ref
+			do
+				touch "$table.lock" || exit 1
+			done ||
+			exit 1
+		done &&
+		test_line_count = 13 .git/reftable/tables.list
+	)
+'
+
 test_expect_success 'pack-refs: compacts tables' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
@@ -354,6 +374,65 @@ test_expect_success 'pack-refs: compacts tables' '
 	test_line_count = 2 table-files &&
 	test_line_count = 1 repo/.git/reftable/tables.list
 '
+
+test_expect_success 'pack-refs: compaction raises locking errors' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo A &&
+	touch repo/.git/reftable/tables.list.lock &&
+	cat >expect <<-EOF &&
+	error: unable to compact stack: data is locked
+	EOF
+	test_must_fail git -C repo pack-refs 2>err &&
+	test_cmp expect err
+'
+
+for command in pack-refs gc "maintenance run --task=pack-refs"
+do
+test_expect_success "$command: auto compaction" '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit A &&
+
+		# We need a bit of setup to ensure that git-gc(1) actually
+		# triggers, and that it does not write anything to the refdb.
+		git config gc.auto 1 &&
+		git config gc.autoDetach 0 &&
+		git config gc.reflogExpire never &&
+		git config gc.reflogExpireUnreachable never &&
+		test_oid blob17_1 | git hash-object -w --stdin &&
+
+		# The tables should have been auto-compacted, and thus auto
+		# compaction should not have to do anything.
+		ls -1 .git/reftable >tables-expect &&
+		test_line_count = 4 tables-expect &&
+		git $command --auto &&
+		ls -1 .git/reftable >tables-actual &&
+		test_cmp tables-expect tables-actual &&
+
+		test_oid blob17_2 | git hash-object -w --stdin &&
+
+		# Lock all tables write some refs. Auto-compaction will be
+		# unable to compact tables and thus fails gracefully, leaving
+		# the stack in a sub-optimal state.
+		ls .git/reftable/*.ref |
+		while read table
+		do
+			touch "$table.lock" || exit 1
+		done &&
+		git branch B &&
+		git branch C &&
+		rm .git/reftable/*.lock &&
+		test_line_count = 5 .git/reftable/tables.list &&
+
+		git $command --auto &&
+		test_line_count = 1 .git/reftable/tables.list
+	)
+'
+done
 
 test_expect_success 'pack-refs: prunes stale tables' '
 	test_when_finished "rm -rf repo" &&

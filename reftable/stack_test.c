@@ -242,7 +242,7 @@ static void test_reftable_stack_uptodate(void)
 	EXPECT_ERR(err);
 
 	err = reftable_stack_add(st2, &write_test_ref, &ref2);
-	EXPECT(err == REFTABLE_LOCK_ERROR);
+	EXPECT(err == REFTABLE_OUTDATED_ERROR);
 
 	err = reftable_stack_reload(st2);
 	EXPECT_ERR(err);
@@ -350,6 +350,49 @@ static void test_reftable_stack_transaction_api_performs_auto_compaction(void)
 	}
 
 	reftable_stack_destroy(st);
+	clear_dir(dir);
+}
+
+static void test_reftable_stack_auto_compaction_fails_gracefully(void)
+{
+	struct reftable_ref_record ref = {
+		.refname = "refs/heads/master",
+		.update_index = 1,
+		.value_type = REFTABLE_REF_VAL1,
+		.value.val1 = {0x01},
+	};
+	struct reftable_write_options cfg = {0};
+	struct reftable_stack *st;
+	struct strbuf table_path = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	err = reftable_new_stack(&st, dir, cfg);
+	EXPECT_ERR(err);
+
+	err = reftable_stack_add(st, write_test_ref, &ref);
+	EXPECT_ERR(err);
+	EXPECT(st->merged->stack_len == 1);
+	EXPECT(st->stats.attempts == 0);
+	EXPECT(st->stats.failures == 0);
+
+	/*
+	 * Lock the newly written table such that it cannot be compacted.
+	 * Adding a new table to the stack should not be impacted by this, even
+	 * though auto-compaction will now fail.
+	 */
+	strbuf_addf(&table_path, "%s/%s.lock", dir, st->readers[0]->name);
+	write_file_buf(table_path.buf, "", 0);
+
+	ref.update_index = 2;
+	err = reftable_stack_add(st, write_test_ref, &ref);
+	EXPECT_ERR(err);
+	EXPECT(st->merged->stack_len == 2);
+	EXPECT(st->stats.attempts == 1);
+	EXPECT(st->stats.failures == 1);
+
+	reftable_stack_destroy(st);
+	strbuf_release(&table_path);
 	clear_dir(dir);
 }
 
@@ -1095,6 +1138,7 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_tombstone);
 	RUN_TEST(test_reftable_stack_transaction_api);
 	RUN_TEST(test_reftable_stack_transaction_api_performs_auto_compaction);
+	RUN_TEST(test_reftable_stack_auto_compaction_fails_gracefully);
 	RUN_TEST(test_reftable_stack_update_index_check);
 	RUN_TEST(test_reftable_stack_uptodate);
 	RUN_TEST(test_reftable_stack_validate_refname);

@@ -25,7 +25,7 @@ enum reftable_error {
 	 */
 	REFTABLE_NOT_EXIST_ERROR = -4,
 
-	/* Trying to write out-of-date data. */
+	/* Trying to access locked data. */
 	REFTABLE_LOCK_ERROR = -5,
 
 	/* Misuse of the API:
@@ -57,6 +57,9 @@ enum reftable_error {
 	/* Entry does not fit. This can happen when writing outsize reflog
 	   messages. */
 	REFTABLE_ENTRY_TOO_BIG_ERROR = -11,
+
+	/* Trying to write out-of-date data. */
+	REFTABLE_OUTDATED_ERROR = -12,
 };
 
 /* convert the numeric error code to a string. The string should not be
