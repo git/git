@@ -303,6 +303,9 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *displaypath;
 
+	if (validate_submodule_path(path) < 0)
+		exit(128);
+
 	displaypath = get_submodule_displaypath(path, info->prefix,
 						info->super_prefix);
 
@@ -633,6 +636,9 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	struct setup_revision_opt opt = {
 		.free_removed_argv_elements = 1,
 	};
+
+	if (validate_submodule_path(path) < 0)
+		exit(128);
 
 	if (!submodule_from_path(the_repository, null_oid(), path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -1238,6 +1244,9 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (!is_submodule_active(the_repository, path))
 		return;
 
+	if (validate_submodule_path(path) < 0)
+		exit(128);
+
 	sub = submodule_from_path(the_repository, null_oid(), path);
 
 	if (sub && sub->url) {
@@ -1380,6 +1389,9 @@ static void deinit_submodule(const char *path, const char *prefix,
 	struct child_process cp_config = CHILD_PROCESS_INIT;
 	struct strbuf sb_config = STRBUF_INIT;
 	char *sub_git_dir = xstrfmt("%s/.git", path);
+
+	if (validate_submodule_path(path) < 0)
+		exit(128);
 
 	sub = submodule_from_path(the_repository, null_oid(), path);
 
@@ -1662,15 +1674,41 @@ static char *clone_submodule_sm_gitdir(const char *name)
 	return sm_gitdir;
 }
 
+static int dir_contains_only_dotgit(const char *path)
+{
+	DIR *dir = opendir(path);
+	struct dirent *e;
+	int ret = 1;
+
+	if (!dir)
+		return 0;
+
+	e = readdir_skip_dot_and_dotdot(dir);
+	if (!e)
+		ret = 0;
+	else if (strcmp(DEFAULT_GIT_DIR_ENVIRONMENT, e->d_name) ||
+		 (e = readdir_skip_dot_and_dotdot(dir))) {
+		error("unexpected item '%s' in '%s'", e->d_name, path);
+		ret = 0;
+	}
+
+	closedir(dir);
+	return ret;
+}
+
 static int clone_submodule(const struct module_clone_data *clone_data,
 			   struct string_list *reference)
 {
 	char *p;
 	char *sm_gitdir = clone_submodule_sm_gitdir(clone_data->name);
 	char *sm_alternate = NULL, *error_strategy = NULL;
+	struct stat st;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *clone_data_path = clone_data->path;
 	char *to_free = NULL;
+
+	if (validate_submodule_path(clone_data_path) < 0)
+		exit(128);
 
 	if (!is_absolute_path(clone_data->path))
 		clone_data_path = to_free = xstrfmt("%s/%s", get_git_work_tree(),
@@ -1681,6 +1719,10 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		      "git dir"), sm_gitdir);
 
 	if (!file_exists(sm_gitdir)) {
+		if (clone_data->require_init && !stat(clone_data_path, &st) &&
+		    !is_empty_dir(clone_data_path))
+			die(_("directory not empty: '%s'"), clone_data_path);
+
 		if (safe_create_leading_directories_const(sm_gitdir) < 0)
 			die(_("could not create directory '%s'"), sm_gitdir);
 
@@ -1725,10 +1767,18 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		if(run_command(&cp))
 			die(_("clone of '%s' into submodule path '%s' failed"),
 			    clone_data->url, clone_data_path);
+
+		if (clone_data->require_init && !stat(clone_data_path, &st) &&
+		    !dir_contains_only_dotgit(clone_data_path)) {
+			char *dot_git = xstrfmt("%s/.git", clone_data_path);
+			unlink(dot_git);
+			free(dot_git);
+			die(_("directory not empty: '%s'"), clone_data_path);
+		}
 	} else {
 		char *path;
 
-		if (clone_data->require_init && !access(clone_data_path, X_OK) &&
+		if (clone_data->require_init && !stat(clone_data_path, &st) &&
 		    !is_empty_dir(clone_data_path))
 			die(_("directory not empty: '%s'"), clone_data_path);
 		if (safe_create_leading_directories_const(clone_data_path) < 0)
@@ -1736,6 +1786,23 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		path = xstrfmt("%s/index", sm_gitdir);
 		unlink_or_warn(path);
 		free(path);
+	}
+
+	/*
+	 * We already performed this check at the beginning of this function,
+	 * before cloning the objects. This tries to detect racy behavior e.g.
+	 * in parallel clones, where another process could easily have made the
+	 * gitdir nested _after_ it was created.
+	 *
+	 * To prevent further harm coming from this unintentionally-nested
+	 * gitdir, let's disable it by deleting the `HEAD` file.
+	 */
+	if (validate_submodule_git_dir(sm_gitdir, clone_data->name) < 0) {
+		char *head = xstrfmt("%s/HEAD", sm_gitdir);
+		unlink(head);
+		free(head);
+		die(_("refusing to create/use '%s' in another submodule's "
+		      "git dir"), sm_gitdir);
 	}
 
 	connect_work_tree_and_git_dir(clone_data_path, sm_gitdir, 0);
@@ -2517,6 +2584,9 @@ static int update_submodule(struct update_data *update_data)
 {
 	int ret;
 
+	if (validate_submodule_path(update_data->sm_path) < 0)
+		return -1;
+
 	ret = determine_submodule_update_strategy(the_repository,
 						  update_data->just_cloned,
 						  update_data->sm_path,
@@ -2624,11 +2694,20 @@ static int update_submodules(struct update_data *update_data)
 
 	for (i = 0; i < suc.update_clone_nr; i++) {
 		struct update_clone_data ucd = suc.update_clone[i];
-		int code;
+		int code = 128;
 
 		oidcpy(&update_data->oid, &ucd.oid);
 		update_data->just_cloned = ucd.just_cloned;
 		update_data->sm_path = ucd.sub->path;
+
+		/*
+		 * Verify that the submodule path does not contain any
+		 * symlinks; if it does, it might have been tampered with.
+		 * TODO: allow exempting it via
+		 * `safe.submodule.path` or something
+		 */
+		if (validate_submodule_path(update_data->sm_path) < 0)
+			goto fail;
 
 		code = ensure_core_worktree(update_data->sm_path);
 		if (code)
@@ -3355,6 +3434,9 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	 */
 	normalize_path_copy(add_data.sm_path, add_data.sm_path);
 	strip_dir_trailing_slashes(add_data.sm_path);
+
+	if (validate_submodule_path(add_data.sm_path) < 0)
+		exit(128);
 
 	die_on_index_match(add_data.sm_path, force);
 	die_on_repo_without_commits(add_data.sm_path);

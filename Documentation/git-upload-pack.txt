@@ -55,6 +55,37 @@ ENVIRONMENT
 	admins may need to configure some transports to allow this
 	variable to be passed. See the discussion in linkgit:git[1].
 
+`GIT_NO_LAZY_FETCH`::
+	When cloning or fetching from a partial repository (i.e., one
+	itself cloned with `--filter`), the server-side `upload-pack`
+	may need to fetch extra objects from its upstream in order to
+	complete the request. By default, `upload-pack` will refuse to
+	perform such a lazy fetch, because `git fetch` may run arbitrary
+	commands specified in configuration and hooks of the source
+	repository (and `upload-pack` tries to be safe to run even in
+	untrusted `.git` directories).
++
+This is implemented by having `upload-pack` internally set the
+`GIT_NO_LAZY_FETCH` variable to `1`. If you want to override it
+(because you are fetching from a partial clone, and you are sure
+you trust it), you can explicitly set `GIT_NO_LAZY_FETCH` to
+`0`.
+
+SECURITY
+--------
+
+Most Git commands should not be run in an untrusted `.git` directory
+(see the section `SECURITY` in linkgit:git[1]). `upload-pack` tries to
+avoid any dangerous configuration options or hooks from the repository
+it's serving, making it safe to clone an untrusted directory and run
+commands on the resulting clone.
+
+For an extra level of safety, you may be able to run `upload-pack` as an
+alternate user. The details will be platform dependent, but on many
+systems you can run:
+
+    git clone --no-local --upload-pack='sudo -u nobody git-upload-pack' ...
+
 SEE ALSO
 --------
 linkgit:gitnamespaces[7]

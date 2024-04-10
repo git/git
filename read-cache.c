@@ -1116,19 +1116,32 @@ static int has_dir_name(struct index_state *istate,
 			istate->cache[istate->cache_nr - 1]->name,
 			&len_eq_last);
 		if (cmp_last > 0) {
-			if (len_eq_last == 0) {
+			if (name[len_eq_last] != '/') {
 				/*
 				 * The entry sorts AFTER the last one in the
-				 * index and their paths have no common prefix,
-				 * so there cannot be a F/D conflict.
+				 * index.
+				 *
+				 * If there were a conflict with "file", then our
+				 * name would start with "file/" and the last index
+				 * entry would start with "file" but not "file/".
+				 *
+				 * The next character after common prefix is
+				 * not '/', so there can be no conflict.
 				 */
 				return retval;
 			} else {
 				/*
 				 * The entry sorts AFTER the last one in the
-				 * index, but has a common prefix.  Fall through
-				 * to the loop below to disect the entry's path
-				 * and see where the difference is.
+				 * index, and the next character after common
+				 * prefix is '/'.
+				 *
+				 * Either the last index entry is a file in
+				 * conflict with this entry, or it has a name
+				 * which sorts between this entry and the
+				 * potential conflicting file.
+				 *
+				 * In both cases, we fall through to the loop
+				 * below and let the regular search code handle it.
 				 */
 			}
 		} else if (cmp_last == 0) {
@@ -1151,53 +1164,6 @@ static int has_dir_name(struct index_state *istate,
 				return retval;
 		}
 		len = slash - name;
-
-		if (cmp_last > 0) {
-			/*
-			 * (len + 1) is a directory boundary (including
-			 * the trailing slash).  And since the loop is
-			 * decrementing "slash", the first iteration is
-			 * the longest directory prefix; subsequent
-			 * iterations consider parent directories.
-			 */
-
-			if (len + 1 <= len_eq_last) {
-				/*
-				 * The directory prefix (including the trailing
-				 * slash) also appears as a prefix in the last
-				 * entry, so the remainder cannot collide (because
-				 * strcmp said the whole path was greater).
-				 *
-				 * EQ: last: xxx/A
-				 *     this: xxx/B
-				 *
-				 * LT: last: xxx/file_A
-				 *     this: xxx/file_B
-				 */
-				return retval;
-			}
-
-			if (len > len_eq_last) {
-				/*
-				 * This part of the directory prefix (excluding
-				 * the trailing slash) is longer than the known
-				 * equal portions, so this sub-directory cannot
-				 * collide with a file.
-				 *
-				 * GT: last: xxxA
-				 *     this: xxxB/file
-				 */
-				return retval;
-			}
-
-			/*
-			 * This is a possible collision. Fall through and
-			 * let the regular search code handle it.
-			 *
-			 * last: xxx
-			 * this: xxx/file
-			 */
-		}
 
 		pos = index_name_stage_pos(istate, name, len, stage, EXPAND_SPARSE);
 		if (pos >= 0) {
