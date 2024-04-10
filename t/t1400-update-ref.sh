@@ -622,7 +622,7 @@ test_expect_success 'stdin fails create with no ref' '
 test_expect_success 'stdin fails create with no new value' '
 	echo "create $a" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: create $a: missing <newvalue>" err
+	grep "fatal: create $a: missing <new-oid>" err
 '
 
 test_expect_success 'stdin fails create with too many arguments' '
@@ -640,7 +640,7 @@ test_expect_success 'stdin fails update with no ref' '
 test_expect_success 'stdin fails update with no new value' '
 	echo "update $a" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: update $a: missing <newvalue>" err
+	grep "fatal: update $a: missing <new-oid>" err
 '
 
 test_expect_success 'stdin fails update with too many arguments' '
@@ -765,21 +765,21 @@ test_expect_success 'stdin update ref fails with wrong old value' '
 test_expect_success 'stdin update ref fails with bad old value' '
 	echo "update $c $m does-not-exist" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: update $c: invalid <oldvalue>: does-not-exist" err &&
+	grep "fatal: update $c: invalid <old-oid>: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
 test_expect_success 'stdin create ref fails with bad new value' '
 	echo "create $c does-not-exist" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: create $c: invalid <newvalue>: does-not-exist" err &&
+	grep "fatal: create $c: invalid <new-oid>: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
 test_expect_success 'stdin create ref fails with zero new value' '
 	echo "create $c " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: create $c: zero <newvalue>" err &&
+	grep "fatal: create $c: zero <new-oid>" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
@@ -803,7 +803,7 @@ test_expect_success 'stdin delete ref fails with wrong old value' '
 test_expect_success 'stdin delete ref fails with zero old value' '
 	echo "delete $a " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: delete $a: zero <oldvalue>" err &&
+	grep "fatal: delete $a: zero <old-oid>" err &&
 	git rev-parse $m >expect &&
 	git rev-parse $a >actual &&
 	test_cmp expect actual
@@ -1027,7 +1027,7 @@ test_expect_success 'stdin -z fails create with no ref' '
 test_expect_success 'stdin -z fails create with no new value' '
 	printf $F "create $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: create $a: unexpected end of input when reading <newvalue>" err
+	grep "fatal: create $a: unexpected end of input when reading <new-oid>" err
 '
 
 test_expect_success 'stdin -z fails create with too many arguments' '
@@ -1045,27 +1045,27 @@ test_expect_success 'stdin -z fails update with no ref' '
 test_expect_success 'stdin -z fails update with too few args' '
 	printf $F "update $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $a: unexpected end of input when reading <oldvalue>" err
+	grep "fatal: update $a: unexpected end of input when reading <old-oid>" err
 '
 
 test_expect_success 'stdin -z emits warning with empty new value' '
 	git update-ref $a $m &&
 	printf $F "update $a" "" "" >stdin &&
 	git update-ref -z --stdin <stdin 2>err &&
-	grep "warning: update $a: missing <newvalue>, treating as zero" err &&
+	grep "warning: update $a: missing <new-oid>, treating as zero" err &&
 	test_must_fail git rev-parse --verify -q $a
 '
 
 test_expect_success 'stdin -z fails update with no new value' '
 	printf $F "update $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $a: unexpected end of input when reading <newvalue>" err
+	grep "fatal: update $a: unexpected end of input when reading <new-oid>" err
 '
 
 test_expect_success 'stdin -z fails update with no old value' '
 	printf $F "update $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $a: unexpected end of input when reading <oldvalue>" err
+	grep "fatal: update $a: unexpected end of input when reading <old-oid>" err
 '
 
 test_expect_success 'stdin -z fails update with too many arguments' '
@@ -1083,7 +1083,7 @@ test_expect_success 'stdin -z fails delete with no ref' '
 test_expect_success 'stdin -z fails delete with no old value' '
 	printf $F "delete $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: delete $a: unexpected end of input when reading <oldvalue>" err
+	grep "fatal: delete $a: unexpected end of input when reading <old-oid>" err
 '
 
 test_expect_success 'stdin -z fails delete with too many arguments' '
@@ -1101,7 +1101,7 @@ test_expect_success 'stdin -z fails verify with too many arguments' '
 test_expect_success 'stdin -z fails verify with no old value' '
 	printf $F "verify $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: verify $a: unexpected end of input when reading <oldvalue>" err
+	grep "fatal: verify $a: unexpected end of input when reading <old-oid>" err
 '
 
 test_expect_success 'stdin -z fails option with unknown name' '
@@ -1160,7 +1160,7 @@ test_expect_success 'stdin -z update ref fails with wrong old value' '
 test_expect_success 'stdin -z update ref fails with bad old value' '
 	printf $F "update $c" "$m" "does-not-exist" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $c: invalid <oldvalue>: does-not-exist" err &&
+	grep "fatal: update $c: invalid <old-oid>: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
@@ -1178,14 +1178,14 @@ test_expect_success 'stdin -z create ref fails with bad new value' '
 	git update-ref -d "$c" &&
 	printf $F "create $c" "does-not-exist" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: create $c: invalid <newvalue>: does-not-exist" err &&
+	grep "fatal: create $c: invalid <new-oid>: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
 test_expect_success 'stdin -z create ref fails with empty new value' '
 	printf $F "create $c" "" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: create $c: missing <newvalue>" err &&
+	grep "fatal: create $c: missing <new-oid>" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
@@ -1209,7 +1209,7 @@ test_expect_success 'stdin -z delete ref fails with wrong old value' '
 test_expect_success 'stdin -z delete ref fails with zero old value' '
 	printf $F "delete $a" "$Z" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: delete $a: zero <oldvalue>" err &&
+	grep "fatal: delete $a: zero <old-oid>" err &&
 	git rev-parse $m >expect &&
 	git rev-parse $a >actual &&
 	test_cmp expect actual
