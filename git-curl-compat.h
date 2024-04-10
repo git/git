@@ -127,6 +127,15 @@
 #endif
 
 /**
+ * Versions before curl 7.66.0 (September 2019) required manually setting the
+ * transfer-encoding for a streaming POST; after that this is handled
+ * automatically.
+ */
+#if LIBCURL_VERSION_NUM < 0x074200
+#define GIT_CURL_NEED_TRANSFER_ENCODING_HEADER
+#endif
+
+/**
  * CURLOPT_PROTOCOLS_STR and CURLOPT_REDIR_PROTOCOLS_STR were added in 7.85.0,
  * released in August 2022.
  */
