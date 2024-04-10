@@ -335,6 +335,9 @@ Fixes since v2.44
    call advise() after checking advice_enabled().
    (merge 6412d01527 rj/use-adv-if-enabled later to maint).
 
+ * Another "set -u" fix for the bash prompt (in contrib/) script.
+   (merge d7805bc743 vs/complete-with-set-u-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -359,3 +362,4 @@ Fixes since v2.44
    (merge 86f9ce7dd6 bl/doc-config-fixes later to maint).
    (merge 0d527842b7 az/grep-group-error-message-update later to maint).
    (merge 7c43bdf07b rs/strbuf-expand-bad-format later to maint).
+   (merge 8b68b48d5c ds/typofix-core-config-doc later to maint).
