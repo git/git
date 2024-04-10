@@ -23,7 +23,7 @@ test_expect_success 'create evil repo' '
 	>evil/.git/shallow
 '
 
-test_expect_failure 'local clone must not fetch from promisor remote and execute script' '
+test_expect_success 'local clone must not fetch from promisor remote and execute script' '
 	rm -f script-executed &&
 	test_must_fail git clone \
 		--upload-pack="GIT_TEST_ASSUME_DIFFERENT_OWNER=true git-upload-pack" \
@@ -32,7 +32,7 @@ test_expect_failure 'local clone must not fetch from promisor remote and execute
 	test_path_is_missing script-executed
 '
 
-test_expect_failure 'clone from file://... must not fetch from promisor remote and execute script' '
+test_expect_success 'clone from file://... must not fetch from promisor remote and execute script' '
 	rm -f script-executed &&
 	test_must_fail git clone \
 		--upload-pack="GIT_TEST_ASSUME_DIFFERENT_OWNER=true git-upload-pack" \
@@ -41,7 +41,7 @@ test_expect_failure 'clone from file://... must not fetch from promisor remote a
 	test_path_is_missing script-executed
 '
 
-test_expect_failure 'fetch from file://... must not fetch from promisor remote and execute script' '
+test_expect_success 'fetch from file://... must not fetch from promisor remote and execute script' '
 	rm -f script-executed &&
 	test_must_fail git fetch \
 		--upload-pack="GIT_TEST_ASSUME_DIFFERENT_OWNER=true git-upload-pack" \
