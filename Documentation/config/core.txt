@@ -703,7 +703,7 @@ core.createObject::
 	will not overwrite existing objects.
 +
 On some file system/operating system combinations, this is unreliable.
-Set this config setting to 'rename' there; However, This will remove the
+Set this config setting to 'rename' there; however, this will remove the
 check that makes sure that existing object files will not get overwritten.
 
 core.notesRef::
