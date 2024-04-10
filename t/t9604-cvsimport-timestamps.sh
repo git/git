@@ -3,11 +3,28 @@
 test_description='git cvsimport timestamps'
 . ./lib-cvs.sh
 
+test_lazy_prereq POSIX_TIMEZONE '
+	local tz=XST-1XDT,M3.5.0,M11.1.0
+	echo "1711846799 -> 2024-03-31 01:59:59 +0100" >expected &&
+	TZ="$tz" test-tool date show:iso-local 1711846799 >actual &&
+	test_cmp expected actual &&
+	echo "1711846800 -> 2024-03-31 03:00:00 +0200" >expected &&
+	TZ="$tz" test-tool date show:iso-local 1711846800 >actual &&
+	test_cmp expected actual &&
+	echo "1730591999 -> 2024-11-03 01:59:59 +0200" >expected &&
+	TZ="$tz" test-tool date show:iso-local 1730591999 >actual &&
+	test_cmp expected actual &&
+	echo "1730592000 -> 2024-11-03 01:00:00 +0100" >expected &&
+	TZ="$tz" test-tool date show:iso-local 1730592000 >actual &&
+	test_cmp expected actual
+'
+
 setup_cvs_test_repository t9604
 
-test_expect_success PERL 'check timestamps are UTC (TZ=CST6CDT)' '
+test_expect_success PERL,POSIX_TIMEZONE 'check timestamps are UTC' '
 
-	TZ=CST6CDT git cvsimport -p"-x" -C module-1 module &&
+	TZ=CST6CDT,M4.1.0,M10.5.0 \
+	git cvsimport -p"-x" -C module-1 module &&
 	git cvsimport -p"-x" -C module-1 module &&
 	(
 		cd module-1 &&
@@ -34,13 +51,13 @@ test_expect_success PERL 'check timestamps are UTC (TZ=CST6CDT)' '
 	test_cmp expect-1 actual-1
 '
 
-test_expect_success PERL 'check timestamps with author-specific timezones' '
+test_expect_success PERL,POSIX_TIMEZONE 'check timestamps with author-specific timezones' '
 
 	cat >cvs-authors <<-EOF &&
 	user1=User One <user1@domain.org>
-	user2=User Two <user2@domain.org> CST6CDT
-	user3=User Three <user3@domain.org> EST5EDT
-	user4=User Four <user4@domain.org> MST7MDT
+	user2=User Two <user2@domain.org> CST6CDT,M4.1.0,M10.5.0
+	user3=User Three <user3@domain.org> EST5EDT,M4.1.0,M10.5.0
+	user4=User Four <user4@domain.org> MST7MDT,M4.1.0,M10.5.0
 	EOF
 	git cvsimport -p"-x" -A cvs-authors -C module-2 module &&
 	(
