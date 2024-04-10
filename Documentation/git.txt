@@ -1044,6 +1044,37 @@ The index is also capable of storing multiple entries (called "stages")
 for a given pathname.  These stages are used to hold the various
 unmerged version of a file when a merge is in progress.
 
+SECURITY
+--------
+
+Some configuration options and hook files may cause Git to run arbitrary
+shell commands. Because configuration and hooks are not copied using
+`git clone`, it is generally safe to clone remote repositories with
+untrusted content, inspect them with `git log`, and so on.
+
+However, it is not safe to run Git commands in a `.git` directory (or
+the working tree that surrounds it) when that `.git` directory itself
+comes from an untrusted source. The commands in its config and hooks
+are executed in the usual way.
+
+By default, Git will refuse to run when the repository is owned by
+someone other than the user running the command. See the entry for
+`safe.directory` in linkgit:git-config[1]. While this can help protect
+you in a multi-user environment, note that you can also acquire
+untrusted repositories that are owned by you (for example, if you
+extract a zip file or tarball from an untrusted source). In such cases,
+you'd need to "sanitize" the untrusted repository first.
+
+If you have an untrusted `.git` directory, you should first clone it
+with `git clone --no-local` to obtain a clean copy. Git does restrict
+the set of options and hooks that will be run by `upload-pack`, which
+handles the server side of a clone or fetch, but beware that the
+surface area for attack against `upload-pack` is large, so this does
+carry some risk. The safest thing is to serve the repository as an
+unprivileged user (either via linkgit:git-daemon[1], ssh, or using
+other tools to change user ids). See the discussion in the `SECURITY`
+section of linkgit:git-upload-pack[1].
+
 FURTHER DOCUMENTATION
 ---------------------
 
