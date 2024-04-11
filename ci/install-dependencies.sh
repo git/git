@@ -29,15 +29,14 @@ ubuntu-*)
 		libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl \
 		$CC_PACKAGE $PYTHON_PACKAGE
 
-	mkdir --parents "$P4_PATH"
-	wget --quiet --directory-prefix="$P4_PATH" \
+	mkdir --parents "$CUSTOM_PATH"
+	wget --quiet --directory-prefix="$CUSTOM_PATH" \
 		"$P4WHENCE/bin.linux26x86_64/p4d" "$P4WHENCE/bin.linux26x86_64/p4"
-	chmod u+x "$P4_PATH/p4d" "$P4_PATH/p4"
+	chmod u+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4"
 
-	mkdir --parents "$GIT_LFS_PATH"
 	wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
 	tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
-		-C "$GIT_LFS_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
+		-C "$CUSTOM_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
 	rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
 	;;
 macos-*)
@@ -48,10 +47,10 @@ macos-*)
 	brew install $BREW_INSTALL_PACKAGES
 	brew link --force gettext
 
-	mkdir -p "$P4_PATH"
+	mkdir -p "$CUSTOM_PATH"
 	wget -q "$P4WHENCE/bin.macosx1015x86_64/helix-core-server.tgz" &&
-	tar -xf helix-core-server.tgz -C "$P4_PATH" p4 p4d &&
-	sudo xattr -d com.apple.quarantine "$P4_PATH/p4" "$P4_PATH/p4d" 2>/dev/null || true
+	tar -xf helix-core-server.tgz -C "$CUSTOM_PATH" p4 p4d &&
+	sudo xattr -d com.apple.quarantine "$CUSTOM_PATH/p4" "$CUSTOM_PATH/p4d" 2>/dev/null || true
 	rm helix-core-server.tgz
 
 	if test -n "$CC_PACKAGE"
