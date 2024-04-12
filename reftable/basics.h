@@ -22,13 +22,14 @@ uint32_t get_be24(uint8_t *in);
 void put_be16(uint8_t *out, uint16_t i);
 
 /*
- * find smallest index i in [0, sz) at which f(i) is true, assuming
- * that f is ascending. Return sz if f(i) is false for all indices.
+ * find smallest index i in [0, sz) at which `f(i) > 0`, assuming that f is
+ * ascending. Return sz if `f(i) == 0` for all indices. The search is aborted
+ * and `sz` is returned in case `f(i) < 0`.
  *
  * Contrary to bsearch(3), this returns something useful if the argument is not
  * found.
  */
-int binsearch(size_t sz, int (*f)(size_t k, void *args), void *args);
+size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args);
 
 /*
  * Frees a NULL terminated array of malloced strings. The array itself is also
