@@ -279,7 +279,7 @@ then
 
 	cache_dir="$HOME/none"
 
-	runs_on_pool=$(echo "$CI_JOB_IMAGE" | tr : -)
+	distro=$(echo "$CI_JOB_IMAGE" | tr : -)
 	JOBS=$(nproc)
 else
 	echo "Could not identify CI type" >&2
@@ -318,7 +318,7 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
-case "$runs_on_pool" in
+case "$distro" in
 ubuntu-*)
 	if test "$jobname" = "linux-gcc-default"
 	then
