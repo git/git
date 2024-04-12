@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # Install dependencies required to build and test Git on Linux and macOS
 #
@@ -30,19 +30,15 @@ ubuntu-*)
 		$CC_PACKAGE $PYTHON_PACKAGE
 
 	mkdir --parents "$P4_PATH"
-	pushd "$P4_PATH"
-		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4d"
-		wget --quiet "$P4WHENCE/bin.linux26x86_64/p4"
-		chmod u+x p4d
-		chmod u+x p4
-	popd
+	wget --quiet --directory-prefix="$P4_PATH" \
+		"$P4WHENCE/bin.linux26x86_64/p4d" "$P4WHENCE/bin.linux26x86_64/p4"
+	chmod u+x "$P4_PATH/p4d" "$P4_PATH/p4"
 
 	mkdir --parents "$GIT_LFS_PATH"
-	pushd "$GIT_LFS_PATH"
-		wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-		tar --extract --gunzip --file "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-		cp git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs .
-	popd
+	wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+	tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
+		-C "$GIT_LFS_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
+	rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
 	;;
 macos-*)
 	export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1
@@ -53,11 +49,10 @@ macos-*)
 	brew link --force gettext
 
 	mkdir -p "$P4_PATH"
-	pushd "$P4_PATH"
-		wget -q "$P4WHENCE/bin.macosx1015x86_64/helix-core-server.tgz" &&
-		tar -xf helix-core-server.tgz &&
-		sudo xattr -d com.apple.quarantine p4 p4d 2>/dev/null || true
-	popd
+	wget -q "$P4WHENCE/bin.macosx1015x86_64/helix-core-server.tgz" &&
+	tar -xf helix-core-server.tgz -C "$P4_PATH" p4 p4d &&
+	sudo xattr -d com.apple.quarantine "$P4_PATH/p4" "$P4_PATH/p4d" 2>/dev/null || true
+	rm helix-core-server.tgz
 
 	if test -n "$CC_PACKAGE"
 	then
