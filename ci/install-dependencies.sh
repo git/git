@@ -9,6 +9,7 @@ begin_group "Install dependencies"
 
 P4WHENCE=https://cdist2.perforce.com/perforce/r21.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
+JGITWHENCE=https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit.pgm/6.8.0.202311291450-r/org.eclipse.jgit.pgm-6.8.0.202311291450-r.sh
 
 # Make sudo a no-op and execute the command directly when running as root.
 # While using sudo would be fine on most platforms when we are root already,
@@ -39,7 +40,7 @@ ubuntu-*)
 	sudo apt-get -q update
 	sudo apt-get -q -y install \
 		language-pack-is libsvn-perl apache2 cvs cvsps git gnupg subversion \
-		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo \
+		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
 		libemail-valid-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
@@ -53,6 +54,9 @@ ubuntu-*)
 	tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
 		-C "$CUSTOM_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
 	rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+
+	wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit"
+	chmod a+x "$CUSTOM_PATH/jgit"
 	;;
 ubuntu32-*)
 	sudo linux32 --32bit i386 sh -c '
@@ -113,12 +117,21 @@ then
 else
 	echo >&2 "WARNING: perforce wasn't installed, see above for clues why"
 fi
+
 if type git-lfs >/dev/null 2>&1
 then
 	echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
 	git-lfs version
 else
 	echo >&2 "WARNING: git-lfs wasn't installed, see above for clues why"
+fi
+
+if type jgit >/dev/null 2>&1
+then
+	echo "$(tput setaf 6)JGit Version$(tput sgr0)"
+	jgit version
+else
+	echo >&2 "WARNING: JGit wasn't installed, see above for clues why"
 fi
 
 end_group "Install dependencies"
