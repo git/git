@@ -655,7 +655,7 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 	trace2_region_leave("midx", "prepare_midx_packing_data", the_repository);
 }
 
-static int add_ref_to_pending(const char *refname,
+static int add_ref_to_pending(const char *refname, const char *referent UNUSED,
 			      const struct object_id *oid,
 			      int flag, void *cb_data)
 {
