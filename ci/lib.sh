@@ -340,10 +340,6 @@ ubuntu-*)
 	# image.
 	# Keep that in mind when you encounter a broken OS X build!
 	export LINUX_GIT_LFS_VERSION="1.5.2"
-
-	P4_PATH="$HOME/custom/p4"
-	GIT_LFS_PATH="$HOME/custom/git-lfs"
-	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
 macos-*)
 	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
@@ -351,11 +347,11 @@ macos-*)
 	then
 		MAKEFLAGS="$MAKEFLAGS APPLE_COMMON_CRYPTO_SHA1=Yes"
 	fi
-
-	P4_PATH="$HOME/custom/p4"
-	export PATH="$P4_PATH:$PATH"
 	;;
 esac
+
+CUSTOM_PATH="$HOME/path"
+export PATH="$CUSTOM_PATH:$PATH"
 
 case "$jobname" in
 linux32)
