@@ -11,7 +11,7 @@ Git internal format::
 	For example CET (which is 1 hour ahead of UTC) is `+0100`.
 
 RFC 2822::
-	The standard email format as described by RFC 2822, for example
+	The standard date format as described by RFC 2822, for example
 	`Thu, 07 Apr 2005 22:13:13 +0200`.
 
 ISO 8601::
