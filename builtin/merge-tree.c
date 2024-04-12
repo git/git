@@ -563,7 +563,7 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			   PARSE_OPT_NONEG),
 		OPT_STRING(0, "merge-base",
 			   &merge_base,
-			   N_("commit"),
+			   N_("tree-ish"),
 			   N_("specify a merge-base for the merge")),
 		OPT_STRVEC('X', "strategy-option", &xopts, N_("option=value"),
 			N_("option for selected merge strategy")),
