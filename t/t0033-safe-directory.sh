@@ -80,4 +80,28 @@ test_expect_success 'safe.directory in included file' '
 	git status
 '
 
+test_expect_success 'local clone of unowned repo refused in unsafe directory' '
+	test_when_finished "rm -rf source" &&
+	git init source &&
+	(
+		sane_unset GIT_TEST_ASSUME_DIFFERENT_OWNER &&
+		test_commit -C source initial
+	) &&
+	test_must_fail git clone --local source target &&
+	test_path_is_missing target
+'
+
+test_expect_success 'local clone of unowned repo accepted in safe directory' '
+	test_when_finished "rm -rf source" &&
+	git init source &&
+	(
+		sane_unset GIT_TEST_ASSUME_DIFFERENT_OWNER &&
+		test_commit -C source initial
+	) &&
+	test_must_fail git clone --local source target &&
+	git config --global --add safe.directory "$(pwd)/source/.git" &&
+	git clone --local source target &&
+	test_path_is_dir target
+'
+
 test_done
