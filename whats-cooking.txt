@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2024, #04; Tue, 9)
-X-master-at: 91ec36f2cca02d33ab0ed6e87195c6fe801debae
-X-next-at: 1a5e3faff75d1d3622627d3820bc57b4c2728bc5
+Subject: What's cooking in git.git (Apr 2024, #05; Fri, 12)
+X-master-at: 8f7582d995682f785e80e344197cc715e6bc7d8e
+X-next-at: 346d391aac0a243ed73bad8a0e30123f5381affe
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2024, #04; Tue, 9)
+What's cooking in git.git (Apr 2024, #05; Fri, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,215 +48,292 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* dg/myfirstobjectwalk-updates (2024-03-27) 5 commits
-  (merged to 'next' on 2024-04-02 at effa6a98a6)
- + MyFirstObjectWalk: add stderr to pipe processing
- + MyFirstObjectWalk: fix description for counting omitted objects
- + MyFirstObjectWalk: fix filtered object walk
- + MyFirstObjectWalk: fix misspelled "builtins/"
- + MyFirstObjectWalk: use additional arg in config_fn_t
+* ds/typofix-core-config-doc (2024-03-31) 1 commit
+  (merged to 'next' on 2024-04-02 at 79496fcfc4)
+ + config: fix some small capitalization issues, as spotted
 
- Update a more recent tutorial doc.
- source: <cover.1711537370.git.dirk@gouders.net>
+ Typofix.
+ source: <26135b06c48565ee8ac6dcfc1ef5431511e6202c.1711918168.git.dsimic@manjaro.org>
 
 
-* es/test-cron-safety (2024-03-31) 1 commit
-  (merged to 'next' on 2024-04-02 at e383c8cfb2)
- + test-lib: fix non-functioning GIT_TEST_MAINT_SCHEDULER fallback
+* jc/checkout-detach-wo-tracking-report (2024-03-30) 1 commit
+  (merged to 'next' on 2024-04-04 at 161eca247d)
+ + checkout: omit "tracking" information on a detached HEAD
 
- The test script had an incomplete and ineffective attempt to avoid
- clobbering the testing user's real crontab (and its equivalents),
- which has been completed.
- source: <20240329222703.9343-1-ericsunshine@charter.net>
+ "git checkout/switch --detach foo", after switching to the detached
+ HEAD state, gave the tracking information for the 'foo' branch,
+ which was pointless.
 
-
-* ja/doc-markup-updates (2024-03-29) 5 commits
-  (merged to 'next' on 2024-04-02 at 69b015d7ce)
- + doc: git-clone: do not autoreference the manpage in itself
- + doc: git-clone: apply new documentation formatting guidelines
- + doc: git-init: apply new documentation formatting guidelines
- + doc: allow literal and emphasis format in doc vs help tests
- + doc: rework CodingGuidelines with new formatting rules
-
- Documentation rules has been explicitly described how to mark-up
- literal parts and a few manual pages have been updated as examples.
- source: <pull.1702.v2.git.1711711181.gitgitgadget@gmail.com>
+ Tested-by: M Hickford <mirth.hickford@gmail.com>
+ cf. <CAGJzqsmE9FDEBn=u3ge4LA3ha4fDbm4OWiuUbMaztwjELBd7ug@mail.gmail.com>
+ source: <xmqqa5mfl7ud.fsf@gitster.g>
 
 
-* jc/advice-sans-trailing-whitespace (2024-03-29) 1 commit
-  (merged to 'next' on 2024-04-02 at 3cb0fda1bf)
- + advice: omit trailing whitespace
+* jc/t2104-style-update (2024-04-02) 1 commit
+  (merged to 'next' on 2024-04-03 at 0449835479)
+ + t2104: style fixes
 
- The "hint:" messages given by the advice mechanism, when given a
- message with a blank line, left a line with trailing whitespace,
- which has been cleansed.
- source: <xmqq4jcooddp.fsf@gitster.g>
+ Coding style fixes.
+ source: <xmqqmsqb4ngg.fsf@gitster.g>
 
 
-* jc/apply-parse-diff-git-header-names-fix (2024-03-29) 3 commits
-  (merged to 'next' on 2024-04-02 at d1fa726c41)
- + t4126: fix "funny directory name" test on Windows (again)
-  (merged to 'next' on 2024-03-28 at a35de15836)
- + t4126: make sure a directory with SP at the end is usable
-  (merged to 'next' on 2024-03-27 at d586367985)
- + apply: parse names out of "diff --git" more carefully
+* js/merge-tree-3-trees (2024-04-12) 1 commit
+  (merged to 'next' on 2024-04-12 at d4235d1f47)
+ + merge-tree: fix argument type of the `--merge-base` option
 
- "git apply" failed to extract the filename the patch applied to,
- when the change was about an empty file created in or deleted from
- a directory whose name ends with a SP, which has been corrected.
- source: <xmqqfrwlltjn.fsf@gitster.g>
- source: <xmqqh6gqt674.fsf_-_@gitster.g>
- source: <xmqq5xx50x8p.fsf_-_@gitster.g>
+ Match the option argument type in the help text to the correct type
+ updated by a recent series.
+ source: <pull.1717.git.1712923841235.gitgitgadget@gmail.com>
 
 
-* mg/editorconfig-makefile (2024-03-23) 1 commit
-  (merged to 'next' on 2024-04-02 at 907b55579e)
- + editorconfig: add Makefiles to "text files"
+* kn/clarify-update-ref-doc (2024-04-02) 2 commits
+  (merged to 'next' on 2024-04-02 at d1b9c5aa67)
+ + githooks: use {old,new}-oid instead of {old,new}-value
+ + update-ref: use {old,new}-oid instead of {old,new}value
 
- The .editorconfig file has been taught that a Makefile uses HT
- indentation.
- source: <20240322221813.13019-1-mg@max.gautier.name>
-
-
-* ps/pack-refs-auto (2024-03-25) 16 commits
-  (merged to 'next' on 2024-04-02 at 1d76dc3648)
- + builtin/gc: pack refs when using `git maintenance run --auto`
- + builtin/gc: forward git-gc(1)'s `--auto` flag when packing refs
- + t6500: extract objects with "17" prefix
- + builtin/gc: move `struct maintenance_run_opts`
- + builtin/pack-refs: introduce new "--auto" flag
- + builtin/pack-refs: release allocated memory
- + refs/reftable: expose auto compaction via new flag
- + refs: remove `PACK_REFS_ALL` flag
- + refs: move `struct pack_refs_opts` to where it's used
- + t/helper: drop pack-refs wrapper
- + refs/reftable: print errors on compaction failure
- + reftable/stack: gracefully handle failed auto-compaction due to locks
- + reftable/stack: use error codes when locking fails during compaction
- + reftable/error: discern locked/outdated errors
- + reftable/stack: fix error handling in `reftable_stack_init_addition()`
- + Merge branch 'ps/reftable-stack-tempfile' into ps/pack-refs-auto
- (this branch is used by jt/reftable-geometric-compaction.)
-
- "git pack-refs" learned the "--auto" option, which is a useful
- addition to be triggered from "git gc --auto".
-
- Acked-by: Karthik Nayak <karthik.188@gmail.com>
- cf. <CAOLa=ZRAEA7rSUoYL0h-2qfEELdbPHbeGpgBJRqesyhHi9Q6WQ@mail.gmail.com>
- source: <cover.1711360631.git.ps@pks.im>
+ Doc update, as a preparation to enhance "git update-ref --stdin".
+ source: <20240402064915.191104-1-knayak@gitlab.com>
 
 
-* rj/add-p-explicit-reshow (2024-03-29) 2 commits
-  (merged to 'next' on 2024-04-02 at 05c7e930af)
- + add-patch: do not print hunks repeatedly
- + add-patch: introduce 'p' in interactive-patch
+* ps/reftable-binsearch-updates (2024-04-03) 7 commits
+  (merged to 'next' on 2024-04-04 at 40e6d5a36b)
+ + reftable/block: avoid decoding keys when searching restart points
+ + reftable/record: extract function to decode key lengths
+ + reftable/block: fix error handling when searching restart points
+ + reftable/block: refactor binary search over restart points
+ + reftable/refname: refactor binary search over refnames
+ + reftable/basics: improve `binsearch()` test
+ + reftable/basics: fix return type of `binsearch()` to be `size_t`
 
- "git add -p" and other "interactive hunk selection" UI has learned to
- skip showing the hunk immediately after it has already been shown, and
- an additional action to explicitly ask to reshow the current hunk.
- source: <a9c515fe-6664-4b5d-abca-d88fdd32a883@gmail.com>
+ Reftable code clean-up and some bugfixes.
+ source: <cover.1712123093.git.ps@pks.im>
 
 
-* rj/use-adv-if-enabled (2024-03-30) 3 commits
-  (merged to 'next' on 2024-04-02 at 31d4453035)
- + add: use advise_if_enabled for ADVICE_ADD_EMBEDDED_REPO
- + add: use advise_if_enabled for ADVICE_ADD_EMPTY_PATHSPEC
- + add: use advise_if_enabled for ADVICE_ADD_IGNORED_FILE
+* rs/imap-send-use-xsnprintf (2024-04-02) 1 commit
+  (merged to 'next' on 2024-04-04 at 789ad853e1)
+ + imap-send: use xsnprintf to format command
 
- Use advice_if_enabled() API to rewrite a simple pattern to
- call advise() after checking advice_enabled().
- source: <46fba030-d7aa-49d2-88fa-e506850f7b6a@gmail.com>
+ Code clean-up and duplicate reduction.
+ source: <f9ad9f41-5b9b-474e-9818-f91fc937daae@web.de>
+
+
+* rs/mem-pool-size-t-safety (2024-03-31) 1 commit
+  (merged to 'next' on 2024-04-02 at 3517d48210)
+ + mem-pool: use st_add() in mem_pool_strvfmt()
+
+ size_t arithmetic safety.
+ source: <bbe00b9e-64d8-4ec8-a2b9-2c6917c72dbd@web.de>
+
+
+* rs/t-prio-queue-cleanup (2024-04-02) 1 commit
+  (merged to 'next' on 2024-04-04 at 7961c838ac)
+ + t-prio-queue: simplify using compound literals
+
+ t-prio-queue test has been cleaned up by using C99 compound
+ literals; this is meant to also serve as a weather-balloon to smoke
+ out folks with compilers who have trouble compiling code that uses
+ the feature.
+ source: <520da361-1b80-4ba3-87b2-86d6fdfc18b5@web.de>
+
+
+* tb/midx-write (2024-04-01) 5 commits
+  (merged to 'next' on 2024-04-05 at b4870116f7)
+ + midx-write.c: use `--stdin-packs` when repacking
+ + midx-write.c: check count of packs to repack after grouping
+ + midx-write.c: factor out common want_included_pack() routine
+ + midx-write: move writing-related functions from midx.c
+ + Merge branch 'rs/midx-use-strvec-pushf' into tb/midx-write
+
+ Code clean-up by splitting code responsible for writing midx files
+ into its own file.
+ source: <cover.1712006190.git.me@ttaylorr.com>
+
+
+* vs/complete-with-set-u-fix (2024-04-01) 2 commits
+  (merged to 'next' on 2024-04-02 at d8f6a511e8)
+ + completion: protect prompt against unset SHOWUPSTREAM in nounset mode
+ + completion: fix prompt with unset SHOWCONFLICTSTATE in nounset mode
+
+ Another "set -u" fix for the bash prompt (in contrib/) script.
+ source: <20240401190751.8676-1-ville.skytta@iki.fi>
 
 --------------------------------------------------
 [New Topics]
 
+* dd/t9604-use-posix-timezones (2024-04-10) 1 commit
+ - t9604: Fix test for musl libc and new Debian
+
+ The cvsimport tests required that the platform understands
+ traditional timezone notations like CST6CDT, which has been
+ updated to work on those systems as long as they understand
+ POSIX notation with explicit tz transition dates.
+
+ Will merge to 'next'.
+ source: <20240410032812.30476-1-congdanhqx@gmail.com>
+
+
+* jc/t2104-style-fixes (2024-04-09) 1 commit
+  (merged to 'next' on 2024-04-11 at 7678ec509b)
+ + t2104: style fixes
+
+ Test style fixes.
+
+ Will merge to 'master'.
+ source: <xmqqmsqb4ngg.fsf@gitster.g>
+
+
+* kn/update-ref-symrefs (2024-04-12) 8 commits
+ - SQUASH???
+ - refs: support symrefs in 'reference-transaction' hook
+ - update-ref: add support for symref-update
+ - update-ref: add support for symref-create
+ - files-backend: extract out `create_symref_lock`
+ - update-ref: add support for symref-delete
+ - update-ref: add support for symref-verify
+ - refs: accept symref values in `ref_transaction[_add]_update`
+
+ source: <20240412095908.1134387-1-knayak@gitlab.com>
+
+
+* pf/commitish-committish (2024-04-11) 1 commit
+  (merged to 'next' on 2024-04-12 at 7ef816cb64)
+ + typo: replace 'commitish' with 'committish'
+
+ Spellfix.
+
+ Will merge to 'master'.
+ source: <20240407212111.55362-1-Pi.L.D.Fisher@gmail.com>
+
+
+* pw/t3428-cleanup (2024-04-09) 3 commits
+  (merged to 'next' on 2024-04-11 at 3c40516874)
+ + t3428: restore coverage for "apply" backend
+ + t3428: use test_commit_message
+ + t3428: modernize test setup
+
+ Test cleanup.
+
+ Will merge to 'master'.
+ source: <pull.1713.git.1712676444.gitgitgadget@gmail.com>
+
+
+* ta/fast-import-parse-path-fix (2024-04-12) 8 commits
+ - fast-import: make comments more precise
+ - fast-import: forbid escaped NUL in paths
+ - fast-import: document C-style escapes for paths
+ - fast-import: improve documentation for path quoting
+ - fast-import: remove dead strbuf
+ - fast-import: allow unquoted empty path for root
+ - fast-import: directly use strbufs for paths
+ - fast-import: tighten path unquoting
+
+ The way "git fast-import" handles paths described in its input has
+ been tightened up and more clearly documented.
+
+ Will merge to 'next'?
+ source: <cover.1712907684.git.thalia@archibald.dev>
+
+
+* xx/rfc2822-date-format-in-doc (2024-04-12) 1 commit
+ - Documentation: fix typos describing date format
+
+ Docfix.
+
+ Will merge to 'next'?
+ source: <pull.1716.git.1712911876943.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * rs/date-mode-pass-by-value (2024-04-05) 1 commit
- - date: make DATE_MODE thread-safe
+  (merged to 'next' on 2024-04-10 at cc3c17d31c)
+ + date: make DATE_MODE thread-safe
 
  The codepaths that reach date_mode_from_type() have been updated to
  pass "struct date_mode" by value to make them thread safe.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <c6cb255a-72f0-4ac2-81a2-1d8e95570a81@web.de>
 
 
 * rs/usage-fallback-to-show-message-format (2024-04-05) 1 commit
- - usage: report vsnprintf(3) failure
+  (merged to 'next' on 2024-04-10 at 9a34aed4d5)
+ + usage: report vsnprintf(3) failure
 
  vreportf(), which is usede by error() and friends, has been taught
  to give the error message printf-format string when its vsnprintf()
  call fails, instead of showing nothing useful to identify the
  nature of the error.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <3da13298-b6a6-4391-b8e8-5dae9a28b860@web.de>
 
 
 * jc/local-extern-shell-rules (2024-04-05) 8 commits
- - t1016: local VAR="VAL" fix
- - t0610: local VAR="VAL" fix
- - t: teach lint that RHS of 'local VAR=VAL' needs to be quoted
- - t: local VAR="VAL" (quote ${magic-reference})
- - t: local VAR="VAL" (quote command substitution)
- - t: local VAR="VAL" (quote positional parameters)
- - CodingGuidelines: quote assigned value in 'local var=$val'
- - CodingGuidelines: describe "export VAR=VAL" rule
+  (merged to 'next' on 2024-04-10 at d3a13273e7)
+ + t1016: local VAR="VAL" fix
+ + t0610: local VAR="VAL" fix
+ + t: teach lint that RHS of 'local VAR=VAL' needs to be quoted
+ + t: local VAR="VAL" (quote ${magic-reference})
+ + t: local VAR="VAL" (quote command substitution)
+ + t: local VAR="VAL" (quote positional parameters)
+ + CodingGuidelines: quote assigned value in 'local var=$val'
+ + CodingGuidelines: describe "export VAR=VAL" rule
 
  Document and apply workaround for a buggy version of dash that
  mishandles "local var=val" construct.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240406000902.3082301-1-gitster@pobox.com>
 
 
 * jc/unleak-core-excludesfile (2024-04-08) 1 commit
- - config: do not leak excludes_file
+  (merged to 'next' on 2024-04-10 at ffb0c01871)
+ + config: do not leak excludes_file
 
  The variable that holds the value read from the core.excludefile
  configuration variable used to leak, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqttkeicov.fsf@gitster.g>
 
 
-* la/doc-use-of-contacts-when-contributing (2024-04-05) 8 commits
+* la/doc-use-of-contacts-when-contributing (2024-04-12) 8 commits
  - SubmittingPatches: demonstrate using git-contacts with git-send-email
  - SubmittingPatches: add heading for format-patch and send-email
  - SubmittingPatches: dedupe discussion of security patches
  - SubmittingPatches: discuss reviewers first
  - SubmittingPatches: quote commands
  - SubmittingPatches: mention GitGitGadget
- - SubmittingPatches: make 'git contacts' grep-friendly
+ - SubmittingPatches: clarify 'git-contacts' location
  - MyFirstContribution: mention contrib/contacts/git-contacts
 
  Advertise "git contacts", a tool for newcomers to find people to
  ask review for their patches, a bit more in our developer
  documentation.
 
- Expecting a reroll.
- cf. <owlypluzs5qa.fsf@fine.c.googlers.com>
- source: <pull.1704.v2.git.1712366536.gitgitgadget@gmail.com>
+ source: <pull.1704.v4.git.1712878339.gitgitgadget@gmail.com>
 
 
-* ps/ci-test-with-jgit (2024-04-08) 12 commits
+* ps/ci-test-with-jgit (2024-04-12) 13 commits
  - t0612: add tests to exercise Git/JGit reftable compatibility
  - t0610: fix non-portable variable assignment
  - t06xx: always execute backend-specific tests
  - ci: install JGit dependency
  - ci: make Perforce binaries executable for all users
  - ci: merge scripts which install dependencies
+ - ci: fix setup of custom path for GitLab CI
  - ci: merge custom PATH directories
  - ci: convert "install-dependencies.sh" to use "/bin/sh"
  - ci: drop duplicate package installation for "linux-gcc-default"
- - ci: allow skipping sudo on dockerized jobs
+ - ci: skip sudo when we are already root
  - ci: expose distro name in dockerized GitHub jobs
  - ci: rename "runs_on_pool" to "distro"
 
  Tests to ensure interoperability between reftable written by jgit
  and our code have been added and enabled in CI.
 
- Comments?
- source: <cover.1712555682.git.ps@pks.im>
+ source: <cover.1712896868.git.ps@pks.im>
 
 
 * pw/rebase-i-error-message (2024-04-08) 2 commits
@@ -272,28 +349,28 @@ Release tarballs are available at:
 
 
 * tb/make-indent-conditional-with-non-spaces (2024-04-08) 2 commits
- - Makefile(s): do not enforce "all indents must be done with tab"
- - Makefile(s): avoid recipe prefix in conditional statements
+  (merged to 'next' on 2024-04-10 at 98aa239dc3)
+ + Makefile(s): do not enforce "all indents must be done with tab"
+ + Makefile(s): avoid recipe prefix in conditional statements
 
  Adjust to an upcoming changes to GNU make that breaks our Makefiles.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <9d14c08ca6cc06cdf8fb4ba33d2470053dca3966.1712591504.git.me@ttaylorr.com>
 
 
 * ps/t0610-umask-fix (2024-04-09) 2 commits
- - t0610: execute git-pack-refs(1) with specified umask
- - t0610: make `--shared=` tests reusable
+  (merged to 'next' on 2024-04-10 at 659a29b138)
+ + t0610: execute git-pack-refs(1) with specified umask
+ + t0610: make `--shared=` tests reusable
 
  The "shared repository" test in the t0610 reftable test failed
  under restrictive umask setting (e.g. 007), which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1712656576.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * ma/win32-unix-domain-socket (2024-04-03) 1 commit
   (merged to 'next' on 2024-04-09 at b98021a65c)
@@ -324,16 +401,15 @@ Release tarballs are available at:
  source: <cover.1712578837.git.ps@pks.im>
 
 
-* ds/send-email-per-message-block (2024-04-08) 3 commits
- - send-email: separate the confirmation prompts from the messages
+* ds/send-email-per-message-block (2024-04-10) 2 commits
  - send-email: make it easy to discern the messages for each patch
- - send-email: move newline character out of a translatable string
+ - send-email: move newline characters out of a few translatable strings
 
  "git send-email" learned to separate its reports on each message it
  sends out with an extra blank line in between.
 
  Comments?
- source: <cover.1712486910.git.dsimic@manjaro.org>
+ source: <cover.1712732383.git.dsimic@manjaro.org>
 
 
 * ds/fetch-config-parse-microfix (2024-04-05) 1 commit
@@ -372,107 +448,40 @@ Release tarballs are available at:
  source: <5ba55ee4-94c7-4094-a744-584fc623b391@web.de>
 
 
-* kn/clarify-update-ref-doc (2024-04-02) 2 commits
-  (merged to 'next' on 2024-04-02 at d1b9c5aa67)
- + githooks: use {old,new}-oid instead of {old,new}-value
- + update-ref: use {old,new}-oid instead of {old,new}value
-
- Doc update, as a preparation to enhance "git update-ref --stdin".
-
- Will merge to 'master'.
- source: <20240402064915.191104-1-knayak@gitlab.com>
-
-
-* vs/complete-with-set-u-fix (2024-04-01) 2 commits
-  (merged to 'next' on 2024-04-02 at d8f6a511e8)
- + completion: protect prompt against unset SHOWUPSTREAM in nounset mode
- + completion: fix prompt with unset SHOWCONFLICTSTATE in nounset mode
-
- Another "set -u" fix for the bash prompt (in contrib/) script.
-
- Will merge to 'master'.
- source: <20240401190751.8676-1-ville.skytta@iki.fi>
-
-
 * ba/osxkeychain-updates (2024-04-01) 4 commits
- - osxkeychain: store new attributes
- - osxkeychain: erase matching passwords only
- - osxkeychain: erase all matching credentials
- - osxkeychain: replace deprecated SecKeychain API
+  (merged to 'next' on 2024-04-10 at 1e7d925a43)
+ + osxkeychain: store new attributes
+ + osxkeychain: erase matching passwords only
+ + osxkeychain: erase all matching credentials
+ + osxkeychain: replace deprecated SecKeychain API
 
  Update osxkeychain backend with features required for the recent
  credential subsystem.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1667.git.1708212896.gitgitgadget@gmail.com>
 
 
-* rs/imap-send-use-xsnprintf (2024-04-02) 1 commit
-  (merged to 'next' on 2024-04-04 at 789ad853e1)
- + imap-send: use xsnprintf to format command
-
- Code clean-up and duplicate reduction.
-
- Will merge to 'master'.
- source: <f9ad9f41-5b9b-474e-9818-f91fc937daae@web.de>
-
-
-* tb/midx-write (2024-04-01) 5 commits
-  (merged to 'next' on 2024-04-05 at b4870116f7)
- + midx-write.c: use `--stdin-packs` when repacking
- + midx-write.c: check count of packs to repack after grouping
- + midx-write.c: factor out common want_included_pack() routine
- + midx-write: move writing-related functions from midx.c
- + Merge branch 'rs/midx-use-strvec-pushf' into tb/midx-write
-
- Code clean-up by splitting code responsible for writing midx files
- into its own file.
-
- Will merge to 'master'.
- source: <cover.1712006190.git.me@ttaylorr.com>
-
-
-* jc/t2104-style-update (2024-04-02) 1 commit
-  (merged to 'next' on 2024-04-03 at 0449835479)
- + t2104: style fixes
-
- Coding style fixes.
-
- Will merge to 'master'.
- source: <xmqqmsqb4ngg.fsf@gitster.g>
-
-
-* rs/t-prio-queue-cleanup (2024-04-02) 1 commit
-  (merged to 'next' on 2024-04-04 at 7961c838ac)
- + t-prio-queue: simplify using compound literals
-
- t-prio-queue test has been cleaned up by using C99 compound
- literals; this is meant to also serve as a weather-balloon to smoke
- out folks with compilers who have trouble compiling code that uses
- the feature.
-
- Will merge to 'master'.
- source: <520da361-1b80-4ba3-87b2-86d6fdfc18b5@web.de>
-
-
 * jk/libcurl-8.7-regression-workaround (2024-04-05) 3 commits
- - remote-curl: add Transfer-Encoding header only for older curl
- - INSTALL: bump libcurl version to 7.21.3
- - http: reset POSTFIELDSIZE when clearing curl handle
+  (merged to 'next' on 2024-04-10 at 3b76577bfc)
+ + remote-curl: add Transfer-Encoding header only for older curl
+ + INSTALL: bump libcurl version to 7.21.3
+ + http: reset POSTFIELDSIZE when clearing curl handle
 
  Fix was added to work around a regression in libcURL 8.7.0 (which has
  already been fixed in their tip of the tree).
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240402200254.GA874754@coredump.intra.peff.net>
 
 
 * tb/t7700-fixup (2024-04-03) 1 commit
- - t/t7700-repack.sh: fix test breakages with `GIT_TEST_MULTI_PACK_INDEX=1 `
+  (merged to 'next' on 2024-04-10 at ff1f877ef7)
+ + t/t7700-repack.sh: fix test breakages with `GIT_TEST_MULTI_PACK_INDEX=1 `
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <7e8d435d58eea19d2aae0be366720f5956d29a5d.1712075189.git.me@ttaylorr.com>
 
 
@@ -491,52 +500,18 @@ Release tarballs are available at:
 
 
 * jt/reftable-geometric-compaction (2024-04-08) 4 commits
- - reftable/stack: use geometric table compaction
- - reftable/stack: add env to disable autocompaction
- - reftable/stack: expose option to disable auto-compaction
- - Merge branch 'ps/pack-refs-auto' into jt/reftable-geometric-compaction
+  (merged to 'next' on 2024-04-10 at 7e868a831c)
+ + reftable/stack: use geometric table compaction
+ + reftable/stack: add env to disable autocompaction
+ + reftable/stack: expose option to disable auto-compaction
+ + Merge branch 'ps/pack-refs-auto' into jt/reftable-geometric-compaction
 
  The strategy to compact multiple tables of reftables after many
  operations accumulate many entries has been improved to avoid
  accumulating too many tables uncollected.
 
- Comments?
+ Will merge to 'master'.
  source: <pull.1683.v6.git.1712593016.gitgitgadget@gmail.com>
-
-
-* ds/typofix-core-config-doc (2024-03-31) 1 commit
-  (merged to 'next' on 2024-04-02 at 79496fcfc4)
- + config: fix some small capitalization issues, as spotted
-
- Typofix.
-
- Will merge to 'master'.
- source: <26135b06c48565ee8ac6dcfc1ef5431511e6202c.1711918168.git.dsimic@manjaro.org>
-
-
-* jc/checkout-detach-wo-tracking-report (2024-03-30) 1 commit
-  (merged to 'next' on 2024-04-04 at 161eca247d)
- + checkout: omit "tracking" information on a detached HEAD
-
- "git checkout/switch --detach foo", after switching to the detached
- HEAD state, gave the tracking information for the 'foo' branch,
- which was pointless.
-
- Tested-by: M Hickford <mirth.hickford@gmail.com>
- cf. <CAGJzqsmE9FDEBn=u3ge4LA3ha4fDbm4OWiuUbMaztwjELBd7ug@mail.gmail.com>
-
- Will merge to 'master'.
- source: <xmqqa5mfl7ud.fsf@gitster.g>
-
-
-* rs/mem-pool-size-t-safety (2024-03-31) 1 commit
-  (merged to 'next' on 2024-04-02 at 3517d48210)
- + mem-pool: use st_add() in mem_pool_strvfmt()
-
- size_t arithmetic safety.
-
- Will merge to 'master'.
- source: <bbe00b9e-64d8-4ec8-a2b9-2c6917c72dbd@web.de>
 
 
 * ew/khash-to-khashl (2024-03-28) 3 commits
@@ -590,22 +565,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <ZgSQ5o_KyqDaxz1m@tapette.crustytoothpaste.net>
  source: <20240324011301.1553072-1-sandals@crustytoothpaste.net>
-
-
-* ps/reftable-binsearch-updates (2024-04-03) 7 commits
-  (merged to 'next' on 2024-04-04 at 40e6d5a36b)
- + reftable/block: avoid decoding keys when searching restart points
- + reftable/record: extract function to decode key lengths
- + reftable/block: fix error handling when searching restart points
- + reftable/block: refactor binary search over restart points
- + reftable/refname: refactor binary search over refnames
- + reftable/basics: improve `binsearch()` test
- + reftable/basics: fix return type of `binsearch()` to be `size_t`
-
- Reftable code clean-up and some bugfixes.
-
- Will merge to 'master'.
- source: <cover.1712123093.git.ps@pks.im>
 
 
 * tb/pseudo-merge-reachability-bitmap (2024-03-20) 24 commits
@@ -697,8 +656,7 @@ Release tarballs are available at:
  source: <20240319183722.211300-1-ignacio@iencinas.com>
 
 
-* js/build-fuzz-more-often (2024-03-05) 3 commits
- - SQUASH???
+* js/build-fuzz-more-often (2024-04-11) 2 commits
  - fuzz: link fuzz programs with `make all` on Linux
  - ci: also define CXX environment variable
 
@@ -706,20 +664,21 @@ Release tarballs are available at:
  that are used in fuzzer tests, to make sure at least they build
  without bitrot, in Linux CI runs.
 
- Stalled.
- cf. <xmqq1q7w8xx6.fsf@gitster.g>
- source: <cover.1709673020.git.steadmon@google.com>
+ Expecting a hopefully minor and final reroll.
+ cf. <20240412042247.GA1077925@coredump.intra.peff.net>
+ source: <cover.1712858920.git.steadmon@google.com>
 
 
 * sj/userdiff-c-sharp (2024-04-05) 1 commit
- - userdiff: better method/property matching for C#
+  (merged to 'next' on 2024-04-10 at 56aaf254a7)
+ + userdiff: better method/property matching for C#
 
  The userdiff patterns for C# has been updated.
 
  Acked-by: Johannes Sixt <j6t@kdbg.org>
  cf. <c2154457-3f2f-496e-9b8b-c8ea7257027b@kdbg.org>
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1682.v5.git.git.1712180564927.gitgitgadget@gmail.com>
 
 
