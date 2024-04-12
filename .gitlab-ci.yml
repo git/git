@@ -9,6 +9,8 @@ workflow:
 
 test:linux:
   image: $image
+  variables:
+    CUSTOM_PATH: "/custom"
   before_script:
     - ./ci/install-docker-dependencies.sh
   script:
