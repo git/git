@@ -1742,7 +1742,7 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 	} else {
 		char *path;
 
-		if (clone_data->require_init && !access(clone_data_path, X_OK) &&
+		if (clone_data->require_init && !stat(clone_data_path, &st) &&
 		    !is_empty_dir(clone_data_path))
 			die(_("directory not empty: '%s'"), clone_data_path);
 		if (safe_create_leading_directories_const(clone_data_path) < 0)
