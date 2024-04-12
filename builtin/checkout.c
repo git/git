@@ -1035,7 +1035,8 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	remove_branch_state(the_repository, !opts->quiet);
 	strbuf_release(&msg);
 	if (!opts->quiet &&
-	    (new_branch_info->path || (!opts->force_detach && !strcmp(new_branch_info->name, "HEAD"))))
+	    !opts->force_detach &&
+	    (new_branch_info->path || !strcmp(new_branch_info->name, "HEAD")))
 		report_tracking(new_branch_info);
 }
 
