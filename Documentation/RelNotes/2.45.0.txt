@@ -156,6 +156,11 @@ Performance, Internal Implementation, Development Support etc.
  * The .editorconfig file has been taught that a Makefile uses HT
    indentation.
 
+ * t-prio-queue test has been cleaned up by using C99 compound
+   literals; this is meant to also serve as a weather-balloon to smoke
+   out folks with compilers who have trouble compiling code that uses
+   the feature.
+
 
 Fixes since v2.44
 -----------------
@@ -338,6 +343,10 @@ Fixes since v2.44
  * Another "set -u" fix for the bash prompt (in contrib/) script.
    (merge d7805bc743 vs/complete-with-set-u-fix later to maint).
 
+ * "git checkout/switch --detach foo", after switching to the detached
+   HEAD state, gave the tracking information for the 'foo' branch,
+   which was pointless.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -363,3 +372,4 @@ Fixes since v2.44
    (merge 0d527842b7 az/grep-group-error-message-update later to maint).
    (merge 7c43bdf07b rs/strbuf-expand-bad-format later to maint).
    (merge 8b68b48d5c ds/typofix-core-config-doc later to maint).
+   (merge 39bb692152 rs/imap-send-use-xsnprintf later to maint).
