@@ -360,7 +360,7 @@ $ gitk HEAD...FETCH_HEAD
 This means "show everything that is reachable from either one, but
 exclude anything that is reachable from both of them".
 
-Please note that these range notation can be used with both `gitk`
+Please note that these range notations can be used with both `gitk`
 and `git log`.
 
 After inspecting what Bob did, if there is nothing urgent, Alice may
