@@ -65,7 +65,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		/*
 		 * We need to extend the diagonal "domain" by one. If the next
 		 * values exits the box boundaries we need to change it in the
-		 * opposite direction because (max - min) must be a power of
+		 * opposite direction because (max - min) must be a multiple of
 		 * two.
 		 *
 		 * Also we initialize the external K value to -1 so that we can
@@ -102,11 +102,12 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		/*
 		 * We need to extend the diagonal "domain" by one. If the next
 		 * values exits the box boundaries we need to change it in the
-		 * opposite direction because (max - min) must be a power of
+		 * opposite direction because (max - min) must be a multiple of
 		 * two.
 		 *
-		 * Also we initialize the external K value to -1 so that we can
-		 * avoid extra conditions in the check inside the core loop.
+		 * Also we initialize the external K value to XDL_LINE_MAX so
+                 * that we can avoid extra conditions in the check inside the
+		 * core loop.
 		 */
 		if (bmin > dmin)
 			kvdb[--bmin - 1] = XDL_LINE_MAX;
