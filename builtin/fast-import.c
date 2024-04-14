@@ -2311,7 +2311,7 @@ static void parse_path_space(struct strbuf *sb, const char *p,
 
 static void file_change_m(const char *p, struct branch *b)
 {
-	static struct strbuf uq = STRBUF_INIT;
+	static struct strbuf path = STRBUF_INIT;
 	struct object_entry *oe;
 	struct object_id oid;
 	uint16_t mode, inline_data = 0;
@@ -2348,13 +2348,12 @@ static void file_change_m(const char *p, struct branch *b)
 			die("Missing space after SHA1: %s", command_buf.buf);
 	}
 
-	strbuf_reset(&uq);
-	parse_path_eol(&uq, p, "path");
-	p = uq.buf;
+	strbuf_reset(&path);
+	parse_path_eol(&path, p, "path");
 
 	/* Git does not track empty, non-toplevel directories. */
-	if (S_ISDIR(mode) && is_empty_tree_oid(&oid) && *p) {
-		tree_content_remove(&b->branch_tree, p, NULL, 0);
+	if (S_ISDIR(mode) && is_empty_tree_oid(&oid) && *path.buf) {
+		tree_content_remove(&b->branch_tree, path.buf, NULL, 0);
 		return;
 	}
 
@@ -2375,10 +2374,6 @@ static void file_change_m(const char *p, struct branch *b)
 		if (S_ISDIR(mode))
 			die("Directories cannot be specified 'inline': %s",
 				command_buf.buf);
-		if (p != uq.buf) {
-			strbuf_addstr(&uq, p);
-			p = uq.buf;
-		}
 		while (read_next_command() != EOF) {
 			const char *v;
 			if (skip_prefix(command_buf.buf, "cat-blob ", &v))
@@ -2404,55 +2399,51 @@ static void file_change_m(const char *p, struct branch *b)
 				command_buf.buf);
 	}
 
-	if (!*p) {
+	if (!*path.buf) {
 		tree_content_replace(&b->branch_tree, &oid, mode, NULL);
 		return;
 	}
-	tree_content_set(&b->branch_tree, p, &oid, mode, NULL);
+	tree_content_set(&b->branch_tree, path.buf, &oid, mode, NULL);
 }
 
 static void file_change_d(const char *p, struct branch *b)
 {
-	static struct strbuf uq = STRBUF_INIT;
+	static struct strbuf path = STRBUF_INIT;
 
-	strbuf_reset(&uq);
-	parse_path_eol(&uq, p, "path");
-	p = uq.buf;
-	tree_content_remove(&b->branch_tree, p, NULL, 1);
+	strbuf_reset(&path);
+	parse_path_eol(&path, p, "path");
+	tree_content_remove(&b->branch_tree, path.buf, NULL, 1);
 }
 
 static void file_change_cr(const char *p, struct branch *b, int rename)
 {
-	const char *s, *d;
-	static struct strbuf s_uq = STRBUF_INIT;
-	static struct strbuf d_uq = STRBUF_INIT;
+	static struct strbuf source = STRBUF_INIT;
+	static struct strbuf dest = STRBUF_INIT;
 	struct tree_entry leaf;
 
-	strbuf_reset(&s_uq);
-	parse_path_space(&s_uq, p, &p, "source");
-	s = s_uq.buf;
+	strbuf_reset(&source);
+	parse_path_space(&source, p, &p, "source");
 
 	if (!*p)
 		die("Missing dest: %s", command_buf.buf);
-	strbuf_reset(&d_uq);
-	parse_path_eol(&d_uq, p, "dest");
-	d = d_uq.buf;
+	strbuf_reset(&dest);
+	parse_path_eol(&dest, p, "dest");
 
 	memset(&leaf, 0, sizeof(leaf));
 	if (rename)
-		tree_content_remove(&b->branch_tree, s, &leaf, 1);
+		tree_content_remove(&b->branch_tree, source.buf, &leaf, 1);
 	else
-		tree_content_get(&b->branch_tree, s, &leaf, 1);
+		tree_content_get(&b->branch_tree, source.buf, &leaf, 1);
 	if (!leaf.versions[1].mode)
-		die("Path %s not in branch", s);
-	if (!*d) {	/* C "path/to/subdir" "" */
+		die("Path %s not in branch", source.buf);
+	if (!*dest.buf) {	/* C "path/to/subdir" "" */
 		tree_content_replace(&b->branch_tree,
 			&leaf.versions[1].oid,
 			leaf.versions[1].mode,
 			leaf.tree);
 		return;
 	}
-	tree_content_set(&b->branch_tree, d,
+	tree_content_set(&b->branch_tree, dest.buf,
 		&leaf.versions[1].oid,
 		leaf.versions[1].mode,
 		leaf.tree);
@@ -3180,7 +3171,7 @@ static void print_ls(int mode, const unsigned char *hash, const char *path)
 
 static void parse_ls(const char *p, struct branch *b)
 {
-	static struct strbuf uq = STRBUF_INIT;
+	static struct strbuf path = STRBUF_INIT;
 	struct tree_entry *root = NULL;
 	struct tree_entry leaf = {NULL};
 
@@ -3197,10 +3188,9 @@ static void parse_ls(const char *p, struct branch *b)
 			root->versions[1].mode = S_IFDIR;
 		load_tree(root);
 	}
-	strbuf_reset(&uq);
-	parse_path_eol(&uq, p, "path");
-	p = uq.buf;
-	tree_content_get(root, p, &leaf, 1);
+	strbuf_reset(&path);
+	parse_path_eol(&path, p, "path");
+	tree_content_get(root, path.buf, &leaf, 1);
 	/*
 	 * A directory in preparation would have a sha1 of zero
 	 * until it is saved.  Save, for simplicity.
@@ -3208,7 +3198,7 @@ static void parse_ls(const char *p, struct branch *b)
 	if (S_ISDIR(leaf.versions[1].mode))
 		store_tree(&leaf);
 
-	print_ls(leaf.versions[1].mode, leaf.versions[1].oid.hash, p);
+	print_ls(leaf.versions[1].mode, leaf.versions[1].oid.hash, path.buf);
 	if (leaf.tree)
 		release_tree_content_recursive(leaf.tree);
 	if (!b || root != &b->branch_tree)
