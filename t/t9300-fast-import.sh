@@ -1059,30 +1059,33 @@ test_expect_success 'M: rename subdirectory to new subdirectory' '
 	compare_diff_raw expect actual
 '
 
-test_expect_success 'M: rename root to subdirectory' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/M4
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	rename root
-	COMMIT
+for root in '""' ''
+do
+	test_expect_success "M: rename root ($root) to subdirectory" '
+		cat >input <<-INPUT_END &&
+		commit refs/heads/M4
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		rename root
+		COMMIT
 
-	from refs/heads/M2^0
-	R "" sub
+		from refs/heads/M2^0
+		R $root sub
 
-	INPUT_END
+		INPUT_END
 
-	cat >expect <<-EOF &&
-	:100644 100644 $oldf $oldf R100	file2/oldf	sub/file2/oldf
-	:100755 100755 $f4id $f4id R100	file4	sub/file4
-	:100755 100755 $newf $newf R100	i/am/new/to/you	sub/i/am/new/to/you
-	:100755 100755 $f6id $f6id R100	newdir/exec.sh	sub/newdir/exec.sh
-	:100644 100644 $f5id $f5id R100	newdir/interesting	sub/newdir/interesting
-	EOF
-	git fast-import <input &&
-	git diff-tree -M -r M4^ M4 >actual &&
-	compare_diff_raw expect actual
-'
+		cat >expect <<-EOF &&
+		:100644 100644 $oldf $oldf R100	file2/oldf	sub/file2/oldf
+		:100755 100755 $f4id $f4id R100	file4	sub/file4
+		:100755 100755 $newf $newf R100	i/am/new/to/you	sub/i/am/new/to/you
+		:100755 100755 $f6id $f6id R100	newdir/exec.sh	sub/newdir/exec.sh
+		:100644 100644 $f5id $f5id R100	newdir/interesting	sub/newdir/interesting
+		EOF
+		git fast-import <input &&
+		git diff-tree -M -r M4^ M4 >actual &&
+		compare_diff_raw expect actual
+	'
+done
 
 ###
 ### series N
@@ -1259,49 +1262,52 @@ test_expect_success PIPE 'N: empty directory reads as missing' '
 	test_cmp expect actual
 '
 
-test_expect_success 'N: copy root directory by tree hash' '
-	cat >expect <<-EOF &&
-	:100755 000000 $newf $zero D	file3/newf
-	:100644 000000 $oldf $zero D	file3/oldf
-	EOF
-	root=$(git rev-parse refs/heads/branch^0^{tree}) &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/N6
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	copy root directory by tree hash
-	COMMIT
+for root in '""' ''
+do
+	test_expect_success "N: copy root ($root) by tree hash" '
+		cat >expect <<-EOF &&
+		:100755 000000 $newf $zero D	file3/newf
+		:100644 000000 $oldf $zero D	file3/oldf
+		EOF
+		root_tree=$(git rev-parse refs/heads/branch^0^{tree}) &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/N6
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		copy root directory by tree hash
+		COMMIT
 
-	from refs/heads/branch^0
-	M 040000 $root ""
-	INPUT_END
-	git fast-import <input &&
-	git diff-tree -C --find-copies-harder -r N4 N6 >actual &&
-	compare_diff_raw expect actual
-'
+		from refs/heads/branch^0
+		M 040000 $root_tree $root
+		INPUT_END
+		git fast-import <input &&
+		git diff-tree -C --find-copies-harder -r N4 N6 >actual &&
+		compare_diff_raw expect actual
+	'
 
-test_expect_success 'N: copy root by path' '
-	cat >expect <<-EOF &&
-	:100755 100755 $newf $newf C100	file2/newf	oldroot/file2/newf
-	:100644 100644 $oldf $oldf C100	file2/oldf	oldroot/file2/oldf
-	:100755 100755 $f4id $f4id C100	file4	oldroot/file4
-	:100755 100755 $f6id $f6id C100	newdir/exec.sh	oldroot/newdir/exec.sh
-	:100644 100644 $f5id $f5id C100	newdir/interesting	oldroot/newdir/interesting
-	EOF
-	cat >input <<-INPUT_END &&
-	commit refs/heads/N-copy-root-path
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	copy root directory by (empty) path
-	COMMIT
+	test_expect_success "N: copy root ($root) by path" '
+		cat >expect <<-EOF &&
+		:100755 100755 $newf $newf C100	file2/newf	oldroot/file2/newf
+		:100644 100644 $oldf $oldf C100	file2/oldf	oldroot/file2/oldf
+		:100755 100755 $f4id $f4id C100	file4	oldroot/file4
+		:100755 100755 $f6id $f6id C100	newdir/exec.sh	oldroot/newdir/exec.sh
+		:100644 100644 $f5id $f5id C100	newdir/interesting	oldroot/newdir/interesting
+		EOF
+		cat >input <<-INPUT_END &&
+		commit refs/heads/N-copy-root-path
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		copy root directory by (empty) path
+		COMMIT
 
-	from refs/heads/branch^0
-	C "" oldroot
-	INPUT_END
-	git fast-import <input &&
-	git diff-tree -C --find-copies-harder -r branch N-copy-root-path >actual &&
-	compare_diff_raw expect actual
-'
+		from refs/heads/branch^0
+		C $root oldroot
+		INPUT_END
+		git fast-import <input &&
+		git diff-tree -C --find-copies-harder -r branch N-copy-root-path >actual &&
+		compare_diff_raw expect actual
+	'
+done
 
 test_expect_success 'N: delete directory by copying' '
 	cat >expect <<-\EOF &&
@@ -1431,98 +1437,102 @@ test_expect_success 'N: reject foo/ syntax in ls argument' '
 	INPUT_END
 '
 
-test_expect_success 'N: copy to root by id and modify' '
-	echo "hello, world" >expect.foo &&
-	echo hello >expect.bar &&
-	git fast-import <<-SETUP_END &&
-	commit refs/heads/N7
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	hello, tree
-	COMMIT
+for root in '""' ''
+do
+	test_expect_success "N: copy to root ($root) by id and modify" '
+		echo "hello, world" >expect.foo &&
+		echo hello >expect.bar &&
+		git fast-import <<-SETUP_END &&
+		commit refs/heads/N7
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		hello, tree
+		COMMIT
 
-	deleteall
-	M 644 inline foo/bar
-	data <<EOF
-	hello
-	EOF
-	SETUP_END
+		deleteall
+		M 644 inline foo/bar
+		data <<EOF
+		hello
+		EOF
+		SETUP_END
 
-	tree=$(git rev-parse --verify N7:) &&
-	git fast-import <<-INPUT_END &&
-	commit refs/heads/N8
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	copy to root by id and modify
-	COMMIT
+		tree=$(git rev-parse --verify N7:) &&
+		git fast-import <<-INPUT_END &&
+		commit refs/heads/N8
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		copy to root by id and modify
+		COMMIT
 
-	M 040000 $tree ""
-	M 644 inline foo/foo
-	data <<EOF
-	hello, world
-	EOF
-	INPUT_END
-	git show N8:foo/foo >actual.foo &&
-	git show N8:foo/bar >actual.bar &&
-	test_cmp expect.foo actual.foo &&
-	test_cmp expect.bar actual.bar
-'
+		M 040000 $tree $root
+		M 644 inline foo/foo
+		data <<EOF
+		hello, world
+		EOF
+		INPUT_END
+		git show N8:foo/foo >actual.foo &&
+		git show N8:foo/bar >actual.bar &&
+		test_cmp expect.foo actual.foo &&
+		test_cmp expect.bar actual.bar
+	'
 
-test_expect_success 'N: extract subtree' '
-	branch=$(git rev-parse --verify refs/heads/branch^{tree}) &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/N9
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	extract subtree branch:newdir
-	COMMIT
+	test_expect_success "N: extract subtree to the root ($root)" '
+		branch=$(git rev-parse --verify refs/heads/branch^{tree}) &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/N9
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		extract subtree branch:newdir
+		COMMIT
 
-	M 040000 $branch ""
-	C "newdir" ""
-	INPUT_END
-	git fast-import <input &&
-	git diff --exit-code branch:newdir N9
-'
+		M 040000 $branch $root
+		C "newdir" $root
+		INPUT_END
+		git fast-import <input &&
+		git diff --exit-code branch:newdir N9
+	'
 
-test_expect_success 'N: modify subtree, extract it, and modify again' '
-	echo hello >expect.baz &&
-	echo hello, world >expect.qux &&
-	git fast-import <<-SETUP_END &&
-	commit refs/heads/N10
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	hello, tree
-	COMMIT
+	test_expect_success "N: modify subtree, extract it to the root ($root), and modify again" '
+		echo hello >expect.baz &&
+		echo hello, world >expect.qux &&
+		git fast-import <<-SETUP_END &&
+		commit refs/heads/N10
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		hello, tree
+		COMMIT
 
-	deleteall
-	M 644 inline foo/bar/baz
-	data <<EOF
-	hello
-	EOF
-	SETUP_END
+		deleteall
+		M 644 inline foo/bar/baz
+		data <<EOF
+		hello
+		EOF
+		SETUP_END
 
-	tree=$(git rev-parse --verify N10:) &&
-	git fast-import <<-INPUT_END &&
-	commit refs/heads/N11
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	copy to root by id and modify
-	COMMIT
+		tree=$(git rev-parse --verify N10:) &&
+		git fast-import <<-INPUT_END &&
+		commit refs/heads/N11
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		copy to root by id and modify
+		COMMIT
 
-	M 040000 $tree ""
-	M 100644 inline foo/bar/qux
-	data <<EOF
-	hello, world
-	EOF
-	R "foo" ""
-	C "bar/qux" "bar/quux"
-	INPUT_END
-	git show N11:bar/baz >actual.baz &&
-	git show N11:bar/qux >actual.qux &&
-	git show N11:bar/quux >actual.quux &&
-	test_cmp expect.baz actual.baz &&
-	test_cmp expect.qux actual.qux &&
-	test_cmp expect.qux actual.quux'
+		M 040000 $tree $root
+		M 100644 inline foo/bar/qux
+		data <<EOF
+		hello, world
+		EOF
+		R "foo" $root
+		C "bar/qux" "bar/quux"
+		INPUT_END
+		git show N11:bar/baz >actual.baz &&
+		git show N11:bar/qux >actual.qux &&
+		git show N11:bar/quux >actual.quux &&
+		test_cmp expect.baz actual.baz &&
+		test_cmp expect.qux actual.qux &&
+		test_cmp expect.qux actual.quux
+	'
+done
 
 ###
 ### series O
@@ -3067,6 +3077,7 @@ test_expect_success 'S: ls with garbage after sha1 must fail' '
 # There are two sorts of ways a path can be parsed, depending on whether it is
 # the last field on the line. Additionally, ls without a <dataref> has a special
 # case. Test every occurrence of <path> in the grammar against every error case.
+# Paths for the root (empty strings) are tested elsewhere.
 #
 
 #
@@ -3321,16 +3332,19 @@ test_path_eol_quoted_fail 'ls (without dataref in commit)' 'ls ' path
 ###
 # Setup is carried over from series S.
 
-test_expect_success 'T: ls root tree' '
-	sed -e "s/Z\$//" >expect <<-EOF &&
-	040000 tree $(git rev-parse S^{tree})	Z
-	EOF
-	sha1=$(git rev-parse --verify S) &&
-	git fast-import --import-marks=marks <<-EOF >actual &&
-	ls $sha1 ""
-	EOF
-	test_cmp expect actual
-'
+for root in '""' ''
+do
+	test_expect_success "T: ls root ($root) tree" '
+		sed -e "s/Z\$//" >expect <<-EOF &&
+		040000 tree $(git rev-parse S^{tree})	Z
+		EOF
+		sha1=$(git rev-parse --verify S) &&
+		git fast-import --import-marks=marks <<-EOF >actual &&
+		ls $sha1 $root
+		EOF
+		test_cmp expect actual
+	'
+done
 
 test_expect_success 'T: delete branch' '
 	git branch to-delete &&
@@ -3432,30 +3446,33 @@ test_expect_success 'U: validate directory delete result' '
 	compare_diff_raw expect actual
 '
 
-test_expect_success 'U: filedelete root succeeds' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/U
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	must succeed
-	COMMIT
-	from refs/heads/U^0
-	D ""
+for root in '""' ''
+do
+	test_expect_success "U: filedelete root ($root) succeeds" '
+		cat >input <<-INPUT_END &&
+		commit refs/heads/U-delete-root
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		must succeed
+		COMMIT
+		from refs/heads/U^0
+		D $root
 
-	INPUT_END
+		INPUT_END
 
-	git fast-import <input
-'
+		git fast-import <input
+	'
 
-test_expect_success 'U: validate root delete result' '
-	cat >expect <<-EOF &&
-	:100644 000000 $f7id $ZERO_OID D	hello.c
-	EOF
+	test_expect_success "U: validate root ($root) delete result" '
+		cat >expect <<-EOF &&
+		:100644 000000 $f7id $ZERO_OID D	hello.c
+		EOF
 
-	git diff-tree -M -r U^1 U >actual &&
+		git diff-tree -M -r U U-delete-root >actual &&
 
-	compare_diff_raw expect actual
-'
+		compare_diff_raw expect actual
+	'
+done
 
 ###
 ### series V (checkpoint)

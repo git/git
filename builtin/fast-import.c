@@ -2423,9 +2423,6 @@ static void file_change_cr(const char *p, struct branch *b, int rename)
 
 	strbuf_reset(&source);
 	parse_path_space(&source, p, &p, "source");
-
-	if (!*p)
-		die("Missing dest: %s", command_buf.buf);
 	strbuf_reset(&dest);
 	parse_path_eol(&dest, p, "dest");
 
