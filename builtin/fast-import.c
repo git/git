@@ -2448,7 +2448,6 @@ static void file_change_cr(const char *p, struct branch *b, int rename)
 
 static void note_change_n(const char *p, struct branch *b, unsigned char *old_fanout)
 {
-	static struct strbuf uq = STRBUF_INIT;
 	struct object_entry *oe;
 	struct branch *s;
 	struct object_id oid, commit_oid;
@@ -2513,10 +2512,6 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		die("Invalid ref name or SHA1 expression: %s", p);
 
 	if (inline_data) {
-		if (p != uq.buf) {
-			strbuf_addstr(&uq, p);
-			p = uq.buf;
-		}
 		read_next_command();
 		parse_and_store_blob(&last_blob, &oid, 0);
 	} else if (oe) {
