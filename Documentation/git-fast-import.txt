@@ -661,6 +661,7 @@ and its value must be in canonical form. That is it must not:
 
 The root of the tree can be represented by an empty string as `<path>`.
 
+`<path>` cannot contain NUL, either literally or escaped as `\000`.
 It is recommended that `<path>` always be encoded using UTF-8.
 
 `filedelete`

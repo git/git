@@ -3300,6 +3300,7 @@ test_path_base_fail () {
 	local change="$1" prefix="$2" field="$3" suffix="$4"
 	test_path_fail "$change" 'unclosed " in '"$field"          "$prefix" '"hello.c'    "$suffix" "Invalid $field"
 	test_path_fail "$change" "invalid escape in quoted $field" "$prefix" '"hello\xff"' "$suffix" "Invalid $field"
+	test_path_fail "$change" "escaped NUL in quoted $field"    "$prefix" '"hello\000"' "$suffix" "NUL in $field"
 }
 test_path_eol_quoted_fail () {
 	local change="$1" prefix="$2" field="$3"
