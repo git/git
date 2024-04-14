@@ -46,7 +46,7 @@ the new commits (in other words, this mimics a cherry-pick operation).
 	Range of commits to replay. More than one <revision-range> can
 	be passed, but in `--advance <branch>` mode, they should have
 	a single tip, so that it's clear where <branch> should point
-	to. See "Specifying Ranges" in linkgit:git-rev-parse and the
+	to. See "Specifying Ranges" in linkgit:git-rev-parse[1] and the
 	"Commit Limiting" options below.
 
 include::rev-list-options.txt[]
