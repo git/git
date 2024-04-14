@@ -2210,7 +2210,7 @@ static int parse_mapped_oid_hex(const char *hex, struct object_id *oid, const ch
  *
  *   idnum ::= ':' bigint;
  *
- * Return the first character after the value in *endptr.
+ * Update *endptr to point to the first character after the value.
  *
  * Complain if the following character is not what is expected,
  * either a space or end of the string.
@@ -2243,8 +2243,8 @@ static uintmax_t parse_mark_ref_eol(const char *p)
 }
 
 /*
- * Parse the mark reference, demanding a trailing space.  Return a
- * pointer to the space.
+ * Parse the mark reference, demanding a trailing space. Update *p to
+ * point to the first character after the space.
  */
 static uintmax_t parse_mark_ref_space(const char **p)
 {
