@@ -630,18 +630,24 @@ in octal.  Git only supports the following modes:
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
 
-A `<path>` string must use UNIX-style directory separators (forward
-slash `/`), may contain any byte other than `LF`, and must not
-start with double quote (`"`).
+A `<path>` can be written as unquoted bytes or a C-style quoted string.
 
-A path can use C-style string quoting; this is accepted in all cases
-and mandatory if the filename starts with double quote or contains
-`LF`. In C-style quoting, the complete name should be surrounded with
-double quotes, and any `LF`, backslash, or double quote characters
-must be escaped by preceding them with a backslash (e.g.,
-`"path/with\n, \\ and \" in it"`).
+When a `<path>` does not start with a double quote (`"`), it is an
+unquoted string and is parsed as literal bytes without any escape
+sequences. However, if the filename contains `LF` or starts with double
+quote, it cannot be represented as an unquoted string and must be
+quoted. Additionally, the source `<path>` in `filecopy` or `filerename`
+must be quoted if it contains SP.
 
-The value of `<path>` must be in canonical form. That is it must not:
+When a `<path>` starts with a double quote (`"`), it is a C-style quoted
+string, where the complete filename is enclosed in a pair of double
+quotes and escape sequences are used. Certain characters must be escaped
+by preceding them with a backslash: `LF` is written as `\n`, backslash
+as `\\`, and double quote as `\"`. All filenames can be represented as
+quoted strings.
+
+A `<path>` must use UNIX-style directory separators (forward slash `/`)
+and its value must be in canonical form. That is it must not:
 
 * contain an empty directory component (e.g. `foo//bar` is invalid),
 * end with a directory separator (e.g. `foo/` is invalid),
