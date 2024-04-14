@@ -3057,6 +3057,9 @@ _git_remote ()
 	set-head,--*)
 		__gitcomp_builtin remote_set-head
 		;;
+	set-tag,--*)
+		__gitcomp_builtin remote_set-tag
+		;;
 	set-branches,--*)
 		__gitcomp_builtin remote_set-branches
 		;;
@@ -3471,7 +3474,7 @@ _git_submodule ()
 {
 	__git_has_doubledash && return
 
-	local subcommands="add status init deinit update set-branch set-url summary foreach sync absorbgitdirs"
+	local subcommands="add status init deinit update set-branch set-tag set-url summary foreach sync absorbgitdirs"
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
 		case "$cur" in
@@ -3501,6 +3504,9 @@ _git_submodule ()
 			--recommend-shallow --no-recommend-shallow
 			--force --rebase --merge --reference --depth --recursive --jobs
 		"
+		;;
+	set-tag,--*)
+		__gitcomp "--tag"
 		;;
 	set-branch,--*)
 		__gitcomp "--default --branch"

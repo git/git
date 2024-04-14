@@ -6,12 +6,13 @@
 
 dashless=$(basename "$0" | sed -e 's/-/ /')
 USAGE="[--quiet] [--cached]
-   or: $dashless [--quiet] add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
+   or: $dashless [--quiet] add [-b <branch>] [-t <tag>] [-f|--force] [--name <name>] [--reference <repository>] [--] <repository> [<path>]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] deinit [-f|--force] (--all| [--] <path>...)
-   or: $dashless [--quiet] update [--init [--filter=<filter-spec>]] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--] [<path>...]
+   or: $dashless [--quiet] update [--init [--filter=<filter-spec>]] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--[no-]single-tag] [--] [<path>...]
    or: $dashless [--quiet] set-branch (--default|--branch <branch>) [--] <path>
+   or: $dashless [--quiet] set-tag (--tag <tag>) [--] <path>
    or: $dashless [--quiet] set-url [--] <path> <newurl>
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
@@ -49,6 +50,7 @@ depth=
 progress=
 dissociate=
 single_branch=
+single_tag=
 jobs=
 recommend_shallow=
 filter=
@@ -75,6 +77,11 @@ cmd_add()
 		-b | --branch)
 			case "$2" in '') usage ;; esac
 			branch=$2
+			shift
+			;;
+		-t | --tag)
+			case "$2" in '') usage ;; esac
+			tag=$2
 			shift
 			;;
 		-f | --force)
@@ -129,7 +136,7 @@ cmd_add()
 		usage
 	fi
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper add ${quiet:+--quiet} ${force:+--force} ${progress:+"--progress"} ${branch:+--branch "$branch"} ${reference_path:+--reference "$reference_path"} ${dissociate:+--dissociate} ${custom_name:+--name "$custom_name"} ${depth:+"$depth"} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper add ${quiet:+--quiet} ${force:+--force} ${progress:+"--progress"} ${branch:+--branch "$branch"}  ${tag:+--tag "$tag"} ${reference_path:+--reference "$reference_path"} ${dissociate:+--dissociate} ${custom_name:+--name "$custom_name"} ${depth:+"$depth"} -- "$@"
 }
 
 #
@@ -316,6 +323,12 @@ cmd_update()
 		--no-single-branch)
 			single_branch="--no-single-branch"
 			;;
+		--single-tag)
+			single_tag="--single-tag"
+			;;
+		--no-single-tag)
+			single_tag="--no-single-tag"
+			;;
 		--filter)
 			case "$2" in '') usage ;; esac
 			filter="--filter=$2"
@@ -355,6 +368,7 @@ cmd_update()
 		${require_init:+--require-init} \
 		${dissociate:+"--dissociate"} \
 		$single_branch \
+		$single_tag \
 		$recommend_shallow \
 		$jobs \
 		$filter \
@@ -400,6 +414,43 @@ cmd_set_branch() {
 	done
 
 	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-branch ${quiet:+--quiet} ${branch:+--branch "$branch"} ${default:+--default} -- "$@"
+}
+
+#
+# Configures a submodule's default tag
+#
+# $@ = requested path
+#
+cmd_set_tag() {
+	default=
+	tag=
+
+	while test $# -ne 0
+	do
+		case "$1" in
+		-q|--quiet)
+			# we don't do anything with this but we need to accept it
+			;;
+		-t|--tag)
+			case "$2" in '') usage ;; esac
+			tag=$2
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		-*)
+			usage
+			;;
+		*)
+			break
+			;;
+		esac
+		shift
+	done
+
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-tag ${quiet:+--quiet} ${tag:+--tag "$tag"} -- "$@"
 }
 
 #
@@ -571,7 +622,7 @@ cmd_absorbgitdirs()
 while test $# != 0 && test -z "$command"
 do
 	case "$1" in
-	add | foreach | init | deinit | update | set-branch | set-url | status | summary | sync | absorbgitdirs)
+	add | foreach | init | deinit | update | set-branch | set-tag | set-url | status | summary | sync | absorbgitdirs)
 		command=$1
 		;;
 	-q|--quiet)

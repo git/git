@@ -38,6 +38,7 @@ struct submodule {
 	enum submodule_recurse_mode fetch_recurse;
 	const char *ignore;
 	const char *branch;
+	const char *tag;
 	struct submodule_update_strategy update_strategy;
 	/* the object id of the responsible .gitmodules file */
 	struct object_id gitmodules_oid;
