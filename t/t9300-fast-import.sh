@@ -3189,8 +3189,9 @@ test_path_eol_success () {
 	'
 }
 
-test_path_eol_success 'quoted spaces'   '" hello world.c "' ' hello world.c '
-test_path_eol_success 'unquoted spaces' ' hello world.c '   ' hello world.c '
+test_path_eol_success 'quoted spaces'   '" hello world.c "'  ' hello world.c '
+test_path_eol_success 'unquoted spaces' ' hello world.c '    ' hello world.c '
+test_path_eol_success 'octal escapes'   '"\150\151\056\143"' 'hi.c'
 
 #
 # Valid paths before a space: filecopy (source) and filerename (source).
@@ -3256,8 +3257,9 @@ test_path_space_success () {
 	'
 }
 
-test_path_space_success 'quoted spaces'      '" hello world.c "' ' hello world.c '
-test_path_space_success 'no unquoted spaces' 'hello_world.c'     'hello_world.c'
+test_path_space_success 'quoted spaces'      '" hello world.c "'  ' hello world.c '
+test_path_space_success 'no unquoted spaces' 'hello_world.c'      'hello_world.c'
+test_path_space_success 'octal escapes'      '"\150\151\056\143"' 'hi.c'
 
 #
 # Test a single commit change with an invalid path. Run it with all occurrences
