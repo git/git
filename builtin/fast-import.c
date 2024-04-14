@@ -2258,10 +2258,60 @@ static uintmax_t parse_mark_ref_space(const char **p)
 	return mark;
 }
 
+/*
+ * Parse the path string into the strbuf. The path can either be quoted with
+ * escape sequences or unquoted without escape sequences. Unquoted strings may
+ * contain spaces only if `is_last_field` is nonzero; otherwise, it stops
+ * parsing at the first space.
+ */
+static void parse_path(struct strbuf *sb, const char *p, const char **endp,
+		int is_last_field, const char *field)
+{
+	if (*p == '"') {
+		if (unquote_c_style(sb, p, endp))
+			die("Invalid %s: %s", field, command_buf.buf);
+	} else {
+		/*
+		 * Unless we are parsing the last field of a line,
+		 * SP is the end of this field.
+		 */
+		*endp = is_last_field
+			? p + strlen(p)
+			: strchrnul(p, ' ');
+		strbuf_add(sb, p, *endp - p);
+	}
+}
+
+/*
+ * Parse the path string into the strbuf, and complain if this is not the end of
+ * the string. Unquoted strings may contain spaces.
+ */
+static void parse_path_eol(struct strbuf *sb, const char *p, const char *field)
+{
+	const char *end;
+
+	parse_path(sb, p, &end, 1, field);
+	if (*end)
+		die("Garbage after %s: %s", field, command_buf.buf);
+}
+
+/*
+ * Parse the path string into the strbuf, and ensure it is followed by a space.
+ * Unquoted strings may not contain spaces. Update *endp to point to the first
+ * character after the space.
+ */
+static void parse_path_space(struct strbuf *sb, const char *p,
+		const char **endp, const char *field)
+{
+	parse_path(sb, p, endp, 0, field);
+	if (**endp != ' ')
+		die("Missing space after %s: %s", field, command_buf.buf);
+	(*endp)++;
+}
+
 static void file_change_m(const char *p, struct branch *b)
 {
 	static struct strbuf uq = STRBUF_INIT;
-	const char *endp;
 	struct object_entry *oe;
 	struct object_id oid;
 	uint16_t mode, inline_data = 0;
@@ -2299,11 +2349,8 @@ static void file_change_m(const char *p, struct branch *b)
 	}
 
 	strbuf_reset(&uq);
-	if (!unquote_c_style(&uq, p, &endp)) {
-		if (*endp)
-			die("Garbage after path in: %s", command_buf.buf);
-		p = uq.buf;
-	}
+	parse_path_eol(&uq, p, "path");
+	p = uq.buf;
 
 	/* Git does not track empty, non-toplevel directories. */
 	if (S_ISDIR(mode) && is_empty_tree_oid(&oid) && *p) {
@@ -2367,48 +2414,29 @@ static void file_change_m(const char *p, struct branch *b)
 static void file_change_d(const char *p, struct branch *b)
 {
 	static struct strbuf uq = STRBUF_INIT;
-	const char *endp;
 
 	strbuf_reset(&uq);
-	if (!unquote_c_style(&uq, p, &endp)) {
-		if (*endp)
-			die("Garbage after path in: %s", command_buf.buf);
-		p = uq.buf;
-	}
+	parse_path_eol(&uq, p, "path");
+	p = uq.buf;
 	tree_content_remove(&b->branch_tree, p, NULL, 1);
 }
 
-static void file_change_cr(const char *s, struct branch *b, int rename)
+static void file_change_cr(const char *p, struct branch *b, int rename)
 {
-	const char *d;
+	const char *s, *d;
 	static struct strbuf s_uq = STRBUF_INIT;
 	static struct strbuf d_uq = STRBUF_INIT;
-	const char *endp;
 	struct tree_entry leaf;
 
 	strbuf_reset(&s_uq);
-	if (!unquote_c_style(&s_uq, s, &endp)) {
-		if (*endp != ' ')
-			die("Missing space after source: %s", command_buf.buf);
-	} else {
-		endp = strchr(s, ' ');
-		if (!endp)
-			die("Missing space after source: %s", command_buf.buf);
-		strbuf_add(&s_uq, s, endp - s);
-	}
+	parse_path_space(&s_uq, p, &p, "source");
 	s = s_uq.buf;
 
-	endp++;
-	if (!*endp)
+	if (!*p)
 		die("Missing dest: %s", command_buf.buf);
-
-	d = endp;
 	strbuf_reset(&d_uq);
-	if (!unquote_c_style(&d_uq, d, &endp)) {
-		if (*endp)
-			die("Garbage after dest in: %s", command_buf.buf);
-		d = d_uq.buf;
-	}
+	parse_path_eol(&d_uq, p, "dest");
+	d = d_uq.buf;
 
 	memset(&leaf, 0, sizeof(leaf));
 	if (rename)
@@ -3152,6 +3180,7 @@ static void print_ls(int mode, const unsigned char *hash, const char *path)
 
 static void parse_ls(const char *p, struct branch *b)
 {
+	static struct strbuf uq = STRBUF_INIT;
 	struct tree_entry *root = NULL;
 	struct tree_entry leaf = {NULL};
 
@@ -3168,16 +3197,9 @@ static void parse_ls(const char *p, struct branch *b)
 			root->versions[1].mode = S_IFDIR;
 		load_tree(root);
 	}
-	if (*p == '"') {
-		static struct strbuf uq = STRBUF_INIT;
-		const char *endp;
-		strbuf_reset(&uq);
-		if (unquote_c_style(&uq, p, &endp))
-			die("Invalid path: %s", command_buf.buf);
-		if (*endp)
-			die("Garbage after path in: %s", command_buf.buf);
-		p = uq.buf;
-	}
+	strbuf_reset(&uq);
+	parse_path_eol(&uq, p, "path");
+	p = uq.buf;
 	tree_content_get(root, p, &leaf, 1);
 	/*
 	 * A directory in preparation would have a sha1 of zero
