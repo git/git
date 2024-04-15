@@ -294,6 +294,8 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 	socket_path = argv[0];
 
+	if (!have_unix_sockets())
+		die(_("credential-cache--daemon unavailable; no unix socket support"));
 	if (!socket_path)
 		usage_with_options(usage, options);
 

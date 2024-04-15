@@ -447,7 +447,6 @@ ifeq ($(uname_S),Windows)
 	NO_POLL = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NO_IPV6 = YesPlease
-	NO_UNIX_SOCKETS = YesPlease
 	NO_SETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
@@ -661,7 +660,6 @@ ifeq ($(uname_S),MINGW)
 	NO_LIBGEN_H = YesPlease
 	NO_POLL = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
-	NO_UNIX_SOCKETS = YesPlease
 	NO_SETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease

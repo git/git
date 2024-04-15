@@ -8,6 +8,14 @@ test -z "$NO_UNIX_SOCKETS" || {
 	skip_all='skipping credential-cache tests, unix sockets not available'
 	test_done
 }
+if test_have_prereq MINGW
+then
+	service_running=$(sc query afunix | grep "4  RUNNING")
+	test -z "$service_running" || {
+		skip_all='skipping credential-cache tests, unix sockets not available'
+		test_done
+	}
+fi
 
 uname_s=$(uname -s)
 case $uname_s in
