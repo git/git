@@ -138,6 +138,7 @@ static int git_fetch_config(const char *k, const char *v,
 		int r = git_config_bool(k, v) ?
 			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
 		fetch_config->recurse_submodules = r;
+		return 0;
 	}
 
 	if (!strcmp(k, "submodule.fetchjobs")) {
