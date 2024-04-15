@@ -96,23 +96,54 @@ test_expect_perms () {
 	esac
 }
 
-for umask in 002 022
-do
-	test_expect_success POSIXPERM 'init: honors core.sharedRepository' '
+test_expect_reftable_perms () {
+	local umask="$1"
+	local shared="$2"
+	local expect="$3"
+
+	test_expect_success POSIXPERM "init: honors --shared=$shared with umask $umask" '
 		test_when_finished "rm -rf repo" &&
 		(
 			umask $umask &&
-			git init --shared=true repo &&
-			test 1 = "$(git -C repo config core.sharedrepository)"
+			git init --shared=$shared repo
 		) &&
-		test_expect_perms "-rw-rw-r--" repo/.git/reftable/tables.list &&
+		test_expect_perms "$expect" repo/.git/reftable/tables.list &&
 		for table in repo/.git/reftable/*.ref
 		do
-			test_expect_perms "-rw-rw-r--" "$table" ||
+			test_expect_perms "$expect" "$table" ||
 			return 1
 		done
 	'
-done
+
+	test_expect_success POSIXPERM "pack-refs: honors --shared=$shared with umask $umask" '
+		test_when_finished "rm -rf repo" &&
+		(
+			umask $umask &&
+			git init --shared=$shared repo &&
+			test_commit -C repo A &&
+			test_line_count = 3 repo/.git/reftable/tables.list &&
+			git -C repo pack-refs
+		) &&
+		test_expect_perms "$expect" repo/.git/reftable/tables.list &&
+		for table in repo/.git/reftable/*.ref
+		do
+			test_expect_perms "$expect" "$table" ||
+			return 1
+		done
+	'
+}
+
+test_expect_reftable_perms 002 umask "-rw-rw-r--"
+test_expect_reftable_perms 022 umask "-rw-r--r--"
+test_expect_reftable_perms 027 umask "-rw-r-----"
+
+test_expect_reftable_perms 002 group "-rw-rw-r--"
+test_expect_reftable_perms 022 group "-rw-rw-r--"
+test_expect_reftable_perms 027 group "-rw-rw----"
+
+test_expect_reftable_perms 002 world "-rw-rw-r--"
+test_expect_reftable_perms 022 world "-rw-rw-r--"
+test_expect_reftable_perms 027 world "-rw-rw-r--"
 
 test_expect_success 'clone: can clone reftable repository' '
 	test_when_finished "rm -rf repo clone" &&
@@ -449,26 +480,6 @@ test_expect_success 'pack-refs: does not prune non-table files' '
 	git -C repo pack-refs &&
 	test_path_is_file repo/.git/reftable/garbage
 '
-
-for umask in 002 022
-do
-	test_expect_success POSIXPERM 'pack-refs: honors core.sharedRepository' '
-		test_when_finished "rm -rf repo" &&
-		(
-			umask $umask &&
-			git init --shared=true repo &&
-			test_commit -C repo A &&
-			test_line_count = 3 repo/.git/reftable/tables.list
-		) &&
-		git -C repo pack-refs &&
-		test_expect_perms "-rw-rw-r--" repo/.git/reftable/tables.list &&
-		for table in repo/.git/reftable/*.ref
-		do
-			test_expect_perms "-rw-rw-r--" "$table" ||
-			return 1
-		done
-	'
-done
 
 test_expect_success 'packed-refs: writes are synced' '
 	test_when_finished "rm -rf repo" &&
