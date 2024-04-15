@@ -28,8 +28,6 @@ static int get_st_mode_bits(const char *path, int *mode)
 	return 0;
 }
 
-static char bad_path[] = "/bad-path/";
-
 static struct strbuf *get_pathname(void)
 {
 	static struct strbuf pathname_array[4] = {
@@ -57,21 +55,6 @@ static void strbuf_cleanup_path(struct strbuf *sb)
 	const char *path = cleanup_path(sb->buf);
 	if (path > sb->buf)
 		strbuf_remove(sb, 0, path - sb->buf);
-}
-
-char *mksnpath(char *buf, size_t n, const char *fmt, ...)
-{
-	va_list args;
-	unsigned len;
-
-	va_start(args, fmt);
-	len = vsnprintf(buf, n, fmt, args);
-	va_end(args);
-	if (len >= n) {
-		strlcpy(buf, bad_path, n);
-		return buf;
-	}
-	return (char *)cleanup_path(buf);
 }
 
 static int dir_prefix(const char *buf, const char *dir)

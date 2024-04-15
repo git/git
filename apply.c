@@ -4448,6 +4448,7 @@ static int create_one_file(struct apply_state *state,
 			   const char *buf,
 			   unsigned long size)
 {
+	char *newpath = NULL;
 	int res;
 
 	if (state->cached)
@@ -4509,24 +4510,26 @@ static int create_one_file(struct apply_state *state,
 		unsigned int nr = getpid();
 
 		for (;;) {
-			char newpath[PATH_MAX];
-			mksnpath(newpath, sizeof(newpath), "%s~%u", path, nr);
+			newpath = mkpathdup("%s~%u", path, nr);
 			res = try_create_file(state, newpath, mode, buf, size);
 			if (res < 0)
-				return -1;
+				goto out;
 			if (!res) {
 				if (!rename(newpath, path))
-					return 0;
+					goto out;
 				unlink_or_warn(newpath);
 				break;
 			}
 			if (errno != EEXIST)
 				break;
 			++nr;
+			FREE_AND_NULL(newpath);
 		}
 	}
-	return error_errno(_("unable to write file '%s' mode %o"),
-			   path, mode);
+	res = error_errno(_("unable to write file '%s' mode %o"), path, mode);
+out:
+	free(newpath);
+	return res;
 }
 
 static int add_conflicted_stages_file(struct apply_state *state,

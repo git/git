@@ -92,7 +92,6 @@ cat >.vscode/settings.json.new <<\EOF ||
         "isexe",
         "iskeychar",
         "kompare",
-        "mksnpath",
         "mktag",
         "mktree",
         "mmblob",
