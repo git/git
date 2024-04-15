@@ -357,8 +357,27 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 		if (unlink(dest->buf) && errno != ENOENT)
 			die_errno(_("failed to unlink '%s'"), dest->buf);
 		if (!option_no_hardlinks) {
-			if (!link(src->buf, dest->buf))
+			if (!link(src->buf, dest->buf)) {
+				struct stat st;
+
+				/*
+				 * Sanity-check whether the created hardlink
+				 * actually links to the expected file now. This
+				 * catches time-of-check-time-of-use bugs in
+				 * case the source file was meanwhile swapped.
+				 */
+				if (lstat(dest->buf, &st))
+					die(_("hardlink cannot be checked at '%s'"), dest->buf);
+				if (st.st_mode != iter->st.st_mode ||
+				    st.st_ino != iter->st.st_ino ||
+				    st.st_dev != iter->st.st_dev ||
+				    st.st_size != iter->st.st_size ||
+				    st.st_uid != iter->st.st_uid ||
+				    st.st_gid != iter->st.st_gid)
+					die(_("hardlink different from source at '%s'"), dest->buf);
+
 				continue;
+			}
 			if (option_local > 0)
 				die_errno(_("failed to create link '%s'"), dest->buf);
 			option_no_hardlinks = 1;
