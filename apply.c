@@ -4665,8 +4665,11 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 			return error_errno(_("cannot open %s"), namebuf);
 	}
 	rej = fdopen(fd, "w");
-	if (!rej)
-		return error_errno(_("cannot open %s"), namebuf);
+	if (!rej) {
+		error_errno(_("cannot open %s"), namebuf);
+		close(fd);
+		return -1;
+	}
 
 	/* Normal git tools never deal with .rej, so do not pretend
 	 * this is a git patch by saying --git or giving extended
