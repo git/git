@@ -321,6 +321,20 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 	struct dir_iterator *iter;
 	int iter_status;
 
+	/*
+	 * Refuse copying directories by default which aren't owned by us. The
+	 * code that performs either the copying or hardlinking is not prepared
+	 * to handle various edge cases where an adversary may for example
+	 * racily swap out files for symlinks. This can cause us to
+	 * inadvertently use the wrong source file.
+	 *
+	 * Furthermore, even if we were prepared to handle such races safely,
+	 * creating hardlinks across user boundaries is an inherently unsafe
+	 * operation as the hardlinked files can be rewritten at will by the
+	 * potentially-untrusted user. We thus refuse to do so by default.
+	 */
+	die_upon_dubious_ownership(NULL, NULL, src_repo);
+
 	mkdir_if_missing(dest->buf, 0777);
 
 	iter = dir_iterator_begin(src->buf, DIR_ITERATOR_PEDANTIC);
