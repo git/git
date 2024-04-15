@@ -198,9 +198,10 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 
 	pair_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS, &m->chunk_large_offsets,
 		   &m->chunk_large_offsets_len);
-	pair_chunk(cf, MIDX_CHUNKID_BITMAPPEDPACKS,
-		   (const unsigned char **)&m->chunk_bitmapped_packs,
-		   &m->chunk_bitmapped_packs_len);
+	if (git_env_bool("GIT_TEST_MIDX_READ_BTMP", 1))
+		pair_chunk(cf, MIDX_CHUNKID_BITMAPPEDPACKS,
+			   (const unsigned char **)&m->chunk_bitmapped_packs,
+			   &m->chunk_bitmapped_packs_len);
 
 	if (git_env_bool("GIT_TEST_MIDX_READ_RIDX", 1))
 		pair_chunk(cf, MIDX_CHUNKID_REVINDEX, &m->chunk_revindex,
