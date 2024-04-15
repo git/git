@@ -441,16 +441,21 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 * (B) on failure, rollback the real index.
 	 */
 	if (all || (also && pathspec.nr)) {
+		char *ps_matched = xcalloc(pathspec.nr, 1);
 		repo_hold_locked_index(the_repository, &index_lock,
 				       LOCK_DIE_ON_ERROR);
 		add_files_to_cache(the_repository, also ? prefix : NULL,
-				   &pathspec, 0, 0);
+				   &pathspec, ps_matched, 0, 0);
+		if (!all && report_path_error(ps_matched, &pathspec))
+			exit(128);
+
 		refresh_cache_or_die(refresh_flags);
 		cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, 0))
 			die(_("unable to write new index file"));
 		commit_style = COMMIT_NORMAL;
 		ret = get_lock_file_path(&index_lock);
+		free(ps_matched);
 		goto out;
 	}
 

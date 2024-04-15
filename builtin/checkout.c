@@ -882,7 +882,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			 * entries in the index.
 			 */
 
-			add_files_to_cache(the_repository, NULL, NULL, 0, 0);
+			add_files_to_cache(the_repository, NULL, NULL, NULL, 0,
+					   0);
 			init_merge_options(&o, the_repository);
 			o.verbosity = 0;
 			work = write_in_core_index_as_tree(the_repository);
