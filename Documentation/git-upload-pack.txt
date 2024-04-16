@@ -71,6 +71,21 @@ This is implemented by having `upload-pack` internally set the
 you trust it), you can explicitly set `GIT_NO_LAZY_FETCH` to
 `0`.
 
+SECURITY
+--------
+
+Most Git commands should not be run in an untrusted `.git` directory
+(see the section `SECURITY` in linkgit:git[1]). `upload-pack` tries to
+avoid any dangerous configuration options or hooks from the repository
+it's serving, making it safe to clone an untrusted directory and run
+commands on the resulting clone.
+
+For an extra level of safety, you may be able to run `upload-pack` as an
+alternate user. The details will be platform dependent, but on many
+systems you can run:
+
+    git clone --no-local --upload-pack='sudo -u nobody git-upload-pack' ...
+
 SEE ALSO
 --------
 linkgit:gitnamespaces[7]
