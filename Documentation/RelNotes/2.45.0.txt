@@ -84,6 +84,8 @@ UI, Workflows & Features
    diagnose a pathspec element that did not match any files in certain
    situations, unlike "git add <pathspec>" did.
 
+ * The userdiff patterns for C# has been updated.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -172,6 +174,16 @@ Performance, Internal Implementation, Development Support etc.
  * The "shared repository" test in the t0610 reftable test failed
    under restrictive umask setting (e.g. 007), which has been
    corrected.
+
+ * Document and apply workaround for a buggy version of dash that
+   mishandles "local var=val" construct.
+
+ * The codepaths that reach date_mode_from_type() have been updated to
+   pass "struct date_mode" by value to make them thread safe.
+
+ * The strategy to compact multiple tables of reftables after many
+   operations accumulate many entries has been improved to avoid
+   accumulating too many tables uncollected.
 
 
 Fixes since v2.44
@@ -381,6 +393,15 @@ Fixes since v2.44
    configuration variable used to leak, which has been corrected.
    (merge 0e0fefb29f jc/unleak-core-excludesfile later to maint).
 
+ * vreportf(), which is usede by error() and friends, has been taught
+   to give the error message printf-format string when its vsnprintf()
+   call fails, instead of showing nothing useful to identify the
+   nature of the error.
+   (merge c63adab961 rs/usage-fallback-to-show-message-format later to maint).
+
+ * Adjust to an upcoming changes to GNU make that breaks our Makefiles.
+   (merge 227b8fd902 tb/make-indent-conditional-with-non-spaces later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
    (merge 83e6eb7d7a ba/credential-test-clean-fix later to maint).
@@ -408,3 +429,4 @@ Fixes since v2.44
    (merge 8b68b48d5c ds/typofix-core-config-doc later to maint).
    (merge 39bb692152 rs/imap-send-use-xsnprintf later to maint).
    (merge 8d320cec60 jc/t2104-style-fixes later to maint).
+   (merge b4454d5a7b pw/t3428-cleanup later to maint).
