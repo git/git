@@ -55,6 +55,22 @@ ENVIRONMENT
 	admins may need to configure some transports to allow this
 	variable to be passed. See the discussion in linkgit:git[1].
 
+`GIT_NO_LAZY_FETCH`::
+	When cloning or fetching from a partial repository (i.e., one
+	itself cloned with `--filter`), the server-side `upload-pack`
+	may need to fetch extra objects from its upstream in order to
+	complete the request. By default, `upload-pack` will refuse to
+	perform such a lazy fetch, because `git fetch` may run arbitrary
+	commands specified in configuration and hooks of the source
+	repository (and `upload-pack` tries to be safe to run even in
+	untrusted `.git` directories).
++
+This is implemented by having `upload-pack` internally set the
+`GIT_NO_LAZY_FETCH` variable to `1`. If you want to override it
+(because you are fetching from a partial clone, and you are sure
+you trust it), you can explicitly set `GIT_NO_LAZY_FETCH` to
+`0`.
+
 SEE ALSO
 --------
 linkgit:gitnamespaces[7]
