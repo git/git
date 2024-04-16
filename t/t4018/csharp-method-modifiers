@@ -1,0 +1,13 @@
+using System.Threading.Tasks;
+
+class Example
+{
+    static internal async Task Method(int RIGHT)
+    {
+        // Filler
+        // Filler
+        
+        // ChangeMe
+        await Task.Delay(1);
+    }
+}
