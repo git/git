@@ -385,7 +385,7 @@ test_commit () {
 		shift
 	done &&
 	indir=${indir:+"$indir"/} &&
-	local file=${2:-"$1.t"} &&
+	local file="${2:-"$1.t"}" &&
 	if test -n "$append"
 	then
 		$echo "${3-$1}" >>"$indir$file"
@@ -1748,7 +1748,7 @@ test_oid () {
 # Insert a slash into an object ID so it can be used to reference a location
 # under ".git/objects".  For example, "deadbeef..." becomes "de/adbeef..".
 test_oid_to_path () {
-	local basename=${1#??}
+	local basename="${1#??}"
 	echo "${1%$basename}/$basename"
 }
 
@@ -1765,7 +1765,7 @@ test_parse_ls_tree_oids () {
 # Choose a port number based on the test script's number and store it in
 # the given variable name, unless that variable already contains a number.
 test_set_port () {
-	local var=$1 port
+	local var="$1" port
 
 	if test $# -ne 1 || test -z "$var"
 	then
@@ -1840,7 +1840,7 @@ test_subcommand () {
 		shift
 	fi
 
-	local expr=$(printf '"%s",' "$@")
+	local expr="$(printf '"%s",' "$@")"
 	expr="${expr%,}"
 
 	if test -n "$negate"
@@ -1930,7 +1930,7 @@ test_readlink () {
 # An optional increment to the magic timestamp may be specified as second
 # argument.
 test_set_magic_mtime () {
-	local inc=${2:-0} &&
+	local inc="${2:-0}" &&
 	local mtime=$((1234567890 + $inc)) &&
 	test-tool chmtime =$mtime "$1" &&
 	test_is_magic_mtime "$1" $inc
@@ -1943,7 +1943,7 @@ test_set_magic_mtime () {
 # argument.  Usually, this should be the same increment which was used for
 # the associated test_set_magic_mtime.
 test_is_magic_mtime () {
-	local inc=${2:-0} &&
+	local inc="${2:-0}" &&
 	local mtime=$((1234567890 + $inc)) &&
 	echo $mtime >.git/test-mtime-expect &&
 	test-tool chmtime --get "$1" >.git/test-mtime-actual &&

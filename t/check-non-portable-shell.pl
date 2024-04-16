@@ -47,6 +47,8 @@ while (<>) {
 	/\bgrep\b.*--file\b/ and err 'grep --file FILE is not portable (use grep -f FILE)';
 	/\b[ef]grep\b/ and err 'egrep/fgrep obsolescent (use grep -E/-F)';
 	/\bexport\s+[A-Za-z0-9_]*=/ and err '"export FOO=bar" is not portable (use FOO=bar && export FOO)';
+	/\blocal\s+[A-Za-z0-9_]*=\$([A-Za-z0-9_{]|[(][^(])/ and
+		err q(quote "$val" in 'local var=$val');
 	/^\s*([A-Z0-9_]+=(\w*|(["']).*?\3)\s+)+(\w+)/ and exists($func{$4}) and
 		err '"FOO=bar shell_func" assignment extends beyond "shell_func"';
 	$line = '';

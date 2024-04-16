@@ -79,7 +79,7 @@ commit2_oid () {
 }
 
 del_sigcommit () {
-    local delete=$1
+    local delete="$1"
 
     if test "$delete" = "sha256" ; then
 	local pattern="gpgsig-sha256"
@@ -91,8 +91,8 @@ del_sigcommit () {
 
 
 del_sigtag () {
-    local storage=$1
-    local delete=$2
+    local storage="$1"
+    local delete="$2"
 
     if test "$storage" = "$delete" ; then
 	local pattern="trailer"
@@ -181,7 +181,7 @@ done
 cd "$base"
 
 compare_oids () {
-    test "$#" = 5 && { local PREREQ=$1; shift; } || PREREQ=
+    test "$#" = 5 && { local PREREQ="$1"; shift; } || PREREQ=
     local type="$1"
     local name="$2"
     local sha1_oid="$3"
@@ -193,8 +193,8 @@ compare_oids () {
 
     git --git-dir=repo-sha1/.git rev-parse --output-object-format=sha256 ${sha1_oid} > ${name}_sha1_sha256_found
     git --git-dir=repo-sha256/.git rev-parse --output-object-format=sha1 ${sha256_oid} > ${name}_sha256_sha1_found
-    local sha1_sha256_oid=$(cat ${name}_sha1_sha256_found)
-    local sha256_sha1_oid=$(cat ${name}_sha256_sha1_found)
+    local sha1_sha256_oid="$(cat ${name}_sha1_sha256_found)"
+    local sha256_sha1_oid="$(cat ${name}_sha256_sha1_found)"
 
     test_expect_success $PREREQ "Verify ${type} ${name}'s sha1 oid" '
 	git --git-dir=repo-sha256/.git rev-parse --output-object-format=sha1 ${sha256_oid} > ${name}_sha1 &&

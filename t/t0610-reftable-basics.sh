@@ -83,7 +83,7 @@ test_expect_success 'init: reinitializing reftable with files backend fails' '
 test_expect_perms () {
 	local perms="$1"
 	local file="$2"
-	local actual=$(ls -l "$file") &&
+	local actual="$(ls -l "$file")" &&
 
 	case "$actual" in
 	$perms*)
