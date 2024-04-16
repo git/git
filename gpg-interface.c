@@ -483,7 +483,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 
 	if (sigc->payload_timestamp)
 		strbuf_addf(&verify_time, "-Overify-time=%s",
-			show_date(sigc->payload_timestamp, 0, &verify_date_mode));
+			show_date(sigc->payload_timestamp, 0, verify_date_mode));
 
 	/* Find the principal from the signers */
 	strvec_pushl(&ssh_keygen.args, fmt->program,

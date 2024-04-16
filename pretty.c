@@ -428,7 +428,7 @@ static void add_rfc2047(struct strbuf *sb, const char *line, size_t len,
 }
 
 const char *show_ident_date(const struct ident_split *ident,
-			    const struct date_mode *mode)
+			    struct date_mode mode)
 {
 	timestamp_t date = 0;
 	long tz = 0;
@@ -592,7 +592,7 @@ void pp_user_info(struct pretty_print_context *pp,
 	switch (pp->fmt) {
 	case CMIT_FMT_MEDIUM:
 		strbuf_addf(sb, "Date:   %s\n",
-			    show_ident_date(&ident, &pp->date_mode));
+			    show_ident_date(&ident, pp->date_mode));
 		break;
 	case CMIT_FMT_EMAIL:
 	case CMIT_FMT_MBOXRD:
@@ -601,7 +601,7 @@ void pp_user_info(struct pretty_print_context *pp,
 		break;
 	case CMIT_FMT_FULLER:
 		strbuf_addf(sb, "%sDate: %s\n", what,
-			    show_ident_date(&ident, &pp->date_mode));
+			    show_ident_date(&ident, pp->date_mode));
 		break;
 	default:
 		/* notin' */
@@ -775,7 +775,7 @@ static int mailmap_name(const char **email, size_t *email_len,
 
 static size_t format_person_part(struct strbuf *sb, char part,
 				 const char *msg, int len,
-				 const struct date_mode *dmode)
+				 struct date_mode dmode)
 {
 	/* currently all placeholders have same length */
 	const int placeholder_len = 2;
@@ -1034,7 +1034,7 @@ static void rewrap_message_tail(struct strbuf *sb,
 static int format_reflog_person(struct strbuf *sb,
 				char part,
 				struct reflog_walk_info *log,
-				const struct date_mode *dmode)
+				struct date_mode dmode)
 {
 	const char *ident;
 
@@ -1602,7 +1602,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			if (c->pretty_ctx->reflog_info)
 				get_reflog_selector(sb,
 						    c->pretty_ctx->reflog_info,
-						    &c->pretty_ctx->date_mode,
+						    c->pretty_ctx->date_mode,
 						    c->pretty_ctx->date_mode_explicit,
 						    (placeholder[1] == 'd'));
 			return 2;
@@ -1617,7 +1617,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			return format_reflog_person(sb,
 						    placeholder[1],
 						    c->pretty_ctx->reflog_info,
-						    &c->pretty_ctx->date_mode);
+						    c->pretty_ctx->date_mode);
 		}
 		return 0;	/* unknown %g placeholder */
 	case 'N':
@@ -1712,11 +1712,11 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	case 'a':	/* author ... */
 		return format_person_part(sb, placeholder[1],
 				   msg + c->author.off, c->author.len,
-				   &c->pretty_ctx->date_mode);
+				   c->pretty_ctx->date_mode);
 	case 'c':	/* committer ... */
 		return format_person_part(sb, placeholder[1],
 				   msg + c->committer.off, c->committer.len,
-				   &c->pretty_ctx->date_mode);
+				   c->pretty_ctx->date_mode);
 	case 'e':	/* encoding */
 		if (c->commit_encoding)
 			strbuf_addstr(sb, c->commit_encoding);

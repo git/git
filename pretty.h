@@ -167,7 +167,7 @@ int format_set_trailers_options(struct process_trailer_options *opts,
  * a well-known sentinel date if they appear bogus.
  */
 const char *show_ident_date(const struct ident_split *id,
-			    const struct date_mode *mode);
+			    struct date_mode mode);
 
 
 #endif /* PRETTY_H */
