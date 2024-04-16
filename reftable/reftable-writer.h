@@ -46,6 +46,9 @@ struct reftable_write_options {
 	 *   is a single line, and add '\n' if missing.
 	 */
 	unsigned exact_log_message : 1;
+
+	/* boolean: Prevent auto-compaction of tables. */
+	unsigned disable_auto_compact : 1;
 };
 
 /* reftable_block_stats holds statistics for a single block type */
