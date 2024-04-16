@@ -629,6 +629,7 @@ test_expect_success '--write-midx with preferred bitmap tips' '
 		git log --format="create refs/tags/%s/%s %H" HEAD >refs &&
 		git update-ref --stdin <refs &&
 
+		GIT_TEST_MULTI_PACK_INDEX=0 \
 		git repack --write-midx --write-bitmap-index &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
@@ -749,6 +750,7 @@ test_expect_success '--write-midx with --pack-kept-objects' '
 		keep="$objdir/pack/pack-$one.keep" &&
 		touch "$keep" &&
 
+		GIT_TEST_MULTI_PACK_INDEX=0 \
 		git repack --write-midx --write-bitmap-index --geometric=2 -d \
 			--pack-kept-objects &&
 
