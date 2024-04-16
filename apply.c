@@ -4612,7 +4612,7 @@ static int write_out_one_result(struct apply_state *state,
 static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 {
 	FILE *rej;
-	char namebuf[PATH_MAX];
+	char *namebuf;
 	struct fragment *frag;
 	int fd, cnt = 0;
 	struct strbuf sb = STRBUF_INIT;
@@ -4645,30 +4645,29 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 		say_patch_name(stderr, sb.buf, patch);
 	strbuf_release(&sb);
 
-	cnt = strlen(patch->new_name);
-	if (ARRAY_SIZE(namebuf) <= cnt + 5) {
-		cnt = ARRAY_SIZE(namebuf) - 5;
-		warning(_("truncating .rej filename to %.*s.rej"),
-			cnt - 1, patch->new_name);
-	}
-	memcpy(namebuf, patch->new_name, cnt);
-	memcpy(namebuf + cnt, ".rej", 5);
+	namebuf = xstrfmt("%s.rej", patch->new_name);
 
 	fd = open(namebuf, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (fd < 0) {
-		if (errno != EEXIST)
-			return error_errno(_("cannot open %s"), namebuf);
-		if (unlink(namebuf))
-			return error_errno(_("cannot unlink '%s'"), namebuf);
+		if (errno != EEXIST) {
+			error_errno(_("cannot open %s"), namebuf);
+			goto error;
+		}
+		if (unlink(namebuf)) {
+			error_errno(_("cannot unlink '%s'"), namebuf);
+			goto error;
+		}
 		fd = open(namebuf, O_CREAT | O_EXCL | O_WRONLY, 0666);
-		if (fd < 0)
-			return error_errno(_("cannot open %s"), namebuf);
+		if (fd < 0) {
+			error_errno(_("cannot open %s"), namebuf);
+			goto error;
+		}
 	}
 	rej = fdopen(fd, "w");
 	if (!rej) {
 		error_errno(_("cannot open %s"), namebuf);
 		close(fd);
-		return -1;
+		goto error;
 	}
 
 	/* Normal git tools never deal with .rej, so do not pretend
@@ -4693,6 +4692,8 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 			fputc('\n', rej);
 	}
 	fclose(rej);
+error:
+	free(namebuf);
 	return -1;
 }
 
