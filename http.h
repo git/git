@@ -175,6 +175,9 @@ int http_get_file(const char *url, const char *filename,
 
 int http_fetch_ref(const char *base, struct ref *ref);
 
+struct curl_slist *http_append_auth_header(const struct credential *c,
+					   struct curl_slist *headers);
+
 /* Helpers for fetching packs */
 int http_get_info_packs(const char *base_url,
 			struct packed_git **packs_head);

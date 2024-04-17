@@ -931,7 +931,7 @@ static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_rece
 		if (err != HTTP_OK)
 			return -1;
 
-		if (results.auth_avail & CURLAUTH_GSSNEGOTIATE)
+		if (results.auth_avail & CURLAUTH_GSSNEGOTIATE || http_auth.authtype)
 			needs_100_continue = 1;
 	}
 
@@ -941,6 +941,8 @@ retry:
 	headers = curl_slist_append(headers, rpc->hdr_accept);
 	headers = curl_slist_append(headers, needs_100_continue ?
 		"Expect: 100-continue" : "Expect:");
+
+	headers = http_append_auth_header(&http_auth, headers);
 
 	/* Add Accept-Language header */
 	if (rpc->hdr_accept_language)

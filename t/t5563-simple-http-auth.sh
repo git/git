@@ -74,6 +74,7 @@ test_expect_success 'access using basic auth' '
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
 
 	expect_credential_query get <<-EOF &&
+	capability[]=authtype
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=Basic realm="example.com"
@@ -84,6 +85,43 @@ test_expect_success 'access using basic auth' '
 	host=$HTTPD_DEST
 	username=alice
 	password=secret-passwd
+	EOF
+'
+
+test_expect_success 'access using basic auth via authtype' '
+	test_when_finished "per_test_cleanup" &&
+
+	set_credential_reply get <<-EOF &&
+	capability[]=authtype
+	authtype=Basic
+	credential=YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	EOF
+
+	# Basic base64(alice:secret-passwd)
+	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
+	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	EOF
+
+	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
+	WWW-Authenticate: Basic realm="example.com"
+	EOF
+
+	test_config_global credential.helper test-helper &&
+	GIT_CURL_VERBOSE=1 git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
+
+	expect_credential_query get <<-EOF &&
+	capability[]=authtype
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=Basic realm="example.com"
+	EOF
+
+	expect_credential_query store <<-EOF
+	capability[]=authtype
+	authtype=Basic
+	credential=YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	protocol=http
+	host=$HTTPD_DEST
 	EOF
 '
 
@@ -108,6 +146,7 @@ test_expect_success 'access using basic auth invalid credentials' '
 	test_must_fail git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
 
 	expect_credential_query get <<-EOF &&
+	capability[]=authtype
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=Basic realm="example.com"
@@ -145,6 +184,7 @@ test_expect_success 'access using basic auth with extra challenges' '
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
 
 	expect_credential_query get <<-EOF &&
+	capability[]=authtype
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -183,6 +223,7 @@ test_expect_success 'access using basic auth mixed-case wwwauth header name' '
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
 
 	expect_credential_query get <<-EOF &&
+	capability[]=authtype
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=foobar param1="value1" param2="value2"
@@ -226,6 +267,7 @@ test_expect_success 'access using basic auth with wwwauth header continuations' 
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
 
 	expect_credential_query get <<-EOF &&
+	capability[]=authtype
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -271,6 +313,7 @@ test_expect_success 'access using basic auth with wwwauth header empty continuat
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
 
 	expect_credential_query get <<-EOF &&
+	capability[]=authtype
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -312,6 +355,7 @@ test_expect_success 'access using basic auth with wwwauth header mixed line-endi
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
 
 	expect_credential_query get <<-EOF &&
+	capability[]=authtype
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -323,6 +367,95 @@ test_expect_success 'access using basic auth with wwwauth header mixed line-endi
 	host=$HTTPD_DEST
 	username=alice
 	password=secret-passwd
+	EOF
+'
+
+test_expect_success 'access using bearer auth' '
+	test_when_finished "per_test_cleanup" &&
+
+	set_credential_reply get <<-EOF &&
+	capability[]=authtype
+	authtype=Bearer
+	credential=YS1naXQtdG9rZW4=
+	EOF
+
+	# Basic base64(a-git-token)
+	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
+	Bearer YS1naXQtdG9rZW4=
+	EOF
+
+	CHALLENGE="$HTTPD_ROOT_PATH/custom-auth.challenge" &&
+
+	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
+	WWW-Authenticate: FooBar param1="value1" param2="value2"
+	WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
+	WWW-Authenticate: Basic realm="example.com"
+	EOF
+
+	test_config_global credential.helper test-helper &&
+	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
+
+	expect_credential_query get <<-EOF &&
+	capability[]=authtype
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=FooBar param1="value1" param2="value2"
+	wwwauth[]=Bearer authorize_uri="id.example.com" p=1 q=0
+	wwwauth[]=Basic realm="example.com"
+	EOF
+
+	expect_credential_query store <<-EOF
+	capability[]=authtype
+	authtype=Bearer
+	credential=YS1naXQtdG9rZW4=
+	protocol=http
+	host=$HTTPD_DEST
+	EOF
+'
+
+test_expect_success 'access using bearer auth with invalid credentials' '
+	test_when_finished "per_test_cleanup" &&
+
+	set_credential_reply get <<-EOF &&
+	capability[]=authtype
+	authtype=Bearer
+	credential=incorrect-token
+	EOF
+
+	# Basic base64(a-git-token)
+	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
+	Bearer YS1naXQtdG9rZW4=
+	EOF
+
+	CHALLENGE="$HTTPD_ROOT_PATH/custom-auth.challenge" &&
+
+	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
+	WWW-Authenticate: FooBar param1="value1" param2="value2"
+	WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
+	WWW-Authenticate: Basic realm="example.com"
+	EOF
+
+	test_config_global credential.helper test-helper &&
+	test_must_fail git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
+
+	expect_credential_query get <<-EOF &&
+	capability[]=authtype
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=FooBar param1="value1" param2="value2"
+	wwwauth[]=Bearer authorize_uri="id.example.com" p=1 q=0
+	wwwauth[]=Basic realm="example.com"
+	EOF
+
+	expect_credential_query erase <<-EOF
+	capability[]=authtype
+	authtype=Bearer
+	credential=incorrect-token
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=FooBar param1="value1" param2="value2"
+	wwwauth[]=Bearer authorize_uri="id.example.com" p=1 q=0
+	wwwauth[]=Basic realm="example.com"
 	EOF
 '
 
