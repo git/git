@@ -1452,4 +1452,35 @@ test_expect_success 'recursive clone respects -q' '
 	test_must_be_empty actual
 '
 
+test_expect_success '`submodule init` and `init.templateDir`' '
+	mkdir -p tmpl/hooks &&
+	write_script tmpl/hooks/post-checkout <<-EOF &&
+	echo HOOK-RUN >&2
+	echo I was here >hook.run
+	exit 1
+	EOF
+
+	test_config init.templateDir "$(pwd)/tmpl" &&
+	test_when_finished \
+		"git config --global --unset init.templateDir || true" &&
+	(
+		sane_unset GIT_TEMPLATE_DIR &&
+		NO_SET_GIT_TEMPLATE_DIR=t &&
+		export NO_SET_GIT_TEMPLATE_DIR &&
+
+		git config --global init.templateDir "$(pwd)/tmpl" &&
+		test_must_fail git submodule \
+			add "$submodurl" sub-global 2>err &&
+		git config --global --unset init.templateDir &&
+		grep HOOK-RUN err &&
+		test_path_is_file sub-global/hook.run &&
+
+		git config init.templateDir "$(pwd)/tmpl" &&
+		git submodule add "$submodurl" sub-local 2>err &&
+		git config --unset init.templateDir &&
+		! grep HOOK-RUN err &&
+		test_path_is_missing sub-local/hook.run
+	)
+'
+
 test_done

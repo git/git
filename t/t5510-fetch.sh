@@ -1250,6 +1250,30 @@ EOF
 	test_cmp fatal-expect fatal-actual
 '
 
+test_expect_success SYMLINKS 'clone does not get confused by a D/F conflict' '
+	git init df-conflict &&
+	(
+		cd df-conflict &&
+		ln -s .git a &&
+		git add a &&
+		test_tick &&
+		git commit -m symlink &&
+		test_commit a- &&
+		rm a &&
+		mkdir -p a/hooks &&
+		write_script a/hooks/post-checkout <<-EOF &&
+		echo WHOOPSIE >&2
+		echo whoopsie >"$TRASH_DIRECTORY"/whoops
+		EOF
+		git add a/hooks/post-checkout &&
+		test_tick &&
+		git commit -m post-checkout
+	) &&
+	git clone df-conflict clone 2>err &&
+	! grep WHOOPS err &&
+	test_path_is_missing whoops
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
