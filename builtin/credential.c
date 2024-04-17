@@ -17,6 +17,12 @@ int cmd_credential(int argc, const char **argv, const char *prefix UNUSED)
 		usage(usage_msg);
 	op = argv[1];
 
+	if (!strcmp(op, "capability")) {
+		credential_set_all_capabilities(&c, CREDENTIAL_OP_INITIAL);
+		credential_announce_capabilities(&c, stdout);
+		return 0;
+	}
+
 	if (credential_read(&c, stdin, CREDENTIAL_OP_INITIAL) < 0)
 		die("unable to read credential from stdin");
 

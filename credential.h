@@ -254,6 +254,12 @@ void credential_set_all_capabilities(struct credential *c,
 void credential_clear_secrets(struct credential *c);
 
 /**
+ * Print a list of supported capabilities and version numbers to standard
+ * output.
+ */
+void credential_announce_capabilities(struct credential *c, FILE *fp);
+
+/**
  * Prepares the credential for the next iteration of the helper protocol by
  * updating the state headers to send with the ones read by the last iteration
  * of the protocol.

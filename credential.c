@@ -72,6 +72,17 @@ void credential_set_all_capabilities(struct credential *c,
 	credential_set_capability(&c->capa_state, op_type);
 }
 
+static void announce_one(struct credential_capability *cc, const char *name, FILE *fp) {
+	if (cc->request_initial)
+		fprintf(fp, "capability %s\n", name);
+}
+
+void credential_announce_capabilities(struct credential *c, FILE *fp) {
+	fprintf(fp, "version 0\n");
+	announce_one(&c->capa_authtype, "authtype", fp);
+	announce_one(&c->capa_state, "state", fp);
+}
+
 int credential_match(const struct credential *want,
 		     const struct credential *have, int match_password)
 {
