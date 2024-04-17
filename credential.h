@@ -93,6 +93,27 @@
  * -----------------------------------------------------------------------
  */
 
+/*
+ * These values define the kind of operation we're performing and the
+ * capabilities at each stage.  The first is either an external request (via git
+ * credential fill) or an internal request (e.g., via the HTTP) code.  The
+ * second is the call to the credential helper, and the third is the response
+ * we're providing.
+ *
+ * At each stage, we will emit the capability only if the previous stage
+ * supported it.
+ */
+enum credential_op_type {
+	CREDENTIAL_OP_INITIAL  = 1,
+	CREDENTIAL_OP_HELPER   = 2,
+	CREDENTIAL_OP_RESPONSE = 3,
+};
+
+struct credential_capability {
+	unsigned request_initial:1,
+		 request_helper:1,
+		 response:1;
+};
 
 /**
  * This struct represents a single username/password combination
@@ -136,6 +157,8 @@ struct credential {
 		 use_http_path:1,
 		 username_from_proto:1;
 
+	struct credential_capability capa_authtype;
+
 	char *username;
 	char *password;
 	char *credential;
@@ -174,8 +197,11 @@ void credential_clear(struct credential *);
  * returns, the username and password fields of the credential are
  * guaranteed to be non-NULL. If an error occurs, the function will
  * die().
+ *
+ * If all_capabilities is set, this is an internal user that is prepared
+ * to deal with all known capabilities, and we should advertise that fact.
  */
-void credential_fill(struct credential *);
+void credential_fill(struct credential *, int all_capabilities);
 
 /**
  * Inform the credential subsystem that the provided credentials
@@ -198,8 +224,16 @@ void credential_approve(struct credential *);
  */
 void credential_reject(struct credential *);
 
-int credential_read(struct credential *, FILE *);
-void credential_write(const struct credential *, FILE *);
+/**
+ * Enable all of the supported credential flags in this credential.
+ */
+void credential_set_all_capabilities(struct credential *c,
+				     enum credential_op_type op_type);
+
+int credential_read(struct credential *, FILE *,
+		    enum credential_op_type);
+void credential_write(const struct credential *, FILE *,
+		      enum credential_op_type);
 
 /*
  * Parse a url into a credential struct, replacing any existing contents.

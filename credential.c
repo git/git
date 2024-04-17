@@ -34,6 +34,29 @@ void credential_clear(struct credential *c)
 	credential_init(c);
 }
 
+static void credential_set_capability(struct credential_capability *capa,
+				      enum credential_op_type op_type)
+{
+	switch (op_type) {
+	case CREDENTIAL_OP_INITIAL:
+		capa->request_initial = 1;
+		break;
+	case CREDENTIAL_OP_HELPER:
+		capa->request_helper = 1;
+		break;
+	case CREDENTIAL_OP_RESPONSE:
+		capa->response = 1;
+		break;
+	}
+}
+
+
+void credential_set_all_capabilities(struct credential *c,
+				     enum credential_op_type op_type)
+{
+	credential_set_capability(&c->capa_authtype, op_type);
+}
+
 int credential_match(const struct credential *want,
 		     const struct credential *have, int match_password)
 {
@@ -210,7 +233,26 @@ static void credential_getpass(struct credential *c)
 						 PROMPT_ASKPASS);
 }
 
-int credential_read(struct credential *c, FILE *fp)
+static int credential_has_capability(const struct credential_capability *capa,
+				     enum credential_op_type op_type)
+{
+	/*
+	 * We're checking here if each previous step indicated that we had the
+	 * capability.  If it did, then we want to pass it along; conversely, if
+	 * it did not, we don't want to report that to our caller.
+	 */
+	switch (op_type) {
+	case CREDENTIAL_OP_HELPER:
+		return capa->request_initial;
+	case CREDENTIAL_OP_RESPONSE:
+		return capa->request_initial && capa->request_helper;
+	default:
+		return 0;
+	}
+}
+
+int credential_read(struct credential *c, FILE *fp,
+		    enum credential_op_type op_type)
 {
 	struct strbuf line = STRBUF_INIT;
 
@@ -249,6 +291,8 @@ int credential_read(struct credential *c, FILE *fp)
 			c->path = xstrdup(value);
 		} else if (!strcmp(key, "wwwauth[]")) {
 			strvec_push(&c->wwwauth_headers, value);
+		} else if (!strcmp(key, "capability[]") && !strcmp(value, "authtype")) {
+			credential_set_capability(&c->capa_authtype, op_type);
 		} else if (!strcmp(key, "password_expiry_utc")) {
 			errno = 0;
 			c->password_expiry_utc = parse_timestamp(value, NULL, 10);
@@ -288,14 +332,19 @@ static void credential_write_item(FILE *fp, const char *key, const char *value,
 	fprintf(fp, "%s=%s\n", key, value);
 }
 
-void credential_write(const struct credential *c, FILE *fp)
+void credential_write(const struct credential *c, FILE *fp,
+		      enum credential_op_type op_type)
 {
+	if (credential_has_capability(&c->capa_authtype, op_type)) {
+		credential_write_item(fp, "capability[]", "authtype", 0);
+		credential_write_item(fp, "authtype", c->authtype, 0);
+		credential_write_item(fp, "credential", c->credential, 0);
+	}
 	credential_write_item(fp, "protocol", c->protocol, 1);
 	credential_write_item(fp, "host", c->host, 1);
 	credential_write_item(fp, "path", c->path, 0);
 	credential_write_item(fp, "username", c->username, 0);
 	credential_write_item(fp, "password", c->password, 0);
-	credential_write_item(fp, "credential", c->credential, 0);
 	credential_write_item(fp, "oauth_refresh_token", c->oauth_refresh_token, 0);
 	if (c->password_expiry_utc != TIME_MAX) {
 		char *s = xstrfmt("%"PRItime, c->password_expiry_utc);
@@ -304,7 +353,6 @@ void credential_write(const struct credential *c, FILE *fp)
 	}
 	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
 		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
-	credential_write_item(fp, "authtype", c->authtype, 0);
 }
 
 static int run_credential_helper(struct credential *c,
@@ -327,14 +375,14 @@ static int run_credential_helper(struct credential *c,
 
 	fp = xfdopen(helper.in, "w");
 	sigchain_push(SIGPIPE, SIG_IGN);
-	credential_write(c, fp);
+	credential_write(c, fp, want_output ? CREDENTIAL_OP_HELPER : CREDENTIAL_OP_RESPONSE);
 	fclose(fp);
 	sigchain_pop(SIGPIPE);
 
 	if (want_output) {
 		int r;
 		fp = xfdopen(helper.out, "r");
-		r = credential_read(c, fp);
+		r = credential_read(c, fp, CREDENTIAL_OP_HELPER);
 		fclose(fp);
 		if (r < 0) {
 			finish_command(&helper);
@@ -367,7 +415,7 @@ static int credential_do(struct credential *c, const char *helper,
 	return r;
 }
 
-void credential_fill(struct credential *c)
+void credential_fill(struct credential *c, int all_capabilities)
 {
 	int i;
 
@@ -375,6 +423,8 @@ void credential_fill(struct credential *c)
 		return;
 
 	credential_apply_config(c);
+	if (all_capabilities)
+		credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
 
 	for (i = 0; i < c->helpers.nr; i++) {
 		credential_do(c, c->helpers.items[i].string, "get");

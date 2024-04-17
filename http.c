@@ -569,7 +569,7 @@ static void init_curl_http_auth(CURL *result)
 		return;
 	}
 
-	credential_fill(&http_auth);
+	credential_fill(&http_auth, 0);
 
 	curl_easy_setopt(result, CURLOPT_USERNAME, http_auth.username);
 	curl_easy_setopt(result, CURLOPT_PASSWORD, http_auth.password);
@@ -596,7 +596,7 @@ static void init_curl_proxy_auth(CURL *result)
 {
 	if (proxy_auth.username) {
 		if (!proxy_auth.password)
-			credential_fill(&proxy_auth);
+			credential_fill(&proxy_auth, 0);
 		set_proxyauth_name_password(result);
 	}
 
@@ -630,7 +630,7 @@ static int has_cert_password(void)
 		cert_auth.host = xstrdup("");
 		cert_auth.username = xstrdup("");
 		cert_auth.path = xstrdup(ssl_cert);
-		credential_fill(&cert_auth);
+		credential_fill(&cert_auth, 0);
 	}
 	return 1;
 }
@@ -645,7 +645,7 @@ static int has_proxy_cert_password(void)
 		proxy_cert_auth.host = xstrdup("");
 		proxy_cert_auth.username = xstrdup("");
 		proxy_cert_auth.path = xstrdup(http_proxy_ssl_cert);
-		credential_fill(&proxy_cert_auth);
+		credential_fill(&proxy_cert_auth, 0);
 	}
 	return 1;
 }
@@ -2190,7 +2190,7 @@ static int http_request_reauth(const char *url,
 		BUG("Unknown http_request target");
 	}
 
-	credential_fill(&http_auth);
+	credential_fill(&http_auth, 0);
 
 	return http_request(url, result, target, options);
 }

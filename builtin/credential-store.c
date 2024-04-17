@@ -205,7 +205,7 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 	if (!fns.nr)
 		die("unable to set up default path; use --file");
 
-	if (credential_read(&c, stdin) < 0)
+	if (credential_read(&c, stdin, CREDENTIAL_OP_HELPER) < 0)
 		die("unable to read credential");
 
 	if (!strcmp(op, "get"))

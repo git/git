@@ -115,7 +115,7 @@ static int read_request(FILE *fh, struct credential *c,
 		return error("client sent bogus timeout line: %s", item.buf);
 	*timeout = atoi(p);
 
-	if (credential_read(c, fh) < 0)
+	if (credential_read(c, fh, CREDENTIAL_OP_HELPER) < 0)
 		return -1;
 	return 0;
 }
