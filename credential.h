@@ -143,6 +143,12 @@ struct credential {
 	char *path;
 	char *oauth_refresh_token;
 	timestamp_t password_expiry_utc;
+
+	/**
+	 * The authorization scheme to use.  If this is NULL, libcurl is free to
+	 * negotiate any scheme it likes.
+	 */
+	char *authtype;
 };
 
 #define CREDENTIAL_INIT { \

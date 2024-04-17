@@ -26,6 +26,7 @@ void credential_clear(struct credential *c)
 	free(c->username);
 	free(c->password);
 	free(c->oauth_refresh_token);
+	free(c->authtype);
 	string_list_clear(&c->helpers, 0);
 	strvec_clear(&c->wwwauth_headers);
 
@@ -252,6 +253,9 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "oauth_refresh_token")) {
 			free(c->oauth_refresh_token);
 			c->oauth_refresh_token = xstrdup(value);
+		} else if (!strcmp(key, "authtype")) {
+			free(c->authtype);
+			c->authtype = xstrdup(value);
 		} else if (!strcmp(key, "url")) {
 			credential_from_url(c, value);
 		} else if (!strcmp(key, "quit")) {
@@ -295,6 +299,7 @@ void credential_write(const struct credential *c, FILE *fp)
 	}
 	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
 		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
+	credential_write_item(fp, "authtype", c->authtype, 0);
 }
 
 static int run_credential_helper(struct credential *c,
