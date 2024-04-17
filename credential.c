@@ -80,7 +80,8 @@ int credential_match(const struct credential *want,
 	       CHECK(host) &&
 	       CHECK(path) &&
 	       CHECK(username) &&
-	       (!match_password || CHECK(password));
+	       (!match_password || CHECK(password)) &&
+	       (!match_password || CHECK(credential));
 #undef CHECK
 }
 
@@ -248,8 +249,8 @@ static void credential_getpass(struct credential *c)
 						 PROMPT_ASKPASS);
 }
 
-static int credential_has_capability(const struct credential_capability *capa,
-				     enum credential_op_type op_type)
+int credential_has_capability(const struct credential_capability *capa,
+			      enum credential_op_type op_type)
 {
 	/*
 	 * We're checking here if each previous step indicated that we had the

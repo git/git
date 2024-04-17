@@ -263,6 +263,12 @@ void credential_clear_secrets(struct credential *c);
  */
 void credential_next_state(struct credential *c);
 
+/**
+ * Return true if the capability is enabled for an operation of op_type.
+ */
+int credential_has_capability(const struct credential_capability *capa,
+			      enum credential_op_type op_type);
+
 int credential_read(struct credential *, FILE *,
 		    enum credential_op_type);
 void credential_write(const struct credential *, FILE *,
