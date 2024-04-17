@@ -75,6 +75,7 @@ test_expect_success 'access using basic auth' '
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=Basic realm="example.com"
@@ -111,6 +112,7 @@ test_expect_success 'access using basic auth via authtype' '
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=Basic realm="example.com"
@@ -147,6 +149,7 @@ test_expect_success 'access using basic auth invalid credentials' '
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=Basic realm="example.com"
@@ -185,6 +188,7 @@ test_expect_success 'access using basic auth with extra challenges' '
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -224,6 +228,7 @@ test_expect_success 'access using basic auth mixed-case wwwauth header name' '
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=foobar param1="value1" param2="value2"
@@ -268,6 +273,7 @@ test_expect_success 'access using basic auth with wwwauth header continuations' 
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -314,6 +320,7 @@ test_expect_success 'access using basic auth with wwwauth header empty continuat
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -356,6 +363,7 @@ test_expect_success 'access using basic auth with wwwauth header mixed line-endi
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -397,6 +405,7 @@ test_expect_success 'access using bearer auth' '
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"
@@ -440,6 +449,7 @@ test_expect_success 'access using bearer auth with invalid credentials' '
 
 	expect_credential_query get <<-EOF &&
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=$HTTPD_DEST
 	wwwauth[]=FooBar param1="value1" param2="value2"

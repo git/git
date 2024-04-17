@@ -56,6 +56,7 @@ void credential_set_all_capabilities(struct credential *c,
 				     enum credential_op_type op_type)
 {
 	credential_set_capability(&c->capa_authtype, op_type);
+	credential_set_capability(&c->capa_state, op_type);
 }
 
 int credential_match(const struct credential *want,
