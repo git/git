@@ -893,7 +893,7 @@ static curl_off_t xcurl_off_t(size_t len)
 static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_received)
 {
 	struct active_request_slot *slot;
-	struct curl_slist *headers = http_copy_default_headers();
+	struct curl_slist *headers = NULL;
 	int use_gzip = rpc->gzip_request;
 	char *gzip_body = NULL;
 	size_t gzip_size = 0;
@@ -935,6 +935,8 @@ static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_rece
 			needs_100_continue = 1;
 	}
 
+retry:
+	headers = http_copy_default_headers();
 	headers = curl_slist_append(headers, rpc->hdr_content_type);
 	headers = curl_slist_append(headers, rpc->hdr_accept);
 	headers = curl_slist_append(headers, needs_100_continue ?
@@ -948,7 +950,6 @@ static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_rece
 	if (rpc->protocol_header)
 		headers = curl_slist_append(headers, rpc->protocol_header);
 
-retry:
 	slot = get_active_slot();
 
 	curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
@@ -1044,6 +1045,7 @@ retry:
 	err = run_slot(slot, NULL);
 	if (err == HTTP_REAUTH && !large_request) {
 		credential_fill(&http_auth);
+		curl_slist_free_all(headers);
 		goto retry;
 	}
 	if (err != HTTP_OK)
