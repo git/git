@@ -196,6 +196,7 @@ struct http_pack_request {
 	FILE *packfile;
 	struct strbuf tmpfile;
 	struct active_request_slot *slot;
+	struct curl_slist *headers;
 };
 
 struct http_pack_request *new_http_pack_request(
@@ -229,6 +230,7 @@ struct http_object_request {
 	int zret;
 	int rename;
 	struct active_request_slot *slot;
+	struct curl_slist *headers;
 };
 
 struct http_object_request *new_http_object_request(
