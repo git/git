@@ -46,9 +46,12 @@ test_expect_success 'setup helper scripts' '
 	credential=$1; shift
 	. ./dump
 	echo capability[]=authtype
+	echo capability[]=state
 	test -z "${capability##*authtype*}" || exit 0
 	test -z "$authtype" || echo authtype=$authtype
 	test -z "$credential" || echo credential=$credential
+	test -z "${capability##*state*}" || exit 0
+	echo state[]=verbatim-cred:foo
 	EOF
 
 	write_script git-credential-verbatim-ephemeral <<-\EOF &&
@@ -129,6 +132,28 @@ test_expect_success 'credential_fill invokes helper with ephemeral credential' '
 	verbatim-ephemeral: host=example.com
 	EOF
 '
+test_expect_success 'credential_fill invokes helper with credential and state' '
+	check fill "verbatim-cred Bearer token" <<-\EOF
+	capability[]=authtype
+	capability[]=state
+	protocol=http
+	host=example.com
+	--
+	capability[]=authtype
+	capability[]=state
+	authtype=Bearer
+	credential=token
+	protocol=http
+	host=example.com
+	state[]=verbatim-cred:foo
+	--
+	verbatim-cred: get
+	verbatim-cred: capability[]=authtype
+	verbatim-cred: capability[]=state
+	verbatim-cred: protocol=http
+	verbatim-cred: host=example.com
+	EOF
+'
 
 test_expect_success 'credential_fill invokes multiple helpers' '
 	check fill useless "verbatim foo bar" <<-\EOF
@@ -152,6 +177,7 @@ test_expect_success 'credential_fill invokes multiple helpers' '
 test_expect_success 'credential_fill response does not get capabilities when helpers are incapable' '
 	check fill useless "verbatim foo bar" <<-\EOF
 	capability[]=authtype
+	capability[]=state
 	protocol=http
 	host=example.com
 	--
@@ -162,10 +188,12 @@ test_expect_success 'credential_fill response does not get capabilities when hel
 	--
 	useless: get
 	useless: capability[]=authtype
+	useless: capability[]=state
 	useless: protocol=http
 	useless: host=example.com
 	verbatim: get
 	verbatim: capability[]=authtype
+	verbatim: capability[]=state
 	verbatim: protocol=http
 	verbatim: host=example.com
 	EOF

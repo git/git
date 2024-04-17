@@ -30,6 +30,7 @@ void credential_clear(struct credential *c)
 	free(c->authtype);
 	string_list_clear(&c->helpers, 0);
 	strvec_clear(&c->wwwauth_headers);
+	strvec_clear(&c->state_headers);
 
 	credential_init(c);
 }
@@ -293,8 +294,13 @@ int credential_read(struct credential *c, FILE *fp,
 			c->ephemeral = !!git_config_bool("ephemeral", value);
 		} else if (!strcmp(key, "wwwauth[]")) {
 			strvec_push(&c->wwwauth_headers, value);
-		} else if (!strcmp(key, "capability[]") && !strcmp(value, "authtype")) {
-			credential_set_capability(&c->capa_authtype, op_type);
+		} else if (!strcmp(key, "state[]")) {
+			strvec_push(&c->state_headers, value);
+		} else if (!strcmp(key, "capability[]")) {
+			if (!strcmp(value, "authtype"))
+				credential_set_capability(&c->capa_authtype, op_type);
+			else if (!strcmp(value, "state"))
+				credential_set_capability(&c->capa_state, op_type);
 		} else if (!strcmp(key, "password_expiry_utc")) {
 			errno = 0;
 			c->password_expiry_utc = parse_timestamp(value, NULL, 10);
@@ -337,8 +343,12 @@ static void credential_write_item(FILE *fp, const char *key, const char *value,
 void credential_write(const struct credential *c, FILE *fp,
 		      enum credential_op_type op_type)
 {
-	if (credential_has_capability(&c->capa_authtype, op_type)) {
+	if (credential_has_capability(&c->capa_authtype, op_type))
 		credential_write_item(fp, "capability[]", "authtype", 0);
+	if (credential_has_capability(&c->capa_state, op_type))
+		credential_write_item(fp, "capability[]", "state", 0);
+
+	if (credential_has_capability(&c->capa_authtype, op_type)) {
 		credential_write_item(fp, "authtype", c->authtype, 0);
 		credential_write_item(fp, "credential", c->credential, 0);
 		if (c->ephemeral)
@@ -357,6 +367,10 @@ void credential_write(const struct credential *c, FILE *fp,
 	}
 	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
 		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
+	if (credential_has_capability(&c->capa_state, op_type)) {
+		for (size_t i = 0; i < c->state_headers.nr; i++)
+			credential_write_item(fp, "state[]", c->state_headers.v[i], 0);
+	}
 }
 
 static int run_credential_helper(struct credential *c,
