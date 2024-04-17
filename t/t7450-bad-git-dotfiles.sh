@@ -294,7 +294,7 @@ test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 	fi
 '
 
-test_expect_success 'git dirs of sibling submodules must not be nested' '
+test_expect_success 'setup submodules with nested git dirs' '
 	git init nested &&
 	test_commit -C nested nested &&
 	(
@@ -312,9 +312,39 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 		git add .gitmodules thing1 thing2 &&
 		test_tick &&
 		git commit -m nested
-	) &&
+	)
+'
+
+test_expect_success 'git dirs of sibling submodules must not be nested' '
 	test_must_fail git clone --recurse-submodules nested clone 2>err &&
 	test_i18ngrep "is inside git dir" err
+'
+
+test_expect_success 'submodule git dir nesting detection must work with parallel cloning' '
+	test_must_fail git clone --recurse-submodules --jobs=2 nested clone_parallel 2>err &&
+	cat err &&
+	grep -E "(already exists|is inside git dir|not a git repository)" err &&
+	{
+		test_path_is_missing .git/modules/hippo/HEAD ||
+		test_path_is_missing .git/modules/hippo/hooks/HEAD
+	}
+'
+
+test_expect_success 'checkout -f --recurse-submodules must not use a nested gitdir' '
+	git clone nested nested_checkout &&
+	(
+		cd nested_checkout &&
+		git submodule init &&
+		git submodule update thing1 &&
+		mkdir -p .git/modules/hippo/hooks/refs &&
+		mkdir -p .git/modules/hippo/hooks/objects/info &&
+		echo "../../../../objects" >.git/modules/hippo/hooks/objects/info/alternates &&
+		echo "ref: refs/heads/master" >.git/modules/hippo/hooks/HEAD
+	) &&
+	test_must_fail git -C nested_checkout checkout -f --recurse-submodules HEAD 2>err &&
+	cat err &&
+	grep "is inside git dir" err &&
+	test_path_is_missing nested_checkout/thing2/.git
 '
 
 test_done

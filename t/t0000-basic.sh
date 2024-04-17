@@ -1201,6 +1201,34 @@ test_expect_success 'very long name in the index handled sanely' '
 	test $len = 4098
 '
 
+# D/F conflict checking uses an optimization when adding to the end.
+# make sure it does not get confused by `a-` sorting _between_
+# `a` and `a/`.
+test_expect_success 'more update-index D/F conflicts' '
+	# empty the index to make sure our entry is last
+	git read-tree --empty &&
+	cacheinfo=100644,$(test_oid empty_blob) &&
+	git update-index --add --cacheinfo $cacheinfo,path5/a &&
+
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/c/file &&
+
+	# "a-" sorts between "a" and "a/"
+	git update-index --add --cacheinfo $cacheinfo,path5/a- &&
+
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/c/file &&
+
+	cat >expected <<-\EOF &&
+	path5/a
+	path5/a-
+	EOF
+	git ls-files >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'test_must_fail on a failing git command' '
 	test_must_fail git notacommand
 '

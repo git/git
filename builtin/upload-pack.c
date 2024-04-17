@@ -37,6 +37,8 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("upload-pack");
 	read_replace_refs = 0;
+	/* TODO: This should use NO_LAZY_FETCH_ENVIRONMENT */
+	xsetenv("GIT_NO_LAZY_FETCH", "1", 0);
 
 	argc = parse_options(argc, argv, prefix, options, upload_pack_usage, 0);
 

@@ -528,6 +528,13 @@ int fspathncmp(const char *a, const char *b, size_t count);
 unsigned int fspathhash(const char *str);
 
 /*
+ * Reports whether paths collide. This may be because the paths differ only in
+ * case on a case-sensitive filesystem, or that one path refers to a symlink
+ * that collides with one of the parent directories of the other.
+ */
+int paths_collide(const char *a, const char *b);
+
+/*
  * The prefix part of pattern must not contains wildcards.
  */
 struct pathspec_item;

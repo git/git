@@ -41,6 +41,18 @@ const char *read_gitfile_gently(const char *path, int *return_error_code);
 const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
 #define resolve_gitdir(path) resolve_gitdir_gently((path), NULL)
 
+/*
+ * Check if a repository is safe and die if it is not, by verifying the
+ * ownership of the worktree (if any), the git directory, and the gitfile (if
+ * any).
+ *
+ * Exemptions for known-safe repositories can be added via `safe.directory`
+ * config settings; for non-bare repositories, their worktree needs to be
+ * added, for bare ones their git directory.
+ */
+void die_upon_dubious_ownership(const char *gitfile, const char *worktree,
+				const char *gitdir);
+
 void setup_work_tree(void);
 /*
  * Find the commondir and gitdir of the repository that contains the current
@@ -139,6 +151,8 @@ int verify_repository_format(const struct repository_format *format,
  * If successful and fmt is not NULL, fill fmt with data.
  */
 void check_repository_format(struct repository_format *fmt);
+
+const char *get_template_dir(const char *option_template);
 
 /*
  * NOTE NOTE NOTE!!

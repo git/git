@@ -13,6 +13,7 @@
 #include "quote.h"
 #include "trace2.h"
 #include "wrapper.h"
+#include "exec-cmd.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
@@ -1172,6 +1173,27 @@ static int ensure_valid_ownership(const char *gitfile,
 	return data.is_safe;
 }
 
+void die_upon_dubious_ownership(const char *gitfile, const char *worktree,
+				const char *gitdir)
+{
+	struct strbuf report = STRBUF_INIT, quoted = STRBUF_INIT;
+	const char *path;
+
+	if (ensure_valid_ownership(gitfile, worktree, gitdir, &report))
+		return;
+
+	strbuf_complete(&report, '\n');
+	path = gitfile ? gitfile : gitdir;
+	sq_quote_buf_pretty(&quoted, path);
+
+	die(_("detected dubious ownership in repository at '%s'\n"
+	      "%s"
+	      "To add an exception for this directory, call:\n"
+	      "\n"
+	      "\tgit config --global --add safe.directory %s"),
+	    path, report.buf, quoted.buf);
+}
+
 static int allowed_bare_repo_cb(const char *key, const char *value, void *d)
 {
 	enum allowed_bare_repo *allowed_bare_repo = d;
@@ -1706,4 +1728,58 @@ int daemonize(void)
 	sanitize_stdfds();
 	return 0;
 #endif
+}
+
+#ifndef DEFAULT_GIT_TEMPLATE_DIR
+#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
+#endif
+
+struct template_dir_cb_data {
+	char *path;
+	int initialized;
+};
+
+static int template_dir_cb(const char *key, const char *value, void *d)
+{
+	struct template_dir_cb_data *data = d;
+
+	if (strcmp(key, "init.templatedir"))
+		return 0;
+
+	if (!value) {
+		data->path = NULL;
+	} else {
+		char *path = NULL;
+
+		FREE_AND_NULL(data->path);
+		if (!git_config_pathname((const char **)&path, key, value))
+			data->path = path ? path : xstrdup(value);
+	}
+
+	return 0;
+}
+
+const char *get_template_dir(const char *option_template)
+{
+	const char *template_dir = option_template;
+
+	if (!template_dir)
+		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
+	if (!template_dir) {
+		static struct template_dir_cb_data data;
+
+		if (!data.initialized) {
+			git_protected_config(template_dir_cb, &data);
+			data.initialized = 1;
+		}
+		template_dir = data.path;
+	}
+	if (!template_dir) {
+		static char *dir;
+
+		if (!dir)
+			dir = system_path(DEFAULT_GIT_TEMPLATE_DIR);
+		template_dir = dir;
+	}
+	return template_dir;
 }
