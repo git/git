@@ -138,6 +138,7 @@ struct credential {
 
 	char *username;
 	char *password;
+	char *credential;
 	char *protocol;
 	char *host;
 	char *path;
