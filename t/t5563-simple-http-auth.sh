@@ -63,11 +63,12 @@ test_expect_success 'access using basic auth' '
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	WWW-Authenticate: Basic realm="example.com"
+	id=1 status=200
+	id=default response=WWW-Authenticate: Basic realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
@@ -100,11 +101,12 @@ test_expect_success 'access using basic auth via authtype' '
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	WWW-Authenticate: Basic realm="example.com"
+	id=1 status=200
+	id=default response=WWW-Authenticate: Basic realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
@@ -137,11 +139,12 @@ test_expect_success 'access using basic auth invalid credentials' '
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	WWW-Authenticate: Basic realm="example.com"
+	id=1 status=200
+	id=default response=WWW-Authenticate: Basic realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
@@ -174,13 +177,14 @@ test_expect_success 'access using basic auth with extra challenges' '
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	WWW-Authenticate: FooBar param1="value1" param2="value2"
-	WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
-	WWW-Authenticate: Basic realm="example.com"
+	id=1 status=200
+	id=default response=WWW-Authenticate: FooBar param1="value1" param2="value2"
+	id=default response=WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
+	id=default response=WWW-Authenticate: Basic realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
@@ -214,13 +218,14 @@ test_expect_success 'access using basic auth mixed-case wwwauth header name' '
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	www-authenticate: foobar param1="value1" param2="value2"
-	WWW-AUTHENTICATE: BEARER authorize_uri="id.example.com" p=1 q=0
-	WwW-aUtHeNtIcAtE: baSiC realm="example.com"
+	id=1 status=200
+	id=default response=www-authenticate: foobar param1="value1" param2="value2"
+	id=default response=WWW-AUTHENTICATE: BEARER authorize_uri="id.example.com" p=1 q=0
+	id=default response=WwW-aUtHeNtIcAtE: baSiC realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
@@ -254,18 +259,19 @@ test_expect_success 'access using basic auth with wwwauth header continuations' 
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	# Note that leading and trailing whitespace is important to correctly
 	# simulate a continuation/folded header.
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	WWW-Authenticate: FooBar param1="value1"
-	 param2="value2"
-	WWW-Authenticate: Bearer authorize_uri="id.example.com"
-	 p=1
-	 q=0
-	WWW-Authenticate: Basic realm="example.com"
+	id=1 status=200
+	id=default response=WWW-Authenticate: FooBar param1="value1"
+	id=default response= param2="value2"
+	id=default response=WWW-Authenticate: Bearer authorize_uri="id.example.com"
+	id=default response= p=1
+	id=default response= q=0
+	id=default response=WWW-Authenticate: Basic realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
@@ -299,21 +305,22 @@ test_expect_success 'access using basic auth with wwwauth header empty continuat
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	CHALLENGE="$HTTPD_ROOT_PATH/custom-auth.challenge" &&
 
 	# Note that leading and trailing whitespace is important to correctly
 	# simulate a continuation/folded header.
-	printf "WWW-Authenticate: FooBar param1=\"value1\"\r\n" >"$CHALLENGE" &&
-	printf " \r\n" >>"$CHALLENGE" &&
-	printf " param2=\"value2\"\r\n" >>"$CHALLENGE" &&
-	printf "WWW-Authenticate: Bearer authorize_uri=\"id.example.com\"\r\n" >>"$CHALLENGE" &&
-	printf " p=1\r\n" >>"$CHALLENGE" &&
-	printf " \r\n" >>"$CHALLENGE" &&
-	printf " q=0\r\n" >>"$CHALLENGE" &&
-	printf "WWW-Authenticate: Basic realm=\"example.com\"\r\n" >>"$CHALLENGE" &&
+	printf "id=1 status=200\n" >"$CHALLENGE" &&
+	printf "id=default response=WWW-Authenticate: FooBar param1=\"value1\"\r\n" >>"$CHALLENGE" &&
+	printf "id=default response= \r\n" >>"$CHALLENGE" &&
+	printf "id=default response= param2=\"value2\"\r\n" >>"$CHALLENGE" &&
+	printf "id=default response=WWW-Authenticate: Bearer authorize_uri=\"id.example.com\"\r\n" >>"$CHALLENGE" &&
+	printf "id=default response= p=1\r\n" >>"$CHALLENGE" &&
+	printf "id=default response= \r\n" >>"$CHALLENGE" &&
+	printf "id=default response= q=0\r\n" >>"$CHALLENGE" &&
+	printf "id=default response=WWW-Authenticate: Basic realm=\"example.com\"\r\n" >>"$CHALLENGE" &&
 
 	test_config_global credential.helper test-helper &&
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
@@ -346,17 +353,18 @@ test_expect_success 'access using basic auth with wwwauth header mixed line-endi
 
 	# Basic base64(alice:secret-passwd)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
 	EOF
 
 	CHALLENGE="$HTTPD_ROOT_PATH/custom-auth.challenge" &&
 
 	# Note that leading and trailing whitespace is important to correctly
 	# simulate a continuation/folded header.
-	printf "WWW-Authenticate: FooBar param1=\"value1\"\r\n" >"$CHALLENGE" &&
-	printf " \r\n" >>"$CHALLENGE" &&
-	printf "\tparam2=\"value2\"\r\n" >>"$CHALLENGE" &&
-	printf "WWW-Authenticate: Basic realm=\"example.com\"" >>"$CHALLENGE" &&
+	printf "id=1 status=200\n" >"$CHALLENGE" &&
+	printf "id=default response=WWW-Authenticate: FooBar param1=\"value1\"\r\n" >>"$CHALLENGE" &&
+	printf "id=default response= \r\n" >>"$CHALLENGE" &&
+	printf "id=default response=\tparam2=\"value2\"\r\n" >>"$CHALLENGE" &&
+	printf "id=default response=WWW-Authenticate: Basic realm=\"example.com\"" >>"$CHALLENGE" &&
 
 	test_config_global credential.helper test-helper &&
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
@@ -389,15 +397,16 @@ test_expect_success 'access using bearer auth' '
 
 	# Basic base64(a-git-token)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Bearer YS1naXQtdG9rZW4=
+	id=1 creds=Bearer YS1naXQtdG9rZW4=
 	EOF
 
 	CHALLENGE="$HTTPD_ROOT_PATH/custom-auth.challenge" &&
 
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	WWW-Authenticate: FooBar param1="value1" param2="value2"
-	WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
-	WWW-Authenticate: Basic realm="example.com"
+	id=1 status=200
+	id=default response=WWW-Authenticate: FooBar param1="value1" param2="value2"
+	id=default response=WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
+	id=default response=WWW-Authenticate: Basic realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
@@ -433,15 +442,16 @@ test_expect_success 'access using bearer auth with invalid credentials' '
 
 	# Basic base64(a-git-token)
 	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
-	Bearer YS1naXQtdG9rZW4=
+	id=1 creds=Bearer YS1naXQtdG9rZW4=
 	EOF
 
 	CHALLENGE="$HTTPD_ROOT_PATH/custom-auth.challenge" &&
 
 	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
-	WWW-Authenticate: FooBar param1="value1" param2="value2"
-	WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
-	WWW-Authenticate: Basic realm="example.com"
+	id=1 status=200
+	id=default response=WWW-Authenticate: FooBar param1="value1" param2="value2"
+	id=default response=WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
+	id=default response=WWW-Authenticate: Basic realm="example.com"
 	EOF
 
 	test_config_global credential.helper test-helper &&
