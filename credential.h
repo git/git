@@ -152,6 +152,7 @@ struct credential {
 	unsigned header_is_last_match:1;
 
 	unsigned approved:1,
+		 ephemeral:1,
 		 configured:1,
 		 quit:1,
 		 use_http_path:1,

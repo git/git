@@ -51,6 +51,17 @@ test_expect_success 'setup helper scripts' '
 	test -z "$credential" || echo credential=$credential
 	EOF
 
+	write_script git-credential-verbatim-ephemeral <<-\EOF &&
+	authtype=$1; shift
+	credential=$1; shift
+	. ./dump
+	echo capability[]=authtype
+	test -z "${capability##*authtype*}" || exit 0
+	test -z "$authtype" || echo authtype=$authtype
+	test -z "$credential" || echo credential=$credential
+	echo "ephemeral=1"
+	EOF
+
 	write_script git-credential-verbatim-with-expiry <<-\EOF &&
 	user=$1; shift
 	pass=$1; shift
@@ -99,6 +110,25 @@ test_expect_success 'credential_fill invokes helper with credential' '
 	EOF
 '
 
+test_expect_success 'credential_fill invokes helper with ephemeral credential' '
+	check fill "verbatim-ephemeral Bearer token" <<-\EOF
+	capability[]=authtype
+	protocol=http
+	host=example.com
+	--
+	capability[]=authtype
+	authtype=Bearer
+	credential=token
+	ephemeral=1
+	protocol=http
+	host=example.com
+	--
+	verbatim-ephemeral: get
+	verbatim-ephemeral: capability[]=authtype
+	verbatim-ephemeral: protocol=http
+	verbatim-ephemeral: host=example.com
+	EOF
+'
 
 test_expect_success 'credential_fill invokes multiple helpers' '
 	check fill useless "verbatim foo bar" <<-\EOF

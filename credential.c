@@ -289,6 +289,8 @@ int credential_read(struct credential *c, FILE *fp,
 		} else if (!strcmp(key, "path")) {
 			free(c->path);
 			c->path = xstrdup(value);
+		} else if (!strcmp(key, "ephemeral")) {
+			c->ephemeral = !!git_config_bool("ephemeral", value);
 		} else if (!strcmp(key, "wwwauth[]")) {
 			strvec_push(&c->wwwauth_headers, value);
 		} else if (!strcmp(key, "capability[]") && !strcmp(value, "authtype")) {
@@ -339,6 +341,8 @@ void credential_write(const struct credential *c, FILE *fp,
 		credential_write_item(fp, "capability[]", "authtype", 0);
 		credential_write_item(fp, "authtype", c->authtype, 0);
 		credential_write_item(fp, "credential", c->credential, 0);
+		if (c->ephemeral)
+			credential_write_item(fp, "ephemeral", "1", 0);
 	}
 	credential_write_item(fp, "protocol", c->protocol, 1);
 	credential_write_item(fp, "host", c->host, 1);
