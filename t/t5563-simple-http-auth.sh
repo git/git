@@ -21,9 +21,17 @@ test_expect_success 'setup_credential_helper' '
 	CREDENTIAL_HELPER="$TRASH_DIRECTORY/bin/git-credential-test-helper" &&
 	write_script "$CREDENTIAL_HELPER" <<-\EOF
 	cmd=$1
-	teefile=$cmd-query.cred
+	teefile=$cmd-query-temp.cred
 	catfile=$cmd-reply.cred
 	sed -n -e "/^$/q" -e "p" >>$teefile
+	state=$(sed -ne "s/^state\[\]=helper://p" "$teefile")
+	if test -z "$state"
+	then
+		mv "$teefile" "$cmd-query.cred"
+	else
+		mv "$teefile" "$cmd-query-$state.cred"
+		catfile="$cmd-reply-$state.cred"
+	fi
 	if test "$cmd" = "get"
 	then
 		cat $catfile
@@ -32,13 +40,15 @@ test_expect_success 'setup_credential_helper' '
 '
 
 set_credential_reply () {
-	cat >"$TRASH_DIRECTORY/$1-reply.cred"
+	local suffix="$(test -n "$2" && echo "-$2")"
+	cat >"$TRASH_DIRECTORY/$1-reply$suffix.cred"
 }
 
 expect_credential_query () {
-	cat >"$TRASH_DIRECTORY/$1-expect.cred" &&
-	test_cmp "$TRASH_DIRECTORY/$1-expect.cred" \
-		 "$TRASH_DIRECTORY/$1-query.cred"
+	local suffix="$(test -n "$2" && echo "-$2")"
+	cat >"$TRASH_DIRECTORY/$1-expect$suffix.cred" &&
+	test_cmp "$TRASH_DIRECTORY/$1-expect$suffix.cred" \
+		 "$TRASH_DIRECTORY/$1-query$suffix.cred"
 }
 
 per_test_cleanup () {
@@ -476,6 +486,75 @@ test_expect_success 'access using bearer auth with invalid credentials' '
 	wwwauth[]=FooBar param1="value1" param2="value2"
 	wwwauth[]=Bearer authorize_uri="id.example.com" p=1 q=0
 	wwwauth[]=Basic realm="example.com"
+	EOF
+'
+
+test_expect_success 'access using three-legged auth' '
+	test_when_finished "per_test_cleanup" &&
+
+	set_credential_reply get <<-EOF &&
+	capability[]=authtype
+	capability[]=state
+	authtype=Multistage
+	credential=YS1naXQtdG9rZW4=
+	state[]=helper:foobar
+	continue=1
+	EOF
+
+	set_credential_reply get foobar <<-EOF &&
+	capability[]=authtype
+	capability[]=state
+	authtype=Multistage
+	credential=YW5vdGhlci10b2tlbg==
+	state[]=helper:bazquux
+	EOF
+
+	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
+	id=1 creds=Multistage YS1naXQtdG9rZW4=
+	id=2 creds=Multistage YW5vdGhlci10b2tlbg==
+	EOF
+
+	CHALLENGE="$HTTPD_ROOT_PATH/custom-auth.challenge" &&
+
+	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
+	id=1 status=401 response=WWW-Authenticate: Multistage challenge="456"
+	id=1 status=401 response=WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
+	id=2 status=200
+	id=default response=WWW-Authenticate: Multistage challenge="123"
+	id=default response=WWW-Authenticate: Bearer authorize_uri="id.example.com" p=1 q=0
+	EOF
+
+	test_config_global credential.helper test-helper &&
+	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
+
+	expect_credential_query get <<-EOF &&
+	capability[]=authtype
+	capability[]=state
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=Multistage challenge="123"
+	wwwauth[]=Bearer authorize_uri="id.example.com" p=1 q=0
+	EOF
+
+	expect_credential_query get foobar <<-EOF &&
+	capability[]=authtype
+	capability[]=state
+	authtype=Multistage
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=Multistage challenge="456"
+	wwwauth[]=Bearer authorize_uri="id.example.com" p=1 q=0
+	state[]=helper:foobar
+	EOF
+
+	expect_credential_query store bazquux <<-EOF
+	capability[]=authtype
+	capability[]=state
+	authtype=Multistage
+	credential=YW5vdGhlci10b2tlbg==
+	protocol=http
+	host=$HTTPD_DEST
+	state[]=helper:bazquux
 	EOF
 '
 

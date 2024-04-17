@@ -31,8 +31,21 @@ void credential_clear(struct credential *c)
 	string_list_clear(&c->helpers, 0);
 	strvec_clear(&c->wwwauth_headers);
 	strvec_clear(&c->state_headers);
+	strvec_clear(&c->state_headers_to_send);
 
 	credential_init(c);
+}
+
+void credential_next_state(struct credential *c)
+{
+	strvec_clear(&c->state_headers_to_send);
+	SWAP(c->state_headers, c->state_headers_to_send);
+}
+
+void credential_clear_secrets(struct credential *c)
+{
+	FREE_AND_NULL(c->password);
+	FREE_AND_NULL(c->credential);
 }
 
 static void credential_set_capability(struct credential_capability *capa,
@@ -302,6 +315,8 @@ int credential_read(struct credential *c, FILE *fp,
 				credential_set_capability(&c->capa_authtype, op_type);
 			else if (!strcmp(value, "state"))
 				credential_set_capability(&c->capa_state, op_type);
+		} else if (!strcmp(key, "continue")) {
+			c->multistage = !!git_config_bool("continue", value);
 		} else if (!strcmp(key, "password_expiry_utc")) {
 			errno = 0;
 			c->password_expiry_utc = parse_timestamp(value, NULL, 10);
@@ -369,8 +384,10 @@ void credential_write(const struct credential *c, FILE *fp,
 	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
 		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
 	if (credential_has_capability(&c->capa_state, op_type)) {
-		for (size_t i = 0; i < c->state_headers.nr; i++)
-			credential_write_item(fp, "state[]", c->state_headers.v[i], 0);
+		if (c->multistage)
+			credential_write_item(fp, "continue", "1", 0);
+		for (size_t i = 0; i < c->state_headers_to_send.nr; i++)
+			credential_write_item(fp, "state[]", c->state_headers_to_send.v[i], 0);
 	}
 }
 
@@ -441,6 +458,9 @@ void credential_fill(struct credential *c, int all_capabilities)
 	if ((c->username && c->password) || c->credential)
 		return;
 
+	credential_next_state(c);
+	c->multistage = 0;
+
 	credential_apply_config(c);
 	if (all_capabilities)
 		credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
@@ -453,8 +473,10 @@ void credential_fill(struct credential *c, int all_capabilities)
 			/* Reset expiry to maintain consistency */
 			c->password_expiry_utc = TIME_MAX;
 		}
-		if ((c->username && c->password) || c->credential)
+		if ((c->username && c->password) || c->credential) {
+			strvec_clear(&c->wwwauth_headers);
 			return;
+		}
 		if (c->quit)
 			die("credential helper '%s' told us to quit",
 			    c->helpers.items[i].string);
@@ -474,6 +496,8 @@ void credential_approve(struct credential *c)
 	if (((!c->username || !c->password) && !c->credential) || c->password_expiry_utc < time(NULL))
 		return;
 
+	credential_next_state(c);
+
 	credential_apply_config(c);
 
 	for (i = 0; i < c->helpers.nr; i++)
@@ -484,6 +508,8 @@ void credential_approve(struct credential *c)
 void credential_reject(struct credential *c)
 {
 	int i;
+
+	credential_next_state(c);
 
 	credential_apply_config(c);
 

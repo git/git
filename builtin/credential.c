@@ -22,6 +22,7 @@ int cmd_credential(int argc, const char **argv, const char *prefix UNUSED)
 
 	if (!strcmp(op, "fill")) {
 		credential_fill(&c, 0);
+		credential_next_state(&c);
 		credential_write(&c, stdout, CREDENTIAL_OP_RESPONSE);
 	} else if (!strcmp(op, "approve")) {
 		credential_set_all_capabilities(&c, CREDENTIAL_OP_HELPER);

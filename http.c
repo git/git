@@ -1780,6 +1780,10 @@ static int handle_curl_result(struct slot_results *results)
 	else if (results->http_code == 401) {
 		if ((http_auth.username && http_auth.password) ||\
 		    (http_auth.authtype && http_auth.credential)) {
+			if (http_auth.multistage) {
+				credential_clear_secrets(&http_auth);
+				return HTTP_REAUTH;
+			}
 			credential_reject(&http_auth);
 			return HTTP_NOAUTH;
 		} else {
@@ -2177,6 +2181,7 @@ static int http_request_reauth(const char *url,
 			       void *result, int target,
 			       struct http_get_options *options)
 {
+	int i = 3;
 	int ret = http_request(url, result, target, options);
 
 	if (ret != HTTP_OK && ret != HTTP_REAUTH)
@@ -2190,35 +2195,35 @@ static int http_request_reauth(const char *url,
 		}
 	}
 
-	if (ret != HTTP_REAUTH)
-		return ret;
+	while (ret == HTTP_REAUTH && --i) {
+		/*
+		 * The previous request may have put cruft into our output stream; we
+		 * should clear it out before making our next request.
+		 */
+		switch (target) {
+		case HTTP_REQUEST_STRBUF:
+			strbuf_reset(result);
+			break;
+		case HTTP_REQUEST_FILE:
+			if (fflush(result)) {
+				error_errno("unable to flush a file");
+				return HTTP_START_FAILED;
+			}
+			rewind(result);
+			if (ftruncate(fileno(result), 0) < 0) {
+				error_errno("unable to truncate a file");
+				return HTTP_START_FAILED;
+			}
+			break;
+		default:
+			BUG("Unknown http_request target");
+		}
 
-	/*
-	 * The previous request may have put cruft into our output stream; we
-	 * should clear it out before making our next request.
-	 */
-	switch (target) {
-	case HTTP_REQUEST_STRBUF:
-		strbuf_reset(result);
-		break;
-	case HTTP_REQUEST_FILE:
-		if (fflush(result)) {
-			error_errno("unable to flush a file");
-			return HTTP_START_FAILED;
-		}
-		rewind(result);
-		if (ftruncate(fileno(result), 0) < 0) {
-			error_errno("unable to truncate a file");
-			return HTTP_START_FAILED;
-		}
-		break;
-	default:
-		BUG("Unknown http_request target");
+		credential_fill(&http_auth, 1);
+
+		ret = http_request(url, result, target, options);
 	}
-
-	credential_fill(&http_auth, 1);
-
-	return http_request(url, result, target, options);
+	return ret;
 }
 
 int http_get_strbuf(const char *url,

@@ -145,9 +145,14 @@ struct credential {
 	struct strvec wwwauth_headers;
 
 	/**
-	 * A `strvec` of state headers from credential helpers.
+	 * A `strvec` of state headers received from credential helpers.
 	 */
 	struct strvec state_headers;
+
+	/**
+	 * A `strvec` of state headers to send to credential helpers.
+	 */
+	struct strvec state_headers_to_send;
 
 	/**
 	 * Internal use only. Keeps track of if we previously matched against a
@@ -159,6 +164,7 @@ struct credential {
 	unsigned approved:1,
 		 ephemeral:1,
 		 configured:1,
+		 multistage: 1,
 		 quit:1,
 		 use_http_path:1,
 		 username_from_proto:1;
@@ -187,6 +193,7 @@ struct credential {
 	.password_expiry_utc = TIME_MAX, \
 	.wwwauth_headers = STRVEC_INIT, \
 	.state_headers = STRVEC_INIT, \
+	.state_headers_to_send = STRVEC_INIT, \
 }
 
 /* Initialize a credential structure, setting all fields to empty. */
@@ -237,6 +244,24 @@ void credential_reject(struct credential *);
  */
 void credential_set_all_capabilities(struct credential *c,
 				     enum credential_op_type op_type);
+
+/**
+ * Clear the secrets in this credential, but leave other data intact.
+ *
+ * This is useful for resetting credentials in preparation for a subsequent
+ * stage of filling.
+ */
+void credential_clear_secrets(struct credential *c);
+
+/**
+ * Prepares the credential for the next iteration of the helper protocol by
+ * updating the state headers to send with the ones read by the last iteration
+ * of the protocol.
+ *
+ * Except for internal callers, this should be called exactly once between
+ * reading credentials with `credential_fill` and writing them.
+ */
+void credential_next_state(struct credential *c);
 
 int credential_read(struct credential *, FILE *,
 		    enum credential_op_type);
