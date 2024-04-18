@@ -4,7 +4,6 @@
  * Copyright (c) 2018 Pratik Karki
  */
 
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "environment.h"
@@ -295,7 +294,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	if (ret)
 		error(_("could not generate todo list"));
 	else {
-		discard_index(&the_index);
+		discard_index(the_repository->index);
 		if (todo_list_parse_insn_buffer(the_repository, todo_list.buf.buf,
 						&todo_list))
 			BUG("unusable todo list");

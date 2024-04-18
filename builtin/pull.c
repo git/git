@@ -5,7 +5,7 @@
  *
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
@@ -1044,7 +1044,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (opt_autostash == -1)
 			opt_autostash = config_autostash;
 
-		if (is_null_oid(&orig_head) && !is_index_unborn(&the_index))
+		if (is_null_oid(&orig_head) && !is_index_unborn(the_repository->index))
 			die(_("Updating an unborn branch with changes added to the index."));
 
 		if (!opt_autostash)

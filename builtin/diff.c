@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "config.h"
 #include "ewah/ewok.h"
@@ -239,9 +239,9 @@ static void refresh_index_quietly(void)
 	fd = repo_hold_locked_index(the_repository, &lock_file, 0);
 	if (fd < 0)
 		return;
-	discard_index(&the_index);
+	discard_index(the_repository->index);
 	repo_read_index(the_repository);
-	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL,
+	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL,
 		      NULL);
 	repo_update_index_if_able(the_repository, &lock_file);
 }

@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "config.h"
 #include "convert.h"
@@ -77,7 +77,7 @@ static int filter_object(const char *path, unsigned mode,
 		struct checkout_metadata meta;
 
 		init_checkout_metadata(&meta, NULL, NULL, oid);
-		if (convert_to_working_tree(&the_index, path, *buf, *size, &strbuf, &meta)) {
+		if (convert_to_working_tree(the_repository->index, path, *buf, *size, &strbuf, &meta)) {
 			free(*buf);
 			*size = strbuf.len;
 			*buf = strbuf_detach(&strbuf, NULL);

@@ -3,7 +3,7 @@
  *
  * Based on git-am.sh by Junio C Hamano.
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
@@ -1536,8 +1536,8 @@ static int run_apply(const struct am_state *state, const char *index_file)
 
 	if (index_file) {
 		/* Reload index as apply_all_patches() will have modified it. */
-		discard_index(&the_index);
-		read_index_from(&the_index, index_file, get_git_dir());
+		discard_index(the_repository->index);
+		read_index_from(the_repository->index, index_file, get_git_dir());
 	}
 
 	return 0;
@@ -1579,10 +1579,10 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 	if (build_fake_ancestor(state, index_path))
 		return error("could not build fake ancestor");
 
-	discard_index(&the_index);
-	read_index_from(&the_index, index_path, get_git_dir());
+	discard_index(the_repository->index);
+	read_index_from(the_repository->index, index_path, get_git_dir());
 
-	if (write_index_as_tree(&orig_tree, &the_index, index_path, 0, NULL))
+	if (write_index_as_tree(&orig_tree, the_repository->index, index_path, 0, NULL))
 		return error(_("Repository lacks necessary blobs to fall back on 3-way merge."));
 
 	say(state, stdout, _("Using index info to reconstruct a base tree..."));
@@ -1608,12 +1608,12 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 		return error(_("Did you hand edit your patch?\n"
 				"It does not apply to blobs recorded in its index."));
 
-	if (write_index_as_tree(&their_tree, &the_index, index_path, 0, NULL))
+	if (write_index_as_tree(&their_tree, the_repository->index, index_path, 0, NULL))
 		return error("could not write tree");
 
 	say(state, stdout, _("Falling back to patching base and 3-way merge..."));
 
-	discard_index(&the_index);
+	discard_index(the_repository->index);
 	repo_read_index(the_repository);
 
 	/*
@@ -1660,7 +1660,7 @@ static void do_commit(const struct am_state *state)
 	if (!state->no_verify && run_hooks("pre-applypatch"))
 		exit(1);
 
-	if (write_index_as_tree(&tree, &the_index, get_index_file(), 0, NULL))
+	if (write_index_as_tree(&tree, the_repository->index, get_index_file(), 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 
 	if (!repo_get_oid_commit(the_repository, "HEAD", &parent)) {
@@ -1948,7 +1948,7 @@ static void am_resolve(struct am_state *state, int allow_empty)
 		}
 	}
 
-	if (unmerged_index(&the_index)) {
+	if (unmerged_index(the_repository->index)) {
 		printf_ln(_("You still have unmerged paths in your index.\n"
 			"You should 'git add' each file with resolved conflicts to mark them as such.\n"
 			"You might run `git rm` on a file to accept \"deleted by them\" for it."));
@@ -1987,12 +1987,12 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 
-	refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL);
+	refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL, NULL);
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
-	opts.src_index = &the_index;
-	opts.dst_index = &the_index;
+	opts.src_index = the_repository->index;
+	opts.dst_index = the_repository->index;
 	opts.update = 1;
 	opts.merge = 1;
 	opts.reset = reset ? UNPACK_RESET_PROTECT_UNTRACKED : 0;
@@ -2006,7 +2006,7 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;
@@ -2029,8 +2029,8 @@ static int merge_tree(struct tree *tree)
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
-	opts.src_index = &the_index;
-	opts.dst_index = &the_index;
+	opts.src_index = the_repository->index;
+	opts.dst_index = the_repository->index;
 	opts.merge = 1;
 	opts.fn = oneway_merge;
 	init_tree_desc(&t[0], &tree->object.oid, tree->buffer, tree->size);
@@ -2040,7 +2040,7 @@ static int merge_tree(struct tree *tree)
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;
@@ -2068,7 +2068,7 @@ static int clean_index(const struct object_id *head, const struct object_id *rem
 	if (fast_forward_to(head_tree, head_tree, 1))
 		return -1;
 
-	if (write_index_as_tree(&index, &the_index, get_index_file(), 0, NULL))
+	if (write_index_as_tree(&index, the_repository->index, get_index_file(), 0, NULL))
 		return -1;
 
 	index_tree = parse_tree_indirect(&index);

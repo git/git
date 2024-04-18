@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "environment.h"
@@ -674,7 +673,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			prepare_repo_settings(the_repository);
 			the_repository->settings.command_requires_full_index = 0;
 			repo_read_index(the_repository);
-			refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED,
+			refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED,
 				      NULL, NULL, NULL);
 			fd = repo_hold_locked_index(the_repository,
 						    &index_lock, 0);
