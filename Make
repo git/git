@@ -291,7 +291,7 @@ ${make-make} \
      SPATCH_FLAGS="--all-includes --recursive-includes --patch ." \
      SPATCH_BATCH_SIZE=16 \
      CFLAGS="-g -Wall -Wunused -Wdeclaration-after-statement -std=gnu99${O:+ $O}" \
-     ${tests:+"T=$tests"} \
+     ${tests:+"T=$tests"} ${tests:+UNIT_TESTS=} \
      "$@"
 status=$?
 eval "$clean"
