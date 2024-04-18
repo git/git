@@ -207,6 +207,24 @@ static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-res
 static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
 static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
 
+/*
+ * A 'struct replay_ctx' represents the private state of the sequencer.
+ */
+struct replay_ctx {
+	/*
+	 * Stores the reflog message that will be used when creating a
+	 * commit. Points to a static buffer and should not be free()'d.
+	 */
+	const char *reflog_message;
+};
+
+struct replay_ctx* replay_ctx_new(void)
+{
+	struct replay_ctx *ctx = xcalloc(1, sizeof(*ctx));
+
+	return ctx;
+}
+
 /**
  * A 'struct update_refs_record' represents a value in the update-refs
  * list. We use a string_list to map refs to these (before, after) pairs.
@@ -377,6 +395,7 @@ void replay_opts_release(struct replay_opts *opts)
 	if (opts->revs)
 		release_revisions(opts->revs);
 	free(opts->revs);
+	free(opts->ctx);
 }
 
 int sequencer_remove_state(struct replay_opts *opts)
@@ -1054,6 +1073,7 @@ static int run_git_commit(const char *defmsg,
 			  struct replay_opts *opts,
 			  unsigned int flags)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
@@ -1071,7 +1091,7 @@ static int run_git_commit(const char *defmsg,
 			     gpg_opt, gpg_opt);
 	}
 
-	strvec_pushf(&cmd.env, GIT_REFLOG_ACTION "=%s", opts->reflog_message);
+	strvec_pushf(&cmd.env, GIT_REFLOG_ACTION "=%s", ctx->reflog_message);
 
 	if (opts->committer_date_is_author_date)
 		strvec_pushf(&cmd.env, "GIT_COMMITTER_DATE=%s",
@@ -1457,6 +1477,7 @@ static int try_to_commit(struct repository *r,
 			 struct replay_opts *opts, unsigned int flags,
 			 struct object_id *oid)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	struct object_id tree;
 	struct commit *current_head = NULL;
 	struct commit_list *parents = NULL;
@@ -1618,7 +1639,7 @@ static int try_to_commit(struct repository *r,
 		goto out;
 	}
 
-	if (update_head_with_reflog(current_head, oid, opts->reflog_message,
+	if (update_head_with_reflog(current_head, oid, ctx->reflog_message,
 				    msg, &err)) {
 		res = error("%s", err.buf);
 		goto out;
@@ -4725,11 +4746,12 @@ static int pick_one_commit(struct repository *r,
 			   struct replay_opts *opts,
 			   int *check_todo, int* reschedule)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	int res;
 	struct todo_item *item = todo_list->items + todo_list->current;
 	const char *arg = todo_item_get_arg(todo_list, item);
 	if (is_rebase_i(opts))
-		opts->reflog_message = reflog_message(
+		ctx->reflog_message = reflog_message(
 			opts, command_to_string(item->command), NULL);
 
 	res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
@@ -4786,9 +4808,10 @@ static int pick_commits(struct repository *r,
 			struct todo_list *todo_list,
 			struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	int res = 0, reschedule = 0;
 
-	opts->reflog_message = sequencer_reflog_action(opts);
+	ctx->reflog_message = sequencer_reflog_action(opts);
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
 			 opts->record_origin || should_edit(opts) ||
@@ -5205,6 +5228,7 @@ static int commit_staged_changes(struct repository *r,
 
 int sequencer_continue(struct repository *r, struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	struct todo_list todo_list = TODO_LIST_INIT;
 	int res;
 
@@ -5224,7 +5248,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			unlink(rebase_path_dropped());
 		}
 
-		opts->reflog_message = reflog_message(opts, "continue", NULL);
+		ctx->reflog_message = reflog_message(opts, "continue", NULL);
 		if (commit_staged_changes(r, opts, &todo_list)) {
 			res = -1;
 			goto release_todo_list;
@@ -5276,7 +5300,7 @@ static int single_pick(struct repository *r,
 			TODO_PICK : TODO_REVERT;
 	item.commit = cmit;
 
-	opts->reflog_message = sequencer_reflog_action(opts);
+	opts->ctx->reflog_message = sequencer_reflog_action(opts);
 	return do_pick_commit(r, &item, opts, 0, &check_todo);
 }
 
