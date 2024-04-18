@@ -11,7 +11,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
 	struct commit_graph *g;
 
-	initialize_the_repository();
+	initialize_repository(the_repository);
+
 	/*
 	 * Initialize the_repository with commit-graph settings that would
 	 * normally be read from the repository's gitdir. We want to avoid

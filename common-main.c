@@ -48,7 +48,7 @@ int main(int argc, const char **argv)
 	setlocale(LC_CTYPE, "");
 	git_setup_gettext();
 
-	initialize_the_repository();
+	initialize_repository(the_repository);
 
 	attr_start();
 
