@@ -212,6 +212,11 @@ static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redu
  */
 struct replay_ctx {
 	/*
+	 * The commit message that will be used except at the end of a
+	 * chain of fixup and squash commands.
+	 */
+	struct strbuf message;
+	/*
 	 * The list of completed fixup and squash commands in the
 	 * current chain.
 	 */
@@ -226,6 +231,10 @@ struct replay_ctx {
 	 * current chain.
 	 */
 	int current_fixup_count;
+	/*
+	 * Whether message contains a commit message.
+	 */
+	unsigned have_message :1;
 };
 
 struct replay_ctx* replay_ctx_new(void)
@@ -233,6 +242,7 @@ struct replay_ctx* replay_ctx_new(void)
 	struct replay_ctx *ctx = xcalloc(1, sizeof(*ctx));
 
 	strbuf_init(&ctx->current_fixups, 0);
+	strbuf_init(&ctx->message, 0);
 
 	return ctx;
 }
@@ -399,6 +409,7 @@ static const char *gpg_sign_opt_quoted(struct replay_opts *opts)
 static void replay_ctx_release(struct replay_ctx *ctx)
 {
 	strbuf_release(&ctx->current_fixups);
+	strbuf_release(&ctx->message);
 }
 
 void replay_opts_release(struct replay_opts *opts)
@@ -2205,7 +2216,6 @@ static int do_pick_commit(struct repository *r,
 	const char *base_label, *next_label;
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
-	struct strbuf msgbuf = STRBUF_INIT;
 	int res, unborn = 0, reword = 0, allow, drop_commit;
 	enum todo_command command = item->command;
 	struct commit *commit = item->commit;
@@ -2304,7 +2314,7 @@ static int do_pick_commit(struct repository *r,
 		next = parent;
 		next_label = msg.parent_label;
 		if (opts->commit_use_reference) {
-			strbuf_addstr(&msgbuf,
+			strbuf_addstr(&ctx->message,
 				"# *** SAY WHY WE ARE REVERTING ON THE TITLE LINE ***");
 		} else if (skip_prefix(msg.subject, "Revert \"", &orig_subject) &&
 			   /*
@@ -2313,21 +2323,21 @@ static int do_pick_commit(struct repository *r,
 			    * thus requiring excessive complexity to deal with.
 			    */
 			   !starts_with(orig_subject, "Revert \"")) {
-			strbuf_addstr(&msgbuf, "Reapply \"");
-			strbuf_addstr(&msgbuf, orig_subject);
+			strbuf_addstr(&ctx->message, "Reapply \"");
+			strbuf_addstr(&ctx->message, orig_subject);
 		} else {
-			strbuf_addstr(&msgbuf, "Revert \"");
-			strbuf_addstr(&msgbuf, msg.subject);
-			strbuf_addstr(&msgbuf, "\"");
+			strbuf_addstr(&ctx->message, "Revert \"");
+			strbuf_addstr(&ctx->message, msg.subject);
+			strbuf_addstr(&ctx->message, "\"");
 		}
-		strbuf_addstr(&msgbuf, "\n\nThis reverts commit ");
-		refer_to_commit(opts, &msgbuf, commit);
+		strbuf_addstr(&ctx->message, "\n\nThis reverts commit ");
+		refer_to_commit(opts, &ctx->message, commit);
 
 		if (commit->parents && commit->parents->next) {
-			strbuf_addstr(&msgbuf, ", reversing\nchanges made to ");
-			refer_to_commit(opts, &msgbuf, parent);
+			strbuf_addstr(&ctx->message, ", reversing\nchanges made to ");
+			refer_to_commit(opts, &ctx->message, parent);
 		}
-		strbuf_addstr(&msgbuf, ".\n");
+		strbuf_addstr(&ctx->message, ".\n");
 	} else {
 		const char *p;
 
@@ -2336,21 +2346,22 @@ static int do_pick_commit(struct repository *r,
 		next = commit;
 		next_label = msg.label;
 
-		/* Append the commit log message to msgbuf. */
+		/* Append the commit log message to ctx->message. */
 		if (find_commit_subject(msg.message, &p))
-			strbuf_addstr(&msgbuf, p);
+			strbuf_addstr(&ctx->message, p);
 
 		if (opts->record_origin) {
-			strbuf_complete_line(&msgbuf);
-			if (!has_conforming_footer(&msgbuf, NULL, 0))
-				strbuf_addch(&msgbuf, '\n');
-			strbuf_addstr(&msgbuf, cherry_picked_prefix);
-			strbuf_addstr(&msgbuf, oid_to_hex(&commit->object.oid));
-			strbuf_addstr(&msgbuf, ")\n");
+			strbuf_complete_line(&ctx->message);
+			if (!has_conforming_footer(&ctx->message, NULL, 0))
+				strbuf_addch(&ctx->message, '\n');
+			strbuf_addstr(&ctx->message, cherry_picked_prefix);
+			strbuf_addstr(&ctx->message, oid_to_hex(&commit->object.oid));
+			strbuf_addstr(&ctx->message, ")\n");
 		}
 		if (!is_fixup(command))
 			author = get_author(msg.message);
 	}
+	ctx->have_message = 1;
 
 	if (command == TODO_REWORD)
 		reword = 1;
@@ -2381,7 +2392,7 @@ static int do_pick_commit(struct repository *r,
 	}
 
 	if (opts->signoff && !is_fixup(command))
-		append_signoff(&msgbuf, 0, 0);
+		append_signoff(&ctx->message, 0, 0);
 
 	if (is_rebase_i(opts) && write_author_script(msg.message) < 0)
 		res = -1;
@@ -2390,17 +2401,17 @@ static int do_pick_commit(struct repository *r,
 		 !strcmp(opts->strategy, "ort") ||
 		 command == TODO_REVERT) {
 		res = do_recursive_merge(r, base, next, base_label, next_label,
-					 &head, &msgbuf, opts);
+					 &head, &ctx->message, opts);
 		if (res < 0)
 			goto leave;
 
-		res |= write_message(msgbuf.buf, msgbuf.len,
+		res |= write_message(ctx->message.buf, ctx->message.len,
 				     git_path_merge_msg(r), 0);
 	} else {
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
 
-		res = write_message(msgbuf.buf, msgbuf.len,
+		res = write_message(ctx->message.buf, ctx->message.len,
 				    git_path_merge_msg(r), 0);
 
 		commit_list_insert(base, &common);
@@ -2485,7 +2496,6 @@ fast_forward_edit:
 leave:
 	free_message(commit, &msg);
 	free(author);
-	strbuf_release(&msgbuf);
 	update_abort_safety_file();
 
 	return res;
@@ -3952,6 +3962,7 @@ static int do_merge(struct repository *r,
 		    const char *arg, int arg_len,
 		    int flags, int *check_todo, struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	int run_commit_flags = 0;
 	struct strbuf ref_name = STRBUF_INIT;
 	struct commit *head_commit, *merge_commit, *i;
@@ -4080,39 +4091,30 @@ static int do_merge(struct repository *r,
 		write_author_script(message);
 		find_commit_subject(message, &body);
 		len = strlen(body);
-		ret = write_message(body, len, git_path_merge_msg(r), 0);
+		strbuf_add(&ctx->message, body, len);
 		repo_unuse_commit_buffer(r, commit, message);
-		if (ret) {
-			error_errno(_("could not write '%s'"),
-				    git_path_merge_msg(r));
-			goto leave_merge;
-		}
 	} else {
 		struct strbuf buf = STRBUF_INIT;
-		int len;
 
 		strbuf_addf(&buf, "author %s", git_author_info(0));
 		write_author_script(buf.buf);
-		strbuf_reset(&buf);
+		strbuf_release(&buf);
 
 		if (oneline_offset < arg_len) {
-			p = arg + oneline_offset;
-			len = arg_len - oneline_offset;
+			strbuf_add(&ctx->message, arg + oneline_offset,
+				   arg_len - oneline_offset);
 		} else {
-			strbuf_addf(&buf, "Merge %s '%.*s'",
+			strbuf_addf(&ctx->message, "Merge %s '%.*s'",
 				    to_merge->next ? "branches" : "branch",
 				    merge_arg_len, arg);
-			p = buf.buf;
-			len = buf.len;
 		}
-
-		ret = write_message(p, len, git_path_merge_msg(r), 0);
-		strbuf_release(&buf);
-		if (ret) {
-			error_errno(_("could not write '%s'"),
-				    git_path_merge_msg(r));
-			goto leave_merge;
-		}
+	}
+	ctx->have_message = 1;
+	if (write_message(ctx->message.buf, ctx->message.len,
+			  git_path_merge_msg(r), 0)) {
+		    ret = error_errno(_("could not write '%s'"),
+				      git_path_merge_msg(r));
+		    goto leave_merge;
 	}
 
 	if (strategy || to_merge->next) {
@@ -4885,6 +4887,8 @@ static int pick_commits(struct repository *r,
 				return stopped_at_head(r);
 			}
 		}
+		strbuf_reset(&ctx->message);
+		ctx->have_message = 0;
 		if (item->command <= TODO_SQUASH) {
 			res = pick_one_commit(r, todo_list, opts, &check_todo,
 					      &reschedule);
