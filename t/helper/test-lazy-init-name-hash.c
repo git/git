@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 #include "environment.h"
 #include "name-hash.h"
@@ -40,22 +39,22 @@ static void dump_run(void)
 
 	repo_read_index(the_repository);
 	if (single) {
-		test_lazy_init_name_hash(&the_index, 0);
+		test_lazy_init_name_hash(the_repository->index, 0);
 	} else {
-		int nr_threads_used = test_lazy_init_name_hash(&the_index, 1);
+		int nr_threads_used = test_lazy_init_name_hash(the_repository->index, 1);
 		if (!nr_threads_used)
 			die("non-threaded code path used");
 	}
 
-	hashmap_for_each_entry(&the_index.dir_hash, &iter_dir, dir,
+	hashmap_for_each_entry(&the_repository->index->dir_hash, &iter_dir, dir,
 				ent /* member name */)
 		printf("dir %08x %7d %s\n", dir->ent.hash, dir->nr, dir->name);
 
-	hashmap_for_each_entry(&the_index.name_hash, &iter_cache, ce,
+	hashmap_for_each_entry(&the_repository->index->name_hash, &iter_cache, ce,
 				ent /* member name */)
 		printf("name %08x %s\n", ce->ent.hash, ce->name);
 
-	discard_index(&the_index);
+	discard_index(the_repository->index);
 }
 
 /*
@@ -74,7 +73,7 @@ static uint64_t time_runs(int try_threaded)
 		t0 = getnanotime();
 		repo_read_index(the_repository);
 		t1 = getnanotime();
-		nr_threads_used = test_lazy_init_name_hash(&the_index, try_threaded);
+		nr_threads_used = test_lazy_init_name_hash(the_repository->index, try_threaded);
 		t2 = getnanotime();
 
 		sum += (t2 - t1);
@@ -86,16 +85,16 @@ static uint64_t time_runs(int try_threaded)
 			printf("%f %f %d multi %d\n",
 				   ((double)(t1 - t0))/1000000000,
 				   ((double)(t2 - t1))/1000000000,
-				   the_index.cache_nr,
+				   the_repository->index->cache_nr,
 				   nr_threads_used);
 		else
 			printf("%f %f %d single\n",
 				   ((double)(t1 - t0))/1000000000,
 				   ((double)(t2 - t1))/1000000000,
-				   the_index.cache_nr);
+				   the_repository->index->cache_nr);
 		fflush(stdout);
 
-		discard_index(&the_index);
+		discard_index(the_repository->index);
 	}
 
 	avg = sum / count;
@@ -120,8 +119,8 @@ static void analyze_run(void)
 	int nr;
 
 	repo_read_index(the_repository);
-	cache_nr_limit = the_index.cache_nr;
-	discard_index(&the_index);
+	cache_nr_limit = the_repository->index->cache_nr;
+	discard_index(the_repository->index);
 
 	nr = analyze;
 	while (1) {
@@ -135,22 +134,22 @@ static void analyze_run(void)
 
 		for (i = 0; i < count; i++) {
 			repo_read_index(the_repository);
-			the_index.cache_nr = nr; /* cheap truncate of index */
+			the_repository->index->cache_nr = nr; /* cheap truncate of index */
 			t1s = getnanotime();
-			test_lazy_init_name_hash(&the_index, 0);
+			test_lazy_init_name_hash(the_repository->index, 0);
 			t2s = getnanotime();
 			sum_single += (t2s - t1s);
-			the_index.cache_nr = cache_nr_limit;
-			discard_index(&the_index);
+			the_repository->index->cache_nr = cache_nr_limit;
+			discard_index(the_repository->index);
 
 			repo_read_index(the_repository);
-			the_index.cache_nr = nr; /* cheap truncate of index */
+			the_repository->index->cache_nr = nr; /* cheap truncate of index */
 			t1m = getnanotime();
-			nr_threads_used = test_lazy_init_name_hash(&the_index, 1);
+			nr_threads_used = test_lazy_init_name_hash(the_repository->index, 1);
 			t2m = getnanotime();
 			sum_multi += (t2m - t1m);
-			the_index.cache_nr = cache_nr_limit;
-			discard_index(&the_index);
+			the_repository->index->cache_nr = cache_nr_limit;
+			discard_index(the_repository->index);
 
 			if (!nr_threads_used)
 				printf("    [size %8d] [single %f]   non-threaded code path used\n",
