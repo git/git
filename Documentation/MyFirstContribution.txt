@@ -1116,6 +1116,15 @@ $ git send-email --to=target@example.com psuh/*.patch
 NOTE: Check `git help send-email` for some other options which you may find
 valuable, such as changing the Reply-to address or adding more CC and BCC lines.
 
+:contrib-scripts: footnoteref:[contrib-scripts,Scripts under `contrib/` are +
+not part of the core `git` binary and must be called directly. Clone the Git +
+codebase and run `perl contrib/contacts/git-contacts`.]
+
+NOTE: If you're not sure whom to CC, running `contrib/contacts/git-contacts` can
+list potential reviewers. In addition, you can do `git send-email
+--cc-cmd='perl contrib/contacts/git-contacts' feature/*.patch`{contrib-scripts} to
+automatically pass this list of emails to `send-email`.
+
 NOTE: When you are sending a real patch, it will go to git@vger.kernel.org - but
 please don't send your patchset from the tutorial to the real mailing list! For
 now, you can send it to yourself, to make sure you understand how it will look.
