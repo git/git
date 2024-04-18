@@ -408,6 +408,10 @@ are optimized for the workflow of sending patches, avoiding many ways
 your existing e-mail client (often optimized for "multipart/*" MIME
 type e-mails) might render your patches unusable.
 
+NOTE: Here we outline the procedure using `format-patch` and
+`send-email`, but you can instead use GitGitGadget to send in your
+patches (see link:MyFirstContribution.html[MyFirstContribution]).
+
 People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
 a developer to be able to "quote" your changes, using standard
