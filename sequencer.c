@@ -3636,13 +3636,24 @@ static int error_with_patch(struct repository *r,
 			    struct replay_opts *opts,
 			    int exit_code, int to_amend)
 {
-	if (commit) {
-		if (make_patch(r, commit, opts))
+	struct replay_ctx *ctx = opts->ctx;
+
+	/*
+	 * Write the commit message to be used by "git rebase
+	 * --continue". If a "fixup" or "squash" command has conflicts
+	 * then we will have already written rebase_path_message() in
+	 * error_failed_squash(). If an "edit" command was
+	 * fast-forwarded then we don't have a message in ctx->message
+	 * and rely on make_patch() to write rebase_path_message()
+	 * instead.
+	 */
+	if (ctx->have_message && !file_exists(rebase_path_message()) &&
+	    write_message(ctx->message.buf, ctx->message.len,
+			  rebase_path_message(), 0))
+		return error(_("could not write commit message file"));
+
+	if (commit && make_patch(r, commit, opts))
 			return -1;
-	} else if (copy_file(rebase_path_message(),
-			     git_path_merge_msg(r), 0666))
-		return error(_("unable to copy '%s' to '%s'"),
-			     git_path_merge_msg(r), rebase_path_message());
 
 	if (to_amend) {
 		if (intend_to_amend())
