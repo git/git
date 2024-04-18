@@ -25,17 +25,20 @@ static struct repository the_repo;
 struct repository *the_repository;
 struct index_state the_index;
 
+static void initialize_repository(struct repository *repo,
+				  struct index_state *index)
+{
+	repo->index = index;
+	repo->objects = raw_object_store_new();
+	repo->remote_state = remote_state_new();
+	repo->parsed_objects = parsed_object_pool_new();
+	index_state_init(index, repo);
+}
+
 void initialize_the_repository(void)
 {
 	the_repository = &the_repo;
-
-	the_repo.index = &the_index;
-	the_repo.objects = raw_object_store_new();
-	the_repo.remote_state = remote_state_new();
-	the_repo.parsed_objects = parsed_object_pool_new();
-
-	index_state_init(&the_index, the_repository);
-
+	initialize_repository(the_repository, &the_index);
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
 
@@ -188,9 +191,12 @@ int repo_init(struct repository *repo,
 	struct repository_format format = REPOSITORY_FORMAT_INIT;
 	memset(repo, 0, sizeof(*repo));
 
-	repo->objects = raw_object_store_new();
-	repo->parsed_objects = parsed_object_pool_new();
-	repo->remote_state = remote_state_new();
+	if (repo == the_repository) {
+		initialize_repository(the_repository, &the_index);
+	} else {
+		ALLOC_ARRAY(repo->index, 1);
+		initialize_repository(repo, repo->index);
+	}
 
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
