@@ -187,9 +187,6 @@ struct repository {
 };
 
 extern struct repository *the_repository;
-#ifdef USE_THE_INDEX_VARIABLE
-extern struct index_state the_index;
-#endif
 
 /*
  * Define a custom repository layout. Any field can be NULL, which
