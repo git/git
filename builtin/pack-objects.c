@@ -1826,7 +1826,8 @@ static void add_pbase_object(struct tree_desc *tree,
 			tree = pbase_tree_get(&entry.oid);
 			if (!tree)
 				return;
-			init_tree_desc(&sub, tree->tree_data, tree->tree_size);
+			init_tree_desc(&sub, &tree->oid,
+				       tree->tree_data, tree->tree_size);
 
 			add_pbase_object(&sub, down, downlen, fullname);
 			pbase_tree_put(tree);
@@ -1886,7 +1887,8 @@ static void add_preferred_base_object(const char *name)
 		}
 		else {
 			struct tree_desc tree;
-			init_tree_desc(&tree, it->pcache.tree_data, it->pcache.tree_size);
+			init_tree_desc(&tree, &it->pcache.oid,
+				       it->pcache.tree_data, it->pcache.tree_size);
 			add_pbase_object(&tree, name, cmplen, name);
 		}
 	}
@@ -4396,6 +4398,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		prepare_repo_settings(the_repository);
 		if (sparse < 0)
 			sparse = the_repository->settings.pack_use_sparse;
+		if (the_repository->settings.pack_use_multi_pack_reuse)
+			allow_pack_reuse = MULTI_PACK_REUSE;
 	}
 
 	reset_pack_idx_option(&pack_idx_opts);

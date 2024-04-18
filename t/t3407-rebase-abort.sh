@@ -40,9 +40,24 @@ testrebase() {
 		test_path_is_missing "$state_dir"
 	'
 
+	test_expect_success "pre rebase$type head is marked as reachable" '
+		# Clean up the state from the previous one
+		git checkout -f --detach pre-rebase &&
+		test_tick &&
+		git commit --amend --only -m "reworded" &&
+		orig_head=$(git rev-parse HEAD) &&
+		test_must_fail git rebase$type main &&
+		# Stop ORIG_HEAD marking $state_dir/orig-head as reachable
+		git update-ref -d ORIG_HEAD &&
+		git reflog expire --expire="$GIT_COMMITTER_DATE" --all &&
+		git prune --expire=now &&
+		git rebase --abort &&
+		test_cmp_rev $orig_head HEAD
+	'
+
 	test_expect_success "rebase$type --abort after --skip" '
 		# Clean up the state from the previous one
-		git reset --hard pre-rebase &&
+		git checkout -B to-rebase pre-rebase &&
 		test_must_fail git rebase$type main &&
 		test_path_is_dir "$state_dir" &&
 		test_must_fail git rebase --skip &&

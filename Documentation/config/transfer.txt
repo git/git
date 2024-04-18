@@ -121,3 +121,7 @@ transfer.bundleURI::
 	information from the remote server (if advertised) and download
 	bundles before continuing the clone through the Git protocol.
 	Defaults to `false`.
+
+transfer.advertiseObjectInfo::
+	When `true`, the `object-info` capability is advertised by
+	servers. Defaults to false.

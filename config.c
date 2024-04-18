@@ -817,7 +817,8 @@ static int get_next_char(struct config_source *cs)
 
 static char *parse_value(struct config_source *cs)
 {
-	int quote = 0, comment = 0, space = 0;
+	int quote = 0, comment = 0;
+	size_t trim_len = 0;
 
 	strbuf_reset(&cs->value);
 	for (;;) {
@@ -827,13 +828,17 @@ static char *parse_value(struct config_source *cs)
 				cs->linenr--;
 				return NULL;
 			}
+			if (trim_len)
+				strbuf_setlen(&cs->value, trim_len);
 			return cs->value.buf;
 		}
 		if (comment)
 			continue;
 		if (isspace(c) && !quote) {
+			if (!trim_len)
+				trim_len = cs->value.len;
 			if (cs->value.len)
-				space++;
+				strbuf_addch(&cs->value, c);
 			continue;
 		}
 		if (!quote) {
@@ -842,8 +847,8 @@ static char *parse_value(struct config_source *cs)
 				continue;
 			}
 		}
-		for (; space; space--)
-			strbuf_addch(&cs->value, ' ');
+		if (trim_len)
+			trim_len = 0;
 		if (c == '\\') {
 			c = get_next_char(cs);
 			switch (c) {
@@ -869,7 +874,7 @@ static char *parse_value(struct config_source *cs)
 			continue;
 		}
 		if (c == '"') {
-			quote = 1-quote;
+			quote = 1 - quote;
 			continue;
 		}
 		strbuf_addch(&cs->value, c);
@@ -1560,24 +1565,29 @@ static int git_default_core_config(const char *var, const char *value,
 	if (!strcmp(var, "core.editor"))
 		return git_config_string(&editor_program, var, value);
 
-	if (!strcmp(var, "core.commentchar")) {
+	if (!strcmp(var, "core.commentchar") ||
+	    !strcmp(var, "core.commentstring")) {
 		if (!value)
 			return config_error_nonbool(var);
 		else if (!strcasecmp(value, "auto"))
 			auto_comment_line_char = 1;
-		else if (value[0] && !value[1]) {
-			comment_line_char = value[0];
+		else if (value[0]) {
+			if (strchr(value, '\n'))
+				return error(_("%s cannot contain newline"), var);
+			comment_line_str = xstrdup(value);
 			auto_comment_line_char = 0;
 		} else
-			return error(_("core.commentChar should only be one ASCII character"));
+			return error(_("%s must have at least one character"), var);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.askpass"))
 		return git_config_string(&askpass_program, var, value);
 
-	if (!strcmp(var, "core.excludesfile"))
+	if (!strcmp(var, "core.excludesfile")) {
+		free((char *)excludes_file);
 		return git_config_pathname(&excludes_file, var, value);
+	}
 
 	if (!strcmp(var, "core.whitespace")) {
 		if (!value)
@@ -3001,6 +3011,7 @@ static ssize_t write_section(int fd, const char *key,
 }
 
 static ssize_t write_pair(int fd, const char *key, const char *value,
+			  const char *comment,
 			  const struct config_store_data *store)
 {
 	int i;
@@ -3041,7 +3052,11 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 			strbuf_addch(&sb, value[i]);
 			break;
 		}
-	strbuf_addf(&sb, "%s\n", quote);
+
+	if (comment)
+		strbuf_addf(&sb, "%s%s\n", quote, comment);
+	else
+		strbuf_addf(&sb, "%s\n", quote);
 
 	ret = write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
@@ -3130,9 +3145,9 @@ static void maybe_remove_section(struct config_store_data *store,
 }
 
 int git_config_set_in_file_gently(const char *config_filename,
-				  const char *key, const char *value)
+				  const char *key, const char *comment, const char *value)
 {
-	return git_config_set_multivar_in_file_gently(config_filename, key, value, NULL, 0);
+	return git_config_set_multivar_in_file_gently(config_filename, key, value, NULL, comment, 0);
 }
 
 void git_config_set_in_file(const char *config_filename,
@@ -3153,7 +3168,7 @@ int repo_config_set_worktree_gently(struct repository *r,
 	if (r->repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
 		int ret = git_config_set_multivar_in_file_gently(
-					file, key, value, NULL, 0);
+					file, key, value, NULL, NULL, 0);
 		free(file);
 		return ret;
 	}
@@ -3165,6 +3180,62 @@ void git_config_set(const char *key, const char *value)
 	git_config_set_multivar(key, value, NULL, 0);
 
 	trace2_cmd_set_config(key, value);
+}
+
+/*
+ * The ownership rule is that the caller will own the string
+ * if it receives a piece of memory different from what it passed
+ * as the parameter.
+ */
+const char *git_config_prepare_comment_string(const char *comment)
+{
+	size_t leading_blanks;
+
+	if (!comment)
+		return NULL;
+
+	if (strchr(comment, '\n'))
+		die(_("no multi-line comment allowed: '%s'"), comment);
+
+	/*
+	 * If it begins with one or more leading whitespace characters
+	 * followed by '#", the comment string is used as-is.
+	 *
+	 * If it begins with '#', a SP is inserted between the comment
+	 * and the value the comment is about.
+	 *
+	 * Otherwise, the value is followed by a SP followed by '#'
+	 * followed by SP and then the comment string comes.
+	 */
+
+	leading_blanks = strspn(comment, " \t");
+	if (leading_blanks && comment[leading_blanks] == '#')
+		; /* use it as-is */
+	else if (comment[0] == '#')
+		comment = xstrfmt(" %s", comment);
+	else
+		comment = xstrfmt(" # %s", comment);
+
+	return comment;
+}
+
+static void validate_comment_string(const char *comment)
+{
+	size_t leading_blanks;
+
+	if (!comment)
+		return;
+	/*
+	 * The front-end must have massaged the comment string
+	 * properly before calling us.
+	 */
+	if (strchr(comment, '\n'))
+		BUG("multi-line comments are not permitted: '%s'", comment);
+
+	leading_blanks = strspn(comment, " \t");
+	if (!leading_blanks || comment[leading_blanks] != '#')
+		BUG("comment must begin with one or more SP followed by '#': '%s'",
+		    comment);
 }
 
 /*
@@ -3195,6 +3266,7 @@ void git_config_set(const char *key, const char *value)
 int git_config_set_multivar_in_file_gently(const char *config_filename,
 					   const char *key, const char *value,
 					   const char *value_pattern,
+					   const char *comment,
 					   unsigned flags)
 {
 	int fd = -1, in_fd = -1;
@@ -3204,6 +3276,8 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	char *contents = NULL;
 	size_t contents_sz;
 	struct config_store_data store = CONFIG_STORE_INIT;
+
+	validate_comment_string(comment);
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
@@ -3245,7 +3319,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		free(store.key);
 		store.key = xstrdup(key);
 		if (write_section(fd, key, &store) < 0 ||
-		    write_pair(fd, key, value, &store) < 0)
+		    write_pair(fd, key, value, comment, &store) < 0)
 			goto write_err_out;
 	} else {
 		struct stat st;
@@ -3399,7 +3473,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 				if (write_section(fd, key, &store) < 0)
 					goto write_err_out;
 			}
-			if (write_pair(fd, key, value, &store) < 0)
+			if (write_pair(fd, key, value, comment, &store) < 0)
 				goto write_err_out;
 		}
 
@@ -3444,7 +3518,7 @@ void git_config_set_multivar_in_file(const char *config_filename,
 				     const char *value_pattern, unsigned flags)
 {
 	if (!git_config_set_multivar_in_file_gently(config_filename, key, value,
-						    value_pattern, flags))
+						    value_pattern, NULL, flags))
 		return;
 	if (value)
 		die(_("could not set '%s' to '%s'"), key, value);
@@ -3467,7 +3541,7 @@ int repo_config_set_multivar_gently(struct repository *r, const char *key,
 	int res = git_config_set_multivar_in_file_gently(file,
 							 key, value,
 							 value_pattern,
-							 flags);
+							 NULL, flags);
 	free(file);
 	return res;
 }

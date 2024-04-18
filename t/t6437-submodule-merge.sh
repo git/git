@@ -113,7 +113,7 @@ test_expect_success 'merging should conflict for non fast-forward' '
 	 git checkout -b test-nonforward-a b &&
 	  if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	  then
-		test_must_fail git merge c >actual &&
+		test_must_fail git merge c 2>actual &&
 		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-c)" &&
 		grep "$sub_expect" actual
 	  else
@@ -154,9 +154,9 @@ test_expect_success 'merging should conflict for non fast-forward (resolution ex
 	  git rev-parse --short sub-d > ../expect) &&
 	  if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	  then
-		test_must_fail git merge c >actual &&
+		test_must_fail git merge c >actual 2>sub-actual &&
 		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-c)" &&
-		grep "$sub_expect" actual
+		grep "$sub_expect" sub-actual
 	  else
 		test_must_fail git merge c 2> actual
 	  fi &&
@@ -181,9 +181,9 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 	 ) &&
 	 if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	 then
-		test_must_fail git merge c >actual &&
+		test_must_fail git merge c >actual 2>sub-actual &&
 		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-c)" &&
-		grep "$sub_expect" actual
+		grep "$sub_expect" sub-actual
 	 else
 		test_must_fail git merge c 2> actual
 	 fi &&
@@ -227,7 +227,7 @@ test_expect_success 'merging should fail for changes that are backwards' '
 	git commit -a -m "f" &&
 
 	git checkout -b test-backward e &&
-	test_must_fail git merge f >actual &&
+	test_must_fail git merge f 2>actual &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
     then
 		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short sub-d)" &&
@@ -535,7 +535,7 @@ test_expect_success 'merging should fail with no merge base' '
 	git checkout -b b init &&
 	git add sub &&
 	git commit -m "b" &&
-	test_must_fail git merge a >actual &&
+	test_must_fail git merge a 2>actual &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
     then
 		sub_expect="go to submodule (sub), and either merge commit $(git -C sub rev-parse --short HEAD^1)" &&

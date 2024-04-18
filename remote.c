@@ -105,7 +105,7 @@ static int remotes_hash_cmp(const void *cmp_data UNUSED,
 	b = container_of(entry_or_key, const struct remote, ent);
 
 	if (key)
-		return strncmp(a->name, key->str, key->len) || a->name[key->len];
+		return !!xstrncmpz(a->name, key->str, key->len);
 	else
 		return strcmp(a->name, b->name);
 }
@@ -189,8 +189,7 @@ static int branches_hash_cmp(const void *cmp_data UNUSED,
 	b = container_of(entry_or_key, const struct branch, ent);
 
 	if (key)
-		return strncmp(a->name, key->str, key->len) ||
-		       a->name[key->len];
+		return !!xstrncmpz(a->name, key->str, key->len);
 	else
 		return strcmp(a->name, b->name);
 }
@@ -2680,7 +2679,7 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 		if (MERGE_BASES_BATCH_SIZE < size)
 			size = MERGE_BASES_BATCH_SIZE;
 
-		if ((ret = repo_in_merge_bases_many(the_repository, commit, size, chunk)))
+		if ((ret = repo_in_merge_bases_many(the_repository, commit, size, chunk, 0)))
 			break;
 	}
 

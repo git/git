@@ -2,9 +2,18 @@
 #include "dir.h"
 #include "iterator.h"
 #include "dir-iterator.h"
+#include "string-list.h"
 
 struct dir_iterator_level {
 	DIR *dir;
+
+	/*
+	 * The directory entries of the current level. This list will only be
+	 * populated when the iterator is ordered. In that case, `dir` will be
+	 * set to `NULL`.
+	 */
+	struct string_list entries;
+	size_t entries_idx;
 
 	/*
 	 * The length of the directory part of path at this level
@@ -43,6 +52,31 @@ struct dir_iterator_int {
 	unsigned int flags;
 };
 
+static int next_directory_entry(DIR *dir, const char *path,
+				struct dirent **out)
+{
+	struct dirent *de;
+
+repeat:
+	errno = 0;
+	de = readdir(dir);
+	if (!de) {
+		if (errno) {
+			warning_errno("error reading directory '%s'",
+				      path);
+			return -1;
+		}
+
+		return 1;
+	}
+
+	if (is_dot_or_dotdot(de->d_name))
+		goto repeat;
+
+	*out = de;
+	return 0;
+}
+
 /*
  * Push a level in the iter stack and initialize it with information from
  * the directory pointed by iter->base->path. It is assumed that this
@@ -72,6 +106,35 @@ static int push_level(struct dir_iterator_int *iter)
 		return -1;
 	}
 
+	string_list_init_dup(&level->entries);
+	level->entries_idx = 0;
+
+	/*
+	 * When the iterator is sorted we read and sort all directory entries
+	 * directly.
+	 */
+	if (iter->flags & DIR_ITERATOR_SORTED) {
+		struct dirent *de;
+
+		while (1) {
+			int ret = next_directory_entry(level->dir, iter->base.path.buf, &de);
+			if (ret < 0) {
+				if (errno != ENOENT &&
+				    iter->flags & DIR_ITERATOR_PEDANTIC)
+					return -1;
+				continue;
+			} else if (ret > 0) {
+				break;
+			}
+
+			string_list_append(&level->entries, de->d_name);
+		}
+		string_list_sort(&level->entries);
+
+		closedir(level->dir);
+		level->dir = NULL;
+	}
+
 	return 0;
 }
 
@@ -88,21 +151,22 @@ static int pop_level(struct dir_iterator_int *iter)
 		warning_errno("error closing directory '%s'",
 			      iter->base.path.buf);
 	level->dir = NULL;
+	string_list_clear(&level->entries, 0);
 
 	return --iter->levels_nr;
 }
 
 /*
  * Populate iter->base with the necessary information on the next iteration
- * entry, represented by the given dirent de. Return 0 on success and -1
+ * entry, represented by the given name. Return 0 on success and -1
  * otherwise, setting errno accordingly.
  */
 static int prepare_next_entry_data(struct dir_iterator_int *iter,
-				   struct dirent *de)
+				   const char *name)
 {
 	int err, saved_errno;
 
-	strbuf_addstr(&iter->base.path, de->d_name);
+	strbuf_addstr(&iter->base.path, name);
 	/*
 	 * We have to reset these because the path strbuf might have
 	 * been realloc()ed at the previous strbuf_addstr().
@@ -139,27 +203,34 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 		struct dirent *de;
 		struct dir_iterator_level *level =
 			&iter->levels[iter->levels_nr - 1];
+		const char *name;
 
 		strbuf_setlen(&iter->base.path, level->prefix_len);
-		errno = 0;
-		de = readdir(level->dir);
 
-		if (!de) {
-			if (errno) {
-				warning_errno("error reading directory '%s'",
-					      iter->base.path.buf);
+		if (level->dir) {
+			int ret = next_directory_entry(level->dir, iter->base.path.buf, &de);
+			if (ret < 0) {
 				if (iter->flags & DIR_ITERATOR_PEDANTIC)
 					goto error_out;
-			} else if (pop_level(iter) == 0) {
-				return dir_iterator_abort(dir_iterator);
+				continue;
+			} else if (ret > 0) {
+				if (pop_level(iter) == 0)
+					return dir_iterator_abort(dir_iterator);
+				continue;
 			}
-			continue;
+
+			name = de->d_name;
+		} else {
+			if (level->entries_idx >= level->entries.nr) {
+				if (pop_level(iter) == 0)
+					return dir_iterator_abort(dir_iterator);
+				continue;
+			}
+
+			name = level->entries.items[level->entries_idx++].string;
 		}
 
-		if (is_dot_or_dotdot(de->d_name))
-			continue;
-
-		if (prepare_next_entry_data(iter, de)) {
+		if (prepare_next_entry_data(iter, name)) {
 			if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
 				goto error_out;
 			continue;
@@ -188,6 +259,8 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 			warning_errno("error closing directory '%s'",
 				      iter->base.path.buf);
 		}
+
+		string_list_clear(&level->entries, 0);
 	}
 
 	free(iter->levels);

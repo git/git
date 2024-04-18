@@ -1777,10 +1777,10 @@ test_expect_success '--points-at finds annotated tags of tags' '
 '
 
 test_expect_success 'recursive tagging should give advice' '
-	sed -e "s/|$//" <<-EOF >expect &&
+	cat >expect <<-EOF &&
 	hint: You have created a nested tag. The object referred to by your new tag is
 	hint: already a tag. If you meant to tag the object that it points to, use:
-	hint: |
+	hint:
 	hint: 	git tag -f nested annotated-v4.0^{}
 	hint: Disable this message with "git config advice.nestedTag false"
 	EOF

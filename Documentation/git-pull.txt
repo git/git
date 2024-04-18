@@ -87,7 +87,7 @@ OPTIONS
 --verbose::
 	Pass --verbose to git-fetch and git-merge.
 
---[no-]recurse-submodules[=yes|on-demand|no]::
+--[no-]recurse-submodules[=(yes|on-demand|no)]::
 	This option controls if new commits of populated submodules should
 	be fetched, and if the working trees of active submodules should be
 	updated, too (see linkgit:git-fetch[1], linkgit:git-config[1] and
@@ -105,7 +105,7 @@ Options related to merging
 include::merge-options.txt[]
 
 -r::
---rebase[=false|true|merges|interactive]::
+--rebase[=(false|true|merges|interactive)]::
 	When true, rebase the current branch on top of the upstream
 	branch after fetching. If there is a remote-tracking branch
 	corresponding to the upstream branch and the upstream branch

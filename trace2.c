@@ -433,6 +433,9 @@ void trace2_cmd_name_fl(const char *file, int line, const char *name)
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_command_name_fl)
 			tgt_j->pfn_command_name_fl(file, line, name, hierarchy);
+
+	trace2_cmd_list_config();
+	trace2_cmd_list_env_vars();
 }
 
 void trace2_cmd_mode_fl(const char *file, int line, const char *mode)
@@ -464,16 +467,28 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
 
 void trace2_cmd_list_config_fl(const char *file, int line)
 {
+	static int emitted = 0;
+
 	if (!trace2_enabled)
 		return;
+
+	if (emitted)
+		return;
+	emitted = 1;
 
 	tr2_cfg_list_config_fl(file, line);
 }
 
 void trace2_cmd_list_env_vars_fl(const char *file, int line)
 {
+	static int emitted = 0;
+
 	if (!trace2_enabled)
 		return;
+
+	if (emitted)
+		return;
+	emitted = 1;
 
 	tr2_list_env_vars_fl(file, line);
 }

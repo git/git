@@ -865,8 +865,9 @@ endif::git-format-patch[]
 
 --default-prefix::
 	Use the default source and destination prefixes ("a/" and "b/").
-	This is usually the default already, but may be used to override
-	config such as `diff.noprefix`.
+	This overrides configuration variables such as `diff.noprefix`,
+	`diff.srcPrefix`, `diff.dstPrefix`, and `diff.mnemonicPrefix`
+	(see `git-config`(1)).
 
 --line-prefix=<prefix>::
 	Prepend an additional prefix to every line of output.

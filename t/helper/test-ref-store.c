@@ -112,25 +112,6 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 	return argv + 1;
 }
 
-static struct flag_definition pack_flags[] = { FLAG_DEF(PACK_REFS_PRUNE),
-					       FLAG_DEF(PACK_REFS_ALL),
-					       { NULL, 0 } };
-
-static int cmd_pack_refs(struct ref_store *refs, const char **argv)
-{
-	unsigned int flags = arg_flags(*argv++, "flags", pack_flags);
-	static struct ref_exclusions exclusions = REF_EXCLUSIONS_INIT;
-	static struct string_list included_refs = STRING_LIST_INIT_NODUP;
-	struct pack_refs_opts pack_opts = { .flags = flags,
-					    .exclusions = &exclusions,
-					    .includes = &included_refs };
-
-	if (pack_opts.flags & PACK_REFS_ALL)
-		string_list_append(pack_opts.includes, "*");
-
-	return refs_pack_refs(refs, &pack_opts);
-}
-
 static int cmd_create_symref(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
@@ -221,15 +202,21 @@ static int cmd_verify_ref(struct ref_store *refs, const char **argv)
 	return ret;
 }
 
+static int each_reflog(const char *refname, void *cb_data UNUSED)
+{
+	printf("%s\n", refname);
+	return 0;
+}
+
 static int cmd_for_each_reflog(struct ref_store *refs,
 			       const char **argv UNUSED)
 {
-	return refs_for_each_reflog(refs, each_ref, NULL);
+	return refs_for_each_reflog(refs, each_reflog, NULL);
 }
 
-static int each_reflog(struct object_id *old_oid, struct object_id *new_oid,
-		       const char *committer, timestamp_t timestamp,
-		       int tz, const char *msg, void *cb_data UNUSED)
+static int each_reflog_ent(struct object_id *old_oid, struct object_id *new_oid,
+			   const char *committer, timestamp_t timestamp,
+			   int tz, const char *msg, void *cb_data UNUSED)
 {
 	printf("%s %s %s %" PRItime " %+05d%s%s", oid_to_hex(old_oid),
 	       oid_to_hex(new_oid), committer, timestamp, tz,
@@ -241,14 +228,14 @@ static int cmd_for_each_reflog_ent(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
 
-	return refs_for_each_reflog_ent(refs, refname, each_reflog, refs);
+	return refs_for_each_reflog_ent(refs, refname, each_reflog_ent, refs);
 }
 
 static int cmd_for_each_reflog_ent_reverse(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
 
-	return refs_for_each_reflog_ent_reverse(refs, refname, each_reflog, refs);
+	return refs_for_each_reflog_ent_reverse(refs, refname, each_reflog_ent, refs);
 }
 
 static int cmd_reflog_exists(struct ref_store *refs, const char **argv)
@@ -320,7 +307,6 @@ struct command {
 };
 
 static struct command commands[] = {
-	{ "pack-refs", cmd_pack_refs },
 	{ "create-symref", cmd_create_symref },
 	{ "delete-refs", cmd_delete_refs },
 	{ "rename-ref", cmd_rename_ref },

@@ -110,7 +110,7 @@ int protect_ntfs = PROTECT_NTFS_DEFAULT;
  * The character that begins a commented line in user-editable file
  * that is subject to stripspace.
  */
-char comment_line_char = '#';
+const char *comment_line_str = "#";
 int auto_comment_line_char;
 
 /* Parallel index stat data preload? */
@@ -207,6 +207,9 @@ void setup_git_env(const char *git_dir)
 	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
 	if (shallow_file)
 		set_alternate_shallow_file(the_repository, shallow_file, 0);
+
+	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0))
+		fetch_if_missing = 0;
 }
 
 int is_bare_repository(void)

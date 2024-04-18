@@ -3918,6 +3918,26 @@ void untracked_cache_invalidate_path(struct index_state *istate,
 				 path, strlen(path));
 }
 
+void untracked_cache_invalidate_trimmed_path(struct index_state *istate,
+					     const char *path,
+					     int safe_path)
+{
+	size_t len = strlen(path);
+
+	if (!len)
+		BUG("untracked_cache_invalidate_trimmed_path given zero length path");
+
+	if (path[len - 1] != '/') {
+		untracked_cache_invalidate_path(istate, path, safe_path);
+	} else {
+		struct strbuf tmp = STRBUF_INIT;
+
+		strbuf_add(&tmp, path, len - 1);
+		untracked_cache_invalidate_path(istate, tmp.buf, safe_path);
+		strbuf_release(&tmp);
+	}
+}
+
 void untracked_cache_remove_from_index(struct index_state *istate,
 				       const char *path)
 {

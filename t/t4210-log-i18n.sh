@@ -64,7 +64,7 @@ test_expect_success 'log --grep does not find non-reencoded values (latin1)' '
 '
 
 triggers_undefined_behaviour () {
-	local engine=$1
+	local engine="$1"
 
 	case $engine in
 	fixed)
@@ -85,7 +85,7 @@ triggers_undefined_behaviour () {
 }
 
 mismatched_git_log () {
-	local pattern=$1
+	local pattern="$1"
 
 	LC_ALL=$is_IS_locale git log --encoding=ISO-8859-1 --format=%s \
 		--grep=$pattern

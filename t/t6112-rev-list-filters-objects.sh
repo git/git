@@ -670,7 +670,7 @@ test_expect_success 'rev-list W/ --missing=print' '
 	awk -f print_2.awk ls_files_result |
 	sort >expected &&
 
-	for id in `cat expected | sed "s|..|&/|"`
+	for id in `sed "s|..|&/|" expected`
 	do
 		rm r1/.git/objects/$id || return 1
 	done &&

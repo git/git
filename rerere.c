@@ -973,6 +973,9 @@ static int handle_cache(struct index_state *istate,
 			mmfile[i].ptr = repo_read_object_file(the_repository,
 							      &ce->oid, &type,
 							      &size);
+			if (!mmfile[i].ptr)
+				die(_("unable to read %s"),
+				    oid_to_hex(&ce->oid));
 			mmfile[i].size = size;
 		}
 	}

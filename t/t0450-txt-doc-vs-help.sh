@@ -59,7 +59,9 @@ txt_to_synopsis () {
 		-e '/^\[verse\]$/,/^$/ {
 			/^$/d;
 			/^\[verse\]$/d;
-
+			s/_//g;
+			s/++//g;
+			s/`//g;
 			s/{litdd}/--/g;
 			s/'\''\(git[ a-z-]*\)'\''/\1/g;
 

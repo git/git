@@ -48,6 +48,12 @@ int oidset_contains(const struct oidset *set, const struct object_id *oid);
 int oidset_insert(struct oidset *set, const struct object_id *oid);
 
 /**
+ * Insert all the oids that are in set 'src' into set 'dest'; a copy
+ * is made of each oid inserted into set 'dest'.
+ */
+void oidset_insert_from_set(struct oidset *dest, struct oidset *src);
+
+/**
  * Remove the oid from the set.
  *
  * Returns 1 if the oid was present in the set, 0 otherwise.

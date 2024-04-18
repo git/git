@@ -141,7 +141,7 @@ __git_ps1_show_upstream ()
 
 	# parse configuration values
 	local option
-	for option in ${GIT_PS1_SHOWUPSTREAM}; do
+	for option in ${GIT_PS1_SHOWUPSTREAM-}; do
 		case "$option" in
 		git|svn) upstream_type="$option" ;;
 		verbose) verbose=1 ;;
@@ -528,7 +528,7 @@ __git_ps1 ()
 	fi
 
 	local conflict="" # state indicator for unresolved conflicts
-	if [[ "${GIT_PS1_SHOWCONFLICTSTATE}" == "yes" ]] &&
+	if [[ "${GIT_PS1_SHOWCONFLICTSTATE-}" == "yes" ]] &&
 	   [[ $(git ls-files --unmerged 2>/dev/null) ]]; then
 		conflict="|CONFLICT"
 	fi

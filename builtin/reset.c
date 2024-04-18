@@ -116,6 +116,10 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 
 	if (reset_type == MIXED || reset_type == HARD) {
 		tree = parse_tree_indirect(oid);
+		if (!tree) {
+			error(_("unable to read tree (%s)"), oid_to_hex(oid));
+			goto out;
+		}
 		prime_cache_tree(the_repository, the_repository->index, tree);
 	}
 
@@ -281,7 +285,9 @@ static void parse_args(struct pathspec *pathspec,
 			verify_filename(prefix, argv[0], 1);
 		}
 	}
-	*rev_ret = rev;
+
+	/* treat '@' as a shortcut for 'HEAD' */
+	*rev_ret = !strcmp("@", rev) ? "HEAD" : rev;
 
 	parse_pathspec(pathspec, 0,
 		       PATHSPEC_PREFER_FULL |

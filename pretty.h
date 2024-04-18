@@ -35,11 +35,10 @@ struct pretty_print_context {
 	 */
 	enum cmit_fmt fmt;
 	int abbrev;
-	const char *after_subject;
+	char *after_subject;
 	int preserve_subject;
 	struct date_mode date_mode;
 	unsigned date_mode_explicit:1;
-	int print_email_subject;
 	int expand_tabs_in_log;
 	int need_8bit_cte;
 	char *notes_message;
@@ -96,13 +95,13 @@ void pp_user_info(struct pretty_print_context *pp, const char *what,
 			const char *encoding);
 
 /*
- * Format title line of commit message taken from "msg_p" and
+ * Format subject line of commit message taken from "msg_p" and
  * put it into "sb".
  * First line of "msg_p" is also affected.
  */
-void pp_title_line(struct pretty_print_context *pp, const char **msg_p,
-			struct strbuf *sb, const char *encoding,
-			int need_8bit_cte);
+void pp_email_subject(struct pretty_print_context *pp, const char **msg_p,
+		      struct strbuf *sb, const char *encoding,
+		      int need_8bit_cte);
 
 /*
  * Get current state of commit message from "msg_p" and continue formatting
@@ -168,7 +167,7 @@ int format_set_trailers_options(struct process_trailer_options *opts,
  * a well-known sentinel date if they appear bogus.
  */
 const char *show_ident_date(const struct ident_split *id,
-			    const struct date_mode *mode);
+			    struct date_mode mode);
 
 
 #endif /* PRETTY_H */

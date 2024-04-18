@@ -9,8 +9,8 @@
 #include "repository.h"
 
 static const char * const git_update_ref_usage[] = {
-	N_("git update-ref [<options>] -d <refname> [<old-val>]"),
-	N_("git update-ref [<options>]    <refname> <new-val> [<old-val>]"),
+	N_("git update-ref [<options>] -d <refname> [<old-oid>]"),
+	N_("git update-ref [<options>]    <refname> <new-oid> [<old-oid>]"),
 	N_("git update-ref [<options>] --stdin [-z]"),
 	NULL
 };
@@ -77,14 +77,14 @@ static char *parse_refname(const char **next)
 }
 
 /*
- * The value being parsed is <oldvalue> (as opposed to <newvalue>; the
+ * The value being parsed is <old-oid> (as opposed to <new-oid>; the
  * difference affects which error messages are generated):
  */
 #define PARSE_SHA1_OLD 0x01
 
 /*
  * For backwards compatibility, accept an empty string for update's
- * <newvalue> in binary mode to be equivalent to specifying zeros.
+ * <new-oid> in binary mode to be equivalent to specifying zeros.
  */
 #define PARSE_SHA1_ALLOW_EMPTY 0x02
 
@@ -140,7 +140,7 @@ static int parse_next_oid(const char **next, const char *end,
 				goto invalid;
 		} else if (flags & PARSE_SHA1_ALLOW_EMPTY) {
 			/* With -z, treat an empty value as all zeros: */
-			warning("%s %s: missing <newvalue>, treating as zero",
+			warning("%s %s: missing <new-oid>, treating as zero",
 				command, refname);
 			oidclr(oid);
 		} else {
@@ -158,14 +158,14 @@ static int parse_next_oid(const char **next, const char *end,
 
  invalid:
 	die(flags & PARSE_SHA1_OLD ?
-	    "%s %s: invalid <oldvalue>: %s" :
-	    "%s %s: invalid <newvalue>: %s",
+	    "%s %s: invalid <old-oid>: %s" :
+	    "%s %s: invalid <new-oid>: %s",
 	    command, refname, arg.buf);
 
  eof:
 	die(flags & PARSE_SHA1_OLD ?
-	    "%s %s: unexpected end of input when reading <oldvalue>" :
-	    "%s %s: unexpected end of input when reading <newvalue>",
+	    "%s %s: unexpected end of input when reading <old-oid>" :
+	    "%s %s: unexpected end of input when reading <new-oid>",
 	    command, refname);
 }
 
@@ -194,7 +194,7 @@ static void parse_cmd_update(struct ref_transaction *transaction,
 
 	if (parse_next_oid(&next, end, &new_oid, "update", refname,
 			   PARSE_SHA1_ALLOW_EMPTY))
-		die("update %s: missing <newvalue>", refname);
+		die("update %s: missing <new-oid>", refname);
 
 	have_old = !parse_next_oid(&next, end, &old_oid, "update", refname,
 				   PARSE_SHA1_OLD);
@@ -225,10 +225,10 @@ static void parse_cmd_create(struct ref_transaction *transaction,
 		die("create: missing <ref>");
 
 	if (parse_next_oid(&next, end, &new_oid, "create", refname, 0))
-		die("create %s: missing <newvalue>", refname);
+		die("create %s: missing <new-oid>", refname);
 
 	if (is_null_oid(&new_oid))
-		die("create %s: zero <newvalue>", refname);
+		die("create %s: zero <new-oid>", refname);
 
 	if (*next != line_termination)
 		die("create %s: extra input: %s", refname, next);
@@ -260,7 +260,7 @@ static void parse_cmd_delete(struct ref_transaction *transaction,
 		have_old = 0;
 	} else {
 		if (is_null_oid(&old_oid))
-			die("delete %s: zero <oldvalue>", refname);
+			die("delete %s: zero <old-oid>", refname);
 		have_old = 1;
 	}
 

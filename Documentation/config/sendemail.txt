@@ -8,7 +8,7 @@ sendemail.smtpEncryption::
 	See linkgit:git-send-email[1] for description.  Note that this
 	setting is not subject to the 'identity' mechanism.
 
-sendemail.smtpsslcertpath::
+sendemail.smtpSSLCertPath::
 	Path to ca-certificates (either a directory or a single file).
 	Set it to an empty string to disable certificate verification.
 
@@ -62,12 +62,12 @@ sendemail.chainReplyTo::
 sendemail.envelopeSender::
 sendemail.from::
 sendemail.headerCmd::
-sendemail.signedoffbycc::
+sendemail.signedOffByCc::
 sendemail.smtpPass::
-sendemail.suppresscc::
+sendemail.suppressCc::
 sendemail.suppressFrom::
 sendemail.to::
-sendemail.tocmd::
+sendemail.toCmd::
 sendemail.smtpDomain::
 sendemail.smtpServer::
 sendemail.smtpServerPort::
@@ -81,8 +81,8 @@ sendemail.xmailer::
 	linkgit:git-send-email[1] command-line options. See its
 	documentation for details.
 
-sendemail.signedoffcc (deprecated)::
-	Deprecated alias for `sendemail.signedoffbycc`.
+sendemail.signedOffCc (deprecated)::
+	Deprecated alias for `sendemail.signedOffByCc`.
 
 sendemail.smtpBatchSize::
 	Number of messages to be sent per connection, after that a relogin

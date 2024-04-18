@@ -20,7 +20,6 @@ test_expect_success 'test capability advertisement' '
 	fetch=shallow wait-for-done
 	server-option
 	object-format=$(test_oid algo)
-	object-info
 	EOF
 	cat >expect.trailer <<-EOF &&
 	0000
@@ -323,6 +322,8 @@ test_expect_success 'unexpected lines are not allowed in fetch request' '
 # Test the basics of object-info
 #
 test_expect_success 'basics of object-info' '
+	test_config transfer.advertiseObjectInfo true &&
+
 	test-tool pkt-line pack >in <<-EOF &&
 	command=object-info
 	object-format=$(test_oid algo)
@@ -378,6 +379,27 @@ test_expect_success 'basics of bundle-uri: dies if not enabled' '
 	test_must_fail test-tool serve-v2 --stateless-rpc <in >out 2>err.actual &&
 	test_cmp err.expect err.actual &&
 	test_must_be_empty out
+'
+
+test_expect_success 'object-info missing from capabilities when disabled' '
+	test_config transfer.advertiseObjectInfo false &&
+
+	GIT_TEST_SIDEBAND_ALL=0 test-tool serve-v2 \
+		--advertise-capabilities >out &&
+	test-tool pkt-line unpack <out >actual &&
+
+	! grep object.info actual
+'
+
+test_expect_success 'object-info commands rejected when disabled' '
+	test_config transfer.advertiseObjectInfo false &&
+
+	test-tool pkt-line pack >in <<-EOF &&
+	command=object-info
+	EOF
+
+	test_must_fail test-tool serve-v2 --stateless-rpc <in 2>err &&
+	grep invalid.command err
 '
 
 test_done

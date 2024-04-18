@@ -177,7 +177,8 @@ Instead of `--tool=vimdiff`, you can also use one of these other variants:
 
 When using these variants, in order to specify a custom layout you will have to
 set configuration variables `mergetool.gvimdiff.layout` and
-`mergetool.nvimdiff.layout` instead of `mergetool.vimdiff.layout`
+`mergetool.nvimdiff.layout` instead of `mergetool.vimdiff.layout` (though the
+latter will be used as fallback if the variant-specific one is not set).
 
 In addition, for backwards compatibility with previous Git versions, you can
 also append `1`, `2` or `3` to either `vimdiff` or any of the variants (ex:

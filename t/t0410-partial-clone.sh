@@ -49,7 +49,7 @@ test_expect_success 'convert shallow clone to partial clone' '
 	test_cmp_config -C client 1 core.repositoryformatversion
 '
 
-test_expect_success SHA1,REFFILES 'convert to partial clone with noop extension' '
+test_expect_success DEFAULT_REPO_FORMAT 'convert to partial clone with noop extension' '
 	rm -fr server client &&
 	test_create_repo server &&
 	test_commit -C server my_commit 1 &&
@@ -60,7 +60,7 @@ test_expect_success SHA1,REFFILES 'convert to partial clone with noop extension'
 	git -C client fetch --unshallow --filter="blob:none"
 '
 
-test_expect_success SHA1,REFFILES 'converting to partial clone fails with unrecognized extension' '
+test_expect_success DEFAULT_REPO_FORMAT 'converting to partial clone fails with unrecognized extension' '
 	rm -fr server client &&
 	test_create_repo server &&
 	test_commit -C server my_commit 1 &&
@@ -662,6 +662,21 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 	FILE_HASH=$(git -C full rev-parse HEAD:file.txt) &&
 
 	# Sanity check that the file is missing
+	git -C partial.git rev-list --objects --missing=print HEAD >out &&
+	grep "[?]$FILE_HASH" out &&
+
+	# The no-lazy-fetch mechanism prevents Git from fetching
+	test_must_fail env GIT_NO_LAZY_FETCH=1 \
+		git -C partial.git cat-file -e "$FILE_HASH" &&
+
+	# The same with command line option to "git"
+	test_must_fail git --no-lazy-fetch -C partial.git cat-file -e "$FILE_HASH" &&
+
+	# The same, forcing a subprocess via an alias
+	test_must_fail git --no-lazy-fetch -C partial.git \
+		-c alias.foo="!git cat-file" foo -e "$FILE_HASH" &&
+
+	# Sanity check that the file is still missing
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
 	grep "[?]$FILE_HASH" out &&
 

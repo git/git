@@ -81,9 +81,6 @@ you will.
 Here are the rules regarding the "flags" that you should follow when you are
 scripting Git:
 
- * It's preferred to use the non-dashed form of Git commands, which means that
-   you should prefer `git foo` to `git-foo`.
-
  * Splitting short options to separate words (prefer `git foo -a -b`
    to `git foo -ab`, the latter may not even work).
 

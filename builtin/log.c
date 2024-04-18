@@ -1297,7 +1297,7 @@ static void prepare_cover_text(struct pretty_print_context *pp,
 		subject = subject_sb.buf;
 
 do_pp:
-	pp_title_line(pp, &subject, sb, encoding, need_8bit_cte);
+	pp_email_subject(pp, &subject, sb, encoding, need_8bit_cte);
 	pp_remainder(pp, &body, sb, 0);
 
 	strbuf_release(&description_sb);
@@ -1364,13 +1364,13 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	pp.fmt = CMIT_FMT_EMAIL;
 	pp.date_mode.type = DATE_RFC2822;
 	pp.rev = rev;
-	pp.print_email_subject = 1;
 	pp.encode_email_headers = rev->encode_email_headers;
 	pp_user_info(&pp, NULL, &sb, committer, encoding);
 	prepare_cover_text(&pp, description_file, branch_name, &sb,
 			   encoding, need_8bit_cte);
 	fprintf(rev->diffopt.file, "%s\n", sb.buf);
 
+	free(pp.after_subject);
 	strbuf_release(&sb);
 
 	shortlog_init(&log);
@@ -1625,7 +1625,7 @@ static struct commit *get_base_commit(const char *base_commit,
 {
 	struct commit *base = NULL;
 	struct commit **rev;
-	int i = 0, rev_nr = 0, auto_select, die_on_failure;
+	int i = 0, rev_nr = 0, auto_select, die_on_failure, ret;
 
 	switch (auto_base) {
 	case AUTO_BASE_NEVER:
@@ -1658,7 +1658,7 @@ static struct commit *get_base_commit(const char *base_commit,
 		struct branch *curr_branch = branch_get(NULL);
 		const char *upstream = branch_get_upstream(curr_branch, NULL);
 		if (upstream) {
-			struct commit_list *base_list;
+			struct commit_list *base_list = NULL;
 			struct commit *commit;
 			struct object_id oid;
 
@@ -1669,11 +1669,12 @@ static struct commit *get_base_commit(const char *base_commit,
 					return NULL;
 			}
 			commit = lookup_commit_or_die(&oid, "upstream base");
-			base_list = repo_get_merge_bases_many(the_repository,
-							      commit, total,
-							      list);
-			/* There should be one and only one merge base. */
-			if (!base_list || base_list->next) {
+			if (repo_get_merge_bases_many(the_repository,
+						      commit, total,
+						      list,
+						      &base_list) < 0 ||
+			    /* There should be one and only one merge base. */
+			    !base_list || base_list->next) {
 				if (die_on_failure) {
 					die(_("could not find exact merge base"));
 				} else {
@@ -1704,11 +1705,11 @@ static struct commit *get_base_commit(const char *base_commit,
 	 */
 	while (rev_nr > 1) {
 		for (i = 0; i < rev_nr / 2; i++) {
-			struct commit_list *merge_base;
-			merge_base = repo_get_merge_bases(the_repository,
-							  rev[2 * i],
-							  rev[2 * i + 1]);
-			if (!merge_base || merge_base->next) {
+			struct commit_list *merge_base = NULL;
+			if (repo_get_merge_bases(the_repository,
+						 rev[2 * i],
+						 rev[2 * i + 1], &merge_base) < 0 ||
+			    !merge_base || merge_base->next) {
 				if (die_on_failure) {
 					die(_("failed to find exact merge base"));
 				} else {
@@ -1725,7 +1726,10 @@ static struct commit *get_base_commit(const char *base_commit,
 		rev_nr = DIV_ROUND_UP(rev_nr, 2);
 	}
 
-	if (!repo_in_merge_bases(the_repository, base, rev[0])) {
+	ret = repo_in_merge_bases(the_repository, base, rev[0]);
+	if (ret < 0)
+		exit(128);
+	if (!ret) {
 		if (die_on_failure) {
 			die(_("base commit should be the ancestor of revision list"));
 		} else {

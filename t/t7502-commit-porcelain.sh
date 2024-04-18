@@ -485,6 +485,24 @@ test_expect_success 'commit --trailer not confused by --- separator' '
 	test_cmp expected actual
 '
 
+test_expect_success 'commit --trailer with --verbose' '
+	cat >msg <<-\EOF &&
+	subject
+
+	body
+	EOF
+	GIT_EDITOR=: git commit --edit -F msg --allow-empty \
+		--trailer="my-trailer: value" --verbose &&
+	{
+		cat msg &&
+		echo &&
+		echo "my-trailer: value"
+	} >expected &&
+	git cat-file commit HEAD >commit.msg &&
+	sed -e "1,/^\$/d" commit.msg >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'multiple -m' '
 
 	>negative &&
@@ -716,6 +734,11 @@ test_expect_success 'message shows date when it is explicitly set' '
 	test_grep \
 	  "^# Date: *Sat Jan 2 03:04:05 2010 +0000" \
 	  .git/COMMIT_EDITMSG
+'
+
+test_expect_success 'message does not have multiple scissors lines' '
+	git commit --cleanup=scissors -v --allow-empty -e -m foo &&
+	test $(grep -c -e "--- >8 ---" .git/COMMIT_EDITMSG) -eq 1
 '
 
 test_expect_success AUTOIDENT 'message shows committer when it is automatic' '

@@ -16,11 +16,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reader.h"
 #include "reftable-error.h"
 
-int iterator_is_null(struct reftable_iterator *it)
-{
-	return !it->ops;
-}
-
 static void filtering_ref_iterator_close(void *iter_arg)
 {
 	struct filtering_ref_iterator *fri = iter_arg;
@@ -160,8 +155,7 @@ int new_indexed_table_ref_iter(struct indexed_table_ref_iter **dest,
 			       int oid_len, uint64_t *offsets, int offset_len)
 {
 	struct indexed_table_ref_iter empty = INDEXED_TABLE_REF_ITER_INIT;
-	struct indexed_table_ref_iter *itr =
-		reftable_calloc(sizeof(struct indexed_table_ref_iter));
+	struct indexed_table_ref_iter *itr = reftable_calloc(1, sizeof(*itr));
 	int err = 0;
 
 	*itr = empty;

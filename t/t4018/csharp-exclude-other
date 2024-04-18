@@ -1,0 +1,18 @@
+class Example
+{
+    string Method(int RIGHT)
+    {
+        lock (this)
+        {
+        }
+        unsafe
+        {
+            byte[] bytes = [1, 2, 3];
+            fixed (byte* pointerToFirst = bytes)
+            {
+            }
+        }
+
+        return "ChangeMe";
+    }
+}

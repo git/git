@@ -332,7 +332,7 @@ static int has_conforming_footer(struct strbuf *sb, struct strbuf *sob,
 		sb->buf[sb->len - ignore_footer] = '\0';
 	}
 
-	trailer_info_get(&info, sb->buf, &opts);
+	trailer_info_get(&opts, sb->buf, &info);
 
 	if (ignore_footer)
 		sb->buf[sb->len - ignore_footer] = saved_char;
@@ -461,13 +461,25 @@ static void free_message(struct commit *commit, struct commit_message *msg)
 	repo_unuse_commit_buffer(the_repository, commit, msg->message);
 }
 
+const char *rebase_resolvemsg =
+N_("Resolve all conflicts manually, mark them as resolved with\n"
+"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
+"You can instead skip this commit: run \"git rebase --skip\".\n"
+"To abort and get back to the state before \"git rebase\", run "
+"\"git rebase --abort\".");
+
 static void print_advice(struct repository *r, int show_hint,
 			 struct replay_opts *opts)
 {
-	char *msg = getenv("GIT_CHERRY_PICK_HELP");
+	const char *msg;
+
+	if (is_rebase_i(opts))
+		msg = rebase_resolvemsg;
+	else
+		msg = getenv("GIT_CHERRY_PICK_HELP");
 
 	if (msg) {
-		advise("%s\n", msg);
+		advise_if_enabled(ADVICE_MERGE_CONFLICT, "%s", msg);
 		/*
 		 * A conflict has occurred but the porcelain
 		 * (typically rebase --interactive) wants to take care
@@ -480,22 +492,25 @@ static void print_advice(struct repository *r, int show_hint,
 
 	if (show_hint) {
 		if (opts->no_commit)
-			advise(_("after resolving the conflicts, mark the corrected paths\n"
-				 "with 'git add <paths>' or 'git rm <paths>'"));
+			advise_if_enabled(ADVICE_MERGE_CONFLICT,
+					  _("after resolving the conflicts, mark the corrected paths\n"
+					    "with 'git add <paths>' or 'git rm <paths>'"));
 		else if (opts->action == REPLAY_PICK)
-			advise(_("After resolving the conflicts, mark them with\n"
-				 "\"git add/rm <pathspec>\", then run\n"
-				 "\"git cherry-pick --continue\".\n"
-				 "You can instead skip this commit with \"git cherry-pick --skip\".\n"
-				 "To abort and get back to the state before \"git cherry-pick\",\n"
-				 "run \"git cherry-pick --abort\"."));
+			advise_if_enabled(ADVICE_MERGE_CONFLICT,
+					  _("After resolving the conflicts, mark them with\n"
+					    "\"git add/rm <pathspec>\", then run\n"
+					    "\"git cherry-pick --continue\".\n"
+					    "You can instead skip this commit with \"git cherry-pick --skip\".\n"
+					    "To abort and get back to the state before \"git cherry-pick\",\n"
+					    "run \"git cherry-pick --abort\"."));
 		else if (opts->action == REPLAY_REVERT)
-			advise(_("After resolving the conflicts, mark them with\n"
-				 "\"git add/rm <pathspec>\", then run\n"
-				 "\"git revert --continue\".\n"
-				 "You can instead skip this commit with \"git revert --skip\".\n"
-				 "To abort and get back to the state before \"git revert\",\n"
-				 "run \"git revert --abort\"."));
+			advise_if_enabled(ADVICE_MERGE_CONFLICT,
+					  _("After resolving the conflicts, mark them with\n"
+					    "\"git add/rm <pathspec>\", then run\n"
+					    "\"git revert --continue\".\n"
+					    "You can instead skip this commit with \"git revert --skip\".\n"
+					    "To abort and get back to the state before \"git revert\",\n"
+					    "run \"git revert --abort\"."));
 		else
 			BUG("unexpected pick action in print_advice()");
 	}
@@ -663,15 +678,15 @@ void append_conflicts_hint(struct index_state *istate,
 	if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
 		strbuf_addch(msgbuf, '\n');
 		wt_status_append_cut_line(msgbuf);
-		strbuf_addch(msgbuf, comment_line_char);
+		strbuf_addstr(msgbuf, comment_line_str);
 	}
 
 	strbuf_addch(msgbuf, '\n');
-	strbuf_commented_addf(msgbuf, comment_line_char, "Conflicts:\n");
+	strbuf_commented_addf(msgbuf, comment_line_str, "Conflicts:\n");
 	for (i = 0; i < istate->cache_nr;) {
 		const struct cache_entry *ce = istate->cache[i++];
 		if (ce_stage(ce)) {
-			strbuf_commented_addf(msgbuf, comment_line_char,
+			strbuf_commented_addf(msgbuf, comment_line_str,
 					      "\t%s\n", ce->name);
 			while (i < istate->cache_nr &&
 			       !strcmp(ce->name, istate->cache[i]->name))
@@ -707,6 +722,8 @@ static int do_recursive_merge(struct repository *r,
 	o.show_rename_progress = 1;
 
 	head_tree = parse_tree_indirect(head);
+	if (!head_tree)
+		return error(_("unable to read tree (%s)"), oid_to_hex(head));
 	next_tree = next ? repo_get_commit_tree(r, next) : empty_tree(r);
 	base_tree = base ? repo_get_commit_tree(r, base) : empty_tree(r);
 
@@ -770,29 +787,42 @@ static struct object_id *get_cache_tree_oid(struct index_state *istate)
 static int is_index_unchanged(struct repository *r)
 {
 	struct object_id head_oid, *cache_tree_oid;
+	const struct object_id *head_tree_oid;
 	struct commit *head_commit;
 	struct index_state *istate = r->index;
+	const char *head_name;
 
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
-		return error(_("could not resolve HEAD commit"));
+	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL)) {
+		/* Check to see if this is an unborn branch */
+		head_name = resolve_ref_unsafe("HEAD",
+			RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+			&head_oid, NULL);
+		if (!head_name ||
+			!starts_with(head_name, "refs/heads/") ||
+			!is_null_oid(&head_oid))
+			return error(_("could not resolve HEAD commit"));
+		head_tree_oid = the_hash_algo->empty_tree;
+	} else {
+		head_commit = lookup_commit(r, &head_oid);
 
-	head_commit = lookup_commit(r, &head_oid);
+		/*
+		 * If head_commit is NULL, check_commit, called from
+		 * lookup_commit, would have indicated that head_commit is not
+		 * a commit object already.  repo_parse_commit() will return failure
+		 * without further complaints in such a case.  Otherwise, if
+		 * the commit is invalid, repo_parse_commit() will complain.  So
+		 * there is nothing for us to say here.  Just return failure.
+		 */
+		if (repo_parse_commit(r, head_commit))
+			return -1;
 
-	/*
-	 * If head_commit is NULL, check_commit, called from
-	 * lookup_commit, would have indicated that head_commit is not
-	 * a commit object already.  repo_parse_commit() will return failure
-	 * without further complaints in such a case.  Otherwise, if
-	 * the commit is invalid, repo_parse_commit() will complain.  So
-	 * there is nothing for us to say here.  Just return failure.
-	 */
-	if (repo_parse_commit(r, head_commit))
-		return -1;
+		head_tree_oid = get_commit_tree_oid(head_commit);
+	}
 
 	if (!(cache_tree_oid = get_cache_tree_oid(istate)))
 		return -1;
 
-	return oideq(cache_tree_oid, get_commit_tree_oid(head_commit));
+	return oideq(cache_tree_oid, head_tree_oid);
 }
 
 static int write_author_script(const char *message)
@@ -1152,7 +1182,7 @@ void cleanup_message(struct strbuf *msgbuf,
 		strbuf_setlen(msgbuf, wt_status_locate_end(msgbuf->buf, msgbuf->len));
 	if (cleanup_mode != COMMIT_MSG_CLEANUP_NONE)
 		strbuf_stripspace(msgbuf,
-		  cleanup_mode == COMMIT_MSG_CLEANUP_ALL ? comment_line_char : '\0');
+		  cleanup_mode == COMMIT_MSG_CLEANUP_ALL ? comment_line_str : NULL);
 }
 
 /*
@@ -1184,7 +1214,7 @@ int template_untouched(const struct strbuf *sb, const char *template_file,
 		return 0;
 
 	strbuf_stripspace(&tmpl,
-	  cleanup_mode == COMMIT_MSG_CLEANUP_ALL ? comment_line_char : '\0');
+	  cleanup_mode == COMMIT_MSG_CLEANUP_ALL ? comment_line_str : NULL);
 	if (!skip_prefix(sb->buf, tmpl.buf, &start))
 		start = sb->buf;
 	strbuf_release(&tmpl);
@@ -1557,7 +1587,7 @@ static int try_to_commit(struct repository *r,
 
 	if (cleanup != COMMIT_MSG_CLEANUP_NONE)
 		strbuf_stripspace(msg,
-		  cleanup == COMMIT_MSG_CLEANUP_ALL ? comment_line_char : '\0');
+		  cleanup == COMMIT_MSG_CLEANUP_ALL ? comment_line_str : NULL);
 	if ((flags & EDIT_MSG) && message_is_empty(msg, cleanup)) {
 		res = 1; /* run 'git commit' to display error message */
 		goto out;
@@ -1719,34 +1749,25 @@ static int allow_empty(struct repository *r,
 	int index_unchanged, originally_empty;
 
 	/*
-	 * Four cases:
+	 * For a commit that is initially empty, allow_empty determines if it
+	 * should be kept or not
 	 *
-	 * (1) we do not allow empty at all and error out.
-	 *
-	 * (2) we allow ones that were initially empty, and
-	 *     just drop the ones that become empty
-	 *
-	 * (3) we allow ones that were initially empty, but
-	 *     halt for the ones that become empty;
-	 *
-	 * (4) we allow both.
+	 * For a commit that becomes empty, keep_redundant_commits and
+	 * drop_redundant_commits determine whether the commit should be kept or
+	 * dropped. If neither is specified, halt.
 	 */
-	if (!opts->allow_empty)
-		return 0; /* let "git commit" barf as necessary */
-
 	index_unchanged = is_index_unchanged(r);
 	if (index_unchanged < 0)
 		return index_unchanged;
 	if (!index_unchanged)
 		return 0; /* we do not have to say --allow-empty */
 
-	if (opts->keep_redundant_commits)
-		return 1;
-
 	originally_empty = is_original_commit_empty(commit);
 	if (originally_empty < 0)
 		return originally_empty;
 	if (originally_empty)
+		return opts->allow_empty;
+	else if (opts->keep_redundant_commits)
 		return 1;
 	else if (opts->drop_redundant_commits)
 		return 2;
@@ -1779,6 +1800,8 @@ static const char *command_to_string(const enum todo_command command)
 {
 	if (command < TODO_COMMENT)
 		return todo_command_info[command].str;
+	if (command == TODO_COMMENT)
+		return comment_line_str;
 	die(_("unknown command: %d"), command);
 }
 
@@ -1786,7 +1809,7 @@ static char command_to_char(const enum todo_command command)
 {
 	if (command < TODO_COMMENT)
 		return todo_command_info[command].c;
-	return comment_line_char;
+	return 0;
 }
 
 static int is_noop(const enum todo_command command)
@@ -1840,7 +1863,7 @@ static int is_fixup_flag(enum todo_command command, unsigned flag)
 static void add_commented_lines(struct strbuf *buf, const void *str, size_t len)
 {
 	const char *s = str;
-	while (len > 0 && s[0] == comment_line_char) {
+	while (starts_with_mem(s, len, comment_line_str)) {
 		size_t count;
 		const char *n = memchr(s, '\n', len);
 		if (!n)
@@ -1851,7 +1874,7 @@ static void add_commented_lines(struct strbuf *buf, const void *str, size_t len)
 		s += count;
 		len -= count;
 	}
-	strbuf_add_commented_lines(buf, s, len, comment_line_char);
+	strbuf_add_commented_lines(buf, s, len, comment_line_str);
 }
 
 /* Does the current fixup chain contain a squash command? */
@@ -1946,11 +1969,11 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	     (starts_with(body, "squash!") || starts_with(body, "fixup!"))))
 		commented_len = commit_subject_length(body);
 
-	strbuf_addf(buf, "\n%c ", comment_line_char);
+	strbuf_addf(buf, "\n%s ", comment_line_str);
 	strbuf_addf(buf, _(nth_commit_msg_fmt),
 		    ++opts->current_fixup_count + 1);
 	strbuf_addstr(buf, "\n\n");
-	strbuf_add_commented_lines(buf, body, commented_len, comment_line_char);
+	strbuf_add_commented_lines(buf, body, commented_len, comment_line_str);
 	/* buf->buf may be reallocated so store an offset into the buffer */
 	fixup_off = buf->len;
 	strbuf_addstr(buf, body + commented_len);
@@ -2003,10 +2026,10 @@ static int update_squash_messages(struct repository *r,
 			return error(_("could not read '%s'"),
 				rebase_path_squash_msg());
 
-		eol = buf.buf[0] != comment_line_char ?
+		eol = !starts_with(buf.buf, comment_line_str) ?
 			buf.buf : strchrnul(buf.buf, '\n');
 
-		strbuf_addf(&header, "%c ", comment_line_char);
+		strbuf_addf(&header, "%s ", comment_line_str);
 		strbuf_addf(&header, _(combined_commit_msg_fmt),
 			    opts->current_fixup_count + 2);
 		strbuf_splice(&buf, 0, eol - buf.buf, header.buf, header.len);
@@ -2032,16 +2055,16 @@ static int update_squash_messages(struct repository *r,
 			repo_unuse_commit_buffer(r, head_commit, head_message);
 			return error(_("cannot write '%s'"), rebase_path_fixup_msg());
 		}
-		strbuf_addf(&buf, "%c ", comment_line_char);
+		strbuf_addf(&buf, "%s ", comment_line_str);
 		strbuf_addf(&buf, _(combined_commit_msg_fmt), 2);
-		strbuf_addf(&buf, "\n%c ", comment_line_char);
+		strbuf_addf(&buf, "\n%s ", comment_line_str);
 		strbuf_addstr(&buf, is_fixup_flag(command, flag) ?
 			      _(skip_first_commit_msg_str) :
 			      _(first_commit_msg_str));
 		strbuf_addstr(&buf, "\n\n");
 		if (is_fixup_flag(command, flag))
 			strbuf_add_commented_lines(&buf, body, strlen(body),
-						   comment_line_char);
+						   comment_line_str);
 		else
 			strbuf_addstr(&buf, body);
 
@@ -2056,12 +2079,12 @@ static int update_squash_messages(struct repository *r,
 	if (command == TODO_SQUASH || is_fixup_flag(command, flag)) {
 		res = append_squash_message(&buf, body, command, opts, flag);
 	} else if (command == TODO_FIXUP) {
-		strbuf_addf(&buf, "\n%c ", comment_line_char);
+		strbuf_addf(&buf, "\n%s ", comment_line_str);
 		strbuf_addf(&buf, _(skip_nth_commit_msg_fmt),
 			    ++opts->current_fixup_count + 1);
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_add_commented_lines(&buf, body, strlen(body),
-					   comment_line_char);
+					   comment_line_str);
 	} else
 		return error(_("unknown command: %d"), command);
 	repo_unuse_commit_buffer(r, commit, message);
@@ -2562,7 +2585,7 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 	/* left-trim */
 	bol += strspn(bol, " \t");
 
-	if (bol == eol || *bol == '\r' || *bol == comment_line_char) {
+	if (bol == eol || *bol == '\r' || starts_with_mem(bol, eol - bol, comment_line_str)) {
 		item->command = TODO_COMMENT;
 		item->commit = NULL;
 		item->arg_offset = bol - buf;
@@ -2925,6 +2948,9 @@ static int populate_opts_cb(const char *key, const char *value,
 			git_config_bool_or_int(key, value, ctx->kvi, &error_flag);
 	else if (!strcmp(key, "options.allow-empty-message"))
 		opts->allow_empty_message =
+			git_config_bool_or_int(key, value, ctx->kvi, &error_flag);
+	else if (!strcmp(key, "options.drop-redundant-commits"))
+		opts->drop_redundant_commits =
 			git_config_bool_or_int(key, value, ctx->kvi, &error_flag);
 	else if (!strcmp(key, "options.keep-redundant-commits"))
 		opts->keep_redundant_commits =
@@ -3460,54 +3486,57 @@ static int save_opts(struct replay_opts *opts)
 
 	if (opts->no_commit)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.no-commit", "true");
+					"options.no-commit", NULL, "true");
 	if (opts->edit >= 0)
-		res |= git_config_set_in_file_gently(opts_file, "options.edit",
+		res |= git_config_set_in_file_gently(opts_file, "options.edit", NULL,
 						     opts->edit ? "true" : "false");
 	if (opts->allow_empty)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.allow-empty", "true");
+					"options.allow-empty", NULL, "true");
 	if (opts->allow_empty_message)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.allow-empty-message", "true");
+				"options.allow-empty-message", NULL, "true");
+	if (opts->drop_redundant_commits)
+		res |= git_config_set_in_file_gently(opts_file,
+				"options.drop-redundant-commits", NULL, "true");
 	if (opts->keep_redundant_commits)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.keep-redundant-commits", "true");
+				"options.keep-redundant-commits", NULL, "true");
 	if (opts->signoff)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.signoff", "true");
+					"options.signoff", NULL, "true");
 	if (opts->record_origin)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.record-origin", "true");
+					"options.record-origin", NULL, "true");
 	if (opts->allow_ff)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.allow-ff", "true");
+					"options.allow-ff", NULL, "true");
 	if (opts->mainline) {
 		struct strbuf buf = STRBUF_INIT;
 		strbuf_addf(&buf, "%d", opts->mainline);
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.mainline", buf.buf);
+					"options.mainline", NULL, buf.buf);
 		strbuf_release(&buf);
 	}
 	if (opts->strategy)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.strategy", opts->strategy);
+					"options.strategy", NULL, opts->strategy);
 	if (opts->gpg_sign)
 		res |= git_config_set_in_file_gently(opts_file,
-					"options.gpg-sign", opts->gpg_sign);
+					"options.gpg-sign", NULL, opts->gpg_sign);
 	for (size_t i = 0; i < opts->xopts.nr; i++)
 		res |= git_config_set_multivar_in_file_gently(opts_file,
 				"options.strategy-option",
-				opts->xopts.v[i], "^$", 0);
+				opts->xopts.v[i], "^$", NULL, 0);
 	if (opts->allow_rerere_auto)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.allow-rerere-auto",
+				"options.allow-rerere-auto", NULL,
 				opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
 				"true" : "false");
 
 	if (opts->explicit_cleanup)
 		res |= git_config_set_in_file_gently(opts_file,
-				"options.default-msg-cleanup",
+				"options.default-msg-cleanup", NULL,
 				describe_cleanup_mode(opts->default_msg_cleanup));
 	return res;
 }
@@ -3641,6 +3670,7 @@ static int do_exec(struct repository *r, const char *command_line)
 	fprintf(stderr, _("Executing: %s\n"), command_line);
 	cmd.use_shell = 1;
 	strvec_push(&cmd.args, command_line);
+	strvec_push(&cmd.env, "GIT_CHERRY_PICK_HELP");
 	status = run_command(&cmd);
 
 	/* force re-reading of the cache */
@@ -3881,6 +3911,8 @@ static int do_reset(struct repository *r,
 	}
 
 	tree = parse_tree_indirect(&oid);
+	if (!tree)
+		return error(_("unable to read tree (%s)"), oid_to_hex(&oid));
 	prime_cache_tree(r, r->index, tree);
 
 	if (write_locked_index(r->index, &lock, COMMIT_LOCK) < 0)
@@ -3907,7 +3939,7 @@ static int do_merge(struct repository *r,
 	int run_commit_flags = 0;
 	struct strbuf ref_name = STRBUF_INIT;
 	struct commit *head_commit, *merge_commit, *i;
-	struct commit_list *bases, *j;
+	struct commit_list *bases = NULL, *j;
 	struct commit_list *to_merge = NULL, **tail = &to_merge;
 	const char *strategy = !opts->xopts.nr &&
 		(!opts->strategy ||
@@ -4133,7 +4165,11 @@ static int do_merge(struct repository *r,
 	}
 
 	merge_commit = to_merge->item;
-	bases = repo_get_merge_bases(r, head_commit, merge_commit);
+	if (repo_get_merge_bases(r, head_commit, merge_commit, &bases) < 0) {
+		ret = -1;
+		goto leave_merge;
+	}
+
 	if (bases && oideq(&merge_commit->object.oid,
 			   &bases->item->object.oid)) {
 		ret = 0;
@@ -5658,8 +5694,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				    oid_to_hex(&commit->object.oid),
 				    oneline.buf);
 			if (is_empty)
-				strbuf_addf(&buf, " %c empty",
-					    comment_line_char);
+				strbuf_addf(&buf, " %s empty",
+					    comment_line_str);
 
 			FLEX_ALLOC_STR(entry, string, buf.buf);
 			oidcpy(&entry->entry.oid, &commit->object.oid);
@@ -5749,7 +5785,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		entry = oidmap_get(&state.commit2label, &commit->object.oid);
 
 		if (entry)
-			strbuf_addf(out, "\n%c Branch %s\n", comment_line_char, entry->string);
+			strbuf_addf(out, "\n%s Branch %s\n", comment_line_str, entry->string);
 		else
 			strbuf_addch(out, '\n');
 
@@ -5886,7 +5922,7 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			    oid_to_hex(&commit->object.oid));
 		pretty_print_commit(&pp, commit, out);
 		if (is_empty)
-			strbuf_addf(out, " %c empty", comment_line_char);
+			strbuf_addf(out, " %s empty", comment_line_str);
 		strbuf_addch(out, '\n');
 	}
 	if (skipped_commit)

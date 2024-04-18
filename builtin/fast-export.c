@@ -136,8 +136,7 @@ static int anonymized_entry_cmp(const void *cmp_data UNUSED,
 	a = container_of(eptr, const struct anonymized_entry, hash);
 	if (keydata) {
 		const struct anonymized_entry_key *key = keydata;
-		int equal = !strncmp(a->orig, key->orig, key->orig_len) &&
-			    !a->orig[key->orig_len];
+		int equal = !xstrncmpz(a->orig, key->orig, key->orig_len);
 		return !equal;
 	}
 

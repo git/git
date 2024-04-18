@@ -4,9 +4,6 @@ test_description='test show-branch'
 
 . ./test-lib.sh
 
-# arbitrary reference time: 2009-08-30 19:20:00
-GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
-
 test_expect_success 'error descriptions on empty repository' '
 	current=$(git branch --show-current) &&
 	cat >expect <<-EOF &&
@@ -187,18 +184,6 @@ test_expect_success 'show branch --merge-base with N arguments' '
 	test_cmp expect actual
 '
 
-test_expect_success 'show branch --reflog=2' '
-	sed "s/^>	//" >expect <<-\EOF &&
-	>	! [refs/heads/branch10@{0}] (4 years, 5 months ago) commit: branch10
-	>	 ! [refs/heads/branch10@{1}] (4 years, 5 months ago) commit: branch10
-	>	--
-	>	+  [refs/heads/branch10@{0}] branch10
-	>	++ [refs/heads/branch10@{1}] initial
-	EOF
-	git show-branch --reflog=2 >actual &&
-	test_cmp actual expect
-'
-
 # incompatible options
 while read combo
 do
@@ -262,6 +247,40 @@ test_expect_success 'error descriptions on orphan branch' '
 	test_branch_op_in_wt --edit-description &&
 	test_branch_op_in_wt --set-upstream-to=ne &&
 	test_branch_op_in_wt -c new-branch
+'
+
+test_expect_success 'setup reflogs' '
+	test_commit base &&
+	git checkout -b branch &&
+	test_commit one &&
+	git reset --hard HEAD^ &&
+	test_commit two &&
+	test_commit three
+'
+
+test_expect_success '--reflog shows reflog entries' '
+	cat >expect <<-\EOF &&
+	! [branch@{0}] (0 seconds ago) commit: three
+	 ! [branch@{1}] (60 seconds ago) commit: two
+	  ! [branch@{2}] (2 minutes ago) reset: moving to HEAD^
+	   ! [branch@{3}] (2 minutes ago) commit: one
+	----
+	+    [branch@{0}] three
+	++   [branch@{1}] two
+	   + [branch@{3}] one
+	++++ [branch@{2}] base
+	EOF
+	# the output always contains relative timestamps; use
+	# a known time to get deterministic results
+	GIT_TEST_DATE_NOW=$test_tick \
+	git show-branch --reflog branch >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--reflog handles missing reflog' '
+	git reflog expire --expire=now branch &&
+	git show-branch --reflog branch >actual &&
+	test_must_be_empty actual
 '
 
 test_done

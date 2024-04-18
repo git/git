@@ -607,7 +607,8 @@ int notes_merge(struct notes_merge_options *o,
 	assert(local && remote);
 
 	/* Find merge bases */
-	bases = repo_get_merge_bases(the_repository, local, remote);
+	if (repo_get_merge_bases(the_repository, local, remote, &bases) < 0)
+		exit(128);
 	if (!bases) {
 		base_oid = null_oid();
 		base_tree_oid = the_hash_algo->empty_tree;

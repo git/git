@@ -127,7 +127,16 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 		if (diff_can_quit_early(&revs->diffopt))
 			break;
 
-		if (!ce_path_match(istate, ce, &revs->prune_data, NULL))
+		/*
+		 * NEEDSWORK:
+		 * Here we filter with pathspec but the result is further
+		 * filtered out when --relative is in effect.  To end-users,
+		 * a pathspec element that matched only to paths outside the
+		 * current directory is like not matching anything at all;
+		 * the handling of ps_matched[] here may become problematic
+		 * if/when we add the "--error-unmatch" option to "git diff".
+		 */
+		if (!ce_path_match(istate, ce, &revs->prune_data, revs->ps_matched))
 			continue;
 
 		if (revs->diffopt.prefix &&
@@ -562,7 +571,7 @@ static int diff_cache(struct rev_info *revs,
 	opts.pathspec = &revs->diffopt.pathspec;
 	opts.pathspec->recursive = 1;
 
-	init_tree_desc(&t, tree->buffer, tree->size);
+	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	return unpack_trees(1, &t, &opts);
 }
 
@@ -570,7 +579,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 {
 	int i;
 	struct commit *mb_child[2] = {0};
-	struct commit_list *merge_bases;
+	struct commit_list *merge_bases = NULL;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *obj = revs->pending.objects[i].item;
@@ -597,7 +606,8 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 		mb_child[1] = lookup_commit_reference(the_repository, &oid);
 	}
 
-	merge_bases = repo_get_merge_bases(the_repository, mb_child[0], mb_child[1]);
+	if (repo_get_merge_bases(the_repository, mb_child[0], mb_child[1], &merge_bases) < 0)
+		exit(128);
 	if (!merge_bases)
 		die(_("no merge base found"));
 	if (merge_bases->next)

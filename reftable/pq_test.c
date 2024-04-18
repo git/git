@@ -27,48 +27,43 @@ void merged_iter_pqueue_check(struct merged_iter_pqueue pq)
 
 static void test_pq(void)
 {
-	char *names[54] = { NULL };
-	int N = ARRAY_SIZE(names) - 1;
-
 	struct merged_iter_pqueue pq = { NULL };
+	struct reftable_record recs[54];
+	int N = ARRAY_SIZE(recs) - 1, i;
 	char *last = NULL;
 
-	int i = 0;
 	for (i = 0; i < N; i++) {
-		char name[100];
-		snprintf(name, sizeof(name), "%02d", i);
-		names[i] = xstrdup(name);
+		struct strbuf refname = STRBUF_INIT;
+		strbuf_addf(&refname, "%02d", i);
+
+		reftable_record_init(&recs[i], BLOCK_TYPE_REF);
+		recs[i].u.ref.refname = strbuf_detach(&refname, NULL);
 	}
 
 	i = 1;
 	do {
-		struct pq_entry e = { .rec = { .type = BLOCK_TYPE_REF,
-					       .u.ref = {
-						       .refname = names[i],
-					       } } };
+		struct pq_entry e = {
+			.rec = &recs[i],
+		};
+
 		merged_iter_pqueue_add(&pq, &e);
 		merged_iter_pqueue_check(pq);
+
 		i = (i * 7) % N;
 	} while (i != 1);
 
 	while (!merged_iter_pqueue_is_empty(pq)) {
 		struct pq_entry e = merged_iter_pqueue_remove(&pq);
-		struct reftable_record *rec = &e.rec;
 		merged_iter_pqueue_check(pq);
 
-		EXPECT(reftable_record_type(rec) == BLOCK_TYPE_REF);
-		if (last) {
-			EXPECT(strcmp(last, rec->u.ref.refname) < 0);
-		}
-		/* this is names[i], so don't dealloc. */
-		last = rec->u.ref.refname;
-		rec->u.ref.refname = NULL;
-		reftable_record_release(rec);
-	}
-	for (i = 0; i < N; i++) {
-		reftable_free(names[i]);
+		EXPECT(reftable_record_type(e.rec) == BLOCK_TYPE_REF);
+		if (last)
+			EXPECT(strcmp(last, e.rec->u.ref.refname) < 0);
+		last = e.rec->u.ref.refname;
 	}
 
+	for (i = 0; i < N; i++)
+		reftable_record_release(&recs[i]);
 	merged_iter_pqueue_release(&pq);
 }
 

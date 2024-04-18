@@ -427,7 +427,7 @@ test_expect_success '"add" worktree with orphan branch, lock, and reason' '
 # Note: Quoted arguments containing spaces are not supported.
 test_wt_add_orphan_hint () {
 	local context="$1" &&
-	local use_branch=$2 &&
+	local use_branch="$2" &&
 	shift 2 &&
 	local opts="$*" &&
 	test_expect_success "'worktree add' show orphan hint in bad/orphan HEAD w/ $context" '

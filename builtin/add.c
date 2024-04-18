@@ -115,7 +115,7 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 	int i, ret = 0;
 	char *skip_worktree_seen = NULL;
 	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
-	int flags = REFRESH_IGNORE_SKIP_WORKTREE |
+	unsigned int flags = REFRESH_IGNORE_SKIP_WORKTREE |
 		    (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
 
 	seen = xcalloc(pathspec->nr, 1);
@@ -310,9 +310,9 @@ static void check_embedded_repo(const char *path)
 	strbuf_strip_suffix(&name, "/");
 
 	warning(_("adding embedded git repository: %s"), name.buf);
-	if (!adviced_on_embedded_repo &&
-	    advice_enabled(ADVICE_ADD_EMBEDDED_REPO)) {
-		advise(embedded_advice, name.buf, name.buf);
+	if (!adviced_on_embedded_repo) {
+		advise_if_enabled(ADVICE_ADD_EMBEDDED_REPO,
+				  embedded_advice, name.buf, name.buf);
 		adviced_on_embedded_repo = 1;
 	}
 
@@ -328,10 +328,8 @@ static int add_files(struct dir_struct *dir, int flags)
 		fprintf(stderr, _(ignore_error));
 		for (i = 0; i < dir->ignored_nr; i++)
 			fprintf(stderr, "%s\n", dir->ignored[i]->name);
-		if (advice_enabled(ADVICE_ADD_IGNORED_FILE))
-			advise(_("Use -f if you really want to add them.\n"
-				"Turn this message off by running\n"
-				"\"git config advice.addIgnoredFile false\""));
+		advise_if_enabled(ADVICE_ADD_IGNORED_FILE,
+				  _("Use -f if you really want to add them."));
 		exit_status = 1;
 	}
 
@@ -370,6 +368,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int add_new_files;
 	int require_pathspec;
 	char *seen = NULL;
+	char *ps_matched = NULL;
 	struct lock_file lock_file = LOCK_INIT;
 
 	git_config(add_config, NULL);
@@ -440,10 +439,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (require_pathspec && pathspec.nr == 0) {
 		fprintf(stderr, _("Nothing specified, nothing added.\n"));
-		if (advice_enabled(ADVICE_ADD_EMPTY_PATHSPEC))
-			advise( _("Maybe you wanted to say 'git add .'?\n"
-				"Turn this message off by running\n"
-				"\"git config advice.addEmptyPathspec false\""));
+		advise_if_enabled(ADVICE_ADD_EMPTY_PATHSPEC,
+				  _("Maybe you wanted to say 'git add .'?"));
 		return 0;
 	}
 
@@ -549,12 +546,17 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	begin_odb_transaction();
 
+	ps_matched = xcalloc(pathspec.nr, 1);
 	if (add_renormalize)
 		exit_status |= renormalize_tracked_files(&pathspec, flags);
 	else
 		exit_status |= add_files_to_cache(the_repository, prefix,
-						  &pathspec, include_sparse,
-						  flags);
+						  &pathspec, ps_matched,
+						  include_sparse, flags);
+
+	if (take_worktree_changes && !add_renormalize && !ignore_add_errors &&
+	    report_path_error(ps_matched, &pathspec))
+		exit(128);
 
 	if (add_new_files)
 		exit_status |= add_files(&dir, flags);
@@ -568,6 +570,7 @@ finish:
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write new index file"));
 
+	free(ps_matched);
 	dir_clear(&dir);
 	clear_pathspec(&pathspec);
 	return exit_status;

@@ -1105,26 +1105,26 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 	size_t i;
 
 	strbuf_reset(&s->buf);
-	strbuf_commented_addf(&s->buf, comment_line_char,
+	strbuf_commented_addf(&s->buf, comment_line_str,
 			      _("Manual hunk edit mode -- see bottom for "
 				"a quick guide.\n"));
 	render_hunk(s, hunk, 0, 0, &s->buf);
-	strbuf_commented_addf(&s->buf, comment_line_char,
+	strbuf_commented_addf(&s->buf, comment_line_str,
 			      _("---\n"
 				"To remove '%c' lines, make them ' ' lines "
 				"(context).\n"
 				"To remove '%c' lines, delete them.\n"
-				"Lines starting with %c will be removed.\n"),
+				"Lines starting with %s will be removed.\n"),
 			      s->mode->is_reverse ? '+' : '-',
 			      s->mode->is_reverse ? '-' : '+',
-			      comment_line_char);
-	strbuf_commented_addf(&s->buf, comment_line_char, "%s",
+			      comment_line_str);
+	strbuf_commented_addf(&s->buf, comment_line_str, "%s",
 			      _(s->mode->edit_hunk_hint));
 	/*
 	 * TRANSLATORS: 'it' refers to the patch mentioned in the previous
 	 * messages.
 	 */
-	strbuf_commented_addf(&s->buf, comment_line_char,
+	strbuf_commented_addf(&s->buf, comment_line_str,
 			      _("If it does not apply cleanly, you will be "
 				"given an opportunity to\n"
 				"edit again.  If all lines of the hunk are "
@@ -1139,7 +1139,7 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 	for (i = 0; i < s->buf.len; ) {
 		size_t next = find_next_line(&s->buf, i);
 
-		if (s->buf.buf[i] != comment_line_char)
+		if (!starts_with(s->buf.buf + i, comment_line_str))
 			strbuf_add(&s->plain, s->buf.buf + i, next - i);
 		i = next;
 	}
@@ -1388,13 +1388,14 @@ N_("j - leave this hunk undecided, see next undecided hunk\n"
    "/ - search for a hunk matching the given regex\n"
    "s - split the current hunk into smaller hunks\n"
    "e - manually edit the current hunk\n"
+   "p - print the current hunk\n"
    "? - print help\n");
 
 static int patch_update_file(struct add_p_state *s,
 			     struct file_diff *file_diff)
 {
 	size_t hunk_index = 0;
-	ssize_t i, undecided_previous, undecided_next;
+	ssize_t i, undecided_previous, undecided_next, rendered_hunk_index = -1;
 	struct hunk *hunk;
 	char ch;
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -1447,8 +1448,11 @@ static int patch_update_file(struct add_p_state *s,
 
 		strbuf_reset(&s->buf);
 		if (file_diff->hunk_nr) {
-			render_hunk(s, hunk, 0, colored, &s->buf);
-			fputs(s->buf.buf, stdout);
+			if (rendered_hunk_index != hunk_index) {
+				render_hunk(s, hunk, 0, colored, &s->buf);
+				fputs(s->buf.buf, stdout);
+				rendered_hunk_index = hunk_index;
+			}
 
 			strbuf_reset(&s->buf);
 			if (undecided_previous >= 0) {
@@ -1480,6 +1484,7 @@ static int patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_EDIT;
 				strbuf_addstr(&s->buf, ",e");
 			}
+			strbuf_addstr(&s->buf, ",p");
 		}
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
@@ -1644,13 +1649,15 @@ soft_increment:
 			hunk_index = i;
 		} else if (s->answer.buf[0] == 's') {
 			size_t splittable_into = hunk->splittable_into;
-			if (!(permitted & ALLOW_SPLIT))
+			if (!(permitted & ALLOW_SPLIT)) {
 				err(s, _("Sorry, cannot split this hunk"));
-			else if (!split_hunk(s, file_diff,
-					     hunk - file_diff->hunk))
+			} else if (!split_hunk(s, file_diff,
+					     hunk - file_diff->hunk)) {
 				color_fprintf_ln(stdout, s->s.header_color,
 						 _("Split into %d hunks."),
 						 (int)splittable_into);
+				rendered_hunk_index = -1;
+			}
 		} else if (s->answer.buf[0] == 'e') {
 			if (!(permitted & ALLOW_EDIT))
 				err(s, _("Sorry, cannot edit this hunk"));
@@ -1658,6 +1665,8 @@ soft_increment:
 				hunk->use = USE_HUNK;
 				goto soft_increment;
 			}
+		} else if (s->answer.buf[0] == 'p') {
+			rendered_hunk_index = -1;
 		} else {
 			const char *p = _(help_patch_remainder), *eol = p;
 
@@ -1729,14 +1738,6 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 	if (mode == ADD_P_STASH)
 		s.mode = &patch_mode_stash;
 	else if (mode == ADD_P_RESET) {
-		/*
-		 * NEEDSWORK: Instead of comparing to the literal "HEAD",
-		 * compare the commit objects instead so that other ways of
-		 * saying the same thing (such as "@") are also handled
-		 * appropriately.
-		 *
-		 * This applies to the cases below too.
-		 */
 		if (!revision || !strcmp(revision, "HEAD"))
 			s.mode = &patch_mode_reset_head;
 		else

@@ -405,8 +405,9 @@ static inline int merge_detect_rename(struct merge_options *opt)
 
 static void init_tree_desc_from_tree(struct tree_desc *desc, struct tree *tree)
 {
-	parse_tree(tree);
-	init_tree_desc(desc, tree->buffer, tree->size);
+	if (parse_tree(tree) < 0)
+		exit(128);
+	init_tree_desc(desc, &tree->object.oid, tree->buffer, tree->size);
 }
 
 static int unpack_trees_start(struct merge_options *opt,
@@ -1047,13 +1048,14 @@ static int merge_3way(struct merge_options *opt,
 		      const int extra_marker_size)
 {
 	mmfile_t orig, src1, src2;
-	struct ll_merge_options ll_opts = {0};
+	struct ll_merge_options ll_opts = LL_MERGE_OPTIONS_INIT;
 	char *base, *name1, *name2;
 	enum ll_merge_result merge_status;
 
 	ll_opts.renormalize = opt->renormalize;
 	ll_opts.extra_marker_size = extra_marker_size;
 	ll_opts.xdl_opts = opt->xdl_opts;
+	ll_opts.conflict_style = opt->conflict_style;
 
 	if (opt->priv->call_depth) {
 		ll_opts.virtual_ancestor = 1;
@@ -1139,7 +1141,13 @@ static int find_first_merges(struct repository *repo,
 		die("revision walk setup failed");
 	while ((commit = get_revision(&revs)) != NULL) {
 		struct object *o = &(commit->object);
-		if (repo_in_merge_bases(repo, b, commit))
+		int ret = repo_in_merge_bases(repo, b, commit);
+		if (ret < 0) {
+			object_array_clear(&merges);
+			release_revisions(&revs);
+			return ret;
+		}
+		if (ret)
 			add_object_array(o, NULL, &merges);
 	}
 	reset_revision_walk();
@@ -1154,9 +1162,17 @@ static int find_first_merges(struct repository *repo,
 		contains_another = 0;
 		for (j = 0; j < merges.nr; j++) {
 			struct commit *m2 = (struct commit *) merges.objects[j].item;
-			if (i != j && repo_in_merge_bases(repo, m2, m1)) {
-				contains_another = 1;
-				break;
+			if (i != j) {
+				int ret = repo_in_merge_bases(repo, m2, m1);
+				if (ret < 0) {
+					object_array_clear(&merges);
+					release_revisions(&revs);
+					return ret;
+				}
+				if (ret > 0) {
+					contains_another = 1;
+					break;
+				}
 			}
 		}
 
@@ -1192,7 +1208,7 @@ static int merge_submodule(struct merge_options *opt,
 			   const struct object_id *b)
 {
 	struct repository subrepo;
-	int ret = 0;
+	int ret = 0, ret2;
 	struct commit *commit_base, *commit_a, *commit_b;
 	int parent_count;
 	struct object_array merges;
@@ -1229,14 +1245,32 @@ static int merge_submodule(struct merge_options *opt,
 	}
 
 	/* check whether both changes are forward */
-	if (!repo_in_merge_bases(&subrepo, commit_base, commit_a) ||
-	    !repo_in_merge_bases(&subrepo, commit_base, commit_b)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_base, commit_a);
+	if (ret2 < 0) {
+		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (ret2 > 0)
+		ret2 = repo_in_merge_bases(&subrepo, commit_base, commit_b);
+	if (ret2 < 0) {
+		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (!ret2) {
 		output(opt, 1, _("Failed to merge submodule %s (commits don't follow merge-base)"), path);
 		goto cleanup;
 	}
 
 	/* Case #1: a is contained in b or vice versa */
-	if (repo_in_merge_bases(&subrepo, commit_a, commit_b)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_a, commit_b);
+	if (ret2 < 0) {
+		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (ret2) {
 		oidcpy(result, b);
 		if (show(opt, 3)) {
 			output(opt, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
@@ -1249,7 +1283,13 @@ static int merge_submodule(struct merge_options *opt,
 		ret = 1;
 		goto cleanup;
 	}
-	if (repo_in_merge_bases(&subrepo, commit_b, commit_a)) {
+	ret2 = repo_in_merge_bases(&subrepo, commit_b, commit_a);
+	if (ret2 < 0) {
+		output(opt, 1, _("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
+		goto cleanup;
+	}
+	if (ret2) {
 		oidcpy(result, a);
 		if (show(opt, 3)) {
 			output(opt, 3, _("Fast-forwarding submodule %s to the following commit:"), path);
@@ -1278,6 +1318,10 @@ static int merge_submodule(struct merge_options *opt,
 	parent_count = find_first_merges(&subrepo, &merges, path,
 					 commit_a, commit_b);
 	switch (parent_count) {
+	case -1:
+		output(opt, 1,_("Failed to merge submodule %s (repository corrupt)"), path);
+		ret = -1;
+		break;
 	case 0:
 		output(opt, 1, _("Failed to merge submodule %s (merge following commits not found)"), path);
 		break;
@@ -1392,11 +1436,14 @@ static int merge_mode_and_contents(struct merge_options *opt,
 			/* FIXME: bug, what if modes didn't match? */
 			result->clean = (merge_status == 0);
 		} else if (S_ISGITLINK(a->mode)) {
-			result->clean = merge_submodule(opt, &result->blob.oid,
-							o->path,
-							&o->oid,
-							&a->oid,
-							&b->oid);
+			int clean = merge_submodule(opt, &result->blob.oid,
+						    o->path,
+						    &o->oid,
+						    &a->oid,
+						    &b->oid);
+			if (clean < 0)
+				return -1;
+			result->clean = clean;
 		} else if (S_ISLNK(a->mode)) {
 			switch (opt->recursive_variant) {
 			case MERGE_VARIANT_NORMAL:
@@ -3597,7 +3644,9 @@ static int merge_recursive_internal(struct merge_options *opt,
 	}
 
 	if (!merge_bases) {
-		merge_bases = repo_get_merge_bases(the_repository, h1, h2);
+		if (repo_get_merge_bases(the_repository, h1, h2,
+					 &merge_bases) < 0)
+			return -1;
 		merge_bases = reverse_commit_list(merge_bases);
 	}
 
@@ -3898,6 +3947,8 @@ void init_merge_options(struct merge_options *opt,
 	strbuf_init(&opt->obuf, 0);
 
 	opt->renormalize = 0;
+
+	opt->conflict_style = -1;
 
 	merge_recursive_config(opt);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");

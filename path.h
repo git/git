@@ -24,12 +24,6 @@ char *mkpathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
 
 /*
- * Construct a path and place the result in the provided buffer `buf`.
- */
-char *mksnpath(char *buf, size_t n, const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
-
-/*
  * The `git_common_path` family of functions will construct a path into a
  * repository's common git directory, which is shared by all worktrees.
  */
@@ -181,6 +175,7 @@ const char *git_path_shallow(struct repository *r);
 int ends_with_path_components(const char *path, const char *components);
 int validate_headref(const char *ref);
 
+int calc_shared_perm(int mode);
 int adjust_shared_perm(const char *path);
 
 char *interpolate_path(const char *path, int real_home);

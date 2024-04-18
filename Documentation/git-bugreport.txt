@@ -8,7 +8,8 @@ git-bugreport - Collect information for user to file a bug report
 SYNOPSIS
 --------
 [verse]
-'git bugreport' [(-o | --output-directory) <path>] [(-s | --suffix) <format>]
+'git bugreport' [(-o | --output-directory) <path>]
+		[(-s | --suffix) <format> | --no-suffix]
 		[--diagnose[=<mode>]]
 
 DESCRIPTION
@@ -51,9 +52,12 @@ OPTIONS
 
 -s <format>::
 --suffix <format>::
+--no-suffix::
 	Specify an alternate suffix for the bugreport name, to create a file
 	named 'git-bugreport-<formatted-suffix>'. This should take the form of a
 	strftime(3) format string; the current local time will be used.
+	`--no-suffix` disables the suffix and the file is just named
+	`git-bugreport` without any disambiguation measure.
 
 --no-diagnose::
 --diagnose[=<mode>]::

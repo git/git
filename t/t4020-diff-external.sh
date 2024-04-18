@@ -232,7 +232,7 @@ keep_only_cr () {
 test_expect_success 'external diff with autocrlf = true' '
 	test_config core.autocrlf true &&
 	GIT_EXTERNAL_DIFF=./fake-diff.sh git diff &&
-	test $(wc -l < crlfed.txt) = $(cat crlfed.txt | keep_only_cr | wc -c)
+	test $(wc -l <crlfed.txt) = $(keep_only_cr <crlfed.txt | wc -c)
 '
 
 test_expect_success 'diff --cached' '

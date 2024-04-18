@@ -100,7 +100,7 @@ info "The user is: '$username'"
 
 if test -f "$allowed_users_file"
 then
-  rc=$(cat $allowed_users_file | grep -v '^#' | grep -v '^$' |
+  rc=$(grep -Ev '^(#|$)' $allowed_users_file |
     while read heads user_patterns
     do
       # does this rule apply to us?
@@ -138,7 +138,7 @@ info "'$groups'"
 
 if test -f "$allowed_groups_file"
 then
-  rc=$(cat $allowed_groups_file | grep -v '^#' | grep -v '^$' |
+  rc=$(grep -Ev '^(#|$)' $allowed_groups_file |
     while read heads group_patterns
     do
       # does this rule apply to us?

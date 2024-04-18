@@ -12,15 +12,15 @@
 #include "refname.h"
 #include "reftable-iterator.h"
 
-struct find_arg {
-	char **names;
-	const char *want;
+struct refname_needle_lesseq_args {
+	char **haystack;
+	const char *needle;
 };
 
-static int find_name(size_t k, void *arg)
+static int refname_needle_lesseq(size_t k, void *_args)
 {
-	struct find_arg *f_arg = arg;
-	return strcmp(f_arg->names[k], f_arg->want) >= 0;
+	struct refname_needle_lesseq_args *args = _args;
+	return strcmp(args->needle, args->haystack[k]) <= 0;
 }
 
 static int modification_has_ref(struct modification *mod, const char *name)
@@ -29,25 +29,23 @@ static int modification_has_ref(struct modification *mod, const char *name)
 	int err = 0;
 
 	if (mod->add_len > 0) {
-		struct find_arg arg = {
-			.names = mod->add,
-			.want = name,
+		struct refname_needle_lesseq_args args = {
+			.haystack = mod->add,
+			.needle = name,
 		};
-		int idx = binsearch(mod->add_len, find_name, &arg);
-		if (idx < mod->add_len && !strcmp(mod->add[idx], name)) {
+		size_t idx = binsearch(mod->add_len, refname_needle_lesseq, &args);
+		if (idx < mod->add_len && !strcmp(mod->add[idx], name))
 			return 0;
-		}
 	}
 
 	if (mod->del_len > 0) {
-		struct find_arg arg = {
-			.names = mod->del,
-			.want = name,
+		struct refname_needle_lesseq_args args = {
+			.haystack = mod->del,
+			.needle = name,
 		};
-		int idx = binsearch(mod->del_len, find_name, &arg);
-		if (idx < mod->del_len && !strcmp(mod->del[idx], name)) {
+		size_t idx = binsearch(mod->del_len, refname_needle_lesseq, &args);
+		if (idx < mod->del_len && !strcmp(mod->del[idx], name))
 			return 1;
-		}
 	}
 
 	err = reftable_table_read_ref(&mod->tab, name, &ref);
@@ -73,11 +71,11 @@ static int modification_has_ref_with_prefix(struct modification *mod,
 	int err = 0;
 
 	if (mod->add_len > 0) {
-		struct find_arg arg = {
-			.names = mod->add,
-			.want = prefix,
+		struct refname_needle_lesseq_args args = {
+			.haystack = mod->add,
+			.needle = prefix,
 		};
-		int idx = binsearch(mod->add_len, find_name, &arg);
+		size_t idx = binsearch(mod->add_len, refname_needle_lesseq, &args);
 		if (idx < mod->add_len &&
 		    !strncmp(prefix, mod->add[idx], strlen(prefix)))
 			goto done;
@@ -92,15 +90,14 @@ static int modification_has_ref_with_prefix(struct modification *mod,
 			goto done;
 
 		if (mod->del_len > 0) {
-			struct find_arg arg = {
-				.names = mod->del,
-				.want = ref.refname,
+			struct refname_needle_lesseq_args args = {
+				.haystack = mod->del,
+				.needle = ref.refname,
 			};
-			int idx = binsearch(mod->del_len, find_name, &arg);
+			size_t idx = binsearch(mod->del_len, refname_needle_lesseq, &args);
 			if (idx < mod->del_len &&
-			    !strcmp(ref.refname, mod->del[idx])) {
+			    !strcmp(ref.refname, mod->del[idx]))
 				continue;
-			}
 		}
 
 		if (strncmp(ref.refname, prefix, strlen(prefix))) {
@@ -140,8 +137,8 @@ int validate_ref_record_addition(struct reftable_table tab,
 {
 	struct modification mod = {
 		.tab = tab,
-		.add = reftable_calloc(sizeof(char *) * sz),
-		.del = reftable_calloc(sizeof(char *) * sz),
+		.add = reftable_calloc(sz, sizeof(*mod.add)),
+		.del = reftable_calloc(sz, sizeof(*mod.del)),
 	};
 	int i = 0;
 	int err = 0;

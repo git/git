@@ -429,41 +429,56 @@ static int real_merge(struct merge_tree_options *o,
 	struct merge_options opt;
 
 	copy_merge_options(&opt, &o->merge_options);
-	parent1 = get_merge_parent(branch1);
-	if (!parent1)
-		help_unknown_ref(branch1, "merge-tree",
-				 _("not something we can merge"));
-
-	parent2 = get_merge_parent(branch2);
-	if (!parent2)
-		help_unknown_ref(branch2, "merge-tree",
-				 _("not something we can merge"));
-
 	opt.show_rename_progress = 0;
 
 	opt.branch1 = branch1;
 	opt.branch2 = branch2;
 
 	if (merge_base) {
-		struct commit *base_commit;
 		struct tree *base_tree, *parent1_tree, *parent2_tree;
 
-		base_commit = lookup_commit_reference_by_name(merge_base);
-		if (!base_commit)
-			die(_("could not lookup commit '%s'"), merge_base);
+		/*
+		 * We actually only need the trees because we already
+		 * have a merge base.
+		 */
+		struct object_id base_oid, head_oid, merge_oid;
+
+		if (repo_get_oid_treeish(the_repository, merge_base, &base_oid))
+			die(_("could not parse as tree '%s'"), merge_base);
+		base_tree = parse_tree_indirect(&base_oid);
+		if (!base_tree)
+			die(_("unable to read tree (%s)"), oid_to_hex(&base_oid));
+		if (repo_get_oid_treeish(the_repository, branch1, &head_oid))
+			die(_("could not parse as tree '%s'"), branch1);
+		parent1_tree = parse_tree_indirect(&head_oid);
+		if (!parent1_tree)
+			die(_("unable to read tree (%s)"), oid_to_hex(&head_oid));
+		if (repo_get_oid_treeish(the_repository, branch2, &merge_oid))
+			die(_("could not parse as tree '%s'"), branch2);
+		parent2_tree = parse_tree_indirect(&merge_oid);
+		if (!parent2_tree)
+			die(_("unable to read tree (%s)"), oid_to_hex(&merge_oid));
 
 		opt.ancestor = merge_base;
-		base_tree = repo_get_commit_tree(the_repository, base_commit);
-		parent1_tree = repo_get_commit_tree(the_repository, parent1);
-		parent2_tree = repo_get_commit_tree(the_repository, parent2);
 		merge_incore_nonrecursive(&opt, base_tree, parent1_tree, parent2_tree, &result);
 	} else {
+		parent1 = get_merge_parent(branch1);
+		if (!parent1)
+			help_unknown_ref(branch1, "merge-tree",
+					 _("not something we can merge"));
+
+		parent2 = get_merge_parent(branch2);
+		if (!parent2)
+			help_unknown_ref(branch2, "merge-tree",
+					 _("not something we can merge"));
+
 		/*
 		 * Get the merge bases, in reverse order; see comment above
 		 * merge_incore_recursive in merge-ort.h
 		 */
-		merge_bases = repo_get_merge_bases(the_repository, parent1,
-						   parent2);
+		if (repo_get_merge_bases(the_repository, parent1,
+					 parent2, &merge_bases) < 0)
+			exit(128);
 		if (!merge_bases && !o->allow_unrelated_histories)
 			die(_("refusing to merge unrelated histories"));
 		merge_bases = reverse_commit_list(merge_bases);
@@ -548,7 +563,7 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			   PARSE_OPT_NONEG),
 		OPT_STRING(0, "merge-base",
 			   &merge_base,
-			   N_("commit"),
+			   N_("tree-ish"),
 			   N_("specify a merge-base for the merge")),
 		OPT_STRVEC('X', "strategy-option", &xopts, N_("option=value"),
 			N_("option for selected merge strategy")),

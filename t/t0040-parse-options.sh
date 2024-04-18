@@ -210,6 +210,22 @@ test_expect_success 'superfluous value provided: boolean' '
 	test_cmp expect actual
 '
 
+test_expect_success 'superfluous value provided: boolean, abbreviated' '
+	cat >expect <<-\EOF &&
+	error: option `yes'\'' takes no value
+	EOF
+	test_expect_code 129 env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool parse-options --ye=hi 2>actual &&
+	test_cmp expect actual &&
+
+	cat >expect <<-\EOF &&
+	error: option `no-yes'\'' takes no value
+	EOF
+	test_expect_code 129 env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool parse-options --no-ye=hi 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'superfluous value provided: cmdmode' '
 	cat >expect <<-\EOF &&
 	error: option `mode1'\'' takes no value

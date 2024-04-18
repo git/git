@@ -33,7 +33,7 @@ do
 done
 
 git ls-tree -r HEAD >GEN_src_list
-nr_src_files=$(cat GEN_src_list | wc -l)
+nr_src_files=$(wc -l <GEN_src_list)
 
 src_branch=$(git symbolic-ref --short HEAD)
 

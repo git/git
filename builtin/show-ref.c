@@ -172,7 +172,7 @@ static int cmd_show_ref__verify(const struct show_one_options *show_one_opts,
 	while (*refs) {
 		struct object_id oid;
 
-		if ((starts_with(*refs, "refs/") || !strcmp(*refs, "HEAD")) &&
+		if ((starts_with(*refs, "refs/") || refname_is_safe(*refs)) &&
 		    !read_ref(*refs, &oid)) {
 			show_one(show_one_opts, *refs, &oid);
 		}

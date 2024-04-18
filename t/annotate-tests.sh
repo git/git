@@ -532,7 +532,7 @@ test_expect_success 'blame -L :funcname with userdiff driver' '
 		"$(cat file.template)" &&
 	test_commit --author "B <B@test.git>" \
 		"change" "$fortran_file" \
-		"$(cat file.template | sed -e s/ChangeMe/IWasChanged/)" &&
+		"$(sed -e s/ChangeMe/IWasChanged/ file.template)" &&
 	check_count -f "$fortran_file" -L:RIGHT A 3 B 1
 '
 

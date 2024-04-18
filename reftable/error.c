@@ -22,7 +22,7 @@ const char *reftable_error_str(int err)
 	case REFTABLE_NOT_EXIST_ERROR:
 		return "file does not exist";
 	case REFTABLE_LOCK_ERROR:
-		return "data is outdated";
+		return "data is locked";
 	case REFTABLE_API_ERROR:
 		return "misuse of the reftable API";
 	case REFTABLE_ZLIB_ERROR:
@@ -35,6 +35,8 @@ const char *reftable_error_str(int err)
 		return "invalid refname";
 	case REFTABLE_ENTRY_TOO_BIG_ERROR:
 		return "entry too large";
+	case REFTABLE_OUTDATED_ERROR:
+		return "data concurrently modified";
 	case -1:
 		return "general error";
 	default:

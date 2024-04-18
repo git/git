@@ -158,6 +158,9 @@ static void show_list(const char *debug, int counted, int nr,
 		const char *subject_start;
 		int subject_len;
 
+		if (!buf)
+			die(_("unable to read %s"), oid_to_hex(&commit->object.oid));
+
 		fprintf(stderr, "%c%c%c ",
 			(commit_flags & TREESAME) ? ' ' : 'T',
 			(commit_flags & UNINTERESTING) ? 'U' : ' ',
@@ -833,10 +836,11 @@ static void handle_skipped_merge_base(const struct object_id *mb)
 static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int no_checkout)
 {
 	enum bisect_error res = BISECT_OK;
-	struct commit_list *result;
+	struct commit_list *result = NULL;
 
-	result = repo_get_merge_bases_many(the_repository, rev[0], rev_nr - 1,
-					   rev + 1);
+	if (repo_get_merge_bases_many(the_repository, rev[0], rev_nr - 1,
+				      rev + 1, &result) < 0)
+		exit(128);
 
 	for (; result; result = result->next) {
 		const struct object_id *mb = &result->item->object.oid;

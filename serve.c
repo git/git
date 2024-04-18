@@ -12,6 +12,7 @@
 #include "trace2.h"
 
 static int advertise_sid = -1;
+static int advertise_object_info = -1;
 static int client_hash_algo = GIT_HASH_SHA1;
 
 static int always_advertise(struct repository *r UNUSED,
@@ -65,6 +66,17 @@ static void session_id_receive(struct repository *r UNUSED,
 	if (!client_sid)
 		client_sid = "";
 	trace2_data_string("transfer", NULL, "client-sid", client_sid);
+}
+
+static int object_info_advertise(struct repository *r, struct strbuf *value UNUSED)
+{
+	if (advertise_object_info == -1 &&
+	    repo_config_get_bool(r, "transfer.advertiseobjectinfo",
+				 &advertise_object_info)) {
+		/* disabled by default */
+		advertise_object_info = 0;
+	}
+	return advertise_object_info;
 }
 
 struct protocol_capability {
@@ -135,7 +147,7 @@ static struct protocol_capability capabilities[] = {
 	},
 	{
 		.name = "object-info",
-		.advertise = always_advertise,
+		.advertise = object_info_advertise,
 		.command = cap_object_info,
 	},
 	{

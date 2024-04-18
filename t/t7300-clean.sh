@@ -5,6 +5,7 @@
 
 test_description='git clean basic tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 git config clean.requireForce no
@@ -405,6 +406,12 @@ test_expect_success 'clean.requireForce and -f' '
 	test -f obj.o &&
 	test -f build/lib.so
 
+'
+
+test_expect_success 'clean.requireForce and --interactive' '
+	git clean --interactive </dev/null >output 2>error &&
+	test_grep ! "requireForce is true and" error &&
+	test_grep "\*\*\* Commands \*\*\*" output
 '
 
 test_expect_success 'core.excludesfile' '

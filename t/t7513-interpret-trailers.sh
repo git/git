@@ -1916,4 +1916,37 @@ test_expect_success 'suppress --- handling' '
 	test_cmp expected actual
 '
 
+test_expect_success 'suppressing --- does not disable cut-line handling' '
+	echo "real-trailer: before the cut" >expected &&
+
+	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
+	subject
+
+	This input has a cut-line in it; we should stop parsing when we see it
+	and consider only trailers before that line.
+
+	real-trailer: before the cut
+
+	# ------------------------ >8 ------------------------
+	# Nothing below this line counts as part of the commit message.
+	not-a-trailer: too late
+	EOF
+
+	test_cmp expected actual
+'
+
+test_expect_success 'handling of --- lines in conjunction with cut-lines' '
+	echo "my-trailer: here" >expected &&
+
+	git interpret-trailers --parse >actual <<-\EOF &&
+	subject
+
+	my-trailer: here
+	---
+	# ------------------------ >8 ------------------------
+	EOF
+
+	test_cmp expected actual
+'
+
 test_done

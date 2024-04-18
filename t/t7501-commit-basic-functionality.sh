@@ -101,22 +101,8 @@ test_expect_success 'fail to commit untracked file (even with --include/--only)'
 	test_must_fail git commit --only -m "baz" baz 2>err &&
 	test_grep -e "$error" err &&
 
-	# TODO: as for --include, the below command will fail because
-	# nothing is staged. If something was staged, it would not fail
-	# even though the provided pathspec does not match any tracked
-	# path. (However, the untracked paths that match the pathspec are
-	# not committed and only the staged changes get committed.)
-	# In either cases, no error is returned to stderr like in (--only
-	# and without --only/--include) cases. In a similar manner,
-	# "git add -u baz" also does not error out.
-	#
-	# Therefore, the below test is just to document the current behavior
-	# and is not an endorsement to the current behavior, and we may
-	# want to fix this. And when that happens, this test should be
-	# updated accordingly.
-
 	test_must_fail git commit --include -m "baz" baz 2>err &&
-	test_must_be_empty err
+	test_grep -e "$error" err
 '
 
 test_expect_success 'setup: non-initial commit' '

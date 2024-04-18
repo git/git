@@ -479,14 +479,14 @@ set by Git if the remote helper has the 'option' capability.
 'option depth' <depth>::
 	Deepens the history of a shallow repository.
 
-'option deepen-since <timestamp>::
+'option deepen-since' <timestamp>::
 	Deepens the history of a shallow repository based on time.
 
-'option deepen-not <ref>::
+'option deepen-not' <ref>::
 	Deepens the history of a shallow repository excluding ref.
 	Multiple options add up.
 
-'option deepen-relative {'true'|'false'}::
+'option deepen-relative' {'true'|'false'}::
 	Deepens the history of a shallow repository relative to
 	current boundary. Only valid when used with "option depth".
 
@@ -526,7 +526,7 @@ set by Git if the remote helper has the 'option' capability.
 'option pushcert' {'true'|'false'}::
 	GPG sign pushes.
 
-'option push-option <string>::
+'option push-option' <string>::
 	Transmit <string> as a push option. As the push option
 	must not contain LF or NUL characters, the string is not encoded.
 
@@ -542,13 +542,10 @@ set by Git if the remote helper has the 'option' capability.
 	transaction.  If successful, all refs will be updated, or none will.  If the
 	remote side does not support this capability, the push will fail.
 
-'option object-format' {'true'|algorithm}::
-	If 'true', indicate that the caller wants hash algorithm information
+'option object-format true'::
+	Indicate that the caller wants hash algorithm information
 	to be passed back from the remote.  This mode is used when fetching
 	refs.
-+
-If set to an algorithm, indicate that the caller wants to interact with
-the remote side using that algorithm.
 
 SEE ALSO
 --------

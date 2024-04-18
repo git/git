@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "git-curl-compat.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -211,14 +212,9 @@ static int set_option(const char *name, const char *value)
 		options.filter = xstrdup(value);
 		return 0;
 	} else if (!strcmp(name, "object-format")) {
-		int algo;
 		options.object_format = 1;
-		if (strcmp(value, "true")) {
-			algo = hash_algo_by_name(value);
-			if (algo == GIT_HASH_UNKNOWN)
-				die("unknown object format '%s'", value);
-			options.hash_algo = &hash_algos[algo];
-		}
+		if (strcmp(value, "true"))
+			die(_("unknown value for object-format: %s"), value);
 		return 0;
 	} else {
 		return 1 /* unsupported */;
@@ -960,7 +956,9 @@ retry:
 		/* The request body is large and the size cannot be predicted.
 		 * We must use chunked encoding to send it.
 		 */
+#ifdef GIT_CURL_NEED_TRANSFER_ENCODING_HEADER
 		headers = curl_slist_append(headers, "Transfer-Encoding: chunked");
+#endif
 		rpc->initial_buffer = 1;
 		curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, rpc_out);
 		curl_easy_setopt(slot->curl, CURLOPT_INFILE, rpc);

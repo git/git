@@ -49,7 +49,7 @@ static int padded_write(struct reftable_writer *w, uint8_t *data, size_t len,
 {
 	int n = 0;
 	if (w->pending_padding > 0) {
-		uint8_t *zeroed = reftable_calloc(w->pending_padding);
+		uint8_t *zeroed = reftable_calloc(w->pending_padding, sizeof(*zeroed));
 		int n = w->write(w->write_arg, zeroed, w->pending_padding);
 		if (n < 0)
 			return n;
@@ -124,8 +124,7 @@ reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 		    int (*flush_func)(void *),
 		    void *writer_arg, struct reftable_write_options *opts)
 {
-	struct reftable_writer *wp =
-		reftable_calloc(sizeof(struct reftable_writer));
+	struct reftable_writer *wp = reftable_calloc(1, sizeof(*wp));
 	strbuf_init(&wp->block_writer_data.last_key, 0);
 	options_set_defaults(opts);
 	if (opts->block_size >= (1 << 24)) {
@@ -133,7 +132,7 @@ reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 		abort();
 	}
 	wp->last_key = reftable_empty_strbuf;
-	wp->block = reftable_calloc(opts->block_size);
+	REFTABLE_CALLOC_ARRAY(wp->block, opts->block_size);
 	wp->write = writer_func;
 	wp->write_arg = writer_arg;
 	wp->opts = *opts;
@@ -202,12 +201,7 @@ static void writer_index_hash(struct reftable_writer *w, struct strbuf *hash)
 		return;
 	}
 
-	if (key->offset_len == key->offset_cap) {
-		key->offset_cap = 2 * key->offset_cap + 1;
-		key->offsets = reftable_realloc(
-			key->offsets, sizeof(uint64_t) * key->offset_cap);
-	}
-
+	REFTABLE_ALLOC_GROW(key->offsets, key->offset_len + 1, key->offset_cap);
 	key->offsets[key->offset_len++] = off;
 }
 
@@ -379,20 +373,39 @@ int reftable_writer_add_logs(struct reftable_writer *w,
 
 static int writer_finish_section(struct reftable_writer *w)
 {
+	struct reftable_block_stats *bstats = NULL;
 	uint8_t typ = block_writer_type(w->block_writer);
 	uint64_t index_start = 0;
 	int max_level = 0;
-	int threshold = w->opts.unpadded ? 1 : 3;
+	size_t threshold = w->opts.unpadded ? 1 : 3;
 	int before_blocks = w->stats.idx_stats.blocks;
-	int err = writer_flush_block(w);
-	int i = 0;
-	struct reftable_block_stats *bstats = NULL;
+	int err;
+
+	err = writer_flush_block(w);
 	if (err < 0)
 		return err;
 
+	/*
+	 * When the section we are about to index has a lot of blocks then the
+	 * index itself may span across multiple blocks, as well. This would
+	 * require a linear scan over index blocks only to find the desired
+	 * indexed block, which is inefficient. Instead, we write a multi-level
+	 * index where index records of level N+1 will refer to index blocks of
+	 * level N. This isn't constant time, either, but at least logarithmic.
+	 *
+	 * This loop handles writing this multi-level index. Note that we write
+	 * the lowest-level index pointing to the indexed blocks first. We then
+	 * continue writing additional index levels until the current level has
+	 * less blocks than the threshold so that the highest level will be at
+	 * the end of the index section.
+	 *
+	 * Readers are thus required to start reading the index section from
+	 * its end, which is why we set `index_start` to the beginning of the
+	 * last index section.
+	 */
 	while (w->index_len > threshold) {
 		struct reftable_index_record *idx = NULL;
-		int idx_len = 0;
+		size_t i, idx_len;
 
 		max_level++;
 		index_start = w->next;
@@ -411,33 +424,26 @@ static int writer_finish_section(struct reftable_writer *w)
 					.idx = idx[i],
 				},
 			};
-			if (block_writer_add(w->block_writer, &rec) == 0) {
-				continue;
-			}
 
-			err = writer_flush_block(w);
+			err = writer_add_record(w, &rec);
 			if (err < 0)
 				return err;
-
-			writer_reinit_block_writer(w, BLOCK_TYPE_INDEX);
-
-			err = block_writer_add(w->block_writer, &rec);
-			if (err != 0) {
-				/* write into fresh block should always succeed
-				 */
-				abort();
-			}
 		}
-		for (i = 0; i < idx_len; i++) {
+
+		err = writer_flush_block(w);
+		if (err < 0)
+			return err;
+
+		for (i = 0; i < idx_len; i++)
 			strbuf_release(&idx[i].last_key);
-		}
 		reftable_free(idx);
 	}
 
-	err = writer_flush_block(w);
-	if (err < 0)
-		return err;
-
+	/*
+	 * The index may still contain a number of index blocks lower than the
+	 * threshold. Clear it so that these entries don't leak into the next
+	 * index section.
+	 */
 	writer_clear_index(w);
 
 	bstats = writer_reftable_block_stats(w, typ);
@@ -630,11 +636,8 @@ done:
 
 static void writer_clear_index(struct reftable_writer *w)
 {
-	int i = 0;
-	for (i = 0; i < w->index_len; i++) {
+	for (size_t i = 0; i < w->index_len; i++)
 		strbuf_release(&w->index[i].last_key);
-	}
-
 	FREE_AND_NULL(w->index);
 	w->index_len = 0;
 	w->index_cap = 0;
@@ -682,12 +685,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	if (err < 0)
 		return err;
 
-	if (w->index_cap == w->index_len) {
-		w->index_cap = 2 * w->index_cap + 1;
-		w->index = reftable_realloc(
-			w->index,
-			sizeof(struct reftable_index_record) * w->index_cap);
-	}
+	REFTABLE_ALLOC_GROW(w->index, w->index_len + 1, w->index_cap);
 
 	ir.offset = w->next;
 	strbuf_reset(&ir.last_key);

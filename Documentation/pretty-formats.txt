@@ -316,9 +316,8 @@ multiple times, the last occurrence wins.
    `Reviewed-by`.
 ** 'only[=<bool>]': select whether non-trailer lines from the trailer
    block should be included.
-** 'separator=<sep>': specify a separator inserted between trailer
-   lines. When this option is not given each trailer line is
-   terminated with a line feed character. The string <sep> may contain
+** 'separator=<sep>': specify the separator inserted between trailer
+   lines. Defaults to a line feed character. The string <sep> may contain
    the literal formatting codes described above. To use comma as
    separator one must use `%x2C` as it would otherwise be parsed as
    next option. E.g., `%(trailers:key=Ticket,separator=%x2C )`
@@ -329,10 +328,9 @@ multiple times, the last occurrence wins.
    `%(trailers:only,unfold=true)` unfolds and shows all trailer lines.
 ** 'keyonly[=<bool>]': only show the key part of the trailer.
 ** 'valueonly[=<bool>]': only show the value part of the trailer.
-** 'key_value_separator=<sep>': specify a separator inserted between
-   trailer lines. When this option is not given each trailer key-value
-   pair is separated by ": ". Otherwise it shares the same semantics
-   as 'separator=<sep>' above.
+** 'key_value_separator=<sep>': specify the separator inserted between
+   the key and value of each trailer. Defaults to ": ". Otherwise it
+   shares the same semantics as 'separator=<sep>' above.
 
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will

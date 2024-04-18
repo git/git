@@ -179,7 +179,7 @@ static void write_commented_object(int fd, const struct object_id *object)
 
 	if (strbuf_read(&buf, show.out, 0) < 0)
 		die_errno(_("could not read 'show' output"));
-	strbuf_add_commented_lines(&cbuf, buf.buf, buf.len, comment_line_char);
+	strbuf_add_commented_lines(&cbuf, buf.buf, buf.len, comment_line_str);
 	write_or_die(fd, cbuf.buf, cbuf.len);
 
 	strbuf_release(&cbuf);
@@ -207,10 +207,10 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 			copy_obj_to_fd(fd, old_note);
 
 		strbuf_addch(&buf, '\n');
-		strbuf_add_commented_lines(&buf, "\n", strlen("\n"), comment_line_char);
+		strbuf_add_commented_lines(&buf, "\n", strlen("\n"), comment_line_str);
 		strbuf_add_commented_lines(&buf, _(note_template), strlen(_(note_template)),
-					   comment_line_char);
-		strbuf_add_commented_lines(&buf, "\n", strlen("\n"), comment_line_char);
+					   comment_line_str);
+		strbuf_add_commented_lines(&buf, "\n", strlen("\n"), comment_line_str);
 		write_or_die(fd, buf.buf, buf.len);
 
 		write_commented_object(fd, object);
@@ -223,7 +223,7 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 			die(_("please supply the note contents using either -m or -F option"));
 		}
 		if (d->stripspace)
-			strbuf_stripspace(&d->buf, comment_line_char);
+			strbuf_stripspace(&d->buf, comment_line_str);
 	}
 }
 
@@ -264,7 +264,7 @@ static void concat_messages(struct note_data *d)
 		if ((d->stripspace == UNSPECIFIED &&
 		     d->messages[i]->stripspace == STRIPSPACE) ||
 		    d->stripspace == STRIPSPACE)
-			strbuf_stripspace(&d->buf, 0);
+			strbuf_stripspace(&d->buf, NULL);
 		strbuf_reset(&msg);
 	}
 	strbuf_release(&msg);
@@ -716,9 +716,11 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		struct strbuf buf = STRBUF_INIT;
 		char *prev_buf = repo_read_object_file(the_repository, note, &type, &size);
 
-		if (prev_buf && size)
+		if (!prev_buf)
+			die(_("unable to read %s"), oid_to_hex(note));
+		if (size)
 			strbuf_add(&buf, prev_buf, size);
-		if (d.buf.len && prev_buf && size)
+		if (d.buf.len && size)
 			append_separator(&buf);
 		strbuf_insert(&d.buf, 0, buf.buf, buf.len);
 

@@ -181,7 +181,6 @@ static int debug_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		trace_printf_key(&trace_refs, "iterator_advance: %s (0)\n",
 			diter->iter->refname);
 
-	diter->base.ordered = diter->iter->ordered;
 	diter->base.refname = diter->iter->refname;
 	diter->base.oid = diter->iter->oid;
 	diter->base.flags = diter->iter->flags;
@@ -222,7 +221,7 @@ debug_ref_iterator_begin(struct ref_store *ref_store, const char *prefix,
 		drefs->refs->be->iterator_begin(drefs->refs, prefix,
 						exclude_patterns, flags);
 	struct debug_ref_iterator *diter = xcalloc(1, sizeof(*diter));
-	base_ref_iterator_init(&diter->base, &debug_ref_iterator_vtable, 1);
+	base_ref_iterator_init(&diter->base, &debug_ref_iterator_vtable);
 	diter->iter = res;
 	trace_printf_key(&trace_refs, "ref_iterator_begin: \"%s\" (0x%x)\n",
 			 prefix, flags);

@@ -62,6 +62,8 @@ static const char *diff_order_file_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
+static const char *diff_src_prefix = "a/";
+static const char *diff_dst_prefix = "b/";
 static int diff_relative;
 static int diff_stat_name_width;
 static int diff_stat_graph_width;
@@ -407,6 +409,12 @@ int git_diff_ui_config(const char *var, const char *value,
 	if (!strcmp(var, "diff.noprefix")) {
 		diff_no_prefix = git_config_bool(var, value);
 		return 0;
+	}
+	if (!strcmp(var, "diff.srcprefix")) {
+		return git_config_string(&diff_src_prefix, var, value);
+	}
+	if (!strcmp(var, "diff.dstprefix")) {
+		return git_config_string(&diff_dst_prefix, var, value);
 	}
 	if (!strcmp(var, "diff.relative")) {
 		diff_relative = git_config_bool(var, value);
@@ -3425,8 +3433,8 @@ void diff_set_noprefix(struct diff_options *options)
 
 void diff_set_default_prefix(struct diff_options *options)
 {
-	options->a_prefix = "a/";
-	options->b_prefix = "b/";
+	options->a_prefix = diff_src_prefix;
+	options->b_prefix = diff_dst_prefix;
 }
 
 struct userdiff_driver *get_textconv(struct repository *r,
@@ -5362,6 +5370,8 @@ static int diff_opt_default_prefix(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(optarg);
+	diff_src_prefix = "a/";
+	diff_dst_prefix = "b/";
 	diff_set_default_prefix(options);
 	return 0;
 }
@@ -5590,7 +5600,7 @@ struct option *add_diff_options(const struct option *opts,
 		OPT_BITOP(0, "shortstat", &options->output_format,
 			  N_("output only the last line of --stat"),
 			  DIFF_FORMAT_SHORTSTAT, DIFF_FORMAT_NO_OUTPUT),
-		OPT_CALLBACK_F('X', "dirstat", options, N_("<param1,param2>..."),
+		OPT_CALLBACK_F('X', "dirstat", options, N_("<param1>,<param2>..."),
 			       N_("output the distribution of relative amount of changes for each sub-directory"),
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
 			       diff_opt_dirstat),
@@ -5598,8 +5608,8 @@ struct option *add_diff_options(const struct option *opts,
 			       N_("synonym for --dirstat=cumulative"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			       diff_opt_dirstat),
-		OPT_CALLBACK_F(0, "dirstat-by-file", options, N_("<param1,param2>..."),
-			       N_("synonym for --dirstat=files,param1,param2..."),
+		OPT_CALLBACK_F(0, "dirstat-by-file", options, N_("<param1>,<param2>..."),
+			       N_("synonym for --dirstat=files,<param1>,<param2>..."),
 			       PARSE_OPT_NONEG | PARSE_OPT_OPTARG,
 			       diff_opt_dirstat),
 		OPT_BIT_F(0, "check", &options->output_format,

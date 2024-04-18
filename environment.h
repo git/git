@@ -8,7 +8,7 @@ struct strvec;
  * The character that begins a commented line in user-editable file
  * that is subject to stripspace.
  */
-extern char comment_line_char;
+extern const char *comment_line_str;
 extern int auto_comment_line_char;
 
 /*
@@ -36,6 +36,7 @@ const char *getenv_safe(struct strvec *argv, const char *name);
 #define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
 #define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
 #define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
+#define NO_LAZY_FETCH_ENVIRONMENT "GIT_NO_LAZY_FETCH"
 #define GITATTRIBUTES_FILE ".gitattributes"
 #define INFOATTRIBUTES_FILE "info/attributes"
 #define ATTRIBUTE_MACRO_PREFIX "[attr]"

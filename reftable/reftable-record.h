@@ -22,6 +22,7 @@ https://developers.google.com/open-source/licenses/bsd
 /* reftable_ref_record holds a ref database entry target_value */
 struct reftable_ref_record {
 	char *refname; /* Name of the ref, malloced. */
+	size_t refname_cap;
 	uint64_t update_index; /* Logical timestamp at which this value is
 				* written */
 
@@ -73,6 +74,7 @@ int reftable_ref_record_equal(const struct reftable_ref_record *a,
 /* reftable_log_record holds a reflog entry */
 struct reftable_log_record {
 	char *refname;
+	size_t refname_cap;
 	uint64_t update_index; /* logical timestamp of a transactional update.
 				*/
 
@@ -87,13 +89,14 @@ struct reftable_log_record {
 
 	union {
 		struct {
-			uint8_t *new_hash;
-			uint8_t *old_hash;
+			unsigned char new_hash[GIT_MAX_RAWSZ];
+			unsigned char old_hash[GIT_MAX_RAWSZ];
 			char *name;
 			char *email;
 			uint64_t time;
 			int16_t tz_offset;
 			char *message;
+			size_t message_cap;
 		} update;
 	} value;
 };

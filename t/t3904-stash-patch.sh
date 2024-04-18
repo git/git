@@ -3,12 +3,6 @@
 test_description='stash -p'
 . ./lib-patch-mode.sh
 
-if ! test_have_prereq PERL
-then
-	skip_all='skipping stash -p tests, perl not available'
-	test_done
-fi
-
 test_expect_success 'setup' '
 	mkdir dir &&
 	echo parent > dir/foo &&

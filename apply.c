@@ -77,7 +77,8 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 		return 0;
 	}
 	/*
-	 * Please update $__git_whitespacelist in git-completion.bash
+	 * Please update $__git_whitespacelist in git-completion.bash,
+	 * Documentation/git-apply.txt, and Documentation/git-am.txt
 	 * when you add new options.
 	 */
 	return error(_("unrecognized whitespace option '%s'"), option);
@@ -1291,8 +1292,15 @@ static char *git_header_name(int p_value,
 				return NULL; /* no postimage name */
 			second = skip_tree_prefix(p_value, name + len + 1,
 						  line_len - (len + 1));
+			/*
+			 * If we are at the SP at the end of a directory,
+			 * skip_tree_prefix() may return NULL as that makes
+			 * it appears as if we have an absolute path.
+			 * Keep going to find another SP.
+			 */
 			if (!second)
-				return NULL;
+				continue;
+
 			/*
 			 * Does len bytes starting at "name" and "second"
 			 * (that are separated by one HT or SP we just
@@ -2219,7 +2227,8 @@ static void reverse_patches(struct patch *p)
 		struct fragment *frag = p->fragments;
 
 		SWAP(p->new_name, p->old_name);
-		SWAP(p->new_mode, p->old_mode);
+		if (p->new_mode)
+			SWAP(p->new_mode, p->old_mode);
 		SWAP(p->is_new, p->is_delete);
 		SWAP(p->lines_added, p->lines_deleted);
 		SWAP(p->old_oid_prefix, p->new_oid_prefix);
@@ -3777,8 +3786,17 @@ static int check_preimage(struct apply_state *state,
 		return error_errno("%s", old_name);
 	}
 
-	if (!state->cached && !previous)
-		st_mode = ce_mode_from_stat(*ce, st->st_mode);
+	if (!state->cached && !previous) {
+		if (*ce && !(*ce)->ce_mode)
+			BUG("ce_mode == 0 for path '%s'", old_name);
+
+		if (trust_executable_bit)
+			st_mode = ce_mode_from_stat(*ce, st->st_mode);
+		else if (*ce)
+			st_mode = (*ce)->ce_mode;
+		else
+			st_mode = patch->old_mode;
+	}
 
 	if (patch->is_new < 0)
 		patch->is_new = 0;
@@ -4430,6 +4448,7 @@ static int create_one_file(struct apply_state *state,
 			   const char *buf,
 			   unsigned long size)
 {
+	char *newpath = NULL;
 	int res;
 
 	if (state->cached)
@@ -4491,24 +4510,26 @@ static int create_one_file(struct apply_state *state,
 		unsigned int nr = getpid();
 
 		for (;;) {
-			char newpath[PATH_MAX];
-			mksnpath(newpath, sizeof(newpath), "%s~%u", path, nr);
+			newpath = mkpathdup("%s~%u", path, nr);
 			res = try_create_file(state, newpath, mode, buf, size);
 			if (res < 0)
-				return -1;
+				goto out;
 			if (!res) {
 				if (!rename(newpath, path))
-					return 0;
+					goto out;
 				unlink_or_warn(newpath);
 				break;
 			}
 			if (errno != EEXIST)
 				break;
 			++nr;
+			FREE_AND_NULL(newpath);
 		}
 	}
-	return error_errno(_("unable to write file '%s' mode %o"),
-			   path, mode);
+	res = error_errno(_("unable to write file '%s' mode %o"), path, mode);
+out:
+	free(newpath);
+	return res;
 }
 
 static int add_conflicted_stages_file(struct apply_state *state,
@@ -4644,8 +4665,11 @@ static int write_out_one_reject(struct apply_state *state, struct patch *patch)
 			return error_errno(_("cannot open %s"), namebuf);
 	}
 	rej = fdopen(fd, "w");
-	if (!rej)
-		return error_errno(_("cannot open %s"), namebuf);
+	if (!rej) {
+		error_errno(_("cannot open %s"), namebuf);
+		close(fd);
+		return -1;
+	}
 
 	/* Normal git tools never deal with .rej, so do not pretend
 	 * this is a git patch by saying --git or giving extended

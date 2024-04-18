@@ -236,7 +236,7 @@ EOF
 
 test_expect_success 'set up faked signed tag' '
 
-	cat signed-tag-import | git fast-import
+	git fast-import <signed-tag-import
 
 '
 
@@ -537,7 +537,7 @@ test_expect_success 'full-tree re-shows unmodified files'        '
 
 test_expect_success 'set-up a few more tags for tag export tests' '
 	git checkout -f main &&
-	HEAD_TREE=$(git show -s --pretty=raw HEAD | grep tree | sed "s/tree //") &&
+	HEAD_TREE=$(git show -s --pretty=raw HEAD | sed -n "/tree/s/tree //p") &&
 	git tag    tree_tag        -m "tagging a tree" $HEAD_TREE &&
 	git tag -a tree_tag-obj    -m "tagging a tree" $HEAD_TREE &&
 	git tag    tag-obj_tag     -m "tagging a tag" tree_tag-obj &&

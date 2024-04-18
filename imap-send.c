@@ -68,9 +68,6 @@ static void imap_warn(const char *, ...);
 
 static char *next_arg(char **);
 
-__attribute__((format (printf, 3, 4)))
-static int nfsnprintf(char *buf, int blen, const char *fmt, ...);
-
 static int nfvasprintf(char **strp, const char *fmt, va_list ap)
 {
 	int len;
@@ -500,19 +497,6 @@ static char *next_arg(char **s)
 	return ret;
 }
 
-__attribute__((format (printf, 3, 4)))
-static int nfsnprintf(char *buf, int blen, const char *fmt, ...)
-{
-	int ret;
-	va_list va;
-
-	va_start(va, fmt);
-	if (blen <= 0 || (unsigned)(ret = vsnprintf(buf, blen, fmt, va)) >= (unsigned)blen)
-		BUG("buffer too small. Please report a bug.");
-	va_end(va);
-	return ret;
-}
-
 static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 				       struct imap_cmd_cb *cb,
 				       const char *fmt, va_list ap)
@@ -535,11 +519,11 @@ static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 		get_cmd_result(ctx, NULL);
 
 	if (!cmd->cb.data)
-		bufl = nfsnprintf(buf, sizeof(buf), "%d %s\r\n", cmd->tag, cmd->cmd);
+		bufl = xsnprintf(buf, sizeof(buf), "%d %s\r\n", cmd->tag, cmd->cmd);
 	else
-		bufl = nfsnprintf(buf, sizeof(buf), "%d %s{%d%s}\r\n",
-				  cmd->tag, cmd->cmd, cmd->cb.dlen,
-				  CAP(LITERALPLUS) ? "+" : "");
+		bufl = xsnprintf(buf, sizeof(buf), "%d %s{%d%s}\r\n",
+				 cmd->tag, cmd->cmd, cmd->cb.dlen,
+				 CAP(LITERALPLUS) ? "+" : "");
 
 	if (0 < verbosity) {
 		if (imap->num_in_progress)

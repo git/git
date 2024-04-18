@@ -4093,7 +4093,38 @@ that not only specifies their type, but also provides size information
 about the data in the object.  It's worth noting that the SHA-1 hash
 that is used to name the object is the hash of the original data
 plus this header, so `sha1sum` 'file' does not match the object name
-for 'file'.
+for 'file' (the earliest versions of Git hashed slightly differently
+but the conclusion is still the same).
+
+The following is a short example that demonstrates how these hashes
+can be generated manually:
+
+Let's assume a small text file with some simple content:
+
+-------------------------------------------------
+$ echo "Hello world" >hello.txt
+-------------------------------------------------
+
+We can now manually generate the hash Git would use for this file:
+
+- The object we want the hash for is of type "blob" and its size is
+  12 bytes.
+
+- Prepend the object header to the file content and feed this to
+  `sha1sum`:
+
+-------------------------------------------------
+$ { printf "blob 12\0"; cat hello.txt; } | sha1sum
+802992c4220de19a90767f3000a79a31b98d0df7  -
+-------------------------------------------------
+
+This manually constructed hash can be verified using `git hash-object`
+which of course hides the addition of the header:
+
+-------------------------------------------------
+$ git hash-object hello.txt
+802992c4220de19a90767f3000a79a31b98d0df7
+-------------------------------------------------
 
 As a result, the general consistency of an object can always be tested
 independently of the contents or the type of the object: all objects can
@@ -4123,7 +4154,8 @@ $ git switch --detach e83c5163
 ----------------------------------------------------
 
 The initial revision lays the foundation for almost everything Git has
-today, but is small enough to read in one sitting.
+today (even though details may differ in a few places), but is small
+enough to read in one sitting.
 
 Note that terminology has changed since that revision.  For example, the
 README in that revision uses the word "changeset" to describe what we

@@ -303,7 +303,7 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 		EOF
 		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" dst/push-cert
 	) >expect.in &&
-	key=$(cat "${GNUPGHOME}/trustlist.txt" | cut -d" " -f1 | tr -d ":") &&
+	key=$(cut -d" " -f1 <"${GNUPGHOME}/trustlist.txt" | tr -d ":") &&
 	sed -e "s/^KEY=/KEY=${key}/" expect.in >expect &&
 
 	noop=$(git rev-parse noop) &&

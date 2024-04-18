@@ -1755,6 +1755,8 @@ esac
 case "$GIT_DEFAULT_REF_FORMAT" in
 files)
 	test_set_prereq REFFILES;;
+reftable)
+	test_set_prereq REFTABLE;;
 *)
 	echo 2>&1 "error: unknown ref format $GIT_DEFAULT_REF_FORMAT"
 	exit 1
@@ -1960,6 +1962,7 @@ test_lazy_prereq DEFAULT_REPO_FORMAT '
 # Tests that verify the scheduler integration must set this locally
 # to avoid errors.
 GIT_TEST_MAINT_SCHEDULER="none:exit 1"
+export GIT_TEST_MAINT_SCHEDULER
 
 # Does this platform support `git fsmonitor--daemon`
 #

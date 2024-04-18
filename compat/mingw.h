@@ -631,3 +631,9 @@ void open_in_gdb(void);
  * Used by Pthread API implementation for Windows
  */
 int err_win_to_posix(DWORD winerr);
+
+#ifndef NO_UNIX_SOCKETS
+int mingw_have_unix_sockets(void);
+#undef have_unix_sockets
+#define have_unix_sockets mingw_have_unix_sockets
+#endif

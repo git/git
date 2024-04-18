@@ -316,12 +316,12 @@ list.
 With `--pretty` format other than `oneline` and `reference` (for obvious reasons),
 this causes the output to have two extra lines of information
 taken from the reflog.  The reflog designator in the output may be shown
-as `ref@{Nth}` (where `Nth` is the reverse-chronological index in the
-reflog) or as `ref@{timestamp}` (with the timestamp for that entry),
+as `ref@{<Nth>}` (where _<Nth>_ is the reverse-chronological index in the
+reflog) or as `ref@{<timestamp>}` (with the _<timestamp>_ for that entry),
 depending on a few rules:
 +
 --
-1. If the starting point is specified as `ref@{Nth}`, show the index
+1. If the starting point is specified as `ref@{<Nth>}`, show the index
    format.
 +
 2. If the starting point was specified as `ref@{now}`, show the
@@ -341,8 +341,11 @@ See also linkgit:git-reflog[1].
 Under `--pretty=reference`, this information will not be shown at all.
 
 --merge::
-	After a failed merge, show refs that touch files having a
-	conflict and don't exist on all heads to merge.
+	Show commits touching conflicted paths in the range `HEAD...<other>`,
+	where `<other>` is the first existing pseudoref in `MERGE_HEAD`,
+	`CHERRY_PICK_HEAD`, `REVERT_HEAD` or `REBASE_HEAD`. Only works
+	when the index has unmerged entries. This option can be used to show
+	relevant commits when resolving conflicts from a 3-way merge.
 
 --boundary::
 	Output excluded boundary commits. Boundary commits are
@@ -1019,6 +1022,10 @@ Unexpected missing objects will raise an error.
 +
 The form '--missing=print' is like 'allow-any', but will also print a
 list of the missing objects.  Object IDs are prefixed with a ``?'' character.
++
+If some tips passed to the traversal are missing, they will be
+considered as missing too, and the traversal will ignore them. In case
+we cannot get their Object ID though, an error will be raised.
 
 --exclude-promisor-objects::
 	(For internal use only.)  Prefilter object traversal at

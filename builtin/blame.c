@@ -316,7 +316,7 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 		size_t time_width;
 		int tz;
 		tz = atoi(tz_str);
-		time_str = show_date(time, tz, &blame_date_mode);
+		time_str = show_date(time, tz, blame_date_mode);
 		strbuf_addstr(&time_buf, time_str);
 		/*
 		 * Add space paddings to time_buf to display a fixed width
@@ -1029,7 +1029,7 @@ parse_done:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
 		break;
 	case DATE_STRFTIME:
-		blame_date_width = strlen(show_date(0, 0, &blame_date_mode)) + 1; /* add the null */
+		blame_date_width = strlen(show_date(0, 0, blame_date_mode)) + 1; /* add the null */
 		break;
 	}
 	blame_date_width -= 1; /* strip the null */

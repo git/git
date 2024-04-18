@@ -331,8 +331,9 @@ static void create_base_index(const struct commit *current_head)
 	tree = parse_tree_indirect(&current_head->object.oid);
 	if (!tree)
 		die(_("failed to unpack HEAD tree object"));
-	parse_tree(tree);
-	init_tree_desc(&t, tree->buffer, tree->size);
+	if (parse_tree(tree) < 0)
+		exit(128);
+	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts))
 		exit(128); /* We've already reported the error, finish dying */
 }
@@ -440,16 +441,21 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 * (B) on failure, rollback the real index.
 	 */
 	if (all || (also && pathspec.nr)) {
+		char *ps_matched = xcalloc(pathspec.nr, 1);
 		repo_hold_locked_index(the_repository, &index_lock,
 				       LOCK_DIE_ON_ERROR);
 		add_files_to_cache(the_repository, also ? prefix : NULL,
-				   &pathspec, 0, 0);
+				   &pathspec, ps_matched, 0, 0);
+		if (!all && report_path_error(ps_matched, &pathspec))
+			exit(128);
+
 		refresh_cache_or_die(refresh_flags);
 		cache_tree_update(&the_index, WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, 0))
 			die(_("unable to write new index file"));
 		commit_style = COMMIT_NORMAL;
 		ret = get_lock_file_path(&index_lock);
+		free(ps_matched);
 		goto out;
 	}
 
@@ -684,9 +690,10 @@ static void adjust_comment_line_char(const struct strbuf *sb)
 	char *candidate;
 	const char *p;
 
-	comment_line_char = candidates[0];
-	if (!memchr(sb->buf, comment_line_char, sb->len))
+	if (!memchr(sb->buf, candidates[0], sb->len)) {
+		comment_line_str = xstrfmt("%c", candidates[0]);
 		return;
+	}
 
 	p = sb->buf;
 	candidate = strchr(candidates, *p);
@@ -705,7 +712,7 @@ static void adjust_comment_line_char(const struct strbuf *sb)
 	if (!*p)
 		die(_("unable to select a comment character that is not used\n"
 		      "in the current commit message"));
-	comment_line_char = *p;
+	comment_line_str = xstrfmt("%c", *p);
 }
 
 static void prepare_amend_commit(struct commit *commit, struct strbuf *sb,
@@ -737,7 +744,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	const char *hook_arg2 = NULL;
 	int clean_message_contents = (cleanup_mode != COMMIT_MSG_CLEANUP_NONE);
 	int old_display_comment_prefix;
-	int merge_contains_scissors = 0;
 	int invoked_hook;
 
 	/* This checks and barfs if author is badly specified */
@@ -841,7 +847,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		    wt_status_locate_end(sb.buf + merge_msg_start,
 					 sb.len - merge_msg_start) <
 				sb.len - merge_msg_start)
-			merge_contains_scissors = 1;
+			s->added_cut_line = 1;
 	} else if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
 			die_errno(_("could not read SQUASH_MSG"));
@@ -889,7 +895,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	s->hints = 0;
 
 	if (clean_message_contents)
-		strbuf_stripspace(&sb, '\0');
+		strbuf_stripspace(&sb, NULL);
 
 	if (signoff)
 		append_signoff(&sb, ignored_log_message_bytes(sb.buf, sb.len), 0);
@@ -909,24 +915,23 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		struct ident_split ci, ai;
 		const char *hint_cleanup_all = allow_empty_message ?
 			_("Please enter the commit message for your changes."
-			  " Lines starting\nwith '%c' will be ignored.\n") :
+			  " Lines starting\nwith '%s' will be ignored.\n") :
 			_("Please enter the commit message for your changes."
-			  " Lines starting\nwith '%c' will be ignored, and an empty"
+			  " Lines starting\nwith '%s' will be ignored, and an empty"
 			  " message aborts the commit.\n");
 		const char *hint_cleanup_space = allow_empty_message ?
 			_("Please enter the commit message for your changes."
 			  " Lines starting\n"
-			  "with '%c' will be kept; you may remove them"
+			  "with '%s' will be kept; you may remove them"
 			  " yourself if you want to.\n") :
 			_("Please enter the commit message for your changes."
 			  " Lines starting\n"
-			  "with '%c' will be kept; you may remove them"
+			  "with '%s' will be kept; you may remove them"
 			  " yourself if you want to.\n"
 			  "An empty message aborts the commit.\n");
 		if (whence != FROM_COMMIT) {
-			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS &&
-				!merge_contains_scissors)
-				wt_status_add_cut_line(s->fp);
+			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
+				wt_status_add_cut_line(s);
 			status_printf_ln(
 				s, GIT_COLOR_NORMAL,
 				whence == FROM_MERGE ?
@@ -944,12 +949,12 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 		fprintf(s->fp, "\n");
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_ALL)
-			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_all, comment_line_char);
+			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_all, comment_line_str);
 		else if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
-			if (whence == FROM_COMMIT && !merge_contains_scissors)
-				wt_status_add_cut_line(s->fp);
+			if (whence == FROM_COMMIT)
+				wt_status_add_cut_line(s);
 		} else /* COMMIT_MSG_CLEANUP_SPACE, that is. */
-			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_space, comment_line_char);
+			status_printf(s, GIT_COLOR_NORMAL, hint_cleanup_space, comment_line_str);
 
 		/*
 		 * These should never fail because they come from our own
@@ -1158,22 +1163,45 @@ static void handle_ignored_arg(struct wt_status *s)
 		die(_("Invalid ignored mode '%s'"), ignored_arg);
 }
 
-static void handle_untracked_files_arg(struct wt_status *s)
+static enum untracked_status_type parse_untracked_setting_name(const char *u)
 {
-	if (!untracked_files_arg)
-		; /* default already initialized */
-	else if (!strcmp(untracked_files_arg, "no"))
-		s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "normal"))
-		s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
-	else if (!strcmp(untracked_files_arg, "all"))
-		s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
 	/*
 	 * Please update $__git_untracked_file_modes in
 	 * git-completion.bash when you add new options
 	 */
+	switch (git_parse_maybe_bool(u)) {
+	case 0:
+		u = "no";
+		break;
+	case 1:
+		u = "normal";
+		break;
+	default:
+		break;
+	}
+
+	if (!strcmp(u, "no"))
+		return SHOW_NO_UNTRACKED_FILES;
+	else if (!strcmp(u, "normal"))
+		return SHOW_NORMAL_UNTRACKED_FILES;
+	else if (!strcmp(u, "all"))
+		return SHOW_ALL_UNTRACKED_FILES;
 	else
-		die(_("Invalid untracked files mode '%s'"), untracked_files_arg);
+		return SHOW_UNTRACKED_FILES_ERROR;
+}
+
+static void handle_untracked_files_arg(struct wt_status *s)
+{
+	enum untracked_status_type u;
+
+	if (!untracked_files_arg)
+		return; /* default already initialized */
+
+	u = parse_untracked_setting_name(untracked_files_arg);
+	if (u == SHOW_UNTRACKED_FILES_ERROR)
+		die(_("Invalid untracked files mode '%s'"),
+		    untracked_files_arg);
+	s->show_untracked_files = u;
 }
 
 static const char *read_commit_message(const char *name)
@@ -1456,16 +1484,12 @@ static int git_status_config(const char *k, const char *v,
 		return 0;
 	}
 	if (!strcmp(k, "status.showuntrackedfiles")) {
-		if (!v)
-			return config_error_nonbool(k);
-		else if (!strcmp(v, "no"))
-			s->show_untracked_files = SHOW_NO_UNTRACKED_FILES;
-		else if (!strcmp(v, "normal"))
-			s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
-		else if (!strcmp(v, "all"))
-			s->show_untracked_files = SHOW_ALL_UNTRACKED_FILES;
-		else
+		enum untracked_status_type u;
+
+		u = parse_untracked_setting_name(v);
+		if (u == SHOW_UNTRACKED_FILES_ERROR)
 			return error(_("Invalid untracked files mode '%s'"), v);
+		s->show_untracked_files = u;
 		return 0;
 	}
 	if (!strcmp(k, "diff.renamelimit")) {

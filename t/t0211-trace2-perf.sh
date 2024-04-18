@@ -287,4 +287,235 @@ test_expect_success 'unsafe URLs are redacted by default' '
 	grep "d0|main|def_param|.*|remote.origin.url:https://user:pwd@example.com" actual
 '
 
+# Confirm that the requested command produces a "cmd_name" and a
+# set of "def_param" events.
+#
+try_simple () {
+	test_when_finished "rm prop.perf actual" &&
+
+	cmd=$1 &&
+	cmd_name=$2 &&
+
+	test_config_global "trace2.configParams" "cfg.prop.*" &&
+	test_config_global "trace2.envvars" "ENV_PROP_FOO,ENV_PROP_BAR" &&
+
+	test_config_global "cfg.prop.foo" "red" &&
+
+	ENV_PROP_FOO=blue \
+		GIT_TRACE2_PERF="$(pwd)/prop.perf" \
+			$cmd &&
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <prop.perf >actual &&
+	grep "d0|main|cmd_name|.*|$cmd_name" actual &&
+	grep "d0|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d0|main|def_param|.*|ENV_PROP_FOO:blue" actual
+}
+
+# Representative mainstream builtin Git command dispatched
+# in run_builtin() in git.c
+#
+test_expect_success 'expect def_params for normal builtin command' '
+	try_simple "git version" "version"
+'
+
+# Representative query command dispatched in handle_options()
+# in git.c
+#
+test_expect_success 'expect def_params for query command' '
+	try_simple "git --man-path" "_query_"
+'
+
+# remote-curl.c does not use the builtin setup in git.c, so confirm
+# that executables built from remote-curl.c emit def_params.
+#
+# Also tests the dashed-command handling where "git foo" silently
+# spawns "git-foo".  Make sure that both commands should emit
+# def_params.
+#
+# Pass bogus arguments to remote-https and allow the command to fail
+# because we don't actually have a remote to fetch from.  We just want
+# to see the run-dashed code run an executable built from
+# remote-curl.c rather than git.c.  Confirm that we get def_param
+# events from both layers.
+#
+test_expect_success 'expect def_params for remote-curl and _run_dashed_' '
+	test_when_finished "rm prop.perf actual" &&
+
+	test_config_global "trace2.configParams" "cfg.prop.*" &&
+	test_config_global "trace2.envvars" "ENV_PROP_FOO,ENV_PROP_BAR" &&
+
+	test_config_global "cfg.prop.foo" "red" &&
+
+	test_might_fail env \
+		ENV_PROP_FOO=blue \
+		GIT_TRACE2_PERF="$(pwd)/prop.perf" \
+		git remote-http x y &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <prop.perf >actual &&
+
+	grep "d0|main|cmd_name|.*|_run_dashed_" actual &&
+	grep "d0|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d0|main|def_param|.*|ENV_PROP_FOO:blue" actual &&
+
+	grep "d1|main|cmd_name|.*|remote-curl" actual &&
+	grep "d1|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d1|main|def_param|.*|ENV_PROP_FOO:blue" actual
+'
+
+# Similarly, `git-http-fetch` is not built from git.c so do a
+# trivial fetch so that the main git.c run-dashed code spawns
+# an executable built from http-fetch.c.  Confirm that we get
+# def_param events from both layers.
+#
+test_expect_success 'expect def_params for http-fetch and _run_dashed_' '
+	test_when_finished "rm prop.perf actual" &&
+
+	test_config_global "trace2.configParams" "cfg.prop.*" &&
+	test_config_global "trace2.envvars" "ENV_PROP_FOO,ENV_PROP_BAR" &&
+
+	test_config_global "cfg.prop.foo" "red" &&
+
+	test_might_fail env \
+		ENV_PROP_FOO=blue \
+		GIT_TRACE2_PERF="$(pwd)/prop.perf" \
+		git http-fetch --stdin file:/// <<-EOF &&
+	EOF
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <prop.perf >actual &&
+
+	grep "d0|main|cmd_name|.*|_run_dashed_" actual &&
+	grep "d0|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d0|main|def_param|.*|ENV_PROP_FOO:blue" actual &&
+
+	grep "d1|main|cmd_name|.*|http-fetch" actual &&
+	grep "d1|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d1|main|def_param|.*|ENV_PROP_FOO:blue" actual
+'
+
+# Historically, alias expansion explicitly emitted the def_param
+# events (independent of whether the command was a builtin, a Git
+# command or arbitrary shell command) so that it wasn't dependent
+# upon the unpeeling of the alias. Let's make sure that we preserve
+# the net effect.
+#
+test_expect_success 'expect def_params during git alias expansion' '
+	test_when_finished "rm prop.perf actual" &&
+
+	test_config_global "trace2.configParams" "cfg.prop.*" &&
+	test_config_global "trace2.envvars" "ENV_PROP_FOO,ENV_PROP_BAR" &&
+
+	test_config_global "cfg.prop.foo" "red" &&
+
+	test_config_global "alias.xxx" "version" &&
+
+	ENV_PROP_FOO=blue \
+		GIT_TRACE2_PERF="$(pwd)/prop.perf" \
+			git xxx &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <prop.perf >actual &&
+
+	# "git xxx" is first mapped to "git-xxx" and the child will fail.
+	grep "d0|main|cmd_name|.*|_run_dashed_ (_run_dashed_)" actual &&
+
+	# We unpeel that and substitute "version" into "xxx" (giving
+	# "git version") and update the cmd_name event.
+	grep "d0|main|cmd_name|.*|_run_git_alias_ (_run_dashed_/_run_git_alias_)" actual &&
+
+	# These def_param events could be associated with either of the
+	# above cmd_name events.  It does not matter.
+	grep "d0|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d0|main|def_param|.*|ENV_PROP_FOO:blue" actual &&
+
+	# The "git version" child sees a different cmd_name hierarchy.
+	# Also test the def_param (only for completeness).
+	grep "d1|main|cmd_name|.*|version (_run_dashed_/_run_git_alias_/version)" actual &&
+	grep "d1|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d1|main|def_param|.*|ENV_PROP_FOO:blue" actual
+'
+
+test_expect_success 'expect def_params during shell alias expansion' '
+	test_when_finished "rm prop.perf actual" &&
+
+	test_config_global "trace2.configParams" "cfg.prop.*" &&
+	test_config_global "trace2.envvars" "ENV_PROP_FOO,ENV_PROP_BAR" &&
+
+	test_config_global "cfg.prop.foo" "red" &&
+
+	test_config_global "alias.xxx" "!git version" &&
+
+	ENV_PROP_FOO=blue \
+		GIT_TRACE2_PERF="$(pwd)/prop.perf" \
+			git xxx &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <prop.perf >actual &&
+
+	# "git xxx" is first mapped to "git-xxx" and the child will fail.
+	grep "d0|main|cmd_name|.*|_run_dashed_ (_run_dashed_)" actual &&
+
+	# We unpeel that and substitute "git version" for "git xxx" (as a
+	# shell command.  Another cmd_name event is emitted as we unpeel.
+	grep "d0|main|cmd_name|.*|_run_shell_alias_ (_run_dashed_/_run_shell_alias_)" actual &&
+
+	# These def_param events could be associated with either of the
+	# above cmd_name events.  It does not matter.
+	grep "d0|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d0|main|def_param|.*|ENV_PROP_FOO:blue" actual &&
+
+	# We get the following only because we used a git command for the
+	# shell command. In general, it could have been a shell script and
+	# we would see nothing.
+	#
+	# The child knows the cmd_name hierarchy so it includes it.
+	grep "d1|main|cmd_name|.*|version (_run_dashed_/_run_shell_alias_/version)" actual &&
+	grep "d1|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d1|main|def_param|.*|ENV_PROP_FOO:blue" actual
+'
+
+test_expect_success 'expect def_params during nested git alias expansion' '
+	test_when_finished "rm prop.perf actual" &&
+
+	test_config_global "trace2.configParams" "cfg.prop.*" &&
+	test_config_global "trace2.envvars" "ENV_PROP_FOO,ENV_PROP_BAR" &&
+
+	test_config_global "cfg.prop.foo" "red" &&
+
+	test_config_global "alias.xxx" "yyy" &&
+	test_config_global "alias.yyy" "version" &&
+
+	ENV_PROP_FOO=blue \
+		GIT_TRACE2_PERF="$(pwd)/prop.perf" \
+			git xxx &&
+
+	perl "$TEST_DIRECTORY/t0211/scrub_perf.perl" <prop.perf >actual &&
+
+	# "git xxx" is first mapped to "git-xxx" and try to spawn "git-xxx"
+	# and the child will fail.
+	grep "d0|main|cmd_name|.*|_run_dashed_ (_run_dashed_)" actual &&
+	grep "d0|main|child_start|.*|.* class:dashed argv:\[git-xxx\]" actual &&
+
+	# We unpeel that and substitute "yyy" into "xxx" (giving "git yyy")
+	# and spawn "git-yyy" and the child will fail.
+	grep "d0|main|alias|.*|alias:xxx argv:\[yyy\]" actual &&
+	grep "d0|main|cmd_name|.*|_run_dashed_ (_run_dashed_/_run_dashed_)" actual &&
+	grep "d0|main|child_start|.*|.* class:dashed argv:\[git-yyy\]" actual &&
+
+	# We unpeel that and substitute "version" into "xxx" (giving
+	# "git version") and update the cmd_name event.
+	grep "d0|main|alias|.*|alias:yyy argv:\[version\]" actual &&
+	grep "d0|main|cmd_name|.*|_run_git_alias_ (_run_dashed_/_run_dashed_/_run_git_alias_)" actual &&
+
+	# These def_param events could be associated with any of the
+	# above cmd_name events.  It does not matter.
+	grep "d0|main|def_param|.*|cfg.prop.foo:red" actual >actual.matches &&
+	grep "d0|main|def_param|.*|ENV_PROP_FOO:blue" actual &&
+
+	# However, we do not want them repeated each time we unpeel.
+	test_line_count = 1 actual.matches &&
+
+	# The "git version" child sees a different cmd_name hierarchy.
+	# Also test the def_param (only for completeness).
+	grep "d1|main|cmd_name|.*|version (_run_dashed_/_run_dashed_/_run_git_alias_/version)" actual &&
+	grep "d1|main|def_param|.*|cfg.prop.foo:red" actual &&
+	grep "d1|main|def_param|.*|ENV_PROP_FOO:blue" actual
+'
+
 test_done

@@ -279,31 +279,31 @@ test_expect_success 'setup worktree' '
 # direct FS access for creating the reflogs. 3) PSEUDO-WT and refs/bisect/random
 # do not create reflogs by default, so it is not testing a realistic scenario.
 test_expect_success 'for_each_reflog()' '
-	echo $ZERO_OID > .git/logs/PSEUDO-MAIN &&
+	echo $ZERO_OID >.git/logs/PSEUDO_MAIN_HEAD &&
 	mkdir -p     .git/logs/refs/bisect &&
-	echo $ZERO_OID > .git/logs/refs/bisect/random &&
+	echo $ZERO_OID >.git/logs/refs/bisect/random &&
 
-	echo $ZERO_OID > .git/worktrees/wt/logs/PSEUDO-WT &&
+	echo $ZERO_OID >.git/worktrees/wt/logs/PSEUDO_WT_HEAD &&
 	mkdir -p     .git/worktrees/wt/logs/refs/bisect &&
-	echo $ZERO_OID > .git/worktrees/wt/logs/refs/bisect/wt-random &&
+	echo $ZERO_OID >.git/worktrees/wt/logs/refs/bisect/wt-random &&
 
-	$RWT for-each-reflog | cut -d" " -f 2- | sort >actual &&
+	$RWT for-each-reflog >actual &&
 	cat >expected <<-\EOF &&
-	HEAD 0x1
-	PSEUDO-WT 0x0
-	refs/bisect/wt-random 0x0
-	refs/heads/main 0x0
-	refs/heads/wt-main 0x0
+	HEAD
+	PSEUDO_WT_HEAD
+	refs/bisect/wt-random
+	refs/heads/main
+	refs/heads/wt-main
 	EOF
 	test_cmp expected actual &&
 
-	$RMAIN for-each-reflog | cut -d" " -f 2- | sort >actual &&
+	$RMAIN for-each-reflog >actual &&
 	cat >expected <<-\EOF &&
-	HEAD 0x1
-	PSEUDO-MAIN 0x0
-	refs/bisect/random 0x0
-	refs/heads/main 0x0
-	refs/heads/wt-main 0x0
+	HEAD
+	PSEUDO_MAIN_HEAD
+	refs/bisect/random
+	refs/heads/main
+	refs/heads/wt-main
 	EOF
 	test_cmp expected actual
 '
@@ -379,6 +379,97 @@ test_expect_success 'log diagnoses bogus HEAD symref' '
 	test_grep broken stderr &&
 	test_must_fail git -C empty log --default totally-bogus 2>stderr &&
 	test_grep broken stderr
+'
+
+test_expect_success 'empty directory removal' '
+	git branch d1/d2/r1 HEAD &&
+	git branch d1/r2 HEAD &&
+	test_path_is_file .git/refs/heads/d1/d2/r1 &&
+	test_path_is_file .git/logs/refs/heads/d1/d2/r1 &&
+	git branch -d d1/d2/r1 &&
+	test_must_fail git show-ref --verify -q refs/heads/d1/d2 &&
+	test_must_fail git show-ref --verify -q logs/refs/heads/d1/d2 &&
+	test_path_is_file .git/refs/heads/d1/r2 &&
+	test_path_is_file .git/logs/refs/heads/d1/r2
+'
+
+test_expect_success 'symref empty directory removal' '
+	git branch e1/e2/r1 HEAD &&
+	git branch e1/r2 HEAD &&
+	git checkout e1/e2/r1 &&
+	test_when_finished "git checkout main" &&
+	test_path_is_file .git/refs/heads/e1/e2/r1 &&
+	test_path_is_file .git/logs/refs/heads/e1/e2/r1 &&
+	git update-ref -d HEAD &&
+	test_must_fail git show-ref --verify -q refs/heads/e1/e2 &&
+	test_must_fail git show-ref --verify -q logs/refs/heads/e1/e2 &&
+	test_path_is_file .git/refs/heads/e1/r2 &&
+	test_path_is_file .git/logs/refs/heads/e1/r2 &&
+	test_path_is_file .git/logs/HEAD
+'
+
+test_expect_success 'directory not created deleting packed ref' '
+	git branch d1/d2/r1 HEAD &&
+	git pack-refs --all &&
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	git update-ref -d refs/heads/d1/d2/r1 &&
+	test_path_is_missing .git/refs/heads/d1/d2 &&
+	test_path_is_missing .git/refs/heads/d1
+'
+
+test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for u is a symlink' '
+	git branch --create-reflog u &&
+	mv .git/logs/refs/heads/u real-u &&
+	ln -s real-u .git/logs/refs/heads/u &&
+	test_must_fail git branch -m u v
+'
+
+test_expect_success SYMLINKS 'git branch -m with symlinked .git/refs' '
+	test_when_finished "rm -rf subdir" &&
+	git init --bare subdir &&
+
+	rm -rfv subdir/refs subdir/objects subdir/packed-refs &&
+	ln -s ../.git/refs subdir/refs &&
+	ln -s ../.git/objects subdir/objects &&
+	ln -s ../.git/packed-refs subdir/packed-refs &&
+
+	git -C subdir rev-parse --absolute-git-dir >subdir.dir &&
+	git rev-parse --absolute-git-dir >our.dir &&
+	! test_cmp subdir.dir our.dir &&
+
+	git -C subdir log &&
+	git -C subdir branch rename-src &&
+	git rev-parse rename-src >expect &&
+	git -C subdir branch -m rename-src rename-dest &&
+	git rev-parse rename-dest >actual &&
+	test_cmp expect actual &&
+	git branch -D rename-dest
+'
+
+test_expect_success MINGW,SYMLINKS_WINDOWS 'rebase when .git/logs is a symlink' '
+	git checkout main &&
+	mv .git/logs actual_logs &&
+	cmd //c "mklink /D .git\logs ..\actual_logs" &&
+	git rebase -f HEAD^ &&
+	test -L .git/logs &&
+	rm .git/logs &&
+	mv actual_logs .git/logs
+'
+
+test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
+	umask 077 &&
+	git config core.sharedRepository group &&
+	git reflog expire --all &&
+	actual="$(ls -l .git/logs/refs/heads/main)" &&
+	case "$actual" in
+	-rw-rw-*)
+		: happy
+		;;
+	*)
+		echo Ooops, .git/logs/refs/heads/main is not 066x [$actual]
+		false
+		;;
+	esac
 '
 
 test_done

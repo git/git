@@ -591,6 +591,25 @@ static enum extension_result handle_extension(const char *var,
 				     "extensions.objectformat", value);
 		data->hash_algo = format;
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "compatobjectformat")) {
+		struct string_list_item *item;
+		int format;
+
+		if (!value)
+			return config_error_nonbool(var);
+		format = hash_algo_by_name(value);
+		if (format == GIT_HASH_UNKNOWN)
+			return error(_("invalid value for '%s': '%s'"),
+				     "extensions.compatobjectformat", value);
+		/* For now only support compatObjectFormat being specified once. */
+		for_each_string_list_item(item, &data->v1_only_extensions) {
+			if (!strcmp(item->string, "compatobjectformat"))
+				return error(_("'%s' already specified as '%s'"),
+					"extensions.compatobjectformat",
+					hash_algos[data->compat_hash_algo].name);
+		}
+		data->compat_hash_algo = format;
+		return EXTENSION_OK;
 	} else if (!strcmp(ext, "refstorage")) {
 		unsigned int format;
 
@@ -1243,6 +1262,32 @@ static const char *allowed_bare_repo_to_string(
 	return NULL;
 }
 
+static int is_implicit_bare_repo(const char *path)
+{
+	/*
+	 * what we found is a ".git" directory at the root of
+	 * the working tree.
+	 */
+	if (ends_with_path_components(path, ".git"))
+		return 1;
+
+	/*
+	 * we are inside $GIT_DIR of a secondary worktree of a
+	 * non-bare repository.
+	 */
+	if (strstr(path, "/.git/worktrees/"))
+		return 1;
+
+	/*
+	 * we are inside $GIT_DIR of a worktree of a non-embedded
+	 * submodule, whose superproject is not a bare repository.
+	 */
+	if (strstr(path, "/.git/modules/"))
+		return 1;
+
+	return 0;
+}
+
 /*
  * We cannot decide in this function whether we are in the work tree or
  * not, since the config can only be read _after_ this function was called.
@@ -1372,7 +1417,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 		if (is_git_directory(dir->buf)) {
 			trace2_data_string("setup", NULL, "implicit-bare-repository", dir->buf);
 			if (get_allowed_bare_repo() == ALLOWED_BARE_REPO_EXPLICIT &&
-			    !ends_with_path_components(dir->buf, ".git"))
+			    !is_implicit_bare_repo(dir->buf))
 				return GIT_DIR_DISALLOWED_BARE;
 			if (!ensure_valid_ownership(NULL, NULL, dir->buf, report))
 				return GIT_DIR_INVALID_OWNERSHIP;
@@ -1577,6 +1622,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		}
 		if (startup_info->have_repository) {
 			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
+			repo_set_compat_hash_algo(the_repository,
+						  repo_fmt.compat_hash_algo);
 			repo_set_ref_storage_format(the_repository,
 						    repo_fmt.ref_storage_format);
 			the_repository->repository_format_worktree_config =
@@ -1672,6 +1719,7 @@ void check_repository_format(struct repository_format *fmt)
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
 	repo_set_hash_algo(the_repository, fmt->hash_algo);
+	repo_set_compat_hash_algo(the_repository, fmt->compat_hash_algo);
 	repo_set_ref_storage_format(the_repository,
 				    fmt->ref_storage_format);
 	the_repository->repository_format_worktree_config =
@@ -1889,6 +1937,13 @@ void initialize_repository_version(int hash_algo,
 	char repo_version_string[10];
 	int repo_version = GIT_REPO_VERSION;
 
+	/*
+	 * Note that we initialize the repository version to 1 when the ref
+	 * storage format is unknown. This is on purpose so that we can add the
+	 * correct object format to the config during git-clone(1). The format
+	 * version will get adjusted by git-clone(1) once it has learned about
+	 * the remote repository's format.
+	 */
 	if (hash_algo != GIT_HASH_SHA1 ||
 	    ref_storage_format != REF_STORAGE_FORMAT_FILES)
 		repo_version = GIT_REPO_VERSION_READ;
@@ -1898,7 +1953,7 @@ void initialize_repository_version(int hash_algo,
 		  "%d", repo_version);
 	git_config_set("core.repositoryformatversion", repo_version_string);
 
-	if (hash_algo != GIT_HASH_SHA1)
+	if (hash_algo != GIT_HASH_SHA1 && hash_algo != GIT_HASH_UNKNOWN)
 		git_config_set("extensions.objectformat",
 			       hash_algos[hash_algo].name);
 	else if (reinit)
@@ -1961,7 +2016,6 @@ void create_reference_database(unsigned int ref_storage_format,
 static int create_default_files(const char *template_path,
 				const char *original_git_dir,
 				const struct repository_format *fmt,
-				int prev_bare_repository,
 				int init_shared_repository)
 {
 	struct stat st1;
@@ -1996,34 +2050,8 @@ static int create_default_files(const char *template_path,
 	 */
 	if (init_shared_repository != -1)
 		set_shared_repository(init_shared_repository);
-	/*
-	 * TODO: heed core.bare from config file in templates if no
-	 *       command-line override given
-	 */
-	is_bare_repository_cfg = prev_bare_repository || !work_tree;
-	/* TODO (continued):
-	 *
-	 * Unfortunately, the line above is equivalent to
-	 *    is_bare_repository_cfg = !work_tree;
-	 * which ignores the config entirely even if no `--[no-]bare`
-	 * command line option was present.
-	 *
-	 * To see why, note that before this function, there was this call:
-	 *    prev_bare_repository = is_bare_repository()
-	 * expanding the right hand side:
-	 *                 = is_bare_repository_cfg && !get_git_work_tree()
-	 *                 = is_bare_repository_cfg && !work_tree
-	 * note that the last simplification above is valid because nothing
-	 * calls repo_init() or set_git_work_tree() between any of the
-	 * relevant calls in the code, and thus the !get_git_work_tree()
-	 * calls will return the same result each time.  So, what we are
-	 * interested in computing is the right hand side of the line of
-	 * code just above this comment:
-	 *     prev_bare_repository || !work_tree
-	 *        = is_bare_repository_cfg && !work_tree || !work_tree
-	 *        = !work_tree
-	 * because "A && !B || !B == !B" for all boolean values of A & B.
-	 */
+
+	is_bare_repository_cfg = !work_tree;
 
 	/*
 	 * We would have created the above under user's umask -- under
@@ -2175,7 +2203,6 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	int exist_ok = flags & INIT_DB_EXIST_OK;
 	char *original_git_dir = real_pathdup(git_dir, 1);
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
-	int prev_bare_repository;
 
 	if (real_git_dir) {
 		struct stat st;
@@ -2201,7 +2228,6 @@ int init_db(const char *git_dir, const char *real_git_dir,
 
 	safe_create_dir(git_dir, 0);
 
-	prev_bare_repository = is_bare_repository();
 
 	/* Check to see if the repository version is right.
 	 * Note that a newly created repository does not have
@@ -2214,8 +2240,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	validate_ref_storage_format(&repo_fmt, ref_storage_format);
 
 	reinit = create_default_files(template_dir, original_git_dir,
-				      &repo_fmt, prev_bare_repository,
-				      init_shared_repository);
+				      &repo_fmt, init_shared_repository);
 
 	/*
 	 * Now that we have set up both the hash algorithm and the ref storage

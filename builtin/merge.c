@@ -192,8 +192,7 @@ static struct strategy *get_strategy(const char *name)
 			int j, found = 0;
 			struct cmdname *ent = main_cmds.names[i];
 			for (j = 0; !found && j < ARRAY_SIZE(all_strategy); j++)
-				if (!strncmp(ent->name, all_strategy[j].name, ent->len)
-						&& !all_strategy[j].name[ent->len])
+				if (!xstrncmpz(all_strategy[j].name, ent->name, ent->len))
 					found = 1;
 			if (!found)
 				add_cmdname(&not_strategies, ent->name, ent->len);
@@ -678,7 +677,8 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	cache_tree_free(&the_index.cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		parse_tree(trees[i]);
-		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
+		init_tree_desc(t+i, &trees[i]->object.oid,
+			       trees[i]->buffer, trees[i]->size);
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;
@@ -822,7 +822,7 @@ static const char scissors_editor_comment[] =
 N_("An empty message aborts the commit.\n");
 
 static const char no_scissors_editor_comment[] =
-N_("Lines starting with '%c' will be ignored, and an empty message aborts\n"
+N_("Lines starting with '%s' will be ignored, and an empty message aborts\n"
    "the commit.\n");
 
 static void write_merge_heads(struct commit_list *);
@@ -853,16 +853,16 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 		strbuf_addch(&msg, '\n');
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS) {
 			wt_status_append_cut_line(&msg);
-			strbuf_commented_addf(&msg, comment_line_char, "\n");
+			strbuf_commented_addf(&msg, comment_line_str, "\n");
 		}
-		strbuf_commented_addf(&msg, comment_line_char,
+		strbuf_commented_addf(&msg, comment_line_str,
 				      _(merge_editor_comment));
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
-			strbuf_commented_addf(&msg, comment_line_char,
+			strbuf_commented_addf(&msg, comment_line_str,
 					      _(scissors_editor_comment));
 		else
-			strbuf_commented_addf(&msg, comment_line_char,
-				_(no_scissors_editor_comment), comment_line_char);
+			strbuf_commented_addf(&msg, comment_line_str,
+				_(no_scissors_editor_comment), comment_line_str);
 	}
 	if (signoff)
 		append_signoff(&msg, ignored_log_message_bytes(msg.buf, msg.len), 0);
@@ -1514,13 +1514,20 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (!remoteheads)
 		; /* already up-to-date */
-	else if (!remoteheads->next)
-		common = repo_get_merge_bases(the_repository, head_commit,
-					      remoteheads->item);
-	else {
+	else if (!remoteheads->next) {
+		if (repo_get_merge_bases(the_repository, head_commit,
+					 remoteheads->item, &common) < 0) {
+			ret = 2;
+			goto done;
+		}
+	} else {
 		struct commit_list *list = remoteheads;
 		commit_list_insert(head_commit, &list);
-		common = get_octopus_merge_bases(list);
+		if (get_octopus_merge_bases(list, &common) < 0) {
+			free(list);
+			ret = 2;
+			goto done;
+		}
 		free(list);
 	}
 
@@ -1627,7 +1634,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		struct commit_list *j;
 
 		for (j = remoteheads; j; j = j->next) {
-			struct commit_list *common_one;
+			struct commit_list *common_one = NULL;
 			struct commit *common_item;
 
 			/*
@@ -1635,9 +1642,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			 * merge_bases again, otherwise "git merge HEAD^
 			 * HEAD^^" would be missed.
 			 */
-			common_one = repo_get_merge_bases(the_repository,
-							  head_commit,
-							  j->item);
+			if (repo_get_merge_bases(the_repository, head_commit,
+						 j->item, &common_one) < 0)
+				exit(128);
+
 			common_item = common_one->item;
 			free_commit_list(common_one);
 			if (!oideq(&common_item->object.oid, &j->item->object.oid)) {

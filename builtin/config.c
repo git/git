@@ -44,6 +44,7 @@ static struct config_options config_options;
 static int show_origin;
 static int show_scope;
 static int fixed_value;
+static const char *comment;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -173,6 +174,7 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
 	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)")),
 	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
+	OPT_STRING(0, "comment", &comment, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
 	OPT_END(),
 };
 
@@ -797,6 +799,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_builtin_config();
 	}
 
+	if (comment &&
+	    !(actions & (ACTION_ADD|ACTION_SET|ACTION_SET_ALL|ACTION_REPLACE_ALL))) {
+		error(_("--comment is only applicable to add/set/replace operations"));
+		usage_builtin_config();
+	}
+
 	/* check usage of --fixed-value */
 	if (fixed_value) {
 		int allowed_usage = 0;
@@ -832,6 +840,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 		flags |= CONFIG_FLAGS_FIXED_VALUE;
 	}
+
+	comment = git_config_prepare_comment_string(comment);
 
 	if (actions & PAGING_ACTIONS)
 		setup_auto_pager("config", 1);
@@ -880,7 +890,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_write();
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1], &default_kvi);
-		ret = git_config_set_in_file_gently(given_config_source.file, argv[0], value);
+		ret = git_config_set_in_file_gently(given_config_source.file, argv[0], comment, value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
@@ -891,7 +901,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		value = normalize_value(argv[0], argv[1], &default_kvi);
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value, argv[2],
-							     flags);
+							     comment, flags);
 	}
 	else if (actions == ACTION_ADD) {
 		check_write();
@@ -900,7 +910,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value,
 							     CONFIG_REGEX_NONE,
-							     flags);
+							     comment, flags);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_write();
@@ -908,7 +918,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		value = normalize_value(argv[0], argv[1], &default_kvi);
 		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
 							     argv[0], value, argv[2],
-							     flags | CONFIG_FLAGS_MULTI_REPLACE);
+							     comment, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
@@ -936,17 +946,17 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (argc == 2)
 			return git_config_set_multivar_in_file_gently(given_config_source.file,
 								      argv[0], NULL, argv[1],
-								      flags);
+								      NULL, flags);
 		else
 			return git_config_set_in_file_gently(given_config_source.file,
-							     argv[0], NULL);
+							     argv[0], NULL, NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
 		check_write();
 		check_argc(argc, 1, 2);
 		return git_config_set_multivar_in_file_gently(given_config_source.file,
 							      argv[0], NULL, argv[1],
-							      flags | CONFIG_FLAGS_MULTI_REPLACE);
+							      NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
 		check_write();

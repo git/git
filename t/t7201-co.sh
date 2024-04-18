@@ -631,6 +631,72 @@ test_expect_success 'checkout --conflict=diff3' '
 	test_cmp merged file
 '
 
+test_expect_success 'checkout --conflict=diff3 --no-conflict does not merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >expect &&
+	cat expect >fild &&
+	cat expect >file &&
+	test_must_fail git checkout --conflict=diff3 --no-conflict -- fild file 2>err &&
+	test_cmp expect file &&
+	test_cmp expect fild &&
+	echo "error: path ${SQ}file${SQ} is unmerged" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'checkout --conflict=diff3 --no-merge does not merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >expect &&
+	cat expect >fild &&
+	cat expect >file &&
+	test_must_fail git checkout --conflict=diff3 --no-merge -- fild file 2>err &&
+	test_cmp expect file &&
+	test_cmp expect fild &&
+	echo "error: path ${SQ}file${SQ} is unmerged" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'checkout --no-merge --conflict=diff3 does merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >fild &&
+	echo "none of the above" >file &&
+	git checkout --no-merge --conflict=diff3 -- fild file &&
+	echo "ourside" >expect &&
+	test_cmp expect fild &&
+	cat >expect <<-\EOF &&
+	<<<<<<< ours
+	ourside
+	||||||| base
+	original
+	=======
+	theirside
+	>>>>>>> theirs
+	EOF
+	test_cmp expect file
+'
+
+test_expect_success 'checkout --merge --conflict=diff3 --no-conflict does merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >fild &&
+	echo "none of the above" >file &&
+	git checkout --merge --conflict=diff3 --no-conflict -- fild file &&
+	echo "ourside" >expect &&
+	test_cmp expect fild &&
+	cat >expect <<-\EOF &&
+	<<<<<<< ours
+	ourside
+	=======
+	theirside
+	>>>>>>> theirs
+	EOF
+	test_cmp expect file
+'
+
+test_expect_success 'checkout with invalid conflict style' '
+	test_must_fail git checkout --conflict=bad 2>actual -- file &&
+	echo "error: unknown conflict style ${SQ}bad${SQ}" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'failing checkout -b should not break working tree' '
 	git clean -fd &&  # Remove untracked files in the way
 	git reset --hard main &&

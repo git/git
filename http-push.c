@@ -1307,7 +1307,7 @@ static struct object_list **process_tree(struct tree *tree,
 	obj->flags |= SEEN;
 	p = add_one_object(obj, p);
 
-	init_tree_desc(&desc, tree->buffer, tree->size);
+	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry))
 		switch (object_type(entry.mode)) {
@@ -1575,8 +1575,11 @@ static int verify_merge_base(struct object_id *head_oid, struct ref *remote)
 	struct commit *head = lookup_commit_or_die(head_oid, "HEAD");
 	struct commit *branch = lookup_commit_or_die(&remote->old_oid,
 						     remote->name);
+	int ret = repo_in_merge_bases(the_repository, branch, head);
 
-	return repo_in_merge_bases(the_repository, branch, head);
+	if (ret < 0)
+		exit(128);
+	return ret;
 }
 
 static int delete_remote_branch(const char *pattern, int force)

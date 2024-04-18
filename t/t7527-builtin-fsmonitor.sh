@@ -1037,4 +1037,227 @@ test_expect_success 'split-index and FSMonitor work well together' '
 	)
 '
 
+# The FSMonitor daemon reports the OBSERVED pathname of modified files
+# and thus contains the OBSERVED spelling on case-insensitive file
+# systems.  The daemon does not (and should not) load the .git/index
+# file and therefore does not know the expected case-spelling.  Since
+# it is possible for the user to create files/subdirectories with the
+# incorrect case, a modified file event for a tracked will not have
+# the EXPECTED case. This can cause `index_name_pos()` to incorrectly
+# report that the file is untracked. This causes the client to fail to
+# mark the file as possibly dirty (keeping the CE_FSMONITOR_VALID bit
+# set) so that `git status` will avoid inspecting it and thus not
+# present in the status output.
+#
+# The setup is a little contrived.
+#
+test_expect_success CASE_INSENSITIVE_FS 'fsmonitor subdir case wrong on disk' '
+	test_when_finished "stop_daemon_delete_repo subdir_case_wrong" &&
+
+	git init subdir_case_wrong &&
+	(
+		cd subdir_case_wrong &&
+		echo x >AAA &&
+		echo x >BBB &&
+
+		mkdir dir1 &&
+		echo x >dir1/file1 &&
+		mkdir dir1/dir2 &&
+		echo x >dir1/dir2/file2 &&
+		mkdir dir1/dir2/dir3 &&
+		echo x >dir1/dir2/dir3/file3 &&
+
+		echo x >yyy &&
+		echo x >zzz &&
+		git add . &&
+		git commit -m "data" &&
+
+		# This will cause "dir1/" and everything under it
+		# to be deleted.
+		git sparse-checkout set --cone --sparse-index &&
+
+		# Create dir2 with the wrong case and then let Git
+		# repopulate dir3 -- it will not correct the spelling
+		# of dir2.
+		mkdir dir1 &&
+		mkdir dir1/DIR2 &&
+		git sparse-checkout add dir1/dir2/dir3
+	) &&
+
+	start_daemon -C subdir_case_wrong --tf "$PWD/subdir_case_wrong.trace" &&
+
+	# Enable FSMonitor in the client. Run enough commands for
+	# the .git/index to sync up with the daemon with everything
+	# marked clean.
+	git -C subdir_case_wrong config core.fsmonitor true &&
+	git -C subdir_case_wrong update-index --fsmonitor &&
+	git -C subdir_case_wrong status &&
+
+	# Make some files dirty so that FSMonitor gets FSEvents for
+	# each of them.
+	echo xx >>subdir_case_wrong/AAA &&
+	echo xx >>subdir_case_wrong/dir1/DIR2/dir3/file3 &&
+	echo xx >>subdir_case_wrong/zzz &&
+
+	GIT_TRACE_FSMONITOR="$PWD/subdir_case_wrong.log" \
+		git -C subdir_case_wrong --no-optional-locks status --short \
+			>"$PWD/subdir_case_wrong.out" &&
+
+	# "git status" should have gotten file events for each of
+	# the 3 files.
+	#
+	# "dir2" should be in the observed case on disk.
+	grep "fsmonitor_refresh_callback" \
+		<"$PWD/subdir_case_wrong.log" \
+		>"$PWD/subdir_case_wrong.log1" &&
+
+	grep -q "AAA.*pos 0" "$PWD/subdir_case_wrong.log1" &&
+	grep -q "zzz.*pos 6" "$PWD/subdir_case_wrong.log1" &&
+
+	grep -q "dir1/DIR2/dir3/file3.*pos -3" "$PWD/subdir_case_wrong.log1" &&
+
+	# Verify that we get a mapping event to correct the case.
+	grep -q "MAP:.*dir1/DIR2/dir3/file3.*dir1/dir2/dir3/file3" \
+		"$PWD/subdir_case_wrong.log1" &&
+
+	# The refresh-callbacks should have caused "git status" to clear
+	# the CE_FSMONITOR_VALID bit on each of those files and caused
+	# the worktree scan to visit them and mark them as modified.
+	grep -q " M AAA" "$PWD/subdir_case_wrong.out" &&
+	grep -q " M zzz" "$PWD/subdir_case_wrong.out" &&
+	grep -q " M dir1/dir2/dir3/file3" "$PWD/subdir_case_wrong.out"
+'
+
+test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
+	test_when_finished "stop_daemon_delete_repo file_case_wrong" &&
+
+	git init file_case_wrong &&
+	(
+		cd file_case_wrong &&
+		echo x >AAA &&
+		echo x >BBB &&
+
+		mkdir dir1 &&
+		mkdir dir1/dir2 &&
+		mkdir dir1/dir2/dir3 &&
+		echo x >dir1/dir2/dir3/FILE-3-B &&
+		echo x >dir1/dir2/dir3/XXXX-3-X &&
+		echo x >dir1/dir2/dir3/file-3-a &&
+		echo x >dir1/dir2/dir3/yyyy-3-y &&
+		mkdir dir1/dir2/dir4 &&
+		echo x >dir1/dir2/dir4/FILE-4-A &&
+		echo x >dir1/dir2/dir4/XXXX-4-X &&
+		echo x >dir1/dir2/dir4/file-4-b &&
+		echo x >dir1/dir2/dir4/yyyy-4-y &&
+
+		echo x >yyy &&
+		echo x >zzz &&
+		git add . &&
+		git commit -m "data"
+	) &&
+
+	start_daemon -C file_case_wrong --tf "$PWD/file_case_wrong.trace" &&
+
+	# Enable FSMonitor in the client. Run enough commands for
+	# the .git/index to sync up with the daemon with everything
+	# marked clean.
+	git -C file_case_wrong config core.fsmonitor true &&
+	git -C file_case_wrong update-index --fsmonitor &&
+	git -C file_case_wrong status &&
+
+	# Make some files dirty so that FSMonitor gets FSEvents for
+	# each of them.
+	echo xx >>file_case_wrong/AAA &&
+	echo xx >>file_case_wrong/zzz &&
+
+	# Rename some files so that FSMonitor sees a create and delete
+	# FSEvent for each.  (A simple "mv foo FOO" is not portable
+	# between macOS and Windows. It works on both platforms, but makes
+	# the test messy, since (1) one platform updates "ctime" on the
+	# moved file and one does not and (2) it causes a directory event
+	# on one platform and not on the other which causes additional
+	# scanning during "git status" which causes a "H" vs "h" discrepancy
+	# in "git ls-files -f".)  So old-school it and move it out of the
+	# way and copy it to the case-incorrect name so that we get fresh
+	# "ctime" and "mtime" values.
+
+	mv file_case_wrong/dir1/dir2/dir3/file-3-a file_case_wrong/dir1/dir2/dir3/ORIG &&
+	cp file_case_wrong/dir1/dir2/dir3/ORIG     file_case_wrong/dir1/dir2/dir3/FILE-3-A &&
+	rm file_case_wrong/dir1/dir2/dir3/ORIG &&
+	mv file_case_wrong/dir1/dir2/dir4/FILE-4-A file_case_wrong/dir1/dir2/dir4/ORIG &&
+	cp file_case_wrong/dir1/dir2/dir4/ORIG     file_case_wrong/dir1/dir2/dir4/file-4-a &&
+	rm file_case_wrong/dir1/dir2/dir4/ORIG &&
+
+	# Run status enough times to fully sync.
+	#
+	# The first instance should get the create and delete FSEvents
+	# for each pair.  Status should update the index with a new FSM
+	# token (so the next invocation will not see data for these
+	# events).
+
+	GIT_TRACE_FSMONITOR="$PWD/file_case_wrong-try1.log" \
+		git -C file_case_wrong status --short \
+			>"$PWD/file_case_wrong-try1.out" &&
+	grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos -3" "$PWD/file_case_wrong-try1.log" &&
+	grep -q "fsmonitor_refresh_callback.*file-3-a.*pos 4"  "$PWD/file_case_wrong-try1.log" &&
+	grep -q "fsmonitor_refresh_callback.*FILE-4-A.*pos 6"  "$PWD/file_case_wrong-try1.log" &&
+	grep -q "fsmonitor_refresh_callback.*file-4-a.*pos -9" "$PWD/file_case_wrong-try1.log" &&
+
+	# FSM refresh will have invalidated the FSM bit and cause a regular
+	# (real) scan of these tracked files, so they should have "H" status.
+	# (We will not see a "h" status until the next refresh (on the next
+	# command).)
+
+	git -C file_case_wrong ls-files -f >"$PWD/file_case_wrong-lsf1.out" &&
+	grep -q "H dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-lsf1.out" &&
+	grep -q "H dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-lsf1.out" &&
+
+
+	# Try the status again. We assume that the above status command
+	# advanced the token so that the next one will not see those events.
+
+	GIT_TRACE_FSMONITOR="$PWD/file_case_wrong-try2.log" \
+		git -C file_case_wrong status --short \
+			>"$PWD/file_case_wrong-try2.out" &&
+	! grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos" "$PWD/file_case_wrong-try2.log" &&
+	! grep -q "fsmonitor_refresh_callback.*file-3-a.*pos" "$PWD/file_case_wrong-try2.log" &&
+	! grep -q "fsmonitor_refresh_callback.*FILE-4-A.*pos" "$PWD/file_case_wrong-try2.log" &&
+	! grep -q "fsmonitor_refresh_callback.*file-4-a.*pos" "$PWD/file_case_wrong-try2.log" &&
+
+	# FSM refresh saw nothing, so it will mark all files as valid,
+	# so they should now have "h" status.
+
+	git -C file_case_wrong ls-files -f >"$PWD/file_case_wrong-lsf2.out" &&
+	grep -q "h dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-lsf2.out" &&
+	grep -q "h dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-lsf2.out" &&
+
+
+	# We now have files with clean content, but with case-incorrect
+	# file names.  Modify them to see if status properly reports
+	# them.
+
+	echo xx >>file_case_wrong/dir1/dir2/dir3/FILE-3-A &&
+	echo xx >>file_case_wrong/dir1/dir2/dir4/file-4-a &&
+
+	GIT_TRACE_FSMONITOR="$PWD/file_case_wrong-try3.log" \
+		git -C file_case_wrong --no-optional-locks status --short \
+			>"$PWD/file_case_wrong-try3.out" &&
+
+	# Verify that we get a mapping event to correct the case.
+	grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir3/FILE-3-A.*dir1/dir2/dir3/file-3-a" \
+		"$PWD/file_case_wrong-try3.log" &&
+	grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir4/file-4-a.*dir1/dir2/dir4/FILE-4-A" \
+		"$PWD/file_case_wrong-try3.log" &&
+
+	# FSEvents are in observed case.
+	grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos -3" "$PWD/file_case_wrong-try3.log" &&
+	grep -q "fsmonitor_refresh_callback.*file-4-a.*pos -9" "$PWD/file_case_wrong-try3.log" &&
+
+	# The refresh-callbacks should have caused "git status" to clear
+	# the CE_FSMONITOR_VALID bit on each of those files and caused
+	# the worktree scan to visit them and mark them as modified.
+	grep -q " M dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-try3.out" &&
+	grep -q " M dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-try3.out"
+'
+
 test_done
