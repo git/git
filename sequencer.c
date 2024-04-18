@@ -2823,12 +2823,14 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 			NULL, REF_NO_DEREF);
 
 	if (!need_cleanup)
-		return;
+		goto out;
 
 	if (!have_finished_the_last_pick())
-		return;
+		goto out;
 
 	sequencer_remove_state(&opts);
+out:
+	replay_opts_release(&opts);
 }
 
 static void todo_list_write_total_nr(struct todo_list *todo_list)
