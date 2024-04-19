@@ -430,3 +430,5 @@ Fixes since v2.44
    (merge 39bb692152 rs/imap-send-use-xsnprintf later to maint).
    (merge 8d320cec60 jc/t2104-style-fixes later to maint).
    (merge b4454d5a7b pw/t3428-cleanup later to maint).
+   (merge 84a7c33a4b pf/commitish-committish later to maint).
+   (merge 8882ee9d68 la/mailmap-entry later to maint).
