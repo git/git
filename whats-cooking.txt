@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2024, #06; Wed, 17)
-X-master-at: 21306a098c3f174ad4c2a5cddb9069ee27a548b0
-X-next-at: 701ccded8beffcdb6ef223edea31263683e5129b
+Subject: What's cooking in git.git (Apr 2024, #07; Fri, 19)
+X-master-at: ae3196a5ea84a9e88991d576020cf66512487088
+X-next-at: bae5840b3b82b94d0aca7c99a507840c3e5bd7fb
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2024, #06; Wed, 17)
+What's cooking in git.git (Apr 2024, #07; Fri, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,8 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+A preview release Git 2.45-rc0 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,196 +50,59 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ba/osxkeychain-updates (2024-04-01) 4 commits
-  (merged to 'next' on 2024-04-10 at 1e7d925a43)
- + osxkeychain: store new attributes
- + osxkeychain: erase matching passwords only
- + osxkeychain: erase all matching credentials
- + osxkeychain: replace deprecated SecKeychain API
+* la/mailmap-entry (2024-04-16) 1 commit
+  (merged to 'next' on 2024-04-17 at 440b18b8be)
+ + mailmap: change primary address for Linus Arver
 
- Update osxkeychain backend with features required for the recent
- credential subsystem.
- source: <pull.1667.git.1708212896.gitgitgadget@gmail.com>
+ Update contact address for Linus Arver.
+ source: <pull.1720.git.1713309711217.gitgitgadget@gmail.com>
 
 
-* ds/fetch-config-parse-microfix (2024-04-05) 1 commit
-  (merged to 'next' on 2024-04-09 at 585dcadd63)
- + fetch: return when parsing submodule.recurse
+* pf/commitish-committish (2024-04-11) 1 commit
+  (merged to 'next' on 2024-04-12 at 7ef816cb64)
+ + typo: replace 'commitish' with 'committish'
 
- A config parser callback function fell through instead of returning
- after recognising and processing a variable, wasting cycles, which
- has been corrected.
- source: <pull.1709.git.1712285542303.gitgitgadget@gmail.com>
-
-
-* gt/add-u-commit-i-pathspec-check (2024-04-03) 3 commits
-  (merged to 'next' on 2024-04-09 at 1a0c757907)
- + builtin/add: error out when passing untracked path with -u
- + builtin/commit: error out when passing untracked path with -i
- + revision: optionally record matches with pathspec elements
-
- "git add -u <pathspec>" and "git commit [-i] <pathspec>" did not
- diagnose a pathspec element that did not match any files in certain
- situations, unlike "git add <pathspec>" did.
- source: <20240402213640.139682-2-shyamthakkar001@gmail.com>
-
-
-* jc/local-extern-shell-rules (2024-04-05) 8 commits
-  (merged to 'next' on 2024-04-10 at d3a13273e7)
- + t1016: local VAR="VAL" fix
- + t0610: local VAR="VAL" fix
- + t: teach lint that RHS of 'local VAR=VAL' needs to be quoted
- + t: local VAR="VAL" (quote ${magic-reference})
- + t: local VAR="VAL" (quote command substitution)
- + t: local VAR="VAL" (quote positional parameters)
- + CodingGuidelines: quote assigned value in 'local var=$val'
- + CodingGuidelines: describe "export VAR=VAL" rule
-
- Document and apply workaround for a buggy version of dash that
- mishandles "local var=val" construct.
- source: <20240406000902.3082301-1-gitster@pobox.com>
-
-
-* jc/t2104-style-fixes (2024-04-09) 1 commit
-  (merged to 'next' on 2024-04-11 at 7678ec509b)
- + t2104: style fixes
-
- Test style fixes.
- source: <xmqqmsqb4ngg.fsf@gitster.g>
-
-
-* jc/unleak-core-excludesfile (2024-04-08) 1 commit
-  (merged to 'next' on 2024-04-10 at ffb0c01871)
- + config: do not leak excludes_file
-
- The variable that holds the value read from the core.excludefile
- configuration variable used to leak, which has been corrected.
- source: <xmqqttkeicov.fsf@gitster.g>
-
-
-* jk/libcurl-8.7-regression-workaround (2024-04-05) 3 commits
-  (merged to 'next' on 2024-04-10 at 3b76577bfc)
- + remote-curl: add Transfer-Encoding header only for older curl
- + INSTALL: bump libcurl version to 7.21.3
- + http: reset POSTFIELDSIZE when clearing curl handle
-
- Fix was added to work around a regression in libcURL 8.7.0 (which has
- already been fixed in their tip of the tree).
- source: <20240402200254.GA874754@coredump.intra.peff.net>
-
-
-* jt/reftable-geometric-compaction (2024-04-08) 4 commits
-  (merged to 'next' on 2024-04-10 at 7e868a831c)
- + reftable/stack: use geometric table compaction
- + reftable/stack: add env to disable autocompaction
- + reftable/stack: expose option to disable auto-compaction
- + Merge branch 'ps/pack-refs-auto' into jt/reftable-geometric-compaction
-
- The strategy to compact multiple tables of reftables after many
- operations accumulate many entries has been improved to avoid
- accumulating too many tables uncollected.
- source: <pull.1683.v6.git.1712593016.gitgitgadget@gmail.com>
-
-
-* ma/win32-unix-domain-socket (2024-04-03) 1 commit
-  (merged to 'next' on 2024-04-09 at b98021a65c)
- + Win32: detect unix socket support at runtime
-
- Windows binary used to decide the use of unix-domain socket at
- build time, but it learned to make the decision at runtime instead.
- source: <pull.1708.git.1712158923106.gitgitgadget@gmail.com>
-
-
-* ps/t0610-umask-fix (2024-04-09) 2 commits
-  (merged to 'next' on 2024-04-10 at 659a29b138)
- + t0610: execute git-pack-refs(1) with specified umask
- + t0610: make `--shared=` tests reusable
-
- The "shared repository" test in the t0610 reftable test failed
- under restrictive umask setting (e.g. 007), which has been
- corrected.
- source: <cover.1712656576.git.ps@pks.im>
-
-
-* pw/t3428-cleanup (2024-04-09) 3 commits
-  (merged to 'next' on 2024-04-11 at 3c40516874)
- + t3428: restore coverage for "apply" backend
- + t3428: use test_commit_message
- + t3428: modernize test setup
-
- Test cleanup.
- source: <pull.1713.git.1712676444.gitgitgadget@gmail.com>
-
-
-* rs/apply-lift-path-length-limit (2024-04-05) 2 commits
-  (merged to 'next' on 2024-04-09 at 3270d194fd)
- + path: remove mksnpath()
- + apply: avoid fixed-size buffer in create_one_file()
-
- "git apply" has been updated to lift the hardcoded pathname length
- limit, which in turn allowed a mksnpath() function that is no
- longer used.
- source: <df774306-f29b-4a75-a282-59db89812b9a@web.de>
-
-
-* rs/apply-reject-fd-leakfix (2024-04-05) 1 commit
-  (merged to 'next' on 2024-04-09 at 11efa0543c)
- + apply: don't leak fd on fdopen() error
-
- A file descriptor leak in an error codepath, used when "git apply
- --reject" fails to create the *.rej file, has been corrected.
- source: <5ba55ee4-94c7-4094-a744-584fc623b391@web.de>
-
-
-* rs/date-mode-pass-by-value (2024-04-05) 1 commit
-  (merged to 'next' on 2024-04-10 at cc3c17d31c)
- + date: make DATE_MODE thread-safe
-
- The codepaths that reach date_mode_from_type() have been updated to
- pass "struct date_mode" by value to make them thread safe.
- source: <c6cb255a-72f0-4ac2-81a2-1d8e95570a81@web.de>
-
-
-* rs/usage-fallback-to-show-message-format (2024-04-05) 1 commit
-  (merged to 'next' on 2024-04-10 at 9a34aed4d5)
- + usage: report vsnprintf(3) failure
-
- vreportf(), which is usede by error() and friends, has been taught
- to give the error message printf-format string when its vsnprintf()
- call fails, instead of showing nothing useful to identify the
- nature of the error.
- source: <3da13298-b6a6-4391-b8e8-5dae9a28b860@web.de>
-
-
-* sj/userdiff-c-sharp (2024-04-05) 1 commit
-  (merged to 'next' on 2024-04-10 at 56aaf254a7)
- + userdiff: better method/property matching for C#
-
- The userdiff patterns for C# has been updated.
-
- Acked-by: Johannes Sixt <j6t@kdbg.org>
- cf. <c2154457-3f2f-496e-9b8b-c8ea7257027b@kdbg.org>
- source: <pull.1682.v5.git.git.1712180564927.gitgitgadget@gmail.com>
-
-
-* tb/make-indent-conditional-with-non-spaces (2024-04-08) 2 commits
-  (merged to 'next' on 2024-04-10 at 98aa239dc3)
- + Makefile(s): do not enforce "all indents must be done with tab"
- + Makefile(s): avoid recipe prefix in conditional statements
-
- Adjust to an upcoming changes to GNU make that breaks our Makefiles.
- source: <9d14c08ca6cc06cdf8fb4ba33d2470053dca3966.1712591504.git.me@ttaylorr.com>
-
-
-* tb/t7700-fixup (2024-04-03) 1 commit
-  (merged to 'next' on 2024-04-10 at ff1f877ef7)
- + t/t7700-repack.sh: fix test breakages with `GIT_TEST_MULTI_PACK_INDEX=1 `
-
- Test fix.
- source: <7e8d435d58eea19d2aae0be366720f5956d29a5d.1712075189.git.me@ttaylorr.com>
+ Spellfix.
+ source: <20240407212111.55362-1-Pi.L.D.Fisher@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* ds/format-patch-rfc-and-k (2024-04-19) 1 commit
+ - format-patch: ensure that --rfc and -k are mutually exclusive
+
+ source: <71d195c248879e7c46fac0e84c6b0a8aa90bd2c2.1713488563.git.dsimic@manjaro.org>
+
+
+* jc/format-patch-rfc-more (2024-04-18) 1 commit
+ - format-patch: allow --rfc to optionally take a value, like --rfc=WIP
+
+ source: <xmqqzftqnuxq.fsf@gitster.g>
+
+
+* ps/the-index-is-no-more (2024-04-18) 6 commits
+ - repository: drop `initialize_the_repository()`
+ - repository: drop `the_index` variable
+ - builtin/clone: stop using `the_index`
+ - repository: initialize index in `repo_init()`
+ - builtin: stop using `the_index`
+ - t/helper: stop using `the_index`
+
+ source: <cover.1713442061.git.ps@pks.im>
+
+
+* pw/rebase-m-signoff-fix (2024-04-18) 6 commits
+ - rebase -m: fix --signoff with conflicts
+ - sequencer: store commit message in private context
+ - sequencer: move current fixups to private context
+ - sequencer: start removing private fields from public API
+ - sequencer: always free "struct replay_opts"
+ - Merge branch 'pw/t3428-cleanup' into pw/rebase-m-signoff-fix
+
+ source: <cover.1713445918.git.phillip.wood@dunelm.org.uk>
+
+--------------------------------------------------
+[Cooking]
 
 * mr/rerere-crash-fix (2024-04-16) 1 commit
   (merged to 'next' on 2024-04-17 at 60be8e2d74)
@@ -329,7 +194,7 @@ Release tarballs are available at:
  source: <a93cd243-cb17-4ad5-8d23-30768dc5213b@web.de>
 
 
-* js/for-each-repo-keep-going (2024-04-17) 2 commits
+* js/for-each-repo-keep-going (2024-04-18) 2 commits
  - maintenance: running maintenance should not stop on errors
  - for-each-repo: optionally keep going on an error
 
@@ -337,9 +202,8 @@ Release tarballs are available at:
  repositories it knows about, but it stopped at the first one that
  errored out.  Now it keeps going.
 
- Expecting a (hopefully minor and final) reroll.
- cf. <CAPig+cSjoGe7Eeynz=jGSaNYWXQ-VkvWv7mv1NDeCXPFEtdqOA@mail.gmail.com>
- source: <pull.1719.git.1713342535.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1719.v2.git.1713444783.gitgitgadget@gmail.com>
 
 
 * ps/run-auto-maintenance-in-receive-pack (2024-04-17) 2 commits
@@ -354,20 +218,16 @@ Release tarballs are available at:
  source: <cover.1713334241.git.ps@pks.im>
 
 
-* la/mailmap-entry (2024-04-16) 1 commit
-  (merged to 'next' on 2024-04-17 at 440b18b8be)
- + mailmap: change primary address for Linus Arver
-
- source: <pull.1720.git.1713309711217.gitgitgadget@gmail.com>
-
-
 * xx/disable-replace-when-building-midx (2024-04-17) 1 commit
  - midx: disable replace objects
 
+ The procedure to build multi-pack-index got confused by the
+ replace-refs mechanism, which has been corrected by disabling the
+ latter.
+
+ Will merge to 'next'.
  source: <pull.1711.v2.git.1712554017808.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * dd/t9604-use-posix-timezones (2024-04-10) 1 commit
   (merged to 'next' on 2024-04-16 at 46ab81737f)
@@ -393,16 +253,6 @@ Release tarballs are available at:
  - refs: accept symref values in `ref_transaction[_add]_update`
 
  source: <20240412095908.1134387-1-knayak@gitlab.com>
-
-
-* pf/commitish-committish (2024-04-11) 1 commit
-  (merged to 'next' on 2024-04-12 at 7ef816cb64)
- + typo: replace 'commitish' with 'committish'
-
- Spellfix.
-
- Will merge to 'master'.
- source: <20240407212111.55362-1-Pi.L.D.Fisher@gmail.com>
 
 
 * ta/fast-import-parse-path-fix (2024-04-15) 8 commits
@@ -433,8 +283,7 @@ Release tarballs are available at:
  source: <pull.1716.git.1712911876943.gitgitgadget@gmail.com>
 
 
-* la/doc-use-of-contacts-when-contributing (2024-04-17) 9 commits
- - SQUASH???
+* la/doc-use-of-contacts-when-contributing (2024-04-18) 8 commits
  - SubmittingPatches: demonstrate using git-contacts with git-send-email
  - SubmittingPatches: add heading for format-patch and send-email
  - SubmittingPatches: dedupe discussion of security patches
@@ -448,8 +297,8 @@ Release tarballs are available at:
  ask review for their patches, a bit more in our developer
  documentation.
 
- Almost there?
- source: <pull.1704.v5.git.1713308518.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1704.v6.git.1713477125.gitgitgadget@gmail.com>
 
 
 * ps/ci-test-with-jgit (2024-04-12) 13 commits
