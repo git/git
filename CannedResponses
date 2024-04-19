@@ -23,7 +23,7 @@ the stage and stating the objective first, before going into how the
 patch solved it.
 
 ------------------------------------------------------------------------
-[polish your history]
+[polish your history before sending]
 
 We frown upon a patch series that makes mistakes in an earlier step,
 only to fix them in a later step.  The "git rebase -i" command helps
@@ -44,6 +44,18 @@ e-mail response.  It is pointing out that the end product, either the
 patch text or the proposed log message, is not clear to target
 audience and needs update.
 
+We would expect a review comment to be at least responded to either
+rebut or admit the issues raised.  It may be that a reviewer's point
+were missing the mark and the patches themselves were perfectly
+fine.
+
+But all other cases, even when the reviewer's comment were missing
+the mark, such a confusion may have been the result of the patch
+text or the proposed log message being unclear.  Of course, the
+review comments may have been pointing out an actionable issue.
+They would hopefully lead to an improved version of the patches
+posted sometime later, so that we can conclude a topic and move
+ahead.
 ----------------------------------------------------------------
 [make us come to you, begging]
 
