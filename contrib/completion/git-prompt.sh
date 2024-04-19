@@ -141,14 +141,14 @@ __git_ps1_show_upstream ()
 
 	# parse configuration values
 	local option
-	for option in ${GIT_PS1_SHOWUPSTREAM-}; do
+	while read -r -d' ' option; do
 		case "$option" in
 		git|svn) upstream_type="$option" ;;
 		verbose) verbose=1 ;;
 		legacy)  legacy=1  ;;
 		name)    name=1 ;;
 		esac
-	done
+	done <<< "${GIT_PS1_SHOWUPSTREAM-} "
 
 	# Find our upstream type
 	case "$upstream_type" in
