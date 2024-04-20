@@ -100,7 +100,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * The way placeholders are to be marked-up in documentation have been
    specified; use "_<placeholder>_" to typeset the word inside a pair
-   of <angle-brakets> emphasized.
+   of <angle-brackets> emphasized.
 
  * "git --no-lazy-fetch cmd" allows to run "cmd" while disabling lazy
    fetching of objects from the promisor remote, which may be handy
@@ -109,9 +109,6 @@ Performance, Internal Implementation, Development Support etc.
  * The implementation in "git clean" that makes "-n" and "-i" ignore
    clean.requireForce has been simplified, together with the
    documentation.
-
- * The code to iterate over refs with the reftable backend has seen
-   some optimization.
 
  * Uses of xwrite() helper have been audited and updated for better
    error checking and simpler code.
