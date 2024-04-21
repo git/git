@@ -1,0 +1,25 @@
+function capitalizeName(name) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+// Library 2: startsWithJ
+function startsWithJ(name) {
+  return name.charAt(0).toLowerCase() === 'j';
+}
+
+// Array of names
+var names = ['John', 'Jane', 'Alex', 'Jessica'];
+
+// Name greeting logic
+for (var i = 0; i < names.length; i++) {
+  var name = names[i];
+  var greeting;
+
+  if (startsWithJ(name)) {
+    greeting = 'Goodbye ' + capitalizeName(name);
+  } else {
+    greeting = 'Hello ' + capitalizeName(name);
+  }
+
+  console.log(greeting);
+}
