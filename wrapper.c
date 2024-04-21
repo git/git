@@ -670,7 +670,7 @@ int xsnprintf(char *dst, size_t max, const char *fmt, ...)
 	va_end(ap);
 
 	if (len < 0)
-		BUG("your snprintf is broken");
+		die(_("unable to format message: %s"), fmt);
 	if (len >= max)
 		BUG("attempt to snprintf into too-small buffer");
 	return len;
