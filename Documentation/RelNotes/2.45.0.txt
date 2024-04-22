@@ -77,8 +77,10 @@ UI, Workflows & Features
    skip showing the hunk immediately after it has already been shown, and
    an additional action to explicitly ask to reshow the current hunk.
 
- * "git pack-refs" learned the "--auto" option, which is a useful
-   addition to be triggered from "git gc --auto".
+ * "git pack-refs" learned the "--auto" option, which defers the decision of
+   whether and how to pack to the ref backend. This is used by the reftable
+   backend to avoid repacking of an already-optimal ref database. The new mode
+   is triggered from "git gc --auto".
 
  * "git add -u <pathspec>" and "git commit [-i] <pathspec>" did not
    diagnose a pathspec element that did not match any files in certain
