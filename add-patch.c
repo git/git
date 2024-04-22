@@ -1646,6 +1646,7 @@ soft_increment:
 				err(s, _("No hunk matches the given pattern"));
 				break;
 			}
+			regfree(&regex);
 			hunk_index = i;
 		} else if (s->answer.buf[0] == 's') {
 			size_t splittable_into = hunk->splittable_into;
