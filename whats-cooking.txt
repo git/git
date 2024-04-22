@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2024, #07; Fri, 19)
-X-master-at: ae3196a5ea84a9e88991d576020cf66512487088
-X-next-at: bae5840b3b82b94d0aca7c99a507840c3e5bd7fb
+Subject: What's cooking in git.git (Apr 2024, #08; Mon, 22)
+X-master-at: 00e10ef10e161a913893b8cb33aa080d4ca5baa6
+X-next-at: 0c9c63564e25443fb8d0688fe3c87722ba128238
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2024, #07; Fri, 19)
+What's cooking in git.git (Apr 2024, #08; Mon, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,8 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-A preview release Git 2.45-rc0 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,36 +46,76 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* la/mailmap-entry (2024-04-16) 1 commit
-  (merged to 'next' on 2024-04-17 at 440b18b8be)
- + mailmap: change primary address for Linus Arver
+* aj/stash-staged-fix (2024-04-22) 1 commit
+ - stash: fix "--staged" with binary files
 
- Update contact address for Linus Arver.
- source: <pull.1720.git.1713309711217.gitgitgadget@gmail.com>
+ "git stash -S" did not handle binary files correctly, which has
+ been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1722.git.1713781694490.gitgitgadget@gmail.com>
 
 
-* pf/commitish-committish (2024-04-11) 1 commit
-  (merged to 'next' on 2024-04-12 at 7ef816cb64)
- + typo: replace 'commitish' with 'committish'
+* rj/add-i-leak-fix (2024-04-22) 4 commits
+ - add: plug a leak on interactive_add
+ - add-patch: plug a leak handling the '/' command
+ - add-interactive: plug a leak in get_untracked_files
+ - apply: plug a leak in apply_data
 
- Spellfix.
- source: <20240407212111.55362-1-Pi.L.D.Fisher@gmail.com>
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <69f86760-96ff-4c62-9649-4627652b7c19@gmail.com>
+
+
+* rj/add-p-typo-reaction (2024-04-21) 1 commit
+ - add-patch: response to unknown command
+
+ When the user responds to a prompt given by "git add -p" with an
+ unsupported command, list of available commands were given, which
+ was too much if the user knew what they wanted to type but merely
+ made a typo.  Now the user gets a much shorter error message.
+
+ Will merge to 'next'.
+ source: <b209a2b8-f98f-4f14-a687-9022d30968dd@gmail.com>
+
+
+* rs/vsnprintf-failure-is-not-a-bug (2024-04-21) 1 commit
+ - don't report vsnprintf(3) error as bug
+
+ Demote a BUG() to an die() when the failure from vsnprintf() may
+ not be due to a programmer error.
+
+ Will merge to 'next'.
+ source: <ea752a2b-9b74-4a59-a037-4782abf7161e@web.de>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * ds/format-patch-rfc-and-k (2024-04-19) 1 commit
  - format-patch: ensure that --rfc and -k are mutually exclusive
 
+ The "-k" and "--rfc" options of "format-patch" will now error out
+ when used together, as one tells us not to add anything to the
+ title of the commit, and the other one tells us to add "RFC" in
+ addition to "PATCH".
+
+ Will merge to 'next'.
  source: <71d195c248879e7c46fac0e84c6b0a8aa90bd2c2.1713488563.git.dsimic@manjaro.org>
 
 
-* jc/format-patch-rfc-more (2024-04-18) 1 commit
+* jc/format-patch-rfc-more (2024-04-22) 2 commits
+ - format-patch: "--rfc=-(WIP)" appends to produce [PATCH (WIP)]
  - format-patch: allow --rfc to optionally take a value, like --rfc=WIP
 
- source: <xmqqzftqnuxq.fsf@gitster.g>
+ The "--rfc" option of "git format-patch" learned to take an
+ optional string value to be used in place of "RFC" to tweak the
+ "[PATCH]" on the subject header.
+
+ Will merge to 'next'?
+ source: <20240421185915.1031590-1-gitster@pobox.com>
 
 
 * ps/the-index-is-no-more (2024-04-18) 6 commits
@@ -88,6 +126,11 @@ Release tarballs are available at:
  - builtin: stop using `the_index`
  - t/helper: stop using `the_index`
 
+ The singleton index_state instance "the_index" has been eliminated
+ by always instantiating "the_repository" and replacing references
+ to "the_index"  with references to its .index member.
+
+ Comments?
  source: <cover.1713442061.git.ps@pks.im>
 
 
@@ -99,10 +142,13 @@ Release tarballs are available at:
  - sequencer: always free "struct replay_opts"
  - Merge branch 'pw/t3428-cleanup' into pw/rebase-m-signoff-fix
 
+ "git rebase --signoff" used to forget that it needs to add a
+ sign-off to the resulting commit when told to continue after a
+ conflict stops its operation.
+
+ Will merge to 'next'.
  source: <cover.1713445918.git.phillip.wood@dunelm.org.uk>
 
---------------------------------------------------
-[Cooking]
 
 * mr/rerere-crash-fix (2024-04-16) 1 commit
   (merged to 'next' on 2024-04-17 at 60be8e2d74)
@@ -117,14 +163,15 @@ Release tarballs are available at:
 
 
 * pk/bisect-use-show (2024-04-15) 1 commit
- - bisect: report the found commit with "show"
+  (merged to 'next' on 2024-04-22 at 4dd13c288f)
+ + bisect: report the found commit with "show"
 
  When "git bisect" reports the commit it determined to be the
  culprit, we used to show it in a format that does not honor common
  UI tweaks, like log.date and log.decorate.  The code has been
  taught to use "git show" to follow more customizations.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <965ae345-fd58-c46c-5a7a-de181e901f21@softwolves.pp.se>
 
 
@@ -202,19 +249,22 @@ Release tarballs are available at:
  repositories it knows about, but it stopped at the first one that
  errored out.  Now it keeps going.
 
- Will merge to 'next'?
+ Expecting a hopefully small and final reroll.
+ Can change exit condition, which needs fixing.
+ cf. <20240419175621.GB14309@coredump.intra.peff.net>
  source: <pull.1719.v2.git.1713444783.gitgitgadget@gmail.com>
 
 
 * ps/run-auto-maintenance-in-receive-pack (2024-04-17) 2 commits
- - builtin/receive-pack: convert to use git-maintenance(1)
- - run-command: introduce function to prepare auto-maintenance process
+  (merged to 'next' on 2024-04-22 at cacdcac452)
+ + builtin/receive-pack: convert to use git-maintenance(1)
+ + run-command: introduce function to prepare auto-maintenance process
 
  The "receive-pack" program (which responds to "git push") was not
  converted to run "git maintenance --auto" when other codepaths that
  used to run "git gc --auto" were updated, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1713334241.git.ps@pks.im>
 
 
@@ -329,7 +379,8 @@ Release tarballs are available at:
  commit, the error experience is not pleasant.  Such an error is now
  caught earlier in the process that parses the todo list.
 
- Comments?
+ Expecting a reroll.
+ cf. <88bc0787-e7ae-49e5-99e8-97f6c55ea8c6@gmail.com>
  source: <pull.1672.v2.git.1712585787.gitgitgadget@gmail.com>
 
 
@@ -371,6 +422,7 @@ Release tarballs are available at:
  that has better memory usage characteristics.
 
  Needs review.
+ cf. <xmqqy1a4ao3t.fsf@gitster.g>
  source: <20240328101356.300374-1-e@80x24.org>
 
 
@@ -454,20 +506,22 @@ Release tarballs are available at:
  source: <cover.1710972293.git.me@ttaylorr.com>
 
 
-* la/hide-trailer-info (2024-03-16) 7 commits
+* la/hide-trailer-info (2024-04-19) 9 commits
  - trailer: retire trailer_info_get() from API
  - trailer: make trailer_info struct private
  - trailer: make parse_trailers() return trailer_info pointer
  - interpret-trailers: access trailer_info with new helpers
  - sequencer: use the trailer iterator
  - trailer: teach iterator about non-trailer lines
+ - trailer: add unit tests for trailer iterator
+ - Makefile: sort UNIT_TEST_PROGRAMS
  - Merge branch 'la/format-trailer-info' into la/hide-trailer-info
  (this branch uses la/format-trailer-info.)
 
  The trailer API has been reshuffled a bit.
 
  Needs review.
- source: <pull.1696.git.1710570428.gitgitgadget@gmail.com>
+ source: <pull.1696.v2.git.1713504153.gitgitgadget@gmail.com>
 
 
 * ds/doc-config-reflow (2024-03-14) 1 commit
@@ -516,7 +570,7 @@ Release tarballs are available at:
  that are used in fuzzer tests, to make sure at least they build
  without bitrot, in Linux CI runs.
 
- Expecting a hopefully minor and final reroll.
+ Expecting a hopefully small and final reroll.
  cf. <20240412042247.GA1077925@coredump.intra.peff.net>
  source: <cover.1712858920.git.steadmon@google.com>
 
