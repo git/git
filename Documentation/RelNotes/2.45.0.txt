@@ -247,7 +247,7 @@ Fixes since v2.44
    This has been corrected.
    (merge 199f44cb2e ps/remote-helper-repo-initialization-fix later to maint).
 
- * Various parts of upload-pack has been updated to bound the resource
+ * Various parts of upload-pack have been updated to bound the resource
    consumption relative to the size of the repository to protect from
    abusive clients.
    (merge 6cd05e768b jk/upload-pack-bounded-resources later to maint).
@@ -294,11 +294,11 @@ Fixes since v2.44
    variable that is no longer used.
    (merge 72a8d3f027 pw/rebase-i-ignore-cherry-pick-help-environment later to maint).
 
- * The code to find the effective end of log message can fall into an
+ * The code to find the effective end of log messages can fall into an
    endless loop, which has been corrected.
    (merge 2541cba2d6 fs/find-end-of-log-message-fix later to maint).
 
- * Mark-ups used in the documentation has been improved for
+ * Mark-up used in the documentation has been improved for
    consistency.
    (merge 45d5ed3e50 ja/doc-markup-fixes later to maint).
 
@@ -392,7 +392,7 @@ Fixes since v2.44
    configuration variable used to leak, which has been corrected.
    (merge 0e0fefb29f jc/unleak-core-excludesfile later to maint).
 
- * vreportf(), which is usede by error() and friends, has been taught
+ * vreportf(), which is used by error() and friends, has been taught
    to give the error message printf-format string when its vsnprintf()
    call fails, instead of showing nothing useful to identify the
    nature of the error.
