@@ -5,6 +5,7 @@
 
 test_description='git apply boundary tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 L="c d e f g h i j k l m n o p q r s t u v w x"

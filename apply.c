@@ -3712,8 +3712,10 @@ static int apply_data(struct apply_state *state, struct patch *patch,
 			fprintf(stderr, _("Falling back to direct application...\n"));
 
 		/* Note: with --reject, apply_fragments() returns 0 */
-		if (patch->direct_to_threeway || apply_fragments(state, &image, patch) < 0)
+		if (patch->direct_to_threeway || apply_fragments(state, &image, patch) < 0) {
+			clear_image(&image);
 			return -1;
+		}
 	}
 	patch->result = image.buf;
 	patch->resultsize = image.len;
