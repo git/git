@@ -150,7 +150,7 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
-	int unused;
+	int unused, ret;
 
 	if (!git_config_get_bool("add.interactive.usebuiltin", &unused))
 		warning(_("the add.interactive.useBuiltin setting has been removed!\n"
@@ -163,9 +163,12 @@ int interactive_add(const char **argv, const char *prefix, int patch)
 		       prefix, argv);
 
 	if (patch)
-		return !!run_add_p(the_repository, ADD_P_ADD, NULL, &pathspec);
+		ret = !!run_add_p(the_repository, ADD_P_ADD, NULL, &pathspec);
 	else
-		return !!run_add_i(the_repository, &pathspec);
+		ret = !!run_add_i(the_repository, &pathspec);
+
+	clear_pathspec(&pathspec);
+	return ret;
 }
 
 static int edit_patch(int argc, const char **argv, const char *prefix)
