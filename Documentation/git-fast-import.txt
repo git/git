@@ -303,7 +303,7 @@ and some sanity checks on the numeric values may also be performed.
 	with e.g. bogus timezone values.
 
 `rfc2822`::
-	This is the standard email format as described by RFC 2822.
+	This is the standard date format as described by RFC 2822.
 +
 An example value is ``Tue Feb 6 11:22:18 2007 -0500''.  The Git
 parser is accurate, but a little on the lenient side.  It is the
