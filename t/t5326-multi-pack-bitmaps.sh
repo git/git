@@ -513,4 +513,21 @@ test_expect_success 'corrupt MIDX with bitmap causes fallback' '
 	)
 '
 
+for allow_pack_reuse in single multi
+do
+	test_expect_success "reading MIDX without BTMP chunk does not complain with $allow_pack_reuse pack reuse" '
+		test_when_finished "rm -rf midx-without-btmp" &&
+		git init midx-without-btmp &&
+		(
+			cd midx-without-btmp &&
+			test_commit initial &&
+
+			git repack -Adbl --write-bitmap-index --write-midx &&
+			GIT_TEST_MIDX_READ_BTMP=false git -c pack.allowPackReuse=$allow_pack_reuse \
+				pack-objects --all --use-bitmap-index --stdout </dev/null >/dev/null 2>err &&
+			test_must_be_empty err
+		)
+	'
+done
+
 test_done
