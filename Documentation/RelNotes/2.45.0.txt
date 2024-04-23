@@ -96,6 +96,11 @@ UI, Workflows & Features
  * The filename used for rejected hunks "git apply --reject" creates
    was limited to PATH_MAX, which has been lifted.
 
+ * When "git bisect" reports the commit it determined to be the
+   culprit, we used to show it in a format that does not honor common
+   UI tweaks, like log.date and log.decorate.  The code has been
+   taught to use "git show" to follow more customizations.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -430,6 +435,11 @@ Fixes since v2.44
    work on a file with conflicted hunks resolved incompletely, the rerere
    machinery got confused and segfaulted, which has been corrected.
    (merge 167395bb47 mr/rerere-crash-fix later to maint).
+
+ * The "receive-pack" program (which responds to "git push") was not
+   converted to run "git maintenance --auto" when other codepaths that
+   used to run "git gc --auto" were updated, which has been corrected.
+   (merge 7bf3057d9c ps/run-auto-maintenance-in-receive-pack later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
