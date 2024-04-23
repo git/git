@@ -196,6 +196,7 @@ git-update-ref                          plumbingmanipulators
 git-update-server-info                  synchingrepositories
 git-upload-archive                      synchelpers
 git-upload-pack                         synchelpers
+git-url-parse                           plumbinginterrogators
 git-var                                 plumbinginterrogators
 git-verify-commit                       ancillaryinterrogators
 git-verify-pack                         plumbinginterrogators

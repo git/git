@@ -240,6 +240,7 @@ int cmd_update_server_info(int argc, const char **argv, const char *prefix);
 int cmd_upload_archive(int argc, const char **argv, const char *prefix);
 int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix);
 int cmd_upload_pack(int argc, const char **argv, const char *prefix);
+int cmd_url_parse(int argc, const char **argv, const char *prefix);
 int cmd_var(int argc, const char **argv, const char *prefix);
 int cmd_verify_commit(int argc, const char **argv, const char *prefix);
 int cmd_verify_tag(int argc, const char **argv, const char *prefix);
