@@ -104,16 +104,15 @@ static int launch_specified_editor(const char *editor, const char *path,
 		sigchain_pop(SIGQUIT);
 		if (sig == SIGINT || sig == SIGQUIT)
 			raise(sig);
-		if (ret)
-			return error("There was a problem with the editor '%s'.",
-					editor);
-
 		if (print_waiting_for_editor && !is_terminal_dumb())
 			/*
 			 * Erase the entire line to avoid wasting the
 			 * vertical space.
 			 */
 			term_clear_line();
+		if (ret)
+			return error("there was a problem with the editor '%s'",
+					editor);
 	}
 
 	if (!buffer)
