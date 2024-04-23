@@ -1793,20 +1793,27 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		trace2_region_leave(tr2_category, tr2_label, NULL);
 }
 
-int run_auto_maintenance(int quiet)
+int prepare_auto_maintenance(int quiet, struct child_process *maint)
 {
 	int enabled;
-	struct child_process maint = CHILD_PROCESS_INIT;
 
 	if (!git_config_get_bool("maintenance.auto", &enabled) &&
 	    !enabled)
 		return 0;
 
-	maint.git_cmd = 1;
-	maint.close_object_store = 1;
-	strvec_pushl(&maint.args, "maintenance", "run", "--auto", NULL);
-	strvec_push(&maint.args, quiet ? "--quiet" : "--no-quiet");
+	maint->git_cmd = 1;
+	maint->close_object_store = 1;
+	strvec_pushl(&maint->args, "maintenance", "run", "--auto", NULL);
+	strvec_push(&maint->args, quiet ? "--quiet" : "--no-quiet");
 
+	return 1;
+}
+
+int run_auto_maintenance(int quiet)
+{
+	struct child_process maint = CHILD_PROCESS_INIT;
+	if (!prepare_auto_maintenance(quiet, &maint))
+		return 0;
 	return run_command(&maint);
 }
 
