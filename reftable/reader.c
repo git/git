@@ -220,21 +220,12 @@ struct table_iter {
 	struct reftable_reader *r;
 	uint8_t typ;
 	uint64_t block_off;
+	struct block_reader br;
 	struct block_iter bi;
 	int is_finished;
 };
 #define TABLE_ITER_INIT { \
 	.bi = BLOCK_ITER_INIT \
-}
-
-static void table_iter_copy_from(struct table_iter *dest,
-				 struct table_iter *src)
-{
-	dest->r = src->r;
-	dest->typ = src->typ;
-	dest->block_off = src->block_off;
-	dest->is_finished = src->is_finished;
-	block_iter_copy_from(&dest->bi, &src->bi);
 }
 
 static int table_iter_next_in_block(struct table_iter *ti,
@@ -250,14 +241,8 @@ static int table_iter_next_in_block(struct table_iter *ti,
 
 static void table_iter_block_done(struct table_iter *ti)
 {
-	if (!ti->bi.br) {
-		return;
-	}
-	reftable_block_done(&ti->bi.br->block);
-	FREE_AND_NULL(ti->bi.br);
-
-	ti->bi.last_key.len = 0;
-	ti->bi.next_off = 0;
+	block_reader_release(&ti->br);
+	block_iter_reset(&ti->bi);
 }
 
 static int32_t extract_block_size(uint8_t *data, uint8_t *typ, uint64_t off,
@@ -321,32 +306,27 @@ done:
 	return err;
 }
 
-static int table_iter_next_block(struct table_iter *dest,
-				 struct table_iter *src)
+static void table_iter_close(struct table_iter *ti)
 {
-	uint64_t next_block_off = src->block_off + src->bi.br->full_block_size;
-	struct block_reader br = { 0 };
-	int err = 0;
+	table_iter_block_done(ti);
+	block_iter_close(&ti->bi);
+}
 
-	dest->r = src->r;
-	dest->typ = src->typ;
-	dest->block_off = next_block_off;
+static int table_iter_next_block(struct table_iter *ti)
+{
+	uint64_t next_block_off = ti->block_off + ti->br.full_block_size;
+	int err;
 
-	err = reader_init_block_reader(src->r, &br, next_block_off, src->typ);
-	if (err > 0) {
-		dest->is_finished = 1;
-		return 1;
-	}
-	if (err != 0)
+	err = reader_init_block_reader(ti->r, &ti->br, next_block_off, ti->typ);
+	if (err > 0)
+		ti->is_finished = 1;
+	if (err)
 		return err;
-	else {
-		struct block_reader *brp =
-			reftable_malloc(sizeof(struct block_reader));
-		*brp = br;
 
-		dest->is_finished = 0;
-		block_reader_start(brp, &dest->bi);
-	}
+	ti->block_off = next_block_off;
+	ti->is_finished = 0;
+	block_iter_seek_start(&ti->bi, &ti->br);
+
 	return 0;
 }
 
@@ -356,7 +336,6 @@ static int table_iter_next(struct table_iter *ti, struct reftable_record *rec)
 		return REFTABLE_API_ERROR;
 
 	while (1) {
-		struct table_iter next = TABLE_ITER_INIT;
 		int err;
 
 		if (ti->is_finished)
@@ -376,15 +355,11 @@ static int table_iter_next(struct table_iter *ti, struct reftable_record *rec)
 		 * table and retry. If there are no more blocks then the
 		 * iterator is drained.
 		 */
-		err = table_iter_next_block(&next, ti);
-		table_iter_block_done(ti);
+		err = table_iter_next_block(ti);
 		if (err) {
 			ti->is_finished = 1;
 			return err;
 		}
-
-		table_iter_copy_from(ti, &next);
-		block_iter_close(&next.bi);
 	}
 }
 
@@ -393,16 +368,14 @@ static int table_iter_next_void(void *ti, struct reftable_record *rec)
 	return table_iter_next(ti, rec);
 }
 
-static void table_iter_close(void *p)
+static void table_iter_close_void(void *ti)
 {
-	struct table_iter *ti = p;
-	table_iter_block_done(ti);
-	block_iter_close(&ti->bi);
+	table_iter_close(ti);
 }
 
 static struct reftable_iterator_vtable table_iter_vtable = {
 	.next = &table_iter_next_void,
-	.close = &table_iter_close,
+	.close = &table_iter_close_void,
 };
 
 static void iterator_from_table_iter(struct reftable_iterator *it,
@@ -417,19 +390,16 @@ static int reader_table_iter_at(struct reftable_reader *r,
 				struct table_iter *ti, uint64_t off,
 				uint8_t typ)
 {
-	struct block_reader br = { 0 };
-	struct block_reader *brp = NULL;
+	int err;
 
-	int err = reader_init_block_reader(r, &br, off, typ);
+	err = reader_init_block_reader(r, &ti->br, off, typ);
 	if (err != 0)
 		return err;
 
-	brp = reftable_malloc(sizeof(struct block_reader));
-	*brp = br;
 	ti->r = r;
-	ti->typ = block_reader_type(brp);
+	ti->typ = block_reader_type(&ti->br);
 	ti->block_off = off;
-	block_reader_start(brp, &ti->bi);
+	block_iter_seek_start(&ti->bi, &ti->br);
 	return 0;
 }
 
@@ -454,23 +424,52 @@ static int reader_seek_linear(struct table_iter *ti,
 {
 	struct strbuf want_key = STRBUF_INIT;
 	struct strbuf got_key = STRBUF_INIT;
-	struct table_iter next = TABLE_ITER_INIT;
 	struct reftable_record rec;
 	int err = -1;
 
 	reftable_record_init(&rec, reftable_record_type(want));
 	reftable_record_key(want, &want_key);
 
+	/*
+	 * First we need to locate the block that must contain our record. To
+	 * do so we scan through blocks linearly until we find the first block
+	 * whose first key is bigger than our wanted key. Once we have found
+	 * that block we know that the key must be contained in the preceding
+	 * block.
+	 *
+	 * This algorithm is somewhat unfortunate because it means that we
+	 * always have to seek one block too far and then back up. But as we
+	 * can only decode the _first_ key of a block but not its _last_ key we
+	 * have no other way to do this.
+	 */
 	while (1) {
-		err = table_iter_next_block(&next, ti);
+		struct table_iter next = *ti;
+
+		/*
+		 * We must be careful to not modify underlying data of `ti`
+		 * because we may find that `next` does not contain our desired
+		 * block, but that `ti` does. In that case, we would discard
+		 * `next` and continue with `ti`.
+		 *
+		 * This also means that we cannot reuse allocated memory for
+		 * `next` here. While it would be great if we could, it should
+		 * in practice not be too bad given that we should only ever
+		 * end up doing linear seeks with at most three blocks. As soon
+		 * as we have more than three blocks we would have an index, so
+		 * we would not do a linear search there anymore.
+		 */
+		memset(&next.br.block, 0, sizeof(next.br.block));
+		next.br.zstream = NULL;
+		next.br.uncompressed_data = NULL;
+		next.br.uncompressed_cap = 0;
+
+		err = table_iter_next_block(&next);
 		if (err < 0)
 			goto done;
-
-		if (err > 0) {
+		if (err > 0)
 			break;
-		}
 
-		err = block_reader_first_key(next.bi.br, &got_key);
+		err = block_reader_first_key(&next.br, &got_key);
 		if (err < 0)
 			goto done;
 
@@ -480,16 +479,20 @@ static int reader_seek_linear(struct table_iter *ti,
 		}
 
 		table_iter_block_done(ti);
-		table_iter_copy_from(ti, &next);
+		*ti = next;
 	}
 
-	err = block_iter_seek(&ti->bi, &want_key);
+	/*
+	 * We have located the block that must contain our record, so we seek
+	 * the wanted key inside of it. If the block does not contain our key
+	 * we know that the corresponding record does not exist.
+	 */
+	err = block_iter_seek_key(&ti->bi, &ti->br, &want_key);
 	if (err < 0)
 		goto done;
 	err = 0;
 
 done:
-	block_iter_close(&next.bi);
 	reftable_record_release(&rec);
 	strbuf_release(&want_key);
 	strbuf_release(&got_key);
@@ -508,6 +511,7 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		.u.idx = { .last_key = STRBUF_INIT },
 	};
 	struct table_iter index_iter = TABLE_ITER_INIT;
+	struct table_iter empty = TABLE_ITER_INIT;
 	struct table_iter next = TABLE_ITER_INIT;
 	int err = 0;
 
@@ -549,7 +553,6 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		 * not exist.
 		 */
 		err = table_iter_next(&index_iter, &index_result);
-		table_iter_block_done(&index_iter);
 		if (err != 0)
 			goto done;
 
@@ -558,7 +561,7 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		if (err != 0)
 			goto done;
 
-		err = block_iter_seek(&next.bi, &want_index.u.idx.last_key);
+		err = block_iter_seek_key(&next.bi, &next.br, &want_index.u.idx.last_key);
 		if (err < 0)
 			goto done;
 
@@ -572,18 +575,20 @@ static int reader_seek_indexed(struct reftable_reader *r,
 			break;
 		}
 
-		table_iter_copy_from(&index_iter, &next);
+		table_iter_close(&index_iter);
+		index_iter = next;
+		next = empty;
 	}
 
 	if (err == 0) {
-		struct table_iter empty = TABLE_ITER_INIT;
 		struct table_iter *malloced = reftable_calloc(1, sizeof(*malloced));
-		*malloced = empty;
-		table_iter_copy_from(malloced, &next);
+		*malloced = next;
+		next = empty;
 		iterator_from_table_iter(it, malloced);
 	}
+
 done:
-	block_iter_close(&next.bi);
+	table_iter_close(&next);
 	table_iter_close(&index_iter);
 	reftable_record_release(&want_index);
 	reftable_record_release(&index_result);
@@ -597,25 +602,28 @@ static int reader_seek_internal(struct reftable_reader *r,
 	struct reftable_reader_offsets *offs =
 		reader_offsets_for(r, reftable_record_type(rec));
 	uint64_t idx = offs->index_offset;
-	struct table_iter ti = TABLE_ITER_INIT;
-	int err = 0;
+	struct table_iter ti = TABLE_ITER_INIT, *p;
+	int err;
+
 	if (idx > 0)
 		return reader_seek_indexed(r, it, rec);
 
 	err = reader_start(r, &ti, reftable_record_type(rec), 0);
 	if (err < 0)
-		return err;
+		goto out;
+
 	err = reader_seek_linear(&ti, rec);
 	if (err < 0)
-		return err;
-	else {
-		struct table_iter *p =
-			reftable_malloc(sizeof(struct table_iter));
-		*p = ti;
-		iterator_from_table_iter(it, p);
-	}
+		goto out;
 
-	return 0;
+	REFTABLE_ALLOC_ARRAY(p, 1);
+	*p = ti;
+	iterator_from_table_iter(it, p);
+
+out:
+	if (err)
+		table_iter_close(&ti);
+	return err;
 }
 
 static int reader_seek(struct reftable_reader *r, struct reftable_iterator *it,

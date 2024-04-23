@@ -69,7 +69,7 @@ static void test_block_read_write(void)
 
 	block_reader_init(&br, &block, header_off, block_size, GIT_SHA1_RAWSZ);
 
-	block_reader_start(&br, &it);
+	block_iter_seek_start(&it, &br);
 
 	while (1) {
 		int r = block_iter_next(&it, &rec);
@@ -89,7 +89,7 @@ static void test_block_read_write(void)
 		strbuf_reset(&want);
 		strbuf_addstr(&want, names[i]);
 
-		n = block_reader_seek(&br, &it, &want);
+		n = block_iter_seek_key(&it, &br, &want);
 		EXPECT(n == 0);
 
 		n = block_iter_next(&it, &rec);
@@ -98,7 +98,7 @@ static void test_block_read_write(void)
 		EXPECT_STREQ(names[i], rec.u.ref.refname);
 
 		want.len--;
-		n = block_reader_seek(&br, &it, &want);
+		n = block_iter_seek_key(&it, &br, &want);
 		EXPECT(n == 0);
 
 		n = block_iter_next(&it, &rec);
