@@ -2065,8 +2065,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_from_description_arg)
 		cover_from_description_mode = parse_cover_from_description(cover_from_description_arg);
 
-	if (rfc && rfc[0])
-		strbuf_insertf(&sprefix, 0, "%s ", rfc);
+	if (rfc && rfc[0]) {
+		if (rfc[0] == '-')
+			strbuf_addf(&sprefix, " %s", rfc + 1);
+		else
+			strbuf_insertf(&sprefix, 0, "%s ", rfc);
+	}
 
 	if (reroll_count) {
 		strbuf_addf(&sprefix, " v%s", reroll_count);

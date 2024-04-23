@@ -1394,6 +1394,15 @@ test_expect_success '--rfc=WIP and --rfc=' '
 	test_cmp expect-raw actual
 '
 
+test_expect_success '--rfc=-(WIP) appends' '
+	cat >expect <<-\EOF &&
+	Subject: [PATCH (WIP) 1/1] header with . in it
+	EOF
+	git format-patch -n -1 --stdout --rfc="-(WIP)" >patch &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--rfc does not overwrite prefix' '
 	cat >expect <<-\EOF &&
 	Subject: [RFC PATCH foobar 1/1] header with . in it
