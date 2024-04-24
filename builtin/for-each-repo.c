@@ -8,7 +8,7 @@
 #include "string-list.h"
 
 static const char * const for_each_repo_usage[] = {
-	N_("git for-each-repo --config=<config> [--] <arguments>"),
+	N_("git for-each-repo --config=<config> [--continue] [--] <arguments>"),
 	NULL
 };
 
@@ -32,6 +32,7 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
 {
 	static const char *config_key = NULL;
+	static int cont = 0;
 	int i, result = 0;
 	const struct string_list *values;
 	int err;
@@ -39,6 +40,8 @@ int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
 	const struct option options[] = {
 		OPT_STRING(0, "config", &config_key, N_("config"),
 			   N_("config key storing a list of repository paths")),
+		OPT_BOOL(0, "continue", &cont,
+			   N_("continue on error")),
 		OPT_END()
 	};
 
@@ -55,8 +58,8 @@ int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
 	else if (err)
 		return 0;
 
-	for (i = 0; !result && i < values->nr; i++)
+	for (i = 0; (cont || !result) && i < values->nr; i++)
 		result = run_command_on_repo(values->items[i].string, argc, argv);
 
-	return result;
+	return cont ? 0 : result;
 }

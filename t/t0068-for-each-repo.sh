@@ -59,4 +59,25 @@ test_expect_success 'error on NULL value for config keys' '
 	test_cmp expect actual
 '
 
+test_expect_success 'terminate or continue on error' '
+	git init before &&
+	git init after &&
+	git -C before commit --allow-empty -m "none" &&
+	git -C after commit --allow-empty -m "none" &&
+	git config run.witherror "$TRASH_DIRECTORY/before" &&
+	git config --add run.witherror "$TRASH_DIRECTORY/willfail" &&
+	git config --add run.witherror "$TRASH_DIRECTORY/after" &&
+	! git for-each-repo --config=run.witherror commit --allow-empty -m "first" &&
+	git -C before log -1 --pretty=format:%s >message &&
+	grep first message &&
+	git -C after log -1 --pretty=format:%s >message &&
+	! grep first message &&
+	git for-each-repo --config=run.witherror --continue commit --allow-empty -m "second" &&
+	git -C before log -1 --pretty=format:%s >message &&
+	grep second message &&
+	git -C after log -1 --pretty=format:%s >message &&
+	grep second message &&
+	true
+'
+
 test_done
