@@ -256,7 +256,7 @@ Fixes since v2.44
    (merge 5edd126720 jk/reflog-special-cases-fix later to maint).
 
  * An error message from "git upload-pack", which responds to "git
-   fetch" requests, had a trialing NUL in it, which has been
+   fetch" requests, had a trailing NUL in it, which has been
    corrected.
    (merge 3f4c7a0805 sg/upload-pack-error-message-fix later to maint).
 
