@@ -639,9 +639,9 @@ test_expect_success 'start from empty cron table' '
 	# start registers the repo
 	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
 
-	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=daily" cron.txt &&
-	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=hourly" cron.txt &&
-	grep "for-each-repo --config=maintenance.repo maintenance run --schedule=weekly" cron.txt
+	grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=daily" cron.txt &&
+	grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=hourly" cron.txt &&
+	grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=weekly" cron.txt
 '
 
 test_expect_success 'stop from existing schedule' '
