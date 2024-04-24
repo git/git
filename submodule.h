@@ -148,6 +148,11 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
  */
 int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
 
+/*
+ * Make sure that the given submodule path does not follow symlinks.
+ */
+int validate_submodule_path(const char *path);
+
 #define SUBMODULE_MOVE_HEAD_DRY_RUN (1<<0)
 #define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
 int submodule_move_head(const char *path, const char *super_prefix,
