@@ -257,9 +257,9 @@ The schedule written by `git maintenance start` is similar to this:
 # Any edits made in this region might be
 # replaced in the future by a Git command.
 
-0 1-23 * * * "/<path>/git" --exec-path="/<path>" for-each-repo --config=maintenance.repo maintenance run --schedule=hourly
-0 0 * * 1-6 "/<path>/git" --exec-path="/<path>" for-each-repo --config=maintenance.repo maintenance run --schedule=daily
-0 0 * * 0 "/<path>/git" --exec-path="/<path>" for-each-repo --config=maintenance.repo maintenance run --schedule=weekly
+0 1-23 * * * "/<path>/git" --exec-path="/<path>" for-each-repo --config=maintenance.repo --continue maintenance run --schedule=hourly
+0 0 * * 1-6 "/<path>/git" --exec-path="/<path>" for-each-repo --config=maintenance.repo --continue maintenance run --schedule=daily
+0 0 * * 0 "/<path>/git" --exec-path="/<path>" for-each-repo --config=maintenance.repo --continue maintenance run --schedule=weekly
 
 # END GIT MAINTENANCE SCHEDULE
 -----------------------------------------------------------------------
@@ -274,14 +274,14 @@ ensure that the executed `git` command is the same one with which
 runs `git maintenance start` with multiple Git executables, then only the
 latest executable is used.
 
-These commands use `git for-each-repo --config=maintenance.repo` to run
-`git maintenance run --schedule=<frequency>` on each repository listed in
-the multi-valued `maintenance.repo` config option. These are typically
-loaded from the user-specific global config. The `git maintenance` process
-then determines which maintenance tasks are configured to run on each
-repository with each `<frequency>` using the `maintenance.<task>.schedule`
-config options. These values are loaded from the global or repository
-config values.
+These commands use `git for-each-repo --config=maintenance.repo --continue`
+to run `git maintenance run --schedule=<frequency>` on each repository
+listed in the multi-valued `maintenance.repo` config option. These are
+typically loaded from the user-specific global config. The
+`git maintenance` process then determines which maintenance tasks are
+configured to run on each repository with each `<frequency>` using the
+`maintenance.<task>.schedule` config options. These values are loaded from
+the global or repository config values.
 
 If the config values are insufficient to achieve your desired background
 maintenance schedule, then you can create your own schedule. If you run
