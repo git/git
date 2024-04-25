@@ -970,7 +970,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int submodule_progress;
 	int filter_submodules = 0;
 	int hash_algo;
-	unsigned int ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
+	enum ref_storage_format ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
 	const int do_not_override_repo_unix_permissions = -1;
 	const char *template_dir;
 	char *template_dir_dup = NULL;
