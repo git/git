@@ -277,7 +277,7 @@ void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt, va_list ap)
 	len = vsnprintf(sb->buf + sb->len, 0, fmt, cp);
 	va_end(cp);
 	if (len < 0)
-		BUG("your vsnprintf is broken (returned %d)", len);
+		die(_("unable to format message: %s"), fmt);
 	if (!len)
 		return; /* nothing to do */
 	if (unsigned_add_overflows(sb->len, len))
@@ -404,7 +404,7 @@ void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap)
 	len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, cp);
 	va_end(cp);
 	if (len < 0)
-		BUG("your vsnprintf is broken (returned %d)", len);
+		die(_("unable to format message: %s"), fmt);
 	if (len > strbuf_avail(sb)) {
 		strbuf_grow(sb, len);
 		len = vsnprintf(sb->buf + sb->len, sb->alloc - sb->len, fmt, ap);
