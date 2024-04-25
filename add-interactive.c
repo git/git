@@ -865,6 +865,7 @@ static int get_untracked_files(struct repository *r,
 	}
 
 	strbuf_release(&buf);
+	dir_clear(&dir);
 	return 0;
 }
 

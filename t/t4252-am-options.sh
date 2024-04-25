@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='git am with options and not losing them'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 tm="$TEST_DIRECTORY/t4252"
