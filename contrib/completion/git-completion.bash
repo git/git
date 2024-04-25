@@ -3523,6 +3523,17 @@ _git_svn ()
 	fi
 }
 
+_git_symbolic_ref () {
+	case "$cur" in
+	--*)
+		__gitcomp_builtin symbolic-ref
+		return
+		;;
+	esac
+
+	__git_complete_refs
+}
+
 _git_tag ()
 {
 	local i c="$__git_cmd_idx" f=0
