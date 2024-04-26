@@ -3340,11 +3340,74 @@ static int files_ref_store_create_on_disk(struct ref_store *ref_store,
 	return 0;
 }
 
+struct remove_one_root_ref_data {
+	const char *gitdir;
+	struct strbuf *err;
+};
+
+static int remove_one_root_ref(const char *refname,
+			       void *cb_data)
+{
+	struct remove_one_root_ref_data *data = cb_data;
+	struct strbuf buf = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addf(&buf, "%s/%s", data->gitdir, refname);
+
+	ret = unlink(buf.buf);
+	if (ret < 0)
+		strbuf_addf(data->err, "could not delete %s: %s\n",
+			    refname, strerror(errno));
+
+	strbuf_release(&buf);
+	return ret;
+}
+
+static int files_ref_store_remove_on_disk(struct ref_store *ref_store,
+					  struct strbuf *err)
+{
+	struct files_ref_store *refs =
+		files_downcast(ref_store, REF_STORE_WRITE, "remove");
+	struct remove_one_root_ref_data data = {
+		.gitdir = refs->base.gitdir,
+		.err = err,
+	};
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addf(&sb, "%s/refs", refs->base.gitdir);
+	if (remove_dir_recursively(&sb, 0) < 0) {
+		strbuf_addf(err, "could not delete refs: %s",
+			    strerror(errno));
+		ret = -1;
+	}
+	strbuf_reset(&sb);
+
+	strbuf_addf(&sb, "%s/logs", refs->base.gitdir);
+	if (remove_dir_recursively(&sb, 0) < 0) {
+		strbuf_addf(err, "could not delete logs: %s",
+			    strerror(errno));
+		ret = -1;
+	}
+	strbuf_reset(&sb);
+
+	ret = for_each_root_ref(refs, remove_one_root_ref, &data);
+	if (ret < 0)
+		ret = -1;
+
+	if (ref_store_remove_on_disk(refs->packed_ref_store, err) < 0)
+		ret = -1;
+
+	strbuf_release(&sb);
+	return ret;
+}
+
 struct ref_storage_be refs_be_files = {
 	.name = "files",
 	.init = files_ref_store_init,
 	.release = files_ref_store_release,
 	.create_on_disk = files_ref_store_create_on_disk,
+	.remove_on_disk = files_ref_store_remove_on_disk,
 
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,

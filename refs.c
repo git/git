@@ -1861,6 +1861,11 @@ int ref_store_create_on_disk(struct ref_store *refs, int flags, struct strbuf *e
 	return refs->be->create_on_disk(refs, flags, err);
 }
 
+int ref_store_remove_on_disk(struct ref_store *refs, struct strbuf *err)
+{
+	return refs->be->remove_on_disk(refs, err);
+}
+
 int repo_resolve_gitlink_ref(struct repository *r,
 			     const char *submodule, const char *refname,
 			     struct object_id *oid)
