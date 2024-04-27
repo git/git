@@ -11,7 +11,21 @@
 
 #include "builtin.h"
 #include "gettext.h"
+#include "parse-options.h"
 #include "urlmatch.h"
+
+static const char * const builtin_url_parse_usage[] = {
+	N_("git url-parse [<options>] [--] <url>..."),
+	NULL
+};
+
+static char *component_arg = NULL;
+
+static struct option builtin_url_parse_options[] = {
+	OPT_STRING('c', "component", &component_arg, "<component>", \
+		N_("which URL component to extract")),
+	OPT_END(),
+};
 
 enum url_component {
 	URL_NONE = 0,
