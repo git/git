@@ -11,6 +11,16 @@
 
 #include "builtin.h"
 #include "gettext.h"
+#include "urlmatch.h"
+
+static void parse_or_die(const char *url, struct url_info *info)
+{
+	if (url_parse(url, info)) {
+		return;
+	} else {
+		die("invalid git URL '%s', %s", url, info->err);
+	}
+}
 
 int cmd_url_parse(int argc, const char **argv, const char *prefix)
 {
