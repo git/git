@@ -32,6 +32,42 @@ static void parse_or_die(const char *url, struct url_info *info)
 	}
 }
 
+static char *extract(enum url_component component, struct url_info *info)
+{
+	size_t offset, length;
+
+	switch (component) {
+	case URL_PROTOCOL:
+		offset = 0;
+		length = info->scheme_len;
+		break;
+	case URL_USER:
+		offset = info->user_off;
+		length = info->user_len;
+		break;
+	case URL_PASSWORD:
+		offset = info->passwd_off;
+		length = info->passwd_len;
+		break;
+	case URL_HOST:
+		offset = info->host_off;
+		length = info->host_len;
+		break;
+	case URL_PORT:
+		offset = info->port_off;
+		length = info->port_len;
+		break;
+	case URL_PATH:
+		offset = info->path_off;
+		length = info->path_len;
+		break;
+	case URL_NONE:
+		return NULL;
+	}
+
+	return xstrndup(info->url + offset, length);
+}
+
 int cmd_url_parse(int argc, const char **argv, const char *prefix)
 {
 	return 0;
