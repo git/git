@@ -3,6 +3,7 @@
 #include "hex-ll.h"
 #include "strbuf.h"
 #include "urlmatch.h"
+#include "url.h"
 
 #define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 #define URL_DIGIT "0123456789"
@@ -436,6 +437,95 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 char *url_normalize(const char *url, struct url_info *out_info)
 {
 	return url_normalize_1(url, out_info, 0);
+}
+
+enum protocol {
+	PROTO_UNKNOWN = 0,
+	PROTO_LOCAL,
+	PROTO_FILE,
+	PROTO_SSH,
+	PROTO_GIT,
+};
+
+static enum protocol url_get_protocol(const char *name, size_t n)
+{
+	if (!strncmp(name, "ssh", n))
+		return PROTO_SSH;
+	if (!strncmp(name, "git", n))
+		return PROTO_GIT;
+	if (!strncmp(name, "git+ssh", n)) /* deprecated - do not use */
+		return PROTO_SSH;
+	if (!strncmp(name, "ssh+git", n)) /* deprecated - do not use */
+		return PROTO_SSH;
+	if (!strncmp(name, "file", n))
+		return PROTO_FILE;
+	return PROTO_UNKNOWN;
+}
+
+char *url_parse(const char *url_orig, struct url_info *out_info)
+{
+	struct strbuf url;
+	char *host, *separator;
+	char *detached, *normalized;
+	enum protocol protocol = PROTO_LOCAL;
+	struct url_info local_info;
+	struct url_info *info = out_info? out_info : &local_info;
+	bool scp_syntax = false;
+
+	if (is_url(url_orig)) {
+		url_orig = url_decode(url_orig);
+	} else {
+		url_orig = xstrdup(url_orig);
+	}
+
+	strbuf_init(&url, strlen(url_orig) + sizeof("ssh://"));
+	strbuf_addstr(&url, url_orig);
+
+	host = strstr(url.buf, "://");
+	if (host) {
+		protocol = url_get_protocol(url.buf, host - url.buf);
+		host += 3;
+	} else {
+		if (!url_is_local_not_ssh(url.buf)) {
+			scp_syntax = true;
+			protocol = PROTO_SSH;
+			strbuf_insertstr(&url, 0, "ssh://");
+			host = url.buf + 6;
+		}
+	}
+
+	/* path starts after ':' in scp style SSH URLs */
+	if (scp_syntax) {
+		separator = strchr(host, ':');
+		if (separator) {
+			if (separator[1] == '/')
+				strbuf_remove(&url, separator - url.buf, 1);
+			else
+				*separator = '/';
+		}
+	}
+
+	detached = strbuf_detach(&url, NULL);
+	normalized = url_normalize(detached, info);
+	free(detached);
+
+	if (!normalized) {
+		return NULL;
+	}
+
+	/* point path to ~ for URL's like this:
+	 *
+	 *     ssh://host.xz/~user/repo
+	 *     git://host.xz/~user/repo
+	 *     host.xz:~user/repo
+	 *
+	 */
+	if (protocol == PROTO_GIT || protocol == PROTO_SSH) {
+		if (normalized[info->path_off + 1] == '~')
+			info->path_off++;
+	}
+
+	return normalized;
 }
 
 static size_t url_match_prefix(const char *url,
