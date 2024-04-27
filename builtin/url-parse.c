@@ -32,6 +32,23 @@ static void parse_or_die(const char *url, struct url_info *info)
 	}
 }
 
+static enum url_component get_component_or_die(const char *arg)
+{
+	if (!strcmp("path", arg))
+		return URL_PATH;
+	if (!strcmp("host", arg))
+		return URL_HOST;
+	if (!strcmp("protocol", arg))
+		return URL_PROTOCOL;
+	if (!strcmp("user", arg))
+		return URL_USER;
+	if (!strcmp("password", arg))
+		return URL_PASSWORD;
+	if (!strcmp("port", arg))
+		return URL_PORT;
+	die("invalid git URL component '%s'", arg);
+}
+
 static char *extract(enum url_component component, struct url_info *info)
 {
 	size_t offset, length;
