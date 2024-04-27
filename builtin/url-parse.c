@@ -102,6 +102,8 @@ static char *extract(enum url_component component, struct url_info *info)
 int cmd_url_parse(int argc, const char **argv, const char *prefix)
 {
 	struct url_info info;
+	enum url_component selected = URL_NONE;
+	char *extracted;
 	int i;
 
 	argc = parse_options(argc, argv, prefix,
@@ -109,8 +111,20 @@ int cmd_url_parse(int argc, const char **argv, const char *prefix)
 		builtin_url_parse_usage,
 		0);
 
+	if (component_arg)
+		selected = get_component_or_die(component_arg);
+
 	for (i = 0; i < argc; ++i) {
 		parse_or_die(argv[i], &info);
+
+		if (selected != URL_NONE) {
+			extracted = extract(selected, &info);
+			if (extracted) {
+				puts(extracted);
+				free(extracted);
+			}
+		}
+
 		free(info.url);
 	}
 
