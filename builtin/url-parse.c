@@ -101,5 +101,10 @@ static char *extract(enum url_component component, struct url_info *info)
 
 int cmd_url_parse(int argc, const char **argv, const char *prefix)
 {
+	argc = parse_options(argc, argv, prefix,
+		builtin_url_parse_options,
+		builtin_url_parse_usage,
+		0);
+
 	return 0;
 }
