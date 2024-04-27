@@ -1,0 +1,59 @@
+git-url-parse(1)
+================
+
+NAME
+----
+git-url-parse - Parse and extract git URL components
+
+SYNOPSIS
+--------
+[verse]
+'git url-parse' [<options>] [--] <url>...
+
+DESCRIPTION
+-----------
+
+Git supports many ways to specify URLs, some of them non-standard.
+For example, git supports the scp style [user@]host:[path] format.
+This command eases interoperability with git URLs by enabling the
+parsing and extraction of the components of all git URLs.
+
+OPTIONS
+-------
+
+-c <arg>::
+--component <arg>::
+	Extract the `<arg>` component from the given git URLs.
+	`<arg>` can be one of:
+	`protocol`, `user`, `password`, `host`, `port`, `path`.
+
+EXAMPLES
+--------
+
+* Print the host name:
++
+------------
+$ git url-parse --component host https://example.com/user/repo
+example.com
+------------
+
+* Print the path:
++
+------------
+$ git url-parse --component path https://example.com/user/repo
+/usr/repo
+$ git url-parse --component path example.com:~user/repo
+~user/repo
+$ git url-parse --component path example.com:user/repo
+/user/repo
+------------
+
+* Validate URLs without outputting anything:
++
+------------
+$ git url-parse https://example.com/user/repo example.com:~user/repo
+------------
+
+GIT
+---
+Part of the linkgit:git[1] suite
