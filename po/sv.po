@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.44.0\n"
+"Project-Id-Version: git 2.45.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-02-16 07:58+0100\n"
-"PO-Revision-Date: 2024-02-16 07:59+0100\n"
+"POT-Creation-Date: 2024-04-27 15:19+0100\n"
+"PO-Revision-Date: 2024-04-27 15:20+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -490,12 +490,12 @@ msgid ""
 "---\n"
 "To remove '%c' lines, make them ' ' lines (context).\n"
 "To remove '%c' lines, delete them.\n"
-"Lines starting with %c will be removed.\n"
+"Lines starting with %s will be removed.\n"
 msgstr ""
 "---\n"
 "Ta bort ”%c” rader genom att göra dem ” ”-rader (sammanhang).\n"
 "Ta bort ”%c” rader genom att radera dem.\n"
-"Rader som börjar med %c kommer att tas bort.\n"
+"Rader som börjar med %s kommer att tas bort.\n"
 
 msgid ""
 "If it does not apply cleanly, you will be given an opportunity to\n"
@@ -542,6 +542,7 @@ msgid ""
 "/ - search for a hunk matching the given regex\n"
 "s - split the current hunk into smaller hunks\n"
 "e - manually edit the current hunk\n"
+"p - print the current hunk\n"
 "? - print help\n"
 msgstr ""
 "j - lämna stycket obestämt, se nästa obestämda stycke\n"
@@ -552,6 +553,7 @@ msgstr ""
 "/ - sök efter stycke som motsvarar angivet reguljärt uttryck\n"
 "s - dela aktuellt stycke i mindre styckens\n"
 "e - redigera aktuellt stycke manuellt\n"
+"p - visa aktuellt stycke\n"
 "? - visa hjälp\n"
 
 msgid "No previous hunk"
@@ -614,8 +616,8 @@ msgstr ""
 "Slå av meddelandet med ”git config advice.%s false”"
 
 #, c-format
-msgid "%shint: %.*s%s\n"
-msgstr "%stips: %.*s%s\n"
+msgid "%shint:%s%.*s%s\n"
+msgstr "%stips:%s%.*s%s\n"
 
 msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr ""
@@ -889,11 +891,11 @@ msgstr "patch med bara skräp på rad %d"
 
 #, c-format
 msgid "unable to read symlink %s"
-msgstr "kunde inte läsa symboliska länken %s"
+msgstr "kan inte läsa symboliska länken %s"
 
 #, c-format
 msgid "unable to open or read %s"
-msgstr "kunde inte öppna eller läsa %s"
+msgstr "kan inte öppna eller läsa %s"
 
 #, c-format
 msgid "invalid start of line: '%c'"
@@ -1116,10 +1118,6 @@ msgstr[0] "Tillämpade patchen %%s med %d refuserad..."
 msgstr[1] "Tillämpade patchen %%s med %d refuserade..."
 
 #, c-format
-msgid "truncating .rej filename to %.*s.rej"
-msgstr "trunkerar .rej-filnamnet till %.*s.rej"
-
-#, c-format
 msgid "cannot open %s"
 msgstr "kan inte öppna %s"
 
@@ -1168,7 +1166,7 @@ msgstr[0] "%d rad applicerade efter att ha rättat fel i blanksteg."
 msgstr[1] "%d rader applicerade efter att ha rättat fel i blanksteg."
 
 msgid "Unable to write new index file"
-msgstr "Kunde inte skriva ny indexfil"
+msgstr "Kan inte skriva ny indexfil"
 
 msgid "don't apply changes matching the given path"
 msgstr "tillämpa inte ändringar som motsvarar given sökväg"
@@ -1276,7 +1274,7 @@ msgstr "fel i deflate (%d)"
 
 #, c-format
 msgid "unable to start '%s' filter"
-msgstr "kunde inte starta filtret ”%s”"
+msgstr "kane inte starta filtret ”%s”"
 
 msgid "unable to redirect descriptor"
 msgstr "kan inte omdirigera handtag"
@@ -1434,7 +1432,7 @@ msgid "%.*s is not a valid attribute name"
 msgstr "%-*s är inte ett giltigt namn på attribut"
 
 msgid "unable to add additional attribute"
-msgstr "Kunde inte lägga till ytterligare attribut"
+msgstr "kan inte lägga till ytterligare attribut"
 
 #, c-format
 msgid "ignoring overly long attributes line %d"
@@ -1472,7 +1470,7 @@ msgstr "kan inte ta status på ”%s”"
 
 #, c-format
 msgid "unable to read %s"
-msgstr "kunde inte läsa %s"
+msgstr "kan inte läsa %s"
 
 #, c-format
 msgid "Badly quoted content in file '%s': %s"
@@ -1542,6 +1540,10 @@ msgstr "en %s-revision behövs"
 #, c-format
 msgid "could not create file '%s'"
 msgstr "kunde inte skapa filen ”%s”"
+
+#, c-format
+msgid "unable to start 'show' for object '%s'"
+msgstr "kan inte starta ”show” för objektet ”%s”"
 
 #, c-format
 msgid "could not read file '%s'"
@@ -1692,6 +1694,9 @@ msgstr ""
 #, c-format
 msgid "'%s' is not a valid branch name"
 msgstr "”%s” är inte ett giltigt grennamn"
+
+msgid "See `man git check-ref-format`"
+msgstr "Se ”man git check-ref-format”"
 
 #, c-format
 msgid "a branch named '%s' already exists"
@@ -1885,14 +1890,8 @@ msgstr ""
 msgid "adding embedded git repository: %s"
 msgstr "lägger till inbäddat git-arkiv: %s"
 
-msgid ""
-"Use -f if you really want to add them.\n"
-"Turn this message off by running\n"
-"\"git config advice.addIgnoredFile false\""
-msgstr ""
-"Använd -f om du verkligen vill lägga till dem.\n"
-"Slå av detta meddelande med\n"
-"”git config advice.addIgnoredFile false”"
+msgid "Use -f if you really want to add them."
+msgstr "Använd -f om du verkligen vill lägga till dem."
 
 msgid "adding files failed"
 msgstr "misslyckades lägga till filer"
@@ -1909,20 +1908,14 @@ msgstr "”%s” kan inte användas tillsammans med sökvägsangivelser"
 msgid "Nothing specified, nothing added.\n"
 msgstr "Inget angivet, inget tillagt.\n"
 
-msgid ""
-"Maybe you wanted to say 'git add .'?\n"
-"Turn this message off by running\n"
-"\"git config advice.addEmptyPathspec false\""
-msgstr ""
-"Tänkte du kanske säga ”git add .”?\n"
-"Slå av detta meddelande genom att köra\n"
-"”git config advice.addEmptyPathspec false”"
+msgid "Maybe you wanted to say 'git add .'?"
+msgstr "Tänkte du kanske säga ”git add .”?"
 
 msgid "index file corrupt"
 msgstr "indexfilen trasig"
 
 msgid "unable to write new index file"
-msgstr "kunde inte skriva ny indexfil"
+msgstr "kan inte skriva ny indexfil"
 
 #, c-format
 msgid "bad action '%s' for '%s'"
@@ -1993,18 +1986,19 @@ msgid "Failed to split patches."
 msgstr "Misslyckades dela patchar."
 
 #, c-format
-msgid "When you have resolved this problem, run \"%s --continue\"."
-msgstr "När du har löst problemet, kör ”%s --continue”."
+msgid "When you have resolved this problem, run \"%s --continue\".\n"
+msgstr "När du har löst problemet, kör ”%s --continue”.\n"
 
 #, c-format
-msgid "If you prefer to skip this patch, run \"%s --skip\" instead."
-msgstr "Om du hellre vill hoppa över patchen, kör ”%s --skip” i stället."
+msgid "If you prefer to skip this patch, run \"%s --skip\" instead.\n"
+msgstr "Om du hellre vill hoppa över patchen, kör ”%s --skip” i stället.\n"
 
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid ""
+"To record the empty patch as an empty commit, run \"%s --allow-empty\".\n"
 msgstr ""
 "För att registrera den tomma patchen som en tom incheckning, kör ”%s --allow-"
-"empty”."
+"empty”.\n"
 
 #, c-format
 msgid "To restore the original branch and stop patching, run \"%s --abort\"."
@@ -2025,7 +2019,7 @@ msgstr "ogiltig ident-rad: %.*s"
 
 #, c-format
 msgid "unable to parse commit %s"
-msgstr "kunde inte tolka incheckningen %s"
+msgstr "kan inte tolka incheckningen %s"
 
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr ""
@@ -2056,7 +2050,7 @@ msgid "applying to an empty history"
 msgstr "tillämpar på en tom historik"
 
 msgid "failed to write commit object"
-msgstr "kunde inte skriva incheckningsobjekt"
+msgstr "misslyckades skriva incheckningsobjekt"
 
 #, c-format
 msgid "cannot resume: %s does not exist."
@@ -2357,7 +2351,7 @@ msgstr "”%s” är inte en giltig incheckning"
 msgid ""
 "could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
 msgstr ""
-"Kunde inte checka ut original-HEAD ”%s”. Försök ”git bisect reset "
+"kan inte checka ut original-HEAD ”%s”. Försök ”git bisect reset "
 "<incheckning>”."
 
 #, c-format
@@ -2849,11 +2843,11 @@ msgstr "grenen kopierades, men misslyckades uppdatera konfigurationsfilen"
 msgid ""
 "Please edit the description for the branch\n"
 "  %s\n"
-"Lines starting with '%c' will be stripped.\n"
+"Lines starting with '%s' will be stripped.\n"
 msgstr ""
 "Redigera beskrivningen för grenen\n"
 "  %s\n"
-"Rader som inleds med ”%c” ignoreras.\n"
+"Rader som inleds med ”%s” ignoreras.\n"
 
 msgid "Generic options"
 msgstr "Allmänna flaggor"
@@ -3052,11 +3046,13 @@ msgid "not run from a git repository - no hooks to show\n"
 msgstr "körs inte från ett git-arkiv - inga krokar att visa\n"
 
 msgid ""
-"git bugreport [(-o | --output-directory) <path>] [(-s | --suffix) <format>]\n"
+"git bugreport [(-o | --output-directory) <path>]\n"
+"              [(-s | --suffix) <format> | --no-suffix]\n"
 "              [--diagnose[=<mode>]]"
 msgstr ""
-"git bugreport [(-o | --output-directory) <fil>] [(-s | --suffix) <format>]\n"
-"              [--diagnose[=<läge>]"
+"git bugreport [(-o | --output-directory) <sökväg>]\n"
+"              [(-s | --suffix) <format> | --no-suffix]\n"
+"              [--diagnose[=<läge>]]"
 
 msgid ""
 "Thank you for filling out a Git bug report!\n"
@@ -3117,7 +3113,7 @@ msgstr "kunde inte skapa inledande kataloger för ”%s”"
 
 #, c-format
 msgid "unable to create diagnostics archive %s"
-msgstr "kunde inte skapa diagnostikarkiven %s"
+msgstr "kan inte skapa diagnostikarkiven %s"
 
 msgid "System Info"
 msgstr "Systeminfo"
@@ -3127,7 +3123,7 @@ msgstr "Aktiverade krokar"
 
 #, c-format
 msgid "unable to write to %s"
-msgstr "kunde inte skriva till %s"
+msgstr "kan inte skriva till %s"
 
 #, c-format
 msgid "Created new report at '%s'.\n"
@@ -3407,7 +3403,7 @@ msgstr "läs även kontakter från standard in"
 
 #, c-format
 msgid "unable to parse contact: %s"
-msgstr "kunde inte tolka kontakt: %s"
+msgstr "kan inte tolka kontakt: %s"
 
 msgid "no contacts specified"
 msgstr "inga kontakter angavs"
@@ -3488,7 +3484,7 @@ msgstr "sökväg ”%s”: kan inte slå ihop"
 
 #, c-format
 msgid "Unable to add merge result for '%s'"
-msgstr "Kunde inte lägga till sammanslagningsresultat för ”%s”"
+msgstr "Kan inte lägga till sammanslagningsresultat för ”%s”"
 
 #, c-format
 msgid "Recreated %d merge conflict"
@@ -3535,6 +3531,10 @@ msgstr "”%s”, ”%s” eller ”%s” kan inte användas när en katalog che
 #, c-format
 msgid "path '%s' is unmerged"
 msgstr "sökvägen ”%s” har inte slagits ihop"
+
+#, c-format
+msgid "unable to read tree (%s)"
+msgstr "kan inte läsa träd (%s)"
 
 msgid "you need to resolve your current index first"
 msgstr "du måste lösa ditt befintliga index först"
@@ -3765,6 +3765,10 @@ msgstr "Kan inte växla gren till icke-incheckningen ”%s”"
 
 msgid "missing branch or commit argument"
 msgstr "saknar gren- eller incheckingsargument"
+
+#, c-format
+msgid "unknown conflict style '%s'"
+msgstr "okänd konflikttyp ”%s”"
 
 msgid "perform a 3-way merge with the new branch"
 msgstr "utför en 3-vägssammanslagning för den nya grenen"
@@ -4021,19 +4025,8 @@ msgstr "ta även bort ignorerade filer"
 msgid "remove only ignored files"
 msgstr "ta endast bort ignorerade filer"
 
-msgid ""
-"clean.requireForce set to true and neither -i, -n, nor -f given; refusing to "
-"clean"
-msgstr ""
-"clean.requireForce satt till true, men varken -i, -n eller -f angavs; vägrar "
-"städa"
-
-msgid ""
-"clean.requireForce defaults to true and neither -i, -n, nor -f given; "
-"refusing to clean"
-msgstr ""
-"clean.requireForce har standardvärdet true och varken -i, -n eller -f "
-"angavs; vägrar städa"
+msgid "clean.requireForce is true and -f not given: refusing to clean"
+msgstr "clean.requireForce är true och -f angavs inte: vägrar städa"
 
 msgid "git clone [<options>] [--] <repo> [<dir>]"
 msgstr "git clone [<flaggor>] [--] <arkiv> [<kat>]"
@@ -4047,8 +4040,8 @@ msgstr "skapa inte någon utcheckning"
 msgid "create a bare repository"
 msgstr "skapa ett naket (”bare”) arkiv"
 
-msgid "create a mirror repository (implies bare)"
-msgstr "skapa ett spegelarkiv (implicerar ”bare”)"
+msgid "create a mirror repository (implies --bare)"
+msgstr "skapa ett spegelarkiv (implicerar --bare)"
 
 msgid "to clone from a local repository"
 msgstr "för att klona från ett lokalt arkiv"
@@ -4223,10 +4216,10 @@ msgid "remote HEAD refers to nonexistent ref, unable to checkout"
 msgstr "HEAD hos fjärren pekar på en obefintlig referens, kan inte checka ut"
 
 msgid "unable to checkout working tree"
-msgstr "kunde inte checka ut arbetskatalogen"
+msgstr "kan inte checka ut arbetskatalogen"
 
 msgid "unable to write parameters to config file"
-msgstr "kunde inte skriva parametrar till konfigurationsfilen"
+msgstr "kan inte skriva parametrar till konfigurationsfilen"
 
 msgid "cannot repack to clean up"
 msgstr "kan inte packa om för att städa upp"
@@ -4355,6 +4348,10 @@ msgstr "spaltfyllnad i högerkanten"
 
 msgid "padding space between columns"
 msgstr "spaltfyllnad mellan spalter"
+
+#, c-format
+msgid "%s must be non-negative"
+msgstr "%s måste vara icke-negativt"
 
 msgid "--command must be the first argument"
 msgstr "--command måste vara första argument"
@@ -4584,7 +4581,7 @@ msgid "No paths with --include/--only does not make sense."
 msgstr "Du måste ange sökvägar tillsammans med --include/--only."
 
 msgid "unable to create temporary index"
-msgstr "kunde inte skapa temporär indexfil"
+msgstr "kan inte skapa temporär indexfil"
 
 msgid "interactive add failed"
 msgstr "interaktiv tilläggning misslyckades"
@@ -4608,7 +4605,7 @@ msgid "cannot read the index"
 msgstr "kan inte läsa indexet"
 
 msgid "unable to write temporary index file"
-msgstr "kunde inte skriva temporär indexfil"
+msgstr "kan inte skriva temporär indexfil"
 
 #, c-format
 msgid "commit '%s' lacks author header"
@@ -4629,7 +4626,7 @@ msgid ""
 "unable to select a comment character that is not used\n"
 "in the current commit message"
 msgstr ""
-"kunde inte välja ett kommentarstecken som inte använts\n"
+"kan inte välja ett kommentarstecken som inte använts\n"
 "i det befintliga incheckningsmeddelandet"
 
 #, c-format
@@ -4667,35 +4664,35 @@ msgstr "kunde inte skriva incheckningsmall"
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored.\n"
+"with '%s' will be ignored.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
-"med ”%c” kommer ignoreras.\n"
+"med ”%s” kommer ignoreras.\n"
 
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"with '%s' will be ignored, and an empty message aborts the commit.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
-"med ”%c” kommer ignoreras, och ett tomt meddelande avbryter incheckningen.\n"
+"med ”%s” kommer ignoreras, och ett tomt meddelande avbryter incheckningen.\n"
 
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be kept; you may remove them yourself if you want to.\n"
+"with '%s' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
-"med ”%c” kommer behållas; du kan själv ta bort dem om du vill.\n"
+"med ”%s” kommer behållas; du kan själv ta bort dem om du vill.\n"
 
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be kept; you may remove them yourself if you want to.\n"
+"with '%s' will be kept; you may remove them yourself if you want to.\n"
 "An empty message aborts the commit.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
-"med ”%c” kommer behållas; du kan själv ta bort dem om du vill.\n"
+"med ”%s” kommer behållas; du kan själv ta bort dem om du vill.\n"
 "Ett tomt meddelande avbryter incheckningen.\n"
 
 msgid ""
@@ -5134,6 +5131,9 @@ msgstr "värde"
 msgid "with --get, use default value when missing entry"
 msgstr "med --get, använd standardvärde vid saknad post"
 
+msgid "human-readable comment string (# will be prepended as needed)"
+msgstr "människoläsbar kommentarssträng (# läggs in först efter behov)"
+
 #, c-format
 msgid "wrong number of arguments, should be %d"
 msgstr "fel antal argument, skulle vara %d"
@@ -5226,6 +5226,9 @@ msgstr ""
 msgid "--default is only applicable to --get"
 msgstr "--default gäller bara för --get"
 
+msgid "--comment is only applicable to add/set/replace operations"
+msgstr "--comment gäller bara för ”get”/”set”/”replace”-operationerna"
+
 msgid "--fixed-value only applies with 'value-pattern'"
 msgstr "--fixed-value gäller endast med ”värde-mönster”"
 
@@ -5284,7 +5287,7 @@ msgstr "”credential-cache” ej tillgänglig; stöd för unix-uttag saknas"
 
 #, c-format
 msgid "unable to get credential storage lock in %d ms"
-msgstr "kunde inte erhålla låset för lagring av inlogginsuppgifter på %d ms"
+msgstr "kan inte erhålla låset för lagring av inlogginsuppgifter på %d ms"
 
 msgid ""
 "git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"
@@ -5693,7 +5696,7 @@ msgid "[tag update]"
 msgstr "[uppdaterad tagg]"
 
 msgid "unable to update local ref"
-msgstr "kunde inte uppdatera lokal ref"
+msgstr "kan inte uppdatera lokal ref"
 
 msgid "would clobber existing tag"
 msgstr "skulle skriva över befintlig tagg"
@@ -6061,6 +6064,9 @@ msgstr "visa endast referenser som inte innehåller incheckningen"
 msgid "read reference patterns from stdin"
 msgstr "läs referensmönster från standard in"
 
+msgid "also include HEAD ref and pseudorefs"
+msgstr "ta också med HEAD- och pseudo-referenser"
+
 msgid "unknown arguments supplied with --stdin"
 msgstr "okända argument angavs tillsammans med --stdin"
 
@@ -6247,7 +6253,7 @@ msgstr "%s: ogiltig sha1-pekare i resolve-undo för %s"
 
 #, c-format
 msgid "unable to load rev-index for pack '%s'"
-msgstr "kunde inte läsa rev-index för paketfil ”%s”"
+msgstr "kan inte läsa rev-index för paketfil ”%s”"
 
 #, c-format
 msgid "invalid rev-index for pack '%s'"
@@ -6456,11 +6462,11 @@ msgstr "packa om alla paket förutom det största paketet"
 
 #, c-format
 msgid "failed to parse gc.logExpiry value %s"
-msgstr "kunde inte tolka värdet %s för gc.logExpiry"
+msgstr "misslyckades tolka värdet %s för gc.logExpiry"
 
 #, c-format
 msgid "failed to parse prune expiry value %s"
-msgstr "kunde inte tolka värdet %s för prune expiry"
+msgstr "misslyckades tolka värdet %s för prune expiry"
 
 #, c-format
 msgid "Auto packing the repository in background for optimum performance.\n"
@@ -6499,19 +6505,19 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "okänt argument för --schedule, %s"
 
 msgid "failed to write commit-graph"
-msgstr "kunde inte skriva incheckningsgraf"
+msgstr "misslyckades skriva incheckningsgraf"
 
 msgid "failed to prefetch remotes"
-msgstr "kunde inte förhämta fjärrar"
+msgstr "misslyckades förhämta fjärrar"
 
 msgid "failed to start 'git pack-objects' process"
-msgstr "kunde inte starta ”git pack-objects”-process"
+msgstr "misslyckades starta ”git pack-objects”-process"
 
 msgid "failed to finish 'git pack-objects' process"
-msgstr "kunde inte avsluta ”git pack-objects”-process"
+msgstr "misslyckades att avsluta ”git pack-objects”-process"
 
 msgid "failed to write multi-pack-index"
-msgstr "kunde inte skriva multi-pack-index"
+msgstr "misslyckades skriva multi-pack-index"
 
 msgid "'git multi-pack-index expire' failed"
 msgstr "”git multi-pack-index expire” misslyckades"
@@ -6680,16 +6686,12 @@ msgid "no threads support, ignoring %s"
 msgstr "trådstöd saknas, ignorerar %s"
 
 #, c-format
-msgid "unable to read tree (%s)"
-msgstr "kunde inte läsa träd (%s)"
-
-#, c-format
 msgid "unable to read tree %s"
-msgstr "kunde inte läsa trädet %s"
+msgstr "kan inte läsa trädet %s"
 
 #, c-format
 msgid "unable to grep from object of type %s"
-msgstr "kunde inte ”grep” från objekt av typen %s"
+msgstr "kan inte ”grep” från objekt av typen %s"
 
 #, c-format
 msgid "switch `%c' expects a numerical value"
@@ -6945,7 +6947,7 @@ msgid "Failed to start emacsclient."
 msgstr "Misslyckades starta emacsclient."
 
 msgid "Failed to parse emacsclient version."
-msgstr "Kunde inte tolka emacsclient-version."
+msgstr "Misslyckades tolka emacsclient-version."
 
 #, c-format
 msgid "emacsclient version '%d' too old (< 22)."
@@ -6953,7 +6955,7 @@ msgstr "emacsclient version ”%d” för gammal (< 22)."
 
 #, c-format
 msgid "failed to exec '%s'"
-msgstr "exec misslyckades för ”%s”"
+msgstr "”exec” misslyckades för ”%s”"
 
 #, c-format
 msgid ""
@@ -7138,7 +7140,7 @@ msgstr "Analyserar delta"
 
 #, c-format
 msgid "unable to create thread: %s"
-msgstr "kunde inte skapa tråd: %s"
+msgstr "kan inte skapa tråd: %s"
 
 msgid "confusion beyond insanity"
 msgstr "förvirrad bortom vanvett"
@@ -7161,7 +7163,7 @@ msgstr[1] "paketet har %d oanalyserade delta"
 
 #, c-format
 msgid "unable to deflate appended object (%d)"
-msgstr "kunde inte utföra ”deflate” på tillagt objekt (%d)"
+msgstr "kan inte utföra ”deflate” på tillagt objekt (%d)"
 
 #, c-format
 msgid "local object %s is corrupt"
@@ -7181,7 +7183,7 @@ msgstr "kan inte stänga skriven %s-fil ”%s”"
 
 #, c-format
 msgid "unable to rename temporary '*.%s' file to '%s'"
-msgstr "kunde inte byta namn på temporär ”*.%s”-fil till ”%s”"
+msgstr "kan inte byta namn på temporär ”*.%s”-fil till ”%s”"
 
 msgid "error while closing pack file"
 msgstr "fel vid stängning av paketfil"
@@ -7283,13 +7285,39 @@ msgstr "--separate-git-dir är inkompatibelt med naket arkiv"
 
 msgid ""
 "git interpret-trailers [--in-place] [--trim-empty]\n"
-"                       [(--trailer (<key>|<keyAlias>)[(=|:)<value>])...]\n"
+"                       [(--trailer (<key>|<key-alias>)[(=|:)<value>])...]\n"
 "                       [--parse] [<file>...]"
 msgstr ""
 "git interpret-trailers [--in-place] [--trim-empty]\n"
-"                       [(--trailer (<nyckel>|<nyckelAlias>)"
+"                       [(--trailer (<nyckel>|<nyckel-alias>)"
 "[(=|:)<värde>])...]\n"
 "                       [--parse] [<fil>...]"
+
+#, c-format
+msgid "could not stat %s"
+msgstr "kunde inte ta status på %s"
+
+#, c-format
+msgid "file %s is not a regular file"
+msgstr "filen %s är inte en normal fil"
+
+#, c-format
+msgid "file %s is not writable by user"
+msgstr "filen %s är inte skrivbar av användaren"
+
+msgid "could not open temporary file"
+msgstr "kunde inte öppna temporär fil"
+
+#, c-format
+msgid "could not read input file '%s'"
+msgstr "kunde inte läsa indatafilen ”%s”"
+
+msgid "could not read from stdin"
+msgstr "kunde inte läsa från standard in"
+
+#, c-format
+msgid "could not rename temporary file to %s"
+msgstr "kunde inte byta namn på temporär fil till %s"
 
 msgid "edit files in place"
 msgstr "redigera filer på plats"
@@ -7380,7 +7408,7 @@ msgid "Final output: %d %s\n"
 msgstr "Slututdata: %d %s\n"
 
 msgid "unable to create temporary object directory"
-msgstr "kunde inte skapa temporär objektkatalog"
+msgstr "kan inte skapa temporär objektkatalog"
 
 #, c-format
 msgid "git show %s: bad file"
@@ -7447,12 +7475,12 @@ msgid ""
 "please use git branch --set-upstream-to to track a remote branch.\n"
 "Or you could specify base commit by --base=<base-commit-id> manually"
 msgstr ""
-"kunde inte hämta uppström, om du vill lagra basincheckningen automatiskt,\n"
+"misslyckades hämta uppström, om du vill lagra basincheckningen automatiskt,\n"
 "använd git branch --set-upstream-to för att spåra en fjärrgren.\n"
 "Eller så kan du ange basincheckning med --base=<bas-inchecknings-id> manuellt"
 
 msgid "failed to find exact merge base"
-msgstr "kunde inte hitta exakt sammanslagningsbas"
+msgstr "misslyckades hitta exakt sammanslagningsbas"
 
 msgid "base commit should be the ancestor of revision list"
 msgstr "basincheckningen bör vara förfader till revisionslistan"
@@ -7653,7 +7681,7 @@ msgstr "Intervall-diff mot v%d:"
 
 #, c-format
 msgid "unable to read signature file '%s'"
-msgstr "kunde inte läsa signaturfil ”%s”"
+msgstr "kan inte läsa signaturfil ”%s”"
 
 msgid "Generating patches"
 msgstr "Skapar patchar"
@@ -7672,18 +7700,6 @@ msgstr "Kunde inte hitta en spårad fjärrgren, ange <uppström> manuellt.\n"
 #, c-format
 msgid "could not get object info about '%s'"
 msgstr "kunde inte hämta objektinfo om ”%s”"
-
-#, c-format
-msgid "bad ls-files format: element '%s' does not start with '('"
-msgstr "felaktigt ls-files-format: elementet ”%s” börjar inte med ”(”"
-
-#, c-format
-msgid "bad ls-files format: element '%s' does not end in ')'"
-msgstr "felaktigt ls-files-format: elementet ”%s” slutar inte med ”)”"
-
-#, c-format
-msgid "bad ls-files format: %%%.*s"
-msgstr "felaktigt ls-files-format: %%%.*s"
 
 msgid "git ls-files [<options>] [<file>...]"
 msgstr "git ls-files [<flaggor>] [<fil>...]"
@@ -7814,18 +7830,6 @@ msgstr "visa underliggande referens och objektet det pekar på"
 
 msgid "git ls-tree [<options>] <tree-ish> [<path>...]"
 msgstr "git ls-tree [<flaggor>] <träd-igt> [<sökväg>...]"
-
-#, c-format
-msgid "bad ls-tree format: element '%s' does not start with '('"
-msgstr "felaktigt ls-tree-format: elementet ”%s” börjar inte med ”(”"
-
-#, c-format
-msgid "bad ls-tree format: element '%s' does not end in ')'"
-msgstr "felaktigt ls-tree-format: elementet ”%s” slutar inte med ”)”"
-
-#, c-format
-msgid "bad ls-tree format: %%%.*s"
-msgstr "felaktigt ls-tree-format: %%%.*s"
 
 msgid "only show trees"
 msgstr "visa endast träd"
@@ -8012,6 +8016,10 @@ msgstr "kunde inte bestämma referensen ”%s”"
 msgid "Merging %s with %s\n"
 msgstr "Slår ihop %s med %s\n"
 
+#, c-format
+msgid "could not parse as tree '%s'"
+msgstr "kunde inte tolka som träd ”%s”"
+
 msgid "not something we can merge"
 msgstr "inte något vi kan slå ihop"
 
@@ -8182,14 +8190,14 @@ msgid "Bad branch.%s.mergeoptions string: %s"
 msgstr "Felaktig branch.%s.mergeoptions-sträng: %s"
 
 msgid "Unable to write index."
-msgstr "Kunde inte skriva indexet."
+msgstr "Kan inte skriva indexet."
 
 msgid "Not handling anything other than two heads merge."
 msgstr "Hanterar inte något annat än en sammanslagning av två huvuden."
 
 #, c-format
 msgid "unable to write %s"
-msgstr "kunde inte skriva %s"
+msgstr "kan inte skriva %s"
 
 #, c-format
 msgid "Could not read from '%s'"
@@ -8215,10 +8223,10 @@ msgstr "Ett tomt meddelande avbryter incheckningen.\n"
 
 #, c-format
 msgid ""
-"Lines starting with '%c' will be ignored, and an empty message aborts\n"
+"Lines starting with '%s' will be ignored, and an empty message aborts\n"
 "the commit.\n"
 msgstr ""
-"Rader som inleds med ”%c” kommer ignoreras, och ett tomt meddelande\n"
+"Rader som inleds med ”%s” kommer ignoreras, och ett tomt meddelande\n"
 "avbryter incheckningen.\n"
 
 msgid "Empty commit message."
@@ -8376,9 +8384,6 @@ msgstr "kunde inte läsa det taggade objektet ”%s”"
 msgid "object '%s' tagged as '%s', but is a '%s' type"
 msgstr "objektet ”%s” taggat som ”%s”, men är av typen ”%s”"
 
-msgid "could not read from stdin"
-msgstr "kunde inte läsa från standard in"
-
 msgid "tag on stdin did not pass our strict fsck check"
 msgstr "tagg på stdin godkänns inte av vår strikta fsck-kontroll"
 
@@ -8386,7 +8391,7 @@ msgid "tag on stdin did not refer to a valid object"
 msgstr "taggen på stdin pekar inte på ett giltigt objekt"
 
 msgid "unable to write tag file"
-msgstr "kunde inte skriva tagg-filen"
+msgstr "kan inte skriva tagg-filen"
 
 msgid "input is NUL terminated"
 msgstr "indata är NUL-terminerad"
@@ -8640,22 +8645,18 @@ msgstr "git notes prune [<flaggor>]"
 msgid "Write/edit the notes for the following object:"
 msgstr "Skriv/redigera anteckningar för följande objekt:"
 
-#, c-format
-msgid "unable to start 'show' for object '%s'"
-msgstr "kunde inte starta ”show” för objektet ”%s”"
-
 msgid "could not read 'show' output"
-msgstr "kunde inte läsa utdata från ”show”"
+msgstr "kan inte läsa utdata från ”show”"
 
 #, c-format
 msgid "failed to finish 'show' for object '%s'"
-msgstr "kunde inte avsluta ”show” för objektet ”%s”"
+msgstr "misslyckades att avsluta ”show” för objektet ”%s”"
 
 msgid "please supply the note contents using either -m or -F option"
 msgstr "ange innehåll för anteckningen med antingen -m eller -F"
 
 msgid "unable to write note object"
-msgstr "kunde inte skriva anteckningsobjekt"
+msgstr "kan inte skriva anteckningsobjekt"
 
 #, c-format
 msgid "the note contents have been left in %s"
@@ -8667,11 +8668,11 @@ msgstr "kunde inte öppna eller läsa ”%s”"
 
 #, c-format
 msgid "failed to resolve '%s' as a valid ref."
-msgstr "kunde inte slå upp ”%s” som en giltig referens."
+msgstr "misslyckades slå upp ”%s” som en giltig referens."
 
 #, c-format
 msgid "failed to read object '%s'."
-msgstr "kunde inte läsa objektet ”%s”."
+msgstr "misslyckades läsa objektet ”%s”."
 
 #, c-format
 msgid "cannot read note data from non-blob object '%s'."
@@ -8849,7 +8850,7 @@ msgstr ""
 
 #, c-format
 msgid "Failed to resolve '%s' as a valid ref."
-msgstr "Kunde inte slå upp ”%s” som en giltig referens."
+msgstr "Misslyckades slå upp ”%s” som en giltig referens."
 
 #, c-format
 msgid "Object %s has no note\n"
@@ -8955,7 +8956,7 @@ msgstr "kan inte hämta storlek på %s"
 
 #, c-format
 msgid "unable to parse object header of %s"
-msgstr "kunde inte tolka objekthuvud för %s"
+msgstr "kan inte tolka objekthuvud för %s"
 
 #, c-format
 msgid "object %s cannot be read"
@@ -8978,7 +8979,7 @@ msgstr "kan inte packa objekt nåbara från taggen %s"
 
 #, c-format
 msgid "unable to get type of object %s"
-msgstr "kunde inte hämta typ för objektet %s"
+msgstr "kan inte hämta typ för objektet %s"
 
 msgid "Compressing objects"
 msgstr "Komprimerar objekt"
@@ -9265,10 +9266,10 @@ msgid "refusing to run without --i-still-use-this"
 msgstr "vägrar köra utan --i-still-use-this"
 
 msgid ""
-"git pack-refs [--all] [--no-prune] [--include <pattern>] [--exclude "
+"git pack-refs [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude "
 "<pattern>]"
 msgstr ""
-"git pack-refs [--all] [--no-prune] [--include <mönster>] [--exclude "
+"git pack-refs [--all] [--no-prune] [--auto] [--include <mönster>] [--exclude "
 "<mönster>]"
 
 msgid "pack everything"
@@ -9276,6 +9277,9 @@ msgstr "packa allt"
 
 msgid "prune loose refs (default)"
 msgstr "ta bort lösa referenser (standard)"
+
+msgid "auto-pack refs as needed"
+msgstr "packa referenser automatiskt om nödvändigt"
 
 msgid "references to include"
 msgstr "referenser att ta med"
@@ -9411,7 +9415,7 @@ msgstr ""
 
 #, c-format
 msgid "unable to access commit %s"
-msgstr "kunde inte komma åt incheckningen %s"
+msgstr "kan inte komma åt incheckningen %s"
 
 msgid "ignoring --verify-signatures for rebase"
 msgstr "ignorera --verify-signatures för ombasering"
@@ -9902,7 +9906,7 @@ msgid "could not mark as interactive"
 msgstr "kunde inte markera som interaktiv"
 
 msgid "could not generate todo list"
-msgstr "Kunde inte skapa attgöra-lista"
+msgstr "kunde inte skapa attgöra-lista"
 
 msgid "a base commit must be provided with --upstream or --onto"
 msgstr "en basincheckning måste anges med --upstream eller --onto"
@@ -9926,19 +9930,6 @@ msgstr "ignorera ogiltigt allow_rerere_autoupdate: ”%s”"
 #, c-format
 msgid "could not remove '%s'"
 msgstr "kunde inte ta bort ”%s”"
-
-msgid ""
-"Resolve all conflicts manually, mark them as resolved with\n"
-"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
-"To abort and get back to the state before \"git rebase\", run \"git rebase --"
-"abort\"."
-msgstr ""
-"Lös alla konflikter manuellt, märk dem som lösta med\n"
-"”git add/rm <filer_i_konflikt>”, kör sedan ”git rebase --continue”.\n"
-"Du kan hoppa över incheckningen istället: kör ”git rebase --skip”.\n"
-"För att avbryta och återgå till där du var före ombaseringen, kör ”git "
-"rebase --abort”."
 
 #, c-format
 msgid ""
@@ -9970,11 +9961,14 @@ msgid "apply options and merge options cannot be used together"
 msgstr ""
 "appliceringsflaggor och sammanslagningsflaggor kan inte användas tillsammans"
 
+msgid "--empty=ask is deprecated; use '--empty=stop' instead."
+msgstr "--empty=ask rekommenderas inte; använd ”--empty=stop” istället."
+
 #, c-format
 msgid ""
 "unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and "
-"\"ask\"."
-msgstr "okänd tom-typ ”%s”; giltiga värden är ”drop”, ”keep” och ”ask”."
+"\"stop\"."
+msgstr "okänd tom-typ ”%s”; giltiga värden är ”drop”, ”keep” och ”stop”."
 
 msgid ""
 "--rebase-merges with an empty string argument is deprecated and will stop "
@@ -10153,8 +10147,8 @@ msgstr ""
 "Observera: Din inställning för ”pull.rebase” kan också vara satt till\n"
 "”preserve”, som inte längre stöds; använd ”merges” istället"
 
-msgid "No rebase in progress?"
-msgstr "Ingen ombasering pågår?"
+msgid "no rebase in progress"
+msgstr "ingen ombasering pågår"
 
 msgid "The --edit-todo action can only be used during interactive rebase."
 msgstr "Åtgärden --edit-todo kan endast användas under interaktiv ombasering."
@@ -10348,6 +10342,9 @@ msgstr "du måste ange en katalog"
 msgid "git reflog [show] [<log-options>] [<ref>]"
 msgstr "git reflog [show] [<log-flaggor>] [<ref>]"
 
+msgid "git reflog list"
+msgstr "git reflog list"
+
 msgid ""
 "git reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n"
 "                  [--rewrite] [--updateref] [--stale-fix]\n"
@@ -10372,6 +10369,10 @@ msgstr "git reflog exists <referens>"
 #, c-format
 msgid "invalid timestamp '%s' given to '--%s'"
 msgstr "ogiltig tidsstämpel ”%s” given i ”--%s”"
+
+#, c-format
+msgid "%s does not accept arguments: '%s'"
+msgstr "%s tar inte argument: ”%s”"
 
 msgid "do not actually prune any entries"
 msgstr "rensa faktiskt inte några poster"
@@ -10498,8 +10499,8 @@ msgstr ""
 "\t --mirror=fetch eller --mirror=push istället"
 
 #, c-format
-msgid "unknown mirror argument: %s"
-msgstr "okänt argument till mirror: %s"
+msgid "unknown --mirror argument: %s"
+msgstr "okänt argument till --mirror: %s"
 
 msgid "fetch the remote branches"
 msgstr "hämta fjärrgrenarna"
@@ -10861,6 +10862,9 @@ msgstr ""
 
 msgid "could not start pack-objects to repack promisor objects"
 msgstr "kunde inte starta pack-objects för att packa om kontraktsobjekt"
+
+msgid "failed to feed promisor objects to pack-objects"
+msgstr "misslyckades sända kontraktsobjekt till pack-objects"
 
 msgid "repack: Expecting full hex object ID lines only from pack-objects."
 msgstr ""
@@ -11267,7 +11271,7 @@ msgstr "”git rerere forget” utan sökvägar är föråldrat"
 
 #, c-format
 msgid "unable to generate diff for '%s'"
-msgstr "misslyckades skapa diff för ”%s”"
+msgstr "kan inte skapa diff för ”%s”"
 
 msgid ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
@@ -11304,11 +11308,11 @@ msgid "You do not have a valid HEAD."
 msgstr "Du har inte en giltig HEAD."
 
 msgid "Failed to find tree of HEAD."
-msgstr "Kunde inte hitta trädet för HEAD."
+msgstr "Misslyckades hitta trädet för HEAD."
 
 #, c-format
 msgid "Failed to find tree of %s."
-msgstr "Kunde inte hitta trädet för %s."
+msgstr "Misslyckades hitta trädet för %s."
 
 #, c-format
 msgid "HEAD is now at %s"
@@ -11341,11 +11345,11 @@ msgstr "registrera endast att borttagna sökvägar kommer läggas till senare"
 
 #, c-format
 msgid "Failed to resolve '%s' as a valid revision."
-msgstr "Kunde inte slå upp ”%s” som en giltig revision."
+msgstr "Misslyckades slå upp ”%s” som en giltig revision."
 
 #, c-format
 msgid "Failed to resolve '%s' as a valid tree."
-msgstr "Kunde inte slå upp ”%s” som ett giltigt träd."
+msgstr "Misslyckades slå upp ”%s” som ett giltigt träd."
 
 msgid "--mixed with paths is deprecated; use 'git reset -- <paths>' instead."
 msgstr ""
@@ -11456,6 +11460,13 @@ msgstr "--default kräver ett argument"
 msgid "--prefix requires an argument"
 msgstr "--prefix kräver ett argument"
 
+msgid "no object format specified"
+msgstr "inget objektformat angavs"
+
+#, c-format
+msgid "unsupported object format: %s"
+msgstr "objektformatet stöds ej: %s"
+
 #, c-format
 msgid "unknown mode for --abbrev-ref: %s"
 msgstr "okänt läge för --abbrev-ref: %s"
@@ -11537,8 +11548,8 @@ msgstr "behåll incheckningar som börjar som tomma"
 msgid "allow commits with empty messages"
 msgstr "tillåt incheckningar med tomt meddelande"
 
-msgid "keep redundant, empty commits"
-msgstr "behåll redundanta, tomma incheckningar"
+msgid "deprecated: use --empty=keep instead"
+msgstr "avråds: använd --empty=keep istället"
 
 msgid "use the 'reference' format to refer to commits"
 msgstr "använd ”referens”-format för att referera till incheckningar"
@@ -11905,7 +11916,7 @@ msgstr "slå på/av använding av glest index"
 
 #, c-format
 msgid "unable to create leading directories of %s"
-msgstr "kunde inte skapa inledande kataloger för %s"
+msgstr "kan inte skapa inledande kataloger för %s"
 
 #, c-format
 msgid "failed to open '%s'"
@@ -11920,7 +11931,7 @@ msgid "unable to unquote C-style string '%s'"
 msgstr "kan inte ta bort citering av C-sträng ”%s”"
 
 msgid "unable to load existing sparse-checkout patterns"
-msgstr "kunde inte läsa in existerande mönster för gles utcheckning"
+msgstr "kan inte läsa in existerande mönster för gles utcheckning"
 
 msgid "existing sparse-checkout patterns do not use cone mode"
 msgstr "befintliga filter för gles utcheckning använder inte konläge"
@@ -12860,29 +12871,29 @@ msgid ""
 "\n"
 "Write a message for tag:\n"
 "  %s\n"
-"Lines starting with '%c' will be ignored.\n"
+"Lines starting with '%s' will be ignored.\n"
 msgstr ""
 "\n"
 "Skriv ett meddelande för taggen:\n"
 "  %s\n"
-"Rader som inleds med ”%c” ignoreras.\n"
+"Rader som inleds med ”%s” ignoreras.\n"
 
 #, c-format
 msgid ""
 "\n"
 "Write a message for tag:\n"
 "  %s\n"
-"Lines starting with '%c' will be kept; you may remove them yourself if you "
+"Lines starting with '%s' will be kept; you may remove them yourself if you "
 "want to.\n"
 msgstr ""
 "\n"
 "Skriv ett meddelande för taggen:\n"
 "  %s\n"
-"Rader som inleds med ”%c” kommer behållas; du kan själv ta bort dem om\n"
+"Rader som inleds med ”%s” kommer behållas; du kan själv ta bort dem om\n"
 "du vill.\n"
 
 msgid "unable to sign the tag"
-msgstr "kunde inte signera taggen"
+msgstr "kan inte signera taggen"
 
 #, c-format
 msgid ""
@@ -12962,6 +12973,9 @@ msgstr "visa endast taggar som ej slagits samman"
 
 msgid "print only tags of the object"
 msgstr "visa endast taggar för objektet"
+
+msgid "could not start 'git column'"
+msgstr "kunde inte starta ”git column”"
 
 #, c-format
 msgid "the '%s' option is only allowed in list mode"
@@ -13204,11 +13218,11 @@ msgstr ""
 msgid "fsmonitor disabled"
 msgstr "fsmonitor inaktiverat"
 
-msgid "git update-ref [<options>] -d <refname> [<old-val>]"
-msgstr "git update-ref [<flaggor>] -d <refnamn> [<gammaltvärde>]"
+msgid "git update-ref [<options>] -d <refname> [<old-oid>]"
+msgstr "git update-ref [<flaggor>] -d <refnamn> [<gammalt-oid>]"
 
-msgid "git update-ref [<options>]    <refname> <new-val> [<old-val>]"
-msgstr "git update-ref [<flaggor>]    <refnamn> <gammaltvärde> [<nyttvärde>]"
+msgid "git update-ref [<options>]    <refname> <new-oid> [<old-oid>]"
+msgstr "git update-ref [<flaggor>]    <refnamn> <gammalt-oid> [<nytt-oid>]"
 
 msgid "git update-ref [<options>] --stdin [-z]"
 msgstr "git update-ref [<flaggor>] --stdin [-z]"
@@ -13627,7 +13641,7 @@ msgstr "överskred buntens URI-rekursionsgräns (%d)"
 
 #, c-format
 msgid "failed to download bundle from URI '%s'"
-msgstr "kunde inte hämta bunt från URI:en ”%s”"
+msgstr "misslyckades hämta bunt från URI:en ”%s”"
 
 #, c-format
 msgid "file at URI '%s' is not a bundle or bundle list"
@@ -14454,7 +14468,7 @@ msgid "Finding extra edges in commit graph"
 msgstr "Söker ytterligare kanter i incheckingsgraf"
 
 msgid "failed to write correct number of base graph ids"
-msgstr "kunde inte skriva korrekt antal bas-graf-id:n"
+msgstr "misslyckades skriva korrekt antal bas-graf-id:n"
 
 msgid "unable to create temporary graph layer"
 msgstr "kan inte skapa temporärt graflager"
@@ -14470,13 +14484,13 @@ msgstr[0] "Skriver ut incheckningsgraf i %d pass"
 msgstr[1] "Skriver ut incheckningsgraf i %d pass"
 
 msgid "unable to open commit-graph chain file"
-msgstr "Kunde inte öppna incheckningsgrafkedjefilen"
+msgstr "kan inte öppna incheckningsgrafkedjefilen"
 
 msgid "failed to rename base commit-graph file"
-msgstr "kunde inte byta namn på bas-incheckingsgraffilen"
+msgstr "misslyckades byta namn på bas-incheckingsgraffilen"
 
 msgid "failed to rename temporary commit-graph file"
-msgstr "kunde inte byta namn på temporär incheckningsgraffil"
+msgstr "misslyckades byta namn på temporär incheckningsgraffil"
 
 #, c-format
 msgid "cannot merge graphs with %<PRIuMAX>, %<PRIuMAX> commits"
@@ -14515,12 +14529,12 @@ msgstr ""
 
 #, c-format
 msgid "failed to parse commit %s from commit-graph"
-msgstr "kunde inte tolka incheckning %s från incheckningsgraf"
+msgstr "misslyckades tolka incheckningen %s från incheckningsgraf"
 
 #, c-format
 msgid "failed to parse commit %s from object database for commit-graph"
 msgstr ""
-"misslyckades tolka incheckning %s från objektdatabasen för incheckningsgraf"
+"misslyckades tolka incheckningen %s från objektdatabasen för incheckningsgraf"
 
 #, c-format
 msgid "root tree OID for commit %s in commit-graph is %s != %s"
@@ -14561,6 +14575,10 @@ msgstr ""
 
 msgid "Verifying commits in commit graph"
 msgstr "Bekräftar incheckningar i incheckningsgrafen"
+
+#, c-format
+msgid "could not parse commit %s"
+msgstr "kunde inte tolka incheckningen %s"
 
 #, c-format
 msgid "%s %s is not a commit!"
@@ -14707,11 +14725,11 @@ msgstr "closedir('%s') misslyckades"
 
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
-msgstr "[GLE %ld] kunde inte öppna ”%ls” för läsning"
+msgstr "[GLE %ld] kan inte öppna ”%ls” för läsning"
 
 #, c-format
 msgid "[GLE %ld] unable to get protocol information for '%ls'"
-msgstr "[GLE %ld] kunde inte hämta protokollinformation för ”%ls”"
+msgstr "[GLE %ld] kan inte hämta protokollinformation för ”%ls”"
 
 #, c-format
 msgid "failed to copy SID (%ld)"
@@ -14990,8 +15008,13 @@ msgstr "förkortningslängd utanför intervallet: %d"
 msgid "bad zlib compression level %d"
 msgstr "felaktigt zlib-komprimeringsgrad %d"
 
-msgid "core.commentChar should only be one ASCII character"
-msgstr "core.commentChar kan bara vara ett ASCII-tecken"
+#, c-format
+msgid "%s cannot contain newline"
+msgstr "%s kan inte innehålla nyradstecken"
+
+#, c-format
+msgid "%s must have at least one character"
+msgstr "%s måste innehålla minst ett tecken"
 
 #, c-format
 msgid "ignoring unknown core.fsyncMethod value '%s'"
@@ -15017,7 +15040,7 @@ msgstr "måste vara en av nothing, matching, simple, upstream eller current"
 
 #, c-format
 msgid "unable to load config blob object '%s'"
-msgstr "kunde inte läsa konfigurerings-blobobjektet ”%s”"
+msgstr "kan inte läsa konfigurerings-blobobjektet ”%s”"
 
 #, c-format
 msgid "reference '%s' does not point to a blob"
@@ -15044,7 +15067,7 @@ msgstr ""
 
 #, c-format
 msgid "unable to parse '%s' from command-line config"
-msgstr "kunde inte tolka värdet ”%s” från kommandoradskonfiguration"
+msgstr "kan inte tolka värdet ”%s” från kommandoradskonfiguration"
 
 #, c-format
 msgid "bad config variable '%s' in file '%s' at line %d"
@@ -15060,7 +15083,11 @@ msgstr "%s har flera värden"
 
 #, c-format
 msgid "failed to write new configuration file %s"
-msgstr "kan inte skriva nya konfigurationsfilen ”%s”"
+msgstr "misslyckades skriva nya konfigurationsfilen ”%s”"
+
+#, c-format
+msgid "no multi-line comment allowed: '%s'"
+msgstr "inga flerradiga kommentarer tillåtna: ”%s”"
 
 #, c-format
 msgid "could not lock config file %s"
@@ -15080,7 +15107,7 @@ msgstr "fstat misslyckades på %s"
 
 #, c-format
 msgid "unable to mmap '%s'%s"
-msgstr "kunde inte utföra mmap på ”%s”%s"
+msgstr "kan inte utföra mmap på ”%s”%s"
 
 #, c-format
 msgid "chmod on %s failed"
@@ -15178,7 +15205,7 @@ msgid "protocol '%s' is not supported"
 msgstr "protokollet ”%s” stöds inte"
 
 msgid "unable to set SO_KEEPALIVE on socket"
-msgstr "kunde inte sätta SO_KEEPALIVE på uttaget"
+msgstr "kan inte sätta SO_KEEPALIVE på uttaget"
 
 #, c-format
 msgid "Looking up %s ... "
@@ -15202,7 +15229,7 @@ msgid ""
 "unable to connect to %s:\n"
 "%s"
 msgstr ""
-"kunde inte ansluta till %s:\n"
+"kan inte ansluta till %s:\n"
 "%s"
 
 #. TRANSLATORS: this is the end of "Connecting to %s (port %s) ... "
@@ -15211,7 +15238,7 @@ msgstr "klart."
 
 #, c-format
 msgid "unable to look up %s (%s)"
-msgstr "kunde inte slå upp %s (%s)"
+msgstr "kan inte slå upp %s (%s)"
 
 #, c-format
 msgid "unknown port %s"
@@ -15249,16 +15276,16 @@ msgid "strange pathname '%s' blocked"
 msgstr "konstigt sökvägsnamn ”%s” blockerat"
 
 msgid "unable to fork"
-msgstr "kunde inte grena (fork)"
+msgstr "kan inte grena (fork)"
 
 msgid "Could not run 'git rev-list'"
 msgstr "Kunde inte köra ”git rev-list”"
 
 msgid "failed write to rev-list"
-msgstr "kunde inte skriva till rev-list"
+msgstr "misslyckades skriva till rev-list"
 
 msgid "failed to close rev-list's stdin"
-msgstr "kunde inte stänga rev-list:s standard in"
+msgstr "misslyckades stänga rev-list:s standard in"
 
 #, c-format
 msgid "illegal crlf_action %d"
@@ -15320,7 +15347,7 @@ msgstr "omkodning av ”%s” från %s till %s och tillbaka ger inte samma resul
 
 #, c-format
 msgid "cannot fork to run external filter '%s'"
-msgstr "kan inte grena (fork) för att köra externt filter ”%s”"
+msgstr "kan inte grena (fork) av för att köra externt filter ”%s”"
 
 #, c-format
 msgid "cannot feed the input to external filter '%s'"
@@ -15452,7 +15479,7 @@ msgstr "felaktigt trädobjektet %s"
 
 #, c-format
 msgid "failed to load island regex for '%s': %s"
-msgstr "kunde inte hämta ö-regex för ”%s”: %s"
+msgstr "misslyckades hämta ö-regex för ”%s”: %s"
 
 #, c-format
 msgid "island regex from config has too many capture groups (max=%d)"
@@ -15615,7 +15642,7 @@ msgstr "okänt värde efter ws-error-highlight=%.*s"
 
 #, c-format
 msgid "unable to resolve '%s'"
-msgstr "kunde inte slå upp ”%s”"
+msgstr "kan inte slå upp ”%s”"
 
 #, c-format
 msgid "%s expects <n>/<m> form"
@@ -15998,7 +16025,7 @@ msgstr ""
 
 #, c-format
 msgid "failed to read orderfile '%s'"
-msgstr "kunde inte läsa orderfilen ”%s”"
+msgstr "misslyckades läsa orderfilen ”%s”"
 
 msgid "Performing inexact rename detection"
 msgstr "Utför onöjaktig namnbytesdetektering"
@@ -16098,7 +16125,7 @@ msgid "git fetch-pack: expected ACK/NAK, got '%s'"
 msgstr "git fetch-pack: förväntade ACK/NAK, fick ”%s”"
 
 msgid "unable to write to remote"
-msgstr "kunde inte skriva till fjärren"
+msgstr "kan inte skriva till fjärren"
 
 msgid "Server supports filter"
 msgstr "Servern stöder filter"
@@ -16154,14 +16181,14 @@ msgid "already have %s (%s)"
 msgstr "har redan %s (%s)"
 
 msgid "fetch-pack: unable to fork off sideband demultiplexer"
-msgstr "fetch-patch: kunde inte grena av sidbandsmultiplexare"
+msgstr "fetch-patch: kan inte grena (fork) av sidbandsmultiplexare"
 
 msgid "protocol error: bad pack header"
 msgstr "protokollfel: felaktigt packhuvud"
 
 #, c-format
 msgid "fetch-pack: unable to fork off %s"
-msgstr "fetch-patch: kunde inte grena av %s"
+msgstr "fetch-patch: kan inte grena (fork) av %s"
 
 msgid "fetch-pack: invalid index-pack output"
 msgstr "fetch-patch: ogiltig utdata från index-pack"
@@ -16214,7 +16241,7 @@ msgid "Server does not support shallow requests"
 msgstr "Servern stöder inte grunda förfrågningar"
 
 msgid "unable to write request to remote"
-msgstr "kunde inte skriva anrop till fjärren"
+msgstr "kan inte skriva anrop till fjärren"
 
 #, c-format
 msgid "expected '%s', received '%s'"
@@ -16516,7 +16543,7 @@ msgstr ""
 
 #, c-format
 msgid "'%s': unable to read %s"
-msgstr "”%s” kunde inte läsa %s"
+msgstr "”%s”: kan inte läsa %s"
 
 #, c-format
 msgid "'%s': short read"
@@ -16747,14 +16774,14 @@ msgstr "ingen e-post angavs och autodetektering är inaktiverad"
 
 #, c-format
 msgid "unable to auto-detect email address (got '%s')"
-msgstr "kunde inte autodetektera e-postadress (fick ”%s”)"
+msgstr "kan inte autodetektera e-postadress (fick ”%s”)"
 
 msgid "no name was given and auto-detection is disabled"
 msgstr "inget namn angavs och autodetektering är inaktiverad"
 
 #, c-format
 msgid "unable to auto-detect name (got '%s')"
-msgstr "kunde inte autodetektera namn (fick ”%s”)"
+msgstr "kan inte autodetektera namn (fick ”%s”)"
 
 #, c-format
 msgid "empty ident name (for <%s>) not allowed"
@@ -16789,7 +16816,7 @@ msgid "multiple filter-specs cannot be combined"
 msgstr "flera filterspecifikationer kan inte kombineras"
 
 msgid "unable to upgrade repository format to support partial clone"
-msgstr "kunde inte uppgradera arkivformat till att stöda delvis klon"
+msgstr "kan inte uppgradera arkivformat till att stöda delvis klon"
 
 msgid "args"
 msgstr "argument"
@@ -16799,11 +16826,11 @@ msgstr "objektfiltrering"
 
 #, c-format
 msgid "unable to access sparse blob in '%s'"
-msgstr "kunde inte nå gles blob på ”%s”"
+msgstr "kan inte nå gles blob på ”%s”"
 
 #, c-format
 msgid "unable to parse sparse filter data in %s"
-msgstr "kunde inte tolka gles filterdata i %s"
+msgstr "kan inte tolka gles filterdata i %s"
 
 #, c-format
 msgid "entry '%s' in tree %s has tree mode, but is not a tree"
@@ -16815,7 +16842,7 @@ msgstr "posten ”%s” i trädet %s har blob-läge, men är inte en blob"
 
 #, c-format
 msgid "unable to load root tree for commit %s"
-msgstr "kunde inte läsa in rot-trädet för incheckningen %s"
+msgstr "kan inte läsa in rot-trädet för incheckningen %s"
 
 #, c-format
 msgid ""
@@ -16841,6 +16868,14 @@ msgid "Unable to create '%s.lock': %s"
 msgstr "Kunde inte skapa ”%s.lock”: %s"
 
 #, c-format
+msgid "could not write loose object index %s"
+msgstr "kunde inte skriva löst objektindex %s"
+
+#, c-format
+msgid "failed to write loose object index %s\n"
+msgstr "misslyckades skriva löst objektindex %s\n"
+
+#, c-format
 msgid "unexpected line: '%s'"
 msgstr "oväntad rad: ”%s”"
 
@@ -16849,6 +16884,10 @@ msgstr "förväntade ”flush” efter ls-refs-argument"
 
 msgid "quoted CRLF detected"
 msgstr "citerad CRLF upptäcktes"
+
+#, c-format
+msgid "unable to format message: %s"
+msgstr "kan inte formatera meddelandet: %s"
 
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
@@ -16861,6 +16900,10 @@ msgstr "Misslyckades slå ihop undermodulen %s (ingen sammanslagningsbas)"
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
 msgstr "Misslyckades slå ihop undermodulen %s (incheckningar saknas)"
+
+#, c-format
+msgid "Failed to merge submodule %s (repository corrupt)"
+msgstr "Misslyckades slå ihop undermodulen %s (arkivet är trasigt)"
 
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
@@ -16895,7 +16938,7 @@ msgstr "misslyckades exekvera intern sammanslagning"
 
 #, c-format
 msgid "unable to add %s to database"
-msgstr "kunde inte lägga till %s till databasen"
+msgstr "kan inte lägga till %s till databasen"
 
 #, c-format
 msgid "Auto-merging %s"
@@ -17329,6 +17372,82 @@ msgstr "Kunde inte tolka objektet ”%s”"
 msgid "failed to read the cache"
 msgstr "misslyckades läsa cachen"
 
+#, c-format
+msgid "failed to add packfile '%s'"
+msgstr "misslyckades läsa paketfilen ”%s”"
+
+#, c-format
+msgid "failed to open pack-index '%s'"
+msgstr "misslyckades öppna paketindexet ”%s”"
+
+#, c-format
+msgid "failed to locate object %d in packfile"
+msgstr "misslyckades hitta objekt %d i paketfilen"
+
+msgid "cannot store reverse index file"
+msgstr "kan inte spara reverse-index-fil"
+
+#, c-format
+msgid "could not parse line: %s"
+msgstr "kunde inte tolka rad: %s"
+
+#, c-format
+msgid "malformed line: %s"
+msgstr "felaktig rad: %s"
+
+msgid "ignoring existing multi-pack-index; checksum mismatch"
+msgstr "ignorerar befintlig multi-pack-index; felaktig kontrollsumma"
+
+msgid "could not load pack"
+msgstr "kunde inte läsa paket{"
+
+#, c-format
+msgid "could not open index for %s"
+msgstr "kunde inte öppna indexet för %s"
+
+msgid "Adding packfiles to multi-pack-index"
+msgstr "Lägger till paketfiler till multi-pack-index"
+
+#, c-format
+msgid "unknown preferred pack: '%s'"
+msgstr "okänt föredraget paket: %s"
+
+#, c-format
+msgid "cannot select preferred pack %s with no objects"
+msgstr "kan inte välja föredraget paket %s som inte har några objekt"
+
+#, c-format
+msgid "did not see pack-file %s to drop"
+msgstr "såg inte paketfilen %s som skulle kastas"
+
+#, c-format
+msgid "preferred pack '%s' is expired"
+msgstr "föredraget paket ”%s” har löpt ut"
+
+msgid "no pack files to index."
+msgstr "inga paketfiler att indexera."
+
+msgid "refusing to write multi-pack .bitmap without any objects"
+msgstr "kunde inte skriva fler-paketsbitkarta utan några objekt"
+
+msgid "could not write multi-pack bitmap"
+msgstr "kunde inte skriva fler-paketsbitkarta"
+
+msgid "could not write multi-pack-index"
+msgstr "kunde inte skriva flerpakets-index"
+
+msgid "Counting referenced objects"
+msgstr "Räknar refererade objekt"
+
+msgid "Finding and deleting unreferenced packfiles"
+msgstr "Ser efter och tar bort orefererade packfiler"
+
+msgid "could not start pack-objects"
+msgstr "kunde inte starta pack-objects"
+
+msgid "could not finish pack-objects"
+msgstr "kunde inte avsluta pack-objects"
+
 msgid "multi-pack-index OID fanout is of the wrong size"
 msgstr "OID-utbredning för multi-pack-index har fel storlek"
 
@@ -17402,70 +17521,6 @@ msgid "multi-pack-index large offset out of bounds"
 msgstr "stort offset för mult-pack-index utanför gränsen"
 
 #, c-format
-msgid "failed to add packfile '%s'"
-msgstr "misslyckades läsa paketfilen ”%s”"
-
-#, c-format
-msgid "failed to open pack-index '%s'"
-msgstr "misslyckades öppna paketindexet ”%s”"
-
-#, c-format
-msgid "failed to locate object %d in packfile"
-msgstr "misslyckades hitta objekt %d i paketfilen"
-
-msgid "cannot store reverse index file"
-msgstr "kan inte spara reverse-index-fil"
-
-#, c-format
-msgid "could not parse line: %s"
-msgstr "kunde inte tolka rad: %s"
-
-#, c-format
-msgid "malformed line: %s"
-msgstr "felaktig rad: %s"
-
-msgid "ignoring existing multi-pack-index; checksum mismatch"
-msgstr "ignorerar befintlig multi-pack-index; felaktig kontrollsumma"
-
-msgid "could not load pack"
-msgstr "kunde inte läsa paket{"
-
-#, c-format
-msgid "could not open index for %s"
-msgstr "kunde inte öppna indexet för %s"
-
-msgid "Adding packfiles to multi-pack-index"
-msgstr "Lägger till paketfiler till multi-pack-index"
-
-#, c-format
-msgid "unknown preferred pack: '%s'"
-msgstr "okänt föredraget paket: %s"
-
-#, c-format
-msgid "cannot select preferred pack %s with no objects"
-msgstr "kan inte välja föredraget paket %s som inte har några objekt"
-
-#, c-format
-msgid "did not see pack-file %s to drop"
-msgstr "såg inte paketfilen %s som skulle kastas"
-
-#, c-format
-msgid "preferred pack '%s' is expired"
-msgstr "föredraget paket ”%s” har löpt ut"
-
-msgid "no pack files to index."
-msgstr "inga paketfiler att indexera."
-
-msgid "refusing to write multi-pack .bitmap without any objects"
-msgstr "kunde inte skriva fler-paketsbitkarta utan några objekt"
-
-msgid "could not write multi-pack bitmap"
-msgstr "kunde inte skriva fler-paketsbitkarta"
-
-msgid "could not write multi-pack-index"
-msgstr "kunde inte skriva flerpakets-index"
-
-#, c-format
 msgid "failed to clear multi-pack-index at %s"
 msgstr "misslyckades städa multi-pack-index på %s"
 
@@ -17506,29 +17561,17 @@ msgstr "misslyckades läsa paketindex för paketfil %s"
 msgid "incorrect object offset for oid[%d] = %s: %<PRIx64> != %<PRIx64>"
 msgstr "felaktigt objekt-offset för oid[%d] = %s: %<PRIx64> != %<PRIx64>"
 
-msgid "Counting referenced objects"
-msgstr "Räknar refererade objekt"
-
-msgid "Finding and deleting unreferenced packfiles"
-msgstr "Ser efter och tar bort orefererade packfiler"
-
-msgid "could not start pack-objects"
-msgstr "kunde inte starta pack-objects"
-
-msgid "could not finish pack-objects"
-msgstr "kunde inte avsluta pack-objects"
-
 #, c-format
 msgid "unable to create lazy_dir thread: %s"
-msgstr "misslyckades skapa lazy_dir-tråd: %s"
+msgstr "kan inte skapa lazy_dir-tråd: %s"
 
 #, c-format
 msgid "unable to create lazy_name thread: %s"
-msgstr "misslyckades skapa lazy_name-tråd: %s"
+msgstr "kan inte skapa lazy_name-tråd: %s"
 
 #, c-format
 msgid "unable to join lazy_name thread: %s"
-msgstr "misslyckades utföra join på lazy_name-tråd: %s"
+msgstr "kan inte utföra join på lazy_name-tråd: %s"
 
 #, c-format
 msgid ""
@@ -17564,13 +17607,32 @@ msgstr "Vägrar skriva över anteckningar i %s (utanför refs/notes/)"
 msgid "Bad %s value: '%s'"
 msgstr "Felaktigt värde på %s: ”%s”"
 
+msgid "failed to decode tree entry"
+msgstr "misslyckades avkoda trädposten"
+
+#, c-format
+msgid "failed to map tree entry for %s"
+msgstr "misslyckades koppla trädpost för %s"
+
+#, c-format
+msgid "bad %s in commit"
+msgstr "felaktig %s i incheckning"
+
+#, c-format
+msgid "unable to map %s %s in commit object"
+msgstr "kan inte koppla %s %s i incheckningsobjekt"
+
+#, c-format
+msgid "Failed to convert object from %s to %s"
+msgstr "Misslyckades konvertera objekt från %s till %s"
+
 #, c-format
 msgid "object directory %s does not exist; check .git/objects/info/alternates"
 msgstr "objektkatalogen %s finns inte; se .git/objects/info/alternates"
 
 #, c-format
 msgid "unable to normalize alternate object path: %s"
-msgstr "kunde inte normalisera supplerande objektsökväg: %s"
+msgstr "kan inte normalisera supplerande objektsökväg: %s"
 
 #, c-format
 msgid "%s: ignoring alternate object stores, nesting too deep"
@@ -17665,8 +17727,12 @@ msgid "packed object %s (stored in %s) is corrupt"
 msgstr "packat objekt %s (lagrat i %s) är trasigt"
 
 #, c-format
+msgid "missing mapping of %s to %s"
+msgstr "saknar koppling av %s till %s"
+
+#, c-format
 msgid "unable to write file %s"
-msgstr "kunde inte skriva filen %s"
+msgstr "kan inte skriva filen %s"
 
 #, c-format
 msgid "unable to set permission to '%s'"
@@ -17684,7 +17750,7 @@ msgid "unable to create temporary file"
 msgstr "kan inte skapa temporär fil"
 
 msgid "unable to write loose object file"
-msgstr "kunde inte skriva fil för löst objekt"
+msgstr "kan inte skriva fil för löst objekt"
 
 #, c-format
 msgid "unable to deflate new object %s (%d)"
@@ -17712,11 +17778,15 @@ msgstr "”deflatEend” på strömobjektet misslyckades (%d)"
 
 #, c-format
 msgid "unable to create directory %s"
-msgstr "kunde inte skapa katalogen %s"
+msgstr "kan inte skapa katalogen %s"
 
 #, c-format
 msgid "cannot read object for %s"
 msgstr "kan inte läsa objekt för %s"
+
+#, c-format
+msgid "cannot map object %s to %s"
+msgstr "kan inte koppla objektet %s till %s"
 
 #, c-format
 msgid "object fails fsck: %s"
@@ -17935,7 +18005,7 @@ msgstr "objektet %s har okänd typ-id %d"
 
 #, c-format
 msgid "unable to parse object: %s"
-msgstr "kunde inte tolka objektet: %s"
+msgstr "kan inte tolka objektet: %s"
 
 #, c-format
 msgid "hash mismatch %s"
@@ -18018,7 +18088,10 @@ msgstr "trasig ewah-bitkarta: avhugget huvud för bitkarta för incheckning ”%
 
 #, c-format
 msgid "unable to load pack: '%s', disabling pack-reuse"
-msgstr "kunde inte läsa paketet: ”%s”, inaktiverar återanvändning av paket"
+msgstr "kan inte läsa paketet: ”%s”, inaktiverar återanvändning av paket"
+
+msgid "unable to compute preferred pack, disabling pack-reuse"
+msgstr "kan inte beräkna föredraget paket, inaktiverar återanvändning av paket"
 
 #, c-format
 msgid "object '%s' not found in type bitmaps"
@@ -18123,7 +18196,7 @@ msgstr "kunde inte ta status: %s"
 
 #, c-format
 msgid "failed to make %s readable"
-msgstr "kunde inte göra %s läsbar"
+msgstr "misslyckades göra %s läsbar"
 
 #, c-format
 msgid "could not write '%s' promisor file"
@@ -18285,7 +18358,7 @@ msgstr "felaktigt booleskt miljövariabelvärde ”%s” för ”%s”"
 
 #, c-format
 msgid "failed to parse %s"
-msgstr "kunde inte tolka %s"
+msgstr "misslyckades tolka %s"
 
 #, c-format
 msgid "Could not make %s writable by group"
@@ -18364,7 +18437,7 @@ msgid "unable to write delim packet"
 msgstr "kan inte skriva delim-paket"
 
 msgid "unable to write response end packet"
-msgstr "kunde inte skriva svarsavslutningspaket"
+msgstr "kan inte skriva svarsavslutningspaket"
 
 msgid "flush packet write failed"
 msgstr "fel vid skrivning av ”flush”-paket"
@@ -18405,16 +18478,16 @@ msgstr "Uppdaterar indexet"
 
 #, c-format
 msgid "unable to create threaded lstat: %s"
-msgstr "kunde inte skapa trådad lstat: %s"
+msgstr "kan inte skapa trådad lstat: %s"
 
 msgid "unable to parse --pretty format"
-msgstr "kunde inte tolka format för --pretty"
+msgstr "kan inte tolka format för --pretty"
 
 msgid "promisor-remote: unable to fork off fetch subprocess"
-msgstr "promisor-remote: kunde inte starta (fork) underprocessen för fetch"
+msgstr "promisor-remote: kan inte grena (fork) av underprocessen för fetch"
 
 msgid "promisor-remote: could not write to fetch subprocess"
-msgstr "promisor-remote: kunde skriva till underprocessen för fetch"
+msgstr "promisor-remote: kan skriva till underprocessen för fetch"
 
 msgid "promisor-remote: could not close stdin to fetch subprocess"
 msgstr ""
@@ -18552,11 +18625,11 @@ msgstr "osorterade köposter för ”%s”"
 
 #, c-format
 msgid "unable to create load_cache_entries thread: %s"
-msgstr "kunde inte skapa tråd för load_cache_entries: %s"
+msgstr "kan inte skapa tråd för load_cache_entries: %s"
 
 #, c-format
 msgid "unable to join load_cache_entries thread: %s"
-msgstr "kunde inte ansluta till tråden för load_cache_entries: %s"
+msgstr "kan inte ansluta till tråden för load_cache_entries: %s"
 
 #, c-format
 msgid "%s: index file open failed"
@@ -18576,11 +18649,11 @@ msgstr "%s: kan inte koppla indexfilen%s"
 
 #, c-format
 msgid "unable to create load_index_extensions thread: %s"
-msgstr "kunde inte skapa load_index_extensions-tråden: %s"
+msgstr "kan inte skapa load_index_extensions-tråden: %s"
 
 #, c-format
 msgid "unable to join load_index_extensions thread: %s"
-msgstr "kunde inte utföra join på load_index_extensions-tråden: %s"
+msgstr "kan inte utföra join på load_index_extensions-tråden: %s"
 
 #, c-format
 msgid "could not freshen shared index '%s'"
@@ -18598,11 +18671,11 @@ msgstr "misslyckades omvandla till glest index"
 
 #, c-format
 msgid "unable to open git dir: %s"
-msgstr "kunde inte öppna git-katalog: %s"
+msgstr "kan inte öppna git-katalog: %s"
 
 #, c-format
 msgid "unable to unlink: %s"
-msgstr "misslyckades ta bort länken: %s"
+msgstr "kan inte ta bort länken: %s"
 
 #, c-format
 msgid "cannot fix permission bits on '%s'"
@@ -19070,12 +19143,82 @@ msgid "could not delete references: %s"
 msgstr "kunde inte ta bort referenser: %s"
 
 #, c-format
+msgid "refname is dangerous: %s"
+msgstr "refnamnet är farligt: %s"
+
+#, c-format
+msgid "trying to write ref '%s' with nonexistent object %s"
+msgstr "försöker skriva referensen ”%s” med icke-existerande objektet %s"
+
+#, c-format
+msgid "trying to write non-commit object %s to branch '%s'"
+msgstr "försöker skriva objektet %s som inte är incheckning till grenen ”%s”"
+
+#, c-format
+msgid ""
+"multiple updates for 'HEAD' (including one via its referent '%s') are not "
+"allowed"
+msgstr ""
+"flera uppdateringar för ”HEAD” (inklusive en via dess referent ”%s”) tillåts "
+"inte"
+
+#, c-format
+msgid "cannot lock ref '%s': unable to resolve reference '%s'"
+msgstr "kan inte låsa referensen ”%s”: kan inte slå upp referensen ”%s”"
+
+#, c-format
+msgid "cannot lock ref '%s': error reading reference"
+msgstr "kan inte låsa referensen ”%s”: fel vid läsning av referensen"
+
+#, c-format
+msgid ""
+"multiple updates for '%s' (including one via symref '%s') are not allowed"
+msgstr ""
+"flera uppdateringar för ”%s” (inklusive en via symrefen ”%s”) tillåts inte"
+
+#, c-format
+msgid "cannot lock ref '%s': reference already exists"
+msgstr "kan inte låsa referensen ”%s”: referensen finns redan"
+
+#, c-format
+msgid "cannot lock ref '%s': reference is missing but expected %s"
+msgstr "kan inte låsa referensen ”%s”: referensen saknas men förväntade %s"
+
+#, c-format
+msgid "cannot lock ref '%s': is at %s but expected %s"
+msgstr "kan inte låsa referensen ”%s”: är vid %s men förväntade %s"
+
+#, c-format
+msgid "reftable: transaction prepare: %s"
+msgstr "referenstabell: förbereder transaktion: %s"
+
+#, c-format
+msgid "reftable: transaction failure: %s"
+msgstr "referenstabell: transaktionen misslyckades: %s"
+
+#, c-format
+msgid "unable to compact stack: %s"
+msgstr "kan inte kompaktera stack: %s"
+
+#, c-format
+msgid "refname %s not found"
+msgstr "referensnamnet %s hittades inte"
+
+#, c-format
+msgid "refname %s is a symbolic ref, copying it is not supported"
+msgstr "referensnamnet %s är en symbolisk referens, kopiering stöds inte"
+
+#, c-format
 msgid "invalid refspec '%s'"
 msgstr "felaktig referensspecifikation: ”%s”"
 
 #, c-format
 msgid "invalid quoting in push-option value: '%s'"
 msgstr "felaktig citering på värde för push-option: ”%s”"
+
+#, c-format
+msgid "unknown value for object-format: %s"
+msgstr "okänt värde för object-format: %s"
 
 #, c-format
 msgid "%sinfo/refs not valid: is this a git repository?"
@@ -19115,7 +19258,7 @@ msgid "remote server sent unexpected response end packet"
 msgstr "fjärrservern sände oväntat svarsavslutningspaketet"
 
 msgid "unable to rewind rpc post data - try increasing http.postBuffer"
-msgstr "kunde inte spola tillbaka rpc-postdata - försök öka http.postBuffer"
+msgstr "kan inte spola tillbaka rpc-postdata - försök öka http.postBuffer"
 
 #, c-format
 msgid "remote-curl: bad line length character: %.4s"
@@ -19350,7 +19493,7 @@ msgstr "”enkel push” motsvarar flera olika mål"
 
 #, c-format
 msgid "couldn't find remote ref %s"
-msgstr "Kunde inte hitta fjärr-referensen %s"
+msgstr "kunde inte hitta fjärr-referensen %s"
 
 #, c-format
 msgid "* Ignoring funny ref '%s' locally"
@@ -19438,7 +19581,7 @@ msgid "corrupt MERGE_RR"
 msgstr "trasig MERGE_RR"
 
 msgid "unable to write rerere record"
-msgstr "kunde inte skriva rerere-post"
+msgstr "kan inte skriva rerere-post"
 
 #, c-format
 msgid "there were errors while writing '%s' (%s)"
@@ -19503,7 +19646,7 @@ msgstr "kunde inte bestämma HEAD-revision"
 
 #, c-format
 msgid "failed to find tree of %s"
-msgstr "kunde inte hitta trädet för %s."
+msgstr "misslyckades hitta trädet för %s."
 
 #, c-format
 msgid "unsupported section for hidden refs: %s"
@@ -19517,15 +19660,26 @@ msgid "resolve-undo records `%s` which is missing"
 msgstr "resolve-undo registrerar ”%s” som saknas"
 
 #, c-format
-msgid "could not get commit for ancestry-path argument %s"
-msgstr "kunde inte hämta incheckning för ”ancestry-path”-argumentet %s"
+msgid "%s exists but is a symbolic ref"
+msgstr "%s finns men är en symbolisk referens"
+
+msgid ""
+"--merge requires one of the pseudorefs MERGE_HEAD, CHERRY_PICK_HEAD, "
+"REVERT_HEAD or REBASE_HEAD"
+msgstr ""
+"--merge kräver en av pseudoreferenserna MERGE_HEAD, CHERRY_PICK_HEAD, "
+"REVERT_HEAD eller REBASE_HEAD"
+
+#, c-format
+msgid "could not get commit for --ancestry-path argument %s"
+msgstr "kunde inte hämta incheckning för ”--ancestry-path”-argumentet %s"
 
 msgid "--unpacked=<packfile> no longer supported"
 msgstr "--unpacked=<paketfil> stöds inte längre"
 
 #, c-format
 msgid "invalid option '%s' in --stdin mode"
-msgstr "ogiltig flagga ”%s” i --stdin-läge"
+msgstr "ogiltig flagga ”%s” i ”--stdin”-läge"
 
 msgid "your current branch appears to be broken"
 msgstr "din nuvarande gren verkar vara trasig"
@@ -19747,7 +19901,7 @@ msgstr "oväntat flush-paket vid läsning av fjärruppackningsstatus"
 
 #, c-format
 msgid "unable to parse remote unpack status: %s"
-msgstr "kunde inte tolka fjärruppackningsstatus: %s"
+msgstr "kan inte tolka fjärruppackningsstatus: %s"
 
 #, c-format
 msgid "remote unpack failed: %s"
@@ -19757,7 +19911,7 @@ msgid "failed to sign the push certificate"
 msgstr "misslyckades underteckna push-certifikatet"
 
 msgid "send-pack: unable to fork off fetch subprocess"
-msgstr "send-pack: kunde inte starta (fork) underprocessen för fetch"
+msgstr "send-pack: kan inte grena (fork) av underprocessen för fetch"
 
 msgid "push negotiation failed; proceeding anyway with push"
 msgstr "sänd-förhandling misslyckades; fortsätter ändå med sändningen"
@@ -19801,6 +19955,19 @@ msgstr "rebase"
 #, c-format
 msgid "unknown action: %d"
 msgstr "okänd funktion: %d"
+
+msgid ""
+"Resolve all conflicts manually, mark them as resolved with\n"
+"\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
+"You can instead skip this commit: run \"git rebase --skip\".\n"
+"To abort and get back to the state before \"git rebase\", run \"git rebase --"
+"abort\"."
+msgstr ""
+"Lös alla konflikter manuellt, märk dem som lösta med\n"
+"”git add/rm <filer_i_konflikt>”, kör sedan ”git rebase --continue”.\n"
+"Du kan hoppa över incheckningen istället: kör ”git rebase --skip”.\n"
+"För att avbryta och återgå till där du var före ombaseringen, kör ”git "
+"rebase --abort”."
 
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
@@ -19989,7 +20156,7 @@ msgid "could not parse newly created commit"
 msgstr "kunde inte tolka en precis skapad incheckning"
 
 msgid "unable to resolve HEAD after creating commit"
-msgstr "kunde inte bestämma HEAD efter att ha skapat incheckning"
+msgstr "kan inte bestämma HEAD efter att ha skapat incheckning"
 
 msgid "detached HEAD"
 msgstr "frånkopplad HEAD"
@@ -20005,11 +20172,11 @@ msgid "HEAD %s is not a commit!"
 msgstr "HEAD %s är inte en incheckning!"
 
 msgid "unable to parse commit author"
-msgstr "kunde inte tolka incheckningens författare"
+msgstr "kan inte tolka incheckningens författare"
 
 #, c-format
 msgid "unable to read commit message from '%s'"
-msgstr "kunde inte läsa incheckningsmeddelande från ”%s”"
+msgstr "kan inte läsa incheckningsmeddelande från ”%s”"
 
 #, c-format
 msgid "invalid author identity '%s'"
@@ -20021,10 +20188,6 @@ msgstr "trasig författare: saknar datuminformation"
 #, c-format
 msgid "could not update %s"
 msgstr "kunde inte uppdatera %s"
-
-#, c-format
-msgid "could not parse commit %s"
-msgstr "kunde inte tolka incheckningen %s"
 
 #, c-format
 msgid "could not parse parent commit %s"
@@ -20130,10 +20293,6 @@ msgid "invalid command '%.*s'"
 msgstr "ogiltigt kommando ”%.*s”"
 
 #, c-format
-msgid "%s does not accept arguments: '%s'"
-msgstr "%s tar inte argument: ”%s”"
-
-#, c-format
 msgid "missing arguments for %s"
 msgstr "argument saknas för %s"
 
@@ -20231,7 +20390,7 @@ msgid "no cherry-pick in progress"
 msgstr "ingen ”cherry-pick” pågår"
 
 msgid "failed to skip the commit"
-msgstr "kunde inte hoppa över incheckningen"
+msgstr "misslyckades hoppa över incheckningen"
 
 msgid "there is nothing to skip"
 msgstr "ingenting att hoppa över"
@@ -20588,6 +20747,10 @@ msgid "unable to set up work tree using invalid config"
 msgstr "kan inte skapa arbetskatalog med felaktig konfiguration"
 
 #, c-format
+msgid "'%s' already specified as '%s'"
+msgstr "”%s” har redan angivits som ”%s”"
+
+#, c-format
 msgid "Expected git repo version <= %d, found %d"
 msgstr "Förväntade git-arkivversion <= %d, hittade %d"
 
@@ -20776,6 +20939,21 @@ msgstr "indexposten är en katalog, men inte gles (%08x)"
 msgid "cannot use split index with a sparse index"
 msgstr "kan inte dela indexet med ett glest index"
 
+#. TRANSLATORS: The first %s is a command like "ls-tree".
+#, c-format
+msgid "bad %s format: element '%s' does not start with '('"
+msgstr "felaktigt %s-format: elementet ”%s” börjar inte med ”(”"
+
+#. TRANSLATORS: The first %s is a command like "ls-tree".
+#, c-format
+msgid "bad %s format: element '%s' does not end in ')'"
+msgstr "felaktigt %s-format: elementet ”%s” slutar inte med ”)”"
+
+#. TRANSLATORS: %s is a command like "ls-tree".
+#, c-format
+msgid "bad %s format: %%%.*s"
+msgstr "felaktigt %s-format: %%%.*s"
+
 #. TRANSLATORS: IEC 80000-13:2008 gibibyte
 #, c-format
 msgid "%u.%2.2u GiB"
@@ -20833,11 +21011,11 @@ msgstr "ignorerar ”%s” som kan tolkas som en kommandoradsflagga: %s"
 
 #, c-format
 msgid "Could not update .gitmodules entry %s"
-msgstr "Kunde inte uppdatera .gitmodules-posten %s"
+msgstr "Kunde inte uppdatera ”.gitmodules”-posten %s"
 
 msgid "Cannot change unmerged .gitmodules, resolve merge conflicts first"
 msgstr ""
-"Kan inte ändra .gitmodules-fil som inte slagits ihop, lös "
+"Kan inte ändra ”.gitmodules”-fil som inte slagits ihop, lös "
 "sammanslagningskonflikter först"
 
 #, c-format
@@ -20846,7 +21024,7 @@ msgstr "Hittade inte någon sektion i .gitmodules där sökväg=%s"
 
 #, c-format
 msgid "Could not remove .gitmodules entry for %s"
-msgstr "Kunde inte ta bort .gitmodules-posten för %s"
+msgstr "Kunde inte ta bort ”.gitmodules”-posten för %s"
 
 msgid "staging updated .gitmodules failed"
 msgstr "misslyckades köa uppdaterad .gitmodules"
@@ -20909,7 +21087,7 @@ msgstr "Kunde inte komma åt undermodulen ”%s” vid incheckningen %s\n"
 
 #, c-format
 msgid "Fetching submodule %s%s at commit %s\n"
-msgstr "Hämtar undermodulen %s%s vvid incheckningen %s\n"
+msgstr "Hämtar undermodulen %s%s vid incheckningen %s\n"
 
 #, c-format
 msgid ""
@@ -21098,29 +21276,6 @@ msgstr "okänt värde ”%s” för nyckeln ”%s”"
 msgid "empty trailer token in trailer '%.*s'"
 msgstr "tom släpradssymbol i släpraden ”%.*s”"
 
-#, c-format
-msgid "could not read input file '%s'"
-msgstr "kunde inte läsa indatafilen ”%s”"
-
-#, c-format
-msgid "could not stat %s"
-msgstr "kunde inte ta status på %s"
-
-#, c-format
-msgid "file %s is not a regular file"
-msgstr "filen %s är inte en normal fil"
-
-#, c-format
-msgid "file %s is not writable by user"
-msgstr "filen %s är inte skrivbar av användaren"
-
-msgid "could not open temporary file"
-msgstr "kunde inte öppna temporär fil"
-
-#, c-format
-msgid "could not rename temporary file to %s"
-msgstr "kunde inte byta namn på temporär fil till %s"
-
 msgid "full write to remote helper failed"
 msgstr "komplett skrivning till fjärrhjälpare misslyckades"
 
@@ -21218,8 +21373,8 @@ msgid "remote-helper doesn't support push; refspec needed"
 msgstr "fjärrhjälparen stöder inte push; referensspecifikation krävs"
 
 #, c-format
-msgid "helper %s does not support 'force'"
-msgstr "hjälparen %s stöder inte ”force”"
+msgid "helper %s does not support '--force'"
+msgstr "hjälparen %s stöder inte ”--force”"
 
 msgid "couldn't run fast-export"
 msgstr "kunde inte köra fast-export"
@@ -21346,7 +21501,7 @@ msgid "Aborting."
 msgstr "Avbryter."
 
 msgid "failed to push all needed submodules"
-msgstr "kunde inte sända alla nödvändiga undermoduler"
+msgstr "misslyckades sända alla nödvändiga undermoduler"
 
 msgid "bundle-uri operation not supported by protocol"
 msgstr "bundle-uri-funktionen stöds inte av protokollet"
@@ -21636,6 +21791,10 @@ msgstr "felaktigt portnummer"
 msgid "invalid '..' path segment"
 msgstr "felaktigt ”..”-sökvägssegment"
 
+#, c-format
+msgid "error: unable to format message: %s\n"
+msgstr "fel: kan inte formatera meddelande: %s\n"
+
 msgid "usage: "
 msgstr "användning: "
 
@@ -21683,13 +21842,13 @@ msgid "not a valid path"
 msgstr "inte en giltig sökväg"
 
 msgid "unable to locate repository; .git is not a file"
-msgstr "hittar inte arkivet; .git är inte en fil"
+msgstr "kan inte hitta arkivet; .git är inte en fil"
 
 msgid "unable to locate repository; .git file does not reference a repository"
-msgstr "hittar inte arkivet; .git-filen hänvisar inte till ett arkiv"
+msgstr "kan inte hitta arkivet; ”.git”-filen hänvisar inte till ett arkiv"
 
 msgid "unable to locate repository; .git file broken"
-msgstr "hittar inte arkivet; .git-filen är trasig"
+msgstr "kan inte hitta arkivet; ”.git”-filen är trasig"
 
 msgid "gitdir unreadable"
 msgstr "gitdir är oläsbar"
@@ -21701,21 +21860,21 @@ msgid "not a valid directory"
 msgstr "inte i en giltig katalog"
 
 msgid "gitdir file does not exist"
-msgstr "gitdir-filen existerar inte"
+msgstr "”gitdir”-filen existerar inte"
 
 #, c-format
 msgid "unable to read gitdir file (%s)"
-msgstr "kunde inte läsa gitdir-filen (%s)"
+msgstr "kan inte läsa ”gitdir”-filen (%s)"
 
 #, c-format
 msgid "short read (expected %<PRIuMAX> bytes, read %<PRIuMAX>)"
 msgstr "kort läsning (förväntade %<PRIuMAX> byte, läste %<PRIuMAX>)"
 
 msgid "invalid gitdir file"
-msgstr "ogiltig gitdir-fil"
+msgstr "ogiltig ”gitdir”-fil"
 
 msgid "gitdir file points to non-existent location"
-msgstr "gitdir-filen pekar på en ickeexisterande plats"
+msgstr "”gitdir”-filen pekar på en ickeexisterande plats"
 
 #, c-format
 msgid "unable to set %s in '%s'"
@@ -21734,7 +21893,7 @@ msgstr "kunde inte lagra miljövariabeln ”%s”"
 
 #, c-format
 msgid "unable to create '%s'"
-msgstr "kunde inte skapa ”%s”"
+msgstr "kan inte skapa ”%s”"
 
 #, c-format
 msgid "could not open '%s' for reading and writing"
@@ -21748,7 +21907,7 @@ msgid "unable to get current working directory"
 msgstr "kan inte hämta aktuell arbetskatalog"
 
 msgid "unable to get random bytes"
-msgstr "kunde inte hämta slumpdata"
+msgstr "kan inte hämta slumpdata"
 
 msgid "Unmerged paths:"
 msgstr "Ej sammanslagna sökvägar:"
@@ -22222,7 +22381,7 @@ msgstr "använd: $dashless $USAGE"
 
 #, sh-format
 msgid "Cannot chdir to $cdup, the toplevel of the working tree"
-msgstr "Kunde inte byta katalog till $cdup, toppnivån på arbetskatalogen"
+msgstr "Kan inte byta katalog till $cdup, toppnivån på arbetskatalogen"
 
 #, sh-format
 msgid "fatal: $program_name cannot be used without a working tree."
@@ -22352,7 +22511,7 @@ msgstr "Ingen ärenderad i %s?"
 
 #, perl-format
 msgid "Failed to open for writing %s: %s"
-msgstr "Kunde inte öppna för skrivning %s: %s"
+msgstr "Misslyckades öppna för skrivning %s: %s"
 
 msgid ""
 "Lines beginning in \"GIT:\" will be removed.\n"
@@ -22417,7 +22576,7 @@ msgstr ""
 
 #, perl-format
 msgid "error: unable to extract a valid address from: %s\n"
-msgstr "fel: kunde inte få fram en giltig adress från: %s\n"
+msgstr "fel: kan inte få fram en giltig adress från: %s\n"
 
 #. TRANSLATORS: Make sure to include [q] [d] [e] in your
 #. translation. The program will only accept English input
@@ -22555,7 +22714,7 @@ msgstr ""
 
 #, perl-format
 msgid "unable to open %s: %s\n"
-msgstr "kunde inte öppna %s: %s\n"
+msgstr "kan inte öppna %s: %s\n"
 
 #, perl-format
 msgid ""
