@@ -5,6 +5,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "remote.h"
+#include "url.h"
 #include "urlmatch.h"
 #include "refs.h"
 #include "refspec.h"

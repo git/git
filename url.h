@@ -21,4 +21,6 @@ char *url_decode_parameter_value(const char **query);
 void end_url_with_slash(struct strbuf *buf, const char *url);
 void str_end_url_with_slash(const char *url, char **dest);
 
+int url_is_local_not_ssh(const char *url);
+
 #endif /* URL_H */
