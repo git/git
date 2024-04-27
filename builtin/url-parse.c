@@ -13,6 +13,16 @@
 #include "gettext.h"
 #include "urlmatch.h"
 
+enum url_component {
+	URL_NONE = 0,
+	URL_PROTOCOL,
+	URL_USER,
+	URL_PASSWORD,
+	URL_HOST,
+	URL_PORT,
+	URL_PATH,
+};
+
 static void parse_or_die(const char *url, struct url_info *info)
 {
 	if (url_parse(url, info)) {
