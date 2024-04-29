@@ -15,4 +15,13 @@ test_expect_success 'git survey -h shows experimental warning' '
 	grep "EXPERIMENTAL!" usage
 '
 
+test_expect_success 'create a semi-interesting repo' '
+	test_commit_bulk 10
+'
+
+test_expect_success 'git survey (default)' '
+	git survey >out 2>err &&
+	test_line_count = 0 err
+'
+
 test_done
