@@ -141,6 +141,7 @@ manpages = {
   'git-status.txt' : 1,
   'git-stripspace.txt' : 1,
   'git-submodule.txt' : 1,
+  'git-survey.txt' : 1,
   'git-svn.txt' : 1,
   'git-switch.txt' : 1,
   'git-symbolic-ref.txt' : 1,

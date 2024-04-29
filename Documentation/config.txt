@@ -534,6 +534,8 @@ include::config/status.txt[]
 
 include::config/submodule.txt[]
 
+include::config/survey.txt[]
+
 include::config/tag.txt[]
 
 include::config/tar.txt[]
