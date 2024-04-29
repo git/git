@@ -44,13 +44,13 @@ test_expect_success 'warn about add.interactive.useBuiltin' '
 	cat >expect <<-\EOF &&
 	warning: the add.interactive.useBuiltin setting has been removed!
 	See its entry in '\''git help config'\'' for details.
-	No changes.
 	EOF
+	echo "No changes." >expect.out &&
 
 	for v in = =true =false
 	do
 		git -c "add.interactive.useBuiltin$v" add -p >out 2>actual &&
-		test_must_be_empty out &&
+		test_cmp expect.out out &&
 		test_cmp expect actual || return 1
 	done
 '
@@ -334,13 +334,13 @@ test_expect_success 'different prompts for mode change/deleted' '
 
 test_expect_success 'correct message when there is nothing to do' '
 	git reset --hard &&
-	git add -p 2>err &&
-	test_grep "No changes" err &&
+	git add -p >out &&
+	test_grep "No changes" out &&
 	printf "\\0123" >binary &&
 	git add binary &&
 	printf "\\0abc" >binary &&
-	git add -p 2>err &&
-	test_grep "Only binary files changed" err
+	git add -p >out &&
+	test_grep "Only binary files changed" out
 '
 
 test_expect_success 'setup again' '
