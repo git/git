@@ -1,0 +1,36 @@
+git-survey(1)
+=============
+
+NAME
+----
+git-survey - EXPERIMENTAL: Measure various repository dimensions of scale
+
+SYNOPSIS
+--------
+[verse]
+(EXPERIMENTAL!) 'git survey' <options>
+
+DESCRIPTION
+-----------
+
+Survey the repository and measure various dimensions of scale.
+
+As repositories grow to "monorepo" size, certain data shapes can cause
+performance problems.  `git-survey` attempts to measure and report on
+known problem areas.
+
+OPTIONS
+-------
+
+--progress::
+	Show progress.  This is automatically enabled when interactive.
+
+OUTPUT
+------
+
+By default, `git survey` will print information about the repository in a
+human-readable format that includes overviews and tables.
+
+GIT
+---
+Part of the linkgit:git[1] suite
