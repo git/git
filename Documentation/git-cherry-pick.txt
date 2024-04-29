@@ -64,7 +64,7 @@ OPTIONS
 
 -x::
 	When recording the commit, append a line that says
-	"(cherry picked from commit ...)" to the original commit
+	"Cherry-Picked-From-Commit:" to the original commit
 	message in order to indicate which commit this change was
 	cherry-picked from.  This is done only for cherry
 	picks without conflicts.  Do not use this option if
@@ -74,7 +74,7 @@ OPTIONS
 	visible branches (e.g. backporting a fix to a
 	maintenance branch for an older release from a
 	development branch), adding this information can be
-	useful.
+	useful. See also linkgit:git-interpret-trailers[1].
 
 -r::
 	It used to be that the command defaulted to do `-x`

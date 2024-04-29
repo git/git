@@ -580,10 +580,10 @@ test_expect_success '--continue respects opts' '
 	git cat-file commit HEAD~1 >picked_msg &&
 	git cat-file commit HEAD~2 >unrelatedpick_msg &&
 	git cat-file commit HEAD~3 >initial_msg &&
-	! grep "cherry picked from" initial_msg &&
-	grep "cherry picked from" unrelatedpick_msg &&
-	grep "cherry picked from" picked_msg &&
-	grep "cherry picked from" anotherpick_msg
+	! grep "Cherry-Picked-From-Commit" initial_msg &&
+	grep "Cherry-Picked-From-Commit" unrelatedpick_msg &&
+	grep "Cherry-Picked-From-Commit" picked_msg &&
+	grep "Cherry-Picked-From-Commit" anotherpick_msg
 '
 
 test_expect_success '--continue of single-pick respects -x' '
@@ -594,7 +594,7 @@ test_expect_success '--continue of single-pick respects -x' '
 	git cherry-pick --continue &&
 	test_path_is_missing .git/sequencer &&
 	git cat-file commit HEAD >msg &&
-	grep "cherry picked from" msg
+	grep "Cherry-Picked-From-Commit" msg
 '
 
 test_expect_success '--continue respects -x in first commit in multi-pick' '
@@ -606,7 +606,7 @@ test_expect_success '--continue respects -x in first commit in multi-pick' '
 	test_path_is_missing .git/sequencer &&
 	git cat-file commit HEAD^ >msg &&
 	picked=$(git rev-parse --verify picked) &&
-	grep "cherry picked from.*$picked" msg
+	grep "Cherry-Picked-From-Commit: $picked" msg
 '
 
 test_expect_failure '--signoff is automatically propagated to resolved conflict' '

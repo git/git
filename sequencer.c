@@ -58,7 +58,7 @@
 #define GIT_MAX_LABEL_LENGTH ((NAME_MAX) - (LOCK_SUFFIX_LEN) - 16)
 
 static const char sign_off_header[] = "Signed-off-by: ";
-static const char cherry_picked_prefix[] = "(cherry picked from commit ";
+static const char cherry_picked_header[] = "Cherry-Picked-From-Commit: ";
 
 GIT_PATH_FUNC(git_path_commit_editmsg, "COMMIT_EDITMSG")
 
@@ -2324,9 +2324,9 @@ static int do_pick_commit(struct repository *r,
 			strbuf_complete_line(&msgbuf);
 			if (!has_conforming_footer(&msgbuf, NULL, 0))
 				strbuf_addch(&msgbuf, '\n');
-			strbuf_addstr(&msgbuf, cherry_picked_prefix);
+			strbuf_addstr(&msgbuf, cherry_picked_header);
 			strbuf_addstr(&msgbuf, oid_to_hex(&commit->object.oid));
-			strbuf_addstr(&msgbuf, ")\n");
+			strbuf_addstr(&msgbuf, "\n");
 		}
 		if (!is_fixup(command))
 			author = get_author(msg.message);
