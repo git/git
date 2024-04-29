@@ -961,6 +961,7 @@ integration_tests = [
   't8014-blame-ignore-fuzzy.sh',
   't8015-blame-diff-algorithm.sh',
   't8020-last-modified.sh',
+  't8100-git-survey.sh',
   't9001-send-email.sh',
   't9002-column.sh',
   't9003-help-autocorrect.sh',
