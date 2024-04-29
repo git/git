@@ -7,6 +7,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
+SP=" "
+
 diff_cmp () {
 	for x
 	do
@@ -53,6 +55,19 @@ test_expect_success 'warn about add.interactive.useBuiltin' '
 		test_cmp expect.out out &&
 		test_cmp expect actual || return 1
 	done
+'
+
+test_expect_success 'unknown command' '
+	test_when_finished "git reset --hard; rm -f command" &&
+	echo W >command &&
+	git add -N command &&
+	git diff command >expect &&
+	cat >>expect <<-EOF &&
+	(1/1) Stage addition [y,n,q,a,d,e,p,?]? Unknown command ${SQ}W${SQ} (use ${SQ}?${SQ} for help)
+	(1/1) Stage addition [y,n,q,a,d,e,p,?]?$SP
+	EOF
+	git add -p -- command <command >actual 2>&1 &&
+	test_cmp expect actual
 '
 
 test_expect_success 'setup (initial)' '
@@ -231,7 +246,6 @@ test_expect_success 'setup file' '
 '
 
 test_expect_success 'setup patch' '
-	SP=" " &&
 	NULL="" &&
 	cat >patch <<-EOF
 	@@ -1,4 +1,4 @@
