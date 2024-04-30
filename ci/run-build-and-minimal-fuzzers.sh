@@ -7,7 +7,7 @@
 
 group "Build fuzzers" make \
 	CC=clang \
-	CXX=clang++ \
+	FUZZ_CXX=clang++ \
 	CFLAGS="-fsanitize=fuzzer-no-link,address" \
 	LIB_FUZZING_ENGINE="-fsanitize=fuzzer,address" \
 	fuzz-all
