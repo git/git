@@ -323,17 +323,15 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	add_per_worktree_entries_to_dir(dir, dirname);
 }
 
-/*
- * Add root refs to the ref dir by parsing the directory for any files which
- * follow the root ref syntax.
- */
-static void add_root_refs(struct files_ref_store *refs,
-			  struct ref_dir *dir)
+static int for_each_root_ref(struct files_ref_store *refs,
+			     int (*cb)(const char *refname, void *cb_data),
+			     void *cb_data)
 {
 	struct strbuf path = STRBUF_INIT, refname = STRBUF_INIT;
 	const char *dirname = refs->loose->root->name;
 	struct dirent *de;
 	size_t dirnamelen;
+	int ret;
 	DIR *d;
 
 	files_ref_path(refs, &path, dirname);
@@ -341,7 +339,7 @@ static void add_root_refs(struct files_ref_store *refs,
 	d = opendir(path.buf);
 	if (!d) {
 		strbuf_release(&path);
-		return;
+		return -1;
 	}
 
 	strbuf_addstr(&refname, dirname);
@@ -357,14 +355,47 @@ static void add_root_refs(struct files_ref_store *refs,
 		strbuf_addstr(&refname, de->d_name);
 
 		dtype = get_dtype(de, &path, 1);
-		if (dtype == DT_REG && is_root_ref(de->d_name))
-			loose_fill_ref_dir_regular_file(refs, refname.buf, dir);
+		if (dtype == DT_REG && is_root_ref(de->d_name)) {
+			ret = cb(refname.buf, cb_data);
+			if (ret)
+				goto done;
+		}
 
 		strbuf_setlen(&refname, dirnamelen);
 	}
+
+done:
 	strbuf_release(&refname);
 	strbuf_release(&path);
 	closedir(d);
+	return ret;
+}
+
+struct fill_root_ref_data {
+	struct files_ref_store *refs;
+	struct ref_dir *dir;
+};
+
+static int fill_root_ref(const char *refname, void *cb_data)
+{
+	struct fill_root_ref_data *data = cb_data;
+	loose_fill_ref_dir_regular_file(data->refs, refname, data->dir);
+	return 0;
+}
+
+/*
+ * Add root refs to the ref dir by parsing the directory for any files which
+ * follow the root ref syntax.
+ */
+static void add_root_refs(struct files_ref_store *refs,
+			  struct ref_dir *dir)
+{
+	struct fill_root_ref_data data = {
+		.refs = refs,
+		.dir = dir,
+	};
+
+	for_each_root_ref(refs, fill_root_ref, &data);
 }
 
 static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
