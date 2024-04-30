@@ -1368,11 +1368,37 @@ test_expect_success 'empty subject prefix does not have extra space' '
 	test_cmp expect actual
 '
 
-test_expect_success '--rfc' '
+test_expect_success '--rfc and --no-rfc' '
 	cat >expect <<-\EOF &&
 	Subject: [RFC PATCH 1/1] header with . in it
 	EOF
 	git format-patch -n -1 --stdout --rfc >patch &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual &&
+	git format-patch -n -1 --stdout --rfc --no-rfc >patch &&
+	sed -e "s/RFC //" expect >expect-raw &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect-raw actual
+'
+
+test_expect_success '--rfc=WIP and --rfc=' '
+	cat >expect <<-\EOF &&
+	Subject: [WIP PATCH 1/1] header with . in it
+	EOF
+	git format-patch -n -1 --stdout --rfc=WIP >patch &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual &&
+	git format-patch -n -1 --stdout --rfc --rfc= >patch &&
+	sed -e "s/WIP //" expect >expect-raw &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect-raw actual
+'
+
+test_expect_success '--rfc=-(WIP) appends' '
+	cat >expect <<-\EOF &&
+	Subject: [PATCH (WIP) 1/1] header with . in it
+	EOF
+	git format-patch -n -1 --stdout --rfc="-(WIP)" >patch &&
 	grep "^Subject:" patch >actual &&
 	test_cmp expect actual
 '

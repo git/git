@@ -1494,6 +1494,19 @@ static int subject_prefix_callback(const struct option *opt, const char *arg,
 	return 0;
 }
 
+static int rfc_callback(const struct option *opt, const char *arg,
+			int unset)
+{
+	const char **rfc = opt->value;
+
+	*rfc = opt->value;
+	if (unset)
+		*rfc = NULL;
+	else
+		*rfc = arg ? arg : "RFC";
+	return 0;
+}
+
 static int numbered_cmdline_opt = 0;
 
 static int numbered_callback(const struct option *opt, const char *arg,
@@ -1907,8 +1920,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct strbuf rdiff2 = STRBUF_INIT;
 	struct strbuf rdiff_title = STRBUF_INIT;
 	struct strbuf sprefix = STRBUF_INIT;
+	const char *rfc = NULL;
 	int creation_factor = -1;
-	int rfc = 0;
 
 	const struct option builtin_format_patch_options[] = {
 		OPT_CALLBACK_F('n', "numbered", &numbered, NULL,
@@ -1932,7 +1945,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    N_("mark the series as Nth re-roll")),
 		OPT_INTEGER(0, "filename-max-length", &fmt_patch_name_max,
 			    N_("max length of output filename")),
-		OPT_BOOL(0, "rfc", &rfc, N_("use [RFC PATCH] instead of [PATCH]")),
+		OPT_CALLBACK_F(0, "rfc", &rfc, N_("rfc"),
+			       N_("add <rfc> (default 'RFC') before 'PATCH'"),
+			       PARSE_OPT_OPTARG, rfc_callback),
 		OPT_STRING(0, "cover-from-description", &cover_from_description_arg,
 			    N_("cover-from-description-mode"),
 			    N_("generate parts of a cover letter based on a branch's description")),
@@ -2050,9 +2065,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_from_description_arg)
 		cover_from_description_mode = parse_cover_from_description(cover_from_description_arg);
 
-	if (rfc) {
-		strbuf_insertstr(&sprefix, 0, "RFC ");
+	if (rfc && rfc[0]) {
 		subject_prefix = 1;
+		if (rfc[0] == '-')
+			strbuf_addf(&sprefix, " %s", rfc + 1);
+		else
+			strbuf_insertf(&sprefix, 0, "%s ", rfc);
 	}
 
 	if (reroll_count) {
