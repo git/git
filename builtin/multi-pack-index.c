@@ -8,6 +8,7 @@
 #include "strbuf.h"
 #include "trace2.h"
 #include "object-store-ll.h"
+#include "replace-object.h"
 
 #define BUILTIN_MIDX_WRITE_USAGE \
 	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]" \
@@ -272,6 +273,8 @@ int cmd_multi_pack_index(int argc, const char **argv,
 		OPT_END(),
 	};
 	struct option *options = parse_options_concat(builtin_multi_pack_index_options, common_opts);
+
+	disable_replace_refs();
 
 	git_config(git_default_config, NULL);
 
