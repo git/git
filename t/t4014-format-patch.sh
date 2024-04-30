@@ -1397,6 +1397,27 @@ test_expect_success '--rfc is argument order independent' '
 	test_cmp expect actual
 '
 
+test_expect_success '--subject-prefix="<non-empty>" and -k cannot be used together' '
+	echo "fatal: options '\''--subject-prefix/--rfc'\'' and '\''-k'\'' cannot be used together" >expect.err &&
+	test_must_fail git format-patch -1 --stdout --subject-prefix="MYPREFIX" -k >actual.out 2>actual.err &&
+	test_must_be_empty actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success '--subject-prefix="" and -k cannot be used together' '
+	echo "fatal: options '\''--subject-prefix/--rfc'\'' and '\''-k'\'' cannot be used together" >expect.err &&
+	test_must_fail git format-patch -1 --stdout --subject-prefix="" -k >actual.out 2>actual.err &&
+	test_must_be_empty actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success '--rfc and -k cannot be used together' '
+	echo "fatal: options '\''--subject-prefix/--rfc'\'' and '\''-k'\'' cannot be used together" >expect.err &&
+	test_must_fail git format-patch -1 --stdout --rfc -k >actual.out 2>actual.err &&
+	test_must_be_empty actual.out &&
+	test_cmp expect.err actual.err
+'
+
 test_expect_success '--from=ident notices bogus ident' '
 	test_must_fail git format-patch -1 --stdout --from=foo >patch
 '
