@@ -1,0 +1,55 @@
+Git v2.46 Release Notes
+=======================
+
+Backward Compatibility Notes
+
+ (None at this moment)
+
+UI, Workflows & Features
+
+ * The "--rfc" option of "git format-patch" learned to take an
+   optional string value to be used in place of "RFC" to tweak the
+   "[PATCH]" on the subject header.
+   (merge ce36894509 jc/format-patch-rfc-more later to maint).
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Advertise "git contacts", a tool for newcomers to find people to
+   ask review for their patches, a bit more in our developer
+   documentation.
+
+ * In addition to building the objects needed, try to link the objects
+   that are used in fuzzer tests, to make sure at least they build
+   without bitrot, in Linux CI runs.
+
+
+Fixes since v2.45
+-----------------
+
+ * "git rebase --signoff" used to forget that it needs to add a
+   sign-off to the resulting commit when told to continue after a
+   conflict stops its operation.
+   (merge a6c2654f83 pw/rebase-m-signoff-fix later to maint).
+
+ * The procedure to build multi-pack-index got confused by the
+   replace-refs mechanism, which has been corrected by disabling the
+   latter.
+   (merge 93e2ae1c95 xx/disable-replace-when-building-midx later to maint).
+
+ * The "-k" and "--rfc" options of "format-patch" will now error out
+   when used together, as one tells us not to add anything to the
+   title of the commit, and the other one tells us to add "RFC" in
+   addition to "PATCH".
+   (merge cadcf58085 ds/format-patch-rfc-and-k later to maint).
+
+ * "git stash -S" did not handle binary files correctly, which has
+   been corrected.
+   (merge 5fb7686409 aj/stash-staged-fix later to maint).
+
+ * A scheduled "git maintenance" job is expected to work on all
+   repositories it knows about, but it stopped at the first one that
+   errored out.  Now it keeps going.
+   (merge c75662bfc9 js/for-each-repo-keep-going later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
