@@ -18,8 +18,15 @@ Many Git porcelainish commands take a mixture of flags
 (i.e. parameters that begin with a dash '-') and parameters
 meant for the underlying 'git rev-list' command they use internally
 and flags and parameters for the other commands they use
-downstream of 'git rev-list'.  This command is used to
-distinguish between them.
+downstream of 'git rev-list'.  The primary purpose of this command
+is to allow calling programs to distinguish between them.  There are
+a few other operation modes that have nothing to do with the above
+"help parse command line options".
+
+Unless otherwise specified, most of the options and operation modes
+require you to run this command inside a git repository or a working
+tree that is under the control of a git repository, and will give you
+a fatal error otherwise.
 
 
 OPTIONS
@@ -32,11 +39,15 @@ Each of these options must appear first on the command line.
 
 --parseopt::
 	Use 'git rev-parse' in option parsing mode (see PARSEOPT section below).
+	The command in this mode can be used outside a repository or
+	a working tree controlled by a repository.
 
 --sq-quote::
 	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
 	section below). In contrast to the `--sq` option below, this
 	mode only does quoting. Nothing else is done to command input.
+	The command in this mode can be used outside a repository or
+	a working tree controlled by a repository.
 
 Options for --parseopt
 ~~~~~~~~~~~~~~~~~~~~~~
