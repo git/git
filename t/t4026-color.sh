@@ -140,6 +140,24 @@ test_expect_success 'extra character after attribute' '
 	invalid_color "dimX"
 '
 
+test_expect_success 'non-hex character in RGB color' '
+	invalid_color "#x23456" &&
+	invalid_color "#1x3456" &&
+	invalid_color "#12x456" &&
+	invalid_color "#123x56" &&
+	invalid_color "#1234x6" &&
+	invalid_color "#12345x"
+'
+
+test_expect_success 'wrong number of letters in RGB color' '
+	invalid_color "#1" &&
+	invalid_color "#23" &&
+	invalid_color "#456" &&
+	invalid_color "#789a" &&
+	invalid_color "#bcdef" &&
+	invalid_color "#1234567"
+'
+
 test_expect_success 'unknown color slots are ignored (diff)' '
 	git config color.diff.nosuchslotwilleverbedefined white &&
 	git diff --color
