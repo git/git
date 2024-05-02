@@ -952,6 +952,12 @@ static void unfold_value(struct strbuf *val)
 	strbuf_release(&out);
 }
 
+struct trailer_info *trailer_info_new(void)
+{
+	struct trailer_info *info = xcalloc(1, sizeof(*info));
+	return info;
+}
+
 /*
  * Parse trailers in "str", populating the trailer info and "head"
  * linked list structure.
@@ -998,6 +1004,21 @@ void free_trailers(struct list_head *trailers)
 		list_del(pos);
 		free_trailer_item(list_entry(pos, struct trailer_item, list));
 	}
+}
+
+size_t trailer_block_start(struct trailer_info *info)
+{
+	return info->trailer_block_start;
+}
+
+size_t trailer_block_end(struct trailer_info *info)
+{
+	return info->trailer_block_end;
+}
+
+int blank_line_before_trailer_block(struct trailer_info *info)
+{
+	return info->blank_line_before_trailer;
 }
 
 void trailer_info_get(const struct process_trailer_options *opts,
