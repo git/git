@@ -125,6 +125,13 @@ void format_trailers_from_commit(const struct process_trailer_options *,
  *   trailer_iterator_release(&iter);
  */
 struct trailer_iterator {
+	/*
+	 * Raw line (e.g., "foo: bar baz") before being parsed as a trailer
+	 * key/val pair as part of a trailer block (as the "key" and "val"
+	 * fields below). If a line fails to parse as a trailer, then the "key"
+	 * will be the entire line and "val" will be the empty string.
+	 */
+	const char *raw;
 	struct strbuf key;
 	struct strbuf val;
 

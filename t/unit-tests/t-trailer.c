@@ -1,7 +1,7 @@
 #include "test-lib.h"
 #include "trailer.h"
 
-static void t_trailer_iterator(const char *msg, size_t num_expected_trailers)
+static void t_trailer_iterator(const char *msg, size_t num_expected)
 {
 	struct trailer_iterator iter;
 	size_t i = 0;
@@ -11,7 +11,7 @@ static void t_trailer_iterator(const char *msg, size_t num_expected_trailers)
 		i++;
 	trailer_iterator_release(&iter);
 
-	check_uint(i, ==, num_expected_trailers);
+	check_uint(i, ==, num_expected);
 }
 
 static void run_t_trailer_iterator(void)
@@ -19,7 +19,7 @@ static void run_t_trailer_iterator(void)
 	static struct test_cases {
 		const char *name;
 		const char *msg;
-		size_t num_expected_trailers;
+		size_t num_expected;
 	} tc[] = {
 		{
 			"empty input",
@@ -119,7 +119,13 @@ static void run_t_trailer_iterator(void)
 			"not a trailer line\n"
 			"not a trailer line\n"
 			"Signed-off-by: x\n",
-			1
+			/*
+			 * Even though there is only really 1 real "trailer"
+			 * (Signed-off-by), we still have 4 trailer objects
+			 * because we still want to iterate through the entire
+			 * block.
+			 */
+			4
 		},
 		{
 			"with non-trailer lines (one too many) in trailer block",
@@ -162,7 +168,7 @@ static void run_t_trailer_iterator(void)
 
 	for (int i = 0; i < sizeof(tc) / sizeof(tc[0]); i++) {
 		TEST(t_trailer_iterator(tc[i].msg,
-					tc[i].num_expected_trailers),
+					tc[i].num_expected),
 		     "%s", tc[i].name);
 	}
 }
