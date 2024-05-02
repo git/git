@@ -70,14 +70,63 @@ void parse_trailers_from_command_line_args(struct list_head *arg_head,
 void process_trailers_lists(struct list_head *head,
 			    struct list_head *arg_head);
 
+/*
+ * Given some input string "str", return a pointer to an opaque trailer_info
+ * structure. Also populate the trailer_objects list with parsed trailer
+ * objects. Internally this calls trailer_info_get() to get the opaque pointer,
+ * but does some extra work to populate the trailer_objects linked list.
+ *
+ * The opaque trailer_info pointer can be used to check the position of the
+ * trailer block as offsets relative to the beginning of "str" in
+ * trailer_block_start() and trailer_block_end().
+ * blank_line_before_trailer_block() returns 1 if there is a blank line just
+ * before the trailer block. All of these functions are useful for preserving
+ * the input before and after the trailer block, if we were to write out the
+ * original input (but with the trailer block itself modified); see
+ * builtin/interpret-trailers.c for an example.
+ *
+ * For iterating through the parsed trailer block (if you don't care about the
+ * position of the trailer block itself in the context of the larger string text
+ * from which it was parsed), please see trailer_iterator_init() which uses the
+ * trailer_info struct internally.
+ *
+ * Lastly, callers should call trailer_info_release() when they are done using
+ * the opaque pointer.
+ *
+ * NOTE: Callers should treat both trailer_info and trailer_objects as
+ * read-only items, because there is some overlap between the two (trailer_info
+ * has "char **trailers" string array, and trailer_objects will have the same
+ * data but as a linked list of trailer_item objects). This API does not perform
+ * any synchronization between the two. In the future we should be able to
+ * reduce the duplication and use just the linked list.
+ */
 struct trailer_info *parse_trailers(const struct process_trailer_options *,
 				    const char *str,
-				    struct list_head *head);
+				    struct list_head *trailer_objects);
 
+/*
+ * Return the offset of the start of the trailer block. That is, 0 is the start
+ * of the input ("str" in parse_trailers()) and some other positive number
+ * indicates how many bytes we have to skip over before we get to the beginning
+ * of the trailer block.
+ */
 size_t trailer_block_start(struct trailer_info *);
+
+/*
+ * Return the end of the trailer block, again relative to the start of the
+ * input.
+ */
 size_t trailer_block_end(struct trailer_info *);
+
+/*
+ * Return 1 if the trailer block had an extra newline (blank line) just before
+ * it.
+ */
 int blank_line_before_trailer_block(struct trailer_info *);
 
+/*
+ * Free trailer_info struct.
+ */
 void trailer_info_release(struct trailer_info *info);
 
 void trailer_config_init(void);

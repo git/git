@@ -1026,12 +1026,12 @@ static struct trailer_info *trailer_info_get(const struct process_trailer_option
 }
 
 /*
- * Parse trailers in "str", populating the trailer info and "head"
+ * Parse trailers in "str", populating the trailer info and "trailer_objects"
  * linked list structure.
  */
 struct trailer_info *parse_trailers(const struct process_trailer_options *opts,
 				    const char *str,
-				    struct list_head *head)
+				    struct list_head *trailer_objects)
 {
 	struct trailer_info *info;
 	struct strbuf tok = STRBUF_INIT;
@@ -1051,13 +1051,13 @@ struct trailer_info *parse_trailers(const struct process_trailer_options *opts,
 				      separator_pos);
 			if (opts->unfold)
 				unfold_value(&val);
-			add_trailer_item(head,
+			add_trailer_item(trailer_objects,
 					 strbuf_detach(&tok, NULL),
 					 strbuf_detach(&val, NULL));
 		} else if (!opts->only_trailers) {
 			strbuf_addstr(&val, trailer);
 			strbuf_strip_suffix(&val, "\n");
-			add_trailer_item(head,
+			add_trailer_item(trailer_objects,
 					 NULL,
 					 strbuf_detach(&val, NULL));
 		}
