@@ -1,14 +1,27 @@
 #include "test-lib.h"
 #include "trailer.h"
 
-static void t_trailer_iterator(const char *msg, size_t num_expected)
+struct contents {
+	const char *raw;
+	const char *key;
+	const char *val;
+};
+
+static void t_trailer_iterator(const char *msg, size_t num_expected,
+			       struct contents *contents)
 {
 	struct trailer_iterator iter;
 	size_t i = 0;
 
 	trailer_iterator_init(&iter, msg);
-	while (trailer_iterator_advance(&iter))
+	while (trailer_iterator_advance(&iter)) {
+		if (num_expected) {
+			check_str(iter.raw, contents[i].raw);
+			check_str(iter.key.buf, contents[i].key);
+			check_str(iter.val.buf, contents[i].val);
+		}
 		i++;
+	}
 	trailer_iterator_release(&iter);
 
 	check_uint(i, ==, num_expected);
@@ -16,22 +29,26 @@ static void t_trailer_iterator(const char *msg, size_t num_expected)
 
 static void run_t_trailer_iterator(void)
 {
+
 	static struct test_cases {
 		const char *name;
 		const char *msg;
 		size_t num_expected;
+		struct contents contents[10];
 	} tc[] = {
 		{
 			"empty input",
 			"",
-			0
+			0,
+			{{0}},
 		},
 		{
 			"no newline at beginning",
 			"Fixes: x\n"
 			"Acked-by: x\n"
 			"Reviewed-by: x\n",
-			0
+			0,
+			{{0}},
 		},
 		{
 			"newline at beginning",
@@ -39,7 +56,27 @@ static void run_t_trailer_iterator(void)
 			"Fixes: x\n"
 			"Acked-by: x\n"
 			"Reviewed-by: x\n",
-			3
+			3,
+			{
+				{
+					.raw = "Fixes: x\n",
+					.key = "Fixes",
+					.val = "x",
+				},
+				{
+					.raw = "Acked-by: x\n",
+					.key = "Acked-by",
+					.val = "x",
+				},
+				{
+					.raw = "Reviewed-by: x\n",
+					.key = "Reviewed-by",
+					.val = "x",
+				},
+				{
+					0
+				},
+			},
 		},
 		{
 			"without body text",
@@ -48,7 +85,27 @@ static void run_t_trailer_iterator(void)
 			"Fixes: x\n"
 			"Acked-by: x\n"
 			"Reviewed-by: x\n",
-			3
+			3,
+			{
+				{
+					.raw = "Fixes: x\n",
+					.key = "Fixes",
+					.val = "x",
+				},
+				{
+					.raw = "Acked-by: x\n",
+					.key = "Acked-by",
+					.val = "x",
+				},
+				{
+					.raw = "Reviewed-by: x\n",
+					.key = "Reviewed-by",
+					.val = "x",
+				},
+				{
+					0
+				},
+			},
 		},
 		{
 			"with body text, without divider",
@@ -63,7 +120,32 @@ static void run_t_trailer_iterator(void)
 			"Acked-by: x\n"
 			"Reviewed-by: x\n"
 			"Signed-off-by: x\n",
-			4
+			4,
+			{
+				{
+					.raw = "Fixes: x\n",
+					.key = "Fixes",
+					.val = "x",
+				},
+				{
+					.raw = "Acked-by: x\n",
+					.key = "Acked-by",
+					.val = "x",
+				},
+				{
+					.raw = "Reviewed-by: x\n",
+					.key = "Reviewed-by",
+					.val = "x",
+				},
+				{
+					.raw = "Signed-off-by: x\n",
+					.key = "Signed-off-by",
+					.val = "x",
+				},
+				{
+					0
+				},
+			},
 		},
 		{
 			"with body text, without divider (second trailer block)",
@@ -85,7 +167,22 @@ static void run_t_trailer_iterator(void)
 			 */
 			"Helped-by: x\n"
 			"Signed-off-by: x\n",
-			2
+			2,
+			{
+				{
+					.raw = "Helped-by: x\n",
+					.key = "Helped-by",
+					.val = "x",
+				},
+				{
+					.raw = "Signed-off-by: x\n",
+					.key = "Signed-off-by",
+					.val = "x",
+				},
+				{
+					0
+				},
+			},
 		},
 		{
 			"with body text, with divider",
@@ -103,7 +200,17 @@ static void run_t_trailer_iterator(void)
 			 * always ignores the divider.
 			 */
 			"Signed-off-by: x\n",
-			1
+			1,
+			{
+				{
+					.raw = "Signed-off-by: x\n",
+					.key = "Signed-off-by",
+					.val = "x",
+				},
+				{
+					0
+				},
+			},
 		},
 		{
 			"with non-trailer lines in trailer block",
@@ -125,7 +232,32 @@ static void run_t_trailer_iterator(void)
 			 * because we still want to iterate through the entire
 			 * block.
 			 */
-			4
+			4,
+			{
+				{
+					.raw = "not a trailer line\n",
+					.key = "not a trailer line",
+					.val = "",
+				},
+				{
+					.raw = "not a trailer line\n",
+					.key = "not a trailer line",
+					.val = "",
+				},
+				{
+					.raw = "not a trailer line\n",
+					.key = "not a trailer line",
+					.val = "",
+				},
+				{
+					.raw = "Signed-off-by: x\n",
+					.key = "Signed-off-by",
+					.val = "x",
+				},
+				{
+					0
+				},
+			},
 		},
 		{
 			"with non-trailer lines (one too many) in trailer block",
@@ -140,7 +272,8 @@ static void run_t_trailer_iterator(void)
 			"not a trailer line\n"
 			"not a trailer line\n"
 			"Signed-off-by: x\n",
-			0
+			0,
+			{{0}},
 		},
 		{
 			"with non-trailer lines (only 1) in trailer block, but no Git-generated trailers",
@@ -162,13 +295,15 @@ static void run_t_trailer_iterator(void)
 			"Acked-by: x\n"
 			"Acked-by: x\n"
 			"not a trailer line\n",
-			0
+			0,
+			{{0}},
 		},
 	};
 
 	for (int i = 0; i < sizeof(tc) / sizeof(tc[0]); i++) {
 		TEST(t_trailer_iterator(tc[i].msg,
-					tc[i].num_expected),
+					tc[i].num_expected,
+					tc[i].contents),
 		     "%s", tc[i].name);
 	}
 }
