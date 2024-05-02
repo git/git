@@ -112,7 +112,7 @@ test_expect_success '"default" can be combined with attributes' '
 	color "default default no-reverse bold" "[1;27;39;49m"
 '
 
-test_expect_success '"normal" yields no color at all"' '
+test_expect_success '"normal" yields no color at all' '
 	color "normal black" "[40m"
 '
 
