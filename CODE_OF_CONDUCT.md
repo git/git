@@ -58,20 +58,14 @@ decisions when appropriate.
 
 This Code of Conduct applies within all community spaces, and also applies when
 an individual is officially representing the community in public spaces.
-Examples of representing our community include using an official e-mail address,
+Examples of representing our community include using an official email address,
 posting via an official social media account, or acting as an appointed
 representative at an online or offline event.
 
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the Git for Windows maintainer or the community leaders
-responsible for enforcement at git@sfconservancy.org, or individually:
-
-  - Ævar Arnfjörð Bjarmason <avarab@gmail.com>
-  - Christian Couder <christian.couder@gmail.com>
-  - Junio C Hamano <gitster@pobox.com>
-  - Taylor Blau <me@ttaylorr.com>
+reported by contacting the Git for Windows maintainer.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
