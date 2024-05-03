@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
+#
+# Check that commits after a specified point do not contain new or modified
+# lines with whitespace errors. An optional formatted summary can be generated
+# by providing an output file path and url as additional arguments.
+#
 
 baseCommit=$1
 outputFile=$2
 url=$3
+
+if test "$#" -ne 1 && test "$#" -ne 3
+then
+	echo "USAGE: $0 <BASE_COMMIT> [<OUTPUT_FILE> <URL>]"
+	exit 1
+fi
 
 problems=()
 commit=
@@ -56,19 +67,29 @@ then
 		goodParent=${baseCommit: 0:7}
 	fi
 
-	echo "🛑 Please review the Summary output for further information."
-	echo "### :x: A whitespace issue was found in one or more of the commits." >"$outputFile"
-	echo "" >>"$outputFile"
-	echo "Run these commands to correct the problem:" >>"$outputFile"
-	echo "1. \`git rebase --whitespace=fix ${goodParent}\`" >>"$outputFile"
-	echo "1. \`git push --force\`" >>"$outputFile"
-	echo " " >>"$outputFile"
-	echo "Errors:" >>"$outputFile"
+	echo "A whitespace issue was found in onen of more of the commits."
+	echo "Run the following command to resolve whitespace issues:"
+	echo "git rebase --whitespace=fix ${goodParent}"
 
-	for i in "${problems[@]}"
-	do
-		echo "${i}" >>"$outputFile"
-	done
+	# If target output file is provided, write formatted output.
+	if test -n "$outputFile"
+	then
+		echo "🛑 Please review the Summary output for further information."
+		(
+			echo "### :x: A whitespace issue was found in one or more of the commits."
+			echo ""
+			echo "Run these commands to correct the problem:"
+			echo "1. \`git rebase --whitespace=fix ${goodParent}\`"
+			echo "1. \`git push --force\`"
+			echo ""
+			echo "Errors:"
+
+			for i in "${problems[@]}"
+			do
+				echo "${i}"
+			done
+		) >"$outputFile"
+	fi
 
 	exit 2
 fi
