@@ -31,14 +31,15 @@ jobs:
         commit=
         commitText=
         commitTextmd=
-        goodparent=
+        goodParent=
         while read dash sha etc
         do
           case "${dash}" in
-          "---")
-            if test -z "${commit}"
+          "---") # Line contains commit information.
+            if test -z "${goodParent}"
             then
-              goodparent=${sha}
+              # Assume the commit has no whitespace errors until detected otherwise.
+              goodParent=${sha}
             fi
             commit="${sha}"
             commitText="${sha} ${etc}"
@@ -46,18 +47,18 @@ jobs:
             ;;
           "")
             ;;
-          *)
-            if test -n "${commit}"
+          *) # Line contains whitespace error information for current commit.
+            if test -n "${goodParent}"
             then
               problems+=("1) --- ${commitTextmd}")
               echo ""
               echo "--- ${commitText}"
-              commit=
+              goodParent=
             fi
             case "${dash}" in
             *:[1-9]*:) # contains file and line number information
               dashend=${dash#*:}
-              problems+=("[${dash}](https://github.com/${{ github.repository }}/blob/${{github.event.pull_request.head.ref}}/${dash%%:*}#L${dashend%:}) ${sha} ${etc}")
+              problems+=("[${dash}](https://github.com/${{ github.repository }}/blob/${commit}/${dash%%:*}#L${dashend%:}) ${sha} ${etc}")
               ;;
             *)
               problems+=("\`${dash} ${sha} ${etc}\`")
@@ -70,15 +71,15 @@ jobs:
 
         if test ${#problems[*]} -gt 0
         then
-          if test -z "${commit}"
+          if test -z "${goodParent}"
           then
-            goodparent=${baseSha: 0:7}
+            goodParent=${baseSha: 0:7}
           fi
           echo "🛑 Please review the Summary output for further information."
           echo "### :x: A whitespace issue was found in one or more of the commits." >$GITHUB_STEP_SUMMARY
           echo "" >>$GITHUB_STEP_SUMMARY
           echo "Run these commands to correct the problem:" >>$GITHUB_STEP_SUMMARY
-          echo "1. \`git rebase --whitespace=fix ${goodparent}\`" >>$GITHUB_STEP_SUMMARY
+          echo "1. \`git rebase --whitespace=fix ${goodParent}\`" >>$GITHUB_STEP_SUMMARY
           echo "1. \`git push --force\`" >>$GITHUB_STEP_SUMMARY
           echo " " >>$GITHUB_STEP_SUMMARY
           echo "Errors:" >>$GITHUB_STEP_SUMMARY
