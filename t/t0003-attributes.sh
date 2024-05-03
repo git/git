@@ -572,6 +572,16 @@ test_expect_success EXPENSIVE 'large attributes file ignored in index' '
 	test_cmp expect err
 '
 
+test_expect_success EXPENSIVE 'large attributes blob ignored' '
+	test_when_finished "git update-index --remove .gitattributes" &&
+	blob=$(dd if=/dev/zero bs=1048576 count=101 2>/dev/null | git hash-object -w --stdin) &&
+	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
+	tree="$(git write-tree)" &&
+	git check-attr --cached --all --source="$tree" path >/dev/null 2>err &&
+	echo "warning: ignoring overly large gitattributes blob ${SQ}.gitattributes${SQ}" >expect &&
+	test_cmp expect err
+'
+
 test_expect_success 'builtin object mode attributes work (dir and regular paths)' '
 	>normal &&
 	attr_check_object_mode normal 100644 &&
