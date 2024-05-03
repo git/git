@@ -12,8 +12,9 @@ SYNOPSIS
 'git' [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
     [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-lazy-fetch]
-    [--no-optional-locks] [--bare] [--git-dir=<path>] [--work-tree=<path>]
-    [--namespace=<name>] [--config-env=<name>=<envvar>] <command> [<args>]
+    [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]
+    [--work-tree=<path>] [--namespace=<name>] [--config-env=<name>=<envvar>]
+    <command> [<args>]
 
 DESCRIPTION
 -----------
@@ -189,6 +190,9 @@ If you just want to run git as if it was started in `<path>` then use
 --no-optional-locks::
 	Do not perform optional operations that require locks. This is
 	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
+
+--no-advice::
+	Disable all advice hints from being printed.
 
 --literal-pathspecs::
 	Treat pathspecs literally (i.e. no globbing, no pathspec magic).

@@ -29,4 +29,72 @@ test_expect_success 'advice should not be printed when config variable is set to
 	test_must_be_empty actual
 '
 
+test_expect_success 'advice should not be printed when --no-advice is used' '
+	q_to_tab >expect <<-\EOF &&
+On branch master
+
+No commits yet
+
+Untracked files:
+QREADME
+
+nothing added to commit but untracked files present
+EOF
+
+	test_when_finished "rm -fr advice-test" &&
+	git init advice-test &&
+	(
+		cd advice-test &&
+		>README &&
+		git --no-advice status
+	) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'advice should not be printed when GIT_ADVICE is set to false' '
+	q_to_tab >expect <<-\EOF &&
+On branch master
+
+No commits yet
+
+Untracked files:
+QREADME
+
+nothing added to commit but untracked files present
+EOF
+
+	test_when_finished "rm -fr advice-test" &&
+	git init advice-test &&
+	(
+		cd advice-test &&
+		>README &&
+		GIT_ADVICE=false git status
+	) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'advice should be printed when GIT_ADVICE is set to true' '
+	q_to_tab >expect <<-\EOF &&
+On branch master
+
+No commits yet
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+QREADME
+
+nothing added to commit but untracked files present (use "git add" to track)
+EOF
+
+	test_when_finished "rm -fr advice-test" &&
+	git init advice-test &&
+	(
+		cd advice-test &&
+		>README &&
+		GIT_ADVICE=true git status
+	) >actual &&
+	cat actual > /tmp/actual &&
+	test_cmp expect actual
+'
+
 test_done
