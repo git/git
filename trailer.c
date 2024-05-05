@@ -1170,3 +1170,15 @@ void trailer_iterator_release(struct trailer_iterator *iter)
 	strbuf_release(&iter->val);
 	strbuf_release(&iter->key);
 }
+
+int amend_file_with_trailers(const char *path, const struct strvec *trailer_args)
+{
+	struct child_process run_trailer = CHILD_PROCESS_INIT;
+
+	run_trailer.git_cmd = 1;
+	strvec_pushl(&run_trailer.args, "interpret-trailers",
+		     "--in-place", "--no-divider",
+		     path, NULL);
+	strvec_pushv(&run_trailer.args, trailer_args->v);
+	return run_command(&run_trailer);
+}
