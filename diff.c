@@ -4547,6 +4547,7 @@ static void run_diff_cmd(const char *pgm,
 			     o, complete_rewrite);
 	} else {
 		fprintf(o->file, "* Unmerged path %s\n", name);
+		o->found_changes = 1;
 	}
 }
 
