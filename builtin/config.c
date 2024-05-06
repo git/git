@@ -44,7 +44,7 @@ static struct config_options config_options;
 static int show_origin;
 static int show_scope;
 static int fixed_value;
-static const char *comment;
+static const char *comment_arg;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -174,7 +174,7 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
 	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)")),
 	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
-	OPT_STRING(0, "comment", &comment, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
+	OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
 	OPT_END(),
 };
 
@@ -674,7 +674,7 @@ static char *default_user_config(void)
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = !startup_info->have_repository;
-	char *value = NULL;
+	char *value = NULL, *comment = NULL;
 	int flags = 0;
 	int ret = 0;
 	struct key_value_info default_kvi = KVI_INIT;
@@ -799,7 +799,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_builtin_config();
 	}
 
-	if (comment &&
+	if (comment_arg &&
 	    !(actions & (ACTION_ADD|ACTION_SET|ACTION_SET_ALL|ACTION_REPLACE_ALL))) {
 		error(_("--comment is only applicable to add/set/replace operations"));
 		usage_builtin_config();
@@ -841,7 +841,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		flags |= CONFIG_FLAGS_FIXED_VALUE;
 	}
 
-	comment = git_config_prepare_comment_string(comment);
+	comment = git_config_prepare_comment_string(comment_arg);
 
 	if (actions & PAGING_ACTIONS)
 		setup_auto_pager("config", 1);
@@ -993,6 +993,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		return get_colorbool(argv[0], argc == 2);
 	}
 
+	free(comment);
 	free(value);
 	return ret;
 }

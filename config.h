@@ -338,7 +338,7 @@ void git_config_set_multivar(const char *, const char *, const char *, unsigned)
 int repo_config_set_multivar_gently(struct repository *, const char *, const char *, const char *, unsigned);
 int git_config_set_multivar_in_file_gently(const char *, const char *, const char *, const char *, const char *, unsigned);
 
-const char *git_config_prepare_comment_string(const char *);
+char *git_config_prepare_comment_string(const char *);
 
 /**
  * takes four parameters:
