@@ -698,6 +698,14 @@ static void handle_config_location(const char *prefix)
 	}
 }
 
+static void handle_nul(void) {
+	if (end_nul) {
+		term = '\0';
+		delim = '\n';
+		key_delim = '\n';
+	}
+}
+
 static struct option builtin_config_options[] = {
 	OPT_GROUP(N_("Config file location")),
 	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
@@ -760,12 +768,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
 	handle_config_location(prefix);
-
-	if (end_nul) {
-		term = '\0';
-		delim = '\n';
-		key_delim = '\n';
-	}
+	handle_nul();
 
 	if ((actions & (ACTION_GET_COLOR|ACTION_GET_COLORBOOL)) && type) {
 		error(_("--get-color and variable type are incoherent"));
