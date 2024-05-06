@@ -6,6 +6,12 @@
 
 #define RANGE_DIFF_CREATION_FACTOR_DEFAULT 60
 
+/*
+ * A much higher value than the default, when we KNOW we are comparing
+ * the same series (e.g., used when format-patch calls range-diff).
+ */
+#define CREATION_FACTOR_FOR_THE_SAME_SERIES 999
+
 struct range_diff_options {
 	int creation_factor;
 	unsigned dual_color:1;
