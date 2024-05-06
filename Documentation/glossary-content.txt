@@ -576,7 +576,8 @@ The most notable example is `HEAD`.
 [[def_refspec]]refspec::
 	A "refspec" is used by <<def_fetch,fetch>> and
 	<<def_push,push>> to describe the mapping between remote
-	<<def_ref,ref>> and local ref.
+	<<def_ref,ref>> and local ref. See linkgit:git-fetch[1] or
+	linkgit:git-push[1] for details.
 
 [[def_remote]]remote repository::
 	A <<def_repository,repository>> which is used to track the same
