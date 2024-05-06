@@ -17,12 +17,17 @@
 
 static const char *const builtin_config_usage[] = {
 	N_("git config list [<file-option>] [<display-option>] [--includes]"),
-	N_("git config [<options>]"),
+	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
 	NULL
 };
 
 static const char *const builtin_config_list_usage[] = {
 	N_("git config list [<file-option>] [<display-option>] [--includes]"),
+	NULL
+};
+
+static const char *const builtin_config_get_usage[] = {
+	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
 	NULL
 };
 
@@ -722,6 +727,16 @@ static void handle_nul(void) {
 	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")), \
 	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object"))
 
+#define CONFIG_TYPE_OPTIONS \
+	OPT_GROUP(N_("Type")), \
+	OPT_CALLBACK('t', "type", &type, N_("type"), N_("value is given this type"), option_parse_type), \
+	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL), \
+	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT), \
+	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT), \
+	OPT_CALLBACK_VALUE(0, "bool-or-str", &type, N_("value is --bool or string"), TYPE_BOOL_OR_STR), \
+	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH), \
+	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE)
+
 #define CONFIG_DISPLAY_OPTIONS \
 	OPT_GROUP(N_("Display options")), \
 	OPT_BOOL('z', "null", &end_nul, N_("terminate values with NUL byte")), \
@@ -746,14 +761,7 @@ static struct option builtin_config_options[] = {
 	OPT_CMDMODE('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
 	OPT_CMDMODE(0, "get-color", &actions, N_("find the color configured: slot [<default>]"), ACTION_GET_COLOR),
 	OPT_CMDMODE(0, "get-colorbool", &actions, N_("find the color setting: slot [<stdout-is-tty>]"), ACTION_GET_COLORBOOL),
-	OPT_GROUP(N_("Type")),
-	OPT_CALLBACK('t', "type", &type, N_("type"), N_("value is given this type"), option_parse_type),
-	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL),
-	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT),
-	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
-	OPT_CALLBACK_VALUE(0, "bool-or-str", &type, N_("value is --bool or string"), TYPE_BOOL_OR_STR),
-	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
-	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
+	CONFIG_TYPE_OPTIONS,
 	CONFIG_DISPLAY_OPTIONS,
 	OPT_GROUP(N_("Other")),
 	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
@@ -799,8 +807,51 @@ static int cmd_config_list(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int cmd_config_get(int argc, const char **argv, const char *prefix)
+{
+	const char *value_pattern = NULL, *url = NULL;
+	int flags = 0;
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		CONFIG_TYPE_OPTIONS,
+		OPT_GROUP(N_("Filter options")),
+		OPT_BOOL(0, "all", &do_all, N_("return all values for multi-valued config options")),
+		OPT_BOOL(0, "regexp", &use_key_regexp, N_("interpret the name as a regular expression")),
+		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
+		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
+		OPT_STRING(0, "url", &url, N_("URL"), N_("show config matching the given URL")),
+		CONFIG_DISPLAY_OPTIONS,
+		OPT_BOOL(0, "show-names", &show_keys, N_("show config keys in addition to their values")),
+		OPT_GROUP(N_("Other")),
+		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+		OPT_STRING(0, "default", &default_value, N_("value"), N_("use default value when missing entry")),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_get_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_argc(argc, 1, 1);
+
+	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
+		die(_("--fixed-value only applies with 'value-pattern'"));
+	if (default_value && (do_all || url))
+		die(_("--default= cannot be used with --all or --url="));
+	if (url && (do_all || use_key_regexp || value_pattern))
+		die(_("--url= cannot be used with --all, --regexp or --value"));
+
+	handle_config_location(prefix);
+	handle_nul();
+
+	setup_auto_pager("config", 1);
+
+	if (url)
+		return get_urlmatch(argv[0], url);
+	return get_value(argv[0], value_pattern, flags);
+}
+
 static struct option builtin_subcommand_options[] = {
 	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
+	OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
 	OPT_END(),
 };
 

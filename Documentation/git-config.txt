@@ -10,18 +10,14 @@ SYNOPSIS
 --------
 [verse]
 'git config list' [<file-option>] [<display-option>] [--includes]
+'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>
 'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
 'git config' [<file-option>] [--type=<type>] [--comment=<message>] --add <name> <value>
 'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get <name> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get-all <name> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] [--name-only] --get-regexp <name-regex> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [-z|--null] --get-urlmatch <name> <URL>
 'git config' [<file-option>] [--fixed-value] --unset <name> [<value-pattern>]
 'git config' [<file-option>] [--fixed-value] --unset-all <name> [<value-pattern>]
 'git config' [<file-option>] --rename-section <old-name> <new-name>
 'git config' [<file-option>] --remove-section <name>
-'git config' [<file-option>] --get-color <name> [<default>]
 'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
 'git config' [<file-option>] -e | --edit
 
@@ -80,6 +76,12 @@ COMMANDS
 list::
 	List all variables set in config file, along with their values.
 
+get::
+	Emits the value of the specified key. If key is present multiple times
+	in the configuration, emits the last value. If `--all` is specified,
+	emits all values associated with key. Returns error code 1 if key is
+	not present.
+
 [[OPTIONS]]
 OPTIONS
 -------
@@ -105,22 +107,16 @@ OPTIONS
 	not contain linefeed characters (no multi-line comments are
 	permitted).
 
---get::
-	Get the value for a given key (optionally filtered by a regex
-	matching the value). Returns error code 1 if the key was not
-	found and the last value if multiple key values were found.
+--all::
+	With `get`, return all values for a multi-valued key.
 
---get-all::
-	Like get, but returns all values for a multi-valued key.
+---regexp::
+	With `get`, interpret the name as a regular expression. Regular
+	expression matching is currently case-sensitive and done against a
+	canonicalized version of the key in which section and variable names
+	are lowercased, but subsection names are not.
 
---get-regexp::
-	Like --get-all, but interprets the name as a regular expression and
-	writes out the key names.  Regular expression matching is currently
-	case-sensitive and done against a canonicalized version of the key
-	in which section and variable names are lowercased, but subsection
-	names are not.
-
---get-urlmatch <name> <URL>::
+--url=<URL>::
 	When given a two-part <name> as <section>.<key>, the value for
 	<section>.<URL>.<key> whose <URL> part matches the best to the
 	given URL is returned (if no such key exists, the value for
@@ -251,7 +247,7 @@ Valid `<type>`'s include:
 
 --name-only::
 	Output only the names of config variables for `list` or
-	`--get-regexp`.
+	`get`.
 
 --show-origin::
 	Augment the output of all queried config options with the
@@ -275,17 +271,6 @@ Valid `<type>`'s include:
 	When the color setting for `name` is undefined, the command uses
 	`color.ui` as fallback.
 
---get-color <name> [<default>]::
-
-	Find the color configured for `name` (e.g. `color.diff.new`) and
-	output it as the ANSI color escape sequence to the standard
-	output.  The optional `default` parameter is used instead, if
-	there is no color configured for `name`.
-+
-`--type=color [--default=<default>]` is preferred over `--get-color`
-(but note that `--get-color` will omit the trailing newline printed by
-`--type=color`).
-
 -e::
 --edit::
 	Opens an editor to modify the specified config file; either
@@ -299,7 +284,7 @@ Valid `<type>`'s include:
 	config files.
 
 --default <value>::
-  When using `--get`, and the requested variable is not found, behave as if
+  When using `get`, and the requested variable is not found, behave as if
   <value> were the value assigned to that variable.
 
 DEPRECATED MODES
@@ -308,15 +293,33 @@ DEPRECATED MODES
 The following modes have been deprecated in favor of subcommands. It is
 recommended to migrate to the new syntax.
 
+'git config <name>'::
+	Replaced by `git config get <name>`.
+
 -l::
 --list::
 	Replaced by `git config list`.
 
+--get <name> [<value-pattern>]::
+	Replaced by `git config get [--value=<pattern>] <name>`.
+
+--get-all <name> [<value-pattern>]::
+	Replaced by `git config get [--value=<pattern>] --all --show-names <name>`.
+
+--get-regexp <name-regexp>::
+	Replaced by `git config get --all --show-names --regexp <name-regexp>`.
+
+--get-urlmatch <name> <URL>::
+	Replaced by `git config get --all --show-names --url=<URL> <name>`.
+
+--get-color <name> [<default>]::
+	Replaced by `git config get --type=color [--default=<default>] <name>`.
+
 CONFIGURATION
 -------------
 `pager.config` is only respected when listing configuration, i.e., when
-using `list` or any of the `--get-*` which may return multiple results.
-The default is to use a pager.
+using `list` or `get` which may return multiple results. The default is to use
+a pager.
 
 [[FILES]]
 FILES
@@ -519,25 +522,19 @@ you have to provide a regex matching the value of exactly one line.
 To query the value for a given key, do
 
 ------------
-% git config --get core.filemode
-------------
-
-or
-
-------------
-% git config core.filemode
+% git config get core.filemode
 ------------
 
 or, to query a multivar:
 
 ------------
-% git config --get core.gitproxy "for kernel.org$"
+% git config get --value="for kernel.org$" core.gitproxy
 ------------
 
 If you want to know all the values for a multivar, do:
 
 ------------
-% git config --get-all core.gitproxy
+% git config get --all --show-names core.gitproxy
 ------------
 
 If you like to live dangerously, you can replace *all* core.gitproxy by a
@@ -571,8 +568,8 @@ script:
 
 ------------
 #!/bin/sh
-WS=$(git config --get-color color.diff.whitespace "blue reverse")
-RESET=$(git config --get-color "" "reset")
+WS=$(git config get --type=color --default="blue reverse" color.diff.whitespace)
+RESET=$(git config get --type=color --default="reset" "")
 echo "${WS}your whitespace color or blue reverse${RESET}"
 ------------
 
@@ -580,11 +577,11 @@ For URLs in `https://weak.example.com`, `http.sslVerify` is set to
 false, while it is set to `true` for all others:
 
 ------------
-% git config --type=bool --get-urlmatch http.sslverify https://good.example.com
+% git config get --type=bool --url=https://good.example.com http.sslverify
 true
-% git config --type=bool --get-urlmatch http.sslverify https://weak.example.com
+% git config get --type=bool --url=https://weak.example.com http.sslverify
 false
-% git config --get-urlmatch http https://weak.example.com
+% git config get --url=https://weak.example.com http
 http.cookieFile /tmp/cookie.txt
 http.sslverify false
 ------------
