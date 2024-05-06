@@ -9,6 +9,7 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
+'git config list' [<file-option>] [<display-option>] [--includes]
 'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
 'git config' [<file-option>] [--type=<type>] [--comment=<message>] --add <name> <value>
 'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
@@ -20,7 +21,6 @@ SYNOPSIS
 'git config' [<file-option>] [--fixed-value] --unset-all <name> [<value-pattern>]
 'git config' [<file-option>] --rename-section <old-name> <new-name>
 'git config' [<file-option>] --remove-section <name>
-'git config' [<file-option>] [--show-origin] [--show-scope] [-z|--null] [--name-only] -l | --list
 'git config' [<file-option>] --get-color <name> [<default>]
 'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
 'git config' [<file-option>] -e | --edit
@@ -73,6 +73,12 @@ On success, the command returns the exit code 0.
 
 A list of all available configuration variables can be obtained using the
 `git help --config` command.
+
+COMMANDS
+--------
+
+list::
+	List all variables set in config file, along with their values.
 
 [[OPTIONS]]
 OPTIONS
@@ -190,10 +196,6 @@ See also <<FILES>>.
 --unset-all::
 	Remove all lines matching the key from config file.
 
--l::
---list::
-	List all variables set in config file, along with their values.
-
 --fixed-value::
 	When used with the `value-pattern` argument, treat `value-pattern` as
 	an exact string instead of a regular expression. This will restrict
@@ -248,7 +250,7 @@ Valid `<type>`'s include:
 	contain line breaks.
 
 --name-only::
-	Output only the names of config variables for `--list` or
+	Output only the names of config variables for `list` or
 	`--get-regexp`.
 
 --show-origin::
@@ -300,10 +302,20 @@ Valid `<type>`'s include:
   When using `--get`, and the requested variable is not found, behave as if
   <value> were the value assigned to that variable.
 
+DEPRECATED MODES
+----------------
+
+The following modes have been deprecated in favor of subcommands. It is
+recommended to migrate to the new syntax.
+
+-l::
+--list::
+	Replaced by `git config list`.
+
 CONFIGURATION
 -------------
 `pager.config` is only respected when listing configuration, i.e., when
-using `--list` or any of the `--get-*` which may return multiple results.
+using `list` or any of the `--get-*` which may return multiple results.
 The default is to use a pager.
 
 [[FILES]]

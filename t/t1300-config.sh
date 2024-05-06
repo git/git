@@ -11,6 +11,20 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+for mode in legacy subcommands
+do
+
+case "$mode" in
+legacy)
+	mode_prefix="--"
+	;;
+subcommands)
+	mode_prefix=""
+	;;
+*)
+	BUG "unknown mode $mode";;
+esac
+
 test_expect_success 'setup whitespace config' '
 	sed -e "s/^|//" \
 	    -e "s/[$]$//" \
@@ -460,11 +474,11 @@ version.1.2.3eX.alpha=beta
 EOF
 
 test_expect_success 'working --list' '
-	git config --list > output &&
+	git config ${mode_prefix}list > output &&
 	test_cmp expect output
 '
 test_expect_success '--list without repo produces empty output' '
-	git --git-dir=nonexistent config --list >output &&
+	git --git-dir=nonexistent config ${mode_prefix}list >output &&
 	test_must_be_empty output
 '
 
@@ -476,7 +490,7 @@ version.1.2.3eX.alpha
 EOF
 
 test_expect_success '--name-only --list' '
-	git config --name-only --list >output &&
+	git config ${mode_prefix}list --name-only >output &&
 	test_cmp expect output
 '
 
@@ -614,17 +628,17 @@ ein.bahn=strasse
 EOF
 
 test_expect_success 'alternative GIT_CONFIG' '
-	GIT_CONFIG=other-config git config --list >output &&
+	GIT_CONFIG=other-config git config ${mode_prefix}list >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'alternative GIT_CONFIG (--file)' '
-	git config --file other-config --list >output &&
+	git config ${mode_prefix}list --file other-config >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'alternative GIT_CONFIG (--file=-)' '
-	git config --file - --list <other-config >output &&
+	git config ${mode_prefix}list --file - <other-config >output &&
 	test_cmp expect output
 '
 
@@ -637,6 +651,7 @@ test_expect_success 'editing stdin is an error' '
 '
 
 test_expect_success 'refer config from subdirectory' '
+	test_when_finished "rm -r x" &&
 	mkdir x &&
 	test_cmp_config -C x strasse --file=../other-config --get ein.bahn
 '
@@ -847,7 +862,7 @@ test_expect_success 'line number is reported correctly' '
 '
 
 test_expect_success 'invalid stdin config' '
-	echo "[broken" | test_must_fail git config --list --file - >output 2>&1 &&
+	echo "[broken" | test_must_fail git config ${mode_prefix}list --file - >output 2>&1 &&
 	test_grep "bad config line 1 in standard input" output
 '
 
@@ -1139,7 +1154,7 @@ section.quotecont=cont;inued
 EOF
 
 test_expect_success 'value continued on next line' '
-	git config --list > result &&
+	git config ${mode_prefix}list > result &&
 	test_cmp expect result
 '
 
@@ -1163,7 +1178,7 @@ Qsection.sub=section.val4
 Qsection.sub=section.val5Q
 EOF
 test_expect_success '--null --list' '
-	git config --null --list >result.raw &&
+	git config ${mode_prefix}list --null >result.raw &&
 	nul_to_q <result.raw >result &&
 	echo >>result &&
 	test_cmp expect result
@@ -1198,6 +1213,7 @@ test_expect_success 'inner whitespace kept verbatim, horizontal tabs and spaces'
 '
 
 test_expect_success SYMLINKS 'symlinked configuration' '
+	test_when_finished "rm myconfig" &&
 	ln -s notyet myconfig &&
 	git config --file=myconfig test.frotz nitfol &&
 	test -h myconfig &&
@@ -1218,10 +1234,11 @@ test_expect_success SYMLINKS 'symlinked configuration' '
 '
 
 test_expect_success SYMLINKS 'symlink to nonexistent configuration' '
+	test_when_finished "rm linktonada linktolinktonada" &&
 	ln -s doesnotexist linktonada &&
 	ln -s linktonada linktolinktonada &&
-	test_must_fail git config --file=linktonada --list &&
-	test_must_fail git config --file=linktolinktonada --list
+	test_must_fail git config ${mode_prefix}list --file=linktonada &&
+	test_must_fail git config ${mode_prefix}list --file=linktolinktonada
 '
 
 test_expect_success 'check split_cmdline return' '
@@ -1478,7 +1495,7 @@ do
 done
 
 test_expect_success 'git -c is not confused by empty environment' '
-	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config --list
+	GIT_CONFIG_PARAMETERS="" git -c x.one=1 config ${mode_prefix}list
 '
 
 test_expect_success 'GIT_CONFIG_PARAMETERS handles old-style entries' '
@@ -1669,31 +1686,31 @@ test_expect_success 'git config ignores pairs with empty count' '
 '
 
 test_expect_success 'git config fails with invalid count' '
-	test_must_fail env GIT_CONFIG_COUNT=10a git config --list 2>error &&
+	test_must_fail env GIT_CONFIG_COUNT=10a git config ${mode_prefix}list 2>error &&
 	test_grep "bogus count" error &&
-	test_must_fail env GIT_CONFIG_COUNT=9999999999999999 git config --list 2>error &&
+	test_must_fail env GIT_CONFIG_COUNT=9999999999999999 git config ${mode_prefix}list 2>error &&
 	test_grep "too many entries" error
 '
 
 test_expect_success 'git config fails with missing config key' '
 	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_VALUE_0="value" \
-		git config --list 2>error &&
+		git config ${mode_prefix}list 2>error &&
 	test_grep "missing config key" error
 '
 
 test_expect_success 'git config fails with missing config value' '
 	test_must_fail env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="pair.one" \
-		git config --list 2>error &&
+		git config ${mode_prefix}list 2>error &&
 	test_grep "missing config value" error
 '
 
 test_expect_success 'git config fails with invalid config pair key' '
 	test_must_fail env GIT_CONFIG_COUNT=1 \
 		GIT_CONFIG_KEY_0= GIT_CONFIG_VALUE_0=value \
-		git config --list &&
+		git config ${mode_prefix}list &&
 	test_must_fail env GIT_CONFIG_COUNT=1 \
 		GIT_CONFIG_KEY_0=missing-section GIT_CONFIG_VALUE_0=value \
-		git config --list
+		git config ${mode_prefix}list
 '
 
 test_expect_success 'environment overrides config file' '
@@ -1733,7 +1750,7 @@ test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
 	GIT_EDITOR="echo [test]value=yes >" git config -f tmp --edit &&
-	git config -f tmp --list >actual &&
+	git config ${mode_prefix}list -f tmp >actual &&
 	test_cmp expect actual
 '
 
@@ -1742,7 +1759,7 @@ test_expect_success 'git config --edit respects core.editor' '
 	echo test.value=yes >expect &&
 	test_config core.editor "echo [test]value=yes >" &&
 	git config -f tmp --edit &&
-	git config -f tmp --list >actual &&
+	git config ${mode_prefix}list -f tmp >actual &&
 	test_cmp expect actual
 '
 
@@ -2093,7 +2110,7 @@ test_expect_success '--show-origin with --list' '
 	command line:	user.cmdline=true
 	EOF
 	GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=user.environ GIT_CONFIG_VALUE_0=true\
-		git -c user.cmdline=true config --list --show-origin >output &&
+		git -c user.cmdline=true config ${mode_prefix}list --show-origin >output &&
 	test_cmp expect output
 '
 
@@ -2110,7 +2127,7 @@ test_expect_success '--show-origin with --list --null' '
 	includeQcommand line:Quser.cmdline
 	trueQ
 	EOF
-	git -c user.cmdline=true config --null --list --show-origin >output.raw &&
+	git -c user.cmdline=true config ${mode_prefix}list --null --show-origin >output.raw &&
 	nul_to_q <output.raw >output &&
 	# The here-doc above adds a newline that the --null output would not
 	# include. Add it here to make the two comparable.
@@ -2124,7 +2141,7 @@ test_expect_success '--show-origin with single file' '
 	file:.git/config	user.override=local
 	file:.git/config	include.path=../include/relative.include
 	EOF
-	git config --local --list --show-origin >output &&
+	git config ${mode_prefix}list --local --show-origin >output &&
 	test_cmp expect output
 '
 
@@ -2162,7 +2179,7 @@ test_expect_success !MINGW '--show-origin escape special file name characters' '
 	cat >expect <<-\EOF &&
 	file:"file\" (dq) and spaces.conf"	user.custom=true
 	EOF
-	git config --file "$WEIRDLY_NAMED_FILE" --show-origin --list >output &&
+	git config ${mode_prefix}list --file "$WEIRDLY_NAMED_FILE" --show-origin >output &&
 	test_cmp expect output
 '
 
@@ -2170,7 +2187,7 @@ test_expect_success '--show-origin stdin' '
 	cat >expect <<-\EOF &&
 	standard input:	user.custom=true
 	EOF
-	git config --file - --show-origin --list <"$CUSTOM_CONFIG_FILE" >output &&
+	git config ${mode_prefix}list --file - --show-origin <"$CUSTOM_CONFIG_FILE" >output &&
 	test_cmp expect output
 '
 
@@ -2197,7 +2214,7 @@ test_expect_success '--show-origin blob' '
 		cat >expect <<-EOF &&
 		blob:$blob	user.custom=true
 		EOF
-		git config --blob=$blob --show-origin --list >output &&
+		git config ${mode_prefix}list --blob=$blob --show-origin >output &&
 		test_cmp expect output
 	)
 '
@@ -2213,7 +2230,7 @@ test_expect_success '--show-origin blob ref' '
 		cp "$CUSTOM_CONFIG_FILE" custom.conf &&
 		git add custom.conf &&
 		git commit -m "new config file" &&
-		git config --blob=main:custom.conf --show-origin --list >output &&
+		git config ${mode_prefix}list --blob=main:custom.conf --show-origin >output &&
 		test_cmp expect output
 	)
 '
@@ -2239,13 +2256,14 @@ test_expect_success '--show-scope with --list' '
 	worktree	user.worktree=true
 	command	user.cmdline=true
 	EOF
+	test_when_finished "git worktree remove wt1" &&
 	git worktree add wt1 &&
 	# We need these to test for worktree scope, but outside of this
 	# test, this is just noise
 	test_config core.repositoryformatversion 1 &&
 	test_config extensions.worktreeConfig true &&
 	git config --worktree user.worktree true &&
-	git -c user.cmdline=true config --list --show-scope >output &&
+	git -c user.cmdline=true config ${mode_prefix}list --show-scope >output &&
 	test_cmp expect output
 '
 
@@ -2254,7 +2272,7 @@ test_expect_success !MINGW '--show-scope with --blob' '
 	cat >expect <<-EOF &&
 	command	user.custom=true
 	EOF
-	git config --blob=$blob --show-scope --list >output &&
+	git config ${mode_prefix}list --blob=$blob --show-scope >output &&
 	test_cmp expect output
 '
 
@@ -2264,7 +2282,7 @@ test_expect_success '--show-scope with --local' '
 	local	user.override=local
 	local	include.path=../include/relative.include
 	EOF
-	git config --local --list --show-scope >output &&
+	git config ${mode_prefix}list --local --show-scope >output &&
 	test_cmp expect output
 '
 
@@ -2288,7 +2306,7 @@ test_expect_success '--show-scope with --show-origin' '
 	local	file:.git/../include/relative.include	user.relative=include
 	command	command line:	user.cmdline=true
 	EOF
-	git -c user.cmdline=true config --list --show-origin --show-scope >output &&
+	git -c user.cmdline=true config ${mode_prefix}list --show-origin --show-scope >output &&
 	test_cmp expect output
 '
 
@@ -2329,7 +2347,7 @@ test_expect_success 'override global and system config' '
 	global	home.config=true
 	local	local.config=true
 	EOF
-	git config --show-scope --list >output &&
+	git config ${mode_prefix}list --show-scope >output &&
 	test_cmp expect output &&
 
 	cat >expect <<-EOF &&
@@ -2338,20 +2356,20 @@ test_expect_success 'override global and system config' '
 	local	local.config=true
 	EOF
 	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=custom-system-config GIT_CONFIG_GLOBAL=custom-global-config \
-		git config --show-scope --list >output &&
+		git config ${mode_prefix}list --show-scope >output &&
 	test_cmp expect output &&
 
 	cat >expect <<-EOF &&
 	local	local.config=true
 	EOF
 	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_GLOBAL=/dev/null \
-		git config --show-scope --list >output &&
+		git config ${mode_prefix}list --show-scope >output &&
 	test_cmp expect output
 '
 
 test_expect_success 'override global and system config with missing file' '
-	test_must_fail env GIT_CONFIG_GLOBAL=does-not-exist GIT_CONFIG_SYSTEM=/dev/null git config --global --list &&
-	test_must_fail env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=does-not-exist git config --system --list &&
+	test_must_fail env GIT_CONFIG_GLOBAL=does-not-exist GIT_CONFIG_SYSTEM=/dev/null git config ${mode_prefix}list --global &&
+	test_must_fail env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=does-not-exist git config ${mode_prefix}list --system &&
 	GIT_CONFIG_GLOBAL=does-not-exist GIT_CONFIG_SYSTEM=does-not-exist git version
 '
 
@@ -2478,7 +2496,7 @@ test_expect_success 'set all config with value-pattern' '
 	# no match => add new entry
 	cp initial config &&
 	git config --file=config abc.key two a+ &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-\EOF &&
 	abc.key=one
 	abc.key=two
@@ -2491,7 +2509,7 @@ test_expect_success 'set all config with value-pattern' '
 
 	# multiple values, no match => add
 	git config --file=config abc.key three a+ &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-\EOF &&
 	abc.key=one
 	abc.key=two
@@ -2501,7 +2519,7 @@ test_expect_success 'set all config with value-pattern' '
 
 	# single match => replace
 	git config --file=config abc.key four h+ &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-\EOF &&
 	abc.key=one
 	abc.key=two
@@ -2516,7 +2534,7 @@ test_expect_success '--replace-all and value-pattern' '
 	git config --file=config --add abc.key two &&
 	git config --file=config --add abc.key three &&
 	git config --file=config --replace-all abc.key four "o+" &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-\EOF &&
 	abc.key=four
 	abc.key=three
@@ -2534,7 +2552,7 @@ test_expect_success 'refuse --fixed-value for incompatible actions' '
 	test_must_fail git config --file=config --fixed-value --get-urlmatch dev.null bogus &&
 	test_must_fail git config --file=config --fixed-value --rename-section dev null &&
 	test_must_fail git config --file=config --fixed-value --remove-section dev &&
-	test_must_fail git config --file=config --fixed-value --list &&
+	test_must_fail git config ${mode_prefix}list --file=config --fixed-value &&
 	test_must_fail git config --file=config --fixed-value --get-color dev.null &&
 	test_must_fail git config --file=config --fixed-value --get-colorbool dev.null &&
 
@@ -2555,7 +2573,7 @@ test_expect_success '--fixed-value uses exact string matching' '
 
 	cp initial config &&
 	git config --file=config fixed.test bogus "$META" &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-EOF &&
 	fixed.test=$META
 	fixed.test=bogus
@@ -2564,7 +2582,7 @@ test_expect_success '--fixed-value uses exact string matching' '
 
 	cp initial config &&
 	git config --file=config --fixed-value fixed.test bogus "$META" &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-\EOF &&
 	fixed.test=bogus
 	EOF
@@ -2582,7 +2600,7 @@ test_expect_success '--fixed-value uses exact string matching' '
 
 	cp initial config &&
 	git config --file=config --replace-all fixed.test bogus "$META" &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-EOF &&
 	fixed.test=$META
 	fixed.test=bogus
@@ -2590,7 +2608,7 @@ test_expect_success '--fixed-value uses exact string matching' '
 	test_cmp expect actual &&
 
 	git config --file=config --fixed-value --replace-all fixed.test bogus "$META" &&
-	git config --file=config --list >actual &&
+	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-EOF &&
 	fixed.test=bogus
 	fixed.test=bogus
@@ -2750,5 +2768,7 @@ test_expect_success 'specifying multiple modes causes failure' '
 	test_must_fail git config --get --get-all 2>err &&
 	test_cmp expect err
 '
+
+done
 
 test_done

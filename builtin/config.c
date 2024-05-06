@@ -16,7 +16,13 @@
 #include "worktree.h"
 
 static const char *const builtin_config_usage[] = {
+	N_("git config list [<file-option>] [<display-option>] [--includes]"),
 	N_("git config [<options>]"),
+	NULL
+};
+
+static const char *const builtin_config_list_usage[] = {
+	N_("git config list [<file-option>] [<display-option>] [--includes]"),
 	NULL
 };
 
@@ -33,6 +39,7 @@ static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
 
+static parse_opt_subcommand_fn *subcommand;
 static int use_global_config, use_system_config, use_local_config;
 static int use_worktree_config;
 static struct git_config_source given_config_source;
@@ -706,14 +713,24 @@ static void handle_nul(void) {
 	}
 }
 
+#define CONFIG_LOCATION_OPTIONS \
+	OPT_GROUP(N_("Config file location")), \
+	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")), \
+	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")), \
+	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")), \
+	OPT_BOOL(0, "worktree", &use_worktree_config, N_("use per-worktree config file")), \
+	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")), \
+	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object"))
+
+#define CONFIG_DISPLAY_OPTIONS \
+	OPT_GROUP(N_("Display options")), \
+	OPT_BOOL('z', "null", &end_nul, N_("terminate values with NUL byte")), \
+	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")), \
+	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")), \
+	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)"))
+
 static struct option builtin_config_options[] = {
-	OPT_GROUP(N_("Config file location")),
-	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
-	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")),
-	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")),
-	OPT_BOOL(0, "worktree", &use_worktree_config, N_("use per-worktree config file")),
-	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")),
-	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object")),
+	CONFIG_LOCATION_OPTIONS,
 	OPT_GROUP(N_("Action")),
 	OPT_CMDMODE(0, "get", &actions, N_("get value: name [<value-pattern>]"), ACTION_GET),
 	OPT_CMDMODE(0, "get-all", &actions, N_("get all values: key [<value-pattern>]"), ACTION_GET_ALL),
@@ -737,15 +754,12 @@ static struct option builtin_config_options[] = {
 	OPT_CALLBACK_VALUE(0, "bool-or-str", &type, N_("value is --bool or string"), TYPE_BOOL_OR_STR),
 	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
+	CONFIG_DISPLAY_OPTIONS,
 	OPT_GROUP(N_("Other")),
-	OPT_BOOL('z', "null", &end_nul, N_("terminate values with NUL byte")),
-	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
-	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
-	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
-	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)")),
 	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
 	OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
 	OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
+	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 	OPT_END(),
 };
 
@@ -753,6 +767,42 @@ static NORETURN void usage_builtin_config(void)
 {
 	usage_with_options(builtin_config_usage, builtin_config_options);
 }
+
+static int cmd_config_list(int argc, const char **argv, const char *prefix)
+{
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		CONFIG_DISPLAY_OPTIONS,
+		OPT_GROUP(N_("Other")),
+		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_list_usage, 0);
+	check_argc(argc, 0, 0);
+
+	handle_config_location(prefix);
+	handle_nul();
+
+	setup_auto_pager("config", 1);
+
+	if (config_with_options(show_all_config, NULL,
+				&given_config_source, the_repository,
+				&config_options) < 0) {
+		if (given_config_source.file)
+			die_errno(_("unable to read config file '%s'"),
+				  given_config_source.file);
+		else
+			die(_("error processing config file(s)"));
+	}
+
+	return 0;
+}
+
+static struct option builtin_subcommand_options[] = {
+	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
+	OPT_END(),
+};
 
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
@@ -762,6 +812,22 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	struct key_value_info default_kvi = KVI_INIT;
 
 	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
+
+	/*
+	 * This is somewhat hacky: we first parse the command line while
+	 * keeping all args intact in order to determine whether a subcommand
+	 * has been specified. If so, we re-parse it a second time, but this
+	 * time we drop KEEP_ARGV0. This is so that we don't munge the command
+	 * line in case no subcommand was given, which would otherwise confuse
+	 * us when parsing the legacy-style modes that don't use subcommands.
+	 */
+	argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_NO_INTERNAL_HELP|PARSE_OPT_KEEP_ARGV0|PARSE_OPT_KEEP_UNKNOWN_OPT);
+	if (subcommand) {
+		argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_NO_INTERNAL_HELP|PARSE_OPT_KEEP_UNKNOWN_OPT);
+		return subcommand(argc, argv, prefix);
+	}
 
 	argc = parse_options(argc, argv, prefix, builtin_config_options,
 			     builtin_config_usage,
