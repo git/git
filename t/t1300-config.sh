@@ -666,7 +666,7 @@ test_expect_success 'setting a value in stdin is an error' '
 '
 
 test_expect_success 'editing stdin is an error' '
-	test_must_fail git config --file - --edit
+	test_must_fail git config ${mode_prefix}edit --file -
 '
 
 test_expect_success 'refer config from subdirectory' '
@@ -1768,7 +1768,7 @@ test_expect_success 'command line overrides environment config' '
 test_expect_success 'git config --edit works' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
-	GIT_EDITOR="echo [test]value=yes >" git config -f tmp --edit &&
+	GIT_EDITOR="echo [test]value=yes >" git config ${mode_prefix}edit -f tmp &&
 	git config ${mode_prefix}list -f tmp >actual &&
 	test_cmp expect actual
 '
@@ -1777,7 +1777,7 @@ test_expect_success 'git config --edit respects core.editor' '
 	git config -f tmp test.value no &&
 	echo test.value=yes >expect &&
 	test_config core.editor "echo [test]value=yes >" &&
-	git config -f tmp --edit &&
+	git config ${mode_prefix}edit -f tmp &&
 	git config ${mode_prefix}list -f tmp >actual &&
 	test_cmp expect actual
 '

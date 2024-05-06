@@ -22,6 +22,7 @@ static const char *const builtin_config_usage[] = {
 	N_("git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
 	N_("git config rename-section [<file-option>] <old-name> <new-name>"),
 	N_("git config remove-section [<file-option>] <name>"),
+	N_("git config edit [<file-option>]"),
 	NULL
 };
 
@@ -52,6 +53,11 @@ static const char *const builtin_config_rename_section_usage[] = {
 
 static const char *const builtin_config_remove_section_usage[] = {
 	N_("git config remove-section [<file-option>] <name>"),
+	NULL
+};
+
+static const char *const builtin_config_edit_usage[] = {
+	N_("git config edit [<file-option>]"),
 	NULL
 };
 
@@ -1011,6 +1017,53 @@ static int cmd_config_remove_section(int argc, const char **argv, const char *pr
 	return 0;
 }
 
+static int show_editor(void)
+{
+	char *config_file;
+
+	if (!given_config_source.file && !startup_info->have_repository)
+		die(_("not in a git directory"));
+	if (given_config_source.use_stdin)
+		die(_("editing stdin is not supported"));
+	if (given_config_source.blob)
+		die(_("editing blobs is not supported"));
+	git_config(git_default_config, NULL);
+	config_file = given_config_source.file ?
+			xstrdup(given_config_source.file) :
+			git_pathdup("config");
+	if (use_global_config) {
+		int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (fd >= 0) {
+			char *content = default_user_config();
+			write_str_in_full(fd, content);
+			free(content);
+			close(fd);
+		}
+		else if (errno != EEXIST)
+			die_errno(_("cannot create configuration file %s"), config_file);
+	}
+	launch_editor(config_file, NULL, NULL);
+	free(config_file);
+
+	return 0;
+}
+
+static int cmd_config_edit(int argc, const char **argv, const char *prefix)
+{
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_edit_usage, 0);
+	check_write();
+	check_argc(argc, 0, 0);
+
+	handle_config_location(prefix);
+
+	return show_editor();
+}
+
 static struct option builtin_subcommand_options[] = {
 	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
 	OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
@@ -1018,6 +1071,7 @@ static struct option builtin_subcommand_options[] = {
 	OPT_SUBCOMMAND("unset", &subcommand, cmd_config_unset),
 	OPT_SUBCOMMAND("rename-section", &subcommand, cmd_config_rename_section),
 	OPT_SUBCOMMAND("remove-section", &subcommand, cmd_config_remove_section),
+	OPT_SUBCOMMAND("edit", &subcommand, cmd_config_edit),
 	OPT_END(),
 };
 
@@ -1144,32 +1198,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 	}
 	else if (actions == ACTION_EDIT) {
-		char *config_file;
-
-		check_argc(argc, 0, 0);
-		if (!given_config_source.file && !startup_info->have_repository)
-			die(_("not in a git directory"));
-		if (given_config_source.use_stdin)
-			die(_("editing stdin is not supported"));
-		if (given_config_source.blob)
-			die(_("editing blobs is not supported"));
-		git_config(git_default_config, NULL);
-		config_file = given_config_source.file ?
-				xstrdup(given_config_source.file) :
-				git_pathdup("config");
-		if (use_global_config) {
-			int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
-			if (fd >= 0) {
-				char *content = default_user_config();
-				write_str_in_full(fd, content);
-				free(content);
-				close(fd);
-			}
-			else if (errno != EEXIST)
-				die_errno(_("cannot create configuration file %s"), config_file);
-		}
-		launch_editor(config_file, NULL, NULL);
-		free(config_file);
+		ret = show_editor();
 	}
 	else if (actions == ACTION_SET) {
 		check_write();
