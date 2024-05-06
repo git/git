@@ -20,6 +20,7 @@ static const char *const builtin_config_usage[] = {
 	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
 	N_("git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
 	N_("git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	N_("git config rename-section [<file-option>] <old-name> <new-name>"),
 	NULL
 };
 
@@ -40,6 +41,11 @@ static const char *const builtin_config_set_usage[] = {
 
 static const char *const builtin_config_unset_usage[] = {
 	N_("git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	NULL
+};
+
+static const char *const builtin_config_rename_section_usage[] = {
+	N_("git config rename-section [<file-option>] <old-name> <new-name>"),
 	NULL
 };
 
@@ -949,11 +955,37 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix)
 						     NULL, NULL);
 }
 
+static int cmd_config_rename_section(int argc, const char **argv, const char *prefix)
+{
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		OPT_END(),
+	};
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_rename_section_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_write();
+	check_argc(argc, 2, 2);
+
+	handle_config_location(prefix);
+
+	ret = git_config_rename_section_in_file(given_config_source.file,
+						argv[0], argv[1]);
+	if (ret < 0)
+		return ret;
+	else if (!ret)
+		die(_("no such section: %s"), argv[0]);
+
+	return 0;
+}
+
 static struct option builtin_subcommand_options[] = {
 	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
 	OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
 	OPT_SUBCOMMAND("set", &subcommand, cmd_config_set),
 	OPT_SUBCOMMAND("unset", &subcommand, cmd_config_unset),
+	OPT_SUBCOMMAND("rename-section", &subcommand, cmd_config_rename_section),
 	OPT_END(),
 };
 

@@ -699,7 +699,7 @@ weird
 EOF
 
 test_expect_success 'rename section' '
-	git config --rename-section branch.eins branch.zwei
+	git config ${mode_prefix}rename-section branch.eins branch.zwei
 '
 
 cat > expect << EOF
@@ -718,7 +718,7 @@ test_expect_success 'rename succeeded' '
 '
 
 test_expect_success 'rename non-existing section' '
-	test_must_fail git config --rename-section \
+	test_must_fail git config ${mode_prefix}rename-section \
 		branch."world domination" branch.drei
 '
 
@@ -727,7 +727,7 @@ test_expect_success 'rename succeeded' '
 '
 
 test_expect_success 'rename another section' '
-	git config --rename-section branch."1 234 blabl/a" branch.drei
+	git config ${mode_prefix}rename-section branch."1 234 blabl/a" branch.drei
 '
 
 cat > expect << EOF
@@ -750,7 +750,7 @@ cat >> .git/config << EOF
 EOF
 
 test_expect_success 'rename a section with a var on the same line' '
-	git config --rename-section branch.vier branch.zwei
+	git config ${mode_prefix}rename-section branch.vier branch.zwei
 '
 
 cat > expect << EOF
@@ -771,11 +771,11 @@ test_expect_success 'rename succeeded' '
 '
 
 test_expect_success 'renaming empty section name is rejected' '
-	test_must_fail git config --rename-section branch.zwei ""
+	test_must_fail git config ${mode_prefix}rename-section branch.zwei ""
 '
 
 test_expect_success 'renaming to bogus section is rejected' '
-	test_must_fail git config --rename-section branch.zwei "bogus name"
+	test_must_fail git config ${mode_prefix}rename-section branch.zwei "bogus name"
 '
 
 test_expect_success 'renaming a section with a long line' '
@@ -784,7 +784,7 @@ test_expect_success 'renaming a section with a long line' '
 		printf "  c = d %1024s [a] e = f\\n" " " &&
 		printf "[a] g = h\\n"
 	} >y &&
-	git config -f y --rename-section a xyz &&
+	git config ${mode_prefix}rename-section -f y a xyz &&
 	test_must_fail git config -f y b.e
 '
 
@@ -794,7 +794,7 @@ test_expect_success 'renaming an embedded section with a long line' '
 		printf "  c = d %1024s [a] [foo] e = f\\n" " " &&
 		printf "[a] g = h\\n"
 	} >y &&
-	git config -f y --rename-section a xyz &&
+	git config ${mode_prefix}rename-section -f y a xyz &&
 	test_must_fail git config -f y foo.e
 '
 
@@ -804,7 +804,7 @@ test_expect_success 'renaming a section with an overly-long line' '
 		printf "  c = d %525000s e" " " &&
 		printf "[a] g = h\\n"
 	} >y &&
-	test_must_fail git config -f y --rename-section a xyz 2>err &&
+	test_must_fail git config ${mode_prefix}rename-section -f y a xyz 2>err &&
 	grep "refusing to work with overly long line in .y. on line 2" err
 '
 
@@ -2112,7 +2112,7 @@ test_expect_success POSIXPERM,PERL 'preserves existing permissions' '
 	git config imap.pass Hunter2 &&
 	perl -e \
 	  "die q(badset) if ((stat(q(.git/config)))[2] & 07777) != 0600" &&
-	git config --rename-section imap pop &&
+	git config ${mode_prefix}rename-section imap pop &&
 	perl -e \
 	  "die q(badrename) if ((stat(q(.git/config)))[2] & 07777) != 0600"
 '
@@ -2601,7 +2601,7 @@ test_expect_success 'refuse --fixed-value for incompatible actions' '
 	test_must_fail git config --file=config --fixed-value --add dev.null bogus &&
 	test_must_fail git config --file=config --fixed-value --get-urlmatch dev.null bogus &&
 	test_must_fail git config --file=config --fixed-value --get-urlmatch dev.null bogus &&
-	test_must_fail git config --file=config --fixed-value --rename-section dev null &&
+	test_must_fail git config ${mode_prefix}rename-section --file=config --fixed-value dev null &&
 	test_must_fail git config --file=config --fixed-value --remove-section dev &&
 	test_must_fail git config ${mode_prefix}list --file=config --fixed-value &&
 	test_must_fail git config --file=config --fixed-value --get-color dev.null &&

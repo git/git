@@ -13,7 +13,7 @@ SYNOPSIS
 'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>
 'git config set' [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>
 'git config unset' [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>
-'git config' [<file-option>] --rename-section <old-name> <new-name>
+'git config rename-section' [<file-option>] <old-name> <new-name>
 'git config' [<file-option>] --remove-section <name>
 'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
 'git config' [<file-option>] -e | --edit
@@ -91,6 +91,9 @@ unset::
 	refuses to unset multi-valued keys. Passing `--all` will unset all
 	multi-valued config options, whereas `--value` will unset all config
 	options whose values match the given pattern.
+
+rename-section::
+	Rename the given section to a new name.
 
 [[OPTIONS]]
 OPTIONS
@@ -191,9 +194,6 @@ See also <<FILES>>.
 
 --remove-section::
 	Remove the given section from the configuration file.
-
---rename-section::
-	Rename the given section to a new name.
 
 --fixed-value::
 	When used with the `value-pattern` argument, treat `value-pattern` as
@@ -329,6 +329,9 @@ recommended to migrate to the new syntax.
 
 --unset-all <name> [<value-pattern>]::
 	Replaced by `git config unset [--value=<pattern>] --all <name>`.
+
+--rename-section <old-name> <new-name>::
+	Replaced by `git config rename-section <old-name> <new-name>`.
 
 CONFIGURATION
 -------------
