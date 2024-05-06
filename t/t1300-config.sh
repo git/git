@@ -20,12 +20,16 @@ legacy)
 	mode_get=""
 	mode_get_all="--get-all"
 	mode_get_regexp="--get-regexp"
+	mode_set=""
+	mode_replace_all="--replace-all"
 	;;
 subcommands)
 	mode_prefix=""
 	mode_get="get"
 	mode_get_all="get --all"
 	mode_get_regexp="get --regexp --all --show-names"
+	mode_set="set"
+	mode_replace_all="set --all"
 	;;
 *)
 	BUG "unknown mode $mode";;
@@ -132,7 +136,7 @@ cat > expect << EOF
 	penguin = little blue
 EOF
 test_expect_success 'initial' '
-	git config section.penguin "little blue" &&
+	git config ${mode_set} section.penguin "little blue" &&
 	test_cmp expect .git/config
 '
 
@@ -142,7 +146,7 @@ cat > expect << EOF
 	Movie = BadPhysics
 EOF
 test_expect_success 'mixed case' '
-	git config Section.Movie BadPhysics &&
+	git config ${mode_set} Section.Movie BadPhysics &&
 	test_cmp expect .git/config
 '
 
@@ -154,7 +158,7 @@ cat > expect << EOF
 	WhatEver = Second
 EOF
 test_expect_success 'similar section' '
-	git config Sections.WhatEver Second &&
+	git config ${mode_set} Sections.WhatEver Second &&
 	test_cmp expect .git/config
 '
 
@@ -167,7 +171,7 @@ cat > expect << EOF
 	WhatEver = Second
 EOF
 test_expect_success 'uppercase section' '
-	git config SECTION.UPPERCASE true &&
+	git config ${mode_set} SECTION.UPPERCASE true &&
 	test_cmp expect .git/config
 '
 
@@ -194,8 +198,8 @@ EOF
 
 test_expect_success 'append comments' '
 	git config --replace-all --comment="Pygoscelis papua" section.penguin gentoo &&
-	git config --comment="find fish" section.disposition peckish &&
-	git config --comment="#abc" section.foo bar &&
+	git config ${mode_set} --comment="find fish" section.disposition peckish &&
+	git config ${mode_set} --comment="#abc" section.foo bar &&
 
 	git config --comment="and comment" section.spsp value &&
 	git config --comment="	# and comment" section.htsp value &&
@@ -204,7 +208,7 @@ test_expect_success 'append comments' '
 '
 
 test_expect_success 'Prohibited LF in comment' '
-	test_must_fail git config --comment="a${LF}b" section.k v
+	test_must_fail git config ${mode_set} --comment="a${LF}b" section.k v
 '
 
 test_expect_success 'non-match result' 'test_cmp expect .git/config'
@@ -301,14 +305,14 @@ test_expect_success 'multiple unset is correct' '
 cp .git/config2 .git/config
 
 test_expect_success '--replace-all missing value' '
-	test_must_fail git config --replace-all beta.haha &&
+	test_must_fail git config ${mode_replace_all} beta.haha &&
 	test_cmp .git/config2 .git/config
 '
 
 rm .git/config2
 
 test_expect_success '--replace-all' '
-	git config --replace-all beta.haha gamma
+	git config ${mode_replace_all} beta.haha gamma
 '
 
 cat > expect << EOF
@@ -335,7 +339,7 @@ noIndent= sillyValue ; 'nother silly comment
 [nextSection] noNewline = ouch
 EOF
 test_expect_success 'really mean test' '
-	git config beta.haha alpha &&
+	git config ${mode_set} beta.haha alpha &&
 	test_cmp expect .git/config
 '
 
@@ -350,7 +354,7 @@ noIndent= sillyValue ; 'nother silly comment
 	nonewline = wow
 EOF
 test_expect_success 'really really mean test' '
-	git config nextsection.nonewline wow &&
+	git config ${mode_set} nextsection.nonewline wow &&
 	test_cmp expect .git/config
 '
 
@@ -824,16 +828,16 @@ EOF
 
 test_expect_success 'section ending' '
 	rm -f .git/config &&
-	git config gitcvs.enabled true &&
-	git config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
-	git config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
+	git config ${mode_set} gitcvs.enabled true &&
+	git config ${mode_set} gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
+	git config ${mode_set} gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
 	test_cmp expect .git/config
 
 '
 
 test_expect_success numbers '
-	git config kilo.gram 1k &&
-	git config mega.ton 1m &&
+	git config ${mode_set} kilo.gram 1k &&
+	git config ${mode_set} mega.ton 1m &&
 	echo 1024 >expect &&
 	echo 1048576 >>expect &&
 	git config --int --get kilo.gram >actual &&
@@ -842,20 +846,20 @@ test_expect_success numbers '
 '
 
 test_expect_success '--int is at least 64 bits' '
-	git config giga.watts 121g &&
+	git config ${mode_set} giga.watts 121g &&
 	echo  >expect &&
 	test_cmp_config 129922760704 --int --get giga.watts
 '
 
 test_expect_success 'invalid unit' '
-	git config aninvalid.unit "1auto" &&
+	git config ${mode_set} aninvalid.unit "1auto" &&
 	test_cmp_config 1auto aninvalid.unit &&
 	test_must_fail git config --int --get aninvalid.unit 2>actual &&
 	test_grep "bad numeric config value .1auto. for .aninvalid.unit. in file .git/config: invalid unit" actual
 '
 
 test_expect_success 'invalid unit boolean' '
-	git config commit.gpgsign "1true" &&
+	git config ${mode_set} commit.gpgsign "1true" &&
 	test_cmp_config 1true commit.gpgsign &&
 	test_must_fail git config --bool --get commit.gpgsign 2>actual &&
 	test_grep "bad boolean config value .1true. for .commit.gpgsign." actual
@@ -885,14 +889,14 @@ EOF
 
 test_expect_success bool '
 
-	git config bool.true1 01 &&
-	git config bool.true2 -1 &&
-	git config bool.true3 YeS &&
-	git config bool.true4 true &&
-	git config bool.false1 000 &&
-	git config bool.false2 "" &&
-	git config bool.false3 nO &&
-	git config bool.false4 FALSE &&
+	git config ${mode_set} bool.true1 01 &&
+	git config ${mode_set} bool.true2 -1 &&
+	git config ${mode_set} bool.true3 YeS &&
+	git config ${mode_set} bool.true4 true &&
+	git config ${mode_set} bool.false1 000 &&
+	git config ${mode_set} bool.false2 "" &&
+	git config ${mode_set} bool.false3 nO &&
+	git config ${mode_set} bool.false4 FALSE &&
 	rm -f result &&
 	for i in 1 2 3 4
 	do
@@ -903,7 +907,7 @@ test_expect_success bool '
 
 test_expect_success 'invalid bool (--get)' '
 
-	git config bool.nobool foobar &&
+	git config ${mode_set} bool.nobool foobar &&
 	test_must_fail git config --bool --get bool.nobool'
 
 test_expect_success 'invalid bool (set)' '
@@ -1092,7 +1096,7 @@ test_expect_success 'get --expiry-date' '
 
 test_expect_success 'get --type=color' '
 	rm .git/config &&
-	git config foo.color "red" &&
+	git config ${mode_set} foo.color "red" &&
 	git config --get --type=color foo.color >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	echo "<RED>" >expect &&
@@ -1129,10 +1133,10 @@ cat > expect << EOF
 EOF
 test_expect_success 'quoting' '
 	rm -f .git/config &&
-	git config quote.leading " test" &&
-	git config quote.ending "test " &&
-	git config quote.semicolon "test;test" &&
-	git config quote.hash "test#test" &&
+	git config ${mode_set} quote.leading " test" &&
+	git config ${mode_set} quote.ending "test " &&
+	git config ${mode_set} quote.semicolon "test;test" &&
+	git config ${mode_set} quote.hash "test#test" &&
 	test_cmp expect .git/config
 '
 
@@ -1140,7 +1144,7 @@ test_expect_success 'key with newline' '
 	test_must_fail git config ${mode_get} "key.with
 newline" 123'
 
-test_expect_success 'value with newline' 'git config key.sub value.with\\\
+test_expect_success 'value with newline' 'git config ${mode_set} key.sub value.with\\\
 newline'
 
 cat > .git/config <<\EOF
@@ -1199,21 +1203,21 @@ test_expect_success '--null --get-regexp' '
 
 test_expect_success 'inner whitespace kept verbatim, spaces only' '
 	echo "foo   bar" >expect &&
-	git config section.val "foo   bar" &&
+	git config ${mode_set} section.val "foo   bar" &&
 	git config ${mode_get} section.val >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'inner whitespace kept verbatim, horizontal tabs only' '
 	echo "fooQQbar" | q_to_tab >expect &&
-	git config section.val "$(cat expect)" &&
+	git config ${mode_set} section.val "$(cat expect)" &&
 	git config ${mode_get} section.val >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'inner whitespace kept verbatim, horizontal tabs and spaces' '
 	echo "foo Q  bar" | q_to_tab >expect &&
-	git config section.val "$(cat expect)" &&
+	git config ${mode_set} section.val "$(cat expect)" &&
 	git config ${mode_get} section.val >actual &&
 	test_cmp expect actual
 '
@@ -1252,12 +1256,12 @@ test_expect_success 'check split_cmdline return' '
 	git init repo &&
 	(
 		cd repo &&
-		git config alias.split-cmdline-fix "echo \"" &&
+		git config ${mode_set} alias.split-cmdline-fix "echo \"" &&
 		test_must_fail git split-cmdline-fix &&
 		echo foo >foo &&
 		git add foo &&
 		git commit -m "initial commit" &&
-		git config branch.main.mergeoptions "echo \"" &&
+		git config ${mode_set} branch.main.mergeoptions "echo \"" &&
 		test_must_fail git merge main
 	)
 '
@@ -1295,12 +1299,12 @@ test_expect_success 'key sanity-checking' '
 	test_must_fail git config ${mode_get} foo.1bar &&
 	test_must_fail git config ${mode_get} foo."ba
 				z".bar &&
-	test_must_fail git config . false &&
-	test_must_fail git config .foo false &&
-	test_must_fail git config foo. false &&
-	test_must_fail git config .foo. false &&
-	git config foo.bar true &&
-	git config foo."ba =z".bar false
+	test_must_fail git config ${mode_set} . false &&
+	test_must_fail git config ${mode_set} .foo false &&
+	test_must_fail git config ${mode_set} foo. false &&
+	test_must_fail git config ${mode_set} .foo. false &&
+	git config ${mode_set} foo.bar true &&
+	git config ${mode_set} foo."ba =z".bar false
 '
 
 test_expect_success 'git -c works with aliases of builtins' '
@@ -2523,7 +2527,7 @@ test_expect_success '--replace-all does not invent newlines' '
 	[abc]
 	Qkey = b
 	EOF
-	git config --replace-all abc.key b &&
+	git config ${mode_replace_all} abc.key b &&
 	test_cmp expect .git/config
 '
 
@@ -2595,8 +2599,8 @@ test_expect_success 'refuse --fixed-value for incompatible actions' '
 	test_must_fail git config --file=config --fixed-value --get-colorbool dev.null &&
 
 	# These modes complain when --fixed-value has no value-pattern
-	test_must_fail git config --file=config --fixed-value dev.null bogus &&
-	test_must_fail git config --file=config --fixed-value --replace-all dev.null bogus &&
+	test_must_fail git config ${mode_set} --file=config --fixed-value dev.null bogus &&
+	test_must_fail git config ${mode_replace_all} --file=config --fixed-value dev.null bogus &&
 	test_must_fail git config ${mode_prefix}get --file=config --fixed-value dev.null &&
 	test_must_fail git config ${mode_get_all} --file=config --fixed-value dev.null &&
 	test_must_fail git config ${mode_get_regexp} --file=config --fixed-value "dev.*" &&
@@ -2637,7 +2641,7 @@ test_expect_success '--fixed-value uses exact string matching' '
 	test_must_fail git config ${mode_get} --file=config fixed.test &&
 
 	cp initial config &&
-	git config --file=config --replace-all fixed.test bogus "$META" &&
+	git config --file=config fixed.test bogus "$META" &&
 	git config ${mode_prefix}list --file=config >actual &&
 	cat >expect <<-EOF &&
 	fixed.test=$META

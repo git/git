@@ -11,9 +11,7 @@ SYNOPSIS
 [verse]
 'git config list' [<file-option>] [<display-option>] [--includes]
 'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>
-'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
-'git config' [<file-option>] [--type=<type>] [--comment=<message>] --add <name> <value>
-'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
+'git config set' [<file-option>] [--type=<type>] [--comment=<message>] [--all] [--value=<value>] [--fixed-value] <name> <value>
 'git config' [<file-option>] [--fixed-value] --unset <name> [<value-pattern>]
 'git config' [<file-option>] [--fixed-value] --unset-all <name> [<value-pattern>]
 'git config' [<file-option>] --rename-section <old-name> <new-name>
@@ -27,7 +25,7 @@ You can query/set/replace/unset options with this command. The name is
 actually the section and the key separated by a dot, and the value will be
 escaped.
 
-Multiple lines can be added to an option by using the `--add` option.
+Multiple lines can be added to an option by using the `--append` option.
 If you want to update or unset an option which can occur on multiple
 lines, a `value-pattern` (which is an extended regular expression,
 unless the `--fixed-value` option is given) needs to be given.  Only the
@@ -82,6 +80,13 @@ get::
 	emits all values associated with key. Returns error code 1 if key is
 	not present.
 
+set::
+	Set value for one or more config options. By default, this command
+	refuses to write multi-valued config options. Passing `--all` will
+	replace all multi-valued config options with the new value, whereas
+	`--value=` will replace all config options whose values match the given
+	pattern.
+
 [[OPTIONS]]
 OPTIONS
 -------
@@ -90,10 +95,9 @@ OPTIONS
 	Default behavior is to replace at most one line. This replaces
 	all lines matching the key (and optionally the `value-pattern`).
 
---add::
+--append::
 	Adds a new line to the option without altering any existing
-	values.  This is the same as providing '^$' as the `value-pattern`
-	in `--replace-all`.
+	values. This is the same as providing '--value=^$' in `set`.
 
 --comment <message>::
 	Append a comment at the end of new or modified lines.
@@ -296,6 +300,9 @@ recommended to migrate to the new syntax.
 'git config <name>'::
 	Replaced by `git config get <name>`.
 
+'git config <name> <value> [<value-pattern>]'::
+	Replaced by `git config set [--value=<pattern>] <name> <value>`.
+
 -l::
 --list::
 	Replaced by `git config list`.
@@ -314,6 +321,9 @@ recommended to migrate to the new syntax.
 
 --get-color <name> [<default>]::
 	Replaced by `git config get --type=color [--default=<default>] <name>`.
+
+--add <name> <value>::
+	Replaced by `git config set --append <name> <value>`.
 
 CONFIGURATION
 -------------
@@ -361,7 +371,7 @@ precedence over values read earlier.  When multiple values are taken then all
 values of a key from all files will be used.
 
 By default, options are only written to the repository specific
-configuration file. Note that this also affects options like `--replace-all`
+configuration file. Note that this also affects options like `set`
 and `--unset`. *'git config' will only ever change one file at a time*.
 
 You can limit which configuration sources are read from or written to by
@@ -497,7 +507,7 @@ Given a .git/config like this:
 you can set the filemode to true with
 
 ------------
-% git config core.filemode true
+% git config set core.filemode true
 ------------
 
 The hypothetical proxy command entries actually have a postfix to discern
@@ -505,7 +515,7 @@ what URL they apply to. Here is how to change the entry for kernel.org
 to "ssh".
 
 ------------
-% git config core.gitproxy '"ssh" for kernel.org' 'for kernel.org$'
+% git config set --value='for kernel.org$' core.gitproxy '"ssh" for kernel.org'
 ------------
 
 This makes sure that only the key/value pair for kernel.org is replaced.
@@ -541,26 +551,26 @@ If you like to live dangerously, you can replace *all* core.gitproxy by a
 new one with
 
 ------------
-% git config --replace-all core.gitproxy ssh
+% git config set --all core.gitproxy ssh
 ------------
 
 However, if you really only want to replace the line for the default proxy,
 i.e. the one without a "for ..." postfix, do something like this:
 
 ------------
-% git config core.gitproxy ssh '! for '
+% git config set --value='! for ' core.gitproxy ssh
 ------------
 
 To actually match only values with an exclamation mark, you have to
 
 ------------
-% git config section.key value '[!]'
+% git config set --value='[!]' section.key value
 ------------
 
 To add a new proxy, without altering any of the existing ones, use
 
 ------------
-% git config --add core.gitproxy '"proxy-command" for example.com'
+% git config set --append core.gitproxy '"proxy-command" for example.com'
 ------------
 
 An example to use customized color from the configuration in your

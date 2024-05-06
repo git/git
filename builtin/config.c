@@ -18,6 +18,7 @@
 static const char *const builtin_config_usage[] = {
 	N_("git config list [<file-option>] [<display-option>] [--includes]"),
 	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
+	N_("git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
 	NULL
 };
 
@@ -28,6 +29,11 @@ static const char *const builtin_config_list_usage[] = {
 
 static const char *const builtin_config_get_usage[] = {
 	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
+	NULL
+};
+
+static const char *const builtin_config_set_usage[] = {
+	N_("git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
 	NULL
 };
 
@@ -849,9 +855,66 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 	return get_value(argv[0], value_pattern, flags);
 }
 
+static int cmd_config_set(int argc, const char **argv, const char *prefix)
+{
+	const char *value_pattern = NULL, *comment_arg = NULL;
+	char *comment = NULL;
+	int flags = 0, append = 0;
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		CONFIG_TYPE_OPTIONS,
+		OPT_GROUP(N_("Filter")),
+		OPT_BIT(0, "all", &flags, N_("replace multi-valued config option with new value"), CONFIG_FLAGS_MULTI_REPLACE),
+		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
+		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
+		OPT_GROUP(N_("Other")),
+		OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
+		OPT_BOOL(0, "append", &append, N_("add a new line without altering any existing values")),
+		OPT_END(),
+	};
+	struct key_value_info default_kvi = KVI_INIT;
+	char *value;
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_set_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_write();
+	check_argc(argc, 2, 2);
+
+	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
+		die(_("--fixed-value only applies with --value=<pattern>"));
+	if (append && value_pattern)
+		die(_("--append cannot be used with --value=<pattern>"));
+	if (append)
+		value_pattern = CONFIG_REGEX_NONE;
+
+	comment = git_config_prepare_comment_string(comment_arg);
+
+	handle_config_location(prefix);
+
+	value = normalize_value(argv[0], argv[1], &default_kvi);
+
+	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern) {
+		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+							     argv[0], value, value_pattern,
+							     comment, flags);
+	} else {
+		ret = git_config_set_in_file_gently(given_config_source.file,
+						    argv[0], comment, value);
+		if (ret == CONFIG_NOTHING_SET)
+			error(_("cannot overwrite multiple values with a single value\n"
+			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
+	}
+
+	free(comment);
+	free(value);
+	return ret;
+}
+
 static struct option builtin_subcommand_options[] = {
 	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
 	OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
+	OPT_SUBCOMMAND("set", &subcommand, cmd_config_set),
 	OPT_END(),
 };
 
