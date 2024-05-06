@@ -813,7 +813,7 @@ cat >> .git/config << EOF
 EOF
 
 test_expect_success 'remove section' '
-	git config --remove-section branch.zwei
+	git config ${mode_prefix}remove-section branch.zwei
 '
 
 cat > expect << EOF
@@ -2602,7 +2602,7 @@ test_expect_success 'refuse --fixed-value for incompatible actions' '
 	test_must_fail git config --file=config --fixed-value --get-urlmatch dev.null bogus &&
 	test_must_fail git config --file=config --fixed-value --get-urlmatch dev.null bogus &&
 	test_must_fail git config ${mode_prefix}rename-section --file=config --fixed-value dev null &&
-	test_must_fail git config --file=config --fixed-value --remove-section dev &&
+	test_must_fail git config ${mode_prefix}remove-section --file=config --fixed-value dev &&
 	test_must_fail git config ${mode_prefix}list --file=config --fixed-value &&
 	test_must_fail git config --file=config --fixed-value --get-color dev.null &&
 	test_must_fail git config --file=config --fixed-value --get-colorbool dev.null &&

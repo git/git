@@ -14,7 +14,7 @@ SYNOPSIS
 'git config set' [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>
 'git config unset' [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>
 'git config rename-section' [<file-option>] <old-name> <new-name>
-'git config' [<file-option>] --remove-section <name>
+'git config remove-section' [<file-option>] <name>
 'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
 'git config' [<file-option>] -e | --edit
 
@@ -94,6 +94,9 @@ unset::
 
 rename-section::
 	Rename the given section to a new name.
+
+remove-section::
+	Remove the given section from the configuration file.
 
 [[OPTIONS]]
 OPTIONS
@@ -191,9 +194,6 @@ See also <<FILES>>.
 	'.gitmodules' in the master branch. See "SPECIFYING REVISIONS"
 	section in linkgit:gitrevisions[7] for a more complete list of
 	ways to spell blob names.
-
---remove-section::
-	Remove the given section from the configuration file.
 
 --fixed-value::
 	When used with the `value-pattern` argument, treat `value-pattern` as
@@ -332,6 +332,9 @@ recommended to migrate to the new syntax.
 
 --rename-section <old-name> <new-name>::
 	Replaced by `git config rename-section <old-name> <new-name>`.
+
+--remove-section <name>::
+	Replaced by `git config remove-section <name>`.
 
 CONFIGURATION
 -------------
