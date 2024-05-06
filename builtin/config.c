@@ -23,6 +23,7 @@ static const char *const builtin_config_usage[] = {
 	N_("git config rename-section [<file-option>] <old-name> <new-name>"),
 	N_("git config remove-section [<file-option>] <name>"),
 	N_("git config edit [<file-option>]"),
+	N_("git config [<file-option>] --get-colorbool <name> [<stdout-is-tty>]"),
 	NULL
 };
 
@@ -1093,10 +1094,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	 * us when parsing the legacy-style modes that don't use subcommands.
 	 */
 	argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
-			     PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_NO_INTERNAL_HELP|PARSE_OPT_KEEP_ARGV0|PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_ARGV0|PARSE_OPT_KEEP_UNKNOWN_OPT);
 	if (subcommand) {
 		argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
-		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_NO_INTERNAL_HELP|PARSE_OPT_KEEP_UNKNOWN_OPT);
+		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_UNKNOWN_OPT);
 		return subcommand(argc, argv, prefix);
 	}
 
