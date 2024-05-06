@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2024, #02; Fri, 3)
+Subject: What's cooking in git.git (May 2024, #03; Mon, 6)
 X-master-at: d4cc1ec35f3bcce816b69986ca41943f6ce21377
-X-next-at: 7fe29c98d7a84cdef7e95a658d5ebfcb2a8b606b
+X-next-at: b98150cc7190226eafa47b017c34392aadf638ea
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2024, #02; Fri, 3)
+What's cooking in git.git (May 2024, #03; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,9 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-The first batch of topics for the new cycle have graduated to the
-'master' branch, and the tip of 'next' has been rewound.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,14 +48,86 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* it/refs-name-conflict (2024-05-06) 1 commit
+ - refs: return conflict error when checking packed refs
+
+ Comments?
+ cf. <CAOLa=ZSre3f+0SR-_migfkPONqhinobKjU=NnGOJ_sTNM_L5ug@mail.gmail.com>
+ source: <pull.1716.v3.git.git.1714791848557.gitgitgadget@gmail.com>
+
+
+* jc/format-patch-more-aggressive-range-diff (2024-05-06) 1 commit
+ - format-patch: run range-diff with larger creation-factor
+
+ The default "creation-factor" used by "git format-patch" has been
+ raised to make it more aggressively find matching commits.
+
+ Comments?
+ source: <xmqqbk5i3ncw.fsf_-_@gitster.g>
+
+
+* jp/tag-trailer (2024-05-06) 3 commits
+ - builtin/tag: add --trailer option
+ - builtin/commit: refactor --trailer logic
+ - builtin/commit: use ARGV macro to collect trailers
+
+ "git tag" learned the "--trailer" option to futz with the trailers
+ in the same way as "git commit" does.
+
+ Will merge to 'next'.
+ source: <pull.1723.v5.git.1714934950.gitgitgadget@gmail.com>
+
+
+* ow/refspec-glossary-update (2024-05-06) 1 commit
+ - Documentation: Mention that refspecs are explained elsewhere
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <20240506182317.13477-1-oystwa@gmail.com>
+
+
+* ps/ci-enable-minimal-fuzzers-at-gitlab (2024-05-06) 1 commit
+ - gitlab-ci: add smoke test for fuzzers
+
+ CI update.
+
+ Will merge to 'next'.
+ source: <01fb94999f8e2014ba4d09ce7451a4f5d315ee72.1714371146.git.ps@pks.im>
+
+
+* ps/ci-python-2-deprecation (2024-05-06) 1 commit
+ - ci: fix Python dependency on Ubuntu 24.04
+
+ Unbreak CI jobs so that we do not attempt to use Python 2 that has
+ been removed from the platform.
+
+ Will merge to 'next'.
+ source: <cb8cefc20f373a3516695e7cbee975132553ea95.1714973381.git.ps@pks.im>
+
+
+* rs/external-diff-with-exit-code (2024-05-06) 2 commits
+ - diff: fix --exit-code with external diff
+ - diff: report unmerged paths as changes in run_diff_cmd()
+
+ The "--exit-code" option of "git diff" command learned to work with
+ the "--ext-diff" option.
+
+ Will merge to 'next'?
+ source: <82561c70-ec33-41bf-b036-52310ffc1926@web.de>
+
+--------------------------------------------------
+[Cooking]
+
 * jc/test-workaround-broken-mv (2024-05-02) 1 commit
- - t/lib-chunk: work around broken "mv" on some vintage of macOS
+  (merged to 'next' on 2024-05-06 at 7e009c6827)
+ + t/lib-chunk: work around broken "mv" on some vintage of macOS
 
  Tests that try to corrupt in-repository files in chunked format did
  not work well on macOS due to its broken "mv", which has been
  worked around.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqsez0c6ma.fsf@gitster.g>
 
 
@@ -89,14 +158,15 @@ Release tarballs are available at:
 
 
 * jl/git-no-advice (2024-05-03) 3 commits
- - advice: add --no-advice global option
- - doc: add spacing around paginate options
- - doc: clean up usage documentation for --no-* opts
+  (merged to 'next' on 2024-05-06 at 95cc03ef96)
+ + advice: add --no-advice global option
+ + doc: add spacing around paginate options
+ + doc: clean up usage documentation for --no-* opts
 
  A new global "--no-advice" option can be used to disable all advice
  messages, which is meant to be used only in scripts.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240503071706.78109-1-james@jamesliu.io>
 
 
@@ -117,15 +187,16 @@ Release tarballs are available at:
 
 
 * ma/win32-unix-domain-socket (2024-05-03) 1 commit
- - win32: fix building with NO_UNIX_SOCKETS
+  (merged to 'next' on 2024-05-06 at 799a546c96)
+ + win32: fix building with NO_UNIX_SOCKETS
 
  Build fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240503091427.2808390-1-mh@glandium.org>
 
 
-* ps/config-subcommands (2024-05-03) 14 commits
+* ps/config-subcommands (2024-05-06) 14 commits
  - builtin/config: display subcommand help
  - builtin/config: introduce "edit" subcommand
  - builtin/config: introduce "remove-section" subcommand
@@ -145,8 +216,8 @@ Release tarballs are available at:
  uses have been deprecated and replaced with subcommands (like "git
  config get").
 
- Will merge to 'next'?
- source: <cover.1714730169.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1714982328.git.ps@pks.im>
 
 
 * ps/refs-without-the-repository (2024-05-03) 5 commits
@@ -185,33 +256,14 @@ Release tarballs are available at:
 
 
 * tb/attr-limits (2024-05-03) 1 commit
- - attr.c: move ATTR_MAX_FILE_SIZE check into read_attr_from_buf()
+  (merged to 'next' on 2024-05-06 at b98150cc71)
+ + attr.c: move ATTR_MAX_FILE_SIZE check into read_attr_from_buf()
 
  The maximum size of attribute files is enforced more consistently.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <28f6267709db78ba526d7ed9fc4a734674697c70.1714763555.git.me@ttaylorr.com>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* kn/update-ref-symrefs (2024-04-26) 7 commits
- - ref: support symrefs in 'reference-transaction' hook
- - update-ref: add support for 'symref-update' command
- - update-ref: add support for 'symref-create' command
- - update-ref: add support for 'symref-delete' command
- - update-ref: add support for 'symref-verify' command
- - files-backend: extract out `create_symref_lock`
- - refs: accept symref values in `ref_transaction[_add]_update`
-
- "update-ref" learns to also handle symbolic refs.
-
- Expecting a reroll.
- cf. <CAOLa=ZT4yVEuZXmiTVB2tf0qaTPCPn=0TcJRc89knZQWZBbFTg@mail.gmail.com>
- source: <20240426152449.228860-1-knayak@gitlab.com>
-
---------------------------------------------------
-[Cooking]
 
 * bb/rgb-12-bit-colors (2024-05-02) 3 commits
   (merged to 'next' on 2024-05-02 at 7fe29c98d7)
@@ -226,13 +278,14 @@ Release tarballs are available at:
  source: <20240502110331.6347-1-dev+git@drbeat.li>
 
 
-* ds/scalar-reconfigure-all-fix (2024-04-30) 1 commit
+* ds/scalar-reconfigure-all-fix (2024-05-06) 1 commit
  - scalar: avoid segfault in reconfigure --all
 
  Scalar fix.
 
- Comments?
- source: <pull.1724.git.1714496333004.gitgitgadget@gmail.com>
+ Expecting a final (and hopefully small) reroll.
+ cf. <Zjhufiq2DmBlVpIx@tanuki>
+ source: <pull.1724.v2.git.1714874298859.gitgitgadget@gmail.com>
 
 
 * ps/pseudo-ref-terminology (2024-05-02) 10 commits
@@ -575,20 +628,8 @@ Release tarballs are available at:
  source: <cover.1696021277.git.jonathantanmy@google.com>
 
 
-* js/cmake-with-test-tool (2024-04-30) 2 commits
+* js/unit-test-suite-runner (2024-05-06) 9 commits
  - cmake: let `test-tool` run the unit tests, too
- - Merge branch 'js/unit-test-suite-runner' into js/cmake-with-test-tool
- (this branch uses js/unit-test-suite-runner.)
-
- "test-tool" is now built in CMake build to also run the unit tests.
-
- May want to roll it into the base topic.
-
- Will merge to 'next' together with the base topic.
- source: <pull.1666.git.1708038924522.gitgitgadget@gmail.com>
-
-
-* js/unit-test-suite-runner (2024-04-30) 8 commits
  - ci: use test-tool as unit test runner on Windows
  - t/Makefile: run unit tests alongside shell tests
  - unit tests: add rule for running with test-tool
@@ -597,13 +638,13 @@ Release tarballs are available at:
  - test-tool run-command testsuite: get shell from env
  - t0080: turn t-basic unit test into a helper
  - Merge branch 'jk/unit-tests-buildfix' into js/unit-test-suite-runner
- (this branch is used by js/cmake-with-test-tool.)
 
  The "test-tool" has been taught to run testsuite tests in parallel,
  bypassing the need to use the "prove" tool.
 
- Will merge to 'next' together with js/cmake-with-test-tool?
- source: <cover.1714506612.git.steadmon@google.com>
+ Will merge to 'next'.
+ source: <cover.1715024899.git.steadmon@google.com>
+ source: <pull.1666.git.1708038924522.gitgitgadget@gmail.com>
 
 
 * bk/complete-dirname-for-am-and-format-patch (2024-01-12) 1 commit
@@ -668,3 +709,16 @@ Release tarballs are available at:
 
  Not ready to be reviewed yet.
  source: <20230824205456.1231371-1-gitster@pobox.com>
+
+--------------------------------------------------
+[Discarded]
+
+* js/cmake-with-test-tool (2024-04-30) 2 commits
+ . cmake: let `test-tool` run the unit tests, too
+ . Merge branch 'js/unit-test-suite-runner' into js/cmake-with-test-tool
+ (this branch uses js/unit-test-suite-runner.)
+
+ "test-tool" is now built in CMake build to also run the unit tests.
+
+ Rolled into the base topic.
+ source: <pull.1666.git.1708038924522.gitgitgadget@gmail.com>
