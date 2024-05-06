@@ -22,6 +22,8 @@ legacy)
 	mode_get_regexp="--get-regexp"
 	mode_set=""
 	mode_replace_all="--replace-all"
+	mode_unset="--unset"
+	mode_unset_all="--unset-all"
 	;;
 subcommands)
 	mode_prefix=""
@@ -30,6 +32,8 @@ subcommands)
 	mode_get_regexp="get --regexp --all --show-names"
 	mode_set="set"
 	mode_replace_all="set --all"
+	mode_unset="unset"
+	mode_unset_all="unset --all"
 	;;
 *)
 	BUG "unknown mode $mode";;
@@ -259,7 +263,7 @@ foo = bar
 EOF
 
 test_expect_success 'unset with cont. lines' '
-	git config --unset beta.baz
+	git config ${mode_unset} beta.baz
 '
 
 cat > expect <<\EOF
@@ -286,7 +290,7 @@ EOF
 cp .git/config .git/config2
 
 test_expect_success 'multiple unset' '
-	git config --unset-all beta.haha
+	git config ${mode_unset_all} beta.haha
 '
 
 cat > expect << EOF
@@ -372,7 +376,7 @@ noIndent= sillyValue ; 'nother silly comment
 	nonewline = wow
 EOF
 test_expect_success 'unset' '
-	git config --unset beta.haha &&
+	git config ${mode_unset} beta.haha &&
 	test_cmp expect .git/config
 '
 
@@ -428,11 +432,11 @@ test_expect_success 'multivar replace' '
 '
 
 test_expect_success 'ambiguous unset' '
-	test_must_fail git config --unset nextsection.nonewline
+	test_must_fail git config ${mode_unset} nextsection.nonewline
 '
 
 test_expect_success 'invalid unset' '
-	test_must_fail git config --unset somesection.nonewline
+	test_must_fail git config ${mode_unset} somesection.nonewline
 '
 
 cat > expect << EOF
@@ -446,7 +450,12 @@ noIndent= sillyValue ; 'nother silly comment
 EOF
 
 test_expect_success 'multivar unset' '
-	git config --unset nextsection.nonewline "wow3$" &&
+	case "$mode" in
+	legacy)
+		git config --unset nextsection.nonewline "wow3$";;
+	subcommands)
+		git config unset --value="wow3$" nextsection.nonewline;;
+	esac &&
 	test_cmp expect .git/config
 '
 
@@ -2013,7 +2022,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	# please be careful when you update the above variable
 	EOF
 
-	git config --unset section.key &&
+	git config ${mode_unset} section.key &&
 	test_cmp expect .git/config &&
 
 	cat >.git/config <<-\EOF &&
@@ -2026,7 +2035,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	[next-section]
 	EOF
 
-	git config --unset section.key &&
+	git config ${mode_unset} section.key &&
 	test_cmp expect .git/config &&
 
 	q_to_tab >.git/config <<-\EOF &&
@@ -2036,7 +2045,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	[two]
 	key = true
 	EOF
-	git config --unset two.key &&
+	git config ${mode_unset} two.key &&
 	! grep two .git/config &&
 
 	q_to_tab >.git/config <<-\EOF &&
@@ -2046,7 +2055,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	[one]
 	key = true
 	EOF
-	git config --unset-all one.key &&
+	git config ${mode_unset_all} one.key &&
 	test_line_count = 0 .git/config &&
 
 	q_to_tab >.git/config <<-\EOF &&
@@ -2056,7 +2065,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	[two]
 	Qkey = true
 	EOF
-	git config --unset two.key &&
+	git config ${mode_unset} two.key &&
 	grep two .git/config &&
 
 	q_to_tab >.git/config <<-\EOF &&
@@ -2068,7 +2077,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	[TWO "subsection"]
 	[one]
 	EOF
-	git config --unset two.subsection.key &&
+	git config ${mode_unset} two.subsection.key &&
 	test "not [two subsection]" = "$(git config ${mode_get} one.key)" &&
 	test_line_count = 3 .git/config
 '
@@ -2080,7 +2089,7 @@ test_expect_success '--unset-all removes section if empty & uncommented' '
 	key = value2
 	EOF
 
-	git config --unset-all section.key &&
+	git config ${mode_unset_all} section.key &&
 	test_line_count = 0 .git/config
 '
 
@@ -2604,8 +2613,8 @@ test_expect_success 'refuse --fixed-value for incompatible actions' '
 	test_must_fail git config ${mode_prefix}get --file=config --fixed-value dev.null &&
 	test_must_fail git config ${mode_get_all} --file=config --fixed-value dev.null &&
 	test_must_fail git config ${mode_get_regexp} --file=config --fixed-value "dev.*" &&
-	test_must_fail git config --file=config --fixed-value --unset dev.null &&
-	test_must_fail git config --file=config --fixed-value --unset-all dev.null
+	test_must_fail git config ${mode_unset} --file=config --fixed-value dev.null &&
+	test_must_fail git config ${mode_unset_all} --file=config --fixed-value dev.null
 '
 
 test_expect_success '--fixed-value uses exact string matching' '
@@ -2633,6 +2642,11 @@ test_expect_success '--fixed-value uses exact string matching' '
 	cp initial config &&
 	test_must_fail git config --file=config --unset fixed.test "$META" &&
 	git config --file=config --fixed-value --unset fixed.test "$META" &&
+	test_must_fail git config ${mode_get} --file=config fixed.test &&
+
+	cp initial config &&
+	test_must_fail git config unset --file=config --value="$META" fixed.test &&
+	git config unset --file=config --fixed-value --value="$META" fixed.test &&
 	test_must_fail git config ${mode_get} --file=config fixed.test &&
 
 	cp initial config &&

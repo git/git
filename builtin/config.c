@@ -19,6 +19,7 @@ static const char *const builtin_config_usage[] = {
 	N_("git config list [<file-option>] [<display-option>] [--includes]"),
 	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
 	N_("git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	N_("git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
 	NULL
 };
 
@@ -34,6 +35,11 @@ static const char *const builtin_config_get_usage[] = {
 
 static const char *const builtin_config_set_usage[] = {
 	N_("git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	NULL
+};
+
+static const char *const builtin_config_unset_usage[] = {
+	N_("git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
 	NULL
 };
 
@@ -911,10 +917,43 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
+static int cmd_config_unset(int argc, const char **argv, const char *prefix)
+{
+	const char *value_pattern = NULL;
+	int flags = 0;
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		OPT_GROUP(N_("Filter")),
+		OPT_BIT(0, "all", &flags, N_("replace multi-valued config option with new value"), CONFIG_FLAGS_MULTI_REPLACE),
+		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
+		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_unset_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_write();
+	check_argc(argc, 1, 1);
+
+	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
+		die(_("--fixed-value only applies with 'value-pattern'"));
+
+	handle_config_location(prefix);
+
+	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern)
+		return git_config_set_multivar_in_file_gently(given_config_source.file,
+							      argv[0], NULL, value_pattern,
+							      NULL, flags);
+	else
+		return git_config_set_in_file_gently(given_config_source.file, argv[0],
+						     NULL, NULL);
+}
+
 static struct option builtin_subcommand_options[] = {
 	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
 	OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
 	OPT_SUBCOMMAND("set", &subcommand, cmd_config_set),
+	OPT_SUBCOMMAND("unset", &subcommand, cmd_config_unset),
 	OPT_END(),
 };
 

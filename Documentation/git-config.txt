@@ -11,9 +11,8 @@ SYNOPSIS
 [verse]
 'git config list' [<file-option>] [<display-option>] [--includes]
 'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>
-'git config set' [<file-option>] [--type=<type>] [--comment=<message>] [--all] [--value=<value>] [--fixed-value] <name> <value>
-'git config' [<file-option>] [--fixed-value] --unset <name> [<value-pattern>]
-'git config' [<file-option>] [--fixed-value] --unset-all <name> [<value-pattern>]
+'git config set' [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>
+'git config unset' [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>
 'git config' [<file-option>] --rename-section <old-name> <new-name>
 'git config' [<file-option>] --remove-section <name>
 'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
@@ -86,6 +85,12 @@ set::
 	replace all multi-valued config options with the new value, whereas
 	`--value=` will replace all config options whose values match the given
 	pattern.
+
+unset::
+	Unset value for one or more config options. By default, this command
+	refuses to unset multi-valued keys. Passing `--all` will unset all
+	multi-valued config options, whereas `--value` will unset all config
+	options whose values match the given pattern.
 
 [[OPTIONS]]
 OPTIONS
@@ -189,12 +194,6 @@ See also <<FILES>>.
 
 --rename-section::
 	Rename the given section to a new name.
-
---unset::
-	Remove the line matching the key from config file.
-
---unset-all::
-	Remove all lines matching the key from config file.
 
 --fixed-value::
 	When used with the `value-pattern` argument, treat `value-pattern` as
@@ -325,6 +324,12 @@ recommended to migrate to the new syntax.
 --add <name> <value>::
 	Replaced by `git config set --append <name> <value>`.
 
+--unset <name> [<value-pattern>]::
+	Replaced by `git config unset [--value=<pattern>] <name>`.
+
+--unset-all <name> [<value-pattern>]::
+	Replaced by `git config unset [--value=<pattern>] --all <name>`.
+
 CONFIGURATION
 -------------
 `pager.config` is only respected when listing configuration, i.e., when
@@ -372,7 +377,7 @@ values of a key from all files will be used.
 
 By default, options are only written to the repository specific
 configuration file. Note that this also affects options like `set`
-and `--unset`. *'git config' will only ever change one file at a time*.
+and `unset`. *'git config' will only ever change one file at a time*.
 
 You can limit which configuration sources are read from or written to by
 specifying the path of a file with the `--file` option, or by specifying a
@@ -523,7 +528,7 @@ This makes sure that only the key/value pair for kernel.org is replaced.
 To delete the entry for renames, do
 
 ------------
-% git config --unset diff.renames
+% git config unset diff.renames
 ------------
 
 If you want to delete an entry for a multivar (like core.gitproxy above),
