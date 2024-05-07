@@ -133,7 +133,8 @@ test_expect_success 'git archive vs. bare' '
 '
 
 test_expect_success 'git archive with worktree attributes, bare' '
-	(cd bare && git archive --worktree-attributes HEAD) >bare-worktree.tar &&
+	(cd bare &&
+	git -c attr.tree=HEAD archive --worktree-attributes HEAD) >bare-worktree.tar &&
 	(mkdir bare-worktree && cd bare-worktree && "$TAR" xf -) <bare-worktree.tar
 '
 
