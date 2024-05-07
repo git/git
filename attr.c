@@ -1227,6 +1227,12 @@ static int compute_default_attr_source(struct object_id *attr_source)
 	if (!default_attr_source_tree_object_name)
 		return 0;
 
+	if (!startup_info->have_repository) {
+		if (!ignore_bad_attr_tree)
+			die(_("cannot use --attr-source or GIT_ATTR_SOURCE without repo"));
+		return 0;
+	}
+
 	if (repo_get_oid_treeish(the_repository,
 				 default_attr_source_tree_object_name,
 				 attr_source)) {

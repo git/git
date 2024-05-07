@@ -434,6 +434,21 @@ test_expect_success 'precedence of --attr-source, GIT_ATTR_SOURCE, then attr.tre
 	)
 '
 
+test_expect_success 'diff without repository with attr source' '
+	mkdir -p "$TRASH_DIRECTORY/outside/nongit" &&
+	(
+		cd "$TRASH_DIRECTORY/outside/nongit" &&
+		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/outside" &&
+		export GIT_CEILING_DIRECTORIES &&
+		touch file &&
+		cat >expect <<-EOF &&
+		fatal: cannot use --attr-source or GIT_ATTR_SOURCE without repo
+		EOF
+		test_must_fail env GIT_ATTR_SOURCE=HEAD git grep --no-index foo file 2>err &&
+		test_cmp expect err
+	)
+'
+
 test_expect_success 'bare repository: with --source' '
 	(
 		cd bare.git &&
