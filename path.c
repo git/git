@@ -693,7 +693,7 @@ int validate_headref(const char *path)
 	/*
 	 * Is this a detached HEAD?
 	 */
-	if (!get_oid_hex(buffer, &oid))
+	if (get_oid_hex_any(buffer, &oid) != GIT_HASH_UNKNOWN)
 		return 0;
 
 	return -1;
