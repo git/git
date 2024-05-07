@@ -2394,8 +2394,9 @@ static int split_symref_update(struct ref_update *update,
 
 	new_update = ref_transaction_add_update(
 			transaction, referent, new_flags,
-			&update->new_oid, &update->old_oid,
-			NULL, NULL, update->msg);
+			update->new_target ? NULL : &update->new_oid,
+			update->old_target ? NULL : &update->old_oid,
+			update->new_target, update->old_target, update->msg);
 
 	new_update->parent_update = update;
 
@@ -2483,7 +2484,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 	files_assert_main_repository(refs, "lock_ref_for_update");
 
-	if ((update->flags & REF_HAVE_NEW) && is_null_oid(&update->new_oid))
+	if ((update->flags & REF_HAVE_NEW) && ref_update_has_null_new_value(update))
 		update->flags |= REF_DELETING;
 
 	if (head_ref) {
@@ -2526,7 +2527,14 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto out;
 				}
-			} else if (check_old_oid(update, &lock->old_oid, err)) {
+			}
+
+			if (update->old_target) {
+				if (ref_update_check_old_target(referent.buf, update, err)) {
+					ret = TRANSACTION_GENERIC_ERROR;
+					goto out;
+				}
+			} else if  (check_old_oid(update, &lock->old_oid, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto out;
 			}
@@ -2547,7 +2555,17 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 	} else {
 		struct ref_update *parent_update;
 
-		if (check_old_oid(update, &lock->old_oid, err)) {
+		/*
+		 * Even if the ref is a regular ref, if `old_target` is set, we
+		 * check the referent value. Ideally `old_target` should only
+		 * be set for symrefs, but we're strict about its usage.
+		 */
+		if (update->old_target) {
+			if (ref_update_check_old_target(referent.buf, update, err)) {
+				ret = TRANSACTION_GENERIC_ERROR;
+				goto out;
+			}
+		} else if  (check_old_oid(update, &lock->old_oid, err)) {
 			ret = TRANSACTION_GENERIC_ERROR;
 			goto out;
 		}
@@ -2565,9 +2583,28 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 		}
 	}
 
-	if ((update->flags & REF_HAVE_NEW) &&
-	    !(update->flags & REF_DELETING) &&
-	    !(update->flags & REF_LOG_ONLY)) {
+	if (update->new_target && !(update->flags & REF_LOG_ONLY)) {
+		if (create_symref_lock(refs, lock, update->refname,
+				       update->new_target, err)) {
+			ret = TRANSACTION_GENERIC_ERROR;
+			goto out;
+		}
+
+		if (close_ref_gently(lock)) {
+			strbuf_addf(err, "couldn't close '%s.lock'",
+				    update->refname);
+			ret = TRANSACTION_GENERIC_ERROR;
+			goto out;
+		}
+
+		/*
+		 * Once we have created the symref lock, the commit
+		 * phase of the transaction only needs to commit the lock.
+		 */
+		update->flags |= REF_NEEDS_COMMIT;
+	} else if ((update->flags & REF_HAVE_NEW) &&
+		   !(update->flags & REF_DELETING) &&
+		   !(update->flags & REF_LOG_ONLY)) {
 		if (!(update->type & REF_ISSYMREF) &&
 		    oideq(&lock->old_oid, &update->new_oid)) {
 			/*
@@ -2830,6 +2867,43 @@ cleanup:
 	return ret;
 }
 
+static int parse_and_write_reflog(struct files_ref_store *refs,
+				  struct ref_update *update,
+				  struct ref_lock *lock,
+				  struct strbuf *err)
+{
+	if (update->new_target) {
+		/*
+		 * We want to get the resolved OID for the target, to ensure
+		 * that the correct value is added to the reflog.
+		 */
+		if (!refs_resolve_ref_unsafe(&refs->base, update->new_target,
+					     RESOLVE_REF_READING,
+					     &update->new_oid, NULL)) {
+			/*
+			 * TODO: currently we skip creating reflogs for dangling
+			 * symref updates. It would be nice to capture this as
+			 * zero oid updates however.
+			 */
+			return 0;
+		}
+	}
+
+	if (files_log_ref_write(refs, lock->ref_name, &lock->old_oid,
+				&update->new_oid, update->msg, update->flags, err)) {
+		char *old_msg = strbuf_detach(err, NULL);
+
+		strbuf_addf(err, "cannot update the ref '%s': %s",
+			    lock->ref_name, old_msg);
+		free(old_msg);
+		unlock_ref(lock);
+		update->backend_data = NULL;
+		return -1;
+	}
+
+	return 0;
+}
+
 static int files_transaction_finish(struct ref_store *ref_store,
 				    struct ref_transaction *transaction,
 				    struct strbuf *err)
@@ -2860,23 +2934,20 @@ static int files_transaction_finish(struct ref_store *ref_store,
 
 		if (update->flags & REF_NEEDS_COMMIT ||
 		    update->flags & REF_LOG_ONLY) {
-			if (files_log_ref_write(refs,
-						lock->ref_name,
-						&lock->old_oid,
-						&update->new_oid,
-						update->msg, update->flags,
-						err)) {
-				char *old_msg = strbuf_detach(err, NULL);
-
-				strbuf_addf(err, "cannot update the ref '%s': %s",
-					    lock->ref_name, old_msg);
-				free(old_msg);
-				unlock_ref(lock);
-				update->backend_data = NULL;
+			if (parse_and_write_reflog(refs, update, lock, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
 		}
+
+		/*
+		 * We try creating a symlink, if that succeeds we continue to the
+		 * next update. If not, we try and create a regular symref.
+		 */
+		if (update->new_target && prefer_symlink_refs)
+			if (!create_ref_symlink(lock, update->new_target))
+				continue;
+
 		if (update->flags & REF_NEEDS_COMMIT) {
 			clear_loose_ref_cache(refs);
 			if (commit_ref(lock)) {

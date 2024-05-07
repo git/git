@@ -754,4 +754,20 @@ struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_stor
  */
 const char *ref_update_original_update_refname(struct ref_update *update);
 
+/*
+ * Helper function to check if the new value is null, this
+ * takes into consideration that the update could be a regular
+ * ref or a symbolic ref.
+ */
+int ref_update_has_null_new_value(struct ref_update *update);
+
+/*
+ * Check whether the old_target values stored in update are consistent
+ * with the referent, which is the symbolic reference's current value.
+ * If everything is OK, return 0; otherwise, write an error message to
+ * err and return -1.
+ */
+int ref_update_check_old_target(const char *referent, struct ref_update *update,
+				struct strbuf *err);
+
 #endif /* REFS_REFS_INTERNAL_H */

@@ -843,7 +843,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			 * There is no need to write the reference deletion
 			 * when the reference in question doesn't exist.
 			 */
-			 if (u->flags & REF_HAVE_NEW && !is_null_oid(&u->new_oid)) {
+			 if ((u->flags & REF_HAVE_NEW) && !ref_update_has_null_new_value(u)) {
 				 ret = queue_transaction_update(refs, tx_data, u,
 								&current_oid, err);
 				 if (ret)
@@ -894,8 +894,10 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 				 * intertwined with the locking in files-backend.c.
 				 */
 				new_update = ref_transaction_add_update(
-						transaction, referent.buf, new_flags,
-						&u->new_oid, &u->old_oid, NULL, NULL, u->msg);
+					transaction, referent.buf, new_flags,
+					&u->new_oid, &u->old_oid, u->new_target,
+					u->old_target, u->msg);
+
 				new_update->parent_update = u;
 
 				/*
@@ -925,7 +927,12 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		 * individual refs. But the error messages match what the files
 		 * backend returns, which keeps our tests happy.
 		 */
-		if (u->flags & REF_HAVE_OLD && !oideq(&current_oid, &u->old_oid)) {
+		if (u->old_target) {
+			if (ref_update_check_old_target(referent.buf, u, err)) {
+				ret = -1;
+				goto done;
+			}
+		} else if ((u->flags & REF_HAVE_OLD) && !oideq(&current_oid, &u->old_oid)) {
 			if (is_null_oid(&u->old_oid))
 				strbuf_addf(err, _("cannot lock ref '%s': "
 						   "reference already exists"),
@@ -1030,7 +1037,9 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 		 * - `core.logAllRefUpdates` tells us to create the reflog for
 		 *   the given ref.
 		 */
-		if (u->flags & REF_HAVE_NEW && !(u->type & REF_ISSYMREF) && is_null_oid(&u->new_oid)) {
+		if ((u->flags & REF_HAVE_NEW) &&
+		    !(u->type & REF_ISSYMREF) &&
+		    ref_update_has_null_new_value(u)) {
 			struct reftable_log_record log = {0};
 			struct reftable_iterator it = {0};
 
@@ -1071,24 +1080,52 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			   (u->flags & REF_FORCE_CREATE_REFLOG ||
 			    should_write_log(&arg->refs->base, u->refname))) {
 			struct reftable_log_record *log;
+			int create_reflog = 1;
 
-			ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
-			log = &logs[logs_nr++];
-			memset(log, 0, sizeof(*log));
+			if (u->new_target) {
+				if (!refs_resolve_ref_unsafe(&arg->refs->base, u->new_target,
+							     RESOLVE_REF_READING, &u->new_oid, NULL)) {
+					/*
+					 * TODO: currently we skip creating reflogs for dangling
+					 * symref updates. It would be nice to capture this as
+					 * zero oid updates however.
+					 */
+					create_reflog = 0;
+				}
+			}
 
-			fill_reftable_log_record(log);
-			log->update_index = ts;
-			log->refname = xstrdup(u->refname);
-			memcpy(log->value.update.new_hash, u->new_oid.hash, GIT_MAX_RAWSZ);
-			memcpy(log->value.update.old_hash, tx_update->current_oid.hash, GIT_MAX_RAWSZ);
-			log->value.update.message =
-				xstrndup(u->msg, arg->refs->write_options.block_size / 2);
+			if (create_reflog) {
+				ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
+				log = &logs[logs_nr++];
+				memset(log, 0, sizeof(*log));
+
+				fill_reftable_log_record(log);
+				log->update_index = ts;
+				log->refname = xstrdup(u->refname);
+				memcpy(log->value.update.new_hash,
+				       u->new_oid.hash, GIT_MAX_RAWSZ);
+				memcpy(log->value.update.old_hash,
+				       tx_update->current_oid.hash, GIT_MAX_RAWSZ);
+				log->value.update.message =
+					xstrndup(u->msg, arg->refs->write_options.block_size / 2);
+			}
 		}
 
 		if (u->flags & REF_LOG_ONLY)
 			continue;
 
-		if (u->flags & REF_HAVE_NEW && is_null_oid(&u->new_oid)) {
+		if (u->new_target) {
+			struct reftable_ref_record ref = {
+				.refname = (char *)u->refname,
+				.value_type = REFTABLE_REF_SYMREF,
+				.value.symref = (char *)u->new_target,
+				.update_index = ts,
+			};
+
+			ret = reftable_writer_add_ref(writer, &ref);
+			if (ret < 0)
+				goto done;
+		} else if ((u->flags & REF_HAVE_NEW) && ref_update_has_null_new_value(u)) {
 			struct reftable_ref_record ref = {
 				.refname = (char *)u->refname,
 				.update_index = ts,

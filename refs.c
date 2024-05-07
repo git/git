@@ -1217,6 +1217,8 @@ void ref_transaction_free(struct ref_transaction *transaction)
 
 	for (i = 0; i < transaction->nr; i++) {
 		free(transaction->updates[i]->msg);
+		free((char *)transaction->updates[i]->new_target);
+		free((char *)transaction->updates[i]->old_target);
 		free(transaction->updates[i]);
 	}
 	free(transaction->updates);
@@ -1247,10 +1249,13 @@ struct ref_update *ref_transaction_add_update(
 
 	update->flags = flags;
 
-	if (flags & REF_HAVE_NEW)
+	update->new_target = xstrdup_or_null(new_target);
+	update->old_target = xstrdup_or_null(old_target);
+	if ((flags & REF_HAVE_NEW) && new_oid)
 		oidcpy(&update->new_oid, new_oid);
-	if (flags & REF_HAVE_OLD)
+	if ((flags & REF_HAVE_OLD) && old_oid)
 		oidcpy(&update->old_oid, old_oid);
+
 	update->msg = normalize_reflog_message(msg);
 	return update;
 }
@@ -1286,6 +1291,7 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	flags &= REF_TRANSACTION_UPDATE_ALLOWED_FLAGS;
 
 	flags |= (new_oid ? REF_HAVE_NEW : 0) | (old_oid ? REF_HAVE_OLD : 0);
+	flags |= (new_target ? REF_HAVE_NEW : 0) | (old_target ? REF_HAVE_OLD : 0);
 
 	ref_transaction_add_update(transaction, refname, flags,
 				   new_oid, old_oid, new_target,
@@ -2821,4 +2827,31 @@ const char *ref_update_original_update_refname(struct ref_update *update)
 		update = update->parent_update;
 
 	return update->refname;
+}
+
+int ref_update_has_null_new_value(struct ref_update *update)
+{
+	return !update->new_target && is_null_oid(&update->new_oid);
+}
+
+int ref_update_check_old_target(const char *referent, struct ref_update *update,
+				struct strbuf *err)
+{
+	if (!update->old_target)
+		BUG("called without old_target set");
+
+	if (!strcmp(referent, update->old_target))
+		return 0;
+
+	if (!strcmp(referent, ""))
+		strbuf_addf(err, "verifying symref target: '%s': "
+			    "reference is missing but expected %s",
+			    ref_update_original_update_refname(update),
+			    update->old_target);
+	else
+		strbuf_addf(err, "verifying symref target: '%s': "
+			    "is at %s but expected %s",
+			    ref_update_original_update_refname(update),
+			    referent, update->old_target);
+	return -1;
 }
