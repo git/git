@@ -1903,23 +1903,6 @@ static int create_ref_symlink(struct ref_lock *lock, const char *target)
 	return ret;
 }
 
-static void update_symref_reflog(struct files_ref_store *refs,
-				 struct ref_lock *lock, const char *refname,
-				 const char *target, const char *logmsg)
-{
-	struct strbuf err = STRBUF_INIT;
-	struct object_id new_oid;
-
-	if (logmsg &&
-	    refs_resolve_ref_unsafe(&refs->base, target,
-				    RESOLVE_REF_READING, &new_oid, NULL) &&
-	    files_log_ref_write(refs, refname, &lock->old_oid,
-				&new_oid, logmsg, 0, &err)) {
-		error("%s", err.buf);
-		strbuf_release(&err);
-	}
-}
-
 static int create_symref_lock(struct files_ref_store *refs,
 			      struct ref_lock *lock, const char *refname,
 			      const char *target, struct strbuf *err)
@@ -1937,55 +1920,6 @@ static int create_symref_lock(struct files_ref_store *refs,
 	}
 
 	return 0;
-}
-
-static int create_and_commit_symref(struct files_ref_store *refs,
-				    struct ref_lock *lock, const char *refname,
-				    const char *target, const char *logmsg)
-{
-	struct strbuf err = STRBUF_INIT;
-	int ret;
-
-	if (prefer_symlink_refs && !create_ref_symlink(lock, target)) {
-		update_symref_reflog(refs, lock, refname, target, logmsg);
-		return 0;
-	}
-
-	ret = create_symref_lock(refs, lock, refname, target, &err);
-	if (!ret) {
-		update_symref_reflog(refs, lock, refname, target, logmsg);
-
-		if (commit_ref(lock) < 0)
-			return error("unable to write symref for %s: %s", refname,
-				     strerror(errno));
-	} else {
-		return error("%s", err.buf);
-	}
-
-	return ret;
-}
-
-static int files_create_symref(struct ref_store *ref_store,
-			       const char *refname, const char *target,
-			       const char *logmsg)
-{
-	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_WRITE, "create_symref");
-	struct strbuf err = STRBUF_INIT;
-	struct ref_lock *lock;
-	int ret;
-
-	lock = lock_ref_oid_basic(refs, refname, &err);
-	if (!lock) {
-		error("%s", err.buf);
-		strbuf_release(&err);
-		return -1;
-	}
-
-	ret = create_and_commit_symref(refs, lock, refname, target, logmsg);
-
-	unlock_ref(lock);
-	return ret;
 }
 
 static int files_reflog_exists(struct ref_store *ref_store,
@@ -3374,7 +3308,6 @@ struct ref_storage_be refs_be_files = {
 	.initial_transaction_commit = files_initial_transaction_commit,
 
 	.pack_refs = files_pack_refs,
-	.create_symref = files_create_symref,
 	.rename_ref = files_rename_ref,
 	.copy_ref = files_copy_ref,
 
