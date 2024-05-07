@@ -2424,17 +2424,6 @@ static int split_symref_update(struct ref_update *update,
 }
 
 /*
- * Return the refname under which update was originally requested.
- */
-static const char *original_update_refname(struct ref_update *update)
-{
-	while (update->parent_update)
-		update = update->parent_update;
-
-	return update->refname;
-}
-
-/*
  * Check whether the REF_HAVE_OLD and old_oid values stored in update
  * are consistent with oid, which is the reference's current value. If
  * everything is OK, return 0; otherwise, write an error message to
@@ -2450,16 +2439,16 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
 	if (is_null_oid(&update->old_oid))
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference already exists",
-			    original_update_refname(update));
+			    ref_update_original_update_refname(update));
 	else if (is_null_oid(oid))
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference is missing but expected %s",
-			    original_update_refname(update),
+			    ref_update_original_update_refname(update),
 			    oid_to_hex(&update->old_oid));
 	else
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "is at %s but expected %s",
-			    original_update_refname(update),
+			    ref_update_original_update_refname(update),
 			    oid_to_hex(oid),
 			    oid_to_hex(&update->old_oid));
 
@@ -2513,7 +2502,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 		reason = strbuf_detach(err, NULL);
 		strbuf_addf(err, "cannot lock ref '%s': %s",
-			    original_update_refname(update), reason);
+			    ref_update_original_update_refname(update), reason);
 		free(reason);
 		goto out;
 	}
@@ -2533,7 +2522,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 				if (update->flags & REF_HAVE_OLD) {
 					strbuf_addf(err, "cannot lock ref '%s': "
 						    "error reading reference",
-						    original_update_refname(update));
+						    ref_update_original_update_refname(update));
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto out;
 				}

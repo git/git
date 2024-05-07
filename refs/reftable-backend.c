@@ -578,16 +578,6 @@ static int reftable_be_read_symbolic_ref(struct ref_store *ref_store,
 	return ret;
 }
 
-/*
- * Return the refname under which update was originally requested.
- */
-static const char *original_update_refname(struct ref_update *update)
-{
-	while (update->parent_update)
-		update = update->parent_update;
-	return update->refname;
-}
-
 struct reftable_transaction_update {
 	struct ref_update *update;
 	struct object_id current_oid;
@@ -866,7 +856,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			/* The reference does not exist, but we expected it to. */
 			strbuf_addf(err, _("cannot lock ref '%s': "
 				    "unable to resolve reference '%s'"),
-				    original_update_refname(u), u->refname);
+				    ref_update_original_update_refname(u), u->refname);
 			ret = -1;
 			goto done;
 		}
@@ -938,17 +928,17 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		if (u->flags & REF_HAVE_OLD && !oideq(&current_oid, &u->old_oid)) {
 			if (is_null_oid(&u->old_oid))
 				strbuf_addf(err, _("cannot lock ref '%s': "
-					    "reference already exists"),
-					    original_update_refname(u));
+						   "reference already exists"),
+					    ref_update_original_update_refname(u));
 			else if (is_null_oid(&current_oid))
 				strbuf_addf(err, _("cannot lock ref '%s': "
-					    "reference is missing but expected %s"),
-					    original_update_refname(u),
+						   "reference is missing but expected %s"),
+					    ref_update_original_update_refname(u),
 					    oid_to_hex(&u->old_oid));
 			else
 				strbuf_addf(err, _("cannot lock ref '%s': "
-					    "is at %s but expected %s"),
-					    original_update_refname(u),
+						   "is at %s but expected %s"),
+					    ref_update_original_update_refname(u),
 					    oid_to_hex(&current_oid),
 					    oid_to_hex(&u->old_oid));
 			ret = -1;
