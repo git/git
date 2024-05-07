@@ -2640,7 +2640,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * prefixes like "refs/heads/" etc. are stripped off,
 		 * so we have to look at everything:
 		 */
-		return for_each_fullref_in("", cb, cb_data);
+		return for_each_fullref_in("", NULL, cb, cb_data);
 	}
 
 	if (filter->ignore_case) {
@@ -2649,7 +2649,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * so just return everything and let the caller
 		 * sort it out.
 		 */
-		return for_each_fullref_in("", cb, cb_data);
+		return for_each_fullref_in("", NULL, cb, cb_data);
 	}
 
 	if (!filter->name_patterns[0]) {
@@ -3060,11 +3060,11 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 		 * of filter_ref_kind().
 		 */
 		if (filter->kind == FILTER_REFS_BRANCHES)
-			ret = for_each_fullref_in("refs/heads/", fn, cb_data);
+			ret = for_each_fullref_in("refs/heads/", NULL, fn, cb_data);
 		else if (filter->kind == FILTER_REFS_REMOTES)
-			ret = for_each_fullref_in("refs/remotes/", fn, cb_data);
+			ret = for_each_fullref_in("refs/remotes/", NULL, fn, cb_data);
 		else if (filter->kind == FILTER_REFS_TAGS)
-			ret = for_each_fullref_in("refs/tags/", fn, cb_data);
+			ret = for_each_fullref_in("refs/tags/", NULL, fn, cb_data);
 		else if (filter->kind & FILTER_REFS_REGULAR)
 			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
 

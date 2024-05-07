@@ -208,9 +208,9 @@ static int cmd_show_ref__patterns(const struct patterns_options *opts,
 		head_ref(show_ref, &show_ref_data);
 	if (opts->heads_only || opts->tags_only) {
 		if (opts->heads_only)
-			for_each_fullref_in("refs/heads/", show_ref, &show_ref_data);
+			for_each_fullref_in("refs/heads/", NULL, show_ref, &show_ref_data);
 		if (opts->tags_only)
-			for_each_fullref_in("refs/tags/", show_ref, &show_ref_data);
+			for_each_fullref_in("refs/tags/", NULL, show_ref, &show_ref_data);
 	} else {
 		for_each_ref(show_ref, &show_ref_data);
 	}

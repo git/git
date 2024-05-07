@@ -353,7 +353,8 @@ int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 			     const char **exclude_patterns,
 			     each_ref_fn fn, void *cb_data);
-int for_each_fullref_in(const char *prefix, each_ref_fn fn, void *cb_data);
+int for_each_fullref_in(const char *prefix, const char **exclude_patterns,
+			each_ref_fn fn, void *cb_data);
 
 /**
  * iterate all refs in "patterns" by partitioning patterns into disjoint sets
