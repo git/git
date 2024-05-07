@@ -687,7 +687,6 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	const char *name = NULL;
 	struct object_context unused;
 	struct strbuf buf = STRBUF_INIT;
-	const int hexsz = the_hash_algo->hexsz;
 	int seen_end_of_options = 0;
 	enum format_type format = FORMAT_DEFAULT;
 
@@ -863,8 +862,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				abbrev = strtoul(arg, NULL, 10);
 				if (abbrev < MINIMUM_ABBREV)
 					abbrev = MINIMUM_ABBREV;
-				else if (hexsz <= abbrev)
-					abbrev = hexsz;
+				else if ((int)the_hash_algo->hexsz <= abbrev)
+					abbrev = the_hash_algo->hexsz;
 				continue;
 			}
 			if (!strcmp(arg, "--sq")) {
