@@ -1206,15 +1206,16 @@ static void collect_some_attrs(struct index_state *istate,
 }
 
 static const char *default_attr_source_tree_object_name;
-static int ignore_bad_attr_tree;
 
 void set_git_attr_source(const char *tree_object_name)
 {
 	default_attr_source_tree_object_name = xstrdup(tree_object_name);
 }
 
-static void compute_default_attr_source(struct object_id *attr_source)
+static int compute_default_attr_source(struct object_id *attr_source)
 {
+	int ignore_bad_attr_tree = 0;
+
 	if (!default_attr_source_tree_object_name)
 		default_attr_source_tree_object_name = getenv(GIT_ATTR_SOURCE_ENVIRONMENT);
 
@@ -1223,22 +1224,28 @@ static void compute_default_attr_source(struct object_id *attr_source)
 		ignore_bad_attr_tree = 1;
 	}
 
-	if (!default_attr_source_tree_object_name || !is_null_oid(attr_source))
-		return;
+	if (!default_attr_source_tree_object_name)
+		return 0;
 
 	if (repo_get_oid_treeish(the_repository,
 				 default_attr_source_tree_object_name,
-				 attr_source) && !ignore_bad_attr_tree)
-		die(_("bad --attr-source or GIT_ATTR_SOURCE"));
+				 attr_source)) {
+		if (!ignore_bad_attr_tree)
+			die(_("bad --attr-source or GIT_ATTR_SOURCE"));
+		return 0;
+	}
+
+	return 1;
 }
 
 static struct object_id *default_attr_source(void)
 {
 	static struct object_id attr_source;
+	static int has_attr_source = -1;
 
-	if (is_null_oid(&attr_source))
-		compute_default_attr_source(&attr_source);
-	if (is_null_oid(&attr_source))
+	if (has_attr_source < 0)
+		has_attr_source = compute_default_attr_source(&attr_source);
+	if (!has_attr_source)
 		return NULL;
 	return &attr_source;
 }
