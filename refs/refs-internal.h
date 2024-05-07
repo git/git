@@ -125,6 +125,19 @@ struct ref_update {
 	struct object_id old_oid;
 
 	/*
+	 * If set, point the reference to this value. This can also be
+	 * used to convert regular references to become symbolic refs.
+	 * Cannot be set together with `new_oid`.
+	 */
+	const char *new_target;
+
+	/*
+	 * If set, check that the reference previously pointed to this
+	 * value. Cannot be set together with `old_oid`.
+	 */
+	const char *old_target;
+
+	/*
 	 * One or more of REF_NO_DEREF, REF_FORCE_CREATE_REFLOG,
 	 * REF_HAVE_NEW, REF_HAVE_OLD, or backend-specific flags.
 	 */
@@ -173,6 +186,7 @@ struct ref_update *ref_transaction_add_update(
 		const char *refname, unsigned int flags,
 		const struct object_id *new_oid,
 		const struct object_id *old_oid,
+		const char *new_target, const char *old_target,
 		const char *msg);
 
 /*
