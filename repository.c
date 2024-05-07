@@ -1,8 +1,3 @@
-/*
- * not really _using_ the compat macros, just make sure the_index
- * declaration matches the definition in this file.
- */
-#define USE_THE_INDEX_VARIABLE
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "repository.h"
@@ -22,21 +17,35 @@
 
 /* The main repository */
 static struct repository the_repo;
-struct repository *the_repository;
-struct index_state the_index;
+struct repository *the_repository = &the_repo;
 
-void initialize_the_repository(void)
+void initialize_repository(struct repository *repo)
 {
-	the_repository = &the_repo;
+	repo->objects = raw_object_store_new();
+	repo->remote_state = remote_state_new();
+	repo->parsed_objects = parsed_object_pool_new();
+	ALLOC_ARRAY(repo->index, 1);
+	index_state_init(repo->index, repo);
 
-	the_repo.index = &the_index;
-	the_repo.objects = raw_object_store_new();
-	the_repo.remote_state = remote_state_new();
-	the_repo.parsed_objects = parsed_object_pool_new();
-
-	index_state_init(&the_index, the_repository);
-
-	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
+	/*
+	 * Unfortunately, we need to keep this hack around for the time being:
+	 *
+	 *   - Not setting up the hash algorithm for `the_repository` leads to
+	 *     crashes because `the_hash_algo` is a macro that expands to
+	 *     `the_repository->hash_algo`. So if Git commands try to access
+	 *     `the_hash_algo` without a Git directory we crash.
+	 *
+	 *   - Setting up the hash algorithm to be SHA1 by default breaks other
+	 *     commands when running with SHA256.
+	 *
+	 * This is another point in case why having global state is a bad idea.
+	 * Eventually, we should remove this hack and stop setting the hash
+	 * algorithm in this function altogether. Instead, it should only ever
+	 * be set via our repository setup procedures. But that requires more
+	 * work.
+	 */
+	if (repo == the_repository)
+		repo_set_hash_algo(repo, GIT_HASH_SHA1);
 }
 
 static void expand_base_dir(char **out, const char *in,
@@ -188,9 +197,7 @@ int repo_init(struct repository *repo,
 	struct repository_format format = REPOSITORY_FORMAT_INIT;
 	memset(repo, 0, sizeof(*repo));
 
-	repo->objects = raw_object_store_new();
-	repo->parsed_objects = parsed_object_pool_new();
-	repo->remote_state = remote_state_new();
+	initialize_repository(repo);
 
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
@@ -307,8 +314,7 @@ void repo_clear(struct repository *repo)
 
 	if (repo->index) {
 		discard_index(repo->index);
-		if (repo->index != &the_index)
-			FREE_AND_NULL(repo->index);
+		FREE_AND_NULL(repo->index);
 	}
 
 	if (repo->promisor_remote_config) {

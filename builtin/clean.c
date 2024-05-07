@@ -6,7 +6,6 @@
  * Based on git-clean.sh by Pavel Roskin
  */
 
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
@@ -714,7 +713,7 @@ static int filter_by_patterns_cmd(void)
 		for_each_string_list_item(item, &del_list) {
 			int dtype = DT_UNKNOWN;
 
-			if (is_excluded(&dir, &the_index, item->string, &dtype)) {
+			if (is_excluded(&dir, the_repository->index, item->string, &dtype)) {
 				*item->string = '\0';
 				changed++;
 			}
@@ -1021,7 +1020,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		       PATHSPEC_PREFER_CWD,
 		       prefix, argv);
 
-	fill_directory(&dir, &the_index, &pathspec);
+	fill_directory(&dir, the_repository->index, &pathspec);
 	correct_untracked_entries(&dir);
 
 	for (i = 0; i < dir.nr; i++) {
@@ -1029,7 +1028,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		struct stat st;
 		const char *rel;
 
-		if (!index_name_is_other(&the_index, ent->name, ent->len))
+		if (!index_name_is_other(the_repository->index, ent->name, ent->len))
 			continue;
 
 		if (lstat(ent->name, &st))

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2006 Johannes Schindelin
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
@@ -95,9 +95,9 @@ static void prepare_move_submodule(const char *src, int first,
 				   const char **submodule_gitfile)
 {
 	struct strbuf submodule_dotgit = STRBUF_INIT;
-	if (!S_ISGITLINK(the_index.cache[first]->ce_mode))
+	if (!S_ISGITLINK(the_repository->index->cache[first]->ce_mode))
 		die(_("Directory %s is in index and no submodule?"), src);
-	if (!is_staging_gitmodules_ok(&the_index))
+	if (!is_staging_gitmodules_ok(the_repository->index))
 		die(_("Please stage your changes to .gitmodules or stash them to proceed"));
 	strbuf_addf(&submodule_dotgit, "%s/.git", src);
 	*submodule_gitfile = read_gitfile(submodule_dotgit.buf);
@@ -114,13 +114,13 @@ static int index_range_of_same_dir(const char *src, int length,
 	const char *src_w_slash = add_slash(src);
 	int first, last, len_w_slash = length + 1;
 
-	first = index_name_pos(&the_index, src_w_slash, len_w_slash);
+	first = index_name_pos(the_repository->index, src_w_slash, len_w_slash);
 	if (first >= 0)
 		die(_("%.*s is in index"), len_w_slash, src_w_slash);
 
 	first = -1 - first;
-	for (last = first; last < the_index.cache_nr; last++) {
-		const char *path = the_index.cache[last]->name;
+	for (last = first; last < the_repository->index->cache_nr; last++) {
+		const char *path = the_repository->index->cache[last]->name;
 		if (strncmp(path, src_w_slash, len_w_slash))
 			break;
 	}
@@ -144,14 +144,14 @@ static int empty_dir_has_sparse_contents(const char *name)
 	const char *with_slash = add_slash(name);
 	int length = strlen(with_slash);
 
-	int pos = index_name_pos(&the_index, with_slash, length);
+	int pos = index_name_pos(the_repository->index, with_slash, length);
 	const struct cache_entry *ce;
 
 	if (pos < 0) {
 		pos = -pos - 1;
-		if (pos >= the_index.cache_nr)
+		if (pos >= the_repository->index->cache_nr)
 			goto free_return;
-		ce = the_index.cache[pos];
+		ce = the_repository->index->cache[pos];
 		if (strncmp(with_slash, ce->name, length))
 			goto free_return;
 		if (ce_skip_worktree(ce))
@@ -223,7 +223,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			S_ISDIR(st.st_mode)) {
 		destination = internal_prefix_pathspec(dst_w_slash, argv, argc, DUP_BASENAME);
 	} else {
-		if (!path_in_sparse_checkout(dst_w_slash, &the_index) &&
+		if (!path_in_sparse_checkout(dst_w_slash, the_repository->index) &&
 		    empty_dir_has_sparse_contents(dst_w_slash)) {
 			destination = internal_prefix_pathspec(dst_w_slash, argv, argc, DUP_BASENAME);
 			dst_mode = SKIP_WORKTREE_DIR;
@@ -239,7 +239,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			 * is deprecated at this point) sparse-checkout. As
 			 * SPARSE here is only considering cone-mode situation.
 			 */
-			if (!path_in_cone_mode_sparse_checkout(destination[0], &the_index))
+			if (!path_in_cone_mode_sparse_checkout(destination[0], the_repository->index))
 				dst_mode = SPARSE;
 		}
 	}
@@ -263,10 +263,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			int pos;
 			const struct cache_entry *ce;
 
-			pos = index_name_pos(&the_index, src, length);
+			pos = index_name_pos(the_repository->index, src, length);
 			if (pos < 0) {
 				const char *src_w_slash = add_slash(src);
-				if (!path_in_sparse_checkout(src_w_slash, &the_index) &&
+				if (!path_in_sparse_checkout(src_w_slash, the_repository->index) &&
 				    empty_dir_has_sparse_contents(src)) {
 					modes[i] |= SKIP_WORKTREE_DIR;
 					goto dir_check;
@@ -276,7 +276,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					bad = _("bad source");
 				goto act_on_entry;
 			}
-			ce = the_index.cache[pos];
+			ce = the_repository->index->cache[pos];
 			if (!ce_skip_worktree(ce)) {
 				bad = _("bad source");
 				goto act_on_entry;
@@ -286,7 +286,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				goto act_on_entry;
 			}
 			/* Check if dst exists in index */
-			if (index_name_pos(&the_index, dst, strlen(dst)) < 0) {
+			if (index_name_pos(the_repository->index, dst, strlen(dst)) < 0) {
 				modes[i] |= SPARSE;
 				goto act_on_entry;
 			}
@@ -311,7 +311,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 dir_check:
 		if (S_ISDIR(st.st_mode)) {
 			int j, dst_len, n;
-			int first = index_name_pos(&the_index, src, length), last;
+			int first = index_name_pos(the_repository->index, src, length), last;
 
 			if (first >= 0) {
 				prepare_move_submodule(src, first,
@@ -339,7 +339,7 @@ dir_check:
 			dst_len = strlen(dst);
 
 			for (j = 0; j < last - first; j++) {
-				const struct cache_entry *ce = the_index.cache[first + j];
+				const struct cache_entry *ce = the_repository->index->cache[first + j];
 				const char *path = ce->name;
 				source[argc + j] = path;
 				destination[argc + j] =
@@ -351,7 +351,7 @@ dir_check:
 			argc += last - first;
 			goto act_on_entry;
 		}
-		if (!(ce = index_file_exists(&the_index, src, length, 0))) {
+		if (!(ce = index_file_exists(the_repository->index, src, length, 0))) {
 			bad = _("not under version control");
 			goto act_on_entry;
 		}
@@ -387,7 +387,7 @@ dir_check:
 
 		if (ignore_sparse &&
 		    (dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) &&
-		    index_entry_exists(&the_index, dst, strlen(dst))) {
+		    index_entry_exists(the_repository->index, dst, strlen(dst))) {
 			bad = _("destination exists in the index");
 			if (force) {
 				if (verbose)
@@ -404,12 +404,12 @@ dir_check:
 		 * option as a way to have a successful run.
 		 */
 		if (!ignore_sparse &&
-		    !path_in_sparse_checkout(src, &the_index)) {
+		    !path_in_sparse_checkout(src, the_repository->index)) {
 			string_list_append(&only_match_skip_worktree, src);
 			skip_sparse = 1;
 		}
 		if (!ignore_sparse &&
-		    !path_in_sparse_checkout(dst, &the_index)) {
+		    !path_in_sparse_checkout(dst, the_repository->index)) {
 			string_list_append(&only_match_skip_worktree, dst);
 			skip_sparse = 1;
 		}
@@ -449,7 +449,7 @@ remove_entry:
 		int pos;
 		int sparse_and_dirty = 0;
 		struct checkout state = CHECKOUT_INIT;
-		state.istate = &the_index;
+		state.istate = the_repository->index;
 
 		if (force)
 			state.force = 1;
@@ -476,14 +476,14 @@ remove_entry:
 		if (mode & (WORKING_DIRECTORY | SKIP_WORKTREE_DIR))
 			continue;
 
-		pos = index_name_pos(&the_index, src, strlen(src));
+		pos = index_name_pos(the_repository->index, src, strlen(src));
 		assert(pos >= 0);
 		if (!(mode & SPARSE) && !lstat(src, &st))
-			sparse_and_dirty = ie_modified(&the_index,
-						       the_index.cache[pos],
+			sparse_and_dirty = ie_modified(the_repository->index,
+						       the_repository->index->cache[pos],
 						       &st,
 						       0);
-		rename_index_entry_at(&the_index, pos, dst);
+		rename_index_entry_at(the_repository->index, pos, dst);
 
 		if (ignore_sparse &&
 		    core_apply_sparse_checkout &&
@@ -495,11 +495,11 @@ remove_entry:
 			 * should be added in a future patch.
 			 */
 			if ((mode & SPARSE) &&
-			    path_in_sparse_checkout(dst, &the_index)) {
+			    path_in_sparse_checkout(dst, the_repository->index)) {
 				/* from out-of-cone to in-cone */
-				int dst_pos = index_name_pos(&the_index, dst,
+				int dst_pos = index_name_pos(the_repository->index, dst,
 							     strlen(dst));
-				struct cache_entry *dst_ce = the_index.cache[dst_pos];
+				struct cache_entry *dst_ce = the_repository->index->cache[dst_pos];
 
 				dst_ce->ce_flags &= ~CE_SKIP_WORKTREE;
 
@@ -507,11 +507,11 @@ remove_entry:
 					die(_("cannot checkout %s"), dst_ce->name);
 			} else if ((dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) &&
 				   !(mode & SPARSE) &&
-				   !path_in_sparse_checkout(dst, &the_index)) {
+				   !path_in_sparse_checkout(dst, the_repository->index)) {
 				/* from in-cone to out-of-cone */
-				int dst_pos = index_name_pos(&the_index, dst,
+				int dst_pos = index_name_pos(the_repository->index, dst,
 							     strlen(dst));
-				struct cache_entry *dst_ce = the_index.cache[dst_pos];
+				struct cache_entry *dst_ce = the_repository->index->cache[dst_pos];
 
 				/*
 				 * if src is clean, it will suffice to remove it
@@ -559,9 +559,9 @@ remove_entry:
 		advise_on_moving_dirty_path(&dirty_paths);
 
 	if (gitmodules_modified)
-		stage_updated_gitmodules(&the_index);
+		stage_updated_gitmodules(the_repository->index);
 
-	if (write_locked_index(&the_index, &lock_file,
+	if (write_locked_index(the_repository->index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 

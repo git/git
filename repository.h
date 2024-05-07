@@ -187,9 +187,6 @@ struct repository {
 };
 
 extern struct repository *the_repository;
-#ifdef USE_THE_INDEX_VARIABLE
-extern struct index_state the_index;
-#endif
 
 /*
  * Define a custom repository layout. Any field can be NULL, which
@@ -210,7 +207,7 @@ void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
 void repo_set_compat_hash_algo(struct repository *repo, int compat_algo);
 void repo_set_ref_storage_format(struct repository *repo, unsigned int format);
-void initialize_the_repository(void);
+void initialize_repository(struct repository *repo);
 RESULT_MUST_BE_USED
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 

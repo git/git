@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds 2006
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
@@ -41,8 +41,8 @@ static int get_ours_cache_pos(const char *path, int pos)
 {
 	int i = -pos - 1;
 
-	while ((i < the_index.cache_nr) && !strcmp(the_index.cache[i]->name, path)) {
-		if (ce_stage(the_index.cache[i]) == 2)
+	while ((i < the_repository->index->cache_nr) && !strcmp(the_repository->index->cache[i]->name, path)) {
+		if (ce_stage(the_repository->index->cache[i]) == 2)
 			return i;
 		i++;
 	}
@@ -78,13 +78,13 @@ static void submodules_absorb_gitdir_if_needed(void)
 		int pos;
 		const struct cache_entry *ce;
 
-		pos = index_name_pos(&the_index, name, strlen(name));
+		pos = index_name_pos(the_repository->index, name, strlen(name));
 		if (pos < 0) {
 			pos = get_ours_cache_pos(name, pos);
 			if (pos < 0)
 				continue;
 		}
-		ce = the_index.cache[pos];
+		ce = the_repository->index->cache[pos];
 
 		if (!S_ISGITLINK(ce->ce_mode) ||
 		    !file_exists(ce->name) ||
@@ -122,7 +122,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		int local_changes = 0;
 		int staged_changes = 0;
 
-		pos = index_name_pos(&the_index, name, strlen(name));
+		pos = index_name_pos(the_repository->index, name, strlen(name));
 		if (pos < 0) {
 			/*
 			 * Skip unmerged entries except for populated submodules
@@ -132,11 +132,11 @@ static int check_local_mod(struct object_id *head, int index_only)
 			if (pos < 0)
 				continue;
 
-			if (!S_ISGITLINK(the_index.cache[pos]->ce_mode) ||
+			if (!S_ISGITLINK(the_repository->index->cache[pos]->ce_mode) ||
 			    is_empty_dir(name))
 				continue;
 		}
-		ce = the_index.cache[pos];
+		ce = the_repository->index->cache[pos];
 
 		if (lstat(ce->name, &st) < 0) {
 			if (!is_missing_file_error(errno))
@@ -173,7 +173,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		 * Is the index different from the file in the work tree?
 		 * If it's a submodule, is its work tree modified?
 		 */
-		if (ie_match_stat(&the_index, ce, &st, 0) ||
+		if (ie_match_stat(the_repository->index, ce, &st, 0) ||
 		    (S_ISGITLINK(ce->ce_mode) &&
 		     bad_to_remove_submodule(ce->name,
 				SUBMODULE_REMOVAL_DIE_ON_ERROR |
@@ -301,27 +301,27 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, &pathspec, NULL, NULL);
+	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, &pathspec, NULL, NULL);
 
 	seen = xcalloc(pathspec.nr, 1);
 
-	if (pathspec_needs_expanded_index(&the_index, &pathspec))
-		ensure_full_index(&the_index);
+	if (pathspec_needs_expanded_index(the_repository->index, &pathspec))
+		ensure_full_index(the_repository->index);
 
-	for (i = 0; i < the_index.cache_nr; i++) {
-		const struct cache_entry *ce = the_index.cache[i];
+	for (i = 0; i < the_repository->index->cache_nr; i++) {
+		const struct cache_entry *ce = the_repository->index->cache[i];
 
 		if (!include_sparse &&
 		    (ce_skip_worktree(ce) ||
-		     !path_in_sparse_checkout(ce->name, &the_index)))
+		     !path_in_sparse_checkout(ce->name, the_repository->index)))
 			continue;
-		if (!ce_path_match(&the_index, ce, &pathspec, seen))
+		if (!ce_path_match(the_repository->index, ce, &pathspec, seen))
 			continue;
 		ALLOC_GROW(list.entry, list.nr + 1, list.alloc);
 		list.entry[list.nr].name = xstrdup(ce->name);
 		list.entry[list.nr].is_submodule = S_ISGITLINK(ce->ce_mode);
 		if (list.entry[list.nr++].is_submodule &&
-		    !is_staging_gitmodules_ok(&the_index))
+		    !is_staging_gitmodules_ok(the_repository->index))
 			die(_("please stage your changes to .gitmodules or stash them to proceed"));
 	}
 
@@ -391,7 +391,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		if (!quiet)
 			printf("rm '%s'\n", path);
 
-		if (remove_file_from_index(&the_index, path))
+		if (remove_file_from_index(the_repository->index, path))
 			die(_("git rm: unable to remove %s"), path);
 	}
 
@@ -432,10 +432,10 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		}
 		strbuf_release(&buf);
 		if (gitmodules_modified)
-			stage_updated_gitmodules(&the_index);
+			stage_updated_gitmodules(the_repository->index);
 	}
 
-	if (write_locked_index(&the_index, &lock_file,
+	if (write_locked_index(the_repository->index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 

@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
@@ -1049,8 +1049,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--shared-index-path")) {
 				if (repo_read_index(the_repository) < 0)
 					die(_("Could not read the index"));
-				if (the_index.split_index) {
-					const struct object_id *oid = &the_index.split_index->base_oid;
+				if (the_repository->index->split_index) {
+					const struct object_id *oid = &the_repository->index->split_index->base_oid;
 					const char *path = git_path("sharedindex.%s", oid_to_hex(oid));
 					print_path(path, prefix, format, DEFAULT_RELATIVE);
 				}
