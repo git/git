@@ -514,7 +514,9 @@ static int fsck_handle_reflog(const char *logname, void *cb_data)
 	struct strbuf refname = STRBUF_INIT;
 
 	strbuf_worktree_ref(cb_data, &refname, logname);
-	for_each_reflog_ent(refname.buf, fsck_handle_reflog_ent, refname.buf);
+	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+				 refname.buf, fsck_handle_reflog_ent,
+				 refname.buf);
 	strbuf_release(&refname);
 	return 0;
 }
@@ -563,7 +565,8 @@ static void get_default_heads(void)
 	const char *head_points_at;
 	struct object_id head_oid;
 
-	for_each_rawref(fsck_handle_ref, NULL);
+	refs_for_each_rawref(get_main_ref_store(the_repository),
+			     fsck_handle_ref, NULL);
 
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
@@ -712,7 +715,9 @@ static int fsck_head_link(const char *head_ref_name,
 	if (verbose)
 		fprintf_ln(stderr, _("Checking %s link"), head_ref_name);
 
-	*head_points_at = resolve_ref_unsafe(head_ref_name, 0, head_oid, NULL);
+	*head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						  head_ref_name, 0, head_oid,
+						  NULL);
 	if (!*head_points_at) {
 		errors_found |= ERROR_REFS;
 		return error(_("invalid %s"), head_ref_name);

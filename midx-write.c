@@ -755,7 +755,8 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 		read_refs_snapshot(refs_snapshot, &revs);
 	} else {
 		setup_revisions(0, NULL, &revs, NULL);
-		for_each_ref(add_ref_to_pending, &revs);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  add_ref_to_pending, &revs);
 	}
 
 	/*

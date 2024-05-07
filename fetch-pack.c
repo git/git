@@ -290,7 +290,8 @@ static void mark_tips(struct fetch_negotiator *negotiator,
 	int i;
 
 	if (!negotiation_tips) {
-		for_each_rawref(rev_list_insert_ref_oid, negotiator);
+		refs_for_each_rawref(get_main_ref_store(the_repository),
+				     rev_list_insert_ref_oid, negotiator);
 		return;
 	}
 
@@ -793,7 +794,8 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	 */
 	trace2_region_enter("fetch-pack", "mark_complete_local_refs", NULL);
 	if (!args->deepen) {
-		for_each_rawref(mark_complete_oid, NULL);
+		refs_for_each_rawref(get_main_ref_store(the_repository),
+				     mark_complete_oid, NULL);
 		for_each_cached_alternate(NULL, mark_alternate_complete);
 		commit_list_sort_by_date(&complete);
 		if (cutoff)

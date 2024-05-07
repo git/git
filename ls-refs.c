@@ -95,9 +95,11 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		strbuf_addf(&data->buf, "unborn %s", refname_nons);
 	if (data->symrefs && flag & REF_ISSYMREF) {
 		struct object_id unused;
-		const char *symref_target = resolve_ref_unsafe(refname, 0,
-							       &unused,
-							       &flag);
+		const char *symref_target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+								    refname,
+								    0,
+								    &unused,
+								    &flag);
 
 		if (!symref_target)
 			die("'%s' is a symref but it is not?", refname);
@@ -126,7 +128,7 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 	int oid_is_null;
 
 	strbuf_addf(&namespaced, "%sHEAD", get_git_namespace());
-	if (!resolve_ref_unsafe(namespaced.buf, 0, &oid, &flag))
+	if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), namespaced.buf, 0, &oid, &flag))
 		return; /* bad ref */
 	oid_is_null = is_null_oid(&oid);
 	if (!oid_is_null ||

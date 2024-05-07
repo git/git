@@ -67,24 +67,32 @@ static struct complete_reflogs *read_complete_reflog(const char *ref)
 	struct complete_reflogs *reflogs =
 		xcalloc(1, sizeof(struct complete_reflogs));
 	reflogs->ref = xstrdup(ref);
-	for_each_reflog_ent(ref, read_one_reflog, reflogs);
+	refs_for_each_reflog_ent(get_main_ref_store(the_repository), ref,
+				 read_one_reflog, reflogs);
 	if (reflogs->nr == 0) {
 		const char *name;
 		void *name_to_free;
-		name = name_to_free = resolve_refdup(ref, RESOLVE_REF_READING,
-						     NULL, NULL);
+		name = name_to_free = refs_resolve_refdup(get_main_ref_store(the_repository),
+							  ref,
+							  RESOLVE_REF_READING,
+							  NULL, NULL);
 		if (name) {
-			for_each_reflog_ent(name, read_one_reflog, reflogs);
+			refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+						 name, read_one_reflog,
+						 reflogs);
 			free(name_to_free);
 		}
 	}
 	if (reflogs->nr == 0) {
 		char *refname = xstrfmt("refs/%s", ref);
-		for_each_reflog_ent(refname, read_one_reflog, reflogs);
+		refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+					 refname, read_one_reflog, reflogs);
 		if (reflogs->nr == 0) {
 			free(refname);
 			refname = xstrfmt("refs/heads/%s", ref);
-			for_each_reflog_ent(refname, read_one_reflog, reflogs);
+			refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+						 refname, read_one_reflog,
+						 reflogs);
 		}
 		free(refname);
 	}
@@ -174,7 +182,8 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	else {
 		if (*branch == '\0') {
 			free(branch);
-			branch = resolve_refdup("HEAD", 0, NULL, NULL);
+			branch = refs_resolve_refdup(get_main_ref_store(the_repository),
+						     "HEAD", 0, NULL, NULL);
 			if (!branch)
 				die("no current branch");
 
@@ -236,7 +245,9 @@ void get_reflog_selector(struct strbuf *sb,
 	if (shorten) {
 		if (!commit_reflog->reflogs->short_ref)
 			commit_reflog->reflogs->short_ref
-				= shorten_unambiguous_ref(commit_reflog->reflogs->ref, 0);
+				= refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+							       commit_reflog->reflogs->ref,
+							       0);
 		printed_ref = commit_reflog->reflogs->short_ref;
 	} else {
 		printed_ref = commit_reflog->reflogs->ref;

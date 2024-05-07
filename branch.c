@@ -377,7 +377,7 @@ int validate_branchname(const char *name, struct strbuf *ref)
 		exit(code);
 	}
 
-	return ref_exists(ref->buf);
+	return refs_ref_exists(get_main_ref_store(the_repository), ref->buf);
 }
 
 static int initialized_checked_out_branches;
@@ -623,7 +623,8 @@ void create_branch(struct repository *r,
 		msg = xstrfmt("branch: Reset to %s", start_name);
 	else
 		msg = xstrfmt("branch: Created from %s", start_name);
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction ||
 		ref_transaction_update(transaction, ref.buf,
 					&oid, forcing ? NULL : null_oid(),

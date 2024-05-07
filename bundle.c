@@ -389,7 +389,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		if (repo_dwim_ref(the_repository, e->name, strlen(e->name),
 				  &oid, &ref, 0) != 1)
 			goto skip_write_ref;
-		if (read_ref_full(e->name, RESOLVE_REF_READING, &oid, &flag))
+		if (refs_read_ref_full(get_main_ref_store(the_repository), e->name, RESOLVE_REF_READING, &oid, &flag))
 			flag = 0;
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
 

@@ -1604,10 +1604,11 @@ static int update_branch(struct branch *b)
 
 	if (is_null_oid(&b->oid)) {
 		if (b->delete)
-			delete_ref(NULL, b->name, NULL, 0);
+			refs_delete_ref(get_main_ref_store(the_repository),
+					NULL, b->name, NULL, 0);
 		return 0;
 	}
-	if (read_ref(b->name, &old_oid))
+	if (refs_read_ref(get_main_ref_store(the_repository), b->name, &old_oid))
 		oidclr(&old_oid);
 	if (!force_update && !is_null_oid(&old_oid)) {
 		struct commit *old_cmit, *new_cmit;
@@ -1631,7 +1632,8 @@ static int update_branch(struct branch *b)
 			return -1;
 		}
 	}
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, b->name, &b->oid, &old_oid,
 				   0, msg, &err) ||
@@ -1665,7 +1667,8 @@ static void dump_tags(void)
 	struct strbuf err = STRBUF_INIT;
 	struct ref_transaction *transaction;
 
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction) {
 		failure |= error("%s", err.buf);
 		goto cleanup;

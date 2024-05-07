@@ -433,7 +433,7 @@ static int add_worktree(const char *path, const char *refname,
 
 	/* is 'refname' a branch or commit? */
 	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
-	    ref_exists(symref.buf)) {
+	    refs_ref_exists(get_main_ref_store(the_repository), symref.buf)) {
 		is_branch = 1;
 		if (!opts->force)
 			die_if_checked_out(symref.buf, 0);
@@ -605,7 +605,7 @@ static void print_preparing_worktree_line(int detach,
 	} else {
 		struct strbuf s = STRBUF_INIT;
 		if (!detach && !strbuf_check_branch_ref(&s, branch) &&
-		    ref_exists(s.buf))
+		    refs_ref_exists(get_main_ref_store(the_repository), s.buf))
 			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
 				  branch);
 		else {
@@ -647,9 +647,9 @@ static int first_valid_ref(const char *refname UNUSED,
  */
 static int can_use_local_refs(const struct add_opts *opts)
 {
-	if (head_ref(first_valid_ref, NULL)) {
+	if (refs_head_ref(get_main_ref_store(the_repository), first_valid_ref, NULL)) {
 		return 1;
-	} else if (for_each_branch_ref(first_valid_ref, NULL)) {
+	} else if (refs_for_each_branch_ref(get_main_ref_store(the_repository), first_valid_ref, NULL)) {
 		if (!opts->quiet) {
 			struct strbuf path = STRBUF_INIT;
 			struct strbuf contents = STRBUF_INIT;
@@ -689,7 +689,7 @@ static int can_use_remote_refs(const struct add_opts *opts)
 {
 	if (!guess_remote) {
 		return 0;
-	} else if (for_each_remote_ref(first_valid_ref, NULL)) {
+	} else if (refs_for_each_remote_ref(get_main_ref_store(the_repository), first_valid_ref, NULL)) {
 		return 1;
 	} else if (!opts->force && remote_get(NULL)) {
 		die(_("No local or remote refs exist despite at least one remote\n"
@@ -747,7 +747,8 @@ static const char *dwim_branch(const char *path, const char **new_branch)
 	UNLEAK(branchname);
 
 	branch_exists = !strbuf_check_branch_ref(&ref, branchname) &&
-			ref_exists(ref.buf);
+			refs_ref_exists(get_main_ref_store(the_repository),
+					ref.buf);
 	strbuf_release(&ref);
 	if (branch_exists)
 		return branchname;
@@ -838,7 +839,7 @@ static int add(int ac, const char **av, const char *prefix)
 
 		if (!opts.force &&
 		    !strbuf_check_branch_ref(&symref, new_branch) &&
-		    ref_exists(symref.buf))
+		    refs_ref_exists(get_main_ref_store(the_repository), symref.buf))
 			die_if_checked_out(symref.buf, 0);
 		strbuf_release(&symref);
 	}
@@ -974,7 +975,9 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 		if (wt->is_detached)
 			strbuf_addstr(&sb, "(detached HEAD)");
 		else if (wt->head_ref) {
-			char *ref = shorten_unambiguous_ref(wt->head_ref, 0);
+			char *ref = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+								 wt->head_ref,
+								 0);
 			strbuf_addf(&sb, "[%s]", ref);
 			free(ref);
 		} else

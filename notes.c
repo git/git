@@ -945,7 +945,8 @@ void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 {
 	assert(list->strdup_strings);
 	if (has_glob_specials(glob)) {
-		for_each_glob_ref(string_list_add_one_ref, glob, list);
+		refs_for_each_glob_ref(get_main_ref_store(the_repository),
+				       string_list_add_one_ref, glob, list);
 	} else {
 		struct object_id oid;
 		if (repo_get_oid(the_repository, glob, &oid))
@@ -1029,7 +1030,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	if (flags & NOTES_INIT_EMPTY ||
 	    repo_get_oid_treeish(the_repository, notes_ref, &object_oid))
 		return;
-	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, &object_oid))
+	if (flags & NOTES_INIT_WRITABLE && refs_read_ref(get_main_ref_store(the_repository), notes_ref, &object_oid))
 		die("Cannot use notes ref %s", notes_ref);
 	if (get_tree_entry(the_repository, &object_oid, "", &oid, &mode))
 		die("Failed to read notes tree referenced by %s (%s)",

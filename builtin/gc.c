@@ -907,7 +907,8 @@ static int should_write_commit_graph(void)
 	if (data.limit < 0)
 		return 1;
 
-	result = for_each_ref(dfs_on_ref, &data);
+	result = refs_for_each_ref(get_main_ref_store(the_repository),
+				   dfs_on_ref, &data);
 
 	repo_clear_commit_marks(the_repository, SEEN);
 

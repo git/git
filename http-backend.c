@@ -559,7 +559,8 @@ static void get_info_refs(struct strbuf *hdr, char *arg UNUSED)
 
 	} else {
 		select_getanyfile(hdr);
-		for_each_namespaced_ref(NULL, show_text_ref, &buf);
+		refs_for_each_namespaced_ref(get_main_ref_store(the_repository),
+					     NULL, show_text_ref, &buf);
 		send_strbuf(hdr, "text/plain", &buf);
 	}
 	strbuf_release(&buf);
@@ -571,9 +572,10 @@ static int show_head_ref(const char *refname, const struct object_id *oid,
 	struct strbuf *buf = cb_data;
 
 	if (flag & REF_ISSYMREF) {
-		const char *target = resolve_ref_unsafe(refname,
-							RESOLVE_REF_READING,
-							NULL, NULL);
+		const char *target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+							     refname,
+							     RESOLVE_REF_READING,
+							     NULL, NULL);
 
 		if (target)
 			strbuf_addf(buf, "ref: %s\n", strip_namespace(target));
@@ -589,7 +591,8 @@ static void get_head(struct strbuf *hdr, char *arg UNUSED)
 	struct strbuf buf = STRBUF_INIT;
 
 	select_getanyfile(hdr);
-	head_ref_namespaced(show_head_ref, &buf);
+	refs_head_ref_namespaced(get_main_ref_store(the_repository),
+				 show_head_ref, &buf);
 	send_strbuf(hdr, "text/plain", &buf);
 	strbuf_release(&buf);
 }

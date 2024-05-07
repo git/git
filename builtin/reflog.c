@@ -364,11 +364,12 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			};
 
 			set_reflog_expiry_param(&cb.cmd,  item->string);
-			status |= reflog_expire(item->string, flags,
-						reflog_expiry_prepare,
-						should_prune_fn,
-						reflog_expiry_cleanup,
-						&cb);
+			status |= refs_reflog_expire(get_main_ref_store(the_repository),
+						     item->string, flags,
+						     reflog_expiry_prepare,
+						     should_prune_fn,
+						     reflog_expiry_cleanup,
+						     &cb);
 		}
 		string_list_clear(&collected.reflogs, 0);
 	}
@@ -382,11 +383,12 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		set_reflog_expiry_param(&cb.cmd, ref);
-		status |= reflog_expire(ref, flags,
-					reflog_expiry_prepare,
-					should_prune_fn,
-					reflog_expiry_cleanup,
-					&cb);
+		status |= refs_reflog_expire(get_main_ref_store(the_repository),
+					     ref, flags,
+					     reflog_expiry_prepare,
+					     should_prune_fn,
+					     reflog_expiry_cleanup,
+					     &cb);
 		free(ref);
 	}
 	return status;
@@ -437,7 +439,8 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 	refname = argv[0];
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
 		die(_("invalid ref format: %s"), refname);
-	return !reflog_exists(refname);
+	return !refs_reflog_exists(get_main_ref_store(the_repository),
+				   refname);
 }
 
 /*

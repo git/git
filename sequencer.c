@@ -266,7 +266,7 @@ static struct update_ref_record *init_update_ref_record(const char *ref)
 	oidcpy(&rec->after, null_oid());
 
 	/* This may fail, but that's fine, we will keep the null OID. */
-	read_ref(ref, &rec->before);
+	refs_read_ref(get_main_ref_store(the_repository), ref, &rec->before);
 
 	return rec;
 }
@@ -440,7 +440,7 @@ int sequencer_remove_state(struct replay_opts *opts)
 			char *eol = strchr(p, '\n');
 			if (eol)
 				*eol = '\0';
-			if (delete_ref("(rebase) cleanup", p, NULL, 0) < 0) {
+			if (refs_delete_ref(get_main_ref_store(the_repository), "(rebase) cleanup", p, NULL, 0) < 0) {
 				warning(_("could not delete '%s'"), p);
 				ret = -1;
 			}
@@ -661,7 +661,8 @@ static int fast_forward_to(struct repository *r,
 
 	strbuf_addf(&sb, "%s: fast-forward", action_name(opts));
 
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD",
 				   to, unborn && !is_rebase_i(opts) ?
@@ -841,11 +842,12 @@ static int is_index_unchanged(struct repository *r)
 	struct index_state *istate = r->index;
 	const char *head_name;
 
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL)) {
+	if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING, &head_oid, NULL)) {
 		/* Check to see if this is an unborn branch */
-		head_name = resolve_ref_unsafe("HEAD",
-			RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-			&head_oid, NULL);
+		head_name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						    "HEAD",
+						    RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+						    &head_oid, NULL);
 		if (!head_name ||
 			!starts_with(head_name, "refs/heads/") ||
 			!is_null_oid(&head_oid))
@@ -1294,7 +1296,8 @@ int update_head_with_reflog(const struct commit *old_head,
 		strbuf_addch(&sb, '\n');
 	}
 
-	transaction = ref_transaction_begin(err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD", new_head,
 				   old_head ? &old_head->object.oid : null_oid(),
@@ -1720,8 +1723,8 @@ out:
 
 static int write_rebase_head(struct object_id *oid)
 {
-	if (update_ref("rebase", "REBASE_HEAD", oid,
-		       NULL, REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
+	if (refs_update_ref(get_main_ref_store(the_repository), "rebase", "REBASE_HEAD", oid,
+			    NULL, REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
 		return error(_("could not update %s"), "REBASE_HEAD");
 
 	return 0;
@@ -2455,12 +2458,12 @@ static int do_pick_commit(struct repository *r,
 	if ((command == TODO_PICK || command == TODO_REWORD ||
 	     command == TODO_EDIT) && !opts->no_commit &&
 	    (res == 0 || res == 1) &&
-	    update_ref(NULL, "CHERRY_PICK_HEAD", &commit->object.oid, NULL,
-		       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
+	    refs_update_ref(get_main_ref_store(the_repository), NULL, "CHERRY_PICK_HEAD", &commit->object.oid, NULL,
+			    REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
 		res = -1;
 	if (command == TODO_REVERT && ((opts->no_commit && res == 0) || res == 1) &&
-	    update_ref(NULL, "REVERT_HEAD", &commit->object.oid, NULL,
-		       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
+	    refs_update_ref(get_main_ref_store(the_repository), NULL, "REVERT_HEAD", &commit->object.oid, NULL,
+			    REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR))
 		res = -1;
 
 	if (res) {
@@ -3364,7 +3367,7 @@ static int rollback_single_pick(struct repository *r)
 	if (!refs_ref_exists(get_main_ref_store(r), "CHERRY_PICK_HEAD") &&
 	    !refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD"))
 		return error(_("no cherry-pick or revert in progress"));
-	if (read_ref_full("HEAD", 0, &head_oid, NULL))
+	if (refs_read_ref_full(get_main_ref_store(the_repository), "HEAD", 0, &head_oid, NULL))
 		return error(_("cannot resolve HEAD"));
 	if (is_null_oid(&head_oid))
 		return error(_("cannot abort from a branch yet to be born"));
@@ -3375,7 +3378,7 @@ static int skip_single_pick(void)
 {
 	struct object_id head;
 
-	if (read_ref_full("HEAD", 0, &head, NULL))
+	if (refs_read_ref_full(get_main_ref_store(the_repository), "HEAD", 0, &head, NULL))
 		return error(_("cannot resolve HEAD"));
 	return reset_merge(&head);
 }
@@ -3891,7 +3894,7 @@ static struct commit *lookup_label(struct repository *r, const char *label,
 
 	strbuf_reset(buf);
 	strbuf_addf(buf, "refs/rewritten/%.*s", len, label);
-	if (!read_ref(buf->buf, &oid)) {
+	if (!refs_read_ref(get_main_ref_store(the_repository), buf->buf, &oid)) {
 		commit = lookup_commit_object(r, &oid);
 	} else {
 		/* fall back to non-rewritten ref or commit */
@@ -3987,9 +3990,10 @@ static int do_reset(struct repository *r,
 		ret = error(_("could not write index"));
 
 	if (!ret)
-		ret = update_ref(reflog_message(opts, "reset", "'%.*s'",
-						len, name), "HEAD", &oid,
-				 NULL, 0, UPDATE_REFS_MSG_ON_ERR);
+		ret = refs_update_ref(get_main_ref_store(the_repository), reflog_message(opts, "reset", "'%.*s'",
+											 len, name),
+				      "HEAD", &oid,
+				      NULL, 0, UPDATE_REFS_MSG_ON_ERR);
 cleanup:
 	free((void *)desc.buffer);
 	if (ret < 0)
@@ -4471,7 +4475,7 @@ static int do_update_ref(struct repository *r, const char *refname)
 	for_each_string_list_item(item, &list) {
 		if (!strcmp(item->string, refname)) {
 			struct update_ref_record *rec = item->util;
-			if (read_ref("HEAD", &rec->after))
+			if (refs_read_ref(get_main_ref_store(the_repository), "HEAD", &rec->after))
 				return -1;
 			break;
 		}
@@ -5031,15 +5035,15 @@ cleanup_head_ref:
 			}
 			msg = reflog_message(opts, "finish", "%s onto %s",
 				head_ref.buf, buf.buf);
-			if (update_ref(msg, head_ref.buf, &head, &orig,
-				       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
+			if (refs_update_ref(get_main_ref_store(the_repository), msg, head_ref.buf, &head, &orig,
+					    REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
 				res = error(_("could not update %s"),
 					head_ref.buf);
 				goto cleanup_head_ref;
 			}
 			msg = reflog_message(opts, "finish", "returning to %s",
 				head_ref.buf);
-			if (create_symref("HEAD", head_ref.buf, msg)) {
+			if (refs_create_symref(get_main_ref_store(the_repository), "HEAD", head_ref.buf, msg)) {
 				res = error(_("could not update HEAD to %s"),
 					head_ref.buf);
 				goto cleanup_head_ref;
@@ -6209,10 +6213,11 @@ static int add_decorations_to_list(const struct commit *commit,
 				   struct todo_add_branch_context *ctx)
 {
 	const struct name_decoration *decoration = get_name_decoration(&commit->object);
-	const char *head_ref = resolve_ref_unsafe("HEAD",
-						  RESOLVE_REF_READING,
-						  NULL,
-						  NULL);
+	const char *head_ref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						       "HEAD",
+						       RESOLVE_REF_READING,
+						       NULL,
+						       NULL);
 
 	while (decoration) {
 		struct todo_item *item;

@@ -397,7 +397,8 @@ static void update_refs_stdin(void)
 	struct ref_transaction *transaction;
 	int i, j;
 
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction)
 		die("%s", err.buf);
 
@@ -464,7 +465,8 @@ static void update_refs_stdin(void)
 			 * get a "start".
 			 */
 			state = cmd->state;
-			transaction = ref_transaction_begin(&err);
+			transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+								  &err);
 			if (!transaction)
 				die("%s", err.buf);
 
@@ -571,11 +573,14 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		 * For purposes of backwards compatibility, we treat
 		 * NULL_SHA1 as "don't care" here:
 		 */
-		return delete_ref(msg, refname,
-				  (oldval && !is_null_oid(&oldoid)) ? &oldoid : NULL,
-				  default_flags);
+		return refs_delete_ref(get_main_ref_store(the_repository),
+				       msg, refname,
+				       (oldval && !is_null_oid(&oldoid)) ? &oldoid : NULL,
+				       default_flags);
 	else
-		return update_ref(msg, refname, &oid, oldval ? &oldoid : NULL,
-				  default_flags | create_reflog_flag,
-				  UPDATE_REFS_DIE_ON_ERR);
+		return refs_update_ref(get_main_ref_store(the_repository),
+				       msg, refname, &oid,
+				       oldval ? &oldoid : NULL,
+				       default_flags | create_reflog_flag,
+				       UPDATE_REFS_DIE_ON_ERR);
 }

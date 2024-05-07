@@ -130,7 +130,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 		strbuf_addstr(&ref, oid_to_hex(&oid));
 		full_hex = ref.buf + base_len;
 
-		if (read_ref(ref.buf, &oid)) {
+		if (refs_read_ref(get_main_ref_store(the_repository), ref.buf, &oid)) {
 			error(_("replace ref '%s' not found"), full_hex);
 			had_error = 1;
 			continue;
@@ -145,7 +145,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 static int delete_replace_ref(const char *name, const char *ref,
 			      const struct object_id *oid)
 {
-	if (delete_ref(NULL, ref, oid, 0))
+	if (refs_delete_ref(get_main_ref_store(the_repository), NULL, ref, oid, 0))
 		return 1;
 	printf_ln(_("Deleted replace ref '%s'"), name);
 	return 0;
@@ -163,7 +163,7 @@ static int check_ref_valid(struct object_id *object,
 	if (check_refname_format(ref->buf, 0))
 		return error(_("'%s' is not a valid ref name"), ref->buf);
 
-	if (read_ref(ref->buf, prev))
+	if (refs_read_ref(get_main_ref_store(the_repository), ref->buf, prev))
 		oidclr(prev);
 	else if (!force)
 		return error(_("replace ref '%s' already exists"), ref->buf);
@@ -198,7 +198,8 @@ static int replace_object_oid(const char *object_ref,
 		return -1;
 	}
 
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref.buf, repl, &prev,
 				   0, NULL, &err) ||
