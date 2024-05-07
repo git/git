@@ -81,8 +81,12 @@ char *refs_resolve_refdup(struct ref_store *refs,
 char *resolve_refdup(const char *refname, int resolve_flags,
 		     struct object_id *oid, int *flags);
 
+int refs_read_ref_full(struct ref_store *refs, const char *refname,
+		       int resolve_flags, struct object_id *oid, int *flags);
 int read_ref_full(const char *refname, int resolve_flags,
 		  struct object_id *oid, int *flags);
+
+int refs_read_ref(struct ref_store *refs, const char *refname, struct object_id *oid);
 int read_ref(const char *refname, struct object_id *oid);
 
 int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
@@ -375,16 +379,25 @@ int for_each_remote_ref(each_ref_fn fn, void *cb_data);
 int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data);
 
 /* iterates all refs that match the specified glob pattern. */
+int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
+			   const char *pattern, void *cb_data);
 int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
 
+int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
+			      const char *pattern, const char *prefix, void *cb_data);
 int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 			 const char *prefix, void *cb_data);
 
+int refs_head_ref_namespaced(struct ref_store *refs, each_ref_fn fn, void *cb_data);
 int head_ref_namespaced(each_ref_fn fn, void *cb_data);
+
 /*
  * references matching any pattern in "exclude_patterns" are omitted from the
  * result set on a best-effort basis.
  */
+int refs_for_each_namespaced_ref(struct ref_store *refs,
+				 const char **exclude_patterns,
+				 each_ref_fn fn, void *cb_data);
 int for_each_namespaced_ref(const char **exclude_patterns,
 			    each_ref_fn fn, void *cb_data);
 
