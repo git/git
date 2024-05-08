@@ -10,7 +10,22 @@ UI, Workflows & Features
  * The "--rfc" option of "git format-patch" learned to take an
    optional string value to be used in place of "RFC" to tweak the
    "[PATCH]" on the subject header.
-   (merge ce36894509 jc/format-patch-rfc-more later to maint).
+
+ * The credential helper protocol, together with the HTTP layer, have
+   been enhanced to support authentication schemes different from
+   username & password pair, like Bearer and NTLM.
+
+ * Command line completion script (in contrib/) learned to complete
+   "git symbolic-ref" a bit better (you need to enable plumbing
+   commands to be completed with GIT_COMPLETION_SHOW_ALL_COMMANDS).
+
+ * When the user responds to a prompt given by "git add -p" with an
+   unsupported command, list of available commands were given, which
+   was too much if the user knew what they wanted to type but merely
+   made a typo.  Now the user gets a much shorter error message.
+
+ * The color parsing code learned to handle 12-bit RGB colors, spelled
+   as "#RGB" (in addition to "#RRGGBB" that is already supported).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -22,6 +37,16 @@ Performance, Internal Implementation, Development Support etc.
  * In addition to building the objects needed, try to link the objects
    that are used in fuzzer tests, to make sure at least they build
    without bitrot, in Linux CI runs.
+
+ * Code to write out reftable has seen some optimization and
+   simplification.
+
+ * Tests to ensure interoperability between reftable written by jgit
+   and our code have been added and enabled in CI.
+
+ * The singleton index_state instance "the_index" has been eliminated
+   by always instantiating "the_repository" and replacing references
+   to "the_index"  with references to its .index member.
 
 
 Fixes since v2.45
@@ -52,4 +77,16 @@ Fixes since v2.45
    errored out.  Now it keeps going.
    (merge c75662bfc9 js/for-each-repo-keep-going later to maint).
 
+ * zsh can pretend to be a normal shell pretty well except for some
+   glitches that we tickle in some of our scripts. Work them around
+   so that "vimdiff" and our test suite works well enough with it.
+   (merge fedd5c79ff bc/zsh-compatibility later to maint).
+
+ * Command line completion support for zsh (in contrib/) has been
+   updated to stop exposing internal state to end-user shell
+   interaction.
+   (merge 3c20acdf46 dk/zsh-git-repo-path-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
+   (merge 4cf6e7bf5e jt/doc-submitting-rerolled-series later to maint).
+   (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
