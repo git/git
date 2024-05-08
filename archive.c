@@ -365,12 +365,11 @@ int write_archive_entries(struct archiver_args *args,
 
 		put_be64(fake_oid.hash, i + 1);
 
+		strbuf_reset(&path_in_archive);
+		if (info->base)
+			strbuf_addstr(&path_in_archive, info->base);
 		if (!info->content) {
-			strbuf_reset(&path_in_archive);
-			if (info->base)
-				strbuf_addstr(&path_in_archive, info->base);
 			strbuf_addstr(&path_in_archive, basename(path));
-
 			strbuf_reset(&content);
 			if (strbuf_read_file(&content, path, info->stat.st_size) < 0)
 				err = error_errno(_("cannot read '%s'"), path);
@@ -380,8 +379,9 @@ int write_archive_entries(struct archiver_args *args,
 						  canon_mode(info->stat.st_mode),
 						  content.buf, content.len);
 		} else {
+			strbuf_addstr(&path_in_archive, path);
 			err = write_entry(args, &fake_oid,
-					  path, strlen(path),
+					  path_in_archive.buf, path_in_archive.len,
 					  canon_mode(info->stat.st_mode),
 					  info->content, info->stat.st_size);
 		}
