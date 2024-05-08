@@ -2,6 +2,9 @@
 
 test_description='Test advise_if_enabled functionality'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=trunk
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
@@ -31,15 +34,15 @@ test_expect_success 'advice should not be printed when config variable is set to
 
 test_expect_success 'advice should not be printed when --no-advice is used' '
 	q_to_tab >expect <<-\EOF &&
-On branch master
+	On branch trunk
 
-No commits yet
+	No commits yet
 
-Untracked files:
-QREADME
+	Untracked files:
+	QREADME
 
-nothing added to commit but untracked files present
-EOF
+	nothing added to commit but untracked files present
+	EOF
 
 	test_when_finished "rm -fr advice-test" &&
 	git init advice-test &&
@@ -53,15 +56,15 @@ EOF
 
 test_expect_success 'advice should not be printed when GIT_ADVICE is set to false' '
 	q_to_tab >expect <<-\EOF &&
-On branch master
+	On branch trunk
 
-No commits yet
+	No commits yet
 
-Untracked files:
-QREADME
+	Untracked files:
+	QREADME
 
-nothing added to commit but untracked files present
-EOF
+	nothing added to commit but untracked files present
+	EOF
 
 	test_when_finished "rm -fr advice-test" &&
 	git init advice-test &&
@@ -75,16 +78,16 @@ EOF
 
 test_expect_success 'advice should be printed when GIT_ADVICE is set to true' '
 	q_to_tab >expect <<-\EOF &&
-On branch master
+	On branch trunk
 
-No commits yet
+	No commits yet
 
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-QREADME
+	Untracked files:
+	  (use "git add <file>..." to include in what will be committed)
+	QREADME
 
-nothing added to commit but untracked files present (use "git add" to track)
-EOF
+	nothing added to commit but untracked files present (use "git add" to track)
+	EOF
 
 	test_when_finished "rm -fr advice-test" &&
 	git init advice-test &&
