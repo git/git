@@ -4,16 +4,13 @@
 #
 
 test_description='reftable basics'
+
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+GIT_TEST_DEFAULT_REF_FORMAT=reftable
+export GIT_TEST_DEFAULT_REF_FORMAT
 
 . ./test-lib.sh
-
-if ! test_have_prereq REFTABLE
-then
-	skip_all='skipping reftable tests; set GIT_TEST_DEFAULT_REF_FORMAT=reftable'
-	test_done
-fi
 
 INVALID_OID=$(test_oid 001)
 
@@ -81,8 +78,8 @@ test_expect_success 'init: reinitializing reftable with files backend fails' '
 '
 
 test_expect_perms () {
-	local perms="$1"
-	local file="$2"
+	local perms="$1" &&
+	local file="$2" &&
 	local actual="$(ls -l "$file")" &&
 
 	case "$actual" in

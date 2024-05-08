@@ -279,7 +279,7 @@ then
 
 	cache_dir="$HOME/none"
 
-	runs_on_pool=$(echo "$CI_JOB_IMAGE" | tr : -)
+	distro=$(echo "$CI_JOB_IMAGE" | tr : -)
 	JOBS=$(nproc)
 else
 	echo "Could not identify CI type" >&2
@@ -318,7 +318,7 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
-case "$runs_on_pool" in
+case "$distro" in
 ubuntu-*)
 	if test "$jobname" = "linux-gcc-default"
 	then
@@ -340,10 +340,6 @@ ubuntu-*)
 	# image.
 	# Keep that in mind when you encounter a broken OS X build!
 	export LINUX_GIT_LFS_VERSION="1.5.2"
-
-	P4_PATH="$HOME/custom/p4"
-	GIT_LFS_PATH="$HOME/custom/git-lfs"
-	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
 macos-*)
 	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
@@ -351,11 +347,11 @@ macos-*)
 	then
 		MAKEFLAGS="$MAKEFLAGS APPLE_COMMON_CRYPTO_SHA1=Yes"
 	fi
-
-	P4_PATH="$HOME/custom/p4"
-	export PATH="$P4_PATH:$PATH"
 	;;
 esac
+
+CUSTOM_PATH="${CUSTOM_PATH:-$HOME/path}"
+export PATH="$CUSTOM_PATH:$PATH"
 
 case "$jobname" in
 linux32)
