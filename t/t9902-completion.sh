@@ -2518,6 +2518,29 @@ test_expect_success 'complete tree filename with metacharacters' '
 	EOF
 '
 
+test_expect_success 'symbolic-ref completes builtin options' '
+	test_completion "git symbolic-ref --d" <<-\EOF
+	--delete Z
+	EOF
+'
+
+test_expect_success 'symbolic-ref completes short ref names' '
+	test_completion "git symbolic-ref foo m" <<-\EOF
+	main Z
+	mybranch Z
+	mytag Z
+	EOF
+'
+
+test_expect_success 'symbolic-ref completes full ref names' '
+	test_completion "git symbolic-ref foo refs/" <<-\EOF
+	refs/heads/main Z
+	refs/heads/mybranch Z
+	refs/tags/mytag Z
+	refs/tags/A Z
+	EOF
+'
+
 test_expect_success PERL 'send-email' '
 	test_completion "git send-email --cov" <<-\EOF &&
 	--cover-from-description=Z

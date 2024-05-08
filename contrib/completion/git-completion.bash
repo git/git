@@ -31,14 +31,28 @@
 # Note that "git" is optional --- '!f() { : commit; ...}; f' would complete
 # just like the 'git commit' command.
 #
-# If you have a command that is not part of git, but you would still
-# like completion, you can use __git_complete:
+# To add completion for git subcommands that are implemented in external
+# scripts, define a function of the form '_git_${subcommand}' while replacing
+# all dashes with underscores, and the main git completion will make use of it.
+# For example, to add completion for 'git do-stuff' (which could e.g. live
+# in /usr/bin/git-do-stuff), name the completion function '_git_do_stuff'.
+# See _git_show, _git_bisect etc. below for more examples.
+#
+# If you have a shell command that is not part of git (and is not called as a
+# git subcommand), but you would still like git-style completion for it, use
+# __git_complete. For example, to use the same completion as for 'git log' also
+# for the 'gl' command:
 #
 #   __git_complete gl git_log
 #
-# Or if it's a main command (i.e. git or gitk):
+# Or if the 'gk' command should be completed the same as 'gitk':
 #
 #   __git_complete gk gitk
+#
+# The second parameter of __git_complete gives the completion function; it is
+# resolved as a function named "$2", or "__$2_main", or "_$2" in that order.
+# In the examples above, the actual functions used for completion will be
+# _git_log and __gitk_main.
 #
 # Compatible with bash 3.2.57.
 #
@@ -3579,6 +3593,17 @@ _git_svn ()
 			;;
 		esac
 	fi
+}
+
+_git_symbolic_ref () {
+	case "$cur" in
+	--*)
+		__gitcomp_builtin symbolic-ref
+		return
+		;;
+	esac
+
+	__git_complete_refs
 }
 
 _git_tag ()
