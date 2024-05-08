@@ -172,32 +172,30 @@ static int should_write_log(struct ref_store *refs, const char *refname)
 	}
 }
 
-static void fill_reftable_log_record(struct reftable_log_record *log)
+static void fill_reftable_log_record(struct reftable_log_record *log, const struct ident_split *split)
 {
-	const char *info = git_committer_info(0);
-	struct ident_split split = {0};
+	const char *tz_begin;
 	int sign = 1;
-
-	if (split_ident_line(&split, info, strlen(info)))
-		BUG("failed splitting committer info");
 
 	reftable_log_record_release(log);
 	log->value_type = REFTABLE_LOG_UPDATE;
 	log->value.update.name =
-		xstrndup(split.name_begin, split.name_end - split.name_begin);
+		xstrndup(split->name_begin, split->name_end - split->name_begin);
 	log->value.update.email =
-		xstrndup(split.mail_begin, split.mail_end - split.mail_begin);
-	log->value.update.time = atol(split.date_begin);
-	if (*split.tz_begin == '-') {
+		xstrndup(split->mail_begin, split->mail_end - split->mail_begin);
+	log->value.update.time = atol(split->date_begin);
+
+	tz_begin = split->tz_begin;
+	if (*tz_begin == '-') {
 		sign = -1;
-		split.tz_begin++;
+		tz_begin++;
 	}
-	if (*split.tz_begin == '+') {
+	if (*tz_begin == '+') {
 		sign = 1;
-		split.tz_begin++;
+		tz_begin++;
 	}
 
-	log->value.update.tz_offset = sign * atoi(split.tz_begin);
+	log->value.update.tz_offset = sign * atoi(tz_begin);
 }
 
 static int read_ref_without_reload(struct reftable_stack *stack,
@@ -1021,8 +1019,14 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 		reftable_stack_merged_table(arg->stack);
 	uint64_t ts = reftable_stack_next_update_index(arg->stack);
 	struct reftable_log_record *logs = NULL;
+	struct ident_split committer_ident = {0};
 	size_t logs_nr = 0, logs_alloc = 0, i;
+	const char *committer_info;
 	int ret = 0;
+
+	committer_info = git_committer_info(0);
+	if (split_ident_line(&committer_ident, committer_info, strlen(committer_info)))
+		BUG("failed splitting committer info");
 
 	QSORT(arg->updates, arg->updates_nr, transaction_update_cmp);
 
@@ -1089,7 +1093,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			log = &logs[logs_nr++];
 			memset(log, 0, sizeof(*log));
 
-			fill_reftable_log_record(log);
+			fill_reftable_log_record(log, &committer_ident);
 			log->update_index = ts;
 			log->refname = xstrdup(u->refname);
 			memcpy(log->value.update.new_hash, u->new_oid.hash, GIT_MAX_RAWSZ);
@@ -1227,6 +1231,7 @@ out:
 struct write_create_symref_arg {
 	struct reftable_ref_store *refs;
 	struct reftable_stack *stack;
+	struct strbuf *err;
 	const char *refname;
 	const char *target;
 	const char *logmsg;
@@ -1242,12 +1247,19 @@ static int write_create_symref_table(struct reftable_writer *writer, void *cb_da
 		.value.symref = (char *)create->target,
 		.update_index = ts,
 	};
+	struct ident_split committer_ident = {0};
 	struct reftable_log_record log = {0};
 	struct object_id new_oid;
 	struct object_id old_oid;
+	const char *committer_info;
 	int ret;
 
 	reftable_writer_set_limits(writer, ts, ts);
+
+	ret = refs_verify_refname_available(&create->refs->base, create->refname,
+					    NULL, NULL, create->err);
+	if (ret < 0)
+		return ret;
 
 	ret = reftable_writer_add_ref(writer, &ref);
 	if (ret)
@@ -1267,7 +1279,11 @@ static int write_create_symref_table(struct reftable_writer *writer, void *cb_da
 	    !should_write_log(&create->refs->base, create->refname))
 		return 0;
 
-	fill_reftable_log_record(&log);
+	committer_info = git_committer_info(0);
+	if (split_ident_line(&committer_ident, committer_info, strlen(committer_info)))
+		BUG("failed splitting committer info");
+
+	fill_reftable_log_record(&log, &committer_ident);
 	log.refname = xstrdup(create->refname);
 	log.update_index = ts;
 	log.value.update.message = xstrndup(create->logmsg,
@@ -1290,12 +1306,14 @@ static int reftable_be_create_symref(struct ref_store *ref_store,
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_WRITE, "create_symref");
 	struct reftable_stack *stack = stack_for(refs, refname, &refname);
+	struct strbuf err = STRBUF_INIT;
 	struct write_create_symref_arg arg = {
 		.refs = refs,
 		.stack = stack,
 		.refname = refname,
 		.target = target,
 		.logmsg = logmsg,
+		.err = &err,
 	};
 	int ret;
 
@@ -1311,9 +1329,15 @@ static int reftable_be_create_symref(struct ref_store *ref_store,
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
-	if (ret)
-		error("unable to write symref for %s: %s", refname,
-		      reftable_error_str(ret));
+	if (ret) {
+		if (err.len)
+			error("%s", err.buf);
+		else
+			error("unable to write symref for %s: %s", refname,
+			      reftable_error_str(ret));
+	}
+
+	strbuf_release(&err);
 	return ret;
 }
 
@@ -1335,9 +1359,15 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	struct reftable_log_record old_log = {0}, *logs = NULL;
 	struct reftable_iterator it = {0};
 	struct string_list skip = STRING_LIST_INIT_NODUP;
+	struct ident_split committer_ident = {0};
 	struct strbuf errbuf = STRBUF_INIT;
 	size_t logs_nr = 0, logs_alloc = 0, i;
+	const char *committer_info;
 	int ret;
+
+	committer_info = git_committer_info(0);
+	if (split_ident_line(&committer_ident, committer_info, strlen(committer_info)))
+		BUG("failed splitting committer info");
 
 	if (reftable_stack_read_ref(arg->stack, arg->oldname, &old_ref)) {
 		ret = error(_("refname %s not found"), arg->oldname);
@@ -1361,7 +1391,8 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	/*
 	 * Verify that the new refname is available.
 	 */
-	string_list_insert(&skip, arg->oldname);
+	if (arg->delete_old)
+		string_list_insert(&skip, arg->oldname);
 	ret = refs_verify_refname_available(&arg->refs->base, arg->newname,
 					    NULL, &skip, &errbuf);
 	if (ret < 0) {
@@ -1412,7 +1443,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 
 		ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 		memset(&logs[logs_nr], 0, sizeof(logs[logs_nr]));
-		fill_reftable_log_record(&logs[logs_nr]);
+		fill_reftable_log_record(&logs[logs_nr], &committer_ident);
 		logs[logs_nr].refname = (char *)arg->newname;
 		logs[logs_nr].update_index = deletion_ts;
 		logs[logs_nr].value.update.message =
@@ -1444,7 +1475,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	 */
 	ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 	memset(&logs[logs_nr], 0, sizeof(logs[logs_nr]));
-	fill_reftable_log_record(&logs[logs_nr]);
+	fill_reftable_log_record(&logs[logs_nr], &committer_ident);
 	logs[logs_nr].refname = (char *)arg->newname;
 	logs[logs_nr].update_index = creation_ts;
 	logs[logs_nr].value.update.message =

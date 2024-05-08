@@ -48,9 +48,6 @@ enum reftable_error {
 	/* Wrote a table without blocks. */
 	REFTABLE_EMPTY_TABLE_ERROR = -8,
 
-	/* Dir/file conflict. */
-	REFTABLE_NAME_CONFLICT = -9,
-
 	/* Invalid ref name. */
 	REFTABLE_REFNAME_ERROR = -10,
 

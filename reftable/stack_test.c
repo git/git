@@ -396,44 +396,6 @@ static void test_reftable_stack_auto_compaction_fails_gracefully(void)
 	clear_dir(dir);
 }
 
-static void test_reftable_stack_validate_refname(void)
-{
-	struct reftable_write_options cfg = { 0 };
-	struct reftable_stack *st = NULL;
-	int err;
-	char *dir = get_tmp_dir(__LINE__);
-
-	int i;
-	struct reftable_ref_record ref = {
-		.refname = "a/b",
-		.update_index = 1,
-		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = "master",
-	};
-	char *additions[] = { "a", "a/b/c" };
-
-	err = reftable_new_stack(&st, dir, cfg);
-	EXPECT_ERR(err);
-
-	err = reftable_stack_add(st, &write_test_ref, &ref);
-	EXPECT_ERR(err);
-
-	for (i = 0; i < ARRAY_SIZE(additions); i++) {
-		struct reftable_ref_record ref = {
-			.refname = additions[i],
-			.update_index = 1,
-			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = "master",
-		};
-
-		err = reftable_stack_add(st, &write_test_ref, &ref);
-		EXPECT(err == REFTABLE_NAME_CONFLICT);
-	}
-
-	reftable_stack_destroy(st);
-	clear_dir(dir);
-}
-
 static int write_error(struct reftable_writer *wr, void *arg)
 {
 	return *((int *)arg);
@@ -1105,7 +1067,6 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_auto_compaction_fails_gracefully);
 	RUN_TEST(test_reftable_stack_update_index_check);
 	RUN_TEST(test_reftable_stack_uptodate);
-	RUN_TEST(test_reftable_stack_validate_refname);
 	RUN_TEST(test_suggest_compaction_segment);
 	RUN_TEST(test_suggest_compaction_segment_nothing);
 	return 0;

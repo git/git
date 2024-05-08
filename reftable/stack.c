@@ -12,8 +12,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include "merged.h"
 #include "reader.h"
-#include "refname.h"
 #include "reftable-error.h"
+#include "reftable-generic.h"
 #include "reftable-record.h"
 #include "reftable-merged.h"
 #include "writer.h"
@@ -27,8 +27,6 @@ static int stack_write_compact(struct reftable_stack *st,
 			       struct reftable_writer *wr,
 			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *config);
-static int stack_check_addition(struct reftable_stack *st,
-				const char *new_tab_name);
 static void reftable_addition_close(struct reftable_addition *add);
 static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 					     int reuse_open);
@@ -787,10 +785,6 @@ int reftable_addition_add(struct reftable_addition *add,
 		goto done;
 	}
 
-	err = stack_check_addition(add->stack, get_tempfile_path(tab_file));
-	if (err < 0)
-		goto done;
-
 	if (wr->min_update_index < add->next_update_index) {
 		err = REFTABLE_API_ERROR;
 		goto done;
@@ -1352,65 +1346,6 @@ done:
 		reftable_log_record_release(log);
 	}
 	reftable_iterator_destroy(&it);
-	return err;
-}
-
-static int stack_check_addition(struct reftable_stack *st,
-				const char *new_tab_name)
-{
-	int err = 0;
-	struct reftable_block_source src = { NULL };
-	struct reftable_reader *rd = NULL;
-	struct reftable_table tab = { NULL };
-	struct reftable_ref_record *refs = NULL;
-	struct reftable_iterator it = { NULL };
-	int cap = 0;
-	int len = 0;
-	int i = 0;
-
-	if (st->config.skip_name_check)
-		return 0;
-
-	err = reftable_block_source_from_file(&src, new_tab_name);
-	if (err < 0)
-		goto done;
-
-	err = reftable_new_reader(&rd, &src, new_tab_name);
-	if (err < 0)
-		goto done;
-
-	err = reftable_reader_seek_ref(rd, &it, "");
-	if (err > 0) {
-		err = 0;
-		goto done;
-	}
-	if (err < 0)
-		goto done;
-
-	while (1) {
-		struct reftable_ref_record ref = { NULL };
-		err = reftable_iterator_next_ref(&it, &ref);
-		if (err > 0)
-			break;
-		if (err < 0)
-			goto done;
-
-		REFTABLE_ALLOC_GROW(refs, len + 1, cap);
-		refs[len++] = ref;
-	}
-
-	reftable_table_from_merged_table(&tab, reftable_stack_merged_table(st));
-
-	err = validate_ref_record_addition(tab, refs, len);
-
-done:
-	for (i = 0; i < len; i++) {
-		reftable_ref_record_release(&refs[i]);
-	}
-
-	free(refs);
-	reftable_iterator_destroy(&it);
-	reftable_reader_free(rd);
 	return err;
 }
 
