@@ -645,7 +645,6 @@ static int cmd_reconfigure(int argc, const char **argv)
 	};
 	struct string_list scalar_repos = STRING_LIST_INIT_DUP;
 	int i, res = 0;
-	struct repository r = { NULL };
 	struct strbuf commondir = STRBUF_INIT, gitdir = STRBUF_INIT;
 
 	argc = parse_options(argc, argv, NULL, options,
@@ -665,6 +664,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 	for (i = 0; i < scalar_repos.nr; i++) {
 		int succeeded = 0;
+		struct repository *old_repo, r = { NULL };
 		const char *dir = scalar_repos.items[i].string;
 
 		strbuf_reset(&commondir);
@@ -712,12 +712,16 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 		git_config_clear();
 
+		if (repo_init(&r, gitdir.buf, commondir.buf))
+			goto loop_end;
+
+		old_repo = the_repository;
 		the_repository = &r;
-		r.commondir = commondir.buf;
-		r.gitdir = gitdir.buf;
 
 		if (set_recommended_config(1) >= 0)
 			succeeded = 1;
+
+		the_repository = old_repo;
 
 loop_end:
 		if (!succeeded) {
