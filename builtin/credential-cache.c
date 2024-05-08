@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "credential.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "path.h"
@@ -127,6 +128,13 @@ static char *get_socket_path(void)
 	return socket;
 }
 
+static void announce_capabilities(void)
+{
+	struct credential c = CREDENTIAL_INIT;
+	c.capa_authtype.request_initial = 1;
+	credential_announce_capabilities(&c, stdout);
+}
+
 int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 {
 	char *socket_path = NULL;
@@ -163,6 +171,8 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 		do_cache(socket_path, op, timeout, FLAG_RELAY);
 	else if (!strcmp(op, "store"))
 		do_cache(socket_path, op, timeout, FLAG_RELAY|FLAG_SPAWN);
+	else if (!strcmp(op, "capability"))
+		announce_capabilities();
 	else
 		; /* ignore unknown operation */
 

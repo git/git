@@ -93,6 +93,27 @@
  * -----------------------------------------------------------------------
  */
 
+/*
+ * These values define the kind of operation we're performing and the
+ * capabilities at each stage.  The first is either an external request (via git
+ * credential fill) or an internal request (e.g., via the HTTP) code.  The
+ * second is the call to the credential helper, and the third is the response
+ * we're providing.
+ *
+ * At each stage, we will emit the capability only if the previous stage
+ * supported it.
+ */
+enum credential_op_type {
+	CREDENTIAL_OP_INITIAL  = 1,
+	CREDENTIAL_OP_HELPER   = 2,
+	CREDENTIAL_OP_RESPONSE = 3,
+};
+
+struct credential_capability {
+	unsigned request_initial:1,
+		 request_helper:1,
+		 response:1;
+};
 
 /**
  * This struct represents a single username/password combination
@@ -124,6 +145,16 @@ struct credential {
 	struct strvec wwwauth_headers;
 
 	/**
+	 * A `strvec` of state headers received from credential helpers.
+	 */
+	struct strvec state_headers;
+
+	/**
+	 * A `strvec` of state headers to send to credential helpers.
+	 */
+	struct strvec state_headers_to_send;
+
+	/**
 	 * Internal use only. Keeps track of if we previously matched against a
 	 * WWW-Authenticate header line in order to re-fold future continuation
 	 * lines into one value.
@@ -131,24 +162,38 @@ struct credential {
 	unsigned header_is_last_match:1;
 
 	unsigned approved:1,
+		 ephemeral:1,
 		 configured:1,
+		 multistage: 1,
 		 quit:1,
 		 use_http_path:1,
 		 username_from_proto:1;
 
+	struct credential_capability capa_authtype;
+	struct credential_capability capa_state;
+
 	char *username;
 	char *password;
+	char *credential;
 	char *protocol;
 	char *host;
 	char *path;
 	char *oauth_refresh_token;
 	timestamp_t password_expiry_utc;
+
+	/**
+	 * The authorization scheme to use.  If this is NULL, libcurl is free to
+	 * negotiate any scheme it likes.
+	 */
+	char *authtype;
 };
 
 #define CREDENTIAL_INIT { \
 	.helpers = STRING_LIST_INIT_DUP, \
 	.password_expiry_utc = TIME_MAX, \
 	.wwwauth_headers = STRVEC_INIT, \
+	.state_headers = STRVEC_INIT, \
+	.state_headers_to_send = STRVEC_INIT, \
 }
 
 /* Initialize a credential structure, setting all fields to empty. */
@@ -167,8 +212,11 @@ void credential_clear(struct credential *);
  * returns, the username and password fields of the credential are
  * guaranteed to be non-NULL. If an error occurs, the function will
  * die().
+ *
+ * If all_capabilities is set, this is an internal user that is prepared
+ * to deal with all known capabilities, and we should advertise that fact.
  */
-void credential_fill(struct credential *);
+void credential_fill(struct credential *, int all_capabilities);
 
 /**
  * Inform the credential subsystem that the provided credentials
@@ -191,8 +239,46 @@ void credential_approve(struct credential *);
  */
 void credential_reject(struct credential *);
 
-int credential_read(struct credential *, FILE *);
-void credential_write(const struct credential *, FILE *);
+/**
+ * Enable all of the supported credential flags in this credential.
+ */
+void credential_set_all_capabilities(struct credential *c,
+				     enum credential_op_type op_type);
+
+/**
+ * Clear the secrets in this credential, but leave other data intact.
+ *
+ * This is useful for resetting credentials in preparation for a subsequent
+ * stage of filling.
+ */
+void credential_clear_secrets(struct credential *c);
+
+/**
+ * Print a list of supported capabilities and version numbers to standard
+ * output.
+ */
+void credential_announce_capabilities(struct credential *c, FILE *fp);
+
+/**
+ * Prepares the credential for the next iteration of the helper protocol by
+ * updating the state headers to send with the ones read by the last iteration
+ * of the protocol.
+ *
+ * Except for internal callers, this should be called exactly once between
+ * reading credentials with `credential_fill` and writing them.
+ */
+void credential_next_state(struct credential *c);
+
+/**
+ * Return true if the capability is enabled for an operation of op_type.
+ */
+int credential_has_capability(const struct credential_capability *capa,
+			      enum credential_op_type op_type);
+
+int credential_read(struct credential *, FILE *,
+		    enum credential_op_type);
+void credential_write(const struct credential *, FILE *,
+		      enum credential_op_type);
 
 /*
  * Parse a url into a credential struct, replacing any existing contents.

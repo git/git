@@ -115,7 +115,9 @@ static int read_request(FILE *fh, struct credential *c,
 		return error("client sent bogus timeout line: %s", item.buf);
 	*timeout = atoi(p);
 
-	if (credential_read(c, fh) < 0)
+	credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
+
+	if (credential_read(c, fh, CREDENTIAL_OP_HELPER) < 0)
 		return -1;
 	return 0;
 }
@@ -131,8 +133,18 @@ static void serve_one_client(FILE *in, FILE *out)
 	else if (!strcmp(action.buf, "get")) {
 		struct credential_cache_entry *e = lookup_credential(&c);
 		if (e) {
-			fprintf(out, "username=%s\n", e->item.username);
-			fprintf(out, "password=%s\n", e->item.password);
+			e->item.capa_authtype.request_initial = 1;
+			e->item.capa_authtype.request_helper = 1;
+
+			fprintf(out, "capability[]=authtype\n");
+			if (e->item.username)
+				fprintf(out, "username=%s\n", e->item.username);
+			if (e->item.password)
+				fprintf(out, "password=%s\n", e->item.password);
+			if (credential_has_capability(&c.capa_authtype, CREDENTIAL_OP_HELPER) && e->item.authtype)
+				fprintf(out, "authtype=%s\n", e->item.authtype);
+			if (credential_has_capability(&c.capa_authtype, CREDENTIAL_OP_HELPER) && e->item.credential)
+				fprintf(out, "credential=%s\n", e->item.credential);
 			if (e->item.password_expiry_utc != TIME_MAX)
 				fprintf(out, "password_expiry_utc=%"PRItime"\n",
 					e->item.password_expiry_utc);
@@ -157,8 +169,10 @@ static void serve_one_client(FILE *in, FILE *out)
 	else if (!strcmp(action.buf, "store")) {
 		if (timeout < 0)
 			warning("cache client didn't specify a timeout");
-		else if (!c.username || !c.password)
+		else if ((!c.username || !c.password) && (!c.authtype && !c.credential))
 			warning("cache client gave us a partial credential");
+		else if (c.ephemeral)
+			warning("not storing ephemeral credential");
 		else {
 			remove_credential(&c, 0);
 			cache_credential(&c, timeout);

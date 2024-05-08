@@ -917,7 +917,7 @@ static void server_fill_credential(struct imap_server_conf *srvc, struct credent
 	cred->username = xstrdup_or_null(srvc->user);
 	cred->password = xstrdup_or_null(srvc->pass);
 
-	credential_fill(cred);
+	credential_fill(cred, 1);
 
 	if (!srvc->user)
 		srvc->user = xstrdup(cred->username);
