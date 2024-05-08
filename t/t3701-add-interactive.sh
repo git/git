@@ -8,6 +8,8 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
+SP=" "
+
 diff_cmp () {
 	for x
 	do
@@ -45,15 +47,28 @@ test_expect_success 'warn about add.interactive.useBuiltin' '
 	cat >expect <<-\EOF &&
 	warning: the add.interactive.useBuiltin setting has been removed!
 	See its entry in '\''git help config'\'' for details.
-	No changes.
 	EOF
+	echo "No changes." >expect.out &&
 
 	for v in = =true =false
 	do
 		git -c "add.interactive.useBuiltin$v" add -p >out 2>actual &&
-		test_must_be_empty out &&
+		test_cmp expect.out out &&
 		test_cmp expect actual || return 1
 	done
+'
+
+test_expect_success 'unknown command' '
+	test_when_finished "git reset --hard; rm -f command" &&
+	echo W >command &&
+	git add -N command &&
+	git diff command >expect &&
+	cat >>expect <<-EOF &&
+	(1/1) Stage addition [y,n,q,a,d,e,p,?]? Unknown command ${SQ}W${SQ} (use ${SQ}?${SQ} for help)
+	(1/1) Stage addition [y,n,q,a,d,e,p,?]?$SP
+	EOF
+	git add -p -- command <command >actual 2>&1 &&
+	test_cmp expect actual
 '
 
 test_expect_success 'setup (initial)' '
@@ -232,7 +247,6 @@ test_expect_success 'setup file' '
 '
 
 test_expect_success 'setup patch' '
-	SP=" " &&
 	NULL="" &&
 	cat >patch <<-EOF
 	@@ -1,4 +1,4 @@
@@ -335,13 +349,13 @@ test_expect_success 'different prompts for mode change/deleted' '
 
 test_expect_success 'correct message when there is nothing to do' '
 	git reset --hard &&
-	git add -p 2>err &&
-	test_grep "No changes" err &&
+	git add -p >out &&
+	test_grep "No changes" out &&
 	printf "\\0123" >binary &&
 	git add binary &&
 	printf "\\0abc" >binary &&
-	git add -p 2>err &&
-	test_grep "Only binary files changed" err
+	git add -p >out &&
+	test_grep "Only binary files changed" out
 '
 
 test_expect_success 'setup again' '

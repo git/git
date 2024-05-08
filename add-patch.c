@@ -293,10 +293,9 @@ static void err(struct add_p_state *s, const char *fmt, ...)
 	va_list args;
 
 	va_start(args, fmt);
-	fputs(s->s.error_color, stderr);
-	vfprintf(stderr, fmt, args);
-	fputs(s->s.reset_color, stderr);
-	fputc('\n', stderr);
+	fputs(s->s.error_color, stdout);
+	vprintf(fmt, args);
+	puts(s->s.reset_color);
 	va_end(args);
 }
 
@@ -1326,7 +1325,7 @@ static int apply_for_checkout(struct add_p_state *s, struct strbuf *diff,
 		err(s, _("Nothing was applied.\n"));
 	} else
 		/* As a last resort, show the diff to the user */
-		fwrite(diff->buf, diff->len, 1, stderr);
+		fwrite(diff->buf, diff->len, 1, stdout);
 
 	return 0;
 }
@@ -1668,7 +1667,7 @@ soft_increment:
 			}
 		} else if (s->answer.buf[0] == 'p') {
 			rendered_hunk_index = -1;
-		} else {
+		} else if (s->answer.buf[0] == '?') {
 			const char *p = _(help_patch_remainder), *eol = p;
 
 			color_fprintf(stdout, s->s.help_color, "%s",
@@ -1692,6 +1691,9 @@ soft_increment:
 				color_fprintf_ln(stdout, s->s.help_color,
 						 "%.*s", (int)(eol - p), p);
 			}
+		} else {
+			err(s, _("Unknown command '%s' (use '?' for help)"),
+			    s->answer.buf);
 		}
 	}
 
@@ -1778,9 +1780,9 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 			break;
 
 	if (s.file_diff_nr == 0)
-		fprintf(stderr, _("No changes.\n"));
+		err(&s, _("No changes."));
 	else if (binary_count == s.file_diff_nr)
-		fprintf(stderr, _("Only binary files changed.\n"));
+		err(&s, _("Only binary files changed."));
 
 	add_p_state_clear(&s);
 	return 0;
