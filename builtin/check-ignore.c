@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
@@ -95,21 +94,21 @@ static int check_ignore(struct dir_struct *dir,
 		       PATHSPEC_KEEP_ORDER,
 		       prefix, argv);
 
-	die_path_inside_submodule(&the_index, &pathspec);
+	die_path_inside_submodule(the_repository->index, &pathspec);
 
 	/*
 	 * look for pathspecs matching entries in the index, since these
 	 * should not be ignored, in order to be consistent with
 	 * 'git status', 'git add' etc.
 	 */
-	seen = find_pathspecs_matching_against_index(&pathspec, &the_index,
+	seen = find_pathspecs_matching_against_index(&pathspec, the_repository->index,
 						     PS_HEED_SKIP_WORKTREE);
 	for (i = 0; i < pathspec.nr; i++) {
 		full_path = pathspec.items[i].match;
 		pattern = NULL;
 		if (!seen[i]) {
 			int dtype = DT_UNKNOWN;
-			pattern = last_matching_pattern(dir, &the_index,
+			pattern = last_matching_pattern(dir, the_repository->index,
 							full_path, &dtype);
 			if (!verbose && pattern &&
 			    pattern->flags & PATTERN_FLAG_NEGATIVE)

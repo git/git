@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "environment.h"
@@ -207,18 +206,18 @@ static int module_list_compute(const char **argv,
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	for (i = 0; i < the_index.cache_nr; i++) {
-		const struct cache_entry *ce = the_index.cache[i];
+	for (i = 0; i < the_repository->index->cache_nr; i++) {
+		const struct cache_entry *ce = the_repository->index->cache[i];
 
-		if (!match_pathspec(&the_index, pathspec, ce->name, ce_namelen(ce),
+		if (!match_pathspec(the_repository->index, pathspec, ce->name, ce_namelen(ce),
 				    0, ps_matched, 1) ||
 		    !S_ISGITLINK(ce->ce_mode))
 			continue;
 
 		ALLOC_GROW(list->entries, list->nr + 1, list->alloc);
 		list->entries[list->nr++] = ce;
-		while (i + 1 < the_index.cache_nr &&
-		       !strcmp(ce->name, the_index.cache[i + 1]->name))
+		while (i + 1 < the_repository->index->cache_nr &&
+		       !strcmp(ce->name, the_repository->index->cache[i + 1]->name))
 			/*
 			 * Skip entries with the same name in different stages
 			 * to make sure an entry is returned only once.
@@ -907,7 +906,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 			int fd = open(p->sm_path, O_RDONLY);
 
 			if (fd < 0 || fstat(fd, &st) < 0 ||
-			    index_fd(&the_index, &p->oid_dst, fd, &st, OBJ_BLOB,
+			    index_fd(the_repository->index, &p->oid_dst, fd, &st, OBJ_BLOB,
 				     p->sm_path, 0))
 				error(_("couldn't hash object from '%s'"), p->sm_path);
 		} else {
@@ -3243,21 +3242,21 @@ static void die_on_index_match(const char *path, int force)
 		char *ps_matched = xcalloc(ps.nr, 1);
 
 		/* TODO: audit for interaction with sparse-index. */
-		ensure_full_index(&the_index);
+		ensure_full_index(the_repository->index);
 
 		/*
 		 * Since there is only one pathspec, we just need to
 		 * check ps_matched[0] to know if a cache entry matched.
 		 */
-		for (i = 0; i < the_index.cache_nr; i++) {
-			ce_path_match(&the_index, the_index.cache[i], &ps,
+		for (i = 0; i < the_repository->index->cache_nr; i++) {
+			ce_path_match(the_repository->index, the_repository->index->cache[i], &ps,
 				      ps_matched);
 
 			if (ps_matched[0]) {
 				if (!force)
 					die(_("'%s' already exists in the index"),
 					    path);
-				if (!S_ISGITLINK(the_index.cache[i]->ce_mode))
+				if (!S_ISGITLINK(the_repository->index->cache[i]->ce_mode))
 					die(_("'%s' already exists in the index "
 					      "and is not a submodule"), path);
 				break;

@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
@@ -364,7 +363,7 @@ static void trivial_merge_trees(struct tree_desc t[3], const char *base)
 
 	setup_traverse_info(&info, base);
 	info.fn = threeway_callback;
-	traverse_trees(&the_index, 3, t, &info);
+	traverse_trees(the_repository->index, 3, t, &info);
 }
 
 static void *get_tree_descriptor(struct repository *r,

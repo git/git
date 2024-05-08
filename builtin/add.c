@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2006 Linus Torvalds
  */
-#define USE_THE_INDEX_VARIABLE
+
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
@@ -40,20 +40,20 @@ static int chmod_pathspec(struct pathspec *pathspec, char flip, int show_only)
 {
 	int i, ret = 0;
 
-	for (i = 0; i < the_index.cache_nr; i++) {
-		struct cache_entry *ce = the_index.cache[i];
+	for (i = 0; i < the_repository->index->cache_nr; i++) {
+		struct cache_entry *ce = the_repository->index->cache[i];
 		int err;
 
 		if (!include_sparse &&
 		    (ce_skip_worktree(ce) ||
-		     !path_in_sparse_checkout(ce->name, &the_index)))
+		     !path_in_sparse_checkout(ce->name, the_repository->index)))
 			continue;
 
-		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
+		if (pathspec && !ce_path_match(the_repository->index, ce, pathspec, NULL))
 			continue;
 
 		if (!show_only)
-			err = chmod_index_entry(&the_index, ce, flip);
+			err = chmod_index_entry(the_repository->index, ce, flip);
 		else
 			err = S_ISREG(ce->ce_mode) ? 0 : -1;
 
@@ -68,20 +68,20 @@ static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
 {
 	int i, retval = 0;
 
-	for (i = 0; i < the_index.cache_nr; i++) {
-		struct cache_entry *ce = the_index.cache[i];
+	for (i = 0; i < the_repository->index->cache_nr; i++) {
+		struct cache_entry *ce = the_repository->index->cache[i];
 
 		if (!include_sparse &&
 		    (ce_skip_worktree(ce) ||
-		     !path_in_sparse_checkout(ce->name, &the_index)))
+		     !path_in_sparse_checkout(ce->name, the_repository->index)))
 			continue;
 		if (ce_stage(ce))
 			continue; /* do not touch unmerged paths */
 		if (!S_ISREG(ce->ce_mode) && !S_ISLNK(ce->ce_mode))
 			continue; /* do not touch non blobs */
-		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
+		if (pathspec && !ce_path_match(the_repository->index, ce, pathspec, NULL))
 			continue;
-		retval |= add_file_to_index(&the_index, ce->name,
+		retval |= add_file_to_index(the_repository->index, ce->name,
 					    flags | ADD_CACHE_RENORMALIZE);
 	}
 
@@ -100,11 +100,11 @@ static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, 
 	i = dir->nr;
 	while (--i >= 0) {
 		struct dir_entry *entry = *src++;
-		if (dir_path_match(&the_index, entry, pathspec, prefix, seen))
+		if (dir_path_match(the_repository->index, entry, pathspec, prefix, seen))
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
-	add_pathspec_matches_against_index(pathspec, &the_index, seen,
+	add_pathspec_matches_against_index(pathspec, the_repository->index, seen,
 					   PS_IGNORE_SKIP_WORKTREE);
 	return seen;
 }
@@ -119,14 +119,14 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 		    (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
 
 	seen = xcalloc(pathspec->nr, 1);
-	refresh_index(&the_index, flags, pathspec, seen,
+	refresh_index(the_repository->index, flags, pathspec, seen,
 		      _("Unstaged changes after refreshing the index:"));
 	for (i = 0; i < pathspec->nr; i++) {
 		if (!seen[i]) {
 			const char *path = pathspec->items[i].original;
 
 			if (matches_skip_worktree(pathspec, i, &skip_worktree_seen) ||
-			    !path_in_sparse_checkout(path, &the_index)) {
+			    !path_in_sparse_checkout(path, the_repository->index)) {
 				string_list_append(&only_match_skip_worktree,
 						   pathspec->items[i].original);
 			} else {
@@ -338,12 +338,12 @@ static int add_files(struct dir_struct *dir, int flags)
 
 	for (i = 0; i < dir->nr; i++) {
 		if (!include_sparse &&
-		    !path_in_sparse_checkout(dir->entries[i]->name, &the_index)) {
+		    !path_in_sparse_checkout(dir->entries[i]->name, the_repository->index)) {
 			string_list_append(&matched_sparse_paths,
 					   dir->entries[i]->name);
 			continue;
 		}
-		if (add_file_to_index(&the_index, dir->entries[i]->name, flags)) {
+		if (add_file_to_index(the_repository->index, dir->entries[i]->name, flags)) {
 			if (!ignore_add_errors)
 				die(_("adding files failed"));
 			exit_status = 1;
@@ -461,8 +461,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (repo_read_index_preload(the_repository, &pathspec, 0) < 0)
 		die(_("index file corrupt"));
 
-	die_in_unpopulated_submodule(&the_index, prefix);
-	die_path_inside_submodule(&the_index, &pathspec);
+	die_in_unpopulated_submodule(the_repository->index, prefix);
+	die_path_inside_submodule(the_repository->index, &pathspec);
 
 	if (add_new_files) {
 		int baselen;
@@ -474,7 +474,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		}
 
 		/* This picks up the paths that are not tracked */
-		baselen = fill_directory(&dir, &the_index, &pathspec);
+		baselen = fill_directory(&dir, the_repository->index, &pathspec);
 		if (pathspec.nr)
 			seen = prune_directory(&dir, &pathspec, baselen);
 	}
@@ -491,7 +491,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 		if (!seen)
 			seen = find_pathspecs_matching_against_index(&pathspec,
-					&the_index, PS_IGNORE_SKIP_WORKTREE);
+					the_repository->index, PS_IGNORE_SKIP_WORKTREE);
 
 		/*
 		 * file_exists() assumes exact match
@@ -527,8 +527,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			    !file_exists(path)) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
-					if (is_excluded(&dir, &the_index, path, &dtype))
-						dir_add_ignored(&dir, &the_index,
+					if (is_excluded(&dir, the_repository->index, path, &dtype))
+						dir_add_ignored(&dir, the_repository->index,
 								path, pathspec.items[i].len);
 				} else
 					die(_("pathspec '%s' did not match any files"),
@@ -569,7 +569,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	end_odb_transaction();
 
 finish:
-	if (write_locked_index(&the_index, &lock_file,
+	if (write_locked_index(the_repository->index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write new index file"));
 

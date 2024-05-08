@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "test-tool.h"
 #include "config.h"
 #include "read-cache-ll.h"
@@ -10,7 +9,7 @@ int cmd__read_cache(int argc, const char **argv)
 	int i, cnt = 1;
 	const char *name = NULL;
 
-	initialize_the_repository();
+	initialize_repository(the_repository);
 
 	if (argc > 1 && skip_prefix(argv[1], "--print-and-refresh=", &name)) {
 		argc--;
@@ -27,16 +26,16 @@ int cmd__read_cache(int argc, const char **argv)
 		if (name) {
 			int pos;
 
-			refresh_index(&the_index, REFRESH_QUIET,
+			refresh_index(the_repository->index, REFRESH_QUIET,
 				      NULL, NULL, NULL);
-			pos = index_name_pos(&the_index, name, strlen(name));
+			pos = index_name_pos(the_repository->index, name, strlen(name));
 			if (pos < 0)
 				die("%s not in index", name);
 			printf("%s is%s up to date\n", name,
-			       ce_uptodate(the_index.cache[pos]) ? "" : " not");
+			       ce_uptodate(the_repository->index->cache[pos]) ? "" : " not");
 			write_file(name, "%d\n", i);
 		}
-		discard_index(&the_index);
+		discard_index(the_repository->index);
 	}
 	return 0;
 }

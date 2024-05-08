@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
@@ -273,7 +272,7 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	struct lock_file lock_file = LOCK_INIT;
 
 	repo_read_index_preload(the_repository, NULL, 0);
-	if (refresh_index(&the_index, REFRESH_QUIET, NULL, NULL, NULL))
+	if (refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL, NULL))
 		return -1;
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
@@ -287,8 +286,8 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	init_tree_desc(t, &tree->object.oid, tree->buffer, tree->size);
 
 	opts.head_idx = 1;
-	opts.src_index = &the_index;
-	opts.dst_index = &the_index;
+	opts.src_index = the_repository->index;
+	opts.dst_index = the_repository->index;
 	opts.merge = 1;
 	opts.reset = reset ? UNPACK_RESET_PROTECT_UNTRACKED : 0;
 	opts.update = update;
@@ -299,7 +298,7 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
 		return error(_("unable to write new index file"));
 
 	return 0;
@@ -430,7 +429,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
-	state.istate = &the_index;
+	state.istate = the_repository->index;
 
 	/*
 	 * Step 1: get a difference between orig_tree (which corresponding
@@ -454,7 +453,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 
 		/* Look up the path's position in the current index. */
 		p = diff_queued_diff.queue[i];
-		pos = index_name_pos(&the_index, p->two->path,
+		pos = index_name_pos(the_repository->index, p->two->path,
 				     strlen(p->two->path));
 
 		/*
@@ -465,10 +464,10 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 		 * path, but left it out of the working tree, then clear the
 		 * SKIP_WORKTREE bit and write it to the working tree.
 		 */
-		if (pos >= 0 && ce_skip_worktree(the_index.cache[pos])) {
+		if (pos >= 0 && ce_skip_worktree(the_repository->index->cache[pos])) {
 			struct stat st;
 
-			ce = the_index.cache[pos];
+			ce = the_repository->index->cache[pos];
 			if (!lstat(ce->name, &st)) {
 				/* Conflicting path present; relocate it */
 				struct strbuf new_path = STRBUF_INIT;
@@ -504,12 +503,12 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 			if (pos < 0)
 				option = ADD_CACHE_OK_TO_ADD;
 
-			ce = make_cache_entry(&the_index,
+			ce = make_cache_entry(the_repository->index,
 					      p->one->mode,
 					      &p->one->oid,
 					      p->one->path,
 					      0, 0);
-			add_index_entry(&the_index, ce, option);
+			add_index_entry(the_repository->index, ce, option);
 		}
 	}
 	diff_flush(&diff_opts);
@@ -518,7 +517,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	 * Step 4: write the new index to disk
 	 */
 	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
-	if (write_locked_index(&the_index, &lock,
+	if (write_locked_index(the_repository->index, &lock,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("could not write index"));
 }
@@ -539,7 +538,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 					 NULL, NULL, NULL))
 		return error(_("could not write index"));
 
-	if (write_index_as_tree(&c_tree, &the_index, get_index_file(), 0,
+	if (write_index_as_tree(&c_tree, the_repository->index, get_index_file(), 0,
 				NULL))
 		return error(_("cannot apply a stash in the middle of a merge"));
 
@@ -562,14 +561,14 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 				return error(_("conflicts in index. "
 					       "Try without --index."));
 
-			discard_index(&the_index);
+			discard_index(the_repository->index);
 			repo_read_index(the_repository);
-			if (write_index_as_tree(&index_tree, &the_index,
+			if (write_index_as_tree(&index_tree, the_repository->index,
 						get_index_file(), 0, NULL))
 				return error(_("could not save index tree"));
 
 			reset_head();
-			discard_index(&the_index);
+			discard_index(the_repository->index);
 			repo_read_index(the_repository);
 		}
 	}
@@ -875,8 +874,8 @@ static void diff_include_untracked(const struct stash_info *info, struct diff_op
 	}
 
 	unpack_tree_opt.head_idx = -1;
-	unpack_tree_opt.src_index = &the_index;
-	unpack_tree_opt.dst_index = &the_index;
+	unpack_tree_opt.src_index = the_repository->index;
+	unpack_tree_opt.dst_index = the_repository->index;
 	unpack_tree_opt.merge = 1;
 	unpack_tree_opt.fn = stash_worktree_untracked_merge;
 
@@ -1395,7 +1394,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 
 	strbuf_addf(&commit_tree_label, "index on %s\n", msg.buf);
 	commit_list_insert(head_commit, &parents);
-	if (write_index_as_tree(&info->i_tree, &the_index, get_index_file(), 0,
+	if (write_index_as_tree(&info->i_tree, the_repository->index, get_index_file(), 0,
 				NULL) ||
 	    commit_tree(commit_tree_label.buf, commit_tree_label.len,
 			&info->i_tree, parents, &info->i_commit, NULL, NULL)) {
@@ -1540,9 +1539,9 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		char *ps_matched = xcalloc(ps->nr, 1);
 
 		/* TODO: audit for interaction with sparse-index. */
-		ensure_full_index(&the_index);
-		for (i = 0; i < the_index.cache_nr; i++)
-			ce_path_match(&the_index, the_index.cache[i], ps,
+		ensure_full_index(the_repository->index);
+		for (i = 0; i < the_repository->index->cache_nr; i++)
+			ce_path_match(the_repository->index, the_repository->index->cache[i], ps,
 				      ps_matched);
 
 		if (report_path_error(ps_matched, ps)) {
@@ -1612,7 +1611,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 				goto done;
 			}
 		}
-		discard_index(&the_index);
+		discard_index(the_repository->index);
 		if (ps->nr) {
 			struct child_process cp_add = CHILD_PROCESS_INIT;
 			struct child_process cp_diff = CHILD_PROCESS_INIT;

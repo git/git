@@ -2,7 +2,6 @@
  * "git replay" builtin command
  */
 
-#define USE_THE_INDEX_VARIABLE
 #include "git-compat-util.h"
 
 #include "builtin.h"

@@ -1,4 +1,3 @@
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "attr.h"
@@ -71,9 +70,9 @@ static void check_attr(const char *prefix, struct attr_check *check,
 		prefix_path(prefix, prefix ? strlen(prefix) : 0, file);
 
 	if (collect_all) {
-		git_all_attrs(&the_index, full_path, check);
+		git_all_attrs(the_repository->index, full_path, check);
 	} else {
-		git_check_attr(&the_index, full_path, check);
+		git_check_attr(the_repository->index, full_path, check);
 	}
 	output_attr(check, file);
 
