@@ -455,10 +455,12 @@ e-mail tools, so that they may comment on specific portions of
 your code.  For this reason, each patch should be submitted
 "inline" in a separate message.
 
-Multiple related patches should be grouped into their own e-mail
-thread to help readers find all parts of the series.  To that end,
-send them as replies to either an additional "cover letter" message
-(see below), the first patch, or the respective preceding patch.
+All subsequent versions of a patch series and other related patches should be
+grouped into their own e-mail thread to help readers find all parts of the
+series.  To that end, send them as replies to either an additional "cover
+letter" message (see below), the first patch, or the respective preceding patch.
+Here is a link:MyFirstContribution.html#v2-git-send-email[step-by-step guide] on
+how to submit updated versions of a patch series.
 
 If your log message (including your name on the
 `Signed-off-by` trailer) is not writable in ASCII, make sure that
