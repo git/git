@@ -100,7 +100,7 @@ test:fuzz-smoke-tests:
   variables:
     CC: clang
   before_script:
-    - ./ci/install-docker-dependencies.sh
+    - ./ci/install-dependencies.sh
   script:
     - ./ci/run-build-and-minimal-fuzzers.sh
 
