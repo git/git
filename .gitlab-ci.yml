@@ -95,6 +95,15 @@ test:osx:
       - t/failed-test-artifacts
     when: on_failure
 
+test:fuzz-smoke-tests:
+  image: ubuntu:latest
+  variables:
+    CC: clang
+  before_script:
+    - ./ci/install-docker-dependencies.sh
+  script:
+    - ./ci/run-build-and-minimal-fuzzers.sh
+
 static-analysis:
   image: ubuntu:22.04
   variables:
