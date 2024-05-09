@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2024, #03; Mon, 6)
-X-master-at: d4cc1ec35f3bcce816b69986ca41943f6ce21377
-X-next-at: b98150cc7190226eafa47b017c34392aadf638ea
+Subject: What's cooking in git.git (May 2024, #04; Thu, 9)
+X-master-at: 0f3415f1f8478b05e64db11eb8aaa2915e48fef6
+X-next-at: 3402c0e53fb798cb471dd6562eb5c938885b7295
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2024, #03; Mon, 6)
+What's cooking in git.git (May 2024, #04; Thu, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,263 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* bb/rgb-12-bit-colors (2024-05-02) 3 commits
+  (merged to 'next' on 2024-05-02 at 7fe29c98d7)
+ + color: add support for 12-bit RGB colors
+ + t/t4026-color: add test coverage for invalid RGB colors
+ + t/t4026-color: remove an extra double quote character
+
+ The color parsing code learned to handle 12-bit RGB colors, spelled
+ as "#RGB" (in addition to "#RRGGBB" that is already supported).
+ source: <20240502110331.6347-1-dev+git@drbeat.li>
+
+
+* bc/credential-scheme-enhancement (2024-04-16) 16 commits
+  (merged to 'next' on 2024-05-01 at 789ec5bd35)
+ + credential: add method for querying capabilities
+ + credential-cache: implement authtype capability
+ + t: add credential tests for authtype
+ + credential: add support for multistage credential rounds
+ + t5563: refactor for multi-stage authentication
+ + docs: set a limit on credential line length
+ + credential: enable state capability
+ + credential: add an argument to keep state
+ + http: add support for authtype and credential
+ + docs: indicate new credential protocol fields
+ + credential: add a field called "ephemeral"
+ + credential: gate new fields on capability
+ + credential: add a field for pre-encoded credentials
+ + http: use new headers for each object request
+ + remote-curl: reset headers on new request
+ + credential: add an authtype field
+
+ The credential helper protocol, together with the HTTP layer, have
+ been enhanced to support authentication schemes different from
+ username & password pair, like Bearer and NTLM.
+ source: <20240417000240.3611948-1-sandals@crustytoothpaste.net>
+
+
+* bc/zsh-compatibility (2024-04-26) 2 commits
+  (merged to 'next' on 2024-05-02 at 10222b2472)
+ + vimdiff: make script and tests work with zsh
+ + t4046: avoid continue in &&-chain for zsh
+
+ zsh can pretend to be a normal shell pretty well except for some
+ glitches that we tickle in some of our scripts. Work them around
+ so that "vimdiff" and our test suite works well enough with it.
+ source: <20240426221154.2194139-1-sandals@crustytoothpaste.net>
+
+
+* dk/zsh-git-repo-path-fix (2024-04-30) 1 commit
+  (merged to 'next' on 2024-05-02 at 0446d8e63a)
+ + completion: zsh: stop leaking local cache variable
+
+ Command line completion support for zsh (in contrib/) has been
+ updated to stop exposing internal state to end-user shell
+ interaction.
+ source: <pull.1725.git.1714513995564.gitgitgadget@gmail.com>
+
+
+* jt/doc-submitting-rerolled-series (2024-04-25) 1 commit
+  (merged to 'next' on 2024-05-01 at 1c5865f11c)
+ + doc: clarify practices for submitting updated patch versions
+
+ Developer doc update.
+ source: <20240425213404.133660-1-jltobler@gmail.com>
+
+
+* ps/ci-test-with-jgit (2024-04-12) 13 commits
+  (merged to 'next' on 2024-05-01 at 35e293e618)
+ + t0612: add tests to exercise Git/JGit reftable compatibility
+ + t0610: fix non-portable variable assignment
+ + t06xx: always execute backend-specific tests
+ + ci: install JGit dependency
+ + ci: make Perforce binaries executable for all users
+ + ci: merge scripts which install dependencies
+ + ci: fix setup of custom path for GitLab CI
+ + ci: merge custom PATH directories
+ + ci: convert "install-dependencies.sh" to use "/bin/sh"
+ + ci: drop duplicate package installation for "linux-gcc-default"
+ + ci: skip sudo when we are already root
+ + ci: expose distro name in dockerized GitHub jobs
+ + ci: rename "runs_on_pool" to "distro"
+
+ Tests to ensure interoperability between reftable written by jgit
+ and our code have been added and enabled in CI.
+ source: <cover.1712896868.git.ps@pks.im>
+
+
+* ps/reftable-write-optim (2024-04-08) 11 commits
+  (merged to 'next' on 2024-04-30 at 0667e3c05b)
+ + reftable/block: reuse compressed array
+ + reftable/block: reuse zstream when writing log blocks
+ + reftable/writer: reset `last_key` instead of releasing it
+ + reftable/writer: unify releasing memory
+ + reftable/writer: refactorings for `writer_flush_nonempty_block()`
+ + reftable/writer: refactorings for `writer_add_record()`
+ + refs/reftable: don't recompute committer ident
+ + reftable: remove name checks
+ + refs/reftable: skip duplicate name checks
+ + refs/reftable: perform explicit D/F check when writing symrefs
+ + refs/reftable: fix D/F conflict error message on ref copy
+
+ Code to write out reftable has seen some optimization and
+ simplification.
+ source: <cover.1712578837.git.ps@pks.im>
+
+
+* ps/the-index-is-no-more (2024-04-18) 6 commits
+  (merged to 'next' on 2024-05-01 at 7b9a0ab760)
+ + repository: drop `initialize_the_repository()`
+ + repository: drop `the_index` variable
+ + builtin/clone: stop using `the_index`
+ + repository: initialize index in `repo_init()`
+ + builtin: stop using `the_index`
+ + t/helper: stop using `the_index`
+ (this branch is used by ps/undecided-is-not-necessarily-sha1.)
+
+ The singleton index_state instance "the_index" has been eliminated
+ by always instantiating "the_repository" and replacing references
+ to "the_index"  with references to its .index member.
+ source: <cover.1713442061.git.ps@pks.im>
+
+
+* rh/complete-symbolic-ref (2024-04-25) 3 commits
+  (merged to 'next' on 2024-05-01 at 7020ecebe7)
+ + completion: add docs on how to add subcommand completions
+ + completion: improve docs for using __git_complete
+ + completion: add 'symbolic-ref'
+
+ Command line completion script (in contrib/) learned to complete
+ "git symbolic-ref" a bit better (you need to enable plumbing
+ commands to be completed with GIT_COMPLETION_SHOW_ALL_COMMANDS).
+ source: <20240425101845.708554-3-rhi@pengutronix.de>
+
+
+* rj/add-p-typo-reaction (2024-04-30) 2 commits
+  (merged to 'next' on 2024-05-01 at 3016062ebf)
+ + add-patch: response to unknown command
+ + add-patch: do not show UI messages on stderr
+
+ When the user responds to a prompt given by "git add -p" with an
+ unsupported command, list of available commands were given, which
+ was too much if the user knew what they wanted to type but merely
+ made a typo.  Now the user gets a much shorter error message.
+ source: <952a9514-3cf1-4601-8f0d-db57adc750c3@gmail.com>
+
+
+* rs/diff-parseopts-cleanup (2024-05-01) 1 commit
+  (merged to 'next' on 2024-05-02 at cd9779c175)
+ + diff-lib: stop calling diff_setup_done() in do_diff_cache()
+
+ Code clean-up to remove code that is now a noop.
+ source: <0e96c5a3-7b4d-4c6b-875e-d80e3eb07a00@web.de>
+
+--------------------------------------------------
 [New Topics]
+
+* vd/doc-merge-tree-x-option (2024-05-07) 1 commit
+  (merged to 'next' on 2024-05-08 at 42637b8bdf)
+ + Documentation/git-merge-tree.txt: document -X
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1728.git.1715117789985.gitgitgadget@gmail.com>
+
+
+* fa/p4-error (2024-05-08) 1 commit
+ - git-p4: show Perforce error to the user
+
+ P4 update.
+
+ Will merge to 'next'.
+ source: <pull.1668.v3.git.git.1715206266214.gitgitgadget@gmail.com>
+
+
+* jc/doc-manpages-l10n (2024-05-09) 1 commit
+ - SubmittingPatches: advertise git-manpages-l10n project a bit
+
+ The SubmittingPatches document now refers folks to manpages
+ translation project.
+
+ Comments?
+ source: <xmqqv83muc12.fsf@gitster.g>
+
+
+* jk/ci-macos-gcc13-fix (2024-05-09) 3 commits
+ - ci: stop installing "gcc-13" for osx-gcc
+ - ci: avoid bare "gcc" for osx-gcc job
+ - ci: drop mention of BREW_INSTALL_PACKAGES variable
+
+ CI fix.
+
+ Will merge to 'next'.
+ source: <20240509162219.GA1707955@coredump.intra.peff.net>
+
+
+* ps/ci-fuzzers-at-gitlab-fix (2024-05-09) 3 commits
+ - gitlab-ci: fix installing dependencies for fuzz smoke tests
+ - Merge branch 'ps/ci-python-2-deprecation' into ps/ci-fuzzers-at-gitlab-fix
+ - Merge branch 'ps/ci-enable-minimal-fuzzers-at-gitlab' into ps/ci-fuzzers-at-gitlab-fix
+ (this branch uses ps/ci-enable-minimal-fuzzers-at-gitlab and ps/ci-python-2-deprecation.)
+
+ CI fix.
+
+ Will merge to 'next'.
+ source: <5a92a4aa9edd9653df71b284f07461c7906f97e2.1715241343.git.ps@pks.im>
+
+
+* ps/reftable-reusable-iterator (2024-05-08) 13 commits
+ - reftable/merged: adapt interface to allow reuse of iterators
+ - reftable/stack: provide convenience functions to create iterators
+ - reftable/reader: adapt interface to allow reuse of iterators
+ - reftable/generic: adapt interface to allow reuse of iterators
+ - reftable/generic: move seeking of records into the iterator
+ - reftable/merged: simplify indices for subiterators
+ - reftable/merged: split up initialization and seeking of records
+ - reftable/reader: set up the reader when initializing table iterator
+ - reftable/reader: inline `reader_seek_internal()`
+ - reftable/reader: separate concerns of table iter and reftable reader
+ - reftable/reader: unify indexed and linear seeking
+ - reftable/reader: avoid copying index iterator
+ - reftable/block: use `size_t` to track restart point index
+
+ source: <cover.1715166175.git.ps@pks.im>
+
+
+* tb/precompose-getcwd (2024-05-09) 1 commit
+ - macOS: ls-files path fails if path of workdir is NFD
+
+ We forgot to normalize the result of getcwd() to NFC on macOS where
+ all other paths are normalized, which has been corrected.
+
+ Will merge to 'next'.
+ source: <20240509161110.12121-1-tboegi@web.de>
+
+
+* jk/ci-test-with-jgit-fix (2024-05-09) 1 commit
+ - ci: update coverity runs_on_pool reference
+
+ CI fix.
+
+ Will merge to 'next'.
+ source: <20240509161506.GA1707588@coredump.intra.peff.net>
+
+
+* jc/patch-flow-updates (2024-05-09) 2 commits
+ - SubmittingPatches: extend the "flow" section
+ - SubmittingPatches: move the patch-flow section earlier
+
+ Doc updates.
+
+ Comments?
+ source: <20240509211318.641896-1-gitster@pobox.com>
+
+--------------------------------------------------
+[Cooking]
 
 * it/refs-name-conflict (2024-05-06) 1 commit
  - refs: return conflict error when checking packed refs
@@ -66,58 +322,63 @@ Release tarballs are available at:
  source: <xmqqbk5i3ncw.fsf_-_@gitster.g>
 
 
-* jp/tag-trailer (2024-05-06) 3 commits
- - builtin/tag: add --trailer option
- - builtin/commit: refactor --trailer logic
- - builtin/commit: use ARGV macro to collect trailers
+* jp/tag-trailer (2024-05-07) 3 commits
+  (merged to 'next' on 2024-05-07 at 646013793d)
+ + builtin/tag: add --trailer option
+ + builtin/commit: refactor --trailer logic
+ + builtin/commit: use ARGV macro to collect trailers
 
  "git tag" learned the "--trailer" option to futz with the trailers
  in the same way as "git commit" does.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1723.v5.git.1714934950.gitgitgadget@gmail.com>
 
 
 * ow/refspec-glossary-update (2024-05-06) 1 commit
- - Documentation: Mention that refspecs are explained elsewhere
+  (merged to 'next' on 2024-05-07 at 7d55ebb0c8)
+ + Documentation: Mention that refspecs are explained elsewhere
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240506182317.13477-1-oystwa@gmail.com>
 
 
 * ps/ci-enable-minimal-fuzzers-at-gitlab (2024-05-06) 1 commit
- - gitlab-ci: add smoke test for fuzzers
+  (merged to 'next' on 2024-05-07 at a76024bd9f)
+ + gitlab-ci: add smoke test for fuzzers
+ (this branch is used by ps/ci-fuzzers-at-gitlab-fix.)
 
  CI update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <01fb94999f8e2014ba4d09ce7451a4f5d315ee72.1714371146.git.ps@pks.im>
 
 
 * ps/ci-python-2-deprecation (2024-05-06) 1 commit
- - ci: fix Python dependency on Ubuntu 24.04
+  (merged to 'next' on 2024-05-07 at 0e11e94f99)
+ + ci: fix Python dependency on Ubuntu 24.04
+ (this branch is used by ps/ci-fuzzers-at-gitlab-fix.)
 
  Unbreak CI jobs so that we do not attempt to use Python 2 that has
  been removed from the platform.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cb8cefc20f373a3516695e7cbee975132553ea95.1714973381.git.ps@pks.im>
 
 
 * rs/external-diff-with-exit-code (2024-05-06) 2 commits
- - diff: fix --exit-code with external diff
- - diff: report unmerged paths as changes in run_diff_cmd()
+  (merged to 'next' on 2024-05-08 at ad5fee3cbf)
+ + diff: fix --exit-code with external diff
+ + diff: report unmerged paths as changes in run_diff_cmd()
 
  The "--exit-code" option of "git diff" command learned to work with
  the "--ext-diff" option.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <82561c70-ec33-41bf-b036-52310ffc1926@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * jc/test-workaround-broken-mv (2024-05-02) 1 commit
   (merged to 'next' on 2024-05-06 at 7e009c6827)
@@ -132,32 +393,37 @@ Release tarballs are available at:
 
 
 * jt/port-ci-whitespace-check-to-gitlab (2024-05-03) 5 commits
- - gitlab-ci: add whitespace error check
- - ci: make the whitespace report optional
- - ci: separate whitespace check script
- - github-ci: fix link to whitespace error
- - ci: pre-collapse GitLab CI sections
+  (merged to 'next' on 2024-05-08 at 774a29dde4)
+ + gitlab-ci: add whitespace error check
+ + ci: make the whitespace report optional
+ + ci: separate whitespace check script
+ + github-ci: fix link to whitespace error
+ + ci: pre-collapse GitLab CI sections
 
  The "whitespace check" task that was enabled for GitHub Actions CI
  has been ported to GitLab CI.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20240503172110.181326-1-jltobler@gmail.com>
 
 
 * jc/no-default-attr-tree-in-bare (2024-05-03) 1 commit
- - stop using HEAD for attributes in bare repository by default
+  (merged to 'next' on 2024-05-08 at a34819b16d)
+ + stop using HEAD for attributes in bare repository by default
+ (this branch is used by ps/undecided-is-not-necessarily-sha1.)
 
  Git 2.43 started using the tree of HEAD as the source of attributes
  in a bare repository, which has severe performance implications.
  For now, revert the change, without ripping out a more explicit
  support for the attr.tree configuration variable.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqqzft6aozg.fsf_-_@gitster.g>
 
 
-* jl/git-no-advice (2024-05-03) 3 commits
+* jl/git-no-advice (2024-05-07) 4 commits
+  (merged to 'next' on 2024-05-08 at c9e7e0866e)
+ + t0018: two small fixes
   (merged to 'next' on 2024-05-06 at 95cc03ef96)
  + advice: add --no-advice global option
  + doc: add spacing around paginate options
@@ -170,11 +436,12 @@ Release tarballs are available at:
  source: <20240503071706.78109-1-james@jamesliu.io>
 
 
-* kn/ref-transaction-symref (2024-05-03) 7 commits
+* kn/ref-transaction-symref (2024-05-07) 8 commits
  - refs: remove `create_symref` and associated dead code
  - refs: rename `refs_create_symref()` to `refs_update_symref()`
  - refs: use transaction in `refs_create_symref()`
  - refs: add support for transactional symref updates
+ - refs: move `original_update_refname` to 'refs.c'
  - refs: support symrefs in 'reference-transaction' hook
  - files-backend: extract out `create_symref_lock()`
  - refs: accept symref values in `ref_transaction_update()`
@@ -182,8 +449,8 @@ Release tarballs are available at:
  Updates to symbolic refs can now be made as a part of ref
  transaction.
 
- Will merge to 'next'?
- source: <20240503124115.252413-1-knayak@gitlab.com>
+ Will merge to 'next'.
+ source: <20240507125859.132116-1-knayak@gitlab.com>
 
 
 * ma/win32-unix-domain-socket (2024-05-03) 1 commit
@@ -197,42 +464,44 @@ Release tarballs are available at:
 
 
 * ps/config-subcommands (2024-05-06) 14 commits
- - builtin/config: display subcommand help
- - builtin/config: introduce "edit" subcommand
- - builtin/config: introduce "remove-section" subcommand
- - builtin/config: introduce "rename-section" subcommand
- - builtin/config: introduce "unset" subcommand
- - builtin/config: introduce "set" subcommand
- - builtin/config: introduce "get" subcommand
- - builtin/config: introduce "list" subcommand
- - builtin/config: pull out function to handle `--null`
- - builtin/config: pull out function to handle config location
- - builtin/config: use `OPT_CMDMODE()` to specify modes
- - builtin/config: move "fixed-value" option to correct group
- - builtin/config: move option array around
- - config: clarify memory ownership when preparing comment strings
+  (merged to 'next' on 2024-05-07 at f10c689a30)
+ + builtin/config: display subcommand help
+ + builtin/config: introduce "edit" subcommand
+ + builtin/config: introduce "remove-section" subcommand
+ + builtin/config: introduce "rename-section" subcommand
+ + builtin/config: introduce "unset" subcommand
+ + builtin/config: introduce "set" subcommand
+ + builtin/config: introduce "get" subcommand
+ + builtin/config: introduce "list" subcommand
+ + builtin/config: pull out function to handle `--null`
+ + builtin/config: pull out function to handle config location
+ + builtin/config: use `OPT_CMDMODE()` to specify modes
+ + builtin/config: move "fixed-value" option to correct group
+ + builtin/config: move option array around
+ + config: clarify memory ownership when preparing comment strings
 
  The operation mode options (like "--get") the "git config" command
  uses have been deprecated and replaced with subcommands (like "git
  config get").
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1714982328.git.ps@pks.im>
 
 
-* ps/refs-without-the-repository (2024-05-03) 5 commits
- - refs: remove functions without ref store
- - cocci: apply rules to rewrite callers of "refs" interfaces
- - cocci: introduce rules to transform "refs" to pass ref store
- - refs: add `exclude_patterns` parameter to `for_each_fullref_in()`
- - refs: introduce missing functions that accept a `struct ref_store`
+* ps/refs-without-the-repository (2024-05-07) 5 commits
+  (merged to 'next' on 2024-05-08 at 2479b9de46)
+ + refs: remove functions without ref store
+ + cocci: apply rules to rewrite callers of "refs" interfaces
+ + cocci: introduce rules to transform "refs" to pass ref store
+ + refs: add `exclude_patterns` parameter to `for_each_fullref_in()`
+ + refs: introduce missing functions that accept a `struct ref_store`
 
  The refs API lost functions that implicitly assumes to work on the
  primary ref_store by forcing the callers to pass a ref_store as an
  argument.
 
- Will merge to 'next'?
- source: <cover.1714717057.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <cover.1715065736.git.ps@pks.im>
 
 
 * ps/reftable-write-options (2024-05-03) 11 commits
@@ -265,27 +534,14 @@ Release tarballs are available at:
  source: <28f6267709db78ba526d7ed9fc4a734674697c70.1714763555.git.me@ttaylorr.com>
 
 
-* bb/rgb-12-bit-colors (2024-05-02) 3 commits
-  (merged to 'next' on 2024-05-02 at 7fe29c98d7)
- + color: add support for 12-bit RGB colors
- + t/t4026-color: add test coverage for invalid RGB colors
- + t/t4026-color: remove an extra double quote character
-
- The color parsing code learned to handle 12-bit RGB colors, spelled
- as "#RGB" (in addition to "#RRGGBB" that is already supported).
-
- Will merge to 'master'.
- source: <20240502110331.6347-1-dev+git@drbeat.li>
-
-
-* ds/scalar-reconfigure-all-fix (2024-05-06) 1 commit
- - scalar: avoid segfault in reconfigure --all
+* ds/scalar-reconfigure-all-fix (2024-05-07) 1 commit
+  (merged to 'next' on 2024-05-08 at eca398f4a5)
+ + scalar: avoid segfault in reconfigure --all
 
  Scalar fix.
 
- Expecting a final (and hopefully small) reroll.
- cf. <Zjhufiq2DmBlVpIx@tanuki>
- source: <pull.1724.v2.git.1714874298859.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1724.v3.git.1715126749391.gitgitgadget@gmail.com>
 
 
 * ps/pseudo-ref-terminology (2024-05-02) 10 commits
@@ -307,65 +563,6 @@ Release tarballs are available at:
  source: <cover.1714637671.git.ps@pks.im>
 
 
-* dk/zsh-git-repo-path-fix (2024-04-30) 1 commit
-  (merged to 'next' on 2024-05-02 at 0446d8e63a)
- + completion: zsh: stop leaking local cache variable
-
- Command line completion support for zsh (in contrib/) has been
- updated to stop exposing internal state to end-user shell
- interaction.
-
- Will merge to 'master'.
- source: <pull.1725.git.1714513995564.gitgitgadget@gmail.com>
-
-
-* rs/diff-parseopts-cleanup (2024-05-01) 1 commit
-  (merged to 'next' on 2024-05-02 at cd9779c175)
- + diff-lib: stop calling diff_setup_done() in do_diff_cache()
-
- Code clean-up to remove code that is now a noop.
-
- Will merge to 'master'.
- source: <0e96c5a3-7b4d-4c6b-875e-d80e3eb07a00@web.de>
-
-
-* rh/complete-symbolic-ref (2024-04-25) 3 commits
-  (merged to 'next' on 2024-05-01 at 7020ecebe7)
- + completion: add docs on how to add subcommand completions
- + completion: improve docs for using __git_complete
- + completion: add 'symbolic-ref'
-
- Command line completion script (in contrib/) learned to complete
- "git symbolic-ref" a bit better (you need to enable plumbing
- commands to be completed with GIT_COMPLETION_SHOW_ALL_COMMANDS).
-
- Will merge to 'master'.
- source: <20240425101845.708554-3-rhi@pengutronix.de>
-
-
-* jt/doc-submitting-rerolled-series (2024-04-25) 1 commit
-  (merged to 'next' on 2024-05-01 at 1c5865f11c)
- + doc: clarify practices for submitting updated patch versions
-
- Developer doc update.
-
- Will merge to 'master'.
- source: <20240425213404.133660-1-jltobler@gmail.com>
-
-
-* bc/zsh-compatibility (2024-04-26) 2 commits
-  (merged to 'next' on 2024-05-02 at 10222b2472)
- + vimdiff: make script and tests work with zsh
- + t4046: avoid continue in &&-chain for zsh
-
- zsh can pretend to be a normal shell pretty well except for some
- glitches that we tickle in some of our scripts. Work them around
- so that "vimdiff" and our test suite works well enough with it.
-
- Will merge to 'master'.
- source: <20240426221154.2194139-1-sandals@crustytoothpaste.net>
-
-
 * jc/rev-parse-fatal-doc (2024-05-01) 1 commit
  - rev-parse: document how --is-* options work outside a repository
 
@@ -375,84 +572,32 @@ Release tarballs are available at:
  source: <xmqqplu54fbg.fsf@gitster.g>
 
 
-* ps/undecided-is-not-necessarily-sha1 (2024-04-30) 13 commits
- . repository: stop setting SHA1 as the default object hash
- . oss-fuzz/commit-graph: set up hash algorithm
- . builtin/shortlog: don't set up revisions without repo
- . builtin/diff: explicitly set hash algo when there is no repo
- . builtin/bundle: abort "verify" early when there is no repository
- . builtin/blame: don't access potentially unitialized `the_hash_algo`
- . builtin/rev-parse: allow shortening to more than 40 hex characters
- . remote-curl: fix parsing of detached SHA256 heads
- . attr: fix BUG() when parsing attrs outside of repo
- . attr: don't recompute default attribute source
- . parse-options-cb: only abbreviate hashes when hash algo is known
- . path: move `validate_headref()` to its only user
- . path: harden validation of HEAD with non-standard hashes
+* ps/undecided-is-not-necessarily-sha1 (2024-05-06) 15 commits
+  (merged to 'next' on 2024-05-08 at 9f8e894685)
+ + repository: stop setting SHA1 as the default object hash
+ + oss-fuzz/commit-graph: set up hash algorithm
+ + builtin/shortlog: don't set up revisions without repo
+ + builtin/diff: explicitly set hash algo when there is no repo
+ + builtin/bundle: abort "verify" early when there is no repository
+ + builtin/blame: don't access potentially unitialized `the_hash_algo`
+ + builtin/rev-parse: allow shortening to more than 40 hex characters
+ + remote-curl: fix parsing of detached SHA256 heads
+ + attr: fix BUG() when parsing attrs outside of repo
+ + attr: don't recompute default attribute source
+ + parse-options-cb: only abbreviate hashes when hash algo is known
+ + path: move `validate_headref()` to its only user
+ + path: harden validation of HEAD with non-standard hashes
+ + Merge branch 'ps/the-index-is-no-more' into ps/undecided-is-not-necessarily-sha1
+ + Merge branch 'jc/no-default-attr-tree-in-bare' into ps/undecided-is-not-necessarily-sha1
+ (this branch uses jc/no-default-attr-tree-in-bare.)
 
  Before discovering the repository details, We used to assume SHA-1
  as the "default" hash function, which has been corrected. Hopefully
  this will smoke out codepaths that rely on such an unwarranted
  assumptions.
 
- Seems to break t0003 with a NULL the_repository.
-
- Ejected out of 'seen' for now.
- source: <cover.1714371422.git.ps@pks.im>
-
-
-* rj/add-p-typo-reaction (2024-04-30) 2 commits
-  (merged to 'next' on 2024-05-01 at 3016062ebf)
- + add-patch: response to unknown command
- + add-patch: do not show UI messages on stderr
-
- When the user responds to a prompt given by "git add -p" with an
- unsupported command, list of available commands were given, which
- was too much if the user knew what they wanted to type but merely
- made a typo.  Now the user gets a much shorter error message.
-
  Will merge to 'master'.
- source: <952a9514-3cf1-4601-8f0d-db57adc750c3@gmail.com>
-
-
-* ps/the-index-is-no-more (2024-04-18) 6 commits
-  (merged to 'next' on 2024-05-01 at 7b9a0ab760)
- + repository: drop `initialize_the_repository()`
- + repository: drop `the_index` variable
- + builtin/clone: stop using `the_index`
- + repository: initialize index in `repo_init()`
- + builtin: stop using `the_index`
- + t/helper: stop using `the_index`
-
- The singleton index_state instance "the_index" has been eliminated
- by always instantiating "the_repository" and replacing references
- to "the_index"  with references to its .index member.
-
- Will merge to 'master'.
- source: <cover.1713442061.git.ps@pks.im>
-
-
-* ps/ci-test-with-jgit (2024-04-12) 13 commits
-  (merged to 'next' on 2024-05-01 at 35e293e618)
- + t0612: add tests to exercise Git/JGit reftable compatibility
- + t0610: fix non-portable variable assignment
- + t06xx: always execute backend-specific tests
- + ci: install JGit dependency
- + ci: make Perforce binaries executable for all users
- + ci: merge scripts which install dependencies
- + ci: fix setup of custom path for GitLab CI
- + ci: merge custom PATH directories
- + ci: convert "install-dependencies.sh" to use "/bin/sh"
- + ci: drop duplicate package installation for "linux-gcc-default"
- + ci: skip sudo when we are already root
- + ci: expose distro name in dockerized GitHub jobs
- + ci: rename "runs_on_pool" to "distro"
-
- Tests to ensure interoperability between reftable written by jgit
- and our code have been added and enabled in CI.
-
- Will merge to 'master'.
- source: <cover.1712896868.git.ps@pks.im>
+ source: <cover.1715057362.git.ps@pks.im>
 
 
 * pw/rebase-i-error-message (2024-04-08) 2 commits
@@ -466,27 +611,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <88bc0787-e7ae-49e5-99e8-97f6c55ea8c6@gmail.com>
  source: <pull.1672.v2.git.1712585787.gitgitgadget@gmail.com>
-
-
-* ps/reftable-write-optim (2024-04-08) 11 commits
-  (merged to 'next' on 2024-04-30 at 0667e3c05b)
- + reftable/block: reuse compressed array
- + reftable/block: reuse zstream when writing log blocks
- + reftable/writer: reset `last_key` instead of releasing it
- + reftable/writer: unify releasing memory
- + reftable/writer: refactorings for `writer_flush_nonempty_block()`
- + reftable/writer: refactorings for `writer_add_record()`
- + refs/reftable: don't recompute committer ident
- + reftable: remove name checks
- + refs/reftable: skip duplicate name checks
- + refs/reftable: perform explicit D/F check when writing symrefs
- + refs/reftable: fix D/F conflict error message on ref copy
-
- Code to write out reftable has seen some optimization and
- simplification.
-
- Will merge to 'master'.
- source: <cover.1712578837.git.ps@pks.im>
 
 
 * ds/send-email-per-message-block (2024-04-10) 2 commits
@@ -511,33 +635,6 @@ Release tarballs are available at:
  Needs review.
  cf. <xmqqy1a4ao3t.fsf@gitster.g>
  source: <20240328101356.300374-1-e@80x24.org>
-
-
-* bc/credential-scheme-enhancement (2024-04-16) 16 commits
-  (merged to 'next' on 2024-05-01 at 789ec5bd35)
- + credential: add method for querying capabilities
- + credential-cache: implement authtype capability
- + t: add credential tests for authtype
- + credential: add support for multistage credential rounds
- + t5563: refactor for multi-stage authentication
- + docs: set a limit on credential line length
- + credential: enable state capability
- + credential: add an argument to keep state
- + http: add support for authtype and credential
- + docs: indicate new credential protocol fields
- + credential: add a field called "ephemeral"
- + credential: gate new fields on capability
- + credential: add a field for pre-encoded credentials
- + http: use new headers for each object request
- + remote-curl: reset headers on new request
- + credential: add an authtype field
-
- The credential helper protocol, together with the HTTP layer, have
- been enhanced to support authentication schemes different from
- username & password pair, like Bearer and NTLM.
-
- Will merge to 'master'.
- source: <20240417000240.3611948-1-sandals@crustytoothpaste.net>
 
 
 * tb/pseudo-merge-reachability-bitmap (2024-04-30) 23 commits
@@ -589,7 +686,8 @@ Release tarballs are available at:
 
  The trailer API has been reshuffled a bit.
 
- Will merge to 'next'?
+ Waiting for a review response.
+ cf. <a75133dc-a0bb-4f61-a616-988f2b4d5688@gmail.com>
  source: <pull.1696.v4.git.1714625667.gitgitgadget@gmail.com>
 
 
@@ -629,20 +727,21 @@ Release tarballs are available at:
 
 
 * js/unit-test-suite-runner (2024-05-06) 9 commits
- - cmake: let `test-tool` run the unit tests, too
- - ci: use test-tool as unit test runner on Windows
- - t/Makefile: run unit tests alongside shell tests
- - unit tests: add rule for running with test-tool
- - test-tool run-command testsuite: support unit tests
- - test-tool run-command testsuite: remove hardcoded filter
- - test-tool run-command testsuite: get shell from env
- - t0080: turn t-basic unit test into a helper
- - Merge branch 'jk/unit-tests-buildfix' into js/unit-test-suite-runner
+  (merged to 'next' on 2024-05-07 at 3b376223e3)
+ + cmake: let `test-tool` run the unit tests, too
+ + ci: use test-tool as unit test runner on Windows
+ + t/Makefile: run unit tests alongside shell tests
+ + unit tests: add rule for running with test-tool
+ + test-tool run-command testsuite: support unit tests
+ + test-tool run-command testsuite: remove hardcoded filter
+ + test-tool run-command testsuite: get shell from env
+ + t0080: turn t-basic unit test into a helper
+ + Merge branch 'jk/unit-tests-buildfix' into js/unit-test-suite-runner
 
  The "test-tool" has been taught to run testsuite tests in parallel,
  bypassing the need to use the "prove" tool.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1715024899.git.steadmon@google.com>
  source: <pull.1666.git.1708038924522.gitgitgadget@gmail.com>
 
