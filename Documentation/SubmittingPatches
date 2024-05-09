@@ -548,6 +548,13 @@ repositories.
 
 Patches to these parts should be based on their trees.
 
+- The "Git documentation translations" project, led by Jean-Noël
+  Avila, translates our documentation pages.  Their work products are
+  maintained separately from this project, not as part of our tree:
+
+	https://github.com/jnavila/git-manpages-l10n/
+
+
 [[patch-flow]]
 == An ideal patch flow
 
