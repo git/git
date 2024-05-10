@@ -930,7 +930,6 @@ int cmd_clean(int argc,
 	struct pathspec pathspec;
 	struct strbuf buf = STRBUF_INIT;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
-	struct pattern_list *pl;
 	struct string_list_item *item;
 	const char *qname;
 	struct option options[] = {
@@ -1016,9 +1015,7 @@ int cmd_clean(int argc,
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
-	for (i = 0; i < exclude_list.nr; i++)
-		add_pattern(exclude_list.items[i].string, "", 0, pl, -(i+1));
+	add_patterns_from_string_list(&dir, EXC_CMDL, "--exclude option", &exclude_list);
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD,
