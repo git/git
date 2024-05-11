@@ -114,7 +114,7 @@ of end users.
 
 The official repository of the 'git gui' project can be found at:
 
-  https://github.com/prati0100/git-gui.git/
+  https://github.com/j6t/git-gui
 
 GIT
 ---
