@@ -728,11 +728,6 @@ static void mark_alternate_complete(struct fetch_negotiator *unused,
 	mark_complete(&obj->oid);
 }
 
-struct loose_object_iter {
-	struct oidset *loose_object_set;
-	struct ref *refs;
-};
-
 /*
  * Mark recent commits available locally and reachable from a local ref as
  * COMPLETE.
