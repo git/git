@@ -2,9 +2,10 @@
 
 : ${asof=${1-now}}
 
-lasttag=$(
+: ${lasttag=$(
 	git tag --list 'v*.0' --sort=version:tag | tail -n 1
-) &&
+  )}
+
 for r in "$lasttag..master@{$asof}" \
 	"master@{$asof}..next@{$asof}" \
 	"master@{$asof}..seen@{$asof}"
