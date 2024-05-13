@@ -28,7 +28,7 @@ struct reftable_write_options {
 	unsigned skip_index_objects : 1;
 
 	/* how often to write complete keys in each block. */
-	int restart_interval;
+	uint16_t restart_interval;
 
 	/* 4-byte identifier ("sha1", "s256") of the hash.
 	 * Defaults to SHA1 if unset

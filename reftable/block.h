@@ -29,7 +29,7 @@ struct block_writer {
 	uint32_t header_off;
 
 	/* How often to restart keys. */
-	int restart_interval;
+	uint16_t restart_interval;
 	int hash_size;
 
 	/* Offset of next uint8_t to write. */
