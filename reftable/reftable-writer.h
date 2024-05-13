@@ -45,6 +45,12 @@ struct reftable_write_options {
 
 	/* boolean: Prevent auto-compaction of tables. */
 	unsigned disable_auto_compact : 1;
+
+	/*
+	 * Geometric sequence factor used by auto-compaction to decide which
+	 * tables to compact. Defaults to 2 if unset.
+	 */
+	uint8_t auto_compaction_factor;
 };
 
 /* reftable_block_stats holds statistics for a single block type */

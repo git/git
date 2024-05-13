@@ -729,7 +729,7 @@ static void test_suggest_compaction_segment(void)
 {
 	uint64_t sizes[] = { 512, 64, 17, 16, 9, 9, 9, 16, 2, 16 };
 	struct segment min =
-		suggest_compaction_segment(sizes, ARRAY_SIZE(sizes));
+		suggest_compaction_segment(sizes, ARRAY_SIZE(sizes), 2);
 	EXPECT(min.start == 1);
 	EXPECT(min.end == 10);
 }
@@ -738,7 +738,7 @@ static void test_suggest_compaction_segment_nothing(void)
 {
 	uint64_t sizes[] = { 64, 32, 16, 8, 4, 2 };
 	struct segment result =
-		suggest_compaction_segment(sizes, ARRAY_SIZE(sizes));
+		suggest_compaction_segment(sizes, ARRAY_SIZE(sizes), 2);
 	EXPECT(result.start == result.end);
 }
 
