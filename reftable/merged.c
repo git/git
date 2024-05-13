@@ -37,6 +37,7 @@ static void merged_iter_init(struct merged_iter *mi,
 	mi->advance_index = -1;
 	mi->suppress_deletions = mt->suppress_deletions;
 	REFTABLE_CALLOC_ARRAY(mi->subiters, mt->stack_len);
+	mi->stack_len = mt->stack_len;
 }
 
 static void merged_iter_close(void *p)
@@ -236,21 +237,19 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 	merged_iter_init(&merged, mt);
 
 	for (size_t i = 0; i < mt->stack_len; i++) {
-		reftable_record_init(&merged.subiters[merged.stack_len].rec,
+		reftable_record_init(&merged.subiters[i].rec,
 				     reftable_record_type(rec));
 
 		err = reftable_table_seek_record(&mt->stack[i],
-						 &merged.subiters[merged.stack_len].iter, rec);
+						 &merged.subiters[i].iter, rec);
 		if (err < 0)
 			goto out;
 		if (err > 0)
 			continue;
 
-		err = merged_iter_advance_subiter(&merged, merged.stack_len);
+		err = merged_iter_advance_subiter(&merged, i);
 		if (err < 0)
 			goto out;
-
-		merged.stack_len++;
 	}
 
 	p = reftable_malloc(sizeof(*p));
