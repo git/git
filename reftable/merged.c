@@ -25,34 +25,18 @@ struct merged_subiter {
 struct merged_iter {
 	struct merged_subiter *subiters;
 	struct merged_iter_pqueue pq;
-	uint32_t hash_id;
 	size_t stack_len;
-	uint8_t typ;
 	int suppress_deletions;
 	ssize_t advance_index;
 };
 
-static int merged_iter_init(struct merged_iter *mi)
+static void merged_iter_init(struct merged_iter *mi,
+			     struct reftable_merged_table *mt)
 {
-	for (size_t i = 0; i < mi->stack_len; i++) {
-		struct pq_entry e = {
-			.index = i,
-			.rec = &mi->subiters[i].rec,
-		};
-		int err;
-
-		reftable_record_init(&mi->subiters[i].rec, mi->typ);
-		err = iterator_next(&mi->subiters[i].iter,
-				    &mi->subiters[i].rec);
-		if (err < 0)
-			return err;
-		if (err > 0)
-			continue;
-
-		merged_iter_pqueue_add(&mi->pq, &e);
-	}
-
-	return 0;
+	memset(mi, 0, sizeof(*mi));
+	mi->advance_index = -1;
+	mi->suppress_deletions = mt->suppress_deletions;
+	REFTABLE_CALLOC_ARRAY(mi->subiters, mt->stack_len);
 }
 
 static void merged_iter_close(void *p)
@@ -246,32 +230,33 @@ static int merged_table_seek_record(struct reftable_merged_table *mt,
 				    struct reftable_iterator *it,
 				    struct reftable_record *rec)
 {
-	struct merged_iter merged = {
-		.typ = reftable_record_type(rec),
-		.hash_id = mt->hash_id,
-		.suppress_deletions = mt->suppress_deletions,
-		.advance_index = -1,
-	};
-	struct merged_iter *p;
+	struct merged_iter merged, *p;
 	int err;
 
-	REFTABLE_CALLOC_ARRAY(merged.subiters, mt->stack_len);
+	merged_iter_init(&merged, mt);
+
 	for (size_t i = 0; i < mt->stack_len; i++) {
+		reftable_record_init(&merged.subiters[merged.stack_len].rec,
+				     reftable_record_type(rec));
+
 		err = reftable_table_seek_record(&mt->stack[i],
 						 &merged.subiters[merged.stack_len].iter, rec);
 		if (err < 0)
 			goto out;
-		if (!err)
-			merged.stack_len++;
+		if (err > 0)
+			continue;
+
+		err = merged_iter_advance_subiter(&merged, merged.stack_len);
+		if (err < 0)
+			goto out;
+
+		merged.stack_len++;
 	}
 
-	err = merged_iter_init(&merged);
-	if (err < 0)
-		goto out;
-
-	p = reftable_malloc(sizeof(struct merged_iter));
+	p = reftable_malloc(sizeof(*p));
 	*p = merged;
 	iterator_from_merged_iter(it, p);
+	err = 0;
 
 out:
 	if (err < 0)
