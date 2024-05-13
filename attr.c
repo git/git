@@ -1222,13 +1222,6 @@ static void compute_default_attr_source(struct object_id *attr_source)
 		ignore_bad_attr_tree = 1;
 	}
 
-	if (!default_attr_source_tree_object_name &&
-	    startup_info->have_repository &&
-	    is_bare_repository()) {
-		default_attr_source_tree_object_name = "HEAD";
-		ignore_bad_attr_tree = 1;
-	}
-
 	if (!default_attr_source_tree_object_name || !is_null_oid(attr_source))
 		return;
 
