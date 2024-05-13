@@ -425,7 +425,7 @@ static int reader_seek_linear(struct table_iter *ti,
 	struct strbuf want_key = STRBUF_INIT;
 	struct strbuf got_key = STRBUF_INIT;
 	struct reftable_record rec;
-	int err = -1;
+	int err;
 
 	reftable_record_init(&rec, reftable_record_type(want));
 	reftable_record_key(want, &want_key);
@@ -499,8 +499,8 @@ done:
 	return err;
 }
 
-static int reader_seek_indexed(struct reftable_reader *r,
-			       struct reftable_iterator *it,
+static int reader_seek_indexed(struct table_iter *ti,
+			       struct reftable_reader *r,
 			       struct reftable_record *rec)
 {
 	struct reftable_record want_index = {
@@ -510,13 +510,9 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		.type = BLOCK_TYPE_INDEX,
 		.u.idx = { .last_key = STRBUF_INIT },
 	};
-	struct table_iter ti = TABLE_ITER_INIT, *malloced;
-	int err = 0;
+	int err;
 
 	reftable_record_key(rec, &want_index.u.idx.last_key);
-	err = reader_start(r, &ti, reftable_record_type(rec), 1);
-	if (err < 0)
-		goto done;
 
 	/*
 	 * The index may consist of multiple levels, where each level may have
@@ -524,7 +520,7 @@ static int reader_seek_indexed(struct reftable_reader *r,
 	 * highest layer that identifies the relevant index block as well as
 	 * the record inside that block that corresponds to our wanted key.
 	 */
-	err = reader_seek_linear(&ti, &want_index);
+	err = reader_seek_linear(ti, &want_index);
 	if (err < 0)
 		goto done;
 
@@ -550,36 +546,30 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		 * all levels of the index only to find out that the key does
 		 * not exist.
 		 */
-		err = table_iter_next(&ti, &index_result);
+		err = table_iter_next(ti, &index_result);
 		if (err != 0)
 			goto done;
 
-		err = reader_table_iter_at(r, &ti, index_result.u.idx.offset, 0);
+		err = reader_table_iter_at(r, ti, index_result.u.idx.offset, 0);
 		if (err != 0)
 			goto done;
 
-		err = block_iter_seek_key(&ti.bi, &ti.br, &want_index.u.idx.last_key);
+		err = block_iter_seek_key(&ti->bi, &ti->br, &want_index.u.idx.last_key);
 		if (err < 0)
 			goto done;
 
-		if (ti.typ == reftable_record_type(rec)) {
+		if (ti->typ == reftable_record_type(rec)) {
 			err = 0;
 			break;
 		}
 
-		if (ti.typ != BLOCK_TYPE_INDEX) {
+		if (ti->typ != BLOCK_TYPE_INDEX) {
 			err = REFTABLE_FORMAT_ERROR;
 			goto done;
 		}
 	}
 
-	REFTABLE_ALLOC_ARRAY(malloced, 1);
-	*malloced = ti;
-	iterator_from_table_iter(it, malloced);
-
 done:
-	if (err)
-		table_iter_close(&ti);
 	reftable_record_release(&want_index);
 	reftable_record_release(&index_result);
 	return err;
@@ -595,15 +585,15 @@ static int reader_seek_internal(struct reftable_reader *r,
 	struct table_iter ti = TABLE_ITER_INIT, *p;
 	int err;
 
-	if (idx > 0)
-		return reader_seek_indexed(r, it, rec);
-
-	err = reader_start(r, &ti, reftable_record_type(rec), 0);
+	err = reader_start(r, &ti, reftable_record_type(rec), !!idx);
 	if (err < 0)
 		goto out;
 
-	err = reader_seek_linear(&ti, rec);
-	if (err < 0)
+	if (idx)
+		err = reader_seek_indexed(&ti, r, rec);
+	else
+		err = reader_seek_linear(&ti, rec);
+	if (err)
 		goto out;
 
 	REFTABLE_ALLOC_ARRAY(p, 1);
