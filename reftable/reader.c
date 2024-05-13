@@ -573,21 +573,25 @@ done:
 	return err;
 }
 
-static int reader_seek_internal(struct reftable_reader *r,
-				struct reftable_iterator *it,
-				struct reftable_record *rec)
+static int reader_seek(struct reftable_reader *r, struct reftable_iterator *it,
+		       struct reftable_record *rec)
 {
-	struct reftable_reader_offsets *offs =
-		reader_offsets_for(r, reftable_record_type(rec));
-	uint64_t idx = offs->index_offset;
+	uint8_t typ = reftable_record_type(rec);
+	struct reftable_reader_offsets *offs = reader_offsets_for(r, typ);
 	struct table_iter ti = TABLE_ITER_INIT, *p;
 	int err;
 
-	err = table_iter_seek_start(&ti, r, reftable_record_type(rec), !!idx);
+	if (!offs->is_present) {
+		iterator_set_empty(it);
+		return 0;
+	}
+
+	err = table_iter_seek_start(&ti, r, reftable_record_type(rec),
+				    !!offs->index_offset);
 	if (err < 0)
 		goto out;
 
-	if (idx)
+	if (offs->index_offset)
 		err = table_iter_seek_indexed(&ti, rec);
 	else
 		err = table_iter_seek_linear(&ti, rec);
@@ -602,20 +606,6 @@ out:
 	if (err)
 		table_iter_close(&ti);
 	return err;
-}
-
-static int reader_seek(struct reftable_reader *r, struct reftable_iterator *it,
-		       struct reftable_record *rec)
-{
-	uint8_t typ = reftable_record_type(rec);
-
-	struct reftable_reader_offsets *offs = reader_offsets_for(r, typ);
-	if (!offs->is_present) {
-		iterator_set_empty(it);
-		return 0;
-	}
-
-	return reader_seek_internal(r, it, rec);
 }
 
 int reftable_reader_seek_ref(struct reftable_reader *r,
