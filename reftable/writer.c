@@ -117,8 +117,6 @@ static void writer_reinit_block_writer(struct reftable_writer *w, uint8_t typ)
 	w->block_writer->restart_interval = w->opts.restart_interval;
 }
 
-static struct strbuf reftable_empty_strbuf = STRBUF_INIT;
-
 struct reftable_writer *
 reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 		    int (*flush_func)(void *),
@@ -136,7 +134,7 @@ reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 	}
 
 	strbuf_init(&wp->block_writer_data.last_key, 0);
-	wp->last_key = reftable_empty_strbuf;
+	strbuf_init(&wp->last_key, 0);
 	REFTABLE_CALLOC_ARRAY(wp->block, opts.block_size);
 	wp->write = writer_func;
 	wp->write_arg = writer_arg;
