@@ -54,15 +54,14 @@ static int reftable_fd_flush(void *arg)
 }
 
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
-		       struct reftable_write_options config)
+		       struct reftable_write_options opts)
 {
 	struct reftable_stack *p = reftable_calloc(1, sizeof(*p));
 	struct strbuf list_file_name = STRBUF_INIT;
 	int err = 0;
 
-	if (config.hash_id == 0) {
-		config.hash_id = GIT_SHA1_FORMAT_ID;
-	}
+	if (opts.hash_id == 0)
+		opts.hash_id = GIT_SHA1_FORMAT_ID;
 
 	*dest = NULL;
 
@@ -73,7 +72,7 @@ int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 	p->list_file = strbuf_detach(&list_file_name, NULL);
 	p->list_fd = -1;
 	p->reftable_dir = xstrdup(dir);
-	p->config = config;
+	p->opts = opts;
 
 	err = reftable_stack_reload_maybe_reuse(p, 1);
 	if (err < 0) {
@@ -255,7 +254,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st, char **names,
 
 	/* success! */
 	err = reftable_new_merged_table(&new_merged, new_tables,
-					new_readers_len, st->config.hash_id);
+					new_readers_len, st->opts.hash_id);
 	if (err < 0)
 		goto done;
 
@@ -578,8 +577,8 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 		}
 		goto done;
 	}
-	if (st->config.default_permissions) {
-		if (chmod(add->lock_file->filename.buf, st->config.default_permissions) < 0) {
+	if (st->opts.default_permissions) {
+		if (chmod(add->lock_file->filename.buf, st->opts.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -678,7 +677,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 	if (err)
 		goto done;
 
-	if (!add->stack->config.disable_auto_compact) {
+	if (!add->stack->opts.disable_auto_compact) {
 		/*
 		 * Auto-compact the stack to keep the number of tables in
 		 * control. It is possible that a concurrent writer is already
@@ -756,9 +755,9 @@ int reftable_addition_add(struct reftable_addition *add,
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
-	if (add->stack->config.default_permissions) {
+	if (add->stack->opts.default_permissions) {
 		if (chmod(get_tempfile_path(tab_file),
-			  add->stack->config.default_permissions)) {
+			  add->stack->opts.default_permissions)) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -766,7 +765,7 @@ int reftable_addition_add(struct reftable_addition *add,
 	tab_fd = get_tempfile_fd(tab_file);
 
 	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush, &tab_fd,
-				 &add->stack->config);
+				 &add->stack->opts);
 	err = write_table(wr, arg);
 	if (err < 0)
 		goto done;
@@ -849,14 +848,14 @@ static int stack_compact_locked(struct reftable_stack *st,
 	}
 	tab_fd = get_tempfile_fd(tab_file);
 
-	if (st->config.default_permissions &&
-	    chmod(get_tempfile_path(tab_file), st->config.default_permissions) < 0) {
+	if (st->opts.default_permissions &&
+	    chmod(get_tempfile_path(tab_file), st->opts.default_permissions) < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
 	wr = reftable_new_writer(reftable_fd_write, reftable_fd_flush,
-				 &tab_fd, &st->config);
+				 &tab_fd, &st->opts);
 	err = stack_write_compact(st, wr, first, last, config);
 	if (err < 0)
 		goto done;
@@ -904,7 +903,7 @@ static int stack_write_compact(struct reftable_stack *st,
 				   st->readers[last]->max_update_index);
 
 	err = reftable_new_merged_table(&mt, subtabs, subtabs_len,
-					st->config.hash_id);
+					st->opts.hash_id);
 	if (err < 0) {
 		reftable_free(subtabs);
 		goto done;
@@ -1094,9 +1093,9 @@ static int stack_compact_range(struct reftable_stack *st,
 		goto done;
 	}
 
-	if (st->config.default_permissions) {
+	if (st->opts.default_permissions) {
 		if (chmod(get_lock_file_path(&tables_list_lock),
-			  st->config.default_permissions) < 0) {
+			  st->opts.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -1286,7 +1285,7 @@ static uint64_t *stack_table_sizes_for_compaction(struct reftable_stack *st)
 {
 	uint64_t *sizes =
 		reftable_calloc(st->merged->stack_len, sizeof(*sizes));
-	int version = (st->config.hash_id == GIT_SHA1_FORMAT_ID) ? 1 : 2;
+	int version = (st->opts.hash_id == GIT_SHA1_FORMAT_ID) ? 1 : 2;
 	int overhead = header_size(version) - 1;
 	int i = 0;
 	for (i = 0; i < st->merged->stack_len; i++) {
@@ -1435,11 +1434,11 @@ done:
 int reftable_stack_print_directory(const char *stackdir, uint32_t hash_id)
 {
 	struct reftable_stack *stack = NULL;
-	struct reftable_write_options cfg = { .hash_id = hash_id };
+	struct reftable_write_options opts = { .hash_id = hash_id };
 	struct reftable_merged_table *merged = NULL;
 	struct reftable_table table = { NULL };
 
-	int err = reftable_new_stack(&stack, stackdir, cfg);
+	int err = reftable_new_stack(&stack, stackdir, opts);
 	if (err < 0)
 		goto done;
 
