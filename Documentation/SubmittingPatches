@@ -545,9 +545,9 @@ not a text/plain, it's something else.
 Some parts of the system have dedicated maintainers with their own
 repositories.
 
-- `git-gui/` comes from git-gui project, maintained by Pratyush Yadav:
+- `git-gui/` comes from git-gui project, maintained by Johannes Sixt:
 
-	https://github.com/prati0100/git-gui.git
+        https://github.com/j6t/git-gui
 
 - `gitk-git/` comes from Paul Mackerras's gitk project:
 
