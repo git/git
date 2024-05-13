@@ -31,12 +31,18 @@ struct merged_iter {
 };
 
 static void merged_iter_init(struct merged_iter *mi,
-			     struct reftable_merged_table *mt)
+			     struct reftable_merged_table *mt,
+			     uint8_t typ)
 {
 	memset(mi, 0, sizeof(*mi));
 	mi->advance_index = -1;
 	mi->suppress_deletions = mt->suppress_deletions;
+
 	REFTABLE_CALLOC_ARRAY(mi->subiters, mt->stack_len);
+	for (size_t i = 0; i < mt->stack_len; i++) {
+		reftable_record_init(&mi->subiters[i].rec, typ);
+		table_init_iter(&mt->stack[i], &mi->subiters[i].iter, typ);
+	}
 	mi->stack_len = mt->stack_len;
 }
 
@@ -65,6 +71,27 @@ static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
 		return err;
 
 	merged_iter_pqueue_add(&mi->pq, &e);
+	return 0;
+}
+
+static int merged_iter_seek(struct merged_iter *mi, struct reftable_record *want)
+{
+	int err;
+
+	mi->advance_index = -1;
+
+	for (size_t i = 0; i < mi->stack_len; i++) {
+		err = iterator_seek(&mi->subiters[i].iter, want);
+		if (err < 0)
+			return err;
+		if (err > 0)
+			continue;
+
+		err = merged_iter_advance_subiter(mi, i);
+		if (err < 0)
+			return err;
+	}
+
 	return 0;
 }
 
@@ -133,6 +160,11 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	return 0;
 }
 
+static int merged_iter_seek_void(void *it, struct reftable_record *want)
+{
+	return merged_iter_seek(it, want);
+}
+
 static int merged_iter_next_void(void *p, struct reftable_record *rec)
 {
 	struct merged_iter *mi = p;
@@ -147,6 +179,7 @@ static int merged_iter_next_void(void *p, struct reftable_record *rec)
 }
 
 static struct reftable_iterator_vtable merged_iter_vtable = {
+	.seek = merged_iter_seek_void,
 	.next = &merged_iter_next_void,
 	.close = &merged_iter_close,
 };
@@ -220,47 +253,13 @@ reftable_merged_table_min_update_index(struct reftable_merged_table *mt)
 	return mt->min;
 }
 
-static int reftable_table_seek_record(struct reftable_table *tab,
-				      struct reftable_iterator *it,
-				      struct reftable_record *rec)
+static void merged_table_init_iter(struct reftable_merged_table *mt,
+				   struct reftable_iterator *it,
+				   uint8_t typ)
 {
-	return tab->ops->seek_record(tab->table_arg, it, rec);
-}
-
-static int merged_table_seek_record(struct reftable_merged_table *mt,
-				    struct reftable_iterator *it,
-				    struct reftable_record *rec)
-{
-	struct merged_iter merged, *p;
-	int err;
-
-	merged_iter_init(&merged, mt);
-
-	for (size_t i = 0; i < mt->stack_len; i++) {
-		reftable_record_init(&merged.subiters[i].rec,
-				     reftable_record_type(rec));
-
-		err = reftable_table_seek_record(&mt->stack[i],
-						 &merged.subiters[i].iter, rec);
-		if (err < 0)
-			goto out;
-		if (err > 0)
-			continue;
-
-		err = merged_iter_advance_subiter(&merged, i);
-		if (err < 0)
-			goto out;
-	}
-
-	p = reftable_malloc(sizeof(*p));
-	*p = merged;
-	iterator_from_merged_iter(it, p);
-	err = 0;
-
-out:
-	if (err < 0)
-		merged_iter_close(&merged);
-	return err;
+	struct merged_iter *mi = reftable_malloc(sizeof(*mi));
+	merged_iter_init(mi, mt, typ);
+	iterator_from_merged_iter(it, mi);
 }
 
 int reftable_merged_table_seek_ref(struct reftable_merged_table *mt,
@@ -273,7 +272,8 @@ int reftable_merged_table_seek_ref(struct reftable_merged_table *mt,
 			.refname = (char *)name,
 		},
 	};
-	return merged_table_seek_record(mt, it, &rec);
+	merged_table_init_iter(mt, it, BLOCK_TYPE_REF);
+	return iterator_seek(it, &rec);
 }
 
 int reftable_merged_table_seek_log_at(struct reftable_merged_table *mt,
@@ -285,7 +285,8 @@ int reftable_merged_table_seek_log_at(struct reftable_merged_table *mt,
 					       .refname = (char *)name,
 					       .update_index = update_index,
 				       } };
-	return merged_table_seek_record(mt, it, &rec);
+	merged_table_init_iter(mt, it, BLOCK_TYPE_LOG);
+	return iterator_seek(it, &rec);
 }
 
 int reftable_merged_table_seek_log(struct reftable_merged_table *mt,
@@ -301,11 +302,11 @@ uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *mt)
 	return mt->hash_id;
 }
 
-static int reftable_merged_table_seek_void(void *tab,
-					   struct reftable_iterator *it,
-					   struct reftable_record *rec)
+static void reftable_merged_table_init_iter_void(void *tab,
+						 struct reftable_iterator *it,
+						 uint8_t typ)
 {
-	return merged_table_seek_record(tab, it, rec);
+	merged_table_init_iter(tab, it, typ);
 }
 
 static uint32_t reftable_merged_table_hash_id_void(void *tab)
@@ -324,7 +325,7 @@ static uint64_t reftable_merged_table_max_update_index_void(void *tab)
 }
 
 static struct reftable_table_vtable merged_table_vtable = {
-	.seek_record = reftable_merged_table_seek_void,
+	.init_iter = reftable_merged_table_init_iter_void,
 	.hash_id = reftable_merged_table_hash_id_void,
 	.min_update_index = reftable_merged_table_min_update_index_void,
 	.max_update_index = reftable_merged_table_max_update_index_void,

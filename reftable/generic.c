@@ -12,25 +12,39 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-iterator.h"
 #include "reftable-generic.h"
 
+void table_init_iter(struct reftable_table *tab,
+		     struct reftable_iterator *it,
+		     uint8_t typ)
+{
+
+	tab->ops->init_iter(tab->table_arg, it, typ);
+}
+
 int reftable_table_seek_ref(struct reftable_table *tab,
 			    struct reftable_iterator *it, const char *name)
 {
-	struct reftable_record rec = { .type = BLOCK_TYPE_REF,
-				       .u.ref = {
-					       .refname = (char *)name,
-				       } };
-	return tab->ops->seek_record(tab->table_arg, it, &rec);
+	struct reftable_record want = {
+		.type = BLOCK_TYPE_REF,
+		.u.ref = {
+			.refname = (char *)name,
+		},
+	};
+	table_init_iter(tab, it, BLOCK_TYPE_REF);
+	return it->ops->seek(it->iter_arg, &want);
 }
 
 int reftable_table_seek_log(struct reftable_table *tab,
 			    struct reftable_iterator *it, const char *name)
 {
-	struct reftable_record rec = { .type = BLOCK_TYPE_LOG,
-				       .u.log = {
-					       .refname = (char *)name,
-					       .update_index = ~((uint64_t)0),
-				       } };
-	return tab->ops->seek_record(tab->table_arg, it, &rec);
+	struct reftable_record want = {
+		.type = BLOCK_TYPE_LOG,
+		.u.log = {
+			.refname = (char *)name,
+			.update_index = ~((uint64_t)0),
+		},
+	};
+	table_init_iter(tab, it, BLOCK_TYPE_LOG);
+	return it->ops->seek(it->iter_arg, &want);
 }
 
 int reftable_table_read_ref(struct reftable_table *tab, const char *name,
@@ -152,9 +166,19 @@ int reftable_iterator_next_log(struct reftable_iterator *it,
 	return err;
 }
 
+int iterator_seek(struct reftable_iterator *it, struct reftable_record *want)
+{
+	return it->ops->seek(it->iter_arg, want);
+}
+
 int iterator_next(struct reftable_iterator *it, struct reftable_record *rec)
 {
 	return it->ops->next(it->iter_arg, rec);
+}
+
+static int empty_iterator_seek(void *arg, struct reftable_record *want)
+{
+	return 0;
 }
 
 static int empty_iterator_next(void *arg, struct reftable_record *rec)
@@ -167,6 +191,7 @@ static void empty_iterator_close(void *arg)
 }
 
 static struct reftable_iterator_vtable empty_vtable = {
+	.seek = &empty_iterator_seek,
 	.next = &empty_iterator_next,
 	.close = &empty_iterator_close,
 };
