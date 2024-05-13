@@ -171,4 +171,47 @@ test_expect_success 'block size exceeding maximum supported size' '
 	)
 '
 
+test_expect_success 'restart interval at every single record' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		for i in $(test_seq 10)
+		do
+			printf "update refs/heads/branch-%d HEAD\n" "$i" ||
+			return 1
+		done >input &&
+		git update-ref --stdin <input &&
+		git -c reftable.restartInterval=1 pack-refs &&
+
+		cat >expect <<-EOF &&
+		header:
+		  block_size: 4096
+		ref:
+		  - length: 566
+		    restarts: 13
+		log:
+		  - length: 1393
+		    restarts: 12
+		EOF
+		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'restart interval exceeding maximum supported interval' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		cat >expect <<-EOF &&
+		fatal: reftable block size cannot exceed 65535
+		EOF
+		test_must_fail git -c reftable.restartInterval=65536 pack-refs 2>err &&
+		test_cmp expect err
+	)
+'
+
 test_done

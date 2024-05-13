@@ -240,6 +240,11 @@ static int reftable_be_config(const char *var, const char *value,
 		if (block_size > 16777215)
 			die("reftable block size cannot exceed 16MB");
 		opts->block_size = block_size;
+	} else if (!strcmp(var, "reftable.restartinterval")) {
+		unsigned long restart_interval = git_config_ulong(var, value, ctx->kvi);
+		if (restart_interval > UINT16_MAX)
+			die("reftable block size cannot exceed %u", (unsigned)UINT16_MAX);
+		opts->restart_interval = restart_interval;
 	}
 
 	return 0;
