@@ -45,11 +45,11 @@ static int filtering_ref_iterator_next(void *iter_arg,
 		if (fri->double_check) {
 			struct reftable_iterator it = { NULL };
 
-			err = reftable_table_seek_ref(&fri->tab, &it,
-						      ref->refname);
-			if (err == 0) {
+			reftable_table_init_ref_iter(&fri->tab, &it);
+
+			err = reftable_iterator_seek_ref(&it, ref->refname);
+			if (err == 0)
 				err = reftable_iterator_next_ref(&it, ref);
-			}
 
 			reftable_iterator_destroy(&it);
 

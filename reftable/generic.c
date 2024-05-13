@@ -20,8 +20,20 @@ void table_init_iter(struct reftable_table *tab,
 	tab->ops->init_iter(tab->table_arg, it, typ);
 }
 
-int reftable_table_seek_ref(struct reftable_table *tab,
-			    struct reftable_iterator *it, const char *name)
+void reftable_table_init_ref_iter(struct reftable_table *tab,
+				  struct reftable_iterator *it)
+{
+	table_init_iter(tab, it, BLOCK_TYPE_REF);
+}
+
+void reftable_table_init_log_iter(struct reftable_table *tab,
+				  struct reftable_iterator *it)
+{
+	table_init_iter(tab, it, BLOCK_TYPE_LOG);
+}
+
+int reftable_iterator_seek_ref(struct reftable_iterator *it,
+			       const char *name)
 {
 	struct reftable_record want = {
 		.type = BLOCK_TYPE_REF,
@@ -29,29 +41,37 @@ int reftable_table_seek_ref(struct reftable_table *tab,
 			.refname = (char *)name,
 		},
 	};
-	table_init_iter(tab, it, BLOCK_TYPE_REF);
 	return it->ops->seek(it->iter_arg, &want);
 }
 
-int reftable_table_seek_log(struct reftable_table *tab,
-			    struct reftable_iterator *it, const char *name)
+int reftable_iterator_seek_log_at(struct reftable_iterator *it,
+				  const char *name, uint64_t update_index)
 {
 	struct reftable_record want = {
 		.type = BLOCK_TYPE_LOG,
 		.u.log = {
 			.refname = (char *)name,
-			.update_index = ~((uint64_t)0),
+			.update_index = update_index,
 		},
 	};
-	table_init_iter(tab, it, BLOCK_TYPE_LOG);
 	return it->ops->seek(it->iter_arg, &want);
+}
+
+int reftable_iterator_seek_log(struct reftable_iterator *it,
+			       const char *name)
+{
+	return reftable_iterator_seek_log_at(it, name, ~((uint64_t) 0));
 }
 
 int reftable_table_read_ref(struct reftable_table *tab, const char *name,
 			    struct reftable_ref_record *ref)
 {
 	struct reftable_iterator it = { NULL };
-	int err = reftable_table_seek_ref(tab, &it, name);
+	int err;
+
+	reftable_table_init_ref_iter(tab, &it);
+
+	err = reftable_iterator_seek_ref(&it, name);
 	if (err)
 		goto done;
 
@@ -76,10 +96,13 @@ int reftable_table_print(struct reftable_table *tab) {
 	struct reftable_ref_record ref = { NULL };
 	struct reftable_log_record log = { NULL };
 	uint32_t hash_id = reftable_table_hash_id(tab);
-	int err = reftable_table_seek_ref(tab, &it, "");
-	if (err < 0) {
+	int err;
+
+	reftable_table_init_ref_iter(tab, &it);
+
+	err = reftable_iterator_seek_ref(&it, "");
+	if (err < 0)
 		return err;
-	}
 
 	while (1) {
 		err = reftable_iterator_next_ref(&it, &ref);
@@ -94,10 +117,12 @@ int reftable_table_print(struct reftable_table *tab) {
 	reftable_iterator_destroy(&it);
 	reftable_ref_record_release(&ref);
 
-	err = reftable_table_seek_log(tab, &it, "");
-	if (err < 0) {
+	reftable_table_init_log_iter(tab, &it);
+
+	err = reftable_iterator_seek_log(&it, "");
+	if (err < 0)
 		return err;
-	}
+
 	while (1) {
 		err = reftable_iterator_next_log(&it, &log);
 		if (err > 0) {
