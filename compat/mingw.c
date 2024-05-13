@@ -3159,6 +3159,7 @@ int uname(struct utsname *buf)
 	return 0;
 }
 
+#ifndef NO_UNIX_SOCKETS
 int mingw_have_unix_sockets(void)
 {
 	SC_HANDLE scm, srvc;
@@ -3177,3 +3178,4 @@ int mingw_have_unix_sockets(void)
 	}
 	return ret;
 }
+#endif
