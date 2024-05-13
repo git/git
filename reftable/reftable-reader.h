@@ -97,5 +97,7 @@ void reftable_table_from_reader(struct reftable_table *tab,
 
 /* print table onto stdout for debugging. */
 int reftable_reader_print_file(const char *tablename);
+/* print blocks onto stdout for debugging. */
+int reftable_reader_print_blocks(const char *tablename);
 
 #endif

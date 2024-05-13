@@ -48,6 +48,7 @@ static void print_help(void)
 	printf("usage: dump [-cst] arg\n\n"
 	       "options: \n"
 	       "  -c compact\n"
+	       "  -b dump blocks\n"
 	       "  -t dump table\n"
 	       "  -s dump stack\n"
 	       "  -6 sha256 hash format\n"
@@ -58,6 +59,7 @@ static void print_help(void)
 int reftable_dump_main(int argc, char *const *argv)
 {
 	int err = 0;
+	int opt_dump_blocks = 0;
 	int opt_dump_table = 0;
 	int opt_dump_stack = 0;
 	int opt_compact = 0;
@@ -67,6 +69,8 @@ int reftable_dump_main(int argc, char *const *argv)
 	for (; argc > 1; argv++, argc--)
 		if (*argv[1] != '-')
 			break;
+		else if (!strcmp("-b", argv[1]))
+			opt_dump_blocks = 1;
 		else if (!strcmp("-t", argv[1]))
 			opt_dump_table = 1;
 		else if (!strcmp("-6", argv[1]))
@@ -88,7 +92,9 @@ int reftable_dump_main(int argc, char *const *argv)
 
 	arg = argv[1];
 
-	if (opt_dump_table) {
+	if (opt_dump_blocks) {
+		err = reftable_reader_print_blocks(arg);
+	} else if (opt_dump_table) {
 		err = reftable_reader_print_file(arg);
 	} else if (opt_dump_stack) {
 		err = reftable_stack_print_directory(arg, opt_hash_id);
