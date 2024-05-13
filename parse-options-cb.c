@@ -7,6 +7,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "object-name.h"
+#include "setup.h"
 #include "string-list.h"
 #include "strvec.h"
 #include "oid-array.h"
@@ -29,7 +30,7 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
 				     opt->long_name);
 		if (v && v < MINIMUM_ABBREV)
 			v = MINIMUM_ABBREV;
-		else if (v > the_hash_algo->hexsz)
+		else if (startup_info->have_repository && v > the_hash_algo->hexsz)
 			v = the_hash_algo->hexsz;
 	}
 	*(int *)(opt->value) = v;
