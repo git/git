@@ -239,7 +239,9 @@ static void test_log_write_read(void)
 	err = init_reader(&rd, &source, "file.log");
 	EXPECT_ERR(err);
 
-	err = reftable_reader_seek_ref(&rd, &it, names[N - 1]);
+	reftable_reader_init_ref_iterator(&rd, &it);
+
+	err = reftable_iterator_seek_ref(&it, names[N - 1]);
 	EXPECT_ERR(err);
 
 	err = reftable_iterator_next_ref(&it, &ref);
@@ -252,7 +254,9 @@ static void test_log_write_read(void)
 	reftable_iterator_destroy(&it);
 	reftable_ref_record_release(&ref);
 
-	err = reftable_reader_seek_log(&rd, &it, "");
+	reftable_reader_init_log_iterator(&rd, &it);
+
+	err = reftable_iterator_seek_log(&it, "");
 	EXPECT_ERR(err);
 
 	i = 0;
@@ -330,7 +334,8 @@ static void test_log_zlib_corruption(void)
 	err = init_reader(&rd, &source, "file.log");
 	EXPECT_ERR(err);
 
-	err = reftable_reader_seek_log(&rd, &it, "refname");
+	reftable_reader_init_log_iterator(&rd, &it);
+	err = reftable_iterator_seek_log(&it, "refname");
 	EXPECT(err == REFTABLE_ZLIB_ERROR);
 
 	reftable_iterator_destroy(&it);
@@ -358,7 +363,8 @@ static void test_table_read_write_sequential(void)
 	err = init_reader(&rd, &source, "file.ref");
 	EXPECT_ERR(err);
 
-	err = reftable_reader_seek_ref(&rd, &it, "");
+	reftable_reader_init_ref_iterator(&rd, &it);
+	err = reftable_iterator_seek_ref(&it, "");
 	EXPECT_ERR(err);
 
 	while (1) {
@@ -412,7 +418,8 @@ static void test_table_read_api(void)
 	err = init_reader(&rd, &source, "file.ref");
 	EXPECT_ERR(err);
 
-	err = reftable_reader_seek_ref(&rd, &it, names[0]);
+	reftable_reader_init_ref_iterator(&rd, &it);
+	err = reftable_iterator_seek_ref(&it, names[0]);
 	EXPECT_ERR(err);
 
 	err = reftable_iterator_next_log(&it, &log);
@@ -457,7 +464,8 @@ static void test_table_read_write_seek(int index, int hash_id)
 	}
 
 	for (i = 1; i < N; i++) {
-		int err = reftable_reader_seek_ref(&rd, &it, names[i]);
+		reftable_reader_init_ref_iterator(&rd, &it);
+		err = reftable_iterator_seek_ref(&it, names[i]);
 		EXPECT_ERR(err);
 		err = reftable_iterator_next_ref(&it, &ref);
 		EXPECT_ERR(err);
@@ -472,7 +480,8 @@ static void test_table_read_write_seek(int index, int hash_id)
 	strbuf_addstr(&pastLast, names[N - 1]);
 	strbuf_addstr(&pastLast, "/");
 
-	err = reftable_reader_seek_ref(&rd, &it, pastLast.buf);
+	reftable_reader_init_ref_iterator(&rd, &it);
+	err = reftable_iterator_seek_ref(&it, pastLast.buf);
 	if (err == 0) {
 		struct reftable_ref_record ref = { NULL };
 		int err = reftable_iterator_next_ref(&it, &ref);
@@ -576,7 +585,8 @@ static void test_table_refs_for(int indexed)
 		rd.obj_offsets.is_present = 0;
 	}
 
-	err = reftable_reader_seek_ref(&rd, &it, "");
+	reftable_reader_init_ref_iterator(&rd, &it);
+	err = reftable_iterator_seek_ref(&it, "");
 	EXPECT_ERR(err);
 	reftable_iterator_destroy(&it);
 
@@ -639,7 +649,8 @@ static void test_write_empty_table(void)
 	err = reftable_new_reader(&rd, &source, "filename");
 	EXPECT_ERR(err);
 
-	err = reftable_reader_seek_ref(rd, &it, "");
+	reftable_reader_init_ref_iterator(rd, &it);
+	err = reftable_iterator_seek_ref(&it, "");
 	EXPECT_ERR(err);
 
 	err = reftable_iterator_next_ref(&it, &rec);
@@ -846,7 +857,8 @@ static void test_write_multiple_indices(void)
 	 * Seeking the log uses the log index now. In case there is any
 	 * confusion regarding indices we would notice here.
 	 */
-	err = reftable_reader_seek_log(reader, &it, "");
+	reftable_reader_init_log_iterator(reader, &it);
+	err = reftable_iterator_seek_log(&it, "");
 	EXPECT_ERR(err);
 
 	reftable_iterator_destroy(&it);
@@ -901,7 +913,8 @@ static void test_write_multi_level_index(void)
 	/*
 	 * Seeking the last ref should work as expected.
 	 */
-	err = reftable_reader_seek_ref(reader, &it, "refs/heads/199");
+	reftable_reader_init_ref_iterator(reader, &it);
+	err = reftable_iterator_seek_ref(&it, "refs/heads/199");
 	EXPECT_ERR(err);
 
 	reftable_iterator_destroy(&it);

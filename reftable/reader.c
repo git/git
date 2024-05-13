@@ -621,39 +621,16 @@ static void reader_init_iter(struct reftable_reader *r,
 	}
 }
 
-int reftable_reader_seek_ref(struct reftable_reader *r,
-			     struct reftable_iterator *it, const char *name)
+void reftable_reader_init_ref_iterator(struct reftable_reader *r,
+				       struct reftable_iterator *it)
 {
-	struct reftable_record rec = {
-		.type = BLOCK_TYPE_REF,
-		.u.ref = {
-			.refname = (char *)name,
-		},
-	};
 	reader_init_iter(r, it, BLOCK_TYPE_REF);
-	return iterator_seek(it, &rec);
 }
 
-int reftable_reader_seek_log_at(struct reftable_reader *r,
-				struct reftable_iterator *it, const char *name,
-				uint64_t update_index)
+void reftable_reader_init_log_iterator(struct reftable_reader *r,
+				       struct reftable_iterator *it)
 {
-	struct reftable_record rec = {
-		.type = BLOCK_TYPE_LOG,
-		.u.log = {
-			.refname = (char *)name,
-			.update_index = update_index,
-		},
-	};
 	reader_init_iter(r, it, BLOCK_TYPE_LOG);
-	return iterator_seek(it, &rec);
-}
-
-int reftable_reader_seek_log(struct reftable_reader *r,
-			     struct reftable_iterator *it, const char *name)
-{
-	uint64_t max = ~((uint64_t)0);
-	return reftable_reader_seek_log_at(r, it, name, max);
 }
 
 void reader_close(struct reftable_reader *r)
