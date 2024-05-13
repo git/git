@@ -45,7 +45,7 @@ jobs:
       - run: ci/install-dependencies.sh
         if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
         env:
-          runs_on_pool: ${{ matrix.os }}
+          distro: ${{ matrix.os }}
 
       # The Coverity site says the tool is usually updated twice yearly, so the
       # MD5 of download can be used to determine whether there's been an update.
