@@ -49,6 +49,10 @@ Performance, Internal Implementation, Development Support etc.
    to "the_index"  with references to its .index member.
 
 
+ * Git-GUI has a new maintainer, Johannes Sixt.
+   (merge e18ad8eb26 jc/git-gui-maintainer-update later to maint).
+
+
 Fixes since v2.45
 -----------------
 
@@ -87,6 +91,27 @@ Fixes since v2.45
    interaction.
    (merge 3c20acdf46 dk/zsh-git-repo-path-fix later to maint).
 
+ * Tests that try to corrupt in-repository files in chunked format did
+   not work well on macOS due to its broken "mv", which has been
+   worked around.
+   (merge 861dc19ba8 jc/test-workaround-broken-mv later to maint).
+
+ * The maximum size of attribute files is enforced more consistently.
+   (merge c793f9cb08 tb/attr-limits later to maint).
+
+ * Unbreak CI jobs so that we do not attempt to use Python 2 that has
+   been removed from the platform.
+   (merge 5ca0c455f1 ps/ci-python-2-deprecation later to maint).
+
+ * Git 2.43 started using the tree of HEAD as the source of attributes
+   in a bare repository, which has severe performance implications.
+   For now, revert the change, without ripping out a more explicit
+   support for the attr.tree configuration variable.
+   (merge 51441e6460 jc/no-default-attr-tree-in-bare later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 4cf6e7bf5e jt/doc-submitting-rerolled-series later to maint).
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
+   (merge 395c130fd8 ma/win32-unix-domain-socket later to maint).
+   (merge 7df2405b38 jk/ci-macos-gcc13-fix later to maint).
+   (merge 55702c543e fa/p4-error later to maint).
