@@ -36,21 +36,6 @@ int reftable_new_merged_table(struct reftable_merged_table **dest,
 			      struct reftable_table *stack, size_t n,
 			      uint32_t hash_id);
 
-/* returns an iterator positioned just before 'name' */
-int reftable_merged_table_seek_ref(struct reftable_merged_table *mt,
-				   struct reftable_iterator *it,
-				   const char *name);
-
-/* returns an iterator for log entry, at given update_index */
-int reftable_merged_table_seek_log_at(struct reftable_merged_table *mt,
-				      struct reftable_iterator *it,
-				      const char *name, uint64_t update_index);
-
-/* like reftable_merged_table_seek_log_at but look for the newest entry. */
-int reftable_merged_table_seek_log(struct reftable_merged_table *mt,
-				   struct reftable_iterator *it,
-				   const char *name);
-
 /* returns the max update_index covered by this merged table. */
 uint64_t
 reftable_merged_table_max_update_index(struct reftable_merged_table *mt);

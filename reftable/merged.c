@@ -262,41 +262,6 @@ void merged_table_init_iter(struct reftable_merged_table *mt,
 	iterator_from_merged_iter(it, mi);
 }
 
-int reftable_merged_table_seek_ref(struct reftable_merged_table *mt,
-				   struct reftable_iterator *it,
-				   const char *name)
-{
-	struct reftable_record rec = {
-		.type = BLOCK_TYPE_REF,
-		.u.ref = {
-			.refname = (char *)name,
-		},
-	};
-	merged_table_init_iter(mt, it, BLOCK_TYPE_REF);
-	return iterator_seek(it, &rec);
-}
-
-int reftable_merged_table_seek_log_at(struct reftable_merged_table *mt,
-				      struct reftable_iterator *it,
-				      const char *name, uint64_t update_index)
-{
-	struct reftable_record rec = { .type = BLOCK_TYPE_LOG,
-				       .u.log = {
-					       .refname = (char *)name,
-					       .update_index = update_index,
-				       } };
-	merged_table_init_iter(mt, it, BLOCK_TYPE_LOG);
-	return iterator_seek(it, &rec);
-}
-
-int reftable_merged_table_seek_log(struct reftable_merged_table *mt,
-				   struct reftable_iterator *it,
-				   const char *name)
-{
-	uint64_t max = ~((uint64_t)0);
-	return reftable_merged_table_seek_log_at(mt, it, name, max);
-}
-
 uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *mt)
 {
 	return mt->hash_id;

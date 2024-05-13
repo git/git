@@ -925,7 +925,8 @@ static int stack_write_compact(struct reftable_stack *st,
 		goto done;
 	}
 
-	err = reftable_merged_table_seek_ref(mt, &it, "");
+	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+	err = reftable_iterator_seek_ref(&it, "");
 	if (err < 0)
 		goto done;
 
@@ -949,7 +950,8 @@ static int stack_write_compact(struct reftable_stack *st,
 	}
 	reftable_iterator_destroy(&it);
 
-	err = reftable_merged_table_seek_log(mt, &it, "");
+	merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
+	err = reftable_iterator_seek_log(&it, "");
 	if (err < 0)
 		goto done;
 
@@ -1340,9 +1342,11 @@ int reftable_stack_read_ref(struct reftable_stack *st, const char *refname,
 int reftable_stack_read_log(struct reftable_stack *st, const char *refname,
 			    struct reftable_log_record *log)
 {
-	struct reftable_iterator it = { NULL };
-	struct reftable_merged_table *mt = reftable_stack_merged_table(st);
-	int err = reftable_merged_table_seek_log(mt, &it, refname);
+	struct reftable_iterator it = {0};
+	int err;
+
+	reftable_stack_init_log_iterator(st, &it);
+	err = reftable_iterator_seek_log(&it, refname);
 	if (err)
 		goto done;
 

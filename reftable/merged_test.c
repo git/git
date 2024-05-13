@@ -12,6 +12,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "basics.h"
 #include "blocksource.h"
+#include "constants.h"
 #include "reader.h"
 #include "record.h"
 #include "test_framework.h"
@@ -145,7 +146,10 @@ static void test_merged_between(void)
 	int i;
 	struct reftable_ref_record ref = { NULL };
 	struct reftable_iterator it = { NULL };
-	int err = reftable_merged_table_seek_ref(mt, &it, "a");
+	int err;
+
+	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+	err = reftable_iterator_seek_ref(&it, "a");
 	EXPECT_ERR(err);
 
 	err = reftable_iterator_next_ref(&it, &ref);
@@ -217,14 +221,15 @@ static void test_merged(void)
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt =
 		merged_table_from_records(refs, &bs, &readers, sizes, bufs, 3);
-
 	struct reftable_iterator it = { NULL };
-	int err = reftable_merged_table_seek_ref(mt, &it, "a");
+	int err;
 	struct reftable_ref_record *out = NULL;
 	size_t len = 0;
 	size_t cap = 0;
 	int i = 0;
 
+	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+	err = reftable_iterator_seek_ref(&it, "a");
 	EXPECT_ERR(err);
 	EXPECT(reftable_merged_table_hash_id(mt) == GIT_SHA1_FORMAT_ID);
 	EXPECT(reftable_merged_table_min_update_index(mt) == 1);
@@ -348,14 +353,15 @@ static void test_merged_logs(void)
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt = merged_table_from_log_records(
 		logs, &bs, &readers, sizes, bufs, 3);
-
 	struct reftable_iterator it = { NULL };
-	int err = reftable_merged_table_seek_log(mt, &it, "a");
+	int err;
 	struct reftable_log_record *out = NULL;
 	size_t len = 0;
 	size_t cap = 0;
 	int i = 0;
 
+	merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
+	err = reftable_iterator_seek_log(&it, "a");
 	EXPECT_ERR(err);
 	EXPECT(reftable_merged_table_hash_id(mt) == GIT_SHA1_FORMAT_ID);
 	EXPECT(reftable_merged_table_min_update_index(mt) == 1);
@@ -377,7 +383,8 @@ static void test_merged_logs(void)
 						 GIT_SHA1_RAWSZ));
 	}
 
-	err = reftable_merged_table_seek_log_at(mt, &it, "a", 2);
+	merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
+	err = reftable_iterator_seek_log_at(&it, "a", 2);
 	EXPECT_ERR(err);
 	reftable_log_record_release(&out[0]);
 	err = reftable_iterator_next_log(&it, &out[0]);
