@@ -128,10 +128,8 @@ reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 	if (_opts)
 		opts = *_opts;
 	options_set_defaults(&opts);
-	if (opts.block_size >= (1 << 24)) {
-		/* TODO - error return? */
-		abort();
-	}
+	if (opts.block_size >= (1 << 24))
+		BUG("configured block size exceeds 16MB");
 
 	strbuf_init(&wp->block_writer_data.last_key, 0);
 	strbuf_init(&wp->last_key, 0);
