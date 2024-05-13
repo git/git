@@ -29,7 +29,7 @@ static int compact_stack(const char *stackdir)
 	struct reftable_stack *stack = NULL;
 	struct reftable_write_options opts = { 0 };
 
-	int err = reftable_new_stack(&stack, stackdir, opts);
+	int err = reftable_new_stack(&stack, stackdir, &opts);
 	if (err < 0)
 		goto done;
 

@@ -54,12 +54,15 @@ static int reftable_fd_flush(void *arg)
 }
 
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
-		       struct reftable_write_options opts)
+		       const struct reftable_write_options *_opts)
 {
 	struct reftable_stack *p = reftable_calloc(1, sizeof(*p));
 	struct strbuf list_file_name = STRBUF_INIT;
+	struct reftable_write_options opts = {0};
 	int err = 0;
 
+	if (_opts)
+		opts = *_opts;
 	if (opts.hash_id == 0)
 		opts.hash_id = GIT_SHA1_FORMAT_ID;
 
@@ -1438,7 +1441,7 @@ int reftable_stack_print_directory(const char *stackdir, uint32_t hash_id)
 	struct reftable_merged_table *merged = NULL;
 	struct reftable_table table = { NULL };
 
-	int err = reftable_new_stack(&stack, stackdir, opts);
+	int err = reftable_new_stack(&stack, stackdir, &opts);
 	if (err < 0)
 		goto done;
 

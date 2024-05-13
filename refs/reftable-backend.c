@@ -129,7 +129,7 @@ static struct reftable_stack *stack_for(struct reftable_ref_store *store,
 				    store->base.repo->commondir, wtname_buf.buf);
 
 			store->err = reftable_new_stack(&stack, wt_dir.buf,
-							store->write_options);
+							&store->write_options);
 			assert(store->err != REFTABLE_API_ERROR);
 			strmap_put(&store->worktree_stacks, wtname_buf.buf, stack);
 		}
@@ -263,7 +263,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	}
 	strbuf_addstr(&path, "/reftable");
 	refs->err = reftable_new_stack(&refs->main_stack, path.buf,
-				       refs->write_options);
+				       &refs->write_options);
 	if (refs->err)
 		goto done;
 
@@ -280,7 +280,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 		strbuf_addf(&path, "%s/reftable", gitdir);
 
 		refs->err = reftable_new_stack(&refs->worktree_stack, path.buf,
-					       refs->write_options);
+					       &refs->write_options);
 		if (refs->err)
 			goto done;
 	}
