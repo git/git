@@ -253,9 +253,9 @@ reftable_merged_table_min_update_index(struct reftable_merged_table *mt)
 	return mt->min;
 }
 
-static void merged_table_init_iter(struct reftable_merged_table *mt,
-				   struct reftable_iterator *it,
-				   uint8_t typ)
+void merged_table_init_iter(struct reftable_merged_table *mt,
+			    struct reftable_iterator *it,
+			    uint8_t typ)
 {
 	struct merged_iter *mi = reftable_malloc(sizeof(*mi));
 	merged_iter_init(mi, mt, typ);

@@ -10,6 +10,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "../write-or-die.h"
 #include "system.h"
+#include "constants.h"
 #include "merged.h"
 #include "reader.h"
 #include "reftable-error.h"
@@ -128,6 +129,20 @@ int read_lines(const char *filename, char ***namesp)
 	err = fd_read_lines(fd, namesp);
 	close(fd);
 	return err;
+}
+
+void reftable_stack_init_ref_iterator(struct reftable_stack *st,
+				      struct reftable_iterator *it)
+{
+	merged_table_init_iter(reftable_stack_merged_table(st),
+			       it, BLOCK_TYPE_REF);
+}
+
+void reftable_stack_init_log_iterator(struct reftable_stack *st,
+				      struct reftable_iterator *it)
+{
+	merged_table_init_iter(reftable_stack_merged_table(st),
+			       it, BLOCK_TYPE_LOG);
 }
 
 struct reftable_merged_table *
