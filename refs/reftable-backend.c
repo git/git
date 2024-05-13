@@ -245,6 +245,8 @@ static int reftable_be_config(const char *var, const char *value,
 		if (restart_interval > UINT16_MAX)
 			die("reftable block size cannot exceed %u", (unsigned)UINT16_MAX);
 		opts->restart_interval = restart_interval;
+	} else if (!strcmp(var, "reftable.indexobjects")) {
+		opts->skip_index_objects = !git_config_bool(var, value);
 	}
 
 	return 0;

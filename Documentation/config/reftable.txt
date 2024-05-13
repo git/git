@@ -30,3 +30,9 @@ A maximum of `65535` restart points per block is supported.
 +
 The default value is to create restart points every 16 records. A value of `0`
 will use the default value.
+
+reftable.indexObjects::
+	Whether the reftable backend shall write object blocks. Object blocks
+	are a reverse mapping of object ID to the references pointing to them.
++
+The default value is `true`.
