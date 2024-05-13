@@ -99,4 +99,76 @@ test_expect_success 'many refs results in multiple blocks' '
 	)
 '
 
+test_expect_success 'tiny block size leads to error' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		cat >expect <<-EOF &&
+		error: unable to compact stack: entry too large
+		EOF
+		test_must_fail git -c reftable.blockSize=50 pack-refs 2>err &&
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'small block size leads to multiple ref blocks' '
+	test_config_global core.logAllRefUpdates false &&
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A &&
+		test_commit B &&
+		git -c reftable.blockSize=100 pack-refs &&
+
+		cat >expect <<-EOF &&
+		header:
+		  block_size: 100
+		ref:
+		  - length: 53
+		    restarts: 1
+		  - length: 74
+		    restarts: 1
+		  - length: 38
+		    restarts: 1
+		EOF
+		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'small block size fails with large reflog message' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A &&
+		perl -e "print \"a\" x 500" >logmsg &&
+		cat >expect <<-EOF &&
+		fatal: update_ref failed for ref ${SQ}refs/heads/logme${SQ}: reftable: transaction failure: entry too large
+		EOF
+		test_must_fail git -c reftable.blockSize=100 \
+			update-ref -m "$(cat logmsg)" refs/heads/logme HEAD 2>err &&
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'block size exceeding maximum supported size' '
+	test_config_global core.logAllRefUpdates false &&
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit A &&
+		test_commit B &&
+		cat >expect <<-EOF &&
+		fatal: reftable block size cannot exceed 16MB
+		EOF
+		test_must_fail git -c reftable.blockSize=16777216 pack-refs 2>err &&
+		test_cmp expect err
+	)
+'
+
 test_done

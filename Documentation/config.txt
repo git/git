@@ -498,6 +498,8 @@ include::config/rebase.txt[]
 
 include::config/receive.txt[]
 
+include::config/reftable.txt[]
+
 include::config/remote.txt[]
 
 include::config/remotes.txt[]

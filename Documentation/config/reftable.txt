@@ -1,0 +1,14 @@
+reftable.blockSize::
+	The size in bytes used by the reftable backend when writing blocks.
+	The block size is determined by the writer, and does not have to be a
+	power of 2. The block size must be larger than the longest reference
+	name or log entry used in the repository, as references cannot span
+	blocks.
++
+Powers of two that are friendly to the virtual memory system or
+filesystem (such as 4kB or 8kB) are recommended. Larger sizes (64kB) can
+yield better compression, with a possible increased cost incurred by
+readers during access.
++
+The largest block size is `16777215` bytes (15.99 MiB). The default value is
+`4096` bytes (4kB). A value of `0` will use the default value.
