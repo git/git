@@ -36,3 +36,13 @@ reftable.indexObjects::
 	are a reverse mapping of object ID to the references pointing to them.
 +
 The default value is `true`.
+
+reftable.geometricFactor::
+	Whenever the reftable backend appends a new table to the stack, it
+	performs auto compaction to ensure that there is only a handful of
+	tables. The backend does this by ensuring that tables form a geometric
+	sequence regarding the respective sizes of each table.
++
+By default, the geometric sequence uses a factor of 2, meaning that for any
+table, the next-biggest table must at least be twice as big. A maximum factor
+of 256 is supported.
