@@ -131,8 +131,7 @@ struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
 				      struct commit *commit);
 void bitmap_writer_select_commits(struct bitmap_writer *writer,
 				  struct commit **indexed_commits,
-				  unsigned int indexed_commits_nr,
-				  int max_bitmaps);
+				  unsigned int indexed_commits_nr);
 int bitmap_writer_build(struct bitmap_writer *writer,
 			struct packing_data *to_pack);
 void bitmap_writer_finish(struct bitmap_writer *writer,

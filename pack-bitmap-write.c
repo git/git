@@ -587,8 +587,7 @@ static int date_compare(const void *_a, const void *_b)
 
 void bitmap_writer_select_commits(struct bitmap_writer *writer,
 				  struct commit **indexed_commits,
-				  unsigned int indexed_commits_nr,
-				  int max_bitmaps)
+				  unsigned int indexed_commits_nr)
 {
 	unsigned int i = 0, j, next;
 
@@ -610,11 +609,6 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 
 		if (i + next >= indexed_commits_nr)
 			break;
-
-		if (max_bitmaps > 0 && writer->selected_nr >= max_bitmaps) {
-			writer->selected_nr = max_bitmaps;
-			break;
-		}
 
 		if (next == 0) {
 			chosen = indexed_commits[i];
