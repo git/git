@@ -1245,6 +1245,7 @@ static void write_pack_file(void)
 	uint32_t nr_remaining = nr_result;
 	time_t last_mtime = 0;
 	struct object_entry **write_order;
+	struct bitmap_writer bitmap_writer;
 
 	if (progress > pack_to_stdout)
 		progress_state = start_progress(_("Writing objects"), nr_result);
@@ -1339,8 +1340,9 @@ static void write_pack_file(void)
 				    hash_to_hex(hash));
 
 			if (write_bitmap_index) {
-				bitmap_writer_set_checksum(hash);
-				bitmap_writer_build_type_index(
+				bitmap_writer_init(&bitmap_writer);
+				bitmap_writer_set_checksum(&bitmap_writer, hash);
+				bitmap_writer_build_type_index(&bitmap_writer,
 					&to_pack, written_list, nr_written);
 			}
 
@@ -1358,11 +1360,16 @@ static void write_pack_file(void)
 				strbuf_addstr(&tmpname, "bitmap");
 				stop_progress(&progress_state);
 
-				bitmap_writer_show_progress(progress);
-				bitmap_writer_select_commits(indexed_commits, indexed_commits_nr, -1);
-				if (bitmap_writer_build(&to_pack) < 0)
+				bitmap_writer_show_progress(&bitmap_writer,
+							    progress);
+				bitmap_writer_select_commits(&bitmap_writer,
+							     indexed_commits,
+							     indexed_commits_nr,
+							     -1);
+				if (bitmap_writer_build(&bitmap_writer, &to_pack) < 0)
 					die(_("failed to write bitmap index"));
-				bitmap_writer_finish(written_list, nr_written,
+				bitmap_writer_finish(&bitmap_writer,
+						     written_list, nr_written,
 						     tmpname.buf, write_bitmap_options);
 				write_bitmap_index = 0;
 				strbuf_setlen(&tmpname, tmpname_len);
