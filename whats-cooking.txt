@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2024, #05; Sat, 11)
-X-master-at: 0f3415f1f8478b05e64db11eb8aaa2915e48fef6
-X-next-at: 78c648537befcff421d4ad73d5ad976eb9255800
+Subject: What's cooking in git.git (May 2024, #06; Tue, 14)
+X-master-at: 83f1add914c6b4682de1e944ec0d1ac043d53d78
+X-next-at: 74e4eb009334be9d0c81507039d39db2634c3a6b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2024, #05; Sat, 11)
+What's cooking in git.git (May 2024, #06; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,9 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Git 2.45.1 and friends have been released, and the integration
+branches for developers have all been updated to include them.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,10 +49,157 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* fa/p4-error (2024-05-08) 1 commit
+  (merged to 'next' on 2024-05-11 at 58fd3fbf2f)
+ + git-p4: show Perforce error to the user
+
+ P4 update.
+ source: <pull.1668.v3.git.git.1715206266214.gitgitgadget@gmail.com>
+
+
+* jc/git-gui-maintainer-update (2024-05-11) 1 commit
+  (merged to 'next' on 2024-05-11 at 78c648537b)
+ + SubmittingPatches: welcome the new maintainer of git-gui part
+
+ Will merge to 'master'.
+
+
+* jc/no-default-attr-tree-in-bare (2024-05-03) 1 commit
+  (merged to 'next' on 2024-05-08 at a34819b16d)
+ + stop using HEAD for attributes in bare repository by default
+ (this branch is used by ps/undecided-is-not-necessarily-sha1.)
+
+ Git 2.43 started using the tree of HEAD as the source of attributes
+ in a bare repository, which has severe performance implications.
+ For now, revert the change, without ripping out a more explicit
+ support for the attr.tree configuration variable.
+ source: <xmqqzft6aozg.fsf_-_@gitster.g>
+
+
+* jc/test-workaround-broken-mv (2024-05-02) 1 commit
+  (merged to 'next' on 2024-05-06 at 7e009c6827)
+ + t/lib-chunk: work around broken "mv" on some vintage of macOS
+
+ Tests that try to corrupt in-repository files in chunked format did
+ not work well on macOS due to its broken "mv", which has been
+ worked around.
+ source: <xmqqsez0c6ma.fsf@gitster.g>
+
+
+* jk/ci-macos-gcc13-fix (2024-05-09) 3 commits
+  (merged to 'next' on 2024-05-11 at 571a90f095)
+ + ci: stop installing "gcc-13" for osx-gcc
+ + ci: avoid bare "gcc" for osx-gcc job
+ + ci: drop mention of BREW_INSTALL_PACKAGES variable
+
+ CI fix.
+ source: <20240509162219.GA1707955@coredump.intra.peff.net>
+
+
+* jk/ci-test-with-jgit-fix (2024-05-09) 1 commit
+  (merged to 'next' on 2024-05-11 at 7d3d69657e)
+ + ci: update coverity runs_on_pool reference
+
+ CI fix.
+ source: <20240509161506.GA1707588@coredump.intra.peff.net>
+
+
+* ma/win32-unix-domain-socket (2024-05-03) 1 commit
+  (merged to 'next' on 2024-05-06 at 799a546c96)
+ + win32: fix building with NO_UNIX_SOCKETS
+
+ Build fix.
+ source: <20240503091427.2808390-1-mh@glandium.org>
+
+
+* ps/ci-enable-minimal-fuzzers-at-gitlab (2024-05-06) 1 commit
+  (merged to 'next' on 2024-05-07 at a76024bd9f)
+ + gitlab-ci: add smoke test for fuzzers
+ (this branch is used by ps/ci-fuzzers-at-gitlab-fix.)
+
+ CI update.
+ source: <01fb94999f8e2014ba4d09ce7451a4f5d315ee72.1714371146.git.ps@pks.im>
+
+
+* ps/ci-fuzzers-at-gitlab-fix (2024-05-09) 3 commits
+  (merged to 'next' on 2024-05-11 at f4307d4164)
+ + gitlab-ci: fix installing dependencies for fuzz smoke tests
+ + Merge branch 'ps/ci-python-2-deprecation' into ps/ci-fuzzers-at-gitlab-fix
+ + Merge branch 'ps/ci-enable-minimal-fuzzers-at-gitlab' into ps/ci-fuzzers-at-gitlab-fix
+ (this branch uses ps/ci-enable-minimal-fuzzers-at-gitlab and ps/ci-python-2-deprecation.)
+
+ CI fix.
+ source: <5a92a4aa9edd9653df71b284f07461c7906f97e2.1715241343.git.ps@pks.im>
+
+
+* ps/ci-python-2-deprecation (2024-05-06) 1 commit
+  (merged to 'next' on 2024-05-07 at 0e11e94f99)
+ + ci: fix Python dependency on Ubuntu 24.04
+ (this branch is used by ps/ci-fuzzers-at-gitlab-fix.)
+
+ Unbreak CI jobs so that we do not attempt to use Python 2 that has
+ been removed from the platform.
+ source: <cb8cefc20f373a3516695e7cbee975132553ea95.1714973381.git.ps@pks.im>
+
+
+* tb/attr-limits (2024-05-03) 1 commit
+  (merged to 'next' on 2024-05-06 at b98150cc71)
+ + attr.c: move ATTR_MAX_FILE_SIZE check into read_attr_from_buf()
+
+ The maximum size of attribute files is enforced more consistently.
+ source: <28f6267709db78ba526d7ed9fc4a734674697c70.1714763555.git.me@ttaylorr.com>
+
+--------------------------------------------------
 [New Topics]
 
-* ps/builtin-config-cleanup (2024-05-10) 23 commits
- - fixup! builtin/config: move location options into local variables
+* jc/compat-regex-calloc-fix (2024-05-13) 1 commit
+  (merged to 'next' on 2024-05-13 at 077c4e1dcc)
+ + compat/regex: fix argument order to calloc(3)
+
+ Windows CI running in GitHub Actions started complaining about the
+ order of arguments given to calloc(); the imported regex code uses
+ the wrong order almost consistently, which has been corrected.
+
+ Will merge to 'master'.
+ source: <xmqqbk5bim2n.fsf@gitster.g>
+
+
+* jc/undecided-is-not-necessarily-sha1-fix (2024-05-13) 6 commits
+ - apply: fix uninitialized hash function
+ - builtin/hash-object: fix uninitialized hash function
+ - builtin/patch-id: fix uninitialized hash function
+ - t1517: test commands that are designed to be run outside repository
+ - setup: add an escape hatch for "no more default hash algorithm" change
+ - Merge branch 'ps/undecided-is-not-necessarily-sha1' into jc/undecided-is-not-necessarily-sha1-fix
+ (this branch uses ps/undecided-is-not-necessarily-sha1.)
+
+ The base topic started to make it an error for a command to leave
+ the hash algorithm unspecified, which revealed a few commands that
+ were not ready for the change.  Give users a knob to revert back to
+ the "default is sha-1" behaviour as an escape hatch, and start
+ fixing these breakages.
+
+ Comments?
+ source: <20240513224127.2042052-1-gitster@pobox.com>
+
+
+* dg/fetch-pack-code-cleanup (2024-05-13) 1 commit
+ - fetch-pack: remove unused 'struct loose_object_iter'
+
+ source: <20240512005913.342287-1-dave@treblig.org>
+
+
+* dm/update-index-doc-fix (2024-05-13) 1 commit
+ - documentation: git-update-index: add --show-index-version to synopsis
+
+ source: <20240512031400.28416-1-dov.murik@linux.dev>
+
+--------------------------------------------------
+[Cooking]
+
+* ps/builtin-config-cleanup (2024-05-13) 22 commits
  - builtin/config: pass data between callbacks via local variables
  - builtin/config: convert flags to a local variable
  - builtin/config: track "fixed value" option via flags only
@@ -77,18 +227,9 @@ Release tarballs are available at:
  Code clean-up to reduce inter-function communication inside
  builtin/config.c done via the use of global variables.
 
- Will merge to 'next'?
- source: <cover.1715339393.git.ps@pks.im>
+ Comments?
+ source: <cover.1715595550.git.ps@pks.im>
 
-
-* jc/git-gui-maintainer-update (2024-05-11) 1 commit
-  (merged to 'next' on 2024-05-11 at 78c648537b)
- + SubmittingPatches: welcome the new maintainer of git-gui part
-
- Will merge to 'master'.
-
---------------------------------------------------
-[Cooking]
 
 * vd/doc-merge-tree-x-option (2024-05-07) 1 commit
   (merged to 'next' on 2024-05-08 at 42637b8bdf)
@@ -98,16 +239,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1728.git.1715117789985.gitgitgadget@gmail.com>
-
-
-* fa/p4-error (2024-05-08) 1 commit
-  (merged to 'next' on 2024-05-11 at 58fd3fbf2f)
- + git-p4: show Perforce error to the user
-
- P4 update.
-
- Will merge to 'master'.
- source: <pull.1668.v3.git.git.1715206266214.gitgitgadget@gmail.com>
 
 
 * jc/doc-manpages-l10n (2024-05-09) 1 commit
@@ -120,32 +251,7 @@ Release tarballs are available at:
  source: <xmqqv83muc12.fsf@gitster.g>
 
 
-* jk/ci-macos-gcc13-fix (2024-05-09) 3 commits
-  (merged to 'next' on 2024-05-11 at 571a90f095)
- + ci: stop installing "gcc-13" for osx-gcc
- + ci: avoid bare "gcc" for osx-gcc job
- + ci: drop mention of BREW_INSTALL_PACKAGES variable
-
- CI fix.
-
- Will merge to 'master'.
- source: <20240509162219.GA1707955@coredump.intra.peff.net>
-
-
-* ps/ci-fuzzers-at-gitlab-fix (2024-05-09) 3 commits
-  (merged to 'next' on 2024-05-11 at f4307d4164)
- + gitlab-ci: fix installing dependencies for fuzz smoke tests
- + Merge branch 'ps/ci-python-2-deprecation' into ps/ci-fuzzers-at-gitlab-fix
- + Merge branch 'ps/ci-enable-minimal-fuzzers-at-gitlab' into ps/ci-fuzzers-at-gitlab-fix
- (this branch uses ps/ci-enable-minimal-fuzzers-at-gitlab and ps/ci-python-2-deprecation.)
-
- CI fix.
-
- Will merge to 'master'.
- source: <5a92a4aa9edd9653df71b284f07461c7906f97e2.1715241343.git.ps@pks.im>
-
-
-* ps/reftable-reusable-iterator (2024-05-08) 13 commits
+* ps/reftable-reusable-iterator (2024-05-13) 13 commits
  - reftable/merged: adapt interface to allow reuse of iterators
  - reftable/stack: provide convenience functions to create iterators
  - reftable/reader: adapt interface to allow reuse of iterators
@@ -161,7 +267,9 @@ Release tarballs are available at:
  - reftable/block: use `size_t` to track restart point index
 
  Code clean-up to make the reftable iterator closer to be reusable.
- source: <cover.1715166175.git.ps@pks.im>
+
+ Comments?
+ source: <cover.1715589670.git.ps@pks.im>
 
 
 * tb/precompose-getcwd (2024-05-09) 1 commit
@@ -173,16 +281,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20240509161110.12121-1-tboegi@web.de>
-
-
-* jk/ci-test-with-jgit-fix (2024-05-09) 1 commit
-  (merged to 'next' on 2024-05-11 at 7d3d69657e)
- + ci: update coverity runs_on_pool reference
-
- CI fix.
-
- Will merge to 'master'.
- source: <20240509161506.GA1707588@coredump.intra.peff.net>
 
 
 * jc/patch-flow-updates (2024-05-10) 2 commits
@@ -198,8 +296,11 @@ Release tarballs are available at:
 * it/refs-name-conflict (2024-05-06) 1 commit
  - refs: return conflict error when checking packed refs
 
- Comments?
- cf. <CAOLa=ZSre3f+0SR-_migfkPONqhinobKjU=NnGOJ_sTNM_L5ug@mail.gmail.com>
+ Expose "name conflict" error when a ref creation fails due to D/F
+ conflict in the ref namespace, to improve an error message given by
+ "git fetch".
+
+ Will merge to 'next'.
  source: <pull.1716.v3.git.git.1714791848557.gitgitgadget@gmail.com>
 
 
@@ -236,29 +337,6 @@ Release tarballs are available at:
  source: <20240506182317.13477-1-oystwa@gmail.com>
 
 
-* ps/ci-enable-minimal-fuzzers-at-gitlab (2024-05-06) 1 commit
-  (merged to 'next' on 2024-05-07 at a76024bd9f)
- + gitlab-ci: add smoke test for fuzzers
- (this branch is used by ps/ci-fuzzers-at-gitlab-fix.)
-
- CI update.
-
- Will merge to 'master'.
- source: <01fb94999f8e2014ba4d09ce7451a4f5d315ee72.1714371146.git.ps@pks.im>
-
-
-* ps/ci-python-2-deprecation (2024-05-06) 1 commit
-  (merged to 'next' on 2024-05-07 at 0e11e94f99)
- + ci: fix Python dependency on Ubuntu 24.04
- (this branch is used by ps/ci-fuzzers-at-gitlab-fix.)
-
- Unbreak CI jobs so that we do not attempt to use Python 2 that has
- been removed from the platform.
-
- Will merge to 'master'.
- source: <cb8cefc20f373a3516695e7cbee975132553ea95.1714973381.git.ps@pks.im>
-
-
 * rs/external-diff-with-exit-code (2024-05-06) 2 commits
   (merged to 'next' on 2024-05-08 at ad5fee3cbf)
  + diff: fix --exit-code with external diff
@@ -269,18 +347,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <82561c70-ec33-41bf-b036-52310ffc1926@web.de>
-
-
-* jc/test-workaround-broken-mv (2024-05-02) 1 commit
-  (merged to 'next' on 2024-05-06 at 7e009c6827)
- + t/lib-chunk: work around broken "mv" on some vintage of macOS
-
- Tests that try to corrupt in-repository files in chunked format did
- not work well on macOS due to its broken "mv", which has been
- worked around.
-
- Will merge to 'master'.
- source: <xmqqsez0c6ma.fsf@gitster.g>
 
 
 * jt/port-ci-whitespace-check-to-gitlab (2024-05-03) 5 commits
@@ -296,20 +362,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20240503172110.181326-1-jltobler@gmail.com>
-
-
-* jc/no-default-attr-tree-in-bare (2024-05-03) 1 commit
-  (merged to 'next' on 2024-05-08 at a34819b16d)
- + stop using HEAD for attributes in bare repository by default
- (this branch is used by ps/undecided-is-not-necessarily-sha1.)
-
- Git 2.43 started using the tree of HEAD as the source of attributes
- in a bare repository, which has severe performance implications.
- For now, revert the change, without ripping out a more explicit
- support for the attr.tree configuration variable.
-
- Will merge to 'master'.
- source: <xmqqzft6aozg.fsf_-_@gitster.g>
 
 
 * jl/git-no-advice (2024-05-07) 4 commits
@@ -343,16 +395,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20240507125859.132116-1-knayak@gitlab.com>
-
-
-* ma/win32-unix-domain-socket (2024-05-03) 1 commit
-  (merged to 'next' on 2024-05-06 at 799a546c96)
- + win32: fix building with NO_UNIX_SOCKETS
-
- Build fix.
-
- Will merge to 'master'.
- source: <20240503091427.2808390-1-mh@glandium.org>
 
 
 * ps/config-subcommands (2024-05-06) 14 commits
@@ -397,7 +439,7 @@ Release tarballs are available at:
  source: <cover.1715065736.git.ps@pks.im>
 
 
-* ps/reftable-write-options (2024-05-10) 11 commits
+* ps/reftable-write-options (2024-05-13) 11 commits
  - refs/reftable: allow configuring geometric factor
  - reftable: make the compaction factor configurable
  - refs/reftable: allow disabling writing the object index
@@ -407,24 +449,14 @@ Release tarballs are available at:
  - reftable/dump: support dumping a table's block structure
  - reftable/writer: improve error when passed an invalid block size
  - reftable/writer: drop static variable used to initialize strbuf
- - reftable: consistently pass write opts as value
+ - reftable: pass opts as constant pointer
  - reftable: consistently refer to `reftable_write_options` as `opts`
 
  The knobs to tweak how reftable files are written have been made
  available as configuration variables.
 
- Will merge to 'next'?
- source: <cover.1715336797.git.ps@pks.im>
-
-
-* tb/attr-limits (2024-05-03) 1 commit
-  (merged to 'next' on 2024-05-06 at b98150cc71)
- + attr.c: move ATTR_MAX_FILE_SIZE check into read_attr_from_buf()
-
- The maximum size of attribute files is enforced more consistently.
-
- Will merge to 'master'.
- source: <28f6267709db78ba526d7ed9fc4a734674697c70.1714763555.git.me@ttaylorr.com>
+ Comments?
+ source: <cover.1715587849.git.ps@pks.im>
 
 
 * ds/scalar-reconfigure-all-fix (2024-05-07) 1 commit
@@ -482,14 +514,14 @@ Release tarballs are available at:
  + path: harden validation of HEAD with non-standard hashes
  + Merge branch 'ps/the-index-is-no-more' into ps/undecided-is-not-necessarily-sha1
  + Merge branch 'jc/no-default-attr-tree-in-bare' into ps/undecided-is-not-necessarily-sha1
- (this branch uses jc/no-default-attr-tree-in-bare.)
+ (this branch is used by jc/undecided-is-not-necessarily-sha1-fix.)
 
  Before discovering the repository details, We used to assume SHA-1
  as the "default" hash function, which has been corrected. Hopefully
  this will smoke out codepaths that rely on such an unwarranted
  assumptions.
 
- Will merge to 'master'.
+ Will cook in 'next'.
  source: <cover.1715057362.git.ps@pks.im>
 
 
