@@ -112,6 +112,7 @@ static inline void push_bitmapped_commit(struct bitmap_writer *writer,
 
 	writer->selected[writer->selected_nr].commit = commit;
 	writer->selected[writer->selected_nr].bitmap = NULL;
+	writer->selected[writer->selected_nr].write_as = NULL;
 	writer->selected[writer->selected_nr].flags = 0;
 
 	writer->selected_nr++;
