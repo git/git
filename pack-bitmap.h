@@ -139,6 +139,7 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 			  uint32_t index_nr,
 			  const char *filename,
 			  uint16_t options);
+void bitmap_writer_free(struct bitmap_writer *writer);
 char *midx_bitmap_filename(struct multi_pack_index *midx);
 char *pack_bitmap_filename(struct packed_git *p);
 
