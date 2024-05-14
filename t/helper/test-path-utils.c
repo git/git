@@ -7,6 +7,7 @@
 #include "string-list.h"
 #include "trace.h"
 #include "utf8.h"
+#include "copy.h"
 
 /*
  * A "string_list_each_func_t" function that normalizes an entry from
@@ -498,6 +499,16 @@ int cmd__path_utils(int argc, const char **argv)
 					argv[i], expect ? "" : " not");
 
 		return !!res;
+	}
+
+	if (argc == 4 && !strcmp(argv[1], "do_files_match")) {
+		int ret = do_files_match(argv[2], argv[3]);
+
+		if (ret)
+			printf("equal\n");
+		else
+			printf("different\n");
+		return !ret;
 	}
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],

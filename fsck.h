@@ -64,6 +64,8 @@ enum fsck_msg_type {
 	FUNC(GITATTRIBUTES_LARGE, ERROR) \
 	FUNC(GITATTRIBUTES_LINE_LENGTH, ERROR) \
 	FUNC(GITATTRIBUTES_BLOB, ERROR) \
+	FUNC(SYMLINK_TARGET_MISSING, ERROR) \
+	FUNC(SYMLINK_TARGET_BLOB, ERROR) \
 	/* warnings */ \
 	FUNC(EMPTY_NAME, WARN) \
 	FUNC(FULL_PATHNAME, WARN) \
@@ -74,6 +76,8 @@ enum fsck_msg_type {
 	FUNC(ZERO_PADDED_FILEMODE, WARN) \
 	FUNC(NUL_IN_COMMIT, WARN) \
 	FUNC(LARGE_PATHNAME, WARN) \
+	FUNC(SYMLINK_TARGET_LENGTH, WARN) \
+	FUNC(SYMLINK_POINTS_TO_GIT_DIR, WARN) \
 	/* infos (reported as warnings, but ignored by default) */ \
 	FUNC(BAD_FILEMODE, INFO) \
 	FUNC(GITMODULES_PARSE, INFO) \
@@ -141,6 +145,8 @@ struct fsck_options {
 	struct oidset gitmodules_done;
 	struct oidset gitattributes_found;
 	struct oidset gitattributes_done;
+	struct oidset symlink_targets_found;
+	struct oidset symlink_targets_done;
 	kh_oid_map_t *object_names;
 };
 
@@ -150,6 +156,8 @@ struct fsck_options {
 	.gitmodules_done = OIDSET_INIT, \
 	.gitattributes_found = OIDSET_INIT, \
 	.gitattributes_done = OIDSET_INIT, \
+	.symlink_targets_found = OIDSET_INIT, \
+	.symlink_targets_done = OIDSET_INIT, \
 	.error_func = fsck_error_function \
 }
 #define FSCK_OPTIONS_STRICT { \
@@ -158,6 +166,8 @@ struct fsck_options {
 	.gitmodules_done = OIDSET_INIT, \
 	.gitattributes_found = OIDSET_INIT, \
 	.gitattributes_done = OIDSET_INIT, \
+	.symlink_targets_found = OIDSET_INIT, \
+	.symlink_targets_done = OIDSET_INIT, \
 	.error_func = fsck_error_function, \
 }
 #define FSCK_OPTIONS_MISSING_GITMODULES { \
@@ -166,6 +176,8 @@ struct fsck_options {
 	.gitmodules_done = OIDSET_INIT, \
 	.gitattributes_found = OIDSET_INIT, \
 	.gitattributes_done = OIDSET_INIT, \
+	.symlink_targets_found = OIDSET_INIT, \
+	.symlink_targets_done = OIDSET_INIT, \
 	.error_func = fsck_error_cb_print_missing_gitmodules, \
 }
 
