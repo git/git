@@ -37,6 +37,7 @@
 #include "commit-reach.h"
 #include "commit-graph.h"
 #include "pretty.h"
+#include "hex.h"
 
 static const char * const builtin_commit_usage[] = {
 	N_("git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
@@ -806,6 +807,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 					   &ctx);
 		free(fmt);
 		hook_arg1 = "message";
+
+		strbuf_addstr(&sb, "\n\nThis fixes commit ");
+		strbuf_addstr(&sb, oid_to_hex(&commit->object.oid));
 
 		/*
 		 * Only `-m` commit message option is checked here, as
