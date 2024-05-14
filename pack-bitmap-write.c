@@ -670,9 +670,7 @@ static const struct object_id *oid_access(size_t pos, const void *table)
 	return &index[pos]->oid;
 }
 
-static void write_selected_commits_v1(struct hashfile *f,
-				      uint32_t *commit_positions,
-				      off_t *offsets)
+static void write_selected_commits_v1(struct hashfile *f, off_t *offsets)
 {
 	int i;
 
@@ -682,7 +680,7 @@ static void write_selected_commits_v1(struct hashfile *f,
 		if (offsets)
 			offsets[i] = hashfile_total(f);
 
-		hashwrite_be32(f, commit_positions[i]);
+		hashwrite_be32(f, stored->commit_pos);
 		hashwrite_u8(f, stored->xor_offset);
 		hashwrite_u8(f, stored->flags);
 
@@ -690,23 +688,20 @@ static void write_selected_commits_v1(struct hashfile *f,
 	}
 }
 
-static int table_cmp(const void *_va, const void *_vb, void *_data)
+static int table_cmp(const void *_va, const void *_vb)
 {
-	uint32_t *commit_positions = _data;
-	uint32_t a = commit_positions[*(uint32_t *)_va];
-	uint32_t b = commit_positions[*(uint32_t *)_vb];
+	struct bitmapped_commit *a = &writer.selected[*(uint32_t *)_va];
+	struct bitmapped_commit *b = &writer.selected[*(uint32_t *)_vb];
 
-	if (a > b)
-		return 1;
-	else if (a < b)
+	if (a->commit_pos < b->commit_pos)
 		return -1;
+	else if (a->commit_pos > b->commit_pos)
+		return 1;
 
 	return 0;
 }
 
-static void write_lookup_table(struct hashfile *f,
-			       uint32_t *commit_positions,
-			       off_t *offsets)
+static void write_lookup_table(struct hashfile *f, off_t *offsets)
 {
 	uint32_t i;
 	uint32_t *table, *table_inv;
@@ -722,7 +717,7 @@ static void write_lookup_table(struct hashfile *f,
 	 * bitmap corresponds to j'th bitmapped commit (among the selected
 	 * commits) in lex order of OIDs.
 	 */
-	QSORT_S(table, writer.selected_nr, table_cmp, commit_positions);
+	QSORT(table, writer.selected_nr, table_cmp);
 
 	/* table_inv helps us discover that relationship (i'th bitmap
 	 * to j'th commit by j = table_inv[i])
@@ -753,7 +748,7 @@ static void write_lookup_table(struct hashfile *f,
 			xor_row = 0xffffffff;
 		}
 
-		hashwrite_be32(f, commit_positions[table[i]]);
+		hashwrite_be32(f, writer.selected[table[i]].commit_pos);
 		hashwrite_be64(f, (uint64_t)offsets[table[i]]);
 		hashwrite_be32(f, xor_row);
 	}
@@ -789,7 +784,6 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	static uint16_t flags = BITMAP_OPT_FULL_DAG;
 	struct strbuf tmp_file = STRBUF_INIT;
 	struct hashfile *f;
-	uint32_t *commit_positions = NULL;
 	off_t *offsets = NULL;
 	uint32_t i;
 
@@ -814,22 +808,20 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	if (options & BITMAP_OPT_LOOKUP_TABLE)
 		CALLOC_ARRAY(offsets, index_nr);
 
-	ALLOC_ARRAY(commit_positions, writer.selected_nr);
-
 	for (i = 0; i < writer.selected_nr; i++) {
 		struct bitmapped_commit *stored = &writer.selected[i];
-		int commit_pos = oid_pos(&stored->commit->object.oid, index, index_nr, oid_access);
+		int commit_pos = oid_pos(&stored->commit->object.oid, index,
+					 index_nr, oid_access);
 
 		if (commit_pos < 0)
 			BUG(_("trying to write commit not in index"));
-
-		commit_positions[i] = commit_pos;
+		stored->commit_pos = commit_pos;
 	}
 
-	write_selected_commits_v1(f, commit_positions, offsets);
+	write_selected_commits_v1(f, offsets);
 
 	if (options & BITMAP_OPT_LOOKUP_TABLE)
-		write_lookup_table(f, commit_positions, offsets);
+		write_lookup_table(f, offsets);
 
 	if (options & BITMAP_OPT_HASH_CACHE)
 		write_hash_cache(f, index, index_nr);
@@ -844,6 +836,5 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 		die_errno("unable to rename temporary bitmap file to '%s'", filename);
 
 	strbuf_release(&tmp_file);
-	free(commit_positions);
 	free(offsets);
 }
