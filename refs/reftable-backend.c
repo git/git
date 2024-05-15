@@ -356,7 +356,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		 */
 		if (!starts_with(iter->ref.refname, "refs/") &&
 		    !(iter->flags & DO_FOR_EACH_INCLUDE_ROOT_REFS &&
-		     (is_pseudoref(&iter->refs->base, iter->ref.refname) ||
+		     (is_root_ref(&iter->refs->base, iter->ref.refname) ||
 		      is_headref(&iter->refs->base, iter->ref.refname)))) {
 			continue;
 		}

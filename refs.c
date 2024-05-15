@@ -844,7 +844,7 @@ int is_per_worktree_ref(const char *refname)
 	       starts_with(refname, "refs/rewritten/");
 }
 
-static int is_pseudoref_syntax(const char *refname)
+static int is_root_ref_syntax(const char *refname)
 {
 	const char *c;
 
@@ -853,16 +853,12 @@ static int is_pseudoref_syntax(const char *refname)
 			return 0;
 	}
 
-	/*
-	 * HEAD is not a pseudoref, but it certainly uses the
-	 * pseudoref syntax.
-	 */
 	return 1;
 }
 
-int is_pseudoref(struct ref_store *refs, const char *refname)
+int is_root_ref(struct ref_store *refs, const char *refname)
 {
-	static const char *const irregular_pseudorefs[] = {
+	static const char *const irregular_root_refs[] = {
 		"AUTO_MERGE",
 		"BISECT_EXPECTED_REV",
 		"NOTES_MERGE_PARTIAL",
@@ -872,7 +868,7 @@ int is_pseudoref(struct ref_store *refs, const char *refname)
 	struct object_id oid;
 	size_t i;
 
-	if (!is_pseudoref_syntax(refname))
+	if (!is_root_ref_syntax(refname))
 		return 0;
 
 	if (ends_with(refname, "_HEAD")) {
@@ -882,8 +878,8 @@ int is_pseudoref(struct ref_store *refs, const char *refname)
 		return !is_null_oid(&oid);
 	}
 
-	for (i = 0; i < ARRAY_SIZE(irregular_pseudorefs); i++)
-		if (!strcmp(refname, irregular_pseudorefs[i])) {
+	for (i = 0; i < ARRAY_SIZE(irregular_root_refs); i++)
+		if (!strcmp(refname, irregular_root_refs[i])) {
 			refs_resolve_ref_unsafe(refs, refname,
 						RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 						&oid, NULL);
@@ -902,7 +898,7 @@ int is_headref(struct ref_store *refs, const char *refname)
 }
 
 static int is_current_worktree_ref(const char *ref) {
-	return is_pseudoref_syntax(ref) || is_per_worktree_ref(ref);
+	return is_root_ref_syntax(ref) || is_per_worktree_ref(ref);
 }
 
 enum ref_worktree_type parse_worktree_ref(const char *maybe_worktree_ref,

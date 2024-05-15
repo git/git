@@ -2756,7 +2756,7 @@ static int ref_kind_from_refname(const char *refname)
 			return ref_kind[i].kind;
 	}
 
-	if (is_pseudoref(get_main_ref_store(the_repository), refname))
+	if (is_root_ref(get_main_ref_store(the_repository), refname))
 		return FILTER_REFS_PSEUDOREFS;
 
 	return FILTER_REFS_OTHERS;
