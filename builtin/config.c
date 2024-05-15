@@ -1069,30 +1069,12 @@ static struct option builtin_subcommand_options[] = {
 	OPT_END(),
 };
 
-int cmd_config(int argc, const char **argv, const char *prefix)
+static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 {
 	char *value = NULL, *comment = NULL;
 	int flags = 0;
 	int ret = 0;
 	struct key_value_info default_kvi = KVI_INIT;
-
-	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
-
-	/*
-	 * This is somewhat hacky: we first parse the command line while
-	 * keeping all args intact in order to determine whether a subcommand
-	 * has been specified. If so, we re-parse it a second time, but this
-	 * time we drop KEEP_ARGV0. This is so that we don't munge the command
-	 * line in case no subcommand was given, which would otherwise confuse
-	 * us when parsing the legacy-style modes that don't use subcommands.
-	 */
-	argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
-			     PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_ARGV0|PARSE_OPT_KEEP_UNKNOWN_OPT);
-	if (subcommand) {
-		argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
-		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_UNKNOWN_OPT);
-		return subcommand(argc, argv, prefix);
-	}
 
 	argc = parse_options(argc, argv, prefix, builtin_config_options,
 			     builtin_config_usage,
@@ -1305,4 +1287,27 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	free(comment);
 	free(value);
 	return ret;
+}
+
+int cmd_config(int argc, const char **argv, const char *prefix)
+{
+	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
+
+	/*
+	 * This is somewhat hacky: we first parse the command line while
+	 * keeping all args intact in order to determine whether a subcommand
+	 * has been specified. If so, we re-parse it a second time, but this
+	 * time we drop KEEP_ARGV0. This is so that we don't munge the command
+	 * line in case no subcommand was given, which would otherwise confuse
+	 * us when parsing the legacy-style modes that don't use subcommands.
+	 */
+	argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_ARGV0|PARSE_OPT_KEEP_UNKNOWN_OPT);
+	if (subcommand) {
+		argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_UNKNOWN_OPT);
+		return subcommand(argc, argv, prefix);
+	}
+
+	return cmd_config_actions(argc, argv, prefix);
 }
