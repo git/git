@@ -129,7 +129,6 @@ static const char *value_pattern;
 static regex_t *regexp;
 static int use_key_regexp;
 static int do_all;
-static int do_not_match;
 static int fixed_value;
 
 #define TYPE_BOOL		1
@@ -328,6 +327,7 @@ static int format_config(const struct config_display_options *opts,
 struct collect_config_data {
 	const struct config_display_options *display_opts;
 	struct strbuf_list *values;
+	int do_not_match;
 };
 
 static int collect_config(const char *key_, const char *value_,
@@ -344,7 +344,7 @@ static int collect_config(const char *key_, const char *value_,
 	if (fixed_value && strcmp(value_pattern, (value_?value_:"")))
 		return 0;
 	if (regexp != NULL &&
-	    (do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+	    (data->do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
@@ -401,7 +401,7 @@ static int get_value(const struct config_location_options *opts,
 		value_pattern = regex_;
 	else if (regex_) {
 		if (regex_[0] == '!') {
-			do_not_match = 1;
+			data.do_not_match = 1;
 			regex_++;
 		}
 
