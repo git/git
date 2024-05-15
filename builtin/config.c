@@ -798,6 +798,7 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "default", &default_value, N_("value"), N_("use default value when missing entry")),
 		OPT_END(),
 	};
+	int ret;
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_get_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
@@ -816,8 +817,11 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 	setup_auto_pager("config", 1);
 
 	if (url)
-		return get_urlmatch(argv[0], url);
-	return get_value(argv[0], value_pattern, flags);
+		ret = get_urlmatch(argv[0], url);
+	else
+		ret = get_value(argv[0], value_pattern, flags);
+
+	return ret;
 }
 
 static int cmd_config_set(int argc, const char **argv, const char *prefix)
@@ -888,6 +892,7 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
 		OPT_END(),
 	};
+	int ret;
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_unset_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
@@ -900,12 +905,14 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix)
 	check_write();
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern)
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
-							      argv[0], NULL, value_pattern,
-							      NULL, flags);
+		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+							     argv[0], NULL, value_pattern,
+							     NULL, flags);
 	else
-		return git_config_set_in_file_gently(given_config_source.file, argv[0],
-						     NULL, NULL);
+		ret = git_config_set_in_file_gently(given_config_source.file, argv[0],
+						    NULL, NULL);
+
+	return ret;
 }
 
 static int cmd_config_rename_section(int argc, const char **argv, const char *prefix)
@@ -926,11 +933,13 @@ static int cmd_config_rename_section(int argc, const char **argv, const char *pr
 	ret = git_config_rename_section_in_file(given_config_source.file,
 						argv[0], argv[1]);
 	if (ret < 0)
-		return ret;
+		goto out;
 	else if (!ret)
 		die(_("no such section: %s"), argv[0]);
+	ret = 0;
 
-	return 0;
+out:
+	return ret;
 }
 
 static int cmd_config_remove_section(int argc, const char **argv, const char *prefix)
@@ -951,11 +960,13 @@ static int cmd_config_remove_section(int argc, const char **argv, const char *pr
 	ret = git_config_rename_section_in_file(given_config_source.file,
 						argv[0], NULL);
 	if (ret < 0)
-		return ret;
+		goto out;
 	else if (!ret)
 		die(_("no such section: %s"), argv[0]);
+	ret = 0;
 
-	return 0;
+out:
+	return ret;
 }
 
 static int show_editor(void)
@@ -1199,41 +1210,41 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1], flags);
+		ret = get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_ALL) {
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1], flags);
+		ret = get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_REGEXP) {
 		show_keys = 1;
 		use_key_regexp = 1;
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		return get_value(argv[0], argv[1], flags);
+		ret = get_value(argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_URLMATCH) {
 		check_argc(argc, 2, 2);
-		return get_urlmatch(argv[0], argv[1]);
+		ret = get_urlmatch(argv[0], argv[1]);
 	}
 	else if (actions == ACTION_UNSET) {
 		check_write();
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			return git_config_set_multivar_in_file_gently(given_config_source.file,
-								      argv[0], NULL, argv[1],
-								      NULL, flags);
+			ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+								     argv[0], NULL, argv[1],
+								     NULL, flags);
 		else
-			return git_config_set_in_file_gently(given_config_source.file,
-							     argv[0], NULL, NULL);
+			ret = git_config_set_in_file_gently(given_config_source.file,
+							    argv[0], NULL, NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
 		check_write();
 		check_argc(argc, 1, 2);
-		return git_config_set_multivar_in_file_gently(given_config_source.file,
-							      argv[0], NULL, argv[1],
-							      NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
+		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+							     argv[0], NULL, argv[1],
+							     NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
 		check_write();
@@ -1241,7 +1252,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		ret = git_config_rename_section_in_file(given_config_source.file,
 							argv[0], argv[1]);
 		if (ret < 0)
-			return ret;
+			goto out;
 		else if (!ret)
 			die(_("no such section: %s"), argv[0]);
 		else
@@ -1253,7 +1264,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		ret = git_config_rename_section_in_file(given_config_source.file,
 							argv[0], NULL);
 		if (ret < 0)
-			return ret;
+			goto out;
 		else if (!ret)
 			die(_("no such section: %s"), argv[0]);
 		else
@@ -1267,9 +1278,10 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 1, 2);
 		if (argc == 2)
 			color_stdout_is_tty = git_config_bool("command line", argv[1]);
-		return get_colorbool(argv[0], argc == 2);
+		ret = get_colorbool(argv[0], argc == 2);
 	}
 
+out:
 	free(comment);
 	free(value);
 	return ret;
