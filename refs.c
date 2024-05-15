@@ -1872,13 +1872,13 @@ done:
 	return result;
 }
 
-static int is_special_ref(const char *refname)
+static int is_pseudo_ref(const char *refname)
 {
 	/*
-	 * Special references are refs that have different semantics compared
-	 * to "normal" refs. These refs can thus not be stored in the ref
-	 * backend, but must always be accessed via the filesystem. The
-	 * following refs are special:
+	 * Pseudorefs are refs that have different semantics compared to
+	 * "normal" refs. These refs can thus not be stored in the ref backend,
+	 * but must always be accessed via the filesystem. The following refs
+	 * are pseudorefs:
 	 *
 	 * - FETCH_HEAD may contain multiple object IDs, and each one of them
 	 *   carries additional metadata like where it came from.
@@ -1887,17 +1887,17 @@ static int is_special_ref(const char *refname)
 	 *   heads.
 	 *
 	 * Reading, writing or deleting references must consistently go either
-	 * through the filesystem (special refs) or through the reference
+	 * through the filesystem (pseudorefs) or through the reference
 	 * backend (normal ones).
 	 */
-	static const char * const special_refs[] = {
+	static const char * const pseudo_refs[] = {
 		"FETCH_HEAD",
 		"MERGE_HEAD",
 	};
 	size_t i;
 
-	for (i = 0; i < ARRAY_SIZE(special_refs); i++)
-		if (!strcmp(refname, special_refs[i]))
+	for (i = 0; i < ARRAY_SIZE(pseudo_refs); i++)
+		if (!strcmp(refname, pseudo_refs[i]))
 			return 1;
 
 	return 0;
@@ -1908,7 +1908,7 @@ int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		      unsigned int *type, int *failure_errno)
 {
 	assert(failure_errno);
-	if (is_special_ref(refname))
+	if (is_pseudo_ref(refname))
 		return refs_read_special_head(ref_store, refname, oid, referent,
 					      type, failure_errno);
 
