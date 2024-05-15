@@ -668,6 +668,115 @@ test_expect_success \
 	test_cmp expect actual
 '
 
+# trailers
+
+test_expect_success 'create tag with -m and --trailer' '
+	get_tag_header tag-with-inline-message-and-trailers $commit commit $time >expect &&
+	cat >>expect <<-\EOF &&
+	create tag with trailers
+
+	my-trailer: here
+	alt-trailer: there
+	EOF
+	git tag -m "create tag with trailers" \
+		--trailer my-trailer=here \
+		--trailer alt-trailer=there \
+		tag-with-inline-message-and-trailers &&
+	get_tag_msg tag-with-inline-message-and-trailers >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'list tag extracting trailers' '
+	cat >expect <<-\EOF &&
+	my-trailer: here
+	alt-trailer: there
+
+	EOF
+	git tag --list --format="%(trailers)" tag-with-inline-message-and-trailers >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'create tag with -F and --trailer' '
+	echo "create tag from message file using --trailer" >messagefilewithnotrailers &&
+	get_tag_header tag-with-file-message-and-trailers $commit commit $time >expect &&
+	cat >>expect <<-\EOF &&
+	create tag from message file using --trailer
+
+	my-trailer: here
+	alt-trailer: there
+	EOF
+	git tag -F messagefilewithnotrailers \
+		--trailer my-trailer=here \
+		--trailer alt-trailer=there \
+		tag-with-file-message-and-trailers &&
+	get_tag_msg tag-with-file-message-and-trailers >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'create tag with -m and --trailer and --edit' '
+	write_script fakeeditor <<-\EOF &&
+	sed -e "1s/^/EDITED: /g" <"$1" >"$1-"
+	mv "$1-" "$1"
+	EOF
+	get_tag_header tag-with-edited-inline-message-and-trailers $commit commit $time >expect &&
+	cat >>expect <<-\EOF &&
+	EDITED: create tag with trailers
+
+	my-trailer: here
+	alt-trailer: there
+	EOF
+	GIT_EDITOR=./fakeeditor git tag --edit \
+		-m "create tag with trailers" \
+		--trailer my-trailer=here \
+		--trailer alt-trailer=there \
+		tag-with-edited-inline-message-and-trailers &&
+	get_tag_msg tag-with-edited-inline-message-and-trailers >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'create tag with -F and --trailer and --edit' '
+	echo "create tag from message file using --trailer" >messagefilewithnotrailers &&
+	get_tag_header tag-with-edited-file-message-and-trailers $commit commit $time >expect &&
+	cat >>expect <<-\EOF &&
+	EDITED: create tag from message file using --trailer
+
+	my-trailer: here
+	alt-trailer: there
+	EOF
+	GIT_EDITOR=./fakeeditor git tag --edit \
+		-F messagefilewithnotrailers \
+		--trailer my-trailer=here \
+		--trailer alt-trailer=there \
+		tag-with-edited-file-message-and-trailers &&
+	get_tag_msg tag-with-edited-file-message-and-trailers >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'create annotated tag and force editor when only --trailer is given' '
+	write_script fakeeditor <<-\EOF &&
+	echo "add a line" >"$1-"
+	cat <"$1" >>"$1-"
+	mv "$1-" "$1"
+	EOF
+	get_tag_header tag-with-trailers-and-no-message $commit commit $time >expect &&
+	cat >>expect <<-\EOF &&
+	add a line
+
+	my-trailer: here
+	alt-trailer: there
+	EOF
+	GIT_EDITOR=./fakeeditor git tag \
+		--trailer my-trailer=here \
+		--trailer alt-trailer=there \
+		tag-with-trailers-and-no-message &&
+	get_tag_msg tag-with-trailers-and-no-message >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'bad editor causes panic when only --trailer is given' '
+	test_must_fail env GIT_EDITOR=false git tag --trailer my-trailer=here tag-will-not-exist
+'
+
 # listing messages for annotated non-signed tags:
 
 test_expect_success \
@@ -810,6 +919,11 @@ test_expect_success 'git tag --format with ahead-behind' '
 	refs/tags/tag-lines 0 1 !
 	refs/tags/tag-one-line 0 1 !
 	refs/tags/tag-right 0 0 !
+	refs/tags/tag-with-edited-file-message-and-trailers 0 1 !
+	refs/tags/tag-with-edited-inline-message-and-trailers 0 1 !
+	refs/tags/tag-with-file-message-and-trailers 0 1 !
+	refs/tags/tag-with-inline-message-and-trailers 0 1 !
+	refs/tags/tag-with-trailers-and-no-message 0 1 !
 	refs/tags/tag-zero-lines 0 1 !
 	EOF
 	git tag -l --format="%(refname) %(ahead-behind:HEAD) !" >actual 2>err &&
