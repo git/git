@@ -98,7 +98,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	}
 
 	if (include_root_refs)
-		flags |= FILTER_REFS_ROOT_REFS;
+		flags |= FILTER_REFS_ROOT_REFS | FILTER_REFS_DETACHED_HEAD;
 
 	filter.match_as_path = 1;
 	filter_and_format_refs(&filter, flags, sorting, &format);
