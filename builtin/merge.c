@@ -105,7 +105,8 @@ static const char *pull_twohead, *pull_octopus;
 enum ff_type {
 	FF_NO,
 	FF_ALLOW,
-	FF_ONLY
+	FF_ONLY,
+	FF_ONE_ONLY
 };
 
 static enum ff_type fast_forward = FF_ALLOW;
@@ -252,6 +253,7 @@ static struct option builtin_merge_options[] = {
 		N_("edit message before committing")),
 	OPT_CLEANUP(&cleanup_arg),
 	OPT_SET_INT(0, "ff", &fast_forward, N_("allow fast-forward (default)"), FF_ALLOW),
+	OPT_SET_INT(0, "ff-one-only", &fast_forward, N_("allow fast-forward if only one commit"), FF_ONE_ONLY),
 	OPT_SET_INT_F(0, "ff-only", &fast_forward,
 		      N_("abort if fast-forward is not possible"),
 		      FF_ONLY, PARSE_OPT_NONEG),
@@ -625,6 +627,8 @@ static int git_merge_config(const char *k, const char *v,
 			fast_forward = boolval ? FF_ALLOW : FF_NO;
 		} else if (v && !strcmp(v, "only")) {
 			fast_forward = FF_ONLY;
+		} else if (v && !strcmp(v, "one-only")) {
+			fast_forward = FF_ONE_ONLY;
 		} /* do not barf on values from future versions of git */
 		return 0;
 	} else if (!strcmp(k, "merge.defaulttoupstream")) {
@@ -1528,6 +1532,18 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			goto done;
 		}
 		free(list);
+	}
+
+	if (fast_forward == FF_ONE_ONLY) {
+		fast_forward = FF_NO;
+
+		/* check that we have one and only one commit to merge */
+		if (squash || ((!remoteheads->next &&
+				!common->next &&
+				oideq(&common->item->object.oid, &head_commit->object.oid)) &&
+				oideq(&remoteheads->item->parents->item->object.oid, &head_commit->object.oid))) {
+			fast_forward = FF_ALLOW;
+		}
 	}
 
 	update_ref("updating ORIG_HEAD", "ORIG_HEAD",
