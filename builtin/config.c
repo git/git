@@ -123,7 +123,6 @@ struct config_display_options {
 	.key_delim = ' ', \
 }
 
-static char *key;
 static int use_key_regexp;
 static int do_all;
 static int fixed_value;
@@ -325,6 +324,7 @@ struct collect_config_data {
 	const struct config_display_options *display_opts;
 	struct strbuf_list *values;
 	const char *value_pattern;
+	const char *key;
 	regex_t *regexp;
 	regex_t *key_regexp;
 	int do_not_match;
@@ -337,7 +337,7 @@ static int collect_config(const char *key_, const char *value_,
 	struct strbuf_list *values = data->values;
 	const struct key_value_info *kvi = ctx->kvi;
 
-	if (!use_key_regexp && strcmp(key_, key))
+	if (!use_key_regexp && strcmp(key_, data->key))
 		return 0;
 	if (use_key_regexp && regexec(data->key_regexp, key_, 0, NULL, 0))
 		return 0;
@@ -364,6 +364,7 @@ static int get_value(const struct config_location_options *opts,
 		.display_opts = display_opts,
 		.values = &values,
 	};
+	char *key = NULL;
 	int i;
 
 	if (use_key_regexp) {
@@ -395,6 +396,8 @@ static int get_value(const struct config_location_options *opts,
 			ret = CONFIG_INVALID_KEY;
 			goto free_strings;
 		}
+
+		data.key = key;
 	}
 
 	if (regex_ && (flags & CONFIG_FLAGS_FIXED_VALUE))
