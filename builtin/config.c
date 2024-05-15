@@ -108,6 +108,7 @@ struct config_display_options {
 	int show_scope;
 	int show_keys;
 	int type;
+	char *default_value;
 	/* Populated via `display_options_init()`. */
 	int term;
 	int delim;
@@ -126,7 +127,6 @@ static regex_t *regexp;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
-static char *default_value;
 static int respect_includes_opt = -1;
 static int fixed_value;
 
@@ -416,7 +416,7 @@ static int get_value(const struct config_location_options *opts,
 			    &opts->source, the_repository,
 			    &opts->options);
 
-	if (!values.nr && default_value) {
+	if (!values.nr && display_opts->default_value) {
 		struct key_value_info kvi = KVI_INIT;
 		struct strbuf *item;
 
@@ -424,9 +424,10 @@ static int get_value(const struct config_location_options *opts,
 		ALLOC_GROW(values.items, values.nr + 1, values.alloc);
 		item = &values.items[values.nr++];
 		strbuf_init(item, 0);
-		if (format_config(display_opts, item, key_, default_value, &kvi) < 0)
+		if (format_config(display_opts, item, key_,
+				  display_opts->default_value, &kvi) < 0)
 			die(_("failed to format default config value: %s"),
-				default_value);
+			    display_opts->default_value);
 	}
 
 	ret = !values.nr;
@@ -850,7 +851,8 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 		CONFIG_DISPLAY_OPTIONS(display_opts),
 		OPT_GROUP(N_("Other")),
 		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
-		OPT_STRING(0, "default", &default_value, N_("value"), N_("use default value when missing entry")),
+		OPT_STRING(0, "default", &display_opts.default_value,
+			   N_("value"), N_("use default value when missing entry")),
 		OPT_END(),
 	};
 	int ret;
@@ -861,7 +863,7 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 
 	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
 		die(_("--fixed-value only applies with 'value-pattern'"));
-	if (default_value && (do_all || url))
+	if (display_opts.default_value && (do_all || url))
 		die(_("--default= cannot be used with --all or --url="));
 	if (url && (do_all || use_key_regexp || value_pattern))
 		die(_("--url= cannot be used with --all, --regexp or --value"));
@@ -1127,7 +1129,8 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "get-colorbool", &actions, N_("find the color setting: slot [<stdout-is-tty>]"), ACTION_GET_COLORBOOL),
 		CONFIG_DISPLAY_OPTIONS(display_opts),
 		OPT_GROUP(N_("Other")),
-		OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
+		OPT_STRING(0, "default", &display_opts.default_value,
+			   N_("value"), N_("with --get, use default value when missing entry")),
 		OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
 		OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
 		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
@@ -1172,7 +1175,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		exit(129);
 	}
 
-	if (default_value && !(actions & ACTION_GET)) {
+	if (display_opts.default_value && !(actions & ACTION_GET)) {
 		error(_("--default is only applicable to --get"));
 		exit(129);
 	}
