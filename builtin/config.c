@@ -75,7 +75,6 @@ static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
 
-static parse_opt_subcommand_fn *subcommand;
 static int use_global_config, use_system_config, use_local_config;
 static int use_worktree_config;
 static struct git_config_source given_config_source;
@@ -1058,17 +1057,6 @@ static int cmd_config_edit(int argc, const char **argv, const char *prefix)
 	return show_editor();
 }
 
-static struct option builtin_subcommand_options[] = {
-	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
-	OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
-	OPT_SUBCOMMAND("set", &subcommand, cmd_config_set),
-	OPT_SUBCOMMAND("unset", &subcommand, cmd_config_unset),
-	OPT_SUBCOMMAND("rename-section", &subcommand, cmd_config_rename_section),
-	OPT_SUBCOMMAND("remove-section", &subcommand, cmd_config_remove_section),
-	OPT_SUBCOMMAND("edit", &subcommand, cmd_config_edit),
-	OPT_END(),
-};
-
 static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 {
 	char *value = NULL, *comment = NULL;
@@ -1291,6 +1279,18 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
+	parse_opt_subcommand_fn *subcommand = NULL;
+	struct option subcommand_opts[] = {
+		OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
+		OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
+		OPT_SUBCOMMAND("set", &subcommand, cmd_config_set),
+		OPT_SUBCOMMAND("unset", &subcommand, cmd_config_unset),
+		OPT_SUBCOMMAND("rename-section", &subcommand, cmd_config_rename_section),
+		OPT_SUBCOMMAND("remove-section", &subcommand, cmd_config_remove_section),
+		OPT_SUBCOMMAND("edit", &subcommand, cmd_config_edit),
+		OPT_END(),
+	};
+
 	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
 
 	/*
@@ -1301,10 +1301,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	 * line in case no subcommand was given, which would otherwise confuse
 	 * us when parsing the legacy-style modes that don't use subcommands.
 	 */
-	argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+	argc = parse_options(argc, argv, prefix, subcommand_opts, builtin_config_usage,
 			     PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_ARGV0|PARSE_OPT_KEEP_UNKNOWN_OPT);
 	if (subcommand) {
-		argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+		argc = parse_options(argc, argv, prefix, subcommand_opts, builtin_config_usage,
 		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_UNKNOWN_OPT);
 		return subcommand(argc, argv, prefix);
 	}
