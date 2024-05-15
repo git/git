@@ -596,7 +596,8 @@ test_expect_success 'get bool variable with empty value' '
 
 test_expect_success 'no arguments, but no crash' '
 	test_must_fail git config >output 2>&1 &&
-	test_grep usage output
+	echo "error: no action specified" >expect &&
+	test_cmp expect output
 '
 
 cat > .git/config << EOF

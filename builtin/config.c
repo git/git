@@ -125,8 +125,6 @@ static const char *comment_arg;
 	{ OPTION_CALLBACK, (s), (l), (v), NULL, (h), PARSE_OPT_NOARG | \
 	PARSE_OPT_NONEG, option_parse_type, (i) }
 
-static NORETURN void usage_builtin_config(void);
-
 static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)
 {
@@ -171,7 +169,7 @@ static int option_parse_type(const struct option *opt, const char *arg,
 		 * --type=int'.
 		 */
 		error(_("only one type at a time"));
-		usage_builtin_config();
+		exit(129);
 	}
 	*to_type = new_type;
 
@@ -187,7 +185,7 @@ static void check_argc(int argc, int min, int max)
 	else
 		error(_("wrong number of arguments, should be from %d to %d"),
 		      min, max);
-	usage_builtin_config();
+	exit(129);
 }
 
 static void show_config_origin(const struct key_value_info *kvi,
@@ -672,7 +670,7 @@ static void handle_config_location(const char *prefix)
 	    use_worktree_config +
 	    !!given_config_source.file + !!given_config_source.blob > 1) {
 		error(_("only one config file at a time"));
-		usage_builtin_config();
+		exit(129);
 	}
 
 	if (!startup_info->have_repository) {
@@ -801,11 +799,6 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 	OPT_END(),
 };
-
-static NORETURN void usage_builtin_config(void)
-{
-	usage_with_options(builtin_config_usage, builtin_config_options);
-}
 
 static int cmd_config_list(int argc, const char **argv, const char *prefix)
 {
@@ -1110,7 +1103,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 	if ((actions & (ACTION_GET_COLOR|ACTION_GET_COLORBOOL)) && type) {
 		error(_("--get-color and variable type are incoherent"));
-		usage_builtin_config();
+		exit(129);
 	}
 
 	if (actions == 0)
@@ -1119,30 +1112,31 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		case 2: actions = ACTION_SET; break;
 		case 3: actions = ACTION_SET_ALL; break;
 		default:
-			usage_builtin_config();
+			error(_("no action specified"));
+			exit(129);
 		}
 	if (omit_values &&
 	    !(actions == ACTION_LIST || actions == ACTION_GET_REGEXP)) {
 		error(_("--name-only is only applicable to --list or --get-regexp"));
-		usage_builtin_config();
+		exit(129);
 	}
 
 	if (show_origin && !(actions &
 		(ACTION_GET|ACTION_GET_ALL|ACTION_GET_REGEXP|ACTION_LIST))) {
 		error(_("--show-origin is only applicable to --get, --get-all, "
 			"--get-regexp, and --list"));
-		usage_builtin_config();
+		exit(129);
 	}
 
 	if (default_value && !(actions & ACTION_GET)) {
 		error(_("--default is only applicable to --get"));
-		usage_builtin_config();
+		exit(129);
 	}
 
 	if (comment_arg &&
 	    !(actions & (ACTION_ADD|ACTION_SET|ACTION_SET_ALL|ACTION_REPLACE_ALL))) {
 		error(_("--comment is only applicable to add/set/replace operations"));
-		usage_builtin_config();
+		exit(129);
 	}
 
 	/* check usage of --fixed-value */
@@ -1175,7 +1169,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 		if (!allowed_usage) {
 			error(_("--fixed-value only applies with 'value-pattern'"));
-			usage_builtin_config();
+			exit(129);
 		}
 
 		flags |= CONFIG_FLAGS_FIXED_VALUE;
