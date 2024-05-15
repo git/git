@@ -843,7 +843,6 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_set_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	check_write();
 	check_argc(argc, 2, 2);
 
 	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
@@ -856,6 +855,7 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix)
 	comment = git_config_prepare_comment_string(comment_arg);
 
 	handle_config_location(prefix);
+	check_write();
 
 	value = normalize_value(argv[0], argv[1], &default_kvi);
 
@@ -891,13 +891,13 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_unset_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	check_write();
 	check_argc(argc, 1, 1);
 
 	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
 		die(_("--fixed-value only applies with 'value-pattern'"));
 
 	handle_config_location(prefix);
+	check_write();
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern)
 		return git_config_set_multivar_in_file_gently(given_config_source.file,
@@ -918,10 +918,10 @@ static int cmd_config_rename_section(int argc, const char **argv, const char *pr
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_rename_section_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	check_write();
 	check_argc(argc, 2, 2);
 
 	handle_config_location(prefix);
+	check_write();
 
 	ret = git_config_rename_section_in_file(given_config_source.file,
 						argv[0], argv[1]);
@@ -943,10 +943,10 @@ static int cmd_config_remove_section(int argc, const char **argv, const char *pr
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_remove_section_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
-	check_write();
 	check_argc(argc, 1, 1);
 
 	handle_config_location(prefix);
+	check_write();
 
 	ret = git_config_rename_section_in_file(given_config_source.file,
 						argv[0], NULL);
@@ -997,10 +997,10 @@ static int cmd_config_edit(int argc, const char **argv, const char *prefix)
 	};
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_edit_usage, 0);
-	check_write();
 	check_argc(argc, 0, 0);
 
 	handle_config_location(prefix);
+	check_write();
 
 	return show_editor();
 }

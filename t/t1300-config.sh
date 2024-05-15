@@ -2835,6 +2835,12 @@ test_expect_success 'specifying multiple modes causes failure' '
 	test_cmp expect err
 '
 
+test_expect_success 'writing to stdin is rejected' '
+	echo "fatal: writing to stdin is not supported" >expect &&
+	test_must_fail git config ${mode_set} --file - foo.bar baz 2>err &&
+	test_cmp expect err
+'
+
 done
 
 test_done
