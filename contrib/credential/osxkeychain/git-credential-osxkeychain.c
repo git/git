@@ -414,6 +414,9 @@ int main(int argc, const char **argv)
 	if (!argv[1])
 		die("%s", usage);
 
+	if (open(argv[0], O_RDONLY | O_EXLOCK) == -1)
+		die("failed to lock %s", argv[0]);
+
 	read_credential();
 
 	if (!strcmp(argv[1], "get"))
