@@ -1052,7 +1052,8 @@ extern struct ref_namespace_info ref_namespace[NAMESPACE__COUNT];
 void update_ref_namespace(enum ref_namespace namespace, char *ref);
 
 /*
- * Check whether the reference is an existing root reference.
+ * Check whether the provided name names a root reference. This function only
+ * performs a syntactic check.
  *
  * A root ref is a reference that lives in the root of the reference hierarchy.
  * These references must conform to special syntax:
@@ -1076,7 +1077,7 @@ void update_ref_namespace(enum ref_namespace namespace, char *ref);
  *
  *   - MERGE_AUTOSTASH
  */
-int is_root_ref(struct ref_store *refs, const char *refname);
+int is_root_ref(const char *refname);
 
 int is_headref(struct ref_store *refs, const char *refname);
 

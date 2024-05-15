@@ -856,7 +856,7 @@ static int is_root_ref_syntax(const char *refname)
 	return 1;
 }
 
-int is_root_ref(struct ref_store *refs, const char *refname)
+int is_root_ref(const char *refname)
 {
 	static const char *const irregular_root_refs[] = {
 		"AUTO_MERGE",
@@ -865,26 +865,17 @@ int is_root_ref(struct ref_store *refs, const char *refname)
 		"NOTES_MERGE_REF",
 		"MERGE_AUTOSTASH",
 	};
-	struct object_id oid;
 	size_t i;
 
 	if (!is_root_ref_syntax(refname))
 		return 0;
 
-	if (ends_with(refname, "_HEAD")) {
-		refs_resolve_ref_unsafe(refs, refname,
-					RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-					&oid, NULL);
-		return !is_null_oid(&oid);
-	}
+	if (ends_with(refname, "_HEAD"))
+		return 1;
 
 	for (i = 0; i < ARRAY_SIZE(irregular_root_refs); i++)
-		if (!strcmp(refname, irregular_root_refs[i])) {
-			refs_resolve_ref_unsafe(refs, refname,
-						RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-						&oid, NULL);
-			return !is_null_oid(&oid);
-		}
+		if (!strcmp(refname, irregular_root_refs[i]))
+			return 1;
 
 	return 0;
 }
