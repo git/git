@@ -125,7 +125,6 @@ struct config_display_options {
 
 static char *key;
 static regex_t *key_regexp;
-static regex_t *regexp;
 static int use_key_regexp;
 static int do_all;
 static int fixed_value;
@@ -327,6 +326,7 @@ struct collect_config_data {
 	const struct config_display_options *display_opts;
 	struct strbuf_list *values;
 	const char *value_pattern;
+	regex_t *regexp;
 	int do_not_match;
 };
 
@@ -343,8 +343,8 @@ static int collect_config(const char *key_, const char *value_,
 		return 0;
 	if (fixed_value && strcmp(data->value_pattern, (value_?value_:"")))
 		return 0;
-	if (regexp != NULL &&
-	    (data->do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
+	if (data->regexp &&
+	    (data->do_not_match ^ !!regexec(data->regexp, (value_?value_:""), 0, NULL, 0)))
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
@@ -405,10 +405,10 @@ static int get_value(const struct config_location_options *opts,
 			regex_++;
 		}
 
-		regexp = (regex_t*)xmalloc(sizeof(regex_t));
-		if (regcomp(regexp, regex_, REG_EXTENDED)) {
+		data.regexp = (regex_t*)xmalloc(sizeof(regex_t));
+		if (regcomp(data.regexp, regex_, REG_EXTENDED)) {
 			error(_("invalid pattern: %s"), regex_);
-			FREE_AND_NULL(regexp);
+			FREE_AND_NULL(data.regexp);
 			ret = CONFIG_INVALID_PATTERN;
 			goto free_strings;
 		}
@@ -448,9 +448,9 @@ free_strings:
 		regfree(key_regexp);
 		free(key_regexp);
 	}
-	if (regexp) {
-		regfree(regexp);
-		free(regexp);
+	if (data.regexp) {
+		regfree(data.regexp);
+		free(data.regexp);
 	}
 
 	return ret;
