@@ -91,9 +91,16 @@ test_expect_success 'test-tool env-helper reads config thanks to trace2' '
 		git config -l 2>err &&
 	grep "exceeded maximum include depth" err &&
 
+	# This validates that the assumption that we attempt to
+	# read the configuration and fail very early in the start-up
+	# sequence (due to trace2 subsystem), even before we notice
+	# that the directory named with "test-tool -C" does not exist
+	# and die.  It is a dubious thing to test, though.
 	test_must_fail \
 		env HOME="$(pwd)/home" GIT_TEST_ENV_HELPER=true \
-		test-tool -C cycle env-helper --type=bool --default=0 --exit-code GIT_TEST_ENV_HELPER 2>err &&
+		test-tool -C no-such-directory \
+		env-helper --type=bool --default=0 \
+		--exit-code GIT_TEST_ENV_HELPER 2>err &&
 	grep "exceeded maximum include depth" err
 '
 
