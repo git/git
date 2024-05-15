@@ -82,25 +82,42 @@ struct config_location_options {
 };
 #define CONFIG_LOCATION_OPTIONS_INIT {0}
 
+#define CONFIG_DISPLAY_OPTIONS(opts) \
+	OPT_GROUP(N_("Display options")), \
+	OPT_BOOL('z', "null", &opts.end_nul, N_("terminate values with NUL byte")), \
+	OPT_BOOL(0, "name-only", &opts.omit_values, N_("show variable names only")), \
+	OPT_BOOL(0, "show-origin", &opts.show_origin, N_("show origin of config (file, standard input, blob, command line)")), \
+	OPT_BOOL(0, "show-scope", &opts.show_scope, N_("show scope of config (worktree, local, global, system, command)")), \
+	OPT_BOOL(0, "show-names", &opts.show_keys, N_("show config keys in addition to their values"))
+
+struct config_display_options {
+	int end_nul;
+	int omit_values;
+	int show_origin;
+	int show_scope;
+	int show_keys;
+	/* Populated via `display_options_init()`. */
+	int term;
+	int delim;
+	int key_delim;
+};
+#define CONFIG_DISPLAY_OPTIONS_INIT { \
+	.term = '\n', \
+	.delim = '=', \
+	.key_delim = ' ', \
+}
+
 static char *key;
 static regex_t *key_regexp;
 static const char *value_pattern;
 static regex_t *regexp;
-static int show_keys;
-static int omit_values;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
-static char delim = '=';
-static char key_delim = ' ';
-static char term = '\n';
 
 static int type;
 static char *default_value;
-static int end_nul;
 static int respect_includes_opt = -1;
-static int show_origin;
-static int show_scope;
 static int fixed_value;
 
 #define TYPE_BOOL		1
@@ -178,24 +195,26 @@ static void check_argc(int argc, int min, int max)
 	exit(129);
 }
 
-static void show_config_origin(const struct key_value_info *kvi,
+static void show_config_origin(const struct config_display_options *opts,
+			       const struct key_value_info *kvi,
 			       struct strbuf *buf)
 {
-	const char term = end_nul ? '\0' : '\t';
+	const char term = opts->end_nul ? '\0' : '\t';
 
 	strbuf_addstr(buf, config_origin_type_name(kvi->origin_type));
 	strbuf_addch(buf, ':');
-	if (end_nul)
+	if (opts->end_nul)
 		strbuf_addstr(buf, kvi->filename ? kvi->filename : "");
 	else
 		quote_c_style(kvi->filename ? kvi->filename : "", buf, NULL, 0);
 	strbuf_addch(buf, term);
 }
 
-static void show_config_scope(const struct key_value_info *kvi,
+static void show_config_scope(const struct config_display_options *opts,
+			      const struct key_value_info *kvi,
 			      struct strbuf *buf)
 {
-	const char term = end_nul ? '\0' : '\t';
+	const char term = opts->end_nul ? '\0' : '\t';
 	const char *scope = config_scope_name(kvi->scope);
 
 	strbuf_addstr(buf, N_(scope));
@@ -204,24 +223,25 @@ static void show_config_scope(const struct key_value_info *kvi,
 
 static int show_all_config(const char *key_, const char *value_,
 			   const struct config_context *ctx,
-			   void *cb UNUSED)
+			   void *cb)
 {
+	const struct config_display_options *opts = cb;
 	const struct key_value_info *kvi = ctx->kvi;
 
-	if (show_origin || show_scope) {
+	if (opts->show_origin || opts->show_scope) {
 		struct strbuf buf = STRBUF_INIT;
-		if (show_scope)
-			show_config_scope(kvi, &buf);
-		if (show_origin)
-			show_config_origin(kvi, &buf);
+		if (opts->show_scope)
+			show_config_scope(opts, kvi, &buf);
+		if (opts->show_origin)
+			show_config_origin(opts, kvi, &buf);
 		/* Use fwrite as "buf" can contain \0's if "end_null" is set. */
 		fwrite(buf.buf, 1, buf.len, stdout);
 		strbuf_release(&buf);
 	}
-	if (!omit_values && value_)
-		printf("%s%c%s%c", key_, delim, value_, term);
+	if (!opts->omit_values && value_)
+		printf("%s%c%s%c", key_, opts->delim, value_, opts->term);
 	else
-		printf("%s%c", key_, term);
+		printf("%s%c", key_, opts->term);
 	return 0;
 }
 
@@ -231,18 +251,19 @@ struct strbuf_list {
 	int alloc;
 };
 
-static int format_config(struct strbuf *buf, const char *key_,
+static int format_config(const struct config_display_options *opts,
+			 struct strbuf *buf, const char *key_,
 			 const char *value_, const struct key_value_info *kvi)
 {
-	if (show_scope)
-		show_config_scope(kvi, buf);
-	if (show_origin)
-		show_config_origin(kvi, buf);
-	if (show_keys)
+	if (opts->show_scope)
+		show_config_scope(opts, kvi, buf);
+	if (opts->show_origin)
+		show_config_origin(opts, kvi, buf);
+	if (opts->show_keys)
 		strbuf_addstr(buf, key_);
-	if (!omit_values) {
-		if (show_keys)
-			strbuf_addch(buf, key_delim);
+	if (!opts->omit_values) {
+		if (opts->show_keys)
+			strbuf_addch(buf, opts->key_delim);
 
 		if (type == TYPE_INT)
 			strbuf_addf(buf, "%"PRId64,
@@ -284,18 +305,24 @@ static int format_config(struct strbuf *buf, const char *key_,
 			strbuf_addstr(buf, value_);
 		} else {
 			/* Just show the key name; back out delimiter */
-			if (show_keys)
+			if (opts->show_keys)
 				strbuf_setlen(buf, buf->len - 1);
 		}
 	}
-	strbuf_addch(buf, term);
+	strbuf_addch(buf, opts->term);
 	return 0;
 }
+
+struct collect_config_data {
+	const struct config_display_options *display_opts;
+	struct strbuf_list *values;
+};
 
 static int collect_config(const char *key_, const char *value_,
 			  const struct config_context *ctx, void *cb)
 {
-	struct strbuf_list *values = cb;
+	struct collect_config_data *data = cb;
+	struct strbuf_list *values = data->values;
 	const struct key_value_info *kvi = ctx->kvi;
 
 	if (!use_key_regexp && strcmp(key_, key))
@@ -311,14 +338,20 @@ static int collect_config(const char *key_, const char *value_,
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
 	strbuf_init(&values->items[values->nr], 0);
 
-	return format_config(&values->items[values->nr++], key_, value_, kvi);
+	return format_config(data->display_opts, &values->items[values->nr++],
+			     key_, value_, kvi);
 }
 
 static int get_value(const struct config_location_options *opts,
+		     const struct config_display_options *display_opts,
 		     const char *key_, const char *regex_, unsigned flags)
 {
 	int ret = CONFIG_GENERIC_ERROR;
 	struct strbuf_list values = {NULL};
+	struct collect_config_data data = {
+		.display_opts = display_opts,
+		.values = &values,
+	};
 	int i;
 
 	if (use_key_regexp) {
@@ -369,7 +402,7 @@ static int get_value(const struct config_location_options *opts,
 		}
 	}
 
-	config_with_options(collect_config, &values,
+	config_with_options(collect_config, &data,
 			    &opts->source, the_repository,
 			    &opts->options);
 
@@ -381,7 +414,7 @@ static int get_value(const struct config_location_options *opts,
 		ALLOC_GROW(values.items, values.nr + 1, values.alloc);
 		item = &values.items[values.nr++];
 		strbuf_init(item, 0);
-		if (format_config(item, key_, default_value, &kvi) < 0)
+		if (format_config(display_opts, item, key_, default_value, &kvi) < 0)
 			die(_("failed to format default config value: %s"),
 				default_value);
 	}
@@ -592,10 +625,12 @@ static int urlmatch_collect_fn(const char *var, const char *value,
 }
 
 static int get_urlmatch(const struct config_location_options *opts,
+			const struct config_display_options *_display_opts,
 			const char *var, const char *url)
 {
 	int ret;
 	char *section_tail;
+	struct config_display_options display_opts = *_display_opts;
 	struct string_list_item *item;
 	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
 	struct string_list values = STRING_LIST_INIT_DUP;
@@ -612,10 +647,10 @@ static int get_urlmatch(const struct config_location_options *opts,
 	if (section_tail) {
 		*section_tail = '\0';
 		config.key = section_tail + 1;
-		show_keys = 0;
+		display_opts.show_keys = 0;
 	} else {
 		config.key = NULL;
-		show_keys = 1;
+		display_opts.show_keys = 1;
 	}
 
 	config_with_options(urlmatch_config_entry, &config,
@@ -628,7 +663,7 @@ static int get_urlmatch(const struct config_location_options *opts,
 		struct urlmatch_current_candidate_value *matched = item->util;
 		struct strbuf buf = STRBUF_INIT;
 
-		format_config(&buf, item->string,
+		format_config(&display_opts, &buf, item->string,
 			      matched->value_is_null ? NULL : matched->value.buf,
 			      &matched->kvi);
 		fwrite(buf.buf, 1, buf.len, stdout);
@@ -745,11 +780,12 @@ static void location_options_release(struct config_location_options *opts)
 	free(opts->file_to_free);
 }
 
-static void handle_nul(void) {
-	if (end_nul) {
-		term = '\0';
-		delim = '\n';
-		key_delim = '\n';
+static void display_options_init(struct config_display_options *opts)
+{
+	if (opts->end_nul) {
+		opts->term = '\0';
+		opts->delim = '\n';
+		opts->key_delim = '\n';
 	}
 }
 
@@ -763,19 +799,13 @@ static void handle_nul(void) {
 	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH), \
 	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE)
 
-#define CONFIG_DISPLAY_OPTIONS \
-	OPT_GROUP(N_("Display options")), \
-	OPT_BOOL('z', "null", &end_nul, N_("terminate values with NUL byte")), \
-	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")), \
-	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")), \
-	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)"))
-
 static int cmd_config_list(int argc, const char **argv, const char *prefix)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
+	struct config_display_options display_opts = CONFIG_DISPLAY_OPTIONS_INIT;
 	struct option opts[] = {
 		CONFIG_LOCATION_OPTIONS(location_opts),
-		CONFIG_DISPLAY_OPTIONS,
+		CONFIG_DISPLAY_OPTIONS(display_opts),
 		OPT_GROUP(N_("Other")),
 		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 		OPT_END(),
@@ -785,11 +815,11 @@ static int cmd_config_list(int argc, const char **argv, const char *prefix)
 	check_argc(argc, 0, 0);
 
 	location_options_init(&location_opts, prefix);
-	handle_nul();
+	display_options_init(&display_opts);
 
 	setup_auto_pager("config", 1);
 
-	if (config_with_options(show_all_config, NULL,
+	if (config_with_options(show_all_config, &display_opts,
 				&location_opts.source, the_repository,
 				&location_opts.options) < 0) {
 		if (location_opts.source.file)
@@ -806,6 +836,7 @@ static int cmd_config_list(int argc, const char **argv, const char *prefix)
 static int cmd_config_get(int argc, const char **argv, const char *prefix)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
+	struct config_display_options display_opts = CONFIG_DISPLAY_OPTIONS_INIT;
 	const char *value_pattern = NULL, *url = NULL;
 	int flags = 0;
 	struct option opts[] = {
@@ -817,8 +848,7 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
 		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
 		OPT_STRING(0, "url", &url, N_("URL"), N_("show config matching the given URL")),
-		CONFIG_DISPLAY_OPTIONS,
-		OPT_BOOL(0, "show-names", &show_keys, N_("show config keys in addition to their values")),
+		CONFIG_DISPLAY_OPTIONS(display_opts),
 		OPT_GROUP(N_("Other")),
 		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
 		OPT_STRING(0, "default", &default_value, N_("value"), N_("use default value when missing entry")),
@@ -838,14 +868,14 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 		die(_("--url= cannot be used with --all, --regexp or --value"));
 
 	location_options_init(&location_opts, prefix);
-	handle_nul();
+	display_options_init(&display_opts);
 
 	setup_auto_pager("config", 1);
 
 	if (url)
-		ret = get_urlmatch(&location_opts, argv[0], url);
+		ret = get_urlmatch(&location_opts, &display_opts, argv[0], url);
 	else
-		ret = get_value(&location_opts, argv[0], value_pattern, flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], value_pattern, flags);
 
 	location_options_release(&location_opts);
 	return ret;
@@ -1076,6 +1106,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		ACTION_GET_URLMATCH = (1<<15),
 	};
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
+	struct config_display_options display_opts = CONFIG_DISPLAY_OPTIONS_INIT;
 	const char *comment_arg = NULL;
 	int actions = 0;
 	struct option opts[] = {
@@ -1096,7 +1127,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "get-color", &actions, N_("find the color configured: slot [<default>]"), ACTION_GET_COLOR),
 		OPT_CMDMODE(0, "get-colorbool", &actions, N_("find the color setting: slot [<stdout-is-tty>]"), ACTION_GET_COLORBOOL),
 		CONFIG_TYPE_OPTIONS,
-		CONFIG_DISPLAY_OPTIONS,
+		CONFIG_DISPLAY_OPTIONS(display_opts),
 		OPT_GROUP(N_("Other")),
 		OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
 		OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
@@ -1114,7 +1145,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
 	location_options_init(&location_opts, prefix);
-	handle_nul();
+	display_options_init(&display_opts);
 
 	if ((actions & (ACTION_GET_COLOR|ACTION_GET_COLORBOOL)) && type) {
 		error(_("--get-color and variable type are incoherent"));
@@ -1130,13 +1161,13 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 			error(_("no action specified"));
 			exit(129);
 		}
-	if (omit_values &&
+	if (display_opts.omit_values &&
 	    !(actions == ACTION_LIST || actions == ACTION_GET_REGEXP)) {
 		error(_("--name-only is only applicable to --list or --get-regexp"));
 		exit(129);
 	}
 
-	if (show_origin && !(actions &
+	if (display_opts.show_origin && !(actions &
 		(ACTION_GET|ACTION_GET_ALL|ACTION_GET_REGEXP|ACTION_LIST))) {
 		error(_("--show-origin is only applicable to --get, --get-all, "
 			"--get-regexp, and --list"));
@@ -1201,7 +1232,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
-		if (config_with_options(show_all_config, NULL,
+		if (config_with_options(show_all_config, &display_opts,
 					&location_opts.source, the_repository,
 					&location_opts.options) < 0) {
 			if (location_opts.source.file)
@@ -1250,23 +1281,23 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
-		ret = get_value(&location_opts, argv[0], argv[1], flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_ALL) {
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		ret = get_value(&location_opts, argv[0], argv[1], flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_REGEXP) {
-		show_keys = 1;
+		display_opts.show_keys = 1;
 		use_key_regexp = 1;
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		ret = get_value(&location_opts, argv[0], argv[1], flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_URLMATCH) {
 		check_argc(argc, 2, 2);
-		ret = get_urlmatch(&location_opts, argv[0], argv[1]);
+		ret = get_urlmatch(&location_opts, &display_opts, argv[0], argv[1]);
 	}
 	else if (actions == ACTION_UNSET) {
 		check_write(&location_opts.source);
