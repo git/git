@@ -12,7 +12,7 @@ SYNOPSIS
 'git' [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
     [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
-    [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+    [--git-dir=<path>] [--work-tree=<path>] [--namespace=<path>]
     [--config-env=<name>=<envvar>] <command> [<args>]
 
 DESCRIPTION
@@ -351,7 +351,7 @@ Repository, command and file interfaces
 ---------------------------------------
 
 This documentation discusses repository and command interfaces which
-users are expected to interact with directly. See `--user-formats` in
+users are expected to interact with directly. See `--user-interfaces` in
 linkgit:git-help[1] for more details on the criteria.
 
 include::cmds-userinterfaces.txt[]
