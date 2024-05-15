@@ -125,7 +125,6 @@ struct config_display_options {
 
 static char *key;
 static regex_t *key_regexp;
-static const char *value_pattern;
 static regex_t *regexp;
 static int use_key_regexp;
 static int do_all;
@@ -327,6 +326,7 @@ static int format_config(const struct config_display_options *opts,
 struct collect_config_data {
 	const struct config_display_options *display_opts;
 	struct strbuf_list *values;
+	const char *value_pattern;
 	int do_not_match;
 };
 
@@ -341,7 +341,7 @@ static int collect_config(const char *key_, const char *value_,
 		return 0;
 	if (use_key_regexp && regexec(key_regexp, key_, 0, NULL, 0))
 		return 0;
-	if (fixed_value && strcmp(value_pattern, (value_?value_:"")))
+	if (fixed_value && strcmp(data->value_pattern, (value_?value_:"")))
 		return 0;
 	if (regexp != NULL &&
 	    (data->do_not_match ^ !!regexec(regexp, (value_?value_:""), 0, NULL, 0)))
@@ -398,7 +398,7 @@ static int get_value(const struct config_location_options *opts,
 	}
 
 	if (regex_ && (flags & CONFIG_FLAGS_FIXED_VALUE))
-		value_pattern = regex_;
+		data.value_pattern = regex_;
 	else if (regex_) {
 		if (regex_[0] == '!') {
 			data.do_not_match = 1;
