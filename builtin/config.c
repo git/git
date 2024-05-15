@@ -87,30 +87,6 @@ static int show_origin;
 static int show_scope;
 static int fixed_value;
 
-#define ACTION_GET (1<<0)
-#define ACTION_GET_ALL (1<<1)
-#define ACTION_GET_REGEXP (1<<2)
-#define ACTION_REPLACE_ALL (1<<3)
-#define ACTION_ADD (1<<4)
-#define ACTION_UNSET (1<<5)
-#define ACTION_UNSET_ALL (1<<6)
-#define ACTION_RENAME_SECTION (1<<7)
-#define ACTION_REMOVE_SECTION (1<<8)
-#define ACTION_LIST (1<<9)
-#define ACTION_EDIT (1<<10)
-#define ACTION_SET (1<<11)
-#define ACTION_SET_ALL (1<<12)
-#define ACTION_GET_COLOR (1<<13)
-#define ACTION_GET_COLORBOOL (1<<14)
-#define ACTION_GET_URLMATCH (1<<15)
-
-/*
- * The actions "ACTION_LIST | ACTION_GET_*" which may produce more than
- * one line of output and which should therefore be paged.
- */
-#define PAGING_ACTIONS (ACTION_LIST | ACTION_GET_ALL | \
-			ACTION_GET_REGEXP | ACTION_GET_URLMATCH)
-
 #define TYPE_BOOL		1
 #define TYPE_INT		2
 #define TYPE_BOOL_OR_INT	3
@@ -1031,6 +1007,24 @@ static int cmd_config_edit(int argc, const char **argv, const char *prefix)
 
 static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 {
+	enum {
+		ACTION_GET = (1<<0),
+		ACTION_GET_ALL = (1<<1),
+		ACTION_GET_REGEXP = (1<<2),
+		ACTION_REPLACE_ALL = (1<<3),
+		ACTION_ADD = (1<<4),
+		ACTION_UNSET = (1<<5),
+		ACTION_UNSET_ALL = (1<<6),
+		ACTION_RENAME_SECTION = (1<<7),
+		ACTION_REMOVE_SECTION = (1<<8),
+		ACTION_LIST = (1<<9),
+		ACTION_EDIT = (1<<10),
+		ACTION_SET = (1<<11),
+		ACTION_SET_ALL = (1<<12),
+		ACTION_GET_COLOR = (1<<13),
+		ACTION_GET_COLORBOOL = (1<<14),
+		ACTION_GET_URLMATCH = (1<<15),
+	};
 	const char *comment_arg = NULL;
 	int actions = 0;
 	struct option opts[] = {
@@ -1147,7 +1141,11 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 
 	comment = git_config_prepare_comment_string(comment_arg);
 
-	if (actions & PAGING_ACTIONS)
+	/*
+	 * The following actions may produce more than one line of output and
+	 * should therefore be paged.
+	 */
+	if (actions & (ACTION_LIST | ACTION_GET_ALL | ACTION_GET_REGEXP | ACTION_GET_URLMATCH))
 		setup_auto_pager("config", 1);
 
 	if (actions == ACTION_LIST) {
