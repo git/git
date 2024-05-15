@@ -79,8 +79,11 @@ struct config_location_options {
 	int use_system_config;
 	int use_local_config;
 	int use_worktree_config;
+	int respect_includes_opt;
 };
-#define CONFIG_LOCATION_OPTIONS_INIT {0}
+#define CONFIG_LOCATION_OPTIONS_INIT { \
+	.respect_includes_opt = -1, \
+}
 
 #define CONFIG_TYPE_OPTIONS(type) \
 	OPT_GROUP(N_("Type")), \
@@ -127,7 +130,6 @@ static regex_t *regexp;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
-static int respect_includes_opt = -1;
 static int fixed_value;
 
 #define TYPE_BOOL		1
@@ -776,10 +778,10 @@ static void location_options_init(struct config_location_options *opts,
 		opts->source.scope = CONFIG_SCOPE_COMMAND;
 	}
 
-	if (respect_includes_opt == -1)
+	if (opts->respect_includes_opt == -1)
 		opts->options.respect_includes = !opts->source.file;
 	else
-		opts->options.respect_includes = respect_includes_opt;
+		opts->options.respect_includes = opts->respect_includes_opt;
 	if (startup_info->have_repository) {
 		opts->options.commondir = get_git_common_dir();
 		opts->options.git_dir = get_git_dir();
@@ -808,7 +810,8 @@ static int cmd_config_list(int argc, const char **argv, const char *prefix)
 		CONFIG_LOCATION_OPTIONS(location_opts),
 		CONFIG_DISPLAY_OPTIONS(display_opts),
 		OPT_GROUP(N_("Other")),
-		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+		OPT_BOOL(0, "includes", &location_opts.respect_includes_opt,
+			 N_("respect include directives on lookup")),
 		OPT_END(),
 	};
 
@@ -850,7 +853,8 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "url", &url, N_("URL"), N_("show config matching the given URL")),
 		CONFIG_DISPLAY_OPTIONS(display_opts),
 		OPT_GROUP(N_("Other")),
-		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+		OPT_BOOL(0, "includes", &location_opts.respect_includes_opt,
+			 N_("respect include directives on lookup")),
 		OPT_STRING(0, "default", &display_opts.default_value,
 			   N_("value"), N_("use default value when missing entry")),
 		OPT_END(),
@@ -1133,7 +1137,8 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 			   N_("value"), N_("with --get, use default value when missing entry")),
 		OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
 		OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
-		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+		OPT_BOOL(0, "includes", &location_opts.respect_includes_opt,
+			 N_("respect include directives on lookup")),
 		OPT_END(),
 	};
 	char *value = NULL, *comment = NULL;
