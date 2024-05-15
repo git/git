@@ -498,8 +498,8 @@ exclude;;
 
 [[def_pseudoref]]pseudoref::
 	A ref that has different semantics than normal refs. These refs can be
-	accessed via normal Git commands but may not behave the same as a
-	normal ref in some cases.
+	read via normal Git commands, but cannot be written to by commands like
+	linkgit:git-update-ref[1].
 +
 The following pseudorefs are known to Git:
 
