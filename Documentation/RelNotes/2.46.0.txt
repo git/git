@@ -27,6 +27,13 @@ UI, Workflows & Features
  * The color parsing code learned to handle 12-bit RGB colors, spelled
    as "#RGB" (in addition to "#RRGGBB" that is already supported).
 
+ * The operation mode options (like "--get") the "git config" command
+   uses have been deprecated and replaced with subcommands (like "git
+   config get").
+
+ * "git tag" learned the "--trailer" option to futz with the trailers
+   in the same way as "git commit" does.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -48,9 +55,14 @@ Performance, Internal Implementation, Development Support etc.
    by always instantiating "the_repository" and replacing references
    to "the_index"  with references to its .index member.
 
-
  * Git-GUI has a new maintainer, Johannes Sixt.
    (merge e18ad8eb26 jc/git-gui-maintainer-update later to maint).
+
+ * The "test-tool" has been taught to run testsuite tests in parallel,
+   bypassing the need to use the "prove" tool.
+
+ * The "whitespace check" task that was enabled for GitHub Actions CI
+   has been ported to GitLab CI.
 
 
 Fixes since v2.45
@@ -109,9 +121,15 @@ Fixes since v2.45
    support for the attr.tree configuration variable.
    (merge 51441e6460 jc/no-default-attr-tree-in-bare later to maint).
 
+ * The "--exit-code" option of "git diff" command learned to work with
+   the "--ext-diff" option.
+   (merge 11be65cfa4 rs/external-diff-with-exit-code later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 4cf6e7bf5e jt/doc-submitting-rerolled-series later to maint).
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
    (merge 395c130fd8 ma/win32-unix-domain-socket later to maint).
    (merge 7df2405b38 jk/ci-macos-gcc13-fix later to maint).
    (merge 55702c543e fa/p4-error later to maint).
+   (merge 2566a77774 vd/doc-merge-tree-x-option later to maint).
+   (merge b64b0df9da ds/scalar-reconfigure-all-fix later to maint).
