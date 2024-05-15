@@ -518,21 +518,24 @@ static char *normalize_value(const char *key, const char *value,
 	BUG("cannot normalize type %d", type);
 }
 
-static int get_color_found;
-static const char *get_color_slot;
-static const char *get_colorbool_slot;
-static char parsed_color[COLOR_MAXLEN];
+struct get_color_config_data {
+	int get_color_found;
+	const char *get_color_slot;
+	char parsed_color[COLOR_MAXLEN];
+};
 
 static int git_get_color_config(const char *var, const char *value,
 				const struct config_context *ctx UNUSED,
-				void *cb UNUSED)
+				void *cb)
 {
-	if (!strcmp(var, get_color_slot)) {
+	struct get_color_config_data *data = cb;
+
+	if (!strcmp(var, data->get_color_slot)) {
 		if (!value)
 			config_error_nonbool(var);
-		if (color_parse(value, parsed_color) < 0)
+		if (color_parse(value, data->parsed_color) < 0)
 			return -1;
-		get_color_found = 1;
+		data->get_color_found = 1;
 	}
 	return 0;
 }
@@ -540,66 +543,77 @@ static int git_get_color_config(const char *var, const char *value,
 static void get_color(const struct config_location_options *opts,
 		      const char *var, const char *def_color)
 {
-	get_color_slot = var;
-	get_color_found = 0;
-	parsed_color[0] = '\0';
-	config_with_options(git_get_color_config, NULL,
+	struct get_color_config_data data = {
+		.get_color_slot = var,
+		.parsed_color[0] = '\0',
+	};
+
+	config_with_options(git_get_color_config, &data,
 			    &opts->source, the_repository,
 			    &opts->options);
 
-	if (!get_color_found && def_color) {
-		if (color_parse(def_color, parsed_color) < 0)
+	if (!data.get_color_found && def_color) {
+		if (color_parse(def_color, data.parsed_color) < 0)
 			die(_("unable to parse default color value"));
 	}
 
-	fputs(parsed_color, stdout);
+	fputs(data.parsed_color, stdout);
 }
 
-static int get_colorbool_found;
-static int get_diff_color_found;
-static int get_color_ui_found;
+struct get_colorbool_config_data {
+	int get_colorbool_found;
+	int get_diff_color_found;
+	int get_color_ui_found;
+	const char *get_colorbool_slot;
+};
+
 static int git_get_colorbool_config(const char *var, const char *value,
 				    const struct config_context *ctx UNUSED,
-				    void *data UNUSED)
+				    void *cb)
 {
-	if (!strcmp(var, get_colorbool_slot))
-		get_colorbool_found = git_config_colorbool(var, value);
+	struct get_colorbool_config_data *data = cb;
+
+	if (!strcmp(var, data->get_colorbool_slot))
+		data->get_colorbool_found = git_config_colorbool(var, value);
 	else if (!strcmp(var, "diff.color"))
-		get_diff_color_found = git_config_colorbool(var, value);
+		data->get_diff_color_found = git_config_colorbool(var, value);
 	else if (!strcmp(var, "color.ui"))
-		get_color_ui_found = git_config_colorbool(var, value);
+		data->get_color_ui_found = git_config_colorbool(var, value);
 	return 0;
 }
 
 static int get_colorbool(const struct config_location_options *opts,
 			 const char *var, int print)
 {
-	get_colorbool_slot = var;
-	get_colorbool_found = -1;
-	get_diff_color_found = -1;
-	get_color_ui_found = -1;
-	config_with_options(git_get_colorbool_config, NULL,
+	struct get_colorbool_config_data data = {
+		.get_colorbool_slot = var,
+		.get_colorbool_found = -1,
+		.get_diff_color_found = -1,
+		.get_color_ui_found = -1,
+	};
+
+	config_with_options(git_get_colorbool_config, &data,
 			    &opts->source, the_repository,
 			    &opts->options);
 
-	if (get_colorbool_found < 0) {
-		if (!strcmp(get_colorbool_slot, "color.diff"))
-			get_colorbool_found = get_diff_color_found;
-		if (get_colorbool_found < 0)
-			get_colorbool_found = get_color_ui_found;
+	if (data.get_colorbool_found < 0) {
+		if (!strcmp(data.get_colorbool_slot, "color.diff"))
+			data.get_colorbool_found = data.get_diff_color_found;
+		if (data.get_colorbool_found < 0)
+			data.get_colorbool_found = data.get_color_ui_found;
 	}
 
-	if (get_colorbool_found < 0)
+	if (data.get_colorbool_found < 0)
 		/* default value if none found in config */
-		get_colorbool_found = GIT_COLOR_AUTO;
+		data.get_colorbool_found = GIT_COLOR_AUTO;
 
-	get_colorbool_found = want_color(get_colorbool_found);
+	data.get_colorbool_found = want_color(data.get_colorbool_found);
 
 	if (print) {
-		printf("%s\n", get_colorbool_found ? "true" : "false");
+		printf("%s\n", data.get_colorbool_found ? "true" : "false");
 		return 0;
 	} else
-		return get_colorbool_found ? 0 : 1;
+		return data.get_colorbool_found ? 0 : 1;
 }
 
 static void check_write(const struct git_config_source *source)
