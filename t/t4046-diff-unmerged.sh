@@ -98,4 +98,12 @@ test_expect_success 'diff --stat' '
 	test_cmp diff-stat.expect diff-stat.actual
 '
 
+test_expect_success 'diff --quiet' '
+	test_expect_code 1 git diff --cached --quiet
+'
+
+test_expect_success 'diff --quiet --ignore-all-space' '
+	test_expect_code 1 git diff --cached --quiet --ignore-all-space
+'
+
 test_done
