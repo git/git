@@ -113,3 +113,12 @@ static-analysis:
   script:
     - ./ci/run-static-analysis.sh
     - ./ci/check-directional-formatting.bash
+
+check-whitespace:
+  image: ubuntu:latest
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/check-whitespace.sh "$CI_MERGE_REQUEST_TARGET_BRANCH_SHA"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
