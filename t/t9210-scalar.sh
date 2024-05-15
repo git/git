@@ -180,6 +180,44 @@ test_expect_success 'scalar reconfigure' '
 	test true = "$(git -C one/src config core.preloadIndex)"
 '
 
+test_expect_success 'scalar reconfigure --all with includeIf.onbranch' '
+	repos="two three four" &&
+	for num in $repos
+	do
+		git init $num/src &&
+		scalar register $num/src &&
+		git -C $num/src config includeif."onbranch:foo".path something &&
+		git -C $num/src config core.preloadIndex false || return 1
+	done &&
+
+	scalar reconfigure --all &&
+
+	for num in $repos
+	do
+		test true = "$(git -C $num/src config core.preloadIndex)" || return 1
+	done
+'
+
+ test_expect_success 'scalar reconfigure --all with detached HEADs' '
+	repos="two three four" &&
+	for num in $repos
+	do
+		rm -rf $num/src &&
+		git init $num/src &&
+		scalar register $num/src &&
+		git -C $num/src config core.preloadIndex false &&
+		test_commit -C $num/src initial &&
+		git -C $num/src switch --detach HEAD || return 1
+	done &&
+
+	scalar reconfigure --all &&
+
+	for num in $repos
+	do
+		test true = "$(git -C $num/src config core.preloadIndex)" || return 1
+	done
+'
+
 test_expect_success '`reconfigure -a` removes stale config entries' '
 	git init stale/src &&
 	scalar register stale &&
