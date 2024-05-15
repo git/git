@@ -859,6 +859,7 @@ static int is_root_ref_syntax(const char *refname)
 int is_root_ref(const char *refname)
 {
 	static const char *const irregular_root_refs[] = {
+		"HEAD",
 		"AUTO_MERGE",
 		"BISECT_EXPECTED_REV",
 		"NOTES_MERGE_PARTIAL",
@@ -876,14 +877,6 @@ int is_root_ref(const char *refname)
 	for (i = 0; i < ARRAY_SIZE(irregular_root_refs); i++)
 		if (!strcmp(refname, irregular_root_refs[i]))
 			return 1;
-
-	return 0;
-}
-
-int is_headref(struct ref_store *refs, const char *refname)
-{
-	if (!strcmp(refname, "HEAD"))
-		return refs_ref_exists(refs, refname);
 
 	return 0;
 }

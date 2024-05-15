@@ -1060,7 +1060,8 @@ void update_ref_namespace(enum ref_namespace namespace, char *ref);
  *
  *   - Their name must be all-uppercase or underscores ("_").
  *
- *   - Their name must end with "_HEAD".
+ *   - Their name must end with "_HEAD". As a special rule, "HEAD" is a root
+ *     ref, as well.
  *
  *   - Their name may not contain a slash.
  *
@@ -1078,7 +1079,5 @@ void update_ref_namespace(enum ref_namespace namespace, char *ref);
  *   - MERGE_AUTOSTASH
  */
 int is_root_ref(const char *refname);
-
-int is_headref(struct ref_store *refs, const char *refname);
 
 #endif /* REFS_H */
