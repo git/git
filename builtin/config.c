@@ -62,6 +62,26 @@ static const char *const builtin_config_edit_usage[] = {
 	NULL
 };
 
+#define CONFIG_LOCATION_OPTIONS(opts) \
+	OPT_GROUP(N_("Config file location")), \
+	OPT_BOOL(0, "global", &opts.use_global_config, N_("use global config file")), \
+	OPT_BOOL(0, "system", &opts.use_system_config, N_("use system config file")), \
+	OPT_BOOL(0, "local", &opts.use_local_config, N_("use repository config file")), \
+	OPT_BOOL(0, "worktree", &opts.use_worktree_config, N_("use per-worktree config file")), \
+	OPT_STRING('f', "file", &opts.source.file, N_("file"), N_("use given config file")), \
+	OPT_STRING(0, "blob", &opts.source.blob, N_("blob-id"), N_("read config from given blob object"))
+
+struct config_location_options {
+	struct git_config_source source;
+	struct config_options options;
+	char *file_to_free;
+	int use_global_config;
+	int use_system_config;
+	int use_local_config;
+	int use_worktree_config;
+};
+#define CONFIG_LOCATION_OPTIONS_INIT {0}
+
 static char *key;
 static regex_t *key_regexp;
 static const char *value_pattern;
@@ -75,14 +95,10 @@ static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
 
-static int use_global_config, use_system_config, use_local_config;
-static int use_worktree_config;
-static struct git_config_source given_config_source;
 static int type;
 static char *default_value;
 static int end_nul;
 static int respect_includes_opt = -1;
-static struct config_options config_options;
 static int show_origin;
 static int show_scope;
 static int fixed_value;
@@ -298,7 +314,8 @@ static int collect_config(const char *key_, const char *value_,
 	return format_config(&values->items[values->nr++], key_, value_, kvi);
 }
 
-static int get_value(const char *key_, const char *regex_, unsigned flags)
+static int get_value(const struct config_location_options *opts,
+		     const char *key_, const char *regex_, unsigned flags)
 {
 	int ret = CONFIG_GENERIC_ERROR;
 	struct strbuf_list values = {NULL};
@@ -353,8 +370,8 @@ static int get_value(const char *key_, const char *regex_, unsigned flags)
 	}
 
 	config_with_options(collect_config, &values,
-			    &given_config_source, the_repository,
-			    &config_options);
+			    &opts->source, the_repository,
+			    &opts->options);
 
 	if (!values.nr && default_value) {
 		struct key_value_info kvi = KVI_INIT;
@@ -464,14 +481,15 @@ static int git_get_color_config(const char *var, const char *value,
 	return 0;
 }
 
-static void get_color(const char *var, const char *def_color)
+static void get_color(const struct config_location_options *opts,
+		      const char *var, const char *def_color)
 {
 	get_color_slot = var;
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	config_with_options(git_get_color_config, NULL,
-			    &given_config_source, the_repository,
-			    &config_options);
+			    &opts->source, the_repository,
+			    &opts->options);
 
 	if (!get_color_found && def_color) {
 		if (color_parse(def_color, parsed_color) < 0)
@@ -497,15 +515,16 @@ static int git_get_colorbool_config(const char *var, const char *value,
 	return 0;
 }
 
-static int get_colorbool(const char *var, int print)
+static int get_colorbool(const struct config_location_options *opts,
+			 const char *var, int print)
 {
 	get_colorbool_slot = var;
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
 	config_with_options(git_get_colorbool_config, NULL,
-			    &given_config_source, the_repository,
-			    &config_options);
+			    &opts->source, the_repository,
+			    &opts->options);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -527,15 +546,15 @@ static int get_colorbool(const char *var, int print)
 		return get_colorbool_found ? 0 : 1;
 }
 
-static void check_write(void)
+static void check_write(const struct git_config_source *source)
 {
-	if (!given_config_source.file && !startup_info->have_repository)
+	if (!source->file && !startup_info->have_repository)
 		die(_("not in a git directory"));
 
-	if (given_config_source.use_stdin)
+	if (source->use_stdin)
 		die(_("writing to stdin is not supported"));
 
-	if (given_config_source.blob)
+	if (source->blob)
 		die(_("writing config blobs is not supported"));
 }
 
@@ -572,7 +591,8 @@ static int urlmatch_collect_fn(const char *var, const char *value,
 	return 0;
 }
 
-static int get_urlmatch(const char *var, const char *url)
+static int get_urlmatch(const struct config_location_options *opts,
+			const char *var, const char *url)
 {
 	int ret;
 	char *section_tail;
@@ -599,8 +619,8 @@ static int get_urlmatch(const char *var, const char *url)
 	}
 
 	config_with_options(urlmatch_config_entry, &config,
-			    &given_config_source, the_repository,
-			    &config_options);
+			    &opts->source, the_repository,
+			    &opts->options);
 
 	ret = !values.nr;
 
@@ -638,34 +658,39 @@ static char *default_user_config(void)
 	return strbuf_detach(&buf, NULL);
 }
 
-static void handle_config_location(const char *prefix)
+static void location_options_init(struct config_location_options *opts,
+				  const char *prefix)
 {
-	if (use_global_config + use_system_config + use_local_config +
-	    use_worktree_config +
-	    !!given_config_source.file + !!given_config_source.blob > 1) {
+	if (!opts->source.file)
+		opts->source.file = opts->file_to_free =
+			xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
+
+	if (opts->use_global_config + opts->use_system_config +
+	    opts->use_local_config + opts->use_worktree_config +
+	    !!opts->source.file + !!opts->source.blob > 1) {
 		error(_("only one config file at a time"));
 		exit(129);
 	}
 
 	if (!startup_info->have_repository) {
-		if (use_local_config)
+		if (opts->use_local_config)
 			die(_("--local can only be used inside a git repository"));
-		if (given_config_source.blob)
+		if (opts->source.blob)
 			die(_("--blob can only be used inside a git repository"));
-		if (use_worktree_config)
+		if (opts->use_worktree_config)
 			die(_("--worktree can only be used inside a git repository"));
 	}
 
-	if (given_config_source.file &&
-			!strcmp(given_config_source.file, "-")) {
-		given_config_source.file = NULL;
-		given_config_source.use_stdin = 1;
-		given_config_source.scope = CONFIG_SCOPE_COMMAND;
+	if (opts->source.file &&
+			!strcmp(opts->source.file, "-")) {
+		opts->source.file = NULL;
+		opts->source.use_stdin = 1;
+		opts->source.scope = CONFIG_SCOPE_COMMAND;
 	}
 
-	if (use_global_config) {
-		given_config_source.file = git_global_config();
-		if (!given_config_source.file)
+	if (opts->use_global_config) {
+		opts->source.file = opts->file_to_free = git_global_config();
+		if (!opts->source.file)
 			/*
 			 * It is unknown if HOME/.gitconfig exists, so
 			 * we do not know if we should write to XDG
@@ -673,17 +698,18 @@ static void handle_config_location(const char *prefix)
 			 * is set and points at a sane location.
 			 */
 			die(_("$HOME not set"));
-		given_config_source.scope = CONFIG_SCOPE_GLOBAL;
-	} else if (use_system_config) {
-		given_config_source.file = git_system_config();
-		given_config_source.scope = CONFIG_SCOPE_SYSTEM;
-	} else if (use_local_config) {
-		given_config_source.file = git_pathdup("config");
-		given_config_source.scope = CONFIG_SCOPE_LOCAL;
-	} else if (use_worktree_config) {
+		opts->source.scope = CONFIG_SCOPE_GLOBAL;
+	} else if (opts->use_system_config) {
+		opts->source.file = opts->file_to_free = git_system_config();
+		opts->source.scope = CONFIG_SCOPE_SYSTEM;
+	} else if (opts->use_local_config) {
+		opts->source.file = opts->file_to_free = git_pathdup("config");
+		opts->source.scope = CONFIG_SCOPE_LOCAL;
+	} else if (opts->use_worktree_config) {
 		struct worktree **worktrees = get_worktrees();
 		if (the_repository->repository_format_worktree_config)
-			given_config_source.file = git_pathdup("config.worktree");
+			opts->source.file = opts->file_to_free =
+				git_pathdup("config.worktree");
 		else if (worktrees[0] && worktrees[1])
 			die(_("--worktree cannot be used with multiple "
 			      "working trees unless the config\n"
@@ -691,26 +717,32 @@ static void handle_config_location(const char *prefix)
 			      "Please read \"CONFIGURATION FILE\"\n"
 			      "section in \"git help worktree\" for details"));
 		else
-			given_config_source.file = git_pathdup("config");
-		given_config_source.scope = CONFIG_SCOPE_LOCAL;
+			opts->source.file = opts->file_to_free =
+				git_pathdup("config");
+		opts->source.scope = CONFIG_SCOPE_LOCAL;
 		free_worktrees(worktrees);
-	} else if (given_config_source.file) {
-		if (!is_absolute_path(given_config_source.file) && prefix)
-			given_config_source.file =
-				prefix_filename(prefix, given_config_source.file);
-		given_config_source.scope = CONFIG_SCOPE_COMMAND;
-	} else if (given_config_source.blob) {
-		given_config_source.scope = CONFIG_SCOPE_COMMAND;
+	} else if (opts->source.file) {
+		if (!is_absolute_path(opts->source.file) && prefix)
+			opts->source.file = opts->file_to_free =
+				prefix_filename(prefix, opts->source.file);
+		opts->source.scope = CONFIG_SCOPE_COMMAND;
+	} else if (opts->source.blob) {
+		opts->source.scope = CONFIG_SCOPE_COMMAND;
 	}
 
 	if (respect_includes_opt == -1)
-		config_options.respect_includes = !given_config_source.file;
+		opts->options.respect_includes = !opts->source.file;
 	else
-		config_options.respect_includes = respect_includes_opt;
+		opts->options.respect_includes = respect_includes_opt;
 	if (startup_info->have_repository) {
-		config_options.commondir = get_git_common_dir();
-		config_options.git_dir = get_git_dir();
+		opts->options.commondir = get_git_common_dir();
+		opts->options.git_dir = get_git_dir();
 	}
+}
+
+static void location_options_release(struct config_location_options *opts)
+{
+	free(opts->file_to_free);
 }
 
 static void handle_nul(void) {
@@ -720,15 +752,6 @@ static void handle_nul(void) {
 		key_delim = '\n';
 	}
 }
-
-#define CONFIG_LOCATION_OPTIONS \
-	OPT_GROUP(N_("Config file location")), \
-	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")), \
-	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")), \
-	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")), \
-	OPT_BOOL(0, "worktree", &use_worktree_config, N_("use per-worktree config file")), \
-	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")), \
-	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object"))
 
 #define CONFIG_TYPE_OPTIONS \
 	OPT_GROUP(N_("Type")), \
@@ -749,8 +772,9 @@ static void handle_nul(void) {
 
 static int cmd_config_list(int argc, const char **argv, const char *prefix)
 {
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		CONFIG_DISPLAY_OPTIONS,
 		OPT_GROUP(N_("Other")),
 		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
@@ -760,30 +784,32 @@ static int cmd_config_list(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_list_usage, 0);
 	check_argc(argc, 0, 0);
 
-	handle_config_location(prefix);
+	location_options_init(&location_opts, prefix);
 	handle_nul();
 
 	setup_auto_pager("config", 1);
 
 	if (config_with_options(show_all_config, NULL,
-				&given_config_source, the_repository,
-				&config_options) < 0) {
-		if (given_config_source.file)
+				&location_opts.source, the_repository,
+				&location_opts.options) < 0) {
+		if (location_opts.source.file)
 			die_errno(_("unable to read config file '%s'"),
-				  given_config_source.file);
+				  location_opts.source.file);
 		else
 			die(_("error processing config file(s)"));
 	}
 
+	location_options_release(&location_opts);
 	return 0;
 }
 
 static int cmd_config_get(int argc, const char **argv, const char *prefix)
 {
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	const char *value_pattern = NULL, *url = NULL;
 	int flags = 0;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		CONFIG_TYPE_OPTIONS,
 		OPT_GROUP(N_("Filter options")),
 		OPT_BOOL(0, "all", &do_all, N_("return all values for multi-valued config options")),
@@ -811,26 +837,28 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 	if (url && (do_all || use_key_regexp || value_pattern))
 		die(_("--url= cannot be used with --all, --regexp or --value"));
 
-	handle_config_location(prefix);
+	location_options_init(&location_opts, prefix);
 	handle_nul();
 
 	setup_auto_pager("config", 1);
 
 	if (url)
-		ret = get_urlmatch(argv[0], url);
+		ret = get_urlmatch(&location_opts, argv[0], url);
 	else
-		ret = get_value(argv[0], value_pattern, flags);
+		ret = get_value(&location_opts, argv[0], value_pattern, flags);
 
+	location_options_release(&location_opts);
 	return ret;
 }
 
 static int cmd_config_set(int argc, const char **argv, const char *prefix)
 {
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	const char *value_pattern = NULL, *comment_arg = NULL;
 	char *comment = NULL;
 	int flags = 0, append = 0;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		CONFIG_TYPE_OPTIONS,
 		OPT_GROUP(N_("Filter")),
 		OPT_BIT(0, "all", &flags, N_("replace multi-valued config option with new value"), CONFIG_FLAGS_MULTI_REPLACE),
@@ -858,23 +886,24 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix)
 
 	comment = git_config_prepare_comment_string(comment_arg);
 
-	handle_config_location(prefix);
-	check_write();
+	location_options_init(&location_opts, prefix);
+	check_write(&location_opts.source);
 
 	value = normalize_value(argv[0], argv[1], &default_kvi);
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern) {
-		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
 							     argv[0], value, value_pattern,
 							     comment, flags);
 	} else {
-		ret = git_config_set_in_file_gently(given_config_source.file,
+		ret = git_config_set_in_file_gently(location_opts.source.file,
 						    argv[0], comment, value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
 	}
 
+	location_options_release(&location_opts);
 	free(comment);
 	free(value);
 	return ret;
@@ -882,10 +911,11 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix)
 
 static int cmd_config_unset(int argc, const char **argv, const char *prefix)
 {
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	const char *value_pattern = NULL;
 	int flags = 0;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		OPT_GROUP(N_("Filter")),
 		OPT_BIT(0, "all", &flags, N_("replace multi-valued config option with new value"), CONFIG_FLAGS_MULTI_REPLACE),
 		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
@@ -901,24 +931,26 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix)
 	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
 		die(_("--fixed-value only applies with 'value-pattern'"));
 
-	handle_config_location(prefix);
-	check_write();
+	location_options_init(&location_opts, prefix);
+	check_write(&location_opts.source);
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern)
-		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
 							     argv[0], NULL, value_pattern,
 							     NULL, flags);
 	else
-		ret = git_config_set_in_file_gently(given_config_source.file, argv[0],
+		ret = git_config_set_in_file_gently(location_opts.source.file, argv[0],
 						    NULL, NULL);
 
+	location_options_release(&location_opts);
 	return ret;
 }
 
 static int cmd_config_rename_section(int argc, const char **argv, const char *prefix)
 {
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		OPT_END(),
 	};
 	int ret;
@@ -927,10 +959,10 @@ static int cmd_config_rename_section(int argc, const char **argv, const char *pr
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 	check_argc(argc, 2, 2);
 
-	handle_config_location(prefix);
-	check_write();
+	location_options_init(&location_opts, prefix);
+	check_write(&location_opts.source);
 
-	ret = git_config_rename_section_in_file(given_config_source.file,
+	ret = git_config_rename_section_in_file(location_opts.source.file,
 						argv[0], argv[1]);
 	if (ret < 0)
 		goto out;
@@ -939,13 +971,15 @@ static int cmd_config_rename_section(int argc, const char **argv, const char *pr
 	ret = 0;
 
 out:
+	location_options_release(&location_opts);
 	return ret;
 }
 
 static int cmd_config_remove_section(int argc, const char **argv, const char *prefix)
 {
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		OPT_END(),
 	};
 	int ret;
@@ -954,10 +988,10 @@ static int cmd_config_remove_section(int argc, const char **argv, const char *pr
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 	check_argc(argc, 1, 1);
 
-	handle_config_location(prefix);
-	check_write();
+	location_options_init(&location_opts, prefix);
+	check_write(&location_opts.source);
 
-	ret = git_config_rename_section_in_file(given_config_source.file,
+	ret = git_config_rename_section_in_file(location_opts.source.file,
 						argv[0], NULL);
 	if (ret < 0)
 		goto out;
@@ -966,24 +1000,25 @@ static int cmd_config_remove_section(int argc, const char **argv, const char *pr
 	ret = 0;
 
 out:
+	location_options_release(&location_opts);
 	return ret;
 }
 
-static int show_editor(void)
+static int show_editor(struct config_location_options *opts)
 {
 	char *config_file;
 
-	if (!given_config_source.file && !startup_info->have_repository)
+	if (!opts->source.file && !startup_info->have_repository)
 		die(_("not in a git directory"));
-	if (given_config_source.use_stdin)
+	if (opts->source.use_stdin)
 		die(_("editing stdin is not supported"));
-	if (given_config_source.blob)
+	if (opts->source.blob)
 		die(_("editing blobs is not supported"));
 	git_config(git_default_config, NULL);
-	config_file = given_config_source.file ?
-			xstrdup(given_config_source.file) :
+	config_file = opts->source.file ?
+			xstrdup(opts->source.file) :
 			git_pathdup("config");
-	if (use_global_config) {
+	if (opts->use_global_config) {
 		int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
 		if (fd >= 0) {
 			char *content = default_user_config();
@@ -1002,18 +1037,22 @@ static int show_editor(void)
 
 static int cmd_config_edit(int argc, const char **argv, const char *prefix)
 {
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		OPT_END(),
 	};
+	int ret;
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_edit_usage, 0);
 	check_argc(argc, 0, 0);
 
-	handle_config_location(prefix);
-	check_write();
+	location_options_init(&location_opts, prefix);
+	check_write(&location_opts.source);
 
-	return show_editor();
+	ret = show_editor(&location_opts);
+	location_options_release(&location_opts);
+	return ret;
 }
 
 static int cmd_config_actions(int argc, const char **argv, const char *prefix)
@@ -1036,10 +1075,11 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		ACTION_GET_COLORBOOL = (1<<14),
 		ACTION_GET_URLMATCH = (1<<15),
 	};
+	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	const char *comment_arg = NULL;
 	int actions = 0;
 	struct option opts[] = {
-		CONFIG_LOCATION_OPTIONS,
+		CONFIG_LOCATION_OPTIONS(location_opts),
 		OPT_GROUP(N_("Action")),
 		OPT_CMDMODE(0, "get", &actions, N_("get value: name [<value-pattern>]"), ACTION_GET),
 		OPT_CMDMODE(0, "get-all", &actions, N_("get all values: key [<value-pattern>]"), ACTION_GET_ALL),
@@ -1073,7 +1113,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 			     builtin_config_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	handle_config_location(prefix);
+	location_options_init(&location_opts, prefix);
 	handle_nul();
 
 	if ((actions & (ACTION_GET_COLOR|ACTION_GET_COLORBOOL)) && type) {
@@ -1162,94 +1202,94 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
 		if (config_with_options(show_all_config, NULL,
-					&given_config_source, the_repository,
-					&config_options) < 0) {
-			if (given_config_source.file)
+					&location_opts.source, the_repository,
+					&location_opts.options) < 0) {
+			if (location_opts.source.file)
 				die_errno(_("unable to read config file '%s'"),
-					  given_config_source.file);
+					  location_opts.source.file);
 			else
 				die(_("error processing config file(s)"));
 		}
 	}
 	else if (actions == ACTION_EDIT) {
-		ret = show_editor();
+		ret = show_editor(&location_opts);
 	}
 	else if (actions == ACTION_SET) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1], &default_kvi);
-		ret = git_config_set_in_file_gently(given_config_source.file, argv[0], comment, value);
+		ret = git_config_set_in_file_gently(location_opts.source.file, argv[0], comment, value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
 	}
 	else if (actions == ACTION_SET_ALL) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1], &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
 							     argv[0], value, argv[2],
 							     comment, flags);
 	}
 	else if (actions == ACTION_ADD) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1], &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
 							     argv[0], value,
 							     CONFIG_REGEX_NONE,
 							     comment, flags);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1], &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
 							     argv[0], value, argv[2],
 							     comment, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
-		ret = get_value(argv[0], argv[1], flags);
+		ret = get_value(&location_opts, argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_ALL) {
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		ret = get_value(argv[0], argv[1], flags);
+		ret = get_value(&location_opts, argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_REGEXP) {
 		show_keys = 1;
 		use_key_regexp = 1;
 		do_all = 1;
 		check_argc(argc, 1, 2);
-		ret = get_value(argv[0], argv[1], flags);
+		ret = get_value(&location_opts, argv[0], argv[1], flags);
 	}
 	else if (actions == ACTION_GET_URLMATCH) {
 		check_argc(argc, 2, 2);
-		ret = get_urlmatch(argv[0], argv[1]);
+		ret = get_urlmatch(&location_opts, argv[0], argv[1]);
 	}
 	else if (actions == ACTION_UNSET) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+			ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
 								     argv[0], NULL, argv[1],
 								     NULL, flags);
 		else
-			ret = git_config_set_in_file_gently(given_config_source.file,
+			ret = git_config_set_in_file_gently(location_opts.source.file,
 							    argv[0], NULL, NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 1, 2);
-		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
 							     argv[0], NULL, argv[1],
 							     NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
-		ret = git_config_rename_section_in_file(given_config_source.file,
+		ret = git_config_rename_section_in_file(location_opts.source.file,
 							argv[0], argv[1]);
 		if (ret < 0)
 			goto out;
@@ -1259,9 +1299,9 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 			ret = 0;
 	}
 	else if (actions == ACTION_REMOVE_SECTION) {
-		check_write();
+		check_write(&location_opts.source);
 		check_argc(argc, 1, 1);
-		ret = git_config_rename_section_in_file(given_config_source.file,
+		ret = git_config_rename_section_in_file(location_opts.source.file,
 							argv[0], NULL);
 		if (ret < 0)
 			goto out;
@@ -1272,16 +1312,17 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	}
 	else if (actions == ACTION_GET_COLOR) {
 		check_argc(argc, 1, 2);
-		get_color(argv[0], argv[1]);
+		get_color(&location_opts, argv[0], argv[1]);
 	}
 	else if (actions == ACTION_GET_COLORBOOL) {
 		check_argc(argc, 1, 2);
 		if (argc == 2)
 			color_stdout_is_tty = git_config_bool("command line", argv[1]);
-		ret = get_colorbool(argv[0], argc == 2);
+		ret = get_colorbool(&location_opts, argv[0], argc == 2);
 	}
 
 out:
+	location_options_release(&location_opts);
 	free(comment);
 	free(value);
 	return ret;
@@ -1300,8 +1341,6 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("edit", &subcommand, cmd_config_edit),
 		OPT_END(),
 	};
-
-	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
 
 	/*
 	 * This is somewhat hacky: we first parse the command line while
