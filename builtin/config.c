@@ -125,7 +125,6 @@ struct config_display_options {
 
 static int use_key_regexp;
 static int do_all;
-static int fixed_value;
 
 #define TYPE_BOOL		1
 #define TYPE_INT		2
@@ -328,6 +327,7 @@ struct collect_config_data {
 	regex_t *regexp;
 	regex_t *key_regexp;
 	int do_not_match;
+	unsigned flags;
 };
 
 static int collect_config(const char *key_, const char *value_,
@@ -341,7 +341,8 @@ static int collect_config(const char *key_, const char *value_,
 		return 0;
 	if (use_key_regexp && regexec(data->key_regexp, key_, 0, NULL, 0))
 		return 0;
-	if (fixed_value && strcmp(data->value_pattern, (value_?value_:"")))
+	if ((data->flags & CONFIG_FLAGS_FIXED_VALUE) &&
+	    strcmp(data->value_pattern, (value_?value_:"")))
 		return 0;
 	if (data->regexp &&
 	    (data->do_not_match ^ !!regexec(data->regexp, (value_?value_:""), 0, NULL, 0)))
@@ -363,6 +364,7 @@ static int get_value(const struct config_location_options *opts,
 	struct collect_config_data data = {
 		.display_opts = display_opts,
 		.values = &values,
+		.flags = flags,
 	};
 	char *key = NULL;
 	int i;
@@ -1117,6 +1119,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	struct config_display_options display_opts = CONFIG_DISPLAY_OPTIONS_INIT;
 	const char *comment_arg = NULL;
 	int actions = 0;
+	unsigned flags = 0;
 	struct option opts[] = {
 		CONFIG_LOCATION_OPTIONS(location_opts),
 		OPT_GROUP(N_("Action")),
@@ -1139,13 +1142,12 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		OPT_STRING(0, "default", &display_opts.default_value,
 			   N_("value"), N_("with --get, use default value when missing entry")),
 		OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
-		OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
+		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
 		OPT_BOOL(0, "includes", &location_opts.respect_includes_opt,
 			 N_("respect include directives on lookup")),
 		OPT_END(),
 	};
 	char *value = NULL, *comment = NULL;
-	int flags = 0;
 	int ret = 0;
 	struct key_value_info default_kvi = KVI_INIT;
 
@@ -1195,7 +1197,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	}
 
 	/* check usage of --fixed-value */
-	if (fixed_value) {
+	if (flags & CONFIG_FLAGS_FIXED_VALUE) {
 		int allowed_usage = 0;
 
 		switch (actions) {
@@ -1226,8 +1228,6 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 			error(_("--fixed-value only applies with 'value-pattern'"));
 			exit(129);
 		}
-
-		flags |= CONFIG_FLAGS_FIXED_VALUE;
 	}
 
 	comment = git_config_prepare_comment_string(comment_arg);
