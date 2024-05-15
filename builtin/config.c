@@ -123,9 +123,6 @@ struct config_display_options {
 	.key_delim = ' ', \
 }
 
-static int use_key_regexp;
-static int do_all;
-
 #define TYPE_BOOL		1
 #define TYPE_INT		2
 #define TYPE_BOOL_OR_INT	3
@@ -319,6 +316,9 @@ static int format_config(const struct config_display_options *opts,
 	return 0;
 }
 
+#define GET_VALUE_ALL        (1 << 0)
+#define GET_VALUE_KEY_REGEXP (1 << 1)
+
 struct collect_config_data {
 	const struct config_display_options *display_opts;
 	struct strbuf_list *values;
@@ -327,6 +327,7 @@ struct collect_config_data {
 	regex_t *regexp;
 	regex_t *key_regexp;
 	int do_not_match;
+	unsigned get_value_flags;
 	unsigned flags;
 };
 
@@ -337,9 +338,11 @@ static int collect_config(const char *key_, const char *value_,
 	struct strbuf_list *values = data->values;
 	const struct key_value_info *kvi = ctx->kvi;
 
-	if (!use_key_regexp && strcmp(key_, data->key))
+	if (!(data->get_value_flags & GET_VALUE_KEY_REGEXP) &&
+	    strcmp(key_, data->key))
 		return 0;
-	if (use_key_regexp && regexec(data->key_regexp, key_, 0, NULL, 0))
+	if ((data->get_value_flags & GET_VALUE_KEY_REGEXP) &&
+	    regexec(data->key_regexp, key_, 0, NULL, 0))
 		return 0;
 	if ((data->flags & CONFIG_FLAGS_FIXED_VALUE) &&
 	    strcmp(data->value_pattern, (value_?value_:"")))
@@ -357,19 +360,21 @@ static int collect_config(const char *key_, const char *value_,
 
 static int get_value(const struct config_location_options *opts,
 		     const struct config_display_options *display_opts,
-		     const char *key_, const char *regex_, unsigned flags)
+		     const char *key_, const char *regex_,
+		     unsigned get_value_flags, unsigned flags)
 {
 	int ret = CONFIG_GENERIC_ERROR;
 	struct strbuf_list values = {NULL};
 	struct collect_config_data data = {
 		.display_opts = display_opts,
 		.values = &values,
+		.get_value_flags = get_value_flags,
 		.flags = flags,
 	};
 	char *key = NULL;
 	int i;
 
-	if (use_key_regexp) {
+	if (get_value_flags & GET_VALUE_KEY_REGEXP) {
 		char *tl;
 
 		/*
@@ -441,7 +446,7 @@ static int get_value(const struct config_location_options *opts,
 
 	for (i = 0; i < values.nr; i++) {
 		struct strbuf *buf = values.items + i;
-		if (do_all || i == values.nr - 1)
+		if ((get_value_flags & GET_VALUE_ALL) || i == values.nr - 1)
 			fwrite(buf->buf, 1, buf->len, stdout);
 		strbuf_release(buf);
 	}
@@ -848,11 +853,12 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 	struct config_display_options display_opts = CONFIG_DISPLAY_OPTIONS_INIT;
 	const char *value_pattern = NULL, *url = NULL;
 	int flags = 0;
+	unsigned get_value_flags = 0;
 	struct option opts[] = {
 		CONFIG_LOCATION_OPTIONS(location_opts),
 		OPT_GROUP(N_("Filter options")),
-		OPT_BOOL(0, "all", &do_all, N_("return all values for multi-valued config options")),
-		OPT_BOOL(0, "regexp", &use_key_regexp, N_("interpret the name as a regular expression")),
+		OPT_BIT(0, "all", &get_value_flags, N_("return all values for multi-valued config options"), GET_VALUE_ALL),
+		OPT_BIT(0, "regexp", &get_value_flags, N_("interpret the name as a regular expression"), GET_VALUE_KEY_REGEXP),
 		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
 		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
 		OPT_STRING(0, "url", &url, N_("URL"), N_("show config matching the given URL")),
@@ -872,9 +878,12 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 
 	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
 		die(_("--fixed-value only applies with 'value-pattern'"));
-	if (display_opts.default_value && (do_all || url))
+	if (display_opts.default_value &&
+	    ((get_value_flags & GET_VALUE_ALL) || url))
 		die(_("--default= cannot be used with --all or --url="));
-	if (url && (do_all || use_key_regexp || value_pattern))
+	if (url && ((get_value_flags & GET_VALUE_ALL) ||
+		    (get_value_flags & GET_VALUE_KEY_REGEXP) ||
+		    value_pattern))
 		die(_("--url= cannot be used with --all, --regexp or --value"));
 
 	location_options_init(&location_opts, prefix);
@@ -885,7 +894,8 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 	if (url)
 		ret = get_urlmatch(&location_opts, &display_opts, argv[0], url);
 	else
-		ret = get_value(&location_opts, &display_opts, argv[0], value_pattern, flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], value_pattern,
+				get_value_flags, flags);
 
 	location_options_release(&location_opts);
 	return ret;
@@ -1290,19 +1300,19 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
-		ret = get_value(&location_opts, &display_opts, argv[0], argv[1], flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], argv[1],
+				0, flags);
 	}
 	else if (actions == ACTION_GET_ALL) {
-		do_all = 1;
 		check_argc(argc, 1, 2);
-		ret = get_value(&location_opts, &display_opts, argv[0], argv[1], flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], argv[1],
+				GET_VALUE_ALL, flags);
 	}
 	else if (actions == ACTION_GET_REGEXP) {
 		display_opts.show_keys = 1;
-		use_key_regexp = 1;
-		do_all = 1;
 		check_argc(argc, 1, 2);
-		ret = get_value(&location_opts, &display_opts, argv[0], argv[1], flags);
+		ret = get_value(&location_opts, &display_opts, argv[0], argv[1],
+				GET_VALUE_ALL|GET_VALUE_KEY_REGEXP, flags);
 	}
 	else if (actions == ACTION_GET_URLMATCH) {
 		check_argc(argc, 2, 2);
