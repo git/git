@@ -3193,14 +3193,10 @@ void git_config_set(const char *key, const char *value)
 	trace2_cmd_set_config(key, value);
 }
 
-/*
- * The ownership rule is that the caller will own the string
- * if it receives a piece of memory different from what it passed
- * as the parameter.
- */
-const char *git_config_prepare_comment_string(const char *comment)
+char *git_config_prepare_comment_string(const char *comment)
 {
 	size_t leading_blanks;
+	char *prepared;
 
 	if (!comment)
 		return NULL;
@@ -3221,13 +3217,13 @@ const char *git_config_prepare_comment_string(const char *comment)
 
 	leading_blanks = strspn(comment, " \t");
 	if (leading_blanks && comment[leading_blanks] == '#')
-		; /* use it as-is */
+		prepared = xstrdup(comment); /* use it as-is */
 	else if (comment[0] == '#')
-		comment = xstrfmt(" %s", comment);
+		prepared = xstrfmt(" %s", comment);
 	else
-		comment = xstrfmt(" # %s", comment);
+		prepared = xstrfmt(" # %s", comment);
 
-	return comment;
+	return prepared;
 }
 
 static void validate_comment_string(const char *comment)

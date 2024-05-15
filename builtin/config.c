@@ -16,7 +16,49 @@
 #include "worktree.h"
 
 static const char *const builtin_config_usage[] = {
-	N_("git config [<options>]"),
+	N_("git config list [<file-option>] [<display-option>] [--includes]"),
+	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
+	N_("git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	N_("git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	N_("git config rename-section [<file-option>] <old-name> <new-name>"),
+	N_("git config remove-section [<file-option>] <name>"),
+	N_("git config edit [<file-option>]"),
+	N_("git config [<file-option>] --get-colorbool <name> [<stdout-is-tty>]"),
+	NULL
+};
+
+static const char *const builtin_config_list_usage[] = {
+	N_("git config list [<file-option>] [<display-option>] [--includes]"),
+	NULL
+};
+
+static const char *const builtin_config_get_usage[] = {
+	N_("git config get [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>"),
+	NULL
+};
+
+static const char *const builtin_config_set_usage[] = {
+	N_("git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	NULL
+};
+
+static const char *const builtin_config_unset_usage[] = {
+	N_("git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>"),
+	NULL
+};
+
+static const char *const builtin_config_rename_section_usage[] = {
+	N_("git config rename-section [<file-option>] <old-name> <new-name>"),
+	NULL
+};
+
+static const char *const builtin_config_remove_section_usage[] = {
+	N_("git config remove-section [<file-option>] <name>"),
+	NULL
+};
+
+static const char *const builtin_config_edit_usage[] = {
+	N_("git config edit [<file-option>]"),
 	NULL
 };
 
@@ -33,6 +75,7 @@ static char delim = '=';
 static char key_delim = ' ';
 static char term = '\n';
 
+static parse_opt_subcommand_fn *subcommand;
 static int use_global_config, use_system_config, use_local_config;
 static int use_worktree_config;
 static struct git_config_source given_config_source;
@@ -44,7 +87,7 @@ static struct config_options config_options;
 static int show_origin;
 static int show_scope;
 static int fixed_value;
-static const char *comment;
+static const char *comment_arg;
 
 #define ACTION_GET (1<<0)
 #define ACTION_GET_ALL (1<<1)
@@ -133,54 +176,6 @@ static int option_parse_type(const struct option *opt, const char *arg,
 	*to_type = new_type;
 
 	return 0;
-}
-
-static struct option builtin_config_options[] = {
-	OPT_GROUP(N_("Config file location")),
-	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
-	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")),
-	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")),
-	OPT_BOOL(0, "worktree", &use_worktree_config, N_("use per-worktree config file")),
-	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")),
-	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object")),
-	OPT_GROUP(N_("Action")),
-	OPT_BIT(0, "get", &actions, N_("get value: name [value-pattern]"), ACTION_GET),
-	OPT_BIT(0, "get-all", &actions, N_("get all values: key [value-pattern]"), ACTION_GET_ALL),
-	OPT_BIT(0, "get-regexp", &actions, N_("get values for regexp: name-regex [value-pattern]"), ACTION_GET_REGEXP),
-	OPT_BIT(0, "get-urlmatch", &actions, N_("get value specific for the URL: section[.var] URL"), ACTION_GET_URLMATCH),
-	OPT_BIT(0, "replace-all", &actions, N_("replace all matching variables: name value [value-pattern]"), ACTION_REPLACE_ALL),
-	OPT_BIT(0, "add", &actions, N_("add a new variable: name value"), ACTION_ADD),
-	OPT_BIT(0, "unset", &actions, N_("remove a variable: name [value-pattern]"), ACTION_UNSET),
-	OPT_BIT(0, "unset-all", &actions, N_("remove all matches: name [value-pattern]"), ACTION_UNSET_ALL),
-	OPT_BIT(0, "rename-section", &actions, N_("rename section: old-name new-name"), ACTION_RENAME_SECTION),
-	OPT_BIT(0, "remove-section", &actions, N_("remove a section: name"), ACTION_REMOVE_SECTION),
-	OPT_BIT('l', "list", &actions, N_("list all"), ACTION_LIST),
-	OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
-	OPT_BIT('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
-	OPT_BIT(0, "get-color", &actions, N_("find the color configured: slot [default]"), ACTION_GET_COLOR),
-	OPT_BIT(0, "get-colorbool", &actions, N_("find the color setting: slot [stdout-is-tty]"), ACTION_GET_COLORBOOL),
-	OPT_GROUP(N_("Type")),
-	OPT_CALLBACK('t', "type", &type, N_("type"), N_("value is given this type"), option_parse_type),
-	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL),
-	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT),
-	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT),
-	OPT_CALLBACK_VALUE(0, "bool-or-str", &type, N_("value is --bool or string"), TYPE_BOOL_OR_STR),
-	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH),
-	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE),
-	OPT_GROUP(N_("Other")),
-	OPT_BOOL('z', "null", &end_nul, N_("terminate values with NUL byte")),
-	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
-	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
-	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")),
-	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)")),
-	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
-	OPT_STRING(0, "comment", &comment, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
-	OPT_END(),
-};
-
-static NORETURN void usage_builtin_config(void)
-{
-	usage_with_options(builtin_config_usage, builtin_config_options);
 }
 
 static void check_argc(int argc, int min, int max)
@@ -671,20 +666,8 @@ static char *default_user_config(void)
 	return strbuf_detach(&buf, NULL);
 }
 
-int cmd_config(int argc, const char **argv, const char *prefix)
+static void handle_config_location(const char *prefix)
 {
-	int nongit = !startup_info->have_repository;
-	char *value = NULL;
-	int flags = 0;
-	int ret = 0;
-	struct key_value_info default_kvi = KVI_INIT;
-
-	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
-
-	argc = parse_options(argc, argv, prefix, builtin_config_options,
-			     builtin_config_usage,
-			     PARSE_OPT_STOP_AT_NON_OPTION);
-
 	if (use_global_config + use_system_config + use_local_config +
 	    use_worktree_config +
 	    !!given_config_source.file + !!given_config_source.blob > 1) {
@@ -692,14 +675,13 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_builtin_config();
 	}
 
-	if (nongit) {
+	if (!startup_info->have_repository) {
 		if (use_local_config)
 			die(_("--local can only be used inside a git repository"));
 		if (given_config_source.blob)
 			die(_("--blob can only be used inside a git repository"));
 		if (use_worktree_config)
 			die(_("--worktree can only be used inside a git repository"));
-
 	}
 
 	if (given_config_source.file &&
@@ -753,26 +735,384 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		config_options.respect_includes = !given_config_source.file;
 	else
 		config_options.respect_includes = respect_includes_opt;
-	if (!nongit) {
+	if (startup_info->have_repository) {
 		config_options.commondir = get_git_common_dir();
 		config_options.git_dir = get_git_dir();
 	}
+}
 
+static void handle_nul(void) {
 	if (end_nul) {
 		term = '\0';
 		delim = '\n';
 		key_delim = '\n';
 	}
+}
+
+#define CONFIG_LOCATION_OPTIONS \
+	OPT_GROUP(N_("Config file location")), \
+	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")), \
+	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")), \
+	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")), \
+	OPT_BOOL(0, "worktree", &use_worktree_config, N_("use per-worktree config file")), \
+	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")), \
+	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object"))
+
+#define CONFIG_TYPE_OPTIONS \
+	OPT_GROUP(N_("Type")), \
+	OPT_CALLBACK('t', "type", &type, N_("type"), N_("value is given this type"), option_parse_type), \
+	OPT_CALLBACK_VALUE(0, "bool", &type, N_("value is \"true\" or \"false\""), TYPE_BOOL), \
+	OPT_CALLBACK_VALUE(0, "int", &type, N_("value is decimal number"), TYPE_INT), \
+	OPT_CALLBACK_VALUE(0, "bool-or-int", &type, N_("value is --bool or --int"), TYPE_BOOL_OR_INT), \
+	OPT_CALLBACK_VALUE(0, "bool-or-str", &type, N_("value is --bool or string"), TYPE_BOOL_OR_STR), \
+	OPT_CALLBACK_VALUE(0, "path", &type, N_("value is a path (file or directory name)"), TYPE_PATH), \
+	OPT_CALLBACK_VALUE(0, "expiry-date", &type, N_("value is an expiry date"), TYPE_EXPIRY_DATE)
+
+#define CONFIG_DISPLAY_OPTIONS \
+	OPT_GROUP(N_("Display options")), \
+	OPT_BOOL('z', "null", &end_nul, N_("terminate values with NUL byte")), \
+	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")), \
+	OPT_BOOL(0, "show-origin", &show_origin, N_("show origin of config (file, standard input, blob, command line)")), \
+	OPT_BOOL(0, "show-scope", &show_scope, N_("show scope of config (worktree, local, global, system, command)"))
+
+static struct option builtin_config_options[] = {
+	CONFIG_LOCATION_OPTIONS,
+	OPT_GROUP(N_("Action")),
+	OPT_CMDMODE(0, "get", &actions, N_("get value: name [<value-pattern>]"), ACTION_GET),
+	OPT_CMDMODE(0, "get-all", &actions, N_("get all values: key [<value-pattern>]"), ACTION_GET_ALL),
+	OPT_CMDMODE(0, "get-regexp", &actions, N_("get values for regexp: name-regex [<value-pattern>]"), ACTION_GET_REGEXP),
+	OPT_CMDMODE(0, "get-urlmatch", &actions, N_("get value specific for the URL: section[.var] URL"), ACTION_GET_URLMATCH),
+	OPT_CMDMODE(0, "replace-all", &actions, N_("replace all matching variables: name value [<value-pattern>]"), ACTION_REPLACE_ALL),
+	OPT_CMDMODE(0, "add", &actions, N_("add a new variable: name value"), ACTION_ADD),
+	OPT_CMDMODE(0, "unset", &actions, N_("remove a variable: name [<value-pattern>]"), ACTION_UNSET),
+	OPT_CMDMODE(0, "unset-all", &actions, N_("remove all matches: name [<value-pattern>]"), ACTION_UNSET_ALL),
+	OPT_CMDMODE(0, "rename-section", &actions, N_("rename section: old-name new-name"), ACTION_RENAME_SECTION),
+	OPT_CMDMODE(0, "remove-section", &actions, N_("remove a section: name"), ACTION_REMOVE_SECTION),
+	OPT_CMDMODE('l', "list", &actions, N_("list all"), ACTION_LIST),
+	OPT_CMDMODE('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
+	OPT_CMDMODE(0, "get-color", &actions, N_("find the color configured: slot [<default>]"), ACTION_GET_COLOR),
+	OPT_CMDMODE(0, "get-colorbool", &actions, N_("find the color setting: slot [<stdout-is-tty>]"), ACTION_GET_COLORBOOL),
+	CONFIG_TYPE_OPTIONS,
+	CONFIG_DISPLAY_OPTIONS,
+	OPT_GROUP(N_("Other")),
+	OPT_STRING(0, "default", &default_value, N_("value"), N_("with --get, use default value when missing entry")),
+	OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
+	OPT_BOOL(0, "fixed-value", &fixed_value, N_("use string equality when comparing values to 'value-pattern'")),
+	OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+	OPT_END(),
+};
+
+static NORETURN void usage_builtin_config(void)
+{
+	usage_with_options(builtin_config_usage, builtin_config_options);
+}
+
+static int cmd_config_list(int argc, const char **argv, const char *prefix)
+{
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		CONFIG_DISPLAY_OPTIONS,
+		OPT_GROUP(N_("Other")),
+		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_list_usage, 0);
+	check_argc(argc, 0, 0);
+
+	handle_config_location(prefix);
+	handle_nul();
+
+	setup_auto_pager("config", 1);
+
+	if (config_with_options(show_all_config, NULL,
+				&given_config_source, the_repository,
+				&config_options) < 0) {
+		if (given_config_source.file)
+			die_errno(_("unable to read config file '%s'"),
+				  given_config_source.file);
+		else
+			die(_("error processing config file(s)"));
+	}
+
+	return 0;
+}
+
+static int cmd_config_get(int argc, const char **argv, const char *prefix)
+{
+	const char *value_pattern = NULL, *url = NULL;
+	int flags = 0;
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		CONFIG_TYPE_OPTIONS,
+		OPT_GROUP(N_("Filter options")),
+		OPT_BOOL(0, "all", &do_all, N_("return all values for multi-valued config options")),
+		OPT_BOOL(0, "regexp", &use_key_regexp, N_("interpret the name as a regular expression")),
+		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
+		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
+		OPT_STRING(0, "url", &url, N_("URL"), N_("show config matching the given URL")),
+		CONFIG_DISPLAY_OPTIONS,
+		OPT_BOOL(0, "show-names", &show_keys, N_("show config keys in addition to their values")),
+		OPT_GROUP(N_("Other")),
+		OPT_BOOL(0, "includes", &respect_includes_opt, N_("respect include directives on lookup")),
+		OPT_STRING(0, "default", &default_value, N_("value"), N_("use default value when missing entry")),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_get_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_argc(argc, 1, 1);
+
+	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
+		die(_("--fixed-value only applies with 'value-pattern'"));
+	if (default_value && (do_all || url))
+		die(_("--default= cannot be used with --all or --url="));
+	if (url && (do_all || use_key_regexp || value_pattern))
+		die(_("--url= cannot be used with --all, --regexp or --value"));
+
+	handle_config_location(prefix);
+	handle_nul();
+
+	setup_auto_pager("config", 1);
+
+	if (url)
+		return get_urlmatch(argv[0], url);
+	return get_value(argv[0], value_pattern, flags);
+}
+
+static int cmd_config_set(int argc, const char **argv, const char *prefix)
+{
+	const char *value_pattern = NULL, *comment_arg = NULL;
+	char *comment = NULL;
+	int flags = 0, append = 0;
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		CONFIG_TYPE_OPTIONS,
+		OPT_GROUP(N_("Filter")),
+		OPT_BIT(0, "all", &flags, N_("replace multi-valued config option with new value"), CONFIG_FLAGS_MULTI_REPLACE),
+		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
+		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
+		OPT_GROUP(N_("Other")),
+		OPT_STRING(0, "comment", &comment_arg, N_("value"), N_("human-readable comment string (# will be prepended as needed)")),
+		OPT_BOOL(0, "append", &append, N_("add a new line without altering any existing values")),
+		OPT_END(),
+	};
+	struct key_value_info default_kvi = KVI_INIT;
+	char *value;
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_set_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_write();
+	check_argc(argc, 2, 2);
+
+	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
+		die(_("--fixed-value only applies with --value=<pattern>"));
+	if (append && value_pattern)
+		die(_("--append cannot be used with --value=<pattern>"));
+	if (append)
+		value_pattern = CONFIG_REGEX_NONE;
+
+	comment = git_config_prepare_comment_string(comment_arg);
+
+	handle_config_location(prefix);
+
+	value = normalize_value(argv[0], argv[1], &default_kvi);
+
+	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern) {
+		ret = git_config_set_multivar_in_file_gently(given_config_source.file,
+							     argv[0], value, value_pattern,
+							     comment, flags);
+	} else {
+		ret = git_config_set_in_file_gently(given_config_source.file,
+						    argv[0], comment, value);
+		if (ret == CONFIG_NOTHING_SET)
+			error(_("cannot overwrite multiple values with a single value\n"
+			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
+	}
+
+	free(comment);
+	free(value);
+	return ret;
+}
+
+static int cmd_config_unset(int argc, const char **argv, const char *prefix)
+{
+	const char *value_pattern = NULL;
+	int flags = 0;
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		OPT_GROUP(N_("Filter")),
+		OPT_BIT(0, "all", &flags, N_("replace multi-valued config option with new value"), CONFIG_FLAGS_MULTI_REPLACE),
+		OPT_STRING(0, "value", &value_pattern, N_("pattern"), N_("show config with values matching the pattern")),
+		OPT_BIT(0, "fixed-value", &flags, N_("use string equality when comparing values to value pattern"), CONFIG_FLAGS_FIXED_VALUE),
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_unset_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_write();
+	check_argc(argc, 1, 1);
+
+	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
+		die(_("--fixed-value only applies with 'value-pattern'"));
+
+	handle_config_location(prefix);
+
+	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern)
+		return git_config_set_multivar_in_file_gently(given_config_source.file,
+							      argv[0], NULL, value_pattern,
+							      NULL, flags);
+	else
+		return git_config_set_in_file_gently(given_config_source.file, argv[0],
+						     NULL, NULL);
+}
+
+static int cmd_config_rename_section(int argc, const char **argv, const char *prefix)
+{
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		OPT_END(),
+	};
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_rename_section_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_write();
+	check_argc(argc, 2, 2);
+
+	handle_config_location(prefix);
+
+	ret = git_config_rename_section_in_file(given_config_source.file,
+						argv[0], argv[1]);
+	if (ret < 0)
+		return ret;
+	else if (!ret)
+		die(_("no such section: %s"), argv[0]);
+
+	return 0;
+}
+
+static int cmd_config_remove_section(int argc, const char **argv, const char *prefix)
+{
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		OPT_END(),
+	};
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_remove_section_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	check_write();
+	check_argc(argc, 1, 1);
+
+	handle_config_location(prefix);
+
+	ret = git_config_rename_section_in_file(given_config_source.file,
+						argv[0], NULL);
+	if (ret < 0)
+		return ret;
+	else if (!ret)
+		die(_("no such section: %s"), argv[0]);
+
+	return 0;
+}
+
+static int show_editor(void)
+{
+	char *config_file;
+
+	if (!given_config_source.file && !startup_info->have_repository)
+		die(_("not in a git directory"));
+	if (given_config_source.use_stdin)
+		die(_("editing stdin is not supported"));
+	if (given_config_source.blob)
+		die(_("editing blobs is not supported"));
+	git_config(git_default_config, NULL);
+	config_file = given_config_source.file ?
+			xstrdup(given_config_source.file) :
+			git_pathdup("config");
+	if (use_global_config) {
+		int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
+		if (fd >= 0) {
+			char *content = default_user_config();
+			write_str_in_full(fd, content);
+			free(content);
+			close(fd);
+		}
+		else if (errno != EEXIST)
+			die_errno(_("cannot create configuration file %s"), config_file);
+	}
+	launch_editor(config_file, NULL, NULL);
+	free(config_file);
+
+	return 0;
+}
+
+static int cmd_config_edit(int argc, const char **argv, const char *prefix)
+{
+	struct option opts[] = {
+		CONFIG_LOCATION_OPTIONS,
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, opts, builtin_config_edit_usage, 0);
+	check_write();
+	check_argc(argc, 0, 0);
+
+	handle_config_location(prefix);
+
+	return show_editor();
+}
+
+static struct option builtin_subcommand_options[] = {
+	OPT_SUBCOMMAND("list", &subcommand, cmd_config_list),
+	OPT_SUBCOMMAND("get", &subcommand, cmd_config_get),
+	OPT_SUBCOMMAND("set", &subcommand, cmd_config_set),
+	OPT_SUBCOMMAND("unset", &subcommand, cmd_config_unset),
+	OPT_SUBCOMMAND("rename-section", &subcommand, cmd_config_rename_section),
+	OPT_SUBCOMMAND("remove-section", &subcommand, cmd_config_remove_section),
+	OPT_SUBCOMMAND("edit", &subcommand, cmd_config_edit),
+	OPT_END(),
+};
+
+int cmd_config(int argc, const char **argv, const char *prefix)
+{
+	char *value = NULL, *comment = NULL;
+	int flags = 0;
+	int ret = 0;
+	struct key_value_info default_kvi = KVI_INIT;
+
+	given_config_source.file = xstrdup_or_null(getenv(CONFIG_ENVIRONMENT));
+
+	/*
+	 * This is somewhat hacky: we first parse the command line while
+	 * keeping all args intact in order to determine whether a subcommand
+	 * has been specified. If so, we re-parse it a second time, but this
+	 * time we drop KEEP_ARGV0. This is so that we don't munge the command
+	 * line in case no subcommand was given, which would otherwise confuse
+	 * us when parsing the legacy-style modes that don't use subcommands.
+	 */
+	argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+			     PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_ARGV0|PARSE_OPT_KEEP_UNKNOWN_OPT);
+	if (subcommand) {
+		argc = parse_options(argc, argv, prefix, builtin_subcommand_options, builtin_config_usage,
+		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_UNKNOWN_OPT);
+		return subcommand(argc, argv, prefix);
+	}
+
+	argc = parse_options(argc, argv, prefix, builtin_config_options,
+			     builtin_config_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	handle_config_location(prefix);
+	handle_nul();
 
 	if ((actions & (ACTION_GET_COLOR|ACTION_GET_COLORBOOL)) && type) {
 		error(_("--get-color and variable type are incoherent"));
 		usage_builtin_config();
 	}
 
-	if (HAS_MULTI_BITS(actions)) {
-		error(_("only one action at a time"));
-		usage_builtin_config();
-	}
 	if (actions == 0)
 		switch (argc) {
 		case 1: actions = ACTION_GET; break;
@@ -799,7 +1139,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_builtin_config();
 	}
 
-	if (comment &&
+	if (comment_arg &&
 	    !(actions & (ACTION_ADD|ACTION_SET|ACTION_SET_ALL|ACTION_REPLACE_ALL))) {
 		error(_("--comment is only applicable to add/set/replace operations"));
 		usage_builtin_config();
@@ -841,7 +1181,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		flags |= CONFIG_FLAGS_FIXED_VALUE;
 	}
 
-	comment = git_config_prepare_comment_string(comment);
+	comment = git_config_prepare_comment_string(comment_arg);
 
 	if (actions & PAGING_ACTIONS)
 		setup_auto_pager("config", 1);
@@ -859,32 +1199,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 	}
 	else if (actions == ACTION_EDIT) {
-		char *config_file;
-
-		check_argc(argc, 0, 0);
-		if (!given_config_source.file && nongit)
-			die(_("not in a git directory"));
-		if (given_config_source.use_stdin)
-			die(_("editing stdin is not supported"));
-		if (given_config_source.blob)
-			die(_("editing blobs is not supported"));
-		git_config(git_default_config, NULL);
-		config_file = given_config_source.file ?
-				xstrdup(given_config_source.file) :
-				git_pathdup("config");
-		if (use_global_config) {
-			int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
-			if (fd >= 0) {
-				char *content = default_user_config();
-				write_str_in_full(fd, content);
-				free(content);
-				close(fd);
-			}
-			else if (errno != EEXIST)
-				die_errno(_("cannot create configuration file %s"), config_file);
-		}
-		launch_editor(config_file, NULL, NULL);
-		free(config_file);
+		ret = show_editor();
 	}
 	else if (actions == ACTION_SET) {
 		check_write();
@@ -993,6 +1308,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		return get_colorbool(argv[0], argc == 2);
 	}
 
+	free(comment);
 	free(value);
 	return ret;
 }

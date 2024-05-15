@@ -9,21 +9,14 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] [--show-origin] [--show-scope] [-z|--null] <name> [<value> [<value-pattern>]]
-'git config' [<file-option>] [--type=<type>] [--comment=<message>] --add <name> <value>
-'git config' [<file-option>] [--type=<type>] [--comment=<message>] [--fixed-value] --replace-all <name> <value> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get <name> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] --get-all <name> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [--show-origin] [--show-scope] [-z|--null] [--fixed-value] [--name-only] --get-regexp <name-regex> [<value-pattern>]
-'git config' [<file-option>] [--type=<type>] [-z|--null] --get-urlmatch <name> <URL>
-'git config' [<file-option>] [--fixed-value] --unset <name> [<value-pattern>]
-'git config' [<file-option>] [--fixed-value] --unset-all <name> [<value-pattern>]
-'git config' [<file-option>] --rename-section <old-name> <new-name>
-'git config' [<file-option>] --remove-section <name>
-'git config' [<file-option>] [--show-origin] [--show-scope] [-z|--null] [--name-only] -l | --list
-'git config' [<file-option>] --get-color <name> [<default>]
+'git config list' [<file-option>] [<display-option>] [--includes]
+'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>
+'git config set' [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>
+'git config unset' [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>
+'git config rename-section' [<file-option>] <old-name> <new-name>
+'git config remove-section' [<file-option>] <name>
+'git config edit' [<file-option>]
 'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
-'git config' [<file-option>] -e | --edit
 
 DESCRIPTION
 -----------
@@ -31,7 +24,7 @@ You can query/set/replace/unset options with this command. The name is
 actually the section and the key separated by a dot, and the value will be
 escaped.
 
-Multiple lines can be added to an option by using the `--add` option.
+Multiple lines can be added to an option by using the `--append` option.
 If you want to update or unset an option which can occur on multiple
 lines, a `value-pattern` (which is an extended regular expression,
 unless the `--fixed-value` option is given) needs to be given.  Only the
@@ -74,6 +67,42 @@ On success, the command returns the exit code 0.
 A list of all available configuration variables can be obtained using the
 `git help --config` command.
 
+COMMANDS
+--------
+
+list::
+	List all variables set in config file, along with their values.
+
+get::
+	Emits the value of the specified key. If key is present multiple times
+	in the configuration, emits the last value. If `--all` is specified,
+	emits all values associated with key. Returns error code 1 if key is
+	not present.
+
+set::
+	Set value for one or more config options. By default, this command
+	refuses to write multi-valued config options. Passing `--all` will
+	replace all multi-valued config options with the new value, whereas
+	`--value=` will replace all config options whose values match the given
+	pattern.
+
+unset::
+	Unset value for one or more config options. By default, this command
+	refuses to unset multi-valued keys. Passing `--all` will unset all
+	multi-valued config options, whereas `--value` will unset all config
+	options whose values match the given pattern.
+
+rename-section::
+	Rename the given section to a new name.
+
+remove-section::
+	Remove the given section from the configuration file.
+
+edit::
+	Opens an editor to modify the specified config file; either
+	`--system`, `--global`, `--local` (default), `--worktree`, or
+	`--file <config-file>`.
+
 [[OPTIONS]]
 OPTIONS
 -------
@@ -82,10 +111,9 @@ OPTIONS
 	Default behavior is to replace at most one line. This replaces
 	all lines matching the key (and optionally the `value-pattern`).
 
---add::
+--append::
 	Adds a new line to the option without altering any existing
-	values.  This is the same as providing '^$' as the `value-pattern`
-	in `--replace-all`.
+	values. This is the same as providing '--value=^$' in `set`.
 
 --comment <message>::
 	Append a comment at the end of new or modified lines.
@@ -99,22 +127,16 @@ OPTIONS
 	not contain linefeed characters (no multi-line comments are
 	permitted).
 
---get::
-	Get the value for a given key (optionally filtered by a regex
-	matching the value). Returns error code 1 if the key was not
-	found and the last value if multiple key values were found.
+--all::
+	With `get`, return all values for a multi-valued key.
 
---get-all::
-	Like get, but returns all values for a multi-valued key.
+---regexp::
+	With `get`, interpret the name as a regular expression. Regular
+	expression matching is currently case-sensitive and done against a
+	canonicalized version of the key in which section and variable names
+	are lowercased, but subsection names are not.
 
---get-regexp::
-	Like --get-all, but interprets the name as a regular expression and
-	writes out the key names.  Regular expression matching is currently
-	case-sensitive and done against a canonicalized version of the key
-	in which section and variable names are lowercased, but subsection
-	names are not.
-
---get-urlmatch <name> <URL>::
+--url=<URL>::
 	When given a two-part <name> as <section>.<key>, the value for
 	<section>.<URL>.<key> whose <URL> part matches the best to the
 	given URL is returned (if no such key exists, the value for
@@ -178,22 +200,6 @@ See also <<FILES>>.
 	section in linkgit:gitrevisions[7] for a more complete list of
 	ways to spell blob names.
 
---remove-section::
-	Remove the given section from the configuration file.
-
---rename-section::
-	Rename the given section to a new name.
-
---unset::
-	Remove the line matching the key from config file.
-
---unset-all::
-	Remove all lines matching the key from config file.
-
--l::
---list::
-	List all variables set in config file, along with their values.
-
 --fixed-value::
 	When used with the `value-pattern` argument, treat `value-pattern` as
 	an exact string instead of a regular expression. This will restrict
@@ -248,8 +254,8 @@ Valid `<type>`'s include:
 	contain line breaks.
 
 --name-only::
-	Output only the names of config variables for `--list` or
-	`--get-regexp`.
+	Output only the names of config variables for `list` or
+	`get`.
 
 --show-origin::
 	Augment the output of all queried config options with the
@@ -273,23 +279,6 @@ Valid `<type>`'s include:
 	When the color setting for `name` is undefined, the command uses
 	`color.ui` as fallback.
 
---get-color <name> [<default>]::
-
-	Find the color configured for `name` (e.g. `color.diff.new`) and
-	output it as the ANSI color escape sequence to the standard
-	output.  The optional `default` parameter is used instead, if
-	there is no color configured for `name`.
-+
-`--type=color [--default=<default>]` is preferred over `--get-color`
-(but note that `--get-color` will omit the trailing newline printed by
-`--type=color`).
-
--e::
---edit::
-	Opens an editor to modify the specified config file; either
-	`--system`, `--global`, `--local` (default), `--worktree`, or
-	`--file <config-file>`.
-
 --[no-]includes::
 	Respect `include.*` directives in config files when looking up
 	values. Defaults to `off` when a specific file is given (e.g.,
@@ -297,14 +286,64 @@ Valid `<type>`'s include:
 	config files.
 
 --default <value>::
-  When using `--get`, and the requested variable is not found, behave as if
+  When using `get`, and the requested variable is not found, behave as if
   <value> were the value assigned to that variable.
+
+DEPRECATED MODES
+----------------
+
+The following modes have been deprecated in favor of subcommands. It is
+recommended to migrate to the new syntax.
+
+'git config <name>'::
+	Replaced by `git config get <name>`.
+
+'git config <name> <value> [<value-pattern>]'::
+	Replaced by `git config set [--value=<pattern>] <name> <value>`.
+
+-l::
+--list::
+	Replaced by `git config list`.
+
+--get <name> [<value-pattern>]::
+	Replaced by `git config get [--value=<pattern>] <name>`.
+
+--get-all <name> [<value-pattern>]::
+	Replaced by `git config get [--value=<pattern>] --all --show-names <name>`.
+
+--get-regexp <name-regexp>::
+	Replaced by `git config get --all --show-names --regexp <name-regexp>`.
+
+--get-urlmatch <name> <URL>::
+	Replaced by `git config get --all --show-names --url=<URL> <name>`.
+
+--get-color <name> [<default>]::
+	Replaced by `git config get --type=color [--default=<default>] <name>`.
+
+--add <name> <value>::
+	Replaced by `git config set --append <name> <value>`.
+
+--unset <name> [<value-pattern>]::
+	Replaced by `git config unset [--value=<pattern>] <name>`.
+
+--unset-all <name> [<value-pattern>]::
+	Replaced by `git config unset [--value=<pattern>] --all <name>`.
+
+--rename-section <old-name> <new-name>::
+	Replaced by `git config rename-section <old-name> <new-name>`.
+
+--remove-section <name>::
+	Replaced by `git config remove-section <name>`.
+
+-e::
+--edit::
+	Replaced by `git config edit`.
 
 CONFIGURATION
 -------------
 `pager.config` is only respected when listing configuration, i.e., when
-using `--list` or any of the `--get-*` which may return multiple results.
-The default is to use a pager.
+using `list` or `get` which may return multiple results. The default is to use
+a pager.
 
 [[FILES]]
 FILES
@@ -346,8 +385,8 @@ precedence over values read earlier.  When multiple values are taken then all
 values of a key from all files will be used.
 
 By default, options are only written to the repository specific
-configuration file. Note that this also affects options like `--replace-all`
-and `--unset`. *'git config' will only ever change one file at a time*.
+configuration file. Note that this also affects options like `set`
+and `unset`. *'git config' will only ever change one file at a time*.
 
 You can limit which configuration sources are read from or written to by
 specifying the path of a file with the `--file` option, or by specifying a
@@ -482,7 +521,7 @@ Given a .git/config like this:
 you can set the filemode to true with
 
 ------------
-% git config core.filemode true
+% git config set core.filemode true
 ------------
 
 The hypothetical proxy command entries actually have a postfix to discern
@@ -490,7 +529,7 @@ what URL they apply to. Here is how to change the entry for kernel.org
 to "ssh".
 
 ------------
-% git config core.gitproxy '"ssh" for kernel.org' 'for kernel.org$'
+% git config set --value='for kernel.org$' core.gitproxy '"ssh" for kernel.org'
 ------------
 
 This makes sure that only the key/value pair for kernel.org is replaced.
@@ -498,7 +537,7 @@ This makes sure that only the key/value pair for kernel.org is replaced.
 To delete the entry for renames, do
 
 ------------
-% git config --unset diff.renames
+% git config unset diff.renames
 ------------
 
 If you want to delete an entry for a multivar (like core.gitproxy above),
@@ -507,51 +546,45 @@ you have to provide a regex matching the value of exactly one line.
 To query the value for a given key, do
 
 ------------
-% git config --get core.filemode
-------------
-
-or
-
-------------
-% git config core.filemode
+% git config get core.filemode
 ------------
 
 or, to query a multivar:
 
 ------------
-% git config --get core.gitproxy "for kernel.org$"
+% git config get --value="for kernel.org$" core.gitproxy
 ------------
 
 If you want to know all the values for a multivar, do:
 
 ------------
-% git config --get-all core.gitproxy
+% git config get --all --show-names core.gitproxy
 ------------
 
 If you like to live dangerously, you can replace *all* core.gitproxy by a
 new one with
 
 ------------
-% git config --replace-all core.gitproxy ssh
+% git config set --all core.gitproxy ssh
 ------------
 
 However, if you really only want to replace the line for the default proxy,
 i.e. the one without a "for ..." postfix, do something like this:
 
 ------------
-% git config core.gitproxy ssh '! for '
+% git config set --value='! for ' core.gitproxy ssh
 ------------
 
 To actually match only values with an exclamation mark, you have to
 
 ------------
-% git config section.key value '[!]'
+% git config set --value='[!]' section.key value
 ------------
 
 To add a new proxy, without altering any of the existing ones, use
 
 ------------
-% git config --add core.gitproxy '"proxy-command" for example.com'
+% git config set --append core.gitproxy '"proxy-command" for example.com'
 ------------
 
 An example to use customized color from the configuration in your
@@ -559,8 +592,8 @@ script:
 
 ------------
 #!/bin/sh
-WS=$(git config --get-color color.diff.whitespace "blue reverse")
-RESET=$(git config --get-color "" "reset")
+WS=$(git config get --type=color --default="blue reverse" color.diff.whitespace)
+RESET=$(git config get --type=color --default="reset" "")
 echo "${WS}your whitespace color or blue reverse${RESET}"
 ------------
 
@@ -568,11 +601,11 @@ For URLs in `https://weak.example.com`, `http.sslVerify` is set to
 false, while it is set to `true` for all others:
 
 ------------
-% git config --type=bool --get-urlmatch http.sslverify https://good.example.com
+% git config get --type=bool --url=https://good.example.com http.sslverify
 true
-% git config --type=bool --get-urlmatch http.sslverify https://weak.example.com
+% git config get --type=bool --url=https://weak.example.com http.sslverify
 false
-% git config --get-urlmatch http https://weak.example.com
+% git config get --url=https://weak.example.com http
 http.cookieFile /tmp/cookie.txt
 http.sslverify false
 ------------
