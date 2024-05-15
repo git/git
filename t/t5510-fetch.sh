@@ -518,7 +518,7 @@ test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [1]' '
 	one_head=$(cd one && git rev-parse HEAD) &&
 	this_head=$(git rev-parse HEAD) &&
-	git update-ref -d FETCH_HEAD &&
+	rm .git/FETCH_HEAD &&
 	git fetch one &&
 	test $one_head = "$(git rev-parse --verify FETCH_HEAD)" &&
 	test $this_head = "$(git rev-parse --verify HEAD)"
@@ -530,7 +530,7 @@ test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge 
 	one_ref=$(cd one && git symbolic-ref HEAD) &&
 	git config branch.main.remote blub &&
 	git config branch.main.merge "$one_ref" &&
-	git update-ref -d FETCH_HEAD &&
+	rm .git/FETCH_HEAD &&
 	git fetch one &&
 	test $one_head = "$(git rev-parse --verify FETCH_HEAD)" &&
 	test $this_head = "$(git rev-parse --verify HEAD)"
@@ -540,7 +540,7 @@ test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge 
 # the merge spec does not match the branch the remote HEAD points to
 test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge [3]' '
 	git config branch.main.merge "${one_ref}_not" &&
-	git update-ref -d FETCH_HEAD &&
+	rm .git/FETCH_HEAD &&
 	git fetch one &&
 	test $one_head = "$(git rev-parse --verify FETCH_HEAD)" &&
 	test $this_head = "$(git rev-parse --verify HEAD)"

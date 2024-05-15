@@ -1263,6 +1263,13 @@ int ref_transaction_update(struct ref_transaction *transaction,
 		return -1;
 	}
 
+	if (!(flags & REF_SKIP_REFNAME_VERIFICATION) &&
+	    is_pseudo_ref(refname)) {
+		strbuf_addf(err, _("refusing to update pseudoref '%s'"),
+			    refname);
+		return -1;
+	}
+
 	if (flags & ~REF_TRANSACTION_UPDATE_ALLOWED_FLAGS)
 		BUG("illegal flags 0x%x passed to ref_transaction_update()", flags);
 
