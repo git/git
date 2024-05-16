@@ -232,8 +232,10 @@ void load_ref_decorations(struct decoration_filter *filter, int flags)
 		}
 		decoration_loaded = 1;
 		decoration_flags = flags;
-		for_each_ref(add_ref_decoration, filter);
-		head_ref(add_ref_decoration, filter);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  add_ref_decoration, filter);
+		refs_head_ref(get_main_ref_store(the_repository),
+			      add_ref_decoration, filter);
 		for_each_commit_graft(add_graft_decoration, filter);
 	}
 }
@@ -277,7 +279,8 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 		return NULL;
 
 	/* Now resolve and find the matching current branch */
-	branch_name = resolve_ref_unsafe("HEAD", 0, NULL, &rru_flags);
+	branch_name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					      "HEAD", 0, NULL, &rru_flags);
 	if (!branch_name || !(rru_flags & REF_ISSYMREF))
 		return NULL;
 

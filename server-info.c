@@ -175,7 +175,8 @@ static int add_info_ref(const char *path, const struct object_id *oid,
 
 static int generate_info_refs(struct update_info_ctx *uic)
 {
-	return for_each_ref(add_info_ref, uic);
+	return refs_for_each_ref(get_main_ref_store(the_repository),
+				 add_info_ref, uic);
 }
 
 static int update_info_refs(int force)

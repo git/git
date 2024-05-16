@@ -145,7 +145,8 @@ void wt_status_prepare(struct repository *r, struct wt_status *s)
 	s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
 	s->use_color = -1;
 	s->relative_paths = 1;
-	s->branch = resolve_refdup("HEAD", 0, NULL, NULL);
+	s->branch = refs_resolve_refdup(get_main_ref_store(the_repository),
+					"HEAD", 0, NULL, NULL);
 	s->reference = "HEAD";
 	s->fp = stdout;
 	s->index_file = get_index_file();
@@ -976,7 +977,8 @@ static int stash_count_refs(struct object_id *ooid UNUSED,
 static int count_stash_entries(void)
 {
 	int n = 0;
-	for_each_reflog_ent("refs/stash", stash_count_refs, &n);
+	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+				 "refs/stash", stash_count_refs, &n);
 	return n;
 }
 
@@ -1304,10 +1306,10 @@ static int split_commit_in_progress(struct wt_status *s)
 	    !s->branch || strcmp(s->branch, "HEAD"))
 		return 0;
 
-	if (read_ref_full("HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-			  &head_oid, &head_flags) ||
-	    read_ref_full("ORIG_HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-			  &orig_head_oid, &orig_head_flags))
+	if (refs_read_ref_full(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+			       &head_oid, &head_flags) ||
+	    refs_read_ref_full(get_main_ref_store(the_repository), "ORIG_HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+			       &orig_head_oid, &orig_head_flags))
 		return 0;
 	if (head_flags & REF_ISSYMREF || orig_head_flags & REF_ISSYMREF)
 		return 0;
@@ -1679,7 +1681,7 @@ static void wt_status_get_detached_from(struct repository *r,
 	char *ref = NULL;
 
 	strbuf_init(&cb.buf, 0);
-	if (for_each_reflog_ent_reverse("HEAD", grab_1st_switch, &cb) <= 0) {
+	if (refs_for_each_reflog_ent_reverse(get_main_ref_store(the_repository), "HEAD", grab_1st_switch, &cb) <= 0) {
 		strbuf_release(&cb.buf);
 		return;
 	}
@@ -2087,7 +2089,8 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		upstream_is_gone = 1;
 	}
 
-	short_base = shorten_unambiguous_ref(base, 0);
+	short_base = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+						  base, 0);
 	color_fprintf(s->fp, header_color, "...");
 	color_fprintf(s->fp, branch_color_remote, "%s", short_base);
 	free(short_base);
@@ -2220,7 +2223,8 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
 		ab_info = stat_tracking_info(branch, &nr_ahead, &nr_behind,
 					     &base, 0, s->ahead_behind_flags);
 		if (base) {
-			base = shorten_unambiguous_ref(base, 0);
+			base = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+							    base, 0);
 			fprintf(s->fp, "# branch.upstream %s%c", base, eol);
 			free((char *)base);
 

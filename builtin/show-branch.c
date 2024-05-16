@@ -479,13 +479,15 @@ static void snarf_refs(int head, int remotes)
 	if (head) {
 		int orig_cnt = ref_name_cnt;
 
-		for_each_ref(append_head_ref, NULL);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  append_head_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 	if (remotes) {
 		int orig_cnt = ref_name_cnt;
 
-		for_each_ref(append_remote_ref, NULL);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  append_remote_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 }
@@ -549,7 +551,8 @@ static void append_one_rev(const char *av)
 
 		match_ref_pattern = av;
 		match_ref_slash = count_slashes(av);
-		for_each_ref(append_matching_ref, NULL);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  append_matching_ref, NULL);
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
 			error(_("no matching refs with %s"), av);
@@ -740,9 +743,11 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		if (ac == 0) {
 			static const char *fake_av[2];
 
-			fake_av[0] = resolve_refdup("HEAD",
-						    RESOLVE_REF_READING, &oid,
-						    NULL);
+			fake_av[0] = refs_resolve_refdup(get_main_ref_store(the_repository),
+							 "HEAD",
+							 RESOLVE_REF_READING,
+							 &oid,
+							 NULL);
 			fake_av[1] = NULL;
 			av = fake_av;
 			ac = 1;
@@ -815,8 +820,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			snarf_refs(all_heads, all_remotes);
 	}
 
-	head = resolve_refdup("HEAD", RESOLVE_REF_READING,
-			      &head_oid, NULL);
+	head = refs_resolve_refdup(get_main_ref_store(the_repository), "HEAD",
+				   RESOLVE_REF_READING,
+				   &head_oid, NULL);
 
 	if (with_current_branch && head) {
 		int has_head = 0;

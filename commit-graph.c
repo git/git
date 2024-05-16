@@ -1845,7 +1845,8 @@ int write_commit_graph_reachable(struct object_directory *odb,
 		data.progress = start_delayed_progress(
 			_("Collecting referenced commits"), 0);
 
-	for_each_ref(add_ref_to_set, &data);
+	refs_for_each_ref(get_main_ref_store(the_repository), add_ref_to_set,
+			  &data);
 
 	stop_progress(&data.progress);
 

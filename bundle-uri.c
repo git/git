@@ -395,11 +395,13 @@ static int unbundle_from_file(struct repository *r, const char *file)
 		strbuf_setlen(&bundle_ref, bundle_prefix_len);
 		strbuf_addstr(&bundle_ref, branch_name);
 
-		has_old = !read_ref(bundle_ref.buf, &old_oid);
-		update_ref("fetched bundle", bundle_ref.buf, oid,
-			   has_old ? &old_oid : NULL,
-			   REF_SKIP_OID_VERIFICATION,
-			   UPDATE_REFS_MSG_ON_ERR);
+		has_old = !refs_read_ref(get_main_ref_store(the_repository),
+					 bundle_ref.buf, &old_oid);
+		refs_update_ref(get_main_ref_store(the_repository),
+				"fetched bundle", bundle_ref.buf, oid,
+				has_old ? &old_oid : NULL,
+				REF_SKIP_OID_VERIFICATION,
+				UPDATE_REFS_MSG_ON_ERR);
 	}
 
 	bundle_header_release(&header);

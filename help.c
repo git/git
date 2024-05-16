@@ -800,7 +800,7 @@ static int append_similar_ref(const char *refname,
 	if (starts_with(refname, "refs/remotes/") &&
 	    !strcmp(branch, cb->base_ref))
 		string_list_append_nodup(cb->similar_refs,
-					 shorten_unambiguous_ref(refname, 1));
+					 refs_shorten_unambiguous_ref(get_main_ref_store(the_repository), refname, 1));
 	return 0;
 }
 
@@ -811,7 +811,8 @@ static struct string_list guess_refs(const char *ref)
 
 	ref_cb.base_ref = ref;
 	ref_cb.similar_refs = &similar_refs;
-	for_each_ref(append_similar_ref, &ref_cb);
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  append_similar_ref, &ref_cb);
 	return similar_refs;
 }
 

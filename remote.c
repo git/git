@@ -1198,8 +1198,10 @@ static char *guess_ref(const char *name, struct ref *peer)
 {
 	struct strbuf buf = STRBUF_INIT;
 
-	const char *r = resolve_ref_unsafe(peer->name, RESOLVE_REF_READING,
-					   NULL, NULL);
+	const char *r = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						peer->name,
+						RESOLVE_REF_READING,
+						NULL, NULL);
 	if (!r)
 		return NULL;
 
@@ -1316,9 +1318,10 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	if (!dst_value) {
 		int flag;
 
-		dst_value = resolve_ref_unsafe(matched_src->name,
-					       RESOLVE_REF_READING,
-					       NULL, &flag);
+		dst_value = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						    matched_src->name,
+						    RESOLVE_REF_READING,
+						    NULL, &flag);
 		if (!dst_value ||
 		    ((flag & REF_ISSYMREF) &&
 		     !starts_with(dst_value, "refs/heads/")))
@@ -1882,7 +1885,7 @@ const char *branch_get_upstream(struct branch *branch, struct strbuf *err)
 		 * or because it is not a real branch, and get_branch
 		 * auto-vivified it?
 		 */
-		if (!ref_exists(branch->refname))
+		if (!refs_ref_exists(get_main_ref_store(the_repository), branch->refname))
 			return error_buf(err, _("no such branch: '%s'"),
 					 branch->name);
 		return error_buf(err,
@@ -2168,13 +2171,13 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	struct strvec argv = STRVEC_INIT;
 
 	/* Cannot stat if what we used to build on no longer exists */
-	if (read_ref(base, &oid))
+	if (refs_read_ref(get_main_ref_store(the_repository), base, &oid))
 		return -1;
 	theirs = lookup_commit_reference(the_repository, &oid);
 	if (!theirs)
 		return -1;
 
-	if (read_ref(branch_name, &oid))
+	if (refs_read_ref(get_main_ref_store(the_repository), branch_name, &oid))
 		return -1;
 	ours = lookup_commit_reference(the_repository, &oid);
 	if (!ours)
@@ -2278,7 +2281,8 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		upstream_is_gone = 1;
 	}
 
-	base = shorten_unambiguous_ref(full_base, 0);
+	base = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+					    full_base, 0);
 	if (upstream_is_gone) {
 		strbuf_addf(sb,
 			_("Your branch is based on '%s', but the upstream is gone.\n"),
@@ -2358,7 +2362,8 @@ struct ref *get_local_heads(void)
 {
 	struct ref *local_refs = NULL, **local_tail = &local_refs;
 
-	for_each_ref(one_local_ref, &local_tail);
+	refs_for_each_ref(get_main_ref_store(the_repository), one_local_ref,
+			  &local_tail);
 	return local_refs;
 }
 
@@ -2468,7 +2473,8 @@ struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map)
 	for (ref = fetch_map; ref; ref = ref->next)
 		string_list_append(&ref_names, ref->name);
 	string_list_sort(&ref_names);
-	for_each_ref(get_stale_heads_cb, &info);
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  get_stale_heads_cb, &info);
 	string_list_clear(&ref_names, 0);
 	return stale_refs;
 }
@@ -2553,7 +2559,7 @@ static int remote_tracking(struct remote *remote, const char *refname,
 	dst = apply_refspecs(&remote->fetch, refname);
 	if (!dst)
 		return -1; /* no tracking ref for refname at remote */
-	if (read_ref(dst, oid))
+	if (refs_read_ref(get_main_ref_store(the_repository), dst, oid))
 		return -1; /* we know what the tracking ref is but we cannot read it */
 
 	*dst_refname = dst;
@@ -2659,12 +2665,16 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	 * Get the timestamp from the latest entry
 	 * of the remote-tracking ref's reflog.
 	 */
-	for_each_reflog_ent_reverse(remote->tracking_ref, peek_reflog, &date);
+	refs_for_each_reflog_ent_reverse(get_main_ref_store(the_repository),
+					 remote->tracking_ref, peek_reflog,
+					 &date);
 
 	cb.remote_commit = commit;
 	cb.local_commits = &arr;
 	cb.remote_reflog_timestamp = date;
-	ret = for_each_reflog_ent_reverse(local, check_and_collect_until, &cb);
+	ret = refs_for_each_reflog_ent_reverse(get_main_ref_store(the_repository),
+					       local, check_and_collect_until,
+					       &cb);
 
 	/* We found an entry in the reflog. */
 	if (ret > 0)

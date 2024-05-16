@@ -340,7 +340,8 @@ static void find_non_local_tags(const struct ref *refs,
 	refname_hash_init(&remote_refs);
 	create_fetch_oidset(head, &fetch_oids);
 
-	for_each_ref(add_one_refname, &existing_refs);
+	refs_for_each_ref(get_main_ref_store(the_repository), add_one_refname,
+			  &existing_refs);
 
 	/*
 	 * If we already have a transaction, then we need to filter out all
@@ -614,7 +615,9 @@ static struct ref *get_ref_map(struct remote *remote,
 
 			if (!existing_refs_populated) {
 				refname_hash_init(&existing_refs);
-				for_each_ref(add_one_refname, &existing_refs);
+				refs_for_each_ref(get_main_ref_store(the_repository),
+						  add_one_refname,
+						  &existing_refs);
 				existing_refs_populated = 1;
 			}
 
@@ -659,7 +662,8 @@ static int s_update_ref(const char *action,
 	 * lifecycle.
 	 */
 	if (!transaction) {
-		transaction = our_transaction = ref_transaction_begin(&err);
+		transaction = our_transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+									    &err);
 		if (!transaction) {
 			ret = STORE_REF_ERROR_OTHER;
 			goto out;
@@ -1393,7 +1397,9 @@ static int prune_refs(struct display_state *display_state,
 			for (ref = stale_refs; ref; ref = ref->next)
 				string_list_append(&refnames, ref->name);
 
-			result = delete_refs("fetch: prune", &refnames, 0);
+			result = refs_delete_refs(get_main_ref_store(the_repository),
+						  "fetch: prune", &refnames,
+						  0);
 			string_list_clear(&refnames, 0);
 		}
 	}
@@ -1479,7 +1485,8 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 			continue;
 		}
 		old_nr = oids->nr;
-		for_each_glob_ref(add_oid, s, oids);
+		refs_for_each_glob_ref(get_main_ref_store(the_repository),
+				       add_oid, s, oids);
 		if (old_nr == oids->nr)
 			warning("ignoring --negotiation-tip=%s because it does not match any refs",
 				s);
@@ -1655,7 +1662,8 @@ static int do_fetch(struct transport *transport,
 			   config->display_format);
 
 	if (atomic_fetch) {
-		transaction = ref_transaction_begin(&err);
+		transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+							  &err);
 		if (!transaction) {
 			retcode = -1;
 			goto cleanup;

@@ -682,7 +682,7 @@ static int do_reupdate(const char **paths,
 		       PATHSPEC_PREFER_CWD,
 		       prefix, paths);
 
-	if (read_ref("HEAD", &head_oid))
+	if (refs_read_ref(get_main_ref_store(the_repository), "HEAD", &head_oid))
 		/* If there is no HEAD, that means it is an initial
 		 * commit.  Update everything in the index.
 		 */

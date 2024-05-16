@@ -296,7 +296,8 @@ static void add_to_tip_table(const struct object_id *oid, const char *refname,
 	char *short_refname = NULL;
 
 	if (shorten_unambiguous)
-		short_refname = shorten_unambiguous_ref(refname, 0);
+		short_refname = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+							     refname, 0);
 	else if (skip_prefix(refname, "refs/heads/", &refname))
 		; /* refname already advanced */
 	else
@@ -647,7 +648,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 
 	adjust_cutoff_timestamp_for_slop();
 
-	for_each_ref(name_ref, &data);
+	refs_for_each_ref(get_main_ref_store(the_repository), name_ref, &data);
 	name_tips(&string_pool);
 
 	if (annotate_stdin) {

@@ -89,7 +89,7 @@ static int for_each_tag_name(const char **argv, each_tag_name_fn fn,
 	for (p = argv; *p; p++) {
 		strbuf_reset(&ref);
 		strbuf_addf(&ref, "refs/tags/%s", *p);
-		if (read_ref(ref.buf, &oid)) {
+		if (refs_read_ref(get_main_ref_store(the_repository), ref.buf, &oid)) {
 			error(_("tag '%s' not found."), *p);
 			had_error = 1;
 			continue;
@@ -118,13 +118,13 @@ static int delete_tags(const char **argv)
 	struct string_list_item *item;
 
 	result = for_each_tag_name(argv, collect_tags, (void *)&refs_to_delete);
-	if (delete_refs(NULL, &refs_to_delete, REF_NO_DEREF))
+	if (refs_delete_refs(get_main_ref_store(the_repository), NULL, &refs_to_delete, REF_NO_DEREF))
 		result = 1;
 
 	for_each_string_list_item(item, &refs_to_delete) {
 		const char *name = item->string;
 		struct object_id *oid = item->util;
-		if (!ref_exists(name))
+		if (!refs_ref_exists(get_main_ref_store(the_repository), name))
 			printf(_("Deleted tag '%s' (was %s)\n"),
 				item->string + 10,
 				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV));
@@ -649,7 +649,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (strbuf_check_tag_ref(&ref, tag))
 		die(_("'%s' is not a valid tag name."), tag);
 
-	if (read_ref(ref.buf, &prev))
+	if (refs_read_ref(get_main_ref_store(the_repository), ref.buf, &prev))
 		oidclr(&prev);
 	else if (!force)
 		die(_("tag '%s' already exists"), tag);
@@ -676,7 +676,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			   &trailer_args, path);
 	}
 
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref.buf, &object, &prev,
 				   create_reflog ? REF_FORCE_CREATE_REFLOG : 0,

@@ -2067,7 +2067,7 @@ void create_reference_database(unsigned int ref_storage_format,
 			die(_("invalid initial branch name: '%s'"),
 			    initial_branch);
 
-		if (create_symref("HEAD", ref, NULL) < 0)
+		if (refs_create_symref(get_main_ref_store(the_repository), "HEAD", ref, NULL) < 0)
 			exit(1);
 		free(ref);
 	}

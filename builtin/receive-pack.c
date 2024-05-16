@@ -1566,7 +1566,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		struct strbuf err = STRBUF_INIT;
 		if (!parse_object(the_repository, old_oid)) {
 			old_oid = NULL;
-			if (ref_exists(name)) {
+			if (refs_ref_exists(get_main_ref_store(the_repository), name)) {
 				rp_warning("allowing deletion of corrupt ref");
 			} else {
 				rp_warning("deleting a non-existent ref");
@@ -1693,7 +1693,8 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	int flag;
 
 	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
-	dst_name = resolve_ref_unsafe(buf.buf, 0, NULL, &flag);
+	dst_name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					   buf.buf, 0, NULL, &flag);
 	check_aliased_update_internal(cmd, list, dst_name, flag);
 	strbuf_release(&buf);
 }
@@ -1829,7 +1830,8 @@ static void execute_commands_non_atomic(struct command *commands,
 		if (!should_process_cmd(cmd) || cmd->run_proc_receive)
 			continue;
 
-		transaction = ref_transaction_begin(&err);
+		transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+							  &err);
 		if (!transaction) {
 			rp_error("%s", err.buf);
 			strbuf_reset(&err);
@@ -1857,7 +1859,8 @@ static void execute_commands_atomic(struct command *commands,
 	struct strbuf err = STRBUF_INIT;
 	const char *reported_error = "atomic push failure";
 
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction) {
 		rp_error("%s", err.buf);
 		strbuf_reset(&err);
@@ -1983,7 +1986,9 @@ static void execute_commands(struct command *commands,
 	check_aliased_updates(commands);
 
 	free(head_name_to_free);
-	head_name = head_name_to_free = resolve_refdup("HEAD", 0, NULL, NULL);
+	head_name = head_name_to_free = refs_resolve_refdup(get_main_ref_store(the_repository),
+							    "HEAD", 0, NULL,
+							    NULL);
 
 	if (run_proc_receive &&
 	    run_proc_receive_hook(commands, push_options))

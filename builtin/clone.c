@@ -567,7 +567,8 @@ static void write_remote_refs(const struct ref *local_refs)
 	struct ref_transaction *t;
 	struct strbuf err = STRBUF_INIT;
 
-	t = ref_transaction_begin(&err);
+	t = ref_store_transaction_begin(get_main_ref_store(the_repository),
+					&err);
 	if (!t)
 		die("%s", err.buf);
 
@@ -598,8 +599,9 @@ static void write_followtags(const struct ref *refs, const char *msg)
 						     OBJECT_INFO_QUICK |
 						     OBJECT_INFO_SKIP_FETCH_OBJECT))
 			continue;
-		update_ref(msg, ref->name, &ref->old_oid, NULL, 0,
-			   UPDATE_REFS_DIE_ON_ERR);
+		refs_update_ref(get_main_ref_store(the_repository), msg,
+				ref->name, &ref->old_oid, NULL, 0,
+				UPDATE_REFS_DIE_ON_ERR);
 	}
 }
 
@@ -651,9 +653,9 @@ static void update_remote_refs(const struct ref *refs,
 		struct strbuf head_ref = STRBUF_INIT;
 		strbuf_addstr(&head_ref, branch_top);
 		strbuf_addstr(&head_ref, "HEAD");
-		if (create_symref(head_ref.buf,
-				  remote_head_points_at->peer_ref->name,
-				  msg) < 0)
+		if (refs_create_symref(get_main_ref_store(the_repository), head_ref.buf,
+				       remote_head_points_at->peer_ref->name,
+				       msg) < 0)
 			die(_("unable to update %s"), head_ref.buf);
 		strbuf_release(&head_ref);
 	}
@@ -665,33 +667,36 @@ static void update_head(const struct ref *our, const struct ref *remote,
 	const char *head;
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
 		/* Local default branch link */
-		if (create_symref("HEAD", our->name, NULL) < 0)
+		if (refs_create_symref(get_main_ref_store(the_repository), "HEAD", our->name, NULL) < 0)
 			die(_("unable to update HEAD"));
 		if (!option_bare) {
-			update_ref(msg, "HEAD", &our->old_oid, NULL, 0,
-				   UPDATE_REFS_DIE_ON_ERR);
+			refs_update_ref(get_main_ref_store(the_repository),
+					msg, "HEAD", &our->old_oid, NULL, 0,
+					UPDATE_REFS_DIE_ON_ERR);
 			install_branch_config(0, head, remote_name, our->name);
 		}
 	} else if (our) {
 		struct commit *c = lookup_commit_reference(the_repository,
 							   &our->old_oid);
 		/* --branch specifies a non-branch (i.e. tags), detach HEAD */
-		update_ref(msg, "HEAD", &c->object.oid, NULL, REF_NO_DEREF,
-			   UPDATE_REFS_DIE_ON_ERR);
+		refs_update_ref(get_main_ref_store(the_repository), msg,
+				"HEAD", &c->object.oid, NULL, REF_NO_DEREF,
+				UPDATE_REFS_DIE_ON_ERR);
 	} else if (remote) {
 		/*
 		 * We know remote HEAD points to a non-branch, or
 		 * HEAD points to a branch but we don't know which one.
 		 * Detach HEAD in all these cases.
 		 */
-		update_ref(msg, "HEAD", &remote->old_oid, NULL, REF_NO_DEREF,
-			   UPDATE_REFS_DIE_ON_ERR);
+		refs_update_ref(get_main_ref_store(the_repository), msg,
+				"HEAD", &remote->old_oid, NULL, REF_NO_DEREF,
+				UPDATE_REFS_DIE_ON_ERR);
 	} else if (unborn && skip_prefix(unborn, "refs/heads/", &head)) {
 		/*
 		 * Unborn head from remote; same as "our" case above except
 		 * that we have no ref to update.
 		 */
-		if (create_symref("HEAD", unborn, NULL) < 0)
+		if (refs_create_symref(get_main_ref_store(the_repository), "HEAD", unborn, NULL) < 0)
 			die(_("unable to update HEAD"));
 		if (!option_bare)
 			install_branch_config(0, head, remote_name, unborn);
@@ -732,7 +737,8 @@ static int checkout(int submodule_progress, int filter_submodules)
 	if (option_no_checkout)
 		return 0;
 
-	head = resolve_refdup("HEAD", RESOLVE_REF_READING, &oid, NULL);
+	head = refs_resolve_refdup(get_main_ref_store(the_repository), "HEAD",
+				   RESOLVE_REF_READING, &oid, NULL);
 	if (!head) {
 		warning(_("remote HEAD refers to nonexistent ref, "
 			  "unable to checkout"));

@@ -895,7 +895,9 @@ static int head_atom_parser(struct ref_format *format UNUSED,
 {
 	if (arg)
 		return err_no_arg(err, "HEAD");
-	atom->u.head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
+	atom->u.head = refs_resolve_refdup(get_main_ref_store(the_repository),
+					   "HEAD", RESOLVE_REF_READING, NULL,
+					   NULL);
 	return 0;
 }
 
@@ -2135,7 +2137,9 @@ static const char *rstrip_ref_components(const char *refname, int len)
 static const char *show_ref(struct refname_atom *atom, const char *refname)
 {
 	if (atom->option == R_SHORT)
-		return shorten_unambiguous_ref(refname, warn_ambiguous_refs);
+		return refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+						    refname,
+						    warn_ambiguous_refs);
 	else if (atom->option == R_LSTRIP)
 		return lstrip_ref_components(refname, atom->lstrip);
 	else if (atom->option == R_RSTRIP)
@@ -2338,8 +2342,10 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	CALLOC_ARRAY(ref->value, used_atom_cnt);
 
 	if (need_symref && (ref->flag & REF_ISSYMREF) && !ref->symref) {
-		ref->symref = resolve_refdup(ref->refname, RESOLVE_REF_READING,
-					     NULL, NULL);
+		ref->symref = refs_resolve_refdup(get_main_ref_store(the_repository),
+						  ref->refname,
+						  RESOLVE_REF_READING,
+						  NULL, NULL);
 		if (!ref->symref)
 			ref->symref = xstrdup("");
 	}
@@ -2640,7 +2646,8 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * prefixes like "refs/heads/" etc. are stripped off,
 		 * so we have to look at everything:
 		 */
-		return for_each_fullref_in("", cb, cb_data);
+		return refs_for_each_fullref_in(get_main_ref_store(the_repository),
+						"", NULL, cb, cb_data);
 	}
 
 	if (filter->ignore_case) {
@@ -2649,7 +2656,8 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * so just return everything and let the caller
 		 * sort it out.
 		 */
-		return for_each_fullref_in("", cb, cb_data);
+		return refs_for_each_fullref_in(get_main_ref_store(the_repository),
+						"", NULL, cb, cb_data);
 	}
 
 	if (!filter->name_patterns[0]) {
@@ -3060,11 +3068,17 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 		 * of filter_ref_kind().
 		 */
 		if (filter->kind == FILTER_REFS_BRANCHES)
-			ret = for_each_fullref_in("refs/heads/", fn, cb_data);
+			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
+						       "refs/heads/", NULL,
+						       fn, cb_data);
 		else if (filter->kind == FILTER_REFS_REMOTES)
-			ret = for_each_fullref_in("refs/remotes/", fn, cb_data);
+			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
+						       "refs/remotes/", NULL,
+						       fn, cb_data);
 		else if (filter->kind == FILTER_REFS_TAGS)
-			ret = for_each_fullref_in("refs/tags/", fn, cb_data);
+			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
+						       "refs/tags/", NULL, fn,
+						       cb_data);
 		else if (filter->kind & FILTER_REFS_REGULAR)
 			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
 
@@ -3074,7 +3088,8 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 		 */
 		if (!ret && (filter->kind != FILTER_REFS_KIND_MASK) &&
 		    (filter->kind & FILTER_REFS_DETACHED_HEAD))
-			head_ref(fn, cb_data);
+			refs_head_ref(get_main_ref_store(the_repository), fn,
+				      cb_data);
 	}
 
 	clear_contains_cache(&filter->internal.contains_cache);

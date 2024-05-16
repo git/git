@@ -532,8 +532,9 @@ static int get_modified_files(struct repository *r,
 			      size_t *binary_count)
 {
 	struct object_id head_oid;
-	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-					     &head_oid, NULL);
+	int is_initial = !refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						  "HEAD", RESOLVE_REF_READING,
+						  &head_oid, NULL);
 	struct collection_status s = { 0 };
 	int i;
 
@@ -761,8 +762,10 @@ static int run_revert(struct add_i_state *s, const struct pathspec *ps,
 	size_t count, i, j;
 
 	struct object_id oid;
-	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &oid,
-					     NULL);
+	int is_initial = !refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						  "HEAD", RESOLVE_REF_READING,
+						  &oid,
+						  NULL);
 	struct lock_file index_lock;
 	const char **paths;
 	struct tree *tree;
@@ -990,8 +993,10 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	ssize_t count, i;
 
 	struct object_id oid;
-	int is_initial = !resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &oid,
-					     NULL);
+	int is_initial = !refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						  "HEAD", RESOLVE_REF_READING,
+						  &oid,
+						  NULL);
 	if (get_modified_files(s->r, INDEX_ONLY, files, ps, NULL, NULL) < 0)
 		return -1;
 

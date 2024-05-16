@@ -129,7 +129,8 @@ static int cmd_show_ref__exclude_existing(const struct exclude_existing_options 
 	char buf[1024];
 	int patternlen = opts->pattern ? strlen(opts->pattern) : 0;
 
-	for_each_ref(add_existing, &existing_refs);
+	refs_for_each_ref(get_main_ref_store(the_repository), add_existing,
+			  &existing_refs);
 	while (fgets(buf, sizeof(buf), stdin)) {
 		char *ref;
 		int len = strlen(buf);
@@ -173,7 +174,7 @@ static int cmd_show_ref__verify(const struct show_one_options *show_one_opts,
 		struct object_id oid;
 
 		if ((starts_with(*refs, "refs/") || refname_is_safe(*refs)) &&
-		    !read_ref(*refs, &oid)) {
+		    !refs_read_ref(get_main_ref_store(the_repository), *refs, &oid)) {
 			show_one(show_one_opts, *refs, &oid);
 		}
 		else if (!show_one_opts->quiet)
@@ -205,14 +206,20 @@ static int cmd_show_ref__patterns(const struct patterns_options *opts,
 		show_ref_data.patterns = patterns;
 
 	if (opts->show_head)
-		head_ref(show_ref, &show_ref_data);
+		refs_head_ref(get_main_ref_store(the_repository), show_ref,
+			      &show_ref_data);
 	if (opts->heads_only || opts->tags_only) {
 		if (opts->heads_only)
-			for_each_fullref_in("refs/heads/", show_ref, &show_ref_data);
+			refs_for_each_fullref_in(get_main_ref_store(the_repository),
+						 "refs/heads/", NULL,
+						 show_ref, &show_ref_data);
 		if (opts->tags_only)
-			for_each_fullref_in("refs/tags/", show_ref, &show_ref_data);
+			refs_for_each_fullref_in(get_main_ref_store(the_repository),
+						 "refs/tags/", NULL, show_ref,
+						 &show_ref_data);
 	} else {
-		for_each_ref(show_ref, &show_ref_data);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  show_ref, &show_ref_data);
 	}
 	if (!show_ref_data.found_match)
 		return 1;

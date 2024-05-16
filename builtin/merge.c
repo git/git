@@ -448,8 +448,10 @@ static void finish(struct commit *head_commit,
 		if (verbosity >= 0 && !merge_msg.len)
 			printf(_("No merge message -- not updating HEAD\n"));
 		else {
-			update_ref(reflog_message.buf, "HEAD", new_head, head,
-				   0, UPDATE_REFS_DIE_ON_ERR);
+			refs_update_ref(get_main_ref_store(the_repository),
+					reflog_message.buf, "HEAD", new_head,
+					head,
+					0, UPDATE_REFS_DIE_ON_ERR);
 			/*
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
@@ -546,7 +548,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 		struct strbuf truname = STRBUF_INIT;
 		strbuf_addf(&truname, "refs/heads/%s", remote);
 		strbuf_setlen(&truname, truname.len - len);
-		if (ref_exists(truname.buf)) {
+		if (refs_ref_exists(get_main_ref_store(the_repository), truname.buf)) {
 			strbuf_addf(msg,
 				    "%s\t\tbranch '%s'%s of .\n",
 				    oid_to_hex(&remote_head->object.oid),
@@ -1251,7 +1253,7 @@ static int merging_a_throwaway_tag(struct commit *commit)
 	 */
 	tag_ref = xstrfmt("refs/tags/%s",
 			  ((struct tag *)merge_remote_util(commit)->obj)->tag);
-	if (!read_ref(tag_ref, &oid) &&
+	if (!refs_read_ref(get_main_ref_store(the_repository), tag_ref, &oid) &&
 	    oideq(&oid, &merge_remote_util(commit)->obj->oid))
 		is_throwaway_tag = 0;
 	else
@@ -1283,7 +1285,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * Check if we are _not_ on a detached HEAD, i.e. if there is a
 	 * current branch.
 	 */
-	branch = branch_to_free = resolve_refdup("HEAD", 0, &head_oid, NULL);
+	branch = branch_to_free = refs_resolve_refdup(get_main_ref_store(the_repository),
+						      "HEAD", 0, &head_oid,
+						      NULL);
 	if (branch)
 		skip_prefix(branch, "refs/heads/", &branch);
 
@@ -1324,8 +1328,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (!file_exists(git_path_merge_head(the_repository)))
 			die(_("There is no merge to abort (MERGE_HEAD missing)."));
 
-		if (!read_ref("MERGE_AUTOSTASH", &stash_oid))
-			delete_ref("", "MERGE_AUTOSTASH", &stash_oid, REF_NO_DEREF);
+		if (!refs_read_ref(get_main_ref_store(the_repository), "MERGE_AUTOSTASH", &stash_oid))
+			refs_delete_ref(get_main_ref_store(the_repository),
+					"", "MERGE_AUTOSTASH", &stash_oid,
+					REF_NO_DEREF);
 
 		/* Invoke 'git reset --merge' */
 		ret = cmd_reset(nargc, nargv, prefix);
@@ -1378,7 +1384,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		else
 			die(_("You have not concluded your merge (MERGE_HEAD exists)."));
 	}
-	if (ref_exists("CHERRY_PICK_HEAD")) {
+	if (refs_ref_exists(get_main_ref_store(the_repository), "CHERRY_PICK_HEAD")) {
 		if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 			die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
 			    "Please, commit your changes before you merge."));
@@ -1449,8 +1455,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		remote_head_oid = &remoteheads->item->object.oid;
 		read_empty(remote_head_oid);
-		update_ref("initial pull", "HEAD", remote_head_oid, NULL, 0,
-			   UPDATE_REFS_DIE_ON_ERR);
+		refs_update_ref(get_main_ref_store(the_repository),
+				"initial pull", "HEAD", remote_head_oid, NULL,
+				0,
+				UPDATE_REFS_DIE_ON_ERR);
 		goto done;
 	}
 
@@ -1530,8 +1538,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		free(list);
 	}
 
-	update_ref("updating ORIG_HEAD", "ORIG_HEAD",
-		   &head_commit->object.oid, NULL, 0, UPDATE_REFS_DIE_ON_ERR);
+	refs_update_ref(get_main_ref_store(the_repository),
+			"updating ORIG_HEAD", "ORIG_HEAD",
+			&head_commit->object.oid, NULL, 0,
+			UPDATE_REFS_DIE_ON_ERR);
 
 	if (remoteheads && !common) {
 		/* No common ancestors found. */

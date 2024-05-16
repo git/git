@@ -2226,8 +2226,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 		if (check_head) {
 			const char *ref, *v;
-			ref = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-						 NULL, NULL);
+			ref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						      "HEAD",
+						      RESOLVE_REF_READING,
+						      NULL, NULL);
 			if (ref && skip_prefix(ref, "refs/heads/", &v))
 				branch_name = xstrdup(v);
 			else

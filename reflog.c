@@ -343,7 +343,8 @@ void reflog_expiry_prepare(const char *refname,
 	case UE_ALWAYS:
 		return;
 	case UE_HEAD:
-		for_each_ref(push_tip_to_list, &cb->tips);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  push_tip_to_list, &cb->tips);
 		for (elem = cb->tips; elem; elem = elem->next)
 			commit_list_insert(elem->item, &cb->mark_list);
 		break;
@@ -416,19 +417,22 @@ int reflog_delete(const char *rev, enum expire_reflog_flags flags, int verbose)
 	recno = strtoul(spec + 2, &ep, 10);
 	if (*ep == '}') {
 		cmd.recno = -recno;
-		for_each_reflog_ent(ref, count_reflog_ent, &cmd);
+		refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+					 ref, count_reflog_ent, &cmd);
 	} else {
 		cmd.expire_total = approxidate(spec + 2);
-		for_each_reflog_ent(ref, count_reflog_ent, &cmd);
+		refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+					 ref, count_reflog_ent, &cmd);
 		cmd.expire_total = 0;
 	}
 
 	cb.cmd = cmd;
-	status |= reflog_expire(ref, flags,
-				reflog_expiry_prepare,
-				should_prune_fn,
-				reflog_expiry_cleanup,
-				&cb);
+	status |= refs_reflog_expire(get_main_ref_store(the_repository), ref,
+				     flags,
+				     reflog_expiry_prepare,
+				     should_prune_fn,
+				     reflog_expiry_cleanup,
+				     &cb);
 
  cleanup:
 	free(ref);

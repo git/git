@@ -618,7 +618,8 @@ static void for_each_namespaced_ref_1(each_ref_fn fn,
 	if (allow_hidden_refs(data->allow_uor))
 		excludes = hidden_refs_to_excludes(&data->hidden_refs);
 
-	for_each_namespaced_ref(excludes, fn, data);
+	refs_for_each_namespaced_ref(get_main_ref_store(the_repository),
+				     excludes, fn, data);
 }
 
 
@@ -873,7 +874,8 @@ static void deepen(struct upload_pack_data *data, int depth)
 		 * Checking for reachable shallows requires that our refs be
 		 * marked with OUR_REF.
 		 */
-		head_ref_namespaced(check_ref, data);
+		refs_head_ref_namespaced(get_main_ref_store(the_repository),
+					 check_ref, data);
 		for_each_namespaced_ref_1(check_ref, data);
 
 		get_reachable_list(data, &reachable_shallows);
@@ -1288,7 +1290,8 @@ static int find_symref(const char *refname,
 
 	if ((flag & REF_ISSYMREF) == 0)
 		return 0;
-	symref_target = resolve_ref_unsafe(refname, 0, NULL, &flag);
+	symref_target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						refname, 0, NULL, &flag);
 	if (!symref_target || (flag & REF_ISSYMREF) == 0)
 		die("'%s' is a symref but it is not?", refname);
 	item = string_list_append(cb_data, strip_namespace(refname));
@@ -1413,13 +1416,15 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 	if (data.timeout)
 		data.daemon_mode = 1;
 
-	head_ref_namespaced(find_symref, &data.symref);
+	refs_head_ref_namespaced(get_main_ref_store(the_repository),
+				 find_symref, &data.symref);
 
 	if (advertise_refs || !data.stateless_rpc) {
 		reset_timeout(data.timeout);
 		if (advertise_refs)
 			data.no_done = 1;
-		head_ref_namespaced(send_ref, &data);
+		refs_head_ref_namespaced(get_main_ref_store(the_repository),
+					 send_ref, &data);
 		for_each_namespaced_ref_1(send_ref, &data);
 		if (!data.sent_capabilities) {
 			const char *refname = "capabilities^{}";
@@ -1433,7 +1438,8 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 		advertise_shallow_grafts(1);
 		packet_flush(1);
 	} else {
-		head_ref_namespaced(check_ref, &data);
+		refs_head_ref_namespaced(get_main_ref_store(the_repository),
+					 check_ref, &data);
 		for_each_namespaced_ref_1(check_ref, &data);
 	}
 
@@ -1511,7 +1517,7 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 
 		strbuf_addf(&refname, "%s%s", get_git_namespace(), refname_nons);
 		if (ref_is_hidden(refname_nons, refname.buf, hidden_refs) ||
-		    read_ref(refname.buf, &oid)) {
+		    refs_read_ref(get_main_ref_store(the_repository), refname.buf, &oid)) {
 			packet_writer_error(writer, "unknown ref %s", refname_nons);
 			die("unknown ref %s", refname_nons);
 		}

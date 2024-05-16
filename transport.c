@@ -100,8 +100,9 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		/* Follow symbolic refs (mainly for HEAD). */
 		localname = ref->peer_ref->name;
 		remotename = ref->name;
-		tmp = resolve_ref_unsafe(localname, RESOLVE_REF_READING,
-					 NULL, &flag);
+		tmp = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					      localname, RESOLVE_REF_READING,
+					      NULL, &flag);
 		if (tmp && flag & REF_ISSYMREF &&
 			starts_with(tmp, "refs/heads/"))
 			localname = tmp;
@@ -543,10 +544,12 @@ static void update_one_tracking_ref(struct remote *remote, char *refname,
 		if (verbose)
 			fprintf(stderr, "updating local tracking ref '%s'\n", rs.dst);
 		if (deletion)
-			delete_ref(NULL, rs.dst, NULL, 0);
+			refs_delete_ref(get_main_ref_store(the_repository),
+					NULL, rs.dst, NULL, 0);
 		else
-			update_ref("update by push", rs.dst, new_oid,
-				   NULL, 0, 0);
+			refs_update_ref(get_main_ref_store(the_repository),
+					"update by push", rs.dst, new_oid,
+					NULL, 0, 0);
 		free(rs.dst);
 	}
 }
@@ -814,7 +817,8 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 	if (transport_color_config() < 0)
 		warning(_("could not parse transport.color.* config"));
 
-	head = resolve_refdup("HEAD", RESOLVE_REF_READING, NULL, NULL);
+	head = refs_resolve_refdup(get_main_ref_store(the_repository), "HEAD",
+				   RESOLVE_REF_READING, NULL, NULL);
 
 	if (verbose) {
 		for (ref = refs; ref; ref = ref->next)

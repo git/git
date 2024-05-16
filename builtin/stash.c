@@ -195,7 +195,7 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 		commit = argv[0];
 
 	if (!commit) {
-		if (!ref_exists(ref_stash)) {
+		if (!refs_ref_exists(get_main_ref_store(the_repository), ref_stash)) {
 			fprintf_ln(stderr, _("No stash entries found."));
 			return -1;
 		}
@@ -243,7 +243,8 @@ static int do_clear_stash(void)
 	if (repo_get_oid(the_repository, ref_stash, &obj))
 		return 0;
 
-	return delete_ref(NULL, ref_stash, &obj, 0);
+	return refs_delete_ref(get_main_ref_store(the_repository), NULL,
+			       ref_stash, &obj, 0);
 }
 
 static int clear_stash(int argc, const char **argv, const char *prefix)
@@ -686,7 +687,8 @@ static int reject_reflog_ent(struct object_id *ooid UNUSED,
 
 static int reflog_is_empty(const char *refname)
 {
-	return !for_each_reflog_ent(refname, reject_reflog_ent, NULL);
+	return !refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+					 refname, reject_reflog_ent, NULL);
 }
 
 static int do_drop_stash(struct stash_info *info, int quiet)
@@ -823,7 +825,7 @@ static int list_stash(int argc, const char **argv, const char *prefix)
 			     git_stash_list_usage,
 			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
-	if (!ref_exists(ref_stash))
+	if (!refs_ref_exists(get_main_ref_store(the_repository), ref_stash))
 		return 0;
 
 	cp.git_cmd = 1;
@@ -997,10 +999,10 @@ static int do_store_stash(const struct object_id *w_commit, const char *stash_ms
 	if (!stash_msg)
 		stash_msg = "Created via \"git stash store\".";
 
-	if (update_ref(stash_msg, ref_stash, w_commit, NULL,
-		       REF_FORCE_CREATE_REFLOG,
-		       quiet ? UPDATE_REFS_QUIET_ON_ERR :
-		       UPDATE_REFS_MSG_ON_ERR)) {
+	if (refs_update_ref(get_main_ref_store(the_repository), stash_msg, ref_stash, w_commit, NULL,
+			    REF_FORCE_CREATE_REFLOG,
+			    quiet ? UPDATE_REFS_QUIET_ON_ERR :
+			    UPDATE_REFS_MSG_ON_ERR)) {
 		if (!quiet) {
 			fprintf_ln(stderr, _("Cannot update %s with %s"),
 				   ref_stash, oid_to_hex(w_commit));
@@ -1383,7 +1385,8 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		goto done;
 	}
 
-	branch_ref = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
+	branch_ref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					     "HEAD", 0, NULL, &flags);
 	if (flags & REF_ISSYMREF)
 		skip_prefix(branch_ref, "refs/heads/", &branch_name);
 	head_short_sha1 = repo_find_unique_abbrev(the_repository,
@@ -1565,7 +1568,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		goto done;
 	}
 
-	if (!reflog_exists(ref_stash) && do_clear_stash()) {
+	if (!refs_reflog_exists(get_main_ref_store(the_repository), ref_stash) && do_clear_stash()) {
 		ret = -1;
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot initialize stash"));

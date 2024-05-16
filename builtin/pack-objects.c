@@ -939,7 +939,8 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * Mark objects that are at the tip of tags.
 	 */
-	for_each_tag_ref(mark_tagged, NULL);
+	refs_for_each_tag_ref(get_main_ref_store(the_repository), mark_tagged,
+			      NULL);
 
 	if (use_delta_islands) {
 		max_layers = compute_pack_layers(&to_pack);
@@ -4093,7 +4094,9 @@ static void mark_bitmap_preferred_tips(void)
 		return;
 
 	for_each_string_list_item(item, preferred_tips) {
-		for_each_ref_in(item->string, mark_bitmap_preferred_tip, NULL);
+		refs_for_each_ref_in(get_main_ref_store(the_repository),
+				     item->string, mark_bitmap_preferred_tip,
+				     NULL);
 	}
 }
 
@@ -4588,7 +4591,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)
-		for_each_tag_ref(add_ref_tag, NULL);
+		refs_for_each_tag_ref(get_main_ref_store(the_repository),
+				      add_ref_tag, NULL);
 	stop_progress(&progress_state);
 	trace2_region_leave("pack-objects", "enumerate-objects",
 			    the_repository);

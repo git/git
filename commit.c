@@ -1070,7 +1070,8 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 
 	memset(&revs, 0, sizeof(revs));
 	revs.initial = 1;
-	for_each_reflog_ent(full_refname, collect_one_reflog_ent, &revs);
+	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+				 full_refname, collect_one_reflog_ent, &revs);
 
 	if (!revs.nr)
 		add_one_commit(&oid, &revs);
