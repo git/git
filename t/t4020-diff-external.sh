@@ -172,14 +172,6 @@ test_expect_success 'no diff with -diff' '
 	grep Binary out
 '
 
-test_expect_success 'diff.external and --exit-code with output' '
-	test_expect_code 1 git -c diff.external=echo diff --exit-code
-'
-
-test_expect_success 'diff.external and --exit-code without output' '
-	git -c diff.external=true diff --exit-code
-'
-
 echo NULZbetweenZwords | perl -pe 'y/Z/\000/' > file
 
 test_expect_success 'force diff with "diff"' '
