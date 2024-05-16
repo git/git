@@ -804,8 +804,11 @@ static size_t rpc_in(char *ptr, size_t eltsize,
 	if (curl_easy_getinfo(data->slot->curl, CURLINFO_RESPONSE_CODE,
 			      &response_code) != CURLE_OK)
 		return size;
-	if (response_code >= 300)
+	if (response_code >= 300) {
+		strbuf_reset(data->slot->errstr);
+		strbuf_add(data->slot->errstr, ptr, size);
 		return size;
+	}
 	if (size)
 		data->rpc->any_written = 1;
 	if (data->check_pktline)
@@ -837,6 +840,8 @@ static int run_slot(struct active_request_slot *slot,
 				strbuf_addch(&msg, ' ');
 				strbuf_addstr(&msg, curl_errorstr);
 			}
+			if (slot->errstr && slot->errstr->len)
+				error(_("%s"), slot->errstr->buf);
 		}
 		error(_("RPC failed; %s"), msg.buf);
 		strbuf_release(&msg);
@@ -896,6 +901,7 @@ static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_rece
 	int err, large_request = 0;
 	int needs_100_continue = 0;
 	struct rpc_in_data rpc_in_data;
+	struct strbuf errstr = STRBUF_INIT;
 
 	/* Try to load the entire request, if we can fit it into the
 	 * allocated buffer space we can use HTTP/1.0 and avoid the
@@ -1030,6 +1036,7 @@ retry:
 
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
+	slot->errstr = &errstr;
 	rpc_in_data.rpc = rpc;
 	rpc_in_data.slot = slot;
 	rpc_in_data.check_pktline = stateless_connect;
@@ -1040,6 +1047,7 @@ retry:
 
 	rpc->any_written = 0;
 	err = run_slot(slot, NULL);
+	slot->errstr = NULL;
 	if (err == HTTP_REAUTH && !large_request) {
 		credential_fill(&http_auth);
 		goto retry;
@@ -1060,6 +1068,7 @@ retry:
 
 	curl_slist_free_all(headers);
 	free(gzip_body);
+	strbuf_release(&errstr);
 	return err;
 }
 

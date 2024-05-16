@@ -1419,6 +1419,7 @@ struct active_request_slot *get_active_slot(void)
 		newslot->curl = NULL;
 		newslot->in_use = 0;
 		newslot->next = NULL;
+		newslot->errstr = NULL;
 
 		slot = active_queue_head;
 		if (!slot) {
