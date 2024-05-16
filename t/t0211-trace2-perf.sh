@@ -233,7 +233,7 @@ have_counter_event () {
 
 	pattern="d0|${thread}|${event}||||${category}|name:${name} value:${value}" &&
 
-	grep "${patern}" ${file}
+	grep "${pattern}" ${file}
 }
 
 test_expect_success 'global counter test/test1' '
