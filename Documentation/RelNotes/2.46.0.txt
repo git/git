@@ -34,6 +34,9 @@ UI, Workflows & Features
  * "git tag" learned the "--trailer" option to futz with the trailers
    in the same way as "git commit" does.
 
+ * A new global "--no-advice" option can be used to disable all advice
+   messages, which is meant to be used only in scripts.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -63,6 +66,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * The "whitespace check" task that was enabled for GitHub Actions CI
    has been ported to GitLab CI.
+
+ * The refs API lost functions that implicitly assumes to work on the
+   primary ref_store by forcing the callers to pass a ref_store as an
+   argument.
 
 
 Fixes since v2.45
