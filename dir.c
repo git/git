@@ -2771,8 +2771,10 @@ static int treat_leading_path(struct dir_struct *dir,
 			baselen = cp - path;
 		strbuf_reset(&sb);
 		strbuf_add(&sb, path, baselen);
-		if (!is_directory(sb.buf))
+		if (!is_directory(sb.buf)) {
+			state = path_none;
 			break;
+		}
 		strbuf_reset(&sb);
 		strbuf_add(&sb, path, prevlen);
 		strbuf_reset(&subdir);
