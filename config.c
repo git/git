@@ -303,7 +303,8 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	int ret;
 	struct strbuf pattern = STRBUF_INIT;
 	const char *refname = !the_repository->gitdir ?
-		NULL : resolve_ref_unsafe("HEAD", 0, NULL, &flags);
+		NULL : refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					       "HEAD", 0, NULL, &flags);
 	const char *shortname;
 
 	if (!refname || !(flags & REF_ISSYMREF)	||

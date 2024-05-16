@@ -551,7 +551,7 @@ static int fetch_with_import(struct transport *transport,
 		else
 			private = xstrdup(name);
 		if (private) {
-			if (read_ref(private, &posn->old_oid) < 0)
+			if (refs_read_ref(get_main_ref_store(the_repository), private, &posn->old_oid) < 0)
 				die(_("could not read ref %s"), private);
 			free(private);
 		}
@@ -923,8 +923,10 @@ static int push_update_refs_status(struct helper_data *data,
 			private = apply_refspecs(&data->rs, ref->name);
 			if (!private)
 				continue;
-			update_ref("update by helper", private, &(ref->new_oid),
-				   NULL, 0, 0);
+			refs_update_ref(get_main_ref_store(the_repository),
+					"update by helper", private,
+					&(ref->new_oid),
+					NULL, 0, 0);
 			free(private);
 		} else {
 			for (report = ref->report; report; report = report->next) {
@@ -934,11 +936,12 @@ static int push_update_refs_status(struct helper_data *data,
 							 : ref->name);
 				if (!private)
 					continue;
-				update_ref("update by helper", private,
-					   report->new_oid
-					   ? report->new_oid
-					   : &(ref->new_oid),
-					   NULL, 0, 0);
+				refs_update_ref(get_main_ref_store(the_repository),
+						"update by helper", private,
+						report->new_oid
+						? report->new_oid
+						: &(ref->new_oid),
+						NULL, 0, 0);
 				free(private);
 			}
 		}
@@ -1105,9 +1108,11 @@ static int push_refs_with_export(struct transport *transport,
 					int flag;
 
 					/* Follow symbolic refs (mainly for HEAD). */
-					name = resolve_ref_unsafe(ref->peer_ref->name,
-								  RESOLVE_REF_READING,
-								  &oid, &flag);
+					name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+								       ref->peer_ref->name,
+								       RESOLVE_REF_READING,
+								       &oid,
+								       &flag);
 					if (!name || !(flag & REF_ISSYMREF))
 						name = ref->peer_ref->name;
 
@@ -1252,7 +1257,7 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 		if (eon) {
 			if (has_attribute(eon + 1, "unchanged")) {
 				(*tail)->status |= REF_STATUS_UPTODATE;
-				if (read_ref((*tail)->name, &(*tail)->old_oid) < 0)
+				if (refs_read_ref(get_main_ref_store(the_repository), (*tail)->name, &(*tail)->old_oid) < 0)
 					die(_("could not read ref %s"),
 					    (*tail)->name);
 			}

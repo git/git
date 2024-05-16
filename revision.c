@@ -1738,7 +1738,8 @@ void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
 	cb.all_revs = revs;
 	cb.all_flags = flags;
 	cb.wt = NULL;
-	for_each_reflog(handle_one_reflog, &cb);
+	refs_for_each_reflog(get_main_ref_store(the_repository),
+			     handle_one_reflog, &cb);
 
 	if (!revs->single_worktree)
 		add_other_reflogs_to_pending(&cb);
@@ -1979,9 +1980,9 @@ static const char *lookup_other_head(struct object_id *oid)
 	};
 
 	for (i = 0; i < ARRAY_SIZE(other_head); i++)
-		if (!read_ref_full(other_head[i],
-				RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-				oid, NULL)) {
+		if (!refs_read_ref_full(get_main_ref_store(the_repository), other_head[i],
+					RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+					oid, NULL)) {
 			if (is_null_oid(oid))
 				die(_("%s exists but is a symbolic ref"), other_head[i]);
 			return other_head[i];
@@ -2789,7 +2790,8 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref(handle_one_ref, optarg, &cb);
+		refs_for_each_glob_ref(get_main_ref_store(the_repository),
+				       handle_one_ref, optarg, &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
@@ -2804,7 +2806,9 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--branches");
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, optarg, "refs/heads/", &cb);
+		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
+					  handle_one_ref, optarg,
+					  "refs/heads/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
 		struct all_refs_cb cb;
@@ -2812,7 +2816,9 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--tags");
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, optarg, "refs/tags/", &cb);
+		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
+					  handle_one_ref, optarg,
+					  "refs/tags/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
 		struct all_refs_cb cb;
@@ -2820,7 +2826,9 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--remotes");
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, optarg, "refs/remotes/", &cb);
+		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
+					  handle_one_ref, optarg,
+					  "refs/remotes/", &cb);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
@@ -2911,7 +2919,8 @@ static void NORETURN diagnose_missing_default(const char *def)
 	int flags;
 	const char *refname;
 
-	refname = resolve_ref_unsafe(def, 0, NULL, &flags);
+	refname = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					  def, 0, NULL, &flags);
 	if (!refname || !(flags & REF_ISSYMREF) || (flags & REF_ISBROKEN))
 		die(_("your current branch appears to be broken"));
 

@@ -645,7 +645,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 		rollback_lock_file(&lock_file);
 	}
 
-	read_ref_full("HEAD", 0, &rev, NULL);
+	refs_read_ref_full(get_main_ref_store(the_repository), "HEAD", 0,
+			   &rev, NULL);
 	head = lookup_commit_reference_gently(the_repository, &rev, 1);
 
 	errs |= post_checkout_hook(head, head, 0);
@@ -957,7 +958,8 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 				int ret;
 				struct strbuf err = STRBUF_INIT;
 
-				ret = safe_create_reflog(refname, &err);
+				ret = refs_create_reflog(get_main_ref_store(the_repository),
+							 refname, &err);
 				if (ret) {
 					fprintf(stderr, _("Can not do reflog for '%s': %s\n"),
 						opts->new_orphan_branch, err.buf);
@@ -998,8 +1000,10 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	if (!strcmp(new_branch_info->name, "HEAD") && !new_branch_info->path && !opts->force_detach) {
 		/* Nothing to do. */
 	} else if (opts->force_detach || !new_branch_info->path) {	/* No longer on any branch. */
-		update_ref(msg.buf, "HEAD", &new_branch_info->commit->object.oid, NULL,
-			   REF_NO_DEREF, UPDATE_REFS_DIE_ON_ERR);
+		refs_update_ref(get_main_ref_store(the_repository), msg.buf,
+				"HEAD", &new_branch_info->commit->object.oid,
+				NULL,
+				REF_NO_DEREF, UPDATE_REFS_DIE_ON_ERR);
 		if (!opts->quiet) {
 			if (old_branch_info->path &&
 			    advice_enabled(ADVICE_DETACHED_HEAD) && !opts->force_detach)
@@ -1007,7 +1011,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			describe_detached_head(_("HEAD is now at"), new_branch_info->commit);
 		}
 	} else if (new_branch_info->path) {	/* Switch branches. */
-		if (create_symref("HEAD", new_branch_info->path, msg.buf) < 0)
+		if (refs_create_symref(get_main_ref_store(the_repository), "HEAD", new_branch_info->path, msg.buf) < 0)
 			die(_("unable to update HEAD"));
 		if (!opts->quiet) {
 			if (old_branch_info->path && !strcmp(new_branch_info->path, old_branch_info->path)) {
@@ -1028,8 +1032,9 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			}
 		}
 		if (old_branch_info->path && old_branch_info->name) {
-			if (!ref_exists(old_branch_info->path) && reflog_exists(old_branch_info->path))
-				delete_reflog(old_branch_info->path);
+			if (!refs_ref_exists(get_main_ref_store(the_repository), old_branch_info->path) && refs_reflog_exists(get_main_ref_store(the_repository), old_branch_info->path))
+				refs_delete_reflog(get_main_ref_store(the_repository),
+						   old_branch_info->path);
 		}
 	}
 	remove_branch_state(the_repository, !opts->quiet);
@@ -1128,7 +1133,8 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 	object->flags &= ~UNINTERESTING;
 	add_pending_object(&revs, object, oid_to_hex(&object->oid));
 
-	for_each_ref(add_pending_uninteresting_ref, &revs);
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  add_pending_uninteresting_ref, &revs);
 	if (new_commit)
 		add_pending_oid(&revs, "HEAD",
 				&new_commit->object.oid,
@@ -1158,7 +1164,8 @@ static int switch_branches(const struct checkout_opts *opts,
 	trace2_cmd_mode("branch");
 
 	memset(&old_branch_info, 0, sizeof(old_branch_info));
-	old_branch_info.path = resolve_refdup("HEAD", 0, &rev, &flag);
+	old_branch_info.path = refs_resolve_refdup(get_main_ref_store(the_repository),
+						   "HEAD", 0, &rev, &flag);
 	if (old_branch_info.path)
 		old_branch_info.commit = lookup_commit_reference_gently(the_repository, &rev, 1);
 	if (!(flag & REF_ISSYMREF))
@@ -1246,7 +1253,7 @@ static void setup_new_branch_info_and_source_tree(
 	setup_branch_path(new_branch_info);
 
 	if (!check_refname_format(new_branch_info->path, 0) &&
-	    !read_ref(new_branch_info->path, &branch_rev))
+	    !refs_read_ref(get_main_ref_store(the_repository), new_branch_info->path, &branch_rev))
 		oidcpy(rev, &branch_rev);
 	else
 		/* not an existing branch */
@@ -1465,7 +1472,8 @@ static int switch_unborn_to_new_branch(const struct checkout_opts *opts)
 	if (!opts->new_branch)
 		die(_("You are on a branch yet to be born"));
 	strbuf_addf(&branch_ref, "refs/heads/%s", opts->new_branch);
-	status = create_symref("HEAD", branch_ref.buf, "checkout -b");
+	status = refs_create_symref(get_main_ref_store(the_repository),
+				    "HEAD", branch_ref.buf, "checkout -b");
 	strbuf_release(&branch_ref);
 	if (!opts->quiet)
 		fprintf(stderr, _("Switched to a new branch '%s'\n"),
@@ -1552,7 +1560,8 @@ static void die_if_switching_to_a_branch_in_use(struct checkout_opts *opts,
 
 	if (opts->ignore_other_worktrees)
 		return;
-	head_ref = resolve_refdup("HEAD", 0, NULL, &flags);
+	head_ref = refs_resolve_refdup(get_main_ref_store(the_repository),
+				       "HEAD", 0, NULL, &flags);
 	if (head_ref && (!(flags & REF_ISSYMREF) || strcmp(head_ref, full_ref)))
 		die_if_checked_out(full_ref, 1);
 	free(head_ref);
@@ -1633,7 +1642,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		struct object_id rev;
 		int flag;
 
-		if (!read_ref_full("HEAD", 0, &rev, &flag) &&
+		if (!refs_read_ref_full(get_main_ref_store(the_repository), "HEAD", 0, &rev, &flag) &&
 		    (flag & REF_ISSYMREF) && is_null_oid(&rev))
 			return switch_unborn_to_new_branch(opts);
 	}

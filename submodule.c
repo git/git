@@ -1242,7 +1242,8 @@ int push_unpushed_submodules(struct repository *r,
 		char *head;
 		struct object_id head_oid;
 
-		head = resolve_refdup("HEAD", 0, &head_oid, NULL);
+		head = refs_resolve_refdup(get_main_ref_store(the_repository),
+					   "HEAD", 0, &head_oid, NULL);
 		if (!head)
 			die(_("Failed to resolve HEAD as a valid ref."));
 
@@ -1280,7 +1281,8 @@ static int append_oid_to_array(const char *ref UNUSED,
 void check_for_new_submodule_commits(struct object_id *oid)
 {
 	if (!initialized_fetch_ref_tips) {
-		for_each_ref(append_oid_to_array, &ref_tips_before_fetch);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  append_oid_to_array, &ref_tips_before_fetch);
 		initialized_fetch_ref_tips = 1;
 	}
 

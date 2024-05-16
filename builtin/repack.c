@@ -706,11 +706,14 @@ static void midx_snapshot_refs(struct tempfile *f)
 
 		data.preferred = 1;
 		for_each_string_list_item(item, preferred)
-			for_each_ref_in(item->string, midx_snapshot_ref_one, &data);
+			refs_for_each_ref_in(get_main_ref_store(the_repository),
+					     item->string,
+					     midx_snapshot_ref_one, &data);
 		data.preferred = 0;
 	}
 
-	for_each_ref(midx_snapshot_ref_one, &data);
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  midx_snapshot_ref_one, &data);
 
 	if (close_tempfile_gently(f)) {
 		int save_errno = errno;

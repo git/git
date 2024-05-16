@@ -243,7 +243,7 @@ static int bisect_reset(const char *commit)
 		strbuf_addstr(&branch, commit);
 	}
 
-	if (branch.len && !ref_exists("BISECT_HEAD")) {
+	if (branch.len && !refs_ref_exists(get_main_ref_store(the_repository), "BISECT_HEAD")) {
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
 		cmd.git_cmd = 1;
@@ -302,8 +302,8 @@ static int bisect_write(const char *state, const char *rev,
 		goto finish;
 	}
 
-	if (update_ref(NULL, tag.buf, &oid, NULL, 0,
-		       UPDATE_REFS_MSG_ON_ERR)) {
+	if (refs_update_ref(get_main_ref_store(the_repository), NULL, tag.buf, &oid, NULL, 0,
+			    UPDATE_REFS_MSG_ON_ERR)) {
 		res = -1;
 		goto finish;
 	}
@@ -416,11 +416,12 @@ static void bisect_status(struct bisect_state *state,
 	char *bad_ref = xstrfmt("refs/bisect/%s", terms->term_bad);
 	char *good_glob = xstrfmt("%s-*", terms->term_good);
 
-	if (ref_exists(bad_ref))
+	if (refs_ref_exists(get_main_ref_store(the_repository), bad_ref))
 		state->nr_bad = 1;
 
-	for_each_glob_ref_in(inc_nr, good_glob, "refs/bisect/",
-			     (void *) &state->nr_good);
+	refs_for_each_glob_ref_in(get_main_ref_store(the_repository), inc_nr,
+				  good_glob, "refs/bisect/",
+				  (void *) &state->nr_good);
 
 	free(good_glob);
 	free(bad_ref);
@@ -574,9 +575,11 @@ static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 	reset_revision_walk();
 	repo_init_revisions(the_repository, revs, NULL);
 	setup_revisions(0, NULL, revs, NULL);
-	for_each_glob_ref_in(add_bisect_ref, bad, "refs/bisect/", &cb);
+	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
+				  add_bisect_ref, bad, "refs/bisect/", &cb);
 	cb.object_flags = UNINTERESTING;
-	for_each_glob_ref_in(add_bisect_ref, good, "refs/bisect/", &cb);
+	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
+				  add_bisect_ref, good, "refs/bisect/", &cb);
 	if (prepare_revision_walk(revs))
 		res = error(_("revision walk setup failed\n"));
 
@@ -636,7 +639,7 @@ static int bisect_successful(struct bisect_terms *terms)
 	char *bad_ref = xstrfmt("refs/bisect/%s",terms->term_bad);
 	int res;
 
-	read_ref(bad_ref, &oid);
+	refs_read_ref(get_main_ref_store(the_repository), bad_ref, &oid);
 	commit = lookup_commit_reference_by_name(bad_ref);
 	repo_format_commit_message(the_repository, commit, "%s", &commit_name,
 				   &pp);
@@ -779,7 +782,8 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 	/*
 	 * Verify HEAD
 	 */
-	head = resolve_ref_unsafe("HEAD", 0, &head_oid, &flags);
+	head = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+				       "HEAD", 0, &head_oid, &flags);
 	if (!head)
 		if (repo_get_oid(the_repository, "HEAD", &head_oid))
 			return error(_("bad HEAD - I need a HEAD"));
@@ -838,8 +842,8 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 			res = error(_("invalid ref: '%s'"), start_head.buf);
 			goto finish;
 		}
-		if (update_ref(NULL, "BISECT_HEAD", &oid, NULL, 0,
-			       UPDATE_REFS_MSG_ON_ERR)) {
+		if (refs_update_ref(get_main_ref_store(the_repository), NULL, "BISECT_HEAD", &oid, NULL, 0,
+				    UPDATE_REFS_MSG_ON_ERR)) {
 			res = BISECT_FAILED;
 			goto finish;
 		}
@@ -972,7 +976,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 		oid_array_append(&revs, &commit->object.oid);
 	}
 
-	if (read_ref("BISECT_EXPECTED_REV", &expected))
+	if (refs_read_ref(get_main_ref_store(the_repository), "BISECT_EXPECTED_REV", &expected))
 		verify_expected = 0; /* Ignore invalid file contents */
 
 	for (i = 0; i < revs.nr; i++) {
@@ -982,7 +986,9 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, int argc,
 		}
 		if (verify_expected && !oideq(&revs.oid[i], &expected)) {
 			unlink_or_warn(git_path_bisect_ancestors_ok());
-			delete_ref(NULL, "BISECT_EXPECTED_REV", NULL, REF_NO_DEREF);
+			refs_delete_ref(get_main_ref_store(the_repository),
+					NULL, "BISECT_EXPECTED_REV", NULL,
+					REF_NO_DEREF);
 			verify_expected = 0;
 		}
 	}
@@ -1179,13 +1185,15 @@ static int verify_good(const struct bisect_terms *terms, const char *command)
 	struct object_id good_rev;
 	struct object_id current_rev;
 	char *good_glob = xstrfmt("%s-*", terms->term_good);
-	int no_checkout = ref_exists("BISECT_HEAD");
+	int no_checkout = refs_ref_exists(get_main_ref_store(the_repository),
+					  "BISECT_HEAD");
 
-	for_each_glob_ref_in(get_first_good, good_glob, "refs/bisect/",
-			     &good_rev);
+	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
+				  get_first_good, good_glob, "refs/bisect/",
+				  &good_rev);
 	free(good_glob);
 
-	if (read_ref(no_checkout ? "BISECT_HEAD" : "HEAD", &current_rev))
+	if (refs_read_ref(get_main_ref_store(the_repository), no_checkout ? "BISECT_HEAD" : "HEAD", &current_rev))
 		return -1;
 
 	res = bisect_checkout(&good_rev, no_checkout);

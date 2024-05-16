@@ -1001,7 +1001,8 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 
 	if (mkdir(state->dir, 0777) < 0 && errno != EEXIST)
 		die_errno(_("failed to create directory '%s'"), state->dir);
-	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
+	refs_delete_ref(get_main_ref_store(the_repository), NULL,
+			"REBASE_HEAD", NULL, REF_NO_DEREF);
 
 	if (split_mail(state, patch_format, paths, keep_cr) < 0) {
 		am_destroy(state);
@@ -1081,12 +1082,15 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	if (!repo_get_oid(the_repository, "HEAD", &curr_head)) {
 		write_state_text(state, "abort-safety", oid_to_hex(&curr_head));
 		if (!state->rebasing)
-			update_ref("am", "ORIG_HEAD", &curr_head, NULL, 0,
-				   UPDATE_REFS_DIE_ON_ERR);
+			refs_update_ref(get_main_ref_store(the_repository),
+					"am", "ORIG_HEAD", &curr_head, NULL,
+					0,
+					UPDATE_REFS_DIE_ON_ERR);
 	} else {
 		write_state_text(state, "abort-safety", "");
 		if (!state->rebasing)
-			delete_ref(NULL, "ORIG_HEAD", NULL, 0);
+			refs_delete_ref(get_main_ref_store(the_repository),
+					NULL, "ORIG_HEAD", NULL, 0);
 	}
 
 	/*
@@ -1119,7 +1123,8 @@ static void am_next(struct am_state *state)
 
 	oidclr(&state->orig_commit);
 	unlink(am_path(state, "original-commit"));
-	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
+	refs_delete_ref(get_main_ref_store(the_repository), NULL,
+			"REBASE_HEAD", NULL, REF_NO_DEREF);
 
 	if (!repo_get_oid(the_repository, "HEAD", &head))
 		write_state_text(state, "abort-safety", oid_to_hex(&head));
@@ -1466,8 +1471,9 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 
 	oidcpy(&state->orig_commit, &commit_oid);
 	write_state_text(state, "original-commit", oid_to_hex(&commit_oid));
-	update_ref("am", "REBASE_HEAD", &commit_oid,
-		   NULL, REF_NO_DEREF, UPDATE_REFS_DIE_ON_ERR);
+	refs_update_ref(get_main_ref_store(the_repository), "am",
+			"REBASE_HEAD", &commit_oid,
+			NULL, REF_NO_DEREF, UPDATE_REFS_DIE_ON_ERR);
 
 	return 0;
 }
@@ -1697,8 +1703,9 @@ static void do_commit(const struct am_state *state)
 	strbuf_addf(&sb, "%s: %.*s", reflog_msg, linelen(state->msg),
 			state->msg);
 
-	update_ref(sb.buf, "HEAD", &commit, old_oid, 0,
-		   UPDATE_REFS_DIE_ON_ERR);
+	refs_update_ref(get_main_ref_store(the_repository), sb.buf, "HEAD",
+			&commit, old_oid, 0,
+			UPDATE_REFS_DIE_ON_ERR);
 
 	if (state->rebasing) {
 		FILE *fp = xfopen(am_path(state, "rewritten"), "a");
@@ -2175,7 +2182,8 @@ static void am_abort(struct am_state *state)
 
 	am_rerere_clear();
 
-	curr_branch = resolve_refdup("HEAD", 0, &curr_head, NULL);
+	curr_branch = refs_resolve_refdup(get_main_ref_store(the_repository),
+					  "HEAD", 0, &curr_head, NULL);
 	has_curr_head = curr_branch && !is_null_oid(&curr_head);
 	if (!has_curr_head)
 		oidcpy(&curr_head, the_hash_algo->empty_tree);
@@ -2188,11 +2196,13 @@ static void am_abort(struct am_state *state)
 		die(_("failed to clean index"));
 
 	if (has_orig_head)
-		update_ref("am --abort", "HEAD", &orig_head,
-			   has_curr_head ? &curr_head : NULL, 0,
-			   UPDATE_REFS_DIE_ON_ERR);
+		refs_update_ref(get_main_ref_store(the_repository),
+				"am --abort", "HEAD", &orig_head,
+				has_curr_head ? &curr_head : NULL, 0,
+				UPDATE_REFS_DIE_ON_ERR);
 	else if (curr_branch)
-		delete_ref(NULL, curr_branch, NULL, REF_NO_DEREF);
+		refs_delete_ref(get_main_ref_store(the_repository), NULL,
+				curr_branch, NULL, REF_NO_DEREF);
 
 	free(curr_branch);
 	am_destroy(state);

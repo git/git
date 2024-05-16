@@ -160,8 +160,9 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 			case 1: /* happy */
 				if (abbrev_ref) {
 					char *old = full;
-					full = shorten_unambiguous_ref(full,
-						abbrev_ref_strict);
+					full = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+									    full,
+									    abbrev_ref_strict);
 					free(old);
 				}
 				show_with_type(type, full);
@@ -599,9 +600,12 @@ static int opt_with_value(const char *arg, const char *opt, const char **value)
 static void handle_ref_opt(const char *pattern, const char *prefix)
 {
 	if (pattern)
-		for_each_glob_ref_in(show_reference, pattern, prefix, NULL);
+		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
+					  show_reference, pattern, prefix,
+					  NULL);
 	else
-		for_each_ref_in(prefix, show_reference, NULL);
+		refs_for_each_ref_in(get_main_ref_store(the_repository),
+				     prefix, show_reference, NULL);
 	clear_ref_exclusions(&ref_excludes);
 }
 
@@ -898,7 +902,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
-				for_each_ref(show_reference, NULL);
+				refs_for_each_ref(get_main_ref_store(the_repository),
+						  show_reference, NULL);
 				clear_ref_exclusions(&ref_excludes);
 				continue;
 			}
@@ -908,8 +913,14 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				for_each_fullref_in("refs/bisect/bad", show_reference, NULL);
-				for_each_fullref_in("refs/bisect/good", anti_reference, NULL);
+				refs_for_each_fullref_in(get_main_ref_store(the_repository),
+							 "refs/bisect/bad",
+							 NULL, show_reference,
+							 NULL);
+				refs_for_each_fullref_in(get_main_ref_store(the_repository),
+							 "refs/bisect/good",
+							 NULL, anti_reference,
+							 NULL);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {

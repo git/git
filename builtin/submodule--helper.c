@@ -2456,7 +2456,9 @@ static int remote_submodule_branch(const char *path, const char **branch)
 	}
 
 	if (!strcmp(*branch, ".")) {
-		const char *refname = resolve_ref_unsafe("HEAD", 0, NULL, NULL);
+		const char *refname = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+							      "HEAD", 0, NULL,
+							      NULL);
 
 		if (!refname)
 			return die_message(_("No such ref: %s"), "HEAD");
@@ -2874,7 +2876,8 @@ static int push_check(int argc, const char **argv, const char *prefix UNUSED)
 	argv++;
 	argc--;
 	/* Get the submodule's head ref and determine if it is detached */
-	head = resolve_refdup("HEAD", 0, &head_oid, NULL);
+	head = refs_resolve_refdup(get_main_ref_store(the_repository), "HEAD",
+				   0, &head_oid, NULL);
 	if (!head)
 		die(_("Failed to resolve HEAD as a valid ref."));
 	if (!strcmp(head, "HEAD"))

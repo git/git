@@ -240,7 +240,7 @@ static int add(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf2);
 		strbuf_addf(&buf2, "refs/remotes/%s/%s", name, master);
 
-		if (create_symref(buf.buf, buf2.buf, "remote add"))
+		if (refs_create_symref(get_main_ref_store(the_repository), buf.buf, buf2.buf, "remote add"))
 			return error(_("Could not setup master '%s'"), master);
 	}
 
@@ -376,7 +376,7 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	for (ref = fetch_map; ref; ref = ref->next) {
 		if (omit_name_by_refspec(ref->name, &states->remote->fetch))
 			string_list_append(&states->skipped, abbrev_branch(ref->name));
-		else if (!ref->peer_ref || !ref_exists(ref->peer_ref->name))
+		else if (!ref->peer_ref || !refs_ref_exists(get_main_ref_store(the_repository), ref->peer_ref->name))
 			string_list_append(&states->new_refs, abbrev_branch(ref->name));
 		else
 			string_list_append(&states->tracked, abbrev_branch(ref->name));
@@ -598,8 +598,9 @@ static int read_remote_branches(const char *refname,
 	strbuf_addf(&buf, "refs/remotes/%s/", rename->old_name);
 	if (starts_with(refname, buf.buf)) {
 		item = string_list_append(rename->remote_branches, refname);
-		symref = resolve_ref_unsafe(refname, RESOLVE_REF_READING,
-					    NULL, &flag);
+		symref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						 refname, RESOLVE_REF_READING,
+						 NULL, &flag);
 		if (symref && (flag & REF_ISSYMREF)) {
 			item->util = xstrdup(symref);
 			rename->symrefs_nr++;
@@ -789,7 +790,8 @@ static int mv(int argc, const char **argv, const char *prefix)
 	 * First remove symrefs, then rename the rest, finally create
 	 * the new symrefs.
 	 */
-	for_each_ref(read_remote_branches, &rename);
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  read_remote_branches, &rename);
 	if (show_progress) {
 		/*
 		 * Count symrefs twice, since "renaming" them is done by
@@ -805,7 +807,7 @@ static int mv(int argc, const char **argv, const char *prefix)
 		if (refs_read_symbolic_ref(get_main_ref_store(the_repository), item->string,
 					   &referent))
 			continue;
-		if (delete_ref(NULL, item->string, NULL, REF_NO_DEREF))
+		if (refs_delete_ref(get_main_ref_store(the_repository), NULL, item->string, NULL, REF_NO_DEREF))
 			die(_("deleting '%s' failed"), item->string);
 
 		strbuf_release(&referent);
@@ -823,7 +825,7 @@ static int mv(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf2);
 		strbuf_addf(&buf2, "remote: renamed %s to %s",
 				item->string, buf.buf);
-		if (rename_ref(item->string, buf.buf, buf2.buf))
+		if (refs_rename_ref(get_main_ref_store(the_repository), item->string, buf.buf, buf2.buf))
 			die(_("renaming '%s' failed"), item->string);
 		display_progress(progress, ++refs_renamed_nr);
 	}
@@ -843,7 +845,7 @@ static int mv(int argc, const char **argv, const char *prefix)
 		strbuf_reset(&buf3);
 		strbuf_addf(&buf3, "remote: renamed %s to %s",
 				item->string, buf.buf);
-		if (create_symref(buf.buf, buf2.buf, buf3.buf))
+		if (refs_create_symref(get_main_ref_store(the_repository), buf.buf, buf2.buf, buf3.buf))
 			die(_("creating '%s' failed"), buf.buf);
 		display_progress(progress, ++refs_renamed_nr);
 	}
@@ -917,11 +919,14 @@ static int rm(int argc, const char **argv, const char *prefix)
 	 * refs, which are invalidated when deleting a branch.
 	 */
 	cb_data.remote = remote;
-	result = for_each_ref(add_branch_for_removal, &cb_data);
+	result = refs_for_each_ref(get_main_ref_store(the_repository),
+				   add_branch_for_removal, &cb_data);
 	strbuf_release(&buf);
 
 	if (!result)
-		result = delete_refs("remote: remove", &branches, REF_NO_DEREF);
+		result = refs_delete_refs(get_main_ref_store(the_repository),
+					  "remote: remove", &branches,
+					  REF_NO_DEREF);
 	string_list_clear(&branches, 0);
 
 	if (skipped.nr) {
@@ -1010,7 +1015,8 @@ static int get_remote_ref_states(const char *name,
 			get_push_ref_states(remote_refs, states);
 		transport_disconnect(transport);
 	} else {
-		for_each_ref(append_ref_to_tracked_list, states);
+		refs_for_each_ref(get_main_ref_store(the_repository),
+				  append_ref_to_tracked_list, states);
 		string_list_sort(&states->tracked);
 		get_push_ref_states_noquery(states);
 	}
@@ -1407,7 +1413,7 @@ static int set_head(int argc, const char **argv, const char *prefix)
 			head_name = xstrdup(states.heads.items[0].string);
 		free_remote_ref_states(&states);
 	} else if (opt_d && !opt_a && argc == 1) {
-		if (delete_ref(NULL, buf.buf, NULL, REF_NO_DEREF))
+		if (refs_delete_ref(get_main_ref_store(the_repository), NULL, buf.buf, NULL, REF_NO_DEREF))
 			result |= error(_("Could not delete %s"), buf.buf);
 	} else
 		usage_with_options(builtin_remote_sethead_usage, options);
@@ -1415,9 +1421,9 @@ static int set_head(int argc, const char **argv, const char *prefix)
 	if (head_name) {
 		strbuf_addf(&buf2, "refs/remotes/%s/%s", argv[0], head_name);
 		/* make sure it's valid */
-		if (!ref_exists(buf2.buf))
+		if (!refs_ref_exists(get_main_ref_store(the_repository), buf2.buf))
 			result |= error(_("Not a valid ref: %s"), buf2.buf);
-		else if (create_symref(buf.buf, buf2.buf, "remote set-head"))
+		else if (refs_create_symref(get_main_ref_store(the_repository), buf.buf, buf2.buf, "remote set-head"))
 			result |= error(_("Could not setup %s"), buf.buf);
 		else if (opt_a)
 			printf("%s/HEAD set to %s\n", argv[0], head_name);
@@ -1457,7 +1463,8 @@ static int prune_remote(const char *remote, int dry_run)
 	string_list_sort(&refs_to_prune);
 
 	if (!dry_run)
-		result |= delete_refs("remote: prune", &refs_to_prune, 0);
+		result |= refs_delete_refs(get_main_ref_store(the_repository),
+					   "remote: prune", &refs_to_prune, 0);
 
 	for_each_string_list_item(item, &states.stale) {
 		const char *refname = item->util;

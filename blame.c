@@ -2700,7 +2700,7 @@ static struct commit *dwim_reverse_initial(struct rev_info *revs,
 		return NULL;
 
 	/* Do we have HEAD? */
-	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
+	if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING, &head_oid, NULL))
 		return NULL;
 	head_commit = lookup_commit_reference_gently(revs->repo,
 						     &head_oid, 1);
@@ -2803,7 +2803,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		if (sb->final) {
 			parent_oid = &sb->final->object.oid;
 		} else {
-			if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
+			if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING, &head_oid, NULL))
 				die("no such ref: HEAD");
 			parent_oid = &head_oid;
 		}

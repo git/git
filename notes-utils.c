@@ -23,7 +23,7 @@ void create_notes_commit(struct repository *r,
 	if (!parents) {
 		/* Deduce parent commit from t->ref */
 		struct object_id parent_oid;
-		if (!read_ref(t->ref, &parent_oid)) {
+		if (!refs_read_ref(get_main_ref_store(the_repository), t->ref, &parent_oid)) {
 			struct commit *parent = lookup_commit(r, &parent_oid);
 			if (repo_parse_commit(r, parent))
 				die("Failed to find/parse commit %s", t->ref);
@@ -55,8 +55,9 @@ void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
 
 	create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
 	strbuf_insertstr(&buf, 0, "notes: ");
-	update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
-		   UPDATE_REFS_DIE_ON_ERR);
+	refs_update_ref(get_main_ref_store(the_repository), buf.buf,
+			t->update_ref, &commit_oid, NULL, 0,
+			UPDATE_REFS_DIE_ON_ERR);
 
 	strbuf_release(&buf);
 }
