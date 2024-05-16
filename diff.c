@@ -40,7 +40,6 @@
 #include "setup.h"
 #include "strmap.h"
 #include "ws.h"
-#include "write-or-die.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -4405,33 +4404,8 @@ static void run_external_diff(const char *pgm,
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	cmd.use_shell = 1;
-	if (o->flags.diff_from_contents) {
-		int got_output = 0;
-		cmd.out = -1;
-		if (start_command(&cmd))
-			die(_("external diff died, stopping at %s"), name);
-		for (;;) {
-			char buffer[8192];
-			ssize_t len = xread(cmd.out, buffer, sizeof(buffer));
-			if (!len)
-				break;
-			if (len < 0)
-				die(_("unable to read from external diff,"
-				      " stopping at %s"), name);
-			got_output = 1;
-			if (write_in_full(1, buffer, len) < 0)
-				die(_("unable to write output of external diff,"
-				      " stopping at %s"), name);
-		}
-		close(cmd.out);
-		if (finish_command(&cmd))
-			die(_("external diff died, stopping at %s"), name);
-		if (got_output)
-			o->found_changes = 1;
-	} else {
-		if (run_command(&cmd))
-			die(_("external diff died, stopping at %s"), name);
-	}
+	if (run_command(&cmd))
+		die(_("external diff died, stopping at %s"), name);
 
 	remove_tempfile();
 }
@@ -4878,7 +4852,6 @@ void diff_setup_done(struct diff_options *options)
 	 */
 
 	if ((options->xdl_opts & XDF_WHITESPACE_FLAGS) ||
-	    options->flags.exit_with_status ||
 	    options->ignore_regex_nr)
 		options->flags.diff_from_contents = 1;
 	else
@@ -6769,7 +6742,7 @@ void diff_flush(struct diff_options *options)
 	if (output_format & DIFF_FORMAT_CALLBACK)
 		options->format_callback(q, options, options->format_callback_data);
 
-	if ((!output_format || output_format & DIFF_FORMAT_NO_OUTPUT) &&
+	if (output_format & DIFF_FORMAT_NO_OUTPUT &&
 	    options->flags.exit_with_status &&
 	    options->flags.diff_from_contents) {
 		/*
