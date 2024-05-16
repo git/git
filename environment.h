@@ -58,6 +58,13 @@ const char *getenv_safe(struct strvec *argv, const char *name);
 #define GIT_ATTR_SOURCE_ENVIRONMENT "GIT_ATTR_SOURCE"
 
 /*
+ * Environment variable used to propagate the --no-advice global option to the
+ * advice_enabled() helper, even when run in a subprocess.
+ * This is an internal variable that should not be set by the user.
+ */
+#define GIT_ADVICE_ENVIRONMENT "GIT_ADVICE"
+
+/*
  * Environment variable used in handshaking the wire protocol.
  * Contains a colon ':' separated list of keys with optional values
  * 'key[=value]'.  Presence of unknown keys and values must be

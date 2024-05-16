@@ -11,9 +11,10 @@ SYNOPSIS
 [verse]
 'git' [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
     [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-    [-p|--paginate|-P|--no-pager] [--no-replace-objects] [--bare]
-    [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-    [--config-env=<name>=<envvar>] <command> [<args>]
+    [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-lazy-fetch]
+    [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]
+    [--work-tree=<path>] [--namespace=<name>] [--config-env=<name>=<envvar>]
+    <command> [<args>]
 
 DESCRIPTION
 -----------
@@ -186,6 +187,13 @@ If you just want to run git as if it was started in `<path>` then use
 	This is equivalent to setting the `GIT_NO_LAZY_FETCH`
 	environment variable to `1`.
 
+--no-optional-locks::
+	Do not perform optional operations that require locks. This is
+	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
+
+--no-advice::
+	Disable all advice hints from being printed.
+
 --literal-pathspecs::
 	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
 	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
@@ -206,10 +214,6 @@ If you just want to run git as if it was started in `<path>` then use
 --icase-pathspecs::
 	Add "icase" magic to all pathspec. This is equivalent to setting
 	the `GIT_ICASE_PATHSPECS` environment variable to `1`.
-
---no-optional-locks::
-	Do not perform optional operations that require locks. This is
-	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
 
 --list-cmds=<group>[,<group>...]::
 	List commands by group. This is an internal/experimental
