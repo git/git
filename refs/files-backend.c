@@ -89,9 +89,9 @@ static void clear_loose_ref_cache(struct files_ref_store *refs)
  * Create a new submodule ref cache and add it to the internal
  * set of caches.
  */
-static struct ref_store *files_ref_store_create(struct repository *repo,
-						const char *gitdir,
-						unsigned int flags)
+static struct ref_store *files_ref_store_init(struct repository *repo,
+					      const char *gitdir,
+					      unsigned int flags)
 {
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
@@ -102,7 +102,7 @@ static struct ref_store *files_ref_store_create(struct repository *repo,
 	get_common_dir_noenv(&sb, gitdir);
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	refs->packed_ref_store =
-		packed_ref_store_create(repo, refs->gitcommondir, flags);
+		packed_ref_store_init(repo, refs->gitcommondir, flags);
 
 	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
 	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
@@ -3283,7 +3283,7 @@ static int files_init_db(struct ref_store *ref_store,
 
 struct ref_storage_be refs_be_files = {
 	.name = "files",
-	.init = files_ref_store_create,
+	.init = files_ref_store_init,
 	.init_db = files_init_db,
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
