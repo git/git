@@ -529,6 +529,10 @@ struct ref_store;
 typedef struct ref_store *ref_store_init_fn(struct repository *repo,
 					    const char *gitdir,
 					    unsigned int flags);
+/*
+ * Release all memory and resources associated with the ref store.
+ */
+typedef void ref_store_release_fn(struct ref_store *refs);
 
 typedef int ref_store_create_on_disk_fn(struct ref_store *refs,
 					int flags,
@@ -668,6 +672,7 @@ typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refnam
 struct ref_storage_be {
 	const char *name;
 	ref_store_init_fn *init;
+	ref_store_release_fn *release;
 	ref_store_create_on_disk_fn *create_on_disk;
 
 	ref_transaction_prepare_fn *transaction_prepare;

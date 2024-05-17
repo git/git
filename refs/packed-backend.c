@@ -252,6 +252,15 @@ static void clear_snapshot(struct packed_ref_store *refs)
 	}
 }
 
+static void packed_ref_store_release(struct ref_store *ref_store)
+{
+	struct packed_ref_store *refs = packed_downcast(ref_store, 0, "release");
+	clear_snapshot(refs);
+	rollback_lock_file(&refs->lock);
+	delete_tempfile(&refs->tempfile);
+	free(refs->path);
+}
+
 static NORETURN void die_unterminated_line(const char *path,
 					   const char *p, size_t len)
 {
@@ -1707,7 +1716,9 @@ static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_s
 struct ref_storage_be refs_be_packed = {
 	.name = "packed",
 	.init = packed_ref_store_init,
+	.release = packed_ref_store_release,
 	.create_on_disk = packed_ref_store_create_on_disk,
+
 	.transaction_prepare = packed_transaction_prepare,
 	.transaction_finish = packed_transaction_finish,
 	.transaction_abort = packed_transaction_abort,

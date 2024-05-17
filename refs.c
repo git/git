@@ -2041,6 +2041,12 @@ static struct ref_store *ref_store_init(struct repository *repo,
 	return refs;
 }
 
+void ref_store_release(struct ref_store *ref_store)
+{
+	ref_store->be->release(ref_store);
+	free(ref_store->gitdir);
+}
+
 struct ref_store *get_main_ref_store(struct repository *r)
 {
 	if (r->refs_private)

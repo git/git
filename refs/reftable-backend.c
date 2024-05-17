@@ -293,6 +293,27 @@ done:
 	return &refs->base;
 }
 
+static void reftable_be_release(struct ref_store *ref_store)
+{
+	struct reftable_ref_store *refs = reftable_be_downcast(ref_store, 0, "release");
+	struct strmap_entry *entry;
+	struct hashmap_iter iter;
+
+	if (refs->main_stack) {
+		reftable_stack_destroy(refs->main_stack);
+		refs->main_stack = NULL;
+	}
+
+	if (refs->worktree_stack) {
+		reftable_stack_destroy(refs->worktree_stack);
+		refs->worktree_stack = NULL;
+	}
+
+	strmap_for_each_entry(&refs->worktree_stacks, &iter, entry)
+		reftable_stack_destroy(entry->value);
+	strmap_clear(&refs->worktree_stacks, 0);
+}
+
 static int reftable_be_create_on_disk(struct ref_store *ref_store,
 				      int flags UNUSED,
 				      struct strbuf *err UNUSED)
@@ -2248,7 +2269,9 @@ done:
 struct ref_storage_be refs_be_reftable = {
 	.name = "reftable",
 	.init = reftable_be_init,
+	.release = reftable_be_release,
 	.create_on_disk = reftable_be_create_on_disk,
+
 	.transaction_prepare = reftable_be_transaction_prepare,
 	.transaction_finish = reftable_be_transaction_finish,
 	.transaction_abort = reftable_be_transaction_abort,

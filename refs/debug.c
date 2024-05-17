@@ -33,6 +33,13 @@ struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_stor
 	return (struct ref_store *)res;
 }
 
+static void debug_release(struct ref_store *refs)
+{
+	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
+	drefs->refs->be->release(drefs->refs);
+	trace_printf_key(&trace_refs, "release\n");
+}
+
 static int debug_create_on_disk(struct ref_store *refs, int flags, struct strbuf *err)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
@@ -427,6 +434,7 @@ static int debug_reflog_expire(struct ref_store *ref_store, const char *refname,
 struct ref_storage_be refs_be_debug = {
 	.name = "debug",
 	.init = NULL,
+	.release = debug_release,
 	.create_on_disk = debug_create_on_disk,
 
 	/*

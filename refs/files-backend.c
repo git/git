@@ -149,6 +149,14 @@ static struct files_ref_store *files_downcast(struct ref_store *ref_store,
 	return refs;
 }
 
+static void files_ref_store_release(struct ref_store *ref_store)
+{
+	struct files_ref_store *refs = files_downcast(ref_store, 0, "release");
+	free_ref_cache(refs->loose);
+	free(refs->gitcommondir);
+	ref_store_release(refs->packed_ref_store);
+}
+
 static void files_reflog_path(struct files_ref_store *refs,
 			      struct strbuf *sb,
 			      const char *refname)
@@ -3284,7 +3292,9 @@ static int files_ref_store_create_on_disk(struct ref_store *ref_store,
 struct ref_storage_be refs_be_files = {
 	.name = "files",
 	.init = files_ref_store_init,
+	.release = files_ref_store_release,
 	.create_on_disk = files_ref_store_create_on_disk,
+
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
 	.transaction_abort = files_transaction_abort,

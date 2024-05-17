@@ -119,6 +119,11 @@ int is_branch(const char *refname);
 int ref_store_create_on_disk(struct ref_store *refs, int flags, struct strbuf *err);
 
 /*
+ * Release all memory and resources associated with the ref store.
+ */
+void ref_store_release(struct ref_store *ref_store);
+
+/*
  * Return the peeled value of the oid currently being iterated via
  * for_each_ref(), etc. This is equivalent to calling:
  *
