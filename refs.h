@@ -141,8 +141,9 @@ int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
  * successful, return 0 and set oid to the name of the object;
  * otherwise, return a non-zero value.
  */
-int resolve_gitlink_ref(const char *submodule, const char *refname,
-			struct object_id *oid);
+int repo_resolve_gitlink_ref(struct repository *r,
+			     const char *submodule, const char *refname,
+			     struct object_id *oid);
 
 /*
  * Return true iff abbrev_name is a possible abbreviation for

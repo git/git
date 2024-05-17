@@ -1943,13 +1943,14 @@ int ref_store_create_on_disk(struct ref_store *refs, int flags, struct strbuf *e
 	return refs->be->create_on_disk(refs, flags, err);
 }
 
-int resolve_gitlink_ref(const char *submodule, const char *refname,
-			struct object_id *oid)
+int repo_resolve_gitlink_ref(struct repository *r,
+			     const char *submodule, const char *refname,
+			     struct object_id *oid)
 {
 	struct ref_store *refs;
 	int flags;
 
-	refs = repo_get_submodule_ref_store(the_repository, submodule);
+	refs = repo_get_submodule_ref_store(r, submodule);
 	if (!refs)
 		return -1;
 
