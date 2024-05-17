@@ -2046,6 +2046,7 @@ void create_reference_database(unsigned int ref_storage_format,
 			       const char *initial_branch, int quiet)
 {
 	struct strbuf err = STRBUF_INIT;
+	char *to_free = NULL;
 	int reinit = is_reinit();
 
 	repo_set_ref_storage_format(the_repository, ref_storage_format);
@@ -2060,7 +2061,8 @@ void create_reference_database(unsigned int ref_storage_format,
 		char *ref;
 
 		if (!initial_branch)
-			initial_branch = git_default_branch_name(quiet);
+			initial_branch = to_free =
+				repo_default_branch_name(the_repository, quiet);
 
 		ref = xstrfmt("refs/heads/%s", initial_branch);
 		if (check_refname_format(ref, 0) < 0)
@@ -2077,6 +2079,7 @@ void create_reference_database(unsigned int ref_storage_format,
 			initial_branch);
 
 	strbuf_release(&err);
+	free(to_free);
 }
 
 static int create_default_files(const char *template_path,

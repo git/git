@@ -664,16 +664,6 @@ char *repo_default_branch_name(struct repository *r, int quiet)
 	return ret;
 }
 
-const char *git_default_branch_name(int quiet)
-{
-	static char *ret;
-
-	if (!ret)
-		ret = repo_default_branch_name(the_repository, quiet);
-
-	return ret;
-}
-
 /*
  * *string and *len will only be substituted, and *string returned (for
  * later free()ing) if the string passed in is a magic short-hand form

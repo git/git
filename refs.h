@@ -169,10 +169,8 @@ int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 /*
  * Retrieves the default branch name for newly-initialized repositories.
  *
- * The return value of `repo_default_branch_name()` is an allocated string. The
- * return value of `git_default_branch_name()` is a singleton.
+ * The return value is an allocated string.
  */
-const char *git_default_branch_name(int quiet);
 char *repo_default_branch_name(struct repository *r, int quiet);
 
 /*
