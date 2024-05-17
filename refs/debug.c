@@ -33,11 +33,11 @@ struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_stor
 	return (struct ref_store *)res;
 }
 
-static int debug_init_db(struct ref_store *refs, int flags, struct strbuf *err)
+static int debug_create_on_disk(struct ref_store *refs, int flags, struct strbuf *err)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
-	int res = drefs->refs->be->init_db(drefs->refs, flags, err);
-	trace_printf_key(&trace_refs, "init_db: %d\n", res);
+	int res = drefs->refs->be->create_on_disk(drefs->refs, flags, err);
+	trace_printf_key(&trace_refs, "create_on_disk: %d\n", res);
 	return res;
 }
 
@@ -427,7 +427,7 @@ static int debug_reflog_expire(struct ref_store *ref_store, const char *refname,
 struct ref_storage_be refs_be_debug = {
 	.name = "debug",
 	.init = NULL,
-	.init_db = debug_init_db,
+	.create_on_disk = debug_create_on_disk,
 
 	/*
 	 * None of these should be NULL. If the "files" backend (in

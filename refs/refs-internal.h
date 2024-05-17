@@ -530,9 +530,9 @@ typedef struct ref_store *ref_store_init_fn(struct repository *repo,
 					    const char *gitdir,
 					    unsigned int flags);
 
-typedef int ref_init_db_fn(struct ref_store *refs,
-			   int flags,
-			   struct strbuf *err);
+typedef int ref_store_create_on_disk_fn(struct ref_store *refs,
+					int flags,
+					struct strbuf *err);
 
 typedef int ref_transaction_prepare_fn(struct ref_store *refs,
 				       struct ref_transaction *transaction,
@@ -668,7 +668,7 @@ typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refnam
 struct ref_storage_be {
 	const char *name;
 	ref_store_init_fn *init;
-	ref_init_db_fn *init_db;
+	ref_store_create_on_disk_fn *create_on_disk;
 
 	ref_transaction_prepare_fn *transaction_prepare;
 	ref_transaction_finish_fn *transaction_finish;

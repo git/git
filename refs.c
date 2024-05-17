@@ -1938,9 +1938,9 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 }
 
 /* backend functions */
-int refs_init_db(struct ref_store *refs, int flags, struct strbuf *err)
+int ref_store_create_on_disk(struct ref_store *refs, int flags, struct strbuf *err)
 {
-	return refs->be->init_db(refs, flags, err);
+	return refs->be->create_on_disk(refs, flags, err);
 }
 
 int resolve_gitlink_ref(const char *submodule, const char *refname,

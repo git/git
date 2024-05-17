@@ -2049,7 +2049,7 @@ void create_reference_database(unsigned int ref_storage_format,
 	int reinit = is_reinit();
 
 	repo_set_ref_storage_format(the_repository, ref_storage_format);
-	if (refs_init_db(get_main_ref_store(the_repository), 0, &err))
+	if (ref_store_create_on_disk(get_main_ref_store(the_repository), 0, &err))
 		die("failed to set up refs db: %s", err.buf);
 
 	/*

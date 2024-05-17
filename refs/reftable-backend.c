@@ -293,12 +293,12 @@ done:
 	return &refs->base;
 }
 
-static int reftable_be_init_db(struct ref_store *ref_store,
-			       int flags UNUSED,
-			       struct strbuf *err UNUSED)
+static int reftable_be_create_on_disk(struct ref_store *ref_store,
+				      int flags UNUSED,
+				      struct strbuf *err UNUSED)
 {
 	struct reftable_ref_store *refs =
-		reftable_be_downcast(ref_store, REF_STORE_WRITE, "init_db");
+		reftable_be_downcast(ref_store, REF_STORE_WRITE, "create");
 	struct strbuf sb = STRBUF_INIT;
 
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
@@ -2248,7 +2248,7 @@ done:
 struct ref_storage_be refs_be_reftable = {
 	.name = "reftable",
 	.init = reftable_be_init,
-	.init_db = reftable_be_init_db,
+	.create_on_disk = reftable_be_create_on_disk,
 	.transaction_prepare = reftable_be_transaction_prepare,
 	.transaction_finish = reftable_be_transaction_finish,
 	.transaction_abort = reftable_be_transaction_abort,

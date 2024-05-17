@@ -3236,12 +3236,12 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	return -1;
 }
 
-static int files_init_db(struct ref_store *ref_store,
-			 int flags,
-			 struct strbuf *err UNUSED)
+static int files_ref_store_create_on_disk(struct ref_store *ref_store,
+					  int flags,
+					  struct strbuf *err UNUSED)
 {
 	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_WRITE, "init_db");
+		files_downcast(ref_store, REF_STORE_WRITE, "create");
 	struct strbuf sb = STRBUF_INIT;
 
 	/*
@@ -3264,7 +3264,7 @@ static int files_init_db(struct ref_store *ref_store,
 	 * There is no need to create directories for common refs when creating
 	 * a worktree ref store.
 	 */
-	if (!(flags & REFS_INIT_DB_IS_WORKTREE)) {
+	if (!(flags & REF_STORE_CREATE_ON_DISK_IS_WORKTREE)) {
 		/*
 		 * Create .git/refs/{heads,tags}
 		 */
@@ -3284,7 +3284,7 @@ static int files_init_db(struct ref_store *ref_store,
 struct ref_storage_be refs_be_files = {
 	.name = "files",
 	.init = files_ref_store_init,
-	.init_db = files_init_db,
+	.create_on_disk = files_ref_store_create_on_disk,
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
 	.transaction_abort = files_transaction_abort,

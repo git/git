@@ -114,9 +114,9 @@ int should_autocreate_reflog(const char *refname);
 
 int is_branch(const char *refname);
 
-#define REFS_INIT_DB_IS_WORKTREE (1 << 0)
+#define REF_STORE_CREATE_ON_DISK_IS_WORKTREE (1 << 0)
 
-int refs_init_db(struct ref_store *refs, int flags, struct strbuf *err);
+int ref_store_create_on_disk(struct ref_store *refs, int flags, struct strbuf *err);
 
 /*
  * Return the peeled value of the oid currently being iterated via

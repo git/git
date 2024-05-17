@@ -1244,9 +1244,9 @@ int packed_refs_is_locked(struct ref_store *ref_store)
 static const char PACKED_REFS_HEADER[] =
 	"# pack-refs with: peeled fully-peeled sorted \n";
 
-static int packed_ref_store_init_db(struct ref_store *ref_store UNUSED,
-				    int flags UNUSED,
-				    struct strbuf *err UNUSED)
+static int packed_ref_store_create_on_disk(struct ref_store *ref_store UNUSED,
+					   int flags UNUSED,
+					   struct strbuf *err UNUSED)
 {
 	/* Nothing to do. */
 	return 0;
@@ -1707,7 +1707,7 @@ static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_s
 struct ref_storage_be refs_be_packed = {
 	.name = "packed",
 	.init = packed_ref_store_init,
-	.init_db = packed_ref_store_init_db,
+	.create_on_disk = packed_ref_store_create_on_disk,
 	.transaction_prepare = packed_transaction_prepare,
 	.transaction_finish = packed_transaction_finish,
 	.transaction_abort = packed_transaction_abort,
