@@ -954,7 +954,8 @@ struct ref_store *get_main_ref_store(struct repository *r);
  * For backwards compatibility, submodule=="" is treated the same as
  * submodule==NULL.
  */
-struct ref_store *get_submodule_ref_store(const char *submodule);
+struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
+					       const char *submodule);
 struct ref_store *get_worktree_ref_store(const struct worktree *wt);
 
 /*

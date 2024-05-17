@@ -679,7 +679,8 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 			     displaypath);
 	} else if (!(flags & OPT_CACHED)) {
 		struct object_id oid;
-		struct ref_store *refs = get_submodule_ref_store(path);
+		struct ref_store *refs = repo_get_submodule_ref_store(the_repository,
+								      path);
 
 		if (!refs) {
 			print_status(flags, '-', path, ce_oid, displaypath);
@@ -903,7 +904,8 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
 		if (S_ISGITLINK(p->mod_dst)) {
-			struct ref_store *refs = get_submodule_ref_store(p->sm_path);
+			struct ref_store *refs = repo_get_submodule_ref_store(the_repository,
+									      p->sm_path);
 
 			if (refs)
 				refs_head_ref(refs, handle_submodule_head_ref, &p->oid_dst);

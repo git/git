@@ -1949,8 +1949,7 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 	struct ref_store *refs;
 	int flags;
 
-	refs = get_submodule_ref_store(submodule);
-
+	refs = repo_get_submodule_ref_store(the_repository, submodule);
 	if (!refs)
 		return -1;
 
@@ -1959,9 +1958,6 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 		return -1;
 	return 0;
 }
-
-/* A strmap of ref_stores, stored by submodule name: */
-static struct strmap submodule_ref_stores;
 
 /* A strmap of ref_stores, stored by worktree id: */
 static struct strmap worktree_ref_stores;
@@ -2036,7 +2032,8 @@ static void register_ref_store_map(struct strmap *map,
 		BUG("%s ref_store '%s' initialized twice", type, name);
 }
 
-struct ref_store *get_submodule_ref_store(const char *submodule)
+struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
+					       const char *submodule)
 {
 	struct strbuf submodule_sb = STRBUF_INIT;
 	struct ref_store *refs;
@@ -2057,7 +2054,7 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 		/* We need to strip off one or more trailing slashes */
 		submodule = to_free = xmemdupz(submodule, len);
 
-	refs = lookup_ref_store_map(&submodule_ref_stores, submodule);
+	refs = lookup_ref_store_map(&repo->submodule_ref_stores, submodule);
 	if (refs)
 		goto done;
 
@@ -2069,20 +2066,15 @@ struct ref_store *get_submodule_ref_store(const char *submodule)
 		goto done;
 
 	subrepo = xmalloc(sizeof(*subrepo));
-	/*
-	 * NEEDSWORK: Make get_submodule_ref_store() work with arbitrary
-	 * superprojects other than the_repository. This probably should be
-	 * done by making it take a struct repository * parameter instead of a
-	 * submodule path.
-	 */
-	if (repo_submodule_init(subrepo, the_repository, submodule,
+
+	if (repo_submodule_init(subrepo, repo, submodule,
 				null_oid())) {
 		free(subrepo);
 		goto done;
 	}
 	refs = ref_store_init(subrepo, submodule_sb.buf,
 			      REF_STORE_READ | REF_STORE_ODB);
-	register_ref_store_map(&submodule_ref_stores, "submodule",
+	register_ref_store_map(&repo->submodule_ref_stores, "submodule",
 			       refs, submodule);
 
 done:

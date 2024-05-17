@@ -82,7 +82,7 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 		add_to_alternates_memory(sb.buf);
 		strbuf_release(&sb);
 
-		*refs = get_submodule_ref_store(gitdir);
+		*refs = repo_get_submodule_ref_store(the_repository, gitdir);
 	} else if (skip_prefix(argv[0], "worktree:", &gitdir)) {
 		struct worktree **p, **worktrees = get_worktrees();
 
