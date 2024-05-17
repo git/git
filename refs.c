@@ -1576,53 +1576,12 @@ struct ref_iterator *refs_ref_iterator_begin(
 	return iter;
 }
 
-/*
- * Call fn for each reference in the specified submodule for which the
- * refname begins with prefix. If trim is non-zero, then trim that
- * many characters off the beginning of each refname before passing
- * the refname to fn. flags can be DO_FOR_EACH_INCLUDE_BROKEN to
- * include broken references in the iteration. If fn ever returns a
- * non-zero value, stop the iteration and return that value;
- * otherwise, return 0.
- */
-static int do_for_each_repo_ref(struct repository *r, const char *prefix,
-				each_repo_ref_fn fn, int trim, int flags,
-				void *cb_data)
-{
-	struct ref_iterator *iter;
-	struct ref_store *refs = get_main_ref_store(r);
-
-	if (!refs)
-		return 0;
-
-	iter = refs_ref_iterator_begin(refs, prefix, NULL, trim, flags);
-
-	return do_for_each_repo_ref_iterator(r, iter, fn, cb_data);
-}
-
-struct do_for_each_ref_help {
-	each_ref_fn *fn;
-	void *cb_data;
-};
-
-static int do_for_each_ref_helper(struct repository *r UNUSED,
-				  const char *refname,
-				  const struct object_id *oid,
-				  int flags,
-				  void *cb_data)
-{
-	struct do_for_each_ref_help *hp = cb_data;
-
-	return hp->fn(refname, oid, flags, hp->cb_data);
-}
-
 static int do_for_each_ref(struct ref_store *refs, const char *prefix,
 			   const char **exclude_patterns,
 			   each_ref_fn fn, int trim,
 			   enum do_for_each_ref_flags flags, void *cb_data)
 {
 	struct ref_iterator *iter;
-	struct do_for_each_ref_help hp = { fn, cb_data };
 
 	if (!refs)
 		return 0;
@@ -1630,8 +1589,7 @@ static int do_for_each_ref(struct ref_store *refs, const char *prefix,
 	iter = refs_ref_iterator_begin(refs, prefix, exclude_patterns, trim,
 				       flags);
 
-	return do_for_each_repo_ref_iterator(the_repository, iter,
-					do_for_each_ref_helper, &hp);
+	return do_for_each_ref_iterator(iter, fn, cb_data);
 }
 
 int refs_for_each_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
@@ -1652,12 +1610,12 @@ int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 	return do_for_each_ref(refs, prefix, exclude_patterns, fn, 0, 0, cb_data);
 }
 
-int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data)
+int refs_for_each_replace_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 {
 	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
-	return do_for_each_repo_ref(r, git_replace_ref_base, fn,
-				    strlen(git_replace_ref_base),
-				    DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
+	return do_for_each_ref(refs, git_replace_ref_base, NULL, fn,
+			       strlen(git_replace_ref_base),
+			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
 int refs_for_each_namespaced_ref(struct ref_store *refs,
@@ -2425,8 +2383,7 @@ struct do_for_each_reflog_help {
 	void *cb_data;
 };
 
-static int do_for_each_reflog_helper(struct repository *r UNUSED,
-				     const char *refname,
+static int do_for_each_reflog_helper(const char *refname,
 				     const struct object_id *oid UNUSED,
 				     int flags,
 				     void *cb_data)
@@ -2442,8 +2399,7 @@ int refs_for_each_reflog(struct ref_store *refs, each_reflog_fn fn, void *cb_dat
 
 	iter = refs->be->reflog_iterator_begin(refs);
 
-	return do_for_each_repo_ref_iterator(the_repository, iter,
-					     do_for_each_reflog_helper, &hp);
+	return do_for_each_ref_iterator(iter, do_for_each_reflog_helper, &hp);
 }
 
 int refs_for_each_reflog_ent_reverse(struct ref_store *refs,

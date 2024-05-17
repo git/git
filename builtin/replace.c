@@ -43,11 +43,12 @@ enum replace_format {
 };
 
 struct show_data {
+	struct repository *repo;
 	const char *pattern;
 	enum replace_format format;
 };
 
-static int show_reference(struct repository *r, const char *refname,
+static int show_reference(const char *refname,
 			  const struct object_id *oid,
 			  int flag UNUSED, void *cb_data)
 {
@@ -62,11 +63,11 @@ static int show_reference(struct repository *r, const char *refname,
 			struct object_id object;
 			enum object_type obj_type, repl_type;
 
-			if (repo_get_oid(r, refname, &object))
+			if (repo_get_oid(data->repo, refname, &object))
 				return error(_("failed to resolve '%s' as a valid ref"), refname);
 
-			obj_type = oid_object_info(r, &object, NULL);
-			repl_type = oid_object_info(r, oid, NULL);
+			obj_type = oid_object_info(data->repo, &object, NULL);
+			repl_type = oid_object_info(data->repo, oid, NULL);
 
 			printf("%s (%s) -> %s (%s)\n", refname, type_name(obj_type),
 			       oid_to_hex(oid), type_name(repl_type));
@@ -80,6 +81,7 @@ static int list_replace_refs(const char *pattern, const char *format)
 {
 	struct show_data data;
 
+	data.repo = the_repository;
 	if (!pattern)
 		pattern = "*";
 	data.pattern = pattern;
@@ -99,7 +101,8 @@ static int list_replace_refs(const char *pattern, const char *format)
 			       "valid formats are 'short', 'medium' and 'long'"),
 			     format);
 
-	for_each_replace_ref(the_repository, show_reference, (void *)&data);
+	refs_for_each_replace_ref(get_main_ref_store(the_repository),
+				  show_reference, (void *)&data);
 
 	return 0;
 }

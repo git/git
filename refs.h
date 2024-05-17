@@ -299,16 +299,6 @@ typedef int each_ref_fn(const char *refname,
 			const struct object_id *oid, int flags, void *cb_data);
 
 /*
- * The same as each_ref_fn, but also with a repository argument that
- * contains the repository associated with the callback.
- */
-typedef int each_repo_ref_fn(struct repository *r,
-			     const char *refname,
-			     const struct object_id *oid,
-			     int flags,
-			     void *cb_data);
-
-/*
  * The following functions invoke the specified callback function for
  * each reference indicated.  If the function ever returns a nonzero
  * value, stop the iteration and return that value.  Please note that
@@ -329,6 +319,8 @@ int refs_for_each_branch_ref(struct ref_store *refs,
 			     each_ref_fn fn, void *cb_data);
 int refs_for_each_remote_ref(struct ref_store *refs,
 			     each_ref_fn fn, void *cb_data);
+int refs_for_each_replace_ref(struct ref_store *refs,
+			      each_ref_fn fn, void *cb_data);
 
 /*
  * references matching any pattern in "exclude_patterns" are omitted from the
@@ -352,11 +344,6 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *refs,
 				      const char **patterns,
 				      const char **exclude_patterns,
 				      each_ref_fn fn, void *cb_data);
-
-/**
- * iterate refs from the respective area.
- */
-int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data);
 
 /* iterates all refs that match the specified glob pattern. */
 int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,

@@ -503,9 +503,8 @@ extern struct ref_iterator *current_ref_iter;
  * adapter between the callback style of reference iteration and the
  * iterator style.
  */
-int do_for_each_repo_ref_iterator(struct repository *r,
-				  struct ref_iterator *iter,
-				  each_repo_ref_fn fn, void *cb_data);
+int do_for_each_ref_iterator(struct ref_iterator *iter,
+			     each_ref_fn fn, void *cb_data);
 
 struct ref_store;
 
