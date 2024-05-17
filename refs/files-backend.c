@@ -1822,7 +1822,7 @@ static int write_ref_to_lockfile(struct files_ref_store *refs,
 		}
 	}
 	fd = get_lock_file_fd(&lock->lk);
-	if (write_in_full(fd, oid_to_hex(oid), the_hash_algo->hexsz) < 0 ||
+	if (write_in_full(fd, oid_to_hex(oid), refs->base.repo->hash_algo->hexsz) < 0 ||
 	    write_in_full(fd, &term, 1) < 0 ||
 	    fsync_component(FSYNC_COMPONENT_REFERENCE, get_lock_file_fd(&lock->lk)) < 0 ||
 	    close_ref_gently(lock) < 0) {
@@ -3223,7 +3223,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 			rollback_lock_file(&reflog_lock);
 		} else if (update &&
 			   (write_in_full(get_lock_file_fd(&lock->lk),
-				oid_to_hex(&cb.last_kept_oid), the_hash_algo->hexsz) < 0 ||
+				oid_to_hex(&cb.last_kept_oid), refs->base.repo->hash_algo->hexsz) < 0 ||
 			    write_str_in_full(get_lock_file_fd(&lock->lk), "\n") < 0 ||
 			    close_ref_gently(lock) < 0)) {
 			status |= error("couldn't write %s",
