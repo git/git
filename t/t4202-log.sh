@@ -2022,7 +2022,7 @@ test_expect_success GPGSM 'log --graph --show-signature x509' '
 test_expect_success GPGSSH 'log --graph --show-signature ssh' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git log --graph --show-signature -n1 signed-ssh >actual &&
-	grep "${GOOD_SIGNATURE_TRUSTED}" actual
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure on expired signature key' '
