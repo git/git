@@ -1237,7 +1237,8 @@ static void prune_refs(struct files_ref_store *refs, struct ref_to_prune **refs_
 /*
  * Return true if the specified reference should be packed.
  */
-static int should_pack_ref(const char *refname,
+static int should_pack_ref(struct files_ref_store *refs,
+			   const char *refname,
 			   const struct object_id *oid, unsigned int ref_flags,
 			   struct pack_refs_opts *opts)
 {
@@ -1253,7 +1254,7 @@ static int should_pack_ref(const char *refname,
 		return 0;
 
 	/* Do not pack broken refs: */
-	if (!ref_resolves_to_object(refname, the_repository, oid, ref_flags))
+	if (!ref_resolves_to_object(refname, refs->base.repo, oid, ref_flags))
 		return 0;
 
 	if (ref_excluded(opts->exclusions, refname))
@@ -1285,14 +1286,14 @@ static int files_pack_refs(struct ref_store *ref_store,
 	packed_refs_lock(refs->packed_ref_store, LOCK_DIE_ON_ERROR, &err);
 
 	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, 0), NULL,
-					the_repository, 0);
+					refs->base.repo, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		/*
 		 * If the loose reference can be packed, add an entry
 		 * in the packed ref cache. If the reference should be
 		 * pruned, also add it to refs_to_prune.
 		 */
-		if (!should_pack_ref(iter->refname, iter->oid, iter->flags, opts))
+		if (!should_pack_ref(refs, iter->refname, iter->oid, iter->flags, opts))
 			continue;
 
 		/*
@@ -1389,7 +1390,8 @@ static int rename_tmp_log(struct files_ref_store *refs, const char *newrefname)
 	return ret;
 }
 
-static int write_ref_to_lockfile(struct ref_lock *lock,
+static int write_ref_to_lockfile(struct files_ref_store *refs,
+				 struct ref_lock *lock,
 				 const struct object_id *oid,
 				 int skip_oid_verification, struct strbuf *err);
 static int commit_ref_update(struct files_ref_store *refs,
@@ -1537,7 +1539,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	}
 	oidcpy(&lock->old_oid, &orig_oid);
 
-	if (write_ref_to_lockfile(lock, &orig_oid, 0, &err) ||
+	if (write_ref_to_lockfile(refs, lock, &orig_oid, 0, &err) ||
 	    commit_ref_update(refs, lock, &orig_oid, logmsg, &err)) {
 		error("unable to write current sha1 into %s: %s", newrefname, err.buf);
 		strbuf_release(&err);
@@ -1557,7 +1559,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
 	flag = log_all_ref_updates;
 	log_all_ref_updates = LOG_REFS_NONE;
-	if (write_ref_to_lockfile(lock, &orig_oid, 0, &err) ||
+	if (write_ref_to_lockfile(refs, lock, &orig_oid, 0, &err) ||
 	    commit_ref_update(refs, lock, &orig_oid, NULL, &err)) {
 		error("unable to write current sha1 into %s: %s", oldrefname, err.buf);
 		strbuf_release(&err);
@@ -1791,7 +1793,8 @@ static int files_log_ref_write(struct files_ref_store *refs,
  * Write oid into the open lockfile, then close the lockfile. On
  * errors, rollback the lockfile, fill in *err and return -1.
  */
-static int write_ref_to_lockfile(struct ref_lock *lock,
+static int write_ref_to_lockfile(struct files_ref_store *refs,
+				 struct ref_lock *lock,
 				 const struct object_id *oid,
 				 int skip_oid_verification, struct strbuf *err)
 {
@@ -1800,7 +1803,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 	int fd;
 
 	if (!skip_oid_verification) {
-		o = parse_object(the_repository, oid);
+		o = parse_object(refs->base.repo, oid);
 		if (!o) {
 			strbuf_addf(
 				err,
@@ -2571,7 +2574,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * value, so we don't need to write it.
 			 */
 		} else if (write_ref_to_lockfile(
-				   lock, &update->new_oid,
+				   refs, lock, &update->new_oid,
 				   update->flags & REF_SKIP_OID_VERIFICATION,
 				   err)) {
 			char *write_err = strbuf_detach(err, NULL);
