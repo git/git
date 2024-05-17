@@ -6,7 +6,7 @@
 #include "advice.h"
 #include "config.h"
 #include "environment.h"
-#include "hashmap.h"
+#include "strmap.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -1960,66 +1960,27 @@ int resolve_gitlink_ref(const char *submodule, const char *refname,
 	return 0;
 }
 
-struct ref_store_hash_entry
-{
-	struct hashmap_entry ent;
+/* A strmap of ref_stores, stored by submodule name: */
+static struct strmap submodule_ref_stores;
 
-	struct ref_store *refs;
-
-	/* NUL-terminated identifier of the ref store: */
-	char name[FLEX_ARRAY];
-};
-
-static int ref_store_hash_cmp(const void *cmp_data UNUSED,
-			      const struct hashmap_entry *eptr,
-			      const struct hashmap_entry *entry_or_key,
-			      const void *keydata)
-{
-	const struct ref_store_hash_entry *e1, *e2;
-	const char *name;
-
-	e1 = container_of(eptr, const struct ref_store_hash_entry, ent);
-	e2 = container_of(entry_or_key, const struct ref_store_hash_entry, ent);
-	name = keydata ? keydata : e2->name;
-
-	return strcmp(e1->name, name);
-}
-
-static struct ref_store_hash_entry *alloc_ref_store_hash_entry(
-		const char *name, struct ref_store *refs)
-{
-	struct ref_store_hash_entry *entry;
-
-	FLEX_ALLOC_STR(entry, name, name);
-	hashmap_entry_init(&entry->ent, strhash(name));
-	entry->refs = refs;
-	return entry;
-}
-
-/* A hashmap of ref_stores, stored by submodule name: */
-static struct hashmap submodule_ref_stores;
-
-/* A hashmap of ref_stores, stored by worktree id: */
-static struct hashmap worktree_ref_stores;
+/* A strmap of ref_stores, stored by worktree id: */
+static struct strmap worktree_ref_stores;
 
 /*
  * Look up a ref store by name. If that ref_store hasn't been
  * registered yet, return NULL.
  */
-static struct ref_store *lookup_ref_store_map(struct hashmap *map,
+static struct ref_store *lookup_ref_store_map(struct strmap *map,
 					      const char *name)
 {
-	struct ref_store_hash_entry *entry;
-	unsigned int hash;
+	struct strmap_entry *entry;
 
-	if (!map->tablesize)
+	if (!map->map.tablesize)
 		/* It's initialized on demand in register_ref_store(). */
 		return NULL;
 
-	hash = strhash(name);
-	entry = hashmap_get_entry_from_hash(map, hash, name,
-					struct ref_store_hash_entry, ent);
-	return entry ? entry->refs : NULL;
+	entry = strmap_get_entry(map, name);
+	return entry ? entry->value : NULL;
 }
 
 /*
@@ -2064,18 +2025,14 @@ struct ref_store *get_main_ref_store(struct repository *r)
  * Associate a ref store with a name. It is a fatal error to call this
  * function twice for the same name.
  */
-static void register_ref_store_map(struct hashmap *map,
+static void register_ref_store_map(struct strmap *map,
 				   const char *type,
 				   struct ref_store *refs,
 				   const char *name)
 {
-	struct ref_store_hash_entry *entry;
-
-	if (!map->tablesize)
-		hashmap_init(map, ref_store_hash_cmp, NULL, 0);
-
-	entry = alloc_ref_store_hash_entry(name, refs);
-	if (hashmap_put(map, &entry->ent))
+	if (!map->map.tablesize)
+		strmap_init(map);
+	if (strmap_put(map, name, refs))
 		BUG("%s ref_store '%s' initialized twice", type, name);
 }
 
