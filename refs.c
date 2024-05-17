@@ -775,11 +775,6 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
 	return logs_found;
 }
 
-int dwim_log(const char *str, int len, struct object_id *oid, char **log)
-{
-	return repo_dwim_log(the_repository, str, len, oid, log);
-}
-
 int is_per_worktree_ref(const char *refname)
 {
 	return starts_with(refname, "refs/worktree/") ||
