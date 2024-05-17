@@ -200,6 +200,11 @@ static int release_snapshot(struct snapshot *snapshot)
 	}
 }
 
+static size_t snapshot_hexsz(const struct snapshot *snapshot)
+{
+	return snapshot->refs->base.repo->hash_algo->hexsz;
+}
+
 struct ref_store *packed_ref_store_init(struct repository *repo,
 					const char *gitdir,
 					unsigned int store_flags)
@@ -289,11 +294,13 @@ struct snapshot_record {
 	size_t len;
 };
 
-static int cmp_packed_ref_records(const void *v1, const void *v2)
+static int cmp_packed_ref_records(const void *v1, const void *v2,
+				  void *cb_data)
 {
+	const struct snapshot *snapshot = cb_data;
 	const struct snapshot_record *e1 = v1, *e2 = v2;
-	const char *r1 = e1->start + the_hash_algo->hexsz + 1;
-	const char *r2 = e2->start + the_hash_algo->hexsz + 1;
+	const char *r1 = e1->start + snapshot_hexsz(snapshot) + 1;
+	const char *r2 = e2->start + snapshot_hexsz(snapshot) + 1;
 
 	while (1) {
 		if (*r1 == '\n')
@@ -314,9 +321,9 @@ static int cmp_packed_ref_records(const void *v1, const void *v2)
  * refname.
  */
 static int cmp_record_to_refname(const char *rec, const char *refname,
-				 int start)
+				 int start, const struct snapshot *snapshot)
 {
-	const char *r1 = rec + the_hash_algo->hexsz + 1;
+	const char *r1 = rec + snapshot_hexsz(snapshot) + 1;
 	const char *r2 = refname;
 
 	while (1) {
@@ -363,7 +370,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		if (!eol)
 			/* The safety check should prevent this. */
 			BUG("unterminated line found in packed-refs");
-		if (eol - pos < the_hash_algo->hexsz + 2)
+		if (eol - pos < snapshot_hexsz(snapshot) + 2)
 			die_invalid_line(snapshot->refs->path,
 					 pos, eof - pos);
 		eol++;
@@ -389,7 +396,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		if (sorted &&
 		    nr > 1 &&
 		    cmp_packed_ref_records(&records[nr - 2],
-					   &records[nr - 1]) >= 0)
+					   &records[nr - 1], snapshot) >= 0)
 			sorted = 0;
 
 		pos = eol;
@@ -399,7 +406,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		goto cleanup;
 
 	/* We need to sort the memory. First we sort the records array: */
-	QSORT(records, nr, cmp_packed_ref_records);
+	QSORT_S(records, nr, cmp_packed_ref_records, snapshot);
 
 	/*
 	 * Allocate a new chunk of memory, and copy the old memory to
@@ -475,7 +482,8 @@ static void verify_buffer_safe(struct snapshot *snapshot)
 		return;
 
 	last_line = find_start_of_record(start, eof - 1);
-	if (*(eof - 1) != '\n' || eof - last_line < the_hash_algo->hexsz + 2)
+	if (*(eof - 1) != '\n' ||
+	    eof - last_line < snapshot_hexsz(snapshot) + 2)
 		die_invalid_line(snapshot->refs->path,
 				 last_line, eof - last_line);
 }
@@ -570,7 +578,7 @@ static const char *find_reference_location_1(struct snapshot *snapshot,
 
 		mid = lo + (hi - lo) / 2;
 		rec = find_start_of_record(lo, mid);
-		cmp = cmp_record_to_refname(rec, refname, start);
+		cmp = cmp_record_to_refname(rec, refname, start, snapshot);
 		if (cmp < 0) {
 			lo = find_end_of_record(mid, hi);
 		} else if (cmp > 0) {
@@ -867,7 +875,7 @@ static int next_record(struct packed_ref_iterator *iter)
 	iter->base.flags = REF_ISPACKED;
 	p = iter->pos;
 
-	if (iter->eof - p < the_hash_algo->hexsz + 2 ||
+	if (iter->eof - p < snapshot_hexsz(iter->snapshot) + 2 ||
 	    parse_oid_hex(p, &iter->oid, &p) ||
 	    !isspace(*p++))
 		die_invalid_line(iter->snapshot->refs->path,
@@ -897,7 +905,7 @@ static int next_record(struct packed_ref_iterator *iter)
 
 	if (iter->pos < iter->eof && *iter->pos == '^') {
 		p = iter->pos + 1;
-		if (iter->eof - p < the_hash_algo->hexsz + 1 ||
+		if (iter->eof - p < snapshot_hexsz(iter->snapshot) + 1 ||
 		    parse_oid_hex(p, &iter->peeled, &p) ||
 		    *p++ != '\n')
 			die_invalid_line(iter->snapshot->refs->path,
