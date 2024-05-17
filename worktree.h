@@ -6,6 +6,8 @@
 struct strbuf;
 
 struct worktree {
+	/* The repository this worktree belongs to. */
+	struct repository *repo;
 	char *path;
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */

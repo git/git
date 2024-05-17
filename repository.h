@@ -117,6 +117,12 @@ struct repository {
 	struct strmap submodule_ref_stores;
 
 	/*
+	 * A strmap of ref_stores, stored by worktree id, accessible via
+	 * `get_worktree_ref_store()`.
+	 */
+	struct strmap worktree_ref_stores;
+
+	/*
 	 * Contains path to often used file names.
 	 */
 	struct repo_path_cache cached_paths;

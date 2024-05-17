@@ -1960,9 +1960,6 @@ int repo_resolve_gitlink_ref(struct repository *r,
 	return 0;
 }
 
-/* A strmap of ref_stores, stored by worktree id: */
-static struct strmap worktree_ref_stores;
-
 /*
  * Look up a ref store by name. If that ref_store hasn't been
  * registered yet, return NULL.
@@ -2091,25 +2088,29 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 	const char *id;
 
 	if (wt->is_current)
-		return get_main_ref_store(the_repository);
+		return get_main_ref_store(wt->repo);
 
 	id = wt->id ? wt->id : "/";
-	refs = lookup_ref_store_map(&worktree_ref_stores, id);
+	refs = lookup_ref_store_map(&wt->repo->worktree_ref_stores, id);
 	if (refs)
 		return refs;
 
-	if (wt->id)
-		refs = ref_store_init(the_repository,
-				      git_common_path("worktrees/%s", wt->id),
+	if (wt->id) {
+		struct strbuf common_path = STRBUF_INIT;
+		strbuf_git_common_path(&common_path, wt->repo,
+				      "worktrees/%s", wt->id);
+		refs = ref_store_init(wt->repo, common_path.buf,
 				      REF_STORE_ALL_CAPS);
-	else
-		refs = ref_store_init(the_repository,
-				      get_git_common_dir(),
+		strbuf_release(&common_path);
+	} else {
+		refs = ref_store_init(wt->repo, wt->repo->commondir,
 				      REF_STORE_ALL_CAPS);
+	}
 
 	if (refs)
-		register_ref_store_map(&worktree_ref_stores, "worktree",
-				       refs, id);
+		register_ref_store_map(&wt->repo->worktree_ref_stores,
+				       "worktree", refs, id);
+
 	return refs;
 }
 
