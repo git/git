@@ -288,7 +288,8 @@ enum peel_status {
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
  * and leave oid unchanged.
  */
-enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
+enum peel_status peel_object(struct repository *r,
+			     const struct object_id *name, struct object_id *oid);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);

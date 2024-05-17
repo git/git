@@ -110,7 +110,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 
 	if (data->peel && oid) {
 		struct object_id peeled;
-		if (!peel_iterated_oid(oid, &peeled))
+		if (!peel_iterated_oid(the_repository, oid, &peeled))
 			strbuf_addf(&data->buf, " peeled:%s", oid_to_hex(&peeled));
 	}
 

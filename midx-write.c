@@ -664,7 +664,7 @@ static int add_ref_to_pending(const char *refname,
 		return 0;
 	}
 
-	if (!peel_iterated_oid(oid, &peeled))
+	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
 
 	object = parse_object_or_die(oid, refname);

@@ -127,13 +127,14 @@ void ref_store_release(struct ref_store *ref_store);
  * Return the peeled value of the oid currently being iterated via
  * for_each_ref(), etc. This is equivalent to calling:
  *
- *   peel_object(oid, &peeled);
+ *   peel_object(r, oid, &peeled);
  *
  * with the "oid" value given to the each_ref_fn callback, except
  * that some ref storage may be able to answer the query without
  * actually loading the object in memory.
  */
-int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
+int peel_iterated_oid(struct repository *r,
+		      const struct object_id *base, struct object_id *peeled);
 
 /**
  * Resolve refname in the nested "gitlink" repository in the specified

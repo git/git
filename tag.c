@@ -91,10 +91,10 @@ struct object *deref_tag(struct repository *r, struct object *o, const char *war
 	return o;
 }
 
-struct object *deref_tag_noverify(struct object *o)
+struct object *deref_tag_noverify(struct repository *r, struct object *o)
 {
 	while (o && o->type == OBJ_TAG) {
-		o = parse_object(the_repository, &o->oid);
+		o = parse_object(r, &o->oid);
 		if (o && o->type == OBJ_TAG && ((struct tag *)o)->tagged)
 			o = ((struct tag *)o)->tagged;
 		else
