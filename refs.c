@@ -447,6 +447,7 @@ enum peel_status peel_object(const struct object_id *name, struct object_id *oid
 }
 
 struct warn_if_dangling_data {
+	struct ref_store *refs;
 	FILE *fp;
 	const char *refname;
 	const struct string_list *refnames;
@@ -463,8 +464,7 @@ static int warn_if_dangling_symref(const char *refname,
 	if (!(flags & REF_ISSYMREF))
 		return 0;
 
-	resolves_to = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					      refname, 0, NULL, NULL);
+	resolves_to = refs_resolve_ref_unsafe(d->refs, refname, 0, NULL, NULL);
 	if (!resolves_to
 	    || (d->refname
 		? strcmp(resolves_to, d->refname)
@@ -477,28 +477,28 @@ static int warn_if_dangling_symref(const char *refname,
 	return 0;
 }
 
-void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname)
+void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
+			       const char *msg_fmt, const char *refname)
 {
-	struct warn_if_dangling_data data;
-
-	data.fp = fp;
-	data.refname = refname;
-	data.refnames = NULL;
-	data.msg_fmt = msg_fmt;
-	refs_for_each_rawref(get_main_ref_store(the_repository),
-			     warn_if_dangling_symref, &data);
+	struct warn_if_dangling_data data = {
+		.refs = refs,
+		.fp = fp,
+		.refname = refname,
+		.msg_fmt = msg_fmt,
+	};
+	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
 }
 
-void warn_dangling_symrefs(FILE *fp, const char *msg_fmt, const struct string_list *refnames)
+void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
+				const char *msg_fmt, const struct string_list *refnames)
 {
-	struct warn_if_dangling_data data;
-
-	data.fp = fp;
-	data.refname = NULL;
-	data.refnames = refnames;
-	data.msg_fmt = msg_fmt;
-	refs_for_each_rawref(get_main_ref_store(the_repository),
-			     warn_if_dangling_symref, &data);
+	struct warn_if_dangling_data data = {
+		.refs = refs,
+		.fp = fp,
+		.refnames = refnames,
+		.msg_fmt = msg_fmt,
+	};
+	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
 }
 
 int refs_for_each_tag_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)

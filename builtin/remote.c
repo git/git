@@ -1477,7 +1477,8 @@ static int prune_remote(const char *remote, int dry_run)
 			       abbrev_ref(refname, "refs/remotes/"));
 	}
 
-	warn_dangling_symrefs(stdout, dangling_msg, &refs_to_prune);
+	refs_warn_dangling_symrefs(get_main_ref_store(the_repository),
+				   stdout, dangling_msg, &refs_to_prune);
 
 	string_list_clear(&refs_to_prune, 0);
 	free_remote_ref_states(&states);

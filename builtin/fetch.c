@@ -1412,7 +1412,8 @@ static int prune_refs(struct display_state *display_state,
 					   _("(none)"), ref->name,
 					   &ref->new_oid, &ref->old_oid,
 					   summary_width);
-			warn_dangling_symref(stderr, dangling_msg, ref->name);
+			refs_warn_dangling_symref(get_main_ref_store(the_repository),
+						  stderr, dangling_msg, ref->name);
 		}
 	}
 

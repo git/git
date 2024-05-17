@@ -388,9 +388,10 @@ static inline const char *has_glob_specials(const char *pattern)
 	return strpbrk(pattern, "?*[");
 }
 
-void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
-void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
-			   const struct string_list *refnames);
+void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
+			       const char *msg_fmt, const char *refname);
+void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
+				const char *msg_fmt, const struct string_list *refnames);
 
 /*
  * Flags for controlling behaviour of pack_refs()
