@@ -37,7 +37,7 @@ test_expect_success 'hash-object outside repository (uses SHA-1)' '
 	test_cmp hash.expect hash.actual
 '
 
-test_expect_failure 'apply a patch outside repository' '
+test_expect_success 'apply a patch outside repository' '
 	(
 		cd non-repo &&
 		cp ../nums.old nums &&
