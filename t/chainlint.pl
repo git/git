@@ -715,7 +715,7 @@ sub ncores {
 	if (open my $fh, '<', '/proc/cpuinfo') {
 		my $cpuinfo = do { local $/; <$fh> };
 		close($fh);
-		my @matches = ($cpuinfo =~ /^processor[\s\d]*:/mg);
+		my @matches = ($cpuinfo =~ /^(processor|CPU)[\s\d]*:/mg);
 		return @matches ? scalar(@matches) : 1;
 	}
 	# macOS & BSD
