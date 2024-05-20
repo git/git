@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2024, #07; Fri, 17)
-X-master-at: d8ab1d464d07baa30e5a180eb33b3f9aa5c93adf
-X-next-at: de53f37879660c0da62a72472ba37f8680a3587c
+Subject: What's cooking in git.git (May 2024, #08; Mon, 20)
+X-master-at: 4365c6fcf96caac73dcc412aa25db34cf8df48d5
+X-next-at: 888b28324335471fe2b21105063128ca8fa54801
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2024, #07; Fri, 17)
+What's cooking in git.git (May 2024, #08; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,159 +46,74 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ds/scalar-reconfigure-all-fix (2024-05-07) 1 commit
-  (merged to 'next' on 2024-05-08 at eca398f4a5)
- + scalar: avoid segfault in reconfigure --all
-
- Scalar fix.
- source: <pull.1724.v3.git.1715126749391.gitgitgadget@gmail.com>
-
-
-* jl/git-no-advice (2024-05-07) 4 commits
-  (merged to 'next' on 2024-05-08 at c9e7e0866e)
- + t0018: two small fixes
-  (merged to 'next' on 2024-05-06 at 95cc03ef96)
- + advice: add --no-advice global option
- + doc: add spacing around paginate options
- + doc: clean up usage documentation for --no-* opts
-
- A new global "--no-advice" option can be used to disable all advice
- messages, which is meant to be used only in scripts.
- source: <20240503071706.78109-1-james@jamesliu.io>
-
-
-* jp/tag-trailer (2024-05-07) 3 commits
-  (merged to 'next' on 2024-05-07 at 646013793d)
- + builtin/tag: add --trailer option
- + builtin/commit: refactor --trailer logic
- + builtin/commit: use ARGV macro to collect trailers
-
- "git tag" learned the "--trailer" option to futz with the trailers
- in the same way as "git commit" does.
- source: <pull.1723.v5.git.1714934950.gitgitgadget@gmail.com>
-
-
-* js/unit-test-suite-runner (2024-05-06) 9 commits
-  (merged to 'next' on 2024-05-07 at 3b376223e3)
- + cmake: let `test-tool` run the unit tests, too
- + ci: use test-tool as unit test runner on Windows
- + t/Makefile: run unit tests alongside shell tests
- + unit tests: add rule for running with test-tool
- + test-tool run-command testsuite: support unit tests
- + test-tool run-command testsuite: remove hardcoded filter
- + test-tool run-command testsuite: get shell from env
- + t0080: turn t-basic unit test into a helper
- + Merge branch 'jk/unit-tests-buildfix' into js/unit-test-suite-runner
-
- The "test-tool" has been taught to run testsuite tests in parallel,
- bypassing the need to use the "prove" tool.
- source: <cover.1715024899.git.steadmon@google.com>
- source: <pull.1666.git.1708038924522.gitgitgadget@gmail.com>
-
-
-* jt/port-ci-whitespace-check-to-gitlab (2024-05-03) 5 commits
-  (merged to 'next' on 2024-05-08 at 774a29dde4)
- + gitlab-ci: add whitespace error check
- + ci: make the whitespace report optional
- + ci: separate whitespace check script
- + github-ci: fix link to whitespace error
- + ci: pre-collapse GitLab CI sections
-
- The "whitespace check" task that was enabled for GitHub Actions CI
- has been ported to GitLab CI.
- source: <20240503172110.181326-1-jltobler@gmail.com>
-
-
-* ow/refspec-glossary-update (2024-05-06) 1 commit
-  (merged to 'next' on 2024-05-07 at 7d55ebb0c8)
- + Documentation: Mention that refspecs are explained elsewhere
-
- Doc update.
- source: <20240506182317.13477-1-oystwa@gmail.com>
-
-
-* ps/config-subcommands (2024-05-06) 14 commits
-  (merged to 'next' on 2024-05-07 at f10c689a30)
- + builtin/config: display subcommand help
- + builtin/config: introduce "edit" subcommand
- + builtin/config: introduce "remove-section" subcommand
- + builtin/config: introduce "rename-section" subcommand
- + builtin/config: introduce "unset" subcommand
- + builtin/config: introduce "set" subcommand
- + builtin/config: introduce "get" subcommand
- + builtin/config: introduce "list" subcommand
- + builtin/config: pull out function to handle `--null`
- + builtin/config: pull out function to handle config location
- + builtin/config: use `OPT_CMDMODE()` to specify modes
- + builtin/config: move "fixed-value" option to correct group
- + builtin/config: move option array around
- + config: clarify memory ownership when preparing comment strings
- (this branch is used by ps/builtin-config-cleanup.)
-
- The operation mode options (like "--get") the "git config" command
- uses have been deprecated and replaced with subcommands (like "git
- config get").
- source: <cover.1714982328.git.ps@pks.im>
-
-
-* ps/refs-without-the-repository (2024-05-07) 5 commits
-  (merged to 'next' on 2024-05-08 at 2479b9de46)
- + refs: remove functions without ref store
- + cocci: apply rules to rewrite callers of "refs" interfaces
- + cocci: introduce rules to transform "refs" to pass ref store
- + refs: add `exclude_patterns` parameter to `for_each_fullref_in()`
- + refs: introduce missing functions that accept a `struct ref_store`
- (this branch is used by ps/refs-without-the-repository-updates.)
-
- The refs API lost functions that implicitly assumes to work on the
- primary ref_store by forcing the callers to pass a ref_store as an
- argument.
- source: <cover.1715065736.git.ps@pks.im>
-
-
-* rs/external-diff-with-exit-code (2024-05-06) 1 commit
-  (merged to 'next' on 2024-05-08 at ad5fee3cbf)
- + diff: report unmerged paths as changes in run_diff_cmd()
-
- The "--exit-code" option of "git diff" command learned to report
- unmerged paths as changes.
-
- [jc: the tip one was reverted out]
- source: <82561c70-ec33-41bf-b036-52310ffc1926@web.de>
-
-
-* vd/doc-merge-tree-x-option (2024-05-07) 1 commit
-  (merged to 'next' on 2024-05-08 at 42637b8bdf)
- + Documentation/git-merge-tree.txt: document -X
-
- Doc update.
- source: <pull.1728.git.1715117789985.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
+* es/chainlint-ncores-fix (2024-05-20) 3 commits
+ - chainlint.pl: latch CPU count directly reported by /proc/cpuinfo
+ - chainlint.pl: fix incorrect CPU count on Linux SPARC
+ - chainlint.pl: make CPU count computation more robust
+
+ The chainlint script (invoked during "make test") did nothing when
+ it failed to detect the number of available CPUs.  It now falls
+ back to 1 CPU to avoid the problem.
+
+ Will merge to 'next'.
+ source: <20240520190131.94904-1-ericsunshine@charter.net>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* jc/compat-regex-calloc-fix (2024-05-13) 1 commit
+  (merged to 'next' on 2024-05-13 at 077c4e1dcc)
+ + compat/regex: fix argument order to calloc(3)
+
+ Windows CI running in GitHub Actions started complaining about the
+ order of arguments given to calloc(); the imported regex code uses
+ the wrong order almost consistently, which has been corrected.
+ source: <xmqqbk5bim2n.fsf@gitster.g>
+
+
+* kn/ref-transaction-symref (2024-05-07) 8 commits
+  (merged to 'next' on 2024-05-11 at 0a7119f2a3)
+ + refs: remove `create_symref` and associated dead code
+ + refs: rename `refs_create_symref()` to `refs_update_symref()`
+ + refs: use transaction in `refs_create_symref()`
+ + refs: add support for transactional symref updates
+ + refs: move `original_update_refname` to 'refs.c'
+ + refs: support symrefs in 'reference-transaction' hook
+ + files-backend: extract out `create_symref_lock()`
+ + refs: accept symref values in `ref_transaction_update()`
+ (this branch is used by kn/update-ref-symref.)
+
+ Updates to symbolic refs can now be made as a part of ref
+ transaction.
+ source: <20240507125859.132116-1-knayak@gitlab.com>
+
+--------------------------------------------------
+[Cooking]
+
 * tb/pack-bitmap-write-cleanups (2024-05-15) 6 commits
- - pack-bitmap: introduce `bitmap_writer_free()`
- - pack-bitmap-write.c: avoid uninitialized 'write_as' field
- - pack-bitmap: drop unused `max_bitmaps` parameter
- - pack-bitmap: avoid use of static `bitmap_writer`
- - pack-bitmap-write.c: move commit_positions into commit_pos fields
- - object.h: add flags allocated by pack-bitmap.h
+  (merged to 'next' on 2024-05-20 at 585e7bde21)
+ + pack-bitmap: introduce `bitmap_writer_free()`
+ + pack-bitmap-write.c: avoid uninitialized 'write_as' field
+ + pack-bitmap: drop unused `max_bitmaps` parameter
+ + pack-bitmap: avoid use of static `bitmap_writer`
+ + pack-bitmap-write.c: move commit_positions into commit_pos fields
+ + object.h: add flags allocated by pack-bitmap.h
 
  The pack bitmap code saw some clean-up to prepare for a follow-up topic.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1715716605.git.me@ttaylorr.com>
 
 
 * jc/t0017-clarify-bogus-expectation (2024-05-16) 1 commit
- - t0017: clarify dubious test set-up
+  (merged to 'next' on 2024-05-20 at c64016ec43)
+ + t0017: clarify dubious test set-up
 
  Test clean-up.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqqcypmx44l.fsf@gitster.g>
 
 
@@ -222,7 +137,6 @@ Release tarballs are available at:
  - update-ref: add support for 'symref-verify' command
  - refs: create and use `ref_update_ref_must_exist()`
  - Merge branch 'kn/ref-transaction-symref' into kn/update-ref-symref
- (this branch uses kn/ref-transaction-symref.)
 
  "git update-ref --stdin" learned to handle transactional updates of
  symbolic-refs.
@@ -233,22 +147,24 @@ Release tarballs are available at:
 
 
 * mt/t0211-typofix (2024-05-16) 1 commit
- - t/t0211-trace2-perf.sh: fix typo patern -> pattern
+  (merged to 'next' on 2024-05-20 at f4fba3c7d2)
+ + t/t0211-trace2-perf.sh: fix typo patern -> pattern
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <ZkW5ggOVlglfi64u@telcontar>
 
 
 * ps/complete-config-w-subcommands (2024-05-17) 1 commit
- - completion: adapt git-config(1) to complete subcommands
+  (merged to 'next' on 2024-05-20 at 14453d34fc)
+ + completion: adapt git-config(1) to complete subcommands
 
  Update the command line completion script (in contrib/) to adjust
  to the recent update to "git config" that adopted subcommand based
  UI.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <8d43dee33289969a5afbbf7635ac40b7312d8e19.1715926344.git.ps@pks.im>
 
 
@@ -280,23 +196,25 @@ Release tarballs are available at:
 
 
 * jc/doc-diff-name-only (2024-05-17) 1 commit
- - diff: document what --name-only shows
+  (merged to 'next' on 2024-05-20 at 13b6f9350d)
+ + diff: document what --name-only shows
 
  The documentation for "git diff --name-only" has been clarified
  that it is about showing the names in the post-image tree.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqeda0jr7d.fsf@gitster.g>
 
 
 * kn/patch-iteration-doc (2024-05-17) 2 commits
- - SubmittingPatches: add section for iterating patches
- - Merge branch 'jc/patch-flow-updates' into kn/patch-iteration-doc
+  (merged to 'next' on 2024-05-20 at e0ee0051a9)
+ + SubmittingPatches: add section for iterating patches
+ + Merge branch 'jc/patch-flow-updates' into kn/patch-iteration-doc
  (this branch uses jc/patch-flow-updates.)
 
  Doc updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240517122724.270706-1-knayak@gitlab.com>
 
 
@@ -337,20 +255,6 @@ Release tarballs are available at:
  The project decision making policy has been documented.
  source: <10f217915600eda3ebec886e4f020f87c22e318a.1715978031.git.steadmon@google.com>
 
---------------------------------------------------
-[Cooking]
-
-* jc/compat-regex-calloc-fix (2024-05-13) 1 commit
-  (merged to 'next' on 2024-05-13 at 077c4e1dcc)
- + compat/regex: fix argument order to calloc(3)
-
- Windows CI running in GitHub Actions started complaining about the
- order of arguments given to calloc(); the imported regex code uses
- the wrong order almost consistently, which has been corrected.
-
- Will merge to 'master'.
- source: <xmqqbk5bim2n.fsf@gitster.g>
-
 
 * jc/undecided-is-not-necessarily-sha1-fix (2024-05-16) 6 commits
  - apply: fix uninitialized hash function
@@ -367,7 +271,8 @@ Release tarballs are available at:
  the "default is sha-1" behaviour as an escape hatch, and start
  fixing these breakages.
 
- Comments?
+ Broken.
+ The hash-object test does not seem to work with SHA-256 repositories.
  source: <20240513224127.2042052-1-gitster@pobox.com>
 
 
@@ -392,43 +297,45 @@ Release tarballs are available at:
 
 
 * ps/builtin-config-cleanup (2024-05-15) 22 commits
- - builtin/config: pass data between callbacks via local variables
- - builtin/config: convert flags to a local variable
- - builtin/config: track "fixed value" option via flags only
- - builtin/config: convert `key` to a local variable
- - builtin/config: convert `key_regexp` to a local variable
- - builtin/config: convert `regexp` to a local variable
- - builtin/config: convert `value_pattern` to a local variable
- - builtin/config: convert `do_not_match` to a local variable
- - builtin/config: move `respect_includes_opt` into location options
- - builtin/config: move default value into display options
- - builtin/config: move type options into display options
- - builtin/config: move display options into local variables
- - builtin/config: move location options into local variables
- - builtin/config: refactor functions to have common exit paths
- - config: make the config source const
- - builtin/config: check for writeability after source is set up
- - builtin/config: move actions into `cmd_config_actions()`
- - builtin/config: move legacy options into `cmd_config()`
- - builtin/config: move subcommand options into `cmd_config()`
- - builtin/config: move legacy mode into its own function
- - builtin/config: stop printing full usage on misuse
- - Merge branch 'ps/config-subcommands' into ps/builtin-config-cleanup
+  (merged to 'next' on 2024-05-20 at b6f728f1f5)
+ + builtin/config: pass data between callbacks via local variables
+ + builtin/config: convert flags to a local variable
+ + builtin/config: track "fixed value" option via flags only
+ + builtin/config: convert `key` to a local variable
+ + builtin/config: convert `key_regexp` to a local variable
+ + builtin/config: convert `regexp` to a local variable
+ + builtin/config: convert `value_pattern` to a local variable
+ + builtin/config: convert `do_not_match` to a local variable
+ + builtin/config: move `respect_includes_opt` into location options
+ + builtin/config: move default value into display options
+ + builtin/config: move type options into display options
+ + builtin/config: move display options into local variables
+ + builtin/config: move location options into local variables
+ + builtin/config: refactor functions to have common exit paths
+ + config: make the config source const
+ + builtin/config: check for writeability after source is set up
+ + builtin/config: move actions into `cmd_config_actions()`
+ + builtin/config: move legacy options into `cmd_config()`
+ + builtin/config: move subcommand options into `cmd_config()`
+ + builtin/config: move legacy mode into its own function
+ + builtin/config: stop printing full usage on misuse
+ + Merge branch 'ps/config-subcommands' into ps/builtin-config-cleanup
 
  Code clean-up to reduce inter-function communication inside
  builtin/config.c done via the use of global variables.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1715755055.git.ps@pks.im>
 
 
 * jc/doc-manpages-l10n (2024-05-17) 1 commit
- - SubmittingPatches: advertise git-manpages-l10n project a bit
+  (merged to 'next' on 2024-05-20 at fb103ed70f)
+ + SubmittingPatches: advertise git-manpages-l10n project a bit
 
  The SubmittingPatches document now refers folks to manpages
  translation project.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqv83muc12.fsf@gitster.g>
 
 
@@ -460,7 +367,8 @@ Release tarballs are available at:
  We forgot to normalize the result of getcwd() to NFC on macOS where
  all other paths are normalized, which has been corrected.
 
- Will merge to 'master'.
+ On hold.
+ cf. <20240520160601.GA29154@tb-raspi4>
  source: <20240509161110.12121-1-tboegi@web.de>
 
 
@@ -498,25 +406,6 @@ Release tarballs are available at:
  source: <xmqqbk5i3ncw.fsf_-_@gitster.g>
 
 
-* kn/ref-transaction-symref (2024-05-07) 8 commits
-  (merged to 'next' on 2024-05-11 at 0a7119f2a3)
- + refs: remove `create_symref` and associated dead code
- + refs: rename `refs_create_symref()` to `refs_update_symref()`
- + refs: use transaction in `refs_create_symref()`
- + refs: add support for transactional symref updates
- + refs: move `original_update_refname` to 'refs.c'
- + refs: support symrefs in 'reference-transaction' hook
- + files-backend: extract out `create_symref_lock()`
- + refs: accept symref values in `ref_transaction_update()`
- (this branch is used by kn/update-ref-symref.)
-
- Updates to symbolic refs can now be made as a part of ref
- transaction.
-
- Will merge to 'master'.
- source: <20240507125859.132116-1-knayak@gitlab.com>
-
-
 * ps/reftable-write-options (2024-05-13) 11 commits
  - refs/reftable: allow configuring geometric factor
  - reftable: make the compaction factor configurable
@@ -538,21 +427,22 @@ Release tarballs are available at:
 
 
 * ps/pseudo-ref-terminology (2024-05-15) 10 commits
- - refs: refuse to write pseudorefs
- - ref-filter: properly distinuish pseudo and root refs
- - refs: pseudorefs are no refs
- - refs: classify HEAD as a root ref
- - refs: do not check ref existence in `is_root_ref()`
- - refs: rename `is_special_ref()` to `is_pseudo_ref()`
- - refs: rename `is_pseudoref()` to `is_root_ref()`
- - Documentation/glossary: define root refs as refs
- - Documentation/glossary: clarify limitations of pseudorefs
- - Documentation/glossary: redefine pseudorefs as special refs
+  (merged to 'next' on 2024-05-20 at fc0f1f2607)
+ + refs: refuse to write pseudorefs
+ + ref-filter: properly distinuish pseudo and root refs
+ + refs: pseudorefs are no refs
+ + refs: classify HEAD as a root ref
+ + refs: do not check ref existence in `is_root_ref()`
+ + refs: rename `is_special_ref()` to `is_pseudo_ref()`
+ + refs: rename `is_pseudoref()` to `is_root_ref()`
+ + Documentation/glossary: define root refs as refs
+ + Documentation/glossary: clarify limitations of pseudorefs
+ + Documentation/glossary: redefine pseudorefs as special refs
 
  Terminology to call various ref-like things are getting
  straightened out.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <vgzwb5xnlvz2gfiqamzrfcjs2xya3zhhoootyzopfpdrjapayq@wfsomyal4cf6>
  source: <cover.1715755591.git.ps@pks.im>
 
@@ -590,7 +480,7 @@ Release tarballs are available at:
  this will smoke out codepaths that rely on such an unwarranted
  assumptions.
 
- Will cook in 'next'.
+ Will cook in 'next', as it has known breakage.
  source: <cover.1715057362.git.ps@pks.im>
 
 
@@ -608,11 +498,12 @@ Release tarballs are available at:
 
 
 * ds/send-email-per-message-block (2024-04-10) 1 commit
- - send-email: move newline characters out of a few translatable strings
+  (merged to 'next' on 2024-05-20 at 189c49a1ca)
+ + send-email: move newline characters out of a few translatable strings
 
  Preliminary code clean-up for "git send-email".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  The topmost commit in the original series was dropped per author's request.
  cf. <a07d3807a24f6d68cb48ee48366ae25e@manjaro.org>
  source: <29ea3a9b07bf1aa17b5d6a1e41325379c494bcb2.1712732383.git.dsimic@manjaro.org>
