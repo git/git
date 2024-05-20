@@ -37,6 +37,9 @@ UI, Workflows & Features
  * A new global "--no-advice" option can be used to disable all advice
    messages, which is meant to be used only in scripts.
 
+ * Updates to symbolic refs can now be made as a part of ref
+   transaction.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -131,6 +134,11 @@ Fixes since v2.45
  * The "--exit-code" option of "git diff" command learned to work with
    the "--ext-diff" option.
    (merge 11be65cfa4 rs/external-diff-with-exit-code later to maint).
+
+ * Windows CI running in GitHub Actions started complaining about the
+   order of arguments given to calloc(); the imported regex code uses
+   the wrong order almost consistently, which has been corrected.
+   (merge f01301aabe jc/compat-regex-calloc-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 4cf6e7bf5e jt/doc-submitting-rerolled-series later to maint).
