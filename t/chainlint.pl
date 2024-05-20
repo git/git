@@ -707,11 +707,22 @@ sub fd_colors {
 
 sub ncores {
 	# Windows
-	return $ENV{NUMBER_OF_PROCESSORS} if exists($ENV{NUMBER_OF_PROCESSORS});
+	if (exists($ENV{NUMBER_OF_PROCESSORS})) {
+		my $ncpu = $ENV{NUMBER_OF_PROCESSORS};
+		return $ncpu > 0 ? $ncpu : 1;
+	}
 	# Linux / MSYS2 / Cygwin / WSL
-	do { local @ARGV='/proc/cpuinfo'; return scalar(grep(/^processor[\s\d]*:/, <>)); } if -r '/proc/cpuinfo';
+	if (open my $fh, '<', '/proc/cpuinfo') {
+		my $cpuinfo = do { local $/; <$fh> };
+		close($fh);
+		my @matches = ($cpuinfo =~ /^processor[\s\d]*:/mg);
+		return @matches ? scalar(@matches) : 1;
+	}
 	# macOS & BSD
-	return qx/sysctl -n hw.ncpu/ if $^O =~ /(?:^darwin$|bsd)/;
+	if ($^O =~ /(?:^darwin$|bsd)/) {
+		my $ncpu = qx/sysctl -n hw.ncpu/;
+		return $ncpu > 0 ? $ncpu : 1;
+	}
 	return 1;
 }
 
