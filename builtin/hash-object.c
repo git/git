@@ -123,6 +123,9 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	else
 		prefix = setup_git_directory_gently(&nongit);
 
+	if (nongit && !the_hash_algo)
+		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+
 	if (vpath && prefix) {
 		vpath_free = prefix_filename(prefix, vpath);
 		vpath = vpath_free;
