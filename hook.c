@@ -18,8 +18,10 @@ static int identical_to_template_hook(const char *name, const char *path)
 		found_template_hook = access(template_path.buf, X_OK) >= 0;
 	}
 #endif
-	if (!found_template_hook)
+	if (!found_template_hook) {
+		strbuf_release(&template_path);
 		return 0;
+	}
 
 	ret = do_files_match(template_path.buf, path);
 
