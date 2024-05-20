@@ -118,7 +118,7 @@ static int cmd_create_symref(struct ref_store *refs, const char **argv)
 	const char *target = notnull(*argv++, "target");
 	const char *logmsg = *argv++;
 
-	return refs_create_symref(refs, refname, target, logmsg);
+	return refs_update_symref(refs, refname, target, logmsg);
 }
 
 static struct flag_definition transaction_flags[] = {

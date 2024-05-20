@@ -72,7 +72,7 @@ static int update_refs(const struct reset_head_opts *opts,
 				      switch_to_branch, oid, NULL, 0,
 				      UPDATE_REFS_MSG_ON_ERR);
 		if (!ret)
-			ret = refs_create_symref(get_main_ref_store(the_repository),
+			ret = refs_update_symref(get_main_ref_store(the_repository),
 						 "HEAD", switch_to_branch,
 						 reflog_head);
 	}

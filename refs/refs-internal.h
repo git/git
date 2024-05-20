@@ -125,6 +125,19 @@ struct ref_update {
 	struct object_id old_oid;
 
 	/*
+	 * If set, point the reference to this value. This can also be
+	 * used to convert regular references to become symbolic refs.
+	 * Cannot be set together with `new_oid`.
+	 */
+	const char *new_target;
+
+	/*
+	 * If set, check that the reference previously pointed to this
+	 * value. Cannot be set together with `old_oid`.
+	 */
+	const char *old_target;
+
+	/*
 	 * One or more of REF_NO_DEREF, REF_FORCE_CREATE_REFLOG,
 	 * REF_HAVE_NEW, REF_HAVE_OLD, or backend-specific flags.
 	 */
@@ -173,6 +186,7 @@ struct ref_update *ref_transaction_add_update(
 		const char *refname, unsigned int flags,
 		const struct object_id *new_oid,
 		const struct object_id *old_oid,
+		const char *new_target, const char *old_target,
 		const char *msg);
 
 /*
@@ -552,10 +566,6 @@ typedef int ref_transaction_commit_fn(struct ref_store *refs,
 
 typedef int pack_refs_fn(struct ref_store *ref_store,
 			 struct pack_refs_opts *opts);
-typedef int create_symref_fn(struct ref_store *ref_store,
-			     const char *ref_target,
-			     const char *refs_heads_master,
-			     const char *logmsg);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
@@ -676,7 +686,6 @@ struct ref_storage_be {
 	ref_transaction_commit_fn *initial_transaction_commit;
 
 	pack_refs_fn *pack_refs;
-	create_symref_fn *create_symref;
 	rename_ref_fn *rename_ref;
 	copy_ref_fn *copy_ref;
 
@@ -734,5 +743,26 @@ void base_ref_store_init(struct ref_store *refs, struct repository *repo,
  * Support GIT_TRACE_REFS by optionally wrapping the given ref_store instance.
  */
 struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_store *store);
+
+/*
+ * Return the refname under which update was originally requested.
+ */
+const char *ref_update_original_update_refname(struct ref_update *update);
+
+/*
+ * Helper function to check if the new value is null, this
+ * takes into consideration that the update could be a regular
+ * ref or a symbolic ref.
+ */
+int ref_update_has_null_new_value(struct ref_update *update);
+
+/*
+ * Check whether the old_target values stored in update are consistent
+ * with the referent, which is the symbolic reference's current value.
+ * If everything is OK, return 0; otherwise, write an error message to
+ * err and return -1.
+ */
+int ref_update_check_old_target(const char *referent, struct ref_update *update,
+				struct strbuf *err);
 
 #endif /* REFS_REFS_INTERNAL_H */

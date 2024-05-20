@@ -1180,6 +1180,8 @@ void ref_transaction_free(struct ref_transaction *transaction)
 
 	for (i = 0; i < transaction->nr; i++) {
 		free(transaction->updates[i]->msg);
+		free((char *)transaction->updates[i]->new_target);
+		free((char *)transaction->updates[i]->old_target);
 		free(transaction->updates[i]);
 	}
 	free(transaction->updates);
@@ -1191,6 +1193,7 @@ struct ref_update *ref_transaction_add_update(
 		const char *refname, unsigned int flags,
 		const struct object_id *new_oid,
 		const struct object_id *old_oid,
+		const char *new_target, const char *old_target,
 		const char *msg)
 {
 	struct ref_update *update;
@@ -1198,16 +1201,24 @@ struct ref_update *ref_transaction_add_update(
 	if (transaction->state != REF_TRANSACTION_OPEN)
 		BUG("update called for transaction that is not open");
 
+	if (old_oid && old_target)
+		BUG("only one of old_oid and old_target should be non NULL");
+	if (new_oid && new_target)
+		BUG("only one of new_oid and new_target should be non NULL");
+
 	FLEX_ALLOC_STR(update, refname, refname);
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
 	transaction->updates[transaction->nr++] = update;
 
 	update->flags = flags;
 
-	if (flags & REF_HAVE_NEW)
+	update->new_target = xstrdup_or_null(new_target);
+	update->old_target = xstrdup_or_null(old_target);
+	if ((flags & REF_HAVE_NEW) && new_oid)
 		oidcpy(&update->new_oid, new_oid);
-	if (flags & REF_HAVE_OLD)
+	if ((flags & REF_HAVE_OLD) && old_oid)
 		oidcpy(&update->old_oid, old_oid);
+
 	update->msg = normalize_reflog_message(msg);
 	return update;
 }
@@ -1216,6 +1227,8 @@ int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
 			   const struct object_id *new_oid,
 			   const struct object_id *old_oid,
+			   const char *new_target,
+			   const char *old_target,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err)
 {
@@ -1241,9 +1254,11 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	flags &= REF_TRANSACTION_UPDATE_ALLOWED_FLAGS;
 
 	flags |= (new_oid ? REF_HAVE_NEW : 0) | (old_oid ? REF_HAVE_OLD : 0);
+	flags |= (new_target ? REF_HAVE_NEW : 0) | (old_target ? REF_HAVE_OLD : 0);
 
 	ref_transaction_add_update(transaction, refname, flags,
-				   new_oid, old_oid, msg);
+				   new_oid, old_oid, new_target,
+				   old_target, msg);
 	return 0;
 }
 
@@ -1258,7 +1273,8 @@ int ref_transaction_create(struct ref_transaction *transaction,
 		return 1;
 	}
 	return ref_transaction_update(transaction, refname, new_oid,
-				      null_oid(), flags, msg, err);
+				      null_oid(), NULL, NULL, flags,
+				      msg, err);
 }
 
 int ref_transaction_delete(struct ref_transaction *transaction,
@@ -1271,7 +1287,8 @@ int ref_transaction_delete(struct ref_transaction *transaction,
 		BUG("delete called with old_oid set to zeros");
 	return ref_transaction_update(transaction, refname,
 				      null_oid(), old_oid,
-				      flags, msg, err);
+				      NULL, NULL, flags,
+				      msg, err);
 }
 
 int ref_transaction_verify(struct ref_transaction *transaction,
@@ -1284,6 +1301,7 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 		BUG("verify called with old_oid set to NULL");
 	return ref_transaction_update(transaction, refname,
 				      NULL, old_oid,
+				      NULL, NULL,
 				      flags, NULL, err);
 }
 
@@ -1298,8 +1316,8 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 
 	t = ref_store_transaction_begin(refs, &err);
 	if (!t ||
-	    ref_transaction_update(t, refname, new_oid, old_oid, flags, msg,
-				   &err) ||
+	    ref_transaction_update(t, refname, new_oid, old_oid, NULL, NULL,
+				   flags, msg, &err) ||
 	    ref_transaction_commit(t, &err)) {
 		ret = 1;
 		ref_transaction_free(t);
@@ -2181,19 +2199,27 @@ int peel_iterated_oid(const struct object_id *base, struct object_id *peeled)
 	return peel_object(base, peeled) ? -1 : 0;
 }
 
-int refs_create_symref(struct ref_store *refs,
-		       const char *ref_target,
-		       const char *refs_heads_master,
-		       const char *logmsg)
+int refs_update_symref(struct ref_store *refs, const char *ref,
+		       const char *target, const char *logmsg)
 {
-	char *msg;
-	int retval;
+	struct ref_transaction *transaction;
+	struct strbuf err = STRBUF_INIT;
+	int ret = 0;
 
-	msg = normalize_reflog_message(logmsg);
-	retval = refs->be->create_symref(refs, ref_target, refs_heads_master,
-					 msg);
-	free(msg);
-	return retval;
+	transaction = ref_store_transaction_begin(refs, &err);
+	if (!transaction ||
+	    ref_transaction_update(transaction, ref, NULL, NULL,
+				   target, NULL, REF_NO_DEREF,
+				   logmsg, &err) ||
+	    ref_transaction_commit(transaction, &err)) {
+		ret = error("%s", err.buf);
+	}
+
+	strbuf_release(&err);
+	if (transaction)
+		ref_transaction_free(transaction);
+
+	return ret;
 }
 
 int ref_update_reject_duplicates(struct string_list *refnames,
@@ -2246,10 +2272,22 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 		struct ref_update *update = transaction->updates[i];
 
 		strbuf_reset(&buf);
-		strbuf_addf(&buf, "%s %s %s\n",
-			    oid_to_hex(&update->old_oid),
-			    oid_to_hex(&update->new_oid),
-			    update->refname);
+
+		if (!(update->flags & REF_HAVE_OLD))
+			strbuf_addf(&buf, "%s ", oid_to_hex(null_oid()));
+		else if (update->old_target)
+			strbuf_addf(&buf, "ref:%s ", update->old_target);
+		else
+			strbuf_addf(&buf, "%s ", oid_to_hex(&update->old_oid));
+
+		if (!(update->flags & REF_HAVE_NEW))
+			strbuf_addf(&buf, "%s ", oid_to_hex(null_oid()));
+		else if (update->new_target)
+			strbuf_addf(&buf, "ref:%s ", update->new_target);
+		else
+			strbuf_addf(&buf, "%s ", oid_to_hex(&update->new_oid));
+
+		strbuf_addf(&buf, "%s\n", update->refname);
 
 		if (write_in_full(proc.in, buf.buf, buf.len) < 0) {
 			if (errno != EPIPE) {
@@ -2633,4 +2671,39 @@ int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
 	retval = refs->be->copy_ref(refs, oldref, newref, msg);
 	free(msg);
 	return retval;
+}
+
+const char *ref_update_original_update_refname(struct ref_update *update)
+{
+	while (update->parent_update)
+		update = update->parent_update;
+
+	return update->refname;
+}
+
+int ref_update_has_null_new_value(struct ref_update *update)
+{
+	return !update->new_target && is_null_oid(&update->new_oid);
+}
+
+int ref_update_check_old_target(const char *referent, struct ref_update *update,
+				struct strbuf *err)
+{
+	if (!update->old_target)
+		BUG("called without old_target set");
+
+	if (!strcmp(referent, update->old_target))
+		return 0;
+
+	if (!strcmp(referent, ""))
+		strbuf_addf(err, "verifying symref target: '%s': "
+			    "reference is missing but expected %s",
+			    ref_update_original_update_refname(update),
+			    update->old_target);
+	else
+		strbuf_addf(err, "verifying symref target: '%s': "
+			    "is at %s but expected %s",
+			    ref_update_original_update_refname(update),
+			    referent, update->old_target);
+	return -1;
 }

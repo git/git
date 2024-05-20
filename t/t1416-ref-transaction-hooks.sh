@@ -134,4 +134,27 @@ test_expect_success 'interleaving hook calls succeed' '
 	test_cmp expect target-repo.git/actual
 '
 
+test_expect_success 'hook captures git-symbolic-ref updates' '
+	test_when_finished "rm actual" &&
+
+	test_hook reference-transaction <<-\EOF &&
+		echo "$*" >>actual
+		while read -r line
+		do
+			printf "%s\n" "$line"
+		done >>actual
+	EOF
+
+	git symbolic-ref refs/heads/symref refs/heads/main &&
+
+	cat >expect <<-EOF &&
+	prepared
+	$ZERO_OID ref:refs/heads/main refs/heads/symref
+	committed
+	$ZERO_OID ref:refs/heads/main refs/heads/symref
+	EOF
+
+	test_cmp expect actual
+'
+
 test_done

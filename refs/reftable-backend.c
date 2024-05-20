@@ -579,16 +579,6 @@ static int reftable_be_read_symbolic_ref(struct ref_store *ref_store,
 	return ret;
 }
 
-/*
- * Return the refname under which update was originally requested.
- */
-static const char *original_update_refname(struct ref_update *update)
-{
-	while (update->parent_update)
-		update = update->parent_update;
-	return update->refname;
-}
-
 struct reftable_transaction_update {
 	struct ref_update *update;
 	struct object_id current_oid;
@@ -827,7 +817,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			new_update = ref_transaction_add_update(
 					transaction, "HEAD",
 					u->flags | REF_LOG_ONLY | REF_NO_DEREF,
-					&u->new_oid, &u->old_oid, u->msg);
+					&u->new_oid, &u->old_oid, NULL, NULL, u->msg);
 			string_list_insert(&affected_refnames, new_update->refname);
 		}
 
@@ -854,7 +844,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			 * There is no need to write the reference deletion
 			 * when the reference in question doesn't exist.
 			 */
-			 if (u->flags & REF_HAVE_NEW && !is_null_oid(&u->new_oid)) {
+			 if ((u->flags & REF_HAVE_NEW) && !ref_update_has_null_new_value(u)) {
 				 ret = queue_transaction_update(refs, tx_data, u,
 								&current_oid, err);
 				 if (ret)
@@ -867,7 +857,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			/* The reference does not exist, but we expected it to. */
 			strbuf_addf(err, _("cannot lock ref '%s': "
 				    "unable to resolve reference '%s'"),
-				    original_update_refname(u), u->refname);
+				    ref_update_original_update_refname(u), u->refname);
 			ret = -1;
 			goto done;
 		}
@@ -905,8 +895,10 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 				 * intertwined with the locking in files-backend.c.
 				 */
 				new_update = ref_transaction_add_update(
-						transaction, referent.buf, new_flags,
-						&u->new_oid, &u->old_oid, u->msg);
+					transaction, referent.buf, new_flags,
+					&u->new_oid, &u->old_oid, u->new_target,
+					u->old_target, u->msg);
+
 				new_update->parent_update = u;
 
 				/*
@@ -936,20 +928,25 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		 * individual refs. But the error messages match what the files
 		 * backend returns, which keeps our tests happy.
 		 */
-		if (u->flags & REF_HAVE_OLD && !oideq(&current_oid, &u->old_oid)) {
+		if (u->old_target) {
+			if (ref_update_check_old_target(referent.buf, u, err)) {
+				ret = -1;
+				goto done;
+			}
+		} else if ((u->flags & REF_HAVE_OLD) && !oideq(&current_oid, &u->old_oid)) {
 			if (is_null_oid(&u->old_oid))
 				strbuf_addf(err, _("cannot lock ref '%s': "
-					    "reference already exists"),
-					    original_update_refname(u));
+						   "reference already exists"),
+					    ref_update_original_update_refname(u));
 			else if (is_null_oid(&current_oid))
 				strbuf_addf(err, _("cannot lock ref '%s': "
-					    "reference is missing but expected %s"),
-					    original_update_refname(u),
+						   "reference is missing but expected %s"),
+					    ref_update_original_update_refname(u),
 					    oid_to_hex(&u->old_oid));
 			else
 				strbuf_addf(err, _("cannot lock ref '%s': "
-					    "is at %s but expected %s"),
-					    original_update_refname(u),
+						   "is at %s but expected %s"),
+					    ref_update_original_update_refname(u),
 					    oid_to_hex(&current_oid),
 					    oid_to_hex(&u->old_oid));
 			ret = -1;
@@ -1047,7 +1044,9 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 		 * - `core.logAllRefUpdates` tells us to create the reflog for
 		 *   the given ref.
 		 */
-		if (u->flags & REF_HAVE_NEW && !(u->type & REF_ISSYMREF) && is_null_oid(&u->new_oid)) {
+		if ((u->flags & REF_HAVE_NEW) &&
+		    !(u->type & REF_ISSYMREF) &&
+		    ref_update_has_null_new_value(u)) {
 			struct reftable_log_record log = {0};
 			struct reftable_iterator it = {0};
 
@@ -1088,24 +1087,52 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			   (u->flags & REF_FORCE_CREATE_REFLOG ||
 			    should_write_log(&arg->refs->base, u->refname))) {
 			struct reftable_log_record *log;
+			int create_reflog = 1;
 
-			ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
-			log = &logs[logs_nr++];
-			memset(log, 0, sizeof(*log));
+			if (u->new_target) {
+				if (!refs_resolve_ref_unsafe(&arg->refs->base, u->new_target,
+							     RESOLVE_REF_READING, &u->new_oid, NULL)) {
+					/*
+					 * TODO: currently we skip creating reflogs for dangling
+					 * symref updates. It would be nice to capture this as
+					 * zero oid updates however.
+					 */
+					create_reflog = 0;
+				}
+			}
 
-			fill_reftable_log_record(log, &committer_ident);
-			log->update_index = ts;
-			log->refname = xstrdup(u->refname);
-			memcpy(log->value.update.new_hash, u->new_oid.hash, GIT_MAX_RAWSZ);
-			memcpy(log->value.update.old_hash, tx_update->current_oid.hash, GIT_MAX_RAWSZ);
-			log->value.update.message =
-				xstrndup(u->msg, arg->refs->write_options.block_size / 2);
+			if (create_reflog) {
+				ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
+				log = &logs[logs_nr++];
+				memset(log, 0, sizeof(*log));
+
+				fill_reftable_log_record(log, &committer_ident);
+				log->update_index = ts;
+				log->refname = xstrdup(u->refname);
+				memcpy(log->value.update.new_hash,
+				       u->new_oid.hash, GIT_MAX_RAWSZ);
+				memcpy(log->value.update.old_hash,
+				       tx_update->current_oid.hash, GIT_MAX_RAWSZ);
+				log->value.update.message =
+					xstrndup(u->msg, arg->refs->write_options.block_size / 2);
+			}
 		}
 
 		if (u->flags & REF_LOG_ONLY)
 			continue;
 
-		if (u->flags & REF_HAVE_NEW && is_null_oid(&u->new_oid)) {
+		if (u->new_target) {
+			struct reftable_ref_record ref = {
+				.refname = (char *)u->refname,
+				.value_type = REFTABLE_REF_SYMREF,
+				.value.symref = (char *)u->new_target,
+				.update_index = ts,
+			};
+
+			ret = reftable_writer_add_ref(writer, &ref);
+			if (ret < 0)
+				goto done;
+		} else if ((u->flags & REF_HAVE_NEW) && ref_update_has_null_new_value(u)) {
 			struct reftable_ref_record ref = {
 				.refname = (char *)u->refname,
 				.update_index = ts,
@@ -1236,110 +1263,6 @@ struct write_create_symref_arg {
 	const char *target;
 	const char *logmsg;
 };
-
-static int write_create_symref_table(struct reftable_writer *writer, void *cb_data)
-{
-	struct write_create_symref_arg *create = cb_data;
-	uint64_t ts = reftable_stack_next_update_index(create->stack);
-	struct reftable_ref_record ref = {
-		.refname = (char *)create->refname,
-		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *)create->target,
-		.update_index = ts,
-	};
-	struct ident_split committer_ident = {0};
-	struct reftable_log_record log = {0};
-	struct object_id new_oid;
-	struct object_id old_oid;
-	const char *committer_info;
-	int ret;
-
-	reftable_writer_set_limits(writer, ts, ts);
-
-	ret = refs_verify_refname_available(&create->refs->base, create->refname,
-					    NULL, NULL, create->err);
-	if (ret < 0)
-		return ret;
-
-	ret = reftable_writer_add_ref(writer, &ref);
-	if (ret)
-		return ret;
-
-	/*
-	 * Note that it is important to try and resolve the reference before we
-	 * write the log entry. This is because `should_write_log()` will munge
-	 * `core.logAllRefUpdates`, which is undesirable when we create a new
-	 * repository because it would be written into the config. As HEAD will
-	 * not resolve for new repositories this ordering will ensure that this
-	 * never happens.
-	 */
-	if (!create->logmsg ||
-	    !refs_resolve_ref_unsafe(&create->refs->base, create->target,
-				     RESOLVE_REF_READING, &new_oid, NULL) ||
-	    !should_write_log(&create->refs->base, create->refname))
-		return 0;
-
-	committer_info = git_committer_info(0);
-	if (split_ident_line(&committer_ident, committer_info, strlen(committer_info)))
-		BUG("failed splitting committer info");
-
-	fill_reftable_log_record(&log, &committer_ident);
-	log.refname = xstrdup(create->refname);
-	log.update_index = ts;
-	log.value.update.message = xstrndup(create->logmsg,
-					    create->refs->write_options.block_size / 2);
-	memcpy(log.value.update.new_hash, new_oid.hash, GIT_MAX_RAWSZ);
-	if (refs_resolve_ref_unsafe(&create->refs->base, create->refname,
-				    RESOLVE_REF_READING, &old_oid, NULL))
-		memcpy(log.value.update.old_hash, old_oid.hash, GIT_MAX_RAWSZ);
-
-	ret = reftable_writer_add_log(writer, &log);
-	reftable_log_record_release(&log);
-	return ret;
-}
-
-static int reftable_be_create_symref(struct ref_store *ref_store,
-				     const char *refname,
-				     const char *target,
-				     const char *logmsg)
-{
-	struct reftable_ref_store *refs =
-		reftable_be_downcast(ref_store, REF_STORE_WRITE, "create_symref");
-	struct reftable_stack *stack = stack_for(refs, refname, &refname);
-	struct strbuf err = STRBUF_INIT;
-	struct write_create_symref_arg arg = {
-		.refs = refs,
-		.stack = stack,
-		.refname = refname,
-		.target = target,
-		.logmsg = logmsg,
-		.err = &err,
-	};
-	int ret;
-
-	ret = refs->err;
-	if (ret < 0)
-		goto done;
-
-	ret = reftable_stack_reload(stack);
-	if (ret)
-		goto done;
-
-	ret = reftable_stack_add(stack, &write_create_symref_table, &arg);
-
-done:
-	assert(ret != REFTABLE_API_ERROR);
-	if (ret) {
-		if (err.len)
-			error("%s", err.buf);
-		else
-			error("unable to write symref for %s: %s", refname,
-			      reftable_error_str(ret));
-	}
-
-	strbuf_release(&err);
-	return ret;
-}
 
 struct write_copy_arg {
 	struct reftable_ref_store *refs;
@@ -2255,7 +2178,6 @@ struct ref_storage_be refs_be_reftable = {
 	.initial_transaction_commit = reftable_be_initial_transaction_commit,
 
 	.pack_refs = reftable_be_pack_refs,
-	.create_symref = reftable_be_create_symref,
 	.rename_ref = reftable_be_rename_ref,
 	.copy_ref = reftable_be_copy_ref,
 
