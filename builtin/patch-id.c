@@ -5,6 +5,7 @@
 #include "hash.h"
 #include "hex.h"
 #include "parse-options.h"
+#include "setup.h"
 
 static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
@@ -236,6 +237,18 @@ int cmd_patch_id(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, builtin_patch_id_options,
 			     patch_id_usage, 0);
+
+	/*
+	 * We rely on `the_hash_algo` to compute patch IDs. This is dubious as
+	 * it means that the hash algorithm now depends on the object hash of
+	 * the repository, even though git-patch-id(1) clearly defines that
+	 * patch IDs always use SHA1.
+	 *
+	 * NEEDSWORK: This hack should be removed in favor of converting
+	 * the code that computes patch IDs to always use SHA1.
+	 */
+	if (!the_hash_algo)
+		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
 
 	generate_id_list(opts ? opts > 1 : config.stable,
 			 opts ? opts == 3 : config.verbatim);
