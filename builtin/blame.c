@@ -134,7 +134,7 @@ static void get_ac_line(const char *inbuf, const char *what,
 {
 	struct ident_split ident;
 	size_t len, maillen, namelen;
-	char *tmp, *endp;
+	const char *tmp, *endp;
 	const char *namebuf, *mailbuf;
 
 	tmp = strstr(inbuf, what);

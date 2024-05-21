@@ -36,7 +36,8 @@ static int test_entry_cmp(const void *cmp_data,
 }
 
 static struct test_entry *alloc_test_entry(unsigned int hash,
-					   char *key, char *value)
+					   const char *key,
+					   const char *value)
 {
 	size_t klen = strlen(key);
 	size_t vlen = strlen(value);

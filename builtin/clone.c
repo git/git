@@ -71,7 +71,7 @@ static char *option_branch = NULL;
 static struct string_list option_not = STRING_LIST_INIT_NODUP;
 static const char *real_git_dir;
 static const char *ref_format;
-static char *option_upload_pack = "git-upload-pack";
+static const char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
 static int option_progress = -1;
 static int option_sparse_checkout;
@@ -177,8 +177,8 @@ static struct option builtin_clone_options[] = {
 
 static const char *get_repo_path_1(struct strbuf *path, int *is_bundle)
 {
-	static char *suffix[] = { "/.git", "", ".git/.git", ".git" };
-	static char *bundle_suffix[] = { ".bundle", "" };
+	static const char *suffix[] = { "/.git", "", ".git/.git", ".git" };
+	static const char *bundle_suffix[] = { ".bundle", "" };
 	size_t baselen = path->len;
 	struct stat st;
 	int i;

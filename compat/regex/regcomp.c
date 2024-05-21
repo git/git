@@ -848,7 +848,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
 {
   unsigned int table_size;
 #ifndef _LIBC
-  char *codeset_name;
+  const char *codeset_name;
 #endif
 
   memset (dfa, '\0', sizeof (re_dfa_t));

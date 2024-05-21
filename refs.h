@@ -975,7 +975,7 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt);
  */
 
 struct ref_namespace_info {
-	char *ref;
+	const char *ref;
 	enum decoration_type decoration;
 
 	/*
