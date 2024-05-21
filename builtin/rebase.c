@@ -131,25 +131,40 @@ struct rebase_options {
 	int config_update_refs;
 };
 
-#define REBASE_OPTIONS_INIT {			  	\
-		.type = REBASE_UNSPECIFIED,	  	\
-		.empty = EMPTY_UNSPECIFIED,	  	\
-		.keep_empty = 1,			\
-		.default_backend = "merge",	  	\
-		.flags = REBASE_NO_QUIET, 		\
-		.git_am_opts = STRVEC_INIT,		\
-		.exec = STRING_LIST_INIT_NODUP,		\
-		.git_format_patch_opt = STRBUF_INIT,	\
-		.fork_point = -1,			\
-		.reapply_cherry_picks = -1,             \
-		.allow_empty_message = 1,               \
-		.autosquash = -1,                       \
-		.rebase_merges = -1,                    \
-		.config_rebase_merges = -1,             \
-		.update_refs = -1,                      \
-		.config_update_refs = -1,               \
-		.strategy_opts = STRING_LIST_INIT_NODUP,\
-	}
+static void rebase_options_init(struct rebase_options *opts)
+{
+	memset(opts, 0, sizeof(*opts));
+	opts->type = REBASE_UNSPECIFIED;
+	opts->empty = EMPTY_UNSPECIFIED;
+	opts->default_backend = xstrdup("merge");
+	opts->keep_empty = 1;
+	opts->flags = REBASE_NO_QUIET;
+	strvec_init(&opts->git_am_opts);
+	string_list_init_nodup(&opts->exec);
+	strbuf_init(&opts->git_format_patch_opt, 0);
+	opts->fork_point = -1;
+	opts->reapply_cherry_picks = -1;
+	opts->allow_empty_message = 1;
+	opts->autosquash = -1;
+	opts->rebase_merges = -1;
+	opts->config_rebase_merges = -1;
+	opts->update_refs = -1;
+	opts->config_update_refs = -1;
+	string_list_init_nodup(&opts->strategy_opts);
+}
+
+static void rebase_options_release(struct rebase_options *opts)
+{
+	free(opts->default_backend);
+	free(opts->reflog_action);
+	free(opts->head_name);
+	strvec_clear(&opts->git_am_opts);
+	free(opts->gpg_sign_opt);
+	string_list_clear(&opts->exec, 0);
+	free(opts->strategy);
+	string_list_clear(&opts->strategy_opts, 0);
+	strbuf_release(&opts->git_format_patch_opt);
+}
 
 static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 {
@@ -796,6 +811,7 @@ static int rebase_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "rebase.backend")) {
+		FREE_AND_NULL(opts->default_backend);
 		return git_config_string(&opts->default_backend, var, value);
 	}
 
@@ -1045,7 +1061,7 @@ static int check_exec_cmd(const char *cmd)
 
 int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
-	struct rebase_options options = REBASE_OPTIONS_INIT;
+	struct rebase_options options;
 	const char *branch_name;
 	int ret, flags, total_argc, in_progress = 0;
 	int keep_base = 0;
@@ -1177,6 +1193,8 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 	int i;
+
+	rebase_options_init(&options);
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_rebase_usage,
@@ -1833,14 +1851,7 @@ run_rebase:
 cleanup:
 	strbuf_release(&buf);
 	strbuf_release(&revisions);
-	free(options.reflog_action);
-	free(options.head_name);
-	strvec_clear(&options.git_am_opts);
-	free(options.gpg_sign_opt);
-	string_list_clear(&options.exec, 0);
-	free(options.strategy);
-	string_list_clear(&options.strategy_opts, 0);
-	strbuf_release(&options.git_format_patch_opt);
+	rebase_options_release(&options);
 	free(squash_onto_name);
 	free(keep_base_onto_name);
 	return !!ret;
