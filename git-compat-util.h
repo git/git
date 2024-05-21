@@ -166,7 +166,7 @@ struct strbuf;
 /* Approximation of the length of the decimal representation of this type. */
 #define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)
 
-#ifdef __MINGW64__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #define _POSIX_C_SOURCE 1
 #elif defined(__sun__)
  /*
