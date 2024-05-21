@@ -1583,9 +1583,10 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		return 1;
 	case 'D':
 		{
+			char empty_str[] = "";
 			const struct decoration_options opts = {
-				.prefix = "",
-				.suffix = ""
+				.prefix = empty_str,
+				.suffix = empty_str,
 			};
 
 			format_decorations(sb, commit, c->auto_color, &opts);

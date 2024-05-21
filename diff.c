@@ -7231,11 +7231,12 @@ size_t fill_textconv(struct repository *r,
 		     struct diff_filespec *df,
 		     char **outbuf)
 {
+	static char empty_str[] = "";
 	size_t size;
 
 	if (!driver) {
 		if (!DIFF_FILE_VALID(df)) {
-			*outbuf = "";
+			*outbuf = empty_str;
 			return 0;
 		}
 		if (diff_populate_filespec(r, df, NULL))

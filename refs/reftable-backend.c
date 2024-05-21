@@ -1285,6 +1285,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	struct strbuf errbuf = STRBUF_INIT;
 	size_t logs_nr = 0, logs_alloc = 0, i;
 	const char *committer_info;
+	char head[] = "HEAD";
 	int ret;
 
 	committer_info = git_committer_info(0);
@@ -1387,7 +1388,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		if (append_head_reflog) {
 			ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 			logs[logs_nr] = logs[logs_nr - 1];
-			logs[logs_nr].refname = "HEAD";
+			logs[logs_nr].refname = head;
 			logs_nr++;
 		}
 	}
@@ -1463,7 +1464,7 @@ done:
 	string_list_clear(&skip, 0);
 	strbuf_release(&errbuf);
 	for (i = 0; i < logs_nr; i++) {
-		if (!strcmp(logs[i].refname, "HEAD"))
+		if (logs[i].refname == head)
 			continue;
 		logs[i].refname = NULL;
 		reftable_log_record_release(&logs[i]);

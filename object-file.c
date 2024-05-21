@@ -282,12 +282,13 @@ static struct cached_object {
 } *cached_objects;
 static int cached_object_nr, cached_object_alloc;
 
+static char empty_tree_buf[] = "";
 static struct cached_object empty_tree = {
 	.oid = {
 		.hash = EMPTY_TREE_SHA1_BIN_LITERAL,
 	},
 	.type = OBJ_TREE,
-	.buf = "",
+	.buf = empty_tree_buf,
 };
 
 static struct cached_object *find_cached_object(const struct object_id *oid)
