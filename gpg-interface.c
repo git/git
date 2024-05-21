@@ -727,7 +727,7 @@ static int git_gpg_config(const char *var, const char *value,
 			  void *cb UNUSED)
 {
 	struct gpg_format *fmt = NULL;
-	char *fmtname = NULL;
+	const char *fmtname = NULL;
 	char *trust;
 	int ret;
 

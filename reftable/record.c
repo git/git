@@ -116,7 +116,7 @@ static int decode_string(struct strbuf *dest, struct string_view in)
 	return start_len - in.len;
 }
 
-static int encode_string(char *str, struct string_view s)
+static int encode_string(const char *str, struct string_view s)
 {
 	struct string_view start = s;
 	int l = strlen(str);
@@ -969,9 +969,9 @@ done:
 	return REFTABLE_FORMAT_ERROR;
 }
 
-static int null_streq(char *a, char *b)
+static int null_streq(const char *a, const char *b)
 {
-	char *empty = "";
+	const char *empty = "";
 	if (!a)
 		a = empty;
 

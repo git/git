@@ -83,7 +83,7 @@ static void test_read_file(void)
 	char out[1024] = "line1\n\nline2\nline3";
 	int n, err;
 	char **names = NULL;
-	char *want[] = { "line1", "line2", "line3" };
+	const char *want[] = { "line1", "line2", "line3" };
 	int i = 0;
 
 	EXPECT(fd > 0);
@@ -116,9 +116,9 @@ static void test_parse_names(void)
 
 static void test_names_equal(void)
 {
-	char *a[] = { "a", "b", "c", NULL };
-	char *b[] = { "a", "b", "d", NULL };
-	char *c[] = { "a", "b", NULL };
+	const char *a[] = { "a", "b", "c", NULL };
+	const char *b[] = { "a", "b", "d", NULL };
+	const char *c[] = { "a", "b", NULL };
 
 	EXPECT(names_equal(a, a));
 	EXPECT(!names_equal(a, b));

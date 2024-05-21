@@ -1215,9 +1215,9 @@ static int imap_store_msg(struct imap_store *ctx, struct strbuf *msg)
 static void wrap_in_html(struct strbuf *msg)
 {
 	struct strbuf buf = STRBUF_INIT;
-	static char *content_type = "Content-Type: text/html;\n";
-	static char *pre_open = "<pre>\n";
-	static char *pre_close = "</pre>\n";
+	static const char *content_type = "Content-Type: text/html;\n";
+	static const char *pre_open = "<pre>\n";
+	static const char *pre_close = "</pre>\n";
 	const char *body = strstr(msg->buf, "\n\n");
 
 	if (!body)
