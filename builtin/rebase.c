@@ -135,7 +135,6 @@ struct rebase_options {
 		.type = REBASE_UNSPECIFIED,	  	\
 		.empty = EMPTY_UNSPECIFIED,	  	\
 		.keep_empty = 1,			\
-		.default_backend = "merge",	  	\
 		.flags = REBASE_NO_QUIET, 		\
 		.git_am_opts = STRVEC_INIT,		\
 		.exec = STRING_LIST_INIT_NODUP,		\
@@ -796,6 +795,7 @@ static int rebase_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "rebase.backend")) {
+		FREE_AND_NULL(opts->default_backend);
 		return git_config_string(&opts->default_backend, var, value);
 	}
 
@@ -1471,12 +1471,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	if (options.strategy_opts.nr && !options.strategy)
-		options.strategy = "ort";
-
-	if (options.strategy) {
-		options.strategy = xstrdup(options.strategy);
+		options.strategy = xstrdup("ort");
+	else
+		options.strategy = xstrdup_or_null(options.strategy);
+	if (options.strategy)
 		imply_merge(&options, "--strategy");
-	}
 
 	if (options.root && !options.onto_name)
 		imply_merge(&options, "--root without --onto");
@@ -1522,7 +1521,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	}
 
 	if (options.type == REBASE_UNSPECIFIED) {
-		if (!strcmp(options.default_backend, "merge"))
+		if (!options.default_backend)
+			options.type = REBASE_MERGE;
+		else if (!strcmp(options.default_backend, "merge"))
 			options.type = REBASE_MERGE;
 		else if (!strcmp(options.default_backend, "apply"))
 			options.type = REBASE_APPLY;
@@ -1833,6 +1834,7 @@ run_rebase:
 cleanup:
 	strbuf_release(&buf);
 	strbuf_release(&revisions);
+	free(options.default_backend);
 	free(options.reflog_action);
 	free(options.head_name);
 	strvec_clear(&options.git_am_opts);
