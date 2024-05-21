@@ -336,5 +336,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		/* stable plumbing output; do not modify or localize */
 		fprintf(stderr, "Everything up-to-date\n");
 
+	free_refs(remote_refs);
+	free_refs(local_refs);
 	return ret;
 }
