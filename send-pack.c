@@ -259,7 +259,7 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 			if (p)
 				hint->remote_status = xstrdup(p);
 			else
-				hint->remote_status = "failed";
+				hint->remote_status = xstrdup("failed");
 		} else {
 			hint->status = REF_STATUS_OK;
 			hint->remote_status = xstrdup_or_null(p);
