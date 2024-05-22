@@ -689,6 +689,25 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 	! grep "[?]$FILE_HASH" out
 '
 
+test_expect_success 'push should not fetch new commit objects' '
+	rm -rf server client &&
+	test_create_repo server &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	test_commit -C server server1 &&
+
+	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	test_commit -C client client1 &&
+
+	test_commit -C server server2 &&
+	COMMIT=$(git -C server rev-parse server2) &&
+
+	test_must_fail git -C client push 2>err &&
+	grep "fetch first" err &&
+	git -C client rev-list --objects --missing=print "$COMMIT" >objects &&
+	grep "^[?]$COMMIT" objects
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
