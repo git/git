@@ -7,6 +7,73 @@ Here are some guidelines for contributing back to this
 project. There is also a link:MyFirstContribution.html[step-by-step tutorial]
 available which covers many of these same guidelines.
 
+[[patch-flow]]
+=== A typical life cycle of a patch series
+
+To help us understand the reason behind various guidelines given later
+in the document, first let's understand how the life cycle of a
+typical patch series for this project goes.
+
+. You come up with an itch.  You code it up.  You do not need any
+  pre-authorization from the project to do so.
++
+Your patches will be reviewed by other contributors on the mailing
+list, and the reviews will be done to assess the merit of various
+things, like the general idea behind your patch (including "is it
+solving a problem worth solving in the first place?"), the reason
+behind the design of the solution, and the actual implementation.
+The guidelines given here are there to help your patches by making
+them easier to understand by the reviewers.
+
+. You send the patches to the list and cc people who may need to know
+  about the change.  Your goal is *not* necessarily to convince others
+  that what you are building is good.  Your goal is to get help in
+  coming up with a solution for the "itch" that is better than what
+  you can build alone.
++
+The people who may need to know are the ones who worked on the code
+you are touching.  These people happen to be the ones who are
+most likely to be knowledgeable enough to help you, but
+they have no obligation to help you (i.e. you ask them for help,
+you don't demand).  +git log -p {litdd} _$area_you_are_modifying_+ would
+help you find out who they are.
+
+. You get comments and suggestions for improvements.  You may even get
+  them in an "on top of your change" patch form.  You are expected to
+  respond to them with "Reply-All" on the mailing list, while taking
+  them into account while preparing an updated set of patches.
+
+. Polish, refine, and re-send your patches to the list and to the people
+  who spent their time to improve your patch.  Go back to step (2).
+
+. While the above iterations improve your patches, the maintainer may
+  pick the patches up from the list and queue them to the `seen`
+  branch, in order to make it easier for people to play with it
+  without having to pick up and apply the patches to their trees
+  themselves.  Being in `seen` has no other meaning.  Specifically, it
+  does not mean the patch was "accepted" in any way.
+
+. When the discussion reaches a consensus that the latest iteration of
+  the patches are in good enough shape, the maintainer includes the
+  topic in the "What's cooking" report that are sent out a few times a
+  week to the mailing list, marked as "Will merge to 'next'."  This
+  decision is primarily made by the maintainer with help from those
+  who participated in the review discussion.
+
+. After the patches are merged to the 'next' branch, the discussion
+  can still continue to further improve them by adding more patches on
+  top, but by the time a topic gets merged to 'next', it is expected
+  that everybody agrees that the scope and the basic direction of the
+  topic are appropriate, so such an incremental updates are limited to
+  small corrections and polishing.  After a topic cooks for some time
+  (like 7 calendar days) in 'next' without needing further tweaks on
+  top, it gets merged to the 'master' branch and wait to become part
+  of the next major release.
+
+In the following sections, many techniques and conventions are listed
+to help your patches get reviewed effectively in such a life cycle.
+
+
 [[choose-starting-point]]
 === Choose a starting point.
 
@@ -192,8 +259,9 @@ reasons:
   which case, they can explain why they extend your code to cover
   files, too).
 
-The goal of your log message is to convey the _why_ behind your
-change to help future developers.
+The goal of your log message is to convey the _why_ behind your change
+to help future developers.  The reviewers will also make sure that
+your proposed log message will serve this purpose well.
 
 The first line of the commit message should be a short description (50
 characters is the soft limit, see DISCUSSION in linkgit:git-commit[1]),
@@ -561,55 +629,6 @@ repositories.
 	https://github.com/git-l10n/git-po/
 
 Patches to these parts should be based on their trees.
-
-[[patch-flow]]
-== An ideal patch flow
-
-Here is an ideal patch flow for this project the current maintainer
-suggests to the contributors:
-
-. You come up with an itch.  You code it up.
-
-. Send it to the list and cc people who may need to know about
-  the change.
-+
-The people who may need to know are the ones whose code you
-are butchering.  These people happen to be the ones who are
-most likely to be knowledgeable enough to help you, but
-they have no obligation to help you (i.e. you ask for help,
-don't demand).  +git log -p {litdd} _$area_you_are_modifying_+ would
-help you find out who they are.
-
-. You get comments and suggestions for improvements.  You may
-  even get them in an "on top of your change" patch form.
-
-. Polish, refine, and re-send to the list and the people who
-  spend their time to improve your patch.  Go back to step (2).
-
-. The list forms consensus that the last round of your patch is
-  good.  Send it to the maintainer and cc the list.
-
-. A topic branch is created with the patch and is merged to `next`,
-  and cooked further and eventually graduates to `master`.
-
-In any time between the (2)-(3) cycle, the maintainer may pick it up
-from the list and queue it to `seen`, in order to make it easier for
-people to play with it without having to pick up and apply the patch to
-their trees themselves.
-
-[[patch-status]]
-== Know the status of your patch after submission
-
-* You can use Git itself to find out when your patch is merged in
-  master. `git pull --rebase` will automatically skip already-applied
-  patches, and will let you know. This works only if you rebase on top
-  of the branch in which your patch has been merged (i.e. it will not
-  tell you if your patch is merged in `seen` if you rebase on top of
-  master).
-
-* Read the Git mailing list, the maintainer regularly posts messages
-  entitled "What's cooking in git.git" giving
-  the status of various proposed changes.
 
 == GitHub CI[[GHCI]]
 
