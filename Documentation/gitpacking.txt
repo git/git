@@ -1,0 +1,34 @@
+gitpacking(7)
+=============
+
+NAME
+----
+gitpacking - Advanced concepts related to packing in Git
+
+SYNOPSIS
+--------
+gitpacking
+
+DESCRIPTION
+-----------
+
+This document aims to describe some advanced concepts related to packing
+in Git.
+
+Many concepts are currently described scattered between manual pages of
+various Git commands, including linkgit:git-pack-objects[1],
+linkgit:git-repack[1], and others, as well as linkgit:gitformat-pack[5],
+and parts of the `Documentation/technical` tree.
+
+There are many aspects of packing in Git that are not covered in this
+document that instead live in the aforementioned areas. Over time, those
+scattered bits may coalesce into this document.
+
+SEE ALSO
+--------
+linkgit:git-pack-objects[1]
+linkgit:git-repack[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite
