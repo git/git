@@ -673,7 +673,7 @@ static int midx_snapshot_ref_one(const char *refname UNUSED,
 	struct midx_snapshot_ref_data *data = _data;
 	struct object_id peeled;
 
-	if (!peel_iterated_oid(oid, &peeled))
+	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
 
 	if (oidset_insert(&data->seen, oid))

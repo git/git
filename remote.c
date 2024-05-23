@@ -305,7 +305,7 @@ static void read_remotes_file(struct remote_state *remote_state,
 static void read_branches_file(struct remote_state *remote_state,
 			       struct remote *remote)
 {
-	char *frag;
+	char *frag, *to_free = NULL;
 	struct strbuf buf = STRBUF_INIT;
 	FILE *f = fopen_or_warn(git_path("branches/%s", remote->name), "r");
 
@@ -333,7 +333,7 @@ static void read_branches_file(struct remote_state *remote_state,
 	if (frag)
 		*(frag++) = '\0';
 	else
-		frag = (char *)git_default_branch_name(0);
+		frag = to_free = repo_default_branch_name(the_repository, 0);
 
 	add_url_alias(remote_state, remote, strbuf_detach(&buf, NULL));
 	refspec_appendf(&remote->fetch, "refs/heads/%s:refs/heads/%s",
@@ -345,6 +345,8 @@ static void read_branches_file(struct remote_state *remote_state,
 	 */
 	refspec_appendf(&remote->push, "HEAD:refs/heads/%s", frag);
 	remote->fetch_tags = 1; /* always auto-follow */
+
+	free(to_free);
 }
 
 static int handle_config(const char *key, const char *value,
@@ -2388,11 +2390,13 @@ struct ref *guess_remote_head(const struct ref *head,
 
 	/* If a remote branch exists with the default branch name, let's use it. */
 	if (!all) {
-		char *ref = xstrfmt("refs/heads/%s",
-				    git_default_branch_name(0));
+		char *default_branch = repo_default_branch_name(the_repository, 0);
+		char *ref = xstrfmt("refs/heads/%s", default_branch);
 
 		r = find_ref_by_name(refs, ref);
 		free(ref);
+		free(default_branch);
+
 		if (r && oideq(&r->old_oid, &head->old_oid))
 			return copy_ref(r);
 

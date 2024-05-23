@@ -114,21 +114,27 @@ int should_autocreate_reflog(const char *refname);
 
 int is_branch(const char *refname);
 
-#define REFS_INIT_DB_IS_WORKTREE (1 << 0)
+#define REF_STORE_CREATE_ON_DISK_IS_WORKTREE (1 << 0)
 
-int refs_init_db(struct ref_store *refs, int flags, struct strbuf *err);
+int ref_store_create_on_disk(struct ref_store *refs, int flags, struct strbuf *err);
+
+/*
+ * Release all memory and resources associated with the ref store.
+ */
+void ref_store_release(struct ref_store *ref_store);
 
 /*
  * Return the peeled value of the oid currently being iterated via
  * for_each_ref(), etc. This is equivalent to calling:
  *
- *   peel_object(oid, &peeled);
+ *   peel_object(r, oid, &peeled);
  *
  * with the "oid" value given to the each_ref_fn callback, except
  * that some ref storage may be able to answer the query without
  * actually loading the object in memory.
  */
-int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
+int peel_iterated_oid(struct repository *r,
+		      const struct object_id *base, struct object_id *peeled);
 
 /**
  * Resolve refname in the nested "gitlink" repository in the specified
@@ -136,8 +142,9 @@ int peel_iterated_oid(const struct object_id *base, struct object_id *peeled);
  * successful, return 0 and set oid to the name of the object;
  * otherwise, return a non-zero value.
  */
-int resolve_gitlink_ref(const char *submodule, const char *refname,
-			struct object_id *oid);
+int repo_resolve_gitlink_ref(struct repository *r,
+			     const char *submodule, const char *refname,
+			     struct object_id *oid);
 
 /*
  * Return true iff abbrev_name is a possible abbreviation for
@@ -157,15 +164,12 @@ int expand_ref(struct repository *r, const char *str, int len, struct object_id 
 int repo_dwim_ref(struct repository *r, const char *str, int len,
 		  struct object_id *oid, char **ref, int nonfatal_dangling_mark);
 int repo_dwim_log(struct repository *r, const char *str, int len, struct object_id *oid, char **ref);
-int dwim_log(const char *str, int len, struct object_id *oid, char **ref);
 
 /*
  * Retrieves the default branch name for newly-initialized repositories.
  *
- * The return value of `repo_default_branch_name()` is an allocated string. The
- * return value of `git_default_branch_name()` is a singleton.
+ * The return value is an allocated string.
  */
-const char *git_default_branch_name(int quiet);
 char *repo_default_branch_name(struct repository *r, int quiet);
 
 /*
@@ -293,16 +297,6 @@ typedef int each_ref_fn(const char *refname,
 			const struct object_id *oid, int flags, void *cb_data);
 
 /*
- * The same as each_ref_fn, but also with a repository argument that
- * contains the repository associated with the callback.
- */
-typedef int each_repo_ref_fn(struct repository *r,
-			     const char *refname,
-			     const struct object_id *oid,
-			     int flags,
-			     void *cb_data);
-
-/*
  * The following functions invoke the specified callback function for
  * each reference indicated.  If the function ever returns a nonzero
  * value, stop the iteration and return that value.  Please note that
@@ -323,6 +317,8 @@ int refs_for_each_branch_ref(struct ref_store *refs,
 			     each_ref_fn fn, void *cb_data);
 int refs_for_each_remote_ref(struct ref_store *refs,
 			     each_ref_fn fn, void *cb_data);
+int refs_for_each_replace_ref(struct ref_store *refs,
+			      each_ref_fn fn, void *cb_data);
 
 /*
  * references matching any pattern in "exclude_patterns" are omitted from the
@@ -346,11 +342,6 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *refs,
 				      const char **patterns,
 				      const char **exclude_patterns,
 				      each_ref_fn fn, void *cb_data);
-
-/**
- * iterate refs from the respective area.
- */
-int for_each_replace_ref(struct repository *r, each_repo_ref_fn fn, void *cb_data);
 
 /* iterates all refs that match the specified glob pattern. */
 int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
@@ -395,9 +386,10 @@ static inline const char *has_glob_specials(const char *pattern)
 	return strpbrk(pattern, "?*[");
 }
 
-void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
-void warn_dangling_symrefs(FILE *fp, const char *msg_fmt,
-			   const struct string_list *refnames);
+void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
+			       const char *msg_fmt, const char *refname);
+void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
+				const char *msg_fmt, const struct string_list *refnames);
 
 /*
  * Flags for controlling behaviour of pack_refs()
@@ -965,7 +957,8 @@ struct ref_store *get_main_ref_store(struct repository *r);
  * For backwards compatibility, submodule=="" is treated the same as
  * submodule==NULL.
  */
-struct ref_store *get_submodule_ref_store(const char *submodule);
+struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
+					       const char *submodule);
 struct ref_store *get_worktree_ref_store(const struct worktree *wt);
 
 /*

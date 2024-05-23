@@ -65,6 +65,7 @@ static struct worktree *get_main_worktree(int skip_reading_head)
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
 	CALLOC_ARRAY(worktree, 1);
+	worktree->repo = the_repository;
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	/*
 	 * NEEDSWORK: If this function is called from a secondary worktree and
@@ -98,6 +99,7 @@ struct worktree *get_linked_worktree(const char *id,
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
 	CALLOC_ARRAY(worktree, 1);
+	worktree->repo = the_repository;
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	worktree->id = xstrdup(id);
 	if (!skip_reading_head)

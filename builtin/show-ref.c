@@ -50,7 +50,7 @@ static void show_one(const struct show_one_options *opts,
 	if (!opts->deref_tags)
 		return;
 
-	if (!peel_iterated_oid(oid, &peeled)) {
+	if (!peel_iterated_oid(the_repository, oid, &peeled)) {
 		hex = repo_find_unique_abbrev(the_repository, &peeled, opts->abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}

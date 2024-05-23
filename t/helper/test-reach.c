@@ -62,7 +62,7 @@ int cmd__reach(int ac, const char **av)
 			die("failed to resolve %s", buf.buf + 2);
 
 		orig = parse_object(r, &oid);
-		peeled = deref_tag_noverify(orig);
+		peeled = deref_tag_noverify(the_repository, orig);
 
 		if (!peeled)
 			die("failed to load commit for input %s resulting in oid %s\n",

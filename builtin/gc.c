@@ -846,7 +846,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 	struct commit_list *stack = NULL;
 	struct commit *commit;
 
-	if (!peel_iterated_oid(oid, &peeled))
+	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
 	if (oid_object_info(the_repository, oid, NULL) != OBJ_COMMIT)
 		return 0;

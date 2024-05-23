@@ -1,6 +1,8 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
+#include "strmap.h"
+
 struct config_set;
 struct fsmonitor_settings;
 struct git_hash_algo;
@@ -107,6 +109,18 @@ struct repository {
 	 * the ref object.
 	 */
 	struct ref_store *refs_private;
+
+	/*
+	 * A strmap of ref_stores, stored by submodule name, accessible via
+	 * `repo_get_submodule_ref_store()`.
+	 */
+	struct strmap submodule_ref_stores;
+
+	/*
+	 * A strmap of ref_stores, stored by worktree id, accessible via
+	 * `get_worktree_ref_store()`.
+	 */
+	struct strmap worktree_ref_stores;
 
 	/*
 	 * Contains path to often used file names.
