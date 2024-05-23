@@ -794,8 +794,10 @@ retry:
 		 */
 		if (refs_verify_refname_available(
 				    refs->packed_ref_store, refname,
-				    extras, NULL, err))
+				    extras, NULL, err)) {
+			ret = TRANSACTION_NAME_CONFLICT;
 			goto error_return;
+		}
 	}
 
 	ret = 0;
