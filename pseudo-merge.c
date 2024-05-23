@@ -699,3 +699,58 @@ int cascade_pseudo_merges(const struct pseudo_merge_map *pm,
 
 	return ret;
 }
+
+struct pseudo_merge *pseudo_merge_for_parents(const struct pseudo_merge_map *pm,
+					      struct bitmap *parents)
+{
+	struct pseudo_merge *match = NULL;
+	size_t i;
+
+	if (!pm->nr)
+		return NULL;
+
+	/*
+	 * NOTE: this loop is quadratic in the worst-case (where no
+	 * matching pseudo-merge bitmaps are found), but in practice
+	 * this is OK for a few reasons:
+	 *
+	 *   - Rejecting pseudo-merge bitmaps that do not match the
+	 *     given commit is done quickly (i.e. `bitmap_equals_ewah()`
+	 *     returns early when we know the two bitmaps aren't equal.
+	 *
+	 *   - Already matched pseudo-merge bitmaps (which we track with
+	 *     the `->satisfied` bit here) are skipped as potential
+	 *     candidates.
+	 *
+	 *   - The number of pseudo-merges should be small (in the
+	 *     hundreds for most repositories).
+	 *
+	 * If in the future this semi-quadratic behavior does become a
+	 * problem, another approach would be to keep track of which
+	 * pseudo-merges are still "viable" after enumerating the
+	 * pseudo-merge commit's parents:
+	 *
+	 *   - A pseudo-merge bitmap becomes non-viable when the bit(s)
+	 *     corresponding to one or more parent(s) of the given
+	 *     commit are not set in a candidate pseudo-merge's commits
+	 *     bitmap.
+	 *
+	 *   - After processing all bits, enumerate the remaining set of
+	 *     viable pseudo-merge bitmaps, and check that their
+	 *     popcount() matches the number of parents in the given
+	 *     commit.
+	 */
+	for (i = 0; i < pm->nr; i++) {
+		struct pseudo_merge *candidate = use_pseudo_merge(pm, &pm->v[i]);
+		if (!candidate || candidate->satisfied)
+			continue;
+		if (!bitmap_equals_ewah(parents, candidate->commits))
+			continue;
+
+		match = candidate;
+		match->satisfied = 1;
+		break;
+	}
+
+	return match;
+}

@@ -206,4 +206,11 @@ int cascade_pseudo_merges(const struct pseudo_merge_map *pm,
 			  struct bitmap *result,
 			  struct bitmap *roots);
 
+/*
+ * Returns a pseudo-merge which contains the exact set of commits
+ * listed in the "parents" bitamp, or NULL if none could be found.
+ */
+struct pseudo_merge *pseudo_merge_for_parents(const struct pseudo_merge_map *pm,
+					      struct bitmap *parents);
+
 #endif

@@ -1316,6 +1316,37 @@ cleanup:
 	return cb.base;
 }
 
+struct ewah_bitmap *pseudo_merge_bitmap_for_commit(struct bitmap_index *bitmap_git,
+						   struct commit *commit)
+{
+	struct commit_list *p;
+	struct bitmap *parents;
+	struct pseudo_merge *match = NULL;
+
+	if (!bitmap_git->pseudo_merges.nr)
+		return NULL;
+
+	parents = bitmap_new();
+
+	for (p = commit->parents; p; p = p->next) {
+		int pos = bitmap_position(bitmap_git, &p->item->object.oid);
+		if (pos < 0 || pos >= bitmap_num_objects(bitmap_git))
+			goto done;
+
+		bitmap_set(parents, pos);
+	}
+
+	match = pseudo_merge_for_parents(&bitmap_git->pseudo_merges,
+						parents);
+
+done:
+	bitmap_free(parents);
+	if (match)
+		return pseudo_merge_bitmap(&bitmap_git->pseudo_merges, match);
+
+	return NULL;
+}
+
 static void unsatisfy_all_pseudo_merges(struct bitmap_index *bitmap_git)
 {
 	uint32_t i;
@@ -2809,6 +2840,7 @@ void free_bitmap_index(struct bitmap_index *b)
 		 */
 		close_midx_revindex(b->midx);
 	}
+	free_pseudo_merge_map(&b->pseudo_merges);
 	free(b);
 }
 

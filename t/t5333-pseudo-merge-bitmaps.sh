@@ -22,6 +22,10 @@ test_pseudo_merges_cascades () {
 	test_trace2_data bitmap pseudo_merges_cascades "$1"
 }
 
+test_pseudo_merges_reused () {
+	test_trace2_data pack-bitmap-write building_bitmaps_pseudo_merge_reused "$1"
+}
+
 tag_everything () {
 	git rev-list --all --no-object-names >in &&
 	perl -lne '
@@ -321,6 +325,67 @@ test_expect_success 'pseudo-merge overlap stale traversal' '
 
 		test_pseudo_merges_satisfied 2 <trace2.txt &&
 		test_pseudo_merges_cascades 1 <trace2.txt &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'pseudo-merge reuse' '
+	git init pseudo-merge-reuse &&
+	(
+		cd pseudo-merge-reuse &&
+
+		stable="1641013200" && # 2022-01-01
+		unstable="1672549200" && # 2023-01-01
+
+		GIT_COMMITTER_DATE="$stable +0000" &&
+		export GIT_COMMITTER_DATE &&
+		test_commit_bulk --notick 128 &&
+		GIT_COMMITTER_DATE="$unstable +0000" &&
+		export GIT_COMMITTER_DATE &&
+		test_commit_bulk --notick 128 &&
+
+		tag_everything &&
+
+		git \
+			-c bitmapPseudoMerge.test.pattern="refs/tags/" \
+			-c bitmapPseudoMerge.test.maxMerges=1 \
+			-c bitmapPseudoMerge.test.threshold=now \
+			-c bitmapPseudoMerge.test.stableThreshold=$(($unstable - 1)) \
+			-c bitmapPseudoMerge.test.stableSize=512 \
+			repack -adb &&
+
+		test_pseudo_merges >merges &&
+		test_line_count = 2 merges &&
+
+		test_pseudo_merge_commits 0 >stable-oids.before &&
+		test_pseudo_merge_commits 1 >unstable-oids.before &&
+
+		: >trace2.txt &&
+		GIT_TRACE2_EVENT=$PWD/trace2.txt git \
+			-c bitmapPseudoMerge.test.pattern="refs/tags/" \
+			-c bitmapPseudoMerge.test.maxMerges=2 \
+			-c bitmapPseudoMerge.test.threshold=now \
+			-c bitmapPseudoMerge.test.stableThreshold=$(($unstable - 1)) \
+			-c bitmapPseudoMerge.test.stableSize=512 \
+			repack -adb &&
+
+		test_pseudo_merges_reused 1 <trace2.txt &&
+
+		test_pseudo_merges >merges &&
+		test_line_count = 3 merges &&
+
+		test_pseudo_merge_commits 0 >stable-oids.after &&
+		for i in 1 2
+		do
+			test_pseudo_merge_commits $i || return 1
+		done >unstable-oids.after &&
+
+		sort -u <stable-oids.before >expect &&
+		sort -u <stable-oids.after >actual &&
+		test_cmp expect actual &&
+
+		sort -u <unstable-oids.before >expect &&
+		sort -u <unstable-oids.after >actual &&
 		test_cmp expect actual
 	)
 '
