@@ -131,18 +131,6 @@ static int debug_pack_refs(struct ref_store *ref_store, struct pack_refs_opts *o
 	return res;
 }
 
-static int debug_create_symref(struct ref_store *ref_store,
-			       const char *ref_name, const char *target,
-			       const char *logmsg)
-{
-	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
-	int res = drefs->refs->be->create_symref(drefs->refs, ref_name, target,
-						 logmsg);
-	trace_printf_key(&trace_refs, "create_symref: %s -> %s \"%s\": %d\n", ref_name,
-		target, logmsg, res);
-	return res;
-}
-
 static int debug_rename_ref(struct ref_store *ref_store, const char *oldref,
 			    const char *newref, const char *logmsg)
 {
@@ -441,7 +429,6 @@ struct ref_storage_be refs_be_debug = {
 	.initial_transaction_commit = debug_initial_transaction_commit,
 
 	.pack_refs = debug_pack_refs,
-	.create_symref = debug_create_symref,
 	.rename_ref = debug_rename_ref,
 	.copy_ref = debug_copy_ref,
 

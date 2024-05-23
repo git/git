@@ -606,7 +606,7 @@ int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
 int copy_existing_ref(const char *oldref, const char *newref,
 			const char *logmsg);
 
-int refs_create_symref(struct ref_store *refs, const char *refname,
+int refs_update_symref(struct ref_store *refs, const char *refname,
 		       const char *target, const char *logmsg);
 int create_symref(const char *refname, const char *target, const char *logmsg);
 
@@ -647,6 +647,16 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  *         or null_oid, meaning that the reference must not exist
  *         before the update. A copy of this value is made in the
  *         transaction.
+ *
+ *     new_target -- the target reference that the reference will be
+ *         updated to point to. If the reference is a regular reference,
+ *         it will be converted to a symbolic reference. Cannot be set
+ *         together with `new_oid`. A copy of this value is made in the
+ *         transaction.
+ *
+ *     old_target -- the reference that the reference must be pointing to.
+ *         Canont be set together with `old_oid`. A copy of this value is
+ *         made in the transaction.
  *
  *     flags -- flags affecting the update, passed to
  *         update_ref_lock(). Possible flags: REF_NO_DEREF,
@@ -713,7 +723,11 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  * beforehand. The old value is checked after the lock is taken to
  * prevent races. If the old value doesn't agree with old_oid, the
  * whole transaction fails. If old_oid is NULL, then the previous
- * value is not checked.
+ * value is not checked. If `old_target` is not NULL, treat the reference
+ * as a symbolic ref and validate that its target before the update is
+ * `old_target`. If the `new_target` is not NULL, then the reference
+ * will be updated to a symbolic ref which targets `new_target`.
+ * Together, these allow us to update between regular refs and symrefs.
  *
  * See the above comment "Reference transaction updates" for more
  * information.
@@ -722,6 +736,8 @@ int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
 			   const struct object_id *new_oid,
 			   const struct object_id *old_oid,
+			   const char *new_target,
+			   const char *old_target,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 

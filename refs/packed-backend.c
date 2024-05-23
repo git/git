@@ -1714,7 +1714,6 @@ struct ref_storage_be refs_be_packed = {
 	.initial_transaction_commit = packed_initial_transaction_commit,
 
 	.pack_refs = packed_pack_refs,
-	.create_symref = NULL,
 	.rename_ref = NULL,
 	.copy_ref = NULL,
 
