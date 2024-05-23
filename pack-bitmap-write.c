@@ -27,9 +27,12 @@ struct bitmapped_commit {
 	uint32_t commit_pos;
 };
 
-void bitmap_writer_init(struct bitmap_writer *writer)
+void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r)
 {
 	memset(writer, 0, sizeof(struct bitmap_writer));
+	if (writer->bitmaps)
+		BUG("bitmap writer already initialized");
+	writer->bitmaps = kh_init_oid_map();
 }
 
 void bitmap_writer_free(struct bitmap_writer *writer)
@@ -128,10 +131,20 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 static inline void push_bitmapped_commit(struct bitmap_writer *writer,
 					 struct commit *commit)
 {
+	int hash_ret;
+	khiter_t hash_pos;
+
 	if (writer->selected_nr >= writer->selected_alloc) {
 		writer->selected_alloc = (writer->selected_alloc + 32) * 2;
 		REALLOC_ARRAY(writer->selected, writer->selected_alloc);
 	}
+
+	hash_pos = kh_put_oid_map(writer->bitmaps, commit->object.oid,
+				  &hash_ret);
+	if (!hash_ret)
+		die(_("duplicate entry when writing bitmap index: %s"),
+		    oid_to_hex(&commit->object.oid));
+	kh_value(writer->bitmaps, hash_pos) = NULL;
 
 	writer->selected[writer->selected_nr].commit = commit;
 	writer->selected[writer->selected_nr].bitmap = NULL;
@@ -483,14 +496,14 @@ static void store_selected(struct bitmap_writer *writer,
 {
 	struct bitmapped_commit *stored = &writer->selected[ent->idx];
 	khiter_t hash_pos;
-	int hash_ret;
 
 	stored->bitmap = bitmap_to_ewah(ent->bitmap);
 
-	hash_pos = kh_put_oid_map(writer->bitmaps, commit->object.oid, &hash_ret);
-	if (hash_ret == 0)
-		die("Duplicate entry when writing index: %s",
+	hash_pos = kh_get_oid_map(writer->bitmaps, commit->object.oid);
+	if (hash_pos == kh_end(writer->bitmaps))
+		die(_("attempted to store non-selected commit: '%s'"),
 		    oid_to_hex(&commit->object.oid));
+
 	kh_value(writer->bitmaps, hash_pos) = stored;
 }
 
@@ -506,7 +519,6 @@ int bitmap_writer_build(struct bitmap_writer *writer,
 	uint32_t *mapping;
 	int closed = 1; /* until proven otherwise */
 
-	writer->bitmaps = kh_init_oid_map();
 	writer->to_pack = to_pack;
 
 	if (writer->show_progress)

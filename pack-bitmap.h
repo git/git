@@ -114,7 +114,7 @@ struct bitmap_writer {
 	unsigned char pack_checksum[GIT_MAX_RAWSZ];
 };
 
-void bitmap_writer_init(struct bitmap_writer *writer);
+void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r);
 void bitmap_writer_show_progress(struct bitmap_writer *writer, int show);
 void bitmap_writer_set_checksum(struct bitmap_writer *writer,
 				const unsigned char *sha1);
