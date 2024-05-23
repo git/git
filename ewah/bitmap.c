@@ -212,6 +212,20 @@ size_t bitmap_popcount(struct bitmap *self)
 	return count;
 }
 
+size_t ewah_bitmap_popcount(struct ewah_bitmap *self)
+{
+	struct ewah_iterator it;
+	eword_t word;
+	size_t count = 0;
+
+	ewah_iterator_init(&it, self);
+
+	while (ewah_iterator_next(&word, &it))
+		count += ewah_bit_popcount64(word);
+
+	return count;
+}
+
 int bitmap_is_empty(struct bitmap *self)
 {
 	size_t i;
