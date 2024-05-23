@@ -179,6 +179,7 @@ void bitmap_unset(struct bitmap *self, size_t pos);
 int bitmap_get(struct bitmap *self, size_t pos);
 void bitmap_free(struct bitmap *self);
 int bitmap_equals(struct bitmap *self, struct bitmap *other);
+int bitmap_equals_ewah(struct bitmap *self, struct ewah_bitmap *other);
 
 /*
  * Both `bitmap_is_subset()` and `ewah_bitmap_is_subset()` return 1 if the set

@@ -261,6 +261,25 @@ int bitmap_equals(struct bitmap *self, struct bitmap *other)
 	return 1;
 }
 
+int bitmap_equals_ewah(struct bitmap *self, struct ewah_bitmap *other)
+{
+	struct ewah_iterator it;
+	eword_t word;
+	size_t i = 0;
+
+	ewah_iterator_init(&it, other);
+
+	while (ewah_iterator_next(&word, &it))
+		if (word != (i < self->word_alloc ? self->words[i++] : 0))
+			return 0;
+
+	for (; i < self->word_alloc; i++)
+		if (self->words[i])
+			return 0;
+
+	return 1;
+}
+
 int bitmap_is_subset(struct bitmap *self, struct bitmap *other)
 {
 	size_t common_size, i;
