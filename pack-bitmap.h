@@ -21,6 +21,7 @@ struct bitmap_disk_header {
 	unsigned char checksum[GIT_MAX_RAWSZ];
 };
 
+#define BITMAP_PSEUDO_MERGE (1u<<21)
 #define NEEDS_BITMAP (1u<<22)
 
 /*
@@ -108,6 +109,8 @@ struct bitmap_writer {
 
 	struct bitmapped_commit *selected;
 	unsigned int selected_nr, selected_alloc;
+
+	uint32_t pseudo_merges_nr;
 
 	struct progress *progress;
 	int show_progress;
