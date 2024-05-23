@@ -162,4 +162,48 @@ struct pseudo_merge {
  */
 void free_pseudo_merge_map(struct pseudo_merge_map *pm);
 
+/*
+ * Loads the bitmap corresponding to the given pseudo-merge from the
+ * map, if it has not already been loaded.
+ */
+struct ewah_bitmap *pseudo_merge_bitmap(const struct pseudo_merge_map *pm,
+					struct pseudo_merge *merge);
+
+/*
+ * Loads the pseudo-merge and its commits bitmap from the given
+ * pseudo-merge map, if it has not already been loaded.
+ */
+struct pseudo_merge *use_pseudo_merge(const struct pseudo_merge_map *pm,
+				      struct pseudo_merge *merge);
+
+/*
+ * Applies pseudo-merge(s) containing the given commit to the bitmap
+ * "result".
+ *
+ * If any pseudo-merge(s) were satisfied, returns the number
+ * satisfied, otherwise returns 0. If any were satisfied, the
+ * remaining unsatisfied pseudo-merges are cascaded (see below).
+ */
+int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
+				   struct bitmap *result,
+				   struct commit *commit, uint32_t commit_pos);
+
+/*
+ * Applies pseudo-merge(s) which are satisfied according to the
+ * current bitmap in result (or roots, see below). If any
+ * pseudo-merges were satisfied, repeat the process over unsatisfied
+ * pseudo-merge commits until no more pseudo-merges are satisfied.
+ *
+ * Result is the bitmap to which the pseudo-merge(s) are applied.
+ * Roots (if given) is a bitmap of the traversal tip(s) for either
+ * side of a reachability traversal.
+ *
+ * Roots may given instead of a populated results bitmap at the
+ * beginning of a traversal on either side where the reachability
+ * closure over tips is not yet known.
+ */
+int cascade_pseudo_merges(const struct pseudo_merge_map *pm,
+			  struct bitmap *result,
+			  struct bitmap *roots);
+
 #endif
