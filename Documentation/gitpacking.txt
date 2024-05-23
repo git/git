@@ -96,6 +96,89 @@ can take advantage of the fact that we only care about the union of
 objects reachable from all of those tags, and answer the query much
 faster.
 
+=== Configuration
+
+Reference tips are grouped into different pseudo-merge groups according
+to two criteria. A reference name matches one or more of the defined
+pseudo-merge patterns, and optionally one or more capture groups within
+that pattern which further partition the group.
+
+Within a group, commits may be considered "stable", or "unstable"
+depending on their age. These are adjusted by setting the
+`bitmapPseudoMerge.<name>.stableThreshold` and
+`bitmapPseudoMerge.<name>.threshold` configuration values, respectively.
+
+All stable commits are grouped into pseudo-merges of equal size
+(`bitmapPseudoMerge.<name>.stableSize`). If the `stableSize`
+configuration is set to, say, 100, then the first 100 commits (ordered
+by committer date) which are older than the `stableThreshold` value will
+form one group, the next 100 commits will form another group, and so on.
+
+Among unstable commits, the pseudo-merge machinery will attempt to
+combine older commits into large groups as opposed to newer commits
+which will appear in smaller groups. This is based on the heuristic that
+references whose tip commit is older are less likely to be modified to
+point at a different commit than a reference whose tip commit is newer.
+
+The size of groups is determined by a power-law decay function, and the
+decay parameter roughly corresponds to "k" in `f(n) = C*n^(-k/100)`,
+where `f(n)` describes the size of the `n`-th pseudo-merge group. The
+sample rate controls what percentage of eligible commits are considered
+as candidates. The threshold parameter indicates the minimum age (so as
+to avoid including too-recent commits in a pseudo-merge group, making it
+less likely to be valid). The "maxMerges" parameter sets an upper-bound
+on the number of pseudo-merge commits an individual group
+
+The "stable"-related parameters control "stable" pseudo-merge groups,
+comprised of a fixed number of commits which are older than the
+configured "stable threshold" value and may be grouped together in
+chunks of "stableSize" in order of age.
+
+The exact configuration for pseudo-merges is as follows:
+
+include::config/bitmap-pseudo-merge.txt[]
+
+=== Examples
+
+Suppose that you have a repository with a large number of references,
+and you want a bare-bones configuration of pseudo-merge bitmaps that
+will enhance bitmap coverage of the `refs/` namespace. You may start
+wiht a configuration like so:
+
+    [bitmapPseudoMerge "all"]
+	pattern = "refs/"
+	threshold = now
+	stableThreshold = never
+	sampleRate = 100
+	maxMerges = 64
+
+This will create pseudo-merge bitmaps for all references, regardless of
+their age, and group them into 64 pseudo-merge commits.
+
+If you wanted to separate tags from branches when generating
+pseudo-merge commits, you would instead define the pattern with a
+capture group, like so:
+
+    [bitmapPseudoMerge "all"]
+	pattern = "refs/(heads/tags)/"
+
+Suppose instead that you are working in a fork-network repository, with
+each fork specified by some numeric ID, and whose refs reside in
+`refs/virtual/NNN/` (where `NNN` is the numeric ID corresponding to some
+fork) in the network. In this instance, you may instead write something
+like:
+
+    [bitmapPseudoMerge "all"]
+	pattern = "refs/virtual/([0-9]+)/(heads|tags)/"
+	threshold = now
+	stableThreshold = never
+	sampleRate = 100
+	maxMerges = 64
+
+Which would generate pseudo-merge group identifiers like "1234-heads",
+and "5678-tags" (for branches in fork "1234", and tags in remote "5678",
+respectively).
+
 SEE ALSO
 --------
 linkgit:git-pack-objects[1]

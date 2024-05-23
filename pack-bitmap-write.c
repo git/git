@@ -17,6 +17,7 @@
 #include "trace2.h"
 #include "tree.h"
 #include "tree-walk.h"
+#include "pseudo-merge.h"
 
 struct bitmapped_commit {
 	struct commit *commit;
@@ -39,11 +40,25 @@ void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r)
 	if (writer->bitmaps)
 		BUG("bitmap writer already initialized");
 	writer->bitmaps = kh_init_oid_map();
+	writer->pseudo_merge_commits = kh_init_oid_map();
+
+	string_list_init_dup(&writer->pseudo_merge_groups);
+
+	load_pseudo_merges_from_config(&writer->pseudo_merge_groups);
+}
+
+static void free_pseudo_merge_commit_idx(struct pseudo_merge_commit_idx *idx)
+{
+	if (!idx)
+		return;
+	free(idx->pseudo_merge);
+	free(idx);
 }
 
 void bitmap_writer_free(struct bitmap_writer *writer)
 {
 	uint32_t i;
+	struct pseudo_merge_commit_idx *idx;
 
 	if (!writer)
 		return;
@@ -54,6 +69,10 @@ void bitmap_writer_free(struct bitmap_writer *writer)
 	ewah_free(writer->tags);
 
 	kh_destroy_oid_map(writer->bitmaps);
+
+	kh_foreach_value(writer->pseudo_merge_commits, idx,
+			 free_pseudo_merge_commit_idx(idx));
+	kh_destroy_oid_map(writer->pseudo_merge_commits);
 
 	for (i = 0; i < writer->selected_nr; i++) {
 		struct bitmapped_commit *bc = &writer->selected[i];
@@ -703,6 +722,8 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 	}
 
 	stop_progress(&writer->progress);
+
+	select_pseudo_merges(writer, indexed_commits, indexed_commits_nr);
 }
 
 
