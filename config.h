@@ -262,6 +262,13 @@ ssize_t git_config_ssize_t(const char *, const char *,
 			   const struct key_value_info *);
 
 /**
+ * Identically to `git_config_double`, but for double-precision floating point
+ * values.
+ */
+double git_config_double(const char *, const char *,
+			 const struct key_value_info *);
+
+/**
  * Same as `git_config_bool`, except that integers are returned as-is, and
  * an `is_bool` flag is unset.
  */
