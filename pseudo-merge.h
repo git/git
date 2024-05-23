@@ -97,4 +97,69 @@ struct pseudo_merge_commit_idx {
 void select_pseudo_merges(struct bitmap_writer *writer,
 			  struct commit **commits, size_t commits_nr);
 
+/*
+ * Represents a serialized view of a file containing pseudo-merge(s)
+ * (see Documentation/technical/bitmap-format.txt for a specification
+ * of the format).
+ */
+struct pseudo_merge_map {
+	/*
+	 * An array of pseudo-merge(s), lazily loaded from the .bitmap
+	 * file.
+	 */
+	struct pseudo_merge *v;
+	size_t nr;
+	size_t commits_nr;
+
+	/*
+	 * Pointers into a memory-mapped view of the .bitmap file:
+	 *
+	 *   - map: the beginning of the .bitmap file
+	 *   - commits: the beginning of the pseudo-merge commit index
+	 *   - map_size: the size of the .bitmap file
+	 */
+	const unsigned char *map;
+	const unsigned char *commits;
+
+	size_t map_size;
+};
+
+/*
+ * An individual pseudo-merge, storing a pair of lazily-loaded
+ * bitmaps:
+ *
+ *  - commits: the set of commit(s) that are part of the pseudo-merge
+ *  - bitmap: the set of object(s) reachable from the above set of
+ *    commits.
+ *
+ * The `at` and `bitmap_at` fields are used to store the locations of
+ * each of the above bitmaps in the .bitmap file.
+ */
+struct pseudo_merge {
+	struct ewah_bitmap *commits;
+	struct ewah_bitmap *bitmap;
+
+	off_t at;
+	off_t bitmap_at;
+
+	/*
+	 * `satisfied` indicates whether the given pseudo-merge has been
+	 * used.
+	 *
+	 * `loaded_commits` and `loaded_bitmap` indicate whether the
+	 * respective bitmaps have been loaded and read from the
+	 * .bitmap file.
+	 */
+	unsigned satisfied : 1,
+		 loaded_commits : 1,
+		 loaded_bitmap : 1;
+};
+
+/*
+ * Frees the given pseudo-merge map, releasing any memory held by (a)
+ * parsed EWAH bitmaps, or (b) the array of pseudo-merges itself. Does
+ * not free the memory-mapped view of the .bitmap file.
+ */
+void free_pseudo_merge_map(struct pseudo_merge_map *pm);
+
 #endif
