@@ -673,6 +673,53 @@ static void next_commentary_block(struct rev_info *opt, struct strbuf *sb)
 	opt->shown_dashes = 1;
 }
 
+static void show_diff_of_diff(struct rev_info *opt)
+{
+	if (!cmit_fmt_is_mail(opt->commit_format))
+		return;
+
+	if (opt->idiff_oid1) {
+		struct diff_queue_struct dq;
+
+		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
+		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+
+		next_commentary_block(opt, NULL);
+		fprintf_ln(opt->diffopt.file, "%s", opt->idiff_title);
+		show_interdiff(opt->idiff_oid1, opt->idiff_oid2, 2,
+			       &opt->diffopt);
+
+		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
+	}
+
+	if (opt->rdiff1) {
+		struct diff_queue_struct dq;
+		struct diff_options opts;
+		struct range_diff_options range_diff_opts = {
+			.creation_factor = opt->creation_factor,
+			.dual_color = 1,
+			.diffopt = &opts
+		};
+
+		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
+		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+
+		next_commentary_block(opt, NULL);
+		fprintf_ln(opt->diffopt.file, "%s", opt->rdiff_title);
+		/*
+		 * Pass minimum required diff-options to range-diff; others
+		 * can be added later if deemed desirable.
+		 */
+		repo_diff_setup(the_repository, &opts);
+		opts.file = opt->diffopt.file;
+		opts.use_color = opt->diffopt.use_color;
+		diff_setup_done(&opts);
+		show_range_diff(opt->rdiff1, opt->rdiff2, &range_diff_opts);
+
+		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
+	}
+}
+
 void show_log(struct rev_info *opt)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
@@ -857,46 +904,7 @@ void show_log(struct rev_info *opt)
 	free(ctx.notes_message);
 	free(ctx.after_subject);
 
-	if (cmit_fmt_is_mail(ctx.fmt) && opt->idiff_oid1) {
-		struct diff_queue_struct dq;
-
-		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
-		DIFF_QUEUE_CLEAR(&diff_queued_diff);
-
-		next_commentary_block(opt, NULL);
-		fprintf_ln(opt->diffopt.file, "%s", opt->idiff_title);
-		show_interdiff(opt->idiff_oid1, opt->idiff_oid2, 2,
-			       &opt->diffopt);
-
-		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
-	}
-
-	if (cmit_fmt_is_mail(ctx.fmt) && opt->rdiff1) {
-		struct diff_queue_struct dq;
-		struct diff_options opts;
-		struct range_diff_options range_diff_opts = {
-			.creation_factor = opt->creation_factor,
-			.dual_color = 1,
-			.diffopt = &opts
-		};
-
-		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
-		DIFF_QUEUE_CLEAR(&diff_queued_diff);
-
-		next_commentary_block(opt, NULL);
-		fprintf_ln(opt->diffopt.file, "%s", opt->rdiff_title);
-		/*
-		 * Pass minimum required diff-options to range-diff; others
-		 * can be added later if deemed desirable.
-		 */
-		repo_diff_setup(the_repository, &opts);
-		opts.file = opt->diffopt.file;
-		opts.use_color = opt->diffopt.use_color;
-		diff_setup_done(&opts);
-		show_range_diff(opt->rdiff1, opt->rdiff2, &range_diff_opts);
-
-		memcpy(&diff_queued_diff, &dq, sizeof(diff_queued_diff));
-	}
+	show_diff_of_diff(opt);
 }
 
 int log_tree_diff_flush(struct rev_info *opt)
