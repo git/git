@@ -130,6 +130,12 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 	}
 }
 
+int bitmap_writer_has_bitmapped_object_id(struct bitmap_writer *writer,
+					  const struct object_id *oid)
+{
+	return kh_get_oid_map(writer->bitmaps, *oid) != kh_end(writer->bitmaps);
+}
+
 /**
  * Compute the actual bitmaps
  */

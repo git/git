@@ -125,6 +125,8 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 				    struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
 				    uint32_t index_nr);
+int bitmap_writer_has_bitmapped_object_id(struct bitmap_writer *writer,
+					  const struct object_id *oid);
 uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 				struct packing_data *mapping);
 int rebuild_bitmap(const uint32_t *reposition,
