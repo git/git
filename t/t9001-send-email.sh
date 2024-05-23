@@ -2526,7 +2526,7 @@ test_expect_success $PREREQ 'test forbidSendmailVariables behavior override' '
 
 test_expect_success $PREREQ '--compose handles lowercase headers' '
 	write_script fake-editor <<-\EOF &&
-	sed "s/^From:.*/from: edited-from@example.com/i" "$1" >"$1.tmp" &&
+	sed "s/^[Ff][Rr][Oo][Mm]:.*/from: edited-from@example.com/" "$1" >"$1.tmp" &&
 	mv "$1.tmp" "$1"
 	EOF
 	clean_fake_sendmail &&

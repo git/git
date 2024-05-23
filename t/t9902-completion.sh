@@ -73,7 +73,7 @@ _get_comp_words_by_ref ()
 print_comp ()
 {
 	local IFS=$'\n'
-	echo "${COMPREPLY[*]}" > out
+	printf '%s\n' "${COMPREPLY[*]}" > out
 }
 
 run_completion ()

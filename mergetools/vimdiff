@@ -325,7 +325,7 @@ gen_cmd () {
 		fi
 
 		# If this is a single window diff with all the buffers
-		if ! echo "$tab" | grep ",\|/" >/dev/null
+		if ! echo "$tab" | grep -E ",|/" >/dev/null
 		then
 			CMD="$CMD | silent execute 'bufdo diffthis'"
 		fi

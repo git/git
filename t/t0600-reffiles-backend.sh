@@ -424,7 +424,7 @@ test_expect_success SYMLINKS 'git branch -m with symlinked .git/refs' '
 	test_when_finished "rm -rf subdir" &&
 	git init --bare subdir &&
 
-	rm -rfv subdir/refs subdir/objects subdir/packed-refs &&
+	rm -rf subdir/refs subdir/objects subdir/packed-refs &&
 	ln -s ../.git/refs subdir/refs &&
 	ln -s ../.git/objects subdir/objects &&
 	ln -s ../.git/packed-refs subdir/packed-refs &&
