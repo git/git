@@ -497,20 +497,18 @@ exclude;;
 	unusual refs.
 
 [[def_pseudoref]]pseudoref::
-	Pseudorefs are a class of files under `$GIT_DIR` which behave
-	like refs for the purposes of rev-parse, but which are treated
-	specially by git.  Pseudorefs both have names that are all-caps,
-	and always start with a line consisting of a
-	<<def_SHA1,SHA-1>> followed by whitespace.  So, HEAD is not a
-	pseudoref, because it is sometimes a symbolic ref.  They might
-	optionally contain some additional data.  `MERGE_HEAD` and
-	`CHERRY_PICK_HEAD` are examples.  Unlike
-	<<def_per_worktree_ref,per-worktree refs>>, these files cannot
-	be symbolic refs, and never have reflogs.  They also cannot be
-	updated through the normal ref update machinery.  Instead,
-	they are updated by directly writing to the files.  However,
-	they can be read as if they were refs, so `git rev-parse
-	MERGE_HEAD` will work.
+	A ref that has different semantics than normal refs. These refs can be
+	read via normal Git commands, but cannot be written to by commands like
+	linkgit:git-update-ref[1].
++
+The following pseudorefs are known to Git:
+
+ - `FETCH_HEAD` is written by linkgit:git-fetch[1] or linkgit:git-pull[1]. It
+   may refer to multiple object IDs. Each object ID is annotated with metadata
+   indicating where it was fetched from and its fetch status.
+
+ - `MERGE_HEAD` is written by linkgit:git-merge[1] when resolving merge
+   conflicts. It contains all commit IDs which are being merged.
 
 [[def_pull]]pull::
 	Pulling a <<def_branch,branch>> means to <<def_fetch,fetch>> it and
@@ -552,20 +550,38 @@ exclude;;
 	to the result.
 
 [[def_ref]]ref::
-	A name that begins with `refs/` (e.g. `refs/heads/master`)
-	that points to an <<def_object_name,object name>> or another
-	ref (the latter is called a <<def_symref,symbolic ref>>).
+	A name that that points to an <<def_object_name,object name>> or
+	another ref (the latter is called a <<def_symref,symbolic ref>>).
 	For convenience, a ref can sometimes be abbreviated when used
 	as an argument to a Git command; see linkgit:gitrevisions[7]
 	for details.
 	Refs are stored in the <<def_repository,repository>>.
 +
 The ref namespace is hierarchical.
-Different subhierarchies are used for different purposes (e.g. the
-`refs/heads/` hierarchy is used to represent local branches).
+Ref names must either start with `refs/` or be located in the root of
+the hierarchy. For the latter, their name must follow these rules:
 +
-There are a few special-purpose refs that do not begin with `refs/`.
-The most notable example is `HEAD`.
+ - The name consists of only upper-case characters or underscores.
+
+ - The name ends with "`_HEAD`" or is equal to "`HEAD`".
++
+There are some irregular refs in the root of the hierarchy that do not
+match these rules. The following list is exhaustive and shall not be
+extended in the future:
++
+ - `AUTO_MERGE`
+
+ - `BISECT_EXPECTED_REV`
+
+ - `NOTES_MERGE_PARTIAL`
+
+ - `NOTES_MERGE_REF`
+
+ - `MERGE_AUTOSTASH`
++
+Different subhierarchies are used for different purposes. For example,
+the `refs/heads/` hierarchy is used to represent local branches whereas
+the `refs/tags/` hierarchy is used to represent local tags..
 
 [[def_reflog]]reflog::
 	A reflog shows the local "history" of a ref.  In other words,
@@ -638,20 +654,6 @@ The most notable example is `HEAD`.
 [[def_stash]]stash entry::
 	An <<def_object,object>> used to temporarily store the contents of a
 	<<def_dirty,dirty>> working directory and the index for future reuse.
-
-[[def_special_ref]]special ref::
-	A ref that has different semantics than normal refs. These refs can be
-	accessed via normal Git commands but may not behave the same as a
-	normal ref in some cases.
-+
-The following special refs are known to Git:
-
- - "`FETCH_HEAD`" is written by linkgit:git-fetch[1] or linkgit:git-pull[1]. It
-   may refer to multiple object IDs. Each object ID is annotated with metadata
-   indicating where it was fetched from and its fetch status.
-
- - "`MERGE_HEAD`" is written by linkgit:git-merge[1] when resolving merge
-   conflicts. It contains all commit IDs which are being merged.
 
 [[def_submodule]]submodule::
 	A <<def_repository,repository>> that holds the history of a

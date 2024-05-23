@@ -2634,7 +2634,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       each_ref_fn cb,
 				       void *cb_data)
 {
-	if (filter->kind == FILTER_REFS_KIND_MASK) {
+	if (filter->kind & FILTER_REFS_ROOT_REFS) {
 		/* In this case, we want to print all refs including root refs. */
 		return refs_for_each_include_root_refs(get_main_ref_store(the_repository),
 						       cb, cb_data);
@@ -2764,8 +2764,10 @@ static int ref_kind_from_refname(const char *refname)
 			return ref_kind[i].kind;
 	}
 
-	if (is_pseudoref(get_main_ref_store(the_repository), refname))
+	if (is_pseudo_ref(refname))
 		return FILTER_REFS_PSEUDOREFS;
+	if (is_root_ref(refname))
+		return FILTER_REFS_ROOT_REFS;
 
 	return FILTER_REFS_OTHERS;
 }
@@ -2802,11 +2804,11 @@ static struct ref_array_item *apply_ref_filter(const char *refname, const struct
 	/*
 	 * Generally HEAD refs are printed with special description denoting a rebase,
 	 * detached state and so forth. This is useful when only printing the HEAD ref
-	 * But when it is being printed along with other pseudorefs, it makes sense to
-	 * keep the formatting consistent. So we mask the type to act like a pseudoref.
+	 * But when it is being printed along with other root refs, it makes sense to
+	 * keep the formatting consistent. So we mask the type to act like a root ref.
 	 */
-	if (filter->kind == FILTER_REFS_KIND_MASK && kind == FILTER_REFS_DETACHED_HEAD)
-		kind = FILTER_REFS_PSEUDOREFS;
+	if (filter->kind & FILTER_REFS_ROOT_REFS && kind == FILTER_REFS_DETACHED_HEAD)
+		kind = FILTER_REFS_ROOT_REFS;
 	else if (!(kind & filter->kind))
 		return NULL;
 
@@ -3086,7 +3088,7 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 		 * When printing all ref types, HEAD is already included,
 		 * so we don't want to print HEAD again.
 		 */
-		if (!ret && (filter->kind != FILTER_REFS_KIND_MASK) &&
+		if (!ret && !(filter->kind & FILTER_REFS_ROOT_REFS) &&
 		    (filter->kind & FILTER_REFS_DETACHED_HEAD))
 			refs_head_ref(get_main_ref_store(the_repository), fn,
 				      cb_data);
