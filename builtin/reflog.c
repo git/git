@@ -378,7 +378,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		char *ref;
 		struct expire_reflog_policy_cb cb = { .cmd = cmd };
 
-		if (!dwim_log(argv[i], strlen(argv[i]), NULL, &ref)) {
+		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
 			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
 		}

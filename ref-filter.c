@@ -2520,7 +2520,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	 * If it is a tag object, see if we use the peeled value. If we do,
 	 * grab the peeled OID.
 	 */
-	if (need_tagged && peel_iterated_oid(&obj->oid, &oi_deref.oid))
+	if (need_tagged && peel_iterated_oid(the_repository, &obj->oid, &oi_deref.oid))
 		die("bad tag");
 
 	return get_object(ref, 1, &obj, &oi_deref, err);

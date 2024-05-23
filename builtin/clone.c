@@ -1468,6 +1468,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	} else if (remote_head) {
 		our_head_points_at = NULL;
 	} else {
+		char *to_free = NULL;
 		const char *branch;
 
 		if (!mapped_refs) {
@@ -1480,7 +1481,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				"refs/heads/", &branch)) {
 			unborn_head  = xstrdup(transport_ls_refs_options.unborn_head_target);
 		} else {
-			branch = git_default_branch_name(0);
+			branch = to_free = repo_default_branch_name(the_repository, 0);
 			unborn_head = xstrfmt("refs/heads/%s", branch);
 		}
 
@@ -1496,6 +1497,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		 * a match.
 		 */
 		our_head_points_at = find_remote_branch(mapped_refs, branch);
+
+		free(to_free);
 	}
 
 	write_refspec_config(src_ref_prefix, our_head_points_at,

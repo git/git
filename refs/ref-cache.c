@@ -441,10 +441,7 @@ static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
 {
 	struct cache_ref_iterator *iter =
 		(struct cache_ref_iterator *)ref_iterator;
-
-	if (iter->repo != the_repository)
-		BUG("peeling for non-the_repository is not supported");
-	return peel_object(ref_iterator->oid, peeled) ? -1 : 0;
+	return peel_object(iter->repo, ref_iterator->oid, peeled) ? -1 : 0;
 }
 
 static int cache_ref_iterator_abort(struct ref_iterator *ref_iterator)
