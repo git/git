@@ -26,18 +26,6 @@ use Git::I18N;
 
 Getopt::Long::Configure qw/ pass_through /;
 
-package FakeTerm;
-sub new {
-	my ($class, $reason) = @_;
-	return bless \$reason, shift;
-}
-sub readline {
-	my $self = shift;
-	die "Cannot use readline on FakeTerm: $$self";
-}
-package main;
-
-
 sub usage {
 	print <<EOT;
 git send-email' [<options>] <file|directory>
@@ -971,17 +959,19 @@ EOT3
 	do_edit(@files);
 }
 
-sub term {
-	my $term = eval {
+{
+	# Only instantiate one $term per program run, since some
+	# Term::ReadLine providers refuse to create a second instance.
+	my $term;
+	sub term {
 		require Term::ReadLine;
-		$ENV{"GIT_SEND_EMAIL_NOTTY"}
-			? Term::ReadLine->new('git-send-email', \*STDIN, \*STDOUT)
-			: Term::ReadLine->new('git-send-email');
-	};
-	if ($@) {
-		$term = FakeTerm->new("$@: going non-interactive");
+		if (!defined $term) {
+			$term = $ENV{"GIT_SEND_EMAIL_NOTTY"}
+				? Term::ReadLine->new('git-send-email', \*STDIN, \*STDOUT)
+				: Term::ReadLine->new('git-send-email');
+		}
+		return $term;
 	}
-	return $term;
 }
 
 sub ask {
