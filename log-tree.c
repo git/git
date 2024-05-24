@@ -684,8 +684,7 @@ static void show_diff_of_diff(struct rev_info *opt)
 		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
 		DIFF_QUEUE_CLEAR(&diff_queued_diff);
 
-		next_commentary_block(opt, NULL);
-		fprintf_ln(opt->diffopt.file, "%s", opt->idiff_title);
+		fprintf_ln(opt->diffopt.file, "\n%s", opt->idiff_title);
 		show_interdiff(opt->idiff_oid1, opt->idiff_oid2, 2,
 			       &opt->diffopt);
 
@@ -704,8 +703,7 @@ static void show_diff_of_diff(struct rev_info *opt)
 		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
 		DIFF_QUEUE_CLEAR(&diff_queued_diff);
 
-		next_commentary_block(opt, NULL);
-		fprintf_ln(opt->diffopt.file, "%s", opt->rdiff_title);
+		fprintf_ln(opt->diffopt.file, "\n%s", opt->rdiff_title);
 		/*
 		 * Pass minimum required diff-options to range-diff; others
 		 * can be added later if deemed desirable.
@@ -903,8 +901,6 @@ void show_log(struct rev_info *opt)
 	strbuf_release(&msgbuf);
 	free(ctx.notes_message);
 	free(ctx.after_subject);
-
-	show_diff_of_diff(opt);
 }
 
 int log_tree_diff_flush(struct rev_info *opt)
@@ -1173,9 +1169,12 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	}
 	if (opt->track_linear && !opt->linear && opt->reverse_output_stage)
 		fprintf(opt->diffopt.file, "\n%s\n", opt->break_bar);
+	if (shown)
+		show_diff_of_diff(opt);
 	opt->loginfo = NULL;
 	maybe_flush_or_die(opt->diffopt.file, "stdout");
 	opt->diffopt.no_free = no_free;
+
 	diff_free(&opt->diffopt);
 	return shown;
 }
