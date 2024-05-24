@@ -9,31 +9,6 @@
 #include "strbuf.h"
 #include "environment.h"
 #include "setup.h"
-#include "copy.h"
-
-static int identical_to_template_hook(const char *name, const char *path)
-{
-	const char *env = getenv("GIT_CLONE_TEMPLATE_DIR");
-	const char *template_dir = get_template_dir(env && *env ? env : NULL);
-	struct strbuf template_path = STRBUF_INIT;
-	int found_template_hook, ret;
-
-	strbuf_addf(&template_path, "%s/hooks/%s", template_dir, name);
-	found_template_hook = access(template_path.buf, X_OK) >= 0;
-#ifdef STRIP_EXTENSION
-	if (!found_template_hook) {
-		strbuf_addstr(&template_path, STRIP_EXTENSION);
-		found_template_hook = access(template_path.buf, X_OK) >= 0;
-	}
-#endif
-	if (!found_template_hook)
-		return 0;
-
-	ret = do_files_match(template_path.buf, path);
-
-	strbuf_release(&template_path);
-	return ret;
-}
 
 const char *find_hook(const char *name)
 {
@@ -70,14 +45,6 @@ const char *find_hook(const char *name)
 		}
 		return NULL;
 	}
-	if (!git_hooks_path && git_env_bool("GIT_CLONE_PROTECTION_ACTIVE", 0) &&
-	    !identical_to_template_hook(name, path.buf))
-		die(_("active `%s` hook found during `git clone`:\n\t%s\n"
-		      "For security reasons, this is disallowed by default.\n"
-		      "If this is intentional and the hook should actually "
-		      "be run, please\nrun the command again with "
-		      "`GIT_CLONE_PROTECTION_ACTIVE=false`"),
-		    name, path.buf);
 	return path.buf;
 }
 

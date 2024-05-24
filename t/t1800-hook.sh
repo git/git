@@ -185,19 +185,4 @@ test_expect_success 'stdin to hooks' '
 	test_cmp expect actual
 '
 
-test_expect_success 'clone protections' '
-	test_config core.hooksPath "$(pwd)/my-hooks" &&
-	mkdir -p my-hooks &&
-	write_script my-hooks/test-hook <<-\EOF &&
-	echo Hook ran $1
-	EOF
-
-	git hook run test-hook 2>err &&
-	test_grep "Hook ran" err &&
-	test_must_fail env GIT_CLONE_PROTECTION_ACTIVE=true \
-		git hook run test-hook 2>err &&
-	test_grep "active .core.hooksPath" err &&
-	test_grep ! "Hook ran" err
-'
-
 test_done
