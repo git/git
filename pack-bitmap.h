@@ -97,9 +97,29 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_i
 
 off_t get_disk_usage_from_bitmap(struct bitmap_index *, struct rev_info *);
 
-void bitmap_writer_show_progress(int show);
-void bitmap_writer_set_checksum(const unsigned char *sha1);
-void bitmap_writer_build_type_index(struct packing_data *to_pack,
+struct bitmap_writer {
+	struct ewah_bitmap *commits;
+	struct ewah_bitmap *trees;
+	struct ewah_bitmap *blobs;
+	struct ewah_bitmap *tags;
+
+	kh_oid_map_t *bitmaps;
+	struct packing_data *to_pack;
+
+	struct bitmapped_commit *selected;
+	unsigned int selected_nr, selected_alloc;
+
+	struct progress *progress;
+	int show_progress;
+	unsigned char pack_checksum[GIT_MAX_RAWSZ];
+};
+
+void bitmap_writer_init(struct bitmap_writer *writer);
+void bitmap_writer_show_progress(struct bitmap_writer *writer, int show);
+void bitmap_writer_set_checksum(struct bitmap_writer *writer,
+				const unsigned char *sha1);
+void bitmap_writer_build_type_index(struct bitmap_writer *writer,
+				    struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
 				    uint32_t index_nr);
 uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
@@ -109,13 +129,17 @@ int rebuild_bitmap(const uint32_t *reposition,
 		   struct bitmap *dest);
 struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
 				      struct commit *commit);
-void bitmap_writer_select_commits(struct commit **indexed_commits,
-		unsigned int indexed_commits_nr, int max_bitmaps);
-int bitmap_writer_build(struct packing_data *to_pack);
-void bitmap_writer_finish(struct pack_idx_entry **index,
+void bitmap_writer_select_commits(struct bitmap_writer *writer,
+				  struct commit **indexed_commits,
+				  unsigned int indexed_commits_nr);
+int bitmap_writer_build(struct bitmap_writer *writer,
+			struct packing_data *to_pack);
+void bitmap_writer_finish(struct bitmap_writer *writer,
+			  struct pack_idx_entry **index,
 			  uint32_t index_nr,
 			  const char *filename,
 			  uint16_t options);
+void bitmap_writer_free(struct bitmap_writer *writer);
 char *midx_bitmap_filename(struct multi_pack_index *midx);
 char *pack_bitmap_filename(struct packed_git *p);
 
