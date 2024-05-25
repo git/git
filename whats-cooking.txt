@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2024, #09; Thu, 23)
+Subject: What's cooking in git.git (May 2024, #10; Fri, 24)
 X-master-at: b9cfe4845cb2562584837bc0101c0ab76490a239
 X-next-at: bbe1065a7e6f9ab964c30003b9eadf3a65c611d5
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2024, #09; Thu, 23)
+What's cooking in git.git (May 2024, #10; Fri, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -21,10 +21,9 @@ We unfortunately had serious regressions in 2.45.1 (and below, down
 to 2.39 maintenance track are affected), and we are trying to assess
 the extent of damage and which changes that went into the release to
 revert.  We know about "git lfs" and "git annex" getting affected.
-If your workflow is affected, you would want to try out 'seen' that
-has proposed reverts to alleviate and report back to us, to make sure
-that the next set of maintenance releases will fix the regressions
-for you.
+We have bunch of reverts planned to fix these regressions that I
+plan to merge to 'next' soonish.  Please test it if you think you're
+affected.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -55,77 +54,187 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* dg/fetch-pack-code-cleanup (2024-05-13) 1 commit
-  (merged to 'next' on 2024-05-17 at c8f8136d2e)
- + fetch-pack: remove unused 'struct loose_object_iter'
+* jc/format-patch-with-range-diff (2024-05-24) 2 commits
+ - format-patch: move range/inter diff at the end of a single patch output
+ - show_log: factor out interdiff/range-diff generation
 
- Code clean-up to remove an unused struct definition.
- source: <20240512005913.342287-1-dave@treblig.org>
+ Move inter/range-diff output to the end of the patch when
+ format-patch adds it to a single patch, instead of writing it
+ before the patch text, to be consistent with what is done for a
+ cover letter for a multi-patch series.
 
-
-* dm/update-index-doc-fix (2024-05-13) 1 commit
-  (merged to 'next' on 2024-05-17 at 2f6cd0d1cc)
- + documentation: git-update-index: add --show-index-version to synopsis
-
- Doc fix.
- source: <20240512031400.28416-1-dov.murik@linux.dev>
+ Comments?
+ source: <20240523225007.2871766-1-gitster@pobox.com>
 
 
-* it/refs-name-conflict (2024-05-06) 1 commit
-  (merged to 'next' on 2024-05-15 at 39ef3ecc88)
- + refs: return conflict error when checking packed refs
+* cc/upload-pack-missing-action (2024-05-24) 3 commits
+ - upload-pack: allow configuring a missing-action
+ - pack-objects: use the missing action API
+ - rev-list: refactor --missing=<missing-action>
 
- Expose "name conflict" error when a ref creation fails due to D/F
- conflict in the ref namespace, to improve an error message given by
- "git fetch".
- source: <pull.1716.v3.git.git.1714791848557.gitgitgadget@gmail.com>
+ Allow a server S that is a lazy clone of another repository X to
+ respond to a request by C that is a lazy clone of S in a way that
+ it omits objects it itself does not have (and has to be lazily
+ fetched from X).
 
+ I would say this is a terribly irresponsive design, especially
+ there is no negociation for S to learn if the objects it is going
+ to omit is obtainable by C from elsewhere.
 
-* jc/patch-flow-updates (2024-05-10) 2 commits
-  (merged to 'next' on 2024-05-16 at d7a885574b)
- + SubmittingPatches: extend the "flow" section
- + SubmittingPatches: move the patch-flow section earlier
- (this branch is used by kn/patch-iteration-doc.)
-
- Doc updates.
- source: <20240510165526.1412338-1-gitster@pobox.com>
+ Will discard.
+ source: <20240524163926.2019648-1-christian.couder@gmail.com>
 
 
-* la/hide-trailer-info (2024-05-02) 11 commits
-  (merged to 'next' on 2024-05-15 at 955ffe4f37)
- + trailer unit tests: inspect iterator contents
- + trailer: document parse_trailers() usage
- + trailer: retire trailer_info_get() from API
- + trailer: make trailer_info struct private
- + trailer: make parse_trailers() return trailer_info pointer
- + interpret-trailers: access trailer_info with new helpers
- + sequencer: use the trailer iterator
- + trailer: teach iterator about non-trailer lines
- + trailer: add unit tests for trailer iterator
- + Makefile: sort UNIT_TEST_PROGRAMS
- + Merge branch 'la/format-trailer-info' into la/hide-trailer-info
+* iw/trace-argv-on-alias (2024-05-24) 4 commits
+ - fixup! run-command: show prepared command
+ - run-command: show prepared command
+ - Documentation: alias: add notes on shell expansion
+ - Documentation: alias: rework notes into points
 
- The trailer API has been reshuffled a bit.
- source: <pull.1696.v4.git.1714625667.gitgitgadget@gmail.com>
+ Log the alias-expanded command lines to the trace output.
+
+ Expecting a (hopefully minor and final) reroll.
+ source: <20240523043806.1223032-1-iwienand@redhat.com>
 
 
-* mt/openindiana-portability (2024-05-17) 7 commits
-  (merged to 'next' on 2024-05-17 at de53f37879)
- + t/t9001-send-email.sh: sed - remove the i flag for s
- + t/t9118-git-svn-funky-branch-names.sh: sed needs semicolon
- + t/t1700-split-index.sh: mv -v is not portable
- + t/t4202-log.sh: fix misspelled variable
- + t/t0600-reffiles-backend.sh: rm -v is not portable
- + t/t9902-completion.sh: backslashes in echo
- + Switch grep from non-portable BRE to portable ERE
+* ps/document-breaking-changes (2024-05-24) 1 commit
+ - docs: document upcoming breaking changes
 
- Portability updates to various uses of grep and sed.
- source: <ZkeMiifGHkIsehz3@telcontar>
+ The structure of the document that records longer-term project
+ decisions to deprecate/remove/update various behaviour has been
+ outlined.
+
+ Under discussion.
+ source: <84c01f1b0a2d24d7de912606f548623601c0d715.1716555034.git.ps@pks.im>
+
+
+* ps/leakfixes (2024-05-24) 21 commits
+ - builtin/mv: fix leaks for submodule gitfile paths
+ - builtin/mv: refactor to use `struct strvec`
+ - builtin/mv duplicate string list memory
+ - builtin/mv: refactor `add_slash()` to always return allocated strings
+ - strvec: add functions to replace and remove strings
+ - submodule: fix leaking memory for submodule entries
+ - commit-reach: fix memory leak in `ahead_behind()`
+ - builtin/credential: clear credential before exit
+ - config: plug various memory leaks
+ - config: clarify memory ownership in `git_config_string()`
+ - builtin/log: stop using globals for format config
+ - builtin/log: stop using globals for log config
+ - convert: refactor code to clarify ownership of check_roundtrip_encoding
+ - diff: refactor code to clarify memory ownership of prefixes
+ - config: clarify memory ownership in `git_config_pathname()`
+ - http: refactor code to clarify memory ownership
+ - checkout: clarify memory ownership in `unique_tracking_name()`
+ - strbuf: fix leak when `appendwholeline()` fails with EOF
+ - transport-helper: fix leaking helper name
+ - t: mark a bunch of tests as leak-free
+ - ci: add missing dependency for TTY prereq
+
+ Leakfixes.
+
+ Will merge to 'next'?
+ source: <cover.1716541556.git.ps@pks.im>
+
+
+* ps/ref-storage-migration (2024-05-24) 11 commits
+ - builtin/refs: new command to migrate ref storage formats
+ - refs: implement logic to migrate between ref storage formats
+ - refs: implement removal of ref storages
+ - refs/files: extract function to iterate through root refs
+ - refs/files: refactor `add_pseudoref_and_head_entries()`
+ - refs: allow to skip creation of reflog entries
+ - refs: pass storage format to `ref_store_init()` explicitly
+ - refs: convert ref storage format to an enum
+ - setup: unset ref storage when reinitializing repository version
+ - Merge branch 'ps/pseudo-ref-terminology' into ps/ref-storage-migration
+ - Merge branch 'ps/refs-without-the-repository-updates' into ps/ref-storage-migration
+ (this branch uses ps/pseudo-ref-terminology and ps/refs-without-the-repository-updates.)
+
+ Allow migrating a repository that uses the files backend for its
+ ref storage to use the reftable backend, with limitations.
+
+ Expecting a reroll.
+ source: <cover.1716545235.git.ps@pks.im>
+
+
+* tb/midx-write-cleanup (2024-05-24) 8 commits
+ - pack-bitmap.c: reimplement `midx_bitmap_filename()` with helper
+ - midx: replace `get_midx_rev_filename()` with a generic helper
+ - midx-write.c: support reading an existing MIDX with `packs_to_include`
+ - midx-write.c: extract `fill_packs_from_midx()`
+ - midx-write.c: extract `should_include_pack()`
+ - midx-write.c: pass `start_pack` to `get_sorted_entries()`
+ - midx-write.c: reduce argument count for `get_sorted_entries()`
+ - midx-write.c: tolerate `--preferred-pack` without bitmaps
+
+ Code clean-up around writing the .midx files.
+
+ Needs review.
+ source: <cover.1716482279.git.me@ttaylorr.com>
+
+
+* tb/pseudo-merge-reachability-bitmap (2024-05-24) 25 commits
+ - t/perf: implement performance tests for pseudo-merge bitmaps
+ - pseudo-merge: implement support for finding existing merges
+ - ewah: `bitmap_equals_ewah()`
+ - pack-bitmap: extra trace2 information
+ - pack-bitmap.c: use pseudo-merges during traversal
+ - t/test-lib-functions.sh: support `--notick` in `test_commit_bulk()`
+ - pack-bitmap: implement test helpers for pseudo-merge
+ - ewah: implement `ewah_bitmap_popcount()`
+ - pseudo-merge: implement support for reading pseudo-merge commits
+ - pack-bitmap.c: read pseudo-merge extension
+ - pseudo-merge: scaffolding for reads
+ - pack-bitmap: extract `read_bitmap()` function
+ - pack-bitmap-write.c: write pseudo-merge table
+ - pseudo-merge: implement support for selecting pseudo-merge commits
+ - config: introduce `git_config_double()`
+ - pack-bitmap: make `bitmap_writer_push_bitmapped_commit()` public
+ - pack-bitmap: implement `bitmap_writer_has_bitmapped_object_id()`
+ - pack-bitmap-write: support storing pseudo-merge commits
+ - pseudo-merge.ch: initial commit
+ - pack-bitmap: move some initialization to `bitmap_writer_init()`
+ - ewah: implement `ewah_bitmap_is_subset()`
+ - Documentation/technical: describe pseudo-merge bitmaps format
+ - Documentation/gitpacking.txt: describe pseudo-merge bitmaps
+ - Documentation/gitpacking.txt: initial commit
+ - Merge branch 'tb/pack-bitmap-write-cleanups' into tb/pseudo-merge-reachability-bitmap
+ (this branch uses tb/pack-bitmap-write-cleanups.)
+
+ The pseudo-merge reachability bitmap to help more efficient storage
+ of the reachability bitmap in a repository with too many refs.
+
+ Needs review.
+ source: <cover.1716499565.git.me@ttaylorr.com>
+
+
+* th/push-local-ff-check-without-lazy-fetch (2024-05-22) 1 commit
+ - push: don't fetch commit object when checking existence
+
+ When "git push" notices that the commit at the tip of the ref on
+ the other side it is about to overwrite does not exist locally, it
+ used to first try fetching it if the local repository is a partial
+ clone. The command has been taught not to do so and immediately
+ fail instead.
+
+ Will merge to 'next'.
+ source: <20240522201559.1677959-1-tom@compton.nu>
+
+
+* th/quiet-lazy-fetch-from-promisor (2024-05-24) 1 commit
+ - promisor-remote: add promisor.quiet configuration option
+
+ The promisor.quiet configuration knob can be set to true to make
+ lazy fetching from promisor remotes silent.
+
+ Comments?
+ source: <20240524090937.2448229-1-tom@compton.nu>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * gt/unit-test-strcmp-offset (2024-05-20) 1 commit
   (merged to 'next' on 2024-05-23 at f672ec425f)
@@ -172,13 +281,7 @@ Release tarballs are available at:
  source: <20240521195659.870714-1-gitster@pobox.com>
 
 
-* jc/fix-2.45.1-and-friends-for-maint (2024-05-22) 12 commits
- - Merge branch 'fixes/2.45.1/2.44' into jc/fix-2.45.1-and-friends-for-maint
- - Merge branch 'fixes/2.45.1/2.43' into fixes/2.45.1/2.44
- - Merge branch 'fixes/2.45.1/2.42' into fixes/2.45.1/2.43
- - Merge branch 'fixes/2.45.1/2.41' into fixes/2.45.1/2.42
- - Merge branch 'fixes/2.45.1/2.40' into fixes/2.45.1/2.41
- - Merge branch 'jc/fix-2.45.1-and-friends-for-2.39' into fixes/2.45.1/2.40
+* jc/fix-2.45.1-and-friends-for-maint (2024-05-24) 6 commits
  - Merge branch 'fixes/2.45.1/2.44' into jc/fix-2.45.1-and-friends-for-maint
  - Merge branch 'fixes/2.45.1/2.43' into fixes/2.45.1/2.44
  - Merge branch 'fixes/2.45.1/2.42' into fixes/2.45.1/2.43
@@ -203,8 +306,6 @@ Release tarballs are available at:
  Will merge to 'next'.
  source: <cf182bb9ee7d4a7eb46e5dbf4f3ef5deb198d823.1716374321.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * es/chainlint-ncores-fix (2024-05-22) 3 commits
   (merged to 'next' on 2024-05-22 at 1e4ab85522)
@@ -228,6 +329,7 @@ Release tarballs are available at:
  + pack-bitmap: avoid use of static `bitmap_writer`
  + pack-bitmap-write.c: move commit_positions into commit_pos fields
  + object.h: add flags allocated by pack-bitmap.h
+ (this branch is used by tb/pseudo-merge-reachability-bitmap.)
 
  The pack bitmap code saw some clean-up to prepare for a follow-up topic.
 
