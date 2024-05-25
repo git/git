@@ -22,6 +22,7 @@ static int fetch_objects(struct repository *repo,
 	struct child_process child = CHILD_PROCESS_INIT;
 	int i;
 	FILE *child_in;
+	int quiet;
 
 	child.git_cmd = 1;
 	child.in = -1;
@@ -31,6 +32,8 @@ static int fetch_objects(struct repository *repo,
 		     "fetch", remote_name, "--no-tags",
 		     "--no-write-fetch-head", "--recurse-submodules=no",
 		     "--filter=blob:none", "--stdin", NULL);
+	if (!git_config_get_bool("promisor.quiet", &quiet) && quiet)
+		strvec_push(&child.args, "--quiet");
 	if (start_command(&child))
 		die(_("promisor-remote: unable to fork off fetch subprocess"));
 	child_in = xfdopen(child.in, "w");

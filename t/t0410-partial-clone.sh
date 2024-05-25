@@ -3,6 +3,7 @@
 test_description='partial clone'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 # missing promisor objects cause repacks which write bitmaps to fail
 GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
@@ -687,6 +688,48 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 	# Sanity check that the file is now present
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
 	! grep "[?]$FILE_HASH" out
+'
+
+test_expect_success 'setup for promisor.quiet tests' '
+	rm -rf server &&
+	test_create_repo server &&
+	test_commit -C server foo &&
+	git -C server rm foo.t &&
+	git -C server commit -m remove &&
+	git -C server config uploadpack.allowanysha1inwant 1 &&
+	git -C server config uploadpack.allowfilter 1
+'
+
+test_expect_success TTY 'promisor.quiet=false shows progress messages' '
+	rm -rf repo &&
+	git clone --filter=blob:none "file://$(pwd)/server" repo &&
+	git -C repo config promisor.quiet "false" &&
+
+	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
+
+	# Ensure that progress messages are written
+	grep "Receiving objects" err
+'
+
+test_expect_success TTY 'promisor.quiet=true does not show progress messages' '
+	rm -rf repo &&
+	git clone --filter=blob:none "file://$(pwd)/server" repo &&
+	git -C repo config promisor.quiet "true" &&
+
+	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
+
+	# Ensure that no progress messages are written
+	! grep "Receiving objects" err
+'
+
+test_expect_success TTY 'promisor.quiet=unconfigured shows progress messages' '
+	rm -rf repo &&
+	git clone --filter=blob:none "file://$(pwd)/server" repo &&
+
+	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
+
+	# Ensure that progress messages are written
+	grep "Receiving objects" err
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
