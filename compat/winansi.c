@@ -595,11 +595,15 @@ static void detect_msys_tty(int fd)
 #endif
 
 static HANDLE std_console_handle;
-static DWORD std_console_mode;
+static DWORD std_console_mode = ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+static UINT std_console_code_page = CP_UTF8;
 
-static void reset_std_console_mode(void)
+static void reset_std_console(void)
 {
-	SetConsoleMode(std_console_handle, std_console_mode);
+	if (std_console_mode != ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+		SetConsoleMode(std_console_handle, std_console_mode);
+	if (std_console_code_page != CP_UTF8)
+		SetConsoleOutputCP(std_console_code_page);
 }
 
 static int enable_virtual_processing(void)
@@ -613,6 +617,14 @@ static int enable_virtual_processing(void)
 		return 0;
 	}
 
+	std_console_code_page = GetConsoleOutputCP();
+	if (std_console_code_page != CP_UTF8)
+		SetConsoleOutputCP(CP_UTF8);
+	if (!std_console_code_page)
+		std_console_code_page = CP_UTF8;
+
+	atexit(reset_std_console);
+
 	if (std_console_mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
 		return 1;
 
@@ -622,7 +634,6 @@ static int enable_virtual_processing(void)
 			    ENABLE_VIRTUAL_TERMINAL_PROCESSING))
 		return 0;
 
-	atexit(reset_std_console_mode);
 	return 1;
 }
 
