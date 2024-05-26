@@ -674,19 +674,15 @@ finish:
 static int run_file_diff(int prompt, const char *prefix,
 			 struct child_process *child)
 {
-	const char *env[] = {
-		"GIT_PAGER=", "GIT_EXTERNAL_DIFF=git-difftool--helper", NULL,
-		NULL
-	};
-
+	strvec_push(&child->env, "GIT_PAGER=");
+	strvec_push(&child->env, "GIT_EXTERNAL_DIFF=git-difftool--helper");
 	if (prompt > 0)
-		env[2] = "GIT_DIFFTOOL_PROMPT=true";
+		strvec_push(&child->env, "GIT_DIFFTOOL_PROMPT=true");
 	else if (!prompt)
-		env[2] = "GIT_DIFFTOOL_NO_PROMPT=true";
+		strvec_push(&child->env, "GIT_DIFFTOOL_NO_PROMPT=true");
 
 	child->git_cmd = 1;
 	child->dir = prefix;
-	strvec_pushv(&child->env, env);
 
 	return run_command(child);
 }
