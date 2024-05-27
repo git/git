@@ -352,6 +352,8 @@ static int reftable_be_remove_on_disk(struct ref_store *ref_store,
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
 
+	reftable_be_release(ref_store);
+
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
 	if (remove_dir_recursively(&sb, 0) < 0) {
 		strbuf_addf(err, "could not delete reftables: %s",
