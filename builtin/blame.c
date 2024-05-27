@@ -718,7 +718,7 @@ static int git_blame_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "blame.ignorerevsfile")) {
-		const char *str;
+		char *str;
 		int ret;
 
 		ret = git_config_pathname(&str, var, value);

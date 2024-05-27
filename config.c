@@ -1346,7 +1346,7 @@ int git_config_string(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
-int git_config_pathname(const char **dest, const char *var, const char *value)
+int git_config_pathname(char **dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
@@ -1597,7 +1597,7 @@ static int git_default_core_config(const char *var, const char *value,
 		return git_config_string(&askpass_program, var, value);
 
 	if (!strcmp(var, "core.excludesfile")) {
-		free((char *)excludes_file);
+		free(excludes_file);
 		return git_config_pathname(&excludes_file, var, value);
 	}
 
@@ -2494,7 +2494,7 @@ int git_configset_get_maybe_bool(struct config_set *set, const char *key, int *d
 		return 1;
 }
 
-int git_configset_get_pathname(struct config_set *set, const char *key, const char **dest)
+int git_configset_get_pathname(struct config_set *set, const char *key, char **dest)
 {
 	const char *value;
 	if (!git_configset_get_value(set, key, &value, NULL))
@@ -2639,7 +2639,7 @@ int repo_config_get_maybe_bool(struct repository *repo,
 }
 
 int repo_config_get_pathname(struct repository *repo,
-			     const char *key, const char **dest)
+			     const char *key, char **dest)
 {
 	int ret;
 	git_config_check_init(repo);
@@ -2738,7 +2738,7 @@ int git_config_get_maybe_bool(const char *key, int *dest)
 	return repo_config_get_maybe_bool(the_repository, key, dest);
 }
 
-int git_config_get_pathname(const char *key, const char **dest)
+int git_config_get_pathname(const char *key, char **dest)
 {
 	return repo_config_get_pathname(the_repository, key, dest);
 }

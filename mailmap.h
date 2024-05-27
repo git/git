@@ -3,7 +3,7 @@
 
 struct string_list;
 
-extern const char *git_mailmap_file;
+extern char *git_mailmap_file;
 extern const char *git_mailmap_blob;
 
 int read_mailmap(struct string_list *map);

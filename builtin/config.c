@@ -277,7 +277,7 @@ static int format_config(struct strbuf *buf, const char *key_,
 			else
 				strbuf_addstr(buf, v ? "true" : "false");
 		} else if (type == TYPE_PATH) {
-			const char *v;
+			char *v;
 			if (git_config_pathname(&v, key_, value_) < 0)
 				return -1;
 			strbuf_addstr(buf, v);

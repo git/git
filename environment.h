@@ -131,8 +131,8 @@ extern int warn_ambiguous_refs;
 extern int warn_on_object_refname_ambiguity;
 extern char *apply_default_whitespace;
 extern char *apply_default_ignorewhitespace;
-extern const char *git_attributes_file;
-extern const char *git_hooks_path;
+extern char *git_attributes_file;
+extern char *git_hooks_path;
 extern int zlib_compression_level;
 extern int pack_compression_level;
 extern size_t packed_git_window_size;
@@ -229,7 +229,7 @@ extern const char *git_log_output_encoding;
 
 extern const char *editor_program;
 extern const char *askpass_program;
-extern const char *excludes_file;
+extern char *excludes_file;
 
 /*
  * Should we print an ellipsis after an abbreviated SHA-1 value

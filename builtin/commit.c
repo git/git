@@ -107,7 +107,7 @@ static enum {
 } commit_style;
 
 static const char *logfile, *force_author;
-static const char *template_file;
+static char *template_file;
 /*
  * The _message variables are commit names from which to take
  * the commit message and/or authorship.

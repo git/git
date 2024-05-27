@@ -957,7 +957,7 @@ static int do_signoff;
 static enum auto_base_setting auto_base;
 static char *from;
 static const char *signature = git_version_string;
-static const char *signature_file;
+static char *signature_file;
 static enum cover_setting config_cover_letter;
 static const char *config_output_directory;
 static enum cover_from_description cover_from_description_mode = COVER_FROM_MESSAGE;

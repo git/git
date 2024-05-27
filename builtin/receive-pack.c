@@ -168,13 +168,13 @@ static int receive_pack_config(const char *var, const char *value,
 	}
 
 	if (strcmp(var, "receive.fsck.skiplist") == 0) {
-		const char *path;
+		char *path;
 
 		if (git_config_pathname(&path, var, value))
 			return 1;
 		strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
 			fsck_msg_types.len ? ',' : '=', path);
-		free((char *)path);
+		free(path);
 		return 0;
 	}
 

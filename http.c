@@ -64,7 +64,7 @@ static char *ssl_key_type;
 static char *ssl_capath;
 static char *curl_no_proxy;
 #ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
-static const char *ssl_pinnedkey;
+static char *ssl_pinnedkey;
 #endif
 static char *ssl_cainfo;
 static long curl_low_speed_limit = -1;
@@ -108,7 +108,7 @@ static struct {
 
 static struct credential proxy_auth = CREDENTIAL_INIT;
 static const char *curl_proxyuserpwd;
-static const char *curl_cookie_file;
+static char *curl_cookie_file;
 static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
 static int http_proactive_auth;
@@ -381,17 +381,17 @@ static int http_options(const char *var, const char *value,
 	if (!strcmp("http.sslversion", var))
 		return git_config_string(&ssl_version, var, value);
 	if (!strcmp("http.sslcert", var))
-		return git_config_pathname((const char **)&ssl_cert, var, value);
+		return git_config_pathname(&ssl_cert, var, value);
 	if (!strcmp("http.sslcerttype", var))
 		return git_config_string((const char **)&ssl_cert_type, var, value);
 	if (!strcmp("http.sslkey", var))
-		return git_config_pathname((const char **)&ssl_key, var, value);
+		return git_config_pathname(&ssl_key, var, value);
 	if (!strcmp("http.sslkeytype", var))
 		return git_config_string((const char **)&ssl_key_type, var, value);
 	if (!strcmp("http.sslcapath", var))
-		return git_config_pathname((const char **)&ssl_capath, var, value);
+		return git_config_pathname(&ssl_capath, var, value);
 	if (!strcmp("http.sslcainfo", var))
-		return git_config_pathname((const char **)&ssl_cainfo, var, value);
+		return git_config_pathname(&ssl_cainfo, var, value);
 	if (!strcmp("http.sslcertpasswordprotected", var)) {
 		ssl_cert_password_required = git_config_bool(var, value);
 		return 0;
