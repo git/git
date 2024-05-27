@@ -62,8 +62,8 @@ static char *diff_order_file_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
-static const char *diff_src_prefix = "a/";
-static const char *diff_dst_prefix = "b/";
+static char *diff_src_prefix;
+static char *diff_dst_prefix;
 static int diff_relative;
 static int diff_stat_name_width;
 static int diff_stat_graph_width;
@@ -411,10 +411,12 @@ int git_diff_ui_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "diff.srcprefix")) {
-		return git_config_string(&diff_src_prefix, var, value);
+		FREE_AND_NULL(diff_src_prefix);
+		return git_config_string((const char **) &diff_src_prefix, var, value);
 	}
 	if (!strcmp(var, "diff.dstprefix")) {
-		return git_config_string(&diff_dst_prefix, var, value);
+		FREE_AND_NULL(diff_dst_prefix);
+		return git_config_string((const char **) &diff_dst_prefix, var, value);
 	}
 	if (!strcmp(var, "diff.relative")) {
 		diff_relative = git_config_bool(var, value);
@@ -3433,8 +3435,8 @@ void diff_set_noprefix(struct diff_options *options)
 
 void diff_set_default_prefix(struct diff_options *options)
 {
-	options->a_prefix = diff_src_prefix;
-	options->b_prefix = diff_dst_prefix;
+	options->a_prefix = diff_src_prefix ? diff_src_prefix : "a/";
+	options->b_prefix = diff_dst_prefix ? diff_dst_prefix : "b/";
 }
 
 struct userdiff_driver *get_textconv(struct repository *r,
@@ -5371,8 +5373,8 @@ static int diff_opt_default_prefix(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(optarg);
-	diff_src_prefix = "a/";
-	diff_dst_prefix = "b/";
+	FREE_AND_NULL(diff_src_prefix);
+	FREE_AND_NULL(diff_dst_prefix);
 	diff_set_default_prefix(options);
 	return 0;
 }
