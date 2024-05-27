@@ -6,6 +6,8 @@ default="sparse hdr-check sha256 leaks test check-docs doc"
 skip=" "
 more=" "
 
+: ${T:=""}
+
 for t
 do
 	case "$t" in
@@ -35,9 +37,9 @@ do
 		;;
 	leaks)
 		SANITIZE=leak \
-		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 test &&
+		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 $T CC=clang test &&
 		SANITIZE=leak \
-		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 clean
+		GIT_TEST_PASSING_SANITIZE_LEAK=true Meta/Make -j16 CC=clang clean
 		;;
 	coccicheck)
 		SPATCH_FLAGS=--recursive-includes Meta/Make -j16 "$t"
@@ -48,7 +50,10 @@ do
 		rm -f compat/regex/regex.o
 		;;
 	sha256)
-		GIT_TEST_DEFAULT_HASH=sha256 Meta/Make -j16 test
+		GIT_TEST_DEFAULT_HASH=sha256 Meta/Make -j16 $T test
+		;;
+	test)
+		Meta/Make -j16 $T "$t"
 		;;
 	*)
 		Meta/Make -j16 "$t"
