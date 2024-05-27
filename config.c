@@ -1564,8 +1564,10 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.checkroundtripencoding"))
-		return git_config_string(&check_roundtrip_encoding, var, value);
+	if (!strcmp(var, "core.checkroundtripencoding")) {
+		FREE_AND_NULL(check_roundtrip_encoding);
+		return git_config_string((const char **) &check_roundtrip_encoding, var, value);
+	}
 
 	if (!strcmp(var, "core.notesref")) {
 		if (!value)
