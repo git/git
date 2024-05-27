@@ -183,11 +183,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct strbuf a_src_dir = STRBUF_INIT;
 	enum update_mode *modes, dst_mode = 0;
 	struct stat st, dest_st;
-	struct string_list src_for_dst = STRING_LIST_INIT_NODUP;
+	struct string_list src_for_dst = STRING_LIST_INIT_DUP;
 	struct lock_file lock_file = LOCK_INIT;
 	struct cache_entry *ce;
-	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
-	struct string_list dirty_paths = STRING_LIST_INIT_NODUP;
+	struct string_list only_match_skip_worktree = STRING_LIST_INIT_DUP;
+	struct string_list dirty_paths = STRING_LIST_INIT_DUP;
+	int ret;
 
 	git_config(git_default_config, NULL);
 
@@ -440,8 +441,10 @@ remove_entry:
 
 	if (only_match_skip_worktree.nr) {
 		advise_on_updating_sparse_paths(&only_match_skip_worktree);
-		if (!ignore_errors)
-			return 1;
+		if (!ignore_errors) {
+			ret = 1;
+			goto out;
+		}
 	}
 
 	for (i = 0; i < argc; i++) {
@@ -566,12 +569,16 @@ remove_entry:
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+	ret = 0;
+
+out:
 	free(dst_w_slash);
 	string_list_clear(&src_for_dst, 0);
 	string_list_clear(&dirty_paths, 0);
+	string_list_clear(&only_match_skip_worktree, 0);
 	UNLEAK(source);
 	UNLEAK(dest_path);
 	free(submodule_gitfile);
 	free(modes);
-	return 0;
+	return ret;
 }
