@@ -48,22 +48,8 @@
 #define COVER_FROM_AUTO_MAX_SUBJECT_LEN 100
 #define FORMAT_PATCH_NAME_MAX_DEFAULT 64
 
-/* Set a default date-time format for git log ("log.date" config variable) */
-static const char *default_date_mode = NULL;
-
-static int default_abbrev_commit;
-static int default_show_root = 1;
-static int default_follow;
-static int default_show_signature;
-static int default_encode_email_headers = 1;
-static int decoration_style;
-static int decoration_given;
-static int use_mailmap_config = 1;
 static unsigned int force_in_body_from;
 static int stdout_mboxrd;
-static const char *fmt_patch_subject_prefix = "PATCH";
-static int fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
-static const char *fmt_pretty;
 static int format_no_prefix;
 
 static const char * const builtin_log_usage[] = {
@@ -111,6 +97,39 @@ static int parse_decoration_style(const char *value)
 	return -1;
 }
 
+struct log_config {
+	int default_abbrev_commit;
+	int default_show_root;
+	int default_follow;
+	int default_show_signature;
+	int default_encode_email_headers;
+	int decoration_style;
+	int decoration_given;
+	int use_mailmap_config;
+	char *fmt_patch_subject_prefix;
+	int fmt_patch_name_max;
+	char *fmt_pretty;
+	char *default_date_mode;
+};
+
+static void log_config_init(struct log_config *cfg)
+{
+	memset(cfg, 0, sizeof(*cfg));
+	cfg->default_show_root = 1;
+	cfg->default_encode_email_headers = 1;
+	cfg->use_mailmap_config = 1;
+	cfg->fmt_patch_subject_prefix = xstrdup("PATCH");
+	cfg->fmt_patch_name_max = FORMAT_PATCH_NAME_MAX_DEFAULT;
+	cfg->decoration_style = auto_decoration_style();
+}
+
+static void log_config_release(struct log_config *cfg)
+{
+	free(cfg->default_date_mode);
+	free(cfg->fmt_pretty);
+	free(cfg->fmt_patch_subject_prefix);
+}
+
 static int use_default_decoration_filter = 1;
 static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
 static struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
@@ -127,20 +146,22 @@ static int clear_decorations_callback(const struct option *opt UNUSED,
 	return 0;
 }
 
-static int decorate_callback(const struct option *opt UNUSED, const char *arg,
+static int decorate_callback(const struct option *opt, const char *arg,
 			     int unset)
 {
-	if (unset)
-		decoration_style = 0;
-	else if (arg)
-		decoration_style = parse_decoration_style(arg);
-	else
-		decoration_style = DECORATE_SHORT_REFS;
+	struct log_config *cfg = opt->value;
 
-	if (decoration_style < 0)
+	if (unset)
+		cfg->decoration_style = 0;
+	else if (arg)
+		cfg->decoration_style = parse_decoration_style(arg);
+	else
+		cfg->decoration_style = DECORATE_SHORT_REFS;
+
+	if (cfg->decoration_style < 0)
 		die(_("invalid --decorate option: %s"), arg);
 
-	decoration_given = 1;
+	cfg->decoration_given = 1;
 
 	return 0;
 }
@@ -160,32 +181,26 @@ static int log_line_range_callback(const struct option *option, const char *arg,
 	return 0;
 }
 
-static void init_log_defaults(void)
+static void cmd_log_init_defaults(struct rev_info *rev,
+				  struct log_config *cfg)
 {
-	init_diff_ui_defaults();
-
-	decoration_style = auto_decoration_style();
-}
-
-static void cmd_log_init_defaults(struct rev_info *rev)
-{
-	if (fmt_pretty)
-		get_commit_format(fmt_pretty, rev);
-	if (default_follow)
+	if (cfg->fmt_pretty)
+		get_commit_format(cfg->fmt_pretty, rev);
+	if (cfg->default_follow)
 		rev->diffopt.flags.default_follow_renames = 1;
 	rev->verbose_header = 1;
 	init_diffstat_widths(&rev->diffopt);
 	rev->diffopt.flags.recursive = 1;
 	rev->diffopt.flags.allow_textconv = 1;
-	rev->abbrev_commit = default_abbrev_commit;
-	rev->show_root_diff = default_show_root;
-	rev->subject_prefix = fmt_patch_subject_prefix;
-	rev->patch_name_max = fmt_patch_name_max;
-	rev->show_signature = default_show_signature;
-	rev->encode_email_headers = default_encode_email_headers;
+	rev->abbrev_commit = cfg->default_abbrev_commit;
+	rev->show_root_diff = cfg->default_show_root;
+	rev->subject_prefix = cfg->fmt_patch_subject_prefix;
+	rev->patch_name_max = cfg->fmt_patch_name_max;
+	rev->show_signature = cfg->default_show_signature;
+	rev->encode_email_headers = cfg->default_encode_email_headers;
 
-	if (default_date_mode)
-		parse_date_format(default_date_mode, &rev->date_mode);
+	if (cfg->default_date_mode)
+		parse_date_format(cfg->default_date_mode, &rev->date_mode);
 }
 
 static void set_default_decoration_filter(struct decoration_filter *decoration_filter)
@@ -233,7 +248,8 @@ static void set_default_decoration_filter(struct decoration_filter *decoration_f
 }
 
 static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
-			 struct rev_info *rev, struct setup_revision_opt *opt)
+			 struct rev_info *rev, struct setup_revision_opt *opt,
+			 struct log_config *cfg)
 {
 	struct userformat_want w;
 	int quiet = 0, source = 0, mailmap;
@@ -258,7 +274,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 				N_("pattern"), N_("only decorate refs that match <pattern>")),
 		OPT_STRING_LIST(0, "decorate-refs-exclude", &decorate_refs_exclude,
 				N_("pattern"), N_("do not decorate refs that match <pattern>")),
-		OPT_CALLBACK_F(0, "decorate", NULL, NULL, N_("decorate options"),
+		OPT_CALLBACK_F(0, "decorate", cfg, NULL, N_("decorate options"),
 			       PARSE_OPT_OPTARG, decorate_callback),
 		OPT_CALLBACK('L', NULL, &line_cb, "range:file",
 			     N_("trace the evolution of line range <start>,<end> or function :<funcname> in <file>"),
@@ -269,7 +285,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	line_cb.rev = rev;
 	line_cb.prefix = prefix;
 
-	mailmap = use_mailmap_config;
+	mailmap = cfg->use_mailmap_config;
 	argc = parse_options(argc, argv, prefix,
 			     builtin_log_options, builtin_log_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT |
@@ -314,8 +330,8 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		 * "log --pretty=raw" is special; ignore UI oriented
 		 * configuration variables such as decoration.
 		 */
-		if (!decoration_given)
-			decoration_style = 0;
+		if (!cfg->decoration_given)
+			cfg->decoration_style = 0;
 		if (!rev->abbrev_commit_given)
 			rev->abbrev_commit = 0;
 	}
@@ -326,24 +342,24 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			 * Disable decoration loading if the format will not
 			 * show them anyway.
 			 */
-			decoration_style = 0;
-		} else if (!decoration_style) {
+			cfg->decoration_style = 0;
+		} else if (!cfg->decoration_style) {
 			/*
 			 * If we are going to show them, make sure we do load
 			 * them here, but taking care not to override a
 			 * specific style set by config or --decorate.
 			 */
-			decoration_style = DECORATE_SHORT_REFS;
+			cfg->decoration_style = DECORATE_SHORT_REFS;
 		}
 	}
 
-	if (decoration_style || rev->simplify_by_decoration) {
+	if (cfg->decoration_style || rev->simplify_by_decoration) {
 		set_default_decoration_filter(&decoration_filter);
 
-		if (decoration_style)
+		if (cfg->decoration_style)
 			rev->show_decorations = 1;
 
-		load_ref_decorations(&decoration_filter, decoration_style);
+		load_ref_decorations(&decoration_filter, cfg->decoration_style);
 	}
 
 	if (rev->line_level_traverse)
@@ -353,16 +369,11 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 }
 
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
-			 struct rev_info *rev, struct setup_revision_opt *opt)
+			 struct rev_info *rev, struct setup_revision_opt *opt,
+			 struct log_config *cfg)
 {
-	cmd_log_init_defaults(rev);
-	cmd_log_init_finish(argc, argv, prefix, rev, opt);
-}
-
-static int cmd_log_deinit(int ret, struct rev_info *rev)
-{
-	release_revisions(rev);
-	return ret;
+	cmd_log_init_defaults(rev, cfg);
+	cmd_log_init_finish(argc, argv, prefix, rev, opt, cfg);
 }
 
 /*
@@ -566,30 +577,37 @@ static int cmd_log_walk(struct rev_info *rev)
 static int git_log_config(const char *var, const char *value,
 			  const struct config_context *ctx, void *cb)
 {
+	struct log_config *cfg = cb;
 	const char *slot_name;
 
-	if (!strcmp(var, "format.pretty"))
-		return git_config_string(&fmt_pretty, var, value);
-	if (!strcmp(var, "format.subjectprefix"))
-		return git_config_string(&fmt_patch_subject_prefix, var, value);
+	if (!strcmp(var, "format.pretty")) {
+		FREE_AND_NULL(cfg->fmt_pretty);
+		return git_config_string((const char **) &cfg->fmt_pretty, var, value);
+	}
+	if (!strcmp(var, "format.subjectprefix")) {
+		FREE_AND_NULL(cfg->fmt_patch_subject_prefix);
+		return git_config_string((const char **) &cfg->fmt_patch_subject_prefix, var, value);
+	}
 	if (!strcmp(var, "format.filenamemaxlength")) {
-		fmt_patch_name_max = git_config_int(var, value, ctx->kvi);
+		cfg->fmt_patch_name_max = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp(var, "format.encodeemailheaders")) {
-		default_encode_email_headers = git_config_bool(var, value);
+		cfg->default_encode_email_headers = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.abbrevcommit")) {
-		default_abbrev_commit = git_config_bool(var, value);
+		cfg->default_abbrev_commit = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "log.date"))
-		return git_config_string(&default_date_mode, var, value);
+	if (!strcmp(var, "log.date")) {
+		FREE_AND_NULL(cfg->default_date_mode);
+		return git_config_string((const char **) &cfg->default_date_mode, var, value);
+	}
 	if (!strcmp(var, "log.decorate")) {
-		decoration_style = parse_decoration_style(value);
-		if (decoration_style < 0)
-			decoration_style = 0; /* maybe warn? */
+		cfg->decoration_style = parse_decoration_style(value);
+		if (cfg->decoration_style < 0)
+			cfg->decoration_style = 0; /* maybe warn? */
 		return 0;
 	}
 	if (!strcmp(var, "log.diffmerges")) {
@@ -598,21 +616,21 @@ static int git_log_config(const char *var, const char *value,
 		return diff_merges_config(value);
 	}
 	if (!strcmp(var, "log.showroot")) {
-		default_show_root = git_config_bool(var, value);
+		cfg->default_show_root = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.follow")) {
-		default_follow = git_config_bool(var, value);
+		cfg->default_follow = git_config_bool(var, value);
 		return 0;
 	}
 	if (skip_prefix(var, "color.decorate.", &slot_name))
 		return parse_decorate_color_config(var, slot_name, value);
 	if (!strcmp(var, "log.mailmap")) {
-		use_mailmap_config = git_config_bool(var, value);
+		cfg->use_mailmap_config = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.showsignature")) {
-		default_show_signature = git_config_bool(var, value);
+		cfg->default_show_signature = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -621,11 +639,14 @@ static int git_log_config(const char *var, const char *value,
 
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 {
+	struct log_config cfg;
 	struct rev_info rev;
 	struct setup_revision_opt opt;
+	int ret;
 
-	init_log_defaults();
-	git_config(git_log_config, NULL);
+	log_config_init(&cfg);
+	init_diff_ui_defaults();
+	git_config(git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
 	git_config(grep_config, &rev.grep_filter);
@@ -635,10 +656,15 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.revarg_opt = REVARG_COMMITTISH;
-	cmd_log_init(argc, argv, prefix, &rev, &opt);
+	cmd_log_init(argc, argv, prefix, &rev, &opt, &cfg);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
-	return cmd_log_deinit(cmd_log_walk(&rev), &rev);
+
+	ret = cmd_log_walk(&rev);
+
+	release_revisions(&rev);
+	log_config_release(&cfg);
+	return ret;
 }
 
 static void show_tagger(const char *buf, struct rev_info *rev)
@@ -733,14 +759,16 @@ static void show_setup_revisions_tweak(struct rev_info *rev)
 
 int cmd_show(int argc, const char **argv, const char *prefix)
 {
+	struct log_config cfg;
 	struct rev_info rev;
 	unsigned int i;
 	struct setup_revision_opt opt;
 	struct pathspec match_all;
 	int ret = 0;
 
-	init_log_defaults();
-	git_config(git_log_config, NULL);
+	log_config_init(&cfg);
+	init_diff_ui_defaults();
+	git_config(git_log_config, &cfg);
 
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
@@ -759,10 +787,14 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.tweak = show_setup_revisions_tweak;
-	cmd_log_init(argc, argv, prefix, &rev, &opt);
+	cmd_log_init(argc, argv, prefix, &rev, &opt, &cfg);
 
-	if (!rev.no_walk)
-		return cmd_log_deinit(cmd_log_walk(&rev), &rev);
+	if (!rev.no_walk) {
+		ret = cmd_log_walk(&rev);
+		release_revisions(&rev);
+		log_config_release(&cfg);
+		return ret;
+	}
 
 	rev.diffopt.no_free = 1;
 	for (i = 0; i < rev.pending.nr && !ret; i++) {
@@ -832,8 +864,10 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 
 	rev.diffopt.no_free = 0;
 	diff_free(&rev.diffopt);
+	release_revisions(&rev);
+	log_config_release(&cfg);
 
-	return cmd_log_deinit(ret, &rev);
+	return ret;
 }
 
 /*
@@ -841,11 +875,14 @@ int cmd_show(int argc, const char **argv, const char *prefix)
  */
 int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 {
+	struct log_config cfg;
 	struct rev_info rev;
 	struct setup_revision_opt opt;
+	int ret;
 
-	init_log_defaults();
-	git_config(git_log_config, NULL);
+	log_config_init(&cfg);
+	init_diff_ui_defaults();
+	git_config(git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
 	init_reflog_walk(&rev.reflog_info);
@@ -854,14 +891,18 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	rev.verbose_header = 1;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	cmd_log_init_defaults(&rev);
+	cmd_log_init_defaults(&rev, &cfg);
 	rev.abbrev_commit = 1;
 	rev.commit_format = CMIT_FMT_ONELINE;
 	rev.use_terminator = 1;
 	rev.always_show_header = 1;
-	cmd_log_init_finish(argc, argv, prefix, &rev, &opt);
+	cmd_log_init_finish(argc, argv, prefix, &rev, &opt, &cfg);
 
-	return cmd_log_deinit(cmd_log_walk(&rev), &rev);
+	ret = cmd_log_walk(&rev);
+
+	release_revisions(&rev);
+	log_config_release(&cfg);
+	return ret;
 }
 
 static void log_setup_revisions_tweak(struct rev_info *rev)
@@ -876,11 +917,14 @@ static void log_setup_revisions_tweak(struct rev_info *rev)
 
 int cmd_log(int argc, const char **argv, const char *prefix)
 {
+	struct log_config cfg;
 	struct rev_info rev;
 	struct setup_revision_opt opt;
+	int ret;
 
-	init_log_defaults();
-	git_config(git_log_config, NULL);
+	log_config_init(&cfg);
+	init_diff_ui_defaults();
+	git_config(git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
 	git_config(grep_config, &rev.grep_filter);
@@ -890,8 +934,13 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	opt.def = "HEAD";
 	opt.revarg_opt = REVARG_COMMITTISH;
 	opt.tweak = log_setup_revisions_tweak;
-	cmd_log_init(argc, argv, prefix, &rev, &opt);
-	return cmd_log_deinit(cmd_log_walk(&rev), &rev);
+	cmd_log_init(argc, argv, prefix, &rev, &opt, &cfg);
+
+	ret = cmd_log_walk(&rev);
+
+	release_revisions(&rev);
+	log_config_release(&cfg);
+	return ret;
 }
 
 /* format-patch */
@@ -1884,6 +1933,7 @@ static void infer_range_diff_ranges(struct strbuf *r1,
 
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
+	struct log_config cfg;
 	struct commit *commit;
 	struct commit **list = NULL;
 	struct rev_info rev;
@@ -1943,7 +1993,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    N_("start numbering patches at <n> instead of 1")),
 		OPT_STRING('v', "reroll-count", &reroll_count, N_("reroll-count"),
 			    N_("mark the series as Nth re-roll")),
-		OPT_INTEGER(0, "filename-max-length", &fmt_patch_name_max,
+		OPT_INTEGER(0, "filename-max-length", &cfg.fmt_patch_name_max,
 			    N_("max length of output filename")),
 		OPT_CALLBACK_F(0, "rfc", &rfc, N_("rfc"),
 			       N_("add <rfc> (default 'RFC') before 'PATCH'"),
@@ -2017,16 +2067,17 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	extra_to.strdup_strings = 1;
 	extra_cc.strdup_strings = 1;
 
-	init_log_defaults();
+	log_config_init(&cfg);
+	init_diff_ui_defaults();
 	init_display_notes(&notes_opt);
-	git_config(git_format_config, NULL);
+	git_config(git_format_config, &cfg);
 	repo_init_revisions(the_repository, &rev, prefix);
 	git_config(grep_config, &rev.grep_filter);
 
 	rev.show_notes = show_notes;
 	memcpy(&rev.notes_opt, &notes_opt, sizeof(notes_opt));
 	rev.commit_format = CMIT_FMT_EMAIL;
-	rev.encode_email_headers = default_encode_email_headers;
+	rev.encode_email_headers = cfg.default_encode_email_headers;
 	rev.expand_tabs_in_log_default = 0;
 	rev.verbose_header = 1;
 	rev.diff = 1;
@@ -2037,7 +2088,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
 
-	strbuf_addstr(&sprefix, fmt_patch_subject_prefix);
+	strbuf_addstr(&sprefix, cfg.fmt_patch_subject_prefix);
 	if (format_no_prefix)
 		diff_set_noprefix(&rev.diffopt);
 
@@ -2059,8 +2110,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.force_in_body_from = force_in_body_from;
 
 	/* Make sure "0000-$sub.patch" gives non-negative length for $sub */
-	if (fmt_patch_name_max <= strlen("0000-") + strlen(fmt_patch_suffix))
-		fmt_patch_name_max = strlen("0000-") + strlen(fmt_patch_suffix);
+	if (cfg.fmt_patch_name_max <= strlen("0000-") + strlen(fmt_patch_suffix))
+		cfg.fmt_patch_name_max = strlen("0000-") + strlen(fmt_patch_suffix);
 
 	if (cover_from_description_arg)
 		cover_from_description_mode = parse_cover_from_description(cover_from_description_arg);
@@ -2156,7 +2207,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.always_show_header = 1;
 
 	rev.zero_commit = zero_commit;
-	rev.patch_name_max = fmt_patch_name_max;
+	rev.patch_name_max = cfg.fmt_patch_name_max;
 
 	if (!rev.diffopt.flags.text && !no_binary_diff)
 		rev.diffopt.flags.binary = 1;
@@ -2450,7 +2501,9 @@ done:
 	if (rev.ref_message_ids)
 		string_list_clear(rev.ref_message_ids, 0);
 	free(rev.ref_message_ids);
-	return cmd_log_deinit(0, &rev);
+	release_revisions(&rev);
+	log_config_release(&cfg);
+	return 0;
 }
 
 static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
