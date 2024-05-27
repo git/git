@@ -20,6 +20,7 @@
 #include "read-cache-ll.h"
 #include "repository.h"
 #include "setup.h"
+#include "strvec.h"
 #include "submodule.h"
 #include "entry.h"
 
@@ -38,42 +39,32 @@ enum update_mode {
 #define DUP_BASENAME 1
 #define KEEP_TRAILING_SLASH 2
 
-static const char **internal_prefix_pathspec(const char *prefix,
-					     const char **pathspec,
-					     int count, unsigned flags)
+static void internal_prefix_pathspec(struct strvec *out,
+				     const char *prefix,
+				     const char **pathspec,
+				     int count, unsigned flags)
 {
-	int i;
-	const char **result;
 	int prefixlen = prefix ? strlen(prefix) : 0;
-	ALLOC_ARRAY(result, count + 1);
 
 	/* Create an intermediate copy of the pathspec based on the flags */
-	for (i = 0; i < count; i++) {
-		int length = strlen(pathspec[i]);
-		int to_copy = length;
-		char *it;
+	for (int i = 0; i < count; i++) {
+		size_t length = strlen(pathspec[i]);
+		size_t to_copy = length;
+		const char *maybe_basename;
+		char *trimmed, *prefixed_path;
+
 		while (!(flags & KEEP_TRAILING_SLASH) &&
 		       to_copy > 0 && is_dir_sep(pathspec[i][to_copy - 1]))
 			to_copy--;
 
-		it = xmemdupz(pathspec[i], to_copy);
-		if (flags & DUP_BASENAME) {
-			result[i] = xstrdup(basename(it));
-			free(it);
-		} else {
-			result[i] = it;
-		}
-	}
-	result[count] = NULL;
+		trimmed = xmemdupz(pathspec[i], to_copy);
+		maybe_basename = (flags & DUP_BASENAME) ? basename(trimmed) : trimmed;
+		prefixed_path = prefix_path(prefix, prefixlen, maybe_basename);
+		strvec_push(out, prefixed_path);
 
-	/* Prefix the pathspec and free the old intermediate strings */
-	for (i = 0; i < count; i++) {
-		const char *match = prefix_path(prefix, prefixlen, result[i]);
-		free((char *) result[i]);
-		result[i] = match;
+		free(prefixed_path);
+		free(trimmed);
 	}
-
-	return result;
 }
 
 static char *add_slash(const char *path)
@@ -176,7 +167,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "sparse", &ignore_sparse, N_("allow updating entries outside of the sparse-checkout cone")),
 		OPT_END(),
 	};
-	const char **source, **destination, **dest_path, **submodule_gitfile;
+	struct strvec sources = STRVEC_INIT;
+	struct strvec dest_paths = STRVEC_INIT;
+	struct strvec destinations = STRVEC_INIT;
+	const char **submodule_gitfile;
 	char *dst_w_slash = NULL;
 	const char **src_dir = NULL;
 	int src_dir_nr = 0, src_dir_alloc = 0;
@@ -201,7 +195,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	source = internal_prefix_pathspec(prefix, argv, argc, 0);
+	internal_prefix_pathspec(&sources, prefix, argv, argc, 0);
 	CALLOC_ARRAY(modes, argc);
 
 	/*
@@ -212,41 +206,39 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	flags = KEEP_TRAILING_SLASH;
 	if (argc == 1 && is_directory(argv[0]) && !is_directory(argv[1]))
 		flags = 0;
-	dest_path = internal_prefix_pathspec(prefix, argv + argc, 1, flags);
-	dst_w_slash = add_slash(dest_path[0]);
+	internal_prefix_pathspec(&dest_paths, prefix, argv + argc, 1, flags);
+	dst_w_slash = add_slash(dest_paths.v[0]);
 	submodule_gitfile = xcalloc(argc, sizeof(char *));
 
-	if (dest_path[0][0] == '\0')
+	if (dest_paths.v[0][0] == '\0')
 		/* special case: "." was normalized to "" */
-		destination = internal_prefix_pathspec(dest_path[0], argv, argc, DUP_BASENAME);
-	else if (!lstat(dest_path[0], &st) &&
-			S_ISDIR(st.st_mode)) {
-		destination = internal_prefix_pathspec(dst_w_slash, argv, argc, DUP_BASENAME);
+		internal_prefix_pathspec(&destinations, dest_paths.v[0], argv, argc, DUP_BASENAME);
+	else if (!lstat(dest_paths.v[0], &st) && S_ISDIR(st.st_mode)) {
+		internal_prefix_pathspec(&destinations, dst_w_slash, argv, argc, DUP_BASENAME);
+	} else if (!path_in_sparse_checkout(dst_w_slash, the_repository->index) &&
+		   empty_dir_has_sparse_contents(dst_w_slash)) {
+		internal_prefix_pathspec(&destinations, dst_w_slash, argv, argc, DUP_BASENAME);
+		dst_mode = SKIP_WORKTREE_DIR;
+	} else if (argc != 1) {
+		die(_("destination '%s' is not a directory"), dest_paths.v[0]);
 	} else {
-		if (!path_in_sparse_checkout(dst_w_slash, the_repository->index) &&
-		    empty_dir_has_sparse_contents(dst_w_slash)) {
-			destination = internal_prefix_pathspec(dst_w_slash, argv, argc, DUP_BASENAME);
-			dst_mode = SKIP_WORKTREE_DIR;
-		} else if (argc != 1) {
-			die(_("destination '%s' is not a directory"), dest_path[0]);
-		} else {
-			destination = dest_path;
-			/*
-			 * <destination> is a file outside of sparse-checkout
-			 * cone. Insist on cone mode here for backward
-			 * compatibility. We don't want dst_mode to be assigned
-			 * for a file when the repo is using no-cone mode (which
-			 * is deprecated at this point) sparse-checkout. As
-			 * SPARSE here is only considering cone-mode situation.
-			 */
-			if (!path_in_cone_mode_sparse_checkout(destination[0], the_repository->index))
-				dst_mode = SPARSE;
-		}
+		strvec_pushv(&destinations, dest_paths.v);
+
+		/*
+		 * <destination> is a file outside of sparse-checkout
+		 * cone. Insist on cone mode here for backward
+		 * compatibility. We don't want dst_mode to be assigned
+		 * for a file when the repo is using no-cone mode (which
+		 * is deprecated at this point) sparse-checkout. As
+		 * SPARSE here is only considering cone-mode situation.
+		 */
+		if (!path_in_cone_mode_sparse_checkout(destinations.v[0], the_repository->index))
+			dst_mode = SPARSE;
 	}
 
 	/* Checking */
 	for (i = 0; i < argc; i++) {
-		const char *src = source[i], *dst = destination[i];
+		const char *src = sources.v[i], *dst = destinations.v[i];
 		int length;
 		const char *bad = NULL;
 		int skip_sparse = 0;
@@ -330,8 +322,6 @@ dir_check:
 			src_dir[src_dir_nr++] = src;
 
 			n = argc + last - first;
-			REALLOC_ARRAY(source, n);
-			REALLOC_ARRAY(destination, n);
 			REALLOC_ARRAY(modes, n);
 			REALLOC_ARRAY(submodule_gitfile, n);
 
@@ -341,12 +331,16 @@ dir_check:
 			for (j = 0; j < last - first; j++) {
 				const struct cache_entry *ce = the_repository->index->cache[first + j];
 				const char *path = ce->name;
-				source[argc + j] = path;
-				destination[argc + j] =
-					prefix_path(dst_with_slash, dst_with_slash_len, path + length + 1);
+				char *prefixed_path = prefix_path(dst_with_slash, dst_with_slash_len, path + length + 1);
+
+				strvec_push(&sources, path);
+				strvec_push(&destinations, prefixed_path);
+
 				memset(modes + argc + j, 0, sizeof(enum update_mode));
 				modes[argc + j] |= ce_skip_worktree(ce) ? SPARSE : INDEX;
 				submodule_gitfile[argc + j] = NULL;
+
+				free(prefixed_path);
 			}
 
 			free(dst_with_slash);
@@ -430,8 +424,8 @@ act_on_entry:
 remove_entry:
 		if (--argc > 0) {
 			int n = argc - i;
-			MOVE_ARRAY(source + i, source + i + 1, n);
-			MOVE_ARRAY(destination + i, destination + i + 1, n);
+			strvec_remove(&sources, i);
+			strvec_remove(&destinations, i);
 			MOVE_ARRAY(modes + i, modes + i + 1, n);
 			MOVE_ARRAY(submodule_gitfile + i,
 				   submodule_gitfile + i + 1, n);
@@ -448,7 +442,7 @@ remove_entry:
 	}
 
 	for (i = 0; i < argc; i++) {
-		const char *src = source[i], *dst = destination[i];
+		const char *src = sources.v[i], *dst = destinations.v[i];
 		enum update_mode mode = modes[i];
 		int pos;
 		int sparse_and_dirty = 0;
@@ -576,8 +570,9 @@ out:
 	string_list_clear(&src_for_dst, 0);
 	string_list_clear(&dirty_paths, 0);
 	string_list_clear(&only_match_skip_worktree, 0);
-	UNLEAK(source);
-	UNLEAK(dest_path);
+	strvec_clear(&sources);
+	strvec_clear(&dest_paths);
+	strvec_clear(&destinations);
 	free(submodule_gitfile);
 	free(modes);
 	return ret;
