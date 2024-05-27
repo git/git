@@ -207,19 +207,11 @@ int reftable_new_merged_table(struct reftable_merged_table **dest,
 	return 0;
 }
 
-/* clears the list of subtable, without affecting the readers themselves. */
-void merged_table_release(struct reftable_merged_table *mt)
-{
-	FREE_AND_NULL(mt->stack);
-	mt->stack_len = 0;
-}
-
 void reftable_merged_table_free(struct reftable_merged_table *mt)
 {
-	if (!mt) {
+	if (!mt)
 		return;
-	}
-	merged_table_release(mt);
+	FREE_AND_NULL(mt->stack);
 	reftable_free(mt);
 }
 
