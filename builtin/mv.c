@@ -76,7 +76,7 @@ static const char **internal_prefix_pathspec(const char *prefix,
 	return result;
 }
 
-static const char *add_slash(const char *path)
+static char *add_slash(const char *path)
 {
 	size_t len = strlen(path);
 	if (len && path[len - 1] != '/') {
@@ -86,7 +86,7 @@ static const char *add_slash(const char *path)
 		with_slash[len] = 0;
 		return with_slash;
 	}
-	return path;
+	return xstrdup(path);
 }
 
 #define SUBMODULE_WITH_GITDIR ((const char *)1)
@@ -111,7 +111,7 @@ static void prepare_move_submodule(const char *src, int first,
 static int index_range_of_same_dir(const char *src, int length,
 				   int *first_p, int *last_p)
 {
-	const char *src_w_slash = add_slash(src);
+	char *src_w_slash = add_slash(src);
 	int first, last, len_w_slash = length + 1;
 
 	first = index_name_pos(the_repository->index, src_w_slash, len_w_slash);
@@ -124,8 +124,8 @@ static int index_range_of_same_dir(const char *src, int length,
 		if (strncmp(path, src_w_slash, len_w_slash))
 			break;
 	}
-	if (src_w_slash != src)
-		free((char *)src_w_slash);
+
+	free(src_w_slash);
 	*first_p = first;
 	*last_p = last;
 	return last - first;
@@ -141,7 +141,7 @@ static int index_range_of_same_dir(const char *src, int length,
 static int empty_dir_has_sparse_contents(const char *name)
 {
 	int ret = 0;
-	const char *with_slash = add_slash(name);
+	char *with_slash = add_slash(name);
 	int length = strlen(with_slash);
 
 	int pos = index_name_pos(the_repository->index, with_slash, length);
@@ -159,8 +159,7 @@ static int empty_dir_has_sparse_contents(const char *name)
 	}
 
 free_return:
-	if (with_slash != name)
-		free((char *)with_slash);
+	free(with_slash);
 	return ret;
 }
 
@@ -178,7 +177,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 	const char **source, **destination, **dest_path, **submodule_gitfile;
-	const char *dst_w_slash;
+	char *dst_w_slash = NULL;
 	const char **src_dir = NULL;
 	int src_dir_nr = 0, src_dir_alloc = 0;
 	struct strbuf a_src_dir = STRBUF_INIT;
@@ -243,10 +242,6 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				dst_mode = SPARSE;
 		}
 	}
-	if (dst_w_slash != dest_path[0]) {
-		free((char *)dst_w_slash);
-		dst_w_slash = NULL;
-	}
 
 	/* Checking */
 	for (i = 0; i < argc; i++) {
@@ -265,12 +260,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 			pos = index_name_pos(the_repository->index, src, length);
 			if (pos < 0) {
-				const char *src_w_slash = add_slash(src);
+				char *src_w_slash = add_slash(src);
 				if (!path_in_sparse_checkout(src_w_slash, the_repository->index) &&
 				    empty_dir_has_sparse_contents(src)) {
+					free(src_w_slash);
 					modes[i] |= SKIP_WORKTREE_DIR;
 					goto dir_check;
 				}
+				free(src_w_slash);
 				/* only error if existence is expected. */
 				if (!(modes[i] & SPARSE))
 					bad = _("bad source");
@@ -310,7 +307,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 dir_check:
 		if (S_ISDIR(st.st_mode)) {
-			int j, dst_len, n;
+			char *dst_with_slash;
+			size_t dst_with_slash_len;
+			int j, n;
 			int first = index_name_pos(the_repository->index, src, length), last;
 
 			if (first >= 0) {
@@ -335,19 +334,21 @@ dir_check:
 			REALLOC_ARRAY(modes, n);
 			REALLOC_ARRAY(submodule_gitfile, n);
 
-			dst = add_slash(dst);
-			dst_len = strlen(dst);
+			dst_with_slash = add_slash(dst);
+			dst_with_slash_len = strlen(dst_with_slash);
 
 			for (j = 0; j < last - first; j++) {
 				const struct cache_entry *ce = the_repository->index->cache[first + j];
 				const char *path = ce->name;
 				source[argc + j] = path;
 				destination[argc + j] =
-					prefix_path(dst, dst_len, path + length + 1);
+					prefix_path(dst_with_slash, dst_with_slash_len, path + length + 1);
 				memset(modes + argc + j, 0, sizeof(enum update_mode));
 				modes[argc + j] |= ce_skip_worktree(ce) ? SPARSE : INDEX;
 				submodule_gitfile[argc + j] = NULL;
 			}
+
+			free(dst_with_slash);
 			argc += last - first;
 			goto act_on_entry;
 		}
@@ -565,6 +566,7 @@ remove_entry:
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+	free(dst_w_slash);
 	string_list_clear(&src_for_dst, 0);
 	string_list_clear(&dirty_paths, 0);
 	UNLEAK(source);
