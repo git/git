@@ -82,21 +82,23 @@ static char *add_slash(const char *path)
 
 #define SUBMODULE_WITH_GITDIR ((const char *)1)
 
-static void prepare_move_submodule(const char *src, int first,
-				   const char **submodule_gitfile)
+static const char *submodule_gitfile_path(const char *src, int first)
 {
 	struct strbuf submodule_dotgit = STRBUF_INIT;
+	const char *path;
+
 	if (!S_ISGITLINK(the_repository->index->cache[first]->ce_mode))
 		die(_("Directory %s is in index and no submodule?"), src);
 	if (!is_staging_gitmodules_ok(the_repository->index))
 		die(_("Please stage your changes to .gitmodules or stash them to proceed"));
+
 	strbuf_addf(&submodule_dotgit, "%s/.git", src);
-	*submodule_gitfile = read_gitfile(submodule_dotgit.buf);
-	if (*submodule_gitfile)
-		*submodule_gitfile = xstrdup(*submodule_gitfile);
-	else
-		*submodule_gitfile = SUBMODULE_WITH_GITDIR;
+
+	path = read_gitfile(submodule_dotgit.buf);
 	strbuf_release(&submodule_dotgit);
+	if (path)
+		return path;
+	return SUBMODULE_WITH_GITDIR;
 }
 
 static int index_range_of_same_dir(const char *src, int length,
@@ -170,7 +172,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct strvec sources = STRVEC_INIT;
 	struct strvec dest_paths = STRVEC_INIT;
 	struct strvec destinations = STRVEC_INIT;
-	const char **submodule_gitfile;
+	struct strvec submodule_gitfiles_to_free = STRVEC_INIT;
+	const char **submodule_gitfiles;
 	char *dst_w_slash = NULL;
 	const char **src_dir = NULL;
 	int src_dir_nr = 0, src_dir_alloc = 0;
@@ -208,7 +211,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		flags = 0;
 	internal_prefix_pathspec(&dest_paths, prefix, argv + argc, 1, flags);
 	dst_w_slash = add_slash(dest_paths.v[0]);
-	submodule_gitfile = xcalloc(argc, sizeof(char *));
+	submodule_gitfiles = xcalloc(argc, sizeof(char *));
 
 	if (dest_paths.v[0][0] == '\0')
 		/* special case: "." was normalized to "" */
@@ -306,8 +309,10 @@ dir_check:
 			int first = index_name_pos(the_repository->index, src, length), last;
 
 			if (first >= 0) {
-				prepare_move_submodule(src, first,
-						       submodule_gitfile + i);
+				const char *path = submodule_gitfile_path(src, first);
+				if (path != SUBMODULE_WITH_GITDIR)
+					path = strvec_push(&submodule_gitfiles_to_free, path);
+				submodule_gitfiles[i] = path;
 				goto act_on_entry;
 			} else if (index_range_of_same_dir(src, length,
 							   &first, &last) < 1) {
@@ -323,7 +328,7 @@ dir_check:
 
 			n = argc + last - first;
 			REALLOC_ARRAY(modes, n);
-			REALLOC_ARRAY(submodule_gitfile, n);
+			REALLOC_ARRAY(submodule_gitfiles, n);
 
 			dst_with_slash = add_slash(dst);
 			dst_with_slash_len = strlen(dst_with_slash);
@@ -338,7 +343,7 @@ dir_check:
 
 				memset(modes + argc + j, 0, sizeof(enum update_mode));
 				modes[argc + j] |= ce_skip_worktree(ce) ? SPARSE : INDEX;
-				submodule_gitfile[argc + j] = NULL;
+				submodule_gitfiles[argc + j] = NULL;
 
 				free(prefixed_path);
 			}
@@ -427,8 +432,8 @@ remove_entry:
 			strvec_remove(&sources, i);
 			strvec_remove(&destinations, i);
 			MOVE_ARRAY(modes + i, modes + i + 1, n);
-			MOVE_ARRAY(submodule_gitfile + i,
-				   submodule_gitfile + i + 1, n);
+			MOVE_ARRAY(submodule_gitfiles + i,
+				   submodule_gitfiles + i + 1, n);
 			i--;
 		}
 	}
@@ -462,12 +467,12 @@ remove_entry:
 				continue;
 			die_errno(_("renaming '%s' failed"), src);
 		}
-		if (submodule_gitfile[i]) {
+		if (submodule_gitfiles[i]) {
 			if (!update_path_in_gitmodules(src, dst))
 				gitmodules_modified = 1;
-			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
+			if (submodule_gitfiles[i] != SUBMODULE_WITH_GITDIR)
 				connect_work_tree_and_git_dir(dst,
-							      submodule_gitfile[i],
+							      submodule_gitfiles[i],
 							      1);
 		}
 
@@ -573,7 +578,8 @@ out:
 	strvec_clear(&sources);
 	strvec_clear(&dest_paths);
 	strvec_clear(&destinations);
-	free(submodule_gitfile);
+	strvec_clear(&submodule_gitfiles_to_free);
+	free(submodule_gitfiles);
 	free(modes);
 	return ret;
 }
