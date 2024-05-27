@@ -746,6 +746,8 @@ fail_pipe:
 		goto end_of_spawn;
 	}
 
+	trace_argv_printf(&argv.v[1], "trace: start_command:");
+
 	if (pipe(notify_pipe))
 		notify_pipe[0] = notify_pipe[1] = -1;
 
@@ -913,6 +915,7 @@ end_of_spawn:
 	else if (cmd->use_shell)
 		cmd->args.v = prepare_shell_cmd(&nargv, sargv);
 
+	trace_argv_printf(cmd->args.v, "trace: start_command:");
 	cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v,
 				  (char**) cmd->env.v,
 				  cmd->dir, fhin, fhout, fherr);
