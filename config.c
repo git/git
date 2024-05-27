@@ -1414,8 +1414,10 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.attributesfile"))
+	if (!strcmp(var, "core.attributesfile")) {
+		FREE_AND_NULL(git_attributes_file);
 		return git_config_pathname(&git_attributes_file, var, value);
+	}
 
 	if (!strcmp(var, "core.hookspath")) {
 		if (ctx->kvi && ctx->kvi->scope == CONFIG_SCOPE_LOCAL &&
@@ -1428,6 +1430,7 @@ static int git_default_core_config(const char *var, const char *value,
 			      "again with "
 			      "`GIT_CLONE_PROTECTION_ACTIVE=false`"),
 			    value);
+		FREE_AND_NULL(git_hooks_path);
 		return git_config_pathname(&git_hooks_path, var, value);
 	}
 
@@ -1576,8 +1579,10 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.editor"))
+	if (!strcmp(var, "core.editor")) {
+		FREE_AND_NULL(editor_program);
 		return git_config_string(&editor_program, var, value);
+	}
 
 	if (!strcmp(var, "core.commentchar") ||
 	    !strcmp(var, "core.commentstring")) {
@@ -1595,11 +1600,13 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.askpass"))
+	if (!strcmp(var, "core.askpass")) {
+		FREE_AND_NULL(askpass_program);
 		return git_config_string(&askpass_program, var, value);
+	}
 
 	if (!strcmp(var, "core.excludesfile")) {
-		free(excludes_file);
+		FREE_AND_NULL(excludes_file);
 		return git_config_pathname(&excludes_file, var, value);
 	}
 
@@ -1702,11 +1709,15 @@ static int git_default_sparse_config(const char *var, const char *value)
 
 static int git_default_i18n_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "i18n.commitencoding"))
+	if (!strcmp(var, "i18n.commitencoding")) {
+		FREE_AND_NULL(git_commit_encoding);
 		return git_config_string(&git_commit_encoding, var, value);
+	}
 
-	if (!strcmp(var, "i18n.logoutputencoding"))
+	if (!strcmp(var, "i18n.logoutputencoding")) {
+		FREE_AND_NULL(git_log_output_encoding);
 		return git_config_string(&git_log_output_encoding, var, value);
+	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
@@ -1779,10 +1790,15 @@ static int git_default_push_config(const char *var, const char *value)
 
 static int git_default_mailmap_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "mailmap.file"))
+	if (!strcmp(var, "mailmap.file")) {
+		FREE_AND_NULL(git_mailmap_file);
 		return git_config_pathname(&git_mailmap_file, var, value);
-	if (!strcmp(var, "mailmap.blob"))
+	}
+
+	if (!strcmp(var, "mailmap.blob")) {
+		FREE_AND_NULL(git_mailmap_blob);
 		return git_config_string(&git_mailmap_blob, var, value);
+	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
@@ -1790,8 +1806,10 @@ static int git_default_mailmap_config(const char *var, const char *value)
 
 static int git_default_attr_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "attr.tree"))
+	if (!strcmp(var, "attr.tree")) {
+		FREE_AND_NULL(git_attr_tree);
 		return git_config_string(&git_attr_tree, var, value);
+	}
 
 	/*
 	 * Add other attribute related config variables here and to
