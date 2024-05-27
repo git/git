@@ -71,6 +71,8 @@ static void free_ref_entry(struct ref_entry *entry)
 
 void free_ref_cache(struct ref_cache *cache)
 {
+	if (!cache)
+		return;
 	free_ref_entry(cache->root);
 	free(cache);
 }
