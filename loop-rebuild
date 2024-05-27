@@ -19,7 +19,7 @@ do
 		ssleep 300
 	done
 	ssleep 30
-	time nice -20 Meta/Dothem -j32 --dash; uptime; date
+	time nice -20 Meta/Dothem -j32; uptime; date
 	P=$(stamp)
 	Meta/V
 done
