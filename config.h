@@ -280,7 +280,7 @@ int git_config_bool(const char *, const char *);
  * Allocates and copies the value string into the `dest` parameter; if no
  * string is given, prints an error message and returns -1.
  */
-int git_config_string(const char **, const char *, const char *);
+int git_config_string(char **, const char *, const char *);
 
 /**
  * Similar to `git_config_string`, but expands `~` or `~user` into the

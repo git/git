@@ -981,9 +981,9 @@ done:
 static struct convert_driver {
 	const char *name;
 	struct convert_driver *next;
-	const char *smudge;
-	const char *clean;
-	const char *process;
+	char *smudge;
+	char *clean;
+	char *process;
 	int required;
 } *user_convert, **user_convert_tail;
 

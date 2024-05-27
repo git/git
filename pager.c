@@ -13,7 +13,7 @@ int pager_use_color = 1;
 #endif
 
 static struct child_process pager_process;
-static const char *pager_program;
+static char *pager_program;
 
 /* Is the value coming back from term_columns() just a guess? */
 static int term_columns_guessed;

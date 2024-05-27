@@ -7,7 +7,7 @@
 #include "setup.h"
 
 char *git_mailmap_file;
-const char *git_mailmap_blob;
+char *git_mailmap_blob;
 
 struct mailmap_info {
 	char *name;

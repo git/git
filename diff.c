@@ -56,8 +56,8 @@ static int diff_color_moved_default;
 static int diff_color_moved_ws_default;
 static int diff_context_default = 3;
 static int diff_interhunk_context_default;
-static const char *diff_word_regex_cfg;
-static const char *external_diff_cmd_cfg;
+static char *diff_word_regex_cfg;
+static char *external_diff_cmd_cfg;
 static char *diff_order_file_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
@@ -412,11 +412,11 @@ int git_diff_ui_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "diff.srcprefix")) {
 		FREE_AND_NULL(diff_src_prefix);
-		return git_config_string((const char **) &diff_src_prefix, var, value);
+		return git_config_string(&diff_src_prefix, var, value);
 	}
 	if (!strcmp(var, "diff.dstprefix")) {
 		FREE_AND_NULL(diff_dst_prefix);
-		return git_config_string((const char **) &diff_dst_prefix, var, value);
+		return git_config_string(&diff_dst_prefix, var, value);
 	}
 	if (!strcmp(var, "diff.relative")) {
 		diff_relative = git_config_bool(var, value);

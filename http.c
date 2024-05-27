@@ -38,11 +38,11 @@ char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
 static int curl_ssl_try;
-static const char *curl_http_version = NULL;
+static char *curl_http_version;
 static char *ssl_cert;
 static char *ssl_cert_type;
-static const char *ssl_cipherlist;
-static const char *ssl_version;
+static char *ssl_cipherlist;
+static char *ssl_version;
 static struct {
 	const char *name;
 	long ssl_version;
@@ -95,7 +95,7 @@ static struct {
 	 */
 };
 #ifdef CURLGSSAPI_DELEGATION_FLAG
-static const char *curl_deleg;
+static char *curl_deleg;
 static struct {
 	const char *name;
 	long curl_deleg_param;
@@ -383,11 +383,11 @@ static int http_options(const char *var, const char *value,
 	if (!strcmp("http.sslcert", var))
 		return git_config_pathname(&ssl_cert, var, value);
 	if (!strcmp("http.sslcerttype", var))
-		return git_config_string((const char **)&ssl_cert_type, var, value);
+		return git_config_string(&ssl_cert_type, var, value);
 	if (!strcmp("http.sslkey", var))
 		return git_config_pathname(&ssl_key, var, value);
 	if (!strcmp("http.sslkeytype", var))
-		return git_config_string((const char **)&ssl_key_type, var, value);
+		return git_config_string(&ssl_key_type, var, value);
 	if (!strcmp("http.sslcapath", var))
 		return git_config_pathname(&ssl_capath, var, value);
 	if (!strcmp("http.sslcainfo", var))
@@ -440,19 +440,19 @@ static int http_options(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp("http.proxy", var))
-		return git_config_string((const char **)&curl_http_proxy, var, value);
+		return git_config_string(&curl_http_proxy, var, value);
 
 	if (!strcmp("http.proxyauthmethod", var))
-		return git_config_string((const char **)&http_proxy_authmethod, var, value);
+		return git_config_string(&http_proxy_authmethod, var, value);
 
 	if (!strcmp("http.proxysslcert", var))
-		return git_config_string((const char **)&http_proxy_ssl_cert, var, value);
+		return git_config_string(&http_proxy_ssl_cert, var, value);
 
 	if (!strcmp("http.proxysslkey", var))
-		return git_config_string((const char **)&http_proxy_ssl_key, var, value);
+		return git_config_string(&http_proxy_ssl_key, var, value);
 
 	if (!strcmp("http.proxysslcainfo", var))
-		return git_config_string((const char **)&http_proxy_ssl_ca_info, var, value);
+		return git_config_string(&http_proxy_ssl_ca_info, var, value);
 
 	if (!strcmp("http.proxysslcertpasswordprotected", var)) {
 		proxy_ssl_cert_password_required = git_config_bool(var, value);
@@ -476,7 +476,7 @@ static int http_options(const char *var, const char *value,
 	}
 
 	if (!strcmp("http.useragent", var))
-		return git_config_string((const char **)&user_agent, var, value);
+		return git_config_string(&user_agent, var, value);
 
 	if (!strcmp("http.emptyauth", var)) {
 		if (value && !strcmp("auto", value))

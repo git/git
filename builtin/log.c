@@ -582,11 +582,11 @@ static int git_log_config(const char *var, const char *value,
 
 	if (!strcmp(var, "format.pretty")) {
 		FREE_AND_NULL(cfg->fmt_pretty);
-		return git_config_string((const char **) &cfg->fmt_pretty, var, value);
+		return git_config_string(&cfg->fmt_pretty, var, value);
 	}
 	if (!strcmp(var, "format.subjectprefix")) {
 		FREE_AND_NULL(cfg->fmt_patch_subject_prefix);
-		return git_config_string((const char **) &cfg->fmt_patch_subject_prefix, var, value);
+		return git_config_string(&cfg->fmt_patch_subject_prefix, var, value);
 	}
 	if (!strcmp(var, "format.filenamemaxlength")) {
 		cfg->fmt_patch_name_max = git_config_int(var, value, ctx->kvi);
@@ -602,7 +602,7 @@ static int git_log_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "log.date")) {
 		FREE_AND_NULL(cfg->default_date_mode);
-		return git_config_string((const char **) &cfg->default_date_mode, var, value);
+		return git_config_string(&cfg->default_date_mode, var, value);
 	}
 	if (!strcmp(var, "log.decorate")) {
 		cfg->decoration_style = parse_decoration_style(value);
@@ -1076,7 +1076,7 @@ static int git_format_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "format.suffix")) {
 		FREE_AND_NULL(cfg->fmt_patch_suffix);
-		return git_config_string((const char **) &cfg->fmt_patch_suffix, var, value);
+		return git_config_string(&cfg->fmt_patch_suffix, var, value);
 	}
 	if (!strcmp(var, "format.to")) {
 		if (!value)
@@ -1133,7 +1133,7 @@ static int git_format_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "format.signature")) {
 		FREE_AND_NULL(cfg->signature);
-		return git_config_string((const char **) &cfg->signature, var, value);
+		return git_config_string(&cfg->signature, var, value);
 	}
 	if (!strcmp(var, "format.signaturefile")) {
 		FREE_AND_NULL(cfg->signature_file);
@@ -1149,7 +1149,7 @@ static int git_format_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "format.outputdirectory")) {
 		FREE_AND_NULL(cfg->config_output_directory);
-		return git_config_string((const char **) &cfg->config_output_directory, var, value);
+		return git_config_string(&cfg->config_output_directory, var, value);
 	}
 	if (!strcmp(var, "format.useautobase")) {
 		if (value && !strcasecmp(value, "whenAble")) {
