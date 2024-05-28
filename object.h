@@ -81,6 +81,7 @@ void object_array_init(struct object_array *array);
  * reflog.c:                           10--12
  * builtin/show-branch.c:    0-------------------------------------------26
  * builtin/unpack-objects.c:                                 2021
+ * pack-bitmap.h:                                                22
  */
 #define FLAG_BITS  28
 
