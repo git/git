@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2024, #11; Mon, 27)
-X-master-at: b9cfe4845cb2562584837bc0101c0ab76490a239
+Subject: What's cooking in git.git (May 2024, #12; Tue, 28)
+X-master-at: 3a57aa566a21e7a510c64881bc6bdff7eb397988
 X-next-at: bab1589fc04ad0202329dc933a2f485402c51dfa
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2024, #11; Mon, 27)
+What's cooking in git.git (May 2024, #12; Tue, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -55,7 +55,128 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
+
+* ds/send-email-per-message-block (2024-04-10) 1 commit
+  (merged to 'next' on 2024-05-20 at 189c49a1ca)
+ + send-email: move newline characters out of a few translatable strings
+
+ Preliminary code clean-up for "git send-email".
+ The topmost commit in the original series was dropped per author's request.
+ cf. <a07d3807a24f6d68cb48ee48366ae25e@manjaro.org>
+ source: <29ea3a9b07bf1aa17b5d6a1e41325379c494bcb2.1712732383.git.dsimic@manjaro.org>
+
+
+* jc/doc-diff-name-only (2024-05-17) 1 commit
+  (merged to 'next' on 2024-05-20 at 13b6f9350d)
+ + diff: document what --name-only shows
+
+ The documentation for "git diff --name-only" has been clarified
+ that it is about showing the names in the post-image tree.
+ source: <xmqqeda0jr7d.fsf@gitster.g>
+
+
+* jc/doc-manpages-l10n (2024-05-17) 1 commit
+  (merged to 'next' on 2024-05-20 at fb103ed70f)
+ + SubmittingPatches: advertise git-manpages-l10n project a bit
+
+ The SubmittingPatches document now refers folks to manpages
+ translation project.
+ source: <xmqqv83muc12.fsf@gitster.g>
+
+
+* jc/format-patch-more-aggressive-range-diff (2024-05-06) 1 commit
+  (merged to 'next' on 2024-05-21 at 899cce93fb)
+ + format-patch: run range-diff with larger creation-factor
+
+ The default "creation-factor" used by "git format-patch" has been
+ raised to make it more aggressively find matching commits.
+ source: <xmqqbk5i3ncw.fsf_-_@gitster.g>
+
+
+* jc/rev-parse-fatal-doc (2024-05-01) 1 commit
+  (merged to 'next' on 2024-05-21 at 9bbb973b7b)
+ + rev-parse: document how --is-* options work outside a repository
+
+ Doc update.
+ source: <xmqqplu54fbg.fsf@gitster.g>
+
+
+* jc/t0017-clarify-bogus-expectation (2024-05-16) 1 commit
+  (merged to 'next' on 2024-05-20 at c64016ec43)
+ + t0017: clarify dubious test set-up
+
+ Test clean-up.
+ source: <xmqqcypmx44l.fsf@gitster.g>
+
+
+* kn/osxkeychain-skip-idempotent-store (2024-05-15) 2 commits
+  (merged to 'next' on 2024-05-21 at 4d757167ad)
+ + osxkeychain: state to skip unnecessary store operations
+ + osxkeychain: exclusive lock to serialize execution of operations
+
+ The credential helper that talks with osx keychain learned to avoid
+ storing back the authentication material it just got received from
+ the keychain.
+ source: <pull.1729.v3.git.1715800868.gitgitgadget@gmail.com>
+
+
+* kn/patch-iteration-doc (2024-05-17) 2 commits
+  (merged to 'next' on 2024-05-20 at e0ee0051a9)
+ + SubmittingPatches: add section for iterating patches
+ + Merge branch 'jc/patch-flow-updates' into kn/patch-iteration-doc
+
+ Doc updates.
+ source: <20240517122724.270706-1-knayak@gitlab.com>
+
+
+* mt/t0211-typofix (2024-05-16) 1 commit
+  (merged to 'next' on 2024-05-20 at f4fba3c7d2)
+ + t/t0211-trace2-perf.sh: fix typo patern -> pattern
+
+ Test fix.
+ source: <ZkW5ggOVlglfi64u@telcontar>
+
+
+* ps/builtin-config-cleanup (2024-05-15) 22 commits
+  (merged to 'next' on 2024-05-20 at b6f728f1f5)
+ + builtin/config: pass data between callbacks via local variables
+ + builtin/config: convert flags to a local variable
+ + builtin/config: track "fixed value" option via flags only
+ + builtin/config: convert `key` to a local variable
+ + builtin/config: convert `key_regexp` to a local variable
+ + builtin/config: convert `regexp` to a local variable
+ + builtin/config: convert `value_pattern` to a local variable
+ + builtin/config: convert `do_not_match` to a local variable
+ + builtin/config: move `respect_includes_opt` into location options
+ + builtin/config: move default value into display options
+ + builtin/config: move type options into display options
+ + builtin/config: move display options into local variables
+ + builtin/config: move location options into local variables
+ + builtin/config: refactor functions to have common exit paths
+ + config: make the config source const
+ + builtin/config: check for writeability after source is set up
+ + builtin/config: move actions into `cmd_config_actions()`
+ + builtin/config: move legacy options into `cmd_config()`
+ + builtin/config: move subcommand options into `cmd_config()`
+ + builtin/config: move legacy mode into its own function
+ + builtin/config: stop printing full usage on misuse
+ + Merge branch 'ps/config-subcommands' into ps/builtin-config-cleanup
+
+ Code clean-up to reduce inter-function communication inside
+ builtin/config.c done via the use of global variables.
+ source: <cover.1715755055.git.ps@pks.im>
+
+
+* ps/complete-config-w-subcommands (2024-05-17) 1 commit
+  (merged to 'next' on 2024-05-20 at 14453d34fc)
+ + completion: adapt git-config(1) to complete subcommands
+
+ The command line completion script (in contrib/) has been adjusted
+ to the recent update to "git config" that adopted subcommand based
+ UI.
+ source: <8d43dee33289969a5afbbf7635ac40b7312d8e19.1715926344.git.ps@pks.im>
+
 
 * ps/leakfixes-base (2024-05-27) 2 commits
   (merged to 'next' on 2024-05-27 at bab1589fc0)
@@ -63,29 +184,75 @@ Release tarballs are available at:
  + ci: add missing dependency for TTY prereq
  (this branch is used by ps/leakfixes.)
 
+ Will merge to 'master'.
  source: <cover.1716810168.git.ps@pks.im>
 
+
+* ps/pseudo-ref-terminology (2024-05-15) 10 commits
+  (merged to 'next' on 2024-05-20 at fc0f1f2607)
+ + refs: refuse to write pseudorefs
+ + ref-filter: properly distinuish pseudo and root refs
+ + refs: pseudorefs are no refs
+ + refs: classify HEAD as a root ref
+ + refs: do not check ref existence in `is_root_ref()`
+ + refs: rename `is_special_ref()` to `is_pseudo_ref()`
+ + refs: rename `is_pseudoref()` to `is_root_ref()`
+ + Documentation/glossary: define root refs as refs
+ + Documentation/glossary: clarify limitations of pseudorefs
+ + Documentation/glossary: redefine pseudorefs as special refs
+ (this branch is used by ps/ref-storage-migration.)
+
+ Terminology to call various ref-like things are getting
+ straightened out.
+ cf. <vgzwb5xnlvz2gfiqamzrfcjs2xya3zhhoootyzopfpdrjapayq@wfsomyal4cf6>
+ source: <cover.1715755591.git.ps@pks.im>
+
+
+* tb/pack-bitmap-write-cleanups (2024-05-15) 6 commits
+  (merged to 'next' on 2024-05-20 at 585e7bde21)
+ + pack-bitmap: introduce `bitmap_writer_free()`
+ + pack-bitmap-write.c: avoid uninitialized 'write_as' field
+ + pack-bitmap: drop unused `max_bitmaps` parameter
+ + pack-bitmap: avoid use of static `bitmap_writer`
+ + pack-bitmap-write.c: move commit_positions into commit_pos fields
+ + object.h: add flags allocated by pack-bitmap.h
+ (this branch is used by tb/pseudo-merge-reachability-bitmap.)
+
+ The pack bitmap code saw some clean-up to prepare for a follow-up topic.
+ source: <cover.1715716605.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[Cooking]
 
 * gt/t-hash-unit-test (2024-05-27) 2 commits
  - t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
  - strbuf: introduce strbuf_addstrings() to repeatedly add a string
 
+ A pair of test helpers that essentially are unit tests on hash
+ algorithms have been rewritten using the unit-tests framework.
+
+ Will merge to 'next'?
  source: <20240526084345.24138-1-shyamthakkar001@gmail.com>
 
 
 * pp/add-parse-range-unit-test (2024-05-27) 1 commit
  - apply: add unit tests for parse_range
 
+ A unit test for code that parses the hunk offset and length from a
+ patch fragment header as been added.
+
+ Will merge to 'next'?
  source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
 
 
 * rs/difftool-env-simplify (2024-05-27) 1 commit
  - difftool: add env vars directly in run_file_diff()
 
+ Code simplification.
+
+ Will merge to 'next'.
  source: <c7c843b9-0ccf-4bcb-a036-d794729a99d6@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * jc/format-patch-with-range-diff (2024-05-24) 2 commits
  - format-patch: move range/inter diff at the end of a single patch output
@@ -96,7 +263,7 @@ Release tarballs are available at:
  before the patch text, to be consistent with what is done for a
  cover letter for a multi-patch series.
 
- Comments?
+ Will merge to 'next'?
  source: <20240523225007.2871766-1-gitster@pobox.com>
 
 
@@ -126,7 +293,7 @@ Release tarballs are available at:
 
  Log the alias-expanded command lines to the trace output.
 
- Comments?
+ Will merge to 'next' after squashing the fix in?
  source: <20240525234454.1489598-1-iwienand@redhat.com>
 
 
@@ -161,7 +328,6 @@ Release tarballs are available at:
  - checkout: clarify memory ownership in `unique_tracking_name()`
  - strbuf: fix leak when `appendwholeline()` fails with EOF
  - transport-helper: fix leaking helper name
- (this branch uses ps/leakfixes-base.)
 
  Leakfixes.
 
@@ -169,10 +335,13 @@ Release tarballs are available at:
  source: <cover.1716810168.git.ps@pks.im>
 
 
-* ps/ref-storage-migration (2024-05-24) 11 commits
+* ps/ref-storage-migration (2024-05-28) 14 commits
  - builtin/refs: new command to migrate ref storage formats
  - refs: implement logic to migrate between ref storage formats
  - refs: implement removal of ref storages
+ - worktree: don't store main worktree twice
+ - reftable: inline `merged_table_release()`
+ - refs/files: fix NULL pointer deref when releasing ref store
  - refs/files: extract function to iterate through root refs
  - refs/files: refactor `add_pseudoref_and_head_entries()`
  - refs: allow to skip creation of reflog entries
@@ -181,15 +350,13 @@ Release tarballs are available at:
  - setup: unset ref storage when reinitializing repository version
  - Merge branch 'ps/pseudo-ref-terminology' into ps/ref-storage-migration
  - Merge branch 'ps/refs-without-the-repository-updates' into ps/ref-storage-migration
- (this branch uses ps/pseudo-ref-terminology and ps/refs-without-the-repository-updates.)
+ (this branch uses ps/refs-without-the-repository-updates.)
 
  Allow migrating a repository that uses the files backend for its
  ref storage to use the reftable backend, with limitations.
 
- Expecting a reroll.
- With this in 'seen', "leaks" job at CI seems to fail.
- cf. <xmqqwmniiqv2.fsf@gitster.g>
- source: <cover.1716545235.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1716877224.git.ps@pks.im>
 
 
 * tb/midx-write-cleanup (2024-05-24) 8 commits
@@ -234,12 +401,11 @@ Release tarballs are available at:
  - Documentation/gitpacking.txt: describe pseudo-merge bitmaps
  - Documentation/gitpacking.txt: initial commit
  - Merge branch 'tb/pack-bitmap-write-cleanups' into tb/pseudo-merge-reachability-bitmap
- (this branch uses tb/pack-bitmap-write-cleanups.)
 
  The pseudo-merge reachability bitmap to help more efficient storage
  of the reachability bitmap in a repository with too many refs.
 
- Needs review.
+ Will merge to 'next'?
  source: <cover.1716499565.git.me@ttaylorr.com>
 
 
@@ -354,45 +520,6 @@ Release tarballs are available at:
  source: <20240520190131.94904-1-ericsunshine@charter.net>
 
 
-* tb/pack-bitmap-write-cleanups (2024-05-15) 6 commits
-  (merged to 'next' on 2024-05-20 at 585e7bde21)
- + pack-bitmap: introduce `bitmap_writer_free()`
- + pack-bitmap-write.c: avoid uninitialized 'write_as' field
- + pack-bitmap: drop unused `max_bitmaps` parameter
- + pack-bitmap: avoid use of static `bitmap_writer`
- + pack-bitmap-write.c: move commit_positions into commit_pos fields
- + object.h: add flags allocated by pack-bitmap.h
- (this branch is used by tb/pseudo-merge-reachability-bitmap.)
-
- The pack bitmap code saw some clean-up to prepare for a follow-up topic.
-
- Will merge to 'master'.
- source: <cover.1715716605.git.me@ttaylorr.com>
-
-
-* jc/t0017-clarify-bogus-expectation (2024-05-16) 1 commit
-  (merged to 'next' on 2024-05-20 at c64016ec43)
- + t0017: clarify dubious test set-up
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <xmqqcypmx44l.fsf@gitster.g>
-
-
-* kn/osxkeychain-skip-idempotent-store (2024-05-15) 2 commits
-  (merged to 'next' on 2024-05-21 at 4d757167ad)
- + osxkeychain: state to skip unnecessary store operations
- + osxkeychain: exclusive lock to serialize execution of operations
-
- The credential helper that talks with osx keychain learned to avoid
- storing back the authentication material it just got received from
- the keychain.
-
- Will merge to 'master'.
- source: <pull.1729.v3.git.1715800868.gitgitgadget@gmail.com>
-
-
 * kn/update-ref-symref (2024-05-27) 8 commits
  - SQUASH??? leakfix
  - update-ref: add support for 'symref-update' command
@@ -406,32 +533,8 @@ Release tarballs are available at:
  "git update-ref --stdin" learned to handle transactional updates of
  symbolic-refs.
 
- Needs review.
- With this in 'seen', "leaks" job at CI seems to fail.
- cf. <xmqqwmniiqv2.fsf@gitster.g>
+ Expecting a (hopefully minor and final) reroll.
  source: <20240514124411.1037019-1-knayak@gitlab.com>
-
-
-* mt/t0211-typofix (2024-05-16) 1 commit
-  (merged to 'next' on 2024-05-20 at f4fba3c7d2)
- + t/t0211-trace2-perf.sh: fix typo patern -> pattern
-
- Test fix.
-
- Will merge to 'master'.
- source: <ZkW5ggOVlglfi64u@telcontar>
-
-
-* ps/complete-config-w-subcommands (2024-05-17) 1 commit
-  (merged to 'next' on 2024-05-20 at 14453d34fc)
- + completion: adapt git-config(1) to complete subcommands
-
- Update the command line completion script (in contrib/) to adjust
- to the recent update to "git config" that adopted subcommand based
- UI.
-
- Will merge to 'master'.
- source: <8d43dee33289969a5afbbf7635ac40b7312d8e19.1715926344.git.ps@pks.im>
 
 
 * ps/refs-without-the-repository-updates (2024-05-17) 17 commits
@@ -461,28 +564,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1715929858.git.ps@pks.im>
-
-
-* jc/doc-diff-name-only (2024-05-17) 1 commit
-  (merged to 'next' on 2024-05-20 at 13b6f9350d)
- + diff: document what --name-only shows
-
- The documentation for "git diff --name-only" has been clarified
- that it is about showing the names in the post-image tree.
-
- Will merge to 'master'.
- source: <xmqqeda0jr7d.fsf@gitster.g>
-
-
-* kn/patch-iteration-doc (2024-05-17) 2 commits
-  (merged to 'next' on 2024-05-20 at e0ee0051a9)
- + SubmittingPatches: add section for iterating patches
- + Merge branch 'jc/patch-flow-updates' into kn/patch-iteration-doc
-
- Doc updates.
-
- Will merge to 'master'.
- source: <20240517122724.270706-1-knayak@gitlab.com>
 
 
 * mt/openindiana-scalar (2024-05-17) 1 commit
@@ -536,49 +617,6 @@ Release tarballs are available at:
  source: <20240520231434.1816979-1-gitster@pobox.com>
 
 
-* ps/builtin-config-cleanup (2024-05-15) 22 commits
-  (merged to 'next' on 2024-05-20 at b6f728f1f5)
- + builtin/config: pass data between callbacks via local variables
- + builtin/config: convert flags to a local variable
- + builtin/config: track "fixed value" option via flags only
- + builtin/config: convert `key` to a local variable
- + builtin/config: convert `key_regexp` to a local variable
- + builtin/config: convert `regexp` to a local variable
- + builtin/config: convert `value_pattern` to a local variable
- + builtin/config: convert `do_not_match` to a local variable
- + builtin/config: move `respect_includes_opt` into location options
- + builtin/config: move default value into display options
- + builtin/config: move type options into display options
- + builtin/config: move display options into local variables
- + builtin/config: move location options into local variables
- + builtin/config: refactor functions to have common exit paths
- + config: make the config source const
- + builtin/config: check for writeability after source is set up
- + builtin/config: move actions into `cmd_config_actions()`
- + builtin/config: move legacy options into `cmd_config()`
- + builtin/config: move subcommand options into `cmd_config()`
- + builtin/config: move legacy mode into its own function
- + builtin/config: stop printing full usage on misuse
- + Merge branch 'ps/config-subcommands' into ps/builtin-config-cleanup
-
- Code clean-up to reduce inter-function communication inside
- builtin/config.c done via the use of global variables.
-
- Will merge to 'master'.
- source: <cover.1715755055.git.ps@pks.im>
-
-
-* jc/doc-manpages-l10n (2024-05-17) 1 commit
-  (merged to 'next' on 2024-05-20 at fb103ed70f)
- + SubmittingPatches: advertise git-manpages-l10n project a bit
-
- The SubmittingPatches document now refers folks to manpages
- translation project.
-
- Will merge to 'master'.
- source: <xmqqv83muc12.fsf@gitster.g>
-
-
 * ps/reftable-reusable-iterator (2024-05-13) 13 commits
   (merged to 'next' on 2024-05-22 at b92eb9939f)
  + reftable/merged: adapt interface to allow reuse of iterators
@@ -614,17 +652,6 @@ Release tarballs are available at:
  source: <20240521141452.26210-1-tboegi@web.de>
 
 
-* jc/format-patch-more-aggressive-range-diff (2024-05-06) 1 commit
-  (merged to 'next' on 2024-05-21 at 899cce93fb)
- + format-patch: run range-diff with larger creation-factor
-
- The default "creation-factor" used by "git format-patch" has been
- raised to make it more aggressively find matching commits.
-
- Will merge to 'master'.
- source: <xmqqbk5i3ncw.fsf_-_@gitster.g>
-
-
 * ps/reftable-write-options (2024-05-13) 11 commits
   (merged to 'next' on 2024-05-22 at ae8e378430)
  + refs/reftable: allow configuring geometric factor
@@ -644,38 +671,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1715587849.git.ps@pks.im>
-
-
-* ps/pseudo-ref-terminology (2024-05-15) 10 commits
-  (merged to 'next' on 2024-05-20 at fc0f1f2607)
- + refs: refuse to write pseudorefs
- + ref-filter: properly distinuish pseudo and root refs
- + refs: pseudorefs are no refs
- + refs: classify HEAD as a root ref
- + refs: do not check ref existence in `is_root_ref()`
- + refs: rename `is_special_ref()` to `is_pseudo_ref()`
- + refs: rename `is_pseudoref()` to `is_root_ref()`
- + Documentation/glossary: define root refs as refs
- + Documentation/glossary: clarify limitations of pseudorefs
- + Documentation/glossary: redefine pseudorefs as special refs
- (this branch is used by ps/ref-storage-migration.)
-
- Terminology to call various ref-like things are getting
- straightened out.
-
- Will merge to 'master'.
- cf. <vgzwb5xnlvz2gfiqamzrfcjs2xya3zhhoootyzopfpdrjapayq@wfsomyal4cf6>
- source: <cover.1715755591.git.ps@pks.im>
-
-
-* jc/rev-parse-fatal-doc (2024-05-01) 1 commit
-  (merged to 'next' on 2024-05-21 at 9bbb973b7b)
- + rev-parse: document how --is-* options work outside a repository
-
- Doc update.
-
- Will merge to 'master'.
- source: <xmqqplu54fbg.fsf@gitster.g>
 
 
 * ps/undecided-is-not-necessarily-sha1 (2024-05-06) 15 commits
@@ -717,18 +712,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <88bc0787-e7ae-49e5-99e8-97f6c55ea8c6@gmail.com>
  source: <pull.1672.v2.git.1712585787.gitgitgadget@gmail.com>
-
-
-* ds/send-email-per-message-block (2024-04-10) 1 commit
-  (merged to 'next' on 2024-05-20 at 189c49a1ca)
- + send-email: move newline characters out of a few translatable strings
-
- Preliminary code clean-up for "git send-email".
-
- Will merge to 'master'.
- The topmost commit in the original series was dropped per author's request.
- cf. <a07d3807a24f6d68cb48ee48366ae25e@manjaro.org>
- source: <29ea3a9b07bf1aa17b5d6a1e41325379c494bcb2.1712732383.git.dsimic@manjaro.org>
 
 
 * ew/khash-to-khashl (2024-03-28) 3 commits
