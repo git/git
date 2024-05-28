@@ -608,6 +608,85 @@ patch, format it as "multipart/signed", not a text/plain message
 that starts with `-----BEGIN PGP SIGNED MESSAGE-----`.  That is
 not a text/plain, it's something else.
 
+=== Handling Conflicts and Iterating Patches
+
+When revising changes made to your patches, it's important to
+acknowledge the possibility of conflicts with other ongoing topics. To
+navigate these potential conflicts effectively, follow the recommended
+steps outlined below:
+
+. Build on a suitable base branch, see the <<choose-starting-point, section above>>,
+and format-patch the series. If you are doing "rebase -i" in-place to
+update from the previous round, this will reuse the previous base so
+(2) and (3) may become trivial.
+
+. Find the base of where the last round was queued
++
+    $ mine='kn/ref-transaction-symref'
+    $ git checkout "origin/seen^{/^Merge branch '$mine'}...master"
+
+. Apply your format-patch result.  There are two cases
+.. Things apply cleanly and tests fine.  Go to (4).
+.. Things apply cleanly but does not build or test fails, or things do
+not apply cleanly.
++
+In the latter case, you have textual or semantic conflicts coming from
+the difference between the old base and the base you used to build in
+(1).  Identify what caused the breakages (e.g., a topic or two may have
+merged since the base used by (2) until the base used by (1)).
++
+Check out the latest 'origin/master' (which may be newer than the base
+used by (2)), "merge --no-ff" the topics you newly depend on in there,
+and use the result of the merge(s) as the base, rebuild the series and
+test again.  Run format-patch from the last such merges to the tip of
+your topic.  If you did
++
+    $ git checkout origin/master
+    $ git merge --no-ff --into-name kn/ref-transaction-symref fo/obar
+    $ git merge --no-ff --into-name kn/ref-transaction-symref ba/zqux
+    ... rebuild the topic ...
++
+Then you'd just format your topic above these "preparing the ground"
+merges, e.g.
++
+    $ git format-patch "HEAD^{/^Merge branch 'ba/zqux'}"..HEAD
++
+Do not forget to write in the cover letter you did this, including the
+topics you have in your base on top of 'master'.  Then go to (4).
+
+. Make a trial merge of your topic into 'next' and 'seen', e.g.
++
+    $ git checkout --detach 'origin/seen'
+    $ git revert -m 1 <the merge of the previous iteration into seen>
+    $ git merge kn/ref-transaction-symref
++
+The "revert" is needed if the previous iteration of your topic is
+already in 'seen' (like in this case).  You could choose to rebuild
+master..origin/seen from scratch while excluding your previous
+iteration, which may emulate what happens on the maintainers end more
+closely.
++
+This trial merge may conflict.  It is primarily to see what conflicts
+_other_ topics may have with your topic.  In other words, you do not
+have to depend on it to make your topic work on 'master'.  It may
+become the job of the other topic owners to resolve conflicts if your
+topic goes to 'next' before theirs.
++
+Make a note on what conflict you saw in the cover letter.  You do not
+necessarily have to resolve them, but it would be a good opportunity to
+learn what others are doing in related areas.
++
+    $ git checkout --detach 'origin/next'
+    $ git merge kn/ref-transaction-symref
++
+This is to see what conflicts your topic has with other topics that are
+already cooking.  This should not conflict if (3)-2 prepared a base on
+top of updated master plus dependent topics taken from 'next'.  Unless
+the context is severe (one way to tell is try the same trial merge with
+your old iteration, which may conflict in a similar way), expect that it
+will be handled on maintainers end (if it gets unmanageable, I'll ask to
+rebase when I receive your patches).
+
 == Subsystems with dedicated maintainers
 
 Some parts of the system have dedicated maintainers with their own
