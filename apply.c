@@ -3218,13 +3218,13 @@ static int apply_binary(struct apply_state *state,
 		return 0; /* deletion patch */
 	}
 
-	if (has_object(the_repository, &oid, 0)) {
+	if (has_object(state->repo, &oid, 0)) {
 		/* We already have the postimage */
 		enum object_type type;
 		unsigned long size;
 		char *result;
 
-		result = repo_read_object_file(the_repository, &oid, &type,
+		result = repo_read_object_file(state->repo, &oid, &type,
 					       &size);
 		if (!result)
 			return error(_("the necessary postimage %s for "
@@ -3278,7 +3278,7 @@ static int apply_fragments(struct apply_state *state, struct image *img, struct 
 	return 0;
 }
 
-static int read_blob_object(struct strbuf *buf, const struct object_id *oid, unsigned mode)
+static int read_blob_object(struct repository *r, struct strbuf *buf, const struct object_id *oid, unsigned mode)
 {
 	if (S_ISGITLINK(mode)) {
 		strbuf_grow(buf, 100);
@@ -3288,7 +3288,7 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 		unsigned long sz;
 		char *result;
 
-		result = repo_read_object_file(the_repository, oid, &type,
+		result = repo_read_object_file(r, oid, &type,
 					       &sz);
 		if (!result)
 			return -1;
@@ -3298,11 +3298,11 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 	return 0;
 }
 
-static int read_file_or_gitlink(const struct cache_entry *ce, struct strbuf *buf)
+static int read_file_or_gitlink(struct repository *r, const struct cache_entry *ce, struct strbuf *buf)
 {
 	if (!ce)
 		return 0;
-	return read_blob_object(buf, &ce->oid, ce->ce_mode);
+	return read_blob_object(r, buf, &ce->oid, ce->ce_mode);
 }
 
 static struct patch *in_fn_table(struct apply_state *state, const char *name)
@@ -3443,12 +3443,12 @@ static int load_patch_target(struct apply_state *state,
 			     unsigned expected_mode)
 {
 	if (state->cached || state->check_index) {
-		if (read_file_or_gitlink(ce, buf))
+		if (read_file_or_gitlink(state->repo, ce, buf))
 			return error(_("failed to read %s"), name);
 	} else if (name) {
 		if (S_ISGITLINK(expected_mode)) {
 			if (ce)
-				return read_file_or_gitlink(ce, buf);
+				return read_file_or_gitlink(state->repo, ce, buf);
 			else
 				return SUBMODULE_PATCH_WITHOUT_INDEX;
 		} else if (has_symlink_leading_path(name, strlen(name))) {
@@ -3510,14 +3510,14 @@ static int load_preimage(struct apply_state *state,
 	return 0;
 }
 
-static int resolve_to(struct image *image, const struct object_id *result_id)
+static int resolve_to(struct repository *r, struct image *image, const struct object_id *result_id)
 {
 	unsigned long size;
 	enum object_type type;
 
 	clear_image(image);
 
-	image->buf = repo_read_object_file(the_repository, result_id, &type,
+	image->buf = repo_read_object_file(r, result_id, &type,
 					   &size);
 	if (!image->buf || type != OBJ_BLOB)
 		die("unable to read blob object %s", oid_to_hex(result_id));
@@ -3539,9 +3539,9 @@ static int three_way_merge(struct apply_state *state,
 
 	/* resolve trivial cases first */
 	if (oideq(base, ours))
-		return resolve_to(image, theirs);
+		return resolve_to(state->repo, image, theirs);
 	else if (oideq(base, theirs) || oideq(ours, theirs))
-		return resolve_to(image, ours);
+		return resolve_to(state->repo, image, ours);
 
 	read_mmblob(&base_file, base);
 	read_mmblob(&our_file, ours);
@@ -3636,8 +3636,8 @@ static int try_threeway(struct apply_state *state,
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
 		write_object_file("", 0, OBJ_BLOB, &pre_oid);
-	else if (repo_get_oid(the_repository, patch->old_oid_prefix, &pre_oid) ||
-		 read_blob_object(&buf, &pre_oid, patch->old_mode))
+	else if (repo_get_oid(state->repo, patch->old_oid_prefix, &pre_oid) ||
+		 read_blob_object(state->repo, &buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to perform 3-way merge."));
 
 	if (state->apply_verbosity > verbosity_silent && patch->direct_to_threeway)
@@ -4164,7 +4164,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 			else
 				return error(_("sha1 information is lacking or "
 					       "useless for submodule %s"), name);
-		} else if (!repo_get_oid_blob(the_repository, patch->old_oid_prefix, &oid)) {
+		} else if (!repo_get_oid_blob(state->repo, patch->old_oid_prefix, &oid)) {
 			; /* ok */
 		} else if (!patch->lines_added && !patch->lines_deleted) {
 			/* mode-only change: update the current */
