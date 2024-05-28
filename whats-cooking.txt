@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2024, #10; Fri, 24)
+Subject: What's cooking in git.git (May 2024, #11; Mon, 27)
 X-master-at: b9cfe4845cb2562584837bc0101c0ab76490a239
-X-next-at: bbe1065a7e6f9ab964c30003b9eadf3a65c611d5
+X-next-at: bab1589fc04ad0202329dc933a2f485402c51dfa
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2024, #10; Fri, 24)
+What's cooking in git.git (May 2024, #11; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -21,9 +21,10 @@ We unfortunately had serious regressions in 2.45.1 (and below, down
 to 2.39 maintenance track are affected), and we are trying to assess
 the extent of damage and which changes that went into the release to
 revert.  We know about "git lfs" and "git annex" getting affected.
-We have bunch of reverts planned to fix these regressions that I
-plan to merge to 'next' soonish.  Please test it if you think you're
-affected.
+We have bunch of reverts planned to fix these regressions that are
+already in 'next'.  Please test it if you think you're affected, so
+that we can have 2.45.2 and friends to fix these regressions early
+next month.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -56,6 +57,36 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* ps/leakfixes-base (2024-05-27) 2 commits
+  (merged to 'next' on 2024-05-27 at bab1589fc0)
+ + t: mark a bunch of tests as leak-free
+ + ci: add missing dependency for TTY prereq
+ (this branch is used by ps/leakfixes.)
+
+ source: <cover.1716810168.git.ps@pks.im>
+
+
+* gt/t-hash-unit-test (2024-05-27) 2 commits
+ - t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
+ - strbuf: introduce strbuf_addstrings() to repeatedly add a string
+
+ source: <20240526084345.24138-1-shyamthakkar001@gmail.com>
+
+
+* pp/add-parse-range-unit-test (2024-05-27) 1 commit
+ - apply: add unit tests for parse_range
+
+ source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
+
+
+* rs/difftool-env-simplify (2024-05-27) 1 commit
+ - difftool: add env vars directly in run_file_diff()
+
+ source: <c7c843b9-0ccf-4bcb-a036-d794729a99d6@web.de>
+
+--------------------------------------------------
+[Cooking]
+
 * jc/format-patch-with-range-diff (2024-05-24) 2 commits
  - format-patch: move range/inter diff at the end of a single patch output
  - show_log: factor out interdiff/range-diff generation
@@ -87,16 +118,16 @@ Release tarballs are available at:
  source: <20240524163926.2019648-1-christian.couder@gmail.com>
 
 
-* iw/trace-argv-on-alias (2024-05-24) 4 commits
- - fixup! run-command: show prepared command
+* iw/trace-argv-on-alias (2024-05-27) 4 commits
+ - SQUASH???
  - run-command: show prepared command
  - Documentation: alias: add notes on shell expansion
  - Documentation: alias: rework notes into points
 
  Log the alias-expanded command lines to the trace output.
 
- Expecting a (hopefully minor and final) reroll.
- source: <20240523043806.1223032-1-iwienand@redhat.com>
+ Comments?
+ source: <20240525234454.1489598-1-iwienand@redhat.com>
 
 
 * ps/document-breaking-changes (2024-05-24) 1 commit
@@ -110,7 +141,7 @@ Release tarballs are available at:
  source: <84c01f1b0a2d24d7de912606f548623601c0d715.1716555034.git.ps@pks.im>
 
 
-* ps/leakfixes (2024-05-24) 21 commits
+* ps/leakfixes (2024-05-27) 19 commits
  - builtin/mv: fix leaks for submodule gitfile paths
  - builtin/mv: refactor to use `struct strvec`
  - builtin/mv duplicate string list memory
@@ -130,13 +161,12 @@ Release tarballs are available at:
  - checkout: clarify memory ownership in `unique_tracking_name()`
  - strbuf: fix leak when `appendwholeline()` fails with EOF
  - transport-helper: fix leaking helper name
- - t: mark a bunch of tests as leak-free
- - ci: add missing dependency for TTY prereq
+ (this branch uses ps/leakfixes-base.)
 
  Leakfixes.
 
- Will merge to 'next'?
- source: <cover.1716541556.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1716810168.git.ps@pks.im>
 
 
 * ps/ref-storage-migration (2024-05-24) 11 commits
@@ -157,6 +187,8 @@ Release tarballs are available at:
  ref storage to use the reftable backend, with limitations.
 
  Expecting a reroll.
+ With this in 'seen', "leaks" job at CI seems to fail.
+ cf. <xmqqwmniiqv2.fsf@gitster.g>
  source: <cover.1716545235.git.ps@pks.im>
 
 
@@ -212,7 +244,8 @@ Release tarballs are available at:
 
 
 * th/push-local-ff-check-without-lazy-fetch (2024-05-22) 1 commit
- - push: don't fetch commit object when checking existence
+  (merged to 'next' on 2024-05-25 at 520b6b2897)
+ + push: don't fetch commit object when checking existence
 
  When "git push" notices that the commit at the tip of the ref on
  the other side it is about to overwrite does not exist locally, it
@@ -220,21 +253,19 @@ Release tarballs are available at:
  clone. The command has been taught not to do so and immediately
  fail instead.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240522201559.1677959-1-tom@compton.nu>
 
 
-* th/quiet-lazy-fetch-from-promisor (2024-05-24) 1 commit
+* th/quiet-lazy-fetch-from-promisor (2024-05-26) 1 commit
  - promisor-remote: add promisor.quiet configuration option
 
  The promisor.quiet configuration knob can be set to true to make
  lazy fetching from promisor remotes silent.
 
- Comments?
- source: <20240524090937.2448229-1-tom@compton.nu>
+ Will merge to 'next'.
+ source: <20240525100927.2949808-1-tom@compton.nu>
 
---------------------------------------------------
-[Cooking]
 
 * gt/unit-test-strcmp-offset (2024-05-20) 1 commit
   (merged to 'next' on 2024-05-23 at f672ec425f)
@@ -259,35 +290,36 @@ Release tarballs are available at:
 
 
 * jc/fix-2.45.1-and-friends-for-2.39 (2024-05-22) 12 commits
- - Revert "fsck: warn about symlink pointing inside a gitdir"
- - Revert "Add a helper function to compare file contents"
- - clone: drop the protections where hooks aren't run
- - tests: verify that `clone -c core.hooksPath=/dev/null` works again
- - Revert "core.hooksPath: add some protection while cloning"
- - init: use the correct path of the templates directory again
- - hook: plug a new memory leak
- - ci: stop installing "gcc-13" for osx-gcc
- - ci: avoid bare "gcc" for osx-gcc job
- - ci: drop mention of BREW_INSTALL_PACKAGES variable
- - send-email: avoid creating more than one Term::ReadLine object
- - send-email: drop FakeTerm hack
+ + Revert "fsck: warn about symlink pointing inside a gitdir"
+ + Revert "Add a helper function to compare file contents"
+ + clone: drop the protections where hooks aren't run
+ + tests: verify that `clone -c core.hooksPath=/dev/null` works again
+ + Revert "core.hooksPath: add some protection while cloning"
+ + init: use the correct path of the templates directory again
+ + hook: plug a new memory leak
+ + ci: stop installing "gcc-13" for osx-gcc
+ + ci: avoid bare "gcc" for osx-gcc job
+ + ci: drop mention of BREW_INSTALL_PACKAGES variable
+ + send-email: avoid creating more than one Term::ReadLine object
+ + send-email: drop FakeTerm hack
  (this branch is used by jc/fix-2.45.1-and-friends-for-maint.)
 
  Revert overly aggressive "layered defence" that went into 2.45.1
  and friends, which broke "git-lfs", "git-annex", and other use
  cases, so that we can rebuild necessary counterparts in the open.
 
- Needs consensus on what (more) to revert or adjust.
+ Will merge to 'master' and then prepare 2.45.2 and friends.
  source: <20240521195659.870714-1-gitster@pobox.com>
 
 
 * jc/fix-2.45.1-and-friends-for-maint (2024-05-24) 6 commits
- - Merge branch 'fixes/2.45.1/2.44' into jc/fix-2.45.1-and-friends-for-maint
- - Merge branch 'fixes/2.45.1/2.43' into fixes/2.45.1/2.44
- - Merge branch 'fixes/2.45.1/2.42' into fixes/2.45.1/2.43
- - Merge branch 'fixes/2.45.1/2.41' into fixes/2.45.1/2.42
- - Merge branch 'fixes/2.45.1/2.40' into fixes/2.45.1/2.41
- - Merge branch 'jc/fix-2.45.1-and-friends-for-2.39' into fixes/2.45.1/2.40
+  (merged to 'next' on 2024-05-25 at a090491028)
+ + Merge branch 'fixes/2.45.1/2.44' into jc/fix-2.45.1-and-friends-for-maint
+ + Merge branch 'fixes/2.45.1/2.43' into fixes/2.45.1/2.44
+ + Merge branch 'fixes/2.45.1/2.42' into fixes/2.45.1/2.43
+ + Merge branch 'fixes/2.45.1/2.41' into fixes/2.45.1/2.42
+ + Merge branch 'fixes/2.45.1/2.40' into fixes/2.45.1/2.41
+ + Merge branch 'jc/fix-2.45.1-and-friends-for-2.39' into fixes/2.45.1/2.40
  (this branch uses jc/fix-2.45.1-and-friends-for-2.39.)
 
  Adjust jc/fix-2.45.1-and-friends-for-2.39 for more recent
@@ -297,13 +329,14 @@ Release tarballs are available at:
 
 
 * ps/fix-reinit-includeif-onbranch (2024-05-22) 1 commit
- - setup: fix bug with "includeIf.onbranch" when initializing dir
+  (merged to 'next' on 2024-05-25 at 89c035186d)
+ + setup: fix bug with "includeIf.onbranch" when initializing dir
 
  "git init" in an already created directory, when the user
  configuration has includeif.onbranch, started to fail recently,
  which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cf182bb9ee7d4a7eb46e5dbf4f3ef5deb198d823.1716374321.git.ps@pks.im>
 
 
@@ -360,7 +393,8 @@ Release tarballs are available at:
  source: <pull.1729.v3.git.1715800868.gitgitgadget@gmail.com>
 
 
-* kn/update-ref-symref (2024-05-23) 7 commits
+* kn/update-ref-symref (2024-05-27) 8 commits
+ - SQUASH??? leakfix
  - update-ref: add support for 'symref-update' command
  - reftable: pick either 'oid' or 'target' for new updates
  - update-ref: add support for 'symref-create' command
@@ -373,6 +407,8 @@ Release tarballs are available at:
  symbolic-refs.
 
  Needs review.
+ With this in 'seen', "leaks" job at CI seems to fail.
+ cf. <xmqqwmniiqv2.fsf@gitster.g>
  source: <20240514124411.1037019-1-knayak@gitlab.com>
 
 
