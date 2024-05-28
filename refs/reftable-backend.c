@@ -352,6 +352,11 @@ static int reftable_be_remove_on_disk(struct ref_store *ref_store,
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
 
+	/*
+	 * Release the ref store such that all stacks are closed. This is
+	 * required so that the "tables.list" file is not open anymore, which
+	 * would otherwise make it impossible to remove the file on Windows.
+	 */
 	reftable_be_release(ref_store);
 
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
