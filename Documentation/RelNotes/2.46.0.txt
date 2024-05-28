@@ -42,6 +42,13 @@ UI, Workflows & Features
 
  * The trailer API has been reshuffled a bit.
 
+ * Terminology to call various ref-like things are getting
+   straightened out.
+
+ * The command line completion script (in contrib/) has been adjusted
+   to the recent update to "git config" that adopted subcommand based
+   UI.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -75,6 +82,19 @@ Performance, Internal Implementation, Development Support etc.
  * The refs API lost functions that implicitly assumes to work on the
    primary ref_store by forcing the callers to pass a ref_store as an
    argument.
+
+ * Code clean-up to reduce inter-function communication inside
+   builtin/config.c done via the use of global variables.
+
+ * The pack bitmap code saw some clean-up to prepare for a follow-up topic.
+   (merge 85f360fee5 tb/pack-bitmap-write-cleanups later to maint).
+
+ * Preliminary code clean-up for "git send-email".
+   (merge c02dc38570 ds/send-email-per-message-block later to maint).
+
+ * The default "creation-factor" used by "git format-patch" has been
+   raised to make it more aggressively find matching commits.
+   (merge c22d41d641 jc/format-patch-more-aggressive-range-diff later to maint).
 
 
 Fixes since v2.45
@@ -147,6 +167,19 @@ Fixes since v2.45
    "git fetch".
    (merge 9339fca23e it/refs-name-conflict later to maint).
 
+ * The SubmittingPatches document now refers folks to manpages
+   translation project.
+   (merge 558a5b8cd0 jc/doc-manpages-l10n later to maint).
+
+ * The documentation for "git diff --name-only" has been clarified
+   that it is about showing the names in the post-image tree.
+   (merge 4986662cbc jc/doc-diff-name-only later to maint).
+
+ * The credential helper that talks with osx keychain learned to avoid
+   storing back the authentication material it just got received from
+   the keychain.
+   (merge e1ab45b2da kn/osxkeychain-skip-idempotent-store later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 4cf6e7bf5e jt/doc-submitting-rerolled-series later to maint).
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
@@ -157,3 +190,5 @@ Fixes since v2.45
    (merge b64b0df9da ds/scalar-reconfigure-all-fix later to maint).
    (merge c81ffcff83 dm/update-index-doc-fix later to maint).
    (merge fc0202b0e9 dg/fetch-pack-code-cleanup later to maint).
+   (merge 7150f140f9 mt/t0211-typofix later to maint).
+   (merge d424488901 jc/rev-parse-fatal-doc later to maint).
