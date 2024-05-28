@@ -12,6 +12,7 @@ static CFStringRef username;
 static CFDataRef password;
 static CFDataRef password_expiry_utc;
 static CFDataRef oauth_refresh_token;
+static int state_seen;
 
 static void clear_credential(void)
 {
@@ -171,6 +172,9 @@ static OSStatus find_internet_password(void)
 
 	CFRelease(item);
 
+	write_item("capability[]", "state", strlen("state"));
+	write_item("state[]", "osxkeychain:seen=1", strlen("osxkeychain:seen=1"));
+
 out:
 	CFRelease(attrs);
 
@@ -284,6 +288,9 @@ static OSStatus add_internet_password(void)
 	CFDictionaryRef attrs;
 	OSStatus result;
 
+	if (state_seen)
+		return errSecSuccess;
+
 	/* Only store complete credentials */
 	if (!protocol || !host || !username || !password)
 		return -1;
@@ -395,6 +402,10 @@ static void read_credential(void)
 			oauth_refresh_token = CFDataCreate(kCFAllocatorDefault,
 							   (UInt8 *)v,
 							   strlen(v));
+		else if (!strcmp(buf, "state[]")) {
+			if (!strcmp(v, "osxkeychain:seen=1"))
+				state_seen = 1;
+		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but
 		 * this future-proofs us when later versions of git do
@@ -413,6 +424,9 @@ int main(int argc, const char **argv)
 
 	if (!argv[1])
 		die("%s", usage);
+
+	if (open(argv[0], O_RDONLY | O_EXLOCK) == -1)
+		die("failed to lock %s", argv[0]);
 
 	read_credential();
 
