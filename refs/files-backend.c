@@ -351,8 +351,7 @@ static void add_pseudoref_and_head_entries(struct ref_store *ref_store,
 		strbuf_addstr(&refname, de->d_name);
 
 		dtype = get_dtype(de, &path, 1);
-		if (dtype == DT_REG && (is_pseudoref(ref_store, de->d_name) ||
-								is_headref(ref_store, de->d_name)))
+		if (dtype == DT_REG && is_root_ref(de->d_name))
 			loose_fill_ref_dir_regular_file(refs, refname.buf, dir);
 
 		strbuf_setlen(&refname, dirnamelen);

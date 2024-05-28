@@ -819,7 +819,22 @@ int is_per_worktree_ref(const char *refname)
 	       starts_with(refname, "refs/rewritten/");
 }
 
-static int is_pseudoref_syntax(const char *refname)
+int is_pseudo_ref(const char *refname)
+{
+	static const char * const pseudo_refs[] = {
+		"FETCH_HEAD",
+		"MERGE_HEAD",
+	};
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(pseudo_refs); i++)
+		if (!strcmp(refname, pseudo_refs[i]))
+			return 1;
+
+	return 0;
+}
+
+static int is_root_ref_syntax(const char *refname)
 {
 	const char *c;
 
@@ -828,56 +843,37 @@ static int is_pseudoref_syntax(const char *refname)
 			return 0;
 	}
 
-	/*
-	 * HEAD is not a pseudoref, but it certainly uses the
-	 * pseudoref syntax.
-	 */
 	return 1;
 }
 
-int is_pseudoref(struct ref_store *refs, const char *refname)
+int is_root_ref(const char *refname)
 {
-	static const char *const irregular_pseudorefs[] = {
+	static const char *const irregular_root_refs[] = {
+		"HEAD",
 		"AUTO_MERGE",
 		"BISECT_EXPECTED_REV",
 		"NOTES_MERGE_PARTIAL",
 		"NOTES_MERGE_REF",
 		"MERGE_AUTOSTASH",
 	};
-	struct object_id oid;
 	size_t i;
 
-	if (!is_pseudoref_syntax(refname))
+	if (!is_root_ref_syntax(refname) ||
+	    is_pseudo_ref(refname))
 		return 0;
 
-	if (ends_with(refname, "_HEAD")) {
-		refs_resolve_ref_unsafe(refs, refname,
-					RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-					&oid, NULL);
-		return !is_null_oid(&oid);
-	}
+	if (ends_with(refname, "_HEAD"))
+		return 1;
 
-	for (i = 0; i < ARRAY_SIZE(irregular_pseudorefs); i++)
-		if (!strcmp(refname, irregular_pseudorefs[i])) {
-			refs_resolve_ref_unsafe(refs, refname,
-						RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
-						&oid, NULL);
-			return !is_null_oid(&oid);
-		}
-
-	return 0;
-}
-
-int is_headref(struct ref_store *refs, const char *refname)
-{
-	if (!strcmp(refname, "HEAD"))
-		return refs_ref_exists(refs, refname);
+	for (i = 0; i < ARRAY_SIZE(irregular_root_refs); i++)
+		if (!strcmp(refname, irregular_root_refs[i]))
+			return 1;
 
 	return 0;
 }
 
 static int is_current_worktree_ref(const char *ref) {
-	return is_pseudoref_syntax(ref) || is_per_worktree_ref(ref);
+	return is_root_ref_syntax(ref) || is_per_worktree_ref(ref);
 }
 
 enum ref_worktree_type parse_worktree_ref(const char *maybe_worktree_ref,
@@ -1239,6 +1235,13 @@ int ref_transaction_update(struct ref_transaction *transaction,
 		     check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
 			   !refname_is_safe(refname))) {
 		strbuf_addf(err, _("refusing to update ref with bad name '%s'"),
+			    refname);
+		return -1;
+	}
+
+	if (!(flags & REF_SKIP_REFNAME_VERIFICATION) &&
+	    is_pseudo_ref(refname)) {
+		strbuf_addf(err, _("refusing to update pseudoref '%s'"),
 			    refname);
 		return -1;
 	}
@@ -1816,43 +1819,12 @@ done:
 	return result;
 }
 
-static int is_special_ref(const char *refname)
-{
-	/*
-	 * Special references are refs that have different semantics compared
-	 * to "normal" refs. These refs can thus not be stored in the ref
-	 * backend, but must always be accessed via the filesystem. The
-	 * following refs are special:
-	 *
-	 * - FETCH_HEAD may contain multiple object IDs, and each one of them
-	 *   carries additional metadata like where it came from.
-	 *
-	 * - MERGE_HEAD may contain multiple object IDs when merging multiple
-	 *   heads.
-	 *
-	 * Reading, writing or deleting references must consistently go either
-	 * through the filesystem (special refs) or through the reference
-	 * backend (normal ones).
-	 */
-	static const char * const special_refs[] = {
-		"FETCH_HEAD",
-		"MERGE_HEAD",
-	};
-	size_t i;
-
-	for (i = 0; i < ARRAY_SIZE(special_refs); i++)
-		if (!strcmp(refname, special_refs[i]))
-			return 1;
-
-	return 0;
-}
-
 int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		      struct object_id *oid, struct strbuf *referent,
 		      unsigned int *type, int *failure_errno)
 {
 	assert(failure_errno);
-	if (is_special_ref(refname))
+	if (is_pseudo_ref(refname))
 		return refs_read_special_head(ref_store, refname, oid, referent,
 					      type, failure_errno);
 
