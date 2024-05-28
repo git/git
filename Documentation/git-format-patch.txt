@@ -357,6 +357,11 @@ material (this may change in the future).
 	between the previous and current series of patches by adjusting the
 	creation/deletion cost fudge factor. See linkgit:git-range-diff[1])
 	for details.
++
+Defaults to 999 (the linkgit:git-range-diff[1] uses 60), as the use
+case is to show comparison with an older iteration of the same
+topic and the tool should find more correspondence between the two
+sets of patches.
 
 --notes[=<ref>]::
 --no-notes::
