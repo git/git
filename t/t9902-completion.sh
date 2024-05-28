@@ -2742,30 +2742,58 @@ do
 	'
 done
 
-test_expect_success 'git config - section' '
-	test_completion "git config br" <<-\EOF
+test_expect_success 'git config subcommand' '
+	test_completion "git config " <<-\EOF
+	edit Z
+	get Z
+	list Z
+	remove-section Z
+	rename-section Z
+	set Z
+	unset Z
+	EOF
+'
+
+test_expect_success 'git config subcommand options' '
+	test_completion "git config get --show-" <<-\EOF
+	--show-names Z
+	--show-origin Z
+	--show-scope Z
+	EOF
+'
+
+test_expect_success 'git config get' '
+	test_when_finished "rm -f cfgfile" &&
+	git config set --file cfgfile foo.bar baz &&
+	test_completion "git config get --file cfgfile foo." <<-\EOF
+	foo.bar Z
+	EOF
+'
+
+test_expect_success 'git config set - section' '
+	test_completion "git config set br" <<-\EOF
 	branch.Z
 	browser.Z
 	EOF
 '
 
-test_expect_success 'git config - section include, includeIf' '
-	test_completion "git config inclu" <<-\EOF
+test_expect_success 'git config set - section include, includeIf' '
+	test_completion "git config set inclu" <<-\EOF
 	include.Z
 	includeIf.Z
 	EOF
 '
 
-test_expect_success 'git config - variable name' '
-	test_completion "git config log.d" <<-\EOF
+test_expect_success 'git config set - variable name' '
+	test_completion "git config set log.d" <<-\EOF
 	log.date Z
 	log.decorate Z
 	log.diffMerges Z
 	EOF
 '
 
-test_expect_success 'git config - variable name include' '
-	test_completion "git config include.p" <<-\EOF
+test_expect_success 'git config set - variable name include' '
+	test_completion "git config set include.p" <<-\EOF
 	include.path Z
 	EOF
 '
@@ -2776,8 +2804,8 @@ test_expect_success 'setup for git config submodule tests' '
 	git submodule add ./sub
 '
 
-test_expect_success 'git config - variable name - submodule and __git_compute_first_level_config_vars_for_section' '
-	test_completion "git config submodule." <<-\EOF
+test_expect_success 'git config set - variable name - submodule and __git_compute_first_level_config_vars_for_section' '
+	test_completion "git config set submodule." <<-\EOF
 	submodule.active Z
 	submodule.alternateErrorStrategy Z
 	submodule.alternateLocation Z
@@ -2788,8 +2816,8 @@ test_expect_success 'git config - variable name - submodule and __git_compute_fi
 	EOF
 '
 
-test_expect_success 'git config - variable name - __git_compute_second_level_config_vars_for_section' '
-	test_completion "git config submodule.sub." <<-\EOF
+test_expect_success 'git config set - variable name - __git_compute_second_level_config_vars_for_section' '
+	test_completion "git config set submodule.sub." <<-\EOF
 	submodule.sub.url Z
 	submodule.sub.update Z
 	submodule.sub.branch Z
@@ -2799,8 +2827,8 @@ test_expect_success 'git config - variable name - __git_compute_second_level_con
 	EOF
 '
 
-test_expect_success 'git config - value' '
-	test_completion "git config color.pager " <<-\EOF
+test_expect_success 'git config set - value' '
+	test_completion "git config set color.pager " <<-\EOF
 	false Z
 	true Z
 	EOF
