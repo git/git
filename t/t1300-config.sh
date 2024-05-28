@@ -596,7 +596,8 @@ test_expect_success 'get bool variable with empty value' '
 
 test_expect_success 'no arguments, but no crash' '
 	test_must_fail git config >output 2>&1 &&
-	test_grep usage output
+	echo "error: no action specified" >expect &&
+	test_cmp expect output
 '
 
 cat > .git/config << EOF
@@ -2831,6 +2832,12 @@ test_expect_success 'specifying multiple modes causes failure' '
 	error: options ${SQ}--get-all${SQ} and ${SQ}--get${SQ} cannot be used together
 	EOF
 	test_must_fail git config --get --get-all 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'writing to stdin is rejected' '
+	echo "fatal: writing to stdin is not supported" >expect &&
+	test_must_fail git config ${mode_set} --file - foo.bar baz 2>err &&
 	test_cmp expect err
 '
 
