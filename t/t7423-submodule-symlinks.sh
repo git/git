@@ -2,6 +2,7 @@
 
 test_description='check that submodule operations do not follow symlinks'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'prepare' '
