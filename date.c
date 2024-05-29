@@ -868,6 +868,10 @@ static int match_object_header_date(const char *date, timestamp_t *timestamp, in
 	return 0;
 }
 
+
+/* timestamp of 2099-12-31T23:59:59Z, including 32 leap days */
+static const timestamp_t timestamp_max = (((timestamp_t)2100 - 1970) * 365 + 32) * 24 * 60 * 60 - 1;
+
 /* Gr. strptime is crap for this; it doesn't have a way to require RFC2822
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
 int parse_date_basic(const char *date, timestamp_t *timestamp, int *offset)
@@ -937,8 +941,14 @@ int parse_date_basic(const char *date, timestamp_t *timestamp, int *offset)
 		}
 	}
 
-	if (!tm_gmt)
+	if (!tm_gmt) {
+		if (*offset > 0 && *offset * 60 > *timestamp)
+			return -1;
+		if (*offset < 0 && -*offset * 60 > timestamp_max - *timestamp)
+			return -1;
 		*timestamp -= *offset * 60;
+	}
+
 	return 0; /* success */
 }
 
