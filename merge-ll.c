@@ -27,7 +27,7 @@ typedef enum ll_merge_result (*ll_merge_fn)(const struct ll_merge_driver *,
 
 struct ll_merge_driver {
 	const char *name;
-	char *description;
+	const char *description;
 	ll_merge_fn fn;
 	char *recursive;
 	struct ll_merge_driver *next;
@@ -304,8 +304,13 @@ static int read_merge_config(const char *var, const char *value,
 		ll_user_merge_tail = &(fn->next);
 	}
 
-	if (!strcmp("name", key))
-		return git_config_string(&fn->description, var, value);
+	if (!strcmp("name", key)) {
+		/*
+		 * The description is leaking, but that's okay as we want to
+		 * keep around the merge drivers anyway.
+		 */
+		return git_config_string((char **) &fn->description, var, value);
+	}
 
 	if (!strcmp("driver", key)) {
 		if (!value)
