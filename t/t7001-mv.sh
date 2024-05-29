@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='git mv in subdirs'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff-data.sh
 

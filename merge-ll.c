@@ -27,9 +27,9 @@ typedef enum ll_merge_result (*ll_merge_fn)(const struct ll_merge_driver *,
 
 struct ll_merge_driver {
 	const char *name;
-	const char *description;
+	char *description;
 	ll_merge_fn fn;
-	const char *recursive;
+	char *recursive;
 	struct ll_merge_driver *next;
 	char *cmdline;
 };
@@ -268,7 +268,7 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
  * merge.default and merge.driver configuration items
  */
 static struct ll_merge_driver *ll_user_merge, **ll_user_merge_tail;
-static const char *default_ll_merge;
+static char *default_ll_merge;
 
 static int read_merge_config(const char *var, const char *value,
 			     const struct config_context *ctx UNUSED,

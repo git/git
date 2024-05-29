@@ -38,11 +38,11 @@ char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
 static int curl_ssl_try;
-static const char *curl_http_version = NULL;
-static const char *ssl_cert;
-static const char *ssl_cert_type;
-static const char *ssl_cipherlist;
-static const char *ssl_version;
+static char *curl_http_version;
+static char *ssl_cert;
+static char *ssl_cert_type;
+static char *ssl_cipherlist;
+static char *ssl_version;
 static struct {
 	const char *name;
 	long ssl_version;
@@ -59,23 +59,23 @@ static struct {
 	{ "tlsv1.3", CURL_SSLVERSION_TLSv1_3 },
 #endif
 };
-static const char *ssl_key;
-static const char *ssl_key_type;
-static const char *ssl_capath;
-static const char *curl_no_proxy;
+static char *ssl_key;
+static char *ssl_key_type;
+static char *ssl_capath;
+static char *curl_no_proxy;
 #ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
-static const char *ssl_pinnedkey;
+static char *ssl_pinnedkey;
 #endif
-static const char *ssl_cainfo;
+static char *ssl_cainfo;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
-static const char *curl_http_proxy;
-static const char *http_proxy_authmethod;
+static char *curl_http_proxy;
+static char *http_proxy_authmethod;
 
-static const char *http_proxy_ssl_cert;
-static const char *http_proxy_ssl_key;
-static const char *http_proxy_ssl_ca_info;
+static char *http_proxy_ssl_cert;
+static char *http_proxy_ssl_key;
+static char *http_proxy_ssl_ca_info;
 static struct credential proxy_cert_auth = CREDENTIAL_INIT;
 static int proxy_ssl_cert_password_required;
 
@@ -95,7 +95,7 @@ static struct {
 	 */
 };
 #ifdef CURLGSSAPI_DELEGATION_FLAG
-static const char *curl_deleg;
+static char *curl_deleg;
 static struct {
 	const char *name;
 	long curl_deleg_param;
@@ -108,11 +108,11 @@ static struct {
 
 static struct credential proxy_auth = CREDENTIAL_INIT;
 static const char *curl_proxyuserpwd;
-static const char *curl_cookie_file;
+static char *curl_cookie_file;
 static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
 static int http_proactive_auth;
-static const char *user_agent;
+static char *user_agent;
 static int curl_empty_auth = -1;
 
 enum http_follow_config http_follow_config = HTTP_FOLLOW_INITIAL;
@@ -592,10 +592,10 @@ static void init_curl_http_auth(CURL *result)
 }
 
 /* *var must be free-able */
-static void var_override(const char **var, char *value)
+static void var_override(char **var, char *value)
 {
 	if (value) {
-		free((void *)*var);
+		free(*var);
 		*var = xstrdup(value);
 	}
 }
@@ -1233,11 +1233,13 @@ static CURL *get_curl_handle(void)
 	return result;
 }
 
-static void set_from_env(const char **var, const char *envname)
+static void set_from_env(char **var, const char *envname)
 {
 	const char *val = getenv(envname);
-	if (val)
-		*var = val;
+	if (val) {
+		FREE_AND_NULL(*var);
+		*var = xstrdup(val);
+	}
 }
 
 void http_init(struct remote *remote, const char *url, int proactive_auth)
