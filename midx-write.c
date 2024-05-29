@@ -100,6 +100,32 @@ struct write_midx_context {
 	struct string_list *to_include;
 };
 
+static int should_include_pack(const struct write_midx_context *ctx,
+			       const char *file_name)
+{
+	/*
+	 * Note that at most one of ctx->m and ctx->to_include are set,
+	 * so we are testing midx_contains_pack() and
+	 * string_list_has_string() independently (guarded by the
+	 * appropriate NULL checks).
+	 *
+	 * We could support passing to_include while reusing an existing
+	 * MIDX, but don't currently since the reuse process drags
+	 * forward all packs from an existing MIDX (without checking
+	 * whether or not they appear in the to_include list).
+	 *
+	 * If we added support for that, these next two conditional
+	 * should be performed independently (likely checking
+	 * to_include before the existing MIDX).
+	 */
+	if (ctx->m && midx_contains_pack(ctx->m, file_name))
+		return 0;
+	else if (ctx->to_include &&
+		 !string_list_has_string(ctx->to_include, file_name))
+		return 0;
+	return 1;
+}
+
 static void add_pack_to_midx(const char *full_path, size_t full_path_len,
 			     const char *file_name, void *data)
 {
@@ -108,29 +134,11 @@ static void add_pack_to_midx(const char *full_path, size_t full_path_len,
 
 	if (ends_with(file_name, ".idx")) {
 		display_progress(ctx->progress, ++ctx->pack_paths_checked);
-		/*
-		 * Note that at most one of ctx->m and ctx->to_include are set,
-		 * so we are testing midx_contains_pack() and
-		 * string_list_has_string() independently (guarded by the
-		 * appropriate NULL checks).
-		 *
-		 * We could support passing to_include while reusing an existing
-		 * MIDX, but don't currently since the reuse process drags
-		 * forward all packs from an existing MIDX (without checking
-		 * whether or not they appear in the to_include list).
-		 *
-		 * If we added support for that, these next two conditional
-		 * should be performed independently (likely checking
-		 * to_include before the existing MIDX).
-		 */
-		if (ctx->m && midx_contains_pack(ctx->m, file_name))
-			return;
-		else if (ctx->to_include &&
-			 !string_list_has_string(ctx->to_include, file_name))
+
+		if (!should_include_pack(ctx, file_name))
 			return;
 
 		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
-
 		p = add_packed_git(full_path, full_path_len, 0);
 		if (!p) {
 			warning(_("failed to add packfile '%s'"),
