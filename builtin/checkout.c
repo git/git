@@ -1275,12 +1275,12 @@ static void setup_new_branch_info_and_source_tree(
 	}
 }
 
-static const char *parse_remote_branch(const char *arg,
-				       struct object_id *rev,
-				       int could_be_checkout_paths)
+static char *parse_remote_branch(const char *arg,
+				 struct object_id *rev,
+				 int could_be_checkout_paths)
 {
 	int num_matches = 0;
-	const char *remote = unique_tracking_name(arg, rev, &num_matches);
+	char *remote = unique_tracking_name(arg, rev, &num_matches);
 
 	if (remote && could_be_checkout_paths) {
 		die(_("'%s' could be both a local file and a tracking branch.\n"
@@ -1316,6 +1316,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	const char **new_branch = &opts->new_branch;
 	int argcount = 0;
 	const char *arg;
+	char *remote = NULL;
 	int dash_dash_pos;
 	int has_dash_dash = 0;
 	int i;
@@ -1416,8 +1417,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 			recover_with_dwim = 0;
 
 		if (recover_with_dwim) {
-			const char *remote = parse_remote_branch(arg, rev,
-								 could_be_checkout_paths);
+			remote = parse_remote_branch(arg, rev,
+						     could_be_checkout_paths);
 			if (remote) {
 				*new_branch = arg;
 				arg = remote;
@@ -1459,6 +1460,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 		argc--;
 	}
 
+	free(remote);
 	return argcount;
 }
 

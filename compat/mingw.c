@@ -2257,6 +2257,7 @@ struct passwd *getpwuid(int uid)
 {
 	static unsigned initialized;
 	static char user_name[100];
+	static char unknown[] = "unknown";
 	static struct passwd *p;
 	wchar_t buf[100];
 	DWORD len;
@@ -2279,7 +2280,7 @@ struct passwd *getpwuid(int uid)
 	p->pw_name = user_name;
 	p->pw_gecos = get_extended_user_info(NameDisplay);
 	if (!p->pw_gecos)
-		p->pw_gecos = "unknown";
+		p->pw_gecos = unknown;
 	p->pw_dir = NULL;
 
 	initialized = 1;
@@ -2800,16 +2801,16 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 			strbuf_addf(report, "'%s' is on a file system that does "
 				    "not record ownership\n", path);
 		} else if (report) {
-			LPSTR str1, str2, str3, str4, to_free1 = NULL,
-			    to_free3 = NULL, to_local_free2 = NULL,
-			    to_local_free4 = NULL;
+			PCSTR str1, str2, str3, str4;
+			LPSTR to_free1 = NULL, to_free3 = NULL,
+			    to_local_free2 = NULL, to_local_free4 = NULL;
 
-			if (user_sid_to_user_name(sid, &str1))
-				to_free1 = str1;
+			if (user_sid_to_user_name(sid, &to_free1))
+				str1 = to_free1;
 			else
 				str1 = "(inconvertible)";
-			if (ConvertSidToStringSidA(sid, &str2))
-				to_local_free2 = str2;
+			if (ConvertSidToStringSidA(sid, &to_local_free2))
+				str2 = to_local_free2;
 			else
 				str2 = "(inconvertible)";
 
@@ -2822,13 +2823,13 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 				str4 = "(invalid)";
 			} else {
 				if (user_sid_to_user_name(current_user_sid,
-							  &str3))
-					to_free3 = str3;
+							  &to_free3))
+					str3 = to_free3;
 				else
 					str3 = "(inconvertible)";
 				if (ConvertSidToStringSidA(current_user_sid,
-							   &str4))
-					to_local_free4 = str4;
+							   &to_local_free4))
+					str4 = to_local_free4;
 				else
 					str4 = "(inconvertible)";
 			}

@@ -37,6 +37,7 @@ DEVELOPER_CFLAGS += -Wpointer-arith
 DEVELOPER_CFLAGS += -Wstrict-prototypes
 DEVELOPER_CFLAGS += -Wunused
 DEVELOPER_CFLAGS += -Wvla
+DEVELOPER_CFLAGS += -Wwrite-strings
 DEVELOPER_CFLAGS += -fno-common
 
 ifneq ($(filter clang4,$(COMPILER_FEATURES)),)

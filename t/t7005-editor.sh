@@ -2,6 +2,7 @@
 
 test_description='GIT_EDITOR, core.editor, and stuff'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 unset EDITOR VISUAL GIT_EDITOR

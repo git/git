@@ -79,6 +79,18 @@ int check_bool_loc(const char *loc, const char *check, int ok);
  * Compare two integers. Prints a message with the two values if the
  * comparison fails. NB this is not thread safe.
  */
+#define check_pointer_eq(a, b)						\
+	(test__tmp[0].p = (a), test__tmp[1].p = (b),			\
+	 check_pointer_eq_loc(TEST_LOCATION(), #a" == "#b,		\
+			      test__tmp[0].p == test__tmp[1].p,		\
+			      test__tmp[0].p, test__tmp[1].p))
+int check_pointer_eq_loc(const char *loc, const char *check, int ok,
+			 const void *a, const void *b);
+
+/*
+ * Compare two integers. Prints a message with the two values if the
+ * comparison fails. NB this is not thread safe.
+ */
 #define check_int(a, op, b)						\
 	(test__tmp[0].i = (a), test__tmp[1].i = (b),			\
 	 check_int_loc(TEST_LOCATION(), #a" "#op" "#b,			\
@@ -136,6 +148,7 @@ union test__tmp {
 	intmax_t i;
 	uintmax_t u;
 	char c;
+	const void *p;
 };
 
 extern union test__tmp test__tmp[2];

@@ -1,6 +1,13 @@
 #include "../git-compat-util.h"
 #include "../strbuf.h"
 
+/*
+ * Both basename(3P) and dirname(3P) are mis-specified because they return a
+ * non-constant pointer even though it is specified that they may return a
+ * pointer to internal memory. This variable here is a result of that.
+ */
+static char current_directory[] = ".";
+
 /* Adapted from libiberty's basename.c.  */
 char *gitbasename (char *path)
 {
@@ -10,7 +17,7 @@ char *gitbasename (char *path)
 		skip_dos_drive_prefix(&path);
 
 	if (!path || !*path)
-		return ".";
+		return current_directory;
 
 	for (base = path; *path; path++) {
 		if (!is_dir_sep(*path))
@@ -33,8 +40,12 @@ char *gitdirname(char *path)
 	char *p = path, *slash = NULL, c;
 	int dos_drive_prefix;
 
+	/*
+	 * Same here, dirname(3P) is broken because it returns a non-constant
+	 * pointer that may point to internal memory.
+	 */
 	if (!p)
-		return ".";
+		return current_directory;
 
 	if ((dos_drive_prefix = skip_dos_drive_prefix(&p)) && !*p)
 		goto dot;

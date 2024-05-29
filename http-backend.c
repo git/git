@@ -753,7 +753,7 @@ static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
 
 int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
-	char *method = getenv("REQUEST_METHOD");
+	const char *method = getenv("REQUEST_METHOD");
 	const char *proto_header;
 	char *dir;
 	struct service_cmd *cmd = NULL;

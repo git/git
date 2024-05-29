@@ -65,6 +65,19 @@ void strvec_pushl(struct strvec *, ...);
 void strvec_pushv(struct strvec *, const char **);
 
 /**
+ * Replace the value at the given index with a new value. The index must be
+ * valid. Returns a pointer to the inserted value.
+ */
+const char *strvec_replace(struct strvec *array, size_t idx, const char *replacement);
+
+/*
+ * Remove the value at the given index. The remainder of the array will be
+ * moved to fill the resulting gap. The provided index must point into the
+ * array.
+ */
+void strvec_remove(struct strvec *array, size_t idx);
+
+/**
  * Remove the final element from the array. If there are no
  * elements in the array, do nothing.
  */

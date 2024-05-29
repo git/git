@@ -2,6 +2,7 @@
 
 test_description='Test the core.hooksPath configuration variable'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up a pre-commit hook in core.hooksPath' '

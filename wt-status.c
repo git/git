@@ -2408,7 +2408,7 @@ static void wt_porcelain_v2_print_unmerged_entry(
 		int mode;
 		struct object_id oid;
 	} stages[3];
-	char *key;
+	const char *key;
 	char submodule_token[5];
 	char unmerged_prefix = 'u';
 	char eol_char = s->null_termination ? '\0' : '\n';

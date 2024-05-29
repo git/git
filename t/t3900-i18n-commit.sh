@@ -5,6 +5,7 @@
 
 test_description='commit and log output encodings'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 compare_with () {

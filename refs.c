@@ -159,7 +159,7 @@ void update_ref_namespace(enum ref_namespace namespace, char *ref)
 {
 	struct ref_namespace_info *info = &ref_namespace[namespace];
 	if (info->ref_updated)
-		free(info->ref);
+		free((char *)info->ref);
 	info->ref = ref;
 	info->ref_updated = 1;
 }

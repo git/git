@@ -306,7 +306,7 @@ static int git_sequencer_config(const char *k, const char *v,
 	}
 
 	if (!opts->default_strategy && !strcmp(k, "pull.twohead")) {
-		int ret = git_config_string((const char**)&opts->default_strategy, k, v);
+		int ret = git_config_string(&opts->default_strategy, k, v);
 		if (ret == 0) {
 			/*
 			 * pull.twohead is allowed to be multi-valued; we only

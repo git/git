@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test log with i18n features'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 # two forms of é

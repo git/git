@@ -25,7 +25,7 @@
 #include "tree-walk.h"
 #include "object-name.h"
 
-const char *git_attr_tree;
+char *git_attr_tree;
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";

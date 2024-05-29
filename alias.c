@@ -21,9 +21,11 @@ static int config_alias_cb(const char *key, const char *value,
 		return 0;
 
 	if (data->alias) {
-		if (!strcasecmp(p, data->alias))
-			return git_config_string((const char **)&data->v,
+		if (!strcasecmp(p, data->alias)) {
+			FREE_AND_NULL(data->v);
+			return git_config_string(&data->v,
 						 key, value);
+		}
 	} else if (data->list) {
 		string_list_append(data->list, p);
 	}

@@ -46,7 +46,7 @@ struct remote_state {
 	struct hashmap branches_hash;
 
 	struct branch *current_branch;
-	const char *pushremote_name;
+	char *pushremote_name;
 
 	struct rewrites rewrites;
 	struct rewrites rewrites_push;
@@ -65,7 +65,7 @@ struct remote {
 
 	int origin, configured_in_repo;
 
-	const char *foreign_vcs;
+	char *foreign_vcs;
 
 	/* An array of all of the url_nr URLs configured for the remote */
 	const char **url;
@@ -309,9 +309,9 @@ struct branch {
 	const char *refname;
 
 	/* The name of the remote listed in the configuration. */
-	const char *remote_name;
+	char *remote_name;
 
-	const char *pushremote_name;
+	char *pushremote_name;
 
 	/* An array of the "merge" lines in the configuration. */
 	const char **merge_name;

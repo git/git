@@ -280,13 +280,13 @@ int git_config_bool(const char *, const char *);
  * Allocates and copies the value string into the `dest` parameter; if no
  * string is given, prints an error message and returns -1.
  */
-int git_config_string(const char **, const char *, const char *);
+int git_config_string(char **, const char *, const char *);
 
 /**
  * Similar to `git_config_string`, but expands `~` or `~user` into the
  * user's home directory when found at the beginning of the path.
  */
-int git_config_pathname(const char **, const char *, const char *);
+int git_config_pathname(char **, const char *, const char *);
 
 int git_config_expiry_date(timestamp_t *, const char *, const char *);
 int git_config_color(char *, const char *, const char *);
@@ -541,7 +541,7 @@ int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned lon
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_bool_or_int(struct config_set *cs, const char *key, int *is_bool, int *dest);
 int git_configset_get_maybe_bool(struct config_set *cs, const char *key, int *dest);
-int git_configset_get_pathname(struct config_set *cs, const char *key, const char **dest);
+int git_configset_get_pathname(struct config_set *cs, const char *key, char **dest);
 
 /* Functions for reading a repository's config */
 struct repository;
@@ -577,7 +577,7 @@ int repo_config_get_bool_or_int(struct repository *repo,
 int repo_config_get_maybe_bool(struct repository *repo,
 			       const char *key, int *dest);
 int repo_config_get_pathname(struct repository *repo,
-			     const char *key, const char **dest);
+			     const char *key, char **dest);
 
 /*
  * Functions for reading protected config. By definition, protected
@@ -687,7 +687,7 @@ int git_config_get_maybe_bool(const char *key, int *dest);
  * Similar to `git_config_get_string`, but expands `~` or `~user` into
  * the user's home directory when found at the beginning of the path.
  */
-int git_config_get_pathname(const char *key, const char **dest);
+int git_config_get_pathname(const char *key, char **dest);
 
 int git_config_get_index_threads(int *dest);
 int git_config_get_split_index(void);

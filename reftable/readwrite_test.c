@@ -86,7 +86,7 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 		log.update_index = update_index;
 		log.value_type = REFTABLE_LOG_UPDATE;
 		set_test_hash(log.value.update.new_hash, i);
-		log.value.update.message = "message";
+		log.value.update.message = (char *)"message";
 
 		n = reftable_writer_add_log(w, &log);
 		EXPECT(n == 0);
@@ -117,17 +117,18 @@ static void test_log_buffer_size(void)
 	};
 	int err;
 	int i;
-	struct reftable_log_record
-		log = { .refname = "refs/heads/master",
-			.update_index = 0xa,
-			.value_type = REFTABLE_LOG_UPDATE,
-			.value = { .update = {
-					   .name = "Han-Wen Nienhuys",
-					   .email = "hanwen@google.com",
-					   .tz_offset = 100,
-					   .time = 0x5e430672,
-					   .message = "commit: 9\n",
-				   } } };
+	struct reftable_log_record log = {
+		.refname = (char *)"refs/heads/master",
+		.update_index = 0xa,
+		.value_type = REFTABLE_LOG_UPDATE,
+		.value.update = {
+			.name = (char *)"Han-Wen Nienhuys",
+			.email = (char *)"hanwen@google.com",
+			.tz_offset = 100,
+			.time = 0x5e430672,
+			.message = (char *)"commit: 9\n",
+		},
+	};
 	struct reftable_writer *w =
 		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 
@@ -156,15 +157,15 @@ static void test_log_overflow(void)
 	};
 	int err;
 	struct reftable_log_record log = {
-		.refname = "refs/heads/master",
+		.refname = (char *)"refs/heads/master",
 		.update_index = 0xa,
 		.value_type = REFTABLE_LOG_UPDATE,
 		.value = {
 			.update = {
 				.old_hash = { 1 },
 				.new_hash = { 2 },
-				.name = "Han-Wen Nienhuys",
-				.email = "hanwen@google.com",
+				.name = (char *)"Han-Wen Nienhuys",
+				.email = (char *)"hanwen@google.com",
 				.tz_offset = 100,
 				.time = 0x5e430672,
 				.message = msg,
@@ -293,14 +294,14 @@ static void test_log_zlib_corruption(void)
 	char message[100] = { 0 };
 	int err, i, n;
 	struct reftable_log_record log = {
-		.refname = "refname",
+		.refname = (char *)"refname",
 		.value_type = REFTABLE_LOG_UPDATE,
 		.value = {
 			.update = {
 				.new_hash = { 1 },
 				.old_hash = { 2 },
-				.name = "My Name",
-				.email = "myname@invalid",
+				.name = (char *)"My Name",
+				.email = (char *)"myname@invalid",
 				.message = message,
 			},
 		},
@@ -728,7 +729,7 @@ static void test_write_empty_key(void)
 	struct reftable_writer *w =
 		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 	struct reftable_ref_record ref = {
-		.refname = "",
+		.refname = (char *)"",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_DELETION,
 	};
@@ -752,18 +753,18 @@ static void test_write_key_order(void)
 		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 	struct reftable_ref_record refs[2] = {
 		{
-			.refname = "b",
+			.refname = (char *)"b",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_SYMREF,
 			.value = {
-				.symref = "target",
+				.symref = (char *)"target",
 			},
 		}, {
-			.refname = "a",
+			.refname = (char *)"a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_SYMREF,
 			.value = {
-				.symref = "target",
+				.symref = (char *)"target",
 			},
 		}
 	};

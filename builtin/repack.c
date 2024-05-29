@@ -48,10 +48,10 @@ static const char incremental_bitmap_conflict_error[] = N_(
 );
 
 struct pack_objects_args {
-	const char *window;
-	const char *window_memory;
-	const char *depth;
-	const char *threads;
+	char *window;
+	char *window_memory;
+	char *depth;
+	char *threads;
 	unsigned long max_pack_size;
 	int no_reuse_delta;
 	int no_reuse_object;

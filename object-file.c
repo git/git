@@ -282,12 +282,13 @@ static struct cached_object {
 } *cached_objects;
 static int cached_object_nr, cached_object_alloc;
 
+static char empty_tree_buf[] = "";
 static struct cached_object empty_tree = {
 	.oid = {
 		.hash = EMPTY_TREE_SHA1_BIN_LITERAL,
 	},
 	.type = OBJ_TREE,
-	.buf = "",
+	.buf = empty_tree_buf,
 };
 
 static struct cached_object *find_cached_object(const struct object_id *oid)
@@ -2482,12 +2483,13 @@ static int hash_format_check_report(struct fsck_options *opts UNUSED,
 }
 
 static int index_mem(struct index_state *istate,
-		     struct object_id *oid, void *buf, size_t size,
+		     struct object_id *oid,
+		     const void *buf, size_t size,
 		     enum object_type type,
 		     const char *path, unsigned flags)
 {
+	struct strbuf nbuf = STRBUF_INIT;
 	int ret = 0;
-	int re_allocated = 0;
 	int write_object = flags & HASH_WRITE_OBJECT;
 
 	if (!type)
@@ -2497,11 +2499,10 @@ static int index_mem(struct index_state *istate,
 	 * Convert blobs to git internal format
 	 */
 	if ((type == OBJ_BLOB) && path) {
-		struct strbuf nbuf = STRBUF_INIT;
 		if (convert_to_git(istate, path, buf, size, &nbuf,
 				   get_conv_flags(flags))) {
-			buf = strbuf_detach(&nbuf, &size);
-			re_allocated = 1;
+			buf = nbuf.buf;
+			size = nbuf.len;
 		}
 	}
 	if (flags & HASH_FORMAT_CHECK) {
@@ -2518,8 +2519,8 @@ static int index_mem(struct index_state *istate,
 		ret = write_object_file(buf, size, type, oid);
 	else
 		hash_object_file(the_hash_algo, buf, size, type, oid);
-	if (re_allocated)
-		free(buf);
+
+	strbuf_release(&nbuf);
 	return ret;
 }
 

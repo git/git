@@ -691,8 +691,10 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 int strbuf_appendwholeline(struct strbuf *sb, FILE *fp, int term)
 {
 	struct strbuf line = STRBUF_INIT;
-	if (strbuf_getwholeline(&line, fp, term))
+	if (strbuf_getwholeline(&line, fp, term)) {
+		strbuf_release(&line);
 		return EOF;
+	}
 	strbuf_addbuf(sb, &line);
 	strbuf_release(&line);
 	return 0;

@@ -736,15 +736,13 @@ static int dwim_orphan(const struct add_opts *opts, int opt_track, int remote)
 	return 1;
 }
 
-static const char *dwim_branch(const char *path, const char **new_branch)
+static char *dwim_branch(const char *path, char **new_branch)
 {
 	int n;
 	int branch_exists;
 	const char *s = worktree_basename(path, &n);
-	const char *branchname = xstrndup(s, n);
+	char *branchname = xstrndup(s, n);
 	struct strbuf ref = STRBUF_INIT;
-
-	UNLEAK(branchname);
 
 	branch_exists = !strbuf_check_branch_ref(&ref, branchname) &&
 			refs_ref_exists(get_main_ref_store(the_repository),
@@ -756,8 +754,7 @@ static const char *dwim_branch(const char *path, const char **new_branch)
 	*new_branch = branchname;
 	if (guess_remote) {
 		struct object_id oid;
-		const char *remote =
-			unique_tracking_name(*new_branch, &oid, NULL);
+		char *remote = unique_tracking_name(*new_branch, &oid, NULL);
 		return remote;
 	}
 	return NULL;
@@ -769,6 +766,8 @@ static int add(int ac, const char **av, const char *prefix)
 	const char *new_branch_force = NULL;
 	char *path;
 	const char *branch;
+	char *branch_to_free = NULL;
+	char *new_branch_to_free = NULL;
 	const char *new_branch = NULL;
 	const char *opt_track = NULL;
 	const char *lock_reason = NULL;
@@ -859,16 +858,17 @@ static int add(int ac, const char **av, const char *prefix)
 		opts.orphan = dwim_orphan(&opts, !!opt_track, 0);
 	} else if (ac < 2) {
 		/* DWIM: Guess branch name from path. */
-		const char *s = dwim_branch(path, &new_branch);
+		char *s = dwim_branch(path, &new_branch_to_free);
 		if (s)
-			branch = s;
+			branch = branch_to_free = s;
+		new_branch = new_branch_to_free;
 
 		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
 	} else if (ac == 2) {
 		struct object_id oid;
 		struct commit *commit;
-		const char *remote;
+		char *remote;
 
 		commit = lookup_commit_reference_by_name(branch);
 		if (!commit) {
@@ -923,6 +923,8 @@ static int add(int ac, const char **av, const char *prefix)
 
 	ret = add_worktree(path, branch, &opts);
 	free(path);
+	free(branch_to_free);
+	free(new_branch_to_free);
 	return ret;
 }
 

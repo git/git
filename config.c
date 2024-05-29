@@ -1338,7 +1338,7 @@ int git_config_bool(const char *name, const char *value)
 	return v;
 }
 
-int git_config_string(const char **dest, const char *var, const char *value)
+int git_config_string(char **dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
@@ -1346,7 +1346,7 @@ int git_config_string(const char **dest, const char *var, const char *value)
 	return 0;
 }
 
-int git_config_pathname(const char **dest, const char *var, const char *value)
+int git_config_pathname(char **dest, const char *var, const char *value)
 {
 	if (!value)
 		return config_error_nonbool(var);
@@ -1414,8 +1414,10 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.attributesfile"))
+	if (!strcmp(var, "core.attributesfile")) {
+		FREE_AND_NULL(git_attributes_file);
 		return git_config_pathname(&git_attributes_file, var, value);
+	}
 
 	if (!strcmp(var, "core.hookspath")) {
 		if (ctx->kvi && ctx->kvi->scope == CONFIG_SCOPE_LOCAL &&
@@ -1428,6 +1430,7 @@ static int git_default_core_config(const char *var, const char *value,
 			      "again with "
 			      "`GIT_CLONE_PROTECTION_ACTIVE=false`"),
 			    value);
+		FREE_AND_NULL(git_hooks_path);
 		return git_config_pathname(&git_hooks_path, var, value);
 	}
 
@@ -1564,8 +1567,10 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.checkroundtripencoding"))
+	if (!strcmp(var, "core.checkroundtripencoding")) {
+		FREE_AND_NULL(check_roundtrip_encoding);
 		return git_config_string(&check_roundtrip_encoding, var, value);
+	}
 
 	if (!strcmp(var, "core.notesref")) {
 		if (!value)
@@ -1574,8 +1579,10 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.editor"))
+	if (!strcmp(var, "core.editor")) {
+		FREE_AND_NULL(editor_program);
 		return git_config_string(&editor_program, var, value);
+	}
 
 	if (!strcmp(var, "core.commentchar") ||
 	    !strcmp(var, "core.commentstring")) {
@@ -1593,11 +1600,13 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.askpass"))
+	if (!strcmp(var, "core.askpass")) {
+		FREE_AND_NULL(askpass_program);
 		return git_config_string(&askpass_program, var, value);
+	}
 
 	if (!strcmp(var, "core.excludesfile")) {
-		free((char *)excludes_file);
+		FREE_AND_NULL(excludes_file);
 		return git_config_pathname(&excludes_file, var, value);
 	}
 
@@ -1700,11 +1709,15 @@ static int git_default_sparse_config(const char *var, const char *value)
 
 static int git_default_i18n_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "i18n.commitencoding"))
+	if (!strcmp(var, "i18n.commitencoding")) {
+		FREE_AND_NULL(git_commit_encoding);
 		return git_config_string(&git_commit_encoding, var, value);
+	}
 
-	if (!strcmp(var, "i18n.logoutputencoding"))
+	if (!strcmp(var, "i18n.logoutputencoding")) {
+		FREE_AND_NULL(git_log_output_encoding);
 		return git_config_string(&git_log_output_encoding, var, value);
+	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
@@ -1777,10 +1790,15 @@ static int git_default_push_config(const char *var, const char *value)
 
 static int git_default_mailmap_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "mailmap.file"))
+	if (!strcmp(var, "mailmap.file")) {
+		FREE_AND_NULL(git_mailmap_file);
 		return git_config_pathname(&git_mailmap_file, var, value);
-	if (!strcmp(var, "mailmap.blob"))
+	}
+
+	if (!strcmp(var, "mailmap.blob")) {
+		FREE_AND_NULL(git_mailmap_blob);
 		return git_config_string(&git_mailmap_blob, var, value);
+	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
 	return 0;
@@ -1788,8 +1806,10 @@ static int git_default_mailmap_config(const char *var, const char *value)
 
 static int git_default_attr_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "attr.tree"))
+	if (!strcmp(var, "attr.tree")) {
+		FREE_AND_NULL(git_attr_tree);
 		return git_config_string(&git_attr_tree, var, value);
+	}
 
 	/*
 	 * Add other attribute related config variables here and to
@@ -2416,7 +2436,7 @@ int git_configset_get_string(struct config_set *set, const char *key, char **des
 {
 	const char *value;
 	if (!git_configset_get_value(set, key, &value, NULL))
-		return git_config_string((const char **)dest, key, value);
+		return git_config_string(dest, key, value);
 	else
 		return 1;
 }
@@ -2494,7 +2514,7 @@ int git_configset_get_maybe_bool(struct config_set *set, const char *key, int *d
 		return 1;
 }
 
-int git_configset_get_pathname(struct config_set *set, const char *key, const char **dest)
+int git_configset_get_pathname(struct config_set *set, const char *key, char **dest)
 {
 	const char *value;
 	if (!git_configset_get_value(set, key, &value, NULL))
@@ -2639,7 +2659,7 @@ int repo_config_get_maybe_bool(struct repository *repo,
 }
 
 int repo_config_get_pathname(struct repository *repo,
-			     const char *key, const char **dest)
+			     const char *key, char **dest)
 {
 	int ret;
 	git_config_check_init(repo);
@@ -2738,7 +2758,7 @@ int git_config_get_maybe_bool(const char *key, int *dest)
 	return repo_config_get_maybe_bool(the_repository, key, dest);
 }
 
-int git_config_get_pathname(const char *key, const char **dest)
+int git_config_get_pathname(const char *key, char **dest)
 {
 	return repo_config_get_pathname(the_repository, key, dest);
 }
