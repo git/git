@@ -25,13 +25,15 @@ const unsigned char *get_midx_checksum(struct multi_pack_index *m)
 
 void get_midx_filename(struct strbuf *out, const char *object_dir)
 {
-	strbuf_addf(out, "%s/pack/multi-pack-index", object_dir);
+	get_midx_filename_ext(out, object_dir, NULL, NULL);
 }
 
-void get_midx_rev_filename(struct strbuf *out, struct multi_pack_index *m)
+void get_midx_filename_ext(struct strbuf *out, const char *object_dir,
+			   const unsigned char *hash, const char *ext)
 {
-	get_midx_filename(out, m->object_dir);
-	strbuf_addf(out, "-%s.rev", hash_to_hex(get_midx_checksum(m)));
+	strbuf_addf(out, "%s/pack/multi-pack-index", object_dir);
+	if (ext)
+		strbuf_addf(out, "-%s.%s", hash_to_hex(hash), ext);
 }
 
 static int midx_read_oid_fanout(const unsigned char *chunk_start,
