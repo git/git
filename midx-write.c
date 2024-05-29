@@ -882,6 +882,40 @@ cleanup:
 	return result;
 }
 
+static int fill_packs_from_midx(struct write_midx_context *ctx,
+				const char *preferred_pack_name, uint32_t flags)
+{
+	uint32_t i;
+
+	for (i = 0; i < ctx->m->num_packs; i++) {
+		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
+
+		if (flags & MIDX_WRITE_REV_INDEX || preferred_pack_name) {
+			/*
+			 * If generating a reverse index, need to have
+			 * packed_git's loaded to compare their
+			 * mtimes and object count.
+			 *
+			 *
+			 * If a preferred pack is specified, need to
+			 * have packed_git's loaded to ensure the chosen
+			 * preferred pack has a non-zero object count.
+			 */
+			if (prepare_midx_pack(the_repository, ctx->m, i))
+				return error(_("could not load pack"));
+
+			if (open_pack_index(ctx->m->packs[i]))
+				die(_("could not open index for %s"),
+				    ctx->m->packs[i]->pack_name);
+		}
+
+		fill_pack_info(&ctx->info[ctx->nr++], ctx->m->packs[i],
+			       ctx->m->pack_names[i], i);
+	}
+
+	return 0;
+}
+
 static int write_midx_internal(const char *object_dir,
 			       struct string_list *packs_to_include,
 			       struct string_list *packs_to_drop,
@@ -927,36 +961,10 @@ static int write_midx_internal(const char *object_dir,
 	ctx.info = NULL;
 	ALLOC_ARRAY(ctx.info, ctx.alloc);
 
-	if (ctx.m) {
-		for (i = 0; i < ctx.m->num_packs; i++) {
-			ALLOC_GROW(ctx.info, ctx.nr + 1, ctx.alloc);
-
-			if (flags & MIDX_WRITE_REV_INDEX ||
-			    preferred_pack_name) {
-				/*
-				 * If generating a reverse index, need to have
-				 * packed_git's loaded to compare their
-				 * mtimes and object count.
-				 *
-				 * If a preferred pack is specified,
-				 * need to have packed_git's loaded to
-				 * ensure the chosen preferred pack has
-				 * a non-zero object count.
-				 */
-				if (prepare_midx_pack(the_repository, ctx.m, i)) {
-					error(_("could not load pack"));
-					result = 1;
-					goto cleanup;
-				}
-
-				if (open_pack_index(ctx.m->packs[i]))
-					die(_("could not open index for %s"),
-					    ctx.m->packs[i]->pack_name);
-			}
-
-			fill_pack_info(&ctx.info[ctx.nr++], ctx.m->packs[i],
-				       ctx.m->pack_names[i], i);
-		}
+	if (ctx.m && fill_packs_from_midx(&ctx, preferred_pack_name,
+					  flags) < 0) {
+		result = 1;
+		goto cleanup;
 	}
 
 	start_pack = ctx.nr;
