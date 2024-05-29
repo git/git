@@ -10,7 +10,13 @@ char *gitbasename (char *path)
 		skip_dos_drive_prefix(&path);
 
 	if (!path || !*path)
-		return ".";
+		/*
+		 * basename(3P) is mis-specified because it returns a
+		 * non-constant pointer even though it is specified to return a
+		 * pointer to internal memory at times. The cast is a result of
+		 * that.
+		 */
+		return (char *) ".";
 
 	for (base = path; *path; path++) {
 		if (!is_dir_sep(*path))
@@ -34,7 +40,13 @@ char *gitdirname(char *path)
 	int dos_drive_prefix;
 
 	if (!p)
-		return ".";
+		/*
+		 * dirname(3P) is mis-specified because it returns a
+		 * non-constant pointer even though it is specified to return a
+		 * pointer to internal memory at times. The cast is a result of
+		 * that.
+		 */
+		return (char *) ".";
 
 	if ((dos_drive_prefix = skip_dos_drive_prefix(&p)) && !*p)
 		goto dot;
