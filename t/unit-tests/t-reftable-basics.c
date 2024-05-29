@@ -58,14 +58,32 @@ static void test_names_length(void)
 	check_int(names_length(a), ==, 2);
 }
 
+static void test_names_equal(void)
+{
+	char *a[] = { "a", "b", "c", NULL };
+	char *b[] = { "a", "b", "d", NULL };
+	char *c[] = { "a", "b", NULL };
+
+	check(names_equal(a, a));
+	check(!names_equal(a, b));
+	check(!names_equal(a, c));
+}
+
 static void test_parse_names_normal(void)
 {
-	char in[] = "a\nb\n";
+	char in1[] = "line\n";
+	char in2[] = "a\nb\nc";
 	char **out = NULL;
-	parse_names(in, strlen(in), &out);
+	parse_names(in1, strlen(in1), &out);
+	check_str(out[0], "line");
+	check(!out[1]);
+	free_names(out);
+
+	parse_names(in2, strlen(in2), &out);
 	check_str(out[0], "a");
 	check_str(out[1], "b");
-	check(!out[2]);
+	check_str(out[2], "c");
+	check(!out[3]);
 	free_names(out);
 }
 
@@ -97,6 +115,7 @@ int cmd_main(int argc, const char *argv[])
 	TEST(test_parse_names_drop_empty(), "parse_names drops empty string");
 	TEST(test_binsearch(), "binary search with binsearch works");
 	TEST(test_names_length(), "names_length retuns size of a NULL-terminated string array");
+	TEST(test_names_equal(), "names_equal compares NULL-terminated string arrays");
 
 	return test_done();
 }
