@@ -299,12 +299,12 @@ static void midx_fanout_add_pack_fanout(struct midx_fanout *fanout,
  * Copy only the de-duplicated entries (selected by most-recent modified time
  * of a packfile containing the object).
  */
-static void compute_sorted_entries(struct write_midx_context *ctx)
+static void compute_sorted_entries(struct write_midx_context *ctx,
+				   uint32_t start_pack)
 {
 	uint32_t cur_fanout, cur_pack, cur_object;
 	size_t alloc_objects, total_objects = 0;
 	struct midx_fanout fanout = { 0 };
-	uint32_t start_pack = ctx->m ? ctx->m->num_packs : 0;
 
 	for (cur_pack = start_pack; cur_pack < ctx->nr; cur_pack++)
 		total_objects = st_add(total_objects,
@@ -883,7 +883,7 @@ static int write_midx_internal(const char *object_dir,
 {
 	struct strbuf midx_name = STRBUF_INIT;
 	unsigned char midx_hash[GIT_MAX_RAWSZ];
-	uint32_t i;
+	uint32_t i, start_pack;
 	struct hashfile *f = NULL;
 	struct lock_file lk;
 	struct write_midx_context ctx = { 0 };
@@ -950,6 +950,8 @@ static int write_midx_internal(const char *object_dir,
 				       ctx.m->pack_names[i], i);
 		}
 	}
+
+	start_pack = ctx.nr;
 
 	ctx.pack_paths_checked = 0;
 	if (flags & MIDX_PROGRESS)
@@ -1048,7 +1050,7 @@ static int write_midx_internal(const char *object_dir,
 		}
 	}
 
-	compute_sorted_entries(&ctx);
+	compute_sorted_entries(&ctx, start_pack);
 
 	ctx.large_offsets_needed = 0;
 	for (i = 0; i < ctx.entries_nr; i++) {
