@@ -39,5 +39,7 @@ int cmd_credential(int argc, const char **argv, const char *prefix UNUSED)
 	} else {
 		usage(usage_msg);
 	}
+
+	credential_clear(&c);
 	return 0;
 }

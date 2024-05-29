@@ -83,7 +83,7 @@ static const char *action_names[] = {
 struct rebase_options {
 	enum rebase_type type;
 	enum empty_type empty;
-	const char *default_backend;
+	char *default_backend;
 	const char *state_dir;
 	struct commit *upstream;
 	const char *upstream_name;
