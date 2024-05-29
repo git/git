@@ -89,11 +89,13 @@ static void test_parse_names_normal(void)
 
 static void test_parse_names_drop_empty(void)
 {
-	char in[] = "a\n\n";
+	char in[] = "a\n\nb\n";
 	char **out = NULL;
 	parse_names(in, strlen(in), &out);
 	check_str(out[0], "a");
-	check(!out[1]);
+	/* simply '\n' should be dropped as empty string */
+	check_str(out[1], "b");
+	check(!out[2]);
 	free_names(out);
 }
 
