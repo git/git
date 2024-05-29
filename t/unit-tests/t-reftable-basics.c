@@ -133,6 +133,16 @@ static void test_u24_roundtrip(void)
 	check_int(in, ==, out);
 }
 
+static void test_u16_roundtrip(void)
+{
+	uint32_t in = 0xfef1;
+	uint8_t dest[3];
+	uint32_t out;
+	put_be16(dest, in);
+	out = get_be16(dest);
+	check_int(in, ==, out);
+}
+
 int cmd_main(int argc, const char *argv[])
 {
 	TEST(test_common_prefix(), "common_prefix_size works");
@@ -142,6 +152,7 @@ int cmd_main(int argc, const char *argv[])
 	TEST(test_names_length(), "names_length retuns size of a NULL-terminated string array");
 	TEST(test_names_equal(), "names_equal compares NULL-terminated string arrays");
 	TEST(test_u24_roundtrip(), "put_be24 and get_be24 work");
+	TEST(test_u16_roundtrip(), "put_be16 and get_be16 work");
 
 	return test_done();
 }
