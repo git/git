@@ -257,11 +257,9 @@ static void module_list_active(struct module_list *list)
 
 static char *get_up_path(const char *path)
 {
-	int i;
 	struct strbuf sb = STRBUF_INIT;
 
-	for (i = count_slashes(path); i; i--)
-		strbuf_addstr(&sb, "../");
+	strbuf_addstrings(&sb, "../", count_slashes(path));
 
 	/*
 	 * Check if 'path' ends with slash or not
