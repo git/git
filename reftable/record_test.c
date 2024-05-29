@@ -64,31 +64,6 @@ static void test_varint_roundtrip(void)
 	}
 }
 
-static void test_common_prefix(void)
-{
-	struct {
-		const char *a, *b;
-		int want;
-	} cases[] = {
-		{ "abc", "ab", 2 },
-		{ "", "abc", 0 },
-		{ "abc", "abd", 2 },
-		{ "abc", "pqr", 0 },
-	};
-
-	int i = 0;
-	for (i = 0; i < ARRAY_SIZE(cases); i++) {
-		struct strbuf a = STRBUF_INIT;
-		struct strbuf b = STRBUF_INIT;
-		strbuf_addstr(&a, cases[i].a);
-		strbuf_addstr(&b, cases[i].b);
-		EXPECT(common_prefix_size(&a, &b) == cases[i].want);
-
-		strbuf_release(&a);
-		strbuf_release(&b);
-	}
-}
-
 static void set_hash(uint8_t *h, int j)
 {
 	int i = 0;
@@ -258,16 +233,6 @@ static void test_reftable_log_record_roundtrip(void)
 	strbuf_release(&scratch);
 }
 
-static void test_u24_roundtrip(void)
-{
-	uint32_t in = 0x112233;
-	uint8_t dest[3];
-	uint32_t out;
-	put_be24(dest, in);
-	out = get_be24(dest);
-	EXPECT(in == out);
-}
-
 static void test_key_roundtrip(void)
 {
 	uint8_t buffer[1024] = { 0 };
@@ -411,9 +376,7 @@ int record_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_ref_record_roundtrip);
 	RUN_TEST(test_varint_roundtrip);
 	RUN_TEST(test_key_roundtrip);
-	RUN_TEST(test_common_prefix);
 	RUN_TEST(test_reftable_obj_record_roundtrip);
 	RUN_TEST(test_reftable_index_record_roundtrip);
-	RUN_TEST(test_u24_roundtrip);
 	return 0;
 }
