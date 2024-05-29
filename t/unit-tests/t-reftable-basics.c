@@ -6,11 +6,8 @@ license that can be found in the LICENSE file or at
 https://developers.google.com/open-source/licenses/bsd
 */
 
-#include "system.h"
-
-#include "basics.h"
-#include "test_framework.h"
-#include "reftable-tests.h"
+#include "test-lib.h"
+#include "reftable/basics.h"
 
 struct integer_needle_lesseq_args {
 	int needle;
@@ -42,9 +39,8 @@ static void test_binsearch(void)
 		{11, 5},
 		{9000, 5},
 	};
-	size_t i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(testcases); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(testcases); i++) {
 		struct integer_needle_lesseq_args args = {
 			.haystack = haystack,
 			.needle = testcases[i].needle,
@@ -52,14 +48,14 @@ static void test_binsearch(void)
 		size_t idx;
 
 		idx = binsearch(ARRAY_SIZE(haystack), &integer_needle_lesseq, &args);
-		EXPECT(idx == testcases[i].expected_idx);
+		check_int(idx, ==, testcases[i].expected_idx);
 	}
 }
 
 static void test_names_length(void)
 {
 	char *a[] = { "a", "b", NULL };
-	EXPECT(names_length(a) == 2);
+	check_int(names_length(a), ==, 2);
 }
 
 static void test_parse_names_normal(void)
@@ -67,9 +63,9 @@ static void test_parse_names_normal(void)
 	char in[] = "a\nb\n";
 	char **out = NULL;
 	parse_names(in, strlen(in), &out);
-	EXPECT(!strcmp(out[0], "a"));
-	EXPECT(!strcmp(out[1], "b"));
-	EXPECT(!out[2]);
+	check_str(out[0], "a");
+	check_str(out[1], "b");
+	check(!out[2]);
 	free_names(out);
 }
 
@@ -78,8 +74,8 @@ static void test_parse_names_drop_empty(void)
 	char in[] = "a\n\n";
 	char **out = NULL;
 	parse_names(in, strlen(in), &out);
-	EXPECT(!strcmp(out[0], "a"));
-	EXPECT(!out[1]);
+	check_str(out[0], "a");
+	check(!out[1]);
 	free_names(out);
 }
 
@@ -89,17 +85,18 @@ static void test_common_prefix(void)
 	struct strbuf s2 = STRBUF_INIT;
 	strbuf_addstr(&s1, "abcdef");
 	strbuf_addstr(&s2, "abc");
-	EXPECT(common_prefix_size(&s1, &s2) == 3);
+	check_int(common_prefix_size(&s1, &s2), ==, 3);
 	strbuf_release(&s1);
 	strbuf_release(&s2);
 }
 
-int basics_test_main(int argc, const char *argv[])
+int cmd_main(int argc, const char *argv[])
 {
-	RUN_TEST(test_common_prefix);
-	RUN_TEST(test_parse_names_normal);
-	RUN_TEST(test_parse_names_drop_empty);
-	RUN_TEST(test_binsearch);
-	RUN_TEST(test_names_length);
-	return 0;
+	TEST(test_common_prefix(), "common_prefix_size works");
+	TEST(test_parse_names_normal(), "parse_names works for basic input");
+	TEST(test_parse_names_drop_empty(), "parse_names drops empty string");
+	TEST(test_binsearch(), "binary search with binsearch works");
+	TEST(test_names_length(), "names_length retuns size of a NULL-terminated string array");
+
+	return test_done();
 }
