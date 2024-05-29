@@ -929,11 +929,17 @@ static int write_midx_internal(const char *object_dir,
 		for (i = 0; i < ctx.m->num_packs; i++) {
 			ALLOC_GROW(ctx.info, ctx.nr + 1, ctx.alloc);
 
-			if (flags & MIDX_WRITE_REV_INDEX) {
+			if (flags & MIDX_WRITE_REV_INDEX ||
+			    preferred_pack_name) {
 				/*
 				 * If generating a reverse index, need to have
 				 * packed_git's loaded to compare their
 				 * mtimes and object count.
+				 *
+				 * If a preferred pack is specified,
+				 * need to have packed_git's loaded to
+				 * ensure the chosen preferred pack has
+				 * a non-zero object count.
 				 */
 				if (prepare_midx_pack(the_repository, ctx.m, i)) {
 					error(_("could not load pack"));
