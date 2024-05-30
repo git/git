@@ -117,25 +117,26 @@ static void writer_reinit_block_writer(struct reftable_writer *w, uint8_t typ)
 	w->block_writer->restart_interval = w->opts.restart_interval;
 }
 
-static struct strbuf reftable_empty_strbuf = STRBUF_INIT;
-
 struct reftable_writer *
 reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 		    int (*flush_func)(void *),
-		    void *writer_arg, struct reftable_write_options *opts)
+		    void *writer_arg, const struct reftable_write_options *_opts)
 {
 	struct reftable_writer *wp = reftable_calloc(1, sizeof(*wp));
+	struct reftable_write_options opts = {0};
+
+	if (_opts)
+		opts = *_opts;
+	options_set_defaults(&opts);
+	if (opts.block_size >= (1 << 24))
+		BUG("configured block size exceeds 16MB");
+
 	strbuf_init(&wp->block_writer_data.last_key, 0);
-	options_set_defaults(opts);
-	if (opts->block_size >= (1 << 24)) {
-		/* TODO - error return? */
-		abort();
-	}
-	wp->last_key = reftable_empty_strbuf;
-	REFTABLE_CALLOC_ARRAY(wp->block, opts->block_size);
+	strbuf_init(&wp->last_key, 0);
+	REFTABLE_CALLOC_ARRAY(wp->block, opts.block_size);
 	wp->write = writer_func;
 	wp->write_arg = writer_arg;
-	wp->opts = *opts;
+	wp->opts = opts;
 	wp->flush = flush_func;
 	writer_reinit_block_writer(wp, BLOCK_TYPE_REF);
 

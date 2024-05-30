@@ -1,6 +1,7 @@
 #include "../git-compat-util.h"
 #include "../abspath.h"
 #include "../chdir-notify.h"
+#include "../config.h"
 #include "../environment.h"
 #include "../gettext.h"
 #include "../hash.h"
@@ -129,7 +130,7 @@ static struct reftable_stack *stack_for(struct reftable_ref_store *store,
 				    store->base.repo->commondir, wtname_buf.buf);
 
 			store->err = reftable_new_stack(&stack, wt_dir.buf,
-							store->write_options);
+							&store->write_options);
 			assert(store->err != REFTABLE_API_ERROR);
 			strmap_put(&store->worktree_stacks, wtname_buf.buf, stack);
 		}
@@ -228,6 +229,34 @@ done:
 	return ret;
 }
 
+static int reftable_be_config(const char *var, const char *value,
+			      const struct config_context *ctx,
+			      void *_opts)
+{
+	struct reftable_write_options *opts = _opts;
+
+	if (!strcmp(var, "reftable.blocksize")) {
+		unsigned long block_size = git_config_ulong(var, value, ctx->kvi);
+		if (block_size > 16777215)
+			die("reftable block size cannot exceed 16MB");
+		opts->block_size = block_size;
+	} else if (!strcmp(var, "reftable.restartinterval")) {
+		unsigned long restart_interval = git_config_ulong(var, value, ctx->kvi);
+		if (restart_interval > UINT16_MAX)
+			die("reftable block size cannot exceed %u", (unsigned)UINT16_MAX);
+		opts->restart_interval = restart_interval;
+	} else if (!strcmp(var, "reftable.indexobjects")) {
+		opts->skip_index_objects = !git_config_bool(var, value);
+	} else if (!strcmp(var, "reftable.geometricfactor")) {
+		unsigned long factor = git_config_ulong(var, value, ctx->kvi);
+		if (factor > UINT8_MAX)
+			die("reftable geometric factor cannot exceed %u", (unsigned)UINT8_MAX);
+		opts->auto_compaction_factor = factor;
+	}
+
+	return 0;
+}
+
 static struct ref_store *reftable_be_init(struct repository *repo,
 					  const char *gitdir,
 					  unsigned int store_flags)
@@ -243,11 +272,23 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	base_ref_store_init(&refs->base, repo, gitdir, &refs_be_reftable);
 	strmap_init(&refs->worktree_stacks);
 	refs->store_flags = store_flags;
-	refs->write_options.block_size = 4096;
+
 	refs->write_options.hash_id = repo->hash_algo->format_id;
 	refs->write_options.default_permissions = calc_shared_perm(0666 & ~mask);
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
+
+	git_config(reftable_be_config, &refs->write_options);
+
+	/*
+	 * It is somewhat unfortunate that we have to mirror the default block
+	 * size of the reftable library here. But given that the write options
+	 * wouldn't be updated by the library here, and given that we require
+	 * the proper block size to trim reflog message so that they fit, we
+	 * must set up a proper value here.
+	 */
+	if (!refs->write_options.block_size)
+		refs->write_options.block_size = 4096;
 
 	/*
 	 * Set up the main reftable stack that is hosted in GIT_COMMON_DIR.
@@ -263,7 +304,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	}
 	strbuf_addstr(&path, "/reftable");
 	refs->err = reftable_new_stack(&refs->main_stack, path.buf,
-				       refs->write_options);
+				       &refs->write_options);
 	if (refs->err)
 		goto done;
 
@@ -280,7 +321,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 		strbuf_addf(&path, "%s/reftable", gitdir);
 
 		refs->err = reftable_new_stack(&refs->worktree_stack, path.buf,
-					       refs->write_options);
+					       &refs->write_options);
 		if (refs->err)
 			goto done;
 	}

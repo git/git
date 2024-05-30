@@ -856,3 +856,66 @@ done:
 	reftable_reader_free(r);
 	return err;
 }
+
+int reftable_reader_print_blocks(const char *tablename)
+{
+	struct {
+		const char *name;
+		int type;
+	} sections[] = {
+		{
+			.name = "ref",
+			.type = BLOCK_TYPE_REF,
+		},
+		{
+			.name = "obj",
+			.type = BLOCK_TYPE_OBJ,
+		},
+		{
+			.name = "log",
+			.type = BLOCK_TYPE_LOG,
+		},
+	};
+	struct reftable_block_source src = { 0 };
+	struct table_iter ti = TABLE_ITER_INIT;
+	struct reftable_reader *r = NULL;
+	size_t i;
+	int err;
+
+	err = reftable_block_source_from_file(&src, tablename);
+	if (err < 0)
+		goto done;
+
+	err = reftable_new_reader(&r, &src, tablename);
+	if (err < 0)
+		goto done;
+
+	printf("header:\n");
+	printf("  block_size: %d\n", r->block_size);
+
+	for (i = 0; i < ARRAY_SIZE(sections); i++) {
+		err = reader_start(r, &ti, sections[i].type, 0);
+		if (err < 0)
+			goto done;
+		if (err > 0)
+			continue;
+
+		printf("%s:\n", sections[i].name);
+
+		while (1) {
+			printf("  - length: %u\n", ti.br.block_len);
+			printf("    restarts: %u\n", ti.br.restart_count);
+
+			err = table_iter_next_block(&ti);
+			if (err < 0)
+				goto done;
+			if (err > 0)
+				break;
+		}
+	}
+
+done:
+	reftable_reader_free(r);
+	table_iter_close(&ti);
+	return err;
+}

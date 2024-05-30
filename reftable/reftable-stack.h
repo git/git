@@ -29,7 +29,7 @@ struct reftable_stack;
  *  stored in 'dir'. Typically, this should be .git/reftables.
  */
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
-		       struct reftable_write_options config);
+		       const struct reftable_write_options *opts);
 
 /* returns the update_index at which a next table should be written. */
 uint64_t reftable_stack_next_update_index(struct reftable_stack *st);

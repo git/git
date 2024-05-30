@@ -28,7 +28,7 @@ struct reftable_write_options {
 	unsigned skip_index_objects : 1;
 
 	/* how often to write complete keys in each block. */
-	int restart_interval;
+	uint16_t restart_interval;
 
 	/* 4-byte identifier ("sha1", "s256") of the hash.
 	 * Defaults to SHA1 if unset
@@ -45,6 +45,12 @@ struct reftable_write_options {
 
 	/* boolean: Prevent auto-compaction of tables. */
 	unsigned disable_auto_compact : 1;
+
+	/*
+	 * Geometric sequence factor used by auto-compaction to decide which
+	 * tables to compact. Defaults to 2 if unset.
+	 */
+	uint8_t auto_compaction_factor;
 };
 
 /* reftable_block_stats holds statistics for a single block type */
@@ -88,7 +94,7 @@ struct reftable_stats {
 struct reftable_writer *
 reftable_new_writer(ssize_t (*writer_func)(void *, const void *, size_t),
 		    int (*flush_func)(void *),
-		    void *writer_arg, struct reftable_write_options *opts);
+		    void *writer_arg, const struct reftable_write_options *opts);
 
 /* Set the range of update indices for the records we will add. When writing a
    table into a stack, the min should be at least

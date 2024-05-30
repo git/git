@@ -20,7 +20,7 @@ struct reftable_stack {
 
 	char *reftable_dir;
 
-	struct reftable_write_options config;
+	struct reftable_write_options opts;
 
 	struct reftable_reader **readers;
 	size_t readers_len;
@@ -35,6 +35,7 @@ struct segment {
 	uint64_t bytes;
 };
 
-struct segment suggest_compaction_segment(uint64_t *sizes, size_t n);
+struct segment suggest_compaction_segment(uint64_t *sizes, size_t n,
+					  uint8_t factor);
 
 #endif
