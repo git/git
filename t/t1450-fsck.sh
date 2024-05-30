@@ -1060,41 +1060,4 @@ test_expect_success 'fsck reports problems in current worktree index without fil
 	test_cmp expect actual
 '
 
-test_expect_success 'fsck warning on symlink target with excessive length' '
-	symlink_target=$(printf "pattern %032769d" 1 | git hash-object -w --stdin) &&
-	test_when_finished "remove_object $symlink_target" &&
-	tree=$(printf "120000 blob %s\t%s\n" $symlink_target symlink | git mktree) &&
-	test_when_finished "remove_object $tree" &&
-	cat >expected <<-EOF &&
-	warning in blob $symlink_target: symlinkTargetLength: symlink target too long
-	EOF
-	git fsck --no-dangling >actual 2>&1 &&
-	test_cmp expected actual
-'
-
-test_expect_success 'fsck warning on symlink target pointing inside git dir' '
-	gitdir=$(printf ".git" | git hash-object -w --stdin) &&
-	ntfs_gitdir=$(printf "GIT~1" | git hash-object -w --stdin) &&
-	hfs_gitdir=$(printf ".${u200c}git" | git hash-object -w --stdin) &&
-	inside_gitdir=$(printf "nested/.git/config" | git hash-object -w --stdin) &&
-	benign_target=$(printf "legit/config" | git hash-object -w --stdin) &&
-	tree=$(printf "120000 blob %s\t%s\n" \
-		$benign_target benign_target \
-		$gitdir gitdir \
-		$hfs_gitdir hfs_gitdir \
-		$inside_gitdir inside_gitdir \
-		$ntfs_gitdir ntfs_gitdir |
-		git mktree) &&
-	for o in $gitdir $ntfs_gitdir $hfs_gitdir $inside_gitdir $benign_target $tree
-	do
-		test_when_finished "remove_object $o" || return 1
-	done &&
-	printf "warning in blob %s: symlinkPointsToGitDir: symlink target points to git dir\n" \
-		$gitdir $hfs_gitdir $inside_gitdir $ntfs_gitdir |
-	sort >expected &&
-	git fsck --no-dangling >actual 2>&1 &&
-	sort actual >actual.sorted &&
-	test_cmp expected actual.sorted
-'
-
 test_done

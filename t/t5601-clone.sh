@@ -788,57 +788,6 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 	git clone --filter=blob:limit=0 "file://$(pwd)/server" client
 '
 
-test_expect_success 'clone with init.templatedir runs hooks' '
-	git init tmpl/hooks &&
-	write_script tmpl/hooks/post-checkout <<-EOF &&
-	echo HOOK-RUN >&2
-	echo I was here >hook.run
-	EOF
-	git -C tmpl/hooks add . &&
-	test_tick &&
-	git -C tmpl/hooks commit -m post-checkout &&
-
-	test_when_finished "git config --global --unset init.templateDir || :" &&
-	test_when_finished "git config --unset init.templateDir || :" &&
-	(
-		sane_unset GIT_TEMPLATE_DIR &&
-		NO_SET_GIT_TEMPLATE_DIR=t &&
-		export NO_SET_GIT_TEMPLATE_DIR &&
-
-		git -c core.hooksPath="$(pwd)/tmpl/hooks" \
-			clone tmpl/hooks hook-run-hookspath 2>err &&
-		test_grep ! "active .* hook found" err &&
-		test_path_is_file hook-run-hookspath/hook.run &&
-
-		git -c init.templateDir="$(pwd)/tmpl" \
-			clone tmpl/hooks hook-run-config 2>err &&
-		test_grep ! "active .* hook found" err &&
-		test_path_is_file hook-run-config/hook.run &&
-
-		git clone --template=tmpl tmpl/hooks hook-run-option 2>err &&
-		test_grep ! "active .* hook found" err &&
-		test_path_is_file hook-run-option/hook.run &&
-
-		git config --global init.templateDir "$(pwd)/tmpl" &&
-		git clone tmpl/hooks hook-run-global-config 2>err &&
-		git config --global --unset init.templateDir &&
-		test_grep ! "active .* hook found" err &&
-		test_path_is_file hook-run-global-config/hook.run &&
-
-		# clone ignores local `init.templateDir`; need to create
-		# a new repository because we deleted `.git/` in the
-		# `setup` test case above
-		git init local-clone &&
-		cd local-clone &&
-
-		git config init.templateDir "$(pwd)/../tmpl" &&
-		git clone ../tmpl/hooks hook-run-local-config 2>err &&
-		git config --unset init.templateDir &&
-		test_grep ! "active .* hook found" err &&
-		test_path_is_missing hook-run-local-config/hook.run
-	)
-'
-
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 

@@ -164,18 +164,6 @@
 `nullSha1`::
 	(WARN) Tree contains entries pointing to a null sha1.
 
-`symlinkPointsToGitDir`::
-	(WARN) Symbolic link points inside a gitdir.
-
-`symlinkTargetBlob`::
-	(ERROR) A non-blob found instead of a symbolic link's target.
-
-`symlinkTargetLength`::
-	(WARN) Symbolic link target longer than maximum path length.
-
-`symlinkTargetMissing`::
-	(ERROR) Unable to read symbolic link target's blob.
-
 `treeNotSorted`::
 	(ERROR) A tree is not properly sorted.
 
