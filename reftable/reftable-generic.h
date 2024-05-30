@@ -21,11 +21,11 @@ struct reftable_table {
 	void *table_arg;
 };
 
-int reftable_table_seek_log(struct reftable_table *tab,
-			    struct reftable_iterator *it, const char *name);
+void reftable_table_init_ref_iter(struct reftable_table *tab,
+				  struct reftable_iterator *it);
 
-int reftable_table_seek_ref(struct reftable_table *tab,
-			    struct reftable_iterator *it, const char *name);
+void reftable_table_init_log_iter(struct reftable_table *tab,
+				  struct reftable_iterator *it);
 
 /* returns the hash ID from a generic reftable_table */
 uint32_t reftable_table_hash_id(struct reftable_table *tab);

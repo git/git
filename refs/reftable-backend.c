@@ -16,7 +16,6 @@
 #include "../reftable/reftable-record.h"
 #include "../reftable/reftable-error.h"
 #include "../reftable/reftable-iterator.h"
-#include "../reftable/reftable-merged.h"
 #include "../setup.h"
 #include "../strmap.h"
 #include "parse.h"
@@ -502,7 +501,6 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 							    const char *prefix,
 							    int flags)
 {
-	struct reftable_merged_table *merged_table;
 	struct reftable_ref_iterator *iter;
 	int ret;
 
@@ -522,9 +520,8 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 	if (ret)
 		goto done;
 
-	merged_table = reftable_stack_merged_table(stack);
-
-	ret = reftable_merged_table_seek_ref(merged_table, &iter->iter, prefix);
+	reftable_stack_init_ref_iterator(stack, &iter->iter);
+	ret = reftable_iterator_seek_ref(&iter->iter, prefix);
 	if (ret)
 		goto done;
 
@@ -1052,8 +1049,6 @@ static int transaction_update_cmp(const void *a, const void *b)
 static int write_transaction_table(struct reftable_writer *writer, void *cb_data)
 {
 	struct write_transaction_table_arg *arg = cb_data;
-	struct reftable_merged_table *mt =
-		reftable_stack_merged_table(arg->stack);
 	uint64_t ts = reftable_stack_next_update_index(arg->stack);
 	struct reftable_log_record *logs = NULL;
 	struct ident_split committer_ident = {0};
@@ -1090,6 +1085,8 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			struct reftable_log_record log = {0};
 			struct reftable_iterator it = {0};
 
+			reftable_stack_init_log_iterator(arg->stack, &it);
+
 			/*
 			 * When deleting refs we also delete all reflog entries
 			 * with them. While it is not strictly required to
@@ -1099,7 +1096,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			 * Unfortunately, we have no better way than to delete
 			 * all reflog entries one by one.
 			 */
-			ret = reftable_merged_table_seek_log(mt, &it, u->refname);
+			ret = reftable_iterator_seek_log(&it, u->refname);
 			while (ret == 0) {
 				struct reftable_log_record *tombstone;
 
@@ -1317,7 +1314,6 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 {
 	struct write_copy_arg *arg = cb_data;
 	uint64_t deletion_ts, creation_ts;
-	struct reftable_merged_table *mt = reftable_stack_merged_table(arg->stack);
 	struct reftable_ref_record old_ref = {0}, refs[2] = {0};
 	struct reftable_log_record old_log = {0}, *logs = NULL;
 	struct reftable_iterator it = {0};
@@ -1451,7 +1447,8 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	 * copy over all log entries from the old reflog. Last but not least,
 	 * when renaming we also have to delete all the old reflog entries.
 	 */
-	ret = reftable_merged_table_seek_log(mt, &it, arg->oldname);
+	reftable_stack_init_log_iterator(arg->stack, &it);
+	ret = reftable_iterator_seek_log(&it, arg->oldname);
 	if (ret < 0)
 		goto done;
 
@@ -1657,7 +1654,6 @@ static struct ref_iterator_vtable reftable_reflog_iterator_vtable = {
 static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftable_ref_store *refs,
 								  struct reftable_stack *stack)
 {
-	struct reftable_merged_table *merged_table;
 	struct reftable_reflog_iterator *iter;
 	int ret;
 
@@ -1674,9 +1670,8 @@ static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftabl
 	if (ret < 0)
 		goto done;
 
-	merged_table = reftable_stack_merged_table(stack);
-
-	ret = reftable_merged_table_seek_log(merged_table, &iter->iter, "");
+	reftable_stack_init_log_iterator(stack, &iter->iter);
+	ret = reftable_iterator_seek_log(&iter->iter, "");
 	if (ret < 0)
 		goto done;
 
@@ -1734,7 +1729,6 @@ static int reftable_be_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_READ, "for_each_reflog_ent_reverse");
 	struct reftable_stack *stack = stack_for(refs, refname, &refname);
-	struct reftable_merged_table *mt = NULL;
 	struct reftable_log_record log = {0};
 	struct reftable_iterator it = {0};
 	int ret;
@@ -1742,8 +1736,8 @@ static int reftable_be_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 	if (refs->err < 0)
 		return refs->err;
 
-	mt = reftable_stack_merged_table(stack);
-	ret = reftable_merged_table_seek_log(mt, &it, refname);
+	reftable_stack_init_log_iterator(stack, &it);
+	ret = reftable_iterator_seek_log(&it, refname);
 	while (!ret) {
 		ret = reftable_iterator_next_log(&it, &log);
 		if (ret < 0)
@@ -1771,7 +1765,6 @@ static int reftable_be_for_each_reflog_ent(struct ref_store *ref_store,
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_READ, "for_each_reflog_ent");
 	struct reftable_stack *stack = stack_for(refs, refname, &refname);
-	struct reftable_merged_table *mt = NULL;
 	struct reftable_log_record *logs = NULL;
 	struct reftable_iterator it = {0};
 	size_t logs_alloc = 0, logs_nr = 0, i;
@@ -1780,8 +1773,8 @@ static int reftable_be_for_each_reflog_ent(struct ref_store *ref_store,
 	if (refs->err < 0)
 		return refs->err;
 
-	mt = reftable_stack_merged_table(stack);
-	ret = reftable_merged_table_seek_log(mt, &it, refname);
+	reftable_stack_init_log_iterator(stack, &it);
+	ret = reftable_iterator_seek_log(&it, refname);
 	while (!ret) {
 		struct reftable_log_record log = {0};
 
@@ -1818,7 +1811,6 @@ static int reftable_be_reflog_exists(struct ref_store *ref_store,
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_READ, "reflog_exists");
 	struct reftable_stack *stack = stack_for(refs, refname, &refname);
-	struct reftable_merged_table *mt = reftable_stack_merged_table(stack);
 	struct reftable_log_record log = {0};
 	struct reftable_iterator it = {0};
 	int ret;
@@ -1831,7 +1823,8 @@ static int reftable_be_reflog_exists(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
-	ret = reftable_merged_table_seek_log(mt, &it, refname);
+	reftable_stack_init_log_iterator(stack, &it);
+	ret = reftable_iterator_seek_log(&it, refname);
 	if (ret < 0)
 		goto done;
 
@@ -1929,8 +1922,6 @@ struct write_reflog_delete_arg {
 static int write_reflog_delete_table(struct reftable_writer *writer, void *cb_data)
 {
 	struct write_reflog_delete_arg *arg = cb_data;
-	struct reftable_merged_table *mt =
-		reftable_stack_merged_table(arg->stack);
 	struct reftable_log_record log = {0}, tombstone = {0};
 	struct reftable_iterator it = {0};
 	uint64_t ts = reftable_stack_next_update_index(arg->stack);
@@ -1938,12 +1929,14 @@ static int write_reflog_delete_table(struct reftable_writer *writer, void *cb_da
 
 	reftable_writer_set_limits(writer, ts, ts);
 
+	reftable_stack_init_log_iterator(arg->stack, &it);
+
 	/*
 	 * In order to delete a table we need to delete all reflog entries one
 	 * by one. This is inefficient, but the reftable format does not have a
 	 * better marker right now.
 	 */
-	ret = reftable_merged_table_seek_log(mt, &it, arg->refname);
+	ret = reftable_iterator_seek_log(&it, arg->refname);
 	while (ret == 0) {
 		ret = reftable_iterator_next_log(&it, &log);
 		if (ret < 0)
@@ -2079,7 +2072,6 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_WRITE, "reflog_expire");
 	struct reftable_stack *stack = stack_for(refs, refname, &refname);
-	struct reftable_merged_table *mt = reftable_stack_merged_table(stack);
 	struct reftable_log_record *logs = NULL;
 	struct reftable_log_record *rewritten = NULL;
 	struct reftable_ref_record ref_record = {0};
@@ -2098,7 +2090,9 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
-	ret = reftable_merged_table_seek_log(mt, &it, refname);
+	reftable_stack_init_log_iterator(stack, &it);
+
+	ret = reftable_iterator_seek_log(&it, refname);
 	if (ret < 0)
 		goto done;
 

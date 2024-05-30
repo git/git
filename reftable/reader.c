@@ -224,8 +224,14 @@ struct table_iter {
 	struct block_iter bi;
 	int is_finished;
 };
-#define TABLE_ITER_INIT { \
-	.bi = BLOCK_ITER_INIT \
+
+static int table_iter_init(struct table_iter *ti, struct reftable_reader *r)
+{
+	struct block_iter bi = BLOCK_ITER_INIT;
+	memset(ti, 0, sizeof(*ti));
+	ti->r = r;
+	ti->bi = bi;
+	return 0;
 }
 
 static int table_iter_next_in_block(struct table_iter *ti,
@@ -363,50 +369,23 @@ static int table_iter_next(struct table_iter *ti, struct reftable_record *rec)
 	}
 }
 
-static int table_iter_next_void(void *ti, struct reftable_record *rec)
-{
-	return table_iter_next(ti, rec);
-}
-
-static void table_iter_close_void(void *ti)
-{
-	table_iter_close(ti);
-}
-
-static struct reftable_iterator_vtable table_iter_vtable = {
-	.next = &table_iter_next_void,
-	.close = &table_iter_close_void,
-};
-
-static void iterator_from_table_iter(struct reftable_iterator *it,
-				     struct table_iter *ti)
-{
-	assert(!it->ops);
-	it->iter_arg = ti;
-	it->ops = &table_iter_vtable;
-}
-
-static int reader_table_iter_at(struct reftable_reader *r,
-				struct table_iter *ti, uint64_t off,
-				uint8_t typ)
+static int table_iter_seek_to(struct table_iter *ti, uint64_t off, uint8_t typ)
 {
 	int err;
 
-	err = reader_init_block_reader(r, &ti->br, off, typ);
+	err = reader_init_block_reader(ti->r, &ti->br, off, typ);
 	if (err != 0)
 		return err;
 
-	ti->r = r;
 	ti->typ = block_reader_type(&ti->br);
 	ti->block_off = off;
 	block_iter_seek_start(&ti->bi, &ti->br);
 	return 0;
 }
 
-static int reader_start(struct reftable_reader *r, struct table_iter *ti,
-			uint8_t typ, int index)
+static int table_iter_seek_start(struct table_iter *ti, uint8_t typ, int index)
 {
-	struct reftable_reader_offsets *offs = reader_offsets_for(r, typ);
+	struct reftable_reader_offsets *offs = reader_offsets_for(ti->r, typ);
 	uint64_t off = offs->offset;
 	if (index) {
 		off = offs->index_offset;
@@ -416,16 +395,16 @@ static int reader_start(struct reftable_reader *r, struct table_iter *ti,
 		typ = BLOCK_TYPE_INDEX;
 	}
 
-	return reader_table_iter_at(r, ti, off, typ);
+	return table_iter_seek_to(ti, off, typ);
 }
 
-static int reader_seek_linear(struct table_iter *ti,
-			      struct reftable_record *want)
+static int table_iter_seek_linear(struct table_iter *ti,
+				  struct reftable_record *want)
 {
 	struct strbuf want_key = STRBUF_INIT;
 	struct strbuf got_key = STRBUF_INIT;
 	struct reftable_record rec;
-	int err = -1;
+	int err;
 
 	reftable_record_init(&rec, reftable_record_type(want));
 	reftable_record_key(want, &want_key);
@@ -499,9 +478,8 @@ done:
 	return err;
 }
 
-static int reader_seek_indexed(struct reftable_reader *r,
-			       struct reftable_iterator *it,
-			       struct reftable_record *rec)
+static int table_iter_seek_indexed(struct table_iter *ti,
+				   struct reftable_record *rec)
 {
 	struct reftable_record want_index = {
 		.type = BLOCK_TYPE_INDEX, .u.idx = { .last_key = STRBUF_INIT }
@@ -510,15 +488,9 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		.type = BLOCK_TYPE_INDEX,
 		.u.idx = { .last_key = STRBUF_INIT },
 	};
-	struct table_iter index_iter = TABLE_ITER_INIT;
-	struct table_iter empty = TABLE_ITER_INIT;
-	struct table_iter next = TABLE_ITER_INIT;
-	int err = 0;
+	int err;
 
 	reftable_record_key(rec, &want_index.u.idx.last_key);
-	err = reader_start(r, &index_iter, reftable_record_type(rec), 1);
-	if (err < 0)
-		goto done;
 
 	/*
 	 * The index may consist of multiple levels, where each level may have
@@ -526,7 +498,7 @@ static int reader_seek_indexed(struct reftable_reader *r,
 	 * highest layer that identifies the relevant index block as well as
 	 * the record inside that block that corresponds to our wanted key.
 	 */
-	err = reader_seek_linear(&index_iter, &want_index);
+	err = table_iter_seek_linear(ti, &want_index);
 	if (err < 0)
 		goto done;
 
@@ -552,123 +524,113 @@ static int reader_seek_indexed(struct reftable_reader *r,
 		 * all levels of the index only to find out that the key does
 		 * not exist.
 		 */
-		err = table_iter_next(&index_iter, &index_result);
+		err = table_iter_next(ti, &index_result);
 		if (err != 0)
 			goto done;
 
-		err = reader_table_iter_at(r, &next, index_result.u.idx.offset,
-					   0);
+		err = table_iter_seek_to(ti, index_result.u.idx.offset, 0);
 		if (err != 0)
 			goto done;
 
-		err = block_iter_seek_key(&next.bi, &next.br, &want_index.u.idx.last_key);
+		err = block_iter_seek_key(&ti->bi, &ti->br, &want_index.u.idx.last_key);
 		if (err < 0)
 			goto done;
 
-		if (next.typ == reftable_record_type(rec)) {
+		if (ti->typ == reftable_record_type(rec)) {
 			err = 0;
 			break;
 		}
 
-		if (next.typ != BLOCK_TYPE_INDEX) {
+		if (ti->typ != BLOCK_TYPE_INDEX) {
 			err = REFTABLE_FORMAT_ERROR;
-			break;
+			goto done;
 		}
-
-		table_iter_close(&index_iter);
-		index_iter = next;
-		next = empty;
-	}
-
-	if (err == 0) {
-		struct table_iter *malloced = reftable_calloc(1, sizeof(*malloced));
-		*malloced = next;
-		next = empty;
-		iterator_from_table_iter(it, malloced);
 	}
 
 done:
-	table_iter_close(&next);
-	table_iter_close(&index_iter);
 	reftable_record_release(&want_index);
 	reftable_record_release(&index_result);
 	return err;
 }
 
-static int reader_seek_internal(struct reftable_reader *r,
-				struct reftable_iterator *it,
-				struct reftable_record *rec)
+static int table_iter_seek(struct table_iter *ti,
+			   struct reftable_record *want)
 {
-	struct reftable_reader_offsets *offs =
-		reader_offsets_for(r, reftable_record_type(rec));
-	uint64_t idx = offs->index_offset;
-	struct table_iter ti = TABLE_ITER_INIT, *p;
+	uint8_t typ = reftable_record_type(want);
+	struct reftable_reader_offsets *offs = reader_offsets_for(ti->r, typ);
 	int err;
 
-	if (idx > 0)
-		return reader_seek_indexed(r, it, rec);
-
-	err = reader_start(r, &ti, reftable_record_type(rec), 0);
+	err = table_iter_seek_start(ti, reftable_record_type(want),
+				    !!offs->index_offset);
 	if (err < 0)
 		goto out;
 
-	err = reader_seek_linear(&ti, rec);
-	if (err < 0)
+	if (offs->index_offset)
+		err = table_iter_seek_indexed(ti, want);
+	else
+		err = table_iter_seek_linear(ti, want);
+	if (err)
 		goto out;
-
-	REFTABLE_ALLOC_ARRAY(p, 1);
-	*p = ti;
-	iterator_from_table_iter(it, p);
 
 out:
-	if (err)
-		table_iter_close(&ti);
 	return err;
 }
 
-static int reader_seek(struct reftable_reader *r, struct reftable_iterator *it,
-		       struct reftable_record *rec)
+static int table_iter_seek_void(void *ti, struct reftable_record *want)
 {
-	uint8_t typ = reftable_record_type(rec);
+	return table_iter_seek(ti, want);
+}
 
+static int table_iter_next_void(void *ti, struct reftable_record *rec)
+{
+	return table_iter_next(ti, rec);
+}
+
+static void table_iter_close_void(void *ti)
+{
+	table_iter_close(ti);
+}
+
+static struct reftable_iterator_vtable table_iter_vtable = {
+	.seek = &table_iter_seek_void,
+	.next = &table_iter_next_void,
+	.close = &table_iter_close_void,
+};
+
+static void iterator_from_table_iter(struct reftable_iterator *it,
+				     struct table_iter *ti)
+{
+	assert(!it->ops);
+	it->iter_arg = ti;
+	it->ops = &table_iter_vtable;
+}
+
+static void reader_init_iter(struct reftable_reader *r,
+			     struct reftable_iterator *it,
+			     uint8_t typ)
+{
 	struct reftable_reader_offsets *offs = reader_offsets_for(r, typ);
-	if (!offs->is_present) {
+
+	if (offs->is_present) {
+		struct table_iter *ti;
+		REFTABLE_ALLOC_ARRAY(ti, 1);
+		table_iter_init(ti, r);
+		iterator_from_table_iter(it, ti);
+	} else {
 		iterator_set_empty(it);
-		return 0;
 	}
-
-	return reader_seek_internal(r, it, rec);
 }
 
-int reftable_reader_seek_ref(struct reftable_reader *r,
-			     struct reftable_iterator *it, const char *name)
+void reftable_reader_init_ref_iterator(struct reftable_reader *r,
+				       struct reftable_iterator *it)
 {
-	struct reftable_record rec = {
-		.type = BLOCK_TYPE_REF,
-		.u.ref = {
-			.refname = (char *)name,
-		},
-	};
-	return reader_seek(r, it, &rec);
+	reader_init_iter(r, it, BLOCK_TYPE_REF);
 }
 
-int reftable_reader_seek_log_at(struct reftable_reader *r,
-				struct reftable_iterator *it, const char *name,
-				uint64_t update_index)
+void reftable_reader_init_log_iterator(struct reftable_reader *r,
+				       struct reftable_iterator *it)
 {
-	struct reftable_record rec = { .type = BLOCK_TYPE_LOG,
-				       .u.log = {
-					       .refname = (char *)name,
-					       .update_index = update_index,
-				       } };
-	return reader_seek(r, it, &rec);
-}
-
-int reftable_reader_seek_log(struct reftable_reader *r,
-			     struct reftable_iterator *it, const char *name)
-{
-	uint64_t max = ~((uint64_t)0);
-	return reftable_reader_seek_log_at(r, it, name, max);
+	reader_init_iter(r, it, BLOCK_TYPE_LOG);
 }
 
 void reader_close(struct reftable_reader *r)
@@ -719,7 +681,8 @@ static int reftable_reader_refs_for_indexed(struct reftable_reader *r,
 	struct indexed_table_ref_iter *itr = NULL;
 
 	/* Look through the reverse index. */
-	err = reader_seek(r, &oit, &want);
+	reader_init_iter(r, &oit, BLOCK_TYPE_OBJ);
+	err = iterator_seek(&oit, &want);
 	if (err != 0)
 		goto done;
 
@@ -754,15 +717,15 @@ static int reftable_reader_refs_for_unindexed(struct reftable_reader *r,
 					      struct reftable_iterator *it,
 					      uint8_t *oid)
 {
-	struct table_iter ti_empty = TABLE_ITER_INIT;
-	struct table_iter *ti = reftable_calloc(1, sizeof(*ti));
+	struct table_iter *ti;
 	struct filtering_ref_iterator *filter = NULL;
 	struct filtering_ref_iterator empty = FILTERING_REF_ITERATOR_INIT;
 	int oid_len = hash_size(r->hash_id);
 	int err;
 
-	*ti = ti_empty;
-	err = reader_start(r, ti, BLOCK_TYPE_REF, 0);
+	REFTABLE_ALLOC_ARRAY(ti, 1);
+	table_iter_init(ti, r);
+	err = table_iter_seek_start(ti, BLOCK_TYPE_REF, 0);
 	if (err < 0) {
 		reftable_free(ti);
 		return err;
@@ -800,10 +763,11 @@ uint64_t reftable_reader_min_update_index(struct reftable_reader *r)
 
 /* generic table interface. */
 
-static int reftable_reader_seek_void(void *tab, struct reftable_iterator *it,
-				     struct reftable_record *rec)
+static void reftable_reader_init_iter_void(void *tab,
+					   struct reftable_iterator *it,
+					   uint8_t typ)
 {
-	return reader_seek(tab, it, rec);
+	reader_init_iter(tab, it, typ);
 }
 
 static uint32_t reftable_reader_hash_id_void(void *tab)
@@ -822,7 +786,7 @@ static uint64_t reftable_reader_max_update_index_void(void *tab)
 }
 
 static struct reftable_table_vtable reader_vtable = {
-	.seek_record = reftable_reader_seek_void,
+	.init_iter = reftable_reader_init_iter_void,
 	.hash_id = reftable_reader_hash_id_void,
 	.min_update_index = reftable_reader_min_update_index_void,
 	.max_update_index = reftable_reader_max_update_index_void,
@@ -877,8 +841,8 @@ int reftable_reader_print_blocks(const char *tablename)
 		},
 	};
 	struct reftable_block_source src = { 0 };
-	struct table_iter ti = TABLE_ITER_INIT;
 	struct reftable_reader *r = NULL;
+	struct table_iter ti = { 0 };
 	size_t i;
 	int err;
 
@@ -890,11 +854,13 @@ int reftable_reader_print_blocks(const char *tablename)
 	if (err < 0)
 		goto done;
 
+	table_iter_init(&ti, r);
+
 	printf("header:\n");
 	printf("  block_size: %d\n", r->block_size);
 
 	for (i = 0; i < ARRAY_SIZE(sections); i++) {
-		err = reader_start(r, &ti, sections[i].type, 0);
+		err = table_iter_seek_start(&ti, sections[i].type, 0);
 		if (err < 0)
 			goto done;
 		if (err > 0)

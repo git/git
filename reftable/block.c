@@ -326,9 +326,9 @@ int block_reader_first_key(const struct block_reader *br, struct strbuf *key)
 	return 0;
 }
 
-static uint32_t block_reader_restart_offset(const struct block_reader *br, int i)
+static uint32_t block_reader_restart_offset(const struct block_reader *br, size_t idx)
 {
-	return get_be24(br->restart_bytes + 3 * i);
+	return get_be24(br->restart_bytes + 3 * idx);
 }
 
 void block_iter_seek_start(struct block_iter *it, const struct block_reader *br)

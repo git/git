@@ -36,47 +36,16 @@ struct reftable_table;
 int reftable_new_reader(struct reftable_reader **pp,
 			struct reftable_block_source *src, const char *name);
 
-/* reftable_reader_seek_ref returns an iterator where 'name' would be inserted
-   in the table.  To seek to the start of the table, use name = "".
+/* Initialize a reftable iterator for reading refs. */
+void reftable_reader_init_ref_iterator(struct reftable_reader *r,
+				       struct reftable_iterator *it);
 
-   example:
-
-   struct reftable_reader *r = NULL;
-   int err = reftable_new_reader(&r, &src, "filename");
-   if (err < 0) { ... }
-   struct reftable_iterator it  = {0};
-   err = reftable_reader_seek_ref(r, &it, "refs/heads/master");
-   if (err < 0) { ... }
-   struct reftable_ref_record ref  = {0};
-   while (1) {
-   err = reftable_iterator_next_ref(&it, &ref);
-   if (err > 0) {
-   break;
-   }
-   if (err < 0) {
-   ..error handling..
-   }
-   ..found..
-   }
-   reftable_iterator_destroy(&it);
-   reftable_ref_record_release(&ref);
-*/
-int reftable_reader_seek_ref(struct reftable_reader *r,
-			     struct reftable_iterator *it, const char *name);
+/* Initialize a reftable iterator for reading logs. */
+void reftable_reader_init_log_iterator(struct reftable_reader *r,
+				       struct reftable_iterator *it);
 
 /* returns the hash ID used in this table. */
 uint32_t reftable_reader_hash_id(struct reftable_reader *r);
-
-/* seek to logs for the given name, older than update_index. To seek to the
-   start of the table, use name = "".
-*/
-int reftable_reader_seek_log_at(struct reftable_reader *r,
-				struct reftable_iterator *it, const char *name,
-				uint64_t update_index);
-
-/* seek to newest log entry for given name. */
-int reftable_reader_seek_log(struct reftable_reader *r,
-			     struct reftable_iterator *it, const char *name);
 
 /* closes and deallocates a reader. */
 void reftable_reader_free(struct reftable_reader *);
