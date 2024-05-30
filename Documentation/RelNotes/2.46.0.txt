@@ -49,6 +49,9 @@ UI, Workflows & Features
    to the recent update to "git config" that adopted subcommand based
    UI.
 
+ * The knobs to tweak how reftable files are written have been made
+   available as configuration variables.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -87,14 +90,24 @@ Performance, Internal Implementation, Development Support etc.
    builtin/config.c done via the use of global variables.
 
  * The pack bitmap code saw some clean-up to prepare for a follow-up topic.
-   (merge 85f360fee5 tb/pack-bitmap-write-cleanups later to maint).
 
  * Preliminary code clean-up for "git send-email".
-   (merge c02dc38570 ds/send-email-per-message-block later to maint).
 
  * The default "creation-factor" used by "git format-patch" has been
    raised to make it more aggressively find matching commits.
-   (merge c22d41d641 jc/format-patch-more-aggressive-range-diff later to maint).
+
+ * Before discovering the repository details, We used to assume SHA-1
+   as the "default" hash function, which has been corrected. Hopefully
+   this will smoke out codepaths that rely on such an unwarranted
+   assumptions.
+
+ * The project decision making policy has been documented.
+
+ * The strcmp-offset tests have been rewritten using the unit test
+   framework.
+
+ * "git add -p" learned to complain when an answer with more than one
+   letter is given to a prompt that expects a single letter answer.
 
 
 Fixes since v2.45
@@ -179,6 +192,15 @@ Fixes since v2.45
    storing back the authentication material it just got received from
    the keychain.
    (merge e1ab45b2da kn/osxkeychain-skip-idempotent-store later to maint).
+
+ * The chainlint script (invoked during "make test") did nothing when
+   it failed to detect the number of available CPUs.  It now falls
+   back to 1 CPU to avoid the problem.
+   (merge 2e7e9205be es/chainlint-ncores-fix later to maint).
+
+ * Revert overly aggressive "layered defence" that went into 2.45.1
+   and friends, which broke "git-lfs", "git-annex", and other use
+   cases, so that we can rebuild necessary counterparts in the open.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 4cf6e7bf5e jt/doc-submitting-rerolled-series later to maint).
