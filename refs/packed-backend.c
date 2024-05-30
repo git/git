@@ -200,9 +200,14 @@ static int release_snapshot(struct snapshot *snapshot)
 	}
 }
 
-struct ref_store *packed_ref_store_create(struct repository *repo,
-					  const char *gitdir,
-					  unsigned int store_flags)
+static size_t snapshot_hexsz(const struct snapshot *snapshot)
+{
+	return snapshot->refs->base.repo->hash_algo->hexsz;
+}
+
+struct ref_store *packed_ref_store_init(struct repository *repo,
+					const char *gitdir,
+					unsigned int store_flags)
 {
 	struct packed_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
@@ -252,6 +257,15 @@ static void clear_snapshot(struct packed_ref_store *refs)
 	}
 }
 
+static void packed_ref_store_release(struct ref_store *ref_store)
+{
+	struct packed_ref_store *refs = packed_downcast(ref_store, 0, "release");
+	clear_snapshot(refs);
+	rollback_lock_file(&refs->lock);
+	delete_tempfile(&refs->tempfile);
+	free(refs->path);
+}
+
 static NORETURN void die_unterminated_line(const char *path,
 					   const char *p, size_t len)
 {
@@ -280,11 +294,13 @@ struct snapshot_record {
 	size_t len;
 };
 
-static int cmp_packed_ref_records(const void *v1, const void *v2)
+static int cmp_packed_ref_records(const void *v1, const void *v2,
+				  void *cb_data)
 {
+	const struct snapshot *snapshot = cb_data;
 	const struct snapshot_record *e1 = v1, *e2 = v2;
-	const char *r1 = e1->start + the_hash_algo->hexsz + 1;
-	const char *r2 = e2->start + the_hash_algo->hexsz + 1;
+	const char *r1 = e1->start + snapshot_hexsz(snapshot) + 1;
+	const char *r2 = e2->start + snapshot_hexsz(snapshot) + 1;
 
 	while (1) {
 		if (*r1 == '\n')
@@ -305,9 +321,9 @@ static int cmp_packed_ref_records(const void *v1, const void *v2)
  * refname.
  */
 static int cmp_record_to_refname(const char *rec, const char *refname,
-				 int start)
+				 int start, const struct snapshot *snapshot)
 {
-	const char *r1 = rec + the_hash_algo->hexsz + 1;
+	const char *r1 = rec + snapshot_hexsz(snapshot) + 1;
 	const char *r2 = refname;
 
 	while (1) {
@@ -354,7 +370,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		if (!eol)
 			/* The safety check should prevent this. */
 			BUG("unterminated line found in packed-refs");
-		if (eol - pos < the_hash_algo->hexsz + 2)
+		if (eol - pos < snapshot_hexsz(snapshot) + 2)
 			die_invalid_line(snapshot->refs->path,
 					 pos, eof - pos);
 		eol++;
@@ -380,7 +396,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		if (sorted &&
 		    nr > 1 &&
 		    cmp_packed_ref_records(&records[nr - 2],
-					   &records[nr - 1]) >= 0)
+					   &records[nr - 1], snapshot) >= 0)
 			sorted = 0;
 
 		pos = eol;
@@ -390,7 +406,7 @@ static void sort_snapshot(struct snapshot *snapshot)
 		goto cleanup;
 
 	/* We need to sort the memory. First we sort the records array: */
-	QSORT(records, nr, cmp_packed_ref_records);
+	QSORT_S(records, nr, cmp_packed_ref_records, snapshot);
 
 	/*
 	 * Allocate a new chunk of memory, and copy the old memory to
@@ -466,7 +482,8 @@ static void verify_buffer_safe(struct snapshot *snapshot)
 		return;
 
 	last_line = find_start_of_record(start, eof - 1);
-	if (*(eof - 1) != '\n' || eof - last_line < the_hash_algo->hexsz + 2)
+	if (*(eof - 1) != '\n' ||
+	    eof - last_line < snapshot_hexsz(snapshot) + 2)
 		die_invalid_line(snapshot->refs->path,
 				 last_line, eof - last_line);
 }
@@ -561,7 +578,7 @@ static const char *find_reference_location_1(struct snapshot *snapshot,
 
 		mid = lo + (hi - lo) / 2;
 		rec = find_start_of_record(lo, mid);
-		cmp = cmp_record_to_refname(rec, refname, start);
+		cmp = cmp_record_to_refname(rec, refname, start, snapshot);
 		if (cmp < 0) {
 			lo = find_end_of_record(mid, hi);
 		} else if (cmp > 0) {
@@ -858,7 +875,7 @@ static int next_record(struct packed_ref_iterator *iter)
 	iter->base.flags = REF_ISPACKED;
 	p = iter->pos;
 
-	if (iter->eof - p < the_hash_algo->hexsz + 2 ||
+	if (iter->eof - p < snapshot_hexsz(iter->snapshot) + 2 ||
 	    parse_oid_hex(p, &iter->oid, &p) ||
 	    !isspace(*p++))
 		die_invalid_line(iter->snapshot->refs->path,
@@ -888,7 +905,7 @@ static int next_record(struct packed_ref_iterator *iter)
 
 	if (iter->pos < iter->eof && *iter->pos == '^') {
 		p = iter->pos + 1;
-		if (iter->eof - p < the_hash_algo->hexsz + 1 ||
+		if (iter->eof - p < snapshot_hexsz(iter->snapshot) + 1 ||
 		    parse_oid_hex(p, &iter->peeled, &p) ||
 		    *p++ != '\n')
 			die_invalid_line(iter->snapshot->refs->path,
@@ -944,16 +961,13 @@ static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	struct packed_ref_iterator *iter =
 		(struct packed_ref_iterator *)ref_iterator;
 
-	if (iter->repo != the_repository)
-		BUG("peeling for non-the_repository is not supported");
-
 	if ((iter->base.flags & REF_KNOWS_PEELED)) {
 		oidcpy(peeled, &iter->peeled);
 		return is_null_oid(&iter->peeled) ? -1 : 0;
 	} else if ((iter->base.flags & (REF_ISBROKEN | REF_ISSYMREF))) {
 		return -1;
 	} else {
-		return peel_object(&iter->oid, peeled) ? -1 : 0;
+		return peel_object(iter->repo, &iter->oid, peeled) ? -1 : 0;
 	}
 }
 
@@ -1244,9 +1258,9 @@ int packed_refs_is_locked(struct ref_store *ref_store)
 static const char PACKED_REFS_HEADER[] =
 	"# pack-refs with: peeled fully-peeled sorted \n";
 
-static int packed_init_db(struct ref_store *ref_store UNUSED,
-			  int flags UNUSED,
-			  struct strbuf *err UNUSED)
+static int packed_ref_store_create_on_disk(struct ref_store *ref_store UNUSED,
+					   int flags UNUSED,
+					   struct strbuf *err UNUSED)
 {
 	/* Nothing to do. */
 	return 0;
@@ -1412,7 +1426,8 @@ static int write_with_updates(struct packed_ref_store *refs,
 			i++;
 		} else {
 			struct object_id peeled;
-			int peel_error = peel_object(&update->new_oid,
+			int peel_error = peel_object(refs->base.repo,
+						     &update->new_oid,
 						     &peeled);
 
 			if (write_packed_entry(out, update->refname,
@@ -1706,8 +1721,10 @@ static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_s
 
 struct ref_storage_be refs_be_packed = {
 	.name = "packed",
-	.init = packed_ref_store_create,
-	.init_db = packed_init_db,
+	.init = packed_ref_store_init,
+	.release = packed_ref_store_release,
+	.create_on_disk = packed_ref_store_create_on_disk,
+
 	.transaction_prepare = packed_transaction_prepare,
 	.transaction_finish = packed_transaction_finish,
 	.transaction_abort = packed_transaction_abort,

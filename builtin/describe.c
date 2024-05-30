@@ -200,7 +200,7 @@ static int get_name(const char *path, const struct object_id *oid,
 	}
 
 	/* Is it annotated? */
-	if (!peel_iterated_oid(oid, &peeled)) {
+	if (!peel_iterated_oid(the_repository, oid, &peeled)) {
 		is_annotated = !oideq(oid, &peeled);
 	} else {
 		oidcpy(&peeled, oid);

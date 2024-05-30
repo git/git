@@ -779,7 +779,7 @@ static int mark_tagged(const char *path UNUSED, const struct object_id *oid,
 
 	if (entry)
 		entry->tagged = 1;
-	if (!peel_iterated_oid(oid, &peeled)) {
+	if (!peel_iterated_oid(the_repository, oid, &peeled)) {
 		entry = packlist_find(&to_pack, &peeled);
 		if (entry)
 			entry->tagged = 1;
@@ -3132,7 +3132,7 @@ static int add_ref_tag(const char *tag UNUSED, const struct object_id *oid,
 {
 	struct object_id peeled;
 
-	if (!peel_iterated_oid(oid, &peeled) && obj_is_packed(&peeled))
+	if (!peel_iterated_oid(the_repository, oid, &peeled) && obj_is_packed(&peeled))
 		add_tag_chain(oid);
 	return 0;
 }
@@ -4081,7 +4081,7 @@ static int mark_bitmap_preferred_tip(const char *refname,
 	struct object_id peeled;
 	struct object *object;
 
-	if (!peel_iterated_oid(oid, &peeled))
+	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
 
 	object = parse_object_or_die(oid, refname);

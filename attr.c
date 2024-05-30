@@ -1301,7 +1301,8 @@ static const char *builtin_object_mode_attr(struct index_state *istate, const ch
 			if (pos >= 0) {
 				 if (S_ISGITLINK(istate->cache[pos]->ce_mode))
 					 mode = istate->cache[pos]->ce_mode;
-			} else if (resolve_gitlink_ref(path, "HEAD", &oid) == 0) {
+			} else if (repo_resolve_gitlink_ref(the_repository, path,
+							    "HEAD", &oid) == 0) {
 				mode = S_IFGITLINK;
 			}
 		}

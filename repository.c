@@ -14,6 +14,7 @@
 #include "sparse-index.h"
 #include "trace2.h"
 #include "promisor-remote.h"
+#include "refs.h"
 
 /* The main repository */
 static struct repository the_repo;
@@ -269,6 +270,9 @@ static void repo_clear_path_cache(struct repo_path_cache *cache)
 
 void repo_clear(struct repository *repo)
 {
+	struct hashmap_iter iter;
+	struct strmap_entry *e;
+
 	FREE_AND_NULL(repo->gitdir);
 	FREE_AND_NULL(repo->commondir);
 	FREE_AND_NULL(repo->graft_file);
@@ -308,6 +312,14 @@ void repo_clear(struct repository *repo)
 		remote_state_clear(repo->remote_state);
 		FREE_AND_NULL(repo->remote_state);
 	}
+
+	strmap_for_each_entry(&repo->submodule_ref_stores, &iter, e)
+		ref_store_release(e->value);
+	strmap_clear(&repo->submodule_ref_stores, 1);
+
+	strmap_for_each_entry(&repo->worktree_ref_stores, &iter, e)
+		ref_store_release(e->value);
+	strmap_clear(&repo->worktree_ref_stores, 1);
 
 	repo_clear_path_cache(&repo->cached_paths);
 }

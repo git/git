@@ -89,9 +89,9 @@ static void clear_loose_ref_cache(struct files_ref_store *refs)
  * Create a new submodule ref cache and add it to the internal
  * set of caches.
  */
-static struct ref_store *files_ref_store_create(struct repository *repo,
-						const char *gitdir,
-						unsigned int flags)
+static struct ref_store *files_ref_store_init(struct repository *repo,
+					      const char *gitdir,
+					      unsigned int flags)
 {
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
@@ -102,7 +102,7 @@ static struct ref_store *files_ref_store_create(struct repository *repo,
 	get_common_dir_noenv(&sb, gitdir);
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	refs->packed_ref_store =
-		packed_ref_store_create(repo, refs->gitcommondir, flags);
+		packed_ref_store_init(repo, refs->gitcommondir, flags);
 
 	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
 	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
@@ -147,6 +147,14 @@ static struct files_ref_store *files_downcast(struct ref_store *ref_store,
 		    caller, required_flags, refs->store_flags);
 
 	return refs;
+}
+
+static void files_ref_store_release(struct ref_store *ref_store)
+{
+	struct files_ref_store *refs = files_downcast(ref_store, 0, "release");
+	free_ref_cache(refs->loose);
+	free(refs->gitcommondir);
+	ref_store_release(refs->packed_ref_store);
 }
 
 static void files_reflog_path(struct files_ref_store *refs,
@@ -1230,7 +1238,8 @@ static void prune_refs(struct files_ref_store *refs, struct ref_to_prune **refs_
 /*
  * Return true if the specified reference should be packed.
  */
-static int should_pack_ref(const char *refname,
+static int should_pack_ref(struct files_ref_store *refs,
+			   const char *refname,
 			   const struct object_id *oid, unsigned int ref_flags,
 			   struct pack_refs_opts *opts)
 {
@@ -1246,7 +1255,7 @@ static int should_pack_ref(const char *refname,
 		return 0;
 
 	/* Do not pack broken refs: */
-	if (!ref_resolves_to_object(refname, the_repository, oid, ref_flags))
+	if (!ref_resolves_to_object(refname, refs->base.repo, oid, ref_flags))
 		return 0;
 
 	if (ref_excluded(opts->exclusions, refname))
@@ -1278,14 +1287,14 @@ static int files_pack_refs(struct ref_store *ref_store,
 	packed_refs_lock(refs->packed_ref_store, LOCK_DIE_ON_ERROR, &err);
 
 	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, 0), NULL,
-					the_repository, 0);
+					refs->base.repo, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		/*
 		 * If the loose reference can be packed, add an entry
 		 * in the packed ref cache. If the reference should be
 		 * pruned, also add it to refs_to_prune.
 		 */
-		if (!should_pack_ref(iter->refname, iter->oid, iter->flags, opts))
+		if (!should_pack_ref(refs, iter->refname, iter->oid, iter->flags, opts))
 			continue;
 
 		/*
@@ -1382,7 +1391,8 @@ static int rename_tmp_log(struct files_ref_store *refs, const char *newrefname)
 	return ret;
 }
 
-static int write_ref_to_lockfile(struct ref_lock *lock,
+static int write_ref_to_lockfile(struct files_ref_store *refs,
+				 struct ref_lock *lock,
 				 const struct object_id *oid,
 				 int skip_oid_verification, struct strbuf *err);
 static int commit_ref_update(struct files_ref_store *refs,
@@ -1530,7 +1540,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	}
 	oidcpy(&lock->old_oid, &orig_oid);
 
-	if (write_ref_to_lockfile(lock, &orig_oid, 0, &err) ||
+	if (write_ref_to_lockfile(refs, lock, &orig_oid, 0, &err) ||
 	    commit_ref_update(refs, lock, &orig_oid, logmsg, &err)) {
 		error("unable to write current sha1 into %s: %s", newrefname, err.buf);
 		strbuf_release(&err);
@@ -1550,7 +1560,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 
 	flag = log_all_ref_updates;
 	log_all_ref_updates = LOG_REFS_NONE;
-	if (write_ref_to_lockfile(lock, &orig_oid, 0, &err) ||
+	if (write_ref_to_lockfile(refs, lock, &orig_oid, 0, &err) ||
 	    commit_ref_update(refs, lock, &orig_oid, NULL, &err)) {
 		error("unable to write current sha1 into %s: %s", oldrefname, err.buf);
 		strbuf_release(&err);
@@ -1784,7 +1794,8 @@ static int files_log_ref_write(struct files_ref_store *refs,
  * Write oid into the open lockfile, then close the lockfile. On
  * errors, rollback the lockfile, fill in *err and return -1.
  */
-static int write_ref_to_lockfile(struct ref_lock *lock,
+static int write_ref_to_lockfile(struct files_ref_store *refs,
+				 struct ref_lock *lock,
 				 const struct object_id *oid,
 				 int skip_oid_verification, struct strbuf *err)
 {
@@ -1793,7 +1804,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 	int fd;
 
 	if (!skip_oid_verification) {
-		o = parse_object(the_repository, oid);
+		o = parse_object(refs->base.repo, oid);
 		if (!o) {
 			strbuf_addf(
 				err,
@@ -1812,7 +1823,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 		}
 	}
 	fd = get_lock_file_fd(&lock->lk);
-	if (write_in_full(fd, oid_to_hex(oid), the_hash_algo->hexsz) < 0 ||
+	if (write_in_full(fd, oid_to_hex(oid), refs->base.repo->hash_algo->hexsz) < 0 ||
 	    write_in_full(fd, &term, 1) < 0 ||
 	    fsync_component(FSYNC_COMPONENT_REFERENCE, get_lock_file_fd(&lock->lk)) < 0 ||
 	    close_ref_gently(lock) < 0) {
@@ -2547,7 +2558,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * value, so we don't need to write it.
 			 */
 		} else if (write_ref_to_lockfile(
-				   lock, &update->new_oid,
+				   refs, lock, &update->new_oid,
 				   update->flags & REF_SKIP_OID_VERIFICATION,
 				   err)) {
 			char *write_err = strbuf_detach(err, NULL);
@@ -3230,7 +3241,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 			rollback_lock_file(&reflog_lock);
 		} else if (update &&
 			   (write_in_full(get_lock_file_fd(&lock->lk),
-				oid_to_hex(&cb.last_kept_oid), the_hash_algo->hexsz) < 0 ||
+				oid_to_hex(&cb.last_kept_oid), refs->base.repo->hash_algo->hexsz) < 0 ||
 			    write_str_in_full(get_lock_file_fd(&lock->lk), "\n") < 0 ||
 			    close_ref_gently(lock) < 0)) {
 			status |= error("couldn't write %s",
@@ -3254,12 +3265,12 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	return -1;
 }
 
-static int files_init_db(struct ref_store *ref_store,
-			 int flags,
-			 struct strbuf *err UNUSED)
+static int files_ref_store_create_on_disk(struct ref_store *ref_store,
+					  int flags,
+					  struct strbuf *err UNUSED)
 {
 	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_WRITE, "init_db");
+		files_downcast(ref_store, REF_STORE_WRITE, "create");
 	struct strbuf sb = STRBUF_INIT;
 
 	/*
@@ -3282,7 +3293,7 @@ static int files_init_db(struct ref_store *ref_store,
 	 * There is no need to create directories for common refs when creating
 	 * a worktree ref store.
 	 */
-	if (!(flags & REFS_INIT_DB_IS_WORKTREE)) {
+	if (!(flags & REF_STORE_CREATE_ON_DISK_IS_WORKTREE)) {
 		/*
 		 * Create .git/refs/{heads,tags}
 		 */
@@ -3301,8 +3312,10 @@ static int files_init_db(struct ref_store *ref_store,
 
 struct ref_storage_be refs_be_files = {
 	.name = "files",
-	.init = files_ref_store_create,
-	.init_db = files_init_db,
+	.init = files_ref_store_init,
+	.release = files_ref_store_release,
+	.create_on_disk = files_ref_store_create_on_disk,
+
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
 	.transaction_abort = files_transaction_abort,

@@ -509,7 +509,7 @@ static int add_worktree(const char *path, const char *refname,
 	}
 	wt_refs = get_worktree_ref_store(wt);
 
-	ret = refs_init_db(wt_refs, REFS_INIT_DB_IS_WORKTREE, &sb);
+	ret = ref_store_create_on_disk(wt_refs, REF_STORE_CREATE_ON_DISK_IS_WORKTREE, &sb);
 	if (ret)
 		goto done;
 

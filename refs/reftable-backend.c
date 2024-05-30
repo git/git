@@ -333,12 +333,33 @@ done:
 	return &refs->base;
 }
 
-static int reftable_be_init_db(struct ref_store *ref_store,
-			       int flags UNUSED,
-			       struct strbuf *err UNUSED)
+static void reftable_be_release(struct ref_store *ref_store)
+{
+	struct reftable_ref_store *refs = reftable_be_downcast(ref_store, 0, "release");
+	struct strmap_entry *entry;
+	struct hashmap_iter iter;
+
+	if (refs->main_stack) {
+		reftable_stack_destroy(refs->main_stack);
+		refs->main_stack = NULL;
+	}
+
+	if (refs->worktree_stack) {
+		reftable_stack_destroy(refs->worktree_stack);
+		refs->worktree_stack = NULL;
+	}
+
+	strmap_for_each_entry(&refs->worktree_stacks, &iter, entry)
+		reftable_stack_destroy(entry->value);
+	strmap_clear(&refs->worktree_stacks, 0);
+}
+
+static int reftable_be_create_on_disk(struct ref_store *ref_store,
+				      int flags UNUSED,
+				      struct strbuf *err UNUSED)
 {
 	struct reftable_ref_store *refs =
-		reftable_be_downcast(ref_store, REF_STORE_WRITE, "init_db");
+		reftable_be_downcast(ref_store, REF_STORE_WRITE, "create");
 	struct strbuf sb = STRBUF_INIT;
 
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
@@ -1187,7 +1208,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			ref.refname = (char *)u->refname;
 			ref.update_index = ts;
 
-			peel_error = peel_object(&u->new_oid, &peeled);
+			peel_error = peel_object(arg->refs->base.repo, &u->new_oid, &peeled);
 			if (!peel_error) {
 				ref.value_type = REFTABLE_REF_VAL2;
 				memcpy(ref.value.val2.target_value, peeled.hash, GIT_MAX_RAWSZ);
@@ -1980,6 +2001,7 @@ static int reftable_be_delete_reflog(struct ref_store *ref_store,
 }
 
 struct reflog_expiry_arg {
+	struct reftable_ref_store *refs;
 	struct reftable_stack *stack;
 	struct reftable_log_record *records;
 	struct object_id update_oid;
@@ -2008,7 +2030,7 @@ static int write_reflog_expiry_table(struct reftable_writer *writer, void *cb_da
 		ref.refname = (char *)arg->refname;
 		ref.update_index = ts;
 
-		if (!peel_object(&arg->update_oid, &peeled)) {
+		if (!peel_object(arg->refs->base.repo, &arg->update_oid, &peeled)) {
 			ref.value_type = REFTABLE_REF_VAL2;
 			memcpy(ref.value.val2.target_value, peeled.hash, GIT_MAX_RAWSZ);
 			memcpy(ref.value.val2.value, arg->update_oid.hash, GIT_MAX_RAWSZ);
@@ -2171,6 +2193,7 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	    reftable_ref_record_val1(&ref_record))
 		oidread(&arg.update_oid, last_hash);
 
+	arg.refs = refs;
 	arg.records = rewritten;
 	arg.len = logs_nr;
 	arg.stack = stack,
@@ -2205,7 +2228,9 @@ done:
 struct ref_storage_be refs_be_reftable = {
 	.name = "reftable",
 	.init = reftable_be_init,
-	.init_db = reftable_be_init_db,
+	.release = reftable_be_release,
+	.create_on_disk = reftable_be_create_on_disk,
+
 	.transaction_prepare = reftable_be_transaction_prepare,
 	.transaction_finish = reftable_be_transaction_finish,
 	.transaction_abort = reftable_be_transaction_abort,

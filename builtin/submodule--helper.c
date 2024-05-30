@@ -679,7 +679,8 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 			     displaypath);
 	} else if (!(flags & OPT_CACHED)) {
 		struct object_id oid;
-		struct ref_store *refs = get_submodule_ref_store(path);
+		struct ref_store *refs = repo_get_submodule_ref_store(the_repository,
+								      path);
 
 		if (!refs) {
 			print_status(flags, '-', path, ce_oid, displaypath);
@@ -903,7 +904,8 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
 		if (S_ISGITLINK(p->mod_dst)) {
-			struct ref_store *refs = get_submodule_ref_store(p->sm_path);
+			struct ref_store *refs = repo_get_submodule_ref_store(the_repository,
+									      p->sm_path);
 
 			if (refs)
 				refs_head_ref(refs, handle_submodule_head_ref, &p->oid_dst);
@@ -2598,7 +2600,8 @@ static int update_submodule(struct update_data *update_data)
 
 	if (update_data->just_cloned)
 		oidcpy(&update_data->suboid, null_oid());
-	else if (resolve_gitlink_ref(update_data->sm_path, "HEAD", &update_data->suboid))
+	else if (repo_resolve_gitlink_ref(the_repository, update_data->sm_path,
+					  "HEAD", &update_data->suboid))
 		return die_message(_("Unable to find current revision in submodule path '%s'"),
 				   update_data->displaypath);
 
@@ -2625,7 +2628,8 @@ static int update_submodule(struct update_data *update_data)
 						   update_data->sm_path);
 		}
 
-		if (resolve_gitlink_ref(update_data->sm_path, remote_ref, &update_data->oid))
+		if (repo_resolve_gitlink_ref(the_repository, update_data->sm_path,
+					     remote_ref, &update_data->oid))
 			return die_message(_("Unable to find %s revision in submodule path '%s'"),
 					   remote_ref, update_data->sm_path);
 
@@ -3355,7 +3359,7 @@ static void die_on_repo_without_commits(const char *path)
 	strbuf_addstr(&sb, path);
 	if (is_nonbare_repository_dir(&sb)) {
 		struct object_id oid;
-		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
+		if (repo_resolve_gitlink_ref(the_repository, path, "HEAD", &oid) < 0)
 			die(_("'%s' does not have a commit checked out"), path);
 	}
 	strbuf_release(&sb);
