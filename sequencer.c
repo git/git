@@ -2573,7 +2573,61 @@ static int check_label_or_ref_arg(enum todo_command command, const char *arg)
 	return 0;
 }
 
-static int parse_insn_line(struct repository *r, struct replay_opts *opts UNUSED,
+static int check_merge_commit_insn(enum todo_command command)
+{
+	switch(command) {
+	case TODO_PICK:
+		error(_("'%s' does not accept merge commits"),
+		      todo_command_info[command].str);
+		advise_if_enabled(ADVICE_REBASE_TODO_ERROR, _(
+			/*
+			 * TRANSLATORS: 'pick' and 'merge -C' should not be
+			 * translated.
+			 */
+			"'pick' does not take a merge commit. If you wanted to\n"
+			"replay the merge, use 'merge -C' on the commit."));
+		return -1;
+
+	case TODO_REWORD:
+		error(_("'%s' does not accept merge commits"),
+		      todo_command_info[command].str);
+		advise_if_enabled(ADVICE_REBASE_TODO_ERROR, _(
+			/*
+			 * TRANSLATORS: 'reword' and 'merge -c' should not be
+			 * translated.
+			 */
+			"'reword' does not take a merge commit. If you wanted to\n"
+			"replay the merge and reword the commit message, use\n"
+			"'merge -c' on the commit"));
+		return -1;
+
+	case TODO_EDIT:
+		error(_("'%s' does not accept merge commits"),
+		      todo_command_info[command].str);
+		advise_if_enabled(ADVICE_REBASE_TODO_ERROR, _(
+			/*
+			 * TRANSLATORS: 'edit', 'merge -C' and 'break' should
+			 * not be translated.
+			 */
+			"'edit' does not take a merge commit. If you wanted to\n"
+			"replay the merge, use 'merge -C' on the commit, and then\n"
+			"'break' to give the control back to you so that you can\n"
+			"do 'git commit --amend && git rebase --continue'."));
+		return -1;
+
+	case TODO_FIXUP:
+	case TODO_SQUASH:
+		return error(_("cannot squash merge commit into another commit"));
+
+	case TODO_MERGE:
+		return 0;
+
+	default:
+		BUG("unexpected todo_command");
+	}
+}
+
+static int parse_insn_line(struct repository *r, struct replay_opts *opts,
 			   struct todo_item *item, const char *buf,
 			   const char *bol, char *eol)
 {
@@ -2679,7 +2733,12 @@ static int parse_insn_line(struct repository *r, struct replay_opts *opts UNUSED
 		return status;
 
 	item->commit = lookup_commit_reference(r, &commit_oid);
-	return item->commit ? 0 : -1;
+	if (!item->commit)
+		return -1;
+	if (is_rebase_i(opts) &&
+	    item->commit->parents && item->commit->parents->next)
+		return check_merge_commit_insn(item->command);
+	return 0;
 }
 
 int sequencer_get_last_command(struct repository *r UNUSED, enum replay_action *action)

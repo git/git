@@ -96,6 +96,8 @@ advice.*::
 		`pushNonFFCurrent`, `pushNonFFMatching`, `pushAlreadyExists`,
 		`pushFetchFirst`, `pushNeedsForce`, and `pushRefNeedsUpdate`
 		simultaneously.
+	rebaseTodoError::
+		Shown when there is an error after editing the rebase todo list.
 	refSyntax::
 		Shown when the user provides an illegal ref name, to
 		tell the user about the ref syntax documentation.
