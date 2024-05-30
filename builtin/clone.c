@@ -937,8 +937,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	int err = 0, complete_refs_before_fetch = 1;
 	int submodule_progress;
 	int filter_submodules = 0;
-	const char *template_dir;
-	char *template_dir_dup = NULL;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
@@ -957,13 +955,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	if (argc == 0)
 		usage_msg_opt(_("You must specify a repository to clone."),
 			builtin_clone_usage, builtin_clone_options);
-
-	xsetenv("GIT_CLONE_PROTECTION_ACTIVE", "true", 0 /* allow user override */);
-	template_dir = get_template_dir(option_template);
-	if (*template_dir && !is_absolute_path(template_dir))
-		template_dir = template_dir_dup =
-			absolute_pathdup(template_dir);
-	xsetenv("GIT_CLONE_TEMPLATE_DIR", template_dir, 1);
 
 	if (option_depth || option_since || option_not.nr)
 		deepen = 1;
@@ -1112,7 +1103,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	init_db(git_dir, real_git_dir, template_dir, GIT_HASH_UNKNOWN, NULL,
+	init_db(git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN, NULL,
 		INIT_DB_QUIET);
 
 	if (real_git_dir) {
@@ -1430,7 +1421,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	free(unborn_head);
 	free(dir);
 	free(path);
-	free(template_dir_dup);
 	UNLEAK(repo);
 	junk_mode = JUNK_LEAVE_ALL;
 
