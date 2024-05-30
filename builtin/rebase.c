@@ -1063,6 +1063,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 {
 	struct rebase_options options;
 	const char *branch_name;
+	const char *strategy_opt = NULL;
 	int ret, flags, total_argc, in_progress = 0;
 	int keep_base = 0;
 	int ok_to_skip_pre_rebase = 0;
@@ -1177,7 +1178,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_OPTARG, parse_opt_rebase_merges),
 		OPT_BOOL(0, "fork-point", &options.fork_point,
 			 N_("use 'merge-base --fork-point' to refine upstream")),
-		OPT_STRING('s', "strategy", &options.strategy,
+		OPT_STRING('s', "strategy", &strategy_opt,
 			   N_("strategy"), N_("use the given merge strategy")),
 		OPT_STRING_LIST('X', "strategy-option", &options.strategy_opts,
 				N_("option"),
@@ -1488,13 +1489,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (options.strategy_opts.nr && !options.strategy)
-		options.strategy = "ort";
-
-	if (options.strategy) {
-		options.strategy = xstrdup(options.strategy);
+	if (strategy_opt)
+		options.strategy = xstrdup(strategy_opt);
+	else if (options.strategy_opts.nr && !options.strategy)
+		options.strategy = xstrdup("ort");
+	if (options.strategy)
 		imply_merge(&options, "--strategy");
-	}
 
 	if (options.root && !options.onto_name)
 		imply_merge(&options, "--root without --onto");
