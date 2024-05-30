@@ -318,6 +318,19 @@ int check_bool_loc(const char *loc, const char *check, int ok)
 
 union test__tmp test__tmp[2];
 
+int check_pointer_eq_loc(const char *loc, const char *check, int ok,
+			 const void *a, const void *b)
+{
+	int ret = test_assert(loc, check, ok);
+
+	if (!ret) {
+		test_msg("   left: %p", a);
+		test_msg("  right: %p", b);
+	}
+
+	return ret;
+}
+
 int check_int_loc(const char *loc, const char *check, int ok,
 		  intmax_t a, intmax_t b)
 {

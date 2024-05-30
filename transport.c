@@ -1176,6 +1176,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		int len = external_specification_len(url);
 		char *handler = xmemdupz(url, len);
 		transport_helper_init(ret, handler);
+		free(handler);
 	}
 
 	if (ret->smart_options) {

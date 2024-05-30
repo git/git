@@ -10,6 +10,7 @@ test_description='Support for diff format verbose submodule difference in git di
 This test tries to verify the sanity of --submodule=diff option of git diff.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Tested non-UTF-8 encoding

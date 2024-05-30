@@ -289,7 +289,7 @@ static int format_config(const struct config_display_options *opts,
 			else
 				strbuf_addstr(buf, v ? "true" : "false");
 		} else if (opts->type == TYPE_PATH) {
-			const char *v;
+			char *v;
 			if (git_config_pathname(&v, key_, value_) < 0)
 				return -1;
 			strbuf_addstr(buf, v);

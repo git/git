@@ -70,16 +70,16 @@ static char *next_arg(char **);
 
 struct imap_server_conf {
 	const char *name;
-	const char *tunnel;
-	const char *host;
+	char *tunnel;
+	char *host;
 	int port;
-	const char *folder;
-	const char *user;
-	const char *pass;
+	char *folder;
+	char *user;
+	char *pass;
 	int use_ssl;
 	int ssl_verify;
 	int use_html;
-	const char *auth_method;
+	char *auth_method;
 };
 
 static struct imap_server_conf server = {
