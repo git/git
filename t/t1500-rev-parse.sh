@@ -304,4 +304,10 @@ test_expect_success 'rev-parse --bisect includes bad, excludes good' '
 	test_cmp expect actual
 '
 
+test_expect_success '--short= truncates to the actual hash length' '
+	git rev-parse HEAD >expect &&
+	git rev-parse --short=100 HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
