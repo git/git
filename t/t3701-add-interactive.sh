@@ -160,6 +160,14 @@ test_expect_success 'revert works (commit)' '
 	grep "unchanged *+3/-0 file" output
 '
 
+test_expect_success 'reject multi-key input' '
+	saved=$(git hash-object -w file) &&
+	test_when_finished "git cat-file blob $saved >file" &&
+	echo an extra line >>file &&
+	test_write_lines aa | git add -p >actual &&
+	test_grep "is expected, got ${SQ}aa${SQ}" actual
+'
+
 test_expect_success 'setup expected' '
 	cat >expected <<-\EOF
 	EOF
@@ -526,7 +534,7 @@ test_expect_success 'split hunk setup' '
 	test_write_lines 10 15 20 21 22 23 24 30 40 50 60 >test
 '
 
-test_expect_success 'goto hunk' '
+test_expect_success 'goto hunk 1 with "g 1"' '
 	test_when_finished "git reset" &&
 	tr _ " " >expect <<-EOF &&
 	(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,p,?]? + 1:  -1,2 +1,3          +15
@@ -542,7 +550,20 @@ test_expect_success 'goto hunk' '
 	test_cmp expect actual.trimmed
 '
 
-test_expect_success 'navigate to hunk via regex' '
+test_expect_success 'goto hunk 1 with "g1"' '
+	test_when_finished "git reset" &&
+	tr _ " " >expect <<-EOF &&
+	_10
+	+15
+	_20
+	(1/2) Stage this hunk [y,n,q,a,d,j,J,g,/,e,p,?]?_
+	EOF
+	test_write_lines s y g1 | git add -p >actual &&
+	tail -n 4 <actual >actual.trimmed &&
+	test_cmp expect actual.trimmed
+'
+
+test_expect_success 'navigate to hunk via regex /pattern' '
 	test_when_finished "git reset" &&
 	tr _ " " >expect <<-EOF &&
 	(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,p,?]? @@ -1,2 +1,3 @@
@@ -553,6 +574,19 @@ test_expect_success 'navigate to hunk via regex' '
 	EOF
 	test_write_lines s y /1,2 | git add -p >actual &&
 	tail -n 5 <actual >actual.trimmed &&
+	test_cmp expect actual.trimmed
+'
+
+test_expect_success 'navigate to hunk via regex / pattern' '
+	test_when_finished "git reset" &&
+	tr _ " " >expect <<-EOF &&
+	_10
+	+15
+	_20
+	(1/2) Stage this hunk [y,n,q,a,d,j,J,g,/,e,p,?]?_
+	EOF
+	test_write_lines s y / 1,2 | git add -p >actual &&
+	tail -n 4 <actual >actual.trimmed &&
 	test_cmp expect actual.trimmed
 '
 

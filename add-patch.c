@@ -1227,6 +1227,7 @@ static int prompt_yesno(struct add_p_state *s, const char *prompt)
 		fflush(stdout);
 		if (read_single_character(s) == EOF)
 			return -1;
+		/* do not limit to 1-byte input to allow 'no' etc. */
 		switch (tolower(s->answer.buf[0])) {
 		case 'n': return 0;
 		case 'y': return 1;
@@ -1510,6 +1511,12 @@ static int patch_update_file(struct add_p_state *s,
 		if (!s->answer.len)
 			continue;
 		ch = tolower(s->answer.buf[0]);
+
+		/* 'g' takes a hunk number and '/' takes a regexp */
+		if (s->answer.len != 1 && (ch != 'g' && ch != '/')) {
+			err(s, _("Only one letter is expected, got '%s'"), s->answer.buf);
+			continue;
+		}
 		if (ch == 'y') {
 			hunk->use = USE_HUNK;
 soft_increment:
