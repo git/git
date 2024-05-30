@@ -78,7 +78,6 @@ static struct test_cmd cmds[] = {
 	{ "sha256", cmd__sha256 },
 	{ "sigchain", cmd__sigchain },
 	{ "simple-ipc", cmd__simple_ipc },
-	{ "strcmp-offset", cmd__strcmp_offset },
 	{ "string-list", cmd__string_list },
 	{ "submodule", cmd__submodule },
 	{ "submodule-config", cmd__submodule_config },
