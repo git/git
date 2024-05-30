@@ -556,7 +556,6 @@ remove_entry:
 	}
 
 	strbuf_release(&a_src_dir);
-	free(src_dir);
 
 	if (dirty_paths.nr)
 		advise_on_moving_dirty_path(&dirty_paths);
@@ -571,6 +570,7 @@ remove_entry:
 	ret = 0;
 
 out:
+	free(src_dir);
 	free(dst_w_slash);
 	string_list_clear(&src_for_dst, 0);
 	string_list_clear(&dirty_paths, 0);
