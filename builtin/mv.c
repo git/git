@@ -156,6 +156,28 @@ free_return:
 	return ret;
 }
 
+static void remove_empty_src_dirs(const char **src_dir, size_t src_dir_nr)
+{
+	size_t i;
+	struct strbuf a_src_dir = STRBUF_INIT;
+
+	for (i = 0; i < src_dir_nr; i++) {
+		int dummy;
+		strbuf_addstr(&a_src_dir, src_dir[i]);
+		/*
+		 * if entries under a_src_dir are all moved away,
+		 * recursively remove a_src_dir to cleanup
+		 */
+		if (index_range_of_same_dir(a_src_dir.buf, a_src_dir.len,
+					    &dummy, &dummy) < 1) {
+			remove_dir_recursively(&a_src_dir, 0);
+		}
+		strbuf_reset(&a_src_dir);
+	}
+
+	strbuf_release(&a_src_dir);
+}
+
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
 	int i, flags, gitmodules_modified = 0;
@@ -177,7 +199,6 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	char *dst_w_slash = NULL;
 	const char **src_dir = NULL;
 	int src_dir_nr = 0, src_dir_alloc = 0;
-	struct strbuf a_src_dir = STRBUF_INIT;
 	enum update_mode *modes, dst_mode = 0;
 	struct stat st, dest_st;
 	struct string_list src_for_dst = STRING_LIST_INIT_DUP;
@@ -538,24 +559,7 @@ remove_entry:
 		}
 	}
 
-	/*
-	 * cleanup the empty src_dirs
-	 */
-	for (i = 0; i < src_dir_nr; i++) {
-		int dummy;
-		strbuf_addstr(&a_src_dir, src_dir[i]);
-		/*
-		 * if entries under a_src_dir are all moved away,
-		 * recursively remove a_src_dir to cleanup
-		 */
-		if (index_range_of_same_dir(a_src_dir.buf, a_src_dir.len,
-					    &dummy, &dummy) < 1) {
-			remove_dir_recursively(&a_src_dir, 0);
-		}
-		strbuf_reset(&a_src_dir);
-	}
-
-	strbuf_release(&a_src_dir);
+	remove_empty_src_dirs(src_dir, src_dir_nr);
 
 	if (dirty_paths.nr)
 		advise_on_moving_dirty_path(&dirty_paths);
