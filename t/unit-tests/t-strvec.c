@@ -4,6 +4,7 @@
 
 #define check_strvec(vec, ...) \
 	check_strvec_loc(TEST_LOCATION(), vec, __VA_ARGS__)
+LAST_ARG_MUST_BE_NULL
 static void check_strvec_loc(const char *loc, struct strvec *vec, ...)
 {
 	va_list ap;
