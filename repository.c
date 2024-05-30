@@ -20,6 +20,28 @@
 static struct repository the_repo;
 struct repository *the_repository = &the_repo;
 
+/*
+ * An escape hatch: if we hit a bug in the production code that fails
+ * to set an appropriate hash algorithm (most likely to happen when
+ * running outside a repository), we can tell the user who reported
+ * the crash to set the environment variable to "sha1" (all lowercase)
+ * to revert to the historical behaviour of defaulting to SHA-1.
+ */
+static void set_default_hash_algo(struct repository *repo)
+{
+	const char *hash_name;
+	int algo;
+
+	hash_name = getenv("GIT_TEST_DEFAULT_HASH_ALGO");
+	if (!hash_name)
+		return;
+	algo = hash_algo_by_name(hash_name);
+	if (algo == GIT_HASH_UNKNOWN)
+		return;
+
+	repo_set_hash_algo(repo, algo);
+}
+
 void initialize_repository(struct repository *repo)
 {
 	repo->objects = raw_object_store_new();
@@ -27,6 +49,28 @@ void initialize_repository(struct repository *repo)
 	repo->parsed_objects = parsed_object_pool_new();
 	ALLOC_ARRAY(repo->index, 1);
 	index_state_init(repo->index, repo);
+
+	/*
+	 * When a command runs inside a repository, it learns what
+	 * hash algorithm is in use from the repository, but some
+	 * commands are designed to work outside a repository, yet
+	 * they want to access the_hash_algo, if only for the length
+	 * of the hashed value to see if their input looks like a
+	 * plausible hash value.
+	 *
+	 * We are in the process of identifying such code paths and
+	 * giving them an appropriate default individually; any
+	 * unconverted code paths that try to access the_hash_algo
+	 * will thus fail.  The end-users however have an escape hatch
+	 * to set GIT_TEST_DEFAULT_HASH_ALGO environment variable to
+	 * "sha1" to get back the old behaviour of defaulting to SHA-1.
+	 *
+	 * This escape hatch is deliberately kept unadvertised, so
+	 * that they see crashes and we can get a report before
+	 * telling them about it.
+	 */
+	if (repo == the_repository)
+		set_default_hash_algo(repo);
 }
 
 static void expand_base_dir(char **out, const char *in,

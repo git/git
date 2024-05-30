@@ -310,4 +310,38 @@ test_expect_success 'patch-id handles diffs with one line of before/after' '
 	test_config patchid.stable true &&
 	calc_patch_id diffu1stable <diffu1
 '
+
+test_expect_failure 'patch-id computes same ID with different object hashes' '
+	test_when_finished "rm -rf repo-sha1 repo-sha256" &&
+
+	cat >diff <<-\EOF &&
+	diff --git a/bar b/bar
+	index bdaf90f..31051f6 100644
+	--- a/bar
+	+++ b/bar
+	@@ -2 +2,2 @@
+	 b
+	+c
+	EOF
+
+	git init --object-format=sha1 repo-sha1 &&
+	git -C repo-sha1 patch-id <diff >patch-id-sha1 &&
+	git init --object-format=sha256 repo-sha256 &&
+	git -C repo-sha256 patch-id <diff >patch-id-sha256 &&
+	test_cmp patch-id-sha1 patch-id-sha256
+'
+
+test_expect_success 'patch-id without repository' '
+	cat >diff <<-\EOF &&
+	diff --git a/bar b/bar
+	index bdaf90f..31051f6 100644
+	--- a/bar
+	+++ b/bar
+	@@ -2 +2,2 @@
+	 b
+	+c
+	EOF
+	nongit git patch-id <diff
+'
+
 test_done

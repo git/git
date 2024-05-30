@@ -260,4 +260,10 @@ test_expect_success '--literally with extra-long type' '
 	echo example | git hash-object -t $t --literally --stdin
 '
 
+test_expect_success '--stdin outside of repository (uses SHA-1)' '
+	nongit git hash-object --stdin <hello >actual &&
+	echo "$(test_oid --hash=sha1 hello)" >expect &&
+	test_cmp expect actual
+'
+
 test_done
