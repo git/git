@@ -197,8 +197,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	struct strvec submodule_gitfiles_to_free = STRVEC_INIT;
 	const char **submodule_gitfiles;
 	char *dst_w_slash = NULL;
-	const char **src_dir = NULL;
-	int src_dir_nr = 0, src_dir_alloc = 0;
+	struct strvec src_dir = STRVEC_INIT;
 	enum update_mode *modes, dst_mode = 0;
 	struct stat st, dest_st;
 	struct string_list src_for_dst = STRING_LIST_INIT_DUP;
@@ -344,8 +343,7 @@ dir_check:
 			/* last - first >= 1 */
 			modes[i] |= WORKING_DIRECTORY;
 
-			ALLOC_GROW(src_dir, src_dir_nr + 1, src_dir_alloc);
-			src_dir[src_dir_nr++] = src;
+			strvec_push(&src_dir, src);
 
 			n = argc + last - first;
 			REALLOC_ARRAY(modes, n);
@@ -559,7 +557,7 @@ remove_entry:
 		}
 	}
 
-	remove_empty_src_dirs(src_dir, src_dir_nr);
+	remove_empty_src_dirs(src_dir.v, src_dir.nr);
 
 	if (dirty_paths.nr)
 		advise_on_moving_dirty_path(&dirty_paths);
@@ -574,7 +572,7 @@ remove_entry:
 	ret = 0;
 
 out:
-	free(src_dir);
+	strvec_clear(&src_dir);
 	free(dst_w_slash);
 	string_list_clear(&src_for_dst, 0);
 	string_list_clear(&dirty_paths, 0);
