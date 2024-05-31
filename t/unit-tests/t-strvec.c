@@ -4,6 +4,7 @@
 
 #define check_strvec(vec, ...) \
 	check_strvec_loc(TEST_LOCATION(), vec, __VA_ARGS__)
+LAST_ARG_MUST_BE_NULL
 static void check_strvec_loc(const char *loc, struct strvec *vec, ...)
 {
 	va_list ap;
@@ -22,11 +23,13 @@ static void check_strvec_loc(const char *loc, struct strvec *vec, ...)
 			strbuf_addf(&msg, "strvec index %"PRIuMAX, (uintmax_t) nr);
 			test_assert(loc, msg.buf, 0);
 			strbuf_release(&msg);
+			va_end(ap);
 			return;
 		}
 
 		nr++;
 	}
+	va_end(ap);
 
 	check_uint(vec->nr, ==, nr);
 	check_uint(vec->alloc, >=, nr);
