@@ -658,8 +658,6 @@ static int fsck_tree(const struct object_id *tree_oid,
 				retval += report(options, tree_oid, OBJ_TREE,
 						 FSCK_MSG_MAILMAP_SYMLINK,
 						 ".mailmap is a symlink");
-			oidset_insert(&options->symlink_targets_found,
-				      entry_oid);
 		}
 
 		if ((backslash = strchr(name, '\\'))) {
@@ -1168,56 +1166,6 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		}
 	}
 
-	if (oidset_contains(&options->symlink_targets_found, oid)) {
-		const char *ptr = buf;
-		const struct object_id *reported = NULL;
-
-		oidset_insert(&options->symlink_targets_done, oid);
-
-		if (!buf || size > PATH_MAX) {
-			/*
-			 * A missing buffer here is a sign that the caller found the
-			 * blob too gigantic to load into memory. Let's just consider
-			 * that an error.
-			 */
-			return report(options, oid, OBJ_BLOB,
-					FSCK_MSG_SYMLINK_TARGET_LENGTH,
-					"symlink target too long");
-		}
-
-		while (!reported && ptr) {
-			const char *p = ptr;
-			char c, *slash = strchrnul(ptr, '/');
-			char *backslash = memchr(ptr, '\\', slash - ptr);
-
-			c = *slash;
-			*slash = '\0';
-
-			while (!reported && backslash) {
-				*backslash = '\0';
-				if (is_ntfs_dotgit(p))
-					ret |= report(options, reported = oid, OBJ_BLOB,
-						      FSCK_MSG_SYMLINK_POINTS_TO_GIT_DIR,
-						      "symlink target points to git dir");
-				*backslash = '\\';
-				p = backslash + 1;
-				backslash = memchr(p, '\\', slash - p);
-			}
-			if (!reported && is_ntfs_dotgit(p))
-				ret |= report(options, reported = oid, OBJ_BLOB,
-					      FSCK_MSG_SYMLINK_POINTS_TO_GIT_DIR,
-					      "symlink target points to git dir");
-
-			if (!reported && is_hfs_dotgit(ptr))
-				ret |= report(options, reported = oid, OBJ_BLOB,
-					      FSCK_MSG_SYMLINK_POINTS_TO_GIT_DIR,
-					      "symlink target points to git dir");
-
-			*slash = c;
-			ptr = c ? slash + 1 : NULL;
-		}
-	}
-
 	return ret;
 }
 
@@ -1315,10 +1263,6 @@ int fsck_finish(struct fsck_options *options)
 	ret |= fsck_blobs(&options->gitattributes_found, &options->gitattributes_done,
 			  FSCK_MSG_GITATTRIBUTES_MISSING, FSCK_MSG_GITATTRIBUTES_BLOB,
 			  options, ".gitattributes");
-
-	ret |= fsck_blobs(&options->symlink_targets_found, &options->symlink_targets_done,
-			  FSCK_MSG_SYMLINK_TARGET_MISSING, FSCK_MSG_SYMLINK_TARGET_BLOB,
-			  options, "<symlink-target>");
 
 	return ret;
 }

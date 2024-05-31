@@ -284,8 +284,7 @@ jobs:
             cc: clang
             pool: macos-13
           - jobname: osx-gcc
-            cc: gcc
-            cc_package: gcc-13
+            cc: gcc-13
             pool: macos-13
           - jobname: linux-gcc-default
             cc: gcc
