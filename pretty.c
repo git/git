@@ -1584,8 +1584,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	case 'D':
 		{
 			const struct decoration_options opts = {
-				.prefix = "",
-				.suffix = ""
+				.prefix = (char *) "",
+				.suffix = (char *) "",
 			};
 
 			format_decorations(sb, commit, c->auto_color, &opts);
