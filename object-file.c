@@ -277,7 +277,7 @@ int hash_algo_by_length(int len)
 static struct cached_object {
 	struct object_id oid;
 	enum object_type type;
-	void *buf;
+	const void *buf;
 	unsigned long size;
 } *cached_objects;
 static int cached_object_nr, cached_object_alloc;
@@ -1778,6 +1778,10 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 			struct object_id *oid)
 {
 	struct cached_object *co;
+	char *co_buf;
+
+	co_buf = xmalloc(len);
+	memcpy(co_buf, buf, len);
 
 	hash_object_file(the_hash_algo, buf, len, type, oid);
 	if (repo_has_object_file_with_flags(the_repository, oid, OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT) ||
@@ -1787,8 +1791,7 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 	co = &cached_objects[cached_object_nr++];
 	co->size = len;
 	co->type = type;
-	co->buf = xmalloc(len);
-	memcpy(co->buf, buf, len);
+	co->buf = co_buf;
 	oidcpy(&co->oid, oid);
 	return 0;
 }
