@@ -398,13 +398,19 @@ test_expect_success 'bad attr source defaults to reading .gitattributes file' '
 	)
 '
 
-test_expect_success 'bare repo defaults to reading .gitattributes from HEAD' '
+test_expect_success 'bare repo no longer defaults to reading .gitattributes from HEAD' '
 	test_when_finished rm -rf test bare_with_gitattribute &&
 	git init test &&
 	test_commit -C test gitattributes .gitattributes "f/path test=val" &&
 	git clone --bare test bare_with_gitattribute &&
-	echo "f/path: test: val" >expect &&
+
+	echo "f/path: test: unspecified" >expect &&
 	git -C bare_with_gitattribute check-attr test -- f/path >actual &&
+	test_cmp expect actual &&
+
+	echo "f/path: test: val" >expect &&
+	git -C bare_with_gitattribute -c attr.tree=HEAD \
+		check-attr test -- f/path >actual &&
 	test_cmp expect actual
 '
 
