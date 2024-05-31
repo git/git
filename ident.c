@@ -46,9 +46,9 @@ static struct passwd *xgetpwuid_self(int *is_bogus)
 	pw = getpwuid(getuid());
 	if (!pw) {
 		static struct passwd fallback;
-		fallback.pw_name = "unknown";
+		fallback.pw_name = (char *) "unknown";
 #ifndef NO_GECOS_IN_PWENT
-		fallback.pw_gecos = "Unknown";
+		fallback.pw_gecos = (char *) "Unknown";
 #endif
 		pw = &fallback;
 		if (is_bogus)
