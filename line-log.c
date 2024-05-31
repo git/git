@@ -1032,6 +1032,7 @@ static int process_diff_filepair(struct rev_info *rev,
 	struct range_set tmp;
 	struct diff_ranges diff;
 	mmfile_t file_parent, file_target;
+	char *parent_data_to_free = NULL;
 
 	assert(pair->two->path);
 	while (rg) {
@@ -1056,7 +1057,7 @@ static int process_diff_filepair(struct rev_info *rev,
 		file_parent.ptr = pair->one->data;
 		file_parent.size = pair->one->size;
 	} else {
-		file_parent.ptr = "";
+		file_parent.ptr = parent_data_to_free = xstrdup("");
 		file_parent.size = 0;
 	}
 
@@ -1075,6 +1076,7 @@ static int process_diff_filepair(struct rev_info *rev,
 
 	diff_ranges_release(&diff);
 
+	free(parent_data_to_free);
 	return ((*diff_out)->parent.nr > 0);
 }
 
