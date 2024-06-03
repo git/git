@@ -62,7 +62,7 @@ static int git_pretty_formats_config(const char *var, const char *value,
 {
 	struct cmt_fmt_map *commit_format = NULL;
 	const char *name;
-	const char *fmt;
+	char *fmt;
 	int i;
 
 	if (!skip_prefix(var, "pretty.", &name))
@@ -93,13 +93,17 @@ static int git_pretty_formats_config(const char *var, const char *value,
 	if (git_config_string(&fmt, var, value))
 		return -1;
 
-	if (skip_prefix(fmt, "format:", &fmt))
+	if (skip_prefix(fmt, "format:", &commit_format->user_format)) {
 		commit_format->is_tformat = 0;
-	else if (skip_prefix(fmt, "tformat:", &fmt) || strchr(fmt, '%'))
+	} else if (skip_prefix(fmt, "tformat:", &commit_format->user_format)) {
 		commit_format->is_tformat = 1;
-	else
+	} else if (strchr(fmt, '%')) {
+		commit_format->is_tformat = 1;
+		commit_format->user_format = fmt;
+	} else {
 		commit_format->is_alias = 1;
-	commit_format->user_format = fmt;
+		commit_format->user_format = fmt;
+	}
 
 	return 0;
 }
