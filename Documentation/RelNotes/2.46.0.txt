@@ -52,6 +52,12 @@ UI, Workflows & Features
  * The knobs to tweak how reftable files are written have been made
    available as configuration variables.
 
+ * When "git push" notices that the commit at the tip of the ref on
+   the other side it is about to overwrite does not exist locally, it
+   used to first try fetching it if the local repository is a partial
+   clone. The command has been taught not to do so and immediately
+   fail instead.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -74,7 +80,6 @@ Performance, Internal Implementation, Development Support etc.
    to "the_index"  with references to its .index member.
 
  * Git-GUI has a new maintainer, Johannes Sixt.
-   (merge e18ad8eb26 jc/git-gui-maintainer-update later to maint).
 
  * The "test-tool" has been taught to run testsuite tests in parallel,
    bypassing the need to use the "prove" tool.
@@ -151,20 +156,17 @@ Fixes since v2.45
  * Tests that try to corrupt in-repository files in chunked format did
    not work well on macOS due to its broken "mv", which has been
    worked around.
-   (merge 861dc19ba8 jc/test-workaround-broken-mv later to maint).
 
  * The maximum size of attribute files is enforced more consistently.
    (merge c793f9cb08 tb/attr-limits later to maint).
 
  * Unbreak CI jobs so that we do not attempt to use Python 2 that has
    been removed from the platform.
-   (merge 5ca0c455f1 ps/ci-python-2-deprecation later to maint).
 
  * Git 2.43 started using the tree of HEAD as the source of attributes
    in a bare repository, which has severe performance implications.
    For now, revert the change, without ripping out a more explicit
    support for the attr.tree configuration variable.
-   (merge 51441e6460 jc/no-default-attr-tree-in-bare later to maint).
 
  * The "--exit-code" option of "git diff" command learned to work with
    the "--ext-diff" option.
@@ -173,7 +175,6 @@ Fixes since v2.45
  * Windows CI running in GitHub Actions started complaining about the
    order of arguments given to calloc(); the imported regex code uses
    the wrong order almost consistently, which has been corrected.
-   (merge f01301aabe jc/compat-regex-calloc-fix later to maint).
 
  * Expose "name conflict" error when a ref creation fails due to D/F
    conflict in the ref namespace, to improve an error message given by
@@ -182,7 +183,6 @@ Fixes since v2.45
 
  * The SubmittingPatches document now refers folks to manpages
    translation project.
-   (merge 558a5b8cd0 jc/doc-manpages-l10n later to maint).
 
  * The documentation for "git diff --name-only" has been clarified
    that it is about showing the names in the post-image tree.
@@ -202,11 +202,13 @@ Fixes since v2.45
    and friends, which broke "git-lfs", "git-annex", and other use
    cases, so that we can rebuild necessary counterparts in the open.
 
+ * "git init" in an already created directory, when the user
+   configuration has includeif.onbranch, started to fail recently,
+   which has been corrected.
+   (merge 407997c1dd ps/fix-reinit-includeif-onbranch later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
-   (merge 4cf6e7bf5e jt/doc-submitting-rerolled-series later to maint).
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
-   (merge 395c130fd8 ma/win32-unix-domain-socket later to maint).
-   (merge 7df2405b38 jk/ci-macos-gcc13-fix later to maint).
    (merge 55702c543e fa/p4-error later to maint).
    (merge 2566a77774 vd/doc-merge-tree-x-option later to maint).
    (merge b64b0df9da ds/scalar-reconfigure-all-fix later to maint).
