@@ -1338,6 +1338,14 @@ int git_config_bool(const char *name, const char *value)
 	return v;
 }
 
+int git_config_bool_or_default(const char *name, const char *value, int default_value)
+{
+	int v = git_parse_maybe_bool(value);
+	if (v < 0)
+		v = default_value;
+	return v;
+}
+
 int git_config_string(const char **dest, const char *var, const char *value)
 {
 	if (!value)
