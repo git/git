@@ -584,14 +584,39 @@ test_expect_success 'init with --ref-format=files' '
 	test_cmp expect actual
 '
 
-test_expect_success 're-init with same format' '
-	test_when_finished "rm -rf refformat" &&
-	git init --ref-format=files refformat &&
-	git init --ref-format=files refformat &&
-	echo files >expect &&
-	git -C refformat rev-parse --show-ref-format >actual &&
-	test_cmp expect actual
-'
+backends="files reftable"
+for from_format in $backends
+do
+	test_expect_success "re-init with same format ($from_format)" '
+		test_when_finished "rm -rf refformat" &&
+		git init --ref-format=$from_format refformat &&
+		git init --ref-format=$from_format refformat &&
+		echo $from_format >expect &&
+		git -C refformat rev-parse --show-ref-format >actual &&
+		test_cmp expect actual
+	'
+
+	for to_format in $backends
+	do
+		if test "$from_format" = "$to_format"
+		then
+			continue
+		fi
+
+		test_expect_success "re-init with different format fails ($from_format -> $to_format)" '
+			test_when_finished "rm -rf refformat" &&
+			git init --ref-format=$from_format refformat &&
+			cat >expect <<-EOF &&
+			fatal: attempt to reinitialize repository with different reference storage format
+			EOF
+			test_must_fail git init --ref-format=$to_format refformat 2>err &&
+			test_cmp expect err &&
+			echo $from_format >expect &&
+			git -C refformat rev-parse --show-ref-format >actual &&
+			test_cmp expect actual
+		'
+	done
+done
 
 test_expect_success 'init with --ref-format=garbage' '
 	test_when_finished "rm -rf refformat" &&
@@ -676,6 +701,66 @@ test_expect_success 'branch -m with the initial branch' '
 	echo again >expect &&
 	git -C rename-initial symbolic-ref --short HEAD >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'init with includeIf.onbranch condition' '
+	test_when_finished "rm -rf repo" &&
+	git -c includeIf.onbranch:main.path=nonexistent init repo &&
+	echo $GIT_DEFAULT_REF_FORMAT >expect &&
+	git -C repo rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'init with includeIf.onbranch condition with existing directory' '
+	test_when_finished "rm -rf repo" &&
+	mkdir repo &&
+	git -c includeIf.onbranch:nonexistent.path=/does/not/exist init repo &&
+	echo $GIT_DEFAULT_REF_FORMAT >expect &&
+	git -C repo rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-init with includeIf.onbranch condition' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	git -c includeIf.onbranch:nonexistent.path=/does/not/exist init repo &&
+	echo $GIT_DEFAULT_REF_FORMAT >expect &&
+	git -C repo rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-init with includeIf.onbranch condition' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	git -c includeIf.onbranch:nonexistent.path=/does/not/exist init repo &&
+	echo $GIT_DEFAULT_REF_FORMAT >expect &&
+	git -C repo rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-init skips non-matching includeIf.onbranch' '
+	test_when_finished "rm -rf repo config" &&
+	cat >config <<-EOF &&
+	[
+	garbage
+	EOF
+	git init repo &&
+	git -c includeIf.onbranch:nonexistent.path="$(test-tool path-utils absolute_path config)" init repo
+'
+
+test_expect_success 're-init reads matching includeIf.onbranch' '
+	test_when_finished "rm -rf repo config" &&
+	cat >config <<-EOF &&
+	[
+	garbage
+	EOF
+	path="$(test-tool path-utils absolute_path config)" &&
+	git init --initial-branch=branch repo &&
+	cat >expect <<-EOF &&
+	fatal: bad config line 1 in file $path
+	EOF
+	test_must_fail git -c includeIf.onbranch:branch.path="$path" init repo 2>err &&
+	test_cmp expect err
 '
 
 test_done

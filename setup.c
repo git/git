@@ -2342,12 +2342,6 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	}
 	startup_info->have_repository = 1;
 
-	/* Ensure `core.hidedotfiles` is processed */
-	git_config(platform_core_config, NULL);
-
-	safe_create_dir(git_dir, 0);
-
-
 	/* Check to see if the repository version is right.
 	 * Note that a newly created repository does not have
 	 * config file, so this will not fail.  What we are catching
@@ -2358,15 +2352,24 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	validate_hash_algorithm(&repo_fmt, hash);
 	validate_ref_storage_format(&repo_fmt, ref_storage_format);
 
-	reinit = create_default_files(template_dir, original_git_dir,
-				      &repo_fmt, init_shared_repository);
-
 	/*
 	 * Now that we have set up both the hash algorithm and the ref storage
 	 * format we can update the repository's settings accordingly.
 	 */
 	repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
 	repo_set_ref_storage_format(the_repository, repo_fmt.ref_storage_format);
+
+	/*
+	 * Ensure `core.hidedotfiles` is processed. This must happen after we
+	 * have set up the repository format such that we can evaluate
+	 * includeIf conditions correctly in the case of re-initialization.
+	 */
+	git_config(platform_core_config, NULL);
+
+	safe_create_dir(git_dir, 0);
+
+	reinit = create_default_files(template_dir, original_git_dir,
+				      &repo_fmt, init_shared_repository);
 
 	if (!(flags & INIT_DB_SKIP_REFDB))
 		create_reference_database(repo_fmt.ref_storage_format,
