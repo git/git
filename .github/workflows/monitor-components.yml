@@ -80,8 +80,8 @@ jobs:
             title-pattern: ^(?!.*(5\.[0-9]+[13579]|RC))
           - label: pcre2
             feed: https://github.com/PCRE2Project/pcre2/tags.atom
-          - label: mingw-w64-clang
-            feed: https://github.com/msys2/MINGW-packages/commits/master/mingw-w64-clang.atom
+          - label: mingw-w64-llvm
+            feed: https://github.com/msys2/MINGW-packages/commits/master/mingw-w64-llvm.atom
       fail-fast: false
     steps:
       - uses: git-for-windows/rss-to-issues@v0
