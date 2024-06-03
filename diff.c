@@ -7235,7 +7235,7 @@ size_t fill_textconv(struct repository *r,
 
 	if (!driver) {
 		if (!DIFF_FILE_VALID(df)) {
-			*outbuf = "";
+			*outbuf = (char *) "";
 			return 0;
 		}
 		if (diff_populate_filespec(r, df, NULL))
