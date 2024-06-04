@@ -585,11 +585,10 @@ static void add_patterns_from_input(struct pattern_list *pl,
 		if (file) {
 			struct strbuf line = STRBUF_INIT;
 
-			while (!strbuf_getline(&line, file)) {
-				size_t len;
-				char *buf = strbuf_detach(&line, &len);
-				add_pattern(buf, empty_base, 0, pl, 0);
-			}
+			while (!strbuf_getline(&line, file))
+				add_pattern(line.buf, empty_base, 0, pl, 0);
+
+			strbuf_release(&line);
 		} else {
 			for (i = 0; i < argc; i++)
 				add_pattern(argv[i], empty_base, 0, pl, 0);
