@@ -442,7 +442,6 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 	char *sparse_filename;
 	int res;
 	struct object_id oid;
-	struct strbuf pattern = STRBUF_INIT;
 
 	static struct option builtin_sparse_checkout_init_options[] = {
 		OPT_BOOL(0, "cone", &init_opts.cone_mode,
@@ -493,10 +492,8 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
-	strbuf_addstr(&pattern, "/*");
-	add_pattern(strbuf_detach(&pattern, NULL), empty_base, 0, &pl, 0);
-	strbuf_addstr(&pattern, "!/*/");
-	add_pattern(strbuf_detach(&pattern, NULL), empty_base, 0, &pl, 0);
+	add_pattern("/*", empty_base, 0, &pl, 0);
+	add_pattern("!/*/", empty_base, 0, &pl, 0);
 	pl.use_cone_patterns = init_opts.cone_mode;
 
 	return write_patterns_and_update(&pl);
@@ -893,7 +890,6 @@ static int sparse_checkout_disable(int argc, const char **argv,
 		OPT_END(),
 	};
 	struct pattern_list pl;
-	struct strbuf match_all = STRBUF_INIT;
 
 	/*
 	 * We do not exit early if !core_apply_sparse_checkout; due to the
@@ -919,8 +915,7 @@ static int sparse_checkout_disable(int argc, const char **argv,
 	pl.use_cone_patterns = 0;
 	core_apply_sparse_checkout = 1;
 
-	strbuf_addstr(&match_all, "/*");
-	add_pattern(strbuf_detach(&match_all, NULL), empty_base, 0, &pl, 0);
+	add_pattern("/*", empty_base, 0, &pl, 0);
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.sparse_index = 0;
