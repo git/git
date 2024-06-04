@@ -47,6 +47,7 @@ test_expect_success setup '
 	git show-ref -d	>refs &&
 	sed -e "s/ /	/" refs >>expected.all &&
 
+	grep refs/heads/ expected.all >expected.branches &&
 	git remote add self "$(pwd)/.git" &&
 	git remote add self2 "."
 '
@@ -69,6 +70,27 @@ test_expect_success 'ls-remote --tags self' '
 test_expect_success 'ls-remote self' '
 	git ls-remote self >actual &&
 	test_cmp expected.all actual
+'
+
+test_expect_success 'ls-remote --branches self' '
+	git ls-remote --branches self >actual &&
+	test_cmp expected.branches actual &&
+	git ls-remote -b self >actual &&
+	test_cmp expected.branches actual
+'
+
+test_expect_success 'ls-remote -h is deprecated w/o warning' '
+	git ls-remote -h self >actual 2>warning &&
+	test_cmp expected.branches actual &&
+	test_grep ! deprecated warning
+'
+
+test_expect_success 'ls-remote --heads is deprecated and hidden w/o warning' '
+	test_expect_code 129 git ls-remote -h >short-help &&
+	test_grep ! -e --head short-help &&
+	git ls-remote --heads self >actual 2>warning &&
+	test_cmp expected.branches actual &&
+	test_grep ! deprecated warning
 '
 
 test_expect_success 'ls-remote --sort="version:refname" --tags self' '
@@ -275,7 +297,7 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'ls-remote with filtered symref (--heads)' '
+test_expect_success 'ls-remote with filtered symref (--branches)' '
 	git symbolic-ref refs/heads/foo refs/tags/mark &&
 	cat >expect.v2 <<-EOF &&
 	ref: refs/tags/mark	refs/heads/foo
@@ -283,9 +305,9 @@ test_expect_success 'ls-remote with filtered symref (--heads)' '
 	$rev	refs/heads/main
 	EOF
 	grep -v "^ref: refs/tags/" <expect.v2 >expect.v0 &&
-	git -c protocol.version=0 ls-remote --symref --heads . >actual.v0 &&
+	git -c protocol.version=0 ls-remote --symref --branches . >actual.v0 &&
 	test_cmp expect.v0 actual.v0 &&
-	git -c protocol.version=2 ls-remote --symref --heads . >actual.v2 &&
+	git -c protocol.version=2 ls-remote --symref --branches . >actual.v2 &&
 	test_cmp expect.v2 actual.v2
 '
 
@@ -335,9 +357,9 @@ test_expect_success 'ls-remote patterns work with all protocol versions' '
 test_expect_success 'ls-remote prefixes work with all protocol versions' '
 	git for-each-ref --format="%(objectname)	%(refname)" \
 		refs/heads/ refs/tags/ >expect &&
-	git -c protocol.version=0 ls-remote --heads --tags . >actual.v0 &&
+	git -c protocol.version=0 ls-remote --branches --tags . >actual.v0 &&
 	test_cmp expect actual.v0 &&
-	git -c protocol.version=2 ls-remote --heads --tags . >actual.v2 &&
+	git -c protocol.version=2 ls-remote --branches --tags . >actual.v2 &&
 	test_cmp expect actual.v2
 '
 
