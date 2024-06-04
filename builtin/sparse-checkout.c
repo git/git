@@ -95,6 +95,8 @@ static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
 			quote_c_style(sl.items[i].string, NULL, stdout, 0);
 			printf("\n");
 		}
+
+		string_list_clear(&sl, 0);
 	} else {
 		write_patterns_to_file(stdout, &pl);
 	}
