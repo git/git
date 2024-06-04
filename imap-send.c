@@ -1543,6 +1543,7 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	if (all_msgs.len == 0) {
+		strbuf_release(&all_msgs);
 		fprintf(stderr, "nothing to send\n");
 		return 1;
 	}
