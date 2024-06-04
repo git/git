@@ -311,6 +311,8 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
 		fprintf(fp, "%s/\n", pattern);
 		free(pattern);
 	}
+
+	string_list_clear(&sl, 0);
 }
 
 static int write_patterns_and_update(struct pattern_list *pl)
