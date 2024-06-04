@@ -472,6 +472,7 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 	/* If we already have a sparse-checkout file, use it. */
 	if (res >= 0) {
 		free(sparse_filename);
+		clear_pattern_list(&pl);
 		return update_working_directory(NULL);
 	}
 
