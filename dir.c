@@ -925,12 +925,7 @@ void add_pattern(const char *string, const char *base,
 	int nowildcardlen;
 
 	parse_path_pattern(&string, &patternlen, &flags, &nowildcardlen);
-	if (flags & PATTERN_FLAG_MUSTBEDIR) {
-		FLEXPTR_ALLOC_MEM(pattern, pattern, string, patternlen);
-	} else {
-		pattern = xmalloc(sizeof(*pattern));
-		pattern->pattern = string;
-	}
+	FLEX_ALLOC_MEM(pattern, pattern, string, patternlen);
 	pattern->patternlen = patternlen;
 	pattern->nowildcardlen = nowildcardlen;
 	pattern->base = base;
@@ -972,7 +967,6 @@ void clear_pattern_list(struct pattern_list *pl)
 	for (i = 0; i < pl->nr; i++)
 		free(pl->patterns[i]);
 	free(pl->patterns);
-	free(pl->filebuf);
 	clear_pattern_entry_hashmap(&pl->recursive_hashmap);
 	clear_pattern_entry_hashmap(&pl->parent_hashmap);
 
@@ -1166,6 +1160,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	}
 
 	add_patterns_from_buffer(buf, size, base, baselen, pl);
+	free(buf);
 	return 0;
 }
 
@@ -1173,16 +1168,15 @@ static int add_patterns_from_buffer(char *buf, size_t size,
 				    const char *base, int baselen,
 				    struct pattern_list *pl)
 {
+	char *orig = buf;
 	int i, lineno = 1;
 	char *entry;
 
 	hashmap_init(&pl->recursive_hashmap, pl_hashmap_cmp, NULL, 0);
 	hashmap_init(&pl->parent_hashmap, pl_hashmap_cmp, NULL, 0);
 
-	pl->filebuf = buf;
-
 	if (skip_utf8_bom(&buf, size))
-		size -= buf - pl->filebuf;
+		size -= buf - orig;
 
 	entry = buf;
 
@@ -1222,6 +1216,7 @@ int add_patterns_from_blob_to_list(
 		return r;
 
 	add_patterns_from_buffer(buf, size, base, baselen, pl);
+	free(buf);
 	return 0;
 }
 
