@@ -500,6 +500,8 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 		return 0;
 	}
 
+	free(sparse_filename);
+
 	add_pattern("/*", empty_base, 0, &pl, 0);
 	add_pattern("!/*/", empty_base, 0, &pl, 0);
 	pl.use_cone_patterns = init_opts.cone_mode;
