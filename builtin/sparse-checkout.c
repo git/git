@@ -95,11 +95,10 @@ static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
 			quote_c_style(sl.items[i].string, NULL, stdout, 0);
 			printf("\n");
 		}
-
-		return 0;
+	} else {
+		write_patterns_to_file(stdout, &pl);
 	}
 
-	write_patterns_to_file(stdout, &pl);
 	clear_pattern_list(&pl);
 
 	return 0;
