@@ -581,6 +581,7 @@ static void add_patterns_from_input(struct pattern_list *pl,
 				strbuf_to_cone_pattern(&line, pl);
 			}
 		}
+		strbuf_release(&line);
 	} else {
 		if (file) {
 			struct strbuf line = STRBUF_INIT;
