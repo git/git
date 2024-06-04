@@ -2,6 +2,7 @@
 
 test_description='git mv in sparse working trees'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 setup_sparse_checkout () {
