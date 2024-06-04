@@ -205,11 +205,13 @@ static int update_working_directory(struct pattern_list *pl)
 	struct unpack_trees_options o;
 	struct lock_file lock_file = LOCK_INIT;
 	struct repository *r = the_repository;
+	struct pattern_list *old_pl;
 
 	/* If no branch has been checked out, there are no updates to make. */
 	if (is_index_unborn(r->index))
 		return UPDATE_SPARSITY_SUCCESS;
 
+	old_pl = r->index->sparse_checkout_patterns;
 	r->index->sparse_checkout_patterns = pl;
 
 	memset(&o, 0, sizeof(o));
@@ -241,7 +243,12 @@ static int update_working_directory(struct pattern_list *pl)
 
 	clean_tracked_sparse_directories(r);
 
-	r->index->sparse_checkout_patterns = NULL;
+	if (r->index->sparse_checkout_patterns != pl) {
+		clear_pattern_list(r->index->sparse_checkout_patterns);
+		FREE_AND_NULL(r->index->sparse_checkout_patterns);
+	}
+	r->index->sparse_checkout_patterns = old_pl;
+
 	return result;
 }
 
