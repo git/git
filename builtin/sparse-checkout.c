@@ -523,6 +523,7 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 		char *slash = strrchr(e->pattern, '/');
 		char *oldpattern = e->pattern;
 		size_t newlen;
+		struct pattern_entry *dup;
 
 		if (!slash || slash == e->pattern)
 			break;
@@ -533,8 +534,14 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
 		e->pattern = xstrndup(oldpattern, newlen);
 		hashmap_entry_init(&e->ent, fspathhash(e->pattern));
 
-		if (!hashmap_get_entry(&pl->parent_hashmap, e, ent, NULL))
+		dup = hashmap_get_entry(&pl->parent_hashmap, e, ent, NULL);
+		if (!dup) {
 			hashmap_add(&pl->parent_hashmap, &e->ent);
+		} else {
+			free(e->pattern);
+			free(e);
+			e = dup;
+		}
 	}
 }
 
