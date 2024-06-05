@@ -150,11 +150,7 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 int interactive_add(const char **argv, const char *prefix, int patch)
 {
 	struct pathspec pathspec;
-	int unused, ret;
-
-	if (!git_config_get_bool("add.interactive.usebuiltin", &unused))
-		warning(_("the add.interactive.useBuiltin setting has been removed!\n"
-			  "See its entry in 'git help config' for details."));
+	int ret;
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
