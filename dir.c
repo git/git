@@ -32,6 +32,12 @@
 #include "tree.h"
 #include "hex.h"
 
+ /*
+  * The maximum size of a pattern/exclude file. If the file exceeds this size
+  * we will ignore it.
+  */
+#define PATTERN_MAX_FILE_SIZE (100 * 1024 * 1024)
+
 /*
  * Tells read_directory_recursive how a file or directory should be treated.
  * Values are ordered by significance, e.g. if a directory contains both
@@ -1137,7 +1143,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 		}
 	}
 
-	if (size > INT_MAX) {
+	if (size > PATTERN_MAX_FILE_SIZE) {
 		warning("ignoring excessively large pattern file: %s", fname);
 		free(buf);
 		return -1;
@@ -1199,7 +1205,7 @@ int add_patterns_from_blob_to_list(
 	if (r != 1)
 		return r;
 
-	if (size > INT_MAX) {
+	if (size > PATTERN_MAX_FILE_SIZE) {
 		warning("ignoring excessively large pattern blob: %s",
 			oid_to_hex(oid));
 		free(buf);
