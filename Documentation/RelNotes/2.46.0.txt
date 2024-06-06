@@ -58,6 +58,9 @@ UI, Workflows & Features
    clone. The command has been taught not to do so and immediately
    fail instead.
 
+ * The promisor.quiet configuration knob can be set to true to make
+   lazy fetching from promisor remotes silent.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -216,3 +219,4 @@ Fixes since v2.45
    (merge fc0202b0e9 dg/fetch-pack-code-cleanup later to maint).
    (merge 7150f140f9 mt/t0211-typofix later to maint).
    (merge d424488901 jc/rev-parse-fatal-doc later to maint).
+   (merge 36d900d2b0 rs/difftool-env-simplify later to maint).
