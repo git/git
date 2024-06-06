@@ -2002,8 +2002,8 @@ static int write_graph_chunk_base(struct hashfile *f,
 static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 {
 	uint32_t i;
-	int fd;
 	struct hashfile *f;
+	struct tempfile *graph_layer; /* when ctx->split is non-zero */
 	struct lock_file lk = LOCK_INIT;
 	const unsigned hashsz = the_hash_algo->rawsz;
 	struct strbuf progress_title = STRBUF_INIT;
@@ -2035,24 +2035,23 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 					       LOCK_DIE_ON_ERROR, 0444);
 		free(lock_name);
 
-		fd = git_mkstemp_mode(ctx->graph_name, 0444);
-		if (fd < 0) {
+		graph_layer = mks_tempfile_m(ctx->graph_name, 0444);
+		if (!graph_layer) {
 			error(_("unable to create temporary graph layer"));
 			return -1;
 		}
 
-		if (adjust_shared_perm(ctx->graph_name)) {
+		if (adjust_shared_perm(get_tempfile_path(graph_layer))) {
 			error(_("unable to adjust shared permissions for '%s'"),
-			      ctx->graph_name);
+			      get_tempfile_path(graph_layer));
 			return -1;
 		}
 
-		f = hashfd(fd, ctx->graph_name);
+		f = hashfd(get_tempfile_fd(graph_layer), get_tempfile_path(graph_layer));
 	} else {
 		hold_lock_file_for_update_mode(&lk, ctx->graph_name,
 					       LOCK_DIE_ON_ERROR, 0444);
-		fd = get_lock_file_fd(&lk);
-		f = hashfd(fd, get_lock_file_path(&lk));
+		f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
 	}
 
 	cf = init_chunkfile(f);
@@ -2133,8 +2132,6 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		char *final_graph_name;
 		int result;
 
-		close(fd);
-
 		if (!chainf) {
 			error(_("unable to open commit-graph chain file"));
 			return -1;
@@ -2169,7 +2166,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		free(ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 1]);
 		ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 1] = final_graph_name;
 
-		result = rename(ctx->graph_name, final_graph_name);
+		result = rename_tempfile(&graph_layer, final_graph_name);
 
 		for (i = 0; i < ctx->num_commit_graphs_after; i++)
 			fprintf(get_lock_file_fp(&lk), "%s\n", ctx->commit_graph_hash_after[i]);
