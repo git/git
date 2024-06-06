@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2024, #01; Mon, 3)
+Subject: What's cooking in git.git (Jun 2024, #02; Thu, 6)
 X-master-at: 7b0defb3915eaa0bd118f0996e8c00b4eb2dc1ca
-X-next-at: 54c50866fa398a825f77bafc637bf933286c7385
+X-next-at: dd2eb8cad419143d6806239019fa87cfc179dfe2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2024, #01; Mon, 3)
+What's cooking in git.git (Jun 2024, #02; Thu, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,63 +46,160 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ps/fix-reinit-includeif-onbranch (2024-05-22) 1 commit
-  (merged to 'next' on 2024-05-25 at 89c035186d)
- + setup: fix bug with "includeIf.onbranch" when initializing dir
-
- "git init" in an already created directory, when the user
- configuration has includeif.onbranch, started to fail recently,
- which has been corrected.
- source: <cf182bb9ee7d4a7eb46e5dbf4f3ef5deb198d823.1716374321.git.ps@pks.im>
-
-
-* th/push-local-ff-check-without-lazy-fetch (2024-05-22) 1 commit
-  (merged to 'next' on 2024-05-25 at 520b6b2897)
- + push: don't fetch commit object when checking existence
-
- When "git push" notices that the commit at the tip of the ref on
- the other side it is about to overwrite does not exist locally, it
- used to first try fetching it if the local repository is a partial
- clone. The command has been taught not to do so and immediately
- fail instead.
- source: <20240522201559.1677959-1-tom@compton.nu>
-
---------------------------------------------------
 [New Topics]
 
-* jk/sparse-leakfix (2024-05-31) 14 commits
- - sparse-checkout: free duplicate hashmap entries
- - sparse-checkout: free string list after displaying
- - sparse-checkout: free pattern list in sparse_checkout_list()
- - sparse-checkout: free sparse_filename after use
- - sparse-checkout: refactor temporary sparse_checkout_patterns
- - sparse-checkout: always free "line" strbuf after reading input
- - sparse-checkout: reuse --stdin buffer when reading patterns
- - dir.c: always copy input to add_pattern()
- - dir.c: free removed sparse-pattern hashmap entries
- - sparse-checkout: clear patterns when init() sees existing sparse file
- - dir.c: free strings in sparse cone pattern hashmaps
- - sparse-checkout: pass string literals directly to add_pattern()
- - sparse-checkout: free string list in write_cone_to_file()
- - Merge branch 'jk/leakfixes' into jk/sparse-leakfix
+* rj/add-p-pager (2024-06-04) 6 commits
+ - add-patch: introduce the command '|'
+ - test-terminal: introduce --no-stdin-pty
+ - pager: introduce setup_custom_pager
+ - pager: introduce wait_for_pager
+ - pager: do not close fd 2 unnecessarily
+ - add-patch: test for 'p' command
+
+ "git add -i" and friends learned a new '|' command that sends the
+ current hunk to the pager, instead of dumping it to the terminal.
+
+ Expecting a reroll.
+ cf. <3f085795-79bd-4a56-9df8-659e32179925@gmail.com>
+ cf. <844704794168f9fcb85c75014c84cde0@manjaro.org>
+ source: <1ef0ac3a-3be5-4fc2-93f8-46610f3d1880@gmail.com>
+
+
+* ap/credential-clear-fix (2024-06-04) 1 commit
+ - credential: clear expired c->credential, unify secret clearing
+
+ Upon expiration event, we forgot to clear in-core authentication
+ material other than password (whose support was added recently),
+ which has been corrected.
+
+ Expecting a reroll.
+ cf. <dcbbd00f-1730-41fd-90d3-c7b070c4f17d@nvidia.com>
+ source: <20240604192929.3252626-1-aplattner@nvidia.com>
+
+
+* jc/heads-are-branches (2024-06-04) 3 commits
+ - show-ref: introduce --branches and deprecate --heads
+ - ls-remote: introduce --branches and deprecate --heads
+ - refs: call branches branches
+
+ The "--heads" option of "ls-remote" and "show-ref" has been been
+ deprecated; "--branches" replaces "--heads".
+
+ Comments?
+ source: <20240604220145.3260714-1-gitster@pobox.com>
+
+
+* jk/imap-send-plug-all-msgs-leak (2024-06-06) 3 commits
+ - imap-send: free all_msgs strbuf in "out" label
+ - Merge branch 'jc/t1517-more' into jk/imap-send-plug-all-msgs-leak
+ - Merge branch 'ps/no-writable-strings' into jk/imap-send-plug-all-msgs-leak
+ (this branch uses jc/t1517-more, ps/leakfixes and ps/no-writable-strings.)
+
+ A leak in "git imap-send" that somehow escapes LSan has been
+ plugged.
+
+ Will merge to 'next'.
+ source: <20240605083526.GB2345232@coredump.intra.peff.net>
+
+
+* ps/check-docs-fix (2024-06-06) 4 commits
+ - ci/test-documentation: work around SyntaxWarning in Python 3.12
+ - gitlab-ci: add job to run `make check-docs`
+ - Documentation/lint-manpages: bubble up errors
+ - Makefile: extract script to lint missing/extraneous manpages
+
+ "make check-docs" noticed problems and reported to its output but
+ failed to signal its findings with its exit status, which has been
+ corrected.
+
+ Will merge to 'next'.
+ source: <cover.1717660597.git.ps@pks.im>
+
+
+* rj/format-patch-auto-cover-with-interdiff (2024-06-05) 2 commits
+ - SQUASH???
+ - format-patch: assume --cover-letter for diff in multi-patch series
+
+ "git format-patch --interdiff" for multi-patch series learned to
+ turn on cover letters automatically (unless told never to enable
+ cover letter with "--no-cover-letter" and such).
+ source: <cb6b6d54-959f-477d-83e5-027c81ae85de@gmail.com>
+
+
+* rs/diff-exit-code-with-external-diff (2024-06-05) 3 commits
+ - diff: let external diffs report that changes are uninteresting
+ - userdiff: add and use struct external_diff
+ - t4020: test exit code with external diffs
+
+ "git diff --exit-code --ext-diff" learned to take the exit status
+ of the external diff driver into account when deciding the exit
+ status of the overall "git diff" invocation when configured to do
+ so.
+
+ Expecting a bit of documentation updates.
+ cf. <55389f35-5762-4b86-81bf-b9fe956815d2@web.de>
+ source: <6fa51a62-5dc1-4865-9f79-eaf7d65189ab@web.de>
+
+
+* jc/add-i-retire-usebuiltin-config (2024-06-05) 1 commit
+ - add-i: finally retire add.interactive.useBuiltin
+
+ For over a year, setting add.interactive.useBuiltin configuration
+ variable did nothing but giving a "this does not do anything"
+ warning.  Finally remove it.
+
+ Comments?
+ source: <xmqqikynqdvq.fsf@gitster.g>
+
+
+* jc/no-default-attr-tree-in-bare (2024-06-05) 1 commit
+ - attr.tree: HEAD:.gitattributes is no longer the default in a bare repo
+
+ Earlier we stopped using the tree of HEAD as the default source of
+ attributes in a bare repository, but failed to document it.  This
+ has been corrected.
+
+ Comments?
+ source: <xmqqa5jzqd5k.fsf_-_@gitster.g>
+
+--------------------------------------------------
+[Cooking]
+
+* jk/sparse-leakfix (2024-06-05) 14 commits
+  (merged to 'next' on 2024-06-06 at c92e02c528)
+ + sparse-checkout: free duplicate hashmap entries
+ + sparse-checkout: free string list after displaying
+ + sparse-checkout: free pattern list in sparse_checkout_list()
+ + sparse-checkout: free sparse_filename after use
+ + sparse-checkout: refactor temporary sparse_checkout_patterns
+ + sparse-checkout: always free "line" strbuf after reading input
+ + sparse-checkout: reuse --stdin buffer when reading patterns
+ + dir.c: always copy input to add_pattern()
+ + dir.c: free removed sparse-pattern hashmap entries
+ + sparse-checkout: clear patterns when init() sees existing sparse file
+ + dir.c: free strings in sparse cone pattern hashmaps
+ + sparse-checkout: pass string literals directly to add_pattern()
+ + sparse-checkout: free string list in write_cone_to_file()
+ + Merge branch 'jk/leakfixes' into jk/sparse-leakfix
  (this branch uses jk/leakfixes and ps/leakfixes.)
 
  Many memory leaks in the sparse-checkout code paths have been
  plugged.
 
- Will merge to 'next'?
- source: <20240531112433.GA428583@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <20240604100814.GA1304520@coredump.intra.peff.net>
 
 
-* jk/cap-exclude-file-size (2024-05-31) 1 commit
- - dir.c: skip .gitignore, etc larger than INT_MAX
+* jk/cap-exclude-file-size (2024-06-05) 2 commits
+  (merged to 'next' on 2024-06-05 at 2467011532)
+ + dir.c: reduce max pattern file size to 100MB
+  (merged to 'next' on 2024-06-04 at 51c0d632d3)
+ + dir.c: skip .gitignore, etc larger than INT_MAX
 
  An overly large ".gitignore" files are now rejected silently.
 
- Will merge to 'next'.
- source: <20240531120034.GA442032@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <xmqqikyowqjj.fsf@gitster.g>
 
 
 * ps/leakfixes-more (2024-06-03) 30 commits
@@ -143,30 +240,30 @@ Release tarballs are available at:
  Needs review.
  source: <cover.1717402439.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * gt/decorate-unit-test (2024-05-28) 1 commit
- - t/: migrate helper/test-example-decorate to the unit testing framework
+  (merged to 'next' on 2024-06-06 at dd2eb8cad4)
+ + t/: migrate helper/test-example-decorate to the unit testing framework
 
  A test helper that essentially is unit tests on the "decorate"
  logic has been rewritten using the unit-tests framework.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20240528125837.31090-1-shyamthakkar001@gmail.com>
 
 
 * jc/safe-directory-leading-path (2024-05-29) 1 commit
- - safe.directory: allow "lead/ing/path/*" match
+  (merged to 'next' on 2024-06-04 at 3d8cb9239c)
+ + safe.directory: allow "lead/ing/path/*" match
 
  The safe.directory configuration knob has been updated to
  optionally allow leading path matches.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqplt4zjw7.fsf@gitster.g>
 
 
-* ps/no-writable-strings (2024-06-03) 28 commits
+* ps/no-writable-strings (2024-06-06) 28 commits
  - config.mak.dev: enable `-Wwrite-strings` warning
  - builtin/merge: always store allocated strings in `pull_twohead`
  - builtin/rebase: always store allocated string in `options.strategy`
@@ -195,31 +292,35 @@ Release tarballs are available at:
  - global: convert intentionally-leaking config strings to consts
  - global: improve const correctness when assigning string constants
  - Merge branch 'ps/leakfixes' into ps/no-writable-strings
- (this branch uses ps/leakfixes.)
+ (this branch is used by jk/imap-send-plug-all-msgs-leak; uses ps/leakfixes.)
 
  Building with "-Werror -Wwrite-strings" is now supported.
 
- Needs review.
- source: <cover.1717402403.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1717667854.git.ps@pks.im>
 
 
 * cp/reftable-unit-test (2024-05-30) 5 commits
- - t: improve the test-case for parse_names()
- - t: add test for put_be16()
- - t: move tests from reftable/record_test.c to the new unit test
- - t: move tests from reftable/stack_test.c to the new unit test
- - t: move reftable/basics_test.c to the unit testing framework
+  (merged to 'next' on 2024-06-04 at baff123933)
+ + t: improve the test-case for parse_names()
+ + t: add test for put_be16()
+ + t: move tests from reftable/record_test.c to the new unit test
+ + t: move tests from reftable/stack_test.c to the new unit test
+ + t: move reftable/basics_test.c to the unit testing framework
 
  Reimplement basic unit tests for reftable under the unit test
  framework.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240529171439.18271-1-chandrapratap3519@gmail.com>
 
 
-* jc/t1517-more (2024-05-31) 1 commit
+* jc/t1517-more (2024-06-04) 2 commits
+  (merged to 'next' on 2024-06-04 at f5a118872d)
+ + imap-send: minimum leakfix
   (merged to 'next' on 2024-06-03 at 10b71e2a60)
  + t1517: more coverage for commands that work without repository
+ (this branch is used by jk/imap-send-plug-all-msgs-leak.)
 
  "smoke tests" to ensure git commands that are designed to run
  outside repositories do work.
@@ -245,13 +346,14 @@ Release tarballs are available at:
 
 
 * gt/t-hash-unit-test (2024-05-29) 2 commits
- - t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
- - strbuf: introduce strbuf_addstrings() to repeatedly add a string
+  (merged to 'next' on 2024-06-04 at 86328a5c8c)
+ + t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
+ + strbuf: introduce strbuf_addstrings() to repeatedly add a string
 
  A pair of test helpers that essentially are unit tests on hash
  algorithms have been rewritten using the unit-tests framework.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20240529080030.64410-1-shyamthakkar001@gmail.com>
 
 
@@ -261,7 +363,7 @@ Release tarballs are available at:
  A unit test for code that parses the hunk offset and length from a
  patch fragment header as been added.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
 
 
@@ -284,7 +386,7 @@ Release tarballs are available at:
  before the patch text, to be consistent with what is done for a
  cover letter for a multi-patch series.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20240523225007.2871766-1-gitster@pobox.com>
 
 
@@ -318,7 +420,7 @@ Release tarballs are available at:
  source: <20240525234454.1489598-1-iwienand@redhat.com>
 
 
-* ps/document-breaking-changes (2024-06-03) 4 commits
+* ps/document-breaking-changes (2024-06-04) 4 commits
  - BreakingChanges: document that we do not plan to deprecate git-checkout
  - BreakingChanges: document removal of grafting
  - BreakingChanges: document upcoming change from "sha1" to "sha256"
@@ -328,8 +430,8 @@ Release tarballs are available at:
  decisions to deprecate/remove/update various behaviour has been
  outlined.
 
- Under discussion.
- source: <cover.1717402497.git.ps@pks.im>
+ Getting there.
+ source: <cover.1717504292.git.ps@pks.im>
 
 
 * ps/leakfixes (2024-05-27) 19 commits
@@ -353,7 +455,7 @@ Release tarballs are available at:
  + checkout: clarify memory ownership in `unique_tracking_name()`
  + strbuf: fix leak when `appendwholeline()` fails with EOF
  + transport-helper: fix leaking helper name
- (this branch is used by jk/leakfixes, jk/sparse-leakfix, ps/leakfixes-more and ps/no-writable-strings.)
+ (this branch is used by jk/imap-send-plug-all-msgs-leak, jk/leakfixes, jk/sparse-leakfix, ps/leakfixes-more and ps/no-writable-strings.)
 
  Leakfixes.
 
@@ -361,7 +463,7 @@ Release tarballs are available at:
  source: <cover.1716810168.git.ps@pks.im>
 
 
-* ps/ref-storage-migration (2024-06-03) 14 commits
+* ps/ref-storage-migration (2024-06-06) 14 commits
  - builtin/refs: new command to migrate ref storage formats
  - refs: implement logic to migrate between ref storage formats
  - refs: implement removal of ref storages
@@ -374,14 +476,14 @@ Release tarballs are available at:
  - refs: pass storage format to `ref_store_init()` explicitly
  - refs: convert ref storage format to an enum
  - setup: unset ref storage when reinitializing repository version
- - Merge branch 'ps/pseudo-ref-terminology' into ps/ref-storage-migration
- - Merge branch 'ps/refs-without-the-repository-updates' into ps/ref-storage-migration
+ + Merge branch 'ps/pseudo-ref-terminology' into ps/ref-storage-migration
+ + Merge branch 'ps/refs-without-the-repository-updates' into ps/ref-storage-migration
 
  Allow migrating a repository that uses the files backend for its
  ref storage to use the reftable backend, with limitations.
 
- Will merge to 'next'?
- source: <cover.1717402363.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1717649802.git.ps@pks.im>
 
 
 * tb/midx-write-cleanup (2024-05-30) 8 commits
@@ -447,20 +549,22 @@ Release tarballs are available at:
  source: <20240525100927.2949808-1-tom@compton.nu>
 
 
-* kn/update-ref-symref (2024-05-30) 7 commits
+* kn/update-ref-symref (2024-06-05) 8 commits
  - update-ref: add support for 'symref-update' command
  - reftable: pick either 'oid' or 'target' for new updates
  - update-ref: add support for 'symref-create' command
  - update-ref: add support for 'symref-delete' command
  - update-ref: add support for 'symref-verify' command
+ - refs: specify error for regular refs with `old_target`
  - refs: create and use `ref_update_expects_existing_old_ref()`
  - Merge branch 'kn/ref-transaction-symref' into kn/update-ref-symref
 
  "git update-ref --stdin" learned to handle transactional updates of
  symbolic-refs.
 
- Expecting a (hopefully minor and final) reroll.
- source: <20240514124411.1037019-1-knayak@gitlab.com>
+ Expecting a reroll.
+ cf. <CAOLa=ZSDRcsmBxje-EgdKNyXCh1OYc4vtzJZKmoHSs94fMxPtw@mail.gmail.com>
+ source: <20240530120940.456817-1-knayak@gitlab.com>
 
 
 * mt/openindiana-scalar (2024-05-17) 1 commit
