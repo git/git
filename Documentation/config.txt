@@ -488,6 +488,8 @@ include::config/pager.txt[]
 
 include::config/pretty.txt[]
 
+include::config/promisor.txt[]
+
 include::config/protocol.txt[]
 
 include::config/pull.txt[]
