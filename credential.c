@@ -20,12 +20,11 @@ void credential_init(struct credential *c)
 
 void credential_clear(struct credential *c)
 {
+	credential_clear_secrets(c);
 	free(c->protocol);
 	free(c->host);
 	free(c->path);
 	free(c->username);
-	free(c->password);
-	free(c->credential);
 	free(c->oauth_refresh_token);
 	free(c->authtype);
 	string_list_clear(&c->helpers, 0);
@@ -479,9 +478,15 @@ void credential_fill(struct credential *c, int all_capabilities)
 
 	for (i = 0; i < c->helpers.nr; i++) {
 		credential_do(c, c->helpers.items[i].string, "get");
+
 		if (c->password_expiry_utc < time(NULL)) {
-			/* Discard expired password */
-			FREE_AND_NULL(c->password);
+			/*
+			 * Don't use credential_clear() here: callers such as
+			 * cmd_credential() expect to still be able to call
+			 * credential_write() on a struct credential whose
+			 * secrets have expired.
+			 */
+			credential_clear_secrets(c);
 			/* Reset expiry to maintain consistency */
 			c->password_expiry_utc = TIME_MAX;
 		}
@@ -528,9 +533,8 @@ void credential_reject(struct credential *c)
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "erase");
 
+	credential_clear_secrets(c);
 	FREE_AND_NULL(c->username);
-	FREE_AND_NULL(c->password);
-	FREE_AND_NULL(c->credential);
 	FREE_AND_NULL(c->oauth_refresh_token);
 	c->password_expiry_utc = TIME_MAX;
 	c->approved = 0;
