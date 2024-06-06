@@ -6,8 +6,8 @@
 #include "object-store-ll.h"
 #include "setup.h"
 
-const char *git_mailmap_file;
-const char *git_mailmap_blob;
+char *git_mailmap_file;
+char *git_mailmap_blob;
 
 struct mailmap_info {
 	char *name;

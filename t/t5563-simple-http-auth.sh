@@ -2,6 +2,7 @@
 
 test_description='test http auth header and credential helper interop'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 

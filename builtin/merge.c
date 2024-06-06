@@ -100,7 +100,7 @@ static struct strategy all_strategy[] = {
 	{ "subtree",    NO_FAST_FORWARD | NO_TRIVIAL },
 };
 
-static const char *pull_twohead, *pull_octopus;
+static char *pull_twohead, *pull_octopus;
 
 enum ff_type {
 	FF_NO,
@@ -110,7 +110,7 @@ enum ff_type {
 
 static enum ff_type fast_forward = FF_ALLOW;
 
-static const char *cleanup_arg;
+static char *cleanup_arg;
 static enum commit_msg_cleanup_mode cleanup_mode;
 
 static int option_parse_message(const struct option *opt,

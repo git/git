@@ -2,6 +2,7 @@
 
 test_description='reftable HTTPD tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 

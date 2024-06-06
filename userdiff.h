@@ -7,19 +7,19 @@ struct index_state;
 struct repository;
 
 struct userdiff_funcname {
-	const char *pattern;
+	char *pattern;
 	int cflags;
 };
 
 struct userdiff_driver {
 	const char *name;
-	const char *external;
-	const char *algorithm;
+	char *external;
+	char *algorithm;
 	int binary;
 	struct userdiff_funcname funcname;
-	const char *word_regex;
-	const char *word_regex_multi_byte;
-	const char *textconv;
+	char *word_regex;
+	char *word_regex_multi_byte;
+	char *textconv;
 	struct notes_cache *textconv_cache;
 	int textconv_want_cache;
 };

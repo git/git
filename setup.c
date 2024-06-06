@@ -1230,13 +1230,13 @@ static int safe_directory_cb(const char *key, const char *value,
 	} else if (!strcmp(value, "*")) {
 		data->is_safe = 1;
 	} else {
-		const char *interpolated = NULL;
+		char *interpolated = NULL;
 
 		if (!git_config_pathname(&interpolated, key, value) &&
 		    !fspathcmp(data->path, interpolated ? interpolated : value))
 			data->is_safe = 1;
 
-		free((char *)interpolated);
+		free(interpolated);
 	}
 
 	return 0;
@@ -1875,7 +1875,7 @@ static int template_dir_cb(const char *key, const char *value,
 		char *path = NULL;
 
 		FREE_AND_NULL(data->path);
-		if (!git_config_pathname((const char **)&path, key, value))
+		if (!git_config_pathname(&path, key, value))
 			data->path = path ? path : xstrdup(value);
 	}
 
