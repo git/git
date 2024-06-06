@@ -3,7 +3,6 @@
 test_description='git-am command-line options override saved options'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-terminal.sh
 
 format_patch () {
 	git format-patch --stdout -1 "$1" >"$1".eml
@@ -27,7 +26,12 @@ test_expect_success 'setup' '
 	format_patch side2
 '
 
-test_expect_success TTY '--3way overrides --no-3way' '
+test_expect_success '--retry fails without in-progress operation' '
+	test_must_fail git am --retry 2>err &&
+	test_grep "operation not in progress" err
+'
+
+test_expect_success '--3way overrides --no-3way' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout renamed-file &&
@@ -40,7 +44,7 @@ test_expect_success TTY '--3way overrides --no-3way' '
 
 	# Applying side1 with am --3way will succeed due to the threeway-merge.
 	# Applying side2 will fail as --3way does not apply to it.
-	test_must_fail test_terminal git am --3way </dev/zero &&
+	test_must_fail git am --retry --3way &&
 	test_path_is_dir .git/rebase-apply &&
 	test side1 = "$(cat file2)"
 '
@@ -84,7 +88,7 @@ test_expect_success '--signoff overrides --no-signoff' '
 	test $(git cat-file commit HEAD | grep -c "Signed-off-by:") -eq 0
 '
 
-test_expect_success TTY '--reject overrides --no-reject' '
+test_expect_success '--reject overrides --no-reject' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
@@ -94,7 +98,7 @@ test_expect_success TTY '--reject overrides --no-reject' '
 	test_path_is_dir .git/rebase-apply &&
 	test_path_is_missing file.rej &&
 
-	test_must_fail test_terminal git am --reject </dev/zero &&
+	test_must_fail git am --retry --reject </dev/zero &&
 	test_path_is_dir .git/rebase-apply &&
 	test_path_is_file file.rej
 '
