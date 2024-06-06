@@ -361,16 +361,13 @@ static char *remote_default_branch(const char *url)
 
 static int delete_enlistment(struct strbuf *enlistment)
 {
-#ifdef WIN32
 	struct strbuf parent = STRBUF_INIT;
 	size_t offset;
 	char *path_sep;
-#endif
 
 	if (unregister_dir())
 		return error(_("failed to unregister repository"));
 
-#ifdef WIN32
 	/*
 	 * Change the current directory to one outside of the enlistment so
 	 * that we may delete everything underneath it.
@@ -385,7 +382,6 @@ static int delete_enlistment(struct strbuf *enlistment)
 		return res;
 	}
 	strbuf_release(&parent);
-#endif
 
 	if (have_fsmonitor_support() && stop_fsmonitor_daemon())
 		return error(_("failed to stop the FSMonitor daemon"));
