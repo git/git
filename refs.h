@@ -130,6 +130,11 @@ int ref_store_create_on_disk(struct ref_store *refs, int flags, struct strbuf *e
 void ref_store_release(struct ref_store *ref_store);
 
 /*
+ * Remove the ref store from disk. This deletes all associated data.
+ */
+int ref_store_remove_on_disk(struct ref_store *refs, struct strbuf *err);
+
+/*
  * Return the peeled value of the oid currently being iterated via
  * for_each_ref(), etc. This is equivalent to calling:
  *
