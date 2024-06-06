@@ -12,7 +12,9 @@ EOF
 	sed -n -e 's/.*XXX \(.*\) YYY.*/\1/p'
 }
 
-check_missing_docs () {
+check_missing_docs () (
+	ret=0
+
 	for v in $ALL_COMMANDS
 	do
 		case "$v" in
@@ -32,6 +34,7 @@ check_missing_docs () {
 		if ! test -f "$v.txt"
 		then
 			echo "no doc: $v"
+			ret=1
 		fi
 
 		if ! sed -e '1,/^### command list/d' -e '/^#/d' ../command-list.txt |
@@ -41,11 +44,15 @@ check_missing_docs () {
 			git)
 				;;
 			*)
-				echo "no link: $v";;
+				echo "no link: $v"
+				ret=1
+				;;
 			esac
 		fi
 	done
-}
+
+	exit $ret
+)
 
 check_extraneous_docs () {
 	(
@@ -61,15 +68,19 @@ check_extraneous_docs () {
 		    -e 's/\.txt//'
 	) | (
 		all_commands="$(printf "%s " "$ALL_COMMANDS" "$BUILT_INS" "$EXCLUDED_PROGRAMS" | tr '\n' ' ')"
+		ret=0
 
 		while read how cmd
 		do
 			case " $all_commands " in
 			*" $cmd "*) ;;
 			*)
-				echo "removed but $how: $cmd";;
+				echo "removed but $how: $cmd"
+				ret=1;;
 			esac
 		done
+
+		exit $ret
 	)
 }
 
@@ -77,7 +88,21 @@ BUILT_INS="$(extract_variable BUILT_INS)"
 ALL_COMMANDS="$(extract_variable ALL_COMMANDS)"
 EXCLUDED_PROGRAMS="$(extract_variable EXCLUDED_PROGRAMS)"
 
-{
-	check_missing_docs
-	check_extraneous_docs
-} | sort
+findings=$(
+	if ! check_missing_docs
+	then
+		ret=1
+	fi
+
+	if ! check_extraneous_docs
+	then
+		ret=1
+	fi
+
+	exit $ret
+)
+ret=$?
+
+printf "%s" "$findings" | sort
+
+exit $ret
