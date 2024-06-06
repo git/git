@@ -328,7 +328,7 @@ ubuntu-*)
 	# Python 2 is end of life, and Ubuntu 23.04 and newer don't actually
 	# have it anymore. We thus only test with Python 2 on older LTS
 	# releases.
-	if "$distro" = "ubuntu-20.04"
+	if test "$distro" = "ubuntu-20.04"
 	then
 		PYTHON_PACKAGE=python2
 	else
