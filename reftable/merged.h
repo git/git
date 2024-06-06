@@ -24,6 +24,4 @@ struct reftable_merged_table {
 	uint64_t max;
 };
 
-void merged_table_release(struct reftable_merged_table *mt);
-
 #endif
