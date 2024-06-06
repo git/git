@@ -324,16 +324,14 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 }
 
 /*
- * Add pseudorefs to the ref dir by parsing the directory for any files
- * which follow the pseudoref syntax.
+ * Add root refs to the ref dir by parsing the directory for any files which
+ * follow the root ref syntax.
  */
-static void add_pseudoref_and_head_entries(struct ref_store *ref_store,
-					 struct ref_dir *dir,
-					 const char *dirname)
+static void add_root_refs(struct files_ref_store *refs,
+			  struct ref_dir *dir)
 {
-	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_READ, "fill_ref_dir");
 	struct strbuf path = STRBUF_INIT, refname = STRBUF_INIT;
+	const char *dirname = refs->loose->root->name;
 	struct dirent *de;
 	size_t dirnamelen;
 	DIR *d;
@@ -388,8 +386,7 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
 		dir = get_ref_dir(refs->loose->root);
 
 		if (flags & DO_FOR_EACH_INCLUDE_ROOT_REFS)
-			add_pseudoref_and_head_entries(dir->cache->ref_store, dir,
-						       refs->loose->root->name);
+			add_root_refs(refs, dir);
 
 		/*
 		 * Add an incomplete entry for "refs/" (to be filled
