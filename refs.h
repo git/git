@@ -1071,6 +1071,24 @@ int is_root_ref(const char *refname);
 int is_pseudo_ref(const char *refname);
 
 /*
+ * The following flags can be passed to `repo_migrate_ref_storage_format()`:
+ *
+ *   - REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN: perform a dry-run migration
+ *     without touching the main repository. The result will be written into a
+ *     temporary ref storage directory.
+ */
+#define REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN (1 << 0)
+
+/*
+ * Migrate the ref storage format used by the repository to the
+ * specified one.
+ */
+int repo_migrate_ref_storage_format(struct repository *repo,
+				    enum ref_storage_format format,
+				    unsigned int flags,
+				    struct strbuf *err);
+
+/*
  * The following functions have been removed in Git v2.45 in favor of functions
  * that receive a `ref_store` as parameter. The intent of this section is
  * merely to help patch authors of in-flight series to have a reference what
