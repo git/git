@@ -42,10 +42,10 @@ void free_names(char **a);
 void parse_names(char *buf, int size, char ***namesp);
 
 /* compares two NULL-terminated arrays of strings. */
-int names_equal(char **a, char **b);
+int names_equal(const char **a, const char **b);
 
 /* returns the array size of a NULL-terminated array of strings. */
-size_t names_length(char **names);
+size_t names_length(const char **names);
 
 /* Allocation routines; they invoke the functions set through
  * reftable_set_alloc() */

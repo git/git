@@ -406,7 +406,7 @@ static const char *get_highest_rename_path(struct strintmap *counts)
 	return highest_destination_dir;
 }
 
-static char *UNKNOWN_DIR = "/";  /* placeholder -- short, illegal directory */
+static const char *UNKNOWN_DIR = "/";  /* placeholder -- short, illegal directory */
 
 static int dir_rename_already_determinable(struct strintmap *counts)
 {
@@ -429,8 +429,8 @@ static int dir_rename_already_determinable(struct strintmap *counts)
 }
 
 static void increment_count(struct dir_rename_info *info,
-			    char *old_dir,
-			    char *new_dir)
+			    const char *old_dir,
+			    const char *new_dir)
 {
 	struct strintmap *counts;
 	struct strmap_entry *e;
