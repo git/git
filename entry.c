@@ -167,6 +167,11 @@ static int remove_available_paths(struct string_list_item *item, void *cb_data)
 	return !available;
 }
 
+static int string_is_not_null(struct string_list_item *item, void *data UNUSED)
+{
+	return !!item->string;
+}
+
 int finish_delayed_checkout(struct checkout *state, int show_progress)
 {
 	int errs = 0;
@@ -189,7 +194,7 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 			if (!async_query_available_blobs(filter->string, &available_paths)) {
 				/* Filter reported an error */
 				errs = 1;
-				filter->string = "";
+				filter->string = NULL;
 				continue;
 			}
 			if (available_paths.nr <= 0) {
@@ -199,7 +204,7 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 				 * filter from the list (see
 				 * "string_list_remove_empty_items" call below).
 				 */
-				filter->string = "";
+				filter->string = NULL;
 				continue;
 			}
 
@@ -225,7 +230,7 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 					 * Do not ask the filter for available blobs,
 					 * again, as the filter is likely buggy.
 					 */
-					filter->string = "";
+					filter->string = NULL;
 					continue;
 				}
 				ce = index_file_exists(state->istate, path->string,
@@ -239,7 +244,8 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 					errs = 1;
 			}
 		}
-		string_list_remove_empty_items(&dco->filters, 0);
+
+		filter_string_list(&dco->filters, 0, string_is_not_null, NULL);
 	}
 	stop_progress(&progress);
 	string_list_clear(&dco->filters, 0);
