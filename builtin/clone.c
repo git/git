@@ -523,6 +523,9 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 	struct ref *head = copy_ref(find_ref_by_name(refs, "HEAD"));
 	struct ref *local_refs = head;
 	struct ref **tail = head ? &head->next : &local_refs;
+	struct refspec_item tag_refspec;
+
+	refspec_item_init(&tag_refspec, TAG_REFSPEC, 0);
 
 	if (option_single_branch) {
 		struct ref *remote_head = NULL;
@@ -545,7 +548,7 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 					      &tail, 0);
 
 			/* if --branch=tag, pull the requested tag explicitly */
-			get_fetch_map(remote_head, tag_refspec, &tail, 0);
+			get_fetch_map(remote_head, &tag_refspec, &tail, 0);
 		}
 		free_refs(remote_head);
 	} else {
@@ -555,8 +558,9 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 	}
 
 	if (!option_mirror && !option_single_branch && !option_no_tags)
-		get_fetch_map(refs, tag_refspec, &tail, 0);
+		get_fetch_map(refs, &tag_refspec, &tail, 0);
 
+	refspec_item_clear(&tag_refspec);
 	return local_refs;
 }
 
