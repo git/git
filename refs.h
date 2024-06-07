@@ -767,7 +767,9 @@ int ref_transaction_create(struct ref_transaction *transaction,
 int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
 			   const struct object_id *old_oid,
-			   unsigned int flags, const char *msg,
+			   const char *old_target,
+			   unsigned int flags,
+			   const char *msg,
 			   struct strbuf *err);
 
 /*

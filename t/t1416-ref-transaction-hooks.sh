@@ -162,6 +162,7 @@ test_expect_success 'hook gets all queued symref updates' '
 
 	git update-ref refs/heads/branch $POST_OID &&
 	git symbolic-ref refs/heads/symref refs/heads/main &&
+	git symbolic-ref refs/heads/symrefd refs/heads/main &&
 
 	test_hook reference-transaction <<-\EOF &&
 	echo "$*" >>actual
@@ -171,16 +172,32 @@ test_expect_success 'hook gets all queued symref updates' '
 	done >>actual
 	EOF
 
-	cat >expect <<-EOF &&
+	# In the files backend, "delete" also triggers an additional transaction
+	# update on the packed-refs backend, which constitutes additional reflog
+	# entries.
+	if test_have_prereq REFFILES
+	then
+		cat >expect <<-EOF
+		aborted
+		$ZERO_OID $ZERO_OID refs/heads/symrefd
+		EOF
+	else
+		>expect
+	fi &&
+
+	cat >>expect <<-EOF &&
 	prepared
 	ref:refs/heads/main $ZERO_OID refs/heads/symref
+	ref:refs/heads/main $ZERO_OID refs/heads/symrefd
 	committed
 	ref:refs/heads/main $ZERO_OID refs/heads/symref
+	ref:refs/heads/main $ZERO_OID refs/heads/symrefd
 	EOF
 
 	git update-ref --no-deref --stdin <<-EOF &&
 	start
 	symref-verify refs/heads/symref refs/heads/main
+	symref-delete refs/heads/symrefd refs/heads/main
 	prepare
 	commit
 	EOF

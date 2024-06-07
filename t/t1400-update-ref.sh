@@ -1729,6 +1729,74 @@ do
 		test_cmp expect actual
 	'
 
+	test_expect_success "stdin $type symref-delete fails without --no-deref" '
+		git symbolic-ref refs/heads/symref $a &&
+		format_command $type "symref-delete refs/heads/symref" "$a" >stdin &&
+		test_must_fail git update-ref --stdin $type <stdin 2>err &&
+		grep "fatal: symref-delete: cannot operate with deref mode" err
+	'
+
+	test_expect_success "stdin $type symref-delete fails with no ref" '
+		format_command $type "symref-delete " >stdin &&
+		test_must_fail git update-ref --stdin $type --no-deref <stdin 2>err &&
+		grep "fatal: symref-delete: missing <ref>" err
+	'
+
+	test_expect_success "stdin $type symref-delete fails deleting regular ref" '
+		test_when_finished "git update-ref -d refs/heads/regularref" &&
+		git update-ref refs/heads/regularref $a &&
+		format_command $type "symref-delete refs/heads/regularref" "$a" >stdin &&
+		test_must_fail git update-ref --stdin $type --no-deref <stdin 2>err &&
+		grep "fatal: cannot lock ref ${SQ}refs/heads/regularref${SQ}: expected symref with target ${SQ}$a${SQ}: but is a regular ref" err
+	'
+
+	test_expect_success "stdin $type symref-delete fails with too many arguments" '
+		format_command $type "symref-delete refs/heads/symref" "$a" "$a" >stdin &&
+		test_must_fail git update-ref --stdin $type --no-deref <stdin 2>err &&
+		if test "$type" = "-z"
+		then
+			grep "fatal: unknown command: $a" err
+		else
+			grep "fatal: symref-delete refs/heads/symref: extra input:  $a" err
+		fi
+	'
+
+	test_expect_success "stdin $type symref-delete fails with wrong old value" '
+		format_command $type "symref-delete refs/heads/symref" "$m" >stdin &&
+		test_must_fail git update-ref --stdin $type --no-deref <stdin 2>err &&
+		grep "fatal: verifying symref target: ${SQ}refs/heads/symref${SQ}: is at $a but expected refs/heads/main" err &&
+		git symbolic-ref refs/heads/symref >expect &&
+		echo $a >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "stdin $type symref-delete works with right old value" '
+		format_command $type "symref-delete refs/heads/symref" "$a" >stdin &&
+		git update-ref --stdin $type --no-deref <stdin &&
+		test_must_fail git rev-parse --verify -q refs/heads/symref
+	'
+
+	test_expect_success "stdin $type symref-delete works with empty old value" '
+		git symbolic-ref refs/heads/symref $a >stdin &&
+		format_command $type "symref-delete refs/heads/symref" "" >stdin &&
+		git update-ref --stdin $type --no-deref <stdin &&
+		test_must_fail git rev-parse --verify -q $b
+	'
+
+	test_expect_success "stdin $type symref-delete succeeds for dangling reference" '
+		test_must_fail git symbolic-ref refs/heads/nonexistent &&
+		git symbolic-ref refs/heads/symref2 refs/heads/nonexistent &&
+		format_command $type "symref-delete refs/heads/symref2" "refs/heads/nonexistent" >stdin &&
+		git update-ref --stdin $type --no-deref <stdin &&
+		test_must_fail git symbolic-ref -d refs/heads/symref2
+	'
+
+	test_expect_success "stdin $type symref-delete deletes regular ref without target" '
+		git update-ref refs/heads/regularref $a &&
+		format_command $type "symref-delete refs/heads/regularref" >stdin &&
+		git update-ref --stdin $type --no-deref <stdin
+	'
+
 done
 
 test_done
