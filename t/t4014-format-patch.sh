@@ -820,8 +820,8 @@ test_expect_success 'format-patch --notes --signoff' '
 '
 
 test_expect_success 'format-patch notes output control' '
+	test_when_finished "git notes remove HEAD || :" &&
 	git notes add -m "notes config message" HEAD &&
-	test_when_finished git notes remove HEAD &&
 
 	git format-patch -1 --stdout >out &&
 	! grep "notes config message" out &&
@@ -848,10 +848,10 @@ test_expect_success 'format-patch notes output control' '
 '
 
 test_expect_success 'format-patch with multiple notes refs' '
+	test_when_finished "git notes --ref note1 remove HEAD;
+			    git notes --ref note2 remove HEAD || :" &&
 	git notes --ref note1 add -m "this is note 1" HEAD &&
-	test_when_finished git notes --ref note1 remove HEAD &&
 	git notes --ref note2 add -m "this is note 2" HEAD &&
-	test_when_finished git notes --ref note2 remove HEAD &&
 
 	git format-patch -1 --stdout >out &&
 	! grep "this is note 1" out &&
@@ -892,10 +892,10 @@ test_expect_success 'format-patch with multiple notes refs' '
 test_expect_success 'format-patch with multiple notes refs in config' '
 	test_when_finished "test_unconfig format.notes" &&
 
+	test_when_finished "git notes --ref note1 remove HEAD;
+			    git notes --ref note2 remove HEAD || :" &&
 	git notes --ref note1 add -m "this is note 1" HEAD &&
-	test_when_finished git notes --ref note1 remove HEAD &&
 	git notes --ref note2 add -m "this is note 2" HEAD &&
-	test_when_finished git notes --ref note2 remove HEAD &&
 
 	git config format.notes note1 &&
 	git format-patch -1 --stdout >out &&
