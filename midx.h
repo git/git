@@ -74,9 +74,13 @@ struct multi_pack_index {
 #define MIDX_WRITE_BITMAP_HASH_CACHE (1 << 3)
 #define MIDX_WRITE_BITMAP_LOOKUP_TABLE (1 << 4)
 
+#define MIDX_EXT_REV "rev"
+#define MIDX_EXT_BITMAP "bitmap"
+
 const unsigned char *get_midx_checksum(struct multi_pack_index *m);
 void get_midx_filename(struct strbuf *out, const char *object_dir);
-void get_midx_rev_filename(struct strbuf *out, struct multi_pack_index *m);
+void get_midx_filename_ext(struct strbuf *out, const char *object_dir,
+			   const unsigned char *hash, const char *ext);
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);

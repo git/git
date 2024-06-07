@@ -350,6 +350,29 @@ test_expect_success 'preferred packs must be non-empty' '
 	)
 '
 
+test_expect_success 'preferred pack from existing MIDX without bitmaps' '
+	git init preferred-without-bitmaps &&
+	(
+		cd preferred-without-bitmaps &&
+
+		test_commit one &&
+		pack="$(git pack-objects --all $objdir/pack/pack </dev/null)" &&
+
+		git multi-pack-index write &&
+
+		# make another pack so that the subsequent MIDX write
+		# has something to do
+		test_commit two &&
+		git repack -d &&
+
+		# write a new MIDX without bitmaps reusing the singular
+		# pack from the existing MIDX as the preferred pack in
+		# the new MIDX
+		git multi-pack-index write --preferred-pack=pack-$pack.pack
+	)
+
+'
+
 test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir
 '
