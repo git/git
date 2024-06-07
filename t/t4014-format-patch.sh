@@ -2445,6 +2445,21 @@ test_expect_success 'interdiff: solo-patch' '
 	test_cmp expect actual
 '
 
+test_expect_success 'interdiff: multi-patch, implicit --cover-letter' '
+	test_when_finished "rm -f v23-0*.patch" &&
+	git format-patch --interdiff=boop~2 -2 -v23 &&
+	test_grep "^Interdiff against v22:$" v23-0000-cover-letter.patch &&
+	test_cmp expect actual
+'
+
+test_expect_success 'interdiff: explicit --no-cover-letter defeats implied --cover-letter' '
+	test_when_finished "rm -f v23-0*.patch" &&
+	test_must_fail git format-patch --no-cover-letter \
+		--interdiff=boop~2 -2 -v23 &&
+	test_must_fail git -c format.coverLetter=no format-patch \
+		--interdiff=boop~2 -2 -v23
+'
+
 test_expect_success 'format-patch does not respect diff.noprefix' '
 	git -c diff.noprefix format-patch -1 --stdout >actual &&
 	grep "^--- a/blorp" actual

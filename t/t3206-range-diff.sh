@@ -545,6 +545,20 @@ do
 	'
 done
 
+test_expect_success "--range-diff implies --cover-letter for multi-patch series" '
+	test_when_finished "rm -f v2-000?-*" &&
+	git format-patch -v2 --range-diff=topic main..unmodified &&
+	test_grep "^Range-diff against v1:$" v2-0000-cover-letter.patch
+'
+
+test_expect_success "explicit --no-cover-letter defeats implied --cover-letter" '
+	test_when_finished "rm -f v2-000?-*" &&
+	test_must_fail git format-patch --no-cover-letter \
+		-v2 --range-diff=topic main..unmodified &&
+	test_must_fail git -c format.coverLetter=no format-patch \
+		-v2 --range-diff=topic main..unmodified
+'
+
 test_expect_success 'format-patch --range-diff as commentary' '
 	git format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
 	test_when_finished "rm 0001-*" &&
