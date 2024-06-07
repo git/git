@@ -1,0 +1,23 @@
+git-backfill(1)
+===============
+
+NAME
+----
+git-backfill - Download missing objects in a partial clone
+
+
+SYNOPSIS
+--------
+[verse]
+'git backfill' [<options>]
+
+DESCRIPTION
+-----------
+
+SEE ALSO
+--------
+linkgit:git-clone[1].
+
+GIT
+---
+Part of the linkgit:git[1] suite
