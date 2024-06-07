@@ -179,7 +179,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 
 	/* Check for incompatible command line arguments */
 	if (cmd) {
-		char *this_operation;
+		const char *this_operation;
 		if (cmd == 'q')
 			this_operation = "--quit";
 		else if (cmd == 'c')

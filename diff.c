@@ -56,14 +56,14 @@ static int diff_color_moved_default;
 static int diff_color_moved_ws_default;
 static int diff_context_default = 3;
 static int diff_interhunk_context_default;
-static const char *diff_word_regex_cfg;
-static const char *external_diff_cmd_cfg;
-static const char *diff_order_file_cfg;
+static char *diff_word_regex_cfg;
+static char *external_diff_cmd_cfg;
+static char *diff_order_file_cfg;
 int diff_auto_refresh_index = 1;
 static int diff_mnemonic_prefix;
 static int diff_no_prefix;
-static const char *diff_src_prefix = "a/";
-static const char *diff_dst_prefix = "b/";
+static char *diff_src_prefix;
+static char *diff_dst_prefix;
 static int diff_relative;
 static int diff_stat_name_width;
 static int diff_stat_graph_width;
@@ -411,9 +411,11 @@ int git_diff_ui_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "diff.srcprefix")) {
+		FREE_AND_NULL(diff_src_prefix);
 		return git_config_string(&diff_src_prefix, var, value);
 	}
 	if (!strcmp(var, "diff.dstprefix")) {
+		FREE_AND_NULL(diff_dst_prefix);
 		return git_config_string(&diff_dst_prefix, var, value);
 	}
 	if (!strcmp(var, "diff.relative")) {
@@ -3433,8 +3435,8 @@ void diff_set_noprefix(struct diff_options *options)
 
 void diff_set_default_prefix(struct diff_options *options)
 {
-	options->a_prefix = diff_src_prefix;
-	options->b_prefix = diff_dst_prefix;
+	options->a_prefix = diff_src_prefix ? diff_src_prefix : "a/";
+	options->b_prefix = diff_dst_prefix ? diff_dst_prefix : "b/";
 }
 
 struct userdiff_driver *get_textconv(struct repository *r,
@@ -3762,7 +3764,7 @@ static void builtin_diff(const char *name_a,
 	return;
 }
 
-static char *get_compact_summary(const struct diff_filepair *p, int is_renamed)
+static const char *get_compact_summary(const struct diff_filepair *p, int is_renamed)
 {
 	if (!is_renamed) {
 		if (p->status == DIFF_STATUS_ADDED) {
@@ -4074,7 +4076,7 @@ static int reuse_worktree_file(struct index_state *istate,
 static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 {
 	struct strbuf buf = STRBUF_INIT;
-	char *dirty = "";
+	const char *dirty = "";
 
 	/* Are we looking at the work tree? */
 	if (s->dirty_submodule)
@@ -5371,8 +5373,8 @@ static int diff_opt_default_prefix(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(optarg);
-	diff_src_prefix = "a/";
-	diff_dst_prefix = "b/";
+	FREE_AND_NULL(diff_src_prefix);
+	FREE_AND_NULL(diff_dst_prefix);
 	diff_set_default_prefix(options);
 	return 0;
 }
@@ -7233,7 +7235,7 @@ size_t fill_textconv(struct repository *r,
 
 	if (!driver) {
 		if (!DIFF_FILE_VALID(df)) {
-			*outbuf = "";
+			*outbuf = (char *) "";
 			return 0;
 		}
 		if (diff_populate_filespec(r, df, NULL))

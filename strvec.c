@@ -56,6 +56,26 @@ void strvec_pushv(struct strvec *array, const char **items)
 		strvec_push(array, *items);
 }
 
+const char *strvec_replace(struct strvec *array, size_t idx, const char *replacement)
+{
+	char *to_free;
+	if (idx >= array->nr)
+		BUG("index outside of array boundary");
+	to_free = (char *) array->v[idx];
+	array->v[idx] = xstrdup(replacement);
+	free(to_free);
+	return array->v[idx];
+}
+
+void strvec_remove(struct strvec *array, size_t idx)
+{
+	if (idx >= array->nr)
+		BUG("index outside of array boundary");
+	free((char *)array->v[idx]);
+	memmove(array->v + idx, array->v + idx + 1, (array->nr - idx) * sizeof(char *));
+	array->nr--;
+}
+
 void strvec_pop(struct strvec *array)
 {
 	if (!array->nr)

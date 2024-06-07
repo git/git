@@ -134,7 +134,7 @@ static void get_ac_line(const char *inbuf, const char *what,
 {
 	struct ident_split ident;
 	size_t len, maillen, namelen;
-	char *tmp, *endp;
+	const char *tmp, *endp;
 	const char *namebuf, *mailbuf;
 
 	tmp = strstr(inbuf, what);
@@ -718,7 +718,7 @@ static int git_blame_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "blame.ignorerevsfile")) {
-		const char *str;
+		char *str;
 		int ret;
 
 		ret = git_config_pathname(&str, var, value);

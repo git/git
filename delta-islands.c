@@ -313,7 +313,7 @@ struct island_load_data {
 	size_t nr;
 	size_t alloc;
 };
-static const char *core_island_name;
+static char *core_island_name;
 
 static void free_config_regexes(struct island_load_data *ild)
 {

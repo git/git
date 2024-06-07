@@ -3,9 +3,9 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='Test rename detection in diff engine.
+test_description='Test rename detection in diff engine.'
 
-'
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 
