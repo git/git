@@ -931,6 +931,16 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		 * backend returns, which keeps our tests happy.
 		 */
 		if (u->old_target) {
+			if (!(u->type & REF_ISSYMREF)) {
+				strbuf_addf(err, _("cannot lock ref '%s': "
+					   "expected symref with target '%s': "
+					   "but is a regular ref"),
+					    ref_update_original_update_refname(u),
+					    u->old_target);
+				ret = -1;
+				goto done;
+			}
+
 			if (ref_update_check_old_target(referent.buf, u, err)) {
 				ret = -1;
 				goto done;
