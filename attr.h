@@ -190,6 +190,8 @@ struct attr_check {
 };
 
 struct attr_check *attr_check_alloc(void);
+
+LAST_ARG_MUST_BE_NULL
 struct attr_check *attr_check_initl(const char *, ...);
 struct attr_check *attr_check_dup(const struct attr_check *check);
 

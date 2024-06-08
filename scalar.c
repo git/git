@@ -70,6 +70,7 @@ static void setup_enlistment_directory(int argc, const char **argv,
 	strbuf_release(&path);
 }
 
+LAST_ARG_MUST_BE_NULL
 static int run_git(const char *arg, ...)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;

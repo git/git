@@ -86,5 +86,6 @@ int run_hooks(const char *hook_name);
  * argument. These things will be used as positional arguments to the
  * hook. This function behaves like the old run_hook_le() API.
  */
+LAST_ARG_MUST_BE_NULL
 int run_hooks_l(const char *hook_name, ...);
 #endif
