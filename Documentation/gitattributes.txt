@@ -776,6 +776,11 @@ with the above configuration, i.e. `j-c-diff`, with 7
 parameters, just like `GIT_EXTERNAL_DIFF` program is called.
 See linkgit:git[1] for details.
 
+If the program is able to ignore certain changes (similar to
+`git diff --ignore-space-change`), then also set the option
+`trustExitCode` to true.  It is then expected to return exit code 1 if
+it finds significant changes and 0 if it doesn't.
+
 Setting the internal diff algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

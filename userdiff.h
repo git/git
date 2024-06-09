@@ -13,6 +13,7 @@ struct userdiff_funcname {
 
 struct external_diff {
 	char *cmd;
+	unsigned trust_exit_code:1;
 };
 
 struct userdiff_driver {

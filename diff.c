@@ -432,6 +432,10 @@ int git_diff_ui_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "diff.external"))
 		return git_config_string(&external_diff_cfg.cmd, var, value);
+	if (!strcmp(var, "diff.trustexitcode")) {
+		external_diff_cfg.trust_exit_code = git_config_bool(var, value);
+		return 0;
+	}
 	if (!strcmp(var, "diff.wordregex"))
 		return git_config_string(&diff_word_regex_cfg, var, value);
 	if (!strcmp(var, "diff.orderfile"))
@@ -556,6 +560,8 @@ static const struct external_diff *external_diff(void)
 	if (done_preparing)
 		return external_diff_ptr;
 	external_diff_env.cmd = xstrdup_or_null(getenv("GIT_EXTERNAL_DIFF"));
+	if (git_env_bool("GIT_EXTERNAL_DIFF_TRUST_EXIT_CODE", 0))
+		external_diff_env.trust_exit_code = 1;
 	if (external_diff_env.cmd)
 		external_diff_ptr = &external_diff_env;
 	else if (external_diff_cfg.cmd)
@@ -4387,6 +4393,19 @@ static void run_external_diff(const struct external_diff *pgm,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
+	int quiet = !(o->output_format & DIFF_FORMAT_PATCH);
+	int rc;
+
+	/*
+	 * Trivial equality is handled by diff_unmodified_pair() before
+	 * we get here.  If we don't need to show the diff and the
+	 * external diff program lacks the ability to tell us whether
+	 * it's empty then we consider it non-empty without even asking.
+	 */
+	if (!pgm->trust_exit_code && quiet) {
+		o->found_changes = 1;
+		return;
+	}
 
 	strvec_push(&cmd.args, pgm->cmd);
 	strvec_push(&cmd.args, name);
@@ -4408,7 +4427,15 @@ static void run_external_diff(const struct external_diff *pgm,
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	cmd.use_shell = 1;
-	if (run_command(&cmd))
+	cmd.no_stdout = quiet;
+	rc = run_command(&cmd);
+	if (!pgm->trust_exit_code && rc == 0)
+		o->found_changes = 1;
+	else if (pgm->trust_exit_code && rc == 0)
+		; /* nothing */
+	else if (pgm->trust_exit_code && rc == 1)
+		o->found_changes = 1;
+	else
 		die(_("external diff died, stopping at %s"), name);
 
 	remove_tempfile();
@@ -4925,6 +4952,13 @@ void diff_setup_done(struct diff_options *options)
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
 		options->flags.exit_with_status = 1;
 	}
+
+	/*
+	 * External diffs could declare non-identical contents equal
+	 * (think diff --ignore-space-change).
+	 */
+	if (options->flags.allow_external && options->flags.exit_with_status)
+		options->flags.diff_from_contents = 1;
 
 	options->diff_path_counter = 0;
 

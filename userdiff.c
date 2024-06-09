@@ -446,6 +446,10 @@ int userdiff_config(const char *k, const char *v)
 		return parse_tristate(&drv->binary, k, v);
 	if (!strcmp(type, "command"))
 		return git_config_string(&drv->external.cmd, k, v);
+	if (!strcmp(type, "trustexitcode")) {
+		drv->external.trust_exit_code = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(type, "textconv"))
 		return git_config_string(&drv->textconv, k, v);
 	if (!strcmp(type, "cachetextconv"))
