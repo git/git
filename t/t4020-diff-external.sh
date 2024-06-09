@@ -172,6 +172,59 @@ test_expect_success 'no diff with -diff' '
 	grep Binary out
 '
 
+check_external_diff () {
+	expect_code=$1
+	expect_out=$2
+	expect_err=$3
+	command_code=$4
+	shift 4
+	options="$@"
+
+	command="echo output; exit $command_code;"
+	desc="external diff '$command'"
+	with_options="${options:+ with }$options"
+
+	test_expect_success "$desc via attribute$with_options" "
+		test_config diff.foo.command \"$command\" &&
+		echo \"file diff=foo\" >.gitattributes &&
+		test_expect_code $expect_code git diff $options >out 2>err &&
+		test_cmp $expect_out out &&
+		test_cmp $expect_err err
+	"
+
+	test_expect_success "$desc via diff.external$with_options" "
+		test_config diff.external \"$command\" &&
+		>.gitattributes &&
+		test_expect_code $expect_code git diff $options >out 2>err &&
+		test_cmp $expect_out out &&
+		test_cmp $expect_err err
+	"
+
+	test_expect_success "$desc via GIT_EXTERNAL_DIFF$with_options" "
+		>.gitattributes &&
+		test_expect_code $expect_code env \
+			GIT_EXTERNAL_DIFF=\"$command\" \
+			git diff $options >out 2>err &&
+		test_cmp $expect_out out &&
+		test_cmp $expect_err err
+	"
+}
+
+test_expect_success 'setup output files' '
+	: >empty &&
+	echo output >output &&
+	echo "fatal: external diff died, stopping at file" >error
+'
+
+check_external_diff   0 output empty 0
+check_external_diff 128 output error 1
+
+check_external_diff   1 output empty 0 --exit-code
+check_external_diff 128 output error 1 --exit-code
+
+check_external_diff   1 empty  empty 0 --quiet
+check_external_diff   1 empty  empty 1 --quiet # we don't even call the program
+
 echo NULZbetweenZwords | perl -pe 'y/Z/\000/' > file
 
 test_expect_success 'force diff with "diff"' '
