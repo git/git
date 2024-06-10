@@ -117,6 +117,8 @@ Performance, Internal Implementation, Development Support etc.
  * "git add -p" learned to complain when an answer with more than one
    letter is given to a prompt that expects a single letter answer.
 
+ * The alias-expanded command lines are logged to the trace output.
+
 
 Fixes since v2.45
 -----------------
@@ -209,6 +211,8 @@ Fixes since v2.45
    configuration has includeif.onbranch, started to fail recently,
    which has been corrected.
    (merge 407997c1dd ps/fix-reinit-includeif-onbranch later to maint).
+
+ * Memory leaks in "git mv" has been plugged.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
