@@ -1219,11 +1219,16 @@ void prune_notes(struct notes_tree *t, int flags)
 	for_each_note(t, 0, prune_notes_helper, &l);
 
 	while (l) {
+		struct note_delete_list *next;
+
 		if (flags & NOTES_PRUNE_VERBOSE)
 			printf("%s\n", hash_to_hex(l->sha1));
 		if (!(flags & NOTES_PRUNE_DRYRUN))
 			remove_note(t, l->sha1);
-		l = l->next;
+
+		next = l->next;
+		free(l);
+		l = next;
 	}
 }
 
