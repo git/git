@@ -3800,6 +3800,9 @@ static void merge_finalize(struct merge_options *opt)
 	if (show(opt, 2))
 		diff_warn_rename_limit("merge.renamelimit",
 				       opt->priv->needed_rename_limit, 0);
+	hashmap_clear_and_free(&opt->priv->current_file_dir_set,
+			       struct path_hashmap_entry, e);
+	string_list_clear(&opt->priv->df_conflict_file_set, 0);
 	FREE_AND_NULL(opt->priv);
 }
 
