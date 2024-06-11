@@ -123,7 +123,7 @@ int merge_recursive_generic(struct merge_options *opt,
 			    const struct object_id *head,
 			    const struct object_id *merge,
 			    int num_merge_bases,
-			    const struct object_id **merge_bases,
+			    const struct object_id *merge_bases,
 			    struct commit **result);
 
 #endif

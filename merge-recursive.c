@@ -3866,7 +3866,7 @@ int merge_recursive_generic(struct merge_options *opt,
 			    const struct object_id *head,
 			    const struct object_id *merge,
 			    int num_merge_bases,
-			    const struct object_id **merge_bases,
+			    const struct object_id *merge_bases,
 			    struct commit **result)
 {
 	int clean;
@@ -3879,10 +3879,10 @@ int merge_recursive_generic(struct merge_options *opt,
 		int i;
 		for (i = 0; i < num_merge_bases; ++i) {
 			struct commit *base;
-			if (!(base = get_ref(opt->repo, merge_bases[i],
-					     oid_to_hex(merge_bases[i]))))
+			if (!(base = get_ref(opt->repo, &merge_bases[i],
+					     oid_to_hex(&merge_bases[i]))))
 				return err(opt, _("Could not parse object '%s'"),
-					   oid_to_hex(merge_bases[i]));
+					   oid_to_hex(&merge_bases[i]));
 			commit_list_insert(base, &ca);
 		}
 		if (num_merge_bases == 1)
