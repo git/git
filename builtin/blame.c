@@ -687,7 +687,7 @@ static unsigned parse_score(const char *arg)
 	return score;
 }
 
-static const char *add_prefix(const char *prefix, const char *path)
+static char *add_prefix(const char *prefix, const char *path)
 {
 	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
@@ -865,7 +865,7 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
-	const char *path;
+	char *path = NULL;
 	struct blame_scoreboard sb;
 	struct blame_origin *o;
 	struct blame_entry *ent = NULL;
@@ -1226,6 +1226,7 @@ parse_done:
 	}
 
 cleanup:
+	free(path);
 	cleanup_scoreboard(&sb);
 	release_revisions(&revs);
 	return 0;
