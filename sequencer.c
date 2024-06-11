@@ -5951,6 +5951,9 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	strbuf_release(&oneline);
 	strbuf_release(&buf);
 
+	oidset_clear(&interesting);
+	oidset_clear(&child_seen);
+	oidset_clear(&shown);
 	oidmap_free(&commit2todo, 1);
 	oidmap_free(&state.commit2label, 1);
 	hashmap_clear_and_free(&state.labels, struct labels_entry, entry);
