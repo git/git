@@ -174,7 +174,7 @@ test_expect_success TTY 'with TTY: gc --no-quiet' '
 		git -c gc.writeCommitGraph=true gc --no-quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_i18ngrep "Enumerating objects" stderr &&
-	test_i18ngrep "Computing commit graph generation numbers" stderr
+	test_i18ngrep "Computing commit graph generation numbers: 100% (4/4), done." stderr
 '
 
 test_expect_success 'gc --quiet' '
