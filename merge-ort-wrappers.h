@@ -19,7 +19,7 @@ int merge_ort_nonrecursive(struct merge_options *opt,
 int merge_ort_recursive(struct merge_options *opt,
 			struct commit *h1,
 			struct commit *h2,
-			struct commit_list *ancestors,
+			const struct commit_list *ancestors,
 			struct commit **result);
 
 #endif

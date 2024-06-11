@@ -4315,6 +4315,7 @@ leave_merge:
 	strbuf_release(&ref_name);
 	rollback_lock_file(&lock);
 	free_commit_list(to_merge);
+	free_commit_list(bases);
 	return ret;
 }
 

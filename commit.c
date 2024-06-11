@@ -680,7 +680,7 @@ unsigned commit_list_count(const struct commit_list *l)
 	return c;
 }
 
-struct commit_list *copy_commit_list(struct commit_list *list)
+struct commit_list *copy_commit_list(const struct commit_list *list)
 {
 	struct commit_list *head = NULL;
 	struct commit_list **pp = &head;

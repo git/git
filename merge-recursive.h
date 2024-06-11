@@ -104,7 +104,7 @@ int merge_trees(struct merge_options *opt,
 int merge_recursive(struct merge_options *opt,
 		    struct commit *h1,
 		    struct commit *h2,
-		    struct commit_list *merge_bases,
+		    const struct commit_list *merge_bases,
 		    struct commit **result);
 
 /*

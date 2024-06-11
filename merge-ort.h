@@ -59,7 +59,7 @@ struct merge_result {
  *           first", 2006-08-09)
  */
 void merge_incore_recursive(struct merge_options *opt,
-			    struct commit_list *merge_bases,
+			    const struct commit_list *merge_bases,
 			    struct commit *side1,
 			    struct commit *side2,
 			    struct merge_result *result);

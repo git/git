@@ -746,6 +746,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 		else
 			clean = merge_recursive(&o, head, remoteheads->item,
 						reversed, &result);
+		free_commit_list(reversed);
+
 		if (clean < 0) {
 			rollback_lock_file(&lock);
 			return 2;
