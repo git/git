@@ -67,7 +67,7 @@ static int no_whole_file_rename;
 static int show_progress;
 static char repeated_meta_color[COLOR_MAXLEN];
 static int coloring_mode;
-static struct string_list ignore_revs_file_list = STRING_LIST_INIT_NODUP;
+static struct string_list ignore_revs_file_list = STRING_LIST_INIT_DUP;
 static int mark_unblamable_lines;
 static int mark_ignored_lines;
 
@@ -725,6 +725,7 @@ static int git_blame_config(const char *var, const char *value,
 		if (ret)
 			return ret;
 		string_list_insert(&ignore_revs_file_list, str);
+		free(str);
 		return 0;
 	}
 	if (!strcmp(var, "blame.markunblamablelines")) {

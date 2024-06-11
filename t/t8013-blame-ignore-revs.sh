@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='ignore revisions when blaming'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Creates:
