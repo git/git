@@ -102,7 +102,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	enum object_type type;
 	char *buf;
 	unsigned long size;
-	struct object_context obj_context;
+	struct object_context obj_context = {0};
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	unsigned flags = OBJECT_INFO_LOOKUP_REPLACE;
@@ -163,7 +163,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		goto cleanup;
 
 	case 'e':
-		return !repo_has_object_file(the_repository, &oid);
+		ret = !repo_has_object_file(the_repository, &oid);
+		goto cleanup;
 
 	case 'w':
 
@@ -268,7 +269,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	ret = 0;
 cleanup:
 	free(buf);
-	free(obj_context.path);
+	object_context_release(&obj_context);
 	return ret;
 }
 
@@ -520,7 +521,7 @@ static void batch_one_object(const char *obj_name,
 			     struct batch_options *opt,
 			     struct expand_data *data)
 {
-	struct object_context ctx;
+	struct object_context ctx = {0};
 	int flags =
 		GET_OID_HASH_ANY |
 		(opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0);
@@ -557,7 +558,8 @@ static void batch_one_object(const char *obj_name,
 			break;
 		}
 		fflush(stdout);
-		return;
+
+		goto out;
 	}
 
 	if (ctx.mode == 0) {
@@ -565,10 +567,13 @@ static void batch_one_object(const char *obj_name,
 		       (uintmax_t)ctx.symlink_path.len,
 		       opt->output_delim, ctx.symlink_path.buf, opt->output_delim);
 		fflush(stdout);
-		return;
+		goto out;
 	}
 
 	batch_object_write(obj_name, scratch, opt, data, NULL, 0);
+
+out:
+	object_context_release(&ctx);
 }
 
 struct object_cb_data {

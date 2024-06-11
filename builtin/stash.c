@@ -1018,13 +1018,14 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	const char *stash_msg = NULL;
 	struct object_id obj;
-	struct object_context dummy;
+	struct object_context dummy = {0};
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet")),
 		OPT_STRING('m', "message", &stash_msg, "message",
 			   N_("stash message")),
 		OPT_END()
 	};
+	int ret;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_stash_store_usage,
@@ -1043,10 +1044,15 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot update %s with %s"),
 					     ref_stash, argv[0]);
-		return -1;
+		ret = -1;
+		goto out;
 	}
 
-	return do_store_stash(&obj, stash_msg, quiet);
+	ret = do_store_stash(&obj, stash_msg, quiet);
+
+out:
+	object_context_release(&dummy);
+	return ret;
 }
 
 static void add_pathspecs(struct strvec *args,

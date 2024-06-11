@@ -367,7 +367,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	struct ls_tree_cmdmode_to_fmt *m2f = ls_tree_cmdmode_format;
-	struct object_context obj_context;
+	struct object_context obj_context = {0};
 	int ret;
 
 	git_config(git_default_config, NULL);
@@ -441,5 +441,6 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 
 	ret = !!read_tree(the_repository, tree, &options.pathspec, fn, &options);
 	clear_pathspec(&options.pathspec);
+	object_context_release(&obj_context);
 	return ret;
 }

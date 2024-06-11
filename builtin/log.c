@@ -682,7 +682,7 @@ static void show_tagger(const char *buf, struct rev_info *rev)
 static int show_blob_object(const struct object_id *oid, struct rev_info *rev, const char *obj_name)
 {
 	struct object_id oidc;
-	struct object_context obj_context;
+	struct object_context obj_context = {0};
 	char *buf;
 	unsigned long size;
 
@@ -698,7 +698,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	if (!obj_context.path ||
 	    !textconv_object(the_repository, obj_context.path,
 			     obj_context.mode, &oidc, 1, &buf, &size)) {
-		free(obj_context.path);
+		object_context_release(&obj_context);
 		return stream_blob_to_fd(1, oid, NULL, 0);
 	}
 
@@ -706,7 +706,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 		die(_("git show %s: bad file"), obj_name);
 
 	write_or_die(1, buf, size);
-	free(obj_context.path);
+	object_context_release(&obj_context);
 	return 0;
 }
 

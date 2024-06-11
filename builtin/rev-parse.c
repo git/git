@@ -1128,6 +1128,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		}
 		if (!get_oid_with_context(the_repository, name,
 					  flags, &oid, &unused)) {
+			object_context_release(&unused);
 			if (output_algo)
 				repo_oid_to_algop(the_repository, &oid,
 						  output_algo, &oid);
@@ -1137,6 +1138,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				show_rev(type, &oid, name);
 			continue;
 		}
+		object_context_release(&unused);
 		if (verify)
 			die_no_single_rev(quiet);
 		if (has_dashdash)
