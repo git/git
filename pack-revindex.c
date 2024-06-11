@@ -527,6 +527,9 @@ static int midx_key_to_pack_pos(struct multi_pack_index *m,
 {
 	uint32_t *found;
 
+	if (key->pack >= m->num_packs)
+		BUG("MIDX pack lookup out of bounds (%"PRIu32" >= %"PRIu32")",
+		    key->pack, m->num_packs);
 	/*
 	 * The preferred pack sorts first, so determine its identifier by
 	 * looking at the first object in pseudo-pack order.
