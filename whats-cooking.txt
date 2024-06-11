@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2024, #02; Thu, 6)
-X-master-at: 7b0defb3915eaa0bd118f0996e8c00b4eb2dc1ca
-X-next-at: dd2eb8cad419143d6806239019fa87cfc179dfe2
+Subject: What's cooking in git.git (Jun 2024, #03; Tue, 11)
+X-master-at: 8d94cfb54504f2ec9edc7ca3eb5c29a3dd3675ae
+X-next-at: 995854087836ed4a61d3a38cc5e5fc7639b27baa
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2024, #02; Thu, 6)
+What's cooking in git.git (Jun 2024, #03; Tue, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,35 +46,342 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* iw/trace-argv-on-alias (2024-05-31) 3 commits
+  (merged to 'next' on 2024-06-03 at 190af38284)
+ + run-command: show prepared command
+ + Documentation: alias: add notes on shell expansion
+ + Documentation: alias: rework notes into points
+
+ The alias-expanded command lines are logged to the trace output.
+ source: <20240525234454.1489598-1-iwienand@redhat.com>
+
+
+* jk/leakfixes (2024-05-30) 6 commits
+  (merged to 'next' on 2024-06-03 at 1e8a6276a1)
+ + mv: replace src_dir with a strvec
+ + mv: factor out empty src_dir removal
+ + mv: move src_dir cleanup to end of cmd_mv()
+ + t-strvec: mark variable-arg helper with LAST_ARG_MUST_BE_NULL
+ + t-strvec: use va_end() to match va_start()
+ + Merge branch 'ps/leakfixes' into jk/leakfixes
+ (this branch is used by jk/sparse-leakfix.)
+
+ Memory leaks in "git mv" has been plugged.
+ source: <20240530063857.GA1942535@coredump.intra.peff.net>
+
+
+* mt/openindiana-scalar (2024-05-17) 1 commit
+  (merged to 'next' on 2024-05-30 at 190d4465cf)
+ + scalar: make enlistment delete to work on all POSIX platforms
+
+ Avoid removing the $(cwd) for portability.
+ source: <Zkds81OB7C5bTCl_@telcontar>
+
+
+* ps/leakfixes (2024-05-27) 19 commits
+  (merged to 'next' on 2024-05-29 at e75dcb3beb)
+ + builtin/mv: fix leaks for submodule gitfile paths
+ + builtin/mv: refactor to use `struct strvec`
+ + builtin/mv duplicate string list memory
+ + builtin/mv: refactor `add_slash()` to always return allocated strings
+ + strvec: add functions to replace and remove strings
+ + submodule: fix leaking memory for submodule entries
+ + commit-reach: fix memory leak in `ahead_behind()`
+ + builtin/credential: clear credential before exit
+ + config: plug various memory leaks
+ + config: clarify memory ownership in `git_config_string()`
+ + builtin/log: stop using globals for format config
+ + builtin/log: stop using globals for log config
+ + convert: refactor code to clarify ownership of check_roundtrip_encoding
+ + diff: refactor code to clarify memory ownership of prefixes
+ + config: clarify memory ownership in `git_config_pathname()`
+ + http: refactor code to clarify memory ownership
+ + checkout: clarify memory ownership in `unique_tracking_name()`
+ + strbuf: fix leak when `appendwholeline()` fails with EOF
+ + transport-helper: fix leaking helper name
+ (this branch is used by jk/imap-send-plug-all-msgs-leak, jk/leakfixes, jk/sparse-leakfix, ps/leakfixes-more and ps/no-writable-strings.)
+
+ Leakfixes.
+ source: <cover.1716810168.git.ps@pks.im>
+
+
+* rs/difftool-env-simplify (2024-05-27) 1 commit
+  (merged to 'next' on 2024-05-29 at 4d3776a989)
+ + difftool: add env vars directly in run_file_diff()
+
+ Code simplification.
+ source: <c7c843b9-0ccf-4bcb-a036-d794729a99d6@web.de>
+
+
+* tb/midx-write-cleanup (2024-05-30) 8 commits
+  (merged to 'next' on 2024-05-31 at 03f3d27e4f)
+ + pack-bitmap.c: reimplement `midx_bitmap_filename()` with helper
+ + midx: replace `get_midx_rev_filename()` with a generic helper
+ + midx-write.c: support reading an existing MIDX with `packs_to_include`
+ + midx-write.c: extract `fill_packs_from_midx()`
+ + midx-write.c: extract `should_include_pack()`
+ + midx-write.c: pass `start_pack` to `compute_sorted_entries()`
+ + midx-write.c: reduce argument count for `get_sorted_entries()`
+ + midx-write.c: tolerate `--preferred-pack` without bitmaps
+
+ Code clean-up around writing the .midx files.
+ source: <cover.1717023301.git.me@ttaylorr.com>
+
+
+* th/quiet-lazy-fetch-from-promisor (2024-05-26) 1 commit
+  (merged to 'next' on 2024-05-29 at bb12492199)
+ + promisor-remote: add promisor.quiet configuration option
+
+ The promisor.quiet configuration knob can be set to true to make
+ lazy fetching from promisor remotes silent.
+ source: <20240525100927.2949808-1-tom@compton.nu>
+
+--------------------------------------------------
 [New Topics]
 
+* jk/am-retry (2024-06-06) 2 commits
+  (merged to 'next' on 2024-06-10 at 4d62361bc7)
+ + test-terminal: drop stdin handling
+ + am: add explicit "--retry" option
+
+ "git am" has a safety feature to prevent it from starting a new
+ session when there already is a session going.  It reliably
+ triggers when a mbox is given on the command line, but it has to
+ rely on the tty-ness of the standard input.  Add an explicit way to
+ opt out of this safety with a command line option.
+
+ Will merge to 'master'.
+ source: <20240606081724.GA1166769@coredump.intra.peff.net>
+
+
+* ps/ci-fix-detection-of-ubuntu-20 (2024-06-06) 1 commit
+  (merged to 'next' on 2024-06-10 at 2d6725a946)
+ + ci: fix check for Ubuntu 20.04
+
+ Fix for an embarrassing typo that prevented running Python2 tests
+ anywhere.
+
+ Will merge to 'master'.
+ source: <f91004a4382c95b1b87bf3d1aafc018af2b7b92e.1717662814.git.ps@pks.im>
+
+
+* tb/pseudo-merge-reachability-bitmap-fixes (2024-06-06) 2 commits
+ - pack-bitmap.c: ensure pseudo-merge offset reads are bounded
+ - Documentation/technical/bitmap-format.txt: add missing position table
+ (this branch uses tb/pseudo-merge-reachability-bitmap.)
+
+ Two rather straight-forward fixes to the base topic that is cooking
+ in 'next'.  Once people find it satisfactory, I plan to merge them
+ into the base topic.
+
+ Comments?
+ source: <cover.1716499565.git.me@ttaylorr.com>
+
+
+* db/date-underflow-fix (2024-06-08) 2 commits
+ - SQUASH???
+ - date: detect underflow/overflow when parsing dates with timezone offset
+
+ date parser updates to be more careful about underflowing epoch
+ based timestamp.
+
+ Expecting a reroll.
+ cf. <xmqq1q58ejnw.fsf@gitster.g>
+ cf. <xmqqtthzrraw.fsf@gitster.g>
+ source: <pull.1726.v3.git.git.1717719428510.gitgitgadget@gmail.com>
+
+
+* tb/commit-graph-use-tempfile (2024-06-07) 2 commits
+ - server-info.c: remove temporary info files on exit
+ - commit-graph.c: remove temporary graph layers on exit
+
+ "git update-server-info" and "git commit-graph --write" have been
+ updated to use the tempfile API to avoid leaving cruft after
+ failing.
+
+ Comments?
+ cf. <xmqqfrtog2rd.fsf@gitster.g>
+ source: <cover.1717712358.git.me@ttaylorr.com>
+
+
+* tb/incremental-midx-part-1 (2024-06-07) 19 commits
+ - midx: implement support for writing incremental MIDX chains
+ - t/t5313-pack-bounds-checks.sh: prepare for sub-directories
+ - t: retire 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
+ - midx: implement verification support for incremental MIDXs
+ - midx: support reading incremental MIDX chains
+ - midx: teach `midx_fanout_add_midx_fanout()` about incremental MIDXs
+ - midx: teach `midx_preferred_pack()` about incremental MIDXs
+ - midx: teach `midx_contains_pack()` about incremental MIDXs
+ - midx: remove unused `midx_locate_pack()`
+ - midx: teach `fill_midx_entry()` about incremental MIDXs
+ - midx: teach `nth_midxed_offset()` about incremental MIDXs
+ - midx: teach `bsearch_midx()` about incremental MIDXs
+ - midx: introduce `bsearch_one_midx()`
+ - midx: teach `nth_bitmapped_pack()` about incremental MIDXs
+ - midx: teach `nth_midxed_object_oid()` about incremental MIDXs
+ - midx: teach `prepare_midx_pack()` about incremental MIDXs
+ - midx: teach `nth_midxed_pack_int_id()` about incremental MIDXs
+ - midx: add new fields for incremental MIDX chains
+ - Documentation: describe incremental MIDX format
+
+ Incremental updates of multi-pack index files.
+
+ Needs review.
+ source: <cover.1717715060.git.me@ttaylorr.com>
+
+
+* ds/doc-add-interactive-singlekey (2024-06-07) 1 commit
+ - doc: interactive.singleKey is disabled by default
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <xmqq4ja4e6d6.fsf@gitster.g>
+
+
+* gt/unit-test-oidtree (2024-06-10) 1 commit
+ - t/: migrate helper/test-oidtree.c to unit-tests/t-oidtree.c
+
+ "oidtree" tests were rewritten to use the unit test framework.
+
+ Expecting a reroll.
+ cf. <7o6fuymnfn6b6buyw3yyctjd4dlwlrazspv3xgxvys6djjivxh@qbhyurorgbtt>
+ source: <20240608165731.29467-1-shyamthakkar001@gmail.com>
+
+
+* jc/varargs-attributes (2024-06-10) 4 commits
+  (merged to 'next' on 2024-06-10 at a9c55c0f89)
+ + __attribute__: add a few missing format attributes
+ + __attribute__: mark some functions with LAST_ARG_MUST_BE_NULL
+ + __attribute__: remove redundant attribute declaration for git_die_config()
+ + __attribute__: trace2_region_enter_printf() is like "printf"
+
+ Varargs functions that are unannotated as printf-like or execl-like
+ have been annotated as such.
+
+ Will merge to 'master'.
+ source: <20240608183747.2084294-1-gitster@pobox.com>
+
+
+* jc/worktree-git-path (2024-06-08) 1 commit
+ - worktree_git_path(): move the declaration to path.h
+
+ Code cleanup.
+
+ Comments?
+ source: <20240608183901.2084546-1-gitster@pobox.com>
+
+
+* ds/ahead-behind-fix (2024-06-11) 1 commit
+ - commit-graph: increment progress indicator
+
+ Fix for a progress bar.
+
+ Will merge to 'next'.
+ source: <pull.1743.git.1718118555197.gitgitgadget@gmail.com>
+
+
+* ps/abbrev-length-before-setup-fix (2024-06-11) 2 commits
+ - object-name: don't try to abbreviate to lengths greater than hexsz
+ - config: fix segfault when parsing "core.abbrev" without repo
+
+ Setting core.abbrev too early before the repository set-up
+ (typically in "git clone") caused segfault, which as been
+ corrected.
+
+ source: <CAO_smVimsHAPbMxy09mcYZY8apFgCbpnS9eSF7UOL6_BLqntNw@mail.gmail.com>
+
+
+* ps/make-append-to-cflags (2024-06-11) 1 commit
+ - Makefile: add ability to append to CFLAGS and LDFLAGS
+
+ To help developers, the build procedure now allows builders to use
+ CFLAGS_APPEND to specify additional CFLAGS.
+
+ Will merge to 'next'.
+ source: <8120ddaf0bdfd50e0fc4cf9a04f833102630b639.1718001244.git.ps@pks.im>
+
+
+* tb/multi-pack-reuse-fix (2024-06-11) 3 commits
+ - pack-revindex.c: guard against out-of-bounds pack lookups
+ - pack-bitmap.c: avoid uninitialized `pack_int_id` during reuse
+ - midx-write.c: do not read existing MIDX with `packs_to_include`
+
+ Assorted fixes to multi-pack-index code paths.
+
+ Will merge to 'next'.
+ source: <cover.1718126886.git.me@ttaylorr.com>
+
+
+* vd/mktree (2024-06-11) 16 commits
+ - mktree: remove entries when mode is 0
+ - mktree: allow deeper paths in input
+ - mktree: optionally add to an existing tree
+ - mktree: add directory-file conflict hashmap
+ - mktree: use iterator struct to add tree entries to index
+ - mktree: create tree using an in-core index
+ - mktree: overwrite duplicate entries
+ - mktree: validate paths more carefully
+ - mktree: add a --literally option
+ - mktree: use read_index_info to read stdin lines
+ - index-info.c: parse object type in provided in read_index_info
+ - index-info.c: identify empty input lines in read_index_info
+ - update-index: generalize 'read_index_info'
+ - mktree: use non-static tree_entry array
+ - mktree: rename treeent to tree_entry
+ - mktree: use OPT_BOOL
+
+ "git mktree" has been rewritten, taking advantage of the cache-tree
+ API.
+
+ source: <pull.1746.git.1718130288.gitgitgadget@gmail.com>
+
+
+* xx/bundie-uri-fixes (2024-06-11) 3 commits
+ - unbundle: support object verification for fetches
+ - fetch-pack: expose fsckObjects configuration logic
+ - bundle-uri: verify oid before writing refs
+
+ When bundleURI interface fetches multiple bundles, Git failed to
+ take full advantage of all bundles and ended up slurping duplicated
+ objects.
+
+ Will merge to 'next'?
+ cf. <xmqqa5jruwkr.fsf@gitster.g>
+ cf. <xmqqsexjtfcg.fsf@gitster.g>
+ source: <pull.1730.v6.git.1718109943.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * rj/add-p-pager (2024-06-04) 6 commits
- - add-patch: introduce the command '|'
- - test-terminal: introduce --no-stdin-pty
- - pager: introduce setup_custom_pager
- - pager: introduce wait_for_pager
- - pager: do not close fd 2 unnecessarily
- - add-patch: test for 'p' command
+ . add-patch: introduce the command '|'
+ . test-terminal: introduce --no-stdin-pty
+ . pager: introduce setup_custom_pager
+ . pager: introduce wait_for_pager
+ . pager: do not close fd 2 unnecessarily
+ . add-patch: test for 'p' command
 
  "git add -i" and friends learned a new '|' command that sends the
  current hunk to the pager, instead of dumping it to the terminal.
 
- Expecting a reroll.
- cf. <3f085795-79bd-4a56-9df8-659e32179925@gmail.com>
- cf. <844704794168f9fcb85c75014c84cde0@manjaro.org>
+ Expecting a reroll to work well with jk/am-retry
  source: <1ef0ac3a-3be5-4fc2-93f8-46610f3d1880@gmail.com>
 
 
-* ap/credential-clear-fix (2024-06-04) 1 commit
- - credential: clear expired c->credential, unify secret clearing
+* ap/credential-clear-fix (2024-06-06) 1 commit
+  (merged to 'next' on 2024-06-07 at 933f06b899)
+ + credential: clear expired c->credential, unify secret clearing
 
  Upon expiration event, we forgot to clear in-core authentication
  material other than password (whose support was added recently),
  which has been corrected.
 
- Expecting a reroll.
- cf. <dcbbd00f-1730-41fd-90d3-c7b070c4f17d@nvidia.com>
- source: <20240604192929.3252626-1-aplattner@nvidia.com>
+ Will merge to 'master'.
+ source: <20240606183516.4077896-2-aplattner@nvidia.com>
 
 
 * jc/heads-are-branches (2024-06-04) 3 commits
@@ -89,44 +396,48 @@ Release tarballs are available at:
  source: <20240604220145.3260714-1-gitster@pobox.com>
 
 
-* jk/imap-send-plug-all-msgs-leak (2024-06-06) 3 commits
- - imap-send: free all_msgs strbuf in "out" label
- - Merge branch 'jc/t1517-more' into jk/imap-send-plug-all-msgs-leak
- - Merge branch 'ps/no-writable-strings' into jk/imap-send-plug-all-msgs-leak
- (this branch uses jc/t1517-more, ps/leakfixes and ps/no-writable-strings.)
+* jk/imap-send-plug-all-msgs-leak (2024-06-07) 3 commits
+  (merged to 'next' on 2024-06-10 at 9b8ec7b97d)
+ + imap-send: free all_msgs strbuf in "out" label
+ + Merge branch 'jc/t1517-more' into jk/imap-send-plug-all-msgs-leak
+ + Merge branch 'ps/no-writable-strings' into jk/imap-send-plug-all-msgs-leak
+ (this branch uses jc/t1517-more and ps/no-writable-strings.)
 
  A leak in "git imap-send" that somehow escapes LSan has been
  plugged.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240605083526.GB2345232@coredump.intra.peff.net>
 
 
 * ps/check-docs-fix (2024-06-06) 4 commits
- - ci/test-documentation: work around SyntaxWarning in Python 3.12
- - gitlab-ci: add job to run `make check-docs`
- - Documentation/lint-manpages: bubble up errors
- - Makefile: extract script to lint missing/extraneous manpages
+  (merged to 'next' on 2024-06-10 at 12570afc8e)
+ + ci/test-documentation: work around SyntaxWarning in Python 3.12
+ + gitlab-ci: add job to run `make check-docs`
+ + Documentation/lint-manpages: bubble up errors
+ + Makefile: extract script to lint missing/extraneous manpages
 
  "make check-docs" noticed problems and reported to its output but
  failed to signal its findings with its exit status, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1717660597.git.ps@pks.im>
 
 
-* rj/format-patch-auto-cover-with-interdiff (2024-06-05) 2 commits
- - SQUASH???
+* rj/format-patch-auto-cover-with-interdiff (2024-06-07) 2 commits
  - format-patch: assume --cover-letter for diff in multi-patch series
+ - t4014: cleanups in a few tests
 
  "git format-patch --interdiff" for multi-patch series learned to
  turn on cover letters automatically (unless told never to enable
  cover letter with "--no-cover-letter" and such).
- source: <cb6b6d54-959f-477d-83e5-027c81ae85de@gmail.com>
+
+ Will merge to 'next'?
+ source: <9f520828-f87e-49b1-aa4b-c00ec6bb0133@gmail.com>
 
 
-* rs/diff-exit-code-with-external-diff (2024-06-05) 3 commits
+* rs/diff-exit-code-with-external-diff (2024-06-10) 3 commits
  - diff: let external diffs report that changes are uninteresting
  - userdiff: add and use struct external_diff
  - t4020: test exit code with external diffs
@@ -136,9 +447,8 @@ Release tarballs are available at:
  status of the overall "git diff" invocation when configured to do
  so.
 
- Expecting a bit of documentation updates.
- cf. <55389f35-5762-4b86-81bf-b9fe956815d2@web.de>
- source: <6fa51a62-5dc1-4865-9f79-eaf7d65189ab@web.de>
+ Will merge to 'next'.
+ source: <168fecaa-2ebd-4897-b0ba-3bd2a37c01e7@web.de>
 
 
 * jc/add-i-retire-usebuiltin-config (2024-06-05) 1 commit
@@ -162,8 +472,6 @@ Release tarballs are available at:
  Comments?
  source: <xmqqa5jzqd5k.fsf_-_@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
 * jk/sparse-leakfix (2024-06-05) 14 commits
   (merged to 'next' on 2024-06-06 at c92e02c528)
@@ -181,7 +489,6 @@ Release tarballs are available at:
  + sparse-checkout: pass string literals directly to add_pattern()
  + sparse-checkout: free string list in write_cone_to_file()
  + Merge branch 'jk/leakfixes' into jk/sparse-leakfix
- (this branch uses jk/leakfixes and ps/leakfixes.)
 
  Many memory leaks in the sparse-checkout code paths have been
  plugged.
@@ -202,7 +509,7 @@ Release tarballs are available at:
  source: <xmqqikyowqjj.fsf@gitster.g>
 
 
-* ps/leakfixes-more (2024-06-03) 30 commits
+* ps/leakfixes-more (2024-06-11) 30 commits
  - builtin/blame: fix leaking ignore revs files
  - builtin/blame: fix leaking prefixed paths
  - blame: fix leaking data for blame scoreboards
@@ -226,19 +533,18 @@ Release tarballs are available at:
  - builtin/rev-list: fix leaking bitmap index when calculating disk usage
  - notes: fix memory leak when pruning notes
  - revision: fix leaking display notes
- - merge-recursive: fix leaging rename conflict info
+ - merge-recursive: fix leaking rename conflict info
  - biultin/rev-parse: fix memory leaks in `--parseopt` mode
  - bundle: plug leaks in `create_bundle()`
  - notes-utils: free note trees when releasing copied notes
  - parse-options: fix leaks for users of OPT_FILENAME
  - revision: fix memory leak when reversing revisions
  - Merge branch 'ps/leakfixes' into ps/leakfixes-more
- (this branch uses ps/leakfixes.)
 
  More memory leaks have been plugged.
 
  Needs review.
- source: <cover.1717402439.git.ps@pks.im>
+ source: <cover.1718095906.git.ps@pks.im>
 
 
 * gt/decorate-unit-test (2024-05-28) 1 commit
@@ -263,41 +569,42 @@ Release tarballs are available at:
  source: <xmqqplt4zjw7.fsf@gitster.g>
 
 
-* ps/no-writable-strings (2024-06-06) 28 commits
- - config.mak.dev: enable `-Wwrite-strings` warning
- - builtin/merge: always store allocated strings in `pull_twohead`
- - builtin/rebase: always store allocated string in `options.strategy`
- - builtin/rebase: do not assign default backend to non-constant field
- - imap-send: fix leaking memory in `imap_server_conf`
- - imap-send: drop global `imap_server_conf` variable
- - mailmap: always store allocated strings in mailmap blob
- - revision: always store allocated strings in output encoding
- - remote-curl: avoid assigning string constant to non-const variable
- - send-pack: always allocate receive status
- - parse-options: cast long name for OPTION_ALIAS
- - http: do not assign string constant to non-const field
- - compat/win32: fix const-correctness with string constants
- - pretty: add casts for decoration option pointers
- - object-file: make `buf` parameter of `index_mem()` a constant
- - object-file: mark cached object buffers as const
- - ident: add casts for fallback name and GECOS
- - entry: refactor how we remove items for delayed checkouts
- - line-log: always allocate the output prefix
- - line-log: stop assigning string constant to file parent buffer
- - diff: cast string constant in `fill_textconv()`
- - builtin/remote: cast away constness in `get_head_names()`
- - refspec: remove global tag refspec structure
- - reftable: cast away constness when assigning constants to records
- - refs/reftable: stop micro-optimizing refname allocations on copy
- - global: convert intentionally-leaking config strings to consts
- - global: improve const correctness when assigning string constants
- - Merge branch 'ps/leakfixes' into ps/no-writable-strings
- (this branch is used by jk/imap-send-plug-all-msgs-leak; uses ps/leakfixes.)
+* ps/no-writable-strings (2024-06-07) 28 commits
+  (merged to 'next' on 2024-06-10 at 9678851a9f)
+ + config.mak.dev: enable `-Wwrite-strings` warning
+ + builtin/merge: always store allocated strings in `pull_twohead`
+ + builtin/rebase: always store allocated string in `options.strategy`
+ + builtin/rebase: do not assign default backend to non-constant field
+ + imap-send: fix leaking memory in `imap_server_conf`
+ + imap-send: drop global `imap_server_conf` variable
+ + mailmap: always store allocated strings in mailmap blob
+ + revision: always store allocated strings in output encoding
+ + remote-curl: avoid assigning string constant to non-const variable
+ + send-pack: always allocate receive status
+ + parse-options: cast long name for OPTION_ALIAS
+ + http: do not assign string constant to non-const field
+ + compat/win32: fix const-correctness with string constants
+ + pretty: add casts for decoration option pointers
+ + object-file: make `buf` parameter of `index_mem()` a constant
+ + object-file: mark cached object buffers as const
+ + ident: add casts for fallback name and GECOS
+ + entry: refactor how we remove items for delayed checkouts
+ + line-log: always allocate the output prefix
+ + line-log: stop assigning string constant to file parent buffer
+ + diff: cast string constant in `fill_textconv()`
+ + builtin/remote: cast away constness in `get_head_names()`
+ + refspec: remove global tag refspec structure
+ + reftable: cast away constness when assigning constants to records
+ + refs/reftable: stop micro-optimizing refname allocations on copy
+ + global: convert intentionally-leaking config strings to consts
+ + global: improve const correctness when assigning string constants
+ + Merge branch 'ps/leakfixes' into ps/no-writable-strings
+ (this branch is used by jk/imap-send-plug-all-msgs-leak.)
 
  Building with "-Werror -Wwrite-strings" is now supported.
 
- Will merge to 'next'?
- source: <cover.1717667854.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <cover.1717740365.git.ps@pks.im>
 
 
 * cp/reftable-unit-test (2024-05-30) 5 commits
@@ -329,22 +636,6 @@ Release tarballs are available at:
  source: <xmqqwmnajrrk.fsf@gitster.g>
 
 
-* jk/leakfixes (2024-05-30) 6 commits
-  (merged to 'next' on 2024-06-03 at 1e8a6276a1)
- + mv: replace src_dir with a strvec
- + mv: factor out empty src_dir removal
- + mv: move src_dir cleanup to end of cmd_mv()
- + t-strvec: mark variable-arg helper with LAST_ARG_MUST_BE_NULL
- + t-strvec: use va_end() to match va_start()
- + Merge branch 'ps/leakfixes' into jk/leakfixes
- (this branch is used by jk/sparse-leakfix; uses ps/leakfixes.)
-
- Memory leaks in "git mv" has been plugged.
-
- Will merge to 'master'.
- source: <20240530063857.GA1942535@coredump.intra.peff.net>
-
-
 * gt/t-hash-unit-test (2024-05-29) 2 commits
   (merged to 'next' on 2024-06-04 at 86328a5c8c)
  + t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
@@ -363,30 +654,22 @@ Release tarballs are available at:
  A unit test for code that parses the hunk offset and length from a
  patch fragment header as been added.
 
- Will merge to 'next'.
+ Expecting a reroll.
+ cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
  source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
 
 
-* rs/difftool-env-simplify (2024-05-27) 1 commit
-  (merged to 'next' on 2024-05-29 at 4d3776a989)
- + difftool: add env vars directly in run_file_diff()
-
- Code simplification.
-
- Will merge to 'master'.
- source: <c7c843b9-0ccf-4bcb-a036-d794729a99d6@web.de>
-
-
 * jc/format-patch-with-range-diff (2024-05-24) 2 commits
- - format-patch: move range/inter diff at the end of a single patch output
- - show_log: factor out interdiff/range-diff generation
+  (merged to 'next' on 2024-06-07 at 394989ee78)
+ + format-patch: move range/inter diff at the end of a single patch output
+ + show_log: factor out interdiff/range-diff generation
 
  Move inter/range-diff output to the end of the patch when
  format-patch adds it to a single patch, instead of writing it
  before the patch text, to be consistent with what is done for a
  cover letter for a multi-patch series.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240523225007.2871766-1-gitster@pobox.com>
 
 
@@ -408,18 +691,6 @@ Release tarballs are available at:
  source: <20240524163926.2019648-1-christian.couder@gmail.com>
 
 
-* iw/trace-argv-on-alias (2024-05-31) 3 commits
-  (merged to 'next' on 2024-06-03 at 190af38284)
- + run-command: show prepared command
- + Documentation: alias: add notes on shell expansion
- + Documentation: alias: rework notes into points
-
- Log the alias-expanded command lines to the trace output.
-
- Will merge to 'master'.
- source: <20240525234454.1489598-1-iwienand@redhat.com>
-
-
 * ps/document-breaking-changes (2024-06-04) 4 commits
  - BreakingChanges: document that we do not plan to deprecate git-checkout
  - BreakingChanges: document removal of grafting
@@ -434,73 +705,29 @@ Release tarballs are available at:
  source: <cover.1717504292.git.ps@pks.im>
 
 
-* ps/leakfixes (2024-05-27) 19 commits
-  (merged to 'next' on 2024-05-29 at e75dcb3beb)
- + builtin/mv: fix leaks for submodule gitfile paths
- + builtin/mv: refactor to use `struct strvec`
- + builtin/mv duplicate string list memory
- + builtin/mv: refactor `add_slash()` to always return allocated strings
- + strvec: add functions to replace and remove strings
- + submodule: fix leaking memory for submodule entries
- + commit-reach: fix memory leak in `ahead_behind()`
- + builtin/credential: clear credential before exit
- + config: plug various memory leaks
- + config: clarify memory ownership in `git_config_string()`
- + builtin/log: stop using globals for format config
- + builtin/log: stop using globals for log config
- + convert: refactor code to clarify ownership of check_roundtrip_encoding
- + diff: refactor code to clarify memory ownership of prefixes
- + config: clarify memory ownership in `git_config_pathname()`
- + http: refactor code to clarify memory ownership
- + checkout: clarify memory ownership in `unique_tracking_name()`
- + strbuf: fix leak when `appendwholeline()` fails with EOF
- + transport-helper: fix leaking helper name
- (this branch is used by jk/imap-send-plug-all-msgs-leak, jk/leakfixes, jk/sparse-leakfix, ps/leakfixes-more and ps/no-writable-strings.)
-
- Leakfixes.
-
- Will merge to 'master'.
- source: <cover.1716810168.git.ps@pks.im>
-
-
 * ps/ref-storage-migration (2024-06-06) 14 commits
- - builtin/refs: new command to migrate ref storage formats
- - refs: implement logic to migrate between ref storage formats
- - refs: implement removal of ref storages
- - worktree: don't store main worktree twice
- - reftable: inline `merged_table_release()`
- - refs/files: fix NULL pointer deref when releasing ref store
- - refs/files: extract function to iterate through root refs
- - refs/files: refactor `add_pseudoref_and_head_entries()`
- - refs: allow to skip creation of reflog entries
- - refs: pass storage format to `ref_store_init()` explicitly
- - refs: convert ref storage format to an enum
- - setup: unset ref storage when reinitializing repository version
+  (merged to 'next' on 2024-06-10 at 81b46b6916)
+ + builtin/refs: new command to migrate ref storage formats
+ + refs: implement logic to migrate between ref storage formats
+ + refs: implement removal of ref storages
+ + worktree: don't store main worktree twice
+ + reftable: inline `merged_table_release()`
+ + refs/files: fix NULL pointer deref when releasing ref store
+ + refs/files: extract function to iterate through root refs
+ + refs/files: refactor `add_pseudoref_and_head_entries()`
+ + refs: allow to skip creation of reflog entries
+ + refs: pass storage format to `ref_store_init()` explicitly
+ + refs: convert ref storage format to an enum
+ + setup: unset ref storage when reinitializing repository version
  + Merge branch 'ps/pseudo-ref-terminology' into ps/ref-storage-migration
  + Merge branch 'ps/refs-without-the-repository-updates' into ps/ref-storage-migration
+ (this branch is used by ps/use-the-repository.)
 
  Allow migrating a repository that uses the files backend for its
  ref storage to use the reftable backend, with limitations.
 
- Will merge to 'next'.
- source: <cover.1717649802.git.ps@pks.im>
-
-
-* tb/midx-write-cleanup (2024-05-30) 8 commits
-  (merged to 'next' on 2024-05-31 at 03f3d27e4f)
- + pack-bitmap.c: reimplement `midx_bitmap_filename()` with helper
- + midx: replace `get_midx_rev_filename()` with a generic helper
- + midx-write.c: support reading an existing MIDX with `packs_to_include`
- + midx-write.c: extract `fill_packs_from_midx()`
- + midx-write.c: extract `should_include_pack()`
- + midx-write.c: pass `start_pack` to `compute_sorted_entries()`
- + midx-write.c: reduce argument count for `get_sorted_entries()`
- + midx-write.c: tolerate `--preferred-pack` without bitmaps
-
- Code clean-up around writing the .midx files.
-
  Will merge to 'master'.
- source: <cover.1717023301.git.me@ttaylorr.com>
+ source: <cover.1717649802.git.ps@pks.im>
 
 
 * tb/pseudo-merge-reachability-bitmap (2024-05-24) 25 commits
@@ -530,26 +757,17 @@ Release tarballs are available at:
  + Documentation/gitpacking.txt: describe pseudo-merge bitmaps
  + Documentation/gitpacking.txt: initial commit
  + Merge branch 'tb/pack-bitmap-write-cleanups' into tb/pseudo-merge-reachability-bitmap
+ (this branch is used by tb/pseudo-merge-reachability-bitmap-fixes.)
 
  The pseudo-merge reachability bitmap to help more efficient storage
- of the reachability bitmap in a repository with too many refs.
+ of the reachability bitmap in a repository with too many refs has
+ been added.
 
- Will merge to 'master'.
+ On hold until we get comments on the follow-up topic.
  source: <cover.1716499565.git.me@ttaylorr.com>
 
 
-* th/quiet-lazy-fetch-from-promisor (2024-05-26) 1 commit
-  (merged to 'next' on 2024-05-29 at bb12492199)
- + promisor-remote: add promisor.quiet configuration option
-
- The promisor.quiet configuration knob can be set to true to make
- lazy fetching from promisor remotes silent.
-
- Will merge to 'master'.
- source: <20240525100927.2949808-1-tom@compton.nu>
-
-
-* kn/update-ref-symref (2024-06-05) 8 commits
+* kn/update-ref-symref (2024-06-07) 8 commits
  - update-ref: add support for 'symref-update' command
  - reftable: pick either 'oid' or 'target' for new updates
  - update-ref: add support for 'symref-create' command
@@ -562,19 +780,8 @@ Release tarballs are available at:
  "git update-ref --stdin" learned to handle transactional updates of
  symbolic-refs.
 
- Expecting a reroll.
- cf. <CAOLa=ZSDRcsmBxje-EgdKNyXCh1OYc4vtzJZKmoHSs94fMxPtw@mail.gmail.com>
- source: <20240530120940.456817-1-knayak@gitlab.com>
-
-
-* mt/openindiana-scalar (2024-05-17) 1 commit
-  (merged to 'next' on 2024-05-30 at 190d4465cf)
- + scalar: make enlistment delete to work on all POSIX platforms
-
- Avoid removing the $(cwd) for portability.
-
- Will merge to 'master'.
- source: <Zkds81OB7C5bTCl_@telcontar>
+ Will merge to 'next'?
+ source: <20240607133304.2333280-1-knayak@gitlab.com>
 
 
 * ts/archive-prefix-with-add-virtual-file (2024-05-17) 1 commit
@@ -720,3 +927,18 @@ Release tarballs are available at:
 
  Not ready to be reviewed yet.
  source: <20230824205456.1231371-1-gitster@pobox.com>
+
+
+--------------------------------------------------
+[Discarded]
+
+* ps/ci-use-Og-in-some-jobs (2024-06-10) 2 commits
+ . ci: compile "linux-gcc-default" job with -Og
+ . Makefile: add ability to append to CFLAGS and LDFLAGS
+
+ Compile with -Og, which is different from the usual -O2, in one CI
+ job, to see if we can get more warning coverage.
+
+ Discarded.
+ False positives in "-Og -Wall -Werror" are too annoying.
+ source: <cover.1718001244.git.ps@pks.im>
