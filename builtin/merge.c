@@ -164,7 +164,7 @@ static struct strategy *get_strategy(const char *name)
 {
 	int i;
 	struct strategy *ret;
-	static struct cmdnames main_cmds, other_cmds;
+	static struct cmdnames main_cmds = {0}, other_cmds = {0};
 	static int loaded;
 	char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
 
@@ -182,10 +182,9 @@ static struct strategy *get_strategy(const char *name)
 			return &all_strategy[i];
 
 	if (!loaded) {
-		struct cmdnames not_strategies;
+		struct cmdnames not_strategies = {0};
 		loaded = 1;
 
-		memset(&not_strategies, 0, sizeof(struct cmdnames));
 		load_command_list("git-merge-", &main_cmds, &other_cmds);
 		for (i = 0; i < main_cmds.cnt; i++) {
 			int j, found = 0;
@@ -197,6 +196,8 @@ static struct strategy *get_strategy(const char *name)
 				add_cmdname(&not_strategies, ent->name, ent->len);
 		}
 		exclude_cmds(&main_cmds, &not_strategies);
+
+		cmdnames_release(&not_strategies);
 	}
 	if (!is_in_cmdlist(&main_cmds, name) && !is_in_cmdlist(&other_cmds, name)) {
 		fprintf(stderr, _("Could not find merge strategy '%s'.\n"), name);
@@ -216,6 +217,9 @@ static struct strategy *get_strategy(const char *name)
 	CALLOC_ARRAY(ret, 1);
 	ret->name = xstrdup(name);
 	ret->attr = NO_TRIVIAL;
+
+	cmdnames_release(&main_cmds);
+	cmdnames_release(&other_cmds);
 	return ret;
 }
 

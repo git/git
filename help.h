@@ -13,6 +13,8 @@ struct cmdnames {
 	} **names;
 };
 
+void cmdnames_release(struct cmdnames *cmds);
+
 static inline void mput_char(char c, unsigned int num)
 {
 	while (num--)
