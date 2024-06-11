@@ -135,6 +135,7 @@ void clear_apply_state(struct apply_state *state)
 	strset_clear(&state->removed_symlinks);
 	strset_clear(&state->kept_symlinks);
 	strbuf_release(&state->root);
+	FREE_AND_NULL(state->fake_ancestor);
 
 	/* &state->fn_table is cleared at the end of apply_patch() */
 }

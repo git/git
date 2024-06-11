@@ -2021,7 +2021,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *rfc = NULL;
 	int creation_factor = -1;
 	const char *signature = git_version_string;
-	const char *signature_file_arg = NULL;
+	char *signature_file_arg = NULL;
 	struct keep_callback_data keep_callback_data = {
 		.cfg = &cfg,
 		.revs = &rev,
@@ -2559,6 +2559,8 @@ done:
 	strbuf_release(&rdiff1);
 	strbuf_release(&rdiff2);
 	strbuf_release(&rdiff_title);
+	free(description_file);
+	free(signature_file_arg);
 	free(to_free);
 	free(rev.message_id);
 	if (rev.ref_message_ids)
