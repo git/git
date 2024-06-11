@@ -101,13 +101,27 @@ struct write_midx_context {
 };
 
 static int should_include_pack(const struct write_midx_context *ctx,
-			       const char *file_name,
-			       int exclude_from_midx)
+			       const char *file_name)
 {
-	if (exclude_from_midx && ctx->m && midx_contains_pack(ctx->m, file_name))
+	/*
+	 * Note that at most one of ctx->m and ctx->to_include are set,
+	 * so we are testing midx_contains_pack() and
+	 * string_list_has_string() independently (guarded by the
+	 * appropriate NULL checks).
+	 *
+	 * We could support passing to_include while reusing an existing
+	 * MIDX, but don't currently since the reuse process drags
+	 * forward all packs from an existing MIDX (without checking
+	 * whether or not they appear in the to_include list).
+	 *
+	 * If we added support for that, these next two conditional
+	 * should be performed independently (likely checking
+	 * to_include before the existing MIDX).
+	 */
+	if (ctx->m && midx_contains_pack(ctx->m, file_name))
 		return 0;
-	if (ctx->to_include && !string_list_has_string(ctx->to_include,
-						       file_name))
+	else if (ctx->to_include &&
+		 !string_list_has_string(ctx->to_include, file_name))
 		return 0;
 	return 1;
 }
@@ -121,7 +135,7 @@ static void add_pack_to_midx(const char *full_path, size_t full_path_len,
 	if (ends_with(file_name, ".idx")) {
 		display_progress(ctx->progress, ++ctx->pack_paths_checked);
 
-		if (!should_include_pack(ctx, file_name, 1))
+		if (!should_include_pack(ctx, file_name))
 			return;
 
 		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
@@ -880,9 +894,6 @@ static int fill_packs_from_midx(struct write_midx_context *ctx,
 	uint32_t i;
 
 	for (i = 0; i < ctx->m->num_packs; i++) {
-		if (!should_include_pack(ctx, ctx->m->pack_names[i], 0))
-			continue;
-
 		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
 
 		if (flags & MIDX_WRITE_REV_INDEX || preferred_pack_name) {
@@ -937,7 +948,15 @@ static int write_midx_internal(const char *object_dir,
 		die_errno(_("unable to create leading directories of %s"),
 			  midx_name.buf);
 
-	ctx.m = lookup_multi_pack_index(the_repository, object_dir);
+	if (!packs_to_include) {
+		/*
+		 * Only reference an existing MIDX when not filtering which
+		 * packs to include, since all packs and objects are copied
+		 * blindly from an existing MIDX if one is present.
+		 */
+		ctx.m = lookup_multi_pack_index(the_repository, object_dir);
+	}
+
 	if (ctx.m && !midx_checksum_valid(ctx.m)) {
 		warning(_("ignoring existing multi-pack-index; checksum mismatch"));
 		ctx.m = NULL;
@@ -946,7 +965,6 @@ static int write_midx_internal(const char *object_dir,
 	ctx.nr = 0;
 	ctx.alloc = ctx.m ? ctx.m->num_packs : 16;
 	ctx.info = NULL;
-	ctx.to_include = packs_to_include;
 	ALLOC_ARRAY(ctx.info, ctx.alloc);
 
 	if (ctx.m && fill_packs_from_midx(&ctx, preferred_pack_name,
@@ -962,6 +980,8 @@ static int write_midx_internal(const char *object_dir,
 		ctx.progress = start_delayed_progress(_("Adding packfiles to multi-pack-index"), 0);
 	else
 		ctx.progress = NULL;
+
+	ctx.to_include = packs_to_include;
 
 	for_each_file_in_pack_dir(object_dir, add_pack_to_midx, &ctx);
 	stop_progress(&ctx.progress);
