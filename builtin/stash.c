@@ -975,7 +975,9 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	log_tree_diff_flush(&rev);
 
 	ret = diff_result_code(&rev.diffopt);
+
 cleanup:
+	strvec_clear(&revision_args);
 	strvec_clear(&stash_args);
 	free_stash_info(&info);
 	release_revisions(&rev);
