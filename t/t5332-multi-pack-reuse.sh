@@ -204,4 +204,30 @@ test_expect_success 'omit delta from uninteresting base (cross pack)' '
 	test_pack_objects_reused_all $(($objects_nr - 1)) $packs_nr
 '
 
+test_expect_success 'non-omitted delta in MIDX preferred pack' '
+	test_config pack.allowPackReuse single &&
+
+	cat >p1.objects <<-EOF &&
+	$(git rev-parse $base)
+	^$(git rev-parse $delta^)
+	EOF
+	cat >p2.objects <<-EOF &&
+	$(git rev-parse F)
+	EOF
+
+	p1="$(git pack-objects --revs $packdir/pack <p1.objects)" &&
+	p2="$(git pack-objects --revs $packdir/pack <p2.objects)" &&
+
+	cat >in <<-EOF &&
+	pack-$p1.idx
+	pack-$p2.idx
+	EOF
+	git multi-pack-index write --bitmap --stdin-packs \
+		--preferred-pack=pack-$p1.pack <in &&
+
+	git show-index <$packdir/pack-$p1.idx >expect &&
+
+	test_pack_objects_reused_all $(wc -l <expect) 1
+'
+
 test_done
