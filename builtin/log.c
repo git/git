@@ -2675,16 +2675,16 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 		commit_list_insert(commit, &list);
 	}
 
-	while (list) {
+	for (struct commit_list *l = list; l; l = l->next) {
 		char sign = '+';
 
-		commit = list->item;
+		commit = l->item;
 		if (has_commit_patch_id(commit, &ids))
 			sign = '-';
 		print_commit(sign, commit, verbose, abbrev, revs.diffopt.file);
-		list = list->next;
 	}
 
+	free_commit_list(list);
 	free_patch_ids(&ids);
 	return 0;
 }
