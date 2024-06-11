@@ -4430,6 +4430,7 @@ struct commit *get_revision(struct rev_info *revs)
 		reversed = NULL;
 		while ((c = get_revision_internal(revs)))
 			commit_list_insert(c, &reversed);
+		free_commit_list(revs->commits);
 		revs->commits = reversed;
 		revs->reverse = 0;
 		revs->reverse_output_stage = 1;
