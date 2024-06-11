@@ -508,6 +508,8 @@ static int try_bitmap_disk_usage(struct rev_info *revs,
 
 	size_from_bitmap = get_disk_usage_from_bitmap(bitmap_git, revs);
 	print_disk_usage(size_from_bitmap);
+
+	free_bitmap_index(bitmap_git);
 	return 0;
 }
 
