@@ -3168,6 +3168,7 @@ void release_revisions(struct rev_info *revs)
 {
 	free_commit_list(revs->commits);
 	free_commit_list(revs->ancestry_path_bottoms);
+	release_display_notes(&revs->notes_opt);
 	object_array_clear(&revs->pending);
 	object_array_clear(&revs->boundary_commits);
 	release_revisions_cmdline(&revs->cmdline);
