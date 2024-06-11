@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='blaming trough history with topic branches'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Creates the history shown below. '*'s mark the first parent in the merges.
