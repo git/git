@@ -2494,18 +2494,21 @@ static int match_fragment(struct apply_state *state,
 			  int match_beginning, int match_end)
 {
 	int i;
-	char *fixed_buf, *buf, *orig, *target;
-	struct strbuf fixed;
-	size_t fixed_len, postlen;
+	const char *orig, *target;
+	struct strbuf fixed = STRBUF_INIT;
+	size_t postlen;
 	int preimage_limit;
+	int ret;
 
 	if (preimage->nr + current_lno <= img->nr) {
 		/*
 		 * The hunk falls within the boundaries of img.
 		 */
 		preimage_limit = preimage->nr;
-		if (match_end && (preimage->nr + current_lno != img->nr))
-			return 0;
+		if (match_end && (preimage->nr + current_lno != img->nr)) {
+			ret = 0;
+			goto out;
+		}
 	} else if (state->ws_error_action == correct_ws_error &&
 		   (ws_rule & WS_BLANK_AT_EOF)) {
 		/*
@@ -2522,17 +2525,23 @@ static int match_fragment(struct apply_state *state,
 		 * we are not removing blanks at the end, so we
 		 * should reject the hunk at this position.
 		 */
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
-	if (match_beginning && current_lno)
-		return 0;
+	if (match_beginning && current_lno) {
+		ret = 0;
+		goto out;
+	}
 
 	/* Quick hash check */
-	for (i = 0; i < preimage_limit; i++)
+	for (i = 0; i < preimage_limit; i++) {
 		if ((img->line[current_lno + i].flag & LINE_PATCHED) ||
-		    (preimage->line[i].hash != img->line[current_lno + i].hash))
-			return 0;
+		    (preimage->line[i].hash != img->line[current_lno + i].hash)) {
+			ret = 0;
+			goto out;
+		}
+	}
 
 	if (preimage_limit == preimage->nr) {
 		/*
@@ -2545,8 +2554,10 @@ static int match_fragment(struct apply_state *state,
 		if ((match_end
 		     ? (current + preimage->len == img->len)
 		     : (current + preimage->len <= img->len)) &&
-		    !memcmp(img->buf + current, preimage->buf, preimage->len))
-			return 1;
+		    !memcmp(img->buf + current, preimage->buf, preimage->len)) {
+			ret = 1;
+			goto out;
+		}
 	} else {
 		/*
 		 * The preimage extends beyond the end of img, so
@@ -2555,7 +2566,7 @@ static int match_fragment(struct apply_state *state,
 		 * There must be one non-blank context line that match
 		 * a line before the end of img.
 		 */
-		char *buf_end;
+		const char *buf, *buf_end;
 
 		buf = preimage->buf;
 		buf_end = buf;
@@ -2565,8 +2576,10 @@ static int match_fragment(struct apply_state *state,
 		for ( ; buf < buf_end; buf++)
 			if (!isspace(*buf))
 				break;
-		if (buf == buf_end)
-			return 0;
+		if (buf == buf_end) {
+			ret = 0;
+			goto out;
+		}
 	}
 
 	/*
@@ -2574,12 +2587,16 @@ static int match_fragment(struct apply_state *state,
 	 * fuzzy matching. We collect all the line length information because
 	 * we need it to adjust whitespace if we match.
 	 */
-	if (state->ws_ignore_action == ignore_ws_change)
-		return line_by_line_fuzzy_match(img, preimage, postimage,
-						current, current_lno, preimage_limit);
+	if (state->ws_ignore_action == ignore_ws_change) {
+		ret = line_by_line_fuzzy_match(img, preimage, postimage,
+					       current, current_lno, preimage_limit);
+		goto out;
+	}
 
-	if (state->ws_error_action != correct_ws_error)
-		return 0;
+	if (state->ws_error_action != correct_ws_error) {
+		ret = 0;
+		goto out;
+	}
 
 	/*
 	 * The hunk does not apply byte-by-byte, but the hash says
@@ -2608,7 +2625,7 @@ static int match_fragment(struct apply_state *state,
 	 * but in this loop we will only handle the part of the
 	 * preimage that falls within the file.
 	 */
-	strbuf_init(&fixed, preimage->len + 1);
+	strbuf_grow(&fixed, preimage->len + 1);
 	orig = preimage->buf;
 	target = img->buf + current;
 	for (i = 0; i < preimage_limit; i++) {
@@ -2644,8 +2661,10 @@ static int match_fragment(struct apply_state *state,
 			postlen += tgtfix.len;
 
 		strbuf_release(&tgtfix);
-		if (!match)
-			goto unmatch_exit;
+		if (!match) {
+			ret = 0;
+			goto out;
+		}
 
 		orig += oldlen;
 		target += tgtlen;
@@ -2666,9 +2685,13 @@ static int match_fragment(struct apply_state *state,
 		/* Try fixing the line in the preimage */
 		ws_fix_copy(&fixed, orig, oldlen, ws_rule, NULL);
 
-		for (j = fixstart; j < fixed.len; j++)
-			if (!isspace(fixed.buf[j]))
-				goto unmatch_exit;
+		for (j = fixstart; j < fixed.len; j++) {
+			if (!isspace(fixed.buf[j])) {
+				ret = 0;
+				goto out;
+			}
+		}
+
 
 		orig += oldlen;
 	}
@@ -2678,16 +2701,16 @@ static int match_fragment(struct apply_state *state,
 	 * has whitespace breakages unfixed, and fixing them makes the
 	 * hunk match.  Update the context lines in the postimage.
 	 */
-	fixed_buf = strbuf_detach(&fixed, &fixed_len);
 	if (postlen < postimage->len)
 		postlen = 0;
 	update_pre_post_images(preimage, postimage,
-			       fixed_buf, fixed_len, postlen);
-	return 1;
+			       fixed.buf, fixed.len, postlen);
 
- unmatch_exit:
+	ret = 1;
+
+out:
 	strbuf_release(&fixed);
-	return 0;
+	return ret;
 }
 
 static int find_pos(struct apply_state *state,
