@@ -1711,6 +1711,7 @@ static int try_to_commit(struct repository *r,
 
 out:
 	free_commit_extra_headers(extra);
+	free_commit_list(parents);
 	strbuf_release(&err);
 	strbuf_release(&commit_msg);
 	free(amend_author);

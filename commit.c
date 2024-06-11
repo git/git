@@ -1262,7 +1262,7 @@ int remove_signature(struct strbuf *buf)
 	return sigs[0].start != NULL;
 }
 
-static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
+static void handle_signed_tag(const struct commit *parent, struct commit_extra_header ***tail)
 {
 	struct merge_remote_desc *desc;
 	struct commit_extra_header *mergetag;
@@ -1359,17 +1359,17 @@ void verify_merge_signature(struct commit *commit, int verbosity,
 	signature_check_clear(&signature_check);
 }
 
-void append_merge_tag_headers(struct commit_list *parents,
+void append_merge_tag_headers(const struct commit_list *parents,
 			      struct commit_extra_header ***tail)
 {
 	while (parents) {
-		struct commit *parent = parents->item;
+		const struct commit *parent = parents->item;
 		handle_signed_tag(parent, tail);
 		parents = parents->next;
 	}
 }
 
-static int convert_commit_extra_headers(struct commit_extra_header *orig,
+static int convert_commit_extra_headers(const struct commit_extra_header *orig,
 					struct commit_extra_header **result)
 {
 	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
@@ -1403,7 +1403,7 @@ static int convert_commit_extra_headers(struct commit_extra_header *orig,
 }
 
 static void add_extra_header(struct strbuf *buffer,
-			     struct commit_extra_header *extra)
+			     const struct commit_extra_header *extra)
 {
 	strbuf_addstr(buffer, extra->key);
 	if (extra->len)
@@ -1517,7 +1517,7 @@ void free_commit_extra_headers(struct commit_extra_header *extra)
 }
 
 int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
-		struct commit_list *parents, struct object_id *ret,
+		const struct commit_list *parents, struct object_id *ret,
 		const char *author, const char *sign_commit)
 {
 	struct commit_extra_header *extra = NULL, **tail = &extra;
@@ -1649,7 +1649,7 @@ static void write_commit_tree(struct strbuf *buffer, const char *msg, size_t msg
 			      const struct object_id *tree,
 			      const struct object_id *parents, size_t parents_len,
 			      const char *author, const char *committer,
-			      struct commit_extra_header *extra)
+			      const struct commit_extra_header *extra)
 {
 	int encoding_is_utf8;
 	size_t i;
@@ -1690,10 +1690,10 @@ static void write_commit_tree(struct strbuf *buffer, const char *msg, size_t msg
 
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
-			 struct commit_list *parents, struct object_id *ret,
+			 const struct commit_list *parents, struct object_id *ret,
 			 const char *author, const char *committer,
 			 const char *sign_commit,
-			 struct commit_extra_header *extra)
+			 const struct commit_extra_header *extra)
 {
 	struct repository *r = the_repository;
 	int result = 0;
@@ -1715,10 +1715,8 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	nparents = commit_list_count(parents);
 	CALLOC_ARRAY(parent_buf, nparents);
 	i = 0;
-	while (parents) {
-		struct commit *parent = pop_commit(&parents);
-		oidcpy(&parent_buf[i++], &parent->object.oid);
-	}
+	for (const struct commit_list *p = parents; p; p = p->next)
+		oidcpy(&parent_buf[i++], &p->item->object.oid);
 
 	write_commit_tree(&buffer, msg, msg_len, tree, parent_buf, nparents, author, committer, extra);
 	if (sign_commit && sign_commit_to_strbuf(&sig, &buffer, sign_commit)) {
@@ -1814,7 +1812,7 @@ out:
 define_commit_slab(merge_desc_slab, struct merge_remote_desc *);
 static struct merge_desc_slab merge_desc_slab = COMMIT_SLAB_INIT(1, merge_desc_slab);
 
-struct merge_remote_desc *merge_remote_util(struct commit *commit)
+struct merge_remote_desc *merge_remote_util(const struct commit *commit)
 {
 	return *merge_desc_slab_at(&merge_desc_slab, commit);
 }

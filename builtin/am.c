@@ -1718,6 +1718,7 @@ static void do_commit(const struct am_state *state)
 
 	run_hooks("post-applypatch");
 
+	free_commit_list(parents);
 	strbuf_release(&sb);
 }
 

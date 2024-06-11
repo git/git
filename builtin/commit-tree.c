@@ -111,6 +111,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 			N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_END()
 	};
+	int ret;
 
 	git_config(git_default_config, NULL);
 
@@ -132,11 +133,15 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 
 	if (commit_tree(buffer.buf, buffer.len, &tree_oid, parents, &commit_oid,
 			NULL, sign_commit)) {
-		strbuf_release(&buffer);
-		return 1;
+		ret = 1;
+		goto out;
 	}
 
 	printf("%s\n", oid_to_hex(&commit_oid));
+	ret = 0;
+
+out:
+	free_commit_list(parents);
 	strbuf_release(&buffer);
-	return 0;
+	return ret;
 }

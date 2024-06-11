@@ -2,6 +2,7 @@
 
 test_description='git rebase of commits that start or become empty'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup test repository' '

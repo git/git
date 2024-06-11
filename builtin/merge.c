@@ -895,7 +895,7 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 {
 	struct object_id result_tree, result_commit;
-	struct commit_list *parents, **pptr = &parents;
+	struct commit_list *parents = NULL, **pptr = &parents;
 
 	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET,
 					 SKIP_IF_UNCHANGED, 0, NULL, NULL,
@@ -911,7 +911,9 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 			&result_commit, NULL, sign_commit))
 		die(_("failed to write commit object"));
 	finish(head, remoteheads, &result_commit, "In-index merge");
+
 	remove_merge_branch_state(the_repository);
+	free_commit_list(parents);
 	return 0;
 }
 
@@ -937,8 +939,10 @@ static int finish_automerge(struct commit *head,
 		die(_("failed to write commit object"));
 	strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
 	finish(head, remoteheads, &result_commit, buf.buf);
+
 	strbuf_release(&buf);
 	remove_merge_branch_state(the_repository);
+	free_commit_list(parents);
 	return 0;
 }
 

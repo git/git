@@ -1416,6 +1416,9 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		goto done;
 	}
 
+	free_commit_list(parents);
+	parents = NULL;
+
 	if (include_untracked) {
 		if (save_untracked_files(info, &msg, untracked_files)) {
 			if (!quiet)
@@ -1461,11 +1464,6 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	else
 		strbuf_insertf(stash_msg_buf, 0, "On %s: ", branch_name);
 
-	/*
-	 * `parents` will be empty after calling `commit_tree()`, so there is
-	 * no need to call `free_commit_list()`
-	 */
-	parents = NULL;
 	if (untracked_commit_option)
 		commit_list_insert(lookup_commit(the_repository,
 						 &info->u_commit),
@@ -1487,6 +1485,7 @@ done:
 	strbuf_release(&commit_tree_label);
 	strbuf_release(&msg);
 	strbuf_release(&untracked_files);
+	free_commit_list(parents);
 	return ret;
 }
 

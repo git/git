@@ -1848,7 +1848,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		rollback_index_files();
 		die(_("failed to write commit object"));
 	}
-	free_commit_extra_headers(extra);
 
 	if (update_head_with_reflog(current_head, &oid, reflog_msg, &sb,
 				    &err)) {
@@ -1890,6 +1889,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 
 cleanup:
+	free_commit_extra_headers(extra);
+	free_commit_list(parents);
 	strbuf_release(&author_ident);
 	strbuf_release(&err);
 	strbuf_release(&sb);
