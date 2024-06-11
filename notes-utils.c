@@ -187,6 +187,7 @@ void finish_copy_notes_for_rewrite(struct repository *r,
 	for (i = 0; c->trees[i]; i++) {
 		commit_notes(r, c->trees[i], msg);
 		free_notes(c->trees[i]);
+		free(c->trees[i]);
 	}
 	free(c->trees);
 	free(c);
