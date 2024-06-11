@@ -6649,8 +6649,10 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 
 static void diff_free_file(struct diff_options *options)
 {
-	if (options->close_file)
+	if (options->close_file && options->file) {
 		fclose(options->file);
+		options->file = NULL;
+	}
 }
 
 static void diff_free_ignore_regex(struct diff_options *options)
@@ -6661,7 +6663,9 @@ static void diff_free_ignore_regex(struct diff_options *options)
 		regfree(options->ignore_regex[i]);
 		free(options->ignore_regex[i]);
 	}
-	free(options->ignore_regex);
+
+	FREE_AND_NULL(options->ignore_regex);
+	options->ignore_regex_nr = 0;
 }
 
 void diff_free(struct diff_options *options)
