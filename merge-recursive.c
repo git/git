@@ -239,7 +239,8 @@ enum rename_type {
 struct stage_data {
 	struct diff_filespec stages[4]; /* mostly for oid & mode; maybe path */
 	struct rename_conflict_info *rename_conflict_info;
-	unsigned processed:1;
+	unsigned processed:1,
+		 rename_conflict_info_owned:1;
 };
 
 struct rename {
@@ -308,6 +309,7 @@ static inline void setup_rename_conflict_info(enum rename_type rename_type,
 
 	ci->ren1->dst_entry->processed = 0;
 	ci->ren1->dst_entry->rename_conflict_info = ci;
+	ci->ren1->dst_entry->rename_conflict_info_owned = 1;
 	if (ren2) {
 		ci->ren2->dst_entry->rename_conflict_info = ci;
 	}
@@ -3055,6 +3057,10 @@ static void final_cleanup_rename(struct string_list *rename)
 	for (i = 0; i < rename->nr; i++) {
 		re = rename->items[i].util;
 		diff_free_filepair(re->pair);
+		if (re->src_entry->rename_conflict_info_owned)
+			FREE_AND_NULL(re->src_entry->rename_conflict_info);
+		if (re->dst_entry->rename_conflict_info_owned)
+			FREE_AND_NULL(re->dst_entry->rename_conflict_info);
 	}
 	string_list_clear(rename, 1);
 	free(rename);
