@@ -46,6 +46,13 @@ test_expect_success 'output from clone' '
 	test $(grep Clon output | wc -l) = 1
 '
 
+test_expect_success 'output from clone with core.abbrev does not crash' '
+	rm -fr dst &&
+	echo "Cloning into ${SQ}dst${SQ}..." >expect &&
+	git -c core.abbrev=12 clone -n "file://$(pwd)/src" dst >actual 2>&1 &&
+	test_cmp expect actual
+'
+
 test_expect_success 'clone does not keep pack' '
 
 	rm -fr dst &&
