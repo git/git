@@ -1243,9 +1243,21 @@ test_expect_success '--abbrev-commit with core.abbrev=false' '
 	test_cmp expect actual
 '
 
+test_expect_success '--abbrev-commit with --no-abbrev' '
+	git log --no-abbrev >expect &&
+	git log --abbrev-commit --no-abbrev >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--abbrev-commit with core.abbrev=9000' '
 	git log --no-abbrev >expect &&
 	git -c core.abbrev=9000 log --abbrev-commit >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abbrev-commit with --abbrev=9000' '
+	git log --no-abbrev >expect &&
+	git log --abbrev-commit --abbrev=9000 >actual &&
 	test_cmp expect actual
 '
 
