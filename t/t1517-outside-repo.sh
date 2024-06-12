@@ -56,4 +56,56 @@ test_expect_success 'grep outside repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'imap-send outside repository' '
+	test_config_global imap.host imaps://localhost &&
+	test_config_global imap.folder Drafts &&
+
+	echo nothing to send >expect &&
+	test_must_fail git imap-send -v </dev/null 2>actual &&
+	test_cmp expect actual &&
+
+	(
+		cd non-repo &&
+		test_must_fail git imap-send -v </dev/null 2>../actual
+	) &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check-ref-format outside repository' '
+	git check-ref-format --branch refs/heads/xyzzy >expect &&
+	nongit git check-ref-format --branch refs/heads/xyzzy >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'diff outside repository' '
+	echo one >one &&
+	echo two >two &&
+	test_must_fail git diff --no-index one two >expect.raw &&
+	(
+		cd non-repo &&
+		cp ../one . &&
+		cp ../two . &&
+		test_must_fail git diff one two >../actual.raw
+	) &&
+	# outside repository diff falls back to SHA-1 but
+	# GIT_DEFAULT_HASH may be set to sha256 on the in-repo side.
+	sed -e "/^index /d" expect.raw >expect &&
+	sed -e "/^index /d" actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stripspace outside repository' '
+	nongit git stripspace -s </dev/null
+'
+
+test_expect_success 'remote-http outside repository' '
+	test_must_fail git remote-http 2>actual &&
+	test_grep "^error: remote-curl" actual &&
+	(
+		cd non-repo &&
+		test_must_fail git remote-http 2>../actual
+	) &&
+	test_grep "^error: remote-curl" actual
+'
+
 test_done
