@@ -3,7 +3,7 @@
 
 /*
  * A data structure that associates Git objects to void pointers. See
- * t/helper/test-example-decorate.c for a demonstration of how to use these
+ * t/unit-tests/t-example-decorate.c for a demonstration of how to use these
  * functions.
  */
 
