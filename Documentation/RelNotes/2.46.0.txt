@@ -119,6 +119,21 @@ Performance, Internal Implementation, Development Support etc.
 
  * The alias-expanded command lines are logged to the trace output.
 
+ * A new test was added to ensure git commands that are designed to
+   run outside repositories do work.
+
+ * Basic unit tests for reftable have been reimplemented under the
+   unit test framework.
+
+ * A pair of test helpers that essentially are unit tests on hash
+   algorithms have been rewritten using the unit-tests framework.
+
+ * A test helper that essentially is unit tests on the "decorate"
+   logic has been rewritten using the unit-tests framework.
+
+ * Many memory leaks in the sparse-checkout code paths have been
+   plugged.
+
 
 Fixes since v2.45
 -----------------
@@ -213,6 +228,13 @@ Fixes since v2.45
    (merge 407997c1dd ps/fix-reinit-includeif-onbranch later to maint).
 
  * Memory leaks in "git mv" has been plugged.
+
+ * The safe.directory configuration knob has been updated to
+   optionally allow leading path matches.
+   (merge 313eec177a jc/safe-directory-leading-path later to maint).
+
+ * An overly large ".gitignore" files are now rejected silently.
+   (merge e7c3d1ddba jk/cap-exclude-file-size later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
