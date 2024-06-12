@@ -55,27 +55,8 @@ do
 	)
 done
 
-tests= jobs= skip= oldtest= with_dash= testpen=
+tests= jobs= oldtest= with_dash= testpen=
 clean=:
-
-case `uname` in
-OpenBSD)
-	# O="-fgnu89-inline"
-	skip="t9402"
-	;;
-NetBSD)
-	OLD_ICONV=YesPlease; export OLD_ICONV
-	skip="t5000 t9402"
-	;;
-FreeBSD)
-	OLD_ICONV=YesPlease; export OLD_ICONV
-	skip="t5560"
-	;;
-SunOS)
-	NEEDS_CRYPTO_WITH_SSL=YesPlease ; export NEEDS_CRYPTO_WITH_SSL
-	NO_PEDANTIC=CannotDo
-	;;
-esac
 
 determine_branch () {
 	expr "$($GIT symbolic-ref --no-recurse HEAD 2>/dev/null ||
@@ -197,11 +178,6 @@ fi
 
 test -f /bin/dash || with_dash=
 
-if test -z "$tests" && test -n "$skip"
-then
-	GIT_SKIP_TESTS="${GIT_SKIP_TESTS:-$skip}"
-	export GIT_SKIP_TESTS
-fi
 if test -z "$oldtest" &&
    sh -c 'prove --version >/dev/null 2>&1' &&
    sh -c 'prove --exec : >/dev/null 2>&1'
@@ -273,6 +249,9 @@ if test -f /bin/ginstall
 then
 	set INSTALL=ginstall "$@"
 fi
+
+GIT_SKIP_TESTS=${GIT_SKIP_TESTS:+"$GIT_SKIP_TESTS "}"t95??"
+export GIT_SKIP_TESTS
 
 unset	SSH_AGENT_PID SSH_CLIENT SSH_TTY SSH_AUTH_SOCK SSH_CONNECTION \
 	GPG_AGENT_INFO GNOME_KEYRING_CONTROL GNOME_KEYRING_PID \
