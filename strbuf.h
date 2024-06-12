@@ -311,6 +311,11 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s)
 }
 
 /**
+ * Add a NUL-terminated string the specified number of times to the buffer.
+ */
+void strbuf_addstrings(struct strbuf *sb, const char *s, size_t n);
+
+/**
  * Copy the contents of another buffer at the end of the current one.
  */
 void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2);
