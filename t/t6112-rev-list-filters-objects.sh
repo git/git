@@ -701,4 +701,16 @@ test_expect_success 'expand blob limit in protocol' '
 	grep "blob:limit=1024" trace
 '
 
+test_expect_success EXPENSIVE 'large sparse filter file ignored' '
+	blob=$(dd if=/dev/zero bs=101M count=1 |
+	       git hash-object -w --stdin) &&
+	test_must_fail \
+		git rev-list --all --objects --filter=sparse:oid=$blob 2>err &&
+	cat >expect <<-EOF &&
+	warning: ignoring excessively large pattern blob: $blob
+	fatal: unable to parse sparse filter data in $blob
+	EOF
+	test_cmp expect err
+'
+
 test_done
