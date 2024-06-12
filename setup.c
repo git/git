@@ -1230,13 +1230,20 @@ static int safe_directory_cb(const char *key, const char *value,
 	} else if (!strcmp(value, "*")) {
 		data->is_safe = 1;
 	} else {
-		char *interpolated = NULL;
+		char *allowed = NULL;
 
-		if (!git_config_pathname(&interpolated, key, value) &&
-		    !fspathcmp(data->path, interpolated ? interpolated : value))
-			data->is_safe = 1;
-
-		free(interpolated);
+		if (!git_config_pathname(&allowed, key, value)) {
+			const char *check = allowed ? allowed : value;
+			if (ends_with(check, "/*")) {
+				size_t len = strlen(check);
+				if (!fspathncmp(check, data->path, len - 1))
+					data->is_safe = 1;
+			} else if (!fspathcmp(data->path, check)) {
+				data->is_safe = 1;
+			}
+		}
+		if (allowed != value)
+			free(allowed);
 	}
 
 	return 0;
