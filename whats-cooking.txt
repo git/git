@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2024, #03; Tue, 11)
-X-master-at: 8d94cfb54504f2ec9edc7ca3eb5c29a3dd3675ae
-X-next-at: 995854087836ed4a61d3a38cc5e5fc7639b27baa
+Subject: What's cooking in git.git (Jun 2024, #04; Wed, 12)
+X-master-at: d63586cb314731c851f28e14fc8012988467e2da
+X-next-at: 1570129ebf8726037c796002ceeec929c386d5a6
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2024, #03; Tue, 11)
+What's cooking in git.git (Jun 2024, #04; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,98 +48,92 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* iw/trace-argv-on-alias (2024-05-31) 3 commits
-  (merged to 'next' on 2024-06-03 at 190af38284)
- + run-command: show prepared command
- + Documentation: alias: add notes on shell expansion
- + Documentation: alias: rework notes into points
+* cp/reftable-unit-test (2024-05-30) 5 commits
+  (merged to 'next' on 2024-06-04 at baff123933)
+ + t: improve the test-case for parse_names()
+ + t: add test for put_be16()
+ + t: move tests from reftable/record_test.c to the new unit test
+ + t: move tests from reftable/stack_test.c to the new unit test
+ + t: move reftable/basics_test.c to the unit testing framework
 
- The alias-expanded command lines are logged to the trace output.
- source: <20240525234454.1489598-1-iwienand@redhat.com>
-
-
-* jk/leakfixes (2024-05-30) 6 commits
-  (merged to 'next' on 2024-06-03 at 1e8a6276a1)
- + mv: replace src_dir with a strvec
- + mv: factor out empty src_dir removal
- + mv: move src_dir cleanup to end of cmd_mv()
- + t-strvec: mark variable-arg helper with LAST_ARG_MUST_BE_NULL
- + t-strvec: use va_end() to match va_start()
- + Merge branch 'ps/leakfixes' into jk/leakfixes
- (this branch is used by jk/sparse-leakfix.)
-
- Memory leaks in "git mv" has been plugged.
- source: <20240530063857.GA1942535@coredump.intra.peff.net>
+ Basic unit tests for reftable have been reimplemented under the
+ unit test framework.
+ source: <20240529171439.18271-1-chandrapratap3519@gmail.com>
 
 
-* mt/openindiana-scalar (2024-05-17) 1 commit
-  (merged to 'next' on 2024-05-30 at 190d4465cf)
- + scalar: make enlistment delete to work on all POSIX platforms
+* gt/decorate-unit-test (2024-05-28) 1 commit
+  (merged to 'next' on 2024-06-06 at dd2eb8cad4)
+ + t/: migrate helper/test-example-decorate to the unit testing framework
 
- Avoid removing the $(cwd) for portability.
- source: <Zkds81OB7C5bTCl_@telcontar>
-
-
-* ps/leakfixes (2024-05-27) 19 commits
-  (merged to 'next' on 2024-05-29 at e75dcb3beb)
- + builtin/mv: fix leaks for submodule gitfile paths
- + builtin/mv: refactor to use `struct strvec`
- + builtin/mv duplicate string list memory
- + builtin/mv: refactor `add_slash()` to always return allocated strings
- + strvec: add functions to replace and remove strings
- + submodule: fix leaking memory for submodule entries
- + commit-reach: fix memory leak in `ahead_behind()`
- + builtin/credential: clear credential before exit
- + config: plug various memory leaks
- + config: clarify memory ownership in `git_config_string()`
- + builtin/log: stop using globals for format config
- + builtin/log: stop using globals for log config
- + convert: refactor code to clarify ownership of check_roundtrip_encoding
- + diff: refactor code to clarify memory ownership of prefixes
- + config: clarify memory ownership in `git_config_pathname()`
- + http: refactor code to clarify memory ownership
- + checkout: clarify memory ownership in `unique_tracking_name()`
- + strbuf: fix leak when `appendwholeline()` fails with EOF
- + transport-helper: fix leaking helper name
- (this branch is used by jk/imap-send-plug-all-msgs-leak, jk/leakfixes, jk/sparse-leakfix, ps/leakfixes-more and ps/no-writable-strings.)
-
- Leakfixes.
- source: <cover.1716810168.git.ps@pks.im>
+ A test helper that essentially is unit tests on the "decorate"
+ logic has been rewritten using the unit-tests framework.
+ source: <20240528125837.31090-1-shyamthakkar001@gmail.com>
 
 
-* rs/difftool-env-simplify (2024-05-27) 1 commit
-  (merged to 'next' on 2024-05-29 at 4d3776a989)
- + difftool: add env vars directly in run_file_diff()
+* gt/t-hash-unit-test (2024-05-29) 2 commits
+  (merged to 'next' on 2024-06-04 at 86328a5c8c)
+ + t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
+ + strbuf: introduce strbuf_addstrings() to repeatedly add a string
 
- Code simplification.
- source: <c7c843b9-0ccf-4bcb-a036-d794729a99d6@web.de>
-
-
-* tb/midx-write-cleanup (2024-05-30) 8 commits
-  (merged to 'next' on 2024-05-31 at 03f3d27e4f)
- + pack-bitmap.c: reimplement `midx_bitmap_filename()` with helper
- + midx: replace `get_midx_rev_filename()` with a generic helper
- + midx-write.c: support reading an existing MIDX with `packs_to_include`
- + midx-write.c: extract `fill_packs_from_midx()`
- + midx-write.c: extract `should_include_pack()`
- + midx-write.c: pass `start_pack` to `compute_sorted_entries()`
- + midx-write.c: reduce argument count for `get_sorted_entries()`
- + midx-write.c: tolerate `--preferred-pack` without bitmaps
-
- Code clean-up around writing the .midx files.
- source: <cover.1717023301.git.me@ttaylorr.com>
+ A pair of test helpers that essentially are unit tests on hash
+ algorithms have been rewritten using the unit-tests framework.
+ source: <20240529080030.64410-1-shyamthakkar001@gmail.com>
 
 
-* th/quiet-lazy-fetch-from-promisor (2024-05-26) 1 commit
-  (merged to 'next' on 2024-05-29 at bb12492199)
- + promisor-remote: add promisor.quiet configuration option
+* jc/safe-directory-leading-path (2024-05-29) 1 commit
+  (merged to 'next' on 2024-06-04 at 3d8cb9239c)
+ + safe.directory: allow "lead/ing/path/*" match
 
- The promisor.quiet configuration knob can be set to true to make
- lazy fetching from promisor remotes silent.
- source: <20240525100927.2949808-1-tom@compton.nu>
+ The safe.directory configuration knob has been updated to
+ optionally allow leading path matches.
+ source: <xmqqplt4zjw7.fsf@gitster.g>
+
+
+* jc/t1517-more (2024-06-04) 2 commits
+  (merged to 'next' on 2024-06-04 at f5a118872d)
+ + imap-send: minimum leakfix
+  (merged to 'next' on 2024-06-03 at 10b71e2a60)
+ + t1517: more coverage for commands that work without repository
+ (this branch is used by jk/imap-send-plug-all-msgs-leak.)
+
+ A new test was added to ensure git commands that are designed to
+ run outside repositories do work.
+ source: <xmqqwmnajrrk.fsf@gitster.g>
+
+
+* jk/cap-exclude-file-size (2024-06-05) 2 commits
+  (merged to 'next' on 2024-06-05 at 2467011532)
+ + dir.c: reduce max pattern file size to 100MB
+  (merged to 'next' on 2024-06-04 at 51c0d632d3)
+ + dir.c: skip .gitignore, etc larger than INT_MAX
+
+ An overly large ".gitignore" files are now rejected silently.
+ source: <xmqqikyowqjj.fsf@gitster.g>
+
+
+* jk/sparse-leakfix (2024-06-05) 14 commits
+  (merged to 'next' on 2024-06-06 at c92e02c528)
+ + sparse-checkout: free duplicate hashmap entries
+ + sparse-checkout: free string list after displaying
+ + sparse-checkout: free pattern list in sparse_checkout_list()
+ + sparse-checkout: free sparse_filename after use
+ + sparse-checkout: refactor temporary sparse_checkout_patterns
+ + sparse-checkout: always free "line" strbuf after reading input
+ + sparse-checkout: reuse --stdin buffer when reading patterns
+ + dir.c: always copy input to add_pattern()
+ + dir.c: free removed sparse-pattern hashmap entries
+ + sparse-checkout: clear patterns when init() sees existing sparse file
+ + dir.c: free strings in sparse cone pattern hashmaps
+ + sparse-checkout: pass string literals directly to add_pattern()
+ + sparse-checkout: free string list in write_cone_to_file()
+ + Merge branch 'jk/leakfixes' into jk/sparse-leakfix
+
+ Many memory leaks in the sparse-checkout code paths have been
+ plugged.
+ source: <20240604100814.GA1304520@coredump.intra.peff.net>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * jk/am-retry (2024-06-06) 2 commits
   (merged to 'next' on 2024-06-10 at 4d62361bc7)
@@ -234,20 +228,21 @@ Release tarballs are available at:
 
 
 * ds/doc-add-interactive-singlekey (2024-06-07) 1 commit
- - doc: interactive.singleKey is disabled by default
+  (merged to 'next' on 2024-06-12 at cf3de70246)
+ + doc: interactive.singleKey is disabled by default
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq4ja4e6d6.fsf@gitster.g>
 
 
-* gt/unit-test-oidtree (2024-06-10) 1 commit
+* gt/unit-test-oidtree (2024-06-12) 1 commit
  - t/: migrate helper/test-oidtree.c to unit-tests/t-oidtree.c
 
  "oidtree" tests were rewritten to use the unit test framework.
 
- Expecting a reroll.
+ Will merge to 'next'.
  cf. <7o6fuymnfn6b6buyw3yyctjd4dlwlrazspv3xgxvys6djjivxh@qbhyurorgbtt>
  source: <20240608165731.29467-1-shyamthakkar001@gmail.com>
 
@@ -275,7 +270,7 @@ Release tarballs are available at:
  source: <20240608183901.2084546-1-gitster@pobox.com>
 
 
-* ds/ahead-behind-fix (2024-06-11) 1 commit
+* ds/ahead-behind-fix (2024-06-12) 1 commit
  - commit-graph: increment progress indicator
 
  Fix for a progress bar.
@@ -284,24 +279,27 @@ Release tarballs are available at:
  source: <pull.1743.git.1718118555197.gitgitgadget@gmail.com>
 
 
-* ps/abbrev-length-before-setup-fix (2024-06-11) 2 commits
+* ps/abbrev-length-before-setup-fix (2024-06-12) 3 commits
  - object-name: don't try to abbreviate to lengths greater than hexsz
+ - parse-options-cb: stop clamping "--abbrev=" to hash length
  - config: fix segfault when parsing "core.abbrev" without repo
 
  Setting core.abbrev too early before the repository set-up
  (typically in "git clone") caused segfault, which as been
  corrected.
 
- source: <CAO_smVimsHAPbMxy09mcYZY8apFgCbpnS9eSF7UOL6_BLqntNw@mail.gmail.com>
+ Will merge to 'next'.
+ source: <cover.1718178996.git.ps@pks.im>
 
 
 * ps/make-append-to-cflags (2024-06-11) 1 commit
- - Makefile: add ability to append to CFLAGS and LDFLAGS
+  (merged to 'next' on 2024-06-12 at d57b04bf16)
+ + Makefile: add ability to append to CFLAGS and LDFLAGS
 
  To help developers, the build procedure now allows builders to use
  CFLAGS_APPEND to specify additional CFLAGS.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <8120ddaf0bdfd50e0fc4cf9a04f833102630b639.1718001244.git.ps@pks.im>
 
 
@@ -336,7 +334,6 @@ Release tarballs are available at:
 
  "git mktree" has been rewritten, taking advantage of the cache-tree
  API.
-
  source: <pull.1746.git.1718130288.gitgitgadget@gmail.com>
 
 
@@ -349,13 +346,11 @@ Release tarballs are available at:
  take full advantage of all bundles and ended up slurping duplicated
  objects.
 
- Will merge to 'next'?
+ Expecting a reroll.
  cf. <xmqqa5jruwkr.fsf@gitster.g>
  cf. <xmqqsexjtfcg.fsf@gitster.g>
  source: <pull.1730.v6.git.1718109943.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * rj/add-p-pager (2024-06-04) 6 commits
  . add-patch: introduce the command '|'
@@ -401,7 +396,7 @@ Release tarballs are available at:
  + imap-send: free all_msgs strbuf in "out" label
  + Merge branch 'jc/t1517-more' into jk/imap-send-plug-all-msgs-leak
  + Merge branch 'ps/no-writable-strings' into jk/imap-send-plug-all-msgs-leak
- (this branch uses jc/t1517-more and ps/no-writable-strings.)
+ (this branch uses ps/no-writable-strings.)
 
  A leak in "git imap-send" that somehow escapes LSan has been
  plugged.
@@ -433,21 +428,22 @@ Release tarballs are available at:
  turn on cover letters automatically (unless told never to enable
  cover letter with "--no-cover-letter" and such).
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <9f520828-f87e-49b1-aa4b-c00ec6bb0133@gmail.com>
 
 
 * rs/diff-exit-code-with-external-diff (2024-06-10) 3 commits
- - diff: let external diffs report that changes are uninteresting
- - userdiff: add and use struct external_diff
- - t4020: test exit code with external diffs
+  (merged to 'next' on 2024-06-12 at 9ce495b6cc)
+ + diff: let external diffs report that changes are uninteresting
+ + userdiff: add and use struct external_diff
+ + t4020: test exit code with external diffs
 
  "git diff --exit-code --ext-diff" learned to take the exit status
  of the external diff driver into account when deciding the exit
  status of the overall "git diff" invocation when configured to do
  so.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <168fecaa-2ebd-4897-b0ba-3bd2a37c01e7@web.de>
 
 
@@ -471,42 +467,6 @@ Release tarballs are available at:
 
  Comments?
  source: <xmqqa5jzqd5k.fsf_-_@gitster.g>
-
-
-* jk/sparse-leakfix (2024-06-05) 14 commits
-  (merged to 'next' on 2024-06-06 at c92e02c528)
- + sparse-checkout: free duplicate hashmap entries
- + sparse-checkout: free string list after displaying
- + sparse-checkout: free pattern list in sparse_checkout_list()
- + sparse-checkout: free sparse_filename after use
- + sparse-checkout: refactor temporary sparse_checkout_patterns
- + sparse-checkout: always free "line" strbuf after reading input
- + sparse-checkout: reuse --stdin buffer when reading patterns
- + dir.c: always copy input to add_pattern()
- + dir.c: free removed sparse-pattern hashmap entries
- + sparse-checkout: clear patterns when init() sees existing sparse file
- + dir.c: free strings in sparse cone pattern hashmaps
- + sparse-checkout: pass string literals directly to add_pattern()
- + sparse-checkout: free string list in write_cone_to_file()
- + Merge branch 'jk/leakfixes' into jk/sparse-leakfix
-
- Many memory leaks in the sparse-checkout code paths have been
- plugged.
-
- Will merge to 'master'.
- source: <20240604100814.GA1304520@coredump.intra.peff.net>
-
-
-* jk/cap-exclude-file-size (2024-06-05) 2 commits
-  (merged to 'next' on 2024-06-05 at 2467011532)
- + dir.c: reduce max pattern file size to 100MB
-  (merged to 'next' on 2024-06-04 at 51c0d632d3)
- + dir.c: skip .gitignore, etc larger than INT_MAX
-
- An overly large ".gitignore" files are now rejected silently.
-
- Will merge to 'master'.
- source: <xmqqikyowqjj.fsf@gitster.g>
 
 
 * ps/leakfixes-more (2024-06-11) 30 commits
@@ -547,28 +507,6 @@ Release tarballs are available at:
  source: <cover.1718095906.git.ps@pks.im>
 
 
-* gt/decorate-unit-test (2024-05-28) 1 commit
-  (merged to 'next' on 2024-06-06 at dd2eb8cad4)
- + t/: migrate helper/test-example-decorate to the unit testing framework
-
- A test helper that essentially is unit tests on the "decorate"
- logic has been rewritten using the unit-tests framework.
-
- Will merge to 'master'.
- source: <20240528125837.31090-1-shyamthakkar001@gmail.com>
-
-
-* jc/safe-directory-leading-path (2024-05-29) 1 commit
-  (merged to 'next' on 2024-06-04 at 3d8cb9239c)
- + safe.directory: allow "lead/ing/path/*" match
-
- The safe.directory configuration knob has been updated to
- optionally allow leading path matches.
-
- Will merge to 'master'.
- source: <xmqqplt4zjw7.fsf@gitster.g>
-
-
 * ps/no-writable-strings (2024-06-07) 28 commits
   (merged to 'next' on 2024-06-10 at 9678851a9f)
  + config.mak.dev: enable `-Wwrite-strings` warning
@@ -605,47 +543,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1717740365.git.ps@pks.im>
-
-
-* cp/reftable-unit-test (2024-05-30) 5 commits
-  (merged to 'next' on 2024-06-04 at baff123933)
- + t: improve the test-case for parse_names()
- + t: add test for put_be16()
- + t: move tests from reftable/record_test.c to the new unit test
- + t: move tests from reftable/stack_test.c to the new unit test
- + t: move reftable/basics_test.c to the unit testing framework
-
- Reimplement basic unit tests for reftable under the unit test
- framework.
-
- Will merge to 'master'.
- source: <20240529171439.18271-1-chandrapratap3519@gmail.com>
-
-
-* jc/t1517-more (2024-06-04) 2 commits
-  (merged to 'next' on 2024-06-04 at f5a118872d)
- + imap-send: minimum leakfix
-  (merged to 'next' on 2024-06-03 at 10b71e2a60)
- + t1517: more coverage for commands that work without repository
- (this branch is used by jk/imap-send-plug-all-msgs-leak.)
-
- "smoke tests" to ensure git commands that are designed to run
- outside repositories do work.
-
- Will merge to 'master'.
- source: <xmqqwmnajrrk.fsf@gitster.g>
-
-
-* gt/t-hash-unit-test (2024-05-29) 2 commits
-  (merged to 'next' on 2024-06-04 at 86328a5c8c)
- + t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
- + strbuf: introduce strbuf_addstrings() to repeatedly add a string
-
- A pair of test helpers that essentially are unit tests on hash
- algorithms have been rewritten using the unit-tests framework.
-
- Will merge to 'master'.
- source: <20240529080030.64410-1-shyamthakkar001@gmail.com>
 
 
 * pp/add-parse-range-unit-test (2024-05-27) 1 commit
@@ -780,7 +677,7 @@ Release tarballs are available at:
  "git update-ref --stdin" learned to handle transactional updates of
  symbolic-refs.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20240607133304.2333280-1-knayak@gitlab.com>
 
 
@@ -927,7 +824,6 @@ Release tarballs are available at:
 
  Not ready to be reviewed yet.
  source: <20230824205456.1231371-1-gitster@pobox.com>
-
 
 --------------------------------------------------
 [Discarded]
