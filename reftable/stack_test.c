@@ -102,29 +102,6 @@ static void test_read_file(void)
 	(void) remove(fn);
 }
 
-static void test_parse_names(void)
-{
-	char buf[] = "line\n";
-	char **names = NULL;
-	parse_names(buf, strlen(buf), &names);
-
-	EXPECT(NULL != names[0]);
-	EXPECT(0 == strcmp(names[0], "line"));
-	EXPECT(NULL == names[1]);
-	free_names(names);
-}
-
-static void test_names_equal(void)
-{
-	char *a[] = { "a", "b", "c", NULL };
-	char *b[] = { "a", "b", "d", NULL };
-	char *c[] = { "a", "b", NULL };
-
-	EXPECT(names_equal(a, a));
-	EXPECT(!names_equal(a, b));
-	EXPECT(!names_equal(a, c));
-}
-
 static int write_test_ref(struct reftable_writer *wr, void *arg)
 {
 	struct reftable_ref_record *ref = arg;
@@ -1034,8 +1011,6 @@ static void test_reftable_stack_compaction_concurrent_clean(void)
 int stack_test_main(int argc, const char *argv[])
 {
 	RUN_TEST(test_empty_add);
-	RUN_TEST(test_names_equal);
-	RUN_TEST(test_parse_names);
 	RUN_TEST(test_read_file);
 	RUN_TEST(test_reflog_expire);
 	RUN_TEST(test_reftable_stack_add);
