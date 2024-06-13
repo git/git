@@ -81,7 +81,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	const char *ref_format = NULL;
 	const char *initial_branch = NULL;
 	int hash_algo = GIT_HASH_UNKNOWN;
-	unsigned int ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
+	enum ref_storage_format ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
 	int init_shared_repository = -1;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),

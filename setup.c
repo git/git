@@ -2057,7 +2057,7 @@ static int needs_work_tree_config(const char *git_dir, const char *work_tree)
 }
 
 void initialize_repository_version(int hash_algo,
-				   unsigned int ref_storage_format,
+				   enum ref_storage_format ref_storage_format,
 				   int reinit)
 {
 	char repo_version_string[10];
@@ -2088,6 +2088,8 @@ void initialize_repository_version(int hash_algo,
 	if (ref_storage_format != REF_STORAGE_FORMAT_FILES)
 		git_config_set("extensions.refstorage",
 			       ref_storage_format_to_name(ref_storage_format));
+	else if (reinit)
+		git_config_set_gently("extensions.refstorage", NULL);
 }
 
 static int is_reinit(void)
@@ -2102,7 +2104,7 @@ static int is_reinit(void)
 	return ret;
 }
 
-void create_reference_database(unsigned int ref_storage_format,
+void create_reference_database(enum ref_storage_format ref_storage_format,
 			       const char *initial_branch, int quiet)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -2301,7 +2303,7 @@ static void validate_hash_algorithm(struct repository_format *repo_fmt, int hash
 }
 
 static void validate_ref_storage_format(struct repository_format *repo_fmt,
-					unsigned int format)
+					enum ref_storage_format format)
 {
 	const char *name = getenv("GIT_DEFAULT_REF_FORMAT");
 
@@ -2321,7 +2323,7 @@ static void validate_ref_storage_format(struct repository_format *repo_fmt,
 
 int init_db(const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash,
-	    unsigned int ref_storage_format,
+	    enum ref_storage_format ref_storage_format,
 	    const char *initial_branch,
 	    int init_shared_repository, unsigned int flags)
 {
