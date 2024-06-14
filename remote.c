@@ -35,7 +35,7 @@ static int valid_remote(const struct remote *remote)
 	return (!!remote->url) || (!!remote->foreign_vcs);
 }
 
-static const char *alias_url(const char *url, struct rewrites *r)
+static char *alias_url(const char *url, struct rewrites *r)
 {
 	int i, j;
 	struct counted_string *longest;
@@ -56,7 +56,7 @@ static const char *alias_url(const char *url, struct rewrites *r)
 		}
 	}
 	if (!longest)
-		return url;
+		return NULL;
 
 	return xstrfmt("%s%s", r->rewrite[longest_i]->base, url + longest->len);
 }
@@ -76,15 +76,16 @@ static void add_pushurl(struct remote *remote, const char *pushurl)
 static void add_pushurl_alias(struct remote_state *remote_state,
 			      struct remote *remote, const char *url)
 {
-	const char *pushurl = alias_url(url, &remote_state->rewrites_push);
-	if (pushurl != url)
-		add_pushurl(remote, pushurl);
+	char *alias = alias_url(url, &remote_state->rewrites_push);
+	if (alias)
+		add_pushurl(remote, alias);
 }
 
 static void add_url_alias(struct remote_state *remote_state,
 			  struct remote *remote, const char *url)
 {
-	add_url(remote, alias_url(url, &remote_state->rewrites));
+	char *alias = alias_url(url, &remote_state->rewrites);
+	add_url(remote, alias ? alias : url);
 	add_pushurl_alias(remote_state, remote, url);
 }
 
@@ -492,19 +493,22 @@ static void alias_all_urls(struct remote_state *remote_state)
 		if (!remote_state->remotes[i])
 			continue;
 		for (j = 0; j < remote_state->remotes[i]->pushurl_nr; j++) {
-			remote_state->remotes[i]->pushurl[j] =
-				alias_url(remote_state->remotes[i]->pushurl[j],
-					  &remote_state->rewrites);
+			char *alias = alias_url(remote_state->remotes[i]->pushurl[j],
+						&remote_state->rewrites);
+			if (alias)
+				remote_state->remotes[i]->pushurl[j] = alias;
 		}
 		add_pushurl_aliases = remote_state->remotes[i]->pushurl_nr == 0;
 		for (j = 0; j < remote_state->remotes[i]->url_nr; j++) {
+			char *alias;
 			if (add_pushurl_aliases)
 				add_pushurl_alias(
 					remote_state, remote_state->remotes[i],
 					remote_state->remotes[i]->url[j]);
-			remote_state->remotes[i]->url[j] =
-				alias_url(remote_state->remotes[i]->url[j],
+			alias = alias_url(remote_state->remotes[i]->url[j],
 					  &remote_state->rewrites);
+			if (alias)
+				remote_state->remotes[i]->url[j] = alias;
 		}
 	}
 }
