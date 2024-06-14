@@ -123,6 +123,7 @@ typedef int each_remote_fn(struct remote *remote, void *priv);
 int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);
+struct strvec *push_url_of_remote(struct remote *remote);
 
 struct ref_push_report {
 	const char *ref_name;

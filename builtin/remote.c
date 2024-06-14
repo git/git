@@ -1213,8 +1213,8 @@ static int get_one_entry(struct remote *remote, void *priv)
 {
 	struct string_list *list = priv;
 	struct strbuf remote_info_buf = STRBUF_INIT;
-	const char **url;
-	int i, url_nr;
+	struct strvec *url;
+	int i;
 
 	if (remote->url.nr > 0) {
 		struct strbuf promisor_config = STRBUF_INIT;
@@ -1230,16 +1230,10 @@ static int get_one_entry(struct remote *remote, void *priv)
 				strbuf_detach(&remote_info_buf, NULL);
 	} else
 		string_list_append(list, remote->name)->util = NULL;
-	if (remote->pushurl.nr) {
-		url = remote->pushurl.v;
-		url_nr = remote->pushurl.nr;
-	} else {
-		url = remote->url.v;
-		url_nr = remote->url.nr;
-	}
-	for (i = 0; i < url_nr; i++)
+	url = push_url_of_remote(remote);
+	for (i = 0; i < url->nr; i++)
 	{
-		strbuf_addf(&remote_info_buf, "%s (push)", url[i]);
+		strbuf_addf(&remote_info_buf, "%s (push)", url->v[i]);
 		string_list_append(list, remote->name)->util =
 				strbuf_detach(&remote_info_buf, NULL);
 	}
@@ -1295,28 +1289,21 @@ static int show(int argc, const char **argv, const char *prefix)
 
 	for (; argc; argc--, argv++) {
 		int i;
-		const char **url;
-		int url_nr;
+		struct strvec *url;
 
 		get_remote_ref_states(*argv, &info.states, query_flag);
 
 		printf_ln(_("* remote %s"), *argv);
 		printf_ln(_("  Fetch URL: %s"), info.states.remote->url.nr > 0 ?
 		       info.states.remote->url.v[0] : _("(no URL)"));
-		if (info.states.remote->pushurl.nr) {
-			url = info.states.remote->pushurl.v;
-			url_nr = info.states.remote->pushurl.nr;
-		} else {
-			url = info.states.remote->url.v;
-			url_nr = info.states.remote->url.nr;
-		}
-		for (i = 0; i < url_nr; i++)
+		url = push_url_of_remote(info.states.remote);
+		for (i = 0; i < url->nr; i++)
 			/*
 			 * TRANSLATORS: the colon ':' should align
 			 * with the one in " Fetch URL: %s"
 			 * translation.
 			 */
-			printf_ln(_("  Push  URL: %s"), url[i]);
+			printf_ln(_("  Push  URL: %s"), url->v[i]);
 		if (!i)
 			printf_ln(_("  Push  URL: %s"), _("(no URL)"));
 		if (no_query)
@@ -1622,8 +1609,7 @@ static int get_url(int argc, const char **argv, const char *prefix)
 	int i, push_mode = 0, all_mode = 0;
 	const char *remotename = NULL;
 	struct remote *remote;
-	const char **url;
-	int url_nr;
+	struct strvec *url;
 	struct option options[] = {
 		OPT_BOOL('\0', "push", &push_mode,
 			 N_("query push URLs rather than fetch URLs")),
@@ -1645,27 +1631,15 @@ static int get_url(int argc, const char **argv, const char *prefix)
 		exit(2);
 	}
 
-	url_nr = 0;
-	if (push_mode) {
-		url = remote->pushurl.v;
-		url_nr = remote->pushurl.nr;
-	}
-	/* else fetch mode */
-
-	/* Use the fetch URL when no push URLs were found or requested. */
-	if (!url_nr) {
-		url = remote->url.v;
-		url_nr = remote->url.nr;
-	}
-
-	if (!url_nr)
+	url = push_mode ? push_url_of_remote(remote) : &remote->url;
+	if (!url->nr)
 		die(_("no URLs configured for remote '%s'"), remotename);
 
 	if (all_mode) {
-		for (i = 0; i < url_nr; i++)
-			printf_ln("%s", url[i]);
+		for (i = 0; i < url->nr; i++)
+			printf_ln("%s", url->v[i]);
 	} else {
-		printf_ln("%s", *url);
+		printf_ln("%s", url->v[0]);
 	}
 
 	return 0;
@@ -1680,8 +1654,7 @@ static int set_url(int argc, const char **argv, const char *prefix)
 	const char *oldurl = NULL;
 	struct remote *remote;
 	regex_t old_regex;
-	const char **urlset;
-	int urlset_nr;
+	struct strvec *urlset;
 	struct strbuf name_buf = STRBUF_INIT;
 	struct option options[] = {
 		OPT_BOOL('\0', "push", &push_mode,
@@ -1718,12 +1691,10 @@ static int set_url(int argc, const char **argv, const char *prefix)
 
 	if (push_mode) {
 		strbuf_addf(&name_buf, "remote.%s.pushurl", remotename);
-		urlset = remote->pushurl.v;
-		urlset_nr = remote->pushurl.nr;
+		urlset = &remote->pushurl;
 	} else {
 		strbuf_addf(&name_buf, "remote.%s.url", remotename);
-		urlset = remote->url.v;
-		urlset_nr = remote->url.nr;
+		urlset = &remote->url;
 	}
 
 	/* Special cases that add new entry. */
@@ -1740,8 +1711,8 @@ static int set_url(int argc, const char **argv, const char *prefix)
 	if (regcomp(&old_regex, oldurl, REG_EXTENDED))
 		die(_("Invalid old URL pattern: %s"), oldurl);
 
-	for (i = 0; i < urlset_nr; i++)
-		if (!regexec(&old_regex, urlset[i], 0, NULL, 0))
+	for (i = 0; i < urlset->nr; i++)
+		if (!regexec(&old_regex, urlset->v[i], 0, NULL, 0))
 			matches++;
 		else
 			negative_matches++;

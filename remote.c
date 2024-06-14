@@ -827,6 +827,11 @@ int remote_has_url(struct remote *remote, const char *url)
 	return 0;
 }
 
+struct strvec *push_url_of_remote(struct remote *remote)
+{
+	return remote->pushurl.nr ? &remote->pushurl : &remote->url;
+}
+
 static int match_name_with_pattern(const char *key, const char *name,
 				   const char *value, char **result)
 {

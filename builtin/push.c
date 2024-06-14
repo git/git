@@ -141,16 +141,6 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 	free_refs(local_refs);
 }
 
-static int push_url_of_remote(struct remote *remote, const char ***url_p)
-{
-	if (remote->pushurl.nr) {
-		*url_p = remote->pushurl.v;
-		return remote->pushurl.nr;
-	}
-	*url_p = remote->url.v;
-	return remote->url.nr;
-}
-
 static NORETURN void die_push_simple(struct branch *branch,
 				     struct remote *remote)
 {
@@ -434,8 +424,7 @@ static int do_push(int flags,
 		   struct remote *remote)
 {
 	int i, errs;
-	const char **url;
-	int url_nr;
+	struct strvec *url;
 	struct refspec *push_refspec = &rs;
 
 	if (push_options->nr)
@@ -448,11 +437,11 @@ static int do_push(int flags,
 			setup_default_push_refspecs(&flags, remote);
 	}
 	errs = 0;
-	url_nr = push_url_of_remote(remote, &url);
-	if (url_nr) {
-		for (i = 0; i < url_nr; i++) {
+	url = push_url_of_remote(remote);
+	if (url->nr) {
+		for (i = 0; i < url->nr; i++) {
 			struct transport *transport =
-				transport_get(remote, url[i]);
+				transport_get(remote, url->v[i]);
 			if (flags & TRANSPORT_PUSH_OPTIONS)
 				transport->push_options = push_options;
 			if (push_with_options(transport, push_refspec, flags))
