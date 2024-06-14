@@ -422,7 +422,7 @@ static int update_one(struct cache_tree *it,
 		/*
 		 * "sub" can be an empty tree if all subentries are i-t-a.
 		 */
-		if (contains_ita && is_empty_tree_oid(oid))
+		if (contains_ita && is_empty_tree_oid(oid, the_repository->hash_algo))
 			continue;
 
 		strbuf_grow(&buffer, entlen + 100);

@@ -350,4 +350,16 @@ static inline int is_null_oid(const struct object_id *oid)
 const char *empty_tree_oid_hex(void);
 const char *empty_blob_oid_hex(void);
 
+static inline int is_empty_blob_oid(const struct object_id *oid,
+				    const struct git_hash_algo *algop)
+{
+	return oideq(oid, algop->empty_blob);
+}
+
+static inline int is_empty_tree_oid(const struct object_id *oid,
+				    const struct git_hash_algo *algop)
+{
+	return oideq(oid, algop->empty_tree);
+}
+
 #endif

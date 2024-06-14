@@ -337,7 +337,7 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 
 	/* Racily smudged entry? */
 	if (!ce->ce_stat_data.sd_size) {
-		if (!is_empty_blob_oid(&ce->oid))
+		if (!is_empty_blob_oid(&ce->oid, the_repository->hash_algo))
 			changed |= DATA_CHANGED;
 	}
 

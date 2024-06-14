@@ -2361,7 +2361,9 @@ static void file_change_m(const char *p, struct branch *b)
 	parse_path_eol(&path, p, "path");
 
 	/* Git does not track empty, non-toplevel directories. */
-	if (S_ISDIR(mode) && is_empty_tree_oid(&oid) && *path.buf) {
+	if (S_ISDIR(mode) &&
+	    is_empty_tree_oid(&oid, the_repository->hash_algo) &&
+	    *path.buf) {
 		tree_content_remove(&b->branch_tree, path.buf, NULL, 0);
 		return;
 	}
