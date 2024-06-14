@@ -1728,7 +1728,7 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 
 	end = (unsigned char *)hdr + size;
 	start = end - the_hash_algo->rawsz;
-	oidread(&oid, start);
+	oidread(&oid, start, the_repository->hash_algo);
 	if (oideq(&oid, null_oid()))
 		return 0;
 
@@ -1876,7 +1876,8 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 	ce->ce_flags = flags & ~CE_NAMEMASK;
 	ce->ce_namelen = len;
 	ce->index = 0;
-	oidread(&ce->oid, (const unsigned char *)ondisk + offsetof(struct ondisk_cache_entry, data));
+	oidread(&ce->oid, (const unsigned char *)ondisk + offsetof(struct ondisk_cache_entry, data),
+		the_repository->hash_algo);
 
 	if (expand_name_field) {
 		if (copy_len)
@@ -2249,7 +2250,8 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (verify_hdr(hdr, mmap_size) < 0)
 		goto unmap;
 
-	oidread(&istate->oid, (const unsigned char *)hdr + mmap_size - the_hash_algo->rawsz);
+	oidread(&istate->oid, (const unsigned char *)hdr + mmap_size - the_hash_algo->rawsz,
+		the_repository->hash_algo);
 	istate->version = ntohl(hdr->hdr_version);
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);

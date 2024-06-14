@@ -475,7 +475,8 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 		FREE_AND_NULL(graph->bloom_filter_settings);
 	}
 
-	oidread(&graph->oid, graph->data + graph->data_len - graph->hash_len);
+	oidread(&graph->oid, graph->data + graph->data_len - graph->hash_len,
+		the_repository->hash_algo);
 
 	free_chunkfile(cf);
 	return graph;
@@ -838,7 +839,8 @@ static void load_oid_from_graph(struct commit_graph *g,
 
 	lex_index = pos - g->num_commits_in_base;
 
-	oidread(oid, g->chunk_oid_lookup + st_mult(g->hash_len, lex_index));
+	oidread(oid, g->chunk_oid_lookup + st_mult(g->hash_len, lex_index),
+		the_repository->hash_algo);
 }
 
 static struct commit_list **insert_parent_or_die(struct repository *r,
@@ -1080,7 +1082,7 @@ static struct tree *load_tree_for_commit(struct repository *r,
 	commit_data = g->chunk_commit_data +
 			st_mult(GRAPH_DATA_WIDTH, graph_pos - g->num_commits_in_base);
 
-	oidread(&oid, commit_data);
+	oidread(&oid, commit_data, the_repository->hash_algo);
 	set_commit_tree(c, lookup_tree(r, &oid));
 
 	return c->maybe_tree;
@@ -2556,7 +2558,8 @@ int write_commit_graph(struct object_directory *odb,
 		struct commit_graph *g = ctx->r->objects->commit_graph;
 		for (i = 0; i < g->num_commits; i++) {
 			struct object_id oid;
-			oidread(&oid, g->chunk_oid_lookup + st_mult(g->hash_len, i));
+			oidread(&oid, g->chunk_oid_lookup + st_mult(g->hash_len, i),
+				the_repository->hash_algo);
 			oid_array_append(&ctx->oids, &oid);
 		}
 	}
@@ -2675,7 +2678,8 @@ static int verify_one_commit_graph(struct repository *r,
 	for (i = 0; i < g->num_commits; i++) {
 		struct commit *graph_commit;
 
-		oidread(&cur_oid, g->chunk_oid_lookup + st_mult(g->hash_len, i));
+		oidread(&cur_oid, g->chunk_oid_lookup + st_mult(g->hash_len, i),
+			the_repository->hash_algo);
 
 		if (i && oidcmp(&prev_oid, &cur_oid) >= 0)
 			graph_report(_("commit-graph has incorrect OID order: %s then %s"),
@@ -2719,7 +2723,8 @@ static int verify_one_commit_graph(struct repository *r,
 		timestamp_t generation;
 
 		display_progress(progress, ++(*seen));
-		oidread(&cur_oid, g->chunk_oid_lookup + st_mult(g->hash_len, i));
+		oidread(&cur_oid, g->chunk_oid_lookup + st_mult(g->hash_len, i),
+			the_repository->hash_algo);
 
 		graph_commit = lookup_commit(r, &cur_oid);
 		odb_commit = (struct commit *)create_object(r, &cur_oid, alloc_commit_node(r));

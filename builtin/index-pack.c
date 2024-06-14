@@ -528,7 +528,8 @@ static void *unpack_raw_entry(struct object_entry *obj,
 
 	switch (obj->type) {
 	case OBJ_REF_DELTA:
-		oidread(ref_oid, fill(the_hash_algo->rawsz));
+		oidread(ref_oid, fill(the_hash_algo->rawsz),
+			the_repository->hash_algo);
 		use(the_hash_algo->rawsz);
 		break;
 	case OBJ_OFS_DELTA:
@@ -1372,7 +1373,7 @@ static struct object_entry *append_obj_to_pack(struct hashfile *f,
 	obj[1].idx.offset += write_compressed(f, buf, size);
 	obj[0].idx.crc32 = crc32_end(f);
 	hashflush(f);
-	oidread(&obj->idx.oid, sha1);
+	oidread(&obj->idx.oid, sha1, the_repository->hash_algo);
 	return obj;
 }
 

@@ -682,7 +682,7 @@ static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
 	int ret = 0;
 
 	if (is_null_oid(treeish_name)) {
-		oidclr(gitmodules_oid);
+		oidclr(gitmodules_oid, the_repository->hash_algo);
 		return 1;
 	}
 

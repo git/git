@@ -3680,7 +3680,7 @@ static int try_threeway(struct apply_state *state,
 	if (status) {
 		patch->conflicted_threeway = 1;
 		if (patch->is_new)
-			oidclr(&patch->threeway_stage[0]);
+			oidclr(&patch->threeway_stage[0], the_repository->hash_algo);
 		else
 			oidcpy(&patch->threeway_stage[0], &pre_oid);
 		oidcpy(&patch->threeway_stage[1], &our_oid);

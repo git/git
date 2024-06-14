@@ -93,7 +93,8 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 				continue;
 			if (size < rawsz)
 				goto error;
-			oidread(&ui->oid[i], (const unsigned char *)data);
+			oidread(&ui->oid[i], (const unsigned char *)data,
+				the_repository->hash_algo);
 			size -= rawsz;
 			data += rawsz;
 		}

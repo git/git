@@ -1822,7 +1822,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 			    failure_errno != ENOTDIR)
 				return NULL;
 
-			oidclr(oid);
+			oidclr(oid, the_repository->hash_algo);
 			if (*flags & REF_BAD_NAME)
 				*flags |= REF_ISBROKEN;
 			return refname;
@@ -1832,7 +1832,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 
 		if (!(read_flags & REF_ISSYMREF)) {
 			if (*flags & REF_BAD_NAME) {
-				oidclr(oid);
+				oidclr(oid, the_repository->hash_algo);
 				*flags |= REF_ISBROKEN;
 			}
 			return refname;
@@ -1840,7 +1840,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 
 		refname = sb_refname.buf;
 		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
-			oidclr(oid);
+			oidclr(oid, the_repository->hash_algo);
 			return refname;
 		}
 		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {

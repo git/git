@@ -1251,7 +1251,7 @@ static int get_delta_base_oid(struct packed_git *p,
 {
 	if (type == OBJ_REF_DELTA) {
 		unsigned char *base = use_pack(p, w_curs, curpos, NULL);
-		oidread(oid, base);
+		oidread(oid, base, the_repository->hash_algo);
 		return 0;
 	} else if (type == OBJ_OFS_DELTA) {
 		uint32_t base_pos;
@@ -1593,7 +1593,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 				goto out;
 			}
 		} else
-			oidclr(oi->delta_base_oid);
+			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 	}
 
 	oi->whence = in_delta_base_cache(p, obj_offset) ? OI_DBCACHED :
@@ -1917,10 +1917,12 @@ int nth_packed_object_id(struct object_id *oid,
 		return -1;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		oidread(oid, index + st_add(st_mult(hashsz + 4, n), 4));
+		oidread(oid, index + st_add(st_mult(hashsz + 4, n), 4),
+			the_repository->hash_algo);
 	} else {
 		index += 8;
-		oidread(oid, index + st_mult(hashsz, n));
+		oidread(oid, index + st_mult(hashsz, n),
+			the_repository->hash_algo);
 	}
 	return 0;
 }

@@ -828,7 +828,7 @@ static int merge_commit(struct notes_merge_options *o)
 	if (partial->parents)
 		oidcpy(&parent_oid, &partial->parents->item->object.oid);
 	else
-		oidclr(&parent_oid);
+		oidclr(&parent_oid, the_repository->hash_algo);
 
 	CALLOC_ARRAY(t, 1);
 	init_notes(t, "NOTES_MERGE_PARTIAL", combine_notes_overwrite, 0);

@@ -3334,12 +3334,12 @@ static int rollback_is_safe(void)
 		strbuf_release(&sb);
 	}
 	else if (errno == ENOENT)
-		oidclr(&expected_head);
+		oidclr(&expected_head, the_repository->hash_algo);
 	else
 		die_errno(_("could not read '%s'"), git_path_abort_safety_file());
 
 	if (repo_get_oid(the_repository, "HEAD", &actual_head))
-		oidclr(&actual_head);
+		oidclr(&actual_head, the_repository->hash_algo);
 
 	return oideq(&actual_head, &expected_head);
 }

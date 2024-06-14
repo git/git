@@ -578,7 +578,8 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	if (0 <= it->entry_count) {
 		if (size < rawsz)
 			goto free_return;
-		oidread(&it->oid, (const unsigned char *)buf);
+		oidread(&it->oid, (const unsigned char *)buf,
+			the_repository->hash_algo);
 		buf += rawsz;
 		size -= rawsz;
 	}

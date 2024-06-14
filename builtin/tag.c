@@ -650,7 +650,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		die(_("'%s' is not a valid tag name."), tag);
 
 	if (refs_read_ref(get_main_ref_store(the_repository), ref.buf, &prev))
-		oidclr(&prev);
+		oidclr(&prev, the_repository->hash_algo);
 	else if (!force)
 		die(_("tag '%s' already exists"), tag);
 

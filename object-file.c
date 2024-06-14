@@ -1446,7 +1446,7 @@ static int loose_object_info(struct repository *r,
 	int allow_unknown = flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (oi->delta_base_oid)
-		oidclr(oi->delta_base_oid);
+		oidclr(oi->delta_base_oid, the_repository->hash_algo);
 
 	/*
 	 * If we don't care about type or size, then we don't
@@ -1580,7 +1580,7 @@ static int do_oid_object_info_extended(struct repository *r,
 		if (oi->disk_sizep)
 			*(oi->disk_sizep) = 0;
 		if (oi->delta_base_oid)
-			oidclr(oi->delta_base_oid);
+			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 		if (oi->type_name)
 			strbuf_addstr(oi->type_name, type_name(co->type));
 		if (oi->contentp)

@@ -29,7 +29,7 @@ int read_link_extension(struct index_state *istate,
 	if (sz < the_hash_algo->rawsz)
 		return error("corrupt link extension (too short)");
 	si = init_split_index(istate);
-	oidread(&si->base_oid, data);
+	oidread(&si->base_oid, data, the_repository->hash_algo);
 	data += the_hash_algo->rawsz;
 	sz -= the_hash_algo->rawsz;
 	if (!sz)

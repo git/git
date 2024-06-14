@@ -1552,7 +1552,7 @@ static void fetch_symref(const char *path, char **symref, struct object_id *oid)
 	free(url);
 
 	FREE_AND_NULL(*symref);
-	oidclr(oid);
+	oidclr(oid, the_repository->hash_algo);
 
 	if (buffer.len == 0)
 		return;

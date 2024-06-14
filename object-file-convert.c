@@ -56,7 +56,7 @@ static int decode_tree_entry_raw(struct object_id *oid, const char **path,
 		return -1;
 	*len = strlen(*path) + 1;
 
-	oidread_algop(oid, (const unsigned char *)*path + *len, algo);
+	oidread(oid, (const unsigned char *)*path + *len, algo);
 	return 0;
 }
 

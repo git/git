@@ -47,23 +47,6 @@ static inline void oidcpy_with_padding(struct object_id *dst,
 	dst->algo = src->algo;
 }
 
-static inline void oidclr(struct object_id *oid)
-{
-	memset(oid->hash, 0, GIT_MAX_RAWSZ);
-	oid->algo = hash_algo_by_ptr(the_hash_algo);
-}
-
-static inline void oidread_algop(struct object_id *oid, const unsigned char *hash, const struct git_hash_algo *algop)
-{
-	memcpy(oid->hash, hash, algop->rawsz);
-	oid->algo = hash_algo_by_ptr(algop);
-}
-
-static inline void oidread(struct object_id *oid, const unsigned char *hash)
-{
-	oidread_algop(oid, hash, the_hash_algo);
-}
-
 static inline int is_empty_blob_oid(const struct object_id *oid)
 {
 	return oideq(oid, the_hash_algo->empty_blob);

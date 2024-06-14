@@ -1687,7 +1687,7 @@ static void prep_exclude(struct dir_struct *dir,
 		}
 
 		/* Try to read per-directory file */
-		oidclr(&oid_stat.oid);
+		oidclr(&oid_stat.oid, the_repository->hash_algo);
 		oid_stat.valid = 0;
 		if (dir->exclude_per_dir &&
 		    /*
@@ -3794,7 +3794,7 @@ static void read_oid(size_t pos, void *cb)
 		rd->data = rd->end + 1;
 		return;
 	}
-	oidread(&ud->exclude_oid, rd->data);
+	oidread(&ud->exclude_oid, rd->data, the_repository->hash_algo);
 	rd->data += the_hash_algo->rawsz;
 }
 
@@ -3802,7 +3802,7 @@ static void load_oid_stat(struct oid_stat *oid_stat, const unsigned char *data,
 			  const unsigned char *sha1)
 {
 	stat_data_from_disk(&oid_stat->stat, data);
-	oidread(&oid_stat->oid, sha1);
+	oidread(&oid_stat->oid, sha1, the_repository->hash_algo);
 	oid_stat->valid = 1;
 }
 

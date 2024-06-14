@@ -284,6 +284,20 @@ static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 	dst->algo = src->algo;
 }
 
+static inline void oidread(struct object_id *oid, const unsigned char *hash,
+			   const struct git_hash_algo *algop)
+{
+	memcpy(oid->hash, hash, algop->rawsz);
+	oid->algo = hash_algo_by_ptr(algop);
+}
+
+static inline void oidclr(struct object_id *oid,
+			  const struct git_hash_algo *algop)
+{
+	memset(oid->hash, 0, GIT_MAX_RAWSZ);
+	oid->algo = hash_algo_by_ptr(algop);
+}
+
 static inline struct object_id *oiddup(const struct object_id *src)
 {
 	struct object_id *dst = xmalloc(sizeof(struct object_id));

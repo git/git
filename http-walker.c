@@ -152,7 +152,7 @@ static void prefetch(struct walker *walker, unsigned char *sha1)
 
 	newreq = xmalloc(sizeof(*newreq));
 	newreq->walker = walker;
-	oidread(&newreq->oid, sha1);
+	oidread(&newreq->oid, sha1, the_repository->hash_algo);
 	newreq->repo = data->alt;
 	newreq->state = WAITING;
 	newreq->req = NULL;

@@ -494,7 +494,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	strbuf_branchname(&bname, remote, 0);
 	remote = bname.buf;
 
-	oidclr(&branch_head);
+	oidclr(&branch_head, the_repository->hash_algo);
 	remote_head = get_merge_parent(remote);
 	if (!remote_head)
 		die(_("'%s' does not point to a commit"), remote);
@@ -1690,7 +1690,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	 * index and working tree polluted.
 	 */
 	if (save_state(&stash))
-		oidclr(&stash);
+		oidclr(&stash, the_repository->hash_algo);
 
 	for (i = 0; i < use_strategies_nr; i++) {
 		int ret, cnt;

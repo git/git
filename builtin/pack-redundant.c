@@ -100,7 +100,7 @@ static inline struct llist_item *llist_insert(struct llist *list,
 					      const unsigned char *oid)
 {
 	struct llist_item *new_item = llist_item_get();
-	oidread(&new_item->oid, oid);
+	oidread(&new_item->oid, oid, the_repository->hash_algo);
 	new_item->next = NULL;
 
 	if (after) {
