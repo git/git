@@ -64,13 +64,13 @@ static char *alias_url(const char *url, struct rewrites *r)
 static void add_url(struct remote *remote, const char *url)
 {
 	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
-	remote->url[remote->url_nr++] = url;
+	remote->url[remote->url_nr++] = xstrdup(url);
 }
 
 static void add_pushurl(struct remote *remote, const char *pushurl)
 {
 	ALLOC_GROW(remote->pushurl, remote->pushurl_nr + 1, remote->pushurl_alloc);
-	remote->pushurl[remote->pushurl_nr++] = pushurl;
+	remote->pushurl[remote->pushurl_nr++] = xstrdup(pushurl);
 }
 
 static void add_pushurl_alias(struct remote_state *remote_state,
@@ -79,6 +79,7 @@ static void add_pushurl_alias(struct remote_state *remote_state,
 	char *alias = alias_url(url, &remote_state->rewrites_push);
 	if (alias)
 		add_pushurl(remote, alias);
+	free(alias);
 }
 
 static void add_url_alias(struct remote_state *remote_state,
@@ -87,6 +88,7 @@ static void add_url_alias(struct remote_state *remote_state,
 	char *alias = alias_url(url, &remote_state->rewrites);
 	add_url(remote, alias ? alias : url);
 	add_pushurl_alias(remote_state, remote, url);
+	free(alias);
 }
 
 struct remotes_hash_key {
@@ -293,7 +295,7 @@ static void read_remotes_file(struct remote_state *remote_state,
 
 		if (skip_prefix(buf.buf, "URL:", &v))
 			add_url_alias(remote_state, remote,
-				      xstrdup(skip_spaces(v)));
+				      skip_spaces(v));
 		else if (skip_prefix(buf.buf, "Push:", &v))
 			refspec_append(&remote->push, skip_spaces(v));
 		else if (skip_prefix(buf.buf, "Pull:", &v))
@@ -336,7 +338,7 @@ static void read_branches_file(struct remote_state *remote_state,
 	else
 		frag = to_free = repo_default_branch_name(the_repository, 0);
 
-	add_url_alias(remote_state, remote, strbuf_detach(&buf, NULL));
+	add_url_alias(remote_state, remote, buf.buf);
 	refspec_appendf(&remote->fetch, "refs/heads/%s:refs/heads/%s",
 			frag, remote->name);
 
@@ -347,6 +349,7 @@ static void read_branches_file(struct remote_state *remote_state,
 	refspec_appendf(&remote->push, "HEAD:refs/heads/%s", frag);
 	remote->fetch_tags = 1; /* always auto-follow */
 
+	strbuf_release(&buf);
 	free(to_free);
 }
 
@@ -431,15 +434,13 @@ static int handle_config(const char *key, const char *value,
 	else if (!strcmp(subkey, "prunetags"))
 		remote->prune_tags = git_config_bool(key, value);
 	else if (!strcmp(subkey, "url")) {
-		char *v;
-		if (git_config_string(&v, key, value))
-			return -1;
-		add_url(remote, v);
+		if (!value)
+			return config_error_nonbool(key);
+		add_url(remote, value);
 	} else if (!strcmp(subkey, "pushurl")) {
-		char *v;
-		if (git_config_string(&v, key, value))
-			return -1;
-		add_pushurl(remote, v);
+		if (!value)
+			return config_error_nonbool(key);
+		add_pushurl(remote, value);
 	} else if (!strcmp(subkey, "push")) {
 		char *v;
 		if (git_config_string(&v, key, value))
@@ -495,8 +496,10 @@ static void alias_all_urls(struct remote_state *remote_state)
 		for (j = 0; j < remote_state->remotes[i]->pushurl_nr; j++) {
 			char *alias = alias_url(remote_state->remotes[i]->pushurl[j],
 						&remote_state->rewrites);
-			if (alias)
+			if (alias) {
+				free((char *)remote_state->remotes[i]->pushurl[j]);
 				remote_state->remotes[i]->pushurl[j] = alias;
+			}
 		}
 		add_pushurl_aliases = remote_state->remotes[i]->pushurl_nr == 0;
 		for (j = 0; j < remote_state->remotes[i]->url_nr; j++) {
@@ -507,8 +510,10 @@ static void alias_all_urls(struct remote_state *remote_state)
 					remote_state->remotes[i]->url[j]);
 			alias = alias_url(remote_state->remotes[i]->url[j],
 					  &remote_state->rewrites);
-			if (alias)
+			if (alias) {
+				free((char *)remote_state->remotes[i]->url[j]);
 				remote_state->remotes[i]->url[j] = alias;
+			}
 		}
 	}
 }
