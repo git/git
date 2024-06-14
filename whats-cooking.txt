@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2024, #04; Wed, 12)
+Subject: What's cooking in git.git (Jun 2024, #05; Fri, 14)
 X-master-at: d63586cb314731c851f28e14fc8012988467e2da
-X-next-at: 1570129ebf8726037c796002ceeec929c386d5a6
+X-next-at: 447d99e1c3bfb5c45d0d491c7e2c0b75dd7eccf9
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2024, #04; Wed, 12)
+What's cooking in git.git (Jun 2024, #05; Fri, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,91 +46,135 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* cp/reftable-unit-test (2024-05-30) 5 commits
-  (merged to 'next' on 2024-06-04 at baff123933)
- + t: improve the test-case for parse_names()
- + t: add test for put_be16()
- + t: move tests from reftable/record_test.c to the new unit test
- + t: move tests from reftable/stack_test.c to the new unit test
- + t: move reftable/basics_test.c to the unit testing framework
+* cp/unit-test-reftable-tree (2024-06-13) 5 commits
+ - t-reftable-tree: improve the test for infix_walk()
+ - t-reftable-tree: add test for non-existent key
+ - t-reftable-tree: split test_tree() into two sub-test functions
+ - t: move reftable/tree_test.c to the unit testing framework
+ - reftable: remove unnecessary curly braces in reftable/tree.c
 
- Basic unit tests for reftable have been reimplemented under the
- unit test framework.
- source: <20240529171439.18271-1-chandrapratap3519@gmail.com>
+ A test in reftable library has been rewritten using the unit test
+ framework.
 
-
-* gt/decorate-unit-test (2024-05-28) 1 commit
-  (merged to 'next' on 2024-06-06 at dd2eb8cad4)
- + t/: migrate helper/test-example-decorate to the unit testing framework
-
- A test helper that essentially is unit tests on the "decorate"
- logic has been rewritten using the unit-tests framework.
- source: <20240528125837.31090-1-shyamthakkar001@gmail.com>
+ Needs review.
+ source: <20240612130217.8877-1-chandrapratap3519@gmail.com>
 
 
-* gt/t-hash-unit-test (2024-05-29) 2 commits
-  (merged to 'next' on 2024-06-04 at 86328a5c8c)
- + t/: migrate helper/test-{sha1, sha256} to unit-tests/t-hash
- + strbuf: introduce strbuf_addstrings() to repeatedly add a string
+* ps/use-the-repository (2024-06-14) 22 commits
+ - hex: guard declarations with `USE_THE_REPOSITORY_VARIABLE`
+ - t/helper: remove dependency on `the_repository` in "proc-receive"
+ - t/helper: fix segfault in "oid-array" command without repository
+ - t/helper: use correct object hash in partial-clone helper
+ - compat/fsmonitor: fix socket path in networked SHA256 repos
+ - replace-object: use hash algorithm from passed-in repository
+ - protocol-caps: use hash algorithm from passed-in repository
+ - oidset: pass hash algorithm when parsing file
+ - http-fetch: don't crash when parsing packfile without a repo
+ - hash-ll: merge with "hash.h"
+ - refs: avoid include cycle with "repository.h"
+ - global: introduce `USE_THE_REPOSITORY_VARIABLE` macro
+ - hash: require hash algorithm in `empty_tree_oid_hex()`
+ - hash: require hash algorithm in `is_empty_{blob,tree}_oid()`
+ - hash: make `is_null_oid()` independent of `the_repository`
+ - hash: convert `oidcmp()` and `oideq()` to compare whole hash
+ - global: ensure that object IDs are always padded
+ - hash: require hash algorithm in `oidread()` and `oidclr()`
+ - hash: require hash algorithm in `hasheq()`, `hashcmp()` and `hashclr()`
+ - hash: drop (mostly) unused `is_empty_{blob,tree}_sha1()` functions
+ - Merge branch 'gt/unit-test-oidtree' into ps/use-the-repository
+ - Merge branch 'ps/ref-storage-migration' into ps/use-the-repository
+ (this branch uses gt/unit-test-oidtree and ps/ref-storage-migration.)
 
- A pair of test helpers that essentially are unit tests on hash
- algorithms have been rewritten using the unit-tests framework.
- source: <20240529080030.64410-1-shyamthakkar001@gmail.com>
+ A CPP macro USE_THE_REPOSITORY_VARIABLE is introduced to help
+ transition the codebase to rely less on the availability of the
+ singleton the_repository instance.
 
-
-* jc/safe-directory-leading-path (2024-05-29) 1 commit
-  (merged to 'next' on 2024-06-04 at 3d8cb9239c)
- + safe.directory: allow "lead/ing/path/*" match
-
- The safe.directory configuration knob has been updated to
- optionally allow leading path matches.
- source: <xmqqplt4zjw7.fsf@gitster.g>
-
-
-* jc/t1517-more (2024-06-04) 2 commits
-  (merged to 'next' on 2024-06-04 at f5a118872d)
- + imap-send: minimum leakfix
-  (merged to 'next' on 2024-06-03 at 10b71e2a60)
- + t1517: more coverage for commands that work without repository
- (this branch is used by jk/imap-send-plug-all-msgs-leak.)
-
- A new test was added to ensure git commands that are designed to
- run outside repositories do work.
- source: <xmqqwmnajrrk.fsf@gitster.g>
-
-
-* jk/cap-exclude-file-size (2024-06-05) 2 commits
-  (merged to 'next' on 2024-06-05 at 2467011532)
- + dir.c: reduce max pattern file size to 100MB
-  (merged to 'next' on 2024-06-04 at 51c0d632d3)
- + dir.c: skip .gitignore, etc larger than INT_MAX
-
- An overly large ".gitignore" files are now rejected silently.
- source: <xmqqikyowqjj.fsf@gitster.g>
+ Needs review.
+ source: <cover.1718347699.git.ps@pks.im>
 
 
-* jk/sparse-leakfix (2024-06-05) 14 commits
-  (merged to 'next' on 2024-06-06 at c92e02c528)
- + sparse-checkout: free duplicate hashmap entries
- + sparse-checkout: free string list after displaying
- + sparse-checkout: free pattern list in sparse_checkout_list()
- + sparse-checkout: free sparse_filename after use
- + sparse-checkout: refactor temporary sparse_checkout_patterns
- + sparse-checkout: always free "line" strbuf after reading input
- + sparse-checkout: reuse --stdin buffer when reading patterns
- + dir.c: always copy input to add_pattern()
- + dir.c: free removed sparse-pattern hashmap entries
- + sparse-checkout: clear patterns when init() sees existing sparse file
- + dir.c: free strings in sparse cone pattern hashmaps
- + sparse-checkout: pass string literals directly to add_pattern()
- + sparse-checkout: free string list in write_cone_to_file()
- + Merge branch 'jk/leakfixes' into jk/sparse-leakfix
+* sj/ref-fsck (2024-06-13) 8 commits
+ - fsck: add ref content check for files backend
+ - fsck: add ref name check for files backend
+ - files-backend: add unified interface for refs scanning
+ - builtin/fsck: add `git-refs verify` child process
+ - builtin/refs: add verify subcommand
+ - refs: set up ref consistency check infrastructure
+ - fsck: add refs check interfaces to interface with fsck error levels
+ - Merge branch 'ps/ref-storage-migration' into sj/ref-fsck
+ (this branch uses ps/ref-storage-migration.)
 
- Many memory leaks in the sparse-checkout code paths have been
- plugged.
- source: <20240604100814.GA1304520@coredump.intra.peff.net>
+ "git fsck" infrastructure has been taught to also check the sanity
+ of the ref database, in addition to the object database.
+
+ Needs review.
+ source: <20240612085349.710785-1-shejialuo@gmail.com>
+
+
+* en/ort-inner-merge-error-fix (2024-06-13) 7 commits
+ - merge-ort: convert more error() cases to path_msg()
+ - merge-ort: upon merge abort, only show messages causing the abort
+ - merge-ort: loosen commented requirements
+ - merge-ort: clearer propagation of failure-to-function from merge_submodule
+ - merge-ort: fix type of local 'clean' var in handle_content_merge()
+ - merge-ort: maintain expected invariant for priv member
+ - merge-ort: extract handling of priv member into reusable function
+
+ The "ort" merge backend saw one bugfix for a crash that happens
+ when inner merge gets killed, and assorted code clean-ups.
+
+ Waiting for comments or a reroll.
+ source: <pull.1748.git.1718310307.gitgitgadget@gmail.com>
+
+
+* cp/unit-test-reftable-pq (2024-06-14) 7 commits
+ - t-reftable-pq: add tests for merged_iter_pqueue_top()
+ - t-reftable-pq: add test for index based comparison
+ - t-reftable-pq: make merged_iter_pqueue_check() callable by reference
+ - t-reftable-pq: make merged_iter_pqueue_check() static
+ - t: move reftable/pq_test.c to the unit testing framework
+ - reftable: change the type of array indices to 'size_t' in reftable/pq.c
+ - reftable: remove unncessary curly braces in reftable/pq.c
+
+ The tests for "pq" part of reftable library got rewritten to use
+ the unit test framework.
+
+ Needs review.
+ source: <20240614095136.12052-1-chandrapratap3519@gmail.com>
+
+
+* jc/archive-prefix-with-add-virtual-file (2024-06-14) 1 commit
+ - archive: document that --add-virtual-file takes full path
+
+ "git archive --add-virtual-file=<path>:<contents>" never paid
+ attention to the --prefix=<prefix> option but the documentation
+ said it would. The documentation has been corrected.
+
+ Waiting for comments.
+ source: <xmqq5xubfjuu.fsf_-_@gitster.g>
+
+
+* jk/remote-wo-url (2024-06-14) 11 commits
+ - remote: drop checks for zero-url case
+ - remote: always require at least one url in a remote
+ - t5801: test remote.*.vcs config
+ - t5801: make remote-testgit GIT_DIR setup more robust
+ - remote: allow resetting url list
+ - config: document remote.*.url/pushurl interaction
+ - remote: simplify url/pushurl selection
+ - remote: use strvecs to store remote url/pushurl
+ - remote: transfer ownership of memory in add_url(), etc
+ - remote: refactor alias_url() memory ownership
+ - archive: fix check for missing url
+
+ Memory ownership rules for the in-core representation of
+ remote.*.url configuration values have been straightened out, which
+ resulted in a few leak fixes and code clarification.
+
+ Waiting for comments.
+ source: <20240614102439.GA222287@coredump.intra.peff.net>
 
 --------------------------------------------------
 [Cooking]
@@ -161,21 +205,10 @@ Release tarballs are available at:
  source: <f91004a4382c95b1b87bf3d1aafc018af2b7b92e.1717662814.git.ps@pks.im>
 
 
-* tb/pseudo-merge-reachability-bitmap-fixes (2024-06-06) 2 commits
- - pack-bitmap.c: ensure pseudo-merge offset reads are bounded
- - Documentation/technical/bitmap-format.txt: add missing position table
- (this branch uses tb/pseudo-merge-reachability-bitmap.)
-
- Two rather straight-forward fixes to the base topic that is cooking
- in 'next'.  Once people find it satisfactory, I plan to merge them
- into the base topic.
-
- Comments?
- source: <cover.1716499565.git.me@ttaylorr.com>
-
-
-* db/date-underflow-fix (2024-06-08) 2 commits
- - SQUASH???
+* db/date-underflow-fix (2024-06-13) 4 commits
+ - SQUASH??? skip "near the end-of-git-time" tests on 32-bit systems
+ - SQUASH??? t0006: simplify prerequisite
+ - SQUASH??? the git-end-of-time is beyond time_t on 32-bit systems
  - date: detect underflow/overflow when parsing dates with timezone offset
 
  date parser updates to be more careful about underflowing epoch
@@ -195,8 +228,7 @@ Release tarballs are available at:
  updated to use the tempfile API to avoid leaving cruft after
  failing.
 
- Comments?
- cf. <xmqqfrtog2rd.fsf@gitster.g>
+ Will merge to 'next'.
  source: <cover.1717712358.git.me@ttaylorr.com>
 
 
@@ -238,11 +270,13 @@ Release tarballs are available at:
 
 
 * gt/unit-test-oidtree (2024-06-12) 1 commit
- - t/: migrate helper/test-oidtree.c to unit-tests/t-oidtree.c
+  (merged to 'next' on 2024-06-13 at eb3700b002)
+ + t/: migrate helper/test-oidtree.c to unit-tests/t-oidtree.c
+ (this branch is used by ps/use-the-repository.)
 
  "oidtree" tests were rewritten to use the unit test framework.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <7o6fuymnfn6b6buyw3yyctjd4dlwlrazspv3xgxvys6djjivxh@qbhyurorgbtt>
  source: <20240608165731.29467-1-shyamthakkar001@gmail.com>
 
@@ -266,29 +300,31 @@ Release tarballs are available at:
 
  Code cleanup.
 
- Comments?
+ Will merge to 'next'.
  source: <20240608183901.2084546-1-gitster@pobox.com>
 
 
 * ds/ahead-behind-fix (2024-06-12) 1 commit
- - commit-graph: increment progress indicator
+  (merged to 'next' on 2024-06-13 at df378ec81e)
+ + commit-graph: increment progress indicator
 
  Fix for a progress bar.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1743.git.1718118555197.gitgitgadget@gmail.com>
 
 
 * ps/abbrev-length-before-setup-fix (2024-06-12) 3 commits
- - object-name: don't try to abbreviate to lengths greater than hexsz
- - parse-options-cb: stop clamping "--abbrev=" to hash length
- - config: fix segfault when parsing "core.abbrev" without repo
+  (merged to 'next' on 2024-06-13 at e5d17f7da2)
+ + object-name: don't try to abbreviate to lengths greater than hexsz
+ + parse-options-cb: stop clamping "--abbrev=" to hash length
+ + config: fix segfault when parsing "core.abbrev" without repo
 
  Setting core.abbrev too early before the repository set-up
  (typically in "git clone") caused segfault, which as been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1718178996.git.ps@pks.im>
 
 
@@ -304,13 +340,14 @@ Release tarballs are available at:
 
 
 * tb/multi-pack-reuse-fix (2024-06-11) 3 commits
- - pack-revindex.c: guard against out-of-bounds pack lookups
- - pack-bitmap.c: avoid uninitialized `pack_int_id` during reuse
- - midx-write.c: do not read existing MIDX with `packs_to_include`
+  (merged to 'next' on 2024-06-13 at 1cd0259667)
+ + pack-revindex.c: guard against out-of-bounds pack lookups
+ + pack-bitmap.c: avoid uninitialized `pack_int_id` during reuse
+ + midx-write.c: do not read existing MIDX with `packs_to_include`
 
  Assorted fixes to multi-pack-index code paths.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1718126886.git.me@ttaylorr.com>
 
 
@@ -334,6 +371,8 @@ Release tarballs are available at:
 
  "git mktree" has been rewritten, taking advantage of the cache-tree
  API.
+
+ Waiting for comments or a reroll.
  source: <pull.1746.git.1718130288.gitgitgadget@gmail.com>
 
 
@@ -380,14 +419,15 @@ Release tarballs are available at:
 
 
 * jc/heads-are-branches (2024-06-04) 3 commits
- - show-ref: introduce --branches and deprecate --heads
- - ls-remote: introduce --branches and deprecate --heads
- - refs: call branches branches
+  (merged to 'next' on 2024-06-14 at b56b59d1d7)
+ + show-ref: introduce --branches and deprecate --heads
+ + ls-remote: introduce --branches and deprecate --heads
+ + refs: call branches branches
 
  The "--heads" option of "ls-remote" and "show-ref" has been been
  deprecated; "--branches" replaces "--heads".
 
- Comments?
+ Will merge to 'master'.
  source: <20240604220145.3260714-1-gitster@pobox.com>
 
 
@@ -421,15 +461,15 @@ Release tarballs are available at:
 
 
 * rj/format-patch-auto-cover-with-interdiff (2024-06-07) 2 commits
- - format-patch: assume --cover-letter for diff in multi-patch series
- - t4014: cleanups in a few tests
+  (merged to 'next' on 2024-06-13 at 3fad4afcfd)
+ + format-patch: assume --cover-letter for diff in multi-patch series
+ + t4014: cleanups in a few tests
 
  "git format-patch --interdiff" for multi-patch series learned to
  turn on cover letters automatically (unless told never to enable
  cover letter with "--no-cover-letter" and such).
 
- Will merge to 'next'.
- source: <9f520828-f87e-49b1-aa4b-c00ec6bb0133@gmail.com>
+ Will merge to 'master'.
 
 
 * rs/diff-exit-code-with-external-diff (2024-06-10) 3 commits
@@ -454,7 +494,7 @@ Release tarballs are available at:
  variable did nothing but giving a "this does not do anything"
  warning.  Finally remove it.
 
- Comments?
+ Will merge to 'next'.
  source: <xmqqikynqdvq.fsf@gitster.g>
 
 
@@ -465,7 +505,7 @@ Release tarballs are available at:
  attributes in a bare repository, but failed to document it.  This
  has been corrected.
 
- Comments?
+ Will merge to 'next'.
  source: <xmqqa5jzqd5k.fsf_-_@gitster.g>
 
 
@@ -570,36 +610,19 @@ Release tarballs are available at:
  source: <20240523225007.2871766-1-gitster@pobox.com>
 
 
-* cc/upload-pack-missing-action (2024-05-24) 3 commits
- - upload-pack: allow configuring a missing-action
- - pack-objects: use the missing action API
- - rev-list: refactor --missing=<missing-action>
-
- Allow a server S that is a lazy clone of another repository X to
- respond to a request by C that is a lazy clone of S in a way that
- it omits objects it itself does not have (and has to be lazily
- fetched from X).
-
- I would say this is a terribly irresponsive design, especially
- there is no negociation for S to learn if the objects it is going
- to omit is obtainable by C from elsewhere.
-
- Will discard.
- source: <20240524163926.2019648-1-christian.couder@gmail.com>
-
-
-* ps/document-breaking-changes (2024-06-04) 4 commits
- - BreakingChanges: document that we do not plan to deprecate git-checkout
- - BreakingChanges: document removal of grafting
- - BreakingChanges: document upcoming change from "sha1" to "sha256"
- - docs: introduce document to announce breaking changes
+* ps/document-breaking-changes (2024-06-14) 4 commits
+  (merged to 'next' on 2024-06-14 at 8089bf6f81)
+ + BreakingChanges: document that we do not plan to deprecate git-checkout
+ + BreakingChanges: document removal of grafting
+ + BreakingChanges: document upcoming change from "sha1" to "sha256"
+ + docs: introduce document to announce breaking changes
 
  The structure of the document that records longer-term project
  decisions to deprecate/remove/update various behaviour has been
  outlined.
 
- Getting there.
- source: <cover.1717504292.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <cover.1718345026.git.ps@pks.im>
 
 
 * ps/ref-storage-migration (2024-06-06) 14 commits
@@ -618,7 +641,7 @@ Release tarballs are available at:
  + setup: unset ref storage when reinitializing repository version
  + Merge branch 'ps/pseudo-ref-terminology' into ps/ref-storage-migration
  + Merge branch 'ps/refs-without-the-repository-updates' into ps/ref-storage-migration
- (this branch is used by ps/use-the-repository.)
+ (this branch is used by ps/use-the-repository and sj/ref-fsck.)
 
  Allow migrating a repository that uses the files backend for its
  ref storage to use the reftable backend, with limitations.
@@ -627,7 +650,10 @@ Release tarballs are available at:
  source: <cover.1717649802.git.ps@pks.im>
 
 
-* tb/pseudo-merge-reachability-bitmap (2024-05-24) 25 commits
+* tb/pseudo-merge-reachability-bitmap (2024-06-14) 27 commits
+  (merged to 'next' on 2024-06-14 at 447d99e1c3)
+ + pack-bitmap.c: ensure pseudo-merge offset reads are bounded
+ + Documentation/technical/bitmap-format.txt: add missing position table
   (merged to 'next' on 2024-06-03 at fcaa39de12)
  + t/perf: implement performance tests for pseudo-merge bitmaps
  + pseudo-merge: implement support for finding existing merges
@@ -654,87 +680,57 @@ Release tarballs are available at:
  + Documentation/gitpacking.txt: describe pseudo-merge bitmaps
  + Documentation/gitpacking.txt: initial commit
  + Merge branch 'tb/pack-bitmap-write-cleanups' into tb/pseudo-merge-reachability-bitmap
- (this branch is used by tb/pseudo-merge-reachability-bitmap-fixes.)
 
  The pseudo-merge reachability bitmap to help more efficient storage
  of the reachability bitmap in a repository with too many refs has
  been added.
 
- On hold until we get comments on the follow-up topic.
+ Will merge to 'next'?
  source: <cover.1716499565.git.me@ttaylorr.com>
+ source: <cover.1718392943.git.me@ttaylorr.com>
 
 
 * kn/update-ref-symref (2024-06-07) 8 commits
- - update-ref: add support for 'symref-update' command
- - reftable: pick either 'oid' or 'target' for new updates
- - update-ref: add support for 'symref-create' command
- - update-ref: add support for 'symref-delete' command
- - update-ref: add support for 'symref-verify' command
- - refs: specify error for regular refs with `old_target`
- - refs: create and use `ref_update_expects_existing_old_ref()`
- - Merge branch 'kn/ref-transaction-symref' into kn/update-ref-symref
+  (merged to 'next' on 2024-06-13 at 5cf8d7513e)
+ + update-ref: add support for 'symref-update' command
+ + reftable: pick either 'oid' or 'target' for new updates
+ + update-ref: add support for 'symref-create' command
+ + update-ref: add support for 'symref-delete' command
+ + update-ref: add support for 'symref-verify' command
+ + refs: specify error for regular refs with `old_target`
+ + refs: create and use `ref_update_expects_existing_old_ref()`
+ + Merge branch 'kn/ref-transaction-symref' into kn/update-ref-symref
 
  "git update-ref --stdin" learned to handle transactional updates of
  symbolic-refs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240607133304.2333280-1-knayak@gitlab.com>
-
-
-* ts/archive-prefix-with-add-virtual-file (2024-05-17) 1 commit
- - archive: make --add-virtual-file honor --prefix
-
- The "--add-virtual-file" option of "git archive", added primarily
- to help "git diagnose", has always ignored the "--prefix", but
- been documented to honor it.
-
- Iffy if updating the implementation is the best approach.
- cf. <bc3711a7-37d5-46bc-979e-83bd0b2cf900@web.de>
- source: <pull.1719.v2.git.git.1715967267420.gitgitgadget@gmail.com>
 
 
 * tb/precompose-getcwd (2024-05-31) 1 commit
  - macOS: ls-files path fails if path of workdir is NFD
 
  We forgot to normalize the result of getcwd() to NFC on macOS where
- all other paths are normalized, which has been corrected.
+ all other paths are normalized, which has been corrected.  This still
+ does not address the case where core.precomposeUnicode configuration
+ is not defined globally.
+
+ Will merge to 'next'.
  source: <20240531193156.28046-1-tboegi@web.de>
 
 
 * pw/rebase-i-error-message (2024-05-30) 2 commits
- - rebase -i: improve error message when picking merge
- - rebase -i: pass struct replay_opts to parse_insn_line()
+  (merged to 'next' on 2024-06-13 at dbec12cfda)
+ + rebase -i: improve error message when picking merge
+ + rebase -i: pass struct replay_opts to parse_insn_line()
 
  When the user adds to "git rebase -i" instruction to "pick" a merge
  commit, the error experience is not pleasant.  Such an error is now
  caught earlier in the process that parses the todo list.
 
- Expecting a reroll.
- cf. <88bc0787-e7ae-49e5-99e8-97f6c55ea8c6@gmail.com>
+ Will merge to 'master'.
  source: <pull.1672.v3.git.1717076630.gitgitgadget@gmail.com>
-
-
-* ew/khash-to-khashl (2024-03-28) 3 commits
- - khashl: fix ensemble lookups on empty table
- - treewide: switch to khashl for memory savings
- - list-objects-filter: use kh_size API
-
- The hashtable library "khash.h" has been replaced with "khashl.h"
- that has better memory usage characteristics.
-
- Will discard.
- cf. <xmqqy1a4ao3t.fsf@gitster.g>
- source: <20240328101356.300374-1-e@80x24.org>
-
-
-* ds/doc-config-reflow (2024-03-14) 1 commit
- - config.txt: perform some minor reformatting
-
- Reflow a paragraph in the documentation source without any effect
- to the formatted text.
-
- Will discard.
- source: <97bdaf075bf5a68554cca1731eca78aff2662907.1710444774.git.dsimic@manjaro.org>
 
 
 * ie/config-includeif-hostname (2024-03-19) 2 commits
@@ -838,3 +834,67 @@ Release tarballs are available at:
  Discarded.
  False positives in "-Og -Wall -Werror" are too annoying.
  source: <cover.1718001244.git.ps@pks.im>
+
+
+* ds/doc-config-reflow (2024-03-14) 1 commit
+ . config.txt: perform some minor reformatting
+
+ Reflow a paragraph in the documentation source without any effect
+ to the formatted text.
+
+ Discarded.
+ source: <97bdaf075bf5a68554cca1731eca78aff2662907.1710444774.git.dsimic@manjaro.org>
+
+
+* ts/archive-prefix-with-add-virtual-file (2024-05-17) 1 commit
+ . archive: make --add-virtual-file honor --prefix
+
+ The "--add-virtual-file" option of "git archive", added primarily
+ to help "git diagnose", has always ignored the "--prefix", but
+ been documented to honor it.
+
+ Discarded.
+ source: <pull.1719.v2.git.git.1715967267420.gitgitgadget@gmail.com>
+
+
+* cc/upload-pack-missing-action (2024-05-24) 3 commits
+ . upload-pack: allow configuring a missing-action
+ . pack-objects: use the missing action API
+ . rev-list: refactor --missing=<missing-action>
+
+ Allow a server S that is a lazy clone of another repository X to
+ respond to a request by C that is a lazy clone of S in a way that
+ it omits objects it itself does not have (and has to be lazily
+ fetched from X).
+
+ I would say this is a terribly irresponsive design, especially
+ there is no negociation for S to learn if the objects it is going
+ to omit is obtainable by C from elsewhere.
+
+ Discarded.
+ source: <20240524163926.2019648-1-christian.couder@gmail.com>
+
+
+* ew/khash-to-khashl (2024-03-28) 3 commits
+ . khashl: fix ensemble lookups on empty table
+ . treewide: switch to khashl for memory savings
+ . list-objects-filter: use kh_size API
+
+ The hashtable library "khash.h" has been replaced with "khashl.h"
+ that has better memory usage characteristics.
+
+ Discarded.
+ cf. <20240419214644.M168521@dcvr>
+ source: <20240328101356.300374-1-e@80x24.org>
+
+
+* tb/pseudo-merge-reachability-bitmap-fixes (2024-06-06) 2 commits
+ - pack-bitmap.c: ensure pseudo-merge offset reads are bounded
+ - Documentation/technical/bitmap-format.txt: add missing position table
+ (this branch uses tb/pseudo-merge-reachability-bitmap.)
+
+ Two rather straight-forward fixes to the base topic that is cooking
+ in 'next'.  Once people find it satisfactory, I plan to merge them
+ into the base topic.
+
+ Merged into the base topic.
