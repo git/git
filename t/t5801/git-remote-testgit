@@ -26,7 +26,8 @@ then
 	t_refspec=""
 fi
 
-GIT_DIR="$url/.git"
+unset $(git rev-parse --local-env-vars)
+GIT_DIR=$(git -C "$url" rev-parse --absolute-git-dir)
 export GIT_DIR
 
 force=
