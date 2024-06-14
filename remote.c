@@ -32,7 +32,7 @@ struct counted_string {
 
 static int valid_remote(const struct remote *remote)
 {
-	return (!!remote->url.nr) || (!!remote->foreign_vcs);
+	return !!remote->url.nr;
 }
 
 static char *alias_url(const char *url, struct rewrites *r)

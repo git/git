@@ -53,7 +53,7 @@ test_expect_success 'fetch with configured remote.*.vcs' '
 	test_grep remote-testgit vcs-fetch.trace
 '
 
-test_expect_failure 'vcs remote with no url' '
+test_expect_success 'vcs remote with no url' '
 	NOURL_UPSTREAM=$PWD/server &&
 	export NOURL_UPSTREAM &&
 	git init vcs-nourl &&
