@@ -15,6 +15,24 @@ echoid () {
 	done
 }
 
+test_expect_success 'without repository' '
+	cat >expect <<-EOF &&
+	4444444444444444444444444444444444444444
+	5555555555555555555555555555555555555555
+	8888888888888888888888888888888888888888
+	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	EOF
+	cat >input <<-EOF &&
+	append 4444444444444444444444444444444444444444
+	append 5555555555555555555555555555555555555555
+	append 8888888888888888888888888888888888888888
+	append aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	for_each_unique
+	EOF
+	nongit test-tool oid-array <input >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'ordered enumeration' '
 	echoid "" 44 55 88 aa >expect &&
 	{

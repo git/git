@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "hex.h"
 #include "oid-array.h"
@@ -17,6 +19,8 @@ int cmd__oid_array(int argc UNUSED, const char **argv UNUSED)
 	int nongit_ok;
 
 	setup_git_directory_gently(&nongit_ok);
+	if (nongit_ok)
+		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
 
 	while (strbuf_getline(&line, stdin) != EOF) {
 		const char *arg;
