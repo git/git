@@ -121,3 +121,15 @@ Some features have gained newer replacements that aim to improve the design in
 certain ways. The fact that there is a replacement does not automatically mean
 that the old way of doing things will eventually be removed. This section tracks
 those features with newer alternatives.
+
+* The features git-checkout(1) offers are covered by the pair of commands
+  git-restore(1) and git-switch(1). Because the use of git-checkout(1) is still
+  widespread, and it is not expected that this will change anytime soon, all
+  three commands will stay.
++
+This decision may get revisited in case we ever figure out that there are
+almost no users of any of the commands anymore.
++
+Cf. <xmqqttjazwwa.fsf@gitster.g>,
+<xmqqleeubork.fsf@gitster.g>,
+<112b6568912a6de6672bf5592c3a718e@manjaro.org>.
