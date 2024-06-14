@@ -347,8 +347,7 @@ static inline int is_null_oid(const struct object_id *oid)
 	return !memcmp(oid->hash, null_hash, GIT_MAX_RAWSZ);
 }
 
-const char *empty_tree_oid_hex(void);
-const char *empty_blob_oid_hex(void);
+const char *empty_tree_oid_hex(const struct git_hash_algo *algop);
 
 static inline int is_empty_blob_oid(const struct object_id *oid,
 				    const struct git_hash_algo *algop)

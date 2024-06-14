@@ -1371,7 +1371,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	strvec_pushl(&child.args, "diff-index", "--quiet", "--cached",
 		     "--ignore-submodules",
 		     /* diff-index with either HEAD or an empty tree */
-		     head_has_history() ? "HEAD" : empty_tree_oid_hex(),
+		     head_has_history() ? "HEAD" : empty_tree_oid_hex(the_repository->hash_algo),
 		     "--", NULL);
 	strvec_pushv(&child.env, env->v);
 	child.no_stdin = 1;

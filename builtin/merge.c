@@ -330,7 +330,8 @@ static void read_empty(const struct object_id *oid)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
-	strvec_pushl(&cmd.args, "read-tree", "-m", "-u", empty_tree_oid_hex(),
+	strvec_pushl(&cmd.args, "read-tree", "-m", "-u",
+		     empty_tree_oid_hex(the_repository->hash_algo),
 		     oid_to_hex(oid), NULL);
 	cmd.git_cmd = 1;
 

@@ -227,16 +227,10 @@ const struct object_id *null_oid(void)
 	return the_hash_algo->null_oid;
 }
 
-const char *empty_tree_oid_hex(void)
+const char *empty_tree_oid_hex(const struct git_hash_algo *algop)
 {
 	static char buf[GIT_MAX_HEXSZ + 1];
-	return oid_to_hex_r(buf, the_hash_algo->empty_tree);
-}
-
-const char *empty_blob_oid_hex(void)
-{
-	static char buf[GIT_MAX_HEXSZ + 1];
-	return oid_to_hex_r(buf, the_hash_algo->empty_blob);
+	return oid_to_hex_r(buf, algop->empty_tree);
 }
 
 int hash_algo_by_name(const char *name)
