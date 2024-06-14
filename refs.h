@@ -2,20 +2,14 @@
 #define REFS_H
 
 #include "commit.h"
+#include "repository.h"
 
 struct object_id;
 struct ref_store;
-struct repository;
 struct strbuf;
 struct string_list;
 struct string_list_item;
 struct worktree;
-
-enum ref_storage_format {
-	REF_STORAGE_FORMAT_UNKNOWN,
-	REF_STORAGE_FORMAT_FILES,
-	REF_STORAGE_FORMAT_REFTABLE,
-};
 
 enum ref_storage_format ref_storage_format_by_name(const char *name);
 const char *ref_storage_format_to_name(enum ref_storage_format ref_storage_format);
