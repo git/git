@@ -427,6 +427,8 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 					 hashsz - prefix_len))
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
+			memset(object_oid.hash + hashsz, 0, GIT_MAX_RAWSZ - hashsz);
+
 			type = PTR_TYPE_NOTE;
 		} else if (path_len == 2) {
 			/* This is potentially an internal node */

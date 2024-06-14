@@ -288,6 +288,8 @@ static inline void oidread(struct object_id *oid, const unsigned char *hash,
 			   const struct git_hash_algo *algop)
 {
 	memcpy(oid->hash, hash, algop->rawsz);
+	if (algop->rawsz < GIT_MAX_RAWSZ)
+		memset(oid->hash + algop->rawsz, 0, GIT_MAX_RAWSZ - algop->rawsz);
 	oid->algo = hash_algo_by_ptr(algop);
 }
 
