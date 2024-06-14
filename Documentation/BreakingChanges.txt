@@ -102,6 +102,19 @@ Cf. <2f5de416-04ba-c23d-1e0b-83bb655829a7@zombino.com>,
 
 === Removals
 
+* Support for grafting commits has long been superseded by git-replace(1).
+  Grafts are inferior to replacement refs:
++
+  ** Grafts are a local-only mechanism and cannot be shared across
+     repositories.
+  ** Grafts can lead to hard-to-diagnose problems when transferring objects
+     between repositories.
++
+The grafting mechanism has been marked as outdated since e650d0643b (docs: mark
+info/grafts as outdated, 2014-03-05) and will be removed.
++
+Cf. <20140304174806.GA11561@sigill.intra.peff.net>.
+
 == Superseded features that will not be deprecated
 
 Some features have gained newer replacements that aim to improve the design in
