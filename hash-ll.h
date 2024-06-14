@@ -278,6 +278,16 @@ static inline void hashclr(unsigned char *hash, const struct git_hash_algo *algo
 	memset(hash, 0, algop->rawsz);
 }
 
+static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
+{
+	return memcmp(oid1->hash, oid2->hash, GIT_MAX_RAWSZ);
+}
+
+static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
+{
+	return !memcmp(oid1->hash, oid2->hash, GIT_MAX_RAWSZ);
+}
+
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 {
 	memcpy(dst->hash, src->hash, GIT_MAX_RAWSZ);

@@ -6,26 +6,6 @@
 
 #define the_hash_algo the_repository->hash_algo
 
-static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
-{
-	const struct git_hash_algo *algop;
-	if (!oid1->algo)
-		algop = the_hash_algo;
-	else
-		algop = &hash_algos[oid1->algo];
-	return hashcmp(oid1->hash, oid2->hash, algop);
-}
-
-static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
-{
-	const struct git_hash_algo *algop;
-	if (!oid1->algo)
-		algop = the_hash_algo;
-	else
-		algop = &hash_algos[oid1->algo];
-	return hasheq(oid1->hash, oid2->hash, algop);
-}
-
 static inline int is_null_oid(const struct object_id *oid)
 {
 	return oideq(oid, null_oid());
