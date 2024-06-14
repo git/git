@@ -17,7 +17,7 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 	git_SHA_CTX sha1ctx;
 	char *sock_dir = NULL;
 	struct strbuf ipc_file = STRBUF_INIT;
-	unsigned char hash[GIT_MAX_RAWSZ];
+	unsigned char hash[GIT_SHA1_RAWSZ];
 
 	if (!r)
 		BUG("No repository passed into fsmonitor_ipc__get_path");
@@ -41,9 +41,10 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 	/* Create the socket file in either socketDir or $HOME */
 	if (sock_dir && *sock_dir) {
 		strbuf_addf(&ipc_file, "%s/.git-fsmonitor-%s",
-					sock_dir, hash_to_hex(hash));
+			    sock_dir, hash_to_hex_algop(hash, &hash_algos[GIT_HASH_SHA1]));
 	} else {
-		strbuf_addf(&ipc_file, "~/.git-fsmonitor-%s", hash_to_hex(hash));
+		strbuf_addf(&ipc_file, "~/.git-fsmonitor-%s",
+			    hash_to_hex_algop(hash, &hash_algos[GIT_HASH_SHA1]));
 	}
 	free(sock_dir);
 
