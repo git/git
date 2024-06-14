@@ -197,7 +197,9 @@ struct repository {
 	unsigned different_commondir:1;
 };
 
+#ifdef USE_THE_REPOSITORY_VARIABLE
 extern struct repository *the_repository;
+#endif
 
 /*
  * Define a custom repository layout. Any field can be NULL, which

@@ -7,6 +7,9 @@
  * even if you might want to know where the git directory etc
  * are.
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "branch.h"

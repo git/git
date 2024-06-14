@@ -1,6 +1,14 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
+/*
+ * TODO: Almost all of our builtins access `the_repository` by necessity
+ * because they do not get passed a pointer to it. We should adapt the function
+ * signature of those main functions to accept a `struct repository *` and then
+ * remove the macro here.
+ */
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 
 /*

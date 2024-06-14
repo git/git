@@ -5,7 +5,7 @@
  * See COPYING for licensing conditions
  */
 
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "config.h"
 #include "color.h"
 #include "builtin.h"

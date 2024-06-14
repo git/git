@@ -5,6 +5,9 @@
  * Copyright (C) Johannes Schindelin, 2005
  *
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"

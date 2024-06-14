@@ -4,6 +4,8 @@
 #include "hash-ll.h"
 #include "repository.h"
 
-#define the_hash_algo the_repository->hash_algo
+#ifdef USE_THE_REPOSITORY_VARIABLE
+# define the_hash_algo the_repository->hash_algo
+#endif
 
 #endif

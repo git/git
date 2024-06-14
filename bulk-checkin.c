@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
 #include "environment.h"

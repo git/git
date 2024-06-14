@@ -6,6 +6,9 @@
  * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"

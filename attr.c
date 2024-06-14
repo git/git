@@ -6,6 +6,8 @@
  * an insanely large number of attributes.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"

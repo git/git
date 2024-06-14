@@ -4,7 +4,7 @@
  * (C) Copyright 2006 Linus Torvalds
  *		 2006 Junio Hamano
  */
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "config.h"
 #include "environment.h"

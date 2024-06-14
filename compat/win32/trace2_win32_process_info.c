@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "../../git-compat-util.h"
 #include "../../json-writer.h"
 #include "../../repository.h"

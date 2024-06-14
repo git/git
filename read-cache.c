@@ -3,6 +3,9 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
 #include "config.h"

@@ -14,6 +14,8 @@
  * "cale", "peedy", or "ins" instead of "ort"?)
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "merge-ort.h"
 
