@@ -4,6 +4,7 @@
 #include "hash-ll.h"
 #include "hashmap.h"
 #include "refspec.h"
+#include "strvec.h"
 
 struct option;
 struct transport_ls_refs_options;
@@ -68,16 +69,9 @@ struct remote {
 	char *foreign_vcs;
 
 	/* An array of all of the url_nr URLs configured for the remote */
-	const char **url;
-
-	int url_nr;
-	int url_alloc;
-
+	struct strvec url;
 	/* An array of all of the pushurl_nr push URLs configured for the remote */
-	const char **pushurl;
-
-	int pushurl_nr;
-	int pushurl_alloc;
+	struct strvec pushurl;
 
 	struct refspec push;
 

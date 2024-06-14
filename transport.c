@@ -1127,8 +1127,8 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	ret->remote = remote;
 	helper = remote->foreign_vcs;
 
-	if (!url && remote->url)
-		url = remote->url[0];
+	if (!url && remote->url.nr)
+		url = remote->url.v[0];
 	ret->url = url;
 
 	/* maybe it is a foreign URL? */

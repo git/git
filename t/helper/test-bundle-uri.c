@@ -88,7 +88,7 @@ static int cmd_ls_remote(int argc, const char **argv)
 			die(_("bad repository '%s'"), dest);
 		die(_("no remote configured to get bundle URIs from"));
 	}
-	if (!remote->url_nr)
+	if (!remote->url.nr)
 		die(_("remote '%s' has no configured URL"), dest);
 
 	transport = transport_get(remote, NULL);

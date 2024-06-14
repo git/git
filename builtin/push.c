@@ -143,12 +143,12 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 
 static int push_url_of_remote(struct remote *remote, const char ***url_p)
 {
-	if (remote->pushurl_nr) {
-		*url_p = remote->pushurl;
-		return remote->pushurl_nr;
+	if (remote->pushurl.nr) {
+		*url_p = remote->pushurl.v;
+		return remote->pushurl.nr;
 	}
-	*url_p = remote->url;
-	return remote->url_nr;
+	*url_p = remote->url.v;
+	return remote->url.nr;
 }
 
 static NORETURN void die_push_simple(struct branch *branch,

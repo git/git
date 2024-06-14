@@ -32,7 +32,7 @@ struct counted_string {
 
 static int valid_remote(const struct remote *remote)
 {
-	return (!!remote->url) || (!!remote->foreign_vcs);
+	return (!!remote->url.nr) || (!!remote->foreign_vcs);
 }
 
 static char *alias_url(const char *url, struct rewrites *r)
@@ -63,14 +63,12 @@ static char *alias_url(const char *url, struct rewrites *r)
 
 static void add_url(struct remote *remote, const char *url)
 {
-	ALLOC_GROW(remote->url, remote->url_nr + 1, remote->url_alloc);
-	remote->url[remote->url_nr++] = xstrdup(url);
+	strvec_push(&remote->url, url);
 }
 
 static void add_pushurl(struct remote *remote, const char *pushurl)
 {
-	ALLOC_GROW(remote->pushurl, remote->pushurl_nr + 1, remote->pushurl_alloc);
-	remote->pushurl[remote->pushurl_nr++] = xstrdup(pushurl);
+	strvec_push(&remote->pushurl, pushurl);
 }
 
 static void add_pushurl_alias(struct remote_state *remote_state,
@@ -150,18 +148,12 @@ static struct remote *make_remote(struct remote_state *remote_state,
 
 static void remote_clear(struct remote *remote)
 {
-	int i;
-
 	free((char *)remote->name);
 	free((char *)remote->foreign_vcs);
 
-	for (i = 0; i < remote->url_nr; i++)
-		free((char *)remote->url[i]);
-	FREE_AND_NULL(remote->url);
+	strvec_clear(&remote->url);
+	strvec_clear(&remote->pushurl);
 
-	for (i = 0; i < remote->pushurl_nr; i++)
-		free((char *)remote->pushurl[i]);
-	FREE_AND_NULL(remote->pushurl);
 	free((char *)remote->receivepack);
 	free((char *)remote->uploadpack);
 	FREE_AND_NULL(remote->http_proxy);
@@ -493,27 +485,25 @@ static void alias_all_urls(struct remote_state *remote_state)
 		int add_pushurl_aliases;
 		if (!remote_state->remotes[i])
 			continue;
-		for (j = 0; j < remote_state->remotes[i]->pushurl_nr; j++) {
-			char *alias = alias_url(remote_state->remotes[i]->pushurl[j],
+		for (j = 0; j < remote_state->remotes[i]->pushurl.nr; j++) {
+			char *alias = alias_url(remote_state->remotes[i]->pushurl.v[j],
 						&remote_state->rewrites);
-			if (alias) {
-				free((char *)remote_state->remotes[i]->pushurl[j]);
-				remote_state->remotes[i]->pushurl[j] = alias;
-			}
+			if (alias)
+				strvec_replace(&remote_state->remotes[i]->pushurl,
+					       j, alias);
 		}
-		add_pushurl_aliases = remote_state->remotes[i]->pushurl_nr == 0;
-		for (j = 0; j < remote_state->remotes[i]->url_nr; j++) {
+		add_pushurl_aliases = remote_state->remotes[i]->pushurl.nr == 0;
+		for (j = 0; j < remote_state->remotes[i]->url.nr; j++) {
 			char *alias;
 			if (add_pushurl_aliases)
 				add_pushurl_alias(
 					remote_state, remote_state->remotes[i],
-					remote_state->remotes[i]->url[j]);
-			alias = alias_url(remote_state->remotes[i]->url[j],
+					remote_state->remotes[i]->url.v[j]);
+			alias = alias_url(remote_state->remotes[i]->url.v[j],
 					  &remote_state->rewrites);
-			if (alias) {
-				free((char *)remote_state->remotes[i]->url[j]);
-				remote_state->remotes[i]->url[j] = alias;
-			}
+			if (alias)
+				strvec_replace(&remote_state->remotes[i]->url,
+					       j, alias);
 		}
 	}
 }
@@ -653,10 +643,10 @@ static void validate_remote_url(struct remote *remote)
 	else
 		die(_("unrecognized value transfer.credentialsInUrl: '%s'"), value);
 
-	for (i = 0; i < remote->url_nr; i++) {
+	for (i = 0; i < remote->url.nr; i++) {
 		struct url_info url_info = { 0 };
 
-		if (!url_normalize(remote->url[i], &url_info) ||
+		if (!url_normalize(remote->url.v[i], &url_info) ||
 		    !url_info.passwd_off)
 			goto loop_cleanup;
 
@@ -830,8 +820,8 @@ struct ref *ref_remove_duplicates(struct ref *ref_map)
 int remote_has_url(struct remote *remote, const char *url)
 {
 	int i;
-	for (i = 0; i < remote->url_nr; i++) {
-		if (!strcmp(remote->url[i], url))
+	for (i = 0; i < remote->url.nr; i++) {
+		if (!strcmp(remote->url.v[i], url))
 			return 1;
 	}
 	return 0;

@@ -619,8 +619,8 @@ static int migrate_file(struct remote *remote)
 	int i;
 
 	strbuf_addf(&buf, "remote.%s.url", remote->name);
-	for (i = 0; i < remote->url_nr; i++)
-		git_config_set_multivar(buf.buf, remote->url[i], "^$", 0);
+	for (i = 0; i < remote->url.nr; i++)
+		git_config_set_multivar(buf.buf, remote->url.v[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
 	for (i = 0; i < remote->push.raw_nr; i++)
@@ -1002,8 +1002,8 @@ static int get_remote_ref_states(const char *name,
 		struct transport *transport;
 		const struct ref *remote_refs;
 
-		transport = transport_get(states->remote, states->remote->url_nr > 0 ?
-			states->remote->url[0] : NULL);
+		transport = transport_get(states->remote, states->remote->url.nr > 0 ?
+			states->remote->url.v[0] : NULL);
 		remote_refs = transport_get_remote_refs(transport, NULL);
 
 		states->queried = 1;
@@ -1216,12 +1216,12 @@ static int get_one_entry(struct remote *remote, void *priv)
 	const char **url;
 	int i, url_nr;
 
-	if (remote->url_nr > 0) {
+	if (remote->url.nr > 0) {
 		struct strbuf promisor_config = STRBUF_INIT;
 		const char *partial_clone_filter = NULL;
 
 		strbuf_addf(&promisor_config, "remote.%s.partialclonefilter", remote->name);
-		strbuf_addf(&remote_info_buf, "%s (fetch)", remote->url[0]);
+		strbuf_addf(&remote_info_buf, "%s (fetch)", remote->url.v[0]);
 		if (!git_config_get_string_tmp(promisor_config.buf, &partial_clone_filter))
 			strbuf_addf(&remote_info_buf, " [%s]", partial_clone_filter);
 
@@ -1230,12 +1230,12 @@ static int get_one_entry(struct remote *remote, void *priv)
 				strbuf_detach(&remote_info_buf, NULL);
 	} else
 		string_list_append(list, remote->name)->util = NULL;
-	if (remote->pushurl_nr) {
-		url = remote->pushurl;
-		url_nr = remote->pushurl_nr;
+	if (remote->pushurl.nr) {
+		url = remote->pushurl.v;
+		url_nr = remote->pushurl.nr;
 	} else {
-		url = remote->url;
-		url_nr = remote->url_nr;
+		url = remote->url.v;
+		url_nr = remote->url.nr;
 	}
 	for (i = 0; i < url_nr; i++)
 	{
@@ -1301,14 +1301,14 @@ static int show(int argc, const char **argv, const char *prefix)
 		get_remote_ref_states(*argv, &info.states, query_flag);
 
 		printf_ln(_("* remote %s"), *argv);
-		printf_ln(_("  Fetch URL: %s"), info.states.remote->url_nr > 0 ?
-		       info.states.remote->url[0] : _("(no URL)"));
-		if (info.states.remote->pushurl_nr) {
-			url = info.states.remote->pushurl;
-			url_nr = info.states.remote->pushurl_nr;
+		printf_ln(_("  Fetch URL: %s"), info.states.remote->url.nr > 0 ?
+		       info.states.remote->url.v[0] : _("(no URL)"));
+		if (info.states.remote->pushurl.nr) {
+			url = info.states.remote->pushurl.v;
+			url_nr = info.states.remote->pushurl.nr;
 		} else {
-			url = info.states.remote->url;
-			url_nr = info.states.remote->url_nr;
+			url = info.states.remote->url.v;
+			url_nr = info.states.remote->url.nr;
 		}
 		for (i = 0; i < url_nr; i++)
 			/*
@@ -1454,8 +1454,8 @@ static int prune_remote(const char *remote, int dry_run)
 
 	printf_ln(_("Pruning %s"), remote);
 	printf_ln(_("URL: %s"),
-		  states.remote->url_nr
-		  ? states.remote->url[0]
+		  states.remote->url.nr
+		  ? states.remote->url.v[0]
 		  : _("(no URL)"));
 
 	for_each_string_list_item(item, &states.stale)
@@ -1647,15 +1647,15 @@ static int get_url(int argc, const char **argv, const char *prefix)
 
 	url_nr = 0;
 	if (push_mode) {
-		url = remote->pushurl;
-		url_nr = remote->pushurl_nr;
+		url = remote->pushurl.v;
+		url_nr = remote->pushurl.nr;
 	}
 	/* else fetch mode */
 
 	/* Use the fetch URL when no push URLs were found or requested. */
 	if (!url_nr) {
-		url = remote->url;
-		url_nr = remote->url_nr;
+		url = remote->url.v;
+		url_nr = remote->url.nr;
 	}
 
 	if (!url_nr)
@@ -1718,12 +1718,12 @@ static int set_url(int argc, const char **argv, const char *prefix)
 
 	if (push_mode) {
 		strbuf_addf(&name_buf, "remote.%s.pushurl", remotename);
-		urlset = remote->pushurl;
-		urlset_nr = remote->pushurl_nr;
+		urlset = remote->pushurl.v;
+		urlset_nr = remote->pushurl.nr;
 	} else {
 		strbuf_addf(&name_buf, "remote.%s.url", remotename);
-		urlset = remote->url;
-		urlset_nr = remote->url_nr;
+		urlset = remote->url.v;
+		urlset_nr = remote->url.nr;
 	}
 
 	/* Special cases that add new entry. */
