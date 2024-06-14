@@ -1,0 +1,80 @@
+= Upcoming breaking changes
+
+The Git project aims to ensure backwards compatibility to the best extent
+possible. Minor releases will not break backwards compatibility unless there is
+a very strong reason to do so, like for example a security vulnerability.
+
+Regardless of that, due to the age of the Git project, it is only natural to
+accumulate a backlog of backwards-incompatible changes that will eventually be
+required to keep the project aligned with a changing world. These changes fall
+into several categories:
+
+* Changes to long established defaults.
+* Concepts that have been replaced with a superior design.
+* Concepts, commands, configuration or options that have been lacking in major
+  ways and that cannot be fixed and which will thus be removed without any
+  replacement.
+
+Explicitly not included in this list are fixes to minor bugs that may cause a
+change in user-visible behavior.
+
+The Git project irregularly releases breaking versions that deliberately break
+backwards compatibility with older versions. This is done to ensure that Git
+remains relevant, safe and maintainable going forward. The release cadence of
+breaking versions is typically measured in multiple years. We had the following
+major breaking releases in the past:
+
+* Git 1.6.0, released in August 2008.
+* Git 2.0, released in May 2014.
+
+We use <major>.<minor> release numbers these days, starting from Git 2.0. For
+future releases, our plan is to increment <major> in the release number when we
+make the next breaking release. Before Git 2.0, the release numbers were
+1.<major>.<minor> with the intention to increment <major> for "usual" breaking
+releases, reserving the jump to Git 2.0 for really large backward-compatibility
+breaking changes.
+
+The intent of this document is to track upcoming deprecations for future
+breaking releases. Furthermore, this document also tracks what will _not_ be
+deprecated. This is done such that the outcome of discussions document both
+when the discussion favors deprecation, but also when it rejects a deprecation.
+
+Items should have a clear summary of the reasons why we do or do not want to
+make the described change that can be easily understood without having to read
+the mailing list discussions. If there are alternatives to the changed feature,
+those alternatives should be pointed out to our users.
+
+All items should be accompanied by references to relevant mailing list threads
+where the deprecation was discussed. These references use message-IDs, which
+can visited via
+
+  https://lore.kernel.org/git/$message_id/
+
+to see the message and its surrounding discussion. Such a reference is there to
+make it easier for you to find how the project reached consensus on the
+described item back then.
+
+This is a living document as the environment surrounding the project changes
+over time. If circumstances change, an earlier decision to deprecate or change
+something may need to be revisited from time to time. So do not take items on
+this list to mean "it is settled, do not waste our time bringing it up again".
+
+== Git 3.0
+
+The following subsections document upcoming breaking changes for Git 3.0. There
+is no planned release date for this breaking version yet.
+
+Proposed changes and removals only include items which are "ready" to be done.
+In other words, this is not supposed to be a wishlist of features that should
+be changed to or replaced in case the alternative was implemented already.
+
+=== Changes
+
+=== Removals
+
+== Superseded features that will not be deprecated
+
+Some features have gained newer replacements that aim to improve the design in
+certain ways. The fact that there is a replacement does not automatically mean
+that the old way of doing things will eventually be removed. This section tracks
+those features with newer alternatives.
