@@ -1,7 +1,7 @@
 #ifndef HEX_H
 #define HEX_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "hex-ll.h"
 
 /*

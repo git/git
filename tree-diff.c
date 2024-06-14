@@ -8,6 +8,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "environment.h"
+#include "repository.h"
 
 /*
  * Some mode bits are also used internally for computations.

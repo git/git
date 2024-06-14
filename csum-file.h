@@ -1,7 +1,7 @@
 #ifndef CSUM_FILE_H
 #define CSUM_FILE_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "write-or-die.h"
 
 struct progress;

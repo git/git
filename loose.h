@@ -3,6 +3,8 @@
 
 #include "khash.h"
 
+struct repository;
+
 struct loose_object_map {
 	kh_oid_map_t *to_compat;
 	kh_oid_map_t *to_storage;

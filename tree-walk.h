@@ -1,7 +1,7 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
-#include "hash-ll.h"
+#include "hash.h"
 
 struct index_state;
 struct repository;
