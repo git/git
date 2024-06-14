@@ -1002,8 +1002,7 @@ static int get_remote_ref_states(const char *name,
 		struct transport *transport;
 		const struct ref *remote_refs;
 
-		transport = transport_get(states->remote, states->remote->url.nr > 0 ?
-			states->remote->url.v[0] : NULL);
+		transport = transport_get(states->remote, states->remote->url.v[0]);
 		remote_refs = transport_get_remote_refs(transport, NULL);
 
 		states->queried = 1;
@@ -1294,8 +1293,7 @@ static int show(int argc, const char **argv, const char *prefix)
 		get_remote_ref_states(*argv, &info.states, query_flag);
 
 		printf_ln(_("* remote %s"), *argv);
-		printf_ln(_("  Fetch URL: %s"), info.states.remote->url.nr > 0 ?
-		       info.states.remote->url.v[0] : _("(no URL)"));
+		printf_ln(_("  Fetch URL: %s"), info.states.remote->url.v[0]);
 		url = push_url_of_remote(info.states.remote);
 		for (i = 0; i < url->nr; i++)
 			/*
@@ -1440,10 +1438,7 @@ static int prune_remote(const char *remote, int dry_run)
 	}
 
 	printf_ln(_("Pruning %s"), remote);
-	printf_ln(_("URL: %s"),
-		  states.remote->url.nr
-		  ? states.remote->url.v[0]
-		  : _("(no URL)"));
+	printf_ln(_("URL: %s"), states.remote->url.v[0]);
 
 	for_each_string_list_item(item, &states.stale)
 		string_list_append(&refs_to_prune, item->util);
@@ -1632,8 +1627,6 @@ static int get_url(int argc, const char **argv, const char *prefix)
 	}
 
 	url = push_mode ? push_url_of_remote(remote) : &remote->url;
-	if (!url->nr)
-		die(_("no URLs configured for remote '%s'"), remotename);
 
 	if (all_mode) {
 		for (i = 0; i < url->nr; i++)

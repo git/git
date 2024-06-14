@@ -438,18 +438,9 @@ static int do_push(int flags,
 	}
 	errs = 0;
 	url = push_url_of_remote(remote);
-	if (url->nr) {
-		for (i = 0; i < url->nr; i++) {
-			struct transport *transport =
-				transport_get(remote, url->v[i]);
-			if (flags & TRANSPORT_PUSH_OPTIONS)
-				transport->push_options = push_options;
-			if (push_with_options(transport, push_refspec, flags))
-				errs++;
-		}
-	} else {
+	for (i = 0; i < url->nr; i++) {
 		struct transport *transport =
-			transport_get(remote, NULL);
+			transport_get(remote, url->v[i]);
 		if (flags & TRANSPORT_PUSH_OPTIONS)
 			transport->push_options = push_options;
 		if (push_with_options(transport, push_refspec, flags))
