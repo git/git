@@ -1492,4 +1492,40 @@ test_expect_success 'refs/remotes/* <src> refspec and unqualified <dst> DWIM and
 	)
 '
 
+test_expect_success 'empty config clears remote.*.url list' '
+	test_when_finished "git config --remove-section remote.multi" &&
+	git config --add remote.multi.url wrong-one &&
+	git config --add remote.multi.url wrong-two &&
+	git -c remote.multi.url= \
+	    -c remote.multi.url=right-one \
+	    -c remote.multi.url=right-two \
+	    remote show -n multi >actual.raw &&
+	grep URL actual.raw >actual &&
+	cat >expect <<-\EOF &&
+	  Fetch URL: right-one
+	  Push  URL: right-one
+	  Push  URL: right-two
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'empty config clears remote.*.pushurl list' '
+	test_when_finished "git config --remove-section remote.multi" &&
+	git config --add remote.multi.url right &&
+	git config --add remote.multi.url will-be-ignored &&
+	git config --add remote.multi.pushurl wrong-push-one &&
+	git config --add remote.multi.pushurl wrong-push-two &&
+	git -c remote.multi.pushurl= \
+	    -c remote.multi.pushurl=right-push-one \
+	    -c remote.multi.pushurl=right-push-two \
+	    remote show -n multi >actual.raw &&
+	grep URL actual.raw >actual &&
+	cat >expect <<-\EOF &&
+	  Fetch URL: right
+	  Push  URL: right-push-one
+	  Push  URL: right-push-two
+	EOF
+	test_cmp expect actual
+'
+
 test_done

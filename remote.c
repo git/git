@@ -63,12 +63,18 @@ static char *alias_url(const char *url, struct rewrites *r)
 
 static void add_url(struct remote *remote, const char *url)
 {
-	strvec_push(&remote->url, url);
+	if (*url)
+		strvec_push(&remote->url, url);
+	else
+		strvec_clear(&remote->url);
 }
 
 static void add_pushurl(struct remote *remote, const char *pushurl)
 {
-	strvec_push(&remote->pushurl, pushurl);
+	if (*pushurl)
+		strvec_push(&remote->pushurl, pushurl);
+	else
+		strvec_clear(&remote->pushurl);
 }
 
 static void add_pushurl_alias(struct remote_state *remote_state,
