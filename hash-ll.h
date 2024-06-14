@@ -245,7 +245,7 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 const struct object_id *null_oid(void);
 
-static inline int hashcmp_algop(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
+static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {
 	/*
 	 * Teach the compiler that there are only two possibilities of hash size
@@ -256,7 +256,7 @@ static inline int hashcmp_algop(const unsigned char *sha1, const unsigned char *
 	return memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
 }
 
-static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
+static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {
 	/*
 	 * We write this here instead of deferring to hashcmp so that the
@@ -265,6 +265,17 @@ static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *s
 	if (algop->rawsz == GIT_MAX_RAWSZ)
 		return !memcmp(sha1, sha2, GIT_MAX_RAWSZ);
 	return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
+}
+
+static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src,
+			   const struct git_hash_algo *algop)
+{
+	memcpy(sha_dst, sha_src, algop->rawsz);
+}
+
+static inline void hashclr(unsigned char *hash, const struct git_hash_algo *algop)
+{
+	memset(hash, 0, algop->rawsz);
 }
 
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)

@@ -6,11 +6,6 @@
 
 #define the_hash_algo the_repository->hash_algo
 
-static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
-{
-	return hashcmp_algop(sha1, sha2, the_hash_algo);
-}
-
 static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
 {
 	const struct git_hash_algo *algop;
@@ -18,12 +13,7 @@ static inline int oidcmp(const struct object_id *oid1, const struct object_id *o
 		algop = the_hash_algo;
 	else
 		algop = &hash_algos[oid1->algo];
-	return hashcmp_algop(oid1->hash, oid2->hash, algop);
-}
-
-static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
-{
-	return hasheq_algop(sha1, sha2, the_hash_algo);
+	return hashcmp(oid1->hash, oid2->hash, algop);
 }
 
 static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
@@ -33,17 +23,12 @@ static inline int oideq(const struct object_id *oid1, const struct object_id *oi
 		algop = the_hash_algo;
 	else
 		algop = &hash_algos[oid1->algo];
-	return hasheq_algop(oid1->hash, oid2->hash, algop);
+	return hasheq(oid1->hash, oid2->hash, algop);
 }
 
 static inline int is_null_oid(const struct object_id *oid)
 {
 	return oideq(oid, null_oid());
-}
-
-static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
-{
-	memcpy(sha_dst, sha_src, the_hash_algo->rawsz);
 }
 
 /* Like oidcpy() but zero-pads the unused bytes in dst's hash array. */
@@ -60,11 +45,6 @@ static inline void oidcpy_with_padding(struct object_id *dst,
 	memcpy(dst->hash, src->hash, hashsz);
 	memset(dst->hash + hashsz, 0, GIT_MAX_RAWSZ - hashsz);
 	dst->algo = src->algo;
-}
-
-static inline void hashclr(unsigned char *hash)
-{
-	memset(hash, 0, the_hash_algo->rawsz);
 }
 
 static inline void oidclr(struct object_id *oid)

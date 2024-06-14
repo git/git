@@ -485,7 +485,7 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
 
 	list_for_each(pos, head) {
 		obj_req = list_entry(pos, struct object_request, node);
-		if (hasheq(obj_req->oid.hash, hash))
+		if (hasheq(obj_req->oid.hash, hash, the_repository->hash_algo))
 			break;
 	}
 	if (!obj_req)

@@ -112,7 +112,8 @@ int bsearch_hash(const unsigned char *hash, const uint32_t *fanout_nbo,
 
 	while (lo < hi) {
 		unsigned mi = lo + (hi - lo) / 2;
-		int cmp = hashcmp(table + mi * stride, hash);
+		int cmp = hashcmp(table + mi * stride, hash,
+				  the_repository->hash_algo);
 
 		if (!cmp) {
 			if (result)

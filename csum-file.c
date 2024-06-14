@@ -68,12 +68,12 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result,
 	hashflush(f);
 
 	if (f->skip_hash)
-		hashclr(f->buffer);
+		hashclr(f->buffer, the_repository->hash_algo);
 	else
 		the_hash_algo->final_fn(f->buffer, &f->ctx);
 
 	if (result)
-		hashcpy(result, f->buffer);
+		hashcpy(result, f->buffer, the_repository->hash_algo);
 	if (flags & CSUM_HASH_IN_STREAM)
 		flush(f, f->buffer, the_hash_algo->rawsz);
 	if (flags & CSUM_FSYNC)
@@ -237,5 +237,5 @@ int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
 	the_hash_algo->update_fn(&ctx, data, data_len);
 	the_hash_algo->final_fn(got, &ctx);
 
-	return hasheq(got, data + data_len);
+	return hasheq(got, data + data_len, the_repository->hash_algo);
 }
