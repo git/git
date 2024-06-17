@@ -11,6 +11,7 @@ filter_log () {
 	    -e '/^    \* new asciidoc flags$/d' \
 	    -e '/stripped namespace before processing/d' \
 	    -e '/Attributed.*IDs for element/d' \
+	    -e '/SyntaxWarning: invalid escape sequence/d' \
 	    "$1"
 }
 

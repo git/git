@@ -485,12 +485,16 @@ $(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.txt
 
 lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
 
+lint-docs-manpages:
+	$(QUIET_GEN)./lint-manpages.sh
+
 ## Lint: list of targets above
 .PHONY: lint-docs
 lint-docs: lint-docs-fsck-msgids
 lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
+lint-docs: lint-docs-manpages
 
 ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::

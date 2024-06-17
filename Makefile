@@ -3759,42 +3759,6 @@ ALL_COMMANDS += scalar
 .PHONY: check-docs
 check-docs::
 	$(MAKE) -C Documentation lint-docs
-	@(for v in $(patsubst %$X,%,$(ALL_COMMANDS)); \
-	do \
-		case "$$v" in \
-		git-merge-octopus | git-merge-ours | git-merge-recursive | \
-		git-merge-resolve | git-merge-subtree | \
-		git-fsck-objects | git-init-db | \
-		git-remote-* | git-stage | git-legacy-* | \
-		git-?*--?* ) continue ;; \
-		esac ; \
-		test -f "Documentation/$$v.txt" || \
-		echo "no doc: $$v"; \
-		sed -e '1,/^### command list/d' -e '/^#/d' command-list.txt | \
-		grep -q "^$$v[ 	]" || \
-		case "$$v" in \
-		git) ;; \
-		*) echo "no link: $$v";; \
-		esac ; \
-	done; \
-	( \
-		sed -e '1,/^### command list/d' \
-		    -e '/^#/d' \
-		    -e '/guide$$/d' \
-		    -e '/interfaces$$/d' \
-		    -e 's/[ 	].*//' \
-		    -e 's/^/listed /' command-list.txt; \
-		$(MAKE) -C Documentation print-man1 | \
-		grep '\.txt$$' | \
-		sed -e 's|^|documented |' \
-		    -e 's/\.txt//'; \
-	) | while read how cmd; \
-	do \
-		case " $(patsubst %$X,%,$(ALL_COMMANDS) $(BUILT_INS) $(EXCLUDED_PROGRAMS)) " in \
-		*" $$cmd "*)	;; \
-		*) echo "removed but $$how: $$cmd" ;; \
-		esac; \
-	done ) | sort
 
 ### Make sure built-ins do not have dups and listed in git.c
 #
