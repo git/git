@@ -418,7 +418,7 @@ argument is required if you want to see the command name in the error message,
 and it is the fourth value returned by C<command_bidi_pipe()>.  The call idiom
 is:
 
-	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe('cat-file --batch-check');
+	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe(qw(cat-file --batch-check));
 	print $out "000000000\n";
 	while (<$in>) { ... }
 	$r->command_close_bidi_pipe($pid, $in, $out, $ctx);
@@ -431,7 +431,7 @@ C<PIPE_IN> and C<PIPE_OUT> may be C<undef> if they have been closed prior to
 calling this function.  This may be useful in a query-response type of
 commands where caller first writes a query and later reads response, eg:
 
-	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe('cat-file --batch-check');
+	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe(qw(cat-file --batch-check));
 	print $out "000000000\n";
 	close $out;
 	while (<$in>) { ... }
