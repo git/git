@@ -323,19 +323,15 @@ static void loose_fill_ref_dir(struct ref_store *ref_store,
 	add_per_worktree_entries_to_dir(dir, dirname);
 }
 
-/*
- * Add pseudorefs to the ref dir by parsing the directory for any files
- * which follow the pseudoref syntax.
- */
-static void add_pseudoref_and_head_entries(struct ref_store *ref_store,
-					 struct ref_dir *dir,
-					 const char *dirname)
+static int for_each_root_ref(struct files_ref_store *refs,
+			     int (*cb)(const char *refname, void *cb_data),
+			     void *cb_data)
 {
-	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_READ, "fill_ref_dir");
 	struct strbuf path = STRBUF_INIT, refname = STRBUF_INIT;
+	const char *dirname = refs->loose->root->name;
 	struct dirent *de;
 	size_t dirnamelen;
+	int ret;
 	DIR *d;
 
 	files_ref_path(refs, &path, dirname);
@@ -343,7 +339,7 @@ static void add_pseudoref_and_head_entries(struct ref_store *ref_store,
 	d = opendir(path.buf);
 	if (!d) {
 		strbuf_release(&path);
-		return;
+		return -1;
 	}
 
 	strbuf_addstr(&refname, dirname);
@@ -359,14 +355,49 @@ static void add_pseudoref_and_head_entries(struct ref_store *ref_store,
 		strbuf_addstr(&refname, de->d_name);
 
 		dtype = get_dtype(de, &path, 1);
-		if (dtype == DT_REG && is_root_ref(de->d_name))
-			loose_fill_ref_dir_regular_file(refs, refname.buf, dir);
+		if (dtype == DT_REG && is_root_ref(de->d_name)) {
+			ret = cb(refname.buf, cb_data);
+			if (ret)
+				goto done;
+		}
 
 		strbuf_setlen(&refname, dirnamelen);
 	}
+
+	ret = 0;
+
+done:
 	strbuf_release(&refname);
 	strbuf_release(&path);
 	closedir(d);
+	return ret;
+}
+
+struct fill_root_ref_data {
+	struct files_ref_store *refs;
+	struct ref_dir *dir;
+};
+
+static int fill_root_ref(const char *refname, void *cb_data)
+{
+	struct fill_root_ref_data *data = cb_data;
+	loose_fill_ref_dir_regular_file(data->refs, refname, data->dir);
+	return 0;
+}
+
+/*
+ * Add root refs to the ref dir by parsing the directory for any files which
+ * follow the root ref syntax.
+ */
+static void add_root_refs(struct files_ref_store *refs,
+			  struct ref_dir *dir)
+{
+	struct fill_root_ref_data data = {
+		.refs = refs,
+		.dir = dir,
+	};
+
+	for_each_root_ref(refs, fill_root_ref, &data);
 }
 
 static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
@@ -388,8 +419,7 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
 		dir = get_ref_dir(refs->loose->root);
 
 		if (flags & DO_FOR_EACH_INCLUDE_ROOT_REFS)
-			add_pseudoref_and_head_entries(dir->cache->ref_store, dir,
-						       refs->loose->root->name);
+			add_root_refs(refs, dir);
 
 		/*
 		 * Add an incomplete entry for "refs/" (to be filled
@@ -1752,6 +1782,9 @@ static int files_log_ref_write(struct files_ref_store *refs,
 {
 	int logfd, result;
 
+	if (flags & REF_SKIP_CREATE_REFLOG)
+		return 0;
+
 	if (log_all_ref_updates == LOG_REFS_UNSET)
 		log_all_ref_updates = is_bare_repository() ? LOG_REFS_NONE : LOG_REFS_NORMAL;
 
@@ -2253,6 +2286,7 @@ static int split_head_update(struct ref_update *update,
 	struct ref_update *new_update;
 
 	if ((update->flags & REF_LOG_ONLY) ||
+	    (update->flags & REF_SKIP_CREATE_REFLOG) ||
 	    (update->flags & REF_IS_PRUNING) ||
 	    (update->flags & REF_UPDATE_VIA_HEAD))
 		return 0;
@@ -3310,11 +3344,73 @@ static int files_ref_store_create_on_disk(struct ref_store *ref_store,
 	return 0;
 }
 
+struct remove_one_root_ref_data {
+	const char *gitdir;
+	struct strbuf *err;
+};
+
+static int remove_one_root_ref(const char *refname,
+			       void *cb_data)
+{
+	struct remove_one_root_ref_data *data = cb_data;
+	struct strbuf buf = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addf(&buf, "%s/%s", data->gitdir, refname);
+
+	ret = unlink(buf.buf);
+	if (ret < 0)
+		strbuf_addf(data->err, "could not delete %s: %s\n",
+			    refname, strerror(errno));
+
+	strbuf_release(&buf);
+	return ret;
+}
+
+static int files_ref_store_remove_on_disk(struct ref_store *ref_store,
+					  struct strbuf *err)
+{
+	struct files_ref_store *refs =
+		files_downcast(ref_store, REF_STORE_WRITE, "remove");
+	struct remove_one_root_ref_data data = {
+		.gitdir = refs->base.gitdir,
+		.err = err,
+	};
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addf(&sb, "%s/refs", refs->base.gitdir);
+	if (remove_dir_recursively(&sb, 0) < 0) {
+		strbuf_addf(err, "could not delete refs: %s",
+			    strerror(errno));
+		ret = -1;
+	}
+	strbuf_reset(&sb);
+
+	strbuf_addf(&sb, "%s/logs", refs->base.gitdir);
+	if (remove_dir_recursively(&sb, 0) < 0) {
+		strbuf_addf(err, "could not delete logs: %s",
+			    strerror(errno));
+		ret = -1;
+	}
+	strbuf_reset(&sb);
+
+	if (for_each_root_ref(refs, remove_one_root_ref, &data) < 0)
+		ret = -1;
+
+	if (ref_store_remove_on_disk(refs->packed_ref_store, err) < 0)
+		ret = -1;
+
+	strbuf_release(&sb);
+	return ret;
+}
+
 struct ref_storage_be refs_be_files = {
 	.name = "files",
 	.init = files_ref_store_init,
 	.release = files_ref_store_release,
 	.create_on_disk = files_ref_store_create_on_disk,
+	.remove_on_disk = files_ref_store_remove_on_disk,
 
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
