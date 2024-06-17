@@ -2482,13 +2482,37 @@ test_expect_success 'interdiff: reroll-count with a integer' '
 '
 
 test_expect_success 'interdiff: solo-patch' '
-	cat >expect <<-\EOF &&
-	  +fleep
-
-	EOF
 	git format-patch --interdiff=boop~2 -1 boop &&
-	test_grep "^Interdiff:$" 0001-fleep.patch &&
-	sed "1,/^  @@ /d; /^$/q" 0001-fleep.patch >actual &&
+
+	# remove up to the last "patch" output line,
+	# and remove everything below the signature mark.
+	sed -e "1,/^+fleep\$/d" -e "/^-- /,\$d" 0001-fleep.patch >actual &&
+
+	# fabricate Interdiff output.
+	git diff boop~2 boop >inter &&
+	{
+		echo &&
+		echo "Interdiff:" &&
+		sed -e "s/^/  /" inter
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'range-diff: solo-patch' '
+	git format-patch --creation-factor=999 \
+		--range-diff=boop~2..boop~1 -1 boop &&
+
+	# remove up to the last "patch" output line,
+	# and remove everything below the signature mark.
+	sed -e "1,/^+fleep\$/d" -e "/^-- /,\$d" 0001-fleep.patch >actual &&
+
+	# fabricate range-diff output.
+	{
+		echo &&
+		echo "Range-diff:" &&
+		git range-diff --creation-factor=999 \
+			boop~2..boop~1 boop~1..boop
+	} >expect &&
 	test_cmp expect actual
 '
 
