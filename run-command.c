@@ -1756,7 +1756,8 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 
 	if (do_trace2)
 		trace2_region_enter_printf(tr2_category, tr2_label, NULL,
-					   "max:%d", opts->processes);
+					   "max:%"PRIuMAX,
+					   (uintmax_t)opts->processes);
 
 	pp_init(&pp, opts, &pp_sig);
 	while (1) {

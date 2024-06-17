@@ -299,6 +299,7 @@ static void err(struct add_p_state *s, const char *fmt, ...)
 	va_end(args);
 }
 
+LAST_ARG_MUST_BE_NULL
 static void setup_child_process(struct add_p_state *s,
 				struct child_process *cp, ...)
 {
