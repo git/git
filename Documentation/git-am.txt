@@ -18,7 +18,7 @@ SYNOPSIS
 	 [--quoted-cr=<action>]
 	 [--empty=(stop|drop|keep)]
 	 [(<mbox> | <Maildir>)...]
-'git am' (--continue | --skip | --abort | --quit | --show-current-patch[=(diff|raw)] | --allow-empty)
+'git am' (--continue | --skip | --abort | --quit | --retry | --show-current-patch[=(diff|raw)] | --allow-empty)
 
 DESCRIPTION
 -----------
@@ -207,6 +207,12 @@ Valid <action> for the `--whitespace` option are:
 --quit::
 	Abort the patching operation but keep HEAD and the index
 	untouched.
+
+--retry::
+	Try to apply the last conflicting patch again. This is generally
+	only useful for passing extra options to the retry attempt
+	(e.g., `--3way`), since otherwise you'll just see the same
+	failure again.
 
 --show-current-patch[=(diff|raw)]::
 	Show the message at which `git am` has stopped due to
