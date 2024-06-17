@@ -5,8 +5,8 @@
 #include "strvec.h"
 
 /**
- * The credentials API provides an abstracted way of gathering username and
- * password credentials from the user.
+ * The credentials API provides an abstracted way of gathering
+ * authentication credentials from the user.
  *
  * Typical setup
  * -------------
@@ -116,11 +116,12 @@ struct credential_capability {
 };
 
 /**
- * This struct represents a single username/password combination
- * along with any associated context. All string fields should be
- * heap-allocated (or NULL if they are not known or not applicable).
- * The meaning of the individual context fields is the same as
- * their counterparts in the helper protocol.
+ * This struct represents a single login credential (typically a
+ * username/password combination) along with any associated
+ * context. All string fields should be heap-allocated (or NULL if
+ * they are not known or not applicable). The meaning of the
+ * individual context fields is the same as their counterparts in
+ * the helper protocol.
  *
  * This struct should always be initialized with `CREDENTIAL_INIT` or
  * `credential_init`.
@@ -207,11 +208,12 @@ void credential_clear(struct credential *);
 
 /**
  * Instruct the credential subsystem to fill the username and
- * password fields of the passed credential struct by first
- * consulting helpers, then asking the user. After this function
- * returns, the username and password fields of the credential are
- * guaranteed to be non-NULL. If an error occurs, the function will
- * die().
+ * password (or authtype and credential) fields of the passed
+ * credential struct by first consulting helpers, then asking the
+ * user. After this function returns, either the username and
+ * password fields or the credential field of the credential are
+ * guaranteed to be non-NULL. If an error occurs, the function
+ * will die().
  *
  * If all_capabilities is set, this is an internal user that is prepared
  * to deal with all known capabilities, and we should advertise that fact.
@@ -232,10 +234,10 @@ void credential_approve(struct credential *);
  * have been rejected. This will cause the credential subsystem to
  * notify any helpers of the rejection (which allows them, for
  * example, to purge the invalid credentials from storage). It
- * will also free() the username and password fields of the
- * credential and set them to NULL (readying the credential for
- * another call to `credential_fill`). Any errors from helpers are
- * ignored.
+ * will also free() the username, password, and credential fields
+ * of the credential and set them to NULL (readying the credential
+ * for another call to `credential_fill`). Any errors from helpers
+ * are ignored.
  */
 void credential_reject(struct credential *);
 
