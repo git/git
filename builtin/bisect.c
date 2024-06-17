@@ -262,7 +262,8 @@ static int bisect_reset(const char *commit)
 	return bisect_clean_state();
 }
 
-static void log_commit(FILE *fp, char *fmt, const char *state,
+static void log_commit(FILE *fp,
+		       const char *fmt, const char *state,
 		       struct commit *commit)
 {
 	struct pretty_print_context pp = {0};

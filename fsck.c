@@ -1179,7 +1179,7 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 }
 
 int fsck_buffer(const struct object_id *oid, enum object_type type,
-		void *data, unsigned long size,
+		const void *data, unsigned long size,
 		struct fsck_options *options)
 {
 	if (type == OBJ_BLOB)

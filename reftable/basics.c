@@ -67,9 +67,9 @@ void free_names(char **a)
 	reftable_free(a);
 }
 
-size_t names_length(char **names)
+size_t names_length(const char **names)
 {
-	char **p = names;
+	const char **p = names;
 	while (*p)
 		p++;
 	return p - names;
@@ -102,15 +102,12 @@ void parse_names(char *buf, int size, char ***namesp)
 	*namesp = names;
 }
 
-int names_equal(char **a, char **b)
+int names_equal(const char **a, const char **b)
 {
-	int i = 0;
-	for (; a[i] && b[i]; i++) {
-		if (strcmp(a[i], b[i])) {
+	size_t i = 0;
+	for (; a[i] && b[i]; i++)
+		if (strcmp(a[i], b[i]))
 			return 0;
-		}
-	}
-
 	return a[i] == b[i];
 }
 

@@ -125,13 +125,13 @@ static void readers_destroy(struct reftable_reader **readers, size_t n)
 static void test_merged_between(void)
 {
 	struct reftable_ref_record r1[] = { {
-		.refname = "b",
+		.refname = (char *) "b",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
 		.value.val1 = { 1, 2, 3, 0 },
 	} };
 	struct reftable_ref_record r2[] = { {
-		.refname = "a",
+		.refname = (char *) "a",
 		.update_index = 2,
 		.value_type = REFTABLE_REF_DELETION,
 	} };
@@ -169,38 +169,38 @@ static void test_merged(void)
 {
 	struct reftable_ref_record r1[] = {
 		{
-			.refname = "a",
+			.refname = (char *) "a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		},
 		{
-			.refname = "b",
+			.refname = (char *) "b",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		},
 		{
-			.refname = "c",
+			.refname = (char *) "c",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		}
 	};
 	struct reftable_ref_record r2[] = { {
-		.refname = "a",
+		.refname = (char *) "a",
 		.update_index = 2,
 		.value_type = REFTABLE_REF_DELETION,
 	} };
 	struct reftable_ref_record r3[] = {
 		{
-			.refname = "c",
+			.refname = (char *) "c",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 2 },
 		},
 		{
-			.refname = "d",
+			.refname = (char *) "d",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
@@ -296,46 +296,46 @@ static void test_merged_logs(void)
 {
 	struct reftable_log_record r1[] = {
 		{
-			.refname = "a",
+			.refname = (char *) "a",
 			.update_index = 2,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
 				.old_hash = { 2 },
 				/* deletion */
-				.name = "jane doe",
-				.email = "jane@invalid",
-				.message = "message2",
+				.name = (char *) "jane doe",
+				.email = (char *) "jane@invalid",
+				.message = (char *) "message2",
 			}
 		},
 		{
-			.refname = "a",
+			.refname = (char *) "a",
 			.update_index = 1,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
 				.old_hash = { 1 },
 				.new_hash = { 2 },
-				.name = "jane doe",
-				.email = "jane@invalid",
-				.message = "message1",
+				.name = (char *) "jane doe",
+				.email = (char *) "jane@invalid",
+				.message = (char *) "message1",
 			}
 		},
 	};
 	struct reftable_log_record r2[] = {
 		{
-			.refname = "a",
+			.refname = (char *) "a",
 			.update_index = 3,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
 				.new_hash = { 3 },
-				.name = "jane doe",
-				.email = "jane@invalid",
-				.message = "message3",
+				.name = (char *) "jane doe",
+				.email = (char *) "jane@invalid",
+				.message = (char *) "message3",
 			}
 		},
 	};
 	struct reftable_log_record r3[] = {
 		{
-			.refname = "a",
+			.refname = (char *) "a",
 			.update_index = 2,
 			.value_type = REFTABLE_LOG_DELETION,
 		},
@@ -413,7 +413,7 @@ static void test_default_write_opts(void)
 		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
 
 	struct reftable_ref_record rec = {
-		.refname = "master",
+		.refname = (char *) "master",
 		.update_index = 1,
 	};
 	int err;

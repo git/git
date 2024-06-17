@@ -1325,7 +1325,7 @@ int format_set_trailers_options(struct process_trailer_options *opts,
 static size_t parse_describe_args(const char *start, struct strvec *args)
 {
 	struct {
-		char *name;
+		const char *name;
 		enum {
 			DESCRIBE_ARG_BOOL,
 			DESCRIBE_ARG_INTEGER,
@@ -1584,8 +1584,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	case 'D':
 		{
 			const struct decoration_options opts = {
-				.prefix = "",
-				.suffix = ""
+				.prefix = (char *) "",
+				.suffix = (char *) "",
 			};
 
 			format_decorations(sb, commit, c->auto_color, &opts);

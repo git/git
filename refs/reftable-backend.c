@@ -1450,10 +1450,10 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	 * old reference.
 	 */
 	refs[0] = old_ref;
-	refs[0].refname = (char *)arg->newname;
+	refs[0].refname = xstrdup(arg->newname);
 	refs[0].update_index = creation_ts;
 	if (arg->delete_old) {
-		refs[1].refname = (char *)arg->oldname;
+		refs[1].refname = xstrdup(arg->oldname);
 		refs[1].value_type = REFTABLE_REF_DELETION;
 		refs[1].update_index = deletion_ts;
 	}
@@ -1476,7 +1476,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 		memset(&logs[logs_nr], 0, sizeof(logs[logs_nr]));
 		fill_reftable_log_record(&logs[logs_nr], &committer_ident);
-		logs[logs_nr].refname = (char *)arg->newname;
+		logs[logs_nr].refname = xstrdup(arg->newname);
 		logs[logs_nr].update_index = deletion_ts;
 		logs[logs_nr].value.update.message =
 			xstrndup(arg->logmsg, arg->refs->write_options.block_size / 2);
@@ -1497,7 +1497,13 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		if (append_head_reflog) {
 			ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 			logs[logs_nr] = logs[logs_nr - 1];
-			logs[logs_nr].refname = "HEAD";
+			logs[logs_nr].refname = xstrdup("HEAD");
+			logs[logs_nr].value.update.name =
+				xstrdup(logs[logs_nr].value.update.name);
+			logs[logs_nr].value.update.email =
+				xstrdup(logs[logs_nr].value.update.email);
+			logs[logs_nr].value.update.message =
+				xstrdup(logs[logs_nr].value.update.message);
 			logs_nr++;
 		}
 	}
@@ -1508,7 +1514,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 	memset(&logs[logs_nr], 0, sizeof(logs[logs_nr]));
 	fill_reftable_log_record(&logs[logs_nr], &committer_ident);
-	logs[logs_nr].refname = (char *)arg->newname;
+	logs[logs_nr].refname = xstrdup(arg->newname);
 	logs[logs_nr].update_index = creation_ts;
 	logs[logs_nr].value.update.message =
 		xstrndup(arg->logmsg, arg->refs->write_options.block_size / 2);
@@ -1541,7 +1547,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		 */
 		ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 		logs[logs_nr] = old_log;
-		logs[logs_nr].refname = (char *)arg->newname;
+		logs[logs_nr].refname = xstrdup(arg->newname);
 		logs_nr++;
 
 		/*
@@ -1550,7 +1556,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		if (arg->delete_old) {
 			ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 			memset(&logs[logs_nr], 0, sizeof(logs[logs_nr]));
-			logs[logs_nr].refname = (char *)arg->oldname;
+			logs[logs_nr].refname = xstrdup(arg->oldname);
 			logs[logs_nr].value_type = REFTABLE_LOG_DELETION;
 			logs[logs_nr].update_index = old_log.update_index;
 			logs_nr++;
@@ -1573,13 +1579,11 @@ done:
 	reftable_iterator_destroy(&it);
 	string_list_clear(&skip, 0);
 	strbuf_release(&errbuf);
-	for (i = 0; i < logs_nr; i++) {
-		if (!strcmp(logs[i].refname, "HEAD"))
-			continue;
-		logs[i].refname = NULL;
+	for (i = 0; i < logs_nr; i++)
 		reftable_log_record_release(&logs[i]);
-	}
 	free(logs);
+	for (i = 0; i < ARRAY_SIZE(refs); i++)
+		reftable_ref_record_release(&refs[i]);
 	reftable_ref_record_release(&old_ref);
 	reftable_log_record_release(&old_log);
 	return ret;

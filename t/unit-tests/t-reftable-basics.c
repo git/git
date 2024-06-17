@@ -54,15 +54,15 @@ static void test_binsearch(void)
 
 static void test_names_length(void)
 {
-	char *a[] = { "a", "b", NULL };
+	const char *a[] = { "a", "b", NULL };
 	check_int(names_length(a), ==, 2);
 }
 
 static void test_names_equal(void)
 {
-	char *a[] = { "a", "b", "c", NULL };
-	char *b[] = { "a", "b", "d", NULL };
-	char *c[] = { "a", "b", NULL };
+	const char *a[] = { "a", "b", "c", NULL };
+	const char *b[] = { "a", "b", "d", NULL };
+	const char *c[] = { "a", "b", NULL };
 
 	check(names_equal(a, a));
 	check(!names_equal(a, b));
