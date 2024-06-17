@@ -61,6 +61,15 @@ UI, Workflows & Features
  * The promisor.quiet configuration knob can be set to true to make
    lazy fetching from promisor remotes silent.
 
+ * The inter/range-diff output has been moved to the end of the patch
+   when format-patch adds it to a single patch, instead of writing it
+   before the patch text, to be consistent with what is done for a
+   cover letter for a multi-patch series.
+
+ * A new command has been added to migrate a repository that uses the
+   files backend for its ref storage to use the reftable backend, with
+   limitations.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -133,6 +142,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * Many memory leaks in the sparse-checkout code paths have been
    plugged.
+
+ * "make check-docs" noticed problems and reported to its output but
+   failed to signal its findings with its exit status, which has been
+   corrected.
+
+ * Building with "-Werror -Wwrite-strings" is now supported.
 
 
 Fixes since v2.45
@@ -235,6 +250,28 @@ Fixes since v2.45
 
  * An overly large ".gitignore" files are now rejected silently.
    (merge e7c3d1ddba jk/cap-exclude-file-size later to maint).
+
+ * Upon expiration event, the credential subsystem forgot to clear
+   in-core authentication material other than password (whose support
+   was added recently), which has been corrected.
+
+ * Fix for an embarrassing typo that prevented Python2 tests from running
+   anywhere.
+   (merge df651330ab ps/ci-fix-detection-of-ubuntu-20 later to maint).
+
+ * Varargs functions that are unannotated as printf-like or execl-like
+   have been annotated as such.
+   (merge 99c7de732e jc/varargs-attributes later to maint).
+
+ * "git am" has a safety feature to prevent it from starting a new
+   session when there already is a session going.  It reliably
+   triggers when a mbox is given on the command line, but it has to
+   rely on the tty-ness of the standard input.  Add an explicit way to
+   opt out of this safety with a command line option.
+   (merge 62c71ace44 jk/am-retry later to maint).
+
+ * A leak in "git imap-send" that somehow escapes LSan has been
+   plugged.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
