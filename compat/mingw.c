@@ -16,7 +16,6 @@ static const int delay[] = { 0, 1, 10, 20, 40 };
 void open_in_gdb(void)
 {
 	static struct child_process cp = CHILD_PROCESS_INIT;
-	extern char *_pgmptr;
 
 	argv_array_pushl(&cp.args, "mintty", "gdb", NULL);
 	argv_array_pushf(&cp.args, "--pid=%d", getpid());
