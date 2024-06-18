@@ -1294,4 +1294,34 @@ test_expect_success 'batch-command flush without --buffer' '
 	grep "^fatal:.*flush is only for --buffer mode.*" err
 '
 
+script='
+use warnings;
+use strict;
+use IPC::Open2;
+my ($opt, $oid, $expect, @pfx) = @ARGV;
+my @cmd = (qw(git cat-file), $opt);
+my $pid = open2(my $out, my $in, @cmd) or die "open2: @cmd";
+print $in @pfx, $oid, "\n" or die "print $!";
+my $rvec = "";
+vec($rvec, fileno($out), 1) = 1;
+select($rvec, undef, undef, 30) or die "no response to `@pfx $oid` from @cmd";
+my $info = <$out>;
+chop($info) eq "\n" or die "no LF";
+$info eq $expect or die "`$info` != `$expect`";
+close $in or die "close in $!";
+close $out or die "close out $!";
+waitpid $pid, 0;
+$? == 0 or die "\$?=$?";
+'
+
+expect="$hello_oid blob $hello_size"
+
+test_expect_success PERL '--batch-check is unbuffered by default' '
+	perl -e "$script" -- --batch-check $hello_oid "$expect"
+'
+
+test_expect_success PERL '--batch-command info is unbuffered by default' '
+	perl -e "$script" -- --batch-command $hello_oid "$expect" "info "
+'
+
 test_done
