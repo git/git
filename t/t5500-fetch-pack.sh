@@ -993,6 +993,16 @@ test_expect_success 'ensure bogus fetch.negotiationAlgorithm yields error' '
 		       fetch origin server_has both_have_2
 '
 
+test_expect_success 'fetch-pack with fsckObjects and keep-file does not segfault' '
+	rm -rf server client &&
+	test_create_repo server &&
+	test_commit -C server one &&
+
+	test_create_repo client &&
+	git -c fetch.fsckObjects=true \
+	    -C client fetch-pack -k -k ../server HEAD
+'
+
 test_expect_success 'filtering by size' '
 	rm -rf server client &&
 	test_create_repo server &&
