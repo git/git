@@ -9,6 +9,7 @@
 #include "hashmap.h"
 #include "pkt-line.h"
 #include "config.h"
+#include "fetch-pack.h"
 #include "remote.h"
 
 static struct {
@@ -373,7 +374,7 @@ static int unbundle_from_file(struct repository *r, const char *file)
 	 * the prerequisite commits.
 	 */
 	if ((result = unbundle(r, &header, bundle_fd, NULL,
-			       VERIFY_BUNDLE_QUIET)))
+			       VERIFY_BUNDLE_QUIET | (fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0))))
 		return 1;
 
 	/*
