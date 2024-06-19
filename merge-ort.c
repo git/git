@@ -553,7 +553,7 @@ enum conflict_and_info_types {
  * Short description of conflict type, relied upon by external tools.
  *
  * We can add more entries, but DO NOT change any of these strings.  Also,
- * Order MUST match conflict_info_and_types.
+ * please ensure the order matches what is used in conflict_info_and_types.
  */
 static const char *type_short_descriptions[] = {
 	/*** "Simple" conflicts and informational messages ***/
