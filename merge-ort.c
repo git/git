@@ -5000,6 +5000,26 @@ static void merge_check_renames_reusable(struct merge_result *result,
 
 /*** Function Grouping: merge_incore_*() and their internal variants ***/
 
+static void move_opt_priv_to_result_priv(struct merge_options *opt,
+					 struct merge_result *result)
+{
+	/*
+	 * opt->priv and result->priv are a bit weird.  opt->priv contains
+	 * information that we can re-use in subsequent merge operations to
+	 * enable our cached renames optimization.  The best way to provide
+	 * that to subsequent merges is putting it in result->priv.
+	 * However, putting it directly there would mean retrofitting lots
+	 * of functions in this file to also take a merge_result pointer,
+	 * which is ugly and annoying.  So, we just make sure at the end of
+	 * the merge (the outer merge if there are internal recursive ones)
+	 * to move it.
+	 */
+	assert(opt->priv && !result->priv);
+	result->priv = opt->priv;
+	result->_properly_initialized = RESULT_INITIALIZED;
+	opt->priv = NULL;
+}
+
 /*
  * Originally from merge_trees_internal(); heavily adapted, though.
  */
@@ -5060,11 +5080,8 @@ redo:
 		/* existence of conflicted entries implies unclean */
 		result->clean &= strmap_empty(&opt->priv->conflicted);
 	}
-	if (!opt->priv->call_depth) {
-		result->priv = opt->priv;
-		result->_properly_initialized = RESULT_INITIALIZED;
-		opt->priv = NULL;
-	}
+	if (!opt->priv->call_depth)
+		move_opt_priv_to_result_priv(opt, result);
 }
 
 /*
