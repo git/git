@@ -2193,6 +2193,8 @@ static int handle_content_merge(struct merge_options *opt,
 		clean = merge_submodule(opt, pathnames[0],
 					two_way ? null_oid() : &o->oid,
 					&a->oid, &b->oid, &result->oid);
+		if (clean < 0)
+			return -1;
 		if (opt->priv->call_depth && two_way && !clean) {
 			result->mode = o->mode;
 			oidcpy(&result->oid, &o->oid);
