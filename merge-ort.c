@@ -2109,7 +2109,7 @@ static int handle_content_merge(struct merge_options *opt,
 	 * merges, which happens for example with rename/rename(2to1) and
 	 * rename/add conflicts.
 	 */
-	unsigned clean = 1;
+	int clean = 1;
 
 	/*
 	 * handle_content_merge() needs both files to be of the same type, i.e.
@@ -2184,7 +2184,8 @@ static int handle_content_merge(struct merge_options *opt,
 		free(result_buf.ptr);
 		if (ret)
 			return -1;
-		clean &= (merge_status == 0);
+		if (merge_status > 0)
+			clean = 0;
 		path_msg(opt, INFO_AUTO_MERGING, 1, path, NULL, NULL, NULL,
 			 _("Auto-merging %s"), path);
 	} else if (S_ISGITLINK(a->mode)) {
