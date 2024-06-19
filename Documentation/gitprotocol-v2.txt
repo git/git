@@ -190,6 +190,26 @@ printable ASCII characters except space (i.e., the byte range 32 < x <
 and debugging purposes, and MUST NOT be used to programmatically assume
 the presence or absence of particular features.
 
+os-version
+~~~~~~~~~~
+
+In the same way as the `agent` capability above, the server can
+advertise the `os-version` capability with a value `X` (in the form
+`os-version=X`) to notify the client that the server is running an
+operating system that can be identified by `X`. The client may
+optionally send its own `os-version` string by including the
+`os-version` capability with a value `Y` (in the form `os-version=Y`)
+in its request to the server (but it MUST NOT do so if the server did
+not advertise the os-version capability). The `X` and `Y` strings may
+contain any printable ASCII characters except space (i.e., the byte
+range 32 < x < 127), and are typically made from the result of
+`uname -s`(OS name e.g Linux). The os-version capability can be disabled
+entirely by setting the `transfer.advertiseOSVersion` config option
+to `false`. The `os-version` strings are purely informative for
+statistics and debugging purposes, and MUST NOT be used to
+programmatically assume the presence or absence of particular
+features.
+
 ls-refs
 ~~~~~~~
 
