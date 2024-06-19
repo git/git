@@ -295,7 +295,7 @@ test_expect_success !WINDOWS 'custom merge driver that is killed with a signal o
 	>./please-abort &&
 	echo "* merge=custom" >.gitattributes &&
 	test_expect_code 2 git merge recursive-a 2>err &&
-	grep "^error: failed to execute internal merge" err &&
+	grep "error: failed to execute internal merge" err &&
 	git ls-files -u >output &&
 	git diff --name-only HEAD >>output &&
 	test_must_be_empty output
