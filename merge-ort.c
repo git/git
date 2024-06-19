@@ -543,10 +543,24 @@ enum conflict_and_info_types {
 	CONFLICT_SUBMODULE_HISTORY_NOT_AVAILABLE,
 	CONFLICT_SUBMODULE_MAY_HAVE_REWINDS,
 	CONFLICT_SUBMODULE_NULL_MERGE_BASE,
-	CONFLICT_SUBMODULE_CORRUPT,
+
+	/* INSERT NEW ENTRIES HERE */
+
+	/*
+	 * Keep this entry after all regular conflict and info types; only
+	 * errors (failures causing immediate abort of the merge) should
+	 * come after this.
+	 */
+	NB_REGULAR_CONFLICT_TYPES,
+
+	/*
+	 * Something is seriously wrong; cannot even perform merge;
+	 * Keep this group _last_ other than NB_TOTAL_TYPES
+	 */
+	ERROR_SUBMODULE_CORRUPT,
 
 	/* Keep this entry _last_ in the list */
-	NB_CONFLICT_TYPES,
+	NB_TOTAL_TYPES,
 };
 
 /*
@@ -597,8 +611,10 @@ static const char *type_short_descriptions[] = {
 		"CONFLICT (submodule may have rewinds)",
 	[CONFLICT_SUBMODULE_NULL_MERGE_BASE] =
 		"CONFLICT (submodule lacks merge base)",
-	[CONFLICT_SUBMODULE_CORRUPT] =
-		"CONFLICT (submodule corrupt)"
+
+	/* Something is seriously wrong; cannot even perform merge */
+	[ERROR_SUBMODULE_CORRUPT] =
+		"ERROR (submodule corrupt)",
 };
 
 struct logical_conflict_info {
@@ -762,7 +778,8 @@ static void path_msg(struct merge_options *opt,
 
 	/* Sanity checks */
 	assert(omittable_hint ==
-	       !starts_with(type_short_descriptions[type], "CONFLICT") ||
+	       (!starts_with(type_short_descriptions[type], "CONFLICT") &&
+		!starts_with(type_short_descriptions[type], "ERROR")) ||
 	       type == CONFLICT_DIR_RENAME_SUGGESTED);
 	if (opt->record_conflict_msgs_as_headers && omittable_hint)
 		return; /* Do not record mere hints in headers */
@@ -1817,9 +1834,9 @@ static int merge_submodule(struct merge_options *opt,
 	/* check whether both changes are forward */
 	ret2 = repo_in_merge_bases(&subrepo, commit_o, commit_a);
 	if (ret2 < 0) {
-		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+		path_msg(opt, ERROR_SUBMODULE_CORRUPT, 0,
 			 path, NULL, NULL, NULL,
-			 _("Failed to merge submodule %s "
+			 _("error: failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
 		ret = -1;
@@ -1828,9 +1845,9 @@ static int merge_submodule(struct merge_options *opt,
 	if (ret2 > 0)
 		ret2 = repo_in_merge_bases(&subrepo, commit_o, commit_b);
 	if (ret2 < 0) {
-		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+		path_msg(opt, ERROR_SUBMODULE_CORRUPT, 0,
 			 path, NULL, NULL, NULL,
-			 _("Failed to merge submodule %s "
+			 _("error: failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
 		ret = -1;
@@ -1848,9 +1865,9 @@ static int merge_submodule(struct merge_options *opt,
 	/* Case #1: a is contained in b or vice versa */
 	ret2 = repo_in_merge_bases(&subrepo, commit_a, commit_b);
 	if (ret2 < 0) {
-		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+		path_msg(opt, ERROR_SUBMODULE_CORRUPT, 0,
 			 path, NULL, NULL, NULL,
-			 _("Failed to merge submodule %s "
+			 _("error: failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
 		ret = -1;
@@ -1867,9 +1884,9 @@ static int merge_submodule(struct merge_options *opt,
 	}
 	ret2 = repo_in_merge_bases(&subrepo, commit_b, commit_a);
 	if (ret2 < 0) {
-		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+		path_msg(opt, ERROR_SUBMODULE_CORRUPT, 0,
 			 path, NULL, NULL, NULL,
-			 _("Failed to merge submodule %s "
+			 _("error: failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
 		ret = -1;
@@ -1901,9 +1918,9 @@ static int merge_submodule(struct merge_options *opt,
 					 &merges);
 	switch (parent_count) {
 	case -1:
-		path_msg(opt, CONFLICT_SUBMODULE_CORRUPT, 0,
+		path_msg(opt, ERROR_SUBMODULE_CORRUPT, 0,
 			 path, NULL, NULL, NULL,
-			 _("Failed to merge submodule %s "
+			 _("error: failed to merge submodule %s "
 			   "(repository corrupt)"),
 			 path);
 		ret = -1;
@@ -4646,6 +4663,7 @@ void merge_display_update_messages(struct merge_options *opt,
 	struct hashmap_iter iter;
 	struct strmap_entry *e;
 	struct string_list olist = STRING_LIST_INIT_NODUP;
+	FILE *o = stdout;
 
 	if (opt->record_conflict_msgs_as_headers)
 		BUG("Either display conflict messages or record them as headers, not both");
@@ -4662,6 +4680,10 @@ void merge_display_update_messages(struct merge_options *opt,
 	}
 	string_list_sort(&olist);
 
+	/* Print to stderr if we hit errors rather than just conflicts */
+	if (result->clean < 0)
+		o = stderr;
+
 	/* Iterate over the items, printing them */
 	for (int path_nr = 0; path_nr < olist.nr; ++path_nr) {
 		struct string_list *conflicts = olist.items[path_nr].util;
@@ -4669,25 +4691,31 @@ void merge_display_update_messages(struct merge_options *opt,
 			struct logical_conflict_info *info =
 				conflicts->items[i].util;
 
+			/* On failure, ignore regular conflict types */
+			if (result->clean < 0 &&
+			    info->type < NB_REGULAR_CONFLICT_TYPES)
+				continue;
+
 			if (detailed) {
-				printf("%lu", (unsigned long)info->paths.nr);
-				putchar('\0');
+				fprintf(o, "%lu", (unsigned long)info->paths.nr);
+				fputc('\0', o);
 				for (int n = 0; n < info->paths.nr; n++) {
-					fputs(info->paths.v[n], stdout);
-					putchar('\0');
+					fputs(info->paths.v[n], o);
+					fputc('\0', o);
 				}
-				fputs(type_short_descriptions[info->type],
-				      stdout);
-				putchar('\0');
+				fputs(type_short_descriptions[info->type], o);
+				fputc('\0', o);
 			}
-			puts(conflicts->items[i].string);
+			fputs(conflicts->items[i].string, o);
+			fputc('\n', o);
 			if (detailed)
-				putchar('\0');
+				fputc('\0', o);
 		}
 	}
 	string_list_clear(&olist, 0);
 
-	print_submodule_conflict_suggestion(&opti->conflicted_submodules);
+	if (result->clean >= 0)
+		print_submodule_conflict_suggestion(&opti->conflicted_submodules);
 
 	/* Also include needed rename limit adjustment now */
 	diff_warn_rename_limit("merge.renamelimit",
