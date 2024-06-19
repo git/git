@@ -757,6 +757,9 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 
 		if (fsmonitor_ipc__is_supported())
 			strbuf_addstr(buf, "feature: fsmonitor--daemon\n");
+#if defined OPENSSL_VERSION_TEXT
+		strbuf_addf(buf, "OpenSSL: %s\n", OPENSSL_VERSION_TEXT);
+#endif
 	}
 }
 
