@@ -5050,6 +5050,7 @@ redo:
 		    oid_to_hex(&side1->object.oid),
 		    oid_to_hex(&side2->object.oid));
 		result->clean = -1;
+		move_opt_priv_to_result_priv(opt, result);
 		return;
 	}
 	trace2_region_leave("merge", "collect_merge_info", opt->repo);
@@ -5080,7 +5081,7 @@ redo:
 		/* existence of conflicted entries implies unclean */
 		result->clean &= strmap_empty(&opt->priv->conflicted);
 	}
-	if (!opt->priv->call_depth)
+	if (!opt->priv->call_depth || result->clean < 0)
 		move_opt_priv_to_result_priv(opt, result);
 }
 
