@@ -820,6 +820,11 @@ ifndef::git-log[]
 
 --quiet::
 	Disable all output of the program. Implies `--exit-code`.
+	Disables execution of external diff helpers whose exit code
+	is not trusted, i.e. their respective configuration option
+	`diff.trustExitCode` or `diff.<driver>.trustExitCode` or
+	environment variable `GIT_EXTERNAL_DIFF_TRUST_EXIT_CODE` is
+	false.
 endif::git-log[]
 endif::git-format-patch[]
 

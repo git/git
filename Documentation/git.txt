@@ -644,6 +644,16 @@ parameter, <path>.
 For each path `GIT_EXTERNAL_DIFF` is called, two environment variables,
 `GIT_DIFF_PATH_COUNTER` and `GIT_DIFF_PATH_TOTAL` are set.
 
+`GIT_EXTERNAL_DIFF_TRUST_EXIT_CODE`::
+	If this Boolean environment variable is set to true then the
+	`GIT_EXTERNAL_DIFF` command is expected to return exit code
+	0 if it considers the input files to be equal or 1 if it
+	considers them to be different, like `diff(1)`.
+	If it is set to false, which is the default, then the command
+	is expected to return exit code 0 regardless of equality.
+	Any other exit code causes Git to report a fatal error.
+
+
 `GIT_DIFF_PATH_COUNTER`::
 	A 1-based counter incremented by one for every path.
 

@@ -333,7 +333,7 @@ PATTERNS("scheme",
 	 "|([^][)(}{[ \t])+"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 	 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
-{ "default", NULL, NULL, -1, { NULL, 0 } },
+{ .name = "default", .binary = -1 },
 };
 #undef PATTERNS
 #undef IPATTERN
@@ -445,7 +445,11 @@ int userdiff_config(const char *k, const char *v)
 	if (!strcmp(type, "binary"))
 		return parse_tristate(&drv->binary, k, v);
 	if (!strcmp(type, "command"))
-		return git_config_string((char **) &drv->external, k, v);
+		return git_config_string((char **) &drv->external.cmd, k, v);
+	if (!strcmp(type, "trustexitcode")) {
+		drv->external.trust_exit_code = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(type, "textconv"))
 		return git_config_string((char **) &drv->textconv, k, v);
 	if (!strcmp(type, "cachetextconv"))

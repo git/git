@@ -11,9 +11,14 @@ struct userdiff_funcname {
 	int cflags;
 };
 
+struct external_diff {
+	char *cmd;
+	unsigned trust_exit_code:1;
+};
+
 struct userdiff_driver {
 	const char *name;
-	const char *external;
+	struct external_diff external;
 	const char *algorithm;
 	int binary;
 	struct userdiff_funcname funcname;
