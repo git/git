@@ -200,7 +200,7 @@ struct ref {
 };
 
 #define REF_NORMAL	(1u << 0)
-#define REF_HEADS	(1u << 1)
+#define REF_BRANCHES	(1u << 1)
 #define REF_TAGS	(1u << 2)
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name);

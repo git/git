@@ -9,8 +9,8 @@ SYNOPSIS
 --------
 [verse]
 'git show-ref' [--head] [-d | --dereference]
-	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]
-	     [--heads] [--] [<pattern>...]
+	     [-s | --hash[=<n>]] [--abbrev[=<n>]] [--branches] [--tags]
+	     [--] [<pattern>...]
 'git show-ref' --verify [-q | --quiet] [-d | --dereference]
 	     [-s | --hash[=<n>]] [--abbrev[=<n>]]
 	     [--] [<ref>...]
@@ -45,12 +45,14 @@ OPTIONS
 
 	Show the HEAD reference, even if it would normally be filtered out.
 
---heads::
+--branches::
 --tags::
 
-	Limit to "refs/heads" and "refs/tags", respectively.  These options
+	Limit to local branches and local tags, respectively.  These options
 	are not mutually exclusive; when given both, references stored in
-	"refs/heads" and "refs/tags" are displayed.
+	"refs/heads" and "refs/tags" are displayed.  Note that `--heads`
+	is a deprecated synonym for `--branches` and may be removed
+	in the future.
 
 -d::
 --dereference::
@@ -139,7 +141,7 @@ When using `--hash` (and not `--dereference`), the output is in the format:
 For example,
 
 -----------------------------------------------------------------------------
-$ git show-ref --heads --hash
+$ git show-ref --branches --hash
 2e3ba0114a1f52b47df29743d6915d056be13278
 185008ae97960c8d551adcd9e23565194651b5d1
 03adf42c988195b50e1a1935ba5fcbc39b2b029b
@@ -183,8 +185,8 @@ to check whether a particular branch exists or not (notice how we don't
 actually want to show any results, and we want to use the full refname for it
 in order to not trigger the problem with ambiguous partial matches).
 
-To show only tags, or only proper branch heads, use `--tags` and/or `--heads`
-respectively (using both means that it shows tags and heads, but not other
+To show only tags, or only proper branch heads, use `--tags` and/or `--branches`
+respectively (using both means that it shows tags and branches, but not other
 random references under the refs/ subdirectory).
 
 To do automatic tag object dereferencing, use the `-d` or `--dereference`
