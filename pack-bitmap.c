@@ -2073,6 +2073,7 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 		QSORT(packs, packs_nr, bitmapped_pack_cmp);
 	} else {
 		struct packed_git *pack;
+		uint32_t pack_int_id;
 
 		if (bitmap_is_midx(bitmap_git)) {
 			uint32_t preferred_pack_pos;
@@ -2083,12 +2084,24 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 			}
 
 			pack = bitmap_git->midx->packs[preferred_pack_pos];
+			pack_int_id = preferred_pack_pos;
 		} else {
 			pack = bitmap_git->pack;
+			/*
+			 * Any value for 'pack_int_id' will do here. When we
+			 * process the pack via try_partial_reuse(), we won't
+			 * use the `pack_int_id` field since we have a non-MIDX
+			 * bitmap.
+			 *
+			 * Use '-1' as a sentinel value to make it clear
+			 * that we do not expect to read this field.
+			 */
+			pack_int_id = -1;
 		}
 
 		ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
 		packs[packs_nr].p = pack;
+		packs[packs_nr].pack_int_id = pack_int_id;
 		packs[packs_nr].bitmap_nr = pack->num_objects;
 		packs[packs_nr].bitmap_pos = 0;
 
