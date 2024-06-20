@@ -2382,6 +2382,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (cover_letter == -1) {
 		if (cfg.config_cover_letter == COVER_AUTO)
 			cover_letter = (total > 1);
+		else if ((idiff_prev.nr || rdiff_prev) && (total > 1))
+			cover_letter = (cfg.config_cover_letter != COVER_OFF);
 		else
 			cover_letter = (cfg.config_cover_letter == COVER_ON);
 	}
