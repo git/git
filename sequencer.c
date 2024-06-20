@@ -2626,8 +2626,63 @@ static int check_label_or_ref_arg(enum todo_command command, const char *arg)
 	return 0;
 }
 
-static int parse_insn_line(struct repository *r, struct todo_item *item,
-			   const char *buf, const char *bol, char *eol)
+static int check_merge_commit_insn(enum todo_command command)
+{
+	switch(command) {
+	case TODO_PICK:
+		error(_("'%s' does not accept merge commits"),
+		      todo_command_info[command].str);
+		advise_if_enabled(ADVICE_REBASE_TODO_ERROR, _(
+			/*
+			 * TRANSLATORS: 'pick' and 'merge -C' should not be
+			 * translated.
+			 */
+			"'pick' does not take a merge commit. If you wanted to\n"
+			"replay the merge, use 'merge -C' on the commit."));
+		return -1;
+
+	case TODO_REWORD:
+		error(_("'%s' does not accept merge commits"),
+		      todo_command_info[command].str);
+		advise_if_enabled(ADVICE_REBASE_TODO_ERROR, _(
+			/*
+			 * TRANSLATORS: 'reword' and 'merge -c' should not be
+			 * translated.
+			 */
+			"'reword' does not take a merge commit. If you wanted to\n"
+			"replay the merge and reword the commit message, use\n"
+			"'merge -c' on the commit"));
+		return -1;
+
+	case TODO_EDIT:
+		error(_("'%s' does not accept merge commits"),
+		      todo_command_info[command].str);
+		advise_if_enabled(ADVICE_REBASE_TODO_ERROR, _(
+			/*
+			 * TRANSLATORS: 'edit', 'merge -C' and 'break' should
+			 * not be translated.
+			 */
+			"'edit' does not take a merge commit. If you wanted to\n"
+			"replay the merge, use 'merge -C' on the commit, and then\n"
+			"'break' to give the control back to you so that you can\n"
+			"do 'git commit --amend && git rebase --continue'."));
+		return -1;
+
+	case TODO_FIXUP:
+	case TODO_SQUASH:
+		return error(_("cannot squash merge commit into another commit"));
+
+	case TODO_MERGE:
+		return 0;
+
+	default:
+		BUG("unexpected todo_command");
+	}
+}
+
+static int parse_insn_line(struct repository *r, struct replay_opts *opts,
+			   struct todo_item *item, const char *buf,
+			   const char *bol, char *eol)
 {
 	struct object_id commit_oid;
 	char *end_of_object_name;
@@ -2731,7 +2786,12 @@ static int parse_insn_line(struct repository *r, struct todo_item *item,
 		return status;
 
 	item->commit = lookup_commit_reference(r, &commit_oid);
-	return item->commit ? 0 : -1;
+	if (!item->commit)
+		return -1;
+	if (is_rebase_i(opts) &&
+	    item->commit->parents && item->commit->parents->next)
+		return check_merge_commit_insn(item->command);
+	return 0;
 }
 
 int sequencer_get_last_command(struct repository *r UNUSED, enum replay_action *action)
@@ -2761,8 +2821,8 @@ int sequencer_get_last_command(struct repository *r UNUSED, enum replay_action *
 	return ret;
 }
 
-int todo_list_parse_insn_buffer(struct repository *r, char *buf,
-				struct todo_list *todo_list)
+int todo_list_parse_insn_buffer(struct repository *r, struct replay_opts *opts,
+				char *buf, struct todo_list *todo_list)
 {
 	struct todo_item *item;
 	char *p = buf, *next_p;
@@ -2780,7 +2840,7 @@ int todo_list_parse_insn_buffer(struct repository *r, char *buf,
 
 		item = append_new_todo(todo_list);
 		item->offset_in_buf = p - todo_list->buf.buf;
-		if (parse_insn_line(r, item, buf, p, eol)) {
+		if (parse_insn_line(r, opts, item, buf, p, eol)) {
 			res = error(_("invalid line %d: %.*s"),
 				i, (int)(eol - p), p);
 			item->command = TODO_COMMENT + 1;
@@ -2930,7 +2990,7 @@ static int read_populate_todo(struct repository *r,
 	if (strbuf_read_file_or_whine(&todo_list->buf, todo_file) < 0)
 		return -1;
 
-	res = todo_list_parse_insn_buffer(r, todo_list->buf.buf, todo_list);
+	res = todo_list_parse_insn_buffer(r, opts, todo_list->buf.buf, todo_list);
 	if (res) {
 		if (is_rebase_i(opts))
 			return error(_("please fix this using "
@@ -2960,7 +3020,7 @@ static int read_populate_todo(struct repository *r,
 		struct todo_list done = TODO_LIST_INIT;
 
 		if (strbuf_read_file(&done.buf, rebase_path_done(), 0) > 0 &&
-		    !todo_list_parse_insn_buffer(r, done.buf.buf, &done))
+		    !todo_list_parse_insn_buffer(r, opts, done.buf.buf, &done))
 			todo_list->done_nr = count_commands(&done);
 		else
 			todo_list->done_nr = 0;
@@ -5319,7 +5379,8 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			goto release_todo_list;
 
 		if (file_exists(rebase_path_dropped())) {
-			if ((res = todo_list_check_against_backup(r, &todo_list)))
+			if ((res = todo_list_check_against_backup(r, opts,
+								  &todo_list)))
 				goto release_todo_list;
 
 			unlink(rebase_path_dropped());
@@ -6363,7 +6424,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		return error(_("nothing to do"));
 	}
 
-	res = edit_todo_list(r, todo_list, &new_todo, shortrevisions,
+	res = edit_todo_list(r, opts, todo_list, &new_todo, shortrevisions,
 			     shortonto, flags);
 	if (res == -1)
 		return -1;
@@ -6391,7 +6452,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	strbuf_release(&buf2);
 	/* Nothing is done yet, and we're reparsing, so let's reset the count */
 	new_todo.total_nr = 0;
-	if (todo_list_parse_insn_buffer(r, new_todo.buf.buf, &new_todo) < 0)
+	if (todo_list_parse_insn_buffer(r, opts, new_todo.buf.buf, &new_todo) < 0)
 		BUG("invalid todo list after expanding IDs:\n%s",
 		    new_todo.buf.buf);
 
