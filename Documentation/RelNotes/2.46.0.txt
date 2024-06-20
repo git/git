@@ -70,6 +70,21 @@ UI, Workflows & Features
    files backend for its ref storage to use the reftable backend, with
    limitations.
 
+ * "git diff --exit-code --ext-diff" learned to take the exit status
+   of the external diff driver into account when deciding the exit
+   status of the overall "git diff" invocation when configured to do
+   so.
+
+ * "git update-ref --stdin" learned to handle transactional updates of
+   symbolic-refs.
+
+ * "git format-patch --interdiff" for multi-patch series learned to
+   turn on cover letters automatically (unless told never to enable
+   cover letter with "--no-cover-letter" and such).
+
+ * The "--heads" option of "ls-remote" and "show-ref" has been been
+   deprecated; "--branches" replaces "--heads".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -148,6 +163,15 @@ Performance, Internal Implementation, Development Support etc.
    corrected.
 
  * Building with "-Werror -Wwrite-strings" is now supported.
+
+ * To help developers, the build procedure now allows builders to use
+   CFLAGS_APPEND to specify additional CFLAGS.
+
+ * "oidtree" tests were rewritten to use the unit test framework.
+
+ * The structure of the document that records longer-term project
+   decisions to deprecate/remove/update various behaviour has been
+   outlined.
 
 
 Fixes since v2.45
@@ -273,6 +297,15 @@ Fixes since v2.45
  * A leak in "git imap-send" that somehow escapes LSan has been
    plugged.
 
+ * Setting core.abbrev too early before the repository set-up
+   (typically in "git clone") caused segfault, which as been
+   corrected.
+
+ * When the user adds to "git rebase -i" instruction to "pick" a merge
+   commit, the error experience is not pleasant.  Such an error is now
+   caught earlier in the process that parses the todo list.
+   (merge 4c063c82e9 pw/rebase-i-error-message later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
    (merge 55702c543e fa/p4-error later to maint).
@@ -283,3 +316,5 @@ Fixes since v2.45
    (merge 7150f140f9 mt/t0211-typofix later to maint).
    (merge d424488901 jc/rev-parse-fatal-doc later to maint).
    (merge 36d900d2b0 rs/difftool-env-simplify later to maint).
+   (merge e83055ecb0 ds/doc-add-interactive-singlekey later to maint).
+   (merge f1160393c1 ds/ahead-behind-fix later to maint).
