@@ -1,10 +1,10 @@
 /*
- * ident.c
- *
- * create git identifier lines of the form "name <email> date"
- *
- * Copyright (C) 2005 Linus Torvalds
- */
+* ident.c
+*
+* create git identifier lines of the form "name <email> date"
+*
+* Copyright (C) 2005 Linus Torvalds
+*/
 #include "git-compat-util.h"
 #include "ident.h"
 #include "config.h"
