@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2024, #06; Mon, 17)
-X-master-at: 66ac6e4bcd111be3fa9c2a6b3fafea718d00678d
-X-next-at: 2facee476fbabb1bfffc7794f9acc62beb2b62dc
+Subject: What's cooking in git.git (Jun 2024, #07; Thu, 20)
+X-master-at: 9005149a4a77e2d3409c6127bf4fd1a0893c3495
+X-next-at: 4e1b14247adedf68e1c01a595e53106096e867db
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2024, #06; Mon, 17)
+What's cooking in git.git (Jun 2024, #07; Thu, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,172 +48,257 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ap/credential-clear-fix (2024-06-06) 1 commit
-  (merged to 'next' on 2024-06-07 at 933f06b899)
- + credential: clear expired c->credential, unify secret clearing
+* ds/ahead-behind-fix (2024-06-12) 1 commit
+  (merged to 'next' on 2024-06-13 at df378ec81e)
+ + commit-graph: increment progress indicator
 
- Upon expiration event, the credential subsystem forgot to clear
- in-core authentication material other than password (whose support
- was added recently), which has been corrected.
- source: <20240606183516.4077896-2-aplattner@nvidia.com>
+ Fix for a progress bar.
+ source: <pull.1743.git.1718118555197.gitgitgadget@gmail.com>
 
 
-* jc/format-patch-with-range-diff (2024-05-24) 2 commits
-  (merged to 'next' on 2024-06-07 at 394989ee78)
- + format-patch: move range/inter diff at the end of a single patch output
- + show_log: factor out interdiff/range-diff generation
+* ds/doc-add-interactive-singlekey (2024-06-07) 1 commit
+  (merged to 'next' on 2024-06-12 at cf3de70246)
+ + doc: interactive.singleKey is disabled by default
 
- The inter/range-diff output has been moved to the end of the patch
- when format-patch adds it to a single patch, instead of writing it
- before the patch text, to be consistent with what is done for a
- cover letter for a multi-patch series.
- source: <20240523225007.2871766-1-gitster@pobox.com>
+ Doc update.
+ source: <xmqq4ja4e6d6.fsf@gitster.g>
 
 
-* jc/varargs-attributes (2024-06-10) 4 commits
-  (merged to 'next' on 2024-06-10 at a9c55c0f89)
- + __attribute__: add a few missing format attributes
- + __attribute__: mark some functions with LAST_ARG_MUST_BE_NULL
- + __attribute__: remove redundant attribute declaration for git_die_config()
- + __attribute__: trace2_region_enter_printf() is like "printf"
+* gt/unit-test-oidtree (2024-06-12) 1 commit
+  (merged to 'next' on 2024-06-13 at eb3700b002)
+ + t/: migrate helper/test-oidtree.c to unit-tests/t-oidtree.c
+ (this branch is used by ps/use-the-repository.)
 
- Varargs functions that are unannotated as printf-like or execl-like
- have been annotated as such.
- source: <20240608183747.2084294-1-gitster@pobox.com>
+ "oidtree" tests were rewritten to use the unit test framework.
+ cf. <7o6fuymnfn6b6buyw3yyctjd4dlwlrazspv3xgxvys6djjivxh@qbhyurorgbtt>
+ source: <20240608165731.29467-1-shyamthakkar001@gmail.com>
 
 
-* jk/am-retry (2024-06-06) 2 commits
-  (merged to 'next' on 2024-06-10 at 4d62361bc7)
- + test-terminal: drop stdin handling
- + am: add explicit "--retry" option
+* jc/heads-are-branches (2024-06-04) 3 commits
+  (merged to 'next' on 2024-06-14 at b56b59d1d7)
+ + show-ref: introduce --branches and deprecate --heads
+ + ls-remote: introduce --branches and deprecate --heads
+ + refs: call branches branches
 
- "git am" has a safety feature to prevent it from starting a new
- session when there already is a session going.  It reliably
- triggers when a mbox is given on the command line, but it has to
- rely on the tty-ness of the standard input.  Add an explicit way to
- opt out of this safety with a command line option.
- source: <20240606081724.GA1166769@coredump.intra.peff.net>
+ The "--heads" option of "ls-remote" and "show-ref" has been been
+ deprecated; "--branches" replaces "--heads".
+ source: <20240604220145.3260714-1-gitster@pobox.com>
 
 
-* jk/imap-send-plug-all-msgs-leak (2024-06-07) 3 commits
-  (merged to 'next' on 2024-06-10 at 9b8ec7b97d)
- + imap-send: free all_msgs strbuf in "out" label
- + Merge branch 'jc/t1517-more' into jk/imap-send-plug-all-msgs-leak
- + Merge branch 'ps/no-writable-strings' into jk/imap-send-plug-all-msgs-leak
- (this branch uses ps/no-writable-strings.)
+* kn/update-ref-symref (2024-06-07) 8 commits
+  (merged to 'next' on 2024-06-13 at 5cf8d7513e)
+ + update-ref: add support for 'symref-update' command
+ + reftable: pick either 'oid' or 'target' for new updates
+ + update-ref: add support for 'symref-create' command
+ + update-ref: add support for 'symref-delete' command
+ + update-ref: add support for 'symref-verify' command
+ + refs: specify error for regular refs with `old_target`
+ + refs: create and use `ref_update_expects_existing_old_ref()`
+ + Merge branch 'kn/ref-transaction-symref' into kn/update-ref-symref
 
- A leak in "git imap-send" that somehow escapes LSan has been
- plugged.
- source: <20240605083526.GB2345232@coredump.intra.peff.net>
+ "git update-ref --stdin" learned to handle transactional updates of
+ symbolic-refs.
+ source: <20240607133304.2333280-1-knayak@gitlab.com>
 
 
-* ps/check-docs-fix (2024-06-06) 4 commits
-  (merged to 'next' on 2024-06-10 at 12570afc8e)
- + ci/test-documentation: work around SyntaxWarning in Python 3.12
- + gitlab-ci: add job to run `make check-docs`
- + Documentation/lint-manpages: bubble up errors
- + Makefile: extract script to lint missing/extraneous manpages
+* ps/abbrev-length-before-setup-fix (2024-06-12) 3 commits
+  (merged to 'next' on 2024-06-13 at e5d17f7da2)
+ + object-name: don't try to abbreviate to lengths greater than hexsz
+ + parse-options-cb: stop clamping "--abbrev=" to hash length
+ + config: fix segfault when parsing "core.abbrev" without repo
 
- "make check-docs" noticed problems and reported to its output but
- failed to signal its findings with its exit status, which has been
+ Setting core.abbrev too early before the repository set-up
+ (typically in "git clone") caused segfault, which as been
  corrected.
- source: <cover.1717660597.git.ps@pks.im>
+ source: <cover.1718178996.git.ps@pks.im>
 
 
-* ps/ci-fix-detection-of-ubuntu-20 (2024-06-06) 1 commit
-  (merged to 'next' on 2024-06-10 at 2d6725a946)
- + ci: fix check for Ubuntu 20.04
+* ps/document-breaking-changes (2024-06-14) 4 commits
+  (merged to 'next' on 2024-06-14 at 8089bf6f81)
+ + BreakingChanges: document that we do not plan to deprecate git-checkout
+ + BreakingChanges: document removal of grafting
+ + BreakingChanges: document upcoming change from "sha1" to "sha256"
+ + docs: introduce document to announce breaking changes
 
- Fix for an embarrassing typo that prevented Python2 tests from running
- anywhere.
- source: <f91004a4382c95b1b87bf3d1aafc018af2b7b92e.1717662814.git.ps@pks.im>
-
-
-* ps/no-writable-strings (2024-06-07) 28 commits
-  (merged to 'next' on 2024-06-10 at 9678851a9f)
- + config.mak.dev: enable `-Wwrite-strings` warning
- + builtin/merge: always store allocated strings in `pull_twohead`
- + builtin/rebase: always store allocated string in `options.strategy`
- + builtin/rebase: do not assign default backend to non-constant field
- + imap-send: fix leaking memory in `imap_server_conf`
- + imap-send: drop global `imap_server_conf` variable
- + mailmap: always store allocated strings in mailmap blob
- + revision: always store allocated strings in output encoding
- + remote-curl: avoid assigning string constant to non-const variable
- + send-pack: always allocate receive status
- + parse-options: cast long name for OPTION_ALIAS
- + http: do not assign string constant to non-const field
- + compat/win32: fix const-correctness with string constants
- + pretty: add casts for decoration option pointers
- + object-file: make `buf` parameter of `index_mem()` a constant
- + object-file: mark cached object buffers as const
- + ident: add casts for fallback name and GECOS
- + entry: refactor how we remove items for delayed checkouts
- + line-log: always allocate the output prefix
- + line-log: stop assigning string constant to file parent buffer
- + diff: cast string constant in `fill_textconv()`
- + builtin/remote: cast away constness in `get_head_names()`
- + refspec: remove global tag refspec structure
- + reftable: cast away constness when assigning constants to records
- + refs/reftable: stop micro-optimizing refname allocations on copy
- + global: convert intentionally-leaking config strings to consts
- + global: improve const correctness when assigning string constants
- + Merge branch 'ps/leakfixes' into ps/no-writable-strings
- (this branch is used by jk/imap-send-plug-all-msgs-leak.)
-
- Building with "-Werror -Wwrite-strings" is now supported.
- source: <cover.1717740365.git.ps@pks.im>
+ The structure of the document that records longer-term project
+ decisions to deprecate/remove/update various behaviour has been
+ outlined.
+ source: <cover.1718345026.git.ps@pks.im>
 
 
-* ps/ref-storage-migration (2024-06-06) 14 commits
-  (merged to 'next' on 2024-06-10 at 81b46b6916)
- + builtin/refs: new command to migrate ref storage formats
- + refs: implement logic to migrate between ref storage formats
- + refs: implement removal of ref storages
- + worktree: don't store main worktree twice
- + reftable: inline `merged_table_release()`
- + refs/files: fix NULL pointer deref when releasing ref store
- + refs/files: extract function to iterate through root refs
- + refs/files: refactor `add_pseudoref_and_head_entries()`
- + refs: allow to skip creation of reflog entries
- + refs: pass storage format to `ref_store_init()` explicitly
- + refs: convert ref storage format to an enum
- + setup: unset ref storage when reinitializing repository version
- + Merge branch 'ps/pseudo-ref-terminology' into ps/ref-storage-migration
- + Merge branch 'ps/refs-without-the-repository-updates' into ps/ref-storage-migration
- (this branch is used by ps/use-the-repository and sj/ref-fsck.)
+* ps/make-append-to-cflags (2024-06-11) 1 commit
+  (merged to 'next' on 2024-06-12 at d57b04bf16)
+ + Makefile: add ability to append to CFLAGS and LDFLAGS
 
- A new command has been added to migrate a repository that uses the
- files backend for its ref storage to use the reftable backend, with
- limitations.
- source: <cover.1717649802.git.ps@pks.im>
+ To help developers, the build procedure now allows builders to use
+ CFLAGS_APPEND to specify additional CFLAGS.
+ source: <8120ddaf0bdfd50e0fc4cf9a04f833102630b639.1718001244.git.ps@pks.im>
+
+
+* pw/rebase-i-error-message (2024-05-30) 2 commits
+  (merged to 'next' on 2024-06-13 at dbec12cfda)
+ + rebase -i: improve error message when picking merge
+ + rebase -i: pass struct replay_opts to parse_insn_line()
+
+ When the user adds to "git rebase -i" instruction to "pick" a merge
+ commit, the error experience is not pleasant.  Such an error is now
+ caught earlier in the process that parses the todo list.
+ source: <pull.1672.v3.git.1717076630.gitgitgadget@gmail.com>
+
+
+* rj/format-patch-auto-cover-with-interdiff (2024-06-07) 2 commits
+  (merged to 'next' on 2024-06-13 at 3fad4afcfd)
+ + format-patch: assume --cover-letter for diff in multi-patch series
+ + t4014: cleanups in a few tests
+
+ "git format-patch --interdiff" for multi-patch series learned to
+ turn on cover letters automatically (unless told never to enable
+ cover letter with "--no-cover-letter" and such).
+
+
+* rs/diff-exit-code-with-external-diff (2024-06-10) 3 commits
+  (merged to 'next' on 2024-06-12 at 9ce495b6cc)
+ + diff: let external diffs report that changes are uninteresting
+ + userdiff: add and use struct external_diff
+ + t4020: test exit code with external diffs
+
+ "git diff --exit-code --ext-diff" learned to take the exit status
+ of the external diff driver into account when deciding the exit
+ status of the overall "git diff" invocation when configured to do
+ so.
+ source: <168fecaa-2ebd-4897-b0ba-3bd2a37c01e7@web.de>
+
+
+* tb/multi-pack-reuse-fix (2024-06-11) 3 commits
+  (merged to 'next' on 2024-06-13 at 1cd0259667)
+ + pack-revindex.c: guard against out-of-bounds pack lookups
+ + pack-bitmap.c: avoid uninitialized `pack_int_id` during reuse
+ + midx-write.c: do not read existing MIDX with `packs_to_include`
+
+ Assorted fixes to multi-pack-index code paths.
+ source: <cover.1718126886.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ew/cat-file-unbuffered-tests (2024-06-17) 2 commits
- - t9700: ensure cat-file info isn't buffered by default
+* kz/merge-fail-early-upon-refresh-failure (2024-06-18) 1 commit
+  (merged to 'next' on 2024-06-20 at 01d4bdd019)
+ + merge: avoid write merge state when unable to write index
+
+ When "git merge" sees that the index cannot be refreshed (e.g. due
+ to another process doing the same in the background), it died but
+ after writing MERGE_HEAD etc. files, which was useless for the
+ purpose to recover from the failure.
+
+ Will merge to 'master'.
+ source: <pull.1731.v6.git.1718593717745.gitgitgadget@gmail.com>
+
+
+* ds/sparse-lstat-caching (2024-06-20) 5 commits
+ - sparse-index: improve lstat caching of sparse paths
+ - sparse-index: count lstat() calls
+ - sparse-index: use strbuf in path_found()
+ - sparse-index: refactor path_found()
+ - sparse-index: refactor skip worktree retry logic
+
+ The code to deal with modified paths that are out-of-cone in a
+ sparsely checked out working tree has been optimized.
+
+ Needs review.
+ source: <pull.1754.git.1718899877.gitgitgadget@gmail.com>
+
+
+* jk/fetch-pack-fsck-wo-lock-pack (2024-06-20) 1 commit
+  (merged to 'next' on 2024-06-20 at c8c41abe07)
+ + fetch-pack: fix segfault when fscking without --lock-pack
+
+ "git fetch-pack -k -k" without passing "--lock-pack" (which we
+ never do ourselves) did not work at all, which has been corrected.
+
+ Will merge to 'master'.
+ source: <20240619130256.GA228005@coredump.intra.peff.net>
+
+
+* jk/t5500-typofix (2024-06-20) 1 commit
+  (merged to 'next' on 2024-06-20 at cf953645e3)
+ + t5500: fix mistaken $SERVER reference in helper function
+
+ A helper function shared between two tests had a copy-paste bug,
+ which has been corrected.
+
+ Will merge to 'master'.
+ source: <20240619125255.GA346466@coredump.intra.peff.net>
+
+
+* js/mingw-remove-unused-extern-decl (2024-06-20) 1 commit
+  (merged to 'next' on 2024-06-20 at 65b323930f)
+ + mingw: drop bogus (and unneeded) declaration of `_pgmptr`
+
+ An unused extern declaration for mingw has been removed to prevent
+ it from causing build failure.
+
+ Will merge to 'master'.
+ source: <pull.1752.git.1718777398765.gitgitgadget@gmail.com>
+
+
+* rb/build-options-w-openssl (2024-06-20) 1 commit
+  (merged to 'next' on 2024-06-20 at b75df251ae)
+ + version: --build-options reports OpenSSL version information
+
+ "git version --build-options" reports the version information of
+ OpenSSL (if used) in the build.
+
+ Will merge to 'master'.
+ source: <20240619172421.33548-2-randall.becker@nexbridge.ca>
+
+
+* rj/pager-die-upon-exec-failure (2024-06-20) 1 commit
+ - pager: die when paging to non-existing command
+
+ When GIT_PAGER failed to spawn, depending on the code path taken,
+ we failed immediately (correct) or just spew the payload to the
+ standard output (incorrect).  The code now always fail immediately
+ when GIT_PAGER fails.
+
+ Will merge to 'next'?
+ source: <f7106878-5ec5-4fe7-940b-2fb1d9707f7d@gmail.com>
+
+
+* rs/remove-unused-find-header-mem (2024-06-20) 1 commit
+  (merged to 'next' on 2024-06-20 at 068c785d77)
+ + commit: remove find_header_mem()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <0d85712c-5beb-4a64-a7f4-797782c26694@web.de>
+
+--------------------------------------------------
+[Cooking]
+
+* ew/cat-file-unbuffered-tests (2024-06-20) 2 commits
+ - t1006: ensure cat-file info isn't buffered by default
  - Git.pm: use array in command_bidi_pipe example
 
  The output from "git cat-file --batch-check" and "--batch-command
  (info)" should not be unbuffered, for which some tests have been
  added.
 
- Waiting for response to review.
+ Will merge to 'next'.
  source: <20240617104326.3522535-1-e@80x24.org>
+ source: <20240618213041.M462972@dcvr>
 
 
 * kl/attr-read-attr-fromindex-msan-workaround (2024-06-17) 1 commit
- - attr: fix msan issue in read_attr_from_index
+  (merged to 'next' on 2024-06-18 at eebafb2d71)
+ + attr: fix msan issue in read_attr_from_index
 
  Code clarification to avoid an appearance of using an uninitialized
  variable.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1747.git.1718654424683.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * cp/unit-test-reftable-tree (2024-06-13) 5 commits
  - t-reftable-tree: improve the test for infix_walk()
@@ -252,47 +337,45 @@ Release tarballs are available at:
  - hash: drop (mostly) unused `is_empty_{blob,tree}_sha1()` functions
  - Merge branch 'gt/unit-test-oidtree' into ps/use-the-repository
  - Merge branch 'ps/ref-storage-migration' into ps/use-the-repository
- (this branch uses gt/unit-test-oidtree.)
 
  A CPP macro USE_THE_REPOSITORY_VARIABLE is introduced to help
  transition the codebase to rely less on the availability of the
  singleton the_repository instance.
 
- Needs review.
+ Will merge to 'next'.
  source: <cover.1718347699.git.ps@pks.im>
 
 
-* sj/ref-fsck (2024-06-13) 8 commits
+* sj/ref-fsck (2024-06-20) 7 commits
  - fsck: add ref content check for files backend
  - fsck: add ref name check for files backend
  - files-backend: add unified interface for refs scanning
  - builtin/fsck: add `git-refs verify` child process
  - builtin/refs: add verify subcommand
  - refs: set up ref consistency check infrastructure
- - fsck: add refs check interfaces to interface with fsck error levels
- - Merge branch 'ps/ref-storage-migration' into sj/ref-fsck
+ - fsck: add refs check interfaces to interact with fsck error levels
 
  "git fsck" infrastructure has been taught to also check the sanity
  of the ref database, in addition to the object database.
 
  Needs review.
- source: <20240612085349.710785-1-shejialuo@gmail.com>
+ source: <ZnKKy52QFO2UhqM6@ArchLinux>
 
 
-* en/ort-inner-merge-error-fix (2024-06-13) 7 commits
+* en/ort-inner-merge-error-fix (2024-06-20) 7 commits
  - merge-ort: convert more error() cases to path_msg()
  - merge-ort: upon merge abort, only show messages causing the abort
  - merge-ort: loosen commented requirements
  - merge-ort: clearer propagation of failure-to-function from merge_submodule
- - merge-ort: fix type of local 'clean' var in handle_content_merge()
+ - merge-ort: fix type of local 'clean' var in handle_content_merge ()
  - merge-ort: maintain expected invariant for priv member
  - merge-ort: extract handling of priv member into reusable function
 
  The "ort" merge backend saw one bugfix for a crash that happens
  when inner merge gets killed, and assorted code clean-ups.
 
- Waiting for comments or a reroll.
- source: <pull.1748.git.1718310307.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.1748.v2.git.1718766019.gitgitgadget@gmail.com>
 
 
 * cp/unit-test-reftable-pq (2024-06-14) 7 commits
@@ -398,28 +481,6 @@ Release tarballs are available at:
  source: <cover.1717715060.git.me@ttaylorr.com>
 
 
-* ds/doc-add-interactive-singlekey (2024-06-07) 1 commit
-  (merged to 'next' on 2024-06-12 at cf3de70246)
- + doc: interactive.singleKey is disabled by default
-
- Doc update.
-
- Will merge to 'master'.
- source: <xmqq4ja4e6d6.fsf@gitster.g>
-
-
-* gt/unit-test-oidtree (2024-06-12) 1 commit
-  (merged to 'next' on 2024-06-13 at eb3700b002)
- + t/: migrate helper/test-oidtree.c to unit-tests/t-oidtree.c
- (this branch is used by ps/use-the-repository.)
-
- "oidtree" tests were rewritten to use the unit test framework.
-
- Will merge to 'master'.
- cf. <7o6fuymnfn6b6buyw3yyctjd4dlwlrazspv3xgxvys6djjivxh@qbhyurorgbtt>
- source: <20240608165731.29467-1-shyamthakkar001@gmail.com>
-
-
 * jc/worktree-git-path (2024-06-08) 1 commit
   (merged to 'next' on 2024-06-17 at a87c318e45)
  + worktree_git_path(): move the declaration to path.h
@@ -430,54 +491,7 @@ Release tarballs are available at:
  source: <20240608183901.2084546-1-gitster@pobox.com>
 
 
-* ds/ahead-behind-fix (2024-06-12) 1 commit
-  (merged to 'next' on 2024-06-13 at df378ec81e)
- + commit-graph: increment progress indicator
-
- Fix for a progress bar.
-
- Will merge to 'master'.
- source: <pull.1743.git.1718118555197.gitgitgadget@gmail.com>
-
-
-* ps/abbrev-length-before-setup-fix (2024-06-12) 3 commits
-  (merged to 'next' on 2024-06-13 at e5d17f7da2)
- + object-name: don't try to abbreviate to lengths greater than hexsz
- + parse-options-cb: stop clamping "--abbrev=" to hash length
- + config: fix segfault when parsing "core.abbrev" without repo
-
- Setting core.abbrev too early before the repository set-up
- (typically in "git clone") caused segfault, which as been
- corrected.
-
- Will merge to 'master'.
- source: <cover.1718178996.git.ps@pks.im>
-
-
-* ps/make-append-to-cflags (2024-06-11) 1 commit
-  (merged to 'next' on 2024-06-12 at d57b04bf16)
- + Makefile: add ability to append to CFLAGS and LDFLAGS
-
- To help developers, the build procedure now allows builders to use
- CFLAGS_APPEND to specify additional CFLAGS.
-
- Will merge to 'master'.
- source: <8120ddaf0bdfd50e0fc4cf9a04f833102630b639.1718001244.git.ps@pks.im>
-
-
-* tb/multi-pack-reuse-fix (2024-06-11) 3 commits
-  (merged to 'next' on 2024-06-13 at 1cd0259667)
- + pack-revindex.c: guard against out-of-bounds pack lookups
- + pack-bitmap.c: avoid uninitialized `pack_int_id` during reuse
- + midx-write.c: do not read existing MIDX with `packs_to_include`
-
- Assorted fixes to multi-pack-index code paths.
-
- Will merge to 'master'.
- source: <cover.1718126886.git.me@ttaylorr.com>
-
-
-* vd/mktree (2024-06-11) 16 commits
+* vd/mktree (2024-06-20) 17 commits
  - mktree: remove entries when mode is 0
  - mktree: allow deeper paths in input
  - mktree: optionally add to an existing tree
@@ -487,9 +501,10 @@ Release tarballs are available at:
  - mktree: overwrite duplicate entries
  - mktree: validate paths more carefully
  - mktree: add a --literally option
+ - mktree.c: do not fail on mismatched submodule type
  - mktree: use read_index_info to read stdin lines
  - index-info.c: parse object type in provided in read_index_info
- - index-info.c: identify empty input lines in read_index_info
+ - index-info.c: return unrecognized lines to caller
  - update-index: generalize 'read_index_info'
  - mktree: use non-static tree_entry array
  - mktree: rename treeent to tree_entry
@@ -498,11 +513,11 @@ Release tarballs are available at:
  "git mktree" has been rewritten, taking advantage of the cache-tree
  API.
 
- Waiting for comments or a reroll.
- source: <pull.1746.git.1718130288.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.1746.v2.git.1718834285.gitgitgadget@gmail.com>
 
 
-* xx/bundie-uri-fixes (2024-06-17) 3 commits
+* xx/bundie-uri-fixes (2024-06-20) 3 commits
  - unbundle: extend object verification for fetches
  - fetch-pack: expose fsckObjects configuration logic
  - bundle-uri: verify oid before writing refs
@@ -512,62 +527,7 @@ Release tarballs are available at:
  objects.
 
  Will merge to 'next'?
- source: <pull.1730.v7.git.1718632535.gitgitgadget@gmail.com>
-
-
-* rj/add-p-pager (2024-06-04) 6 commits
- . add-patch: introduce the command '|'
- . test-terminal: introduce --no-stdin-pty
- . pager: introduce setup_custom_pager
- . pager: introduce wait_for_pager
- . pager: do not close fd 2 unnecessarily
- . add-patch: test for 'p' command
-
- "git add -i" and friends learned a new '|' command that sends the
- current hunk to the pager, instead of dumping it to the terminal.
-
- Expecting a reroll to work well with jk/am-retry
- source: <1ef0ac3a-3be5-4fc2-93f8-46610f3d1880@gmail.com>
-
-
-* jc/heads-are-branches (2024-06-04) 3 commits
-  (merged to 'next' on 2024-06-14 at b56b59d1d7)
- + show-ref: introduce --branches and deprecate --heads
- + ls-remote: introduce --branches and deprecate --heads
- + refs: call branches branches
-
- The "--heads" option of "ls-remote" and "show-ref" has been been
- deprecated; "--branches" replaces "--heads".
-
- Will merge to 'master'.
- source: <20240604220145.3260714-1-gitster@pobox.com>
-
-
-* rj/format-patch-auto-cover-with-interdiff (2024-06-07) 2 commits
-  (merged to 'next' on 2024-06-13 at 3fad4afcfd)
- + format-patch: assume --cover-letter for diff in multi-patch series
- + t4014: cleanups in a few tests
-
- "git format-patch --interdiff" for multi-patch series learned to
- turn on cover letters automatically (unless told never to enable
- cover letter with "--no-cover-letter" and such).
-
- Will merge to 'master'.
-
-
-* rs/diff-exit-code-with-external-diff (2024-06-10) 3 commits
-  (merged to 'next' on 2024-06-12 at 9ce495b6cc)
- + diff: let external diffs report that changes are uninteresting
- + userdiff: add and use struct external_diff
- + t4020: test exit code with external diffs
-
- "git diff --exit-code --ext-diff" learned to take the exit status
- of the external diff driver into account when deciding the exit
- status of the overall "git diff" invocation when configured to do
- so.
-
- Will merge to 'master'.
- source: <168fecaa-2ebd-4897-b0ba-3bd2a37c01e7@web.de>
+ source: <pull.1730.v8.git.1718770053.gitgitgadget@gmail.com>
 
 
 * jc/add-i-retire-usebuiltin-config (2024-06-05) 1 commit
@@ -643,21 +603,6 @@ Release tarballs are available at:
  source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
 
 
-* ps/document-breaking-changes (2024-06-14) 4 commits
-  (merged to 'next' on 2024-06-14 at 8089bf6f81)
- + BreakingChanges: document that we do not plan to deprecate git-checkout
- + BreakingChanges: document removal of grafting
- + BreakingChanges: document upcoming change from "sha1" to "sha256"
- + docs: introduce document to announce breaking changes
-
- The structure of the document that records longer-term project
- decisions to deprecate/remove/update various behaviour has been
- outlined.
-
- Will merge to 'master'.
- source: <cover.1718345026.git.ps@pks.im>
-
-
 * tb/pseudo-merge-reachability-bitmap (2024-06-14) 27 commits
   (merged to 'next' on 2024-06-14 at 447d99e1c3)
  + pack-bitmap.c: ensure pseudo-merge offset reads are bounded
@@ -698,24 +643,6 @@ Release tarballs are available at:
  source: <cover.1718392943.git.me@ttaylorr.com>
 
 
-* kn/update-ref-symref (2024-06-07) 8 commits
-  (merged to 'next' on 2024-06-13 at 5cf8d7513e)
- + update-ref: add support for 'symref-update' command
- + reftable: pick either 'oid' or 'target' for new updates
- + update-ref: add support for 'symref-create' command
- + update-ref: add support for 'symref-delete' command
- + update-ref: add support for 'symref-verify' command
- + refs: specify error for regular refs with `old_target`
- + refs: create and use `ref_update_expects_existing_old_ref()`
- + Merge branch 'kn/ref-transaction-symref' into kn/update-ref-symref
-
- "git update-ref --stdin" learned to handle transactional updates of
- symbolic-refs.
-
- Will merge to 'master'.
- source: <20240607133304.2333280-1-knayak@gitlab.com>
-
-
 * tb/precompose-getcwd (2024-05-31) 1 commit
   (merged to 'next' on 2024-06-17 at 7596abec9f)
  + macOS: ls-files path fails if path of workdir is NFD
@@ -727,19 +654,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20240531193156.28046-1-tboegi@web.de>
-
-
-* pw/rebase-i-error-message (2024-05-30) 2 commits
-  (merged to 'next' on 2024-06-13 at dbec12cfda)
- + rebase -i: improve error message when picking merge
- + rebase -i: pass struct replay_opts to parse_insn_line()
-
- When the user adds to "git rebase -i" instruction to "pick" a merge
- commit, the error experience is not pleasant.  Such an error is now
- caught earlier in the process that parses the todo list.
-
- Will merge to 'master'.
- source: <pull.1672.v3.git.1717076630.gitgitgadget@gmail.com>
 
 
 * ie/config-includeif-hostname (2024-03-19) 2 commits
@@ -829,3 +743,20 @@ Release tarballs are available at:
 
  Not ready to be reviewed yet.
  source: <20230824205456.1231371-1-gitster@pobox.com>
+
+--------------------------------------------------
+[Discarded]
+
+* rj/add-p-pager (2024-06-04) 6 commits
+ . add-patch: introduce the command '|'
+ . test-terminal: introduce --no-stdin-pty
+ . pager: introduce setup_custom_pager
+ . pager: introduce wait_for_pager
+ . pager: do not close fd 2 unnecessarily
+ . add-patch: test for 'p' command
+
+ "git add -i" and friends learned a new '|' command that sends the
+ current hunk to the pager, instead of dumping it to the terminal.
+
+ Expecting a reroll to work well with jk/am-retry
+ source: <1ef0ac3a-3be5-4fc2-93f8-46610f3d1880@gmail.com>
