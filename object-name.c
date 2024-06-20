@@ -837,7 +837,7 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 	}
 
 	oid_to_hex_r(hex, oid);
-	if (len == hexsz || !len)
+	if (len >= hexsz || !len)
 		return hexsz;
 
 	mad.repo = r;

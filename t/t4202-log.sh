@@ -1237,6 +1237,30 @@ test_expect_success 'log.abbrevCommit configuration' '
 	test_cmp expect.whatchanged.full actual
 '
 
+test_expect_success '--abbrev-commit with core.abbrev=false' '
+	git log --no-abbrev >expect &&
+	git -c core.abbrev=false log --abbrev-commit >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abbrev-commit with --no-abbrev' '
+	git log --no-abbrev >expect &&
+	git log --abbrev-commit --no-abbrev >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abbrev-commit with core.abbrev=9000' '
+	git log --no-abbrev >expect &&
+	git -c core.abbrev=9000 log --abbrev-commit >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abbrev-commit with --abbrev=9000' '
+	git log --no-abbrev >expect &&
+	git log --abbrev-commit --abbrev=9000 >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'show added path under "--follow -M"' '
 	# This tests for a regression introduced in v1.7.2-rc0~103^2~2
 	test_create_repo regression &&
