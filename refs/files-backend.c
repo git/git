@@ -2457,8 +2457,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			       struct strbuf *err)
 {
 	struct strbuf referent = STRBUF_INIT;
-	int mustexist = (update->flags & REF_HAVE_OLD) &&
-		!is_null_oid(&update->old_oid);
+	int mustexist = ref_update_expects_existing_old_ref(update);
 	int ret = 0;
 	struct ref_lock *lock;
 
@@ -2537,14 +2536,16 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 		/*
 		 * Even if the ref is a regular ref, if `old_target` is set, we
-		 * check the referent value. Ideally `old_target` should only
-		 * be set for symrefs, but we're strict about its usage.
+		 * fail with an error.
 		 */
 		if (update->old_target) {
-			if (ref_update_check_old_target(referent.buf, update, err)) {
-				ret = TRANSACTION_GENERIC_ERROR;
-				goto out;
-			}
+			strbuf_addf(err, _("cannot lock ref '%s': "
+					   "expected symref with target '%s': "
+					   "but is a regular ref"),
+				    ref_update_original_update_refname(update),
+				    update->old_target);
+			ret = TRANSACTION_GENERIC_ERROR;
+			goto out;
 		} else if  (check_old_oid(update, &lock->old_oid, err)) {
 			ret = TRANSACTION_GENERIC_ERROR;
 			goto out;
