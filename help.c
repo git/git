@@ -767,6 +767,9 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 #if defined OPENSSL_VERSION_TEXT
 		strbuf_addf(buf, "OpenSSL: %s\n", OPENSSL_VERSION_TEXT);
 #endif
+#if defined ZLIB_VERSION
+		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
+#endif
 	}
 }
 
