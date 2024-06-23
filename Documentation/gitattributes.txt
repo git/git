@@ -374,7 +374,7 @@ explicitly define the line endings with `eol` if the `working-tree-encoding`
 attribute is used to avoid ambiguity.
 
 ------------------------
-*.ps1		text working-tree-encoding=UTF-16LE eol=CRLF
+*.ps1		text working-tree-encoding=UTF-16LE eol=crlf
 ------------------------
 
 You can get a list of all available encodings on your platform with the
