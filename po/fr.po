@@ -1646,7 +1646,7 @@ msgstr "Dépôt Git (sous projet)"
 
 #: lib/diff.tcl:222
 msgid "* Binary file (not showing content)."
-msgstr "* Fichier binaire (pas d'apperçu du contenu)."
+msgstr "* Fichier binaire (pas d'aperçu du contenu)."
 
 #: lib/diff.tcl:227
 #, tcl-format
