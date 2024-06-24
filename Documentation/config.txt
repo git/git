@@ -384,6 +384,8 @@ include::config/apply.txt[]
 
 include::config/attr.txt[]
 
+include::config/bitmap-pseudo-merge.txt[]
+
 include::config/blame.txt[]
 
 include::config/branch.txt[]

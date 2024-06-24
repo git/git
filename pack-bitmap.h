@@ -21,6 +21,7 @@ struct bitmap_disk_header {
 	unsigned char checksum[GIT_MAX_RAWSZ];
 };
 
+#define BITMAP_PSEUDO_MERGE (1u<<21)
 #define NEEDS_BITMAP (1u<<22)
 
 /*
@@ -36,6 +37,7 @@ enum pack_bitmap_opts {
 	BITMAP_OPT_FULL_DAG = 0x1,
 	BITMAP_OPT_HASH_CACHE = 0x4,
 	BITMAP_OPT_LOOKUP_TABLE = 0x10,
+	BITMAP_OPT_PSEUDO_MERGES = 0x20,
 };
 
 enum pack_bitmap_flags {
@@ -71,6 +73,9 @@ void traverse_bitmap_commit_list(struct bitmap_index *,
 void test_bitmap_walk(struct rev_info *revs);
 int test_bitmap_commits(struct repository *r);
 int test_bitmap_hashes(struct repository *r);
+int test_bitmap_pseudo_merges(struct repository *r);
+int test_bitmap_pseudo_merge_commits(struct repository *r, uint32_t n);
+int test_bitmap_pseudo_merge_objects(struct repository *r, uint32_t n);
 
 #define GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL \
 	"GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL"
@@ -109,12 +114,16 @@ struct bitmap_writer {
 	struct bitmapped_commit *selected;
 	unsigned int selected_nr, selected_alloc;
 
+	struct string_list pseudo_merge_groups;
+	kh_oid_map_t *pseudo_merge_commits; /* oid -> pseudo merge(s) */
+	uint32_t pseudo_merges_nr;
+
 	struct progress *progress;
 	int show_progress;
 	unsigned char pack_checksum[GIT_MAX_RAWSZ];
 };
 
-void bitmap_writer_init(struct bitmap_writer *writer);
+void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r);
 void bitmap_writer_show_progress(struct bitmap_writer *writer, int show);
 void bitmap_writer_set_checksum(struct bitmap_writer *writer,
 				const unsigned char *sha1);
@@ -122,6 +131,10 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 				    struct packing_data *to_pack,
 				    struct pack_idx_entry **index,
 				    uint32_t index_nr);
+int bitmap_writer_has_bitmapped_object_id(struct bitmap_writer *writer,
+					  const struct object_id *oid);
+void bitmap_writer_push_commit(struct bitmap_writer *writer,
+			       struct commit *commit, unsigned pseudo_merge);
 uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 				struct packing_data *mapping);
 int rebuild_bitmap(const uint32_t *reposition,
@@ -129,6 +142,8 @@ int rebuild_bitmap(const uint32_t *reposition,
 		   struct bitmap *dest);
 struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
 				      struct commit *commit);
+struct ewah_bitmap *pseudo_merge_bitmap_for_commit(struct bitmap_index *bitmap_git,
+						   struct commit *commit);
 void bitmap_writer_select_commits(struct bitmap_writer *writer,
 				  struct commit **indexed_commits,
 				  unsigned int indexed_commits_nr);
@@ -150,4 +165,6 @@ int bitmap_is_preferred_refname(struct repository *r, const char *refname);
 
 int verify_bitmap_files(struct repository *r);
 
+struct ewah_bitmap *read_bitmap(const unsigned char *map,
+				size_t map_size, size_t *map_pos);
 #endif

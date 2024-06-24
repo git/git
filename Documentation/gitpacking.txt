@@ -1,0 +1,189 @@
+gitpacking(7)
+=============
+
+NAME
+----
+gitpacking - Advanced concepts related to packing in Git
+
+SYNOPSIS
+--------
+gitpacking
+
+DESCRIPTION
+-----------
+
+This document aims to describe some advanced concepts related to packing
+in Git.
+
+Many concepts are currently described scattered between manual pages of
+various Git commands, including linkgit:git-pack-objects[1],
+linkgit:git-repack[1], and others, as well as linkgit:gitformat-pack[5],
+and parts of the `Documentation/technical` tree.
+
+There are many aspects of packing in Git that are not covered in this
+document that instead live in the aforementioned areas. Over time, those
+scattered bits may coalesce into this document.
+
+== Pseudo-merge bitmaps
+
+NOTE: Pseudo-merge bitmaps are considered an experimental feature, so
+the configuration and many of the ideas are subject to change.
+
+=== Background
+
+Reachability bitmaps are most efficient when we have on-disk stored
+bitmaps for one or more of the starting points of a traversal. For this
+reason, Git prefers storing bitmaps for commits at the tips of refs,
+because traversals tend to start with those points.
+
+But if you have a large number of refs, it's not feasible to store a
+bitmap for _every_ ref tip. It takes up space, and just OR-ing all of
+those bitmaps together is expensive.
+
+One way we can deal with that is to create bitmaps that represent
+_groups_ of refs. When a traversal asks about the entire group, then we
+can use this single bitmap instead of considering each ref individually.
+Because these bitmaps represent the set of objects which would be
+reachable in a hypothetical merge of all of the commits, we call them
+pseudo-merge bitmaps.
+
+=== Overview
+
+A "pseudo-merge bitmap" is used to refer to a pair of bitmaps, as
+follows:
+
+Commit bitmap::
+
+  A bitmap whose set bits describe the set of commits included in the
+  pseudo-merge's "merge" bitmap (as below).
+
+Merge bitmap::
+
+  A bitmap whose set bits describe the reachability closure over the set
+  of commits in the pseudo-merge's "commits" bitmap (as above). An
+  identical bitmap would be generated for an octopus merge with the same
+  set of parents as described in the commits bitmap.
+
+Pseudo-merge bitmaps can accelerate bitmap traversals when all commits
+for a given pseudo-merge are listed on either side of the traversal,
+either directly (by explicitly asking for them as part of the `HAVES`
+or `WANTS`) or indirectly (by encountering them during a fill-in
+traversal).
+
+=== Use-cases
+
+For example, suppose there exists a pseudo-merge bitmap with a large
+number of commits, all of which are listed in the `WANTS` section of
+some bitmap traversal query. When pseudo-merge bitmaps are enabled, the
+bitmap machinery can quickly determine there is a pseudo-merge which
+satisfies some subset of the wanted objects on either side of the query.
+Then, we can inflate the EWAH-compressed bitmap, and `OR` it in to the
+resulting bitmap. By contrast, without pseudo-merge bitmaps, we would
+have to repeat the decompression and `OR`-ing step over a potentially
+large number of individual bitmaps, which can take proportionally more
+time.
+
+Another benefit of pseudo-merges arises when there is some combination
+of (a) a large number of references, with (b) poor bitmap coverage, and
+(c) deep, nested trees, making fill-in traversal relatively expensive.
+For example, suppose that there are a large enough number of tags where
+bitmapping each of the tags individually is infeasible. Without
+pseudo-merge bitmaps, computing the result of, say, `git rev-list
+--use-bitmap-index --count --objects --tags` would likely require a
+large amount of fill-in traversal. But when a large quantity of those
+tags are stored together in a pseudo-merge bitmap, the bitmap machinery
+can take advantage of the fact that we only care about the union of
+objects reachable from all of those tags, and answer the query much
+faster.
+
+=== Configuration
+
+Reference tips are grouped into different pseudo-merge groups according
+to two criteria. A reference name matches one or more of the defined
+pseudo-merge patterns, and optionally one or more capture groups within
+that pattern which further partition the group.
+
+Within a group, commits may be considered "stable", or "unstable"
+depending on their age. These are adjusted by setting the
+`bitmapPseudoMerge.<name>.stableThreshold` and
+`bitmapPseudoMerge.<name>.threshold` configuration values, respectively.
+
+All stable commits are grouped into pseudo-merges of equal size
+(`bitmapPseudoMerge.<name>.stableSize`). If the `stableSize`
+configuration is set to, say, 100, then the first 100 commits (ordered
+by committer date) which are older than the `stableThreshold` value will
+form one group, the next 100 commits will form another group, and so on.
+
+Among unstable commits, the pseudo-merge machinery will attempt to
+combine older commits into large groups as opposed to newer commits
+which will appear in smaller groups. This is based on the heuristic that
+references whose tip commit is older are less likely to be modified to
+point at a different commit than a reference whose tip commit is newer.
+
+The size of groups is determined by a power-law decay function, and the
+decay parameter roughly corresponds to "k" in `f(n) = C*n^(-k/100)`,
+where `f(n)` describes the size of the `n`-th pseudo-merge group. The
+sample rate controls what percentage of eligible commits are considered
+as candidates. The threshold parameter indicates the minimum age (so as
+to avoid including too-recent commits in a pseudo-merge group, making it
+less likely to be valid). The "maxMerges" parameter sets an upper-bound
+on the number of pseudo-merge commits an individual group
+
+The "stable"-related parameters control "stable" pseudo-merge groups,
+comprised of a fixed number of commits which are older than the
+configured "stable threshold" value and may be grouped together in
+chunks of "stableSize" in order of age.
+
+The exact configuration for pseudo-merges is as follows:
+
+include::config/bitmap-pseudo-merge.txt[]
+
+=== Examples
+
+Suppose that you have a repository with a large number of references,
+and you want a bare-bones configuration of pseudo-merge bitmaps that
+will enhance bitmap coverage of the `refs/` namespace. You may start
+wiht a configuration like so:
+
+    [bitmapPseudoMerge "all"]
+	pattern = "refs/"
+	threshold = now
+	stableThreshold = never
+	sampleRate = 100
+	maxMerges = 64
+
+This will create pseudo-merge bitmaps for all references, regardless of
+their age, and group them into 64 pseudo-merge commits.
+
+If you wanted to separate tags from branches when generating
+pseudo-merge commits, you would instead define the pattern with a
+capture group, like so:
+
+    [bitmapPseudoMerge "all"]
+	pattern = "refs/(heads/tags)/"
+
+Suppose instead that you are working in a fork-network repository, with
+each fork specified by some numeric ID, and whose refs reside in
+`refs/virtual/NNN/` (where `NNN` is the numeric ID corresponding to some
+fork) in the network. In this instance, you may instead write something
+like:
+
+    [bitmapPseudoMerge "all"]
+	pattern = "refs/virtual/([0-9]+)/(heads|tags)/"
+	threshold = now
+	stableThreshold = never
+	sampleRate = 100
+	maxMerges = 64
+
+Which would generate pseudo-merge group identifiers like "1234-heads",
+and "5678-tags" (for branches in fork "1234", and tags in remote "5678",
+respectively).
+
+SEE ALSO
+--------
+linkgit:git-pack-objects[1]
+linkgit:git-repack[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

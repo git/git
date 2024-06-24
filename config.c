@@ -1244,6 +1244,15 @@ ssize_t git_config_ssize_t(const char *name, const char *value,
 	return ret;
 }
 
+double git_config_double(const char *name, const char *value,
+			 const struct key_value_info *kvi)
+{
+	double ret;
+	if (!git_parse_double(value, &ret))
+		die_bad_number(name, value, kvi);
+	return ret;
+}
+
 static const struct fsync_component_name {
 	const char *name;
 	enum fsync_component component_bits;
