@@ -85,6 +85,10 @@ UI, Workflows & Features
  * The "--heads" option of "ls-remote" and "show-ref" has been been
    deprecated; "--branches" replaces "--heads".
 
+ * For over a year, setting add.interactive.useBuiltin configuration
+   variable did nothing but giving a "this does not do anything"
+   warning.  The warning has been removed.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -172,6 +176,10 @@ Performance, Internal Implementation, Development Support etc.
  * The structure of the document that records longer-term project
    decisions to deprecate/remove/update various behaviour has been
    outlined.
+
+ * The pseudo-merge reachability bitmap to help more efficient storage
+   of the reachability bitmap in a repository with too many refs has
+   been added.
 
 
 Fixes since v2.45
@@ -306,6 +314,21 @@ Fixes since v2.45
    caught earlier in the process that parses the todo list.
    (merge 4c063c82e9 pw/rebase-i-error-message later to maint).
 
+ * We forgot to normalize the result of getcwd() to NFC on macOS where
+   all other paths are normalized, which has been corrected.  This still
+   does not address the case where core.precomposeUnicode configuration
+   is not defined globally.
+   (merge 71fa8d2212 tb/precompose-getcwd later to maint).
+
+ * Earlier we stopped using the tree of HEAD as the default source of
+   attributes in a bare repository, but failed to document it.  This
+   has been corrected.
+   (merge 5c71d6b63a jc/no-default-attr-tree-in-bare later to maint).
+
+ * "git update-server-info" and "git commit-graph --write" have been
+   updated to use the tempfile API to avoid leaving cruft after
+   failing.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
    (merge 55702c543e fa/p4-error later to maint).
@@ -318,3 +341,4 @@ Fixes since v2.45
    (merge 36d900d2b0 rs/difftool-env-simplify later to maint).
    (merge e83055ecb0 ds/doc-add-interactive-singlekey later to maint).
    (merge f1160393c1 ds/ahead-behind-fix later to maint).
+   (merge bf6a86236e jc/worktree-git-path later to maint).
