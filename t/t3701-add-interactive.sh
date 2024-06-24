@@ -43,21 +43,6 @@ force_color () {
 	)
 }
 
-test_expect_success 'warn about add.interactive.useBuiltin' '
-	cat >expect <<-\EOF &&
-	warning: the add.interactive.useBuiltin setting has been removed!
-	See its entry in '\''git help config'\'' for details.
-	EOF
-	echo "No changes." >expect.out &&
-
-	for v in = =true =false
-	do
-		git -c "add.interactive.useBuiltin$v" add -p >out 2>actual &&
-		test_cmp expect.out out &&
-		test_cmp expect actual || return 1
-	done
-'
-
 test_expect_success 'unknown command' '
 	test_when_finished "git reset --hard; rm -f command" &&
 	echo W >command &&
