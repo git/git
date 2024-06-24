@@ -1184,6 +1184,15 @@ test_expect_success 'detect moved code, complete file' '
 	test_cmp expected actual
 '
 
+test_expect_success '--color-moved with --no-ext-diff' '
+	test_config color.diff.oldMoved "yellow" &&
+	test_config color.diff.newMoved "blue" &&
+	args="--color --color-moved=zebra --no-renames HEAD" &&
+	git diff $args >expect &&
+	git -c diff.external=echo diff --no-ext-diff $args >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'detect malicious moved code, inside file' '
 	test_config color.diff.oldMoved "normal red" &&
 	test_config color.diff.newMoved "normal green" &&
