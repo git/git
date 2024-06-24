@@ -4,6 +4,7 @@
 struct repository;
 struct strbuf;
 struct string_list;
+struct worktree;
 
 /*
  * The result to all functions which return statically allocated memory may be
@@ -80,6 +81,14 @@ void strbuf_repo_git_path(struct strbuf *sb,
  */
 const char *git_path(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
+
+/*
+ * Similar to git_path() but can produce paths for a specified
+ * worktree instead of current one
+ */
+const char *worktree_git_path(const struct worktree *wt,
+			      const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
 
 /*
  * Return a path into the main repository's (the_repository) git directory.

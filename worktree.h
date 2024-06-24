@@ -178,14 +178,6 @@ int is_worktree_being_rebased(const struct worktree *wt, const char *target);
 int is_worktree_being_bisected(const struct worktree *wt, const char *target);
 
 /*
- * Similar to git_path() but can produce paths for a specified
- * worktree instead of current one
- */
-const char *worktree_git_path(const struct worktree *wt,
-			      const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
-
-/*
  * Return a refname suitable for access from the current ref store.
  */
 void strbuf_worktree_ref(const struct worktree *wt,

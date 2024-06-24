@@ -29,6 +29,7 @@
 #include "bisect.h"
 #include "packfile.h"
 #include "worktree.h"
+#include "path.h"
 #include "read-cache.h"
 #include "setup.h"
 #include "sparse-index.h"
