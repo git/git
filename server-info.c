@@ -13,6 +13,7 @@
 #include "object-store-ll.h"
 #include "server-info.h"
 #include "strbuf.h"
+#include "tempfile.h"
 
 struct update_info_ctx {
 	FILE *cur_fp;
@@ -75,9 +76,8 @@ static int update_info_file(char *path,
 			int force)
 {
 	char *tmp = mkpathdup("%s_XXXXXX", path);
+	struct tempfile *f = NULL;
 	int ret = -1;
-	int fd = -1;
-	FILE *to_close;
 	struct update_info_ctx uic = {
 		.cur_fp = NULL,
 		.old_fp = NULL,
@@ -86,13 +86,12 @@ static int update_info_file(char *path,
 	};
 
 	safe_create_leading_directories(path);
-	fd = git_mkstemp_mode(tmp, 0666);
-	if (fd < 0)
+	f = mks_tempfile_m(tmp, 0666);
+	if (!f)
 		goto out;
-	to_close = uic.cur_fp = fdopen(fd, "w");
+	uic.cur_fp = fdopen_tempfile(f, "w");
 	if (!uic.cur_fp)
 		goto out;
-	fd = -1;
 
 	/* no problem on ENOENT and old_fp == NULL, it's stale, now */
 	if (!force)
@@ -121,27 +120,22 @@ static int update_info_file(char *path,
 	}
 
 	uic.cur_fp = NULL;
-	if (fclose(to_close))
-		goto out;
 
 	if (uic_is_stale(&uic)) {
-		if (adjust_shared_perm(tmp) < 0)
+		if (adjust_shared_perm(get_tempfile_path(f)) < 0)
 			goto out;
-		if (rename(tmp, path) < 0)
+		if (rename_tempfile(&f, path) < 0)
 			goto out;
 	} else {
-		unlink(tmp);
+		delete_tempfile(&f);
 	}
 	ret = 0;
 
 out:
 	if (ret) {
 		error_errno("unable to update %s", path);
-		if (uic.cur_fp)
-			fclose(uic.cur_fp);
-		else if (fd >= 0)
-			close(fd);
-		unlink(tmp);
+		if (f)
+			delete_tempfile(&f);
 	}
 	free(tmp);
 	if (uic.old_fp)

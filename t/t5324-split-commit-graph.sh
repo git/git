@@ -13,7 +13,8 @@ test_expect_success 'setup repo' '
 	git init &&
 	git config core.commitGraph true &&
 	git config gc.writeCommitGraph false &&
-	infodir=".git/objects/info" &&
+	objdir=".git/objects" &&
+	infodir="$objdir/info" &&
 	graphdir="$infodir/commit-graphs" &&
 	test_oid_cache <<-EOM
 	shallow sha1:2132
@@ -715,6 +716,29 @@ test_expect_success 'write generation data chunk when commit-graph chain is repl
 		verify_chain_files_exist $graphdir &&
 		graph_read_expect $(($NUM_FIRST_LAYER_COMMITS + $NUM_SECOND_LAYER_COMMITS)) &&
 		git commit-graph verify
+	)
+'
+
+test_expect_success 'temporary graph layer is discarded upon failure' '
+	git init layer-discard &&
+	(
+		cd layer-discard &&
+
+		test_commit A &&
+		test_commit B &&
+
+		# Intentionally remove commit "A" from the object store
+		# so that the commit-graph machinery fails to parse the
+		# parents of "B".
+		#
+		# This takes place after the commit-graph machinery has
+		# initialized a new temporary file to store the contents
+		# of the new graph layer, so will allow us to ensure
+		# that the temporary file is discarded upon failure.
+		rm $objdir/$(test_oid_to_path $(git rev-parse HEAD^)) &&
+
+		test_must_fail git commit-graph write --reachable --split &&
+		test_dir_is_empty $graphdir
 	)
 '
 
