@@ -49,7 +49,7 @@ static int abspath_part_inside_repo(char *path)
 	size_t wtlen;
 	char *path0;
 	int off;
-	const char *work_tree = get_git_work_tree();
+	const char *work_tree = precompose_string_if_needed(get_git_work_tree());
 	struct strbuf realpath = STRBUF_INIT;
 
 	if (!work_tree)
