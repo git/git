@@ -102,6 +102,7 @@ enum bloom_filter_computed {
 	BLOOM_COMPUTED     = (1 << 1),
 	BLOOM_TRUNC_LARGE  = (1 << 2),
 	BLOOM_TRUNC_EMPTY  = (1 << 3),
+	BLOOM_UPGRADED     = (1 << 4),
 };
 
 struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
