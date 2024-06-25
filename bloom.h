@@ -3,6 +3,7 @@
 
 struct commit;
 struct repository;
+struct commit_graph;
 
 struct bloom_filter_settings {
 	/*
@@ -67,6 +68,10 @@ struct bloom_filter {
 struct bloom_key {
 	uint32_t *hashes;
 };
+
+int load_bloom_filter_from_graph(struct commit_graph *g,
+				 struct bloom_filter *filter,
+				 uint32_t graph_pos);
 
 /*
  * Calculate the murmur3 32-bit hash value for the given data
