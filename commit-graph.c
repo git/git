@@ -828,6 +828,7 @@ struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r)
 void close_commit_graph(struct raw_object_store *o)
 {
 	clear_commit_graph_data_slab(&commit_graph_data_slab);
+	deinit_bloom_filters();
 	free_commit_graph(o->commit_graph);
 	o->commit_graph = NULL;
 }
@@ -2645,6 +2646,9 @@ int write_commit_graph(struct object_directory *odb,
 		compute_bloom_filters(ctx);
 
 	res = write_commit_graph_file(ctx);
+
+	if (ctx->changed_paths)
+		deinit_bloom_filters();
 
 	if (ctx->split)
 		mark_commit_graphs(ctx);
