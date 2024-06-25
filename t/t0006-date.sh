@@ -8,6 +8,11 @@ TEST_PASSES_SANITIZE_LEAK=true
 # arbitrary reference time: 2009-08-30 19:20:00
 GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 
+if test_have_prereq TIME_IS_64BIT,TIME_T_IS_64BIT
+then
+	test_set_prereq HAVE_64BIT_TIME
+fi
+
 check_relative() {
 	t=$(($GIT_TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
@@ -80,14 +85,15 @@ check_show raw "$TIME" '1466000000 -0200'
 
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
-check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" TIME_IS_64BIT,TIME_T_IS_64BIT
-check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" TIME_IS_64BIT,TIME_T_IS_64BIT
+check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" HAVE_64BIT_TIME
+check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" HAVE_64BIT_TIME
 
-check_parse() {
+REQUIRE_64BIT_TIME=
+check_parse () {
 	echo "$1 -> $2" >expect
-	test_expect_${4:-success} "parse date ($1${3:+ TZ=$3})" "
-	TZ=${3:-$TZ} test-tool date parse '$1' >actual &&
-	test_cmp expect actual
+	test_expect_success $REQUIRE_64BIT_TIME "parse date ($1${3:+ TZ=$3}) -> $2" "
+		TZ=${3:-$TZ} test-tool date parse '$1' >actual &&
+		test_cmp expect actual
 	"
 }
 
