@@ -488,13 +488,48 @@ test_expect_success 'merge graph layers with incompatible Bloom settings' '
 	test_must_be_empty err
 '
 
+# chosen to be the same under all Unicode normalization forms
+CENT=$(printf "\302\242")
+
+test_expect_success 'ensure Bloom filter with incompatible versions are ignored' '
+	rm "$repo/$graph" &&
+
+	git -C $repo log --oneline --no-decorate -- $CENT >expect &&
+
+	# Compute v1 Bloom filters for commits at the bottom.
+	git -C $repo rev-parse HEAD^ >in &&
+	git -C $repo commit-graph write --stdin-commits --changed-paths \
+		--split <in &&
+
+	# Compute v2 Bloomfilters for the rest of the commits at the top.
+	git -C $repo rev-parse HEAD >in &&
+	git -C $repo -c commitGraph.changedPathsVersion=2 commit-graph write \
+		--stdin-commits --changed-paths --split=no-merge <in &&
+
+	test_line_count = 2 $repo/$chain &&
+
+	git -C $repo log --oneline --no-decorate -- $CENT >actual 2>err &&
+	test_cmp expect actual &&
+
+	layer="$(head -n 1 $repo/$chain)" &&
+	cat >expect.err <<-EOF &&
+	warning: disabling Bloom filters for commit-graph layer $SQ$layer$SQ due to incompatible settings
+	EOF
+	test_cmp expect.err err &&
+
+	# Merge the two layers with incompatible bloom filter versions,
+	# ensuring that the v2 filters are used.
+	>trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		git -C $repo -c commitGraph.changedPathsVersion=2 commit-graph write --reachable --changed-paths 2>err &&
+	grep "disabling Bloom filters for commit-graph layer .$layer." err &&
+	grep "{\"hash_version\":2,\"num_hashes\":7,\"bits_per_entry\":10,\"max_changed_paths\":512" trace2.txt
+'
+
 get_first_changed_path_filter () {
 	test-tool read-graph bloom-filters >filters.dat &&
 	head -n 1 filters.dat
 }
-
-# chosen to be the same under all Unicode normalization forms
-CENT=$(printf "\302\242")
 
 test_expect_success 'set up repo with high bit path, version 1 changed-path' '
 	git init highbit1 &&
@@ -536,6 +571,120 @@ test_expect_success 'version 1 changed-path used when version 1 requested' '
 	(
 		cd highbit1 &&
 		test_bloom_filters_used "-- another$CENT"
+	)
+'
+
+test_expect_success 'version 1 changed-path not used when version 2 requested' '
+	(
+		cd highbit1 &&
+		git config --add commitGraph.changedPathsVersion 2 &&
+		test_bloom_filters_not_used "-- another$CENT"
+	)
+'
+
+test_expect_success 'version 1 changed-path used when autodetect requested' '
+	(
+		cd highbit1 &&
+		git config --add commitGraph.changedPathsVersion -1 &&
+		test_bloom_filters_used "-- another$CENT"
+	)
+'
+
+test_expect_success 'when writing another commit graph, preserve existing version 1 of changed-path' '
+	test_commit -C highbit1 c1double "$CENT$CENT" &&
+	git -C highbit1 commit-graph write --reachable --changed-paths &&
+	(
+		cd highbit1 &&
+		git config --add commitGraph.changedPathsVersion -1 &&
+		echo "options: bloom(1,10,7) read_generation_data" >expect &&
+		test-tool read-graph >full &&
+		grep options full >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'set up repo with high bit path, version 2 changed-path' '
+	git init highbit2 &&
+	git -C highbit2 config --add commitGraph.changedPathsVersion 2 &&
+	test_commit -C highbit2 c2 "$CENT" &&
+	git -C highbit2 commit-graph write --reachable --changed-paths
+'
+
+test_expect_success 'check value of version 2 changed-path' '
+	(
+		cd highbit2 &&
+		echo "c01f" >expect &&
+		get_first_changed_path_filter >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'setup make another commit' '
+	# "git log" does not use Bloom filters for root commits - see how, in
+	# revision.c, rev_compare_tree() (the only code path that eventually calls
+	# get_bloom_filter()) is only called by try_to_simplify_commit() when the commit
+	# has one parent. Therefore, make another commit so that we perform the tests on
+	# a non-root commit.
+	test_commit -C highbit2 anotherc2 "another$CENT"
+'
+
+test_expect_success 'version 2 changed-path used when version 2 requested' '
+	(
+		cd highbit2 &&
+		test_bloom_filters_used "-- another$CENT"
+	)
+'
+
+test_expect_success 'version 2 changed-path not used when version 1 requested' '
+	(
+		cd highbit2 &&
+		git config --add commitGraph.changedPathsVersion 1 &&
+		test_bloom_filters_not_used "-- another$CENT"
+	)
+'
+
+test_expect_success 'version 2 changed-path used when autodetect requested' '
+	(
+		cd highbit2 &&
+		git config --add commitGraph.changedPathsVersion -1 &&
+		test_bloom_filters_used "-- another$CENT"
+	)
+'
+
+test_expect_success 'when writing another commit graph, preserve existing version 2 of changed-path' '
+	test_commit -C highbit2 c2double "$CENT$CENT" &&
+	git -C highbit2 commit-graph write --reachable --changed-paths &&
+	(
+		cd highbit2 &&
+		git config --add commitGraph.changedPathsVersion -1 &&
+		echo "options: bloom(2,10,7) read_generation_data" >expect &&
+		test-tool read-graph >full &&
+		grep options full >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'when writing commit graph, do not reuse changed-path of another version' '
+	git init doublewrite &&
+	test_commit -C doublewrite c "$CENT" &&
+	git -C doublewrite config --add commitGraph.changedPathsVersion 1 &&
+	git -C doublewrite commit-graph write --reachable --changed-paths &&
+	for v in -2 3
+	do
+		git -C doublewrite config --add commitGraph.changedPathsVersion $v &&
+		git -C doublewrite commit-graph write --reachable --changed-paths 2>err &&
+		cat >expect <<-EOF &&
+		warning: attempting to write a commit-graph, but ${SQ}commitGraph.changedPathsVersion${SQ} ($v) is not supported
+		EOF
+		test_cmp expect err || return 1
+	done &&
+	git -C doublewrite config --add commitGraph.changedPathsVersion 2 &&
+	git -C doublewrite commit-graph write --reachable --changed-paths &&
+	(
+		cd doublewrite &&
+		echo "c01f" >expect &&
+		get_first_changed_path_filter >actual &&
+		test_cmp expect actual
 	)
 '
 

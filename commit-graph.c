@@ -344,7 +344,6 @@ static int graph_read_bloom_data(const unsigned char *chunk_start,
 				  size_t chunk_size, void *data)
 {
 	struct commit_graph *g = data;
-	uint32_t hash_version;
 
 	if (chunk_size < BLOOMDATA_CHUNK_HEADER_SIZE) {
 		warning(_("ignoring too-small changed-path chunk"
@@ -356,10 +355,9 @@ static int graph_read_bloom_data(const unsigned char *chunk_start,
 
 	g->chunk_bloom_data = chunk_start;
 	g->chunk_bloom_data_size = chunk_size;
-	hash_version = get_be32(chunk_start);
 
 	g->bloom_filter_settings = xmalloc(sizeof(struct bloom_filter_settings));
-	g->bloom_filter_settings->hash_version = hash_version;
+	g->bloom_filter_settings->hash_version = get_be32(chunk_start);
 	g->bloom_filter_settings->num_hashes = get_be32(chunk_start + 4);
 	g->bloom_filter_settings->bits_per_entry = get_be32(chunk_start + 8);
 	g->bloom_filter_settings->max_changed_paths = DEFAULT_BLOOM_MAX_CHANGES;
@@ -2498,6 +2496,13 @@ int write_commit_graph(struct object_directory *odb,
 	}
 	if (!commit_graph_compatible(r))
 		return 0;
+	if (r->settings.commit_graph_changed_paths_version < -1
+	    || r->settings.commit_graph_changed_paths_version > 2) {
+		warning(_("attempting to write a commit-graph, but "
+			  "'commitGraph.changedPathsVersion' (%d) is not supported"),
+			r->settings.commit_graph_changed_paths_version);
+		return 0;
+	}
 
 	CALLOC_ARRAY(ctx, 1);
 	ctx->r = r;
@@ -2540,7 +2545,7 @@ int write_commit_graph(struct object_directory *odb,
 		g = ctx->r->objects->commit_graph;
 
 		/* We have changed-paths already. Keep them in the next graph */
-		if (g && g->chunk_bloom_data) {
+		if (g && g->bloom_filter_settings) {
 			ctx->changed_paths = 1;
 
 			/* don't propagate the hash_version unless unspecified */
