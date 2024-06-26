@@ -111,7 +111,7 @@ static enum fsck_msg_type fsck_msg_type(enum fsck_msg_id msg_id,
 {
 	assert(msg_id >= 0 && msg_id < FSCK_MSG_MAX);
 
-	if (!options->msg_type) {
+	if (!fsck_configs.msg_type) {
 		enum fsck_msg_type msg_type = msg_id_info[msg_id].msg_type;
 
 		if (options->strict && msg_type == FSCK_WARN)
@@ -119,7 +119,7 @@ static enum fsck_msg_type fsck_msg_type(enum fsck_msg_id msg_id,
 		return msg_type;
 	}
 
-	return options->msg_type[msg_id];
+	return fsck_configs.msg_type[msg_id];
 }
 
 static enum fsck_msg_type parse_msg_type(const char *str)
@@ -146,16 +146,16 @@ void fsck_set_msg_type_from_ids(struct fsck_options *options,
 				enum fsck_msg_id msg_id,
 				enum fsck_msg_type msg_type)
 {
-	if (!options->msg_type) {
+	if (!fsck_configs.msg_type) {
 		int i;
 		enum fsck_msg_type *severity;
 		ALLOC_ARRAY(severity, FSCK_MSG_MAX);
 		for (i = 0; i < FSCK_MSG_MAX; i++)
 			severity[i] = fsck_msg_type(i, options);
-		options->msg_type = severity;
+		fsck_configs.msg_type = severity;
 	}
 
-	options->msg_type[msg_id] = msg_type;
+	fsck_configs.msg_type[msg_id] = msg_type;
 }
 
 void fsck_set_msg_type(struct fsck_options *options,
@@ -211,7 +211,7 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 		if (!strcmp(buf, "skiplist")) {
 			if (equal == len)
 				die("skiplist requires a path");
-			oidset_parse_file(&options->skiplist, buf + equal + 1);
+			oidset_parse_file(&fsck_configs.oid_skiplist, buf + equal + 1);
 			buf += len + 1;
 			continue;
 		}
@@ -225,10 +225,9 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 	free(to_free);
 }
 
-static int object_on_skiplist(struct fsck_options *opts,
-			      const struct object_id *oid)
+static int object_on_skiplist(const struct object_id *oid)
 {
-	return opts && oid && oidset_contains(&opts->skiplist, oid);
+	return oid && oidset_contains(&fsck_configs.oid_skiplist, oid);
 }
 
 __attribute__((format (printf, 5, 6)))
@@ -244,7 +243,7 @@ static int report(struct fsck_options *options,
 	if (msg_type == FSCK_IGNORE)
 		return 0;
 
-	if (object_on_skiplist(options, oid))
+	if (object_on_skiplist(oid))
 		return 0;
 
 	if (msg_type == FSCK_FATAL)
@@ -1112,7 +1111,7 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 {
 	int ret = 0;
 
-	if (object_on_skiplist(options, oid))
+	if (object_on_skiplist(oid))
 		return 0;
 
 	if (oidset_contains(&options->gitmodules_found, oid)) {
