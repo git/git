@@ -24,6 +24,14 @@
 
 static ssize_t max_tree_entry_len = 4096;
 
+static struct {
+	enum fsck_msg_type *msg_type;
+	struct oidset oid_skiplist;
+} fsck_configs = {
+	.msg_type = NULL,
+	.oid_skiplist = OIDSET_INIT
+};
+
 #define STR(x) #x
 #define MSG_ID(id, msg_type) { STR(id), NULL, NULL, FSCK_##msg_type },
 static struct {

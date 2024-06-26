@@ -132,41 +132,52 @@ int fsck_error_cb_print_missing_gitmodules(struct fsck_options *o,
 					   const char *message);
 
 struct fsck_options {
-	fsck_walk_func walk;
 	fsck_error error_func;
-	unsigned strict:1;
-	enum fsck_msg_type *msg_type;
-	struct oidset skiplist;
+	unsigned verbose:1,
+		 strict:1;
+};
+
+struct fsck_refs_states {
+	struct fsck_options options;
+};
+
+struct fsck_objs_states {
+	struct fsck_options options;
+	fsck_walk_func walk;
 	struct oidset gitmodules_found;
 	struct oidset gitmodules_done;
 	struct oidset gitattributes_found;
 	struct oidset gitattributes_done;
 	kh_oid_map_t *object_names;
 };
-
-#define FSCK_OPTIONS_DEFAULT { \
-	.skiplist = OIDSET_INIT, \
+#define FSCK_OBJS_STATES_DEFAULT { \
+	.options = { \
+		.error_func = fsck_error_function, \
+	}, \
 	.gitmodules_found = OIDSET_INIT, \
 	.gitmodules_done = OIDSET_INIT, \
 	.gitattributes_found = OIDSET_INIT, \
 	.gitattributes_done = OIDSET_INIT, \
-	.error_func = fsck_error_function \
 }
-#define FSCK_OPTIONS_STRICT { \
-	.strict = 1, \
+#define FSCK_OBJS_STATES_STRICT { \
+	.options = { \
+		.error_func = fsck_error_function, \
+		.strict = 1, \
+	}, \
 	.gitmodules_found = OIDSET_INIT, \
 	.gitmodules_done = OIDSET_INIT, \
 	.gitattributes_found = OIDSET_INIT, \
 	.gitattributes_done = OIDSET_INIT, \
-	.error_func = fsck_error_function, \
 }
-#define FSCK_OPTIONS_MISSING_GITMODULES { \
-	.strict = 1, \
+#define FSCK_OBJS_STATES_MISSING_GITMODULES { \
+	.options = { \
+		.error_func = fsck_error_cb_print_missing_gitmodules, \
+		.strict = 1, \
+	}, \
 	.gitmodules_found = OIDSET_INIT, \
 	.gitmodules_done = OIDSET_INIT, \
 	.gitattributes_found = OIDSET_INIT, \
 	.gitattributes_done = OIDSET_INIT, \
-	.error_func = fsck_error_cb_print_missing_gitmodules, \
 }
 
 /* descend in all linked child objects
