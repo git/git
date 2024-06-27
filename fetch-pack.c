@@ -1038,8 +1038,10 @@ static int get_pack(struct fetch_pack_args *args,
 
 		if (!is_well_formed)
 			die(_("fetch-pack: invalid index-pack output"));
-		if (pack_lockfile)
+		if (pack_lockfiles && pack_lockfile)
 			string_list_append_nodup(pack_lockfiles, pack_lockfile);
+		else
+			free(pack_lockfile);
 		parse_gitmodules_oids(cmd.out, gitmodules_oids);
 		close(cmd.out);
 	}
