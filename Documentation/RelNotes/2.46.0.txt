@@ -181,6 +181,11 @@ Performance, Internal Implementation, Development Support etc.
    of the reachability bitmap in a repository with too many refs has
    been added.
 
+ * When "git merge" sees that the index cannot be refreshed (e.g. due
+   to another process doing the same in the background), it died but
+   after writing MERGE_HEAD etc. files, which was useless for the
+   purpose to recover from the failure.
+
 
 Fixes since v2.45
 -----------------
@@ -329,6 +334,18 @@ Fixes since v2.45
    updated to use the tempfile API to avoid leaving cruft after
    failing.
 
+ * An unused extern declaration for mingw has been removed to prevent
+   it from causing build failure.
+   (merge 3c295c87c2 js/mingw-remove-unused-extern-decl later to maint).
+
+ * A helper function shared between two tests had a copy-paste bug,
+   which has been corrected.
+   (merge 40d817875d jk/t5500-typofix later to maint).
+
+ * "git fetch-pack -k -k" without passing "--lock-pack" (which we
+   never do ourselves) did not work at all, which has been corrected.
+   (merge 96a6621d25 jk/fetch-pack-fsck-wo-lock-pack later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
    (merge 55702c543e fa/p4-error later to maint).
@@ -342,3 +359,4 @@ Fixes since v2.45
    (merge e83055ecb0 ds/doc-add-interactive-singlekey later to maint).
    (merge f1160393c1 ds/ahead-behind-fix later to maint).
    (merge bf6a86236e jc/worktree-git-path later to maint).
+   (merge 28dc26dc33 rs/remove-unused-find-header-mem later to maint).
