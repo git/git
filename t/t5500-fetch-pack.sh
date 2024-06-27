@@ -1046,7 +1046,7 @@ fetch_filter_blob_limit_zero () {
 
 	# Ensure that commit is fetched, but blob is not
 	commit=$(git -C "$SERVER" rev-parse two) &&
-	blob=$(git hash-object server/two.t) &&
+	blob=$(git hash-object "$SERVER/two.t") &&
 	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
 	grep "$commit" oids &&
 	! grep "$blob" oids
