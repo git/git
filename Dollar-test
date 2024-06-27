@@ -1,0 +1,52 @@
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "Fashion",
+      "subcategories": [
+        {
+          "id": 11,
+          "name": "Men",
+          "subcategories": [
+            {
+              "id": 111,
+              "name": "Ethnic Wear"
+            },
+            {
+              "id": 112,
+              "name": "Casual Wear"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "Women",
+          "subcategories": [
+            {
+              "id": 121,
+              "name": "Ethnic Wear"
+            },
+            {
+              "id": 122,
+              "name": "Formal Wear"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Electronics",
+      "subcategories": [
+        {
+          "id": 21,
+          "name": "Smartphones"
+        },
+        {
+          "id": 22,
+          "name": "Laptops"
+        }
+      ]
+    }
+  ]
+}
