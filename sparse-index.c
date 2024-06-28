@@ -440,14 +440,21 @@ void ensure_correct_sparsity(struct index_state *istate)
 }
 
 struct path_found_data {
+	/**
+	 * The path stored in 'dir', if non-empty, corresponds to the most-
+	 * recent path that we checked where:
+	 *
+	 *   1. The path should be a directory, according to the index.
+	 *   2. The path does not exist.
+	 *   3. The parent path _does_ exist. (This may be the root of the
+	 *      working directory.)
+	 */
 	struct strbuf dir;
-	int dir_found;
 	size_t lstat_count;
 };
 
 #define PATH_FOUND_DATA_INIT { \
-	.dir = STRBUF_INIT, \
-	.dir_found = 1 \
+	.dir = STRBUF_INIT \
 }
 
 static void clear_path_found_data(struct path_found_data *data)
@@ -455,49 +462,108 @@ static void clear_path_found_data(struct path_found_data *data)
 	strbuf_release(&data->dir);
 }
 
+/**
+ * Return the length of the longest common substring that ends in a
+ * slash ('/') to indicate the longest common parent directory. Returns
+ * zero if no common directory exists.
+ */
+static size_t max_common_dir_prefix(const char *path1, const char *path2)
+{
+	size_t common_prefix = 0;
+	for (size_t i = 0; path1[i] && path2[i]; i++) {
+		if (path1[i] != path2[i])
+			break;
+
+		/*
+		 * If they agree at a directory separator, then add one
+		 * to make sure it is included in the common prefix string.
+		 */
+		if (path1[i] == '/')
+			common_prefix = i + 1;
+	}
+
+	return common_prefix;
+}
+
 static int path_found(const char *path, struct path_found_data *data)
 {
 	struct stat st;
-	char *newdir;
+	size_t common_prefix;
 
 	/*
-	 * If dirname corresponds to a directory that doesn't exist, and this
-	 * path starts with dirname, then path can't exist.
+	 * If data->dir is non-empty, then it contains a path that doesn't
+	 * exist, including an ending slash ('/'). If it is a prefix of 'path',
+	 * then we can return 0.
 	 */
-	if (!data->dir_found && !memcmp(path, data->dir.buf, data->dir.len))
+	if (data->dir.len && !memcmp(path, data->dir.buf, data->dir.len))
 		return 0;
 
 	/*
-	 * If path itself exists, return 1.
+	 * Otherwise, we must check if the current path exists. If it does, then
+	 * return 1. The cached directory will be skipped until we come across
+	 * a missing path again.
 	 */
 	data->lstat_count++;
 	if (!lstat(path, &st))
 		return 1;
 
 	/*
-	 * Otherwise, path does not exist so we'll return 0...but we'll first
-	 * determine some info about its parent directory so we can avoid
-	 * lstat calls for future cache entries.
+	 * At this point, we know that 'path' doesn't exist, and we know that
+	 * the parent directory of 'data->dir' does exist. Let's set 'data->dir'
+	 * to be the top-most non-existing directory of 'path'. If the first
+	 * parent of 'path' exists, then we will act as though 'path'
+	 * corresponds to a directory (by adding a slash).
 	 */
-	newdir = strrchr(path, '/');
-	if (!newdir)
-		return 0; /* Didn't find a parent dir; just return 0 now. */
+	common_prefix = max_common_dir_prefix(path, data->dir.buf);
 
 	/*
-	 * If path starts with directory (which we already lstat'ed and found),
-	 * then no need to lstat parent directory again.
+	 * At this point, 'path' and 'data->dir' have a common existing parent
+	 * directory given by path[0..common_prefix] (which could have length 0).
+	 * We "grow" the data->dir buffer by checking for existing directories
+	 * along 'path'.
 	 */
-	if (data->dir_found && data->dir.buf &&
-	    memcmp(path, data->dir.buf, data->dir.len))
-		return 0;
 
-	/* Free previous dirname, and cache path's dirname */
-	strbuf_reset(&data->dir);
-	strbuf_add(&data->dir, path, newdir - path + 1);
+	strbuf_setlen(&data->dir, common_prefix);
+	while (1) {
+		/* Find the next directory in 'path'. */
+		const char *rest = path + data->dir.len;
+		const char *next_slash = strchr(rest, '/');
 
-	data->lstat_count++;
-	data->dir_found = !lstat(data->dir.buf, &st);
+		/*
+		 * If there are no more slashes, then 'path' doesn't contain a
+		 * non-existent _parent_ directory. Set 'data->dir' to be equal
+		 * to 'path' plus an additional slash, so it can be used for
+		 * caching in the future. The filename of 'path' is considered
+		 * a non-existent directory.
+		 *
+		 * Note: if "{path}/" exists as a directory, then it will never
+		 * appear as a prefix of other callers to this method, assuming
+		 * the context from the clear_skip_worktree... methods. If this
+		 * method is reused, then this must be reconsidered.
+		 */
+		if (!next_slash) {
+			strbuf_addstr(&data->dir, rest);
+			strbuf_addch(&data->dir, '/');
+			break;
+		}
 
+		/*
+		 * Now that we have a slash, let's grow 'data->dir' to include
+		 * this slash, then test if we should stop.
+		 */
+		strbuf_add(&data->dir, rest, next_slash - rest + 1);
+
+		/* If the parent dir doesn't exist, then stop here. */
+		data->lstat_count++;
+		if (lstat(data->dir.buf, &st))
+			return 0;
+	}
+
+	/*
+	 * At this point, 'data->dir' is equal to 'path' plus a slash character,
+	 * and the parent directory of 'path' definitely exists. Moreover, we
+	 * know that 'path' doesn't exist, or we would have returned 1 earlier.
+	 */
 	return 0;
 }
 
