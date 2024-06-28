@@ -1597,7 +1597,7 @@ static void compute_reachable_generation_numbers(
 		timestamp_t gen;
 		repo_parse_commit(info->r, c);
 		gen = info->get_generation(c, info->data);
-		display_progress(info->progress, info->progress_cnt + 1);
+		display_progress(info->progress, ++info->progress_cnt);
 
 		if (gen != GENERATION_NUMBER_ZERO && gen != GENERATION_NUMBER_INFINITY)
 			continue;
