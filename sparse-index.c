@@ -442,6 +442,7 @@ void ensure_correct_sparsity(struct index_state *istate)
 struct path_found_data {
 	struct strbuf dir;
 	int dir_found;
+	size_t lstat_count;
 };
 
 #define PATH_FOUND_DATA_INIT { \
@@ -469,6 +470,7 @@ static int path_found(const char *path, struct path_found_data *data)
 	/*
 	 * If path itself exists, return 1.
 	 */
+	data->lstat_count++;
 	if (!lstat(path, &st))
 		return 1;
 
@@ -493,6 +495,7 @@ static int path_found(const char *path, struct path_found_data *data)
 	strbuf_reset(&data->dir);
 	strbuf_add(&data->dir, path, newdir - path + 1);
 
+	data->lstat_count++;
 	data->dir_found = !lstat(data->dir.buf, &st);
 
 	return 0;
@@ -524,6 +527,8 @@ static int clear_skip_worktree_from_present_files_sparse(struct index_state *ist
 
 	trace2_data_intmax("index", istate->repo,
 			   "sparse_path_count", path_count);
+	trace2_data_intmax("index", istate->repo,
+			   "sparse_lstat_count", data.lstat_count);
 	trace2_region_leave("index", "clear_skip_worktree_from_present_files_sparse",
 			    istate->repo);
 	clear_path_found_data(&data);
@@ -553,6 +558,8 @@ static void clear_skip_worktree_from_present_files_full(struct index_state *ista
 
 	trace2_data_intmax("index", istate->repo,
 			   "full_path_count", path_count);
+	trace2_data_intmax("index", istate->repo,
+			   "full_lstat_count", data.lstat_count);
 	trace2_region_leave("index", "clear_skip_worktree_from_present_files_full",
 			    istate->repo);
 	clear_path_found_data(&data);
