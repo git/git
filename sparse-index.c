@@ -440,31 +440,30 @@ void ensure_correct_sparsity(struct index_state *istate)
 }
 
 struct path_found_data {
-	const char *dirname;
-	size_t dir_len;
+	struct strbuf dir;
 	int dir_found;
 };
 
 #define PATH_FOUND_DATA_INIT { \
+	.dir = STRBUF_INIT, \
 	.dir_found = 1 \
 }
 
 static void clear_path_found_data(struct path_found_data *data)
 {
-	return;
+	strbuf_release(&data->dir);
 }
 
 static int path_found(const char *path, struct path_found_data *data)
 {
 	struct stat st;
 	char *newdir;
-	char *tmp;
 
 	/*
 	 * If dirname corresponds to a directory that doesn't exist, and this
 	 * path starts with dirname, then path can't exist.
 	 */
-	if (!data->dir_found && !memcmp(path, data->dirname, data->dir_len))
+	if (!data->dir_found && !memcmp(path, data->dir.buf, data->dir.len))
 		return 0;
 
 	/*
@@ -486,17 +485,15 @@ static int path_found(const char *path, struct path_found_data *data)
 	 * If path starts with directory (which we already lstat'ed and found),
 	 * then no need to lstat parent directory again.
 	 */
-	if (data->dir_found && data->dirname &&
-	    memcmp(path, data->dirname, data->dir_len))
+	if (data->dir_found && data->dir.buf &&
+	    memcmp(path, data->dir.buf, data->dir.len))
 		return 0;
 
 	/* Free previous dirname, and cache path's dirname */
-	data->dirname = path;
-	data->dir_len = newdir - path + 1;
+	strbuf_reset(&data->dir);
+	strbuf_add(&data->dir, path, newdir - path + 1);
 
-	tmp = xstrndup(path, data->dir_len);
-	data->dir_found = !lstat(tmp, &st);
-	free(tmp);
+	data->dir_found = !lstat(data->dir.buf, &st);
 
 	return 0;
 }
