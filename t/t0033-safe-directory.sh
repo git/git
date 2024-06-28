@@ -71,7 +71,22 @@ test_expect_success 'safe.directory=*, but is reset' '
 	expect_rejected_dir
 '
 
+test_expect_success 'safe.directory with matching glob' '
+	git config --global --unset-all safe.directory &&
+	p=$(pwd) &&
+	git config --global safe.directory "${p%/*}/*" &&
+	git status
+'
+
+test_expect_success 'safe.directory with unmatching glob' '
+	git config --global --unset-all safe.directory &&
+	p=$(pwd) &&
+	git config --global safe.directory "${p%/*}no/*" &&
+	expect_rejected_dir
+'
+
 test_expect_success 'safe.directory in included file' '
+	git config --global --unset-all safe.directory &&
 	cat >gitconfig-include <<-EOF &&
 	[safe]
 		directory = "$(pwd)"
