@@ -486,49 +486,78 @@ static int path_found(const char *path, const char **dirname, size_t *dir_len,
 	return 0;
 }
 
-void clear_skip_worktree_from_present_files(struct index_state *istate)
+static int clear_skip_worktree_from_present_files_sparse(struct index_state *istate)
 {
 	const char *last_dirname = NULL;
 	size_t dir_len = 0;
 	int dir_found = 1;
 
-	int i;
-	int path_count[2] = {0, 0};
-	int restarted = 0;
+	int path_count = 0;
+	int to_restart = 0;
 
-	if (!core_apply_sparse_checkout ||
-	    sparse_expect_files_outside_of_patterns)
-		return;
-
-	trace2_region_enter("index", "clear_skip_worktree_from_present_files",
+	trace2_region_enter("index", "clear_skip_worktree_from_present_files_sparse",
 			    istate->repo);
-restart:
-	for (i = 0; i < istate->cache_nr; i++) {
+	for (int i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 
 		if (ce_skip_worktree(ce)) {
-			path_count[restarted]++;
+			path_count++;
 			if (path_found(ce->name, &last_dirname, &dir_len, &dir_found)) {
 				if (S_ISSPARSEDIR(ce->ce_mode)) {
-					if (restarted)
-						BUG("ensure-full-index did not fully flatten?");
-					ensure_full_index(istate);
-					restarted = 1;
-					goto restart;
+					to_restart = 1;
+					break;
 				}
 				ce->ce_flags &= ~CE_SKIP_WORKTREE;
 			}
 		}
 	}
 
-	if (path_count[0])
-		trace2_data_intmax("index", istate->repo,
-				   "sparse_path_count", path_count[0]);
-	if (restarted)
-		trace2_data_intmax("index", istate->repo,
-				   "sparse_path_count_full", path_count[1]);
-	trace2_region_leave("index", "clear_skip_worktree_from_present_files",
+	trace2_data_intmax("index", istate->repo,
+			   "sparse_path_count", path_count);
+	trace2_region_leave("index", "clear_skip_worktree_from_present_files_sparse",
 			    istate->repo);
+	return to_restart;
+}
+
+static void clear_skip_worktree_from_present_files_full(struct index_state *istate)
+{
+	const char *last_dirname = NULL;
+	size_t dir_len = 0;
+	int dir_found = 1;
+
+	int path_count = 0;
+
+	trace2_region_enter("index", "clear_skip_worktree_from_present_files_full",
+			    istate->repo);
+	for (int i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+
+		if (S_ISSPARSEDIR(ce->ce_mode))
+			BUG("ensure-full-index did not fully flatten?");
+
+		if (ce_skip_worktree(ce)) {
+			path_count++;
+			if (path_found(ce->name, &last_dirname, &dir_len, &dir_found))
+				ce->ce_flags &= ~CE_SKIP_WORKTREE;
+		}
+	}
+
+	trace2_data_intmax("index", istate->repo,
+			   "full_path_count", path_count);
+	trace2_region_leave("index", "clear_skip_worktree_from_present_files_full",
+			    istate->repo);
+}
+
+void clear_skip_worktree_from_present_files(struct index_state *istate)
+{
+	if (!core_apply_sparse_checkout ||
+	    sparse_expect_files_outside_of_patterns)
+		return;
+
+	if (clear_skip_worktree_from_present_files_sparse(istate)) {
+		ensure_full_index(istate);
+		clear_skip_worktree_from_present_files_full(istate);
+	}
 }
 
 /*
