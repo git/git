@@ -59,4 +59,20 @@ test_expect_success 'error on NULL value for config keys' '
 	test_cmp expect actual
 '
 
+test_expect_success '--keep-going' '
+	git config keep.going non-existing &&
+	git config --add keep.going . &&
+
+	test_must_fail git for-each-repo --config=keep.going \
+		-- branch >out 2>err &&
+	test_grep "cannot change to .*non-existing" err &&
+	test_must_be_empty out &&
+
+	test_must_fail git for-each-repo --config=keep.going --keep-going \
+		-- branch >out 2>err &&
+	test_grep "cannot change to .*non-existing" err &&
+	git branch >expect &&
+	test_cmp expect out
+'
+
 test_done
