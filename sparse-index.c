@@ -439,8 +439,22 @@ void ensure_correct_sparsity(struct index_state *istate)
 		ensure_full_index(istate);
 }
 
-static int path_found(const char *path, const char **dirname, size_t *dir_len,
-		      int *dir_found)
+struct path_found_data {
+	const char *dirname;
+	size_t dir_len;
+	int dir_found;
+};
+
+#define PATH_FOUND_DATA_INIT { \
+	.dir_found = 1 \
+}
+
+static void clear_path_found_data(struct path_found_data *data)
+{
+	return;
+}
+
+static int path_found(const char *path, struct path_found_data *data)
 {
 	struct stat st;
 	char *newdir;
@@ -450,7 +464,7 @@ static int path_found(const char *path, const char **dirname, size_t *dir_len,
 	 * If dirname corresponds to a directory that doesn't exist, and this
 	 * path starts with dirname, then path can't exist.
 	 */
-	if (!*dir_found && !memcmp(path, *dirname, *dir_len))
+	if (!data->dir_found && !memcmp(path, data->dirname, data->dir_len))
 		return 0;
 
 	/*
@@ -472,15 +486,16 @@ static int path_found(const char *path, const char **dirname, size_t *dir_len,
 	 * If path starts with directory (which we already lstat'ed and found),
 	 * then no need to lstat parent directory again.
 	 */
-	if (*dir_found && *dirname && memcmp(path, *dirname, *dir_len))
+	if (data->dir_found && data->dirname &&
+	    memcmp(path, data->dirname, data->dir_len))
 		return 0;
 
 	/* Free previous dirname, and cache path's dirname */
-	*dirname = path;
-	*dir_len = newdir - path + 1;
+	data->dirname = path;
+	data->dir_len = newdir - path + 1;
 
-	tmp = xstrndup(path, *dir_len);
-	*dir_found = !lstat(tmp, &st);
+	tmp = xstrndup(path, data->dir_len);
+	data->dir_found = !lstat(tmp, &st);
 	free(tmp);
 
 	return 0;
@@ -488,9 +503,7 @@ static int path_found(const char *path, const char **dirname, size_t *dir_len,
 
 static int clear_skip_worktree_from_present_files_sparse(struct index_state *istate)
 {
-	const char *last_dirname = NULL;
-	size_t dir_len = 0;
-	int dir_found = 1;
+	struct path_found_data data = PATH_FOUND_DATA_INIT;
 
 	int path_count = 0;
 	int to_restart = 0;
@@ -502,7 +515,7 @@ static int clear_skip_worktree_from_present_files_sparse(struct index_state *ist
 
 		if (ce_skip_worktree(ce)) {
 			path_count++;
-			if (path_found(ce->name, &last_dirname, &dir_len, &dir_found)) {
+			if (path_found(ce->name, &data)) {
 				if (S_ISSPARSEDIR(ce->ce_mode)) {
 					to_restart = 1;
 					break;
@@ -516,14 +529,13 @@ static int clear_skip_worktree_from_present_files_sparse(struct index_state *ist
 			   "sparse_path_count", path_count);
 	trace2_region_leave("index", "clear_skip_worktree_from_present_files_sparse",
 			    istate->repo);
+	clear_path_found_data(&data);
 	return to_restart;
 }
 
 static void clear_skip_worktree_from_present_files_full(struct index_state *istate)
 {
-	const char *last_dirname = NULL;
-	size_t dir_len = 0;
-	int dir_found = 1;
+	struct path_found_data data = PATH_FOUND_DATA_INIT;
 
 	int path_count = 0;
 
@@ -537,7 +549,7 @@ static void clear_skip_worktree_from_present_files_full(struct index_state *ista
 
 		if (ce_skip_worktree(ce)) {
 			path_count++;
-			if (path_found(ce->name, &last_dirname, &dir_len, &dir_found))
+			if (path_found(ce->name, &data))
 				ce->ce_flags &= ~CE_SKIP_WORKTREE;
 		}
 	}
@@ -546,6 +558,7 @@ static void clear_skip_worktree_from_present_files_full(struct index_state *ista
 			   "full_path_count", path_count);
 	trace2_region_leave("index", "clear_skip_worktree_from_present_files_full",
 			    istate->repo);
+	clear_path_found_data(&data);
 }
 
 void clear_skip_worktree_from_present_files(struct index_state *istate)
