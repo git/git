@@ -72,7 +72,6 @@ gen_cmd_aux () {
 	nested=0
 	nested_min=100
 
-
 	# Step 1:
 	#
 	# Increase/decrease "start"/"end" indices respectively to get rid of
@@ -87,7 +86,7 @@ gen_cmd_aux () {
 	IFS=#
 	for c in $(echo "$LAYOUT" | sed 's:.:&#:g')
 	do
-		if test "$c" = " "
+		if test -z "$c" || test "$c" = " "
 		then
 			continue
 		fi

@@ -20,13 +20,15 @@ test_expect_success setup '
 			for t in o x
 			do
 				path="$b$o$t" &&
-				case "$path" in ooo) continue ;; esac &&
-				paths="$paths$path " &&
-				p="	$path" &&
-				case "$b" in x) echo "$m1$p" ;; esac &&
-				case "$o" in x) echo "$m2$p" ;; esac &&
-				case "$t" in x) echo "$m3$p" ;; esac ||
-				return 1
+				if test "$path" != ooo
+				then
+					paths="$paths$path " &&
+					p="	$path" &&
+					case "$b" in x) echo "$m1$p" ;; esac &&
+					case "$o" in x) echo "$m2$p" ;; esac &&
+					case "$t" in x) echo "$m3$p" ;; esac ||
+					return 1
+				fi
 			done
 		done
 	done >ls-files-s.expect &&
