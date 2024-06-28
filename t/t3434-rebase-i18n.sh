@@ -71,7 +71,7 @@ test_rebase_continue_update_encode () {
 		git config i18n.commitencoding $new &&
 		test_must_fail git rebase -m main &&
 		test -f .git/rebase-merge/message &&
-		git stripspace <.git/rebase-merge/message >two.t &&
+		git stripspace -s <.git/rebase-merge/message >two.t &&
 		git add two.t &&
 		git rebase --continue &&
 		compare_msg $msgfile $old $new &&

@@ -207,6 +207,46 @@ static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-res
 static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
 static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
 
+/*
+ * A 'struct replay_ctx' represents the private state of the sequencer.
+ */
+struct replay_ctx {
+	/*
+	 * The commit message that will be used except at the end of a
+	 * chain of fixup and squash commands.
+	 */
+	struct strbuf message;
+	/*
+	 * The list of completed fixup and squash commands in the
+	 * current chain.
+	 */
+	struct strbuf current_fixups;
+	/*
+	 * Stores the reflog message that will be used when creating a
+	 * commit. Points to a static buffer and should not be free()'d.
+	 */
+	const char *reflog_message;
+	/*
+	 * The number of completed fixup and squash commands in the
+	 * current chain.
+	 */
+	int current_fixup_count;
+	/*
+	 * Whether message contains a commit message.
+	 */
+	unsigned have_message :1;
+};
+
+struct replay_ctx* replay_ctx_new(void)
+{
+	struct replay_ctx *ctx = xcalloc(1, sizeof(*ctx));
+
+	strbuf_init(&ctx->current_fixups, 0);
+	strbuf_init(&ctx->message, 0);
+
+	return ctx;
+}
+
 /**
  * A 'struct update_refs_record' represents a value in the update-refs
  * list. We use a string_list to map refs to these (before, after) pairs.
@@ -366,17 +406,26 @@ static const char *gpg_sign_opt_quoted(struct replay_opts *opts)
 	return buf.buf;
 }
 
+static void replay_ctx_release(struct replay_ctx *ctx)
+{
+	strbuf_release(&ctx->current_fixups);
+	strbuf_release(&ctx->message);
+}
+
 void replay_opts_release(struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
+
 	free(opts->gpg_sign);
 	free(opts->reflog_action);
 	free(opts->default_strategy);
 	free(opts->strategy);
 	strvec_clear (&opts->xopts);
-	strbuf_release(&opts->current_fixups);
 	if (opts->revs)
 		release_revisions(opts->revs);
 	free(opts->revs);
+	replay_ctx_release(ctx);
+	free(opts->ctx);
 }
 
 int sequencer_remove_state(struct replay_opts *opts)
@@ -1084,6 +1133,7 @@ static int run_git_commit(const char *defmsg,
 			  struct replay_opts *opts,
 			  unsigned int flags)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
@@ -1101,7 +1151,7 @@ static int run_git_commit(const char *defmsg,
 			     gpg_opt, gpg_opt);
 	}
 
-	strvec_pushf(&cmd.env, GIT_REFLOG_ACTION "=%s", opts->reflog_message);
+	strvec_pushf(&cmd.env, GIT_REFLOG_ACTION "=%s", ctx->reflog_message);
 
 	if (opts->committer_date_is_author_date)
 		strvec_pushf(&cmd.env, "GIT_COMMITTER_DATE=%s",
@@ -1487,6 +1537,7 @@ static int try_to_commit(struct repository *r,
 			 struct replay_opts *opts, unsigned int flags,
 			 struct object_id *oid)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	struct object_id tree;
 	struct commit *current_head = NULL;
 	struct commit_list *parents = NULL;
@@ -1648,7 +1699,7 @@ static int try_to_commit(struct repository *r,
 		goto out;
 	}
 
-	if (update_head_with_reflog(current_head, oid, opts->reflog_message,
+	if (update_head_with_reflog(current_head, oid, ctx->reflog_message,
 				    msg, &err)) {
 		res = error("%s", err.buf);
 		goto out;
@@ -1878,10 +1929,10 @@ static void add_commented_lines(struct strbuf *buf, const void *str, size_t len)
 }
 
 /* Does the current fixup chain contain a squash command? */
-static int seen_squash(struct replay_opts *opts)
+static int seen_squash(struct replay_ctx *ctx)
 {
-	return starts_with(opts->current_fixups.buf, "squash") ||
-		strstr(opts->current_fixups.buf, "\nsquash");
+	return starts_with(ctx->current_fixups.buf, "squash") ||
+		strstr(ctx->current_fixups.buf, "\nsquash");
 }
 
 static void update_comment_bufs(struct strbuf *buf1, struct strbuf *buf2, int n)
@@ -1957,6 +2008,7 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 			 enum todo_command command, struct replay_opts *opts,
 			 unsigned flag)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	const char *fixup_msg;
 	size_t commented_len = 0, fixup_off;
 	/*
@@ -1965,13 +2017,13 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	 * squashing commit messages.
 	 */
 	if (starts_with(body, "amend!") ||
-	    ((command == TODO_SQUASH || seen_squash(opts)) &&
+	    ((command == TODO_SQUASH || seen_squash(ctx)) &&
 	     (starts_with(body, "squash!") || starts_with(body, "fixup!"))))
 		commented_len = commit_subject_length(body);
 
 	strbuf_addf(buf, "\n%s ", comment_line_str);
 	strbuf_addf(buf, _(nth_commit_msg_fmt),
-		    ++opts->current_fixup_count + 1);
+		    ++ctx->current_fixup_count + 1);
 	strbuf_addstr(buf, "\n\n");
 	strbuf_add_commented_lines(buf, body, commented_len, comment_line_str);
 	/* buf->buf may be reallocated so store an offset into the buffer */
@@ -1979,7 +2031,7 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	strbuf_addstr(buf, body + commented_len);
 
 	/* fixup -C after squash behaves like squash */
-	if (is_fixup_flag(command, flag) && !seen_squash(opts)) {
+	if (is_fixup_flag(command, flag) && !seen_squash(ctx)) {
 		/*
 		 * We're replacing the commit message so we need to
 		 * append the Signed-off-by: trailer if the user
@@ -2013,12 +2065,13 @@ static int update_squash_messages(struct repository *r,
 				  struct replay_opts *opts,
 				  unsigned flag)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	struct strbuf buf = STRBUF_INIT;
 	int res = 0;
 	const char *message, *body;
 	const char *encoding = get_commit_output_encoding();
 
-	if (opts->current_fixup_count > 0) {
+	if (ctx->current_fixup_count > 0) {
 		struct strbuf header = STRBUF_INIT;
 		char *eol;
 
@@ -2031,10 +2084,10 @@ static int update_squash_messages(struct repository *r,
 
 		strbuf_addf(&header, "%s ", comment_line_str);
 		strbuf_addf(&header, _(combined_commit_msg_fmt),
-			    opts->current_fixup_count + 2);
+			    ctx->current_fixup_count + 2);
 		strbuf_splice(&buf, 0, eol - buf.buf, header.buf, header.len);
 		strbuf_release(&header);
-		if (is_fixup_flag(command, flag) && !seen_squash(opts))
+		if (is_fixup_flag(command, flag) && !seen_squash(ctx))
 			update_squash_message_for_fixup(&buf);
 	} else {
 		struct object_id head;
@@ -2081,7 +2134,7 @@ static int update_squash_messages(struct repository *r,
 	} else if (command == TODO_FIXUP) {
 		strbuf_addf(&buf, "\n%s ", comment_line_str);
 		strbuf_addf(&buf, _(skip_nth_commit_msg_fmt),
-			    ++opts->current_fixup_count + 1);
+			    ++ctx->current_fixup_count + 1);
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_add_commented_lines(&buf, body, strlen(body),
 					   comment_line_str);
@@ -2095,12 +2148,12 @@ static int update_squash_messages(struct repository *r,
 	strbuf_release(&buf);
 
 	if (!res) {
-		strbuf_addf(&opts->current_fixups, "%s%s %s",
-			    opts->current_fixups.len ? "\n" : "",
+		strbuf_addf(&ctx->current_fixups, "%s%s %s",
+			    ctx->current_fixups.len ? "\n" : "",
 			    command_to_string(command),
 			    oid_to_hex(&commit->object.oid));
-		res = write_message(opts->current_fixups.buf,
-				    opts->current_fixups.len,
+		res = write_message(ctx->current_fixups.buf,
+				    ctx->current_fixups.len,
 				    rebase_path_current_fixups(), 0);
 	}
 
@@ -2178,6 +2231,7 @@ static int do_pick_commit(struct repository *r,
 			  struct replay_opts *opts,
 			  int final_fixup, int *check_todo)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	unsigned int flags = should_edit(opts) ? EDIT_MSG : 0;
 	const char *msg_file = should_edit(opts) ? NULL : git_path_merge_msg(r);
 	struct object_id head;
@@ -2185,7 +2239,6 @@ static int do_pick_commit(struct repository *r,
 	const char *base_label, *next_label;
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
-	struct strbuf msgbuf = STRBUF_INIT;
 	int res, unborn = 0, reword = 0, allow, drop_commit;
 	enum todo_command command = item->command;
 	struct commit *commit = item->commit;
@@ -2284,7 +2337,7 @@ static int do_pick_commit(struct repository *r,
 		next = parent;
 		next_label = msg.parent_label;
 		if (opts->commit_use_reference) {
-			strbuf_addstr(&msgbuf,
+			strbuf_addstr(&ctx->message,
 				"# *** SAY WHY WE ARE REVERTING ON THE TITLE LINE ***");
 		} else if (skip_prefix(msg.subject, "Revert \"", &orig_subject) &&
 			   /*
@@ -2293,21 +2346,21 @@ static int do_pick_commit(struct repository *r,
 			    * thus requiring excessive complexity to deal with.
 			    */
 			   !starts_with(orig_subject, "Revert \"")) {
-			strbuf_addstr(&msgbuf, "Reapply \"");
-			strbuf_addstr(&msgbuf, orig_subject);
+			strbuf_addstr(&ctx->message, "Reapply \"");
+			strbuf_addstr(&ctx->message, orig_subject);
 		} else {
-			strbuf_addstr(&msgbuf, "Revert \"");
-			strbuf_addstr(&msgbuf, msg.subject);
-			strbuf_addstr(&msgbuf, "\"");
+			strbuf_addstr(&ctx->message, "Revert \"");
+			strbuf_addstr(&ctx->message, msg.subject);
+			strbuf_addstr(&ctx->message, "\"");
 		}
-		strbuf_addstr(&msgbuf, "\n\nThis reverts commit ");
-		refer_to_commit(opts, &msgbuf, commit);
+		strbuf_addstr(&ctx->message, "\n\nThis reverts commit ");
+		refer_to_commit(opts, &ctx->message, commit);
 
 		if (commit->parents && commit->parents->next) {
-			strbuf_addstr(&msgbuf, ", reversing\nchanges made to ");
-			refer_to_commit(opts, &msgbuf, parent);
+			strbuf_addstr(&ctx->message, ", reversing\nchanges made to ");
+			refer_to_commit(opts, &ctx->message, parent);
 		}
-		strbuf_addstr(&msgbuf, ".\n");
+		strbuf_addstr(&ctx->message, ".\n");
 	} else {
 		const char *p;
 
@@ -2316,21 +2369,22 @@ static int do_pick_commit(struct repository *r,
 		next = commit;
 		next_label = msg.label;
 
-		/* Append the commit log message to msgbuf. */
+		/* Append the commit log message to ctx->message. */
 		if (find_commit_subject(msg.message, &p))
-			strbuf_addstr(&msgbuf, p);
+			strbuf_addstr(&ctx->message, p);
 
 		if (opts->record_origin) {
-			strbuf_complete_line(&msgbuf);
-			if (!has_conforming_footer(&msgbuf, NULL, 0))
-				strbuf_addch(&msgbuf, '\n');
-			strbuf_addstr(&msgbuf, cherry_picked_prefix);
-			strbuf_addstr(&msgbuf, oid_to_hex(&commit->object.oid));
-			strbuf_addstr(&msgbuf, ")\n");
+			strbuf_complete_line(&ctx->message);
+			if (!has_conforming_footer(&ctx->message, NULL, 0))
+				strbuf_addch(&ctx->message, '\n');
+			strbuf_addstr(&ctx->message, cherry_picked_prefix);
+			strbuf_addstr(&ctx->message, oid_to_hex(&commit->object.oid));
+			strbuf_addstr(&ctx->message, ")\n");
 		}
 		if (!is_fixup(command))
 			author = get_author(msg.message);
 	}
+	ctx->have_message = 1;
 
 	if (command == TODO_REWORD)
 		reword = 1;
@@ -2361,7 +2415,7 @@ static int do_pick_commit(struct repository *r,
 	}
 
 	if (opts->signoff && !is_fixup(command))
-		append_signoff(&msgbuf, 0, 0);
+		append_signoff(&ctx->message, 0, 0);
 
 	if (is_rebase_i(opts) && write_author_script(msg.message) < 0)
 		res = -1;
@@ -2370,17 +2424,17 @@ static int do_pick_commit(struct repository *r,
 		 !strcmp(opts->strategy, "ort") ||
 		 command == TODO_REVERT) {
 		res = do_recursive_merge(r, base, next, base_label, next_label,
-					 &head, &msgbuf, opts);
+					 &head, &ctx->message, opts);
 		if (res < 0)
 			goto leave;
 
-		res |= write_message(msgbuf.buf, msgbuf.len,
+		res |= write_message(ctx->message.buf, ctx->message.len,
 				     git_path_merge_msg(r), 0);
 	} else {
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
 
-		res = write_message(msgbuf.buf, msgbuf.len,
+		res = write_message(ctx->message.buf, ctx->message.len,
 				    git_path_merge_msg(r), 0);
 
 		commit_list_insert(base, &common);
@@ -2458,14 +2512,13 @@ fast_forward_edit:
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
 		unlink(rebase_path_current_fixups());
-		strbuf_reset(&opts->current_fixups);
-		opts->current_fixup_count = 0;
+		strbuf_reset(&ctx->current_fixups);
+		ctx->current_fixup_count = 0;
 	}
 
 leave:
 	free_message(commit, &msg);
 	free(author);
-	strbuf_release(&msgbuf);
 	update_abort_safety_file();
 
 	return res;
@@ -2846,12 +2899,14 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose)
 			NULL, REF_NO_DEREF);
 
 	if (!need_cleanup)
-		return;
+		goto out;
 
 	if (!have_finished_the_last_pick())
-		return;
+		goto out;
 
 	sequencer_remove_state(&opts);
+out:
+	replay_opts_release(&opts);
 }
 
 static void todo_list_write_total_nr(struct todo_list *todo_list)
@@ -3022,6 +3077,8 @@ static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 
 static int read_populate_opts(struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
+
 	if (is_rebase_i(opts)) {
 		struct strbuf buf = STRBUF_INIT;
 		int ret = 0;
@@ -3081,13 +3138,13 @@ static int read_populate_opts(struct replay_opts *opts)
 		read_strategy_opts(opts, &buf);
 		strbuf_reset(&buf);
 
-		if (read_oneliner(&opts->current_fixups,
+		if (read_oneliner(&ctx->current_fixups,
 				  rebase_path_current_fixups(),
 				  READ_ONELINER_SKIP_IF_EMPTY)) {
-			const char *p = opts->current_fixups.buf;
-			opts->current_fixup_count = 1;
+			const char *p = ctx->current_fixups.buf;
+			ctx->current_fixup_count = 1;
 			while ((p = strchr(p, '\n'))) {
-				opts->current_fixup_count++;
+				ctx->current_fixup_count++;
 				p++;
 			}
 		}
@@ -3608,13 +3665,24 @@ static int error_with_patch(struct repository *r,
 			    struct replay_opts *opts,
 			    int exit_code, int to_amend)
 {
-	if (commit) {
-		if (make_patch(r, commit, opts))
+	struct replay_ctx *ctx = opts->ctx;
+
+	/*
+	 * Write the commit message to be used by "git rebase
+	 * --continue". If a "fixup" or "squash" command has conflicts
+	 * then we will have already written rebase_path_message() in
+	 * error_failed_squash(). If an "edit" command was
+	 * fast-forwarded then we don't have a message in ctx->message
+	 * and rely on make_patch() to write rebase_path_message()
+	 * instead.
+	 */
+	if (ctx->have_message && !file_exists(rebase_path_message()) &&
+	    write_message(ctx->message.buf, ctx->message.len,
+			  rebase_path_message(), 0))
+		return error(_("could not write commit message file"));
+
+	if (commit && make_patch(r, commit, opts))
 			return -1;
-	} else if (copy_file(rebase_path_message(),
-			     git_path_merge_msg(r), 0666))
-		return error(_("unable to copy '%s' to '%s'"),
-			     git_path_merge_msg(r), rebase_path_message());
 
 	if (to_amend) {
 		if (intend_to_amend())
@@ -3936,6 +4004,7 @@ static int do_merge(struct repository *r,
 		    const char *arg, int arg_len,
 		    int flags, int *check_todo, struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	int run_commit_flags = 0;
 	struct strbuf ref_name = STRBUF_INIT;
 	struct commit *head_commit, *merge_commit, *i;
@@ -4064,39 +4133,30 @@ static int do_merge(struct repository *r,
 		write_author_script(message);
 		find_commit_subject(message, &body);
 		len = strlen(body);
-		ret = write_message(body, len, git_path_merge_msg(r), 0);
+		strbuf_add(&ctx->message, body, len);
 		repo_unuse_commit_buffer(r, commit, message);
-		if (ret) {
-			error_errno(_("could not write '%s'"),
-				    git_path_merge_msg(r));
-			goto leave_merge;
-		}
 	} else {
 		struct strbuf buf = STRBUF_INIT;
-		int len;
 
 		strbuf_addf(&buf, "author %s", git_author_info(0));
 		write_author_script(buf.buf);
-		strbuf_reset(&buf);
+		strbuf_release(&buf);
 
 		if (oneline_offset < arg_len) {
-			p = arg + oneline_offset;
-			len = arg_len - oneline_offset;
+			strbuf_add(&ctx->message, arg + oneline_offset,
+				   arg_len - oneline_offset);
 		} else {
-			strbuf_addf(&buf, "Merge %s '%.*s'",
+			strbuf_addf(&ctx->message, "Merge %s '%.*s'",
 				    to_merge->next ? "branches" : "branch",
 				    merge_arg_len, arg);
-			p = buf.buf;
-			len = buf.len;
 		}
-
-		ret = write_message(p, len, git_path_merge_msg(r), 0);
-		strbuf_release(&buf);
-		if (ret) {
-			error_errno(_("could not write '%s'"),
-				    git_path_merge_msg(r));
-			goto leave_merge;
-		}
+	}
+	ctx->have_message = 1;
+	if (write_message(ctx->message.buf, ctx->message.len,
+			  git_path_merge_msg(r), 0)) {
+		    ret = error_errno(_("could not write '%s'"),
+				      git_path_merge_msg(r));
+		    goto leave_merge;
 	}
 
 	if (strategy || to_merge->next) {
@@ -4758,11 +4818,12 @@ static int pick_one_commit(struct repository *r,
 			   struct replay_opts *opts,
 			   int *check_todo, int* reschedule)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	int res;
 	struct todo_item *item = todo_list->items + todo_list->current;
 	const char *arg = todo_item_get_arg(todo_list, item);
 	if (is_rebase_i(opts))
-		opts->reflog_message = reflog_message(
+		ctx->reflog_message = reflog_message(
 			opts, command_to_string(item->command), NULL);
 
 	res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
@@ -4819,9 +4880,10 @@ static int pick_commits(struct repository *r,
 			struct todo_list *todo_list,
 			struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	int res = 0, reschedule = 0;
 
-	opts->reflog_message = sequencer_reflog_action(opts);
+	ctx->reflog_message = sequencer_reflog_action(opts);
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
 			 opts->record_origin || should_edit(opts) ||
@@ -4871,6 +4933,8 @@ static int pick_commits(struct repository *r,
 				return stopped_at_head(r);
 			}
 		}
+		strbuf_reset(&ctx->message);
+		ctx->have_message = 0;
 		if (item->command <= TODO_SQUASH) {
 			res = pick_one_commit(r, todo_list, opts, &check_todo,
 					      &reschedule);
@@ -5076,6 +5140,7 @@ static int commit_staged_changes(struct repository *r,
 				 struct replay_opts *opts,
 				 struct todo_list *todo_list)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	unsigned int flags = ALLOW_EMPTY | EDIT_MSG;
 	unsigned int final_fixup = 0, is_clean;
 
@@ -5112,7 +5177,7 @@ static int commit_staged_changes(struct repository *r,
 		 * the commit message and if there was a squash, let the user
 		 * edit it.
 		 */
-		if (!is_clean || !opts->current_fixup_count)
+		if (!is_clean || !ctx->current_fixup_count)
 			; /* this is not the final fixup */
 		else if (!oideq(&head, &to_amend) ||
 			 !file_exists(rebase_path_stopped_sha())) {
@@ -5121,20 +5186,20 @@ static int commit_staged_changes(struct repository *r,
 				unlink(rebase_path_fixup_msg());
 				unlink(rebase_path_squash_msg());
 				unlink(rebase_path_current_fixups());
-				strbuf_reset(&opts->current_fixups);
-				opts->current_fixup_count = 0;
+				strbuf_reset(&ctx->current_fixups);
+				ctx->current_fixup_count = 0;
 			}
 		} else {
 			/* we are in a fixup/squash chain */
-			const char *p = opts->current_fixups.buf;
-			int len = opts->current_fixups.len;
+			const char *p = ctx->current_fixups.buf;
+			int len = ctx->current_fixups.len;
 
-			opts->current_fixup_count--;
+			ctx->current_fixup_count--;
 			if (!len)
 				BUG("Incorrect current_fixups:\n%s", p);
 			while (len && p[len - 1] != '\n')
 				len--;
-			strbuf_setlen(&opts->current_fixups, len);
+			strbuf_setlen(&ctx->current_fixups, len);
 			if (write_message(p, len, rebase_path_current_fixups(),
 					  0) < 0)
 				return error(_("could not write file: '%s'"),
@@ -5151,7 +5216,7 @@ static int commit_staged_changes(struct repository *r,
 			 * actually need to re-commit with a cleaned up commit
 			 * message.
 			 */
-			if (opts->current_fixup_count > 0 &&
+			if (ctx->current_fixup_count > 0 &&
 			    !is_fixup(peek_command(todo_list, 0))) {
 				final_fixup = 1;
 				/*
@@ -5224,20 +5289,21 @@ static int commit_staged_changes(struct repository *r,
 		unlink(rebase_path_fixup_msg());
 		unlink(rebase_path_squash_msg());
 	}
-	if (opts->current_fixup_count > 0) {
+	if (ctx->current_fixup_count > 0) {
 		/*
 		 * Whether final fixup or not, we just cleaned up the commit
 		 * message...
 		 */
 		unlink(rebase_path_current_fixups());
-		strbuf_reset(&opts->current_fixups);
-		opts->current_fixup_count = 0;
+		strbuf_reset(&ctx->current_fixups);
+		ctx->current_fixup_count = 0;
 	}
 	return 0;
 }
 
 int sequencer_continue(struct repository *r, struct replay_opts *opts)
 {
+	struct replay_ctx *ctx = opts->ctx;
 	struct todo_list todo_list = TODO_LIST_INIT;
 	int res;
 
@@ -5257,7 +5323,7 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			unlink(rebase_path_dropped());
 		}
 
-		opts->reflog_message = reflog_message(opts, "continue", NULL);
+		ctx->reflog_message = reflog_message(opts, "continue", NULL);
 		if (commit_staged_changes(r, opts, &todo_list)) {
 			res = -1;
 			goto release_todo_list;
@@ -5309,7 +5375,7 @@ static int single_pick(struct repository *r,
 			TODO_PICK : TODO_REVERT;
 	item.commit = cmit;
 
-	opts->reflog_message = sequencer_reflog_action(opts);
+	opts->ctx->reflog_message = sequencer_reflog_action(opts);
 	return do_pick_commit(r, &item, opts, 0, &check_todo);
 }
 

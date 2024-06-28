@@ -31,6 +31,9 @@ enum commit_msg_cleanup_mode {
 	COMMIT_MSG_CLEANUP_ALL
 };
 
+struct replay_ctx;
+struct replay_ctx* replay_ctx_new(void);
+
 struct replay_opts {
 	enum replay_action action;
 
@@ -68,10 +71,6 @@ struct replay_opts {
 	/* Reflog */
 	char *reflog_action;
 
-	/* Used by fixup/squash */
-	struct strbuf current_fixups;
-	int current_fixup_count;
-
 	/* placeholder commit for -i --root */
 	struct object_id squash_onto;
 	int have_squash_onto;
@@ -80,13 +79,13 @@ struct replay_opts {
 	struct rev_info *revs;
 
 	/* Private use */
-	const char *reflog_message;
+	struct replay_ctx *ctx;
 };
 #define REPLAY_OPTS_INIT {			\
 	.edit = -1,				\
 	.action = -1,				\
-	.current_fixups = STRBUF_INIT,		\
 	.xopts = STRVEC_INIT,			\
+	.ctx = replay_ctx_new(),		\
 }
 
 /*
