@@ -193,12 +193,10 @@ Fixes since v2.45
  * "git rebase --signoff" used to forget that it needs to add a
    sign-off to the resulting commit when told to continue after a
    conflict stops its operation.
-   (merge a6c2654f83 pw/rebase-m-signoff-fix later to maint).
 
  * The procedure to build multi-pack-index got confused by the
    replace-refs mechanism, which has been corrected by disabling the
    latter.
-   (merge 93e2ae1c95 xx/disable-replace-when-building-midx later to maint).
 
  * The "-k" and "--rfc" options of "format-patch" will now error out
    when used together, as one tells us not to add anything to the
@@ -208,29 +206,24 @@ Fixes since v2.45
 
  * "git stash -S" did not handle binary files correctly, which has
    been corrected.
-   (merge 5fb7686409 aj/stash-staged-fix later to maint).
 
  * A scheduled "git maintenance" job is expected to work on all
    repositories it knows about, but it stopped at the first one that
    errored out.  Now it keeps going.
-   (merge c75662bfc9 js/for-each-repo-keep-going later to maint).
 
  * zsh can pretend to be a normal shell pretty well except for some
    glitches that we tickle in some of our scripts. Work them around
    so that "vimdiff" and our test suite works well enough with it.
-   (merge fedd5c79ff bc/zsh-compatibility later to maint).
 
  * Command line completion support for zsh (in contrib/) has been
    updated to stop exposing internal state to end-user shell
    interaction.
-   (merge 3c20acdf46 dk/zsh-git-repo-path-fix later to maint).
 
  * Tests that try to corrupt in-repository files in chunked format did
    not work well on macOS due to its broken "mv", which has been
    worked around.
 
  * The maximum size of attribute files is enforced more consistently.
-   (merge c793f9cb08 tb/attr-limits later to maint).
 
  * Unbreak CI jobs so that we do not attempt to use Python 2 that has
    been removed from the platform.
@@ -242,7 +235,6 @@ Fixes since v2.45
 
  * The "--exit-code" option of "git diff" command learned to work with
    the "--ext-diff" option.
-   (merge 11be65cfa4 rs/external-diff-with-exit-code later to maint).
 
  * Windows CI running in GitHub Actions started complaining about the
    order of arguments given to calloc(); the imported regex code uses
@@ -258,7 +250,6 @@ Fixes since v2.45
 
  * The documentation for "git diff --name-only" has been clarified
    that it is about showing the names in the post-image tree.
-   (merge 4986662cbc jc/doc-diff-name-only later to maint).
 
  * The credential helper that talks with osx keychain learned to avoid
    storing back the authentication material it just got received from
@@ -268,7 +259,6 @@ Fixes since v2.45
  * The chainlint script (invoked during "make test") did nothing when
    it failed to detect the number of available CPUs.  It now falls
    back to 1 CPU to avoid the problem.
-   (merge 2e7e9205be es/chainlint-ncores-fix later to maint).
 
  * Revert overly aggressive "layered defence" that went into 2.45.1
    and friends, which broke "git-lfs", "git-annex", and other use
@@ -277,16 +267,13 @@ Fixes since v2.45
  * "git init" in an already created directory, when the user
    configuration has includeif.onbranch, started to fail recently,
    which has been corrected.
-   (merge 407997c1dd ps/fix-reinit-includeif-onbranch later to maint).
 
  * Memory leaks in "git mv" has been plugged.
 
  * The safe.directory configuration knob has been updated to
    optionally allow leading path matches.
-   (merge 313eec177a jc/safe-directory-leading-path later to maint).
 
  * An overly large ".gitignore" files are now rejected silently.
-   (merge e7c3d1ddba jk/cap-exclude-file-size later to maint).
 
  * Upon expiration event, the credential subsystem forgot to clear
    in-core authentication material other than password (whose support
@@ -294,11 +281,9 @@ Fixes since v2.45
 
  * Fix for an embarrassing typo that prevented Python2 tests from running
    anywhere.
-   (merge df651330ab ps/ci-fix-detection-of-ubuntu-20 later to maint).
 
  * Varargs functions that are unannotated as printf-like or execl-like
    have been annotated as such.
-   (merge 99c7de732e jc/varargs-attributes later to maint).
 
  * "git am" has a safety feature to prevent it from starting a new
    session when there already is a session going.  It reliably
@@ -347,16 +332,5 @@ Fixes since v2.45
    (merge 96a6621d25 jk/fetch-pack-fsck-wo-lock-pack later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge a5a4cb7b27 rs/diff-parseopts-cleanup later to maint).
-   (merge 55702c543e fa/p4-error later to maint).
-   (merge 2566a77774 vd/doc-merge-tree-x-option later to maint).
-   (merge b64b0df9da ds/scalar-reconfigure-all-fix later to maint).
-   (merge c81ffcff83 dm/update-index-doc-fix later to maint).
-   (merge fc0202b0e9 dg/fetch-pack-code-cleanup later to maint).
-   (merge 7150f140f9 mt/t0211-typofix later to maint).
-   (merge d424488901 jc/rev-parse-fatal-doc later to maint).
-   (merge 36d900d2b0 rs/difftool-env-simplify later to maint).
-   (merge e83055ecb0 ds/doc-add-interactive-singlekey later to maint).
-   (merge f1160393c1 ds/ahead-behind-fix later to maint).
    (merge bf6a86236e jc/worktree-git-path later to maint).
    (merge 28dc26dc33 rs/remove-unused-find-header-mem later to maint).
