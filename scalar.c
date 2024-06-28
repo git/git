@@ -70,6 +70,7 @@ static void setup_enlistment_directory(int argc, const char **argv,
 	strbuf_release(&path);
 }
 
+LAST_ARG_MUST_BE_NULL
 static int run_git(const char *arg, ...)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -288,6 +289,7 @@ static int unregister_dir(void)
 }
 
 /* printf-style interface, expects `<key>=<value>` argument */
+__attribute__((format (printf, 1, 2)))
 static int set_config(const char *fmt, ...)
 {
 	struct strbuf buf = STRBUF_INIT;
