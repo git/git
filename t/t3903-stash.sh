@@ -393,6 +393,15 @@ test_expect_success 'stash --staged' '
 	test bar,bar4 = $(cat file),$(cat file2)
 '
 
+test_expect_success 'stash --staged with binary file' '
+	printf "\0" >file &&
+	git add file &&
+	git stash --staged &&
+	git stash pop &&
+	printf "\0" >expect &&
+	test_cmp expect file
+'
+
 test_expect_success 'dont assume push with non-option args' '
 	test_must_fail git stash -q drop 2>err &&
 	test_grep -e "subcommand wasn'\''t specified; '\''push'\'' can'\''t be assumed due to unexpected token '\''drop'\''" err
