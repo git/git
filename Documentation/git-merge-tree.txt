@@ -72,6 +72,11 @@ OPTIONS
 As the merge-base is provided directly, <branch1> and <branch2> do not need
 to specify commits; trees are enough.
 
+-X<option>::
+--strategy-option=<option>::
+	Pass the merge strategy-specific option through to the merge strategy.
+	See linkgit:git-merge[1] for details.
+
 [[OUTPUT]]
 OUTPUT
 ------
