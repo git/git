@@ -400,7 +400,7 @@ static void complete_file(char marker, struct hunk *hunk)
 		hunk->splittable_into++;
 }
 
-static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
+static int parse_diff(struct repository *r, struct add_p_state *s, const struct pathspec *ps)
 {
 	struct strvec args = STRVEC_INIT;
 	const char *diff_algorithm = s->s.interactive_diff_algorithm;
@@ -420,7 +420,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		strvec_push(&args,
 			    /* could be on an unborn branch */
 			    !strcmp("HEAD", s->revision) &&
-			    repo_get_oid(the_repository, "HEAD", &oid) ?
+			    repo_get_oid(r, "HEAD", &oid) ?
 			    empty_tree_oid_hex() : s->revision);
 	}
 	color_arg_index = args.nr;
@@ -1776,7 +1776,7 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 	    (!s.mode->index_only &&
 	     repo_refresh_and_write_index(r, REFRESH_QUIET, 0, 1,
 					  NULL, NULL, NULL) < 0) ||
-	    parse_diff(&s, ps) < 0) {
+	    parse_diff(r, &s, ps) < 0) {
 		add_p_state_clear(&s);
 		return -1;
 	}
