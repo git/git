@@ -186,7 +186,7 @@ static int check_dotfile(const char *x, const char **argv,
 	int res = 0, expect = 1;
 	for (; *argv; argv++) {
 		if (!strcmp("--not", *argv))
-			expect = !expect;
+			expect ^= 1;
 		else if (expect != (is_hfs(*argv) || is_ntfs(*argv)))
 			res = error("'%s' is %s.git%s", *argv,
 				    expect ? "not " : "", x);
