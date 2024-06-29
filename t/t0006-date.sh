@@ -8,6 +8,11 @@ TEST_PASSES_SANITIZE_LEAK=true
 # arbitrary reference time: 2009-08-30 19:20:00
 GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 
+if test_have_prereq TIME_IS_64BIT,TIME_T_IS_64BIT
+then
+	test_set_prereq HAVE_64BIT_TIME
+fi
+
 check_relative() {
 	t=$(($GIT_TEST_DATE_NOW - $1))
 	echo "$t -> $2" >expect
@@ -80,14 +85,15 @@ check_show raw "$TIME" '1466000000 -0200'
 
 # arbitrary time absurdly far in the future
 FUTURE="5758122296 -0400"
-check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" TIME_IS_64BIT,TIME_T_IS_64BIT
-check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" TIME_IS_64BIT,TIME_T_IS_64BIT
+check_show iso       "$FUTURE" "2152-06-19 18:24:56 -0400" HAVE_64BIT_TIME
+check_show iso-local "$FUTURE" "2152-06-19 22:24:56 +0000" HAVE_64BIT_TIME
 
-check_parse() {
+REQUIRE_64BIT_TIME=
+check_parse () {
 	echo "$1 -> $2" >expect
-	test_expect_${4:-success} "parse date ($1${3:+ TZ=$3})" "
-	TZ=${3:-$TZ} test-tool date parse '$1' >actual &&
-	test_cmp expect actual
+	test_expect_success $REQUIRE_64BIT_TIME "parse date ($1${3:+ TZ=$3}) -> $2" "
+		TZ=${3:-$TZ} test-tool date parse '$1' >actual &&
+		test_cmp expect actual
 	"
 }
 
@@ -116,6 +122,39 @@ check_parse '2008-02-14 20:30:45 -:30' '2008-02-14 20:30:45 +0000'
 check_parse '2008-02-14 20:30:45 -05:00' '2008-02-14 20:30:45 -0500'
 check_parse '2008-02-14 20:30:45' '2008-02-14 20:30:45 -0500' EST5
 check_parse 'Thu, 7 Apr 2005 15:14:13 -0700' '2005-04-07 15:14:13 -0700'
+
+check_parse '1970-01-01 00:00:00' '1970-01-01 00:00:00 +0000'
+check_parse '1970-01-01 00:00:00 +00' '1970-01-01 00:00:00 +0000'
+check_parse '1970-01-01 00:00:00 Z' '1970-01-01 00:00:00 +0000'
+check_parse '1970-01-01 00:00:00 -01' '1970-01-01 00:00:00 -0100'
+check_parse '1970-01-01 00:00:00 +01' bad
+check_parse '1970-01-01 00:00:00 +11' bad
+check_parse '1970-01-01 00:59:59 +01' bad
+check_parse '1970-01-01 01:00:00 +01' '1970-01-01 01:00:00 +0100'
+check_parse '1970-01-01 01:00:00 +11' bad
+check_parse '1970-01-02 00:00:00 +11' '1970-01-02 00:00:00 +1100'
+check_parse '1969-12-31 23:59:59' bad
+check_parse '1969-12-31 23:59:59 +00' bad
+check_parse '1969-12-31 23:59:59 Z' bad
+check_parse '1969-12-31 23:59:59 +11' bad
+check_parse '1969-12-31 23:59:59 -11' bad
+
+REQUIRE_64BIT_TIME=HAVE_64BIT_TIME
+check_parse '2099-12-31 23:59:59' '2099-12-31 23:59:59 +0000'
+check_parse '2099-12-31 23:59:59 +00' '2099-12-31 23:59:59 +0000'
+check_parse '2099-12-31 23:59:59 Z' '2099-12-31 23:59:59 +0000'
+check_parse '2099-12-31 23:59:59 +01' '2099-12-31 23:59:59 +0100'
+check_parse '2099-12-31 23:59:59 -01' bad
+check_parse '2099-12-31 23:59:59 -11' bad
+check_parse '2099-12-31 23:00:00 -01' bad
+check_parse '2099-12-31 22:59:59 -01' '2099-12-31 22:59:59 -0100'
+check_parse '2100-00-00 00:00:00' bad
+check_parse '2099-12-30 00:00:00 -11' '2099-12-30 00:00:00 -1100'
+check_parse '2100-00-00 00:00:00 +00' bad
+check_parse '2100-00-00 00:00:00 Z' bad
+check_parse '2100-00-00 00:00:00 -11' bad
+check_parse '2100-00-00 00:00:00 +11' bad
+REQUIRE_64BIT_TIME=
 
 check_approxidate() {
 	echo "$1 -> $2 +0000" >expect
