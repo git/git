@@ -1507,7 +1507,7 @@ static int create_stash(int argc, const char **argv, const char *prefix UNUSED)
 }
 
 static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int quiet,
-			 int keep_index, int patch_mode, int include_untracked, int only_staged)
+			 int keep_index, int patch_mode, int include_untracked, int only_staged, int preserve)
 {
 	int ret = 0;
 	struct stash_info info = STASH_INFO_INIT;
@@ -1652,7 +1652,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 				ret = -1;
 				goto done;
 			}
-		} else {
+		} else if (!preserve) {
 			struct child_process cp = CHILD_PROCESS_INIT;
 			cp.git_cmd = 1;
 			/* BUG: this nukes untracked files in the way */
@@ -1718,7 +1718,7 @@ done:
 }
 
 static int push_stash(int argc, const char **argv, const char *prefix,
-		      int push_assumed)
+		      int push_assumed, int preserve)
 {
 	int force_assume = 0;
 	int keep_index = -1;
@@ -1789,14 +1789,19 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 	}
 
 	ret = do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
-			    include_untracked, only_staged);
+			    include_untracked, only_staged, preserve);
 	clear_pathspec(&ps);
 	return ret;
 }
 
 static int push_stash_unassumed(int argc, const char **argv, const char *prefix)
 {
-	return push_stash(argc, argv, prefix, 0);
+	return push_stash(argc, argv, prefix, 0, 0);
+}
+
+static int preserve_stash(int argc, const char **argv, const char *prefix)
+{
+	return push_stash(argc, argv, prefix, 0, 1);
 }
 
 static int save_stash(int argc, const char **argv, const char *prefix)
@@ -1836,7 +1841,7 @@ static int save_stash(int argc, const char **argv, const char *prefix)
 
 	memset(&ps, 0, sizeof(ps));
 	ret = do_push_stash(&ps, stash_msg, quiet, keep_index,
-			    patch_mode, include_untracked, only_staged);
+			    patch_mode, include_untracked, only_staged, 0);
 
 	strbuf_release(&stash_msg_buf);
 	return ret;
@@ -1859,6 +1864,7 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND("store", &fn, store_stash),
 		OPT_SUBCOMMAND("create", &fn, create_stash),
 		OPT_SUBCOMMAND("push", &fn, push_stash_unassumed),
+		OPT_SUBCOMMAND("preserve", &fn, preserve_stash),
 		OPT_SUBCOMMAND_F("save", &fn, save_stash, PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
@@ -1885,5 +1891,5 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	/* Assume 'stash push' */
 	strvec_push(&args, "push");
 	strvec_pushv(&args, argv);
-	return !!push_stash(args.nr, args.v, prefix, 1);
+	return !!push_stash(args.nr, args.v, prefix, 1, 0);
 }
