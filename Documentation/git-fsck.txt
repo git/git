@@ -16,7 +16,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Verifies the connectivity and validity of the objects in the database.
+Verifies the connectivity and validity of the objects in the database. 'fsck' stands for File Sysem ChecK
 
 OPTIONS
 -------
