@@ -503,7 +503,7 @@ static void print_current_branch_name(void)
 {
 	int flags;
 	const char *refname = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						      "HEAD", 0, NULL, &flags);
+						      "HEAD", NULL, 0, NULL, &flags);
 	const char *shortname;
 	if (!refname)
 		die(_("could not resolve HEAD"));

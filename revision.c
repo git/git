@@ -1628,7 +1628,7 @@ struct all_refs_cb {
 	struct worktree *wt;
 };
 
-static int handle_one_ref(const char *path, const struct object_id *oid,
+static int handle_one_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
 			  int flag UNUSED,
 			  void *cb_data)
 {
@@ -2922,7 +2922,7 @@ static void NORETURN diagnose_missing_default(const char *def)
 	const char *refname;
 
 	refname = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					  def, 0, NULL, &flags);
+					  def, NULL, 0, NULL, &flags);
 	if (!refname || !(flags & REF_ISSYMREF) || (flags & REF_ISBROKEN))
 		die(_("your current branch appears to be broken"));
 

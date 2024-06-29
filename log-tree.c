@@ -143,7 +143,7 @@ static int ref_filter_match(const char *refname,
 	return 1;
 }
 
-static int add_ref_decoration(const char *refname, const struct object_id *oid,
+static int add_ref_decoration(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			      int flags UNUSED,
 			      void *cb_data)
 {
@@ -280,7 +280,7 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 
 	/* Now resolve and find the matching current branch */
 	branch_name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					      "HEAD", 0, NULL, &rru_flags);
+					      "HEAD", NULL, 0, NULL, &rru_flags);
 	if (!branch_name || !(rru_flags & REF_ISSYMREF))
 		return NULL;
 

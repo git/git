@@ -73,7 +73,7 @@ static struct entry *rev_list_push(struct data *data, struct commit *commit, int
 	return entry;
 }
 
-static int clear_marks(const char *refname, const struct object_id *oid,
+static int clear_marks(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 		       int flag UNUSED,
 		       void *cb_data UNUSED)
 {

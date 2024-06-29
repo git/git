@@ -219,6 +219,7 @@ static int interpret_target(struct walker *walker, char *target, struct object_i
 }
 
 static int mark_complete(const char *path UNUSED,
+			const char *referent UNUSED,
 			 const struct object_id *oid,
 			 int flag UNUSED,
 			 void *cb_data UNUSED)

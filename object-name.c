@@ -1363,7 +1363,7 @@ struct handle_one_ref_cb {
 	struct commit_list **list;
 };
 
-static int handle_one_ref(const char *path, const struct object_id *oid,
+static int handle_one_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
 			  int flag UNUSED,
 			  void *cb_data)
 {

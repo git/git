@@ -44,7 +44,7 @@ static int repo_get_default_remote(struct repository *repo, char **default_remot
 	char *dest = NULL;
 	struct strbuf sb = STRBUF_INIT;
 	struct ref_store *store = get_main_ref_store(repo);
-	const char *refname = refs_resolve_ref_unsafe(store, "HEAD", 0, NULL,
+	const char *refname = refs_resolve_ref_unsafe(store, "HEAD", NULL, 0, NULL,
 						      NULL);
 
 	if (!refname)
@@ -609,6 +609,7 @@ static void print_status(unsigned int flags, char state, const char *path,
 }
 
 static int handle_submodule_head_ref(const char *refname UNUSED,
+				     const char *referent UNUSED,
 				     const struct object_id *oid,
 				     int flags UNUSED,
 				     void *cb_data)
@@ -2457,7 +2458,7 @@ static int remote_submodule_branch(const char *path, const char **branch)
 
 	if (!strcmp(*branch, ".")) {
 		const char *refname = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-							      "HEAD", 0, NULL,
+							      "HEAD", NULL, 0, NULL,
 							      NULL);
 
 		if (!refname)

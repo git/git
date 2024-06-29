@@ -300,7 +300,7 @@ static void show_ref(const char *path, const struct object_id *oid)
 	}
 }
 
-static int show_ref_cb(const char *path_full, const struct object_id *oid,
+static int show_ref_cb(const char *path_full, const char *referent UNUSED, const struct object_id *oid,
 		       int flag UNUSED, void *data)
 {
 	struct oidset *seen = data;
@@ -1696,7 +1696,7 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 
 	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
 	dst_name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					   buf.buf, 0, NULL, &flag);
+					   buf.buf, NULL, 0, NULL, &flag);
 	check_aliased_update_internal(cmd, list, dst_name, flag);
 	strbuf_release(&buf);
 }

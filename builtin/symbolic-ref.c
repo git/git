@@ -19,7 +19,7 @@ static int check_symref(const char *HEAD, int quiet, int shorten, int recurse, i
 
 	resolve_flags = (recurse ? 0 : RESOLVE_REF_NO_RECURSE);
 	refname = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					  HEAD, resolve_flags, NULL, &flag);
+					  HEAD, NULL, resolve_flags, NULL, &flag);
 
 	if (!refname)
 		die("No such ref: %s", HEAD);

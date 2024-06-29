@@ -145,7 +145,7 @@ out:
 	return ret;
 }
 
-static int add_info_ref(const char *path, const struct object_id *oid,
+static int add_info_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
 			int flag UNUSED,
 			void *cb_data)
 {

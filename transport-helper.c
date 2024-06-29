@@ -1112,6 +1112,7 @@ static int push_refs_with_export(struct transport *transport,
 					/* Follow symbolic refs (mainly for HEAD). */
 					name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
 								       ref->peer_ref->name,
+								       NULL,
 								       RESOLVE_REF_READING,
 								       &oid,
 								       &flag);

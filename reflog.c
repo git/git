@@ -298,6 +298,7 @@ int should_expire_reflog_ent_verbose(struct object_id *ooid,
 }
 
 static int push_tip_to_list(const char *refname UNUSED,
+			    const char *referent UNUSED,
 			    const struct object_id *oid,
 			    int flags, void *cb_data)
 {

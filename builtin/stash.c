@@ -1386,7 +1386,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	}
 
 	branch_ref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					     "HEAD", 0, NULL, &flags);
+					     "HEAD", NULL, 0, NULL, &flags);
 	if (flags & REF_ISSYMREF)
 		skip_prefix(branch_ref, "refs/heads/", &branch_name);
 	head_short_sha1 = repo_find_unique_abbrev(the_repository,

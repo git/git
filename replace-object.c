@@ -9,6 +9,7 @@
 #include "commit.h"
 
 static int register_replace_ref(const char *refname,
+				const char *referent UNUSED,
 				const struct object_id *oid,
 				int flag UNUSED,
 				void *cb_data)

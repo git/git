@@ -2333,6 +2333,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			const char *ref, *v;
 			ref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
 						      "HEAD",
+						      NULL,
 						      RESOLVE_REF_READING,
 						      NULL, NULL);
 			if (ref && skip_prefix(ref, "refs/heads/", &v))

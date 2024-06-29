@@ -1092,7 +1092,7 @@ parse_done:
 		struct commit *head_commit;
 		struct object_id head_oid;
 
-		if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING,
+		if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", NULL, RESOLVE_REF_READING,
 					     &head_oid, NULL) ||
 		    !(head_commit = lookup_commit_reference_gently(revs.repo,
 							     &head_oid, 1)))

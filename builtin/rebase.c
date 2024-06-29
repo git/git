@@ -1660,7 +1660,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	} else if (argc == 0) {
 		/* Do not need to switch branches, we are already on it. */
 		options.head_name =
-			xstrdup_or_null(refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", 0, NULL,
+			xstrdup_or_null(refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", NULL, 0, NULL,
 								&flags));
 		if (!options.head_name)
 			die(_("No such ref: %s"), "HEAD");
@@ -1755,7 +1755,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			if (!(options.flags & REBASE_NO_QUIET))
 				; /* be quiet */
 			else if (!strcmp(branch_name, "HEAD") &&
-				 refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", 0, NULL, &flag))
+				 refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", NULL, 0, NULL, &flag))
 				puts(_("HEAD is up to date."));
 			else
 				printf(_("Current branch %s is up to date.\n"),
@@ -1765,7 +1765,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		} else if (!(options.flags & REBASE_NO_QUIET))
 			; /* be quiet */
 		else if (!strcmp(branch_name, "HEAD") &&
-			 refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", 0, NULL, &flag))
+			 refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", NULL, 0, NULL, &flag))
 			puts(_("HEAD is up to date, rebase forced."));
 		else
 			printf(_("Current branch %s is up to date, rebase "

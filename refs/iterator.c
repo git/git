@@ -7,6 +7,7 @@
 #include "refs.h"
 #include "refs/refs-internal.h"
 #include "iterator.h"
+#include "strbuf.h"
 
 int ref_iterator_advance(struct ref_iterator *ref_iterator)
 {
@@ -29,6 +30,7 @@ void base_ref_iterator_init(struct ref_iterator *iter,
 {
 	iter->vtable = vtable;
 	iter->refname = NULL;
+	iter->referent = NULL;
 	iter->oid = NULL;
 	iter->flags = 0;
 }
@@ -199,6 +201,7 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		}
 
 		if (selection & ITER_YIELD_CURRENT) {
+			iter->base.referent = (*iter->current)->referent;
 			iter->base.refname = (*iter->current)->refname;
 			iter->base.oid = (*iter->current)->oid;
 			iter->base.flags = (*iter->current)->flags;
@@ -448,7 +451,7 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
 
 	current_ref_iter = iter;
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
-		retval = fn(iter->refname, iter->oid, iter->flags, cb_data);
+		retval = fn(iter->refname, iter->referent, iter->oid, iter->flags, cb_data);
 		if (retval) {
 			/*
 			 * If ref_iterator_abort() returns ITER_ERROR,

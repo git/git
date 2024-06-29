@@ -181,6 +181,7 @@ static int rev_list_insert_ref(struct fetch_negotiator *negotiator,
 }
 
 static int rev_list_insert_ref_oid(const char *refname UNUSED,
+				   const char *referent UNUSED,
 				   const struct object_id *oid,
 				   int flag UNUSED,
 				   void *cb_data)
@@ -608,6 +609,7 @@ static int mark_complete(const struct object_id *oid)
 }
 
 static int mark_complete_oid(const char *refname UNUSED,
+			     const char *referent UNUSED,
 			     const struct object_id *oid,
 			     int flag UNUSED,
 			     void *cb_data UNUSED)

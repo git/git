@@ -388,7 +388,7 @@ static void add_ref_to_island(kh_str_t *remote_islands, const char *island_name,
 	rl->hash += sha_core;
 }
 
-static int find_island_for_ref(const char *refname, const struct object_id *oid,
+static int find_island_for_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			       int flags UNUSED, void *cb)
 {
 	struct island_load_data *ild = cb;

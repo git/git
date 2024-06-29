@@ -789,7 +789,7 @@ struct similar_ref_cb {
 	struct string_list *similar_refs;
 };
 
-static int append_similar_ref(const char *refname,
+static int append_similar_ref(const char *refname, const char *referent UNUSED,
 			      const struct object_id *oid UNUSED,
 			      int flags UNUSED, void *cb_data)
 {

@@ -533,7 +533,7 @@ static int get_modified_files(struct repository *r,
 {
 	struct object_id head_oid;
 	int is_initial = !refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						  "HEAD", RESOLVE_REF_READING,
+						  "HEAD", NULL, RESOLVE_REF_READING,
 						  &head_oid, NULL);
 	struct collection_status s = { 0 };
 	int i;
@@ -763,7 +763,7 @@ static int run_revert(struct add_i_state *s, const struct pathspec *ps,
 
 	struct object_id oid;
 	int is_initial = !refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						  "HEAD", RESOLVE_REF_READING,
+						  "HEAD", NULL, RESOLVE_REF_READING,
 						  &oid,
 						  NULL);
 	struct lock_file index_lock;
@@ -994,7 +994,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 
 	struct object_id oid;
 	int is_initial = !refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						  "HEAD", RESOLVE_REF_READING,
+						  "HEAD", NULL, RESOLVE_REF_READING,
 						  &oid,
 						  NULL);
 	if (get_modified_files(s->r, INDEX_ONLY, files, ps, NULL, NULL) < 0)

@@ -928,7 +928,7 @@ out:
 	return ret;
 }
 
-static int string_list_add_one_ref(const char *refname,
+static int string_list_add_one_ref(const char *refname, const char *referent UNUSED,
 				   const struct object_id *oid UNUSED,
 				   int flag UNUSED, void *cb)
 {

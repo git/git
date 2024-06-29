@@ -75,7 +75,7 @@ struct ls_refs_data {
 	unsigned unborn : 1;
 };
 
-static int send_ref(const char *refname, const struct object_id *oid,
+static int send_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 		    int flag, void *cb_data)
 {
 	struct ls_refs_data *data = cb_data;
@@ -97,6 +97,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		struct object_id unused;
 		const char *symref_target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
 								    refname,
+								    NULL,
 								    0,
 								    &unused,
 								    &flag);
@@ -128,12 +129,12 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 	int oid_is_null;
 
 	strbuf_addf(&namespaced, "%sHEAD", get_git_namespace());
-	if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), namespaced.buf, 0, &oid, &flag))
+	if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), namespaced.buf, NULL, 0, &oid, &flag))
 		return; /* bad ref */
 	oid_is_null = is_null_oid(&oid);
 	if (!oid_is_null ||
 	    (data->unborn && data->symrefs && (flag & REF_ISSYMREF)))
-		send_ref(namespaced.buf, oid_is_null ? NULL : &oid, flag, data);
+		send_ref(namespaced.buf, NULL, oid_is_null ? NULL : &oid, flag, data);
 	strbuf_release(&namespaced);
 }
 

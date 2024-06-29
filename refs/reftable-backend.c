@@ -489,7 +489,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			oidread(&iter->oid, iter->ref.value.val2.value);
 			break;
 		case REFTABLE_REF_SYMREF:
-			if (!refs_resolve_ref_unsafe(&iter->refs->base, iter->ref.refname,
+			if (!refs_resolve_ref_unsafe(&iter->refs->base, iter->ref.refname, iter->base.referent,
 						     RESOLVE_REF_READING, &iter->oid, &flags))
 				oidclr(&iter->oid);
 			break;
@@ -977,7 +977,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			 * so it is safe to call `refs_resolve_ref_unsafe()`
 			 * here without causing races.
 			 */
-			const char *resolved = refs_resolve_ref_unsafe(&refs->base, u->refname, 0,
+			const char *resolved = refs_resolve_ref_unsafe(&refs->base, u->refname, NULL, 0,
 								       &current_oid, NULL);
 
 			if (u->flags & REF_NO_DEREF) {
@@ -1211,7 +1211,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			int create_reflog = 1;
 
 			if (u->new_target) {
-				if (!refs_resolve_ref_unsafe(&arg->refs->base, u->new_target,
+				if (!refs_resolve_ref_unsafe(&arg->refs->base, u->new_target, NULL,
 							     RESOLVE_REF_READING, &u->new_oid, NULL)) {
 					/*
 					 * TODO: currently we skip creating reflogs for dangling

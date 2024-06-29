@@ -74,6 +74,7 @@ const char *ref_storage_format_to_name(enum ref_storage_format ref_storage_forma
 
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 				    const char *refname,
+				    const char *referent,
 				    int resolve_flags,
 				    struct object_id *oid,
 				    int *flags);
@@ -304,7 +305,7 @@ struct ref_transaction;
  * arguments is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
-typedef int each_ref_fn(const char *refname,
+typedef int each_ref_fn(const char *refname, const char *referent,
 			const struct object_id *oid, int flags, void *cb_data);
 
 /*

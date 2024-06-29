@@ -286,7 +286,7 @@ static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
 	return ent;
 }
 
-static int add_one_refname(const char *refname,
+static int add_one_refname(const char *refname, const char *referent UNUSED,
 			   const struct object_id *oid,
 			   int flag UNUSED, void *cbdata)
 {
@@ -1464,6 +1464,7 @@ static void set_option(struct transport *transport, const char *name, const char
 
 
 static int add_oid(const char *refname UNUSED,
+		   const char *referent UNUSED,
 		   const struct object_id *oid,
 		   int flags UNUSED, void *cb_data)
 {

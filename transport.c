@@ -101,7 +101,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 		localname = ref->peer_ref->name;
 		remotename = ref->name;
 		tmp = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-					      localname, RESOLVE_REF_READING,
+					      localname, NULL, RESOLVE_REF_READING,
 					      NULL, &flag);
 		if (tmp && flag & REF_ISSYMREF &&
 			starts_with(tmp, "refs/heads/"))

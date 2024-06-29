@@ -446,7 +446,7 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	clear_commit_weight(&commit_weight);
 }
 
-static int register_ref(const char *refname, const struct object_id *oid,
+static int register_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			int flags UNUSED, void *cb_data UNUSED)
 {
 	struct strbuf good_prefix = STRBUF_INIT;
@@ -1168,6 +1168,7 @@ int estimate_bisect_steps(int all)
 }
 
 static int mark_for_removal(const char *refname,
+			    const char *referent UNUSED,
 			    const struct object_id *oid UNUSED,
 			    int flag UNUSED, void *cb_data)
 {

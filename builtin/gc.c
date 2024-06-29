@@ -836,6 +836,7 @@ struct cg_auto_data {
 };
 
 static int dfs_on_ref(const char *refname UNUSED,
+		      const char *referent UNUSED,
 		      const struct object_id *oid,
 		      int flags UNUSED,
 		      void *cb_data)
