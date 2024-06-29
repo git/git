@@ -179,7 +179,7 @@ int cmd__parse_options(int argc, const char **argv)
 
 	trace2_cmd_name("_parse_");
 
-	argc = parse_options(argc, (const char **)argv, prefix, options, usage, 0);
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	if (length_cb.called) {
 		const char *arg = length_cb.arg;

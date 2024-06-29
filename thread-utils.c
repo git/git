@@ -57,7 +57,7 @@ int online_cpus(void)
 #endif /* defined(HAVE_BSD_SYSCTL) && defined(HW_NCPU) */
 
 #ifdef _SC_NPROCESSORS_ONLN
-	if ((ncpus = (long)sysconf(_SC_NPROCESSORS_ONLN)) > 0)
+	if ((ncpus = sysconf(_SC_NPROCESSORS_ONLN)) > 0)
 		return (int)ncpus;
 #endif
 

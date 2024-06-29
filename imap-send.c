@@ -754,7 +754,7 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 			if (cmdp->cb.data) {
 				n = socket_write(&imap->buf.sock, cmdp->cb.data, cmdp->cb.dlen);
 				FREE_AND_NULL(cmdp->cb.data);
-				if (n != (int)cmdp->cb.dlen)
+				if (n != cmdp->cb.dlen)
 					return RESP_BAD;
 			} else if (cmdp->cb.cont) {
 				if (cmdp->cb.cont(ctx, cmd))
@@ -1513,7 +1513,8 @@ int cmd_main(int argc, const char **argv)
 	setup_git_directory_gently(&nongit_ok);
 	git_config(git_imap_config, &server);
 
-	argc = parse_options(argc, (const char **)argv, "", imap_send_options, imap_send_usage, 0);
+	argc = parse_options(argc, argv, "", imap_send_options, imap_send_usage,
+			     0);
 
 	if (argc)
 		usage_with_options(imap_send_usage, imap_send_options);

@@ -188,7 +188,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 			if (!(crec = xdl_cha_alloc(&xdf->rcha)))
 				goto abort;
 			crec->ptr = prev;
-			crec->size = (long) (cur - prev);
+			crec->size = (cur - prev);
 			crec->ha = hav;
 			recs[nrec++] = crec;
 			if (xdl_classify_record(pass, cf, rhash, hbits, crec) < 0)

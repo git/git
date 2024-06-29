@@ -2636,7 +2636,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 
 	/* Find parent directories missing from opt->priv->paths */
 	cur_path = mem_pool_strdup(&opt->priv->pool, new_path);
-	free((char*)new_path);
+	free(new_path);
 	new_path = (char *)cur_path;
 
 	while (1) {
