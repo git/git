@@ -277,6 +277,11 @@ http.followRedirects::
 	the base for the follow-up requests, this is generally
 	sufficient. The default is `initial`.
 
+http.unixSocket::
+	Connect through this Unix domain socket via HTTP, instead of using the
+	network. If set, this config takes precendence over `http.proxy` and
+	is incompatible with the proxy options (see `curl(1)`).
+
 http.<url>.*::
 	Any of the http.* options above can be applied selectively to some URLs.
 	For a config key to match a URL, each element of the config key is
