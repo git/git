@@ -1936,6 +1936,7 @@ static struct diff_queue_struct *get_diffpairs(struct merge_options *opt,
 	repo_diff_setup(opt->repo, &opts);
 	opts.flags.recursive = 1;
 	opts.flags.rename_empty = 0;
+	opts.xdl_opts = opt->xdl_opts;
 	opts.detect_rename = merge_detect_rename(opt);
 	/*
 	 * We do not have logic to handle the detection of copies.  In
