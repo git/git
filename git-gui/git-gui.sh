@@ -775,10 +775,18 @@ if {[is_Windows]} {
 		gitlogo put gray26  -to  5 15 11 16
 		gitlogo redither
 
-		image create photo gitlogo32 -width 32 -height 32
-		gitlogo32 copy gitlogo -zoom 2 2
-
-		wm iconphoto . -default gitlogo gitlogo32
+		set version [split [info tclversion] "."]
+		set major [lindex ${version} 0]
+		set minor [lindex ${version} 1]
+		if { (${major} > 8) || (${major} >= 8 && ${minor} >= 6) } {
+			# PNG images are supported by Tk 8.6+
+			image create photo gitlogo256 -format png -file "$oguilib/git-gui-256.png"
+			wm iconphoto . -default gitlogo256 gitlogo
+		} else {
+			image create photo gitlogo32 -width 32 -height 32
+			gitlogo32 copy gitlogo -zoom 2 2
+			wm iconphoto . -default gitlogo gitlogo32
+		}
 	}
 }
 

@@ -24,6 +24,8 @@ ALL_LIBFILES = $(wildcard lib/*.tcl)
 PRELOAD_FILES = lib/class.tcl
 NONTCL_LIBFILES = \
 	lib/git-gui.ico \
+	lib/git-gui.svg \
+	lib/git-gui-256.png \
 	$(wildcard lib/win32_*.js) \
 #end NONTCL_LIBFILES
 
