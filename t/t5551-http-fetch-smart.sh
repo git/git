@@ -302,6 +302,11 @@ test_expect_success 'dumb clone via http-backend respects namespace' '
 	test_cmp expect actual
 '
 
+test_expect_success 'smart http should display an error message on POST request failure' '
+	test_must_fail git clone --single-branch $HTTPD_URL/smart_fail_on_post_with_body/repo.git 2>actual &&
+	grep -q "error: Too many requests" actual
+'
+
 test_expect_success 'cookies stored in http.cookiefile when http.savecookies set' '
 	cat >cookies.txt <<-\EOF &&
 	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
