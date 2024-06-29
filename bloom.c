@@ -115,11 +115,11 @@ uint32_t murmur3_seeded(uint32_t seed, const char *data, size_t len)
 
 	uint32_t k;
 	for (i = 0; i < len4; i++) {
-		uint32_t byte1 = (uint32_t)data[4*i];
-		uint32_t byte2 = ((uint32_t)data[4*i + 1]) << 8;
-		uint32_t byte3 = ((uint32_t)data[4*i + 2]) << 16;
-		uint32_t byte4 = ((uint32_t)data[4*i + 3]) << 24;
-		k = byte1 | byte2 | byte3 | byte4;
+		uint32_t byte1 = ((uint32_t)data[4*i]) & 0xFF;
+		uint32_t byte2 = ((uint32_t)data[4*i + 1]) & 0xFF;
+		uint32_t byte3 = ((uint32_t)data[4*i + 2]) & 0xFF;
+		uint32_t byte4 = ((uint32_t)data[4*i + 3]) & 0xFF;
+		k = byte1 | (byte2 << 8) | (byte3 << 16) | (byte4 << 24);
 		k *= c1;
 		k = rotate_left(k, r1);
 		k *= c2;
