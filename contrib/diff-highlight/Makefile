@@ -9,6 +9,7 @@ diff-highlight: shebang.perl DiffHighlight.pm diff-highlight.perl
 	cat $^ >$@+
 	chmod +x $@+
 	mv $@+ $@
+	ln --symbolic --target-directory=$(DESTDIR) $(abspath $@)
 
 shebang.perl: FORCE
 	@echo '#!$(PERL_PATH_SQ)' >$@+
@@ -19,5 +20,6 @@ test: all
 
 clean:
 	$(RM) diff-highlight
+	$(RM) --force $(DESTDIR)diff-highlight
 
 .PHONY: FORCE
