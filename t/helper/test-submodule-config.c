@@ -29,10 +29,30 @@ int cmd__submodule_config(int argc, const char **argv)
 		my_argc--;
 	}
 
-	if (my_argc % 2 != 0)
+	if (my_argc > 1 && my_argc % 2 != 0)
 		die_usage(argc, argv, "Wrong number of arguments.");
 
 	setup_git_directory();
+
+	if (my_argc == 1) {
+		const struct submodule *submodule;
+		const char *path_or_name;
+
+		path_or_name = arg[0];
+		if (lookup_name) {
+			submodule = submodule_from_name(the_repository,
+							null_oid(), path_or_name);
+		} else
+			submodule = submodule_from_path(the_repository,
+							null_oid(), path_or_name);
+		if (!submodule)
+			die_usage(argc, argv, "Submodule not found.");
+
+		printf("Submodule name: '%s' for path '%s'\n", submodule->name,
+		       submodule->path);
+
+		return 0;
+	}
 
 	while (*arg) {
 		struct object_id commit_oid;
