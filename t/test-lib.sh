@@ -1269,9 +1269,12 @@ check_test_results_san_file_ () {
 	then
 		say "As TEST_PASSES_SANITIZE_LEAK=true isn't set the above leak is 'ok' with GIT_TEST_PASSING_SANITIZE_LEAK=check" &&
 		invert_exit_code=t
-	else
+	elif test "$test_failure" = 0
+	then
 		say "With GIT_TEST_SANITIZE_LEAK_LOG=true our logs revealed a memory leak, exit non-zero!" &&
 		invert_exit_code=t
+	else
+		say "With GIT_TEST_SANITIZE_LEAK_LOG=true our logs revealed a memory leak..."
 	fi
 }
 
