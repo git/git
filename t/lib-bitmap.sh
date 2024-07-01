@@ -1,6 +1,8 @@
 # Helpers for scripts testing bitmap functionality; see t5310 for
 # example usage.
 
+. "$TEST_DIRECTORY"/lib-midx.sh
+
 objdir=.git/objects
 midx=$objdir/pack/multi-pack-index
 
@@ -262,10 +264,6 @@ have_delta () {
 	echo $2 >expect &&
 	echo $1 | git cat-file --batch-check="%(deltabase)" >actual &&
 	test_cmp expect actual
-}
-
-midx_checksum () {
-	test-tool read-midx --checksum "$1"
 }
 
 # midx_pack_source <obj>

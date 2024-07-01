@@ -134,28 +134,32 @@ static int match_hash(unsigned len, const unsigned char *a, const unsigned char 
 static void unique_in_midx(struct multi_pack_index *m,
 			   struct disambiguate_state *ds)
 {
-	uint32_t num, i, first = 0;
-	const struct object_id *current = NULL;
-	int len = ds->len > ds->repo->hash_algo->hexsz ?
-		ds->repo->hash_algo->hexsz : ds->len;
-	num = m->num_objects;
+	for (; m; m = m->base_midx) {
+		uint32_t num, i, first = 0;
+		const struct object_id *current = NULL;
+		int len = ds->len > ds->repo->hash_algo->hexsz ?
+			ds->repo->hash_algo->hexsz : ds->len;
 
-	if (!num)
-		return;
+		num = m->num_objects + m->num_objects_in_base;
 
-	bsearch_midx(&ds->bin_pfx, m, &first);
+		if (!num)
+			continue;
 
-	/*
-	 * At this point, "first" is the location of the lowest object
-	 * with an object name that could match "bin_pfx".  See if we have
-	 * 0, 1 or more objects that actually match(es).
-	 */
-	for (i = first; i < num && !ds->ambiguous; i++) {
-		struct object_id oid;
-		current = nth_midxed_object_oid(&oid, m, i);
-		if (!match_hash(len, ds->bin_pfx.hash, current->hash))
-			break;
-		update_candidates(ds, current);
+		bsearch_one_midx(&ds->bin_pfx, m, &first);
+
+		/*
+		 * At this point, "first" is the location of the lowest
+		 * object with an object name that could match
+		 * "bin_pfx".  See if we have 0, 1 or more objects that
+		 * actually match(es).
+		 */
+		for (i = first; i < num && !ds->ambiguous; i++) {
+			struct object_id oid;
+			current = nth_midxed_object_oid(&oid, m, i);
+			if (!match_hash(len, ds->bin_pfx.hash, current->hash))
+				break;
+			update_candidates(ds, current);
+		}
 	}
 }
 
@@ -708,37 +712,40 @@ static int repo_extend_abbrev_len(struct repository *r UNUSED,
 static void find_abbrev_len_for_midx(struct multi_pack_index *m,
 				     struct min_abbrev_data *mad)
 {
-	int match = 0;
-	uint32_t num, first = 0;
-	struct object_id oid;
-	const struct object_id *mad_oid;
+	for (; m; m = m->base_midx) {
+		int match = 0;
+		uint32_t num, first = 0;
+		struct object_id oid;
+		const struct object_id *mad_oid;
 
-	if (!m->num_objects)
-		return;
+		if (!m->num_objects)
+			continue;
 
-	num = m->num_objects;
-	mad_oid = mad->oid;
-	match = bsearch_midx(mad_oid, m, &first);
+		num = m->num_objects + m->num_objects_in_base;
+		mad_oid = mad->oid;
+		match = bsearch_one_midx(mad_oid, m, &first);
 
-	/*
-	 * first is now the position in the packfile where we would insert
-	 * mad->hash if it does not exist (or the position of mad->hash if
-	 * it does exist). Hence, we consider a maximum of two objects
-	 * nearby for the abbreviation length.
-	 */
-	mad->init_len = 0;
-	if (!match) {
-		if (nth_midxed_object_oid(&oid, m, first))
-			extend_abbrev_len(&oid, mad);
-	} else if (first < num - 1) {
-		if (nth_midxed_object_oid(&oid, m, first + 1))
-			extend_abbrev_len(&oid, mad);
+		/*
+		 * first is now the position in the packfile where we
+		 * would insert mad->hash if it does not exist (or the
+		 * position of mad->hash if it does exist). Hence, we
+		 * consider a maximum of two objects nearby for the
+		 * abbreviation length.
+		 */
+		mad->init_len = 0;
+		if (!match) {
+			if (nth_midxed_object_oid(&oid, m, first))
+				extend_abbrev_len(&oid, mad);
+		} else if (first < num - 1) {
+			if (nth_midxed_object_oid(&oid, m, first + 1))
+				extend_abbrev_len(&oid, mad);
+		}
+		if (first > 0) {
+			if (nth_midxed_object_oid(&oid, m, first - 1))
+				extend_abbrev_len(&oid, mad);
+		}
+		mad->init_len = mad->cur_len;
 	}
-	if (first > 0) {
-		if (nth_midxed_object_oid(&oid, m, first - 1))
-			extend_abbrev_len(&oid, mad);
-	}
-	mad->init_len = mad->cur_len;
 }
 
 static void find_abbrev_len_for_pack(struct packed_git *p,

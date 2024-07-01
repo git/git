@@ -55,6 +55,10 @@ struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
 				      const char *file_name, void *data);
+void for_each_file_in_pack_subdir(const char *objdir,
+				  const char *subdir,
+				  each_file_in_pack_dir_fn fn,
+				  void *data);
 void for_each_file_in_pack_dir(const char *objdir,
 			       each_file_in_pack_dir_fn fn,
 			       void *data);

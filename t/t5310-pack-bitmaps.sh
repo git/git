@@ -5,10 +5,6 @@ test_description='exercise basic bitmap functionality'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bitmap.sh
 
-# t5310 deals only with single-pack bitmaps, so don't write MIDX bitmaps in
-# their place.
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
-
 # Likewise, allow individual tests to control whether or not they use
 # the boundary-based traversal.
 sane_unset GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL

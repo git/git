@@ -5,8 +5,6 @@ test_description='partial clone'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-# missing promisor objects cause repacks which write bitmaps to fail
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 # When enabled, some commands will write commit-graphs. This causes fsck
 # to fail when delete_object() is called because fsck will attempt to
 # verify the out-of-sync commit graph.

@@ -4,10 +4,10 @@ test_description='exercise basic multi-pack bitmap functionality'
 . ./test-lib.sh
 . "${TEST_DIRECTORY}/lib-bitmap.sh"
 
-# We'll be writing our own midx and bitmaps, so avoid getting confused by the
+# We'll be writing our own MIDX, so avoid getting confused by the
 # automatic ones.
 GIT_TEST_MULTI_PACK_INDEX=0
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
+GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=0
 
 # This test exercise multi-pack bitmap functionality where the object order is
 # stored and read from a special chunk within the MIDX, so use the default
