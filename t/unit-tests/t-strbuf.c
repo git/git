@@ -1,32 +1,6 @@
 #include "test-lib.h"
 #include "strbuf.h"
 
-/* wrapper that supplies tests with an empty, initialized strbuf */
-static void setup(void (*f)(struct strbuf*, const void*),
-		  const void *data)
-{
-	struct strbuf buf = STRBUF_INIT;
-
-	f(&buf, data);
-	strbuf_release(&buf);
-	check_uint(buf.len, ==, 0);
-	check_uint(buf.alloc, ==, 0);
-}
-
-/* wrapper that supplies tests with a populated, initialized strbuf */
-static void setup_populated(void (*f)(struct strbuf*, const void*),
-			    const char *init_str, const void *data)
-{
-	struct strbuf buf = STRBUF_INIT;
-
-	strbuf_addstr(&buf, init_str);
-	check_uint(buf.len, ==, strlen(init_str));
-	f(&buf, data);
-	strbuf_release(&buf);
-	check_uint(buf.len, ==, 0);
-	check_uint(buf.alloc, ==, 0);
-}
-
 static int assert_sane_strbuf(struct strbuf *buf)
 {
 	/* Initialized strbufs should always have a non-NULL buffer */
@@ -66,10 +40,8 @@ static void t_dynamic_init(void)
 	strbuf_release(&buf);
 }
 
-static void t_addch(struct strbuf *buf, const void *data)
+static void t_addch(struct strbuf *buf, int ch)
 {
-	const char *p_ch = data;
-	const char ch = *p_ch;
 	size_t orig_alloc = buf->alloc;
 	size_t orig_len = buf->len;
 
@@ -85,9 +57,8 @@ static void t_addch(struct strbuf *buf, const void *data)
 	check_char(buf->buf[buf->len], ==, '\0');
 }
 
-static void t_addstr(struct strbuf *buf, const void *data)
+static void t_addstr(struct strbuf *buf, const char *text)
 {
-	const char *text = data;
 	size_t len = strlen(text);
 	size_t orig_alloc = buf->alloc;
 	size_t orig_len = buf->len;
@@ -105,18 +76,50 @@ static void t_addstr(struct strbuf *buf, const void *data)
 	check_str(buf->buf + orig_len, text);
 }
 
+static void t_release(struct strbuf *sb)
+{
+	strbuf_release(sb);
+	check_uint(sb->len, ==, 0);
+	check_uint(sb->alloc, ==, 0);
+}
+
 int cmd_main(int argc, const char **argv)
 {
 	if (!TEST(t_static_init(), "static initialization works"))
 		test_skip_all("STRBUF_INIT is broken");
 	TEST(t_dynamic_init(), "dynamic initialization works");
-	TEST(setup(t_addch, "a"), "strbuf_addch adds char");
-	TEST(setup(t_addch, ""), "strbuf_addch adds NUL char");
-	TEST(setup_populated(t_addch, "initial value", "a"),
-	     "strbuf_addch appends to initial value");
-	TEST(setup(t_addstr, "hello there"), "strbuf_addstr adds string");
-	TEST(setup_populated(t_addstr, "initial value", "hello there"),
-	     "strbuf_addstr appends string to initial value");
+
+	if (TEST_RUN("strbuf_addch adds char")) {
+		struct strbuf sb = STRBUF_INIT;
+		t_addch(&sb, 'a');
+		t_release(&sb);
+	}
+
+	if (TEST_RUN("strbuf_addch adds NUL char")) {
+		struct strbuf sb = STRBUF_INIT;
+		t_addch(&sb, '\0');
+		t_release(&sb);
+	}
+
+	if (TEST_RUN("strbuf_addch appends to initial value")) {
+		struct strbuf sb = STRBUF_INIT;
+		t_addstr(&sb, "initial value");
+		t_addch(&sb, 'a');
+		t_release(&sb);
+	}
+
+	if (TEST_RUN("strbuf_addstr adds string")) {
+		struct strbuf sb = STRBUF_INIT;
+		t_addstr(&sb, "hello there");
+		t_release(&sb);
+	}
+
+	if (TEST_RUN("strbuf_addstr appends string to initial value")) {
+		struct strbuf sb = STRBUF_INIT;
+		t_addstr(&sb, "initial value");
+		t_addstr(&sb, "hello there");
+		t_release(&sb);
+	}
 
 	return test_done();
 }

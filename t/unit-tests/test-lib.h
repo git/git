@@ -22,6 +22,13 @@
 void test_plan(int count);
 
 /*
+ * Start a test, returns 1 if the test was actually started or 0 if it
+ * was skipped.  The test ends when the next test starts or test_done()
+ * is called.
+ */
+#define TEST_RUN(...) test__run(TEST_LOCATION(), __VA_ARGS__)
+
+/*
  * test_done() must be called at the end of main(). It will print the
  * plan if plan() was not called at the beginning of the test program
  * and returns the exit code for the test program.
@@ -156,6 +163,7 @@ extern union test__tmp test__tmp[2];
 int test__run_begin(void);
 __attribute__((format (printf, 3, 4)))
 int test__run_end(int, const char *, const char *, ...);
+int test__run(const char *location, const char *format, ...);
 void test__todo_begin(void);
 int test__todo_end(const char *, const char *, int);
 

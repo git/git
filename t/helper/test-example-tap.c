@@ -92,5 +92,38 @@ int cmd__example_tap(int argc, const char **argv)
 	test_res = TEST(t_empty(), "test with no checks");
 	TEST(check_int(test_res, ==, 0), "test with no checks returns 0");
 
+	if (TEST_RUN("TEST_RUN passing test"))
+		check_int(1, ==, 1);
+	if (TEST_RUN("TEST_RUN failing test"))
+		check_int(1, ==, 2);
+	if (TEST_RUN("TEST_RUN passing TEST_TODO()"))
+		TEST_TODO(check(0));
+	if (TEST_RUN("TEST_RUN failing TEST_TODO()"))
+		TEST_TODO(check(1));
+	if (TEST_RUN("TEST_RUN test_skip()")) {
+		check(0);
+		test_skip("missing prerequisite");
+		check(1);
+	}
+	if (TEST_RUN("TEST_RUN test_skip() inside TEST_TODO()"))
+		TEST_TODO((test_skip("missing prerequisite"), 1));
+	if (TEST_RUN("TEST_RUN TEST_TODO() after failing check")) {
+		check(0);
+		TEST_TODO(check(0));
+	}
+	if (TEST_RUN("TEST_RUN failing check after TEST_TODO()")) {
+		check(1);
+		TEST_TODO(check(0));
+		check(0);
+	}
+	if (TEST_RUN("TEST_RUN messages from failing string and char comparison")) {
+		check_str("\thello\\", "there\"\n");
+		check_str("NULL", NULL);
+		check_char('a', ==, '\n');
+		check_char('\\', ==, '\'');
+	}
+	if (TEST_RUN("TEST_RUN test with no checks"))
+		; /* nothing */
+
 	return test_done();
 }

@@ -16,6 +16,8 @@ static struct {
 	unsigned running :1;
 	unsigned skip_all :1;
 	unsigned todo :1;
+	char *desc;
+	char *location;
 } ctx = {
 	.lazy_plan = 1,
 	.result = RESULT_NONE,
@@ -123,9 +125,45 @@ void test_plan(int count)
 	ctx.lazy_plan = 0;
 }
 
+static void test__run_maybe_end(void)
+{
+	if (ctx.running) {
+		assert(ctx.location);
+		assert(ctx.desc);
+		test__run_end(0, ctx.location, "%s", ctx.desc);
+		FREE_AND_NULL(ctx.location);
+		FREE_AND_NULL(ctx.desc);
+	}
+	assert(!ctx.running);
+	assert(!ctx.location);
+	assert(!ctx.desc);
+}
+
+int test__run(const char *location, const char *format, ...)
+{
+	va_list ap;
+	char *desc;
+
+	test__run_maybe_end();
+
+	va_start(ap, format);
+	desc = xstrvfmt(format, ap);
+	va_end(ap);
+
+	if (test__run_begin()) {
+		test__run_end(1, location, "%s", desc);
+		free(desc);
+		return 0;
+	} else {
+		ctx.location = xstrdup(location);
+		ctx.desc = desc;
+		return 1;
+	}
+}
+
 int test_done(void)
 {
-	assert(!ctx.running);
+	test__run_maybe_end();
 
 	if (ctx.lazy_plan)
 		test_plan(ctx.count);
@@ -169,7 +207,7 @@ void test_skip_all(const char *format, ...)
 
 int test__run_begin(void)
 {
-	assert(!ctx.running);
+	test__run_maybe_end();
 
 	ctx.count++;
 	ctx.result = RESULT_NONE;
