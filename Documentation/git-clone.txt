@@ -297,6 +297,9 @@ or `--mirror` is given)
 
 `--`[`no-`]`shallow-submodules`::
 	All submodules which are cloned will be shallow with a depth of 1.
+	Also implies `--single-branch` for the submodule clones
+	unless `--no-single-branch` is passed, in which case histories near
+	the tips of all branches of the cloned submodules are fetched.
 
 `--`[`no-`]`remote-submodules`::
 	All submodules which are cloned will use the status of the submodule's

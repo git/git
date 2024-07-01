@@ -95,8 +95,8 @@ affected by this setting.
 
 submodule.<name>.shallow::
 	When set to true, a clone of this submodule will be performed as a
-	shallow clone (with a history depth of 1) unless the user explicitly
-	asks for a non-shallow clone.
+	shallow clone (single branch with a history depth of 1) unless the
+	user explicitly asks for a non-shallow clone.
 
 NOTES
 -----
