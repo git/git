@@ -17,6 +17,7 @@
 #include "strvec.h"
 #include "tag.h"
 #include "trace2.h"
+#include "color.h"
 
 static const char * const survey_usage[] = {
 	N_("(EXPERIMENTAL!) git survey <options>"),
@@ -900,6 +901,11 @@ int cmd_survey(int argc, const char **argv, const char *prefix, struct repositor
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(survey_usage, survey_options);
+
+	if (isatty(2))
+		color_fprintf_ln(stderr,
+				 want_color_fd(2, GIT_COLOR_AUTO) ? GIT_COLOR_YELLOW : "",
+				 "(THIS IS EXPERIMENTAL, EXPECT THE OUTPUT FORMAT TO CHANGE!)");
 
 	ctx.repo = repo;
 
