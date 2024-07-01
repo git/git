@@ -376,8 +376,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 
 		strvec_pushl(&cpr.args, "submodule--helper", "foreach", "--recursive",
 			     NULL);
-		strvec_pushl(&cpr.args, "--super-prefix", NULL);
-		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushf(&cpr.args, "--super-prefix=%s/", displaypath);
 
 		if (info->quiet)
 			strvec_push(&cpr.args, "--quiet");
@@ -702,8 +701,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 
 		strvec_pushl(&cpr.args, "submodule--helper", "status",
 			     "--recursive", NULL);
-		strvec_push(&cpr.args, "--super-prefix");
-		strvec_pushf(&cpr.args, "%s/", displaypath);
+		strvec_pushf(&cpr.args, "--super-prefix=%s/", displaypath);
 
 		if (flags & OPT_CACHED)
 			strvec_push(&cpr.args, "--cached");
@@ -1304,9 +1302,7 @@ static void sync_submodule(const char *path, const char *prefix,
 
 		strvec_pushl(&cpr.args, "submodule--helper", "sync",
 			     "--recursive", NULL);
-		strvec_push(&cpr.args, "--super-prefix");
-		strvec_pushf(&cpr.args, "%s/", displaypath);
-
+		strvec_pushf(&cpr.args, "--super-prefix=%s/", displaypath);
 
 		if (flags & OPT_QUIET)
 			strvec_push(&cpr.args, "--quiet");
@@ -2534,10 +2530,9 @@ static void update_data_to_args(const struct update_data *update_data,
 	enum submodule_update_type update_type = update_data->update_default;
 
 	strvec_pushl(args, "submodule--helper", "update", "--recursive", NULL);
-	if (update_data->displaypath) {
-		strvec_push(args, "--super-prefix");
-		strvec_pushf(args, "%s/", update_data->displaypath);
-	}
+	if (update_data->displaypath)
+		strvec_pushf(args, "--super-prefix=%s/",
+			     update_data->displaypath);
 	strvec_pushf(args, "--jobs=%d", update_data->max_jobs);
 	if (update_data->quiet)
 		strvec_push(args, "--quiet");
