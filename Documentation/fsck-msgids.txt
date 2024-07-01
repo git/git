@@ -19,6 +19,15 @@
 `badParentSha1`::
 	(ERROR) A commit object has a bad parent sha1.
 
+`badRefContent`::
+	(ERROR) A ref has a bad content.
+
+`badRefName`::
+	(ERROR) A ref has a bad name.
+
+`badSymrefPointee`::
+	(ERROR) The pointee of a symref is bad.
+
 `badTagName`::
 	(INFO) A tag has an invalid format.
 
@@ -163,6 +172,9 @@
 
 `nullSha1`::
 	(WARN) Tree contains entries pointing to a null sha1.
+
+`trailingRefContent`::
+	(WARN) A ref content has trailing contents.
 
 `treeNotSorted`::
 	(ERROR) A tree is not properly sorted.
