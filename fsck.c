@@ -259,20 +259,20 @@ static int report(struct fsck_options *options,
 
 void fsck_enable_object_names(struct fsck_options *options)
 {
-	if (!options->object_names)
-		options->object_names = kh_init_oid_map();
+	if (!options->objects_options.object_names)
+		options->objects_options.object_names = kh_init_oid_map();
 }
 
 const char *fsck_get_object_name(struct fsck_options *options,
 				 const struct object_id *oid)
 {
 	khiter_t pos;
-	if (!options->object_names)
+	if (!options->objects_options.object_names)
 		return NULL;
-	pos = kh_get_oid_map(options->object_names, *oid);
-	if (pos >= kh_end(options->object_names))
+	pos = kh_get_oid_map(options->objects_options.object_names, *oid);
+	if (pos >= kh_end(options->objects_options.object_names))
 		return NULL;
-	return kh_value(options->object_names, pos);
+	return kh_value(options->objects_options.object_names, pos);
 }
 
 void fsck_put_object_name(struct fsck_options *options,
@@ -284,15 +284,16 @@ void fsck_put_object_name(struct fsck_options *options,
 	khiter_t pos;
 	int hashret;
 
-	if (!options->object_names)
+	if (!options->objects_options.object_names)
 		return;
 
-	pos = kh_put_oid_map(options->object_names, *oid, &hashret);
+	pos = kh_put_oid_map(options->objects_options.object_names,
+			     *oid, &hashret);
 	if (!hashret)
 		return;
 	va_start(ap, fmt);
 	strbuf_vaddf(&buf, fmt, ap);
-	kh_value(options->object_names, pos) = strbuf_detach(&buf, NULL);
+	kh_value(options->objects_options.object_names, pos) = strbuf_detach(&buf, NULL);
 	va_end(ap);
 }
 
@@ -342,14 +343,14 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			if (name && obj)
 				fsck_put_object_name(options, &entry.oid, "%s%s/",
 						     name, entry.path);
-			result = options->walk(obj, OBJ_TREE, data, options);
+			result = options->objects_options.walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
 			obj = (struct object *)lookup_blob(the_repository, &entry.oid);
 			if (name && obj)
 				fsck_put_object_name(options, &entry.oid, "%s%s",
 						     name, entry.path);
-			result = options->walk(obj, OBJ_BLOB, data, options);
+			result = options->objects_options.walk(obj, OBJ_BLOB, data, options);
 		}
 		else {
 			result = error("in tree %s: entry %s has bad mode %.6o",
@@ -380,7 +381,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		fsck_put_object_name(options, get_commit_tree_oid(commit),
 				     "%s:", name);
 
-	result = options->walk((struct object *) repo_get_commit_tree(the_repository, commit),
+	result = options->objects_options.walk((struct object *) repo_get_commit_tree(the_repository, commit),
 			       OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
@@ -423,7 +424,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 			else
 				fsck_put_object_name(options, oid, "%s^", name);
 		}
-		result = options->walk((struct object *)parents->item, OBJ_COMMIT, data, options);
+		result = options->objects_options.walk((struct object *)parents->item, OBJ_COMMIT, data, options);
 		if (result < 0)
 			return result;
 		if (!res)
@@ -441,7 +442,7 @@ static int fsck_walk_tag(struct tag *tag, void *data, struct fsck_options *optio
 		return -1;
 	if (name)
 		fsck_put_object_name(options, &tag->tagged->oid, "%s", name);
-	return options->walk(tag->tagged, OBJ_ANY, data, options);
+	return options->objects_options.walk(tag->tagged, OBJ_ANY, data, options);
 }
 
 int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
@@ -598,6 +599,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 	unsigned o_mode;
 	const char *o_name;
 	struct name_stack df_dup_candidates = { NULL };
+	struct fsck_objects_options *objects_options = &options->objects_options;
 
 	if (init_tree_desc_gently(&desc, tree_oid, buffer, size,
 				  TREE_DESC_RAW_MODES)) {
@@ -628,7 +630,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 
 		if (is_hfs_dotgitmodules(name) || is_ntfs_dotgitmodules(name)) {
 			if (!S_ISLNK(mode))
-				oidset_insert(&options->gitmodules_found,
+				oidset_insert(&objects_options->gitmodules_found,
 					      entry_oid);
 			else
 				retval += report(options,
@@ -639,7 +641,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 
 		if (is_hfs_dotgitattributes(name) || is_ntfs_dotgitattributes(name)) {
 			if (!S_ISLNK(mode))
-				oidset_insert(&options->gitattributes_found,
+				oidset_insert(&objects_options->gitattributes_found,
 					      entry_oid);
 			else
 				retval += report(options, tree_oid, OBJ_TREE,
@@ -666,7 +668,7 @@ static int fsck_tree(const struct object_id *tree_oid,
 				has_dotgit |= is_ntfs_dotgit(backslash);
 				if (is_ntfs_dotgitmodules(backslash)) {
 					if (!S_ISLNK(mode))
-						oidset_insert(&options->gitmodules_found,
+						oidset_insert(&objects_options->gitmodules_found,
 							      entry_oid);
 					else
 						retval += report(options, tree_oid, OBJ_TREE,
@@ -1107,11 +1109,11 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 	if (object_on_skiplist(options, oid))
 		return 0;
 
-	if (oidset_contains(&options->gitmodules_found, oid)) {
+	if (oidset_contains(&options->objects_options.gitmodules_found, oid)) {
 		struct config_options config_opts = { 0 };
 		struct fsck_gitmodules_data data;
 
-		oidset_insert(&options->gitmodules_done, oid);
+		oidset_insert(&options->objects_options.gitmodules_done, oid);
 
 		if (!buf) {
 			/*
@@ -1137,10 +1139,10 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 		ret |= data.ret;
 	}
 
-	if (oidset_contains(&options->gitattributes_found, oid)) {
+	if (oidset_contains(&options->objects_options.gitattributes_found, oid)) {
 		const char *ptr;
 
-		oidset_insert(&options->gitattributes_done, oid);
+		oidset_insert(&options->objects_options.gitattributes_done, oid);
 
 		if (!buf || size > ATTR_MAX_FILE_SIZE) {
 			/*
@@ -1255,12 +1257,15 @@ static int fsck_blobs(struct oidset *blobs_found, struct oidset *blobs_done,
 
 int fsck_finish(struct fsck_options *options)
 {
+	struct fsck_objects_options *objects_options = &options->objects_options;
 	int ret = 0;
 
-	ret |= fsck_blobs(&options->gitmodules_found, &options->gitmodules_done,
+	ret |= fsck_blobs(&objects_options->gitmodules_found,
+			  &objects_options->gitmodules_done,
 			  FSCK_MSG_GITMODULES_MISSING, FSCK_MSG_GITMODULES_BLOB,
 			  options, ".gitmodules");
-	ret |= fsck_blobs(&options->gitattributes_found, &options->gitattributes_done,
+	ret |= fsck_blobs(&objects_options->gitattributes_found,
+			  &objects_options->gitattributes_done,
 			  FSCK_MSG_GITATTRIBUTES_MISSING, FSCK_MSG_GITATTRIBUTES_BLOB,
 			  options, ".gitattributes");
 

@@ -25,7 +25,7 @@ static unsigned int offset, len;
 static off_t consumed_bytes;
 static off_t max_input_size;
 static git_hash_ctx ctx;
-static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
+static struct fsck_options fsck_options = FSCK_OBJECTS_OPTIONS_STRICT;
 static struct progress *progress;
 
 /*
@@ -239,7 +239,7 @@ static int check_object(struct object *obj, enum object_type type,
 		die("Whoops! Cannot find object '%s'", oid_to_hex(&obj->oid));
 	if (fsck_object(obj, obj_buf->buffer, obj_buf->size, &fsck_options))
 		die("fsck error in packed object");
-	fsck_options.walk = check_object;
+	fsck_options.objects_options.walk = check_object;
 	if (fsck_walk(obj, NULL, &fsck_options))
 		die("Error on reachable objects of %s", oid_to_hex(&obj->oid));
 	write_cached_object(obj, obj_buf);

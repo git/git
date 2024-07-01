@@ -2507,7 +2507,7 @@ static int index_mem(struct index_state *istate,
 		}
 	}
 	if (flags & HASH_FORMAT_CHECK) {
-		struct fsck_options opts = FSCK_OPTIONS_DEFAULT;
+		struct fsck_options opts = FSCK_OBJECTS_OPTIONS_DEFAULT;
 
 		opts.strict = 1;
 		opts.error_func = hash_format_check_report;

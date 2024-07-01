@@ -15,7 +15,7 @@ static char const * const builtin_mktag_usage[] = {
 };
 static int option_strict = 1;
 
-static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
+static struct fsck_options fsck_options = FSCK_OBJECTS_OPTIONS_STRICT;
 
 static int mktag_fsck_error_func(struct fsck_options *o UNUSED,
 				 const struct object_id *oid UNUSED,

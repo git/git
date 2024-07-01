@@ -127,7 +127,7 @@ static int nr_threads;
 static int from_stdin;
 static int strict;
 static int do_fsck_object;
-static struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_GITMODULES;
+static struct fsck_options fsck_options = FSCK_OBJECTS_OPTIONS_MISSING_GITMODULES;
 static int verbose;
 static const char *progress_title;
 static int show_resolving_progress;
@@ -1746,7 +1746,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		usage(index_pack_usage);
 
 	disable_replace_refs();
-	fsck_options.walk = mark_link;
+	fsck_options.objects_options.walk = mark_link;
 
 	reset_pack_idx_option(&opts);
 	opts.flags |= WRITE_REV;

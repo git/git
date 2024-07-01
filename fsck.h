@@ -131,12 +131,8 @@ int fsck_error_cb_print_missing_gitmodules(struct fsck_options *o,
 					   enum fsck_msg_id msg_id,
 					   const char *message);
 
-struct fsck_options {
+struct fsck_objects_options {
 	fsck_walk_func walk;
-	fsck_error error_func;
-	unsigned strict:1;
-	enum fsck_msg_type *msg_type;
-	struct oidset skiplist;
 	struct oidset gitmodules_found;
 	struct oidset gitmodules_done;
 	struct oidset gitattributes_found;
@@ -144,29 +140,43 @@ struct fsck_options {
 	kh_oid_map_t *object_names;
 };
 
-#define FSCK_OPTIONS_DEFAULT { \
+struct fsck_options {
+	unsigned strict:1;
+	enum fsck_msg_type *msg_type;
+	struct oidset skiplist;
+	fsck_error error_func;
+	struct fsck_objects_options objects_options;
+};
+
+#define FSCK_OBJECTS_OPTIONS_DEFAULT { \
 	.skiplist = OIDSET_INIT, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
-	.gitattributes_found = OIDSET_INIT, \
-	.gitattributes_done = OIDSET_INIT, \
-	.error_func = fsck_error_function \
-}
-#define FSCK_OPTIONS_STRICT { \
-	.strict = 1, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
-	.gitattributes_found = OIDSET_INIT, \
-	.gitattributes_done = OIDSET_INIT, \
 	.error_func = fsck_error_function, \
+	.objects_options = { \
+		.gitmodules_found = OIDSET_INIT, \
+		.gitmodules_done = OIDSET_INIT, \
+		.gitattributes_found = OIDSET_INIT, \
+		.gitattributes_done = OIDSET_INIT, \
+	} \
 }
-#define FSCK_OPTIONS_MISSING_GITMODULES { \
+#define FSCK_OBJECTS_OPTIONS_STRICT { \
 	.strict = 1, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
-	.gitattributes_found = OIDSET_INIT, \
-	.gitattributes_done = OIDSET_INIT, \
+	.error_func = fsck_error_function, \
+	.objects_options = { \
+		.gitmodules_found = OIDSET_INIT, \
+		.gitmodules_done = OIDSET_INIT, \
+		.gitattributes_found = OIDSET_INIT, \
+		.gitattributes_done = OIDSET_INIT, \
+	} \
+}
+#define FSCK_OBJECTS_OPTIONS_MISSING_GITMODULES { \
+	.strict = 1, \
 	.error_func = fsck_error_cb_print_missing_gitmodules, \
+	.objects_options = { \
+		.gitmodules_found = OIDSET_INIT, \
+		.gitmodules_done = OIDSET_INIT, \
+		.gitattributes_found = OIDSET_INIT, \
+		.gitattributes_done = OIDSET_INIT, \
+	} \
 }
 
 /* descend in all linked child objects

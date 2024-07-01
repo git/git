@@ -42,8 +42,8 @@ static int check_full = 1;
 static int connectivity_only;
 static int check_strict;
 static int keep_cache_objects;
-static struct fsck_options fsck_walk_options = FSCK_OPTIONS_DEFAULT;
-static struct fsck_options fsck_obj_options = FSCK_OPTIONS_DEFAULT;
+static struct fsck_options fsck_walk_options = FSCK_OBJECTS_OPTIONS_DEFAULT;
+static struct fsck_options fsck_obj_options = FSCK_OBJECTS_OPTIONS_DEFAULT;
 static int errors_found;
 static int write_lost_and_found;
 static int verbose;
@@ -214,7 +214,7 @@ static int mark_used(struct object *obj, enum object_type type UNUSED,
 
 static void mark_unreachable_referents(const struct object_id *oid)
 {
-	struct fsck_options options = FSCK_OPTIONS_DEFAULT;
+	struct fsck_options options = FSCK_OBJECTS_OPTIONS_DEFAULT;
 	struct object *obj = lookup_object(the_repository, oid);
 
 	if (!obj || !(obj->flags & HAS_OBJ))
@@ -233,7 +233,7 @@ static void mark_unreachable_referents(const struct object_id *oid)
 			object_as_type(obj, type, 0);
 	}
 
-	options.walk = mark_used;
+	options.objects_options.walk = mark_used;
 	fsck_walk(obj, NULL, &options);
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
@@ -936,8 +936,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
 
-	fsck_walk_options.walk = mark_object;
-	fsck_obj_options.walk = mark_used;
+	fsck_walk_options.objects_options.walk = mark_object;
+	fsck_obj_options.objects_options.walk = mark_used;
 	fsck_obj_options.error_func = fsck_error_func;
 	if (check_strict)
 		fsck_obj_options.strict = 1;
