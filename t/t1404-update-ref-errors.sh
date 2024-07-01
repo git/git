@@ -100,13 +100,13 @@ df_test() {
 		printf "%s\n" "delete $delname" "create $addname $D"
 	fi >commands &&
 	test_must_fail git update-ref --stdin <commands 2>output.err &&
-	grep -E "fatal:( cannot lock ref $SQ$addname$SQ:)? $SQ$delref$SQ exists; cannot create $SQ$addref$SQ" output.err &&
+	grep -E "fatal:( cannot lock ref '$addname':)? '$delref' exists; cannot create '$addref'" output.err &&
 	printf "%s\n" "$C $delref" >expected-refs &&
 	git for-each-ref --format="%(objectname) %(refname)" $prefix/r >actual-refs &&
 	test_cmp expected-refs actual-refs
 }
 
-test_expect_success 'setup' '
+test_expect_success 'setup' - <<\EOT
 
 	git commit --allow-empty -m Initial &&
 	C=$(git rev-parse HEAD) &&
@@ -114,283 +114,283 @@ test_expect_success 'setup' '
 	D=$(git rev-parse HEAD) &&
 	git commit --allow-empty -m Third &&
 	E=$(git rev-parse HEAD)
-'
+EOT
 
-test_expect_success 'existing loose ref is a simple prefix of new' '
+test_expect_success 'existing loose ref is a simple prefix of new' - <<\EOT
 
 	prefix=refs/1l &&
 	test_update_rejected "a c e" false "b c/x d" \
-		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x$SQ"
+		"'$prefix/c' exists; cannot create '$prefix/c/x'"
 
-'
+EOT
 
-test_expect_success 'existing packed ref is a simple prefix of new' '
+test_expect_success 'existing packed ref is a simple prefix of new' - <<\EOT
 
 	prefix=refs/1p &&
 	test_update_rejected "a c e" true "b c/x d" \
-		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x$SQ"
+		"'$prefix/c' exists; cannot create '$prefix/c/x'"
 
-'
+EOT
 
-test_expect_success 'existing loose ref is a deeper prefix of new' '
+test_expect_success 'existing loose ref is a deeper prefix of new' - <<\EOT
 
 	prefix=refs/2l &&
 	test_update_rejected "a c e" false "b c/x/y d" \
-		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x/y$SQ"
+		"'$prefix/c' exists; cannot create '$prefix/c/x/y'"
 
-'
+EOT
 
-test_expect_success 'existing packed ref is a deeper prefix of new' '
+test_expect_success 'existing packed ref is a deeper prefix of new' - <<\EOT
 
 	prefix=refs/2p &&
 	test_update_rejected "a c e" true "b c/x/y d" \
-		"$SQ$prefix/c$SQ exists; cannot create $SQ$prefix/c/x/y$SQ"
+		"'$prefix/c' exists; cannot create '$prefix/c/x/y'"
 
-'
+EOT
 
-test_expect_success 'new ref is a simple prefix of existing loose' '
+test_expect_success 'new ref is a simple prefix of existing loose' - <<\EOT
 
 	prefix=refs/3l &&
 	test_update_rejected "a c/x e" false "b c d" \
-		"$SQ$prefix/c/x$SQ exists; cannot create $SQ$prefix/c$SQ"
+		"'$prefix/c/x' exists; cannot create '$prefix/c'"
 
-'
+EOT
 
-test_expect_success 'new ref is a simple prefix of existing packed' '
+test_expect_success 'new ref is a simple prefix of existing packed' - <<\EOT
 
 	prefix=refs/3p &&
 	test_update_rejected "a c/x e" true "b c d" \
-		"$SQ$prefix/c/x$SQ exists; cannot create $SQ$prefix/c$SQ"
+		"'$prefix/c/x' exists; cannot create '$prefix/c'"
 
-'
+EOT
 
-test_expect_success 'new ref is a deeper prefix of existing loose' '
+test_expect_success 'new ref is a deeper prefix of existing loose' - <<\EOT
 
 	prefix=refs/4l &&
 	test_update_rejected "a c/x/y e" false "b c d" \
-		"$SQ$prefix/c/x/y$SQ exists; cannot create $SQ$prefix/c$SQ"
+		"'$prefix/c/x/y' exists; cannot create '$prefix/c'"
 
-'
+EOT
 
-test_expect_success 'new ref is a deeper prefix of existing packed' '
+test_expect_success 'new ref is a deeper prefix of existing packed' - <<\EOT
 
 	prefix=refs/4p &&
 	test_update_rejected "a c/x/y e" true "b c d" \
-		"$SQ$prefix/c/x/y$SQ exists; cannot create $SQ$prefix/c$SQ"
+		"'$prefix/c/x/y' exists; cannot create '$prefix/c'"
 
-'
+EOT
 
-test_expect_success 'one new ref is a simple prefix of another' '
+test_expect_success 'one new ref is a simple prefix of another' - <<\EOT
 
 	prefix=refs/5 &&
 	test_update_rejected "a e" false "b c c/x d" \
-		"cannot process $SQ$prefix/c$SQ and $SQ$prefix/c/x$SQ at the same time"
+		"cannot process '$prefix/c' and '$prefix/c/x' at the same time"
 
-'
+EOT
 
-test_expect_success 'D/F conflict prevents add long + delete short' '
+test_expect_success 'D/F conflict prevents add long + delete short' - <<\EOT
 	df_test refs/df-al-ds --add-del foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents add short + delete long' '
+test_expect_success 'D/F conflict prevents add short + delete long' - <<\EOT
 	df_test refs/df-as-dl --add-del foo foo/bar
-'
+EOT
 
-test_expect_success 'D/F conflict prevents delete long + add short' '
+test_expect_success 'D/F conflict prevents delete long + add short' - <<\EOT
 	df_test refs/df-dl-as --del-add foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents delete short + add long' '
+test_expect_success 'D/F conflict prevents delete short + add long' - <<\EOT
 	df_test refs/df-ds-al --del-add foo foo/bar
-'
+EOT
 
-test_expect_success 'D/F conflict prevents add long + delete short packed' '
+test_expect_success 'D/F conflict prevents add long + delete short packed' - <<\EOT
 	df_test refs/df-al-dsp --pack --add-del foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents add short + delete long packed' '
+test_expect_success 'D/F conflict prevents add short + delete long packed' - <<\EOT
 	df_test refs/df-as-dlp --pack --add-del foo foo/bar
-'
+EOT
 
-test_expect_success 'D/F conflict prevents delete long packed + add short' '
+test_expect_success 'D/F conflict prevents delete long packed + add short' - <<\EOT
 	df_test refs/df-dlp-as --pack --del-add foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents delete short packed + add long' '
+test_expect_success 'D/F conflict prevents delete short packed + add long' - <<\EOT
 	df_test refs/df-dsp-al --pack --del-add foo foo/bar
-'
+EOT
 
 # Try some combinations involving symbolic refs...
 
-test_expect_success 'D/F conflict prevents indirect add long + delete short' '
+test_expect_success 'D/F conflict prevents indirect add long + delete short' - <<\EOT
 	df_test refs/df-ial-ds --sym-add --add-del foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents indirect add long + indirect delete short' '
+test_expect_success 'D/F conflict prevents indirect add long + indirect delete short' - <<\EOT
 	df_test refs/df-ial-ids --sym-add --sym-del --add-del foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents indirect add short + indirect delete long' '
+test_expect_success 'D/F conflict prevents indirect add short + indirect delete long' - <<\EOT
 	df_test refs/df-ias-idl --sym-add --sym-del --add-del foo foo/bar
-'
+EOT
 
-test_expect_success 'D/F conflict prevents indirect delete long + indirect add short' '
+test_expect_success 'D/F conflict prevents indirect delete long + indirect add short' - <<\EOT
 	df_test refs/df-idl-ias --sym-add --sym-del --del-add foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents indirect add long + delete short packed' '
+test_expect_success 'D/F conflict prevents indirect add long + delete short packed' - <<\EOT
 	df_test refs/df-ial-dsp --sym-add --pack --add-del foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents indirect add long + indirect delete short packed' '
+test_expect_success 'D/F conflict prevents indirect add long + indirect delete short packed' - <<\EOT
 	df_test refs/df-ial-idsp --sym-add --sym-del --pack --add-del foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents add long + indirect delete short packed' '
+test_expect_success 'D/F conflict prevents add long + indirect delete short packed' - <<\EOT
 	df_test refs/df-al-idsp --sym-del --pack --add-del foo/bar foo
-'
+EOT
 
-test_expect_success 'D/F conflict prevents indirect delete long packed + indirect add short' '
+test_expect_success 'D/F conflict prevents indirect delete long packed + indirect add short' - <<\EOT
 	df_test refs/df-idlp-ias --sym-add --sym-del --pack --del-add foo/bar foo
-'
+EOT
 
 # Test various errors when reading the old values of references...
 
-test_expect_success 'missing old value blocks update' '
+test_expect_success 'missing old value blocks update' - <<\EOT
 	prefix=refs/missing-update &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ
+	fatal: cannot lock ref '$prefix/foo': unable to resolve reference '$prefix/foo'
 	EOF
 	printf "%s\n" "update $prefix/foo $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'incorrect old value blocks update' '
+test_expect_success 'incorrect old value blocks update' - <<\EOT
 	prefix=refs/incorrect-update &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: is at $C but expected $D
+	fatal: cannot lock ref '$prefix/foo': is at $C but expected $D
 	EOF
 	printf "%s\n" "update $prefix/foo $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'existing old value blocks create' '
+test_expect_success 'existing old value blocks create' - <<\EOT
 	prefix=refs/existing-create &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: reference already exists
+	fatal: cannot lock ref '$prefix/foo': reference already exists
 	EOF
 	printf "%s\n" "create $prefix/foo $E" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'incorrect old value blocks delete' '
+test_expect_success 'incorrect old value blocks delete' - <<\EOT
 	prefix=refs/incorrect-delete &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: is at $C but expected $D
+	fatal: cannot lock ref '$prefix/foo': is at $C but expected $D
 	EOF
 	printf "%s\n" "delete $prefix/foo $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'missing old value blocks indirect update' '
+test_expect_success 'missing old value blocks indirect update' - <<\EOT
 	prefix=refs/missing-indirect-update &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ
+	fatal: cannot lock ref '$prefix/symref': unable to resolve reference '$prefix/foo'
 	EOF
 	printf "%s\n" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'incorrect old value blocks indirect update' '
+test_expect_success 'incorrect old value blocks indirect update' - <<\EOT
 	prefix=refs/incorrect-indirect-update &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
+	fatal: cannot lock ref '$prefix/symref': is at $C but expected $D
 	EOF
 	printf "%s\n" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'existing old value blocks indirect create' '
+test_expect_success 'existing old value blocks indirect create' - <<\EOT
 	prefix=refs/existing-indirect-create &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: reference already exists
+	fatal: cannot lock ref '$prefix/symref': reference already exists
 	EOF
 	printf "%s\n" "create $prefix/symref $E" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'incorrect old value blocks indirect delete' '
+test_expect_success 'incorrect old value blocks indirect delete' - <<\EOT
 	prefix=refs/incorrect-indirect-delete &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
+	fatal: cannot lock ref '$prefix/symref': is at $C but expected $D
 	EOF
 	printf "%s\n" "delete $prefix/symref $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'missing old value blocks indirect no-deref update' '
+test_expect_success 'missing old value blocks indirect no-deref update' - <<\EOT
 	prefix=refs/missing-noderef-update &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: reference is missing but expected $D
+	fatal: cannot lock ref '$prefix/symref': reference is missing but expected $D
 	EOF
 	printf "%s\n" "option no-deref" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'incorrect old value blocks indirect no-deref update' '
+test_expect_success 'incorrect old value blocks indirect no-deref update' - <<\EOT
 	prefix=refs/incorrect-noderef-update &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
+	fatal: cannot lock ref '$prefix/symref': is at $C but expected $D
 	EOF
 	printf "%s\n" "option no-deref" "update $prefix/symref $E $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'existing old value blocks indirect no-deref create' '
+test_expect_success 'existing old value blocks indirect no-deref create' - <<\EOT
 	prefix=refs/existing-noderef-create &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: reference already exists
+	fatal: cannot lock ref '$prefix/symref': reference already exists
 	EOF
 	printf "%s\n" "option no-deref" "create $prefix/symref $E" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'incorrect old value blocks indirect no-deref delete' '
+test_expect_success 'incorrect old value blocks indirect no-deref delete' - <<\EOT
 	prefix=refs/incorrect-noderef-delete &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	git update-ref $prefix/foo $C &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: is at $C but expected $D
+	fatal: cannot lock ref '$prefix/symref': is at $C but expected $D
 	EOF
 	printf "%s\n" "option no-deref" "delete $prefix/symref $D" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
 test_done
