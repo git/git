@@ -143,13 +143,13 @@ struct fsck_objects_options {
 struct fsck_options {
 	unsigned strict:1;
 	enum fsck_msg_type *msg_type;
-	struct oidset skiplist;
+	struct oidset oid_skiplist;
 	fsck_error error_func;
 	struct fsck_objects_options objects_options;
 };
 
 #define FSCK_OBJECTS_OPTIONS_DEFAULT { \
-	.skiplist = OIDSET_INIT, \
+	.oid_skiplist = OIDSET_INIT, \
 	.error_func = fsck_error_function, \
 	.objects_options = { \
 		.gitmodules_found = OIDSET_INIT, \
