@@ -131,6 +131,10 @@ int fsck_error_cb_print_missing_gitmodules(struct fsck_options *o,
 					   enum fsck_msg_id msg_id,
 					   const char *message);
 
+struct fsck_refs_options {
+	unsigned verbose:1;
+};
+
 struct fsck_objects_options {
 	fsck_walk_func walk;
 	struct oidset gitmodules_found;
@@ -146,6 +150,7 @@ struct fsck_options {
 	struct oidset oid_skiplist;
 	fsck_error error_func;
 	struct fsck_objects_options objects_options;
+	struct fsck_refs_options refs_options;
 };
 
 #define FSCK_OBJECTS_OPTIONS_DEFAULT { \
