@@ -38,6 +38,29 @@ test_expect_success 'cloning from local repo' '
 	test_cmp server/file local/file
 '
 
+test_expect_success 'clone with remote.*.vcs config' '
+	GIT_TRACE=$PWD/vcs-clone.trace \
+	git clone --no-local -c remote.origin.vcs=testgit "$PWD/server" vcs-clone &&
+	test_grep remote-testgit vcs-clone.trace
+'
+
+test_expect_success 'fetch with configured remote.*.vcs' '
+	git init vcs-fetch &&
+	git -C vcs-fetch config remote.origin.vcs testgit &&
+	git -C vcs-fetch config remote.origin.url "$PWD/server" &&
+	GIT_TRACE=$PWD/vcs-fetch.trace \
+	git -C vcs-fetch fetch origin &&
+	test_grep remote-testgit vcs-fetch.trace
+'
+
+test_expect_success 'vcs remote with no url' '
+	NOURL_UPSTREAM=$PWD/server &&
+	export NOURL_UPSTREAM &&
+	git init vcs-nourl &&
+	git -C vcs-nourl config remote.origin.vcs nourl &&
+	git -C vcs-nourl fetch origin
+'
+
 test_expect_success 'create new commit on remote' '
 	(cd server &&
 	 echo content >>file &&

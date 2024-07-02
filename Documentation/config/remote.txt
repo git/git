@@ -5,10 +5,19 @@ remote.pushDefault::
 
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
-	linkgit:git-push[1].
+	linkgit:git-push[1]. A configured remote can have multiple URLs;
+	in this case the first is used for fetching, and all are used
+	for pushing (assuming no `remote.<name>.pushurl` is defined).
+	Setting this key to the empty string clears the list of urls,
+	allowing you to override earlier config.
 
 remote.<name>.pushurl::
 	The push URL of a remote repository.  See linkgit:git-push[1].
+	If a `pushurl` option is present in a configured remote, it
+	is used for pushing instead of `remote.<name>.url`. A configured
+	remote can have multiple push URLs; in this case a push goes to
+	all of them. Setting this key to the empty string clears the
+	list of urls, allowing you to override earlier config.
 
 remote.<name>.proxy::
 	For remotes that require curl (http, https and ftp), the URL to

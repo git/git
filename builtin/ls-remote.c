@@ -112,11 +112,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			die("bad repository '%s'", dest);
 		die("No remote configured to list refs from.");
 	}
-	if (!remote->url_nr)
-		die("remote %s has no configured URL", dest);
 
 	if (get_url) {
-		printf("%s\n", *remote->url);
+		printf("%s\n", remote->url.v[0]);
 		return 0;
 	}
 
@@ -133,7 +131,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!dest && !quiet)
-		fprintf(stderr, "From %s\n", *remote->url);
+		fprintf(stderr, "From %s\n", remote->url.v[0]);
 	for ( ; ref; ref = ref->next) {
 		struct ref_array_item *item;
 		if (!check_ref_type(ref, flags))

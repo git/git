@@ -31,9 +31,7 @@ static int run_remote_archiver(int argc, const char **argv,
 	struct packet_reader reader;
 
 	_remote = remote_get(remote);
-	if (!_remote->url[0])
-		die(_("git archive: Remote with no URL"));
-	transport = transport_get(_remote, _remote->url[0]);
+	transport = transport_get(_remote, _remote->url.v[0]);
 	transport_connect(transport, "git-upload-archive", exec, fd);
 
 	/*
