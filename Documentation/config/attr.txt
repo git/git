@@ -1,7 +1,6 @@
 attr.tree::
 	A reference to a tree in the repository from which to read attributes,
-	instead of the `.gitattributes` file in the working tree. In a bare
-	repository, this defaults to `HEAD:.gitattributes`. If the value does
-	not resolve to a valid tree object, an empty tree is used instead.
+	instead of the `.gitattributes` file in the working tree. If the value
+	does not resolve to a valid tree object, an empty tree is used instead.
 	When the `GIT_ATTR_SOURCE` environment variable or `--attr-source`
 	command line option are used, this configuration variable has no effect.
