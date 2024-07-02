@@ -77,4 +77,31 @@ Fixes since v2.45.2
  * Varargs functions that are unannotated as printf-like or execl-like
    have been annotated as such.
 
+ * The "-k" and "--rfc" options of "format-patch" will now error out
+   when used together, as one tells us not to add anything to the
+   title of the commit, and the other one tells us to add "RFC" in
+   addition to "PATCH".
+
+ * When the user adds to "git rebase -i" instruction to "pick" a merge
+   commit, the error experience is not pleasant.  Such an error is now
+   caught earlier in the process that parses the todo list.
+
+ * We forgot to normalize the result of getcwd() to NFC on macOS where
+   all other paths are normalized, which has been corrected.  This still
+   does not address the case where core.precomposeUnicode configuration
+   is not defined globally.
+
+ * Earlier we stopped using the tree of HEAD as the default source of
+   attributes in a bare repository, but failed to document it.  This
+   has been corrected.
+
+ * An unused extern declaration for mingw has been removed to prevent
+   it from causing build failure.
+
+ * A helper function shared between two tests had a copy-paste bug,
+   which has been corrected.
+
+ * "git fetch-pack -k -k" without passing "--lock-pack" (which we
+   never do ourselves) did not work at all, which has been corrected.
+
 Also contains various documentation updates and code clean-ups.
