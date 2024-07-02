@@ -6,6 +6,7 @@
 . ${0%/*}/lib.sh
 
 group "Build fuzzers" make \
+	NO_CURL=NoThanks \
 	CC=clang \
 	FUZZ_CXX=clang++ \
 	CFLAGS="-fsanitize=fuzzer-no-link,address" \
