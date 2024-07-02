@@ -61,7 +61,7 @@ static int option_no_checkout, option_bare, option_mirror, option_single_branch 
 static int option_single_branch_submodules;
 static int option_local = -1, option_no_hardlinks, option_shared;
 static int option_no_tags;
-static int option_shallow_submodules;
+static int option_shallow_submodules = -1;
 static int option_reject_shallow = -1;    /* unspecified */
 static int config_reject_shallow = -1;    /* unspecified */
 static int deepen;
@@ -798,6 +798,8 @@ static int checkout(int submodule_progress, int filter_submodules)
 
 		if (option_shallow_submodules == 1)
 			strvec_push(&cmd.args, "--depth=1");
+		else if (option_shallow_submodules == 0)
+			strvec_push(&cmd.args, "--no-recommend-shallow");
 
 		if (max_jobs != -1)
 			strvec_pushf(&cmd.args, "--jobs=%d", max_jobs);

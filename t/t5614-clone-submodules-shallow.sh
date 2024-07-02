@@ -102,6 +102,22 @@ test_expect_success 'clone follows shallow recommendation' '
 	)
 '
 
+test_expect_success 'no-shallow-submodules clone option overrides gitmodules' '
+	test_when_finished "rm -rf super_clone" &&
+	test_config_global protocol.file.allow always &&
+	git clone --recurse-submodules --no-shallow-submodules --no-local "file://$pwd/." super_clone &&
+	(
+		cd super_clone &&
+		git log --oneline >lines &&
+		test_line_count = 4 lines
+	) &&
+	(
+		cd super_clone/sub &&
+		git log --oneline --all >lines &&
+		test_line_count = 5 lines
+	)
+'
+
 test_expect_success 'get unshallow recommended shallow submodule' '
 	test_when_finished "rm -rf super_clone" &&
 	test_config_global protocol.file.allow always &&
