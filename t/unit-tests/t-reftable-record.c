@@ -6,15 +6,11 @@
   https://developers.google.com/open-source/licenses/bsd
 */
 
-#include "record.h"
+#include "test-lib.h"
+#include "reftable/constants.h"
+#include "reftable/record.h"
 
-#include "system.h"
-#include "basics.h"
-#include "constants.h"
-#include "test_framework.h"
-#include "reftable-tests.h"
-
-static void test_copy(struct reftable_record *rec)
+static void t_copy(struct reftable_record *rec)
 {
 	struct reftable_record copy;
 	uint8_t typ;
@@ -24,15 +20,12 @@ static void test_copy(struct reftable_record *rec)
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
 	/* do it twice to catch memory leaks */
 	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
-	EXPECT(reftable_record_equal(rec, &copy, GIT_SHA1_RAWSZ));
-
-	puts("testing print coverage:\n");
-	reftable_record_print(&copy, GIT_SHA1_RAWSZ);
+	check(reftable_record_equal(rec, &copy, GIT_SHA1_RAWSZ));
 
 	reftable_record_release(&copy);
 }
 
-static void test_varint_roundtrip(void)
+static void t_varint_roundtrip(void)
 {
 	uint64_t inputs[] = { 0,
 			      1,
@@ -43,8 +36,8 @@ static void test_varint_roundtrip(void)
 			      4096,
 			      ((uint64_t)1 << 63),
 			      ((uint64_t)1 << 63) + ((uint64_t)1 << 63) - 1 };
-	int i = 0;
-	for (i = 0; i < ARRAY_SIZE(inputs); i++) {
+
+	for (size_t i = 0; i < ARRAY_SIZE(inputs); i++) {
 		uint8_t dest[10];
 
 		struct string_view out = {
@@ -55,29 +48,26 @@ static void test_varint_roundtrip(void)
 		int n = put_var_int(&out, in);
 		uint64_t got = 0;
 
-		EXPECT(n > 0);
+		check_int(n, >, 0);
 		out.len = n;
 		n = get_var_int(&got, &out);
-		EXPECT(n > 0);
+		check_int(n, >, 0);
 
-		EXPECT(got == in);
+		check_int(got, ==, in);
 	}
 }
 
 static void set_hash(uint8_t *h, int j)
 {
-	int i = 0;
-	for (i = 0; i < hash_size(GIT_SHA1_FORMAT_ID); i++) {
+	for (int i = 0; i < hash_size(GIT_SHA1_FORMAT_ID); i++)
 		h[i] = (j >> i) & 0xff;
-	}
 }
 
-static void test_reftable_ref_record_roundtrip(void)
+static void t_reftable_ref_record_roundtrip(void)
 {
 	struct strbuf scratch = STRBUF_INIT;
-	int i = 0;
 
-	for (i = REFTABLE_REF_DELETION; i < REFTABLE_NR_REF_VALUETYPES; i++) {
+	for (int i = REFTABLE_REF_DELETION; i < REFTABLE_NR_REF_VALUETYPES; i++) {
 		struct reftable_record in = {
 			.type = BLOCK_TYPE_REF,
 		};
@@ -107,19 +97,19 @@ static void test_reftable_ref_record_roundtrip(void)
 		}
 		in.u.ref.refname = xstrdup("refs/heads/master");
 
-		test_copy(&in);
+		t_copy(&in);
 
-		EXPECT(reftable_record_val_type(&in) == i);
+		check_int(reftable_record_val_type(&in), ==, i);
 
 		reftable_record_key(&in, &key);
 		n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
-		EXPECT(n > 0);
+		check_int(n, >, 0);
 
 		/* decode into a non-zero reftable_record to test for leaks. */
 		m = reftable_record_decode(&out, key, i, dest, GIT_SHA1_RAWSZ, &scratch);
-		EXPECT(n == m);
+		check_int(n, ==, m);
 
-		EXPECT(reftable_ref_record_equal(&in.u.ref, &out.u.ref,
+		check(reftable_ref_record_equal(&in.u.ref, &out.u.ref,
 						 GIT_SHA1_RAWSZ));
 		reftable_record_release(&in);
 
@@ -130,7 +120,7 @@ static void test_reftable_ref_record_roundtrip(void)
 	strbuf_release(&scratch);
 }
 
-static void test_reftable_log_record_equal(void)
+static void t_reftable_log_record_equal(void)
 {
 	struct reftable_log_record in[2] = {
 		{
@@ -143,16 +133,15 @@ static void test_reftable_log_record_equal(void)
 		}
 	};
 
-	EXPECT(!reftable_log_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_log_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
 	in[1].update_index = in[0].update_index;
-	EXPECT(reftable_log_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(reftable_log_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
 	reftable_log_record_release(&in[0]);
 	reftable_log_record_release(&in[1]);
 }
 
-static void test_reftable_log_record_roundtrip(void)
+static void t_reftable_log_record_roundtrip(void)
 {
-	int i;
 	struct reftable_log_record in[] = {
 		{
 			.refname = xstrdup("refs/heads/master"),
@@ -180,12 +169,12 @@ static void test_reftable_log_record_roundtrip(void)
 		}
 	};
 	struct strbuf scratch = STRBUF_INIT;
+	set_hash(in[0].value.update.new_hash, 1);
+	set_hash(in[0].value.update.old_hash, 2);
+	set_hash(in[2].value.update.new_hash, 3);
+	set_hash(in[2].value.update.old_hash, 4);
 
-	set_test_hash(in[0].value.update.new_hash, 1);
-	set_test_hash(in[0].value.update.old_hash, 2);
-	set_test_hash(in[2].value.update.new_hash, 3);
-	set_test_hash(in[2].value.update.old_hash, 4);
-	for (i = 0; i < ARRAY_SIZE(in); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(in); i++) {
 		struct reftable_record rec = { .type = BLOCK_TYPE_LOG };
 		struct strbuf key = STRBUF_INIT;
 		uint8_t buffer[1024] = { 0 };
@@ -212,18 +201,18 @@ static void test_reftable_log_record_roundtrip(void)
 
 		rec.u.log = in[i];
 
-		test_copy(&rec);
+		t_copy(&rec);
 
 		reftable_record_key(&rec, &key);
 
 		n = reftable_record_encode(&rec, dest, GIT_SHA1_RAWSZ);
-		EXPECT(n >= 0);
+		check_int(n, >=, 0);
 		valtype = reftable_record_val_type(&rec);
 		m = reftable_record_decode(&out, key, valtype, dest,
 					   GIT_SHA1_RAWSZ, &scratch);
-		EXPECT(n == m);
+		check_int(n, ==, m);
 
-		EXPECT(reftable_log_record_equal(&in[i], &out.u.log,
+		check(reftable_log_record_equal(&in[i], &out.u.log,
 						 GIT_SHA1_RAWSZ));
 		reftable_log_record_release(&in[i]);
 		strbuf_release(&key);
@@ -233,7 +222,7 @@ static void test_reftable_log_record_roundtrip(void)
 	strbuf_release(&scratch);
 }
 
-static void test_key_roundtrip(void)
+static void t_key_roundtrip(void)
 {
 	uint8_t buffer[1024] = { 0 };
 	struct string_view dest = {
@@ -252,21 +241,21 @@ static void test_key_roundtrip(void)
 	strbuf_addstr(&key, "refs/tags/bla");
 	extra = 6;
 	n = reftable_encode_key(&restart, dest, last_key, key, extra);
-	EXPECT(!restart);
-	EXPECT(n > 0);
+	check(!restart);
+	check_int(n, >, 0);
 
 	strbuf_addstr(&roundtrip, "refs/heads/master");
 	m = reftable_decode_key(&roundtrip, &rt_extra, dest);
-	EXPECT(n == m);
-	EXPECT(0 == strbuf_cmp(&key, &roundtrip));
-	EXPECT(rt_extra == extra);
+	check_int(n, ==, m);
+	check(!strbuf_cmp(&key, &roundtrip));
+	check_int(rt_extra, ==, extra);
 
 	strbuf_release(&last_key);
 	strbuf_release(&key);
 	strbuf_release(&roundtrip);
 }
 
-static void test_reftable_obj_record_roundtrip(void)
+static void t_reftable_obj_record_roundtrip(void)
 {
 	uint8_t testHash1[GIT_SHA1_RAWSZ] = { 1, 2, 3, 4, 0 };
 	uint64_t till9[] = { 1, 2, 3, 4, 500, 600, 700, 800, 9000 };
@@ -289,9 +278,8 @@ static void test_reftable_obj_record_roundtrip(void)
 		},
 	};
 	struct strbuf scratch = STRBUF_INIT;
-	int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(recs); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(recs); i++) {
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
 			.buf = buffer,
@@ -308,16 +296,16 @@ static void test_reftable_obj_record_roundtrip(void)
 		int n, m;
 		uint8_t extra;
 
-		test_copy(&in);
+		t_copy(&in);
 		reftable_record_key(&in, &key);
 		n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
-		EXPECT(n > 0);
+		check_int(n, >, 0);
 		extra = reftable_record_val_type(&in);
 		m = reftable_record_decode(&out, key, extra, dest,
 					   GIT_SHA1_RAWSZ, &scratch);
-		EXPECT(n == m);
+		check_int(n, ==, m);
 
-		EXPECT(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
 		strbuf_release(&key);
 		reftable_record_release(&out);
 	}
@@ -325,7 +313,7 @@ static void test_reftable_obj_record_roundtrip(void)
 	strbuf_release(&scratch);
 }
 
-static void test_reftable_index_record_roundtrip(void)
+static void t_reftable_index_record_roundtrip(void)
 {
 	struct reftable_record in = {
 		.type = BLOCK_TYPE_INDEX,
@@ -350,18 +338,18 @@ static void test_reftable_index_record_roundtrip(void)
 
 	strbuf_addstr(&in.u.idx.last_key, "refs/heads/master");
 	reftable_record_key(&in, &key);
-	test_copy(&in);
+	t_copy(&in);
 
-	EXPECT(0 == strbuf_cmp(&key, &in.u.idx.last_key));
+	check(!strbuf_cmp(&key, &in.u.idx.last_key));
 	n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
-	EXPECT(n > 0);
+	check_int(n, >, 0);
 
 	extra = reftable_record_val_type(&in);
 	m = reftable_record_decode(&out, key, extra, dest, GIT_SHA1_RAWSZ,
 				   &scratch);
-	EXPECT(m == n);
+	check_int(m, ==, n);
 
-	EXPECT(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
+	check(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
 
 	reftable_record_release(&out);
 	strbuf_release(&key);
@@ -369,14 +357,15 @@ static void test_reftable_index_record_roundtrip(void)
 	strbuf_release(&in.u.idx.last_key);
 }
 
-int record_test_main(int argc, const char *argv[])
+int cmd_main(int argc, const char *argv[])
 {
-	RUN_TEST(test_reftable_log_record_equal);
-	RUN_TEST(test_reftable_log_record_roundtrip);
-	RUN_TEST(test_reftable_ref_record_roundtrip);
-	RUN_TEST(test_varint_roundtrip);
-	RUN_TEST(test_key_roundtrip);
-	RUN_TEST(test_reftable_obj_record_roundtrip);
-	RUN_TEST(test_reftable_index_record_roundtrip);
-	return 0;
+	TEST(t_reftable_log_record_equal(), "reftable_log_record_equal works");
+	TEST(t_reftable_log_record_roundtrip(), "record operations work on log record");
+	TEST(t_reftable_ref_record_roundtrip(), "record operations work on ref record");
+	TEST(t_varint_roundtrip(), "put_var_int and get_var_int work");
+	TEST(t_key_roundtrip(), "reftable_encode_key and reftable_decode_key work");
+	TEST(t_reftable_obj_record_roundtrip(), "record operations work on obj record");
+	TEST(t_reftable_index_record_roundtrip(), "record operations work on index record");
+
+	return test_done();
 }
