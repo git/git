@@ -1708,9 +1708,9 @@ static int oid_object_info_convert(struct repository *r,
 			ret = convert_object_file(&outbuf,
 						  the_hash_algo, input_algo,
 						  content, size, type, !do_die);
+			free(content);
 			if (ret == -1)
 				return -1;
-			free(content);
 			size = outbuf.len;
 			content = strbuf_detach(&outbuf, NULL);
 		}
