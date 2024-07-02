@@ -205,6 +205,35 @@ static void t_reftable_log_record_comparison(void)
 	check(!reftable_record_cmp(&in[0], &in[1]));
 }
 
+static void t_reftable_log_record_compare_key(void)
+{
+	struct reftable_log_record logs[3] = {
+		{
+			.refname = (char *) "refs/heads/a",
+			.update_index = 1,
+		},
+		{
+			.refname = (char *) "refs/heads/b",
+			.update_index = 2,
+		},
+		{
+			.refname = (char *) "refs/heads/a",
+			.update_index = 3,
+		},
+	};
+
+	check_int(reftable_log_record_compare_key(&logs[0], &logs[1]), <, 0);
+	check_int(reftable_log_record_compare_key(&logs[1], &logs[0]), >, 0);
+
+	logs[1].update_index = logs[0].update_index;
+	check_int(reftable_log_record_compare_key(&logs[0], &logs[1]), <, 0);
+
+	check_int(reftable_log_record_compare_key(&logs[0], &logs[2]), >, 0);
+	check_int(reftable_log_record_compare_key(&logs[2], &logs[0]), <, 0);
+	logs[2].update_index = logs[0].update_index;
+	check_int(reftable_log_record_compare_key(&logs[0], &logs[2]), ==, 0);
+}
+
 static void t_reftable_log_record_roundtrip(void)
 {
 	struct reftable_log_record in[] = {
@@ -510,6 +539,7 @@ int cmd_main(int argc, const char *argv[])
 	TEST(t_reftable_index_record_comparison(), "comparison operations work on index record");
 	TEST(t_reftable_obj_record_comparison(), "comparison operations work on obj record");
 	TEST(t_reftable_ref_record_compare_name(), "reftable_ref_record_compare_name works");
+	TEST(t_reftable_log_record_compare_key(), "reftable_log_record_compare_key works");
 	TEST(t_reftable_log_record_roundtrip(), "record operations work on log record");
 	TEST(t_reftable_ref_record_roundtrip(), "record operations work on ref record");
 	TEST(t_varint_roundtrip(), "put_var_int and get_var_int work");
