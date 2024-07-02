@@ -4968,7 +4968,8 @@ void diff_setup_done(struct diff_options *options)
 	if (options->flags.follow_renames)
 		diff_check_follow_pathspec(&options->pathspec, 1);
 
-	if (!options->use_color || external_diff())
+	if (!options->use_color ||
+	    (options->flags.allow_external && external_diff()))
 		options->color_moved = 0;
 
 	if (options->filter_not) {
