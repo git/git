@@ -120,24 +120,36 @@ static void t_reftable_ref_record_roundtrip(void)
 	strbuf_release(&scratch);
 }
 
-static void t_reftable_log_record_equal(void)
+static void t_reftable_log_record_comparison(void)
 {
-	struct reftable_log_record in[2] = {
+	struct reftable_record in[3] = {
 		{
-			.refname = xstrdup("refs/heads/master"),
-			.update_index = 42,
+			.type = BLOCK_TYPE_LOG,
+			.u.log.refname = (char *) "refs/heads/master",
+			.u.log.update_index = 42,
 		},
 		{
-			.refname = xstrdup("refs/heads/master"),
-			.update_index = 22,
-		}
+			.type = BLOCK_TYPE_LOG,
+			.u.log.refname = (char *) "refs/heads/master",
+			.u.log.update_index = 22,
+		},
+		{
+			.type = BLOCK_TYPE_LOG,
+			.u.log.refname = (char *) "refs/heads/main",
+			.u.log.update_index = 22,
+		},
 	};
 
-	check(!reftable_log_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
-	in[1].update_index = in[0].update_index;
-	check(reftable_log_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
-	reftable_log_record_release(&in[0]);
-	reftable_log_record_release(&in[1]);
+	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[1], &in[2], GIT_SHA1_RAWSZ));
+	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
+	/* comparison should be reversed for equal keys, because
+	 * comparison is now performed on the basis of update indices */
+	check_int(reftable_record_cmp(&in[0], &in[1]), <, 0);
+
+	in[1].u.log.update_index = in[0].u.log.update_index;
+	check(reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_record_cmp(&in[0], &in[1]));
 }
 
 static void t_reftable_log_record_roundtrip(void)
@@ -359,7 +371,7 @@ static void t_reftable_index_record_roundtrip(void)
 
 int cmd_main(int argc, const char *argv[])
 {
-	TEST(t_reftable_log_record_equal(), "reftable_log_record_equal works");
+	TEST(t_reftable_log_record_comparison(), "comparison operations work on log record");
 	TEST(t_reftable_log_record_roundtrip(), "record operations work on log record");
 	TEST(t_reftable_ref_record_roundtrip(), "record operations work on ref record");
 	TEST(t_varint_roundtrip(), "put_var_int and get_var_int work");
