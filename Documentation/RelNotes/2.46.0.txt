@@ -186,6 +186,21 @@ Performance, Internal Implementation, Development Support etc.
    after writing MERGE_HEAD etc. files, which was useless for the
    purpose to recover from the failure.
 
+ * The output from "git cat-file --batch-check" and "--batch-command
+   (info)" should not be unbuffered, for which some tests have been
+   added.
+
+ * A CPP macro USE_THE_REPOSITORY_VARIABLE is introduced to help
+   transition the codebase to rely less on the availability of the
+   singleton the_repository instance.
+
+ * "git version --build-options" reports the version information of
+   OpenSSL and other libraries (if used) in the build.
+
+ * Memory ownership rules for the in-core representation of
+   remote.*.url configuration values have been straightened out, which
+   resulted in a few leak fixes and code clarification.
+
 
 Fixes since v2.45
 -----------------
@@ -331,6 +346,16 @@ Fixes since v2.45
    never do ourselves) did not work at all, which has been corrected.
    (merge 96a6621d25 jk/fetch-pack-fsck-wo-lock-pack later to maint).
 
+ * CI job to build minimum fuzzers learned to pass NO_CURL=NoThanks to
+   the build procedure, as its build environment does not offer, or
+   the rest of the build needs, anything cURL.
+   (merge 4e66b5a990 jc/fuzz-sans-curl later to maint).
+
+ * "git diff --no-ext-diff" when diff.external is configured ignored
+   the "--color-moved" option.
+   (merge 0f4b0d4cf0 rs/diff-color-moved-w-no-ext-diff-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bf6a86236e jc/worktree-git-path later to maint).
    (merge 28dc26dc33 rs/remove-unused-find-header-mem later to maint).
+   (merge 493fdae046 ew/object-convert-leakfix later to maint).
