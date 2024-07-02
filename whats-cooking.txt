@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2024, #09; Fri, 28)
-X-master-at: 790a17fb19d6eadd16c52e5d284a5c6921744766
-X-next-at: a6f4998532677456b59359a9ed4ffb96862a90a1
+Subject: What's cooking in git.git (Jul 2024, #01; Tue, 2)
+X-master-at: 06e570c0dfb2a2deb64d217db78e2ec21672f558
+X-next-at: 49e7a77208d3c1ef14056111881a0b2281e7abbe
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2024, #09; Fri, 28)
+What's cooking in git.git (Jul 2024, #01; Tue, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,98 +48,214 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jk/fetch-pack-fsck-wo-lock-pack (2024-06-20) 1 commit
-  (merged to 'next' on 2024-06-20 at c8c41abe07)
- + fetch-pack: fix segfault when fscking without --lock-pack
+* ew/cat-file-unbuffered-tests (2024-06-20) 2 commits
+  (merged to 'next' on 2024-06-24 at d605297495)
+ + t1006: ensure cat-file info isn't buffered by default
+ + Git.pm: use array in command_bidi_pipe example
 
- "git fetch-pack -k -k" without passing "--lock-pack" (which we
- never do ourselves) did not work at all, which has been corrected.
- source: <20240619130256.GA228005@coredump.intra.peff.net>
-
-
-* jk/t5500-typofix (2024-06-20) 1 commit
-  (merged to 'next' on 2024-06-20 at cf953645e3)
- + t5500: fix mistaken $SERVER reference in helper function
-
- A helper function shared between two tests had a copy-paste bug,
- which has been corrected.
- source: <20240619125255.GA346466@coredump.intra.peff.net>
+ The output from "git cat-file --batch-check" and "--batch-command
+ (info)" should not be unbuffered, for which some tests have been
+ added.
+ source: <20240617104326.3522535-1-e@80x24.org>
+ source: <20240618213041.M462972@dcvr>
 
 
-* js/mingw-remove-unused-extern-decl (2024-06-20) 1 commit
-  (merged to 'next' on 2024-06-20 at 65b323930f)
- + mingw: drop bogus (and unneeded) declaration of `_pgmptr`
+* ew/object-convert-leakfix (2024-06-24) 1 commit
+  (merged to 'next' on 2024-06-25 at f87bf4a18f)
+ + object-file: fix leak on conversion failure
 
- An unused extern declaration for mingw has been removed to prevent
- it from causing build failure.
- source: <pull.1752.git.1718777398765.gitgitgadget@gmail.com>
-
-
-* kz/merge-fail-early-upon-refresh-failure (2024-06-18) 1 commit
-  (merged to 'next' on 2024-06-20 at 01d4bdd019)
- + merge: avoid write merge state when unable to write index
-
- When "git merge" sees that the index cannot be refreshed (e.g. due
- to another process doing the same in the background), it died but
- after writing MERGE_HEAD etc. files, which was useless for the
- purpose to recover from the failure.
- source: <pull.1731.v6.git.1718593717745.gitgitgadget@gmail.com>
+ Leakfix.
+ source: <20240622043648.M78681@dcvr>
 
 
-* rs/remove-unused-find-header-mem (2024-06-20) 1 commit
-  (merged to 'next' on 2024-06-20 at 068c785d77)
- + commit: remove find_header_mem()
+* jc/fuzz-sans-curl (2024-06-21) 1 commit
+  (merged to 'next' on 2024-06-25 at 80f85c6e4c)
+ + fuzz: minimum fuzzers environment lacks libcURL
 
- Code clean-up.
- source: <0d85712c-5beb-4a64-a7f4-797782c26694@web.de>
+ CI job to build minimum fuzzers learned to pass NO_CURL=NoThanks to
+ the build procedure, as its build environment does not offer, or
+ the rest of the build needs, anything cURL.
+ source: <xmqqwmmhimxx.fsf@gitster.g>
+
+
+* jk/remote-wo-url (2024-06-14) 11 commits
+  (merged to 'next' on 2024-06-25 at f2b75a3507)
+ + remote: drop checks for zero-url case
+ + remote: always require at least one url in a remote
+ + t5801: test remote.*.vcs config
+ + t5801: make remote-testgit GIT_DIR setup more robust
+ + remote: allow resetting url list
+ + config: document remote.*.url/pushurl interaction
+ + remote: simplify url/pushurl selection
+ + remote: use strvecs to store remote url/pushurl
+ + remote: transfer ownership of memory in add_url(), etc
+ + remote: refactor alias_url() memory ownership
+ + archive: fix check for missing url
+
+ Memory ownership rules for the in-core representation of
+ remote.*.url configuration values have been straightened out, which
+ resulted in a few leak fixes and code clarification.
+ source: <20240614102439.GA222287@coredump.intra.peff.net>
+
+
+* ps/use-the-repository (2024-06-14) 22 commits
+  (merged to 'next' on 2024-06-24 at ca97784ba8)
+ + hex: guard declarations with `USE_THE_REPOSITORY_VARIABLE`
+ + t/helper: remove dependency on `the_repository` in "proc-receive"
+ + t/helper: fix segfault in "oid-array" command without repository
+ + t/helper: use correct object hash in partial-clone helper
+ + compat/fsmonitor: fix socket path in networked SHA256 repos
+ + replace-object: use hash algorithm from passed-in repository
+ + protocol-caps: use hash algorithm from passed-in repository
+ + oidset: pass hash algorithm when parsing file
+ + http-fetch: don't crash when parsing packfile without a repo
+ + hash-ll: merge with "hash.h"
+ + refs: avoid include cycle with "repository.h"
+ + global: introduce `USE_THE_REPOSITORY_VARIABLE` macro
+ + hash: require hash algorithm in `empty_tree_oid_hex()`
+ + hash: require hash algorithm in `is_empty_{blob,tree}_oid()`
+ + hash: make `is_null_oid()` independent of `the_repository`
+ + hash: convert `oidcmp()` and `oideq()` to compare whole hash
+ + global: ensure that object IDs are always padded
+ + hash: require hash algorithm in `oidread()` and `oidclr()`
+ + hash: require hash algorithm in `hasheq()`, `hashcmp()` and `hashclr()`
+ + hash: drop (mostly) unused `is_empty_{blob,tree}_sha1()` functions
+ + Merge branch 'gt/unit-test-oidtree' into ps/use-the-repository
+ + Merge branch 'ps/ref-storage-migration' into ps/use-the-repository
+
+ A CPP macro USE_THE_REPOSITORY_VARIABLE is introduced to help
+ transition the codebase to rely less on the availability of the
+ singleton the_repository instance.
+ source: <cover.1718347699.git.ps@pks.im>
+
+
+* rb/build-options-w-lib-versions (2024-06-21) 3 commits
+  (merged to 'next' on 2024-06-25 at e20656d61f)
+ + version: teach --build-options to reports zlib version information
+ + version: teach --build-options to reports libcurl version information
+  (merged to 'next' on 2024-06-20 at b75df251ae)
+ + version: --build-options reports OpenSSL version information
+
+ "git version --build-options" reports the version information of
+ OpenSSL and other libraries (if used) in the build.
+ source: <20240619172421.33548-1-randall.becker@nexbridge.ca>
+ source: <20240621180947.64419-1-randall.becker@nexbridge.ca>
+
+
+* rs/diff-color-moved-w-no-ext-diff-fix (2024-06-24) 1 commit
+  (merged to 'next' on 2024-06-25 at 73f48ab9a9)
+ + diff: allow --color-moved with --no-ext-diff
+
+ "git diff --no-ext-diff" when diff.external is configured ignored
+ the "--color-moved" option.
+ source: <fee1815c-80bb-42a4-97f3-d3f8e9b3a6ca@web.de>
 
 --------------------------------------------------
 [New Topics]
 
-* ss/doc-eol-attr-fix (2024-06-24) 1 commit
-  (merged to 'next' on 2024-06-26 at 6b96672a5f)
- + doc: fix case error of eol attribute in example
+* as/pathspec-h-typofix (2024-07-01) 1 commit
+  (merged to 'next' on 2024-07-02 at ae7cee4189)
+ + pathspec: fix typo "glossary-context.txt" -> "glossary-content.txt"
 
- Doc update.
+ Typofix.
 
  Will merge to 'master'.
- source: <pull.1736.git.git.1719178817386.gitgitgadget@gmail.com>
+ source: <20240629193137.54037-1-abhijeet.nkt@gmail.com>
 
 
-* as/describe-broken-refresh-index-fix (2024-06-26) 1 commit
- - describe: refresh the index when 'broken' flag is used
+* gt/unit-test-oidmap (2024-07-01) 1 commit
+ - t: migrate helper/test-oidmap.c to unit-tests/t-oidmap.c
 
- "git describe --dirty --broken" forgot to refresh the index before
- seeing if there is any chang, ("git describe --dirty" correctly did
- so), which has been corrected.
+ An existing test of oidmap API has been rewritten with the
+ unit-test framework.
 
  Will merge to 'next'?
- source: <20240626190801.68472-1-abhijeet.nkt@gmail.com>
+ source: <20240628122030.41554-1-shyamthakkar001@gmail.com>
 
 
-* cb/send-email-sanitize-trailer-addresses (2024-06-28) 1 commit
- - git-send-email: Use sanitized address when reading mbox body
+* jk/test-body-in-here-doc (2024-07-01) 2 commits
+ - t: convert some here-doc test bodies
+ - test-lib: allow test snippets as here-docs
 
- Address-looking strings found on the trailer are now placed on the
- Cc: list after running through sanitize_address.
+ The test framework learns to take the test body not as a single
+ string but as a here-document.
 
- Expecting a hopefully small and final reroll.
- cf. <xmqq1q4g3lwh.fsf@gitster.g>
- source: <20240628085018.65076-2-csokas.bence@prolan.hu>
-
-
-* jk/tests-without-dns (2024-06-26) 3 commits
- - t/lib-bundle-uri: use local fake bundle URLs
- - t5551: do not confirm that bogus url cannot be used
- - t5553: use local url for invalid fetch
-
- source: <20240626205355.GA1009060@coredump.intra.peff.net>
+ May need a matching change to shell script linter.
+ cf. <CAPig+cQdioTBinkacLFb7yktm168oB+qyP9MpZtTRE=1aBz5yg@mail.gmail.com>
+ source: <20240701220815.GA20293@coredump.intra.peff.net>
 
 
-* bc/http-proactive-auth (2024-06-28) 1 commit
- - http: allow authenticating proactively
+* rj/t0612-no-longer-leaks (2024-07-01) 1 commit
+ - t0612: mark as leak-free
 
- source: <20240628002742.3421311-2-sandals@crustytoothpaste.net>
+ A test that no longer leaks has been marked as such.
+
+ Will merge to 'next'.
+ source: <86427b9e-9574-4e61-890a-691779a8da82@gmail.com>
+
+
+* rj/t0613-no-longer-leaks (2024-07-01) 1 commit
+ - t0613: mark as leak-free
+
+ A test that no longer leaks has been marked as such.
+
+ Will merge to 'next'.
+ source: <23d41343-54fd-46c6-9d78-369e8009fa0b@gmail.com>
+
+
+* rj/test-sanitize-leak-log-fix (2024-07-01) 1 commit
+ - test-lib: fix GIT_TEST_SANITIZE_LEAK_LOG
+
+ Tests that use GIT_TEST_SANITIZE_LEAK_LOG feature got their exit
+ status inverted, which has been corrected.
+
+ Will merge to 'next'?
+ source: <f4ae6e2a-218a-419c-b6c4-59a08be247a0@gmail.com>
+
+
+* rs/simplify-submodule-helper-super-prefix-invocation (2024-07-01) 1 commit
+  (merged to 'next' on 2024-07-02 at 06e1677920)
+ + submodule--helper: use strvec_pushf() for --super-prefix
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <fb79ebc4-5ecf-4257-ac2e-39f98db5649c@web.de>
+
+
+* rs/unit-tests-test-run (2024-07-01) 6 commits
+ - t-strbuf: use TEST_RUN
+ - t-strvec: use TEST_RUN
+ - t-reftable-basics: use TEST_RUN
+ - t-ctype: use TEST_RUN
+ - unit-tests: add TEST_RUN
+ - t0080: move expected output to a file
+
+ Unit-test framework clean-up.
+
+ Will merge to 'next'?
+ source: <85b6b8a9-ee5f-42ab-bcbc-49976b30ef33@web.de>
+
+
+* cp/unit-test-reftable-record (2024-07-02) 11 commits
+ - t-reftable-record: add tests for reftable_log_record_compare_key()
+ - t-reftable-record: add tests for reftable_ref_record_compare_name()
+ - t-reftable-record: add index tests for reftable_record_is_deletion()
+ - t-reftable-record: add obj tests for reftable_record_is_deletion()
+ - t-reftable-record: add log tests for reftable_record_is_deletion()
+ - t-reftable-record: add ref tests for reftable_record_is_deletion()
+ - t-reftable-record: add comparison tests for obj records
+ - t-reftable-record: add comparison tests for index records
+ - t-reftable-record: add comparison tests for ref records
+ - t-reftable-record: add reftable_record_cmp() tests for log records
+ - t: move reftable/record_test.c to the unit testing framework
+
+ A test in reftable library has been rewritten using the unit test
+ framework.
+
+ Will merge to 'next'.
+ cf. <CAOLa=ZT_x1Kf7EopU+RbBFzX3EPU5NWx6f8L9Uw=sM0MbCXDAQ@mail.gmail.com>
+ source: <20240702074906.5587-1-chandrapratap3519@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -158,25 +274,24 @@ Release tarballs are available at:
  source: <20240612130217.8877-1-chandrapratap3519@gmail.com>
 
 
-* sj/ref-fsck (2024-06-27) 12 commits
- . fsck: add ref content check for files backend
- . fsck: add ref name check for files backend
- . files-backend: add unified interface for refs scanning
- . builtin/fsck: add `git-refs verify` child process
- . builtin/refs: add verify subcommand
- . refs: set up ref consistency check infrastructure
- . fsck: add "fsck_refs_options" initialization macros
- . fsck: add a unified interface for reporting fsck messages
- . fsck: add "fsck_refs_options" struct
- . fsck: abstract common options for reusing
- . fsck: use "fsck_configs" to set up configs
- . fsck: rename "fsck_options" to "fsck_objects_options"
+* sj/ref-fsck (2024-07-01) 11 commits
+ - fsck: add ref content check for files backend
+ - fsck: add ref name check for files backend
+ - files-backend: add unified interface for refs scanning
+ - builtin/fsck: add `git-refs verify` child process
+ - builtin/refs: add verify subcommand
+ - refs: set up ref consistency check infrastructure
+ - fsck: add "fsck_refs_options" initialization macros
+ - fsck: add a unified interface for reporting fsck messages
+ - fsck: add "fsck_refs_options" into "fsck_options"
+ - fsck: rename "skiplist" to "oid_skiplist"
+ - fsck: add "fsck_objects_options" to hold objects-related options
 
  "git fsck" infrastructure has been taught to also check the sanity
  of the ref database, in addition to the object database.
 
  Needs review.
- source: <Zn2Ah3WDhtOmzrzn@ArchLinux>
+ source: <ZoLHtmOKTfxMSxvw@ArchLinux>
 
 
 * cp/unit-test-reftable-pq (2024-06-14) 7 commits
@@ -244,7 +359,7 @@ Release tarballs are available at:
  "git mktree" has been rewritten, taking advantage of the cache-tree
  API.
 
- Will merge to 'next'.
+ Will merge to 'next'?
  source: <pull.1746.v2.git.1718834285.gitgitgadget@gmail.com>
 
 
@@ -272,6 +387,51 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ss/doc-eol-attr-fix (2024-06-24) 1 commit
+  (merged to 'next' on 2024-06-26 at 6b96672a5f)
+ + doc: fix case error of eol attribute in example
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1736.git.git.1719178817386.gitgitgadget@gmail.com>
+
+
+* as/describe-broken-refresh-index-fix (2024-06-26) 1 commit
+ - describe: refresh the index when 'broken' flag is used
+
+ "git describe --dirty --broken" forgot to refresh the index before
+ seeing if there is any chang, ("git describe --dirty" correctly did
+ so), which has been corrected.
+
+ Will merge to 'next'?
+ source: <20240626190801.68472-1-abhijeet.nkt@gmail.com>
+
+
+* cb/send-email-sanitize-trailer-addresses (2024-07-01) 1 commit
+ - git-send-email: use sanitized address when reading mbox body
+
+ Address-looking strings found on the trailer are now placed on the
+ Cc: list after running through sanitize_address.
+
+ Will merge to 'next'?
+ source: <20240701090115.56957-1-csokas.bence@prolan.hu>
+
+
+* jk/tests-without-dns (2024-06-26) 3 commits
+ - t/lib-bundle-uri: use local fake bundle URLs
+ - t5551: do not confirm that bogus url cannot be used
+ - t5553: use local url for invalid fetch
+
+ source: <20240626205355.GA1009060@coredump.intra.peff.net>
+
+
+* bc/http-proactive-auth (2024-06-28) 1 commit
+ - http: allow authenticating proactively
+
+ source: <20240628002742.3421311-2-sandals@crustytoothpaste.net>
+
 
 * ps/leakfixes-more (2024-06-11) 30 commits
   (merged to 'next' on 2024-06-27 at 9550a05068)
@@ -325,28 +485,6 @@ Release tarballs are available at:
  source: <20240625231248.4070257-1-gitster@pobox.com>
 
 
-* jk/remote-wo-url (2024-06-14) 11 commits
-  (merged to 'next' on 2024-06-25 at f2b75a3507)
- + remote: drop checks for zero-url case
- + remote: always require at least one url in a remote
- + t5801: test remote.*.vcs config
- + t5801: make remote-testgit GIT_DIR setup more robust
- + remote: allow resetting url list
- + config: document remote.*.url/pushurl interaction
- + remote: simplify url/pushurl selection
- + remote: use strvecs to store remote url/pushurl
- + remote: transfer ownership of memory in add_url(), etc
- + remote: refactor alias_url() memory ownership
- + archive: fix check for missing url
-
- Memory ownership rules for the in-core representation of
- remote.*.url configuration values have been straightened out, which
- resulted in a few leak fixes and code clarification.
-
- Will merge to 'master'.
- source: <20240614102439.GA222287@coredump.intra.peff.net>
-
-
 * jc/archive-prefix-with-add-virtual-file (2024-06-26) 1 commit
   (merged to 'next' on 2024-06-26 at da3ae88d56)
  + archive: document that --add-virtual-file takes full path
@@ -374,39 +512,6 @@ Release tarballs are available at:
  source: <20240621231826.3280338-1-gitster@pobox.com>
 
 
-* jc/fuzz-sans-curl (2024-06-21) 1 commit
-  (merged to 'next' on 2024-06-25 at 80f85c6e4c)
- + fuzz: minimum fuzzers environment lacks libcURL
-
- CI job to build minimum fuzzers learned to pass NO_CURL=NoThanks to
- the build procedure, as its build environment does not offer, or
- the rest of the build needs, anything cURL.
-
- Will merge to 'master'.
- source: <xmqqwmmhimxx.fsf@gitster.g>
-
-
-* ew/object-convert-leakfix (2024-06-24) 1 commit
-  (merged to 'next' on 2024-06-25 at f87bf4a18f)
- + object-file: fix leak on conversion failure
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20240622043648.M78681@dcvr>
-
-
-* rs/diff-color-moved-w-no-ext-diff-fix (2024-06-24) 1 commit
-  (merged to 'next' on 2024-06-25 at 73f48ab9a9)
- + diff: allow --color-moved with --no-ext-diff
-
- "git diff --no-ext-diff" when diff.external is configured ignored
- the "--color-moved" option.
-
- Will merge to 'master'.
- source: <fee1815c-80bb-42a4-97f3-d3f8e9b3a6ca@web.de>
-
-
 * ds/sparse-lstat-caching (2024-06-28) 5 commits
   (merged to 'next' on 2024-06-28 at 9efaea181d)
  + sparse-index: improve lstat caching of sparse paths
@@ -423,21 +528,6 @@ Release tarballs are available at:
  source: <pull.1754.v3.git.1719578605.gitgitgadget@gmail.com>
 
 
-* rb/build-options-w-lib-versions (2024-06-21) 3 commits
-  (merged to 'next' on 2024-06-25 at e20656d61f)
- + version: teach --build-options to reports zlib version information
- + version: teach --build-options to reports libcurl version information
-  (merged to 'next' on 2024-06-20 at b75df251ae)
- + version: --build-options reports OpenSSL version information
-
- "git version --build-options" reports the version information of
- OpenSSL and other libraries (if used) in the build.
-
- Will merge to 'master'.
- source: <20240619172421.33548-1-randall.becker@nexbridge.ca>
- source: <20240621180947.64419-1-randall.becker@nexbridge.ca>
-
-
 * rj/pager-die-upon-exec-failure (2024-06-25) 1 commit
   (merged to 'next' on 2024-06-26 at bfb6361ca8)
  + pager: die when paging to non-existing command
@@ -449,53 +539,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <392deded-9eb2-42fa-b6f9-54c22d3ffd33@gmail.com>
-
-
-* ew/cat-file-unbuffered-tests (2024-06-20) 2 commits
-  (merged to 'next' on 2024-06-24 at d605297495)
- + t1006: ensure cat-file info isn't buffered by default
- + Git.pm: use array in command_bidi_pipe example
-
- The output from "git cat-file --batch-check" and "--batch-command
- (info)" should not be unbuffered, for which some tests have been
- added.
-
- Will merge to 'master'.
- source: <20240617104326.3522535-1-e@80x24.org>
- source: <20240618213041.M462972@dcvr>
-
-
-* ps/use-the-repository (2024-06-14) 22 commits
-  (merged to 'next' on 2024-06-24 at ca97784ba8)
- + hex: guard declarations with `USE_THE_REPOSITORY_VARIABLE`
- + t/helper: remove dependency on `the_repository` in "proc-receive"
- + t/helper: fix segfault in "oid-array" command without repository
- + t/helper: use correct object hash in partial-clone helper
- + compat/fsmonitor: fix socket path in networked SHA256 repos
- + replace-object: use hash algorithm from passed-in repository
- + protocol-caps: use hash algorithm from passed-in repository
- + oidset: pass hash algorithm when parsing file
- + http-fetch: don't crash when parsing packfile without a repo
- + hash-ll: merge with "hash.h"
- + refs: avoid include cycle with "repository.h"
- + global: introduce `USE_THE_REPOSITORY_VARIABLE` macro
- + hash: require hash algorithm in `empty_tree_oid_hex()`
- + hash: require hash algorithm in `is_empty_{blob,tree}_oid()`
- + hash: make `is_null_oid()` independent of `the_repository`
- + hash: convert `oidcmp()` and `oideq()` to compare whole hash
- + global: ensure that object IDs are always padded
- + hash: require hash algorithm in `oidread()` and `oidclr()`
- + hash: require hash algorithm in `hasheq()`, `hashcmp()` and `hashclr()`
- + hash: drop (mostly) unused `is_empty_{blob,tree}_sha1()` functions
- + Merge branch 'gt/unit-test-oidtree' into ps/use-the-repository
- + Merge branch 'ps/ref-storage-migration' into ps/use-the-repository
-
- A CPP macro USE_THE_REPOSITORY_VARIABLE is introduced to help
- transition the codebase to rely less on the availability of the
- singleton the_repository instance.
-
- Will merge to 'master'.
- source: <cover.1718347699.git.ps@pks.im>
 
 
 * en/ort-inner-merge-error-fix (2024-06-20) 7 commits
@@ -555,70 +598,3 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1719333276.git.me@ttaylorr.com>
-
---------------------------------------------------
-[Discarded]
-
-* rj/add-p-pager (2024-06-04) 6 commits
- . add-patch: introduce the command '|'
- . test-terminal: introduce --no-stdin-pty
- . pager: introduce setup_custom_pager
- . pager: introduce wait_for_pager
- . pager: do not close fd 2 unnecessarily
- . add-patch: test for 'p' command
-
- "git add -i" and friends learned a new '|' command that sends the
- current hunk to the pager, instead of dumping it to the terminal.
-
- Expecting a reroll to work well with jk/am-retry
- source: <1ef0ac3a-3be5-4fc2-93f8-46610f3d1880@gmail.com>
-
-
-* jc/rerere-cleanup (2023-08-25) 4 commits
- . rerere: modernize use of empty strbuf
- . rerere: try_merge() should use LL_MERGE_ERROR when it means an error
- . rerere: fix comment on handle_file() helper
- . rerere: simplify check_one_conflict() helper function
-
- Code clean-up.
-
- Discarded.
- source: <20230824205456.1231371-1-gitster@pobox.com>
-
-
-* ie/config-includeif-hostname (2024-03-19) 2 commits
- . config: learn the "hostname:" includeIf condition
- . t: add a test helper for getting hostname
-
- The conditional inclusion mechanism for configuration files learned
- to switch on the hostname.
-
- Has been in the "Expecting a reroll." state for too long.
- cf. <20240319210428.GC1159535@coredump.intra.peff.net>
- cf. <20240320001934.GA903718@coredump.intra.peff.net>
- source: <20240319183722.211300-1-ignacio@iencinas.com>
-
-
-* bk/complete-dirname-for-am-and-format-patch (2024-01-12) 1 commit
- . completion: dir-type optargs for am, format-patch
-
- Command line completion support (in contrib/) has been
- updated for a few commands to complete directory names where a
- directory name is expected.
-
- Has been in the "Expecting a reroll." state for too long.
- cf. <40c3a824-a961-490b-94d4-4eb23c8f713d@gmail.com>
- cf. <6683f24e-7e56-489d-be2d-8afe1fc38d2b@gmail.com>
- source: <d37781c3-6af2-409b-95a8-660a9b92d20b@smtp-relay.sendinblue.com>
-
-
-* bk/complete-send-email (2024-01-12) 1 commit
- . completion: don't complete revs when --no-format-patch
-
- Command line completion support (in contrib/) has been taught to
- avoid offering revision names as candidates to "git send-email" when
- the command is used to send pre-generated files.
-
- Has been in the "Expecting a reroll." state for too long.
- cf. <CAC4O8c88Z3ZqxH2VVaNPpEGB3moL5dJcg3cOWuLWwQ_hLrJMtA@mail.gmail.com>
- source: <a718b5ee-afb0-44bd-a299-3208fac43506@smtp-relay.sendinblue.com>
