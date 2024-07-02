@@ -1,7 +1,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "hash-ll.h"
+#include "hash.h"
 
 struct buffer_slab;
 struct repository;

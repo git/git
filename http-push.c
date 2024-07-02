@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "environment.h"
 #include "hex.h"
@@ -1016,6 +1018,7 @@ static void remote_ls(const char *path, int flags,
 /* extract hex from sharded "xx/x{38}" filename */
 static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
 {
+	memset(oid->hash, 0, GIT_MAX_RAWSZ);
 	oid->algo = hash_algo_by_ptr(the_hash_algo);
 
 	if (strlen(path) != the_hash_algo->hexsz + 1)
@@ -1552,7 +1555,7 @@ static void fetch_symref(const char *path, char **symref, struct object_id *oid)
 	free(url);
 
 	FREE_AND_NULL(*symref);
-	oidclr(oid);
+	oidclr(oid, the_repository->hash_algo);
 
 	if (buffer.len == 0)
 		return;

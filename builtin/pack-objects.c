@@ -2079,7 +2079,8 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 				oidread(&base_ref,
 					use_pack(p, &w_curs,
 						 entry->in_pack_offset + used,
-						 NULL));
+						 NULL),
+					the_repository->hash_algo);
 				have_base = 1;
 			}
 			entry->in_pack_header_size = used + the_hash_algo->rawsz;

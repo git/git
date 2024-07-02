@@ -1,7 +1,7 @@
 #ifndef CHECKOUT_H
 #define CHECKOUT_H
 
-#include "hash-ll.h"
+#include "hash.h"
 
 /*
  * Check if the branch name uniquely matches a branch name on a remote

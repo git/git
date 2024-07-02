@@ -1,7 +1,7 @@
 #ifndef XDIFF_INTERFACE_H
 #define XDIFF_INTERFACE_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "xdiff/xdiff.h"
 
 /*

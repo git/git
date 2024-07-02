@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "gettext.h"
@@ -127,8 +129,12 @@ int cmd_main(int argc, const char **argv)
 		} else if (skip_prefix(argv[arg], "--packfile=", &p)) {
 			const char *end;
 
+			if (nongit)
+				die(_("not a git repository"));
+
 			packfile = 1;
-			if (parse_oid_hex(p, &packfile_hash, &end) || *end)
+			if (parse_oid_hex_algop(p, &packfile_hash, &end,
+						the_repository->hash_algo) || *end)
 				die(_("argument to --packfile must be a valid hash (got '%s')"), p);
 		} else if (skip_prefix(argv[arg], "--index-pack-arg=", &p)) {
 			strvec_push(&index_pack_args, p);

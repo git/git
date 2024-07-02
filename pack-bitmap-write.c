@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
@@ -994,7 +996,7 @@ static void write_hash_cache(struct hashfile *f,
 void bitmap_writer_set_checksum(struct bitmap_writer *writer,
 				const unsigned char *sha1)
 {
-	hashcpy(writer->pack_checksum, sha1);
+	hashcpy(writer->pack_checksum, sha1, the_repository->hash_algo);
 }
 
 void bitmap_writer_finish(struct bitmap_writer *writer,
@@ -1023,7 +1025,7 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 	header.version = htons(default_version);
 	header.options = htons(flags | options);
 	header.entry_count = htonl(bitmap_writer_nr_selected_commits(writer));
-	hashcpy(header.checksum, writer->pack_checksum);
+	hashcpy(header.checksum, writer->pack_checksum, the_repository->hash_algo);
 
 	hashwrite(f, &header, sizeof(header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz);
 	dump_bitmap(f, writer->commits);

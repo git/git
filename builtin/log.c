@@ -4,7 +4,7 @@
  * (C) Copyright 2006 Linus Torvalds
  *		 2006 Junio Hamano
  */
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "abspath.h"
 #include "config.h"
 #include "environment.h"
@@ -1938,7 +1938,7 @@ static void print_bases(struct base_tree_info *bases, FILE *file)
 	free(bases->patch_id);
 	bases->nr_patch_id = 0;
 	bases->alloc_patch_id = 0;
-	oidclr(&bases->base_commit);
+	oidclr(&bases->base_commit, the_repository->hash_algo);
 }
 
 static const char *diff_title(struct strbuf *sb,

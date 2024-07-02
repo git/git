@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "advice.h"
 #include "commit.h"
@@ -240,7 +242,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 			 *     (will be overwritten by following addition)
 			 */
 			if (oideq(&mp->local, &uninitialized))
-				oidclr(&mp->local);
+				oidclr(&mp->local, the_repository->hash_algo);
 		} else if (is_null_oid(&p->one->oid)) { /* addition */
 			/*
 			 * Either this is a true addition (1), or it is part
@@ -556,7 +558,7 @@ int notes_merge(struct notes_merge_options *o,
 
 	assert(o->local_ref && o->remote_ref);
 	assert(!strcmp(o->local_ref, local_tree->ref));
-	oidclr(result_oid);
+	oidclr(result_oid, the_repository->hash_algo);
 
 	trace_printf("notes_merge(o->local_ref = %s, o->remote_ref = %s)\n",
 	       o->local_ref, o->remote_ref);
@@ -579,7 +581,7 @@ int notes_merge(struct notes_merge_options *o,
 		 * unborn ref, perform the merge using an empty notes tree.
 		 */
 		if (!check_refname_format(o->remote_ref, 0)) {
-			oidclr(&remote_oid);
+			oidclr(&remote_oid, the_repository->hash_algo);
 			remote = NULL;
 		} else {
 			die("Failed to resolve remote notes ref '%s'",

@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "../git-compat-util.h"
 #include "../abspath.h"
 #include "../chdir-notify.h"
@@ -217,7 +219,8 @@ static int read_ref_without_reload(struct reftable_stack *stack,
 		strbuf_addstr(referent, ref.value.symref);
 		*type |= REF_ISSYMREF;
 	} else if (reftable_ref_record_val1(&ref)) {
-		oidread(oid, reftable_ref_record_val1(&ref));
+		oidread(oid, reftable_ref_record_val1(&ref),
+			the_repository->hash_algo);
 	} else {
 		/* We got a tombstone, which should not happen. */
 		BUG("unhandled reference value type %d", ref.value_type);
@@ -483,15 +486,17 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 		switch (iter->ref.value_type) {
 		case REFTABLE_REF_VAL1:
-			oidread(&iter->oid, iter->ref.value.val1);
+			oidread(&iter->oid, iter->ref.value.val1,
+				the_repository->hash_algo);
 			break;
 		case REFTABLE_REF_VAL2:
-			oidread(&iter->oid, iter->ref.value.val2.value);
+			oidread(&iter->oid, iter->ref.value.val2.value,
+				the_repository->hash_algo);
 			break;
 		case REFTABLE_REF_SYMREF:
 			if (!refs_resolve_ref_unsafe(&iter->refs->base, iter->ref.refname,
 						     RESOLVE_REF_READING, &iter->oid, &flags))
-				oidclr(&iter->oid);
+				oidclr(&iter->oid, the_repository->hash_algo);
 			break;
 		default:
 			BUG("unhandled reference value type %d", iter->ref.value_type);
@@ -503,7 +508,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		if (check_refname_format(iter->ref.refname, REFNAME_ALLOW_ONELEVEL)) {
 			if (!refname_is_safe(iter->ref.refname))
 				die(_("refname is dangerous: %s"), iter->ref.refname);
-			oidclr(&iter->oid);
+			oidclr(&iter->oid, the_repository->hash_algo);
 			flags |= REF_BAD_NAME | REF_ISBROKEN;
 		}
 
@@ -545,7 +550,8 @@ static int reftable_ref_iterator_peel(struct ref_iterator *ref_iterator,
 		(struct reftable_ref_iterator *)ref_iterator;
 
 	if (iter->ref.value_type == REFTABLE_REF_VAL2) {
-		oidread(peeled, iter->ref.value.val2.target_value);
+		oidread(peeled, iter->ref.value.val2.target_value,
+			the_repository->hash_algo);
 		return 0;
 	}
 
@@ -1791,8 +1797,8 @@ static int yield_log_record(struct reftable_log_record *log,
 	struct object_id old_oid, new_oid;
 	const char *full_committer;
 
-	oidread(&old_oid, log->value.update.old_hash);
-	oidread(&new_oid, log->value.update.new_hash);
+	oidread(&old_oid, log->value.update.old_hash, the_repository->hash_algo);
+	oidread(&new_oid, log->value.update.new_hash, the_repository->hash_algo);
 
 	/*
 	 * When both the old object ID and the new object ID are null
@@ -2193,7 +2199,8 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 	if (reftable_ref_record_val1(&ref_record))
-		oidread(&oid, reftable_ref_record_val1(&ref_record));
+		oidread(&oid, reftable_ref_record_val1(&ref_record),
+			the_repository->hash_algo);
 	prepare_fn(refname, &oid, policy_cb_data);
 
 	while (1) {
@@ -2208,8 +2215,10 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 			break;
 		}
 
-		oidread(&old_oid, log.value.update.old_hash);
-		oidread(&new_oid, log.value.update.new_hash);
+		oidread(&old_oid, log.value.update.old_hash,
+			the_repository->hash_algo);
+		oidread(&new_oid, log.value.update.new_hash,
+			the_repository->hash_algo);
 
 		/*
 		 * Skip over the reflog existence marker. We will add it back
@@ -2240,8 +2249,10 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 		struct object_id old_oid, new_oid;
 
 		*dest = logs[i];
-		oidread(&old_oid, logs[i].value.update.old_hash);
-		oidread(&new_oid, logs[i].value.update.new_hash);
+		oidread(&old_oid, logs[i].value.update.old_hash,
+			the_repository->hash_algo);
+		oidread(&new_oid, logs[i].value.update.new_hash,
+			the_repository->hash_algo);
 
 		if (should_prune_fn(&old_oid, &new_oid, logs[i].value.update.email,
 				    (timestamp_t)logs[i].value.update.time,
@@ -2258,7 +2269,7 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 
 	if (flags & EXPIRE_REFLOGS_UPDATE_REF && last_hash &&
 	    reftable_ref_record_val1(&ref_record))
-		oidread(&arg.update_oid, last_hash);
+		oidread(&arg.update_oid, last_hash, the_repository->hash_algo);
 
 	arg.refs = refs;
 	arg.records = rewritten;

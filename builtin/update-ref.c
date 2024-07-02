@@ -181,7 +181,7 @@ static int parse_next_oid(const char **next, const char *end,
 				goto invalid;
 		} else {
 			/* Without -z, an empty value means all zeros: */
-			oidclr(oid);
+			oidclr(oid, the_repository->hash_algo);
 		}
 	} else {
 		/* With -z, read the next NUL-terminated line */
@@ -201,7 +201,7 @@ static int parse_next_oid(const char **next, const char *end,
 			/* With -z, treat an empty value as all zeros: */
 			warning("%s %s: missing <new-oid>, treating as zero",
 				command, refname);
-			oidclr(oid);
+			oidclr(oid, the_repository->hash_algo);
 		} else {
 			/*
 			 * With -z, an empty non-required value means
@@ -464,7 +464,7 @@ static void parse_cmd_verify(struct ref_transaction *transaction,
 
 	if (parse_next_oid(&next, end, &old_oid, "verify", refname,
 			   PARSE_SHA1_OLD))
-		oidclr(&old_oid);
+		oidclr(&old_oid, the_repository->hash_algo);
 
 	if (*next != line_termination)
 		die("verify %s: extra input: %s", refname, next);
@@ -777,7 +777,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 			 * The empty string implies that the reference
 			 * must not already exist:
 			 */
-			oidclr(&oldoid);
+			oidclr(&oldoid, the_repository->hash_algo);
 		else if (repo_get_oid(the_repository, oldval, &oldoid))
 			die("%s: not a valid old SHA1", oldval);
 	}

@@ -2,7 +2,7 @@
 #define OIDTREE_H
 
 #include "cbtree.h"
-#include "hash-ll.h"
+#include "hash.h"
 #include "mem-pool.h"
 
 struct oidtree {

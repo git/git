@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "repository.h"
@@ -2119,7 +2121,7 @@ static void submodule_reset_index(const char *path, const char *super_prefix)
 	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
 		     (super_prefix ? super_prefix : ""), path);
 
-	strvec_push(&cp.args, empty_tree_oid_hex());
+	strvec_push(&cp.args, empty_tree_oid_hex(the_repository->hash_algo));
 
 	if (run_command(&cp))
 		die(_("could not reset submodule index"));
@@ -2229,9 +2231,9 @@ int submodule_move_head(const char *path, const char *super_prefix,
 		strvec_push(&cp.args, "-m");
 
 	if (!(flags & SUBMODULE_MOVE_HEAD_FORCE))
-		strvec_push(&cp.args, old_head ? old_head : empty_tree_oid_hex());
+		strvec_push(&cp.args, old_head ? old_head : empty_tree_oid_hex(the_repository->hash_algo));
 
-	strvec_push(&cp.args, new_head ? new_head : empty_tree_oid_hex());
+	strvec_push(&cp.args, new_head ? new_head : empty_tree_oid_hex(the_repository->hash_algo));
 
 	if (run_command(&cp)) {
 		ret = error(_("Submodule '%s' could not be updated."), path);

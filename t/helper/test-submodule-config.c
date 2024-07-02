@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "config.h"
 #include "hash.h"
@@ -44,7 +46,7 @@ int cmd__submodule_config(int argc, const char **argv)
 		path_or_name = arg[1];
 
 		if (commit[0] == '\0')
-			oidclr(&commit_oid);
+			oidclr(&commit_oid, the_repository->hash_algo);
 		else if (repo_get_oid(the_repository, commit, &commit_oid) < 0)
 			die_usage(argc, argv, "Commit not found.");
 

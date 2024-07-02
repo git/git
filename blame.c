@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "refs.h"
 #include "object-store-ll.h"
@@ -1246,7 +1248,7 @@ static int fill_blob_sha1_and_mode(struct repository *r,
 		goto error_out;
 	return 0;
  error_out:
-	oidclr(&origin->blob_oid);
+	oidclr(&origin->blob_oid, the_repository->hash_algo);
 	origin->mode = S_IFINVALID;
 	return -1;
 }

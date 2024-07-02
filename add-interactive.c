@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "add-interactive.h"
 #include "color.h"
@@ -557,7 +559,7 @@ static int get_modified_files(struct repository *r,
 		s.skip_unseen = filter && i;
 
 		opt.def = is_initial ?
-			empty_tree_oid_hex() : oid_to_hex(&head_oid);
+			empty_tree_oid_hex(the_repository->hash_algo) : oid_to_hex(&head_oid);
 
 		repo_init_revisions(r, &rev, NULL);
 		setup_revisions(0, NULL, &rev, &opt);

@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
@@ -2263,7 +2265,7 @@ static int do_pick_commit(struct repository *r,
 			unborn = 1;
 		} else if (unborn)
 			oidcpy(&head, the_hash_algo->empty_tree);
-		if (index_differs_from(r, unborn ? empty_tree_oid_hex() : "HEAD",
+		if (index_differs_from(r, unborn ? empty_tree_oid_hex(the_repository->hash_algo) : "HEAD",
 				       NULL, 0))
 			return error_dirty_index(r, opts);
 	}
@@ -3394,12 +3396,12 @@ static int rollback_is_safe(void)
 		strbuf_release(&sb);
 	}
 	else if (errno == ENOENT)
-		oidclr(&expected_head);
+		oidclr(&expected_head, the_repository->hash_algo);
 	else
 		die_errno(_("could not read '%s'"), git_path_abort_safety_file());
 
 	if (repo_get_oid(the_repository, "HEAD", &actual_head))
-		oidclr(&actual_head);
+		oidclr(&actual_head, the_repository->hash_algo);
 
 	return oideq(&actual_head, &expected_head);
 }

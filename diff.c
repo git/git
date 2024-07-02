@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "base85.h"
@@ -4596,7 +4599,7 @@ static void diff_fill_oid_info(struct diff_filespec *one, struct index_state *is
 		if (!one->oid_valid) {
 			struct stat st;
 			if (one->is_stdin) {
-				oidclr(&one->oid);
+				oidclr(&one->oid, the_repository->hash_algo);
 				return;
 			}
 			if (lstat(one->path, &st) < 0)
@@ -4606,7 +4609,7 @@ static void diff_fill_oid_info(struct diff_filespec *one, struct index_state *is
 		}
 	}
 	else
-		oidclr(&one->oid);
+		oidclr(&one->oid, the_repository->hash_algo);
 }
 
 static void strip_prefix(int prefix_length, const char **namep, const char **otherp)
@@ -6440,7 +6443,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 	the_hash_algo->init_fn(&ctx);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
-	oidclr(oid);
+	oidclr(oid, the_repository->hash_algo);
 
 	for (i = 0; i < q->nr; i++) {
 		xpparam_t xpp;

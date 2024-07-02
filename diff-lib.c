@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "commit.h"
 #include "diff.h"
@@ -160,7 +163,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 			dpath->next = NULL;
 			memcpy(dpath->path, ce->name, path_len);
 			dpath->path[path_len] = '\0';
-			oidclr(&dpath->oid);
+			oidclr(&dpath->oid, the_repository->hash_algo);
 			memset(&(dpath->parent[0]), 0,
 			       sizeof(struct combine_diff_parent)*5);
 
@@ -412,7 +415,7 @@ static int show_modified(struct rev_info *revs,
 		memcpy(p->path, new_entry->name, pathlen);
 		p->path[pathlen] = 0;
 		p->mode = mode;
-		oidclr(&p->oid);
+		oidclr(&p->oid, the_repository->hash_algo);
 		memset(p->parent, 0, 2 * sizeof(struct combine_diff_parent));
 		p->parent[0].status = DIFF_STATUS_MODIFIED;
 		p->parent[0].mode = new_entry->ce_mode;

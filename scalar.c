@@ -2,6 +2,8 @@
  * The Scalar command-line interface.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "gettext.h"

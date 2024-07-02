@@ -100,7 +100,7 @@ static inline struct llist_item *llist_insert(struct llist *list,
 					      const unsigned char *oid)
 {
 	struct llist_item *new_item = llist_item_get();
-	oidread(&new_item->oid, oid);
+	oidread(&new_item->oid, oid, the_repository->hash_algo);
 	new_item->next = NULL;
 
 	if (after) {
@@ -155,7 +155,7 @@ redo_from_start:
 	l = (hint == NULL) ? list->front : hint;
 	prev = NULL;
 	while (l) {
-		const int cmp = hashcmp(l->oid.hash, oid);
+		const int cmp = hashcmp(l->oid.hash, oid, the_repository->hash_algo);
 		if (cmp > 0) /* not in list, since sorted */
 			return prev;
 		if (!cmp) { /* found */
@@ -258,7 +258,8 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	while (p1_off < p1->pack->num_objects * p1_step &&
 	       p2_off < p2->pack->num_objects * p2_step)
 	{
-		const int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
+		const int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off,
+					the_repository->hash_algo);
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			p1_hint = llist_sorted_remove(p1->unique_objects,
@@ -296,7 +297,8 @@ static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 	while (p1_off < p1->num_objects * p1_step &&
 	       p2_off < p2->num_objects * p2_step)
 	{
-		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
+		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off,
+				  the_repository->hash_algo);
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			ret++;

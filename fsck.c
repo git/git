@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "date.h"
 #include "dir.h"
@@ -203,7 +205,8 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 		if (!strcmp(buf, "skiplist")) {
 			if (equal == len)
 				die("skiplist requires a path");
-			oidset_parse_file(&options->skiplist, buf + equal + 1);
+			oidset_parse_file(&options->skiplist, buf + equal + 1,
+					  the_repository->hash_algo);
 			buf += len + 1;
 			continue;
 		}

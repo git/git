@@ -5,7 +5,7 @@
  * See COPYING for licensing conditions
  */
 
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "config.h"
 #include "color.h"
 #include "builtin.h"
@@ -852,6 +852,7 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 			oidset_clear(&sb->ignore_list);
 		else
 			oidset_parse_file_carefully(&sb->ignore_list, i->string,
+						    the_repository->hash_algo,
 						    peel_to_commit_oid, sb);
 	}
 	for_each_string_list_item(i, ignore_rev_list) {

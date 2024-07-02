@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
@@ -242,7 +244,7 @@ struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 	struct packed_git *p = alloc_packed_git(alloc);
 
 	memcpy(p->pack_name, path, alloc); /* includes NUL */
-	hashcpy(p->hash, sha1);
+	hashcpy(p->hash, sha1, the_repository->hash_algo);
 	if (check_packed_git_idx(idx_path, p)) {
 		free(p);
 		return NULL;
@@ -596,7 +598,7 @@ static int open_packed_git_1(struct packed_git *p)
 	if (read_result != hashsz)
 		return error("packfile %s signature is unavailable", p->pack_name);
 	idx_hash = ((unsigned char *)p->index_data) + p->index_size - hashsz * 2;
-	if (!hasheq(hash, idx_hash))
+	if (!hasheq(hash, idx_hash, the_repository->hash_algo))
 		return error("packfile %s does not match index", p->pack_name);
 	return 0;
 }
@@ -751,7 +753,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	p->mtime = st.st_mtime;
 	if (path_len < the_hash_algo->hexsz ||
 	    get_hash_hex(path + path_len - the_hash_algo->hexsz, p->hash))
-		hashclr(p->hash);
+		hashclr(p->hash, the_repository->hash_algo);
 	return p;
 }
 
@@ -1251,7 +1253,7 @@ static int get_delta_base_oid(struct packed_git *p,
 {
 	if (type == OBJ_REF_DELTA) {
 		unsigned char *base = use_pack(p, w_curs, curpos, NULL);
-		oidread(oid, base);
+		oidread(oid, base, the_repository->hash_algo);
 		return 0;
 	} else if (type == OBJ_OFS_DELTA) {
 		uint32_t base_pos;
@@ -1593,7 +1595,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 				goto out;
 			}
 		} else
-			oidclr(oi->delta_base_oid);
+			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 	}
 
 	oi->whence = in_delta_base_cache(p, obj_offset) ? OI_DBCACHED :
@@ -1917,10 +1919,12 @@ int nth_packed_object_id(struct object_id *oid,
 		return -1;
 	index += 4 * 256;
 	if (p->index_version == 1) {
-		oidread(oid, index + st_add(st_mult(hashsz + 4, n), 4));
+		oidread(oid, index + st_add(st_mult(hashsz + 4, n), 4),
+			the_repository->hash_algo);
 	} else {
 		index += 8;
-		oidread(oid, index + st_mult(hashsz, n));
+		oidread(oid, index + st_mult(hashsz, n),
+			the_repository->hash_algo);
 	}
 	return 0;
 }
@@ -1971,7 +1975,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 			return 0;
 	}
 
-	hashcpy(oid.hash, sha1);
+	hashcpy(oid.hash, sha1, the_repository->hash_algo);
 	if (bsearch_pack(&oid, p, &result))
 		return nth_packed_object_offset(p, result);
 	return 0;

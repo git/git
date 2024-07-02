@@ -15,7 +15,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "lockfile.h"
 #include "strbuf.h"
 #include "tempfile.h"
-#include "hash-ll.h" /* hash ID, sizes.*/
+#include "hash.h" /* hash ID, sizes.*/
 #include "dir.h" /* remove_dir_recursively, for tests.*/
 
 int hash_size(uint32_t id);

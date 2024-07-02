@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-lib.h"
 #include "object.h"
 #include "decorate.h"

@@ -3,6 +3,9 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
 #include "config.h"
@@ -337,7 +340,7 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 
 	/* Racily smudged entry? */
 	if (!ce->ce_stat_data.sd_size) {
-		if (!is_empty_blob_sha1(ce->oid.hash))
+		if (!is_empty_blob_oid(&ce->oid, the_repository->hash_algo))
 			changed |= DATA_CHANGED;
 	}
 
@@ -1728,14 +1731,14 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 
 	end = (unsigned char *)hdr + size;
 	start = end - the_hash_algo->rawsz;
-	oidread(&oid, start);
+	oidread(&oid, start, the_repository->hash_algo);
 	if (oideq(&oid, null_oid()))
 		return 0;
 
 	the_hash_algo->init_fn(&c);
 	the_hash_algo->update_fn(&c, hdr, size - the_hash_algo->rawsz);
 	the_hash_algo->final_fn(hash, &c);
-	if (!hasheq(hash, start))
+	if (!hasheq(hash, start, the_repository->hash_algo))
 		return error(_("bad index file sha1 signature"));
 	return 0;
 }
@@ -1876,7 +1879,8 @@ static struct cache_entry *create_from_disk(struct mem_pool *ce_mem_pool,
 	ce->ce_flags = flags & ~CE_NAMEMASK;
 	ce->ce_namelen = len;
 	ce->index = 0;
-	oidread(&ce->oid, (const unsigned char *)ondisk + offsetof(struct ondisk_cache_entry, data));
+	oidread(&ce->oid, (const unsigned char *)ondisk + offsetof(struct ondisk_cache_entry, data),
+		the_repository->hash_algo);
 
 	if (expand_name_field) {
 		if (copy_len)
@@ -2249,7 +2253,8 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 	if (verify_hdr(hdr, mmap_size) < 0)
 		goto unmap;
 
-	oidread(&istate->oid, (const unsigned char *)hdr + mmap_size - the_hash_algo->rawsz);
+	oidread(&istate->oid, (const unsigned char *)hdr + mmap_size - the_hash_algo->rawsz,
+		the_repository->hash_algo);
 	istate->version = ntohl(hdr->hdr_version);
 	istate->cache_nr = ntohl(hdr->hdr_entries);
 	istate->cache_alloc = alloc_nr(istate->cache_nr);
@@ -2641,7 +2646,7 @@ static void copy_cache_entry_to_ondisk(struct ondisk_cache_entry *ondisk,
 	ondisk->uid  = htonl(ce->ce_stat_data.sd_uid);
 	ondisk->gid  = htonl(ce->ce_stat_data.sd_gid);
 	ondisk->size = htonl(ce->ce_stat_data.sd_size);
-	hashcpy(ondisk->data, ce->oid.hash);
+	hashcpy(ondisk->data, ce->oid.hash, the_repository->hash_algo);
 
 	flags = ce->ce_flags & ~CE_NAMEMASK;
 	flags |= (ce_namelen(ce) >= CE_NAMEMASK ? CE_NAMEMASK : ce_namelen(ce));
@@ -2730,7 +2735,7 @@ static int verify_index_from(const struct index_state *istate, const char *path)
 	if (n != the_hash_algo->rawsz)
 		goto out;
 
-	if (!hasheq(istate->oid.hash, hash))
+	if (!hasheq(istate->oid.hash, hash, the_repository->hash_algo))
 		goto out;
 
 	close(fd);
@@ -3603,7 +3608,7 @@ static size_t read_eoie_extension(const char *mmap, size_t mmap_size)
 		src_offset += extsize;
 	}
 	the_hash_algo->final_fn(hash, &c);
-	if (!hasheq(hash, (const unsigned char *)index))
+	if (!hasheq(hash, (const unsigned char *)index, the_repository->hash_algo))
 		return 0;
 
 	/* Validate that the extension offsets returned us back to the eoie extension. */

@@ -167,7 +167,7 @@ static int check_ref_valid(struct object_id *object,
 		return error(_("'%s' is not a valid ref name"), ref->buf);
 
 	if (refs_read_ref(get_main_ref_store(the_repository), ref->buf, prev))
-		oidclr(prev);
+		oidclr(prev, the_repository->hash_algo);
 	else if (!force)
 		return error(_("replace ref '%s' already exists"), ref->buf);
 	return 0;

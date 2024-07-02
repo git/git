@@ -25,6 +25,12 @@ test_expect_success 'setup repository' '
 	git commit -m two
 '
 
+test_expect_success 'packfile without repository does not crash' '
+	echo "fatal: not a git repository" >expect &&
+	test_must_fail nongit git http-fetch --packfile=abc 2>err &&
+	test_cmp expect err
+'
+
 setup_post_update_server_info_hook () {
 	test_hook --setup -C "$1" post-update <<-\EOF &&
 	exec git update-server-info

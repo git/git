@@ -1,7 +1,6 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
 
-#include "refs.h"
 #include "strmap.h"
 
 struct config_set;
@@ -25,6 +24,12 @@ enum fetch_negotiation_setting {
 	FETCH_NEGOTIATION_CONSECUTIVE,
 	FETCH_NEGOTIATION_SKIPPING,
 	FETCH_NEGOTIATION_NOOP,
+};
+
+enum ref_storage_format {
+	REF_STORAGE_FORMAT_UNKNOWN,
+	REF_STORAGE_FORMAT_FILES,
+	REF_STORAGE_FORMAT_REFTABLE,
 };
 
 struct repo_settings {
@@ -197,7 +202,9 @@ struct repository {
 	unsigned different_commondir:1;
 };
 
+#ifdef USE_THE_REPOSITORY_VARIABLE
 extern struct repository *the_repository;
+#endif
 
 /*
  * Define a custom repository layout. Any field can be NULL, which

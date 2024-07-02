@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "../git-compat-util.h"
 #include "../copy.h"
 #include "../environment.h"
@@ -246,7 +248,7 @@ static void loose_fill_ref_dir_regular_file(struct files_ref_store *refs,
 
 	if (!refs_resolve_ref_unsafe(&refs->base, refname, RESOLVE_REF_READING,
 				     &oid, &flag)) {
-		oidclr(&oid);
+		oidclr(&oid, the_repository->hash_algo);
 		flag |= REF_ISBROKEN;
 	} else if (is_null_oid(&oid)) {
 		/*
@@ -263,7 +265,7 @@ static void loose_fill_ref_dir_regular_file(struct files_ref_store *refs,
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
 		if (!refname_is_safe(refname))
 			die("loose refname is dangerous: %s", refname);
-		oidclr(&oid);
+		oidclr(&oid, the_repository->hash_algo);
 		flag |= REF_BAD_NAME | REF_ISBROKEN;
 	}
 	add_entry_to_dir(dir, create_ref_entry(refname, &oid, flag));
@@ -1150,7 +1152,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 
 	if (!refs_resolve_ref_unsafe(&refs->base, lock->ref_name, 0,
 				     &lock->old_oid, NULL))
-		oidclr(&lock->old_oid);
+		oidclr(&lock->old_oid, the_repository->hash_algo);
 	goto out;
 
  error_return:

@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "gettext.h"

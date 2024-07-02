@@ -29,11 +29,11 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 			; /* <oid>, leave oid as name */
 		} else {
 			/* <ref>, clear cruft from oid */
-			oidclr(&oid);
+			oidclr(&oid, the_repository->hash_algo);
 		}
 	} else {
 		/* <ref>, clear cruft from get_oid_hex */
-		oidclr(&oid);
+		oidclr(&oid, the_repository->hash_algo);
 	}
 
 	ref = alloc_ref(name);

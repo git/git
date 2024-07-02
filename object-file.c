@@ -6,6 +6,9 @@
  * This handles basic git object files - packing, unpacking,
  * creation etc.
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
@@ -227,16 +230,10 @@ const struct object_id *null_oid(void)
 	return the_hash_algo->null_oid;
 }
 
-const char *empty_tree_oid_hex(void)
+const char *empty_tree_oid_hex(const struct git_hash_algo *algop)
 {
 	static char buf[GIT_MAX_HEXSZ + 1];
-	return oid_to_hex_r(buf, the_hash_algo->empty_tree);
-}
-
-const char *empty_blob_oid_hex(void)
-{
-	static char buf[GIT_MAX_HEXSZ + 1];
-	return oid_to_hex_r(buf, the_hash_algo->empty_blob);
+	return oid_to_hex_r(buf, algop->empty_tree);
 }
 
 int hash_algo_by_name(const char *name)
@@ -1446,7 +1443,7 @@ static int loose_object_info(struct repository *r,
 	int allow_unknown = flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (oi->delta_base_oid)
-		oidclr(oi->delta_base_oid);
+		oidclr(oi->delta_base_oid, the_repository->hash_algo);
 
 	/*
 	 * If we don't care about type or size, then we don't
@@ -1580,7 +1577,7 @@ static int do_oid_object_info_extended(struct repository *r,
 		if (oi->disk_sizep)
 			*(oi->disk_sizep) = 0;
 		if (oi->delta_base_oid)
-			oidclr(oi->delta_base_oid);
+			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 		if (oi->type_name)
 			strbuf_addstr(oi->type_name, type_name(co->type));
 		if (oi->contentp)
@@ -2745,6 +2742,8 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 		    !hex_to_bytes(oid.hash + 1, de->d_name,
 				  the_hash_algo->rawsz - 1)) {
 			oid_set_algo(&oid, the_hash_algo);
+			memset(oid.hash + the_hash_algo->rawsz, 0,
+			       GIT_MAX_RAWSZ - the_hash_algo->rawsz);
 			if (obj_cb) {
 				r = obj_cb(&oid, path->buf, data);
 				if (r)

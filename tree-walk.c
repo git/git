@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "tree-walk.h"
 #include "dir.h"
@@ -38,8 +40,8 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 	desc->entry.path = path;
 	desc->entry.mode = (desc->flags & TREE_DESC_RAW_MODES) ? mode : canon_mode(mode);
 	desc->entry.pathlen = len - 1;
-	oidread_algop(&desc->entry.oid, (const unsigned char *)path + len,
-		      desc->algo);
+	oidread(&desc->entry.oid, (const unsigned char *)path + len,
+		desc->algo);
 
 	return 0;
 }

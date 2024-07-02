@@ -1,7 +1,7 @@
 #ifndef RESET_H
 #define RESET_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "repository.h"
 
 #define GIT_REFLOG_ACTION_ENVIRONMENT "GIT_REFLOG_ACTION"

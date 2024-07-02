@@ -1,7 +1,7 @@
 #ifndef HEX_H
 #define HEX_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "hex-ll.h"
 
 /*
@@ -13,10 +13,6 @@
  * input, so it is safe to pass this function an arbitrary
  * null-terminated string.
  */
-int get_hash_hex(const char *hex, unsigned char *hash);
-int get_oid_hex(const char *hex, struct object_id *oid);
-
-/* Like get_oid_hex, but for an arbitrary hash algorithm. */
 int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_hash_algo *algop);
 
 /*
@@ -35,7 +31,6 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_h
 char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
 char *oid_to_hex_r(char *out, const struct object_id *oid);
 char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
-char *hash_to_hex(const unsigned char *hash);						/* same static buffer */
 char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
 
 /*
@@ -45,12 +40,8 @@ char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
  * other invalid character.  end is only updated on success; otherwise, it is
  * unmodified.
  */
-int parse_oid_hex(const char *hex, struct object_id *oid, const char **end);
-
-/* Like parse_oid_hex, but for an arbitrary hash algorithm. */
 int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
 			const struct git_hash_algo *algo);
-
 
 /*
  * These functions work like get_oid_hex and parse_oid_hex, but they will parse
@@ -61,4 +52,19 @@ int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end
 int get_oid_hex_any(const char *hex, struct object_id *oid);
 int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
 
-#endif
+#ifdef USE_THE_REPOSITORY_VARIABLE
+
+/* Like get_oid_hex_algop, but for `the_hash_algo`. */
+int get_hash_hex(const char *hex, unsigned char *hash);
+int get_oid_hex(const char *hex, struct object_id *oid);
+
+/* Like parse_oid_hex_algop, but uses `the_hash_algo`. */
+int parse_oid_hex(const char *hex, struct object_id *oid, const char **end);
+
+/*
+ * Same as `hash_to_hex_algop()`, but uses `the_hash_algo`.
+ */
+char *hash_to_hex(const unsigned char *hash);
+
+#endif /* USE_THE_REPOSITORY_VARIABLE */
+#endif /* HEX_H */

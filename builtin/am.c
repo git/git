@@ -408,7 +408,7 @@ static void am_load(struct am_state *state)
 	read_commit_msg(state);
 
 	if (read_state_file(&sb, state, "original-commit", 1) < 0)
-		oidclr(&state->orig_commit);
+		oidclr(&state->orig_commit, the_repository->hash_algo);
 	else if (get_oid_hex(sb.buf, &state->orig_commit) < 0)
 		die(_("could not parse %s"), am_path(state, "original-commit"));
 
@@ -1121,7 +1121,7 @@ static void am_next(struct am_state *state)
 	unlink(am_path(state, "author-script"));
 	unlink(am_path(state, "final-commit"));
 
-	oidclr(&state->orig_commit);
+	oidclr(&state->orig_commit, the_repository->hash_algo);
 	unlink(am_path(state, "original-commit"));
 	refs_delete_ref(get_main_ref_store(the_repository), NULL,
 			"REBASE_HEAD", NULL, REF_NO_DEREF);
@@ -2151,11 +2151,11 @@ static int safe_to_abort(const struct am_state *state)
 		if (get_oid_hex(sb.buf, &abort_safety))
 			die(_("could not parse %s"), am_path(state, "abort-safety"));
 	} else
-		oidclr(&abort_safety);
+		oidclr(&abort_safety, the_repository->hash_algo);
 	strbuf_release(&sb);
 
 	if (repo_get_oid(the_repository, "HEAD", &head))
-		oidclr(&head);
+		oidclr(&head, the_repository->hash_algo);
 
 	if (oideq(&head, &abort_safety))
 		return 1;

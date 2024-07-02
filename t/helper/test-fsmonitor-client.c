@@ -3,6 +3,8 @@
  * a `git fsmonitor--daemon` daemon.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "parse-options.h"
 #include "fsmonitor-ipc.h"

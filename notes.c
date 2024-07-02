@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
@@ -149,7 +151,7 @@ static struct leaf_node *note_tree_find(struct notes_tree *t,
 	void **p = note_tree_search(t, &tree, &n, key_sha1);
 	if (GET_PTR_TYPE(*p) == PTR_TYPE_NOTE) {
 		struct leaf_node *l = (struct leaf_node *) CLR_PTR_TYPE(*p);
-		if (hasheq(key_sha1, l->key_oid.hash))
+		if (hasheq(key_sha1, l->key_oid.hash, the_repository->hash_algo))
 			return l;
 	}
 	return NULL;
@@ -353,7 +355,7 @@ static void add_non_note(struct notes_tree *t, char *path,
 	n->next = NULL;
 	n->path = path;
 	n->mode = mode;
-	oidread(&n->oid, sha1);
+	oidread(&n->oid, sha1, the_repository->hash_algo);
 	t->prev_non_note = n;
 
 	if (!t->first_non_note) {
@@ -426,6 +428,8 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 			if (hex_to_bytes(object_oid.hash + prefix_len, entry.path,
 					 hashsz - prefix_len))
 				goto handle_non_note; /* entry.path is not a SHA1 */
+
+			memset(object_oid.hash + hashsz, 0, GIT_MAX_RAWSZ - hashsz);
 
 			type = PTR_TYPE_NOTE;
 		} else if (path_len == 2) {
@@ -1036,7 +1040,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 		die("Failed to read notes tree referenced by %s (%s)",
 		    notes_ref, oid_to_hex(&object_oid));
 
-	oidclr(&root_tree.key_oid);
+	oidclr(&root_tree.key_oid, the_repository->hash_algo);
 	oidcpy(&root_tree.val_oid, &oid);
 	load_subtree(t, &root_tree, t->root, 0);
 }
@@ -1146,8 +1150,8 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	oidread(&l.key_oid, object_sha1);
-	oidclr(&l.val_oid);
+	oidread(&l.key_oid, object_sha1, the_repository->hash_algo);
+	oidclr(&l.val_oid, the_repository->hash_algo);
 	note_tree_remove(t, t->root, 0, &l);
 	if (is_null_oid(&l.val_oid)) /* no note was removed */
 		return 1;

@@ -1038,7 +1038,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		die_conclude_merge();
 
 	if (repo_get_oid(the_repository, "HEAD", &orig_head))
-		oidclr(&orig_head);
+		oidclr(&orig_head, the_repository->hash_algo);
 
 	if (opt_rebase) {
 		if (opt_autostash == -1)
@@ -1053,7 +1053,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 				_("Please commit or stash them."), 1, 0);
 
 		if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
-			oidclr(&rebase_fork_point);
+			oidclr(&rebase_fork_point, the_repository->hash_algo);
 	}
 
 	if (run_fetch(repo, refspecs))
@@ -1063,7 +1063,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		return 0;
 
 	if (repo_get_oid(the_repository, "HEAD", &curr_head))
-		oidclr(&curr_head);
+		oidclr(&curr_head, the_repository->hash_algo);
 
 	if (!is_null_oid(&orig_head) && !is_null_oid(&curr_head) &&
 			!oideq(&orig_head, &curr_head)) {

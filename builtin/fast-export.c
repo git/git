@@ -415,7 +415,7 @@ static char *generate_fake_oid(void)
 	struct object_id oid;
 	char *hex = xmallocz(GIT_MAX_HEXSZ);
 
-	oidclr(&oid);
+	oidclr(&oid, the_repository->hash_algo);
 	put_be32(oid.hash + hashsz - 4, counter++);
 	return oid_to_hex_r(hex, &oid);
 }

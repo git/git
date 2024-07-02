@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "environment.h"
 #include "hex.h"
@@ -422,7 +424,7 @@ static int update_one(struct cache_tree *it,
 		/*
 		 * "sub" can be an empty tree if all subentries are i-t-a.
 		 */
-		if (contains_ita && is_empty_tree_oid(oid))
+		if (contains_ita && is_empty_tree_oid(oid, the_repository->hash_algo))
 			continue;
 
 		strbuf_grow(&buffer, entlen + 100);
@@ -578,7 +580,8 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	if (0 <= it->entry_count) {
 		if (size < rawsz)
 			goto free_return;
-		oidread(&it->oid, (const unsigned char *)buf);
+		oidread(&it->oid, (const unsigned char *)buf,
+			the_repository->hash_algo);
 		buf += rawsz;
 		size -= rawsz;
 	}

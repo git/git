@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "../git-compat-util.h"
 #include "../config.h"
 #include "../dir.h"
@@ -894,7 +896,7 @@ static int next_record(struct packed_ref_iterator *iter)
 		if (!refname_is_safe(iter->base.refname))
 			die("packed refname is dangerous: %s",
 			    iter->base.refname);
-		oidclr(&iter->oid);
+		oidclr(&iter->oid, the_repository->hash_algo);
 		iter->base.flags |= REF_BAD_NAME | REF_ISBROKEN;
 	}
 	if (iter->snapshot->peeled == PEELED_FULLY ||
@@ -919,13 +921,13 @@ static int next_record(struct packed_ref_iterator *iter)
 		 * we suppress it if the reference is broken:
 		 */
 		if ((iter->base.flags & REF_ISBROKEN)) {
-			oidclr(&iter->peeled);
+			oidclr(&iter->peeled, the_repository->hash_algo);
 			iter->base.flags &= ~REF_KNOWS_PEELED;
 		} else {
 			iter->base.flags |= REF_KNOWS_PEELED;
 		}
 	} else {
-		oidclr(&iter->peeled);
+		oidclr(&iter->peeled, the_repository->hash_algo);
 	}
 
 	return ITER_OK;

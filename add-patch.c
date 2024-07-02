@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "add-interactive.h"
 #include "advice.h"
@@ -421,7 +423,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			    /* could be on an unborn branch */
 			    !strcmp("HEAD", s->revision) &&
 			    repo_get_oid(the_repository, "HEAD", &oid) ?
-			    empty_tree_oid_hex() : s->revision);
+			    empty_tree_oid_hex(the_repository->hash_algo) : s->revision);
 	}
 	color_arg_index = args.nr;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */

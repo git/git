@@ -1,7 +1,7 @@
 #ifndef LIB_OID_H
 #define LIB_OID_H
 
-#include "hash-ll.h"
+#include "hash.h"
 
 /*
  * Convert arbitrary hex string to object_id.

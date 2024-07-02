@@ -2,6 +2,9 @@
  *
  * Copyright (C) 2005 Junio C Hamano
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -1422,7 +1425,7 @@ void diffcore_rename_extended(struct diff_options *options,
 				 strcmp(options->single_follow, p->two->path))
 				continue; /* not interested */
 			else if (!options->flags.rename_empty &&
-				 is_empty_blob_oid(&p->two->oid))
+				 is_empty_blob_oid(&p->two->oid, the_repository->hash_algo))
 				continue;
 			else if (add_rename_dst(p) < 0) {
 				warning("skipping rename detection, detected"
@@ -1432,7 +1435,7 @@ void diffcore_rename_extended(struct diff_options *options,
 			}
 		}
 		else if (!options->flags.rename_empty &&
-			 is_empty_blob_oid(&p->one->oid))
+			 is_empty_blob_oid(&p->one->oid, the_repository->hash_algo))
 			continue;
 		else if (!DIFF_PAIR_UNMERGED(p) && !DIFF_FILE_VALID(p->two)) {
 			/*
