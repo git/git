@@ -17,6 +17,10 @@
 #include "prompt.h"
 #include "fsmonitor-ipc.h"
 
+#ifndef NO_CURL
+#include "git-curl-compat.h" /* For LIBCURL_VERSION only */
+#endif
+
 struct category_description {
 	uint32_t category;
 	const char *desc;
@@ -759,6 +763,15 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 
 		if (fsmonitor_ipc__is_supported())
 			strbuf_addstr(buf, "feature: fsmonitor--daemon\n");
+#if defined LIBCURL_VERSION
+		strbuf_addf(buf, "libcurl: %s\n", LIBCURL_VERSION);
+#endif
+#if defined OPENSSL_VERSION_TEXT
+		strbuf_addf(buf, "OpenSSL: %s\n", OPENSSL_VERSION_TEXT);
+#endif
+#if defined ZLIB_VERSION
+		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
+#endif
 	}
 }
 
