@@ -357,6 +357,43 @@ static void t_reftable_obj_record_roundtrip(void)
 	strbuf_release(&scratch);
 }
 
+static void t_reftable_index_record_comparison(void)
+{
+	struct reftable_record in[3] = {
+		{
+			.type = BLOCK_TYPE_INDEX,
+			.u.idx.offset = 22,
+			.u.idx.last_key = STRBUF_INIT,
+		},
+		{
+			.type = BLOCK_TYPE_INDEX,
+			.u.idx.offset = 32,
+			.u.idx.last_key = STRBUF_INIT,
+		},
+		{
+			.type = BLOCK_TYPE_INDEX,
+			.u.idx.offset = 32,
+			.u.idx.last_key = STRBUF_INIT,
+		},
+	};
+	strbuf_addstr(&in[0].u.idx.last_key, "refs/heads/master");
+	strbuf_addstr(&in[1].u.idx.last_key, "refs/heads/master");
+	strbuf_addstr(&in[2].u.idx.last_key, "refs/heads/branch");
+
+	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_record_cmp(&in[0], &in[1]));
+
+	check(!reftable_record_equal(&in[1], &in[2], GIT_SHA1_RAWSZ));
+	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
+
+	in[1].u.idx.offset = in[0].u.idx.offset;
+	check(reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_record_cmp(&in[0], &in[1]));
+
+	for (size_t i = 0; i < ARRAY_SIZE(in); i++)
+		reftable_record_release(&in[i]);
+}
+
 static void t_reftable_index_record_roundtrip(void)
 {
 	struct reftable_record in = {
@@ -405,6 +442,7 @@ int cmd_main(int argc, const char *argv[])
 {
 	TEST(t_reftable_ref_record_comparison(), "comparison operations work on ref record");
 	TEST(t_reftable_log_record_comparison(), "comparison operations work on log record");
+	TEST(t_reftable_index_record_comparison(), "comparison operations work on index record");
 	TEST(t_reftable_log_record_roundtrip(), "record operations work on log record");
 	TEST(t_reftable_ref_record_roundtrip(), "record operations work on ref record");
 	TEST(t_varint_roundtrip(), "put_var_int and get_var_int work");
