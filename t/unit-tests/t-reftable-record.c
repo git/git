@@ -220,6 +220,10 @@ static void t_reftable_log_record_roundtrip(void)
 	set_hash(in[2].value.update.new_hash, 3);
 	set_hash(in[2].value.update.old_hash, 4);
 
+	check(!reftable_log_record_is_deletion(&in[0]));
+	check(reftable_log_record_is_deletion(&in[1]));
+	check(!reftable_log_record_is_deletion(&in[2]));
+
 	for (size_t i = 0; i < ARRAY_SIZE(in); i++) {
 		struct reftable_record rec = { .type = BLOCK_TYPE_LOG };
 		struct strbuf key = STRBUF_INIT;
