@@ -466,6 +466,7 @@ static void t_reftable_index_record_roundtrip(void)
 	reftable_record_key(&in, &key);
 	t_copy(&in);
 
+	check(!reftable_record_is_deletion(&in));
 	check(!strbuf_cmp(&key, &in.u.idx.last_key));
 	n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
 	check_int(n, >, 0);
