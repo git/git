@@ -1518,6 +1518,10 @@ static void die_if_some_operation_in_progress(void)
 static int checkout_branch(struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
+	int noop_switch = (!new_branch_info->name &&
+			   !opts->new_branch &&
+			   !opts->force_detach);
+
 	if (opts->pathspec.nr)
 		die(_("paths cannot be used with switching branches"));
 
@@ -1529,9 +1533,14 @@ static int checkout_branch(struct checkout_opts *opts,
 		die(_("'%s' cannot be used with switching branches"),
 		    "--[no]-overlay");
 
-	if (opts->writeout_stage)
-		die(_("'%s' cannot be used with switching branches"),
-		    "--ours/--theirs");
+	if (opts->writeout_stage) {
+		const char *msg;
+		if (noop_switch)
+			msg = _("'%s' needs the paths to check out");
+		else
+			msg = _("'%s' cannot be used with switching branches");
+		die(msg, "--ours/--theirs");
+	}
 
 	if (opts->force && opts->merge)
 		die(_("'%s' cannot be used with '%s'"), "-f", "-m");
@@ -1558,10 +1567,8 @@ static int checkout_branch(struct checkout_opts *opts,
 		die(_("Cannot switch branch to a non-commit '%s'"),
 		    new_branch_info->name);
 
-	if (!opts->switch_branch_doing_nothing_is_ok &&
-	    !new_branch_info->name &&
-	    !opts->new_branch &&
-	    !opts->force_detach)
+	if (noop_switch &&
+	    !opts->switch_branch_doing_nothing_is_ok)
 		die(_("missing branch or commit argument"));
 
 	if (!opts->implicit_detach &&
