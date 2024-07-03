@@ -9,6 +9,11 @@
 GNUPGHOME="$PWD/gpghome"
 export GNUPGHOME
 
+prepare_gnupghome () {
+	mkdir -p "$GNUPGHOME" &&
+	chmod 0700 "$GNUPGHOME"
+}
+
 test_lazy_prereq GPG '
 	gpg_version=$(gpg --version 2>&1)
 	test $? != 127 || exit 1
@@ -38,8 +43,7 @@ test_lazy_prereq GPG '
 		# To export ownertrust:
 		#	gpg --homedir /tmp/gpghome --export-ownertrust \
 		#		> lib-gpg/ownertrust
-		mkdir "$GNUPGHOME" &&
-		chmod 0700 "$GNUPGHOME" &&
+		prepare_gnupghome &&
 		(gpgconf --kill all || : ) &&
 		gpg --homedir "${GNUPGHOME}" --import \
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
@@ -132,8 +136,7 @@ test_lazy_prereq GPGSSH '
 	test $? = 0 || exit 1;
 
 	# Setup some keys and an allowed signers file
-	mkdir -p "${GNUPGHOME}" &&
-	chmod 0700 "${GNUPGHOME}" &&
+	prepare_gnupghome &&
 	(setfacl -k "${GNUPGHOME}" 2>/dev/null || true) &&
 	ssh-keygen -t ed25519 -N "" -C "git ed25519 key" -f "${GPGSSH_KEY_PRIMARY}" >/dev/null &&
 	ssh-keygen -t rsa -b 2048 -N "" -C "git rsa2048 key" -f "${GPGSSH_KEY_SECONDARY}" >/dev/null &&
