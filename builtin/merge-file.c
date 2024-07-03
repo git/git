@@ -29,6 +29,8 @@ static int label_cb(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int explicit_diff_algorithm = 0;
+
 static int set_diff_algorithm(xpparam_t *xpp,
 			      const char *alg)
 {
@@ -49,6 +51,8 @@ static int diff_algorithm_cb(const struct option *opt,
 	if (set_diff_algorithm(xpp, arg))
 		return error(_("option diff-algorithm accepts \"myers\", "
 			       "\"minimal\", \"patience\" and \"histogram\""));
+
+	explicit_diff_algorithm = 1;
 
 	return 0;
 }
@@ -101,6 +105,10 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 	if (quiet) {
 		if (!freopen("/dev/null", "w", stderr))
 			return error_errno("failed to redirect stderr to /dev/null");
+	}
+
+	if (!explicit_diff_algorithm) {
+		warning(_("--diff-algorithm not provided, defaulting to \"myers\". This default will change to \"histogram\" in a future version."));
 	}
 
 	if (object_id)

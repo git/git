@@ -540,8 +540,9 @@ test_expect_success 'merging C files with "myers" diff algorithm creates some sp
 	}
 	EOF
 
-	test_must_fail git merge-file -p --diff3 --diff-algorithm myers ours.c base.c theirs.c >myers_output.c &&
-	test_cmp expect.c myers_output.c
+	test_must_fail git merge-file -p --diff3 ours.c base.c theirs.c >myers_output.c 2> err &&
+	test_cmp expect.c myers_output.c &&
+	grep "diff-algorithm not provided" err
 '
 
 test_expect_success 'merging C files with "histogram" diff algorithm avoids some spurious conflicts' '
