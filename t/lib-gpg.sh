@@ -66,6 +66,7 @@ test_lazy_prereq GPG2 '
 		exit 1
 		;;
 	*)
+		prepare_gnupghome &&
 		(gpgconf --kill all || : ) &&
 		gpg --homedir "${GNUPGHOME}" --import \
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
