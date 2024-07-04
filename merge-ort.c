@@ -3618,6 +3618,7 @@ static int read_oid_strbuf(struct merge_options *opt,
 		path_msg(opt, ERROR_OBJECT_NOT_A_BLOB, 0,
 			 path, NULL, NULL, NULL,
 			 _("error: object %s is not a blob"), oid_to_hex(oid));
+		return -1;
 	}
 	strbuf_attach(dst, buf, size, size + 1);
 	return 0;
