@@ -527,6 +527,13 @@ static inline int git_offset_1st_component(const char *path)
 #define fspathncmp git_fspathncmp
 #endif
 
+#ifndef warn_about_git_lfs_on_windows7
+static inline void warn_about_git_lfs_on_windows7(int exit_code UNUSED,
+						  const char *argv0 UNUSED)
+{
+}
+#endif
+
 #ifndef is_valid_path
 #define is_valid_path(path) 1
 #endif
