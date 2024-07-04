@@ -575,6 +575,7 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 		 */
 		code += 128;
 	} else if (WIFEXITED(status)) {
+		warn_about_git_lfs_on_windows7(status, argv0);
 		code = WEXITSTATUS(status);
 	} else {
 		if (!in_signal)
