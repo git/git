@@ -10,7 +10,7 @@ endif
 DEVELOPER_CFLAGS += -Wall
 ifeq ($(filter no-pedantic,$(DEVOPTS)),)
 DEVELOPER_CFLAGS += -pedantic
-ifneq (($or $(filter gcc5,$(COMPILER_FEATURES)),$(filter clang4,$(COMPILER_FEATURES))),)
+ifneq ($(or $(filter gcc5,$(COMPILER_FEATURES)),$(filter clang4,$(COMPILER_FEATURES))),)
 DEVELOPER_CFLAGS += -Wpedantic
 ifneq ($(filter gcc10,$(COMPILER_FEATURES)),)
 ifeq ($(uname_S),MINGW)
