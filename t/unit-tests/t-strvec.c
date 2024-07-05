@@ -17,12 +17,12 @@ static void check_strvec_loc(const char *loc, struct strvec *vec, ...)
 			break;
 
 		if (!check_uint(vec->nr, >, nr) ||
-		    !check_uint(vec->alloc, >, nr) ||
-		    !check_str(vec->v[nr], str)) {
-			struct strbuf msg = STRBUF_INIT;
-			strbuf_addf(&msg, "strvec index %"PRIuMAX, (uintmax_t) nr);
-			test_assert(loc, msg.buf, 0);
-			strbuf_release(&msg);
+		    !check_uint(vec->alloc, >, nr)) {
+			va_end(ap);
+			return;
+		}
+		if (!check_str(vec->v[nr], str)) {
+			test_msg("     nr: %"PRIuMAX, (uintmax_t)nr);
 			va_end(ap);
 			return;
 		}
