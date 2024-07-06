@@ -2268,9 +2268,9 @@ proc bind_mousewheel {} {
     global canv cflist ctext
     bindall <MouseWheel> {allcanvs yview scroll [scrollval %D] units}
     bindall <Shift-MouseWheel> break
-    bind $ctext <MouseWheel> {$ctext yview scroll [scrollval %D] units}
-    bind $ctext <Shift-MouseWheel> {$ctext xview scroll [scrollval %D] units}
-    bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D] units}
+    bind $ctext <MouseWheel> {$ctext yview scroll [scrollval %D 2] units}
+    bind $ctext <Shift-MouseWheel> {$ctext xview scroll [scrollval %D 2] units}
+    bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D 2] units}
     bind $cflist <Shift-MouseWheel> break
 }
 
@@ -2293,6 +2293,7 @@ proc makewindow {} {
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
     global worddiff
+    global scroll_D0
 
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
@@ -2709,10 +2710,11 @@ proc makewindow {} {
 
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
-    #bindall <B1-Motion> {selcanvline %W %x %y}
+
+    #Mouse / touchpad scrolling
     if {[tk windowingsystem] == "win32"} {
-        bind . <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D }
-        bind $ctext <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D ; break }
+        set scroll_D0 120
+        bind_mousewheel
     } elseif {[tk windowingsystem] == "x11"} {
         bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
         bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
@@ -2871,24 +2873,6 @@ proc makewindow {} {
         {mc "Run git gui blame on this line" command {external_blame_diff}}
     }
     $diff_menu configure -tearoff 0
-}
-
-# Windows sends all mouse wheel events to the current focused window, not
-# the one where the mouse hovers, so bind those events here and redirect
-# to the correct window
-proc windows_mousewheel_redirector {W X Y D} {
-    global canv canv2 canv3
-    set w [winfo containing -displayof $W $X $Y]
-    if {$w ne ""} {
-        set u [expr {$D < 0 ? 5 : -5}]
-        if {$w == $canv || $w == $canv2 || $w == $canv3} {
-            allcanvs yview scroll $u units
-        } else {
-            catch {
-                $w yview scroll $u units
-            }
-        }
-    }
 }
 
 # Update row number label when selectedline changes
