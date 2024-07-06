@@ -2698,7 +2698,7 @@ proc makewindow {} {
     if {[tk windowingsystem] == "win32"} {
         bind . <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D }
         bind $ctext <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D ; break }
-    } else {
+    } elseif {[tk windowingsystem] == "x11"} {
         bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
         bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
         bind $ctext <Button> {
@@ -2708,16 +2708,17 @@ proc makewindow {} {
                 $ctext xview scroll 5 units
             }
         }
-        if {[tk windowingsystem] eq "aqua"} {
-            bindall <MouseWheel> {
-                set delta [expr {- (%D)}]
-                allcanvs yview scroll $delta units
-            }
-            bindall <Shift-MouseWheel> {
-                set delta [expr {- (%D)}]
-                $canv xview scroll $delta units
-            }
+    } elseif {[tk windowingsystem] == "aqua"} {
+        bindall <MouseWheel> {
+            set delta [expr {- (%D)}]
+            allcanvs yview scroll $delta units
         }
+        bindall <Shift-MouseWheel> {
+            set delta [expr {- (%D)}]
+            $canv xview scroll $delta units
+        }
+    } else {
+        puts stderr [mc "Unknown windowing system, cannot bind mouse"]
     }
     bindall <$::BM> "canvscan mark %W %x %y"
     bindall <B$::BM-Motion> "canvscan dragto %W %x %y"
