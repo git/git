@@ -201,6 +201,13 @@ Performance, Internal Implementation, Development Support etc.
    remote.*.url configuration values have been straightened out, which
    resulted in a few leak fixes and code clarification.
 
+ * When bundleURI interface fetches multiple bundles, Git failed to
+   take full advantage of all bundles and ended up slurping duplicated
+   objects, which has been corrected..
+
+ * The code to deal with modified paths that are out-of-cone in a
+   sparsely checked out working tree has been optimized.
+
 
 Fixes since v2.45
 -----------------
@@ -348,5 +355,26 @@ Fixes since v2.45
    the "--color-moved" option.
    (merge 0f4b0d4cf0 rs/diff-color-moved-w-no-ext-diff-fix later to maint).
 
+ * "git archive --add-virtual-file=<path>:<contents>" never paid
+   attention to the --prefix=<prefix> option but the documentation
+   said it would. The documentation has been corrected.
+   (merge 72c282098d jc/archive-prefix-with-add-virtual-file later to maint).
+
+ * When GIT_PAGER failed to spawn, depending on the code path taken,
+   we failed immediately (correct) or just spew the payload to the
+   standard output (incorrect).  The code now always fail immediately
+   when GIT_PAGER fails.
+   (merge 78f0a5d187 rj/pager-die-upon-exec-failure later to maint).
+
+ * date parser updates to be more careful about underflowing epoch
+   based timestamp.
+   (merge 9d69789770 db/date-underflow-fix later to maint).
+
+ * The Bloom filter used for path limited history traversal was broken
+   on systems whose "char" is unsigned; update the implementation and
+   bump the format version to 2.
+   (merge 9c8a9ec787 tb/path-filter-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 493fdae046 ew/object-convert-leakfix later to maint).
+   (merge 00f3661a0a ss/doc-eol-attr-fix later to maint).
