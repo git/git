@@ -137,7 +137,7 @@ void setup_pager(void)
 	pager_process.in = -1;
 	strvec_push(&pager_process.env, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
-		return;
+		die("unable to execute pager '%s'", pager);
 
 	/* original process continues, but writes to the pipe */
 	dup2(pager_process.in, 1);
