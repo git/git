@@ -42,8 +42,8 @@ You probably need to have root/admin permissions to install.
 
 # Contributing
 
-The project is currently maintained by Pratyush Yadav over at
-https://github.com/prati0100/git-gui. Even though the project is hosted at
+The project is currently maintained by Johannes Sixt at
+https://github.com/j6t/git-gui. Even though the project is hosted at
 GitHub, the development does not happen over GitHub Issues and Pull Requests.
 Instead, an email based workflow is used. The Git mailing list
 [git@vger.kernel.org](mailto:git@vger.kernel.org) is where the patches are
