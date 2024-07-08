@@ -22,6 +22,8 @@ struct object_context {
 	char *path;
 };
 
+void object_context_release(struct object_context *ctx);
+
 /*
  * Return an abbreviated sha1 unique within this repository's object database.
  * The result will be at least `len` characters long, and will be NUL

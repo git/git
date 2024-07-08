@@ -665,9 +665,11 @@ int do_diff_cache(const struct object_id *tree_oid, struct diff_options *opt)
 	repo_init_revisions(opt->repo, &revs, NULL);
 	copy_pathspec(&revs.prune_data, &opt->pathspec);
 	revs.diffopt = *opt;
+	revs.diffopt.no_free = 1;
 
 	if (diff_cache(&revs, tree_oid, NULL, 1))
 		exit(128);
+
 	release_revisions(&revs);
 	return 0;
 }

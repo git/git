@@ -1759,6 +1759,11 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 	return check_refname_format(sb->buf, 0);
 }
 
+void object_context_release(struct object_context *ctx)
+{
+	free(ctx->path);
+}
+
 /*
  * This is like "get_oid_basic()", except it allows "object ID expressions",
  * notably "xyz^" for "parent of xyz"
@@ -1766,7 +1771,9 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 int repo_get_oid(struct repository *r, const char *name, struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, 0, oid, &unused);
+	int ret = get_oid_with_context(r, name, 0, oid, &unused);
+	object_context_release(&unused);
+	return ret;
 }
 
 /*
@@ -1804,8 +1811,10 @@ int repo_get_oid_committish(struct repository *r,
 			    struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_COMMITTISH,
-				    oid, &unused);
+	int ret = get_oid_with_context(r, name, GET_OID_COMMITTISH,
+				       oid, &unused);
+	object_context_release(&unused);
+	return ret;
 }
 
 int repo_get_oid_treeish(struct repository *r,
@@ -1813,8 +1822,10 @@ int repo_get_oid_treeish(struct repository *r,
 			 struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_TREEISH,
-				    oid, &unused);
+	int ret = get_oid_with_context(r, name, GET_OID_TREEISH,
+				       oid, &unused);
+	object_context_release(&unused);
+	return ret;
 }
 
 int repo_get_oid_commit(struct repository *r,
@@ -1822,8 +1833,10 @@ int repo_get_oid_commit(struct repository *r,
 			struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_COMMIT,
-				    oid, &unused);
+	int ret = get_oid_with_context(r, name, GET_OID_COMMIT,
+				       oid, &unused);
+	object_context_release(&unused);
+	return ret;
 }
 
 int repo_get_oid_tree(struct repository *r,
@@ -1831,8 +1844,10 @@ int repo_get_oid_tree(struct repository *r,
 		      struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_TREE,
-				    oid, &unused);
+	int ret = get_oid_with_context(r, name, GET_OID_TREE,
+				       oid, &unused);
+	object_context_release(&unused);
+	return ret;
 }
 
 int repo_get_oid_blob(struct repository *r,
@@ -1840,8 +1855,10 @@ int repo_get_oid_blob(struct repository *r,
 		      struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_BLOB,
-				    oid, &unused);
+	int ret = get_oid_with_context(r, name, GET_OID_BLOB,
+				       oid, &unused);
+	object_context_release(&unused);
+	return ret;
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
@@ -2119,6 +2136,7 @@ void maybe_die_on_misspelt_object_name(struct repository *r,
 	struct object_id oid;
 	get_oid_with_context_1(r, name, GET_OID_ONLY_TO_DIE | GET_OID_QUIETLY,
 			       prefix, &oid, &oc);
+	object_context_release(&oc);
 }
 
 enum get_oid_result get_oid_with_context(struct repository *repo,

@@ -276,6 +276,11 @@ struct display_notes_opt {
 void init_display_notes(struct display_notes_opt *opt);
 
 /*
+ * Release resources acquired by the display_notes_opt.
+ */
+void release_display_notes(struct display_notes_opt *opt);
+
+/*
  * This family of functions enables or disables the display of notes. In
  * particular, 'enable_default_display_notes' will display the default notes,
  * 'enable_ref_display_notes' will display the notes ref 'ref' and

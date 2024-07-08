@@ -11,10 +11,11 @@
 
 void create_notes_commit(struct repository *r,
 			 struct notes_tree *t,
-			 struct commit_list *parents,
+			 const struct commit_list *parents,
 			 const char *msg, size_t msg_len,
 			 struct object_id *result_oid)
 {
+	struct commit_list *parents_to_free = NULL;
 	struct object_id tree_oid;
 
 	assert(t->initialized);
@@ -29,7 +30,8 @@ void create_notes_commit(struct repository *r,
 			struct commit *parent = lookup_commit(r, &parent_oid);
 			if (repo_parse_commit(r, parent))
 				die("Failed to find/parse commit %s", t->ref);
-			commit_list_insert(parent, &parents);
+			commit_list_insert(parent, &parents_to_free);
+			parents = parents_to_free;
 		}
 		/* else: t->ref points to nothing, assume root/orphan commit */
 	}
@@ -37,6 +39,8 @@ void create_notes_commit(struct repository *r,
 	if (commit_tree(msg, msg_len, &tree_oid, parents, result_oid, NULL,
 			NULL))
 		die("Failed to commit notes tree to database");
+
+	free_commit_list(parents_to_free);
 }
 
 void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
@@ -189,6 +193,7 @@ void finish_copy_notes_for_rewrite(struct repository *r,
 	for (i = 0; c->trees[i]; i++) {
 		commit_notes(r, c->trees[i], msg);
 		free_notes(c->trees[i]);
+		free(c->trees[i]);
 	}
 	free(c->trees);
 	free(c);

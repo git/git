@@ -50,7 +50,7 @@ static char const * const builtin_multi_pack_index_usage[] = {
 static struct opts_multi_pack_index {
 	char *object_dir;
 	const char *preferred_pack;
-	const char *refs_snapshot;
+	char *refs_snapshot;
 	unsigned long batch_size;
 	unsigned flags;
 	int stdin_packs;
@@ -135,6 +135,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 			     N_("refs snapshot for selecting bitmap commits")),
 		OPT_END(),
 	};
+	int ret;
 
 	opts.flags |= MIDX_WRITE_BITMAP_HASH_CACHE;
 
@@ -157,7 +158,6 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 	if (opts.stdin_packs) {
 		struct string_list packs = STRING_LIST_INIT_DUP;
-		int ret;
 
 		read_packs_from_stdin(&packs);
 
@@ -166,12 +166,17 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 					   opts.refs_snapshot, opts.flags);
 
 		string_list_clear(&packs, 0);
+		free(opts.refs_snapshot);
 
 		return ret;
 
 	}
-	return write_midx_file(opts.object_dir, opts.preferred_pack,
-			       opts.refs_snapshot, opts.flags);
+
+	ret = write_midx_file(opts.object_dir, opts.preferred_pack,
+			      opts.refs_snapshot, opts.flags);
+
+	free(opts.refs_snapshot);
+	return ret;
 }
 
 static int cmd_multi_pack_index_verify(int argc, const char **argv,

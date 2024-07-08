@@ -975,7 +975,9 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	log_tree_diff_flush(&rev);
 
 	ret = diff_result_code(&rev.diffopt);
+
 cleanup:
+	strvec_clear(&revision_args);
 	strvec_clear(&stash_args);
 	free_stash_info(&info);
 	release_revisions(&rev);
@@ -1018,13 +1020,14 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	const char *stash_msg = NULL;
 	struct object_id obj;
-	struct object_context dummy;
+	struct object_context dummy = {0};
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet")),
 		OPT_STRING('m', "message", &stash_msg, "message",
 			   N_("stash message")),
 		OPT_END()
 	};
+	int ret;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     git_stash_store_usage,
@@ -1043,10 +1046,15 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot update %s with %s"),
 					     ref_stash, argv[0]);
-		return -1;
+		ret = -1;
+		goto out;
 	}
 
-	return do_store_stash(&obj, stash_msg, quiet);
+	ret = do_store_stash(&obj, stash_msg, quiet);
+
+out:
+	object_context_release(&dummy);
+	return ret;
 }
 
 static void add_pathspecs(struct strvec *args,
@@ -1408,6 +1416,9 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		goto done;
 	}
 
+	free_commit_list(parents);
+	parents = NULL;
+
 	if (include_untracked) {
 		if (save_untracked_files(info, &msg, untracked_files)) {
 			if (!quiet)
@@ -1453,11 +1464,6 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	else
 		strbuf_insertf(stash_msg_buf, 0, "On %s: ", branch_name);
 
-	/*
-	 * `parents` will be empty after calling `commit_tree()`, so there is
-	 * no need to call `free_commit_list()`
-	 */
-	parents = NULL;
 	if (untracked_commit_option)
 		commit_list_insert(lookup_commit(the_repository,
 						 &info->u_commit),
@@ -1479,6 +1485,7 @@ done:
 	strbuf_release(&commit_tree_label);
 	strbuf_release(&msg);
 	strbuf_release(&untracked_files);
+	free_commit_list(parents);
 	return ret;
 }
 

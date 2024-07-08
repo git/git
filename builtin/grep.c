@@ -1114,7 +1114,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		struct object_id oid;
-		struct object_context oc;
+		struct object_context oc = {0};
 		struct object *object;
 
 		if (!strcmp(arg, "--")) {
@@ -1140,7 +1140,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (!seen_dashdash)
 			verify_non_filename(prefix, arg);
 		add_object_array_with_path(object, arg, &list, oc.mode, oc.path);
-		free(oc.path);
+		object_context_release(&oc);
 	}
 
 	/*

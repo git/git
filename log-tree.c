@@ -1053,6 +1053,7 @@ static int do_remerge_diff(struct rev_info *opt,
 	log_tree_diff_flush(opt);
 
 	/* Cleanup */
+	free_commit_list(bases);
 	cleanup_additional_headers(&opt->diffopt);
 	strbuf_release(&parent1_desc);
 	strbuf_release(&parent2_desc);

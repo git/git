@@ -106,7 +106,8 @@ static enum {
 	COMMIT_PARTIAL
 } commit_style;
 
-static const char *logfile, *force_author;
+static const char *force_author;
+static char *logfile;
 static char *template_file;
 /*
  * The _message variables are commit names from which to take
@@ -1309,7 +1310,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 				  !!use_message, "-C",
 				  !!logfile, "-F");
 	if (use_message || edit_message || logfile ||fixup_message || have_option_m)
-		template_file = NULL;
+		FREE_AND_NULL(template_file);
 	if (edit_message)
 		use_message = edit_message;
 	if (amend && !use_message && !fixup_message)
@@ -1847,7 +1848,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		rollback_index_files();
 		die(_("failed to write commit object"));
 	}
-	free_commit_extra_headers(extra);
 
 	if (update_head_with_reflog(current_head, &oid, reflog_msg, &sb,
 				    &err)) {
@@ -1889,8 +1889,12 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
 
 cleanup:
+	free_commit_extra_headers(extra);
+	free_commit_list(parents);
 	strbuf_release(&author_ident);
 	strbuf_release(&err);
 	strbuf_release(&sb);
+	free(logfile);
+	free(template_file);
 	return ret;
 }

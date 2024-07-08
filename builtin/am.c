@@ -1573,8 +1573,8 @@ static int build_fake_ancestor(const struct am_state *state, const char *index_f
  */
 static int fall_back_threeway(const struct am_state *state, const char *index_path)
 {
-	struct object_id orig_tree, their_tree, our_tree;
-	const struct object_id *bases[1] = { &orig_tree };
+	struct object_id their_tree, our_tree;
+	struct object_id bases[1] = { 0 };
 	struct merge_options o;
 	struct commit *result;
 	char *their_tree_name;
@@ -1588,7 +1588,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 	discard_index(the_repository->index);
 	read_index_from(the_repository->index, index_path, get_git_dir());
 
-	if (write_index_as_tree(&orig_tree, the_repository->index, index_path, 0, NULL))
+	if (write_index_as_tree(&bases[0], the_repository->index, index_path, 0, NULL))
 		return error(_("Repository lacks necessary blobs to fall back on 3-way merge."));
 
 	say(state, stdout, _("Using index info to reconstruct a base tree..."));
@@ -1718,6 +1718,7 @@ static void do_commit(const struct am_state *state)
 
 	run_hooks("post-applypatch");
 
+	free_commit_list(parents);
 	strbuf_release(&sb);
 }
 

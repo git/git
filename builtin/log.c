@@ -682,7 +682,7 @@ static void show_tagger(const char *buf, struct rev_info *rev)
 static int show_blob_object(const struct object_id *oid, struct rev_info *rev, const char *obj_name)
 {
 	struct object_id oidc;
-	struct object_context obj_context;
+	struct object_context obj_context = {0};
 	char *buf;
 	unsigned long size;
 
@@ -698,7 +698,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	if (!obj_context.path ||
 	    !textconv_object(the_repository, obj_context.path,
 			     obj_context.mode, &oidc, 1, &buf, &size)) {
-		free(obj_context.path);
+		object_context_release(&obj_context);
 		return stream_blob_to_fd(1, oid, NULL, 0);
 	}
 
@@ -706,7 +706,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 		die(_("git show %s: bad file"), obj_name);
 
 	write_or_die(1, buf, size);
-	free(obj_context.path);
+	object_context_release(&obj_context);
 	return 0;
 }
 
@@ -2021,7 +2021,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *rfc = NULL;
 	int creation_factor = -1;
 	const char *signature = git_version_string;
-	const char *signature_file_arg = NULL;
+	char *signature_file_arg = NULL;
 	struct keep_callback_data keep_callback_data = {
 		.cfg = &cfg,
 		.revs = &rev,
@@ -2561,6 +2561,8 @@ done:
 	strbuf_release(&rdiff1);
 	strbuf_release(&rdiff2);
 	strbuf_release(&rdiff_title);
+	free(description_file);
+	free(signature_file_arg);
 	free(to_free);
 	free(rev.message_id);
 	if (rev.ref_message_ids)
@@ -2675,16 +2677,16 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 		commit_list_insert(commit, &list);
 	}
 
-	while (list) {
+	for (struct commit_list *l = list; l; l = l->next) {
 		char sign = '+';
 
-		commit = list->item;
+		commit = l->item;
 		if (has_commit_patch_id(commit, &ids))
 			sign = '-';
 		print_commit(sign, commit, verbose, abbrev, revs.diffopt.file);
-		list = list->next;
 	}
 
+	free_commit_list(list);
 	free_patch_ids(&ids);
 	return 0;
 }

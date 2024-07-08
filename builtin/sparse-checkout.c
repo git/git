@@ -1026,6 +1026,7 @@ static int sparse_checkout_check_rules(int argc, const char **argv, const char *
 
 	ret = check_rules(&pl, check_rules_opts.null_termination);
 	clear_pattern_list(&pl);
+	free(check_rules_opts.rules_file);
 	return ret;
 }
 

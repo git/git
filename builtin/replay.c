@@ -52,11 +52,11 @@ static struct commit *create_commit(struct tree *tree,
 				    struct commit *parent)
 {
 	struct object_id ret;
-	struct object *obj;
+	struct object *obj = NULL;
 	struct commit_list *parents = NULL;
 	char *author;
 	char *sign_commit = NULL; /* FIXME: cli users might want to sign again */
-	struct commit_extra_header *extra;
+	struct commit_extra_header *extra = NULL;
 	struct strbuf msg = STRBUF_INIT;
 	const char *out_enc = get_commit_output_encoding();
 	const char *message = repo_logmsg_reencode(the_repository, based_on,
@@ -73,12 +73,16 @@ static struct commit *create_commit(struct tree *tree,
 	if (commit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
 				 &ret, author, NULL, sign_commit, extra)) {
 		error(_("failed to write commit object"));
-		return NULL;
+		goto out;
 	}
-	free(author);
-	strbuf_release(&msg);
 
 	obj = parse_object(the_repository, &ret);
+
+out:
+	free_commit_extra_headers(extra);
+	free_commit_list(parents);
+	strbuf_release(&msg);
+	free(author);
 	return (struct commit *)obj;
 }
 

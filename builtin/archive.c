@@ -90,6 +90,7 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 			N_("path to the remote git-upload-archive command")),
 		OPT_END()
 	};
+	int ret;
 
 	argc = parse_options(argc, argv, prefix, local_opts, NULL,
 			     PARSE_OPT_KEEP_ALL);
@@ -104,6 +105,8 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
-	UNLEAK(output);
-	return write_archive(argc, argv, prefix, the_repository, output, 0);
+	ret = write_archive(argc, argv, prefix, the_repository, output, 0);
+
+	free(output);
+	return ret;
 }

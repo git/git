@@ -851,6 +851,8 @@ static int do_plain_rerere(struct repository *r,
 	if (update.nr)
 		update_paths(r, &update);
 
+	string_list_clear(&conflict, 0);
+	string_list_clear(&update, 0);
 	return write_rr(rr, fd);
 }
 
@@ -914,6 +916,7 @@ int repo_rerere(struct repository *r, int flags)
 		return 0;
 	status = do_plain_rerere(r, &merge_rr, fd);
 	free_rerere_dirs();
+	string_list_clear(&merge_rr, 1);
 	return status;
 }
 

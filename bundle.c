@@ -502,6 +502,7 @@ int create_bundle(struct repository *r, const char *path,
 	struct rev_info revs, revs_copy;
 	int min_version = 2;
 	struct bundle_prerequisites_info bpi;
+	int ret;
 	int i;
 
 	/* init revs to list objects for pack-objects later */
@@ -527,8 +528,8 @@ int create_bundle(struct repository *r, const char *path,
 		min_version = 3;
 
 	if (argc > 1) {
-		error(_("unrecognized argument: %s"), argv[1]);
-		goto err;
+		ret = error(_("unrecognized argument: %s"), argv[1]);
+		goto out;
 	}
 
 	bundle_to_stdout = !strcmp(path, "-");
@@ -593,23 +594,31 @@ int create_bundle(struct repository *r, const char *path,
 
 	/* write bundle refs */
 	ref_count = write_bundle_refs(bundle_fd, &revs_copy);
-	if (!ref_count)
+	if (!ref_count) {
 		die(_("Refusing to create empty bundle."));
-	else if (ref_count < 0)
-		goto err;
+	} else if (ref_count < 0) {
+		ret = -1;
+		goto out;
+	}
 
 	/* write pack */
-	if (write_pack_data(bundle_fd, &revs_copy, pack_options))
-		goto err;
+	if (write_pack_data(bundle_fd, &revs_copy, pack_options)) {
+		ret = -1;
+		goto out;
+	}
 
 	if (!bundle_to_stdout) {
 		if (commit_lock_file(&lock))
 			die_errno(_("cannot create '%s'"), path);
 	}
-	return 0;
-err:
+
+	ret = 0;
+
+out:
+	object_array_clear(&revs_copy.pending);
+	release_revisions(&revs);
 	rollback_lock_file(&lock);
-	return -1;
+	return ret;
 }
 
 int unbundle(struct repository *r, struct bundle_header *header,

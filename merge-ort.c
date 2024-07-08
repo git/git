@@ -5073,11 +5073,12 @@ redo:
  * Originally from merge_recursive_internal(); somewhat adapted, though.
  */
 static void merge_ort_internal(struct merge_options *opt,
-			       struct commit_list *merge_bases,
+			       const struct commit_list *_merge_bases,
 			       struct commit *h1,
 			       struct commit *h2,
 			       struct merge_result *result)
 {
+	struct commit_list *merge_bases = copy_commit_list(_merge_bases);
 	struct commit *next;
 	struct commit *merged_merge_bases;
 	const char *ancestor_name;
@@ -5087,7 +5088,7 @@ static void merge_ort_internal(struct merge_options *opt,
 		if (repo_get_merge_bases(the_repository, h1, h2,
 					 &merge_bases) < 0) {
 			result->clean = -1;
-			return;
+			goto out;
 		}
 		/* See merge-ort.h:merge_incore_recursive() declaration NOTE */
 		merge_bases = reverse_commit_list(merge_bases);
@@ -5131,7 +5132,7 @@ static void merge_ort_internal(struct merge_options *opt,
 		opt->branch2 = "Temporary merge branch 2";
 		merge_ort_internal(opt, NULL, prev, next, result);
 		if (result->clean < 0)
-			return;
+			goto out;
 		opt->branch1 = saved_b1;
 		opt->branch2 = saved_b2;
 		opt->priv->call_depth--;
@@ -5154,6 +5155,9 @@ static void merge_ort_internal(struct merge_options *opt,
 					result);
 	strbuf_release(&merge_base_abbrev);
 	opt->ancestor = NULL;  /* avoid accidental re-use of opt->ancestor */
+
+out:
+	free_commit_list(merge_bases);
 }
 
 void merge_incore_nonrecursive(struct merge_options *opt,
@@ -5183,7 +5187,7 @@ void merge_incore_nonrecursive(struct merge_options *opt,
 }
 
 void merge_incore_recursive(struct merge_options *opt,
-			    struct commit_list *merge_bases,
+			    const struct commit_list *merge_bases,
 			    struct commit *side1,
 			    struct commit *side2,
 			    struct merge_result *result)

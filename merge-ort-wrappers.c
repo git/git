@@ -48,7 +48,7 @@ int merge_ort_nonrecursive(struct merge_options *opt,
 int merge_ort_recursive(struct merge_options *opt,
 			struct commit *side1,
 			struct commit *side2,
-			struct commit_list *merge_bases,
+			const struct commit_list *merge_bases,
 			struct commit **result)
 {
 	struct tree *head = repo_get_commit_tree(opt->repo, side1);

@@ -544,6 +544,8 @@ static void filter_sparse_oid__init(
 	filter->filter_data = d;
 	filter->filter_object_fn = filter_sparse;
 	filter->free_fn = filter_sparse_free;
+
+	object_context_release(&oc);
 }
 
 /*

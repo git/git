@@ -163,7 +163,7 @@ void add_cmdname(struct cmdnames *cmds, const char *name, int len)
 	cmds->names[cmds->cnt++] = ent;
 }
 
-static void clean_cmdnames(struct cmdnames *cmds)
+void cmdnames_release(struct cmdnames *cmds)
 {
 	int i;
 	for (i = 0; i < cmds->cnt; ++i)
@@ -365,8 +365,8 @@ void list_all_main_cmds(struct string_list *list)
 	for (i = 0; i < main_cmds.cnt; i++)
 		string_list_append(list, main_cmds.names[i]->name);
 
-	clean_cmdnames(&main_cmds);
-	clean_cmdnames(&other_cmds);
+	cmdnames_release(&main_cmds);
+	cmdnames_release(&other_cmds);
 }
 
 void list_all_other_cmds(struct string_list *list)
@@ -381,8 +381,8 @@ void list_all_other_cmds(struct string_list *list)
 	for (i = 0; i < other_cmds.cnt; i++)
 		string_list_append(list, other_cmds.names[i]->name);
 
-	clean_cmdnames(&main_cmds);
-	clean_cmdnames(&other_cmds);
+	cmdnames_release(&main_cmds);
+	cmdnames_release(&other_cmds);
 }
 
 void list_cmds_by_category(struct string_list *list,
@@ -695,7 +695,7 @@ const char *help_unknown_cmd(const char *cmd)
 	if (autocorrect && n == 1 && SIMILAR_ENOUGH(best_similarity)) {
 		const char *assumed = main_cmds.names[0]->name;
 		main_cmds.names[0] = NULL;
-		clean_cmdnames(&main_cmds);
+		cmdnames_release(&main_cmds);
 		fprintf_ln(stderr,
 			   _("WARNING: You called a Git command named '%s', "
 			     "which does not exist."),

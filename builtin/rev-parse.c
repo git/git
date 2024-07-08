@@ -423,12 +423,12 @@ static char *findspace(const char *s)
 
 static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
-	static int keep_dashdash = 0, stop_at_non_option = 0;
-	static char const * const parseopt_usage[] = {
+	int keep_dashdash = 0, stop_at_non_option = 0;
+	char const * const parseopt_usage[] = {
 		N_("git rev-parse --parseopt [<options>] -- [<args>...]"),
 		NULL
 	};
-	static struct option parseopt_opts[] = {
+	struct option parseopt_opts[] = {
 		OPT_BOOL(0, "keep-dashdash", &keep_dashdash,
 					N_("keep the `--` passed as an arg")),
 		OPT_BOOL(0, "stop-at-non-option", &stop_at_non_option,
@@ -438,12 +438,11 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 					N_("output in stuck long form")),
 		OPT_END(),
 	};
-	static const char * const flag_chars = "*=?!";
-
 	struct strbuf sb = STRBUF_INIT, parsed = STRBUF_INIT;
-	const char **usage = NULL;
+	struct strvec longnames = STRVEC_INIT;
+	struct strvec usage = STRVEC_INIT;
 	struct option *opts = NULL;
-	int onb = 0, osz = 0, unb = 0, usz = 0;
+	size_t opts_nr = 0, opts_alloc = 0;
 
 	strbuf_addstr(&parsed, "set --");
 	argc = parse_options(argc, argv, prefix, parseopt_opts, parseopt_usage,
@@ -453,16 +452,16 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 
 	/* get the usage up to the first line with a -- on it */
 	for (;;) {
+		strbuf_reset(&sb);
 		if (strbuf_getline(&sb, stdin) == EOF)
 			die(_("premature end of input"));
-		ALLOC_GROW(usage, unb + 1, usz);
 		if (!strcmp("--", sb.buf)) {
-			if (unb < 1)
+			if (!usage.nr)
 				die(_("no usage string given before the `--' separator"));
-			usage[unb] = NULL;
 			break;
 		}
-		usage[unb++] = strbuf_detach(&sb, NULL);
+
+		strvec_push(&usage, sb.buf);
 	}
 
 	/* parse: (<short>|<short>,<long>|<long>)[*=?!]*<arghint>? SP+ <help> */
@@ -474,10 +473,10 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		if (!sb.len)
 			continue;
 
-		ALLOC_GROW(opts, onb + 1, osz);
-		memset(opts + onb, 0, sizeof(opts[onb]));
+		ALLOC_GROW(opts, opts_nr + 1, opts_alloc);
+		memset(opts + opts_nr, 0, sizeof(*opts));
 
-		o = &opts[onb++];
+		o = &opts[opts_nr++];
 		help = findspace(sb.buf);
 		if (!help || sb.buf == help) {
 			o->type = OPTION_GROUP;
@@ -494,20 +493,22 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		o->callback = &parseopt_dump;
 
 		/* name(s) */
-		s = strpbrk(sb.buf, flag_chars);
+		s = strpbrk(sb.buf, "*=?!");
 		if (!s)
 			s = help;
 
 		if (s == sb.buf)
 			die(_("missing opt-spec before option flags"));
 
-		if (s - sb.buf == 1) /* short option only */
+		if (s - sb.buf == 1) { /* short option only */
 			o->short_name = *sb.buf;
-		else if (sb.buf[1] != ',') /* long option only */
-			o->long_name = xmemdupz(sb.buf, s - sb.buf);
-		else {
+		} else if (sb.buf[1] != ',') { /* long option only */
+			o->long_name = strvec_pushf(&longnames, "%.*s",
+						    (int)(s - sb.buf), sb.buf);
+		} else {
 			o->short_name = *sb.buf;
-			o->long_name = xmemdupz(sb.buf + 2, s - sb.buf - 2);
+			o->long_name = strvec_pushf(&longnames, "%.*s",
+						    (int)(s - sb.buf - 2), sb.buf + 2);
 		}
 
 		/* flags */
@@ -537,9 +538,9 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	strbuf_release(&sb);
 
 	/* put an OPT_END() */
-	ALLOC_GROW(opts, onb + 1, osz);
-	memset(opts + onb, 0, sizeof(opts[onb]));
-	argc = parse_options(argc, argv, prefix, opts, usage,
+	ALLOC_GROW(opts, opts_nr + 1, opts_alloc);
+	memset(opts + opts_nr, 0, sizeof(*opts));
+	argc = parse_options(argc, argv, prefix, opts, usage.v,
 			(keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0) |
 			(stop_at_non_option ? PARSE_OPT_STOP_AT_NON_OPTION : 0) |
 			PARSE_OPT_SHELL_EVAL);
@@ -547,7 +548,13 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	strbuf_addstr(&parsed, " --");
 	sq_quote_argv(&parsed, argv);
 	puts(parsed.buf);
+
 	strbuf_release(&parsed);
+	strbuf_release(&sb);
+	strvec_clear(&longnames);
+	strvec_clear(&usage);
+	free((char *) opts->help);
+	free(opts);
 	return 0;
 }
 
@@ -1121,6 +1128,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		}
 		if (!get_oid_with_context(the_repository, name,
 					  flags, &oid, &unused)) {
+			object_context_release(&unused);
 			if (output_algo)
 				repo_oid_to_algop(the_repository, &oid,
 						  output_algo, &oid);
@@ -1130,6 +1138,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				show_rev(type, &oid, name);
 			continue;
 		}
+		object_context_release(&unused);
 		if (verify)
 			die_no_single_rev(quiet);
 		if (has_dashdash)

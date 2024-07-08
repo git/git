@@ -11,7 +11,7 @@ static const char * const fmt_merge_msg_usage[] = {
 
 int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 {
-	const char *inpath = NULL;
+	char *inpath = NULL;
 	const char *message = NULL;
 	char *into_name = NULL;
 	int shortlog_len = -1;
@@ -66,5 +66,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	if (ret)
 		return ret;
 	write_in_full(STDOUT_FILENO, output.buf, output.len);
+
+	free(inpath);
 	return 0;
 }

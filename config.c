@@ -1577,6 +1577,7 @@ static int git_default_core_config(const char *var, const char *value,
 	if (!strcmp(var, "core.notesref")) {
 		if (!value)
 			return config_error_nonbool(var);
+		free(notes_ref_name);
 		notes_ref_name = xstrdup(value);
 		return 0;
 	}
