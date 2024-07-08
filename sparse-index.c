@@ -439,96 +439,208 @@ void ensure_correct_sparsity(struct index_state *istate)
 		ensure_full_index(istate);
 }
 
-static int path_found(const char *path, const char **dirname, size_t *dir_len,
-		      int *dir_found)
+struct path_found_data {
+	/**
+	 * The path stored in 'dir', if non-empty, corresponds to the most-
+	 * recent path that we checked where:
+	 *
+	 *   1. The path should be a directory, according to the index.
+	 *   2. The path does not exist.
+	 *   3. The parent path _does_ exist. (This may be the root of the
+	 *      working directory.)
+	 */
+	struct strbuf dir;
+	size_t lstat_count;
+};
+
+#define PATH_FOUND_DATA_INIT { \
+	.dir = STRBUF_INIT \
+}
+
+static void clear_path_found_data(struct path_found_data *data)
+{
+	strbuf_release(&data->dir);
+}
+
+/**
+ * Return the length of the longest common substring that ends in a
+ * slash ('/') to indicate the longest common parent directory. Returns
+ * zero if no common directory exists.
+ */
+static size_t max_common_dir_prefix(const char *path1, const char *path2)
+{
+	size_t common_prefix = 0;
+	for (size_t i = 0; path1[i] && path2[i]; i++) {
+		if (path1[i] != path2[i])
+			break;
+
+		/*
+		 * If they agree at a directory separator, then add one
+		 * to make sure it is included in the common prefix string.
+		 */
+		if (path1[i] == '/')
+			common_prefix = i + 1;
+	}
+
+	return common_prefix;
+}
+
+static int path_found(const char *path, struct path_found_data *data)
 {
 	struct stat st;
-	char *newdir;
-	char *tmp;
+	size_t common_prefix;
 
 	/*
-	 * If dirname corresponds to a directory that doesn't exist, and this
-	 * path starts with dirname, then path can't exist.
+	 * If data->dir is non-empty, then it contains a path that doesn't
+	 * exist, including an ending slash ('/'). If it is a prefix of 'path',
+	 * then we can return 0.
 	 */
-	if (!*dir_found && !memcmp(path, *dirname, *dir_len))
+	if (data->dir.len && !memcmp(path, data->dir.buf, data->dir.len))
 		return 0;
 
 	/*
-	 * If path itself exists, return 1.
+	 * Otherwise, we must check if the current path exists. If it does, then
+	 * return 1. The cached directory will be skipped until we come across
+	 * a missing path again.
 	 */
+	data->lstat_count++;
 	if (!lstat(path, &st))
 		return 1;
 
 	/*
-	 * Otherwise, path does not exist so we'll return 0...but we'll first
-	 * determine some info about its parent directory so we can avoid
-	 * lstat calls for future cache entries.
+	 * At this point, we know that 'path' doesn't exist, and we know that
+	 * the parent directory of 'data->dir' does exist. Let's set 'data->dir'
+	 * to be the top-most non-existing directory of 'path'. If the first
+	 * parent of 'path' exists, then we will act as though 'path'
+	 * corresponds to a directory (by adding a slash).
 	 */
-	newdir = strrchr(path, '/');
-	if (!newdir)
-		return 0; /* Didn't find a parent dir; just return 0 now. */
+	common_prefix = max_common_dir_prefix(path, data->dir.buf);
 
 	/*
-	 * If path starts with directory (which we already lstat'ed and found),
-	 * then no need to lstat parent directory again.
+	 * At this point, 'path' and 'data->dir' have a common existing parent
+	 * directory given by path[0..common_prefix] (which could have length 0).
+	 * We "grow" the data->dir buffer by checking for existing directories
+	 * along 'path'.
 	 */
-	if (*dir_found && *dirname && memcmp(path, *dirname, *dir_len))
-		return 0;
 
-	/* Free previous dirname, and cache path's dirname */
-	*dirname = path;
-	*dir_len = newdir - path + 1;
+	strbuf_setlen(&data->dir, common_prefix);
+	while (1) {
+		/* Find the next directory in 'path'. */
+		const char *rest = path + data->dir.len;
+		const char *next_slash = strchr(rest, '/');
 
-	tmp = xstrndup(path, *dir_len);
-	*dir_found = !lstat(tmp, &st);
-	free(tmp);
+		/*
+		 * If there are no more slashes, then 'path' doesn't contain a
+		 * non-existent _parent_ directory. Set 'data->dir' to be equal
+		 * to 'path' plus an additional slash, so it can be used for
+		 * caching in the future. The filename of 'path' is considered
+		 * a non-existent directory.
+		 *
+		 * Note: if "{path}/" exists as a directory, then it will never
+		 * appear as a prefix of other callers to this method, assuming
+		 * the context from the clear_skip_worktree... methods. If this
+		 * method is reused, then this must be reconsidered.
+		 */
+		if (!next_slash) {
+			strbuf_addstr(&data->dir, rest);
+			strbuf_addch(&data->dir, '/');
+			break;
+		}
 
+		/*
+		 * Now that we have a slash, let's grow 'data->dir' to include
+		 * this slash, then test if we should stop.
+		 */
+		strbuf_add(&data->dir, rest, next_slash - rest + 1);
+
+		/* If the parent dir doesn't exist, then stop here. */
+		data->lstat_count++;
+		if (lstat(data->dir.buf, &st))
+			return 0;
+	}
+
+	/*
+	 * At this point, 'data->dir' is equal to 'path' plus a slash character,
+	 * and the parent directory of 'path' definitely exists. Moreover, we
+	 * know that 'path' doesn't exist, or we would have returned 1 earlier.
+	 */
 	return 0;
 }
 
-void clear_skip_worktree_from_present_files(struct index_state *istate)
+static int clear_skip_worktree_from_present_files_sparse(struct index_state *istate)
 {
-	const char *last_dirname = NULL;
-	size_t dir_len = 0;
-	int dir_found = 1;
+	struct path_found_data data = PATH_FOUND_DATA_INIT;
 
-	int i;
-	int path_count[2] = {0, 0};
-	int restarted = 0;
+	int path_count = 0;
+	int to_restart = 0;
 
-	if (!core_apply_sparse_checkout ||
-	    sparse_expect_files_outside_of_patterns)
-		return;
-
-	trace2_region_enter("index", "clear_skip_worktree_from_present_files",
+	trace2_region_enter("index", "clear_skip_worktree_from_present_files_sparse",
 			    istate->repo);
-restart:
-	for (i = 0; i < istate->cache_nr; i++) {
+	for (int i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 
 		if (ce_skip_worktree(ce)) {
-			path_count[restarted]++;
-			if (path_found(ce->name, &last_dirname, &dir_len, &dir_found)) {
+			path_count++;
+			if (path_found(ce->name, &data)) {
 				if (S_ISSPARSEDIR(ce->ce_mode)) {
-					if (restarted)
-						BUG("ensure-full-index did not fully flatten?");
-					ensure_full_index(istate);
-					restarted = 1;
-					goto restart;
+					to_restart = 1;
+					break;
 				}
 				ce->ce_flags &= ~CE_SKIP_WORKTREE;
 			}
 		}
 	}
 
-	if (path_count[0])
-		trace2_data_intmax("index", istate->repo,
-				   "sparse_path_count", path_count[0]);
-	if (restarted)
-		trace2_data_intmax("index", istate->repo,
-				   "sparse_path_count_full", path_count[1]);
-	trace2_region_leave("index", "clear_skip_worktree_from_present_files",
+	trace2_data_intmax("index", istate->repo,
+			   "sparse_path_count", path_count);
+	trace2_data_intmax("index", istate->repo,
+			   "sparse_lstat_count", data.lstat_count);
+	trace2_region_leave("index", "clear_skip_worktree_from_present_files_sparse",
 			    istate->repo);
+	clear_path_found_data(&data);
+	return to_restart;
+}
+
+static void clear_skip_worktree_from_present_files_full(struct index_state *istate)
+{
+	struct path_found_data data = PATH_FOUND_DATA_INIT;
+
+	int path_count = 0;
+
+	trace2_region_enter("index", "clear_skip_worktree_from_present_files_full",
+			    istate->repo);
+	for (int i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+
+		if (S_ISSPARSEDIR(ce->ce_mode))
+			BUG("ensure-full-index did not fully flatten?");
+
+		if (ce_skip_worktree(ce)) {
+			path_count++;
+			if (path_found(ce->name, &data))
+				ce->ce_flags &= ~CE_SKIP_WORKTREE;
+		}
+	}
+
+	trace2_data_intmax("index", istate->repo,
+			   "full_path_count", path_count);
+	trace2_data_intmax("index", istate->repo,
+			   "full_lstat_count", data.lstat_count);
+	trace2_region_leave("index", "clear_skip_worktree_from_present_files_full",
+			    istate->repo);
+	clear_path_found_data(&data);
+}
+
+void clear_skip_worktree_from_present_files(struct index_state *istate)
+{
+	if (!core_apply_sparse_checkout ||
+	    sparse_expect_files_outside_of_patterns)
+		return;
+
+	if (clear_skip_worktree_from_present_files_sparse(istate)) {
+		ensure_full_index(istate);
+		clear_skip_worktree_from_present_files_full(istate);
+	}
 }
 
 /*
