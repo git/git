@@ -241,6 +241,42 @@ How do I know if I want to do a fetch or a pull?::
 	ignore the upstream changes.  A pull consists of a fetch followed
 	immediately by either a merge or rebase.  See linkgit:git-pull[1].
 
+[[proxy]]
+Can I use a proxy with Git?::
+	Yes, Git supports the use of proxies.  Git honors the standard `http_proxy`,
+	`https_proxy`, and `no_proxy` environment variables commonly used on Unix, and
+	it also can be configured with `http.proxy` and similar options for HTTPS (see
+	linkgit:git-config[1]).  The `http.proxy` and related options can be
+	customized on a per-URL pattern basis.  In addition, Git can in theory
+	function normally with transparent proxies that exist on the network.
++
+For SSH, Git can support a proxy using OpenSSH's `ProxyCommand`. Commonly used
+tools include `netcat` and `socat`.  However, they must be configured not to
+exit when seeing EOF on standard input, which usually means that `netcat` will
+require `-q` and `socat` will require a timeout with something like `-t 10`.
+This is required because the way the Git SSH server knows that no more requests
+will be made is an EOF on standard input, but when that happens, the server may
+not have yet processed the final request, so dropping the connection at that
+point would interrupt that request.
++
+An example configuration entry in `~/.ssh/config` with an HTTP proxy might look
+like this:
++
+----
+Host git.example.org
+    User git
+    ProxyCommand socat -t 10 - PROXY:proxy.example.org:%h:%p,proxyport=8080
+----
++
+Note that in all cases, for Git to work properly, the proxy must be completely
+transparent.  The proxy cannot modify, tamper with, or buffer the connection in
+any way, or Git will almost certainly fail to work.  Note that many proxies,
+including many TLS middleboxes, Windows antivirus and firewall programs other
+than Windows Defender and Windows Firewall, and filtering proxies fail to meet
+this standard, and as a result end up breaking Git.  Because of the many
+reports of problems and their poor security history, we recommend against the
+use of these classes of software and devices.
+
 Merging and Rebasing
 --------------------
 
