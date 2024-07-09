@@ -393,8 +393,9 @@ I'm on Windows and git diff shows my files as having a `^M` at the end.::
 +
 You can store the files in the repository with Unix line endings and convert
 them automatically to your platform's line endings.  To do that, set the
-configuration option `core.eol` to `native` and see the following entry for
-information about how to configure files as text or binary.
+configuration option `core.eol` to `native` and see
+<<recommended-storage-settings,the question on recommended storage settings>>
+for information about how to configure files as text or binary.
 +
 You can also control this behavior with the `core.whitespace` setting if you
 don't wish to remove the carriage returns from your line endings.
@@ -456,14 +457,26 @@ references, URLs, and hashes stored in the repository.
 +
 We also recommend setting a linkgit:gitattributes[5] file to explicitly mark
 which files are text and which are binary.  If you want Git to guess, you can
-set the attribute `text=auto`.  For example, the following might be appropriate
-in some projects:
+set the attribute `text=auto`.
++
+With text files, Git will generally ensure that LF endings are used in the
+repository.  The `core.autocrlf` and `core.eol` configuration variables specify
+what line-ending convention is followed when any text file is checked out.  You
+can also use the `eol` attribute (e.g., `eol=crlf`) to override which files get
+what line-ending treatment.
++
+For example, generally shell files must have LF endings and batch files must
+have CRLF endings, so the following might be appropriate in some projects:
 +
 ----
 # By default, guess.
 *	text=auto
 # Mark all C files as text.
 *.c	text
+# Ensure all shell files have LF endings and all batch files have CRLF
+# endings in the working tree and both have LF in the repo.
+*.sh text eol=lf
+*.bat text eol=crlf
 # Mark all JPEG files as binary.
 *.jpg	binary
 ----
