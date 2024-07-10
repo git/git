@@ -762,7 +762,7 @@ sub check_script {
 	while (my $path = $next_script->()) {
 		$nscripts++;
 		my $fh;
-		unless (open($fh, "<", $path)) {
+		unless (open($fh, "<:unix:crlf", $path)) {
 			$emit->("?!ERR?! $path: $!\n");
 			next;
 		}
