@@ -56,6 +56,26 @@ http.emptyAuth::
 	a username in the URL, as libcurl normally requires a username for
 	authentication.
 
+http.proactiveAuth::
+	Attempt authentication without first making an unauthenticated attempt and
+	receiving a 401 response. This can be used to ensure that all requests are
+	authenticated. If `http.emptyAuth` is set to true, this value has no effect.
++
+If the credential helper used specifies an authentication scheme (i.e., via the
+`authtype` field), that value will be used; if a username and password is
+provided without a scheme, then Basic authentication is used.  The value of the
+option determines the scheme requested from the helper. Possible values are:
++
+--
+* `basic` - Request Basic authentication from the helper.
+* `auto` - Allow the helper to pick an appropriate scheme.
+* `none` - Disable proactive authentication.
+--
++
+Note that TLS should always be used with this configuration, since otherwise it
+is easy to accidentally expose plaintext credentials if Basic authentication
+is selected.
+
 http.delegation::
 	Control GSSAPI credential delegation. The delegation is disabled
 	by default in libcurl since version 7.21.7. Set parameter to tell

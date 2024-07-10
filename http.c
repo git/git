@@ -106,12 +106,19 @@ static struct {
 };
 #endif
 
+enum proactive_auth {
+	PROACTIVE_AUTH_NONE = 0,
+	PROACTIVE_AUTH_IF_CREDENTIALS,
+	PROACTIVE_AUTH_AUTO,
+	PROACTIVE_AUTH_BASIC,
+};
+
 static struct credential proxy_auth = CREDENTIAL_INIT;
 static const char *curl_proxyuserpwd;
 static char *curl_cookie_file;
 static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
-static int http_proactive_auth;
+static enum proactive_auth http_proactive_auth;
 static char *user_agent;
 static int curl_empty_auth = -1;
 
@@ -145,6 +152,12 @@ static int http_schannel_check_revoke = 1;
  * by default.
  */
 static int http_schannel_use_ssl_cainfo;
+
+static int always_auth_proactively(void)
+{
+	return http_proactive_auth != PROACTIVE_AUTH_NONE &&
+	       http_proactive_auth != PROACTIVE_AUTH_IF_CREDENTIALS;
+}
 
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
@@ -537,6 +550,20 @@ static int http_options(const char *var, const char *value,
 		return 0;
 	}
 
+	if (!strcmp("http.proactiveauth", var)) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (!strcmp(value, "auto"))
+			http_proactive_auth = PROACTIVE_AUTH_AUTO;
+		else if (!strcmp(value, "basic"))
+			http_proactive_auth = PROACTIVE_AUTH_BASIC;
+		else if (!strcmp(value, "none"))
+			http_proactive_auth = PROACTIVE_AUTH_NONE;
+		else
+			warning(_("Unknown value for http.proactiveauth"));
+		return 0;
+	}
+
 	/* Fall back on the default ones */
 	return git_default_config(var, value, ctx, data);
 }
@@ -578,14 +605,29 @@ static void init_curl_http_auth(CURL *result)
 {
 	if ((!http_auth.username || !*http_auth.username) &&
 	    (!http_auth.credential || !*http_auth.credential)) {
-		if (curl_empty_auth_enabled())
+		int empty_auth = curl_empty_auth_enabled();
+		if ((empty_auth != -1 && !always_auth_proactively()) || empty_auth == 1) {
 			curl_easy_setopt(result, CURLOPT_USERPWD, ":");
-		return;
+			return;
+		} else if (!always_auth_proactively()) {
+			return;
+		} else if (http_proactive_auth == PROACTIVE_AUTH_BASIC) {
+			strvec_push(&http_auth.wwwauth_headers, "Basic");
+		}
 	}
 
 	credential_fill(&http_auth, 1);
 
 	if (http_auth.password) {
+		if (always_auth_proactively()) {
+			/*
+			 * We got a credential without an authtype and we don't
+			 * know what's available.  Since our only two options at
+			 * the moment are auto (which defaults to basic) and
+			 * basic, use basic for now.
+			 */
+			curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		}
 		curl_easy_setopt(result, CURLOPT_USERNAME, http_auth.username);
 		curl_easy_setopt(result, CURLOPT_PASSWORD, http_auth.password);
 	}
@@ -1048,7 +1090,7 @@ static CURL *get_curl_handle(void)
 #endif
 	}
 
-	if (http_proactive_auth)
+	if (http_proactive_auth != PROACTIVE_AUTH_NONE)
 		init_curl_http_auth(result);
 
 	if (getenv("GIT_SSL_VERSION"))
@@ -1292,7 +1334,8 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
 		die("curl_global_init failed");
 
-	http_proactive_auth = proactive_auth;
+	if (proactive_auth && http_proactive_auth == PROACTIVE_AUTH_NONE)
+		http_proactive_auth = PROACTIVE_AUTH_IF_CREDENTIALS;
 
 	if (remote && remote->http_proxy)
 		curl_http_proxy = xstrdup(remote->http_proxy);
@@ -1788,6 +1831,8 @@ static int handle_curl_result(struct slot_results *results)
 				return HTTP_REAUTH;
 			}
 			credential_reject(&http_auth);
+			if (always_auth_proactively())
+				http_proactive_auth = PROACTIVE_AUTH_NONE;
 			return HTTP_NOAUTH;
 		} else {
 			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
@@ -2184,7 +2229,12 @@ static int http_request_reauth(const char *url,
 			       struct http_get_options *options)
 {
 	int i = 3;
-	int ret = http_request(url, result, target, options);
+	int ret;
+
+	if (always_auth_proactively())
+		credential_fill(&http_auth, 1);
+
+	ret = http_request(url, result, target, options);
 
 	if (ret != HTTP_OK && ret != HTTP_REAUTH)
 		return ret;
