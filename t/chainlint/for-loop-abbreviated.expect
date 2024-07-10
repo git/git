@@ -1,5 +1,5 @@
-for it
-do
-	path=$(expr "$it" : ([^:]*)) &&
-	git update-index --add "$path" || exit
-done
+2 for it
+3 do
+4 	path=$(expr "$it" : ([^:]*)) &&
+5 	git update-index --add "$path" || exit
+6 done

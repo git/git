@@ -1,4 +1,4 @@
-(
-	cat <<-\INPUT)
-	fizz
-	INPUT
+2 (
+3 	cat <<-\INPUT)
+4 	fizz
+5 	INPUT

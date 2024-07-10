@@ -1,12 +1,12 @@
-grep "^ ! [rejected][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" out &&
-
-grep "^\.git$" output.txt &&
-
-
-(
-	cd client$version &&
-	GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. $(cat ../input)
-) >output &&
-	cut -d ' ' -f 2 <output | sort >actual &&
-	test_cmp expect actual
-
+2 grep "^ ! [rejected][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" out &&
+3 
+4 grep "^\.git$" output.txt &&
+5 
+6 
+7 (
+8 	cd client$version &&
+9 	GIT_TEST_PROTOCOL_VERSION=$version git fetch-pack --no-progress .. $(cat ../input)
+10 ) >output &&
+11 	cut -d ' ' -f 2 <output | sort >actual &&
+12 	test_cmp expect actual
+13 

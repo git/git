@@ -1,6 +1,6 @@
-(if test -z ""; then
-    echo empty
- else
-    echo bizzy
- fi) &&
-echo foobar
+2 (if test -z ""; then
+3     echo empty
+4  else
+5     echo bizzy
+6  fi) &&
+7 echo foobar

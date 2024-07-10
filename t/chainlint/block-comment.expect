@@ -1,8 +1,8 @@
-(
-	{
-		# show a
-		echo a &&
-		# show b
-		echo b
-	}
-)
+2 (
+3 	{
+4 		# show a
+5 		echo a &&
+6 		# show b
+7 		echo b
+8 	}
+9 )

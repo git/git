@@ -1,24 +1,24 @@
-(
-	for i in a b c
-	do
-		foo || exit 1
-		bar &&
-		baz
-	done
-) &&
-(
-	while true
-	do
-		foo || exit 1
-		bar &&
-		baz
-	done
-) &&
-(
-	i=0 &&
-	while test $i -lt 10
-	do
-		echo $i || exit
-		i=$(($i + 1))
-	done
-)
+2 (
+3 	for i in a b c
+4 	do
+5 		foo || exit 1
+6 		bar &&
+7 		baz
+8 	done
+9 ) &&
+10 (
+11 	while true
+12 	do
+13 		foo || exit 1
+14 		bar &&
+15 		baz
+16 	done
+17 ) &&
+18 (
+19 	i=0 &&
+20 	while test $i -lt 10
+21 	do
+22 		echo $i || exit
+23 		i=$(($i + 1))
+24 	done
+25 )

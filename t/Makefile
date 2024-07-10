@@ -108,18 +108,8 @@ clean-chainlint:
 
 check-chainlint:
 	@mkdir -p '$(CHAINLINTTMP_SQ)' && \
-	for i in $(CHAINLINTTESTS); do \
-		sed -e '/^# LINT: /d' chainlint/$$i.test; \
-	done >'$(CHAINLINTTMP_SQ)'/tests && \
-	{ \
-		echo "# chainlint: $(CHAINLINTTMP_SQ)/tests" && \
-		for i in $(CHAINLINTTESTS); do \
-			echo "# chainlint: $$i" && \
-			cat chainlint/$$i.expect; \
-		done \
-	} >'$(CHAINLINTTMP_SQ)'/expect && \
-	$(CHAINLINT) --emit-all '$(CHAINLINTTMP_SQ)'/tests | \
-		sed -e 's/^[1-9][0-9]* //' >'$(CHAINLINTTMP_SQ)'/actual && \
+	'$(PERL_PATH_SQ)' chainlint-cat.pl '$(CHAINLINTTMP_SQ)' $(CHAINLINTTESTS) && \
+	{ $(CHAINLINT) --emit-all '$(CHAINLINTTMP_SQ)'/tests >'$(CHAINLINTTMP_SQ)'/actual || true; } && \
 	diff -u '$(CHAINLINTTMP_SQ)'/expect '$(CHAINLINTTMP_SQ)'/actual
 
 test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \

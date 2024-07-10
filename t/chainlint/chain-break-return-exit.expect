@@ -1,19 +1,19 @@
-case "$(git ls-files)" in
-one) echo pass one ;;
-*) echo bad one; return 1 ;;
-esac &&
-(
-	case "$(git ls-files)" in
-	two) echo pass two ;;
-	*) echo bad two; exit 1 ;;
-	esac
-) &&
-case "$(git ls-files)" in
-dir/two"$LF"one) echo pass both ;;
-*) echo bad; return 1 ;;
-esac &&
-
-for i in 1 2 3 4 ; do
-	git checkout main -b $i || return $?
-	test_commit $i $i $i tag$i || return $?
-done
+2 case "$(git ls-files)" in
+3 one) echo pass one ;;
+4 *) echo bad one; return 1 ;;
+5 esac &&
+6 (
+7 	case "$(git ls-files)" in
+8 	two) echo pass two ;;
+9 	*) echo bad two; exit 1 ;;
+10 	esac
+11 ) &&
+12 case "$(git ls-files)" in
+13 dir/two"$LF"one) echo pass both ;;
+14 *) echo bad; return 1 ;;
+15 esac &&
+16 
+17 for i in 1 2 3 4 ; do
+18 	git checkout main -b $i || return $?
+19 	test_commit $i $i $i tag$i || return $?
+20 done
