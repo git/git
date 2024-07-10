@@ -1,0 +1,2 @@
+2 	echo "we should find this" ?!AMP?!
+3 	echo "even though our heredoc has its indent stripped"
