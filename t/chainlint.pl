@@ -806,6 +806,7 @@ unless (@scripts) {
 	show_stats($start_time, \@stats) if $show_stats;
 	exit;
 }
+$jobs = @scripts if @scripts < $jobs;
 
 unless ($jobs > 1 &&
 	$Config{useithreads} && eval {
