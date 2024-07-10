@@ -1,3 +1,4 @@
+test_expect_success 'nested-cuddled-subshell' '
 (
 # LINT: opening "(" cuddled with first nested subshell statement
 	(cd foo &&
@@ -29,3 +30,4 @@
 
 	foobar
 )
+'

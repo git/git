@@ -1,3 +1,4 @@
+test_expect_success 'if-in-loop' '
 (
 	for i in a b c
 	do
@@ -13,3 +14,4 @@
 	done
 	bar
 )
+'

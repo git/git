@@ -1,3 +1,4 @@
+test_expect_success 'here-doc-multi-line-command-subst' '
 (
 # LINT: line contains here-doc and opens multi-line $(...)
 	x=$(bobble <<-\END &&
@@ -7,3 +8,4 @@
 		wiffle)
 	echo $x
 )
+'

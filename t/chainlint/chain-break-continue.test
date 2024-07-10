@@ -1,3 +1,4 @@
+test_expect_success 'chain-break-continue' '
 git ls-tree --name-only -r refs/notes/many_notes |
 while read path
 do
@@ -11,3 +12,4 @@ do
 		return 1
 	fi
 done
+'

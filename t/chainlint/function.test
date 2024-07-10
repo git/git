@@ -1,3 +1,4 @@
+test_expect_success 'function' '
 # LINT: "()" in function definition not mistaken for subshell
 sha1_file() {
 	echo "$*" | sed "s#..#.git/objects/&/#"
@@ -11,3 +12,4 @@ remove_object() {
 }
 
 sha1_file arg && remove_object arg
+'

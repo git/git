@@ -1,3 +1,4 @@
+test_expect_success 'close-subshell' '
 # LINT: closing ")" with various decorations ("&&", ">", "|", etc.)
 (
 	foo
@@ -25,3 +26,4 @@ fuzzle &&
 (
 	yop
 )
+'

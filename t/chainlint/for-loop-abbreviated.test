@@ -1,6 +1,8 @@
+test_expect_success 'for-loop-abbreviated' '
 # LINT: for-loop lacking optional "in [word...]" before "do"
 for it
 do
 	path=$(expr "$it" : '\([^:]*\)') &&
 	git update-index --add "$path" || exit
 done
+'

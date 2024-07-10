@@ -1,3 +1,4 @@
+test_expect_success 'cuddled-loop' '
 # LINT: "while" loop cuddled with "(" and ")", with embedded (allowed)
 # LINT: "|| exit {n}" to exit loop early, and using redirection "<" to feed
 # LINT: loop; indented with spaces, not tabs
@@ -5,3 +6,4 @@
   do foobar bop || exit 1
   done <file ) &&
 outside subshell
+'

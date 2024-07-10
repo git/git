@@ -1,3 +1,4 @@
+test_expect_success 'nested-subshell' '
 (
 	cd foo &&
 	(
@@ -11,3 +12,4 @@
 		echo b
 	) >file
 )
+'

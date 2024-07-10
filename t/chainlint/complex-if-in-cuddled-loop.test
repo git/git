@@ -1,3 +1,4 @@
+test_expect_success 'complex-if-in-cuddled-loop' '
 # LINT: "for" loop cuddled with "(" and ")" and nested "if" with complex
 # LINT: multi-line condition; indented with spaces, not tabs
 (for i in a b c; do
@@ -9,3 +10,4 @@
    fi
  done) &&
 test ! -f file
+'

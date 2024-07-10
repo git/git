@@ -1,3 +1,4 @@
+test_expect_success 'case-comment' '
 (
 	case "$x" in
 	# found foo
@@ -9,3 +10,4 @@
 		;;
 	esac
 )
+'

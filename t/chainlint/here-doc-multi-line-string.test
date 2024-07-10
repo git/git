@@ -1,3 +1,4 @@
+test_expect_success 'here-doc-multi-line-string' '
 (
 # LINT: line contains here-doc and opens multi-line string
 	cat <<-\TXT && echo "multi-line
@@ -6,3 +7,4 @@
 	TXT
 	bap
 )
+'

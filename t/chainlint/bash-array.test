@@ -1,3 +1,4 @@
+test_expect_success 'bash-array' '
 (
 	foo &&
 # LINT: ")" in Bash array assignment not misinterpreted as subshell-closing ")"
@@ -10,3 +11,4 @@
 	bar=${#bar[@]} &&
 	baz
 )
+'

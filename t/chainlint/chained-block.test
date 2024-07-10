@@ -1,3 +1,4 @@
+test_expect_success 'chained-block' '
 # LINT: start of block chained to preceding command
 echo nobody home && {
 	test the doohicky
@@ -9,3 +10,4 @@ GIT_EXTERNAL_DIFF=echo git diff | {
 	read path oldfile oldhex oldmode newfile newhex newmode &&
 	test "z$oh" = "z$oldhex"
 }
+'

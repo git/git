@@ -1,3 +1,4 @@
+test_expect_success 'loop-detect-failure' '
 git init r1 &&
 # LINT: loop handles failure explicitly with "|| return 1"
 for n in 1 2 3 4 5
@@ -15,3 +16,4 @@ do
 	git -C r2 add large.$n &&
 	git -C r2 commit -m "$n"
 done
+'

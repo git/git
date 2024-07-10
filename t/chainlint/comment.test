@@ -1,3 +1,4 @@
+test_expect_success 'comment' '
 (
 # LINT: swallow comment lines
 	# comment 1
@@ -9,3 +10,4 @@
 	# comment 3
 	# comment 4
 )
+'

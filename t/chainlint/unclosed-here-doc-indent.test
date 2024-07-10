@@ -1,4 +1,6 @@
+test_expect_success 'unclosed-here-doc-indent' '
 command_which_is_run &&
 cat >expect <<-\EOF &&
 we forget to end the here-doc
 command_which_is_gobbled
+'

@@ -109,9 +109,7 @@ clean-chainlint:
 check-chainlint:
 	@mkdir -p '$(CHAINLINTTMP_SQ)' && \
 	for i in $(CHAINLINTTESTS); do \
-		echo "test_expect_success '$$i' '" && \
-		sed -e '/^# LINT: /d' chainlint/$$i.test && \
-		echo "'"; \
+		sed -e '/^# LINT: /d' chainlint/$$i.test; \
 	done >'$(CHAINLINTTMP_SQ)'/tests && \
 	{ \
 		echo "# chainlint: $(CHAINLINTTMP_SQ)/tests" && \

@@ -1,3 +1,4 @@
+test_expect_success 'if-then-else' '
 (
 # LINT: "if", "then", "elif", "else", "fi" do not need "&&"
 	if test -n ""
@@ -27,3 +28,4 @@
 		echo empty
 	fi
 )
+'
