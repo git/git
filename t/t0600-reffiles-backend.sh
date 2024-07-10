@@ -91,82 +91,82 @@ test_expect_success 'empty directory should not fool 1-arg delete' '
 	git update-ref --stdin
 '
 
-test_expect_success 'non-empty directory blocks create' '
+test_expect_success 'non-empty directory blocks create' - <<\EOT
 	prefix=refs/ne-create &&
 	mkdir -p .git/$prefix/foo/bar &&
 	: >.git/$prefix/foo/bar/baz.lock &&
 	test_when_finished "rm -f .git/$prefix/foo/bar/baz.lock" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: there is a non-empty directory $SQ.git/$prefix/foo$SQ blocking reference $SQ$prefix/foo$SQ
+	fatal: cannot lock ref '$prefix/foo': there is a non-empty directory '.git/$prefix/foo' blocking reference '$prefix/foo'
 	EOF
 	printf "%s\n" "update $prefix/foo $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ
+	fatal: cannot lock ref '$prefix/foo': unable to resolve reference '$prefix/foo'
 	EOF
 	printf "%s\n" "update $prefix/foo $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'broken reference blocks create' '
+test_expect_success 'broken reference blocks create' - <<\EOT
 	prefix=refs/broken-create &&
 	mkdir -p .git/$prefix &&
 	echo "gobbledigook" >.git/$prefix/foo &&
 	test_when_finished "rm -f .git/$prefix/foo" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
+	fatal: cannot lock ref '$prefix/foo': unable to resolve reference '$prefix/foo': reference broken
 	EOF
 	printf "%s\n" "update $prefix/foo $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/foo$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
+	fatal: cannot lock ref '$prefix/foo': unable to resolve reference '$prefix/foo': reference broken
 	EOF
 	printf "%s\n" "update $prefix/foo $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'non-empty directory blocks indirect create' '
+test_expect_success 'non-empty directory blocks indirect create' - <<\EOT
 	prefix=refs/ne-indirect-create &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	mkdir -p .git/$prefix/foo/bar &&
 	: >.git/$prefix/foo/bar/baz.lock &&
 	test_when_finished "rm -f .git/$prefix/foo/bar/baz.lock" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: there is a non-empty directory $SQ.git/$prefix/foo$SQ blocking reference $SQ$prefix/foo$SQ
+	fatal: cannot lock ref '$prefix/symref': there is a non-empty directory '.git/$prefix/foo' blocking reference '$prefix/foo'
 	EOF
 	printf "%s\n" "update $prefix/symref $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ
+	fatal: cannot lock ref '$prefix/symref': unable to resolve reference '$prefix/foo'
 	EOF
 	printf "%s\n" "update $prefix/symref $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
-test_expect_success 'broken reference blocks indirect create' '
+test_expect_success 'broken reference blocks indirect create' - <<\EOT
 	prefix=refs/broken-indirect-create &&
 	git symbolic-ref $prefix/symref $prefix/foo &&
 	echo "gobbledigook" >.git/$prefix/foo &&
 	test_when_finished "rm -f .git/$prefix/foo" &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
+	fatal: cannot lock ref '$prefix/symref': unable to resolve reference '$prefix/foo': reference broken
 	EOF
 	printf "%s\n" "update $prefix/symref $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err &&
 	cat >expected <<-EOF &&
-	fatal: cannot lock ref $SQ$prefix/symref$SQ: unable to resolve reference $SQ$prefix/foo$SQ: reference broken
+	fatal: cannot lock ref '$prefix/symref': unable to resolve reference '$prefix/foo': reference broken
 	EOF
 	printf "%s\n" "update $prefix/symref $D $C" |
 	test_must_fail git update-ref --stdin 2>output.err &&
 	test_cmp expected output.err
-'
+EOT
 
 test_expect_success 'no bogus intermediate values during delete' '
 	prefix=refs/slow-transaction &&
@@ -224,7 +224,7 @@ test_expect_success 'no bogus intermediate values during delete' '
 	test_must_fail git rev-parse --verify --quiet $prefix/foo
 '
 
-test_expect_success 'delete fails cleanly if packed-refs file is locked' '
+test_expect_success 'delete fails cleanly if packed-refs file is locked' - <<\EOT
 	prefix=refs/locked-packed-refs &&
 	# Set up a reference with differing loose and packed versions:
 	git update-ref $prefix/foo $C &&
@@ -236,9 +236,9 @@ test_expect_success 'delete fails cleanly if packed-refs file is locked' '
 	test_when_finished "rm -f .git/packed-refs.lock" &&
 	test_must_fail git update-ref -d $prefix/foo >out 2>err &&
 	git for-each-ref $prefix >actual &&
-	test_grep "Unable to create $SQ.*packed-refs.lock$SQ: " err &&
+	test_grep "Unable to create '.*packed-refs.lock': " err &&
 	test_cmp unchanged actual
-'
+EOT
 
 test_expect_success 'delete fails cleanly if packed-refs.new write fails' '
 	# Setup and expectations are similar to the test above.
