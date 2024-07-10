@@ -807,7 +807,8 @@ unless (@scripts) {
 	exit;
 }
 
-unless ($Config{useithreads} && eval {
+unless ($jobs > 1 &&
+	$Config{useithreads} && eval {
 	require threads; threads->import();
 	require Thread::Queue; Thread::Queue->import();
 	1;
