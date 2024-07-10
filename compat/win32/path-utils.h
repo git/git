@@ -30,4 +30,7 @@ static inline int win32_has_dir_sep(const char *path)
 int win32_offset_1st_component(const char *path);
 #define offset_1st_component win32_offset_1st_component
 
+void win32_warn_about_git_lfs_on_windows7(int exit_code, const char *argv0);
+#define warn_about_git_lfs_on_windows7 win32_warn_about_git_lfs_on_windows7
+
 #endif
