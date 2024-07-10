@@ -174,6 +174,10 @@ sub swallow_heredocs {
 		$$b =~ /(?:\G|\n)$indent\Q$$tag[0]\E(?:\n|\z)/gc;
 		if (pos($$b) > $start) {
 			my $body = substr($$b, $start, pos($$b) - $start);
+			$self->{parser}->{heredocs}->{$$tag[0]} = {
+				content => substr($body, 0, length($body) - length($&)),
+				start_line => $self->{lineno},
+		        };
 			$self->{lineno} += () = $body =~ /\n/sg;
 			next;
 		}
@@ -232,7 +236,8 @@ sub new {
 	my $self = bless {
 		buff => [],
 		stop => [],
-		output => []
+		output => [],
+		heredocs => {},
 	} => $class;
 	$self->{lexer} = Lexer->new($self, $s);
 	return $self;
@@ -616,14 +621,21 @@ sub unwrap {
 
 sub check_test {
 	my $self = shift @_;
-	my ($title, $body) = map(unwrap, @_);
+	my $title = unwrap(shift @_);
+	my $body = shift @_;
+	my $lineno = $body->[3];
+	$body = unwrap($body);
+	if ($body eq '-') {
+		my $herebody = shift @_;
+		$body = $herebody->{content};
+		$lineno = $herebody->{start_line};
+	}
 	$self->{ntests}++;
 	my $parser = TestParser->new(\$body);
 	my @tokens = $parser->parse();
 	my $problems = $parser->{problems};
 	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
-	my $lineno = $_[1]->[3];
 	my $start = 0;
 	my $checked = '';
 	for (sort {$a->[1]->[2] <=> $b->[1]->[2]} @$problems) {
@@ -649,8 +661,13 @@ sub parse_cmd {
 	return @tokens unless @tokens && $tokens[0]->[0] =~ /^test_expect_(?:success|failure)$/;
 	my $n = $#tokens;
 	$n-- while $n >= 0 && $tokens[$n]->[0] =~ /^(?:[;&\n|]|&&|\|\|)$/;
-	$self->check_test($tokens[1], $tokens[2]) if $n == 2; # title body
-	$self->check_test($tokens[2], $tokens[3]) if $n > 2;  # prereq title body
+	my $herebody;
+	if ($n >= 2 && $tokens[$n-1]->[0] eq '-' && $tokens[$n]->[0] =~ /^<<-?(.+)$/) {
+		$herebody = $self->{heredocs}->{$1};
+		$n--;
+	}
+	$self->check_test($tokens[1], $tokens[2], $herebody) if $n == 2; # title body
+	$self->check_test($tokens[2], $tokens[3], $herebody) if $n > 2;  # prereq title body
 	return @tokens;
 }
 
