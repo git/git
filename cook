@@ -918,14 +918,24 @@ sub wildo {
 		next unless defined $topic && $in_desc;
 
 		s/^\s+//;
-		if (wildo_match($_)) {
-			wildo_queue(\%what, $_, $topic);
-			$topic = $in_desc = undef;
-		}
 
 		if (/Originally merged to 'next' on ([-0-9]+)/) {
 			$topic->[1] = $1;
+			next;
 		}
+
+		if (wildo_match($_)) {
+			wildo_queue(\%what, $_, $topic);
+			next;
+		}
+
+		if (/^source:\s+(.*)$/) {
+			$topic->[5] ||= [];
+			push @{$topic->[5]}, $1;
+			$topic = $in_desc = undef;
+			next;
+		}
+
 	}
 	wildo_flush_topic($in_section, \%what, $topic);
 
@@ -935,7 +945,7 @@ sub wildo {
 		for $topic (sort { (($a->[1] cmp $b->[1]) ||
 				    ($a->[0] cmp $b->[0])) }
 			    @{$what{$what}}) {
-			my ($tip, $next, $name, $count, $seen) = @$topic;
+			my ($tip, $next, $name, $count, $seen, $source) = @$topic;
 			my ($sign);
 			$tip =~ s/^\d{4}-//;
 			if (($next eq $too_recent) || (0 < $seen)) {
@@ -947,6 +957,14 @@ sub wildo {
 			}
 			$count = "#$count";
 			printf " %s %-60s %s%s %5s\n", $sign, $name, $tip, $next, $count;
+			if ($what !~ /^Will /) {
+				for my $s (@$source) {
+					if ($s =~ /^<(.*)>$/) {
+						$s = "https://lore.kernel.org/git/$1/";
+					}
+					printf "   $s\n";
+				}
+			}
 		}
 		$ipbl = "\n";
 	}
