@@ -288,7 +288,7 @@ no)
 
 			mark_cut
 
-			git cherry-pick "$branch" || leave $? ;;
+			git cherry-pick --allow-empty "$branch" || leave $? ;;
 		*) echo >&2 "Eh? $branch $eh"; leave $? ;;
 		esac
 
