@@ -389,7 +389,10 @@ then
 	generate "$0" "$@"
 elif test -z "$diff"
 then
-	generate "$0" "$@" | diff -w -u "$update" -
+	tmp=/tmp/regenerate.$$
+	trap 'rm -f "$tmp"*' 0
+	generate "$0" "$@" >"$tmp"
+	diff -w -u "$update" "$tmp"
 	if test $? = 0
 	then
 		echo >&2 "No changes."
@@ -398,8 +401,7 @@ then
 		read yesno
 		case "$yesno" in
 		[Yy]*)
-			generate "$0" "$@" |
-			sed -e 's/ :rebased?.*//' >"$update" ;;
+			sed -e 's/ :rebased?.*//' "$tmp" >"$update" ;;
 		*)
 			echo >&2 "No update then." ;;
 		esac
