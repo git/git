@@ -35,7 +35,7 @@ search_topics () {
 			continue
 		fi
 
-		ago= lg=0
+		ago= lg=-1
 		fp=$(
 		    sed -ne "s/^\($x40\) $x40 $tip"'$/\1/p' "$tmp"
 		) &&
@@ -44,7 +44,11 @@ search_topics () {
 		    git show -s --format='%ad' --date=short $fp
 		) &&
 		lg=$(git log --oneline $target..$tip | wc -l)
-		if test $lg != 0
+
+		if test $lg = -1
+		then
+			echo "# $topic not yet merged to $here"
+		elif test $lg != 0
 		then
 			echo "$topic # $lg${ago+ ($ago)}${comment+ $comment}"
 		else
