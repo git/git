@@ -375,6 +375,12 @@ Fixes since v2.45
    bump the format version to 2.
    (merge 9c8a9ec787 tb/path-filter-fix later to maint).
 
+ * Typofix.
+   (merge 231cf7370e as/pathspec-h-typofix later to maint).
+
+ * Code clean-up.
+   (merge 4b837f821e rs/simplify-submodule-helper-super-prefix-invocation later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 493fdae046 ew/object-convert-leakfix later to maint).
    (merge 00f3661a0a ss/doc-eol-attr-fix later to maint).
