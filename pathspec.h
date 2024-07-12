@@ -23,7 +23,7 @@ struct index_state;
 #define PATHSPEC_ONESTAR 1	/* the pathspec pattern satisfies GFNM_ONESTAR */
 
 /**
- * See glossary-context.txt for the syntax of pathspec.
+ * See glossary-content.txt for the syntax of pathspec.
  * In memory, a pathspec set is represented by "struct pathspec" and is
  * prepared by parse_pathspec().
  */
