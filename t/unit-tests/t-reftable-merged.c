@@ -236,6 +236,7 @@ static void t_merged_refs(void)
 	check(!err);
 	check_int(reftable_merged_table_hash_id(mt), ==, GIT_SHA1_FORMAT_ID);
 	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
+	check_int(reftable_merged_table_max_update_index(mt), ==, 3);
 
 	while (len < 100) { /* cap loops/recursion. */
 		struct reftable_ref_record ref = { 0 };
@@ -365,6 +366,7 @@ static void t_merged_logs(void)
 	check(!err);
 	check_int(reftable_merged_table_hash_id(mt), ==, GIT_SHA1_FORMAT_ID);
 	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
+	check_int(reftable_merged_table_max_update_index(mt), ==, 3);
 
 	while (len < 100) { /* cap loops/recursion. */
 		struct reftable_log_record log = { 0 };
