@@ -870,9 +870,6 @@ sub wildo_match {
 	    /^Needs? / || /^Expecting / || /^May want to / || /^Under review/) {
 		return 1;
 	}
-	if (/^I think this is ready for /) {
-		return 1;
-	}
 	return 0;
 }
 
