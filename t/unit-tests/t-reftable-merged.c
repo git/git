@@ -27,11 +27,11 @@ static int noop_flush(void *arg)
 }
 
 static void write_test_table(struct strbuf *buf,
-			     struct reftable_ref_record refs[], int n)
+			     struct reftable_ref_record refs[], size_t n)
 {
 	uint64_t min = 0xffffffff;
 	uint64_t max = 0;
-	int i = 0;
+	size_t i;
 	int err;
 
 	struct reftable_write_options opts = {
@@ -40,12 +40,10 @@ static void write_test_table(struct strbuf *buf,
 	struct reftable_writer *w = NULL;
 	for (i = 0; i < n; i++) {
 		uint64_t ui = refs[i].update_index;
-		if (ui > max) {
+		if (ui > max)
 			max = ui;
-		}
-		if (ui < min) {
+		if (ui < min)
 			min = ui;
-		}
 	}
 
 	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
@@ -65,10 +63,9 @@ static void write_test_table(struct strbuf *buf,
 }
 
 static void write_test_log_table(struct strbuf *buf,
-				 struct reftable_log_record logs[], int n,
+				 struct reftable_log_record logs[], size_t n,
 				 uint64_t update_index)
 {
-	int i = 0;
 	int err;
 
 	struct reftable_write_options opts = {
@@ -79,7 +76,7 @@ static void write_test_log_table(struct strbuf *buf,
 	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
 	reftable_writer_set_limits(w, update_index, update_index);
 
-	for (i = 0; i < n; i++) {
+	for (size_t i = 0; i < n; i++) {
 		int err = reftable_writer_add_log(w, &logs[i]);
 		check(!err);
 	}
@@ -93,7 +90,7 @@ static void write_test_log_table(struct strbuf *buf,
 static struct reftable_merged_table *
 merged_table_from_records(struct reftable_ref_record **refs,
 			  struct reftable_block_source **source,
-			  struct reftable_reader ***readers, int *sizes,
+			  struct reftable_reader ***readers, size_t *sizes,
 			  struct strbuf *buf, size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
@@ -121,8 +118,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 
 static void readers_destroy(struct reftable_reader **readers, size_t n)
 {
-	int i = 0;
-	for (; i < n; i++)
+	for (size_t i = 0; i < n; i++)
 		reftable_reader_free(readers[i]);
 	reftable_free(readers);
 }
@@ -142,15 +138,14 @@ static void t_merged_single_record(void)
 	} };
 
 	struct reftable_ref_record *refs[] = { r1, r2 };
-	int sizes[] = { 1, 1 };
+	size_t sizes[] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2) };
 	struct strbuf bufs[2] = { STRBUF_INIT, STRBUF_INIT };
 	struct reftable_block_source *bs = NULL;
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt =
 		merged_table_from_records(refs, &bs, &readers, sizes, bufs, 2);
-	int i;
-	struct reftable_ref_record ref = { NULL };
-	struct reftable_iterator it = { NULL };
+	struct reftable_ref_record ref = { 0 };
+	struct reftable_iterator it = { 0 };
 	int err;
 
 	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
@@ -164,9 +159,8 @@ static void t_merged_single_record(void)
 	reftable_iterator_destroy(&it);
 	readers_destroy(readers, 2);
 	reftable_merged_table_free(mt);
-	for (i = 0; i < ARRAY_SIZE(bufs); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
 		strbuf_release(&bufs[i]);
-	}
 	reftable_free(bs);
 }
 
@@ -220,18 +214,18 @@ static void t_merged_refs(void)
 	};
 
 	struct reftable_ref_record *refs[] = { r1, r2, r3 };
-	int sizes[3] = { 3, 1, 2 };
+	size_t sizes[3] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2), ARRAY_SIZE(r3) };
 	struct strbuf bufs[3] = { STRBUF_INIT, STRBUF_INIT, STRBUF_INIT };
 	struct reftable_block_source *bs = NULL;
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt =
 		merged_table_from_records(refs, &bs, &readers, sizes, bufs, 3);
-	struct reftable_iterator it = { NULL };
+	struct reftable_iterator it = { 0 };
 	int err;
 	struct reftable_ref_record *out = NULL;
 	size_t len = 0;
 	size_t cap = 0;
-	int i = 0;
+	size_t i;
 
 	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
 	err = reftable_iterator_seek_ref(&it, "a");
@@ -240,7 +234,7 @@ static void t_merged_refs(void)
 	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
 
 	while (len < 100) { /* cap loops/recursion. */
-		struct reftable_ref_record ref = { NULL };
+		struct reftable_ref_record ref = { 0 };
 		int err = reftable_iterator_next_ref(&it, &ref);
 		if (err > 0)
 			break;
@@ -251,18 +245,15 @@ static void t_merged_refs(void)
 	reftable_iterator_destroy(&it);
 
 	check_int(ARRAY_SIZE(want), ==, len);
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++)
 		check(reftable_ref_record_equal(want[i], &out[i],
 						 GIT_SHA1_RAWSZ));
-	}
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++)
 		reftable_ref_record_release(&out[i]);
-	}
 	reftable_free(out);
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 3; i++)
 		strbuf_release(&bufs[i]);
-	}
 	readers_destroy(readers, 3);
 	reftable_merged_table_free(mt);
 	reftable_free(bs);
@@ -271,7 +262,7 @@ static void t_merged_refs(void)
 static struct reftable_merged_table *
 merged_table_from_log_records(struct reftable_log_record **logs,
 			      struct reftable_block_source **source,
-			      struct reftable_reader ***readers, int *sizes,
+			      struct reftable_reader ***readers, size_t *sizes,
 			      struct strbuf *buf, size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
@@ -352,18 +343,18 @@ static void t_merged_logs(void)
 	};
 
 	struct reftable_log_record *logs[] = { r1, r2, r3 };
-	int sizes[3] = { 2, 1, 1 };
+	size_t sizes[3] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2), ARRAY_SIZE(r3) };
 	struct strbuf bufs[3] = { STRBUF_INIT, STRBUF_INIT, STRBUF_INIT };
 	struct reftable_block_source *bs = NULL;
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt = merged_table_from_log_records(
 		logs, &bs, &readers, sizes, bufs, 3);
-	struct reftable_iterator it = { NULL };
+	struct reftable_iterator it = { 0 };
 	int err;
 	struct reftable_log_record *out = NULL;
 	size_t len = 0;
 	size_t cap = 0;
-	int i = 0;
+	size_t i;
 
 	merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
 	err = reftable_iterator_seek_log(&it, "a");
@@ -372,7 +363,7 @@ static void t_merged_logs(void)
 	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
 
 	while (len < 100) { /* cap loops/recursion. */
-		struct reftable_log_record log = { NULL };
+		struct reftable_log_record log = { 0 };
 		int err = reftable_iterator_next_log(&it, &log);
 		if (err > 0)
 			break;
@@ -383,10 +374,9 @@ static void t_merged_logs(void)
 	reftable_iterator_destroy(&it);
 
 	check_int(ARRAY_SIZE(want), ==, len);
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++)
 		check(reftable_log_record_equal(want[i], &out[i],
 						 GIT_SHA1_RAWSZ));
-	}
 
 	merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
 	err = reftable_iterator_seek_log_at(&it, "a", 2);
@@ -397,14 +387,12 @@ static void t_merged_logs(void)
 	check(reftable_log_record_equal(&out[0], &r3[0], GIT_SHA1_RAWSZ));
 	reftable_iterator_destroy(&it);
 
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++)
 		reftable_log_record_release(&out[i]);
-	}
 	reftable_free(out);
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 3; i++)
 		strbuf_release(&bufs[i]);
-	}
 	readers_destroy(readers, 3);
 	reftable_merged_table_free(mt);
 	reftable_free(bs);
@@ -422,7 +410,7 @@ static void t_default_write_opts(void)
 		.update_index = 1,
 	};
 	int err;
-	struct reftable_block_source source = { NULL };
+	struct reftable_block_source source = { 0 };
 	struct reftable_table *tab = reftable_calloc(1, sizeof(*tab));
 	uint32_t hash_id;
 	struct reftable_reader *rd = NULL;
