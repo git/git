@@ -34,4 +34,7 @@ int win32_fspathcmp(const char *a, const char *b);
 int win32_fspathncmp(const char *a, const char *b, size_t count);
 #define fspathncmp win32_fspathncmp
 
+void win32_warn_about_git_lfs_on_windows7(int exit_code, const char *argv0);
+#define warn_about_git_lfs_on_windows7 win32_warn_about_git_lfs_on_windows7
+
 #endif
