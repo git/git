@@ -11,6 +11,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/constants.h"
 #include "reftable/merged.h"
 #include "reftable/reader.h"
+#include "reftable/reftable-error.h"
 #include "reftable/reftable-generic.h"
 #include "reftable/reftable-merged.h"
 #include "reftable/reftable-writer.h"
@@ -440,6 +441,8 @@ static void t_default_write_opts(void)
 	check_int(hash_id, ==, GIT_SHA1_FORMAT_ID);
 
 	reftable_table_from_reader(&tab[0], rd);
+	err = reftable_new_merged_table(&merged, tab, 1, GIT_SHA256_FORMAT_ID);
+	check_int(err, ==, REFTABLE_FORMAT_ERROR);
 	err = reftable_new_merged_table(&merged, tab, 1, GIT_SHA1_FORMAT_ID);
 	check(!err);
 
