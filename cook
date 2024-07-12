@@ -834,31 +834,16 @@ sub merge_cooking {
 ################################################################
 # WilDo
 sub wildo_queue {
-	my ($what, $action, $topic) = @_;
-	if (!exists $what->{$action}) {
-		$what->{$action} = [];
-	}
-	push @{$what->{$action}}, $topic;
-}
-
-sub section_action {
-	my ($section) = @_;
-	if ($section) {
-		for ($section) {
-			return if (/^Graduated to/ || /^Discarded$/);
-			return $_ if (/^Stalled$/);
-		}
-	}
-	return "Undecided";
-}
-
-sub wildo_flush_topic {
 	my ($in_section, $what, $topic) = @_;
 	if (defined $topic) {
-		my $action = section_action($in_section);
-		if ($action) {
-			wildo_queue($what, $action, $topic);
+		for ($in_section) {
+			return if (/^Graduated to/ || /^Discarded$/);
 		}
+		my $action = $topic->[6] || "Under discussion";
+		if (!exists $what->{$action}) {
+			$what->{$action} = [];
+		}
+		push @{$what->{$action}}, $topic;
 	}
 }
 
@@ -883,16 +868,22 @@ sub wildo {
 		if (/^\[(.*)\]$/) {
 			my $old_section = $in_section;
 			$in_section = $1;
-			wildo_flush_topic($old_section, \%what, $topic);
+			wildo_queue($old_section, \%what, $topic);
 			$topic = $in_desc = undef;
 			next;
 		}
 
 		if (/^\* (\S+) \(([-0-9]+)\) (\d+) commits?$/) {
-			wildo_flush_topic($in_section, \%what, $topic);
+			wildo_queue($in_section, \%what, $topic);
 
-			# tip-date, next-date, topic, count, seen-count
-			$topic = [$2, $too_recent, $1, $3, 0];
+			# [0] tip-date
+			# [1] next-date
+			# [2] topic
+			# [3] count
+			# [4] seen-count
+			# [5] source
+			# [6] action
+			$topic = [$2, $too_recent, $1, $3, 0, [], undef];
 			$in_desc = undef;
 			next;
 		}
@@ -922,19 +913,18 @@ sub wildo {
 		}
 
 		if (wildo_match($_)) {
-			wildo_queue(\%what, $_, $topic);
+			$topic->[6] = $_;
 			next;
 		}
 
-		if (/^source:\s+(.*)$/) {
+		if (/^(?:source:|cf\.)\s+(.*)$/) {
 			$topic->[5] ||= [];
 			push @{$topic->[5]}, $1;
-			$topic = $in_desc = undef;
 			next;
 		}
 
 	}
-	wildo_flush_topic($in_section, \%what, $topic);
+	wildo_queue($in_section, \%what, $topic);
 
 	my $ipbl = "";
 	for my $what (sort keys %what) {
@@ -954,12 +944,12 @@ sub wildo {
 			}
 			$count = "#$count";
 			printf " %s %-60s %s%s %5s\n", $sign, $name, $tip, $next, $count;
-			if ($what !~ /^Will /) {
+			if ($what !~ /^Will merge to '\w+'\.$/) {
 				for my $s (@$source) {
 					if ($s =~ /^<(.*)>$/) {
 						$s = "https://lore.kernel.org/git/$1/";
 					}
-					printf "   $s\n";
+					printf "      $s\n";
 				}
 			}
 		}
