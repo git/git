@@ -136,14 +136,19 @@ static void t_merged_single_record(void)
 		.update_index = 2,
 		.value_type = REFTABLE_REF_DELETION,
 	} };
+	struct reftable_ref_record r3[] = { {
+		.refname = (char *) "c",
+		.update_index = 3,
+		.value_type = REFTABLE_REF_DELETION,
+	} };
 
-	struct reftable_ref_record *refs[] = { r1, r2 };
-	size_t sizes[] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2) };
-	struct strbuf bufs[2] = { STRBUF_INIT, STRBUF_INIT };
+	struct reftable_ref_record *refs[] = { r1, r2, r3 };
+	size_t sizes[] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2), ARRAY_SIZE(r3) };
+	struct strbuf bufs[3] = { STRBUF_INIT, STRBUF_INIT, STRBUF_INIT };
 	struct reftable_block_source *bs = NULL;
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt =
-		merged_table_from_records(refs, &bs, &readers, sizes, bufs, 2);
+		merged_table_from_records(refs, &bs, &readers, sizes, bufs, 3);
 	struct reftable_ref_record ref = { 0 };
 	struct reftable_iterator it = { 0 };
 	int err;
@@ -157,7 +162,7 @@ static void t_merged_single_record(void)
 	check_int(ref.update_index, ==, 2);
 	reftable_ref_record_release(&ref);
 	reftable_iterator_destroy(&it);
-	readers_destroy(readers, 2);
+	readers_destroy(readers, 3);
 	reftable_merged_table_free(mt);
 	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
 		strbuf_release(&bufs[i]);
