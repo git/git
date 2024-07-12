@@ -158,7 +158,7 @@ static void t_merged_single_record(void)
 
 	err = reftable_iterator_next_ref(&it, &ref);
 	check(!err);
-	check_int(ref.update_index, ==, 2);
+	check(reftable_ref_record_equal(&r2[0], &ref, GIT_SHA1_RAWSZ));
 	reftable_ref_record_release(&ref);
 	reftable_iterator_destroy(&it);
 	readers_destroy(readers, 3);
