@@ -15,7 +15,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/reftable-merged.h"
 #include "reftable/reftable-writer.h"
 
-static ssize_t strbuf_add_void(void *b, const void *data, size_t sz)
+static ssize_t strbuf_add_void(void *b, const void *data, const size_t sz)
 {
 	strbuf_add(b, data, sz);
 	return sz;
@@ -27,7 +27,7 @@ static int noop_flush(void *arg)
 }
 
 static void write_test_table(struct strbuf *buf,
-			     struct reftable_ref_record refs[], size_t n)
+			     struct reftable_ref_record refs[], const size_t n)
 {
 	uint64_t min = 0xffffffff;
 	uint64_t max = 0;
@@ -62,9 +62,8 @@ static void write_test_table(struct strbuf *buf,
 	reftable_writer_free(w);
 }
 
-static void write_test_log_table(struct strbuf *buf,
-				 struct reftable_log_record logs[], size_t n,
-				 uint64_t update_index)
+static void write_test_log_table(struct strbuf *buf, struct reftable_log_record logs[],
+				 const size_t n, const uint64_t update_index)
 {
 	int err;
 
@@ -90,8 +89,8 @@ static void write_test_log_table(struct strbuf *buf,
 static struct reftable_merged_table *
 merged_table_from_records(struct reftable_ref_record **refs,
 			  struct reftable_block_source **source,
-			  struct reftable_reader ***readers, size_t *sizes,
-			  struct strbuf *buf, size_t n)
+			  struct reftable_reader ***readers, const size_t *sizes,
+			  struct strbuf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
 	struct reftable_table *tabs;
@@ -116,7 +115,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 	return mt;
 }
 
-static void readers_destroy(struct reftable_reader **readers, size_t n)
+static void readers_destroy(struct reftable_reader **readers, const size_t n)
 {
 	for (size_t i = 0; i < n; i++)
 		reftable_reader_free(readers[i]);
@@ -267,8 +266,8 @@ static void t_merged_refs(void)
 static struct reftable_merged_table *
 merged_table_from_log_records(struct reftable_log_record **logs,
 			      struct reftable_block_source **source,
-			      struct reftable_reader ***readers, size_t *sizes,
-			      struct strbuf *buf, size_t n)
+			      struct reftable_reader ***readers, const size_t *sizes,
+			      struct strbuf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
 	struct reftable_table *tabs;
