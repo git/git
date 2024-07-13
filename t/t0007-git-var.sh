@@ -157,7 +157,7 @@ test_expect_success POSIXPERM 'GIT_SHELL_PATH points to a valid executable' '
 test_expect_success MINGW 'GIT_SHELL_PATH points to a suitable shell' '
 	shellpath=$(git var GIT_SHELL_PATH) &&
 	case "$shellpath" in
-	*sh) ;;
+	[A-Z]:/*/sh.exe) test -f "$shellpath";;
 	*) return 1;;
 	esac
 '
