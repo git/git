@@ -46,6 +46,9 @@ void strvec_init(struct strvec *);
 /* Push a copy of a string onto the end of the array. */
 const char *strvec_push(struct strvec *, const char *);
 
+/* Push an allocated string onto the end of the array, taking ownership. */
+void strvec_push_nodup(struct strvec *array, char *value);
+
 /**
  * Format a string and push it onto the end of the array. This is a
  * convenience wrapper combining `strbuf_addf` and `strvec_push`.

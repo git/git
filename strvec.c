@@ -10,7 +10,7 @@ void strvec_init(struct strvec *array)
 	memcpy(array, &blank, sizeof(*array));
 }
 
-static void strvec_push_nodup(struct strvec *array, const char *value)
+void strvec_push_nodup(struct strvec *array, char *value)
 {
 	if (array->v == empty_strvec)
 		array->v = NULL;
