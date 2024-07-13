@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2024, #03; Thu, 11)
-X-master-at: 557ae147e6cdc9db121269b058c757ac5092f9c9
-X-next-at: 2a221341d9b66d14d948b71e4edd3494e5dd692c
+Subject: What's cooking in git.git (Jul 2024, #04; Fri, 12)
+X-master-at: a7dae3bdc8b516d36f630b12bb01e853a667e0d9
+X-next-at: eb743b3ca22675107e6ba730058d59d2cf3cb6fa
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2024, #03; Thu, 11)
+What's cooking in git.git (Jul 2024, #04; Fri, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,8 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Git 2.46-rc0 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,62 +48,101 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* as/pathspec-h-typofix (2024-07-01) 1 commit
+  (merged to 'next' on 2024-07-02 at ae7cee4189)
+ + pathspec: fix typo "glossary-context.txt" -> "glossary-content.txt"
+
+ Typofix.
+ source: <20240629193137.54037-1-abhijeet.nkt@gmail.com>
+
+
+* rs/simplify-submodule-helper-super-prefix-invocation (2024-07-01) 1 commit
+  (merged to 'next' on 2024-07-02 at 06e1677920)
+ + submodule--helper: use strvec_pushf() for --super-prefix
+
+ Code clean-up.
+ source: <fb79ebc4-5ecf-4257-ac2e-39f98db5649c@web.de>
+
+--------------------------------------------------
 [New Topics]
 
-* jc/where-is-bash-for-ci (2024-07-08) 1 commit
-  (merged to 'next' on 2024-07-09 at 14b00e672e)
- + ci: unify bash calling convention
+* es/doc-platform-support-policy (2024-07-12) 1 commit
+ - Documentation: add platform support policy
 
- Shell script clean-up.
+ A policy document that describes platform support levels and
+ expectation on platform stakeholders has been introduced.
 
- Will merge to 'master'.
- source: <xmqqwmlvcx9g.fsf_-_@gitster.g>
-
-
-* kn/push-empty-fix (2024-07-09) 1 commit
- - builtin/push: call set_refspecs after validating remote
-
- "git push '' HEAD:there" used to hit a BUG(); it has been corrected
- to die with "fatal: bad repository ''".
-
- Expecting a reroll.
- cf. <xmqq4j8yflrq.fsf@gitster.g>
- source: <20240709144931.1146528-1-karthik.188@gmail.com>
+ What's the doneness of this one?
+ source: <20240711232413.693444-1-emilyshaffer@google.com>
 
 
-* ad/merge-with-diff-algorithm (2024-07-10) 1 commit
-  (merged to 'next' on 2024-07-11 at 2a221341d9)
- + merge-recursive: honor diff.algorithm
+* js/var-git-shell-path (2024-07-12) 7 commits
+ - var(win32): do report the GIT_SHELL_PATH that is actually used
+ - run-command: declare the `git_shell_path()` function globally
+ - run-command(win32): resolve the path to the Unix shell early
+ - mingw(is_msys2_sh): handle forward slashes in the `sh.exe` path, too
+ - win32: override `fspathcmp()` with a directory separator-aware version
+ - strvec: declare the `strvec_push_nodup()` function globally
+ - run-command: refactor getting the Unix shell path into its own function
 
- Many Porcelain commands that internally use the merge machinery
- were taught to consistently honor the diff.algorithm configuration.
+ "git var GIT_SHELL_PATH" should report the path to the shell used
+ to spawn external commands, but it didn't do so on Windows, which
+ has been corrected.
 
- Will merge to 'master'.
- source: <pull.1743.v2.git.git.1720551701648.gitgitgadget@gmail.com>
-
-
-* jc/http-cookiefile (2024-07-09) 1 commit
-  (merged to 'next' on 2024-07-11 at abdd5711d2)
- + http.c: cookie file tightening
-
- The http.cookieFile and http.saveCookies configuration variables
- have a few values that need to be avoided, which are now ignored
- with warning messages.
-
- Will merge to 'master'.
- source: <xmqqed82cgmj.fsf@gitster.g>
+ Will merge to 'next'.
+ source: <pull.1760.v2.git.1720739496.gitgitgadget@gmail.com>
 
 
-* jk/add-patch-with-suppress-blank-empty (2024-07-10) 1 commit
-  (merged to 'next' on 2024-07-11 at cec8ebb668)
- + add-patch: handle splitting hunks with diff.suppressBlankEmpty
+* kn/ci-clang-format (2024-07-11) 8 commits
+ - check-whitespace: detect if no base_commit is provided
+ - ci: run style check on GitHub and GitLab
+ - clang-format: formalize some of the spacing rules
+ - clang-format: avoid braces on simple single-statement bodies
+ - clang-format: replace deprecated option with 'SpacesInParens'
+ - clang-format: ensure files end with newlines
+ - clang-format: avoid spacing around bitfield colon
+ - clang-format: indent preprocessor directives after hash
 
- When the diff.suppressBlankEmpty configuration variable is set,
- "git add -p" failed to process a patch with an unmodified empty
- line, which has been corrected.
+ A CI job that use clang-format to check coding style issues in new
+ code has been added.
 
- Will merge to 'master'.
- source: <20240710093610.GA2076910@coredump.intra.peff.net>
+ What's the doneness of this one?
+ source: <20240711083043.1732288-1-karthik.188@gmail.com>
+
+
+* ps/doc-http-empty-cookiefile (2024-07-11) 1 commit
+ - doc: update http.cookieFile with in-memory cookie processing
+
+ What happens when http.cookieFile gets the special value "" has
+ been clarified in the documentation..
+
+ Will merge to 'next'.
+ source: <pull.1733.v2.git.git.1720687008915.gitgitgadget@gmail.com>
+
+
+* rj/add-p-pager (2024-07-12) 4 commits
+ - add-patch: render hunks through the pager
+ - pager: introduce wait_for_pager
+ - pager: do not close fd 2 unnecessarily
+ - add-patch: test for 'p' command
+
+ A 'P' command to "git add -p" that passes the patch hunk to the
+ pager has been added.
+
+ Expecting a (hopefully small and final) reroll.
+ cf. <803b10ed-1cb3-4314-82c9-cf48d5d0bb90@gmail.com>
+ source: <2653fb37-c8a8-49b1-a804-4be6654a2cad@gmail.com>
+
+
+* js/unit-test-oidtree-cmake-fix (2024-07-12) 1 commit
+ - cmake: fix build of `t-oidtree`
+
+ Build fix.
+
+ Will merge to 'next'.
+ source: <pull.1761.git.1720816450344.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -233,6 +274,61 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* jc/where-is-bash-for-ci (2024-07-08) 1 commit
+  (merged to 'next' on 2024-07-09 at 14b00e672e)
+ + ci: unify bash calling convention
+
+ Shell script clean-up.
+
+ Will merge to 'master'.
+ source: <xmqqwmlvcx9g.fsf_-_@gitster.g>
+
+
+* kn/push-empty-fix (2024-07-12) 1 commit
+ - builtin/push: call set_refspecs after validating remote
+
+ "git push '' HEAD:there" used to hit a BUG(); it has been corrected
+ to die with "fatal: bad repository ''".
+
+ Will merge to 'next'.
+ source: <20240711093954.20317-1-karthik.188@gmail.com>
+
+
+* ad/merge-with-diff-algorithm (2024-07-10) 1 commit
+  (merged to 'next' on 2024-07-11 at 2a221341d9)
+ + merge-recursive: honor diff.algorithm
+
+ Many Porcelain commands that internally use the merge machinery
+ were taught to consistently honor the diff.algorithm configuration.
+
+ Will merge to 'master'.
+ source: <pull.1743.v2.git.git.1720551701648.gitgitgadget@gmail.com>
+
+
+* jc/http-cookiefile (2024-07-09) 1 commit
+  (merged to 'next' on 2024-07-11 at abdd5711d2)
+ + http.c: cookie file tightening
+
+ The http.cookieFile and http.saveCookies configuration variables
+ have a few values that need to be avoided, which are now ignored
+ with warning messages.
+
+ Will merge to 'master'.
+ source: <xmqqed82cgmj.fsf@gitster.g>
+
+
+* jk/add-patch-with-suppress-blank-empty (2024-07-10) 1 commit
+  (merged to 'next' on 2024-07-11 at cec8ebb668)
+ + add-patch: handle splitting hunks with diff.suppressBlankEmpty
+
+ When the diff.suppressBlankEmpty configuration variable is set,
+ "git add -p" failed to process a patch with an unmodified empty
+ line, which has been corrected.
+
+ Will merge to 'master'.
+ source: <20240710093610.GA2076910@coredump.intra.peff.net>
+
+
 * jc/checkout-no-op-switch-errors (2024-07-02) 1 commit
  - checkout: special case error messages during noop switching
 
@@ -270,7 +366,7 @@ Release tarballs are available at:
  source: <20240709233746.445860-1-sandals@crustytoothpaste.net>
 
 
-* cp/unit-test-reftable-merged (2024-07-11) 7 commits
+* cp/unit-test-reftable-merged (2024-07-12) 7 commits
  - t-reftable-merged: add test for REFTABLE_FORMAT_ERROR
  - t-reftable-merged: use reftable_ref_record_equal to compare ref records
  - t-reftable-merged: add tests for reftable_merged_table_max_update_index
@@ -282,7 +378,7 @@ Release tarballs are available at:
  Another reftable test has been ported to use the unit test framework.
 
  Looking good.
- source: <20240711040854.4602-1-chandrapratap3519@gmail.com>
+ source: <20240712055041.6476-1-chandrapratap3519@gmail.com>
 
 
 * ds/advice-sparse-index-expansion (2024-07-08) 1 commit
@@ -338,14 +434,14 @@ Release tarballs are available at:
  source: <cbc9446b1b0f2453b96aa9c0d89b9ec086a619bd.1720205457.git.me@ttaylorr.com>
 
 
-* gt/unit-test-hashmap (2024-07-08) 1 commit
+* gt/unit-test-hashmap (2024-07-12) 1 commit
  - t: port helper/test-hashmap.c to unit-tests/t-hashmap.c
 
  An existing test of hashmap API has been rewritten with the
  unit-test framework.
 
- Needs review.
- source: <20240708161641.10335-2-shyamthakkar001@gmail.com>
+ What's the doneness of this one?
+ source: <20240711235159.5320-1-shyamthakkar001@gmail.com>
 
 
 * ri/doc-show-branch-fix (2024-07-08) 1 commit
@@ -356,16 +452,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1757.v5.git.1720444080034.gitgitgadget@gmail.com>
-
-
-* as/pathspec-h-typofix (2024-07-01) 1 commit
-  (merged to 'next' on 2024-07-02 at ae7cee4189)
- + pathspec: fix typo "glossary-context.txt" -> "glossary-content.txt"
-
- Typofix.
-
- Will merge to 'master'.
- source: <20240629193137.54037-1-abhijeet.nkt@gmail.com>
 
 
 * gt/unit-test-oidmap (2024-07-03) 1 commit
@@ -431,16 +517,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  source: <f4ae6e2a-218a-419c-b6c4-59a08be247a0@gmail.com>
  source: <fe8cd0d1-e451-43d0-b033-11bbb6d1ed56@gmail.com>
-
-
-* rs/simplify-submodule-helper-super-prefix-invocation (2024-07-01) 1 commit
-  (merged to 'next' on 2024-07-02 at 06e1677920)
- + submodule--helper: use strvec_pushf() for --super-prefix
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <fb79ebc4-5ecf-4257-ac2e-39f98db5649c@web.de>
 
 
 * rs/unit-tests-test-run (2024-07-01) 6 commits
