@@ -1546,7 +1546,7 @@ static int is_msys2_sh(const char *cmd)
 		return ret;
 	}
 
-	if (ends_with(cmd, "\\sh.exe")) {
+	if (ends_with(cmd, "\\sh.exe") || ends_with(cmd, "/sh.exe")) {
 		static char *sh;
 
 		if (!sh)
