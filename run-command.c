@@ -274,7 +274,7 @@ int sane_execvp(const char *file, char * const argv[])
 	return -1;
 }
 
-static char *git_shell_path(void)
+char *git_shell_path(void)
 {
 #ifndef GIT_WINDOWS_NATIVE
 	return xstrdup(SHELL_PATH);
