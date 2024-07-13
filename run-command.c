@@ -274,17 +274,22 @@ int sane_execvp(const char *file, char * const argv[])
 	return -1;
 }
 
+static const char *git_shell_path(void)
+{
+#ifndef GIT_WINDOWS_NATIVE
+	return SHELL_PATH;
+#else
+	return "sh";
+#endif
+}
+
 static const char **prepare_shell_cmd(struct strvec *out, const char **argv)
 {
 	if (!argv[0])
 		BUG("shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
-#ifndef GIT_WINDOWS_NATIVE
-		strvec_push(out, SHELL_PATH);
-#else
-		strvec_push(out, "sh");
-#endif
+		strvec_push(out, git_shell_path());
 		strvec_push(out, "-c");
 
 		/*
