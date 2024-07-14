@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-04-25 18:57+0000\n"
-"PO-Revision-Date: 2024-04-26 15:33+0700\n"
+"POT-Creation-Date: 2024-07-19 14:03+0700\n"
+"PO-Revision-Date: 2024-07-19 14:25+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -104,12 +104,12 @@ msgstr[1] "%d jalur ditambahkan\n"
 msgid "ignoring unmerged: %s"
 msgstr "mengabaikan tak tergabung: %s"
 
-#: add-interactive.c add-patch.c
+#: add-interactive.c
 #, c-format
 msgid "Only binary files changed.\n"
 msgstr "Hanya berkas biner yang berubah.\n"
 
-#: add-interactive.c add-patch.c
+#: add-interactive.c
 #, c-format
 msgid "No changes.\n"
 msgstr "Tidak ada perubahan.\n"
@@ -666,6 +666,11 @@ msgstr ""
 "? - lihat bantuan\n"
 
 #: add-patch.c
+#, c-format
+msgid "Only one letter is expected, got '%s'"
+msgstr "Hanya satu huruf yang diharapkan, dapat '%s'"
+
+#: add-patch.c
 msgid "No previous hunk"
 msgstr "Tidak ada bingkah sebelumnya"
 
@@ -728,8 +733,21 @@ msgid "Sorry, cannot edit this hunk"
 msgstr "Maaf, tidak dapat menyunting bingkah ini"
 
 #: add-patch.c
+#, c-format
+msgid "Unknown command '%s' (use '?' for help)"
+msgstr "Perintah tidak dikenal '%s' (gunakan '?' untuk bantuan)"
+
+#: add-patch.c
 msgid "'git apply' failed"
 msgstr "'git apply' gagal"
+
+#: add-patch.c
+msgid "No changes."
+msgstr "Tidak ada perubahan."
+
+#: add-patch.c
+msgid "Only binary files changed."
+msgstr "Hanya berkas biner yang berubah."
 
 #: advice.c
 #, c-format
@@ -911,7 +929,7 @@ msgid "unclosed quote"
 msgstr "tanda kutip tak ditutup"
 
 #: alias.c builtin/cat-file.c builtin/notes.c builtin/prune-packed.c
-#: builtin/receive-pack.c builtin/tag.c t/helper/test-pkt-line.c
+#: builtin/receive-pack.c builtin/refs.c builtin/tag.c t/helper/test-pkt-line.c
 msgid "too many arguments"
 msgstr "terlalu banyak argumen"
 
@@ -1808,6 +1826,11 @@ msgid "ignoring overly large gitattributes blob '%s'"
 msgstr "mengabaikan blob gitattributes '%s' yang terlalu besar"
 
 #: attr.c
+msgid "cannot use --attr-source or GIT_ATTR_SOURCE without repo"
+msgstr ""
+"tidak dapat menggunakan --attr-source atau GIT_ATTR_SOURCE tanpa repositori"
+
+#: attr.c
 msgid "bad --attr-source or GIT_ATTR_SOURCE"
 msgstr "--attr-source atau GIT_ATTR_SOURCE jelek"
 
@@ -2181,14 +2204,6 @@ msgstr "tidak dapat chmod %cx '%s'"
 #: builtin/add.c
 msgid "Unstaged changes after refreshing the index:"
 msgstr "Perubahan tak tergelar setelah menyegarkan indeks:"
-
-#: builtin/add.c
-msgid ""
-"the add.interactive.useBuiltin setting has been removed!\n"
-"See its entry in 'git help config' for details."
-msgstr ""
-"setelan add.interactive.useBuiltin sudah dihapus!\n"
-"Selengkapnya lihat entrinya di 'git help config'."
 
 #: builtin/add.c
 msgid "could not read the index"
@@ -2644,7 +2659,7 @@ msgstr ""
 "Sepertinya Anda telah memindahkan HEAD sejak kegagalan 'am' terakhir.\n"
 "Tidak memutar ulang ke ORIG_HEAD"
 
-#: builtin/am.c builtin/bisect.c worktree.c
+#: builtin/am.c builtin/bisect.c builtin/tag.c worktree.c
 #, c-format
 msgid "failed to read '%s'"
 msgstr "gagal membaca '%s'"
@@ -2722,8 +2737,8 @@ msgstr "n"
 
 #: builtin/am.c builtin/branch.c builtin/bugreport.c builtin/cat-file.c
 #: builtin/clone.c builtin/diagnose.c builtin/for-each-ref.c builtin/init-db.c
-#: builtin/ls-files.c builtin/ls-tree.c builtin/replace.c builtin/tag.c
-#: builtin/verify-tag.c
+#: builtin/ls-files.c builtin/ls-tree.c builtin/refs.c builtin/replace.c
+#: builtin/tag.c builtin/verify-tag.c
 msgid "format"
 msgstr "format"
 
@@ -2758,6 +2773,10 @@ msgstr "batalkan operasi penambalan tetapi simpan HEAD dimanapun itu"
 #: builtin/am.c
 msgid "show the patch being applied"
 msgstr "perlihatkan tambalan yang diterapkan"
+
+#: builtin/am.c
+msgid "try to apply current patch again"
+msgstr "coba terapkan lagi tambalan saat ini"
 
 #: builtin/am.c
 msgid "record the empty patch as an empty commit"
@@ -2830,10 +2849,6 @@ msgstr "git apply [<opsi>] [<tambalan>...]"
 #: builtin/archive.c diagnose.c
 msgid "could not redirect output"
 msgstr "tidak dapat mengalihkan keluaran"
-
-#: builtin/archive.c
-msgid "git archive: Remote with no URL"
-msgstr "git archive: Remote tanpa URL"
 
 #: builtin/archive.c
 msgid "git archive: expected ACK/NAK, got a flush packet"
@@ -3960,6 +3975,10 @@ msgstr "Perlu sebuah repositori untuk membuat bundel."
 msgid "do not show bundle details"
 msgstr "jangan perlihatkan detail bundel"
 
+#: builtin/bundle.c bundle.c
+msgid "need a repository to verify a bundle"
+msgstr "perlu sebuah repositori untuk verifikasi bundel"
+
 #: builtin/bundle.c
 #, c-format
 msgid "%s is okay\n"
@@ -5018,9 +5037,9 @@ msgstr "pembersihan interaktif"
 msgid "remove whole directories"
 msgstr "hapus keseluruhan direktori"
 
-#: builtin/clean.c builtin/describe.c builtin/grep.c builtin/log.c
-#: builtin/ls-files.c builtin/name-rev.c builtin/pack-refs.c builtin/show-ref.c
-#: ref-filter.h
+#: builtin/clean.c builtin/config.c builtin/describe.c builtin/grep.c
+#: builtin/log.c builtin/ls-files.c builtin/name-rev.c builtin/pack-refs.c
+#: builtin/show-ref.c ref-filter.h
 msgid "pattern"
 msgstr "pola"
 
@@ -5239,6 +5258,16 @@ msgstr "gagal menghapus tautan '%s'"
 
 #: builtin/clone.c
 #, c-format
+msgid "hardlink cannot be checked at '%s'"
+msgstr "tautan keras tidak dapat diperiksa pada '%s'"
+
+#: builtin/clone.c
+#, c-format
+msgid "hardlink different from source at '%s'"
+msgstr "tautan keras berbeda dari sumber pada '%s'"
+
+#: builtin/clone.c
+#, c-format
 msgid "failed to create link '%s'"
 msgstr "gagal membuat tautan '%s'"
 
@@ -5313,7 +5342,7 @@ msgstr "Terlalu banyak argumen."
 msgid "You must specify a repository to clone."
 msgstr "Anda harus sebutkan repositori untuk diklon."
 
-#: builtin/clone.c builtin/init-db.c setup.c
+#: builtin/clone.c builtin/init-db.c builtin/refs.c setup.c
 #, c-format
 msgid "unknown ref storage format '%s'"
 msgstr "format penyimpanan referensi tidak dikenal '%s'"
@@ -5936,7 +5965,7 @@ msgstr "%sPengkomit: %.*s <%.*s>"
 msgid "Cannot read index"
 msgstr "Tidak dapat membaca indeks"
 
-#: builtin/commit.c
+#: builtin/commit.c builtin/tag.c
 msgid "unable to pass trailers to --trailers"
 msgstr "tidak dapat melewatkan trailer ke --trailers"
 
@@ -6152,11 +6181,11 @@ msgstr "gunakan pesan terformat autosquash untuk lumat komit tersebut"
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr "komit sekarang dikarang olehku (gunakan dengan -C/-c/--amend)"
 
-#: builtin/commit.c builtin/interpret-trailers.c
+#: builtin/commit.c builtin/interpret-trailers.c builtin/tag.c
 msgid "trailer"
 msgstr "trailer"
 
-#: builtin/commit.c
+#: builtin/commit.c builtin/tag.c
 msgid "add custom trailer(s)"
 msgstr "tambahkan trailer kustom"
 
@@ -6269,17 +6298,58 @@ msgstr ""
 "tidak terlampaui, lalu \"git restore --staged :/\" untuk pulihkan."
 
 #: builtin/config.c
-msgid "git config [<options>]"
-msgstr "git config [<opsi>]"
+msgid "git config list [<file-option>] [<display-option>] [--includes]"
+msgstr "git config list [<opsi berkas>] [<opsi tampilan>] [--includes]"
 
 #: builtin/config.c
-#, c-format
-msgid "unrecognized --type argument, %s"
-msgstr "argumen --type tidak dikenal %s"
+msgid ""
+"git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
+"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
+"<name>"
+msgstr ""
+"git config get [<opsi berkas>] [<opsi tampilan] [--includes] [--all] [--"
+"regexp=<regexp> [--value=<nilai>] [--fixed-value] [--default=<default>] "
+"<nama>"
 
 #: builtin/config.c
-msgid "only one type at a time"
-msgstr "hanya satu tipe pada suatu saat"
+msgid ""
+"git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--"
+"fixed-value] <name> <value>"
+msgstr ""
+"git config set [<opsi berkas>] [--type=<tipe>] [--all] [--value=<nilai>] [--"
+"fixed-value] <nama> <nilai>"
+
+#: builtin/config.c
+msgid ""
+"git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
+"<name> <value>"
+msgstr ""
+"git config unset [<opsi berkas] [--all] [--value=<nilai>] [--fixed-value] "
+"<nama> <nilai>"
+
+#: builtin/config.c
+msgid "git config rename-section [<file-option>] <old-name> <new-name>"
+msgstr "git config rename-section [<opsi berkas>] <nama lama> <nama baru>"
+
+#: builtin/config.c
+msgid "git config remove-section [<file-option>] <name>"
+msgstr "git config remove-section [<opsi berkas>] <nama>"
+
+#: builtin/config.c
+msgid "git config edit [<file-option>]"
+msgstr "git config edit [<opsi berkas>]"
+
+#: builtin/config.c
+msgid "git config [<file-option>] --get-colorbool <name> [<stdout-is-tty>]"
+msgstr "git config [<opsi berkas>] --get-colorbool <nama> [<stdout-is-tty>]"
+
+#: builtin/config.c
+msgid ""
+"git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
+"[--value=<value>] [--fixed-value] <name> <value>"
+msgstr ""
+"git config set [<opsi berkas>] [--type=<tipe>] [--comment=<pesan>] [--all] "
+"[--value=<nilai>] [--fixed-value] <nama> <nilai>"
 
 #: builtin/config.c
 msgid "Config file location"
@@ -6312,70 +6382,6 @@ msgstr "id blob"
 #: builtin/config.c
 msgid "read config from given blob object"
 msgstr "baca konfigurasi dari objek blob yang diberikan"
-
-#: builtin/config.c
-msgid "Action"
-msgstr "Tindakan"
-
-#: builtin/config.c
-msgid "get value: name [value-pattern]"
-msgstr "dapatkan nilai: name [pola nilai]"
-
-#: builtin/config.c
-msgid "get all values: key [value-pattern]"
-msgstr "dapatkan semua nilai: key [pola nilai]"
-
-#: builtin/config.c
-msgid "get values for regexp: name-regex [value-pattern]"
-msgstr "dapatkan nilai dari regexp: name-regex [pola nilai]"
-
-#: builtin/config.c
-msgid "get value specific for the URL: section[.var] URL"
-msgstr "dapatkan nilai spesifik untuk URL: section[.var] URL"
-
-#: builtin/config.c
-msgid "replace all matching variables: name value [value-pattern]"
-msgstr "ganti semua variabel yang cocok: name value [pola nilai]"
-
-#: builtin/config.c
-msgid "add a new variable: name value"
-msgstr "tambahkan variabel baru: name value"
-
-#: builtin/config.c
-msgid "remove a variable: name [value-pattern]"
-msgstr "hapus variabel: name [pola nilai]"
-
-#: builtin/config.c
-msgid "remove all matches: name [value-pattern]"
-msgstr "hapus semua cocokan: name [pola nilai]"
-
-#: builtin/config.c
-msgid "rename section: old-name new-name"
-msgstr "ganti nama bagian: old-name new-name"
-
-#: builtin/config.c
-msgid "remove a section: name"
-msgstr "hapus bagian: name"
-
-#: builtin/config.c
-msgid "list all"
-msgstr "daftar semua"
-
-#: builtin/config.c
-msgid "use string equality when comparing values to 'value-pattern'"
-msgstr "gunakan kesamaan untai ketika membandingkan nilai ke 'pola nilai'"
-
-#: builtin/config.c
-msgid "open an editor"
-msgstr "buka penyunting"
-
-#: builtin/config.c
-msgid "find the color configured: slot [default]"
-msgstr "temukan warna terkonfigurasi: slot [asali]"
-
-#: builtin/config.c
-msgid "find the color setting: slot [stdout-is-tty]"
-msgstr "temukan setelan warna: slot [stdout-is-tty]"
 
 #: builtin/config.c
 msgid "Type"
@@ -6414,8 +6420,8 @@ msgid "value is an expiry date"
 msgstr "nilai adalah tanggal kadaluarsa"
 
 #: builtin/config.c
-msgid "Other"
-msgstr "Lainnya"
+msgid "Display options"
+msgstr "Tampilkan opsi"
 
 #: builtin/config.c
 msgid "terminate values with NUL byte"
@@ -6424,10 +6430,6 @@ msgstr "Akhiri nilai dengan bita NUL"
 #: builtin/config.c
 msgid "show variable names only"
 msgstr "perlihatkan hanya nama variabel"
-
-#: builtin/config.c
-msgid "respect include directives on lookup"
-msgstr "segani arahan masukkan pada pencarian"
 
 #: builtin/config.c
 msgid "show origin of config (file, standard input, blob, command line)"
@@ -6441,17 +6443,17 @@ msgstr ""
 "perintah)"
 
 #: builtin/config.c
-msgid "value"
-msgstr "nilai"
+msgid "show config keys in addition to their values"
+msgstr "perlihatkan kunci opsi beserta nilainya"
 
 #: builtin/config.c
-msgid "with --get, use default value when missing entry"
-msgstr "dengan --get, gunakan nilai asali ketika kehilangan entri"
+#, c-format
+msgid "unrecognized --type argument, %s"
+msgstr "argumen --type tidak dikenal %s"
 
 #: builtin/config.c
-msgid "human-readable comment string (# will be prepended as needed)"
-msgstr ""
-"untai komentar yang dapat dibaca manusia (# akan ditambahkan bila diperlukan"
+msgid "only one type at a time"
+msgstr "hanya satu tipe pada suatu saat"
 
 #: builtin/config.c
 #, c-format
@@ -6545,12 +6547,193 @@ msgstr ""
 "\"CONFIGURATION FILE\" di \"git help worktree\" untuk selengkapnya"
 
 #: builtin/config.c
+msgid "Other"
+msgstr "Lainnya"
+
+#: builtin/config.c
+msgid "respect include directives on lookup"
+msgstr "segani arahan masukkan pada pencarian"
+
+#: builtin/config.c
+#, c-format
+msgid "unable to read config file '%s'"
+msgstr "tidak dapat membaca berkas konfigurasi '%s'"
+
+#: builtin/config.c
+msgid "error processing config file(s)"
+msgstr "kesalahan memproses berkas konfigurasi"
+
+#: builtin/config.c
+msgid "Filter options"
+msgstr "Opsi penyaringan"
+
+#: builtin/config.c
+msgid "return all values for multi-valued config options"
+msgstr "dapatkan semua nilai untuk opsi konfigurasi multi-nilai"
+
+#: builtin/config.c
+msgid "interpret the name as a regular expression"
+msgstr "tafsirkan nama sebagai ekspresi reguler"
+
+#: builtin/config.c
+msgid "show config with values matching the pattern"
+msgstr "perlihatkan konfigurasi dengan nilai yang cocok dengan pola"
+
+#: builtin/config.c
+msgid "use string equality when comparing values to value pattern"
+msgstr "gunakan kesamaan untai ketika membandingkan nilai dan pola nilai"
+
+#: builtin/config.c
+msgid "URL"
+msgstr "URL"
+
+#: builtin/config.c
+msgid "show config matching the given URL"
+msgstr "perlihatkan konfigurasi yang cocok dengan URL yang diberikan"
+
+#: builtin/config.c
+msgid "value"
+msgstr "nilai"
+
+#: builtin/config.c
+msgid "use default value when missing entry"
+msgstr "gunakan nilai asali ketika entri hilang"
+
+#: builtin/config.c
+msgid "--fixed-value only applies with 'value-pattern'"
+msgstr "--fixed-value hanya diterapkan dengan 'pola nilai'"
+
+#: builtin/config.c
+msgid "--default= cannot be used with --all or --url="
+msgstr "--default= tidak dapat digunakan dengan --all atau --url="
+
+#: builtin/config.c
+msgid "--url= cannot be used with --all, --regexp or --value"
+msgstr "--url= tidak dapat digunakan dengan --all, --regexp atau --value"
+
+#: builtin/config.c
+msgid "Filter"
+msgstr "Penyaring"
+
+#: builtin/config.c
+msgid "replace multi-valued config option with new value"
+msgstr "ganti opsi konfigurasi multi-nilai dengan nilai baru"
+
+#: builtin/config.c
+msgid "human-readable comment string (# will be prepended as needed)"
+msgstr ""
+"untai komentar yang dapat dibaca manusia (# akan ditambahkan bila diperlukan"
+
+#: builtin/config.c
+msgid "add a new line without altering any existing values"
+msgstr "tambahkan baris baru tanpa mengubah nilai yang ada"
+
+#: builtin/config.c
+msgid "--fixed-value only applies with --value=<pattern>"
+msgstr "--fixed-value hanya diterapkan dengan --value=<pola>"
+
+#: builtin/config.c
+msgid "--append cannot be used with --value=<pattern>"
+msgstr "--append tidak dapat digunakan dengan --value=<pola>"
+
+#: builtin/config.c
+#, c-format
+msgid ""
+"cannot overwrite multiple values with a single value\n"
+"       Use a regexp, --add or --replace-all to change %s."
+msgstr ""
+"tidak dapat menimpa banyak nilai dengan nilai tunggal\n"
+"       Gunakan regexp, --add atau --replace-all untuk mengubah %s."
+
+#: builtin/config.c
+#, c-format
+msgid "no such section: %s"
+msgstr "tidak ada bagian seperti: %s"
+
+#: builtin/config.c
+msgid "editing stdin is not supported"
+msgstr "menyunting stdin tidak didukung"
+
+#: builtin/config.c
+msgid "editing blobs is not supported"
+msgstr "menyunting blob tidak didukung"
+
+#: builtin/config.c
+#, c-format
+msgid "cannot create configuration file %s"
+msgstr "tidak dapat membuat berkas konfigurasi %s"
+
+#: builtin/config.c
+msgid "Action"
+msgstr "Tindakan"
+
+#: builtin/config.c
+msgid "get value: name [<value-pattern>]"
+msgstr "dapatkan nilai: name [<pola nilai>]"
+
+#: builtin/config.c
+msgid "get all values: key [<value-pattern>]"
+msgstr "dapatkan semua nilai: key [<pola nilai>]"
+
+#: builtin/config.c
+msgid "get values for regexp: name-regex [<value-pattern>]"
+msgstr "dapatkan nilai dari ekspresi reguler: name-regex [<pola nilai>]"
+
+#: builtin/config.c
+msgid "get value specific for the URL: section[.var] URL"
+msgstr "dapatkan nilai spesifik untuk URL: section[.var] URL"
+
+#: builtin/config.c
+msgid "replace all matching variables: name value [<value-pattern>]"
+msgstr "ganti semua variabel yang cocok: name value [<pola nilai>]"
+
+#: builtin/config.c
+msgid "add a new variable: name value"
+msgstr "tambahkan variabel baru: name value"
+
+#: builtin/config.c
+msgid "remove a variable: name [<value-pattern>]"
+msgstr "hapus variabel: name [<pola nilai>]"
+
+#: builtin/config.c
+msgid "remove all matches: name [<value-pattern>]"
+msgstr "hapus semua cocokan: name [<pola nilai>]"
+
+#: builtin/config.c
+msgid "rename section: old-name new-name"
+msgstr "ganti nama bagian: old-name new-name"
+
+#: builtin/config.c
+msgid "remove a section: name"
+msgstr "hapus bagian: name"
+
+#: builtin/config.c
+msgid "list all"
+msgstr "daftar semua"
+
+#: builtin/config.c
+msgid "open an editor"
+msgstr "buka penyunting"
+
+#: builtin/config.c
+msgid "find the color configured: slot [<default>]"
+msgstr "temukan warna terkonfigurasi: slot [<asali>]"
+
+#: builtin/config.c
+msgid "find the color setting: slot [<stdout-is-tty>]"
+msgstr "temukan setelan warna: slot [<stdout-is-tty>]"
+
+#: builtin/config.c
+msgid "with --get, use default value when missing entry"
+msgstr "dengan --get, gunakan nilai asali ketika kehilangan entri"
+
+#: builtin/config.c
 msgid "--get-color and variable type are incoherent"
 msgstr "--get-color dan tipe variabel raban"
 
 #: builtin/config.c
-msgid "only one action at a time"
-msgstr "hanya satu tindakan pada suatu saat"
+msgid "no action specified"
+msgstr "tidak ada tindakan yang dipilih"
 
 #: builtin/config.c
 msgid "--name-only is only applicable to --list or --get-regexp"
@@ -6573,46 +6756,6 @@ msgid "--comment is only applicable to add/set/replace operations"
 msgstr ""
 "--comment hanya dapat diterapkan pada operasi penambahan/penyetelan/"
 "penggantian"
-
-#: builtin/config.c
-msgid "--fixed-value only applies with 'value-pattern'"
-msgstr "--fixed-value hanya diterapkan dengan 'pola nilai'"
-
-#: builtin/config.c
-#, c-format
-msgid "unable to read config file '%s'"
-msgstr "tidak dapat membaca berkas konfigurasi '%s'"
-
-#: builtin/config.c
-msgid "error processing config file(s)"
-msgstr "kesalahan memproses berkas konfigurasi"
-
-#: builtin/config.c
-msgid "editing stdin is not supported"
-msgstr "menyunting stdin tidak didukung"
-
-#: builtin/config.c
-msgid "editing blobs is not supported"
-msgstr "menyunting blob tidak didukung"
-
-#: builtin/config.c
-#, c-format
-msgid "cannot create configuration file %s"
-msgstr "tidak dapat membuat berkas konfigurasi %s"
-
-#: builtin/config.c
-#, c-format
-msgid ""
-"cannot overwrite multiple values with a single value\n"
-"       Use a regexp, --add or --replace-all to change %s."
-msgstr ""
-"tidak dapat menimpa banyak nilai dengan nilai tunggal\n"
-"       Gunakan regexp, --add atau --replace-all untuk mengubah %s."
-
-#: builtin/config.c
-#, c-format
-msgid "no such section: %s"
-msgstr "tidak ada bagian seperti: %s"
 
 #: builtin/count-objects.c
 msgid "print sizes in human readable format"
@@ -7660,6 +7803,10 @@ msgstr "konfigurasi"
 #: builtin/for-each-repo.c
 msgid "config key storing a list of repository paths"
 msgstr "kunci konfigurasi yang menampung daftar jalur repositori"
+
+#: builtin/for-each-repo.c
+msgid "keep going even if command fails in a repository"
+msgstr "tetap lanjut meski perintah gagal pada repositori"
 
 #: builtin/for-each-repo.c
 msgid "missing --config=<config>"
@@ -9518,8 +9665,12 @@ msgid "max length of output filename"
 msgstr "panjang nama berkas keluaran maksimum"
 
 #: builtin/log.c
-msgid "use [RFC PATCH] instead of [PATCH]"
-msgstr "gunakan [RFC PATCH] daripada [PATCH]"
+msgid "rfc"
+msgstr "rfc"
+
+#: builtin/log.c
+msgid "add <rfc> (default 'RFC') before 'PATCH'"
+msgstr "tambahkan <rfc> (asali 'RFC') sebelum 'PATCH'"
 
 #: builtin/log.c
 msgid "cover-from-description-mode"
@@ -9870,11 +10021,11 @@ msgstr ""
 
 #: builtin/ls-remote.c
 msgid ""
-"git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
+"git ls-remote [--branches] [--tags] [--refs] [--upload-pack=<exec>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
 "              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
-"git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
+"git ls-remote [--branches] [--tags] [--refs] [--upload-pack=<exec>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<kunci>]\n"
 "              [--symref] [<repositori> [<pola>...]]"
 
@@ -9895,8 +10046,12 @@ msgid "limit to tags"
 msgstr "batasi ke tag"
 
 #: builtin/ls-remote.c
-msgid "limit to heads"
-msgstr "batasi ke kepala"
+msgid "limit to branches"
+msgstr "batasi ke cabang"
+
+#: builtin/ls-remote.c builtin/show-ref.c
+msgid "deprecated synonym for --branches"
+msgstr "sinonim usang untuk --branches"
 
 #: builtin/ls-remote.c
 msgid "do not show peeled tags"
@@ -13177,6 +13332,27 @@ msgstr "tidak ada log referensi yang disebutkan untuk dihapus"
 msgid "invalid ref format: %s"
 msgstr "format referensi tidak valid: %s"
 
+#: builtin/refs.c
+msgid "git refs migrate --ref-format=<format> [--dry-run]"
+msgstr "git refs migrate --ref-format=<format> [--dry-run]"
+
+#: builtin/refs.c
+msgid "specify the reference format to convert to"
+msgstr "sebutkan format referensi untuk dikonversi"
+
+#: builtin/refs.c
+msgid "perform a non-destructive dry-run"
+msgstr "lakukan uji coba non desktruktif"
+
+#: builtin/refs.c
+msgid "missing --ref-format=<format>"
+msgstr "--ref-format=<format> hilang"
+
+#: builtin/refs.c
+#, c-format
+msgid "repository already uses '%s' format"
+msgstr "repositori telah menggunakan format '%s'"
+
 #: builtin/remote.c
 msgid ""
 "git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--"
@@ -13530,10 +13706,6 @@ msgstr "* remote %s"
 msgid "  Fetch URL: %s"
 msgstr "  URL pengambilan: %s"
 
-#: builtin/remote.c
-msgid "(no URL)"
-msgstr "(tidak ada URL)"
-
 #. TRANSLATORS: the colon ':' should align
 #. with the one in " Fetch URL: %s"
 #. translation.
@@ -13542,6 +13714,10 @@ msgstr "(tidak ada URL)"
 #, c-format
 msgid "  Push  URL: %s"
 msgstr "  URL pendorongan: %s"
+
+#: builtin/remote.c
+msgid "(no URL)"
+msgstr "(tidak ada URL)"
 
 #: builtin/remote.c
 #, c-format
@@ -13676,11 +13852,6 @@ msgstr "tanyakan URL pendorongan daripada URL pengambilan"
 #: builtin/remote.c
 msgid "return all URLs"
 msgstr "kembalikan semua URL"
-
-#: builtin/remote.c
-#, c-format
-msgid "no URLs configured for remote '%s'"
-msgstr "tidak ada URL yang dikonfigurasi untuk remote '%s'"
 
 #: builtin/remote.c
 msgid "manipulate push URLs"
@@ -14951,12 +15122,12 @@ msgstr "algoritma hash tidak dikenal"
 #: builtin/show-ref.c
 msgid ""
 "git show-ref [--head] [-d | --dereference]\n"
-"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
-"             [--heads] [--] [<pattern>...]"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--branches] [--tags]\n"
+"             [--] [<pattern>...]"
 msgstr ""
 "git show-ref [--head] [-d | --dereference]\n"
-"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
-"             [--heads] [--] [<pola>...]"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--branches] [--tags]\n"
+"             [--] [<pola>...]"
 
 #: builtin/show-ref.c
 msgid ""
@@ -14985,12 +15156,12 @@ msgid "failed to look up reference"
 msgstr "gagal mencari referensi"
 
 #: builtin/show-ref.c
-msgid "only show tags (can be combined with heads)"
-msgstr "hanya perlihatkan tag (bisa dikombinasikan dengan kepala)"
+msgid "only show tags (can be combined with branches)"
+msgstr "hanya perlihatkan tag (bisa dikombinasikan dengan cabang)"
 
 #: builtin/show-ref.c
-msgid "only show heads (can be combined with tags)"
-msgstr "hanya perlihatkan kepala (bisa dikombinasikan dengan tag)"
+msgid "only show branches (can be combined with tags)"
+msgstr "hanya perlihatkan cabang (bisa dikombinasikan dengan tag)"
 
 #: builtin/show-ref.c
 msgid "check for reference existence without resolving"
@@ -15765,7 +15936,7 @@ msgstr "Nilai '%s' untuk submodule.alternateErrorStrategy tidak dikenal"
 msgid "Value '%s' for submodule.alternateLocation is not recognized"
 msgstr "Nilai '%s' untuk submodule.alternateLocation tidak dikenal"
 
-#: builtin/submodule--helper.c
+#: builtin/submodule--helper.c submodule.c
 #, c-format
 msgid "refusing to create/use '%s' in another submodule's git dir"
 msgstr ""
@@ -15773,13 +15944,13 @@ msgstr ""
 
 #: builtin/submodule--helper.c
 #, c-format
-msgid "clone of '%s' into submodule path '%s' failed"
-msgstr "gagal mengkloning '%s' ke dalam jalur submodul '%s'"
+msgid "directory not empty: '%s'"
+msgstr "direktori tidak kosong: '%s'"
 
 #: builtin/submodule--helper.c
 #, c-format
-msgid "directory not empty: '%s'"
-msgstr "direktori tidak kosong: '%s'"
+msgid "clone of '%s' into submodule path '%s' failed"
+msgstr "gagal mengkloning '%s' ke dalam jalur submodul '%s'"
 
 #: builtin/submodule--helper.c
 #, c-format
@@ -16230,9 +16401,11 @@ msgstr "alasan pembaruan"
 #: builtin/tag.c
 msgid ""
 "git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
+"        [(--trailer <token>[(=|:)<value>])...]\n"
 "        <tagname> [<commit> | <object>]"
 msgstr ""
 "git tag [-a | -s | -u <id kunci>] [-f] [-m <pesan> | -F <berkas>] [-e]\n"
+"        [(--trailer <token>[(=|:)<nilai>])...]\n"
 "        <nama tag> [<komit> | <objek>]"
 
 #: builtin/tag.c
@@ -17292,10 +17465,6 @@ msgid "Repository lacks these prerequisite commits:"
 msgstr "Repositori kekurangan komit prasyarat berikut:"
 
 #: bundle.c
-msgid "need a repository to verify a bundle"
-msgstr "perlu sebuah repositori untuk verifikasi bundel"
-
-#: bundle.c
 msgid ""
 "some prerequisite commits exist in the object store, but are not connected "
 "to the repository's history"
@@ -17825,6 +17994,10 @@ msgid "Manage reflog information"
 msgstr "Kelola informasi log referensi"
 
 #: command-list.h
+msgid "Low-level access to refs"
+msgstr "Akses tingat bawah ke referensi"
+
+#: command-list.h
 msgid "Manage set of tracked repositories"
 msgstr "Kelola set repositori terlacak"
 
@@ -18226,6 +18399,15 @@ msgid "commit-graph required commit data chunk missing or corrupted"
 msgstr "bingkah grafik komit data komit yang diperlukan hilang atau rusak"
 
 #: commit-graph.c
+#, c-format
+msgid ""
+"disabling Bloom filters for commit-graph layer '%s' due to incompatible "
+"settings"
+msgstr ""
+"menonaktifkan penyaring Bloom untuk lapisan grafik komit '%s' karena setelan "
+"yang tidak cocok"
+
+#: commit-graph.c
 msgid "commit-graph has no base graphs chunk"
 msgstr "grafik komit tidak punya bingkah grafik dasar"
 
@@ -18382,6 +18564,15 @@ msgstr "Menggabungkan grafik komit"
 #: commit-graph.c
 msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
 msgstr "mencoba menulis grafik komit, tapi 'core.commitGraph' dimatikan"
+
+#: commit-graph.c
+#, c-format
+msgid ""
+"attempting to write a commit-graph, but 'commitGraph.changedPathsVersion' "
+"(%d) is not supported"
+msgstr ""
+"mencoba menulis grafik komit, tapi 'commitGraph.changedPathsVersion (%d) "
+"tidak didukung"
 
 #: commit-graph.c
 msgid "too many commits to write graph"
@@ -20693,15 +20884,17 @@ msgstr ""
 msgid ""
 "git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n"
 "           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n"
-"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
-"bare]\n"
-"           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--config-env=<name>=<envvar>] <command> [<args>]"
+"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-"
+"lazy-fetch]\n"
+"           [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]\n"
+"           [--work-tree=<path>] [--namespace=<name>] [--config-"
+"env=<name>=<envvar>]\n"
+"           <command> [<args>]"
 msgstr ""
 "git [-v| --version] [-h | --help] [-C <jalur>] [-c <nama>=<nilai>]\n"
 "           [--exec-path[=<jalur>]] [--html-path] [--man-path] [--info-path]\n"
-"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
-"bare]\n"
+"           [-p | --paginate | -P | --no-pager] [--no-replace-objects]\n"
+"           [--no-lazy-fetch] [--no-optional-locks] [--no-advice] [--bare]\n"
 "           [--git-dir=<jalur>] [--work-tree=<jalur>] [--namespace=<nama>]\n"
 "           [--config-env=<nama>=<variabel lingkungan>]\n"
 "           <perintah> [<argumen>]"
@@ -21117,13 +21310,13 @@ msgstr ""
 "ignoredHook false`."
 
 #: http-fetch.c
+msgid "not a git repository"
+msgstr "bukan sebuah repositori git"
+
+#: http-fetch.c
 #, c-format
 msgid "argument to --packfile must be a valid hash (got '%s')"
 msgstr "argumen ke --packfile harus sebuah hash valid (dapat '%s')"
-
-#: http-fetch.c
-msgid "not a git repository"
-msgstr "bukan sebuah repositori git"
 
 #: http.c
 #, c-format
@@ -21137,6 +21330,10 @@ msgstr "Kontrol delegasi tidak didukung oleh cURL < 7.22.0"
 #: http.c
 msgid "Public key pinning not supported with cURL < 7.39.0"
 msgstr "Penyematan kunci publik tidak didukung oleh cURL < 7.39.0"
+
+#: http.c
+msgid "Unknown value for http.proactiveauth"
+msgstr "nilai tidak dikenal untuk http.proactiveauth"
 
 #: http.c
 msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
@@ -21158,6 +21355,14 @@ msgstr ""
 #, c-format
 msgid "Could not set SSL backend to '%s': already set"
 msgstr "Tidak dapat menyetel tulang punggung SSL ke '%s': sudah disetel"
+
+#: http.c
+msgid "refusing to read cookies from http.cookiefile '-'"
+msgstr "menolak membaca kuki dari http.cookiefile '-'"
+
+#: http.c
+msgid "ignoring http.savecookies for empty http.cookiefile"
+msgstr "mengabaikan http.savecookies karena http.cookiefile kosong"
 
 #: http.c
 #, c-format
@@ -21367,10 +21572,10 @@ msgstr "Gagal menggabungkan submodul %s (tidak ada dasar penggabungan)"
 msgid "Failed to merge submodule %s (commits not present)"
 msgstr "Gagal menggabungkan submodul %s (komit tidak ada)"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
-msgid "Failed to merge submodule %s (repository corrupt)"
-msgstr "Gagal menggabungkan submodul %s (repositori rusak)"
+msgid "error: failed to merge submodule %s (repository corrupt)"
+msgstr "kesalahan: gagal menggabungkan submodul %s (repositori rusak)"
 
 #: merge-ort.c merge-recursive.c
 #, c-format
@@ -21406,14 +21611,15 @@ msgstr ""
 "mungkin:\n"
 "%s"
 
-#: merge-ort.c merge-recursive.c
-msgid "failed to execute internal merge"
-msgstr "gagal menjalankan penggabungan internal"
-
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
-msgid "unable to add %s to database"
-msgstr "tidak dapat menambahkan %s ke basis data"
+msgid "error: failed to execute internal merge for %s"
+msgstr "kesalahan: gagal menjalankan penggabungan internal untuk %s"
+
+#: merge-ort.c
+#, c-format
+msgid "error: unable to add %s to database"
+msgstr "kesalahan: tidak dapat menambahkan %s ke basis data"
 
 #: merge-ort.c merge-recursive.c
 #, c-format
@@ -21520,15 +21726,15 @@ msgstr ""
 "KONFLIK (penamaan ulang/penghapusan): %s dinamai ulang ke %s di %s, tetapi "
 "dihapus di %s."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
-msgid "cannot read object %s"
-msgstr "tidak dapat membaca objek %s"
+msgid "error: cannot read object %s"
+msgstr "kesalahan: tidak dapat membaca objek %s"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
-msgid "object %s is not a blob"
-msgstr "objek %s bukanlah sebuah blob"
+msgid "error: object %s is not a blob"
+msgstr "kesalahan: objek %s bukanlah suatu blob"
 
 #: merge-ort.c
 #, c-format
@@ -21689,6 +21895,11 @@ msgstr "tidak tahu apa yang dilakukan dengan %06o %s '%s'"
 
 #: merge-recursive.c
 #, c-format
+msgid "Failed to merge submodule %s (repository corrupt)"
+msgstr "Gagal menggabungkan submodul %s (repositori rusak)"
+
+#: merge-recursive.c
+#, c-format
 msgid "Fast-forwarding submodule %s to the following commit:"
 msgstr "Memaju-cepat submodul %s ke komit berikut:"
 
@@ -21733,6 +21944,15 @@ msgstr ""
 #, c-format
 msgid "Failed to merge submodule %s (multiple merges found)"
 msgstr "Gagal menggabungkan submodul %s (banyak penggabungan ditemukan)"
+
+#: merge-recursive.c
+msgid "failed to execute internal merge"
+msgstr "gagal menjalankan penggabungan internal"
+
+#: merge-recursive.c
+#, c-format
+msgid "unable to add %s to database"
+msgstr "tidak dapat menambahkan %s ke basis data"
 
 #: merge-recursive.c
 #, c-format
@@ -21857,6 +22077,16 @@ msgstr ""
 "%s. Penamaan ulang %s->%s di %s"
 
 #: merge-recursive.c
+#, c-format
+msgid "cannot read object %s"
+msgstr "tidak dapat membaca objek %s"
+
+#: merge-recursive.c
+#, c-format
+msgid "object %s is not a blob"
+msgstr "objek %s bukanlah sebuah blob"
+
+#: merge-recursive.c
 msgid "modify"
 msgstr "ubah"
 
@@ -21962,10 +22192,6 @@ msgid "malformed line: %s"
 msgstr "baris jelek '%s'."
 
 #: midx-write.c
-msgid "ignoring existing multi-pack-index; checksum mismatch"
-msgstr "abaikan indeks multipak yang sudah ada; checksum tidak cocok"
-
-#: midx-write.c
 msgid "could not load pack"
 msgstr "tidak dapat memuat pak"
 
@@ -21973,6 +22199,10 @@ msgstr "tidak dapat memuat pak"
 #, c-format
 msgid "could not open index for %s"
 msgstr "tidak dapat membuka indeks untuk %s"
+
+#: midx-write.c
+msgid "ignoring existing multi-pack-index; checksum mismatch"
+msgstr "abaikan indeks multipak yang sudah ada; checksum tidak cocok"
 
 #: midx-write.c
 msgid "Adding packfiles to multi-pack-index"
@@ -22723,6 +22953,20 @@ msgid "hash mismatch %s"
 msgstr "hash tidak cocok %s"
 
 #: pack-bitmap-write.c
+#, c-format
+msgid "duplicate entry when writing bitmap index: %s"
+msgstr "entri duplikat ketika menulis indeks bitmap: %s"
+
+#: pack-bitmap-write.c
+#, c-format
+msgid "attempted to store non-selected commit: '%s'"
+msgstr "mencoba menyimpan komit yang tidak dipilih: '%s'"
+
+#: pack-bitmap-write.c
+msgid "too many pseudo-merges"
+msgstr "terlalu banyak penggabungan semu"
+
+#: pack-bitmap-write.c
 msgid "trying to write commit not in index"
 msgstr "mencoba menulis komit yang bukan di indeks"
 
@@ -22751,6 +22995,23 @@ msgstr "berkas indeks bitmap rusak (terlalu pendek untuk masuk tembolok hash)"
 msgid "corrupted bitmap index file (too short to fit lookup table)"
 msgstr ""
 "berkas indeks bitmap rusak (terlalu pendek untuk masuk tabel pencarian)"
+
+#: pack-bitmap.c
+msgid ""
+"corrupted bitmap index file (too short to fit pseudo-merge table header)"
+msgstr ""
+"berkas indeks bitmap rusak (terlalu pendek untuk masuk kepala tabel "
+"penggabungan semu)"
+
+#: pack-bitmap.c
+msgid "corrupted bitmap index file (too short to fit pseudo-merge table)"
+msgstr ""
+"berkas indeks bitmap rusak (terlalu pendek untuk masuk tabel penggabungan "
+"semu)"
+
+#: pack-bitmap.c
+msgid "corrupted bitmap index file, pseudo-merge table too short"
+msgstr "berkas indeks bitmap rusak (tabel penggabungan semu terlalu pendek)"
 
 #: pack-bitmap.c
 #, c-format
@@ -22865,6 +23126,11 @@ msgstr "komit '%s' tidak punya bitmap terindeks"
 #: pack-bitmap.c
 msgid "mismatch in bitmap results"
 msgstr "ketidaksesuaian di dalam hasil bitmap"
+
+#: pack-bitmap.c
+#, c-format
+msgid "pseudo-merge index out of range (%<PRIu32> >= %<PRIuMAX>)"
+msgstr "indeks penggabungan semu di luar jangkauan (%<PRIu32> >= %<PRIuMAX>)"
 
 #: pack-bitmap.c
 #, c-format
@@ -23325,6 +23591,10 @@ msgid "unable to parse --pretty format"
 msgstr "tidak dapat menguraikan format --pretty"
 
 #: promisor-remote.c
+msgid "lazy fetching disabled; some objects may not be available"
+msgstr "pengambilan malas dimatikan; beberapa objek mungkin tidak tersedia"
+
+#: promisor-remote.c
 msgid "promisor-remote: unable to fork off fetch subprocess"
 msgstr "promisor-remote: tidak dapat menggarpu subproses pengambilan"
 
@@ -23354,6 +23624,83 @@ msgstr "object-info: bilasan diharapkan setelah argumen"
 #: prune-packed.c
 msgid "Removing duplicate objects"
 msgstr "Menghapus objek duplikat"
+
+#: pseudo-merge.c
+#, c-format
+msgid "failed to load pseudo-merge regex for %s: '%s'"
+msgstr "gagal memuat regex penggabungan semu untuk %s: '%s'"
+
+#: pseudo-merge.c
+#, c-format
+msgid "%s must be non-negative, using default"
+msgstr "%s harus non-negatif, menggunakan yang asali"
+
+#: pseudo-merge.c
+#, c-format
+msgid "%s must be between 0 and 1, using default"
+msgstr "%s harus di antara 0 atau 1, menggunakan yang asali"
+
+#: pseudo-merge.c
+#, c-format
+msgid "%s must be positive, using default"
+msgstr "%s harus positif, menggunakan yang asali"
+
+#: pseudo-merge.c
+#, c-format
+msgid "pseudo-merge group '%s' missing required pattern"
+msgstr "grup penggabungan semu '%s' kehilangan pola yang diperlukan"
+
+#: pseudo-merge.c
+#, c-format
+msgid "pseudo-merge group '%s' has unstable threshold before stable one"
+msgstr ""
+"grup penggabungan semu '%s' punya ambang batas tidak stabil sebelum yang "
+"stabil"
+
+#: pseudo-merge.c
+#, c-format
+msgid ""
+"pseudo-merge regex from config has too many capture groups (max=%<PRIuMAX>)"
+msgstr ""
+"regex penggabungan semu dari konfigurasi punya terlalu banyak grup tangkap "
+"(max=%<PRIuMAX>)"
+
+#: pseudo-merge.c
+#, c-format
+msgid "extended pseudo-merge read out-of-bounds (%<PRIuMAX> >= %<PRIuMAX>)"
+msgstr ""
+"pembacaan penggabungan semu yang diperluas di luar batas (%<PRIuMAX> >= "
+"%<PRIuMAX>)"
+
+#: pseudo-merge.c
+#, c-format
+msgid "extended pseudo-merge entry is too short (%<PRIuMAX> >= %<PRIuMAX>)"
+msgstr ""
+"entri penggabungan semu yang diperluas terlalu pendek (%<PRIuMAX> >= "
+"%<PRIuMAX>)"
+
+#: pseudo-merge.c
+#, c-format
+msgid "could not find pseudo-merge for commit %s at offset %<PRIuMAX>"
+msgstr ""
+"tidak dapat menemukan penggabungan semu untuk %s pada offset %<PRIuMAX>"
+
+#: pseudo-merge.c
+#, c-format
+msgid "extended pseudo-merge lookup out-of-bounds (%<PRIu32> >= %<PRIu32>)"
+msgstr ""
+"pencarian penggabungan semu yang diperluas di luar batas (%<PRIu32> >= "
+"%<PRIu32>)"
+
+#: pseudo-merge.c
+#, c-format
+msgid "out-of-bounds read: (%<PRIuMAX> >= %<PRIuMAX>)"
+msgstr "pembacaan di luar batas: (%<PRIuMAX> >= %<PRIuMAX>)"
+
+#: pseudo-merge.c
+#, c-format
+msgid "could not read extended pseudo-merge table for commit %s"
+msgstr "tidak dapat membaca tabel penggabungan semu untuk komit %s"
 
 #: range-diff.c
 msgid "could not start `log`"
@@ -24081,9 +24428,18 @@ msgid "log for %s is empty"
 msgstr "log untuk %s kosong"
 
 #: refs.c
+msgid "refusing to force and skip creation of reflog"
+msgstr "menolak memaksa dan melewatkan pembuatan reflog"
+
+#: refs.c
 #, c-format
 msgid "refusing to update ref with bad name '%s'"
 msgstr "menolak memperbarui referensi dengan nama jelek '%s'"
+
+#: refs.c
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "menolak memperbarui referensi semu '%s'"
 
 #: refs.c
 #, c-format
@@ -24122,6 +24478,29 @@ msgstr "tidak dapat menghapus referensi %s: %s"
 #, c-format
 msgid "could not delete references: %s"
 msgstr "tidak dapat menghapus referensi: %s"
+
+#: refs.c
+#, c-format
+msgid "Finished dry-run migration of refs, the result can be found at '%s'\n"
+msgstr "Selesai uji coba migrasi referensi, hasilnya bisa dilihat di '%s'\n"
+
+#: refs.c
+#, c-format
+msgid "could not remove temporary migration directory '%s'"
+msgstr "tidak dapat menamai ulang direktori migrasi sementara '%s'"
+
+#: refs.c
+#, c-format
+msgid "migrated refs can be found at '%s'"
+msgstr "referensi termigrasi dapat ditemukan pada '%s'"
+
+#: refs/files-backend.c refs/reftable-backend.c
+#, c-format
+msgid ""
+"cannot lock ref '%s': expected symref with target '%s': but is a regular ref"
+msgstr ""
+"tidak dapat mengunci referensi '%s': diharapkan referensi simbolik dengan "
+"target '%s': tetapi bukan referensi reguler"
 
 #: refs/reftable-backend.c
 #, c-format
@@ -25545,6 +25924,55 @@ msgstr ""
 
 #: sequencer.c
 #, c-format
+msgid "'%s' does not accept merge commits"
+msgstr "'%s' tidak menerima komit penggabungan"
+
+#. TRANSLATORS: 'pick' and 'merge -C' should not be
+#. translated.
+#.
+#: sequencer.c
+msgid ""
+"'pick' does not take a merge commit. If you wanted to\n"
+"replay the merge, use 'merge -C' on the commit."
+msgstr ""
+"'pick' tidak mengambil komit penggabungan. Apabila Anda\n"
+"ingin memainkan ulang penggabungan, gunakan 'merge -C'\n"
+"pada komit."
+
+#. TRANSLATORS: 'reword' and 'merge -c' should not be
+#. translated.
+#.
+#: sequencer.c
+msgid ""
+"'reword' does not take a merge commit. If you wanted to\n"
+"replay the merge and reword the commit message, use\n"
+"'merge -c' on the commit"
+msgstr ""
+"'reword' tidak mengambil komit penggabungan. Apabila Anda\n"
+"ingin memainkan ulang penggabungan dan menulis ulang pesan\n"
+"komit, gunakan 'merge -c' pada komit"
+
+#. TRANSLATORS: 'edit', 'merge -C' and 'break' should
+#. not be translated.
+#.
+#: sequencer.c
+msgid ""
+"'edit' does not take a merge commit. If you wanted to\n"
+"replay the merge, use 'merge -C' on the commit, and then\n"
+"'break' to give the control back to you so that you can\n"
+"do 'git commit --amend && git rebase --continue'."
+msgstr ""
+"'edit' tidak mengambil komit penggabungan. Apabila Anda\n"
+"ingin memainkan ulang komit, gunakan 'merge -C' pada komit,\n"
+"lalu 'break' untuk memberikan Anda kembali kendali agar\n"
+"Anda dapat menjalankan 'git commit --amend && git rebase --continue'."
+
+#: sequencer.c
+msgid "cannot squash merge commit into another commit"
+msgstr "tidak dapat melumatkan komit penggabungan ke dalam komit lainnya"
+
+#: sequencer.c
+#, c-format
 msgid "invalid command '%.*s'"
 msgstr "perintah tidak valid '%.*s'"
 
@@ -25695,9 +26123,8 @@ msgid "cannot read HEAD"
 msgstr "tidak dapat membaca HEAD"
 
 #: sequencer.c
-#, c-format
-msgid "unable to copy '%s' to '%s'"
-msgstr "tidak dapat menyalin '%s' ke '%s'"
+msgid "could not write commit message file"
+msgstr "tidak dapat menulis berkas pesan komit"
 
 #: sequencer.c
 #, c-format
@@ -26180,6 +26607,19 @@ msgid "failed to stat '%*s%s%s'"
 msgstr "gagal men-stat '%*s%s%s'"
 
 #: setup.c
+#, c-format
+msgid ""
+"detected dubious ownership in repository at '%s'\n"
+"%sTo add an exception for this directory, call:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+msgstr ""
+"perizinan meragukan terdeteksi di dalam repositori pada '%s'\n"
+"%sUntuk menambahkan pengecualian untuk direktori ini, panggil:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+
+#: setup.c
 msgid "Unable to read current working directory"
 msgstr "tidak dapat membaca direktori kerja saat ini"
 
@@ -26202,19 +26642,6 @@ msgstr ""
 "bukan sebuah repositori git (atau induk apapun hingga ke titik pasang %s)\n"
 "Berhenti pada perbatasan sistem berkas (GIT_DISCOVERY_ACROSS_FILESYSTEM "
 "tidak disetel)."
-
-#: setup.c
-#, c-format
-msgid ""
-"detected dubious ownership in repository at '%s'\n"
-"%sTo add an exception for this directory, call:\n"
-"\n"
-"\tgit config --global --add safe.directory %s"
-msgstr ""
-"perizinan meragukan terdeteksi di dalam repositori pada '%s'\n"
-"%sUntuk menambahkan pengecualian untuk direktori ini, panggil:\n"
-"\n"
-"\tgit config --global --add safe.directory %s"
 
 #: setup.c
 #, c-format
@@ -26591,6 +27018,17 @@ msgstr "direktori submodul git '%s' di dalam direktori git '%.*s'"
 
 #: submodule.c
 #, c-format
+msgid "expected '%.*s' in submodule path '%s' not to be a symbolic link"
+msgstr ""
+"'%.*s' diharapkan di jalur submodul '%s' yang tidak menjadi tautan simbolik"
+
+#: submodule.c
+#, c-format
+msgid "expected submodule path '%s' not to be a symbolic link"
+msgstr "jalur submodul '%s' diharapkan yang tidak menjadi tautan simbolik"
+
+#: submodule.c
+#, c-format
 msgid ""
 "relocate_gitdir for submodule '%s' with more than one worktree not supported"
 msgstr ""
@@ -26635,11 +27073,6 @@ msgstr "gagal men-lstat '%s'"
 #: t/helper/test-bundle-uri.c
 msgid "no remote configured to get bundle URIs from"
 msgstr "tidak ada remote yang dikonfigurasi untuk mendapatkan URI bundel"
-
-#: t/helper/test-bundle-uri.c
-#, c-format
-msgid "remote '%s' has no configured URL"
-msgstr "remote '%s' tidak punya URL terkonfigurasi"
 
 #: t/helper/test-bundle-uri.c
 msgid "could not get the bundle-uri list"
@@ -28440,29 +28873,29 @@ msgstr "Gagal mengirim %s\n"
 
 #: git-send-email.perl
 #, perl-format
-msgid "Dry-Sent %s\n"
-msgstr "Terkirim-kering %s\n"
+msgid "Dry-Sent %s"
+msgstr "Uji-coba-Terkirim %s"
 
 #: git-send-email.perl
 #, perl-format
-msgid "Sent %s\n"
-msgstr "Terkirim %s\n"
+msgid "Sent %s"
+msgstr "Terkirim %s"
 
 #: git-send-email.perl
-msgid "Dry-OK. Log says:\n"
-msgstr "OK-kering. Log berkata:\n"
+msgid "Dry-OK. Log says:"
+msgstr "Uji-coba-OK. Log berkata:"
 
 #: git-send-email.perl
-msgid "OK. Log says:\n"
-msgstr "OK. Log berkata:\n"
+msgid "OK. Log says:"
+msgstr "OK. Log berkata:"
 
 #: git-send-email.perl
 msgid "Result: "
 msgstr "Hasil: "
 
 #: git-send-email.perl
-msgid "Result: OK\n"
-msgstr "Hasil: OK\n"
+msgid "Result: OK"
+msgstr "Hasil: OK"
 
 #: git-send-email.perl
 #, perl-format
