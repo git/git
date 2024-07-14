@@ -1,0 +1,7 @@
+function RIGHT(a: number) : number {
+    const res = a + 1
+
+    // some comment
+    console.log("ChangeMe")
+    return res
+}

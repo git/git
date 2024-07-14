@@ -1,0 +1,5 @@
+interface RIGHT {
+    name: string;
+    // some comment 
+    ChangeMe: number;
+}

@@ -1,0 +1,7 @@
+class Foo {
+    RIGHT = () => {
+        // some
+        // comment
+        console.log("ChangeMe")
+    }
+}
