@@ -129,11 +129,16 @@
 #    strings (SGR color sequences) when calculating the on-screen
 #    prompt width, to maintain correct input editing at the prompt.
 #
-#    Currently there's no support for different markers, so if editing
-#    behaves weird when using colors in __git_ps1, then the solution
-#    is either to disable colors, or, in some shells which only care
-#    about the width of the last prompt line (e.g. busybox-ash),
-#    ensure the git output is not at the last line, maybe like so:
+#    To replace or disable the 0-width markers, set GIT_PS1_COLOR_PRE
+#    and GIT_PS1_COLOR_POST to other markers, or empty (nul) to not
+#    use markers. For instance, some shells support '\[' and '\]' as
+#    start/end markers in PS1 - when invoking __git_ps1 with 3/4 args,
+#    but it may or may not work in command substitution mode. YMMV.
+#
+#    If the shell doesn't support 0-width markers and editing behaves
+#    incorrectly when using colors in __git_ps1, then, other than
+#    disabling color, it might be solved using multi-line prompt,
+#    where the git status is not at the last line, e.g.:
 #      PS1='\n\w \u@\h$(__git_ps1 " (%s)")\n\$ '
 
 # check whether printf supports -v
@@ -309,8 +314,8 @@ __git_ps1_colorize_gitstring ()
 		# \001 (SOH) and \002 (STX) are 0-width substring markers
 		# which bash/readline identify while calculating the prompt
 		# on-screen width - to exclude 0-screen-width esc sequences.
-		local c_pre="${__git_SOH}${__git_ESC}["
-		local c_post="m${__git_STX}"
+		local c_pre="${GIT_PS1_COLOR_PRE-$__git_SOH}${__git_ESC}["
+		local c_post="m${GIT_PS1_COLOR_POST-$__git_STX}"
 
 		local c_red="${c_pre}31${c_post}"
 		local c_green="${c_pre}32${c_post}"
