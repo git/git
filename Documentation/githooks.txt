@@ -415,13 +415,13 @@ post-receive
 
 This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
 `git push` and updates reference(s) in its repository.
-It executes on the remote repository once after all the refs have
-been updated.
+The hook executes on the remote repository once after all the proposed
+ref updates are processed and if at least one ref is updated as the
+result.
 
-This hook executes once for the receive operation.  It takes no
-arguments, but gets the same information as the
-<<pre-receive,'pre-receive'>>
-hook does on its standard input.
+The hook takes no arguments.  It receives one line on standard input for
+each ref that is successfully updated following the same format as the
+<<pre-receive,'pre-receive'>> hook.
 
 This hook does not affect the outcome of `git receive-pack`, as it
 is called after the real work is done.
@@ -447,6 +447,9 @@ If it is negotiated to not use the push options phase, the
 environment variables will not be set. If the client selects
 to use push options, but doesn't transmit any, the count variable
 will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
+
+See the "post-receive" section in linkgit:git-receive-pack[1] for
+additional details.
 
 [[post-update]]
 post-update
