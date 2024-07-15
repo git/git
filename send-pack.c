@@ -427,16 +427,25 @@ static void get_commons_through_negotiation(const char *url,
 	struct child_process child = CHILD_PROCESS_INIT;
 	const struct ref *ref;
 	int len = the_hash_algo->hexsz + 1; /* hash + NL */
+	int nr_negotiation_tip = 0;
 
 	child.git_cmd = 1;
 	child.no_stdin = 1;
 	child.out = -1;
 	strvec_pushl(&child.args, "fetch", "--negotiate-only", NULL);
 	for (ref = remote_refs; ref; ref = ref->next) {
-		if (!is_null_oid(&ref->new_oid))
-			strvec_pushf(&child.args, "--negotiation-tip=%s", oid_to_hex(&ref->new_oid));
+		if (!is_null_oid(&ref->new_oid)) {
+			strvec_pushf(&child.args, "--negotiation-tip=%s",
+				     oid_to_hex(&ref->new_oid));
+			nr_negotiation_tip++;
+		}
 	}
 	strvec_push(&child.args, url);
+
+	if (!nr_negotiation_tip) {
+		child_process_clear(&child);
+		return;
+	}
 
 	if (start_command(&child))
 		die(_("send-pack: unable to fork off fetch subprocess"));

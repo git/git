@@ -230,6 +230,16 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 	test_grep "push negotiation failed" err
 '
 
+test_expect_success 'push deletion with negotiation' '
+	mk_empty testrepo &&
+	git push testrepo $the_first_commit:refs/heads/master &&
+	git -c push.negotiate=1 push testrepo \
+		:master $the_first_commit:refs/heads/next 2>errors-2 &&
+	test_grep ! "negotiate-only needs one or " errors-2 &&
+	git -c push.negotiate=1 push testrepo :next 2>errors-1 &&
+	test_grep ! "negotiate-only needs one or " errors-1
+'
+
 test_expect_success 'push with negotiation does not attempt to fetch submodules' '
 	mk_empty submodule_upstream &&
 	test_commit -C submodule_upstream submodule_commit &&
