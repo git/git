@@ -221,14 +221,18 @@ void win32_warn_about_git_lfs_on_windows7(int exit_code, const char *argv0)
 	 * Git LFS v3.5.1 fails with an Access Violation on Windows 7; That
 	 * would usually show up as an exit code 0xc0000005. For some reason
 	 * (probably because at this point, we no longer have the _original_
-	 * HANDLE that was returned by `CreateProcess()`) we get 0xb00 instead.
+	 * HANDLE that was returned by `CreateProcess()`) we observe other
+	 * values like 0xb00 and 0x2 instead. Since the exact exit code
+	 * seems to be inconsistent, we check for a non-zero exit status.
 	 */
-	if (exit_code != 0x0b00)
+	if (exit_code == 0)
 		return;
 	if (GetVersion() >> 16 > 7601)
 		return; /* Warn only on Windows 7 or older */
-	if (!starts_with(argv0, "git-lfs ") ||
-	    !(git_lfs = locate_in_PATH("git-lfs")))
+	if (!istarts_with(argv0, "git-lfs ") &&
+	    strcasecmp(argv0, "git-lfs"))
+		return;
+	if (!(git_lfs = locate_in_PATH("git-lfs")))
 		return;
 	if (get_go_version(git_lfs, buffer, sizeof(buffer)) > 0 &&
 	    skip_prefix(buffer, "go", &p) &&
