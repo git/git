@@ -150,7 +150,7 @@ Performance, Internal Implementation, Development Support etc.
  * A new test was added to ensure git commands that are designed to
    run outside repositories do work.
 
- * Basic unit tests for reftable have been reimplemented under the
+ * A few tests in reftable library have been rewritten using the
    unit test framework.
 
  * A pair of test helpers that essentially are unit tests on hash
@@ -207,6 +207,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to deal with modified paths that are out-of-cone in a
    sparsely checked out working tree has been optimized.
+
+ * An existing test of oidmap API has been rewritten with the
+   unit-test framework.
 
 
 Fixes since v2.45
@@ -381,6 +384,31 @@ Fixes since v2.45
  * Code clean-up.
    (merge 4b837f821e rs/simplify-submodule-helper-super-prefix-invocation later to maint).
 
+ * "git describe --dirty --broken" forgot to refresh the index before
+   seeing if there is any chang, ("git describe --dirty" correctly did
+   so), which has been corrected.
+   (merge b8ae42e292 as/describe-broken-refresh-index-fix later to maint).
+
+ * Test suite has been taught not to unnecessarily rely on DNS failing
+   a bogus external name.
+   (merge 407cdbd271 jk/tests-without-dns later to maint).
+
+ * GitWeb update to use committer date consistently in rss/atom feeds.
+   (merge cf6ead095b am/gitweb-feed-use-committer-date later to maint).
+
+ * Custom control structures we invented more recently have been
+   taught to the clang-format file.
+   (merge 1457dff9be rs/clang-format-updates later to maint).
+
+ * Developer build procedure fix.
+   (merge df32729866 tb/dev-build-pedantic-fix later to maint).
+
+ * "git push" that pushes only deletion gave an unnecessary and
+   harmless error message when push negotiation is configured, which
+   has been corrected.
+   (merge 4d8ee0317f jc/disable-push-nego-for-deletion later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 493fdae046 ew/object-convert-leakfix later to maint).
    (merge 00f3661a0a ss/doc-eol-attr-fix later to maint).
+   (merge 428c40da61 ri/doc-show-branch-fix later to maint).
