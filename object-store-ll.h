@@ -298,6 +298,13 @@ struct object_info {
 		OI_PACKED,
 		OI_DBCACHED
 	} whence;
+
+	/*
+	 * set if caller is able to use OI_DBCACHED entries without copying
+	 * TODO OI_CACHED if its use goes beyond blame
+	 */
+	unsigned direct_cache:1;
+
 	union {
 		/*
 		 * struct {
