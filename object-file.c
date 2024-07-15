@@ -1492,7 +1492,8 @@ static int loose_object_info(struct repository *r,
 
 		if (!oi->contentp)
 			break;
-		if (oi->content_limit && *oi->sizep > oi->content_limit) {
+		if (oi->content_limit && *oi->typep == OBJ_BLOB &&
+				*oi->sizep > oi->content_limit) {
 			git_inflate_end(&stream);
 			oi->contentp = NULL;
 			goto cleanup;
