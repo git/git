@@ -671,4 +671,40 @@ test_expect_success 'setup misleading taggerdates' '
 
 check_describe newer-tag-older-commit~1 --contains unique-file~2
 
+test_expect_success 'describe --dirty with a file with changed stat' '
+	test_when_finished "rm -fr stat-dirty" &&
+	git init stat-dirty &&
+	(
+		cd stat-dirty &&
+
+		echo A >file &&
+		git add file &&
+		git commit -m A &&
+		git tag A -a -m A &&
+		echo "A" >expect &&
+
+		test-tool chmtime -10 file &&
+		git describe --dirty >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'describe --broken --dirty with a file with changed stat' '
+	test_when_finished "rm -fr stat-dirty" &&
+	git init stat-dirty &&
+	(
+		cd stat-dirty &&
+
+		echo A >file &&
+		git add file &&
+		git commit -m A &&
+		git tag A -a -m A &&
+		echo "A" >expect &&
+
+		test-tool chmtime -10 file &&
+		git describe --dirty --broken >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
