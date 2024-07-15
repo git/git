@@ -666,6 +666,7 @@ static void parse_cmd_contents(struct batch_options *opt,
 			     struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_CONTENTS;
+	data->info.contentp = &data->content;
 	batch_one_object(line, output, opt, data);
 }
 
@@ -675,6 +676,7 @@ static void parse_cmd_info(struct batch_options *opt,
 			   struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_INFO;
+	data->info.contentp = NULL;
 	batch_one_object(line, output, opt, data);
 }
 
@@ -816,7 +818,8 @@ static int batch_objects(struct batch_options *opt)
 	 * Likewise, grab the content in the initial request if it's small
 	 * and we're not planning to filter it.
 	 */
-	if (opt->batch_mode == BATCH_MODE_CONTENTS) {
+	if ((opt->batch_mode == BATCH_MODE_CONTENTS) ||
+			(opt->batch_mode == BATCH_MODE_QUEUE_AND_DISPATCH)) {
 		data.info.typep = &data.type;
 		if (!opt->transform_mode) {
 			data.info.sizep = &data.size;
