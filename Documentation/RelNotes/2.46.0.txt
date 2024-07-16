@@ -89,6 +89,11 @@ UI, Workflows & Features
    variable did nothing but giving a "this does not do anything"
    warning.  The warning has been removed.
 
+ * The http transport can now be told to send request with
+   authentication material without first getting a 401 response.
+
+ * A handful of entries are added to the GitFAQ document.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -210,6 +215,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * An existing test of oidmap API has been rewritten with the
    unit-test framework.
+
+ * The "ort" merge backend saw one bugfix for a crash that happens
+   when inner merge gets killed, and assorted code clean-ups.
+
+ * A new warning message is issued when a command has to expand a
+   sparse index to handle working tree cruft that are outside of the
+   sparse checkout.
 
 
 Fixes since v2.45
@@ -408,7 +420,12 @@ Fixes since v2.45
    has been corrected.
    (merge 4d8ee0317f jc/disable-push-nego-for-deletion later to maint).
 
+ * Address-looking strings found on the trailer are now placed on the
+   Cc: list after running through sanitize_address by "git send-email".
+   (merge c852531f45 cb/send-email-sanitize-trailer-addresses later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 493fdae046 ew/object-convert-leakfix later to maint).
    (merge 00f3661a0a ss/doc-eol-attr-fix later to maint).
    (merge 428c40da61 ri/doc-show-branch-fix later to maint).
+   (merge 58696bfcaa jc/where-is-bash-for-ci later to maint).
