@@ -1001,10 +1001,10 @@ int is_pseudoref(struct ref_store *refs, const char *refname);
 int is_headref(struct ref_store *refs, const char *refname);
 
 /*
- * The following functions have been removed in Git v2.45 in favor of functions
+ * The following functions have been removed in Git v2.46 in favor of functions
  * that receive a `ref_store` as parameter. The intent of this section is
  * merely to help patch authors of in-flight series to have a reference what
- * they should be migrating to. The section will be removed in Git v2.46.
+ * they should be migrating to. The section will be removed in Git v2.47.
  */
 #if 0
 static char *resolve_refdup(const char *refname, int resolve_flags,
