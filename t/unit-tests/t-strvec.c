@@ -11,7 +11,8 @@
 		    check_uint((vec)->nr, <=, (vec)->alloc)) { \
 			for (size_t i = 0; i < ARRAY_SIZE(expect); i++) { \
 				if (!check_str((vec)->v[i], expect[i])) { \
-					test_msg("      i: %"PRIuMAX, i); \
+					test_msg("      i: %"PRIuMAX, \
+						 (uintmax_t)i); \
 					break; \
 				} \
 			} \
