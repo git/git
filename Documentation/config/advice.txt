@@ -116,6 +116,10 @@ advice.*::
 	skippedCherryPicks::
 		Shown when linkgit:git-rebase[1] skips a commit that has already
 		been cherry-picked onto the upstream branch.
+	sparseIndexExpanded::
+		Shown when a sparse index is expanded to a full index, which is likely
+		due to an unexpected set of files existing outside of the
+		sparse-checkout.
 	statusAheadBehind::
 		Shown when linkgit:git-status[1] computes the ahead/behind
 		counts for a local ref compared to its remote tracking ref,
