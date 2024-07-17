@@ -12,6 +12,7 @@
 #include "refs.h"
 #include "path.h"
 #include "strbuf.h"
+#include "run-command.h"
 
 static const char var_usage[] = "git var (-l | <variable>)";
 
@@ -51,7 +52,7 @@ static char *default_branch(int ident_flag UNUSED)
 
 static char *shell_path(int ident_flag UNUSED)
 {
-	return xstrdup(SHELL_PATH);
+	return git_shell_path();
 }
 
 static char *git_attr_val_system(int ident_flag UNUSED)

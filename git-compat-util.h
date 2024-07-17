@@ -506,6 +506,14 @@ static inline int git_offset_1st_component(const char *path)
 #define offset_1st_component git_offset_1st_component
 #endif
 
+#ifndef fspathcmp
+#define fspathcmp git_fspathcmp
+#endif
+
+#ifndef fspathncmp
+#define fspathncmp git_fspathncmp
+#endif
+
 #ifndef is_valid_path
 #define is_valid_path(path) 1
 #endif
