@@ -143,14 +143,16 @@ include::config/bitmap-pseudo-merge.txt[]
 Suppose that you have a repository with a large number of references,
 and you want a bare-bones configuration of pseudo-merge bitmaps that
 will enhance bitmap coverage of the `refs/` namespace. You may start
-wiht a configuration like so:
+with a configuration like so:
 
-    [bitmapPseudoMerge "all"]
+----
+[bitmapPseudoMerge "all"]
 	pattern = "refs/"
 	threshold = now
 	stableThreshold = never
 	sampleRate = 100
 	maxMerges = 64
+----
 
 This will create pseudo-merge bitmaps for all references, regardless of
 their age, and group them into 64 pseudo-merge commits.
@@ -159,8 +161,10 @@ If you wanted to separate tags from branches when generating
 pseudo-merge commits, you would instead define the pattern with a
 capture group, like so:
 
-    [bitmapPseudoMerge "all"]
+----
+[bitmapPseudoMerge "all"]
 	pattern = "refs/(heads/tags)/"
+----
 
 Suppose instead that you are working in a fork-network repository, with
 each fork specified by some numeric ID, and whose refs reside in
@@ -168,12 +172,14 @@ each fork specified by some numeric ID, and whose refs reside in
 fork) in the network. In this instance, you may instead write something
 like:
 
-    [bitmapPseudoMerge "all"]
+----
+[bitmapPseudoMerge "all"]
 	pattern = "refs/virtual/([0-9]+)/(heads|tags)/"
 	threshold = now
 	stableThreshold = never
 	sampleRate = 100
 	maxMerges = 64
+----
 
 Which would generate pseudo-merge group identifiers like "1234-heads",
 and "5678-tags" (for branches in fork "1234", and tags in remote "5678",
