@@ -1,3 +1,4 @@
+test_expect_success 'not-heredoc' '
 # LINT: "<< ours" inside string is not here-doc
 echo "<<<<<<< ours" &&
 echo ourside &&
@@ -14,3 +15,4 @@ echo ">>>>>>> theirs" &&
 	echo ">>>>>>> theirs"
 	poodle
 ) >merged
+'

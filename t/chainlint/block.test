@@ -1,3 +1,4 @@
+test_expect_success 'block' '
 (
 # LINT: missing "&&" after first "echo"
 	foo &&
@@ -25,3 +26,4 @@
 	echo "done"
 } &&
 finis
+'

@@ -1,12 +1,12 @@
-(
-	if true
-	then
-		while true
-		do
-			echo "pop" ?!AMP?!
-			echo "glup" ?!LOOP?!
-		done ?!AMP?!
-		foo
-	fi ?!AMP?!
-	bar
-)
+2 (
+3 	if true
+4 	then
+5 		while true
+6 		do
+7 			echo "pop" ?!AMP?!
+8 			echo "glup" ?!LOOP?!
+9 		done ?!AMP?!
+10 		foo
+11 	fi ?!AMP?!
+12 	bar
+13 )

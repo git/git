@@ -1,3 +1,4 @@
+test_expect_success 'multi-line-string' '
 (
 	x="line 1
 		line 2
@@ -13,3 +14,4 @@
 		ghi" &&
 	barfoo
 )
+'

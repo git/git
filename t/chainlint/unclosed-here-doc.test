@@ -1,3 +1,4 @@
+test_expect_success 'unclosed-here-doc' '
 command_which_is_run &&
 cat >expect <<\EOF &&
 	we try to end the here-doc below,
@@ -5,3 +6,4 @@ cat >expect <<\EOF &&
 	since the operator is not "<<-".
 	EOF
 command_which_is_gobbled
+'

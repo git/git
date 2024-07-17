@@ -1,18 +1,18 @@
-(
-	foo &&
-	x=$(
-		echo bar |
-		cat
-	) &&
-	echo ok
-) |
-sort &&
-(
-	bar &&
-	x=$(echo bar |
-		cat
-	) &&
-	y=$(echo baz |
-		fip) &&
-	echo fail
-)
+2 (
+3 	foo &&
+4 	x=$(
+5 		echo bar |
+6 		cat
+7 	) &&
+8 	echo ok
+9 ) |
+10 sort &&
+11 (
+12 	bar &&
+13 	x=$(echo bar |
+14 		cat
+15 	) &&
+16 	y=$(echo baz |
+17 		fip) &&
+18 	echo fail
+19 )

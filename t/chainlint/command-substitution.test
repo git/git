@@ -1,3 +1,4 @@
+test_expect_success 'command-substitution' '
 (
 	foo &&
 # LINT: closing ")" of $(...) not misinterpreted as subshell-closing ")"
@@ -9,3 +10,4 @@
 	bar=$(gobble blocks)
 	baz
 )
+'

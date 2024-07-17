@@ -1,3 +1,4 @@
+test_expect_success 'broken-chain' '
 (
 	foo &&
 # LINT: missing "&&" from "bar"
@@ -6,3 +7,4 @@
 # LINT: final statement before closing ")" legitimately lacks "&&"
 	wop
 )
+'

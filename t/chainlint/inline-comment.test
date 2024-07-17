@@ -1,3 +1,4 @@
+test_expect_success 'inline-comment' '
 (
 # LINT: swallow inline comment (leaving command intact)
 	foobar && # comment 1
@@ -10,3 +11,4 @@
 # LINT: "#" in string in cuddled subshell not misinterpreted as comment
 (cd foo &&
 	flibble "not a # comment")
+'

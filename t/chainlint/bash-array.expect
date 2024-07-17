@@ -1,10 +1,10 @@
-(
-	foo &&
-	bar=(gumbo stumbo wumbo) &&
-	baz
-) &&
-(
-	foo &&
-	bar=${#bar[@]} &&
-	baz
-)
+2 (
+3 	foo &&
+4 	bar=(gumbo stumbo wumbo) &&
+5 	baz
+6 ) &&
+7 (
+8 	foo &&
+9 	bar=${#bar[@]} &&
+10 	baz
+11 )

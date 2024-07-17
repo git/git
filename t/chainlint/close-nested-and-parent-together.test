@@ -1,3 +1,5 @@
+test_expect_success 'close-nested-and-parent-together' '
 (cd foo &&
 	(bar &&
 		baz))
+'

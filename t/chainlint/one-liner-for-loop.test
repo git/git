@@ -1,3 +1,4 @@
+test_expect_success 'one-liner-for-loop' '
 git init dir-rename-and-content &&
 (
 	cd dir-rename-and-content &&
@@ -8,3 +9,4 @@ git init dir-rename-and-content &&
 	git add foo olddir &&
 	git commit -m "original" &&
 )
+'

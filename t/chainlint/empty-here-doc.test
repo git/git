@@ -1,5 +1,7 @@
+test_expect_success 'empty-here-doc' '
 git ls-tree $tree path >current &&
 # LINT: empty here-doc
 cat >expected <<\EOF &&
 EOF
 test_output
+'

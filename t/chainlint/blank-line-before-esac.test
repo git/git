@@ -1,3 +1,4 @@
+test_expect_success 'blank-line-before-esac' '
 # LINT: blank line before "esac"
 test_done () {
 	case "$test_failure" in
@@ -17,3 +18,4 @@ test_done () {
 
 	esac
 }
+'

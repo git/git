@@ -1,3 +1,4 @@
+test_expect_success 'chained-subshell' '
 # LINT: start of subshell chained to preceding command
 mkdir sub && (
 	cd sub &&
@@ -11,3 +12,4 @@ test -f $s1
 test $(cat $s2) = tree2path1 &&
 # LINT: closing subshell ")" correctly detected on same line as "$(...)"
 test $(cat $s3) = tree3path1)
+'

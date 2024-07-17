@@ -1,18 +1,18 @@
-(while test $i -le $blobcount
- do
-	printf "Generating blob $i/$blobcount\r" >&2 &&
-	printf "blob\nmark :$i\ndata $blobsize\n" &&
-	#test-tool genrandom $i $blobsize &&
-	printf "%-${blobsize}s" $i &&
-	echo "M 100644 :$i $i" >> commit &&
-	i=$(($i+1)) ||
-	echo $? > exit-status
- done &&
- echo "commit refs/heads/main" &&
- echo "author A U Thor <author@email.com> 123456789 +0000" &&
- echo "committer C O Mitter <committer@email.com> 123456789 +0000" &&
- echo "data 5" &&
- echo ">2gb" &&
- cat commit) |
-git fast-import --big-file-threshold=2 &&
-test ! -f exit-status
+2 (while test $i -le $blobcount
+3  do
+4 	printf "Generating blob $i/$blobcount\r" >&2 &&
+5 	printf "blob\nmark :$i\ndata $blobsize\n" &&
+6 	#test-tool genrandom $i $blobsize &&
+7 	printf "%-${blobsize}s" $i &&
+8 	echo "M 100644 :$i $i" >> commit &&
+9 	i=$(($i+1)) ||
+10 	echo $? > exit-status
+11  done &&
+12  echo "commit refs/heads/main" &&
+13  echo "author A U Thor <author@email.com> 123456789 +0000" &&
+14  echo "committer C O Mitter <committer@email.com> 123456789 +0000" &&
+15  echo "data 5" &&
+16  echo ">2gb" &&
+17  cat commit) |
+18 git fast-import --big-file-threshold=2 &&
+19 test ! -f exit-status

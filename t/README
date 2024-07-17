@@ -882,6 +882,14 @@ see test-lib-functions.sh for the full list and their options.
 	    'git-write-tree should be able to write an empty tree.' \
 	    'tree=$(git-write-tree)'
 
+   If <script> is `-` (a single dash), then the script to run is read
+   from stdin. This lets you more easily use single quotes within the
+   script by using a here-doc. For example:
+
+	test_expect_success 'output contains expected string' - <<\EOT
+		grep "this string has 'quotes' in it" output
+	EOT
+
    If you supply three parameters the first will be taken to be a
    prerequisite; see the test_set_prereq and test_have_prereq
    documentation below:

@@ -1,4 +1,4 @@
-( while read x
-  do foobar bop || exit 1
-  done <file ) &&
-outside subshell
+2 ( while read x
+3   do foobar bop || exit 1
+4   done <file ) &&
+5 outside subshell
