@@ -370,7 +370,6 @@ linux-musl)
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
 	export GIT_TEST_PASSING_SANITIZE_LEAK=true
-	export GIT_TEST_SANITIZE_LEAK_LOG=true
 	;;
 linux-asan-ubsan)
 	export SANITIZE=address,undefined
