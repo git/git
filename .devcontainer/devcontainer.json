@@ -9,7 +9,8 @@
 			"extensions": [
 				"Krugle-AI.klip",
 				"TabNine.tabnine-vscode-self-hosted-updater",
-				"DavidAnson.vscode-markdownlint"
+				"DavidAnson.vscode-markdownlint",
+				"ms-vscode-remote.remote-containers"
 			]
 		}
 	},
