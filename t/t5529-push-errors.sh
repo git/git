@@ -2,6 +2,9 @@
 
 test_description='detect some push errors early (before contacting remote)'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
@@ -36,6 +39,20 @@ test_expect_success 'detect missing sha1 expressions early' '
 	echo no >expect &&
 	test_must_fail git push origin main~2:main &&
 	test_cmp expect rp-ran
+'
+
+# We use an existing local_ref, since it follows a different flow in
+# 'builtin/push.c:set_refspecs()' and we want to test that regression.
+test_expect_success 'detect empty remote with existing local ref' '
+	test_must_fail git push "" main 2> stderr &&
+	grep "fatal: bad repository ${SQ}${SQ}" stderr
+'
+
+# While similar to the previous test, here we want to ensure that
+# even targeted refspecs are handled.
+test_expect_success 'detect empty remote with targeted refspec' '
+	test_must_fail git push "" HEAD:refs/heads/main 2> stderr &&
+	grep "fatal: bad repository ${SQ}${SQ}" stderr
 '
 
 test_expect_success 'detect ambiguous refs early' '

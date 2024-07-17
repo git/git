@@ -96,9 +96,8 @@ static void refspec_append_mapped(struct refspec *refspec, const char *ref,
 	refspec_append(refspec, ref);
 }
 
-static void set_refspecs(const char **refs, int nr, const char *repo)
+static void set_refspecs(const char **refs, int nr, struct remote *remote)
 {
-	struct remote *remote = NULL;
 	struct ref *local_refs = NULL;
 	int i;
 
@@ -124,17 +123,10 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 				local_refs = get_local_heads();
 
 			/* Does "ref" uniquely name our ref? */
-			if (count_refspec_match(ref, local_refs, &matched) != 1) {
+			if (count_refspec_match(ref, local_refs, &matched) != 1)
 				refspec_append(&rs, ref);
-			} else {
-				/* lazily grab remote */
-				if (!remote)
-					remote = remote_get(repo);
-				if (!remote)
-					BUG("must get a remote for repo '%s'", repo);
-
+			else
 				refspec_append_mapped(&rs, ref, remote, matched);
-			}
 		} else
 			refspec_append(&rs, ref);
 	}
@@ -630,10 +622,8 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	if (tags)
 		refspec_append(&rs, "refs/tags/*");
 
-	if (argc > 0) {
+	if (argc > 0)
 		repo = argv[0];
-		set_refspecs(argv + 1, argc - 1, repo);
-	}
 
 	remote = pushremote_get(repo);
 	if (!remote) {
@@ -648,6 +638,9 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		    "\n"
 		    "    git push <name>\n"));
 	}
+
+	if (argc > 0)
+		set_refspecs(argv + 1, argc - 1, remote);
 
 	if (remote->mirror)
 		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
