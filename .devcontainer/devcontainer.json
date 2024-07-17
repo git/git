@@ -10,7 +10,9 @@
 				"Krugle-AI.klip",
 				"TabNine.tabnine-vscode-self-hosted-updater",
 				"DavidAnson.vscode-markdownlint",
-				"ms-vscode-remote.remote-containers"
+				"ms-vscode-remote.remote-containers",
+				"ms-python.vscode-pylance",
+				"ms-dotnettools.vscode-dotnet-runtime"
 			]
 		}
 	},
