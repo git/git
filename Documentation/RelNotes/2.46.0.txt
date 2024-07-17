@@ -94,6 +94,10 @@ UI, Workflows & Features
 
  * A handful of entries are added to the GitFAQ document.
 
+ * "git var GIT_SHELL_PATH" should report the path to the shell used
+   to spawn external commands, but it didn't do so on Windows, which
+   has been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -222,6 +226,15 @@ Performance, Internal Implementation, Development Support etc.
  * A new warning message is issued when a command has to expand a
    sparse index to handle working tree cruft that are outside of the
    sparse checkout.
+
+ * The test framework learned to take the test body not as a single
+   string but as a here-document.
+
+ * "git push '' HEAD:there" used to hit a BUG(); it has been corrected
+   to die with "fatal: bad repository ''".
+
+ * What happens when http.cookieFile gets the special value "" has
+   been clarified in the documentation.
 
 
 Fixes since v2.45
@@ -423,6 +436,15 @@ Fixes since v2.45
  * Address-looking strings found on the trailer are now placed on the
    Cc: list after running through sanitize_address by "git send-email".
    (merge c852531f45 cb/send-email-sanitize-trailer-addresses later to maint).
+
+ * Tests that use GIT_TEST_SANITIZE_LEAK_LOG feature got their exit
+   status inverted, which has been corrected.
+   (merge 8c1d6691bc rj/test-sanitize-leak-log-fix later to maint).
+
+ * The http.cookieFile and http.saveCookies configuration variables
+   have a few values that need to be avoided, which are now ignored
+   with warning messages.
+   (merge 4f5822076f jc/http-cookiefile later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 493fdae046 ew/object-convert-leakfix later to maint).
