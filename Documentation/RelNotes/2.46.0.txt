@@ -451,3 +451,4 @@ Fixes since v2.45
    (merge 00f3661a0a ss/doc-eol-attr-fix later to maint).
    (merge 428c40da61 ri/doc-show-branch-fix later to maint).
    (merge 58696bfcaa jc/where-is-bash-for-ci later to maint).
+   (merge 616e94ca24 tb/doc-max-tree-depth-fix later to maint).
