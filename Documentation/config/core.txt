@@ -756,4 +756,5 @@ core.maxTreeDepth::
 	The maximum depth Git is willing to recurse while traversing a
 	tree (e.g., "a/b/cde/f" has a depth of 4). This is a fail-safe
 	to allow Git to abort cleanly, and should not generally need to
-	be adjusted. The default is 4096.
+	be adjusted. When Git is compiled with MSVC, the default is 512.
+	Otherwise, the default is 2048.
