@@ -1004,6 +1004,61 @@ test_expect_success 'repack --batch-size=<large> repacks everything' '
 	)
 '
 
+test_expect_failure 'repack/expire loop' '
+	git init repack-expire &&
+	test_when_finished "rm -fr repack-expire" &&
+	(
+		cd repack-expire &&
+
+		test_commit_bulk 5 &&
+
+		# Create three overlapping pack-files
+		git rev-list --objects HEAD~3 >in-1 &&
+		git rev-list --objects HEAD~4..HEAD~2 >in-2 &&
+		git rev-list --objects HEAD~3..HEAD >in-3 &&
+
+		# Create disconnected blobs
+		obj1=$(git hash-object -w in-1) &&
+		obj2=$(git hash-object -w in-2) &&
+		obj3=$(git hash-object -w in-3) &&
+
+		echo $obj2 >>in-2 &&
+		echo $obj3 >>in-3 &&
+
+		for i in $(test_seq 3)
+		do
+			git pack-objects .git/objects/pack/test-$i <in-$i \
+				|| return 1
+		done &&
+
+		rm -fr .git/objects/pack/pack-* &&
+		git multi-pack-index write &&
+
+		for i in $(test_seq 3)
+		do
+			for file in $(ls .git/objects/pack/test-$i*)
+			do
+				test-tool chmtime =+$((3600*$i-25000)) $file || return 1
+			done || return 1
+		done &&
+
+		pack1=$(ls .git/objects/pack/test-1-*.pack) &&
+		pack2=$(ls .git/objects/pack/test-2-*.pack) &&
+		pack3=$(ls .git/objects/pack/test-3-*.pack) &&
+
+		# Prevent test-1 from being rewritten.
+		touch "${pack1%.pack}.keep" &&
+
+		# This repack-expire loop should repack all non-kept packs
+		# into a new pack and then delete the old packs.
+		git multi-pack-index repack &&
+		git multi-pack-index expire &&
+
+		test_path_is_missing $pack3 &&
+		test_path_is_missing $pack2
+	)
+'
+
 test_expect_success 'load reverse index when missing .idx, .pack' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
