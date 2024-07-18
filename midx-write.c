@@ -1474,8 +1474,7 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	repo_config_get_bool(r, "repack.usedeltabaseoffset", &delta_base_offset);
 	repo_config_get_bool(r, "repack.usedeltaislands", &use_delta_islands);
 
-	strvec_pushl(&cmd.args, "pack-objects", "--stdin-packs", "--non-empty",
-		     NULL);
+	strvec_push(&cmd.args, "pack-objects");
 
 	strvec_pushf(&cmd.args, "%s/pack/pack", object_dir);
 
@@ -1499,15 +1498,16 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 	}
 
 	cmd_in = xfdopen(cmd.in, "w");
-	for (i = 0; i < m->num_packs; i++) {
-		struct packed_git *p = m->packs[i];
-		if (!p)
+
+	for (i = 0; i < m->num_objects; i++) {
+		struct object_id oid;
+		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
+
+		if (!include_pack[pack_int_id])
 			continue;
 
-		if (include_pack[i])
-			fprintf(cmd_in, "%s\n", pack_basename(p));
-		else
-			fprintf(cmd_in, "^%s\n", pack_basename(p));
+		nth_midxed_object_oid(&oid, m, i);
+		fprintf(cmd_in, "%s\n", oid_to_hex(&oid));
 	}
 	fclose(cmd_in);
 

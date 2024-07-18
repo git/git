@@ -1004,7 +1004,7 @@ test_expect_success 'repack --batch-size=<large> repacks everything' '
 	)
 '
 
-test_expect_failure 'repack/expire loop' '
+test_expect_success 'repack/expire loop' '
 	git init repack-expire &&
 	test_when_finished "rm -fr repack-expire" &&
 	(
