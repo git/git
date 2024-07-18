@@ -550,7 +550,7 @@ The following pseudorefs are known to Git:
 	to the result.
 
 [[def_ref]]ref::
-	A name that that points to an <<def_object_name,object name>> or
+	A name that points to an <<def_object_name,object name>> or
 	another ref (the latter is called a <<def_symref,symbolic ref>>).
 	For convenience, a ref can sometimes be abbreviated when used
 	as an argument to a Git command; see linkgit:gitrevisions[7]
