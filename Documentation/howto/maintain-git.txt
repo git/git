@@ -37,22 +37,20 @@ The Policy
 
 The policy on Integration is informally mentioned in "A Note
 from the maintainer" message, which is periodically posted to
-this mailing list after each feature release is made.
+the mailing list after each feature release is made:
 
  - Feature releases are numbered as vX.Y.0 and are meant to
    contain bugfixes and enhancements in any area, including
    functionality, performance and usability, without regression.
 
- - One release cycle for a feature release is expected to last for
-   eight to ten weeks.
-
- - Maintenance releases are numbered as vX.Y.Z and are meant
+ - Maintenance releases are numbered as vX.Y.Z (0 < Z) and are meant
    to contain only bugfixes for the corresponding vX.Y.0 feature
    release and earlier maintenance releases vX.Y.W (W < Z).
 
- - 'master' branch is used to prepare for the next feature
+ - The 'master' branch is used to prepare for the next feature
    release. In other words, at some point, the tip of 'master'
-   branch is tagged with vX.Y.0.
+   branch is tagged as vX.(Y+1).0, when vX.Y.0 is the latest
+   feature release.
 
  - 'maint' branch is used to prepare for the next maintenance
    release.  After the feature release vX.Y.0 is made, the tip
@@ -63,11 +61,13 @@ this mailing list after each feature release is made.
  - 'next' branch is used to publish changes (both enhancements
    and fixes) that (1) have worthwhile goal, (2) are in a fairly
    good shape suitable for everyday use, (3) but have not yet
-   demonstrated to be regression free.  New changes are tested
-   in 'next' before merged to 'master'.
+   demonstrated to be regression free.  Reviews from contributors on
+   the mailing list help to make the determination.  After a topic
+   is merged to 'next', it is tested for at least 7 calendar days
+   before getting merged to 'master'.
 
  - 'seen' branch is used to publish other proposed changes that do
-   not yet pass the criteria set for 'next'.
+   not yet pass the criteria set for 'next' (see above).
 
  - The tips of 'master' and 'maint' branches will not be rewound to
    allow people to build their own customization on top of them.
@@ -85,6 +85,38 @@ this mailing list after each feature release is made.
  - The 'next' branch is where new action takes place, and the
    users are encouraged to test it so that regressions and bugs
    are found before new topics are merged to 'master'.
+
+ - When a problem is found in a topic in 'next', the topic is marked
+   not to be merged to 'master'.  Follow-up patches are discussed on
+   the mailing list and applied to the topic after being reviewed and
+   then the topic is merged (again) to 'next'.  After going through
+   the usual testing in 'next', the entire (fixed) topic is merged
+   to 'master'.
+
+ - One release cycle for a feature release is expected to last for
+   eight to ten weeks.  A few "release candidate" releases are
+   expected to be tagged about a week apart before the final
+   release, and a "preview" release is tagged about a week before
+   the first release candidate gets tagged.
+
+ - After the preview release is tagged, topics that were well
+   reviewed may be merged to 'master' before spending the usual 7
+   calendar days in 'next', with the expectation that any bugs in
+   them can be caught and fixed in the release candidates before
+   the final release.
+
+ - After the first release candidate is tagged, the contributors are
+   strongly encouraged to focus on finding and fixing new regressions
+   introduced during the cycle, over addressing old bugs and any new
+   features.  Topics stop getting merged down from 'next' to 'master',
+   and new topics stop getting merged to 'next'. Unless they are fixes
+   to new regressions in the cycle, that is.
+
+ - Soon after a feature release is made, the tip of 'maint' gets
+   fast-forwarded to point at the release.  Topics that have been
+   kept in 'next' are merged down to 'master' and a new development
+   cycle starts.
+
 
 Note that before v1.9.0 release, the version numbers used to be
 structured slightly differently.  vX.Y.Z were feature releases while
