@@ -1178,14 +1178,14 @@ static ssize_t recount_edited_hunk(struct add_p_state *s, struct hunk *hunk,
 
 	header->old_count = header->new_count = 0;
 	for (i = hunk->start; i < hunk->end; ) {
-		switch (s->plain.buf[i]) {
+		switch(normalize_marker(&s->plain.buf[i])) {
 		case '-':
 			header->old_count++;
 			break;
 		case '+':
 			header->new_count++;
 			break;
-		case ' ': case '\r': case '\n':
+		case ' ':
 			header->old_count++;
 			header->new_count++;
 			break;
