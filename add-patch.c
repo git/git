@@ -400,6 +400,12 @@ static void complete_file(char marker, struct hunk *hunk)
 		hunk->splittable_into++;
 }
 
+/* Empty context lines may omit the leading ' ' */
+static int normalize_marker(const char *p)
+{
+	return p[0] == '\n' || (p[0] == '\r' && p[1] == '\n') ? ' ' : p[0];
+}
+
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 {
 	struct strvec args = STRVEC_INIT;
@@ -485,6 +491,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	while (p != pend) {
 		char *eol = memchr(p, '\n', pend - p);
 		const char *deleted = NULL, *mode_change = NULL;
+		char ch = normalize_marker(p);
 
 		if (!eol)
 			eol = pend;
@@ -532,7 +539,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			 * Start counting into how many hunks this one can be
 			 * split
 			 */
-			marker = *p;
+			marker = ch;
 		} else if (hunk == &file_diff->head &&
 			   starts_with(p, "new file")) {
 			file_diff->added = 1;
@@ -586,10 +593,10 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			    (int)(eol - (plain->buf + file_diff->head.start)),
 			    plain->buf + file_diff->head.start);
 
-		if ((marker == '-' || marker == '+') && *p == ' ')
+		if ((marker == '-' || marker == '+') && ch == ' ')
 			hunk->splittable_into++;
-		if (marker && *p != '\\')
-			marker = *p;
+		if (marker && ch != '\\')
+			marker = ch;
 
 		p = eol == pend ? pend : eol + 1;
 		hunk->end = p - plain->buf;
@@ -813,7 +820,7 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 					    (int)(hunk->end - hunk->start),
 					    plain + hunk->start);
 
-				if (plain[overlap_end] != ' ')
+				if (normalize_marker(&plain[overlap_end]) != ' ')
 					return error(_("expected context line "
 						       "#%d in\n%.*s"),
 						     (int)(j + 1),
@@ -953,7 +960,7 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 	context_line_count = 0;
 
 	while (splittable_into > 1) {
-		ch = s->plain.buf[current];
+		ch = normalize_marker(&s->plain.buf[current]);
 
 		if (!ch)
 			BUG("buffer overrun while splitting hunks");
