@@ -128,8 +128,9 @@ static void set_refspecs(const char **refs, int nr, const char *repo)
 				refspec_append(&rs, ref);
 			} else {
 				/* lazily grab remote */
-				if (!remote)
+				if (!remote) {
 					remote = remote_get(repo);
+				}
 				if (!remote)
 					BUG("must get a remote for repo '%s'", repo);
 
