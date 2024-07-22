@@ -1,6 +1,5 @@
 *.xml
 *.html
-!/docinfo.html
 *.[1-8]
 *.made
 *.texi
