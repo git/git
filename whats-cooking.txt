@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2024, #06; Thu, 18)
+Subject: What's cooking in git.git (Jul 2024, #07; Mon, 22)
 X-master-at: d19b6cd2dd72dc811f19df4b32c7ed223256c3ee
-X-next-at: 9752f9e123323e801511d405efab0fe0db92f038
+X-next-at: 9573259db95170f58f57a4a1f0dc806cd823113f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2024, #06; Thu, 18)
+What's cooking in git.git (Jul 2024, #07; Mon, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,159 +52,118 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ch/refs-without-the-repository-fix (2024-07-16) 1 commit
-  (merged to 'next' on 2024-07-17 at 89f907db0d)
- + refs: correct the version numbers in a comment
-
- Comment fix.
- source: <20240716095544.65931-1-list@eworm.de>
-
-
-* jc/http-cookiefile (2024-07-09) 1 commit
-  (merged to 'next' on 2024-07-11 at abdd5711d2)
- + http.c: cookie file tightening
-
- The http.cookieFile and http.saveCookies configuration variables
- have a few values that need to be avoided, which are now ignored
- with warning messages.
- source: <xmqqed82cgmj.fsf@gitster.g>
-
-
-* jk/am-retry (2024-07-17) 1 commit
-  (merged to 'next' on 2024-07-17 at 012d05db3b)
- + t4153: stop redirecting input from /dev/zero
-
- Test fix as a follow-up to an already graduated topic.
- source: <20240717070050.GG547635@coredump.intra.peff.net>
-
-
-* jk/test-body-in-here-doc (2024-07-10) 10 commits
-  (merged to 'next' on 2024-07-11 at 854733cffc)
- + t/.gitattributes: ignore whitespace in chainlint expect files
- + t: convert some here-doc test bodies
- + test-lib: allow test snippets as here-docs
- + chainlint.pl: add tests for test body in heredoc
- + chainlint.pl: recognize test bodies defined via heredoc
- + chainlint.pl: check line numbers in expected output
- + chainlint.pl: force CRLF conversion when opening input files
- + chainlint.pl: do not spawn more threads than we have scripts
- + chainlint.pl: only start threads if jobs > 1
- + chainlint.pl: add test_expect_success call to test snippets
-
- The test framework learns to take the test body not as a single
- string but as a here-document.
- source: <20240710083416.GA2060328@coredump.intra.peff.net>
-
-
-* js/unit-test-oidtree-cmake-fix (2024-07-12) 1 commit
-  (merged to 'next' on 2024-07-15 at d7aac9004c)
- + cmake: fix build of `t-oidtree`
-
- Build fix.
- source: <pull.1761.git.1720816450344.gitgitgadget@gmail.com>
-
-
-* js/var-git-shell-path (2024-07-13) 7 commits
-  (merged to 'next' on 2024-07-15 at 2e5b0eea39)
- + var(win32): do report the GIT_SHELL_PATH that is actually used
- + run-command: declare the `git_shell_path()` function globally
- + run-command(win32): resolve the path to the Unix shell early
- + mingw(is_msys2_sh): handle forward slashes in the `sh.exe` path, too
- + win32: override `fspathcmp()` with a directory separator-aware version
- + strvec: declare the `strvec_push_nodup()` function globally
- + run-command: refactor getting the Unix shell path into its own function
-
- "git var GIT_SHELL_PATH" should report the path to the shell used
- to spawn external commands, but it didn't do so on Windows, which
- has been corrected.
- source: <pull.1760.v3.git.1720904905.gitgitgadget@gmail.com>
-
-
-* kn/push-empty-fix (2024-07-12) 1 commit
-  (merged to 'next' on 2024-07-13 at 74598adb55)
- + builtin/push: call set_refspecs after validating remote
-
- "git push '' HEAD:there" used to hit a BUG(); it has been corrected
- to die with "fatal: bad repository ''".
- source: <20240711093954.20317-1-karthik.188@gmail.com>
-
-
-* ps/doc-http-empty-cookiefile (2024-07-11) 1 commit
-  (merged to 'next' on 2024-07-13 at 801dcb5a35)
- + doc: update http.cookieFile with in-memory cookie processing
-
- What happens when http.cookieFile gets the special value "" has
- been clarified in the documentation..
- source: <pull.1733.v2.git.git.1720687008915.gitgitgadget@gmail.com>
-
-
-* ps/pseudo-ref-terminology (2024-07-17) 1 commit
-  (merged to 'next' on 2024-07-17 at 8886abf078)
- + Documentation/glossary: fix double word
-
- Doc update.
- source: <20240717105432.2801097-2-martin.agren@gmail.com>
-
-
-* rj/test-sanitize-leak-log-fix (2024-07-11) 2 commits
-  (merged to 'next' on 2024-07-11 at 9961f42025)
- + test-lib: GIT_TEST_SANITIZE_LEAK_LOG enabled by default
-  (merged to 'next' on 2024-07-08 at c7ee7d03e1)
- + test-lib: fix GIT_TEST_SANITIZE_LEAK_LOG
-
- Tests that use GIT_TEST_SANITIZE_LEAK_LOG feature got their exit
- status inverted, which has been corrected.
- source: <f4ae6e2a-218a-419c-b6c4-59a08be247a0@gmail.com>
- source: <fe8cd0d1-e451-43d0-b033-11bbb6d1ed56@gmail.com>
-
-
-* tb/doc-max-tree-depth-fix (2024-07-17) 1 commit
-  (merged to 'next' on 2024-07-17 at cdfc7a4f7b)
- + Documentation: fix default value for core.maxTreeDepth
-
- Doc update.
- source: <57610d9ca635b6c76b9af5b3d3f346a9bc7621be.1721222249.git.me@ttaylorr.com>
-
-
-* tb/pseudo-merge-reachability-bitmap (2024-07-17) 1 commit
-  (merged to 'next' on 2024-07-17 at f11cc8586a)
- + Documentation/gitpacking: make sample configs listing blocks
-
- Doc update.
- source: <20240717105432.2801097-1-martin.agren@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
-* rj/make-cleanup (2024-07-18) 2 commits
- - config.mak.uname: remove unused uname_P variable
- - Makefile: drop -Wno-universal-initializer from SP_EXTRA_FLAGS
+* ag/git-svn-global-ignores (2024-07-18) 2 commits
+ - git-svn: use `svn:global-ignores` to create .gitignore
+ - git-svn: add public property `svn:global-ignores`
 
- A build tweak knob has been simplified by not setting the value
- that is already the default; another unused one has been removed.
+ "git svn" has been taught about svn:global-ignores property
+ recent versions of Subversion has.
+
+ Needs review.
+ source: <pull.1747.v2.git.git.1721335657.gitgitgadget@gmail.com>
+
+
+* ds/midx-write-repack-fix (2024-07-19) 2 commits
+  (merged to 'next' on 2024-07-22 at 0a64b3ed42)
+ + midx-write: revert use of --stdin-packs
+ + t5319: add failing test case for repack/expire
+
+ Repacking a repository with multi-pack index started making stupid
+ pack selections in Git 2.45, which has been corrected.
+
+ Will cook in 'next'.
+ source: <pull.1764.git.1721332546.gitgitgadget@gmail.com>
+
+
+* jc/how-to-maintain-updates (2024-07-19) 2 commits
+ - howto-maintain: update daily tasks
+ - howto-maintain: cover a whole development cycle
+
+ Doc update.
+
+ Will merge to 'next'?
+ source: <xmqq1q3phzpi.fsf@gitster.g>
+
+
+* es/shell-check-updates (2024-07-22) 4 commits
+ - check-non-portable-shell: suggest alternative for `VAR=val shell-func`
+ - check-non-portable-shell: improve `VAR=val shell-func` detection
+ - t4034: fix use of one-shot variable assignment with shell function
+ - t3430: modernize one-shot "VAR=val shell-func" invocation
+
+ Test script linter has been updated to catch an attempt to use
+ one-shot export construct "VAR=VAL func" for shell functions (which
+ does not work for some shells) better.
+
+ Will merge to 'next'?
+ source: <20240722065915.80760-1-ericsunshine@charter.net>
+
+
+* ja/doc-markup-updates-fix (2024-07-20) 1 commit
+ - doc: git-clone fix discrepancy between asciidoc and asciidoctor
+
+ Fix documentation mark-up regression in 2.45.
+
+ Will merge to 'next' and then to 'master'.
+ source: <pull.1765.git.1721496853517.gitgitgadget@gmail.com>
+
+
+* jc/doc-one-short-export-with-shell-func (2024-07-22) 1 commit
+ - CodingGuidelines: document a shell that "fails" "VAR=VAL shell_func"
+
+ It has been documented that we avoid "VAR=VAL shell_func" and why.
 
  Will merge to 'next'.
- source: <0d132370-3e07-4332-bcfb-c4450100d736@ramsayjones.plus.com>
+ source: <xmqqwmld55y1.fsf@gitster.g>
+
+
+* jc/safe-directory (2024-07-20) 2 commits
+ - safe.directory: normalize the configured path
+ - safe.directory: normalize the checked path
+
+ Follow-up on 2.45.1 regression fix.
+
+ Needs review.
+ source: <20240720220915.2933266-1-gitster@pobox.com>
+
+
+* js/doc-markup-updates-fix (2024-07-22) 2 commits
+ - SQUASH???
+ - asciidoctor: fix `synopsis` rendering
+
+ Work around asciidoctor's css that renders `monospace` material
+ in the SYNOPSIS section of manual pages as block elements.
+
+ Waiting for a review response.
+ source: <pull.1749.v2.git.git.1721679949618.gitgitgadget@gmail.com>
+
+
+* pw/add-patch-with-suppress-blank-empty (2024-07-20) 2 commits
+  (merged to 'next' on 2024-07-22 at 5437b7dee3)
+ + add-patch: use normalize_marker() when recounting edited hunk
+ + add-patch: handle splitting hunks with diff.suppressBlankEmpty
+
+ "git add -p" by users with diff.suppressBlankEmpty set to true
+ failed to parse the patch that represents an unmodified empty line
+ with an empty line (not a line with a single space on it), which
+ has been corrected.
+
+ Will cook in 'next'.
+ source: <pull.1763.v2.git.1721491320.gitgitgadget@gmail.com>
+
+
+* tn/doc-commit-fix (2024-07-22) 1 commit
+ - doc: remove dangling closing parenthesis
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <20240722225302.124356-1-tomasn@posteo.net>
 
 --------------------------------------------------
 [Stalled]
-
-* cp/unit-test-reftable-tree (2024-07-16) 6 commits
- - SQUASH?????
- - t-reftable-tree: improve the test for infix_walk()
- - t-reftable-tree: add test for non-existent key
- - t-reftable-tree: split test_tree() into two sub-test functions
- - t: move reftable/tree_test.c to the unit testing framework
- - reftable: remove unnecessary curly braces in reftable/tree.c
-
- A test in reftable library has been rewritten using the unit test
- framework.
-
- Needs review.
- source: <20240716075641.4264-1-chandrapratap3519@gmail.com>
-
 
 * sj/ref-fsck (2024-07-15) 10 commits
  - fsck: add ref content check for files backend
@@ -293,6 +252,32 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* cp/unit-test-reftable-tree (2024-07-22) 5 commits
+ - t-reftable-tree: improve the test for infix_walk()
+ - t-reftable-tree: add test for non-existent key
+ - t-reftable-tree: split test_tree() into two sub-test functions
+ - t: move reftable/tree_test.c to the unit testing framework
+ - reftable: remove unnecessary curly braces in reftable/tree.c
+
+ A test in reftable library has been rewritten using the unit test
+ framework.
+
+ Needs review.
+ source: <20240722061836.4176-1-chandrapratap3519@gmail.com>
+
+
+* rj/make-cleanup (2024-07-18) 2 commits
+  (merged to 'next' on 2024-07-22 at bf3991f70f)
+ + config.mak.uname: remove unused uname_P variable
+ + Makefile: drop -Wno-universal-initializer from SP_EXTRA_FLAGS
+
+ A build tweak knob has been simplified by not setting the value
+ that is already the default; another unused one has been removed.
+
+ Will cook in 'next'.
+ source: <0d132370-3e07-4332-bcfb-c4450100d736@ramsayjones.plus.com>
+
+
 * ew/cat-file-optim (2024-07-15) 10 commits
  - cat-file: use writev(2) if available
  - cat-file: batch_write: use size_t for length
@@ -340,15 +325,13 @@ Release tarballs are available at:
  source: <xmqqv8156rh2.fsf@gitster.g>
 
 
-* es/doc-platform-support-policy (2024-07-12) 1 commit
+* es/doc-platform-support-policy (2024-07-18) 2 commits
+ - SQUASH???
  - Documentation: add platform support policy
 
  A policy document that describes platform support levels and
  expectation on platform stakeholders has been introduced.
-
- Needs review response.
- cf. <xmqqed7ylbna.fsf@gitster.g>
- source: <20240711232413.693444-1-emilyshaffer@google.com>
+ source: <20240718173843.2411415-1-emilyshaffer@google.com>
 
 
 * kn/ci-clang-format (2024-07-18) 6 commits
@@ -366,7 +349,9 @@ Release tarballs are available at:
  source: <20240718081605.452366-1-karthik.188@gmail.com>
 
 
-* rj/add-p-pager (2024-07-15) 4 commits
+* rj/add-p-pager (2024-07-22) 6 commits
+ - pager: make wait_for_pager a no-op for "cat"
+ - t3701: avoid one-shot export for shell functions
  - add-patch: render hunks through the pager
  - pager: introduce wait_for_pager
  - pager: do not close fd 2 unnecessarily
@@ -375,9 +360,9 @@ Release tarballs are available at:
  A 'P' command to "git add -p" that passes the patch hunk to the
  pager has been added.
 
- Expecting a (hopefully small and final) reroll.
- cf. <2b57479c-29c8-4a6e-b7b0-1309395cfbd9@gmail.com>
- source: <a70bddd4-ef2d-488e-a2cf-48515f5df357@gmail.com>
+ source: <efa98aec-f117-4cfe-a7c2-e8c0adbdb399@gmail.com>
+ source: <c37f0d54-4ead-422c-8193-f0c2ec84ca4a@gmail.com>
+ source: <5536b336-5122-47fd-be57-42c299abe60c@gmail.com>
 
 
 * ad/merge-with-diff-algorithm (2024-07-13) 1 commit
@@ -392,14 +377,15 @@ Release tarballs are available at:
 
 
 * jc/checkout-no-op-switch-errors (2024-07-02) 1 commit
- - checkout: special case error messages during noop switching
+  (merged to 'next' on 2024-07-22 at 9573259db9)
+ + checkout: special case error messages during noop switching
 
  "git checkout --ours" (no other arguments) complained that the
  option is incompatible with branch switching, which is technically
  correct, but found confusing by some users.  It now says that the
  user needs to give pathspec to specify what paths to checkout.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <xmqqikxnqzz4.fsf@gitster.g>
 
 
@@ -444,19 +430,19 @@ Release tarballs are available at:
  source: <20240711235159.5320-1-shyamthakkar001@gmail.com>
 
 
-* rs/unit-tests-test-run (2024-07-01) 6 commits
- - t-strbuf: use TEST_RUN
- - t-strvec: use TEST_RUN
- - t-reftable-basics: use TEST_RUN
- - t-ctype: use TEST_RUN
- - unit-tests: add TEST_RUN
+* rs/unit-tests-test-run (2024-07-22) 6 commits
+ - t-strbuf: use for_test
+ - t-strvec: use for_test
+ - t-reftable-basics: use for_test
+ - t-ctype: use for_test
+ - unit-tests: add for_test
  - t0080: move expected output to a file
 
  Unit-test framework clean-up.
 
- Expecting a reroll.
- cf. <97390954-49bc-48c4-bab1-95be10717aca@web.de>
- source: <85b6b8a9-ee5f-42ab-bcbc-49976b30ef33@web.de>
+ Waiting for a review response.
+ cf. <CAO_smVhoobWpsbYHnHJqTj7TJJ1udo_UaGdbOnUqe5jzL+tyaQ@mail.gmail.com>
+ source: <da7ed537-1c8e-42ec-aa91-49e1319e8c68@web.de>
 
 
 * jc/patch-id (2024-06-21) 5 commits
