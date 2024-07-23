@@ -2828,6 +2828,14 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	}
 
 	/*
+	 * Release the new ref store such that any potentially-open files will
+	 * be closed. This is required for platforms like Cygwin, where
+	 * renaming an open file results in EPERM.
+	 */
+	ref_store_release(new_refs);
+	FREE_AND_NULL(new_refs);
+
+	/*
 	 * Until now we were in the non-destructive phase, where we only
 	 * populated the new ref store. From hereon though we are about
 	 * to get hands by deleting the old ref store and then moving
@@ -2858,10 +2866,14 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	 */
 	initialize_repository_version(hash_algo_by_ptr(repo->hash_algo), format, 1);
 
-	free(new_refs->gitdir);
-	new_refs->gitdir = xstrdup(old_refs->gitdir);
-	repo->refs_private = new_refs;
+	/*
+	 * Unset the old ref store and release it. `get_main_ref_store()` will
+	 * make sure to lazily re-initialize the repository's ref store with
+	 * the new format.
+	 */
 	ref_store_release(old_refs);
+	FREE_AND_NULL(old_refs);
+	repo->refs_private = NULL;
 
 	ret = 0;
 
@@ -2872,8 +2884,10 @@ done:
 			    new_gitdir.buf);
 	}
 
-	if (ret && new_refs)
+	if (new_refs) {
 		ref_store_release(new_refs);
+		free(new_refs);
+	}
 	ref_transaction_free(transaction);
 	strbuf_release(&new_gitdir);
 	return ret;
