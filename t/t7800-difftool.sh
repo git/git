@@ -266,7 +266,7 @@ test_expect_success 'GIT_DIFF_TOOL overrides' '
 
 # Test that we don't have to pass --no-prompt to difftool
 # when $GIT_DIFFTOOL_NO_PROMPT is true
-test_expect_success 'GIT_DIFFTOOL_NO_PROMPT variable' '
+test_expect_success 'GIT_DIFFTOOL_NO_PROMPT variable overrides difftool.prompt' '
 	difftool_test_setup &&
 	echo branch >expect &&
 	GIT_DIFFTOOL_NO_PROMPT=true git difftool branch >actual &&
@@ -275,9 +275,20 @@ test_expect_success 'GIT_DIFFTOOL_NO_PROMPT variable' '
 
 # git-difftool supports the difftool.prompt variable.
 # Test that GIT_DIFFTOOL_PROMPT can override difftool.prompt = false
-test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
+test_expect_success 'GIT_DIFFTOOL_PROMPT variable overrides difftool.prompt' '
 	difftool_test_setup &&
 	test_config difftool.prompt false &&
+	echo >input &&
+	GIT_DIFFTOOL_PROMPT=true git difftool branch <input >output &&
+	prompt=$(tail -1 <output) &&
+	prompt_given "$prompt"
+'
+
+# git-difftool supports the difftool.<tool>.prompt variable.
+# Test that GIT_DIFFTOOL_PROMPT can override difftool.<tool>.prompt = false
+test_expect_success 'GIT_DIFFTOOL_PROMPT variable overrides difftool.<tool>.prompt' '
+	difftool_test_setup &&
+	test_config difftool.test-tool.prompt false &&
 	echo >input &&
 	GIT_DIFFTOOL_PROMPT=true git difftool branch <input >output &&
 	prompt=$(tail -1 <output) &&
@@ -288,6 +299,15 @@ test_expect_success 'GIT_DIFFTOOL_PROMPT variable' '
 test_expect_success 'difftool.prompt config variable is false' '
 	difftool_test_setup &&
 	test_config difftool.prompt false &&
+	echo branch >expect &&
+	git difftool branch >actual &&
+	test_cmp expect actual
+'
+
+# Test that we don't have to pass --no-prompt when difftool.<tool>.prompt is false
+test_expect_success 'difftool.<tool>.prompt config variable is false' '
+	difftool_test_setup &&
+	test_config difftool.test-tool.prompt false &&
 	echo branch >expect &&
 	git difftool branch >actual &&
 	test_cmp expect actual
@@ -316,6 +336,37 @@ test_expect_success 'difftool.prompt can overridden with -y' '
 test_expect_success 'difftool.prompt can overridden with --prompt' '
 	difftool_test_setup &&
 	test_config difftool.prompt false &&
+	echo >input &&
+	git difftool --prompt branch <input >output &&
+	prompt=$(tail -1 <output) &&
+	prompt_given "$prompt"
+'
+
+# Test that the --prompt flag can override difftool.<tool>.prompt = false
+test_expect_success 'difftool.<tool>.prompt can be overridden with --prompt' '
+	difftool_test_setup &&
+	test_config difftool.test-tool.prompt false &&
+	echo >input &&
+	git difftool --prompt branch <input >output &&
+	prompt=$(tail -1 <output) &&
+	prompt_given "$prompt"
+'
+
+# Test that difftool.<tool>.prompt = false overrides difftool.prompt = true
+test_expect_success 'difftool.<tool>.prompt = false overrides difftool.prompt = true' '
+	difftool_test_setup &&
+	test_config difftool.prompt true &&
+	test_config difftool.test-tool.prompt false &&
+	echo branch >expect &&
+	git difftool branch >actual &&
+	test_cmp expect actual
+'
+
+# Test that difftool.<tool>.prompt = true overrides difftool.prompt = false
+test_expect_success 'difftool.<tool>.prompt = true overrides difftool.prompt = false' '
+	difftool_test_setup &&
+	test_config difftool.prompt false &&
+	test_config difftool.test-tool.prompt true &&
 	echo >input &&
 	git difftool --prompt branch <input >output &&
 	prompt=$(tail -1 <output) &&
