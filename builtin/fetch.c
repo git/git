@@ -1694,6 +1694,19 @@ static int do_fetch(struct transport *transport,
 			retcode = 1;
 	}
 
+	if (transport_has_remote_bundle_uri(transport)) {
+		/*
+		 * Only use bundle-URIs when they use the creationToken
+		 * heuristic, this allows us to ensure not downloading bundles
+		 * we don't need. You can read the comments in
+		 * fetch_bundles_by_token() to understand how this works.
+		 */
+		if (transport->bundles->heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN) {
+			if (fetch_bundle_list(the_repository, transport->bundles))
+				warning(_("failed to fetch advertised bundles"));
+		}
+	}
+
 	if (fetch_and_consume_refs(&display_state, transport, transaction, ref_map,
 				   &fetch_head, config)) {
 		retcode = 1;
