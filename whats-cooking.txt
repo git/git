@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2024, #07; Mon, 22)
-X-master-at: d19b6cd2dd72dc811f19df4b32c7ed223256c3ee
-X-next-at: 9573259db95170f58f57a4a1f0dc806cd823113f
+Subject: What's cooking in git.git (Jul 2024, #08; Wed, 24)
+X-master-at: ad57f148c6b5f8735b62238dda8f571c582e0e54
+X-next-at: 509ed76dc8ffb8c65e563e151ada58240c08e9db
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2024, #07; Mon, 22)
+What's cooking in git.git (Jul 2024, #08; Wed, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,7 +17,7 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.46-rc1 has been tagged.  From now on until the final release,
+Git 2.46-rc2 has been tagged.  From now on until the final release,
 which is planned to happen near the end of this month, please make
 sure you place priorities on finding and fixing new regressions
 introduced during this cycle over finding and fixing old bugs, over
@@ -52,18 +52,7 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* ag/git-svn-global-ignores (2024-07-18) 2 commits
- - git-svn: use `svn:global-ignores` to create .gitignore
- - git-svn: add public property `svn:global-ignores`
-
- "git svn" has been taught about svn:global-ignores property
- recent versions of Subversion has.
-
- Needs review.
- source: <pull.1747.v2.git.git.1721335657.gitgitgadget@gmail.com>
-
+[Graduated to 'master']
 
 * ds/midx-write-repack-fix (2024-07-19) 2 commits
   (merged to 'next' on 2024-07-22 at 0a64b3ed42)
@@ -72,95 +61,58 @@ Release tarballs are available at:
 
  Repacking a repository with multi-pack index started making stupid
  pack selections in Git 2.45, which has been corrected.
-
- Will cook in 'next'.
  source: <pull.1764.git.1721332546.gitgitgadget@gmail.com>
 
 
-* jc/how-to-maintain-updates (2024-07-19) 2 commits
- - howto-maintain: update daily tasks
- - howto-maintain: cover a whole development cycle
-
- Doc update.
-
- Will merge to 'next'?
- source: <xmqq1q3phzpi.fsf@gitster.g>
-
-
-* es/shell-check-updates (2024-07-22) 4 commits
- - check-non-portable-shell: suggest alternative for `VAR=val shell-func`
- - check-non-portable-shell: improve `VAR=val shell-func` detection
- - t4034: fix use of one-shot variable assignment with shell function
- - t3430: modernize one-shot "VAR=val shell-func" invocation
-
- Test script linter has been updated to catch an attempt to use
- one-shot export construct "VAR=VAL func" for shell functions (which
- does not work for some shells) better.
-
- Will merge to 'next'?
- source: <20240722065915.80760-1-ericsunshine@charter.net>
-
-
 * ja/doc-markup-updates-fix (2024-07-20) 1 commit
- - doc: git-clone fix discrepancy between asciidoc and asciidoctor
+  (merged to 'next' on 2024-07-23 at eedc41259a)
+ + doc: git-clone fix discrepancy between asciidoc and asciidoctor
 
  Fix documentation mark-up regression in 2.45.
-
- Will merge to 'next' and then to 'master'.
+ cf. <xmqqv80w0zrx.fsf@gitster.g>
  source: <pull.1765.git.1721496853517.gitgitgadget@gmail.com>
 
 
-* jc/doc-one-short-export-with-shell-func (2024-07-22) 1 commit
- - CodingGuidelines: document a shell that "fails" "VAR=VAL shell_func"
-
- It has been documented that we avoid "VAR=VAL shell_func" and why.
-
- Will merge to 'next'.
- source: <xmqqwmld55y1.fsf@gitster.g>
-
-
-* jc/safe-directory (2024-07-20) 2 commits
- - safe.directory: normalize the configured path
- - safe.directory: normalize the checked path
-
- Follow-up on 2.45.1 regression fix.
-
- Needs review.
- source: <20240720220915.2933266-1-gitster@pobox.com>
-
-
-* js/doc-markup-updates-fix (2024-07-22) 2 commits
- - SQUASH???
- - asciidoctor: fix `synopsis` rendering
+* js/doc-markup-updates-fix (2024-07-23) 2 commits
+  (merged to 'next' on 2024-07-23 at 9a4fa8f9d0)
+ + Doc: fix Asciidoctor css workaround
+ + asciidoctor: fix `synopsis` rendering
 
  Work around asciidoctor's css that renders `monospace` material
  in the SYNOPSIS section of manual pages as block elements.
-
- Waiting for a review response.
+ cf. <xmqqv80w0zrx.fsf@gitster.g>
  source: <pull.1749.v2.git.git.1721679949618.gitgitgadget@gmail.com>
 
 
-* pw/add-patch-with-suppress-blank-empty (2024-07-20) 2 commits
-  (merged to 'next' on 2024-07-22 at 5437b7dee3)
- + add-patch: use normalize_marker() when recounting edited hunk
- + add-patch: handle splitting hunks with diff.suppressBlankEmpty
+* ps/ref-storage-migration-fix (2024-07-23) 1 commit
+  (merged to 'next' on 2024-07-23 at ebf4e7c214)
+ + refs: fix format migration on Cygwin
 
- "git add -p" by users with diff.suppressBlankEmpty set to true
- failed to parse the patch that represents an unmodified empty line
- with an empty line (not a line with a single space on it), which
- has been corrected.
+ Hotfix for a topic already in -rc.
+ source: <d031aef5552d894784650a8c6580925e877df794.1721731179.git.ps@pks.im>
+
+--------------------------------------------------
+[New Topics]
+
+* ps/p4-tests-updates (2024-07-23) 3 commits
+ - t98xx: mark Perforce tests as memory-leak free
+ - ci: update Perforce version to r23.2
+ - t98xx: fix Perforce tests with p4d r23 and newer
+
+ Perforce tests have been updated.
+
+ Needs review.
+ source: <cover.1721740612.git.ps@pks.im>
+
+
+* jc/doc-one-shot-export-with-shell-func (2024-07-23) 1 commit
+  (merged to 'next' on 2024-07-23 at 621c29e4f6)
+ + CodingGuidelines: document a shell that "fails" "VAR=VAL shell_func"
+
+ It has been documented that we avoid "VAR=VAL shell_func" and why.
 
  Will cook in 'next'.
- source: <pull.1763.v2.git.1721491320.gitgitgadget@gmail.com>
-
-
-* tn/doc-commit-fix (2024-07-22) 1 commit
- - doc: remove dangling closing parenthesis
-
- Docfix.
-
- Will merge to 'next'.
- source: <20240722225302.124356-1-tomasn@posteo.net>
+ source: <xmqqwmld55y1.fsf@gitster.g>
 
 --------------------------------------------------
 [Stalled]
@@ -184,7 +136,7 @@ Release tarballs are available at:
  source: <ZpPEdmUN1Z5tqbK3@ArchLinux>
 
 
-* cp/unit-test-reftable-pq (2024-06-14) 7 commits
+* cp/unit-test-reftable-pq (2024-07-23) 7 commits
  - t-reftable-pq: add tests for merged_iter_pqueue_top()
  - t-reftable-pq: add test for index based comparison
  - t-reftable-pq: make merged_iter_pqueue_check() callable by reference
@@ -197,7 +149,7 @@ Release tarballs are available at:
  the unit test framework.
 
  Needs review.
- source: <20240614095136.12052-1-chandrapratap3519@gmail.com>
+ source: <20240723143032.4261-1-chandrapratap3519@gmail.com>
 
 
 * tb/incremental-midx-part-1 (2024-07-17) 19 commits
@@ -251,6 +203,76 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [Cooking]
+
+* ag/git-svn-global-ignores (2024-07-18) 2 commits
+ - git-svn: use `svn:global-ignores` to create .gitignore
+ - git-svn: add public property `svn:global-ignores`
+
+ "git svn" has been taught about svn:global-ignores property
+ recent versions of Subversion has.
+
+ Needs review.
+ source: <pull.1747.v2.git.git.1721335657.gitgitgadget@gmail.com>
+
+
+* jc/how-to-maintain-updates (2024-07-19) 2 commits
+ - howto-maintain: update daily tasks
+ - howto-maintain: cover a whole development cycle
+
+ Doc update.
+
+ Will merge to 'next'?
+ source: <xmqq1q3phzpi.fsf@gitster.g>
+
+
+* es/shell-check-updates (2024-07-22) 4 commits
+ - check-non-portable-shell: suggest alternative for `VAR=val shell-func`
+ - check-non-portable-shell: improve `VAR=val shell-func` detection
+ - t4034: fix use of one-shot variable assignment with shell function
+ - t3430: modernize one-shot "VAR=val shell-func" invocation
+
+ Test script linter has been updated to catch an attempt to use
+ one-shot export construct "VAR=VAL func" for shell functions (which
+ does not work for some shells) better.
+
+ Will merge to 'next'?
+ source: <20240722065915.80760-1-ericsunshine@charter.net>
+
+
+* jc/safe-directory (2024-07-22) 3 commits
+ - safe.directory: setting safe.directory="." allows the "current" directory
+ - safe.directory: normalize the configured path
+ - safe.directory: normalize the checked path
+
+ Follow-up on 2.45.1 regression fix.
+
+ Needs review.
+ source: <20240723021900.388020-1-gitster@pobox.com>
+
+
+* pw/add-patch-with-suppress-blank-empty (2024-07-20) 2 commits
+  (merged to 'next' on 2024-07-22 at 5437b7dee3)
+ + add-patch: use normalize_marker() when recounting edited hunk
+ + add-patch: handle splitting hunks with diff.suppressBlankEmpty
+
+ "git add -p" by users with diff.suppressBlankEmpty set to true
+ failed to parse the patch that represents an unmodified empty line
+ with an empty line (not a line with a single space on it), which
+ has been corrected.
+
+ Will cook in 'next'.
+ source: <pull.1763.v2.git.1721491320.gitgitgadget@gmail.com>
+
+
+* tn/doc-commit-fix (2024-07-22) 1 commit
+  (merged to 'next' on 2024-07-23 at eb73e04ee4)
+ + doc: remove dangling closing parenthesis
+
+ Docfix.
+
+ Will cook in 'next'.
+ source: <20240722225302.124356-1-tomasn@posteo.net>
+
 
 * cp/unit-test-reftable-tree (2024-07-22) 5 commits
  - t-reftable-tree: improve the test for infix_walk()
@@ -334,19 +356,20 @@ Release tarballs are available at:
  source: <20240718173843.2411415-1-emilyshaffer@google.com>
 
 
-* kn/ci-clang-format (2024-07-18) 6 commits
- - ci/style-check: add `RemoveBracesLLVM` in CI job
- - check-whitespace: detect if no base_commit is provided
- - ci: run style check on GitHub and GitLab
- - clang-format: formalize some of the spacing rules
- - clang-format: avoid spacing around bitfield colon
- - clang-format: indent preprocessor directives after hash
+* kn/ci-clang-format (2024-07-23) 6 commits
+  (merged to 'next' on 2024-07-23 at 3aca45d08a)
+ + ci/style-check: add `RemoveBracesLLVM` in CI job
+ + check-whitespace: detect if no base_commit is provided
+ + ci: run style check on GitHub and GitLab
+ + clang-format: formalize some of the spacing rules
+ + clang-format: avoid spacing around bitfield colon
+ + clang-format: indent preprocessor directives after hash
 
  A CI job that use clang-format to check coding style issues in new
  code has been added.
 
- Will merge to 'next'.
- source: <20240718081605.452366-1-karthik.188@gmail.com>
+ Will cook in 'next'.
+ source: <20240723082111.874382-1-karthik.188@gmail.com>
 
 
 * rj/add-p-pager (2024-07-22) 6 commits
@@ -359,7 +382,6 @@ Release tarballs are available at:
 
  A 'P' command to "git add -p" that passes the patch hunk to the
  pager has been added.
-
  source: <efa98aec-f117-4cfe-a7c2-e8c0adbdb399@gmail.com>
  source: <c37f0d54-4ead-422c-8193-f0c2ec84ca4a@gmail.com>
  source: <5536b336-5122-47fd-be57-42c299abe60c@gmail.com>
@@ -390,17 +412,18 @@ Release tarballs are available at:
 
 
 * cp/unit-test-reftable-merged (2024-07-12) 7 commits
- - t-reftable-merged: add test for REFTABLE_FORMAT_ERROR
- - t-reftable-merged: use reftable_ref_record_equal to compare ref records
- - t-reftable-merged: add tests for reftable_merged_table_max_update_index
- - t-reftable-merged: improve the const-correctness of helper functions
- - t-reftable-merged: improve the test t_merged_single_record()
- - t: harmonize t-reftable-merged.c with coding guidelines
- - t: move reftable/merged_test.c to the unit testing framework
+  (merged to 'next' on 2024-07-23 at 88d2a9ee28)
+ + t-reftable-merged: add test for REFTABLE_FORMAT_ERROR
+ + t-reftable-merged: use reftable_ref_record_equal to compare ref records
+ + t-reftable-merged: add tests for reftable_merged_table_max_update_index
+ + t-reftable-merged: improve the const-correctness of helper functions
+ + t-reftable-merged: improve the test t_merged_single_record()
+ + t: harmonize t-reftable-merged.c with coding guidelines
+ + t: move reftable/merged_test.c to the unit testing framework
 
  Another reftable test has been ported to use the unit test framework.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20240712055041.6476-1-chandrapratap3519@gmail.com>
 
 
@@ -430,7 +453,8 @@ Release tarballs are available at:
  source: <20240711235159.5320-1-shyamthakkar001@gmail.com>
 
 
-* rs/unit-tests-test-run (2024-07-22) 6 commits
+* rs/unit-tests-test-run (2024-07-23) 7 commits
+ - unit-tests: show location of checks outside of tests
  - t-strbuf: use for_test
  - t-strvec: use for_test
  - t-reftable-basics: use for_test
@@ -440,8 +464,7 @@ Release tarballs are available at:
 
  Unit-test framework clean-up.
 
- Waiting for a review response.
- cf. <CAO_smVhoobWpsbYHnHJqTj7TJJ1udo_UaGdbOnUqe5jzL+tyaQ@mail.gmail.com>
+ Still under discussion.
  source: <da7ed537-1c8e-42ec-aa91-49e1319e8c68@web.de>
 
 
