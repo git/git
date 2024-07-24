@@ -1419,9 +1419,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			else if (fetch_bundle_list(the_repository,
 						   transport->bundles))
 				warning(_("failed to fetch advertised bundles"));
-		} else {
-			clear_bundle_list(transport->bundles);
-			FREE_AND_NULL(transport->bundles);
 		}
 	}
 

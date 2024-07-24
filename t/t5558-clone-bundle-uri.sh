@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test fetching bundles with --bundle-uri'
+test_description='test clone with use of bundle-uri'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
@@ -432,6 +432,32 @@ test_expect_success 'negotiation: bundle list with all wanted commits' '
 	cat >expect <<-\EOF &&
 	refs/bundles/base
 	refs/bundles/left
+	EOF
+	test_cmp expect actual &&
+	# We already have all needed commits so no "want" needed.
+	test_grep ! "clone> want " trace-packet.txt
+'
+
+test_expect_success 'bundles advertised by the server' '
+	test_when_finished rm -f trace*.txt &&
+	git clone clone-from clone-advertiser &&
+	git -C clone-advertiser config uploadpack.advertiseBundleURIs true &&
+	git -C clone-advertiser config bundle.version 1 &&
+	git -C clone-advertiser config bundle.mode all &&
+	git -C clone-advertiser config bundle.bundle-1.uri "file://$(pwd)/clone-from/bundle-1.bundle" &&
+	git -C clone-advertiser config bundle.bundle-2.uri "file://$(pwd)/clone-from/bundle-2.bundle" &&
+	git -C clone-advertiser config bundle.bundle-3.uri "file://$(pwd)/clone-from/bundle-3.bundle" &&
+	git -C clone-advertiser config bundle.bundle-4.uri "file://$(pwd)/clone-from/bundle-4.bundle" &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace-packet.txt" \
+	git -c transfer.bundleURI=true clone clone-advertiser clone-advertised &&
+	git -C clone-advertised for-each-ref --format="%(refname)" >refs &&
+	grep "refs/bundles/" refs >actual &&
+	cat >expect <<-\EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	refs/bundles/merge
+	refs/bundles/right
 	EOF
 	test_cmp expect actual &&
 	# We already have all needed commits so no "want" needed.
