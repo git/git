@@ -294,10 +294,11 @@ const struct ref *transport_get_remote_refs(struct transport *transport,
 					    struct transport_ls_refs_options *transport_options);
 
 /**
- * Retrieve bundle URI(s) from a remote. Populates "struct
- * transport"'s "bundle_uri" and "got_remote_bundle_uri".
+ * Try fetch bundle URI(s) from a remote and returns 1 if one or more
+ * bundle URI(s) are received from the server.
+ * Populates "struct transport"'s "bundles" and "got_remote_bundle_uri".
  */
-int transport_get_remote_bundle_uri(struct transport *transport);
+int transport_has_remote_bundle_uri(struct transport *transport);
 
 /*
  * Fetch the hash algorithm used by a remote.

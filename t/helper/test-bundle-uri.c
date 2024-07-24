@@ -90,7 +90,7 @@ static int cmd_ls_remote(int argc, const char **argv)
 	}
 
 	transport = transport_get(remote, NULL);
-	if (transport_get_remote_bundle_uri(transport) < 0) {
+	if (!transport_has_remote_bundle_uri(transport)) {
 		error(_("could not get the bundle-uri list"));
 		status = 1;
 		goto cleanup;

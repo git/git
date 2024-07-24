@@ -1404,22 +1404,13 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				bundle_uri);
 		else if (has_heuristic)
 			git_config_set_gently("fetch.bundleuri", bundle_uri);
-	} else {
-		/*
-		* Populate transport->got_remote_bundle_uri and
-		* transport->bundle_uri. We might get nothing.
-		*/
-		transport_get_remote_bundle_uri(transport);
-
-		if (transport->bundles &&
-		    hashmap_get_size(&transport->bundles->bundles)) {
-			/* At this point, we need the_repository to match the cloned repo. */
-			if (repo_init(the_repository, git_dir, work_tree))
-				warning(_("failed to initialize the repo, skipping bundle URI"));
-			else if (fetch_bundle_list(the_repository,
-						   transport->bundles))
-				warning(_("failed to fetch advertised bundles"));
-		}
+	} else if (transport_has_remote_bundle_uri(transport)) {
+		/* At this point, we need the_repository to match the cloned repo. */
+		if (repo_init(the_repository, git_dir, work_tree))
+			warning(_("failed to initialize the repo, skipping bundle URI"));
+		else if (fetch_bundle_list(the_repository,
+					   transport->bundles))
+			warning(_("failed to fetch advertised bundles"));
 	}
 
 	if (refs)

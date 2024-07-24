@@ -1536,7 +1536,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 	return rc;
 }
 
-int transport_get_remote_bundle_uri(struct transport *transport)
+static int transport_get_remote_bundle_uri(struct transport *transport)
 {
 	int value = 0;
 	const struct transport_vtable *vtable = transport->vtable;
@@ -1561,6 +1561,18 @@ int transport_get_remote_bundle_uri(struct transport *transport)
 
 	if (vtable->get_bundle_uri(transport) < 0)
 		return error(_("could not retrieve server-advertised bundle-uri list"));
+
+	return 0;
+}
+
+int transport_has_remote_bundle_uri(struct transport *transport)
+{
+	transport_get_remote_bundle_uri(transport);
+
+	if (transport->bundles &&
+	    hashmap_get_size(&transport->bundles->bundles))
+		return 1;
+
 	return 0;
 }
 
