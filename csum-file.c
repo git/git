@@ -102,6 +102,15 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result,
 	return fd;
 }
 
+void discard_hashfile(struct hashfile *f)
+{
+	if (0 <= f->check_fd)
+		close(f->check_fd);
+	if (0 <= f->fd)
+		close(f->fd);
+	free_hashfile(f);
+}
+
 void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
 {
 	while (count) {
