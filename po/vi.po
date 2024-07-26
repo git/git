@@ -2,19 +2,72 @@
 # Bản dịch tiếng Việt dành cho GIT-CORE.
 # This file is distributed under the same license as the git-core package.
 # https://raw.githubusercontent.com/git-l10n/git-po/pot/main/po/git.pot
+# ---
 # Copyright (C) 2012-2022, Translation Project, Vietnamese Team <http://translationproject.org/team/vi.html>
 # Copyright (C) 2024, Vũ Tiến Hưng <newcomerminecraft@gmail.com>
 # Nguyễn Thái Ngọc Duy <pclouds@gmail.com>, 2012.
 # Đoàn Trần Công Danh <congdanhqx@gmail.com>, 2020.
 # Trần Ngọc Quân <vnwildman@gmail.com>, 2012-2022.
 # Vũ Tiến Hưng <newcomerminecraft@gmail.com>, 2024.
+# ---
+# BẢNG THUẬT NGỮ / TERMINOLOGY
+# Updated: 2024-07-26, git 2.46
 #
+# Ghi chú:
+#  - Bảng thuật ngữ này chưa hoàn thiện.
+#  - Tuỳ vào ngữ cảnh, bản dịch có thể thay đổi cho phù hợp.
+#
+# CÁCH VIẾT TẮT
+# n. = danh từ
+# v. = động từ
+# a. = tính từ
+#
+# +------------------------------------------------------------------+
+# | Thuật ngữ / Term                  | Bản dịch / Translation       |
+# +------------------------------------------------------------------+
+# |      file                         | tập tin                      |
+# |      folder                       | thư mục                      |
+# |      path                         | đường dẫn                    |
+# |      error                        | lỗi                          |
+# |      fatal / fatal error          | lỗi nghiêm trọng             |
+# |      warning                      | cảnh báo                     |
+# | (v.) commit                       | chuyển giao                  |
+# | (n.) commit                       | lần chuyển giao              |
+# | (n.) branch                       | nhánh                        |
+# | (v.) branch                       | tạo nhánh                    |
+# | (n.) log                          | nhật ký                      |
+# | (v.) log                          | ghi lại                      |
+# | (n.) ref/refs                     | tham chiếu                   |
+# |      hunk                         | khúc                         |
+# |      index                        | chỉ mục                      |
+# | (n.) stage                        | vùng chờ                     |
+# | (v.) stage <...>                  | đưa <...> vào vùng chờ       |
+# | (v.) unstage <...>                | bỏ <...> ra khỏi vùng chờ    |
+# |      revert                       | hoàn nguyên                  |
+# |      add                          | thêm                         |
+# |      restore                      | phục hồi                     |
+# | (n./v.) change                    | thay đổi                     |
+# | (v.) update                       | cập nhật                     |
+# | (v.) track                        | theo dõi                     |
+# | (v.) untrack                      | bỏ theo dõi                  |
+# | (a.) tracked                      | được theo dõi                |
+# | (a.) untracked                    | không được theo dõi          |
+# | (v.) parse                        | hiểu cú pháp                 |
+# | (n.) output                       | đầu ra, kết quả              |
+# | (v.) output                       | in ra, xuất ra               |
+# | (v.) merge                        | hoà trộn                     |
+# | (v.) rebase                       | cải tổ                       |
+# | (v.) squash                       | squash                       |
+# | (v.) amend                        | tu bổ                        |
+# | | |
+# | ... TODO ...                      |                              |
+# +------------------------------------------------------------------+
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.45\n"
+"Project-Id-Version: git 2.46\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-04-25 18:57+0000\n"
-"PO-Revision-Date: 2024-04-28 14:01+0700\n"
+"POT-Creation-Date: 2024-07-21 00:11+0700\n"
+"PO-Revision-Date: 2024-07-26 11:31+0700\n"
 "Last-Translator: Vũ Tiến Hưng <newcomerminecraft@gmail.com>\n"
 "Language-Team: Vietnamese <https://github.com/Nekosha/git-po>\n"
 "Language: vi\n"
@@ -44,7 +97,7 @@ msgstr "Cập nhật"
 
 #, c-format
 msgid "could not stage '%s'"
-msgstr "không thể đưa '%s' lên bệ phóng"
+msgstr "không thể đưa '%s' vào vùng chờ"
 
 msgid "could not write index"
 msgstr "không thể ghi chỉ mục"
@@ -113,7 +166,7 @@ msgstr ""
 
 msgid "revert staged set of changes back to the HEAD version"
 msgstr ""
-"hoàn nguyên lại tập hợp các thay đổi đã được đưa lên bệ phóng trở lại phiên "
+"hoàn nguyên lại tập hợp các thay đổi đã được đưa vào vùng chờ trở lại phiên "
 "bản HEAD"
 
 msgid "pick hunks and update selectively"
@@ -125,7 +178,7 @@ msgstr "xem khác biệt giữa HEAD và chỉ mục"
 msgid "add contents of untracked files to the staged set of changes"
 msgstr ""
 "thêm nội dung của các tập tin chưa được theo dõi vào tập hợp các thay đổi đã "
-"được đưa lên bệ phóng"
+"được đưa vào vùng chờ"
 
 msgid "Prompt help:"
 msgstr "Trợ giúp về nhắc:"
@@ -164,10 +217,10 @@ msgid "What now"
 msgstr "Giờ thì sao"
 
 msgid "staged"
-msgstr "đã đưa lên bệ phóng"
+msgstr "đã đưa vào vùng chờ"
 
 msgid "unstaged"
-msgstr "chưa đưa lên bệ phóng"
+msgstr "chưa đưa vào vùng chờ"
 
 msgid "path"
 msgstr "đường-dẫn"
@@ -181,26 +234,26 @@ msgstr "Tạm biệt.\n"
 
 #, c-format
 msgid "Stage mode change [y,n,q,a,d%s,?]? "
-msgstr "Đưa lên bệ phóng thay đổi chế độ [y,n,q,a,d%s,?]? "
+msgstr "Đưa vào vùng chờ thay đổi chế độ [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Stage deletion [y,n,q,a,d%s,?]? "
-msgstr "Đưa lên bệ phóng thao tác xoá [y,n,q,a,d%s,?]? "
+msgstr "Đưa vào vùng chờ thao tác xoá [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Stage addition [y,n,q,a,d%s,?]? "
-msgstr "Đưa lên bệ phóng thao tác thêm [y,n,q,a,d%s,?]? "
+msgstr "Đưa vào vùng chờ thao tác thêm [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Stage this hunk [y,n,q,a,d%s,?]? "
-msgstr "Đưa lên bệ phóng khúc này [y,n,q,a,d%s,?]? "
+msgstr "Đưa vào vùng chờ khúc này [y,n,q,a,d%s,?]? "
 
 msgid ""
 "If the patch applies cleanly, the edited hunk will immediately be marked for "
 "staging."
 msgstr ""
 "Nếu bản vá được áp dụng hoàn toàn, khúc đã sửa sẽ ngay lập tức được đánh dấu "
-"để chuyển lên bệ phóng."
+"để chuyển vào vùng chờ."
 
 msgid ""
 "y - stage this hunk\n"
@@ -209,11 +262,11 @@ msgid ""
 "a - stage this hunk and all later hunks in the file\n"
 "d - do not stage this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - đưa lên bệ phóng khúc này\n"
-"n - đừng đưa lên bệ phóng khúc này\n"
-"q - thoát; đừng đưa lên bệ phóng khúc này hay bất kỳ cái nào còn lại\n"
-"a - đưa lên bệ phóng khúc này và tất cả các khúc sau này trong tập tin\n"
-"d - đừng đưa lên bệ phóng khúc này hay bất kỳ cái nào còn lại trong tập tin\n"
+"y - đưa vào vùng chờ khúc này\n"
+"n - đừng đưa vào vùng chờ khúc này\n"
+"q - thoát; đừng đưa vào vùng chờ khúc này hay bất kỳ cái nào còn lại\n"
+"a - đưa vào vùng chờ khúc này và tất cả các khúc sau này trong tập tin\n"
+"d - đừng đưa vào vùng chờ khúc này hay bất kỳ cái nào còn lại trong tập tin\n"
 
 #, c-format
 msgid "Stash mode change [y,n,q,a,d%s,?]? "
@@ -253,26 +306,26 @@ msgstr ""
 
 #, c-format
 msgid "Unstage mode change [y,n,q,a,d%s,?]? "
-msgstr "Bỏ ra khỏi bệ phóng thay đổi chế độ [y,n,q,a,d%s,?]? "
+msgstr "Bỏ ra khỏi vùng chờ thay đổi chế độ [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Unstage deletion [y,n,q,a,d%s,?]? "
-msgstr "Bỏ ra khỏi bệ phóng thao tác xoá [y,n,q,a,d%s,?]? "
+msgstr "Bỏ ra khỏi vùng chờ thao tác xoá [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Unstage addition [y,n,q,a,d%s,?]? "
-msgstr "Bỏ ra khỏi bệ phóng thao tác thêm [y,n,q,a,d%s,?]? "
+msgstr "Bỏ ra khỏi vùng chờ thao tác thêm [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Unstage this hunk [y,n,q,a,d%s,?]? "
-msgstr "Bỏ ra khỏi bệ phóng khúc này [y,n,q,a,d%s,?]? "
+msgstr "Bỏ ra khỏi vùng chờ khúc này [y,n,q,a,d%s,?]? "
 
 msgid ""
 "If the patch applies cleanly, the edited hunk will immediately be marked for "
 "unstaging."
 msgstr ""
 "Nếu bản vá được áp dụng hoàn toàn, khúc đã sửa sẽ ngay lập tức được đánh dấu "
-"để bỏ ra khỏi bệ phóng."
+"để bỏ ra khỏi vùng chờ."
 
 msgid ""
 "y - unstage this hunk\n"
@@ -281,11 +334,11 @@ msgid ""
 "a - unstage this hunk and all later hunks in the file\n"
 "d - do not unstage this hunk or any of the later hunks in the file\n"
 msgstr ""
-"y - đưa ra khỏi bệ phóng khúc này\n"
-"n - đừng đưa ra khỏi bệ phóng khúc này\n"
-"q - thoát; đừng đưa ra khỏi bệ phóng khúc này hay bất kỳ cái nào còn lại\n"
-"a - đưa ra khỏi bệ phóng khúc này và tất cả các khúc sau này trong tập tin\n"
-"d - đừng đưa ra khỏi bệ phóng khúc này hay bất kỳ cái nào còn lại trong tập "
+"y - đưa ra khỏi vùng chờ khúc này\n"
+"n - đừng đưa ra khỏi vùng chờ khúc này\n"
+"q - thoát; đừng đưa ra khỏi vùng chờ khúc này hay bất kỳ cái nào còn lại\n"
+"a - đưa ra khỏi vùng chờ khúc này và tất cả các khúc sau này trong tập tin\n"
+"d - đừng đưa ra khỏi vùng chờ khúc này hay bất kỳ cái nào còn lại trong tập "
 "tin\n"
 
 #, c-format
@@ -566,6 +619,10 @@ msgstr ""
 "p - in ra khúc hiện hành\n"
 "? - hiển thị trợ giúp\n"
 
+#, c-format
+msgid "Only one letter is expected, got '%s'"
+msgstr "Cần một ký tự, nhưng lại có '%s'"
+
 msgid "No previous hunk"
 msgstr "Không có khúc kế trước"
 
@@ -613,8 +670,18 @@ msgstr "Chia nhỏ thành %d khúc."
 msgid "Sorry, cannot edit this hunk"
 msgstr "Không thể sửa khúc này"
 
+#, c-format
+msgid "Unknown command '%s' (use '?' for help)"
+msgstr "không hiểu câu lệnh: '%s' ('?' để hiển thị trợ giúp)"
+
 msgid "'git apply' failed"
 msgstr "'git apply' gặp lỗi"
+
+msgid "No changes."
+msgstr "Không có thay đổi nào."
+
+msgid "Only binary files changed."
+msgstr "Chỉ có các tập tin nhị phân thay đổi."
 
 #, c-format
 msgid ""
@@ -1462,6 +1529,9 @@ msgstr "bỏ qua tập tin gitattributes quá lớn '%s'"
 msgid "ignoring overly large gitattributes blob '%s'"
 msgstr "bỏ qua blob gitattributes quá lớn '%s'"
 
+msgid "cannot use --attr-source or GIT_ATTR_SOURCE without repo"
+msgstr "không thể dùng --attr-source hoặc GIT_ATTR_SOURCE mà không có kho chứa"
+
 msgid "bad --attr-source or GIT_ATTR_SOURCE"
 msgstr "--attr-source hoặc GIT_ATTR_SOURCE sai"
 
@@ -1772,14 +1842,7 @@ msgid "cannot chmod %cx '%s'"
 msgstr "không thể chmod %cx '%s'"
 
 msgid "Unstaged changes after refreshing the index:"
-msgstr "Đưa ra khỏi bệ phóng các thay đổi sau khi làm mới lại chỉ mục:"
-
-msgid ""
-"the add.interactive.useBuiltin setting has been removed!\n"
-"See its entry in 'git help config' for details."
-msgstr ""
-"mục cài đặt add.interactive.useBuiltin đã không còn!\n"
-"Xem mục tin của nó trong 'git help config' để biết chi tiết."
+msgstr "Đưa ra khỏi vùng chờ các thay đổi sau khi làm mới lại chỉ mục:"
 
 msgid "could not read the index"
 msgstr "Không thể đọc chỉ mục"
@@ -2065,8 +2128,8 @@ msgstr "Thân của lần chuyển giao là:"
 #, c-format
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr ""
-"Áp dụng? đồng ý [y]/khô[n]g/chỉnh sửa [e]/hiển thị miếng [v]á/chấp nhận tất "
-"cả [a]: "
+"Áp dụng? đồng ý [y]/không [n]/chỉnh sửa [e]/hiển thị bản vá [v]/chấp nhận "
+"tất cả [a]: "
 
 msgid "unable to write index file"
 msgstr "không thể ghi tập tin chỉ mục"
@@ -2110,9 +2173,8 @@ msgid ""
 "already introduced the same changes; you might want to skip this patch."
 msgstr ""
 "Không có thay đổi nào - bạn đã quên sử dụng lệnh 'git add' à?\n"
-"Nếu ở đây không có gì còn lại stage, tình cờ là có một số thứ khác\n"
-"đã sẵn được đưa vào với cùng nội dung thay đổi; bạn có lẽ muốn bỏ qua miếng "
-"vá này."
+"Nếu ở đây không còn gì để đưa vào vùng chờ, có lẽ một số người khác\n"
+"đã thêm các thay đổi trong này rồi; bạn có lẽ muốn bỏ qua bản vá này."
 
 msgid ""
 "You still have unmerged paths in your index.\n"
@@ -2121,8 +2183,8 @@ msgid ""
 "You might run `git rm` on a file to accept \"deleted by them\" for it."
 msgstr ""
 "Bạn vẫn có những đường dẫn chưa hòa trộn trong chỉ mục của bạn.\n"
-"Bạn nên 'git add' từng tập tin với các xung đột đã được giải quyết để đánh "
-"dấu chúng là thế.\n"
+"Bạn nên 'git add' những tập tin đã giải quyết xung đột để đánh dấu chúng là "
+"đã xong.\n"
 "Bạn có lẽ muốn chạy 'git rm' trên một tập tin để chấp nhận \"được xóa bởi "
 "họ\" cho nó."
 
@@ -2222,11 +2284,14 @@ msgstr "huỷ thao tác vá nhưng vẫn giữ HEAD nơi nó chỉ đến"
 msgid "show the patch being applied"
 msgstr "hiển thị bản vá đã được áp dụng rồi"
 
+msgid "try to apply current patch again"
+msgstr "thử áp dụng bản vá hiện hành thêm lần nữa"
+
 msgid "record the empty patch as an empty commit"
 msgstr "ghi lại bản vá trống rỗng như là một lần chuyển giao trống"
 
 msgid "lie about committer date"
-msgstr "nói dối về ngày chuyển giao"
+msgstr "làm giả ngày chuyển giao"
 
 msgid "use current timestamp for author date"
 msgstr "dùng dấu thời gian hiện tại cho ngày tác giả"
@@ -2276,9 +2341,6 @@ msgstr "git apply [<các tùy chọn>] [<miếng-vá>...]"
 
 msgid "could not redirect output"
 msgstr "không thể chuyển hướng đầu ra"
-
-msgid "git archive: Remote with no URL"
-msgstr "git archive: Máy chủ không có địa chỉ URL"
 
 msgid "git archive: expected ACK/NAK, got a flush packet"
 msgstr "git archive: cần ACK/NAK, nhưng lại nhận được gói flush"
@@ -2603,7 +2665,7 @@ msgid "force progress reporting"
 msgstr "ép buộc báo cáo tiến độ công việc"
 
 msgid "show output score for blame entries"
-msgstr "hiển thị kết xuất điểm số cho các mục tin 'blame'"
+msgstr "hiển thị điểm số đầu ra cho các mục tin 'blame'"
 
 msgid "show original filename (Default: auto)"
 msgstr "hiển thị tên tập tin gốc (Mặc định: auto)"
@@ -2881,7 +2943,7 @@ msgid "unset the upstream info"
 msgstr "bỏ đặt thông tin thượng nguồn"
 
 msgid "use colored output"
-msgstr "tô màu kết xuất"
+msgstr "tô màu đầu ra"
 
 msgid "act on remote-tracking branches"
 msgstr "thao tác trên nhánh 'remote-tracking'"
@@ -3175,6 +3237,9 @@ msgstr "Cần một kho chứa để có thể tạo một bundle."
 msgid "do not show bundle details"
 msgstr "không hiển thị chi tiết bundle (bó)"
 
+msgid "need a repository to verify a bundle"
+msgstr "cần một kho chứa để thẩm tra một bundle"
+
 #, c-format
 msgid "%s is okay\n"
 msgstr "%s tốt\n"
@@ -3288,7 +3353,7 @@ msgid "Change or optimize batch output"
 msgstr "Thay đổi hay tối ưu hóa đầu ra batch"
 
 msgid "buffer --batch output"
-msgstr "đệm kết xuất --batch"
+msgstr "buffer đầu ra --batch"
 
 msgid "follow in-tree symlinks"
 msgstr "theo liên kết mềm trong-cây"
@@ -3456,7 +3521,7 @@ msgid "write the content to temporary files"
 msgstr "ghi nội dung vào tập tin tạm"
 
 msgid "copy out the files from named stage"
-msgstr "sao chép ra các tập tin từ bệ phóng có tên"
+msgstr "sao chép ra các tập tin từ vùng chờ có tên"
 
 msgid "git checkout [<options>] <branch>"
 msgstr "git checkout [<các tùy chọn>] <nhánh>"
@@ -3550,7 +3615,7 @@ msgid ""
 "cannot continue with staged changes in the following files:\n"
 "%s"
 msgstr ""
-"không thể tiếp tục với các thay đổi đã được đưa lên bệ phóng trong các dòng "
+"không thể tiếp tục với các thay đổi đã được đưa vào vùng chờ trong các dòng "
 "sau:\n"
 "%s"
 
@@ -3570,7 +3635,7 @@ msgstr "Đặt lại nhánh '%s'\n"
 
 #, c-format
 msgid "Already on '%s'\n"
-msgstr "Đã sẵn sàng trên '%s'\n"
+msgstr "Đã sẵn ở trên '%s'\n"
 
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
@@ -4177,12 +4242,20 @@ msgid "failed to unlink '%s'"
 msgstr "gặp lỗi khi unlink '%s'"
 
 #, c-format
+msgid "hardlink cannot be checked at '%s'"
+msgstr "không thể kiểm tra liên kết cứng '%s'"
+
+#, c-format
+msgid "hardlink different from source at '%s'"
+msgstr "liên kết cứng '%s' khác với nguồn"
+
+#, c-format
 msgid "failed to create link '%s'"
-msgstr "gặp lỗi khi tạo được liên kết mềm %s"
+msgstr "gặp lỗi khi tạo liên kết mềm %s"
 
 #, c-format
 msgid "failed to copy file to '%s'"
-msgstr "gặp lỗi khi sao chép tập tin và '%s'"
+msgstr "gặp lỗi khi sao chép tập tin tới '%s'"
 
 #, c-format
 msgid "failed to iterate over '%s'"
@@ -4841,7 +4914,7 @@ msgid "version"
 msgstr "phiên bản"
 
 msgid "machine-readable output"
-msgstr "kết xuất dạng máy-có-thể-đọc"
+msgstr "xuất ra dạng máy-có-thể-đọc"
 
 msgid "show status in long format (default)"
 msgstr "hiển thị trạng thái ở định dạng dài (mặc định)"
@@ -4930,15 +5003,14 @@ msgstr ""
 
 msgid "use autosquash formatted message to squash specified commit"
 msgstr ""
-"dùng lời nhắn có định dạng tự động nén để nén lại các lần chuyển giao đã chỉ "
-"ra"
+"dùng lời nhắn có định dạng autosquash để squash các lần chuyển giao đã chỉ ra"
 
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 "lần chuyển giao nhận tôi là tác giả (được dùng với tùy chọn -C/-c/--amend)"
 
 msgid "trailer"
-msgstr "bộ dò vết"
+msgstr "trailer"
 
 msgid "add custom trailer(s)"
 msgstr "thêm đuôi tự chọn"
@@ -5029,15 +5101,51 @@ msgstr ""
 "có bị đầy quá hay hạn nghạch đĩa (quota) bị vượt quá hay không,\n"
 "và sau đó \"git restore --staged :/\" để khắc phục."
 
-msgid "git config [<options>]"
-msgstr "git config [<các tùy chọn>]"
+msgid "git config list [<file-option>] [<display-option>] [--includes]"
+msgstr "git config list [<tuỳ-chọn>] [<tuỳ-chọn-hiển-thị>] [--includes]"
 
-#, c-format
-msgid "unrecognized --type argument, %s"
-msgstr "đối số không được thừa nhận --type, %s"
+msgid ""
+"git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
+"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
+"<name>"
+msgstr ""
+"git config get [<tuỳ-chọn>] [<tuỳ-chọn-hiển-thị>] [--includes] [--all] [--"
+"regexp=<biểu-thức-chính-quy>] [--value=<giá-trị>] [--fixed-value] [--"
+"default=<giá-trị-mặc-định>] <khoá>"
 
-msgid "only one type at a time"
-msgstr "chỉ một kiểu một lần"
+msgid ""
+"git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--"
+"fixed-value] <name> <value>"
+msgstr ""
+"git config set [<tuỳ-chọn>] [--type=<kiểu>] [--all] [--value=<giá-trị>] [--"
+"fixed-value] <khoá> <giá-trị>"
+
+msgid ""
+"git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
+"<name> <value>"
+msgstr ""
+"git config unset [<tuỳ-chọn>] [--all] [--value=<giá-trị>] [--fixed-value] "
+"<khoá> <giá-trị>"
+
+msgid "git config rename-section [<file-option>] <old-name> <new-name>"
+msgstr "git config rename-section [<tuỳ-chọn>] <tên-cũ> <tên-mới>"
+
+msgid "git config remove-section [<file-option>] <name>"
+msgstr "git config remove-section [<tuỳ-chọn>] <tên>"
+
+msgid "git config edit [<file-option>]"
+msgstr "git config edit [<tùy-chọn>]"
+
+msgid "git config [<file-option>] --get-colorbool <name> [<stdout-is-tty>]"
+msgstr ""
+"git config [<tuỳ-chọn>] --get-colorbool <tên> [<stdout-là-tty-hay-không>]"
+
+msgid ""
+"git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
+"[--value=<value>] [--fixed-value] <name> <value>"
+msgstr ""
+"git config set [<tuỳ-chọn>] [--type=<kiểu>] [--comment=<chú-thích>] [--all] "
+"[--value=<giá-trị>] [--fixed-value] <khoá> <giá-trị>"
 
 msgid "Config file location"
 msgstr "Vị trí tập tin cấu hình"
@@ -5062,54 +5170,6 @@ msgstr "blob-id"
 
 msgid "read config from given blob object"
 msgstr "đọc cấu hình từ đối tượng blob đã cho"
-
-msgid "Action"
-msgstr "Hành động"
-
-msgid "get value: name [value-pattern]"
-msgstr "lấy giá trị: tên [value-pattern]"
-
-msgid "get all values: key [value-pattern]"
-msgstr "lấy tất cả giá trị: khóa [value-pattern]"
-
-msgid "get values for regexp: name-regex [value-pattern]"
-msgstr "lấy giá trị cho regexp: name-regex [value-pattern]"
-
-msgid "get value specific for the URL: section[.var] URL"
-msgstr "lấy đặc tả giá trị cho URL: phần[.biến] URL"
-
-msgid "replace all matching variables: name value [value-pattern]"
-msgstr "thay thế tất cả các biến khớp mẫu: tên giá-trị [value-pattern]"
-
-msgid "add a new variable: name value"
-msgstr "thêm biến mới: tên giá-trị"
-
-msgid "remove a variable: name [value-pattern]"
-msgstr "gỡ bỏ biến: tên [value-pattern]"
-
-msgid "remove all matches: name [value-pattern]"
-msgstr "gỡ bỏ mọi cái khớp: tên [value-pattern]"
-
-msgid "rename section: old-name new-name"
-msgstr "đổi tên phần: tên-cũ tên-mới"
-
-msgid "remove a section: name"
-msgstr "gỡ bỏ phần: tên"
-
-msgid "list all"
-msgstr "liệt kê tất"
-
-msgid "use string equality when comparing values to 'value-pattern'"
-msgstr "sử dụng so sánh bằng chuỗi khi so sánh các giá trị với 'value-pattern'"
-
-msgid "open an editor"
-msgstr "mở một trình biên soạn"
-
-msgid "find the color configured: slot [default]"
-msgstr "tìm cấu hình màu sắc: slot [mặc định]"
-
-msgid "find the color setting: slot [stdout-is-tty]"
-msgstr "tìm các cài đặt về màu sắc: slot [stdout-là-tty]"
 
 msgid "Type"
 msgstr "Kiểu"
@@ -5138,17 +5198,14 @@ msgstr "giá trị là đường dẫn (tên tập tin hay thư mục)"
 msgid "value is an expiry date"
 msgstr "giá trị là một ngày hết hạn"
 
-msgid "Other"
-msgstr "Khác"
+msgid "Display options"
+msgstr "Tuỳ chọn hiển thị"
 
 msgid "terminate values with NUL byte"
 msgstr "kết thúc giá trị với byte NUL"
 
 msgid "show variable names only"
 msgstr "chỉ hiển thị các tên biến"
-
-msgid "respect include directives on lookup"
-msgstr "tôn trọng kể cà các hướng trong tìm kiếm"
 
 msgid "show origin of config (file, standard input, blob, command line)"
 msgstr "hiển thị nguồn gốc của cấu hình (tập tin, stdin, blob, dòng lệnh)"
@@ -5158,14 +5215,15 @@ msgstr ""
 "hiển thị phạm vi của cấu hình (cây làm việc, cục bộ, toàn cầu, hệ thống, "
 "lệnh)"
 
-msgid "value"
-msgstr "giá trị"
+msgid "show config keys in addition to their values"
+msgstr "hiển thị khoá cùng vói giá trị"
 
-msgid "with --get, use default value when missing entry"
-msgstr "với --get, dùng giá trị mặc định khi thiếu mục tin"
+#, c-format
+msgid "unrecognized --type argument, %s"
+msgstr "đối số không được thừa nhận --type, %s"
 
-msgid "human-readable comment string (# will be prepended as needed)"
-msgstr "ghi chú cho người đọc được (tự động thêm # vào trước nếu cần)"
+msgid "only one type at a time"
+msgstr "chỉ một kiểu một lần"
 
 #, c-format
 msgid "wrong number of arguments, should be %d"
@@ -5241,11 +5299,148 @@ msgstr ""
 "worktreeConfig được bật. Vui lòng đọc phần \"CONFIGURATION FILE\"\n"
 "trong \"git help worktree\" để biết thêm chi tiết"
 
+msgid "Other"
+msgstr "Khác"
+
+msgid "respect include directives on lookup"
+msgstr "tôn trọng kể cà các hướng trong tìm kiếm"
+
+#, c-format
+msgid "unable to read config file '%s'"
+msgstr "không thể đọc tập tin cấu hình '%s'"
+
+msgid "error processing config file(s)"
+msgstr "gặp lỗi khi xử lý các tập tin cấu hình"
+
+msgid "Filter options"
+msgstr "Tùy chọn lọc"
+
+msgid "return all values for multi-valued config options"
+msgstr "trả về tất cả giá trị cho tuỳ chọn cấu hình đa trị"
+
+msgid "interpret the name as a regular expression"
+msgstr "coi khoá là biểu thức chính quy"
+
+msgid "show config with values matching the pattern"
+msgstr "hiển thị giá trị cấu hình khớp với mẫu"
+
+msgid "use string equality when comparing values to value pattern"
+msgstr "sử dụng so sánh xâu khi so sánh các giá trị với mẫu"
+
+msgid "URL"
+msgstr "URL"
+
+msgid "show config matching the given URL"
+msgstr "hiển thị giá trị cấu hình khớp với URL"
+
+msgid "value"
+msgstr "giá trị"
+
+msgid "use default value when missing entry"
+msgstr "dùng giá trị mặc định khi không tồn tại"
+
+msgid "--fixed-value only applies with 'value-pattern'"
+msgstr "--fixed-value chỉ áp dụng với 'value-pattern'"
+
+msgid "--default= cannot be used with --all or --url="
+msgstr "--default= không thể được dùng với --all hay --url"
+
+msgid "--url= cannot be used with --all, --regexp or --value"
+msgstr "--url= không thể được dùng với --all, --regexp hay --value"
+
+msgid "Filter"
+msgstr "Bộ lọc"
+
+msgid "replace multi-valued config option with new value"
+msgstr "thay thế tuỳ chọn cấu hình đa trị thành giá trị"
+
+msgid "human-readable comment string (# will be prepended as needed)"
+msgstr "ghi chú cho người đọc được (tự động thêm # vào trước nếu cần)"
+
+msgid "add a new line without altering any existing values"
+msgstr "thêm dòng mới giữ nguyên các giá trị cũ"
+
+msgid "--fixed-value only applies with --value=<pattern>"
+msgstr "--fixed-value chỉ áp dụng với --value=<mẫu>"
+
+msgid "--append cannot be used with --value=<pattern>"
+msgstr "--append không thể được dùng với --value=<mẫu>"
+
+#, c-format
+msgid ""
+"cannot overwrite multiple values with a single value\n"
+"       Use a regexp, --add or --replace-all to change %s."
+msgstr ""
+"không thể ghi đè nhiều giá trị với một giá trị đơn\n"
+"      Dùng một biểu thức chính quy, --add hay --replace-all để thay đổi %s."
+
+#, c-format
+msgid "no such section: %s"
+msgstr "không có đoạn: %s"
+
+msgid "editing stdin is not supported"
+msgstr "sửa chữa stdin là không được hỗ trợ"
+
+msgid "editing blobs is not supported"
+msgstr "việc sửa chữa các blob là không được hỗ trợ"
+
+#, c-format
+msgid "cannot create configuration file %s"
+msgstr "không thể tạo tập tin cấu hình '%s'"
+
+msgid "Action"
+msgstr "Hành động"
+
+msgid "get value: name [<value-pattern>]"
+msgstr "lấy giá trị: khoá [<mẫu-giá-trị>]"
+
+msgid "get all values: key [<value-pattern>]"
+msgstr "lấy tất cả giá trị: khóa [<mẫu-giá-trị>]"
+
+msgid "get values for regexp: name-regex [<value-pattern>]"
+msgstr "lấy giá trị cho biểu thức chính quy: regex [<mẫu-giá-trị>]"
+
+msgid "get value specific for the URL: section[.var] URL"
+msgstr "lấy giá trị riêng cho URL: phần[.biến] URL"
+
+msgid "replace all matching variables: name value [<value-pattern>]"
+msgstr "thay thế tất cả các biến khớp mẫu: tên giá-trị [<mẫu-giá-trị>]"
+
+msgid "add a new variable: name value"
+msgstr "thêm biến mới: tên giá-trị"
+
+msgid "remove a variable: name [<value-pattern>]"
+msgstr "gỡ bỏ biến: tên [<mẫu-giá-trị>]"
+
+msgid "remove all matches: name [<value-pattern>]"
+msgstr "gỡ bỏ mọi biến khớp: tên [<mẫu-giá-trị>]"
+
+msgid "rename section: old-name new-name"
+msgstr "đổi tên phần: tên-cũ tên-mới"
+
+msgid "remove a section: name"
+msgstr "gỡ bỏ phần: tên"
+
+msgid "list all"
+msgstr "liệt kê tất"
+
+msgid "open an editor"
+msgstr "mở một trình biên soạn"
+
+msgid "find the color configured: slot [<default>]"
+msgstr "tìm cấu hình màu sắc: slot [<mặc định>]"
+
+msgid "find the color setting: slot [<stdout-is-tty>]"
+msgstr "tìm các cài đặt về màu sắc: slot [<stdout-là-tty-hay-không>]"
+
+msgid "with --get, use default value when missing entry"
+msgstr "với --get, dùng giá trị mặc định khi thiếu mục tin"
+
 msgid "--get-color and variable type are incoherent"
 msgstr "--get-color và kiểu biến là không mạch lạc"
 
-msgid "only one action at a time"
-msgstr "chỉ một thao tác mỗi lần"
+msgid "no action specified"
+msgstr "chưa chỉ ra hành động"
 
 msgid "--name-only is only applicable to --list or --get-regexp"
 msgstr "--name-only chỉ được áp dụng cho --list hoặc --get-regexp"
@@ -5262,38 +5457,6 @@ msgstr "--default chỉ được áp dụng cho --get"
 
 msgid "--comment is only applicable to add/set/replace operations"
 msgstr "--comment chỉ được áp dụng cho thao tác add/set/replace"
-
-msgid "--fixed-value only applies with 'value-pattern'"
-msgstr "--fixed-value chỉ áp dụng với 'value-pattern'"
-
-#, c-format
-msgid "unable to read config file '%s'"
-msgstr "không thể đọc tập tin cấu hình '%s'"
-
-msgid "error processing config file(s)"
-msgstr "gặp lỗi khi xử lý các tập tin cấu hình"
-
-msgid "editing stdin is not supported"
-msgstr "sửa chữa stdin là không được hỗ trợ"
-
-msgid "editing blobs is not supported"
-msgstr "việc sửa chữa các blob là không được hỗ trợ"
-
-#, c-format
-msgid "cannot create configuration file %s"
-msgstr "không thể tạo tập tin cấu hình '%s'"
-
-#, c-format
-msgid ""
-"cannot overwrite multiple values with a single value\n"
-"       Use a regexp, --add or --replace-all to change %s."
-msgstr ""
-"không thể ghi đè nhiều giá trị với một giá trị đơn\n"
-"      Dùng một biểu thức chính quy, --add hay --replace-all để thay đổi %s."
-
-#, c-format
-msgid "no such section: %s"
-msgstr "không có đoạn: %s"
 
 msgid "print sizes in human readable format"
 msgstr "hiển thị kích cỡ theo định dạng dành cho người đọc"
@@ -5637,7 +5800,7 @@ msgid "use the done feature to terminate the stream"
 msgstr "sử dụng tính năng done để kết thúc luồng dữ liệu"
 
 msgid "skip output of blob data"
-msgstr "bỏ qua kết xuất của dữ liệu blob"
+msgstr "bỏ qua đầu ra của dữ liệu blob"
 
 msgid "refspec"
 msgstr "refspec"
@@ -5646,7 +5809,7 @@ msgid "apply refspec to exported refs"
 msgstr "áp dụng refspec cho refs đã xuất"
 
 msgid "anonymize output"
-msgstr "kết xuất anonymize"
+msgstr "ẩn danh đầu ra"
 
 msgid "from:to"
 msgstr "từ:đến"
@@ -5946,7 +6109,7 @@ msgid "re-fetch without negotiating common commits"
 msgstr "re-fetch mà không dàn xếp các lần chuyển giao chung"
 
 msgid "prepend this to submodule path output"
-msgstr "soạn sẵn cái này cho kết xuất đường dẫn mô-đun-con"
+msgstr "soạn sẵn cái này cho đầu ra đường dẫn mô-đun-con"
 
 msgid ""
 "default for recursive fetching of submodules (lower priority than config "
@@ -6038,7 +6201,7 @@ msgid "populate log with at most <n> entries from shortlog"
 msgstr "gắn nhật ký với ít nhất <n> mục từ lệnh 'shortlog'"
 
 msgid "alias for --log (deprecated)"
-msgstr "bí danh cho --log (đã lạc hậu)"
+msgstr "đồng nghĩa với --log (đã không còn)"
 
 msgid "text"
 msgstr "văn bản"
@@ -6119,6 +6282,9 @@ msgstr "config"
 msgid "config key storing a list of repository paths"
 msgstr "khóa cấu hình lưu trữ danh sách đường dẫn kho lưu trữ"
 
+msgid "keep going even if command fails in a repository"
+msgstr "tiếp tục dù có lệnh thất bại trong kho chứa"
+
 msgid "missing --config=<config>"
 msgstr "thiếu --config=<config>"
 
@@ -6141,7 +6307,7 @@ msgstr "có cảnh báo trong %s %s: %s"
 
 #, c-format
 msgid "broken link from %7s %s"
-msgstr "liên kết gãy từ %7s %s"
+msgstr "liên kết hỏng từ %7s %s"
 
 msgid "wrong object type in link"
 msgstr "kiểu đối tượng sai trong liên kết"
@@ -6151,7 +6317,7 @@ msgid ""
 "broken link from %7s %s\n"
 "              to %7s %s"
 msgstr ""
-"liên kết gãy từ %7s %s \n"
+"liên kết hỏng từ %7s %s \n"
 "              tới %7s %s"
 
 msgid "Checking connectivity"
@@ -6858,7 +7024,7 @@ msgid "combine patterns specified with -e"
 msgstr "tổ hợp mẫu được chỉ ra với tùy chọn -e"
 
 msgid "indicate hit with exit status without output"
-msgstr "đưa ra gợi ý với trạng thái thoát mà không có kết xuất"
+msgstr "chỉ ra có khớp mẫu hay không với trạng thái thoát thay vì đầu ra"
 
 msgid "show only matches from files that match all patterns"
 msgstr "chỉ hiển thị những cái khớp từ tập tin mà nó khớp toàn bộ các mẫu"
@@ -7402,7 +7568,7 @@ msgid "invalid --decorate option: %s"
 msgstr "tùy chọn --decorate không hợp lệ: %s"
 
 msgid "suppress diff output"
-msgstr "chặn mọi kết xuất từ diff"
+msgstr "chặn mọi đầu ra từ diff"
 
 msgid "show source"
 msgstr "hiển thị mã nguồn"
@@ -7435,7 +7601,7 @@ msgstr "-L<vùng>:<tập tin> không thể được sử dụng với đặc t�
 
 #, c-format
 msgid "Final output: %d %s\n"
-msgstr "Kết xuất cuối cùng: %d %s\n"
+msgstr "Đầu ra cuối cùng: %d %s\n"
 
 msgid "unable to create temporary object directory"
 msgstr "không thể tạo thư mục đối tượng tạm thời"
@@ -7487,7 +7653,7 @@ msgid "git format-patch [<options>] [<since> | <revision-range>]"
 msgstr "git format-patch [<các tùy chọn>] [<kể-từ> | <vùng-xem-xét>]"
 
 msgid "two output directories?"
-msgstr "hai thư mục kết xuất?"
+msgstr "hai thư mục đầu ra?"
 
 #, c-format
 msgid "unknown commit %s"
@@ -7563,8 +7729,11 @@ msgstr "đánh dấu chuỗi là lần chạy lại thứ N"
 msgid "max length of output filename"
 msgstr "chiều dài tên tập tin đầu ra tối đa"
 
-msgid "use [RFC PATCH] instead of [PATCH]"
-msgstr "dùng [RFC PATCH] thay cho [PATCH]"
+msgid "rfc"
+msgstr "rfc"
+
+msgid "add <rfc> (default 'RFC') before 'PATCH'"
+msgstr "thêm <rfc> (mặc định 'RFC') trước 'PATCH'"
 
 msgid "cover-from-description-mode"
 msgstr "cover-from-description-mode"
@@ -7585,7 +7754,7 @@ msgid "don't strip/add [PATCH]"
 msgstr "không loại bỏ/thêm [PATCH]"
 
 msgid "don't output binary diffs"
-msgstr "không kết xuất diff nhị phân"
+msgstr "không xuất diff nhị phân"
 
 msgid "output all-zero hash in From header"
 msgstr "xuất mọi mã băm all-zero trong phần đầu From"
@@ -7722,7 +7891,7 @@ msgid "Generating patches"
 msgstr "Đang tạo các bản vá"
 
 msgid "failed to create output files"
-msgstr "gặp lỗi khi tạo các tập tin kết xuất"
+msgstr "gặp lỗi khi tạo các tập tin đầu ra"
 
 msgid "git cherry [-v] [<upstream> [<head> [<limit>]]]"
 msgstr "git cherry [-v] [<thượng-nguồn> [<đầu> [<giới-hạn>]]]"
@@ -7759,19 +7928,19 @@ msgid "show cached files in the output (default)"
 msgstr "hiển thị các tập tin được nhớ tạm vào đầu ra (mặc định)"
 
 msgid "show deleted files in the output"
-msgstr "hiển thị các tập tin đã xóa trong kết xuất"
+msgstr "hiển thị các tập tin đã xóa trong đầu ra"
 
 msgid "show modified files in the output"
-msgstr "hiển thị các tập tin đã bị sửa đổi ra kết xuất"
+msgstr "hiển thị các tập tin đã bị sửa đổi ra đầu ra"
 
 msgid "show other files in the output"
-msgstr "hiển thị các tập tin khác trong kết xuất"
+msgstr "hiển thị các tập tin khác trong đầu ra"
 
 msgid "show ignored files in the output"
-msgstr "hiển thị các tập tin bị bỏ qua trong kết xuất"
+msgstr "hiển thị các tập tin bị bỏ qua trong đầu ra"
 
 msgid "show staged contents' object name in the output"
-msgstr "hiển thị tên đối tượng của nội dung được đặt lên bệ phóng ra kết xuất"
+msgstr "hiển thị tên đối tượng của nội dung được đặt vào vùng chờ ra đầu ra"
 
 msgid "show files on the filesystem that need to be removed"
 msgstr "hiển thị các tập tin trên hệ thống tập tin mà nó cần được gỡ bỏ"
@@ -7786,13 +7955,13 @@ msgid "don't show empty directories"
 msgstr "không hiển thị thư mục rỗng"
 
 msgid "show unmerged files in the output"
-msgstr "hiển thị các tập tin chưa hòa trộn trong kết xuất"
+msgstr "hiển thị các tập tin chưa hòa trộn trong đầu ra"
 
 msgid "show resolve-undo information"
 msgstr "hiển thị thông tin resolve-undo"
 
 msgid "skip files matching pattern"
-msgstr "bỏ qua những tập tin khớp với một mẫu"
+msgstr "bỏ qua những tập tin khớp với mẫu"
 
 msgid "read exclude patterns from <file>"
 msgstr "đọc mẫu cần loại trừ từ <tập-tin>"
@@ -7804,10 +7973,10 @@ msgid "add the standard git exclusions"
 msgstr "thêm loại trừ tiêu chuẩn kiểu git"
 
 msgid "make the output relative to the project top directory"
-msgstr "làm cho kết xuất liên quan đến thư mục ở mức cao nhất (gốc) của dự án"
+msgstr "cho kết quả là đường dẫn tương đối từ thư mục gốc của dự án"
 
 msgid "if any <file> is not in the index, treat this as an error"
-msgstr "nếu <tập tin> bất kỳ không ở trong chỉ mục, xử lý nó như một lỗi"
+msgstr "nếu có bất kỳ <tập tin> không ở trong chỉ mục, coi nó như một lỗi"
 
 msgid "tree-ish"
 msgstr "tree-ish"
@@ -7833,11 +8002,11 @@ msgstr ""
 "deduplicate, --eol"
 
 msgid ""
-"git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
+"git ls-remote [--branches] [--tags] [--refs] [--upload-pack=<exec>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
 "              [--symref] [<repository> [<patterns>...]]"
 msgstr ""
-"git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
+"git ls-remote [--branches] [--tags] [--refs] [--upload-pack=<exec>]\n"
 "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
 "              [--symref] [<kho> [<mẫu>...]]"
 
@@ -7853,8 +8022,11 @@ msgstr "đường dẫn của git-upload-pack trên máy chủ"
 msgid "limit to tags"
 msgstr "giới hạn tới các thẻ"
 
-msgid "limit to heads"
-msgstr "giới hạn cho các đầu"
+msgid "limit to branches"
+msgstr "giới hạn tới các nhánh"
+
+msgid "deprecated synonym for --branches"
+msgstr "trước đây là đồng nghĩa với --branches"
 
 msgid "do not show peeled tags"
 msgstr "không hiển thị thẻ bị peel (gọt bỏ)"
@@ -8694,7 +8866,7 @@ msgid "Write/edit the notes for the following object:"
 msgstr "Ghi hay sửa ghi chú cho đối tượng sau đây:"
 
 msgid "could not read 'show' output"
-msgstr "không thể đọc kết xuất 'show'"
+msgstr "không thể đọc đầu ra 'show'"
 
 #, c-format
 msgid "failed to finish 'show' for object '%s'"
@@ -9171,7 +9343,7 @@ msgid "use threads when searching for best delta matches"
 msgstr "sử dụng các tuyến trình khi tìm kiếm cho các mẫu khớp delta tốt nhất"
 
 msgid "do not create an empty pack output"
-msgstr "không thể tạo kết xuất gói trống rỗng"
+msgstr "không thể tạo đầu ra gói trống rỗng"
 
 msgid "read revision arguments from standard input"
 msgstr "đọc tham số 'revision' từ stdin"
@@ -9300,7 +9472,7 @@ msgid ""
 "Total %<PRIu32> (delta %<PRIu32>), reused %<PRIu32> (delta %<PRIu32>), pack-"
 "reused %<PRIu32> (from %<PRIuMAX>)"
 msgstr ""
-"Tổng %<PRIu32> (delta %<PRIu32>), dùng lại %<PRIu32> (delta %<PRIu32>),dùng "
+"Tổng %<PRIu32> (delta %<PRIu32>), dùng lại %<PRIu32> (delta %<PRIu32>), dùng "
 "lại pack %<PRIu32> (trong số %<PRIuMAX>)"
 
 msgid ""
@@ -9862,10 +10034,10 @@ msgid "passed to 'git log'"
 msgstr "chuyển cho 'git log'"
 
 msgid "only emit output related to the first range"
-msgstr "chỉ phát ra kết xuất liên quan đến vùng đầu tiên"
+msgstr "chỉ phát ra kết quả liên quan đến vùng đầu tiên"
 
 msgid "only emit output related to the second range"
-msgstr "chỉ phát ra kết xuất liên quan đến vùng thứ hai"
+msgstr "chỉ phát ra kết quả liên quan đến vùng thứ hai"
 
 #, c-format
 msgid "not a revision: '%s'"
@@ -10029,7 +10201,7 @@ msgstr ""
 "không thể tổ hợp các tùy chọn áp dụng với các tùy chọn hòa trộn với nhau"
 
 msgid "--empty=ask is deprecated; use '--empty=stop' instead."
-msgstr "không cho dùng --empty=ask nữa; hãy thay thế bằng '--empty=stop'."
+msgstr "không còn dùng --empty=ask nữa; hãy thay thế bằng '--empty=stop'."
 
 #, c-format
 msgid ""
@@ -10499,6 +10671,22 @@ msgstr "chưa chỉ ra reflog để xóa"
 msgid "invalid ref format: %s"
 msgstr "định dạng tham chiếu không hợp lệ: %s"
 
+msgid "git refs migrate --ref-format=<format> [--dry-run]"
+msgstr "git refs migrate --ref-format=<định dạng> [--dry-run]"
+
+msgid "specify the reference format to convert to"
+msgstr "chỉ định định dạng tham chiếu để chuyển đổi sang"
+
+msgid "perform a non-destructive dry-run"
+msgstr "chạy thử mà không thay đổi gì"
+
+msgid "missing --ref-format=<format>"
+msgstr "thiếu --ref-format=<định dạng>"
+
+#, c-format
+msgid "repository already uses '%s' format"
+msgstr "kho đã dùng định dạng '%s'"
+
 msgid ""
 "git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--"
 "mirror=<fetch|push>] <name> <url>"
@@ -10778,9 +10966,6 @@ msgstr "* máy chủ %s"
 msgid "  Fetch URL: %s"
 msgstr "  URL để lấy về: %s"
 
-msgid "(no URL)"
-msgstr "(không có URL)"
-
 #. TRANSLATORS: the colon ':' should align
 #. with the one in " Fetch URL: %s"
 #. translation.
@@ -10788,6 +10973,9 @@ msgstr "(không có URL)"
 #, c-format
 msgid "  Push  URL: %s"
 msgstr "  URL để đẩy lên: %s"
+
+msgid "(no URL)"
+msgstr "(không có URL)"
 
 #, c-format
 msgid "  HEAD branch: %s"
@@ -10890,10 +11078,6 @@ msgstr "truy vấn đẩy URL thay vì lấy"
 
 msgid "return all URLs"
 msgstr "trả về mọi URL"
-
-#, c-format
-msgid "no URLs configured for remote '%s'"
-msgstr "không có URL nào được cấu hình cho nhánh '%s'"
 
 msgid "manipulate push URLs"
 msgstr "đẩy các 'URL' bằng tay"
@@ -11260,7 +11444,7 @@ msgid "--convert-graft-file takes no argument"
 msgstr "--convert-graft-file không nhận đối số"
 
 msgid "only one pattern can be given with -l"
-msgstr "chỉ một mẫu được chỉ ra với tùy chọn -l"
+msgstr "chỉ được chỉ định một mẫu cùng với tùy chọn -l"
 
 msgid "need some commits to replay"
 msgstr "cần các chuyển giao để phát lại"
@@ -11422,7 +11606,7 @@ msgstr "Gặp lỗi khi phân giải '%s' như là một cây (tree) hợp lệ.
 
 msgid "--mixed with paths is deprecated; use 'git reset -- <paths>' instead."
 msgstr ""
-"không cho dùng --mixed với các đường dẫn nữa; hãy thay thế bằng lệnh 'git "
+"không còn dùng --mixed với các đường dẫn nữa; hãy thay thế bằng lệnh 'git "
 "reset -- </các/đường/dẫn>'."
 
 #, c-format
@@ -11434,7 +11618,7 @@ msgid "%s reset is not allowed in a bare repository"
 msgstr "%s reset không được phép trên kho chứa bare"
 
 msgid "Unstaged changes after reset:"
-msgstr "Những thay đổi được đưa ra khỏi bệ phóng sau khi reset:"
+msgstr "Những thay đổi được đưa ra khỏi vùng chờ sau khi reset:"
 
 #, c-format
 msgid ""
@@ -11477,7 +11661,7 @@ msgid "stop parsing after the first non-option argument"
 msgstr "dừng đọc sau đối số đầu tiên không có tùy chọn"
 
 msgid "output in stuck long form"
-msgstr "kết xuất trong định dạng gậy dài"
+msgstr "kết quả có định dạng dài"
 
 msgid "premature end of input"
 msgstr "đầu vào kết thúc bất thường"
@@ -11646,7 +11830,7 @@ msgid_plural ""
 "the following files have staged content different from both the\n"
 "file and the HEAD:"
 msgstr[0] ""
-"các tập tin sau đây có khác biệt nội dung đã đưa lên bệ phóng\n"
+"các tập tin sau đây có khác biệt nội dung đã đưa vào vùng chờ\n"
 "từ cả tập tin và cả HEAD:"
 
 msgid ""
@@ -11751,7 +11935,7 @@ msgid "group by committer rather than author"
 msgstr "nhóm theo người chuyển giao thay vì tác giả"
 
 msgid "sort output according to the number of commits per author"
-msgstr "sắp xếp kết xuất tuân theo số lượng chuyển giao trên mỗi tác giả"
+msgstr "sắp xếp kết quả theo số lượng chuyển giao trên mỗi tác giả"
 
 msgid "suppress commit descriptions, only provides commit count"
 msgstr "chặn mọi mô tả lần chuyển giao, chỉ đưa ra số lượng lần chuyển giao"
@@ -11883,12 +12067,12 @@ msgstr "Không hiểu thuật toán băm dữ liệu"
 
 msgid ""
 "git show-ref [--head] [-d | --dereference]\n"
-"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
-"             [--heads] [--] [<pattern>...]"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--branches] [--tags]\n"
+"             [--] [<pattern>...]"
 msgstr ""
 "git show-ref [--head] [-d | --dereference]\n"
-"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags]\n"
-"             [--heads] [--] [<mẫu>...]"
+"             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--branches] [--tags]\n"
+"             [--] [<mẫu>...]"
 
 msgid ""
 "git show-ref --verify [-q | --quiet] [-d | --dereference]\n"
@@ -11911,10 +12095,10 @@ msgstr "tham chiếu không tồn tại"
 msgid "failed to look up reference"
 msgstr "gặp lỗi khi tìm tham chiếu"
 
-msgid "only show tags (can be combined with heads)"
-msgstr "chỉ hiển thị thẻ (có thể tổ hợp cùng với đầu)"
+msgid "only show tags (can be combined with branches)"
+msgstr "chỉ hiển thị thẻ (có thể tổ hợp cùng với nhánh)"
 
-msgid "only show heads (can be combined with tags)"
+msgid "only show branches (can be combined with tags)"
 msgstr "chỉ hiển thị đầu (có thể tổ hợp cùng với thẻ)"
 
 msgid "check for reference existence without resolving"
@@ -12229,7 +12413,7 @@ msgid "\"git stash store\" requires one <commit> argument"
 msgstr "\"git stash store\" cần một đối số <lần chuyển giao>"
 
 msgid "No staged changes"
-msgstr "Không có thay đổi đã được đưa lên bệ phóng"
+msgstr "Không có thay đổi đã được đưa vào vùng chờ"
 
 msgid "No changes selected"
 msgstr "Chưa có thay đổi nào được chọn"
@@ -12247,7 +12431,7 @@ msgid "Cannot save the current worktree state"
 msgstr "Không thể ghi lại trạng thái cây-làm-việc hiện hành"
 
 msgid "Cannot save the current staged state"
-msgstr "Không thể ghi lại trạng thái bệ phóng hiện hành"
+msgstr "Không thể ghi lại trạng thái vùng chờ hiện hành"
 
 msgid "Cannot record working tree state"
 msgstr "Không thể ghi lại trạng thái cây làm việc hiện hành"
@@ -12281,7 +12465,7 @@ msgid "keep index"
 msgstr "giữ nguyên chỉ mục"
 
 msgid "stash staged changes only"
-msgstr "chỉ tạm cất đi các thay đổi đã đưa lên bệ phóng"
+msgstr "chỉ tạm cất đi các thay đổi đã đưa vào vùng chờ"
 
 msgid "stash in patch mode"
 msgstr "cất đi ở chế độ vá"
@@ -12344,7 +12528,7 @@ msgstr ""
 "."
 
 msgid "suppress output of entering each submodule command"
-msgstr "chặn kết xuất của từng lệnh mô-đun-con"
+msgstr "chặn đầu ra của từng lệnh mô-đun-con"
 
 msgid "recurse into nested submodules"
 msgstr "đệ quy vào trong mô-đun-con lồng nhau"
@@ -12369,7 +12553,7 @@ msgid "Failed to register update mode for submodule path '%s'"
 msgstr "Gặp lỗi khi đăng ký chế độ cập nhật cho đường dẫn mô-đun-con '%s'"
 
 msgid "suppress output for initializing a submodule"
-msgstr "chặn kết xuất của khởi tạo một mô-đun-con"
+msgstr "chặn đầu ra của khởi tạo một mô-đun-con"
 
 msgid "git submodule init [<options>] [<path>]"
 msgstr "git submodule init [<các tùy chọn>] [</đường/dẫn>]"
@@ -12389,7 +12573,7 @@ msgid "failed to recurse into submodule '%s'"
 msgstr "gặp lỗi khi đệ quy vào trong mô-đun-con '%s'"
 
 msgid "suppress submodule status output"
-msgstr "chặn kết xuất về tình trạng mô-đun-con"
+msgstr "chặn đầu ra về tình trạng mô-đun-con"
 
 msgid ""
 "use commit stored in the index instead of the one stored in the submodule "
@@ -12458,7 +12642,7 @@ msgid "failed to update remote for submodule '%s'"
 msgstr "gặp lỗi khi cập nhật cho mô-đun-con '%s'"
 
 msgid "suppress output of synchronizing submodule url"
-msgstr "chặn kết xuất của url mô-đun-con đồng bộ"
+msgstr "chặn đầu ra của url mô-đun-con đồng bộ"
 
 msgid "git submodule sync [--quiet] [--recursive] [<path>]"
 msgstr "git submodule sync [--quiet] [--recursive] [</đường/dẫn>]"
@@ -12545,12 +12729,12 @@ msgid "refusing to create/use '%s' in another submodule's git dir"
 msgstr "từ chối tạo/dùng '%s' trong một thư mục git của mô đun con"
 
 #, c-format
-msgid "clone of '%s' into submodule path '%s' failed"
-msgstr "việc sao '%s' vào đường dẫn mô-đun-con '%s' gặp lỗi"
-
-#, c-format
 msgid "directory not empty: '%s'"
 msgstr "thư mục không trống: '%s'"
+
+#, c-format
+msgid "clone of '%s' into submodule path '%s' failed"
+msgstr "việc sao '%s' vào đường dẫn mô-đun-con '%s' gặp lỗi"
 
 #, c-format
 msgid "could not get submodule directory for '%s'"
@@ -12902,7 +13086,7 @@ msgid "delete symbolic ref"
 msgstr "xóa tham chiếu mềm"
 
 msgid "shorten ref output"
-msgstr "làm ngắn kết xuất ref (tham chiếu)"
+msgstr "làm ngắn kết quả ref (tham chiếu)"
 
 msgid "recursively dereference (default)"
 msgstr "chế độ giải tham chiếu đệ quy (mặc định)"
@@ -12915,9 +13099,11 @@ msgstr "lý do cập nhật"
 
 msgid ""
 "git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] [-e]\n"
+"        [(--trailer <token>[(=|:)<value>])...]\n"
 "        <tagname> [<commit> | <object>]"
 msgstr ""
 "git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <tập-tin>] [-e]\n"
+"        [(--trailer <token>[(=|:)<giá-trị>])...]\n"
 "        <tên-thẻ> [<lần chuyển giao> | <đối tượng> ]"
 
 msgid "git tag -d <tagname>..."
@@ -13353,7 +13539,7 @@ msgid "print commit contents"
 msgstr "hiển thị nội dung của lần chuyển giao"
 
 msgid "print raw gpg status output"
-msgstr "in kết xuất trạng thái gpg dạng thô"
+msgstr "in đầu ra trạng thái gpg dạng thô"
 
 msgid "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."
 msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] [--] <gói>.idx..."
@@ -13764,9 +13950,6 @@ msgstr "phần đầu không được thừa nhận: %s%s (%d)"
 msgid "Repository lacks these prerequisite commits:"
 msgstr "Kho chứa thiếu những lần chuyển giao tiên quyết này:"
 
-msgid "need a repository to verify a bundle"
-msgstr "cần một kho chứa để thẩm tra một bundle"
-
 msgid ""
 "some prerequisite commits exist in the object store, but are not connected "
 "to the repository's history"
@@ -14029,7 +14212,7 @@ msgstr ""
 "Rút trích mã số lần chuyển giao từ một kho nén đã được tạo bởi git-archive"
 
 msgid "Print lines matching a pattern"
-msgstr "In ra những dòng khớp với một mẫu"
+msgstr "In ra những dòng khớp với mẫu"
 
 msgid "A portable graphical interface to Git"
 msgstr "Một giao diện đồ họa khả chuyển cho Git"
@@ -14174,6 +14357,9 @@ msgstr "Nhận cái mà được đẩy vào trong kho"
 msgid "Manage reflog information"
 msgstr "Quản lý thông tin reflog"
 
+msgid "Low-level access to refs"
+msgstr "Truy cập tới tham chiếu ở mức thấp"
+
 msgid "Manage set of tracked repositories"
 msgstr "Quản lý tập hợp các kho chứa đã được theo dõi"
 
@@ -14219,16 +14405,16 @@ msgid "Push objects over Git protocol to another repository"
 msgstr "Đẩy các đối tượng lên thông qua giao thức Git đến kho chứa khác"
 
 msgid "Git's i18n setup code for shell scripts"
-msgstr "Mã cài đặt quốc tế hóa của Git cho văn lệnh hệ vỏ"
+msgstr "Mã cài đặt quốc tế hóa của Git cho shell script"
 
 msgid "Common Git shell script setup code"
-msgstr "Mã cài đặt văn lệnh hệ vỏ Git chung"
+msgstr "Mã cài đặt shell script Git chung"
 
 msgid "Restricted login shell for Git-only SSH access"
-msgstr "Hệ vỏ đăng nhập có hạn chế cho truy cập SSH chỉ-Git"
+msgstr "Shell đăng nhập có hạn chế cho truy cập SSH chỉ-Git"
 
 msgid "Summarize 'git log' output"
-msgstr "Kết xuất 'git log' dạng tóm tắt"
+msgstr "Tóm tắt kết quả 'git log'"
 
 msgid "Show various types of objects"
 msgstr "Hiển thị các kiểu khác nhau của các đối tượng"
@@ -14248,7 +14434,7 @@ msgstr ""
 "dõi"
 
 msgid "Add file contents to the staging area"
-msgstr "Thêm nội dung tập tin vào vùng bệ phóng"
+msgstr "Thêm nội dung tập tin vào vùng vùng chờ"
 
 msgid "Stash the changes in a dirty working directory away"
 msgstr "Tạm cất đi các thay đổi trong một thư mục làm việc bẩn"
@@ -14266,7 +14452,7 @@ msgid "Bidirectional operation between a Subversion repository and Git"
 msgstr "Thao tác hai hướng giữ hai kho Subversion và Git"
 
 msgid "Switch branches"
-msgstr "Các nhánh chuyển"
+msgstr "Chuyển sang nhánh khác"
 
 msgid "Read, modify and delete symbolic refs"
 msgstr "Đọc, sửa và xóa tham chiếu mềm"
@@ -14335,7 +14521,7 @@ msgid "Git for CVS users"
 msgstr "Git dành cho những người dùng CVS"
 
 msgid "Tweaking diff output"
-msgstr "Chỉnh kết xuất diff"
+msgstr "Tinh chỉnh đầu ra diff"
 
 msgid "A useful minimum set of commands for Everyday Git"
 msgstr "Tập hợp lệnh hữu dụng tối thiểu để dùng Git hàng ngày"
@@ -14478,6 +14664,14 @@ msgstr "đồ-thị-chuyển-giao thiếu chunk OID lookup cần thiết hoặc 
 msgid "commit-graph required commit data chunk missing or corrupted"
 msgstr "đồ-thị-chuyển-giao thiếu chunk commit data cần thiết hoặc bị hỏng"
 
+#, c-format
+msgid ""
+"disabling Bloom filters for commit-graph layer '%s' due to incompatible "
+"settings"
+msgstr ""
+"vô hiệu hoá bộ lọc Bloom cho đồ thị chuyển giao '%s' do tuỳ chọn không tương "
+"thích"
+
 msgid "commit-graph has no base graphs chunk"
 msgstr "đồ thị chuyển giao không có chunk đồ thị cơ sở"
 
@@ -14604,8 +14798,15 @@ msgstr "Đang hòa trộn đồ-thị-chuyển-giao"
 
 msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
 msgstr ""
-"cố gắng để ghi một đồ thị các lần chuyển giao, nhưng 'core.commitGraph' bị "
-"vô hiệu hóa"
+"đang thử ghi đồ thị chuyển giao, nhưng 'core.commitGraph' bị vô hiệu hóa"
+
+#, c-format
+msgid ""
+"attempting to write a commit-graph, but 'commitGraph.changedPathsVersion' "
+"(%d) is not supported"
+msgstr ""
+"đang thử ghi đồ thị chuyển giao, nhưng 'commitGraph.changedPathsVersion' "
+"(%d) không được hỗ trợ"
 
 msgid "too many commits to write graph"
 msgstr "có quá nhiều lần chuyển giao để ghi đồ thị"
@@ -15765,7 +15966,7 @@ msgid "bad --word-diff argument: %s"
 msgstr "đối số --word-diff sai: %s"
 
 msgid "Diff output format options"
-msgstr "Các tùy chọn định dạng khi xuất các khác biệt"
+msgstr "Các tùy chọn định dạng kết quả khác biệt"
 
 msgid "generate patch"
 msgstr "tạo bản vá"
@@ -15789,14 +15990,14 @@ msgid "machine friendly --stat"
 msgstr "--stat thuận tiện cho máy đọc"
 
 msgid "output only the last line of --stat"
-msgstr "chỉ xuất những dòng cuối của --stat"
+msgstr "chỉ in ra những dòng cuối của --stat"
 
 msgid "<param1>,<param2>..."
 msgstr "<tham_số_1>,<tham_số_2>..."
 
 msgid ""
 "output the distribution of relative amount of changes for each sub-directory"
-msgstr "đầu ra phân phối của số lượng thay đổi tương đối cho mỗi thư mục con"
+msgstr "in ra phân phối số lượng thay đổi tương đối cho mỗi thư mục con"
 
 msgid "synonym for --dirstat=cumulative"
 msgstr "đồng nghĩa với --dirstat=cumulative"
@@ -15845,7 +16046,7 @@ msgid "generate compact summary in diffstat"
 msgstr "tạo tổng hợp xúc tích trong diffstat"
 
 msgid "output a binary diff that can be applied"
-msgstr "xuất ra một khác biệt dạng nhị phân cái mà có thể được áp dụng"
+msgstr "in ra một khác biệt dạng nhị phân có thể được áp dụng"
 
 msgid "show full pre- and post-image object names on the \"index\" lines"
 msgstr ""
@@ -15882,7 +16083,7 @@ msgid "show the given destination prefix instead of \"b/\""
 msgstr "hiển thị tiền tố đích đã cho thay cho \"b/\""
 
 msgid "prepend an additional prefix to every line of output"
-msgstr "treo vào trước một tiền tố bổ sung cho mỗi dòng kết xuất"
+msgstr "thêm vào trước một tiền tố bổ sung cho mỗi dòng đầu ra"
 
 msgid "do not show any source or destination prefix"
 msgstr "đừng hiển thị bất kỳ tiền tố nguồn hay đích"
@@ -16023,7 +16224,7 @@ msgid "exit with 1 if there were differences, 0 otherwise"
 msgstr "thoát với mã 1 nếu không có khác biệt gì, 0 nếu ngược lại"
 
 msgid "disable all output of the program"
-msgstr "tắt mọi kết xuất của chương trình"
+msgstr "tắt mọi đầu ra của chương trình"
 
 msgid "allow an external diff helper to be executed"
 msgstr "cho phép mộ helper xuất khác biệt ở bên ngoài được phép thực thi"
@@ -16075,7 +16276,7 @@ msgid "treat <string> in -S as extended POSIX regular expression"
 msgstr "coi <chuỗi> trong -S là biểu thức chính quy POSIX mở rộng"
 
 msgid "control the order in which files appear in the output"
-msgstr "điều khiển thứ tự xuất hiện các tập tin trong đầu ra"
+msgstr "điều khiển thứ tự xuất hiện các tập tin trong kết quả"
 
 msgid "<path>"
 msgstr "<đường-dẫn>"
@@ -16084,7 +16285,7 @@ msgid "show the change in the specified path first"
 msgstr "hiển thị các thay đổi trong đường dẫn đã cho ở đầu"
 
 msgid "skip the output to the specified path"
-msgstr "bỏ qua đầu ra với đường dẫn đã cho"
+msgstr "bỏ qua kết quả với đường dẫn đã cho"
 
 msgid "<object-id>"
 msgstr "<mã-số-đối-tượng>"
@@ -16284,7 +16485,7 @@ msgid "fetch-pack: unable to fork off %s"
 msgstr "fetch-pack: không thể rẽ nhánh %s"
 
 msgid "fetch-pack: invalid index-pack output"
-msgstr "fetch-pack: kết xuất index-pack không hợp lệ"
+msgstr "fetch-pack: đầu ra index-pack không hợp lệ"
 
 #, c-format
 msgid "%s failed"
@@ -16441,19 +16642,23 @@ msgstr ""
 msgid ""
 "git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n"
 "           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n"
-"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--"
-"bare]\n"
-"           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]\n"
-"           [--config-env=<name>=<envvar>] <command> [<args>]"
+"           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-"
+"lazy-fetch]\n"
+"           [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]\n"
+"           [--work-tree=<path>] [--namespace=<name>] [--config-"
+"env=<name>=<envvar>]\n"
+"           <command> [<args>]"
 msgstr ""
 "git [-v | --version] [-h | --help] [-C </đường/dẫn/>] [-c <tên>=<giá trị>]\n"
 "           [--exec-path[=</đường/dẫn/>]] [--html-path] [--man-path] [--info-"
 "path]\n"
-"           [-p | --paginate | -P --no-pager] [--no-replace-objects] [--"
-"bare]\n"
-"           [--git-dir=</đường/dẫn/>] [--work-tree=</đường/dẫn/>] [--"
-"namespace=<tên>]\n"
-"           [--config-env=<tên>=<envvar>] <lệnh> [<các tham số>]"
+"           [-p | --paginate | -P --no-pager] [--no-replace-objects] [--no-"
+"lazy-fetch\n"
+"           [--no-optional-locks] [--no-advice] [--bare] [--git-dir=</đường/"
+"dẫn/>]\n"
+"           [--work-tree=</đường/dẫn/>] [--namespace=<tên>] [--config-"
+"env=<tên>=<envvar>]\n"
+"           <lệnh> [<các tham số>]"
 
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
@@ -16780,15 +16985,15 @@ msgid ""
 "The '%s' hook was ignored because it's not set as executable.\n"
 "You can disable this warning with `git config advice.ignoredHook false`."
 msgstr ""
-"Móc '%s' bị bỏ qua bởi vì nó không thể đặt là thực thi được.\n"
+"Móc '%s' bị bỏ qua bởi vì nó không có cờ thực thi được.\n"
 "Bạn có thể tắt cảnh báo này bằng 'git config advice.ignoredHook false'."
+
+msgid "not a git repository"
+msgstr "không phải là kho git"
 
 #, c-format
 msgid "argument to --packfile must be a valid hash (got '%s')"
 msgstr "tham số cho --packfile phải là một giá trị băm hợp lệ (có '%s')"
-
-msgid "not a git repository"
-msgstr "không phải là kho git"
 
 #, c-format
 msgid "negative value for http.postBuffer; defaulting to %d"
@@ -16799,6 +17004,9 @@ msgstr "Điều khiển giao quyền không được hỗ trợ với cURL < 7.2
 
 msgid "Public key pinning not supported with cURL < 7.39.0"
 msgstr "Chốt khóa công không được hỗ trợ với cURL < 7.39.0"
+
+msgid "Unknown value for http.proactiveauth"
+msgstr "không hiểu giá trị cho http.proactiveauth"
 
 msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
 msgstr "CURLSSLOPT_NO_REVOKE không được hỗ trợ với cURL < 7.44.0"
@@ -16818,6 +17026,12 @@ msgstr ""
 #, c-format
 msgid "Could not set SSL backend to '%s': already set"
 msgstr "Không thể đặt ứng dụng chạy sau SSL cho '%s': đã đặt rồi"
+
+msgid "refusing to read cookies from http.cookiefile '-'"
+msgstr "từ chối đọc cookie từ http.cookiefile '-'"
+
+msgid "ignoring http.savecookies for empty http.cookiefile"
+msgstr "bỏ qua tuỳ chọn http.savecookies vì http.cookiefile để trống"
 
 #, c-format
 msgid ""
@@ -16992,8 +17206,8 @@ msgid "Failed to merge submodule %s (commits not present)"
 msgstr "Gặp lỗi khi hòa trộn mô-đun-con %s (lần chuyển giao không hiện diện)"
 
 #, c-format
-msgid "Failed to merge submodule %s (repository corrupt)"
-msgstr "Gặp lỗi khi hòa trộn mô-đun-con %s (kho chứa hỏng)"
+msgid "error: failed to merge submodule %s (repository corrupt)"
+msgstr "lỗi: gặp lỗi khi hòa trộn mô-đun-con %s (kho chứa hỏng)"
 
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
@@ -17022,12 +17236,13 @@ msgstr ""
 "Gặp lỗi khi hòa trộn mô-đun-con %s, nhưng có nhiều cách giải quyết:\n"
 "%s"
 
-msgid "failed to execute internal merge"
-msgstr "Gặp lỗi khi thực hiện trộn nội bộ"
+#, c-format
+msgid "error: failed to execute internal merge for %s"
+msgstr "lỗi: Gặp lỗi khi thực hiện trộn nội bộ %s"
 
 #, c-format
-msgid "unable to add %s to database"
-msgstr "Không thể thêm %s vào cơ sở dữ liệu"
+msgid "error: unable to add %s to database"
+msgstr "lỗi: không thể thêm %s vào cơ sở dữ liệu"
 
 #, c-format
 msgid "Auto-merging %s"
@@ -17120,20 +17335,20 @@ msgstr ""
 "XUNG ĐỘT (đổi-tên/xóa): Đổi tên %s->%s trong %s, nhưng lại bị xóa trong %s."
 
 #, c-format
-msgid "cannot read object %s"
-msgstr "không thể đọc đối tượng %s"
+msgid "error: cannot read object %s"
+msgstr "lỗi: không thể đọc đối tượng %s"
 
 #, c-format
-msgid "object %s is not a blob"
-msgstr "đối tượng %s không phải là một blob"
+msgid "error: object %s is not a blob"
+msgstr "lỗi: đối tượng %s không phải là một blob"
 
 #, c-format
 msgid ""
 "CONFLICT (file/directory): directory in the way of %s from %s; moving it to "
 "%s instead."
 msgstr ""
-"XUNG ĐỘT (tập tin/thư mục): thư mục theo cách của %s từ %s; thay vào đó, di "
-"chuyển nó đến %s."
+"XUNG ĐỘT (tập tin/thư mục): thư mục khác nằm trên %s từ %s; thay vào đó sẽ "
+"di chuyển nó đến %s."
 
 #, c-format
 msgid ""
@@ -17141,15 +17356,15 @@ msgid ""
 "of them so each can be recorded somewhere."
 msgstr ""
 "XUNG ĐỘT (các kiểu riêng biệt): %s có các kiểu khác nhau ở mỗi bên; đã đổi "
-"tên cả hai trong số chúng để mỗi cái có thể được ghi lại ở đâu đó."
+"tên cả hai để có thể ghi lại cả hai."
 
 #, c-format
 msgid ""
 "CONFLICT (distinct types): %s had different types on each side; renamed one "
 "of them so each can be recorded somewhere."
 msgstr ""
-"XUNG ĐỘT (các kiểu riêng biệt): %s có các loại khác nhau ở mỗi bên; đã đổi "
-"tên một trong số chúng để mỗi cái có thể được ghi lại ở đâu đó."
+"XUNG ĐỘT (các kiểu riêng biệt): %s có các kiểu khác nhau ở mỗi bên; đã đổi "
+"tên một trong số chúng để có thể ghi lại cả hai."
 
 msgid "content"
 msgstr "nội dung"
@@ -17262,6 +17477,10 @@ msgid "do not know what to do with %06o %s '%s'"
 msgstr "không hiểu phải làm gì với %06o %s '%s'"
 
 #, c-format
+msgid "Failed to merge submodule %s (repository corrupt)"
+msgstr "Gặp lỗi khi hòa trộn mô-đun-con %s (kho chứa hỏng)"
+
+#, c-format
 msgid "Fast-forwarding submodule %s to the following commit:"
 msgstr "Chuyển-tiếp-nhanh mô-đun-con '%s' đến lần chuyển giao sau đây:"
 
@@ -17301,6 +17520,13 @@ msgstr ""
 #, c-format
 msgid "Failed to merge submodule %s (multiple merges found)"
 msgstr "Gặp lỗi khi hòa trộn mô-đun-con '%s' (thấy nhiều hòa trộn đa trùng)"
+
+msgid "failed to execute internal merge"
+msgstr "Gặp lỗi khi thực hiện trộn nội bộ"
+
+#, c-format
+msgid "unable to add %s to database"
+msgstr "Không thể thêm %s vào cơ sở dữ liệu"
 
 #, c-format
 msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
@@ -17405,6 +17631,14 @@ msgstr ""
 "XUNG ĐỘT (đổi-tên/đổi-tên): Đổi tên thư mục %s->%s trong %s. Đổi tên thư mục "
 "%s->%s trong %s"
 
+#, c-format
+msgid "cannot read object %s"
+msgstr "không thể đọc đối tượng %s"
+
+#, c-format
+msgid "object %s is not a blob"
+msgstr "đối tượng %s không phải là một blob"
+
 msgid "modify"
 msgstr "sửa đổi"
 
@@ -17488,15 +17722,15 @@ msgstr "không hiểu cú pháp dòng: %s"
 msgid "malformed line: %s"
 msgstr "dòng sai quy cách: %s"
 
-msgid "ignoring existing multi-pack-index; checksum mismatch"
-msgstr "bỏ qua multi-pack-index sẵn có; tổng kiểm không khớp"
-
 msgid "could not load pack"
 msgstr "không thể tải gói"
 
 #, c-format
 msgid "could not open index for %s"
 msgstr "không thể mở chỉ mục cho %s"
+
+msgid "ignoring existing multi-pack-index; checksum mismatch"
+msgstr "bỏ qua multi-pack-index sẵn có; tổng kiểm không khớp"
 
 msgid "Adding packfiles to multi-pack-index"
 msgstr "Đang thêm tập tin gói từ multi-pack-index"
@@ -18103,6 +18337,17 @@ msgstr "không thể đọc đối tượng: '%s'"
 msgid "hash mismatch %s"
 msgstr "mã băm không khớp %s"
 
+#, c-format
+msgid "duplicate entry when writing bitmap index: %s"
+msgstr "đối tượng trùng lặp khi ghi chỉ mục bitmap: %s"
+
+#, c-format
+msgid "attempted to store non-selected commit: '%s'"
+msgstr "đã cố ghi lần chuyển giao không được chọn: '%s'"
+
+msgid "too many pseudo-merges"
+msgstr "có quá nhiều lần pseudo-merge"
+
 msgid "trying to write commit not in index"
 msgstr "đã thử ghi lần chuyển giao nằm ngoài chỉ mục"
 
@@ -18124,6 +18369,17 @@ msgstr "tập tin chỉ mục bitmap bị hỏng (quá ngắn để chứa bộ 
 
 msgid "corrupted bitmap index file (too short to fit lookup table)"
 msgstr "tập tin chỉ mục bitmap bị hỏng (quá ngắn để chứa bảng tìm kiếm)"
+
+msgid ""
+"corrupted bitmap index file (too short to fit pseudo-merge table header)"
+msgstr ""
+"tập tin chỉ mục bitmap bị hỏng (quá ngắn để chứa đề mục bảng pseudo-merge)"
+
+msgid "corrupted bitmap index file (too short to fit pseudo-merge table)"
+msgstr "tập tin chỉ mục bitmap bị hỏng (quá ngắn để chứa bảng pseudo-merge)"
+
+msgid "corrupted bitmap index file, pseudo-merge table too short"
+msgstr "tập tin chỉ mục bitmap bị hỏng, bảng pseudo-merge quá ngắn"
 
 #, c-format
 msgid "duplicate entry in bitmap index: '%s'"
@@ -18213,6 +18469,10 @@ msgstr "lần chuyển giao '%s' không có chỉ mục bitmap"
 
 msgid "mismatch in bitmap results"
 msgstr "kết quả bitmap không khớp"
+
+#, c-format
+msgid "pseudo-merge index out of range (%<PRIu32> >= %<PRIuMAX>)"
+msgstr "chỉ mục pseudo-merge vượt ngoài phạm vi (%<PRIu32> >= %<PRIuMAX>)"
 
 #, c-format
 msgid "could not find '%s' in pack '%s' at offset %<PRIuMAX>"
@@ -18579,6 +18839,9 @@ msgstr "không thể tạo tiến trình lstat: %s"
 msgid "unable to parse --pretty format"
 msgstr "không thể đọc định dạng --pretty"
 
+msgid "lazy fetching disabled; some objects may not be available"
+msgstr "vô hiệu lazy fetching; một số đối tượng sẽ không có sẵn"
+
 msgid "promisor-remote: unable to fork off fetch subprocess"
 msgstr "promisor-remote: không thể rẽ nhánh tuyến trình con fetch"
 
@@ -18601,6 +18864,62 @@ msgstr "object-info: cần đẩy dữ liệu lên đĩa sau các tham số"
 
 msgid "Removing duplicate objects"
 msgstr "Đang gỡ các đối tượng trùng lặp"
+
+#, c-format
+msgid "failed to load pseudo-merge regex for %s: '%s'"
+msgstr "gặp lỗi khi đọc biểu thức chính quy pseudo-merge cho %s: '%s'"
+
+#, c-format
+msgid "%s must be non-negative, using default"
+msgstr "%s phải không âm, dùng mặc định thay thế"
+
+#, c-format
+msgid "%s must be between 0 and 1, using default"
+msgstr "%s nên giữa 0 và 1, dùng mặc định thay thế"
+
+#, c-format
+msgid "%s must be positive, using default"
+msgstr "%s phải dương, dùng mặc định thay thế"
+
+#, c-format
+msgid "pseudo-merge group '%s' missing required pattern"
+msgstr "nhóm pseudo-merge '%s' thiếu mẫu bắt buộc"
+
+#, c-format
+msgid "pseudo-merge group '%s' has unstable threshold before stable one"
+msgstr "nhóm pseudo-merge '%s' có unstable threshold trước stable"
+
+#, c-format
+msgid ""
+"pseudo-merge regex from config has too many capture groups (max=%<PRIuMAX>)"
+msgstr ""
+"biểu thức chính quy pseudo-merge từ cấu hình có quá nhiều nhóm chọn (tối "
+"đa=%<PRIuMAX>)"
+
+#, c-format
+msgid "extended pseudo-merge read out-of-bounds (%<PRIuMAX> >= %<PRIuMAX>)"
+msgstr "extended pseudo-merge đọc ngoài biên (%<PRIuMAX> >= %<PRIuMAX>)"
+
+#, c-format
+msgid "extended pseudo-merge entry is too short (%<PRIuMAX> >= %<PRIuMAX>)"
+msgstr "mục extended pseudo-merge quá ngắn (%<PRIuMAX> >= %<PRIuMAX>)"
+
+#, c-format
+msgid "could not find pseudo-merge for commit %s at offset %<PRIuMAX>"
+msgstr ""
+"không thể tìm pseudo-merge cho lần chuyển giao %s tại vị trí %<PRIuMAX>"
+
+#, c-format
+msgid "extended pseudo-merge lookup out-of-bounds (%<PRIu32> >= %<PRIu32>)"
+msgstr "extended pseudo-merge lookup vượt ngoài biên (%<PRIu32> >= %<PRIu32>)"
+
+#, c-format
+msgid "out-of-bounds read: (%<PRIuMAX> >= %<PRIuMAX>)"
+msgstr "đọc ngoài biên (%<PRIuMAX> >= %<PRIuMAX>)"
+
+#, c-format
+msgid "could not read extended pseudo-merge table for commit %s"
+msgstr "không thể đọc bảng extended pseudo-merge cho lần chuyển giao %s"
 
 msgid "could not start `log`"
 msgstr "không thể khởi chạy `log`"
@@ -18844,7 +19163,7 @@ msgstr ""
 "                   chỉ giữ ghi chú của lần chuyển giao này; -c giống như -C "
 "nhưng\n"
 "                   mở trình biên soạn\n"
-"x, exec <commit> = chạy lệnh (phần còn lại của dòng) dùng hệ vỏ\n"
+"x, exec <commit> = chạy lệnh (phần còn lại của dòng) dùng shell\n"
 "b, break = dừng tại đây (tiếp tục cải tổ sau này bằng 'git rebase --"
 "continue')\n"
 "d, drop <commit> = xóa bỏ lần chuyển giao\n"
@@ -19206,9 +19525,16 @@ msgstr "nhật ký cho tham chiếu %s kết thúc bất ngờ trên %s"
 msgid "log for %s is empty"
 msgstr "nhật ký cho %s trống rỗng"
 
+msgid "refusing to force and skip creation of reflog"
+msgstr "từ chối bỏ qua việc tạo log tham chiếu"
+
 #, c-format
 msgid "refusing to update ref with bad name '%s'"
 msgstr "từ chối cập nhật tham chiếu với tên sai '%s'"
+
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "từ chối cập nhật tham chiếu ảo '%s'"
 
 #, c-format
 msgid "update_ref failed for ref '%s': %s"
@@ -19239,6 +19565,25 @@ msgstr "không thể xóa bỏ tham chiếu %s: %s"
 #, c-format
 msgid "could not delete references: %s"
 msgstr "không thể xóa bỏ tham chiếu: %s"
+
+#, c-format
+msgid "Finished dry-run migration of refs, the result can be found at '%s'\n"
+msgstr "Đã hoàn thành thử chạy di cư tham chiếu, kết quả tại '%s'\n"
+
+#, c-format
+msgid "could not remove temporary migration directory '%s'"
+msgstr "không thể xoá thư mục tạm thời '%s'"
+
+#, c-format
+msgid "migrated refs can be found at '%s'"
+msgstr "ydam chiếu đã di cư tại '%s'"
+
+#, c-format
+msgid ""
+"cannot lock ref '%s': expected symref with target '%s': but is a regular ref"
+msgstr ""
+"không thể lock tham chiếu '%s': cần tham chiếu mềm tới '%s': nhưng lại là "
+"tham chiếu thường"
 
 #, c-format
 msgid "refname is dangerous: %s"
@@ -19599,7 +19944,7 @@ msgstr "không thể tìm thấy tham chiếu máy chủ %s"
 
 #, c-format
 msgid "* Ignoring funny ref '%s' locally"
-msgstr "* Đang bỏ qua tham chiếu thú vị nội bộ '%s'"
+msgstr "* Đang bỏ qua tham chiếu nội bộ '%s'"
 
 #, c-format
 msgid "Your branch is based on '%s', but the upstream is gone.\n"
@@ -20062,9 +20407,9 @@ msgid ""
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
-"Giải quyết vấn đề này thủ công, hãy đanh dấu chúng đã được giải quyết bằng\n"
-"hãy chạy lệnh \"git add/rm <các_tập tin_xung_đột>\", sau đó chạy \"git "
-"rebase --continue\".\n"
+"Hãy giải quyết vấn đề này bằng tay, đánh dấu chúng đã được giải quyết bằng\n"
+"lệnh \"git add/rm <các_tập tin_xung_đột>\", sau đó chạy \"git rebase --"
+"continue\".\n"
 "Bạn có thể bỏ qua bản vá, chạy \"git rebase --skip\".\n"
 "Để huỷ bỏ và quay trở lại trạng thái trước \"git rebase\", chạy \"git rebase "
 "--abort\"."
@@ -20183,7 +20528,7 @@ msgid ""
 "\n"
 "  git rebase --continue\n"
 msgstr ""
-"bạn có các thay đổi so với trong bệ phóng trong thư mục làm việc của bạn.\n"
+"bạn có các thay đổi so với trong vùng chờ trong thư mục làm việc của bạn.\n"
 "Nếu các thay đổi này là muốn squash vào lần chuyển giao kế trước, chạy:\n"
 "\n"
 "  git commit --amend %s\n"
@@ -20397,6 +20742,47 @@ msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
 msgstr "update-ref yêu cầu tên tham chiếu đầy đủ v.d. refs/heads/%s"
 
 #, c-format
+msgid "'%s' does not accept merge commits"
+msgstr "'%s' không nhận đối số lần chuyển giao hoà trộn"
+
+#. TRANSLATORS: 'pick' and 'merge -C' should not be
+#. translated.
+#.
+msgid ""
+"'pick' does not take a merge commit. If you wanted to\n"
+"replay the merge, use 'merge -C' on the commit."
+msgstr ""
+"'pick' không cho phép dùng lần chuyển giao hoà trộn. Nếu như cần phát lại\n"
+"lần hoà trộn, hày dùng 'merge -C'."
+
+#. TRANSLATORS: 'reword' and 'merge -c' should not be
+#. translated.
+#.
+msgid ""
+"'reword' does not take a merge commit. If you wanted to\n"
+"replay the merge and reword the commit message, use\n"
+"'merge -c' on the commit"
+msgstr ""
+"'reword' không cho phép dùng lần chuyển giao hoà trộn. Nếu như cần phát lại\n"
+"lần hoà trộn và sửa nội dung, hãy dùng 'merge -c'."
+
+#. TRANSLATORS: 'edit', 'merge -C' and 'break' should
+#. not be translated.
+#.
+msgid ""
+"'edit' does not take a merge commit. If you wanted to\n"
+"replay the merge, use 'merge -C' on the commit, and then\n"
+"'break' to give the control back to you so that you can\n"
+"do 'git commit --amend && git rebase --continue'."
+msgstr ""
+"'pick' không cho phép dùng lần chuyển giao hoà trộn. Nếu như cần phát lại\n"
+"lần hoà trộn, hày dùng 'merge -C', sau đó 'break' để dùng lệnh\n"
+"'git commit --amend && git rebase --continue'."
+
+msgid "cannot squash merge commit into another commit"
+msgstr "không thể squash lần chuyển giao hoà trộn vào lần chuyển giao khác"
+
+#, c-format
 msgid "invalid command '%.*s'"
 msgstr "lệnh không hợp lệ '%.*s'"
 
@@ -20512,9 +20898,8 @@ msgstr ""
 msgid "cannot read HEAD"
 msgstr "không thể đọc HEAD"
 
-#, c-format
-msgid "unable to copy '%s' to '%s'"
-msgstr "không thể sao chép '%s' sang '%s'"
+msgid "could not write commit message file"
+msgstr "không thể ghi tập tin chú thích lần chuyển giao"
 
 #, c-format
 msgid ""
@@ -20744,7 +21129,7 @@ msgid "Successfully rebased and updated %s.\n"
 msgstr "Cài tổ và cập nhật %s một cách thành công.\n"
 
 msgid "cannot rebase: You have unstaged changes."
-msgstr "không thể cải tổ: Bạn có các thay đổi chưa được đưa lên bệ phóng."
+msgstr "không thể cải tổ: Bạn có các thay đổi chưa được đưa vào vùng chờ."
 
 msgid "cannot amend non-existing commit"
 msgstr "không thể tu sửa lần chuyển giao không tồn tại"
@@ -20774,7 +21159,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "không thể xóa bỏ CHERRY_PICK_HEAD"
 
 msgid "could not commit staged changes."
-msgstr "không thể chuyển giao các thay đổi đã đưa lên bệ phóng."
+msgstr "không thể chuyển giao các thay đổi đã đưa vào vùng chờ."
 
 #, c-format
 msgid "%s: can't cherry-pick a %s"
@@ -20915,6 +21300,18 @@ msgstr "không thể quay lại thư mục làm việc hiện hành"
 msgid "failed to stat '%*s%s%s'"
 msgstr "gặp lỗi khi stat'%*s%s%s'"
 
+#, c-format
+msgid ""
+"detected dubious ownership in repository at '%s'\n"
+"%sTo add an exception for this directory, call:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+msgstr ""
+"kho lưu trữ '%s' thuộc sở hữu của người khác\n"
+"%sĐể thêm ngoại lệ cho thư mục này, hãy gọi:\n"
+"\n"
+"\tgit config --global --add safe.directory %s"
+
 msgid "Unable to read current working directory"
 msgstr "Không thể đọc thư mục làm việc hiện hành"
 
@@ -20935,18 +21332,6 @@ msgstr ""
 "phải)\n"
 "Dừng tại biên của hệ thống tập tin (GIT_DISCOVERY_ACROSS_FILESYSTEM chưa "
 "được đặt)."
-
-#, c-format
-msgid ""
-"detected dubious ownership in repository at '%s'\n"
-"%sTo add an exception for this directory, call:\n"
-"\n"
-"\tgit config --global --add safe.directory %s"
-msgstr ""
-"kho lưu trữ '%s' thuộc sở hữu của người khác\n"
-"%sĐể thêm ngoại lệ cho thư mục này, hãy gọi:\n"
-"\n"
-"\tgit config --global --add safe.directory %s"
 
 #, c-format
 msgid "cannot use bare repository '%s' (safe.bareRepository is '%s')"
@@ -21249,6 +21634,15 @@ msgid "submodule git dir '%s' is inside git dir '%.*s'"
 msgstr "thư mục git mô đun con '%s' là bên trong git DIR '%.*s'"
 
 #, c-format
+msgid "expected '%.*s' in submodule path '%s' not to be a symbolic link"
+msgstr ""
+"cần '%.*s' trong đường dẫn tới mô-đun-con '%s' không phải là liên kết mềm"
+
+#, c-format
+msgid "expected submodule path '%s' not to be a symbolic link"
+msgstr "cần đường dẫn tới mô-đun-con '%s' không phải là liên kết mềm"
+
+#, c-format
 msgid ""
 "relocate_gitdir for submodule '%s' with more than one worktree not supported"
 msgstr ""
@@ -21286,10 +21680,6 @@ msgstr "gặp lỗi khi lstat '%s'"
 
 msgid "no remote configured to get bundle URIs from"
 msgstr "không có máy chủ để lấy URI bundle"
-
-#, c-format
-msgid "remote '%s' has no configured URL"
-msgstr "máy chủ '%s' không có cấu hình URL"
 
 msgid "could not get the bundle-uri list"
 msgstr "không thể lấy về danh sách bundle-uri"
@@ -21915,7 +22305,7 @@ msgid "error: unable to format message: %s\n"
 msgstr "lỗi: không thể định dạng thông điệp: %s\n"
 
 msgid "usage: "
-msgstr "cách dùng: %s"
+msgstr "cách dùng: "
 
 msgid "fatal: "
 msgstr "lỗi nghiêm trọng: "
@@ -22033,7 +22423,7 @@ msgid "Unmerged paths:"
 msgstr "Những đường dẫn chưa được hòa trộn:"
 
 msgid "  (use \"git restore --staged <file>...\" to unstage)"
-msgstr "  (dùng \"git restore --staged <tập-tin>...\" để bỏ ra khỏi bệ phóng)"
+msgstr "  (dùng \"git restore --staged <tập-tin>...\" để bỏ ra khỏi vùng chờ)"
 
 #, c-format
 msgid "  (use \"git restore --source=%s --staged <file>...\" to unstage)"
@@ -22042,7 +22432,7 @@ msgstr ""
 "phóng)"
 
 msgid "  (use \"git rm --cached <file>...\" to unstage)"
-msgstr "  (dùng \"git rm --cached <tập-tin>...\" để bỏ ra khỏi bệ phóng)"
+msgstr "  (dùng \"git rm --cached <tập-tin>...\" để bỏ ra khỏi vùng chờ)"
 
 msgid "  (use \"git add <file>...\" to mark resolution)"
 msgstr "  (dùng \"git add <tập-tin>...\" để đánh dấu là muốn thêm)"
@@ -22057,7 +22447,7 @@ msgid "Changes to be committed:"
 msgstr "Những thay đổi sẽ được chuyển giao:"
 
 msgid "Changes not staged for commit:"
-msgstr "Các thay đổi chưa được đặt lên bệ phóng để chuyển giao:"
+msgstr "Các thay đổi chưa được đặt vào vùng chờ để chuyển giao:"
 
 msgid "  (use \"git add <file>...\" to update what will be committed)"
 msgstr ""
@@ -22465,7 +22855,7 @@ msgstr "đứng trước "
 #. TRANSLATORS: the action is e.g. "pull with rebase"
 #, c-format
 msgid "cannot %s: You have unstaged changes."
-msgstr "không thể %s: Bạn có các thay đổi chưa được đưa lên bệ phóng."
+msgstr "không thể %s: Bạn có các thay đổi chưa được đưa vào vùng chờ."
 
 msgid "additionally, your index contains uncommitted changes."
 msgstr "ngoài ra, chỉ mục của bạn có chứa các thay đổi chưa được chuyển giao."
@@ -22526,11 +22916,11 @@ msgstr ""
 
 msgid "Cannot rewrite branches: You have unstaged changes."
 msgstr ""
-"Không thể ghi lại các nhánh: Bạn có các thay đổi chưa được đưa lên bệ phóng."
+"Không thể ghi lại các nhánh: Bạn có các thay đổi chưa được đưa vào vùng chờ."
 
 #, sh-format
 msgid "Cannot $action: You have unstaged changes."
-msgstr "Không thể $action: Bạn có các thay đổi chưa được đưa lên bệ phóng."
+msgstr "Không thể $action: Bạn có các thay đổi chưa được đưa vào vùng chờ."
 
 #, sh-format
 msgid "Cannot $action: Your index contains uncommitted changes."
@@ -22751,7 +23141,7 @@ msgstr ""
 #. translation. The program will only accept English input
 #. at this point.
 msgid "Send this email? ([y]es|[n]o|[e]dit|[q]uit|[a]ll): "
-msgstr "Gửi email này chứ? ([y]có|[n]không|[e]sửa|[q]thoát|[a]tất): "
+msgstr "Gửi email này chứ? ([y]có|[n]không|[e]sửa|[q]thoát|[a]tất cả): "
 
 msgid "Send this email reply required"
 msgstr "Hãy trả lời yêu cầu gửi email"
@@ -22776,24 +23166,24 @@ msgid "Failed to send %s\n"
 msgstr "Gặp lỗi khi gửi %s\n"
 
 #, perl-format
-msgid "Dry-Sent %s\n"
-msgstr "Thử gửi %s\n"
+msgid "Dry-Sent %s"
+msgstr "Thử gửi %s"
 
 #, perl-format
-msgid "Sent %s\n"
-msgstr "Gửi %s\n"
+msgid "Sent %s"
+msgstr "Gửi %s"
 
-msgid "Dry-OK. Log says:\n"
-msgstr "Thử gửi OK. Nhật ký ghi lại:\n"
+msgid "Dry-OK. Log says:"
+msgstr "Thử gửi OK. Nhật ký ghi lại:"
 
-msgid "OK. Log says:\n"
-msgstr "OK. Nhật ký ghi lại:\n"
+msgid "OK. Log says:"
+msgstr "OK. Nhật ký ghi lại:"
 
 msgid "Result: "
 msgstr "Kết quả: "
 
-msgid "Result: OK\n"
-msgstr "Kết quả: OK\n"
+msgid "Result: OK"
+msgstr "Kết quả: OK"
 
 #, perl-format
 msgid "can't open file %s"
