@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2024, #08; Wed, 24)
-X-master-at: ad57f148c6b5f8735b62238dda8f571c582e0e54
-X-next-at: 509ed76dc8ffb8c65e563e151ada58240c08e9db
+Subject: What's cooking in git.git (Jul 2024, #09; Mon, 29)
+X-master-at: 39bf06adf96da25b87c9aa7d35a32ef3683eb4a4
+X-next-at: 1c80b25241079052bdf3727e0ab9a5d77c51ea6e
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2024, #08; Wed, 24)
+What's cooking in git.git (Jul 2024, #09; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,11 +17,16 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.46-rc2 has been tagged.  From now on until the final release,
-which is planned to happen near the end of this month, please make
-sure you place priorities on finding and fixing new regressions
-introduced during this cycle over finding and fixing old bugs, over
-any shiny new features.
+Git 2.46 has been tagged.  As usual, we'll wait for embarrassing
+bugs to be reported for a week or so, try to fix them, and then
+reopen the tree for the next iteration (probably called 2.47).
+
+We already have known fallouts left from the removal of fallback to
+SHA-1 in operations that do not require an repository, which we may
+want to address next.  There may be more work needed to alleviate
+the issues caused by the over-eager defense-in-depth changes
+introduced by 2.45.1, even though they were somewhat loosened in
+2.45.2 already.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,67 +57,120 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ds/midx-write-repack-fix (2024-07-19) 2 commits
-  (merged to 'next' on 2024-07-22 at 0a64b3ed42)
- + midx-write: revert use of --stdin-packs
- + t5319: add failing test case for repack/expire
-
- Repacking a repository with multi-pack index started making stupid
- pack selections in Git 2.45, which has been corrected.
- source: <pull.1764.git.1721332546.gitgitgadget@gmail.com>
-
-
-* ja/doc-markup-updates-fix (2024-07-20) 1 commit
-  (merged to 'next' on 2024-07-23 at eedc41259a)
- + doc: git-clone fix discrepancy between asciidoc and asciidoctor
-
- Fix documentation mark-up regression in 2.45.
- cf. <xmqqv80w0zrx.fsf@gitster.g>
- source: <pull.1765.git.1721496853517.gitgitgadget@gmail.com>
-
-
-* js/doc-markup-updates-fix (2024-07-23) 2 commits
-  (merged to 'next' on 2024-07-23 at 9a4fa8f9d0)
- + Doc: fix Asciidoctor css workaround
- + asciidoctor: fix `synopsis` rendering
-
- Work around asciidoctor's css that renders `monospace` material
- in the SYNOPSIS section of manual pages as block elements.
- cf. <xmqqv80w0zrx.fsf@gitster.g>
- source: <pull.1749.v2.git.git.1721679949618.gitgitgadget@gmail.com>
-
-
-* ps/ref-storage-migration-fix (2024-07-23) 1 commit
-  (merged to 'next' on 2024-07-23 at ebf4e7c214)
- + refs: fix format migration on Cygwin
-
- Hotfix for a topic already in -rc.
- source: <d031aef5552d894784650a8c6580925e877df794.1721731179.git.ps@pks.im>
-
---------------------------------------------------
 [New Topics]
 
-* ps/p4-tests-updates (2024-07-23) 3 commits
- - t98xx: mark Perforce tests as memory-leak free
- - ci: update Perforce version to r23.2
- - t98xx: fix Perforce tests with p4d r23 and newer
+* ja/doc-synopsis-markup (2024-07-24) 3 commits
+ - doc: apply synopsis simplification on git-clone and git-init
+ - doc: update the guidelines to reflect the current formatting rules
+ - doc: introduce a synopsis custom paragraph attribute
 
- Perforce tests have been updated.
+ The way AsciiDoc is used for SYNOPSIS part of the manual pages has
+ been revamped.  The sources, at least for the simple cases, got
+ vastly pleasant to work with.
+
+ Inviting further discussion.
+ source: <pull.1766.v2.git.1721855179.gitgitgadget@gmail.com>
+
+
+* ps/doc-more-c-coding-guidelines (2024-07-24) 3 commits
+ - Documentation: document difference between release and free
+ - Documentation: document naming schema for struct-related functions
+ - Documentation: clarify indentation style for C preprocessor directives
+
+ Some project conventions have been added to CodingGuidelines.
+
+ Inviting further discussion.
+ source: <cover.1721818488.git.ps@pks.im>
+
+
+* tc/fetch-bundle-uri (2024-07-24) 3 commits
+ - fetch: use bundle URIs when having creationToken heuristic
+ - transport: introduce transport_has_remote_bundle_uri()
+ - clone: remove double bundle list clear code
+
+ Allow "git fetch" take advantage of bundleURI feature.
 
  Needs review.
- source: <cover.1721740612.git.ps@pks.im>
+ source: <20240724144957.3033840-1-toon@iotcl.com>
 
 
-* jc/doc-one-shot-export-with-shell-func (2024-07-23) 1 commit
-  (merged to 'next' on 2024-07-23 at 621c29e4f6)
- + CodingGuidelines: document a shell that "fails" "VAR=VAL shell_func"
+* as/show-ref-option-help-update (2024-07-25) 1 commit
+  (merged to 'next' on 2024-07-26 at bbdc971c38)
+ + show-ref: improve short help messages of options
 
- It has been documented that we avoid "VAR=VAL shell_func" and why.
+ A few descriptions in "git show-ref -h" have been clarified.
 
- Will cook in 'next'.
- source: <xmqqwmld55y1.fsf@gitster.g>
+ Will merge to 'master'.
+ source: <20240724111116.91615-1-ash@kambanaria.org>
+
+
+* jc/doc-rebase-fuzz-vs-offset-fix (2024-07-25) 1 commit
+  (merged to 'next' on 2024-07-26 at 6f784b0c1c)
+ + doc: difference in location to apply is "offset", not "fuzz"
+
+ "git rebase --help" referred to "offset" (the difference between
+ the location a change was taken from and the change gets replaced)
+ incorrectly and called it "fuzz", which has been corrected.
+
+ Will merge to 'master'.
+ source: <xmqqplr1fkla.fsf@gitster.g>
+
+
+* jc/doc-reviewing-guidelines-positive-reviews (2024-07-25) 1 commit
+  (merged to 'next' on 2024-07-26 at 8f878efb0d)
+ + ReviewingGuidelines: encourage positive reviews more
+
+ The reviewing guidelines document now explicitly encourages people
+ to give positive reviews and how.
+
+ Will merge to 'master'.
+ source: <xmqqle1pjwtt.fsf@gitster.g>
+
+
+* jc/leakfix-hashfile (2024-07-26) 1 commit
+ - csum-file: introduce discard_hashfile()
+
+ source: <xmqqle1p1367.fsf@gitster.g>
+
+
+* jc/leakfix-mailmap (2024-07-26) 1 commit
+ - mailmap: plug memory leak in read_mailmap_blob()
+
+ source: <xmqqcyn112xi.fsf@gitster.g>
+
+
+* jr/ls-files-expand-literal-doc (2024-07-26) 1 commit
+ - doc: fix hex code escapes in git-ls-files
+
+ source: <CACStHN-Gs2Sxej+md6zWr3V1dFo+pp=B4yEPm9=uPambDR2NaQ@mail.gmail.com>
+
+
+* ps/leakfixes-part-3 (2024-07-26) 23 commits
+ - commit-reach: fix trivial memory leak when computing reachability
+ - convert: fix leaking config strings
+ - entry: fix leaking pathnames during delayed checkout
+ - object-name: fix leaking commit list items
+ - t/test-repository: fix leaking repository
+ - builtin/credential-cache: fix trivial leaks
+ - builtin/worktree: fix leaking derived branch names
+ - builtin/shortlog: fix various trivial memory leaks
+ - builtin/rerere: fix various trivial memory leaks
+ - builtin/credential-store: fix leaking credential
+ - builtin/show-branch: fix several memory leaks
+ - builtin/rev-parse: fix memory leak with `--parseopt`
+ - builtin/stash: fix various trivial memory leaks
+ - builtin/remote: fix various trivial memory leaks
+ - builtin/remote: fix leaking strings in `branch_list`
+ - builtin/ls-remote: fix leaking `pattern` strings
+ - builtin/submodule--helper: fix various trivial memory leaks
+ - builtin/name-rev: fix various trivial memory leaks
+ - builtin/describe: fix trivial memory leak when describing blob
+ - builtin/describe: fix leaking array when running diff-index
+ - builtin/describe: fix memory leak with `--contains=`
+ - builtin/log: fix leaking branch name when creating cover letters
+ - builtin/replay: plug leaking `advance_name` variable
+
+ source: <cover.1721995576.git.ps@pks.im>
 
 --------------------------------------------------
 [Stalled]
@@ -204,6 +262,27 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* ps/p4-tests-updates (2024-07-23) 3 commits
+ - t98xx: mark Perforce tests as memory-leak free
+ - ci: update Perforce version to r23.2
+ - t98xx: fix Perforce tests with p4d r23 and newer
+
+ Perforce tests have been updated.
+
+ Needs review.
+ source: <cover.1721740612.git.ps@pks.im>
+
+
+* jc/doc-one-shot-export-with-shell-func (2024-07-23) 1 commit
+  (merged to 'next' on 2024-07-23 at 621c29e4f6)
+ + CodingGuidelines: document a shell that "fails" "VAR=VAL shell_func"
+
+ It has been documented that we avoid "VAR=VAL shell_func" and why.
+
+ Will merge to 'master'.
+ source: <xmqqwmld55y1.fsf@gitster.g>
+
+
 * ag/git-svn-global-ignores (2024-07-18) 2 commits
  - git-svn: use `svn:global-ignores` to create .gitignore
  - git-svn: add public property `svn:global-ignores`
@@ -216,27 +295,29 @@ Release tarballs are available at:
 
 
 * jc/how-to-maintain-updates (2024-07-19) 2 commits
- - howto-maintain: update daily tasks
- - howto-maintain: cover a whole development cycle
+  (merged to 'next' on 2024-07-26 at c950efa46d)
+ + howto-maintain: update daily tasks
+ + howto-maintain: cover a whole development cycle
 
  Doc update.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqq1q3phzpi.fsf@gitster.g>
 
 
-* es/shell-check-updates (2024-07-22) 4 commits
- - check-non-portable-shell: suggest alternative for `VAR=val shell-func`
+* es/shell-check-updates (2024-07-26) 5 commits
  - check-non-portable-shell: improve `VAR=val shell-func` detection
+ - check-non-portable-shell: suggest alternative for `VAR=val shell-func`
+ - check-non-portable-shell: loosen one-shot assignment error message
  - t4034: fix use of one-shot variable assignment with shell function
- - t3430: modernize one-shot "VAR=val shell-func" invocation
+ - t3430: drop unnecessary one-shot "VAR=val shell-func" invocation
 
  Test script linter has been updated to catch an attempt to use
  one-shot export construct "VAR=VAL func" for shell functions (which
  does not work for some shells) better.
 
- Will merge to 'next'?
- source: <20240722065915.80760-1-ericsunshine@charter.net>
+ Will merge to 'next'.
+ source: <20240727053509.34339-1-ericsunshine@charter.net>
 
 
 * jc/safe-directory (2024-07-22) 3 commits
@@ -260,7 +341,7 @@ Release tarballs are available at:
  with an empty line (not a line with a single space on it), which
  has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1763.v2.git.1721491320.gitgitgadget@gmail.com>
 
 
@@ -270,7 +351,7 @@ Release tarballs are available at:
 
  Docfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20240722225302.124356-1-tomasn@posteo.net>
 
 
@@ -296,7 +377,7 @@ Release tarballs are available at:
  A build tweak knob has been simplified by not setting the value
  that is already the default; another unused one has been removed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <0d132370-3e07-4332-bcfb-c4450100d736@ramsayjones.plus.com>
 
 
@@ -333,7 +414,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20240715183739.7808-1-jltobler@gmail.com>
 
 
@@ -368,13 +449,11 @@ Release tarballs are available at:
  A CI job that use clang-format to check coding style issues in new
  code has been added.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20240723082111.874382-1-karthik.188@gmail.com>
 
 
-* rj/add-p-pager (2024-07-22) 6 commits
- - pager: make wait_for_pager a no-op for "cat"
- - t3701: avoid one-shot export for shell functions
+* rj/add-p-pager (2024-07-25) 4 commits
  - add-patch: render hunks through the pager
  - pager: introduce wait_for_pager
  - pager: do not close fd 2 unnecessarily
@@ -382,9 +461,9 @@ Release tarballs are available at:
 
  A 'P' command to "git add -p" that passes the patch hunk to the
  pager has been added.
- source: <efa98aec-f117-4cfe-a7c2-e8c0adbdb399@gmail.com>
- source: <c37f0d54-4ead-422c-8193-f0c2ec84ca4a@gmail.com>
- source: <5536b336-5122-47fd-be57-42c299abe60c@gmail.com>
+
+ Will merge to 'next'.
+ source: <76936fb1-446d-455f-b4e7-6e24dda3c17d@gmail.com>
 
 
 * ad/merge-with-diff-algorithm (2024-07-13) 1 commit
@@ -394,7 +473,7 @@ Release tarballs are available at:
  Many Porcelain commands that internally use the merge machinery
  were taught to consistently honor the diff.algorithm configuration.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1743.v3.git.git.1720889507066.gitgitgadget@gmail.com>
 
 
@@ -407,7 +486,7 @@ Release tarballs are available at:
  correct, but found confusing by some users.  It now says that the
  user needs to give pathspec to specify what paths to checkout.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <xmqqikxnqzz4.fsf@gitster.g>
 
 
@@ -423,7 +502,7 @@ Release tarballs are available at:
 
  Another reftable test has been ported to use the unit test framework.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20240712055041.6476-1-chandrapratap3519@gmail.com>
 
 
@@ -437,7 +516,7 @@ Release tarballs are available at:
 
  Unit test clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <35b0ba6b-d485-44f2-a19f-3ce816f8b435@web.de>
  source: <983be396-f47c-4573-8c33-af8367f8ddbe@web.de>
  source: <1521ed89-989e-452b-b7fc-9e73672e0764@web.de>
@@ -453,24 +532,24 @@ Release tarballs are available at:
  source: <20240711235159.5320-1-shyamthakkar001@gmail.com>
 
 
-* rs/unit-tests-test-run (2024-07-23) 7 commits
- - unit-tests: show location of checks outside of tests
+* rs/unit-tests-test-run (2024-07-24) 7 commits
  - t-strbuf: use for_test
  - t-strvec: use for_test
  - t-reftable-basics: use for_test
  - t-ctype: use for_test
  - unit-tests: add for_test
- - t0080: move expected output to a file
+ - unit-tests: show location of checks outside of tests
+ - t0080: use here-doc test body
 
  Unit-test framework clean-up.
 
  Still under discussion.
- source: <da7ed537-1c8e-42ec-aa91-49e1319e8c68@web.de>
+ source: <73465c3d-1be0-456b-9471-f875e819c566@web.de>
 
 
-* jc/patch-id (2024-06-21) 5 commits
- - patch-id: tighten code to detect the patch header
- - patch-id: rewrite code that detects the beginning of a patch
+* jc/patch-id (2024-07-29) 5 commits
+ . patch-id: tighten code to detect the patch header
+ . patch-id: rewrite code that detects the beginning of a patch
  - patch-id: make get_one_patchid() more extensible
  - patch-id: call flush_current_id() only when needed
  - t4204: patch-id supports various input format
@@ -479,7 +558,7 @@ Release tarballs are available at:
  getting confused by lines that look like a patch header in the log
  message.
 
- Needs review.
+ Inviding further discussion.
  source: <20240621231826.3280338-1-gitster@pobox.com>
 
 --------------------------------------------------
