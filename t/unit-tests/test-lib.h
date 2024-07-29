@@ -76,8 +76,9 @@ int test_assert(const char *location, const char *check, int ok);
 int check_bool_loc(const char *loc, const char *check, int ok);
 
 /*
- * Compare two integers. Prints a message with the two values if the
- * comparison fails. NB this is not thread safe.
+ * Compare the equality of two pointers of same type. Prints a message
+ * with the two values if the equality fails. NB this is not thread
+ * safe.
  */
 #define check_pointer_eq(a, b)						\
 	(test__tmp[0].p = (a), test__tmp[1].p = (b),			\
