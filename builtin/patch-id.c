@@ -85,16 +85,19 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		const char *p = line;
 		int len;
 
-		/* Possibly skip over the prefix added by "log" or "format-patch" */
-		if (!skip_prefix(line, "commit ", &p) &&
-		    !skip_prefix(line, "From ", &p) &&
-		    starts_with(line, "\\ ") && 12 < strlen(line)) {
+		/*
+		 * If we see a line that begins with "<object name>",
+		 * "commit <object name>" or "From <object name>", it is
+		 * the beginning of a patch.  Return to the caller, as
+		 * we are done with the one we have been processing.
+		 */
+		if (skip_prefix(line, "commit ", &p))
+			;
+		else if (skip_prefix(line, "From ", &p))
+			;
+		if (!get_oid_hex(p, next_oid)) {
 			if (verbatim)
 				the_hash_algo->update_fn(&ctx, line, strlen(line));
-			continue;
-		}
-
-		if (!get_oid_hex(p, next_oid)) {
 			found_next = 1;
 			break;
 		}
@@ -133,6 +136,16 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 				before = after = 1;
 			else if (!isalpha(line[0]))
 				break;
+		}
+
+		/*
+		 * A hunk about an incomplete line may have this
+		 * marker at the end, which should just be ignored.
+		 */
+		if (starts_with(line, "\\ ") && 12 < strlen(line)) {
+			if (verbatim)
+				the_hash_algo->update_fn(&ctx, line, strlen(line));
+			continue;
 		}
 
 		if (diff_is_binary) {
