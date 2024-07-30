@@ -552,7 +552,8 @@ stat_ref:
 	strbuf_rtrim(&sb_contents);
 	buf = sb_contents.buf;
 
-	ret = parse_loose_ref_contents(buf, oid, referent, type, &myerr);
+	ret = parse_loose_ref_contents(ref_store->repo->hash_algo, buf,
+				       oid, referent, type, &myerr);
 
 out:
 	if (ret && !myerr)
@@ -586,7 +587,8 @@ static int files_read_symbolic_ref(struct ref_store *ref_store, const char *refn
 	return !(type & REF_ISSYMREF);
 }
 
-int parse_loose_ref_contents(const char *buf, struct object_id *oid,
+int parse_loose_ref_contents(const struct git_hash_algo *algop,
+			     const char *buf, struct object_id *oid,
 			     struct strbuf *referent, unsigned int *type,
 			     int *failure_errno)
 {
@@ -604,7 +606,7 @@ int parse_loose_ref_contents(const char *buf, struct object_id *oid,
 	/*
 	 * FETCH_HEAD has additional data after the sha.
 	 */
-	if (parse_oid_hex(buf, oid, &p) ||
+	if (parse_oid_hex_algop(buf, oid, &p, algop) ||
 	    (*p != '\0' && !isspace(*p))) {
 		*type |= REF_ISBROKEN;
 		*failure_errno = EINVAL;
@@ -1998,7 +2000,8 @@ static int files_delete_reflog(struct ref_store *ref_store,
 	return ret;
 }
 
-static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *cb_data)
+static int show_one_reflog_ent(struct files_ref_store *refs, struct strbuf *sb,
+			       each_reflog_ent_fn fn, void *cb_data)
 {
 	struct object_id ooid, noid;
 	char *email_end, *message;
@@ -2008,8 +2011,8 @@ static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *c
 
 	/* old SP new SP name <email> SP time TAB msg LF */
 	if (!sb->len || sb->buf[sb->len - 1] != '\n' ||
-	    parse_oid_hex(p, &ooid, &p) || *p++ != ' ' ||
-	    parse_oid_hex(p, &noid, &p) || *p++ != ' ' ||
+	    parse_oid_hex_algop(p, &ooid, &p, refs->base.repo->hash_algo) || *p++ != ' ' ||
+	    parse_oid_hex_algop(p, &noid, &p, refs->base.repo->hash_algo) || *p++ != ' ' ||
 	    !(email_end = strchr(p, '>')) ||
 	    email_end[1] != ' ' ||
 	    !(timestamp = parse_timestamp(email_end + 2, &message, 10)) ||
@@ -2108,7 +2111,7 @@ static int files_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 				strbuf_splice(&sb, 0, 0, bp + 1, endp - (bp + 1));
 				scanp = bp;
 				endp = bp + 1;
-				ret = show_one_reflog_ent(&sb, fn, cb_data);
+				ret = show_one_reflog_ent(refs, &sb, fn, cb_data);
 				strbuf_reset(&sb);
 				if (ret)
 					break;
@@ -2120,7 +2123,7 @@ static int files_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 				 * Process it, and we can end the loop.
 				 */
 				strbuf_splice(&sb, 0, 0, buf, endp - buf);
-				ret = show_one_reflog_ent(&sb, fn, cb_data);
+				ret = show_one_reflog_ent(refs, &sb, fn, cb_data);
 				strbuf_reset(&sb);
 				break;
 			}
@@ -2170,7 +2173,7 @@ static int files_for_each_reflog_ent(struct ref_store *ref_store,
 		return -1;
 
 	while (!ret && !strbuf_getwholeline(&sb, logfp, '\n'))
-		ret = show_one_reflog_ent(&sb, fn, cb_data);
+		ret = show_one_reflog_ent(refs, &sb, fn, cb_data);
 	fclose(logfp);
 	strbuf_release(&sb);
 	return ret;

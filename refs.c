@@ -1752,8 +1752,8 @@ static int refs_read_special_head(struct ref_store *ref_store,
 		goto done;
 	}
 
-	result = parse_loose_ref_contents(content.buf, oid, referent, type,
-					  failure_errno);
+	result = parse_loose_ref_contents(ref_store->repo->hash_algo, content.buf,
+					  oid, referent, type, failure_errno);
 
 done:
 	strbuf_release(&full_path);
