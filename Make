@@ -55,7 +55,7 @@ do
 	)
 done
 
-tests= jobs= oldtest= with_dash= testpen=
+tests= jobs= oldtest= with_shell= testpen=
 clean=:
 
 determine_branch () {
@@ -140,8 +140,14 @@ do
 		GIT_TEST_LONG=YesPlease
 		export GIT_TEST_LONG
 		;;
+	--bash)
+		with_shell=/bin/bash
+		;;
 	--dash)
-		with_dash=y
+		with_shell=/bin/dash
+		;;
+	--ksh)
+		with_shell=/bin/ksh
 		;;
 	--)
 		shift
@@ -176,8 +182,6 @@ then
 	export GIT_TEST_OPTS
 fi
 
-test -f /bin/dash || with_dash=
-
 if test -z "$oldtest" &&
    sh -c 'prove --version >/dev/null 2>&1' &&
    sh -c 'prove --exec : >/dev/null 2>&1'
@@ -209,9 +213,9 @@ clean="$clean; rm -f version"
 determine_long_version >version
 
 set "prefix=$prefix" "$@"
-if test -n "$with_dash" && test -f /bin/dash
+if test -n "$with_shell" && test -f "$with_shell"
 then
-	set "SHELL_PATH=/bin/dash" "$@"
+	set "SHELL_PATH=$with_shell" "$@"
 fi
 
 if grep >/dev/null DC_SHA1 Makefile
