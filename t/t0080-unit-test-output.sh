@@ -7,9 +7,10 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 test_expect_success 'TAP output from unit tests' - <<\EOT
 	cat >expect <<-EOF &&
+	# BUG: check outside of test at t/helper/test-example-tap.c:75
 	ok 1 - passing test
 	ok 2 - passing test and assertion return 1
-	# check "1 == 2" failed at t/helper/test-example-tap.c:77
+	# check "1 == 2" failed at t/helper/test-example-tap.c:79
 	#    left: 1
 	#   right: 2
 	not ok 3 - failing test
@@ -46,7 +47,7 @@ test_expect_success 'TAP output from unit tests' - <<\EOT
 	#    left: '\\\\'
 	#   right: '\\''
 	not ok 17 - messages from failing string and char comparison
-	# BUG: test has no checks at t/helper/test-example-tap.c:92
+	# BUG: test has no checks at t/helper/test-example-tap.c:94
 	not ok 18 - test with no checks
 	ok 19 - test with no checks returns 0
 	1..19

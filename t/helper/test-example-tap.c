@@ -72,6 +72,8 @@ static void t_empty(void)
 
 int cmd__example_tap(int argc, const char **argv)
 {
+	check(1);
+
 	test_res = TEST(check_res = check_int(1, ==, 1), "passing test");
 	TEST(t_res(1), "passing test and assertion return 1");
 	test_res = TEST(check_res = check_int(1, ==, 2), "failing test");

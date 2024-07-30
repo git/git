@@ -264,7 +264,12 @@ static void test_todo(void)
 
 int test_assert(const char *location, const char *check, int ok)
 {
-	assert(ctx.running);
+	if (!ctx.running) {
+		test_msg("BUG: check outside of test at %s",
+			 make_relative(location));
+		ctx.failed = 1;
+		return 0;
+	}
 
 	if (ctx.result == RESULT_SKIP) {
 		test_msg("skipping check '%s' at %s", check,
