@@ -1235,13 +1235,43 @@ static int safe_directory_cb(const char *key, const char *value,
 		char *allowed = NULL;
 
 		if (!git_config_pathname(&allowed, key, value)) {
-			if (ends_with(allowed, "/*")) {
-				size_t len = strlen(allowed);
-				if (!fspathncmp(allowed, data->path, len - 1))
+			char *normalized = NULL;
+
+			/*
+			 * Setting safe.directory to a non-absolute path
+			 * makes little sense---it won't be relative to
+			 * the configuration file the item is defined in.
+			 * Except for ".", which means "if we are at the top
+			 * level of a repository, then it is OK", which is
+			 * slightly tighter than "*" that allows discovery.
+			 */
+			if (!is_absolute_path(allowed) && strcmp(allowed, ".")) {
+				warning(_("safe.directory '%s' not absolute"),
+					allowed);
+				goto next;
+			}
+
+			/*
+			 * A .gitconfig in $HOME may be shared across
+			 * different machines and safe.directory entries
+			 * may or may not exist as paths on all of these
+			 * machines.  In other words, it is not a warning
+			 * worthy event when there is no such path on this
+			 * machine---the entry may be useful elsewhere.
+			 */
+			normalized = real_pathdup(allowed, 0);
+			if (!normalized)
+				goto next;
+
+			if (ends_with(normalized, "/*")) {
+				size_t len = strlen(normalized);
+				if (!fspathncmp(normalized, data->path, len - 1))
 					data->is_safe = 1;
-			} else if (!fspathcmp(data->path, allowed)) {
+			} else if (!fspathcmp(data->path, normalized)) {
 				data->is_safe = 1;
 			}
+		next:
+			free(normalized);
 			free(allowed);
 		}
 	}
