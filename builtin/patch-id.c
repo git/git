@@ -60,10 +60,17 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 
 /*
  * flag bits to control get_one_patchid()'s behaviour.
+ *
+ * STABLE/VERBATIM are given from the command line option as
+ * --stable/--verbatim.  FIND_HEADER conveys the internal state
+ * maintained by the caller to allow the function to avoid mistaking
+ * lines of log message before seeing the "diff" part as the beginning
+ * of the next patch.
  */
 enum {
 	GOPID_STABLE = (1<<0),		/* --stable */
 	GOPID_VERBATIM = (1<<1),	/* --verbatim */
+	GOPID_FIND_HEADER = (1<<2),	/* stop at the beginning of patch message */
 };
 
 static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
@@ -71,6 +78,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 {
 	int stable = flags & GOPID_STABLE;
 	int verbatim = flags & GOPID_VERBATIM;
+	int find_header = flags & GOPID_FIND_HEADER;
 	int patchlen = 0, found_next = 0;
 	int before = -1, after = -1;
 	int diff_is_binary = 0;
@@ -86,25 +94,38 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		int len;
 
 		/*
-		 * If we see a line that begins with "<object name>",
-		 * "commit <object name>" or "From <object name>", it is
-		 * the beginning of a patch.  Return to the caller, as
-		 * we are done with the one we have been processing.
+		 * The caller hasn't seen us find a patch header and
+		 * return to it, or we have started processing patch
+		 * and may encounter the beginning of the next patch.
 		 */
-		if (skip_prefix(line, "commit ", &p))
-			;
-		else if (skip_prefix(line, "From ", &p))
-			;
-		if (!get_oid_hex(p, next_oid)) {
-			if (verbatim)
-				the_hash_algo->update_fn(&ctx, line, strlen(line));
-			found_next = 1;
-			break;
+		if (find_header) {
+			/*
+			 * If we see a line that begins with "<object name>",
+			 * "commit <object name>" or "From <object name>", it is
+			 * the beginning of a patch.  Return to the caller, as
+			 * we are done with the one we have been processing.
+			 */
+			if (skip_prefix(line, "commit ", &p))
+				;
+			else if (skip_prefix(line, "From ", &p))
+				;
+			if (!get_oid_hex(p, next_oid)) {
+				if (verbatim)
+					the_hash_algo->update_fn(&ctx, line, strlen(line));
+				found_next = 1;
+				break;
+			}
 		}
 
 		/* Ignore commit comments */
 		if (!patchlen && !starts_with(line, "diff "))
 			continue;
+
+		/*
+		 * We are past the commit log message.  Prepare to
+		 * stop at the beginning of the next patch header.
+		 */
+		find_header = 1;
 
 		/* Parsing diff header?  */
 		if (before == -1) {
@@ -201,11 +222,13 @@ static void generate_id_list(unsigned flags)
 	struct strbuf line_buf = STRBUF_INIT;
 
 	oidclr(&oid);
+	flags |= GOPID_FIND_HEADER;
 	while (!feof(stdin)) {
 		patchlen = get_one_patchid(&n, &result, &line_buf, flags);
 		if (patchlen)
 			flush_current_id(&oid, &result);
 		oidcpy(&oid, &n);
+		flags &= ~GOPID_FIND_HEADER;
 	}
 	strbuf_release(&line_buf);
 }

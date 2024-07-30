@@ -137,6 +137,23 @@ test_expect_success 'patch-id computes the same for various formats' '
 	test_cmp actual expect
 '
 
+hash=$(git rev-parse same:)
+for cruft in "$hash" "commit $hash is bad" "From $hash status"
+do
+	test_expect_success "patch-id with <$cruft> in log message" '
+		git format-patch -1 --stdout same >patch-0 &&
+		git patch-id <patch-0 >expect &&
+
+		{
+			sed -e "/^$/q" patch-0 &&
+			printf "random message\n%s\n\n" "$cruft" &&
+			sed -e "1,/^$/d" patch-0
+		} >patch-cruft &&
+		git patch-id <patch-cruft >actual &&
+		test_cmp actual expect
+	'
+done
+
 test_expect_success 'whitespace is irrelevant in footer' '
 	get_patch_id main &&
 	git checkout same &&
