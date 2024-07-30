@@ -58,9 +58,19 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 	return 1;
 }
 
+/*
+ * flag bits to control get_one_patchid()'s behaviour.
+ */
+enum {
+	GOPID_STABLE = (1<<0),		/* --stable */
+	GOPID_VERBATIM = (1<<1),	/* --verbatim */
+};
+
 static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
-			   struct strbuf *line_buf, int stable, int verbatim)
+			   struct strbuf *line_buf, unsigned flags)
 {
+	int stable = flags & GOPID_STABLE;
+	int verbatim = flags & GOPID_VERBATIM;
 	int patchlen = 0, found_next = 0;
 	int before = -1, after = -1;
 	int diff_is_binary = 0;
@@ -171,7 +181,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 	return patchlen;
 }
 
-static void generate_id_list(int stable, int verbatim)
+static void generate_id_list(unsigned flags)
 {
 	struct object_id oid, n, result;
 	int patchlen;
@@ -179,7 +189,7 @@ static void generate_id_list(int stable, int verbatim)
 
 	oidclr(&oid);
 	while (!feof(stdin)) {
-		patchlen = get_one_patchid(&n, &result, &line_buf, stable, verbatim);
+		patchlen = get_one_patchid(&n, &result, &line_buf, flags);
 		if (patchlen)
 			flush_current_id(&oid, &result);
 		oidcpy(&oid, &n);
@@ -218,6 +228,7 @@ int cmd_patch_id(int argc, const char **argv, const char *prefix)
 	/* if nothing is set, default to unstable */
 	struct patch_id_opts config = {0, 0};
 	int opts = 0;
+	unsigned flags = 0;
 	struct option builtin_patch_id_options[] = {
 		OPT_CMDMODE(0, "unstable", &opts,
 		    N_("use the unstable patch-id algorithm"), 1),
@@ -237,7 +248,11 @@ int cmd_patch_id(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, builtin_patch_id_options,
 			     patch_id_usage, 0);
 
-	generate_id_list(opts ? opts > 1 : config.stable,
-			 opts ? opts == 3 : config.verbatim);
+	if (opts ? opts > 1 : config.stable)
+		flags |= GOPID_STABLE;
+	if (opts ? opts == 3 : config.verbatim)
+		flags |= GOPID_VERBATIM;
+	generate_id_list(flags);
+
 	return 0;
 }
