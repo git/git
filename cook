@@ -690,12 +690,7 @@ sub topic_in_seen {
 }
 
 my $mergetomaster;
-
-sub tweak_willdo {
-	my ($td) = @_;
-	my $desc = $td->{'desc'};
-	my $text = $td->{'text'};
-
+sub prepare_mergetomaster {
 	if (!defined $mergetomaster) {
 		my $master = `git describe $MASTER`;
 		if ($master =~ /-rc(\d+)(-\d+-g[0-9a-f]+)?$/ && $1 != 0) {
@@ -704,6 +699,12 @@ sub tweak_willdo {
 			$mergetomaster = "Will merge to '$MASTER'.";
 		}
 	}
+}
+
+sub tweak_willdo {
+	my ($td) = @_;
+	my $desc = $td->{'desc'};
+	my $text = $td->{'text'};
 
 	# If updated description (i.e. the list of patches with
 	# merge trail to 'next') has 'merged to next', then
@@ -852,6 +853,7 @@ sub wildo_match {
 	if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
 	    /^Not urgent/ || /^Not ready/ || /^Waiting for / || /^Under discussion/ ||
 	    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ || /^Breaks / ||
+	    /^Inviting / ||
 	    /^Needs? / || /^Expecting / || /^May want to / || /^Under review/) {
 		return 1;
 	}
@@ -862,6 +864,7 @@ sub wildo {
 	my $fd = shift;
 	my (%what, $topic, $last_merge_to_next, $in_section, $in_desc);
 	my $too_recent = '9999-99-99';
+
 	while (<$fd>) {
 		chomp;
 
@@ -944,13 +947,16 @@ sub wildo {
 			}
 			$count = "#$count";
 			printf " %s %-60s %s%s %5s\n", $sign, $name, $tip, $next, $count;
-			if ($what !~ /^Will merge to '\w+'\.$/) {
-				for my $s (@$source) {
-					if ($s =~ /^<(.*)>$/) {
-						$s = "https://lore.kernel.org/git/$1/";
-					}
-					printf "      $s\n";
+			if ($what =~ /^Will merge to '\w+'/ && $what !~ /\?$/ ||
+			    $what eq $mergetomaster) {
+				next;
+			}
+
+			for my $s (@$source) {
+				if (0 && $s =~ /^<(.*)>$/) {
+					$s = "https://lore.kernel.org/git/$1/";
 				}
+				printf "   $s\n";
 			}
 		}
 		$ipbl = "\n";
@@ -1091,6 +1097,8 @@ if (!GetOptions("wildo" => \$wildo,
 	print STDERR "$0 [--wildo|--havedone]\n";
 	exit 1;
 }
+
+prepare_mergetomaster;
 
 if ($wildo) {
 	my $fd;
