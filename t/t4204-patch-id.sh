@@ -114,6 +114,29 @@ test_expect_success 'patch-id supports git-format-patch output' '
 	test "$2" = $(git rev-parse HEAD)
 '
 
+test_expect_success 'patch-id computes the same for various formats' '
+	# This test happens to consider "git log -p -1" output
+	# the canonical input format, so use it as the norm.
+	git log -1 -p same >log-p.output &&
+	git patch-id <log-p.output >expect &&
+
+	# format-patch begins with "From <commit object name>"
+	git format-patch -1 --stdout same >format-patch.output &&
+	git patch-id <format-patch.output >actual &&
+	test_cmp actual expect &&
+
+	# "diff-tree --stdin -p" begins with "<commit object name>"
+	same=$(git rev-parse same) &&
+	echo $same | git diff-tree --stdin -p >diff-tree.output &&
+	git patch-id <diff-tree.output >actual &&
+	test_cmp actual expect &&
+
+	# "diff-tree --stdin -v -p" begins with "commit <commit object name>"
+	echo $same | git diff-tree --stdin -p -v >diff-tree-v.output &&
+	git patch-id <diff-tree-v.output >actual &&
+	test_cmp actual expect
+'
+
 test_expect_success 'whitespace is irrelevant in footer' '
 	get_patch_id main &&
 	git checkout same &&
