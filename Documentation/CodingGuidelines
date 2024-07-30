@@ -214,6 +214,16 @@ For C programs:
  - We use tabs to indent, and interpret tabs as taking up to
    8 spaces.
 
+ - Nested C preprocessor directives are indented after the hash by one
+   space per nesting level.
+
+	#if FOO
+	# include <foo.h>
+	# if BAR
+	#  include <bar.h>
+	# endif
+	#endif
+
  - We try to keep to at most 80 characters per line.
 
  - As a Git developer we assume you have a reasonably modern compiler
