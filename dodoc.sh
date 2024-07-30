@@ -64,8 +64,7 @@ done
 dd='
 	MAN_BASE_URL="git-htmldocs/"
 	BLK_SHA1=YesPlease
-	GNU_ROFF=YesPlease
-	MAN_BOLD_LITERAL=YesPlease
+	USE_ASCIIDOCTOR=YesPlease
 '
 
 if test -z "$DOC_FROM_SCRATCH"

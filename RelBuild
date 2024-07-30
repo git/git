@@ -11,8 +11,7 @@ make clean &&
 make $j CFLAGS="-O2 -Wno-format-zero-length" \
 	TAR_DIST_EXTRA_OPTS="$TAR_DIST_EXTRA_OPTS" dist &&
 
-ASCIIDOC_NO_ROFF=YesPlease \
-ASCIIDOC8=YesPlease \
+USE_ASCIIDOCTOR=YesPlease \
 MAN_BASE_URL="git-htmldocs/" \
 make $j \
 	TAR_DIST_EXTRA_OPTS="$TAR_DIST_EXTRA_OPTS" \
