@@ -560,6 +560,23 @@ For C programs:
 
 	void reset_strbuf(struct strbuf *buf);
 
+ - There are several common idiomatic names for functions performing
+   specific tasks on a structure `S`:
+
+    - `S_init()` initializes a structure without allocating the
+      structure itself.
+
+    - `S_release()` releases a structure's contents without freeing the
+      structure.
+
+    - `S_clear()` is equivalent to `S_release()` followed by `S_init()`
+      such that the structure is directly usable after clearing it. When
+      `S_clear()` is provided, `S_init()` shall not allocate resources
+      that need to be released again.
+
+    - `S_free()` releases a structure's contents and frees the
+      structure.
+
 For Perl programs:
 
  - Most of the C guidelines above apply.
