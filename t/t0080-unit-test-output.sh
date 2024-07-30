@@ -50,7 +50,40 @@ test_expect_success 'TAP output from unit tests' - <<\EOT
 	# BUG: test has no checks at t/helper/test-example-tap.c:94
 	not ok 18 - test with no checks
 	ok 19 - test with no checks returns 0
-	1..19
+	ok 20 - if_test passing test
+	# check "1 == 2" failed at t/helper/test-example-tap.c:100
+	#    left: 1
+	#   right: 2
+	not ok 21 - if_test failing test
+	not ok 22 - if_test passing TEST_TODO() # TODO
+	# todo check 'check(1)' succeeded at t/helper/test-example-tap.c:104
+	not ok 23 - if_test failing TEST_TODO()
+	# check "0" failed at t/helper/test-example-tap.c:106
+	# skipping test - missing prerequisite
+	# skipping check '1' at t/helper/test-example-tap.c:108
+	ok 24 - if_test test_skip() # SKIP
+	# skipping test - missing prerequisite
+	ok 25 - if_test test_skip() inside TEST_TODO() # SKIP
+	# check "0" failed at t/helper/test-example-tap.c:113
+	not ok 26 - if_test TEST_TODO() after failing check
+	# check "0" failed at t/helper/test-example-tap.c:119
+	not ok 27 - if_test failing check after TEST_TODO()
+	# check "!strcmp("\thello\\\\", "there\"\n")" failed at t/helper/test-example-tap.c:122
+	#    left: "\011hello\\\\"
+	#   right: "there\"\012"
+	# check "!strcmp("NULL", NULL)" failed at t/helper/test-example-tap.c:123
+	#    left: "NULL"
+	#   right: NULL
+	# check "'a' == '\n'" failed at t/helper/test-example-tap.c:124
+	#    left: 'a'
+	#   right: '\012'
+	# check "'\\\\' == '\\''" failed at t/helper/test-example-tap.c:125
+	#    left: '\\\\'
+	#   right: '\\''
+	not ok 28 - if_test messages from failing string and char comparison
+	# BUG: test has no checks at t/helper/test-example-tap.c:127
+	not ok 29 - if_test test with no checks
+	1..29
 	EOF
 
 	! test-tool example-tap >actual &&
