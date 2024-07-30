@@ -541,6 +541,25 @@ For C programs:
    use your own debugger and arguments. Example: `GIT_DEBUGGER="ddd --gdb"
    ./bin-wrappers/git log` (See `wrap-for-bin.sh`.)
 
+ - The primary data structure that a subsystem 'S' deals with is called
+   `struct S`. Functions that operate on `struct S` are named
+   `S_<verb>()` and should generally receive a pointer to `struct S` as
+   first parameter. E.g.
+
+	struct strbuf;
+
+	void strbuf_add(struct strbuf *buf, ...);
+
+	void strbuf_reset(struct strbuf *buf);
+
+    is preferred over:
+
+	struct strbuf;
+
+	void add_string(struct strbuf *buf, ...);
+
+	void reset_strbuf(struct strbuf *buf);
+
 For Perl programs:
 
  - Most of the C guidelines above apply.
