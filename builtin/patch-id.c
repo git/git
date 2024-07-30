@@ -6,10 +6,9 @@
 #include "hex.h"
 #include "parse-options.h"
 
-static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
+static void flush_current_id(struct object_id *id, struct object_id *result)
 {
-	if (patchlen)
-		printf("%s %s\n", oid_to_hex(result), oid_to_hex(id));
+	printf("%s %s\n", oid_to_hex(result), oid_to_hex(id));
 }
 
 static int remove_space(char *line)
@@ -181,7 +180,8 @@ static void generate_id_list(int stable, int verbatim)
 	oidclr(&oid);
 	while (!feof(stdin)) {
 		patchlen = get_one_patchid(&n, &result, &line_buf, stable, verbatim);
-		flush_current_id(patchlen, &oid, &result);
+		if (patchlen)
+			flush_current_id(&oid, &result);
 		oidcpy(&oid, &n);
 	}
 	strbuf_release(&line_buf);
