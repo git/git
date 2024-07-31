@@ -1,3 +1,16 @@
 promisor.quiet::
 	If set to "true" assume `--quiet` when fetching additional
 	objects for a partial clone.
+
+promisor.advertise::
+	If set to "true", a server will use the "promisor-remote"
+	capability, see linkgit:gitprotocol-v2[5], to advertise the
+	promisor remotes it is using if any. Default is "false", which
+	means no promisor remote is advertised.
+
+promisor.acceptFromServer::
+	If set to "all", a client will accept all the promisor remotes
+	a server might advertise using the "promisor-remote"
+	capability, see linkgit:gitprotocol-v2[5]. Default is "none",
+	which means no promisor remote advertised by a server will be
+	accepted.

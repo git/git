@@ -22,6 +22,7 @@ test_expect_success 'test capability advertisement' '
 	object-format=$(test_oid algo)
 	EOF
 	cat >expect.trailer <<-EOF &&
+	promisor-remote
 	0000
 	EOF
 	cat expect.base expect.trailer >expect &&
