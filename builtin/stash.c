@@ -574,7 +574,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		}
 	}
 
-	init_merge_options(&o, the_repository);
+	init_ui_merge_options(&o, the_repository);
 
 	o.branch1 = "Updated upstream";
 	o.branch2 = "Stashed changes";

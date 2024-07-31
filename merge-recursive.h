@@ -54,7 +54,10 @@ struct merge_options {
 	struct merge_options_internal *priv;
 };
 
-void init_merge_options(struct merge_options *opt, struct repository *repo);
+/* for use by porcelain commands */
+void init_ui_merge_options(struct merge_options *opt, struct repository *repo);
+/* for use by plumbing commands */
+void init_basic_merge_options(struct merge_options *opt, struct repository *repo);
 
 void copy_merge_options(struct merge_options *dst, struct merge_options *src);
 void clear_merge_options(struct merge_options *opt);

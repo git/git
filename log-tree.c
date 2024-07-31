@@ -1025,7 +1025,7 @@ static int do_remerge_diff(struct rev_info *opt,
 	struct strbuf parent2_desc = STRBUF_INIT;
 
 	/* Setup merge options */
-	init_merge_options(&o, the_repository);
+	init_ui_merge_options(&o, the_repository);
 	o.show_rename_progress = 0;
 	o.record_conflict_msgs_as_headers = 1;
 	o.msg_header_prefix = "remerge";
