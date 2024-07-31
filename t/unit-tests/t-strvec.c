@@ -3,38 +3,21 @@
 #include "strvec.h"
 
 #define check_strvec(vec, ...) \
-	check_strvec_loc(TEST_LOCATION(), vec, __VA_ARGS__)
-LAST_ARG_MUST_BE_NULL
-static void check_strvec_loc(const char *loc, struct strvec *vec, ...)
-{
-	va_list ap;
-	size_t nr = 0;
-
-	va_start(ap, vec);
-	while (1) {
-		const char *str = va_arg(ap, const char *);
-		if (!str)
-			break;
-
-		if (!check_uint(vec->nr, >, nr) ||
-		    !check_uint(vec->alloc, >, nr) ||
-		    !check_str(vec->v[nr], str)) {
-			struct strbuf msg = STRBUF_INIT;
-			strbuf_addf(&msg, "strvec index %"PRIuMAX, (uintmax_t) nr);
-			test_assert(loc, msg.buf, 0);
-			strbuf_release(&msg);
-			va_end(ap);
-			return;
-		}
-
-		nr++;
-	}
-	va_end(ap);
-
-	check_uint(vec->nr, ==, nr);
-	check_uint(vec->alloc, >=, nr);
-	check_pointer_eq(vec->v[nr], NULL);
-}
+	do { \
+		const char *expect[] = { __VA_ARGS__ }; \
+		if (check_uint(ARRAY_SIZE(expect), >, 0) && \
+		    check_pointer_eq(expect[ARRAY_SIZE(expect) - 1], NULL) && \
+		    check_uint((vec)->nr, ==, ARRAY_SIZE(expect) - 1) && \
+		    check_uint((vec)->nr, <=, (vec)->alloc)) { \
+			for (size_t i = 0; i < ARRAY_SIZE(expect); i++) { \
+				if (!check_str((vec)->v[i], expect[i])) { \
+					test_msg("      i: %"PRIuMAX, \
+						 (uintmax_t)i); \
+					break; \
+				} \
+			} \
+		} \
+	} while (0)
 
 static void t_static_init(void)
 {
