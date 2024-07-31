@@ -297,8 +297,20 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 # p4 changes, files, or describe; just in p4 print.  If P4CLIENT is unset, the
 # message will include "Librarian checkout".
 test_expect_success 'exit gracefully for p4 server errors' '
-	test_when_finished "mv \"$db\"/depot/file1,v,hidden \"$db\"/depot/file1,v" &&
-	mv "$db"/depot/file1,v "$db"/depot/file1,v,hidden &&
+	# Note that newer Perforce versions started to store files
+	# compressed in directories. The case statement handles both
+	# old and new layout.
+	case "$(echo "$db"/depot/file1*)" in
+	*,v)
+		test_when_finished "mv \"$db\"/depot/file1,v,hidden \"$db\"/depot/file1,v" &&
+		mv "$db"/depot/file1,v "$db"/depot/file1,v,hidden;;
+	*,d)
+		path="$(echo "$db"/depot/file1,d/*.gz)" &&
+		test_when_finished "mv \"$path\",hidden \"$path\"" &&
+		mv "$path" "$path",hidden;;
+	*)
+		BUG "unhandled p4d layout";;
+	esac &&
 	test_when_finished cleanup_git &&
 	test_expect_code 1 git p4 clone --dest="$git" //depot@1 >out 2>err &&
 	test_grep "Error from p4 print" err
