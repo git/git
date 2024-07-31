@@ -9,7 +9,6 @@ int cmd__reftable(int argc, const char **argv)
 	tree_test_main(argc, argv);
 	pq_test_main(argc, argv);
 	readwrite_test_main(argc, argv);
-	merged_test_main(argc, argv);
 	stack_test_main(argc, argv);
 	return 0;
 }
