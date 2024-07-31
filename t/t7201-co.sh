@@ -498,6 +498,19 @@ test_expect_success 'checkout unmerged stage' '
 	test ztheirside = "z$(cat file)"
 '
 
+test_expect_success 'checkout --ours is incompatible with switching' '
+	test_must_fail git checkout --ours 2>error &&
+	test_grep "needs the paths to check out" error &&
+
+	test_must_fail git checkout --ours HEAD 2>error &&
+	test_grep "cannot be used with switching" error &&
+
+	test_must_fail git checkout --ours main 2>error &&
+	test_grep "cannot be used with switching" error &&
+
+	git checkout --ours file
+'
+
 test_expect_success 'checkout path with --merge from tree-ish is a no-no' '
 	setup_conflicting_index &&
 	test_must_fail git checkout -m HEAD -- file
