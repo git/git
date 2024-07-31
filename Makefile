@@ -1376,7 +1376,7 @@ PTHREAD_CFLAGS =
 
 # For the 'sparse' target
 SPARSE_FLAGS ?= -std=gnu99
-SP_EXTRA_FLAGS = -Wno-universal-initializer
+SP_EXTRA_FLAGS =
 
 # For informing GIT-BUILD-OPTIONS of the SANITIZE=leak,address targets
 SANITIZE_LEAK =
