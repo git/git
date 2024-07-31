@@ -1164,4 +1164,23 @@ test_expect_success 'reset -p with unmerged files' '
 	test_must_be_empty staged
 '
 
+test_expect_success 'hunk splitting works with diff.suppressBlankEmpty' '
+	test_config diff.suppressBlankEmpty true &&
+	write_script fake-editor.sh <<-\EOF &&
+	tr F G <"$1" >"$1.tmp" &&
+	mv "$1.tmp" "$1"
+	EOF
+
+	test_write_lines a b "" c d  "" e f "" >file &&
+	git add file &&
+	test_write_lines A b "" c D  "" e F "" >file &&
+	(
+		test_set_editor "$(pwd)/fake-editor.sh" &&
+		test_write_lines s n y e q | git add -p file
+	) &&
+	git cat-file blob :file >actual &&
+	test_write_lines a b "" c D "" e G "" >expect &&
+	test_cmp expect actual
+'
+
 test_done
