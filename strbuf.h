@@ -664,6 +664,13 @@ typedef int (*char_predicate)(char ch);
 void strbuf_addstr_urlencode(struct strbuf *sb, const char *name,
 			     char_predicate allow_unencoded_fn);
 
+/*
+ * Trim and replace each character with ascii code below 32 or above
+ * 127 (included) using a dot '.' character. Useful for sending
+ * capabilities.
+ */
+void strbuf_sanitize(struct strbuf *sb);
+
 __attribute__((format (printf,1,2)))
 int printf_ln(const char *fmt, ...);
 __attribute__((format (printf,2,3)))
