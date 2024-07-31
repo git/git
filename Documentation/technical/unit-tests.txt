@@ -203,6 +203,7 @@ GitHub / GitLab stars to estimate this.
 :criterion: https://github.com/Snaipe/Criterion[Criterion]
 :c-tap: https://github.com/rra/c-tap-harness/[C TAP]
 :check: https://libcheck.github.io/check/[Check]
+:clar: https://github.com/clar-test/clar[Clar]
 
 [format="csv",options="header",width="33%",subs="specialcharacters,attributes,quotes,macros"]
 |=====
@@ -212,6 +213,7 @@ Framework,"<<license,License>>","<<vendorable-or-ubiquitous,Vendorable or ubiqui
 {criterion},{mit},{false},{partial},{true},{true},{true},{true},{true},{false},{true},19,1800
 {c-tap},{expat},{true},{partial},{partial},{true},{false},{true},{false},{false},{false},4,33
 {check},{lgpl},{false},{partial},{true},{true},{true},{false},{false},{false},{true},17,973
+{clar},{isc},{false},{partial},{true},{true},{true},{true},{false},{false},{true},1,192
 |=====
 
 === Additional framework candidates
