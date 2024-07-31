@@ -362,19 +362,54 @@ void promisor_remote_info(struct repository *repo, struct strbuf *buf)
 	strvec_clear(&urls);
 }
 
+/*
+ * Find first index of 'vec' where there is 'val'. 'val' is compared
+ * case insensively to the strings in 'vec'. If not found 'vec->nr' is
+ * returned.
+ */
+static size_t strvec_find_index(struct strvec *vec, const char *val)
+{
+	for (size_t i = 0; i < vec->nr; i++)
+		if (!strcasecmp(vec->v[i], val))
+			return i;
+	return vec->nr;
+}
+
 enum accept_promisor {
 	ACCEPT_NONE = 0,
+	ACCEPT_KNOWN_URL,
+	ACCEPT_KNOWN_NAME,
 	ACCEPT_ALL
 };
 
 static int should_accept_remote(enum accept_promisor accept,
-				const char *remote_name UNUSED,
-				const char *remote_url UNUSED)
+				const char *remote_name, const char *remote_url,
+				struct strvec *names, struct strvec *urls)
 {
+	size_t i;
+
 	if (accept == ACCEPT_ALL)
 		return 1;
 
-	BUG("Unhandled 'enum accept_promisor' value '%d'", accept);
+	i = strvec_find_index(names, remote_name);
+
+	if (i >= names->nr)
+		/* We don't know about that remote */
+		return 0;
+
+	if (accept == ACCEPT_KNOWN_NAME)
+		return 1;
+
+	if (accept != ACCEPT_KNOWN_URL)
+		BUG("Unhandled 'enum accept_promisor' value '%d'", accept);
+
+	if (!strcasecmp(urls->v[i], remote_url))
+		return 1;
+
+	warning(_("known remote named '%s' but with url '%s' instead of '%s'"),
+		remote_name, urls->v[i], remote_url);
+
+	return 0;
 }
 
 static void filter_promisor_remote(struct repository *repo,
@@ -384,10 +419,16 @@ static void filter_promisor_remote(struct repository *repo,
 	struct strbuf **remotes;
 	char *accept_str;
 	enum accept_promisor accept = ACCEPT_NONE;
+	struct strvec names = STRVEC_INIT;
+	struct strvec urls = STRVEC_INIT;
 
 	if (!git_config_get_string("promisor.acceptfromserver", &accept_str)) {
 		if (!accept_str || !*accept_str || !strcasecmp("None", accept_str))
 			accept = ACCEPT_NONE;
+		else if (!strcasecmp("KnownUrl", accept_str))
+			accept = ACCEPT_KNOWN_URL;
+		else if (!strcasecmp("KnownName", accept_str))
+			accept = ACCEPT_KNOWN_NAME;
 		else if (!strcasecmp("All", accept_str))
 			accept = ACCEPT_ALL;
 		else
@@ -397,6 +438,9 @@ static void filter_promisor_remote(struct repository *repo,
 
 	if (accept == ACCEPT_NONE)
 		return;
+
+	if (accept != ACCEPT_ALL)
+		promisor_info_vecs(repo, &names, &urls);
 
 	/* Parse remote info received */
 
@@ -423,7 +467,7 @@ static void filter_promisor_remote(struct repository *repo,
 
 		decoded_url = url_decode(remote_url);
 
-		if (should_accept_remote(accept, remote_name, decoded_url))
+		if (should_accept_remote(accept, remote_name, decoded_url, &names, &urls))
 			strvec_push(accepted, remote_name);
 
 		strbuf_list_free(elems);
@@ -431,6 +475,8 @@ static void filter_promisor_remote(struct repository *repo,
 	}
 
 	free(accept_str);
+	strvec_clear(&names);
+	strvec_clear(&urls);
 	strbuf_list_free(remotes);
 }
 
