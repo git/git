@@ -197,6 +197,9 @@ void strbuf_trim_trailing_dir_sep(struct strbuf *sb);
 /* Strip trailing LF or CR/LF */
 void strbuf_trim_trailing_newline(struct strbuf *sb);
 
+/* Strip trailing character c */
+void strbuf_trim_trailing_ch(struct strbuf *sb, int c);
+
 /**
  * Replace the contents of the strbuf with a reencoded form.  Returns -1
  * on error, 0 on success.
