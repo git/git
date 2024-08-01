@@ -264,6 +264,16 @@ ahead-behind:<committish>::
 	commits ahead and behind, respectively, when comparing the output
 	ref to the `<committish>` specified in the format.
 
+is-base:<committish>::
+	In at most one row, `(<committish>)` will appear to indicate the ref
+	that minimizes the number of commits in the first-parent history of
+	`<committish>` and not in the first-parent history of the ref. Ties
+	are broken by favoring the earliest ref in the list. Note that this
+	token will not appear if the first-parent history of `<committish>`
+	does not intersect the first-parent histories of the filtered refs.
+	This can be used as a heuristic to guess which of the filtered refs
+	was used as the base of the branch that produced `<committish>`.
+
 describe[:options]::
 	A human-readable name, like linkgit:git-describe[1];
 	empty string for undescribable commits. The `describe` string may
