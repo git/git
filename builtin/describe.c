@@ -619,6 +619,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	if (contains) {
 		struct string_list_item *item;
 		struct strvec args;
+		const char **argv_copy;
+		int ret;
 
 		strvec_init(&args);
 		strvec_pushl(&args, "name-rev",
@@ -637,7 +639,21 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			strvec_pushv(&args, argv);
 		else
 			strvec_push(&args, "HEAD");
-		return cmd_name_rev(args.nr, args.v, prefix);
+
+		/*
+		 * `cmd_name_rev()` modifies the array, so we'd leak its
+		 * contained strings if we didn't do a copy here.
+		 */
+		ALLOC_ARRAY(argv_copy, args.nr + 1);
+		for (size_t i = 0; i < args.nr; i++)
+			argv_copy[i] = args.v[i];
+		argv_copy[args.nr] = NULL;
+
+		ret = cmd_name_rev(args.nr, argv_copy, prefix);
+
+		strvec_clear(&args);
+		free(argv_copy);
+		return ret;
 	}
 
 	hashmap_init(&names, commit_name_neq, NULL, 0);
