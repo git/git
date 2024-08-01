@@ -695,7 +695,6 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 		} else if (dirty) {
 			struct lock_file index_lock = LOCK_INIT;
 			struct rev_info revs;
-			struct strvec args = STRVEC_INIT;
 			int fd;
 
 			setup_work_tree();
@@ -710,8 +709,9 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				repo_update_index_if_able(the_repository, &index_lock);
 
 			repo_init_revisions(the_repository, &revs, prefix);
-			strvec_pushv(&args, diff_index_args);
-			if (setup_revisions(args.nr, args.v, &revs, NULL) != 1)
+
+			if (setup_revisions(ARRAY_SIZE(diff_index_args) - 1,
+					    diff_index_args, &revs, NULL) != 1)
 				BUG("malformed internal diff-index command line");
 			run_diff_index(&revs, 0);
 
