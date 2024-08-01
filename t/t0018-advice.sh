@@ -93,7 +93,6 @@ EOF
 		>README &&
 		GIT_ADVICE=true git status
 	) >actual &&
-	cat actual > /tmp/actual &&
 	test_cmp expect actual
 '
 
