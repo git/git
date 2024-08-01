@@ -258,7 +258,7 @@ struct branch_info {
 	char *push_remote_name;
 };
 
-static struct string_list branch_list = STRING_LIST_INIT_NODUP;
+static struct string_list branch_list = STRING_LIST_INIT_DUP;
 
 static const char *abbrev_ref(const char *name, const char *prefix)
 {
@@ -292,8 +292,8 @@ static int config_read_branches(const char *key, const char *value,
 		type = PUSH_REMOTE;
 	else
 		return 0;
-	name = xmemdupz(key, key_len);
 
+	name = xmemdupz(key, key_len);
 	item = string_list_insert(&branch_list, name);
 
 	if (!item->util)
@@ -337,6 +337,7 @@ static int config_read_branches(const char *key, const char *value,
 		BUG("unexpected type=%d", type);
 	}
 
+	free(name);
 	return 0;
 }
 
