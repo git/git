@@ -529,6 +529,7 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 	traverse_commit_list(&revs, process_commit, process_object, &pcd);
 	reset_revision_walk();
 	release_revisions(&revs);
+	strvec_clear(&args);
 }
 
 static void describe(const char *arg, int last_one)
