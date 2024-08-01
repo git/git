@@ -1735,7 +1735,8 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 				peek_eol = end_of_line(peek_bol, &peek_left);
 			}
 
-			if (match_funcname(opt, gs, peek_bol, peek_eol))
+			if (peek_bol >= gs->buf + gs->size ||
+			    match_funcname(opt, gs, peek_bol, peek_eol))
 				show_function = 0;
 		}
 		if (show_function ||
