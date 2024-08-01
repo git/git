@@ -960,7 +960,7 @@ int async_query_available_blobs(const char *cmd, struct string_list *available_p
 	while ((line = packet_read_line(process->out, NULL))) {
 		const char *path;
 		if (skip_prefix(line, "pathname=", &path))
-			string_list_insert(available_paths, xstrdup(path));
+			string_list_insert(available_paths, path);
 		else
 			; /* ignore unknown keys */
 	}
