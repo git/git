@@ -1530,7 +1530,7 @@ struct module_clone_data {
 	const char *path;
 	const char *name;
 	const char *url;
-	const char *depth;
+	int depth;
 	struct list_objects_filter_options *filter_options;
 	unsigned int quiet: 1;
 	unsigned int progress: 1;
@@ -1729,8 +1729,8 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 			strvec_push(&cp.args, "--quiet");
 		if (clone_data->progress)
 			strvec_push(&cp.args, "--progress");
-		if (clone_data->depth && *(clone_data->depth))
-			strvec_pushl(&cp.args, "--depth", clone_data->depth, NULL);
+		if (clone_data->depth > 0)
+			strvec_pushf(&cp.args, "--depth=%d", clone_data->depth);
 		if (reference->nr) {
 			struct string_list_item *item;
 
@@ -1851,8 +1851,7 @@ static int module_clone(int argc, const char **argv, const char *prefix)
 			   N_("reference repository")),
 		OPT_BOOL(0, "dissociate", &dissociate,
 			   N_("use --reference only while cloning")),
-		OPT_STRING(0, "depth", &clone_data.depth,
-			   N_("string"),
+		OPT_INTEGER(0, "depth", &clone_data.depth,
 			   N_("depth for shallow clones")),
 		OPT__QUIET(&quiet, "suppress output for cloning a submodule"),
 		OPT_BOOL(0, "progress", &progress,
@@ -3200,7 +3199,7 @@ static int add_submodule(const struct add_data *add_data)
 		}
 		clone_data.dissociate = add_data->dissociate;
 		if (add_data->depth >= 0)
-			clone_data.depth = xstrfmt("%d", add_data->depth);
+			clone_data.depth = add_data->depth;
 
 		if (clone_submodule(&clone_data, &reference))
 			goto cleanup;
