@@ -18,7 +18,7 @@ static void merged_iter_pqueue_check(const struct merged_iter_pqueue *pq)
 	}
 }
 
-static void t_pq(void)
+static void t_pq_record(void)
 {
 	struct merged_iter_pqueue pq = { 0 };
 	struct reftable_record recs[54];
@@ -26,11 +26,8 @@ static void t_pq(void)
 	char *last = NULL;
 
 	for (i = 0; i < N; i++) {
-		struct strbuf refname = STRBUF_INIT;
-		strbuf_addf(&refname, "%02"PRIuMAX, (uintmax_t)i);
-
 		reftable_record_init(&recs[i], BLOCK_TYPE_REF);
-		recs[i].u.ref.refname = strbuf_detach(&refname, NULL);
+		recs[i].u.ref.refname = xstrfmt("%02"PRIuMAX, (uintmax_t)i);
 	}
 
 	i = 1;
@@ -59,9 +56,48 @@ static void t_pq(void)
 	merged_iter_pqueue_release(&pq);
 }
 
+static void t_pq_index(void)
+{
+	struct merged_iter_pqueue pq = { 0 };
+	struct reftable_record recs[13];
+	char *last = NULL;
+	size_t N = ARRAY_SIZE(recs), i;
+
+	for (i = 0; i < N; i++) {
+		reftable_record_init(&recs[i], BLOCK_TYPE_REF);
+		recs[i].u.ref.refname = (char *) "refs/heads/master";
+	}
+
+	i = 1;
+	do {
+		struct pq_entry e = {
+			.rec = &recs[i],
+			.index = i,
+		};
+
+		merged_iter_pqueue_add(&pq, &e);
+		merged_iter_pqueue_check(&pq);
+		i = (i * 7) % N;
+	} while (i != 1);
+
+	for (i = N - 1; i > 0; i--) {
+		struct pq_entry e = merged_iter_pqueue_remove(&pq);
+		merged_iter_pqueue_check(&pq);
+
+		check(reftable_record_type(e.rec) == BLOCK_TYPE_REF);
+		check_int(e.index, ==, i);
+		if (last)
+			check_str(last, e.rec->u.ref.refname);
+		last = e.rec->u.ref.refname;
+	}
+
+	merged_iter_pqueue_release(&pq);
+}
+
 int cmd_main(int argc, const char *argv[])
 {
-	TEST(t_pq(), "pq works");
+	TEST(t_pq_record(), "pq works with record-based comparison");
+	TEST(t_pq_index(), "pq works with index-based comparison");
 
 	return test_done();
 }
