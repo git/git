@@ -2268,6 +2268,7 @@ static int is_tip_reachable(const char *path, const struct object_id *oid)
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf rev = STRBUF_INIT;
 	char *hex = oid_to_hex(oid);
+	int reachable;
 
 	cp.git_cmd = 1;
 	cp.dir = path;
@@ -2277,9 +2278,12 @@ static int is_tip_reachable(const char *path, const struct object_id *oid)
 	prepare_submodule_repo_env(&cp.env);
 
 	if (capture_command(&cp, &rev, GIT_MAX_HEXSZ + 1) || rev.len)
-		return 0;
+		reachable = 0;
+	else
+		reachable = 1;
 
-	return 1;
+	strbuf_release(&rev);
+	return reachable;
 }
 
 static int fetch_in_submodule(const char *module_path, int depth, int quiet,
@@ -3222,6 +3226,7 @@ static int add_submodule(const struct add_data *add_data)
 			die(_("unable to checkout submodule '%s'"), add_data->sm_path);
 	}
 	ret = 0;
+
 cleanup:
 	string_list_clear(&reference, 1);
 	return ret;
