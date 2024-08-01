@@ -114,7 +114,6 @@ struct note_msg {
 };
 
 struct note_data {
-	int given;
 	int use_editor;
 	int stripspace;
 	char *edit_path;
@@ -193,7 +192,7 @@ static void write_commented_object(int fd, const struct object_id *object)
 static void prepare_note_data(const struct object_id *object, struct note_data *d,
 		const struct object_id *old_note)
 {
-	if (d->use_editor || !d->given) {
+	if (d->use_editor || !d->msg_nr) {
 		int fd;
 		struct strbuf buf = STRBUF_INIT;
 
@@ -201,7 +200,7 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		d->edit_path = git_pathdup("NOTES_EDITMSG");
 		fd = xopen(d->edit_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
-		if (d->given)
+		if (d->msg_nr)
 			write_or_die(fd, d->buf.buf, d->buf.len);
 		else if (old_note)
 			copy_obj_to_fd(fd, old_note);
@@ -515,7 +514,6 @@ static int add(int argc, const char **argv, const char *prefix)
 
 	if (d.msg_nr)
 		concat_messages(&d);
-	d.given = !!d.buf.len;
 
 	object_ref = argc > 1 ? argv[1] : "HEAD";
 
@@ -528,7 +526,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	if (note) {
 		if (!force) {
 			free_notes(t);
-			if (d.given) {
+			if (d.msg_nr) {
 				free_note_data(&d);
 				return error(_("Cannot add notes. "
 					"Found existing notes for object %s. "
@@ -690,14 +688,14 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		usage_with_options(usage, options);
 	}
 
-	if (d.msg_nr)
+	if (d.msg_nr) {
 		concat_messages(&d);
-	d.given = !!d.buf.len;
-
-	if (d.given && edit)
-		fprintf(stderr, _("The -m/-F/-c/-C options have been deprecated "
-			"for the 'edit' subcommand.\n"
-			"Please use 'git notes add -f -m/-F/-c/-C' instead.\n"));
+		if (edit)
+			fprintf(stderr, _("The -m/-F/-c/-C options have been "
+				"deprecated for the 'edit' subcommand.\n"
+				"Please use 'git notes add -f -m/-F/-c/-C' "
+				"instead.\n"));
+	}
 
 	object_ref = 1 < argc ? argv[1] : "HEAD";
 
