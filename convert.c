@@ -1050,14 +1050,20 @@ static int read_convert_config(const char *var, const char *value,
 	 * The command-line will not be interpolated in any way.
 	 */
 
-	if (!strcmp("smudge", key))
+	if (!strcmp("smudge", key)) {
+		FREE_AND_NULL(drv->smudge);
 		return git_config_string(&drv->smudge, var, value);
+	}
 
-	if (!strcmp("clean", key))
+	if (!strcmp("clean", key)) {
+		FREE_AND_NULL(drv->clean);
 		return git_config_string(&drv->clean, var, value);
+	}
 
-	if (!strcmp("process", key))
+	if (!strcmp("process", key)) {
+		FREE_AND_NULL(drv->process);
 		return git_config_string(&drv->process, var, value);
+	}
 
 	if (!strcmp("required", key)) {
 		drv->required = git_config_bool(var, value);
