@@ -7,6 +7,8 @@ UI, Workflows & Features
  * Many Porcelain commands that internally use the merge machinery
    were taught to consistently honor the diff.algorithm configuration.
 
+ * A few descriptions in "git show-ref -h" have been clarified.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -16,6 +18,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * A CI job that use clang-format to check coding style issues in new
    code has been added.
+
+ * The reviewing guidelines document now explicitly encourages people
+   to give positive reviews and how.
 
 
 Fixes since v2.46
@@ -35,6 +40,11 @@ Fixes since v2.46
 
  * It has been documented that we avoid "VAR=VAL shell_func" and why.
    (merge 728a1962cd jc/doc-one-shot-export-with-shell-func later to maint).
+
+ * "git rebase --help" referred to "offset" (the difference between
+   the location a change was taken from and the change gets replaced)
+   incorrectly and called it "fuzz", which has been corrected.
+   (merge 70058db385 jc/doc-rebase-fuzz-vs-offset-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 8db8786fc2 jt/doc-post-receive-hook-update later to maint).
