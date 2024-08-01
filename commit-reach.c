@@ -1227,4 +1227,5 @@ void tips_reachable_from_bases(struct repository *r,
 done:
 	free(commits);
 	repo_clear_commit_marks(r, SEEN);
+	free_commit_list(stack);
 }
