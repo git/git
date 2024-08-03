@@ -63,28 +63,17 @@ proc force_diff_encoding {enc} {
 }
 
 proc handle_empty_diff {} {
-	global current_diff_path file_states file_lists
-	global diff_empty_count
+	global current_diff_path file_states
+	global ui_diff
 
 	set path $current_diff_path
 	set s $file_states($path)
 	if {[lindex $s 0] ne {_M} || [has_textconv $path]} return
 
-	# Prevent infinite rescan loops
-	incr diff_empty_count
-	if {$diff_empty_count > 1} return
-
-	info_popup [mc "No differences detected.
-
-%s has no changes.
-
-The modification date of this file was updated by another application, but the content within the file was not changed.
-
-A rescan will be automatically started to find other files which may have the same state." [short_path $path]]
-
-	clear_diff
-	display_file $path __
-	rescan ui_ready 0
+	$ui_diff conf -state normal
+	$ui_diff insert end [mc "* No differences detected; stage the file to de-list it from Unstaged Changes.\n"] d_info
+	$ui_diff insert end [mc "* Click to find other files that may have the same state.\n"] d_rescan
+	$ui_diff conf -state disabled
 }
 
 proc show_diff {path w {lno {}} {scroll_pos {}} {callback {}}} {
@@ -387,7 +376,6 @@ proc read_diff {fd conflict_size cont_info} {
 	global ui_diff diff_active is_submodule_diff
 	global is_3way_diff is_conflict_diff current_diff_header
 	global current_diff_queue
-	global diff_empty_count
 
 	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
@@ -559,8 +547,6 @@ proc read_diff {fd conflict_size cont_info} {
 
 		if {[$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
-		} else {
-			set diff_empty_count 0
 		}
 
 		set callback [lindex $cont_info 1]
