@@ -47,6 +47,7 @@ static void t_tree_search(void)
 		check_pointer_eq(nodes[i], tree_search(&values[i], &root, &t_compare, 0));
 	}
 
+	check(!tree_search(values, &root, t_compare, 0));
 	tree_free(root);
 }
 
