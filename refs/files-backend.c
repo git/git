@@ -155,6 +155,7 @@ static void files_ref_store_release(struct ref_store *ref_store)
 	free_ref_cache(refs->loose);
 	free(refs->gitcommondir);
 	ref_store_release(refs->packed_ref_store);
+	free(refs->packed_ref_store);
 }
 
 static void files_reflog_path(struct files_ref_store *refs,
