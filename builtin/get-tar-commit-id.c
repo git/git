@@ -35,6 +35,7 @@ int cmd_get_tar_commit_id(int argc, const char **argv UNUSED, const char *prefix
 	if (header->typeflag[0] != TYPEFLAG_GLOBAL_HEADER)
 		return 1;
 
+	errno = 0;
 	len = strtol(content, &end, 10);
 	if (errno == ERANGE || end == content || len < 0)
 		return 1;
