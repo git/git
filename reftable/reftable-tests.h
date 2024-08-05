@@ -11,7 +11,6 @@ https://developers.google.com/open-source/licenses/bsd
 
 int basics_test_main(int argc, const char **argv);
 int block_test_main(int argc, const char **argv);
-int pq_test_main(int argc, const char **argv);
 int record_test_main(int argc, const char **argv);
 int readwrite_test_main(int argc, const char **argv);
 int stack_test_main(int argc, const char **argv);
