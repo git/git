@@ -141,7 +141,7 @@ static void find_username_in_item(CFDictionaryRef item)
 				username_buf,
 				buffer_len,
 				ENCODING)) {
-		write_item("username", username_buf, buffer_len - 1);
+		write_item("username", username_buf, strlen(username_buf));
 	}
 	free(username_buf);
 }
