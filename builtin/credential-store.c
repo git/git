@@ -218,5 +218,6 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 		; /* Ignore unknown operation. */
 
 	string_list_clear(&fns, 0);
+	credential_clear(&c);
 	return 0;
 }

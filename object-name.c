@@ -27,7 +27,8 @@
 #include "date.h"
 #include "object-file-convert.h"
 
-static int get_oid_oneline(struct repository *r, const char *, struct object_id *, struct commit_list *);
+static int get_oid_oneline(struct repository *r, const char *, struct object_id *,
+			   const struct commit_list *);
 
 typedef int (*disambiguate_hint_fn)(struct repository *, const struct object_id *, void *);
 
@@ -1254,6 +1255,8 @@ static int peel_onion(struct repository *r, const char *name, int len,
 		prefix = xstrndup(sp + 1, name + len - 1 - (sp + 1));
 		commit_list_insert((struct commit *)o, &list);
 		ret = get_oid_oneline(r, prefix, oid, list);
+
+		free_commit_list(list);
 		free(prefix);
 		return ret;
 	}
@@ -1388,9 +1391,10 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 
 static int get_oid_oneline(struct repository *r,
 			   const char *prefix, struct object_id *oid,
-			   struct commit_list *list)
+			   const struct commit_list *list)
 {
-	struct commit_list *backup = NULL, *l;
+	struct commit_list *copy = NULL;
+	const struct commit_list *l;
 	int found = 0;
 	int negative = 0;
 	regex_t regex;
@@ -1411,14 +1415,14 @@ static int get_oid_oneline(struct repository *r,
 
 	for (l = list; l; l = l->next) {
 		l->item->object.flags |= ONELINE_SEEN;
-		commit_list_insert(l->item, &backup);
+		commit_list_insert(l->item, &copy);
 	}
-	while (list) {
+	while (copy) {
 		const char *p, *buf;
 		struct commit *commit;
 		int matches;
 
-		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
+		commit = pop_most_recent_commit(&copy, ONELINE_SEEN);
 		if (!parse_object(r, &commit->object.oid))
 			continue;
 		buf = repo_get_commit_buffer(r, commit, NULL);
@@ -1433,10 +1437,9 @@ static int get_oid_oneline(struct repository *r,
 		}
 	}
 	regfree(&regex);
-	free_commit_list(list);
-	for (l = backup; l; l = l->next)
+	for (l = list; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);
-	free_commit_list(backup);
+	free_commit_list(copy);
 	return found ? 0 : -1;
 }
 
@@ -2024,7 +2027,10 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			refs_for_each_ref(get_main_ref_store(repo), handle_one_ref, &cb);
 			refs_head_ref(get_main_ref_store(repo), handle_one_ref, &cb);
 			commit_list_sort_by_date(&list);
-			return get_oid_oneline(repo, name + 2, oid, list);
+			ret = get_oid_oneline(repo, name + 2, oid, list);
+
+			free_commit_list(list);
+			return ret;
 		}
 		if (namelen < 3 ||
 		    name[2] != ':' ||

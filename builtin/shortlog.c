@@ -514,4 +514,5 @@ void shortlog_output(struct shortlog *log)
 	string_list_clear(&log->list, 1);
 	clear_mailmap(&log->mailmap);
 	string_list_clear(&log->format, 0);
+	string_list_clear(&log->trailers, 0);
 }

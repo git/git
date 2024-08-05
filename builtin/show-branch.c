@@ -502,14 +502,14 @@ static int rev_is_head(const char *head, const char *name)
 	return !strcmp(head, name);
 }
 
-static int show_merge_base(struct commit_list *seen, int num_rev)
+static int show_merge_base(const struct commit_list *seen, int num_rev)
 {
 	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 	int exit_status = 1;
 
-	while (seen) {
-		struct commit *commit = pop_commit(&seen);
+	for (const struct commit_list *s = seen; s; s = s->next) {
+		struct commit *commit = s->item;
 		int flags = commit->object.flags & all_mask;
 		if (!(flags & UNINTERESTING) &&
 		    ((flags & all_revs) == all_revs)) {
@@ -635,7 +635,7 @@ static int parse_reflog_param(const struct option *opt, const char *arg,
 int cmd_show_branch(int ac, const char **av, const char *prefix)
 {
 	struct commit *rev[MAX_REVS], *commit;
-	char *reflog_msg[MAX_REVS];
+	char *reflog_msg[MAX_REVS] = {0};
 	struct commit_list *list = NULL, *seen = NULL;
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
@@ -692,6 +692,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			    parse_reflog_param),
 		OPT_END()
 	};
+	const char **args_copy = NULL;
+	int ret;
 
 	init_commit_name_slab(&name_slab);
 
@@ -699,8 +701,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_args.nr) {
+		DUP_ARRAY(args_copy, default_args.v, default_args.nr);
 		ac = default_args.nr;
-		av = default_args.v;
+		av = args_copy;
 	}
 
 	ac = parse_options(ac, av, prefix, builtin_show_branch_options,
@@ -780,7 +783,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		}
 
 		for (i = 0; i < reflog; i++) {
-			char *logmsg;
+			char *logmsg = NULL;
 			char *nth_desc;
 			const char *msg;
 			char *end;
@@ -790,6 +793,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			if (read_ref_at(get_main_ref_store(the_repository),
 					ref, flags, 0, base + i, &oid, &logmsg,
 					&timestamp, &tz, NULL)) {
+				free(logmsg);
 				reflog = i;
 				break;
 			}
@@ -842,7 +846,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	if (!ref_name_cnt) {
 		fprintf(stderr, "No revs to be shown.\n");
-		exit(0);
+		ret = 0;
+		goto out;
 	}
 
 	for (num_rev = 0; ref_name[num_rev]; num_rev++) {
@@ -879,11 +884,15 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	commit_list_sort_by_date(&seen);
 
-	if (merge_base)
-		return show_merge_base(seen, num_rev);
+	if (merge_base) {
+		ret = show_merge_base(seen, num_rev);
+		goto out;
+	}
 
-	if (independent)
-		return show_independent(rev, num_rev, rev_mask);
+	if (independent) {
+		ret = show_independent(rev, num_rev, rev_mask);
+		goto out;
+	}
 
 	/* Show list; --more=-1 means list-only */
 	if (1 < num_rev || extra < 0) {
@@ -919,8 +928,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			putchar('\n');
 		}
 	}
-	if (extra < 0)
-		exit(0);
+	if (extra < 0) {
+		ret = 0;
+		goto out;
+	}
 
 	/* Sort topologically */
 	sort_in_topological_order(&seen, sort_order);
@@ -932,8 +943,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 
-	while (seen) {
-		struct commit *commit = pop_commit(&seen);
+	for (struct commit_list *l = seen; l; l = l->next) {
+		struct commit *commit = l->item;
 		int this_flag = commit->object.flags;
 		int is_merge_point = ((this_flag & all_revs) == all_revs);
 
@@ -973,6 +984,15 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		if (shown_merge_point && --extra < 0)
 			break;
 	}
+
+	ret = 0;
+
+out:
+	for (size_t i = 0; i < ARRAY_SIZE(reflog_msg); i++)
+		free(reflog_msg[i]);
+	free_commit_list(seen);
+	free_commit_list(list);
+	free(args_copy);
 	free(head);
-	return 0;
+	return ret;
 }
