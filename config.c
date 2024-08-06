@@ -2914,7 +2914,7 @@ static int matches(const char *key, const char *value,
 {
 	if (strcmp(key, store->key))
 		return 0; /* not ours */
-	if (store->fixed_value)
+	if (store->fixed_value && value)
 		return !strcmp(store->fixed_value, value);
 	if (!store->value_pattern)
 		return 1; /* always matches */
