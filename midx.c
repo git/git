@@ -470,6 +470,13 @@ int prepare_midx_pack(struct repository *r, struct multi_pack_index *m,
 	return 0;
 }
 
+struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
+				   uint32_t pack_int_id)
+{
+	uint32_t local_pack_int_id = midx_for_pack(&m, pack_int_id);
+	return m->packs[local_pack_int_id];
+}
+
 #define MIDX_CHUNK_BITMAPPED_PACKS_WIDTH (2 * sizeof(uint32_t))
 
 int nth_bitmapped_pack(struct repository *r, struct multi_pack_index *m,
@@ -818,6 +825,7 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 	uint32_t i;
 	struct progress *progress = NULL;
 	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct multi_pack_index *curr;
 	verify_midx_error = 0;
 
 	if (!m) {
@@ -840,8 +848,8 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(_("Looking for referenced packfiles"),
-					  m->num_packs);
-	for (i = 0; i < m->num_packs; i++) {
+						  m->num_packs + m->num_packs_in_base);
+	for (i = 0; i < m->num_packs + m->num_packs_in_base; i++) {
 		if (prepare_midx_pack(r, m, i))
 			midx_report("failed to load pack in position %d", i);
 
@@ -861,17 +869,20 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 	if (flags & MIDX_PROGRESS)
 		progress = start_sparse_progress(_("Verifying OID order in multi-pack-index"),
 						 m->num_objects - 1);
-	for (i = 0; i < m->num_objects - 1; i++) {
-		struct object_id oid1, oid2;
 
-		nth_midxed_object_oid(&oid1, m, i);
-		nth_midxed_object_oid(&oid2, m, i + 1);
+	for (curr = m; curr; curr = curr->base_midx) {
+		for (i = 0; i < m->num_objects - 1; i++) {
+			struct object_id oid1, oid2;
 
-		if (oidcmp(&oid1, &oid2) >= 0)
-			midx_report(_("oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"),
-				    i, oid_to_hex(&oid1), oid_to_hex(&oid2), i + 1);
+			nth_midxed_object_oid(&oid1, m, m->num_objects_in_base + i);
+			nth_midxed_object_oid(&oid2, m, m->num_objects_in_base + i + 1);
 
-		midx_display_sparse_progress(progress, i + 1);
+			if (oidcmp(&oid1, &oid2) >= 0)
+				midx_report(_("oid lookup out of order: oid[%d] = %s >= %s = oid[%d]"),
+					    i, oid_to_hex(&oid1), oid_to_hex(&oid2), i + 1);
+
+			midx_display_sparse_progress(progress, i + 1);
+		}
 	}
 	stop_progress(&progress);
 
@@ -881,8 +892,8 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 	 * each of the objects and only require 1 packfile to be open at a
 	 * time.
 	 */
-	ALLOC_ARRAY(pairs, m->num_objects);
-	for (i = 0; i < m->num_objects; i++) {
+	ALLOC_ARRAY(pairs, m->num_objects + m->num_objects_in_base);
+	for (i = 0; i < m->num_objects + m->num_objects_in_base; i++) {
 		pairs[i].pos = i;
 		pairs[i].pack_int_id = nth_midxed_pack_int_id(m, i);
 	}
@@ -896,16 +907,18 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_sparse_progress(_("Verifying object offsets"), m->num_objects);
-	for (i = 0; i < m->num_objects; i++) {
+	for (i = 0; i < m->num_objects + m->num_objects_in_base; i++) {
 		struct object_id oid;
 		struct pack_entry e;
 		off_t m_offset, p_offset;
 
 		if (i > 0 && pairs[i-1].pack_int_id != pairs[i].pack_int_id &&
-		    m->packs[pairs[i-1].pack_int_id])
-		{
-			close_pack_fd(m->packs[pairs[i-1].pack_int_id]);
-			close_pack_index(m->packs[pairs[i-1].pack_int_id]);
+		    nth_midxed_pack(m, pairs[i-1].pack_int_id)) {
+			uint32_t pack_int_id = pairs[i-1].pack_int_id;
+			struct packed_git *p = nth_midxed_pack(m, pack_int_id);
+
+			close_pack_fd(p);
+			close_pack_index(p);
 		}
 
 		nth_midxed_object_oid(&oid, m, pairs[i].pos);
