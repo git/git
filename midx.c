@@ -407,14 +407,12 @@ int fill_midx_entry(struct repository *r,
 	if (!bsearch_midx(oid, m, &pos))
 		return 0;
 
-	if (pos >= m->num_objects)
-		return 0;
-
+	midx_for_object(&m, pos);
 	pack_int_id = nth_midxed_pack_int_id(m, pos);
 
 	if (prepare_midx_pack(r, m, pack_int_id))
 		return 0;
-	p = m->packs[pack_int_id];
+	p = m->packs[pack_int_id - m->num_packs_in_base];
 
 	/*
 	* We are about to tell the caller where they can locate the
