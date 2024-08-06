@@ -196,7 +196,7 @@ static int nth_midxed_pack_midx_entry(struct multi_pack_index *m,
 				      struct pack_midx_entry *e,
 				      uint32_t pos)
 {
-	if (pos >= m->num_objects)
+	if (pos >= m->num_objects + m->num_objects_in_base)
 		return 1;
 
 	nth_midxed_object_oid(&e->oid, m, pos);
@@ -247,12 +247,16 @@ static void midx_fanout_add_midx_fanout(struct midx_fanout *fanout,
 					uint32_t cur_fanout,
 					int preferred_pack)
 {
-	uint32_t start = 0, end;
+	uint32_t start = m->num_objects_in_base, end;
 	uint32_t cur_object;
 
+	if (m->base_midx)
+		midx_fanout_add_midx_fanout(fanout, m->base_midx, cur_fanout,
+					    preferred_pack);
+
 	if (cur_fanout)
-		start = ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
-	end = ntohl(m->chunk_oid_fanout[cur_fanout]);
+		start += ntohl(m->chunk_oid_fanout[cur_fanout - 1]);
+	end = m->num_objects_in_base + ntohl(m->chunk_oid_fanout[cur_fanout]);
 
 	for (cur_object = start; cur_object < end; cur_object++) {
 		if ((preferred_pack > -1) &&
