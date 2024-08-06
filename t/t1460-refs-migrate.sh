@@ -31,20 +31,14 @@ test_expect_success "superfluous arguments" '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	test_must_fail git -C repo refs migrate foo 2>err &&
-	cat >expect <<-EOF &&
-	usage: too many arguments
-	EOF
-	test_cmp expect err
+	test_grep "takes no arguments" err
 '
 
 test_expect_success "missing ref storage format" '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	test_must_fail git -C repo refs migrate 2>err &&
-	cat >expect <<-EOF &&
-	usage: missing --ref-format=<format>
-	EOF
-	test_cmp expect err
+	test_grep "needs ${SQ}--ref-format=<format>${SQ}" err
 '
 
 test_expect_success "unknown ref storage format" '
