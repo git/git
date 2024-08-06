@@ -53,6 +53,7 @@ int copy_wsl_mode_bits_from_disk(const wchar_t *wpath, ssize_t wpathlen,
 	return ret;
 }
 
+#ifndef LX_FILE_METADATA_HAS_UID
 #define LX_FILE_METADATA_HAS_UID 0x1
 #define LX_FILE_METADATA_HAS_GID 0x2
 #define LX_FILE_METADATA_HAS_MODE 0x4
@@ -77,6 +78,7 @@ typedef struct _FILE_STAT_LX_INFORMATION {
 	uint32_t LxDeviceIdMajor;
 	uint32_t LxDeviceIdMinor;
 } FILE_STAT_LX_INFORMATION, *PFILE_STAT_LX_INFORMATION;
+#endif
 
 /*
  * This struct is extended from the original FILE_FULL_EA_INFORMATION of
