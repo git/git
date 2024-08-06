@@ -63,6 +63,10 @@ struct multi_pack_index {
 	const unsigned char *chunk_revindex;
 	size_t chunk_revindex_len;
 
+	struct multi_pack_index *base_midx;
+	uint32_t num_objects_in_base;
+	uint32_t num_packs_in_base;
+
 	const char **pack_names;
 	struct packed_git **packs;
 	char object_dir[FLEX_ARRAY];
