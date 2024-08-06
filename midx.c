@@ -466,7 +466,8 @@ int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 	return strcmp(idx_or_pack_name, idx_name);
 }
 
-int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
+static int midx_contains_pack_1(struct multi_pack_index *m,
+				const char *idx_or_pack_name)
 {
 	uint32_t first = 0, last = m->num_packs;
 
@@ -486,6 +487,14 @@ int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
 		last = mid;
 	}
 
+	return 0;
+}
+
+int midx_contains_pack(struct multi_pack_index *m, const char *idx_or_pack_name)
+{
+	for (; m; m = m->base_midx)
+		if (midx_contains_pack_1(m, idx_or_pack_name))
+			return 1;
 	return 0;
 }
 
