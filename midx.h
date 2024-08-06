@@ -24,6 +24,7 @@ struct bitmapped_pack;
 #define MIDX_CHUNKID_OBJECTOFFSETS 0x4f4f4646 /* "OOFF" */
 #define MIDX_CHUNKID_LARGEOFFSETS 0x4c4f4646 /* "LOFF" */
 #define MIDX_CHUNKID_REVINDEX 0x52494458 /* "RIDX" */
+#define MIDX_CHUNKID_BASE 0x42415345 /* "BASE" */
 #define MIDX_CHUNK_OFFSET_WIDTH (2 * sizeof(uint32_t))
 #define MIDX_LARGE_OFFSET_NEEDED 0x80000000
 
@@ -50,6 +51,7 @@ struct multi_pack_index {
 	int preferred_pack_idx;
 
 	int local;
+	int has_chain;
 
 	const unsigned char *chunk_pack_names;
 	size_t chunk_pack_names_len;
@@ -80,11 +82,16 @@ struct multi_pack_index {
 
 #define MIDX_EXT_REV "rev"
 #define MIDX_EXT_BITMAP "bitmap"
+#define MIDX_EXT_MIDX "midx"
 
 const unsigned char *get_midx_checksum(struct multi_pack_index *m);
 void get_midx_filename(struct strbuf *out, const char *object_dir);
 void get_midx_filename_ext(struct strbuf *out, const char *object_dir,
 			   const unsigned char *hash, const char *ext);
+void get_midx_chain_dirname(struct strbuf *buf, const char *object_dir);
+void get_midx_chain_filename(struct strbuf *buf, const char *object_dir);
+void get_split_midx_filename_ext(struct strbuf *buf, const char *object_dir,
+				 const unsigned char *hash, const char *ext);
 
 struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);
