@@ -90,7 +90,10 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);
 int nth_bitmapped_pack(struct repository *r, struct multi_pack_index *m,
 		       struct bitmapped_pack *bp, uint32_t pack_int_id);
-int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m, uint32_t *result);
+int bsearch_one_midx(const struct object_id *oid, struct multi_pack_index *m,
+		     uint32_t *result);
+int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m,
+		 uint32_t *result);
 off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos);
 uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos);
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
