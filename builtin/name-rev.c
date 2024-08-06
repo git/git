@@ -677,7 +677,9 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 				  always, allow_undefined, data.name_only);
 	}
 
-	UNLEAK(string_pool);
-	UNLEAK(revs);
+	string_list_clear(&data.ref_filters, 0);
+	string_list_clear(&data.exclude_filters, 0);
+	mem_pool_discard(&string_pool, 0);
+	object_array_clear(&revs);
 	return 0;
 }

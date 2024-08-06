@@ -553,7 +553,10 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	strbuf_release(&sb);
 	strvec_clear(&longnames);
 	strvec_clear(&usage);
-	free((char *) opts->help);
+	for (size_t i = 0; i < opts_nr; i++) {
+		free((char *) opts[i].help);
+		free((char *) opts[i].argh);
+	}
 	free(opts);
 	return 0;
 }

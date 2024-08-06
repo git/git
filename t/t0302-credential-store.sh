@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='credential-store tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-credential.sh
 
