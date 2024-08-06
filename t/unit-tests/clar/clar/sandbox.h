@@ -122,6 +122,12 @@ static int build_sandbox_path(void)
 
 	if (mkdir(_clar_path, 0700) != 0)
 		return -1;
+#elif defined(__TANDEM)
+	if (mktemp(_clar_path) == NULL)
+		return -1;
+
+	if (mkdir(_clar_path, 0700) != 0)
+		return -1;
 #elif defined(_WIN32)
 	if (_mktemp_s(_clar_path, sizeof(_clar_path)) != 0)
 		return -1;
