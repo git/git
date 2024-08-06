@@ -344,7 +344,10 @@ int bsearch_one_midx(const struct object_id *oid, struct multi_pack_index *m,
 int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m,
 		 uint32_t *result)
 {
-		return bsearch_one_midx(oid, m, result);
+	for (; m; m = m->base_midx)
+		if (bsearch_one_midx(oid, m, result))
+			return 1;
+	return 0;
 }
 
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
