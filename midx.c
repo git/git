@@ -338,8 +338,10 @@ struct object_id *nth_midxed_object_oid(struct object_id *oid,
 					struct multi_pack_index *m,
 					uint32_t n)
 {
-	if (n >= m->num_objects)
+	if (n >= m->num_objects + m->num_objects_in_base)
 		return NULL;
+
+	n = midx_for_object(&m, n);
 
 	oidread(oid, m->chunk_oid_lookup + st_mult(m->hash_len, n),
 		the_repository->hash_algo);
