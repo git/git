@@ -2503,7 +2503,8 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, receive_pack_usage, 0);
 
 	if (argc > 1)
-		usage_msg_opt(_("too many arguments"), receive_pack_usage, options);
+		usage_msg_optf(_("unexpected argument: '%s'"),
+			       receive_pack_usage, options, argv[1]);
 	if (argc == 0)
 		usage_msg_opt(_("you must specify a directory"), receive_pack_usage, options);
 
