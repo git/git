@@ -815,9 +815,10 @@ static void report_pack_garbage(struct string_list *list)
 	report_helper(list, seen_bits, first, list->nr);
 }
 
-void for_each_file_in_pack_dir(const char *objdir,
-			       each_file_in_pack_dir_fn fn,
-			       void *data)
+void for_each_file_in_pack_subdir(const char *objdir,
+				  const char *subdir,
+				  each_file_in_pack_dir_fn fn,
+				  void *data)
 {
 	struct strbuf path = STRBUF_INIT;
 	size_t dirnamelen;
@@ -826,6 +827,8 @@ void for_each_file_in_pack_dir(const char *objdir,
 
 	strbuf_addstr(&path, objdir);
 	strbuf_addstr(&path, "/pack");
+	if (subdir)
+		strbuf_addf(&path, "/%s", subdir);
 	dir = opendir(path.buf);
 	if (!dir) {
 		if (errno != ENOENT)
@@ -845,6 +848,13 @@ void for_each_file_in_pack_dir(const char *objdir,
 
 	closedir(dir);
 	strbuf_release(&path);
+}
+
+void for_each_file_in_pack_dir(const char *objdir,
+			       each_file_in_pack_dir_fn fn,
+			       void *data)
+{
+	for_each_file_in_pack_subdir(objdir, NULL, fn, data);
 }
 
 struct prepare_pack_data {

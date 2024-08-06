@@ -8,6 +8,7 @@ test_description='exercise basic multi-pack bitmap functionality (.rev files)'
 # We'll be writing our own MIDX, so avoid getting confused by the automatic
 # ones.
 GIT_TEST_MULTI_PACK_INDEX=0
+GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=0
 
 # Unlike t5326, this test exercise multi-pack bitmap functionality where the
 # object order is stored in a separate .rev file.

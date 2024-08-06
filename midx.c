@@ -16,7 +16,10 @@
 
 int midx_checksum_valid(struct multi_pack_index *m);
 void clear_midx_files_ext(const char *object_dir, const char *ext,
-			  unsigned char *keep_hash);
+			  const char *keep_hash);
+void clear_incremental_midx_files_ext(const char *object_dir, const char *ext,
+				      char **keep_hashes,
+				      uint32_t hashes_nr);
 int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 			 const char *idx_name);
 
@@ -521,6 +524,11 @@ int bsearch_midx(const struct object_id *oid, struct multi_pack_index *m,
 	return 0;
 }
 
+int midx_has_oid(struct multi_pack_index *m, const struct object_id *oid)
+{
+	return bsearch_midx(oid, m, NULL);
+}
+
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
 					struct multi_pack_index *m,
 					uint32_t n)
@@ -723,7 +731,8 @@ int midx_checksum_valid(struct multi_pack_index *m)
 }
 
 struct clear_midx_data {
-	char *keep;
+	char **keep;
+	uint32_t keep_nr;
 	const char *ext;
 };
 
@@ -731,32 +740,63 @@ static void clear_midx_file_ext(const char *full_path, size_t full_path_len UNUS
 				const char *file_name, void *_data)
 {
 	struct clear_midx_data *data = _data;
+	uint32_t i;
 
 	if (!(starts_with(file_name, "multi-pack-index-") &&
 	      ends_with(file_name, data->ext)))
 		return;
-	if (data->keep && !strcmp(data->keep, file_name))
-		return;
-
+	for (i = 0; i < data->keep_nr; i++) {
+		if (!strcmp(data->keep[i], file_name))
+			return;
+	}
 	if (unlink(full_path))
 		die_errno(_("failed to remove %s"), full_path);
 }
 
 void clear_midx_files_ext(const char *object_dir, const char *ext,
-			  unsigned char *keep_hash)
+			  const char *keep_hash)
 {
 	struct clear_midx_data data;
 	memset(&data, 0, sizeof(struct clear_midx_data));
 
-	if (keep_hash)
-		data.keep = xstrfmt("multi-pack-index-%s%s",
-				    hash_to_hex(keep_hash), ext);
+	if (keep_hash) {
+		ALLOC_ARRAY(data.keep, 1);
+
+		data.keep[0] = xstrfmt("multi-pack-index-%s.%s", keep_hash, ext);
+		data.keep_nr = 1;
+	}
 	data.ext = ext;
 
 	for_each_file_in_pack_dir(object_dir,
 				  clear_midx_file_ext,
 				  &data);
 
+	if (keep_hash)
+		free(data.keep[0]);
+	free(data.keep);
+}
+
+void clear_incremental_midx_files_ext(const char *object_dir, const char *ext,
+				      char **keep_hashes,
+				      uint32_t hashes_nr)
+{
+	struct clear_midx_data data;
+	uint32_t i;
+
+	memset(&data, 0, sizeof(struct clear_midx_data));
+
+	ALLOC_ARRAY(data.keep, hashes_nr);
+	for (i = 0; i < hashes_nr; i++)
+		data.keep[i] = xstrfmt("multi-pack-index-%s.%s", keep_hashes[i],
+				       ext);
+	data.keep_nr = hashes_nr;
+	data.ext = ext;
+
+	for_each_file_in_pack_subdir(object_dir, "multi-pack-index.d",
+				     clear_midx_file_ext, &data);
+
+	for (i = 0; i < hashes_nr; i++)
+		free(data.keep[i]);
 	free(data.keep);
 }
 
@@ -774,8 +814,8 @@ void clear_midx_file(struct repository *r)
 	if (remove_path(midx.buf))
 		die(_("failed to clear multi-pack-index at %s"), midx.buf);
 
-	clear_midx_files_ext(r->objects->odb->path, ".bitmap", NULL);
-	clear_midx_files_ext(r->objects->odb->path, ".rev", NULL);
+	clear_midx_files_ext(r->objects->odb->path, MIDX_EXT_BITMAP, NULL);
+	clear_midx_files_ext(r->objects->odb->path, MIDX_EXT_REV, NULL);
 
 	strbuf_release(&midx);
 }

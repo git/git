@@ -7,6 +7,9 @@ test_description='git repack works correctly'
 . "${TEST_DIRECTORY}/lib-midx.sh"
 . "${TEST_DIRECTORY}/lib-terminal.sh"
 
+GIT_TEST_MULTI_PACK_INDEX=0
+GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=0
+
 commit_and_pack () {
 	test_commit "$@" 1>&2 &&
 	incrpackid=$(git pack-objects --all --unpacked --incremental .git/objects/pack/pack </dev/null) &&
@@ -117,7 +120,7 @@ test_expect_success '--local disables writing bitmaps when connected to alternat
 	(
 		cd member &&
 		test_commit "object" &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adl --write-bitmap-index 2>err &&
+		git repack -Adl --write-bitmap-index 2>err &&
 		cat >expect <<-EOF &&
 		warning: disabling bitmap writing, as some objects are not being packed
 		EOF
@@ -533,11 +536,11 @@ test_expect_success 'setup for --write-midx tests' '
 test_expect_success '--write-midx unchanged' '
 	(
 		cd midx &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack &&
+		git repack &&
 		test_path_is_missing $midx &&
 		test_path_is_missing $midx-*.bitmap &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack --write-midx &&
+		git repack --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-*.bitmap &&
@@ -550,7 +553,7 @@ test_expect_success '--write-midx with a new pack' '
 		cd midx &&
 		test_commit loose &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack --write-midx &&
+		git repack --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-*.bitmap &&
@@ -561,7 +564,7 @@ test_expect_success '--write-midx with a new pack' '
 test_expect_success '--write-midx with -b' '
 	(
 		cd midx &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -mb &&
+		git repack -mb &&
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-*.bitmap &&
@@ -574,7 +577,7 @@ test_expect_success '--write-midx with -d' '
 		cd midx &&
 		test_commit repack &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Ad --write-midx &&
+		git repack -Ad --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-*.bitmap &&
@@ -587,21 +590,21 @@ test_expect_success 'cleans up MIDX when appropriate' '
 		cd midx &&
 
 		test_commit repack-2 &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb --write-midx &&
+		git repack -Adb --write-midx &&
 
 		checksum=$(midx_checksum $objdir) &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$checksum.bitmap &&
 
 		test_commit repack-3 &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb --write-midx &&
+		git repack -Adb --write-midx &&
 
 		test_path_is_file $midx &&
 		test_path_is_missing $midx-$checksum.bitmap &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
 
 		test_commit repack-4 &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Adb &&
+		git repack -Adb &&
 
 		find $objdir/pack -type f -name "multi-pack-index*" >files &&
 		test_must_be_empty files
@@ -622,7 +625,6 @@ test_expect_success '--write-midx with preferred bitmap tips' '
 		git log --format="create refs/tags/%s/%s %H" HEAD >refs &&
 		git update-ref --stdin <refs &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 \
 		git repack --write-midx --write-bitmap-index &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
@@ -714,13 +716,13 @@ test_expect_success '--write-midx removes stale pack-based bitmaps' '
 	(
 		cd repo &&
 		test_commit base &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -Ab &&
+		git repack -Ab &&
 
 		pack_bitmap=$(ls $objdir/pack/pack-*.bitmap) &&
 		test_path_is_file "$pack_bitmap" &&
 
 		test_commit tip &&
-		GIT_TEST_MULTI_PACK_INDEX=0 git repack -bm &&
+		git repack -bm &&
 
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap &&
@@ -743,7 +745,6 @@ test_expect_success '--write-midx with --pack-kept-objects' '
 		keep="$objdir/pack/pack-$one.keep" &&
 		touch "$keep" &&
 
-		GIT_TEST_MULTI_PACK_INDEX=0 \
 		git repack --write-midx --write-bitmap-index --geometric=2 -d \
 			--pack-kept-objects &&
 
