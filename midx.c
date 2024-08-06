@@ -259,14 +259,32 @@ static uint32_t midx_for_object(struct multi_pack_index **_m, uint32_t pos)
 	return pos - m->num_objects_in_base;
 }
 
-int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id)
+static uint32_t midx_for_pack(struct multi_pack_index **_m,
+			      uint32_t pack_int_id)
+{
+	struct multi_pack_index *m = *_m;
+	while (m && pack_int_id < m->num_packs_in_base)
+		m = m->base_midx;
+
+	if (!m)
+		BUG("NULL multi-pack-index for pack ID: %"PRIu32, pack_int_id);
+
+	if (pack_int_id >= m->num_packs + m->num_packs_in_base)
+		die(_("bad pack-int-id: %u (%u total packs)"),
+		    pack_int_id, m->num_packs + m->num_packs_in_base);
+
+	*_m = m;
+
+	return pack_int_id - m->num_packs_in_base;
+}
+
+int prepare_midx_pack(struct repository *r, struct multi_pack_index *m,
+		      uint32_t pack_int_id)
 {
 	struct strbuf pack_name = STRBUF_INIT;
 	struct packed_git *p;
 
-	if (pack_int_id >= m->num_packs)
-		die(_("bad pack-int-id: %u (%u total packs)"),
-		    pack_int_id, m->num_packs);
+	pack_int_id = midx_for_pack(&m, pack_int_id);
 
 	if (m->packs[pack_int_id])
 		return 0;
