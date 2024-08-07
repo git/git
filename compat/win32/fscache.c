@@ -238,9 +238,20 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 			     &(fse->u.s.st_mtim));
 	filetime_to_timespec((FILETIME *)&(fdata->CreationTime),
 			     &(fse->u.s.st_ctim));
-	if (fdata->EaSize > 0 && are_wsl_compatible_mode_bits_enabled()) {
-		copy_wsl_mode_bits_from_disk(fdata->FileName,
-			fdata->FileNameLength / sizeof(wchar_t), &fse->st_mode);
+	if (fdata->EaSize > 0 &&
+	    sizeof(buf) >= (list ? list->len+1 : 0) + fse->len+1 &&
+	    are_wsl_compatible_mode_bits_enabled()) {
+		size_t off = 0;
+		wchar_t wpath[MAX_LONG_PATH];
+		if (list && list->len) {
+			memcpy(buf, list->dirent.d_name, list->len);
+			buf[list->len] = '/';
+			off = list->len + 1;
+		}
+		memcpy(buf + off, fse->dirent.d_name, fse->len);
+		buf[off + fse->len] = '\0';
+		if (xutftowcs_long_path(wpath, buf) >= 0)
+			copy_wsl_mode_bits_from_disk(wpath, -1, &fse->st_mode);
 	}
 
 	return fse;
