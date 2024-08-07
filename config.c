@@ -3220,8 +3220,8 @@ int repo_config_set_worktree_gently(struct repository *r,
 	/* Only use worktree-specific config if it is already enabled. */
 	if (r->repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
-		int ret = git_config_set_multivar_in_file_gently(
-					file, key, value, NULL, NULL, 0);
+		int ret = repo_config_set_multivar_in_file_gently(
+					r, file, key, value, NULL, NULL, 0);
 		free(file);
 		return ret;
 	}
@@ -3613,10 +3613,10 @@ int repo_config_set_multivar_gently(struct repository *r, const char *key,
 				    const char *value_pattern, unsigned flags)
 {
 	char *file = repo_git_path(r, "config");
-	int res = git_config_set_multivar_in_file_gently(file,
-							 key, value,
-							 value_pattern,
-							 NULL, flags);
+	int res = repo_config_set_multivar_in_file_gently(r, file,
+							  key, value,
+							  value_pattern,
+							  NULL, flags);
 	free(file);
 	return res;
 }
@@ -3626,8 +3626,8 @@ void repo_config_set_multivar(struct repository *r,
 			      const char *value_pattern, unsigned flags)
 {
 	char *file = repo_git_path(r, "config");
-	git_config_set_multivar_in_file(file, key, value,
-					value_pattern, flags);
+	repo_config_set_multivar_in_file(r, file, key, value,
+					 value_pattern, flags);
 	free(file);
 }
 
