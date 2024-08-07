@@ -463,7 +463,7 @@ static int need_to_gc(void)
 	else
 		return 0;
 
-	if (run_hooks("pre-auto-gc"))
+	if (run_hooks(the_repository, "pre-auto-gc"))
 		return 0;
 	return 1;
 }
