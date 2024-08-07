@@ -2766,9 +2766,9 @@ int git_config_get_pathname(const char *key, char **dest)
 	return repo_config_get_pathname(the_repository, key, dest);
 }
 
-int git_config_get_expiry(const char *key, const char **output)
+int repo_config_get_expiry(struct repository *r, const char *key, const char **output)
 {
-	int ret = git_config_get_string(key, (char **)output);
+	int ret = repo_config_get_string(r, key, (char **)output);
 	if (ret)
 		return ret;
 	if (strcmp(*output, "now")) {
