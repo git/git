@@ -37,6 +37,10 @@ void strbuf_git_common_path(struct strbuf *sb,
 			    const struct repository *repo,
 			    const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
+void strbuf_git_common_pathv(struct strbuf *sb,
+			     const struct repository *repo,
+			     const char *fmt,
+			     va_list args);
 
 /*
  * Return a statically allocated path into the main repository's
@@ -44,7 +48,6 @@ void strbuf_git_common_path(struct strbuf *sb,
  */
 const char *git_common_path(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
-
 
 /*
  * The `git_path` family of functions will construct a path into a repository's
