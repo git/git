@@ -718,7 +718,8 @@ int repo_config_get_max_percent_split_change(struct repository *r);
 int repo_config_get_expiry(struct repository *r, const char *key, const char **output);
 
 /* parse either "this many days" integer, or "5.days.ago" approxidate */
-int git_config_get_expiry_in_days(const char *key, timestamp_t *, timestamp_t now);
+int repo_config_get_expiry_in_days(struct repository *r, const char *key,
+				   timestamp_t *, timestamp_t now);
 
 /**
  * First prints the error message specified by the caller in `err` and then
