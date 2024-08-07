@@ -97,9 +97,10 @@ const char *git_path(const char *fmt, ...)
  * Similar to git_path() but can produce paths for a specified
  * worktree instead of current one
  */
-const char *worktree_git_path(const struct worktree *wt,
+const char *worktree_git_path(struct repository *r,
+			      const struct worktree *wt,
 			      const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+	__attribute__((format (printf, 3, 4)));
 
 /*
  * Return a path into the main repository's (the_repository) git directory.

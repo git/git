@@ -512,12 +512,17 @@ const char *mkpath(const char *fmt, ...)
 	return cleanup_path(pathname->buf);
 }
 
-const char *worktree_git_path(const struct worktree *wt, const char *fmt, ...)
+const char *worktree_git_path(struct repository *r,
+			      const struct worktree *wt, const char *fmt, ...)
 {
 	struct strbuf *pathname = get_pathname();
 	va_list args;
+
+	if (wt && wt->repo != r)
+		BUG("worktree not connected to expected repository");
+
 	va_start(args, fmt);
-	repo_git_pathv(the_repository, wt, pathname, fmt, args);
+	repo_git_pathv(r, wt, pathname, fmt, args);
 	va_end(args);
 	return pathname->buf;
 }
