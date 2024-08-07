@@ -2,8 +2,6 @@
  * Utilities for paths and pathnames
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "environment.h"
@@ -30,7 +28,7 @@ static int get_st_mode_bits(const char *path, int *mode)
 	return 0;
 }
 
-static struct strbuf *get_pathname(void)
+struct strbuf *get_pathname(void)
 {
 	static struct strbuf pathname_array[4] = {
 		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
@@ -453,44 +451,6 @@ void strbuf_repo_git_path(struct strbuf *sb,
 	va_end(args);
 }
 
-char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
-{
-	va_list args;
-	strbuf_reset(buf);
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, buf, fmt, args);
-	va_end(args);
-	return buf->buf;
-}
-
-void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, sb, fmt, args);
-	va_end(args);
-}
-
-const char *git_path(const char *fmt, ...)
-{
-	struct strbuf *pathname = get_pathname();
-	va_list args;
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, pathname, fmt, args);
-	va_end(args);
-	return pathname->buf;
-}
-
-char *git_pathdup(const char *fmt, ...)
-{
-	struct strbuf path = STRBUF_INIT;
-	va_list args;
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, &path, fmt, args);
-	va_end(args);
-	return strbuf_detach(&path, NULL);
-}
-
 char *mkpathdup(const char *fmt, ...)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -632,16 +592,6 @@ void strbuf_git_common_pathv(struct strbuf *sb,
 		strbuf_addch(sb, '/');
 	strbuf_vaddf(sb, fmt, args);
 	strbuf_cleanup_path(sb);
-}
-
-const char *git_common_path(const char *fmt, ...)
-{
-	struct strbuf *pathname = get_pathname();
-	va_list args;
-	va_start(args, fmt);
-	strbuf_git_common_pathv(pathname, the_repository, fmt, args);
-	va_end(args);
-	return pathname->buf;
 }
 
 void strbuf_git_common_path(struct strbuf *sb,
