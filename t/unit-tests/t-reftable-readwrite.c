@@ -11,6 +11,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/blocksource.h"
 #include "reftable/reftable-error.h"
 #include "reftable/reftable-writer.h"
+#include "tempfile.h"
+#include "write-or-die.h"
 
 static const int update_index = 5;
 
@@ -25,9 +27,21 @@ static ssize_t strbuf_add_void(void *b, const void *data, size_t sz)
 	return sz;
 }
 
+static ssize_t fd_write(void *b, const void *data, size_t sz)
+{
+	int *fdp = (int *)b;
+	return write_in_full(*fdp, data, sz);
+}
+
 static int noop_flush(void *arg)
 {
 	return 0;
+}
+
+static int fd_flush(void *arg)
+{
+	int *fdp = (int *)arg;
+	return fsync_component(FSYNC_COMPONENT_REFERENCE, *fdp);
 }
 
 static void t_buffer(void)
@@ -944,6 +958,66 @@ static void t_corrupt_table(void)
 	strbuf_release(&buf);
 }
 
+static void t_table_print(void)
+{
+	char name[100];
+	struct reftable_write_options opts = {
+		.block_size = 512,
+		.hash_id = GIT_SHA1_FORMAT_ID,
+	};
+	struct reftable_ref_record ref = { 0 };
+	struct reftable_log_record log = { 0 };
+	struct reftable_writer *w = NULL;
+	struct tempfile *tmp = NULL;
+	size_t i, N = 3;
+	int n, fd;
+
+	xsnprintf(name, sizeof(name), "t-reftable-readwrite-%d-XXXXXX", __LINE__);
+	tmp = mks_tempfile_t(name);
+	fd = get_tempfile_fd(tmp);
+	w = reftable_new_writer(&fd_write, &fd_flush, &fd, &opts);
+	reftable_writer_set_limits(w, 0, update_index);
+
+	for (i = 0; i < N; i++) {
+		xsnprintf(name, sizeof(name), "refs/heads/branch%02"PRIuMAX, (uintmax_t)i);
+		ref.refname = name;
+		ref.update_index = i;
+		ref.value_type = REFTABLE_REF_VAL1;
+		set_test_hash(ref.value.val1, i);
+
+		n = reftable_writer_add_ref(w, &ref);
+		check_int(n, ==, 0);
+	}
+
+	for (i = 0; i < N; i++) {
+		xsnprintf(name, sizeof(name), "refs/heads/branch%02"PRIuMAX, (uintmax_t)i);
+		log.refname = name;
+		log.update_index = i;
+		log.value_type = REFTABLE_LOG_UPDATE;
+		set_test_hash(log.value.update.new_hash, i);
+		log.value.update.name = (char *) "John Doe";
+		log.value.update.email = (char *) "johndoe@anon.org";
+		log.value.update.time = 0x6673e5b9;
+		log.value.update.message = (char *) "message";
+
+		n = reftable_writer_add_log(w, &log);
+		check_int(n, ==, 0);
+	}
+
+	n = reftable_writer_close(w);
+	check_int(n, ==, 0);
+
+	test_msg("testing printing functionality:");
+	n = reftable_reader_print_file(tmp->filename.buf);
+	check_int(n, ==, 0);
+	n = reftable_reader_print_blocks(tmp->filename.buf);
+	/* end of blocks is denoted by a return value of 1 */
+	check_int(n, ==, 1);
+
+	delete_tempfile(&tmp);
+	reftable_writer_free(w);
+}
+
 int cmd_main(int argc, const char *argv[])
 {
 	TEST(t_buffer(), "strbuf works as blocksource");
@@ -953,6 +1027,7 @@ int cmd_main(int argc, const char *argv[])
 	TEST(t_log_overflow(), "log overflow returns expected error");
 	TEST(t_log_write_read(), "read-write on log records");
 	TEST(t_log_zlib_corruption(), "reading corrupted log record returns expected error");
+	TEST(t_table_print(), "print tables and blocks");
 	TEST(t_table_read_api(), "read on a table");
 	TEST(t_table_read_write_seek_index(), "read-write on a table with index");
 	TEST(t_table_read_write_seek_linear(), "read-write on a table without index (SHA1)");
