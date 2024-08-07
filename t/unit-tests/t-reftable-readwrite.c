@@ -413,7 +413,6 @@ static void t_table_read_api(void)
 	struct reftable_reader rd = { 0 };
 	struct reftable_block_source source = { 0 };
 	int err;
-	int i;
 	struct reftable_log_record log = { 0 };
 	struct reftable_iterator it = { 0 };
 
@@ -432,10 +431,8 @@ static void t_table_read_api(void)
 	check_int(err, ==, REFTABLE_API_ERROR);
 
 	strbuf_release(&buf);
-	for (i = 0; i < N; i++)
-		reftable_free(names[i]);
+	free_names(names);
 	reftable_iterator_destroy(&it);
-	reftable_free(names);
 	reader_close(&rd);
 	strbuf_release(&buf);
 }
@@ -498,9 +495,7 @@ static void t_table_read_write_seek(int index, int hash_id)
 	reftable_iterator_destroy(&it);
 
 	strbuf_release(&buf);
-	for (i = 0; i < N; i++)
-		reftable_free(names[i]);
-	reftable_free(names);
+	free_names(names);
 	reader_close(&rd);
 }
 
