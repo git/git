@@ -773,6 +773,11 @@ static void t_write_key_order(void)
 	check(!err);
 	err = reftable_writer_add_ref(w, &refs[1]);
 	check_int(err, ==, REFTABLE_API_ERROR);
+
+	refs[0].update_index = 2;
+	err = reftable_writer_add_ref(w, &refs[0]);
+	check_int(err, ==, REFTABLE_API_ERROR);
+
 	reftable_writer_close(w);
 	reftable_writer_free(w);
 	strbuf_release(&buf);
