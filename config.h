@@ -392,11 +392,11 @@ void repo_config_set_multivar_in_file(struct repository *r,
  * If NULL is passed through `new_name` parameter,
  * the section will be removed from the config file.
  */
-int git_config_rename_section(const char *, const char *);
+int repo_config_rename_section(struct repository *, const char *, const char *);
 
-int git_config_rename_section_in_file(const char *, const char *, const char *);
-int git_config_copy_section(const char *, const char *);
-int git_config_copy_section_in_file(const char *, const char *, const char *);
+int repo_config_rename_section_in_file(struct repository *, const char *, const char *, const char *);
+int repo_config_copy_section(struct repository *, const char *, const char *);
+int repo_config_copy_section_in_file(struct repository *, const char *, const char *, const char *);
 int git_config_system(void);
 int config_error_nonbool(const char *);
 #if defined(__GNUC__)
