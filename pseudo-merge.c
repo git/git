@@ -201,6 +201,7 @@ void load_pseudo_merges_from_config(struct string_list *list)
 }
 
 static int find_pseudo_merge_group_for_ref(const char *refname,
+					   const char *referent UNUSED,
 					   const struct object_id *oid,
 					   int flags UNUSED,
 					   void *_data)

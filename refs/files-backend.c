@@ -3046,7 +3046,7 @@ static int files_transaction_abort(struct ref_store *ref_store,
 	return 0;
 }
 
-static int ref_present(const char *refname,
+static int ref_present(const char *refname, const char *referent UNUSED,
 		       const struct object_id *oid UNUSED,
 		       int flags UNUSED,
 		       void *cb_data)
