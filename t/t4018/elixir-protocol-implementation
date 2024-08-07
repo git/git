@@ -1,0 +1,5 @@
+defimpl RIGHT do
+  # Docs
+  # Docs
+  def foo(ChangeMe), do: :ok
+end

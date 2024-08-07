@@ -1,0 +1,2 @@
+$ git diff-tree --pretty --stat initial
+$

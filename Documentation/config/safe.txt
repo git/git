@@ -1,0 +1,62 @@
+safe.bareRepository::
+	Specifies which bare repositories Git will work with. The currently
+	supported values are:
++
+* `all`: Git works with all bare repositories. This is the default.
+* `explicit`: Git only works with bare repositories specified via
+  the top-level `--git-dir` command-line option, or the `GIT_DIR`
+  environment variable (see linkgit:git[1]).
++
+If you do not use bare repositories in your workflow, then it may be
+beneficial to set `safe.bareRepository` to `explicit` in your global
+config. This will protect you from attacks that involve cloning a
+repository that contains a bare repository and running a Git command
+within that directory.
++
+This config setting is only respected in protected configuration (see
+<<SCOPES>>). This prevents untrusted repositories from tampering with
+this value.
+
+safe.directory::
+	These config entries specify Git-tracked directories that are
+	considered safe even if they are owned by someone other than the
+	current user. By default, Git will refuse to even parse a Git
+	config of a repository owned by someone else, let alone run its
+	hooks, and this config setting allows users to specify exceptions,
+	e.g. for intentionally shared repositories (see the `--shared`
+	option in linkgit:git-init[1]).
++
+This is a multi-valued setting, i.e. you can add more than one directory
+via `git config --add`. To reset the list of safe directories (e.g. to
+override any such directories specified in the system config), add a
+`safe.directory` entry with an empty value.
++
+This config setting is only respected in protected configuration (see
+<<SCOPES>>). This prevents untrusted repositories from tampering with this
+value.
++
+The value of this setting is interpolated, i.e. `~/<path>` expands to a
+path relative to the home directory and `%(prefix)/<path>` expands to a
+path relative to Git's (runtime) prefix.
++
+To completely opt-out of this security check, set `safe.directory` to the
+string `*`. This will allow all repositories to be treated as if their
+directory was listed in the `safe.directory` list. If `safe.directory=*`
+is set in system config and you want to re-enable this protection, then
+initialize your list with an empty value before listing the repositories
+that you deem safe.  Giving a directory with `/*` appended to it will
+allow access to all repositories under the named directory.
++
+As explained, Git only allows you to access repositories owned by
+yourself, i.e. the user who is running Git, by default.  When Git
+is running as 'root' in a non Windows platform that provides sudo,
+however, git checks the SUDO_UID environment variable that sudo creates
+and will allow access to the uid recorded as its value in addition to
+the id from 'root'.
+This is to make it easy to perform a common sequence during installation
+"make && sudo make install".  A git process running under 'sudo' runs as
+'root' but the 'sudo' command exports the environment variable to record
+which id the original user has.
+If that is not what you would prefer and want git to only trust
+repositories that are owned by root instead, then you can remove
+the `SUDO_UID` variable from root's environment before invoking git.

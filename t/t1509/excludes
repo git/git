@@ -1,0 +1,14 @@
+*.o
+*~
+*.bak
+*.c
+*.h
+.git
+contrib
+Documentation
+git-gui
+gitk-git
+gitweb
+t/t4013
+t/t5100
+t/t5515

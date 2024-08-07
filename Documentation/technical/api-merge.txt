@@ -1,0 +1,36 @@
+merge API
+=========
+
+The merge API helps a program to reconcile two competing sets of
+improvements to some files (e.g., unregistered changes from the work
+tree versus changes involved in switching to a new branch), reporting
+conflicts if found.  The library called through this API is
+responsible for a few things.
+
+ * determining which trees to merge (recursive ancestor consolidation);
+
+ * lining up corresponding files in the trees to be merged (rename
+   detection, subtree shifting), reporting edge cases like add/add
+   and rename/rename conflicts to the user;
+
+ * performing a three-way merge of corresponding files, taking
+   path-specific merge drivers (specified in `.gitattributes`)
+   into account.
+
+Data structures
+---------------
+
+* `mmbuffer_t`, `mmfile_t`
+
+These store data usable for use by the xdiff backend, for writing and
+for reading, respectively.  See `xdiff/xdiff.h` for the definitions
+and `diff.c` for examples.
+
+* `struct ll_merge_options`
+
+Check merge-ll.h for details.
+
+Low-level (single file) merge
+-----------------------------
+
+Check merge-ll.h for details.

@@ -1,0 +1,117 @@
+Git v2.9.1 Release Notes
+========================
+
+Fixes since v2.9
+----------------
+
+ * When "git daemon" is run without --[init-]timeout specified, a
+   connection from a client that silently goes offline can hang around
+   for a long time, wasting resources.  The socket-level KEEPALIVE has
+   been enabled to allow the OS to notice such failed connections.
+
+ * The commands in `git log` family take %C(auto) in a custom format
+   string.  This unconditionally turned the color on, ignoring
+   --no-color or with --color=auto when the output is not connected to
+   a tty; this was corrected to make the format truly behave as
+   "auto".
+
+ * "git rev-list --count" whose walk-length is limited with "-n"
+   option did not work well with the counting optimized to look at the
+   bitmap index.
+
+ * "git show -W" (extend hunks to cover the entire function, delimited
+   by lines that match the "funcname" pattern) used to show the entire
+   file when a change added an entire function at the end of the file,
+   which has been fixed.
+
+ * The documentation set has been updated so that literal commands,
+   configuration variables and environment variables are consistently
+   typeset in fixed-width font and bold in manpages.
+
+ * "git svn propset" subcommand that was added in 2.3 days is
+   documented now.
+
+ * The documentation tries to consistently spell "GPG"; when
+   referring to the specific program name, "gpg" is used.
+
+ * "git reflog" stopped upon seeing an entry that denotes a branch
+   creation event (aka "unborn"), which made it appear as if the
+   reflog was truncated.
+
+ * The git-prompt scriptlet (in contrib/) was not friendly with those
+   who uses "set -u", which has been fixed.
+
+ * A codepath that used alloca(3) to place an unbounded amount of data
+   on the stack has been updated to avoid doing so.
+
+ * "git update-index --add --chmod=+x file" may be usable as an escape
+   hatch, but not a friendly thing to force for people who do need to
+   use it regularly.  "git add --chmod=+x file" can be used instead.
+
+ * Build improvements for gnome-keyring (in contrib/)
+
+ * "git status" used to say "working directory" when it meant "working
+   tree".
+
+ * Comments about misbehaving FreeBSD shells have been clarified with
+   the version number (9.x and before are broken, newer ones are OK).
+
+ * "git cherry-pick A" worked on an unborn branch, but "git
+   cherry-pick A..B" didn't.
+
+ * "git add -i/-p" learned to honor diff.compactionHeuristic
+   experimental knob, so that the user can work on the same hunk split
+   as "git diff" output.
+
+ * "log --graph --format=" learned that "%>|(N)" specifies the width
+   relative to the terminal's left edge, not relative to the area to
+   draw text that is to the right of the ancestry-graph section.  It
+   also now accepts negative N that means the column limit is relative
+   to the right border.
+
+ * The ownership rule for the piece of memory that hold references to
+   be fetched in "git fetch" was screwy, which has been cleaned up.
+
+ * "git bisect" makes an internal call to "git diff-tree" when
+   bisection finds the culprit, but this call did not initialize the
+   data structure to pass to the diff-tree API correctly.
+
+ * Formats of the various data (and how to validate them) where we use
+   GPG signature have been documented.
+
+ * Fix an unintended regression in v2.9 that breaks "clone --depth"
+   that recurses down to submodules by forcing the submodules to also
+   be cloned shallowly, which many server instances that host upstream
+   of the submodules are not prepared for.
+
+ * Fix unnecessarily waste in the idiomatic use of ': ${VAR=default}'
+   to set the default value, without enclosing it in double quotes.
+
+ * Some platform-specific code had non-ANSI strict declarations of C
+   functions that do not take any parameters, which has been
+   corrected.
+
+ * The internal code used to show local timezone offset is not
+   prepared to handle timestamps beyond year 2100, and gave a
+   bogus offset value to the caller.  Use a more benign looking
+   +0000 instead and let "git log" going in such a case, instead
+   of aborting.
+
+ * One among four invocations of readlink(1) in our test suite has
+   been rewritten so that the test can run on systems without the
+   command (others are in valgrind test framework and t9802).
+
+ * t/perf needs /usr/bin/time with GNU extension; the invocation of it
+   is updated to "gtime" on Darwin.
+
+ * A bug, which caused "git p4" while running under verbose mode to
+   report paths that are omitted due to branch prefix incorrectly, has
+   been fixed; the command said "Ignoring file outside of prefix" for
+   paths that are _inside_.
+
+ * The top level documentation "git help git" still pointed at the
+   documentation set hosted at now-defunct google-code repository.
+   Update it to point to https://git.github.io/htmldocs/git.html
+   instead.
+
+Also contains minor documentation updates and code clean-ups.

@@ -1,0 +1,88 @@
+Git 2.42.1 Release Notes
+========================
+
+There is nothing exciting to see here.  Relative to Git 2.42, this
+release contains the fixes that have already been merged to the
+'master' branch of the development towards Git 2.43 that has been
+tagged as Git 2.43.0-rc0.
+
+Fixes since Git 2.42.0
+----------------------
+
+ * Tests that are known to pass with LSan are now marked as such.
+
+ * Flaky "git p4" tests, as well as "git svn" tests, are now skipped
+   in the (rather expensive) sanitizer CI job.
+
+ * Tests with LSan from time to time seem to emit harmless message
+   that makes our tests unnecessarily flaky; we work it around by
+   filtering the uninteresting output.
+
+ * GitHub CI workflow has learned to trigger Coverity check.
+
+ * Overly long label names used in the sequencer machinery are now
+   chopped to fit under filesystem limitation.
+
+ * Scalar updates.
+
+ * Tweak GitHub Actions CI so that pushing the same commit to multiple
+   branch tips at the same time will not waste building and testing
+   the same thing twice.
+
+ * The commit-graph verification code that detects mixture of zero and
+   non-zero generation numbers has been updated.
+
+ * "git diff -w --exit-code" with various options did not work
+   correctly, which is being addressed.
+
+ * transfer.unpackLimit ought to be used as a fallback, but overrode
+   fetch.unpackLimit and receive.unpackLimit instead.
+
+ * The use of API between two calls to require_clean_work_tree() from
+   the sequencer code has been cleaned up for consistency.
+
+ * "git diff --no-such-option" and other corner cases around the exit
+   status of the "diff" command has been corrected.
+
+ * "git for-each-ref --sort='contents:size'" sorts the refs according
+   to size numerically, giving a ref that points at a blob twelve-byte
+   (12) long before showing a blob hundred-byte (100) long.
+
+ * Various fixes to the behavior of "rebase -i" when the command got
+   interrupted by conflicting changes.
+
+ * References from description of the `--patch` option in various
+   manual pages have been simplified and improved.
+
+ * "git grep -e A --no-or -e B" is accepted, even though the negation
+   of "or" did not mean anything, which has been tightened.
+
+ * The completion script (in contrib/) has been taught to treat the
+   "-t" option to "git checkout" and "git switch" just like the
+   "--track" option, to complete remote-tracking branches.
+
+ * "git diff --no-index -R <(one) <(two)" did not work correctly,
+   which has been corrected.
+
+ * Update "git maintenance" timers' implementation based on systemd
+   timers to work with WSL.
+
+ * "git diff --cached" codepath did not fill the necessary stat
+   information for a file when fsmonitor knows it is clean and ended
+   up behaving as if it is not clean, which has been corrected.
+
+ * Clarify how "alias.foo = : git cmd ; aliased-command-string" should
+   be spelled with necessary whitespaces around punctuation marks to
+   work.
+
+ * HTTP Header redaction code has been adjusted for a newer version of
+   cURL library that shows its traces differently from earlier
+   versions.
+
+ * An error message given by "git send-email" when given a malformed
+   address did not give correct information, which has been corrected.
+
+ * UBSan options were not propagated through the test framework to git
+   run via the httpd, unlike ASan options, which has been corrected.
+
+Also contains various documentation updates, code clean-ups and minor fixups.

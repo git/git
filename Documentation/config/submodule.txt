@@ -1,0 +1,108 @@
+submodule.<name>.url::
+	The URL for a submodule. This variable is copied from the .gitmodules
+	file to the git config via 'git submodule init'. The user can change
+	the configured URL before obtaining the submodule via 'git submodule
+	update'. If neither submodule.<name>.active nor submodule.active are
+	set, the presence of this variable is used as a fallback to indicate
+	whether the submodule is of interest to git commands.
+	See linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
+
+submodule.<name>.update::
+	The method by which a submodule is updated by 'git submodule update',
+	which is the only affected command, others such as
+	'git checkout --recurse-submodules' are unaffected. It exists for
+	historical reasons, when 'git submodule' was the only command to
+	interact with submodules; settings like `submodule.active`
+	and `pull.rebase` are more specific. It is populated by
+	`git submodule init` from the linkgit:gitmodules[5] file.
+	See description of 'update' command in linkgit:git-submodule[1].
+
+submodule.<name>.branch::
+	The remote branch name for a submodule, used by `git submodule
+	update --remote`.  Set this option to override the value found in
+	the `.gitmodules` file.  See linkgit:git-submodule[1] and
+	linkgit:gitmodules[5] for details.
+
+submodule.<name>.fetchRecurseSubmodules::
+	This option can be used to control recursive fetching of this
+	submodule. It can be overridden by using the --[no-]recurse-submodules
+	command-line option to "git fetch" and "git pull".
+	This setting will override that from in the linkgit:gitmodules[5]
+	file.
+
+submodule.<name>.ignore::
+	Defines under what circumstances "git status" and the diff family show
+	a submodule as modified. When set to "all", it will never be considered
+	modified (but it will nonetheless show up in the output of status and
+	commit when it has been staged), "dirty" will ignore all changes
+	to the submodule's work tree and
+	takes only differences between the HEAD of the submodule and the commit
+	recorded in the superproject into account. "untracked" will additionally
+	let submodules with modified tracked files in their work tree show up.
+	Using "none" (the default when this option is not set) also shows
+	submodules that have untracked files in their work tree as changed.
+	This setting overrides any setting made in .gitmodules for this submodule,
+	both settings can be overridden on the command line by using the
+	"--ignore-submodules" option. The 'git submodule' commands are not
+	affected by this setting.
+
+submodule.<name>.active::
+	Boolean value indicating if the submodule is of interest to git
+	commands.  This config option takes precedence over the
+	submodule.active config option. See linkgit:gitsubmodules[7] for
+	details.
+
+submodule.active::
+	A repeated field which contains a pathspec used to match against a
+	submodule's path to determine if the submodule is of interest to git
+	commands. See linkgit:gitsubmodules[7] for details.
+
+submodule.recurse::
+	A boolean indicating if commands should enable the `--recurse-submodules`
+	option by default. Defaults to false.
++
+When set to true, it can be deactivated via the
+`--no-recurse-submodules` option. Note that some Git commands
+lacking this option may call some of the above commands affected by
+`submodule.recurse`; for instance `git remote update` will call
+`git fetch` but does not have a `--no-recurse-submodules` option.
+For these commands a workaround is to temporarily change the
+configuration value by using `git -c submodule.recurse=0`.
++
+The following list shows the commands that accept
+`--recurse-submodules` and whether they are supported by this
+setting.
+
+* `checkout`, `fetch`, `grep`, `pull`, `push`, `read-tree`,
+`reset`, `restore` and `switch` are always supported.
+* `clone` and `ls-files` are not supported.
+* `branch` is supported only if `submodule.propagateBranches` is
+enabled
+
+submodule.propagateBranches::
+	[EXPERIMENTAL] A boolean that enables branching support when
+	using `--recurse-submodules` or `submodule.recurse=true`.
+	Enabling this will allow certain commands to accept
+	`--recurse-submodules` and certain commands that already accept
+	`--recurse-submodules` will now consider branches.
+	Defaults to false.
+
+submodule.fetchJobs::
+	Specifies how many submodules are fetched/cloned at the same time.
+	A positive integer allows up to that number of submodules fetched
+	in parallel. A value of 0 will give some reasonable default.
+	If unset, it defaults to 1.
+
+submodule.alternateLocation::
+	Specifies how the submodules obtain alternates when submodules are
+	cloned. Possible values are `no`, `superproject`.
+	By default `no` is assumed, which doesn't add references. When the
+	value is set to `superproject` the submodule to be cloned computes
+	its alternates location relative to the superprojects alternate.
+
+submodule.alternateErrorStrategy::
+	Specifies how to treat errors with the alternates for a submodule
+	as computed via `submodule.alternateLocation`. Possible values are
+	`ignore`, `info`, `die`. Default is `die`. Note that if set to `ignore`
+	or `info`, and if there is an error with the computed alternate, the
+	clone proceeds as if no alternate was specified.

@@ -1,0 +1,124 @@
+= coccinelle
+
+This directory provides Coccinelle (http://coccinelle.lip6.fr/) semantic patches
+that might be useful to developers.
+
+==  Types of semantic patches
+
+ * Using the semantic transformation to check for bad patterns in the code;
+   The target 'make coccicheck' is designed to check for these patterns and
+   it is expected that any resulting patch indicates a regression.
+   The patches resulting from 'make coccicheck' are small and infrequent,
+   so once they are found, they can be sent to the mailing list as per usual.
+
+   Example for introducing new patterns:
+   67947c34ae (convert "hashcmp() != 0" to "!hasheq()", 2018-08-28)
+   b84c783882 (fsck: s/++i > 1/i++/, 2018-10-24)
+
+   Example of fixes using this approach:
+   248f66ed8e (run-command: use strbuf_addstr() for adding a string to
+               a strbuf, 2018-03-25)
+   f919ffebed (Use MOVE_ARRAY, 2018-01-22)
+
+   These types of semantic patches are usually part of testing, c.f.
+   0860a7641b (travis-ci: fail if Coccinelle static analysis found something
+               to transform, 2018-07-23)
+
+ * Using semantic transformations in large scale refactorings throughout
+   the code base.
+
+   When applying the semantic patch into a real patch, sending it to the
+   mailing list in the usual way, such a patch would be expected to have a
+   lot of textual and semantic conflicts as such large scale refactorings
+   change function signatures that are used widely in the code base.
+   A textual conflict would arise if surrounding code near any call of such
+   function changes. A semantic conflict arises when other patch series in
+   flight introduce calls to such functions.
+
+   So to aid these large scale refactorings, semantic patches can be used.
+   However we do not want to store them in the same place as the checks for
+   bad patterns, as then automated builds would fail.
+   That is why semantic patches 'contrib/coccinelle/*.pending.cocci'
+   are ignored for checks, and can be applied using 'make coccicheck-pending'.
+
+   This allows to expose plans of pending large scale refactorings without
+   impacting the bad pattern checks.
+
+== Git-specific tips & things to know about how we run "spatch":
+
+ * The "make coccicheck" will piggy-back on
+   "COMPUTE_HEADER_DEPENDENCIES". If you've built a given object file
+   the "coccicheck" target will consider its depednency to decide if
+   it needs to re-run on the corresponding source file.
+
+   This means that a "make coccicheck" will re-compile object files
+   before running. This might be unexpected, but speeds up the run in
+   the common case, as e.g. a change to "column.h" won't require all
+   coccinelle rules to be re-run against "grep.c" (or another file
+   that happens not to use "column.h").
+
+   To disable this behavior use the "SPATCH_USE_O_DEPENDENCIES=NoThanks"
+   flag.
+
+ * To speed up our rules the "make coccicheck" target will by default
+   concatenate all of the *.cocci files here into an "ALL.cocci", and
+   apply it to each source file.
+
+   This makes the run faster, as we don't need to run each rule
+   against each source file. See the Makefile for further discussion,
+   this behavior can be disabled with "SPATCH_CONCAT_COCCI=".
+
+   But since they're concatenated any <id> in the <rulname> (e.g. "@
+   my_name", v.s. anonymous "@@") needs to be unique across all our
+   *.cocci files. You should only need to name rules if other rules
+   depend on them (currently only one rule is named).
+
+ * To speed up incremental runs even more use the "spatchcache" tool
+   in this directory as your "SPATCH". It aimns to be a "ccache" for
+   coccinelle, and piggy-backs on "COMPUTE_HEADER_DEPENDENCIES".
+
+   It caches in Redis by default, see it source for a how-to.
+
+   In one setup with a primed cache "make coccicheck" followed by a
+   "make clean && make" takes around 10s to run, but 2m30s with the
+   default of "SPATCH_CONCAT_COCCI=Y".
+
+   With "SPATCH_CONCAT_COCCI=" the total runtime is around ~6m, sped
+   up to ~1m with "spatchcache".
+
+   Most of the 10s (or ~1m) being spent on re-running "spatch" on
+   files we couldn't cache, as we didn't compile them (in contrib/*
+   and compat/* mostly).
+
+   The absolute times will differ for you, but the relative speedup
+   from caching should be on that order.
+
+== Authoring and reviewing coccinelle changes
+
+* When a .cocci is made, both the Git changes and .cocci file should be
+  reviewed. When reviewing such a change, do your best to understand the .cocci
+  changes (e.g. by asking the author to explain the change) and be explicit
+  about your understanding of the changes. This helps us decide whether input
+  from coccinelle experts is needed or not. If you aren't sure of the cocci
+  changes, indicate what changes you actively endorse and leave an Acked-by
+  (instead of Reviewed-by).
+
+* Authors should consider that reviewers may not be coccinelle experts, thus the
+  the .cocci changes may not be self-evident. A plain text description of the
+  changes is strongly encouraged, especially when using more esoteric features
+  of the language.
+
+* .cocci rules should target only the problem it is trying to solve; "collateral
+  damage" is not allowed. Reviewers should look out and flag overly-broad rules.
+
+* Consider the cost-benefit ratio of .cocci changes. In particular, consider the
+  effect on the runtime of "make coccicheck", and how often your .cocci check
+  will catch something valuable. As a rule of thumb, rules that can bail early
+  if a file doesn't have a particular token will have a small impact on runtime,
+  and vice-versa.
+
+* .cocci files used for refactoring should be temporarily kept in-tree to aid
+  the refactoring of out-of-tree code (e.g. in-flight topics). Periodically
+  evaluate the cost-benefit ratio to determine when the file should be removed.
+  For example, consider how many out-of-tree users are left and how much this
+  slows down "make coccicheck".

@@ -1,0 +1,12 @@
+Git 2.43.3 Release Notes
+========================
+
+Relative to Git 2.43.2, this release fixes one regression that
+manifests while running "git commit -v --trailer".
+
+Fixes since Git 2.43.2
+----------------------
+
+ * "git commit -v --trailer=..." was broken with recent update and
+   placed the trailer _after_ the divider line, which has been
+   corrected.

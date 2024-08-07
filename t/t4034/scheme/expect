@@ -1,0 +1,11 @@
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 74b6605..63b6ac4 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
+<CYAN>@@ -1,6 +1,6 @@<RESET>
+(define (<RED>myfunc a b<RESET><GREEN>my-func first second<RESET>)
+  ; This is a <RED>really<RESET><GREEN>(moderately)<RESET> cool function.
+  (<RED>this\place<RESET><GREEN>that\place<RESET> (+ 3 4))
+  (define <RED>some-text<RESET><GREEN>|a greeting|<RESET> "hello")
+  (let ((c (<RED>+ a b<RESET><GREEN>add1 first<RESET>)))
+    (format "one more than the total is %d" (<RED>add1<RESET><GREEN>+<RESET> c <GREEN>second<RESET>))))

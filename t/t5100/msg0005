@@ -1,0 +1,13 @@
+The git-cvsimport-script had a copule of small bugs that prevented me
+from importing a big CVS repository.
+
+The first was that it didn't handle removed files with a multi-digit
+primary revision number.
+
+The second was that it was asking the CVS server for "F" messages,
+although they were not handled.
+
+I also updated the documentation for that script to correspond to
+actual flags.
+
+Signed-off-by: David Kågedal <davidk@lysator.liu.se>

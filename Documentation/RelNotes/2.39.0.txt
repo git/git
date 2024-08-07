@@ -1,0 +1,346 @@
+Git v2.39 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * "git grep" learned to expand the sparse-index more lazily and on
+   demand in a sparse checkout.
+
+ * By default, use of fsmonitor on a repository on networked
+   filesystem is disabled. Add knobs to make it workable on macOS.
+
+ * After checking out a "branch" that is a symbolic-ref that points at
+   another branch, "git symbolic-ref HEAD" reports the underlying
+   branch, not the symbolic-ref the user gave checkout as argument.
+   The command learned the "--no-recurse" option to stop after
+   dereferencing a symbolic-ref only once.
+
+ * "git branch --edit-description @{-1}" is now a way to edit branch
+   description of the branch you were on before switching to the
+   current branch.
+
+ * "git merge-tree --stdin" is a new way to request a series of merges
+   and report the merge results.
+
+ * "git shortlog" learned to group by the "format" string.
+
+ * A new "--include-whitespace" option is added to "git patch-id", and
+   existing bugs in the internal patch-id logic that did not match
+   what "git patch-id" produces have been corrected.
+
+ * Enable gc.cruftpacks by default for those who opt into
+   feature.experimental setting.
+
+ * "git repack" learns to send cruft objects out of the way into
+   packfiles outside the repository.
+
+ * 'scalar reconfigure -a' is taught to automatically remove
+   scalar.repo entires which no longer exist.
+
+ * Redact headers from cURL's h2h3 module in GIT_CURL_VERBOSE and
+   others.
+
+ * 'git maintenance register' is taught to write configuration to an
+   arbitrary path, and 'git for-each-repo' is taught to expand tilde
+   characters in paths.
+
+ * When creating new notes, the template used to get a stray empty
+   newline, which has been removed.
+
+ * "git receive-pack" used to use all the local refs as the boundary for
+   checking connectivity of the data "git push" sent, but now it uses
+   only the refs that it advertised to the pusher. In a repository with
+   the .hideRefs configuration, this reduces the resources needed to
+   perform the check.
+
+ * With '--recurse-submodules=on-demand', all submodules are
+   recursively pushed.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * With a bit of header twiddling, use the native regexp library on
+   macOS instead of the compat/ one.
+
+ * Prepare for GNU [ef]grep that throw warning of their uses.
+
+ * Sources related to fuzz testing have been moved down to their own
+   directory.
+
+ * Most credential helpers ignored unknown entries in a credential
+   description, but a few died upon seeing them.  The latter were
+   taught to ignore them, too
+
+ * "scalar unregister" in a repository that is already been
+   unregistered reported an error.
+
+ * Remove error detection from a function that fetches from promisor
+   remotes, and make it die when such a fetch fails to bring all the
+   requested objects, to give an early failure to various operations.
+
+ * Update CodingGuidelines to clarify what features to use and avoid
+   in C99.
+
+ * Avoid false-positive from LSan whose assumption may be broken with
+   higher optimization levels.
+
+ * Enable address and undefined sanitizer tasks at GitHub Actions CI.
+
+ * More UNUSED annotation to help using -Wunused option with the
+   compiler.
+   (merge 4b992f0a24 jk/unused-anno-more later to maint).
+
+ * Rewrite a deep recursion in the skipping negotiator to use a loop
+   with on-heap prio queue to avoid stack wastage.
+
+ * Add documentation for message IDs in fsck error messages.
+
+ * Define the logical elements of a "bundle list", data structure to
+   store them in-core, format to transfer them, and code to parse
+   them.
+
+ * The role the security mailing list plays in an embargoed release
+   has been documented.
+
+ * Two new facilities, "timer" and "counter", are introduced to the
+   trace2 API.
+
+ * Code simplification by using strvec_pushf() instead of building an
+   argument in a separate strbuf.
+
+ * Make sure generated dependency file is stably sorted to help
+   developers debugging their build issues.
+
+ * The glossary entries for "commit-graph file" and "reachability
+   bitmap" have been added.
+
+ * Various tests exercising the transfer.credentialsInUrl
+   configuration are taught to avoid making requests which require
+   resolving localhost to reduce CI-flakiness.
+
+ * A redundant diagnostic message is dropped from test_path_is_missing().
+
+ * Simplify the run-command API.
+
+ * Update the actions/github-script dependency in CI to avoid a
+   deprecation warning.
+
+ * Progress on being able to initialize a rev_info struct with a
+   macro.
+
+ * Add trace2 counters to the region to clear skip worktree bits in a
+   sparse checkout.
+
+ * Modernize test script to avoid "test -f" and friends.
+
+ * Avoid calling 'cache_tree_update()' when doing so would be
+   redundant.
+
+ * Update the credential-cache documentation to provide a more
+   realistic example.
+
+ * Makefile comments updates and reordering to clarify knobs used to
+   choose SHA implementations.
+
+ * A design document for sparse-checkout's future directions has been
+   added.
+
+ * Teach chainlint.pl to annotate the original test definition instead
+   of the token stream.
+
+ * "make coccicheck" is time consuming. It has been made to run more
+   incrementally.
+
+ * `parse_object()` has been hardened to check for the existence of a
+   suspected blob object.
+
+ * The build procedure has been adjusted to GNUmake version 4.4, which
+   made some changes to how pattern rule with multiple targets are
+   handled.
+
+
+Fixes since v2.38
+-----------------
+
+ * The codepath that reads from the index v4 had unaligned memory
+   accesses, which has been corrected.
+
+ * Fix messages incorrectly marked for translation.
+
+ * "git fsck" failed to release contents of tree objects already used
+   from the memory, which has been fixed.
+
+ * "git clone" did not like to see the "--bare" and the "--origin"
+   options used together without a good reason.
+
+ * "git remote rename" failed to rename a remote without fetch
+   refspec, which has been corrected.
+
+ * Documentation on various Boolean GIT_* environment variables have
+   been clarified.
+
+ * "git rebase -i" can mistakenly attempt to apply a fixup to a commit
+   itself, which has been corrected.
+
+ * "git multi-pack-index repack/expire" used to repack unreachable
+   cruft into a new pack, which have been corrected.
+
+ * In read-only repositories, "git merge-tree" tried to come up with a
+   merge result tree object, which it failed (which is not wrong) and
+   led to a segfault (which is bad), which has been corrected.
+
+ * Force C locale while running tests around httpd to make sure we can
+   find expected error messages in the log.
+
+ * Fix a logic in "mailinfo -b" that miscomputed the length of a
+   substring, which lead to an out-of-bounds access.
+
+ * The codepath to sign learned to report errors when it fails to read
+   from "ssh-keygen".
+
+ * Code clean-up that results in plugging a leak.
+
+ * "GIT_EDITOR=: git branch --edit-description" resulted in failure,
+   which has been corrected.
+
+ * The code to clean temporary object directories (used for
+   quarantine) tried to remove them inside its signal handler, which
+   was a no-no.
+
+ * Update comment in the Makefile about the RUNTIME_PREFIX config knob.
+
+ * Clarify that "the sentence after <area>: prefix does not begin with
+   a capital letter" rule applies only to the commit title.
+
+ * "git branch --edit-description" on an unborn branch misleadingly
+   said that no such branch exists, which has been corrected.
+
+ * Work around older clang that warns against C99 zero initialization
+   syntax for struct.
+
+ * Giving "--invert-grep" and "--all-match" without "--grep" to the
+   "git log" command resulted in an attempt to access grep pattern
+   expression structure that has not been allocated, which has been
+   corrected.
+   (merge db84376f98 ab/grep-simplify-extended-expression later to maint).
+
+ * "git diff rev^!" did not show combined diff to go to the rev from
+   its parents.
+   (merge a79c6b6081 rs/diff-caret-bang-with-parents later to maint).
+
+ * Allow configuration files in "protected" scopes to include other
+   configuration files.
+   (merge ecec57b3c9 gc/bare-repo-discovery later to maint).
+
+ * Give a bit more diversity to macOS CI by using sha1dc in one of the
+   jobs (the other one tests Apple Common Crypto).
+   (merge 1ad5c3df35 jc/ci-osx-with-sha1dc later to maint).
+
+ * A bugfix with tracing support in midx codepath
+   (merge e9c3839944 tb/midx-bitmap-selection-fix later to maint).
+
+ * When geometric repacking feature is in use together with the
+   --pack-kept-objects option, we lost packs marked with .keep files.
+   (merge 197443e80a tb/save-keep-pack-during-geometric-repack later to maint).
+
+ * Move a global variable added as a hack during regression fixes to
+   its proper place in the API.
+   (merge 0b0ab95f17 ab/run-hook-api-cleanup later to maint).
+
+ * Update to build procedure with VS using CMake/CTest.
+   (merge c858750b41 js/cmake-updates later to maint).
+
+ * The short-help text shown by "git cmd -h" and the synopsis text
+   shown at the beginning of "git help cmd" have been made more
+   consistent.
+
+ * When creating a multi-pack bitmap, remove per-pack bitmap files
+   unconditionally as they will never be consulted.
+   (merge 55d902cd61 tb/remove-unused-pack-bitmap later to maint).
+
+ * Fix a longstanding syntax error in Git.pm error codepath.
+
+ * "git diff --stat" etc. were invented back when everything was ASCII
+   and strlen() was a way to measure the display width of a string;
+   adjust them to compute the display width assuming UTF-8 pathnames.
+   (merge ce8529b2bb tb/diffstat-with-utf8-strwidth later to maint).
+
+ * "git branch --edit-description" can exit with status -1 which is
+   not a good practice; it learned to use 1 as everybody else instead.
+
+ * "git apply" limits its input to a bit less than 1 GiB.
+
+ * Merging a branch with directory renames into a branch that changes
+   the directory to a symlink was mishandled by the ort merge
+   strategy, which has been corrected.
+
+ * A bugfix to "git subtree" in its split and merge features.
+
+ * Fix some bugs in the reflog messages when rebasing and changes the
+   reflog messages of "rebase --apply" to match "rebase --merge" with
+   the aim of making the reflog easier to parse.
+
+ * "git rebase --keep-base" used to discard the commits that are
+   already cherry-picked to the upstream, even when "keep-base" meant
+   that the base, on top of which the history is being rebuilt, does
+   not yet include these cherry-picked commits.  The --keep-base
+   option now implies --reapply-cherry-picks and --no-fork-point
+   options.
+
+ * The way "git repack" created temporary files when it received a
+   signal was prone to deadlocking, which has been corrected.
+
+ * Various tests exercising the transfer.credentialsInUrl
+   configuration are taught to avoid making requests which require
+   resolving localhost to reduce CI-flakiness.
+
+ * The adjust_shared_perm() helper function learned to refrain from
+   setting the "g+s" bit on directories when it is not necessary.
+
+ * "git archive" mistakenly complained twice about a missing
+   executable, which has been corrected.
+
+ * Fix a bug where `git branch -d` did not work on an orphaned HEAD.
+
+ * `git rebase --update-refs` would delete references when all
+   `update-ref` commands in the sequencer were removed, which has been
+   corrected.
+
+ * Fix a regression in the bisect-helper which mistakenly treats
+   arguments to the command given to 'git bisect run' as arguments to
+   the helper.
+
+ * Correct an error where `git rebase` would mistakenly use a branch or
+   tag named "refs/rewritten/xyz" when missing a rebase label.
+
+ * Assorted fixes of parsing end-user input as integers.
+   (merge 14770cf0de pw/config-int-parse-fixes later to maint).
+
+ * "git prune" may try to iterate over .git/objects/pack for trash
+   files to remove in it, and loudly fail when the directory is
+   missing, which is not necessary.  The command has been taught to
+   ignore such a failure.
+   (merge 6974765352 ew/prune-with-missing-objects-pack later to maint).
+
+ * Add one more candidate directory that may house httpd modules while
+   running tests.
+   (merge 1c7dc23d41 es/locate-httpd-module-location-in-test later to maint).
+
+ * A handful of leaks in the line-log machinery have been plugged.
+
+ * The format of a line in /proc/cpuinfo that describes a CPU on s390x
+   looked different from everybody else, and the code in chainlint.pl
+   failed to parse it.
+   (merge 1f51b77f4f ah/chainlint-cpuinfo-parse-fix later to maint).
+
+ * Adjust the GitHub CI to newer ubuntu release.
+   (merge 0d3507f3e7 jx/ci-ubuntu-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 413bc6d20a ds/cmd-main-reorder later to maint).
+   (merge 8d2863e4ed nw/t1002-cleanup later to maint).
+   (merge 7c2dc122f9 rs/list-objects-filter-leakfix later to maint).
+   (merge 288fcb1c94 zk/push-use-bitmaps later to maint).
+   (merge 42db324c0f km/merge-recursive-typofix later to maint).

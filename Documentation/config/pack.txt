@@ -1,0 +1,207 @@
+pack.window::
+	The size of the window used by linkgit:git-pack-objects[1] when no
+	window size is given on the command line. Defaults to 10.
+
+pack.depth::
+	The maximum delta depth used by linkgit:git-pack-objects[1] when no
+	maximum depth is given on the command line. Defaults to 50.
+	Maximum value is 4095.
+
+pack.windowMemory::
+	The maximum size of memory that is consumed by each thread
+	in linkgit:git-pack-objects[1] for pack window memory when
+	no limit is given on the command line.  The value can be
+	suffixed with "k", "m", or "g".  When left unconfigured (or
+	set explicitly to 0), there will be no limit.
+
+pack.compression::
+	An integer -1..9, indicating the compression level for objects
+	in a pack file. -1 is the zlib default. 0 means no
+	compression, and 1..9 are various speed/size tradeoffs, 9 being
+	slowest.  If not set,  defaults to core.compression.  If that is
+	not set,  defaults to -1, the zlib default, which is "a default
+	compromise between speed and compression (currently equivalent
+	to level 6)."
++
+Note that changing the compression level will not automatically recompress
+all existing objects. You can force recompression by passing the -F option
+to linkgit:git-repack[1].
+
+pack.allowPackReuse::
+	When true or "single", and when reachability bitmaps are
+	enabled, pack-objects will try to send parts of the bitmapped
+	packfile verbatim. When "multi", and when a multi-pack
+	reachability bitmap is available, pack-objects will try to send
+	parts of all packs in the MIDX.
++
+If only a single pack bitmap is available, and `pack.allowPackReuse`
+is set to "multi", reuse parts of just the bitmapped packfile. This
+can reduce memory and CPU usage to serve fetches, but might result in
+sending a slightly larger pack. Defaults to true.
+
+pack.island::
+	An extended regular expression configuring a set of delta
+	islands. See "DELTA ISLANDS" in linkgit:git-pack-objects[1]
+	for details.
+
+pack.islandCore::
+	Specify an island name which gets to have its objects be
+	packed first. This creates a kind of pseudo-pack at the front
+	of one pack, so that the objects from the specified island are
+	hopefully faster to copy into any pack that should be served
+	to a user requesting these objects. In practice this means
+	that the island specified should likely correspond to what is
+	the most commonly cloned in the repo. See also "DELTA ISLANDS"
+	in linkgit:git-pack-objects[1].
+
+pack.deltaCacheSize::
+	The maximum memory in bytes used for caching deltas in
+	linkgit:git-pack-objects[1] before writing them out to a pack.
+	This cache is used to speed up the writing object phase by not
+	having to recompute the final delta result once the best match
+	for all objects is found.  Repacking large repositories on machines
+	which are tight with memory might be badly impacted by this though,
+	especially if this cache pushes the system into swapping.
+	A value of 0 means no limit. The smallest size of 1 byte may be
+	used to virtually disable this cache. Defaults to 256 MiB.
+
+pack.deltaCacheLimit::
+	The maximum size of a delta, that is cached in
+	linkgit:git-pack-objects[1]. This cache is used to speed up the
+	writing object phase by not having to recompute the final delta
+	result once the best match for all objects is found.
+	Defaults to 1000. Maximum value is 65535.
+
+pack.threads::
+	Specifies the number of threads to spawn when searching for best
+	delta matches.  This requires that linkgit:git-pack-objects[1]
+	be compiled with pthreads otherwise this option is ignored with a
+	warning. This is meant to reduce packing time on multiprocessor
+	machines. The required amount of memory for the delta search window
+	is however multiplied by the number of threads.
+	Specifying 0 will cause Git to auto-detect the number of CPUs
+	and set the number of threads accordingly.
+
+pack.indexVersion::
+	Specify the default pack index version.  Valid values are 1 for
+	legacy pack index used by Git versions prior to 1.5.2, and 2 for
+	the new pack index with capabilities for packs larger than 4 GB
+	as well as proper protection against the repacking of corrupted
+	packs.  Version 2 is the default.  Note that version 2 is enforced
+	and this config option is ignored whenever the corresponding pack is
+	larger than 2 GB.
++
+If you have an old Git that does not understand the version 2 `*.idx` file,
+cloning or fetching over a non-native protocol (e.g. "http")
+that will copy both `*.pack` file and corresponding `*.idx` file from the
+other side may give you a repository that cannot be accessed with your
+older version of Git. If the `*.pack` file is smaller than 2 GB, however,
+you can use linkgit:git-index-pack[1] on the *.pack file to regenerate
+the `*.idx` file.
+
+pack.packSizeLimit::
+	The maximum size of a pack.  This setting only affects
+	packing to a file when repacking, i.e. the git:// protocol
+	is unaffected.  It can be overridden by the `--max-pack-size`
+	option of linkgit:git-repack[1].  Reaching this limit results
+	in the creation of multiple packfiles.
++
+Note that this option is rarely useful, and may result in a larger total
+on-disk size (because Git will not store deltas between packs) and
+worse runtime performance (object lookup within multiple packs is
+slower than a single pack, and optimizations like reachability bitmaps
+cannot cope with multiple packs).
++
+If you need to actively run Git using smaller packfiles (e.g., because your
+filesystem does not support large files), this option may help. But if
+your goal is to transmit a packfile over a medium that supports limited
+sizes (e.g., removable media that cannot store the whole repository),
+you are likely better off creating a single large packfile and splitting
+it using a generic multi-volume archive tool (e.g., Unix `split`).
++
+The minimum size allowed is limited to 1 MiB. The default is unlimited.
+Common unit suffixes of 'k', 'm', or 'g' are supported.
+
+pack.useBitmaps::
+	When true, git will use pack bitmaps (if available) when packing
+	to stdout (e.g., during the server side of a fetch). Defaults to
+	true. You should not generally need to turn this off unless
+	you are debugging pack bitmaps.
+
+pack.useBitmapBoundaryTraversal::
+	When true, Git will use an experimental algorithm for computing
+	reachability queries with bitmaps. Instead of building up
+	complete bitmaps for all of the negated tips and then OR-ing
+	them together, consider negated tips with existing bitmaps as
+	additive (i.e. OR-ing them into the result if they exist,
+	ignoring them otherwise), and build up a bitmap at the boundary
+	instead.
++
+When using this algorithm, Git may include too many objects as a result
+of not opening up trees belonging to certain UNINTERESTING commits. This
+inexactness matches the non-bitmap traversal algorithm.
++
+In many cases, this can provide a speed-up over the exact algorithm,
+particularly when there is poor bitmap coverage of the negated side of
+the query.
+
+pack.useSparse::
+	When true, git will default to using the '--sparse' option in
+	'git pack-objects' when the '--revs' option is present. This
+	algorithm only walks trees that appear in paths that introduce new
+	objects. This can have significant performance benefits when
+	computing a pack to send a small change. However, it is possible
+	that extra objects are added to the pack-file if the included
+	commits contain certain types of direct renames. Default is
+	`true`.
+
+pack.preferBitmapTips::
+	When selecting which commits will receive bitmaps, prefer a
+	commit at the tip of any reference that is a suffix of any value
+	of this configuration over any other commits in the "selection
+	window".
++
+Note that setting this configuration to `refs/foo` does not mean that
+the commits at the tips of `refs/foo/bar` and `refs/foo/baz` will
+necessarily be selected. This is because commits are selected for
+bitmaps from within a series of windows of variable length.
++
+If a commit at the tip of any reference which is a suffix of any value
+of this configuration is seen in a window, it is immediately given
+preference over any other commit in that window.
+
+pack.writeBitmaps (deprecated)::
+	This is a deprecated synonym for `repack.writeBitmaps`.
+
+pack.writeBitmapHashCache::
+	When true, git will include a "hash cache" section in the bitmap
+	index (if one is written). This cache can be used to feed git's
+	delta heuristics, potentially leading to better deltas between
+	bitmapped and non-bitmapped objects (e.g., when serving a fetch
+	between an older, bitmapped pack and objects that have been
+	pushed since the last gc). The downside is that it consumes 4
+	bytes per object of disk space. Defaults to true.
++
+When writing a multi-pack reachability bitmap, no new namehashes are
+computed; instead, any namehashes stored in an existing bitmap are
+permuted into their appropriate location when writing a new bitmap.
+
+pack.writeBitmapLookupTable::
+	When true, Git will include a "lookup table" section in the
+	bitmap index (if one is written). This table is used to defer
+	loading individual bitmaps as late as possible. This can be
+	beneficial in repositories that have relatively large bitmap
+	indexes. Defaults to false.
+
+pack.readReverseIndex::
+	When true, git will read any .rev file(s) that may be available
+	(see: linkgit:gitformat-pack[5]). When false, the reverse index
+	will be generated from scratch and stored in memory. Defaults to
+	true.
+
+pack.writeReverseIndex::
+	When true, git will write a corresponding .rev file (see:
+	linkgit:gitformat-pack[5])
+	for each new packfile that it writes in all places except for
+	linkgit:git-fast-import[1] and in the bulk checkin mechanism.
+	Defaults to true.

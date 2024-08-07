@@ -1,0 +1,21 @@
+Git v2.30.4 Release Notes
+=========================
+
+This release contains minor fix-ups for the changes that went into
+Git 2.30.3, which was made to address CVE-2022-24765.
+
+ * The code that was meant to parse the new `safe.directory`
+   configuration variable was not checking what configuration
+   variable was being fed to it, which has been corrected.
+
+ * '*' can be used as the value for the `safe.directory` variable to
+   signal that the user considers that any directory is safe.
+
+
+
+Derrick Stolee (2):
+      t0033: add tests for safe.directory
+      setup: opt-out of check with safe.directory=*
+
+Matheus Valadares (1):
+      setup: fix safe.directory key not being checked

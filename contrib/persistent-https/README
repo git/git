@@ -1,0 +1,72 @@
+git-remote-persistent-https
+
+The git-remote-persistent-https binary speeds up SSL operations
+by running a daemon job (git-remote-persistent-https--proxy) that
+keeps a connection open to a server.
+
+
+PRE-BUILT BINARIES
+
+Darwin amd64:
+https://commondatastorage.googleapis.com/git-remote-persistent-https/darwin_amd64.tar.gz
+
+Linux amd64:
+https://commondatastorage.googleapis.com/git-remote-persistent-https/linux_amd64.tar.gz
+
+
+INSTALLING
+
+Move all of the git-remote-persistent-http* binaries to a directory
+in PATH.
+
+
+USAGE
+
+HTTPS requests can be delegated to the proxy by using the
+"persistent-https" scheme, e.g.
+
+git clone persistent-https://kernel.googlesource.com/pub/scm/git/git
+
+Likewise, .gitconfig can be updated as follows to rewrite https urls
+to use persistent-https:
+
+[url "persistent-https"]
+	insteadof = https
+[url "persistent-http"]
+	insteadof = http
+
+You may also want to allow the use of the persistent-https helper for
+submodule URLs (since any https URLs pointing to submodules will be
+rewritten, and Git's out-of-the-box defaults forbid submodules from
+using unknown remote helpers):
+
+[protocol "persistent-https"]
+	allow = always
+[protocol "persistent-http"]
+	allow = always
+
+
+#####################################################################
+# BUILDING FROM SOURCE
+#####################################################################
+
+LOCATION
+
+The source is available in the contrib/persistent-https directory of
+the Git source repository. The Git source repository is available at
+git://git.kernel.org/pub/scm/git/git.git/
+https://kernel.googlesource.com/pub/scm/git/git
+
+
+PREREQUISITES
+
+The code is written in Go (http://golang.org/) and the Go compiler is
+required. Currently, the compiler must be built and installed from tip
+of source, in order to include a fix in the reverse http proxy:
+http://code.google.com/p/go/source/detail?r=a615b796570a2cd8591884767a7d67ede74f6648
+
+
+BUILDING
+
+Run "make" to build the binaries. See the section on
+INSTALLING above.

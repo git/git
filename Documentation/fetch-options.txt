@@ -1,0 +1,327 @@
+--[no-]all::
+	Fetch all remotes. This overrides the configuration variable
+	`fetch.all`.
+
+-a::
+--append::
+	Append ref names and object names of fetched refs to the
+	existing contents of `.git/FETCH_HEAD`.  Without this
+	option old data in `.git/FETCH_HEAD` will be overwritten.
+
+--atomic::
+	Use an atomic transaction to update local refs. Either all refs are
+	updated, or on error, no refs are updated.
+
+--depth=<depth>::
+	Limit fetching to the specified number of commits from the tip of
+	each remote branch history. If fetching to a 'shallow' repository
+	created by `git clone` with `--depth=<depth>` option (see
+	linkgit:git-clone[1]), deepen or shorten the history to the specified
+	number of commits. Tags for the deepened commits are not fetched.
+
+--deepen=<depth>::
+	Similar to --depth, except it specifies the number of commits
+	from the current shallow boundary instead of from the tip of
+	each remote branch history.
+
+--shallow-since=<date>::
+	Deepen or shorten the history of a shallow repository to
+	include all reachable commits after <date>.
+
+--shallow-exclude=<revision>::
+	Deepen or shorten the history of a shallow repository to
+	exclude commits reachable from a specified remote branch or tag.
+	This option can be specified multiple times.
+
+--unshallow::
+	If the source repository is complete, convert a shallow
+	repository to a complete one, removing all the limitations
+	imposed by shallow repositories.
++
+If the source repository is shallow, fetch as much as possible so that
+the current repository has the same history as the source repository.
+
+--update-shallow::
+	By default when fetching from a shallow repository,
+	`git fetch` refuses refs that require updating
+	.git/shallow. This option updates .git/shallow and accepts such
+	refs.
+
+--negotiation-tip=<commit|glob>::
+	By default, Git will report, to the server, commits reachable
+	from all local refs to find common commits in an attempt to
+	reduce the size of the to-be-received packfile. If specified,
+	Git will only report commits reachable from the given tips.
+	This is useful to speed up fetches when the user knows which
+	local ref is likely to have commits in common with the
+	upstream ref being fetched.
++
+This option may be specified more than once; if so, Git will report
+commits reachable from any of the given commits.
++
+The argument to this option may be a glob on ref names, a ref, or the (possibly
+abbreviated) SHA-1 of a commit. Specifying a glob is equivalent to specifying
+this option multiple times, one for each matching ref name.
++
+See also the `fetch.negotiationAlgorithm` and `push.negotiate`
+configuration variables documented in linkgit:git-config[1], and the
+`--negotiate-only` option below.
+
+--negotiate-only::
+	Do not fetch anything from the server, and instead print the
+	ancestors of the provided `--negotiation-tip=*` arguments,
+	which we have in common with the server.
++
+This is incompatible with `--recurse-submodules=[yes|on-demand]`.
+Internally this is used to implement the `push.negotiate` option, see
+linkgit:git-config[1].
+
+--dry-run::
+	Show what would be done, without making any changes.
+
+--porcelain::
+	Print the output to standard output in an easy-to-parse format for
+	scripts. See section OUTPUT in linkgit:git-fetch[1] for details.
++
+This is incompatible with `--recurse-submodules=[yes|on-demand]` and takes
+precedence over the `fetch.output` config option.
+
+ifndef::git-pull[]
+--[no-]write-fetch-head::
+	Write the list of remote refs fetched in the `FETCH_HEAD`
+	file directly under `$GIT_DIR`.  This is the default.
+	Passing `--no-write-fetch-head` from the command line tells
+	Git not to write the file.  Under `--dry-run` option, the
+	file is never written.
+endif::git-pull[]
+
+-f::
+--force::
+	When 'git fetch' is used with `<src>:<dst>` refspec, it may
+	refuse to update the local branch as discussed
+ifdef::git-pull[]
+	in the `<refspec>` part of the linkgit:git-fetch[1]
+	documentation.
+endif::git-pull[]
+ifndef::git-pull[]
+	in the `<refspec>` part below.
+endif::git-pull[]
+	This option overrides that check.
+
+-k::
+--keep::
+	Keep downloaded pack.
+
+ifndef::git-pull[]
+--multiple::
+	Allow several <repository> and <group> arguments to be
+	specified. No <refspec>s may be specified.
+
+--[no-]auto-maintenance::
+--[no-]auto-gc::
+	Run `git maintenance run --auto` at the end to perform automatic
+	repository maintenance if needed. (`--[no-]auto-gc` is a synonym.)
+	This is enabled by default.
+
+--[no-]write-commit-graph::
+	Write a commit-graph after fetching. This overrides the config
+	setting `fetch.writeCommitGraph`.
+endif::git-pull[]
+
+--prefetch::
+	Modify the configured refspec to place all refs into the
+	`refs/prefetch/` namespace. See the `prefetch` task in
+	linkgit:git-maintenance[1].
+
+-p::
+--prune::
+	Before fetching, remove any remote-tracking references that no
+	longer exist on the remote.  Tags are not subject to pruning
+	if they are fetched only because of the default tag
+	auto-following or due to a --tags option.  However, if tags
+	are fetched due to an explicit refspec (either on the command
+	line or in the remote configuration, for example if the remote
+	was cloned with the --mirror option), then they are also
+	subject to pruning. Supplying `--prune-tags` is a shorthand for
+	providing the tag refspec.
+ifndef::git-pull[]
++
+See the PRUNING section below for more details.
+
+-P::
+--prune-tags::
+	Before fetching, remove any local tags that no longer exist on
+	the remote if `--prune` is enabled. This option should be used
+	more carefully, unlike `--prune` it will remove any local
+	references (local tags) that have been created. This option is
+	a shorthand for providing the explicit tag refspec along with
+	`--prune`, see the discussion about that in its documentation.
++
+See the PRUNING section below for more details.
+
+endif::git-pull[]
+
+ifndef::git-pull[]
+-n::
+endif::git-pull[]
+--no-tags::
+	By default, tags that point at objects that are downloaded
+	from the remote repository are fetched and stored locally.
+	This option disables this automatic tag following. The default
+	behavior for a remote may be specified with the remote.<name>.tagOpt
+	setting. See linkgit:git-config[1].
+
+ifndef::git-pull[]
+--refetch::
+	Instead of negotiating with the server to avoid transferring commits and
+	associated objects that are already present locally, this option fetches
+	all objects as a fresh clone would. Use this to reapply a partial clone
+	filter from configuration or using `--filter=` when the filter
+	definition has changed. Automatic post-fetch maintenance will perform
+	object database pack consolidation to remove any duplicate objects.
+endif::git-pull[]
+
+--refmap=<refspec>::
+	When fetching refs listed on the command line, use the
+	specified refspec (can be given more than once) to map the
+	refs to remote-tracking branches, instead of the values of
+	`remote.*.fetch` configuration variables for the remote
+	repository.  Providing an empty `<refspec>` to the
+	`--refmap` option causes Git to ignore the configured
+	refspecs and rely entirely on the refspecs supplied as
+	command-line arguments. See section on "Configured Remote-tracking
+	Branches" for details.
+
+-t::
+--tags::
+	Fetch all tags from the remote (i.e., fetch remote tags
+	`refs/tags/*` into local tags with the same name), in addition
+	to whatever else would otherwise be fetched.  Using this
+	option alone does not subject tags to pruning, even if --prune
+	is used (though tags may be pruned anyway if they are also the
+	destination of an explicit refspec; see `--prune`).
+
+ifndef::git-pull[]
+--recurse-submodules[=(yes|on-demand|no)]::
+	This option controls if and under what conditions new commits of
+	submodules should be fetched too. When recursing through submodules,
+	`git fetch` always attempts to fetch "changed" submodules, that is, a
+	submodule that has commits that are referenced by a newly fetched
+	superproject commit but are missing in the local submodule clone. A
+	changed submodule can be fetched as long as it is present locally e.g.
+	in `$GIT_DIR/modules/` (see linkgit:gitsubmodules[7]); if the upstream
+	adds a new submodule, that submodule cannot be fetched until it is
+	cloned e.g. by `git submodule update`.
++
+When set to 'on-demand', only changed submodules are fetched. When set
+to 'yes', all populated submodules are fetched and submodules that are
+both unpopulated and changed are fetched. When set to 'no', submodules
+are never fetched.
++
+When unspecified, this uses the value of `fetch.recurseSubmodules` if it
+is set (see linkgit:git-config[1]), defaulting to 'on-demand' if unset.
+When this option is used without any value, it defaults to 'yes'.
+endif::git-pull[]
+
+-j::
+--jobs=<n>::
+	Number of parallel children to be used for all forms of fetching.
++
+If the `--multiple` option was specified, the different remotes will be fetched
+in parallel. If multiple submodules are fetched, they will be fetched in
+parallel. To control them independently, use the config settings
+`fetch.parallel` and `submodule.fetchJobs` (see linkgit:git-config[1]).
++
+Typically, parallel recursive and multi-remote fetches will be faster. By
+default fetches are performed sequentially, not in parallel.
+
+ifndef::git-pull[]
+--no-recurse-submodules::
+	Disable recursive fetching of submodules (this has the same effect as
+	using the `--recurse-submodules=no` option).
+endif::git-pull[]
+
+--set-upstream::
+	If the remote is fetched successfully, add upstream
+	(tracking) reference, used by argument-less
+	linkgit:git-pull[1] and other commands. For more information,
+	see `branch.<name>.merge` and `branch.<name>.remote` in
+	linkgit:git-config[1].
+
+ifndef::git-pull[]
+--submodule-prefix=<path>::
+	Prepend <path> to paths printed in informative messages
+	such as "Fetching submodule foo".  This option is used
+	internally when recursing over submodules.
+
+--recurse-submodules-default=[yes|on-demand]::
+	This option is used internally to temporarily provide a
+	non-negative default value for the --recurse-submodules
+	option.  All other methods of configuring fetch's submodule
+	recursion (such as settings in linkgit:gitmodules[5] and
+	linkgit:git-config[1]) override this option, as does
+	specifying --[no-]recurse-submodules directly.
+
+-u::
+--update-head-ok::
+	By default 'git fetch' refuses to update the head which
+	corresponds to the current branch.  This flag disables the
+	check.  This is purely for the internal use for 'git pull'
+	to communicate with 'git fetch', and unless you are
+	implementing your own Porcelain you are not supposed to
+	use it.
+endif::git-pull[]
+
+--upload-pack <upload-pack>::
+	When given, and the repository to fetch from is handled
+	by 'git fetch-pack', `--exec=<upload-pack>` is passed to
+	the command to specify non-default path for the command
+	run on the other end.
+
+ifndef::git-pull[]
+-q::
+--quiet::
+	Pass --quiet to git-fetch-pack and silence any other internally
+	used git commands. Progress is not reported to the standard error
+	stream.
+
+-v::
+--verbose::
+	Be verbose.
+endif::git-pull[]
+
+--progress::
+	Progress status is reported on the standard error stream
+	by default when it is attached to a terminal, unless -q
+	is specified. This flag forces progress status even if the
+	standard error stream is not directed to a terminal.
+
+-o <option>::
+--server-option=<option>::
+	Transmit the given string to the server when communicating using
+	protocol version 2.  The given string must not contain a NUL or LF
+	character.  The server's handling of server options, including
+	unknown ones, is server-specific.
+	When multiple `--server-option=<option>` are given, they are all
+	sent to the other side in the order listed on the command line.
+
+--show-forced-updates::
+	By default, git checks if a branch is force-updated during
+	fetch. This can be disabled through fetch.showForcedUpdates, but
+	the --show-forced-updates option guarantees this check occurs.
+	See linkgit:git-config[1].
+
+--no-show-forced-updates::
+	By default, git checks if a branch is force-updated during
+	fetch. Pass --no-show-forced-updates or set fetch.showForcedUpdates
+	to false to skip this check for performance reasons. If used during
+	'git-pull' the --ff-only option will still check for forced updates
+	before attempting a fast-forward update. See linkgit:git-config[1].
+
+-4::
+--ipv4::
+	Use IPv4 addresses only, ignoring IPv6 addresses.
+
+-6::
+--ipv6::
+	Use IPv6 addresses only, ignoring IPv4 addresses.

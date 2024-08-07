@@ -1,0 +1,638 @@
+git-config(1)
+=============
+
+NAME
+----
+git-config - Get and set repository or global options
+
+
+SYNOPSIS
+--------
+[verse]
+'git config list' [<file-option>] [<display-option>] [--includes]
+'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>
+'git config set' [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>
+'git config unset' [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>
+'git config rename-section' [<file-option>] <old-name> <new-name>
+'git config remove-section' [<file-option>] <name>
+'git config edit' [<file-option>]
+'git config' [<file-option>] --get-colorbool <name> [<stdout-is-tty>]
+
+DESCRIPTION
+-----------
+You can query/set/replace/unset options with this command. The name is
+actually the section and the key separated by a dot, and the value will be
+escaped.
+
+Multiple lines can be added to an option by using the `--append` option.
+If you want to update or unset an option which can occur on multiple
+lines, a `value-pattern` (which is an extended regular expression,
+unless the `--fixed-value` option is given) needs to be given.  Only the
+existing values that match the pattern are updated or unset.  If
+you want to handle the lines that do *not* match the pattern, just
+prepend a single exclamation mark in front (see also <<EXAMPLES>>),
+but note that this only works when the `--fixed-value` option is not
+in use.
+
+The `--type=<type>` option instructs 'git config' to ensure that incoming and
+outgoing values are canonicalize-able under the given <type>.  If no
+`--type=<type>` is given, no canonicalization will be performed. Callers may
+unset an existing `--type` specifier with `--no-type`.
+
+When reading, the values are read from the system, global and
+repository local configuration files by default, and options
+`--system`, `--global`, `--local`, `--worktree` and
+`--file <filename>` can be used to tell the command to read from only
+that location (see <<FILES>>).
+
+When writing, the new value is written to the repository local
+configuration file by default, and options `--system`, `--global`,
+`--worktree`, `--file <filename>` can be used to tell the command to
+write to that location (you can say `--local` but that is the
+default).
+
+This command will fail with non-zero status upon error.  Some exit
+codes are:
+
+- The section or key is invalid (ret=1),
+- no section or name was provided (ret=2),
+- the config file is invalid (ret=3),
+- the config file cannot be written (ret=4),
+- you try to unset an option which does not exist (ret=5),
+- you try to unset/set an option for which multiple lines match (ret=5), or
+- you try to use an invalid regexp (ret=6).
+
+On success, the command returns the exit code 0.
+
+A list of all available configuration variables can be obtained using the
+`git help --config` command.
+
+COMMANDS
+--------
+
+list::
+	List all variables set in config file, along with their values.
+
+get::
+	Emits the value of the specified key. If key is present multiple times
+	in the configuration, emits the last value. If `--all` is specified,
+	emits all values associated with key. Returns error code 1 if key is
+	not present.
+
+set::
+	Set value for one or more config options. By default, this command
+	refuses to write multi-valued config options. Passing `--all` will
+	replace all multi-valued config options with the new value, whereas
+	`--value=` will replace all config options whose values match the given
+	pattern.
+
+unset::
+	Unset value for one or more config options. By default, this command
+	refuses to unset multi-valued keys. Passing `--all` will unset all
+	multi-valued config options, whereas `--value` will unset all config
+	options whose values match the given pattern.
+
+rename-section::
+	Rename the given section to a new name.
+
+remove-section::
+	Remove the given section from the configuration file.
+
+edit::
+	Opens an editor to modify the specified config file; either
+	`--system`, `--global`, `--local` (default), `--worktree`, or
+	`--file <config-file>`.
+
+[[OPTIONS]]
+OPTIONS
+-------
+
+--replace-all::
+	Default behavior is to replace at most one line. This replaces
+	all lines matching the key (and optionally the `value-pattern`).
+
+--append::
+	Adds a new line to the option without altering any existing
+	values. This is the same as providing '--value=^$' in `set`.
+
+--comment <message>::
+	Append a comment at the end of new or modified lines.
+
+	If _<message>_ begins with one or more whitespaces followed
+	by "#", it is used as-is.  If it begins with "#", a space is
+	prepended before it is used.  Otherwise, a string " # " (a
+	space followed by a hash followed by a space) is prepended
+	to it.  And the resulting string is placed immediately after
+	the value defined for the variable.  The _<message>_ must
+	not contain linefeed characters (no multi-line comments are
+	permitted).
+
+--all::
+	With `get`, return all values for a multi-valued key.
+
+---regexp::
+	With `get`, interpret the name as a regular expression. Regular
+	expression matching is currently case-sensitive and done against a
+	canonicalized version of the key in which section and variable names
+	are lowercased, but subsection names are not.
+
+--url=<URL>::
+	When given a two-part <name> as <section>.<key>, the value for
+	<section>.<URL>.<key> whose <URL> part matches the best to the
+	given URL is returned (if no such key exists, the value for
+	<section>.<key> is used as a fallback).  When given just the
+	<section> as name, do so for all the keys in the section and
+	list them.  Returns error code 1 if no value is found.
+
+--global::
+	For writing options: write to global `~/.gitconfig` file
+	rather than the repository `.git/config`, write to
+	`$XDG_CONFIG_HOME/git/config` file if this file exists and the
+	`~/.gitconfig` file doesn't.
++
+For reading options: read only from global `~/.gitconfig` and from
+`$XDG_CONFIG_HOME/git/config` rather than from all available files.
++
+See also <<FILES>>.
+
+--system::
+	For writing options: write to system-wide
+	`$(prefix)/etc/gitconfig` rather than the repository
+	`.git/config`.
++
+For reading options: read only from system-wide `$(prefix)/etc/gitconfig`
+rather than from all available files.
++
+See also <<FILES>>.
+
+--local::
+	For writing options: write to the repository `.git/config` file.
+	This is the default behavior.
++
+For reading options: read only from the repository `.git/config` rather than
+from all available files.
++
+See also <<FILES>>.
+
+--worktree::
+	Similar to `--local` except that `$GIT_DIR/config.worktree` is
+	read from or written to if `extensions.worktreeConfig` is
+	enabled. If not it's the same as `--local`. Note that `$GIT_DIR`
+	is equal to `$GIT_COMMON_DIR` for the main working tree, but is of
+	the form `$GIT_DIR/worktrees/<id>/` for other working trees. See
+	linkgit:git-worktree[1] to learn how to enable
+	`extensions.worktreeConfig`.
+
+-f <config-file>::
+--file <config-file>::
+	For writing options: write to the specified file rather than the
+	repository `.git/config`.
++
+For reading options: read only from the specified file rather than from all
+available files.
++
+See also <<FILES>>.
+
+--blob <blob>::
+	Similar to `--file` but use the given blob instead of a file. E.g.
+	you can use 'master:.gitmodules' to read values from the file
+	'.gitmodules' in the master branch. See "SPECIFYING REVISIONS"
+	section in linkgit:gitrevisions[7] for a more complete list of
+	ways to spell blob names.
+
+--fixed-value::
+	When used with the `value-pattern` argument, treat `value-pattern` as
+	an exact string instead of a regular expression. This will restrict
+	the name/value pairs that are matched to only those where the value
+	is exactly equal to the `value-pattern`.
+
+--type <type>::
+  'git config' will ensure that any input or output is valid under the given
+  type constraint(s), and will canonicalize outgoing values in `<type>`'s
+  canonical form.
++
+Valid `<type>`'s include:
++
+- 'bool': canonicalize values as either "true" or "false".
+- 'int': canonicalize values as simple decimal numbers. An optional suffix of
+  'k', 'm', or 'g' will cause the value to be multiplied by 1024, 1048576, or
+  1073741824 upon input.
+- 'bool-or-int': canonicalize according to either 'bool' or 'int', as described
+  above.
+- 'path': canonicalize by expanding a leading `~` to the value of `$HOME` and
+  `~user` to the home directory for the specified user. This specifier has no
+  effect when setting the value (but you can use `git config section.variable
+  ~/` from the command line to let your shell do the expansion.)
+- 'expiry-date': canonicalize by converting from a fixed or relative date-string
+  to a timestamp. This specifier has no effect when setting the value.
+- 'color': When getting a value, canonicalize by converting to an ANSI color
+  escape sequence. When setting a value, a sanity-check is performed to ensure
+  that the given value is canonicalize-able as an ANSI color, but it is written
+  as-is.
++
+
+--bool::
+--int::
+--bool-or-int::
+--path::
+--expiry-date::
+  Historical options for selecting a type specifier. Prefer instead `--type`
+  (see above).
+
+--no-type::
+  Un-sets the previously set type specifier (if one was previously set). This
+  option requests that 'git config' not canonicalize the retrieved variable.
+  `--no-type` has no effect without `--type=<type>` or `--<type>`.
+
+-z::
+--null::
+	For all options that output values and/or keys, always
+	end values with the null character (instead of a
+	newline). Use newline instead as a delimiter between
+	key and value. This allows for secure parsing of the
+	output without getting confused e.g. by values that
+	contain line breaks.
+
+--name-only::
+	Output only the names of config variables for `list` or
+	`get`.
+
+--show-origin::
+	Augment the output of all queried config options with the
+	origin type (file, standard input, blob, command line) and
+	the actual origin (config file path, ref, or blob id if
+	applicable).
+
+--show-scope::
+	Similar to `--show-origin` in that it augments the output of
+	all queried config options with the scope of that value
+	(worktree, local, global, system, command).
+
+--get-colorbool <name> [<stdout-is-tty>]::
+
+	Find the color setting for `<name>` (e.g. `color.diff`) and output
+	"true" or "false".  `<stdout-is-tty>` should be either "true" or
+	"false", and is taken into account when configuration says
+	"auto".  If `<stdout-is-tty>` is missing, then checks the standard
+	output of the command itself, and exits with status 0 if color
+	is to be used, or exits with status 1 otherwise.
+	When the color setting for `name` is undefined, the command uses
+	`color.ui` as fallback.
+
+--[no-]includes::
+	Respect `include.*` directives in config files when looking up
+	values. Defaults to `off` when a specific file is given (e.g.,
+	using `--file`, `--global`, etc) and `on` when searching all
+	config files.
+
+--default <value>::
+  When using `get`, and the requested variable is not found, behave as if
+  <value> were the value assigned to that variable.
+
+DEPRECATED MODES
+----------------
+
+The following modes have been deprecated in favor of subcommands. It is
+recommended to migrate to the new syntax.
+
+'git config <name>'::
+	Replaced by `git config get <name>`.
+
+'git config <name> <value> [<value-pattern>]'::
+	Replaced by `git config set [--value=<pattern>] <name> <value>`.
+
+-l::
+--list::
+	Replaced by `git config list`.
+
+--get <name> [<value-pattern>]::
+	Replaced by `git config get [--value=<pattern>] <name>`.
+
+--get-all <name> [<value-pattern>]::
+	Replaced by `git config get [--value=<pattern>] --all --show-names <name>`.
+
+--get-regexp <name-regexp>::
+	Replaced by `git config get --all --show-names --regexp <name-regexp>`.
+
+--get-urlmatch <name> <URL>::
+	Replaced by `git config get --all --show-names --url=<URL> <name>`.
+
+--get-color <name> [<default>]::
+	Replaced by `git config get --type=color [--default=<default>] <name>`.
+
+--add <name> <value>::
+	Replaced by `git config set --append <name> <value>`.
+
+--unset <name> [<value-pattern>]::
+	Replaced by `git config unset [--value=<pattern>] <name>`.
+
+--unset-all <name> [<value-pattern>]::
+	Replaced by `git config unset [--value=<pattern>] --all <name>`.
+
+--rename-section <old-name> <new-name>::
+	Replaced by `git config rename-section <old-name> <new-name>`.
+
+--remove-section <name>::
+	Replaced by `git config remove-section <name>`.
+
+-e::
+--edit::
+	Replaced by `git config edit`.
+
+CONFIGURATION
+-------------
+`pager.config` is only respected when listing configuration, i.e., when
+using `list` or `get` which may return multiple results. The default is to use
+a pager.
+
+[[FILES]]
+FILES
+-----
+
+By default, 'git config' will read configuration options from multiple
+files:
+
+$(prefix)/etc/gitconfig::
+	System-wide configuration file.
+
+$XDG_CONFIG_HOME/git/config::
+~/.gitconfig::
+	User-specific configuration files. When the XDG_CONFIG_HOME environment
+	variable is not set or empty, $HOME/.config/ is used as
+	$XDG_CONFIG_HOME.
++
+These are also called "global" configuration files. If both files exist, both
+files are read in the order given above.
+
+$GIT_DIR/config::
+	Repository specific configuration file.
+
+$GIT_DIR/config.worktree::
+	This is optional and is only searched when
+	`extensions.worktreeConfig` is present in $GIT_DIR/config.
+
+You may also provide additional configuration parameters when running any
+git command by using the `-c` option. See linkgit:git[1] for details.
+
+Options will be read from all of these files that are available. If the
+global or the system-wide configuration files are missing or unreadable they
+will be ignored. If the repository configuration file is missing or unreadable,
+'git config' will exit with a non-zero error code. An error message is produced
+if the file is unreadable, but not if it is missing.
+
+The files are read in the order given above, with last value found taking
+precedence over values read earlier.  When multiple values are taken then all
+values of a key from all files will be used.
+
+By default, options are only written to the repository specific
+configuration file. Note that this also affects options like `set`
+and `unset`. *'git config' will only ever change one file at a time*.
+
+You can limit which configuration sources are read from or written to by
+specifying the path of a file with the `--file` option, or by specifying a
+configuration scope with `--system`, `--global`, `--local`, or `--worktree`.
+For more, see <<OPTIONS>> above.
+
+[[SCOPES]]
+SCOPES
+------
+
+Each configuration source falls within a configuration scope. The scopes
+are:
+
+system::
+	$(prefix)/etc/gitconfig
+
+global::
+	$XDG_CONFIG_HOME/git/config
++
+~/.gitconfig
+
+local::
+	$GIT_DIR/config
+
+worktree::
+	$GIT_DIR/config.worktree
+
+command::
+	GIT_CONFIG_{COUNT,KEY,VALUE} environment variables (see <<ENVIRONMENT>>
+	below)
++
+the `-c` option
+
+With the exception of 'command', each scope corresponds to a command line
+option: `--system`, `--global`, `--local`, `--worktree`.
+
+When reading options, specifying a scope will only read options from the
+files within that scope. When writing options, specifying a scope will write
+to the files within that scope (instead of the repository specific
+configuration file). See <<OPTIONS>> above for a complete description.
+
+Most configuration options are respected regardless of the scope it is
+defined in, but some options are only respected in certain scopes. See the
+respective option's documentation for the full details.
+
+Protected configuration
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Protected configuration refers to the 'system', 'global', and 'command' scopes.
+For security reasons, certain options are only respected when they are
+specified in protected configuration, and ignored otherwise.
+
+Git treats these scopes as if they are controlled by the user or a trusted
+administrator. This is because an attacker who controls these scopes can do
+substantial harm without using Git, so it is assumed that the user's environment
+protects these scopes against attackers.
+
+[[ENVIRONMENT]]
+ENVIRONMENT
+-----------
+
+GIT_CONFIG_GLOBAL::
+GIT_CONFIG_SYSTEM::
+	Take the configuration from the given files instead from global or
+	system-level configuration. See linkgit:git[1] for details.
+
+GIT_CONFIG_NOSYSTEM::
+	Whether to skip reading settings from the system-wide
+	$(prefix)/etc/gitconfig file. See linkgit:git[1] for details.
+
+See also <<FILES>>.
+
+GIT_CONFIG_COUNT::
+GIT_CONFIG_KEY_<n>::
+GIT_CONFIG_VALUE_<n>::
+	If GIT_CONFIG_COUNT is set to a positive number, all environment pairs
+	GIT_CONFIG_KEY_<n> and GIT_CONFIG_VALUE_<n> up to that number will be
+	added to the process's runtime configuration. The config pairs are
+	zero-indexed. Any missing key or value is treated as an error. An empty
+	GIT_CONFIG_COUNT is treated the same as GIT_CONFIG_COUNT=0, namely no
+	pairs are processed. These environment variables will override values
+	in configuration files, but will be overridden by any explicit options
+	passed via `git -c`.
++
+This is useful for cases where you want to spawn multiple git commands
+with a common configuration but cannot depend on a configuration file,
+for example when writing scripts.
+
+GIT_CONFIG::
+	If no `--file` option is provided to `git config`, use the file
+	given by `GIT_CONFIG` as if it were provided via `--file`. This
+	variable has no effect on other Git commands, and is mostly for
+	historical compatibility; there is generally no reason to use it
+	instead of the `--file` option.
+
+[[EXAMPLES]]
+EXAMPLES
+--------
+
+Given a .git/config like this:
+
+------------
+#
+# This is the config file, and
+# a '#' or ';' character indicates
+# a comment
+#
+
+; core variables
+[core]
+	; Don't trust file modes
+	filemode = false
+
+; Our diff algorithm
+[diff]
+	external = /usr/local/bin/diff-wrapper
+	renames = true
+
+; Proxy settings
+[core]
+	gitproxy=proxy-command for kernel.org
+	gitproxy=default-proxy ; for all the rest
+
+; HTTP
+[http]
+	sslVerify
+[http "https://weak.example.com"]
+	sslVerify = false
+	cookieFile = /tmp/cookie.txt
+------------
+
+you can set the filemode to true with
+
+------------
+% git config set core.filemode true
+------------
+
+The hypothetical proxy command entries actually have a postfix to discern
+what URL they apply to. Here is how to change the entry for kernel.org
+to "ssh".
+
+------------
+% git config set --value='for kernel.org$' core.gitproxy '"ssh" for kernel.org'
+------------
+
+This makes sure that only the key/value pair for kernel.org is replaced.
+
+To delete the entry for renames, do
+
+------------
+% git config unset diff.renames
+------------
+
+If you want to delete an entry for a multivar (like core.gitproxy above),
+you have to provide a regex matching the value of exactly one line.
+
+To query the value for a given key, do
+
+------------
+% git config get core.filemode
+------------
+
+or, to query a multivar:
+
+------------
+% git config get --value="for kernel.org$" core.gitproxy
+------------
+
+If you want to know all the values for a multivar, do:
+
+------------
+% git config get --all --show-names core.gitproxy
+------------
+
+If you like to live dangerously, you can replace *all* core.gitproxy by a
+new one with
+
+------------
+% git config set --all core.gitproxy ssh
+------------
+
+However, if you really only want to replace the line for the default proxy,
+i.e. the one without a "for ..." postfix, do something like this:
+
+------------
+% git config set --value='! for ' core.gitproxy ssh
+------------
+
+To actually match only values with an exclamation mark, you have to
+
+------------
+% git config set --value='[!]' section.key value
+------------
+
+To add a new proxy, without altering any of the existing ones, use
+
+------------
+% git config set --append core.gitproxy '"proxy-command" for example.com'
+------------
+
+An example to use customized color from the configuration in your
+script:
+
+------------
+#!/bin/sh
+WS=$(git config get --type=color --default="blue reverse" color.diff.whitespace)
+RESET=$(git config get --type=color --default="reset" "")
+echo "${WS}your whitespace color or blue reverse${RESET}"
+------------
+
+For URLs in `https://weak.example.com`, `http.sslVerify` is set to
+false, while it is set to `true` for all others:
+
+------------
+% git config get --type=bool --url=https://good.example.com http.sslverify
+true
+% git config get --type=bool --url=https://weak.example.com http.sslverify
+false
+% git config get --url=https://weak.example.com http
+http.cookieFile /tmp/cookie.txt
+http.sslverify false
+------------
+
+include::config.txt[]
+
+BUGS
+----
+When using the deprecated `[section.subsection]` syntax, changing a value
+will result in adding a multi-line key instead of a change, if the subsection
+is given with at least one uppercase character. For example when the config
+looks like
+
+--------
+  [section.subsection]
+    key = value1
+--------
+
+and running `git config section.Subsection.key value2` will result in
+
+--------
+  [section.subsection]
+    key = value1
+    key = value2
+--------
+
+
+GIT
+---
+Part of the linkgit:git[1] suite

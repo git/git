@@ -1,0 +1,4 @@
+test_expect_success 'here-doc-body-indent' - <<-\EOT
+	echo "we should find this"
+	echo "even though our heredoc has its indent stripped"
+EOT

@@ -1,0 +1,6 @@
+outer() {
+    RIGHT() {
+        :
+        echo 'ChangeMe'
+    }
+}

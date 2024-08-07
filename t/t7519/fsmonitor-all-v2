@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+#
+# An test hook script to integrate with git to test fsmonitor.
+#
+# The hook is passed a version (currently 2) and since token
+# formatted as a string and outputs to stdout all files that have been
+# modified since the given time. Paths must be relative to the root of
+# the working tree and separated by a single NUL.
+#
+#echo "$0 $*" >&2
+my ($version, $last_update_token) = @ARGV;
+
+if ($version ne 2) {
+	print "Unsupported query-fsmonitor hook version '$version'.\n";
+	exit 1;
+}
+
+print "last_update_token\0/\0"

@@ -1,0 +1,15 @@
+test_expect_success 'nested-subshell' '
+(
+	cd foo &&
+	(
+		echo a &&
+		echo b
+	) >file &&
+
+	cd foo &&
+	(
+		echo a
+		echo b
+	) >file
+)
+'

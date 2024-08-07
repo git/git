@@ -1,0 +1,7 @@
+(define book-class%
+  (class* () object% RIGHT
+    (field (pages 5))
+    (field (ChangeMe 5))
+    (define/public (letters)
+      (* pages 500))
+    (super-new)))

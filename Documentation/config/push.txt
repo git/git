@@ -1,0 +1,134 @@
+push.autoSetupRemote::
+	If set to "true" assume `--set-upstream` on default push when no
+	upstream tracking exists for the current branch; this option
+	takes effect with push.default options 'simple', 'upstream',
+	and 'current'. It is useful if by default you want new branches
+	to be pushed to the default remote (like the behavior of
+	'push.default=current') and you also want the upstream tracking
+	to be set. Workflows most likely to benefit from this option are
+	'simple' central workflows where all branches are expected to
+	have the same name on the remote.
+
+push.default::
+	Defines the action `git push` should take if no refspec is
+	given (whether from the command-line, config, or elsewhere).
+	Different values are well-suited for
+	specific workflows; for instance, in a purely central workflow
+	(i.e. the fetch source is equal to the push destination),
+	`upstream` is probably what you want.  Possible values are:
++
+--
+
+* `nothing` - do not push anything (error out) unless a refspec is
+  given. This is primarily meant for people who want to
+  avoid mistakes by always being explicit.
+
+* `current` - push the current branch to update a branch with the same
+  name on the receiving end.  Works in both central and non-central
+  workflows.
+
+* `upstream` - push the current branch back to the branch whose
+  changes are usually integrated into the current branch (which is
+  called `@{upstream}`).  This mode only makes sense if you are
+  pushing to the same repository you would normally pull from
+  (i.e. central workflow).
+
+* `tracking` - This is a deprecated synonym for `upstream`.
+
+* `simple` - push the current branch with the same name on the remote.
++
+If you are working on a centralized workflow (pushing to the same repository you
+pull from, which is typically `origin`), then you need to configure an upstream
+branch with the same name.
++
+This mode is the default since Git 2.0, and is the safest option suited for
+beginners.
+
+* `matching` - push all branches having the same name on both ends.
+  This makes the repository you are pushing to remember the set of
+  branches that will be pushed out (e.g. if you always push 'maint'
+  and 'master' there and no other branches, the repository you push
+  to will have these two branches, and your local 'maint' and
+  'master' will be pushed there).
++
+To use this mode effectively, you have to make sure _all_ the
+branches you would push out are ready to be pushed out before
+running 'git push', as the whole point of this mode is to allow you
+to push all of the branches in one go.  If you usually finish work
+on only one branch and push out the result, while other branches are
+unfinished, this mode is not for you.  Also this mode is not
+suitable for pushing into a shared central repository, as other
+people may add new branches there, or update the tip of existing
+branches outside your control.
++
+This used to be the default, but not since Git 2.0 (`simple` is the
+new default).
+
+--
+
+push.followTags::
+	If set to true, enable `--follow-tags` option by default.  You
+	may override this configuration at time of push by specifying
+	`--no-follow-tags`.
+
+push.gpgSign::
+	May be set to a boolean value, or the string 'if-asked'. A true
+	value causes all pushes to be GPG signed, as if `--signed` is
+	passed to linkgit:git-push[1]. The string 'if-asked' causes
+	pushes to be signed if the server supports it, as if
+	`--signed=if-asked` is passed to 'git push'. A false value may
+	override a value from a lower-priority config file. An explicit
+	command-line flag always overrides this config option.
+
+push.pushOption::
+	When no `--push-option=<option>` argument is given from the
+	command line, `git push` behaves as if each <value> of
+	this variable is given as `--push-option=<value>`.
++
+This is a multi-valued variable, and an empty value can be used in a
+higher priority configuration file (e.g. `.git/config` in a
+repository) to clear the values inherited from a lower priority
+configuration files (e.g. `$HOME/.gitconfig`).
++
+----
+
+Example:
+
+/etc/gitconfig
+  push.pushoption = a
+  push.pushoption = b
+
+~/.gitconfig
+  push.pushoption = c
+
+repo/.git/config
+  push.pushoption =
+  push.pushoption = b
+
+This will result in only b (a and c are cleared).
+
+----
+
+push.recurseSubmodules::
+	May be "check", "on-demand", "only", or "no", with the same behavior
+	as that of "push --recurse-submodules".
+	If not set, 'no' is used by default, unless 'submodule.recurse' is
+	set (in which case a 'true' value means 'on-demand').
+
+push.useForceIfIncludes::
+	If set to "true", it is equivalent to specifying
+	`--force-if-includes` as an option to linkgit:git-push[1]
+	in the command line. Adding `--no-force-if-includes` at the
+	time of push overrides this configuration setting.
+
+push.negotiate::
+	If set to "true", attempt to reduce the size of the packfile
+	sent by rounds of negotiation in which the client and the
+	server attempt to find commits in common. If "false", Git will
+	rely solely on the server's ref advertisement to find commits
+	in common.
+
+push.useBitmaps::
+	If set to "false", disable use of bitmaps for "git push" even if
+	`pack.useBitmaps` is "true", without preventing other git operations
+	from using bitmaps. Default is true.

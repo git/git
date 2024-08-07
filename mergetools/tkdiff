@@ -1,0 +1,24 @@
+diff_cmd () {
+	"$merge_tool_path" "$LOCAL" "$REMOTE"
+}
+
+diff_cmd_help () {
+	echo "Use TkDiff (requires a graphical session)"
+}
+
+merge_cmd () {
+	if $base_present
+	then
+		"$merge_tool_path" -a "$BASE" -o "$MERGED" "$LOCAL" "$REMOTE"
+	else
+		"$merge_tool_path" -o "$MERGED" "$LOCAL" "$REMOTE"
+	fi
+}
+
+exit_code_trustable () {
+	true
+}
+
+merge_cmd_help () {
+	echo "Use TkDiff (requires a graphical session)"
+}

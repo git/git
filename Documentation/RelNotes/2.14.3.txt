@@ -1,0 +1,99 @@
+Git v2.14.3 Release Notes
+=========================
+
+Fixes since v2.14.2
+-------------------
+
+ * A helper function to read a single whole line into strbuf
+   mistakenly triggered OOM error at EOF under certain conditions,
+   which has been fixed.
+
+ * In addition to "cc: <a@dd.re.ss> # cruft", "cc: a@dd.re.ss # cruft"
+   was taught to "git send-email" as a valid way to tell it that it
+   needs to also send a carbon copy to <a@dd.re.ss> in the trailer
+   section.
+
+ * Fix regression to "gitk --bisect" by a recent update.
+
+ * Unlike "git commit-tree < file", "git commit-tree -F file" did not
+   pass the contents of the file verbatim and instead completed an
+   incomplete line at the end, if exists.  The latter has been updated
+   to match the behaviour of the former.
+
+ * "git archive", especially when used with pathspec, stored an empty
+   directory in its output, even though Git itself never does so.
+   This has been fixed.
+
+ * API error-proofing which happens to also squelch warnings from GCC.
+
+ * "git gc" tries to avoid running two instances at the same time by
+   reading and writing pid/host from and to a lock file; it used to
+   use an incorrect fscanf() format when reading, which has been
+   corrected.
+
+ * The test linter has been taught that we do not like "echo -e".
+
+ * Code cmp.std.c nitpick.
+
+ * "git describe --match" learned to take multiple patterns in v2.13
+   series, but the feature ignored the patterns after the first one
+   and did not work at all.  This has been fixed.
+
+ * "git cat-file --textconv" started segfaulting recently, which
+   has been corrected.
+
+ * The built-in pattern to detect the "function header" for HTML did
+   not match <H1>..<H6> elements without any attributes, which has
+   been fixed.
+
+ * "git mailinfo" was loose in decoding quoted printable and produced
+   garbage when the two letters after the equal sign are not
+   hexadecimal.  This has been fixed.
+
+ * The documentation for '-X<option>' for merges was misleadingly
+   written to suggest that "-s theirs" exists, which is not the case.
+
+ * Spell the name of our system as "Git" in the output from
+   request-pull script.
+
+ * Fixes for a handful memory access issues identified by valgrind.
+
+ * Backports a moral equivalent of 2015 fix to the poll emulation from
+   the upstream gnulib to fix occasional breakages on HPE NonStop.
+
+ * In the "--format=..." option of the "git for-each-ref" command (and
+   its friends, i.e. the listing mode of "git branch/tag"), "%(atom:)"
+   (e.g. "%(refname:)", "%(body:)" used to error out.  Instead, treat
+   them as if the colon and an empty string that follows it were not
+   there.
+
+ * Users with "color.ui = always" in their configuration were broken
+   by a recent change that made plumbing commands to pay attention to
+   them as the patch created internally by "git add -p" were colored
+   (heh) and made unusable.  This has been fixed.
+
+ * "git branch -M a b" while on a branch that is completely unrelated
+   to either branch a or branch b misbehaved when multiple worktree
+   was in use.  This has been fixed.
+
+ * "git fast-export" with -M/-C option issued "copy" instruction on a
+   path that is simultaneously modified, which was incorrect.
+
+ * The checkpoint command "git fast-import" did not flush updates to
+   refs and marks unless at least one object was created since the
+   last checkpoint, which has been corrected, as these things can
+   happen without any new object getting created.
+
+ * The scripts to drive TravisCI has been reorganized and then an
+   optimization to avoid spending cycles on a branch whose tip is
+   tagged has been implemented.
+
+ * "git fetch <there> <src>:<dst>" allows an object name on the <src>
+   side when the other side accepts such a request since Git v2.5, but
+   the documentation was left stale.
+
+ * A regression in 2.11 that made the code to read the list of
+   alternate object stores overrun the end of the string has been
+   fixed.
+
+Also contains various documentation updates and code clean-ups.

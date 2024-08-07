@@ -1,0 +1,6 @@
+uploadarchive.allowUnreachable::
+	If true, allow clients to use `git archive --remote` to request
+	any tree, whether reachable from the ref tips or not. See the
+	discussion in the "SECURITY" section of
+	linkgit:git-upload-archive[1] for more details. Defaults to
+	`false`.

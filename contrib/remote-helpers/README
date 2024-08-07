@@ -1,0 +1,15 @@
+The remote-helper bridges to access data stored in Mercurial and
+Bazaar are maintained outside the git.git tree in the repositories
+of their primary author:
+
+    https://github.com/felipec/git-remote-hg (for Mercurial)
+    https://github.com/felipec/git-remote-bzr (for Bazaar)
+
+You can pick a directory on your $PATH and download them from these
+repositories, e.g.:
+
+  $ wget -O $HOME/bin/git-remote-hg \
+    https://raw.github.com/felipec/git-remote-hg/master/git-remote-hg
+  $ wget -O $HOME/bin/git-remote-bzr \
+    https://raw.github.com/felipec/git-remote-bzr/master/git-remote-bzr
+  $ chmod +x $HOME/bin/git-remote-hg $HOME/bin/git-remote-bzr

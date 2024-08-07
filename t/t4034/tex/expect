@@ -1,0 +1,9 @@
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 2b2dfcb..65cab61 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
+<CYAN>@@ -1,4 +1,4 @@<RESET>
+\section{Something <GREEN>new<RESET>}
+<RED>\emph<RESET><GREEN>\textbf<RESET>{Macro style}
+{<RED>\em<RESET><GREEN>\bfseries<RESET> State toggle style}
+\\[<RED>1em<RESET><GREEN>1cm<RESET>]

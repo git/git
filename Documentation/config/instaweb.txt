@@ -1,0 +1,20 @@
+instaweb.browser::
+	Specify the program that will be used to browse your working
+	repository in gitweb. See linkgit:git-instaweb[1].
+
+instaweb.httpd::
+	The HTTP daemon command-line to start gitweb on your working
+	repository. See linkgit:git-instaweb[1].
+
+instaweb.local::
+	If true the web server started by linkgit:git-instaweb[1] will
+	be bound to the local IP (127.0.0.1).
+
+instaweb.modulePath::
+	The default module path for linkgit:git-instaweb[1] to use
+	instead of /usr/lib/apache2/modules.  Only used if httpd
+	is Apache.
+
+instaweb.port::
+	The port number to bind the gitweb httpd to. See
+	linkgit:git-instaweb[1].

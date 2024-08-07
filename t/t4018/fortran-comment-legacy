@@ -1,0 +1,13 @@
+      module a
+
+      contains
+
+C subroutine wrong
+      subroutine RIGHT
+C subroutine wrong
+
+      real ChangeMe
+
+      end subroutine RIGHT
+
+      end module a

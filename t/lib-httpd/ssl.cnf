@@ -1,0 +1,8 @@
+RANDFILE                = $ENV::RANDFILE_PATH
+
+[ req ]
+default_bits            = 2048
+distinguished_name      = req_distinguished_name
+prompt                  = no
+[ req_distinguished_name ]
+commonName              = 127.0.0.1

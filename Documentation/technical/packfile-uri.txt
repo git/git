@@ -1,0 +1,82 @@
+Packfile URIs
+=============
+
+This feature allows servers to serve part of their packfile response as URIs.
+This allows server designs that improve scalability in bandwidth and CPU usage
+(for example, by serving some data through a CDN), and (in the future) provides
+some measure of resumability to clients.
+
+This feature is available only in protocol version 2.
+
+Protocol
+--------
+
+The server advertises the `packfile-uris` capability.
+
+If the client then communicates which protocols (HTTPS, etc.) it supports with
+a `packfile-uris` argument, the server MAY send a `packfile-uris` section
+directly before the `packfile` section (right after `wanted-refs` if it is
+sent) containing URIs of any of the given protocols. The URIs point to
+packfiles that use only features that the client has declared that it supports
+(e.g. ofs-delta and thin-pack). See linkgit:gitprotocol-v2[5] for the documentation of
+this section.
+
+Clients should then download and index all the given URIs (in addition to
+downloading and indexing the packfile given in the `packfile` section of the
+response) before performing the connectivity check.
+
+Server design
+-------------
+
+The server can be trivially made compatible with the proposed protocol by
+having it advertise `packfile-uris`, tolerating the client sending
+`packfile-uris`, and never sending any `packfile-uris` section. But we should
+include some sort of non-trivial implementation in the Minimum Viable Product,
+at least so that we can test the client.
+
+This is the implementation: a feature, marked experimental, that allows the
+server to be configured by one or more `uploadpack.blobPackfileUri=
+<object-hash> <pack-hash> <uri>` entries. Whenever the list of objects to be
+sent is assembled, all such blobs are excluded, replaced with URIs. As noted
+in "Future work" below, the server can evolve in the future to support
+excluding other objects (or other implementations of servers could be made
+that support excluding other objects) without needing a protocol change, so
+clients should not expect that packfiles downloaded in this way only contain
+single blobs.
+
+Client design
+-------------
+
+The client has a config variable `fetch.uriprotocols` that determines which
+protocols the end user is willing to use. By default, this is empty.
+
+When the client downloads the given URIs, it should store them with "keep"
+files, just like it does with the packfile in the `packfile` section. These
+additional "keep" files can only be removed after the refs have been updated -
+just like the "keep" file for the packfile in the `packfile` section.
+
+The division of work (initial fetch + additional URIs) introduces convenient
+points for resumption of an interrupted clone - such resumption can be done
+after the Minimum Viable Product (see "Future work").
+
+Future work
+-----------
+
+The protocol design allows some evolution of the server and client without any
+need for protocol changes, so only a small-scoped design is included here to
+form the MVP. For example, the following can be done:
+
+ * On the server, more sophisticated means of excluding objects (e.g. by
+   specifying a commit to represent that commit and all objects that it
+   references).
+ * On the client, resumption of clone. If a clone is interrupted, information
+   could be recorded in the repository's config and a "clone-resume" command
+   can resume the clone in progress. (Resumption of subsequent fetches is more
+   difficult because that must deal with the user wanting to use the repository
+   even after the fetch was interrupted.)
+
+There are some possible features that will require a change in protocol:
+
+ * Additional HTTP headers (e.g. authentication)
+ * Byte range support
+ * Different file formats referenced by URIs (e.g. raw object)

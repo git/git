@@ -1,0 +1,94 @@
+From: Junio C Hamano <gitster@pobox.com>
+Subject: Separating topic branches
+Abstract: In this article, JC describes how to separate topic branches.
+Content-type: text/asciidoc
+
+How to separate topic branches
+==============================
+
+This text was originally a footnote to a discussion about the
+behaviour of the git diff commands.
+
+Often I find myself doing that [running diff against something other
+than HEAD] while rewriting messy development history.  For example, I
+start doing some work without knowing exactly where it leads, and end
+up with a history like this:
+
+            "master"
+        o---o
+             \                    "topic"
+              o---o---o---o---o---o
+
+At this point, "topic" contains something I know I want, but it
+contains two concepts that turned out to be completely independent.
+And often, one topic component is larger than the other.  It may
+contain more than two topics.
+
+In order to rewrite this mess to be more manageable, I would first do
+"diff master..topic", to extract the changes into a single patch, start
+picking pieces from it to get logically self-contained units, and
+start building on top of "master":
+
+        $ git diff master..topic >P.diff
+        $ git checkout -b topicA master
+        ... pick and apply pieces from P.diff to build
+        ... commits on topicA branch.
+
+              o---o---o
+             /        "topicA"
+        o---o"master"
+             \                    "topic"
+              o---o---o---o---o---o
+
+Before doing each commit on "topicA" HEAD, I run "diff HEAD"
+before update-index the affected paths, or "diff --cached HEAD"
+after.  Also I would run "diff --cached master" to make sure
+that the changes are only the ones related to "topicA".  Usually
+I do this for smaller topics first.
+
+After that, I'd do the remainder of the original "topic", but
+for that, I do not start from the patchfile I extracted by
+comparing "master" and "topic" I used initially.  Still on
+"topicA", I extract "diff topic", and use it to rebuild the
+other topic:
+
+        $ git diff -R topic >P.diff ;# --cached also would work fine
+        $ git checkout -b topicB master
+        ... pick and apply pieces from P.diff to build
+        ... commits on topicB branch.
+
+                                "topicB"
+               o---o---o---o---o
+              /
+             /o---o---o
+            |/        "topicA"
+        o---o"master"
+             \                    "topic"
+              o---o---o---o---o---o
+
+After I am done, I'd try a pretend-merge between "topicA" and
+"topicB" in order to make sure I have not missed anything:
+
+        $ git pull . topicA ;# merge it into current "topicB"
+        $ git diff topic
+                                "topicB"
+               o---o---o---o---o---* (pretend merge)
+              /                   /
+             /o---o---o----------'
+            |/        "topicA"
+        o---o"master"
+             \                    "topic"
+              o---o---o---o---o---o
+
+The last diff better not to show anything other than cleanups
+for cruft.  Then I can finally clean things up:
+
+        $ git branch -D topic
+        $ git reset --hard HEAD^ ;# nuke pretend merge
+
+                                "topicB"
+               o---o---o---o---o
+              /
+             /o---o---o
+            |/        "topicA"
+        o---o"master"

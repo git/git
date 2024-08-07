@@ -1,0 +1,103 @@
+# Icelandic translations for Git.
+# Copyright (C) 2010 Ævar Arnfjörð Bjarmason <avarab@gmail.com>
+# This file is distributed under the same license as the Git package.
+# Ævar Arnfjörð Bjarmason <avarab@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Git\n"
+"Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
+"POT-Creation-Date: 2016-06-17 18:55+0000\n"
+"PO-Revision-Date: 2016-06-17 19:17+0000\n"
+"Last-Translator: Vasco Almeida <vascomalmeida@sapo.pt>\n"
+"Language-Team: Git Mailing List <git@vger.kernel.org>\n"
+"Language: is\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.5\n"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.c:5
+msgid "See 'git help COMMAND' for more information on a specific command."
+msgstr "Sjá 'git help SKIPUN' til að sjá hjálp fyrir tiltekna skipun."
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.c:10
+msgid "TEST: A C test string"
+msgstr "TILRAUN: C tilraunastrengur"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.c:13
+#, c-format
+msgid "TEST: A C test string %s"
+msgstr "TILRAUN: C tilraunastrengur %s"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.c:16
+#, c-format
+msgid "TEST: Hello World!"
+msgstr "TILRAUN: Halló Heimur!"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.c:19
+#, c-format
+msgid "TEST: Old English Runes"
+msgstr "TILRAUN: ᚻᛖ ᚳᚹᚫᚦ ᚦᚫᛏ ᚻᛖ ᛒᚢᛞᛖ ᚩᚾ ᚦᚫᛗ ᛚᚪᚾᛞᛖ ᚾᚩᚱᚦᚹᛖᚪᚱᛞᚢᛗ ᚹᛁᚦ ᚦᚪ ᚹᛖᛥᚫ"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.c:22
+#, c-format
+msgid "TEST: ‘single’ and “double” quotes"
+msgstr "TILRAUN: ‚einfaldar‘ og „tvöfaldar“ gæsalappir"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.sh:8
+msgid "TEST: A Shell test string"
+msgstr "TILRAUN: Skeljartilraunastrengur"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.sh:11
+#, sh-format
+msgid "TEST: A Shell test $variable"
+msgstr "TILRAUN: Skeljartilraunastrengur með breytunni $variable"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.perl:8
+msgid "TEST: A Perl test string"
+msgstr "TILRAUN: Perl tilraunastrengur"
+
+#. TRANSLATORS: This is a test. You don't need to translate it.
+#: t/t0200/test.perl:11
+#, perl-format
+msgid "TEST: A Perl test variable %s"
+msgstr "TILRAUN: Perl tilraunastrengur með breytunni %s"
+
+#: builtin/init-db.c:402
+#, c-format
+msgid "Reinitialized existing shared Git repository in %s%s\n"
+msgstr "Endurgerði Git lind í %s%s\n"
+
+#: builtin/init-db.c:403
+#, c-format
+msgid "Reinitialized existing Git repository in %s%s\n"
+msgstr "Endurgerði Git lind í %s%s\n"
+
+#: builtin/init-db.c:407
+#, c-format
+msgid "Initialized empty shared Git repository in %s%s\n"
+msgstr "Bjó til tóma sameiginlega Git lind í %s%s\n"
+
+#: builtin/init-db.c:408
+#, c-format
+msgid "Initialized empty Git repository in %s%s\n"
+msgstr "Bjó til tóma Git lind í %s%s\n"
+
+#~ msgid "Reinitialized existing"
+#~ msgstr "Endurgerði"
+
+#~ msgid "Initialized empty"
+#~ msgstr "Bjó til tóma"
+
+#~ msgid " shared"
+#~ msgstr " sameiginlega"

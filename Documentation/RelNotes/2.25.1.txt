@@ -1,0 +1,55 @@
+Git 2.25.1 Release Notes
+========================
+
+Fixes since v2.25
+-----------------
+
+ * "git commit" gives output similar to "git status" when there is
+   nothing to commit, but without honoring the advise.statusHints
+   configuration variable, which has been corrected.
+
+ * has_object_file() said "no" given an object registered to the
+   system via pretend_object_file(), making it inconsistent with
+   read_object_file(), causing lazy fetch to attempt fetching an
+   empty tree from promisor remotes.
+
+ * The code that tries to skip over the entries for the paths in a
+   single directory using the cache-tree was not careful enough
+   against corrupt index file.
+
+ * Complete an update to tutorial that encourages "git switch" over
+   "git checkout" that was done only half-way.
+
+ * Reduce unnecessary round-trip when running "ls-remote" over the
+   stateless RPC mechanism.
+
+ * "git restore --staged" did not correctly update the cache-tree
+   structure, resulting in bogus trees to be written afterwards, which
+   has been corrected.
+
+ * The code recently added to move to the entry beyond the ones in the
+   same directory in the index in the sparse-cone mode did not count
+   the number of entries to skip over incorrectly, which has been
+   corrected.
+
+ * Work around test breakages caused by custom regex engine used in
+   libasan, when address sanitizer is used with more recent versions
+   of gcc and clang.
+
+ * "git fetch --refmap=" option has got a better documentation.
+
+ * Corner case bugs in "git clean" that stems from a (necessarily for
+   performance reasons) awkward calling convention in the directory
+   enumeration API has been corrected.
+
+ * "git grep --no-index" should not get affected by the contents of
+   the .gitmodules file but when "--recurse-submodules" is given or
+   the "submodule.recurse" variable is set, it did.  Now these
+   settings are ignored in the "--no-index" mode.
+
+ * Technical details of the bundle format has been documented.
+
+ * Unhelpful warning messages during documentation build have been
+   squelched.
+
+Also contains various documentation updates, code clean-ups and minor fixups.

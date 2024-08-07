@@ -1,0 +1,334 @@
+Git v2.44 Release Notes
+=======================
+
+Backward Compatibility Notes
+
+ * "git checkout -B <branch>" used to allow switching to a branch that
+   is in use on another worktree, but this was by mistake.  The users
+   need to use "--ignore-other-worktrees" option.
+
+
+UI, Workflows & Features
+
+ * "git add" and "git stash" learned to support the ":(attr:...)"
+   magic pathspec.
+
+ * "git rebase --autosquash" is now enabled for non-interactive rebase,
+   but it is still incompatible with the apply backend.
+
+ * Introduce "git replay", a tool meant on the server side without
+   working tree to recreate a history.
+
+ * "git merge-file" learned to take the "--diff-algorithm" option to
+   use algorithm different from the default "myers" diff.
+
+ * Command line completion (in contrib/) learned to complete path
+   arguments to the "add/set" subcommands of "git sparse-checkout"
+   better.
+
+ * "git checkout -B <branch> [<start-point>]" allowed a branch that is
+   in use in another worktree to be updated and checked out, which
+   might be a bit unexpected.  The rule has been tightened, which is a
+   breaking change.  "--ignore-other-worktrees" option is required to
+   unbreak you, if you are used to the current behaviour that "-B"
+   overrides the safety.
+
+ * The builtin_objectmode attribute is populated for each path
+   without adding anything in .gitattributes files, which would be
+   useful in magic pathspec, e.g., ":(attr:builtin_objectmode=100755)"
+   to limit to executables.
+
+ * "git fetch" learned to pay attention to "fetch.all" configuration
+   variable, which pretends as if "--all" was passed from the command
+   line when no remote parameter was given.
+
+ * In addition to (rather cryptic) Security Identifiers, show username
+   and domain in the error message when we barf on mismatch between
+   the Git directory and the current user on Windows.
+
+ * The error message given when "git branch -d branch" fails due to
+   commits unique to the branch has been split into an error and a new
+   conditional advice message.
+
+ * When given an existing but unreadable file as a configuration file,
+   gitweb behaved as if the file did not exist at all, but now it
+   errors out.  This is a change that may break backward compatibility.
+
+ * When $HOME/.gitconfig is missing but XDG config file is available, we
+   should write into the latter, not former.  "git gc" and "git
+   maintenance" wrote into a wrong "global config" file, which have
+   been corrected.
+
+ * Define "special ref" as a very narrow set that consists of
+   FETCH_HEAD and MERGE_HEAD, and clarify everything else that used to
+   be classified as such are actually just pseudorefs.
+
+ * All conditional "advice" messages show how to turn them off, which
+   becomes repetitive.  Setting advice.* configuration explicitly on
+   now omits the instruction part.
+
+ * The "disable repository discovery of a bare repository" check,
+   triggered by setting safe.bareRepository configuration variable to
+   'explicit', has been loosened to exclude the ".git/" directory inside
+   a non-bare repository from the check.  So you can do "cd .git &&
+   git cmd" to run a Git command that works on a bare repository without
+   explicitly specifying $GIT_DIR now.
+
+ * The completion script (in contrib/) learned more options that can
+   be used with "git log".
+
+ * The labels on conflict markers for the common ancestor, our version,
+   and the other version are available to custom 3-way merge driver
+   via %S, %X, and %Y placeholders.
+
+ * The write codepath for the reftable data learned to honor
+   core.fsync configuration.
+
+ * The "--fsck-objects" option of "git index-pack" now can take the
+   optional parameter to tweak severity of different fsck errors.
+
+ * The wincred credential backend has been taught to support oauth
+   refresh token the same way as credential-cache and
+   credential-libsecret backends.
+
+ * Command line completion support (in contrib/) has been
+   updated for "git bisect".
+
+ * "git branch" and friends learned to use the formatted text as
+   sorting key, not the underlying timestamp value, when the --sort
+   option is used with author or committer timestamp with a format
+   specifier (e.g., "--sort=creatordate:format:%H:%M:%S").
+
+ * The command line completion script (in contrib/) learned to
+   complete configuration variable names better.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Process to add some form of low-level unit tests has started.
+
+ * Add support for GitLab CI.
+
+ * "git for-each-ref --no-sort" still sorted the refs alphabetically
+   which paid non-trivial cost.  It has been redefined to show output
+   in an unspecified order, to allow certain optimizations to take
+   advantage of.
+
+ * Simplify API implementation to delete references by eliminating
+   duplication.
+
+ * Subject approxidate() and show_date() machinery to OSS-Fuzz.
+
+ * A new helper to let us pretend that we called lstat() when we know
+   our cache_entry is up-to-date via fsmonitor.
+
+ * The optimization based on fsmonitor in the "diff --cached"
+   codepath is resurrected with the "fake-lstat" introduced earlier.
+
+ * Test balloon to use C99 "bool" type from <stdbool.h> has been
+   added.
+
+ * "git clone" has been prepared to allow cloning a repository with
+   non-default hash function into a repository that uses the reftable
+   backend.
+
+ * Streaming spans of packfile data used to be done only from a
+   single, primary, pack in a repository with multiple packfiles.  It
+   has been extended to allow reuse from other packfiles, too.
+
+ * Comment updates to help developers not to attempt to modify
+   messages from plumbing commands that must stay constant.
+
+   It might make sense to reassess the plumbing needs every few years,
+   but that should be done as a separate effort.
+
+ * Move test-ctype helper to the unit-test framework.
+
+ * Instead of manually creating refs/ hierarchy on disk upon a
+   creation of a secondary worktree, which is only usable via the
+   files backend, use the refs API to populate it.
+
+ * CI for GitLab learned to drive macOS jobs.
+
+ * A few tests to "git commit -o <pathspec>" and "git commit -i
+   <pathspec>" has been added.
+
+ * Tests on ref API are moved around to prepare for reftable.
+
+ * The Makefile often had to say "-L$(path) -R$(path)" that repeats
+   the path to the same library directory for link time and runtime.
+   A Makefile template is used to reduce such repetition.
+
+ * The priority queue test has been migrated to the unit testing
+   framework.
+
+ * Setting `feature.experimental` opts the user into multi-pack reuse
+   experiment
+
+ * Squelch node.js 16 deprecation warnings from GitHub Actions CI
+   by updating actions/github-script and actions/checkout that use
+   node.js 20.
+
+ * The mechanism to report the filename in the source code, used by
+   the unit-test machinery, assumed that the compiler expanded __FILE__
+   to the path to the source given to the $(CC), but some compilers
+   give full path, breaking the output.  This has been corrected.
+
+
+Fixes since v2.43
+-----------------
+
+ * The way CI testing used "prove" could lead to running the test
+   suite twice needlessly, which has been corrected.
+
+ * Update ref-related tests.
+
+ * "git format-patch --encode-email-headers" ignored the option when
+   preparing the cover letter, which has been corrected.
+
+ * Newer versions of Getopt::Long started giving warnings against our
+   (ab)use of it in "git send-email".  Bump the minimum version
+   requirement for Perl to 5.8.1 (from September 2002) to allow
+   simplifying our implementation.
+
+ * Earlier we stopped relying on commit-graph that (still) records
+   information about commits that are lost from the object store,
+   which has negative performance implications.  The default has been
+   flipped to disable this pessimization.
+
+ * Stale URLs have been updated to their current counterparts (or
+   archive.org) and HTTP links are replaced with working HTTPS links.
+
+ * trace2 streams used to record the URLs that potentially embed
+   authentication material, which has been corrected.
+
+ * The sample pre-commit hook that tries to catch introduction of new
+   paths that use potentially non-portable characters did not notice
+   an existing path getting renamed to such a problematic path, when
+   rename detection was enabled.
+
+ * The command line parser for the "log" family of commands was too
+   loose when parsing certain numbers, e.g., silently ignoring the
+   extra 'q' in "git log -n 1q" without complaining, which has been
+   tightened up.
+
+ * "git $cmd --end-of-options --rev -- --path" for some $cmd failed
+   to interpret "--rev" as a rev, and "--path" as a path.  This was
+   fixed for many programs like "reset" and "checkout".
+
+ * "git bisect reset" has been taught to clean up state files and refs
+   even when BISECT_START file is gone.
+
+ * Some codepaths did not correctly parse configuration variables
+   specified with valueless "true", which has been corrected.
+
+ * Code clean-up for sanity checking of command line options for "git
+   show-ref".
+
+ * The code to parse the From e-mail header has been updated to avoid
+   recursion.
+
+ * "git fetch --atomic" issued an unnecessary empty error message,
+   which has been corrected.
+
+ * Command line completion script (in contrib/) learned to work better
+   with the reftable backend.
+
+ * "git status" is taught to show both the branch being bisected and
+   being rebased when both are in effect at the same time.
+
+ * "git archive --list extra garbage" silently ignored excess command
+   line parameters, which has been corrected.
+
+ * "git sparse-checkout set" added default patterns even when the
+   patterns are being fed from the standard input, which has been
+   corrected.
+
+ * "git sparse-checkout (add|set) --[no-]cone --end-of-options" did
+   not handle "--end-of-options" correctly after a recent update.
+
+ * Unlike other environment variables that took the usual
+   true/false/yes/no as well as 0/1, GIT_FLUSH only understood 0/1,
+   which has been corrected.
+
+ * Clearing in-core repository (happens during e.g., "git fetch
+   --recurse-submodules" with commit graph enabled) made in-core
+   commit object in an inconsistent state by discarding the necessary
+   data from commit-graph too early, which has been corrected.
+
+ * Update to a new feature recently added, "git show-ref --exists".
+
+ * oss-fuzz tests are built and run in CI.
+   (merge c4a9cf1df3 js/oss-fuzz-build-in-ci later to maint).
+
+ * Rename detection logic ignored the final line of a file if it is an
+   incomplete line.
+
+ * GitHub CI update.
+   (merge 0188b2c8e0 pb/ci-github-skip-logs-for-broken-tests later to maint).
+
+ * "git diff --no-rename A B" did not disable rename detection but did
+   not trigger an error from the command line parser.
+
+ * "git archive --remote=<remote>" learned to talk over the smart
+   http (aka stateless) transport.
+   (merge 176cd68634 jx/remote-archive-over-smart-http later to maint).
+
+ * Fetching via protocol v0 over Smart HTTP transport sometimes failed
+   to correctly auto-follow tags.
+   (merge fba732c462 jk/fetch-auto-tag-following-fix later to maint).
+
+ * The documentation for the --exclude-per-directory option marked it
+   as deprecated, which confused readers into thinking there may be a
+   plan to remove it in the future, which was not our intention.
+   (merge 0009542cab jc/ls-files-doc-update later to maint).
+
+ * "git diff --no-index file1 file2" segfaulted while invoking the
+   external diff driver, which has been corrected.
+
+ * Rewrite //-comments to /* comments */ in files whose comments
+   prevalently use the latter.
+
+ * Cirrus CI jobs started breaking because we specified version of
+   FreeBSD that is no longer available, which has been corrected.
+   (merge 81fffb66d3 cb/use-freebsd-13-2-at-cirrus-ci later to maint).
+
+ * A caller called index_file_exists() that takes a string expressed
+   as <ptr, length> with a wrong length, which has been corrected.
+   (merge 156e28b36d jh/sparse-index-expand-to-path-fix later to maint).
+
+ * A failed "git tag -s" did not necessarily result in an error
+   depending on the crypto backend, which has been corrected.
+
+ * "git stash" sometimes was silent even when it failed due to
+   unwritable index file, which has been corrected.
+
+ * "git show-ref --verify" did not show things like "CHERRY_PICK_HEAD",
+   which has been corrected.
+
+ * Recent conversion to allow more than 0/1 in GIT_FLUSH broke the
+   mechanism by flipping what yes/no means by mistake, which has been
+   corrected.
+
+ * The sequencer machinery does not use the ref API and instead
+   records names of certain objects it needs for its correct operation
+   in temporary files, which makes these objects susceptible to loss
+   by garbage collection.  These temporary files have been added as
+   starting points for reachability analysis to fix this.
+   (merge bc7f5db896 pw/gc-during-rebase later to maint).
+
+ * "git cherry-pick" invoked during "git rebase -i" session lost
+   the authorship information, which has been corrected.
+   (merge e4301f73ff vn/rebase-with-cherry-pick-authorship later to maint).
+
+ * The code paths that call repo_read_object_file() have been
+   tightened to react to errors.
+   (merge 568459bf5e js/check-null-from-read-object-file later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 5aea3955bc rj/clarify-branch-doc-m later to maint).
+   (merge 9cce3be2df bk/bisect-doc-fix later to maint).
+   (merge 8430b438f6 vd/fsck-submodule-url-test later to maint).
+   (merge 3cb4384683 jc/t0091-with-unknown-git later to maint).
+   (merge 020456cb74 rs/receive-pack-remove-find-header later to maint).
+   (merge bc47139f4f la/trailer-cleanups later to maint).

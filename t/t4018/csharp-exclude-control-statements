@@ -1,0 +1,34 @@
+class Example
+{
+    string Method(int RIGHT)
+    {
+        if (false)
+        {
+            return "out";
+        }
+        else { }
+        if (true) MethodCall(
+        );
+        else MethodCall(
+        );
+        switch ("test")
+        {
+            case "one":
+            return MethodCall(
+            );
+            case "two":
+            break;
+        }
+        (int, int) tuple = (1, 4);
+        switch (tuple)
+        {
+            case (1, 4):
+              MethodCall();
+		      break;
+        }
+
+        return "ChangeMe";
+    }
+
+    string MethodCall(int a = 0, int b = 0) => "test";
+}

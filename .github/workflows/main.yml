@@ -1,0 +1,428 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  DEVELOPER: 1
+
+# If more than one workflow run is triggered for the very same commit hash
+# (which happens when multiple branches pointing to the same commit), only
+# the first one is allowed to run, the second will be kept in the "queued"
+# state. This allows a successful completion of the first run to be reused
+# in the second run via the `skip-if-redundant` logic in the `config` job.
+#
+# The only caveat is that if a workflow run is triggered for the same commit
+# hash that another run is already being held, that latter run will be
+# canceled. For more details about the `concurrency` attribute, see:
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.sha }}
+
+jobs:
+  ci-config:
+    name: config
+    if: vars.CI_BRANCHES == '' || contains(vars.CI_BRANCHES, github.ref_name)
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check-ref.outputs.enabled }}${{ steps.skip-if-redundant.outputs.enabled }}
+      skip_concurrent: ${{ steps.check-ref.outputs.skip_concurrent }}
+    steps:
+      - name: try to clone ci-config branch
+        run: |
+          git -c protocol.version=2 clone \
+            --no-tags \
+            --single-branch \
+            -b ci-config \
+            --depth 1 \
+            --no-checkout \
+            --filter=blob:none \
+            https://github.com/${{ github.repository }} \
+            config-repo &&
+          cd config-repo &&
+          git checkout HEAD -- ci/config || : ignore
+      - id: check-ref
+        name: check whether CI is enabled for ref
+        run: |
+          enabled=yes
+          if test -x config-repo/ci/config/allow-ref
+          then
+            echo "::warning::ci/config/allow-ref is deprecated; use CI_BRANCHES instead"
+            if ! config-repo/ci/config/allow-ref '${{ github.ref }}'
+            then
+              enabled=no
+            fi
+          fi
+
+          skip_concurrent=yes
+          if test -x config-repo/ci/config/skip-concurrent &&
+             ! config-repo/ci/config/skip-concurrent '${{ github.ref }}'
+          then
+            skip_concurrent=no
+          fi
+          echo "enabled=$enabled" >>$GITHUB_OUTPUT
+          echo "skip_concurrent=$skip_concurrent" >>$GITHUB_OUTPUT
+      - name: skip if the commit or tree was already tested
+        id: skip-if-redundant
+        uses: actions/github-script@v7
+        if: steps.check-ref.outputs.enabled == 'yes'
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            try {
+              // Figure out workflow ID, commit and tree
+              const { data: run } = await github.rest.actions.getWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+              });
+              const workflow_id = run.workflow_id;
+              const head_sha = run.head_sha;
+              const tree_id = run.head_commit.tree_id;
+
+              // See whether there is a successful run for that commit or tree
+              const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 500,
+                status: 'success',
+                workflow_id,
+              });
+              for (const run of runs.workflow_runs) {
+                if (head_sha === run.head_sha) {
+                  core.warning(`Successful run for the commit ${head_sha}: ${run.html_url}`);
+                  core.setOutput('enabled', ' but skip');
+                  break;
+                }
+                if (run.head_commit && tree_id === run.head_commit.tree_id) {
+                  core.warning(`Successful run for the tree ${tree_id}: ${run.html_url}`);
+                  core.setOutput('enabled', ' but skip');
+                  break;
+                }
+              }
+            } catch (e) {
+              core.warning(e);
+            }
+
+  windows-build:
+    name: win build
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    runs-on: windows-latest
+    concurrency:
+      group: windows-build-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: build
+      shell: bash
+      env:
+        HOME: ${{runner.workspace}}
+        NO_PERL: 1
+      run: . /etc/profile && ci/make-test-artifacts.sh artifacts
+    - name: zip up tracked files
+      run: git archive -o artifacts/tracked.tar.gz HEAD
+    - name: upload tracked files and build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-artifacts
+        path: artifacts
+  windows-test:
+    name: win test
+    runs-on: windows-latest
+    needs: [ci-config, windows-build]
+    strategy:
+      fail-fast: false
+      matrix:
+        nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    concurrency:
+      group: windows-test-${{ matrix.nr }}-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - name: download tracked files and build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-artifacts
+        path: ${{github.workspace}}
+    - name: extract tracked files and build artifacts
+      shell: bash
+      run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: test
+      shell: bash
+      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
+    - name: print test failures
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      shell: bash
+      run: ci/print-test-failures.sh
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-tests-windows-${{ matrix.nr }}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
+  vs-build:
+    name: win+VS build
+    needs: ci-config
+    if: github.event.repository.owner.login == 'git-for-windows' && needs.ci-config.outputs.enabled == 'yes'
+    env:
+      NO_PERL: 1
+      GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@git'"
+    runs-on: windows-latest
+    concurrency:
+      group: vs-build-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: initialize vcpkg
+      uses: actions/checkout@v4
+      with:
+        repository: 'microsoft/vcpkg'
+        path: 'compat/vcbuild/vcpkg'
+    - name: download vcpkg artifacts
+      shell: powershell
+      run: |
+        $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
+        $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
+        $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
+        (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
+        Expand-Archive compat.zip -DestinationPath . -Force
+        Remove-Item compat.zip
+    - name: add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1
+    - name: copy dlls to root
+      shell: cmd
+      run: compat\vcbuild\vcpkg_copy_dlls.bat release
+    - name: generate Visual Studio solution
+      shell: bash
+      run: |
+        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
+        -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
+    - name: MSBuild
+      run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
+    - name: bundle artifact tar
+      shell: bash
+      env:
+        MSVC: 1
+        VCPKG_ROOT: ${{github.workspace}}\compat\vcbuild\vcpkg
+      run: |
+        mkdir -p artifacts &&
+        eval "$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts NO_GETTEXT=YesPlease 2>&1 | grep ^tar)"
+    - name: zip up tracked files
+      run: git archive -o artifacts/tracked.tar.gz HEAD
+    - name: upload tracked files and build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: vs-artifacts
+        path: artifacts
+  vs-test:
+    name: win+VS test
+    runs-on: windows-latest
+    needs: [ci-config, vs-build]
+    strategy:
+      fail-fast: false
+      matrix:
+        nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    concurrency:
+      group: vs-test-${{ matrix.nr }}-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: download tracked files and build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: vs-artifacts
+        path: ${{github.workspace}}
+    - name: extract tracked files and build artifacts
+      shell: bash
+      run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
+    - name: test
+      shell: bash
+      env:
+        NO_SVN_TESTS: 1
+      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
+    - name: print test failures
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      shell: bash
+      run: ci/print-test-failures.sh
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-tests-windows-vs-${{ matrix.nr }}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
+  regular:
+    name: ${{matrix.vector.jobname}} (${{matrix.vector.pool}})
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    concurrency:
+      group: ${{ matrix.vector.jobname }}-${{ matrix.vector.pool }}-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        vector:
+          - jobname: linux-sha256
+            cc: clang
+            pool: ubuntu-latest
+          - jobname: linux-reftable
+            cc: clang
+            pool: ubuntu-latest
+          - jobname: linux-gcc
+            cc: gcc
+            cc_package: gcc-8
+            pool: ubuntu-20.04
+          - jobname: linux-TEST-vars
+            cc: gcc
+            cc_package: gcc-8
+            pool: ubuntu-20.04
+          - jobname: osx-clang
+            cc: clang
+            pool: macos-13
+          - jobname: osx-reftable
+            cc: clang
+            pool: macos-13
+          - jobname: osx-gcc
+            cc: gcc-13
+            pool: macos-13
+          - jobname: linux-gcc-default
+            cc: gcc
+            pool: ubuntu-latest
+          - jobname: linux-leaks
+            cc: gcc
+            pool: ubuntu-latest
+          - jobname: linux-reftable-leaks
+            cc: gcc
+            pool: ubuntu-latest
+          - jobname: linux-asan-ubsan
+            cc: clang
+            pool: ubuntu-latest
+    env:
+      CC: ${{matrix.vector.cc}}
+      CC_PACKAGE: ${{matrix.vector.cc_package}}
+      jobname: ${{matrix.vector.jobname}}
+      distro: ${{matrix.vector.pool}}
+    runs-on: ${{matrix.vector.pool}}
+    steps:
+    - uses: actions/checkout@v4
+    - run: ci/install-dependencies.sh
+    - run: ci/run-build-and-tests.sh
+    - name: print test failures
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      run: ci/print-test-failures.sh
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-tests-${{matrix.vector.jobname}}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
+  fuzz-smoke-test:
+    name: fuzz smoke test
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    env:
+      CC: clang
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: ci/install-dependencies.sh
+    - run: ci/run-build-and-minimal-fuzzers.sh
+  dockerized:
+    name: ${{matrix.vector.jobname}} (${{matrix.vector.image}})
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    concurrency:
+      group: dockerized-${{ matrix.vector.jobname }}-${{ matrix.vector.image }}-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        vector:
+        - jobname: linux-musl
+          image: alpine
+          distro: alpine-latest
+        - jobname: linux32
+          image: daald/ubuntu32:xenial
+          distro: ubuntu32-16.04
+        - jobname: pedantic
+          image: fedora
+          distro: fedora-latest
+    env:
+      jobname: ${{matrix.vector.jobname}}
+      distro: ${{matrix.vector.distro}}
+    runs-on: ubuntu-latest
+    container: ${{matrix.vector.image}}
+    steps:
+    - uses: actions/checkout@v4
+      if: matrix.vector.jobname != 'linux32'
+    - uses: actions/checkout@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
+      if: matrix.vector.jobname == 'linux32'
+    - run: ci/install-dependencies.sh
+    - run: ci/run-build-and-tests.sh
+    - name: print test failures
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      run: ci/print-test-failures.sh
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname != 'linux32'
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-tests-${{matrix.vector.jobname}}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname == 'linux32'
+      uses: actions/upload-artifact@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
+      with:
+        name: failed-tests-${{matrix.vector.jobname}}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
+  static-analysis:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    env:
+      jobname: StaticAnalysis
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: static-analysis-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - run: ci/install-dependencies.sh
+    - run: ci/run-static-analysis.sh
+    - run: ci/check-directional-formatting.bash
+  sparse:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    env:
+      jobname: sparse
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: sparse-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - name: Download a current `sparse` package
+      # Ubuntu's `sparse` version is too old for us
+      uses: git-for-windows/get-azure-pipelines-artifact@v0
+      with:
+        repository: git/git
+        definitionId: 10
+        artifact: sparse-20.04
+    - name: Install the current `sparse` package
+      run: sudo dpkg -i sparse-20.04/sparse_*.deb
+    - uses: actions/checkout@v4
+    - name: Install other dependencies
+      run: ci/install-dependencies.sh
+    - run: make sparse
+  documentation:
+    name: documentation
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    concurrency:
+      group: documentation-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    env:
+      jobname: Documentation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: ci/install-dependencies.sh
+    - run: ci/test-documentation.sh

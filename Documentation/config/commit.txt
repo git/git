@@ -1,0 +1,29 @@
+commit.cleanup::
+	This setting overrides the default of the `--cleanup` option in
+	`git commit`. See linkgit:git-commit[1] for details. Changing the
+	default can be useful when you always want to keep lines that begin
+	with the comment character `#` in your log message, in which case you
+	would do `git config commit.cleanup whitespace` (note that you will
+	have to remove the help lines that begin with `#` in the commit log
+	template yourself, if you do this).
+
+commit.gpgSign::
+
+	A boolean to specify whether all commits should be GPG signed.
+	Use of this option when doing operations such as rebase can
+	result in a large number of commits being signed. It may be
+	convenient to use an agent to avoid typing your GPG passphrase
+	several times.
+
+commit.status::
+	A boolean to enable/disable inclusion of status information in the
+	commit message template when using an editor to prepare the commit
+	message.  Defaults to true.
+
+commit.template::
+	Specify the pathname of a file to use as the template for
+	new commit messages.
+
+commit.verbose::
+	A boolean or int to specify the level of verbosity with `git commit`.
+	See linkgit:git-commit[1].

@@ -1,0 +1,67 @@
+gitcvs.commitMsgAnnotation::
+	Append this string to each commit message. Set to empty string
+	to disable this feature. Defaults to "via git-CVS emulator".
+
+gitcvs.enabled::
+	Whether the CVS server interface is enabled for this repository.
+	See linkgit:git-cvsserver[1].
+
+gitcvs.logFile::
+	Path to a log file where the CVS server interface well... logs
+	various stuff. See linkgit:git-cvsserver[1].
+
+gitcvs.usecrlfattr::
+	If true, the server will look up the end-of-line conversion
+	attributes for files to determine the `-k` modes to use. If
+	the attributes force Git to treat a file as text,
+	the `-k` mode will be left blank so CVS clients will
+	treat it as text. If they suppress text conversion, the file
+	will be set with '-kb' mode, which suppresses any newline munging
+	the client might otherwise do. If the attributes do not allow
+	the file type to be determined, then `gitcvs.allBinary` is
+	used. See linkgit:gitattributes[5].
+
+gitcvs.allBinary::
+	This is used if `gitcvs.usecrlfattr` does not resolve
+	the correct '-kb' mode to use. If true, all
+	unresolved files are sent to the client in
+	mode '-kb'. This causes the client to treat them
+	as binary files, which suppresses any newline munging it
+	otherwise might do. Alternatively, if it is set to "guess",
+	then the contents of the file are examined to decide if
+	it is binary, similar to `core.autocrlf`.
+
+gitcvs.dbName::
+	Database used by git-cvsserver to cache revision information
+	derived from the Git repository. The exact meaning depends on the
+	used database driver, for SQLite (which is the default driver) this
+	is a filename. Supports variable substitution (see
+	linkgit:git-cvsserver[1] for details). May not contain semicolons (`;`).
+	Default: '%Ggitcvs.%m.sqlite'
+
+gitcvs.dbDriver::
+	Used Perl DBI driver. You can specify any available driver
+	for this here, but it might not work. git-cvsserver is tested
+	with 'DBD::SQLite', reported to work with 'DBD::Pg', and
+	reported *not* to work with 'DBD::mysql'. Experimental feature.
+	May not contain double colons (`:`). Default: 'SQLite'.
+	See linkgit:git-cvsserver[1].
+
+gitcvs.dbUser, gitcvs.dbPass::
+	Database user and password. Only useful if setting `gitcvs.dbDriver`,
+	since SQLite has no concept of database users and/or passwords.
+	'gitcvs.dbUser' supports variable substitution (see
+	linkgit:git-cvsserver[1] for details).
+
+gitcvs.dbTableNamePrefix::
+	Database table name prefix.  Prepended to the names of any
+	database tables used, allowing a single database to be used
+	for several repositories.  Supports variable substitution (see
+	linkgit:git-cvsserver[1] for details).  Any non-alphabetic
+	characters will be replaced with underscores.
+
+All gitcvs variables except for `gitcvs.usecrlfattr` and
+`gitcvs.allBinary` can also be specified as
+'gitcvs.<access_method>.<varname>' (where 'access_method'
+is one of "ext" and "pserver") to make them apply only for the given
+access method.

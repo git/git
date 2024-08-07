@@ -1,0 +1,43 @@
+alias.*::
+	Command aliases for the linkgit:git[1] command wrapper - e.g.
+	after defining `alias.last = cat-file commit HEAD`, the invocation
+	`git last` is equivalent to `git cat-file commit HEAD`. To avoid
+	confusion and troubles with script usage, aliases that
+	hide existing Git commands are ignored. Arguments are split by
+	spaces, the usual shell quoting and escaping are supported.
+	A quote pair or a backslash can be used to quote them.
++
+Note that the first word of an alias does not necessarily have to be a
+command. It can be a command-line option that will be passed into the
+invocation of `git`. In particular, this is useful when used with `-c`
+to pass in one-time configurations or `-p` to force pagination. For example,
+`loud-rebase = -c commit.verbose=true rebase` can be defined such that
+running `git loud-rebase` would be equivalent to
+`git -c commit.verbose=true rebase`. Also, `ps = -p status` would be a
+helpful alias since `git ps` would paginate the output of `git status`
+where the original command does not.
++
+If the alias expansion is prefixed with an exclamation point,
+it will be treated as a shell command.  For example, defining
+`alias.new = !gitk --all --not ORIG_HEAD`, the invocation
+`git new` is equivalent to running the shell command
+`gitk --all --not ORIG_HEAD`.  Note:
++
+* Shell commands will be executed from the top-level directory of a
+  repository, which may not necessarily be the current directory.
+* `GIT_PREFIX` is set as returned by running `git rev-parse --show-prefix`
+  from the original current directory. See linkgit:git-rev-parse[1].
+* Shell command aliases always receive any extra arguments provided to
+  the Git command-line as positional arguments.
+** Care should be taken if your shell alias is a "one-liner" script
+   with multiple commands (e.g. in a pipeline), references multiple
+   arguments, or is otherwise not able to handle positional arguments
+   added at the end.  For example: `alias.cmd = "!echo $1 | grep $2"`
+   called as `git cmd 1 2` will be executed as 'echo $1 | grep $2
+   1 2', which is not what you want.
+** A convenient way to deal with this is to write your script
+   operations in an inline function that is then called with any
+   arguments from the command-line.  For example `alias.cmd = "!c() {
+   echo $1 | grep $2 ; }; c" will correctly execute the prior example.
+** Setting `GIT_TRACE=1` can help you debug the command being run for
+   your alias.

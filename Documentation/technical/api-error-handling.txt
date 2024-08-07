@@ -1,0 +1,103 @@
+Error reporting in git
+======================
+
+`BUG`, `bug`, `die`, `usage`, `error`, and `warning` report errors of
+various kinds.
+
+- `BUG` is for failed internal assertions that should never happen,
+  i.e. a bug in git itself.
+
+- `bug` (lower-case, not `BUG`) is supposed to be used like `BUG` but
+  prints a "BUG" message instead of calling `abort()`.
++
+A call to `bug()` will then result in a "real" call to the `BUG()`
+function, either explicitly by invoking `BUG_if_bug()` after call(s)
+to `bug()`, or implicitly at `exit()` time where we'll check if we
+encountered any outstanding `bug()` invocations.
++
+If there were no prior calls to `bug()` before invoking `BUG_if_bug()`
+the latter is a NOOP. The `BUG_if_bug()` function takes the same
+arguments as `BUG()` itself. Calling `BUG_if_bug()` explicitly isn't
+necessary, but ensures that we die as soon as possible.
++
+If you know you had prior calls to `bug()` then calling `BUG()` itself
+is equivalent to calling `BUG_if_bug()`, the latter being a wrapper
+calling `BUG()` if we've set a flag indicating that we've called
+`bug()`.
++
+This is for the convenience of APIs who'd like to potentially report
+more than one "bug", such as the optbug() validation in
+parse-options.c.
+
+- `die` is for fatal application errors.  It prints a message to
+  the user and exits with status 128.
+
+- `usage` is for errors in command line usage.  After printing its
+  message, it exits with status 129.  (See also `usage_with_options`
+  in the link:api-parse-options.html[parse-options API].)
+
+- `error` is for non-fatal library errors.  It prints a message
+  to the user and returns -1 for convenience in signaling the error
+  to the caller.
+
+- `warning` is for reporting situations that probably should not
+  occur but which the user (and Git) can continue to work around
+  without running into too many problems.  Like `error`, it
+  returns -1 after reporting the situation to the caller.
+
+These reports will be logged via the trace2 facility. See the "error"
+event in link:api-trace2.html[trace2 API].
+
+Customizable error handlers
+---------------------------
+
+The default behavior of `die` and `error` is to write a message to
+stderr and then exit or return as appropriate.  This behavior can be
+overridden using `set_die_routine` and `set_error_routine`.  For
+example, "git daemon" uses set_die_routine to write the reason `die`
+was called to syslog before exiting.
+
+Library errors
+--------------
+
+Functions return a negative integer on error.  Details beyond that
+vary from function to function:
+
+- Some functions return -1 for all errors.  Others return a more
+  specific value depending on how the caller might want to react
+  to the error.
+
+- Some functions report the error to stderr with `error`,
+  while others leave that for the caller to do.
+
+- errno is not meaningful on return from most functions (except
+  for thin wrappers for system calls).
+
+Check the function's API documentation to be sure.
+
+Caller-handled errors
+---------------------
+
+An increasing number of functions take a parameter 'struct strbuf *err'.
+On error, such functions append a message about what went wrong to the
+'err' strbuf.  The message is meant to be complete enough to be passed
+to `die` or `error` as-is.  For example:
+
+	if (ref_transaction_commit(transaction, &err))
+		die("%s", err.buf);
+
+The 'err' parameter will be untouched if no error occurred, so multiple
+function calls can be chained:
+
+	t = ref_transaction_begin(&err);
+	if (!t ||
+	    ref_transaction_update(t, "HEAD", ..., &err) ||
+	    ret_transaction_commit(t, &err))
+		die("%s", err.buf);
+
+The 'err' parameter must be a pointer to a valid strbuf.  To silence
+a message, pass a strbuf that is explicitly ignored:
+
+	if (thing_that_can_fail_in_an_ignorable_way(..., &err))
+		/* This failure is okay. */
+		strbuf_reset(&err);

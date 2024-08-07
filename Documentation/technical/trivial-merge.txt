@@ -1,0 +1,121 @@
+Trivial merge rules
+===================
+
+This document describes the outcomes of the trivial merge logic in read-tree.
+
+One-way merge
+-------------
+
+This replaces the index with a different tree, keeping the stat info
+for entries that don't change, and allowing -u to make the minimum
+required changes to the working tree to have it match.
+
+Entries marked '+' have stat information. Spaces marked '*' don't
+affect the result.
+
+   index   tree    result
+   -----------------------
+   *       (empty) (empty)
+   (empty) tree    tree
+   index+  tree    tree
+   index+  index   index+
+
+Two-way merge
+-------------
+
+It is permitted for the index to lack an entry; this does not prevent
+any case from applying.
+
+If the index exists, it is an error for it not to match either the old
+or the result.
+
+If multiple cases apply, the one used is listed first.
+
+A result which changes the index is an error if the index is not empty
+and not up to date.
+
+Entries marked '+' have stat information. Spaces marked '*' don't
+affect the result.
+
+ case  index   old     new     result
+ -------------------------------------
+ 0/2   (empty) *       (empty) (empty)
+ 1/3   (empty) *       new     new
+ 4/5   index+  (empty) (empty) index+
+ 6/7   index+  (empty) index   index+
+ 10    index+  index   (empty) (empty)
+ 14/15 index+  old     old     index+
+ 18/19 index+  old     index   index+
+ 20    index+  index   new     new
+
+Three-way merge
+---------------
+
+It is permitted for the index to lack an entry; this does not prevent
+any case from applying.
+
+If the index exists, it is an error for it not to match either the
+head or (if the merge is trivial) the result.
+
+If multiple cases apply, the one used is listed first.
+
+A result of "no merge" means that index is left in stage 0, ancest in
+stage 1, head in stage 2, and remote in stage 3 (if any of these are
+empty, no entry is left for that stage). Otherwise, the given entry is
+left in stage 0, and there are no other entries.
+
+A result of "no merge" is an error if the index is not empty and not
+up to date.
+
+*empty* means that the tree must not have a directory-file conflict
+ with the entry.
+
+For multiple ancestors, a '+' means that this case applies even if
+only one ancestor or remote fits; a '^' means all of the ancestors
+must be the same.
+
+ case  ancest    head    remote    result
+ ----------------------------------------
+ 1     (empty)+  (empty) (empty)   (empty)
+ 2ALT  (empty)+  *empty* remote    remote
+ 2     (empty)^  (empty) remote    no merge
+ 3ALT  (empty)+  head    *empty*   head
+ 3     (empty)^  head    (empty)   no merge
+ 4     (empty)^  head    remote    no merge
+ 5ALT  *         head    head      head
+ 6     ancest+   (empty) (empty)   no merge
+ 8     ancest^   (empty) ancest    no merge
+ 7     ancest+   (empty) remote    no merge
+ 10    ancest^   ancest  (empty)   no merge
+ 9     ancest+   head    (empty)   no merge
+ 16    anc1/anc2 anc1    anc2      no merge
+ 13    ancest+   head    ancest    head
+ 14    ancest+   ancest  remote    remote
+ 11    ancest+   head    remote    no merge
+
+Only #2ALT and #3ALT use *empty*, because these are the only cases
+where there can be conflicts that didn't exist before. Note that we
+allow directory-file conflicts between things in different stages
+after the trivial merge.
+
+A possible alternative for #6 is (empty), which would make it like
+#1. This is not used, due to the likelihood that it arises due to
+moving the file to multiple different locations or moving and deleting
+it in different branches.
+
+Case #1 is included for completeness, and also in case we decide to
+put on '+' markings; any path that is never mentioned at all isn't
+handled.
+
+Note that #16 is when both #13 and #14 apply; in this case, we refuse
+the trivial merge, because we can't tell from this data which is
+right. This is a case of a reverted patch (in some direction, maybe
+multiple times), and the right answer depends on looking at crossings
+of history or common ancestors of the ancestors.
+
+Note that, between #6, #7, #9, and #11, all cases not otherwise
+covered are handled in this table.
+
+For #8 and #10, there is alternative behavior, not currently
+implemented, where the result is (empty). As currently implemented,
+the automatic merge will generally give this effect.

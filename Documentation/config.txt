@@ -1,0 +1,557 @@
+CONFIGURATION FILE
+------------------
+
+The Git configuration file contains a number of variables that affect
+the Git commands' behavior. The files `.git/config` and optionally
+`config.worktree` (see the "CONFIGURATION FILE" section of
+linkgit:git-worktree[1]) in each repository are used to store the
+configuration for that repository, and `$HOME/.gitconfig` is used to
+store a per-user configuration as fallback values for the `.git/config`
+file. The file `/etc/gitconfig` can be used to store a system-wide
+default configuration.
+
+The configuration variables are used by both the Git plumbing
+and the porcelain commands. The variables are divided into sections, wherein
+the fully qualified variable name of the variable itself is the last
+dot-separated segment and the section name is everything before the last
+dot. The variable names are case-insensitive, allow only alphanumeric
+characters and `-`, and must start with an alphabetic character.  Some
+variables may appear multiple times; we say then that the variable is
+multivalued.
+
+Syntax
+~~~~~~
+
+The syntax is fairly flexible and permissive.  Whitespace characters,
+which in this context are the space character (SP) and the horizontal
+tabulation (HT), are mostly ignored.  The '#' and ';' characters begin
+comments to the end of line.  Blank lines are ignored.
+
+The file consists of sections and variables.  A section begins with
+the name of the section in square brackets and continues until the next
+section begins.  Section names are case-insensitive.  Only alphanumeric
+characters, `-` and `.` are allowed in section names.  Each variable
+must belong to some section, which means that there must be a section
+header before the first setting of a variable.
+
+Sections can be further divided into subsections.  To begin a subsection
+put its name in double quotes, separated by space from the section name,
+in the section header, like in the example below:
+
+--------
+	[section "subsection"]
+
+--------
+
+Subsection names are case sensitive and can contain any characters except
+newline and the null byte. Doublequote `"` and backslash can be included
+by escaping them as `\"` and `\\`, respectively. Backslashes preceding
+other characters are dropped when reading; for example, `\t` is read as
+`t` and `\0` is read as `0`. Section headers cannot span multiple lines.
+Variables may belong directly to a section or to a given subsection. You
+can have `[section]` if you have `[section "subsection"]`, but you don't
+need to.
+
+There is also a deprecated `[section.subsection]` syntax. With this
+syntax, the subsection name is converted to lower-case and is also
+compared case sensitively. These subsection names follow the same
+restrictions as section names.
+
+All the other lines (and the remainder of the line after the section
+header) are recognized as setting variables, in the form
+'name = value' (or just 'name', which is a short-hand to say that
+the variable is the boolean "true").
+The variable names are case-insensitive, allow only alphanumeric characters
+and `-`, and must start with an alphabetic character.
+
+Whitespace characters surrounding `name`, `=` and `value` are discarded.
+Internal whitespace characters within 'value' are retained verbatim.
+Comments starting with either `#` or `;` and extending to the end of line
+are discarded.  A line that defines a value can be continued to the next
+line by ending it with a backslash (`\`);  the backslash and the end-of-line
+characters are discarded.
+
+If `value` needs to contain leading or trailing whitespace characters,
+it must be enclosed in double quotation marks (`"`).  Inside double quotation
+marks, double quote (`"`) and backslash (`\`) characters must be escaped:
+use `\"` for `"` and `\\` for `\`.
+
+The following escape sequences (beside `\"` and `\\`) are recognized:
+`\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
+and `\b` for backspace (BS).  Other char escape sequences (including octal
+escape sequences) are invalid.
+
+
+Includes
+~~~~~~~~
+
+The `include` and `includeIf` sections allow you to include config
+directives from another source. These sections behave identically to
+each other with the exception that `includeIf` sections may be ignored
+if their condition does not evaluate to true; see "Conditional includes"
+below.
+
+You can include a config file from another by setting the special
+`include.path` (or `includeIf.*.path`) variable to the name of the file
+to be included. The variable takes a pathname as its value, and is
+subject to tilde expansion. These variables can be given multiple times.
+
+The contents of the included file are inserted immediately, as if they
+had been found at the location of the include directive. If the value of the
+variable is a relative path, the path is considered to
+be relative to the configuration file in which the include directive
+was found.  See below for examples.
+
+Conditional includes
+~~~~~~~~~~~~~~~~~~~~
+
+You can conditionally include a config file from another by setting an
+`includeIf.<condition>.path` variable to the name of the file to be
+included.
+
+The condition starts with a keyword followed by a colon and some data
+whose format and meaning depends on the keyword. Supported keywords
+are:
+
+`gitdir`::
+
+	The data that follows the keyword `gitdir:` is used as a glob
+	pattern. If the location of the .git directory matches the
+	pattern, the include condition is met.
++
+The .git location may be auto-discovered, or come from `$GIT_DIR`
+environment variable. If the repository is auto-discovered via a .git
+file (e.g. from submodules, or a linked worktree), the .git location
+would be the final location where the .git directory is, not where the
+.git file is.
++
+The pattern can contain standard globbing wildcards and two additional
+ones, `**/` and `/**`, that can match multiple path components. Please
+refer to linkgit:gitignore[5] for details. For convenience:
+
+ * If the pattern starts with `~/`, `~` will be substituted with the
+   content of the environment variable `HOME`.
+
+ * If the pattern starts with `./`, it is replaced with the directory
+   containing the current config file.
+
+ * If the pattern does not start with either `~/`, `./` or `/`, `**/`
+   will be automatically prepended. For example, the pattern `foo/bar`
+   becomes `**/foo/bar` and would match `/any/path/to/foo/bar`.
+
+ * If the pattern ends with `/`, `**` will be automatically added. For
+   example, the pattern `foo/` becomes `foo/**`. In other words, it
+   matches "foo" and everything inside, recursively.
+
+`gitdir/i`::
+	This is the same as `gitdir` except that matching is done
+	case-insensitively (e.g. on case-insensitive file systems)
+
+`onbranch`::
+	The data that follows the keyword `onbranch:` is taken to be a
+	pattern with standard globbing wildcards and two additional
+	ones, `**/` and `/**`, that can match multiple path components.
+	If we are in a worktree where the name of the branch that is
+	currently checked out matches the pattern, the include condition
+	is met.
++
+If the pattern ends with `/`, `**` will be automatically added. For
+example, the pattern `foo/` becomes `foo/**`. In other words, it matches
+all branches that begin with `foo/`. This is useful if your branches are
+organized hierarchically and you would like to apply a configuration to
+all the branches in that hierarchy.
+
+`hasconfig:remote.*.url:`::
+	The data that follows this keyword is taken to
+	be a pattern with standard globbing wildcards and two
+	additional ones, `**/` and `/**`, that can match multiple
+	components. The first time this keyword is seen, the rest of
+	the config files will be scanned for remote URLs (without
+	applying any values). If there exists at least one remote URL
+	that matches this pattern, the include condition is met.
++
+Files included by this option (directly or indirectly) are not allowed
+to contain remote URLs.
++
+Note that unlike other includeIf conditions, resolving this condition
+relies on information that is not yet known at the point of reading the
+condition. A typical use case is this option being present as a
+system-level or global-level config, and the remote URL being in a
+local-level config; hence the need to scan ahead when resolving this
+condition. In order to avoid the chicken-and-egg problem in which
+potentially-included files can affect whether such files are potentially
+included, Git breaks the cycle by prohibiting these files from affecting
+the resolution of these conditions (thus, prohibiting them from
+declaring remote URLs).
++
+As for the naming of this keyword, it is for forwards compatibility with
+a naming scheme that supports more variable-based include conditions,
+but currently Git only supports the exact keyword described above.
+
+A few more notes on matching via `gitdir` and `gitdir/i`:
+
+ * Symlinks in `$GIT_DIR` are not resolved before matching.
+
+ * Both the symlink & realpath versions of paths will be matched
+   outside of `$GIT_DIR`. E.g. if ~/git is a symlink to
+   /mnt/storage/git, both `gitdir:~/git` and `gitdir:/mnt/storage/git`
+   will match.
++
+This was not the case in the initial release of this feature in
+v2.13.0, which only matched the realpath version. Configuration that
+wants to be compatible with the initial release of this feature needs
+to either specify only the realpath version, or both versions.
+
+ * Note that "../" is not special and will match literally, which is
+   unlikely what you want.
+
+Example
+~~~~~~~
+
+----
+# Core variables
+[core]
+	; Don't trust file modes
+	filemode = false
+
+# Our diff algorithm
+[diff]
+	external = /usr/local/bin/diff-wrapper
+	renames = true
+
+[branch "devel"]
+	remote = origin
+	merge = refs/heads/devel
+
+# Proxy settings
+[core]
+	gitProxy="ssh" for "kernel.org"
+	gitProxy=default-proxy ; for the rest
+
+[include]
+	path = /path/to/foo.inc ; include by absolute path
+	path = foo.inc ; find "foo.inc" relative to the current file
+	path = ~/foo.inc ; find "foo.inc" in your `$HOME` directory
+
+; include if $GIT_DIR is /path/to/foo/.git
+[includeIf "gitdir:/path/to/foo/.git"]
+	path = /path/to/foo.inc
+
+; include for all repositories inside /path/to/group
+[includeIf "gitdir:/path/to/group/"]
+	path = /path/to/foo.inc
+
+; include for all repositories inside $HOME/to/group
+[includeIf "gitdir:~/to/group/"]
+	path = /path/to/foo.inc
+
+; relative paths are always relative to the including
+; file (if the condition is true); their location is not
+; affected by the condition
+[includeIf "gitdir:/path/to/group/"]
+	path = foo.inc
+
+; include only if we are in a worktree where foo-branch is
+; currently checked out
+[includeIf "onbranch:foo-branch"]
+	path = foo.inc
+
+; include only if a remote with the given URL exists (note
+; that such a URL may be provided later in a file or in a
+; file read after this file is read, as seen in this example)
+[includeIf "hasconfig:remote.*.url:https://example.com/**"]
+	path = foo.inc
+[remote "origin"]
+	url = https://example.com/git
+----
+
+Values
+~~~~~~
+
+Values of many variables are treated as a simple string, but there
+are variables that take values of specific types and there are rules
+as to how to spell them.
+
+boolean::
+
+       When a variable is said to take a boolean value, many
+       synonyms are accepted for 'true' and 'false'; these are all
+       case-insensitive.
+
+	true;; Boolean true literals are `yes`, `on`, `true`,
+		and `1`.  Also, a variable defined without `= <value>`
+		is taken as true.
+
+	false;; Boolean false literals are `no`, `off`, `false`,
+		`0` and the empty string.
++
+When converting a value to its canonical form using the `--type=bool` type
+specifier, 'git config' will ensure that the output is "true" or
+"false" (spelled in lowercase).
+
+integer::
+       The value for many variables that specify various sizes can
+       be suffixed with `k`, `M`,... to mean "scale the number by
+       1024", "by 1024x1024", etc.
+
+color::
+       The value for a variable that takes a color is a list of
+       colors (at most two, one for foreground and one for background)
+       and attributes (as many as you want), separated by spaces.
++
+The basic colors accepted are `normal`, `black`, `red`, `green`,
+`yellow`, `blue`, `magenta`, `cyan`, `white` and `default`.  The first
+color given is the foreground; the second is the background.  All the
+basic colors except `normal` and `default` have a bright variant that can
+be specified by prefixing the color with `bright`, like `brightred`.
++
+The color `normal` makes no change to the color. It is the same as an
+empty string, but can be used as the foreground color when specifying a
+background color alone (for example, "normal red").
++
+The color `default` explicitly resets the color to the terminal default,
+for example to specify a cleared background. Although it varies between
+terminals, this is usually not the same as setting to "white black".
++
+Colors may also be given as numbers between 0 and 255; these use ANSI
+256-color mode (but note that not all terminals may support this).  If
+your terminal supports it, you may also specify 24-bit RGB values as
+hex, like `#ff0ab3`, or 12-bit RGB values like `#f1b`, which is
+equivalent to the 24-bit color `#ff11bb`.
++
+The accepted attributes are `bold`, `dim`, `ul`, `blink`, `reverse`,
+`italic`, and `strike` (for crossed-out or "strikethrough" letters).
+The position of any attributes with respect to the colors
+(before, after, or in between), doesn't matter. Specific attributes may
+be turned off by prefixing them with `no` or `no-` (e.g., `noreverse`,
+`no-ul`, etc).
++
+The pseudo-attribute `reset` resets all colors and attributes before
+applying the specified coloring. For example, `reset green` will result
+in a green foreground and default background without any active
+attributes.
++
+An empty color string produces no color effect at all. This can be used
+to avoid coloring specific elements without disabling color entirely.
++
+For git's pre-defined color slots, the attributes are meant to be reset
+at the beginning of each item in the colored output. So setting
+`color.decorate.branch` to `black` will paint that branch name in a
+plain `black`, even if the previous thing on the same output line (e.g.
+opening parenthesis before the list of branch names in `log --decorate`
+output) is set to be painted with `bold` or some other attribute.
+However, custom log formats may do more complicated and layered
+coloring, and the negated forms may be useful there.
+
+pathname::
+	A variable that takes a pathname value can be given a
+	string that begins with "`~/`" or "`~user/`", and the usual
+	tilde expansion happens to such a string: `~/`
+	is expanded to the value of `$HOME`, and `~user/` to the
+	specified user's home directory.
++
+If a path starts with `%(prefix)/`, the remainder is interpreted as a
+path relative to Git's "runtime prefix", i.e. relative to the location
+where Git itself was installed. For example, `%(prefix)/bin/` refers to
+the directory in which the Git executable itself lives. If Git was
+compiled without runtime prefix support, the compiled-in prefix will be
+substituted instead. In the unlikely event that a literal path needs to
+be specified that should _not_ be expanded, it needs to be prefixed by
+`./`, like so: `./%(prefix)/bin`.
+
+
+Variables
+~~~~~~~~~
+
+Note that this list is non-comprehensive and not necessarily complete.
+For command-specific variables, you will find a more detailed description
+in the appropriate manual page.
+
+Other git-related tools may and do use their own variables.  When
+inventing new variables for use in your own tool, make sure their
+names do not conflict with those that are used by Git itself and
+other popular tools, and describe them in your documentation.
+
+include::config/add.txt[]
+
+include::config/advice.txt[]
+
+include::config/alias.txt[]
+
+include::config/am.txt[]
+
+include::config/apply.txt[]
+
+include::config/attr.txt[]
+
+include::config/bitmap-pseudo-merge.txt[]
+
+include::config/blame.txt[]
+
+include::config/branch.txt[]
+
+include::config/browser.txt[]
+
+include::config/bundle.txt[]
+
+include::config/checkout.txt[]
+
+include::config/clean.txt[]
+
+include::config/clone.txt[]
+
+include::config/color.txt[]
+
+include::config/column.txt[]
+
+include::config/commit.txt[]
+
+include::config/commitgraph.txt[]
+
+include::config/completion.txt[]
+
+include::config/core.txt[]
+
+include::config/credential.txt[]
+
+include::config/diff.txt[]
+
+include::config/difftool.txt[]
+
+include::config/extensions.txt[]
+
+include::config/fastimport.txt[]
+
+include::config/feature.txt[]
+
+include::config/fetch.txt[]
+
+include::config/filter.txt[]
+
+include::config/format.txt[]
+
+include::config/fsck.txt[]
+
+include::config/fsmonitor--daemon.txt[]
+
+include::config/gc.txt[]
+
+include::config/gitcvs.txt[]
+
+include::config/gitweb.txt[]
+
+include::config/gpg.txt[]
+
+include::config/grep.txt[]
+
+include::config/gui.txt[]
+
+include::config/guitool.txt[]
+
+include::config/help.txt[]
+
+include::config/http.txt[]
+
+include::config/i18n.txt[]
+
+include::config/imap.txt[]
+
+include::config/includeif.txt[]
+
+include::config/index.txt[]
+
+include::config/init.txt[]
+
+include::config/instaweb.txt[]
+
+include::config/interactive.txt[]
+
+include::config/log.txt[]
+
+include::config/lsrefs.txt[]
+
+include::config/mailinfo.txt[]
+
+include::config/mailmap.txt[]
+
+include::config/maintenance.txt[]
+
+include::config/man.txt[]
+
+include::config/merge.txt[]
+
+include::config/mergetool.txt[]
+
+include::config/notes.txt[]
+
+include::config/pack.txt[]
+
+include::config/pager.txt[]
+
+include::config/pretty.txt[]
+
+include::config/promisor.txt[]
+
+include::config/protocol.txt[]
+
+include::config/pull.txt[]
+
+include::config/push.txt[]
+
+include::config/rebase.txt[]
+
+include::config/receive.txt[]
+
+include::config/reftable.txt[]
+
+include::config/remote.txt[]
+
+include::config/remotes.txt[]
+
+include::config/repack.txt[]
+
+include::config/rerere.txt[]
+
+include::config/revert.txt[]
+
+include::config/safe.txt[]
+
+include::config/sendemail.txt[]
+
+include::config/sequencer.txt[]
+
+include::config/showbranch.txt[]
+
+include::config/sparse.txt[]
+
+include::config/splitindex.txt[]
+
+include::config/ssh.txt[]
+
+include::config/stash.txt[]
+
+include::config/status.txt[]
+
+include::config/submodule.txt[]
+
+include::config/tag.txt[]
+
+include::config/tar.txt[]
+
+include::config/trace2.txt[]
+
+include::config/transfer.txt[]
+
+include::config/uploadarchive.txt[]
+
+include::config/uploadpack.txt[]
+
+include::config/url.txt[]
+
+include::config/user.txt[]
+
+include::config/versionsort.txt[]
+
+include::config/web.txt[]
+
+include::config/worktree.txt[]

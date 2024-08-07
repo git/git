@@ -1,0 +1,92 @@
+Core Git translation language teams
+(please keep the list sorted alphabetically on language field)
+
+Language:	bg (Bulgarian)
+Repository:	https://github.com/git-l10n/git-po
+Leader:		Alexander Shopov <ash@kambanaria.org>
+
+Language:	ca (Catalan)
+Repository:	https://github.com/Softcatala/git-po
+Leader:		Jordi Mas <jmas@softcatala.org>
+Members:	Alex Henrie <alexhenrie24@gmail.com>
+
+Language:	de (German)
+Repository:	https://github.com/ralfth/git
+Leader:		Ralf Thielow <ralf.thielow@gmail.com>
+Members:	Matthias Rüster <matthias.ruester@gmail.com>
+		Phillip Szelat <phillip.szelat@gmail.com>
+
+Language:	el (Greek)
+Repository:	https://github.com/vyruss/git-po-el
+Members:	Jimmy Angelakos <vyruss@hellug.gr>
+
+Language:	es (Spanish)
+Repository:	https://github.com/ChrisADR/git-po
+Members:	Christopher Díaz <christopher.diaz.riv@gmail.com>
+
+Language:	fr (French)
+Repository:	https://github.com/jnavila/git
+Leader:		Jean-Noël Avila <jn.avila@free.fr>
+Members:	Sébastien Helleu <flashcode@flashtux.org>
+
+Language:	id (Indonesian)
+Repository:	https://github.com/bagasme/git-po
+Leader:		Bagas Sanjaya <bagasdotme@gmail.com>
+
+Language:	is (Icelandic)
+Members:	Ævar Arnfjörð Bjarmason <avarab@gmail.com>
+
+Language:	it (Italian)
+Repository:	https://github.com/AlessandroMenti/git-po
+Members:	Alessandro Menti <alessandro.menti@alessandromenti.it>
+
+Language:	ko (Korean)
+Repository:	https://github.com/git-l10n-ko/git-l10n-ko/
+Members:	Gwan-gyeong Mun <elongbug@gmail.com>
+		Changwoo Ryu <cwryu@debian.org>
+		Sihyeon Jang <uneedsihyeon@gmail.com>
+
+Language:	pl (Polish)
+Repository:	https://github.com/Arusekk/git-po
+Members:	Arusekk <arek_koz@o2.pl>
+
+Language:	pt_PT (Portuguese - Portugal)
+Repository:	https://gitlab.com/alexandre1985/git-pt/
+Members:	Daniel Santos <dacs.git@brilhante.top>
+
+Language:	ru (Russian)
+Repository:	https://github.com/DJm00n/git-po-ru/
+Leader:		Dimitriy Ryazantcev <DJm00n AT mail.ru>
+Members:	insolor <insolor AT gmail.com>
+
+Language:	sv (Swedish)
+Repository:	https://github.com/nafmo/git-l10n-sv/
+Leader:		Peter Krefting <peter@softwolves.pp.se>
+
+Language:	tr (Turkish)
+Repository:	https://github.com/bitigchi/git-po/
+Leader:		Emir SARI <bitigchi@me.com>
+
+Language:	uk (Ukrainian)
+Repository:	https://github.com/arkid15r/git-ukrainian-l10n/
+Leader:		Arkadii Yakovets <ark@cho.red>
+Members:	Kateryna Golovanova <kate@kgthreads.com>
+
+Language:	vi (Vietnamese)
+Repository:	https://github.com/Nekosha/git-po/
+Leader:		Vũ Tiến Hưng <newcomerminecraft@gmail.com>
+Members:	Trần Ngọc Quân <vnwildman AT gmail.com>
+		Nguyễn Thái Ngọc Duy <pclouds AT gmail.com>
+
+Language:	zh_CN (Simplified Chinese)
+Repository:	https://github.com/dyrone/git/
+Leader:		Teng Long <dyroneteng AT gmail.com>
+Members:	Ray Chen <oldsharp AT gmail.com>
+		依云 <lilydjwg AT gmail.com>
+		Fangyi Zhou <me AT fangyi.io>
+		Jiang Xin <worldhello.net AT gmail.com>
+
+Language:	zh_TW (Traditional Chinese)
+Repository:	https://github.com/l10n-tw/git-po
+Leader:		Yi-Jyun Pan <pan93412 AT gmail.com>
+Members:	Franklin Weng <franklin AT goodhorse.idv.tw>

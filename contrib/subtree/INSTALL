@@ -1,0 +1,28 @@
+HOW TO INSTALL git-subtree
+==========================
+
+First, build from the top source directory.
+
+Then, in contrib/subtree, run:
+
+  make
+  make install
+  make install-doc
+
+If you used configure to do the main build the git-subtree build will
+pick up those settings.  If not, you will likely have to provide a
+value for prefix:
+
+  make prefix=<some dir>
+  make prefix=<some dir> install
+  make prefix=<some dir> install-doc
+
+To run tests first copy git-subtree to the main build area so the
+newly-built git can find it:
+
+  cp git-subtree ../..
+
+Then:
+
+  make test
+

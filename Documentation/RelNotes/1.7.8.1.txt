@@ -1,0 +1,38 @@
+Git v1.7.8.1 Release Notes
+==========================
+
+Fixes since v1.7.8
+------------------
+
+ * In some codepaths (notably, checkout and merge), the ignore patterns
+   recorded in $GIT_DIR/info/exclude were not honored. They now are.
+
+ * "git apply --check" did not error out when given an empty input
+   without any patch.
+
+ * "git archive" mistakenly allowed remote clients to ask for commits
+   that are not at the tip of any ref.
+
+ * "git checkout" and "git merge" treated in-tree .gitignore and exclude
+   file in $GIT_DIR/info/ directory inconsistently when deciding which
+   untracked files are ignored and expendable.
+
+ * LF-to-CRLF streaming filter used when checking out a large-ish blob
+   fell into an infinite loop with a rare input.
+
+ * The function header pattern for files with "diff=cpp" attribute did
+   not consider "type *funcname(type param1,..." as the beginning of a
+   function.
+
+ * The error message from "git diff" and "git status" when they fail
+   to inspect changes in submodules did not report which submodule they
+   had trouble with.
+
+ * After fetching from a remote that has very long refname, the reporting
+   output could have corrupted by overrunning a static buffer.
+
+ * "git pack-objects" avoids creating cyclic dependencies among deltas
+   when seeing a broken packfile that records the same object in both
+   the deflated form and as a delta.
+
+Also contains minor fixes and documentation updates.

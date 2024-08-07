@@ -1,0 +1,7 @@
+GIT v1.5.5.4 Release Notes
+==========================
+
+Fixes since v1.5.5.4
+--------------------
+
+ * "git name-rev --all" used to segfault.

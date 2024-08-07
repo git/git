@@ -1,0 +1,317 @@
+git-fetch(1)
+============
+
+NAME
+----
+git-fetch - Download objects and refs from another repository
+
+
+SYNOPSIS
+--------
+[verse]
+'git fetch' [<options>] [<repository> [<refspec>...]]
+'git fetch' [<options>] <group>
+'git fetch' --multiple [<options>] [(<repository> | <group>)...]
+'git fetch' --all [<options>]
+
+
+DESCRIPTION
+-----------
+Fetch branches and/or tags (collectively, "refs") from one or more
+other repositories, along with the objects necessary to complete their
+histories.  Remote-tracking branches are updated (see the description
+of <refspec> below for ways to control this behavior).
+
+By default, any tag that points into the histories being fetched is
+also fetched; the effect is to fetch tags that
+point at branches that you are interested in.  This default behavior
+can be changed by using the --tags or --no-tags options or by
+configuring remote.<name>.tagOpt.  By using a refspec that fetches tags
+explicitly, you can fetch tags that do not point into branches you
+are interested in as well.
+
+'git fetch' can fetch from either a single named repository or URL,
+or from several repositories at once if <group> is given and
+there is a remotes.<group> entry in the configuration file.
+(See linkgit:git-config[1]).
+
+When no remote is specified, by default the `origin` remote will be used,
+unless there's an upstream branch configured for the current branch.
+
+The names of refs that are fetched, together with the object names
+they point at, are written to `.git/FETCH_HEAD`.  This information
+may be used by scripts or other git commands, such as linkgit:git-pull[1].
+
+OPTIONS
+-------
+include::fetch-options.txt[]
+
+include::pull-fetch-param.txt[]
+
+--stdin::
+	Read refspecs, one per line, from stdin in addition to those provided
+	as arguments. The "tag <name>" format is not supported.
+
+include::urls-remotes.txt[]
+
+
+CONFIGURED REMOTE-TRACKING BRANCHES[[CRTB]]
+-------------------------------------------
+
+You often interact with the same remote repository by
+regularly and repeatedly fetching from it.  In order to keep track
+of the progress of such a remote repository, `git fetch` allows you
+to configure `remote.<repository>.fetch` configuration variables.
+
+Typically such a variable may look like this:
+
+------------------------------------------------
+[remote "origin"]
+	fetch = +refs/heads/*:refs/remotes/origin/*
+------------------------------------------------
+
+This configuration is used in two ways:
+
+* When `git fetch` is run without specifying what branches
+  and/or tags to fetch on the command line, e.g. `git fetch origin`
+  or `git fetch`, `remote.<repository>.fetch` values are used as
+  the refspecs--they specify which refs to fetch and which local refs
+  to update.  The example above will fetch
+  all branches that exist in the `origin` (i.e. any ref that matches
+  the left-hand side of the value, `refs/heads/*`) and update the
+  corresponding remote-tracking branches in the `refs/remotes/origin/*`
+  hierarchy.
+
+* When `git fetch` is run with explicit branches and/or tags
+  to fetch on the command line, e.g. `git fetch origin master`, the
+  <refspec>s given on the command line determine what are to be
+  fetched (e.g. `master` in the example,
+  which is a short-hand for `master:`, which in turn means
+  "fetch the 'master' branch but I do not explicitly say what
+  remote-tracking branch to update with it from the command line"),
+  and the example command will
+  fetch _only_ the 'master' branch.  The `remote.<repository>.fetch`
+  values determine which
+  remote-tracking branch, if any, is updated.  When used in this
+  way, the `remote.<repository>.fetch` values do not have any
+  effect in deciding _what_ gets fetched (i.e. the values are not
+  used as refspecs when the command-line lists refspecs); they are
+  only used to decide _where_ the refs that are fetched are stored
+  by acting as a mapping.
+
+The latter use of the `remote.<repository>.fetch` values can be
+overridden by giving the `--refmap=<refspec>` parameter(s) on the
+command line.
+
+PRUNING
+-------
+
+Git has a default disposition of keeping data unless it's explicitly
+thrown away; this extends to holding onto local references to branches
+on remotes that have themselves deleted those branches.
+
+If left to accumulate, these stale references might make performance
+worse on big and busy repos that have a lot of branch churn, and
+e.g. make the output of commands like `git branch -a --contains
+<commit>` needlessly verbose, as well as impacting anything else
+that'll work with the complete set of known references.
+
+These remote-tracking references can be deleted as a one-off with
+either of:
+
+------------------------------------------------
+# While fetching
+$ git fetch --prune <name>
+
+# Only prune, don't fetch
+$ git remote prune <name>
+------------------------------------------------
+
+To prune references as part of your normal workflow without needing to
+remember to run that, set `fetch.prune` globally, or
+`remote.<name>.prune` per-remote in the config. See
+linkgit:git-config[1].
+
+Here's where things get tricky and more specific. The pruning feature
+doesn't actually care about branches, instead it'll prune local <-->
+remote-references as a function of the refspec of the remote (see
+`<refspec>` and <<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> above).
+
+Therefore if the refspec for the remote includes
+e.g. `refs/tags/*:refs/tags/*`, or you manually run e.g. `git fetch
+--prune <name> "refs/tags/*:refs/tags/*"` it won't be stale remote
+tracking branches that are deleted, but any local tag that doesn't
+exist on the remote.
+
+This might not be what you expect, i.e. you want to prune remote
+`<name>`, but also explicitly fetch tags from it, so when you fetch
+from it you delete all your local tags, most of which may not have
+come from the `<name>` remote in the first place.
+
+So be careful when using this with a refspec like
+`refs/tags/*:refs/tags/*`, or any other refspec which might map
+references from multiple remotes to the same local namespace.
+
+Since keeping up-to-date with both branches and tags on the remote is
+a common use-case the `--prune-tags` option can be supplied along with
+`--prune` to prune local tags that don't exist on the remote, and
+force-update those tags that differ. Tag pruning can also be enabled
+with `fetch.pruneTags` or `remote.<name>.pruneTags` in the config. See
+linkgit:git-config[1].
+
+The `--prune-tags` option is equivalent to having
+`refs/tags/*:refs/tags/*` declared in the refspecs of the remote. This
+can lead to some seemingly strange interactions:
+
+------------------------------------------------
+# These both fetch tags
+$ git fetch --no-tags origin 'refs/tags/*:refs/tags/*'
+$ git fetch --no-tags --prune-tags origin
+------------------------------------------------
+
+The reason it doesn't error out when provided without `--prune` or its
+config versions is for flexibility of the configured versions, and to
+maintain a 1=1 mapping between what the command line flags do, and
+what the configuration versions do.
+
+It's reasonable to e.g. configure `fetch.pruneTags=true` in
+`~/.gitconfig` to have tags pruned whenever `git fetch --prune` is
+run, without making every invocation of `git fetch` without `--prune`
+an error.
+
+Pruning tags with `--prune-tags` also works when fetching a URL
+instead of a named remote. These will all prune tags not found on
+origin:
+
+------------------------------------------------
+$ git fetch origin --prune --prune-tags
+$ git fetch origin --prune 'refs/tags/*:refs/tags/*'
+$ git fetch <url-of-origin> --prune --prune-tags
+$ git fetch <url-of-origin> --prune 'refs/tags/*:refs/tags/*'
+------------------------------------------------
+
+OUTPUT
+------
+
+The output of "git fetch" depends on the transport method used; this
+section describes the output when fetching over the Git protocol
+(either locally or via ssh) and Smart HTTP protocol.
+
+The status of the fetch is output in tabular form, with each line
+representing the status of a single ref. Each line is of the form:
+
+-------------------------------
+ <flag> <summary> <from> -> <to> [<reason>]
+-------------------------------
+
+When using `--porcelain`, the output format is intended to be
+machine-parseable. In contrast to the human-readable output formats it
+thus prints to standard output instead of standard error. Each line is
+of the form:
+
+-------------------------------
+<flag> <old-object-id> <new-object-id> <local-reference>
+-------------------------------
+
+The status of up-to-date refs is shown only if the --verbose option is
+used.
+
+In compact output mode, specified with configuration variable
+fetch.output, if either entire `<from>` or `<to>` is found in the
+other string, it will be substituted with `*` in the other string. For
+example, `master -> origin/master` becomes `master -> origin/*`.
+
+flag::
+	A single character indicating the status of the ref:
+(space);; for a successfully fetched fast-forward;
+`+`;; for a successful forced update;
+`-`;; for a successfully pruned ref;
+`t`;; for a successful tag update;
+`*`;; for a successfully fetched new ref;
+`!`;; for a ref that was rejected or failed to update; and
+`=`;; for a ref that was up to date and did not need fetching.
+
+summary::
+	For a successfully fetched ref, the summary shows the old and new
+	values of the ref in a form suitable for using as an argument to
+	`git log` (this is `<old>..<new>` in most cases, and
+	`<old>...<new>` for forced non-fast-forward updates).
+
+from::
+	The name of the remote ref being fetched from, minus its
+	`refs/<type>/` prefix. In the case of deletion, the name of
+	the remote ref is "(none)".
+
+to::
+	The name of the local ref being updated, minus its
+	`refs/<type>/` prefix.
+
+reason::
+	A human-readable explanation. In the case of successfully fetched
+	refs, no explanation is needed. For a failed ref, the reason for
+	failure is described.
+
+EXAMPLES
+--------
+
+* Update the remote-tracking branches:
++
+------------------------------------------------
+$ git fetch origin
+------------------------------------------------
++
+The above command copies all branches from the remote `refs/heads/`
+namespace and stores them to the local `refs/remotes/origin/` namespace,
+unless the `remote.<repository>.fetch` option is used to specify a
+non-default refspec.
+
+* Using refspecs explicitly:
++
+------------------------------------------------
+$ git fetch origin +seen:seen maint:tmp
+------------------------------------------------
++
+This updates (or creates, as necessary) branches `seen` and `tmp` in
+the local repository by fetching from the branches (respectively)
+`seen` and `maint` from the remote repository.
++
+The `seen` branch will be updated even if it does not fast-forward,
+because it is prefixed with a plus sign; `tmp` will not be.
+
+* Peek at a remote's branch, without configuring the remote in your local
+  repository:
++
+------------------------------------------------
+$ git fetch git://git.kernel.org/pub/scm/git/git.git maint
+$ git log FETCH_HEAD
+------------------------------------------------
++
+The first command fetches the `maint` branch from the repository at
+`git://git.kernel.org/pub/scm/git/git.git` and the second command uses
+`FETCH_HEAD` to examine the branch with linkgit:git-log[1].  The fetched
+objects will eventually be removed by git's built-in housekeeping (see
+linkgit:git-gc[1]).
+
+include::transfer-data-leaks.txt[]
+
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.txt[]
+
+include::config/fetch.txt[]
+
+BUGS
+----
+Using --recurse-submodules can only fetch new commits in submodules that are
+present locally e.g. in `$GIT_DIR/modules/`. If the upstream adds a new
+submodule, that submodule cannot be fetched until it is cloned e.g. by `git
+submodule update`. This is expected to be fixed in a future Git version.
+
+SEE ALSO
+--------
+linkgit:git-pull[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

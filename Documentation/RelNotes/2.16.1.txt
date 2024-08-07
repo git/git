@@ -1,0 +1,11 @@
+Git v2.16.1 Release Notes
+=========================
+
+Fixes since v2.16
+-----------------
+
+ * "git clone" segfaulted when cloning a project that happens to
+   track two paths that differ only in case on a case insensitive
+   filesystem.
+
+Does not contain any other documentation updates or code clean-ups.

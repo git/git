@@ -1,0 +1,18 @@
+ifdef::git-commit[]
+-s::
+endif::git-commit[]
+--signoff::
+--no-signoff::
+	Add a `Signed-off-by` trailer by the committer at the end of the commit
+	log message.  The meaning of a signoff depends on the project
+	to which you're committing.  For example, it may certify that
+	the committer has the rights to submit the work under the
+	project's license or agrees to some contributor representation,
+	such as a Developer Certificate of Origin.
+	(See https://developercertificate.org for the one used by the
+	Linux kernel and Git projects.)  Consult the documentation or
+	leadership of the project to which you're contributing to
+	understand how the signoffs are used in that project.
++
+The --no-signoff option can be used to countermand an earlier --signoff
+option on the command line.

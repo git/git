@@ -1,0 +1,12 @@
+Git v1.7.9.6 Release Notes
+==========================
+
+Fixes since v1.7.9.5
+--------------------
+
+ * "git merge $tag" to merge an annotated tag always opens the editor
+   during an interactive edit session. v1.7.10 series introduced an
+   environment variable GIT_MERGE_AUTOEDIT to help older scripts decline
+   this behaviour, but the maintenance track should also support it.
+
+Also contains minor fixes and documentation updates.

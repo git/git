@@ -1,0 +1,48 @@
+reftable.blockSize::
+	The size in bytes used by the reftable backend when writing blocks.
+	The block size is determined by the writer, and does not have to be a
+	power of 2. The block size must be larger than the longest reference
+	name or log entry used in the repository, as references cannot span
+	blocks.
++
+Powers of two that are friendly to the virtual memory system or
+filesystem (such as 4kB or 8kB) are recommended. Larger sizes (64kB) can
+yield better compression, with a possible increased cost incurred by
+readers during access.
++
+The largest block size is `16777215` bytes (15.99 MiB). The default value is
+`4096` bytes (4kB). A value of `0` will use the default value.
+
+reftable.restartInterval::
+	The interval at which to create restart points. The reftable backend
+	determines the restart points at file creation. Every 16 may be
+	more suitable for smaller block sizes (4k or 8k), every 64 for larger
+	block sizes (64k).
++
+More frequent restart points reduces prefix compression and increases
+space consumed by the restart table, both of which increase file size.
++
+Less frequent restart points makes prefix compression more effective,
+decreasing overall file size, with increased penalties for readers
+walking through more records after the binary search step.
++
+A maximum of `65535` restart points per block is supported.
++
+The default value is to create restart points every 16 records. A value of `0`
+will use the default value.
+
+reftable.indexObjects::
+	Whether the reftable backend shall write object blocks. Object blocks
+	are a reverse mapping of object ID to the references pointing to them.
++
+The default value is `true`.
+
+reftable.geometricFactor::
+	Whenever the reftable backend appends a new table to the stack, it
+	performs auto compaction to ensure that there is only a handful of
+	tables. The backend does this by ensuring that tables form a geometric
+	sequence regarding the respective sizes of each table.
++
+By default, the geometric sequence uses a factor of 2, meaning that for any
+table, the next-biggest table must at least be twice as big. A maximum factor
+of 256 is supported.

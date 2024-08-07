@@ -1,0 +1,10 @@
+class Example
+{
+    string Method_RIGHT(
+        int a,
+        int b,
+        int c)
+    {
+        return "ChangeMe";
+    }
+}

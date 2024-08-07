@@ -1,0 +1,59 @@
+## linkgit: macro
+#
+# Usage: linkgit:command[manpage-section]
+#
+# Note, {0} is the manpage section, while {target} is the command.
+#
+# Show Git link as: <command>(<section>); if section is defined, else just show
+# the command.
+
+[macros]
+(?su)[\\]?(?P<name>linkgit):(?P<target>\S*?)\[(?P<attrlist>.*?)\]=
+
+[attributes]
+asterisk=&#42;
+plus=&#43;
+caret=&#94;
+startsb=&#91;
+endsb=&#93;
+backslash=&#92;
+tilde=&#126;
+apostrophe=&#39;
+backtick=&#96;
+litdd=&#45;&#45;
+
+ifdef::backend-docbook[]
+[linkgit-inlinemacro]
+{0%{target}}
+{0#<citerefentry>}
+{0#<refentrytitle>{target}</refentrytitle><manvolnum>{0}</manvolnum>}
+{0#</citerefentry>}
+endif::backend-docbook[]
+
+ifdef::backend-docbook[]
+ifdef::doctype-manpage[]
+# The following two small workarounds insert a simple paragraph after screen
+[listingblock]
+<example><title>{title}</title>
+<literallayout class="monospaced">
+|
+</literallayout><simpara></simpara>
+{title#}</example>
+
+[verseblock]
+<formalpara{id? id="{id}"}><title>{title}</title><para>
+{title%}<literallayout{id? id="{id}"}>
+{title#}<literallayout>
+|
+</literallayout>
+{title#}</para></formalpara>
+{title%}<simpara></simpara>
+endif::doctype-manpage[]
+endif::backend-docbook[]
+
+ifdef::backend-xhtml11[]
+[attributes]
+git-relative-html-prefix=
+[linkgit-inlinemacro]
+<a href="{git-relative-html-prefix}{target}.html">{target}{0?({0})}</a>
+endif::backend-xhtml11[]

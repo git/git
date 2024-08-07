@@ -1,0 +1,10 @@
+# This is obviously a ridiculous thing to do, but we should be able
+# to handle two here-docs on the same line, and attribute them
+# correctly.
+test_expect_success "$(cat <<END_OF_PREREQS)" 'here-doc-double' - <<\EOT
+SOME
+PREREQS
+END_OF_PREREQS
+	echo "actual test commands"
+	echo "that should be checked"
+EOT

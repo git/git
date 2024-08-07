@@ -1,0 +1,17 @@
+Headings can be right next to other lines of the file:
+# RIGHT
+Indents of four or more spaces make a code block:
+
+    # code comment, not heading
+
+If there's no space after the final hash, it's not a heading:
+
+#hashtag
+
+Sequences of more than 6 hashes don't make a heading:
+
+####### over-enthusiastic heading
+
+So the detected heading should be right up at the start of this file.
+
+ChangeMe

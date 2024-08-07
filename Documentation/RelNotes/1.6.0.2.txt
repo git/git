@@ -1,0 +1,81 @@
+GIT v1.6.0.2 Release Notes
+==========================
+
+Fixes since v1.6.0.1
+--------------------
+
+* Installation on platforms that needs .exe suffix to git-* programs were
+  broken in 1.6.0.1.
+
+* Installation on filesystems without symbolic links support did not
+  work well.
+
+* In-tree documentations and test scripts now use "git foo" form to set a
+  better example, instead of the "git-foo" form (which is an acceptable
+  form if you have "PATH=$(git --exec-path):$PATH" in your script)
+
+* Many commands did not use the correct working tree location when used
+  with GIT_WORK_TREE environment settings.
+
+* Some systems need to use compatibility fnmatch and regex libraries
+  independent from each other; the compat/ area has been reorganized to
+  allow this.
+
+
+* "git apply --unidiff-zero" incorrectly applied a -U0 patch that inserts
+  a new line before the second line.
+
+* "git blame -c" did not exactly work like "git annotate" when range
+  boundaries are involved.
+
+* "git checkout file" when file is still unmerged checked out contents from
+  a random high order stage, which was confusing.
+
+* "git clone $there $here/" with extra trailing slashes after explicit
+  local directory name $here did not work as expected.
+
+* "git diff" on tracked contents with CRLF line endings did not drive "less"
+  intelligently when showing added or removed lines.
+
+* "git diff --dirstat -M" did not add changes in subdirectories up
+  correctly for renamed paths.
+
+* "git diff --cumulative" did not imply "--dirstat".
+
+* "git for-each-ref refs/heads/" did not work as expected.
+
+* "git gui" allowed users to feed patch without any context to be applied.
+
+* "git gui" botched parsing "diff" output when a line that begins with two
+  dashes and a space gets removed or a line that begins with two pluses
+  and a space gets added.
+
+* "git gui" translation updates and i18n fixes.
+
+* "git index-pack" is more careful against disk corruption while completing
+  a thin pack.
+
+* "git log -i --grep=pattern" did not ignore case; neither "git log -E
+  --grep=pattern" triggered extended regexp.
+
+* "git log --pretty="%ad" --date=short" did not use short format when
+  showing the timestamp.
+
+* "git log --author=author" match incorrectly matched with the
+  timestamp part of "author " line in commit objects.
+
+* "git log -F --author=author" did not work at all.
+
+* Build procedure for "git shell" that used stub versions of some
+  functions and globals was not understood by linkers on some platforms.
+
+* "git stash" was fooled by a stat-dirty but otherwise unmodified paths
+  and refused to work until the user refreshed the index.
+
+* "git svn" was broken on Perl before 5.8 with recent fixes to reduce
+  use of temporary files.
+
+* "git verify-pack -v" did not work correctly when given more than one
+  packfile.
+
+Also contains many documentation updates.

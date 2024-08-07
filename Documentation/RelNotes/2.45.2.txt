@@ -1,0 +1,26 @@
+Git v2.45.2 Release Notes
+=========================
+
+In preparing security fixes for four CVEs, we made overly aggressive
+"defense in depth" changes that broke legitimate use cases like 'git
+lfs' and 'git annex.'  This release is to revert these misguided, if
+well-intentioned, changes that were shipped in 2.45.1 and were not
+direct security fixes.
+
+Jeff King (5):
+      send-email: drop FakeTerm hack
+      send-email: avoid creating more than one Term::ReadLine object
+      ci: drop mention of BREW_INSTALL_PACKAGES variable
+      ci: avoid bare "gcc" for osx-gcc job
+      ci: stop installing "gcc-13" for osx-gcc
+
+Johannes Schindelin (6):
+      hook: plug a new memory leak
+      init: use the correct path of the templates directory again
+      Revert "core.hooksPath: add some protection while cloning"
+      tests: verify that `clone -c core.hooksPath=/dev/null` works again
+      clone: drop the protections where hooks aren't run
+      Revert "Add a helper function to compare file contents"
+
+Junio C Hamano (1):
+      Revert "fsck: warn about symlink pointing inside a gitdir"

@@ -1,0 +1,40 @@
+Git 1.7.12.2 Release Notes
+==========================
+
+Fixes since v1.7.12.1
+---------------------
+
+ * When "git am" is fed an input that has multiple "Content-type: ..."
+   header, it did not grok charset= attribute correctly.
+
+ * Even during a conflicted merge, "git blame $path" always meant to
+   blame uncommitted changes to the "working tree" version; make it
+   more useful by showing cleanly merged parts as coming from the other
+   branch that is being merged.
+
+ * "git blame MAKEFILE" run in a history that has "Makefile" but not
+   "MAKEFILE" should say "No such file MAKEFILE in HEAD", but got
+   confused on a case insensitive filesystem and failed to do so.
+
+ * "git fetch --all", when passed "--no-tags", did not honor the
+   "--no-tags" option while fetching from individual remotes (the same
+   issue existed with "--tags", but combination "--all --tags" makes
+   much less sense than "--all --no-tags").
+
+ * "git log/diff/format-patch --stat" showed the "N line(s) added"
+   comment in user's locale and caused careless submitters to send
+   patches with such a line in them to projects whose project language
+   is not their language, mildly irritating others. Localization to
+   the line has been disabled for now.
+
+ * "git log --all-match --grep=A --grep=B" ought to show commits that
+   mention both A and B, but when these three options are used with
+   --author or --committer, it showed commits that mention either A or
+   B (or both) instead.
+
+ * The subcommand to remove the definition of a remote in "git remote"
+   was named "rm" even though all other subcommands were spelled out.
+   Introduce "git remote remove" to remove confusion, and keep "rm" as
+   a backward compatible synonym.
+
+Also contains a handful of documentation updates.

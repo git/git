@@ -1,0 +1,20 @@
+diff_cmd () {
+	"$merge_tool_path" mergetool "$LOCAL" "$REMOTE" -o "$MERGED"
+}
+
+diff_cmd_help () {
+	echo "Use Sublime Merge (requires a graphical session)"
+}
+
+merge_cmd () {
+	if $base_present
+	then
+		"$merge_tool_path" mergetool "$BASE" "$LOCAL" "$REMOTE" -o "$MERGED"
+	else
+		"$merge_tool_path" mergetool "$LOCAL" "$REMOTE" -o "$MERGED"
+	fi
+}
+
+merge_cmd_help () {
+	echo "Use Sublime Merge (requires a graphical session)"
+}

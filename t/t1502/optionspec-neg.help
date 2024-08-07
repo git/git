@@ -1,0 +1,12 @@
+cat <<\EOF
+usage: some-command [options] <args>...
+
+    some-command does foo and bar!
+
+    --[no-]foo            can be negated
+    --no-bar              can be positivated
+    --bar                 opposite of --no-bar
+    --positive-only       cannot be negated
+    --no-negative         cannot be positivated
+
+EOF

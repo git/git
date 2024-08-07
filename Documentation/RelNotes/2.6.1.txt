@@ -1,0 +1,18 @@
+Git v2.6.1 Release Notes
+========================
+
+Fixes since v2.6
+----------------
+
+ * xdiff code we use to generate diffs is not prepared to handle
+   extremely large files.  It uses "int" in many places, which can
+   overflow if we have a very large number of lines or even bytes in
+   our input files, for example.  Cap the input size to somewhere
+   around 1GB for now.
+
+ * Some protocols (like git-remote-ext) can execute arbitrary code
+   found in the URL.  The URLs that submodules use may come from
+   arbitrary sources (e.g., .gitmodules files in a remote
+   repository), and can hurt those who blindly enable recursive
+   fetch.  Restrict the allowed protocols to well known and safe
+   ones.

@@ -1,0 +1,29 @@
+GIT v1.6.4.3 Release Notes
+==========================
+
+Fixes since v1.6.4.2
+--------------------
+
+* "git clone" from an empty repository gave unnecessary error message,
+  even though it did everything else correctly.
+
+* "git cvsserver" invoked git commands via "git-foo" style, which has long
+  been deprecated.
+
+* "git fetch" and "git clone" had an extra sanity check to verify the
+  presence of the corresponding *.pack file before downloading *.idx
+  file by issuing a HEAD request.  Github server however sometimes
+  gave 500 (Internal server error) response to HEAD even if a GET
+  request for *.pack file to the same URL would have succeeded, and broke
+  clone over HTTP from some of their repositories.  As a workaround, this
+  verification has been removed (as it is not absolutely necessary).
+
+* "git grep" did not like relative pathname to refer outside the current
+  directory when run from a subdirectory.
+
+* an error message from "git push" was formatted in a very ugly way.
+
+* "git svn" did not quote the subversion user name correctly when
+  running its author-prog helper program.
+
+Other minor documentation updates are included.

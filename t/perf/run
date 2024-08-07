@@ -1,0 +1,258 @@
+#!/bin/sh
+
+die () {
+	echo >&2 "error: $*"
+	exit 1
+}
+
+while [ $# -gt 0 ]; do
+	arg="$1"
+	case "$arg" in
+	--)
+		break ;;
+	--help)
+		echo "usage: $0 [--config file] [--subsection subsec] [other_git_tree...] [--] [test_scripts]"
+		exit 0 ;;
+	--config)
+		shift
+		GIT_PERF_CONFIG_FILE=$(cd "$(dirname "$1")"; pwd)/$(basename "$1")
+		export GIT_PERF_CONFIG_FILE
+		shift ;;
+	--subsection)
+		shift
+		GIT_PERF_SUBSECTION="$1"
+		export GIT_PERF_SUBSECTION
+		shift ;;
+	--*)
+		die "unrecognised option: '$arg'" ;;
+	*)
+		break ;;
+	esac
+done
+
+run_one_dir () {
+	if test $# -eq 0; then
+		set -- p????-*.sh
+	fi
+	echo "=== Running $# tests in ${GIT_TEST_INSTALLED:-this tree} ==="
+	for t in "$@"; do
+		./$t $GIT_TEST_OPTS
+	done
+}
+
+unpack_git_rev () {
+	rev=$1
+	echo "=== Unpacking $rev in build/$rev ==="
+	mkdir -p build/$rev
+	(cd "$(git rev-parse --show-cdup)" && git archive --format=tar $rev) |
+	(cd build/$rev && tar x)
+}
+
+build_git_rev () {
+	rev=$1
+	name="$2"
+	for config in config.mak config.mak.autogen config.status
+	do
+		if test -e "../../$config"
+		then
+			cp "../../$config" "build/$rev/"
+		fi
+	done
+	echo "=== Building $rev ($name) ==="
+	(
+		cd build/$rev &&
+		if test -n "$GIT_PERF_MAKE_COMMAND"
+		then
+			sh -c "$GIT_PERF_MAKE_COMMAND"
+		else
+			make $GIT_PERF_MAKE_OPTS
+		fi
+	) || die "failed to build revision '$mydir'"
+}
+
+set_git_test_installed () {
+	mydir=$1
+
+	mydir_abs=$(cd $mydir && pwd)
+	mydir_abs_wrappers="$mydir_abs/bin-wrappers"
+	if test -d "$mydir_abs_wrappers"
+	then
+		GIT_TEST_INSTALLED=$mydir_abs_wrappers
+	else
+		# Older versions of git lacked bin-wrappers;
+		# fallback to the files in the root.
+		GIT_TEST_INSTALLED=$mydir_abs
+	fi
+	export GIT_TEST_INSTALLED
+	PERF_SET_GIT_TEST_INSTALLED=true
+	export PERF_SET_GIT_TEST_INSTALLED
+}
+
+run_dirs_helper () {
+	mydir=${1%/}
+	shift
+	while test $# -gt 0 && test "$1" != -- && test ! -f "$1"; do
+		shift
+	done
+	if test $# -gt 0 && test "$1" = --; then
+		shift
+	fi
+
+	PERF_RESULTS_PREFIX=
+	if test "$mydir" = "."
+	then
+		unset GIT_TEST_INSTALLED
+	elif test -d "$mydir"
+	then
+		PERF_RESULTS_PREFIX=bindir$(cd $mydir && printf "%s" "$(pwd)" | tr -c "[a-zA-Z0-9]" "_").
+		set_git_test_installed "$mydir"
+	else
+		rev=$(git rev-parse --verify "$mydir" 2>/dev/null) ||
+		die "'$mydir' is neither a directory nor a valid revision"
+		if [ ! -d build/$rev ]; then
+			unpack_git_rev $rev
+		fi
+		build_git_rev $rev "$mydir"
+		mydir=build/$rev
+
+		PERF_RESULTS_PREFIX=build_$rev.
+		set_git_test_installed "$mydir"
+	fi
+	export PERF_RESULTS_PREFIX
+
+	run_one_dir "$@"
+}
+
+run_dirs () {
+	while test $# -gt 0 && test "$1" != -- && test ! -f "$1"; do
+		run_dirs_helper "$@"
+		shift
+	done
+}
+
+get_subsections () {
+	section="$1"
+	test -z "$GIT_PERF_CONFIG_FILE" && return
+	git config -f "$GIT_PERF_CONFIG_FILE" --name-only --get-regex "$section\..*\.[^.]+" |
+	sed -e "s/$section\.\(.*\)\..*/\1/" | sort | uniq
+}
+
+get_var_from_env_or_config () {
+	env_var="$1"
+	conf_sec="$2"
+	conf_var="$3"
+	conf_opts="$4" # optional
+
+	# Do nothing if the env variable is already set
+	eval "test -z \"\${$env_var+x}\"" || return
+
+	test -z "$GIT_PERF_CONFIG_FILE" && return
+
+	# Check if the variable is in the config file
+	if test -n "$GIT_PERF_SUBSECTION"
+	then
+		var="$conf_sec.$GIT_PERF_SUBSECTION.$conf_var"
+		conf_value=$(git config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
+		eval "$env_var=\"$conf_value\"" && return
+	fi
+	var="$conf_sec.$conf_var"
+	conf_value=$(git config $conf_opts -f "$GIT_PERF_CONFIG_FILE" "$var") &&
+	eval "$env_var=\"$conf_value\""
+}
+
+run_subsection () {
+	get_var_from_env_or_config "GIT_PERF_REPEAT_COUNT" "perf" "repeatCount" "--int"
+	: ${GIT_PERF_REPEAT_COUNT:=3}
+	export GIT_PERF_REPEAT_COUNT
+
+	get_var_from_env_or_config "GIT_PERF_DIRS_OR_REVS" "perf" "dirsOrRevs"
+	set -- $GIT_PERF_DIRS_OR_REVS "$@"
+
+	get_var_from_env_or_config "GIT_PERF_MAKE_COMMAND" "perf" "makeCommand"
+	get_var_from_env_or_config "GIT_PERF_MAKE_OPTS" "perf" "makeOpts"
+
+	get_var_from_env_or_config "GIT_PERF_USE_SCALAR" "perf" "useScalar" "--bool"
+	export GIT_PERF_USE_SCALAR
+
+	get_var_from_env_or_config "GIT_PERF_REPO_NAME" "perf" "repoName"
+	export GIT_PERF_REPO_NAME
+
+	GIT_PERF_AGGREGATING_LATER=t
+	export GIT_PERF_AGGREGATING_LATER
+
+	if test $# = 0 || test "$1" = -- || test -f "$1"
+	then
+		set -- . "$@"
+	fi
+
+	codespeed_opt=
+	test "$GIT_PERF_CODESPEED_OUTPUT" = "true" && codespeed_opt="--codespeed"
+
+	run_dirs "$@"
+
+	if test -z "$GIT_PERF_SEND_TO_CODESPEED"
+	then
+		./aggregate.perl --results-dir="$TEST_RESULTS_DIR" $codespeed_opt "$@"
+	else
+		json_res_file=""$TEST_RESULTS_DIR"/$GIT_PERF_SUBSECTION/aggregate.json"
+		./aggregate.perl --results-dir="$TEST_RESULTS_DIR" --codespeed "$@" | tee "$json_res_file"
+		send_data_url="$GIT_PERF_SEND_TO_CODESPEED/result/add/json/"
+		curl -v --request POST --data-urlencode "json=$(cat "$json_res_file")" "$send_data_url"
+	fi
+}
+
+get_var_from_env_or_config "GIT_PERF_CODESPEED_OUTPUT" "perf" "codespeedOutput" "--bool"
+get_var_from_env_or_config "GIT_PERF_SEND_TO_CODESPEED" "perf" "sendToCodespeed"
+
+cd "$(dirname $0)"
+. ../../GIT-BUILD-OPTIONS
+
+if test -n "$TEST_OUTPUT_DIRECTORY"
+then
+	TEST_RESULTS_DIR="$TEST_OUTPUT_DIRECTORY/test-results"
+else
+	TEST_RESULTS_DIR=test-results
+fi
+
+mkdir -p "$TEST_RESULTS_DIR"
+get_subsections "perf" >"$TEST_RESULTS_DIR"/run_subsections.names
+
+if test $(wc -l <"$TEST_RESULTS_DIR"/run_subsections.names) -eq 0
+then
+	if test -n "$GIT_PERF_SUBSECTION"
+	then
+		if test -n "$GIT_PERF_CONFIG_FILE"
+		then
+			die "no subsections are defined in config file '$GIT_PERF_CONFIG_FILE'"
+		else
+			die "subsection '$GIT_PERF_SUBSECTION' defined without a config file"
+		fi
+	fi
+	(
+		run_subsection "$@"
+	)
+elif test -n "$GIT_PERF_SUBSECTION"
+then
+	grep -E "^$GIT_PERF_SUBSECTION\$" "$TEST_RESULTS_DIR"/run_subsections.names >/dev/null ||
+		die "subsection '$GIT_PERF_SUBSECTION' not found in '$GIT_PERF_CONFIG_FILE'"
+
+	grep -E "^$GIT_PERF_SUBSECTION\$" "$TEST_RESULTS_DIR"/run_subsections.names | while read -r subsec
+	do
+		(
+			GIT_PERF_SUBSECTION="$subsec"
+			export GIT_PERF_SUBSECTION
+			echo "======== Run for subsection '$GIT_PERF_SUBSECTION' ========"
+			run_subsection "$@"
+		)
+	done
+else
+	while read -r subsec
+	do
+		(
+			GIT_PERF_SUBSECTION="$subsec"
+			export GIT_PERF_SUBSECTION
+			echo "======== Run for subsection '$GIT_PERF_SUBSECTION' ========"
+			run_subsection "$@"
+		)
+	done <"$TEST_RESULTS_DIR"/run_subsections.names
+fi

@@ -1,0 +1,52 @@
+Git v2.47 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * Many Porcelain commands that internally use the merge machinery
+   were taught to consistently honor the diff.algorithm configuration.
+
+ * A few descriptions in "git show-ref -h" have been clarified.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * A build tweak knob has been simplified by not setting the value
+   that is already the default; another unused one has been removed.
+
+ * A CI job that use clang-format to check coding style issues in new
+   code has been added.
+
+ * The reviewing guidelines document now explicitly encourages people
+   to give positive reviews and how.
+
+
+Fixes since v2.46
+-----------------
+
+ * "git add -p" by users with diff.suppressBlankEmpty set to true
+   failed to parse the patch that represents an unmodified empty line
+   with an empty line (not a line with a single space on it), which
+   has been corrected.
+   (merge 60cf761ed1 pw/add-patch-with-suppress-blank-empty later to maint).
+
+ * "git checkout --ours" (no other arguments) complained that the
+   option is incompatible with branch switching, which is technically
+   correct, but found confusing by some users.  It now says that the
+   user needs to give pathspec to specify what paths to checkout.
+   (merge d1e6c61272 jc/checkout-no-op-switch-errors later to maint).
+
+ * It has been documented that we avoid "VAR=VAL shell_func" and why.
+   (merge 728a1962cd jc/doc-one-shot-export-with-shell-func later to maint).
+
+ * "git rebase --help" referred to "offset" (the difference between
+   the location a change was taken from and the change gets replaced)
+   incorrectly and called it "fuzz", which has been corrected.
+   (merge 70058db385 jc/doc-rebase-fuzz-vs-offset-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 8db8786fc2 jt/doc-post-receive-hook-update later to maint).
+   (merge 1c473dd6af tn/doc-commit-fix later to maint).
+   (merge bb0498b1bb jc/how-to-maintain-updates later to maint).

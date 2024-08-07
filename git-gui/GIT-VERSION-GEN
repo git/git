@@ -1,0 +1,80 @@
+#!/bin/sh
+
+GVF=GIT-VERSION-FILE
+DEF_VER=0.21.GITGUI
+
+LF='
+'
+
+tree_search ()
+{
+	head=$1
+	tree=$2
+	for p in $(git rev-list --parents --max-count=1 $head 2>/dev/null)
+	do
+		test $tree = $(git rev-parse $p^{tree} 2>/dev/null) &&
+		vn=$(git describe --abbrev=4 $p 2>/dev/null) &&
+		case "$vn" in
+		gitgui-[0-9]*) echo $vn; break;;
+		esac
+	done
+}
+
+# Always use the tarball version file if found, just
+# in case we are somehow contained in a larger git
+# repository that doesn't actually track our state.
+# (At least one package manager is doing this.)
+#
+# We may be a subproject, so try looking for the merge
+# commit that supplied this directory content if we are
+# not at the toplevel.  We probably will always be the
+# second parent in the commit, but we shouldn't rely on
+# that fact.
+#
+# If we are at the toplevel or the merge assumption fails
+# try looking for a gitgui-* tag.
+
+if test -f version &&
+   VN=$(cat version)
+then
+	: happy
+elif prefix="$(git rev-parse --show-prefix 2>/dev/null)"
+   test -n "$prefix" &&
+   head=$(git rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
+   tree=$(git rev-parse --verify "HEAD:$prefix" 2>/dev/null) &&
+   VN=$(tree_search $head $tree)
+   case "$VN" in
+   gitgui-[0-9]*) : happy ;;
+   *) (exit 1) ;;
+   esac
+then
+	VN=$(echo "$VN" | sed -e 's/^gitgui-//;s/-/./g');
+elif VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
+   case "$VN" in
+   gitgui-[0-9]*) : happy ;;
+   *) (exit 1) ;;
+   esac
+then
+	VN=$(echo "$VN" | sed -e 's/^gitgui-//;s/-/./g');
+else
+	VN="$DEF_VER"
+fi
+
+dirty=$(sh -c 'git diff-index --name-only HEAD' 2>/dev/null) || dirty=
+case "$dirty" in
+'')
+	;;
+*)
+	VN="$VN-dirty" ;;
+esac
+
+if test -r $GVF
+then
+	VC=$(sed -e 's/^GITGUI_VERSION = //' <$GVF)
+else
+	VC=unset
+fi
+test "$VN" = "$VC" || {
+	echo >&2 "GITGUI_VERSION = $VN"
+	echo "GITGUI_VERSION = $VN" >$GVF
+}

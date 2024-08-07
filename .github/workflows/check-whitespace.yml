@@ -1,0 +1,32 @@
+name: check-whitespace
+
+# Get the repository with all commits to ensure that we can analyze
+# all of the commits contributed via the Pull Request.
+# Process `git log --check` output to extract just the check errors.
+# Exit with failure upon white-space issues.
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+# Avoid unnecessary builds. Unlike the main CI jobs, these are not
+# ci-configurable (but could be).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-whitespace:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: git log --check
+      id: check_out
+      run: |
+        ./ci/check-whitespace.sh \
+          "${{github.event.pull_request.base.sha}}" \
+          "$GITHUB_STEP_SUMMARY" \
+          "https://github.com/${{github.repository}}"

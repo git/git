@@ -1,0 +1,17 @@
+*.xml
+*.html
+*.[1-8]
+*.made
+*.texi
+*.pdf
+git.info
+gitman.info
+howto-index.txt
+doc.dep
+cmds-*.txt
+mergetools-*.txt
+SubmittingPatches.txt
+tmp-doc-diff/
+GIT-ASCIIDOCFLAGS
+/.build/
+/GIT-EXCLUDED-PROGRAMS

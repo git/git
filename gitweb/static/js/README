@@ -1,0 +1,20 @@
+GIT web interface (gitweb) - JavaScript
+=======================================
+
+This directory holds JavaScript code used by gitweb (GIT web interface).
+Scripts from there would be concatenated together in the order specified
+by gitweb/Makefile into gitweb/static/gitweb.js, during building of
+gitweb/gitweb.cgi (during gitweb building).  The resulting file (or its
+minification) would then be installed / deployed together with gitweb.
+
+Scripts in 'lib/' subdirectory compose generic JavaScript library,
+providing features required by gitweb but in no way limited to gitweb
+only.  In the future those scripts could be replaced by some JavaScript
+library / framework, like e.g. jQuery, YUI, Prototype, MooTools, Dojo,
+ExtJS, Script.aculo.us or SproutCore.
+
+All scripts that manipulate gitweb output should be put outside 'lib/',
+directly in this directory ('gitweb/static/js/').  Those scripts would
+have to be rewritten if gitweb moves to using some JavaScript library.
+
+See also comments in gitweb/Makefile.

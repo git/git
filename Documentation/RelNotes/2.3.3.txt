@@ -1,0 +1,39 @@
+Git v2.3.3 Release Notes
+========================
+
+Fixes since v2.3.2
+------------------
+
+ * A corrupt input to "git diff -M" used cause us to segfault.
+
+ * The borrowed code in kwset API did not follow our usual convention
+   to use "unsigned char" to store values that range from 0-255.
+
+ * Description given by "grep -h" for its --exclude-standard option
+   was phrased poorly.
+
+ * Documentation for "git remote add" mentioned "--tags" and
+   "--no-tags" and it was not clear that fetch from the remote in
+   the future will use the default behaviour when neither is given
+   to override it.
+
+ * "git diff --shortstat --dirstat=changes" showed a dirstat based on
+   lines that was never asked by the end user in addition to the
+   dirstat that the user asked for.
+
+ * The interaction between "git submodule update" and the
+   submodule.*.update configuration was not clearly documented.
+
+ * "git apply" was not very careful about reading from, removing,
+   updating and creating paths outside the working tree (under
+   --index/--cached) or the current directory (when used as a
+   replacement for GNU patch).
+
+ * "git daemon" looked up the hostname even when "%CH" and "%IP"
+   interpolations are not requested, which was unnecessary.
+
+ * The "interpolated-path" option of "git daemon" inserted any string
+   client declared on the "host=" capability request without checking.
+   Sanitize and limit %H and %CH to a saner and a valid DNS name.
+
+Also contains typofixes, documentation updates and trivial code clean-ups.

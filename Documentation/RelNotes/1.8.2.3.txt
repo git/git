@@ -1,0 +1,19 @@
+Git v1.8.2.3 Release Notes
+==========================
+
+Fixes since v1.8.2.2
+--------------------
+
+ * "rev-list --stdin" and friends kept bogus pointers into the input
+   buffer around as human readable object names.  This was not a
+   huge problem but was exposed by a new change that uses these
+   names in error output.
+
+ * When "git difftool" drove "kdiff3", it mistakenly passed --auto
+   option that was meant while resolving merge conflicts.
+
+ * "git remote add" command did not diagnose extra command line
+   arguments as an error and silently ignored them.
+
+Also contains a handful of trivial code clean-ups, documentation
+updates, updates to the test suite, etc.

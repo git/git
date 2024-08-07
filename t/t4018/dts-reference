@@ -1,0 +1,9 @@
+&label_1 {
+	TEST = <455>;
+};
+
+&RIGHT {
+	vendor,some-property;
+
+	ChangeMe = <0x45-30>;
+};

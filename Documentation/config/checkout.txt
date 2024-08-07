@@ -1,0 +1,44 @@
+checkout.defaultRemote::
+	When you run `git checkout <something>`
+	or `git switch <something>` and only have one
+	remote, it may implicitly fall back on checking out and
+	tracking e.g. `origin/<something>`. This stops working as soon
+	as you have more than one remote with a `<something>`
+	reference. This setting allows for setting the name of a
+	preferred remote that should always win when it comes to
+	disambiguation. The typical use-case is to set this to
+	`origin`.
++
+Currently this is used by linkgit:git-switch[1] and
+linkgit:git-checkout[1] when `git checkout <something>`
+or `git switch <something>`
+will checkout the `<something>` branch on another remote,
+and by linkgit:git-worktree[1] when `git worktree add` refers to a
+remote branch. This setting might be used for other checkout-like
+commands or functionality in the future.
+
+checkout.guess::
+	Provides the default value for the `--guess` or `--no-guess`
+	option in `git checkout` and `git switch`. See
+	linkgit:git-switch[1] and linkgit:git-checkout[1].
+
+checkout.workers::
+	The number of parallel workers to use when updating the working tree.
+	The default is one, i.e. sequential execution. If set to a value less
+	than one, Git will use as many workers as the number of logical cores
+	available. This setting and `checkout.thresholdForParallelism` affect
+	all commands that perform checkout. E.g. checkout, clone, reset,
+	sparse-checkout, etc.
++
+Note: Parallel checkout usually delivers better performance for repositories
+located on SSDs or over NFS. For repositories on spinning disks and/or machines
+with a small number of cores, the default sequential checkout often performs
+better. The size and compression level of a repository might also influence how
+well the parallel version performs.
+
+checkout.thresholdForParallelism::
+	When running parallel checkout with a small number of files, the cost
+	of subprocess spawning and inter-process communication might outweigh
+	the parallelization gains. This setting allows you to define the minimum
+	number of files for which parallel checkout should be attempted. The
+	default is 100.

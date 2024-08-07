@@ -1,0 +1,10 @@
+:see-git-init:
+ifndef::git-init[]
+:see-git-init: (See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
+endif::[]
+
+`init.templateDir`::
+	Specify the directory from which templates will be copied. {see-git-init}
+`init.defaultBranch`::
+	Allows overriding the default branch name e.g. when initializing
+	a new repository.

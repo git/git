@@ -1,0 +1,18 @@
+* whitespace=!indent,trail,space
+*.[ch] whitespace=indent,trail,space diff=cpp
+*.sh whitespace=indent,trail,space text eol=lf
+*.perl text eol=lf diff=perl
+*.pl text eof=lf diff=perl
+*.pm text eol=lf diff=perl
+*.py text eol=lf diff=python
+*.bat text eol=crlf
+CODE_OF_CONDUCT.md -whitespace
+/Documentation/**/*.txt text eol=lf
+/command-list.txt text eol=lf
+/GIT-VERSION-GEN text eol=lf
+/mergetools/* text eol=lf
+/t/oid-info/* text eol=lf
+/Documentation/git-merge.txt conflict-marker-size=32
+/Documentation/gitk.txt conflict-marker-size=32
+/Documentation/user-manual.txt conflict-marker-size=32
+/t/t????-*.sh conflict-marker-size=32

@@ -1,0 +1,111 @@
+name: git-l10n
+
+on: [push, pull_request_target]
+
+# Avoid unnecessary builds. Unlike the main CI jobs, these are not
+# ci-configurable (but could be).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  git-po-helper:
+    if: >-
+      endsWith(github.repository, '/git-po') ||
+      contains(github.head_ref, 'l10n') ||
+      contains(github.ref, 'l10n')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Setup base and head objects
+        id: setup-tips
+        run: |
+          if test "${{ github.event_name }}" = "pull_request_target"
+          then
+            base=${{ github.event.pull_request.base.sha }}
+            head=${{ github.event.pull_request.head.sha }}
+          else
+            base=${{ github.event.before }}
+            head=${{ github.event.after }}
+          fi
+          echo base=$base >>$GITHUB_OUTPUT
+          echo head=$head >>$GITHUB_OUTPUT
+      - name: Run partial clone
+        run: |
+          git -c init.defaultBranch=master init --bare .
+          git remote add \
+            --mirror=fetch \
+            origin \
+            https://github.com/${{ github.repository }}
+          # Fetch tips that may be unreachable from github.ref:
+          # - For a forced push, "$base" may be unreachable.
+          # - For a "pull_request_target" event, "$head" may be unreachable.
+          args=
+          for commit in \
+            ${{ steps.setup-tips.outputs.base }} \
+            ${{ steps.setup-tips.outputs.head }}
+          do
+            case $commit in
+            *[^0]*)
+              args="$args $commit"
+              ;;
+            *)
+              # Should not fetch ZERO-OID.
+              ;;
+            esac
+          done
+          git -c protocol.version=2 fetch \
+            --progress \
+            --no-tags \
+            --no-write-fetch-head \
+            --filter=blob:none \
+            origin \
+            ${{ github.ref }} \
+            $args
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.16'
+          cache: false
+      - name: Install git-po-helper
+        run: go install github.com/git-l10n/git-po-helper@main
+      - name: Install other dependencies
+        run: |
+          sudo apt-get update -q &&
+          sudo apt-get install -q -y gettext
+      - name: Run git-po-helper
+        id: check-commits
+        run: |
+          exit_code=0
+          git-po-helper check-commits \
+            --github-action-event="${{ github.event_name }}" -- \
+            ${{ steps.setup-tips.outputs.base }}..${{ steps.setup-tips.outputs.head }} \
+            >git-po-helper.out 2>&1 || exit_code=$?
+          if test $exit_code -ne 0 || grep -q WARNING git-po-helper.out
+          then
+            # Remove ANSI colors which are proper for console logs but not
+            # proper for PR comment.
+            echo "COMMENT_BODY<<EOF" >>$GITHUB_ENV
+            perl -pe 's/\e\[[0-9;]*m//g; s/\bEOF$//g' git-po-helper.out >>$GITHUB_ENV
+            echo "EOF" >>$GITHUB_ENV
+          fi
+          cat git-po-helper.out
+          exit $exit_code
+      - name: Create comment in pull request for report
+        uses: mshick/add-pr-comment@v2
+        if: >-
+          always() &&
+          github.event_name == 'pull_request_target' &&
+          env.COMMENT_BODY != ''
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          message: >
+            ${{ steps.check-commits.outcome == 'failure' && 'Errors and warnings' || 'Warnings' }}
+            found by [git-po-helper](https://github.com/git-l10n/git-po-helper#readme) in workflow
+            [#${{ github.run_number }}](${{ env.GITHUB_SERVER_URL }}/${{ github.repository }}/actions/runs/${{ github.run_id }}):
+
+            ```
+
+            ${{ env.COMMENT_BODY }}
+
+            ```

@@ -1,0 +1,44 @@
+Git v2.3.5 Release Notes
+========================
+
+Fixes since v2.3.4
+------------------
+
+ * The prompt script (in contrib/) did not show the untracked sign
+   when working in a subdirectory without any untracked files.
+
+ * Even though "git grep --quiet" is run merely to ask for the exit
+   status, we spawned the pager regardless.  Stop doing that.
+
+ * Recommend format-patch and send-email for those who want to submit
+   patches to this project.
+
+ * An failure early in the "git clone" that started creating the
+   working tree and repository could have resulted in some directories
+   and files left without getting cleaned up.
+
+ * "git fetch" that fetches a commit using the allow-tip-sha1-in-want
+   extension could have failed to fetch all the requested refs.
+
+ * The split-index mode introduced at v2.3.0-rc0~41 was broken in the
+   codepath to protect us against a broken reimplementation of Git
+   that writes an invalid index with duplicated index entries, etc.
+
+ * "git prune" used to largely ignore broken refs when deciding which
+   objects are still being used, which could spread an existing small
+   damage and make it a larger one.
+
+ * "git tag -h" used to show the "--column" and "--sort" options
+   that are about listing in a wrong section.
+
+ * The transfer.hiderefs support did not quite work for smart-http
+   transport.
+
+ * The code that reads from the ctags file in the completion script
+   (in contrib/) did not spell ${param/pattern/string} substitution
+   correctly, which happened to work with bash but not with zsh.
+
+ * The explanation on "rebase --preserve-merges", "pull --rebase=preserve",
+   and "push --force-with-lease" in the documentation was unclear.
+
+Also contains typofixes, documentation updates and trivial code clean-ups.

@@ -1,0 +1,184 @@
+# Translation of git-gui glossary to Italian
+# Copyright (C) 2007 Shawn Pearce, et al.
+# This file is distributed under the same license as the git package.
+# Christian Stimming <stimming@tuhh.de>, 2007
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: git-gui glossary\n"
+"POT-Creation-Date: 2007-10-19 21:43+0200\n"
+"PO-Revision-Date: 2007-10-10 15:24+0200\n"
+"Last-Translator: Michele Ballabio <barra_cuda@katamail.com>\n"
+"Language-Team: Italian \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. "English Definition (Dear translator: This file will never be visible to the user! It should only serve as a tool for you, the translator. Nothing more.)"
+msgid ""
+"English Term (Dear translator: This file will never be visible to the user!)"
+msgstr ""
+"Traduzione italiana.\n"
+"Altri SCM in italiano:\n"
+"  http://tortoisesvn.tigris.org/svn/tortoisesvn/trunk/Languages/Tortoise_it."
+"po (username=guest, password empty),\n"
+"  http://tortoisecvs.cvs.sourceforge.net/tortoisecvs/po/TortoiseCVS/it_IT.po?"
+"view=markup ,\n"
+"  http://rapidsvn.tigris.org/svn/rapidsvn/trunk/src/locale/it_IT/rapidsvn.po "
+"(username=guest, password empty)"
+
+#. ""
+msgid "amend"
+msgstr "correggere, correzione"
+
+#. ""
+msgid "annotate"
+msgstr "annotare, annotazione"
+
+#. "A 'branch' is an active line of development."
+msgid "branch [noun]"
+msgstr "ramo, diramazione, ramificazione"
+
+#. ""
+msgid "branch [verb]"
+msgstr "creare ramo, ramificare, diramare"
+
+#. ""
+msgid "checkout [noun]"
+msgstr "attivazione, checkout, revisione attiva, prelievo (TortoiseCVS)?"
+
+#. "The action of updating the working tree to a revision which was stored in the object database."
+msgid "checkout [verb]"
+msgstr ""
+"attivare, effettuare un checkout, attivare revisione, prelevare "
+"(TortoiseCVS), ritirare (TSVN)?"
+
+#. ""
+msgid "clone [verb]"
+msgstr "clonare"
+
+#. "A single point in the git history."
+msgid "commit [noun]"
+msgstr "revisione, commit, deposito (TortoiseCVS), invio (TSVN)?"
+
+#. "The action of storing a new snapshot of the project's state in the git history."
+msgid "commit [verb]"
+msgstr ""
+"creare una nuova revisione, archiviare, effettuare un commit, depositare "
+"(nel server), fare un deposito (TortoiseCVS), inviare (TSVN)?"
+
+#. ""
+msgid "diff [noun]"
+msgstr "differenza, confronto, comparazione, raffronto"
+
+#. ""
+msgid "diff [verb]"
+msgstr "confronta, mostra le differenze"
+
+#. "A fast-forward is a special type of merge where you have a revision and you are merging another branch's changes that happen to be a descendant of what you have."
+msgid "fast forward merge"
+msgstr "fusione in 'fast-forward', fusione in avanti veloce"
+
+#. "Fetching a branch means to get the branch's head from a remote repository, to find out which objects are missing from the local object database, and to get them, too."
+msgid "fetch"
+msgstr "recuperare, prelevare, prendere da, recuperare (TSVN)"
+
+#. "A collection of files. The index is a stored version of your working tree."
+msgid "index (in git-gui: staging area)"
+msgstr "indice"
+
+#. "A successful merge results in the creation of a new commit representing the result of the merge."
+msgid "merge [noun]"
+msgstr "fusione, unione"
+
+#. "To bring the contents of another branch into the current branch."
+msgid "merge [verb]"
+msgstr "effettuare la fusione, unire, fondere, eseguire la fusione"
+
+#. ""
+msgid "message"
+msgstr "messaggio, commento"
+
+#. "Deletes all stale tracking branches under <name>. These stale branches have already been removed from the remote repository referenced by <name>, but are still locally available in 'remotes/<name>'."
+msgid "prune"
+msgstr "potatura"
+
+#. "Pulling a branch means to fetch it and merge it."
+msgid "pull"
+msgstr ""
+"prendi (recupera) e fondi (unisci)? (in pratica una traduzione di fetch + "
+"merge)"
+
+#. "Pushing a branch means to get the branch's head ref from a remote repository, and ... (well, can someone please explain it for mere mortals?)"
+msgid "push"
+msgstr "propaga"
+
+#. ""
+msgid "redo"
+msgstr "ripeti, rifai"
+
+#. "An other repository ('remote'). One might have a set of remotes whose branches one tracks."
+msgid "remote"
+msgstr "remoto"
+
+#. "A collection of refs (?) together with an object database containing all objects which are reachable from the refs... (oops, you've lost me here. Again, please an explanation for mere mortals?)"
+msgid "repository"
+msgstr "archivio, repository, database? deposito (rapidsvn)?"
+
+#. ""
+msgid "reset"
+msgstr "ripristinare, annullare, azzerare, ripristinare"
+
+#. ""
+msgid "revert"
+msgstr ""
+"annullare, inverti (rapidsvn), ritorna allo stato precedente, annulla le "
+"modifiche della revisione"
+
+#. "A particular state of files and directories which was stored in the object database."
+msgid "revision"
+msgstr "revisione (TortoiseSVN)"
+
+#. ""
+msgid "sign off"
+msgstr "sign off, firma"
+
+#. ""
+msgid "staging area"
+msgstr ""
+"area di preparazione, zona di preparazione, modifiche in preparazione? "
+"modifiche in allestimento?"
+
+#. ""
+msgid "status"
+msgstr "stato"
+
+#. "A ref pointing to a tag or commit object"
+msgid "tag [noun]"
+msgstr "etichetta, etichettatura (TortoiseCVS)"
+
+#. ""
+msgid "tag [verb]"
+msgstr "etichettare"
+
+#. "A regular git branch that is used to follow changes from another repository."
+msgid "tracking branch"
+msgstr ""
+"duplicato locale di ramo remoto, ramo in 'tracking', ramo inseguitore? ramo "
+"di {inseguimento,allineamento,rilevamento,puntamento}?"
+
+#. ""
+msgid "undo"
+msgstr "annulla"
+
+#. ""
+msgid "update"
+msgstr "aggiornamento, aggiornare"
+
+#. ""
+msgid "verify"
+msgstr "verifica, verificare"
+
+#. "The tree of actual checked out files."
+msgid "working copy, working tree"
+msgstr "directory di lavoro, copia di lavoro"

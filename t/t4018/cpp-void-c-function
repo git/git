@@ -1,0 +1,4 @@
+void RIGHT (void)
+{
+	ChangeMe;
+}

@@ -1,0 +1,30 @@
+diff --git a/main.c b/main.c
+--- a/main.c
++++ b/main.c
+@@ -1,7 +1,9 @@
++#include <stdlib.h>
+ #include <stdio.h>
+ 
+ int func(int num);
+ void print_int(int num);
++void print_ln();
+ 
+ int main() {
+ 	int i;
+@@ -10,6 +12,8 @@
+ 		print_int(func(i));
+ 	}
+ 
++	print_ln();
++
+ 	return 0;
+ }
+ 
+@@ -21,3 +25,7 @@
+ 	printf("%d", num);
+ }
+ 
++void print_ln() {
++	printf("\n");
++}
++

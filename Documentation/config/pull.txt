@@ -1,0 +1,33 @@
+pull.ff::
+	By default, Git does not create an extra merge commit when merging
+	a commit that is a descendant of the current commit. Instead, the
+	tip of the current branch is fast-forwarded. When set to `false`,
+	this variable tells Git to create an extra merge commit in such
+	a case (equivalent to giving the `--no-ff` option from the command
+	line). When set to `only`, only such fast-forward merges are
+	allowed (equivalent to giving the `--ff-only` option from the
+	command line). This setting overrides `merge.ff` when pulling.
+
+pull.rebase::
+	When true, rebase branches on top of the fetched branch, instead
+	of merging the default branch from the default remote when "git
+	pull" is run. See "branch.<name>.rebase" for setting this on a
+	per-branch basis.
++
+When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
+so that the local merge commits are included in the rebase (see
+linkgit:git-rebase[1] for details).
++
+When the value is `interactive` (or just 'i'), the rebase is run in interactive
+mode.
++
+*NOTE*: this is a possibly dangerous operation; do *not* use
+it unless you understand the implications (see linkgit:git-rebase[1]
+for details).
+
+pull.octopus::
+	The default merge strategy to use when pulling multiple branches
+	at once.
+
+pull.twohead::
+	The default merge strategy to use when pulling a single branch.

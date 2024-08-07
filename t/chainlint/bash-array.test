@@ -1,0 +1,14 @@
+test_expect_success 'bash-array' '
+(
+	foo &&
+# LINT: ")" in Bash array assignment not misinterpreted as subshell-closing ")"
+	bar=(gumbo stumbo wumbo) &&
+	baz
+) &&
+(
+	foo &&
+# LINT: Bash array length operator not misinterpreted as comment
+	bar=${#bar[@]} &&
+	baz
+)
+'

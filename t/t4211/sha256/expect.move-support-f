@@ -1,0 +1,80 @@
+commit 4f7a58195a92c400e28a2354328587f1ff14fb77f5cf894536f17ccbc72931b9
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:49:50 2013 +0100
+
+    another simple change
+
+diff --git a/b.c b/b.c
+--- a/b.c
++++ b/b.c
+@@ -4,9 +4,9 @@
+ long f(long x)
+ {
+ 	int s = 0;
+ 	while (x) {
+-		x >>= 1;
++		x /= 2;
+ 		s++;
+ 	}
+ 	return s;
+ }
+
+commit ccf97b9878189c40a981da50b15713bb80a35755326320ec80900caf22ced46f
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:45:16 2013 +0100
+
+    touch both functions
+
+diff --git a/a.c b/a.c
+--- a/a.c
++++ b/a.c
+@@ -3,9 +3,9 @@
+-int f(int x)
++long f(long x)
+ {
+ 	int s = 0;
+ 	while (x) {
+ 		x >>= 1;
+ 		s++;
+ 	}
+ 	return s;
+ }
+
+commit f6434acd34260a6c9f61e96d96bf9a323d330561df5b1ca2631104f82026dfed
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:44:55 2013 +0100
+
+    change f()
+
+diff --git a/a.c b/a.c
+--- a/a.c
++++ b/a.c
+@@ -3,8 +3,9 @@
+ int f(int x)
+ {
+ 	int s = 0;
+ 	while (x) {
+ 		x >>= 1;
+ 		s++;
+ 	}
++	return s;
+ }
+
+commit 1dd7e9b2b1699324b53b341e728653b913bc192a14dfea168c5b51f2b3d03592
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:44:48 2013 +0100
+
+    initial
+
+diff --git a/a.c b/a.c
+--- /dev/null
++++ b/a.c
+@@ -0,0 +3,8 @@
++int f(int x)
++{
++	int s = 0;
++	while (x) {
++		x >>= 1;
++		s++;
++	}
++}

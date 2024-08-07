@@ -1,0 +1,16 @@
+# Suppressions for ThreadSanitizer (tsan).
+#
+# This file is used by setting the environment variable TSAN_OPTIONS to, e.g.,
+# "suppressions=$(pwd)/.tsan-suppressions". Observe that relative paths such as
+# ".tsan-suppressions" might not work.
+
+# A static variable is written to racily, but we always write the same value, so
+# in practice it (hopefully!) doesn't matter.
+race:^want_color$
+race:^transfer_debug$
+
+# A boolean value, which tells whether the replace_map has been initialized or
+# not, is read racily with an update. As this variable is written to only once,
+# and it's OK if the value change right after reading it, this shouldn't be a
+# problem.
+race:^lookup_replace_object$

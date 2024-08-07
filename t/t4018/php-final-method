@@ -1,0 +1,7 @@
+class Klass
+{
+    final public function RIGHT(): string
+    {
+        return 'ChangeMe';
+    }
+}

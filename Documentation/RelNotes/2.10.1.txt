@@ -1,0 +1,131 @@
+Git v2.10.1 Release Notes
+=========================
+
+Fixes since v2.10
+-----------------
+
+ * Clarify various ways to specify the "revision ranges" in the
+   documentation.
+
+ * "diff-highlight" script (in contrib/) learned to work better with
+   "git log -p --graph" output.
+
+ * The test framework left the number of tests and success/failure
+   count in the t/test-results directory, keyed by the name of the
+   test script plus the process ID.  The latter however turned out not
+   to serve any useful purpose.  The process ID part of the filename
+   has been removed.
+
+ * Having a submodule whose ".git" repository is somehow corrupt
+   caused a few commands that recurse into submodules loop forever.
+
+ * "git symbolic-ref -d HEAD" happily removes the symbolic ref, but
+   the resulting repository becomes an invalid one.  Teach the command
+   to forbid removal of HEAD.
+
+ * A test spawned a short-lived background process, which sometimes
+   prevented the test directory from getting removed at the end of the
+   script on some platforms.
+
+ * Update a few tests that used to use GIT_CURL_VERBOSE to use the
+   newer GIT_TRACE_CURL.
+
+ * Update Japanese translation for "git-gui".
+
+ * "git fetch http::/site/path" did not die correctly and segfaulted
+   instead.
+
+ * "git commit-tree" stopped reading commit.gpgsign configuration
+   variable that was meant for Porcelain "git commit" in Git 2.9; we
+   forgot to update "git gui" to look at the configuration to match
+   this change.
+
+ * "git log --cherry-pick" used to include merge commits as candidates
+   to be matched up with other commits, resulting a lot of wasted time.
+   The patch-id generation logic has been updated to ignore merges to
+   avoid the wastage.
+
+ * The http transport (with curl-multi option, which is the default
+   these days) failed to remove curl-easy handle from a curlm session,
+   which led to unnecessary API failures.
+
+ * "git diff -W" output needs to extend the context backward to
+   include the header line of the current function and also forward to
+   include the body of the entire current function up to the header
+   line of the next one.  This process may have to merge to adjacent
+   hunks, but the code forgot to do so in some cases.
+
+ * Performance tests done via "t/perf" did not use the same set of
+   build configuration if the user relied on autoconf generated
+   configuration.
+
+ * "git format-patch --base=..." feature that was recently added
+   showed the base commit information after "-- " e-mail signature
+   line, which turned out to be inconvenient.  The base information
+   has been moved above the signature line.
+
+ * Even when "git pull --rebase=preserve" (and the underlying "git
+   rebase --preserve") can complete without creating any new commit
+   (i.e. fast-forwards), it still insisted on having a usable ident
+   information (read: user.email is set correctly), which was less
+   than nice.  As the underlying commands used inside "git rebase"
+   would fail with a more meaningful error message and advice text
+   when the bogus ident matters, this extra check was removed.
+
+ * "git gc --aggressive" used to limit the delta-chain length to 250,
+   which is way too deep for gaining additional space savings and is
+   detrimental for runtime performance.  The limit has been reduced to
+   50.
+
+ * Documentation for individual configuration variables to control use
+   of color (like `color.grep`) said that their default value is
+   'false', instead of saying their default is taken from `color.ui`.
+   When we updated the default value for color.ui from 'false' to
+   'auto' quite a while ago, all of them broke.  This has been
+   corrected.
+
+ * A shell script example in check-ref-format documentation has been
+   fixed.
+
+ * "git checkout <word>" does not follow the usual disambiguation
+   rules when the <word> can be both a rev and a path, to allow
+   checking out a branch 'foo' in a project that happens to have a
+   file 'foo' in the working tree without having to disambiguate.
+   This was poorly documented and the check was incorrect when the
+   command was run from a subdirectory.
+
+ * Some codepaths in "git diff" used regexec(3) on a buffer that was
+   mmap(2)ed, which may not have a terminating NUL, leading to a read
+   beyond the end of the mapped region.  This was fixed by introducing
+   a regexec_buf() helper that takes a <ptr,len> pair with REG_STARTEND
+   extension.
+
+ * The procedure to build Git on Mac OS X for Travis CI hardcoded the
+   internal directory structure we assumed HomeBrew uses, which was a
+   no-no.  The procedure has been updated to ask HomeBrew things we
+   need to know to fix this.
+
+ * When "git rebase -i" is given a broken instruction, it told the
+   user to fix it with "--edit-todo", but didn't say what the step
+   after that was (i.e. "--continue").
+
+ * "git add --chmod=+x" added recently lacked documentation, which has
+   been corrected.
+
+ * "git add --chmod=+x <pathspec>" added recently only toggled the
+   executable bit for paths that are either new or modified. This has
+   been corrected to flip the executable bit for all paths that match
+   the given pathspec.
+
+ * "git pack-objects --include-tag" was taught that when we know that
+   we are sending an object C, we want a tag B that directly points at
+   C but also a tag A that points at the tag B.  We used to miss the
+   intermediate tag B in some cases.
+
+ * Documentation around tools to import from CVS was fairly outdated.
+
+ * In the codepath that comes up with the hostname to be used in an
+   e-mail when the user didn't tell us, we looked at ai_canonname
+   field in struct addrinfo without making sure it is not NULL first.
+
+Also contains minor documentation updates and code clean-ups.

@@ -1,0 +1,186 @@
+#!/bin/sh
+#
+# Build two documentation trees and diff the resulting formatted output.
+# Compared to a source diff, this can reveal mistakes in the formatting.
+# For example:
+#
+#   ./doc-diff origin/master HEAD
+#
+# would show the differences introduced by a branch based on master.
+
+OPTIONS_SPEC="\
+doc-diff [options] <from> <to> [-- <diff-options>]
+doc-diff (-c|--clean)
+--
+j=n			parallel argument to pass to make
+f			force rebuild; do not rely on cached results
+c,clean			cleanup temporary working files
+from-asciidoc		use asciidoc with the 'from'-commit
+from-asciidoctor	use asciidoctor with the 'from'-commit
+asciidoc		use asciidoc with both commits
+to-asciidoc		use asciidoc with the 'to'-commit
+to-asciidoctor		use asciidoctor with the 'to'-commit
+asciidoctor		use asciidoctor with both commits
+cut-footer		cut away footer
+"
+SUBDIRECTORY_OK=1
+. "$(git --exec-path)/git-sh-setup"
+
+parallel=
+force=
+clean=
+from_program=
+to_program=
+cut_footer=
+while test $# -gt 0
+do
+	case "$1" in
+	-j)
+		parallel=$2; shift ;;
+	-c|--clean)
+		clean=t ;;
+	-f)
+		force=t ;;
+	--from-asciidoctor)
+		from_program=-asciidoctor ;;
+	--to-asciidoctor)
+		to_program=-asciidoctor ;;
+	--asciidoctor)
+		from_program=-asciidoctor
+		to_program=-asciidoctor ;;
+	--from-asciidoc)
+		from_program=-asciidoc ;;
+	--to-asciidoc)
+		to_program=-asciidoc ;;
+	--asciidoc)
+		from_program=-asciidoc
+		to_program=-asciidoc ;;
+	--cut-footer)
+		cut_footer=-cut-footer ;;
+	--)
+		shift; break ;;
+	*)
+		usage ;;
+	esac
+	shift
+done
+
+tmp="$(git rev-parse --show-toplevel)/Documentation/tmp-doc-diff" || exit 1
+
+if test -n "$clean"
+then
+	test $# -eq 0 || usage
+	git worktree remove --force "$tmp/worktree" 2>/dev/null
+	rm -rf "$tmp"
+	exit 0
+fi
+
+if test -z "$parallel"
+then
+	parallel=$(getconf _NPROCESSORS_ONLN 2>/dev/null)
+	if test $? != 0 || test -z "$parallel"
+	then
+		parallel=1
+	fi
+fi
+
+test $# -gt 1 || usage
+from=$1; shift
+to=$1; shift
+
+from_oid=$(git rev-parse --verify "$from") || exit 1
+to_oid=$(git rev-parse --verify "$to") || exit 1
+
+if test -n "$force"
+then
+	rm -rf "$tmp"
+fi
+
+# We'll do both builds in a single worktree, which lets "make" reuse
+# results that don't differ between the two trees.
+if ! test -d "$tmp/worktree"
+then
+	git worktree add -f --detach "$tmp/worktree" "$from" &&
+	dots=$(echo "$tmp/worktree" | sed 's#[^/]*#..#g') &&
+	ln -s "$dots/config.mak" "$tmp/worktree/config.mak"
+fi
+
+construct_makemanflags () {
+	if test "$1" = "-asciidoc"
+	then
+		echo USE_ASCIIDOCTOR=
+	elif test "$1" = "-asciidoctor"
+	then
+		echo USE_ASCIIDOCTOR=YesPlease
+	fi
+}
+
+from_makemanflags=$(construct_makemanflags "$from_program") &&
+to_makemanflags=$(construct_makemanflags "$to_program") &&
+
+from_dir=$from_oid$from_program$cut_footer &&
+to_dir=$to_oid$to_program$cut_footer &&
+
+# generate_render_makefile <srcdir> <dstdir>
+generate_render_makefile () {
+	find "$1" -type f |
+	while read src
+	do
+		dst=$2/${src#$1/}
+		printf 'all: %s\n' "$dst"
+		printf '%s: %s\n' "$dst" "$src"
+		printf '\t@echo >&2 "  RENDER $(notdir $@)" && \\\n'
+		printf '\tmkdir -p $(dir $@) && \\\n'
+		printf '\tMANWIDTH=80 man $< >$@+ && \\\n'
+		printf '\tmv $@+ $@\n'
+	done
+}
+
+# render_tree <committish_oid> <directory_name> <makemanflags>
+render_tree () {
+	# Skip install-man entirely if we already have an installed directory.
+	# We can't rely on make here, since "install-man" unconditionally
+	# copies the files (spending effort, but also updating timestamps that
+	# we then can't rely on during the render step). We use "mv" to make
+	# sure we don't get confused by a previous run that failed partway
+	# through.
+	oid=$1 &&
+	dname=$2 &&
+	makemanflags=$3 &&
+	if ! test -d "$tmp/installed/$dname"
+	then
+		git -C "$tmp/worktree" checkout --detach "$oid" &&
+		make -j$parallel -C "$tmp/worktree" \
+			$makemanflags \
+			GIT_VERSION=omitted \
+			GIT_DATE=1970-01-01 \
+			DESTDIR="$tmp/installed/$dname+" \
+			install-man &&
+		mv "$tmp/installed/$dname+" "$tmp/installed/$dname"
+	fi &&
+
+	# As with "installed" above, we skip the render if it's already been
+	# done.  So using make here is primarily just about running in
+	# parallel.
+	if ! test -d "$tmp/rendered/$dname"
+	then
+		generate_render_makefile "$tmp/installed/$dname" \
+			"$tmp/rendered/$dname+" |
+		make -j$parallel -f - &&
+		mv "$tmp/rendered/$dname+" "$tmp/rendered/$dname"
+
+		if test "$cut_footer" = "-cut-footer"
+		then
+			for f in $(find "$tmp/rendered/$dname" -type f)
+			do
+				head -n -2 "$f" | sed -e '${/^$/d}' >"$f+" &&
+				mv "$f+" "$f" ||
+				return 1
+			done
+		fi
+	fi
+}
+
+render_tree $from_oid $from_dir $from_makemanflags &&
+render_tree $to_oid $to_dir $to_makemanflags &&
+git -C $tmp/rendered diff --no-index "$@" $from_dir $to_dir

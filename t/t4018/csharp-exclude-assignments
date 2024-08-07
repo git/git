@@ -1,0 +1,20 @@
+class Example
+{
+    string Method(int RIGHT)
+    {
+        var constantAssignment = "test";
+        var methodAssignment = MethodCall();
+        var multiLineMethodAssignment = MethodCall(
+        );
+        var multiLine = "first"
+            + MethodCall()
+            +
+            ( MethodCall()
+            )
+            + MethodCall();
+
+        return "ChangeMe";
+    }
+
+    string MethodCall(int a = 0, int b = 0) => "test";
+}

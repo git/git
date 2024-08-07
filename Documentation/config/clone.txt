@@ -1,0 +1,23 @@
+`clone.defaultRemoteName`::
+	The name of the remote to create when cloning a repository.  Defaults to
+	`origin`.
+ifdef::git-clone[]
+	It can be overridden by passing the `--origin` command-line
+	option.
+endif::[]
+ifndef::git-clone[]
+	It can be overridden by passing the `--origin` command-line
+	option to linkgit:git-clone[1].
+endif::[]
+
+`clone.rejectShallow`::
+	Reject cloning a repository if it is a shallow one; this can be overridden by
+	passing the `--reject-shallow` option on the command line.
+ifndef::git-clone[]
+	See linkgit:git-clone[1].
+endif::[]
+
+`clone.filterSubmodules`::
+	If a partial clone filter is provided (see `--filter` in
+	linkgit:git-rev-list[1]) and `--recurse-submodules` is used, also apply
+	the filter to submodules.

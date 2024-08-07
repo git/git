@@ -1,0 +1,4 @@
+type RIGHT interface {
+	a() Type
+	b() ChangeMe
+}

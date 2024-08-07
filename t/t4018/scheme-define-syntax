@@ -1,0 +1,8 @@
+(define-syntax define-test-suite RIGHT
+  (syntax-rules ()
+    ((_ suite-name (name test) ChangeMe ...)
+     (define suite-name
+       (let ((tests
+              `((name . ,test) ...)))
+         (lambda ()
+           (run-suite 'suite-name tests)))))))

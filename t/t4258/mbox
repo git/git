@@ -1,0 +1,12 @@
+From: A U Thor <mail@example.com>
+To: list@example.org
+Subject: [PATCH v2] sample
+Date: Mon,  3 Aug 2020 22:40:55 +0700
+Message-ID: <msg-id@example.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+VGhpcyBpcyBjb21taXQgbWVzc2FnZS4NCi0tLQ0KIHRleHQgfCAyICstDQogMSBmaWxlIGNoYW5n
+ZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9uKC0pDQoNCmRpZmYgLS1naXQgYS90ZXh0IGIv
+dGV4dA0KaW5kZXggNTYyNmFiZi4uZjcxOWVmZCAxMDA2NDQNCi0tLSBhL3RleHQNCisrKyBiL3Rl
+eHQNCkBAIC0xICsxIEBADQotb25lDQordHdvDQotLSANCjIuMzEuMQoK

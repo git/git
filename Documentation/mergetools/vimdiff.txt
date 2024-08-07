@@ -1,0 +1,195 @@
+Description
+^^^^^^^^^^^
+
+When specifying `--tool=vimdiff` in `git mergetool` Git will open Vim with a 4
+windows layout distributed in the following way:
+....
+------------------------------------------
+|             |           |              |
+|   LOCAL     |   BASE    |   REMOTE     |
+|             |           |              |
+------------------------------------------
+|                                        |
+|                MERGED                  |
+|                                        |
+------------------------------------------
+....
+`LOCAL`, `BASE` and `REMOTE` are read-only buffers showing the contents of the
+conflicting file in specific commits ("commit you are merging into", "common
+ancestor commit" and "commit you are merging from" respectively)
+
+`MERGED` is a writable buffer where you have to resolve the conflicts (using the
+other read-only buffers as a reference). Once you are done, save and exit Vim as
+usual (`:wq`) or, if you want to abort, exit using `:cq`.
+
+Layout configuration
+^^^^^^^^^^^^^^^^^^^^
+
+You can change the windows layout used by Vim by setting configuration variable
+`mergetool.vimdiff.layout` which accepts a string where the following separators
+have special meaning:
+
+  - `+` is used to "open a new tab"
+  - `,` is used to "open a new vertical split"
+  - `/` is used to "open a new horizontal split"
+  - `@` is used to indicate the file containing the final version after
+    solving the conflicts. If not present, `MERGED` will be used by default.
+
+The precedence of the operators is as follows (you can use parentheses to change
+it):
+
+    `@` > `+` > `/` > `,`
+
+Let's see some examples to understand how it works:
+
+* `layout = "(LOCAL,BASE,REMOTE)/MERGED"`
++
+--
+This is exactly the same as the default layout we have already seen.
+
+Note that `/` has precedence over `,` and thus the parenthesis are not
+needed in this case. The next layout definition is equivalent:
+
+    layout = "LOCAL,BASE,REMOTE / MERGED"
+--
+* `layout = "LOCAL,MERGED,REMOTE"`
++
+--
+If, for some reason, we are not interested in the `BASE` buffer.
+....
+------------------------------------------
+|             |           |              |
+|             |           |              |
+|   LOCAL     |   MERGED  |   REMOTE     |
+|             |           |              |
+|             |           |              |
+------------------------------------------
+....
+--
+* `layout = "MERGED"`
++
+--
+Only the `MERGED` buffer will be shown. Note, however, that all the other
+ones are still loaded in vim, and you can access them with the "buffers"
+command.
+....
+------------------------------------------
+|                                        |
+|                                        |
+|                 MERGED                 |
+|                                        |
+|                                        |
+------------------------------------------
+....
+--
+* `layout = "@LOCAL,REMOTE"`
++
+--
+When `MERGED` is not present in the layout, you must "mark" one of the
+buffers with an asterisk. That will become the buffer you need to edit and
+save after resolving the conflicts.
+....
+------------------------------------------
+|                   |                    |
+|                   |                    |
+|                   |                    |
+|     LOCAL         |    REMOTE          |
+|                   |                    |
+|                   |                    |
+|                   |                    |
+------------------------------------------
+....
+--
+* `layout = "LOCAL,BASE,REMOTE / MERGED + BASE,LOCAL + BASE,REMOTE"`
++
+--
+Three tabs will open: the first one is a copy of the default layout, while
+the other two only show the differences between (`BASE` and `LOCAL`) and
+(`BASE` and `REMOTE`) respectively.
+....
+------------------------------------------
+| <TAB #1> |  TAB #2  |  TAB #3  |       |
+------------------------------------------
+|             |           |              |
+|   LOCAL     |   BASE    |   REMOTE     |
+|             |           |              |
+------------------------------------------
+|                                        |
+|                MERGED                  |
+|                                        |
+------------------------------------------
+....
+....
+------------------------------------------
+|  TAB #1  | <TAB #2> |  TAB #3  |       |
+------------------------------------------
+|                   |                    |
+|                   |                    |
+|                   |                    |
+|     BASE          |    LOCAL           |
+|                   |                    |
+|                   |                    |
+|                   |                    |
+------------------------------------------
+....
+....
+------------------------------------------
+|  TAB #1  |  TAB #2  | <TAB #3> |       |
+------------------------------------------
+|                   |                    |
+|                   |                    |
+|                   |                    |
+|     BASE          |    REMOTE          |
+|                   |                    |
+|                   |                    |
+|                   |                    |
+------------------------------------------
+....
+--
+* `layout = "LOCAL,BASE,REMOTE / MERGED + BASE,LOCAL + BASE,REMOTE + (LOCAL/BASE/REMOTE),MERGED"`
++
+--
+Same as the previous example, but adds a fourth tab with the same
+information as the first tab, with a different layout.
+....
+---------------------------------------------
+|  TAB #1  |  TAB #2  |  TAB #3  | <TAB #4> |
+---------------------------------------------
+|       LOCAL         |                     |
+|---------------------|                     |
+|       BASE          |        MERGED       |
+|---------------------|                     |
+|       REMOTE        |                     |
+---------------------------------------------
+....
+Note how in the third tab definition we need to use parentheses to make `,`
+have precedence over `/`.
+--
+
+Variants
+^^^^^^^^
+
+Instead of `--tool=vimdiff`, you can also use one of these other variants:
+
+  * `--tool=gvimdiff`, to open gVim instead of Vim.
+
+  * `--tool=nvimdiff`, to open Neovim instead of Vim.
+
+When using these variants, in order to specify a custom layout you will have to
+set configuration variables `mergetool.gvimdiff.layout` and
+`mergetool.nvimdiff.layout` instead of `mergetool.vimdiff.layout` (though the
+latter will be used as fallback if the variant-specific one is not set).
+
+In addition, for backwards compatibility with previous Git versions, you can
+also append `1`, `2` or `3` to either `vimdiff` or any of the variants (ex:
+`vimdiff3`, `nvimdiff1`, etc...) to use a predefined layout.
+In other words, using `--tool=[g,n,]vimdiffx` is the same as using
+`--tool=[g,n,]vimdiff` and setting configuration variable
+`mergetool.[g,n,]vimdiff.layout` to...
+
+  * `x=1`: `"@LOCAL, REMOTE"`
+  * `x=2`: `"LOCAL, MERGED, REMOTE"`
+  * `x=3`: `"MERGED"`
+
+Example: using `--tool=gvimdiff2` will open `gvim` with three columns (LOCAL,
+MERGED and REMOTE).

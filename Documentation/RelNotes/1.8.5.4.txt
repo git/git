@@ -1,0 +1,48 @@
+Git v1.8.5.4 Release Notes
+==========================
+
+Fixes since v1.8.5.3
+--------------------
+
+ * "git fetch --depth=0" was a no-op, and was silently ignored.
+   Diagnose it as an error.
+
+ * Remote repository URL expressed in scp-style host:path notation are
+   parsed more carefully (e.g. "foo/bar:baz" is local, "[::1]:/~user" asks
+   to connect to user's home directory on host at address ::1.
+
+ * SSL-related options were not passed correctly to underlying socket
+   layer in "git send-email".
+
+ * "git commit -v" appends the patch to the log message before
+   editing, and then removes the patch when the editor returned
+   control. However, the patch was not stripped correctly when the
+   first modified path was a submodule.
+
+ * "git mv A B/", when B does not exist as a directory, should error
+   out, but it didn't.
+
+ * When we figure out how many file descriptors to allocate for
+   keeping packfiles open, a system with non-working getrlimit() could
+   cause us to die(), but because we make this call only to get a
+   rough estimate of how many is available and we do not even attempt
+   to use up all file descriptors available ourselves, it is nicer to
+   fall back to a reasonable low value rather than dying.
+
+ * "git log --decorate" did not handle a tag pointed by another tag
+   nicely.
+
+ * "git add -A" (no other arguments) in a totally empty working tree
+   used to emit an error.
+
+ * There is no reason to have a hardcoded upper limit of the number of
+   parents for an octopus merge, created via the graft mechanism, but
+   there was.
+
+ * The implementation of 'git stash $cmd "stash@{...}"' did not quote
+   the stash argument properly and left it split at IFS whitespace.
+
+ * The documentation to "git pull" hinted there is an "-m" option
+   because it incorrectly shared the documentation with "git merge".
+
+Also contains typofixes, documentation updates and trivial code clean-ups.

@@ -1,0 +1,100 @@
+sendemail.identity::
+	A configuration identity. When given, causes values in the
+	'sendemail.<identity>' subsection to take precedence over
+	values in the 'sendemail' section. The default identity is
+	the value of `sendemail.identity`.
+
+sendemail.smtpEncryption::
+	See linkgit:git-send-email[1] for description.  Note that this
+	setting is not subject to the 'identity' mechanism.
+
+sendemail.smtpSSLCertPath::
+	Path to ca-certificates (either a directory or a single file).
+	Set it to an empty string to disable certificate verification.
+
+sendemail.<identity>.*::
+	Identity-specific versions of the 'sendemail.*' parameters
+	found below, taking precedence over those when this
+	identity is selected, through either the command-line or
+	`sendemail.identity`.
+
+sendemail.multiEdit::
+	If true (default), a single editor instance will be spawned to edit
+	files you have to edit (patches when `--annotate` is used, and the
+	summary when `--compose` is used). If false, files will be edited one
+	after the other, spawning a new editor each time.
+
+sendemail.confirm::
+	Sets the default for whether to confirm before sending. Must be
+	one of 'always', 'never', 'cc', 'compose', or 'auto'. See `--confirm`
+	in the linkgit:git-send-email[1] documentation for the meaning of these
+	values.
+
+sendemail.aliasesFile::
+	To avoid typing long email addresses, point this to one or more
+	email aliases files.  You must also supply `sendemail.aliasFileType`.
+
+sendemail.aliasFileType::
+	Format of the file(s) specified in sendemail.aliasesFile. Must be
+	one of 'mutt', 'mailrc', 'pine', 'elm', 'gnus', or 'sendmail'.
++
+What an alias file in each format looks like can be found in
+the documentation of the email program of the same name. The
+differences and limitations from the standard formats are
+described below:
++
+--
+sendmail;;
+*	Quoted aliases and quoted addresses are not supported: lines that
+	contain a `"` symbol are ignored.
+*	Redirection to a file (`/path/name`) or pipe (`|command`) is not
+	supported.
+*	File inclusion (`:include: /path/name`) is not supported.
+*	Warnings are printed on the standard error output for any
+	explicitly unsupported constructs, and any other lines that are not
+	recognized by the parser.
+--
+sendemail.annotate::
+sendemail.bcc::
+sendemail.cc::
+sendemail.ccCmd::
+sendemail.chainReplyTo::
+sendemail.envelopeSender::
+sendemail.from::
+sendemail.headerCmd::
+sendemail.signedOffByCc::
+sendemail.smtpPass::
+sendemail.suppressCc::
+sendemail.suppressFrom::
+sendemail.to::
+sendemail.toCmd::
+sendemail.smtpDomain::
+sendemail.smtpServer::
+sendemail.smtpServerPort::
+sendemail.smtpServerOption::
+sendemail.smtpUser::
+sendemail.thread::
+sendemail.transferEncoding::
+sendemail.validate::
+sendemail.xmailer::
+	These configuration variables all provide a default for
+	linkgit:git-send-email[1] command-line options. See its
+	documentation for details.
+
+sendemail.signedOffCc (deprecated)::
+	Deprecated alias for `sendemail.signedOffByCc`.
+
+sendemail.smtpBatchSize::
+	Number of messages to be sent per connection, after that a relogin
+	will happen.  If the value is 0 or undefined, send all messages in
+	one connection.
+	See also the `--batch-size` option of linkgit:git-send-email[1].
+
+sendemail.smtpReloginDelay::
+	Seconds to wait before reconnecting to the smtp server.
+	See also the `--relogin-delay` option of linkgit:git-send-email[1].
+
+sendemail.forbidSendmailVariables::
+	To avoid common misconfiguration mistakes, linkgit:git-send-email[1]
+	will abort with a warning if any configuration options for "sendmail"
+	exist. Set this variable to bypass the check.

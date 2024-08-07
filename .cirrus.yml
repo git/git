@@ -1,0 +1,22 @@
+env:
+  CIRRUS_CLONE_DEPTH: 1
+
+freebsd_task:
+  env:
+    GIT_PROVE_OPTS: "--timer --jobs 10"
+    GIT_TEST_OPTS: "--no-chain-lint --no-bin-wrappers"
+    MAKEFLAGS: "-j4"
+    DEFAULT_TEST_TARGET: prove
+    DEVELOPER: 1
+  freebsd_instance:
+    image_family: freebsd-13-2
+    memory: 2G
+  install_script:
+    pkg install -y gettext gmake perl5
+  create_user_script:
+    - pw useradd git
+    - chown -R git:git .
+  build_script:
+    - su git -c gmake
+  test_script:
+    - su git -c 'gmake DEFAULT_UNIT_TEST_TARGET=unit-tests-prove test unit-tests'

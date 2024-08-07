@@ -1,0 +1,69 @@
+Git v2.8.4 Release Notes
+========================
+
+Fixes since v2.8.3
+------------------
+
+ * Documentation for "git merge --verify-signatures" has been updated
+   to clarify that the signature of only the commit at the tip is
+   verified.  Also the phrasing used for signature and key validity is
+   adjusted to align with that used by OpenPGP.
+
+ * On Windows, .git and optionally any files whose name starts with a
+   dot are now marked as hidden, with a core.hideDotFiles knob to
+   customize this behaviour.
+
+ * Portability enhancement for "rebase -i" to help platforms whose
+   shell does not like "for i in <empty>" (which is not POSIX-kosher).
+
+ * "git fsck" learned to catch NUL byte in a commit object as
+   potential error and warn.
+
+ * CI test was taught to build documentation pages.
+
+ * Many 'linkgit:<git documentation page>' references were broken,
+   which are all fixed with this.
+
+ * "git describe --contains" often made a hard-to-justify choice of
+   tag to give name to a given commit, because it tried to come up
+   with a name with smallest number of hops from a tag, causing an old
+   commit whose close descendant that is recently tagged were not
+   described with respect to an old tag but with a newer tag.  It did
+   not help that its computation of "hop" count was further tweaked to
+   penalize being on a side branch of a merge.  The logic has been
+   updated to favor using the tag with the oldest tagger date, which
+   is a lot easier to explain to the end users: "We describe a commit
+   in terms of the (chronologically) oldest tag that contains the
+   commit."
+
+ * Running tests with '-x' option to trace the individual command
+   executions is a useful way to debug test scripts, but some tests
+   that capture the standard error stream and check what the command
+   said can be broken with the trace output mixed in.  When running
+   our tests under "bash", however, we can redirect the trace output
+   to another file descriptor to keep the standard error of programs
+   being tested intact.
+
+ * "http.cookieFile" configuration variable clearly wants a pathname,
+   but we forgot to treat it as such by e.g. applying tilde expansion.
+
+ * When de-initialising all submodules, "git submodule deinit" gave a
+   faulty recommendation to use "git submodule deinit .", which would
+   result in a strange error message in a pathological corner case.
+   This has been corrected to suggest "submodule deinit --all" instead.
+
+ * Many commands normalize command line arguments from NFD to NFC
+   variant of UTF-8 on OSX, but commands in the "diff" family did
+   not, causing "git diff $path" to complain that no such path is
+   known to Git.  They have been taught to do the normalization.
+
+ * A couple of bugs around core.autocrlf have been fixed.
+
+ * "git difftool" learned to handle unmerged paths correctly in
+   dir-diff mode.
+
+ * The "are we talking with TTY, doing an interactive session?"
+   detection has been updated to work better for "Git for Windows".
+
+
+Also contains other minor documentation updates and code clean-ups.

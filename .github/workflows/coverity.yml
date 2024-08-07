@@ -1,0 +1,163 @@
+name: Coverity
+
+# This GitHub workflow automates submitting builds to Coverity Scan. To enable it,
+# set the repository variable `ENABLE_COVERITY_SCAN_FOR_BRANCHES` (for details, see
+# https://docs.github.com/en/actions/learn-github-actions/variables) to a JSON
+# string array containing the names of the branches for which the workflow should be
+# run, e.g. `["main", "next"]`.
+#
+# In addition, two repository secrets must be set (for details how to add secrets, see
+# https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions):
+# `COVERITY_SCAN_EMAIL` and `COVERITY_SCAN_TOKEN`. The former specifies the
+# email to which the Coverity reports should be sent and the latter can be
+# obtained from the Project Settings tab of the Coverity project).
+#
+# The workflow runs on `ubuntu-latest` by default. This can be overridden by setting
+# the repository variable `ENABLE_COVERITY_SCAN_ON_OS` to a JSON string array specifying
+# the operating systems, e.g. `["ubuntu-latest", "windows-latest"]`.
+#
+# By default, the builds are submitted to the Coverity project `git`. To override this,
+# set the repository variable `COVERITY_PROJECT`.
+
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  coverity:
+    if: contains(fromJSON(vars.ENABLE_COVERITY_SCAN_FOR_BRANCHES || '[""]'), github.ref_name)
+    strategy:
+      matrix:
+        os: ${{ fromJSON(vars.ENABLE_COVERITY_SCAN_ON_OS || '["ubuntu-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    env:
+      COVERITY_PROJECT: ${{ vars.COVERITY_PROJECT || 'git' }}
+      COVERITY_LANGUAGE: cxx
+      COVERITY_PLATFORM: overridden-below
+    steps:
+      - uses: actions/checkout@v4
+      - name: install minimal Git for Windows SDK
+        if: contains(matrix.os, 'windows')
+        uses: git-for-windows/setup-git-for-windows-sdk@v1
+      - run: ci/install-dependencies.sh
+        if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
+        env:
+          distro: ${{ matrix.os }}
+
+      # The Coverity site says the tool is usually updated twice yearly, so the
+      # MD5 of download can be used to determine whether there's been an update.
+      - name: get the Coverity Build Tool hash
+        id: lookup
+        run: |
+          case "${{ matrix.os }}" in
+          *windows*)
+            COVERITY_PLATFORM=win64
+            COVERITY_TOOL_FILENAME=cov-analysis.zip
+            MAKEFLAGS=-j$(nproc)
+            ;;
+          *macos*)
+            COVERITY_PLATFORM=macOSX
+            COVERITY_TOOL_FILENAME=cov-analysis.dmg
+            MAKEFLAGS=-j$(sysctl -n hw.physicalcpu)
+            ;;
+          *ubuntu*)
+            COVERITY_PLATFORM=linux64
+            COVERITY_TOOL_FILENAME=cov-analysis.tgz
+            MAKEFLAGS=-j$(nproc)
+            ;;
+          *)
+            echo '::error::unhandled OS ${{ matrix.os }}' >&2
+            exit 1
+            ;;
+          esac
+          echo "COVERITY_PLATFORM=$COVERITY_PLATFORM" >>$GITHUB_ENV
+          echo "COVERITY_TOOL_FILENAME=$COVERITY_TOOL_FILENAME" >>$GITHUB_ENV
+          echo "MAKEFLAGS=$MAKEFLAGS" >>$GITHUB_ENV
+          MD5=$(curl https://scan.coverity.com/download/$COVERITY_LANGUAGE/$COVERITY_PLATFORM \
+                   --fail \
+                   --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
+                   --form project="$COVERITY_PROJECT" \
+                   --form md5=1)
+          case $? in
+          0) ;; # okay
+          22) # 40x, i.e. access denied
+            echo "::error::incorrect token or project?" >&2
+            exit 1
+            ;;
+          *) # other error
+            echo "::error::Failed to retrieve MD5" >&2
+            exit 1
+            ;;
+          esac
+          echo "hash=$MD5" >>$GITHUB_OUTPUT
+
+      # Try to cache the tool to avoid downloading 1GB+ on every run.
+      # A cache miss will add ~30s to create, but a cache hit will save minutes.
+      - name: restore the Coverity Build Tool
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/cov-analysis
+          key: cov-build-${{ env.COVERITY_LANGUAGE }}-${{ env.COVERITY_PLATFORM }}-${{ steps.lookup.outputs.hash }}
+      - name: download the Coverity Build Tool (${{ env.COVERITY_LANGUAGE }} / ${{ env.COVERITY_PLATFORM}})
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          curl https://scan.coverity.com/download/$COVERITY_LANGUAGE/$COVERITY_PLATFORM \
+            --fail --no-progress-meter \
+            --output $RUNNER_TEMP/$COVERITY_TOOL_FILENAME \
+            --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
+            --form project="$COVERITY_PROJECT"
+      - name: extract the Coverity Build Tool
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          case "$COVERITY_TOOL_FILENAME" in
+          *.tgz)
+            mkdir $RUNNER_TEMP/cov-analysis &&
+            tar -xzf $RUNNER_TEMP/$COVERITY_TOOL_FILENAME --strip 1 -C $RUNNER_TEMP/cov-analysis
+            ;;
+          *.dmg)
+            cd $RUNNER_TEMP &&
+            attach="$(hdiutil attach $COVERITY_TOOL_FILENAME)" &&
+            volume="$(echo "$attach" | cut -f 3 | grep /Volumes/)" &&
+            mkdir cov-analysis &&
+            cd cov-analysis &&
+            sh "$volume"/cov-analysis-macosx-*.sh &&
+            ls -l &&
+            hdiutil detach "$volume"
+            ;;
+          *.zip)
+            cd $RUNNER_TEMP &&
+            mkdir cov-analysis-tmp &&
+            unzip -d cov-analysis-tmp $COVERITY_TOOL_FILENAME &&
+            mv cov-analysis-tmp/* cov-analysis
+            ;;
+          *)
+            echo "::error::unhandled archive type: $COVERITY_TOOL_FILENAME" >&2
+            exit 1
+            ;;
+          esac
+      - name: cache the Coverity Build Tool
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/cov-analysis
+          key: cov-build-${{ env.COVERITY_LANGUAGE }}-${{ env.COVERITY_PLATFORM }}-${{ steps.lookup.outputs.hash }}
+      - name: build with cov-build
+        run: |
+          export PATH="$RUNNER_TEMP/cov-analysis/bin:$PATH" &&
+          cov-configure --gcc &&
+          cov-build --dir cov-int make
+      - name: package the build
+        run: tar -czvf cov-int.tgz cov-int
+      - name: submit the build to Coverity Scan
+        run: |
+          curl \
+            --fail \
+            --form token='${{ secrets.COVERITY_SCAN_TOKEN }}' \
+            --form email='${{ secrets.COVERITY_SCAN_EMAIL }}' \
+            --form file=@cov-int.tgz \
+            --form version='${{ github.sha }}' \
+            "https://scan.coverity.com/builds?project=$COVERITY_PROJECT"

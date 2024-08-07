@@ -1,0 +1,201 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 1807dc6f-c693-4cda-9710-00e1be8c1f21
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2008-09-14T19:53:13.006748Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 111
+Content-length: 111
+
+K 7
+svn:log
+V 12
+Create trunk
+K 10
+svn:author
+V 4
+alec
+K 8
+svn:date
+V 27
+2008-09-14T19:53:13.239689Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 119
+Content-length: 119
+
+K 7
+svn:log
+V 20
+Create trunk/project
+K 10
+svn:author
+V 4
+alec
+K 8
+svn:date
+V 27
+2008-09-14T19:53:13.548860Z
+PROPS-END
+
+Node-path: trunk/project
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 111
+Content-length: 111
+
+K 7
+svn:log
+V 12
+add new file
+K 10
+svn:author
+V 4
+alec
+K 8
+svn:date
+V 27
+2008-09-14T19:53:15.433630Z
+PROPS-END
+
+Node-path: trunk/project/foo
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4
+Text-content-md5: d3b07384d113edec49eaa6238ad5ff00
+Content-length: 14
+
+PROPS-END
+foo
+
+
+Revision-number: 4
+Prop-content-length: 116
+Content-length: 116
+
+K 7
+svn:log
+V 17
+change foo to bar
+K 10
+svn:author
+V 4
+alec
+K 8
+svn:date
+V 27
+2008-09-14T19:53:17.339884Z
+PROPS-END
+
+Node-path: trunk/project/foo
+Node-kind: file
+Node-action: change
+Text-content-length: 4
+Text-content-md5: c157a79031e1c40f85931829bc5fc552
+Content-length: 4
+
+bar
+
+
+Revision-number: 5
+Prop-content-length: 114
+Content-length: 114
+
+K 7
+svn:log
+V 15
+don't like that
+K 10
+svn:author
+V 4
+alec
+K 8
+svn:date
+V 27
+2008-09-14T19:53:19.335001Z
+PROPS-END
+
+Node-path: trunk/project
+Node-action: delete
+
+
+Revision-number: 6
+Prop-content-length: 110
+Content-length: 110
+
+K 7
+svn:log
+V 11
+reset trunk
+K 10
+svn:author
+V 4
+alec
+K 8
+svn:date
+V 27
+2008-09-14T19:53:19.845897Z
+PROPS-END
+
+Node-path: trunk/project
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: trunk/project
+
+
+Revision-number: 7
+Prop-content-length: 113
+Content-length: 113
+
+K 7
+svn:log
+V 14
+change to quux
+K 10
+svn:author
+V 4
+alec
+K 8
+svn:date
+V 27
+2008-09-14T19:53:21.367947Z
+PROPS-END
+
+Node-path: trunk/project/foo
+Node-kind: file
+Node-action: change
+Text-content-length: 5
+Text-content-md5: d3b07a382ec010c01889250fce66fb13
+Content-length: 5
+
+quux
+
+

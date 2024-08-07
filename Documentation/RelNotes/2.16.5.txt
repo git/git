@@ -1,0 +1,6 @@
+Git v2.16.5 Release Notes
+=========================
+
+This release merges up the fixes that appear in v2.14.5 to address
+the recently reported CVE-2018-17456; see the release notes for that
+version for details.

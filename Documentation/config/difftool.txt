@@ -1,0 +1,43 @@
+diff.tool::
+	Controls which diff tool is used by linkgit:git-difftool[1].
+	This variable overrides the value configured in `merge.tool`.
+	The list below shows the valid built-in values.
+	Any other value is treated as a custom diff tool and requires
+	that a corresponding difftool.<tool>.cmd variable is defined.
+
+diff.guitool::
+	Controls which diff tool is used by linkgit:git-difftool[1] when
+	the -g/--gui flag is specified. This variable overrides the value
+	configured in `merge.guitool`. The list below shows the valid
+	built-in values. Any other value is treated as a custom diff tool
+	and requires that a corresponding difftool.<guitool>.cmd variable
+	is defined.
+
+difftool.<tool>.cmd::
+	Specify the command to invoke the specified diff tool.
+	The specified command is evaluated in shell with the following
+	variables available:  'LOCAL' is set to the name of the temporary
+	file containing the contents of the diff pre-image and 'REMOTE'
+	is set to the name of the temporary file containing the contents
+	of the diff post-image.
++
+See the `--tool=<tool>` option in linkgit:git-difftool[1] for more details.
+
+difftool.<tool>.path::
+	Override the path for the given tool.  This is useful in case
+	your tool is not in the PATH.
+
+difftool.trustExitCode::
+	Exit difftool if the invoked diff tool returns a non-zero exit status.
++
+See the `--trust-exit-code` option in linkgit:git-difftool[1] for more details.
+
+difftool.prompt::
+	Prompt before each invocation of the diff tool.
+
+difftool.guiDefault::
+	Set `true` to use the `diff.guitool` by default (equivalent to specifying
+	the `--gui` argument), or `auto` to select `diff.guitool` or `diff.tool`
+	depending on the presence of a `DISPLAY` environment variable value. The
+	default is `false`, where the `--gui` argument must be provided
+	explicitly for the `diff.guitool` to be used.

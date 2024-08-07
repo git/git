@@ -1,0 +1,17 @@
+tag.forceSignAnnotated::
+	A boolean to specify whether annotated tags created should be GPG signed.
+	If `--annotate` is specified on the command line, it takes
+	precedence over this option.
+
+tag.sort::
+	This variable controls the sort ordering of tags when displayed by
+	linkgit:git-tag[1]. Without the "--sort=<value>" option provided, the
+	value of this variable will be used as the default.
+
+tag.gpgSign::
+	A boolean to specify whether all tags should be GPG signed.
+	Use of this option when running in an automated script can
+	result in a large number of tags being signed. It is therefore
+	convenient to use an agent to avoid typing your gpg passphrase
+	several times. Note that this option doesn't affect tag signing
+	behavior enabled by "-u <keyid>" or "--local-user=<keyid>" options.

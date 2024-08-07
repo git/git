@@ -1,0 +1,2474 @@
+# Norwegian (Bokmål) translation of git-gui.
+# Copyright (C) 2007-2008 Shawn Pearce, et al.
+# This file is distributed under the same license as the git-gui package.
+#
+# Fredrik Skolmli <fredrik@frsk.net>, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: nb\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-11-16 13:56-0800\n"
+"PO-Revision-Date: 2008-12-03 16:05+0100\n"
+"Last-Translator: Fredrik Skolmli <fredrik@frsk.net>\n"
+"Language-Team: Norwegian Bokmål\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: git-gui.sh:41 git-gui.sh:737 git-gui.sh:751 git-gui.sh:764 git-gui.sh:847
+#: git-gui.sh:866
+msgid "git-gui: fatal error"
+msgstr "git-gui: Kritisk feil"
+
+#: git-gui.sh:689
+#, tcl-format
+msgid "Invalid font specified in %s:"
+msgstr "Ugyldig font spesifisert i %s:"
+
+#: git-gui.sh:723
+msgid "Main Font"
+msgstr "Hovedskrifttype"
+
+#: git-gui.sh:724
+msgid "Diff/Console Font"
+msgstr "Diff-/Konsollskrifttype"
+
+#: git-gui.sh:738
+msgid "Cannot find git in PATH."
+msgstr "Kan ikke finne git i PATH"
+
+#: git-gui.sh:765
+msgid "Cannot parse Git version string:"
+msgstr "Kan ikke tyde Git's oppgitte versjon:"
+
+#: git-gui.sh:783
+#, tcl-format
+msgid ""
+"Git version cannot be determined.\n"
+"\n"
+"%s claims it is version '%s'.\n"
+"\n"
+"%s requires at least Git 1.5.0 or later.\n"
+"\n"
+"Assume '%s' is version 1.5.0?\n"
+msgstr ""
+"Kan ikke avgjøre hvilken Git-versjon du har.\n"
+"\n"
+"%s sier versjonen er '%s'.\n"
+"\n"
+"%s krever Git versjon 1.5.0 eller nyere.\n"
+"\n"
+"Anta at '%s' er versjon 1.5.0?\n"
+
+#: git-gui.sh:1062
+msgid "Git directory not found:"
+msgstr "Git-katalog ikke funnet:"
+
+#: git-gui.sh:1069
+msgid "Cannot move to top of working directory:"
+msgstr "Kan ikke gå til toppen av arbeidskatalogen:"
+
+#: git-gui.sh:1076
+msgid "Cannot use funny .git directory:"
+msgstr ""
+
+#: git-gui.sh:1081
+msgid "No working directory"
+msgstr "Ingen arbeidskatalog"
+
+#: git-gui.sh:1247 lib/checkout_op.tcl:305
+msgid "Refreshing file status..."
+msgstr "Oppdaterer filstatus..."
+
+#: git-gui.sh:1303
+msgid "Scanning for modified files ..."
+msgstr "Søker etter endrede filer..."
+
+#: git-gui.sh:1367
+msgid "Calling prepare-commit-msg hook..."
+msgstr ""
+
+#: git-gui.sh:1384
+msgid "Commit declined by prepare-commit-msg hook."
+msgstr ""
+
+#: git-gui.sh:1542 lib/browser.tcl:246
+msgid "Ready."
+msgstr "Klar."
+
+#: git-gui.sh:1819
+msgid "Unmodified"
+msgstr "Uendret"
+
+#: git-gui.sh:1821
+msgid "Modified, not staged"
+msgstr "Endret, ikke køet"
+
+#: git-gui.sh:1822 git-gui.sh:1830
+msgid "Staged for commit"
+msgstr "Køet for innsjekking"
+
+#: git-gui.sh:1823 git-gui.sh:1831
+msgid "Portions staged for commit"
+msgstr "Delvis køet for innsjekking"
+
+#: git-gui.sh:1824 git-gui.sh:1832
+msgid "Staged for commit, missing"
+msgstr "Klar for innsjekking, fraværende"
+
+#: git-gui.sh:1826
+msgid "File type changed, not staged"
+msgstr "Filtype endret, ikke køet"
+
+#: git-gui.sh:1827
+msgid "File type changed, staged"
+msgstr "Filtype endret, køet"
+
+#: git-gui.sh:1829
+msgid "Untracked, not staged"
+msgstr "Usporet, ikke køet"
+
+#: git-gui.sh:1834
+msgid "Missing"
+msgstr "Fraværende"
+
+#: git-gui.sh:1835
+msgid "Staged for removal"
+msgstr "Køet for fjerning"
+
+#: git-gui.sh:1836
+msgid "Staged for removal, still present"
+msgstr "Køet for fjerning, fortsatt tilstede"
+
+#: git-gui.sh:1838 git-gui.sh:1839 git-gui.sh:1840 git-gui.sh:1841
+#: git-gui.sh:1842 git-gui.sh:1843
+msgid "Requires merge resolution"
+msgstr "Sammenslåingen krever konflikthåndtering"
+
+#: git-gui.sh:1878
+msgid "Starting gitk... please wait..."
+msgstr "Starter gitk... Vennligst vent..."
+
+#: git-gui.sh:1887
+msgid "Couldn't find gitk in PATH"
+msgstr "Kunne ikke finne gitk i PATH"
+
+#: git-gui.sh:2280 lib/choose_repository.tcl:36
+msgid "Repository"
+msgstr "Arkiv"
+
+#: git-gui.sh:2281
+msgid "Edit"
+msgstr "Redigere"
+
+#: git-gui.sh:2283 lib/choose_rev.tcl:561
+msgid "Branch"
+msgstr "Gren"
+
+#: git-gui.sh:2286 lib/choose_rev.tcl:548
+msgid "Commit@@noun"
+msgstr "Innsjekking"
+
+#: git-gui.sh:2289 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
+msgid "Merge"
+msgstr "Sammenslåing"
+
+#: git-gui.sh:2290 lib/choose_rev.tcl:557
+msgid "Remote"
+msgstr "Fjernarkiv"
+
+#: git-gui.sh:2293
+msgid "Tools"
+msgstr "Verktøy"
+
+#: git-gui.sh:2302
+msgid "Explore Working Copy"
+msgstr "Utforsk arbeidskopien"
+
+#: git-gui.sh:2307
+msgid "Browse Current Branch's Files"
+msgstr "Utforsk denne grens filer"
+
+#: git-gui.sh:2311
+msgid "Browse Branch Files..."
+msgstr "Bla igjennom filer på gren..."
+
+#: git-gui.sh:2316
+msgid "Visualize Current Branch's History"
+msgstr "Visualiser denne grens historikk"
+
+#: git-gui.sh:2320
+msgid "Visualize All Branch History"
+msgstr "Visualiser alle greners historikk"
+
+#: git-gui.sh:2327
+#, tcl-format
+msgid "Browse %s's Files"
+msgstr "Bla i filene til %s"
+
+#: git-gui.sh:2329
+#, tcl-format
+msgid "Visualize %s's History"
+msgstr "Visualiser historien til %s"
+
+#: git-gui.sh:2334 lib/database.tcl:27 lib/database.tcl:67
+msgid "Database Statistics"
+msgstr "Databasestatistikk"
+
+#: git-gui.sh:2337 lib/database.tcl:34
+msgid "Compress Database"
+msgstr "Kompress databasen"
+
+#: git-gui.sh:2340
+msgid "Verify Database"
+msgstr "Verifiser databasen"
+
+#: git-gui.sh:2347 git-gui.sh:2351 git-gui.sh:2355 lib/shortcut.tcl:7
+#: lib/shortcut.tcl:39 lib/shortcut.tcl:71
+msgid "Create Desktop Icon"
+msgstr "Lag skrivebordsikon"
+
+#: git-gui.sh:2363 lib/choose_repository.tcl:183 lib/choose_repository.tcl:191
+msgid "Quit"
+msgstr "Avslutt"
+
+#: git-gui.sh:2371
+msgid "Undo"
+msgstr "Angre"
+
+#: git-gui.sh:2374
+msgid "Redo"
+msgstr "Gjør om"
+
+#: git-gui.sh:2378 git-gui.sh:2923
+msgid "Cut"
+msgstr "Klipp ut"
+
+#: git-gui.sh:2381 git-gui.sh:2926 git-gui.sh:3000 git-gui.sh:3082
+#: lib/console.tcl:69
+msgid "Copy"
+msgstr "Kopier"
+
+#: git-gui.sh:2384 git-gui.sh:2929
+msgid "Paste"
+msgstr "Lim inn"
+
+#: git-gui.sh:2387 git-gui.sh:2932 lib/branch_delete.tcl:26
+#: lib/remote_branch_delete.tcl:38
+msgid "Delete"
+msgstr "Slett"
+
+#: git-gui.sh:2391 git-gui.sh:2936 git-gui.sh:3086 lib/console.tcl:71
+msgid "Select All"
+msgstr "Velg alle"
+
+#: git-gui.sh:2400
+msgid "Create..."
+msgstr "Opprett..."
+
+#: git-gui.sh:2406
+msgid "Checkout..."
+msgstr "Sjekk ut..."
+
+#: git-gui.sh:2412
+msgid "Rename..."
+msgstr "Endre navn..."
+
+#: git-gui.sh:2417
+msgid "Delete..."
+msgstr "Slett..."
+
+#: git-gui.sh:2422
+msgid "Reset..."
+msgstr "Tilbakestill..."
+
+#: git-gui.sh:2432
+msgid "Done"
+msgstr "Ferdig"
+
+#: git-gui.sh:2434
+msgid "Commit@@verb"
+msgstr "Sjekk inn"
+
+#: git-gui.sh:2443 git-gui.sh:2864
+msgid "New Commit"
+msgstr "Ny innsjekking"
+
+#: git-gui.sh:2451 git-gui.sh:2871
+msgid "Amend Last Commit"
+msgstr "Legg til forrige innsjekking"
+
+#: git-gui.sh:2461 git-gui.sh:2825 lib/remote_branch_delete.tcl:99
+msgid "Rescan"
+msgstr "Søk på ny"
+
+#: git-gui.sh:2467
+msgid "Stage To Commit"
+msgstr "Legg til i innsjekkingskøen"
+
+#: git-gui.sh:2473
+msgid "Stage Changed Files To Commit"
+msgstr "Legg til endrede filer i innsjekkingskøen"
+
+#: git-gui.sh:2479
+msgid "Unstage From Commit"
+msgstr "Fjern fra innsjekkingskøen"
+
+#: git-gui.sh:2484 lib/index.tcl:410
+msgid "Revert Changes"
+msgstr "Tilbakestill endringer"
+
+#: git-gui.sh:2491 git-gui.sh:3069
+msgid "Show Less Context"
+msgstr "Vis mindre innhold"
+
+#: git-gui.sh:2495 git-gui.sh:3073
+msgid "Show More Context"
+msgstr "Vis mer innhold"
+
+#: git-gui.sh:2502 git-gui.sh:2838 git-gui.sh:2947
+msgid "Sign Off"
+msgstr "Signér"
+
+#: git-gui.sh:2518
+msgid "Local Merge..."
+msgstr "Lokal sammenslåing..."
+
+#: git-gui.sh:2523
+msgid "Abort Merge..."
+msgstr "Avbryt sammenslåing..."
+
+#: git-gui.sh:2535 git-gui.sh:2575
+msgid "Add..."
+msgstr "Legg til..."
+
+#: git-gui.sh:2539
+msgid "Push..."
+msgstr "Send..."
+
+#: git-gui.sh:2543
+msgid "Delete Branch..."
+msgstr "Fjern gren..."
+
+#: git-gui.sh:2553 git-gui.sh:2589 lib/about.tcl:14
+#: lib/choose_repository.tcl:44 lib/choose_repository.tcl:53
+#, tcl-format
+msgid "About %s"
+msgstr "Om %s"
+
+#: git-gui.sh:2557
+msgid "Preferences..."
+msgstr "Innstillinger..."
+
+#: git-gui.sh:2565 git-gui.sh:3115
+msgid "Options..."
+msgstr "Alternativer..."
+
+#: git-gui.sh:2576
+msgid "Remove..."
+msgstr "Fjern..."
+
+#: git-gui.sh:2585 lib/choose_repository.tcl:50
+msgid "Help"
+msgstr "Hjelp"
+
+#: git-gui.sh:2611
+msgid "Online Documentation"
+msgstr "Online dokumentasjon"
+
+#: git-gui.sh:2614 lib/choose_repository.tcl:47 lib/choose_repository.tcl:56
+msgid "Show SSH Key"
+msgstr "Vis SSH-nøkkel"
+
+#: git-gui.sh:2707
+#, tcl-format
+msgid "fatal: cannot stat path %s: No such file or directory"
+msgstr ""
+"kritisk: kunne ikke finne status for sti %s: Ingen slik fil eller katalog"
+
+#: git-gui.sh:2740
+msgid "Current Branch:"
+msgstr "Nåværende gren:"
+
+#: git-gui.sh:2761
+msgid "Staged Changes (Will Commit)"
+msgstr "Køede endringer (til innsjekking)"
+
+#: git-gui.sh:2781
+msgid "Unstaged Changes"
+msgstr "Ukøede endringer"
+
+#: git-gui.sh:2831
+msgid "Stage Changed"
+msgstr "Kø endret"
+
+#: git-gui.sh:2850 lib/transport.tcl:93 lib/transport.tcl:182
+msgid "Push"
+msgstr "Send"
+
+#: git-gui.sh:2885
+msgid "Initial Commit Message:"
+msgstr "Innledende innsjekkingsmelding:"
+
+#: git-gui.sh:2886
+msgid "Amended Commit Message:"
+msgstr "Utdypt innsjekkingsmelding"
+
+#: git-gui.sh:2887
+msgid "Amended Initial Commit Message:"
+msgstr "Utdypt innledende innsjekkingsmelding:"
+
+#: git-gui.sh:2888
+msgid "Amended Merge Commit Message:"
+msgstr "Utdypt innsjekkingsmelding for sammenslåing:"
+
+#: git-gui.sh:2889
+msgid "Merge Commit Message:"
+msgstr "Revisjonsmelding for sammenslåing:"
+
+#: git-gui.sh:2890
+msgid "Commit Message:"
+msgstr "Revisjonsmelding:"
+
+#: git-gui.sh:2939 git-gui.sh:3090 lib/console.tcl:73
+msgid "Copy All"
+msgstr "Kopier alle"
+
+#: git-gui.sh:2963 lib/blame.tcl:104
+msgid "File:"
+msgstr "Fil:"
+
+#: git-gui.sh:3078
+msgid "Refresh"
+msgstr "Oppdater"
+
+#: git-gui.sh:3099
+msgid "Decrease Font Size"
+msgstr "Gjør teksten mindre"
+
+#: git-gui.sh:3103
+msgid "Increase Font Size"
+msgstr "Gjør teksten større"
+
+#: git-gui.sh:3111 lib/blame.tcl:281
+msgid "Encoding"
+msgstr "Tekstkoding"
+
+#: git-gui.sh:3122
+msgid "Apply/Reverse Hunk"
+msgstr "Bruk/tilbakestill del"
+
+#: git-gui.sh:3127
+msgid "Apply/Reverse Line"
+msgstr "Bruk/tilbakestill linje"
+
+#: git-gui.sh:3137
+msgid "Run Merge Tool"
+msgstr "Start sammenslåingsprosess"
+
+#: git-gui.sh:3142
+msgid "Use Remote Version"
+msgstr "Bruk versjon fra fjernarkiv"
+
+#: git-gui.sh:3146
+msgid "Use Local Version"
+msgstr "Bruk lokal versjon"
+
+#: git-gui.sh:3150
+msgid "Revert To Base"
+msgstr "Tilbakestill til baseversjonen"
+
+#: git-gui.sh:3169
+msgid "Unstage Hunk From Commit"
+msgstr "Fjern delen fra innsjekkingskøen"
+
+#: git-gui.sh:3170
+msgid "Unstage Line From Commit"
+msgstr "Fjern linjen fra innsjekkingskøen"
+
+#: git-gui.sh:3172
+msgid "Stage Hunk For Commit"
+msgstr "Legg del i innsjekkingskøen"
+
+#: git-gui.sh:3173
+msgid "Stage Line For Commit"
+msgstr "Legg til linje i innsjekkingskøen"
+
+#: git-gui.sh:3196
+msgid "Initializing..."
+msgstr "Initsialiserer..."
+
+#: git-gui.sh:3301
+#, tcl-format
+msgid ""
+"Possible environment issues exist.\n"
+"\n"
+"The following environment variables are probably\n"
+"going to be ignored by any Git subprocess run\n"
+"by %s:\n"
+"\n"
+msgstr ""
+
+#: git-gui.sh:3331
+msgid ""
+"\n"
+"This is due to a known issue with the\n"
+"Tcl binary distributed by Cygwin."
+msgstr ""
+
+#: git-gui.sh:3336
+#, tcl-format
+msgid ""
+"\n"
+"\n"
+"A good replacement for %s\n"
+"is placing values for the user.name and\n"
+"user.email settings into your personal\n"
+"~/.gitconfig file.\n"
+msgstr ""
+
+#: lib/about.tcl:26
+msgid "git-gui - a graphical user interface for Git."
+msgstr "git-gui - Et grafisk brukergrensesnitt for Git."
+
+#: lib/blame.tcl:72
+msgid "File Viewer"
+msgstr "Filviser"
+
+#: lib/blame.tcl:78
+msgid "Commit:"
+msgstr "Innsjekking:"
+
+#: lib/blame.tcl:271
+msgid "Copy Commit"
+msgstr "Kopier innsjekking"
+
+#: lib/blame.tcl:275
+msgid "Find Text..."
+msgstr "Søk etter tekst..."
+
+#: lib/blame.tcl:284
+msgid "Do Full Copy Detection"
+msgstr "Gjennomfør full deteksjon av kopieringer"
+
+#: lib/blame.tcl:288
+msgid "Show History Context"
+msgstr "Vis historikkens innhold"
+
+#: lib/blame.tcl:291
+msgid "Blame Parent Commit"
+msgstr ""
+
+#: lib/blame.tcl:450
+#, tcl-format
+msgid "Reading %s..."
+msgstr "Leser %s..."
+
+#: lib/blame.tcl:557
+msgid "Loading copy/move tracking annotations..."
+msgstr ""
+
+#: lib/blame.tcl:577
+msgid "lines annotated"
+msgstr ""
+
+#: lib/blame.tcl:769
+msgid "Loading original location annotations..."
+msgstr ""
+
+#: lib/blame.tcl:772
+msgid "Annotation complete."
+msgstr ""
+
+#: lib/blame.tcl:802
+msgid "Busy"
+msgstr "Opptatt"
+
+#: lib/blame.tcl:803
+msgid "Annotation process is already running."
+msgstr ""
+
+#: lib/blame.tcl:842
+msgid "Running thorough copy detection..."
+msgstr "Kjører kopidetektering..."
+
+#: lib/blame.tcl:910
+msgid "Loading annotation..."
+msgstr ""
+
+#: lib/blame.tcl:964
+msgid "Author:"
+msgstr "Forfatter:"
+
+#: lib/blame.tcl:968
+msgid "Committer:"
+msgstr "Innsjekker:"
+
+#: lib/blame.tcl:973
+msgid "Original File:"
+msgstr "Opprinnelig fil:"
+
+#: lib/blame.tcl:1021
+msgid "Cannot find HEAD commit:"
+msgstr "Finner ikke HEAD's innsjekking:"
+
+#: lib/blame.tcl:1076
+msgid "Cannot find parent commit:"
+msgstr "Kan ikke finne innsjekkingens forelder:"
+
+#: lib/blame.tcl:1091
+msgid "Unable to display parent"
+msgstr "Kan ikke vise forelder"
+
+#: lib/blame.tcl:1092 lib/diff.tcl:297
+msgid "Error loading diff:"
+msgstr "Feil ved innlasting av forskjell:"
+
+#: lib/blame.tcl:1232
+msgid "Originally By:"
+msgstr "Opprinnelig av:"
+
+#: lib/blame.tcl:1238
+msgid "In File:"
+msgstr "I fil:"
+
+#: lib/blame.tcl:1243
+msgid "Copied Or Moved Here By:"
+msgstr "Kopiert eller flyttet hit av:"
+
+#: lib/branch_checkout.tcl:14 lib/branch_checkout.tcl:19
+msgid "Checkout Branch"
+msgstr "Sjekk ut gren"
+
+#: lib/branch_checkout.tcl:23
+msgid "Checkout"
+msgstr "Utsjekking"
+
+#: lib/branch_checkout.tcl:27 lib/branch_create.tcl:35
+#: lib/branch_delete.tcl:32 lib/branch_rename.tcl:30 lib/browser.tcl:282
+#: lib/checkout_op.tcl:544 lib/choose_font.tcl:43 lib/merge.tcl:172
+#: lib/option.tcl:125 lib/remote_add.tcl:32 lib/remote_branch_delete.tcl:42
+#: lib/tools_dlg.tcl:40 lib/tools_dlg.tcl:204 lib/tools_dlg.tcl:352
+#: lib/transport.tcl:97
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: lib/branch_checkout.tcl:32 lib/browser.tcl:287 lib/tools_dlg.tcl:328
+msgid "Revision"
+msgstr "Revisjon"
+
+#: lib/branch_checkout.tcl:36 lib/branch_create.tcl:69 lib/option.tcl:280
+msgid "Options"
+msgstr "Valg"
+
+#: lib/branch_checkout.tcl:39 lib/branch_create.tcl:92
+msgid "Fetch Tracking Branch"
+msgstr "Hent sporet gren"
+
+#: lib/branch_checkout.tcl:44
+msgid "Detach From Local Branch"
+msgstr "Koble bort lokal gren"
+
+#: lib/branch_create.tcl:22
+msgid "Create Branch"
+msgstr "Opprett gren"
+
+#: lib/branch_create.tcl:27
+msgid "Create New Branch"
+msgstr "Opprett ny gren"
+
+#: lib/branch_create.tcl:31 lib/choose_repository.tcl:377
+msgid "Create"
+msgstr "Opprett"
+
+#: lib/branch_create.tcl:40
+msgid "Branch Name"
+msgstr "Navn på gren"
+
+#: lib/branch_create.tcl:43 lib/remote_add.tcl:39 lib/tools_dlg.tcl:50
+msgid "Name:"
+msgstr "Navn:"
+
+#: lib/branch_create.tcl:58
+msgid "Match Tracking Branch Name"
+msgstr "Bruk navn på sporet gren"
+
+#: lib/branch_create.tcl:66
+msgid "Starting Revision"
+msgstr "Starter revisjon"
+
+#: lib/branch_create.tcl:72
+msgid "Update Existing Branch:"
+msgstr "Oppdater eksisterende gren:"
+
+#: lib/branch_create.tcl:75
+msgid "No"
+msgstr "Nei"
+
+#: lib/branch_create.tcl:80
+msgid "Fast Forward Only"
+msgstr "Kun hurtigfremspoling"
+
+#: lib/branch_create.tcl:85 lib/checkout_op.tcl:536
+msgid "Reset"
+msgstr "Tilbakestill"
+
+#: lib/branch_create.tcl:97
+msgid "Checkout After Creation"
+msgstr "Sjekk ut etter oppretting"
+
+#: lib/branch_create.tcl:131
+msgid "Please select a tracking branch."
+msgstr "Velg en gren som skal følges."
+
+#: lib/branch_create.tcl:140
+#, tcl-format
+msgid "Tracking branch %s is not a branch in the remote repository."
+msgstr "Den fulgte grenen %s er ikke en gren i fjernarkivet."
+
+#: lib/branch_create.tcl:153 lib/branch_rename.tcl:86
+msgid "Please supply a branch name."
+msgstr "Angi et navn for grenen."
+
+#: lib/branch_create.tcl:164 lib/branch_rename.tcl:106
+#, tcl-format
+msgid "'%s' is not an acceptable branch name."
+msgstr "'%s' kan ikke brukes som navn på en gren."
+
+#: lib/branch_delete.tcl:15
+msgid "Delete Branch"
+msgstr "Fjern gren"
+
+#: lib/branch_delete.tcl:20
+msgid "Delete Local Branch"
+msgstr "Fjern lokal gren"
+
+#: lib/branch_delete.tcl:37
+msgid "Local Branches"
+msgstr "Lokale grener"
+
+#: lib/branch_delete.tcl:52
+msgid "Delete Only If Merged Into"
+msgstr "Fjern kun ved sammenslåing"
+
+#: lib/branch_delete.tcl:54
+msgid "Always (Do not perform merge test.)"
+msgstr "Alltid (Ikke utfør sammenslåingstest.)"
+
+#: lib/branch_delete.tcl:103
+#, tcl-format
+msgid "The following branches are not completely merged into %s:"
+msgstr "Følgende grener er ikke fullstendig slått sammen med %s:"
+
+#: lib/branch_delete.tcl:141
+#, tcl-format
+msgid ""
+"Failed to delete branches:\n"
+"%s"
+msgstr ""
+"Kunne ikke fjerne grener:\n"
+"%s"
+
+#: lib/branch_rename.tcl:14 lib/branch_rename.tcl:22
+msgid "Rename Branch"
+msgstr "Gi gren nytt navn"
+
+#: lib/branch_rename.tcl:26
+msgid "Rename"
+msgstr "Endre navn"
+
+#: lib/branch_rename.tcl:36
+msgid "Branch:"
+msgstr "Gren:"
+
+#: lib/branch_rename.tcl:39
+msgid "New Name:"
+msgstr "Nytt navn:"
+
+#: lib/branch_rename.tcl:75
+msgid "Please select a branch to rename."
+msgstr "Vennligst velg grenen du vil endre navn på."
+
+#: lib/branch_rename.tcl:96 lib/checkout_op.tcl:201
+#, tcl-format
+msgid "Branch '%s' already exists."
+msgstr "Grenen '%s' eksisterer allerede."
+
+#: lib/branch_rename.tcl:117
+#, tcl-format
+msgid "Failed to rename '%s'."
+msgstr "Kunne ikke endre navnet '%s'."
+
+#: lib/browser.tcl:17
+msgid "Starting..."
+msgstr "Starter..."
+
+#: lib/browser.tcl:26
+msgid "File Browser"
+msgstr "Utforsker"
+
+#: lib/browser.tcl:126 lib/browser.tcl:143
+#, tcl-format
+msgid "Loading %s..."
+msgstr "Laster %s..."
+
+#: lib/browser.tcl:187
+msgid "[Up To Parent]"
+msgstr "[Opp til forelder]"
+
+#: lib/browser.tcl:267 lib/browser.tcl:273
+msgid "Browse Branch Files"
+msgstr "Bla igjennom grenens filer"
+
+#: lib/browser.tcl:278 lib/choose_repository.tcl:394
+#: lib/choose_repository.tcl:480 lib/choose_repository.tcl:491
+#: lib/choose_repository.tcl:995
+msgid "Browse"
+msgstr "Bla igjennom"
+
+#: lib/checkout_op.tcl:84
+#, tcl-format
+msgid "Fetching %s from %s"
+msgstr "Henter %s fra %s"
+
+#: lib/checkout_op.tcl:132
+#, tcl-format
+msgid "fatal: Cannot resolve %s"
+msgstr "kritisk: Kan ikke åpne %s"
+
+#: lib/checkout_op.tcl:145 lib/console.tcl:81 lib/database.tcl:31
+#: lib/sshkey.tcl:53
+msgid "Close"
+msgstr "Lukk"
+
+#: lib/checkout_op.tcl:174
+#, tcl-format
+msgid "Branch '%s' does not exist."
+msgstr "Grenen '%s' eksisterer ikke."
+
+#: lib/checkout_op.tcl:193
+#, tcl-format
+msgid "Failed to configure simplified git-pull for '%s'."
+msgstr "Kunne ikke konfigurere forenklet git-pull for '%s'."
+
+#: lib/checkout_op.tcl:228
+#, tcl-format
+msgid ""
+"Branch '%s' already exists.\n"
+"\n"
+"It cannot fast-forward to %s.\n"
+"A merge is required."
+msgstr ""
+"Grenen '%s' eksisterer allerede.\n"
+"\n"
+"Den kan ikke hurtigfremspoles til %s.\n"
+"En sammenslåing er påkrevd."
+
+#: lib/checkout_op.tcl:242
+#, tcl-format
+msgid "Merge strategy '%s' not supported."
+msgstr "Sammenslåingsstrategien '%s' er ikke støttet."
+
+#: lib/checkout_op.tcl:261
+#, tcl-format
+msgid "Failed to update '%s'."
+msgstr "Kunne ikke oppdatere '%s'."
+
+#: lib/checkout_op.tcl:273
+msgid "Staging area (index) is already locked."
+msgstr "Køområdet (index) er allerede låst."
+
+#: lib/checkout_op.tcl:288
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before the current branch can be changed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+
+#: lib/checkout_op.tcl:344
+#, tcl-format
+msgid "Updating working directory to '%s'..."
+msgstr "Oppdaterer arbeidskatalogen til '%s'..."
+
+#: lib/checkout_op.tcl:345
+msgid "files checked out"
+msgstr "filer sjekket ut"
+
+#: lib/checkout_op.tcl:375
+#, tcl-format
+msgid "Aborted checkout of '%s' (file level merging is required)."
+msgstr "Avbrøt utsjekkingen av '%s' (sammenslåing på filnivå kreves)."
+
+#: lib/checkout_op.tcl:376
+msgid "File level merge required."
+msgstr "Sammenslåing på filnivå kreves"
+
+#: lib/checkout_op.tcl:380
+#, tcl-format
+msgid "Staying on branch '%s'."
+msgstr "Blir stående på grenen '%s'."
+
+#: lib/checkout_op.tcl:451
+msgid ""
+"You are no longer on a local branch.\n"
+"\n"
+"If you wanted to be on a branch, create one now starting from 'This Detached "
+"Checkout'."
+msgstr ""
+
+#: lib/checkout_op.tcl:468 lib/checkout_op.tcl:472
+#, tcl-format
+msgid "Checked out '%s'."
+msgstr "Sjekket ut '%s'."
+
+#: lib/checkout_op.tcl:500
+#, tcl-format
+msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgstr ""
+"Tilbakestilling av '%s' til '%s' vil medføre tap av følgende innsjekkinger:"
+
+#: lib/checkout_op.tcl:522
+msgid "Recovering lost commits may not be easy."
+msgstr ""
+"Det vil kanskje ikke være så enkelt å gjenopprette en tapt innsjekking."
+
+#: lib/checkout_op.tcl:527
+#, tcl-format
+msgid "Reset '%s'?"
+msgstr "Tilbakestill '%s'?"
+
+#: lib/checkout_op.tcl:532 lib/merge.tcl:164 lib/tools_dlg.tcl:343
+msgid "Visualize"
+msgstr "Visualiser"
+
+#: lib/checkout_op.tcl:600
+#, tcl-format
+msgid ""
+"Failed to set current branch.\n"
+"\n"
+"This working directory is only partially switched.  We successfully updated "
+"your files, but failed to update an internal Git file.\n"
+"\n"
+"This should not have occurred.  %s will now close and give up."
+msgstr ""
+
+#: lib/choose_font.tcl:39
+msgid "Select"
+msgstr "Velg"
+
+#: lib/choose_font.tcl:53
+msgid "Font Family"
+msgstr "Skrifttype-familie"
+
+#: lib/choose_font.tcl:74
+msgid "Font Size"
+msgstr "Skriftstørrelse"
+
+#: lib/choose_font.tcl:91
+msgid "Font Example"
+msgstr "Skrifteksempel"
+
+#: lib/choose_font.tcl:103
+msgid ""
+"This is example text.\n"
+"If you like this text, it can be your font."
+msgstr ""
+"Dette er en eksempeltekst.\n"
+"Hvis du liker hvordan teksten ser ut, kan du velge dette som din skrifttype."
+
+#: lib/choose_repository.tcl:28
+msgid "Git Gui"
+msgstr "Git Gui"
+
+#: lib/choose_repository.tcl:87 lib/choose_repository.tcl:382
+msgid "Create New Repository"
+msgstr "Opprett nytt arkiv"
+
+#: lib/choose_repository.tcl:93
+msgid "New..."
+msgstr "Ny..."
+
+#: lib/choose_repository.tcl:100 lib/choose_repository.tcl:465
+msgid "Clone Existing Repository"
+msgstr "Klon eksistererende arkiv"
+
+#: lib/choose_repository.tcl:106
+msgid "Clone..."
+msgstr "Klon..."
+
+#: lib/choose_repository.tcl:113 lib/choose_repository.tcl:983
+msgid "Open Existing Repository"
+msgstr "Åpne eksistererende arkiv"
+
+#: lib/choose_repository.tcl:119
+msgid "Open..."
+msgstr "Åpne..."
+
+#: lib/choose_repository.tcl:132
+msgid "Recent Repositories"
+msgstr "Nylig brukte arkiv"
+
+#: lib/choose_repository.tcl:138
+msgid "Open Recent Repository:"
+msgstr "Åpne nylig brukt arkiv:"
+
+#: lib/choose_repository.tcl:302 lib/choose_repository.tcl:309
+#: lib/choose_repository.tcl:316
+#, tcl-format
+msgid "Failed to create repository %s:"
+msgstr "Kunne ikke opprette arkivet %s:"
+
+#: lib/choose_repository.tcl:387
+msgid "Directory:"
+msgstr "Mappe:"
+
+#: lib/choose_repository.tcl:417 lib/choose_repository.tcl:544
+#: lib/choose_repository.tcl:1017
+msgid "Git Repository"
+msgstr "Git arkiv"
+
+#: lib/choose_repository.tcl:442
+#, tcl-format
+msgid "Directory %s already exists."
+msgstr "Mappen %s eksisterer allerede."
+
+#: lib/choose_repository.tcl:446
+#, tcl-format
+msgid "File %s already exists."
+msgstr "Filen %s eksisterer allerede."
+
+#: lib/choose_repository.tcl:460
+msgid "Clone"
+msgstr "Klon"
+
+#: lib/choose_repository.tcl:473
+msgid "Source Location:"
+msgstr "Kildeplassering:"
+
+#: lib/choose_repository.tcl:484
+msgid "Target Directory:"
+msgstr "Destinasjonsmappe:"
+
+#: lib/choose_repository.tcl:496
+msgid "Clone Type:"
+msgstr "Klontype:"
+
+#: lib/choose_repository.tcl:502
+msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
+msgstr "Standard (rask, delvis redundant, hardlinker)"
+
+#: lib/choose_repository.tcl:508
+msgid "Full Copy (Slower, Redundant Backup)"
+msgstr "Full kopi (tregere, redundant sikkerhetskopi)"
+
+#: lib/choose_repository.tcl:514
+msgid "Shared (Fastest, Not Recommended, No Backup)"
+msgstr "Delt (raskest, ikke anbefalt, ingen sikkerhetskopiering)"
+
+#: lib/choose_repository.tcl:550 lib/choose_repository.tcl:597
+#: lib/choose_repository.tcl:743 lib/choose_repository.tcl:813
+#: lib/choose_repository.tcl:1023 lib/choose_repository.tcl:1031
+#, tcl-format
+msgid "Not a Git repository: %s"
+msgstr "Ikke et Git-arkiv: %s"
+
+#: lib/choose_repository.tcl:586
+msgid "Standard only available for local repository."
+msgstr "Standard er kun tilgjengelig for lokalt arkiv."
+
+#: lib/choose_repository.tcl:590
+msgid "Shared only available for local repository."
+msgstr "Delt er kun tilgjengelig for lokalt arkiv."
+
+#: lib/choose_repository.tcl:611
+#, tcl-format
+msgid "Location %s already exists."
+msgstr "Stedet %s eksisterer allerede."
+
+#: lib/choose_repository.tcl:622
+msgid "Failed to configure origin"
+msgstr "Kunne ikke konfigurere kildeoppføring"
+
+#: lib/choose_repository.tcl:634
+msgid "Counting objects"
+msgstr "Teller objekter"
+
+#: lib/choose_repository.tcl:635
+msgid "buckets"
+msgstr "bøtter"
+
+#: lib/choose_repository.tcl:659
+#, tcl-format
+msgid "Unable to copy objects/info/alternates: %s"
+msgstr "Kunne ikke kopiere objekter/informasjon/alternativt: %s"
+
+#: lib/choose_repository.tcl:695
+#, tcl-format
+msgid "Nothing to clone from %s."
+msgstr "Ingenting å klone fra %s."
+
+#: lib/choose_repository.tcl:697 lib/choose_repository.tcl:911
+#: lib/choose_repository.tcl:923
+msgid "The 'master' branch has not been initialized."
+msgstr "Grenen 'master' har ikke blitt initsialisert."
+
+#: lib/choose_repository.tcl:710
+msgid "Hardlinks are unavailable.  Falling back to copying."
+msgstr "Harde linker er utilgjengelig. Går tilbake til kopiering."
+
+#: lib/choose_repository.tcl:722
+#, tcl-format
+msgid "Cloning from %s"
+msgstr "Kloner fra %s"
+
+#: lib/choose_repository.tcl:753
+msgid "Copying objects"
+msgstr "Kopierer objekter"
+
+#: lib/choose_repository.tcl:754
+msgid "KiB"
+msgstr "kB"
+
+#: lib/choose_repository.tcl:778
+#, tcl-format
+msgid "Unable to copy object: %s"
+msgstr "Kunne ikke kopiere objekt: %s"
+
+#: lib/choose_repository.tcl:788
+msgid "Linking objects"
+msgstr "Lenker objekter"
+
+#: lib/choose_repository.tcl:789
+msgid "objects"
+msgstr "objekter"
+
+#: lib/choose_repository.tcl:797
+#, tcl-format
+msgid "Unable to hardlink object: %s"
+msgstr "Kunne ikke opprette hardlink med objektet: %s"
+
+#: lib/choose_repository.tcl:852
+msgid "Cannot fetch branches and objects.  See console output for details."
+msgstr "Kunne ikke hente grener og objekter. Se utdata i konsoll for detaljer."
+
+#: lib/choose_repository.tcl:863
+msgid "Cannot fetch tags.  See console output for details."
+msgstr "Kunne ikke hente tagger. Se utdata i konsoll for detaljer."
+
+#: lib/choose_repository.tcl:887
+msgid "Cannot determine HEAD.  See console output for details."
+msgstr "Kan ikke bestemme HEAD. Se utdata i konsoll for detaljer."
+
+#: lib/choose_repository.tcl:896
+#, tcl-format
+msgid "Unable to cleanup %s"
+msgstr "Kunne ikke rydde opp %s"
+
+#: lib/choose_repository.tcl:902
+msgid "Clone failed."
+msgstr "Kloning feilet."
+
+#: lib/choose_repository.tcl:909
+msgid "No default branch obtained."
+msgstr "Ingen standardgren hentet."
+
+#: lib/choose_repository.tcl:920
+#, tcl-format
+msgid "Cannot resolve %s as a commit."
+msgstr "Kan ikke finne %s som en innsjekking."
+
+#: lib/choose_repository.tcl:932
+msgid "Creating working directory"
+msgstr "Oppretter arbeidskatalog"
+
+#: lib/choose_repository.tcl:933 lib/index.tcl:65 lib/index.tcl:128
+#: lib/index.tcl:196
+msgid "files"
+msgstr "filer"
+
+#: lib/choose_repository.tcl:962
+msgid "Initial file checkout failed."
+msgstr "Initsialiserende utsjekking feilet."
+
+#: lib/choose_repository.tcl:978
+msgid "Open"
+msgstr "Åpne"
+
+#: lib/choose_repository.tcl:988
+msgid "Repository:"
+msgstr "Arkiv:"
+
+#: lib/choose_repository.tcl:1037
+#, tcl-format
+msgid "Failed to open repository %s:"
+msgstr "Kunne ikke åpne arkivet %s:"
+
+#: lib/choose_rev.tcl:53
+msgid "This Detached Checkout"
+msgstr "Denne frakoblede utsjekkingen"
+
+#: lib/choose_rev.tcl:60
+msgid "Revision Expression:"
+msgstr "Revisjonsuttrykk:"
+
+#: lib/choose_rev.tcl:74
+msgid "Local Branch"
+msgstr "Lokal gren"
+
+#: lib/choose_rev.tcl:79
+msgid "Tracking Branch"
+msgstr "Sporet gren"
+
+#: lib/choose_rev.tcl:84 lib/choose_rev.tcl:538
+msgid "Tag"
+msgstr "Tag"
+
+#: lib/choose_rev.tcl:317
+#, tcl-format
+msgid "Invalid revision: %s"
+msgstr "Ugyldig revisjon: %s"
+
+#: lib/choose_rev.tcl:338
+msgid "No revision selected."
+msgstr "Ingen revisjoner valgt."
+
+#: lib/choose_rev.tcl:346
+msgid "Revision expression is empty."
+msgstr "Revisjonsuttrykk er tomt."
+
+#: lib/choose_rev.tcl:531
+msgid "Updated"
+msgstr "Oppdatert"
+
+#: lib/choose_rev.tcl:559
+msgid "URL"
+msgstr "URL"
+
+#: lib/commit.tcl:9
+msgid ""
+"There is nothing to amend.\n"
+"\n"
+"You are about to create the initial commit.  There is no commit before this "
+"to amend.\n"
+msgstr ""
+"Det er ingenting å legge til.\n"
+"\n"
+"Du er i ferd med å lage den initsialiserende revisjonen. Det er ingen "
+"tidligere revisjoner å tilføye.\n"
+
+#: lib/commit.tcl:18
+msgid ""
+"Cannot amend while merging.\n"
+"\n"
+"You are currently in the middle of a merge that has not been fully "
+"completed.  You cannot amend the prior commit unless you first abort the "
+"current merge activity.\n"
+msgstr ""
+"Kan ikke tilføye under sammenslåing.\n"
+"\n"
+"Du er for øyeblikket under en pågående sammenslåing som ikke er fullført. Du "
+"kan ikke tilføye en tidligere revisjon med mindre du først avbryter denne "
+"sammenslåingen.\n"
+
+#: lib/commit.tcl:49
+msgid "Error loading commit data for amend:"
+msgstr "Feil ved innhenting av revisjonsdata for tilføying:"
+
+#: lib/commit.tcl:76
+msgid "Unable to obtain your identity:"
+msgstr "Kunne ikke avgjøre din identitet:"
+
+#: lib/commit.tcl:81
+msgid "Invalid GIT_COMMITTER_IDENT:"
+msgstr "Ugyldig GIT_COMMITTER_IDENT:"
+
+#: lib/commit.tcl:133
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before another commit can be created.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+
+#: lib/commit.tcl:156
+#, tcl-format
+msgid ""
+"Unmerged files cannot be committed.\n"
+"\n"
+"File %s has merge conflicts.  You must resolve them and stage the file "
+"before committing.\n"
+msgstr ""
+
+#: lib/commit.tcl:164
+#, tcl-format
+msgid ""
+"Unknown file state %s detected.\n"
+"\n"
+"File %s cannot be committed by this program.\n"
+msgstr ""
+"Ukjent filstatus %s er funnet.\n"
+"\n"
+"Filen %s kan ikke sjekkes inn av dette programmet.\n"
+
+#: lib/commit.tcl:172
+msgid ""
+"No changes to commit.\n"
+"\n"
+"You must stage at least 1 file before you can commit.\n"
+msgstr ""
+"Ingen endringer å sjekke inn.\n"
+"\n"
+"Du må køe minst en fil før du kan sjekke inn noe.\n"
+
+#: lib/commit.tcl:187
+msgid ""
+"Please supply a commit message.\n"
+"\n"
+"A good commit message has the following format:\n"
+"\n"
+"- First line: Describe in one sentence what you did.\n"
+"- Second line: Blank\n"
+"- Remaining lines: Describe why this change is good.\n"
+msgstr ""
+"Vennligst angi en revisjonsmelding.\n"
+"\n"
+"En god melding har følgende format:\n"
+"\n"
+"- Første linje: En beskrivelse av hva du har gjort i én setning.\n"
+"- Andre linje: Blank\n"
+"- Resterende linjer: Forklar hvorfor denne endringen er bra.\n"
+
+#: lib/commit.tcl:211
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr "advarsel: Tcl støtter ikke denne tegnkodingen '%s'."
+
+#: lib/commit.tcl:227
+msgid "Calling pre-commit hook..."
+msgstr ""
+
+#: lib/commit.tcl:242
+msgid "Commit declined by pre-commit hook."
+msgstr ""
+
+#: lib/commit.tcl:265
+msgid "Calling commit-msg hook..."
+msgstr ""
+
+#: lib/commit.tcl:280
+msgid "Commit declined by commit-msg hook."
+msgstr ""
+
+#: lib/commit.tcl:293
+msgid "Committing changes..."
+msgstr "Sjekker inn endringer..."
+
+#: lib/commit.tcl:309
+msgid "write-tree failed:"
+msgstr "Skriving til tre feilet:"
+
+#: lib/commit.tcl:310 lib/commit.tcl:354 lib/commit.tcl:374
+msgid "Commit failed."
+msgstr "Innsjekking feilet."
+
+#: lib/commit.tcl:327
+#, tcl-format
+msgid "Commit %s appears to be corrupt"
+msgstr "Revisjon %s ser ut til å være korrupt"
+
+#: lib/commit.tcl:332
+msgid ""
+"No changes to commit.\n"
+"\n"
+"No files were modified by this commit and it was not a merge commit.\n"
+"\n"
+"A rescan will be automatically started now.\n"
+msgstr ""
+"Ingen endringer til innsjekking.\n"
+"\n"
+"Ingen filer ble endret av denne revisjonen, og det var ikke en revisjon fra "
+"en sammenslåing.\n"
+"\n"
+"Et nytt søk vil bli startet automatisk.\n"
+
+#: lib/commit.tcl:339
+msgid "No changes to commit."
+msgstr "Ingen endringer til innsekking."
+
+#: lib/commit.tcl:353
+msgid "commit-tree failed:"
+msgstr "commit-tree feilet:"
+
+#: lib/commit.tcl:373
+msgid "update-ref failed:"
+msgstr "update-ref feilet:"
+
+#: lib/commit.tcl:461
+#, tcl-format
+msgid "Created commit %s: %s"
+msgstr "Opprettet innsjekking %s: %s"
+
+#: lib/console.tcl:59
+msgid "Working... please wait..."
+msgstr "Jobber... Vennligst vent..."
+
+#: lib/console.tcl:186
+msgid "Success"
+msgstr "Suksess"
+
+#: lib/console.tcl:200
+msgid "Error: Command Failed"
+msgstr "Feil: Kommandoen feilet"
+
+#: lib/database.tcl:43
+msgid "Number of loose objects"
+msgstr "Antall løse objekter"
+
+#: lib/database.tcl:44
+msgid "Disk space used by loose objects"
+msgstr "Diskplass brukt av løse objekter"
+
+#: lib/database.tcl:45
+msgid "Number of packed objects"
+msgstr "Antall pakkede objekter"
+
+#: lib/database.tcl:46
+msgid "Number of packs"
+msgstr "Antall pakker"
+
+#: lib/database.tcl:47
+msgid "Disk space used by packed objects"
+msgstr "Diskplass brukt av pakkede objekter"
+
+#: lib/database.tcl:48
+msgid "Packed objects waiting for pruning"
+msgstr "Pakkede objekter som avventer fjerning"
+
+#: lib/database.tcl:49
+msgid "Garbage files"
+msgstr "Avfallsfiler"
+
+#: lib/database.tcl:72
+msgid "Compressing the object database"
+msgstr "Komprimerer objektdatabasen"
+
+#: lib/database.tcl:83
+msgid "Verifying the object database with fsck-objects"
+msgstr "Verifiserer objektdatabasen med fsck-objects"
+
+#: lib/database.tcl:108
+#, tcl-format
+msgid ""
+"This repository currently has approximately %i loose objects.\n"
+"\n"
+"To maintain optimal performance it is strongly recommended that you compress "
+"the database when more than %i loose objects exist.\n"
+"\n"
+"Compress the database now?"
+msgstr ""
+"Dette arkivet inneholder omtrent %i 'løse' objekter.\n"
+"\n"
+"For å sikre en optimal ytelse er det sterkt anbefalt at du komprimerer "
+"databasen når det er flere enn %i 'løse' objekter i den.\n"
+"\n"
+"Komprimere databasen nå?"
+
+#: lib/date.tcl:25
+#, tcl-format
+msgid "Invalid date from Git: %s"
+msgstr "Ugyldig dato fra Git: %s"
+
+#: lib/diff.tcl:59
+#, tcl-format
+msgid ""
+"No differences detected.\n"
+"\n"
+"%s has no changes.\n"
+"\n"
+"The modification date of this file was updated by another application, but "
+"the content within the file was not changed.\n"
+"\n"
+"A rescan will be automatically started to find other files which may have "
+"the same state."
+msgstr ""
+"Ingen forandringer funnet.\n"
+"\n"
+"%s har ingen endringer.\n"
+"\n"
+"Tidsstempelet for endring på denne filen ble oppdatert av en annen "
+" applikasjon, men innholdet er uendret.\n"
+"\n"
+"En gjennomsøking vil nå starte automatisk for å se om andre filer har "
+"status."
+
+#: lib/diff.tcl:99
+#, tcl-format
+msgid "Loading diff of %s..."
+msgstr "Laster inn forskjellene av %s..."
+
+#: lib/diff.tcl:120
+msgid ""
+"LOCAL: deleted\n"
+"REMOTE:\n"
+msgstr "LOKAL: slettet\n"
+"FJERN:\n"
+
+#: lib/diff.tcl:125
+msgid ""
+"REMOTE: deleted\n"
+"LOCAL:\n"
+msgstr "FJERN: slettet\n"
+"LOKAL:\n"
+
+#: lib/diff.tcl:132
+msgid "LOCAL:\n"
+msgstr "LOKAL:\n"
+
+#: lib/diff.tcl:135
+msgid "REMOTE:\n"
+msgstr "FJERN:\n"
+
+#: lib/diff.tcl:197 lib/diff.tcl:296
+#, tcl-format
+msgid "Unable to display %s"
+msgstr "Kan ikke vise %s"
+
+#: lib/diff.tcl:198
+msgid "Error loading file:"
+msgstr "Feil ved lesing av fil: %s"
+
+#: lib/diff.tcl:205
+msgid "Git Repository (subproject)"
+msgstr "Git-arkiv (underprosjekt)"
+
+#: lib/diff.tcl:217
+msgid "* Binary file (not showing content)."
+msgstr "* Binærfil (viser ikke innhold)"
+
+#: lib/diff.tcl:222
+#, tcl-format
+msgid ""
+"* Untracked file is %d bytes.\n"
+"* Showing only first %d bytes.\n"
+msgstr ""
+"* Usporet fil er %d bytes.\n"
+"* Viser bare %d første bytes.\n"
+
+#: lib/diff.tcl:228
+#, tcl-format
+msgid ""
+"\n"
+"* Untracked file clipped here by %s.\n"
+"* To see the entire file, use an external editor.\n"
+msgstr ""
+"\n"
+"* Usporede filer klippet her av %s.\n"
+"* For å se hele filen, bruk et eksternt redigeringsverktøy.\n"
+
+#: lib/diff.tcl:436
+msgid "Failed to unstage selected hunk."
+msgstr "Kunne ikke fjerne den valgte delen fra innsjekkingskøen."
+
+#: lib/diff.tcl:443
+msgid "Failed to stage selected hunk."
+msgstr "Kunne ikke legge til den valgte delen i innsjekkingskøen."
+
+#: lib/diff.tcl:509
+msgid "Failed to unstage selected line."
+msgstr "Kunne ikke fjerne den valgte linjen fra innsjekkingskøen."
+
+#: lib/diff.tcl:517
+msgid "Failed to stage selected line."
+msgstr "Kunne ikke legge til den valgte linjen i innsjekkingskøen."
+
+#: lib/encoding.tcl:443
+msgid "Default"
+msgstr "Standard"
+
+#: lib/encoding.tcl:448
+#, tcl-format
+msgid "System (%s)"
+msgstr "Systemets (%s)"
+
+#: lib/encoding.tcl:459 lib/encoding.tcl:465
+msgid "Other"
+msgstr "Andre"
+
+#: lib/error.tcl:20 lib/error.tcl:114
+msgid "error"
+msgstr "feil"
+
+#: lib/error.tcl:36
+msgid "warning"
+msgstr "advarsel"
+
+#: lib/error.tcl:94
+msgid "You must correct the above errors before committing."
+msgstr "Du må rette de ovenstående feilene før innsjekking."
+
+#: lib/index.tcl:6
+msgid "Unable to unlock the index."
+msgstr "Kunne ikke låse opp indexen."
+
+#: lib/index.tcl:15
+msgid "Index Error"
+msgstr "Feil på index"
+
+#: lib/index.tcl:21
+msgid ""
+"Updating the Git index failed.  A rescan will be automatically started to "
+"resynchronize git-gui."
+msgstr ""
+"Oppdatering av Git's index mislyktes. Et nytt søk vil bli startet for å "
+"resynkronisere git-gui."
+
+#: lib/index.tcl:27
+msgid "Continue"
+msgstr "Fortsett"
+
+#: lib/index.tcl:31
+msgid "Unlock Index"
+msgstr "Lås opp index"
+
+#: lib/index.tcl:287
+#, tcl-format
+msgid "Unstaging %s from commit"
+msgstr "Fjerner %s fra innsjekkingskøen"
+
+#: lib/index.tcl:326
+msgid "Ready to commit."
+msgstr "Klar til innsjekking."
+
+#: lib/index.tcl:339
+#, tcl-format
+msgid "Adding %s"
+msgstr "Legger til %s"
+
+#: lib/index.tcl:396
+#, tcl-format
+msgid "Revert changes in file %s?"
+msgstr "Reverter endringene i filen %s?"
+
+#: lib/index.tcl:398
+#, tcl-format
+msgid "Revert changes in these %i files?"
+msgstr "Reverter endringene i disse %i filene?"
+
+#: lib/index.tcl:406
+msgid "Any unstaged changes will be permanently lost by the revert."
+msgstr "Endringer som ikke ligger i innsjekkingskøen vil bli tapt av denne "
+"reverteringen"
+
+#: lib/index.tcl:409
+msgid "Do Nothing"
+msgstr "Ikke gjør noe"
+
+#: lib/index.tcl:427
+msgid "Reverting selected files"
+msgstr "Reverterer valgte filer"
+
+#: lib/index.tcl:431
+#, tcl-format
+msgid "Reverting %s"
+msgstr "Reverterer %s"
+
+#: lib/merge.tcl:13
+msgid ""
+"Cannot merge while amending.\n"
+"\n"
+"You must finish amending this commit before starting any type of merge.\n"
+msgstr ""
+"Kunne ikke slå sammen under utvidelse.\n"
+"\n"
+"Du må først fullføre utvidelsen av denne revisjonen før du kan starte en "
+"sammenslåing.\n"
+
+#: lib/merge.tcl:27
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before a merge can be performed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+
+#: lib/merge.tcl:45
+#, tcl-format
+msgid ""
+"You are in the middle of a conflicted merge.\n"
+"\n"
+"File %s has merge conflicts.\n"
+"\n"
+"You must resolve them, stage the file, and commit to complete the current "
+"merge.  Only then can you begin another merge.\n"
+msgstr ""
+
+#: lib/merge.tcl:55
+#, tcl-format
+msgid ""
+"You are in the middle of a change.\n"
+"\n"
+"File %s is modified.\n"
+"\n"
+"You should complete the current commit before starting a merge.  Doing so "
+"will help you abort a failed merge, should the need arise.\n"
+msgstr ""
+
+#: lib/merge.tcl:107
+#, tcl-format
+msgid "%s of %s"
+msgstr "%s av %s"
+
+#: lib/merge.tcl:120
+#, tcl-format
+msgid "Merging %s and %s..."
+msgstr "Slår sammen %s og %s"
+
+#: lib/merge.tcl:131
+msgid "Merge completed successfully."
+msgstr "Vellykket sammenslåing fullført."
+
+#: lib/merge.tcl:133
+msgid "Merge failed.  Conflict resolution is required."
+msgstr "Sammenslåing feilet. Håndtering av konflikten kreves."
+
+#: lib/merge.tcl:158
+#, tcl-format
+msgid "Merge Into %s"
+msgstr "Slå sammen inn i %s"
+
+#: lib/merge.tcl:177
+msgid "Revision To Merge"
+msgstr "Revisjon til sammenslåing"
+
+#: lib/merge.tcl:212
+msgid ""
+"Cannot abort while amending.\n"
+"\n"
+"You must finish amending this commit.\n"
+msgstr ""
+"Kan ikke avbryte under utvidelse av revisjon.\n"
+"\n"
+"Du må fullføre utvidelsen av denne revisjonen.\n"
+
+#: lib/merge.tcl:222
+msgid ""
+"Abort merge?\n"
+"\n"
+"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with aborting the current merge?"
+msgstr ""
+"Avbryt sammenslåing?\n"
+"\n"
+"Avbryting av pågående sammenslåing vil føre til at *alle* endringer som ikke "
+" er sjekket inn, vil gå tapt.\n"
+"\n"
+"Fortsette med å avbryte den pågående sammenslåingen?"
+
+#: lib/merge.tcl:228
+msgid ""
+"Reset changes?\n"
+"\n"
+"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with resetting the current changes?"
+msgstr ""
+"Nullstill endringer?\n"
+"\n"
+"Nullstilling av endringer vil føre til at *alle* endringer som ikke er "
+"sjekket inn går tapt.\n"
+"\n"
+"Fortsette med nullstilling av endringer?"
+
+#: lib/merge.tcl:239
+msgid "Aborting"
+msgstr "Avbryter"
+
+#: lib/merge.tcl:239
+msgid "files reset"
+msgstr "filer tilbakestilt"
+
+#: lib/merge.tcl:267
+msgid "Abort failed."
+msgstr "Avbryting feilet."
+
+#: lib/merge.tcl:269
+msgid "Abort completed.  Ready."
+msgstr "Avbryting fullført. Klar."
+
+#: lib/mergetool.tcl:8
+msgid "Force resolution to the base version?"
+msgstr "Tving håndtering til opprinnelig versjon?"
+
+#: lib/mergetool.tcl:9
+msgid "Force resolution to this branch?"
+msgstr "Tving håndtering i denne grenen?"
+
+#: lib/mergetool.tcl:10
+msgid "Force resolution to the other branch?"
+msgstr "Tving håndtering i den andre grenen?"
+
+#: lib/mergetool.tcl:14
+#, tcl-format
+msgid ""
+"Note that the diff shows only conflicting changes.\n"
+"\n"
+"%s will be overwritten.\n"
+"\n"
+"This operation can be undone only by restarting the merge."
+msgstr ""
+"Merk deg at endringsvisningen kun viser motstridende endringer.\n"
+"\n"
+"%s vil bli overskrevet.\n"
+"\n"
+"Denne operasjonen kan kun bli angret ved å starte sammenslåingen på ny."
+
+#: lib/mergetool.tcl:45
+#, tcl-format
+msgid "File %s seems to have unresolved conflicts, still stage?"
+msgstr "Filen %s ser ut til å ha uløste konflikter, skal filen likevel køes?"
+
+#: lib/mergetool.tcl:60
+#, tcl-format
+msgid "Adding resolution for %s"
+msgstr "Legger til løsninge på konflikt for %s"
+
+#: lib/mergetool.tcl:141
+msgid "Cannot resolve deletion or link conflicts using a tool"
+msgstr ""
+
+#: lib/mergetool.tcl:146
+msgid "Conflict file does not exist"
+msgstr "Konfliktfil eksisterer ikke"
+
+#: lib/mergetool.tcl:264
+#, tcl-format
+msgid "Not a GUI merge tool: '%s'"
+msgstr ""
+
+#: lib/mergetool.tcl:268
+#, tcl-format
+msgid "Unsupported merge tool '%s'"
+msgstr ""
+
+#: lib/mergetool.tcl:303
+msgid "Merge tool is already running, terminate it?"
+msgstr ""
+
+#: lib/mergetool.tcl:323
+#, tcl-format
+msgid ""
+"Error retrieving versions:\n"
+"%s"
+msgstr ""
+"Kunne ikke hente versjoner:\n"
+"%s"
+
+#: lib/mergetool.tcl:343
+#, tcl-format
+msgid ""
+"Could not start the merge tool:\n"
+"\n"
+"%s"
+msgstr ""
+
+#: lib/mergetool.tcl:347
+msgid "Running merge tool..."
+msgstr ""
+
+#: lib/mergetool.tcl:375 lib/mergetool.tcl:383
+msgid "Merge tool failed."
+msgstr ""
+
+#: lib/option.tcl:11
+#, tcl-format
+msgid "Invalid global encoding '%s'"
+msgstr ""
+
+#: lib/option.tcl:19
+#, tcl-format
+msgid "Invalid repo encoding '%s'"
+msgstr ""
+
+#: lib/option.tcl:117
+msgid "Restore Defaults"
+msgstr "Gjennopprett standardverdier"
+
+#: lib/option.tcl:121
+msgid "Save"
+msgstr "Lagre"
+
+#: lib/option.tcl:131
+#, tcl-format
+msgid "%s Repository"
+msgstr "%s arkiv"
+
+#: lib/option.tcl:132
+msgid "Global (All Repositories)"
+msgstr "Globalt (alle arkiv)"
+
+#: lib/option.tcl:138
+msgid "User Name"
+msgstr "Navn"
+
+#: lib/option.tcl:139
+msgid "Email Address"
+msgstr "Epost-adresse"
+
+#: lib/option.tcl:141
+msgid "Summarize Merge Commits"
+msgstr "Oppsummer innsjekkinger fra sammenslåinger"
+
+#: lib/option.tcl:142
+msgid "Merge Verbosity"
+msgstr "Detaljenivå på sammenslåing"
+
+#: lib/option.tcl:143
+msgid "Show Diffstat After Merge"
+msgstr "Vis endringsstatistikk etter sammenslåing"
+
+#: lib/option.tcl:144
+msgid "Use Merge Tool"
+msgstr "Bruk sammenslåingsverktøy"
+
+#: lib/option.tcl:146
+msgid "Trust File Modification Timestamps"
+msgstr "Stol på filers tid for endring"
+
+#: lib/option.tcl:147
+msgid "Prune Tracking Branches During Fetch"
+msgstr ""
+
+#: lib/option.tcl:148
+msgid "Match Tracking Branches"
+msgstr ""
+
+#: lib/option.tcl:149
+msgid "Blame Copy Only On Changed Files"
+msgstr ""
+
+#: lib/option.tcl:150
+msgid "Minimum Letters To Blame Copy On"
+msgstr ""
+
+#: lib/option.tcl:151
+msgid "Blame History Context Radius (days)"
+msgstr ""
+
+#: lib/option.tcl:152
+msgid "Number of Diff Context Lines"
+msgstr "Antall linjer sammenhengende endringer"
+
+#: lib/option.tcl:153
+msgid "Commit Message Text Width"
+msgstr "Tekstbredde for vindu til innsjekkingsmeldinger"
+
+#: lib/option.tcl:154
+msgid "New Branch Name Template"
+msgstr "Mal for navn på nye grener"
+
+#: lib/option.tcl:155
+msgid "Default File Contents Encoding"
+msgstr "Standard tekstenkoding for innhold i filer"
+
+#: lib/option.tcl:203
+msgid "Change"
+msgstr "Endre"
+
+#: lib/option.tcl:230
+msgid "Spelling Dictionary:"
+msgstr "Stavebokordlister:"
+
+#: lib/option.tcl:254
+msgid "Change Font"
+msgstr "Endre skrifttype"
+
+#: lib/option.tcl:258
+#, tcl-format
+msgid "Choose %s"
+msgstr "Velg %s"
+
+#: lib/option.tcl:264
+msgid "pt."
+msgstr "pt."
+
+#: lib/option.tcl:278
+msgid "Preferences"
+msgstr "Egenskaper"
+
+#: lib/option.tcl:314
+msgid "Failed to completely save options:"
+msgstr "Kunne ikke lagre alternativ:"
+
+#: lib/remote.tcl:163
+msgid "Remove Remote"
+msgstr "Fjern fjernarkiv"
+
+#: lib/remote.tcl:168
+msgid "Prune from"
+msgstr "Fjern fra"
+
+#: lib/remote.tcl:173
+msgid "Fetch from"
+msgstr "Hent fra"
+
+#: lib/remote.tcl:215
+msgid "Push to"
+msgstr "Send til"
+
+#: lib/remote_add.tcl:19
+msgid "Add Remote"
+msgstr "Legg til fjernarkiv"
+
+#: lib/remote_add.tcl:24
+msgid "Add New Remote"
+msgstr "Legg til nytt fjernarkiv"
+
+#: lib/remote_add.tcl:28 lib/tools_dlg.tcl:36
+msgid "Add"
+msgstr "Legg til"
+
+#: lib/remote_add.tcl:37
+msgid "Remote Details"
+msgstr "Detaljer for fjernarkiv"
+
+#: lib/remote_add.tcl:50
+msgid "Location:"
+msgstr "Lokasjon:"
+
+#: lib/remote_add.tcl:62
+msgid "Further Action"
+msgstr "Videre handling"
+
+#: lib/remote_add.tcl:65
+msgid "Fetch Immediately"
+msgstr "Hent umiddelbart"
+
+#: lib/remote_add.tcl:71
+msgid "Initialize Remote Repository and Push"
+msgstr "Initsialiser og send til fjernarkiv"
+
+#: lib/remote_add.tcl:77
+msgid "Do Nothing Else Now"
+msgstr "Ikke gjør mer nå"
+
+#: lib/remote_add.tcl:101
+msgid "Please supply a remote name."
+msgstr "Vennligst angi et navn for fjernarkivet."
+
+#: lib/remote_add.tcl:114
+#, tcl-format
+msgid "'%s' is not an acceptable remote name."
+msgstr "'%s' er ikke et tillatt navn for et fjernarkiv."
+
+#: lib/remote_add.tcl:125
+#, tcl-format
+msgid "Failed to add remote '%s' of location '%s'."
+msgstr "Kunne ikke legge til fjernarkivet '%s' på '%s'."
+
+#: lib/remote_add.tcl:133 lib/transport.tcl:6
+#, tcl-format
+msgid "fetch %s"
+msgstr "hent %s"
+
+#: lib/remote_add.tcl:134
+#, tcl-format
+msgid "Fetching the %s"
+msgstr "Henter %s"
+
+#: lib/remote_add.tcl:157
+#, tcl-format
+msgid "Do not know how to initialize repository at location '%s'."
+msgstr "Vet ikke hvordan arkiv på '%s' skal opprettes."
+
+#: lib/remote_add.tcl:163 lib/transport.tcl:25 lib/transport.tcl:71
+#, tcl-format
+msgid "push %s"
+msgstr "send %s"
+
+#: lib/remote_add.tcl:164
+#, tcl-format
+msgid "Setting up the %s (at %s)"
+msgstr "Initsialiserer %s (på %s)"
+
+#: lib/remote_branch_delete.tcl:29 lib/remote_branch_delete.tcl:34
+msgid "Delete Branch Remotely"
+msgstr "Fjern gren fra fjernarkiv"
+
+#: lib/remote_branch_delete.tcl:47
+msgid "From Repository"
+msgstr "Fra arkiv"
+
+#: lib/remote_branch_delete.tcl:50 lib/transport.tcl:123
+msgid "Remote:"
+msgstr "Fjernarkiv:"
+
+#: lib/remote_branch_delete.tcl:66 lib/transport.tcl:138
+msgid "Arbitrary Location:"
+msgstr "Vilkårlig lokasjon:"
+
+#: lib/remote_branch_delete.tcl:84
+msgid "Branches"
+msgstr "Grener"
+
+#: lib/remote_branch_delete.tcl:109
+msgid "Delete Only If"
+msgstr "Slett kun hvis"
+
+#: lib/remote_branch_delete.tcl:111
+msgid "Merged Into:"
+msgstr "Slått sammen i:"
+
+#: lib/remote_branch_delete.tcl:119
+msgid "Always (Do not perform merge checks)"
+msgstr "Alltid (Ikke utfør sammenslåingskontroll)"
+
+#: lib/remote_branch_delete.tcl:152
+msgid "A branch is required for 'Merged Into'."
+msgstr "En gren kreves for 'sammenslåing i'."
+
+#: lib/remote_branch_delete.tcl:184
+#, tcl-format
+msgid ""
+"The following branches are not completely merged into %s:\n"
+"\n"
+" - %s"
+msgstr ""
+"Følgende grener er ikke fullestendig sammenslått med %s:\n"
+"\n"
+" - %s"
+
+#: lib/remote_branch_delete.tcl:189
+#, tcl-format
+msgid ""
+"One or more of the merge tests failed because you have not fetched the "
+"necessary commits.  Try fetching from %s first."
+msgstr ""
+"En eller flere av testene som blir kjørt under sammenslåing feilet fordi du"
+"ikke har hentet inn de nødvendige innsjekkingene. Prøv å hent disse fra %s"
+"først"
+
+#: lib/remote_branch_delete.tcl:207
+msgid "Please select one or more branches to delete."
+msgstr "Velg en eller flere grener som skal fjernes."
+
+#: lib/remote_branch_delete.tcl:216
+msgid ""
+"Recovering deleted branches is difficult.\n"
+"\n"
+"Delete the selected branches?"
+msgstr ""
+"Gjenoppretting av fjernede grener er vanskelig.\n"
+"\n"
+"Fjern den merkede grenen?"
+
+#: lib/remote_branch_delete.tcl:226
+#, tcl-format
+msgid "Deleting branches from %s"
+msgstr "Fjerner grenene fra %s"
+
+#: lib/remote_branch_delete.tcl:286
+msgid "No repository selected."
+msgstr "Ingen arkiv valgt."
+
+#: lib/remote_branch_delete.tcl:291
+#, tcl-format
+msgid "Scanning %s..."
+msgstr "Søker %s..."
+
+#: lib/search.tcl:21
+msgid "Find:"
+msgstr "Finn:"
+
+#: lib/search.tcl:23
+msgid "Next"
+msgstr "Neste"
+
+#: lib/search.tcl:24
+msgid "Prev"
+msgstr "Forrige"
+
+#: lib/search.tcl:25
+msgid "Case-Sensitive"
+msgstr "Skiller på store og små bokstaver"
+
+#: lib/shortcut.tcl:20 lib/shortcut.tcl:61
+msgid "Cannot write shortcut:"
+msgstr "Kan ikke opprette snarvei:"
+
+#: lib/shortcut.tcl:136
+msgid "Cannot write icon:"
+msgstr "Kan ikke opprette ikon:"
+
+#: lib/spellcheck.tcl:57
+msgid "Unsupported spell checker"
+msgstr "Stavekontrolleren er ikke støttet"
+
+#: lib/spellcheck.tcl:65
+msgid "Spell checking is unavailable"
+msgstr "Stavekontroll er ikke tilgjengelig"
+
+#: lib/spellcheck.tcl:68
+msgid "Invalid spell checking configuration"
+msgstr "Ugyldig stavekontroll-konfigurasjon"
+
+#: lib/spellcheck.tcl:70
+#, tcl-format
+msgid "Reverting dictionary to %s."
+msgstr "Reverterer ordbok til %s."
+
+#: lib/spellcheck.tcl:73
+msgid "Spell checker silently failed on startup"
+msgstr "Stavekontrollen feilet stille under oppstart"
+
+#: lib/spellcheck.tcl:80
+msgid "Unrecognized spell checker"
+msgstr "Stavekontrolleren er ukjent"
+
+#: lib/spellcheck.tcl:186
+msgid "No Suggestions"
+msgstr "Ingen forslag"
+
+#: lib/spellcheck.tcl:388
+msgid "Unexpected EOF from spell checker"
+msgstr "Uventet slutt på filen fra stavekontrollen"
+
+#: lib/spellcheck.tcl:392
+msgid "Spell Checker Failed"
+msgstr "Stavekontroll mislyktes"
+
+#: lib/sshkey.tcl:31
+msgid "No keys found."
+msgstr "Ingen nøkler funnet."
+
+#: lib/sshkey.tcl:34
+#, tcl-format
+msgid "Found a public key in: %s"
+msgstr "Funnet en offentlig nøkkel i: %s"
+
+#: lib/sshkey.tcl:40
+msgid "Generate Key"
+msgstr "Generer nøkkel"
+
+#: lib/sshkey.tcl:56
+msgid "Copy To Clipboard"
+msgstr "Kopier til utklippstavlen"
+
+#: lib/sshkey.tcl:70
+msgid "Your OpenSSH Public Key"
+msgstr "Din offentlige OpenSSH-nøkkel"
+
+#: lib/sshkey.tcl:78
+msgid "Generating..."
+msgstr "Genererer..."
+
+#: lib/sshkey.tcl:84
+#, tcl-format
+msgid ""
+"Could not start ssh-keygen:\n"
+"\n"
+"%s"
+msgstr ""
+"Kunne ikke starte ssh-keygen:\n"
+"\n"
+"%s"
+
+#: lib/sshkey.tcl:111
+msgid "Generation failed."
+msgstr "Generering feilet."
+
+#: lib/sshkey.tcl:118
+msgid "Generation succeeded, but no keys found."
+msgstr "Generering vellykket, men ingen nøkler er funnet."
+
+#: lib/sshkey.tcl:121
+#, tcl-format
+msgid "Your key is in: %s"
+msgstr "Nøkkelen din ligger i: %s"
+
+#: lib/status_bar.tcl:83
+#, tcl-format
+msgid "%s ... %*i of %*i %s (%3i%%)"
+msgstr "%s ... %*i av %*i %s (%3i%%)"
+
+#: lib/tools.tcl:75
+#, tcl-format
+msgid "Running %s requires a selected file."
+msgstr "Å kjøre %s krever at en fil er valgt"
+
+#: lib/tools.tcl:90
+#, tcl-format
+msgid "Are you sure you want to run %s?"
+msgstr "Er du sikker på at du vil kjøre %s?"
+
+#: lib/tools.tcl:110
+#, tcl-format
+msgid "Tool: %s"
+msgstr "Verktøy: %s"
+
+#: lib/tools.tcl:111
+#, tcl-format
+msgid "Running: %s"
+msgstr "Kjører: %s"
+
+#: lib/tools.tcl:149
+#, tcl-format
+msgid "Tool completed successfully: %s"
+msgstr "Verktøyet ble fullført med suksess: %s"
+
+#: lib/tools.tcl:151
+#, tcl-format
+msgid "Tool failed: %s"
+msgstr "Verktøy feilet: %s"
+
+#: lib/tools_dlg.tcl:22
+msgid "Add Tool"
+msgstr "Legg til verktøy"
+
+#: lib/tools_dlg.tcl:28
+msgid "Add New Tool Command"
+msgstr "Legg til ny verktøykommando"
+
+#: lib/tools_dlg.tcl:33
+msgid "Add globally"
+msgstr "Legg til globalt"
+
+#: lib/tools_dlg.tcl:45
+msgid "Tool Details"
+msgstr "Verktøydetaljer"
+
+#: lib/tools_dlg.tcl:48
+msgid "Use '/' separators to create a submenu tree:"
+msgstr "Bruk '/'-separator for å lage undermenyer:"
+
+#: lib/tools_dlg.tcl:61
+msgid "Command:"
+msgstr "Kommando:"
+
+#: lib/tools_dlg.tcl:74
+msgid "Show a dialog before running"
+msgstr "Vis en dialog før start"
+
+#: lib/tools_dlg.tcl:80
+msgid "Ask the user to select a revision (sets $REVISION)"
+msgstr "Spør brukeren om å velge en revisjon (setter $REVISION)"
+
+#: lib/tools_dlg.tcl:85
+msgid "Ask the user for additional arguments (sets $ARGS)"
+msgstr "Spør brukeren for ytterligere paramtere (setter $ARGS)"
+
+#: lib/tools_dlg.tcl:92
+msgid "Don't show the command output window"
+msgstr "Ikke vis kommandoens utdata i vinduet"
+
+#: lib/tools_dlg.tcl:97
+msgid "Run only if a diff is selected ($FILENAME not empty)"
+msgstr "Kjør kun om forskjellene er markert ($FILENAME er ikke tom)"
+
+#: lib/tools_dlg.tcl:121
+msgid "Please supply a name for the tool."
+msgstr "Vennligst angi et navn for dette verktøyet."
+
+#: lib/tools_dlg.tcl:129
+#, tcl-format
+msgid "Tool '%s' already exists."
+msgstr "Verktøyet '%s' eksisterer allerede."
+
+#: lib/tools_dlg.tcl:151
+#, tcl-format
+msgid ""
+"Could not add tool:\n"
+"%s"
+msgstr ""
+"Kunne ikke legge til verktøyet:\n"
+"%s"
+
+#: lib/tools_dlg.tcl:190
+msgid "Remove Tool"
+msgstr "Fjern verktøyet"
+
+#: lib/tools_dlg.tcl:196
+msgid "Remove Tool Commands"
+msgstr "Fjern verktøyskommandoen"
+
+#: lib/tools_dlg.tcl:200
+msgid "Remove"
+msgstr "Fjern"
+
+#: lib/tools_dlg.tcl:236
+msgid "(Blue denotes repository-local tools)"
+msgstr "(Blue angir lokale verktøy til arkivet)"
+
+#: lib/tools_dlg.tcl:297
+#, tcl-format
+msgid "Run Command: %s"
+msgstr "Kjør kommando: %s"
+
+#: lib/tools_dlg.tcl:311
+msgid "Arguments"
+msgstr "Argumenter"
+
+#: lib/tools_dlg.tcl:348
+msgid "OK"
+msgstr "OK"
+
+#: lib/transport.tcl:7
+#, tcl-format
+msgid "Fetching new changes from %s"
+msgstr "Henter nye endringer fra %s"
+
+#: lib/transport.tcl:18
+#, tcl-format
+msgid "remote prune %s"
+msgstr "slett fjernarkiv %s"
+
+#: lib/transport.tcl:19
+#, tcl-format
+msgid "Pruning tracking branches deleted from %s"
+msgstr "Fjrner sporing av grener slettet fra %s"
+
+#: lib/transport.tcl:26
+#, tcl-format
+msgid "Pushing changes to %s"
+msgstr "Sender endringer til %s"
+
+#: lib/transport.tcl:72
+#, tcl-format
+msgid "Pushing %s %s to %s"
+msgstr "Sender %s %s til %s"
+
+#: lib/transport.tcl:89
+msgid "Push Branches"
+msgstr "Send grener"
+
+#: lib/transport.tcl:103
+msgid "Source Branches"
+msgstr "Kildegrener"
+
+#: lib/transport.tcl:120
+msgid "Destination Repository"
+msgstr "Destinasjonsarkiv"
+
+#: lib/transport.tcl:158
+msgid "Transfer Options"
+msgstr "Overføringsalternativer"
+
+#: lib/transport.tcl:160
+msgid "Force overwrite existing branch (may discard changes)"
+msgstr "Tving overskrivning av eksisterende gren (kan forkaste endringer)"
+
+#: lib/transport.tcl:164
+msgid "Use thin pack (for slow network connections)"
+msgstr "Bruk tynne pakker (for tregere nettverkstilkoblinger)"
+
+#: lib/transport.tcl:168
+msgid "Include tags"
+msgstr "Inkluder tagger"

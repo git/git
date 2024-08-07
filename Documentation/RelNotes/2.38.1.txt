@@ -1,0 +1,5 @@
+Git v2.38.1 Release Notes
+=========================
+
+This release merges the security fix that appears in v2.30.6; see
+the release notes for that version for details.

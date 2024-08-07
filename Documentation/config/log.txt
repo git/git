@@ -1,0 +1,64 @@
+log.abbrevCommit::
+	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
+	linkgit:git-whatchanged[1] assume `--abbrev-commit`. You may
+	override this option with `--no-abbrev-commit`.
+
+log.date::
+	Set the default date-time mode for the 'log' command.
+	Setting a value for log.date is similar to using 'git log''s
+	`--date` option.  See linkgit:git-log[1] for details.
++
+If the format is set to "auto:foo" and the pager is in use, format
+"foo" will be used for the date format. Otherwise, "default" will
+be used.
+
+log.decorate::
+	Print out the ref names of any commits that are shown by the log
+	command. If 'short' is specified, the ref name prefixes 'refs/heads/',
+	'refs/tags/' and 'refs/remotes/' will not be printed. If 'full' is
+	specified, the full ref name (including prefix) will be printed.
+	If 'auto' is specified, then if the output is going to a terminal,
+	the ref names are shown as if 'short' were given, otherwise no ref
+	names are shown. This is the same as the `--decorate` option
+	of the `git log`.
+
+log.initialDecorationSet::
+	By default, `git log` only shows decorations for certain known ref
+	namespaces. If 'all' is specified, then show all refs as
+	decorations.
+
+log.excludeDecoration::
+	Exclude the specified patterns from the log decorations. This is
+	similar to the `--decorate-refs-exclude` command-line option, but
+	the config option can be overridden by the `--decorate-refs`
+	option.
+
+log.diffMerges::
+	Set diff format to be used when `--diff-merges=on` is
+	specified, see `--diff-merges` in linkgit:git-log[1] for
+	details. Defaults to `separate`.
+
+log.follow::
+	If `true`, `git log` will act as if the `--follow` option was used when
+	a single <path> is given.  This has the same limitations as `--follow`,
+	i.e. it cannot be used to follow multiple files and does not work well
+	on non-linear history.
+
+log.graphColors::
+	A list of colors, separated by commas, that can be used to draw
+	history lines in `git log --graph`.
+
+log.showRoot::
+	If true, the initial commit will be shown as a big creation event.
+	This is equivalent to a diff against an empty tree.
+	Tools like linkgit:git-log[1] or linkgit:git-whatchanged[1], which
+	normally hide the root commit will now show it. True by default.
+
+log.showSignature::
+	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
+	linkgit:git-whatchanged[1] assume `--show-signature`.
+
+log.mailmap::
+	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
+	linkgit:git-whatchanged[1] assume `--use-mailmap`, otherwise
+	assume `--no-use-mailmap`. True by default.

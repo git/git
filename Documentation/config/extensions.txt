@@ -1,0 +1,62 @@
+extensions.objectFormat::
+	Specify the hash algorithm to use.  The acceptable values are `sha1` and
+	`sha256`.  If not specified, `sha1` is assumed.  It is an error to specify
+	this key unless `core.repositoryFormatVersion` is 1.
++
+Note that this setting should only be set by linkgit:git-init[1] or
+linkgit:git-clone[1].  Trying to change it after initialization will not
+work and will produce hard-to-diagnose issues.
+
+extensions.compatObjectFormat::
+
+	Specify a compatitbility hash algorithm to use.  The acceptable values
+	are `sha1` and `sha256`.  The value specified must be different from the
+	value of extensions.objectFormat.  This allows client level
+	interoperability between git repositories whose objectFormat matches
+	this compatObjectFormat.  In particular when fully implemented the
+	pushes and pulls from a repository in whose objectFormat matches
+	compatObjectFormat.  As well as being able to use oids encoded in
+	compatObjectFormat in addition to oids encoded with objectFormat to
+	locally specify objects.
+
+extensions.refStorage::
+	Specify the ref storage format to use. The acceptable values are:
++
+include::../ref-storage-format.txt[]
++
+It is an error to specify this key unless `core.repositoryFormatVersion` is 1.
++
+Note that this setting should only be set by linkgit:git-init[1] or
+linkgit:git-clone[1]. Trying to change it after initialization will not
+work and will produce hard-to-diagnose issues.
+
+extensions.worktreeConfig::
+	If enabled, then worktrees will load config settings from the
+	`$GIT_DIR/config.worktree` file in addition to the
+	`$GIT_COMMON_DIR/config` file. Note that `$GIT_COMMON_DIR` and
+	`$GIT_DIR` are the same for the main working tree, while other
+	working trees have `$GIT_DIR` equal to
+	`$GIT_COMMON_DIR/worktrees/<id>/`. The settings in the
+	`config.worktree` file will override settings from any other
+	config files.
++
+When enabling `extensions.worktreeConfig`, you must be careful to move
+certain values from the common config file to the main working tree's
+`config.worktree` file, if present:
++
+* `core.worktree` must be moved from `$GIT_COMMON_DIR/config` to
+  `$GIT_COMMON_DIR/config.worktree`.
+* If `core.bare` is true, then it must be moved from `$GIT_COMMON_DIR/config`
+  to `$GIT_COMMON_DIR/config.worktree`.
++
+It may also be beneficial to adjust the locations of `core.sparseCheckout`
+and `core.sparseCheckoutCone` depending on your desire for customizable
+sparse-checkout settings for each worktree. By default, the `git
+sparse-checkout` builtin enables `extensions.worktreeConfig`, assigns
+these config values on a per-worktree basis, and uses the
+`$GIT_DIR/info/sparse-checkout` file to specify the sparsity for each
+worktree independently. See linkgit:git-sparse-checkout[1] for more
+details.
++
+For historical reasons, `extensions.worktreeConfig` is respected
+regardless of the `core.repositoryFormatVersion` setting.

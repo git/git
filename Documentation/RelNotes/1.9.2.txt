@@ -1,0 +1,67 @@
+Git v1.9.2 Release Notes
+========================
+
+Fixes since v1.9.1
+------------------
+
+ * Documentation and in-code comments had many instances of mistaken
+   use of "nor", which have been corrected.
+
+ * "git fetch --prune", when the right-hand-side of multiple fetch
+   refspecs overlap (e.g. storing "refs/heads/*" to
+   "refs/remotes/origin/*", while storing "refs/frotz/*" to
+   "refs/remotes/origin/fr/*"), aggressively thought that lack of
+   "refs/heads/fr/otz" on the origin site meant we should remove
+   "refs/remotes/origin/fr/otz" from us, without checking their
+   "refs/frotz/otz" first.
+
+   Note that such a configuration is inherently unsafe (think what
+   should happen when "refs/heads/fr/otz" does appear on the origin
+   site), but that is not a reason not to be extra careful.
+
+ * "git update-ref --stdin" did not fail a request to create a ref
+   when the ref already existed.
+
+ * "git diff --no-index -Mq a b" fell into an infinite loop.
+
+ * When it is not necessary to edit a commit log message (e.g. "git
+   commit -m" is given a message without specifying "-e"), we used to
+   disable the spawning of the editor by overriding GIT_EDITOR, but
+   this means all the uses of the editor, other than to edit the
+   commit log message, are also affected.
+
+ * "git status --porcelain --branch" showed its output with labels
+   "ahead/behind/gone" translated to the user's locale.
+
+ * "git mv" that moves a submodule forgot to adjust the array that
+   uses to keep track of which submodules were to be moved to update
+   its configuration.
+
+ * Length limit for the pathname used when removing a path in a deep
+   subdirectory has been removed to avoid buffer overflows.
+
+ * The test helper lib-terminal always run an actual test_expect_*
+   when included, which screwed up with the use of skil-all that may
+   have to be done later.
+
+ * "git index-pack" used a wrong variable to name the keep-file in an
+   error message when the file cannot be written or closed.
+
+ * "rebase -i" produced a broken insn sheet when the title of a commit
+   happened to contain '\n' (or ended with '\c') due to a careless use
+   of 'echo'.
+
+ * There were a few instances of 'git-foo' remaining in the
+   documentation that should have been spelled 'git foo'.
+
+ * Serving objects from a shallow repository needs to write a
+   new file to hold the temporary shallow boundaries but it was not
+   cleaned when we exit due to die() or a signal.
+
+ * When "git stash pop" stops after failing to apply the stash
+   (e.g. due to conflicting changes), the stash is not dropped. State
+   that explicitly in the output to let the users know.
+
+ * The labels in "git status" output that describe the nature of
+   conflicts (e.g. "both deleted") were limited to 20 bytes, which was
+   too short for some l10n (e.g. fr).

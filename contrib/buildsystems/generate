@@ -1,0 +1,29 @@
+#!/usr/bin/perl -w
+######################################################################
+# Generate buildsystem files
+#
+# This script generate buildsystem files based on the output of a
+# GNU Make --dry-run, enabling Windows users to develop Git with their
+# trusted IDE with native projects.
+#
+# Note:
+# It is not meant as *the* way of building Git with MSVC, but merely a
+# convenience. The correct way of building Git with MSVC is to use the
+# GNU Make tool to build with the maintained Makefile in the root of
+# the project. If you have the msysgit environment installed and
+# available in your current console, together with the Visual Studio
+# environment you wish to build for, all you have to do is run the
+# command:
+#     make MSVC=1
+#
+# Copyright (C) 2009 Marius Storm-Olsen <mstormo@gmail.com>
+######################################################################
+use strict;
+use File::Basename;
+use Cwd;
+
+my $git_dir = getcwd();
+$git_dir =~ s=\\=/=g;
+$git_dir = dirname($git_dir) while (!-e "$git_dir/git.c" && "$git_dir" ne "");
+die "Couldn't find Git repo" if ("$git_dir" eq "");
+exec join(" ", ("PERL5LIB=${git_dir}/contrib/buildsystems ${git_dir}/contrib/buildsystems/engine.pl", @ARGV));

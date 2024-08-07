@@ -1,0 +1,5 @@
+2 (
+3 	foo || exit 1
+4 	bar &&
+5 	baz
+6 )

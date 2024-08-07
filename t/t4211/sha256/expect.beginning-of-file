@@ -1,0 +1,43 @@
+commit 62a40b38fa4f00800004aee81ef287b7201317594ebcb990f38cbe493b01d200
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:47:40 2013 +0100
+
+    change at very beginning
+
+diff --git a/a.c b/a.c
+--- a/a.c
++++ b/a.c
+@@ -1,3 +1,4 @@
++#include <unistd.h>
+ #include <stdio.h>
+ 
+ long f(long x)
+
+commit ccf97b9878189c40a981da50b15713bb80a35755326320ec80900caf22ced46f
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:45:16 2013 +0100
+
+    touch both functions
+
+diff --git a/a.c b/a.c
+--- a/a.c
++++ b/a.c
+@@ -1,3 +1,3 @@
+ #include <stdio.h>
+ 
+-int f(int x)
++long f(long x)
+
+commit 1dd7e9b2b1699324b53b341e728653b913bc192a14dfea168c5b51f2b3d03592
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:44:48 2013 +0100
+
+    initial
+
+diff --git a/a.c b/a.c
+--- /dev/null
++++ b/a.c
+@@ -0,0 +1,3 @@
++#include <stdio.h>
++
++int f(int x)

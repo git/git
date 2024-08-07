@@ -1,0 +1,21 @@
+Git v2.4.8 Release Notes
+========================
+
+Fixes since v2.4.7
+------------------
+
+ * Abandoning an already applied change in "git rebase -i" with
+   "--continue" left CHERRY_PICK_HEAD and confused later steps.
+
+ * Various fixes around "git am" that applies a patch to a history
+   that is not there yet.
+
+ * "git for-each-ref" reported "missing object" for 0{40} when it
+   encounters a broken ref.  The lack of object whose name is 0{40} is
+   not the problem; the ref being broken is.
+
+ * "git commit --cleanup=scissors" was not careful enough to protect
+   against getting fooled by a line that looked like scissors.
+
+Also contains typofixes, documentation updates and trivial code
+clean-ups.

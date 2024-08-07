@@ -1,0 +1,32 @@
+/ {
+	this_handle: node@f00 {
+		compatible = "mydev";
+		string-prop = start: "hello world!" end: ;
+		#size-cells = <0+0>;
+		reg = <0xf00>;
+		prop = <1>;
+		prop = <-1e10>;
+		prop = <(!3)>;
+		prop = <(~3)>;
+		prop = <(3*4)>;
+		prop = <(3&4)>;
+		prop = <(3*4)>;
+		prop = <(3/4)>;
+		prop = <(3%4)>;
+		prop = <(3+4)>;
+		prop = <(3-4)>;
+		prop = /bits/ 64 <(3<<4)>;
+		prop = <(3>>4)>;
+		prop = <(3&4)>;
+		prop = <(3^4)>;
+		prop = <(3|4)>;
+		prop = <(3&&4)>;
+		prop = <(3||4)>;
+		prop = <(4?5:3)>;
+		list = <&this_handle>, <0 0 0 0>;
+	};
+
+	&phandle {
+		pre-phandle = <&this_handle>;
+	};
+};
