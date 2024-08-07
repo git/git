@@ -245,9 +245,11 @@ static void loose_fill_ref_dir_regular_file(struct files_ref_store *refs,
 {
 	struct object_id oid;
 	int flag;
-
-	if (!refs_resolve_ref_unsafe(&refs->base, refname, RESOLVE_REF_READING,
-				     &oid, &flag)) {
+	const char *referent = refs_resolve_ref_unsafe(&refs->base,
+						       refname,
+						       RESOLVE_REF_READING,
+						       &oid, &flag);
+	if (!referent) {
 		oidclr(&oid, the_repository->hash_algo);
 		flag |= REF_ISBROKEN;
 	} else if (is_null_oid(&oid)) {
@@ -268,7 +270,11 @@ static void loose_fill_ref_dir_regular_file(struct files_ref_store *refs,
 		oidclr(&oid, the_repository->hash_algo);
 		flag |= REF_BAD_NAME | REF_ISBROKEN;
 	}
-	add_entry_to_dir(dir, create_ref_entry(refname, &oid, flag));
+
+	if (!(flag & REF_ISSYMREF))
+		referent = NULL;
+
+	add_entry_to_dir(dir, create_ref_entry(refname, referent, &oid, flag));
 }
 
 /*
@@ -886,6 +892,11 @@ static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		iter->base.refname = iter->iter0->refname;
 		iter->base.oid = iter->iter0->oid;
 		iter->base.flags = iter->iter0->flags;
+		if (iter->iter0->flags & REF_ISSYMREF)
+			iter->base.referent = iter->iter0->referent;
+		else
+			iter->base.referent = NULL;
+
 		return ITER_OK;
 	}
 
