@@ -298,14 +298,18 @@ int git_config_pathname(char **, const char *, const char *);
 int git_config_expiry_date(timestamp_t *, const char *, const char *);
 int git_config_color(char *, const char *, const char *);
 int git_config_set_in_file_gently(const char *, const char *, const char *, const char *);
+int repo_config_set_in_file_gently(struct repository *r, const char *config_filename,
+				   const char *key, const char *comment, const char *value);
 
 /**
  * write config values to a specific config file, takes a key/value pair as
  * parameter.
  */
 void git_config_set_in_file(const char *, const char *, const char *);
+void repo_config_set_in_file(struct repository *, const char *, const char *, const char *);
 
 int git_config_set_gently(const char *, const char *);
+int repo_config_set_gently(struct repository *r, const char *, const char *);
 
 /**
  * Write a config value that should apply to the current worktree. If
@@ -318,6 +322,7 @@ int repo_config_set_worktree_gently(struct repository *, const char *, const cha
  * write config values to `.git/config`, takes a key/value pair as parameter.
  */
 void git_config_set(const char *, const char *);
+void repo_config_set(struct repository *, const char *, const char *);
 
 int git_config_parse_key(const char *, char **, size_t *);
 
@@ -341,9 +346,11 @@ int git_config_parse_key(const char *, char **, size_t *);
 #define CONFIG_FLAGS_FIXED_VALUE (1 << 1)
 
 int git_config_set_multivar_gently(const char *, const char *, const char *, unsigned);
-void git_config_set_multivar(const char *, const char *, const char *, unsigned);
 int repo_config_set_multivar_gently(struct repository *, const char *, const char *, const char *, unsigned);
+void git_config_set_multivar(const char *, const char *, const char *, unsigned);
+void repo_config_set_multivar(struct repository *r, const char *, const char *, const char *, unsigned);
 int git_config_set_multivar_in_file_gently(const char *, const char *, const char *, const char *, const char *, unsigned);
+int repo_config_set_multivar_in_file_gently(struct repository *, const char *, const char *, const char *, const char *, const char *, unsigned);
 
 char *git_config_prepare_comment_string(const char *);
 
@@ -372,6 +379,12 @@ void git_config_set_multivar_in_file(const char *config_filename,
 				     const char *value,
 				     const char *value_pattern,
 				     unsigned flags);
+void repo_config_set_multivar_in_file(struct repository *r,
+				      const char *config_filename,
+				      const char *key,
+				      const char *value,
+				      const char *value_pattern,
+				      unsigned flags);
 
 /**
  * rename or remove sections in the config file
