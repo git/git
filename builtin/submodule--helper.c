@@ -3128,13 +3128,17 @@ struct add_data {
 	const char *sm_name;
 	const char *repo;
 	const char *realrepo;
+	enum ref_storage_format ref_storage_format;
 	int depth;
 	unsigned int force: 1;
 	unsigned int quiet: 1;
 	unsigned int progress: 1;
 	unsigned int dissociate: 1;
 };
-#define ADD_DATA_INIT { .depth = -1 }
+#define ADD_DATA_INIT { \
+	.depth = -1, \
+	.ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN, \
+}
 
 static void append_fetch_remotes(struct strbuf *msg, const char *git_dir_path)
 {
@@ -3228,6 +3232,7 @@ static int add_submodule(const struct add_data *add_data)
 
 			string_list_append(&reference, p)->util = p;
 		}
+		clone_data.ref_storage_format = add_data->ref_storage_format;
 		clone_data.dissociate = add_data->dissociate;
 		if (add_data->depth >= 0)
 			clone_data.depth = xstrfmt("%d", add_data->depth);
@@ -3392,6 +3397,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 {
 	int force = 0, quiet = 0, progress = 0, dissociate = 0;
 	struct add_data add_data = ADD_DATA_INIT;
+	const char *ref_storage_format = NULL;
 	char *to_free = NULL;
 	struct option options[] = {
 		OPT_STRING('b', "branch", &add_data.branch, N_("branch"),
@@ -3402,6 +3408,8 @@ static int module_add(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "progress", &progress, N_("force cloning progress")),
 		OPT_STRING(0, "reference", &add_data.reference_path, N_("repository"),
 			   N_("reference repository")),
+		OPT_STRING(0, "ref-format", &ref_storage_format, N_("format"),
+			   N_("specify the reference format to use")),
 		OPT_BOOL(0, "dissociate", &dissociate, N_("borrow the objects from reference repositories")),
 		OPT_STRING(0, "name", &add_data.sm_name, N_("name"),
 			   N_("sets the submodule's name to the given string "
@@ -3427,6 +3435,12 @@ static int module_add(int argc, const char **argv, const char *prefix)
 
 	if (argc == 0 || argc > 2)
 		usage_with_options(usage, options);
+
+	if (ref_storage_format) {
+		add_data.ref_storage_format = ref_storage_format_by_name(ref_storage_format);
+		if (add_data.ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format '%s'"), ref_storage_format);
+	}
 
 	add_data.repo = argv[0];
 	if (argc == 1)

@@ -37,6 +37,17 @@ test_expect_success 'add existing repository with different ref storage format' 
 	)
 '
 
+test_expect_success 'add submodules with different ref storage format' '
+	test_when_finished "rm -rf submodule upstream" &&
+
+	git init submodule &&
+	test_commit -C submodule submodule-initial &&
+	git init upstream &&
+	test_ref_format upstream "$GIT_DEFAULT_REF_FORMAT" &&
+	git -C upstream submodule add --ref-format="$OTHER_FORMAT" "file://$(pwd)/submodule" &&
+	test_ref_format upstream/submodule "$OTHER_FORMAT"
+'
+
 test_expect_success 'recursive clone propagates ref storage format' '
 	test_when_finished "rm -rf submodule upstream downstream" &&
 

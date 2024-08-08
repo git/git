@@ -94,6 +94,14 @@ cmd_add()
 		--reference=*)
 			reference_path="${1#--reference=}"
 			;;
+		--ref-format)
+			case "$2" in '') usage ;; esac
+			ref_format="--ref-format=$2"
+			shift
+			;;
+		--ref-format=*)
+			ref_format="$1"
+			;;
 		--dissociate)
 			dissociate=1
 			;;
@@ -135,6 +143,7 @@ cmd_add()
 		${progress:+"--progress"} \
 		${branch:+--branch "$branch"} \
 		${reference_path:+--reference "$reference_path"} \
+		${ref_format:+"$ref_format"} \
 		${dissociate:+--dissociate} \
 		${custom_name:+--name "$custom_name"} \
 		${depth:+"$depth"} \
