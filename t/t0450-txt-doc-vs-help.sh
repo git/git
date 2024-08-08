@@ -56,14 +56,11 @@ txt_to_synopsis () {
 	fi &&
 	b2t="$(builtin_to_txt "$builtin")" &&
 	sed -n \
-		-e '/^\[verse\]$/,/^$/ {
+		-E '/^\[(verse|synopsis)\]$/,/^$/ {
 			/^$/d;
-			/^\[verse\]$/d;
-			s/_//g;
-			s/++//g;
-			s/`//g;
-			s/{litdd}/--/g;
-			s/'\''\(git[ a-z-]*\)'\''/\1/g;
+			/^\[(verse|synopsis)\]$/d;
+			s/\{litdd\}/--/g;
+			s/'\''(git[ a-z-]*)'\''/\1/g;
 
 			p;
 		}' \

@@ -8,12 +8,12 @@ git-init - Create an empty Git repository or reinitialize an existing one
 
 SYNOPSIS
 --------
-[verse]
-`git init` [`-q` | `--quiet`] [`--bare`] [++--template=++__<template-directory>__]
-	  [`--separate-git-dir` _<git-dir>_] [++--object-format=++__<format>__]
-	  [++--ref-format=++__<format>__]
-	  [`-b` _<branch-name>_ | ++--initial-branch=++__<branch-name>__]
-	  [++--shared++[++=++__<permissions>__]] [_<directory>_]
+[synopsis]
+git init [-q | --quiet] [--bare] [--template=<template-directory>]
+	 [--separate-git-dir <git-dir>] [--object-format=<format>]
+	 [--ref-format=<format>]
+	 [-b <branch-name> | --initial-branch=<branch-name>]
+	 [--shared[=<permissions>]] [<directory>]
 
 
 DESCRIPTION
