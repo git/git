@@ -96,7 +96,6 @@ test_expect_success 'advice should be printed when GIT_ADVICE is set to true' '
 		>README &&
 		GIT_ADVICE=true git status
 	) >actual &&
-	cat actual > /tmp/actual &&
 	test_cmp expect actual
 '
 
