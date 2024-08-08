@@ -781,6 +781,43 @@ retrieving the header from a bundle at the indicated URI, and thus
 save themselves and the server(s) the request(s) needed to inspect the
 headers of that bundle or bundles.
 
+promisor-remote=<pr-infos>
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The server may advertise some promisor remotes it is using, if it's OK
+for the server that a client uses them too. In this case <pr-infos>
+should be of the form:
+
+	pr-infos = pr-info | pr-infos ";" pr-info
+
+	pr-info = "name=" pr-name | "name=" pr-name "," "url=" pr-url
+
+where `pr-name` is the name of a promisor remote, and `pr-url` the
+urlencoded URL of that promisor remote.
+
+In this case a client wanting to use one or more promisor remotes the
+server advertised should reply with "promisor-remote=<pr-names>" where
+<pr-names> should be of the form:
+
+	pr-names = pr-name | pr-names ";" pr-name
+
+where `pr-name` is the name of a promisor remote the server
+advertised.
+
+If the server prefers a client not to use any promisor remote the
+server uses, or if the server doesn't use any promisor remote, it
+should only advertise "promisor-remote" without any value or "=" sign
+after it.
+
+In this case, or if the client doesn't want to use any promisor remote
+the server advertised, the client should reply only "promisor-remote"
+without any value or "=" sign after it.
+
+The "promisor.advertise" and "promisor.acceptFromServer" configuration
+options can be used on the server and client side respectively to
+control what they advertise or accept respectively. See the
+documentation of these configuration options for more information.
+
 GIT
 ---
 Part of the linkgit:git[1] suite

@@ -131,6 +131,7 @@ test_expect_success 'git upload-pack --advertise-refs: v2' '
 	fetch=shallow wait-for-done
 	server-option
 	object-format=$(test_oid algo)
+	promisor-remote
 	0000
 	EOF
 

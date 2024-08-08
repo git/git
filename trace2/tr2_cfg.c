@@ -33,10 +33,7 @@ static int tr2_cfg_load_patterns(void)
 
 	tr2_cfg_patterns = strbuf_split_buf(envvar, strlen(envvar), ',', -1);
 	for (s = tr2_cfg_patterns; *s; s++) {
-		struct strbuf *buf = *s;
-
-		if (buf->len && buf->buf[buf->len - 1] == ',')
-			strbuf_setlen(buf, buf->len - 1);
+		strbuf_trim_trailing_ch(*s, ',');
 		strbuf_trim_trailing_newline(*s);
 		strbuf_trim(*s);
 	}
@@ -72,10 +69,7 @@ static int tr2_load_env_vars(void)
 
 	tr2_cfg_env_vars = strbuf_split_buf(varlist, strlen(varlist), ',', -1);
 	for (s = tr2_cfg_env_vars; *s; s++) {
-		struct strbuf *buf = *s;
-
-		if (buf->len && buf->buf[buf->len - 1] == ',')
-			strbuf_setlen(buf, buf->len - 1);
+		strbuf_trim_trailing_ch(*s, ',');
 		strbuf_trim_trailing_newline(*s);
 		strbuf_trim(*s);
 	}
