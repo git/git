@@ -201,8 +201,10 @@ static int read_mailmap_blob(struct string_list *map, const char *name)
 	buf = repo_read_object_file(the_repository, &oid, &type, &size);
 	if (!buf)
 		return error("unable to read mailmap object at %s", name);
-	if (type != OBJ_BLOB)
+	if (type != OBJ_BLOB) {
+		free(buf);
 		return error("mailmap is not a blob: %s", name);
+	}
 
 	read_mailmap_string(map, buf);
 
