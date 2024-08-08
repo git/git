@@ -109,6 +109,34 @@ static int write_test_ref(struct reftable_writer *wr, void *arg)
 	return reftable_writer_add_ref(wr, ref);
 }
 
+static void write_n_ref_tables(struct reftable_stack *st,
+			       size_t n)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int disable_auto_compact;
+	int err;
+
+	disable_auto_compact = st->opts.disable_auto_compact;
+	st->opts.disable_auto_compact = 1;
+
+	for (size_t i = 0; i < n; i++) {
+		struct reftable_ref_record ref = {
+			.update_index = reftable_stack_next_update_index(st),
+			.value_type = REFTABLE_REF_VAL1,
+		};
+
+		strbuf_addf(&buf, "refs/heads/branch-%04u", (unsigned) i);
+		ref.refname = buf.buf;
+		set_test_hash(ref.value.val1, i);
+
+		err = reftable_stack_add(st, &write_test_ref, &ref);
+		EXPECT_ERR(err);
+	}
+
+	st->opts.disable_auto_compact = disable_auto_compact;
+	strbuf_release(&buf);
+}
+
 struct write_log_arg {
 	struct reftable_log_record *log;
 	uint64_t update_index;
@@ -916,25 +944,11 @@ static void test_reftable_stack_compaction_concurrent(void)
 	struct reftable_write_options opts = { 0 };
 	struct reftable_stack *st1 = NULL, *st2 = NULL;
 	char *dir = get_tmp_dir(__LINE__);
-	int err, i;
-	int N = 3;
+	int err;
 
 	err = reftable_new_stack(&st1, dir, &opts);
 	EXPECT_ERR(err);
-
-	for (i = 0; i < N; i++) {
-		char name[100];
-		struct reftable_ref_record ref = {
-			.refname = name,
-			.update_index = reftable_stack_next_update_index(st1),
-			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = (char *) "master",
-		};
-		snprintf(name, sizeof(name), "branch%04d", i);
-
-		err = reftable_stack_add(st1, &write_test_ref, &ref);
-		EXPECT_ERR(err);
-	}
+	write_n_ref_tables(st1, 3);
 
 	err = reftable_new_stack(&st2, dir, &opts);
 	EXPECT_ERR(err);
@@ -965,25 +979,11 @@ static void test_reftable_stack_compaction_concurrent_clean(void)
 	struct reftable_write_options opts = { 0 };
 	struct reftable_stack *st1 = NULL, *st2 = NULL, *st3 = NULL;
 	char *dir = get_tmp_dir(__LINE__);
-	int err, i;
-	int N = 3;
+	int err;
 
 	err = reftable_new_stack(&st1, dir, &opts);
 	EXPECT_ERR(err);
-
-	for (i = 0; i < N; i++) {
-		char name[100];
-		struct reftable_ref_record ref = {
-			.refname = name,
-			.update_index = reftable_stack_next_update_index(st1),
-			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = (char *) "master",
-		};
-		snprintf(name, sizeof(name), "branch%04d", i);
-
-		err = reftable_stack_add(st1, &write_test_ref, &ref);
-		EXPECT_ERR(err);
-	}
+	write_n_ref_tables(st1, 3);
 
 	err = reftable_new_stack(&st2, dir, &opts);
 	EXPECT_ERR(err);
