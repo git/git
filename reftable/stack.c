@@ -1020,7 +1020,9 @@ static int stack_compact_range(struct reftable_stack *st,
 	struct lock_file *table_locks = NULL;
 	struct tempfile *new_table = NULL;
 	int is_empty_table = 0, err = 0;
+	size_t first_to_replace, last_to_replace;
 	size_t i, nlocks = 0;
+	char **names = NULL;
 
 	if (first > last || (!expiry && first == last)) {
 		err = 0;
@@ -1124,6 +1126,100 @@ static int stack_compact_range(struct reftable_stack *st,
 	}
 
 	/*
+	 * As we have unlocked the stack while compacting our slice of tables
+	 * it may have happened that a concurrently running process has updated
+	 * the stack while we were compacting. In that case, we need to check
+	 * whether the tables that we have just compacted still exist in the
+	 * stack in the exact same order as we have compacted them.
+	 *
+	 * If they do exist, then it is fine to continue and replace those
+	 * tables with our compacted version. If they don't, then we need to
+	 * abort.
+	 */
+	err = stack_uptodate(st);
+	if (err < 0)
+		goto done;
+	if (err > 0) {
+		ssize_t new_offset = -1;
+		int fd;
+
+		fd = open(st->list_file, O_RDONLY);
+		if (fd < 0) {
+			err = REFTABLE_IO_ERROR;
+			goto done;
+		}
+
+		err = fd_read_lines(fd, &names);
+		close(fd);
+		if (err < 0)
+			goto done;
+
+		/*
+		 * Search for the offset of the first table that we have
+		 * compacted in the updated "tables.list" file.
+		 */
+		for (size_t i = 0; names[i]; i++) {
+			if (strcmp(names[i], st->readers[first]->name))
+				continue;
+
+			/*
+			 * We have found the first entry. Verify that all the
+			 * subsequent tables we have compacted still exist in
+			 * the modified stack in the exact same order as we
+			 * have compacted them.
+			 */
+			for (size_t j = 1; j < last - first + 1; j++) {
+				const char *old = first + j < st->merged->stack_len ?
+					st->readers[first + j]->name : NULL;
+				const char *new = names[i + j];
+
+				/*
+				 * If some entries are missing or in case the tables
+				 * have changed then we need to bail out. Again, this
+				 * shouldn't ever happen because we have locked the
+				 * tables we are compacting.
+				 */
+				if (!old || !new || strcmp(old, new)) {
+					err = REFTABLE_OUTDATED_ERROR;
+					goto done;
+				}
+			}
+
+			new_offset = i;
+			break;
+		}
+
+		/*
+		 * In case we didn't find our compacted tables in the stack we
+		 * need to bail out. In theory, this should have never happened
+		 * because we locked the tables we are compacting.
+		 */
+		if (new_offset < 0) {
+			err = REFTABLE_OUTDATED_ERROR;
+			goto done;
+		}
+
+		/*
+		 * We have found the new range that we want to replace, so
+		 * let's update the range of tables that we want to replace.
+		 */
+		first_to_replace = new_offset;
+		last_to_replace = last + (new_offset - first);
+	} else {
+		/*
+		 * `fd_read_lines()` uses a `NULL` sentinel to indicate that
+		 * the array is at its end. As we use `free_names()` to free
+		 * the array, we need to include this sentinel value here and
+		 * thus have to allocate `stack_len + 1` many entries.
+		 */
+		REFTABLE_CALLOC_ARRAY(names, st->merged->stack_len + 1);
+		for (size_t i = 0; i < st->merged->stack_len; i++)
+			names[i] = xstrdup(st->readers[i]->name);
+		first_to_replace = first;
+		last_to_replace = last;
+	}
+
+	/*
 	 * If the resulting compacted table is not empty, then we need to move
 	 * it into place now.
 	 */
@@ -1145,12 +1241,12 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * have just written. In case the compacted table became empty we
 	 * simply skip writing it.
 	 */
-	for (i = 0; i < first; i++)
-		strbuf_addf(&tables_list_buf, "%s\n", st->readers[i]->name);
+	for (i = 0; i < first_to_replace; i++)
+		strbuf_addf(&tables_list_buf, "%s\n", names[i]);
 	if (!is_empty_table)
 		strbuf_addf(&tables_list_buf, "%s\n", new_table_name.buf);
-	for (i = last + 1; i < st->merged->stack_len; i++)
-		strbuf_addf(&tables_list_buf, "%s\n", st->readers[i]->name);
+	for (i = last_to_replace + 1; names[i]; i++)
+		strbuf_addf(&tables_list_buf, "%s\n", names[i]);
 
 	err = write_in_full(get_lock_file_fd(&tables_list_lock),
 			    tables_list_buf.buf, tables_list_buf.len);
@@ -1203,9 +1299,10 @@ done:
 	delete_tempfile(&new_table);
 	strbuf_release(&new_table_name);
 	strbuf_release(&new_table_path);
-
 	strbuf_release(&tables_list_buf);
 	strbuf_release(&table_name);
+	free_names(names);
+
 	return err;
 }
 
