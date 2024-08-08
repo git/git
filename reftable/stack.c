@@ -674,8 +674,11 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 	}
 
-	fsync_component_or_die(FSYNC_COMPONENT_REFERENCE, lock_file_fd,
-			       get_tempfile_path(add->lock_file));
+	err = fsync_component(FSYNC_COMPONENT_REFERENCE, lock_file_fd);
+	if (err < 0) {
+		err = REFTABLE_IO_ERROR;
+		goto done;
+	}
 
 	err = rename_tempfile(&add->lock_file, add->stack->list_file);
 	if (err < 0) {
