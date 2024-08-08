@@ -397,7 +397,7 @@ test_expect_success 'a/b vs a, plus c/d case setup.' '
 
 test_expect_success 'a/b vs a, plus c/d case test.' '
 	read_tree_u_must_succeed -u -m "$treeH" "$treeM" &&
-	git ls-files --stage | tee >treeMcheck.out &&
+	git ls-files --stage >treeMcheck.out &&
 	test_cmp treeM.out treeMcheck.out
 '
 
