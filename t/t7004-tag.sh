@@ -974,13 +974,11 @@ test_expect_success GPG 'sign with an unknown id (2)' '
 '
 
 test_expect_success GPG '-u implies signed tag' '
-	cat >fakeeditor <<-\EOF &&
-	#!/bin/sh
+	write_script fakeeditor <<-\EOF &&
 	test -n "$1" && exec >"$1"
 	echo A signed tag message
 	echo from a fake editor.
 	EOF
-	chmod +x fakeeditor &&
 
 	get_tag_header implied-sign $commit commit $time >expect &&
 	./fakeeditor >>expect &&
@@ -1415,11 +1413,9 @@ test_expect_success GPG,RFC1991 'creating a signed tag with rfc1991' '
 '
 
 test_expect_success GPG,RFC1991 'reediting a signed tag body omits signature' '
-	cat >fakeeditor <<-\EOF &&
-	#!/bin/sh
+	write_script fakeeditor <<-\EOF &&
 	cp "$1" actual
 	EOF
-	chmod +x fakeeditor &&
 	echo "rfc1991" >gpghome/gpg.conf &&
 	echo "RFC1991 signed tag" >expect &&
 	GIT_EDITOR=./fakeeditor git tag -f -s rfc1991-signed-tag $commit &&
