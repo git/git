@@ -196,6 +196,11 @@ ForEachMacros:
   - 'strmap_for_each_entry'
   - 'strset_for_each_entry'
 
+# A list of macros that should be interpreted as conditionals instead of as
+# function calls.
+IfMacros:
+  - 'if_test'
+
 # The maximum number of consecutive empty lines to keep.
 MaxEmptyLinesToKeep: 1
 

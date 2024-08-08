@@ -72,6 +72,8 @@ static void t_empty(void)
 
 int cmd__example_tap(int argc, const char **argv)
 {
+	check(1);
+
 	test_res = TEST(check_res = check_int(1, ==, 1), "passing test");
 	TEST(t_res(1), "passing test and assertion return 1");
 	test_res = TEST(check_res = check_int(1, ==, 2), "failing test");
@@ -91,6 +93,39 @@ int cmd__example_tap(int argc, const char **argv)
 	TEST(t_messages(), "messages from failing string and char comparison");
 	test_res = TEST(t_empty(), "test with no checks");
 	TEST(check_int(test_res, ==, 0), "test with no checks returns 0");
+
+	if_test ("if_test passing test")
+		check_int(1, ==, 1);
+	if_test ("if_test failing test")
+		check_int(1, ==, 2);
+	if_test ("if_test passing TEST_TODO()")
+		TEST_TODO(check(0));
+	if_test ("if_test failing TEST_TODO()")
+		TEST_TODO(check(1));
+	if_test ("if_test test_skip()") {
+		check(0);
+		test_skip("missing prerequisite");
+		check(1);
+	}
+	if_test ("if_test test_skip() inside TEST_TODO()")
+		TEST_TODO((test_skip("missing prerequisite"), 1));
+	if_test ("if_test TEST_TODO() after failing check") {
+		check(0);
+		TEST_TODO(check(0));
+	}
+	if_test ("if_test failing check after TEST_TODO()") {
+		check(1);
+		TEST_TODO(check(0));
+		check(0);
+	}
+	if_test ("if_test messages from failing string and char comparison") {
+		check_str("\thello\\", "there\"\n");
+		check_str("NULL", NULL);
+		check_char('a', ==, '\n');
+		check_char('\\', ==, '\'');
+	}
+	if_test ("if_test test with no checks")
+		; /* nothing */
 
 	return test_done();
 }
