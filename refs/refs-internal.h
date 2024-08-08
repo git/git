@@ -705,7 +705,8 @@ struct ref_store {
  * Parse contents of a loose ref file. *failure_errno maybe be set to EINVAL for
  * invalid contents.
  */
-int parse_loose_ref_contents(const char *buf, struct object_id *oid,
+int parse_loose_ref_contents(const struct git_hash_algo *algop,
+			     const char *buf, struct object_id *oid,
 			     struct strbuf *referent, unsigned int *type,
 			     int *failure_errno);
 

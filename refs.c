@@ -2,8 +2,6 @@
  * The backend-independent part of the reference module.
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "advice.h"
 #include "config.h"
@@ -1754,8 +1752,8 @@ static int refs_read_special_head(struct ref_store *ref_store,
 		goto done;
 	}
 
-	result = parse_loose_ref_contents(content.buf, oid, referent, type,
-					  failure_errno);
+	result = parse_loose_ref_contents(ref_store->repo->hash_algo, content.buf,
+					  oid, referent, type, failure_errno);
 
 done:
 	strbuf_release(&full_path);
@@ -1838,7 +1836,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 			    failure_errno != ENOTDIR)
 				return NULL;
 
-			oidclr(oid, the_repository->hash_algo);
+			oidclr(oid, refs->repo->hash_algo);
 			if (*flags & REF_BAD_NAME)
 				*flags |= REF_ISBROKEN;
 			return refname;
@@ -1848,7 +1846,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 
 		if (!(read_flags & REF_ISSYMREF)) {
 			if (*flags & REF_BAD_NAME) {
-				oidclr(oid, the_repository->hash_algo);
+				oidclr(oid, refs->repo->hash_algo);
 				*flags |= REF_ISBROKEN;
 			}
 			return refname;
@@ -1856,7 +1854,7 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 
 		refname = sb_refname.buf;
 		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
-			oidclr(oid, the_repository->hash_algo);
+			oidclr(oid, refs->repo->hash_algo);
 			return refname;
 		}
 		if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL)) {
@@ -2011,7 +2009,7 @@ struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
 		free(subrepo);
 		goto done;
 	}
-	refs = ref_store_init(subrepo, the_repository->ref_storage_format,
+	refs = ref_store_init(subrepo, repo->ref_storage_format,
 			      submodule_sb.buf,
 			      REF_STORE_READ | REF_STORE_ODB);
 	register_ref_store_map(&repo->submodule_ref_stores, "submodule",
@@ -2045,7 +2043,7 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 				      common_path.buf, REF_STORE_ALL_CAPS);
 		strbuf_release(&common_path);
 	} else {
-		refs = ref_store_init(wt->repo, the_repository->ref_storage_format,
+		refs = ref_store_init(wt->repo, wt->repo->ref_storage_format,
 				      wt->repo->commondir, REF_STORE_ALL_CAPS);
 	}
 
