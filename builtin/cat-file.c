@@ -1071,10 +1071,13 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		else if (!argc && opt_epts)
 			usage_msg_optf(_("<object> required with '-%c'"),
 				       usage, options, opt);
+		else if (!argc)
+			BUG("argc==0 with opt=%c", opt);
 		else if (argc == 1)
 			obj_name = argv[0];
 		else
-			usage_msg_opt(_("too many arguments"), usage, options);
+			usage_msg_optf(_("unexpected argument: '%s'"),
+				       usage, options, argv[1]);
 	} else if (!argc) {
 		usage_with_options(usage, options);
 	} else if (argc != 2) {

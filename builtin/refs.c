@@ -35,9 +35,9 @@ static int cmd_refs_migrate(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, migrate_usage, 0);
 	if (argc)
-		usage(_("too many arguments"));
+		die(_("'git refs migrate' takes no arguments"));
 	if (!format_str)
-		usage(_("missing --ref-format=<format>"));
+		die(_("'git refs migrate' needs '--ref-format=<format>'"));
 
 	format = ref_storage_format_by_name(format_str);
 	if (format == REF_STORAGE_FORMAT_UNKNOWN) {

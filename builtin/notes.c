@@ -446,7 +446,7 @@ static int list(int argc, const char **argv, const char *prefix)
 				     git_notes_list_usage, 0);
 
 	if (1 < argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[1]);
 		usage_with_options(git_notes_list_usage, options);
 	}
 
@@ -508,7 +508,7 @@ static int add(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_ARGV0);
 
 	if (2 < argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[2]);
 		usage_with_options(git_notes_add_usage, options);
 	}
 
@@ -589,7 +589,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 
 	if (from_stdin || rewrite_cmd) {
 		if (argc) {
-			error(_("too many arguments"));
+			error(_("unexpected argument: '%s'"), argv[0]);
 			usage_with_options(git_notes_copy_usage, options);
 		} else {
 			return notes_copy_from_stdin(force, rewrite_cmd);
@@ -601,7 +601,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_copy_usage, options);
 	}
 	if (2 < argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[2]);
 		usage_with_options(git_notes_copy_usage, options);
 	}
 
@@ -684,7 +684,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_KEEP_ARGV0);
 
 	if (2 < argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[2]);
 		usage_with_options(usage, options);
 	}
 
@@ -760,7 +760,7 @@ static int show(int argc, const char **argv, const char *prefix)
 			     0);
 
 	if (1 < argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[1]);
 		usage_with_options(git_notes_show_usage, options);
 	}
 
@@ -913,7 +913,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 		error(_("must specify a notes ref to merge"));
 		usage_with_options(git_notes_merge_usage, options);
 	} else if (!do_merge && argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[0]);
 		usage_with_options(git_notes_merge_usage, options);
 	}
 
@@ -1067,7 +1067,7 @@ static int prune(int argc, const char **argv, const char *prefix)
 			     0);
 
 	if (argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[0]);
 		usage_with_options(git_notes_prune_usage, options);
 	}
 
@@ -1089,7 +1089,7 @@ static int get_ref(int argc, const char **argv, const char *prefix)
 			     git_notes_get_ref_usage, 0);
 
 	if (argc) {
-		error(_("too many arguments"));
+		error(_("unexpected argument: '%s'"), argv[0]);
 		usage_with_options(git_notes_get_ref_usage, options);
 	}
 
