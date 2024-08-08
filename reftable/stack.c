@@ -1016,7 +1016,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	struct lock_file *table_locks = NULL;
 	struct tempfile *new_table = NULL;
 	int is_empty_table = 0, err = 0;
-	size_t i;
+	size_t i, nlocks = 0;
 
 	if (first > last || (!expiry && first == last)) {
 		err = 0;
@@ -1051,7 +1051,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	for (i = first; i <= last; i++) {
 		stack_filename(&table_name, st, reader_name(st->readers[i]));
 
-		err = hold_lock_file_for_update(&table_locks[i - first],
+		err = hold_lock_file_for_update(&table_locks[nlocks],
 						table_name.buf, LOCK_NO_DEREF);
 		if (err < 0) {
 			if (errno == EEXIST)
@@ -1066,7 +1066,7 @@ static int stack_compact_range(struct reftable_stack *st,
 		 * run into file descriptor exhaustion when we compress a lot
 		 * of tables.
 		 */
-		err = close_lock_file_gently(&table_locks[i - first]);
+		err = close_lock_file_gently(&table_locks[nlocks++]);
 		if (err < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
@@ -1183,8 +1183,8 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * Delete the old tables. They may still be in use by concurrent
 	 * readers, so it is expected that unlinking tables may fail.
 	 */
-	for (i = first; i <= last; i++) {
-		struct lock_file *table_lock = &table_locks[i - first];
+	for (i = 0; i < nlocks; i++) {
+		struct lock_file *table_lock = &table_locks[i];
 		char *table_path = get_locked_file_path(table_lock);
 		unlink(table_path);
 		free(table_path);
@@ -1192,8 +1192,8 @@ static int stack_compact_range(struct reftable_stack *st,
 
 done:
 	rollback_lock_file(&tables_list_lock);
-	for (i = first; table_locks && i <= last; i++)
-		rollback_lock_file(&table_locks[i - first]);
+	for (i = 0; table_locks && i < nlocks; i++)
+		rollback_lock_file(&table_locks[i]);
 	reftable_free(table_locks);
 
 	delete_tempfile(&new_table);
