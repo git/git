@@ -9,6 +9,13 @@ UI, Workflows & Features
 
  * A few descriptions in "git show-ref -h" have been clarified.
 
+ * A 'P' command to "git add -p" that passes the patch hunk to the
+   pager has been added.
+
+ * "git grep -W" omits blank lines that follow the found function at
+   the end of the file, just like it omits blank lines before the next
+   function.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -21,6 +28,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * The reviewing guidelines document now explicitly encourages people
    to give positive reviews and how.
+
+ * Test script linter has been updated to catch an attempt to use
+   one-shot export construct "VAR=VAL func" for shell functions (which
+   does not work for some shells) better.
+
+ * Some project conventions have been added to CodingGuidelines.
 
 
 Fixes since v2.46
@@ -46,7 +59,19 @@ Fixes since v2.46
    incorrectly and called it "fuzz", which has been corrected.
    (merge 70058db385 jc/doc-rebase-fuzz-vs-offset-fix later to maint).
 
+ * "git notes add -m '' --allow-empty" and friends that take prepared
+   data to create notes should not invoke an editor, but it started
+   doing so since Git 2.42, which has been corrected.
+   (merge 8b426c84f3 dd/notes-empty-no-edit-by-default later to maint).
+
+ * An expensive operation to prepare tracing was done in re-encoding
+   code path even when the tracing was not requested, which has been
+   corrected.
+   (merge 63ad8dbf16 dh/encoding-trace-optim later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 8db8786fc2 jt/doc-post-receive-hook-update later to maint).
    (merge 1c473dd6af tn/doc-commit-fix later to maint).
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
+   (merge 6e71d6ac7c ks/unit-test-comment-typofix later to maint).
+   (merge 63ee933383 ps/p4-tests-updates later to maint).
