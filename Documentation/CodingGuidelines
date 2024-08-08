@@ -241,6 +241,16 @@ For C programs:
  - We use tabs to indent, and interpret tabs as taking up to
    8 spaces.
 
+ - Nested C preprocessor directives are indented after the hash by one
+   space per nesting level.
+
+	#if FOO
+	# include <foo.h>
+	# if BAR
+	#  include <bar.h>
+	# endif
+	#endif
+
  - We try to keep to at most 80 characters per line.
 
  - As a Git developer we assume you have a reasonably modern compiler
@@ -261,7 +271,7 @@ For C programs:
    . since around 2007 with 2b6854c863a, we have been using
      initializer elements which are not computable at load time. E.g.:
 
-	const char *args[] = {"constant", variable, NULL};
+	const char *args[] = { "constant", variable, NULL };
 
    . since early 2012 with e1327023ea, we have been using an enum
      definition whose last element is followed by a comma.  This, like
@@ -557,6 +567,42 @@ For C programs:
    run `GIT_DEBUGGER="<debugger> <debugger-args>" ./bin-wrappers/git foo` to
    use your own debugger and arguments. Example: `GIT_DEBUGGER="ddd --gdb"
    ./bin-wrappers/git log` (See `wrap-for-bin.sh`.)
+
+ - The primary data structure that a subsystem 'S' deals with is called
+   `struct S`. Functions that operate on `struct S` are named
+   `S_<verb>()` and should generally receive a pointer to `struct S` as
+   first parameter. E.g.
+
+	struct strbuf;
+
+	void strbuf_add(struct strbuf *buf, ...);
+
+	void strbuf_reset(struct strbuf *buf);
+
+    is preferred over:
+
+	struct strbuf;
+
+	void add_string(struct strbuf *buf, ...);
+
+	void reset_strbuf(struct strbuf *buf);
+
+ - There are several common idiomatic names for functions performing
+   specific tasks on a structure `S`:
+
+    - `S_init()` initializes a structure without allocating the
+      structure itself.
+
+    - `S_release()` releases a structure's contents without freeing the
+      structure.
+
+    - `S_clear()` is equivalent to `S_release()` followed by `S_init()`
+      such that the structure is directly usable after clearing it. When
+      `S_clear()` is provided, `S_init()` shall not allocate resources
+      that need to be released again.
+
+    - `S_free()` releases a structure's contents and frees the
+      structure.
 
 For Perl programs:
 
