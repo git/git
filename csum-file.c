@@ -56,7 +56,7 @@ void hashflush(struct hashfile *f)
 	}
 }
 
-static void free_hashfile(struct hashfile *f)
+void free_hashfile(struct hashfile *f)
 {
 	free(f->buffer);
 	free(f->check_buffer);
