@@ -232,6 +232,10 @@ static int report(struct fsck_options *options,
 		  enum fsck_msg_id msg_id, const char *fmt, ...)
 {
 	va_list ap;
+	struct fsck_object_report report = {
+		.oid = oid,
+		.object_type = object_type
+	};
 	struct strbuf sb = STRBUF_INIT;
 	enum fsck_msg_type msg_type = fsck_msg_type(msg_id, options);
 	int result;
@@ -252,7 +256,7 @@ static int report(struct fsck_options *options,
 
 	va_start(ap, fmt);
 	strbuf_vaddf(&sb, fmt, ap);
-	result = options->error_func(options, oid, object_type,
+	result = options->error_func(options, &report,
 				     msg_type, msg_id, sb.buf);
 	strbuf_release(&sb);
 	va_end(ap);
@@ -1201,12 +1205,14 @@ int fsck_buffer(const struct object_id *oid, enum object_type type,
 }
 
 int fsck_objects_error_function(struct fsck_options *o,
-			const struct object_id *oid,
-			enum object_type object_type UNUSED,
-			enum fsck_msg_type msg_type,
-			enum fsck_msg_id msg_id UNUSED,
-			const char *message)
+				void *fsck_report,
+				enum fsck_msg_type msg_type,
+				enum fsck_msg_id msg_id UNUSED,
+				const char *message)
 {
+	struct fsck_object_report *report = fsck_report;
+	const struct object_id *oid = report->oid;
+
 	if (msg_type == FSCK_WARN) {
 		warning("object %s: %s", fsck_describe_object(o, oid), message);
 		return 0;
@@ -1304,16 +1310,16 @@ int git_fsck_config(const char *var, const char *value,
  */
 
 int fsck_objects_error_cb_print_missing_gitmodules(struct fsck_options *o,
-						   const struct object_id *oid,
-						   enum object_type object_type,
+						   void *fsck_report,
 						   enum fsck_msg_type msg_type,
 						   enum fsck_msg_id msg_id,
 						   const char *message)
 {
 	if (msg_id == FSCK_MSG_GITMODULES_MISSING) {
-		puts(oid_to_hex(oid));
+		struct fsck_object_report *report = fsck_report;
+		puts(oid_to_hex(report->oid));
 		return 0;
 	}
-	return fsck_objects_error_function(o, oid, object_type,
+	return fsck_objects_error_function(o, fsck_report,
 					   msg_type, msg_id, message);
 }

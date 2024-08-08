@@ -114,22 +114,29 @@ int is_valid_msg_type(const char *msg_id, const char *msg_type);
 typedef int (*fsck_walk_func)(struct object *obj, enum object_type object_type,
 			      void *data, struct fsck_options *options);
 
-/* callback for fsck_object, type is FSCK_ERROR or FSCK_WARN */
+/*
+ * Callback for reporting errors either for objects or refs. The "fsck_report"
+ * is a generic pointer that can be used to pass any information.
+ */
 typedef int (*fsck_error)(struct fsck_options *o,
-			  const struct object_id *oid, enum object_type object_type,
+			  void *fsck_report,
 			  enum fsck_msg_type msg_type, enum fsck_msg_id msg_id,
 			  const char *message);
 
 int fsck_objects_error_function(struct fsck_options *o,
-				const struct object_id *oid, enum object_type object_type,
+				void *fsck_report,
 				enum fsck_msg_type msg_type, enum fsck_msg_id msg_id,
 				const char *message);
 int fsck_objects_error_cb_print_missing_gitmodules(struct fsck_options *o,
-						   const struct object_id *oid,
-						   enum object_type object_type,
+						   void *fsck_report,
 						   enum fsck_msg_type msg_type,
 						   enum fsck_msg_id msg_id,
 						   const char *message);
+
+struct fsck_object_report {
+	const struct object_id *oid;
+	enum object_type object_type;
+};
 
 struct fsck_options {
 	fsck_walk_func walk;

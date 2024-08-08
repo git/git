@@ -90,12 +90,15 @@ static int objerror(struct object *obj, const char *err)
 }
 
 static int fsck_objects_error_func(struct fsck_options *o UNUSED,
-				   const struct object_id *oid,
-				   enum object_type object_type,
+				   void *fsck_report,
 				   enum fsck_msg_type msg_type,
 				   enum fsck_msg_id msg_id UNUSED,
 				   const char *message)
 {
+	struct fsck_object_report *report = fsck_report;
+	const struct object_id *oid = report->oid;
+	enum object_type object_type = report->object_type;
+
 	switch (msg_type) {
 	case FSCK_WARN:
 		/* TRANSLATORS: e.g. warning in tree 01bfda: <more explanation> */
