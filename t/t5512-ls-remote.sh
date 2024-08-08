@@ -403,4 +403,17 @@ test_expect_success 'v0 clients can handle multiple symrefs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'helper with refspec capability fails gracefully' '
+	mkdir test-bin &&
+	write_script test-bin/git-remote-foo <<-EOF &&
+	echo import
+	echo refspec ${SQ}*:*${SQ}
+	EOF
+	(
+		PATH="$PWD/test-bin:$PATH" &&
+		export PATH &&
+		test_must_fail nongit git ls-remote foo::bar
+	)
+'
+
 test_done

@@ -90,6 +90,21 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 	dest = argv[0];
 
+	/*
+	 * TODO: This is buggy, but required for transport helpers. When a
+	 * transport helper advertises a "refspec", then we'd add that to a
+	 * list of refspecs via `refspec_append()`, which transitively depends
+	 * on `the_hash_algo`. Thus, when the hash algorithm isn't properly set
+	 * up, this would lead to a segfault.
+	 *
+	 * We really should fix this in the transport helper logic such that we
+	 * lazily parse refspec capabilities _after_ we have learned about the
+	 * remote's object format. Otherwise, we may end up misparsing refspecs
+	 * depending on what object hash the remote uses.
+	 */
+	if (!the_repository->hash_algo)
+		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+
 	packet_trace_identity("ls-remote");
 
 	for (int i = 1; i < argc; i++)
