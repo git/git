@@ -58,9 +58,10 @@ static const char * const builtin_clone_usage[] = {
 };
 
 static int option_no_checkout, option_bare, option_mirror, option_single_branch = -1;
+static int option_single_branch_submodules;
 static int option_local = -1, option_no_hardlinks, option_shared;
 static int option_no_tags;
-static int option_shallow_submodules;
+static int option_shallow_submodules = -1;
 static int option_reject_shallow = -1;    /* unspecified */
 static int config_reject_shallow = -1;    /* unspecified */
 static int deepen;
@@ -798,6 +799,8 @@ static int checkout(int submodule_progress, int filter_submodules)
 
 		if (option_shallow_submodules == 1)
 			strvec_push(&cmd.args, "--depth=1");
+		else if (option_shallow_submodules == 0)
+			strvec_push(&cmd.args, "--no-recommend-shallow");
 
 		if (max_jobs != -1)
 			strvec_pushf(&cmd.args, "--jobs=%d", max_jobs);
@@ -817,8 +820,8 @@ static int checkout(int submodule_progress, int filter_submodules)
 			strvec_pushf(&cmd.args, "--filter=%s",
 				     expand_list_objects_filter_spec(&filter_options));
 
-		if (option_single_branch >= 0)
-			strvec_push(&cmd.args, option_single_branch ?
+		if (option_single_branch_submodules >= 0)
+			strvec_push(&cmd.args, option_single_branch_submodules ?
 					       "--single-branch" :
 					       "--no-single-branch");
 
@@ -998,6 +1001,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (option_depth || option_since || option_not.nr)
 		deepen = 1;
+	option_single_branch_submodules = option_single_branch;
 	if (option_single_branch == -1)
 		option_single_branch = deepen ? 1 : 0;
 
