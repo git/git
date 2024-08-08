@@ -1205,13 +1205,6 @@ done:
 	return err;
 }
 
-int reftable_stack_compact_all(struct reftable_stack *st,
-			       struct reftable_log_expiry_config *config)
-{
-	return stack_compact_range(st, 0, st->merged->stack_len ?
-			st->merged->stack_len - 1 : 0, config);
-}
-
 static int stack_compact_range_stats(struct reftable_stack *st,
 				     size_t first, size_t last,
 				     struct reftable_log_expiry_config *config)
@@ -1220,6 +1213,13 @@ static int stack_compact_range_stats(struct reftable_stack *st,
 	if (err == REFTABLE_LOCK_ERROR)
 		st->stats.failures++;
 	return err;
+}
+
+int reftable_stack_compact_all(struct reftable_stack *st,
+			       struct reftable_log_expiry_config *config)
+{
+	size_t last = st->merged->stack_len ? st->merged->stack_len - 1 : 0;
+	return stack_compact_range_stats(st, 0, last, config);
 }
 
 static int segment_size(struct segment *s)

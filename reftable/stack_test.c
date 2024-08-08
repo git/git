@@ -1005,8 +1005,7 @@ static void test_reftable_stack_compaction_with_locked_tables(void)
 	 */
 	err = reftable_stack_compact_all(st, NULL);
 	EXPECT(err == REFTABLE_LOCK_ERROR);
-	/* TODO: this is wrong, we should get notified about the failure. */
-	EXPECT(st->stats.failures == 0);
+	EXPECT(st->stats.failures == 1);
 	EXPECT(st->merged->stack_len == 3);
 
 	reftable_stack_destroy(st);
