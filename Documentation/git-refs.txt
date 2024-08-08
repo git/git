@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git refs migrate' --ref-format=<format> [--dry-run]
+'git refs verify' [--strict] [--verbose]
 
 DESCRIPTION
 -----------
@@ -21,6 +22,9 @@ COMMANDS
 
 migrate::
 	Migrate ref store between different formats.
+
+verify::
+	Verify reference database consistency.
 
 OPTIONS
 -------
@@ -38,6 +42,15 @@ include::ref-storage-format.txt[]
 	separately. The name of the directory will be reported on stdout. This
 	can be used to double check that the migration works as expected before
 	performing the actual migration.
+
+The following options are specific to 'git refs verify':
+
+--strict::
+	Enable stricter error checking. This will cause warnings to be
+	reported as errors. See linkgit:git-fsck[1].
+
+--verbose::
+	When verifying the reference database consistency, be chatty.
 
 KNOWN LIMITATIONS
 -----------------
