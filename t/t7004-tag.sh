@@ -61,8 +61,9 @@ test_expect_success 'sort tags, ignore case' '
 	)
 '
 
-test_expect_success 'looking for a tag in an empty tree should fail' \
-	'! (tag_exists mytag)'
+test_expect_success 'looking for a tag in an empty tree should fail' '
+	! (tag_exists mytag)
+'
 
 test_expect_success 'creating a tag in an empty tree should fail' '
 	test_must_fail git tag mynotag &&
@@ -148,25 +149,31 @@ test_expect_success 'listing all tags if one exists should output that tag' '
 
 # pattern matching:
 
-test_expect_success 'listing a tag using a matching pattern should succeed' \
-	'git tag -l mytag'
+test_expect_success 'listing a tag using a matching pattern should succeed' '
+	git tag -l mytag
+'
 
-test_expect_success 'listing a tag with --ignore-case' \
-	'test $(git tag -l --ignore-case MYTAG) = mytag'
+test_expect_success 'listing a tag with --ignore-case' '
+	test $(git tag -l --ignore-case MYTAG) = mytag
+'
 
-test_expect_success 'listing a tag using a matching pattern should output that tag' \
-	'test $(git tag -l mytag) = mytag'
+test_expect_success 'listing a tag using a matching pattern should output that tag' '
+	test $(git tag -l mytag) = mytag
+'
 
-test_expect_success 'listing tags using a non-matching pattern should succeed' \
-	'git tag -l xxx'
+test_expect_success 'listing tags using a non-matching pattern should succeed' '
+	git tag -l xxx
+'
 
-test_expect_success 'listing tags using a non-matching pattern should output nothing' \
-	'test $(git tag -l xxx | wc -l) -eq 0'
+test_expect_success 'listing tags using a non-matching pattern should output nothing' '
+	test $(git tag -l xxx | wc -l) -eq 0
+'
 
 # special cases for creating tags:
 
-test_expect_success 'trying to create a tag with the name of one existing should fail' \
-	'test_must_fail git tag mytag'
+test_expect_success 'trying to create a tag with the name of one existing should fail' '
+	test_must_fail git tag mytag
+'
 
 test_expect_success 'trying to create a tag with a non-valid name should fail' '
 	test $(git tag -l | wc -l) -eq 1 &&
@@ -236,8 +243,9 @@ test_expect_success 'trying to delete two tags, existing and not, should fail in
 	! tag_exists nonexistingtag
 '
 
-test_expect_success 'trying to delete an already deleted tag should fail' \
-	'test_must_fail git tag -d mytag'
+test_expect_success 'trying to delete an already deleted tag should fail' '
+	test_must_fail git tag -d mytag
+'
 
 # listing various tags with pattern matching:
 
@@ -417,14 +425,17 @@ test_expect_success 'a non-annotated tag created without parameters should point
 	test $(git rev-parse non-annotated-tag) = $(git rev-parse HEAD)
 '
 
-test_expect_success 'trying to verify an unknown tag should fail' \
-	'test_must_fail git tag -v unknown-tag'
+test_expect_success 'trying to verify an unknown tag should fail' '
+	test_must_fail git tag -v unknown-tag
+'
 
-test_expect_success 'trying to verify a non-annotated and non-signed tag should fail' \
-	'test_must_fail git tag -v non-annotated-tag'
+test_expect_success 'trying to verify a non-annotated and non-signed tag should fail' '
+	test_must_fail git tag -v non-annotated-tag
+'
 
-test_expect_success 'trying to verify many non-annotated or unknown tags, should fail' \
-	'test_must_fail git tag -v unknown-tag1 non-annotated-tag unknown-tag2'
+test_expect_success 'trying to verify many non-annotated or unknown tags, should fail' '
+	test_must_fail git tag -v unknown-tag1 non-annotated-tag unknown-tag2
+'
 
 # creating annotated tags:
 
@@ -1014,8 +1025,8 @@ test_expect_success GPG '-s implies annotated tag' '
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'git tag -s implied if configured with tag.forcesignannotated' \
-	'get_tag_header forcesignannotated-implied-sign $commit commit $time >expect &&
+test_expect_success GPG 'git tag -s implied if configured with tag.forcesignannotated' '
+	get_tag_header forcesignannotated-implied-sign $commit commit $time >expect &&
 	echo "A message" >>expect &&
 	echo "-----BEGIN PGP SIGNATURE-----" >>expect &&
 	test_config tag.forcesignannotated true &&
@@ -1024,15 +1035,15 @@ test_expect_success GPG 'git tag -s implied if configured with tag.forcesignanno
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'lightweight with no message when configured with tag.forcesignannotated' \
-	'test_config tag.forcesignannotated true &&
+test_expect_success GPG 'lightweight with no message when configured with tag.forcesignannotated' '
+	test_config tag.forcesignannotated true &&
 	git tag forcesignannotated-lightweight &&
 	tag_exists forcesignannotated-lightweight &&
 	test_must_fail git tag -v forcesignannotated-no-message
 '
 
-test_expect_success GPG 'git tag -a disable configured tag.forcesignannotated' \
-	'get_tag_header forcesignannotated-annotate $commit commit $time >expect &&
+test_expect_success GPG 'git tag -a disable configured tag.forcesignannotated' '
+	get_tag_header forcesignannotated-annotate $commit commit $time >expect &&
 	echo "A message" >>expect &&
 	test_config tag.forcesignannotated true &&
 	git tag -a -m "A message" forcesignannotated-annotate &&
@@ -1041,8 +1052,8 @@ test_expect_success GPG 'git tag -a disable configured tag.forcesignannotated' \
 	test_must_fail git tag -v forcesignannotated-annotate
 '
 
-test_expect_success GPG 'git tag --sign enable GPG sign' \
-	'get_tag_header forcesignannotated-disabled $commit commit $time >expect &&
+test_expect_success GPG 'git tag --sign enable GPG sign' '
+	get_tag_header forcesignannotated-disabled $commit commit $time >expect &&
 	echo "A message" >>expect &&
 	echo "-----BEGIN PGP SIGNATURE-----" >>expect &&
 	test_config tag.forcesignannotated false &&
@@ -1051,8 +1062,8 @@ test_expect_success GPG 'git tag --sign enable GPG sign' \
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'git tag configured tag.gpgsign enables GPG sign' \
-	'get_tag_header gpgsign-enabled $commit commit $time >expect &&
+test_expect_success GPG 'git tag configured tag.gpgsign enables GPG sign' '
+	get_tag_header gpgsign-enabled $commit commit $time >expect &&
 	echo "A message" >>expect &&
 	echo "-----BEGIN PGP SIGNATURE-----" >>expect &&
 	test_config tag.gpgsign true &&
@@ -1061,8 +1072,8 @@ test_expect_success GPG 'git tag configured tag.gpgsign enables GPG sign' \
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'git tag --no-sign configured tag.gpgsign skip GPG sign' \
-	'get_tag_header no-sign $commit commit $time >expect &&
+test_expect_success GPG 'git tag --no-sign configured tag.gpgsign skip GPG sign' '
+	get_tag_header no-sign $commit commit $time >expect &&
 	echo "A message" >>expect &&
 	test_config tag.gpgsign true &&
 	git tag -a --no-sign -m "A message" no-sign &&
@@ -1077,11 +1088,13 @@ test_expect_success GPG 'trying to create a signed tag with non-existing -F file
 	! tag_exists nosigtag
 '
 
-test_expect_success GPG 'verifying a signed tag should succeed' \
-	'git tag -v signed-tag'
+test_expect_success GPG 'verifying a signed tag should succeed' '
+	git tag -v signed-tag
+'
 
-test_expect_success GPG 'verifying two signed tags in one command should succeed' \
-	'git tag -v signed-tag file-signed-tag'
+test_expect_success GPG 'verifying two signed tags in one command should succeed' '
+	git tag -v signed-tag file-signed-tag
+'
 
 test_expect_success GPG 'verifying many signed and non-signed tags should fail' '
 	test_must_fail git tag -v signed-tag annotated-tag &&
@@ -1451,14 +1464,16 @@ test_expect_success GPG,RFC1991 'reediting a signed tag body omits signature' '
 '
 
 # try to sign with bad user.signingkey
-test_expect_success GPG 'git tag -s fails if gpg is misconfigured (bad key)' \
-	'test_config user.signingkey BobTheMouse &&
-	test_must_fail git tag -s -m tail tag-gpg-failure'
+test_expect_success GPG 'git tag -s fails if gpg is misconfigured (bad key)' '
+	test_config user.signingkey BobTheMouse &&
+	test_must_fail git tag -s -m tail tag-gpg-failure
+'
 
 # try to produce invalid signature
-test_expect_success GPG 'git tag -s fails if gpg is misconfigured (bad signature format)' \
-	'test_config gpg.program echo &&
-	 test_must_fail git tag -s -m tail tag-gpg-failure'
+test_expect_success GPG 'git tag -s fails if gpg is misconfigured (bad signature format)' '
+	test_config gpg.program echo &&
+	test_must_fail git tag -s -m tail tag-gpg-failure
+'
 
 # try to produce invalid signature
 test_expect_success GPG 'git verifies tag is valid with double signature' '
@@ -1479,21 +1494,23 @@ test_expect_success GPG 'git verifies tag is valid with double signature' '
 '
 
 # try to sign with bad user.signingkey
-test_expect_success GPGSM 'git tag -s fails if gpgsm is misconfigured (bad key)' \
-	'test_config user.signingkey BobTheMouse &&
-	 test_config gpg.format x509 &&
-	 test_must_fail git tag -s -m tail tag-gpg-failure'
+test_expect_success GPGSM 'git tag -s fails if gpgsm is misconfigured (bad key)' '
+	test_config user.signingkey BobTheMouse &&
+	test_config gpg.format x509 &&
+	test_must_fail git tag -s -m tail tag-gpg-failure
+'
 
 # try to produce invalid signature
-test_expect_success GPGSM 'git tag -s fails if gpgsm is misconfigured (bad signature format)' \
-	'test_config gpg.x509.program echo &&
-	 test_config gpg.format x509 &&
-	 test_must_fail git tag -s -m tail tag-gpg-failure'
+test_expect_success GPGSM 'git tag -s fails if gpgsm is misconfigured (bad signature format)' '
+	test_config gpg.x509.program echo &&
+	test_config gpg.format x509 &&
+	test_must_fail git tag -s -m tail tag-gpg-failure
+'
 
 # try to verify without gpg:
 
-test_expect_success GPG 'verify signed tag fails when public key is not present' \
-	'rm -rf gpghome &&
+test_expect_success GPG 'verify signed tag fails when public key is not present' '
+	rm -rf gpghome &&
 	test_must_fail git tag -v signed-tag
 '
 
