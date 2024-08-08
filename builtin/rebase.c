@@ -125,10 +125,17 @@ struct rebase_options {
 	int reschedule_failed_exec;
 	int reapply_cherry_picks;
 	int fork_point;
-	int update_refs;
+	// UPDATE_REFS_{UNKNOWN,NO,ALWAYS} numeric values must never
+	// change as post-option-parsing code works with {,config_}update_refs
+	// as if they were ints
+	enum {
+		UPDATE_REFS_UNKNOWN = -1,
+		UPDATE_REFS_NO = 0,
+		UPDATE_REFS_ALWAYS = 1,
+		UPDATE_REFS_INTERACTIVE,
+	} update_refs, config_update_refs;
 	int config_autosquash;
 	int config_rebase_merges;
-	int config_update_refs;
 };
 
 #define REBASE_OPTIONS_INIT {			  	\
@@ -146,8 +153,8 @@ struct rebase_options {
 		.autosquash = -1,                       \
 		.rebase_merges = -1,                    \
 		.config_rebase_merges = -1,             \
-		.update_refs = -1,                      \
-		.config_update_refs = -1,               \
+		.update_refs = UPDATE_REFS_UNKNOWN,     \
+		.config_update_refs = UPDATE_REFS_UNKNOWN, \
 		.strategy_opts = STRING_LIST_INIT_NODUP,\
 	}
 
@@ -405,6 +412,18 @@ static void imply_merge(struct rebase_options *opts, const char *option)
 		opts->type = REBASE_MERGE; /* implied */
 		break;
 	}
+}
+
+static int coerce_update_refs(const struct rebase_options *opts, int update_refs)
+{
+	/* coerce "=interactive" into "no" rather than "not set" when not interactive
+	 * this way, `git -c rebase.updateRefs=yes rebase --update-refs=interactive [without -i]`
+	 * will not inherit the "yes" from the config */
+	if (update_refs == UPDATE_REFS_INTERACTIVE)
+		return (opts->flags & REBASE_INTERACTIVE_EXPLICIT)
+		       ? UPDATE_REFS_ALWAYS
+		       : UPDATE_REFS_NO;
+	return update_refs;
 }
 
 /* Returns the filename prefixed by the state_dir */
@@ -757,6 +776,17 @@ static void parse_rebase_merges_value(struct rebase_options *options, const char
 		die(_("Unknown rebase-merges mode: %s"), value);
 }
 
+static int parse_update_refs_value(const char *value, const char *desc)
+{
+	int v = git_parse_maybe_bool(value);
+	if (v >= 0)
+		return v ? UPDATE_REFS_ALWAYS : UPDATE_REFS_NO;
+	else if (!strcmp("interactive", value))
+		return UPDATE_REFS_INTERACTIVE;
+
+	die(_("bad %s value '%s'; valid values are boolean or \"interactive\""), desc, value);
+}
+
 static int rebase_config(const char *var, const char *value,
 			 const struct config_context *ctx, void *data)
 {
@@ -799,7 +829,8 @@ static int rebase_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "rebase.updaterefs")) {
-		opts->config_update_refs = git_config_bool(var, value);
+		opts->config_update_refs = parse_update_refs_value(value,
+			"rebase.updateRefs");
 		return 0;
 	}
 
@@ -1020,6 +1051,19 @@ static int parse_opt_rebase_merges(const struct option *opt, const char *arg, in
 	return 0;
 }
 
+static int parse_opt_update_refs(const struct option *opt, const char *arg, int unset)
+{
+	struct rebase_options *options = opt->value;
+
+	if (arg)
+		options->update_refs = parse_update_refs_value(arg,
+			"--update-refs");
+	else
+		options->update_refs = unset ? UPDATE_REFS_NO : UPDATE_REFS_ALWAYS;
+
+	return 0;
+}
+
 static void NORETURN error_on_missing_default_upstream(void)
 {
 	struct branch *current_branch = branch_get(NULL);
@@ -1162,9 +1206,11 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "autosquash", &options.autosquash,
 			 N_("move commits that begin with "
 			    "squash!/fixup! under -i")),
-		OPT_BOOL(0, "update-refs", &options.update_refs,
-			 N_("update branches that point to commits "
-			    "that are being rebased")),
+		OPT_CALLBACK_F(0, "update-refs", &options,
+			N_("(bool|interactive)"),
+			N_("update branches that point to commits "
+			   "that are being rebased"),
+			PARSE_OPT_OPTARG, parse_opt_update_refs),
 		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
 			N_("GPG-sign commits"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
@@ -1502,6 +1548,16 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	if (isatty(2) && options.flags & REBASE_NO_QUIET)
 		strbuf_addstr(&options.git_format_patch_opt, " --progress");
+
+	/* coerce --update-refs=interactive into yes or no.
+	 * we do it here because there's just too much code below that handles
+	 * {,config_}update_refs in one way or another and modifying it to
+	 * account for the new state would be too invasive.
+	 * all further code uses {,config_}update_refs as a tristate. */
+	options.update_refs =
+		coerce_update_refs(&options, options.update_refs);
+	options.config_update_refs =
+		coerce_update_refs(&options, options.config_update_refs);
 
 	if (options.git_am_opts.nr || options.type == REBASE_APPLY) {
 		/* all am options except -q are compatible only with --apply */
