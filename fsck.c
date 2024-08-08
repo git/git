@@ -280,6 +280,19 @@ static int report(struct fsck_options *options,
 	return result;
 }
 
+int fsck_report_ref(struct fsck_options *options,
+		    struct fsck_ref_report *report,
+		    enum fsck_msg_id msg_id,
+		    const char *fmt, ...)
+{
+	va_list ap;
+	int result;
+	va_start(ap, fmt);
+	result = fsck_vreport(options, report, msg_id, fmt, ap);
+	va_end(ap);
+	return result;
+}
+
 void fsck_enable_object_names(struct fsck_options *options)
 {
 	if (!options->object_names)
@@ -1235,6 +1248,32 @@ int fsck_objects_error_function(struct fsck_options *o,
 	}
 	error("object %s: %s", fsck_describe_object(o, oid), message);
 	return 1;
+}
+
+int fsck_refs_error_function(struct fsck_options *options UNUSED,
+			     void *fsck_report,
+			     enum fsck_msg_type msg_type,
+			     enum fsck_msg_id msg_id UNUSED,
+			     const char *message)
+{
+	struct fsck_ref_report *report = fsck_report;
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
+
+	strbuf_addstr(&sb, report->path);
+
+	if (report->oid)
+		strbuf_addf(&sb, " -> (%s)", oid_to_hex(report->oid));
+	else if (report->referent)
+		strbuf_addf(&sb, " -> (%s)", report->referent);
+
+	if (msg_type == FSCK_WARN)
+		warning("%s: %s", sb.buf, message);
+	else
+		ret = error("%s: %s", sb.buf, message);
+
+	strbuf_release(&sb);
+	return ret;
 }
 
 static int fsck_blobs(struct oidset *blobs_found, struct oidset *blobs_done,

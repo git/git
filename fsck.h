@@ -133,9 +133,21 @@ int fsck_objects_error_cb_print_missing_gitmodules(struct fsck_options *o,
 						   enum fsck_msg_id msg_id,
 						   const char *message);
 
+int fsck_refs_error_function(struct fsck_options *options,
+			     void *fsck_report,
+			     enum fsck_msg_type msg_type,
+			     enum fsck_msg_id msg_id,
+			     const char *message);
+
 struct fsck_object_report {
 	const struct object_id *oid;
 	enum object_type object_type;
+};
+
+struct fsck_ref_report {
+	const char *path;
+	const struct object_id *oid;
+	const char *referent;
 };
 
 struct fsck_options {
@@ -174,6 +186,9 @@ struct fsck_options {
 	.gitattributes_found = OIDSET_INIT, \
 	.gitattributes_done = OIDSET_INIT, \
 	.error_func = fsck_objects_error_cb_print_missing_gitmodules, \
+}
+#define FSCK_REFS_OPTIONS_DEFAULT { \
+	.error_func = fsck_refs_error_function, \
 }
 
 /* descend in all linked child objects
@@ -215,6 +230,16 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
  * checks.
  */
 int fsck_finish(struct fsck_options *options);
+
+/*
+ * Report an error or warning for refs.
+ */
+__attribute__((format (printf, 4, 5)))
+int fsck_report_ref(struct fsck_options *options,
+		    struct fsck_ref_report *report,
+		    enum fsck_msg_id msg_id,
+		    const char *fmt, ...);
+
 
 /*
  * Subsystem for storing human-readable names for each object.
