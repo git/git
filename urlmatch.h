@@ -35,6 +35,7 @@ struct url_info {
 };
 
 char *url_normalize(const char *, struct url_info *);
+char *url_parse(const char *, struct url_info *);
 
 struct urlmatch_item {
 	size_t hostmatch_len;
