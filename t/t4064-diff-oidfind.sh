@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test finding specific blobs in the revision walking'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup ' '
