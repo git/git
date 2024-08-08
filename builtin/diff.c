@@ -388,6 +388,13 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 	sym->skip = map;
 }
 
+static void symdiff_release(struct symdiff *sdiff)
+{
+	if (!sdiff)
+		return;
+	bitmap_free(sdiff->skip);
+}
+
 int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -398,7 +405,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	struct object_array_entry *blob[2];
 	int nongit = 0, no_index = 0;
 	int result;
-	struct symdiff sdiff;
+	struct symdiff sdiff = {0};
 
 	/*
 	 * We could get N tree-ish in the rev.pending_objects list.
@@ -619,6 +626,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		refresh_index_quietly();
 	release_revisions(&rev);
 	object_array_clear(&ent);
+	symdiff_release(&sdiff);
 	UNLEAK(blob);
 	return result;
 }

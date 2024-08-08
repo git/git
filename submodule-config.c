@@ -899,27 +899,25 @@ static void traverse_tree_submodules(struct repository *r,
 {
 	struct tree_desc tree;
 	struct submodule_tree_entry *st_entry;
-	struct name_entry *name_entry;
+	struct name_entry name_entry;
 	char *tree_path = NULL;
 
-	name_entry = xmalloc(sizeof(*name_entry));
-
 	fill_tree_descriptor(r, &tree, treeish_name);
-	while (tree_entry(&tree, name_entry)) {
+	while (tree_entry(&tree, &name_entry)) {
 		if (prefix)
 			tree_path =
-				mkpathdup("%s/%s", prefix, name_entry->path);
+				mkpathdup("%s/%s", prefix, name_entry.path);
 		else
-			tree_path = xstrdup(name_entry->path);
+			tree_path = xstrdup(name_entry.path);
 
-		if (S_ISGITLINK(name_entry->mode) &&
+		if (S_ISGITLINK(name_entry.mode) &&
 		    is_tree_submodule_active(r, root_tree, tree_path)) {
 			ALLOC_GROW(out->entries, out->entry_nr + 1,
 				   out->entry_alloc);
 			st_entry = &out->entries[out->entry_nr++];
 
 			st_entry->name_entry = xmalloc(sizeof(*st_entry->name_entry));
-			*st_entry->name_entry = *name_entry;
+			*st_entry->name_entry = name_entry;
 			st_entry->submodule =
 				submodule_from_path(r, root_tree, tree_path);
 			st_entry->repo = xmalloc(sizeof(*st_entry->repo));
@@ -927,9 +925,9 @@ static void traverse_tree_submodules(struct repository *r,
 						root_tree))
 				FREE_AND_NULL(st_entry->repo);
 
-		} else if (S_ISDIR(name_entry->mode))
+		} else if (S_ISDIR(name_entry.mode))
 			traverse_tree_submodules(r, root_tree, tree_path,
-						 &name_entry->oid, out);
+						 &name_entry.oid, out);
 		free(tree_path);
 	}
 }

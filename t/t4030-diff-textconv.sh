@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='diff.*.textconv tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 find_diff() {

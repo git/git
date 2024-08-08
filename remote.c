@@ -499,6 +499,7 @@ static void alias_all_urls(struct remote_state *remote_state)
 			if (alias)
 				strvec_replace(&remote_state->remotes[i]->pushurl,
 					       j, alias);
+			free(alias);
 		}
 		add_pushurl_aliases = remote_state->remotes[i]->pushurl.nr == 0;
 		for (j = 0; j < remote_state->remotes[i]->url.nr; j++) {
@@ -512,6 +513,7 @@ static void alias_all_urls(struct remote_state *remote_state)
 			if (alias)
 				strvec_replace(&remote_state->remotes[i]->url,
 					       j, alias);
+			free(alias);
 		}
 	}
 }
