@@ -574,7 +574,7 @@ static void *server_thread_proc(void *_server_thread_data)
 
 		case CR_CONNECT_PENDING:
 			/* By construction, this should not happen. */
-			BUG("ipc-server[%s]: unexpeced CR_CONNECT_PENDING",
+			BUG("ipc-server[%s]: unexpected CR_CONNECT_PENDING",
 			    server_thread_data->server_data->buf_path.buf);
 
 		case CR_CONNECT_ERROR:
