@@ -415,6 +415,7 @@ static void get_i(struct line *line, intmax_t *s_in)
 
 	get_s(line, &s);
 
+	errno = 0;
 	*s_in = strtol(s, &endptr, 10);
 	if (*endptr || errno == ERANGE)
 		die("line[%d]: invalid integer value", line->nr);
@@ -427,6 +428,7 @@ static void get_d(struct line *line, double *s_in)
 
 	get_s(line, &s);
 
+	errno = 0;
 	*s_in = strtod(s, &endptr);
 	if (*endptr || errno == ERANGE)
 		die("line[%d]: invalid float value", line->nr);
