@@ -21,6 +21,29 @@ test_expect_success 'setup' '
 	git config set --global protocol.file.allow always
 '
 
+test_expect_success 'recursive clone propagates ref storage format' '
+	test_when_finished "rm -rf submodule upstream downstream" &&
+
+	git init submodule &&
+	test_commit -C submodule submodule-initial &&
+	git init upstream &&
+	git -C upstream submodule add "file://$(pwd)/submodule" &&
+	git -C upstream commit -am "add submodule" &&
+
+	# The upstream repository and its submodule should be using the default
+	# ref format.
+	test_ref_format upstream "$GIT_DEFAULT_REF_FORMAT" &&
+	test_ref_format upstream/submodule "$GIT_DEFAULT_REF_FORMAT" &&
+
+	# The cloned repositories should use the other ref format that we have
+	# specified via `--ref-format`. The option should propagate to cloned
+	# submodules.
+	git clone --ref-format=$OTHER_FORMAT --recurse-submodules \
+		upstream downstream &&
+	test_ref_format downstream "$OTHER_FORMAT" &&
+	test_ref_format downstream/submodule "$OTHER_FORMAT"
+'
+
 test_expect_success 'clone submodules with different ref storage format' '
 	test_when_finished "rm -rf submodule upstream downstream" &&
 
