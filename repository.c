@@ -366,12 +366,16 @@ void repo_clear(struct repository *repo)
 		FREE_AND_NULL(repo->remote_state);
 	}
 
-	strmap_for_each_entry(&repo->submodule_ref_stores, &iter, e)
+	strmap_for_each_entry(&repo->submodule_ref_stores, &iter, e) {
 		ref_store_release(e->value);
+		free(e->value);
+	}
 	strmap_clear(&repo->submodule_ref_stores, 1);
 
-	strmap_for_each_entry(&repo->worktree_ref_stores, &iter, e)
+	strmap_for_each_entry(&repo->worktree_ref_stores, &iter, e) {
 		ref_store_release(e->value);
+		free(e->value);
+	}
 	strmap_clear(&repo->worktree_ref_stores, 1);
 
 	repo_clear_path_cache(&repo->cached_paths);
