@@ -36,7 +36,9 @@ static int use_sideband_colors(void)
 	if (use_sideband_colors_cached >= 0)
 		return use_sideband_colors_cached;
 
-	if (!git_config_get_string(key, &value)) {
+	if (getenv("NO_COLOR") != NULL) {
+		use_sideband_colors_cached = GIT_COLOR_NEVER;
+	} else if (!git_config_get_string(key, &value)) {
 		use_sideband_colors_cached = git_config_colorbool(key, value);
 	} else if (!git_config_get_string("color.ui", &value)) {
 		use_sideband_colors_cached = git_config_colorbool("color.ui", value);
