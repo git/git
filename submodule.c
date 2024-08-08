@@ -1880,6 +1880,7 @@ int fetch_submodules(struct repository *r,
 	strvec_clear(&spf.args);
 out:
 	free_submodules_data(&spf.changed_submodule_names);
+	string_list_clear(&spf.seen_submodule_names, 0);
 	return spf.result;
 }
 
