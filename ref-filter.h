@@ -48,6 +48,7 @@ struct ref_array_item {
 	struct commit *commit;
 	struct atom_value *value;
 	struct ahead_behind_count **counts;
+	char **is_base;
 
 	char refname[FLEX_ARRAY];
 };
@@ -101,6 +102,9 @@ struct ref_format {
 	/* List of bases for ahead-behind counts. */
 	struct string_list bases;
 
+	/* List of bases for is-base indicators. */
+	struct string_list is_base_tips;
+
 	struct {
 		int max_count;
 		int omit_empty;
@@ -114,6 +118,7 @@ struct ref_format {
 #define REF_FORMAT_INIT {             \
 	.use_color = -1,              \
 	.bases = STRING_LIST_INIT_DUP, \
+	.is_base_tips = STRING_LIST_INIT_DUP, \
 }
 
 /*  Macros for checking --merged and --no-merged options */
@@ -202,6 +207,16 @@ struct ref_array_item *ref_array_push(struct ref_array *array,
 void filter_ahead_behind(struct repository *r,
 			 struct ref_format *format,
 			 struct ref_array *array);
+
+/*
+ * If the provided format includes is-base atoms, then compute the base checks
+ * for those tips against all refs.
+ *
+ * If this is not called, then any is-base atoms will be blank.
+ */
+void filter_is_base(struct repository *r,
+		    struct ref_format *format,
+		    struct ref_array *array);
 
 void ref_filter_init(struct ref_filter *filter);
 void ref_filter_clear(struct ref_filter *filter);
