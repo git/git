@@ -567,7 +567,7 @@ static void format_name(struct strbuf *dest, uint64_t min, uint64_t max)
 }
 
 struct reftable_addition {
-	struct tempfile *lock_file;
+	struct lock_file tables_list_lock;
 	struct reftable_stack *stack;
 
 	char **new_tables;
@@ -581,13 +581,13 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 					struct reftable_stack *st)
 {
 	struct strbuf lock_file_name = STRBUF_INIT;
-	int err = 0;
+	int err;
+
 	add->stack = st;
 
-	strbuf_addf(&lock_file_name, "%s.lock", st->list_file);
-
-	add->lock_file = create_tempfile(lock_file_name.buf);
-	if (!add->lock_file) {
+	err = hold_lock_file_for_update(&add->tables_list_lock, st->list_file,
+					LOCK_NO_DEREF);
+	if (err < 0) {
 		if (errno == EEXIST) {
 			err = REFTABLE_LOCK_ERROR;
 		} else {
@@ -596,7 +596,8 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 		goto done;
 	}
 	if (st->opts.default_permissions) {
-		if (chmod(add->lock_file->filename.buf, st->opts.default_permissions) < 0) {
+		if (chmod(get_lock_file_path(&add->tables_list_lock),
+			  st->opts.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -635,7 +636,7 @@ static void reftable_addition_close(struct reftable_addition *add)
 	add->new_tables_len = 0;
 	add->new_tables_cap = 0;
 
-	delete_tempfile(&add->lock_file);
+	rollback_lock_file(&add->tables_list_lock);
 	strbuf_release(&nm);
 }
 
@@ -651,7 +652,7 @@ void reftable_addition_destroy(struct reftable_addition *add)
 int reftable_addition_commit(struct reftable_addition *add)
 {
 	struct strbuf table_list = STRBUF_INIT;
-	int lock_file_fd = get_tempfile_fd(add->lock_file);
+	int lock_file_fd = get_lock_file_fd(&add->tables_list_lock);
 	int err = 0;
 	size_t i;
 
@@ -680,7 +681,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 	}
 
-	err = rename_tempfile(&add->lock_file, add->stack->list_file);
+	err = commit_lock_file(&add->tables_list_lock);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
