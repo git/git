@@ -289,6 +289,7 @@ struct object_info {
 	struct object_id *delta_base_oid;
 	struct strbuf *type_name;
 	void **contentp;
+	size_t content_limit;
 
 	/* Response */
 	enum {
@@ -297,6 +298,13 @@ struct object_info {
 		OI_PACKED,
 		OI_DBCACHED
 	} whence;
+
+	/*
+	 * set if caller is able to use OI_DBCACHED entries without copying
+	 * TODO OI_CACHED if its use goes beyond blame
+	 */
+	unsigned direct_cache:1;
+
 	union {
 		/*
 		 * struct {

@@ -214,4 +214,8 @@ int is_promisor_object(const struct object_id *oid);
 int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 	     size_t idx_size, struct packed_git *p);
 
+/*
+ * release lock acquired via oi->direct_cache
+ */
+void unlock_delta_base_cache(void);
 #endif

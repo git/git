@@ -107,3 +107,69 @@ void fflush_or_die(FILE *f)
 	if (fflush(f))
 		die_errno("fflush error");
 }
+
+void fwritev_or_die(FILE *fp, const struct git_iovec *iov, int iovcnt)
+{
+	int i;
+
+	for (i = 0; i < iovcnt; i++) {
+		size_t n = iov[i].iov_len;
+
+		if (fwrite(iov[i].iov_base, 1, n, fp) != n)
+			die_errno("unable to write to FD=%d", fileno(fp));
+	}
+}
+
+/*
+ * note: we don't care about atomicity from writev(2) right now.
+ * The goal is to avoid allocations+copies in the writer and
+ * reduce wakeups+syscalls in the reader.
+ * n.b. @iov is not const since we modify it to avoid allocating
+ * on partial write.
+ */
+#ifdef HAVE_WRITEV
+void writev_or_die(int fd, struct git_iovec *iov, int iovcnt)
+{
+	int i;
+
+	while (iovcnt > 0) {
+		ssize_t n = xwritev(fd, iov, iovcnt);
+
+		/* EINVAL happens when sum of iov_len exceeds SSIZE_MAX */
+		if (n < 0 && errno == EINVAL)
+			n = xwrite(fd, iov[0].iov_base, iov[0].iov_len);
+		if (n < 0) {
+			check_pipe(errno);
+			die_errno("writev error");
+		} else if (!n) {
+			errno = ENOSPC;
+			die_errno("writev_error");
+		}
+		/* skip fully written iovs, retry from the first partial iov */
+		for (i = 0; i < iovcnt; i++) {
+			if (n >= iov[i].iov_len) {
+				n -= iov[i].iov_len;
+			} else {
+				iov[i].iov_len -= n;
+				iov[i].iov_base = (char *)iov[i].iov_base + n;
+				break;
+			}
+		}
+		iovcnt -= i;
+		iov += i;
+	}
+}
+#else /* !HAVE_WRITEV */
+
+/*
+ * n.b. don't use stdio fwrite here even if it's faster, @fd may be
+ * non-blocking and stdio isn't equipped for EAGAIN
+ */
+void writev_or_die(int fd, struct git_iovec *iov, int iovcnt)
+{
+	int i;
+
+	for (i = 0; i < iovcnt; i++)
+		write_or_die(fd, iov[i].iov_base, iov[i].iov_len);
+}
+#endif /* !HAVE_WRITEV */

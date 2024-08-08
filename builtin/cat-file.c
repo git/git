@@ -24,6 +24,7 @@
 #include "promisor-remote.h"
 #include "mailmap.h"
 #include "write-or-die.h"
+#define USE_DIRECT_CACHE 1
 
 enum batch_mode {
 	BATCH_MODE_CONTENTS,
@@ -280,6 +281,7 @@ struct expand_data {
 	off_t disk_size;
 	const char *rest;
 	struct object_id delta_base_oid;
+	struct git_iovec iov[3];
 
 	/*
 	 * If mark_query is true, we do not expand anything, but rather
@@ -368,7 +370,7 @@ static void expand_format(struct strbuf *sb, const char *start,
 	}
 }
 
-static void batch_write(struct batch_options *opt, const void *data, int len)
+static void batch_write(struct batch_options *opt, const void *data, size_t len)
 {
 	if (opt->buffer_output) {
 		if (fwrite(data, 1, len, stdout) != len)
@@ -377,15 +379,71 @@ static void batch_write(struct batch_options *opt, const void *data, int len)
 		write_or_die(1, data, len);
 }
 
-static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
+static void batch_writev(struct batch_options *opt, struct expand_data *data,
+			const struct strbuf *hdr, size_t size)
+{
+	data->iov[0].iov_base = hdr->buf;
+	data->iov[0].iov_len = hdr->len;
+	data->iov[1].iov_len = size;
+
+	/*
+	 * Copying a (8|16)-byte iovec for a single byte is gross, but my
+	 * attempt to stuff output_delim into the trailing NUL byte of
+	 * iov[1].iov_base (and restoring it after writev(2) for the
+	 * OI_DBCACHED case) to drop iovcnt from 3->2 wasn't faster.
+	 */
+	data->iov[2].iov_base = &opt->output_delim;
+	data->iov[2].iov_len = 1;
+
+	if (opt->buffer_output)
+		fwritev_or_die(stdout, data->iov, 3);
+	else
+		writev_or_die(1, data->iov, 3);
+
+	/* writev_or_die may move iov[1].iov_base, so it's invalid */
+	data->iov[1].iov_base = NULL;
+}
+
+static void print_object_or_die(struct batch_options *opt,
+				struct expand_data *data, struct strbuf *hdr)
 {
 	const struct object_id *oid = &data->oid;
 
 	assert(data->info.typep);
 
-	if (data->type == OBJ_BLOB) {
-		if (opt->buffer_output)
-			fflush(stdout);
+	if (data->iov[1].iov_base) {
+		void *content = data->iov[1].iov_base;
+		unsigned long size = data->size;
+
+		if (use_mailmap && (data->type == OBJ_COMMIT ||
+					data->type == OBJ_TAG)) {
+			size_t s = size;
+
+			if (USE_DIRECT_CACHE &&
+					data->info.whence == OI_DBCACHED) {
+				content = xmemdupz(content, s);
+				data->info.whence = OI_PACKED;
+			}
+
+			content = replace_idents_using_mailmap(content, &s);
+			data->iov[1].iov_base = content;
+			size = cast_size_t_to_ulong(s);
+		}
+		batch_writev(opt, data, hdr, size);
+		switch (data->info.whence) {
+		case OI_CACHED: BUG("FIXME OI_CACHED support not done");
+		case OI_LOOSE:
+		case OI_PACKED:
+			free(content);
+			break;
+		case OI_DBCACHED:
+			if (USE_DIRECT_CACHE)
+				unlock_delta_base_cache();
+			else
+				free(content);
+		}
+	} else {
+		assert(data->type == OBJ_BLOB);
 		if (opt->transform_mode) {
 			char *contents;
 			unsigned long size;
@@ -412,35 +470,16 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					    oid_to_hex(oid), data->rest);
 			} else
 				BUG("invalid transform_mode: %c", opt->transform_mode);
-			batch_write(opt, contents, size);
+			data->iov[1].iov_base = contents;
+			batch_writev(opt, data, hdr, size);
 			free(contents);
 		} else {
+			batch_write(opt, hdr->buf, hdr->len);
+			if (opt->buffer_output)
+				fflush(stdout);
 			stream_blob(oid);
+			batch_write(opt, &opt->output_delim, 1);
 		}
-	}
-	else {
-		enum object_type type;
-		unsigned long size;
-		void *contents;
-
-		contents = repo_read_object_file(the_repository, oid, &type,
-						 &size);
-		if (!contents)
-			die("object %s disappeared", oid_to_hex(oid));
-
-		if (use_mailmap) {
-			size_t s = size;
-			contents = replace_idents_using_mailmap(contents, &s);
-			size = cast_size_t_to_ulong(s);
-		}
-
-		if (type != data->type)
-			die("object %s changed type!?", oid_to_hex(oid));
-		if (data->info.sizep && size != data->size && !use_mailmap)
-			die("object %s changed size!?", oid_to_hex(oid));
-
-		batch_write(opt, contents, size);
-		free(contents);
 	}
 }
 
@@ -508,12 +547,10 @@ static void batch_object_write(const char *obj_name,
 		strbuf_addch(scratch, opt->output_delim);
 	}
 
-	batch_write(opt, scratch->buf, scratch->len);
-
-	if (opt->batch_mode == BATCH_MODE_CONTENTS) {
-		print_object_or_die(opt, data);
-		batch_write(opt, &opt->output_delim, 1);
-	}
+	if (opt->batch_mode == BATCH_MODE_CONTENTS)
+		print_object_or_die(opt, data, scratch);
+	else
+		batch_write(opt, scratch->buf, scratch->len);
 }
 
 static void batch_one_object(const char *obj_name,
@@ -655,6 +692,7 @@ static void parse_cmd_contents(struct batch_options *opt,
 			     struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_CONTENTS;
+	data->info.contentp = &data->iov[1].iov_base;
 	batch_one_object(line, output, opt, data);
 }
 
@@ -664,6 +702,7 @@ static void parse_cmd_info(struct batch_options *opt,
 			   struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_INFO;
+	data->info.contentp = NULL;
 	batch_one_object(line, output, opt, data);
 }
 
@@ -801,9 +840,20 @@ static int batch_objects(struct batch_options *opt)
 	/*
 	 * If we are printing out the object, then always fill in the type,
 	 * since we will want to decide whether or not to stream.
+	 *
+	 * Likewise, grab the content in the initial request if it's small
+	 * and we're not planning to filter it.
 	 */
-	if (opt->batch_mode == BATCH_MODE_CONTENTS)
+	if ((opt->batch_mode == BATCH_MODE_CONTENTS) ||
+			(opt->batch_mode == BATCH_MODE_QUEUE_AND_DISPATCH)) {
 		data.info.typep = &data.type;
+		if (!opt->transform_mode) {
+			data.info.sizep = &data.size;
+			data.info.contentp = &data.iov[1].iov_base;
+			data.info.content_limit = big_file_threshold;
+			data.info.direct_cache = USE_DIRECT_CACHE;
+		}
+	}
 
 	if (opt->all_objects) {
 		struct object_cb_data cb;

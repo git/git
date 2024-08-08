@@ -625,18 +625,31 @@ test_expect_success 'confirm that neither loose blob is a delta' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup delta base tests' '
+	foo="$(git rev-parse HEAD:foo)" &&
+	foo_plus="$(git rev-parse HEAD:foo-plus)" &&
+	git repack -ad
+'
+
 # To avoid relying too much on the current delta heuristics,
 # we will check only that one of the two objects is a delta
 # against the other, but not the order. We can do so by just
 # asking for the base of both, and checking whether either
 # oid appears in the output.
 test_expect_success '%(deltabase) reports packed delta bases' '
-	git repack -ad &&
 	git cat-file --batch-check="%(deltabase)" <blobs >actual &&
 	{
-		grep "$(git rev-parse HEAD:foo)" actual ||
-		grep "$(git rev-parse HEAD:foo-plus)" actual
+		grep "$foo" actual || grep "$foo_plus" actual
 	}
+'
+
+test_expect_success 'delta base direct cache use succeeds w/o asserting' '
+	commands="info $foo
+info $foo_plus
+contents $foo_plus
+contents $foo" &&
+	echo "$commands" >in &&
+	git cat-file --batch-command <in >out
 '
 
 test_expect_success 'setup bogus data' '

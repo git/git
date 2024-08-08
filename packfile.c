@@ -1373,6 +1373,9 @@ unwind:
 static struct hashmap delta_base_cache;
 static size_t delta_base_cached;
 
+/* ensures oi->direct_cache is used properly */
+static int delta_base_cache_lock;
+
 static LIST_HEAD(delta_base_cache_lru);
 
 struct delta_base_cache_key {
@@ -1455,21 +1458,16 @@ static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 	free(ent);
 }
 
-static void *cache_or_unpack_entry(struct repository *r, struct packed_git *p,
-				   off_t base_offset, unsigned long *base_size,
-				   enum object_type *type)
+static void lock_delta_base_cache(void)
 {
-	struct delta_base_cache_entry *ent;
+	delta_base_cache_lock++;
+	assert(delta_base_cache_lock == 1);
+}
 
-	ent = get_delta_base_cache_entry(p, base_offset);
-	if (!ent)
-		return unpack_entry(r, p, base_offset, type, base_size);
-
-	if (type)
-		*type = ent->type;
-	if (base_size)
-		*base_size = ent->size;
-	return xmemdupz(ent->data, ent->size);
+void unlock_delta_base_cache(void)
+{
+	delta_base_cache_lock--;
+	assert(delta_base_cache_lock == 0);
 }
 
 static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
@@ -1481,6 +1479,7 @@ static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 void clear_delta_base_cache(void)
 {
 	struct list_head *lru, *tmp;
+	assert(!delta_base_cache_lock);
 	list_for_each_safe(lru, tmp, &delta_base_cache_lru) {
 		struct delta_base_cache_entry *entry =
 			list_entry(lru, struct delta_base_cache_entry, lru);
@@ -1494,6 +1493,7 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	struct delta_base_cache_entry *ent;
 	struct list_head *lru, *tmp;
 
+	assert(!delta_base_cache_lock);
 	/*
 	 * Check required to avoid redundant entries when more than one thread
 	 * is unpacking the same object, in unpack_entry() (since its phases I
@@ -1532,39 +1532,75 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		       off_t obj_offset, struct object_info *oi)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long size;
 	off_t curpos = obj_offset;
-	enum object_type type;
+	enum object_type type, final_type = OBJ_BAD;
+	struct delta_base_cache_entry *ent;
 
 	/*
 	 * We always get the representation type, but only convert it to
-	 * a "real" type later if the caller is interested.
+	 * a "real" type later if the caller is interested. Likewise...
+	 * tbd.
 	 */
-	if (oi->contentp) {
-		*oi->contentp = cache_or_unpack_entry(r, p, obj_offset, oi->sizep,
-						      &type);
+	oi->whence = OI_PACKED;
+	ent = get_delta_base_cache_entry(p, obj_offset);
+	if (ent) {
+		oi->whence = OI_DBCACHED;
+		final_type = type = ent->type;
+		if (oi->sizep)
+			*oi->sizep = ent->size;
+		if (oi->contentp) {
+			/* ignore content_limit if avoiding copy from cache */
+			if (oi->direct_cache) {
+				lock_delta_base_cache();
+				*oi->contentp = ent->data;
+			} else if (type != OBJ_BLOB || !oi->content_limit ||
+					ent->size <= oi->content_limit) {
+				*oi->contentp = xmemdupz(ent->data, ent->size);
+			} else {
+				*oi->contentp = NULL; /* caller must stream */
+			}
+		}
+	} else if (oi->contentp && !oi->content_limit) {
+		*oi->contentp = unpack_entry(r, p, obj_offset, &type,
+						oi->sizep);
+		final_type = type;
 		if (!*oi->contentp)
 			type = OBJ_BAD;
 	} else {
+		unsigned long size;
 		type = unpack_object_header(p, &w_curs, &curpos, &size);
-	}
 
-	if (!oi->contentp && oi->sizep) {
-		if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
-			off_t tmp_pos = curpos;
-			off_t base_offset = get_delta_base(p, &w_curs, &tmp_pos,
-							   type, obj_offset);
-			if (!base_offset) {
-				type = OBJ_BAD;
-				goto out;
+		if (oi->sizep) {
+			if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
+				off_t tmp_pos = curpos;
+				off_t base_offset = get_delta_base(p, &w_curs, &tmp_pos,
+								   type, obj_offset);
+				if (!base_offset) {
+					type = OBJ_BAD;
+					goto out;
+				}
+				*oi->sizep = get_size_from_delta(p, &w_curs, tmp_pos);
+				if (*oi->sizep == 0) {
+					type = OBJ_BAD;
+					goto out;
+				}
+			} else {
+				*oi->sizep = size;
 			}
-			*oi->sizep = get_size_from_delta(p, &w_curs, tmp_pos);
-			if (*oi->sizep == 0) {
-				type = OBJ_BAD;
-				goto out;
+		}
+
+		if (oi->contentp) {
+			final_type = packed_to_object_type(r, p, obj_offset,
+						     type, &w_curs, curpos);
+			if (final_type != OBJ_BLOB || (oi->sizep &&
+					*oi->sizep <= oi->content_limit)) {
+				*oi->contentp = unpack_entry(r, p, obj_offset,
+							&type, oi->sizep);
+				if (!*oi->contentp)
+					type = OBJ_BAD;
+			} else {
+				*oi->contentp = NULL;
 			}
-		} else {
-			*oi->sizep = size;
 		}
 	}
 
@@ -1581,17 +1617,17 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 	}
 
 	if (oi->typep || oi->type_name) {
-		enum object_type ptot;
-		ptot = packed_to_object_type(r, p, obj_offset,
-					     type, &w_curs, curpos);
+		if (final_type < 0)
+			final_type = packed_to_object_type(r, p, obj_offset,
+						     type, &w_curs, curpos);
 		if (oi->typep)
-			*oi->typep = ptot;
+			*oi->typep = final_type;
 		if (oi->type_name) {
-			const char *tn = type_name(ptot);
+			const char *tn = type_name(final_type);
 			if (tn)
 				strbuf_addstr(oi->type_name, tn);
 		}
-		if (ptot < 0) {
+		if (final_type < 0) {
 			type = OBJ_BAD;
 			goto out;
 		}
@@ -1608,10 +1644,6 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		} else
 			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 	}
-
-	oi->whence = in_delta_base_cache(p, obj_offset) ? OI_DBCACHED :
-							  OI_PACKED;
-
 out:
 	unuse_pack(&w_curs);
 	return type;
