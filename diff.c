@@ -2321,6 +2321,21 @@ const char *diff_line_prefix(struct diff_options *opt)
 	return msgbuf->buf;
 }
 
+const struct strbuf *diff_line_prefix_buf(struct diff_options *opt)
+{
+	struct strbuf *msgbuf = (struct strbuf *)malloc(sizeof(*msgbuf));
+	if (!opt->output_prefix){
+		msgbuf->buf = "";
+		msgbuf->len = 0;
+		msgbuf->alloc = 1;
+	}
+	else {
+		free(msgbuf);
+		msgbuf = opt->output_prefix(opt, opt->output_prefix_data);
+	}
+	return msgbuf;
+}
+
 static unsigned long sane_truncate_line(char *line, unsigned long len)
 {
 	const char *cp;
@@ -2656,7 +2671,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	int width, name_width, graph_width, number_width = 0, bin_width = 0;
 	const char *reset, *add_c, *del_c;
 	int extra_shown = 0;
-	const char *line_prefix = diff_line_prefix(options);
+	const struct strbuf *line_prefix = diff_line_prefix_buf(options);
 	struct strbuf out = STRBUF_INIT;
 
 	if (data->nr == 0)
@@ -2739,7 +2754,7 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	 * used to correctly count the display width instead of strlen().
 	 */
 	if (options->stat_width == -1)
-		width = term_columns() - strlen(line_prefix);
+		width = term_columns() - utf8_strnwidth(line_prefix->buf, line_prefix->len, 1);
 	else
 		width = options->stat_width ? options->stat_width : 80;
 	number_width = decimal_width(max_change) > number_width ?
