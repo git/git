@@ -290,6 +290,14 @@ cmd_update()
 		-r|--rebase)
 			rebase=1
 			;;
+		--ref-format)
+			case "$2" in '') usage ;; esac
+			ref_format="--ref-format=$2"
+			shift
+			;;
+		--ref-format=*)
+			ref_format="$1"
+			;;
 		--reference)
 			case "$2" in '') usage ;; esac
 			reference="--reference=$2"
@@ -371,6 +379,7 @@ cmd_update()
 		${rebase:+--rebase} \
 		${merge:+--merge} \
 		${checkout:+--checkout} \
+		${ref_format:+"$ref_format"} \
 		${reference:+"$reference"} \
 		${dissociate:+"--dissociate"} \
 		${depth:+"$depth"} \
