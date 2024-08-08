@@ -1460,8 +1460,27 @@ class LargeFileSystem(object):
     """Base class for large file system support."""
 
     def __init__(self, writeToGitStream):
-        self.largeFiles = set()
+        self.largeFiles = self.parseLargeFiles()
         self.writeToGitStream = writeToGitStream
+
+    def parseLargeFiles(self):
+        """Parse large files in order to initially populate 'largeFiles'"""
+        paths = set()
+        try:
+            cmd = ['git', 'show', 'p4/master:.gitattributes']
+            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if p.returncode:
+                print("Failed to read .gitattributed - error code: " + p.returncode)
+                raise
+            out = p.stdout.readlines()
+            for line in out:
+                if line.startswith('/'):
+                    path = line[1:].split(' ', 1)[0]
+                    path = path.replace('[[:space:]]', ' ')
+                    paths.add(path)
+        except:
+            print("parseLargeFiles: .gitattributes does not appear to exist.")
+        return paths
 
     def generatePointer(self, cloneDestination, contentFile):
         """Return the content of a pointer file that is stored in Git instead
