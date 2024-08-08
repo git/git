@@ -4117,6 +4117,7 @@ int diff_populate_filespec(struct repository *r,
 {
 	int size_only = options ? options->check_size_only : 0;
 	int check_binary = options ? options->check_binary : 0;
+	int ignore_whitespace = options ? options->ignore_whitespace : 0;
 	int err = 0;
 	int conv_flags = global_conv_flags_eol;
 	/*
@@ -4125,6 +4126,9 @@ int diff_populate_filespec(struct repository *r,
 	 */
 	if (conv_flags & CONV_EOL_RNDTRP_DIE)
 		conv_flags = CONV_EOL_RNDTRP_WARN;
+
+	if (ignore_whitespace)
+		s->ignore_whitespace = 1;
 
 	if (!DIFF_FILE_VALID(s))
 		die("internal error: asking to populate invalid file.");

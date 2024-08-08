@@ -17,6 +17,7 @@
 #include "string-list.h"
 #include "strmap.h"
 #include "trace2.h"
+#include "xdiff-interface.h"
 
 /* Table of rename/copy destinations */
 
@@ -953,6 +954,10 @@ static int find_basename_matches(struct diff_options *options,
 		.info = info
 	};
 
+	dpf_options.ignore_whitespace =
+		DIFF_XDL_TST(options, IGNORE_WHITESPACE_CHANGE)
+		|| DIFF_XDL_TST(options, IGNORE_WHITESPACE);
+
 	/*
 	 * Create maps of basename -> fullname(s) for remaining sources and
 	 * dests.
@@ -1404,6 +1409,10 @@ void diffcore_rename_extended(struct diff_options *options,
 	struct inexact_prefetch_options prefetch_options = {
 		.repo = options->repo
 	};
+
+	dpf_options.ignore_whitespace =
+		DIFF_XDL_TST(options, IGNORE_WHITESPACE_CHANGE)
+		|| DIFF_XDL_TST(options, IGNORE_WHITESPACE);
 
 	trace2_region_enter("diff", "setup", options->repo);
 	info.setup = 0;
