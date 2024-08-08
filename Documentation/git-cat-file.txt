@@ -270,8 +270,8 @@ BATCH OUTPUT
 ------------
 
 If `--batch` or `--batch-check` is given, `cat-file` will read objects
-from stdin, one per line, and print information about them. By default,
-the whole line is considered as an object, as if it were fed to
+from stdin, one per line, and print information about them sequentially in the same order.
+By default, the whole line is considered as an object, as if it were fed to
 linkgit:git-rev-parse[1].
 
 When `--batch-command` is given, `cat-file` will read commands from stdin,
