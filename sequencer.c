@@ -303,6 +303,7 @@ static int git_sequencer_config(const char *k, const char *v,
 	}
 
 	if (!strcmp(k, "commit.gpgsign")) {
+		free(opts->gpg_sign);
 		opts->gpg_sign = git_config_bool(k, v) ? xstrdup("") : NULL;
 		return 0;
 	}
