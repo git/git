@@ -2,6 +2,7 @@
 
 test_description='git p4 rcs keywords'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 CP1252="\223\224"

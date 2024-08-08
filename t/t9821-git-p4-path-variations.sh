@@ -2,6 +2,7 @@
 
 test_description='Clone repositories with path case variations'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d with case folding enabled' '
