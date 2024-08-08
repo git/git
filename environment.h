@@ -9,6 +9,7 @@ struct strvec;
  * that is subject to stripspace.
  */
 extern const char *comment_line_str;
+extern char *comment_line_str_allocated;
 extern int auto_comment_line_char;
 
 /*
