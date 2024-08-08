@@ -282,13 +282,17 @@ static int protect_ntfs_hfs_benchmark(int argc, const char **argv)
 				for (j = 0; j < nr; j++)
 					verify_path(names[j], file_mode);
 				end = getnanotime();
-				printf("protect_ntfs = %d, protect_hfs = %d: %lfms\n", protect_ntfs, protect_hfs, (end-begin) / (double)1e6);
+				printf("protect_ntfs = %d, protect_hfs = %d: %lfms\n",
+				       protect_ntfs, protect_hfs,
+				       (end - begin) / 1e6);
 				cumul += end - begin;
 				cumul2 += (end - begin) * (end - begin);
 			}
 			m[protect_ntfs][protect_hfs] = cumul / (double)repetitions;
 			v[protect_ntfs][protect_hfs] = my_sqrt(cumul2 / (double)repetitions - m[protect_ntfs][protect_hfs] * m[protect_ntfs][protect_hfs]);
-			printf("mean: %lfms, stddev: %lfms\n", m[protect_ntfs][protect_hfs] / (double)1e6, v[protect_ntfs][protect_hfs] / (double)1e6);
+			printf("mean: %lfms, stddev: %lfms\n",
+			       m[protect_ntfs][protect_hfs] / 1e6,
+			       v[protect_ntfs][protect_hfs] / 1e6);
 		}
 
 	for (protect_ntfs = 0; protect_ntfs < 2; protect_ntfs++)

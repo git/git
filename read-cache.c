@@ -2947,7 +2947,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 			offset = hashfile_total(f);
 		}
-		if (ce_write_entry(f, ce, previous_name, (struct ondisk_cache_entry *)&ondisk) < 0)
+		if (ce_write_entry(f, ce, previous_name, &ondisk) < 0)
 			err = -1;
 
 		if (err)

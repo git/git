@@ -1832,8 +1832,8 @@ static void emit_rewrite_diff(const char *name_a,
 	ecbdata.opt = o;
 	if (ecbdata.ws_rule & WS_BLANK_AT_EOF) {
 		mmfile_t mf1, mf2;
-		mf1.ptr = (char *)data_one;
-		mf2.ptr = (char *)data_two;
+		mf1.ptr = data_one;
+		mf2.ptr = data_two;
 		mf1.size = size_one;
 		mf2.size = size_two;
 		check_blank_at_eof(&mf1, &mf2, &ecbdata);
@@ -1865,9 +1865,9 @@ static void emit_rewrite_diff(const char *name_a,
 	if (lc_b)
 		emit_rewrite_lines(&ecbdata, '+', data_two, size_two);
 	if (textconv_one)
-		free((char *)data_one);
+		free(data_one);
 	if (textconv_two)
-		free((char *)data_two);
+		free(data_two);
 }
 
 struct diff_words_buffer {

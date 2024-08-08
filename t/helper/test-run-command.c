@@ -325,8 +325,8 @@ static int quote_stress_test(int argc, const char **argv)
 		if (ret) {
 			fprintf(stderr, "Trial #%d failed. Arguments:\n", i);
 			for (j = 0; j < arg_count; j++)
-				fprintf(stderr, "arg #%d: '%s'\n",
-					(int)j, args.v[j + arg_offset]);
+				fprintf(stderr, "arg #%d: '%s'\n", j,
+					args.v[j + arg_offset]);
 
 			strbuf_release(&out);
 			strvec_clear(&args);
@@ -335,7 +335,7 @@ static int quote_stress_test(int argc, const char **argv)
 		}
 
 		if (i && (i % 100) == 0)
-			fprintf(stderr, "Trials completed: %d\n", (int)i);
+			fprintf(stderr, "Trials completed: %d\n", i);
 	}
 
 	strbuf_release(&out);
@@ -431,7 +431,7 @@ int cmd__run_command(int argc, const char **argv)
 		ret = 1;
 		goto cleanup;
 	}
-	strvec_pushv(&proc.args, (const char **)argv + 2);
+	strvec_pushv(&proc.args, argv + 2);
 
 	if (!strcmp(argv[1], "start-command-ENOENT")) {
 		if (start_command(&proc) < 0 && errno == ENOENT) {
@@ -454,7 +454,7 @@ int cmd__run_command(int argc, const char **argv)
 
 	jobs = atoi(argv[2]);
 	strvec_clear(&proc.args);
-	strvec_pushv(&proc.args, (const char **)argv + 3);
+	strvec_pushv(&proc.args, argv + 3);
 
 	if (!strcmp(argv[1], "run-command-parallel")) {
 		opts.get_next_task = parallel_next;
