@@ -999,6 +999,15 @@ done:
 	return err;
 }
 
+enum stack_compact_range_flags {
+	/*
+	 * Perform a best-effort compaction. That is, even if we cannot lock
+	 * all tables in the specified range, we will try to compact the
+	 * remaining slice.
+	 */
+	STACK_COMPACT_RANGE_BEST_EFFORT = (1 << 0),
+};
+
 /*
  * Compact all tables in the range `[first, last)` into a single new table.
  *
@@ -1010,7 +1019,8 @@ done:
  */
 static int stack_compact_range(struct reftable_stack *st,
 			       size_t first, size_t last,
-			       struct reftable_log_expiry_config *expiry)
+			       struct reftable_log_expiry_config *expiry,
+			       unsigned int flags)
 {
 	struct strbuf tables_list_buf = STRBUF_INIT;
 	struct strbuf new_table_name = STRBUF_INIT;
@@ -1052,19 +1062,47 @@ static int stack_compact_range(struct reftable_stack *st,
 	/*
 	 * Lock all tables in the user-provided range. This is the slice of our
 	 * stack which we'll compact.
+	 *
+	 * Note that we lock tables in reverse order from last to first. The
+	 * intent behind this is to allow a newer process to perform best
+	 * effort compaction of tables that it has added in the case where an
+	 * older process is still busy compacting tables which are preexisting
+	 * from the point of view of the newer process.
 	 */
 	REFTABLE_CALLOC_ARRAY(table_locks, last - first + 1);
-	for (i = first; i <= last; i++) {
-		stack_filename(&table_name, st, reader_name(st->readers[i]));
+	for (i = last + 1; i > first; i--) {
+		stack_filename(&table_name, st, reader_name(st->readers[i - 1]));
 
 		err = hold_lock_file_for_update(&table_locks[nlocks],
 						table_name.buf, LOCK_NO_DEREF);
 		if (err < 0) {
-			if (errno == EEXIST)
+			/*
+			 * When the table is locked already we may do a
+			 * best-effort compaction and compact only the tables
+			 * that we have managed to lock so far. This of course
+			 * requires that we have been able to lock at least two
+			 * tables, otherwise there would be nothing to compact.
+			 * In that case, we return a lock error to our caller.
+			 */
+			if (errno == EEXIST && last - (i - 1) >= 2 &&
+			    flags & STACK_COMPACT_RANGE_BEST_EFFORT) {
+				err = 0;
+				/*
+				 * The subtraction is to offset the index, the
+				 * addition is to only compact up to the table
+				 * of the preceding iteration. They obviously
+				 * cancel each other out, but that may be
+				 * non-obvious when it was omitted.
+				 */
+				first = (i - 1) + 1;
+				break;
+			} else if (errno == EEXIST) {
 				err = REFTABLE_LOCK_ERROR;
-			else
+				goto done;
+			} else {
 				err = REFTABLE_IO_ERROR;
-			goto done;
+				goto done;
+			}
 		}
 
 		/*
@@ -1308,9 +1346,10 @@ done:
 
 static int stack_compact_range_stats(struct reftable_stack *st,
 				     size_t first, size_t last,
-				     struct reftable_log_expiry_config *config)
+				     struct reftable_log_expiry_config *config,
+				     unsigned int flags)
 {
-	int err = stack_compact_range(st, first, last, config);
+	int err = stack_compact_range(st, first, last, config, flags);
 	if (err == REFTABLE_LOCK_ERROR)
 		st->stats.failures++;
 	return err;
@@ -1320,7 +1359,7 @@ int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config)
 {
 	size_t last = st->merged->stack_len ? st->merged->stack_len - 1 : 0;
-	return stack_compact_range_stats(st, 0, last, config);
+	return stack_compact_range_stats(st, 0, last, config, 0);
 }
 
 static int segment_size(struct segment *s)
@@ -1427,7 +1466,7 @@ int reftable_stack_auto_compact(struct reftable_stack *st)
 	reftable_free(sizes);
 	if (segment_size(&seg) > 0)
 		return stack_compact_range_stats(st, seg.start, seg.end - 1,
-						 NULL);
+						 NULL, STACK_COMPACT_RANGE_BEST_EFFORT);
 
 	return 0;
 }

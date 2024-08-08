@@ -917,13 +917,15 @@ static void test_reftable_stack_auto_compaction_with_locked_tables(void)
 	write_file_buf(buf.buf, "", 0);
 
 	/*
-	 * Ideally, we'd handle the situation where any of the tables is locked
-	 * gracefully. We don't (yet) do this though and thus fail.
+	 * When parts of the stack are locked, then auto-compaction does a best
+	 * effort compaction of those tables which aren't locked. So while this
+	 * would in theory compact all tables, due to the preexisting lock we
+	 * only compact the newest two tables.
 	 */
 	err = reftable_stack_auto_compact(st);
-	EXPECT(err == REFTABLE_LOCK_ERROR);
-	EXPECT(st->stats.failures == 1);
-	EXPECT(st->merged->stack_len == 5);
+	EXPECT_ERR(err);
+	EXPECT(st->stats.failures == 0);
+	EXPECT(st->merged->stack_len == 4);
 
 	reftable_stack_destroy(st);
 	strbuf_release(&buf);
