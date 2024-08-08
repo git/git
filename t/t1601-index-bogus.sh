@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test handling of bogus index entries'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create tree with null sha1' '
