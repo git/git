@@ -1521,6 +1521,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 	struct strbuf patch = STRBUF_INIT;
 	struct strbuf stash_msg_buf = STRBUF_INIT;
 	struct strbuf untracked_files = STRBUF_INIT;
+	struct strbuf out = STRBUF_INIT;
 
 	if (patch_mode && keep_index == -1)
 		keep_index = 1;
@@ -1626,7 +1627,6 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			struct child_process cp_add = CHILD_PROCESS_INIT;
 			struct child_process cp_diff = CHILD_PROCESS_INIT;
 			struct child_process cp_apply = CHILD_PROCESS_INIT;
-			struct strbuf out = STRBUF_INIT;
 
 			cp_add.git_cmd = 1;
 			strvec_push(&cp_add.args, "add");
@@ -1718,6 +1718,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 
 done:
 	strbuf_release(&patch);
+	strbuf_release(&out);
 	free_stash_info(&info);
 	strbuf_release(&stash_msg_buf);
 	strbuf_release(&untracked_files);
@@ -1869,6 +1870,8 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 		OPT_SUBCOMMAND_F("save", &fn, save_stash, PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
+	const char **args_copy;
+	int ret;
 
 	git_config(git_stash_config, NULL);
 
@@ -1892,5 +1895,16 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	/* Assume 'stash push' */
 	strvec_push(&args, "push");
 	strvec_pushv(&args, argv);
-	return !!push_stash(args.nr, args.v, prefix, 1);
+
+	/*
+	 * `push_stash()` ends up modifying the array, which causes memory
+	 * leaks if we didn't copy the array here.
+	 */
+	DUP_ARRAY(args_copy, args.v, args.nr);
+
+	ret = !!push_stash(args.nr, args_copy, prefix, 1);
+
+	strvec_clear(&args);
+	free(args_copy);
+	return ret;
 }

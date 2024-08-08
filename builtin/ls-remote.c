@@ -19,17 +19,16 @@ static const char * const ls_remote_usage[] = {
  * Is there one among the list of patterns that match the tail part
  * of the path?
  */
-static int tail_match(const char **pattern, const char *path)
+static int tail_match(const struct strvec *pattern, const char *path)
 {
-	const char *p;
 	char *pathbuf;
 
-	if (!pattern)
+	if (!pattern->nr)
 		return 1; /* no restriction */
 
 	pathbuf = xstrfmt("/%s", path);
-	while ((p = *(pattern++)) != NULL) {
-		if (!wildmatch(p, pathbuf, 0)) {
+	for (size_t i = 0; i < pattern->nr; i++) {
+		if (!wildmatch(pattern->v[i], pathbuf, 0)) {
 			free(pathbuf);
 			return 1;
 		}
@@ -47,7 +46,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int status = 0;
 	int show_symref_target = 0;
 	const char *uploadpack = NULL;
-	const char **pattern = NULL;
+	struct strvec pattern = STRVEC_INIT;
 	struct transport_ls_refs_options transport_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
 	int i;
@@ -93,13 +92,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("ls-remote");
 
-	if (argc > 1) {
-		int i;
-		CALLOC_ARRAY(pattern, argc);
-		for (i = 1; i < argc; i++) {
-			pattern[i - 1] = xstrfmt("*/%s", argv[i]);
-		}
-	}
+	for (int i = 1; i < argc; i++)
+		strvec_pushf(&pattern, "*/%s", argv[i]);
 
 	if (flags & REF_TAGS)
 		strvec_push(&transport_options.ref_prefixes, "refs/tags/");
@@ -136,7 +130,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		struct ref_array_item *item;
 		if (!check_ref_type(ref, flags))
 			continue;
-		if (!tail_match(pattern, ref->name))
+		if (!tail_match(&pattern, ref->name))
 			continue;
 		item = ref_array_push(&ref_array, ref->name, &ref->old_oid);
 		item->symref = xstrdup_or_null(ref->symref);
@@ -158,5 +152,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	if (transport_disconnect(transport))
 		status = 1;
 	transport_ls_refs_options_release(&transport_options);
+
+	strvec_clear(&pattern);
 	return status;
 }

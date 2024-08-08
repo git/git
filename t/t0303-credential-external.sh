@@ -29,6 +29,7 @@ you can set GIT_TEST_CREDENTIAL_HELPER_SETUP to a sequence of shell
 commands.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-credential.sh
 

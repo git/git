@@ -1107,7 +1107,7 @@ fail_exit:
 
 int rerere_forget(struct repository *r, struct pathspec *pathspec)
 {
-	int i, fd;
+	int i, fd, ret;
 	struct string_list conflict = STRING_LIST_INIT_DUP;
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 
@@ -1132,7 +1132,12 @@ int rerere_forget(struct repository *r, struct pathspec *pathspec)
 			continue;
 		rerere_forget_one_path(r->index, it->string, &merge_rr);
 	}
-	return write_rr(&merge_rr, fd);
+
+	ret = write_rr(&merge_rr, fd);
+
+	string_list_clear(&conflict, 0);
+	string_list_clear(&merge_rr, 1);
+	return ret;
 }
 
 /*
