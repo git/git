@@ -12,6 +12,7 @@ test_description='Test cherry-pick continuation features
 
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Repeat first match 10 times
