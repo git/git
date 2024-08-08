@@ -31,6 +31,7 @@ int main(int argc, const char **argv)
 	return 0;
 	/* char ?? */
 }
+
 EOF
 
 test_expect_success setup '
