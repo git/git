@@ -338,6 +338,7 @@ test_language_driver python
 test_language_driver ruby
 test_language_driver scheme
 test_language_driver tex
+test_language_driver typescript
 
 test_expect_success 'word-diff with diff.sbe' '
 	cat >pre <<-\EOF &&

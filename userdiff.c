@@ -333,6 +333,17 @@ PATTERNS("scheme",
 	 "|([^][)(}{[ \t])+"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 	 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
+PATTERNS("typescript",
+	"^[\t ]*((class|constructor|public|private|protected|function|interface)[ \t].*)$\n"
+	// arrow funcs
+	"^[\t ]*((const|let|var)?[^()]*)=[\t ]*\\([^()]*\\)[\t ]*.*=>.*$",
+	/* -- */
+	"[a-zA-Z_][a-zA-Z0-9_]*"
+	// numeric constants
+	"|[-+0-9.e]+|0[xX]?[0-9a-fA-F]"
+	// operators
+	"|[-+*/<>%&^|=!]"
+	"|--|\\+\\+|//=?|<<=?|>>?=?"),
 { .name = "default", .binary = -1 },
 };
 #undef PATTERNS
