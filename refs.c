@@ -2014,7 +2014,7 @@ struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
 		free(subrepo);
 		goto done;
 	}
-	refs = ref_store_init(subrepo, repo->ref_storage_format,
+	refs = ref_store_init(subrepo, subrepo->ref_storage_format,
 			      submodule_sb.buf,
 			      REF_STORE_READ | REF_STORE_ODB);
 	register_ref_store_map(&repo->submodule_ref_stores, "submodule",

@@ -34,7 +34,7 @@ COMMANDS
 With no arguments, shows the status of existing submodules.  Several
 subcommands are available to perform operations on the submodules.
 
-add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--depth <depth>] [--] <repository> [<path>]::
+add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--ref-format <format>] [--depth <depth>] [--] <repository> [<path>]::
 	Add the given repository as a submodule at the given path
 	to the changeset to be committed next to the current
 	project: the current project is termed the "superproject".
@@ -71,6 +71,9 @@ submodule repositories will be kept together in the same relative
 location, and only the superproject's URL needs to be provided.
 git-submodule will correctly locate the submodule using the relative
 URL in `.gitmodules`.
++
+If `--ref-format <format>`  is specified, the ref storage format of newly
+cloned submodules will be set accordingly.
 
 status [--cached] [--recursive] [--] [<path>...]::
 	Show the status of the submodules. This will print the SHA-1 of the
@@ -136,7 +139,7 @@ If you really want to remove a submodule from the repository and commit
 that use linkgit:git-rm[1] instead. See linkgit:gitsubmodules[7] for removal
 options.
 
-update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>] [--depth <depth>] [--recursive] [--jobs <n>] [--[no-]single-branch] [--filter <filter-spec>] [--] [<path>...]::
+update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>] [--ref-format <format>] [--depth <depth>] [--recursive] [--jobs <n>] [--[no-]single-branch] [--filter <filter-spec>] [--] [<path>...]::
 +
 --
 Update the registered submodules to match what the superproject
@@ -184,6 +187,9 @@ submodule with the `--init` option.
 
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
+
+If `--ref-format <format>`  is specified, the ref storage format of newly
+cloned submodules will be set accordingly.
 
 If `--filter <filter-spec>` is specified, the given partial clone filter will be
 applied to the submodule. See linkgit:git-rev-list[1] for details on filter
