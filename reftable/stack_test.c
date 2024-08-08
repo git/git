@@ -891,6 +891,45 @@ static void test_reftable_stack_auto_compaction(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_auto_compaction_with_locked_tables(void)
+{
+	struct reftable_write_options opts = {
+		.disable_auto_compact = 1,
+	};
+	struct reftable_stack *st = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	err = reftable_new_stack(&st, dir, &opts);
+	EXPECT_ERR(err);
+
+	write_n_ref_tables(st, 5);
+	EXPECT(st->merged->stack_len == 5);
+
+	/*
+	 * Given that all tables we have written should be roughly the same
+	 * size, we expect that auto-compaction will want to compact all of the
+	 * tables. Locking any of the tables will keep it from doing so.
+	 */
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "%s/%s.lock", dir, st->readers[2]->name);
+	write_file_buf(buf.buf, "", 0);
+
+	/*
+	 * Ideally, we'd handle the situation where any of the tables is locked
+	 * gracefully. We don't (yet) do this though and thus fail.
+	 */
+	err = reftable_stack_auto_compact(st);
+	EXPECT(err == REFTABLE_LOCK_ERROR);
+	EXPECT(st->stats.failures == 1);
+	EXPECT(st->merged->stack_len == 5);
+
+	reftable_stack_destroy(st);
+	strbuf_release(&buf);
+	clear_dir(dir);
+}
+
 static void test_reftable_stack_add_performs_auto_compaction(void)
 {
 	struct reftable_write_options opts = { 0 };
@@ -936,6 +975,42 @@ static void test_reftable_stack_add_performs_auto_compaction(void)
 
 	reftable_stack_destroy(st);
 	strbuf_release(&refname);
+	clear_dir(dir);
+}
+
+static void test_reftable_stack_compaction_with_locked_tables(void)
+{
+	struct reftable_write_options opts = {
+		.disable_auto_compact = 1,
+	};
+	struct reftable_stack *st = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	err = reftable_new_stack(&st, dir, &opts);
+	EXPECT_ERR(err);
+
+	write_n_ref_tables(st, 3);
+	EXPECT(st->merged->stack_len == 3);
+
+	/* Lock one of the tables that we're about to compact. */
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "%s/%s.lock", dir, st->readers[1]->name);
+	write_file_buf(buf.buf, "", 0);
+
+	/*
+	 * Compaction is expected to fail given that we were not able to
+	 * compact all tables.
+	 */
+	err = reftable_stack_compact_all(st, NULL);
+	EXPECT(err == REFTABLE_LOCK_ERROR);
+	/* TODO: this is wrong, we should get notified about the failure. */
+	EXPECT(st->stats.failures == 0);
+	EXPECT(st->merged->stack_len == 3);
+
+	reftable_stack_destroy(st);
+	strbuf_release(&buf);
 	clear_dir(dir);
 }
 
@@ -1016,9 +1091,11 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_add);
 	RUN_TEST(test_reftable_stack_add_one);
 	RUN_TEST(test_reftable_stack_auto_compaction);
+	RUN_TEST(test_reftable_stack_auto_compaction_with_locked_tables);
 	RUN_TEST(test_reftable_stack_add_performs_auto_compaction);
 	RUN_TEST(test_reftable_stack_compaction_concurrent);
 	RUN_TEST(test_reftable_stack_compaction_concurrent_clean);
+	RUN_TEST(test_reftable_stack_compaction_with_locked_tables);
 	RUN_TEST(test_reftable_stack_hash_id);
 	RUN_TEST(test_reftable_stack_lock_failure);
 	RUN_TEST(test_reftable_stack_log_normalize);
