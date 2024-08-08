@@ -614,6 +614,15 @@ void raw_object_store_clear(struct raw_object_store *o)
 
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_object_store(o);
+
+	/*
+	 * `close_object_store()` only closes the packfiles, but doesn't free
+	 * them. We thus have to do this manually.
+	 */
+	for (struct packed_git *p = o->packed_git, *next; p; p = next) {
+		next = p->next;
+		free(p);
+	}
 	o->packed_git = NULL;
 
 	hashmap_clear(&o->pack_map);
