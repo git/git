@@ -95,6 +95,7 @@ static void free_one_config(struct submodule_entry *entry)
 	free((void *) entry->config->branch);
 	free((void *) entry->config->url);
 	free((void *) entry->config->ignore);
+	free((void *) entry->config->tag);
 	free((void *) entry->config->update_strategy.command);
 	free(entry->config);
 }
@@ -417,6 +418,7 @@ static struct submodule *lookup_or_create_by_name(struct submodule_cache *cache,
 	submodule->fetch_recurse = RECURSE_SUBMODULES_NONE;
 	submodule->ignore = NULL;
 	submodule->branch = NULL;
+	submodule->tag = NULL;
 	submodule->recommend_shallow = -1;
 
 	oidcpy(&submodule->gitmodules_oid, gitmodules_oid);
@@ -662,12 +664,24 @@ static int parse_config(const char *var, const char *value,
 	} else if (!strcmp(item.buf, "branch")) {
 		if (!value)
 			ret = config_error_nonbool(var);
+		else if (submodule->branch && submodule->tag)
+			die(_("can not specify both tag and branch '%s'"), var);
 		else if (!me->overwrite && submodule->branch)
 			warn_multiple_config(me->treeish_name, submodule->name,
 					     "branch");
 		else {
 			free((void *)submodule->branch);
 			submodule->branch = xstrdup(value);
+		}
+	} else if (!strcmp(item.buf, "tag")) {
+		if (!value)
+			ret = config_error_nonbool(var);
+		else if (!me->overwrite && submodule->tag)
+			warn_multiple_config(me->treeish_name, submodule->name,
+					     "tag");
+		else {
+			free((void *)submodule->tag);
+			submodule->tag = xstrdup(value);
 		}
 	}
 
