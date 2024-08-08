@@ -1305,14 +1305,15 @@ struct segment suggest_compaction_segment(uint64_t *sizes, size_t n,
 
 static uint64_t *stack_table_sizes_for_compaction(struct reftable_stack *st)
 {
-	uint64_t *sizes =
-		reftable_calloc(st->merged->stack_len, sizeof(*sizes));
 	int version = (st->opts.hash_id == GIT_SHA1_FORMAT_ID) ? 1 : 2;
 	int overhead = header_size(version) - 1;
-	int i = 0;
-	for (i = 0; i < st->merged->stack_len; i++) {
+	uint64_t *sizes;
+
+	REFTABLE_CALLOC_ARRAY(sizes, st->merged->stack_len);
+
+	for (size_t i = 0; i < st->merged->stack_len; i++)
 		sizes[i] = st->readers[i]->size - overhead;
-	}
+
 	return sizes;
 }
 
