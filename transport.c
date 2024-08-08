@@ -1273,7 +1273,7 @@ static int run_pre_push_hook(struct transport *transport,
 	struct ref *r;
 	struct child_process proc = CHILD_PROCESS_INIT;
 	struct strbuf buf;
-	const char *hook_path = find_hook("pre-push");
+	const char *hook_path = find_hook(the_repository, "pre-push");
 
 	if (!hook_path)
 		return 0;

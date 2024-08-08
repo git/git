@@ -2,6 +2,8 @@
  * The backend-independent part of the reference module.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "advice.h"
 #include "config.h"
@@ -2137,7 +2139,7 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 	const char *hook;
 	int ret = 0, i;
 
-	hook = find_hook("reference-transaction");
+	hook = find_hook(transaction->ref_store->repo, "reference-transaction");
 	if (!hook)
 		return ret;
 

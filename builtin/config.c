@@ -1026,8 +1026,8 @@ static int cmd_config_rename_section(int argc, const char **argv, const char *pr
 	location_options_init(&location_opts, prefix);
 	check_write(&location_opts.source);
 
-	ret = git_config_rename_section_in_file(location_opts.source.file,
-						argv[0], argv[1]);
+	ret = repo_config_rename_section_in_file(the_repository, location_opts.source.file,
+						 argv[0], argv[1]);
 	if (ret < 0)
 		goto out;
 	else if (!ret)
@@ -1055,8 +1055,8 @@ static int cmd_config_remove_section(int argc, const char **argv, const char *pr
 	location_options_init(&location_opts, prefix);
 	check_write(&location_opts.source);
 
-	ret = git_config_rename_section_in_file(location_opts.source.file,
-						argv[0], NULL);
+	ret = repo_config_rename_section_in_file(the_repository, location_opts.source.file,
+						 argv[0], NULL);
 	if (ret < 0)
 		goto out;
 	else if (!ret)
@@ -1353,8 +1353,8 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_RENAME_SECTION) {
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
-		ret = git_config_rename_section_in_file(location_opts.source.file,
-							argv[0], argv[1]);
+		ret = repo_config_rename_section_in_file(the_repository, location_opts.source.file,
+							 argv[0], argv[1]);
 		if (ret < 0)
 			goto out;
 		else if (!ret)
@@ -1365,8 +1365,8 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_REMOVE_SECTION) {
 		check_write(&location_opts.source);
 		check_argc(argc, 1, 1);
-		ret = git_config_rename_section_in_file(location_opts.source.file,
-							argv[0], NULL);
+		ret = repo_config_rename_section_in_file(the_repository, location_opts.source.file,
+							 argv[0], NULL);
 		if (ret < 0)
 			goto out;
 		else if (!ret)

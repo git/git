@@ -10,14 +10,14 @@
 #include "environment.h"
 #include "setup.h"
 
-const char *find_hook(const char *name)
+const char *find_hook(struct repository *r, const char *name)
 {
 	static struct strbuf path = STRBUF_INIT;
 
 	int found_hook;
 
 	strbuf_reset(&path);
-	strbuf_git_path(&path, "hooks/%s", name);
+	strbuf_repo_git_path(&path, r, "hooks/%s", name);
 	found_hook = access(path.buf, X_OK) >= 0;
 #ifdef STRIP_EXTENSION
 	if (!found_hook) {
@@ -48,9 +48,9 @@ const char *find_hook(const char *name)
 	return path.buf;
 }
 
-int hook_exists(const char *name)
+int hook_exists(struct repository *r, const char *name)
 {
-	return !!find_hook(name);
+	return !!find_hook(r, name);
 }
 
 static int pick_next_hook(struct child_process *cp,
@@ -121,7 +121,8 @@ static void run_hooks_opt_clear(struct run_hooks_opt *options)
 	strvec_clear(&options->args);
 }
 
-int run_hooks_opt(const char *hook_name, struct run_hooks_opt *options)
+int run_hooks_opt(struct repository *r, const char *hook_name,
+		  struct run_hooks_opt *options)
 {
 	struct strbuf abs_path = STRBUF_INIT;
 	struct hook_cb_data cb_data = {
@@ -129,7 +130,7 @@ int run_hooks_opt(const char *hook_name, struct run_hooks_opt *options)
 		.hook_name = hook_name,
 		.options = options,
 	};
-	const char *const hook_path = find_hook(hook_name);
+	const char *const hook_path = find_hook(r, hook_name);
 	int ret = 0;
 	const struct run_process_parallel_opts opts = {
 		.tr2_category = "hook",
@@ -173,14 +174,14 @@ cleanup:
 	return ret;
 }
 
-int run_hooks(const char *hook_name)
+int run_hooks(struct repository *r, const char *hook_name)
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 
-	return run_hooks_opt(hook_name, &opt);
+	return run_hooks_opt(r, hook_name, &opt);
 }
 
-int run_hooks_l(const char *hook_name, ...)
+int run_hooks_l(struct repository *r, const char *hook_name, ...)
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	va_list ap;
@@ -191,5 +192,5 @@ int run_hooks_l(const char *hook_name, ...)
 		strvec_push(&opt.args, arg);
 	va_end(ap);
 
-	return run_hooks_opt(hook_name, &opt);
+	return run_hooks_opt(r, hook_name, &opt);
 }

@@ -1945,7 +1945,7 @@ static void tweak_untracked_cache(struct index_state *istate)
 
 static void tweak_split_index(struct index_state *istate)
 {
-	switch (git_config_get_split_index()) {
+	switch (repo_config_get_split_index(the_repository)) {
 	case -1: /* unset: do nothing */
 		break;
 	case 0: /* false */
@@ -2267,7 +2267,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	src_offset = sizeof(*hdr);
 
-	if (git_config_get_index_threads(&nr_threads))
+	if (repo_config_get_index_threads(the_repository, &nr_threads))
 		nr_threads = 1;
 
 	/* TODO: does creating more threads than cores help? */
@@ -2787,7 +2787,7 @@ static int record_eoie(void)
 	 * used for threading is written by default if the user
 	 * explicitly requested threaded index reads.
 	 */
-	return !git_config_get_index_threads(&val) && val != 1;
+	return !repo_config_get_index_threads(the_repository, &val) && val != 1;
 }
 
 static int record_ieot(void)
@@ -2802,7 +2802,7 @@ static int record_ieot(void)
 	 * written by default if the user explicitly requested
 	 * threaded index reads.
 	 */
-	return !git_config_get_index_threads(&val) && val != 1;
+	return !repo_config_get_index_threads(the_repository, &val) && val != 1;
 }
 
 enum write_extensions {
@@ -2876,7 +2876,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 	hashwrite(f, &hdr, sizeof(hdr));
 
-	if (!HAVE_THREADS || git_config_get_index_threads(&nr_threads))
+	if (!HAVE_THREADS || repo_config_get_index_threads(the_repository, &nr_threads))
 		nr_threads = 1;
 
 	if (nr_threads != 1 && record_ieot()) {
@@ -3175,9 +3175,9 @@ static int do_write_locked_index(struct index_state *istate,
 	else
 		ret = close_lock_file_gently(lock);
 
-	run_hooks_l("post-index-change",
-			istate->updated_workdir ? "1" : "0",
-			istate->updated_skipworktree ? "1" : "0", NULL);
+	run_hooks_l(the_repository, "post-index-change",
+		    istate->updated_workdir ? "1" : "0",
+		    istate->updated_skipworktree ? "1" : "0", NULL);
 	istate->updated_workdir = 0;
 	istate->updated_skipworktree = 0;
 
@@ -3203,8 +3203,8 @@ static unsigned long get_shared_index_expire_date(void)
 	static int shared_index_expire_date_prepared;
 
 	if (!shared_index_expire_date_prepared) {
-		git_config_get_expiry("splitindex.sharedindexexpire",
-				      &shared_index_expire);
+		repo_config_get_expiry(the_repository, "splitindex.sharedindexexpire",
+				       &shared_index_expire);
 		shared_index_expire_date = approxidate(shared_index_expire);
 		shared_index_expire_date_prepared = 1;
 	}
@@ -3294,7 +3294,7 @@ static const int default_max_percent_split_change = 20;
 static int too_many_not_shared_entries(struct index_state *istate)
 {
 	int i, not_shared = 0;
-	int max_split = git_config_get_max_percent_split_change();
+	int max_split = repo_config_get_max_percent_split_change(the_repository);
 
 	switch (max_split) {
 	case -1:

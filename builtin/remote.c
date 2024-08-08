@@ -747,7 +747,7 @@ static int mv(int argc, const char **argv, const char *prefix)
 
 	strbuf_addf(&buf, "remote.%s", rename.old_name);
 	strbuf_addf(&buf2, "remote.%s", rename.new_name);
-	if (git_config_rename_section(buf.buf, buf2.buf) < 1)
+	if (repo_config_rename_section(the_repository, buf.buf, buf2.buf) < 1)
 		return error(_("Could not rename config section '%s' to '%s'"),
 				buf.buf, buf2.buf);
 
@@ -960,7 +960,7 @@ static int rm(int argc, const char **argv, const char *prefix)
 
 	if (!result) {
 		strbuf_addf(&buf, "remote.%s", remote->name);
-		if (git_config_rename_section(buf.buf, NULL) < 1) {
+		if (repo_config_rename_section(the_repository, buf.buf, NULL) < 1) {
 			result = error(_("Could not remove config section '%s'"), buf.buf);
 			goto out;
 		}

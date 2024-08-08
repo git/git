@@ -490,7 +490,8 @@ static int run_applypatch_msg_hook(struct am_state *state)
 	assert(state->msg);
 
 	if (!state->no_verify)
-		ret = run_hooks_l("applypatch-msg", am_path(state, "final-commit"), NULL);
+		ret = run_hooks_l(the_repository, "applypatch-msg",
+				  am_path(state, "final-commit"), NULL);
 
 	if (!ret) {
 		FREE_AND_NULL(state->msg);
@@ -512,7 +513,7 @@ static int run_post_rewrite_hook(const struct am_state *state)
 	strvec_push(&opt.args, "rebase");
 	opt.path_to_stdin = am_path(state, "rewritten");
 
-	return run_hooks_opt("post-rewrite", &opt);
+	return run_hooks_opt(the_repository, "post-rewrite", &opt);
 }
 
 /**
@@ -1663,7 +1664,7 @@ static void do_commit(const struct am_state *state)
 	const char *reflog_msg, *author, *committer = NULL;
 	struct strbuf sb = STRBUF_INIT;
 
-	if (!state->no_verify && run_hooks("pre-applypatch"))
+	if (!state->no_verify && run_hooks(the_repository, "pre-applypatch"))
 		exit(1);
 
 	if (write_index_as_tree(&tree, the_repository->index, get_index_file(), 0, NULL))
@@ -1716,7 +1717,7 @@ static void do_commit(const struct am_state *state)
 		fclose(fp);
 	}
 
-	run_hooks("post-applypatch");
+	run_hooks(the_repository, "post-applypatch");
 
 	free_commit_list(parents);
 	strbuf_release(&sb);

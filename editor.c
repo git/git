@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
@@ -134,13 +136,15 @@ int launch_sequence_editor(const char *path, struct strbuf *buffer,
 }
 
 int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
-			      const char *const *env)
+			      const char *const *env, struct repository *r)
 {
-	char *path2 = NULL;
+	struct strbuf sb = STRBUF_INIT;
 	int fd, res = 0;
 
-	if (!is_absolute_path(path))
-		path = path2 = xstrdup(git_path("%s", path));
+	if (!is_absolute_path(path)) {
+		strbuf_repo_git_path(&sb, r, "%s", path);
+		path = sb.buf;
+	}
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0)
@@ -157,6 +161,6 @@ int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
 		unlink(path);
 	}
 
-	free(path2);
+	strbuf_release(&sb);
 	return res;
 }
