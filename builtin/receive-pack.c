@@ -300,7 +300,7 @@ static void show_ref(const char *path, const struct object_id *oid)
 	}
 }
 
-static int show_ref_cb(const char *path_full, const struct object_id *oid,
+static int show_ref_cb(const char *path_full, const char *referent UNUSED, const struct object_id *oid,
 		       int flag UNUSED, void *data)
 {
 	struct oidset *seen = data;

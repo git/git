@@ -667,6 +667,7 @@ struct midx_snapshot_ref_data {
 };
 
 static int midx_snapshot_ref_one(const char *refname UNUSED,
+				 const char *referent UNUSED,
 				 const struct object_id *oid,
 				 int flag UNUSED, void *_data)
 {
