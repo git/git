@@ -88,7 +88,7 @@ include::pretty-options.txt[]
 
 --no-commit-id::
 	'git diff-tree' outputs a line with the commit ID when
-	applicable.  This flag suppressed the commit ID output.
+	applicable.  This flag suppresses the commit ID output.
 
 -c::
 	This flag changes the way a merge commit is displayed
