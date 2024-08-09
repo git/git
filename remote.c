@@ -2354,7 +2354,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 	return 1;
 }
 
-static int one_local_ref(const char *refname, const struct object_id *oid,
+static int one_local_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			 int flag UNUSED,
 			 void *cb_data)
 {
@@ -2439,7 +2439,7 @@ struct stale_heads_info {
 	struct refspec *rs;
 };
 
-static int get_stale_heads_cb(const char *refname, const struct object_id *oid,
+static int get_stale_heads_cb(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			      int flags, void *cb_data)
 {
 	struct stale_heads_info *info = cb_data;

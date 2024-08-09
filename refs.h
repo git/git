@@ -298,7 +298,7 @@ struct ref_transaction;
  * arguments is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
-typedef int each_ref_fn(const char *refname,
+typedef int each_ref_fn(const char *refname, const char *referent,
 			const struct object_id *oid, int flags, void *cb_data);
 
 /*

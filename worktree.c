@@ -546,7 +546,7 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 					    refname.buf,
 					    RESOLVE_REF_READING,
 					    &oid, &flag))
-			ret = fn(refname.buf, &oid, flag, cb_data);
+			ret = fn(refname.buf, NULL, &oid, flag, cb_data);
 		if (ret)
 			break;
 	}

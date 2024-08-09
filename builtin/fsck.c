@@ -521,7 +521,7 @@ static int fsck_handle_reflog(const char *logname, void *cb_data)
 	return 0;
 }
 
-static int fsck_handle_ref(const char *refname, const struct object_id *oid,
+static int fsck_handle_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			   int flag UNUSED, void *cb_data UNUSED)
 {
 	struct object *obj;
@@ -576,7 +576,7 @@ static void get_default_heads(void)
 		strbuf_worktree_ref(wt, &ref, "HEAD");
 		fsck_head_link(ref.buf, &head_points_at, &head_oid);
 		if (head_points_at && !is_null_oid(&head_oid))
-			fsck_handle_ref(ref.buf, &head_oid, 0, NULL);
+			fsck_handle_ref(ref.buf, NULL, &head_oid, 0, NULL);
 		strbuf_release(&ref);
 
 		if (include_reflogs)

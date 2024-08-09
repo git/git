@@ -49,6 +49,7 @@ struct show_data {
 };
 
 static int show_reference(const char *refname,
+			  const char *referent UNUSED,
 			  const struct object_id *oid,
 			  int flag UNUSED, void *cb_data)
 {
