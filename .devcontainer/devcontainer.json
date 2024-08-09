@@ -1,5 +1,26 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.209.3/containers/typescript-node
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "features": {
-  }
+	"name": "Chef anarchsuns solana!",
+	"build": {
+		"dockerfile": "Dockerfile",
+		// Update 'VARIANT' to pick a Node version: 16, 14, 12.
+		// Append -bullseye or -buster to pin to an OS version.
+		// Use -bullseye variants on local on arm64/Apple Silicon.
+		"args": { 
+			"VARIANT": "18-buster"
+		}
+	},
+
+// or this does the same in a different way  or something than "build" since we are building a docker environment, i figure "build" is better sinc3e it runs dockerfile..
+//{
+//  "image": "mcr.microsoft.com/devcontainers/universal:2",
+//  "features": {
+ // }
+// }
+// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "yarn install",
+
+	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "node"
 }
