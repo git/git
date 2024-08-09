@@ -63,7 +63,7 @@ struct show_ref_data {
 	int show_head;
 };
 
-static int show_ref(const char *refname, const struct object_id *oid,
+static int show_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 		    int flag UNUSED, void *cbdata)
 {
 	struct show_ref_data *data = cbdata;
@@ -97,6 +97,7 @@ match:
 }
 
 static int add_existing(const char *refname,
+			const char *referent UNUSED,
 			const struct object_id *oid UNUSED,
 			int flag UNUSED, void *cbdata)
 {

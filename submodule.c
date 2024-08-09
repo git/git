@@ -953,6 +953,7 @@ static void free_submodules_data(struct string_list *submodules)
 }
 
 static int has_remote(const char *refname UNUSED,
+		      const char *referent UNUSED,
 		      const struct object_id *oid UNUSED,
 		      int flags UNUSED, void *cb_data UNUSED)
 {
@@ -1273,6 +1274,7 @@ int push_unpushed_submodules(struct repository *r,
 }
 
 static int append_oid_to_array(const char *ref UNUSED,
+			       const char *referent UNUSED,
 			       const struct object_id *oid,
 			       int flags UNUSED, void *data)
 {
