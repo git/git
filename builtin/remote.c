@@ -544,6 +544,7 @@ struct branches_for_remote {
 };
 
 static int add_branch_for_removal(const char *refname,
+				  const char *referent UNUSED,
 				  const struct object_id *oid UNUSED,
 				  int flags UNUSED, void *cb_data)
 {
@@ -589,7 +590,7 @@ struct rename_info {
 	uint32_t symrefs_nr;
 };
 
-static int read_remote_branches(const char *refname,
+static int read_remote_branches(const char *refname, const char *referent UNUSED,
 				const struct object_id *oid UNUSED,
 				int flags UNUSED, void *cb_data)
 {
@@ -995,6 +996,7 @@ static void free_remote_ref_states(struct ref_states *states)
 }
 
 static int append_ref_to_tracked_list(const char *refname,
+				      const char *referent UNUSED,
 				      const struct object_id *oid UNUSED,
 				      int flags, void *cb_data)
 {
