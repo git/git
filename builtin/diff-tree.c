@@ -232,10 +232,5 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		diff_free(&opt->diffopt);
 	}
 
-	if (opt->remerge_diff) {
-		tmp_objdir_destroy(opt->remerge_objdir);
-		opt->remerge_objdir = NULL;
-	}
-
-	return diff_result_code(&opt->diffopt);
+	return diff_result_code(opt);
 }

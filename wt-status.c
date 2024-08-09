@@ -2582,7 +2582,7 @@ int has_unstaged_changes(struct repository *r, int ignore_submodules)
 	rev_info.diffopt.flags.quick = 1;
 	diff_setup_done(&rev_info.diffopt);
 	run_diff_files(&rev_info, 0);
-	result = diff_result_code(&rev_info.diffopt);
+	result = diff_result_code(&rev_info);
 	release_revisions(&rev_info);
 	return result;
 }
@@ -2616,7 +2616,7 @@ int has_uncommitted_changes(struct repository *r,
 
 	diff_setup_done(&rev_info.diffopt);
 	run_diff_index(&rev_info, DIFF_INDEX_CACHED);
-	result = diff_result_code(&rev_info.diffopt);
+	result = diff_result_code(&rev_info);
 	release_revisions(&rev_info);
 	return result;
 }
