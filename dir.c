@@ -1258,6 +1258,21 @@ struct pattern_list *add_pattern_list(struct dir_struct *dir,
 }
 
 /*
+ * Convenience function to convert a string_list into pattern_list.
+ */
+struct pattern_list *add_patterns_from_string_list(struct dir_struct *dir,
+						   int group_type,
+						   const char *src,
+						   struct string_list *sl)
+{
+	struct pattern_list *pl;
+	pl = add_pattern_list(dir, group_type, src);
+	for (int i = 0; i < sl->nr; i++)
+		add_pattern(sl->items[i].string, "", 0, pl, -(i+1));
+	return pl;
+}
+
+/*
  * Used to set up core.excludesfile and .git/info/exclude lists.
  */
 static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
