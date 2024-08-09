@@ -168,13 +168,6 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 
 	opt->diffopt.rotate_to_strict = 1;
 
-	if (opt->remerge_diff) {
-		opt->remerge_objdir = tmp_objdir_create("remerge-diff");
-		if (!opt->remerge_objdir)
-			die(_("unable to create temporary object directory"));
-		tmp_objdir_replace_primary_odb(opt->remerge_objdir, 1);
-	}
-
 	/*
 	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
 	 * perfectly valid for revision range parser to yield "b ^a",

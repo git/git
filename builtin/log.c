@@ -494,13 +494,6 @@ static int cmd_log_walk_no_free(struct rev_info *rev)
 	int saved_nrl = 0;
 	int saved_dcctc = 0;
 
-	if (rev->remerge_diff) {
-		rev->remerge_objdir = tmp_objdir_create("remerge-diff");
-		if (!rev->remerge_objdir)
-			die(_("unable to create temporary object directory"));
-		tmp_objdir_replace_primary_odb(rev->remerge_objdir, 1);
-	}
-
 	if (rev->early_output)
 		setup_early_output();
 
