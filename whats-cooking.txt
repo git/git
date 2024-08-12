@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2024, #03; Thu, 8)
+Subject: What's cooking in git.git (Aug 2024, #04; Mon, 12)
 X-master-at: 25673b1c476756ec0587fb0596ab3c22b96dc52a
-X-next-at: 6999bdac580e8ef7d27526f50530785bce6e1b4d
+X-next-at: ee80dbc4f68248653629bdd1361376c366b51623
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2024, #03; Thu, 8)
+What's cooking in git.git (Aug 2024, #04; Mon, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,97 +46,71 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* dd/notes-empty-no-edit-by-default (2024-07-29) 1 commit
-  (merged to 'next' on 2024-08-01 at fe75c53260)
- + notes: do not trigger editor when adding an empty note
+* jc/tests-no-useless-tee (2024-08-08) 1 commit
+  (merged to 'next' on 2024-08-12 at 188e777e16)
+ + tests: drop use of 'tee' that hides exit status
 
- "git notes add -m '' --allow-empty" and friends that take prepared
- data to create notes should not invoke an editor, but it started
- doing so since Git 2.42, which has been corrected.
- source: <20240729151639.19192-2-ddiss@suse.de>
+ Test fixes.
 
-
-* dh/encoding-trace-optim (2024-07-31) 1 commit
-  (merged to 'next' on 2024-08-01 at c5e023eeaf)
- + convert: return early when not tracing
-
- An expensive operation to prepare tracing was done in re-encoding
- code path even when the tracing was not requested, which has been
- corrected.
- source: <pull.1744.v6.git.git.1722432839473.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <xmqq4j7uhfvm.fsf@gitster.g>
 
 
-* es/shell-check-updates (2024-07-26) 5 commits
-  (merged to 'next' on 2024-08-01 at cf06aced6d)
- + check-non-portable-shell: improve `VAR=val shell-func` detection
- + check-non-portable-shell: suggest alternative for `VAR=val shell-func`
- + check-non-portable-shell: loosen one-shot assignment error message
- + t4034: fix use of one-shot variable assignment with shell function
- + t3430: drop unnecessary one-shot "VAR=val shell-func" invocation
+* js/libgit-rust (2024-08-09) 5 commits
+ - cgit: add higher-level cgit crate
+ - config: add git_configset_alloc() and git_configset_clear_and_free()
+ - cgit-sys: add repo initialization and config access
+ - cgit-sys: introduce Rust wrapper for libgit.a
+ - common-main: split init and exit code into new files
 
- Test script linter has been updated to catch an attempt to use
- one-shot export construct "VAR=VAL func" for shell functions (which
- does not work for some shells) better.
- source: <20240727053509.34339-1-ericsunshine@charter.net>
+ An rust binding to libgit.a functions has been introduced.
+ source: <cover.1723242556.git.steadmon@google.com>
 
 
-* ks/unit-test-comment-typofix (2024-07-29) 1 commit
-  (merged to 'next' on 2024-08-01 at 35c44187b1)
- + unit-tests/test-lib: fix typo in check_pointer_eq() description
+* xx/diff-tree-remerge-diff-fix (2024-08-09) 1 commit
+  (merged to 'next' on 2024-08-09 at cabe67c0d1)
+ + diff-tree: fix crash when used with --remerge-diff
+ (this branch is used by jc/range-diff-lazy-setup.)
 
- Typofix.
- source: <20240729043303.3486-1-five231003@gmail.com>
+ "git rev-list ... | git diff-tree -p --remerge-diff --stdin" should
+ behave more or less like "git log -p --remerge-diff" but instead it
+ crashed, forgetting to prepare a temporary object store needed.
 
-
-* ps/doc-more-c-coding-guidelines (2024-07-30) 6 commits
-  (merged to 'next' on 2024-08-01 at 8f8ac5d6ca)
- + Documentation: consistently use spaces inside initializers
- + Documentation: document idiomatic function names
- + Documentation: document naming schema for structs and their functions
- + Documentation: clarify indentation style for C preprocessor directives
- + clang-format: fix indentation width for preprocessor directives
- + Merge branch 'kn/ci-clang-format' into ps/doc-more-c-coding-guidelines
-
- Some project conventions have been added to CodingGuidelines.
- source: <cover.1722323818.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <pull.1771.v2.git.1723188292498.gitgitgadget@gmail.com>
 
 
-* ps/p4-tests-updates (2024-07-31) 3 commits
-  (merged to 'next' on 2024-08-01 at e559c4bf1a)
- + t98xx: mark Perforce tests as memory-leak free
- + ci: update Perforce version to r23.2
- + t98xx: fix Perforce tests with p4d r23 and newer
+* jc/grammo-fixes (2024-08-09) 2 commits
+ - doc: grammofix in git-diff-tree
+ - tutorial: grammofix
 
- Perforce tests have been updated.
- cf. <na5mwletzpnacietbc7pzqcgb622mvrwgrkjgjosysz3gvjcso@gzxxi7d7icr7>
- source: <cover.1722421911.git.ps@pks.im>
+ source: <xmqqed6xehzv.fsf@gitster.g>
 
 
-* rj/add-p-pager (2024-07-25) 4 commits
-  (merged to 'next' on 2024-08-01 at 6f66ace52d)
- + add-patch: render hunks through the pager
- + pager: introduce wait_for_pager
- + pager: do not close fd 2 unnecessarily
- + add-patch: test for 'p' command
+* jc/range-diff-lazy-setup (2024-08-09) 2 commits
+ - remerge-diff: clean up temporary objdir at a central place
+ - remerge-diff: lazily prepare temporary objdir on demand
+ (this branch uses xx/diff-tree-remerge-diff-fix.)
 
- A 'P' command to "git add -p" that passes the patch hunk to the
- pager has been added.
- source: <76936fb1-446d-455f-b4e7-6e24dda3c17d@gmail.com>
-
-
-* rs/grep-omit-blank-lines-after-function-at-eof (2024-07-30) 1 commit
-  (merged to 'next' on 2024-08-01 at 0c6e2b21f9)
- + grep: -W: skip trailing empty lines at EOF, too
-
- "git grep -W" omits blank lines that follow the found function at
- the end of the file, just like it omits blank lines before the next
- function.
- source: <8b90e0ec-251f-46b3-8777-96efd58e227b@web.de>
+ source: <pull.1771.git.1723123250958.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+* pp/add-parse-range-unit-test (2024-05-27) 1 commit
+ - apply: add unit tests for parse_range
+
+ A unit test for code that parses the hunk offset and length from a
+ patch fragment header as been added.
+
+ Expecting a reroll.
+ cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
+ source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/t3206-test-when-finished-fix (2024-08-06) 1 commit
   (merged to 'next' on 2024-08-08 at 46461db3a2)
@@ -192,15 +166,14 @@ Release tarballs are available at:
  source: <cover.1723121979.git.ps@pks.im>
 
 
-* cp/unit-test-reftable-readwrite (2024-08-07) 5 commits
- - t-reftable-readwrite: add tests for print functions
+* cp/unit-test-reftable-readwrite (2024-08-09) 4 commits
  - t-reftable-readwrite: add test for known error
  - t-reftable-readwrite: use 'for' in place of infinite 'while' loops
  - t-reftable-readwrite: use free_names() instead of a for loop
  - t: move reftable/readwrite_test.c to the unit testing framework
 
  Needs review.
- source: <20240807141608.4524-1-chandrapratap3519@gmail.com>
+ source: <20240809111312.4401-1-chandrapratap3519@gmail.com>
 
 
 * ps/config-wo-the-repository (2024-08-07) 21 commits
@@ -236,18 +209,19 @@ Release tarballs are available at:
 
 
 * ps/submodule-ref-format (2024-08-08) 8 commits
- - object: fix leaking packfiles when closing object store
- - submodule: fix leaking seen submodule names
- - submodule: fix leaking fetch tasks
- - builtin/submodule: allow "add" to use different ref storage format
- - refs: fix ref storage format for submodule ref stores
- - builtin/clone: propagate ref storage format to submodules
- - builtin/submodule: allow cloning with different ref storage format
- - git-submodule.sh: break overly long command lines
+  (merged to 'next' on 2024-08-09 at 2b17964809)
+ + object: fix leaking packfiles when closing object store
+ + submodule: fix leaking seen submodule names
+ + submodule: fix leaking fetch tasks
+ + builtin/submodule: allow "add" to use different ref storage format
+ + refs: fix ref storage format for submodule ref stores
+ + builtin/clone: propagate ref storage format to submodules
+ + builtin/submodule: allow cloning with different ref storage format
+ + git-submodule.sh: break overly long command lines
 
  Support to specify ref backend for submodules has been enhanced.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1723102259.git.ps@pks.im>
 
 
@@ -263,47 +237,34 @@ Release tarballs are available at:
 
 
 * ps/transport-leakfix-test-updates (2024-08-08) 1 commit
- - transport: mark more tests leak-free
+  (merged to 'next' on 2024-08-12 at ee80dbc4f6)
+ + transport: mark more tests leak-free
  (this branch uses jc/transport-leakfix.)
 
  Test updates.
 
- On hold.
+ Will merge to 'master'.
  source: <ZrRPD0ggZapZym7E@tanuki>
 
---------------------------------------------------
-[Stalled]
-
-* pp/add-parse-range-unit-test (2024-05-27) 1 commit
- - apply: add unit tests for parse_range
-
- A unit test for code that parses the hunk offset and length from a
- patch fragment header as been added.
-
- Expecting a reroll.
- cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
- source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * ag/t7004-modernize (2024-08-08) 8 commits
- - t7004: make use of write_script
- - t7004: use single quotes instead of double quotes
- - t7004: begin the test body on the same line as test_expect_success
- - t7004: description on the same line as test_expect_success
- - t7004: do not prepare things outside test_expect_success
- - t7004: use indented here-doc
- - t7004: one command per line
- - t7004: remove space after redirect operators
+  (merged to 'next' on 2024-08-09 at 7bce577df4)
+ + t7004: make use of write_script
+ + t7004: use single quotes instead of double quotes
+ + t7004: begin the test body on the same line as test_expect_success
+ + t7004: description on the same line as test_expect_success
+ + t7004: do not prepare things outside test_expect_success
+ + t7004: use indented here-doc
+ + t7004: one command per line
+ + t7004: remove space after redirect operators
 
  Coding style fixes to a test script.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240808163302.17521-1-abdobngad@gmail.com>
 
 
-* ds/for-each-ref-is-base (2024-08-02) 3 commits
+* ds/for-each-ref-is-base (2024-08-12) 3 commits
  - p1500: add is-base performance tests
  - for-each-ref: add 'is-base' token
  - commit-reach: add get_branch_base_for_tip
@@ -312,8 +273,8 @@ Release tarballs are available at:
  that the history leading to a given commit "%(is-base:<commit>)" is
  likely based on.
 
- Expecting a reroll.
- source: <pull.1768.git.1722550226.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1768.v2.git.1723397687.gitgitgadget@gmail.com>
 
 
 * jk/apply-patch-mode-check-fix (2024-08-05) 1 commit
@@ -393,20 +354,21 @@ Release tarballs are available at:
 
 
 * sj/ref-fsck (2024-08-08) 9 commits
- - fsck: add ref name check for files backend
- - files-backend: add unified interface for refs scanning
- - builtin/refs: add verify subcommand
- - refs: set up ref consistency check infrastructure
- - fsck: add refs report function
- - fsck: add a unified interface for reporting fsck messages
- - fsck: make "fsck_error" callback generic
- - fsck: rename objects-related fsck error functions
- - fsck: rename "skiplist" to "skip_oids"
+  (merged to 'next' on 2024-08-09 at 3bde10da94)
+ + fsck: add ref name check for files backend
+ + files-backend: add unified interface for refs scanning
+ + builtin/refs: add verify subcommand
+ + refs: set up ref consistency check infrastructure
+ + fsck: add refs report function
+ + fsck: add a unified interface for reporting fsck messages
+ + fsck: make "fsck_error" callback generic
+ + fsck: rename objects-related fsck error functions
+ + fsck: rename "skiplist" to "skip_oids"
 
  "git fsck" infrastructure has been taught to also check the sanity
  of the ref database, in addition to the object database.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <ZrSqMmD-quQ18a9F@ArchLinux.localdomain>
 
 
@@ -454,21 +416,22 @@ Release tarballs are available at:
 
 
 * ps/reftable-stack-compaction (2024-08-08) 9 commits
- - reftable/stack: handle locked tables during auto-compaction
- - reftable/stack: fix corruption on concurrent compaction
- - reftable/stack: use lock_file when adding table to "tables.list"
- - reftable/stack: do not die when fsyncing lock file files
- - reftable/stack: simplify tracking of table locks
- - reftable/stack: update stats on failed full compaction
- - reftable/stack: test compaction with already-locked tables
- - reftable/stack: extract function to setup stack with N tables
- - reftable/stack: refactor function to gather table sizes
+  (merged to 'next' on 2024-08-09 at d7875bf14b)
+ + reftable/stack: handle locked tables during auto-compaction
+ + reftable/stack: fix corruption on concurrent compaction
+ + reftable/stack: use lock_file when adding table to "tables.list"
+ + reftable/stack: do not die when fsyncing lock file files
+ + reftable/stack: simplify tracking of table locks
+ + reftable/stack: update stats on failed full compaction
+ + reftable/stack: test compaction with already-locked tables
+ + reftable/stack: extract function to setup stack with N tables
+ + reftable/stack: refactor function to gather table sizes
 
  The code paths to compact multiple reftable files have been updated
  to correctly deal with multiple compaction triggering at the same
  time.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1723123606.git.ps@pks.im>
 
 
@@ -485,17 +448,18 @@ Release tarballs are available at:
  source: <pull.1767.v5.git.1722576007398.gitgitgadget@gmail.com>
 
 
-* jc/refs-symref-referent (2024-08-07) 3 commits
- - ref-filter: populate symref from iterator
- - refs: add referent to each_ref_fn
- - refs: keep track of unresolved reference value in iterators
+* jc/refs-symref-referent (2024-08-09) 3 commits
+  (merged to 'next' on 2024-08-09 at 3183f3d05b)
+ + ref-filter: populate symref from iterator
+ + refs: add referent to each_ref_fn
+ + refs: keep track of unresolved reference value in iterators
 
  The refs API has been taught to give symref target information to
  the users of ref iterators, allowing for-each-ref and friends to
  avoid an extra ref_resolve_* API call per a symbolic ref.
 
- Waiting for review response.
- source: <pull.1712.v3.git.git.1723059768.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1712.v4.git.git.1723217871.gitgitgadget@gmail.com>
 
 
 * jk/osxkeychain-username-is-nul-terminated (2024-08-01) 1 commit
@@ -550,33 +514,34 @@ Release tarballs are available at:
 
 
 * tb/incremental-midx-part-1 (2024-08-06) 19 commits
- - midx: implement support for writing incremental MIDX chains
- - t/t5313-pack-bounds-checks.sh: prepare for sub-directories
- - t: retire 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
- - midx: implement verification support for incremental MIDXs
- - midx: support reading incremental MIDX chains
- - midx: teach `midx_fanout_add_midx_fanout()` about incremental MIDXs
- - midx: teach `midx_preferred_pack()` about incremental MIDXs
- - midx: teach `midx_contains_pack()` about incremental MIDXs
- - midx: remove unused `midx_locate_pack()`
- - midx: teach `fill_midx_entry()` about incremental MIDXs
- - midx: teach `nth_midxed_offset()` about incremental MIDXs
- - midx: teach `bsearch_midx()` about incremental MIDXs
- - midx: introduce `bsearch_one_midx()`
- - midx: teach `nth_bitmapped_pack()` about incremental MIDXs
- - midx: teach `nth_midxed_object_oid()` about incremental MIDXs
- - midx: teach `prepare_midx_pack()` about incremental MIDXs
- - midx: teach `nth_midxed_pack_int_id()` about incremental MIDXs
- - midx: add new fields for incremental MIDX chains
- - Documentation: describe incremental MIDX format
+  (merged to 'next' on 2024-08-12 at 92ec55fd49)
+ + midx: implement support for writing incremental MIDX chains
+ + t/t5313-pack-bounds-checks.sh: prepare for sub-directories
+ + t: retire 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
+ + midx: implement verification support for incremental MIDXs
+ + midx: support reading incremental MIDX chains
+ + midx: teach `midx_fanout_add_midx_fanout()` about incremental MIDXs
+ + midx: teach `midx_preferred_pack()` about incremental MIDXs
+ + midx: teach `midx_contains_pack()` about incremental MIDXs
+ + midx: remove unused `midx_locate_pack()`
+ + midx: teach `fill_midx_entry()` about incremental MIDXs
+ + midx: teach `nth_midxed_offset()` about incremental MIDXs
+ + midx: teach `bsearch_midx()` about incremental MIDXs
+ + midx: introduce `bsearch_one_midx()`
+ + midx: teach `nth_bitmapped_pack()` about incremental MIDXs
+ + midx: teach `nth_midxed_object_oid()` about incremental MIDXs
+ + midx: teach `prepare_midx_pack()` about incremental MIDXs
+ + midx: teach `nth_midxed_pack_int_id()` about incremental MIDXs
+ + midx: add new fields for incremental MIDX chains
+ + Documentation: describe incremental MIDX format
 
  Incremental updates of multi-pack index files.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1722958595.git.me@ttaylorr.com>
 
 
-* ja/doc-synopsis-markup (2024-07-24) 3 commits
+* ja/doc-synopsis-markup (2024-08-12) 3 commits
  - doc: apply synopsis simplification on git-clone and git-init
  - doc: update the guidelines to reflect the current formatting rules
  - doc: introduce a synopsis custom paragraph attribute
@@ -585,8 +550,8 @@ Release tarballs are available at:
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- Inviting further discussion.
- source: <pull.1766.v2.git.1721855179.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1766.v3.git.1723389612.gitgitgadget@gmail.com>
 
 
 * tc/fetch-bundle-uri (2024-07-24) 3 commits
@@ -748,39 +713,42 @@ Release tarballs are available at:
 
 
 * es/doc-platform-support-policy (2024-08-02) 1 commit
- - Documentation: add platform support policy
+  (merged to 'next' on 2024-08-09 at 110c94ea82)
+ + Documentation: add platform support policy
 
  A policy document that describes platform support levels and
  expectation on platform stakeholders has been introduced.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20240802221948.2367124-1-emilyshaffer@google.com>
 
 
 * gt/unit-test-hashmap (2024-08-06) 1 commit
- - t: port helper/test-hashmap.c to unit-tests/t-hashmap.c
+  (merged to 'next' on 2024-08-09 at e62febfb4e)
+ + t: port helper/test-hashmap.c to unit-tests/t-hashmap.c
 
  An existing test of hashmap API has been rewritten with the
  unit-test framework.
 
- Getting there?
+ Will merge to 'master'.
  cf. <CAP8UFD04uQbWhY0QDp+nC8VyBvpUs=tBDm=w4CzKK2GcwFZdGQ@mail.gmail.com>
  source: <20240803133517.73308-2-shyamthakkar001@gmail.com>
 
 
 * rs/unit-tests-test-run (2024-07-30) 6 commits
- - t-strvec: use if_test
- - t-reftable-basics: use if_test
- - t-ctype: use if_test
- - unit-tests: add if_test
- - unit-tests: show location of checks outside of tests
- - t0080: use here-doc test body
+  (merged to 'next' on 2024-08-12 at 9df4336877)
+ + t-strvec: use if_test
+ + t-reftable-basics: use if_test
+ + t-ctype: use if_test
+ + unit-tests: add if_test
+ + unit-tests: show location of checks outside of tests
+ + t0080: use here-doc test body
 
  Unit-test framework has learned a simple control structure to allow
  embedding test statements in-line instead of having to create a new
  function to contain them.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <077a178e-eb30-45ff-b653-a514bfd33077@web.de>
 
 
