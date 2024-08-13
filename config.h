@@ -726,7 +726,8 @@ int repo_config_get_expiry_in_days(struct repository *r, const char *key,
  * dies printing the line number and the file name of the highest priority
  * value for the configuration variable `key`.
  */
-NORETURN void git_die_config(const char *key, const char *err, ...) __attribute__((format(printf, 2, 3)));
+NORETURN void git_die_config(struct repository *r, const char *key, const char *err, ...)
+	__attribute__((format(printf, 3, 4)));
 
 /**
  * Helper function which formats the die error message according to the
