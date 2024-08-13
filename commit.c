@@ -1960,5 +1960,5 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 	va_end(args);
 
 	opt.invoked_hook = invoked_hook;
-	return run_hooks_opt(name, &opt);
+	return run_hooks_opt(the_repository, name, &opt);
 }

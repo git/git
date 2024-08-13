@@ -1316,7 +1316,7 @@ static int run_rewrite_hook(const struct object_id *oldoid,
 	struct child_process proc = CHILD_PROCESS_INIT;
 	int code;
 	struct strbuf sb = STRBUF_INIT;
-	const char *hook_path = find_hook("post-rewrite");
+	const char *hook_path = find_hook(the_repository, "post-rewrite");
 
 	if (!hook_path)
 		return 0;
@@ -1614,7 +1614,7 @@ static int try_to_commit(struct repository *r,
 		}
 	}
 
-	if (hook_exists("prepare-commit-msg")) {
+	if (hook_exists(r, "prepare-commit-msg")) {
 		res = run_prepare_commit_msg_hook(r, msg, hook_commit);
 		if (res)
 			goto out;
@@ -5149,7 +5149,7 @@ cleanup_head_ref:
 
 			hook_opt.path_to_stdin = rebase_path_rewritten_list();
 			strvec_push(&hook_opt.args, "rebase");
-			run_hooks_opt("post-rewrite", &hook_opt);
+			run_hooks_opt(r, "post-rewrite", &hook_opt);
 		}
 		apply_autostash(rebase_path_autostash());
 

@@ -58,7 +58,7 @@ static int run(int argc, const char **argv, const char *prefix)
 	hook_name = argv[0];
 	if (!ignore_missing)
 		opt.error_if_missing = 1;
-	ret = run_hooks_opt(hook_name, &opt);
+	ret = run_hooks_opt(the_repository, hook_name, &opt);
 	if (ret < 0) /* error() return */
 		ret = 1;
 	return ret;

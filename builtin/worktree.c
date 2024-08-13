@@ -573,7 +573,7 @@ done:
 			     NULL);
 		opt.dir = path;
 
-		ret = run_hooks_opt("post-checkout", &opt);
+		ret = run_hooks_opt(the_repository, "post-checkout", &opt);
 	}
 
 	strvec_clear(&child_env);
