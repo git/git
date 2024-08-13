@@ -3178,21 +3178,39 @@ static void maybe_remove_section(struct config_store_data *store,
 		*end_offset = store->parsed[store->parsed_nr - 1].end;
 }
 
+int repo_config_set_in_file_gently(struct repository *r, const char *config_filename,
+				   const char *key, const char *comment, const char *value)
+{
+	return repo_config_set_multivar_in_file_gently(r, config_filename, key, value, NULL, comment, 0);
+}
+
 int git_config_set_in_file_gently(const char *config_filename,
 				  const char *key, const char *comment, const char *value)
 {
-	return git_config_set_multivar_in_file_gently(config_filename, key, value, NULL, comment, 0);
+	return repo_config_set_in_file_gently(the_repository, config_filename,
+					      key, comment, value);
+}
+
+void repo_config_set_in_file(struct repository *r, const char *config_filename,
+			     const char *key, const char *value)
+{
+	repo_config_set_multivar_in_file(r, config_filename, key, value, NULL, 0);
 }
 
 void git_config_set_in_file(const char *config_filename,
 			    const char *key, const char *value)
 {
-	git_config_set_multivar_in_file(config_filename, key, value, NULL, 0);
+	repo_config_set_in_file(the_repository, config_filename, key, value);
+}
+
+int repo_config_set_gently(struct repository *r, const char *key, const char *value)
+{
+	return repo_config_set_multivar_gently(r, key, value, NULL, 0);
 }
 
 int git_config_set_gently(const char *key, const char *value)
 {
-	return git_config_set_multivar_gently(key, value, NULL, 0);
+	return repo_config_set_gently(the_repository, key, value);
 }
 
 int repo_config_set_worktree_gently(struct repository *r,
@@ -3209,11 +3227,16 @@ int repo_config_set_worktree_gently(struct repository *r,
 	return repo_config_set_multivar_gently(r, key, value, NULL, 0);
 }
 
-void git_config_set(const char *key, const char *value)
+void repo_config_set(struct repository *r, const char *key, const char *value)
 {
-	git_config_set_multivar(key, value, NULL, 0);
+	repo_config_set_multivar(r, key, value, NULL, 0);
 
 	trace2_cmd_set_config(key, value);
+}
+
+void git_config_set(const char *key, const char *value)
+{
+	repo_config_set(the_repository, key, value);
 }
 
 char *git_config_prepare_comment_string(const char *comment)
@@ -3293,11 +3316,12 @@ static void validate_comment_string(const char *comment)
  * - the config file is removed and the lock file rename()d to it.
  *
  */
-int git_config_set_multivar_in_file_gently(const char *config_filename,
-					   const char *key, const char *value,
-					   const char *value_pattern,
-					   const char *comment,
-					   unsigned flags)
+int repo_config_set_multivar_in_file_gently(struct repository *r,
+					    const char *config_filename,
+					    const char *key, const char *value,
+					    const char *value_pattern,
+					    const char *comment,
+					    unsigned flags)
 {
 	int fd = -1, in_fd = -1;
 	int ret;
@@ -3317,7 +3341,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	store.multi_replace = (flags & CONFIG_FLAGS_MULTI_REPLACE) != 0;
 
 	if (!config_filename)
-		config_filename = filename_buf = git_pathdup("config");
+		config_filename = filename_buf = repo_git_path(r, "config");
 
 	/*
 	 * The lock serves a purpose in addition to locking: the new
@@ -3526,7 +3550,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	ret = 0;
 
 	/* Invalidate the config cache */
-	git_config_clear();
+	repo_config_clear(r);
 
 out_free:
 	rollback_lock_file(&lock);
@@ -3543,17 +3567,37 @@ write_err_out:
 	goto out_free;
 }
 
-void git_config_set_multivar_in_file(const char *config_filename,
-				     const char *key, const char *value,
-				     const char *value_pattern, unsigned flags)
+int git_config_set_multivar_in_file_gently(const char *config_filename,
+					   const char *key, const char *value,
+					   const char *value_pattern,
+					   const char *comment,
+					   unsigned flags)
 {
-	if (!git_config_set_multivar_in_file_gently(config_filename, key, value,
-						    value_pattern, NULL, flags))
+	return repo_config_set_multivar_in_file_gently(the_repository, config_filename,
+						       key, value, value_pattern,
+						       comment, flags);
+}
+
+void repo_config_set_multivar_in_file(struct repository *r,
+				      const char *config_filename,
+				      const char *key, const char *value,
+				      const char *value_pattern, unsigned flags)
+{
+	if (!repo_config_set_multivar_in_file_gently(r, config_filename, key, value,
+						     value_pattern, NULL, flags))
 		return;
 	if (value)
 		die(_("could not set '%s' to '%s'"), key, value);
 	else
 		die(_("could not unset '%s'"), key);
+}
+
+void git_config_set_multivar_in_file(const char *config_filename,
+				     const char *key, const char *value,
+				     const char *value_pattern, unsigned flags)
+{
+	repo_config_set_multivar_in_file(the_repository, config_filename,
+					 key, value, value_pattern, flags);
 }
 
 int git_config_set_multivar_gently(const char *key, const char *value,
@@ -3576,12 +3620,21 @@ int repo_config_set_multivar_gently(struct repository *r, const char *key,
 	return res;
 }
 
+void repo_config_set_multivar(struct repository *r,
+			      const char *key, const char *value,
+			      const char *value_pattern, unsigned flags)
+{
+	char *file = repo_git_path(r, "config");
+	git_config_set_multivar_in_file(file, key, value,
+					value_pattern, flags);
+	free(file);
+}
+
 void git_config_set_multivar(const char *key, const char *value,
 			     const char *value_pattern, unsigned flags)
 {
-	git_config_set_multivar_in_file(git_path("config"),
-					key, value, value_pattern,
-					flags);
+	repo_config_set_multivar(the_repository, key, value,
+				 value_pattern, flags);
 }
 
 static size_t section_name_match (const char *buf, const char *name)
