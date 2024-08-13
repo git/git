@@ -209,6 +209,10 @@ You must stage at least 1 file before you can commit.
 	#
 	set msg [string trim [$ui_comm get 1.0 end]]
 	regsub -all -line {[ \t\r]+$} $msg {} msg
+	# Strip comment lines
+	regsub -all {(^|\n)#[^\n]*} $msg {\1} msg
+	# Compress consecutive empty lines
+	regsub -all {\n{3,}} $msg "\n\n" msg
 	if {$msg eq {}} {
 		error_popup [mc "Please supply a commit message.
 
