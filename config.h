@@ -715,7 +715,7 @@ int repo_config_get_split_index(struct repository *r);
 int repo_config_get_max_percent_split_change(struct repository *r);
 
 /* This dies if the configured or default date is in the future */
-int git_config_get_expiry(const char *key, const char **output);
+int repo_config_get_expiry(struct repository *r, const char *key, const char **output);
 
 /* parse either "this many days" integer, or "5.days.ago" approxidate */
 int git_config_get_expiry_in_days(const char *key, timestamp_t *, timestamp_t now);
