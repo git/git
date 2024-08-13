@@ -659,4 +659,29 @@ test_expect_success 'unbundle outside of a repository' '
 	test_cmp expect err
 '
 
+test_expect_success 'list-heads outside of a repository' '
+	git bundle create some.bundle HEAD &&
+	cat >expect <<-EOF &&
+	$(git rev-parse HEAD) HEAD
+	EOF
+	nongit git bundle list-heads "$(pwd)/some.bundle" >actual &&
+	test_cmp expect actual
+'
+
+for hash in sha1 sha256
+do
+	test_expect_success "list-heads with bundle using $hash" '
+		test_when_finished "rm -rf hash" &&
+		git init --object-format=$hash hash &&
+		test_commit -C hash initial &&
+		git -C hash bundle create hash.bundle HEAD &&
+
+		cat >expect <<-EOF &&
+		$(git -C hash rev-parse HEAD) HEAD
+		EOF
+		git bundle list-heads hash/hash.bundle >actual &&
+		test_cmp expect actual
+	'
+done
+
 test_done
