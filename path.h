@@ -67,6 +67,14 @@ char *repo_git_path(const struct repository *repo,
 	__attribute__((format (printf, 2, 3)));
 
 /*
+ * Print a path into the git directory of repository `repo` into the provided
+ * buffer.
+ */
+void repo_git_pathv(const struct repository *repo,
+		    const struct worktree *wt, struct strbuf *buf,
+		    const char *fmt, va_list args);
+
+/*
  * Construct a path into the git directory of repository `repo` and append it
  * to the provided buffer `sb`.
  */
