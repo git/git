@@ -617,16 +617,16 @@ int strbuf_git_path_submodule(struct strbuf *buf, const char *path,
 	return err;
 }
 
-static void do_git_common_path(const struct repository *repo,
-			       struct strbuf *buf,
-			       const char *fmt,
-			       va_list args)
+void repo_common_pathv(const struct repository *repo,
+		       struct strbuf *sb,
+		       const char *fmt,
+		       va_list args)
 {
-	strbuf_addstr(buf, repo->commondir);
-	if (buf->len && !is_dir_sep(buf->buf[buf->len - 1]))
-		strbuf_addch(buf, '/');
-	strbuf_vaddf(buf, fmt, args);
-	strbuf_cleanup_path(buf);
+	strbuf_addstr(sb, repo->commondir);
+	if (sb->len && !is_dir_sep(sb->buf[sb->len - 1]))
+		strbuf_addch(sb, '/');
+	strbuf_vaddf(sb, fmt, args);
+	strbuf_cleanup_path(sb);
 }
 
 const char *git_common_path(const char *fmt, ...)
@@ -634,7 +634,7 @@ const char *git_common_path(const char *fmt, ...)
 	struct strbuf *pathname = get_pathname();
 	va_list args;
 	va_start(args, fmt);
-	do_git_common_path(the_repository, pathname, fmt, args);
+	repo_common_pathv(the_repository, pathname, fmt, args);
 	va_end(args);
 	return pathname->buf;
 }
@@ -645,7 +645,7 @@ void strbuf_git_common_path(struct strbuf *sb,
 {
 	va_list args;
 	va_start(args, fmt);
-	do_git_common_path(repo, sb, fmt, args);
+	repo_common_pathv(repo, sb, fmt, args);
 	va_end(args);
 }
 
