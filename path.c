@@ -365,15 +365,15 @@ static void update_common_dir(struct strbuf *buf, int git_dir_len,
 		strbuf_addstr(buf, LOCK_SUFFIX);
 }
 
-void report_linked_checkout_garbage(void)
+void report_linked_checkout_garbage(struct repository *r)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const struct common_dir *p;
 	int len;
 
-	if (!the_repository->different_commondir)
+	if (!r->different_commondir)
 		return;
-	strbuf_addf(&sb, "%s/", get_git_dir());
+	strbuf_addf(&sb, "%s/", r->gitdir);
 	len = sb.len;
 	for (p = common_list; p->path; p++) {
 		const char *path = p->path;
