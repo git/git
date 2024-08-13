@@ -6,8 +6,6 @@
  *
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
@@ -2695,78 +2693,6 @@ void git_protected_config(config_fn_t fn, void *data)
 	configset_iter(&protected_config, fn, data);
 }
 
-/* Functions used historically to read configuration from 'the_repository' */
-void git_config(config_fn_t fn, void *data)
-{
-	repo_config(the_repository, fn, data);
-}
-
-void git_config_clear(void)
-{
-	repo_config_clear(the_repository);
-}
-
-int git_config_get(const char *key)
-{
-	return repo_config_get(the_repository, key);
-}
-
-int git_config_get_value(const char *key, const char **value)
-{
-	return repo_config_get_value(the_repository, key, value);
-}
-
-int git_config_get_value_multi(const char *key, const struct string_list **dest)
-{
-	return repo_config_get_value_multi(the_repository, key, dest);
-}
-
-int git_config_get_string_multi(const char *key,
-				const struct string_list **dest)
-{
-	return repo_config_get_string_multi(the_repository, key, dest);
-}
-
-int git_config_get_string(const char *key, char **dest)
-{
-	return repo_config_get_string(the_repository, key, dest);
-}
-
-int git_config_get_string_tmp(const char *key, const char **dest)
-{
-	return repo_config_get_string_tmp(the_repository, key, dest);
-}
-
-int git_config_get_int(const char *key, int *dest)
-{
-	return repo_config_get_int(the_repository, key, dest);
-}
-
-int git_config_get_ulong(const char *key, unsigned long *dest)
-{
-	return repo_config_get_ulong(the_repository, key, dest);
-}
-
-int git_config_get_bool(const char *key, int *dest)
-{
-	return repo_config_get_bool(the_repository, key, dest);
-}
-
-int git_config_get_bool_or_int(const char *key, int *is_bool, int *dest)
-{
-	return repo_config_get_bool_or_int(the_repository, key, is_bool, dest);
-}
-
-int git_config_get_maybe_bool(const char *key, int *dest)
-{
-	return repo_config_get_maybe_bool(the_repository, key, dest);
-}
-
-int git_config_get_pathname(const char *key, char **dest)
-{
-	return repo_config_get_pathname(the_repository, key, dest);
-}
-
 int repo_config_get_expiry(struct repository *r, const char *key, const char **output)
 {
 	int ret = repo_config_get_string(r, key, (char **)output);
@@ -3186,33 +3112,15 @@ int repo_config_set_in_file_gently(struct repository *r, const char *config_file
 	return repo_config_set_multivar_in_file_gently(r, config_filename, key, value, NULL, comment, 0);
 }
 
-int git_config_set_in_file_gently(const char *config_filename,
-				  const char *key, const char *comment, const char *value)
-{
-	return repo_config_set_in_file_gently(the_repository, config_filename,
-					      key, comment, value);
-}
-
 void repo_config_set_in_file(struct repository *r, const char *config_filename,
 			     const char *key, const char *value)
 {
 	repo_config_set_multivar_in_file(r, config_filename, key, value, NULL, 0);
 }
 
-void git_config_set_in_file(const char *config_filename,
-			    const char *key, const char *value)
-{
-	repo_config_set_in_file(the_repository, config_filename, key, value);
-}
-
 int repo_config_set_gently(struct repository *r, const char *key, const char *value)
 {
 	return repo_config_set_multivar_gently(r, key, value, NULL, 0);
-}
-
-int git_config_set_gently(const char *key, const char *value)
-{
-	return repo_config_set_gently(the_repository, key, value);
 }
 
 int repo_config_set_worktree_gently(struct repository *r,
@@ -3234,11 +3142,6 @@ void repo_config_set(struct repository *r, const char *key, const char *value)
 	repo_config_set_multivar(r, key, value, NULL, 0);
 
 	trace2_cmd_set_config(key, value);
-}
-
-void git_config_set(const char *key, const char *value)
-{
-	repo_config_set(the_repository, key, value);
 }
 
 char *git_config_prepare_comment_string(const char *comment)
@@ -3569,17 +3472,6 @@ write_err_out:
 	goto out_free;
 }
 
-int git_config_set_multivar_in_file_gently(const char *config_filename,
-					   const char *key, const char *value,
-					   const char *value_pattern,
-					   const char *comment,
-					   unsigned flags)
-{
-	return repo_config_set_multivar_in_file_gently(the_repository, config_filename,
-						       key, value, value_pattern,
-						       comment, flags);
-}
-
 void repo_config_set_multivar_in_file(struct repository *r,
 				      const char *config_filename,
 				      const char *key, const char *value,
@@ -3592,21 +3484,6 @@ void repo_config_set_multivar_in_file(struct repository *r,
 		die(_("could not set '%s' to '%s'"), key, value);
 	else
 		die(_("could not unset '%s'"), key);
-}
-
-void git_config_set_multivar_in_file(const char *config_filename,
-				     const char *key, const char *value,
-				     const char *value_pattern, unsigned flags)
-{
-	repo_config_set_multivar_in_file(the_repository, config_filename,
-					 key, value, value_pattern, flags);
-}
-
-int git_config_set_multivar_gently(const char *key, const char *value,
-				   const char *value_pattern, unsigned flags)
-{
-	return repo_config_set_multivar_gently(the_repository, key, value,
-					       value_pattern, flags);
 }
 
 int repo_config_set_multivar_gently(struct repository *r, const char *key,
@@ -3630,13 +3507,6 @@ void repo_config_set_multivar(struct repository *r,
 	repo_config_set_multivar_in_file(r, file, key, value,
 					 value_pattern, flags);
 	free(file);
-}
-
-void git_config_set_multivar(const char *key, const char *value,
-			     const char *value_pattern, unsigned flags)
-{
-	repo_config_set_multivar(the_repository, key, value,
-				 value_pattern, flags);
 }
 
 static size_t section_name_match (const char *buf, const char *name)
