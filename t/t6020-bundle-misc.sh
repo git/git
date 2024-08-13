@@ -652,4 +652,11 @@ test_expect_success 'send a bundle to standard output' '
 	test_cmp expect actual
 '
 
+test_expect_success 'unbundle outside of a repository' '
+	git bundle create some.bundle HEAD &&
+	echo "fatal: Need a repository to unbundle." >expect &&
+	nongit test_must_fail git bundle unbundle "$(pwd)/some.bundle" 2>err &&
+	test_cmp expect err
+'
+
 test_done
