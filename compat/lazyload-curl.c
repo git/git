@@ -88,6 +88,9 @@ static func_t load_function(void *handle, const char *name)
 }
 #endif
 
+typedef struct curl_version_info_data *(*curl_version_info_type)(CURLversion version);
+static curl_version_info_type curl_version_info_func;
+
 typedef char *(*curl_easy_escape_type)(CURL *handle, const char *string, int length);
 static curl_easy_escape_type curl_easy_escape_func;
 
@@ -192,6 +195,7 @@ static void lazy_load_curl(void)
 	if (!libcurl)
 		die("failed to load library '%s'", LIBCURL_FILE_NAME("libcurl"));
 
+	curl_version_info_func = (curl_version_info_type)load_function(libcurl, "curl_version_info");
 	curl_easy_escape_func = (curl_easy_escape_type)load_function(libcurl, "curl_easy_escape");
 	curl_free_func = (curl_free_type)load_function(libcurl, "curl_free");
 	curl_global_init_func = (curl_global_init_type)load_function(libcurl, "curl_global_init");
@@ -223,6 +227,12 @@ static void lazy_load_curl(void)
 	curl_easy_setopt_long_func = (curl_easy_setopt_long_type)curl_easy_setopt_func;
 	curl_easy_setopt_pointer_func = (curl_easy_setopt_pointer_type)curl_easy_setopt_func;
 	curl_easy_setopt_off_t_func = (curl_easy_setopt_off_t_type)curl_easy_setopt_func;
+}
+
+struct curl_version_info_data *curl_version_info(CURLversion version)
+{
+	lazy_load_curl();
+	return curl_version_info_func(version);
 }
 
 char *curl_easy_escape(CURL *handle, const char *string, int length)
