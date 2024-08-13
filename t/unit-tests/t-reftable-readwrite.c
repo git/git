@@ -269,15 +269,13 @@ static void t_log_write_read(void)
 	err = reftable_iterator_seek_log(&it, "");
 	check(!err);
 
-	i = 0;
-	while (1) {
+	for (i = 0; ; i++) {
 		int err = reftable_iterator_next_log(&it, &log);
 		if (err > 0)
 			break;
 		check(!err);
 		check_str(names[i], log.refname);
 		check_int(i, ==, log.update_index);
-		i++;
 		reftable_log_record_release(&log);
 	}
 
@@ -375,7 +373,7 @@ static void t_table_read_write_sequential(void)
 	err = reftable_iterator_seek_ref(&it, "");
 	check(!err);
 
-	while (1) {
+	for (j = 0; ; j++) {
 		struct reftable_ref_record ref = { 0 };
 		int r = reftable_iterator_next_ref(&it, &ref);
 		check_int(r, >=, 0);
@@ -383,8 +381,6 @@ static void t_table_read_write_sequential(void)
 			break;
 		check_str(names[j], ref.refname);
 		check_int(update_index, ==, ref.update_index);
-
-		j++;
 		reftable_ref_record_release(&ref);
 	}
 	check_int(j, ==, N);
@@ -590,15 +586,13 @@ static void t_table_refs_for(int indexed)
 	err = reftable_reader_refs_for(&rd, &it, want_hash);
 	check(!err);
 
-	j = 0;
-	while (1) {
+	for (j = 0; ; j++) {
 		int err = reftable_iterator_next_ref(&it, &ref);
 		check_int(err, >=, 0);
 		if (err > 0)
 			break;
 		check_int(j, <, want_names_len);
 		check_str(ref.refname, want_names[j]);
-		j++;
 		reftable_ref_record_release(&ref);
 	}
 	check_int(j, ==, want_names_len);
