@@ -2811,11 +2811,11 @@ int repo_config_get_split_index(struct repository *r)
 	return -1; /* default value */
 }
 
-int git_config_get_max_percent_split_change(void)
+int repo_config_get_max_percent_split_change(struct repository *r)
 {
 	int val = -1;
 
-	if (!git_config_get_int("splitindex.maxpercentchange", &val)) {
+	if (!repo_config_get_int(r, "splitindex.maxpercentchange", &val)) {
 		if (0 <= val && val <= 100)
 			return val;
 
