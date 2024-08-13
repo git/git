@@ -4,6 +4,8 @@
  * Copyright (c) 2007 Junio C Hamano
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "convert.h"

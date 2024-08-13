@@ -21,6 +21,8 @@
  *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "credential.h"
