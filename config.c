@@ -2564,7 +2564,7 @@ static void git_config_check_init(struct repository *repo)
 	repo_read_config(repo);
 }
 
-static void repo_config_clear(struct repository *repo)
+void repo_config_clear(struct repository *repo)
 {
 	if (!repo->config || !repo->config->hash_initialized)
 		return;

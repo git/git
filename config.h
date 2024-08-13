@@ -651,6 +651,7 @@ int git_config_get_string_multi(const char *key,
  * Resets and invalidates the config cache.
  */
 void git_config_clear(void);
+void repo_config_clear(struct repository *repo);
 
 /**
  * Allocates and copies the retrieved string into the `dest` parameter for
