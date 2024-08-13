@@ -2801,11 +2801,11 @@ int git_config_get_expiry_in_days(const char *key, timestamp_t *expiry, timestam
 	return -1; /* thing exists but cannot be parsed */
 }
 
-int git_config_get_split_index(void)
+int repo_config_get_split_index(struct repository *r)
 {
 	int val;
 
-	if (!git_config_get_maybe_bool("core.splitindex", &val))
+	if (!repo_config_get_maybe_bool(r, "core.splitindex", &val))
 		return val;
 
 	return -1; /* default value */

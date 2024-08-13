@@ -1156,7 +1156,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	end_odb_transaction();
 
 	if (split_index > 0) {
-		if (git_config_get_split_index() == 0)
+		if (repo_config_get_split_index(the_repository) == 0)
 			warning(_("core.splitIndex is set to false; "
 				  "remove or change it, if you really want to "
 				  "enable split index"));
@@ -1165,7 +1165,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		else
 			add_split_index(the_repository->index);
 	} else if (!split_index) {
-		if (git_config_get_split_index() == 1)
+		if (repo_config_get_split_index(the_repository) == 1)
 			warning(_("core.splitIndex is set to true; "
 				  "remove or change it, if you really want to "
 				  "disable split index"));

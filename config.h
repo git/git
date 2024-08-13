@@ -711,7 +711,7 @@ int git_config_get_maybe_bool(const char *key, int *dest);
 int git_config_get_pathname(const char *key, char **dest);
 
 int repo_config_get_index_threads(struct repository *r, int *dest);
-int git_config_get_split_index(void);
+int repo_config_get_split_index(struct repository *r);
 int git_config_get_max_percent_split_change(void);
 
 /* This dies if the configured or default date is in the future */
