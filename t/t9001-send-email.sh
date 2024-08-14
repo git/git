@@ -2093,13 +2093,15 @@ test_dump_aliases '--dump-aliases mailrc format' \
 test_dump_aliases '--dump-aliases pine format' \
 	'pine' \
 	'alice' \
+	'bcgrp' \
 	'bob' \
 	'chloe' \
 	'eve' <<-\EOF
-	alice	Alice W Land	<awol@example.com>
-	eve	Eve	<eve@example.com>
-	bob	Robert	Bobbyton <bob@example.com>
+	alice	Alice W Land	awol@example.com		Friend
+	eve	Eve	eve@example.com
+	bob	Robert Bobbyton	bob@example.com
 	chloe		chloe@example.com
+	bcgrp		(bob, chloe, Other <o@example.com>)
 	EOF
 
 test_dump_aliases '--dump-aliases gnus format' \
