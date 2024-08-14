@@ -16,6 +16,11 @@ UI, Workflows & Features
    the end of the file, just like it omits blank lines before the next
    function.
 
+ * The value of http.proxy can have "path" at the end for a socks
+   proxy that listens to a unix-domain socket, but we started to
+   discard it when we taught proxy auth code path to use the
+   credential helpers, which has been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -34,6 +39,17 @@ Performance, Internal Implementation, Development Support etc.
    does not work for some shells) better.
 
  * Some project conventions have been added to CodingGuidelines.
+
+ * In the refs subsystem, implicit reliance of the_repository has been
+   eliminated; the repository associated with the ref store object is
+   used instead.
+
+ * Various tests in reftable library have been rewritten using the unit test
+   framework.
+
+ * A test that fails on an unusually slow machine was found, and made
+   less likely to cause trouble by lengthening the expiry value it
+   uses.
 
 
 Fixes since v2.46
@@ -69,9 +85,49 @@ Fixes since v2.46
    corrected.
    (merge 63ad8dbf16 dh/encoding-trace-optim later to maint).
 
+ * More leakfixes.
+   (merge f30bfafcd4 ps/leakfixes-part-3 later to maint).
+
+ * The credential helper to talk to OSX keychain sometimes sent
+   garbage bytes after the username, which has been corrected.
+   (merge b201316835 jk/osxkeychain-username-is-nul-terminated later to maint).
+
+ * A recent update broke "git ls-remote" used outside a repository,
+   which has been corrected.
+   (merge 9e89dcb66a ps/ls-remote-out-of-repo-fix later to maint).
+
+ * The patch parser in 'git apply' has been a bit more lenient against
+   unexpected mode bits, like 100664, recorded on extended header lines.
+   (merge e95d515141 jk/apply-patch-mode-check-fix later to maint).
+
+ * "git config --value=foo --fixed-value section.key newvalue" barfed
+   when the existing value in the configuration file used the
+   valueless true syntax, which has been corrected.
+   (merge 615d2de3b4 tb/config-fixed-value-with-valueless-true later to maint).
+
+ * The patch parser in "git patch-id" has been tightened to avoid
+   getting confused by lines that look like a patch header in the log
+   message.
+   (merge a6e9429f72 jc/patch-id later to maint).
+
+ * "git reflog expire" failed to honor annotated tags when computing
+   reachable commits.
+   (merge 5133ead528 jc/reflog-expire-lookup-commit-fix later to maint).
+
+ * A flakey test and incorrect calls to strtoX() functions have been
+   fixed.
+   (merge ec60bb9fc4 kl/test-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 8db8786fc2 jt/doc-post-receive-hook-update later to maint).
    (merge 1c473dd6af tn/doc-commit-fix later to maint).
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
    (merge 6e71d6ac7c ks/unit-test-comment-typofix later to maint).
    (merge 63ee933383 ps/p4-tests-updates later to maint).
+   (merge 7c7516b8db jc/jl-git-no-advice-fix later to maint).
+   (merge c3d034df16 jc/leakfix-hashfile later to maint).
+   (merge d98d9c77e5 jc/leakfix-mailmap later to maint).
+   (merge c199707496 jr/ls-files-expand-literal-doc later to maint).
+   (merge e2e373ba82 ss/packed-ref-store-leakfix later to maint).
+   (merge 0c4d5aa22d rs/use-decimal-width later to maint).
+   (merge 67be8c4de5 jc/document-use-of-local later to maint).
