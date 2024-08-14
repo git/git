@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test textconv caching'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >helper <<'EOF'
