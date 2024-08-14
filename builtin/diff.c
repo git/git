@@ -388,6 +388,11 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 	sym->skip = map;
 }
 
+static void symdiff_release(struct symdiff *sdiff)
+{
+	bitmap_free(sdiff->skip);
+}
+
 int cmd_diff(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -619,6 +624,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		refresh_index_quietly();
 	release_revisions(&rev);
 	object_array_clear(&ent);
+	symdiff_release(&sdiff);
 	UNLEAK(blob);
 	return result;
 }
