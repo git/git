@@ -707,6 +707,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 
 	write_or_die(1, buf, size);
 	object_context_release(&obj_context);
+	free(buf);
 	return 0;
 }
 
