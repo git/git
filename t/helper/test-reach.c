@@ -116,6 +116,8 @@ int cmd__reach(int ac, const char **av)
 		       repo_in_merge_bases_many(the_repository, A, X_nr, X_array, 0));
 	else if (!strcmp(av[1], "is_descendant_of"))
 		printf("%s(A,X):%d\n", av[1], repo_is_descendant_of(r, A, X));
+	else if (!strcmp(av[1], "get_branch_base_for_tip"))
+		printf("%s(A,X):%d\n", av[1], get_branch_base_for_tip(r, A, X_array, X_nr));
 	else if (!strcmp(av[1], "get_merge_bases_many")) {
 		struct commit_list *list = NULL;
 		if (repo_get_merge_bases_many(the_repository,
