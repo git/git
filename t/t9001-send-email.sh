@@ -2084,9 +2084,9 @@ test_dump_aliases '--dump-aliases mailrc format' \
 	'bob' \
 	'chloe' \
 	'eve' <<-\EOF
-	alias alice   Alice W Land <awol@example.com>
-	alias eve     Eve <eve@example.com>
-	alias bob     Robert Bobbyton <bob@example.com>
+	alias alice   "Alice W Land <awol@example.com>"
+	alias eve     "Eve <eve@example.com>"
+	alias bob     "Robert Bobbyton <bob@example.com>"
 	alias chloe   chloe@example.com
 	EOF
 
