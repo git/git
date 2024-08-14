@@ -219,11 +219,11 @@ my %cmd = (
 	                "Set an SVN repository to a git tree-ish",
 			{ 'stdin' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'create-ignore' => [ \&cmd_create_ignore,
-			     'Create a .gitignore per svn:ignore',
+			     "Create a .gitignore per directory with SVN ignore properties",
 			     { 'revision|r=i' => \$_revision
 			     } ],
 	'mkdirs' => [ \&cmd_mkdirs ,
-	              "recreate empty directories after a checkout",
+	              "Recreate empty directories after a checkout",
 	              { 'revision|r=i' => \$_revision } ],
         'propget' => [ \&cmd_propget,
 		       'Print the value of a property on a file or directory',
@@ -234,7 +234,7 @@ my %cmd = (
         'proplist' => [ \&cmd_proplist,
 		       'List all properties of a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
-	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
+	'show-ignore' => [ \&cmd_show_ignore, "Show .gitignore patterns from SVN ignore properties",
 			{ 'revision|r=i' => \$_revision
 			} ],
 	'show-externals' => [ \&cmd_show_externals, "Show svn:externals listings",
