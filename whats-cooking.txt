@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2024, #04; Mon, 12)
-X-master-at: 25673b1c476756ec0587fb0596ab3c22b96dc52a
-X-next-at: ee80dbc4f68248653629bdd1361376c366b51623
+Subject: What's cooking in git.git (Aug 2024, #05; Wed, 14)
+X-master-at: 477ce5ccd69bda5c44f53e3b230f8a9c54217ed6
+X-next-at: ddde3f2535d17d0698e32c8f15e9fd627603e752
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2024, #04; Mon, 12)
+What's cooking in git.git (Aug 2024, #05; Wed, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,364 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* cp/unit-test-reftable-pq (2024-08-01) 7 commits
+  (merged to 'next' on 2024-08-05 at 05e47f7097)
+ + t-reftable-pq: add tests for merged_iter_pqueue_top()
+ + t-reftable-pq: add test for index based comparison
+ + t-reftable-pq: make merged_iter_pqueue_check() callable by reference
+ + t-reftable-pq: make merged_iter_pqueue_check() static
+ + t: move reftable/pq_test.c to the unit testing framework
+ + reftable: change the type of array indices to 'size_t' in reftable/pq.c
+ + reftable: remove unnecessary curly braces in reftable/pq.c
+
+ The tests for "pq" part of reftable library got rewritten to use
+ the unit test framework.
+ cf. <Zqt02XmevPRB3idt@tanuki>
+ source: <20240801110453.5087-1-chandrapratap3519@gmail.com>
+
+
+* cp/unit-test-reftable-tree (2024-08-04) 5 commits
+  (merged to 'next' on 2024-08-06 at e32c456e45)
+ + t-reftable-tree: improve the test for infix_walk()
+ + t-reftable-tree: add test for non-existent key
+ + t-reftable-tree: split test_tree() into two sub-test functions
+ + t: move reftable/tree_test.c to the unit testing framework
+ + reftable: remove unnecessary curly braces in reftable/tree.c
+
+ A test in reftable library has been rewritten using the unit test
+ framework.
+ cf. <Zqt1WTT_eJKEuO1z@tanuki>
+ cf. <ZrCx0NWRbFOOReki@tanuki>
+ source: <20240804141105.4268-1-chandrapratap3519@gmail.com>
+
+
+* jc/document-use-of-local (2024-07-15) 1 commit
+  (merged to 'next' on 2024-08-07 at 3321b54659)
+ + doc: note that AT&T ksh does not work with our test suite
+
+ Doc update.
+ source: <xmqq1q3u8zmr.fsf@gitster.g>
+
+
+* jc/jl-git-no-advice-fix (2024-08-01) 1 commit
+  (merged to 'next' on 2024-08-06 at 468bfce24b)
+ + t0018: remove leftover debugging cruft
+
+ Remove leftover debugging cruft from a test script.
+ source: <xmqq7cd0ulen.fsf_-_@gitster.g>
+
+
+* jc/leakfix-hashfile (2024-07-26) 1 commit
+  (merged to 'next' on 2024-08-06 at 7793a7fc56)
+ + csum-file: introduce discard_hashfile()
+
+ Leakfix.
+ source: <xmqqle1p1367.fsf@gitster.g>
+
+
+* jc/leakfix-mailmap (2024-07-26) 1 commit
+  (merged to 'next' on 2024-08-06 at 22f73301fd)
+ + mailmap: plug memory leak in read_mailmap_blob()
+
+ Leakfix.
+ source: <xmqqcyn112xi.fsf@gitster.g>
+
+
+* jc/patch-id (2024-07-29) 5 commits
+  (merged to 'next' on 2024-08-06 at 9ad078b49c)
+ + patch-id: tighten code to detect the patch header
+ + patch-id: rewrite code that detects the beginning of a patch
+ + patch-id: make get_one_patchid() more extensible
+ + patch-id: call flush_current_id() only when needed
+ + t4204: patch-id supports various input format
+
+ The patch parser in "git patch-id" has been tightened to avoid
+ getting confused by lines that look like a patch header in the log
+ message.
+ cf. <Zqh2T_2RLt0SeKF7@tanuki>
+ source: <20240730011738.4032377-1-gitster@pobox.com>
+
+
+* jc/reflog-expire-lookup-commit-fix (2024-07-16) 1 commit
+  (merged to 'next' on 2024-08-06 at 1e59eac417)
+ + Revert "reflog expire: don't use lookup_commit_reference_gently()"
+
+ "git reflog expire" failed to honor annotated tags when computing
+ reachable commits.
+ source: <xmqqv8156rh2.fsf@gitster.g>
+
+
+* jc/transport-leakfix (2024-08-07) 1 commit
+  (merged to 'next' on 2024-08-07 at eec3a24826)
+ + transport: fix leak with transport helper URLs
+ (this branch is used by ps/transport-leakfix-test-updates.)
+
+ Leakfix.
+ source: <xmqq34nfn7ip.fsf@gitster.g>
+
+
+* jk/apply-patch-mode-check-fix (2024-08-05) 1 commit
+  (merged to 'next' on 2024-08-05 at 2dc1a81c89)
+ + apply: canonicalize modes read from patches
+
+ The patch parser in 'git apply' has been a bit more lenient against
+ unexpected mode bits, like 100664, recorded on extended header lines.
+ source: <20240805060010.GA120016@coredump.intra.peff.net>
+
+
+* jk/osxkeychain-username-is-nul-terminated (2024-08-01) 1 commit
+  (merged to 'next' on 2024-08-05 at 34a238e047)
+ + credential/osxkeychain: respect NUL terminator in username
+
+ The credential helper to talk to OSX keychain sometimes sent
+ garbage bytes after the username, which has been corrected.
+ source: <20240801082556.GA640360@coredump.intra.peff.net>
+
+
+* jr/ls-files-expand-literal-doc (2024-07-26) 1 commit
+  (merged to 'next' on 2024-08-06 at 0e7c8858ef)
+ + doc: fix hex code escapes in git-ls-files
+
+ Docfix.
+ source: <CACStHN-Gs2Sxej+md6zWr3V1dFo+pp=B4yEPm9=uPambDR2NaQ@mail.gmail.com>
+
+
+* kl/test-fixes (2024-08-05) 2 commits
+  (merged to 'next' on 2024-08-06 at 2cdcac6ce4)
+ + t6421: fix test to work when repo dir contains d0
+ + set errno=0 before strtoX calls
+
+ A flakey test and incorrect calls to strtoX() functions have been
+ fixed.
+ source: <pull.1756.v3.git.git.1722877808.gitgitgadget@gmail.com>
+
+
+* ps/leakfixes-part-3 (2024-08-01) 24 commits
+  (merged to 'next' on 2024-08-05 at e3d94036ff)
+ + commit-reach: fix trivial memory leak when computing reachability
+ + convert: fix leaking config strings
+ + entry: fix leaking pathnames during delayed checkout
+ + object-name: fix leaking commit list items
+ + t/test-repository: fix leaking repository
+ + builtin/credential-cache: fix trivial leaks
+ + builtin/worktree: fix leaking derived branch names
+ + builtin/shortlog: fix various trivial memory leaks
+ + builtin/rerere: fix various trivial memory leaks
+ + builtin/credential-store: fix leaking credential
+ + builtin/show-branch: fix several memory leaks
+ + builtin/rev-parse: fix memory leak with `--parseopt`
+ + builtin/stash: fix various trivial memory leaks
+ + builtin/remote: fix various trivial memory leaks
+ + builtin/remote: fix leaking strings in `branch_list`
+ + builtin/ls-remote: fix leaking `pattern` strings
+ + builtin/submodule--helper: fix leaking buffer in `is_tip_reachable`
+ + builtin/submodule--helper: fix leaking clone depth parameter
+ + builtin/name-rev: fix various trivial memory leaks
+ + builtin/describe: fix trivial memory leak when describing blob
+ + builtin/describe: fix leaking array when running diff-index
+ + builtin/describe: fix memory leak with `--contains=`
+ + builtin/log: fix leaking branch name when creating cover letters
+ + builtin/replay: plug leaking `advance_name` variable
+ (this branch is used by ps/leakfixes-part-4.)
+
+ More leakfixes.
+ cf. <ZqvDJpNxMkvd3hSZ@nand.local>
+ source: <cover.1722499961.git.ps@pks.im>
+
+
+* ps/ls-remote-out-of-repo-fix (2024-08-02) 1 commit
+  (merged to 'next' on 2024-08-05 at 6438d8196d)
+ + builtin/ls-remote: fall back to SHA1 outside of a repo
+
+ A recent update broke "git ls-remote" used outside a repository,
+ which has been corrected.
+ source: <c52112d3946b2fd8d030580cd7acb809fa54012a.1722573777.git.ps@pks.im>
+
+
+* ps/ref-api-cleanup (2024-08-02) 1 commit
+  (merged to 'next' on 2024-08-05 at d57856ae19)
+ + refs: drop `ref_store`-less functions
+
+ Code clean-up.
+ source: <1d9add71065dabb3d7bf81529d04afbcf91e3a69.1722577074.git.ps@pks.im>
+
+
+* ps/refs-wo-the-repository (2024-07-30) 5 commits
+  (merged to 'next' on 2024-08-06 at fef5e26d47)
+ + refs/reftable: stop using `the_repository`
+ + refs/packed: stop using `the_repository`
+ + refs/files: stop using `the_repository`
+ + refs/files: stop using `the_repository` in `parse_loose_ref_contents()`
+ + refs: stop using `the_repository`
+ (this branch is used by ps/config-wo-the-repository.)
+
+ In the refs subsystem, implicit reliance of the_repository has been
+ eliminated; the repository associated with the ref store object is
+ used instead.
+ cf. <ZqnEuz9uFgUwWKkc@tanuki>
+ source: <cover.1722316795.git.ps@pks.im>
+
+
+* rh/http-proxy-path (2024-08-02) 1 commit
+  (merged to 'next' on 2024-08-05 at d6f1fb194a)
+ + http: do not ignore proxy path
+
+ The value of http.proxy can have "path" at the end for a socks
+ proxy that listens to a unix-domain socket, but we started to
+ discard it when we taught proxy auth code path to use the
+ credential helpers, which has been corrected.
+ source: <pull.1767.v5.git.1722576007398.gitgitgadget@gmail.com>
+
+
+* rs/use-decimal-width (2024-08-05) 1 commit
+  (merged to 'next' on 2024-08-06 at 99ccbb43de)
+ + log-tree: use decimal_width()
+
+ Code clean-up.
+ source: <06783722-5184-41d5-8edd-94f97b2f2794@web.de>
+
+
+* ss/packed-ref-store-leakfix (2024-08-05) 1 commit
+  (merged to 'next' on 2024-08-06 at 5003ec4218)
+ + refs/files: prevent memory leak by freeing packed_ref_store
+
+ Leakfix.
+ source: <pull.1757.v2.git.git.1722851612505.gitgitgadget@gmail.com>
+
+
+* tb/config-fixed-value-with-valueless-true (2024-08-01) 1 commit
+  (merged to 'next' on 2024-08-06 at 0476e5ba76)
+ + config.c: avoid segfault with --fixed-value and valueless config
+
+ "git config --value=foo --fixed-value section.key newvalue" barfed
+ when the existing value in the configuration file used the
+ valueless true syntax, which has been corrected.
+ source: <c78bacfa8fb274fbb48f259b13f4f30253932f69.1722532013.git.me@ttaylorr.com>
+
+
+* tb/t7704-deflake (2024-08-05) 1 commit
+  (merged to 'next' on 2024-08-07 at d3c0727946)
+ + t/t7704-repack-cruft.sh: avoid failures during long-running tests
+
+ A test that fails on an unusually slow machine was found, and made
+ less likely to cause trouble by lengthening the expiry value it
+ uses.
+ source: <95cdc30bad38f464b37e87d78f38e1d91c9e083b.1722886630.git.me@ttaylorr.com>
+
+--------------------------------------------------
 [New Topics]
+
+* gt/unit-test-urlmatch-normalization (2024-08-14) 1 commit
+ - t: migrate t0110-urlmatch-normalization to the new framework
+
+ Another rewrite of test.
+
+ Comments?
+ source: <20240814142057.94671-1-shyamthakkar001@gmail.com>
+
+
+* jk/midx-unused-fix (2024-08-13) 1 commit
+  (merged to 'next' on 2024-08-14 at 2ec51e52e1)
+ + midx: drop unused parameters from add_midx_to_chain()
+ (this branch uses tb/incremental-midx-part-1.)
+
+ Code clean-up in the base topic.
+
+ Will merge to 'master'.
+ source: <cover.1722958595.git.me@ttaylorr.com>
+
+
+* ps/bundle-outside-repo-fix (2024-08-13) 2 commits
+ - bundle: default to SHA1 when reading bundle headers
+ - builtin/bundle: have unbundle check for repo before opening its bundle
+
+ "git bundle unbundle" outside a repository triggered a BUG()
+ unnecessarily, which has been corrected.
+
+ Will merge to 'next'.
+ source: <cover.1723540604.git.ps@pks.im>
+
+
+* ps/clar-unit-test (2024-08-13) 8 commits
+ . t/unit-tests: convert ctype tests to use clar
+ . t/unit-tests: convert strvec tests to use clar
+ . Makefile: wire up the clar unit testing framework
+ . t/clar: fix compatibility with NonStop
+ . t/clar: fix another whitespace error
+ . t/clar: fix whitespace errors
+ . t: import the clar unit testing framework
+ . t: do not pass GIT_TEST_OPTS to unit tests with prove
+
+ Import clar unit tests framework libgit2 folks invented for our
+ use.
+
+ On hold.
+ cf. https://github.com/git/git/actions/runs/10377935505/job/28733214241
+ Seems to break "make sparse" among other things.
+ source: <cover.1723095269.git.ps@pks.im>
+
+
+* ps/maintenance-detach-fix (2024-08-13) 7 commits
+ - builtin/maintenance: fix auto-detach with non-standard tasks
+ - builtin/maintenance: add a `--detach` flag
+ - builtin/gc: add a `--detach` flag
+ - builtin/gc: stop processing log file on signal
+ - builtin/gc: fix leaking config values
+ - builtin/gc: refactor to read config into structure
+ - config: fix constness of out parameter for `git_config_get_expiry()`
+
+ Allow maintance tasks other than "gc" to properly go background
+ when "git maintenance" run them.
+
+ Expecting a reroll.
+ cf. <a3e9a4f9-baef-4c11-9f38-f30ff333e87a@gmail.com>
+ source: <cover.1723533091.git.ps@pks.im>
+
+
+* jk/send-email-translate-aliases (2024-08-14) 3 commits
+ - send-email: teach git send-email option to translate aliases
+ - t9001-send-email.sh: update alias list used for pine test
+ - t9001-send-email.sh: fix quoting for mailrc --dump-aliases test
+
+ "git send-email" learned "--translate-aliases" option that reads
+ addresses from the standard input and emits the result of applying
+ aliases on them to the standard output.
+
+ Will merge to 'next'?
+ source: <20240813-jk-translate-alias-send-email-v2-0-912db4eb6846@gmail.com>
+
+
+* cp/unit-test-reftable-block (2024-08-14) 10 commits
+ - t-reftable-block: add tests for index blocks
+ - t-reftable-block: add tests for obj blocks
+ - t-reftable-block: add tests for log blocks
+ - t-reftable-block: remove unnecessary variable 'j'
+ - t-reftable-block: use xstrfmt() instead of xstrdup()
+ - t-reftable-block: use block_iter_reset() instead of block_iter_close()
+ - t-reftable-block: use reftable_record_key() instead of strbuf_addstr()
+ - t-reftable-block: use reftable_record_equal() instead of check_str()
+ - t-reftable-block: release used block reader
+ - t: move reftable/block_test.c to the unit testing framework
+
+ source: <20240814121122.4642-1-chandrapratap3519@gmail.com>
+
+--------------------------------------------------
+[Stalled]
+
+* pp/add-parse-range-unit-test (2024-05-27) 1 commit
+ - apply: add unit tests for parse_range
+
+ A unit test for code that parses the hunk offset and length from a
+ patch fragment header as been added.
+
+ Expecting a reroll.
+ cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
+ source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/tests-no-useless-tee (2024-08-08) 1 commit
   (merged to 'next' on 2024-08-12 at 188e777e16)
@@ -86,6 +443,9 @@ Release tarballs are available at:
  - doc: grammofix in git-diff-tree
  - tutorial: grammofix
 
+ Doc updates.
+
+ Will merge to 'next'.
  source: <xmqqed6xehzv.fsf@gitster.g>
 
 
@@ -94,23 +454,11 @@ Release tarballs are available at:
  - remerge-diff: lazily prepare temporary objdir on demand
  (this branch uses xx/diff-tree-remerge-diff-fix.)
 
+ Code clean-up.
+
+ Comments?
  source: <pull.1771.git.1723123250958.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-* pp/add-parse-range-unit-test (2024-05-27) 1 commit
- - apply: add unit tests for parse_range
-
- A unit test for code that parses the hunk offset and length from a
- patch fragment header as been added.
-
- Expecting a reroll.
- cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
- source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * jc/t3206-test-when-finished-fix (2024-08-06) 1 commit
   (merged to 'next' on 2024-08-08 at 46461db3a2)
@@ -134,7 +482,7 @@ Release tarballs are available at:
  source: <20240806003539.3292562-1-gitster@pobox.com>
 
 
-* ps/leakfixes-part-4 (2024-08-08) 23 commits
+* ps/leakfixes-part-4 (2024-08-14) 23 commits
  - builtin/diff: free symmetric diff members
  - diff: free state populated via options
  - builtin/log: fix leak when showing converted blob contents
@@ -150,7 +498,7 @@ Release tarballs are available at:
  - builtin/notes: fix leaking `struct notes_tree` when merging notes
  - builtin/rebase: fix leaking `commit.gpgsign` value
  - config: fix leaking comment character config
- - submodule-config: fix leaking name enrty when traversing submodules
+ - submodule-config: fix leaking name entry when traversing submodules
  - read-cache: fix leaking hashfile when writing index fails
  - bulk-checkin: fix leaking state TODO
  - object-name: fix leaking symlink paths in object context
@@ -158,25 +506,24 @@ Release tarballs are available at:
  - git: fix leaking system paths
  - remote: plug memory leak when aliasing URLs
  - Merge branch 'ps/leakfixes-part-3' into ps/leakfixes-part-4
- (this branch uses ps/leakfixes-part-3.)
 
  More leak fixes.
 
  Will merge to 'next'?
- source: <cover.1723121979.git.ps@pks.im>
+ source: <cover.1723614263.git.ps@pks.im>
 
 
-* cp/unit-test-reftable-readwrite (2024-08-09) 4 commits
+* cp/unit-test-reftable-readwrite (2024-08-13) 4 commits
  - t-reftable-readwrite: add test for known error
  - t-reftable-readwrite: use 'for' in place of infinite 'while' loops
  - t-reftable-readwrite: use free_names() instead of a for loop
  - t: move reftable/readwrite_test.c to the unit testing framework
 
- Needs review.
- source: <20240809111312.4401-1-chandrapratap3519@gmail.com>
+ Will merge to 'next' by 2024-08-17 or so.
+ source: <20240813144440.4602-1-chandrapratap3519@gmail.com>
 
 
-* ps/config-wo-the-repository (2024-08-07) 21 commits
+* ps/config-wo-the-repository (2024-08-13) 21 commits
  - config: hide functions using `the_repository` by default
  - global: prepare for hiding away repo-less config functions
  - config: don't depend on `the_repository` with branch conditions
@@ -195,17 +542,16 @@ Release tarballs are available at:
  - path: stop relying on `the_repository` when reporting garbage
  - hooks: remove implicit dependency on `the_repository`
  - editor: do not rely on `the_repository` for interactive edits
- - path: expose `do_git_common_path()` as `strbuf_git_common_pathv()`
+ - path: expose `do_git_common_path()` as `repo_common_pathv()`
  - path: expose `do_git_path()` as `repo_git_pathv()`
  - Merge branch 'ps/refs-wo-the-repository' into ps/config-wo-the-repository
- (this branch uses ps/refs-wo-the-repository.)
 
  Use of API functions that implicitly depend on the_repository
  object in the config subsystem has been rewritten to pass a
  repository object through the callchain.
 
- Needs review.
- source: <cover.1723013714.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1723540226.git.ps@pks.im>
 
 
 * ps/submodule-ref-format (2024-08-08) 8 commits
@@ -225,26 +571,14 @@ Release tarballs are available at:
  source: <cover.1723102259.git.ps@pks.im>
 
 
-* jc/transport-leakfix (2024-08-07) 1 commit
-  (merged to 'next' on 2024-08-07 at eec3a24826)
- + transport: fix leak with transport helper URLs
- (this branch is used by ps/transport-leakfix-test-updates.)
-
- Leakfix.
-
- Will merge to 'master'.
- source: <xmqq34nfn7ip.fsf@gitster.g>
-
-
 * ps/transport-leakfix-test-updates (2024-08-08) 1 commit
   (merged to 'next' on 2024-08-12 at ee80dbc4f6)
  + transport: mark more tests leak-free
- (this branch uses jc/transport-leakfix.)
 
  Test updates.
 
  Will merge to 'master'.
- source: <ZrRPD0ggZapZym7E@tanuki>
+ source: <ZrRV_HrUArsvRgn8@tanuki>
 
 
 * ag/t7004-modernize (2024-08-08) 8 commits
@@ -264,9 +598,10 @@ Release tarballs are available at:
  source: <20240808163302.17521-1-abdobngad@gmail.com>
 
 
-* ds/for-each-ref-is-base (2024-08-12) 3 commits
+* ds/for-each-ref-is-base (2024-08-14) 4 commits
  - p1500: add is-base performance tests
  - for-each-ref: add 'is-base' token
+ - commit: add gentle reference lookup method
  - commit-reach: add get_branch_base_for_tip
 
  'git for-each-ref' learned a new "--format" atom to find the branch
@@ -274,83 +609,7 @@ Release tarballs are available at:
  likely based on.
 
  Comments?
- source: <pull.1768.v2.git.1723397687.gitgitgadget@gmail.com>
-
-
-* jk/apply-patch-mode-check-fix (2024-08-05) 1 commit
-  (merged to 'next' on 2024-08-05 at 2dc1a81c89)
- + apply: canonicalize modes read from patches
-
- The patch parser in 'git apply' has been a bit more lenient against
- unexpected mode bits, like 100664, recorded on extended header lines.
-
- Will merge to 'master'.
- source: <20240805060010.GA120016@coredump.intra.peff.net>
-
-
-* kl/test-fixes (2024-08-05) 2 commits
-  (merged to 'next' on 2024-08-06 at 2cdcac6ce4)
- + t6421: fix test to work when repo dir contains d0
- + set errno=0 before strtoX calls
-
- A flakey test and incorrect calls to strtoX() functions have been
- fixed.
-
- Will merge to 'master'.
- source: <pull.1756.v3.git.git.1722877808.gitgitgadget@gmail.com>
-
-
-* ps/ls-remote-out-of-repo-fix (2024-08-02) 1 commit
-  (merged to 'next' on 2024-08-05 at 6438d8196d)
- + builtin/ls-remote: fall back to SHA1 outside of a repo
-
- A recent update broke "git ls-remote" used outside a repository,
- which has been corrected.
-
- Will merge to 'master'.
- source: <c52112d3946b2fd8d030580cd7acb809fa54012a.1722573777.git.ps@pks.im>
-
-
-* ps/ref-api-cleanup (2024-08-02) 1 commit
-  (merged to 'next' on 2024-08-05 at d57856ae19)
- + refs: drop `ref_store`-less functions
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <1d9add71065dabb3d7bf81529d04afbcf91e3a69.1722577074.git.ps@pks.im>
-
-
-* rs/use-decimal-width (2024-08-05) 1 commit
-  (merged to 'next' on 2024-08-06 at 99ccbb43de)
- + log-tree: use decimal_width()
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <06783722-5184-41d5-8edd-94f97b2f2794@web.de>
-
-
-* ss/packed-ref-store-leakfix (2024-08-05) 1 commit
-  (merged to 'next' on 2024-08-06 at 5003ec4218)
- + refs/files: prevent memory leak by freeing packed_ref_store
-
- Leakfix.
-
- Will merge to 'master'.
- source: <pull.1757.v2.git.git.1722851612505.gitgitgadget@gmail.com>
-
-
-* tb/t7704-deflake (2024-08-05) 1 commit
-  (merged to 'next' on 2024-08-07 at d3c0727946)
- + t/t7704-repack-cruft.sh: avoid failures during long-running tests
-
- A test that fails on an unusually slow machine was found, and made
- less likely to cause trouble by lengthening the expiry value it
- uses.
-
- Will merge to 'master'.
- source: <95cdc30bad38f464b37e87d78f38e1d91c9e083b.1722886630.git.me@ttaylorr.com>
+ source: <pull.1768.v3.git.1723631490.gitgitgadget@gmail.com>
 
 
 * sj/ref-fsck (2024-08-08) 9 commits
@@ -370,24 +629,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <ZrSqMmD-quQ18a9F@ArchLinux.localdomain>
-
-
-* ps/refs-wo-the-repository (2024-07-30) 5 commits
-  (merged to 'next' on 2024-08-06 at fef5e26d47)
- + refs/reftable: stop using `the_repository`
- + refs/packed: stop using `the_repository`
- + refs/files: stop using `the_repository`
- + refs/files: stop using `the_repository` in `parse_loose_ref_contents()`
- + refs: stop using `the_repository`
- (this branch is used by ps/config-wo-the-repository.)
-
- In the refs subsystem, implicit reliance of the_repository has been
- eliminated; the repository associated with the ref store object is
- used instead.
-
- Will merge to 'master'.
- cf. <ZqnEuz9uFgUwWKkc@tanuki>
- source: <cover.1722316795.git.ps@pks.im>
 
 
 * rs/t-example-simplify (2024-07-30) 1 commit
@@ -411,7 +652,7 @@ Release tarballs are available at:
  remotes it uses, so that the server side can omit objects that the
  client can lazily obtain from these other promissor remotes.
 
- Inviting further discussion.
+ Comments?
  source: <20240731134014.2299361-1-christian.couder@gmail.com>
 
 
@@ -435,19 +676,6 @@ Release tarballs are available at:
  source: <cover.1723123606.git.ps@pks.im>
 
 
-* rh/http-proxy-path (2024-08-02) 1 commit
-  (merged to 'next' on 2024-08-05 at d6f1fb194a)
- + http: do not ignore proxy path
-
- The value of http.proxy can have "path" at the end for a socks
- proxy that listens to a unix-domain socket, but we started to
- discard it when we taught proxy auth code path to use the
- credential helpers, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.1767.v5.git.1722576007398.gitgitgadget@gmail.com>
-
-
 * jc/refs-symref-referent (2024-08-09) 3 commits
   (merged to 'next' on 2024-08-09 at 3183f3d05b)
  + ref-filter: populate symref from iterator
@@ -460,57 +688,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1712.v4.git.git.1723217871.gitgitgadget@gmail.com>
-
-
-* jk/osxkeychain-username-is-nul-terminated (2024-08-01) 1 commit
-  (merged to 'next' on 2024-08-05 at 34a238e047)
- + credential/osxkeychain: respect NUL terminator in username
-
- The credential helper to talk to OSX keychain sometimes sent
- garbage bytes after the username, which has been corrected.
-
- Will merge to 'master'.
- source: <20240801082556.GA640360@coredump.intra.peff.net>
-
-
-* tb/config-fixed-value-with-valueless-true (2024-08-01) 1 commit
-  (merged to 'next' on 2024-08-06 at 0476e5ba76)
- + config.c: avoid segfault with --fixed-value and valueless config
-
- "git config --value=foo --fixed-value section.key newvalue" barfed
- when the existing value in the configuration file used the
- valueless true syntax, which has been corrected.
-
- Will merge to 'master'.
- source: <c78bacfa8fb274fbb48f259b13f4f30253932f69.1722532013.git.me@ttaylorr.com>
-
-
-* jc/jl-git-no-advice-fix (2024-08-01) 1 commit
-  (merged to 'next' on 2024-08-06 at 468bfce24b)
- + t0018: remove leftover debugging cruft
-
- Remove leftover debugging cruft from a test script.
-
- Will merge to 'master'.
- source: <xmqq7cd0ulen.fsf_-_@gitster.g>
-
-
-* cp/unit-test-reftable-pq (2024-08-01) 7 commits
-  (merged to 'next' on 2024-08-05 at 05e47f7097)
- + t-reftable-pq: add tests for merged_iter_pqueue_top()
- + t-reftable-pq: add test for index based comparison
- + t-reftable-pq: make merged_iter_pqueue_check() callable by reference
- + t-reftable-pq: make merged_iter_pqueue_check() static
- + t: move reftable/pq_test.c to the unit testing framework
- + reftable: change the type of array indices to 'size_t' in reftable/pq.c
- + reftable: remove unnecessary curly braces in reftable/pq.c
-
- The tests for "pq" part of reftable library got rewritten to use
- the unit test framework.
-
- Will merge to 'master'.
- cf. <Zqt02XmevPRB3idt@tanuki>
- source: <20240801110453.5087-1-chandrapratap3519@gmail.com>
 
 
 * tb/incremental-midx-part-1 (2024-08-06) 19 commits
@@ -534,6 +711,7 @@ Release tarballs are available at:
  + midx: teach `nth_midxed_pack_int_id()` about incremental MIDXs
  + midx: add new fields for incremental MIDX chains
  + Documentation: describe incremental MIDX format
+ (this branch is used by jk/midx-unused-fix.)
 
  Incremental updates of multi-pack index files.
 
@@ -565,72 +743,8 @@ Release tarballs are available at:
  source: <ZqObobw8FsDMkllm@tanuki>
 
 
-* jc/leakfix-hashfile (2024-07-26) 1 commit
-  (merged to 'next' on 2024-08-06 at 7793a7fc56)
- + csum-file: introduce discard_hashfile()
-
- Leakfix.
-
- Will merge to 'master'.
- source: <xmqqle1p1367.fsf@gitster.g>
-
-
-* jc/leakfix-mailmap (2024-07-26) 1 commit
-  (merged to 'next' on 2024-08-06 at 22f73301fd)
- + mailmap: plug memory leak in read_mailmap_blob()
-
- Leakfix.
-
- Will merge to 'master'.
- source: <xmqqcyn112xi.fsf@gitster.g>
-
-
-* jr/ls-files-expand-literal-doc (2024-07-26) 1 commit
-  (merged to 'next' on 2024-08-06 at 0e7c8858ef)
- + doc: fix hex code escapes in git-ls-files
-
- Docfix.
-
- Will merge to 'master'.
- source: <CACStHN-Gs2Sxej+md6zWr3V1dFo+pp=B4yEPm9=uPambDR2NaQ@mail.gmail.com>
-
-
-* ps/leakfixes-part-3 (2024-08-01) 24 commits
-  (merged to 'next' on 2024-08-05 at e3d94036ff)
- + commit-reach: fix trivial memory leak when computing reachability
- + convert: fix leaking config strings
- + entry: fix leaking pathnames during delayed checkout
- + object-name: fix leaking commit list items
- + t/test-repository: fix leaking repository
- + builtin/credential-cache: fix trivial leaks
- + builtin/worktree: fix leaking derived branch names
- + builtin/shortlog: fix various trivial memory leaks
- + builtin/rerere: fix various trivial memory leaks
- + builtin/credential-store: fix leaking credential
- + builtin/show-branch: fix several memory leaks
- + builtin/rev-parse: fix memory leak with `--parseopt`
- + builtin/stash: fix various trivial memory leaks
- + builtin/remote: fix various trivial memory leaks
- + builtin/remote: fix leaking strings in `branch_list`
- + builtin/ls-remote: fix leaking `pattern` strings
- + builtin/submodule--helper: fix leaking buffer in `is_tip_reachable`
- + builtin/submodule--helper: fix leaking clone depth parameter
- + builtin/name-rev: fix various trivial memory leaks
- + builtin/describe: fix trivial memory leak when describing blob
- + builtin/describe: fix leaking array when running diff-index
- + builtin/describe: fix memory leak with `--contains=`
- + builtin/log: fix leaking branch name when creating cover letters
- + builtin/replay: plug leaking `advance_name` variable
- (this branch is used by ps/leakfixes-part-4.)
-
- More leakfixes.
-
- Will merge to 'master'.
- cf. <ZqvDJpNxMkvd3hSZ@nand.local>
- source: <cover.1722499961.git.ps@pks.im>
-
-
-* ag/git-svn-global-ignores (2024-07-18) 2 commits
+* ag/git-svn-global-ignores (2024-08-14) 3 commits
+ - git-svn: mention `svn:global-ignores` in help+docs
   (merged to 'next' on 2024-08-08 at 3ba5e164a6)
  + git-svn: use `svn:global-ignores` to create .gitignore
  + git-svn: add public property `svn:global-ignores`
@@ -638,8 +752,9 @@ Release tarballs are available at:
  "git svn" has been taught about svn:global-ignores property
  recent versions of Subversion has.
 
- Will merge to 'master'.
+ Will merge to 'next'.
  source: <pull.1747.v2.git.git.1721335657.gitgitgadget@gmail.com>
+ source: <pull.1766.v2.git.git.1723578946962.gitgitgadget@gmail.com>
 
 
 * jc/safe-directory (2024-07-30) 4 commits
@@ -653,23 +768,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20240730184352.2503276-1-gitster@pobox.com>
-
-
-* cp/unit-test-reftable-tree (2024-08-04) 5 commits
-  (merged to 'next' on 2024-08-06 at e32c456e45)
- + t-reftable-tree: improve the test for infix_walk()
- + t-reftable-tree: add test for non-existent key
- + t-reftable-tree: split test_tree() into two sub-test functions
- + t: move reftable/tree_test.c to the unit testing framework
- + reftable: remove unnecessary curly braces in reftable/tree.c
-
- A test in reftable library has been rewritten using the unit test
- framework.
-
- Will merge to 'master'.
- cf. <Zqt1WTT_eJKEuO1z@tanuki>
- cf. <ZrCx0NWRbFOOReki@tanuki>
- source: <20240804141105.4268-1-chandrapratap3519@gmail.com>
 
 
 * ew/cat-file-optim (2024-07-15) 10 commits
@@ -689,27 +787,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <ZqC82sDnj7Se_aVB@tanuki>
  source: <20240715003519.2671385-1-e@80x24.org>
-
-
-* jc/document-use-of-local (2024-07-15) 1 commit
-  (merged to 'next' on 2024-08-07 at 3321b54659)
- + doc: note that AT&T ksh does not work with our test suite
-
- Doc update.
-
- Will merge to 'master'.
- source: <xmqq1q3u8zmr.fsf@gitster.g>
-
-
-* jc/reflog-expire-lookup-commit-fix (2024-07-16) 1 commit
-  (merged to 'next' on 2024-08-06 at 1e59eac417)
- + Revert "reflog expire: don't use lookup_commit_reference_gently()"
-
- "git reflog expire" failed to honor annotated tags when computing
- reachable commits.
-
- Will merge to 'master'.
- source: <xmqqv8156rh2.fsf@gitster.g>
 
 
 * es/doc-platform-support-policy (2024-08-02) 1 commit
@@ -750,20 +827,3 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <077a178e-eb30-45ff-b653-a514bfd33077@web.de>
-
-
-* jc/patch-id (2024-07-29) 5 commits
-  (merged to 'next' on 2024-08-06 at 9ad078b49c)
- + patch-id: tighten code to detect the patch header
- + patch-id: rewrite code that detects the beginning of a patch
- + patch-id: make get_one_patchid() more extensible
- + patch-id: call flush_current_id() only when needed
- + t4204: patch-id supports various input format
-
- The patch parser in "git patch-id" has been tightened to avoid
- getting confused by lines that look like a patch header in the log
- message.
-
- Will merge to 'master'.
- cf. <Zqh2T_2RLt0SeKF7@tanuki>
- source: <20240730011738.4032377-1-gitster@pobox.com>
