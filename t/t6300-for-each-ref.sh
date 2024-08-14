@@ -1907,6 +1907,15 @@ test_expect_success 'git for-each-ref with nested tags' '
 	test_cmp expect actual
 '
 
+test_expect_success 'is-base atom with non-commits' '
+	git for-each-ref --format="%(is-base:HEAD) %(refname)" >out 2>err &&
+	grep "(HEAD) refs/heads/main" out &&
+
+	test_line_count = 2 err &&
+	grep "error: object .* is a commit, not a blob" err &&
+	grep "error: bad tag pointer to" err
+'
+
 GRADE_FORMAT="%(signature:grade)%0a%(signature:key)%0a%(signature:signer)%0a%(signature:fingerprint)%0a%(signature:primarykeyfingerprint)"
 TRUSTLEVEL_FORMAT="%(signature:trustlevel)%0a%(signature:key)%0a%(signature:signer)%0a%(signature:fingerprint)%0a%(signature:primarykeyfingerprint)"
 
