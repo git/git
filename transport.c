@@ -1115,6 +1115,7 @@ static struct transport_vtable builtin_smart_vtable = {
 struct transport *transport_get(struct remote *remote, const char *url)
 {
 	const char *helper;
+	char *helper_to_free = NULL;
 	const char *p;
 	struct transport *ret = xcalloc(1, sizeof(*ret));
 
@@ -1139,10 +1140,11 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	while (is_urlschemechar(p == url, *p))
 		p++;
 	if (starts_with(p, "::"))
-		helper = xstrndup(url, p - url);
+		helper = helper_to_free = xstrndup(url, p - url);
 
 	if (helper) {
 		transport_helper_init(ret, helper);
+		free(helper_to_free);
 	} else if (starts_with(url, "rsync:")) {
 		die(_("git-over-rsync is no longer supported"));
 	} else if (url_is_local_not_ssh(url) && is_file(url) && is_bundle(url, 1)) {
