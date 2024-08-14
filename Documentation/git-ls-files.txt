@@ -219,9 +219,9 @@ followed by the  ("attr/<eolattr>").
 
 --format=<format>::
 	A string that interpolates `%(fieldname)` from the result being shown.
-	It also interpolates `%%` to `%`, and `%xx` where `xx` are hex digits
-	interpolates to character with hex code `xx`; for example `%00`
-	interpolates to `\0` (NUL), `%09` to `\t` (TAB) and %0a to `\n` (LF).
+	It also interpolates `%%` to `%`, and `%xXX` where `XX` are hex digits
+	interpolates to character with hex code `XX`; for example `%x00`
+	interpolates to `\0` (NUL), `%x09` to `\t` (TAB) and %x0a to `\n` (LF).
 	--format cannot be combined with `-s`, `-o`, `-k`, `-t`, `--resolve-undo`
 	and `--eol`.
 \--::
