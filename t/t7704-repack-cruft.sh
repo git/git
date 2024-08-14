@@ -330,7 +330,7 @@ test_expect_success '--max-cruft-size with pruning' '
 		# repack (and prune) with a --max-cruft-size to ensure
 		# that we appropriately split the resulting set of packs
 		git repack -d --cruft --max-cruft-size=1M \
-			--cruft-expiration=10.seconds.ago &&
+			--cruft-expiration=1000.seconds.ago &&
 		ls $packdir/pack-*.mtimes | sort >cruft.after &&
 
 		for cruft in $(cat cruft.after)
