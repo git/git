@@ -191,7 +191,7 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 		progress = start_delayed_progress(_("Filtering content"), dco->paths.nr);
 	while (dco->filters.nr > 0) {
 		for_each_string_list_item(filter, &dco->filters) {
-			struct string_list available_paths = STRING_LIST_INIT_NODUP;
+			struct string_list available_paths = STRING_LIST_INIT_DUP;
 
 			if (!async_query_available_blobs(filter->string, &available_paths)) {
 				/* Filter reported an error */
@@ -245,6 +245,8 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 				} else
 					errs = 1;
 			}
+
+			string_list_clear(&available_paths, 0);
 		}
 
 		filter_string_list(&dco->filters, 0, string_is_not_null, NULL);

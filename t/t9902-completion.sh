@@ -16,6 +16,7 @@ test_untraceable=UnfortunatelyYes
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-bash.sh
 
 complete ()

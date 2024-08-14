@@ -2,6 +2,7 @@
 
 test_description='test show-branch'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'error descriptions on empty repository' '

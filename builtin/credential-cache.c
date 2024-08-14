@@ -88,6 +88,8 @@ static void spawn_daemon(const char *socket)
 		die_errno("unable to read result code from cache daemon");
 	if (r != 3 || memcmp(buf, "ok\n", 3))
 		die("cache daemon did not start: %.*s", r, buf);
+
+	child_process_clear(&daemon);
 	close(daemon.out);
 }
 
@@ -137,7 +139,8 @@ static void announce_capabilities(void)
 
 int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 {
-	char *socket_path = NULL;
+	const char *socket_path_arg = NULL;
+	char *socket_path;
 	int timeout = 900;
 	const char *op;
 	const char * const usage[] = {
@@ -147,7 +150,7 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_INTEGER(0, "timeout", &timeout,
 			    "number of seconds to cache credentials"),
-		OPT_STRING(0, "socket", &socket_path, "path",
+		OPT_STRING(0, "socket", &socket_path_arg, "path",
 			   "path of cache-daemon socket"),
 		OPT_END()
 	};
@@ -160,6 +163,7 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 	if (!have_unix_sockets())
 		die(_("credential-cache unavailable; no unix socket support"));
 
+	socket_path = xstrdup_or_null(socket_path_arg);
 	if (!socket_path)
 		socket_path = get_socket_path();
 	if (!socket_path)
@@ -176,6 +180,7 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 	else
 		; /* ignore unknown operation */
 
+	free(socket_path);
 	return 0;
 }
 
