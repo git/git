@@ -2963,7 +2963,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 	if (err) {
 		free(ieot);
-		return err;
+		goto cleanup;
 	}
 
 	offset = hashfile_total(f);
@@ -2992,8 +2992,14 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
 		free(ieot);
-		if (err)
-			return -1;
+		/*
+		 * NEEDSWORK: write_index_ext_header() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 
 	if (write_extensions & WRITE_SPLIT_INDEX_EXTENSION &&
@@ -3008,8 +3014,14 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 					       sb.len) < 0;
 		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
-		if (err)
-			return -1;
+		/*
+		 * NEEDSWORK: write_link_extension() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 	if (write_extensions & WRITE_CACHE_TREE_EXTENSION &&
 	    !drop_cache_tree && istate->cache_tree) {
@@ -3019,8 +3031,14 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		err = write_index_ext_header(f, eoie_c, CACHE_EXT_TREE, sb.len) < 0;
 		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
-		if (err)
-			return -1;
+		/*
+		 * NEEDSWORK: write_index_ext_header() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 	if (write_extensions & WRITE_RESOLVE_UNDO_EXTENSION &&
 	    istate->resolve_undo) {
@@ -3031,8 +3049,14 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 					     sb.len) < 0;
 		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
-		if (err)
-			return -1;
+		/*
+		 * NEEDSWORK: write_index_ext_header() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 	if (write_extensions & WRITE_UNTRACKED_CACHE_EXTENSION &&
 	    istate->untracked) {
@@ -3043,8 +3067,14 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 					     sb.len) < 0;
 		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
-		if (err)
-			return -1;
+		/*
+		 * NEEDSWORK: write_index_ext_header() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 	if (write_extensions & WRITE_FSMONITOR_EXTENSION &&
 	    istate->fsmonitor_last_update) {
@@ -3054,12 +3084,25 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		err = write_index_ext_header(f, eoie_c, CACHE_EXT_FSMONITOR, sb.len) < 0;
 		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
-		if (err)
-			return -1;
+		/*
+		 * NEEDSWORK: write_index_ext_header() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 	if (istate->sparse_index) {
-		if (write_index_ext_header(f, eoie_c, CACHE_EXT_SPARSE_DIRECTORIES, 0) < 0)
-			return -1;
+		err = write_index_ext_header(f, eoie_c, CACHE_EXT_SPARSE_DIRECTORIES, 0);
+		/*
+		 * NEEDSWORK: write_index_ext_header() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 
 	/*
@@ -3075,8 +3118,14 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 		err = write_index_ext_header(f, NULL, CACHE_EXT_ENDOFINDEXENTRIES, sb.len) < 0;
 		hashwrite(f, sb.buf, sb.len);
 		strbuf_release(&sb);
-		if (err)
-			return -1;
+		/*
+		 * NEEDSWORK: write_index_ext_header() never returns a failure,
+		 * and this part may want to be simplified.
+		 */
+		if (err) {
+			err = -1;
+			goto cleanup;
+		}
 	}
 
 	csum_fsync_flag = 0;
@@ -3085,13 +3134,16 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 
 	finalize_hashfile(f, istate->oid.hash, FSYNC_COMPONENT_INDEX,
 			  CSUM_HASH_IN_STREAM | csum_fsync_flag);
+	f = NULL;
 
 	if (close_tempfile_gently(tempfile)) {
-		error(_("could not close '%s'"), get_tempfile_path(tempfile));
-		return -1;
+		err = error(_("could not close '%s'"), get_tempfile_path(tempfile));
+		goto cleanup;
 	}
-	if (stat(get_tempfile_path(tempfile), &st))
-		return -1;
+	if (stat(get_tempfile_path(tempfile), &st)) {
+		err = error_errno(_("could not stat '%s'"), get_tempfile_path(tempfile));
+		goto cleanup;
+	}
 	istate->timestamp.sec = (unsigned int)st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 	trace_performance_since(start, "write index, changed mask = %x", istate->cache_changed);
@@ -3106,6 +3158,11 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 			   istate->cache_nr);
 
 	return 0;
+
+cleanup:
+	if (f)
+		discard_hashfile(f);
+	return err;
 }
 
 void set_alternate_index_output(const char *name)
