@@ -12,6 +12,7 @@ SYNOPSIS
 'git send-email' [<options>] (<file>|<directory>)...
 'git send-email' [<options>] <format-patch-options>
 'git send-email' --dump-aliases
+'git send-email' --translate-aliases
 
 
 DESCRIPTION
@@ -475,6 +476,12 @@ Information
 	that this only includes the alias name and not its expanded email addresses.
 	See 'sendemail.aliasesFile' for more information about aliases.
 
+--translate-aliases::
+	Instead of the normal operation, read from standard input and
+	interpret each line as an email alias. Translate it according to the
+	configured alias file(s). Output each translated name and email
+	address to standard output, one per line. See 'sendemail.aliasFile'
+	for more information about aliases.
 
 CONFIGURATION
 -------------
