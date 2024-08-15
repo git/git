@@ -390,7 +390,7 @@ test_expect_success 'pseudo-merge reuse' '
 	)
 '
 
-test_expect_failure 'empty pseudo-merge group' '
+test_expect_success 'empty pseudo-merge group' '
 	git init pseudo-merge-empty-group &&
 	(
 		cd pseudo-merge-empty-group &&
