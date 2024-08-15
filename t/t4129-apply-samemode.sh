@@ -153,8 +153,8 @@ test_expect_success POSIXPERM 'patch mode for new file is canonicalized' '
 test_expect_success POSIXPERM 'patch mode for deleted file is canonicalized' '
 	test_when_finished "git reset --hard" &&
 	echo content >non-canon &&
-	git add non-canon &&
 	chmod 666 non-canon &&
+	git add non-canon &&
 
 	cat >patch <<-\EOF &&
 	diff --git a/non-canon b/non-canon
