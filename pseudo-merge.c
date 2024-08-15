@@ -217,6 +217,8 @@ static int find_pseudo_merge_group_for_ref(const char *refname,
 	c = lookup_commit(the_repository, oid);
 	if (!c)
 		return 0;
+	if (!packlist_find(writer->to_pack, oid))
+		return 0;
 
 	has_bitmap = bitmap_writer_has_bitmapped_object_id(writer, oid);
 
