@@ -21,6 +21,12 @@ UI, Workflows & Features
    discard it when we taught proxy auth code path to use the
    credential helpers, which has been corrected.
 
+ * The code paths to compact multiple reftable files have been updated
+   to correctly deal with multiple compaction triggering at the same
+   time.
+
+ * Support to specify ref backend for submodules has been enhanced.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -50,6 +56,16 @@ Performance, Internal Implementation, Development Support etc.
  * A test that fails on an unusually slow machine was found, and made
    less likely to cause trouble by lengthening the expiry value it
    uses.
+
+ * An existing test of hashmap API has been rewritten with the
+   unit-test framework.
+
+ * A policy document that describes platform support levels and
+   expectation on platform stakeholders has been introduced.
+
+ * The refs API has been taught to give symref target information to
+   the users of ref iterators, allowing for-each-ref and friends to
+   avoid an extra ref_resolve_* API call per a symbolic ref.
 
 
 Fixes since v2.46
@@ -118,6 +134,14 @@ Fixes since v2.46
    fixed.
    (merge ec60bb9fc4 kl/test-fixes later to maint).
 
+ * Follow-up on 2.45.1 regression fix.
+   (merge ee0be850b0 jc/safe-directory later to maint).
+
+ * "git rev-list ... | git diff-tree -p --remerge-diff --stdin" should
+   behave more or less like "git log -p --remerge-diff" but instead it
+   crashed, forgetting to prepare a temporary object store needed.
+   (merge a77554ea09 xx/diff-tree-remerge-diff-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 8db8786fc2 jt/doc-post-receive-hook-update later to maint).
    (merge 1c473dd6af tn/doc-commit-fix later to maint).
@@ -131,3 +155,4 @@ Fixes since v2.46
    (merge e2e373ba82 ss/packed-ref-store-leakfix later to maint).
    (merge 0c4d5aa22d rs/use-decimal-width later to maint).
    (merge 67be8c4de5 jc/document-use-of-local later to maint).
+   (merge 098be29f5b rs/t-example-simplify later to maint).
