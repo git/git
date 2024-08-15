@@ -4041,43 +4041,117 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 		strbuf_addf(&sub_wt, "%s/%s", sub_worktree, sub->path);
 		submodule_name_to_gitdir(&sub_gd, &subrepo, sub->name);
 
-		connect_work_tree_and_git_dir(sub_wt.buf, sub_gd.buf, 1);
+		connect_submodule_work_tree_and_git_dir(sub_wt.buf, sub_gd.buf,
+							1);
 	}
 	strbuf_release(&sub_wt);
 	strbuf_release(&sub_gd);
 	repo_clear(&subrepo);
 }
 
-void connect_work_tree_and_git_dir(const char *work_tree_,
-				   const char *git_dir_,
-				   int recurse_into_nested)
+void connect_work_tree_and_git_dir(const char *work_tree_, const char *git_dir_,
+				   int use_relative_paths_)
 {
+	struct strbuf rel_path_sb = STRBUF_INIT;
 	struct strbuf gitfile_sb = STRBUF_INIT;
+	char *git_dir = NULL, *work_tree = NULL;
+	const char *rel_path = NULL;
+	int free_gitdir = 0;
+
+	work_tree = worktree_real_pathdup(work_tree_);
+	strbuf_addf(&gitfile_sb, "%s/.git", work_tree);
+	if (safe_create_leading_directories_const(gitfile_sb.buf))
+		die(_("could not create directories for %s"), gitfile_sb.buf);
+
+	if (!is_absolute_path(git_dir_)) {
+		git_dir = real_pathdup(git_dir_, 1);
+		free_gitdir = 1;
+	} else
+		git_dir = (char *)git_dir_;
+
+	if (use_relative_paths_) {
+		rel_path = relative_path(git_dir, work_tree, &rel_path_sb);
+
+		/* Write a relative path */
+		write_file(gitfile_sb.buf, "gitdir: %s", rel_path);
+	} else {
+		/* Write an absolute path */
+		write_file(gitfile_sb.buf, "gitdir: %s", git_dir);
+	}
+
+	if (free_gitdir)
+		free(git_dir);
+
+	free(work_tree);
+	strbuf_release(&rel_path_sb);
+	strbuf_release(&gitfile_sb);
+}
+
+void connect_gitdir_file_and_work_tree(const char *wt_dir_,
+				       const char *wt_name_,
+				       int use_relative_paths_)
+{
+	struct strbuf gitdirfile_sb = STRBUF_INIT;
+	struct strbuf rel_path_sb = STRBUF_INIT;
+	char *git_dir_real_path = NULL;
+	char *repo_real_path = NULL, *work_tree = NULL;
+	const char *rel_path = NULL;
+
+	git_path_buf(&gitdirfile_sb, "worktrees/%s/gitdir", wt_name_);
+	if (safe_create_leading_directories_const(gitdirfile_sb.buf)) {
+		die(_("could not create directories for %s"),
+		    gitdirfile_sb.buf);
+	}
+
+	work_tree = worktree_real_pathdup(wt_dir_);
+	if (use_relative_paths_) {
+		git_dir_real_path = real_pathdup(get_git_common_dir(), 1);
+		repo_real_path = strip_path_suffix(git_dir_real_path, ".git");
+		if (repo_real_path) {
+			rel_path = relative_path(work_tree, repo_real_path,
+						 &rel_path_sb);
+		} else {
+			rel_path = relative_path(work_tree, git_dir_real_path,
+						 &rel_path_sb);
+		}
+
+		/* Write a relative path */
+		write_file(gitdirfile_sb.buf, "%s/.git", rel_path);
+	} else {
+		/* Write an absolute path */
+		write_file(gitdirfile_sb.buf, "%s/.git", work_tree);
+	}
+
+	free(repo_real_path);
+	free(work_tree);
+	free(git_dir_real_path);
+	strbuf_release(&rel_path_sb);
+	strbuf_release(&gitdirfile_sb);
+}
+
+void connect_submodule_work_tree_and_git_dir(const char *work_tree_,
+					     const char *git_dir_,
+					     int recurse_into_nested)
+{
 	struct strbuf cfg_sb = STRBUF_INIT;
 	struct strbuf rel_path = STRBUF_INIT;
 	char *git_dir, *work_tree;
 
-	/* Prepare .git file */
-	strbuf_addf(&gitfile_sb, "%s/.git", work_tree_);
-	if (safe_create_leading_directories_const(gitfile_sb.buf))
-		die(_("could not create directories for %s"), gitfile_sb.buf);
+	git_dir = real_pathdup(git_dir_, 1);
+	work_tree = real_pathdup(work_tree_, 1);
+
+	/* Write .git file */
+	connect_work_tree_and_git_dir(work_tree, git_dir, 1);
 
 	/* Prepare config file */
 	strbuf_addf(&cfg_sb, "%s/config", git_dir_);
 	if (safe_create_leading_directories_const(cfg_sb.buf))
 		die(_("could not create directories for %s"), cfg_sb.buf);
 
-	git_dir = real_pathdup(git_dir_, 1);
-	work_tree = real_pathdup(work_tree_, 1);
-
-	/* Write .git file */
-	write_file(gitfile_sb.buf, "gitdir: %s",
-		   relative_path(git_dir, work_tree, &rel_path));
 	/* Update core.worktree setting */
 	git_config_set_in_file(cfg_sb.buf, "core.worktree",
 			       relative_path(work_tree, git_dir, &rel_path));
 
-	strbuf_release(&gitfile_sb);
 	strbuf_release(&cfg_sb);
 	strbuf_release(&rel_path);
 
@@ -4097,7 +4171,7 @@ void relocate_gitdir(const char *path, const char *old_git_dir, const char *new_
 		die_errno(_("could not migrate git directory from '%s' to '%s'"),
 			old_git_dir, new_git_dir);
 
-	connect_work_tree_and_git_dir(path, new_git_dir, 0);
+	connect_submodule_work_tree_and_git_dir(path, new_git_dir, 0);
 }
 
 int path_match_flags(const char *const str, const enum path_match_flags flags)

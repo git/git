@@ -214,8 +214,12 @@ static void prune_worktrees(void)
 		strbuf_reset(&reason);
 		if (should_prune_worktree(d->d_name, &reason, &path, expire))
 			prune_worktree(d->d_name, reason.buf);
-		else if (path)
-			string_list_append_nodup(&kept, path)->util = xstrdup(d->d_name);
+		else if (path) {
+			string_list_append_nodup(&kept,
+						 worktree_real_pathdup(path))
+				->util = xstrdup(d->d_name);
+			free(path);
+		}
 	}
 	closedir(dir);
 
@@ -414,7 +418,7 @@ static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
-	struct strbuf sb = STRBUF_INIT, realpath = STRBUF_INIT;
+	struct strbuf sb = STRBUF_INIT;
 	const char *name;
 	struct strvec child_env = STRVEC_INIT;
 	unsigned int counter = 0;
@@ -425,6 +429,7 @@ static int add_worktree(const char *path, const char *refname,
 	struct strbuf sb_name = STRBUF_INIT;
 	struct worktree **worktrees, *wt = NULL;
 	struct ref_store *wt_refs;
+	int use_relative_paths = 0;
 
 	worktrees = get_worktrees();
 	check_candidate_path(path, opts->force, worktrees, "add");
@@ -482,19 +487,14 @@ static int add_worktree(const char *path, const char *refname,
 	else
 		write_file(sb.buf, _("initializing"));
 
-	strbuf_addf(&sb_git, "%s/.git", path);
-	if (safe_create_leading_directories_const(sb_git.buf))
-		die_errno(_("could not create leading directories of '%s'"),
-			  sb_git.buf);
 	junk_work_tree = xstrdup(path);
 
 	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
-	strbuf_realpath(&realpath, sb_git.buf, 1);
-	write_file(sb.buf, "%s", realpath.buf);
-	strbuf_realpath(&realpath, get_git_common_dir(), 1);
-	write_file(sb_git.buf, "gitdir: %s/worktrees/%s",
-		   realpath.buf, name);
+	use_relative_paths = repo_config_get_worktree_use_relative_paths(the_repository);
+	strbuf_realpath_forgiving(&sb, path, 1);
+	connect_work_tree_and_git_dir(sb.buf, sb_repo.buf, use_relative_paths);
+	connect_gitdir_file_and_work_tree(sb.buf, name, use_relative_paths);
+
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
@@ -536,6 +536,7 @@ static int add_worktree(const char *path, const char *refname,
 	if (the_repository->repository_format_worktree_config)
 		copy_filtered_worktree_config(sb_repo.buf);
 
+	strbuf_addf(&sb_git, "%s/.git", path);
 	strvec_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
 	strvec_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 
@@ -582,7 +583,6 @@ done:
 	strbuf_release(&sb_repo);
 	strbuf_release(&sb_git);
 	strbuf_release(&sb_name);
-	strbuf_release(&realpath);
 	free_worktree(wt);
 	return ret;
 }
@@ -1185,8 +1185,8 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 	int force = 0;
 	struct option options[] = {
 		OPT__FORCE(&force,
-			 N_("force move even if worktree is dirty or locked"),
-			 PARSE_OPT_NOCOMPLETE),
+			   N_("force move even if worktree is dirty or locked"),
+			   PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
@@ -1263,6 +1263,7 @@ static void check_clean_worktree(struct worktree *wt,
 	struct child_process cp;
 	char buf[1];
 	int ret;
+	char *absolute_wt_path = NULL;
 
 	/*
 	 * Until we sort this out, all submodules are "dirty" and
@@ -1271,15 +1272,15 @@ static void check_clean_worktree(struct worktree *wt,
 	validate_no_submodules(wt);
 
 	child_process_init(&cp);
-	strvec_pushf(&cp.env, "%s=%s/.git",
-		     GIT_DIR_ENVIRONMENT, wt->path);
-	strvec_pushf(&cp.env, "%s=%s",
-		     GIT_WORK_TREE_ENVIRONMENT, wt->path);
-	strvec_pushl(&cp.args, "status",
-		     "--porcelain", "--ignore-submodules=none",
-		     NULL);
+	absolute_wt_path = worktree_real_pathdup_for_wt(wt);
+	strvec_pushf(&cp.env, "%s=%s/.git", GIT_DIR_ENVIRONMENT,
+		     absolute_wt_path);
+	strvec_pushf(&cp.env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT,
+		     absolute_wt_path);
+	strvec_pushl(&cp.args, "status", "--porcelain",
+		     "--ignore-submodules=none", NULL);
 	cp.git_cmd = 1;
-	cp.dir = wt->path;
+	cp.dir = absolute_wt_path;
 	cp.out = -1;
 	ret = start_command(&cp);
 	if (ret)
@@ -1294,6 +1295,8 @@ static void check_clean_worktree(struct worktree *wt,
 	if (ret)
 		die_errno(_("failed to run 'git status' on '%s', code %d"),
 			  original_path, ret);
+
+	free(absolute_wt_path);
 }
 
 static int delete_git_work_tree(struct worktree *wt)

@@ -80,44 +80,66 @@ test_expect_success 'not prune locked checkout' '
 	test -d .git/worktrees/ghi
 '
 
-test_expect_success 'not prune recent checkouts' '
-	test_when_finished rm -r .git/worktrees &&
-	git worktree add jlm HEAD &&
-	test -d .git/worktrees/jlm &&
-	rm -rf jlm &&
-	git worktree prune --verbose --expire=2.days.ago &&
-	test -d .git/worktrees/jlm
+run_worktree_prune_tests() {
+	local use_relative_paths="$1"
+
+	# Set the Git config variable based on the parameter
+	test_config_global worktree.userelativepaths "$use_relative_paths"
+
+	test_expect_success 'not prune recent checkouts' '
+		test_when_finished rm -r .git/worktrees &&
+		git worktree add jlm HEAD &&
+		test -d .git/worktrees/jlm &&
+		rm -rf jlm &&
+		git worktree prune --verbose --expire=2.days.ago &&
+		test -d .git/worktrees/jlm
+	'
+
+	test_expect_success 'not prune proper checkouts' '
+		test_when_finished rm -r .git/worktrees &&
+		git worktree add --detach "$PWD/nop" main &&
+		git worktree prune &&
+		test -d .git/worktrees/nop
+	'
+
+	test_expect_success 'prune duplicate (linked/linked)' '
+		test_when_finished rm -fr .git/worktrees w1 w2 &&
+		git worktree add --detach w1 &&
+		git worktree add --detach w2 &&
+		sed "s/w2/w1/" .git/worktrees/w2/gitdir >.git/worktrees/w2/gitdir.new &&
+		mv .git/worktrees/w2/gitdir.new .git/worktrees/w2/gitdir &&
+		git worktree prune --verbose 2>actual &&
+		test_grep "duplicate entry" actual &&
+		test -d .git/worktrees/w1 &&
+		! test -d .git/worktrees/w2
+	'
+
+	test_expect_success 'prune duplicate (main/linked)' '
+		test_when_finished rm -fr repo wt &&
+		test_create_repo repo &&
+		test_commit -C repo x &&
+		git -C repo worktree add --detach ../wt &&
+		rm -fr wt &&
+		mv repo wt &&
+		git -C wt worktree prune --verbose 2>actual &&
+		echo "FOO" &&
+		cat actual &&
+		echo "BAR" &&
+		test_grep "duplicate entry" actual &&
+		! test -d .git/worktrees/wt
+	'
+}
+
+say "Run tests with worktree.userelativepaths set to false"
+run_worktree_prune_tests false
+
+cd ..
+setup_test_repo
+test_expect_success initialize '
+	git commit --allow-empty -m init
 '
 
-test_expect_success 'not prune proper checkouts' '
-	test_when_finished rm -r .git/worktrees &&
-	git worktree add --detach "$PWD/nop" main &&
-	git worktree prune &&
-	test -d .git/worktrees/nop
-'
-
-test_expect_success 'prune duplicate (linked/linked)' '
-	test_when_finished rm -fr .git/worktrees w1 w2 &&
-	git worktree add --detach w1 &&
-	git worktree add --detach w2 &&
-	sed "s/w2/w1/" .git/worktrees/w2/gitdir >.git/worktrees/w2/gitdir.new &&
-	mv .git/worktrees/w2/gitdir.new .git/worktrees/w2/gitdir &&
-	git worktree prune --verbose 2>actual &&
-	test_grep "duplicate entry" actual &&
-	test -d .git/worktrees/w1 &&
-	! test -d .git/worktrees/w2
-'
-
-test_expect_success 'prune duplicate (main/linked)' '
-	test_when_finished rm -fr repo wt &&
-	test_create_repo repo &&
-	test_commit -C repo x &&
-	git -C repo worktree add --detach ../wt &&
-	rm -fr wt &&
-	mv repo wt &&
-	git -C wt worktree prune --verbose 2>actual &&
-	test_grep "duplicate entry" actual &&
-	! test -d .git/worktrees/wt
-'
+say "Run tests with worktree.userelativepaths set to true"
+run_worktree_prune_tests true
 
 test_done

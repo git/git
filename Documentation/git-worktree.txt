@@ -105,6 +105,15 @@ passed to the command. In the event the repository has a remote and
 `--guess-remote` is used, but no remote or local branches exist, then the
 command fails with a warning reminding the user to fetch from their remote
 first (or override by using `-f/--force`).
++
+By default, the `git worktree add` command links the main worktree with the
+newly created worktree using absolute paths.
+However, this behavior may not be desirable when a repository needs
+to be accessed from different operating systems. To address this, Git can
+be configured to use relative paths instead. To enable this behavior, set the
+`worktree.useRelativePaths` configuration option to `true`. Once enabled,
+all newly added worktrees will be linked using relative paths.
+
 
 list::
 
@@ -128,6 +137,11 @@ Move a worktree to a new location. Note that the main worktree or linked
 worktrees containing submodules cannot be moved with this command. (The
 `git worktree repair` command, however, can reestablish the connection
 with linked worktrees if you move the main worktree manually.)
++
+When moving a worktree, the path formats will be adjusted to align with the
+current value of `worktree.useRelativePaths`. This means that if the worktree
+was created using absolute paths and the configuration is later set to `true`,
+the link will be reestablished using relative paths during the move.
 
 prune::
 
@@ -356,6 +370,10 @@ directory (e.g. `/path/main/.git/worktrees/test-next` in the example) and
 `$GIT_COMMON_DIR` is set to point back to the main worktree's `$GIT_DIR`
 (e.g. `/path/main/.git`). These settings are made in a `.git` file located at
 the top directory of the linked worktree.
+
+If `worktree.useRelativePaths` is enabled, the paths in this `.git` file
+will be stored in a relative format. Conversely, if it is disabled, the paths
+will be stored in an absolute format.
 
 Path resolution via `git rev-parse --git-path` uses either
 `$GIT_DIR` or `$GIT_COMMON_DIR` depending on the path. For example, in the

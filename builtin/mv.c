@@ -490,9 +490,9 @@ remove_entry:
 			if (!update_path_in_gitmodules(src, dst))
 				gitmodules_modified = 1;
 			if (submodule_gitfiles[i] != SUBMODULE_WITH_GITDIR)
-				connect_work_tree_and_git_dir(dst,
-							      submodule_gitfiles[i],
-							      1);
+				connect_submodule_work_tree_and_git_dir(dst,
+									submodule_gitfiles[i],
+									1);
 		}
 
 		if (mode & (WORKING_DIRECTORY | SKIP_WORKTREE_DIR))

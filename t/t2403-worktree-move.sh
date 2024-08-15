@@ -4,6 +4,7 @@ test_description='test git worktree move, remove, lock and unlock'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-worktree.sh
 
 test_expect_success 'setup' '
 	test_commit init &&
@@ -245,6 +246,15 @@ test_expect_success 'not remove a repo with initialized submodule' '
 		git -C to-remove submodule update &&
 		test_must_fail git worktree remove to-remove
 	)
+'
+
+test_expect_success 'move worktree and verify path format' '
+	test_config worktree.userelativepaths false &&
+	git worktree add fred &&
+	check_worktree_paths false fred &&
+	test_config worktree.userelativepaths true &&
+	git worktree move fred barney &&
+	check_worktree_paths true barney
 '
 
 test_done

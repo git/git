@@ -1627,26 +1627,30 @@ remove_trash_directory () {
 	! test -d "$dir"
 }
 
-# Test repository
-remove_trash_directory "$TRASH_DIRECTORY" || {
-	BAIL_OUT 'cannot prepare test area'
+setup_test_repo() {
+	# Remove the trash directory if it exists
+	remove_trash_directory "$TRASH_DIRECTORY" || {
+		BAIL_OUT 'cannot prepare test area'
+	}
+
+	remove_trash=t
+
+	# Initialize a new Git repository or create the directory
+	if [ -z "$TEST_NO_CREATE_REPO" ]; then
+		git init \
+			${TEST_CREATE_REPO_NO_TEMPLATE:+--template=} \
+			"$TRASH_DIRECTORY" >&3 2>&4 ||
+		error "cannot run git init"
+	else
+		mkdir -p "$TRASH_DIRECTORY"
+	fi
+
+	# Use -P to resolve symlinks in our working directory so that the cwd
+	# in subprocesses like git equals our $PWD (for pathname comparisons).
+	cd -P "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
 }
 
-remove_trash=t
-if test -z "$TEST_NO_CREATE_REPO"
-then
-	git init \
-	    ${TEST_CREATE_REPO_NO_TEMPLATE:+--template=} \
-	    "$TRASH_DIRECTORY" >&3 2>&4 ||
-	error "cannot run git init"
-else
-	mkdir -p "$TRASH_DIRECTORY"
-fi
-
-# Use -P to resolve symlinks in our working directory so that the cwd
-# in subprocesses like git equals our $PWD (for pathname comparisons).
-cd -P "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
-
+setup_test_repo
 start_test_output "$0"
 
 # Convenience
