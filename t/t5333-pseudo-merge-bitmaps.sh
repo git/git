@@ -390,4 +390,24 @@ test_expect_success 'pseudo-merge reuse' '
 	)
 '
 
+test_expect_failure 'empty pseudo-merge group' '
+	git init pseudo-merge-empty-group &&
+	(
+		cd pseudo-merge-empty-group &&
+
+		# Ensure that a pseudo-merge group with no unstable
+		# commits does not generate an empty pseudo-merge
+		# bitmap.
+		git config bitmapPseudoMerge.empty.pattern refs/ &&
+
+		test_commit base &&
+		git repack -adb &&
+
+		test-tool bitmap dump-pseudo-merges >merges &&
+		test_line_count = 1 merges &&
+
+		test 0 -eq "$(grep -c commits=0 <merges)"
+	)
+'
+
 test_done
