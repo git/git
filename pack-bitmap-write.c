@@ -694,6 +694,10 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 	if (indexed_commits_nr < 100) {
 		for (i = 0; i < indexed_commits_nr; ++i)
 			bitmap_writer_push_commit(writer, indexed_commits[i], 0);
+
+		select_pseudo_merges(writer, indexed_commits,
+				     indexed_commits_nr);
+
 		return;
 	}
 
