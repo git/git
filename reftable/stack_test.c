@@ -109,6 +109,34 @@ static int write_test_ref(struct reftable_writer *wr, void *arg)
 	return reftable_writer_add_ref(wr, ref);
 }
 
+static void write_n_ref_tables(struct reftable_stack *st,
+			       size_t n)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int disable_auto_compact;
+	int err;
+
+	disable_auto_compact = st->opts.disable_auto_compact;
+	st->opts.disable_auto_compact = 1;
+
+	for (size_t i = 0; i < n; i++) {
+		struct reftable_ref_record ref = {
+			.update_index = reftable_stack_next_update_index(st),
+			.value_type = REFTABLE_REF_VAL1,
+		};
+
+		strbuf_addf(&buf, "refs/heads/branch-%04u", (unsigned) i);
+		ref.refname = buf.buf;
+		set_test_hash(ref.value.val1, i);
+
+		err = reftable_stack_add(st, &write_test_ref, &ref);
+		EXPECT_ERR(err);
+	}
+
+	st->opts.disable_auto_compact = disable_auto_compact;
+	strbuf_release(&buf);
+}
+
 struct write_log_arg {
 	struct reftable_log_record *log;
 	uint64_t update_index;
@@ -863,6 +891,47 @@ static void test_reftable_stack_auto_compaction(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_auto_compaction_with_locked_tables(void)
+{
+	struct reftable_write_options opts = {
+		.disable_auto_compact = 1,
+	};
+	struct reftable_stack *st = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	err = reftable_new_stack(&st, dir, &opts);
+	EXPECT_ERR(err);
+
+	write_n_ref_tables(st, 5);
+	EXPECT(st->merged->stack_len == 5);
+
+	/*
+	 * Given that all tables we have written should be roughly the same
+	 * size, we expect that auto-compaction will want to compact all of the
+	 * tables. Locking any of the tables will keep it from doing so.
+	 */
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "%s/%s.lock", dir, st->readers[2]->name);
+	write_file_buf(buf.buf, "", 0);
+
+	/*
+	 * When parts of the stack are locked, then auto-compaction does a best
+	 * effort compaction of those tables which aren't locked. So while this
+	 * would in theory compact all tables, due to the preexisting lock we
+	 * only compact the newest two tables.
+	 */
+	err = reftable_stack_auto_compact(st);
+	EXPECT_ERR(err);
+	EXPECT(st->stats.failures == 0);
+	EXPECT(st->merged->stack_len == 4);
+
+	reftable_stack_destroy(st);
+	strbuf_release(&buf);
+	clear_dir(dir);
+}
+
 static void test_reftable_stack_add_performs_auto_compaction(void)
 {
 	struct reftable_write_options opts = { 0 };
@@ -911,30 +980,51 @@ static void test_reftable_stack_add_performs_auto_compaction(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_compaction_with_locked_tables(void)
+{
+	struct reftable_write_options opts = {
+		.disable_auto_compact = 1,
+	};
+	struct reftable_stack *st = NULL;
+	struct strbuf buf = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	err = reftable_new_stack(&st, dir, &opts);
+	EXPECT_ERR(err);
+
+	write_n_ref_tables(st, 3);
+	EXPECT(st->merged->stack_len == 3);
+
+	/* Lock one of the tables that we're about to compact. */
+	strbuf_reset(&buf);
+	strbuf_addf(&buf, "%s/%s.lock", dir, st->readers[1]->name);
+	write_file_buf(buf.buf, "", 0);
+
+	/*
+	 * Compaction is expected to fail given that we were not able to
+	 * compact all tables.
+	 */
+	err = reftable_stack_compact_all(st, NULL);
+	EXPECT(err == REFTABLE_LOCK_ERROR);
+	EXPECT(st->stats.failures == 1);
+	EXPECT(st->merged->stack_len == 3);
+
+	reftable_stack_destroy(st);
+	strbuf_release(&buf);
+	clear_dir(dir);
+}
+
 static void test_reftable_stack_compaction_concurrent(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct reftable_stack *st1 = NULL, *st2 = NULL;
 	char *dir = get_tmp_dir(__LINE__);
-	int err, i;
-	int N = 3;
+	int err;
 
 	err = reftable_new_stack(&st1, dir, &opts);
 	EXPECT_ERR(err);
-
-	for (i = 0; i < N; i++) {
-		char name[100];
-		struct reftable_ref_record ref = {
-			.refname = name,
-			.update_index = reftable_stack_next_update_index(st1),
-			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = (char *) "master",
-		};
-		snprintf(name, sizeof(name), "branch%04d", i);
-
-		err = reftable_stack_add(st1, &write_test_ref, &ref);
-		EXPECT_ERR(err);
-	}
+	write_n_ref_tables(st1, 3);
 
 	err = reftable_new_stack(&st2, dir, &opts);
 	EXPECT_ERR(err);
@@ -965,25 +1055,11 @@ static void test_reftable_stack_compaction_concurrent_clean(void)
 	struct reftable_write_options opts = { 0 };
 	struct reftable_stack *st1 = NULL, *st2 = NULL, *st3 = NULL;
 	char *dir = get_tmp_dir(__LINE__);
-	int err, i;
-	int N = 3;
+	int err;
 
 	err = reftable_new_stack(&st1, dir, &opts);
 	EXPECT_ERR(err);
-
-	for (i = 0; i < N; i++) {
-		char name[100];
-		struct reftable_ref_record ref = {
-			.refname = name,
-			.update_index = reftable_stack_next_update_index(st1),
-			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = (char *) "master",
-		};
-		snprintf(name, sizeof(name), "branch%04d", i);
-
-		err = reftable_stack_add(st1, &write_test_ref, &ref);
-		EXPECT_ERR(err);
-	}
+	write_n_ref_tables(st1, 3);
 
 	err = reftable_new_stack(&st2, dir, &opts);
 	EXPECT_ERR(err);
@@ -1016,9 +1092,11 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_add);
 	RUN_TEST(test_reftable_stack_add_one);
 	RUN_TEST(test_reftable_stack_auto_compaction);
+	RUN_TEST(test_reftable_stack_auto_compaction_with_locked_tables);
 	RUN_TEST(test_reftable_stack_add_performs_auto_compaction);
 	RUN_TEST(test_reftable_stack_compaction_concurrent);
 	RUN_TEST(test_reftable_stack_compaction_concurrent_clean);
+	RUN_TEST(test_reftable_stack_compaction_with_locked_tables);
 	RUN_TEST(test_reftable_stack_hash_id);
 	RUN_TEST(test_reftable_stack_lock_failure);
 	RUN_TEST(test_reftable_stack_log_normalize);
