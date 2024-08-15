@@ -827,8 +827,7 @@ static int write_midx_bitmap(const char *midx_name,
 
 	bitmap_writer_init(&writer, the_repository, pdata);
 	bitmap_writer_show_progress(&writer, flags & MIDX_PROGRESS);
-	bitmap_writer_build_type_index(&writer, pdata, index,
-				       pdata->nr_objects);
+	bitmap_writer_build_type_index(&writer, index);
 
 	/*
 	 * bitmap_writer_finish expects objects in lex order, but pack_order

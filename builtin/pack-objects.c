@@ -1345,7 +1345,7 @@ static void write_pack_file(void)
 						   the_repository, &to_pack);
 				bitmap_writer_set_checksum(&bitmap_writer, hash);
 				bitmap_writer_build_type_index(&bitmap_writer,
-					&to_pack, written_list, nr_written);
+							       written_list);
 			}
 
 			if (cruft)

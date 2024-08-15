@@ -101,9 +101,7 @@ void bitmap_writer_show_progress(struct bitmap_writer *writer, int show)
  * Build the initial type index for the packfile or multi-pack-index
  */
 void bitmap_writer_build_type_index(struct bitmap_writer *writer,
-				    struct packing_data *to_pack,
-				    struct pack_idx_entry **index,
-				    uint32_t index_nr)
+				    struct pack_idx_entry **index)
 {
 	uint32_t i;
 
@@ -111,13 +109,13 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 	writer->trees = ewah_new();
 	writer->blobs = ewah_new();
 	writer->tags = ewah_new();
-	ALLOC_ARRAY(to_pack->in_pack_pos, to_pack->nr_objects);
+	ALLOC_ARRAY(writer->to_pack->in_pack_pos, writer->to_pack->nr_objects);
 
-	for (i = 0; i < index_nr; ++i) {
+	for (i = 0; i < writer->to_pack->nr_objects; ++i) {
 		struct object_entry *entry = (struct object_entry *)index[i];
 		enum object_type real_type;
 
-		oe_set_in_pack_pos(to_pack, entry, i);
+		oe_set_in_pack_pos(writer->to_pack, entry, i);
 
 		switch (oe_type(entry)) {
 		case OBJ_COMMIT:
@@ -128,7 +126,7 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 			break;
 
 		default:
-			real_type = oid_object_info(to_pack->repo,
+			real_type = oid_object_info(writer->to_pack->repo,
 						    &entry->idx.oid, NULL);
 			break;
 		}
