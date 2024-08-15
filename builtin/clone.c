@@ -729,7 +729,8 @@ static int git_sparse_checkout_init(const char *repo)
 	return result;
 }
 
-static int checkout(int submodule_progress, int filter_submodules)
+static int checkout(int submodule_progress, int filter_submodules,
+		    enum ref_storage_format ref_storage_format)
 {
 	struct object_id oid;
 	char *head;
@@ -812,6 +813,10 @@ static int checkout(int submodule_progress, int filter_submodules)
 			strvec_push(&cmd.args, "--remote");
 			strvec_push(&cmd.args, "--no-fetch");
 		}
+
+		if (ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN)
+			strvec_pushf(&cmd.args, "--ref-format=%s",
+				     ref_storage_format_to_name(ref_storage_format));
 
 		if (filter_submodules && filter_options.choice)
 			strvec_pushf(&cmd.args, "--filter=%s",
@@ -1536,7 +1541,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		return 1;
 
 	junk_mode = JUNK_LEAVE_REPO;
-	err = checkout(submodule_progress, filter_submodules);
+	err = checkout(submodule_progress, filter_submodules,
+		       ref_storage_format);
 
 	free(remote_name);
 	strbuf_release(&reflog_msg);

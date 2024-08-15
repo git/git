@@ -94,6 +94,14 @@ cmd_add()
 		--reference=*)
 			reference_path="${1#--reference=}"
 			;;
+		--ref-format)
+			case "$2" in '') usage ;; esac
+			ref_format="--ref-format=$2"
+			shift
+			;;
+		--ref-format=*)
+			ref_format="$1"
+			;;
 		--dissociate)
 			dissociate=1
 			;;
@@ -129,7 +137,18 @@ cmd_add()
 		usage
 	fi
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper add ${quiet:+--quiet} ${force:+--force} ${progress:+"--progress"} ${branch:+--branch "$branch"} ${reference_path:+--reference "$reference_path"} ${dissociate:+--dissociate} ${custom_name:+--name "$custom_name"} ${depth:+"$depth"} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper add \
+		${quiet:+--quiet} \
+		${force:+--force} \
+		${progress:+"--progress"} \
+		${branch:+--branch "$branch"} \
+		${reference_path:+--reference "$reference_path"} \
+		${ref_format:+"$ref_format"} \
+		${dissociate:+--dissociate} \
+		${custom_name:+--name "$custom_name"} \
+		${depth:+"$depth"} \
+		-- \
+		"$@"
 }
 
 #
@@ -160,7 +179,11 @@ cmd_foreach()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper foreach ${quiet:+--quiet} ${recursive:+--recursive} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper foreach \
+		${quiet:+--quiet} \
+		${recursive:+--recursive} \
+		-- \
+		"$@"
 }
 
 #
@@ -191,7 +214,10 @@ cmd_init()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper init ${quiet:+--quiet} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper init \
+		${quiet:+--quiet} \
+		-- \
+		"$@"
 }
 
 #
@@ -227,7 +253,12 @@ cmd_deinit()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit ${quiet:+--quiet} ${force:+--force} ${deinit_all:+--all} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit \
+		${quiet:+--quiet} \
+		${force:+--force} \
+		${deinit_all:+--all} \
+		-- \
+		"$@"
 }
 
 #
@@ -267,6 +298,14 @@ cmd_update()
 			;;
 		-r|--rebase)
 			rebase=1
+			;;
+		--ref-format)
+			case "$2" in '') usage ;; esac
+			ref_format="--ref-format=$2"
+			shift
+			;;
+		--ref-format=*)
+			ref_format="$1"
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
@@ -349,6 +388,7 @@ cmd_update()
 		${rebase:+--rebase} \
 		${merge:+--merge} \
 		${checkout:+--checkout} \
+		${ref_format:+"$ref_format"} \
 		${reference:+"$reference"} \
 		${dissociate:+"--dissociate"} \
 		${depth:+"$depth"} \
@@ -399,7 +439,12 @@ cmd_set_branch() {
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-branch ${quiet:+--quiet} ${branch:+--branch "$branch"} ${default:+--default} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-branch \
+		${quiet:+--quiet} \
+		${branch:+--branch "$branch"} \
+		${default:+--default} \
+		-- \
+		"$@"
 }
 
 #
@@ -428,7 +473,10 @@ cmd_set_url() {
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-url ${quiet:+--quiet} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper set-url \
+		${quiet:+--quiet} \
+		-- \
+		"$@"
 }
 
 #
@@ -480,7 +528,13 @@ cmd_summary() {
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper summary ${files:+--files} ${cached:+--cached} ${for_status:+--for-status} ${summary_limit:+-n $summary_limit} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper summary \
+		${files:+--files} \
+		${cached:+--cached} \
+		${for_status:+--for-status} \
+		${summary_limit:+-n $summary_limit} \
+		-- \
+		"$@"
 }
 #
 # List all submodules, prefixed with:
@@ -521,8 +575,14 @@ cmd_status()
 		shift
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper status ${quiet:+--quiet} ${cached:+--cached} ${recursive:+--recursive} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper status \
+		${quiet:+--quiet} \
+		${cached:+--cached} \
+		${recursive:+--recursive} \
+		-- \
+		"$@"
 }
+
 #
 # Sync remote urls for submodules
 # This makes the value for remote.$remote.url match the value
@@ -554,7 +614,11 @@ cmd_sync()
 		esac
 	done
 
-	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper sync ${quiet:+--quiet} ${recursive:+--recursive} -- "$@"
+	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper sync \
+		${quiet:+--quiet} \
+		${recursive:+--recursive} \
+		-- \
+		"$@"
 }
 
 cmd_absorbgitdirs()
