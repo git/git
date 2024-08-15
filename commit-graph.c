@@ -1847,6 +1847,7 @@ struct refs_cb_data {
 };
 
 static int add_ref_to_set(const char *refname UNUSED,
+			  const char *referent UNUSED,
 			  const struct object_id *oid,
 			  int flags UNUSED, void *cb_data)
 {
