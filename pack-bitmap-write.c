@@ -998,7 +998,6 @@ void bitmap_writer_set_checksum(struct bitmap_writer *writer,
 
 void bitmap_writer_finish(struct bitmap_writer *writer,
 			  struct pack_idx_entry **index,
-			  uint32_t index_nr,
 			  const char *filename,
 			  uint16_t options)
 {
@@ -1031,12 +1030,13 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 	dump_bitmap(f, writer->tags);
 
 	if (options & BITMAP_OPT_LOOKUP_TABLE)
-		CALLOC_ARRAY(offsets, index_nr);
+		CALLOC_ARRAY(offsets, writer->to_pack->nr_objects);
 
 	for (i = 0; i < bitmap_writer_nr_selected_commits(writer); i++) {
 		struct bitmapped_commit *stored = &writer->selected[i];
 		int commit_pos = oid_pos(&stored->commit->object.oid, index,
-					 index_nr, oid_access);
+					 writer->to_pack->nr_objects,
+					 oid_access);
 
 		if (commit_pos < 0)
 			BUG(_("trying to write commit not in index"));
@@ -1052,7 +1052,7 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 		write_lookup_table(writer, f, offsets);
 
 	if (options & BITMAP_OPT_HASH_CACHE)
-		write_hash_cache(f, index, index_nr);
+		write_hash_cache(f, index, writer->to_pack->nr_objects);
 
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
 			  CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);

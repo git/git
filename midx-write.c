@@ -851,8 +851,7 @@ static int write_midx_bitmap(const char *midx_name,
 		goto cleanup;
 
 	bitmap_writer_set_checksum(&writer, midx_hash);
-	bitmap_writer_finish(&writer, index, pdata->nr_objects, bitmap_name,
-			     options);
+	bitmap_writer_finish(&writer, index, bitmap_name, options);
 
 cleanup:
 	free(index);

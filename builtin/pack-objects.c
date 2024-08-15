@@ -1370,7 +1370,7 @@ static void write_pack_file(void)
 				if (bitmap_writer_build(&bitmap_writer) < 0)
 					die(_("failed to write bitmap index"));
 				bitmap_writer_finish(&bitmap_writer,
-						     written_list, nr_written,
+						     written_list,
 						     tmpname.buf, write_bitmap_options);
 				bitmap_writer_free(&bitmap_writer);
 				write_bitmap_index = 0;

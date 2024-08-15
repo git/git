@@ -149,7 +149,6 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 int bitmap_writer_build(struct bitmap_writer *writer);
 void bitmap_writer_finish(struct bitmap_writer *writer,
 			  struct pack_idx_entry **index,
-			  uint32_t index_nr,
 			  const char *filename,
 			  uint16_t options);
 void bitmap_writer_free(struct bitmap_writer *writer);
