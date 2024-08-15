@@ -478,19 +478,26 @@ test_expect_success "$command: auto compaction" '
 
 		test_oid blob17_2 | git hash-object -w --stdin &&
 
-		# Lock all tables write some refs. Auto-compaction will be
-		# unable to compact tables and thus fails gracefully, leaving
-		# the stack in a sub-optimal state.
-		ls .git/reftable/*.ref |
+		# Lock all tables, write some refs. Auto-compaction will be
+		# unable to compact tables and thus fails gracefully,
+		# compacting only those tables which are not locked.
+		ls .git/reftable/*.ref | sort |
 		while read table
 		do
-			touch "$table.lock" || exit 1
+			touch "$table.lock" &&
+			basename "$table" >>tables.expect || exit 1
 		done &&
+		test_line_count = 2 .git/reftable/tables.list &&
 		git branch B &&
 		git branch C &&
-		rm .git/reftable/*.lock &&
-		test_line_count = 4 .git/reftable/tables.list &&
 
+		# The new tables are auto-compacted, but the locked tables are
+		# left intact.
+		test_line_count = 3 .git/reftable/tables.list &&
+		head -n 2 .git/reftable/tables.list >tables.head &&
+		test_cmp tables.expect tables.head &&
+
+		rm .git/reftable/*.lock &&
 		git $command --auto &&
 		test_line_count = 1 .git/reftable/tables.list
 	)
