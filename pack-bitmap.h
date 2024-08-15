@@ -146,8 +146,7 @@ struct ewah_bitmap *pseudo_merge_bitmap_for_commit(struct bitmap_index *bitmap_g
 void bitmap_writer_select_commits(struct bitmap_writer *writer,
 				  struct commit **indexed_commits,
 				  unsigned int indexed_commits_nr);
-int bitmap_writer_build(struct bitmap_writer *writer,
-			struct packing_data *to_pack);
+int bitmap_writer_build(struct bitmap_writer *writer);
 void bitmap_writer_finish(struct bitmap_writer *writer,
 			  struct pack_idx_entry **index,
 			  uint32_t index_nr,

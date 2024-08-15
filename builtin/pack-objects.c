@@ -1367,7 +1367,7 @@ static void write_pack_file(void)
 				bitmap_writer_select_commits(&bitmap_writer,
 							     indexed_commits,
 							     indexed_commits_nr);
-				if (bitmap_writer_build(&bitmap_writer, &to_pack) < 0)
+				if (bitmap_writer_build(&bitmap_writer) < 0)
 					die(_("failed to write bitmap index"));
 				bitmap_writer_finish(&bitmap_writer,
 						     written_list, nr_written,

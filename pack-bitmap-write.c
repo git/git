@@ -569,8 +569,7 @@ static void store_selected(struct bitmap_writer *writer,
 	kh_value(writer->bitmaps, hash_pos) = stored;
 }
 
-int bitmap_writer_build(struct bitmap_writer *writer,
-			struct packing_data *to_pack)
+int bitmap_writer_build(struct bitmap_writer *writer)
 {
 	struct bitmap_builder bb;
 	size_t i;
@@ -581,17 +580,15 @@ int bitmap_writer_build(struct bitmap_writer *writer,
 	uint32_t *mapping;
 	int closed = 1; /* until proven otherwise */
 
-	writer->to_pack = to_pack;
-
 	if (writer->show_progress)
 		writer->progress = start_progress("Building bitmaps",
 						  writer->selected_nr);
 	trace2_region_enter("pack-bitmap-write", "building_bitmaps_total",
 			    the_repository);
 
-	old_bitmap = prepare_bitmap_git(to_pack->repo);
+	old_bitmap = prepare_bitmap_git(writer->to_pack->repo);
 	if (old_bitmap)
-		mapping = create_bitmap_mapping(old_bitmap, to_pack);
+		mapping = create_bitmap_mapping(old_bitmap, writer->to_pack);
 	else
 		mapping = NULL;
 

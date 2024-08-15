@@ -846,7 +846,7 @@ static int write_midx_bitmap(const char *midx_name,
 		index[pack_order[i]] = &pdata->objects[i].idx;
 
 	bitmap_writer_select_commits(&writer, commits, commits_nr);
-	ret = bitmap_writer_build(&writer, pdata);
+	ret = bitmap_writer_build(&writer);
 	if (ret < 0)
 		goto cleanup;
 
