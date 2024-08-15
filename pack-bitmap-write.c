@@ -41,13 +41,15 @@ static inline int bitmap_writer_nr_selected_commits(struct bitmap_writer *writer
 	return writer->selected_nr - writer->pseudo_merges_nr;
 }
 
-void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r)
+void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r,
+			struct packing_data *pdata)
 {
 	memset(writer, 0, sizeof(struct bitmap_writer));
 	if (writer->bitmaps)
 		BUG("bitmap writer already initialized");
 	writer->bitmaps = kh_init_oid_map();
 	writer->pseudo_merge_commits = kh_init_oid_map();
+	writer->to_pack = pdata;
 
 	string_list_init_dup(&writer->pseudo_merge_groups);
 
