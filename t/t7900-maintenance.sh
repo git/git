@@ -908,4 +908,43 @@ test_expect_success 'failed schedule prevents config change' '
 	done
 '
 
+test_expect_success '--no-detach causes maintenance to not run in background' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# Prepare the repository such that git-maintenance(1) ends up
+		# outputting something.
+		test_commit something &&
+		git config set maintenance.gc.enabled false &&
+		git config set maintenance.loose-objects.enabled true &&
+		git config set maintenance.loose-objects.auto 1 &&
+		git config set maintenance.incremental-repack.enabled true &&
+
+		# We have no better way to check whether or not the task ran in
+		# the background than to verify whether it output anything. The
+		# next testcase checks the reverse, making this somewhat safer.
+		git maintenance run --no-detach >out 2>&1 &&
+		test_line_count = 1 out
+	)
+'
+
+test_expect_success '--detach causes maintenance to run in background' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit something &&
+		git config set maintenance.gc.enabled false &&
+		git config set maintenance.loose-objects.enabled true &&
+		git config set maintenance.loose-objects.auto 1 &&
+		git config set maintenance.incremental-repack.enabled true &&
+
+		git maintenance run --detach >out 2>&1 &&
+		test_must_be_empty out
+	)
+'
+
 test_done
