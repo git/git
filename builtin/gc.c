@@ -1063,6 +1063,7 @@ static int maintenance_task_gc(struct maintenance_run_opts *opts,
 		strvec_push(&child.args, "--quiet");
 	else
 		strvec_push(&child.args, "--no-quiet");
+	strvec_push(&child.args, "--no-detach");
 
 	return run_command(&child);
 }

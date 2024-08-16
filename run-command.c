@@ -1808,16 +1808,26 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 
 int prepare_auto_maintenance(int quiet, struct child_process *maint)
 {
-	int enabled;
+	int enabled, auto_detach;
 
 	if (!git_config_get_bool("maintenance.auto", &enabled) &&
 	    !enabled)
 		return 0;
 
+	/*
+	 * When `maintenance.autoDetach` isn't set, then we fall back to
+	 * honoring `gc.autoDetach`. This is somewhat weird, but required to
+	 * retain behaviour from when we used to run git-gc(1) here.
+	 */
+	if (git_config_get_bool("maintenance.autodetach", &auto_detach) &&
+	    git_config_get_bool("gc.autodetach", &auto_detach))
+		auto_detach = 1;
+
 	maint->git_cmd = 1;
 	maint->close_object_store = 1;
 	strvec_pushl(&maint->args, "maintenance", "run", "--auto", NULL);
 	strvec_push(&maint->args, quiet ? "--quiet" : "--no-quiet");
+	strvec_push(&maint->args, auto_detach ? "--detach" : "--no-detach");
 
 	return 1;
 }
