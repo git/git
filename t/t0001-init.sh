@@ -500,6 +500,7 @@ test_expect_success 're-init from a linked worktree' '
 '
 
 test_expect_success 'init honors GIT_DEFAULT_HASH' '
+	test_when_finished "rm -rf sha1 sha256" &&
 	GIT_DEFAULT_HASH=sha1 git init sha1 &&
 	git -C sha1 rev-parse --show-object-format >actual &&
 	echo sha1 >expected &&
@@ -511,6 +512,7 @@ test_expect_success 'init honors GIT_DEFAULT_HASH' '
 '
 
 test_expect_success 'init honors --object-format' '
+	test_when_finished "rm -rf explicit-sha1 explicit-sha256" &&
 	git init --object-format=sha1 explicit-sha1 &&
 	git -C explicit-sha1 rev-parse --show-object-format >actual &&
 	echo sha1 >expected &&
@@ -522,6 +524,7 @@ test_expect_success 'init honors --object-format' '
 '
 
 test_expect_success 'extensions.objectFormat is not allowed with repo version 0' '
+	test_when_finished "rm -rf explicit-v0" &&
 	git init --object-format=sha256 explicit-v0 &&
 	git -C explicit-v0 config core.repositoryformatversion 0 &&
 	test_must_fail git -C explicit-v0 rev-parse --show-object-format
