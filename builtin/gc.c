@@ -242,9 +242,13 @@ static enum schedule_priority parse_schedule(const char *value)
 
 struct maintenance_run_opts {
 	int auto_flag;
+	int detach;
 	int quiet;
 	enum schedule_priority schedule;
 };
+#define MAINTENANCE_RUN_OPTS_INIT { \
+	.detach = -1, \
+}
 
 static int pack_refs_condition(UNUSED struct gc_config *cfg)
 {
@@ -664,7 +668,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	int keep_largest_pack = -1;
 	timestamp_t dummy;
 	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
-	struct maintenance_run_opts opts = {0};
+	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
 	struct gc_config cfg = GC_CONFIG_INIT;
 	const char *prune_expire_sentinel = "sentinel";
 	const char *prune_expire_arg = prune_expire_sentinel;
@@ -681,6 +685,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "aggressive", &aggressive, N_("be more thorough (increased runtime)")),
 		OPT_BOOL_F(0, "auto", &opts.auto_flag, N_("enable auto-gc mode"),
 			   PARSE_OPT_NOCOMPLETE),
+		OPT_BOOL(0, "detach", &opts.detach,
+			 N_("perform garbage collection in the background")),
 		OPT_BOOL_F(0, "force", &force,
 			   N_("force running gc even if there may be another gc running"),
 			   PARSE_OPT_NOCOMPLETE),
@@ -729,6 +735,9 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		strvec_push(&repack, "-q");
 
 	if (opts.auto_flag) {
+		if (cfg.detach_auto && opts.detach < 0)
+			opts.detach = 1;
+
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
@@ -738,37 +747,11 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		}
 
 		if (!quiet) {
-			if (cfg.detach_auto)
+			if (opts.detach > 0)
 				fprintf(stderr, _("Auto packing the repository in background for optimum performance.\n"));
 			else
 				fprintf(stderr, _("Auto packing the repository for optimum performance.\n"));
 			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
-		}
-		if (cfg.detach_auto) {
-			ret = report_last_gc_error();
-			if (ret == 1) {
-				/* Last gc --auto failed. Skip this one. */
-				ret = 0;
-				goto out;
-
-			} else if (ret) {
-				/* an I/O error occurred, already reported */
-				goto out;
-			}
-
-			if (lock_repo_for_gc(force, &pid)) {
-				ret = 0;
-				goto out;
-			}
-
-			gc_before_repack(&opts, &cfg); /* dies on failure */
-			delete_tempfile(&pidfile);
-
-			/*
-			 * failure to daemonize is ok, we'll continue
-			 * in foreground
-			 */
-			daemonized = !daemonize();
 		}
 	} else {
 		struct string_list keep_pack = STRING_LIST_INIT_NODUP;
@@ -782,6 +765,33 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 		add_repack_all_option(&cfg, &keep_pack);
 		string_list_clear(&keep_pack, 0);
+	}
+
+	if (opts.detach > 0) {
+		ret = report_last_gc_error();
+		if (ret == 1) {
+			/* Last gc --auto failed. Skip this one. */
+			ret = 0;
+			goto out;
+
+		} else if (ret) {
+			/* an I/O error occurred, already reported */
+			goto out;
+		}
+
+		if (lock_repo_for_gc(force, &pid)) {
+			ret = 0;
+			goto out;
+		}
+
+		gc_before_repack(&opts, &cfg); /* dies on failure */
+		delete_tempfile(&pidfile);
+
+		/*
+		 * failure to daemonize is ok, we'll continue
+		 * in foreground
+		 */
+		daemonized = !daemonize();
 	}
 
 	name = lock_repo_for_gc(force, &pid);
@@ -1537,7 +1547,7 @@ static int task_option_parse(const struct option *opt UNUSED,
 static int maintenance_run(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	struct maintenance_run_opts opts;
+	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
 	struct gc_config cfg = GC_CONFIG_INIT;
 	struct option builtin_maintenance_run_options[] = {
 		OPT_BOOL(0, "auto", &opts.auto_flag,
@@ -1553,8 +1563,6 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	int ret;
-
-	memset(&opts, 0, sizeof(opts));
 
 	opts.quiet = !isatty(2);
 
