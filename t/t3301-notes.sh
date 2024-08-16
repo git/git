@@ -1557,4 +1557,14 @@ test_expect_success 'empty notes are displayed by git log' '
 	test_cmp expect actual
 '
 
+test_expect_success 'empty notes do not invoke the editor' '
+	test_commit 18th &&
+	GIT_EDITOR="false" git notes add -C "$empty_blob" --allow-empty &&
+	git notes remove HEAD &&
+	GIT_EDITOR="false" git notes add -m "" --allow-empty &&
+	git notes remove HEAD &&
+	GIT_EDITOR="false" git notes add -F /dev/null --allow-empty &&
+	git notes remove HEAD
+'
+
 test_done
