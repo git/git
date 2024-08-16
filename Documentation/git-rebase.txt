@@ -737,7 +737,7 @@ The 'apply' backend works by creating a sequence of patches (by calling
 `format-patch` internally), and then applying the patches in sequence
 (calling `am` internally).  Patches are composed of multiple hunks,
 each with line numbers, a context region, and the actual changes.  The
-line numbers have to be taken with some fuzz, since the other side
+line numbers have to be taken with some offset, since the other side
 will likely have inserted or deleted lines earlier in the file.  The
 context region is meant to help find how to adjust the line numbers in
 order to apply the changes to the right lines.  However, if multiple
