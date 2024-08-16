@@ -1,0 +1,37 @@
+Git 2.46.1 Release Notes
+========================
+
+This release is primarily to merge fixes accumulated on the 'master'
+front to prepare for 2.47 release that are still relevant to 2.46.x
+maintenance track.
+
+Fixes since Git 2.46
+--------------------
+
+ * "git checkout --ours" (no other arguments) complained that the
+   option is incompatible with branch switching, which is technically
+   correct, but found confusing by some users.  It now says that the
+   user needs to give pathspec to specify what paths to checkout.
+
+ * It has been documented that we avoid "VAR=VAL shell_func" and why.
+
+ * "git add -p" by users with diff.suppressBlankEmpty set to true
+   failed to parse the patch that represents an unmodified empty line
+   with an empty line (not a line with a single space on it), which
+   has been corrected.
+
+ * "git rebase --help" referred to "offset" (the difference between
+   the location a change was taken from and the change gets replaced)
+   incorrectly and called it "fuzz", which has been corrected.
+
+ * "git notes add -m '' --allow-empty" and friends that take prepared
+   data to create notes should not invoke an editor, but it started
+   doing so since Git 2.42, which has been corrected.
+
+ * An expensive operation to prepare tracing was done in re-encoding
+   code path even when the tracing was not requested, which has been
+   corrected.
+
+ * Perforce tests have been updated.
+
+Also contains minor documentation updates and code clean-ups.

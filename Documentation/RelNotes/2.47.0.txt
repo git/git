@@ -75,31 +75,25 @@ Fixes since v2.46
    failed to parse the patch that represents an unmodified empty line
    with an empty line (not a line with a single space on it), which
    has been corrected.
-   (merge 60cf761ed1 pw/add-patch-with-suppress-blank-empty later to maint).
 
  * "git checkout --ours" (no other arguments) complained that the
    option is incompatible with branch switching, which is technically
    correct, but found confusing by some users.  It now says that the
    user needs to give pathspec to specify what paths to checkout.
-   (merge d1e6c61272 jc/checkout-no-op-switch-errors later to maint).
 
  * It has been documented that we avoid "VAR=VAL shell_func" and why.
-   (merge 728a1962cd jc/doc-one-shot-export-with-shell-func later to maint).
 
  * "git rebase --help" referred to "offset" (the difference between
    the location a change was taken from and the change gets replaced)
    incorrectly and called it "fuzz", which has been corrected.
-   (merge 70058db385 jc/doc-rebase-fuzz-vs-offset-fix later to maint).
 
  * "git notes add -m '' --allow-empty" and friends that take prepared
    data to create notes should not invoke an editor, but it started
    doing so since Git 2.42, which has been corrected.
-   (merge 8b426c84f3 dd/notes-empty-no-edit-by-default later to maint).
 
  * An expensive operation to prepare tracing was done in re-encoding
    code path even when the tracing was not requested, which has been
    corrected.
-   (merge 63ad8dbf16 dh/encoding-trace-optim later to maint).
 
  * More leakfixes.
    (merge f30bfafcd4 ps/leakfixes-part-3 later to maint).
@@ -143,11 +137,7 @@ Fixes since v2.46
    (merge a77554ea09 xx/diff-tree-remerge-diff-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 8db8786fc2 jt/doc-post-receive-hook-update later to maint).
-   (merge 1c473dd6af tn/doc-commit-fix later to maint).
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
-   (merge 6e71d6ac7c ks/unit-test-comment-typofix later to maint).
-   (merge 63ee933383 ps/p4-tests-updates later to maint).
    (merge 7c7516b8db jc/jl-git-no-advice-fix later to maint).
    (merge c3d034df16 jc/leakfix-hashfile later to maint).
    (merge d98d9c77e5 jc/leakfix-mailmap later to maint).
