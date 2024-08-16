@@ -558,15 +558,6 @@ test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage with unknown back
 	grep "invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}garbage${SQ}" err
 '
 
-test_expect_success DEFAULT_REPO_FORMAT 'init with GIT_DEFAULT_REF_FORMAT=files' '
-	test_when_finished "rm -rf refformat" &&
-	GIT_DEFAULT_REF_FORMAT=files git init refformat &&
-	echo 0 >expect &&
-	git -C refformat config core.repositoryformatversion >actual &&
-	test_cmp expect actual &&
-	test_must_fail git -C refformat config extensions.refstorage
-'
-
 test_expect_success 'init with GIT_DEFAULT_REF_FORMAT=garbage' '
 	test_when_finished "rm -rf refformat" &&
 	cat >expect <<-EOF &&
@@ -576,15 +567,46 @@ test_expect_success 'init with GIT_DEFAULT_REF_FORMAT=garbage' '
 	test_cmp expect err
 '
 
-test_expect_success 'init with --ref-format=files' '
+backends="files reftable"
+for format in $backends
+do
+	test_expect_success DEFAULT_REPO_FORMAT "init with GIT_DEFAULT_REF_FORMAT=$format" '
+		test_when_finished "rm -rf refformat" &&
+		GIT_DEFAULT_REF_FORMAT=$format git init refformat &&
+
+		if test $format = files
+		then
+			test_must_fail git -C refformat config extensions.refstorage &&
+			echo 0 >expect
+		else
+			git -C refformat config extensions.refstorage &&
+			echo 1 >expect
+		fi &&
+		git -C refformat config core.repositoryformatversion >actual &&
+		test_cmp expect actual &&
+
+		echo $format >expect &&
+		git -C refformat rev-parse --show-ref-format >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "init with --ref-format=$format" '
+		test_when_finished "rm -rf refformat" &&
+		git init --ref-format=$format refformat &&
+		echo $format >expect &&
+		git -C refformat rev-parse --show-ref-format >actual &&
+		test_cmp expect actual
+	'
+done
+
+test_expect_success "--ref-format= overrides GIT_DEFAULT_REF_FORMAT" '
 	test_when_finished "rm -rf refformat" &&
-	git init --ref-format=files refformat &&
-	echo files >expect &&
+	GIT_DEFAULT_REF_FORMAT=files git init --ref-format=reftable refformat &&
+	echo reftable >expect &&
 	git -C refformat rev-parse --show-ref-format >actual &&
 	test_cmp expect actual
 '
 
-backends="files reftable"
 for from_format in $backends
 do
 	test_expect_success "re-init with same format ($from_format)" '
