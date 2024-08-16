@@ -523,6 +523,56 @@ test_expect_success 'init honors --object-format' '
 	test_cmp expected actual
 '
 
+test_expect_success 'init honors init.defaultObjectFormat' '
+	test_when_finished "rm -rf sha1 sha256" &&
+
+	test_config_global init.defaultObjectFormat sha1 &&
+	(
+		sane_unset GIT_DEFAULT_HASH &&
+		git init sha1 &&
+		git -C sha1 rev-parse --show-object-format >actual &&
+		echo sha1 >expected &&
+		test_cmp expected actual
+	) &&
+
+	test_config_global init.defaultObjectFormat sha256 &&
+	(
+		sane_unset GIT_DEFAULT_HASH &&
+		git init sha256 &&
+		git -C sha256 rev-parse --show-object-format >actual &&
+		echo sha256 >expected &&
+		test_cmp expected actual
+	)
+'
+
+test_expect_success 'init warns about invalid init.defaultObjectFormat' '
+	test_when_finished "rm -rf repo" &&
+	test_config_global init.defaultObjectFormat garbage &&
+
+	echo "warning: unknown hash algorithm ${SQ}garbage${SQ}" >expect &&
+	git init repo 2>err &&
+	test_cmp expect err &&
+
+	git -C repo rev-parse --show-object-format >actual &&
+	echo $GIT_DEFAULT_HASH >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success '--object-format overrides GIT_DEFAULT_HASH' '
+	test_when_finished "rm -rf repo" &&
+	GIT_DEFAULT_HASH=sha1 git init --object-format=sha256 repo &&
+	git -C repo rev-parse --show-object-format >actual &&
+	echo sha256 >expected
+'
+
+test_expect_success 'GIT_DEFAULT_HASH overrides init.defaultObjectFormat' '
+	test_when_finished "rm -rf repo" &&
+	test_config_global init.defaultObjectFormat sha1 &&
+	GIT_DEFAULT_HASH=sha256 git init repo &&
+	git -C repo rev-parse --show-object-format >actual &&
+	echo sha256 >expected
+'
+
 test_expect_success 'extensions.objectFormat is not allowed with repo version 0' '
 	test_when_finished "rm -rf explicit-v0" &&
 	git init --object-format=sha256 explicit-v0 &&
