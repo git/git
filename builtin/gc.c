@@ -139,9 +139,9 @@ struct gc_config {
 	int gc_auto_threshold;
 	int gc_auto_pack_limit;
 	int detach_auto;
-	const char *gc_log_expire;
-	const char *prune_expire;
-	const char *prune_worktrees_expire;
+	char *gc_log_expire;
+	char *prune_expire;
+	char *prune_worktrees_expire;
 	char *repack_filter;
 	char *repack_filter_to;
 	unsigned long big_pack_threshold;
@@ -157,15 +157,25 @@ struct gc_config {
 	.gc_auto_threshold = 6700, \
 	.gc_auto_pack_limit = 50, \
 	.detach_auto = 1, \
-	.gc_log_expire = "1.day.ago", \
-	.prune_expire = "2.weeks.ago", \
-	.prune_worktrees_expire = "3.months.ago", \
+	.gc_log_expire = xstrdup("1.day.ago"), \
+	.prune_expire = xstrdup("2.weeks.ago"), \
+	.prune_worktrees_expire = xstrdup("3.months.ago"), \
 	.max_delta_cache_size = DEFAULT_DELTA_CACHE_SIZE, \
+}
+
+static void gc_config_release(struct gc_config *cfg)
+{
+	free(cfg->gc_log_expire);
+	free(cfg->prune_expire);
+	free(cfg->prune_worktrees_expire);
+	free(cfg->repack_filter);
+	free(cfg->repack_filter_to);
 }
 
 static void gc_config(struct gc_config *cfg)
 {
 	const char *value;
+	char *owned = NULL;
 
 	if (!git_config_get_value("gc.packrefs", &value)) {
 		if (value && !strcmp(value, "notbare"))
@@ -185,15 +195,34 @@ static void gc_config(struct gc_config *cfg)
 	git_config_get_bool("gc.autodetach", &cfg->detach_auto);
 	git_config_get_bool("gc.cruftpacks", &cfg->cruft_packs);
 	git_config_get_ulong("gc.maxcruftsize", &cfg->max_cruft_size);
-	git_config_get_expiry("gc.pruneexpire", (char **) &cfg->prune_expire);
-	git_config_get_expiry("gc.worktreepruneexpire", (char **) &cfg->prune_worktrees_expire);
-	git_config_get_expiry("gc.logexpiry", (char **) &cfg->gc_log_expire);
+
+	if (!git_config_get_expiry("gc.pruneexpire", &owned)) {
+		free(cfg->prune_expire);
+		cfg->prune_expire = owned;
+	}
+
+	if (!git_config_get_expiry("gc.worktreepruneexpire", &owned)) {
+		free(cfg->prune_worktrees_expire);
+		cfg->prune_worktrees_expire = owned;
+	}
+
+	if (!git_config_get_expiry("gc.logexpiry", &owned)) {
+		free(cfg->gc_log_expire);
+		cfg->gc_log_expire = owned;
+	}
 
 	git_config_get_ulong("gc.bigpackthreshold", &cfg->big_pack_threshold);
 	git_config_get_ulong("pack.deltacachesize", &cfg->max_delta_cache_size);
 
-	git_config_get_string("gc.repackfilter", &cfg->repack_filter);
-	git_config_get_string("gc.repackfilterto", &cfg->repack_filter_to);
+	if (!git_config_get_string("gc.repackfilter", &owned)) {
+		free(cfg->repack_filter);
+		cfg->repack_filter = owned;
+	}
+
+	if (!git_config_get_string("gc.repackfilterto", &owned)) {
+		free(cfg->repack_filter_to);
+		cfg->repack_filter_to = owned;
+	}
 
 	git_config(git_default_config, NULL);
 }
@@ -644,12 +673,15 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
 	struct maintenance_run_opts opts = {0};
 	struct gc_config cfg = GC_CONFIG_INIT;
+	const char *prune_expire_sentinel = "sentinel";
+	const char *prune_expire_arg = prune_expire_sentinel;
+	int ret;
 
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
-		{ OPTION_STRING, 0, "prune", &cfg.prune_expire, N_("date"),
+		{ OPTION_STRING, 0, "prune", &prune_expire_arg, N_("date"),
 			N_("prune unreferenced objects"),
-			PARSE_OPT_OPTARG, NULL, (intptr_t)cfg.prune_expire },
+			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire_arg },
 		OPT_BOOL(0, "cruft", &cfg.cruft_packs, N_("pack unreferenced objects separately")),
 		OPT_MAGNITUDE(0, "max-cruft-size", &cfg.max_cruft_size,
 			      N_("with --cruft, limit the size of new cruft packs")),
@@ -673,8 +705,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	strvec_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
 	strvec_pushl(&rerere, "rerere", "gc", NULL);
 
-	/* default expiry time, overwritten in gc_config */
 	gc_config(&cfg);
+
 	if (parse_expiry_date(cfg.gc_log_expire, &gc_log_expire_time))
 		die(_("failed to parse gc.logExpiry value %s"), cfg.gc_log_expire);
 
@@ -686,6 +718,10 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (argc > 0)
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 
+	if (prune_expire_arg != prune_expire_sentinel) {
+		free(cfg.prune_expire);
+		cfg.prune_expire = xstrdup_or_null(prune_expire_arg);
+	}
 	if (cfg.prune_expire && parse_expiry_date(cfg.prune_expire, &dummy))
 		die(_("failed to parse prune expiry value %s"), cfg.prune_expire);
 
@@ -703,8 +739,11 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
-		if (!need_to_gc(&cfg))
-			return 0;
+		if (!need_to_gc(&cfg)) {
+			ret = 0;
+			goto out;
+		}
+
 		if (!quiet) {
 			if (cfg.detach_auto)
 				fprintf(stderr, _("Auto packing the repository in background for optimum performance.\n"));
@@ -713,17 +752,22 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
 		}
 		if (cfg.detach_auto) {
-			int ret = report_last_gc_error();
-
-			if (ret == 1)
+			ret = report_last_gc_error();
+			if (ret == 1) {
 				/* Last gc --auto failed. Skip this one. */
-				return 0;
-			else if (ret)
-				/* an I/O error occurred, already reported */
-				return ret;
+				ret = 0;
+				goto out;
 
-			if (lock_repo_for_gc(force, &pid))
-				return 0;
+			} else if (ret) {
+				/* an I/O error occurred, already reported */
+				goto out;
+			}
+
+			if (lock_repo_for_gc(force, &pid)) {
+				ret = 0;
+				goto out;
+			}
+
 			gc_before_repack(&opts, &cfg); /* dies on failure */
 			delete_tempfile(&pidfile);
 
@@ -749,8 +793,11 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	name = lock_repo_for_gc(force, &pid);
 	if (name) {
-		if (opts.auto_flag)
-			return 0; /* be quiet on --auto */
+		if (opts.auto_flag) {
+			ret = 0;
+			goto out; /* be quiet on --auto */
+		}
+
 		die(_("gc is already running on machine '%s' pid %"PRIuMAX" (use --force if not)"),
 		    name, (uintmax_t)pid);
 	}
@@ -826,6 +873,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	if (!daemonized)
 		unlink(git_path("gc.log"));
 
+out:
+	gc_config_release(&cfg);
 	return 0;
 }
 
@@ -1511,6 +1560,8 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NONEG, task_option_parse),
 		OPT_END()
 	};
+	int ret;
+
 	memset(&opts, 0, sizeof(opts));
 
 	opts.quiet = !isatty(2);
@@ -1532,7 +1583,10 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 	if (argc != 0)
 		usage_with_options(builtin_maintenance_run_usage,
 				   builtin_maintenance_run_options);
-	return maintenance_run_tasks(&opts, &cfg);
+
+	ret = maintenance_run_tasks(&opts, &cfg);
+	gc_config_release(&cfg);
+	return ret;
 }
 
 static char *get_maintpath(void)
