@@ -620,6 +620,19 @@ test_expect_success 'init with GIT_DEFAULT_REF_FORMAT=garbage' '
 	test_cmp expect err
 '
 
+test_expect_success 'init warns about invalid init.defaultRefFormat' '
+	test_when_finished "rm -rf repo" &&
+	test_config_global init.defaultRefFormat garbage &&
+
+	echo "warning: unknown ref storage format ${SQ}garbage${SQ}" >expect &&
+	git init repo 2>err &&
+	test_cmp expect err &&
+
+	git -C repo rev-parse --show-ref-format >actual &&
+	echo $GIT_DEFAULT_REF_FORMAT >expected &&
+	test_cmp expected actual
+'
+
 backends="files reftable"
 for format in $backends
 do
@@ -650,11 +663,42 @@ do
 		git -C refformat rev-parse --show-ref-format >actual &&
 		test_cmp expect actual
 	'
+
+	test_expect_success "init with init.defaultRefFormat=$format" '
+		test_when_finished "rm -rf refformat" &&
+		test_config_global init.defaultRefFormat $format &&
+		(
+			sane_unset GIT_DEFAULT_REF_FORMAT &&
+			git init refformat
+		) &&
+
+		echo $format >expect &&
+		git -C refformat rev-parse --show-ref-format >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "--ref-format=$format overrides GIT_DEFAULT_REF_FORMAT" '
+		test_when_finished "rm -rf refformat" &&
+		GIT_DEFAULT_REF_FORMAT=garbage git init --ref-format=$format refformat &&
+		echo $format >expect &&
+		git -C refformat rev-parse --show-ref-format >actual &&
+		test_cmp expect actual
+	'
 done
 
 test_expect_success "--ref-format= overrides GIT_DEFAULT_REF_FORMAT" '
 	test_when_finished "rm -rf refformat" &&
 	GIT_DEFAULT_REF_FORMAT=files git init --ref-format=reftable refformat &&
+	echo reftable >expect &&
+	git -C refformat rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "GIT_DEFAULT_REF_FORMAT= overrides init.defaultRefFormat" '
+	test_when_finished "rm -rf refformat" &&
+	test_config_global init.defaultRefFormat files &&
+
+	GIT_DEFAULT_REF_FORMAT=reftable git init refformat &&
 	echo reftable >expect &&
 	git -C refformat rev-parse --show-ref-format >actual &&
 	test_cmp expect actual

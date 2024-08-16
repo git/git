@@ -2286,6 +2286,7 @@ static void separate_git_dir(const char *git_dir, const char *git_link)
 
 struct default_format_config {
 	int hash;
+	enum ref_storage_format ref_format;
 };
 
 static int read_default_format_config(const char *key, const char *value,
@@ -2306,6 +2307,16 @@ static int read_default_format_config(const char *key, const char *value,
 		goto out;
 	}
 
+	if (!strcmp(key, "init.defaultrefformat")) {
+		ret = git_config_string(&str, key, value);
+		if (ret)
+			goto out;
+		cfg->ref_format = ref_storage_format_by_name(str);
+		if (cfg->ref_format == REF_STORAGE_FORMAT_UNKNOWN)
+			warning(_("unknown ref storage format '%s'"), str);
+		goto out;
+	}
+
 	ret = 0;
 out:
 	free(str);
@@ -2317,6 +2328,7 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 {
 	struct default_format_config cfg = {
 		.hash = GIT_HASH_UNKNOWN,
+		.ref_format = REF_STORAGE_FORMAT_UNKNOWN,
 	};
 	struct config_options opts = {
 		.respect_includes = 1,
@@ -2359,6 +2371,8 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 		if (ref_format == REF_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown ref storage format '%s'"), env);
 		repo_fmt->ref_storage_format = ref_format;
+	} else if (cfg.ref_format != REF_STORAGE_FORMAT_UNKNOWN) {
+		repo_fmt->ref_storage_format = cfg.ref_format;
 	}
 	repo_set_ref_storage_format(the_repository, repo_fmt->ref_storage_format);
 }
