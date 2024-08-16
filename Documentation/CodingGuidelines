@@ -204,6 +204,33 @@ For shell scripts specifically (not exhaustive):
 	local variable="$value"
 	local variable="$(command args)"
 
+ - The common construct
+
+	VAR=VAL command args
+
+   to temporarily set and export environment variable VAR only while
+   "command args" is running is handy, but this triggers an
+   unspecified behaviour according to POSIX when used for a command
+   that is not an external command (like shell functions).  Indeed,
+   dash 0.5.10.2-6 on Ubuntu 20.04, /bin/sh on FreeBSD 13, and AT&T
+   ksh all make a temporary assignment without exporting the variable,
+   in such a case.  As it does not work portably across shells, do not
+   use this syntax for shell functions.  A common workaround is to do
+   an explicit export in a subshell, like so:
+
+	(incorrect)
+	VAR=VAL func args
+
+	(correct)
+	(
+		VAR=VAL &&
+		export VAR &&
+		func args
+	)
+
+   but be careful that the effect "func" makes to the variables in the
+   current shell will be lost across the subshell boundary.
+
  - Use octal escape sequences (e.g. "\302\242"), not hexadecimal (e.g.
    "\xc2\xa2") in printf format strings, since hexadecimal escape
    sequences are not portable.
