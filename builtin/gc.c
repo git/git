@@ -109,13 +109,6 @@ static void process_log_file_at_exit(void)
 	process_log_file();
 }
 
-static void process_log_file_on_signal(int signo)
-{
-	process_log_file();
-	sigchain_pop(signo);
-	raise(signo);
-}
-
 static int gc_config_is_timestamp_never(const char *var)
 {
 	const char *value;
@@ -807,7 +800,6 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 					  git_path("gc.log"),
 					  LOCK_DIE_ON_ERROR);
 		dup2(get_lock_file_fd(&log_lock), 2);
-		sigchain_push_common(process_log_file_on_signal);
 		atexit(process_log_file_at_exit);
 	}
 
