@@ -4,6 +4,7 @@
 #include "../gettext.h"
 #include "../hash.h"
 #include "../hex.h"
+#include "../fsck.h"
 #include "../refs.h"
 #include "refs-internal.h"
 #include "ref-cache.h"
@@ -3419,6 +3420,116 @@ static int files_ref_store_remove_on_disk(struct ref_store *ref_store,
 	return ret;
 }
 
+/*
+ * For refs and reflogs, they share a unified interface when scanning
+ * the whole directory. This function is used as the callback for each
+ * regular file or symlink in the directory.
+ */
+typedef int (*files_fsck_refs_fn)(struct ref_store *ref_store,
+				  struct fsck_options *o,
+				  const char *refs_check_dir,
+				  struct dir_iterator *iter);
+
+static int files_fsck_refs_name(struct ref_store *ref_store UNUSED,
+				struct fsck_options *o,
+				const char *refs_check_dir,
+				struct dir_iterator *iter)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int ret = 0;
+
+	/*
+	 * Ignore the files ending with ".lock" as they may be lock files
+	 * However, do not allow bare ".lock" files.
+	 */
+	if (iter->basename[0] != '.' && ends_with(iter->basename, ".lock"))
+		goto cleanup;
+
+	if (check_refname_format(iter->basename, REFNAME_ALLOW_ONELEVEL)) {
+		struct fsck_ref_report report = { .path = NULL };
+
+		strbuf_addf(&sb, "%s/%s", refs_check_dir, iter->relative_path);
+		report.path = sb.buf;
+		ret = fsck_report_ref(o, &report,
+				      FSCK_MSG_BAD_REF_NAME,
+				      "invalid refname format");
+	}
+
+cleanup:
+	strbuf_release(&sb);
+	return ret;
+}
+
+static int files_fsck_refs_dir(struct ref_store *ref_store,
+			       struct fsck_options *o,
+			       const char *refs_check_dir,
+			       files_fsck_refs_fn *fsck_refs_fn)
+{
+	struct strbuf sb = STRBUF_INIT;
+	struct dir_iterator *iter;
+	int iter_status;
+	int ret = 0;
+
+	strbuf_addf(&sb, "%s/%s", ref_store->gitdir, refs_check_dir);
+
+	iter = dir_iterator_begin(sb.buf, 0);
+	if (!iter) {
+		ret = error_errno(_("cannot open directory %s"), sb.buf);
+		goto out;
+	}
+
+	while ((iter_status = dir_iterator_advance(iter)) == ITER_OK) {
+		if (S_ISDIR(iter->st.st_mode)) {
+			continue;
+		} else if (S_ISREG(iter->st.st_mode) ||
+			   S_ISLNK(iter->st.st_mode)) {
+			if (o->verbose)
+				fprintf_ln(stderr, "Checking %s/%s",
+					   refs_check_dir, iter->relative_path);
+			for (size_t i = 0; fsck_refs_fn[i]; i++) {
+				if (fsck_refs_fn[i](ref_store, o, refs_check_dir, iter))
+					ret = -1;
+			}
+		} else {
+			struct fsck_ref_report report = { .path = iter->basename };
+			if (fsck_report_ref(o, &report,
+					    FSCK_MSG_BAD_REF_FILETYPE,
+					    "unexpected file type"))
+				ret = -1;
+		}
+	}
+
+	if (iter_status != ITER_DONE)
+		ret = error(_("failed to iterate over '%s'"), sb.buf);
+
+out:
+	strbuf_release(&sb);
+	return ret;
+}
+
+static int files_fsck_refs(struct ref_store *ref_store,
+			   struct fsck_options *o)
+{
+	files_fsck_refs_fn fsck_refs_fn[]= {
+		files_fsck_refs_name,
+		NULL,
+	};
+
+	if (o->verbose)
+		fprintf_ln(stderr, _("Checking references consistency"));
+	return files_fsck_refs_dir(ref_store, o,  "refs", fsck_refs_fn);
+}
+
+static int files_fsck(struct ref_store *ref_store,
+		      struct fsck_options *o)
+{
+	struct files_ref_store *refs =
+		files_downcast(ref_store, REF_STORE_READ, "fsck");
+
+	return files_fsck_refs(ref_store, o) |
+	       refs->packed_ref_store->be->fsck(refs->packed_ref_store, o);
+}
+
 struct ref_storage_be refs_be_files = {
 	.name = "files",
 	.init = files_ref_store_init,
@@ -3445,5 +3556,7 @@ struct ref_storage_be refs_be_files = {
 	.reflog_exists = files_reflog_exists,
 	.create_reflog = files_create_reflog,
 	.delete_reflog = files_delete_reflog,
-	.reflog_expire = files_reflog_expire
+	.reflog_expire = files_reflog_expire,
+
+	.fsck = files_fsck,
 };
