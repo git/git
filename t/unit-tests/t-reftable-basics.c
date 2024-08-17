@@ -145,7 +145,7 @@ static void test_u16_roundtrip(void)
 	check_int(in, ==, out);
 }
 
-int cmd_main(int argc, const char *argv[])
+int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(test_common_prefix(), "common_prefix_size works");
 	TEST(test_parse_names_normal(), "parse_names works for basic input");

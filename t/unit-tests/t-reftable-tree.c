@@ -75,7 +75,7 @@ static void t_infix_walk(void)
 	tree_free(root);
 }
 
-int cmd_main(int argc, const char *argv[])
+int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_tree_search(), "tree_search works");
 	TEST(t_infix_walk(), "infix_walk works");

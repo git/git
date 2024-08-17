@@ -227,7 +227,7 @@ static void t_detach(void)
 	free(detached);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	TEST(t_static_init(), "static initialization");
 	TEST(t_dynamic_init(), "dynamic initialization");

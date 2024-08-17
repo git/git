@@ -38,7 +38,7 @@ static void check_hash_data(const void *data, size_t data_length,
 		     "SHA1 and SHA256 (%s) works", #literal); \
 	} while (0)
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	struct strbuf aaaaaaaaaa_100000 = STRBUF_INIT;
 	struct strbuf alphabet_100000 = STRBUF_INIT;

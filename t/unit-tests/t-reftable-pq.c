@@ -142,7 +142,7 @@ static void t_merged_iter_pqueue_top(void)
 	merged_iter_pqueue_release(&pq);
 }
 
-int cmd_main(int argc, const char *argv[])
+int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_pq_record(), "pq works with record-based comparison");
 	TEST(t_pq_index(), "pq works with index-based comparison");
