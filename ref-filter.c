@@ -742,8 +742,7 @@ static int person_name_atom_parser(struct ref_format *format UNUSED,
 	return 0;
 }
 
-static int email_atom_option_parser(struct used_atom *atom,
-				    const char **arg, struct strbuf *err)
+static int email_atom_option_parser(const char **arg)
 {
 	if (!*arg)
 		return EO_RAW;
@@ -761,7 +760,7 @@ static int person_email_atom_parser(struct ref_format *format UNUSED,
 				    const char *arg, struct strbuf *err)
 {
 	for (;;) {
-		int opt = email_atom_option_parser(atom, &arg, err);
+		int opt = email_atom_option_parser(&arg);
 		const char *bad_arg = arg;
 
 		if (opt < 0)
