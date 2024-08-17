@@ -201,17 +201,19 @@ int iterator_next(struct reftable_iterator *it, struct reftable_record *rec)
 	return it->ops->next(it->iter_arg, rec);
 }
 
-static int empty_iterator_seek(void *arg, struct reftable_record *want)
+static int empty_iterator_seek(void *arg UNUSED,
+			       struct reftable_record *want UNUSED)
 {
 	return 0;
 }
 
-static int empty_iterator_next(void *arg, struct reftable_record *rec)
+static int empty_iterator_next(void *arg UNUSED,
+			       struct reftable_record *rec UNUSED)
 {
 	return 1;
 }
 
-static void empty_iterator_close(void *arg)
+static void empty_iterator_close(void *arg UNUSED)
 {
 }
 

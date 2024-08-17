@@ -127,7 +127,8 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 	return 0;
 }
 
-static int indexed_table_ref_iter_seek(void *p, struct reftable_record *want)
+static int indexed_table_ref_iter_seek(void *p UNUSED,
+				       struct reftable_record *want UNUSED)
 {
 	BUG("seeking indexed table is not supported");
 	return -1;

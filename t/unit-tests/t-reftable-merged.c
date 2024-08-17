@@ -22,7 +22,7 @@ static ssize_t strbuf_add_void(void *b, const void *data, const size_t sz)
 	return sz;
 }
 
-static int noop_flush(void *arg)
+static int noop_flush(void *arg UNUSED)
 {
 	return 0;
 }

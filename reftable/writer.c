@@ -544,7 +544,7 @@ static void write_object_record(void *void_arg, void *key)
 done:;
 }
 
-static void object_record_free(void *void_arg, void *key)
+static void object_record_free(void *void_arg UNUSED, void *key)
 {
 	struct obj_index_tree_node *entry = key;
 
