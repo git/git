@@ -70,7 +70,7 @@ static void t_empty(void)
 	; /* empty */
 }
 
-int cmd__example_tap(int argc, const char **argv)
+int cmd__example_tap(int argc UNUSED, const char **argv UNUSED)
 {
 	test_res = TEST(check_res = check_int(1, ==, 1), "passing test");
 	TEST(t_res(1), "passing test and assertion return 1");

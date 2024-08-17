@@ -138,7 +138,7 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
  *
  * perfhashmap method rounds -> test hashmap.[ch] performance
  */
-int cmd__hashmap(int argc, const char **argv)
+int cmd__hashmap(int argc UNUSED, const char **argv UNUSED)
 {
 	struct string_list parts = STRING_LIST_INIT_NODUP;
 	struct strbuf line = STRBUF_INIT;
