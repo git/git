@@ -951,7 +951,7 @@ static void test_corrupt_table(void)
 	strbuf_release(&buf);
 }
 
-int readwrite_test_main(int argc, const char *argv[])
+int readwrite_test_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	RUN_TEST(test_log_zlib_corruption);
 	RUN_TEST(test_corrupt_table);

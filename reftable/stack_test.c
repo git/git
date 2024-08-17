@@ -1084,7 +1084,7 @@ static void test_reftable_stack_compaction_concurrent_clean(void)
 	clear_dir(dir);
 }
 
-int stack_test_main(int argc, const char *argv[])
+int stack_test_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	RUN_TEST(test_empty_add);
 	RUN_TEST(test_read_file);
