@@ -737,7 +737,7 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 
 	stop_progress(&writer->progress);
 
-	select_pseudo_merges(writer, indexed_commits, indexed_commits_nr);
+	select_pseudo_merges(writer);
 }
 
 

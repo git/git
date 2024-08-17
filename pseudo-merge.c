@@ -425,8 +425,7 @@ static void sort_pseudo_merge_matches(struct pseudo_merge_matches *matches)
 	QSORT(matches->unstable, matches->unstable_nr, commit_date_cmp);
 }
 
-void select_pseudo_merges(struct bitmap_writer *writer,
-			  struct commit **commits, size_t commits_nr)
+void select_pseudo_merges(struct bitmap_writer *writer)
 {
 	struct progress *progress = NULL;
 	uint32_t i;

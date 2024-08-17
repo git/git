@@ -95,8 +95,7 @@ struct pseudo_merge_commit_idx {
  *
  * Optionally shows a progress meter.
  */
-void select_pseudo_merges(struct bitmap_writer *writer,
-			  struct commit **commits, size_t commits_nr);
+void select_pseudo_merges(struct bitmap_writer *writer);
 
 /*
  * Represents a serialized view of a file containing pseudo-merge(s)
