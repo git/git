@@ -400,7 +400,8 @@ static int delete_enlistment(struct strbuf *enlistment)
  * Dummy implementation; Using `get_version_info()` would cause a link error
  * without this.
  */
-void load_builtin_commands(const char *prefix, struct cmdnames *cmds)
+void load_builtin_commands(const char *prefix UNUSED,
+			   struct cmdnames *cmds UNUSED)
 {
 	die("not implemented");
 }
