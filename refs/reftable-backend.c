@@ -2309,8 +2309,8 @@ done:
 	return ret;
 }
 
-static int reftable_be_fsck(struct ref_store *ref_store,
-			    struct fsck_options *o)
+static int reftable_be_fsck(struct ref_store *ref_store UNUSED,
+			    struct fsck_options *o UNUSED)
 {
 	return 0;
 }
