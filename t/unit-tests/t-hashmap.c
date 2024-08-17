@@ -322,7 +322,8 @@ static void t_alloc(struct hashmap *map, unsigned int ignore_case)
 	free(removed);
 }
 
-static void t_intern(struct hashmap *map, unsigned int ignore_case)
+static void t_intern(struct hashmap *map UNUSED,
+		     unsigned int ignore_case UNUSED)
 {
 	const char *values[] = { "value1", "Value1", "value2", "value2" };
 
