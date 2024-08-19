@@ -15,6 +15,23 @@
 		      TEST_LOCATION(),  __VA_ARGS__)
 
 /*
+ * Run a test unless test_skip_all() has been called.  Acts like a
+ * conditional; the test body is expected as a statement or block after
+ * the closing parenthesis.  The description for each test should be
+ * unique.  E.g.:
+ *
+ *  if_test ("something else %d %d", arg1, arg2) {
+ *          prepare();
+ *          test_something_else(arg1, arg2);
+ *          cleanup();
+ *  }
+ */
+#define if_test(...)							\
+	if (test__run_begin() ?						\
+	    (test__run_end(0, TEST_LOCATION(),  __VA_ARGS__), 0) :	\
+	    (test__run_describe(TEST_LOCATION(),  __VA_ARGS__), 1))
+
+/*
  * Print a test plan, should be called before any tests. If the number
  * of tests is not known in advance test_done() will automatically
  * print a plan at the end of the test program.
@@ -153,6 +170,9 @@ union test__tmp {
 };
 
 extern union test__tmp test__tmp[2];
+
+__attribute__((format (printf, 2, 3)))
+void test__run_describe(const char *, const char *, ...);
 
 int test__run_begin(void);
 __attribute__((format (printf, 3, 4)))

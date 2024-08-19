@@ -4,15 +4,13 @@
 	size_t len = ARRAY_SIZE(string) - 1 + \
 		BUILD_ASSERT_OR_ZERO(ARRAY_SIZE(string) > 0) + \
 		BUILD_ASSERT_OR_ZERO(sizeof(string[0]) == sizeof(char)); \
-	int skip = test__run_begin(); \
-	if (!skip) { \
+	if_test (#class " works") { \
 		for (int i = 0; i < 256; i++) { \
 			if (!check_int(class(i), ==, !!memchr(string, i, len)))\
 				test_msg("      i: 0x%02x", i); \
 		} \
 		check(!class(EOF)); \
 	} \
-	test__run_end(!skip, TEST_LOCATION(), #class " works"); \
 } while (0)
 
 #define DIGIT "0123456789"

@@ -16,6 +16,8 @@ static struct {
 	unsigned running :1;
 	unsigned skip_all :1;
 	unsigned todo :1;
+	char location[100];
+	char description[100];
 } ctx = {
 	.lazy_plan = 1,
 	.result = RESULT_NONE,
@@ -125,6 +127,8 @@ void test_plan(int count)
 
 int test_done(void)
 {
+	if (ctx.running && ctx.location[0] && ctx.description[0])
+		test__run_end(1, ctx.location, "%s", ctx.description);
 	assert(!ctx.running);
 
 	if (ctx.lazy_plan)
@@ -167,13 +171,38 @@ void test_skip_all(const char *format, ...)
 	va_end(ap);
 }
 
+void test__run_describe(const char *location, const char *format, ...)
+{
+	va_list ap;
+	int len;
+
+	assert(ctx.running);
+	assert(!ctx.location[0]);
+	assert(!ctx.description[0]);
+
+	xsnprintf(ctx.location, sizeof(ctx.location), "%s",
+		  make_relative(location));
+
+	va_start(ap, format);
+	len = vsnprintf(ctx.description, sizeof(ctx.description), format, ap);
+	va_end(ap);
+	if (len < 0)
+		die("unable to format message: %s", format);
+	if (len >= sizeof(ctx.description))
+		BUG("ctx.description too small to format %s", format);
+}
+
 int test__run_begin(void)
 {
+	if (ctx.running && ctx.location[0] && ctx.description[0])
+		test__run_end(1, ctx.location, "%s", ctx.description);
 	assert(!ctx.running);
 
 	ctx.count++;
 	ctx.result = RESULT_NONE;
 	ctx.running = 1;
+	ctx.location[0] = '\0';
+	ctx.description[0] = '\0';
 
 	return ctx.skip_all;
 }
@@ -264,7 +293,12 @@ static void test_todo(void)
 
 int test_assert(const char *location, const char *check, int ok)
 {
-	assert(ctx.running);
+	if (!ctx.running) {
+		test_msg("BUG: check outside of test at %s",
+			 make_relative(location));
+		ctx.failed = 1;
+		return 0;
+	}
 
 	if (ctx.result == RESULT_SKIP) {
 		test_msg("skipping check '%s' at %s", check,
