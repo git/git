@@ -975,4 +975,20 @@ test_expect_success '--detach causes maintenance to run in background' '
 	)
 '
 
+test_expect_success 'repacking loose objects is quiet' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit something &&
+		git config set maintenance.gc.enabled false &&
+		git config set maintenance.loose-objects.enabled true &&
+		git config set maintenance.loose-objects.auto 1 &&
+
+		git maintenance run --quiet >out 2>&1 &&
+		test_must_be_empty out
+	)
+'
+
 test_done

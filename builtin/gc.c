@@ -1159,6 +1159,12 @@ static int pack_loose(struct maintenance_run_opts *opts)
 
 	pack_proc.in = -1;
 
+	/*
+	 * git-pack-objects(1) ends up writing the pack hash to stdout, which
+	 * we do not care for.
+	 */
+	pack_proc.out = -1;
+
 	if (start_command(&pack_proc)) {
 		error(_("failed to start 'git pack-objects' process"));
 		return 1;
