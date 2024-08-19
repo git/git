@@ -967,8 +967,13 @@ test_expect_success '--detach causes maintenance to run in background' '
 		git config set maintenance.loose-objects.auto 1 &&
 		git config set maintenance.incremental-repack.enabled true &&
 
-		git maintenance run --detach >out 2>&1 &&
-		test_must_be_empty out
+		# The extra file descriptor gets inherited to the child
+		# process, and by reading stdout we thus essentially wait for
+		# that descriptor to get closed, which indicates that the child
+		# is done, too.
+		output=$(git maintenance run --detach 2>&1 9>&1) &&
+		printf "%s" "$output" >output &&
+		test_must_be_empty output
 	)
 '
 
