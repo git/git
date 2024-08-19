@@ -124,14 +124,14 @@ test_expect_success TTY 'push --no-progress suppresses progress' '
 test_expect_success TTY 'quiet push' '
 	ensure_fresh_upstream &&
 
-	test_terminal git push --quiet --no-progress upstream main 2>&1 | tee output &&
+	test_terminal git push --quiet --no-progress upstream main >output 2>&1 &&
 	test_must_be_empty output
 '
 
 test_expect_success TTY 'quiet push -u' '
 	ensure_fresh_upstream &&
 
-	test_terminal git push --quiet -u --no-progress upstream main 2>&1 | tee output &&
+	test_terminal git push --quiet -u --no-progress upstream main >output 2>&1 &&
 	test_must_be_empty output
 '
 
