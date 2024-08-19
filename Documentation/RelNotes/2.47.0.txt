@@ -67,6 +67,12 @@ Performance, Internal Implementation, Development Support etc.
    the users of ref iterators, allowing for-each-ref and friends to
    avoid an extra ref_resolve_* API call per a symbolic ref.
 
+ * Unit-test framework has learned a simple control structure to allow
+   embedding test statements in-line instead of having to create a new
+   function to contain them.
+
+ * Incremental updates of multi-pack index files is getting worked on.
+
 
 Fixes since v2.46
 -----------------
@@ -146,3 +152,4 @@ Fixes since v2.46
    (merge 0c4d5aa22d rs/use-decimal-width later to maint).
    (merge 67be8c4de5 jc/document-use-of-local later to maint).
    (merge 098be29f5b rs/t-example-simplify later to maint).
+   (merge 0d66f601a9 jc/tests-no-useless-tee later to maint).
