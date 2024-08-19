@@ -947,11 +947,9 @@ test_expect_success '--no-detach causes maintenance to not run in background' '
 		git config set maintenance.loose-objects.auto 1 &&
 		git config set maintenance.incremental-repack.enabled true &&
 
-		# We have no better way to check whether or not the task ran in
-		# the background than to verify whether it output anything. The
-		# next testcase checks the reverse, making this somewhat safer.
-		git maintenance run --no-detach >out 2>&1 &&
-		test_line_count = 1 out
+		GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+			git maintenance run --no-detach >out 2>&1 &&
+		! test_region maintenance detach trace.txt
 	)
 '
 
@@ -971,9 +969,9 @@ test_expect_success '--detach causes maintenance to run in background' '
 		# process, and by reading stdout we thus essentially wait for
 		# that descriptor to get closed, which indicates that the child
 		# is done, too.
-		output=$(git maintenance run --detach 2>&1 9>&1) &&
-		printf "%s" "$output" >output &&
-		test_must_be_empty output
+		does_not_matter=$(GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+			git maintenance run --detach 9>&1) &&
+		test_region maintenance detach trace.txt
 	)
 '
 
