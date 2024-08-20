@@ -116,7 +116,7 @@ printf -v __git_printf_supports_v -- '%s' yes >/dev/null 2>&1
 __git_ps1_show_upstream ()
 {
 	local key value
-	local svn_remote svn_url_pattern count n
+	local svn_remote svn_url_pattern="" count n
 	local upstream_type=git legacy="" verbose="" name=""
 
 	svn_remote=()
