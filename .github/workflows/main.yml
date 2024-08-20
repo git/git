@@ -190,7 +190,7 @@ jobs:
         Expand-Archive compat.zip -DestinationPath . -Force
         Remove-Item compat.zip
     - name: add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: copy dlls to root
       shell: cmd
       run: compat\vcbuild\vcpkg_copy_dlls.bat release
