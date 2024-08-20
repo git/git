@@ -264,9 +264,7 @@ static int open_multi_pack_index_chain(const char *chain_file,
 }
 
 static int add_midx_to_chain(struct multi_pack_index *midx,
-			     struct multi_pack_index *midx_chain,
-			     struct object_id *oids,
-			     int n)
+			     struct multi_pack_index *midx_chain)
 {
 	if (midx_chain) {
 		if (unsigned_add_overflows(midx_chain->num_packs,
@@ -300,21 +298,20 @@ static struct multi_pack_index *load_midx_chain_fd_st(const char *object_dir,
 {
 	struct multi_pack_index *midx_chain = NULL;
 	struct strbuf buf = STRBUF_INIT;
-	struct object_id *layers = NULL;
 	int valid = 1;
 	uint32_t i, count;
 	FILE *fp = xfdopen(fd, "r");
 
 	count = st->st_size / (the_hash_algo->hexsz + 1);
-	CALLOC_ARRAY(layers, count);
 
 	for (i = 0; i < count; i++) {
 		struct multi_pack_index *m;
+		struct object_id layer;
 
 		if (strbuf_getline_lf(&buf, fp) == EOF)
 			break;
 
-		if (get_oid_hex(buf.buf, &layers[i])) {
+		if (get_oid_hex(buf.buf, &layer)) {
 			warning(_("invalid multi-pack-index chain: line '%s' "
 				  "not a hash"),
 				buf.buf);
@@ -325,12 +322,12 @@ static struct multi_pack_index *load_midx_chain_fd_st(const char *object_dir,
 		valid = 0;
 
 		strbuf_reset(&buf);
-		get_split_midx_filename_ext(&buf, object_dir, layers[i].hash,
+		get_split_midx_filename_ext(&buf, object_dir, layer.hash,
 					    MIDX_EXT_MIDX);
 		m = load_multi_pack_index_one(object_dir, buf.buf, local);
 
 		if (m) {
-			if (add_midx_to_chain(m, midx_chain, layers, i)) {
+			if (add_midx_to_chain(m, midx_chain)) {
 				midx_chain = m;
 				valid = 1;
 			} else {
@@ -343,7 +340,6 @@ static struct multi_pack_index *load_midx_chain_fd_st(const char *object_dir,
 		}
 	}
 
-	free(layers);
 	fclose(fp);
 	strbuf_release(&buf);
 
