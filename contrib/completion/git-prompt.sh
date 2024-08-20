@@ -126,7 +126,7 @@ __git_ps1_show_upstream ()
 		case "$key" in
 		bash.showupstream)
 			GIT_PS1_SHOWUPSTREAM="$value"
-			if [[ -z "${GIT_PS1_SHOWUPSTREAM}" ]]; then
+			if [ -z "${GIT_PS1_SHOWUPSTREAM}" ]; then
 				p=""
 				return
 			fi
@@ -187,14 +187,14 @@ __git_ps1_show_upstream ()
 				upstream_type=${svn_upstream#/}
 				;;
 			esac
-		elif [[ "svn+git" = "$upstream_type" ]]; then
+		elif [ "svn+git" = "$upstream_type" ]; then
 			upstream_type="@{upstream}"
 		fi
 		;;
 	esac
 
 	# Find how many commits we are ahead/behind our upstream
-	if [[ -z "$legacy" ]]; then
+	if [ -z "$legacy" ]; then
 		count="$(git rev-list --count --left-right \
 				"$upstream_type"...HEAD 2>/dev/null)"
 	else
@@ -206,8 +206,8 @@ __git_ps1_show_upstream ()
 			for commit in $commits
 			do
 				case "$commit" in
-				"<"*) ((behind++)) ;;
-				*)    ((ahead++))  ;;
+				"<"*) behind=$((behind+1)) ;;
+				*)    ahead=$((ahead+1))   ;;
 				esac
 			done
 			count="$behind	$ahead"
@@ -217,7 +217,7 @@ __git_ps1_show_upstream ()
 	fi
 
 	# calculate the result
-	if [[ -z "$verbose" ]]; then
+	if [ -z "$verbose" ]; then
 		case "$count" in
 		"") # no upstream
 			p="" ;;
@@ -243,7 +243,7 @@ __git_ps1_show_upstream ()
 		*)	    # diverged from upstream
 			upstream="|u+${count#*	}-${count%	*}" ;;
 		esac
-		if [[ -n "$count" && -n "$name" ]]; then
+		if [ -n "$count" ] && [ -n "$name" ]; then
 			__git_ps1_upstream_name=$(git rev-parse \
 				--abbrev-ref "$upstream_type" 2>/dev/null)
 			if [ $pcmode = yes ] && [ $ps1_expanded = yes ]; then
@@ -265,7 +265,7 @@ __git_ps1_show_upstream ()
 # their own color.
 __git_ps1_colorize_gitstring ()
 {
-	if [[ -n ${ZSH_VERSION-} ]]; then
+	if [ -n "${ZSH_VERSION-}" ]; then
 		local c_red='%F{red}'
 		local c_green='%F{green}'
 		local c_lblue='%F{blue}'
@@ -417,7 +417,7 @@ __git_ps1 ()
 	# incorrect.)
 	#
 	local ps1_expanded=yes
-	[ -z "${ZSH_VERSION-}" ] || [[ -o PROMPT_SUBST ]] || ps1_expanded=no
+	[ -z "${ZSH_VERSION-}" ] || eval '[[ -o PROMPT_SUBST ]]' || ps1_expanded=no
 	[ -z "${BASH_VERSION-}" ] || shopt -q promptvars || ps1_expanded=no
 
 	local repo_info rev_parse_exit_code
@@ -502,11 +502,13 @@ __git_ps1 ()
 					return $exit
 				fi
 
-				if [[ $head == "ref: "* ]]; then
+				case $head in
+				"ref: "*)
 					head="${head#ref: }"
-				else
+					;;
+				*)
 					head=""
-				fi
+				esac
 				;;
 			*)
 				head="$(git symbolic-ref HEAD 2>/dev/null)"
@@ -542,8 +544,8 @@ __git_ps1 ()
 	fi
 
 	local conflict="" # state indicator for unresolved conflicts
-	if [[ "${GIT_PS1_SHOWCONFLICTSTATE-}" == "yes" ]] &&
-	   [[ $(git ls-files --unmerged 2>/dev/null) ]]; then
+	if [ "${GIT_PS1_SHOWCONFLICTSTATE-}" = "yes" ] &&
+	   [ "$(git ls-files --unmerged 2>/dev/null)" ]; then
 		conflict="|CONFLICT"
 	fi
 
