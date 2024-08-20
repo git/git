@@ -297,6 +297,8 @@ cl_fs_cleanup(void)
 {
 #ifdef CLAR_FIXTURE_PATH
 	fs_rm(fixture_path(_clar_path, "*"));
+#else
+	((void)fs_copy); /* unused */
 #endif
 }
 
