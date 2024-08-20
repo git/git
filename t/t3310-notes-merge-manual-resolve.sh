@@ -5,6 +5,7 @@
 
 test_description='Test notes merging with manual conflict resolution'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Set up a notes merge scenario with different kinds of conflicts

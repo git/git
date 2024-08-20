@@ -6,6 +6,7 @@ test_description='git fsck random collection of tests
 * (main) A
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
