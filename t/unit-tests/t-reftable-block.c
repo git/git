@@ -44,10 +44,7 @@ static void t_block_read_write(void)
 	check_int(ret, ==, REFTABLE_API_ERROR);
 
 	for (i = 0; i < N; i++) {
-		char name[100];
-		snprintf(name, sizeof(name), "branch%02"PRIuMAX, (uintmax_t)i);
-
-		rec.u.ref.refname = xstrdup(name);
+		rec.u.ref.refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
 		rec.u.ref.value_type = REFTABLE_REF_VAL1;
 		memset(rec.u.ref.value.val1, i, GIT_SHA1_RAWSZ);
 
