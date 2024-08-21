@@ -207,12 +207,13 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix) 
 			builtin_bundle_unbundle_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
+	if (!startup_info->have_repository)
+		die(_("Need a repository to unbundle."));
+
 	if ((bundle_fd = open_bundle(bundle_file, &header, NULL)) < 0) {
 		ret = 1;
 		goto cleanup;
 	}
-	if (!startup_info->have_repository)
-		die(_("Need a repository to unbundle."));
 	if (progress)
 		strvec_pushl(&extra_index_pack_args, "-v", "--progress-title",
 			     _("Unbundling objects"), NULL);
