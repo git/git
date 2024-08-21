@@ -78,11 +78,8 @@ static void t_block_read_write(void)
 		j++;
 	}
 
-	reftable_record_release(&rec);
-	block_iter_close(&it);
-
 	for (i = 0; i < N; i++) {
-		struct block_iter it = BLOCK_ITER_INIT;
+		block_iter_reset(&it);
 		reftable_record_key(&recs[i], &want);
 
 		ret = block_iter_seek_key(&it, &br, &want);
@@ -100,11 +97,10 @@ static void t_block_read_write(void)
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
 		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, GIT_SHA1_RAWSZ));
-
-		block_iter_close(&it);
 	}
 
 	block_reader_release(&br);
+	block_iter_close(&it);
 	reftable_record_release(&rec);
 	reftable_block_done(&br.block);
 	strbuf_release(&want);
