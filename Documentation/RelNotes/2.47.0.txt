@@ -27,6 +27,9 @@ UI, Workflows & Features
 
  * Support to specify ref backend for submodules has been enhanced.
 
+ * "git svn" has been taught about svn:global-ignores property
+   recent versions of Subversion has.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -142,6 +145,10 @@ Fixes since v2.46
    crashed, forgetting to prepare a temporary object store needed.
    (merge a77554ea09 xx/diff-tree-remerge-diff-fix later to maint).
 
+ * "git bundle unbundle" outside a repository triggered a BUG()
+   unnecessarily, which has been corrected.
+   (merge 96a9a3e42e ps/bundle-outside-repo-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
    (merge 7c7516b8db jc/jl-git-no-advice-fix later to maint).
@@ -153,3 +160,5 @@ Fixes since v2.46
    (merge 67be8c4de5 jc/document-use-of-local later to maint).
    (merge 098be29f5b rs/t-example-simplify later to maint).
    (merge 0d66f601a9 jc/tests-no-useless-tee later to maint).
+   (merge 170cdfc5a4 jc/grammo-fixes later to maint).
+   (merge 983555a1f2 jc/how-to-maintain-updates later to maint).
