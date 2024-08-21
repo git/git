@@ -219,11 +219,11 @@ my %cmd = (
 	                "Set an SVN repository to a git tree-ish",
 			{ 'stdin' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'create-ignore' => [ \&cmd_create_ignore,
-			     'Create a .gitignore per svn:ignore',
+			     "Create a .gitignore per directory with SVN ignore properties",
 			     { 'revision|r=i' => \$_revision
 			     } ],
 	'mkdirs' => [ \&cmd_mkdirs ,
-	              "recreate empty directories after a checkout",
+	              "Recreate empty directories after a checkout",
 	              { 'revision|r=i' => \$_revision } ],
         'propget' => [ \&cmd_propget,
 		       'Print the value of a property on a file or directory',
@@ -234,7 +234,7 @@ my %cmd = (
         'proplist' => [ \&cmd_proplist,
 		       'List all properties of a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
-	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
+	'show-ignore' => [ \&cmd_show_ignore, "Show .gitignore patterns from SVN ignore properties",
 			{ 'revision|r=i' => \$_revision
 			} ],
 	'show-externals' => [ \&cmd_show_externals, "Show svn:externals listings",
@@ -1279,12 +1279,20 @@ sub cmd_show_ignore {
 	$gs->prop_walk($gs->path, $r, sub {
 		my ($gs, $path, $props) = @_;
 		print STDOUT "\n# $path\n";
-		my $s = $props->{'svn:ignore'} or return;
-		$s =~ s/[\r\n]+/\n/g;
-		$s =~ s/^\n+//;
-		chomp $s;
-		$s =~ s#^#$path#gm;
-		print STDOUT "$s\n";
+		if (my $s = $props->{'svn:ignore'}) {
+			$s =~ s/[\r\n]+/\n/g;
+			$s =~ s/^\n+//;
+			chomp $s;
+			$s =~ s#^#$path#gm;
+			print STDOUT "$s\n";
+		}
+		if (my $s = $props->{'svn:global-ignores'}) {
+			$s =~ s/[\r\n]+/\n/g;
+			$s =~ s/^\n+//;
+			chomp $s;
+			$s =~ s#^#$path**/#gm;
+			print STDOUT "$s\n";
+		}
 	});
 }
 
@@ -1315,16 +1323,25 @@ sub cmd_create_ignore {
 		# which git won't track
 		mkpath([$path]) unless -d $path;
 		my $ignore = $path . '.gitignore';
-		my $s = $props->{'svn:ignore'} or return;
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
-		$s =~ s/[\r\n]+/\n/g;
-		$s =~ s/^\n+//;
-		chomp $s;
-		# Prefix all patterns so that the ignore doesn't apply
-		# to sub-directories.
-		$s =~ s#^#/#gm;
-		print GITIGNORE "$s\n";
+		if (my $s = $props->{'svn:ignore'}) {
+			$s =~ s/[\r\n]+/\n/g;
+			$s =~ s/^\n+//;
+			chomp $s;
+			# Prefix all patterns so that the ignore doesn't apply
+			# to sub-directories.
+			$s =~ s#^#/#gm;
+			print GITIGNORE "$s\n";
+		}
+		if (my $s = $props->{'svn:global-ignores'}) {
+			$s =~ s/[\r\n]+/\n/g;
+			$s =~ s/^\n+//;
+			chomp $s;
+			# Global ignores apply to sub-directories, so they are
+			# not prefixed.
+			print GITIGNORE "$s\n";
+		}
 		close(GITIGNORE)
 		  or fatal("Failed to close `$ignore': $!");
 		command_noisy('add', '-f', $ignore);
