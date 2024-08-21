@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2024, #07; Mon, 19)
-X-master-at: bb9c16bd4f1a9a00799e10c81ee6506cf468c0c7
-X-next-at: 58194ef3dc4e17ce4fbb862d7d4cc852f9f686ad
+Subject: What's cooking in git.git (Aug 2024, #08; Wed, 21)
+X-master-at: 3a7362eb9fad0c4838f5cfaa95ed3c51a4c18d93
+X-next-at: 59c65b2a6766646d1baa3a7f717e8b0c1a3467f6
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2024, #07; Mon, 19)
+What's cooking in git.git (Aug 2024, #08; Wed, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,12 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-A handful of "safe" topics that have been in 'master' are merged on
-top of v2.46.0 on the 'maint' branch, which may become part of Git
-2.46.1 if we decide that we need such an maintenance update.  The
-fixes currently there are small enough that the do not warrant an
-immediate release of such a maintenance update, though.
 
 Among the topics that were sent to the list but not in 'next', there
 are a few (conceptual) biggies like the Rust binding, clar unit test
@@ -58,9 +52,166 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ag/git-svn-global-ignores (2024-08-14) 3 commits
+  (merged to 'next' on 2024-08-15 at b8332fe306)
+ + git-svn: mention `svn:global-ignores` in help+docs
+  (merged to 'next' on 2024-08-08 at 3ba5e164a6)
+ + git-svn: use `svn:global-ignores` to create .gitignore
+ + git-svn: add public property `svn:global-ignores`
+
+ "git svn" has been taught about svn:global-ignores property
+ recent versions of Subversion has.
+ source: <pull.1747.v2.git.git.1721335657.gitgitgadget@gmail.com>
+ source: <pull.1766.v2.git.git.1723578946962.gitgitgadget@gmail.com>
+
+
+* jc/grammo-fixes (2024-08-09) 2 commits
+  (merged to 'next' on 2024-08-15 at 111d5f5c13)
+ + doc: grammofix in git-diff-tree
+ + tutorial: grammofix
+
+ Doc updates.
+ source: <xmqqed6xehzv.fsf@gitster.g>
+
+
+* jc/how-to-maintain-updates (2024-08-14) 1 commit
+  (merged to 'next' on 2024-08-15 at 20ebc08e74)
+ + howto-maintain: mention preformatted docs
+
+ Doc updates.
+ source: <xmqqikw2wvup.fsf@gitster.g>
+
+
+* jk/apply-patch-mode-check-fix (2024-08-15) 1 commit
+  (merged to 'next' on 2024-08-15 at 8e077b7875)
+ + t4129: fix racy index when calling chmod after git-add
+
+ Test fix.
+ source: <20240815153007.GA1477220@coredump.intra.peff.net>
+
+
+* jk/midx-unused-fix (2024-08-13) 1 commit
+  (merged to 'next' on 2024-08-14 at 2ec51e52e1)
+ + midx: drop unused parameters from add_midx_to_chain()
+
+ Code clean-up in the base topic.
+ source: <20240813050216.GA394231@coredump.intra.peff.net>
+
+
+* js/ci-win-vs-build (2024-08-20) 2 commits
+ + ci(win+VS): download the vcpkg artifacts using a dedicated GitHub Action
+ + ci: bump microsoft/setup-msbuild from v1 to v2
+
+ Sync with Windows+VS build jobs used at CI.
+ source: <pull.1775.git.1724164270.gitgitgadget@gmail.com>
+
+
+* ps/bundle-outside-repo-fix (2024-08-13) 2 commits
+  (merged to 'next' on 2024-08-15 at 3b9ea8a38a)
+ + bundle: default to SHA1 when reading bundle headers
+ + builtin/bundle: have unbundle check for repo before opening its bundle
+
+ "git bundle unbundle" outside a repository triggered a BUG()
+ unnecessarily, which has been corrected.
+ source: <cover.1723540604.git.ps@pks.im>
+
+--------------------------------------------------
 [New Topics]
 
-* jk/mark-unused-parameters (2024-08-17) 15 commits
+* jk/send-email-mailmap (2024-08-20) 3 commits
+ - send-email: add mailmap support via sendemail.mailmap and --mailmap
+ - check-mailmap: add options for additional mailmap sources
+ - check-mailmap: accept "user@host" contacts
+
+ "git send-email" learned "--mailmap" option to allow rewriting the
+ recipient addresses.
+
+ Expecting a reroll.
+ cf. <f56b68b8-b5cb-4930-9139-da28bfae2976@intel.com>
+ source: <20240819-jk-send-email-mailmap-support-v2-0-d212c3f9e505@gmail.com>
+
+
+* ps/leakfixes-part-5 (2024-08-20) 21 commits
+ - transport: fix leaking negotiation tips
+ - transport: fix leaking arguments when fetching from bundle
+ - builtin/fetch: fix leaking transaction with `--atomic`
+ - remote: fix leaking peer ref when expanding refmap
+ - remote: fix leaks when matching refspecs
+ - remote: fix leaking config strings
+ - builtin/fetch-pack: fix leaking refs
+ - sideband: fix leaks when configuring sideband colors
+ - builtin/send-pack: fix leaking refspecs
+ - transport: fix leaking OID arrays in git:// transport data
+ - t/helper: fix leaking multi-pack-indices in "read-midx"
+ - builtin/repack: fix leaks when computing packs to repack
+ - midx-write: fix leaking hashfile on error cases
+ - builtin/archive: fix leaking `OPT_FILENAME()` value
+ - builtin/upload-archive: fix leaking args passed to `write_archive()`
+ - builtin/merge-tree: fix leaking `-X` strategy options
+ - pretty: fix leaking key/value separator buffer
+ - pretty: fix memory leaks when parsing pretty formats
+ - convert: fix leaks when resetting attributes
+ - mailinfo: fix leaking header data
+ - Merge branch 'ps/leakfixes-part-4' into ps/leakfixes-part-5
+ (this branch uses ps/leakfixes-part-4.)
+
+ Even more leak fixes.
+
+ Needs review.
+ source: <cover.1724159575.git.ps@pks.im>
+
+
+* sj/ref-contents-check (2024-08-20) 4 commits
+ - ref: add symlink ref consistency check for files backend
+ - ref: add symbolic ref content check for files backend
+ - ref: add regular ref content check for files backend
+ - fsck: introduce "FSCK_REF_REPORT_DEFAULT" macro
+
+ Plumb through extra checks in refs API to "git fsck".
+
+ Comments?
+ source: <ZsIMc6cJ-kzMzW_8@ArchLinux>
+
+
+* jc/coding-style-c-operator-with-spaces (2024-08-20) 1 commit
+  (merged to 'next' on 2024-08-21 at 36bbb9022a)
+ + CodingGuidelines: spaces around C operators
+
+ Write down whitespacing rules around C opeators.
+
+ Will merge to 'master'.
+ source: <xmqq7ccb6if8.fsf@gitster.g>
+
+
+* jc/mailinfo-header-cleanup (2024-08-20) 1 commit
+ - mailinfo: we parse fixed headers
+
+ Code clean-up.
+
+ On hold.
+ source: <xmqq1q2i6gw7.fsf@gitster.g>
+
+--------------------------------------------------
+[Stalled]
+
+* pp/add-parse-range-unit-test (2024-05-27) 1 commit
+ - apply: add unit tests for parse_range
+
+ A unit test for code that parses the hunk offset and length from a
+ patch fragment header as been added.
+
+ Expecting a reroll.
+ cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
+ source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* jk/mark-unused-parameters (2024-08-20) 16 commits
+  (merged to 'next' on 2024-08-20 at 610d16d751)
+ + t-hashmap: stop calling setup() for t_intern() test
   (merged to 'next' on 2024-08-19 at f85d6096c9)
  + scalar: mark unused parameters in dummy function
  + daemon: mark unused parameters in non-posix fallbacks
@@ -98,7 +249,7 @@ Release tarballs are available at:
  source: <20240817072621.GA1535666@coredump.intra.peff.net>
 
 
-* ps/maintenance-detach-fix-more (2024-08-19) 3 commits
+* ps/maintenance-detach-fix-more (2024-08-21) 3 commits
  - builtin/maintenance: fix loose objects task emitting pack hash
  - t7900: exercise detaching via trace2 regions
  - t7900: fix flaky test due to leaking background job
@@ -125,137 +276,29 @@ Release tarballs are available at:
  - reftable/blocksource: drop malloc block source
  (this branch uses ps/reftable-drop-generic.)
 
- source: <cover.1723640107.git.ps@pks.im>
+ The code path for compacting reftable files saw some bugfixes
+ against concurrent operation.
+
+ Needs review.
  source: <cover.1724080006.git.ps@pks.im>
 
---------------------------------------------------
-[Graduated to 'master']
 
-* jc/tests-no-useless-tee (2024-08-08) 1 commit
-  (merged to 'next' on 2024-08-12 at 188e777e16)
- + tests: drop use of 'tee' that hides exit status
-
- Test fixes.
- source: <xmqq4j7uhfvm.fsf@gitster.g>
-
-
-* ps/transport-leakfix-test-updates (2024-08-08) 1 commit
-  (merged to 'next' on 2024-08-12 at ee80dbc4f6)
- + transport: mark more tests leak-free
-
- Test updates.
- source: <ZrRV_HrUArsvRgn8@tanuki>
-
-
-* rs/unit-tests-test-run (2024-07-30) 6 commits
-  (merged to 'next' on 2024-08-12 at 9df4336877)
- + t-strvec: use if_test
- + t-reftable-basics: use if_test
- + t-ctype: use if_test
- + unit-tests: add if_test
- + unit-tests: show location of checks outside of tests
- + t0080: use here-doc test body
-
- Unit-test framework has learned a simple control structure to allow
- embedding test statements in-line instead of having to create a new
- function to contain them.
- source: <077a178e-eb30-45ff-b653-a514bfd33077@web.de>
-
-
-* sj/ref-fsck (2024-08-08) 9 commits
-  (merged to 'next' on 2024-08-09 at 3bde10da94)
- + fsck: add ref name check for files backend
- + files-backend: add unified interface for refs scanning
- + builtin/refs: add verify subcommand
- + refs: set up ref consistency check infrastructure
- + fsck: add refs report function
- + fsck: add a unified interface for reporting fsck messages
- + fsck: make "fsck_error" callback generic
- + fsck: rename objects-related fsck error functions
- + fsck: rename "skiplist" to "skip_oids"
-
- "git fsck" infrastructure has been taught to also check the sanity
- of the ref database, in addition to the object database.
- source: <ZrSqMmD-quQ18a9F@ArchLinux.localdomain>
-
-
-* tb/incremental-midx-part-1 (2024-08-06) 19 commits
-  (merged to 'next' on 2024-08-12 at 92ec55fd49)
- + midx: implement support for writing incremental MIDX chains
- + t/t5313-pack-bounds-checks.sh: prepare for sub-directories
- + t: retire 'GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP'
- + midx: implement verification support for incremental MIDXs
- + midx: support reading incremental MIDX chains
- + midx: teach `midx_fanout_add_midx_fanout()` about incremental MIDXs
- + midx: teach `midx_preferred_pack()` about incremental MIDXs
- + midx: teach `midx_contains_pack()` about incremental MIDXs
- + midx: remove unused `midx_locate_pack()`
- + midx: teach `fill_midx_entry()` about incremental MIDXs
- + midx: teach `nth_midxed_offset()` about incremental MIDXs
- + midx: teach `bsearch_midx()` about incremental MIDXs
- + midx: introduce `bsearch_one_midx()`
- + midx: teach `nth_bitmapped_pack()` about incremental MIDXs
- + midx: teach `nth_midxed_object_oid()` about incremental MIDXs
- + midx: teach `prepare_midx_pack()` about incremental MIDXs
- + midx: teach `nth_midxed_pack_int_id()` about incremental MIDXs
- + midx: add new fields for incremental MIDX chains
- + Documentation: describe incremental MIDX format
- (this branch is used by jk/midx-unused-fix and tb/incremental-midx-part-2.)
-
- Incremental updates of multi-pack index files.
- source: <cover.1722958595.git.me@ttaylorr.com>
-
---------------------------------------------------
-[Stalled]
-
-* pp/add-parse-range-unit-test (2024-05-27) 1 commit
- - apply: add unit tests for parse_range
-
- A unit test for code that parses the hunk offset and length from a
- patch fragment header as been added.
-
- Expecting a reroll.
- cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
- source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* jc/how-to-maintain-updates (2024-08-14) 1 commit
-  (merged to 'next' on 2024-08-15 at 20ebc08e74)
- + howto-maintain: mention preformatted docs
-
- Doc updates.
-
- Will merge to 'master'.
- source: <xmqqikw2wvup.fsf@gitster.g>
-
-
-* ah/git-prompt-portability (2024-08-17) 8 commits
- - git-prompt: support custom 0-width PS1 markers
- - git-prompt: ta-da! document usage in other shells
- - git-prompt: don't use shell $'...'
- - git-prompt: add some missing quotes
- - git-prompt: replace [[...]] with standard code
- - git-prompt: don't use shell arrays
- - git-prompt: fix uninitialized variable
- - git-prompt: use here-doc instead of here-string
+* ah/git-prompt-portability (2024-08-20) 8 commits
+  (merged to 'next' on 2024-08-21 at 14fa411577)
+ + git-prompt: support custom 0-width PS1 markers
+ + git-prompt: ta-da! document usage in other shells
+ + git-prompt: don't use shell $'...'
+ + git-prompt: add some missing quotes
+ + git-prompt: replace [[...]] with standard code
+ + git-prompt: don't use shell arrays
+ + git-prompt: fix uninitialized variable
+ + git-prompt: use here-doc instead of here-string
 
  The command line prompt support used to be littered with bash-isms,
  which has been corrected to work with more shells.
 
- Will merge to 'next'?
- source: <pull.1750.v3.git.git.1723886760.gitgitgadget@gmail.com>
-
-
-* jk/apply-patch-mode-check-fix (2024-08-15) 1 commit
-  (merged to 'next' on 2024-08-15 at 8e077b7875)
- + t4129: fix racy index when calling chmod after git-add
-
- Test fix.
-
  Will merge to 'master'.
- source: <20240815153007.GA1477220@coredump.intra.peff.net>
+ source: <pull.1750.v4.git.git.1724118513.gitgitgadget@gmail.com>
 
 
 * ps/reftable-drop-generic (2024-08-15) 16 commits
@@ -346,13 +389,13 @@ Release tarballs are available at:
  source: <cover.1723760847.git.me@ttaylorr.com>
 
 
-* mt/rebase-x-quiet (2024-08-16) 1 commit
- - rebase -x: don't print "Executing:" msgs with --quiet
+* mt/rebase-x-quiet (2024-08-21) 1 commit
+ - rebase --exec: respect --quiet
 
  "git rebase -x --quiet" was not quiet, which was corrected.
 
- Expecting a reroll.
- source: <be3c968b0d9085843cd9ce67e85aadfaaafa69c8.1723848510.git.matheus.tavb@gmail.com>
+ Will merge to 'next'?
+ source: <f105b34b8e6b33448f4d0ef07d51b7bbf4e71aaa.1724203912.git.matheus.tavb@gmail.com>
 
 
 * ps/stash-keep-untrack-empty-fix (2024-08-16) 1 commit
@@ -365,57 +408,37 @@ Release tarballs are available at:
  source: <6067675b5edf36e2eb28e98119a1c02d0a7ae670.1723804926.git.ps@pks.im>
 
 
-* gt/unit-test-urlmatch-normalization (2024-08-14) 1 commit
- - t: migrate t0110-urlmatch-normalization to the new framework
+* gt/unit-test-urlmatch-normalization (2024-08-20) 1 commit
+  (merged to 'next' on 2024-08-21 at 3efed1ed8d)
+ + t: migrate t0110-urlmatch-normalization to the new framework
 
  Another rewrite of test.
 
- Expecting a (hopefully small and final) reroll.
- cf. <CAP8UFD2-VbyK-ZecDKEvgKicWrVe=e=z6mH_xjmrf=a4ZAYd8w@mail.gmail.com>
- source: <20240814142057.94671-1-shyamthakkar001@gmail.com>
-
-
-* jk/midx-unused-fix (2024-08-13) 1 commit
-  (merged to 'next' on 2024-08-14 at 2ec51e52e1)
- + midx: drop unused parameters from add_midx_to_chain()
-
- Code clean-up in the base topic.
-
  Will merge to 'master'.
- source: <20240813050216.GA394231@coredump.intra.peff.net>
+ source: <20240820152008.21354-2-shyamthakkar001@gmail.com>
 
 
-* ps/bundle-outside-repo-fix (2024-08-13) 2 commits
-  (merged to 'next' on 2024-08-15 at 3b9ea8a38a)
- + bundle: default to SHA1 when reading bundle headers
- + builtin/bundle: have unbundle check for repo before opening its bundle
-
- "git bundle unbundle" outside a repository triggered a BUG()
- unnecessarily, which has been corrected.
-
- Will merge to 'master'.
- source: <cover.1723540604.git.ps@pks.im>
-
-
-* ps/clar-unit-test (2024-08-16) 9 commits
- . t/unit-tests: convert ctype tests to use clar
- . t/unit-tests: convert strvec tests to use clar
- . Makefile: wire up the clar unit testing framework
- . Makefile: do not use sparse on third-party sources
- . Makefile: make hdr-check depend on generated headers
- . Makefile: fix sparse dependency on GENERATED_H
- . t/clar: fix compatibility with NonStop
- . t: import the clar unit testing framework
- . t: do not pass GIT_TEST_OPTS to unit tests with prove
+* ps/clar-unit-test (2024-08-20) 13 commits
+ - clar: add CMake support
+ - t/unit-tests: convert ctype tests to use clar
+ - t/unit-tests: convert strvec tests to use clar
+ - Makefile: wire up the clar unit testing framework
+ - Makefile: do not use sparse on third-party sources
+ - Makefile: make hdr-check depend on generated headers
+ - Makefile: fix sparse dependency on GENERATED_H
+ - clar: stop including `shellapi.h` unnecessarily
+ - clar(win32): avoid compile error due to unused `fs_copy()`
+ - clar: avoid compile error with mingw-w64
+ - t/clar: fix compatibility with NonStop
+ - t: import the clar unit testing framework
+ - t: do not pass GIT_TEST_OPTS to unit tests with prove
 
  Import clar unit tests framework libgit2 folks invented for our
  use.
 
  Need to decide how to fill feature gap with our home-grown one
  cf. <b87700d2-0c9a-4d0c-9ee4-e6a91278d596@gmail.com>
- Fails to build on Windows.
- cf. https://github.com/git/git/actions/runs/10424256896/job/28875787680
- source: <cover.1723791831.git.ps@pks.im>
+ source: <cover.1724159966.git.ps@pks.im>
 
 
 * ps/maintenance-detach-fix (2024-08-16) 7 commits
@@ -450,24 +473,23 @@ Release tarballs are available at:
  source: <20240813-jk-translate-alias-send-email-v2-0-912db4eb6846@gmail.com>
 
 
-* cp/unit-test-reftable-block (2024-08-19) 11 commits
- . t-reftable-block: add tests for index blocks
- . t-reftable-block: add tests for obj blocks
- . t-reftable-block: add tests for log blocks
- . t-reftable-block: remove unnecessary variable 'j'
- . t-reftable-block: use xstrfmt() instead of xstrdup()
- . t-reftable-block: use block_iter_reset() instead of block_iter_close()
- . t-reftable-block: use reftable_record_key() instead of strbuf_addstr()
- . t-reftable-block: use reftable_record_equal() instead of check_str()
- . t-reftable-block: release used block reader
- . t: harmonize t-reftable-block.c with coding guidelines
- . t: move reftable/block_test.c to the unit testing framework
+* cp/unit-test-reftable-block (2024-08-21) 11 commits
+ - t-reftable-block: add tests for index blocks
+ - t-reftable-block: add tests for obj blocks
+ - t-reftable-block: add tests for log blocks
+ - t-reftable-block: remove unnecessary variable 'j'
+ - t-reftable-block: use xstrfmt() instead of xstrdup()
+ - t-reftable-block: use block_iter_reset() instead of block_iter_close()
+ - t-reftable-block: use reftable_record_key() instead of strbuf_addstr()
+ - t-reftable-block: use reftable_record_equal() instead of check_str()
+ - t-reftable-block: release used block reader
+ - t: harmonize t-reftable-block.c with coding guidelines
+ - t: move reftable/block_test.c to the unit testing framework
 
  Another test for reftable library ported to the unit test framework.
 
- Expecting a reroll.
- cf. <CA+J6zkQa9=7C_f=NqGHEEVhnAJZQ7q9gDMhFQ_F2QDn3RDJ+cA@mail.gmail.com> 
- source: <20240816175414.5169-1-chandrapratap3519@gmail.com>
+ Comments?
+ source: <20240821124150.4463-1-chandrapratap3519@gmail.com>
 
 
 * js/libgit-rust (2024-08-09) 5 commits
@@ -481,17 +503,6 @@ Release tarballs are available at:
 
  Comments?
  source: <cover.1723242556.git.steadmon@google.com>
-
-
-* jc/grammo-fixes (2024-08-09) 2 commits
-  (merged to 'next' on 2024-08-15 at 111d5f5c13)
- + doc: grammofix in git-diff-tree
- + tutorial: grammofix
-
- Doc updates.
-
- Will merge to 'master'.
- source: <xmqqed6xehzv.fsf@gitster.g>
 
 
 * jc/range-diff-lazy-setup (2024-08-09) 2 commits
@@ -541,6 +552,7 @@ Release tarballs are available at:
  + git: fix leaking system paths
  + remote: plug memory leak when aliasing URLs
  + Merge branch 'ps/leakfixes-part-3' into ps/leakfixes-part-4
+ (this branch is used by ps/leakfixes-part-5.)
 
  More leak fixes.
 
@@ -592,16 +604,17 @@ Release tarballs are available at:
 
 
 * ds/for-each-ref-is-base (2024-08-14) 4 commits
- - p1500: add is-base performance tests
- - for-each-ref: add 'is-base' token
- - commit: add gentle reference lookup method
- - commit-reach: add get_branch_base_for_tip
+  (merged to 'next' on 2024-08-20 at dd5da48f40)
+ + p1500: add is-base performance tests
+ + for-each-ref: add 'is-base' token
+ + commit: add gentle reference lookup method
+ + commit-reach: add get_branch_base_for_tip
 
  'git for-each-ref' learned a new "--format" atom to find the branch
  that the history leading to a given commit "%(is-base:<commit>)" is
  likely based on.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1768.v3.git.1723631490.gitgitgadget@gmail.com>
 
 
@@ -644,21 +657,6 @@ Release tarballs are available at:
 
  Expecting a reroll or retraction.
  source: <ZqObobw8FsDMkllm@tanuki>
-
-
-* ag/git-svn-global-ignores (2024-08-14) 3 commits
-  (merged to 'next' on 2024-08-15 at b8332fe306)
- + git-svn: mention `svn:global-ignores` in help+docs
-  (merged to 'next' on 2024-08-08 at 3ba5e164a6)
- + git-svn: use `svn:global-ignores` to create .gitignore
- + git-svn: add public property `svn:global-ignores`
-
- "git svn" has been taught about svn:global-ignores property
- recent versions of Subversion has.
-
- Will merge to 'master'.
- source: <pull.1747.v2.git.git.1721335657.gitgitgadget@gmail.com>
- source: <pull.1766.v2.git.git.1723578946962.gitgitgadget@gmail.com>
 
 
 * ew/cat-file-optim (2024-07-15) 10 commits
