@@ -181,6 +181,10 @@ by doing the following:
      $ git diff ORIG_HEAD..   ;# final review
      $ make test              ;# final review
 
+   If the tip of 'master' is updated, also generate the preformatted
+   documentation and push the out result to git-htmldocs and
+   git-manpages repositories.
+
  - Handle the remaining patches:
 
    - Anything unobvious that is applicable to 'master' (in other
