@@ -86,6 +86,8 @@ static int read_midx_checksum(const char *object_dir)
 	if (!m)
 		return 1;
 	printf("%s\n", hash_to_hex(get_midx_checksum(m)));
+
+	close_midx(m);
 	return 0;
 }
 
@@ -102,10 +104,12 @@ static int read_midx_preferred_pack(const char *object_dir)
 
 	if (midx_preferred_pack(midx, &preferred_pack) < 0) {
 		warning(_("could not determine MIDX preferred pack"));
+		close_midx(midx);
 		return 1;
 	}
 
 	printf("%s\n", midx->pack_names[preferred_pack]);
+	close_midx(midx);
 	return 0;
 }
 
@@ -122,8 +126,10 @@ static int read_midx_bitmapped_packs(const char *object_dir)
 		return 1;
 
 	for (i = 0; i < midx->num_packs + midx->num_packs_in_base; i++) {
-		if (nth_bitmapped_pack(the_repository, midx, &pack, i) < 0)
+		if (nth_bitmapped_pack(the_repository, midx, &pack, i) < 0) {
+			close_midx(midx);
 			return 1;
+		}
 
 		printf("%s\n", pack_basename(pack.p));
 		printf("  bitmap_pos: %"PRIuMAX"\n", (uintmax_t)pack.bitmap_pos);
