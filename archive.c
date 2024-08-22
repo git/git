@@ -736,6 +736,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	struct pretty_print_describe_status describe_status = {0};
 	struct pretty_print_context ctx = {0};
 	struct archiver_args args;
+	const char **argv_copy;
 	int rc;
 
 	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
@@ -749,6 +750,14 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	args.repo = repo;
 	args.prefix = prefix;
 	string_list_init_dup(&args.extra_files);
+
+	/*
+	 * `parse_archive_args()` modifies contents of `argv`, which is what we
+	 * want. Our callers may not want it though, so we create a copy here.
+	 */
+	DUP_ARRAY(argv_copy, argv, argc);
+	argv = argv_copy;
+
 	argc = parse_archive_args(argc, argv, &ar, &args, name_hint, remote);
 	if (!startup_info->have_repository) {
 		/*
@@ -767,6 +776,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	string_list_clear_func(&args.extra_files, extra_file_info_clear);
 	free(args.refname);
 	clear_pathspec(&args.pathspec);
+	free(argv_copy);
 
 	return rc;
 }
