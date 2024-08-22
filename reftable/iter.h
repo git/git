@@ -18,8 +18,6 @@ https://developers.google.com/open-source/licenses/bsd
 
 /* iterator that produces only ref records that point to `oid` */
 struct filtering_ref_iterator {
-	int double_check;
-	struct reftable_table tab;
 	struct strbuf oid;
 	struct reftable_iterator it;
 };

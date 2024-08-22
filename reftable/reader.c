@@ -735,8 +735,6 @@ static int reftable_reader_refs_for_unindexed(struct reftable_reader *r,
 	*filter = empty;
 
 	strbuf_add(&filter->oid, oid, oid_len);
-	reftable_table_from_reader(&filter->tab, r);
-	filter->double_check = 0;
 	iterator_from_table_iter(&filter->it, ti);
 
 	iterator_from_filtering_ref_iterator(it, filter);

@@ -42,26 +42,6 @@ static int filtering_ref_iterator_next(void *iter_arg,
 			break;
 		}
 
-		if (fri->double_check) {
-			struct reftable_iterator it = { NULL };
-
-			reftable_table_init_ref_iter(&fri->tab, &it);
-
-			err = reftable_iterator_seek_ref(&it, ref->refname);
-			if (err == 0)
-				err = reftable_iterator_next_ref(&it, ref);
-
-			reftable_iterator_destroy(&it);
-
-			if (err < 0) {
-				break;
-			}
-
-			if (err > 0) {
-				continue;
-			}
-		}
-
 		if (ref->value_type == REFTABLE_REF_VAL2 &&
 		    (!memcmp(fri->oid.buf, ref->value.val2.target_value,
 			     fri->oid.len) ||
