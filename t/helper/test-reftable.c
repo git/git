@@ -30,12 +30,33 @@ static void print_help(void)
 	       "\n");
 }
 
+static char hexdigit(int c)
+{
+	if (c <= 9)
+		return '0' + c;
+	return 'a' + (c - 10);
+}
+
+static void hex_format(char *dest, const unsigned char *src, int hash_size)
+{
+	assert(hash_size > 0);
+	if (src) {
+		int i = 0;
+		for (i = 0; i < hash_size; i++) {
+			dest[2 * i] = hexdigit(src[i] >> 4);
+			dest[2 * i + 1] = hexdigit(src[i] & 0xf);
+		}
+		dest[2 * hash_size] = 0;
+	}
+}
+
 static int dump_table(struct reftable_table *tab)
 {
 	struct reftable_iterator it = { NULL };
 	struct reftable_ref_record ref = { NULL };
 	struct reftable_log_record log = { NULL };
 	uint32_t hash_id = reftable_table_hash_id(tab);
+	int hash_len = hash_size(hash_id);
 	int err;
 
 	reftable_table_init_ref_iter(tab, &it);
@@ -45,14 +66,35 @@ static int dump_table(struct reftable_table *tab)
 		return err;
 
 	while (1) {
+		char hex[GIT_MAX_HEXSZ + 1] = { 0 }; /* BUG */
+
 		err = reftable_iterator_next_ref(&it, &ref);
-		if (err > 0) {
+		if (err > 0)
+			break;
+		if (err < 0)
+			return err;
+
+		printf("ref{%s(%" PRIu64 ") ", ref.refname, ref.update_index);
+		switch (ref.value_type) {
+		case REFTABLE_REF_SYMREF:
+			printf("=> %s", ref.value.symref);
+			break;
+		case REFTABLE_REF_VAL2:
+			hex_format(hex, ref.value.val2.value, hash_len);
+			printf("val 2 %s", hex);
+			hex_format(hex, ref.value.val2.target_value,
+				   hash_len);
+			printf("(T %s)", hex);
+			break;
+		case REFTABLE_REF_VAL1:
+			hex_format(hex, ref.value.val1, hash_len);
+			printf("val 1 %s", hex);
+			break;
+		case REFTABLE_REF_DELETION:
+			printf("delete");
 			break;
 		}
-		if (err < 0) {
-			return err;
-		}
-		reftable_ref_record_print(&ref, hash_id);
+		printf("}\n");
 	}
 	reftable_iterator_destroy(&it);
 	reftable_ref_record_release(&ref);
@@ -64,14 +106,33 @@ static int dump_table(struct reftable_table *tab)
 		return err;
 
 	while (1) {
+		char hex[GIT_MAX_HEXSZ + 1] = { 0 };
+
 		err = reftable_iterator_next_log(&it, &log);
-		if (err > 0) {
+		if (err > 0)
+			break;
+		if (err < 0)
+			return err;
+
+		switch (log.value_type) {
+		case REFTABLE_LOG_DELETION:
+			printf("log{%s(%" PRIu64 ") delete\n", log.refname,
+			       log.update_index);
+			break;
+		case REFTABLE_LOG_UPDATE:
+			printf("log{%s(%" PRIu64 ") %s <%s> %" PRIu64 " %04d\n",
+			       log.refname, log.update_index,
+			       log.value.update.name ? log.value.update.name : "",
+			       log.value.update.email ? log.value.update.email : "",
+			       log.value.update.time,
+			       log.value.update.tz_offset);
+			hex_format(hex, log.value.update.old_hash, hash_len);
+			printf("%s => ", hex);
+			hex_format(hex, log.value.update.new_hash, hash_len);
+			printf("%s\n\n%s\n}\n", hex,
+			       log.value.update.message ? log.value.update.message : "");
 			break;
 		}
-		if (err < 0) {
-			return err;
-		}
-		reftable_log_record_print(&log, hash_id);
 	}
 	reftable_iterator_destroy(&it);
 	reftable_log_record_release(&log);
