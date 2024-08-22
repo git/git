@@ -2,6 +2,7 @@
 
 test_description='git remote porcelain-ish'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 setup_repository () {

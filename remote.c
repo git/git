@@ -1344,18 +1344,21 @@ static int match_explicit(struct ref *src, struct ref *dst,
 			  struct ref ***dst_tail,
 			  struct refspec_item *rs)
 {
-	struct ref *matched_src, *matched_dst;
-	int allocated_src;
+	struct ref *matched_src = NULL, *matched_dst = NULL;
+	int allocated_src = 0, ret;
 
 	const char *dst_value = rs->dst;
 	char *dst_guess;
 
-	if (rs->pattern || rs->matching || rs->negative)
-		return 0;
+	if (rs->pattern || rs->matching || rs->negative) {
+		ret = 0;
+		goto out;
+	}
 
-	matched_src = matched_dst = NULL;
-	if (match_explicit_lhs(src, rs, &matched_src, &allocated_src) < 0)
-		return -1;
+	if (match_explicit_lhs(src, rs, &matched_src, &allocated_src) < 0) {
+		ret = -1;
+		goto out;
+	}
 
 	if (!dst_value) {
 		int flag;
@@ -1394,18 +1397,30 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		      dst_value);
 		break;
 	}
-	if (!matched_dst)
-		return -1;
-	if (matched_dst->peer_ref)
-		return error(_("dst ref %s receives from more than one src"),
-			     matched_dst->name);
-	else {
+
+	if (!matched_dst) {
+		ret = -1;
+		goto out;
+	}
+
+	if (matched_dst->peer_ref) {
+		ret = error(_("dst ref %s receives from more than one src"),
+			    matched_dst->name);
+		goto out;
+	} else {
 		matched_dst->peer_ref = allocated_src ?
 					matched_src :
 					copy_ref(matched_src);
 		matched_dst->force = rs->force;
+		matched_src = NULL;
 	}
-	return 0;
+
+	ret = 0;
+
+out:
+	if (allocated_src)
+		free_one_ref(matched_src);
+	return ret;
 }
 
 static int match_explicit_refs(struct ref *src, struct ref *dst,
