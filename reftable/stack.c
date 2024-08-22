@@ -272,7 +272,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	}
 
 	/* success! */
-	err = reftable_new_merged_table(&new_merged, new_tables,
+	err = reftable_merged_table_new(&new_merged, new_tables,
 					new_readers_len, st->opts.hash_id);
 	if (err < 0)
 		goto done;
@@ -924,7 +924,7 @@ static int stack_write_compact(struct reftable_stack *st,
 	reftable_writer_set_limits(wr, st->readers[first]->min_update_index,
 				   st->readers[last]->max_update_index);
 
-	err = reftable_new_merged_table(&mt, subtabs, subtabs_len,
+	err = reftable_merged_table_new(&mt, subtabs, subtabs_len,
 					st->opts.hash_id);
 	if (err < 0) {
 		reftable_free(subtabs);

@@ -192,7 +192,7 @@ static void iterator_from_merged_iter(struct reftable_iterator *it,
 	it->ops = &merged_iter_vtable;
 }
 
-int reftable_new_merged_table(struct reftable_merged_table **dest,
+int reftable_merged_table_new(struct reftable_merged_table **dest,
 			      struct reftable_table *stack, size_t n,
 			      uint32_t hash_id)
 {

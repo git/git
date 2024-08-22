@@ -29,10 +29,11 @@ struct reftable_merged_table;
 /* A generic reftable; see below. */
 struct reftable_table;
 
-/* reftable_new_merged_table creates a new merged table. It takes ownership of
-   the stack array.
-*/
-int reftable_new_merged_table(struct reftable_merged_table **dest,
+/*
+ * reftable_merged_table_new creates a new merged table. It takes ownership of
+ * the stack array.
+ */
+int reftable_merged_table_new(struct reftable_merged_table **dest,
 			      struct reftable_table *stack, size_t n,
 			      uint32_t hash_id);
 
