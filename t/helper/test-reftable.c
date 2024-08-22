@@ -1,3 +1,6 @@
+#include "git-compat-util.h"
+#include "hash.h"
+#include "hex.h"
 #include "reftable/system.h"
 #include "reftable/reftable-error.h"
 #include "reftable/reftable-generic.h"
@@ -30,33 +33,12 @@ static void print_help(void)
 	       "\n");
 }
 
-static char hexdigit(int c)
-{
-	if (c <= 9)
-		return '0' + c;
-	return 'a' + (c - 10);
-}
-
-static void hex_format(char *dest, const unsigned char *src, int hash_size)
-{
-	assert(hash_size > 0);
-	if (src) {
-		int i = 0;
-		for (i = 0; i < hash_size; i++) {
-			dest[2 * i] = hexdigit(src[i] >> 4);
-			dest[2 * i + 1] = hexdigit(src[i] & 0xf);
-		}
-		dest[2 * hash_size] = 0;
-	}
-}
-
 static int dump_table(struct reftable_table *tab)
 {
 	struct reftable_iterator it = { NULL };
 	struct reftable_ref_record ref = { NULL };
 	struct reftable_log_record log = { NULL };
-	uint32_t hash_id = reftable_table_hash_id(tab);
-	int hash_len = hash_size(hash_id);
+	const struct git_hash_algo *algop;
 	int err;
 
 	reftable_table_init_ref_iter(tab, &it);
@@ -65,9 +47,9 @@ static int dump_table(struct reftable_table *tab)
 	if (err < 0)
 		return err;
 
-	while (1) {
-		char hex[GIT_MAX_HEXSZ + 1] = { 0 }; /* BUG */
+	algop = &hash_algos[hash_algo_by_id(reftable_table_hash_id(tab))];
 
+	while (1) {
 		err = reftable_iterator_next_ref(&it, &ref);
 		if (err > 0)
 			break;
@@ -80,15 +62,11 @@ static int dump_table(struct reftable_table *tab)
 			printf("=> %s", ref.value.symref);
 			break;
 		case REFTABLE_REF_VAL2:
-			hex_format(hex, ref.value.val2.value, hash_len);
-			printf("val 2 %s", hex);
-			hex_format(hex, ref.value.val2.target_value,
-				   hash_len);
-			printf("(T %s)", hex);
+			printf("val 2 %s", hash_to_hex_algop(ref.value.val2.value, algop));
+			printf("(T %s)", hash_to_hex_algop(ref.value.val2.target_value, algop));
 			break;
 		case REFTABLE_REF_VAL1:
-			hex_format(hex, ref.value.val1, hash_len);
-			printf("val 1 %s", hex);
+			printf("val 1 %s", hash_to_hex_algop(ref.value.val1, algop));
 			break;
 		case REFTABLE_REF_DELETION:
 			printf("delete");
@@ -106,8 +84,6 @@ static int dump_table(struct reftable_table *tab)
 		return err;
 
 	while (1) {
-		char hex[GIT_MAX_HEXSZ + 1] = { 0 };
-
 		err = reftable_iterator_next_log(&it, &log);
 		if (err > 0)
 			break;
@@ -126,10 +102,8 @@ static int dump_table(struct reftable_table *tab)
 			       log.value.update.email ? log.value.update.email : "",
 			       log.value.update.time,
 			       log.value.update.tz_offset);
-			hex_format(hex, log.value.update.old_hash, hash_len);
-			printf("%s => ", hex);
-			hex_format(hex, log.value.update.new_hash, hash_len);
-			printf("%s\n\n%s\n}\n", hex,
+			printf("%s => ", hash_to_hex_algop(log.value.update.old_hash, algop));
+			printf("%s\n\n%s\n}\n", hash_to_hex_algop(log.value.update.new_hash, algop),
 			       log.value.update.message ? log.value.update.message : "");
 			break;
 		}
