@@ -1603,23 +1603,3 @@ done:
 	reftable_addition_destroy(add);
 	return err;
 }
-
-int reftable_stack_print_directory(const char *stackdir, uint32_t hash_id)
-{
-	struct reftable_stack *stack = NULL;
-	struct reftable_write_options opts = { .hash_id = hash_id };
-	struct reftable_merged_table *merged = NULL;
-	struct reftable_table table = { NULL };
-
-	int err = reftable_new_stack(&stack, stackdir, &opts);
-	if (err < 0)
-		goto done;
-
-	merged = reftable_stack_merged_table(stack);
-	reftable_table_from_merged_table(&table, merged);
-	err = reftable_table_print(&table);
-done:
-	if (stack)
-		reftable_stack_destroy(stack);
-	return err;
-}

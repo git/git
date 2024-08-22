@@ -179,13 +179,6 @@ static void test_reftable_stack_add_one(void)
 	EXPECT(0 == strcmp("master", dest.value.symref));
 	EXPECT(st->readers_len > 0);
 
-	printf("testing print functionality:\n");
-	err = reftable_stack_print_directory(dir, GIT_SHA1_FORMAT_ID);
-	EXPECT_ERR(err);
-
-	err = reftable_stack_print_directory(dir, GIT_SHA256_FORMAT_ID);
-	EXPECT(err == REFTABLE_FORMAT_ERROR);
-
 #ifndef GIT_WINDOWS_NATIVE
 	strbuf_addstr(&scratch, dir);
 	strbuf_addstr(&scratch, "/tables.list");

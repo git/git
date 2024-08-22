@@ -1,6 +1,7 @@
 #include "reftable/system.h"
 #include "reftable/reftable-error.h"
 #include "reftable/reftable-generic.h"
+#include "reftable/reftable-merged.h"
 #include "reftable/reftable-reader.h"
 #include "reftable/reftable-stack.h"
 #include "reftable/reftable-tests.h"
@@ -27,6 +28,26 @@ static void print_help(void)
 	       "  -6 sha256 hash format\n"
 	       "  -h this help\n"
 	       "\n");
+}
+
+static int dump_stack(const char *stackdir, uint32_t hash_id)
+{
+	struct reftable_stack *stack = NULL;
+	struct reftable_write_options opts = { .hash_id = hash_id };
+	struct reftable_merged_table *merged = NULL;
+	struct reftable_table table = { NULL };
+
+	int err = reftable_new_stack(&stack, stackdir, &opts);
+	if (err < 0)
+		goto done;
+
+	merged = reftable_stack_merged_table(stack);
+	reftable_table_from_merged_table(&table, merged);
+	err = reftable_table_print(&table);
+done:
+	if (stack)
+		reftable_stack_destroy(stack);
+	return err;
 }
 
 static int dump_reftable(const char *tablename)
@@ -87,7 +108,7 @@ int cmd__dump_reftable(int argc, const char **argv)
 	} else if (opt_dump_table) {
 		err = dump_reftable(arg);
 	} else if (opt_dump_stack) {
-		err = reftable_stack_print_directory(arg, opt_hash_id);
+		err = dump_stack(arg, opt_hash_id);
 	}
 
 	if (err < 0) {
