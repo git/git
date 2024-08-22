@@ -533,6 +533,7 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 	int expected_remaining_argc;
 	int original_argc;
 	const char *merge_base = NULL;
+	int ret;
 
 	const char * const merge_tree_usage[] = {
 		N_("git merge-tree [--write-tree] [<options>] <branch1> <branch2>"),
@@ -625,7 +626,9 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 			strbuf_list_free(split);
 		}
 		strbuf_release(&buf);
-		return 0;
+
+		ret = 0;
+		goto out;
 	}
 
 	/* Figure out which mode to use */
@@ -664,7 +667,11 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 
 	/* Do the relevant type of merge */
 	if (o.mode == MODE_REAL)
-		return real_merge(&o, merge_base, argv[0], argv[1], prefix);
+		ret = real_merge(&o, merge_base, argv[0], argv[1], prefix);
 	else
-		return trivial_merge(argv[0], argv[1], argv[2]);
+		ret = trivial_merge(argv[0], argv[1], argv[2]);
+
+out:
+	strvec_clear(&xopts);
+	return ret;
 }
