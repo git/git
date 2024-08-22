@@ -82,6 +82,11 @@ for one to be entered and terminated with ^D.
 
 include::date-formats.txt[]
 
+CONFIGURATION VARIABLES
+-----------------------
+
+include::config/commit-tree.txt[]
+
 Discussion
 ----------
 

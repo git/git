@@ -1,0 +1,7 @@
+commit.gpgSign::
+
+	A boolean to specify whether all commits should be GPG signed.
+	Use of this option when doing operations such as rebase can
+	result in a large number of commits being signed. It may be
+	convenient to use an agent to avoid typing your GPG passphrase
+	several times.

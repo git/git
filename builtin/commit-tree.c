@@ -12,6 +12,7 @@
 #include "repository.h"
 #include "commit.h"
 #include "parse-options.h"
+#include "wt-status.h"
 
 static const char * const commit_tree_usage[] = {
 	N_("git commit-tree <tree> [(-p <parent>)...]"),
@@ -90,6 +91,16 @@ static int parse_file_arg_callback(const struct option *opt,
 	return 0;
 }
 
+static int git_commit_tree_config(const char *k, const char *v,
+					const struct config_context *ctx, void *cb)
+{
+	if (!strcmp(k, "commit.gpgsign")) {
+		sign_commit = git_config_bool(k, v) ? "": NULL;
+		return 0;
+	}
+	return 0;
+}
+
 int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 {
 	static struct strbuf buffer = STRBUF_INIT;
@@ -119,6 +130,9 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		usage_with_options(commit_tree_usage, options);
 
 	argc = parse_options(argc, argv, prefix, options, commit_tree_usage, 0);
+
+	if (!sign_commit)
+		git_config(git_commit_tree_config, NULL);
 
 	if (argc != 1)
 		die(_("must give exactly one tree"));
