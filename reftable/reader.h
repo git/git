@@ -57,6 +57,10 @@ int init_reader(struct reftable_reader *r, struct reftable_block_source *source,
 void reader_close(struct reftable_reader *r);
 const char *reader_name(struct reftable_reader *r);
 
+void reader_init_iter(struct reftable_reader *r,
+		      struct reftable_iterator *it,
+		      uint8_t typ);
+
 /* initialize a block reader to read from `r` */
 int reader_init_block_reader(struct reftable_reader *r, struct block_reader *br,
 			     uint64_t next_off, uint8_t want_typ);
