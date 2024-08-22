@@ -648,6 +648,7 @@ ifeq ($(uname_S),OS/390)
 	NO_GECOS_IN_PWENT = YesPlease
 	HAVE_STRINGS_H = YesPlease
 	NEEDS_MODE_TRANSLATION = YesPlease
+	HAVE_ZOS_GET_EXECUTABLE_PATH = YesPlease
 endif
 ifeq ($(uname_S),MINGW)
         ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
