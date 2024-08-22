@@ -24,14 +24,4 @@ void table_init_iter(struct reftable_table *tab,
 		     struct reftable_iterator *it,
 		     uint8_t typ);
 
-struct reftable_iterator_vtable {
-	int (*seek)(void *iter_arg, struct reftable_record *want);
-	int (*next)(void *iter_arg, struct reftable_record *rec);
-	void (*close)(void *iter_arg);
-};
-
-void iterator_set_empty(struct reftable_iterator *it);
-int iterator_seek(struct reftable_iterator *it, struct reftable_record *want);
-int iterator_next(struct reftable_iterator *it, struct reftable_record *rec);
-
 #endif
