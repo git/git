@@ -1290,8 +1290,21 @@ void clear_mailinfo(struct mailinfo *mi)
 	strbuf_release(&mi->inbody_header_accum);
 	free(mi->message_id);
 
-	strbuf_list_free(mi->p_hdr_data);
-	strbuf_list_free(mi->s_hdr_data);
+	for (size_t i = 0; header[i]; i++) {
+		if (!mi->p_hdr_data[i])
+			continue;
+		strbuf_release(mi->p_hdr_data[i]);
+		free(mi->p_hdr_data[i]);
+	}
+	free(mi->p_hdr_data);
+
+	for (size_t i = 0; header[i]; i++) {
+		if (!mi->s_hdr_data[i])
+			continue;
+		strbuf_release(mi->s_hdr_data[i]);
+		free(mi->s_hdr_data[i]);
+	}
+	free(mi->s_hdr_data);
 
 	while (mi->content < mi->content_top) {
 		free(*(mi->content_top));
