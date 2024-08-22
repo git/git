@@ -64,8 +64,6 @@ uint64_t reftable_reader_min_update_index(struct reftable_reader *r);
 void reftable_table_from_reader(struct reftable_table *tab,
 				struct reftable_reader *reader);
 
-/* print table onto stdout for debugging. */
-int reftable_reader_print_file(const char *tablename);
 /* print blocks onto stdout for debugging. */
 int reftable_reader_print_blocks(const char *tablename);
 

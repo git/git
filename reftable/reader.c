@@ -798,27 +798,6 @@ void reftable_table_from_reader(struct reftable_table *tab,
 	tab->table_arg = reader;
 }
 
-
-int reftable_reader_print_file(const char *tablename)
-{
-	struct reftable_block_source src = { NULL };
-	int err = reftable_block_source_from_file(&src, tablename);
-	struct reftable_reader *r = NULL;
-	struct reftable_table tab = { NULL };
-	if (err < 0)
-		goto done;
-
-	err = reftable_new_reader(&r, &src, tablename);
-	if (err < 0)
-		goto done;
-
-	reftable_table_from_reader(&tab, r);
-	err = reftable_table_print(&tab);
-done:
-	reftable_reader_free(r);
-	return err;
-}
-
 int reftable_reader_print_blocks(const char *tablename)
 {
 	struct {

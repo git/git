@@ -1,5 +1,6 @@
 #include "reftable/system.h"
 #include "reftable/reftable-error.h"
+#include "reftable/reftable-generic.h"
 #include "reftable/reftable-reader.h"
 #include "reftable/reftable-stack.h"
 #include "reftable/reftable-tests.h"
@@ -26,6 +27,26 @@ static void print_help(void)
 	       "  -6 sha256 hash format\n"
 	       "  -h this help\n"
 	       "\n");
+}
+
+static int dump_reftable(const char *tablename)
+{
+	struct reftable_block_source src = { NULL };
+	int err = reftable_block_source_from_file(&src, tablename);
+	struct reftable_reader *r = NULL;
+	struct reftable_table tab = { NULL };
+	if (err < 0)
+		goto done;
+
+	err = reftable_new_reader(&r, &src, tablename);
+	if (err < 0)
+		goto done;
+
+	reftable_table_from_reader(&tab, r);
+	err = reftable_table_print(&tab);
+done:
+	reftable_reader_free(r);
+	return err;
 }
 
 int cmd__dump_reftable(int argc, const char **argv)
@@ -64,7 +85,7 @@ int cmd__dump_reftable(int argc, const char **argv)
 	if (opt_dump_blocks) {
 		err = reftable_reader_print_blocks(arg);
 	} else if (opt_dump_table) {
-		err = reftable_reader_print_file(arg);
+		err = dump_reftable(arg);
 	} else if (opt_dump_stack) {
 		err = reftable_stack_print_directory(arg, opt_hash_id);
 	}
