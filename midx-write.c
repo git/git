@@ -1308,6 +1308,18 @@ static int write_midx_internal(const char *object_dir,
 		pack_name_concat_len += MIDX_CHUNK_ALIGNMENT -
 					(pack_name_concat_len % MIDX_CHUNK_ALIGNMENT);
 
+	if (ctx.nr - dropped_packs == 0) {
+		error(_("no pack files to index."));
+		result = 1;
+		goto cleanup;
+	}
+
+	if (!ctx.entries_nr) {
+		if (flags & MIDX_WRITE_BITMAP)
+			warning(_("refusing to write multi-pack .bitmap without any objects"));
+		flags &= ~(MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP);
+	}
+
 	if (ctx.incremental) {
 		struct strbuf lock_name = STRBUF_INIT;
 
@@ -1331,18 +1343,6 @@ static int write_midx_internal(const char *object_dir,
 	} else {
 		hold_lock_file_for_update(&lk, midx_name.buf, LOCK_DIE_ON_ERROR);
 		f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
-	}
-
-	if (ctx.nr - dropped_packs == 0) {
-		error(_("no pack files to index."));
-		result = 1;
-		goto cleanup;
-	}
-
-	if (!ctx.entries_nr) {
-		if (flags & MIDX_WRITE_BITMAP)
-			warning(_("refusing to write multi-pack .bitmap without any objects"));
-		flags &= ~(MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP);
 	}
 
 	cf = init_chunkfile(f);
