@@ -1468,9 +1468,28 @@ reftable_stack_compaction_stats(struct reftable_stack *st)
 int reftable_stack_read_ref(struct reftable_stack *st, const char *refname,
 			    struct reftable_ref_record *ref)
 {
-	struct reftable_table tab = { NULL };
-	reftable_table_from_merged_table(&tab, reftable_stack_merged_table(st));
-	return reftable_table_read_ref(&tab, refname, ref);
+	struct reftable_iterator it = { 0 };
+	int ret;
+
+	reftable_merged_table_init_ref_iterator(st->merged, &it);
+	ret = reftable_iterator_seek_ref(&it, refname);
+	if (ret)
+		goto out;
+
+	ret = reftable_iterator_next_ref(&it, ref);
+	if (ret)
+		goto out;
+
+	if (strcmp(ref->refname, refname) ||
+	    reftable_ref_record_is_deletion(ref)) {
+		reftable_ref_record_release(ref);
+		ret = 1;
+		goto out;
+	}
+
+out:
+	reftable_iterator_destroy(&it);
+	return ret;
 }
 
 int reftable_stack_read_log(struct reftable_stack *st, const char *refname,
