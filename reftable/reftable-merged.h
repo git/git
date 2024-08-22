@@ -28,13 +28,14 @@ struct reftable_merged_table;
 
 /* A generic reftable; see below. */
 struct reftable_table;
+struct reftable_reader;
 
 /*
- * reftable_merged_table_new creates a new merged table. It takes ownership of
- * the stack array.
+ * reftable_merged_table_new creates a new merged table. The readers must be
+ * kept alive as long as the merged table is still in use.
  */
 int reftable_merged_table_new(struct reftable_merged_table **dest,
-			      struct reftable_table *stack, size_t n,
+			      struct reftable_reader **readers, size_t n,
 			      uint32_t hash_id);
 
 /* Initialize a merged table iterator for reading refs. */

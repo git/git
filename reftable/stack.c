@@ -225,13 +225,11 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 				      const char **names,
 				      int reuse_open)
 {
-	size_t cur_len = !st->merged ? 0 : st->merged->stack_len;
+	size_t cur_len = !st->merged ? 0 : st->merged->readers_len;
 	struct reftable_reader **cur = stack_copy_readers(st, cur_len);
 	size_t names_len = names_length(names);
 	struct reftable_reader **new_readers =
 		reftable_calloc(names_len, sizeof(*new_readers));
-	struct reftable_table *new_tables =
-		reftable_calloc(names_len, sizeof(*new_tables));
 	size_t new_readers_len = 0;
 	struct reftable_merged_table *new_merged = NULL;
 	struct strbuf table_path = STRBUF_INIT;
@@ -267,17 +265,15 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 		}
 
 		new_readers[new_readers_len] = rd;
-		reftable_table_from_reader(&new_tables[new_readers_len], rd);
 		new_readers_len++;
 	}
 
 	/* success! */
-	err = reftable_merged_table_new(&new_merged, new_tables,
+	err = reftable_merged_table_new(&new_merged, new_readers,
 					new_readers_len, st->opts.hash_id);
 	if (err < 0)
 		goto done;
 
-	new_tables = NULL;
 	st->readers_len = new_readers_len;
 	if (st->merged)
 		reftable_merged_table_free(st->merged);
@@ -309,7 +305,6 @@ done:
 		reftable_reader_free(new_readers[i]);
 	}
 	reftable_free(new_readers);
-	reftable_free(new_tables);
 	reftable_free(cur);
 	strbuf_release(&table_path);
 	return err;
@@ -520,7 +515,7 @@ static int stack_uptodate(struct reftable_stack *st)
 		}
 	}
 
-	if (names[st->merged->stack_len]) {
+	if (names[st->merged->readers_len]) {
 		err = 1;
 		goto done;
 	}
@@ -659,7 +654,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 	if (add->new_tables_len == 0)
 		goto done;
 
-	for (i = 0; i < add->stack->merged->stack_len; i++) {
+	for (i = 0; i < add->stack->merged->readers_len; i++) {
 		strbuf_addstr(&table_list, add->stack->readers[i]->name);
 		strbuf_addstr(&table_list, "\n");
 	}
@@ -839,7 +834,7 @@ done:
 
 uint64_t reftable_stack_next_update_index(struct reftable_stack *st)
 {
-	int sz = st->merged->stack_len;
+	int sz = st->merged->readers_len;
 	if (sz > 0)
 		return reftable_reader_max_update_index(st->readers[sz - 1]) +
 		       1;
@@ -906,30 +901,23 @@ static int stack_write_compact(struct reftable_stack *st,
 			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *config)
 {
-	size_t subtabs_len = last - first + 1;
-	struct reftable_table *subtabs = reftable_calloc(
-		last - first + 1, sizeof(*subtabs));
 	struct reftable_merged_table *mt = NULL;
 	struct reftable_iterator it = { NULL };
 	struct reftable_ref_record ref = { NULL };
 	struct reftable_log_record log = { NULL };
+	size_t subtabs_len = last - first + 1;
 	uint64_t entries = 0;
 	int err = 0;
 
-	for (size_t i = first, j = 0; i <= last; i++) {
-		struct reftable_reader *t = st->readers[i];
-		reftable_table_from_reader(&subtabs[j++], t);
-		st->stats.bytes += t->size;
-	}
+	for (size_t i = first; i <= last; i++)
+		st->stats.bytes += st->readers[i]->size;
 	reftable_writer_set_limits(wr, st->readers[first]->min_update_index,
 				   st->readers[last]->max_update_index);
 
-	err = reftable_merged_table_new(&mt, subtabs, subtabs_len,
+	err = reftable_merged_table_new(&mt, st->readers + first, subtabs_len,
 					st->opts.hash_id);
-	if (err < 0) {
-		reftable_free(subtabs);
+	if (err < 0)
 		goto done;
-	}
 
 	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
 	err = reftable_iterator_seek_ref(&it, "");
@@ -1207,7 +1195,7 @@ static int stack_compact_range(struct reftable_stack *st,
 			 * have compacted them.
 			 */
 			for (size_t j = 1; j < last - first + 1; j++) {
-				const char *old = first + j < st->merged->stack_len ?
+				const char *old = first + j < st->merged->readers_len ?
 					st->readers[first + j]->name : NULL;
 				const char *new = names[i + j];
 
@@ -1248,10 +1236,10 @@ static int stack_compact_range(struct reftable_stack *st,
 		 * `fd_read_lines()` uses a `NULL` sentinel to indicate that
 		 * the array is at its end. As we use `free_names()` to free
 		 * the array, we need to include this sentinel value here and
-		 * thus have to allocate `stack_len + 1` many entries.
+		 * thus have to allocate `readers_len + 1` many entries.
 		 */
-		REFTABLE_CALLOC_ARRAY(names, st->merged->stack_len + 1);
-		for (size_t i = 0; i < st->merged->stack_len; i++)
+		REFTABLE_CALLOC_ARRAY(names, st->merged->readers_len + 1);
+		for (size_t i = 0; i < st->merged->readers_len; i++)
 			names[i] = xstrdup(st->readers[i]->name);
 		first_to_replace = first;
 		last_to_replace = last;
@@ -1358,7 +1346,7 @@ static int stack_compact_range_stats(struct reftable_stack *st,
 int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config)
 {
-	size_t last = st->merged->stack_len ? st->merged->stack_len - 1 : 0;
+	size_t last = st->merged->readers_len ? st->merged->readers_len - 1 : 0;
 	return stack_compact_range_stats(st, 0, last, config, 0);
 }
 
@@ -1449,9 +1437,9 @@ static uint64_t *stack_table_sizes_for_compaction(struct reftable_stack *st)
 	int overhead = header_size(version) - 1;
 	uint64_t *sizes;
 
-	REFTABLE_CALLOC_ARRAY(sizes, st->merged->stack_len);
+	REFTABLE_CALLOC_ARRAY(sizes, st->merged->readers_len);
 
-	for (size_t i = 0; i < st->merged->stack_len; i++)
+	for (size_t i = 0; i < st->merged->readers_len; i++)
 		sizes[i] = st->readers[i]->size - overhead;
 
 	return sizes;
@@ -1461,7 +1449,7 @@ int reftable_stack_auto_compact(struct reftable_stack *st)
 {
 	uint64_t *sizes = stack_table_sizes_for_compaction(st);
 	struct segment seg =
-		suggest_compaction_segment(sizes, st->merged->stack_len,
+		suggest_compaction_segment(sizes, st->merged->readers_len,
 					   st->opts.auto_compaction_factor);
 	reftable_free(sizes);
 	if (segment_size(&seg) > 0)

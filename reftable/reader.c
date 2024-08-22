@@ -605,9 +605,9 @@ static void iterator_from_table_iter(struct reftable_iterator *it,
 	it->ops = &table_iter_vtable;
 }
 
-static void reader_init_iter(struct reftable_reader *r,
-			     struct reftable_iterator *it,
-			     uint8_t typ)
+void reader_init_iter(struct reftable_reader *r,
+		      struct reftable_iterator *it,
+		      uint8_t typ)
 {
 	struct reftable_reader_offsets *offs = reader_offsets_for(r, typ);
 
