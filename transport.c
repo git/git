@@ -189,6 +189,8 @@ static int fetch_refs_from_bundle(struct transport *transport,
 		       &extra_index_pack_args,
 		       fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0);
 	transport->hash_algo = data->header.hash_algo;
+
+	strvec_clear(&extra_index_pack_args);
 	return ret;
 }
 
