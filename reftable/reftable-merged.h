@@ -26,8 +26,6 @@ https://developers.google.com/open-source/licenses/bsd
 /* A merged table is implements seeking/iterating over a stack of tables. */
 struct reftable_merged_table;
 
-/* A generic reftable; see below. */
-struct reftable_table;
 struct reftable_reader;
 
 /*
@@ -59,9 +57,5 @@ void reftable_merged_table_free(struct reftable_merged_table *m);
 
 /* return the hash ID of the merged table. */
 uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *m);
-
-/* create a generic table from reftable_merged_table */
-void reftable_table_from_merged_table(struct reftable_table *tab,
-				      struct reftable_merged_table *table);
 
 #endif

@@ -23,9 +23,6 @@
 /* The reader struct is a handle to an open reftable file. */
 struct reftable_reader;
 
-/* Generic table. */
-struct reftable_table;
-
 /* reftable_new_reader opens a reftable for reading. If successful,
  * returns 0 code and sets pp. The name is used for creating a
  * stack. Typically, it is the basename of the file. The block source
@@ -59,10 +56,6 @@ uint64_t reftable_reader_max_update_index(struct reftable_reader *r);
 
 /* return the min_update_index for a table */
 uint64_t reftable_reader_min_update_index(struct reftable_reader *r);
-
-/* creates a generic table from a file reader. */
-void reftable_table_from_reader(struct reftable_table *tab,
-				struct reftable_reader *reader);
 
 /* print blocks onto stdout for debugging. */
 int reftable_reader_print_blocks(const char *tablename);

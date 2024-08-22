@@ -13,7 +13,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "pq.h"
 #include "reader.h"
 #include "record.h"
-#include "generic.h"
 #include "reftable-merged.h"
 #include "reftable-error.h"
 #include "system.h"
@@ -269,41 +268,4 @@ void reftable_merged_table_init_log_iterator(struct reftable_merged_table *mt,
 uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *mt)
 {
 	return mt->hash_id;
-}
-
-static void reftable_merged_table_init_iter_void(void *tab,
-						 struct reftable_iterator *it,
-						 uint8_t typ)
-{
-	merged_table_init_iter(tab, it, typ);
-}
-
-static uint32_t reftable_merged_table_hash_id_void(void *tab)
-{
-	return reftable_merged_table_hash_id(tab);
-}
-
-static uint64_t reftable_merged_table_min_update_index_void(void *tab)
-{
-	return reftable_merged_table_min_update_index(tab);
-}
-
-static uint64_t reftable_merged_table_max_update_index_void(void *tab)
-{
-	return reftable_merged_table_max_update_index(tab);
-}
-
-static struct reftable_table_vtable merged_table_vtable = {
-	.init_iter = reftable_merged_table_init_iter_void,
-	.hash_id = reftable_merged_table_hash_id_void,
-	.min_update_index = reftable_merged_table_min_update_index_void,
-	.max_update_index = reftable_merged_table_max_update_index_void,
-};
-
-void reftable_table_from_merged_table(struct reftable_table *tab,
-				      struct reftable_merged_table *merged)
-{
-	assert(!tab->ops);
-	tab->ops = &merged_table_vtable;
-	tab->table_arg = merged;
 }

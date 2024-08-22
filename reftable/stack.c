@@ -14,7 +14,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "merged.h"
 #include "reader.h"
 #include "reftable-error.h"
-#include "reftable-generic.h"
 #include "reftable-record.h"
 #include "reftable-merged.h"
 #include "writer.h"

@@ -14,7 +14,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "record.h"
 
 #include "reftable-iterator.h"
-#include "reftable-generic.h"
 
 /*
  * The virtual function table for implementing generic reftable iterators.

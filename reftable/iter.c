@@ -11,7 +11,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 
 #include "block.h"
-#include "generic.h"
 #include "constants.h"
 #include "reader.h"
 #include "reftable-error.h"
