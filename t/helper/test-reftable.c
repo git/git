@@ -30,6 +30,54 @@ static void print_help(void)
 	       "\n");
 }
 
+static int dump_table(struct reftable_table *tab)
+{
+	struct reftable_iterator it = { NULL };
+	struct reftable_ref_record ref = { NULL };
+	struct reftable_log_record log = { NULL };
+	uint32_t hash_id = reftable_table_hash_id(tab);
+	int err;
+
+	reftable_table_init_ref_iter(tab, &it);
+
+	err = reftable_iterator_seek_ref(&it, "");
+	if (err < 0)
+		return err;
+
+	while (1) {
+		err = reftable_iterator_next_ref(&it, &ref);
+		if (err > 0) {
+			break;
+		}
+		if (err < 0) {
+			return err;
+		}
+		reftable_ref_record_print(&ref, hash_id);
+	}
+	reftable_iterator_destroy(&it);
+	reftable_ref_record_release(&ref);
+
+	reftable_table_init_log_iter(tab, &it);
+
+	err = reftable_iterator_seek_log(&it, "");
+	if (err < 0)
+		return err;
+
+	while (1) {
+		err = reftable_iterator_next_log(&it, &log);
+		if (err > 0) {
+			break;
+		}
+		if (err < 0) {
+			return err;
+		}
+		reftable_log_record_print(&log, hash_id);
+	}
+	reftable_iterator_destroy(&it);
+	reftable_log_record_release(&log);
+	return 0;
+}
+
 static int dump_stack(const char *stackdir, uint32_t hash_id)
 {
 	struct reftable_stack *stack = NULL;
@@ -43,7 +91,7 @@ static int dump_stack(const char *stackdir, uint32_t hash_id)
 
 	merged = reftable_stack_merged_table(stack);
 	reftable_table_from_merged_table(&table, merged);
-	err = reftable_table_print(&table);
+	err = dump_table(&table);
 done:
 	if (stack)
 		reftable_stack_destroy(stack);
@@ -64,7 +112,7 @@ static int dump_reftable(const char *tablename)
 		goto done;
 
 	reftable_table_from_reader(&tab, r);
-	err = reftable_table_print(&tab);
+	err = dump_table(&tab);
 done:
 	reftable_reader_free(r);
 	return err;

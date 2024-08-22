@@ -41,7 +41,4 @@ uint64_t reftable_table_min_update_index(struct reftable_table *tab);
 int reftable_table_read_ref(struct reftable_table *tab, const char *name,
 			    struct reftable_ref_record *ref);
 
-/* dump table contents onto stdout for debugging */
-int reftable_table_print(struct reftable_table *tab);
-
 #endif
