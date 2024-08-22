@@ -254,6 +254,18 @@ void merged_table_init_iter(struct reftable_merged_table *mt,
 	iterator_from_merged_iter(it, mi);
 }
 
+void reftable_merged_table_init_ref_iterator(struct reftable_merged_table *mt,
+					     struct reftable_iterator *it)
+{
+	merged_table_init_iter(mt, it, BLOCK_TYPE_REF);
+}
+
+void reftable_merged_table_init_log_iterator(struct reftable_merged_table *mt,
+					     struct reftable_iterator *it)
+{
+	merged_table_init_iter(mt, it, BLOCK_TYPE_LOG);
+}
+
 uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *mt)
 {
 	return mt->hash_id;
