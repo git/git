@@ -732,14 +732,23 @@ static void midx_included_packs(struct string_list *include,
 				struct pack_geometry *geometry)
 {
 	struct string_list_item *item;
+	struct strbuf buf = STRBUF_INIT;
 
-	for_each_string_list_item(item, &existing->kept_packs)
-		string_list_insert(include, xstrfmt("%s.idx", item->string));
-	for_each_string_list_item(item, names)
-		string_list_insert(include, xstrfmt("pack-%s.idx", item->string));
+	for_each_string_list_item(item, &existing->kept_packs) {
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "%s.idx", item->string);
+		string_list_insert(include, buf.buf);
+	}
+
+	for_each_string_list_item(item, names) {
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "pack-%s.idx", item->string);
+		string_list_insert(include, buf.buf);
+	}
+
 	if (geometry->split_factor) {
-		struct strbuf buf = STRBUF_INIT;
 		uint32_t i;
+
 		for (i = geometry->split; i < geometry->pack_nr; i++) {
 			struct packed_git *p = geometry->pack[i];
 
@@ -754,17 +763,21 @@ static void midx_included_packs(struct string_list *include,
 			if (!p->pack_local)
 				continue;
 
+			strbuf_reset(&buf);
 			strbuf_addstr(&buf, pack_basename(p));
 			strbuf_strip_suffix(&buf, ".pack");
 			strbuf_addstr(&buf, ".idx");
 
-			string_list_insert(include, strbuf_detach(&buf, NULL));
+			string_list_insert(include, buf.buf);
 		}
 	} else {
 		for_each_string_list_item(item, &existing->non_kept_packs) {
 			if (pack_is_marked_for_deletion(item))
 				continue;
-			string_list_insert(include, xstrfmt("%s.idx", item->string));
+
+			strbuf_reset(&buf);
+			strbuf_addf(&buf, "%s.idx", item->string);
+			string_list_insert(include, buf.buf);
 		}
 	}
 
@@ -784,8 +797,13 @@ static void midx_included_packs(struct string_list *include,
 		 */
 		if (pack_is_marked_for_deletion(item))
 			continue;
-		string_list_insert(include, xstrfmt("%s.idx", item->string));
+
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "%s.idx", item->string);
+		string_list_insert(include, buf.buf);
 	}
+
+	strbuf_release(&buf);
 }
 
 static int write_midx_included_packs(struct string_list *include,
@@ -1476,7 +1494,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		mark_packs_for_deletion(&existing, &names);
 
 	if (write_midx) {
-		struct string_list include = STRING_LIST_INIT_NODUP;
+		struct string_list include = STRING_LIST_INIT_DUP;
 		midx_included_packs(&include, &existing, &names, &geometry);
 
 		ret = write_midx_included_packs(&include, &geometry, &names,
