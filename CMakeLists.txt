@@ -111,7 +111,7 @@ project(git
 
 #macros for parsing the Makefile for sources and scripts
 macro(parse_makefile_for_sources list_var regex)
-	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
+	file(STRINGS ${CMAKE_SOURCE_DIR}/old_Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
 	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) #remove "$(COMPAT_OBJS)" This is only for libgit.
 	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
@@ -121,7 +121,7 @@ macro(parse_makefile_for_sources list_var regex)
 endmacro()
 
 macro(parse_makefile_for_scripts list_var regex lang)
-	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
+	file(STRINGS ${CMAKE_SOURCE_DIR}/old_Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
 	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
 	string(REPLACE " " ";" ${list_var} ${${list_var}}) #convert string to a list
@@ -131,7 +131,7 @@ macro(parse_makefile_for_scripts list_var regex lang)
 endmacro()
 
 macro(parse_makefile_for_executables list_var regex)
-	file(STRINGS ${CMAKE_SOURCE_DIR}/Makefile ${list_var} REGEX "^${regex} \\+= git-(.*)")
+	file(STRINGS ${CMAKE_SOURCE_DIR}/old_Makefile ${list_var} REGEX "^${regex} \\+= git-(.*)")
 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
 	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
 	string(REPLACE "git-" "" ${list_var} ${${list_var}}) #strip `git-` prefix
@@ -884,7 +884,7 @@ endforeach()
 file(GLOB templates "${CMAKE_SOURCE_DIR}/templates/*")
 list(TRANSFORM templates REPLACE "${CMAKE_SOURCE_DIR}/templates/" "")
 list(REMOVE_ITEM templates ".gitignore")
-list(REMOVE_ITEM templates "Makefile")
+list(REMOVE_ITEM templates "old_Makefile")
 list(REMOVE_ITEM templates "blt")# Prevents an error when reconfiguring for in source builds
 
 list(REMOVE_ITEM templates "branches--")
