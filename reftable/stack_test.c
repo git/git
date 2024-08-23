@@ -1076,6 +1076,55 @@ static void test_reftable_stack_compaction_concurrent_clean(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_read_across_reload(void)
+{
+	struct reftable_write_options opts = { 0 };
+	struct reftable_stack *st1 = NULL, *st2 = NULL;
+	struct reftable_ref_record rec = { 0 };
+	struct reftable_iterator it = { 0 };
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	/* Create a first stack and set up an iterator for it. */
+	err = reftable_new_stack(&st1, dir, &opts);
+	EXPECT_ERR(err);
+	write_n_ref_tables(st1, 2);
+	EXPECT(st1->merged->readers_len == 2);
+	reftable_stack_init_ref_iterator(st1, &it);
+	err = reftable_iterator_seek_ref(&it, "");
+	EXPECT_ERR(err);
+
+	/* Set up a second stack for the same directory and compact it. */
+	err = reftable_new_stack(&st2, dir, &opts);
+	EXPECT_ERR(err);
+	EXPECT(st2->merged->readers_len == 2);
+	err = reftable_stack_compact_all(st2, NULL);
+	EXPECT_ERR(err);
+	EXPECT(st2->merged->readers_len == 1);
+
+	/*
+	 * Verify that we can continue to use the old iterator even after we
+	 * have reloaded its stack.
+	 */
+	err = reftable_stack_reload(st1);
+	EXPECT_ERR(err);
+	EXPECT(st1->merged->readers_len == 1);
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0000"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0001"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT(err > 0);
+
+	reftable_ref_record_release(&rec);
+	reftable_iterator_destroy(&it);
+	reftable_stack_destroy(st1);
+	reftable_stack_destroy(st2);
+	clear_dir(dir);
+}
+
 int stack_test_main(int argc, const char *argv[])
 {
 	RUN_TEST(test_empty_add);
@@ -1098,6 +1147,7 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_auto_compaction_fails_gracefully);
 	RUN_TEST(test_reftable_stack_update_index_check);
 	RUN_TEST(test_reftable_stack_uptodate);
+	RUN_TEST(test_reftable_stack_read_across_reload);
 	RUN_TEST(test_suggest_compaction_segment);
 	RUN_TEST(test_suggest_compaction_segment_nothing);
 	return 0;

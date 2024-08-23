@@ -175,6 +175,7 @@ static int table_iter_init(struct table_iter *ti, struct reftable_reader *r)
 {
 	struct block_iter bi = BLOCK_ITER_INIT;
 	memset(ti, 0, sizeof(*ti));
+	reftable_reader_incref(r);
 	ti->r = r;
 	ti->bi = bi;
 	return 0;
@@ -262,6 +263,7 @@ static void table_iter_close(struct table_iter *ti)
 {
 	table_iter_block_done(ti);
 	block_iter_close(&ti->bi);
+	reftable_reader_decref(ti->r);
 }
 
 static int table_iter_next_block(struct table_iter *ti)
