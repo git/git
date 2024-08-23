@@ -1586,6 +1586,11 @@ static int do_oid_object_info_extended(struct repository *r,
 			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 		if (oi->type_name)
 			strbuf_addstr(oi->type_name, type_name(co->type));
+		/*
+		 * Currently `blame' is the only command which creates
+		 * OI_CACHED, and direct_cache is only used by `cat-file'.
+		 */
+		assert(!oi->direct_cache);
 		if (oi->contentp)
 			*oi->contentp = xmemdupz(co->buf, co->size);
 		oi->whence = OI_CACHED;

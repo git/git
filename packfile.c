@@ -1362,6 +1362,14 @@ unwind:
 static struct hashmap delta_base_cache;
 static size_t delta_base_cached;
 
+/*
+ * Ensures only a single object is used at-a-time via oi->direct_cache.
+ * Using two objects directly at once (e.g. diff) would cause corruption
+ * since populating the cache may invalidate existing entries.
+ * This lock has nothing to do with parallelism at the moment.
+ */
+static int delta_base_cache_lock;
+
 static LIST_HEAD(delta_base_cache_lru);
 
 struct delta_base_cache_key {
@@ -1444,6 +1452,18 @@ static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 	free(ent);
 }
 
+static void lock_delta_base_cache(void)
+{
+	delta_base_cache_lock++;
+	assert(delta_base_cache_lock == 1);
+}
+
+void unlock_delta_base_cache(void)
+{
+	delta_base_cache_lock--;
+	assert(delta_base_cache_lock == 0);
+}
+
 static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 {
 	free(ent->data);
@@ -1453,6 +1473,7 @@ static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 void clear_delta_base_cache(void)
 {
 	struct list_head *lru, *tmp;
+	assert(!delta_base_cache_lock);
 	list_for_each_safe(lru, tmp, &delta_base_cache_lru) {
 		struct delta_base_cache_entry *entry =
 			list_entry(lru, struct delta_base_cache_entry, lru);
@@ -1466,6 +1487,7 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	struct delta_base_cache_entry *ent;
 	struct list_head *lru, *tmp;
 
+	assert(!delta_base_cache_lock);
 	/*
 	 * Check required to avoid redundant entries when more than one thread
 	 * is unpacking the same object, in unpack_entry() (since its phases I
@@ -1520,11 +1542,16 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		if (oi->sizep)
 			*oi->sizep = ent->size;
 		if (oi->contentp) {
-			if (!oi->content_limit ||
-					ent->size <= oi->content_limit)
+			/* ignore content_limit if avoiding copy from cache */
+			if (oi->direct_cache) {
+				lock_delta_base_cache();
+				*oi->contentp = ent->data;
+			} else if (!oi->content_limit ||
+					ent->size <= oi->content_limit) {
 				*oi->contentp = xmemdupz(ent->data, ent->size);
-			else
+			} else {
 				*oi->contentp = NULL; /* caller must stream */
+			}
 		}
 	} else if (oi->contentp && !oi->content_limit) {
 		*oi->contentp = unpack_entry(r, p, obj_offset, &type,

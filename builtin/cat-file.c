@@ -386,7 +386,20 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 
 	if (data->content) {
 		batch_write(opt, data->content, data->size);
-		FREE_AND_NULL(data->content);
+		switch (data->info.whence) {
+		case OI_CACHED:
+			/*
+			 * only blame uses OI_CACHED atm, so it's unlikely
+			 * we'll ever hit this path
+			 */
+			BUG("TODO OI_CACHED support not done");
+		case OI_LOOSE:
+		case OI_PACKED:
+			FREE_AND_NULL(data->content);
+			break;
+		case OI_DBCACHED:
+			unlock_delta_base_cache();
+		}
 	} else if (data->type == OBJ_BLOB) {
 		if (opt->buffer_output)
 			fflush(stdout);
@@ -815,6 +828,7 @@ static int batch_objects(struct batch_options *opt)
 			data.info.sizep = &data.size;
 			data.info.contentp = &data.content;
 			data.info.content_limit = big_file_threshold;
+			data.info.direct_cache = 1;
 		}
 	}
 
