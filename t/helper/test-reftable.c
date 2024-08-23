@@ -6,7 +6,6 @@ int cmd__reftable(int argc, const char **argv)
 {
 	/* test from simple to complex. */
 	block_test_main(argc, argv);
-	readwrite_test_main(argc, argv);
 	stack_test_main(argc, argv);
 	return 0;
 }
