@@ -8,3 +8,13 @@ endif::[]
 `init.defaultBranch`::
 	Allows overriding the default branch name e.g. when initializing
 	a new repository.
+`init.defaultObjectFormat`::
+	Allows overriding the default object format for new repositories. See
+	`--object-format=` in linkgit:git-init[1]. Both the command line option
+	and the `GIT_DEFAULT_HASH` environment variable take precedence over
+	this config.
+`init.defaultRefFormat`::
+	Allows overriding the default ref storage format for new repositories.
+	See `--ref-format=` in linkgit:git-init[1]. Both the command line
+	option and the `GIT_DEFAULT_REF_FORMAT` environment variable take
+	precedence over this config.
