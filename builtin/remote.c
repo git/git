@@ -164,6 +164,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT;
 	const char *name, *url;
 	int i;
+	int result = 0;
 
 	struct option options[] = {
 		OPT_BOOL('f', "fetch", &fetch, N_("fetch the remote branches")),
@@ -230,8 +231,10 @@ static int add(int argc, const char **argv, const char *prefix)
 			       fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
 
-	if (fetch && fetch_remote(name))
-		return 1;
+	if (fetch && fetch_remote(name)) {
+		result = 1;
+		goto out;
+	}
 
 	if (master) {
 		strbuf_reset(&buf);
@@ -241,14 +244,15 @@ static int add(int argc, const char **argv, const char *prefix)
 		strbuf_addf(&buf2, "refs/remotes/%s/%s", name, master);
 
 		if (refs_update_symref(get_main_ref_store(the_repository), buf.buf, buf2.buf, "remote add"))
-			return error(_("Could not setup master '%s'"), master);
+			result = error(_("Could not setup master '%s'"), master);
 	}
 
+out:
 	strbuf_release(&buf);
 	strbuf_release(&buf2);
 	string_list_clear(&track, 0);
 
-	return 0;
+	return result;
 }
 
 struct branch_info {
@@ -715,6 +719,7 @@ static int mv(int argc, const char **argv, const char *prefix)
 	struct rename_info rename;
 	int i, refs_renamed_nr = 0, refspec_updated = 0;
 	struct progress *progress = NULL;
+	int result = 0;
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_remote_rename_usage, 0);
@@ -747,9 +752,11 @@ static int mv(int argc, const char **argv, const char *prefix)
 
 	strbuf_addf(&buf, "remote.%s", rename.old_name);
 	strbuf_addf(&buf2, "remote.%s", rename.new_name);
-	if (repo_config_rename_section(the_repository, buf.buf, buf2.buf) < 1)
-		return error(_("Could not rename config section '%s' to '%s'"),
-				buf.buf, buf2.buf);
+	if (repo_config_rename_section(the_repository, buf.buf, buf2.buf) < 1) {
+		result = error(_("Could not rename config section '%s' to '%s'"),
+			       buf.buf, buf2.buf);
+		goto out;
+	}
 
 	if (oldremote->fetch.raw_nr) {
 		strbuf_reset(&buf);
@@ -870,7 +877,7 @@ out:
 	strbuf_release(&buf);
 	strbuf_release(&buf2);
 	strbuf_release(&buf3);
-	return 0;
+	return result;
 }
 
 static int rm(int argc, const char **argv, const char *prefix)
