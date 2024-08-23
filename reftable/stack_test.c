@@ -125,6 +125,7 @@ static void write_n_ref_tables(struct reftable_stack *st,
 			.value_type = REFTABLE_REF_VAL1,
 		};
 
+		strbuf_reset(&buf);
 		strbuf_addf(&buf, "refs/heads/branch-%04u", (unsigned) i);
 		ref.refname = buf.buf;
 		set_test_hash(ref.value.val1, i);
