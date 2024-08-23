@@ -34,11 +34,12 @@ static void test_block_read_write(void)
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
 	int j = 0;
+	struct strbuf block_data = STRBUF_INIT;
 	struct strbuf want = STRBUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
 	block.len = block_size;
-	block.source = malloc_block_source();
+	block_source_from_strbuf(&block.source, &block_data);
 	block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
 			  header_off, hash_size(GIT_SHA1_FORMAT_ID));
 

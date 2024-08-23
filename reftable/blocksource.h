@@ -17,6 +17,4 @@ struct reftable_block_source;
 void block_source_from_strbuf(struct reftable_block_source *bs,
 			      struct strbuf *buf);
 
-struct reftable_block_source malloc_block_source(void);
-
 #endif
