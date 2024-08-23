@@ -1444,23 +1444,6 @@ static void detach_delta_base_cache_entry(struct delta_base_cache_entry *ent)
 	free(ent);
 }
 
-static void *cache_or_unpack_entry(struct repository *r, struct packed_git *p,
-				   off_t base_offset, unsigned long *base_size,
-				   enum object_type *type)
-{
-	struct delta_base_cache_entry *ent;
-
-	ent = get_delta_base_cache_entry(p, base_offset);
-	if (!ent)
-		return unpack_entry(r, p, base_offset, type, base_size);
-
-	if (type)
-		*type = ent->type;
-	if (base_size)
-		*base_size = ent->size;
-	return xmemdupz(ent->data, ent->size);
-}
-
 static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 {
 	free(ent->data);
@@ -1521,20 +1504,35 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		       off_t obj_offset, struct object_info *oi)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long size;
 	off_t curpos = obj_offset;
 	enum object_type type;
+	struct delta_base_cache_entry *ent;
 
 	/*
 	 * We always get the representation type, but only convert it to
 	 * a "real" type later if the caller is interested.
 	 */
-	if (oi->contentp && !oi->content_limit) {
-		*oi->contentp = cache_or_unpack_entry(r, p, obj_offset, oi->sizep,
-						      &type);
+	oi->whence = OI_PACKED;
+	ent = get_delta_base_cache_entry(p, obj_offset);
+	if (ent) {
+		oi->whence = OI_DBCACHED;
+		type = ent->type;
+		if (oi->sizep)
+			*oi->sizep = ent->size;
+		if (oi->contentp) {
+			if (!oi->content_limit ||
+					ent->size <= oi->content_limit)
+				*oi->contentp = xmemdupz(ent->data, ent->size);
+			else
+				*oi->contentp = NULL; /* caller must stream */
+		}
+	} else if (oi->contentp && !oi->content_limit) {
+		*oi->contentp = unpack_entry(r, p, obj_offset, &type,
+						oi->sizep);
 		if (!*oi->contentp)
 			type = OBJ_BAD;
 	} else {
+		unsigned long size;
 		type = unpack_object_header(p, &w_curs, &curpos, &size);
 
 		if (oi->sizep) {
@@ -1558,8 +1556,8 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 
 		if (oi->contentp) {
 			if (oi->sizep && *oi->sizep <= oi->content_limit) {
-				*oi->contentp = cache_or_unpack_entry(r, p, obj_offset,
-								      oi->sizep, &type);
+				*oi->contentp = unpack_entry(r, p, obj_offset,
+							&type, oi->sizep);
 				if (!*oi->contentp)
 					type = OBJ_BAD;
 			} else {
@@ -1608,10 +1606,6 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		} else
 			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 	}
-
-	oi->whence = in_delta_base_cache(p, obj_offset) ? OI_DBCACHED :
-							  OI_PACKED;
-
 out:
 	unuse_pack(&w_curs);
 	return type;
