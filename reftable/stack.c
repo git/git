@@ -1328,17 +1328,9 @@ done:
 	strbuf_release(&table_name);
 	free_names(names);
 
-	return err;
-}
-
-static int stack_compact_range_stats(struct reftable_stack *st,
-				     size_t first, size_t last,
-				     struct reftable_log_expiry_config *config,
-				     unsigned int flags)
-{
-	int err = stack_compact_range(st, first, last, config, flags);
 	if (err == REFTABLE_LOCK_ERROR)
 		st->stats.failures++;
+
 	return err;
 }
 
@@ -1346,7 +1338,7 @@ int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config)
 {
 	size_t last = st->merged->readers_len ? st->merged->readers_len - 1 : 0;
-	return stack_compact_range_stats(st, 0, last, config, 0);
+	return stack_compact_range(st, 0, last, config, 0);
 }
 
 static int segment_size(struct segment *s)
@@ -1452,8 +1444,8 @@ int reftable_stack_auto_compact(struct reftable_stack *st)
 					   st->opts.auto_compaction_factor);
 	reftable_free(sizes);
 	if (segment_size(&seg) > 0)
-		return stack_compact_range_stats(st, seg.start, seg.end - 1,
-						 NULL, STACK_COMPACT_RANGE_BEST_EFFORT);
+		return stack_compact_range(st, seg.start, seg.end - 1,
+					   NULL, STACK_COMPACT_RANGE_BEST_EFFORT);
 
 	return 0;
 }
