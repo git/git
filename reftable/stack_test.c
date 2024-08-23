@@ -10,6 +10,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "system.h"
 
+#include "copy.h"
 #include "reftable-reader.h"
 #include "merged.h"
 #include "basics.h"
@@ -1125,6 +1126,63 @@ static void test_reftable_stack_read_across_reload(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_reload_with_missing_table(void)
+{
+	struct reftable_write_options opts = { 0 };
+	struct reftable_stack *st = NULL;
+	struct reftable_ref_record rec = { 0 };
+	struct reftable_iterator it = { 0 };
+	struct strbuf table_path = STRBUF_INIT, content = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	/* Create a first stack and set up an iterator for it. */
+	err = reftable_new_stack(&st, dir, &opts);
+	EXPECT_ERR(err);
+	write_n_ref_tables(st, 2);
+	EXPECT(st->merged->readers_len == 2);
+	reftable_stack_init_ref_iterator(st, &it);
+	err = reftable_iterator_seek_ref(&it, "");
+	EXPECT_ERR(err);
+
+	/*
+	 * Update the tables.list file with some garbage data, while reusing
+	 * our old readers. This should trigger a partial reload of the stack,
+	 * where we try to reuse our old readers.
+	*/
+	strbuf_addf(&content, "%s\n", st->readers[0]->name);
+	strbuf_addf(&content, "%s\n", st->readers[1]->name);
+	strbuf_addstr(&content, "garbage\n");
+	strbuf_addf(&table_path, "%s.lock", st->list_file);
+	write_file_buf(table_path.buf, content.buf, content.len);
+	err = rename(table_path.buf, st->list_file);
+	EXPECT_ERR(err);
+
+	err = reftable_stack_reload(st);
+	EXPECT(err == -4);
+	EXPECT(st->merged->readers_len == 2);
+
+	/*
+	 * Even though the reload has failed, we should be able to continue
+	 * using the iterator.
+	*/
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0000"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0001"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT(err > 0);
+
+	reftable_ref_record_release(&rec);
+	reftable_iterator_destroy(&it);
+	reftable_stack_destroy(st);
+	strbuf_release(&table_path);
+	strbuf_release(&content);
+	clear_dir(dir);
+}
+
 int stack_test_main(int argc, const char *argv[])
 {
 	RUN_TEST(test_empty_add);
@@ -1148,6 +1206,7 @@ int stack_test_main(int argc, const char *argv[])
 	RUN_TEST(test_reftable_stack_update_index_check);
 	RUN_TEST(test_reftable_stack_uptodate);
 	RUN_TEST(test_reftable_stack_read_across_reload);
+	RUN_TEST(test_reftable_stack_reload_with_missing_table);
 	RUN_TEST(test_suggest_compaction_segment);
 	RUN_TEST(test_suggest_compaction_segment_nothing);
 	return 0;

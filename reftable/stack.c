@@ -226,6 +226,8 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 {
 	size_t cur_len = !st->merged ? 0 : st->merged->readers_len;
 	struct reftable_reader **cur = stack_copy_readers(st, cur_len);
+	struct reftable_reader **reused = NULL;
+	size_t reused_len = 0, reused_alloc = 0;
 	size_t names_len = names_length(names);
 	struct reftable_reader **new_readers =
 		reftable_calloc(names_len, sizeof(*new_readers));
@@ -245,6 +247,18 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 			if (cur[i] && 0 == strcmp(cur[i]->name, name)) {
 				rd = cur[i];
 				cur[i] = NULL;
+
+				/*
+				 * When reloading the stack fails, we end up
+				 * releasing all new readers. This also
+				 * includes the reused readers, even though
+				 * they are still in used by the old stack. We
+				 * thus need to keep them alive here, which we
+				 * do by bumping their refcount.
+				 */
+				REFTABLE_ALLOC_GROW(reused, reused_len + 1, reused_alloc);
+				reused[reused_len++] = rd;
+				reftable_reader_incref(rd);
 				break;
 			}
 		}
@@ -301,10 +315,19 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	new_readers = NULL;
 	new_readers_len = 0;
 
+	/*
+	 * Decrement the refcount of reused readers again. This only needs to
+	 * happen on the successful case, because on the unsuccessful one we
+	 * decrement their refcount via `new_readers`.
+	 */
+	for (i = 0; i < reused_len; i++)
+		reftable_reader_decref(reused[i]);
+
 done:
 	for (i = 0; i < new_readers_len; i++)
 		reftable_reader_decref(new_readers[i]);
 	reftable_free(new_readers);
+	reftable_free(reused);
 	reftable_free(cur);
 	strbuf_release(&table_path);
 	return err;
