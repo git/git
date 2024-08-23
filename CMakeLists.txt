@@ -940,8 +940,8 @@ set(libgit_SOURCES
 
 list(TRANSFORM libgit_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-add_library(libgit ${libgit_SOURCES})
-# add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
+# add_library(libgit ${libgit_SOURCES})
+add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
 
 #libxdiff
 parse_makefile_for_sources(libxdiff_SOURCES "XDIFF_OBJS")
