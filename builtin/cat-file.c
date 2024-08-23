@@ -417,7 +417,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		case OI_DBCACHED:
 			unlock_delta_base_cache();
 		}
-	} else if (data->type == OBJ_BLOB) {
+	} else {
+		assert(data->type == OBJ_BLOB);
 		if (opt->buffer_output)
 			fflush(stdout);
 		if (opt->transform_mode) {
@@ -451,30 +452,6 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		} else {
 			stream_blob(oid);
 		}
-	}
-	else {
-		enum object_type type;
-		unsigned long size;
-		void *contents;
-
-		contents = repo_read_object_file(the_repository, oid, &type,
-						 &size);
-		if (!contents)
-			die("object %s disappeared", oid_to_hex(oid));
-
-		if (use_mailmap) {
-			size_t s = size;
-			contents = replace_idents_using_mailmap(contents, &s);
-			size = cast_size_t_to_ulong(s);
-		}
-
-		if (type != data->type)
-			die("object %s changed type!?", oid_to_hex(oid));
-		if (data->info.sizep && size != data->size && !use_mailmap)
-			die("object %s changed size!?", oid_to_hex(oid));
-
-		batch_write(opt, contents, size);
-		free(contents);
 	}
 }
 
@@ -689,6 +666,7 @@ static void parse_cmd_contents(struct batch_options *opt,
 			     struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_CONTENTS;
+	data->info.contentp = &data->content;
 	batch_one_object(line, output, opt, data);
 }
 
@@ -698,6 +676,7 @@ static void parse_cmd_info(struct batch_options *opt,
 			   struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_INFO;
+	data->info.contentp = NULL;
 	batch_one_object(line, output, opt, data);
 }
 
@@ -839,7 +818,8 @@ static int batch_objects(struct batch_options *opt)
 	 * Likewise, grab the content in the initial request if it's small
 	 * and we're not planning to filter it.
 	 */
-	if (opt->batch_mode == BATCH_MODE_CONTENTS) {
+	if ((opt->batch_mode == BATCH_MODE_CONTENTS) ||
+			(opt->batch_mode == BATCH_MODE_QUEUE_AND_DISPATCH)) {
 		data.info.typep = &data.type;
 		if (!opt->transform_mode) {
 			data.info.sizep = &data.size;
