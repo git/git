@@ -130,7 +130,7 @@ OPTIONS
 --all::
 	With `get`, return all values for a multi-valued key.
 
----regexp::
+--regexp::
 	With `get`, interpret the name as a regular expression. Regular
 	expression matching is currently case-sensitive and done against a
 	canonicalized version of the key in which section and variable names
