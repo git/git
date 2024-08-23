@@ -50,6 +50,8 @@ struct reftable_reader {
 	struct reftable_reader_offsets ref_offsets;
 	struct reftable_reader_offsets obj_offsets;
 	struct reftable_reader_offsets log_offsets;
+
+	uint64_t refcount;
 };
 
 const char *reader_name(struct reftable_reader *r);

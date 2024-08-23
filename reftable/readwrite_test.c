@@ -279,7 +279,7 @@ static void test_log_write_read(void)
 	/* cleanup. */
 	strbuf_release(&buf);
 	free_names(names);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 }
 
 static void test_log_zlib_corruption(void)
@@ -341,7 +341,7 @@ static void test_log_zlib_corruption(void)
 	reftable_iterator_destroy(&it);
 
 	/* cleanup. */
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 	strbuf_release(&buf);
 }
 
@@ -383,7 +383,7 @@ static void test_table_read_write_sequential(void)
 	EXPECT(j == N);
 
 	reftable_iterator_destroy(&it);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 	strbuf_release(&buf);
 	free_names(names);
 }
@@ -431,7 +431,7 @@ static void test_table_read_api(void)
 	}
 	reftable_iterator_destroy(&it);
 	reftable_free(names);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 	strbuf_release(&buf);
 }
 
@@ -498,7 +498,7 @@ static void test_table_read_write_seek(int index, int hash_id)
 		reftable_free(names[i]);
 	}
 	reftable_free(names);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 }
 
 static void test_table_read_write_seek_linear(void)
@@ -611,7 +611,7 @@ static void test_table_refs_for(int indexed)
 	strbuf_release(&buf);
 	free_names(want_names);
 	reftable_iterator_destroy(&it);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 }
 
 static void test_table_refs_for_no_index(void)
@@ -657,7 +657,7 @@ static void test_write_empty_table(void)
 	EXPECT(err > 0);
 
 	reftable_iterator_destroy(&it);
-	reftable_reader_free(rd);
+	reftable_reader_decref(rd);
 	strbuf_release(&buf);
 }
 
@@ -863,7 +863,7 @@ static void test_write_multiple_indices(void)
 
 	reftable_iterator_destroy(&it);
 	reftable_writer_free(writer);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 	strbuf_release(&writer_buf);
 	strbuf_release(&buf);
 }
@@ -919,7 +919,7 @@ static void test_write_multi_level_index(void)
 
 	reftable_iterator_destroy(&it);
 	reftable_writer_free(writer);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 	strbuf_release(&writer_buf);
 	strbuf_release(&buf);
 }

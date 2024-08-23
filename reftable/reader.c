@@ -621,6 +621,7 @@ int reftable_reader_new(struct reftable_reader **out,
 	r->source = *source;
 	r->name = xstrdup(name);
 	r->hash_id = 0;
+	r->refcount = 1;
 
 	err = block_source_read_block(source, &footer, r->size,
 				      footer_size(r->version));
@@ -645,9 +646,20 @@ done:
 	return err;
 }
 
-void reftable_reader_free(struct reftable_reader *r)
+void reftable_reader_incref(struct reftable_reader *r)
+{
+	if (!r->refcount)
+		BUG("cannot increment ref counter of dead reader");
+	r->refcount++;
+}
+
+void reftable_reader_decref(struct reftable_reader *r)
 {
 	if (!r)
+		return;
+	if (!r->refcount)
+		BUG("cannot decrement ref counter of dead reader");
+	if (--r->refcount)
 		return;
 	block_source_close(&r->source);
 	FREE_AND_NULL(r->name);
@@ -812,7 +824,7 @@ int reftable_reader_print_blocks(const char *tablename)
 	}
 
 done:
-	reftable_reader_free(r);
+	reftable_reader_decref(r);
 	table_iter_close(&ti);
 	return err;
 }

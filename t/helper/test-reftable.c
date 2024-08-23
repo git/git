@@ -152,7 +152,7 @@ static int dump_reftable(const char *tablename)
 
 done:
 	reftable_merged_table_free(mt);
-	reftable_reader_free(r);
+	reftable_reader_decref(r);
 	return err;
 }
 

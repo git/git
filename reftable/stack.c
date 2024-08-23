@@ -186,7 +186,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 			if (names && !has_name(names, name)) {
 				stack_filename(&filename, st, name);
 			}
-			reftable_reader_free(st->readers[i]);
+			reftable_reader_decref(st->readers[i]);
 
 			if (filename.len) {
 				/* On Windows, can only unlink after closing. */
@@ -290,7 +290,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 			const char *name = reader_name(cur[i]);
 			stack_filename(&table_path, st, name);
 
-			reftable_reader_free(cur[i]);
+			reftable_reader_decref(cur[i]);
 
 			/* On Windows, can only unlink after closing. */
 			unlink(table_path.buf);
@@ -299,7 +299,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 
 done:
 	for (i = 0; i < new_readers_len; i++)
-		reftable_reader_free(new_readers[i]);
+		reftable_reader_decref(new_readers[i]);
 	reftable_free(new_readers);
 	reftable_free(cur);
 	strbuf_release(&table_path);
@@ -1534,7 +1534,7 @@ static void remove_maybe_stale_table(struct reftable_stack *st, uint64_t max,
 		goto done;
 
 	update_idx = reftable_reader_max_update_index(rd);
-	reftable_reader_free(rd);
+	reftable_reader_decref(rd);
 
 	if (update_idx <= max) {
 		unlink(table_path.buf);

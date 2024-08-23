@@ -1036,10 +1036,8 @@ static void test_reftable_stack_compaction_concurrent(void)
 static void unclean_stack_close(struct reftable_stack *st)
 {
 	/* break abstraction boundary to simulate unclean shutdown. */
-	int i = 0;
-	for (; i < st->readers_len; i++) {
-		reftable_reader_free(st->readers[i]);
-	}
+	for (size_t i = 0; i < st->readers_len; i++)
+		reftable_reader_decref(st->readers[i]);
 	st->readers_len = 0;
 	FREE_AND_NULL(st->readers);
 }

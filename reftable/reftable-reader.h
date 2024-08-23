@@ -33,6 +33,18 @@ struct reftable_reader;
 int reftable_reader_new(struct reftable_reader **pp,
 			struct reftable_block_source *src, const char *name);
 
+/*
+ * Manage the reference count of the reftable reader. A newly initialized
+ * reader starts with a refcount of 1 and will be deleted once the refcount has
+ * reached 0.
+ *
+ * This is required because readers may have longer lifetimes than the stack
+ * they belong to. The stack may for example be reloaded while the old tables
+ * are still being accessed by an iterator.
+ */
+void reftable_reader_incref(struct reftable_reader *reader);
+void reftable_reader_decref(struct reftable_reader *reader);
+
 /* Initialize a reftable iterator for reading refs. */
 void reftable_reader_init_ref_iterator(struct reftable_reader *r,
 				       struct reftable_iterator *it);
@@ -43,9 +55,6 @@ void reftable_reader_init_log_iterator(struct reftable_reader *r,
 
 /* returns the hash ID used in this table. */
 uint32_t reftable_reader_hash_id(struct reftable_reader *r);
-
-/* closes and deallocates a reader. */
-void reftable_reader_free(struct reftable_reader *);
 
 /* return an iterator for the refs pointing to `oid`. */
 int reftable_reader_refs_for(struct reftable_reader *r,

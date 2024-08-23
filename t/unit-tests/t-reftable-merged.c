@@ -115,7 +115,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 static void readers_destroy(struct reftable_reader **readers, const size_t n)
 {
 	for (size_t i = 0; i < n; i++)
-		reftable_reader_free(readers[i]);
+		reftable_reader_decref(readers[i]);
 	reftable_free(readers);
 }
 
@@ -437,7 +437,7 @@ static void t_default_write_opts(void)
 	err = reftable_merged_table_new(&merged, &rd, 1, GIT_SHA1_FORMAT_ID);
 	check(!err);
 
-	reftable_reader_free(rd);
+	reftable_reader_decref(rd);
 	reftable_merged_table_free(merged);
 	strbuf_release(&buf);
 }
