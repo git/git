@@ -113,12 +113,25 @@ project(git
 macro(parse_makefile_for_sources list_var regex)
 	file(STRINGS ${CMAKE_SOURCE_DIR}/old_Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
-	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) #remove "$(COMPAT_OBJS)" This is only for libgit.
-	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
-	string(REPLACE ".o" ".c;" ${list_var} ${${list_var}}) #change .o to .c, ; is for converting the string into a list
-	list(TRANSFORM ${list_var} STRIP) #remove trailing/leading whitespaces for each element in list
-	list(REMOVE_ITEM ${list_var} "") #remove empty list elements
+
+        #remove "$(COMPAT_OBJS)" This is only for libgit.
+	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) 
+
+        #remove trailing/leading whitespaces
+	string(STRIP ${${list_var}} ${list_var}) 
+        
+        #change .o to .c, ; is for converting the string into a list
+	string(REPLACE ".o" ".c;" ${list_var} ${${list_var}}) 
+
+        #remove trailing/leading whitespaces for each element in list
+	list(TRANSFORM ${list_var} STRIP) 
+
+        #remove empty list elements
+	list(REMOVE_ITEM ${list_var} "") 
 endmacro()
+
+
+
 
 macro(parse_makefile_for_scripts list_var regex lang)
 	file(STRINGS ${CMAKE_SOURCE_DIR}/old_Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
@@ -675,11 +688,260 @@ include_directories(${CMAKE_BINARY_DIR})
 
 #build
 #libgit
-parse_makefile_for_sources(libgit_SOURCES "LIB_OBJS")
+# parse_makefile_for_sources(libgit_SOURCES "LIB_OBJS")
+# target_sources(libgit
+set(libgit_SOURCES
+    abspath.c
+    add-interactive.c
+    add-patch.c
+    advice.c
+    alias.c
+    alloc.c
+    apply.c
+    archive-tar.c
+    archive-zip.c
+    archive.c
+    attr.c
+    base85.c
+    bisect.c
+    blame.c
+    blob.c
+    bloom.c
+    branch.c
+    bulk-checkin.c
+    bundle-uri.c
+    bundle.c
+    cache-tree.c
+    cbtree.c
+    chdir-notify.c
+    checkout.c
+    chunk-format.c
+    color.c
+    column.c
+    combine-diff.c
+    commit-graph.c
+    commit-reach.c
+    commit.c
+    compat/nonblock.c
+    compat/obstack.c
+    compat/terminal.c
+    compat/zlib-uncompress2.c
+    config.c
+    connect.c
+    connected.c
+    convert.c
+    copy.c
+    credential.c
+    csum-file.c
+    ctype.c
+    date.c
+    decorate.c
+    delta-islands.c
+    diagnose.c
+    diff-delta.c
+    diff-merges.c
+    diff-lib.c
+    diff-no-index.c
+    diff.c
+    diffcore-break.c
+    diffcore-delta.c
+    diffcore-order.c
+    diffcore-pickaxe.c
+    diffcore-rename.c
+    diffcore-rotate.c
+    dir-iterator.c
+    dir.c
+    editor.c
+    entry.c
+    environment.c
+    ewah/bitmap.c
+    ewah/ewah_bitmap.c
+    ewah/ewah_io.c
+    ewah/ewah_rlw.c
+    exec-cmd.c
+    fetch-negotiator.c
+    fetch-pack.c
+    fmt-merge-msg.c
+    fsck.c
+    fsmonitor.c
+    fsmonitor-ipc.c
+    fsmonitor-settings.c
+    gettext.c
+    git-zlib.c
+    gpg-interface.c
+    graph.c
+    grep.c
+    hash-lookup.c
+    hashmap.c
+    help.c
+    hex.c
+    hex-ll.c
+    hook.c
+    ident.c
+    json-writer.c
+    kwset.c
+    levenshtein.c
+    line-log.c
+    line-range.c
+    linear-assignment.c
+    list-objects-filter-options.c
+    list-objects-filter.c
+    list-objects.c
+    lockfile.c
+    log-tree.c
+    loose.c
+    ls-refs.c
+    mailinfo.c
+    mailmap.c
+    match-trees.c
+    mem-pool.c
+    merge-blobs.c
+    merge-ll.c
+    merge-ort.c
+    merge-ort-wrappers.c
+    merge-recursive.c
+    merge.c
+    midx.c
+    midx-write.c
+    name-hash.c
+    negotiator/default.c
+    negotiator/noop.c
+    negotiator/skipping.c
+    notes-cache.c
+    notes-merge.c
+    notes-utils.c
+    notes.c
+    object-file-convert.c
+    object-file.c
+    object-name.c
+    object.c
+    oid-array.c
+    oidmap.c
+    oidset.c
+    oidtree.c
+    pack-bitmap-write.c
+    pack-bitmap.c
+    pack-check.c
+    pack-mtimes.c
+    pack-objects.c
+    pack-revindex.c
+    pack-write.c
+    packfile.c
+    pager.c
+    parallel-checkout.c
+    parse.c
+    parse-options-cb.c
+    parse-options.c
+    patch-delta.c
+    patch-ids.c
+    path.c
+    pathspec.c
+    pkt-line.c
+    preload-index.c
+    pretty.c
+    prio-queue.c
+    progress.c
+    promisor-remote.c
+    prompt.c
+    protocol.c
+    protocol-caps.c
+    prune-packed.c
+    pseudo-merge.c
+    quote.c
+    range-diff.c
+    reachable.c
+    read-cache.c
+    rebase-interactive.c
+    rebase.c
+    ref-filter.c
+    reflog-walk.c
+    reflog.c
+    refs.c
+    refs/debug.c
+    refs/files-backend.c
+    refs/reftable-backend.c
+    refs/iterator.c
+    refs/packed-backend.c
+    refs/ref-cache.c
+    refspec.c
+    remote.c
+    replace-object.c
+    repo-settings.c
+    repository.c
+    rerere.c
+    reset.c
+    resolve-undo.c
+    revision.c
+    run-command.c
+    send-pack.c
+    sequencer.c
+    serve.c
+    server-info.c
+    setup.c
+    shallow.c
+    sideband.c
+    sigchain.c
+    sparse-index.c
+    split-index.c
+    stable-qsort.c
+    statinfo.c
+    strbuf.c
+    streaming.c
+    string-list.c
+    strmap.c
+    strvec.c
+    sub-process.c
+    submodule-config.c
+    submodule.c
+    symlinks.c
+    tag.c
+    tempfile.c
+    thread-utils.c
+    tmp-objdir.c
+    trace.c
+    trace2.c
+    trace2/tr2_cfg.c
+    trace2/tr2_cmd_name.c
+    trace2/tr2_ctr.c
+    trace2/tr2_dst.c
+    trace2/tr2_sid.c
+    trace2/tr2_sysenv.c
+    trace2/tr2_tbuf.c
+    trace2/tr2_tgt_event.c
+    trace2/tr2_tgt_normal.c
+    trace2/tr2_tgt_perf.c
+    trace2/tr2_tls.c
+    trace2/tr2_tmr.c
+    trailer.c
+    transport-helper.c
+    transport.c
+    tree-diff.c
+    tree-walk.c
+    tree.c
+    unpack-trees.c
+    upload-pack.c
+    url.c
+    urlmatch.c
+    usage.c
+    userdiff.c
+    utf8.c
+    varint.c
+    version.c
+    versioncmp.c
+    walker.c
+    wildmatch.c
+    worktree.c
+    wrapper.c
+    write-or-die.c
+    ws.c
+    wt-status.c
+    xdiff-interface.c
+)
 
 list(TRANSFORM libgit_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
+add_library(libgit ${libgit_SOURCES})
+# add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
 
 #libxdiff
 parse_makefile_for_sources(libxdiff_SOURCES "XDIFF_OBJS")
