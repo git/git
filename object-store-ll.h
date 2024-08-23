@@ -289,6 +289,7 @@ struct object_info {
 	struct object_id *delta_base_oid;
 	struct strbuf *type_name;
 	void **contentp;
+	size_t content_limit;
 
 	/* Response */
 	enum {
