@@ -579,12 +579,6 @@ void reftable_reader_init_log_iterator(struct reftable_reader *r,
 	reader_init_iter(r, it, BLOCK_TYPE_LOG);
 }
 
-void reader_close(struct reftable_reader *r)
-{
-	block_source_close(&r->source);
-	FREE_AND_NULL(r->name);
-}
-
 int reftable_reader_new(struct reftable_reader **out,
 			struct reftable_block_source *source, char const *name)
 {
@@ -655,7 +649,8 @@ void reftable_reader_free(struct reftable_reader *r)
 {
 	if (!r)
 		return;
-	reader_close(r);
+	block_source_close(&r->source);
+	FREE_AND_NULL(r->name);
 	reftable_free(r);
 }
 

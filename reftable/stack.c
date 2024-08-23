@@ -290,7 +290,6 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 			const char *name = reader_name(cur[i]);
 			stack_filename(&table_path, st, name);
 
-			reader_close(cur[i]);
 			reftable_reader_free(cur[i]);
 
 			/* On Windows, can only unlink after closing. */
@@ -299,10 +298,8 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	}
 
 done:
-	for (i = 0; i < new_readers_len; i++) {
-		reader_close(new_readers[i]);
+	for (i = 0; i < new_readers_len; i++)
 		reftable_reader_free(new_readers[i]);
-	}
 	reftable_free(new_readers);
 	reftable_free(cur);
 	strbuf_release(&table_path);
