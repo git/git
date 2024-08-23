@@ -1772,6 +1772,7 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 void object_context_release(struct object_context *ctx)
 {
 	free(ctx->path);
+	strbuf_release(&ctx->symlink_path);
 }
 
 /*

@@ -450,8 +450,10 @@ static void output_pair_header(struct diff_options *diffopt,
 }
 
 static struct userdiff_driver section_headers = {
-	.funcname = { "^ ## (.*) ##$\n"
-		      "^.?@@ (.*)$", REG_EXTENDED }
+	.funcname = {
+		.pattern = "^ ## (.*) ##$\n^.?@@ (.*)$",
+		.cflags = REG_EXTENDED,
+	},
 };
 
 static struct diff_filespec *get_filespec(const char *name, const char *p)

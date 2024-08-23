@@ -42,8 +42,8 @@ static int full_tree;
 static int reference_excluded_commits;
 static int show_original_ids;
 static int mark_tags;
-static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
-static struct string_list tag_refs = STRING_LIST_INIT_NODUP;
+static struct string_list extra_refs = STRING_LIST_INIT_DUP;
+static struct string_list tag_refs = STRING_LIST_INIT_DUP;
 static struct refspec refspecs = REFSPEC_INIT_FETCH;
 static int anonymize;
 static struct hashmap anonymized_seeds;
@@ -901,7 +901,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	free(buf);
 }
 
-static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
+static struct commit *get_commit(struct rev_cmdline_entry *e, const char *full_name)
 {
 	switch (e->item->type) {
 	case OBJ_COMMIT:
@@ -932,14 +932,16 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		struct rev_cmdline_entry *e = info->rev + i;
 		struct object_id oid;
 		struct commit *commit;
-		char *full_name;
+		char *full_name = NULL;
 
 		if (e->flags & UNINTERESTING)
 			continue;
 
 		if (repo_dwim_ref(the_repository, e->name, strlen(e->name),
-				  &oid, &full_name, 0) != 1)
+				  &oid, &full_name, 0) != 1) {
+			free(full_name);
 			continue;
+		}
 
 		if (refspecs.nr) {
 			char *private;
@@ -955,6 +957,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 			warning("%s: Unexpected object of type %s, skipping.",
 				e->name,
 				type_name(e->item->type));
+			free(full_name);
 			continue;
 		}
 
@@ -963,10 +966,12 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 			break;
 		case OBJ_BLOB:
 			export_blob(&commit->object.oid);
+			free(full_name);
 			continue;
 		default: /* OBJ_TAG (nested tags) is already handled */
 			warning("Tag points to object of unexpected type %s, skipping.",
 				type_name(commit->object.type));
+			free(full_name);
 			continue;
 		}
 
@@ -979,6 +984,8 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 
 		if (!*revision_sources_at(&revision_sources, commit))
 			*revision_sources_at(&revision_sources, commit) = full_name;
+		else
+			free(full_name);
 	}
 
 	string_list_sort(&extra_refs);
@@ -1278,9 +1285,11 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	revs.diffopt.format_callback = show_filemodify;
 	revs.diffopt.format_callback_data = &paths_of_changed_objects;
 	revs.diffopt.flags.recursive = 1;
+
 	revs.diffopt.no_free = 1;
 	while ((commit = get_revision(&revs)))
 		handle_commit(commit, &revs, &paths_of_changed_objects);
+	revs.diffopt.no_free = 0;
 
 	handle_tags_and_duplicates(&extra_refs);
 	handle_tags_and_duplicates(&tag_refs);
