@@ -30,6 +30,11 @@ UI, Workflows & Features
  * "git svn" has been taught about svn:global-ignores property
    recent versions of Subversion has.
 
+ * The default object hash and ref backend format used to be settable
+   only with explicit command line option to "git init" and
+   environment variables, but now they can be configured in the user's
+   global and system wide configuration.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -75,6 +80,10 @@ Performance, Internal Implementation, Development Support etc.
    function to contain them.
 
  * Incremental updates of multi-pack index files is getting worked on.
+
+ * Use of API functions that implicitly depend on the_repository
+   object in the config subsystem has been rewritten to pass a
+   repository object through the callchain.
 
 
 Fixes since v2.46
@@ -162,3 +171,4 @@ Fixes since v2.46
    (merge 0d66f601a9 jc/tests-no-useless-tee later to maint).
    (merge 170cdfc5a4 jc/grammo-fixes later to maint).
    (merge 983555a1f2 jc/how-to-maintain-updates later to maint).
+   (merge e3209bd4df ps/stash-keep-untrack-empty-fix later to maint).
