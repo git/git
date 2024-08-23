@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2024, #08; Wed, 21)
-X-master-at: 3a7362eb9fad0c4838f5cfaa95ed3c51a4c18d93
-X-next-at: 59c65b2a6766646d1baa3a7f717e8b0c1a3467f6
+Subject: What's cooking in git.git (Aug 2024, #09; Fri, 23)
+X-master-at: 6a09c36371cbb902c573aee38d7cfd38f884f448
+X-next-at: ac735039a0b08a95923f47bbd2c235c5d9005b93
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2024, #08; Wed, 21)
+What's cooking in git.git (Aug 2024, #09; Fri, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -54,71 +54,168 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ag/git-svn-global-ignores (2024-08-14) 3 commits
-  (merged to 'next' on 2024-08-15 at b8332fe306)
- + git-svn: mention `svn:global-ignores` in help+docs
-  (merged to 'next' on 2024-08-08 at 3ba5e164a6)
- + git-svn: use `svn:global-ignores` to create .gitignore
- + git-svn: add public property `svn:global-ignores`
+* cp/unit-test-reftable-readwrite (2024-08-13) 4 commits
+  (merged to 'next' on 2024-08-16 at 8d68f73455)
+ + t-reftable-readwrite: add test for known error
+ + t-reftable-readwrite: use 'for' in place of infinite 'while' loops
+ + t-reftable-readwrite: use free_names() instead of a for loop
+ + t: move reftable/readwrite_test.c to the unit testing framework
 
- "git svn" has been taught about svn:global-ignores property
- recent versions of Subversion has.
- source: <pull.1747.v2.git.git.1721335657.gitgitgadget@gmail.com>
- source: <pull.1766.v2.git.git.1723578946962.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <20240813144440.4602-1-chandrapratap3519@gmail.com>
 
 
-* jc/grammo-fixes (2024-08-09) 2 commits
-  (merged to 'next' on 2024-08-15 at 111d5f5c13)
- + doc: grammofix in git-diff-tree
- + tutorial: grammofix
+* ps/config-wo-the-repository (2024-08-13) 21 commits
+  (merged to 'next' on 2024-08-16 at 3d5462a90e)
+ + config: hide functions using `the_repository` by default
+ + global: prepare for hiding away repo-less config functions
+ + config: don't depend on `the_repository` with branch conditions
+ + config: don't have setters depend on `the_repository`
+ + config: pass repo to functions that rename or copy sections
+ + config: pass repo to `git_die_config()`
+ + config: pass repo to `git_config_get_expiry_in_days()`
+ + config: pass repo to `git_config_get_expiry()`
+ + config: pass repo to `git_config_get_max_percent_split_change()`
+ + config: pass repo to `git_config_get_split_index()`
+ + config: pass repo to `git_config_get_index_threads()`
+ + config: expose `repo_config_clear()`
+ + config: introduce missing setters that take repo as parameter
+ + path: hide functions using `the_repository` by default
+ + path: stop relying on `the_repository` in `worktree_git_path()`
+ + path: stop relying on `the_repository` when reporting garbage
+ + hooks: remove implicit dependency on `the_repository`
+ + editor: do not rely on `the_repository` for interactive edits
+ + path: expose `do_git_common_path()` as `repo_common_pathv()`
+ + path: expose `do_git_path()` as `repo_git_pathv()`
+ + Merge branch 'ps/refs-wo-the-repository' into ps/config-wo-the-repository
 
- Doc updates.
- source: <xmqqed6xehzv.fsf@gitster.g>
-
-
-* jc/how-to-maintain-updates (2024-08-14) 1 commit
-  (merged to 'next' on 2024-08-15 at 20ebc08e74)
- + howto-maintain: mention preformatted docs
-
- Doc updates.
- source: <xmqqikw2wvup.fsf@gitster.g>
-
-
-* jk/apply-patch-mode-check-fix (2024-08-15) 1 commit
-  (merged to 'next' on 2024-08-15 at 8e077b7875)
- + t4129: fix racy index when calling chmod after git-add
-
- Test fix.
- source: <20240815153007.GA1477220@coredump.intra.peff.net>
-
-
-* jk/midx-unused-fix (2024-08-13) 1 commit
-  (merged to 'next' on 2024-08-14 at 2ec51e52e1)
- + midx: drop unused parameters from add_midx_to_chain()
-
- Code clean-up in the base topic.
- source: <20240813050216.GA394231@coredump.intra.peff.net>
+ Use of API functions that implicitly depend on the_repository
+ object in the config subsystem has been rewritten to pass a
+ repository object through the call chain.
+ source: <cover.1723540226.git.ps@pks.im>
 
 
-* js/ci-win-vs-build (2024-08-20) 2 commits
- + ci(win+VS): download the vcpkg artifacts using a dedicated GitHub Action
- + ci: bump microsoft/setup-msbuild from v1 to v2
+* ps/hash-and-ref-format-from-config (2024-08-16) 5 commits
+  (merged to 'next' on 2024-08-16 at 2028c02d01)
+ + setup: make ref storage format configurable via config
+ + setup: make object format configurable via config
+ + setup: merge configuration of repository formats
+ + t0001: delete repositories when object format tests finish
+ + t0001: exercise initialization with ref formats more thoroughly
 
- Sync with Windows+VS build jobs used at CI.
- source: <pull.1775.git.1724164270.gitgitgadget@gmail.com>
+ The default object hash and ref backend format used to be settable
+ only with explicit command line option to "git init" and
+ environment variables, but now they can be configured in the user's
+ global and system wide configuration.
+ source: <cover.1723798388.git.ps@pks.im>
 
 
-* ps/bundle-outside-repo-fix (2024-08-13) 2 commits
-  (merged to 'next' on 2024-08-15 at 3b9ea8a38a)
- + bundle: default to SHA1 when reading bundle headers
- + builtin/bundle: have unbundle check for repo before opening its bundle
+* ps/leakfixes-part-4 (2024-08-14) 23 commits
+  (merged to 'next' on 2024-08-16 at 37502271ec)
+ + builtin/diff: free symmetric diff members
+ + diff: free state populated via options
+ + builtin/log: fix leak when showing converted blob contents
+ + userdiff: fix leaking memory for configured diff drivers
+ + builtin/format-patch: fix various trivial memory leaks
+ + diff: fix leak when parsing invalid ignore regex option
+ + unpack-trees: clear index when not propagating it
+ + sequencer: release todo list on error paths
+ + merge-ort: unconditionally release attributes index
+ + builtin/fast-export: plug leaking tag names
+ + builtin/fast-export: fix leaking diff options
+ + builtin/fast-import: plug trivial memory leaks
+ + builtin/notes: fix leaking `struct notes_tree` when merging notes
+ + builtin/rebase: fix leaking `commit.gpgsign` value
+ + config: fix leaking comment character config
+ + submodule-config: fix leaking name entry when traversing submodules
+ + read-cache: fix leaking hashfile when writing index fails
+ + bulk-checkin: fix leaking state TODO
+ + object-name: fix leaking symlink paths in object context
+ + object-file: fix memory leak when reading corrupted headers
+ + git: fix leaking system paths
+ + remote: plug memory leak when aliasing URLs
+ + Merge branch 'ps/leakfixes-part-3' into ps/leakfixes-part-4
+ (this branch is used by ps/leakfixes-part-5.)
 
- "git bundle unbundle" outside a repository triggered a BUG()
- unnecessarily, which has been corrected.
- source: <cover.1723540604.git.ps@pks.im>
+ More leak fixes.
+ source: <cover.1723614263.git.ps@pks.im>
+
+
+* ps/stash-keep-untrack-empty-fix (2024-08-16) 1 commit
+  (merged to 'next' on 2024-08-16 at 3db6b6a815)
+ + builtin/stash: fix `--keep-index --include-untracked` with empty HEAD
+
+ A corner case bug in "git stash" was fixed.
+ source: <6067675b5edf36e2eb28e98119a1c02d0a7ae670.1723804926.git.ps@pks.im>
 
 --------------------------------------------------
 [New Topics]
+
+* dh/runtime-prefix-on-zos (2024-08-22) 1 commit
+ - exec_cmd: RUNTIME_PREFIX on z/OS systems
+
+ Support for the RUNTIME_PREFIX feature has been added to z/OS port.
+
+ Will merge to 'next'.
+ source: <pull.1769.git.git.1724334732249.gitgitgadget@gmail.com>
+
+
+* ds/sparse-diff-index (2024-08-22) 1 commit
+  (merged to 'next' on 2024-08-23 at d33f670977)
+ + diff-index: integrate with the sparse index
+
+ The underlying machinery for "git diff-index" has long been made to
+ expand the sparse index as needed, but the command fully expanded
+ the sparse index upfront, which now has been taught not to do.
+
+ Will merge to 'master'.
+ source: <pull.1777.git.1724342607793.gitgitgadget@gmail.com>
+
+
+* cl/config-regexp-docfix (2024-08-23) 1 commit
+ - doc: replace 3 dash with correct 2 dash in git-config(1)
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <20240823-fix-doc-regexp-v2-1-e4eafdd60378@gmail.com>
+
+
+* aa/cat-file-batch-output-doc (2024-08-22) 1 commit
+ - docs: explain the order of output in the batched mode of git-cat-file(1)
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <pull.1768.v3.git.git.1724356231639.gitgitgadget@gmail.com>
+
+
+* js/fetch-push-trace2-annotation (2024-08-22) 3 commits
+ - send-pack: add new tracing regions for push
+ - fetch: add top-level trace2 regions
+ - trace2: implement trace2_printf() for event target
+
+ More trace2 events at key points on push and fetch code paths have
+ been added.
+
+ Will merge to 'next'.
+ source: <cover.1724363615.git.steadmon@google.com>
+
+--------------------------------------------------
+[Stalled]
+
+* pp/add-parse-range-unit-test (2024-05-27) 1 commit
+ - apply: add unit tests for parse_range
+
+ A unit test for code that parses the hunk offset and length from a
+ patch fragment header as been added.
+
+ Expecting a reroll.
+ cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
+ source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jk/send-email-mailmap (2024-08-20) 3 commits
  - send-email: add mailmap support via sendemail.mailmap and --mailmap
@@ -129,11 +226,11 @@ Release tarballs are available at:
  recipient addresses.
 
  Expecting a reroll.
- cf. <f56b68b8-b5cb-4930-9139-da28bfae2976@intel.com>
+ cf. <3e4ba368-ab44-4940-856a-800e0ba7ff9f@intel.com>
  source: <20240819-jk-send-email-mailmap-support-v2-0-d212c3f9e505@gmail.com>
 
 
-* ps/leakfixes-part-5 (2024-08-20) 21 commits
+* ps/leakfixes-part-5 (2024-08-22) 21 commits
  - transport: fix leaking negotiation tips
  - transport: fix leaking arguments when fetching from bundle
  - builtin/fetch: fix leaking transaction with `--atomic`
@@ -155,12 +252,11 @@ Release tarballs are available at:
  - convert: fix leaks when resetting attributes
  - mailinfo: fix leaking header data
  - Merge branch 'ps/leakfixes-part-4' into ps/leakfixes-part-5
- (this branch uses ps/leakfixes-part-4.)
 
  Even more leak fixes.
 
- Needs review.
- source: <cover.1724159575.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1724315484.git.ps@pks.im>
 
 
 * sj/ref-contents-check (2024-08-20) 4 commits
@@ -171,7 +267,7 @@ Release tarballs are available at:
 
  Plumb through extra checks in refs API to "git fsck".
 
- Comments?
+ Expecting a reroll.
  source: <ZsIMc6cJ-kzMzW_8@ArchLinux>
 
 
@@ -191,23 +287,9 @@ Release tarballs are available at:
  Code clean-up.
 
  On hold.
+ cf. <Zsb1rGQbglHMiBHI@tanuki>
  source: <xmqq1q2i6gw7.fsf@gitster.g>
 
---------------------------------------------------
-[Stalled]
-
-* pp/add-parse-range-unit-test (2024-05-27) 1 commit
- - apply: add unit tests for parse_range
-
- A unit test for code that parses the hunk offset and length from a
- patch fragment header as been added.
-
- Expecting a reroll.
- cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
- source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * jk/mark-unused-parameters (2024-08-20) 16 commits
   (merged to 'next' on 2024-08-20 at 610d16d751)
@@ -250,20 +332,21 @@ Release tarballs are available at:
 
 
 * ps/maintenance-detach-fix-more (2024-08-21) 3 commits
- - builtin/maintenance: fix loose objects task emitting pack hash
- - t7900: exercise detaching via trace2 regions
- - t7900: fix flaky test due to leaking background job
+  (merged to 'next' on 2024-08-22 at cbb6723488)
+ + builtin/maintenance: fix loose objects task emitting pack hash
+ + t7900: exercise detaching via trace2 regions
+ + t7900: fix flaky test due to leaking background job
  (this branch uses ps/maintenance-detach-fix.)
 
  A tests for "git maintenance" that were broken on Windows have been
  corrected.
 
- Expecting a (hopefully small and final) reroll.
- cf. <ZsMIxmX2Ash9YtEU@tanuki>
+ Will merge to 'master'.
+ cf. <ZsbPiGJlgxWiM-t9@tanuki>
  source: <cover.1724053639.git.ps@pks.im>
 
 
-* ps/reftable-concurrent-compaction (2024-08-19) 10 commits
+* ps/reftable-concurrent-compaction (2024-08-23) 11 commits
  - reftable/stack: fix segfault when reload with reused readers fails
  - reftable/stack: reorder swapping in the reloaded stack contents
  - reftable/reader: keep readers alive during iteration
@@ -274,13 +357,14 @@ Release tarballs are available at:
  - reftable/reader: rename `reftable_new_reader()`
  - reftable/stack: inline `stack_compact_range_stats()`
  - reftable/blocksource: drop malloc block source
+ - Merge branch 'ps/reftable-drop-generic' into ps/reftable-concurrent-compaction
  (this branch uses ps/reftable-drop-generic.)
 
  The code path for compacting reftable files saw some bugfixes
  against concurrent operation.
 
- Needs review.
- source: <cover.1724080006.git.ps@pks.im>
+ Will merge to 'next'.
+ source: <cover.1724420744.git.ps@pks.im>
 
 
 * ah/git-prompt-portability (2024-08-20) 8 commits
@@ -301,47 +385,31 @@ Release tarballs are available at:
  source: <pull.1750.v4.git.git.1724118513.gitgitgadget@gmail.com>
 
 
-* ps/reftable-drop-generic (2024-08-15) 16 commits
- - reftable/generic: drop interface
- - t/helper: refactor to not use `struct reftable_table`
- - t/helper: use `hash_to_hex_algop()` to print hashes
- - t/helper: inline printing of reftable records
- - t/helper: inline `reftable_table_print()`
- - t/helper: inline `reftable_stack_print_directory()`
- - t/helper: inline `reftable_reader_print_file()`
- - t/helper: inline `reftable_dump_main()`
- - reftable/dump: drop unused `compact_stack()`
- - reftable/generic: move generic iterator code into iterator interface
- - reftable/iter: drop double-checking logic
- - reftable/stack: open-code reading refs
- - reftable/merged: stop using generic tables in the merged table
- - reftable/merged: rename `reftable_new_merged_table()`
- - reftable/merged: expose functions to initialize iterators
- - Merge branch 'ps/reftable-stack-compaction' into ps/reftable-drop-generic
+* ps/reftable-drop-generic (2024-08-22) 16 commits
+  (merged to 'next' on 2024-08-22 at c6706c1b16)
+ + reftable/generic: drop interface
+ + t/helper: refactor to not use `struct reftable_table`
+ + t/helper: use `hash_to_hex_algop()` to print hashes
+ + t/helper: inline printing of reftable records
+ + t/helper: inline `reftable_table_print()`
+ + t/helper: inline `reftable_stack_print_directory()`
+ + t/helper: inline `reftable_reader_print_file()`
+ + t/helper: inline `reftable_dump_main()`
+ + reftable/dump: drop unused `compact_stack()`
+ + reftable/generic: move generic iterator code into iterator interface
+ + reftable/iter: drop double-checking logic
+ + reftable/stack: open-code reading refs
+ + reftable/merged: stop using generic tables in the merged table
+ + reftable/merged: rename `reftable_new_merged_table()`
+ + reftable/merged: expose functions to initialize iterators
+ + Merge branch 'ps/reftable-stack-compaction' into ps/reftable-drop-generic
  (this branch is used by ps/reftable-concurrent-compaction.)
 
  The code in the reftable library has been cleaned up by discarding
  unused "generic" interface.
 
- Needs review.
- source: <cover.1723640107.git.ps@pks.im>
-
-
-* ps/hash-and-ref-format-from-config (2024-08-16) 5 commits
-  (merged to 'next' on 2024-08-16 at 2028c02d01)
- + setup: make ref storage format configurable via config
- + setup: make object format configurable via config
- + setup: merge configuration of repository formats
- + t0001: delete repositories when object format tests finish
- + t0001: exercise initialization with ref formats more thoroughly
-
- The default object hash and ref backend format used to be settable
- only with explicit command line option to "git init" and
- environment variables, but now they can be configured in the user's
- global and system wide configuration.
-
  Will merge to 'master'.
- source: <cover.1723798388.git.ps@pks.im>
+ source: <cover.1724308389.git.ps@pks.im>
 
 
 * tb/pseudo-merge-bitmap-fixes (2024-08-15) 8 commits
@@ -390,22 +458,13 @@ Release tarballs are available at:
 
 
 * mt/rebase-x-quiet (2024-08-21) 1 commit
- - rebase --exec: respect --quiet
+  (merged to 'next' on 2024-08-22 at 1018555d89)
+ + rebase --exec: respect --quiet
 
  "git rebase -x --quiet" was not quiet, which was corrected.
 
- Will merge to 'next'?
- source: <f105b34b8e6b33448f4d0ef07d51b7bbf4e71aaa.1724203912.git.matheus.tavb@gmail.com>
-
-
-* ps/stash-keep-untrack-empty-fix (2024-08-16) 1 commit
-  (merged to 'next' on 2024-08-16 at 3db6b6a815)
- + builtin/stash: fix `--keep-index --include-untracked` with empty HEAD
-
- A corner case bug in "git stash" was fixed.
-
  Will merge to 'master'.
- source: <6067675b5edf36e2eb28e98119a1c02d0a7ae670.1723804926.git.ps@pks.im>
+ source: <f105b34b8e6b33448f4d0ef07d51b7bbf4e71aaa.1724203912.git.matheus.tavb@gmail.com>
 
 
 * gt/unit-test-urlmatch-normalization (2024-08-20) 1 commit
@@ -452,10 +511,10 @@ Release tarballs are available at:
  + config: fix constness of out parameter for `git_config_get_expiry()`
  (this branch is used by ps/maintenance-detach-fix-more.)
 
- Allow maintance tasks other than "gc" to properly go background
+ Allow maintenance tasks other than "gc" to properly go background
  when "git maintenance" run them.
 
- Will wait for the other topic and then merge to 'master'.
+ Will merge to 'master'.
  source: <cover.1723804990.git.ps@pks.im>
 
 
@@ -474,21 +533,23 @@ Release tarballs are available at:
 
 
 * cp/unit-test-reftable-block (2024-08-21) 11 commits
- - t-reftable-block: add tests for index blocks
- - t-reftable-block: add tests for obj blocks
- - t-reftable-block: add tests for log blocks
- - t-reftable-block: remove unnecessary variable 'j'
- - t-reftable-block: use xstrfmt() instead of xstrdup()
- - t-reftable-block: use block_iter_reset() instead of block_iter_close()
- - t-reftable-block: use reftable_record_key() instead of strbuf_addstr()
- - t-reftable-block: use reftable_record_equal() instead of check_str()
- - t-reftable-block: release used block reader
- - t: harmonize t-reftable-block.c with coding guidelines
- - t: move reftable/block_test.c to the unit testing framework
+  (merged to 'next' on 2024-08-22 at 234d8701da)
+ + t-reftable-block: add tests for index blocks
+ + t-reftable-block: add tests for obj blocks
+ + t-reftable-block: add tests for log blocks
+ + t-reftable-block: remove unnecessary variable 'j'
+ + t-reftable-block: use xstrfmt() instead of xstrdup()
+ + t-reftable-block: use block_iter_reset() instead of block_iter_close()
+ + t-reftable-block: use reftable_record_key() instead of strbuf_addstr()
+ + t-reftable-block: use reftable_record_equal() instead of check_str()
+ + t-reftable-block: release used block reader
+ + t: harmonize t-reftable-block.c with coding guidelines
+ + t: move reftable/block_test.c to the unit testing framework
 
  Another test for reftable library ported to the unit test framework.
 
- Comments?
+ Will merge to 'master'.
+ cf. <ZsbdFU9aBQvqE3pb@tanuki>
  source: <20240821124150.4463-1-chandrapratap3519@gmail.com>
 
 
@@ -525,82 +586,6 @@ Release tarballs are available at:
 
  On hold.
  source: <20240806003539.3292562-1-gitster@pobox.com>
-
-
-* ps/leakfixes-part-4 (2024-08-14) 23 commits
-  (merged to 'next' on 2024-08-16 at 37502271ec)
- + builtin/diff: free symmetric diff members
- + diff: free state populated via options
- + builtin/log: fix leak when showing converted blob contents
- + userdiff: fix leaking memory for configured diff drivers
- + builtin/format-patch: fix various trivial memory leaks
- + diff: fix leak when parsing invalid ignore regex option
- + unpack-trees: clear index when not propagating it
- + sequencer: release todo list on error paths
- + merge-ort: unconditionally release attributes index
- + builtin/fast-export: plug leaking tag names
- + builtin/fast-export: fix leaking diff options
- + builtin/fast-import: plug trivial memory leaks
- + builtin/notes: fix leaking `struct notes_tree` when merging notes
- + builtin/rebase: fix leaking `commit.gpgsign` value
- + config: fix leaking comment character config
- + submodule-config: fix leaking name entry when traversing submodules
- + read-cache: fix leaking hashfile when writing index fails
- + bulk-checkin: fix leaking state TODO
- + object-name: fix leaking symlink paths in object context
- + object-file: fix memory leak when reading corrupted headers
- + git: fix leaking system paths
- + remote: plug memory leak when aliasing URLs
- + Merge branch 'ps/leakfixes-part-3' into ps/leakfixes-part-4
- (this branch is used by ps/leakfixes-part-5.)
-
- More leak fixes.
-
- Will merge to 'master'.
- source: <cover.1723614263.git.ps@pks.im>
-
-
-* cp/unit-test-reftable-readwrite (2024-08-13) 4 commits
-  (merged to 'next' on 2024-08-16 at 8d68f73455)
- + t-reftable-readwrite: add test for known error
- + t-reftable-readwrite: use 'for' in place of infinite 'while' loops
- + t-reftable-readwrite: use free_names() instead of a for loop
- + t: move reftable/readwrite_test.c to the unit testing framework
-
- Will merge to 'master'.
- source: <20240813144440.4602-1-chandrapratap3519@gmail.com>
-
-
-* ps/config-wo-the-repository (2024-08-13) 21 commits
-  (merged to 'next' on 2024-08-16 at 3d5462a90e)
- + config: hide functions using `the_repository` by default
- + global: prepare for hiding away repo-less config functions
- + config: don't depend on `the_repository` with branch conditions
- + config: don't have setters depend on `the_repository`
- + config: pass repo to functions that rename or copy sections
- + config: pass repo to `git_die_config()`
- + config: pass repo to `git_config_get_expiry_in_days()`
- + config: pass repo to `git_config_get_expiry()`
- + config: pass repo to `git_config_get_max_percent_split_change()`
- + config: pass repo to `git_config_get_split_index()`
- + config: pass repo to `git_config_get_index_threads()`
- + config: expose `repo_config_clear()`
- + config: introduce missing setters that take repo as parameter
- + path: hide functions using `the_repository` by default
- + path: stop relying on `the_repository` in `worktree_git_path()`
- + path: stop relying on `the_repository` when reporting garbage
- + hooks: remove implicit dependency on `the_repository`
- + editor: do not rely on `the_repository` for interactive edits
- + path: expose `do_git_common_path()` as `repo_common_pathv()`
- + path: expose `do_git_path()` as `repo_git_pathv()`
- + Merge branch 'ps/refs-wo-the-repository' into ps/config-wo-the-repository
-
- Use of API functions that implicitly depend on the_repository
- object in the config subsystem has been rewritten to pass a
- repository object through the callchain.
-
- Will merge to 'master'.
- source: <cover.1723540226.git.ps@pks.im>
 
 
 * ds/for-each-ref-is-base (2024-08-14) 4 commits
