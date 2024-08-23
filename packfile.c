@@ -1527,7 +1527,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 {
 	struct pack_window *w_curs = NULL;
 	off_t curpos = obj_offset;
-	enum object_type type;
+	enum object_type type, final_type = OBJ_BAD;
 	struct delta_base_cache_entry *ent;
 
 	/*
@@ -1538,7 +1538,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 	ent = get_delta_base_cache_entry(p, obj_offset);
 	if (ent) {
 		oi->whence = OI_DBCACHED;
-		type = ent->type;
+		final_type = type = ent->type;
 		if (oi->sizep)
 			*oi->sizep = ent->size;
 		if (oi->contentp) {
@@ -1556,6 +1556,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 	} else if (oi->contentp && !oi->content_limit) {
 		*oi->contentp = unpack_entry(r, p, obj_offset, &type,
 						oi->sizep);
+		final_type = type;
 		if (!*oi->contentp)
 			type = OBJ_BAD;
 	} else {
@@ -1585,6 +1586,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 			if (oi->sizep && *oi->sizep <= oi->content_limit) {
 				*oi->contentp = unpack_entry(r, p, obj_offset,
 							&type, oi->sizep);
+				final_type = type;
 				if (!*oi->contentp)
 					type = OBJ_BAD;
 			} else {
@@ -1606,17 +1608,17 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 	}
 
 	if (oi->typep || oi->type_name) {
-		enum object_type ptot;
-		ptot = packed_to_object_type(r, p, obj_offset,
-					     type, &w_curs, curpos);
+		if (final_type < 0)
+			final_type = packed_to_object_type(r, p, obj_offset,
+						     type, &w_curs, curpos);
 		if (oi->typep)
-			*oi->typep = ptot;
+			*oi->typep = final_type;
 		if (oi->type_name) {
-			const char *tn = type_name(ptot);
+			const char *tn = type_name(final_type);
 			if (tn)
 				strbuf_addstr(oi->type_name, tn);
 		}
-		if (ptot < 0) {
+		if (final_type < 0) {
 			type = OBJ_BAD;
 			goto out;
 		}
