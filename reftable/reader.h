@@ -52,8 +52,6 @@ struct reftable_reader {
 	struct reftable_reader_offsets log_offsets;
 };
 
-int init_reader(struct reftable_reader *r, struct reftable_block_source *source,
-		const char *name);
 void reader_close(struct reftable_reader *r);
 const char *reader_name(struct reftable_reader *r);
 

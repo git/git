@@ -162,58 +162,6 @@ done:
 	return err;
 }
 
-int init_reader(struct reftable_reader *r, struct reftable_block_source *source,
-		const char *name)
-{
-	struct reftable_block footer = { NULL };
-	struct reftable_block header = { NULL };
-	int err = 0;
-	uint64_t file_size = block_source_size(source);
-
-	/* Need +1 to read type of first block. */
-	uint32_t read_size = header_size(2) + 1; /* read v2 because it's larger.  */
-	memset(r, 0, sizeof(struct reftable_reader));
-
-	if (read_size > file_size) {
-		err = REFTABLE_FORMAT_ERROR;
-		goto done;
-	}
-
-	err = block_source_read_block(source, &header, 0, read_size);
-	if (err != read_size) {
-		err = REFTABLE_IO_ERROR;
-		goto done;
-	}
-
-	if (memcmp(header.data, "REFT", 4)) {
-		err = REFTABLE_FORMAT_ERROR;
-		goto done;
-	}
-	r->version = header.data[4];
-	if (r->version != 1 && r->version != 2) {
-		err = REFTABLE_FORMAT_ERROR;
-		goto done;
-	}
-
-	r->size = file_size - footer_size(r->version);
-	r->source = *source;
-	r->name = xstrdup(name);
-	r->hash_id = 0;
-
-	err = block_source_read_block(source, &footer, r->size,
-				      footer_size(r->version));
-	if (err != footer_size(r->version)) {
-		err = REFTABLE_IO_ERROR;
-		goto done;
-	}
-
-	err = parse_footer(r, footer.data, header.data);
-done:
-	reftable_block_done(&footer);
-	reftable_block_done(&header);
-	return err;
-}
-
 struct table_iter {
 	struct reftable_reader *r;
 	uint8_t typ;
@@ -637,16 +585,68 @@ void reader_close(struct reftable_reader *r)
 	FREE_AND_NULL(r->name);
 }
 
-int reftable_reader_new(struct reftable_reader **p,
-			struct reftable_block_source *src, char const *name)
+int reftable_reader_new(struct reftable_reader **out,
+			struct reftable_block_source *source, char const *name)
 {
-	struct reftable_reader *rd = reftable_calloc(1, sizeof(*rd));
-	int err = init_reader(rd, src, name);
-	if (err == 0) {
-		*p = rd;
-	} else {
-		block_source_close(src);
-		reftable_free(rd);
+	struct reftable_block footer = { 0 };
+	struct reftable_block header = { 0 };
+	struct reftable_reader *r;
+	uint64_t file_size = block_source_size(source);
+	uint32_t read_size;
+	int err;
+
+	REFTABLE_CALLOC_ARRAY(r, 1);
+
+	/*
+	 * We need one extra byte to read the type of first block. We also
+	 * pretend to always be reading v2 of the format because it is larger.
+	 */
+	read_size = header_size(2) + 1;
+	if (read_size > file_size) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
+	err = block_source_read_block(source, &header, 0, read_size);
+	if (err != read_size) {
+		err = REFTABLE_IO_ERROR;
+		goto done;
+	}
+
+	if (memcmp(header.data, "REFT", 4)) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+	r->version = header.data[4];
+	if (r->version != 1 && r->version != 2) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
+	r->size = file_size - footer_size(r->version);
+	r->source = *source;
+	r->name = xstrdup(name);
+	r->hash_id = 0;
+
+	err = block_source_read_block(source, &footer, r->size,
+				      footer_size(r->version));
+	if (err != footer_size(r->version)) {
+		err = REFTABLE_IO_ERROR;
+		goto done;
+	}
+
+	err = parse_footer(r, footer.data, header.data);
+	if (err)
+		goto done;
+
+	*out = r;
+
+done:
+	reftable_block_done(&footer);
+	reftable_block_done(&header);
+	if (err) {
+		reftable_free(r);
+		block_source_close(source);
 	}
 	return err;
 }
