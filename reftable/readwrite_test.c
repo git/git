@@ -646,7 +646,7 @@ static void test_write_empty_table(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = reftable_new_reader(&rd, &source, "filename");
+	err = reftable_reader_new(&rd, &source, "filename");
 	EXPECT_ERR(err);
 
 	reftable_reader_init_ref_iterator(rd, &it);
@@ -850,7 +850,7 @@ static void test_write_multiple_indices(void)
 	EXPECT(stats->log_stats.index_offset > 0);
 
 	block_source_from_strbuf(&source, &writer_buf);
-	err = reftable_new_reader(&reader, &source, "filename");
+	err = reftable_reader_new(&reader, &source, "filename");
 	EXPECT_ERR(err);
 
 	/*
@@ -907,7 +907,7 @@ static void test_write_multi_level_index(void)
 	EXPECT(stats->ref_stats.max_index_level == 2);
 
 	block_source_from_strbuf(&source, &writer_buf);
-	err = reftable_new_reader(&reader, &source, "filename");
+	err = reftable_reader_new(&reader, &source, "filename");
 	EXPECT_ERR(err);
 
 	/*

@@ -637,7 +637,7 @@ void reader_close(struct reftable_reader *r)
 	FREE_AND_NULL(r->name);
 }
 
-int reftable_new_reader(struct reftable_reader **p,
+int reftable_reader_new(struct reftable_reader **p,
 			struct reftable_block_source *src, char const *name)
 {
 	struct reftable_reader *rd = reftable_calloc(1, sizeof(*rd));
@@ -786,7 +786,7 @@ int reftable_reader_print_blocks(const char *tablename)
 	if (err < 0)
 		goto done;
 
-	err = reftable_new_reader(&r, &src, tablename);
+	err = reftable_reader_new(&r, &src, tablename);
 	if (err < 0)
 		goto done;
 

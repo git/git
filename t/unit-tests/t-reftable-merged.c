@@ -102,7 +102,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 		write_test_table(&buf[i], refs[i], sizes[i]);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
 
-		err = reftable_new_reader(&(*readers)[i], &(*source)[i],
+		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
 		check(!err);
 	}
@@ -277,7 +277,7 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 		write_test_log_table(&buf[i], logs[i], sizes[i], i + 1);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
 
-		err = reftable_new_reader(&(*readers)[i], &(*source)[i],
+		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
 		check(!err);
 	}
@@ -426,7 +426,7 @@ static void t_default_write_opts(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = reftable_new_reader(&rd, &source, "filename");
+	err = reftable_reader_new(&rd, &source, "filename");
 	check(!err);
 
 	hash_id = reftable_reader_hash_id(rd);

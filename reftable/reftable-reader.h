@@ -23,14 +23,14 @@
 /* The reader struct is a handle to an open reftable file. */
 struct reftable_reader;
 
-/* reftable_new_reader opens a reftable for reading. If successful,
+/* reftable_reader_new opens a reftable for reading. If successful,
  * returns 0 code and sets pp. The name is used for creating a
  * stack. Typically, it is the basename of the file. The block source
  * `src` is owned by the reader, and is closed on calling
  * reftable_reader_destroy(). On error, the block source `src` is
  * closed as well.
  */
-int reftable_new_reader(struct reftable_reader **pp,
+int reftable_reader_new(struct reftable_reader **pp,
 			struct reftable_block_source *src, const char *name);
 
 /* Initialize a reftable iterator for reading refs. */
