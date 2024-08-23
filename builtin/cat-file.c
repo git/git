@@ -385,7 +385,24 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	assert(data->info.typep);
 
 	if (data->content) {
-		batch_write(opt, data->content, data->size);
+		void *content = data->content;
+		unsigned long size = data->size;
+
+		data->content = NULL;
+		if (use_mailmap && (data->type == OBJ_COMMIT ||
+					data->type == OBJ_TAG)) {
+			size_t s = size;
+
+			if (data->info.whence == OI_DBCACHED) {
+				content = xmemdupz(content, s);
+				data->info.whence = OI_PACKED;
+			}
+
+			content = replace_idents_using_mailmap(content, &s);
+			size = cast_size_t_to_ulong(s);
+		}
+
+		batch_write(opt, content, size);
 		switch (data->info.whence) {
 		case OI_CACHED:
 			/*
@@ -395,7 +412,7 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 			BUG("TODO OI_CACHED support not done");
 		case OI_LOOSE:
 		case OI_PACKED:
-			FREE_AND_NULL(data->content);
+			free(content);
 			break;
 		case OI_DBCACHED:
 			unlock_delta_base_cache();
