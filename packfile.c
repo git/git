@@ -1557,7 +1557,7 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		}
 
 		if (oi->contentp) {
-			if (oi->sizep && *oi->sizep < oi->content_limit) {
+			if (oi->sizep && *oi->sizep <= oi->content_limit) {
 				*oi->contentp = cache_or_unpack_entry(r, p, obj_offset,
 								      oi->sizep, &type);
 				if (!*oi->contentp)
