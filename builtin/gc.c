@@ -167,9 +167,9 @@ static void gc_config(void)
 	git_config_get_bool("gc.autodetach", &detach_auto);
 	git_config_get_bool("gc.cruftpacks", &cruft_packs);
 	git_config_get_ulong("gc.maxcruftsize", &max_cruft_size);
-	git_config_get_expiry("gc.pruneexpire", &prune_expire);
-	git_config_get_expiry("gc.worktreepruneexpire", &prune_worktrees_expire);
-	git_config_get_expiry("gc.logexpiry", &gc_log_expire);
+	repo_config_get_expiry(the_repository, "gc.pruneexpire", &prune_expire);
+	repo_config_get_expiry(the_repository, "gc.worktreepruneexpire", &prune_worktrees_expire);
+	repo_config_get_expiry(the_repository, "gc.logexpiry", &gc_log_expire);
 
 	git_config_get_ulong("gc.bigpackthreshold", &big_pack_threshold);
 	git_config_get_ulong("pack.deltacachesize", &max_delta_cache_size);
@@ -463,7 +463,7 @@ static int need_to_gc(void)
 	else
 		return 0;
 
-	if (run_hooks("pre-auto-gc"))
+	if (run_hooks(the_repository, "pre-auto-gc"))
 		return 0;
 	return 1;
 }

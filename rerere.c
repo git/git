@@ -1208,8 +1208,10 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	if (setup_rerere(r, rr, 0) < 0)
 		return;
 
-	git_config_get_expiry_in_days("gc.rerereresolved", &cutoff_resolve, now);
-	git_config_get_expiry_in_days("gc.rerereunresolved", &cutoff_noresolve, now);
+	repo_config_get_expiry_in_days(the_repository, "gc.rerereresolved",
+				       &cutoff_resolve, now);
+	repo_config_get_expiry_in_days(the_repository, "gc.rerereunresolved",
+				       &cutoff_noresolve, now);
 	git_config(git_default_config, NULL);
 	dir = opendir(git_path("rr-cache"));
 	if (!dir)

@@ -1053,7 +1053,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			 * and may get overwritten by other calls
 			 * while we're examining the index.
 			 */
-			path = xstrdup(worktree_git_path(wt, "index"));
+			path = xstrdup(worktree_git_path(the_repository, wt, "index"));
 			read_index_from(&istate, path, get_worktree_git_dir(wt));
 			fsck_index(&istate, path, wt->is_current);
 			discard_index(&istate);

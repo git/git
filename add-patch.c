@@ -1142,7 +1142,8 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 				"removed, then the edit is\n"
 				"aborted and the hunk is left unchanged.\n"));
 
-	if (strbuf_edit_interactively(&s->buf, "addp-hunk-edit.diff", NULL) < 0)
+	if (strbuf_edit_interactively(the_repository, &s->buf,
+				      "addp-hunk-edit.diff", NULL) < 0)
 		return -1;
 
 	/* strip out commented lines */

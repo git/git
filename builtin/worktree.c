@@ -573,7 +573,7 @@ done:
 			     NULL);
 		opt.dir = path;
 
-		ret = run_hooks_opt("post-checkout", &opt);
+		ret = run_hooks_opt(the_repository, "post-checkout", &opt);
 	}
 
 	strvec_clear(&child_env);
@@ -1148,14 +1148,14 @@ static void validate_no_submodules(const struct worktree *wt)
 	struct strbuf path = STRBUF_INIT;
 	int i, found_submodules = 0;
 
-	if (is_directory(worktree_git_path(wt, "modules"))) {
+	if (is_directory(worktree_git_path(the_repository, wt, "modules"))) {
 		/*
 		 * There could be false positives, e.g. the "modules"
 		 * directory exists but is empty. But it's a rare case and
 		 * this simpler check is probably good enough for now.
 		 */
 		found_submodules = 1;
-	} else if (read_index_from(&istate, worktree_git_path(wt, "index"),
+	} else if (read_index_from(&istate, worktree_git_path(the_repository, wt, "index"),
 				   get_worktree_git_dir(wt)) > 0) {
 		for (i = 0; i < istate.cache_nr; i++) {
 			struct cache_entry *ce = istate.cache[i];
