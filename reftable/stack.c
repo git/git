@@ -273,29 +273,33 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	if (err < 0)
 		goto done;
 
-	st->readers_len = new_readers_len;
-	if (st->merged)
-		reftable_merged_table_free(st->merged);
-	if (st->readers) {
-		reftable_free(st->readers);
-	}
-	st->readers = new_readers;
-	new_readers = NULL;
-	new_readers_len = 0;
-
-	new_merged->suppress_deletions = 1;
-	st->merged = new_merged;
+	/*
+	 * Close the old, non-reused readers and proactively try to unlink
+	 * them. This is done for systems like Windows, where the underlying
+	 * file of such an open reader wouldn't have been possible to be
+	 * unlinked by the compacting process.
+	 */
 	for (i = 0; i < cur_len; i++) {
 		if (cur[i]) {
 			const char *name = reader_name(cur[i]);
 			stack_filename(&table_path, st, name);
-
 			reftable_reader_decref(cur[i]);
-
-			/* On Windows, can only unlink after closing. */
 			unlink(table_path.buf);
 		}
 	}
+
+	/* Update the stack to point to the new tables. */
+	if (st->merged)
+		reftable_merged_table_free(st->merged);
+	new_merged->suppress_deletions = 1;
+	st->merged = new_merged;
+
+	if (st->readers)
+		reftable_free(st->readers);
+	st->readers = new_readers;
+	st->readers_len = new_readers_len;
+	new_readers = NULL;
+	new_readers_len = 0;
 
 done:
 	for (i = 0; i < new_readers_len; i++)
