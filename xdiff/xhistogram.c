@@ -80,16 +80,16 @@ struct region
     unsigned int begin2, end2;
 };
 
-#define LINE_MAP(i, a) (i->line_map[(a)-i->ptr_shift])
+#define LINE_MAP(i, a) ((i)->line_map[(a) - (i)->ptr_shift])
 
 #define NEXT_PTR(index, ptr) \
-    (index->next_ptrs[(ptr)-index->ptr_shift])
+    ((index)->next_ptrs[(ptr) - (index)->ptr_shift])
 
 #define CNT(index, ptr) \
     ((LINE_MAP(index, ptr))->cnt)
 
 #define REC(env, s, l) \
-    (env->xdf##s.recs[l - 1])
+    ((env)->xdf##s.recs[(l)-1])
 
 static int cmp_recs(xrecord_t *r1, xrecord_t *r2)
 {
@@ -97,16 +97,18 @@ static int cmp_recs(xrecord_t *r1, xrecord_t *r2)
 }
 
 #define CMP(i, s1, l1, s2, l2) \
-    (cmp_recs(REC(i->env, s1, l1), REC(i->env, s2, l2)))
+    (cmp_recs(REC((i)->env, s1, l1), REC((i)->env, s2, l2)))
 
 #define TABLE_HASH(index, side, line) \
-    XDL_HASHLONG((REC(index->env, side, line))->ha, index->table_bits)
+    XDL_HASHLONG((REC((index)->env, side, line))->ha, (index)->table_bits)
 
 static int scanA(struct histindex *index, int line1, int count1)
 {
-    unsigned int    ptr, tbl_idx;
+    unsigned int    ptr;
+    unsigned int    tbl_idx;
     unsigned int    chain_len;
-    struct record **rec_chain, *rec;
+    struct record **rec_chain;
+    struct record  *rec;
 
     for (ptr = LINE_END(1); line1 <= ptr; ptr--)
     {
@@ -137,14 +139,18 @@ static int scanA(struct histindex *index, int line1, int count1)
         }
 
         if (chain_len == index->max_chain_length)
+        {
             return -1;
+        }
 
         /*
          * This is the first time we have ever seen this particular
          * element in the sequence. Construct a new chain for it.
          */
         if (!(rec = xdl_cha_alloc(&index->rcha)))
+        {
             return -1;
+        }
         rec->ptr             = ptr;
         rec->cnt             = 1;
         rec->next            = *rec_chain;
@@ -162,7 +168,12 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
 {
     unsigned int   b_next = b_ptr + 1;
     struct record *rec    = index->records[TABLE_HASH(index, 2, b_ptr)];
-    unsigned int   as, ae, bs, be, np, rc;
+    unsigned int   as;
+    unsigned int   ae;
+    unsigned int   bs;
+    unsigned int   be;
+    unsigned int   np;
+    unsigned int   rc;
     int            should_break;
 
     for (; rec; rec = rec->next)
@@ -170,13 +181,17 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
         if (rec->cnt > index->cnt)
         {
             if (!index->has_common)
+            {
                 index->has_common = CMP(index, 1, rec->ptr, 2, b_ptr);
+            }
             continue;
         }
 
         as = rec->ptr;
         if (!CMP(index, 1, as, 2, b_ptr))
+        {
             continue;
+        }
 
         index->has_common = 1;
         for (;;)
@@ -194,7 +209,9 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
                 as--;
                 bs--;
                 if (1 < rc)
+                {
                     rc = XDL_MIN(rc, CNT(index, as));
+                }
             }
             while (ae < LINE_END(1) && be < LINE_END(2)
                    && CMP(index, 1, ae + 1, 2, be + 1))
@@ -202,11 +219,15 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
                 ae++;
                 be++;
                 if (1 < rc)
+                {
                     rc = XDL_MIN(rc, CNT(index, ae));
+                }
             }
 
             if (b_next <= be)
+            {
                 b_next = be + 1;
+            }
             if (lcs->end1 - lcs->begin1 < ae - as || rc < index->cnt)
             {
                 lcs->begin1 = as;
@@ -217,7 +238,9 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
             }
 
             if (np == 0)
+            {
                 break;
+            }
 
             while (np <= ae)
             {
@@ -230,7 +253,9 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
             }
 
             if (should_break)
+            {
                 break;
+            }
 
             as = np;
         }
@@ -279,34 +304,50 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
     index.table_bits   = xdl_hashbits(count1);
     index.records_size = 1 << index.table_bits;
     if (!XDL_CALLOC_ARRAY(index.records, index.records_size))
+    {
         goto cleanup;
+    }
 
     index.line_map_size = count1;
     if (!XDL_CALLOC_ARRAY(index.line_map, index.line_map_size))
+    {
         goto cleanup;
+    }
 
     if (!XDL_CALLOC_ARRAY(index.next_ptrs, index.line_map_size))
+    {
         goto cleanup;
+    }
 
     /* lines / 4 + 1 comes from xprepare.c:xdl_prepare_ctx() */
     if (xdl_cha_init(&index.rcha, sizeof(struct record), count1 / 4 + 1) < 0)
+    {
         goto cleanup;
+    }
 
     index.ptr_shift        = line1;
     index.max_chain_length = 64;
 
     if (scanA(&index, line1, count1))
+    {
         goto cleanup;
+    }
 
     index.cnt = index.max_chain_length + 1;
 
     for (b_ptr = line2; b_ptr <= LINE_END(2);)
+    {
         b_ptr = try_lcs(&index, lcs, b_ptr, line1, count1, line2, count2);
+    }
 
     if (index.has_common && index.max_chain_length < index.cnt)
+    {
         ret = 1;
+    }
     else
+    {
         ret = 0;
+    }
 
 cleanup:
     free_index(&index);
@@ -323,18 +364,24 @@ redo:
     result = -1;
 
     if (count1 <= 0 && count2 <= 0)
+    {
         return 0;
+    }
 
     if (LINE_END(1) >= MAX_PTR)
+    {
         return -1;
+    }
 
     if (!count1)
     {
         while (count2--)
+        {
             env->xdf2.rchg[line2++ - 1] = 1;
+        }
         return 0;
     }
-    else if (!count2)
+    if (!count2)
     {
         while (count1--)
             env->xdf1.rchg[line1++ - 1] = 1;
@@ -344,17 +391,25 @@ redo:
     memset(&lcs, 0, sizeof(lcs));
     lcs_found = find_lcs(xpp, env, &lcs, line1, count1, line2, count2);
     if (lcs_found < 0)
+    {
         goto out;
+    }
     else if (lcs_found)
+    {
         result = fall_back_to_classic_diff(xpp, env, line1, count1, line2, count2);
+    }
     else
     {
         if (lcs.begin1 == 0 && lcs.begin2 == 0)
         {
             while (count1--)
+            {
                 env->xdf1.rchg[line1++ - 1] = 1;
+            }
             while (count2--)
+            {
                 env->xdf2.rchg[line2++ - 1] = 1;
+            }
             result = 0;
         }
         else
@@ -363,7 +418,9 @@ redo:
                                     line1, lcs.begin1 - line1,
                                     line2, lcs.begin2 - line2);
             if (result)
+            {
                 goto out;
+            }
             /*
              * result = histogram_diff(xpp, env,
              *            lcs.end1 + 1, LINE_END(1) - lcs.end1,
