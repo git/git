@@ -46,22 +46,24 @@
  * The definition of an individual counter as used by an individual
  * thread (and later in aggregation).
  */
-struct tr2_counter {
-	uint64_t value;
+struct tr2_counter
+{
+    uint64_t value;
 };
 
 /*
  * Metadata for a counter.
  */
-struct tr2_counter_metadata {
-	const char *category;
-	const char *name;
+struct tr2_counter_metadata
+{
+    const char *category;
+    const char *name;
 
-	/*
-	 * True if we should emit per-thread events for this counter
-	 * when individual threads exit.
-	 */
-	unsigned int want_per_thread_events:1;
+    /*
+     * True if we should emit per-thread events for this counter
+     * when individual threads exit.
+     */
+    unsigned int want_per_thread_events : 1;
 };
 
 /*
@@ -69,8 +71,9 @@ struct tr2_counter_metadata {
  * storage.  This wrapper is used to avoid quirks of C and the usual
  * need to pass an array size argument.
  */
-struct tr2_counter_block {
-	struct tr2_counter counter[TRACE2_NUMBER_OF_COUNTERS];
+struct tr2_counter_block
+{
+    struct tr2_counter counter[TRACE2_NUMBER_OF_COUNTERS];
 };
 
 /*

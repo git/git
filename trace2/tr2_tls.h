@@ -15,18 +15,19 @@
  */
 #define TR2_MAX_THREAD_NAME (24)
 
-struct tr2tls_thread_ctx {
-	const char *thread_name;
-	uint64_t *array_us_start;
-	size_t alloc;
-	size_t nr_open_regions; /* plays role of "nr" in ALLOC_GROW */
-	int thread_id;
-	struct tr2_timer_block timer_block;
-	struct tr2_counter_block counter_block;
-	unsigned int used_any_timer:1;
-	unsigned int used_any_per_thread_timer:1;
-	unsigned int used_any_counter:1;
-	unsigned int used_any_per_thread_counter:1;
+struct tr2tls_thread_ctx
+{
+    const char              *thread_name;
+    uint64_t                *array_us_start;
+    size_t                   alloc;
+    size_t                   nr_open_regions; /* plays role of "nr" in ALLOC_GROW */
+    int                      thread_id;
+    struct tr2_timer_block   timer_block;
+    struct tr2_counter_block counter_block;
+    unsigned int             used_any_timer : 1;
+    unsigned int             used_any_per_thread_timer : 1;
+    unsigned int             used_any_counter : 1;
+    unsigned int             used_any_per_thread_counter : 1;
 };
 
 /*
@@ -46,7 +47,7 @@ struct tr2tls_thread_ctx {
  * current thread.
  */
 struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_base_name,
-					     uint64_t us_thread_start);
+                                             uint64_t    us_thread_start);
 
 /*
  * Get the thread-local storage pointer of the current thread.

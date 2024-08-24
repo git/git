@@ -1,11 +1,12 @@
 #ifndef COMPAT_TERMINAL_H
 #define COMPAT_TERMINAL_H
 
-enum save_term_flags {
-	/* Save input and output settings */
-	SAVE_TERM_DUPLEX = 1 << 0,
-	/* Save stdin rather than /dev/tty (fails if stdin is not a terminal) */
-	SAVE_TERM_STDIN  = 1 << 1,
+enum save_term_flags
+{
+    /* Save input and output settings */
+    SAVE_TERM_DUPLEX = 1 << 0,
+    /* Save stdin rather than /dev/tty (fails if stdin is not a terminal) */
+    SAVE_TERM_STDIN = 1 << 1,
 };
 
 /*

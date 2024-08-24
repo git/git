@@ -17,49 +17,52 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-generic.h"
 
 /* iterator that produces only ref records that point to `oid` */
-struct filtering_ref_iterator {
-	int double_check;
-	struct reftable_table tab;
-	struct strbuf oid;
-	struct reftable_iterator it;
+struct filtering_ref_iterator
+{
+    int                      double_check;
+    struct reftable_table    tab;
+    struct strbuf            oid;
+    struct reftable_iterator it;
 };
 #define FILTERING_REF_ITERATOR_INIT \
-	{                           \
-		.oid = STRBUF_INIT  \
-	}
+    {                               \
+        .oid = STRBUF_INIT          \
+    }
 
 void iterator_from_filtering_ref_iterator(struct reftable_iterator *,
-					  struct filtering_ref_iterator *);
+                                          struct filtering_ref_iterator *);
 
 /* iterator that produces only ref records that point to `oid`,
  * but using the object index.
  */
-struct indexed_table_ref_iter {
-	struct reftable_reader *r;
-	struct strbuf oid;
+struct indexed_table_ref_iter
+{
+    struct reftable_reader *r;
+    struct strbuf           oid;
 
-	/* mutable */
-	uint64_t *offsets;
+    /* mutable */
+    uint64_t *offsets;
 
-	/* Points to the next offset to read. */
-	int offset_idx;
-	int offset_len;
-	struct block_reader block_reader;
-	struct block_iter cur;
-	int is_finished;
+    /* Points to the next offset to read. */
+    int                 offset_idx;
+    int                 offset_len;
+    struct block_reader block_reader;
+    struct block_iter   cur;
+    int                 is_finished;
 };
 
-#define INDEXED_TABLE_REF_ITER_INIT { \
-	.cur = BLOCK_ITER_INIT, \
-	.oid = STRBUF_INIT, \
-}
+#define INDEXED_TABLE_REF_ITER_INIT \
+    {                               \
+        .cur = BLOCK_ITER_INIT,     \
+        .oid = STRBUF_INIT,         \
+    }
 
-void iterator_from_indexed_table_ref_iter(struct reftable_iterator *it,
-					  struct indexed_table_ref_iter *itr);
+void iterator_from_indexed_table_ref_iter(struct reftable_iterator      *it,
+                                          struct indexed_table_ref_iter *itr);
 
 /* Takes ownership of `offsets` */
 int new_indexed_table_ref_iter(struct indexed_table_ref_iter **dest,
-			       struct reftable_reader *r, uint8_t *oid,
-			       int oid_len, uint64_t *offsets, int offset_len);
+                               struct reftable_reader *r, uint8_t *oid,
+                               int oid_len, uint64_t *offsets, int offset_len);
 
 #endif

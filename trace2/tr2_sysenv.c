@@ -7,12 +7,13 @@
  * Each entry represents a trace2 setting.
  * See Documentation/technical/api-trace2.txt
  */
-struct tr2_sysenv_entry {
-	const char *env_var_name;
-	const char *git_config_name;
+struct tr2_sysenv_entry
+{
+    const char *env_var_name;
+    const char *git_config_name;
 
-	char *value;
-	unsigned int getenv_called : 1;
+    char        *value;
+    unsigned int getenv_called : 1;
 };
 
 /*
@@ -58,25 +59,27 @@ static struct tr2_sysenv_entry tr2_sysenv_settings[] = {
 /* clang-format on */
 
 static int tr2_sysenv_cb(const char *key, const char *value,
-			 const struct config_context *ctx UNUSED,
-			 void *d UNUSED)
+                         const struct config_context *ctx UNUSED,
+                         void *d                          UNUSED)
 {
-	int k;
+    int k;
 
-	if (!starts_with(key, "trace2."))
-		return 0;
+    if (!starts_with(key, "trace2."))
+        return 0;
 
-	for (k = 0; k < ARRAY_SIZE(tr2_sysenv_settings); k++) {
-		if (!strcmp(key, tr2_sysenv_settings[k].git_config_name)) {
-			if (!value)
-				return config_error_nonbool(key);
-			free(tr2_sysenv_settings[k].value);
-			tr2_sysenv_settings[k].value = xstrdup(value);
-			return 0;
-		}
-	}
+    for (k = 0; k < ARRAY_SIZE(tr2_sysenv_settings); k++)
+    {
+        if (!strcmp(key, tr2_sysenv_settings[k].git_config_name))
+        {
+            if (!value)
+                return config_error_nonbool(key);
+            free(tr2_sysenv_settings[k].value);
+            tr2_sysenv_settings[k].value = xstrdup(value);
+            return 0;
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -88,10 +91,10 @@ static int tr2_sysenv_cb(const char *key, const char *value,
  */
 void tr2_sysenv_load(void)
 {
-	if (ARRAY_SIZE(tr2_sysenv_settings) != TR2_SYSENV_MUST_BE_LAST)
-		BUG("tr2_sysenv_settings size is wrong");
+    if (ARRAY_SIZE(tr2_sysenv_settings) != TR2_SYSENV_MUST_BE_LAST)
+        BUG("tr2_sysenv_settings size is wrong");
 
-	read_very_early_config(tr2_sysenv_cb, NULL);
+    read_very_early_config(tr2_sysenv_cb, NULL);
 }
 
 /*
@@ -100,19 +103,21 @@ void tr2_sysenv_load(void)
  */
 const char *tr2_sysenv_get(enum tr2_sysenv_variable var)
 {
-	if (var >= TR2_SYSENV_MUST_BE_LAST)
-		BUG("tr2_sysenv_get invalid var '%d'", var);
+    if (var >= TR2_SYSENV_MUST_BE_LAST)
+        BUG("tr2_sysenv_get invalid var '%d'", var);
 
-	if (!tr2_sysenv_settings[var].getenv_called) {
-		const char *v = getenv(tr2_sysenv_settings[var].env_var_name);
-		if (v && *v) {
-			free(tr2_sysenv_settings[var].value);
-			tr2_sysenv_settings[var].value = xstrdup(v);
-		}
-		tr2_sysenv_settings[var].getenv_called = 1;
-	}
+    if (!tr2_sysenv_settings[var].getenv_called)
+    {
+        const char *v = getenv(tr2_sysenv_settings[var].env_var_name);
+        if (v && *v)
+        {
+            free(tr2_sysenv_settings[var].value);
+            tr2_sysenv_settings[var].value = xstrdup(v);
+        }
+        tr2_sysenv_settings[var].getenv_called = 1;
+    }
 
-	return tr2_sysenv_settings[var].value;
+    return tr2_sysenv_settings[var].value;
 }
 
 /*
@@ -121,16 +126,16 @@ const char *tr2_sysenv_get(enum tr2_sysenv_variable var)
  */
 const char *tr2_sysenv_display_name(enum tr2_sysenv_variable var)
 {
-	if (var >= TR2_SYSENV_MUST_BE_LAST)
-		BUG("tr2_sysenv_get invalid var '%d'", var);
+    if (var >= TR2_SYSENV_MUST_BE_LAST)
+        BUG("tr2_sysenv_get invalid var '%d'", var);
 
-	return tr2_sysenv_settings[var].env_var_name;
+    return tr2_sysenv_settings[var].env_var_name;
 }
 
 void tr2_sysenv_release(void)
 {
-	int k;
+    int k;
 
-	for (k = 0; k < ARRAY_SIZE(tr2_sysenv_settings); k++)
-		free(tr2_sysenv_settings[k].value);
+    for (k = 0; k < ARRAY_SIZE(tr2_sysenv_settings); k++)
+        free(tr2_sysenv_settings[k].value);
 }

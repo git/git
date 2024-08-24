@@ -8,24 +8,25 @@ static struct strbuf tr2cmdname_hierarchy = STRBUF_INIT;
 
 void tr2_cmd_name_append_hierarchy(const char *name)
 {
-	const char *parent_name = getenv(TR2_ENVVAR_PARENT_NAME);
+    const char *parent_name = getenv(TR2_ENVVAR_PARENT_NAME);
 
-	strbuf_reset(&tr2cmdname_hierarchy);
-	if (parent_name && *parent_name) {
-		strbuf_addstr(&tr2cmdname_hierarchy, parent_name);
-		strbuf_addch(&tr2cmdname_hierarchy, '/');
-	}
-	strbuf_addstr(&tr2cmdname_hierarchy, name);
+    strbuf_reset(&tr2cmdname_hierarchy);
+    if (parent_name && *parent_name)
+    {
+        strbuf_addstr(&tr2cmdname_hierarchy, parent_name);
+        strbuf_addch(&tr2cmdname_hierarchy, '/');
+    }
+    strbuf_addstr(&tr2cmdname_hierarchy, name);
 
-	setenv(TR2_ENVVAR_PARENT_NAME, tr2cmdname_hierarchy.buf, 1);
+    setenv(TR2_ENVVAR_PARENT_NAME, tr2cmdname_hierarchy.buf, 1);
 }
 
 const char *tr2_cmd_name_get_hierarchy(void)
 {
-	return tr2cmdname_hierarchy.buf;
+    return tr2cmdname_hierarchy.buf;
 }
 
 void tr2_cmd_name_release(void)
 {
-	strbuf_release(&tr2cmdname_hierarchy);
+    strbuf_release(&tr2cmdname_hierarchy);
 }

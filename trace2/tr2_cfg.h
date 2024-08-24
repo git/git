@@ -18,7 +18,7 @@ void tr2_list_env_vars_fl(const char *file, int line);
  * the key to be "interesting".
  */
 void tr2_cfg_set_fl(const char *file, int line, const char *key,
-		    const char *value);
+                    const char *value);
 
 void tr2_cfg_free_patterns(void);
 

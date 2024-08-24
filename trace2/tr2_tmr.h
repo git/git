@@ -51,52 +51,54 @@
  * The definition of an individual timer and used by an individual
  * thread.
  */
-struct tr2_timer {
-	/*
-	 * Total elapsed time for this timer in this thread in nanoseconds.
-	 */
-	uint64_t total_ns;
+struct tr2_timer
+{
+    /*
+     * Total elapsed time for this timer in this thread in nanoseconds.
+     */
+    uint64_t total_ns;
 
-	/*
-	 * The maximum and minimum interval values observed for this
-	 * timer in this thread.
-	 */
-	uint64_t min_ns;
-	uint64_t max_ns;
+    /*
+     * The maximum and minimum interval values observed for this
+     * timer in this thread.
+     */
+    uint64_t min_ns;
+    uint64_t max_ns;
 
-	/*
-	 * The value of the clock when this timer was started in this
-	 * thread.  (Undefined when the timer is not active in this
-	 * thread.)
-	 */
-	uint64_t start_ns;
+    /*
+     * The value of the clock when this timer was started in this
+     * thread.  (Undefined when the timer is not active in this
+     * thread.)
+     */
+    uint64_t start_ns;
 
-	/*
-	 * Number of times that this timer has been started and stopped
-	 * in this thread.  (Recursive starts are ignored.)
-	 */
-	uint64_t interval_count;
+    /*
+     * Number of times that this timer has been started and stopped
+     * in this thread.  (Recursive starts are ignored.)
+     */
+    uint64_t interval_count;
 
-	/*
-	 * Number of nested starts on the stack in this thread.  (We
-	 * ignore recursive starts and use this to track the recursive
-	 * calls.)
-	 */
-	unsigned int recursion_count;
+    /*
+     * Number of nested starts on the stack in this thread.  (We
+     * ignore recursive starts and use this to track the recursive
+     * calls.)
+     */
+    unsigned int recursion_count;
 };
 
 /*
  * Metadata for a timer.
  */
-struct tr2_timer_metadata {
-	const char *category;
-	const char *name;
+struct tr2_timer_metadata
+{
+    const char *category;
+    const char *name;
 
-	/*
-	 * True if we should emit per-thread events for this timer
-	 * when individual threads exit.
-	 */
-	unsigned int want_per_thread_events:1;
+    /*
+     * True if we should emit per-thread events for this timer
+     * when individual threads exit.
+     */
+    unsigned int want_per_thread_events : 1;
 };
 
 /*
@@ -104,8 +106,9 @@ struct tr2_timer_metadata {
  * thread-local storage.  This wrapper is used to avoid quirks
  * of C and the usual need to pass an array size argument.
  */
-struct tr2_timer_block {
-	struct tr2_timer timer[TRACE2_NUMBER_OF_TIMERS];
+struct tr2_timer_block
+{
+    struct tr2_timer timer[TRACE2_NUMBER_OF_TIMERS];
 };
 
 /*

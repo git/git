@@ -29,7 +29,7 @@ struct reftable_stack;
  *  stored in 'dir'. Typically, this should be .git/reftables.
  */
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
-		       const struct reftable_write_options *opts);
+                       const struct reftable_write_options *opts);
 
 /* returns the update_index at which a next table should be written. */
 uint64_t reftable_stack_next_update_index(struct reftable_stack *st);
@@ -42,13 +42,13 @@ struct reftable_addition;
  * effect, the ref database is locked.
  */
 int reftable_stack_new_addition(struct reftable_addition **dest,
-				struct reftable_stack *st);
+                                struct reftable_stack     *st);
 
 /* Adds a reftable to transaction. */
 int reftable_addition_add(struct reftable_addition *add,
-			  int (*write_table)(struct reftable_writer *wr,
-					     void *arg),
-			  void *arg);
+                          int (*write_table)(struct reftable_writer *wr,
+                                             void                   *arg),
+                          void *arg);
 
 /* Commits the transaction, releasing the lock. After calling this,
  * reftable_addition_destroy should still be called.
@@ -62,9 +62,9 @@ void reftable_addition_destroy(struct reftable_addition *add);
 /* add a new table to the stack. The write_table function must call
  * reftable_writer_set_limits, add refs and return an error value. */
 int reftable_stack_add(struct reftable_stack *st,
-		       int (*write_table)(struct reftable_writer *wr,
-					  void *write_arg),
-		       void *write_arg);
+                       int (*write_table)(struct reftable_writer *wr,
+                                          void                   *write_arg),
+                       void *write_arg);
 
 struct reftable_iterator;
 
@@ -73,22 +73,22 @@ struct reftable_iterator;
  * be used to iterate through refs. The iterator is valid until the next reload
  * or write.
  */
-void reftable_stack_init_ref_iterator(struct reftable_stack *st,
-				      struct reftable_iterator *it);
+void reftable_stack_init_ref_iterator(struct reftable_stack    *st,
+                                      struct reftable_iterator *it);
 
 /*
  * Initialize an iterator for the merged tables contained in the stack that can
  * be used to iterate through logs. The iterator is valid until the next reload
  * or write.
  */
-void reftable_stack_init_log_iterator(struct reftable_stack *st,
-				      struct reftable_iterator *it);
+void reftable_stack_init_log_iterator(struct reftable_stack    *st,
+                                      struct reftable_iterator *it);
 
 /* returns the merged_table for seeking. This table is valid until the
  * next write or reload, and should not be closed or deleted.
  */
 struct reftable_merged_table *
-reftable_stack_merged_table(struct reftable_stack *st);
+    reftable_stack_merged_table(struct reftable_stack *st);
 
 /* frees all resources associated with the stack. */
 void reftable_stack_destroy(struct reftable_stack *st);
@@ -98,18 +98,19 @@ void reftable_stack_destroy(struct reftable_stack *st);
 int reftable_stack_reload(struct reftable_stack *st);
 
 /* Policy for expiring reflog entries. */
-struct reftable_log_expiry_config {
-	/* Drop entries older than this timestamp */
-	uint64_t time;
+struct reftable_log_expiry_config
+{
+    /* Drop entries older than this timestamp */
+    uint64_t time;
 
-	/* Drop older entries */
-	uint64_t min_update_index;
+    /* Drop older entries */
+    uint64_t min_update_index;
 };
 
 /* compacts all reftables into a giant table. Expire reflog entries if config is
  * non-NULL */
-int reftable_stack_compact_all(struct reftable_stack *st,
-			       struct reftable_log_expiry_config *config);
+int reftable_stack_compact_all(struct reftable_stack             *st,
+                               struct reftable_log_expiry_config *config);
 
 /* heuristically compact unbalanced table stack. */
 int reftable_stack_auto_compact(struct reftable_stack *st);
@@ -120,25 +121,26 @@ int reftable_stack_clean(struct reftable_stack *st);
 /* convenience function to read a single ref. Returns < 0 for error, 0 for
  * success, and 1 if ref not found. */
 int reftable_stack_read_ref(struct reftable_stack *st, const char *refname,
-			    struct reftable_ref_record *ref);
+                            struct reftable_ref_record *ref);
 
 /* convenience function to read a single log. Returns < 0 for error, 0 for
  * success, and 1 if ref not found. */
 int reftable_stack_read_log(struct reftable_stack *st, const char *refname,
-			    struct reftable_log_record *log);
+                            struct reftable_log_record *log);
 
 /* statistics on past compactions. */
-struct reftable_compaction_stats {
-	uint64_t bytes; /* total number of bytes written */
-	uint64_t entries_written; /* total number of entries written, including
-				     failures. */
-	int attempts; /* how often we tried to compact */
-	int failures; /* failures happen on concurrent updates */
+struct reftable_compaction_stats
+{
+    uint64_t bytes;           /* total number of bytes written */
+    uint64_t entries_written; /* total number of entries written, including
+                                 failures. */
+    int attempts;             /* how often we tried to compact */
+    int failures;             /* failures happen on concurrent updates */
 };
 
 /* return statistics for compaction up till now. */
 struct reftable_compaction_stats *
-reftable_stack_compaction_stats(struct reftable_stack *st);
+    reftable_stack_compaction_stats(struct reftable_stack *st);
 
 /* print the entire stack represented by the directory */
 int reftable_stack_print_directory(const char *stackdir, uint32_t hash_id);

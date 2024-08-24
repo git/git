@@ -21,96 +21,96 @@ typedef void(tr2_tgt_term_t)(void);
 typedef void(tr2_tgt_evt_version_fl_t)(const char *file, int line);
 
 typedef void(tr2_tgt_evt_start_fl_t)(const char *file, int line,
-				     uint64_t us_elapsed_absolute,
-				     const char **argv);
+                                     uint64_t     us_elapsed_absolute,
+                                     const char **argv);
 typedef void(tr2_tgt_evt_exit_fl_t)(const char *file, int line,
-				    uint64_t us_elapsed_absolute, int code);
+                                    uint64_t us_elapsed_absolute, int code);
 typedef void(tr2_tgt_evt_signal_t)(uint64_t us_elapsed_absolute, int signo);
 typedef void(tr2_tgt_evt_atexit_t)(uint64_t us_elapsed_absolute, int code);
 
 typedef void(tr2_tgt_evt_error_va_fl_t)(const char *file, int line,
-					const char *fmt, va_list ap);
+                                        const char *fmt, va_list ap);
 
 typedef void(tr2_tgt_evt_command_path_fl_t)(const char *file, int line,
-					    const char *command_path);
+                                            const char *command_path);
 typedef void(tr2_tgt_evt_command_ancestry_fl_t)(const char *file, int line,
-						const char **parent_names);
+                                                const char **parent_names);
 typedef void(tr2_tgt_evt_command_name_fl_t)(const char *file, int line,
-					    const char *name,
-					    const char *hierarchy);
+                                            const char *name,
+                                            const char *hierarchy);
 typedef void(tr2_tgt_evt_command_mode_fl_t)(const char *file, int line,
-					    const char *mode);
+                                            const char *mode);
 
 typedef void(tr2_tgt_evt_alias_fl_t)(const char *file, int line,
-				     const char *alias, const char **argv);
+                                     const char *alias, const char **argv);
 
 typedef void(tr2_tgt_evt_child_start_fl_t)(const char *file, int line,
-					   uint64_t us_elapsed_absolute,
-					   const struct child_process *cmd);
+                                           uint64_t                    us_elapsed_absolute,
+                                           const struct child_process *cmd);
 typedef void(tr2_tgt_evt_child_exit_fl_t)(const char *file, int line,
-					  uint64_t us_elapsed_absolute, int cid,
-					  int pid, int code,
-					  uint64_t us_elapsed_child);
+                                          uint64_t us_elapsed_absolute, int cid,
+                                          int pid, int code,
+                                          uint64_t us_elapsed_child);
 typedef void(tr2_tgt_evt_child_ready_fl_t)(const char *file, int line,
-					   uint64_t us_elapsed_absolute,
-					   int cid, int pid, const char *ready,
-					   uint64_t us_elapsed_child);
+                                           uint64_t us_elapsed_absolute,
+                                           int cid, int pid, const char *ready,
+                                           uint64_t us_elapsed_child);
 
 typedef void(tr2_tgt_evt_thread_start_fl_t)(const char *file, int line,
-					    uint64_t us_elapsed_absolute);
+                                            uint64_t us_elapsed_absolute);
 typedef void(tr2_tgt_evt_thread_exit_fl_t)(const char *file, int line,
-					   uint64_t us_elapsed_absolute,
-					   uint64_t us_elapsed_thread);
+                                           uint64_t us_elapsed_absolute,
+                                           uint64_t us_elapsed_thread);
 
 typedef void(tr2_tgt_evt_exec_fl_t)(const char *file, int line,
-				    uint64_t us_elapsed_absolute, int exec_id,
-				    const char *exe, const char **argv);
+                                    uint64_t us_elapsed_absolute, int exec_id,
+                                    const char *exe, const char **argv);
 typedef void(tr2_tgt_evt_exec_result_fl_t)(const char *file, int line,
-					   uint64_t us_elapsed_absolute,
-					   int exec_id, int code);
+                                           uint64_t us_elapsed_absolute,
+                                           int exec_id, int code);
 
 struct key_value_info;
 typedef void(tr2_tgt_evt_param_fl_t)(const char *file, int line,
-				     const char *param, const char *value,
-				     const struct key_value_info *kvi);
+                                     const char *param, const char *value,
+                                     const struct key_value_info *kvi);
 
 typedef void(tr2_tgt_evt_repo_fl_t)(const char *file, int line,
-				    const struct repository *repo);
+                                    const struct repository *repo);
 
 typedef void(tr2_tgt_evt_region_enter_printf_va_fl_t)(
-	const char *file, int line, uint64_t us_elapsed_absolute,
-	const char *category, const char *label, const struct repository *repo,
-	const char *fmt, va_list ap);
+    const char *file, int line, uint64_t us_elapsed_absolute,
+    const char *category, const char *label, const struct repository *repo,
+    const char *fmt, va_list ap);
 typedef void(tr2_tgt_evt_region_leave_printf_va_fl_t)(
-	const char *file, int line, uint64_t us_elapsed_absolute,
-	uint64_t us_elapsed_region, const char *category, const char *label,
-	const struct repository *repo, const char *fmt, va_list ap);
+    const char *file, int line, uint64_t us_elapsed_absolute,
+    uint64_t us_elapsed_region, const char *category, const char *label,
+    const struct repository *repo, const char *fmt, va_list ap);
 
 typedef void(tr2_tgt_evt_data_fl_t)(const char *file, int line,
-				    uint64_t us_elapsed_absolute,
-				    uint64_t us_elapsed_region,
-				    const char *category,
-				    const struct repository *repo,
-				    const char *key, const char *value);
+                                    uint64_t                 us_elapsed_absolute,
+                                    uint64_t                 us_elapsed_region,
+                                    const char              *category,
+                                    const struct repository *repo,
+                                    const char *key, const char *value);
 typedef void(tr2_tgt_evt_data_json_fl_t)(const char *file, int line,
-					 uint64_t us_elapsed_absolute,
-					 uint64_t us_elapsed_region,
-					 const char *category,
-					 const struct repository *repo,
-					 const char *key,
-					 const struct json_writer *value);
+                                         uint64_t                  us_elapsed_absolute,
+                                         uint64_t                  us_elapsed_region,
+                                         const char               *category,
+                                         const struct repository  *repo,
+                                         const char               *key,
+                                         const struct json_writer *value);
 
 typedef void(tr2_tgt_evt_printf_va_fl_t)(const char *file, int line,
-					 uint64_t us_elapsed_absolute,
-					 const char *fmt, va_list ap);
+                                         uint64_t    us_elapsed_absolute,
+                                         const char *fmt, va_list ap);
 
 typedef void(tr2_tgt_evt_timer_t)(const struct tr2_timer_metadata *meta,
-				  const struct tr2_timer *timer,
-				  int is_final_data);
+                                  const struct tr2_timer          *timer,
+                                  int                              is_final_data);
 
 typedef void(tr2_tgt_evt_counter_t)(const struct tr2_counter_metadata *meta,
-				    const struct tr2_counter *counter,
-				    int is_final_data);
+                                    const struct tr2_counter          *counter,
+                                    int                                is_final_data);
 
 /*
  * "vtable" for a TRACE2 target.  Use NULL if a target does not want

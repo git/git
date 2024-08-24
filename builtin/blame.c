@@ -35,197 +35,200 @@
 #include "tag.h"
 #include "write-or-die.h"
 
-static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
+static char blame_usage[]    = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
 static char annotate_usage[] = N_("git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>");
 
 static const char *blame_opt_usage[] = {
-	blame_usage,
-	"",
-	N_("<rev-opts> are documented in git-rev-list(1)"),
-	NULL
-};
+    blame_usage,
+    "",
+    N_("<rev-opts> are documented in git-rev-list(1)"),
+    NULL};
 
 static const char *annotate_opt_usage[] = {
-	annotate_usage,
-	"",
-	N_("<rev-opts> are documented in git-rev-list(1)"),
-	NULL
-};
+    annotate_usage,
+    "",
+    N_("<rev-opts> are documented in git-rev-list(1)"),
+    NULL};
 
-static int longest_file;
-static int longest_author;
-static int max_orig_digits;
-static int max_digits;
-static int max_score_digits;
-static int show_root;
-static int reverse;
-static int blank_boundary;
-static int incremental;
-static int xdl_opts;
-static int abbrev = -1;
-static int no_whole_file_rename;
-static int show_progress;
-static char repeated_meta_color[COLOR_MAXLEN];
-static int coloring_mode;
+static int                longest_file;
+static int                longest_author;
+static int                max_orig_digits;
+static int                max_digits;
+static int                max_score_digits;
+static int                show_root;
+static int                reverse;
+static int                blank_boundary;
+static int                incremental;
+static int                xdl_opts;
+static int                abbrev = -1;
+static int                no_whole_file_rename;
+static int                show_progress;
+static char               repeated_meta_color[COLOR_MAXLEN];
+static int                coloring_mode;
 static struct string_list ignore_revs_file_list = STRING_LIST_INIT_DUP;
-static int mark_unblamable_lines;
-static int mark_ignored_lines;
+static int                mark_unblamable_lines;
+static int                mark_ignored_lines;
 
-static struct date_mode blame_date_mode = { DATE_ISO8601 };
-static size_t blame_date_width;
+static struct date_mode blame_date_mode = {DATE_ISO8601};
+static size_t           blame_date_width;
 
 static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
 #ifndef DEBUG_BLAME
-#define DEBUG_BLAME 0
+    #define DEBUG_BLAME 0
 #endif
 
 static unsigned blame_move_score;
 static unsigned blame_copy_score;
 
 /* Remember to update object flag allocation in object.h */
-#define METAINFO_SHOWN		(1u<<12)
-#define MORE_THAN_ONE_PATH	(1u<<13)
+#define METAINFO_SHOWN     (1u << 12)
+#define MORE_THAN_ONE_PATH (1u << 13)
 
-struct progress_info {
-	struct progress *progress;
-	int blamed_lines;
+struct progress_info
+{
+    struct progress *progress;
+    int              blamed_lines;
 };
 
 static const char *nth_line_cb(void *data, long lno)
 {
-	return blame_nth_line((struct blame_scoreboard *)data, lno);
+    return blame_nth_line((struct blame_scoreboard *)data, lno);
 }
 
 /*
  * Information on commits, used for output.
  */
-struct commit_info {
-	struct strbuf author;
-	struct strbuf author_mail;
-	timestamp_t author_time;
-	struct strbuf author_tz;
+struct commit_info
+{
+    struct strbuf author;
+    struct strbuf author_mail;
+    timestamp_t   author_time;
+    struct strbuf author_tz;
 
-	/* filled only when asked for details */
-	struct strbuf committer;
-	struct strbuf committer_mail;
-	timestamp_t committer_time;
-	struct strbuf committer_tz;
+    /* filled only when asked for details */
+    struct strbuf committer;
+    struct strbuf committer_mail;
+    timestamp_t   committer_time;
+    struct strbuf committer_tz;
 
-	struct strbuf summary;
+    struct strbuf summary;
 };
 
-#define COMMIT_INFO_INIT { \
-	.author = STRBUF_INIT, \
-	.author_mail = STRBUF_INIT, \
-	.author_tz = STRBUF_INIT, \
-	.committer = STRBUF_INIT, \
-	.committer_mail = STRBUF_INIT, \
-	.committer_tz = STRBUF_INIT, \
-	.summary = STRBUF_INIT, \
-}
+#define COMMIT_INFO_INIT               \
+    {                                  \
+        .author         = STRBUF_INIT, \
+        .author_mail    = STRBUF_INIT, \
+        .author_tz      = STRBUF_INIT, \
+        .committer      = STRBUF_INIT, \
+        .committer_mail = STRBUF_INIT, \
+        .committer_tz   = STRBUF_INIT, \
+        .summary        = STRBUF_INIT, \
+    }
 
 /*
  * Parse author/committer line in the commit object buffer
  */
 static void get_ac_line(const char *inbuf, const char *what,
-	struct strbuf *name, struct strbuf *mail,
-	timestamp_t *time, struct strbuf *tz)
+                        struct strbuf *name, struct strbuf *mail,
+                        timestamp_t *time, struct strbuf *tz)
 {
-	struct ident_split ident;
-	size_t len, maillen, namelen;
-	const char *tmp, *endp;
-	const char *namebuf, *mailbuf;
+    struct ident_split ident;
+    size_t             len, maillen, namelen;
+    const char        *tmp, *endp;
+    const char        *namebuf, *mailbuf;
 
-	tmp = strstr(inbuf, what);
-	if (!tmp)
-		goto error_out;
-	tmp += strlen(what);
-	endp = strchr(tmp, '\n');
-	if (!endp)
-		len = strlen(tmp);
-	else
-		len = endp - tmp;
+    tmp = strstr(inbuf, what);
+    if (!tmp)
+        goto error_out;
+    tmp += strlen(what);
+    endp = strchr(tmp, '\n');
+    if (!endp)
+        len = strlen(tmp);
+    else
+        len = endp - tmp;
 
-	if (split_ident_line(&ident, tmp, len)) {
-	error_out:
-		/* Ugh */
-		tmp = "(unknown)";
-		strbuf_addstr(name, tmp);
-		strbuf_addstr(mail, tmp);
-		strbuf_addstr(tz, tmp);
-		*time = 0;
-		return;
-	}
+    if (split_ident_line(&ident, tmp, len))
+    {
+    error_out:
+        /* Ugh */
+        tmp = "(unknown)";
+        strbuf_addstr(name, tmp);
+        strbuf_addstr(mail, tmp);
+        strbuf_addstr(tz, tmp);
+        *time = 0;
+        return;
+    }
 
-	namelen = ident.name_end - ident.name_begin;
-	namebuf = ident.name_begin;
+    namelen = ident.name_end - ident.name_begin;
+    namebuf = ident.name_begin;
 
-	maillen = ident.mail_end - ident.mail_begin;
-	mailbuf = ident.mail_begin;
+    maillen = ident.mail_end - ident.mail_begin;
+    mailbuf = ident.mail_begin;
 
-	if (ident.date_begin && ident.date_end)
-		*time = strtoul(ident.date_begin, NULL, 10);
-	else
-		*time = 0;
+    if (ident.date_begin && ident.date_end)
+        *time = strtoul(ident.date_begin, NULL, 10);
+    else
+        *time = 0;
 
-	if (ident.tz_begin && ident.tz_end)
-		strbuf_add(tz, ident.tz_begin, ident.tz_end - ident.tz_begin);
-	else
-		strbuf_addstr(tz, "(unknown)");
+    if (ident.tz_begin && ident.tz_end)
+        strbuf_add(tz, ident.tz_begin, ident.tz_end - ident.tz_begin);
+    else
+        strbuf_addstr(tz, "(unknown)");
 
-	/*
-	 * Now, convert both name and e-mail using mailmap
-	 */
-	map_user(&mailmap, &mailbuf, &maillen,
-		 &namebuf, &namelen);
+    /*
+     * Now, convert both name and e-mail using mailmap
+     */
+    map_user(&mailmap, &mailbuf, &maillen,
+             &namebuf, &namelen);
 
-	strbuf_addf(mail, "<%.*s>", (int)maillen, mailbuf);
-	strbuf_add(name, namebuf, namelen);
+    strbuf_addf(mail, "<%.*s>", (int)maillen, mailbuf);
+    strbuf_add(name, namebuf, namelen);
 }
 
 static void commit_info_destroy(struct commit_info *ci)
 {
 
-	strbuf_release(&ci->author);
-	strbuf_release(&ci->author_mail);
-	strbuf_release(&ci->author_tz);
-	strbuf_release(&ci->committer);
-	strbuf_release(&ci->committer_mail);
-	strbuf_release(&ci->committer_tz);
-	strbuf_release(&ci->summary);
+    strbuf_release(&ci->author);
+    strbuf_release(&ci->author_mail);
+    strbuf_release(&ci->author_tz);
+    strbuf_release(&ci->committer);
+    strbuf_release(&ci->committer_mail);
+    strbuf_release(&ci->committer_tz);
+    strbuf_release(&ci->summary);
 }
 
-static void get_commit_info(struct commit *commit,
-			    struct commit_info *ret,
-			    int detailed)
+static void get_commit_info(struct commit      *commit,
+                            struct commit_info *ret,
+                            int                 detailed)
 {
-	int len;
-	const char *subject, *encoding;
-	const char *message;
+    int         len;
+    const char *subject, *encoding;
+    const char *message;
 
-	encoding = get_log_output_encoding();
-	message = repo_logmsg_reencode(the_repository, commit, NULL, encoding);
-	get_ac_line(message, "\nauthor ",
-		    &ret->author, &ret->author_mail,
-		    &ret->author_time, &ret->author_tz);
+    encoding = get_log_output_encoding();
+    message  = repo_logmsg_reencode(the_repository, commit, NULL, encoding);
+    get_ac_line(message, "\nauthor ",
+                &ret->author, &ret->author_mail,
+                &ret->author_time, &ret->author_tz);
 
-	if (!detailed) {
-		repo_unuse_commit_buffer(the_repository, commit, message);
-		return;
-	}
+    if (!detailed)
+    {
+        repo_unuse_commit_buffer(the_repository, commit, message);
+        return;
+    }
 
-	get_ac_line(message, "\ncommitter ",
-		    &ret->committer, &ret->committer_mail,
-		    &ret->committer_time, &ret->committer_tz);
+    get_ac_line(message, "\ncommitter ",
+                &ret->committer, &ret->committer_mail,
+                &ret->committer_time, &ret->committer_tz);
 
-	len = find_commit_subject(message, &subject);
-	if (len)
-		strbuf_add(&ret->summary, subject, len);
-	else
-		strbuf_addf(&ret->summary, "(%s)", oid_to_hex(&commit->object.oid));
+    len = find_commit_subject(message, &subject);
+    if (len)
+        strbuf_add(&ret->summary, subject, len);
+    else
+        strbuf_addf(&ret->summary, "(%s)", oid_to_hex(&commit->object.oid));
 
-	repo_unuse_commit_buffer(the_repository, commit, message);
+    repo_unuse_commit_buffer(the_repository, commit, message);
 }
 
 /*
@@ -239,13 +242,14 @@ static void get_commit_info(struct commit *commit,
  */
 static void write_filename_info(struct blame_origin *suspect)
 {
-	if (suspect->previous) {
-		struct blame_origin *prev = suspect->previous;
-		printf("previous %s ", oid_to_hex(&prev->commit->object.oid));
-		write_name_quoted(prev->path, stdout, '\n');
-	}
-	printf("filename ");
-	write_name_quoted(suspect->path, stdout, '\n');
+    if (suspect->previous)
+    {
+        struct blame_origin *prev = suspect->previous;
+        printf("previous %s ", oid_to_hex(&prev->commit->object.oid));
+        write_name_quoted(prev->path, stdout, '\n');
+    }
+    printf("filename ");
+    write_name_quoted(suspect->path, stdout, '\n');
 }
 
 /*
@@ -256,28 +260,28 @@ static void write_filename_info(struct blame_origin *suspect)
  */
 static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
 {
-	struct commit_info ci = COMMIT_INFO_INIT;
+    struct commit_info ci = COMMIT_INFO_INIT;
 
-	if (!repeat && (suspect->commit->object.flags & METAINFO_SHOWN))
-		return 0;
+    if (!repeat && (suspect->commit->object.flags & METAINFO_SHOWN))
+        return 0;
 
-	suspect->commit->object.flags |= METAINFO_SHOWN;
-	get_commit_info(suspect->commit, &ci, 1);
-	printf("author %s\n", ci.author.buf);
-	printf("author-mail %s\n", ci.author_mail.buf);
-	printf("author-time %"PRItime"\n", ci.author_time);
-	printf("author-tz %s\n", ci.author_tz.buf);
-	printf("committer %s\n", ci.committer.buf);
-	printf("committer-mail %s\n", ci.committer_mail.buf);
-	printf("committer-time %"PRItime"\n", ci.committer_time);
-	printf("committer-tz %s\n", ci.committer_tz.buf);
-	printf("summary %s\n", ci.summary.buf);
-	if (suspect->commit->object.flags & UNINTERESTING)
-		printf("boundary\n");
+    suspect->commit->object.flags |= METAINFO_SHOWN;
+    get_commit_info(suspect->commit, &ci, 1);
+    printf("author %s\n", ci.author.buf);
+    printf("author-mail %s\n", ci.author_mail.buf);
+    printf("author-time %" PRItime "\n", ci.author_time);
+    printf("author-tz %s\n", ci.author_tz.buf);
+    printf("committer %s\n", ci.committer.buf);
+    printf("committer-mail %s\n", ci.committer_mail.buf);
+    printf("committer-time %" PRItime "\n", ci.committer_time);
+    printf("committer-tz %s\n", ci.committer_tz.buf);
+    printf("summary %s\n", ci.summary.buf);
+    if (suspect->commit->object.flags & UNINTERESTING)
+        printf("boundary\n");
 
-	commit_info_destroy(&ci);
+    commit_info_destroy(&ci);
 
-	return 1;
+    return 1;
 }
 
 /*
@@ -286,301 +290,332 @@ static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
  */
 static void found_guilty_entry(struct blame_entry *ent, void *data)
 {
-	struct progress_info *pi = (struct progress_info *)data;
+    struct progress_info *pi = (struct progress_info *)data;
 
-	if (incremental) {
-		struct blame_origin *suspect = ent->suspect;
+    if (incremental)
+    {
+        struct blame_origin *suspect = ent->suspect;
 
-		printf("%s %d %d %d\n",
-		       oid_to_hex(&suspect->commit->object.oid),
-		       ent->s_lno + 1, ent->lno + 1, ent->num_lines);
-		emit_one_suspect_detail(suspect, 0);
-		write_filename_info(suspect);
-		maybe_flush_or_die(stdout, "stdout");
-	}
-	pi->blamed_lines += ent->num_lines;
-	display_progress(pi->progress, pi->blamed_lines);
+        printf("%s %d %d %d\n",
+               oid_to_hex(&suspect->commit->object.oid),
+               ent->s_lno + 1, ent->lno + 1, ent->num_lines);
+        emit_one_suspect_detail(suspect, 0);
+        write_filename_info(suspect);
+        maybe_flush_or_die(stdout, "stdout");
+    }
+    pi->blamed_lines += ent->num_lines;
+    display_progress(pi->progress, pi->blamed_lines);
 }
 
 static const char *format_time(timestamp_t time, const char *tz_str,
-			       int show_raw_time)
+                               int show_raw_time)
 {
-	static struct strbuf time_buf = STRBUF_INIT;
+    static struct strbuf time_buf = STRBUF_INIT;
 
-	strbuf_reset(&time_buf);
-	if (show_raw_time) {
-		strbuf_addf(&time_buf, "%"PRItime" %s", time, tz_str);
-	}
-	else {
-		const char *time_str;
-		size_t time_width;
-		int tz;
-		tz = atoi(tz_str);
-		time_str = show_date(time, tz, blame_date_mode);
-		strbuf_addstr(&time_buf, time_str);
-		/*
-		 * Add space paddings to time_buf to display a fixed width
-		 * string, and use time_width for display width calibration.
-		 */
-		for (time_width = utf8_strwidth(time_str);
-		     time_width < blame_date_width;
-		     time_width++)
-			strbuf_addch(&time_buf, ' ');
-	}
-	return time_buf.buf;
+    strbuf_reset(&time_buf);
+    if (show_raw_time)
+    {
+        strbuf_addf(&time_buf, "%" PRItime " %s", time, tz_str);
+    }
+    else
+    {
+        const char *time_str;
+        size_t      time_width;
+        int         tz;
+        tz       = atoi(tz_str);
+        time_str = show_date(time, tz, blame_date_mode);
+        strbuf_addstr(&time_buf, time_str);
+        /*
+         * Add space paddings to time_buf to display a fixed width
+         * string, and use time_width for display width calibration.
+         */
+        for (time_width = utf8_strwidth(time_str);
+             time_width < blame_date_width;
+             time_width++)
+            strbuf_addch(&time_buf, ' ');
+    }
+    return time_buf.buf;
 }
 
-#define OUTPUT_ANNOTATE_COMPAT      (1U<<0)
-#define OUTPUT_LONG_OBJECT_NAME     (1U<<1)
-#define OUTPUT_RAW_TIMESTAMP        (1U<<2)
-#define OUTPUT_PORCELAIN            (1U<<3)
-#define OUTPUT_SHOW_NAME            (1U<<4)
-#define OUTPUT_SHOW_NUMBER          (1U<<5)
-#define OUTPUT_SHOW_SCORE           (1U<<6)
-#define OUTPUT_NO_AUTHOR            (1U<<7)
-#define OUTPUT_SHOW_EMAIL           (1U<<8)
-#define OUTPUT_LINE_PORCELAIN       (1U<<9)
-#define OUTPUT_COLOR_LINE           (1U<<10)
-#define OUTPUT_SHOW_AGE_WITH_COLOR  (1U<<11)
+#define OUTPUT_ANNOTATE_COMPAT     (1U << 0)
+#define OUTPUT_LONG_OBJECT_NAME    (1U << 1)
+#define OUTPUT_RAW_TIMESTAMP       (1U << 2)
+#define OUTPUT_PORCELAIN           (1U << 3)
+#define OUTPUT_SHOW_NAME           (1U << 4)
+#define OUTPUT_SHOW_NUMBER         (1U << 5)
+#define OUTPUT_SHOW_SCORE          (1U << 6)
+#define OUTPUT_NO_AUTHOR           (1U << 7)
+#define OUTPUT_SHOW_EMAIL          (1U << 8)
+#define OUTPUT_LINE_PORCELAIN      (1U << 9)
+#define OUTPUT_COLOR_LINE          (1U << 10)
+#define OUTPUT_SHOW_AGE_WITH_COLOR (1U << 11)
 
 static void emit_porcelain_details(struct blame_origin *suspect, int repeat)
 {
-	if (emit_one_suspect_detail(suspect, repeat) ||
-	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
-		write_filename_info(suspect);
+    if (emit_one_suspect_detail(suspect, repeat) || (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
+        write_filename_info(suspect);
 }
 
 static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
-			   int opt)
+                           int opt)
 {
-	int repeat = opt & OUTPUT_LINE_PORCELAIN;
-	int cnt;
-	const char *cp;
-	struct blame_origin *suspect = ent->suspect;
-	char hex[GIT_MAX_HEXSZ + 1];
+    int                  repeat = opt & OUTPUT_LINE_PORCELAIN;
+    int                  cnt;
+    const char          *cp;
+    struct blame_origin *suspect = ent->suspect;
+    char                 hex[GIT_MAX_HEXSZ + 1];
 
-	oid_to_hex_r(hex, &suspect->commit->object.oid);
-	printf("%s %d %d %d\n",
-	       hex,
-	       ent->s_lno + 1,
-	       ent->lno + 1,
-	       ent->num_lines);
-	emit_porcelain_details(suspect, repeat);
+    oid_to_hex_r(hex, &suspect->commit->object.oid);
+    printf("%s %d %d %d\n",
+           hex,
+           ent->s_lno + 1,
+           ent->lno + 1,
+           ent->num_lines);
+    emit_porcelain_details(suspect, repeat);
 
-	cp = blame_nth_line(sb, ent->lno);
-	for (cnt = 0; cnt < ent->num_lines; cnt++) {
-		char ch;
-		if (cnt) {
-			printf("%s %d %d\n", hex,
-			       ent->s_lno + 1 + cnt,
-			       ent->lno + 1 + cnt);
-			if (repeat)
-				emit_porcelain_details(suspect, 1);
-		}
-		putchar('\t');
-		do {
-			ch = *cp++;
-			putchar(ch);
-		} while (ch != '\n' &&
-			 cp < sb->final_buf + sb->final_buf_size);
-	}
+    cp = blame_nth_line(sb, ent->lno);
+    for (cnt = 0; cnt < ent->num_lines; cnt++)
+    {
+        char ch;
+        if (cnt)
+        {
+            printf("%s %d %d\n", hex,
+                   ent->s_lno + 1 + cnt,
+                   ent->lno + 1 + cnt);
+            if (repeat)
+                emit_porcelain_details(suspect, 1);
+        }
+        putchar('\t');
+        do
+        {
+            ch = *cp++;
+            putchar(ch);
+        } while (ch != '\n' && cp < sb->final_buf + sb->final_buf_size);
+    }
 
-	if (sb->final_buf_size && cp[-1] != '\n')
-		putchar('\n');
+    if (sb->final_buf_size && cp[-1] != '\n')
+        putchar('\n');
 }
 
-static struct color_field {
-	timestamp_t hop;
-	char col[COLOR_MAXLEN];
-} *colorfield;
+static struct color_field
+{
+    timestamp_t hop;
+    char        col[COLOR_MAXLEN];
+} * colorfield;
 static int colorfield_nr, colorfield_alloc;
 
 static void parse_color_fields(const char *s)
 {
-	struct string_list l = STRING_LIST_INIT_DUP;
-	struct string_list_item *item;
-	enum { EXPECT_DATE, EXPECT_COLOR } next = EXPECT_COLOR;
+    struct string_list       l = STRING_LIST_INIT_DUP;
+    struct string_list_item *item;
+    enum
+    {
+        EXPECT_DATE,
+        EXPECT_COLOR
+    } next = EXPECT_COLOR;
 
-	colorfield_nr = 0;
+    colorfield_nr = 0;
 
-	/* Ideally this would be stripped and split at the same time? */
-	string_list_split(&l, s, ',', -1);
-	ALLOC_GROW(colorfield, colorfield_nr + 1, colorfield_alloc);
+    /* Ideally this would be stripped and split at the same time? */
+    string_list_split(&l, s, ',', -1);
+    ALLOC_GROW(colorfield, colorfield_nr + 1, colorfield_alloc);
 
-	for_each_string_list_item(item, &l) {
-		switch (next) {
-		case EXPECT_DATE:
-			colorfield[colorfield_nr].hop = approxidate(item->string);
-			next = EXPECT_COLOR;
-			colorfield_nr++;
-			ALLOC_GROW(colorfield, colorfield_nr + 1, colorfield_alloc);
-			break;
-		case EXPECT_COLOR:
-			if (color_parse(item->string, colorfield[colorfield_nr].col))
-				die(_("expecting a color: %s"), item->string);
-			next = EXPECT_DATE;
-			break;
-		}
-	}
+    for_each_string_list_item(item, &l)
+    {
+        switch (next)
+        {
+            case EXPECT_DATE:
+                colorfield[colorfield_nr].hop = approxidate(item->string);
+                next                          = EXPECT_COLOR;
+                colorfield_nr++;
+                ALLOC_GROW(colorfield, colorfield_nr + 1, colorfield_alloc);
+                break;
+            case EXPECT_COLOR:
+                if (color_parse(item->string, colorfield[colorfield_nr].col))
+                    die(_("expecting a color: %s"), item->string);
+                next = EXPECT_DATE;
+                break;
+        }
+    }
 
-	if (next == EXPECT_COLOR)
-		die(_("must end with a color"));
+    if (next == EXPECT_COLOR)
+        die(_("must end with a color"));
 
-	colorfield[colorfield_nr].hop = TIME_MAX;
-	string_list_clear(&l, 0);
+    colorfield[colorfield_nr].hop = TIME_MAX;
+    string_list_clear(&l, 0);
 }
 
 static void setup_default_color_by_age(void)
 {
-	parse_color_fields("blue,12 month ago,white,1 month ago,red");
+    parse_color_fields("blue,12 month ago,white,1 month ago,red");
 }
 
 static void determine_line_heat(struct commit_info *ci, const char **dest_color)
 {
-	int i = 0;
+    int i = 0;
 
-	while (i < colorfield_nr && ci->author_time > colorfield[i].hop)
-		i++;
+    while (i < colorfield_nr && ci->author_time > colorfield[i].hop)
+        i++;
 
-	*dest_color = colorfield[i].col;
+    *dest_color = colorfield[i].col;
 }
 
 static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int opt)
 {
-	int cnt;
-	const char *cp;
-	struct blame_origin *suspect = ent->suspect;
-	struct commit_info ci = COMMIT_INFO_INIT;
-	char hex[GIT_MAX_HEXSZ + 1];
-	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
-	const char *default_color = NULL, *color = NULL, *reset = NULL;
+    int                  cnt;
+    const char          *cp;
+    struct blame_origin *suspect = ent->suspect;
+    struct commit_info   ci      = COMMIT_INFO_INIT;
+    char                 hex[GIT_MAX_HEXSZ + 1];
+    int                  show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
+    const char          *default_color = NULL, *color = NULL, *reset = NULL;
 
-	get_commit_info(suspect->commit, &ci, 1);
-	oid_to_hex_r(hex, &suspect->commit->object.oid);
+    get_commit_info(suspect->commit, &ci, 1);
+    oid_to_hex_r(hex, &suspect->commit->object.oid);
 
-	cp = blame_nth_line(sb, ent->lno);
+    cp = blame_nth_line(sb, ent->lno);
 
-	if (opt & OUTPUT_SHOW_AGE_WITH_COLOR) {
-		determine_line_heat(&ci, &default_color);
-		color = default_color;
-		reset = GIT_COLOR_RESET;
-	}
+    if (opt & OUTPUT_SHOW_AGE_WITH_COLOR)
+    {
+        determine_line_heat(&ci, &default_color);
+        color = default_color;
+        reset = GIT_COLOR_RESET;
+    }
 
-	for (cnt = 0; cnt < ent->num_lines; cnt++) {
-		char ch;
-		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? the_hash_algo->hexsz : abbrev;
+    for (cnt = 0; cnt < ent->num_lines; cnt++)
+    {
+        char ch;
+        int  length = (opt & OUTPUT_LONG_OBJECT_NAME) ? the_hash_algo->hexsz : abbrev;
 
-		if (opt & OUTPUT_COLOR_LINE) {
-			if (cnt > 0) {
-				color = repeated_meta_color;
-				reset = GIT_COLOR_RESET;
-			} else  {
-				color = default_color ? default_color : NULL;
-				reset = default_color ? GIT_COLOR_RESET : NULL;
-			}
-		}
-		if (color)
-			fputs(color, stdout);
+        if (opt & OUTPUT_COLOR_LINE)
+        {
+            if (cnt > 0)
+            {
+                color = repeated_meta_color;
+                reset = GIT_COLOR_RESET;
+            }
+            else
+            {
+                color = default_color ? default_color : NULL;
+                reset = default_color ? GIT_COLOR_RESET : NULL;
+            }
+        }
+        if (color)
+            fputs(color, stdout);
 
-		if (suspect->commit->object.flags & UNINTERESTING) {
-			if (blank_boundary)
-				memset(hex, ' ', length);
-			else if (!(opt & OUTPUT_ANNOTATE_COMPAT)) {
-				length--;
-				putchar('^');
-			}
-		}
+        if (suspect->commit->object.flags & UNINTERESTING)
+        {
+            if (blank_boundary)
+                memset(hex, ' ', length);
+            else if (!(opt & OUTPUT_ANNOTATE_COMPAT))
+            {
+                length--;
+                putchar('^');
+            }
+        }
 
-		if (mark_unblamable_lines && ent->unblamable) {
-			length--;
-			putchar('*');
-		}
-		if (mark_ignored_lines && ent->ignored) {
-			length--;
-			putchar('?');
-		}
-		printf("%.*s", length, hex);
-		if (opt & OUTPUT_ANNOTATE_COMPAT) {
-			const char *name;
-			if (opt & OUTPUT_SHOW_EMAIL)
-				name = ci.author_mail.buf;
-			else
-				name = ci.author.buf;
-			printf("\t(%10s\t%10s\t%d)", name,
-			       format_time(ci.author_time, ci.author_tz.buf,
-					   show_raw_time),
-			       ent->lno + 1 + cnt);
-		} else {
-			if (opt & OUTPUT_SHOW_SCORE)
-				printf(" %*d %02d",
-				       max_score_digits, ent->score,
-				       ent->suspect->refcnt);
-			if (opt & OUTPUT_SHOW_NAME)
-				printf(" %-*.*s", longest_file, longest_file,
-				       suspect->path);
-			if (opt & OUTPUT_SHOW_NUMBER)
-				printf(" %*d", max_orig_digits,
-				       ent->s_lno + 1 + cnt);
+        if (mark_unblamable_lines && ent->unblamable)
+        {
+            length--;
+            putchar('*');
+        }
+        if (mark_ignored_lines && ent->ignored)
+        {
+            length--;
+            putchar('?');
+        }
+        printf("%.*s", length, hex);
+        if (opt & OUTPUT_ANNOTATE_COMPAT)
+        {
+            const char *name;
+            if (opt & OUTPUT_SHOW_EMAIL)
+                name = ci.author_mail.buf;
+            else
+                name = ci.author.buf;
+            printf("\t(%10s\t%10s\t%d)", name,
+                   format_time(ci.author_time, ci.author_tz.buf,
+                               show_raw_time),
+                   ent->lno + 1 + cnt);
+        }
+        else
+        {
+            if (opt & OUTPUT_SHOW_SCORE)
+                printf(" %*d %02d",
+                       max_score_digits, ent->score,
+                       ent->suspect->refcnt);
+            if (opt & OUTPUT_SHOW_NAME)
+                printf(" %-*.*s", longest_file, longest_file,
+                       suspect->path);
+            if (opt & OUTPUT_SHOW_NUMBER)
+                printf(" %*d", max_orig_digits,
+                       ent->s_lno + 1 + cnt);
 
-			if (!(opt & OUTPUT_NO_AUTHOR)) {
-				const char *name;
-				int pad;
-				if (opt & OUTPUT_SHOW_EMAIL)
-					name = ci.author_mail.buf;
-				else
-					name = ci.author.buf;
-				pad = longest_author - utf8_strwidth(name);
-				printf(" (%s%*s %10s",
-				       name, pad, "",
-				       format_time(ci.author_time,
-						   ci.author_tz.buf,
-						   show_raw_time));
-			}
-			printf(" %*d) ",
-			       max_digits, ent->lno + 1 + cnt);
-		}
-		if (reset)
-			fputs(reset, stdout);
-		do {
-			ch = *cp++;
-			putchar(ch);
-		} while (ch != '\n' &&
-			 cp < sb->final_buf + sb->final_buf_size);
-	}
+            if (!(opt & OUTPUT_NO_AUTHOR))
+            {
+                const char *name;
+                int         pad;
+                if (opt & OUTPUT_SHOW_EMAIL)
+                    name = ci.author_mail.buf;
+                else
+                    name = ci.author.buf;
+                pad = longest_author - utf8_strwidth(name);
+                printf(" (%s%*s %10s",
+                       name, pad, "",
+                       format_time(ci.author_time,
+                                   ci.author_tz.buf,
+                                   show_raw_time));
+            }
+            printf(" %*d) ",
+                   max_digits, ent->lno + 1 + cnt);
+        }
+        if (reset)
+            fputs(reset, stdout);
+        do
+        {
+            ch = *cp++;
+            putchar(ch);
+        } while (ch != '\n' && cp < sb->final_buf + sb->final_buf_size);
+    }
 
-	if (sb->final_buf_size && cp[-1] != '\n')
-		putchar('\n');
+    if (sb->final_buf_size && cp[-1] != '\n')
+        putchar('\n');
 
-	commit_info_destroy(&ci);
+    commit_info_destroy(&ci);
 }
 
 static void output(struct blame_scoreboard *sb, int option)
 {
-	struct blame_entry *ent;
+    struct blame_entry *ent;
 
-	if (option & OUTPUT_PORCELAIN) {
-		for (ent = sb->ent; ent; ent = ent->next) {
-			int count = 0;
-			struct blame_origin *suspect;
-			struct commit *commit = ent->suspect->commit;
-			if (commit->object.flags & MORE_THAN_ONE_PATH)
-				continue;
-			for (suspect = get_blame_suspects(commit); suspect; suspect = suspect->next) {
-				if (suspect->guilty && count++) {
-					commit->object.flags |= MORE_THAN_ONE_PATH;
-					break;
-				}
-			}
-		}
-	}
+    if (option & OUTPUT_PORCELAIN)
+    {
+        for (ent = sb->ent; ent; ent = ent->next)
+        {
+            int                  count = 0;
+            struct blame_origin *suspect;
+            struct commit       *commit = ent->suspect->commit;
+            if (commit->object.flags & MORE_THAN_ONE_PATH)
+                continue;
+            for (suspect = get_blame_suspects(commit); suspect; suspect = suspect->next)
+            {
+                if (suspect->guilty && count++)
+                {
+                    commit->object.flags |= MORE_THAN_ONE_PATH;
+                    break;
+                }
+            }
+        }
+    }
 
-	for (ent = sb->ent; ent; ent = ent->next) {
-		if (option & OUTPUT_PORCELAIN)
-			emit_porcelain(sb, ent, option);
-		else {
-			emit_other(sb, ent, option);
-		}
-	}
+    for (ent = sb->ent; ent; ent = ent->next)
+    {
+        if (option & OUTPUT_PORCELAIN)
+            emit_porcelain(sb, ent, option);
+        else
+        {
+            emit_other(sb, ent, option);
+        }
+    }
 }
 
 /*
@@ -590,30 +625,31 @@ static void output(struct blame_scoreboard *sb, int option)
  */
 static int read_ancestry(const char *graft_file)
 {
-	FILE *fp = fopen_or_warn(graft_file, "r");
-	struct strbuf buf = STRBUF_INIT;
-	if (!fp)
-		return -1;
-	while (!strbuf_getwholeline(&buf, fp, '\n')) {
-		/* The format is just "Commit Parent1 Parent2 ...\n" */
-		struct commit_graft *graft = read_graft_line(&buf);
-		if (graft)
-			register_commit_graft(the_repository, graft, 0);
-	}
-	fclose(fp);
-	strbuf_release(&buf);
-	return 0;
+    FILE         *fp  = fopen_or_warn(graft_file, "r");
+    struct strbuf buf = STRBUF_INIT;
+    if (!fp)
+        return -1;
+    while (!strbuf_getwholeline(&buf, fp, '\n'))
+    {
+        /* The format is just "Commit Parent1 Parent2 ...\n" */
+        struct commit_graft *graft = read_graft_line(&buf);
+        if (graft)
+            register_commit_graft(the_repository, graft, 0);
+    }
+    fclose(fp);
+    strbuf_release(&buf);
+    return 0;
 }
 
 static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
 {
-	const char *uniq = repo_find_unique_abbrev(the_repository,
-						   &suspect->commit->object.oid,
-						   auto_abbrev);
-	int len = strlen(uniq);
-	if (auto_abbrev < len)
-		return len;
-	return auto_abbrev;
+    const char *uniq = repo_find_unique_abbrev(the_repository,
+                                               &suspect->commit->object.oid,
+                                               auto_abbrev);
+    int         len  = strlen(uniq);
+    if (auto_abbrev < len)
+        return len;
+    return auto_abbrev;
 }
 
 /*
@@ -622,614 +658,655 @@ static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
  */
 static void find_alignment(struct blame_scoreboard *sb, int *option)
 {
-	int longest_src_lines = 0;
-	int longest_dst_lines = 0;
-	unsigned largest_score = 0;
-	struct blame_entry *e;
-	int compute_auto_abbrev = (abbrev < 0);
-	int auto_abbrev = DEFAULT_ABBREV;
+    int                 longest_src_lines = 0;
+    int                 longest_dst_lines = 0;
+    unsigned            largest_score     = 0;
+    struct blame_entry *e;
+    int                 compute_auto_abbrev = (abbrev < 0);
+    int                 auto_abbrev         = DEFAULT_ABBREV;
 
-	for (e = sb->ent; e; e = e->next) {
-		struct blame_origin *suspect = e->suspect;
-		int num;
+    for (e = sb->ent; e; e = e->next)
+    {
+        struct blame_origin *suspect = e->suspect;
+        int                  num;
 
-		if (compute_auto_abbrev)
-			auto_abbrev = update_auto_abbrev(auto_abbrev, suspect);
-		if (strcmp(suspect->path, sb->path))
-			*option |= OUTPUT_SHOW_NAME;
-		num = strlen(suspect->path);
-		if (longest_file < num)
-			longest_file = num;
-		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
-			struct commit_info ci = COMMIT_INFO_INIT;
-			suspect->commit->object.flags |= METAINFO_SHOWN;
-			get_commit_info(suspect->commit, &ci, 1);
-			if (*option & OUTPUT_SHOW_EMAIL)
-				num = utf8_strwidth(ci.author_mail.buf);
-			else
-				num = utf8_strwidth(ci.author.buf);
-			if (longest_author < num)
-				longest_author = num;
-			commit_info_destroy(&ci);
-		}
-		num = e->s_lno + e->num_lines;
-		if (longest_src_lines < num)
-			longest_src_lines = num;
-		num = e->lno + e->num_lines;
-		if (longest_dst_lines < num)
-			longest_dst_lines = num;
-		if (largest_score < blame_entry_score(sb, e))
-			largest_score = blame_entry_score(sb, e);
-	}
-	max_orig_digits = decimal_width(longest_src_lines);
-	max_digits = decimal_width(longest_dst_lines);
-	max_score_digits = decimal_width(largest_score);
+        if (compute_auto_abbrev)
+            auto_abbrev = update_auto_abbrev(auto_abbrev, suspect);
+        if (strcmp(suspect->path, sb->path))
+            *option |= OUTPUT_SHOW_NAME;
+        num = strlen(suspect->path);
+        if (longest_file < num)
+            longest_file = num;
+        if (!(suspect->commit->object.flags & METAINFO_SHOWN))
+        {
+            struct commit_info ci = COMMIT_INFO_INIT;
+            suspect->commit->object.flags |= METAINFO_SHOWN;
+            get_commit_info(suspect->commit, &ci, 1);
+            if (*option & OUTPUT_SHOW_EMAIL)
+                num = utf8_strwidth(ci.author_mail.buf);
+            else
+                num = utf8_strwidth(ci.author.buf);
+            if (longest_author < num)
+                longest_author = num;
+            commit_info_destroy(&ci);
+        }
+        num = e->s_lno + e->num_lines;
+        if (longest_src_lines < num)
+            longest_src_lines = num;
+        num = e->lno + e->num_lines;
+        if (longest_dst_lines < num)
+            longest_dst_lines = num;
+        if (largest_score < blame_entry_score(sb, e))
+            largest_score = blame_entry_score(sb, e);
+    }
+    max_orig_digits  = decimal_width(longest_src_lines);
+    max_digits       = decimal_width(longest_dst_lines);
+    max_score_digits = decimal_width(largest_score);
 
-	if (compute_auto_abbrev)
-		/* one more abbrev length is needed for the boundary commit */
-		abbrev = auto_abbrev + 1;
+    if (compute_auto_abbrev)
+        /* one more abbrev length is needed for the boundary commit */
+        abbrev = auto_abbrev + 1;
 }
 
 static void sanity_check_on_fail(struct blame_scoreboard *sb, int baa)
 {
-	int opt = OUTPUT_SHOW_SCORE | OUTPUT_SHOW_NUMBER | OUTPUT_SHOW_NAME;
-	find_alignment(sb, &opt);
-	output(sb, opt);
-	die("Baa %d!", baa);
+    int opt = OUTPUT_SHOW_SCORE | OUTPUT_SHOW_NUMBER | OUTPUT_SHOW_NAME;
+    find_alignment(sb, &opt);
+    output(sb, opt);
+    die("Baa %d!", baa);
 }
 
 static unsigned parse_score(const char *arg)
 {
-	char *end;
-	unsigned long score = strtoul(arg, &end, 10);
-	if (*end)
-		return 0;
-	return score;
+    char         *end;
+    unsigned long score = strtoul(arg, &end, 10);
+    if (*end)
+        return 0;
+    return score;
 }
 
 static char *add_prefix(const char *prefix, const char *path)
 {
-	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
+    return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
 static int git_blame_config(const char *var, const char *value,
-			    const struct config_context *ctx, void *cb)
+                            const struct config_context *ctx, void *cb)
 {
-	if (!strcmp(var, "blame.showroot")) {
-		show_root = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "blame.blankboundary")) {
-		blank_boundary = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "blame.showemail")) {
-		int *output_option = cb;
-		if (git_config_bool(var, value))
-			*output_option |= OUTPUT_SHOW_EMAIL;
-		else
-			*output_option &= ~OUTPUT_SHOW_EMAIL;
-		return 0;
-	}
-	if (!strcmp(var, "blame.date")) {
-		if (!value)
-			return config_error_nonbool(var);
-		parse_date_format(value, &blame_date_mode);
-		return 0;
-	}
-	if (!strcmp(var, "blame.ignorerevsfile")) {
-		char *str;
-		int ret;
+    if (!strcmp(var, "blame.showroot"))
+    {
+        show_root = git_config_bool(var, value);
+        return 0;
+    }
+    if (!strcmp(var, "blame.blankboundary"))
+    {
+        blank_boundary = git_config_bool(var, value);
+        return 0;
+    }
+    if (!strcmp(var, "blame.showemail"))
+    {
+        int *output_option = cb;
+        if (git_config_bool(var, value))
+            *output_option |= OUTPUT_SHOW_EMAIL;
+        else
+            *output_option &= ~OUTPUT_SHOW_EMAIL;
+        return 0;
+    }
+    if (!strcmp(var, "blame.date"))
+    {
+        if (!value)
+            return config_error_nonbool(var);
+        parse_date_format(value, &blame_date_mode);
+        return 0;
+    }
+    if (!strcmp(var, "blame.ignorerevsfile"))
+    {
+        char *str;
+        int   ret;
 
-		ret = git_config_pathname(&str, var, value);
-		if (ret)
-			return ret;
-		string_list_insert(&ignore_revs_file_list, str);
-		free(str);
-		return 0;
-	}
-	if (!strcmp(var, "blame.markunblamablelines")) {
-		mark_unblamable_lines = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "blame.markignoredlines")) {
-		mark_ignored_lines = git_config_bool(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "color.blame.repeatedlines")) {
-		if (color_parse_mem(value, strlen(value), repeated_meta_color))
-			warning(_("invalid value for '%s': '%s'"),
-				"color.blame.repeatedLines", value);
-		return 0;
-	}
-	if (!strcmp(var, "color.blame.highlightrecent")) {
-		parse_color_fields(value);
-		return 0;
-	}
+        ret = git_config_pathname(&str, var, value);
+        if (ret)
+            return ret;
+        string_list_insert(&ignore_revs_file_list, str);
+        free(str);
+        return 0;
+    }
+    if (!strcmp(var, "blame.markunblamablelines"))
+    {
+        mark_unblamable_lines = git_config_bool(var, value);
+        return 0;
+    }
+    if (!strcmp(var, "blame.markignoredlines"))
+    {
+        mark_ignored_lines = git_config_bool(var, value);
+        return 0;
+    }
+    if (!strcmp(var, "color.blame.repeatedlines"))
+    {
+        if (color_parse_mem(value, strlen(value), repeated_meta_color))
+            warning(_("invalid value for '%s': '%s'"),
+                    "color.blame.repeatedLines", value);
+        return 0;
+    }
+    if (!strcmp(var, "color.blame.highlightrecent"))
+    {
+        parse_color_fields(value);
+        return 0;
+    }
 
-	if (!strcmp(var, "blame.coloring")) {
-		if (!value)
-			return config_error_nonbool(var);
-		if (!strcmp(value, "repeatedLines")) {
-			coloring_mode |= OUTPUT_COLOR_LINE;
-		} else if (!strcmp(value, "highlightRecent")) {
-			coloring_mode |= OUTPUT_SHOW_AGE_WITH_COLOR;
-		} else if (!strcmp(value, "none")) {
-			coloring_mode &= ~(OUTPUT_COLOR_LINE |
-					    OUTPUT_SHOW_AGE_WITH_COLOR);
-		} else {
-			warning(_("invalid value for '%s': '%s'"),
-				"blame.coloring", value);
-			return 0;
-		}
-	}
+    if (!strcmp(var, "blame.coloring"))
+    {
+        if (!value)
+            return config_error_nonbool(var);
+        if (!strcmp(value, "repeatedLines"))
+        {
+            coloring_mode |= OUTPUT_COLOR_LINE;
+        }
+        else if (!strcmp(value, "highlightRecent"))
+        {
+            coloring_mode |= OUTPUT_SHOW_AGE_WITH_COLOR;
+        }
+        else if (!strcmp(value, "none"))
+        {
+            coloring_mode &= ~(OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR);
+        }
+        else
+        {
+            warning(_("invalid value for '%s': '%s'"),
+                    "blame.coloring", value);
+            return 0;
+        }
+    }
 
-	if (git_diff_heuristic_config(var, value, cb) < 0)
-		return -1;
-	if (userdiff_config(var, value) < 0)
-		return -1;
+    if (git_diff_heuristic_config(var, value, cb) < 0)
+        return -1;
+    if (userdiff_config(var, value) < 0)
+        return -1;
 
-	return git_default_config(var, value, ctx, cb);
+    return git_default_config(var, value, ctx, cb);
 }
 
 static int blame_copy_callback(const struct option *option, const char *arg, int unset)
 {
-	int *opt = option->value;
+    int *opt = option->value;
 
-	BUG_ON_OPT_NEG(unset);
+    BUG_ON_OPT_NEG(unset);
 
-	/*
-	 * -C enables copy from removed files;
-	 * -C -C enables copy from existing files, but only
-	 *       when blaming a new file;
-	 * -C -C -C enables copy from existing files for
-	 *          everybody
-	 */
-	if (*opt & PICKAXE_BLAME_COPY_HARDER)
-		*opt |= PICKAXE_BLAME_COPY_HARDEST;
-	if (*opt & PICKAXE_BLAME_COPY)
-		*opt |= PICKAXE_BLAME_COPY_HARDER;
-	*opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
+    /*
+     * -C enables copy from removed files;
+     * -C -C enables copy from existing files, but only
+     *       when blaming a new file;
+     * -C -C -C enables copy from existing files for
+     *          everybody
+     */
+    if (*opt & PICKAXE_BLAME_COPY_HARDER)
+        *opt |= PICKAXE_BLAME_COPY_HARDEST;
+    if (*opt & PICKAXE_BLAME_COPY)
+        *opt |= PICKAXE_BLAME_COPY_HARDER;
+    *opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
 
-	if (arg)
-		blame_copy_score = parse_score(arg);
-	return 0;
+    if (arg)
+        blame_copy_score = parse_score(arg);
+    return 0;
 }
 
 static int blame_move_callback(const struct option *option, const char *arg, int unset)
 {
-	int *opt = option->value;
+    int *opt = option->value;
 
-	BUG_ON_OPT_NEG(unset);
+    BUG_ON_OPT_NEG(unset);
 
-	*opt |= PICKAXE_BLAME_MOVE;
+    *opt |= PICKAXE_BLAME_MOVE;
 
-	if (arg)
-		blame_move_score = parse_score(arg);
-	return 0;
+    if (arg)
+        blame_move_score = parse_score(arg);
+    return 0;
 }
 
 static int is_a_rev(const char *name)
 {
-	struct object_id oid;
+    struct object_id oid;
 
-	if (repo_get_oid(the_repository, name, &oid))
-		return 0;
-	return OBJ_NONE < oid_object_info(the_repository, &oid, NULL);
+    if (repo_get_oid(the_repository, name, &oid))
+        return 0;
+    return OBJ_NONE < oid_object_info(the_repository, &oid, NULL);
 }
 
 static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 {
-	struct repository *r = ((struct blame_scoreboard *)cbdata)->repo;
-	struct object_id oid;
+    struct repository *r = ((struct blame_scoreboard *)cbdata)->repo;
+    struct object_id   oid;
 
-	oidcpy(&oid, oid_ret);
-	while (1) {
-		struct object *obj;
-		int kind = oid_object_info(r, &oid, NULL);
-		if (kind == OBJ_COMMIT) {
-			oidcpy(oid_ret, &oid);
-			return 0;
-		}
-		if (kind != OBJ_TAG)
-			return -1;
-		obj = deref_tag(r, parse_object(r, &oid), NULL, 0);
-		if (!obj)
-			return -1;
-		oidcpy(&oid, &obj->oid);
-	}
+    oidcpy(&oid, oid_ret);
+    while (1)
+    {
+        struct object *obj;
+        int            kind = oid_object_info(r, &oid, NULL);
+        if (kind == OBJ_COMMIT)
+        {
+            oidcpy(oid_ret, &oid);
+            return 0;
+        }
+        if (kind != OBJ_TAG)
+            return -1;
+        obj = deref_tag(r, parse_object(r, &oid), NULL, 0);
+        if (!obj)
+            return -1;
+        oidcpy(&oid, &obj->oid);
+    }
 }
 
 static void build_ignorelist(struct blame_scoreboard *sb,
-			     struct string_list *ignore_revs_file_list,
-			     struct string_list *ignore_rev_list)
+                             struct string_list      *ignore_revs_file_list,
+                             struct string_list      *ignore_rev_list)
 {
-	struct string_list_item *i;
-	struct object_id oid;
+    struct string_list_item *i;
+    struct object_id         oid;
 
-	oidset_init(&sb->ignore_list, 0);
-	for_each_string_list_item(i, ignore_revs_file_list) {
-		if (!strcmp(i->string, ""))
-			oidset_clear(&sb->ignore_list);
-		else
-			oidset_parse_file_carefully(&sb->ignore_list, i->string,
-						    the_repository->hash_algo,
-						    peel_to_commit_oid, sb);
-	}
-	for_each_string_list_item(i, ignore_rev_list) {
-		if (repo_get_oid_committish(the_repository, i->string, &oid) ||
-		    peel_to_commit_oid(&oid, sb))
-			die(_("cannot find revision %s to ignore"), i->string);
-		oidset_insert(&sb->ignore_list, &oid);
-	}
+    oidset_init(&sb->ignore_list, 0);
+    for_each_string_list_item(i, ignore_revs_file_list)
+    {
+        if (!strcmp(i->string, ""))
+            oidset_clear(&sb->ignore_list);
+        else
+            oidset_parse_file_carefully(&sb->ignore_list, i->string,
+                                        the_repository->hash_algo,
+                                        peel_to_commit_oid, sb);
+    }
+    for_each_string_list_item(i, ignore_rev_list)
+    {
+        if (repo_get_oid_committish(the_repository, i->string, &oid) || peel_to_commit_oid(&oid, sb))
+            die(_("cannot find revision %s to ignore"), i->string);
+        oidset_insert(&sb->ignore_list, &oid);
+    }
 }
 
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
-	struct rev_info revs;
-	char *path = NULL;
-	struct blame_scoreboard sb;
-	struct blame_origin *o;
-	struct blame_entry *ent = NULL;
-	long dashdash_pos, lno;
-	struct progress_info pi = { NULL, 0 };
+    struct rev_info         revs;
+    char                   *path = NULL;
+    struct blame_scoreboard sb;
+    struct blame_origin    *o;
+    struct blame_entry     *ent = NULL;
+    long                    dashdash_pos, lno;
+    struct progress_info    pi = {NULL, 0};
 
-	struct string_list range_list = STRING_LIST_INIT_NODUP;
-	struct string_list ignore_rev_list = STRING_LIST_INIT_NODUP;
-	int output_option = 0, opt = 0;
-	int show_stats = 0;
-	const char *revs_file = NULL;
-	const char *contents_from = NULL;
-	const struct option options[] = {
-		OPT_BOOL(0, "incremental", &incremental, N_("show blame entries as we find them, incrementally")),
-		OPT_BOOL('b', NULL, &blank_boundary, N_("do not show object names of boundary commits (Default: off)")),
-		OPT_BOOL(0, "root", &show_root, N_("do not treat root commits as boundaries (Default: off)")),
-		OPT_BOOL(0, "show-stats", &show_stats, N_("show work cost statistics")),
-		OPT_BOOL(0, "progress", &show_progress, N_("force progress reporting")),
-		OPT_BIT(0, "score-debug", &output_option, N_("show output score for blame entries"), OUTPUT_SHOW_SCORE),
-		OPT_BIT('f', "show-name", &output_option, N_("show original filename (Default: auto)"), OUTPUT_SHOW_NAME),
-		OPT_BIT('n', "show-number", &output_option, N_("show original linenumber (Default: off)"), OUTPUT_SHOW_NUMBER),
-		OPT_BIT('p', "porcelain", &output_option, N_("show in a format designed for machine consumption"), OUTPUT_PORCELAIN),
-		OPT_BIT(0, "line-porcelain", &output_option, N_("show porcelain format with per-line commit information"), OUTPUT_PORCELAIN|OUTPUT_LINE_PORCELAIN),
-		OPT_BIT('c', NULL, &output_option, N_("use the same output mode as git-annotate (Default: off)"), OUTPUT_ANNOTATE_COMPAT),
-		OPT_BIT('t', NULL, &output_option, N_("show raw timestamp (Default: off)"), OUTPUT_RAW_TIMESTAMP),
-		OPT_BIT('l', NULL, &output_option, N_("show long commit SHA1 (Default: off)"), OUTPUT_LONG_OBJECT_NAME),
-		OPT_BIT('s', NULL, &output_option, N_("suppress author name and timestamp (Default: off)"), OUTPUT_NO_AUTHOR),
-		OPT_BIT('e', "show-email", &output_option, N_("show author email instead of name (Default: off)"), OUTPUT_SHOW_EMAIL),
-		OPT_BIT('w', NULL, &xdl_opts, N_("ignore whitespace differences"), XDF_IGNORE_WHITESPACE),
-		OPT_STRING_LIST(0, "ignore-rev", &ignore_rev_list, N_("rev"), N_("ignore <rev> when blaming")),
-		OPT_STRING_LIST(0, "ignore-revs-file", &ignore_revs_file_list, N_("file"), N_("ignore revisions from <file>")),
-		OPT_BIT(0, "color-lines", &output_option, N_("color redundant metadata from previous line differently"), OUTPUT_COLOR_LINE),
-		OPT_BIT(0, "color-by-age", &output_option, N_("color lines by age"), OUTPUT_SHOW_AGE_WITH_COLOR),
-		OPT_BIT(0, "minimal", &xdl_opts, N_("spend extra cycles to find better match"), XDF_NEED_MINIMAL),
-		OPT_STRING('S', NULL, &revs_file, N_("file"), N_("use revisions from <file> instead of calling git-rev-list")),
-		OPT_STRING(0, "contents", &contents_from, N_("file"), N_("use <file>'s contents as the final image")),
-		OPT_CALLBACK_F('C', NULL, &opt, N_("score"), N_("find line copies within and across files"), PARSE_OPT_OPTARG, blame_copy_callback),
-		OPT_CALLBACK_F('M', NULL, &opt, N_("score"), N_("find line movements within and across files"), PARSE_OPT_OPTARG, blame_move_callback),
-		OPT_STRING_LIST('L', NULL, &range_list, N_("range"),
-				N_("process only line range <start>,<end> or function :<funcname>")),
-		OPT__ABBREV(&abbrev),
-		OPT_END()
-	};
+    struct string_list  range_list      = STRING_LIST_INIT_NODUP;
+    struct string_list  ignore_rev_list = STRING_LIST_INIT_NODUP;
+    int                 output_option = 0, opt = 0;
+    int                 show_stats    = 0;
+    const char         *revs_file     = NULL;
+    const char         *contents_from = NULL;
+    const struct option options[]     = {
+            OPT_BOOL(0, "incremental", &incremental, N_("show blame entries as we find them, incrementally")),
+            OPT_BOOL('b', NULL, &blank_boundary, N_("do not show object names of boundary commits (Default: off)")),
+            OPT_BOOL(0, "root", &show_root, N_("do not treat root commits as boundaries (Default: off)")),
+            OPT_BOOL(0, "show-stats", &show_stats, N_("show work cost statistics")),
+            OPT_BOOL(0, "progress", &show_progress, N_("force progress reporting")),
+            OPT_BIT(0, "score-debug", &output_option, N_("show output score for blame entries"), OUTPUT_SHOW_SCORE),
+            OPT_BIT('f', "show-name", &output_option, N_("show original filename (Default: auto)"), OUTPUT_SHOW_NAME),
+            OPT_BIT('n', "show-number", &output_option, N_("show original linenumber (Default: off)"), OUTPUT_SHOW_NUMBER),
+            OPT_BIT('p', "porcelain", &output_option, N_("show in a format designed for machine consumption"), OUTPUT_PORCELAIN),
+            OPT_BIT(0, "line-porcelain", &output_option, N_("show porcelain format with per-line commit information"), OUTPUT_PORCELAIN | OUTPUT_LINE_PORCELAIN),
+            OPT_BIT('c', NULL, &output_option, N_("use the same output mode as git-annotate (Default: off)"), OUTPUT_ANNOTATE_COMPAT),
+            OPT_BIT('t', NULL, &output_option, N_("show raw timestamp (Default: off)"), OUTPUT_RAW_TIMESTAMP),
+            OPT_BIT('l', NULL, &output_option, N_("show long commit SHA1 (Default: off)"), OUTPUT_LONG_OBJECT_NAME),
+            OPT_BIT('s', NULL, &output_option, N_("suppress author name and timestamp (Default: off)"), OUTPUT_NO_AUTHOR),
+            OPT_BIT('e', "show-email", &output_option, N_("show author email instead of name (Default: off)"), OUTPUT_SHOW_EMAIL),
+            OPT_BIT('w', NULL, &xdl_opts, N_("ignore whitespace differences"), XDF_IGNORE_WHITESPACE),
+            OPT_STRING_LIST(0, "ignore-rev", &ignore_rev_list, N_("rev"), N_("ignore <rev> when blaming")),
+            OPT_STRING_LIST(0, "ignore-revs-file", &ignore_revs_file_list, N_("file"), N_("ignore revisions from <file>")),
+            OPT_BIT(0, "color-lines", &output_option, N_("color redundant metadata from previous line differently"), OUTPUT_COLOR_LINE),
+            OPT_BIT(0, "color-by-age", &output_option, N_("color lines by age"), OUTPUT_SHOW_AGE_WITH_COLOR),
+            OPT_BIT(0, "minimal", &xdl_opts, N_("spend extra cycles to find better match"), XDF_NEED_MINIMAL),
+            OPT_STRING('S', NULL, &revs_file, N_("file"), N_("use revisions from <file> instead of calling git-rev-list")),
+            OPT_STRING(0, "contents", &contents_from, N_("file"), N_("use <file>'s contents as the final image")),
+            OPT_CALLBACK_F('C', NULL, &opt, N_("score"), N_("find line copies within and across files"), PARSE_OPT_OPTARG, blame_copy_callback),
+            OPT_CALLBACK_F('M', NULL, &opt, N_("score"), N_("find line movements within and across files"), PARSE_OPT_OPTARG, blame_move_callback),
+            OPT_STRING_LIST('L', NULL, &range_list, N_("range"),
+                            N_("process only line range <start>,<end> or function :<funcname>")),
+            OPT__ABBREV(&abbrev),
+            OPT_END()};
 
-	struct parse_opt_ctx_t ctx;
-	int cmd_is_annotate = !strcmp(argv[0], "annotate");
-	struct range_set ranges;
-	unsigned int range_i;
-	long anchor;
-	long num_lines = 0;
-	const char *str_usage = cmd_is_annotate ? annotate_usage : blame_usage;
-	const char **opt_usage = cmd_is_annotate ? annotate_opt_usage : blame_opt_usage;
+    struct parse_opt_ctx_t ctx;
+    int                    cmd_is_annotate = !strcmp(argv[0], "annotate");
+    struct range_set       ranges;
+    unsigned int           range_i;
+    long                   anchor;
+    long                   num_lines = 0;
+    const char            *str_usage = cmd_is_annotate ? annotate_usage : blame_usage;
+    const char           **opt_usage = cmd_is_annotate ? annotate_opt_usage : blame_opt_usage;
 
-	setup_default_color_by_age();
-	git_config(git_blame_config, &output_option);
-	repo_init_revisions(the_repository, &revs, NULL);
-	revs.date_mode = blame_date_mode;
-	revs.diffopt.flags.allow_textconv = 1;
-	revs.diffopt.flags.follow_renames = 1;
+    setup_default_color_by_age();
+    git_config(git_blame_config, &output_option);
+    repo_init_revisions(the_repository, &revs, NULL);
+    revs.date_mode                    = blame_date_mode;
+    revs.diffopt.flags.allow_textconv = 1;
+    revs.diffopt.flags.follow_renames = 1;
 
-	save_commit_buffer = 0;
-	dashdash_pos = 0;
-	show_progress = -1;
+    save_commit_buffer = 0;
+    dashdash_pos       = 0;
+    show_progress      = -1;
 
-	parse_options_start(&ctx, argc, argv, prefix, options,
-			    PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0);
-	for (;;) {
-		switch (parse_options_step(&ctx, options, opt_usage)) {
-		case PARSE_OPT_NON_OPTION:
-		case PARSE_OPT_UNKNOWN:
-			break;
-		case PARSE_OPT_HELP:
-		case PARSE_OPT_ERROR:
-		case PARSE_OPT_SUBCOMMAND:
-			exit(129);
-		case PARSE_OPT_COMPLETE:
-			exit(0);
-		case PARSE_OPT_DONE:
-			if (ctx.argv[0])
-				dashdash_pos = ctx.cpidx;
-			goto parse_done;
-		}
+    parse_options_start(&ctx, argc, argv, prefix, options,
+                        PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0);
+    for (;;)
+    {
+        switch (parse_options_step(&ctx, options, opt_usage))
+        {
+            case PARSE_OPT_NON_OPTION:
+            case PARSE_OPT_UNKNOWN:
+                break;
+            case PARSE_OPT_HELP:
+            case PARSE_OPT_ERROR:
+            case PARSE_OPT_SUBCOMMAND:
+                exit(129);
+            case PARSE_OPT_COMPLETE:
+                exit(0);
+            case PARSE_OPT_DONE:
+                if (ctx.argv[0])
+                    dashdash_pos = ctx.cpidx;
+                goto parse_done;
+        }
 
-		if (!strcmp(ctx.argv[0], "--reverse")) {
-			ctx.argv[0] = "--children";
-			reverse = 1;
-		}
-		parse_revision_opt(&revs, &ctx, options, opt_usage);
-	}
+        if (!strcmp(ctx.argv[0], "--reverse"))
+        {
+            ctx.argv[0] = "--children";
+            reverse     = 1;
+        }
+        parse_revision_opt(&revs, &ctx, options, opt_usage);
+    }
 parse_done:
-	revision_opts_finish(&revs);
-	no_whole_file_rename = !revs.diffopt.flags.follow_renames;
-	xdl_opts |= revs.diffopt.xdl_opts & XDF_INDENT_HEURISTIC;
-	revs.diffopt.flags.follow_renames = 0;
-	argc = parse_options_end(&ctx);
+    revision_opts_finish(&revs);
+    no_whole_file_rename = !revs.diffopt.flags.follow_renames;
+    xdl_opts |= revs.diffopt.xdl_opts & XDF_INDENT_HEURISTIC;
+    revs.diffopt.flags.follow_renames = 0;
+    argc                              = parse_options_end(&ctx);
 
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
+    prepare_repo_settings(the_repository);
+    the_repository->settings.command_requires_full_index = 0;
 
-	if (incremental || (output_option & OUTPUT_PORCELAIN)) {
-		if (show_progress > 0)
-			die(_("--progress can't be used with --incremental or porcelain formats"));
-		show_progress = 0;
-	} else if (show_progress < 0)
-		show_progress = isatty(2);
+    if (incremental || (output_option & OUTPUT_PORCELAIN))
+    {
+        if (show_progress > 0)
+            die(_("--progress can't be used with --incremental or porcelain formats"));
+        show_progress = 0;
+    }
+    else if (show_progress < 0)
+        show_progress = isatty(2);
 
-	if (0 < abbrev && abbrev < (int)the_hash_algo->hexsz)
-		/* one more abbrev length is needed for the boundary commit */
-		abbrev++;
-	else if (!abbrev)
-		abbrev = the_hash_algo->hexsz;
+    if (0 < abbrev && abbrev < (int)the_hash_algo->hexsz)
+        /* one more abbrev length is needed for the boundary commit */
+        abbrev++;
+    else if (!abbrev)
+        abbrev = the_hash_algo->hexsz;
 
-	if (revs_file && read_ancestry(revs_file))
-		die_errno("reading graft file '%s' failed", revs_file);
+    if (revs_file && read_ancestry(revs_file))
+        die_errno("reading graft file '%s' failed", revs_file);
 
-	if (cmd_is_annotate) {
-		output_option |= OUTPUT_ANNOTATE_COMPAT;
-		blame_date_mode.type = DATE_ISO8601;
-	} else {
-		blame_date_mode = revs.date_mode;
-	}
+    if (cmd_is_annotate)
+    {
+        output_option |= OUTPUT_ANNOTATE_COMPAT;
+        blame_date_mode.type = DATE_ISO8601;
+    }
+    else
+    {
+        blame_date_mode = revs.date_mode;
+    }
 
-	/* The maximum width used to show the dates */
-	switch (blame_date_mode.type) {
-	case DATE_RFC2822:
-		blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
-		break;
-	case DATE_ISO8601_STRICT:
-		blame_date_width = sizeof("2006-10-19T16:00:04-07:00");
-		break;
-	case DATE_ISO8601:
-		blame_date_width = sizeof("2006-10-19 16:00:04 -0700");
-		break;
-	case DATE_RAW:
-		blame_date_width = sizeof("1161298804 -0700");
-		break;
-	case DATE_UNIX:
-		blame_date_width = sizeof("1161298804");
-		break;
-	case DATE_SHORT:
-		blame_date_width = sizeof("2006-10-19");
-		break;
-	case DATE_RELATIVE:
-		/*
-		 * TRANSLATORS: This string is used to tell us the
-		 * maximum display width for a relative timestamp in
-		 * "git blame" output.  For C locale, "4 years, 11
-		 * months ago", which takes 22 places, is the longest
-		 * among various forms of relative timestamps, but
-		 * your language may need more or fewer display
-		 * columns.
-		 */
-		blame_date_width = utf8_strwidth(_("4 years, 11 months ago")) + 1; /* add the null */
-		break;
-	case DATE_HUMAN:
-		/* If the year is shown, no time is shown */
-		blame_date_width = sizeof("Thu Oct 19 16:00");
-		break;
-	case DATE_NORMAL:
-		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
-		break;
-	case DATE_STRFTIME:
-		blame_date_width = strlen(show_date(0, 0, blame_date_mode)) + 1; /* add the null */
-		break;
-	}
-	blame_date_width -= 1; /* strip the null */
+    /* The maximum width used to show the dates */
+    switch (blame_date_mode.type)
+    {
+        case DATE_RFC2822:
+            blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
+            break;
+        case DATE_ISO8601_STRICT:
+            blame_date_width = sizeof("2006-10-19T16:00:04-07:00");
+            break;
+        case DATE_ISO8601:
+            blame_date_width = sizeof("2006-10-19 16:00:04 -0700");
+            break;
+        case DATE_RAW:
+            blame_date_width = sizeof("1161298804 -0700");
+            break;
+        case DATE_UNIX:
+            blame_date_width = sizeof("1161298804");
+            break;
+        case DATE_SHORT:
+            blame_date_width = sizeof("2006-10-19");
+            break;
+        case DATE_RELATIVE:
+            /*
+             * TRANSLATORS: This string is used to tell us the
+             * maximum display width for a relative timestamp in
+             * "git blame" output.  For C locale, "4 years, 11
+             * months ago", which takes 22 places, is the longest
+             * among various forms of relative timestamps, but
+             * your language may need more or fewer display
+             * columns.
+             */
+            blame_date_width = utf8_strwidth(_("4 years, 11 months ago")) + 1; /* add the null */
+            break;
+        case DATE_HUMAN:
+            /* If the year is shown, no time is shown */
+            blame_date_width = sizeof("Thu Oct 19 16:00");
+            break;
+        case DATE_NORMAL:
+            blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
+            break;
+        case DATE_STRFTIME:
+            blame_date_width = strlen(show_date(0, 0, blame_date_mode)) + 1; /* add the null */
+            break;
+    }
+    blame_date_width -= 1; /* strip the null */
 
-	if (revs.diffopt.flags.find_copies_harder)
-		opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE |
-			PICKAXE_BLAME_COPY_HARDER);
+    if (revs.diffopt.flags.find_copies_harder)
+        opt |= (PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE | PICKAXE_BLAME_COPY_HARDER);
 
-	/*
-	 * We have collected options unknown to us in argv[1..unk]
-	 * which are to be passed to revision machinery if we are
-	 * going to do the "bottom" processing.
-	 *
-	 * The remaining are:
-	 *
-	 * (1) if dashdash_pos != 0, it is either
-	 *     "blame [revisions] -- <path>" or
-	 *     "blame -- <path> <rev>"
-	 *
-	 * (2) otherwise, it is one of the two:
-	 *     "blame [revisions] <path>"
-	 *     "blame <path> <rev>"
-	 *
-	 * Note that we must strip out <path> from the arguments: we do not
-	 * want the path pruning but we may want "bottom" processing.
-	 */
-	if (dashdash_pos) {
-		switch (argc - dashdash_pos - 1) {
-		case 2: /* (1b) */
-			if (argc != 4)
-				usage_with_options(opt_usage, options);
-			/* reorder for the new way: <rev> -- <path> */
-			argv[1] = argv[3];
-			argv[3] = argv[2];
-			argv[2] = "--";
-			/* FALLTHROUGH */
-		case 1: /* (1a) */
-			path = add_prefix(prefix, argv[--argc]);
-			argv[argc] = NULL;
-			break;
-		default:
-			usage_with_options(opt_usage, options);
-		}
-	} else {
-		if (argc < 2)
-			usage_with_options(opt_usage, options);
-		if (argc == 3 && is_a_rev(argv[argc - 1])) { /* (2b) */
-			path = add_prefix(prefix, argv[1]);
-			argv[1] = argv[2];
-		} else {	/* (2a) */
-			if (argc == 2 && is_a_rev(argv[1]) && !get_git_work_tree())
-				die("missing <path> to blame");
-			path = add_prefix(prefix, argv[argc - 1]);
-		}
-		argv[argc - 1] = "--";
-	}
+    /*
+     * We have collected options unknown to us in argv[1..unk]
+     * which are to be passed to revision machinery if we are
+     * going to do the "bottom" processing.
+     *
+     * The remaining are:
+     *
+     * (1) if dashdash_pos != 0, it is either
+     *     "blame [revisions] -- <path>" or
+     *     "blame -- <path> <rev>"
+     *
+     * (2) otherwise, it is one of the two:
+     *     "blame [revisions] <path>"
+     *     "blame <path> <rev>"
+     *
+     * Note that we must strip out <path> from the arguments: we do not
+     * want the path pruning but we may want "bottom" processing.
+     */
+    if (dashdash_pos)
+    {
+        switch (argc - dashdash_pos - 1)
+        {
+            case 2: /* (1b) */
+                if (argc != 4)
+                    usage_with_options(opt_usage, options);
+                /* reorder for the new way: <rev> -- <path> */
+                argv[1] = argv[3];
+                argv[3] = argv[2];
+                argv[2] = "--";
+                /* FALLTHROUGH */
+            case 1: /* (1a) */
+                path       = add_prefix(prefix, argv[--argc]);
+                argv[argc] = NULL;
+                break;
+            default:
+                usage_with_options(opt_usage, options);
+        }
+    }
+    else
+    {
+        if (argc < 2)
+            usage_with_options(opt_usage, options);
+        if (argc == 3 && is_a_rev(argv[argc - 1]))
+        { /* (2b) */
+            path    = add_prefix(prefix, argv[1]);
+            argv[1] = argv[2];
+        }
+        else
+        { /* (2a) */
+            if (argc == 2 && is_a_rev(argv[1]) && !get_git_work_tree())
+                die("missing <path> to blame");
+            path = add_prefix(prefix, argv[argc - 1]);
+        }
+        argv[argc - 1] = "--";
+    }
 
-	revs.disable_stdin = 1;
-	setup_revisions(argc, argv, &revs, NULL);
-	if (!revs.pending.nr && is_bare_repository()) {
-		struct commit *head_commit;
-		struct object_id head_oid;
+    revs.disable_stdin = 1;
+    setup_revisions(argc, argv, &revs, NULL);
+    if (!revs.pending.nr && is_bare_repository())
+    {
+        struct commit   *head_commit;
+        struct object_id head_oid;
 
-		if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING,
-					     &head_oid, NULL) ||
-		    !(head_commit = lookup_commit_reference_gently(revs.repo,
-							     &head_oid, 1)))
-			die("no such ref: HEAD");
+        if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING,
+                                     &head_oid, NULL)
+            || !(head_commit = lookup_commit_reference_gently(revs.repo,
+                                                              &head_oid, 1)))
+            die("no such ref: HEAD");
 
-		add_pending_object(&revs, &head_commit->object, "HEAD");
-	}
+        add_pending_object(&revs, &head_commit->object, "HEAD");
+    }
 
-	init_scoreboard(&sb);
-	sb.revs = &revs;
-	sb.contents_from = contents_from;
-	sb.reverse = reverse;
-	sb.repo = the_repository;
-	sb.path = path;
-	build_ignorelist(&sb, &ignore_revs_file_list, &ignore_rev_list);
-	string_list_clear(&ignore_revs_file_list, 0);
-	string_list_clear(&ignore_rev_list, 0);
-	setup_scoreboard(&sb, &o);
+    init_scoreboard(&sb);
+    sb.revs          = &revs;
+    sb.contents_from = contents_from;
+    sb.reverse       = reverse;
+    sb.repo          = the_repository;
+    sb.path          = path;
+    build_ignorelist(&sb, &ignore_revs_file_list, &ignore_rev_list);
+    string_list_clear(&ignore_revs_file_list, 0);
+    string_list_clear(&ignore_rev_list, 0);
+    setup_scoreboard(&sb, &o);
 
-	/*
-	 * Changed-path Bloom filters are disabled when looking
-	 * for copies.
-	 */
-	if (!(opt & PICKAXE_BLAME_COPY))
-		setup_blame_bloom_data(&sb);
+    /*
+     * Changed-path Bloom filters are disabled when looking
+     * for copies.
+     */
+    if (!(opt & PICKAXE_BLAME_COPY))
+        setup_blame_bloom_data(&sb);
 
-	lno = sb.num_lines;
+    lno = sb.num_lines;
 
-	if (lno && !range_list.nr)
-		string_list_append(&range_list, "1");
+    if (lno && !range_list.nr)
+        string_list_append(&range_list, "1");
 
-	anchor = 1;
-	range_set_init(&ranges, range_list.nr);
-	for (range_i = 0; range_i < range_list.nr; ++range_i) {
-		long bottom, top;
-		if (parse_range_arg(range_list.items[range_i].string,
-				    nth_line_cb, &sb, lno, anchor,
-				    &bottom, &top, sb.path,
-				    the_repository->index))
-			usage(str_usage);
-		if ((!lno && (top || bottom)) || lno < bottom)
-			die(Q_("file %s has only %lu line",
-			       "file %s has only %lu lines",
-			       lno), sb.path, lno);
-		if (bottom < 1)
-			bottom = 1;
-		if (top < 1 || lno < top)
-			top = lno;
-		bottom--;
-		range_set_append_unsafe(&ranges, bottom, top);
-		anchor = top + 1;
-	}
-	sort_and_merge_range_set(&ranges);
+    anchor = 1;
+    range_set_init(&ranges, range_list.nr);
+    for (range_i = 0; range_i < range_list.nr; ++range_i)
+    {
+        long bottom, top;
+        if (parse_range_arg(range_list.items[range_i].string,
+                            nth_line_cb, &sb, lno, anchor,
+                            &bottom, &top, sb.path,
+                            the_repository->index))
+            usage(str_usage);
+        if ((!lno && (top || bottom)) || lno < bottom)
+            die(Q_("file %s has only %lu line",
+                   "file %s has only %lu lines",
+                   lno),
+                sb.path, lno);
+        if (bottom < 1)
+            bottom = 1;
+        if (top < 1 || lno < top)
+            top = lno;
+        bottom--;
+        range_set_append_unsafe(&ranges, bottom, top);
+        anchor = top + 1;
+    }
+    sort_and_merge_range_set(&ranges);
 
-	for (range_i = ranges.nr; range_i > 0; --range_i) {
-		const struct range *r = &ranges.ranges[range_i - 1];
-		ent = blame_entry_prepend(ent, r->start, r->end, o);
-		num_lines += (r->end - r->start);
-	}
-	if (!num_lines)
-		num_lines = sb.num_lines;
+    for (range_i = ranges.nr; range_i > 0; --range_i)
+    {
+        const struct range *r = &ranges.ranges[range_i - 1];
+        ent                   = blame_entry_prepend(ent, r->start, r->end, o);
+        num_lines += (r->end - r->start);
+    }
+    if (!num_lines)
+        num_lines = sb.num_lines;
 
-	o->suspects = ent;
-	prio_queue_put(&sb.commits, o->commit);
+    o->suspects = ent;
+    prio_queue_put(&sb.commits, o->commit);
 
-	blame_origin_decref(o);
+    blame_origin_decref(o);
 
-	range_set_release(&ranges);
-	string_list_clear(&range_list, 0);
+    range_set_release(&ranges);
+    string_list_clear(&range_list, 0);
 
-	sb.ent = NULL;
+    sb.ent = NULL;
 
-	if (blame_move_score)
-		sb.move_score = blame_move_score;
-	if (blame_copy_score)
-		sb.copy_score = blame_copy_score;
+    if (blame_move_score)
+        sb.move_score = blame_move_score;
+    if (blame_copy_score)
+        sb.copy_score = blame_copy_score;
 
-	sb.debug = DEBUG_BLAME;
-	sb.on_sanity_fail = &sanity_check_on_fail;
+    sb.debug          = DEBUG_BLAME;
+    sb.on_sanity_fail = &sanity_check_on_fail;
 
-	sb.show_root = show_root;
-	sb.xdl_opts = xdl_opts;
-	sb.no_whole_file_rename = no_whole_file_rename;
+    sb.show_root            = show_root;
+    sb.xdl_opts             = xdl_opts;
+    sb.no_whole_file_rename = no_whole_file_rename;
 
-	read_mailmap(&mailmap);
+    read_mailmap(&mailmap);
 
-	sb.found_guilty_entry = &found_guilty_entry;
-	sb.found_guilty_entry_data = &pi;
-	if (show_progress)
-		pi.progress = start_delayed_progress(_("Blaming lines"), num_lines);
+    sb.found_guilty_entry      = &found_guilty_entry;
+    sb.found_guilty_entry_data = &pi;
+    if (show_progress)
+        pi.progress = start_delayed_progress(_("Blaming lines"), num_lines);
 
-	assign_blame(&sb, opt);
+    assign_blame(&sb, opt);
 
-	stop_progress(&pi.progress);
+    stop_progress(&pi.progress);
 
-	if (!incremental)
-		setup_pager();
-	else
-		goto cleanup;
+    if (!incremental)
+        setup_pager();
+    else
+        goto cleanup;
 
-	blame_sort_final(&sb);
+    blame_sort_final(&sb);
 
-	blame_coalesce(&sb);
+    blame_coalesce(&sb);
 
-	if (!(output_option & (OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR)))
-		output_option |= coloring_mode;
+    if (!(output_option & (OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR)))
+        output_option |= coloring_mode;
 
-	if (!(output_option & OUTPUT_PORCELAIN)) {
-		find_alignment(&sb, &output_option);
-		if (!*repeated_meta_color &&
-		    (output_option & OUTPUT_COLOR_LINE))
-			xsnprintf(repeated_meta_color,
-				  sizeof(repeated_meta_color),
-				  "%s", GIT_COLOR_CYAN);
-	}
-	if (output_option & OUTPUT_ANNOTATE_COMPAT)
-		output_option &= ~(OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR);
+    if (!(output_option & OUTPUT_PORCELAIN))
+    {
+        find_alignment(&sb, &output_option);
+        if (!*repeated_meta_color && (output_option & OUTPUT_COLOR_LINE))
+            xsnprintf(repeated_meta_color,
+                      sizeof(repeated_meta_color),
+                      "%s", GIT_COLOR_CYAN);
+    }
+    if (output_option & OUTPUT_ANNOTATE_COMPAT)
+        output_option &= ~(OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR);
 
-	output(&sb, output_option);
-	free((void *)sb.final_buf);
-	for (ent = sb.ent; ent; ) {
-		struct blame_entry *e = ent->next;
-		free(ent);
-		ent = e;
-	}
+    output(&sb, output_option);
+    free((void *)sb.final_buf);
+    for (ent = sb.ent; ent;)
+    {
+        struct blame_entry *e = ent->next;
+        free(ent);
+        ent = e;
+    }
 
-	if (show_stats) {
-		printf("num read blob: %d\n", sb.num_read_blob);
-		printf("num get patch: %d\n", sb.num_get_patch);
-		printf("num commits: %d\n", sb.num_commits);
-	}
+    if (show_stats)
+    {
+        printf("num read blob: %d\n", sb.num_read_blob);
+        printf("num get patch: %d\n", sb.num_get_patch);
+        printf("num commits: %d\n", sb.num_commits);
+    }
 
 cleanup:
-	free(path);
-	cleanup_scoreboard(&sb);
-	release_revisions(&revs);
-	return 0;
+    free(path);
+    cleanup_scoreboard(&sb);
+    release_revisions(&revs);
+    return 0;
 }

@@ -9,14 +9,15 @@
 
 int cmd_annotate(int argc, const char **argv, const char *prefix)
 {
-	struct strvec args = STRVEC_INIT;
-	int i;
+    struct strvec args = STRVEC_INIT;
+    int           i;
 
-	strvec_pushl(&args, "annotate", "-c", NULL);
+    strvec_pushl(&args, "annotate", "-c", NULL);
 
-	for (i = 1; i < argc; i++) {
-		strvec_push(&args, argv[i]);
-	}
+    for (i = 1; i < argc; i++)
+    {
+        strvec_push(&args, argv[i]);
+    }
 
-	return cmd_blame(args.nr, args.v, prefix);
+    return cmd_blame(args.nr, args.v, prefix);
 }

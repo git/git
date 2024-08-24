@@ -13,6 +13,6 @@ https://developers.google.com/open-source/licenses/bsd
 
 /* Overrides the functions to use for memory management. */
 void reftable_set_alloc(void *(*malloc)(size_t),
-			void *(*realloc)(void *, size_t), void (*free)(void *));
+                        void *(*realloc)(void *, size_t), void (*free)(void *));
 
 #endif

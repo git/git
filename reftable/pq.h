@@ -11,30 +11,32 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "record.h"
 
-struct pq_entry {
-	size_t index;
-	struct reftable_record *rec;
+struct pq_entry
+{
+    size_t                  index;
+    struct reftable_record *rec;
 };
 
-struct merged_iter_pqueue {
-	struct pq_entry *heap;
-	size_t len;
-	size_t cap;
+struct merged_iter_pqueue
+{
+    struct pq_entry *heap;
+    size_t           len;
+    size_t           cap;
 };
 
 struct pq_entry merged_iter_pqueue_remove(struct merged_iter_pqueue *pq);
-void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry *e);
-void merged_iter_pqueue_release(struct merged_iter_pqueue *pq);
-int pq_less(struct pq_entry *a, struct pq_entry *b);
+void            merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry *e);
+void            merged_iter_pqueue_release(struct merged_iter_pqueue *pq);
+int             pq_less(struct pq_entry *a, struct pq_entry *b);
 
 static inline struct pq_entry merged_iter_pqueue_top(struct merged_iter_pqueue pq)
 {
-	return pq.heap[0];
+    return pq.heap[0];
 }
 
 static inline int merged_iter_pqueue_is_empty(struct merged_iter_pqueue pq)
 {
-	return pq.len == 0;
+    return pq.len == 0;
 }
 
 #endif

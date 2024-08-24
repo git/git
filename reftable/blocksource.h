@@ -15,7 +15,7 @@ struct reftable_block_source;
 
 /* Create an in-memory block source for reading reftables */
 void block_source_from_strbuf(struct reftable_block_source *bs,
-			      struct strbuf *buf);
+                              struct strbuf                *buf);
 
 struct reftable_block_source malloc_block_source(void);
 

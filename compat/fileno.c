@@ -3,5 +3,5 @@
 
 int git_fileno(FILE *stream)
 {
-	return fileno(stream);
+    return fileno(stream);
 }

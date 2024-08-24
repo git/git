@@ -6,8 +6,9 @@
  * quirks and the need to pass around an additional size_t
  * argument.
  */
-struct tr2_tbuf {
-	char buf[32];
+struct tr2_tbuf
+{
+    char buf[32];
 };
 
 /*

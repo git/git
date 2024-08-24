@@ -17,9 +17,9 @@ https://developers.google.com/open-source/licenses/bsd
 
 /* Bigendian en/decoding of integers */
 
-void put_be24(uint8_t *out, uint32_t i);
+void     put_be24(uint8_t *out, uint32_t i);
 uint32_t get_be24(uint8_t *in);
-void put_be16(uint8_t *out, uint16_t i);
+void     put_be16(uint8_t *out, uint16_t i);
 
 /*
  * find smallest index i in [0, sz) at which `f(i) > 0`, assuming that f is
@@ -51,21 +51,23 @@ size_t names_length(const char **names);
  * reftable_set_alloc() */
 void *reftable_malloc(size_t sz);
 void *reftable_realloc(void *p, size_t sz);
-void reftable_free(void *p);
+void  reftable_free(void *p);
 void *reftable_calloc(size_t nelem, size_t elsize);
 
-#define REFTABLE_ALLOC_ARRAY(x, alloc) (x) = reftable_malloc(st_mult(sizeof(*(x)), (alloc)))
-#define REFTABLE_CALLOC_ARRAY(x, alloc) (x) = reftable_calloc((alloc), sizeof(*(x)))
+#define REFTABLE_ALLOC_ARRAY(x, alloc)   (x) = reftable_malloc(st_mult(sizeof(*(x)), (alloc)))
+#define REFTABLE_CALLOC_ARRAY(x, alloc)  (x) = reftable_calloc((alloc), sizeof(*(x)))
 #define REFTABLE_REALLOC_ARRAY(x, alloc) (x) = reftable_realloc((x), st_mult(sizeof(*(x)), (alloc)))
-#define REFTABLE_ALLOC_GROW(x, nr, alloc) \
-	do { \
-		if ((nr) > alloc) { \
-			alloc = 2 * (alloc) + 1; \
-			if (alloc < (nr)) \
-				alloc = (nr); \
-			REFTABLE_REALLOC_ARRAY(x, alloc); \
-		} \
-	} while (0)
+#define REFTABLE_ALLOC_GROW(x, nr, alloc)     \
+    do                                        \
+    {                                         \
+        if ((nr) > alloc)                     \
+        {                                     \
+            alloc = 2 * (alloc) + 1;          \
+            if (alloc < (nr))                 \
+                alloc = (nr);                 \
+            REFTABLE_REALLOC_ARRAY(x, alloc); \
+        }                                     \
+    } while (0)
 
 /* Find the longest shared prefix size of `a` and `b` */
 struct strbuf;

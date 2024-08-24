@@ -33,16 +33,16 @@ struct reftable_table;
  * reftable_reader_destroy(). On error, the block source `src` is
  * closed as well.
  */
-int reftable_new_reader(struct reftable_reader **pp,
-			struct reftable_block_source *src, const char *name);
+int reftable_new_reader(struct reftable_reader      **pp,
+                        struct reftable_block_source *src, const char *name);
 
 /* Initialize a reftable iterator for reading refs. */
-void reftable_reader_init_ref_iterator(struct reftable_reader *r,
-				       struct reftable_iterator *it);
+void reftable_reader_init_ref_iterator(struct reftable_reader   *r,
+                                       struct reftable_iterator *it);
 
 /* Initialize a reftable iterator for reading logs. */
-void reftable_reader_init_log_iterator(struct reftable_reader *r,
-				       struct reftable_iterator *it);
+void reftable_reader_init_log_iterator(struct reftable_reader   *r,
+                                       struct reftable_iterator *it);
 
 /* returns the hash ID used in this table. */
 uint32_t reftable_reader_hash_id(struct reftable_reader *r);
@@ -51,8 +51,8 @@ uint32_t reftable_reader_hash_id(struct reftable_reader *r);
 void reftable_reader_free(struct reftable_reader *);
 
 /* return an iterator for the refs pointing to `oid`. */
-int reftable_reader_refs_for(struct reftable_reader *r,
-			     struct reftable_iterator *it, uint8_t *oid);
+int reftable_reader_refs_for(struct reftable_reader   *r,
+                             struct reftable_iterator *it, uint8_t *oid);
 
 /* return the max_update_index for a table */
 uint64_t reftable_reader_max_update_index(struct reftable_reader *r);
@@ -61,8 +61,8 @@ uint64_t reftable_reader_max_update_index(struct reftable_reader *r);
 uint64_t reftable_reader_min_update_index(struct reftable_reader *r);
 
 /* creates a generic table from a file reader. */
-void reftable_table_from_reader(struct reftable_table *tab,
-				struct reftable_reader *reader);
+void reftable_table_from_reader(struct reftable_table  *tab,
+                                struct reftable_reader *reader);
 
 /* print table onto stdout for debugging. */
 int reftable_reader_print_file(const char *tablename);
