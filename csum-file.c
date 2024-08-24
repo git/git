@@ -22,22 +22,32 @@ static void verify_buffer_or_die(struct hashfile *f,
     ssize_t ret = read_in_full(f->check_fd, f->check_buffer, count);
 
     if (ret < 0)
+    {
         die_errno("%s: sha1 file read error", f->name);
+    }
     if (ret != count)
+    {
         die("%s: sha1 file truncated", f->name);
-    if (memcmp(buf, f->check_buffer, count))
+    }
+    if (memcmp(buf, f->check_buffer, count) != 0)
+    {
         die("sha1 file '%s' validation error", f->name);
+    }
 }
 
 static void flush(struct hashfile *f, const void *buf, unsigned int count)
 {
     if (0 <= f->check_fd && count)
+    {
         verify_buffer_or_die(f, buf, count);
+    }
 
     if (write_in_full(f->fd, buf, count) < 0)
     {
         if (errno == ENOSPC)
+        {
             die("sha1 file '%s' write error. Out of diskspace", f->name);
+        }
         die_errno("sha1 file '%s' write error", f->name);
     }
 
@@ -52,7 +62,9 @@ void hashflush(struct hashfile *f)
     if (offset)
     {
         if (!f->skip_hash)
+        {
             the_hash_algo->update_fn(&f->ctx, f->buffer, offset);
+        }
         flush(f, f->buffer, offset);
         f->offset = 0;
     }
@@ -73,35 +85,55 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result,
     hashflush(f);
 
     if (f->skip_hash)
+    {
         hashclr(f->buffer, the_repository->hash_algo);
+    }
     else
+    {
         the_hash_algo->final_fn(f->buffer, &f->ctx);
+    }
 
     if (result)
+    {
         hashcpy(result, f->buffer, the_repository->hash_algo);
+    }
     if (flags & CSUM_HASH_IN_STREAM)
+    {
         flush(f, f->buffer, the_hash_algo->rawsz);
+    }
     if (flags & CSUM_FSYNC)
+    {
         fsync_component_or_die(component, f->fd, f->name);
+    }
     if (flags & CSUM_CLOSE)
     {
         if (close(f->fd))
+        {
             die_errno("%s: sha1 file error on close", f->name);
+        }
         fd = 0;
     }
     else
+    {
         fd = f->fd;
+    }
     if (0 <= f->check_fd)
     {
         char discard;
         int  cnt = read_in_full(f->check_fd, &discard, 1);
         if (cnt < 0)
+        {
             die_errno("%s: error when reading the tail of sha1 file",
                       f->name);
+        }
         if (cnt)
+        {
             die("%s: sha1 file has trailing garbage", f->name);
+        }
         if (close(f->check_fd))
+        {
             die_errno("%s: sha1 file error on close", f->name);
+        }
     }
     free_hashfile(f);
     return fd;
@@ -110,9 +142,13 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result,
 void discard_hashfile(struct hashfile *f)
 {
     if (0 <= f->check_fd)
+    {
         close(f->check_fd);
+    }
     if (0 <= f->fd)
+    {
         close(f->fd);
+    }
     free_hashfile(f);
 }
 
@@ -124,7 +160,9 @@ void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
         unsigned nr   = count > left ? left : count;
 
         if (f->do_crc)
+        {
             f->crc32 = crc32(f->crc32, buf, nr);
+        }
 
         if (nr == f->buffer_len)
         {
@@ -135,7 +173,9 @@ void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
              * f->offset is necessarily zero.
              */
             if (!f->skip_hash)
+            {
                 the_hash_algo->update_fn(&f->ctx, buf, nr);
+            }
             flush(f, buf, nr);
         }
         else
@@ -148,7 +188,9 @@ void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
             f->offset += nr;
             left -= nr;
             if (!left)
+            {
                 hashflush(f);
+            }
         }
 
         count -= nr;
@@ -158,7 +200,8 @@ void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
 
 struct hashfile *hashfd_check(const char *name)
 {
-    int              sink, check;
+    int              sink;
+    int              check;
     struct hashfile *f;
 
     sink            = xopen("/dev/null", O_WRONLY);
@@ -225,7 +268,9 @@ int hashfile_truncate(struct hashfile *f, struct hashfile_checkpoint *checkpoint
     off_t offset = checkpoint->offset;
 
     if (ftruncate(f->fd, offset) || lseek(f->fd, offset, SEEK_SET) != offset)
+    {
         return -1;
+    }
     f->total = offset;
     the_hash_algo->clone_fn(&f->ctx, &checkpoint->ctx);
     f->offset = 0; /* hashflush() was called in checkpoint */
@@ -251,7 +296,9 @@ int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
     size_t        data_len = total_len - the_hash_algo->rawsz;
 
     if (total_len < the_hash_algo->rawsz)
+    {
         return 0; /* say "too short"? */
+    }
 
     the_hash_algo->init_fn(&ctx);
     the_hash_algo->update_fn(&ctx, data, data_len);

@@ -20,13 +20,15 @@ static void strip_last_component(struct strbuf *path)
     size_t len    = path->len;
 
     /* Find start of the last component */
-    while (offset < len && !is_dir_sep(path->buf[len - 1])) {
+    while (offset < len && !is_dir_sep(path->buf[len - 1]))
+    {
         len--;
-}
+    }
     /* Skip sequences of multiple path-separators */
-    while (offset < len && is_dir_sep(path->buf[len - 1])) {
+    while (offset < len && is_dir_sep(path->buf[len - 1]))
+    {
         len--;
-}
+    }
 
     strbuf_setlen(path, len);
 }
@@ -41,13 +43,15 @@ static void get_next_component(struct strbuf *next, struct strbuf *remaining)
 
     /* look for the next component */
     /* Skip sequences of multiple path-separators */
-    for (start = remaining->buf; is_dir_sep(*start); start++) {
+    for (start = remaining->buf; is_dir_sep(*start); start++)
+    {
         ; /* nothing */
-}
+    }
     /* Find end of the path component */
-    for (end = start; *end && !is_dir_sep(*end); end++) {
+    for (end = start; *end && !is_dir_sep(*end); end++)
+    {
         ; /* nothing */
-}
+    }
 
     strbuf_add(next, start, end - start);
     /* remove the component from 'remaining' */
@@ -92,11 +96,14 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
 
     if (!*path)
     {
-        if (flags & REALPATH_DIE_ON_ERROR) {
+        if (flags & REALPATH_DIE_ON_ERROR)
+        {
             die("The empty string is not a valid path");
-        } else {
+        }
+        else
+        {
             goto error_out;
-}
+        }
     }
 
     strbuf_addstr(&remaining, path);
@@ -107,11 +114,14 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
         /* relative path; can use CWD as the initial resolved path */
         if (strbuf_getcwd(resolved))
         {
-            if (flags & REALPATH_DIE_ON_ERROR) {
+            if (flags & REALPATH_DIE_ON_ERROR)
+            {
                 die_errno("unable to get current working directory");
-            } else {
+            }
+            else
+            {
                 goto error_out;
-}
+            }
         }
     }
 
@@ -136,9 +146,10 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
         }
 
         /* append the next component and resolve resultant path */
-        if (!is_dir_sep(resolved->buf[resolved->len - 1])) {
+        if (!is_dir_sep(resolved->buf[resolved->len - 1]))
+        {
             strbuf_addch(resolved, '/');
-}
+        }
         strbuf_addbuf(resolved, &next);
 
         if (lstat(resolved->buf, &st))
@@ -146,12 +157,15 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
             /* error out unless this was the last component */
             if (errno != ENOENT || (!(flags & REALPATH_MANY_MISSING) && remaining.len))
             {
-                if (flags & REALPATH_DIE_ON_ERROR) {
+                if (flags & REALPATH_DIE_ON_ERROR)
+                {
                     die_errno("Invalid path '%s'",
                               resolved->buf);
-                } else {
+                }
+                else
+                {
                     goto error_out;
-}
+                }
             }
         }
         else if (S_ISLNK(st.st_mode))
@@ -163,25 +177,31 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
             {
                 errno = ELOOP;
 
-                if (flags & REALPATH_DIE_ON_ERROR) {
+                if (flags & REALPATH_DIE_ON_ERROR)
+                {
                     die("More than %d nested symlinks "
                         "on path '%s'",
                         MAXSYMLINKS, path);
-                } else {
+                }
+                else
+                {
                     goto error_out;
-}
+                }
             }
 
             len = strbuf_readlink(&symlink, resolved->buf,
                                   st.st_size);
             if (len < 0)
             {
-                if (flags & REALPATH_DIE_ON_ERROR) {
+                if (flags & REALPATH_DIE_ON_ERROR)
+                {
                     die_errno("Invalid symlink '%s'",
                               resolved->buf);
-                } else {
+                }
+                else
+                {
                     goto error_out;
-}
+                }
             }
 
             if (is_absolute_path(symlink.buf))
@@ -224,9 +244,10 @@ error_out:
     strbuf_release(&next);
     strbuf_release(&symlink);
 
-    if (!retval) {
+    if (!retval)
+    {
         strbuf_reset(resolved);
-}
+    }
 
     return retval;
 }
@@ -266,9 +287,10 @@ char *real_pathdup(const char *path, int die_on_error)
     struct strbuf realpath = STRBUF_INIT;
     char         *retval   = NULL;
 
-    if (strbuf_realpath(&realpath, path, die_on_error)) {
+    if (strbuf_realpath(&realpath, path, die_on_error))
+    {
         retval = strbuf_detach(&realpath, NULL);
-}
+    }
 
     strbuf_release(&realpath);
 
@@ -299,13 +321,18 @@ char *prefix_filename(const char *pfx, const char *arg)
     struct strbuf path    = STRBUF_INIT;
     size_t        pfx_len = pfx ? strlen(pfx) : 0;
 
-    if (!pfx_len) {
+    if (!pfx_len)
+    {
         ; /* nothing to prefix */
-    } else if (is_absolute_path(arg)) {
+    }
+    else if (is_absolute_path(arg))
+    {
         pfx_len = 0;
-    } else {
+    }
+    else
+    {
         strbuf_add(&path, pfx, pfx_len);
-}
+    }
 
     strbuf_addstr(&path, arg);
 #ifdef GIT_WINDOWS_NATIVE
@@ -316,17 +343,19 @@ char *prefix_filename(const char *pfx, const char *arg)
 
 char *prefix_filename_except_for_dash(const char *pfx, const char *arg)
 {
-    if (!strcmp(arg, "-")) {
+    if (!strcmp(arg, "-"))
+    {
         return xstrdup(arg);
-}
+    }
     return prefix_filename(pfx, arg);
 }
 
 void strbuf_add_absolute_path(struct strbuf *sb, const char *path)
 {
-    if (!*path) {
+    if (!*path)
+    {
         die("The empty string is not a valid path");
-}
+    }
     if (!is_absolute_path(path))
     {
         struct stat cwd_stat;
@@ -334,14 +363,18 @@ void strbuf_add_absolute_path(struct strbuf *sb, const char *path)
         size_t      orig_len = sb->len;
         char       *cwd      = xgetcwd();
         char       *pwd      = getenv("PWD");
-        if (pwd && strcmp(pwd, cwd) != 0 && !stat(cwd, &cwd_stat) && (cwd_stat.st_dev || cwd_stat.st_ino) && !stat(pwd, &pwd_stat) && pwd_stat.st_dev == cwd_stat.st_dev && pwd_stat.st_ino == cwd_stat.st_ino) {
+        if (pwd && strcmp(pwd, cwd) != 0 && !stat(cwd, &cwd_stat) && (cwd_stat.st_dev || cwd_stat.st_ino) && !stat(pwd, &pwd_stat) && pwd_stat.st_dev == cwd_stat.st_dev && pwd_stat.st_ino == cwd_stat.st_ino)
+        {
             strbuf_addstr(sb, pwd);
-        } else {
+        }
+        else
+        {
             strbuf_addstr(sb, cwd);
-}
-        if (sb->len > orig_len && !is_dir_sep(sb->buf[sb->len - 1])) {
+        }
+        if (sb->len > orig_len && !is_dir_sep(sb->buf[sb->len - 1]))
+        {
             strbuf_addch(sb, '/');
-}
+        }
         free(cwd);
     }
     strbuf_addstr(sb, path);
@@ -356,7 +389,8 @@ void strbuf_add_real_path(struct strbuf *sb, const char *path)
         strbuf_addbuf(sb, &resolved);
         strbuf_release(&resolved);
     }
-    else {
+    else
+    {
         strbuf_realpath(sb, path, 1);
-}
+    }
 }

@@ -59,7 +59,9 @@ int main(int argc, const char **argv)
     trace2_collect_process_info(TRACE2_PROCESS_INFO_STARTUP);
 
     if (!strbuf_getcwd(&tmp))
+    {
         tmp_original_cwd = strbuf_detach(&tmp, NULL);
+    }
 
     result = cmd_main(argc, argv);
 
@@ -70,7 +72,9 @@ int main(int argc, const char **argv)
 static void check_bug_if_BUG(void)
 {
     if (!bug_called_must_BUG)
+    {
         return;
+    }
     BUG("on exit(): had bug() call(s) in this process without explicit BUG_if_bug()");
 }
 

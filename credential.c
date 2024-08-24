@@ -12,7 +12,6 @@
 #include "sigchain.h"
 #include "strbuf.h"
 #include "urlmatch.h"
-#include "git-compat-util.h"
 
 void credential_init(struct credential *c)
 {
@@ -76,7 +75,9 @@ void credential_set_all_capabilities(struct credential      *c,
 static void announce_one(struct credential_capability *cc, const char *name, FILE *fp)
 {
     if (cc->request_initial)
+    {
         fprintf(fp, "capability %s\n", name);
+    }
 }
 
 void credential_announce_capabilities(struct credential *c, FILE *fp)
@@ -105,17 +106,25 @@ static int credential_config_callback(const char *var, const char *value,
     const char        *key;
 
     if (!skip_prefix(var, "credential.", &key))
+    {
         return 0;
+    }
 
     if (!value)
+    {
         return config_error_nonbool(var);
+    }
 
     if (!strcmp(key, "helper"))
     {
         if (*value)
+        {
             string_list_append(&c->helpers, value);
+        }
         else
+        {
             string_list_clear(&c->helpers, 0);
+        }
     }
     else if (!strcmp(key, "username"))
     {
@@ -126,7 +135,9 @@ static int credential_config_callback(const char *var, const char *value,
         }
     }
     else if (!strcmp(key, "usehttppath"))
+    {
         c->use_http_path = git_config_bool(var, value);
+    }
 
     return 0;
 }
@@ -134,7 +145,9 @@ static int credential_config_callback(const char *var, const char *value,
 static int proto_is_http(const char *s)
 {
     if (!s)
+    {
         return 0;
+    }
     return !strcmp(s, "https") || !strcmp(s, "http");
 }
 
@@ -154,10 +167,14 @@ static int match_partial_url(const char *url, void *cb)
     int                matches = 0;
 
     if (credential_from_potentially_partial_url(&want, url) < 0)
+    {
         warning(_("skipping credential lookup for key: credential.%s"),
                 url);
+    }
     else
+    {
         matches = credential_match(&want, c, 0);
+    }
     credential_clear(&want);
 
     return matches;
@@ -170,12 +187,18 @@ static void credential_apply_config(struct credential *c)
     struct strbuf          url    = STRBUF_INIT;
 
     if (!c->host)
+    {
         die(_("refusing to work with credential missing host field"));
+    }
     if (!c->protocol)
+    {
         die(_("refusing to work with credential missing protocol field"));
+    }
 
     if (c->configured)
+    {
         return;
+    }
 
     config.section           = "credential";
     config.key               = NULL;
@@ -205,20 +228,30 @@ static void credential_apply_config(struct credential *c)
 static void credential_describe(struct credential *c, struct strbuf *out)
 {
     if (!c->protocol)
+    {
         return;
+    }
     strbuf_addf(out, "%s://", c->protocol);
     if (c->username && *c->username)
+    {
         strbuf_addf(out, "%s@", c->username);
+    }
     if (c->host)
+    {
         strbuf_addstr(out, c->host);
+    }
     if (c->path)
+    {
         strbuf_addf(out, "/%s", c->path);
+    }
 }
 
 static void credential_format(struct credential *c, struct strbuf *out)
 {
     if (!c->protocol)
+    {
         return;
+    }
     strbuf_addf(out, "%s://", c->protocol);
     if (c->username && *c->username)
     {
@@ -226,7 +259,9 @@ static void credential_format(struct credential *c, struct strbuf *out)
         strbuf_addch(out, '@');
     }
     if (c->host)
+    {
         strbuf_addstr(out, c->host);
+    }
     if (c->path)
     {
         strbuf_addch(out, '/');
@@ -243,9 +278,13 @@ static char *credential_ask_one(const char *what, struct credential *c,
 
     credential_describe(c, &desc);
     if (desc.len)
+    {
         strbuf_addf(&prompt, "%s for '%s': ", what, desc.buf);
+    }
     else
+    {
         strbuf_addf(&prompt, "%s: ", what);
+    }
 
     r = git_prompt(prompt.buf, flags);
 
@@ -257,11 +296,15 @@ static char *credential_ask_one(const char *what, struct credential *c,
 static void credential_getpass(struct credential *c)
 {
     if (!c->username)
+    {
         c->username = credential_ask_one("Username", c,
                                          PROMPT_ASKPASS | PROMPT_ECHO);
+    }
     if (!c->password)
+    {
         c->password = credential_ask_one("Password", c,
                                          PROMPT_ASKPASS);
+    }
 }
 
 int credential_has_capability(const struct credential_capability *capa,
@@ -294,7 +337,9 @@ int credential_read(struct credential *c, FILE *fp,
         char *value = strchr(key, '=');
 
         if (!line.len)
+        {
             break;
+        }
 
         if (!value)
         {
@@ -350,9 +395,13 @@ int credential_read(struct credential *c, FILE *fp,
         else if (!strcmp(key, "capability[]"))
         {
             if (!strcmp(value, "authtype"))
+            {
                 credential_set_capability(&c->capa_authtype, op_type);
+            }
             else if (!strcmp(value, "state"))
+            {
                 credential_set_capability(&c->capa_state, op_type);
+            }
         }
         else if (!strcmp(key, "continue"))
         {
@@ -363,7 +412,9 @@ int credential_read(struct credential *c, FILE *fp,
             errno                  = 0;
             c->password_expiry_utc = parse_timestamp(value, NULL, 10);
             if (c->password_expiry_utc == 0 || errno == ERANGE)
+            {
                 c->password_expiry_utc = TIME_MAX;
+            }
         }
         else if (!strcmp(key, "oauth_refresh_token"))
         {
@@ -398,11 +449,17 @@ static void credential_write_item(FILE *fp, const char *key, const char *value,
                                   int required)
 {
     if (!value && required)
+    {
         BUG("credential value for %s is missing", key);
+    }
     if (!value)
+    {
         return;
+    }
     if (strchr(value, '\n'))
+    {
         die("credential value for %s contains newline", key);
+    }
     fprintf(fp, "%s=%s\n", key, value);
 }
 
@@ -410,16 +467,22 @@ void credential_write(const struct credential *c, FILE *fp,
                       enum credential_op_type op_type)
 {
     if (credential_has_capability(&c->capa_authtype, op_type))
+    {
         credential_write_item(fp, "capability[]", "authtype", 0);
+    }
     if (credential_has_capability(&c->capa_state, op_type))
+    {
         credential_write_item(fp, "capability[]", "state", 0);
+    }
 
     if (credential_has_capability(&c->capa_authtype, op_type))
     {
         credential_write_item(fp, "authtype", c->authtype, 0);
         credential_write_item(fp, "credential", c->credential, 0);
         if (c->ephemeral)
+        {
             credential_write_item(fp, "ephemeral", "1", 0);
+        }
     }
     credential_write_item(fp, "protocol", c->protocol, 1);
     credential_write_item(fp, "host", c->host, 1);
@@ -434,13 +497,19 @@ void credential_write(const struct credential *c, FILE *fp,
         free(s);
     }
     for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
+    {
         credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
+    }
     if (credential_has_capability(&c->capa_state, op_type))
     {
         if (c->multistage)
+        {
             credential_write_item(fp, "continue", "1", 0);
+        }
         for (size_t i = 0; i < c->state_headers_to_send.nr; i++)
+        {
             credential_write_item(fp, "state[]", c->state_headers_to_send.v[i], 0);
+        }
     }
 }
 
@@ -455,12 +524,18 @@ static int run_credential_helper(struct credential *c,
     helper.use_shell = 1;
     helper.in        = -1;
     if (want_output)
+    {
         helper.out = -1;
+    }
     else
+    {
         helper.no_stdout = 1;
+    }
 
     if (start_command(&helper) < 0)
+    {
         return -1;
+    }
 
     fp = xfdopen(helper.in, "w");
     sigchain_push(SIGPIPE, SIG_IGN);
@@ -482,7 +557,9 @@ static int run_credential_helper(struct credential *c,
     }
 
     if (finish_command(&helper))
+    {
         return -1;
+    }
     return 0;
 }
 
@@ -493,11 +570,17 @@ static int credential_do(struct credential *c, const char *helper,
     int           r;
 
     if (helper[0] == '!')
+    {
         strbuf_addstr(&cmd, helper + 1);
+    }
     else if (is_absolute_path(helper))
+    {
         strbuf_addstr(&cmd, helper);
+    }
     else
+    {
         strbuf_addf(&cmd, "git credential-%s", helper);
+    }
 
     strbuf_addf(&cmd, " %s", operation);
     r = run_credential_helper(c, cmd.buf, !strcmp(operation, "get"));
@@ -511,14 +594,18 @@ void credential_fill(struct credential *c, int all_capabilities)
     int i;
 
     if ((c->username && c->password) || c->credential)
+    {
         return;
+    }
 
     credential_next_state(c);
     c->multistage = 0;
 
     credential_apply_config(c);
     if (all_capabilities)
+    {
         credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
+    }
 
     for (i = 0; i < c->helpers.nr; i++)
     {
@@ -542,13 +629,17 @@ void credential_fill(struct credential *c, int all_capabilities)
             return;
         }
         if (c->quit)
+        {
             die("credential helper '%s' told us to quit",
                 c->helpers.items[i].string);
+        }
     }
 
     credential_getpass(c);
     if (!c->username && !c->password && !c->credential)
+    {
         die("unable to get password from user");
+    }
 }
 
 void credential_approve(struct credential *c)
@@ -556,16 +647,22 @@ void credential_approve(struct credential *c)
     int i;
 
     if (c->approved)
+    {
         return;
+    }
     if (((!c->username || !c->password) && !c->credential) || c->password_expiry_utc < time(NULL))
+    {
         return;
+    }
 
     credential_next_state(c);
 
     credential_apply_config(c);
 
     for (i = 0; i < c->helpers.nr; i++)
+    {
         credential_do(c, c->helpers.items[i].string, "store");
+    }
     c->approved = 1;
 }
 
@@ -578,7 +675,9 @@ void credential_reject(struct credential *c)
     credential_apply_config(c);
 
     for (i = 0; i < c->helpers.nr; i++)
+    {
         credential_do(c, c->helpers.items[i].string, "erase");
+    }
 
     credential_clear_secrets(c);
     FREE_AND_NULL(c->username);
@@ -591,13 +690,19 @@ static int check_url_component(const char *url, int quiet,
                                const char *name, const char *value)
 {
     if (!value)
+    {
         return 0;
+    }
     if (!strchr(value, '\n'))
+    {
         return 0;
+    }
 
     if (!quiet)
+    {
         warning(_("url contains a newline in its %s component: %s"),
                 name, url);
+    }
     return -1;
 }
 
@@ -627,7 +732,12 @@ static int check_url_component(const char *url, int quiet,
 static int credential_from_url_1(struct credential *c, const char *url,
                                  int allow_partial_url, int quiet)
 {
-    const char *at, *colon, *cp, *slash, *host, *proto_end;
+    const char *at;
+    const char *colon;
+    const char *cp;
+    const char *slash;
+    const char *host;
+    const char *proto_end;
 
     credential_clear(c);
 
@@ -641,7 +751,9 @@ static int credential_from_url_1(struct credential *c, const char *url,
     if (!allow_partial_url && (!proto_end || proto_end == url))
     {
         if (!quiet)
+        {
             warning(_("url has no scheme: %s"), url);
+        }
         return -1;
     }
     cp    = proto_end ? proto_end + 3 : url;
@@ -666,7 +778,9 @@ static int credential_from_url_1(struct credential *c, const char *url,
         /* Case (2) */
         c->username = url_decode_mem(cp, at - cp);
         if (c->username && *c->username)
+        {
             c->username_from_proto = 1;
+        }
         host = at + 1;
     }
     else
@@ -674,29 +788,41 @@ static int credential_from_url_1(struct credential *c, const char *url,
         /* Case (3) */
         c->username = url_decode_mem(cp, colon - cp);
         if (c->username && *c->username)
+        {
             c->username_from_proto = 1;
+        }
         c->password = url_decode_mem(colon + 1, at - (colon + 1));
         host        = at + 1;
     }
 
     if (proto_end && proto_end - url > 0)
+    {
         c->protocol = xmemdupz(url, proto_end - url);
+    }
     if (!allow_partial_url || slash - host > 0)
+    {
         c->host = url_decode_mem(host, slash - host);
+    }
     /* Trim leading and trailing slashes from path */
     while (*slash == '/')
+    {
         slash++;
+    }
     if (*slash)
     {
         char *p;
         c->path = url_decode(slash);
         p       = c->path + strlen(c->path) - 1;
         while (p > c->path && *p == '/')
+        {
             *p-- = '\0';
+        }
     }
 
     if (check_url_component(url, quiet, "username", c->username) < 0 || check_url_component(url, quiet, "password", c->password) < 0 || check_url_component(url, quiet, "protocol", c->protocol) < 0 || check_url_component(url, quiet, "host", c->host) < 0 || check_url_component(url, quiet, "path", c->path) < 0)
+    {
         return -1;
+    }
 
     return 0;
 }
@@ -715,5 +841,7 @@ int credential_from_url_gently(struct credential *c, const char *url, int quiet)
 void credential_from_url(struct credential *c, const char *url)
 {
     if (credential_from_url_gently(c, url, 0) < 0)
+    {
         die(_("credential url cannot be parsed: %s"), url);
+    }
 }

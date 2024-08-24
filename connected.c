@@ -35,14 +35,18 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
     size_t                         base_len;
 
     if (!opt)
+    {
         opt = &defaults;
+    }
     transport = opt->transport;
 
     oid = fn(cb_data);
     if (!oid)
     {
         if (opt->err_fd)
+        {
             close(opt->err_fd);
+        }
         return err;
     }
 
@@ -78,9 +82,13 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
             for (p = get_all_packs(the_repository); p; p = p->next)
             {
                 if (!p->pack_promisor)
+                {
                     continue;
+                }
                 if (find_pack_entry_one(oid->hash, p))
+                {
                     goto promisor_pack_found;
+                }
             }
             /*
              * Fallback to rev-list with oid and the rest of the
@@ -103,30 +111,42 @@ no_promisor_pack_found:
     strvec_push(&rev_list.args, "--objects");
     strvec_push(&rev_list.args, "--stdin");
     if (repo_has_promisor_remote(the_repository))
+    {
         strvec_push(&rev_list.args, "--exclude-promisor-objects");
+    }
     if (!opt->is_deepening_fetch)
     {
         strvec_push(&rev_list.args, "--not");
         if (opt->exclude_hidden_refs_section)
+        {
             strvec_pushf(&rev_list.args, "--exclude-hidden=%s",
                          opt->exclude_hidden_refs_section);
+        }
         strvec_push(&rev_list.args, "--all");
     }
     strvec_push(&rev_list.args, "--quiet");
     strvec_push(&rev_list.args, "--alternate-refs");
     if (opt->progress)
+    {
         strvec_pushf(&rev_list.args, "--progress=%s",
                      _("Checking connectivity"));
+    }
 
     rev_list.git_cmd = 1;
     if (opt->env)
+    {
         strvec_pushv(&rev_list.env, opt->env);
+    }
     rev_list.in        = -1;
     rev_list.no_stdout = 1;
     if (opt->err_fd)
+    {
         rev_list.err = opt->err_fd;
+    }
     else
+    {
         rev_list.no_stderr = opt->quiet;
+    }
 
     if (start_command(&rev_list))
     {
@@ -149,21 +169,29 @@ no_promisor_pack_found:
          * rev-list for verification.
          */
         if (new_pack && find_pack_entry_one(oid->hash, new_pack))
+        {
             continue;
+        }
 
         if (fprintf(rev_list_in, "%s\n", oid_to_hex(oid)) < 0)
+        {
             break;
+        }
     } while ((oid = fn(cb_data)) != NULL);
 
     if (ferror(rev_list_in) || fflush(rev_list_in))
     {
         if (errno != EPIPE && errno != EINVAL)
+        {
             error_errno(_("failed write to rev-list"));
+        }
         err = -1;
     }
 
     if (fclose(rev_list_in))
+    {
         err = error_errno(_("failed to close rev-list's stdin"));
+    }
 
     sigchain_pop(SIGPIPE);
     free(new_pack);

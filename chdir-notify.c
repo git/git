@@ -35,7 +35,9 @@ static void reparent_cb(const char *name,
     char  *tmp  = *path;
 
     if (!tmp)
+    {
         return;
+    }
 
     *path = reparent_relative_path(old_cwd, new_cwd, tmp);
     free(tmp);
@@ -59,7 +61,9 @@ int chdir_notify(const char *new_cwd)
     struct list_head *pos;
 
     if (strbuf_getcwd(&old_cwd) < 0)
+    {
         return -1;
+    }
     if (chdir(new_cwd) < 0)
     {
         int saved_errno = errno;
@@ -87,10 +91,13 @@ char *reparent_relative_path(const char *old_cwd,
                              const char *new_cwd,
                              const char *path)
 {
-    char *ret, *full;
+    char *ret;
+    char *full;
 
     if (is_absolute_path(path))
+    {
         return xstrdup(path);
+    }
 
     full = xstrfmt("%s/%s", old_cwd, path);
     ret  = xstrdup(remove_leading_path(full, new_cwd));

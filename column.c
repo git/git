@@ -36,21 +36,29 @@ static void layout(struct column_data *data, int *width)
 
     *width = 0;
     for (i = 0; i < data->list->nr; i++)
+    {
         if (*width < data->len[i])
+        {
             *width = data->len[i];
+        }
+    }
 
     *width += data->opts.padding;
 
     data->cols = (data->opts.width - strlen(data->opts.indent)) / *width;
     if (data->cols == 0)
+    {
         data->cols = 1;
+    }
 
     data->rows = DIV_ROUND_UP(data->list->nr, data->cols);
 }
 
 static void compute_column_width(struct column_data *data)
 {
-    int i, x, y;
+    int i;
+    int x;
+    int y;
     for (x = 0; x < data->cols; x++)
     {
         data->width[x] = XY2LINEAR(data, x, 0);
@@ -58,7 +66,9 @@ static void compute_column_width(struct column_data *data)
         {
             i = XY2LINEAR(data, x, y);
             if (i < data->list->nr && data->len[data->width[x]] < data->len[i])
+            {
                 data->width[x] = i;
+            }
         }
     }
 }
@@ -75,14 +85,19 @@ static void shrink_columns(struct column_data *data)
     REALLOC_ARRAY(data->width, data->cols);
     while (data->rows > 1)
     {
-        int x, total_width, cols, rows;
+        int x;
+        int total_width;
+        int cols;
+        int rows;
         rows = data->rows;
         cols = data->cols;
 
         data->rows--;
         data->cols = DIV_ROUND_UP(data->list->nr, data->rows);
         if (data->cols != cols)
+        {
             REALLOC_ARRAY(data->width, data->cols);
+        }
         compute_column_width(data);
 
         total_width = strlen(data->opts.indent);
@@ -108,18 +123,24 @@ static void display_plain(const struct string_list *list,
     int i;
 
     for (i = 0; i < list->nr; i++)
+    {
         printf("%s%s%s", indent, list->items[i].string, nl);
+    }
 }
 
 /* Print a cell to stdout with all necessary leading/trailing space */
 static int display_cell(struct column_data *data, int initial_width,
                         const char *empty_cell, int x, int y)
 {
-    int i, len, newline;
+    int i;
+    int len;
+    int newline;
 
     i = XY2LINEAR(data, x, y);
     if (i >= data->list->nr)
+    {
         return -1;
+    }
 
     len = data->len[i];
     if (data->width && data->len[data->width[x]] < initial_width)
@@ -134,9 +155,13 @@ static int display_cell(struct column_data *data, int initial_width,
     }
 
     if (COL_LAYOUT(data->colopts) == COL_COLUMN)
+    {
         newline = i + data->rows >= data->list->nr;
+    }
     else
+    {
         newline = x == data->cols - 1 || i == data->list->nr - 1;
+    }
 
     printf("%s%s%s",
            x == 0 ? data->opts.indent : "",
@@ -151,7 +176,10 @@ static void display_table(const struct string_list    *list,
                           const struct column_options *opts)
 {
     struct column_data data;
-    int                x, y, i, initial_width;
+    int                x;
+    int                y;
+    int                i;
+    int                initial_width;
     char              *empty_cell;
 
     memset(&data, 0, sizeof(data));
@@ -161,20 +189,28 @@ static void display_table(const struct string_list    *list,
 
     ALLOC_ARRAY(data.len, list->nr);
     for (i = 0; i < list->nr; i++)
+    {
         data.len[i] = item_length(list->items[i].string);
+    }
 
     layout(&data, &initial_width);
 
     if (colopts & COL_DENSE)
+    {
         shrink_columns(&data);
+    }
 
     empty_cell = xmallocz(initial_width);
     memset(empty_cell, ' ', initial_width);
     for (y = 0; y < data.rows; y++)
     {
         for (x = 0; x < data.cols; x++)
+        {
             if (display_cell(&data, initial_width, empty_cell, x, y))
+            {
                 break;
+            }
+        }
     }
 
     free(data.len);
@@ -188,9 +224,13 @@ void print_columns(const struct string_list *list, unsigned int colopts,
     struct column_options nopts;
 
     if (opts && (0 > opts->padding))
+    {
         BUG("padding must be non-negative");
+    }
     if (!list->nr)
+    {
         return;
+    }
     assert((colopts & COL_ENABLE_MASK) != COL_AUTO);
 
     memset(&nopts, 0, sizeof(nopts));
@@ -222,10 +262,14 @@ int finalize_colopts(unsigned int *colopts, int stdout_is_tty)
     if ((*colopts & COL_ENABLE_MASK) == COL_AUTO)
     {
         if (stdout_is_tty < 0)
+        {
             stdout_is_tty = isatty(1);
+        }
         *colopts &= ~COL_ENABLE_MASK;
         if (stdout_is_tty || pager_in_use())
+        {
             *colopts |= COL_ENABLED;
+        }
     }
     return 0;
 }
@@ -256,7 +300,9 @@ static int parse_option(const char *arg, int len, unsigned int *colopts,
 
     for (i = 0; i < ARRAY_SIZE(opts); i++)
     {
-        int         set = 1, arg_len = len, name_len;
+        int         set     = 1;
+        int         arg_len = len;
+        int         name_len;
         const char *arg_str = arg;
 
         if (!opts[i].mask)
@@ -270,8 +316,10 @@ static int parse_option(const char *arg, int len, unsigned int *colopts,
         }
 
         name_len = strlen(opts[i].name);
-        if (arg_len != name_len || strncmp(arg_str, opts[i].name, name_len))
+        if (arg_len != name_len || strncmp(arg_str, opts[i].name, name_len) != 0)
+        {
             continue;
+        }
 
         switch (opts[i].mask)
         {
@@ -284,13 +332,19 @@ static int parse_option(const char *arg, int len, unsigned int *colopts,
         }
 
         if (opts[i].mask)
+        {
             *colopts = (*colopts & ~opts[i].mask) | opts[i].value;
+        }
         else
         {
             if (set)
+            {
                 *colopts |= opts[i].value;
+            }
             else
+            {
                 *colopts &= ~opts[i].value;
+            }
         }
         return 0;
     }
@@ -309,7 +363,9 @@ static int parse_config(unsigned int *colopts, const char *value)
         if (len)
         {
             if (parse_option(value, len, colopts, &group_set))
+            {
                 return -1;
+            }
 
             value += len;
         }
@@ -324,7 +380,9 @@ static int parse_config(unsigned int *colopts, const char *value)
      * will become "always".
      */
     if ((group_set & LAYOUT_SET) && !(group_set & ENABLE_SET))
+    {
         *colopts = (*colopts & ~COL_ENABLE_MASK) | COL_ENABLED;
+    }
     return 0;
 }
 
@@ -332,9 +390,13 @@ static int column_config(const char *var, const char *value,
                          const char *key, unsigned int *colopts)
 {
     if (!value)
+    {
         return config_error_nonbool(var);
+    }
     if (parse_config(colopts, value))
+    {
         return error("invalid column.%s mode %s", key, value);
+    }
     return 0;
 }
 
@@ -344,13 +406,19 @@ int git_column_config(const char *var, const char *value,
     const char *it;
 
     if (!skip_prefix(var, "column.", &it))
+    {
         return 0;
+    }
 
     if (!strcmp(it, "ui"))
+    {
         return column_config(var, value, "ui", colopts);
+    }
 
     if (command && !strcmp(it, command))
+    {
         return column_config(var, value, it, colopts);
+    }
 
     return 0;
 }
@@ -361,12 +429,16 @@ int parseopt_column_callback(const struct option *opt,
     unsigned int *colopts = opt->value;
     *colopts |= COL_PARSEOPT;
     *colopts &= ~COL_ENABLE_MASK;
-    if (unset) /* --no-column == never */
+    if (unset)
+    { /* --no-column == never */
         return 0;
+    }
     /* --column == always unless "arg" states otherwise */
     *colopts |= COL_ENABLED;
     if (arg)
+    {
         return parse_config(colopts, arg);
+    }
 
     return 0;
 }
@@ -379,9 +451,13 @@ int run_column_filter(int colopts, const struct column_options *opts)
     struct strvec *argv;
 
     if (opts && (0 > opts->padding))
+    {
         BUG("padding must be non-negative");
+    }
     if (fd_out != -1)
+    {
         return -1;
+    }
 
     child_process_init(&column_process);
     argv = &column_process.args;
@@ -389,21 +465,29 @@ int run_column_filter(int colopts, const struct column_options *opts)
     strvec_push(argv, "column");
     strvec_pushf(argv, "--raw-mode=%d", colopts);
     if (opts && opts->width)
+    {
         strvec_pushf(argv, "--width=%d", opts->width);
+    }
     if (opts && opts->indent)
+    {
         strvec_pushf(argv, "--indent=%s", opts->indent);
+    }
     if (opts && opts->padding)
+    {
         strvec_pushf(argv, "--padding=%d", opts->padding);
+    }
 
     fflush(stdout);
     column_process.in      = -1;
-    column_process.out     = dup(1);
+    column_process.out     = fcntl(1, F_DUPFD_CLOEXEC);
     column_process.git_cmd = 1;
 
     if (start_command(&column_process))
+    {
         return -2;
+    }
 
-    fd_out = dup(1);
+    fd_out = fcntl(1, F_DUPFD_CLOEXEC);
     close(1);
     dup2(column_process.in, 1);
     close(column_process.in);
@@ -413,7 +497,9 @@ int run_column_filter(int colopts, const struct column_options *opts)
 int stop_column_filter(void)
 {
     if (fd_out == -1)
+    {
         return -1;
+    }
 
     fflush(stdout);
     close(1);

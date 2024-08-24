@@ -43,9 +43,10 @@ static int check_bloom_offset(struct commit_graph *g, uint32_t pos,
      * entries (so we can compute size by comparing adjacent ones). And
      * naturally the final entry's end is one-past-the-end of the chunk.
      */
-    if (offset <= g->chunk_bloom_data_size - BLOOMDATA_CHUNK_HEADER_SIZE) {
+    if (offset <= g->chunk_bloom_data_size - BLOOMDATA_CHUNK_HEADER_SIZE)
+    {
         return 0;
-}
+    }
 
     warning("ignoring out-of-range offset (%" PRIuMAX
             ") for changed-path"
@@ -63,28 +64,34 @@ int load_bloom_filter_from_graph(struct commit_graph *g,
     uint32_t start_index;
     uint32_t end_index;
 
-    while (graph_pos < g->num_commits_in_base) {
+    while (graph_pos < g->num_commits_in_base)
+    {
         g = g->base_graph;
-}
+    }
 
     /* The commit graph commit 'c' lives in doesn't carry Bloom filters. */
-    if (!g->chunk_bloom_indexes) {
+    if (!g->chunk_bloom_indexes)
+    {
         return 0;
-}
+    }
 
     lex_pos = graph_pos - g->num_commits_in_base;
 
     end_index = get_be32(g->chunk_bloom_indexes + 4 * lex_pos);
 
-    if (lex_pos > 0) {
+    if (lex_pos > 0)
+    {
         start_index = get_be32(g->chunk_bloom_indexes + 4 * (lex_pos - 1));
-    } else {
+    }
+    else
+    {
         start_index = 0;
-}
+    }
 
-    if (check_bloom_offset(g, lex_pos, end_index) < 0 || check_bloom_offset(g, lex_pos - 1, start_index) < 0) {
+    if (check_bloom_offset(g, lex_pos, end_index) < 0 || check_bloom_offset(g, lex_pos - 1, start_index) < 0)
+    {
         return 0;
-}
+    }
 
     if (end_index < start_index)
     {
@@ -254,9 +261,10 @@ void fill_bloom_key(const char                         *data,
     }
 
     key->hashes = (uint32_t *)xcalloc(settings->num_hashes, sizeof(uint32_t));
-    for (i = 0; i < settings->num_hashes; i++) {
+    for (i = 0; i < settings->num_hashes; i++)
+    {
         key->hashes[i] = hash0 + i * hash1;
-}
+    }
 }
 
 void clear_bloom_key(struct bloom_key *key)
@@ -287,9 +295,10 @@ void init_bloom_filters(void)
 
 static void free_one_bloom_filter(struct bloom_filter *filter)
 {
-    if (!filter) {
+    if (!filter)
+    {
         return;
-}
+    }
     free(filter->to_free);
 }
 
@@ -326,9 +335,10 @@ static void init_truncated_large_filter(struct bloom_filter *filter,
 
 static int has_entries_with_high_bit(struct repository *r, struct tree *t)
 {
-    if (parse_tree(t)) {
+    if (parse_tree(t))
+    {
         return 1;
-}
+    }
 
     if (!(t->object.flags & VISITED))
     {
@@ -370,13 +380,15 @@ static int commit_tree_has_high_bit_paths(struct repository *r,
                                           struct commit     *c)
 {
     struct tree *t;
-    if (repo_parse_commit(r, c)) {
+    if (repo_parse_commit(r, c))
+    {
         return 1;
-}
+    }
     t = repo_get_commit_tree(r, c);
-    if (!t) {
+    if (!t)
+    {
         return 1;
-}
+    }
     return has_entries_with_high_bit(r, t);
 }
 
@@ -385,13 +397,15 @@ static struct bloom_filter *upgrade_filter(struct repository *r, struct commit *
                                            int                  hash_version)
 {
     struct commit_list *p = c->parents;
-    if (commit_tree_has_high_bit_paths(r, c)) {
+    if (commit_tree_has_high_bit_paths(r, c))
+    {
         return NULL;
-}
+    }
 
-    if (p && commit_tree_has_high_bit_paths(r, p->item)) {
+    if (p && commit_tree_has_high_bit_paths(r, p->item))
+    {
         return NULL;
-}
+    }
 
     filter->version = hash_version;
 
@@ -404,16 +418,18 @@ struct bloom_filter *get_bloom_filter(struct repository *r, struct commit *c)
     int                  hash_version;
 
     filter = get_or_compute_bloom_filter(r, c, 0, NULL, NULL);
-    if (!filter) {
+    if (!filter)
+    {
         return NULL;
-}
+    }
 
     prepare_repo_settings(r);
     hash_version = r->settings.commit_graph_changed_paths_version;
 
-    if (!(hash_version == -1 || hash_version == filter->version)) {
+    if (!(hash_version == -1 || hash_version == filter->version))
+    {
         return NULL; /* unusable filter */
-}
+    }
     return filter;
 }
 
@@ -427,31 +443,35 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository              
     int                  i;
     struct diff_options  diffopt;
 
-    if (computed) {
+    if (computed)
+    {
         *computed = BLOOM_NOT_COMPUTED;
-}
+    }
 
-    if (!bloom_filters.slab_size) {
+    if (!bloom_filters.slab_size)
+    {
         return NULL;
-}
+    }
 
     filter = bloom_filter_slab_at(&bloom_filters, c);
 
     if (!filter->data)
     {
         uint32_t graph_pos;
-        if (repo_find_commit_pos_in_graph(r, c, &graph_pos)) {
+        if (repo_find_commit_pos_in_graph(r, c, &graph_pos))
+        {
             load_bloom_filter_from_graph(r->objects->commit_graph,
                                          filter, graph_pos);
-}
+        }
     }
 
     if (filter->data && filter->len)
     {
         struct bloom_filter *upgrade;
-        if (!settings || settings->hash_version == filter->version) {
+        if (!settings || settings->hash_version == filter->version)
+        {
             return filter;
-}
+        }
 
         /* version mismatch, see if we can upgrade */
         if (compute_if_not_present && git_env_bool("GIT_TEST_UPGRADE_BLOOM_FILTERS", 1))
@@ -460,16 +480,18 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository              
                                      settings->hash_version);
             if (upgrade)
             {
-                if (computed) {
+                if (computed)
+                {
                     *computed |= BLOOM_UPGRADED;
-}
+                }
                 return upgrade;
             }
         }
     }
-    if (!compute_if_not_present) {
+    if (!compute_if_not_present)
+    {
         return NULL;
-}
+    }
 
     repo_diff_setup(r, &diffopt);
     diffopt.flags.recursive = 1;
@@ -480,11 +502,14 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository              
     /* ensure commit is parsed so we have parent information */
     repo_parse_commit(r, c);
 
-    if (c->parents) {
+    if (c->parents)
+    {
         diff_tree_oid(&c->parents->item->object.oid, &c->object.oid, "", &diffopt);
-    } else {
+    }
+    else
+    {
         diff_tree_oid(NULL, &c->object.oid, "", &diffopt);
-}
+    }
     diffcore_std(&diffopt);
 
     if (diff_queued_diff.nr <= settings->max_changed_paths)
@@ -512,15 +537,19 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository              
                 FLEX_ALLOC_STR(e, path, path);
                 hashmap_entry_init(&e->entry, strhash(path));
 
-                if (!hashmap_get(&pathmap, &e->entry, NULL)) {
+                if (!hashmap_get(&pathmap, &e->entry, NULL))
+                {
                     hashmap_add(&pathmap, &e->entry);
-                } else {
+                }
+                else
+                {
                     free(e);
-}
+                }
 
-                if (!last_slash) {
+                if (!last_slash)
+                {
                     last_slash = (char *)path;
-}
+                }
                 *last_slash = '\0';
 
             } while (*path);
@@ -532,9 +561,10 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository              
         {
             init_truncated_large_filter(filter,
                                         settings->hash_version);
-            if (computed) {
+            if (computed)
+            {
                 *computed |= BLOOM_TRUNC_LARGE;
-}
+            }
             goto cleanup;
         }
 
@@ -542,9 +572,10 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository              
         filter->version = settings->hash_version;
         if (!filter->len)
         {
-            if (computed) {
+            if (computed)
+            {
                 *computed |= BLOOM_TRUNC_EMPTY;
-}
+            }
             filter->len = 1;
         }
         CALLOC_ARRAY(filter->data, filter->len);
@@ -563,19 +594,22 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository              
     }
     else
     {
-        for (i = 0; i < diff_queued_diff.nr; i++) {
+        for (i = 0; i < diff_queued_diff.nr; i++)
+        {
             diff_free_filepair(diff_queued_diff.queue[i]);
-}
+        }
         init_truncated_large_filter(filter, settings->hash_version);
 
-        if (computed) {
+        if (computed)
+        {
             *computed |= BLOOM_TRUNC_LARGE;
-}
+        }
     }
 
-    if (computed) {
+    if (computed)
+    {
         *computed |= BLOOM_COMPUTED;
-}
+    }
 
     free(diff_queued_diff.queue);
     DIFF_QUEUE_CLEAR(&diff_queued_diff);
@@ -590,17 +624,19 @@ int bloom_filter_contains(const struct bloom_filter          *filter,
     int      i;
     uint64_t mod = filter->len * BITS_PER_WORD;
 
-    if (!mod) {
+    if (!mod)
+    {
         return -1;
-}
+    }
 
     for (i = 0; i < settings->num_hashes; i++)
     {
         uint64_t hash_mod  = key->hashes[i] % mod;
         uint64_t block_pos = hash_mod / BITS_PER_WORD;
-        if (!(filter->data[block_pos] & get_bitmask(hash_mod))) {
+        if (!(filter->data[block_pos] & get_bitmask(hash_mod)))
+        {
             return 0;
-}
+        }
     }
 
     return 1;

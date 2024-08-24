@@ -21,20 +21,23 @@ enum color_advice
 
 static int parse_advise_color_slot(const char *slot)
 {
-    if (!strcasecmp(slot, "reset")) {
+    if (!strcasecmp(slot, "reset"))
+    {
         return ADVICE_COLOR_RESET;
-}
-    if (!strcasecmp(slot, "hint")) {
+    }
+    if (!strcasecmp(slot, "hint"))
+    {
         return ADVICE_COLOR_HINT;
-}
+    }
     return -1;
 }
 
 static const char *advise_get_color(enum color_advice ix)
 {
-    if (want_color_stderr(advice_use_color)) {
+    if (want_color_stderr(advice_use_color))
+    {
         return advice_colors[ix];
-}
+    }
     return "";
 }
 
@@ -110,9 +113,10 @@ static void vadvise(const char *advice, int display_instructions,
 
     strbuf_vaddf(&buf, advice, params);
 
-    if (display_instructions) {
+    if (display_instructions)
+    {
         strbuf_addf(&buf, turn_off_instructions, key);
-}
+    }
 
     for (cp = buf.buf; *cp; cp = np)
     {
@@ -122,9 +126,10 @@ static void vadvise(const char *advice, int display_instructions,
                 (np == cp) ? "" : " ",
                 (int)(np - cp), cp,
                 advise_get_color(ADVICE_COLOR_RESET));
-        if (*np) {
+        if (*np)
+        {
             np++;
-}
+        }
     }
     strbuf_release(&buf);
 }
@@ -142,16 +147,19 @@ int advice_enabled(enum advice_type type)
     int        enabled          = advice_setting[type].level != ADVICE_LEVEL_DISABLED;
     static int globally_enabled = -1;
 
-    if (globally_enabled < 0) {
+    if (globally_enabled < 0)
+    {
         globally_enabled = git_env_bool(GIT_ADVICE_ENVIRONMENT, 1);
-}
-    if (!globally_enabled) {
+    }
+    if (!globally_enabled)
+    {
         return 0;
-}
+    }
 
-    if (type == ADVICE_PUSH_UPDATE_REJECTED) {
+    if (type == ADVICE_PUSH_UPDATE_REJECTED)
+    {
         return enabled && advice_enabled(ADVICE_PUSH_UPDATE_REJECTED_ALIAS);
-}
+    }
 
     return enabled;
 }
@@ -160,9 +168,10 @@ void advise_if_enabled(enum advice_type type, const char *advice, ...)
 {
     va_list params;
 
-    if (!advice_enabled(type)) {
+    if (!advice_enabled(type))
+    {
         return;
-}
+    }
 
     va_start(params, advice);
     vadvise(advice, !advice_setting[type].level, advice_setting[type].key,
@@ -185,24 +194,28 @@ int git_default_advice_config(const char *var, const char *value)
     if (skip_prefix(var, "color.advice.", &slot_name))
     {
         int slot = parse_advise_color_slot(slot_name);
-        if (slot < 0) {
+        if (slot < 0)
+        {
             return 0;
-}
-        if (!value) {
+        }
+        if (!value)
+        {
             return config_error_nonbool(var);
-}
+        }
         return color_parse(value, advice_colors[slot]);
     }
 
-    if (!skip_prefix(var, "advice.", &k)) {
+    if (!skip_prefix(var, "advice.", &k))
+    {
         return 0;
-}
+    }
 
     for (i = 0; i < ARRAY_SIZE(advice_setting); i++)
     {
-        if (strcasecmp(k, advice_setting[i].key) != 0) {
+        if (strcasecmp(k, advice_setting[i].key) != 0)
+        {
             continue;
-}
+        }
         advice_setting[i].level = git_config_bool(var, value)
                                       ? ADVICE_LEVEL_ENABLED
                                       : ADVICE_LEVEL_DISABLED;
@@ -216,30 +229,45 @@ void list_config_advices(struct string_list *list, const char *prefix)
 {
     int i;
 
-    for (i = 0; i < ARRAY_SIZE(advice_setting); i++) {
+    for (i = 0; i < ARRAY_SIZE(advice_setting); i++)
+    {
         list_config_item(list, prefix, advice_setting[i].key);
-}
+    }
 }
 
 int error_resolve_conflict(const char *me)
 {
-    if (!strcmp(me, "cherry-pick")) {
+    if (!strcmp(me, "cherry-pick"))
+    {
         error(_("Cherry-picking is not possible because you have unmerged files."));
-    } else if (!strcmp(me, "commit")) {
+    }
+    else if (!strcmp(me, "commit"))
+    {
         error(_("Committing is not possible because you have unmerged files."));
-    } else if (!strcmp(me, "merge")) {
+    }
+    else if (!strcmp(me, "merge"))
+    {
         error(_("Merging is not possible because you have unmerged files."));
-    } else if (!strcmp(me, "pull")) {
+    }
+    else if (!strcmp(me, "pull"))
+    {
         error(_("Pulling is not possible because you have unmerged files."));
-    } else if (!strcmp(me, "revert")) {
+    }
+    else if (!strcmp(me, "revert"))
+    {
         error(_("Reverting is not possible because you have unmerged files."));
-    } else if (!strcmp(me, "rebase")) {
+    }
+    else if (!strcmp(me, "rebase"))
+    {
         error(_("Rebasing is not possible because you have unmerged files."));
-    } else {
+    }
+    else
+    {
         BUG("Unhandled conflict reason '%s'", me);
-}
+    }
 
-    if (advice_enabled(ADVICE_RESOLVE_CONFLICT)) {
+    if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
+    {
         /*
          * Message used both when 'git commit' fails and when
          * other commands doing a merge do.
@@ -247,7 +275,7 @@ int error_resolve_conflict(const char *me)
         advise(_(
             "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
             "as appropriate to mark resolution and make a commit."));
-}
+    }
     return -1;
 }
 
@@ -260,9 +288,10 @@ void NORETURN die_resolve_conflict(const char *me)
 void NORETURN die_conclude_merge(void)
 {
     error(_("You have not concluded your merge (MERGE_HEAD exists)."));
-    if (advice_enabled(ADVICE_RESOLVE_CONFLICT)) {
+    if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
+    {
         advise(_("Please, commit your changes before merging."));
-}
+    }
     die(_("Exiting because of unfinished merge."));
 }
 
@@ -283,9 +312,10 @@ void advise_on_updating_sparse_paths(struct string_list *pathspec_list)
 {
     struct string_list_item *item;
 
-    if (!pathspec_list->nr) {
+    if (!pathspec_list->nr)
+    {
         return;
-}
+    }
 
     fprintf(stderr, _("The following paths and/or pathspecs matched paths that exist\n"
                       "outside of your sparse-checkout definition, so will not be\n"
@@ -326,9 +356,10 @@ void advise_on_moving_dirty_path(struct string_list *pathspec_list)
 {
     struct string_list_item *item;
 
-    if (!pathspec_list->nr) {
+    if (!pathspec_list->nr)
+    {
         return;
-}
+    }
 
     fprintf(stderr, _("The following paths have been moved outside the\n"
                       "sparse-checkout definition but are not sparse due to local\n"

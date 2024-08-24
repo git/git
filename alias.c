@@ -18,9 +18,10 @@ static int config_alias_cb(const char *key, const char *value,
     struct config_alias_data *data = d;
     const char               *p;
 
-    if (!skip_prefix(key, "alias.", &p)) {
+    if (!skip_prefix(key, "alias.", &p))
+    {
         return 0;
-}
+    }
 
     if (data->alias)
     {
@@ -59,17 +60,19 @@ void quote_cmdline(struct strbuf *buf, const char **argv)
 {
     for (const char **argp = argv; *argp; argp++)
     {
-        if (argp != argv) {
+        if (argp != argv)
+        {
             strbuf_addch(buf, ' ');
-}
+        }
         strbuf_addch(buf, '"');
         for (const char *p = *argp; *p; p++)
         {
             const char c = *p;
 
-            if (c == '"' || c == '\\') {
+            if (c == '"' || c == '\\')
+            {
                 strbuf_addch(buf, '\\');
-}
+            }
             strbuf_addch(buf, c);
         }
         strbuf_addch(buf, '"');
@@ -89,8 +92,8 @@ int split_cmdline(char *cmdline, const char ***argv)
 {
     size_t src;
     size_t dst;
-    size_t count = 0;
-    size_t size = 16;
+    size_t count  = 0;
+    size_t size   = 16;
     char   quoted = 0;
 
     ALLOC_ARRAY(*argv, size);
@@ -104,9 +107,10 @@ int split_cmdline(char *cmdline, const char ***argv)
         {
             cmdline[dst++] = 0;
             while (cmdline[++src]
-                   && isspace(cmdline[src])) {
+                   && isspace(cmdline[src]))
+            {
                 ; /* skip */
-}
+            }
             ALLOC_GROW(*argv, count + 1, size);
             (*argv)[count++] = cmdline + dst;
         }

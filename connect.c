@@ -30,22 +30,32 @@ static const char   *next_server_feature_value(const char *feature, size_t *len,
 static int check_ref(const char *name, unsigned int flags)
 {
     if (!flags)
+    {
         return 1;
+    }
 
     if (!skip_prefix(name, "refs/", &name))
+    {
         return 0;
+    }
 
     /* REF_NORMAL means that we don't want the magic fake tag refs */
     if ((flags & REF_NORMAL) && check_refname_format(name, REFNAME_ALLOW_ONELEVEL))
+    {
         return 0;
+    }
 
     /* REF_BRANCHES means that we want regular branch heads */
     if ((flags & REF_BRANCHES) && starts_with(name, "heads/"))
+    {
         return 1;
+    }
 
     /* REF_TAGS means that we want tags */
     if ((flags & REF_TAGS) && starts_with(name, "tags/"))
+    {
         return 1;
+    }
 
     /* All type bits clear means that we are ok with anything */
     return !(flags & ~REF_NORMAL);
@@ -65,12 +75,16 @@ static NORETURN void die_initial_contact(int unexpected)
      * response does not necessarily mean an ACL problem, though.
      */
     if (unexpected)
+    {
         die(_("the remote end hung up upon initial contact"));
+    }
     else
+    {
         die(_(
             "Could not read from remote repository.\n\n"
             "Please make sure you have the correct access rights\n"
             "and the repository exists."));
+    }
 }
 
 /* Checks if the server supports the capability 'c' */
@@ -82,7 +96,9 @@ int server_supports_v2(const char *c)
     {
         const char *out;
         if (skip_prefix(server_capabilities_v2.v[i], c, &out) && (!*out || *out == '='))
+        {
             return 1;
+        }
     }
     return 0;
 }
@@ -90,7 +106,9 @@ int server_supports_v2(const char *c)
 void ensure_server_supports_v2(const char *c)
 {
     if (!server_supports_v2(c))
+    {
         die(_("server doesn't support '%s'"), c);
+    }
 }
 
 int server_feature_v2(const char *c, const char **v)
@@ -120,14 +138,17 @@ int server_supports_feature(const char *c, const char *feature,
         if (skip_prefix(server_capabilities_v2.v[i], c, &out) && (!*out || *(out++) == '='))
         {
             if (parse_feature_request(out, feature))
+            {
                 return 1;
-            else
-                break;
+            }
+            break;
         }
     }
 
     if (die_on_error)
+    {
         die(_("server doesn't support feature '%s'"), feature);
+    }
 
     return 0;
 }
@@ -135,10 +156,14 @@ int server_supports_feature(const char *c, const char *feature,
 static void process_capabilities_v2(struct packet_reader *reader)
 {
     while (packet_reader_read(reader) == PACKET_READ_NORMAL)
+    {
         strvec_push(&server_capabilities_v2, reader->line);
+    }
 
     if (reader->status != PACKET_READ_FLUSH)
+    {
         die(_("expected flush after capabilities"));
+    }
 }
 
 enum protocol_version discover_version(struct packet_reader *reader)
@@ -185,27 +210,33 @@ enum protocol_version discover_version(struct packet_reader *reader)
 
 static void parse_one_symref_info(struct string_list *symref, const char *val, int len)
 {
-    char                    *sym, *target;
+    char                    *sym;
+    char                    *target;
     struct string_list_item *item;
 
     if (!len)
+    {
         return; /* just "symref" */
+    }
     /* e.g. "symref=HEAD:refs/heads/master" */
     sym    = xmemdupz(val, len);
     target = strchr(sym, ':');
     if (!target)
+    {
         /* just "symref=something" */
         goto reject;
+    }
     *(target++) = '\0';
     if (check_refname_format(sym, REFNAME_ALLOW_ONELEVEL) || check_refname_format(target, REFNAME_ALLOW_ONELEVEL))
+    {
         /* "symref=bogus:pair */
         goto reject;
+    }
     item       = string_list_append_nodup(symref, sym);
     item->util = target;
     return;
 reject:
     free(sym);
-    return;
 }
 
 static void annotate_refs_with_symref_info(struct ref *ref)
@@ -220,7 +251,9 @@ static void annotate_refs_with_symref_info(struct ref *ref)
 
         val = next_server_feature_value("symref", &len, &offset);
         if (!val)
+        {
             break;
+        }
         parse_one_symref_info(&symref, val, len);
     }
     string_list_sort(&symref);
@@ -230,7 +263,9 @@ static void annotate_refs_with_symref_info(struct ref *ref)
         struct string_list_item *item;
         item = string_list_lookup(&symref, ref->name);
         if (!item)
+        {
             continue;
+        }
         ref->symref = xstrdup((char *)item->util);
     }
     string_list_clear(&symref, 0);
@@ -243,7 +278,9 @@ static void process_capabilities(struct packet_reader *reader, int *linelen)
     const char *line         = reader->line;
     int         nul_location = strlen(line);
     if (nul_location == *linelen)
+    {
         return;
+    }
     server_capabilities_v1 = xstrdup(line + nul_location + 1);
     *linelen               = nul_location;
 
@@ -253,7 +290,9 @@ static void process_capabilities(struct packet_reader *reader, int *linelen)
         char *hash_name = xstrndup(feat_val, feat_len);
         int   hash_algo = hash_algo_by_name(hash_name);
         if (hash_algo != GIT_HASH_UNKNOWN)
+        {
             reader->hash_algo = &hash_algos[hash_algo];
+        }
         free(hash_name);
     }
     else
@@ -269,9 +308,13 @@ static int process_dummy_ref(const struct packet_reader *reader)
     const char      *name;
 
     if (parse_oid_hex_algop(line, &oid, &name, reader->hash_algo))
+    {
         return 0;
+    }
     if (*name != ' ')
+    {
         return 0;
+    }
     name++;
 
     return oideq(reader->hash_algo->null_oid, &oid) && !strcmp(name, "capabilities^{}");
@@ -280,8 +323,10 @@ static int process_dummy_ref(const struct packet_reader *reader)
 static void check_no_capabilities(const char *line, int len)
 {
     if (strlen(line) != len)
+    {
         warning(_("ignoring capabilities after first line '%s'"),
                 line + strlen(line));
+    }
 }
 
 static int process_ref(const struct packet_reader *reader, int len,
@@ -293,9 +338,13 @@ static int process_ref(const struct packet_reader *reader, int len,
     const char      *name;
 
     if (parse_oid_hex_algop(line, &old_oid, &name, reader->hash_algo))
+    {
         return 0;
+    }
     if (*name != ' ')
+    {
         return 0;
+    }
     name++;
 
     if (extra_have && !strcmp(name, ".have"))
@@ -325,12 +374,18 @@ static int process_shallow(const struct packet_reader *reader, int len,
     struct object_id old_oid;
 
     if (!skip_prefix(line, "shallow ", &arg))
+    {
         return 0;
+    }
 
     if (get_oid_hex_algop(arg, &old_oid, reader->hash_algo))
+    {
         die(_("protocol error: expected shallow sha-1, got '%s'"), arg);
+    }
     if (!shallow_points)
+    {
         die(_("repository on the other end cannot be shallow"));
+    }
     oid_array_append(shallow_points, &old_oid);
     check_no_capabilities(line, len);
     return 1;
@@ -388,12 +443,16 @@ struct ref **get_remote_heads(struct packet_reader *reader,
                 /* fallthrough */
             case EXPECTING_REF:
                 if (process_ref(reader, len, &list, flags, extra_have))
+                {
                     break;
+                }
                 state = EXPECTING_SHALLOW;
                 /* fallthrough */
             case EXPECTING_SHALLOW:
                 if (process_shallow(reader, len, shallow_points))
+                {
                     break;
+                }
                 die(_("protocol error: unexpected '%s'"), reader->line);
             case EXPECTING_DONE:
                 break;
@@ -467,7 +526,9 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
     {
         const char *arg = line_sections.items[i].string;
         if (skip_prefix(arg, "symref-target:", &arg))
+        {
             ref->symref = xstrdup(arg);
+        }
 
         if (skip_prefix(arg, "peeled:", &arg))
         {
@@ -504,9 +565,13 @@ void check_stateless_delimiter(int                   stateless_rpc,
                                const char           *error)
 {
     if (!stateless_rpc)
+    {
         return; /* not in stateless mode, no delimiter expected */
+    }
     if (packet_reader_read(reader) != PACKET_READ_RESPONSE_END)
+    {
         die("%s", error);
+    }
 }
 
 static void send_capabilities(int fd_out, struct packet_reader *reader)
@@ -514,13 +579,17 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
     const char *hash_name;
 
     if (server_supports_v2("agent"))
+    {
         packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+    }
 
     if (server_feature_v2("object-format", &hash_name))
     {
         int hash_algo = hash_algo_by_name(hash_name);
         if (hash_algo == GIT_HASH_UNKNOWN)
+        {
             die(_("unknown object format '%s' specified by server"), hash_name);
+        }
         reader->hash_algo = &hash_algos[hash_algo];
         packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
     }
@@ -554,14 +623,18 @@ int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
         line_nr++;
 
         if (!bundle_uri_parse_line(bundles, line))
+        {
             continue;
+        }
 
         return error(_("error on bundle-uri response line %d: %s"),
                      line_nr, line);
     }
 
     if (reader->status != PACKET_READ_FLUSH)
+    {
         return error(_("expected flush after bundle-uri listing"));
+    }
 
     /*
      * Might die(), but obscure enough that that's OK, e.g. in
@@ -595,17 +668,23 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
     {
         ensure_server_supports_v2("server-option");
         for (i = 0; i < server_options->nr; i++)
+        {
             packet_write_fmt(fd_out, "server-option=%s",
                              server_options->items[i].string);
+        }
     }
 
     packet_delim(fd_out);
     /* When pushing we don't want to request the peeled tags */
     if (!for_push)
+    {
         packet_write_fmt(fd_out, "peel\n");
+    }
     packet_write_fmt(fd_out, "symrefs\n");
     if (server_supports_feature("ls-refs", "unborn", 0))
+    {
         packet_write_fmt(fd_out, "unborn\n");
+    }
     for (i = 0; ref_prefixes && i < ref_prefixes->nr; i++)
     {
         packet_write_fmt(fd_out, "ref-prefix %s\n",
@@ -617,11 +696,15 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
     while (packet_reader_read(reader) == PACKET_READ_NORMAL)
     {
         if (!process_ref_v2(reader, &list, unborn_head_target))
+        {
             die(_("invalid ls-refs response: %s"), reader->line);
+        }
     }
 
     if (reader->status != PACKET_READ_FLUSH)
+    {
         die(_("expected flush after ref listing"));
+    }
 
     check_stateless_delimiter(stateless_rpc, reader,
                               _("expected response end packet after ref listing"));
@@ -635,16 +718,22 @@ const char *parse_feature_value(const char *feature_list, const char *feature, s
     size_t      len;
 
     if (!feature_list)
+    {
         return NULL;
+    }
 
     len = strlen(feature);
     if (offset)
+    {
         feature_list += *offset;
+    }
     while (*feature_list)
     {
         const char *found = strstr(feature_list, feature);
         if (!found)
+        {
             return NULL;
+        }
         if (feature_list == found || isspace(found[-1]))
         {
             const char *value = found + len;
@@ -652,13 +741,17 @@ const char *parse_feature_value(const char *feature_list, const char *feature, s
             if (!*value || isspace(*value))
             {
                 if (lenp)
+                {
                     *lenp = 0;
+                }
                 if (offset)
+                {
                     *offset = found + len - orig_start;
+                }
                 return value;
             }
             /* feature with a value (e.g., "agent=git/1.2.3") */
-            else if (*value == '=')
+            if (*value == '=')
             {
                 size_t end;
 
@@ -688,7 +781,9 @@ int server_supports_hash(const char *desired, int *feature_supported)
 
     hash = next_server_feature_value("object-format", &len, &offset);
     if (feature_supported)
+    {
         *feature_supported = !!hash;
+    }
     if (!hash)
     {
         hash = hash_algos[GIT_HASH_SHA1].name;
@@ -697,7 +792,9 @@ int server_supports_hash(const char *desired, int *feature_supported)
     while (hash)
     {
         if (!xstrncmpz(desired, hash, len))
+        {
             return 1;
+        }
 
         hash = next_server_feature_value("object-format", &len, &offset);
     }
@@ -758,15 +855,25 @@ static const char *prot_name(enum protocol protocol)
 static enum protocol get_protocol(const char *name)
 {
     if (!strcmp(name, "ssh"))
+    {
         return PROTO_SSH;
+    }
     if (!strcmp(name, "git"))
+    {
         return PROTO_GIT;
-    if (!strcmp(name, "git+ssh")) /* deprecated - do not use */
+    }
+    if (!strcmp(name, "git+ssh"))
+    { /* deprecated - do not use */
         return PROTO_SSH;
-    if (!strcmp(name, "ssh+git")) /* deprecated - do not use */
+    }
+    if (!strcmp(name, "ssh+git"))
+    { /* deprecated - do not use */
         return PROTO_SSH;
+    }
     if (!strcmp(name, "file"))
+    {
         return PROTO_FILE;
+    }
     die(_("protocol '%s' is not supported"), name);
 }
 
@@ -776,9 +883,13 @@ static char *host_end(char **hoststart, int removebrackets)
     char *end;
     char *start = strstr(host, "@[");
     if (start)
+    {
         start++; /* Jump over '@' */
+    }
     else
+    {
         start = host;
+    }
     if (start[0] == '[')
     {
         end = strchr(start + 1, ']');
@@ -792,10 +903,14 @@ static char *host_end(char **hoststart, int removebrackets)
             }
         }
         else
+        {
             end = host;
+        }
     }
     else
+    {
         end = host;
+    }
     return end;
 }
 
@@ -804,7 +919,8 @@ static char *host_end(char **hoststart, int removebrackets)
 
 static void get_host_and_port(char **host, const char **port)
 {
-    char *colon, *end;
+    char *colon;
+    char *end;
     end   = host_end(host, 1);
     colon = strchr(end, ':');
     if (colon)
@@ -827,7 +943,9 @@ static void enable_keepalive(int sockfd)
     int ka = 1;
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &ka, sizeof(ka)) < 0)
+    {
         error_errno(_("unable to set SO_KEEPALIVE on socket"));
+    }
 }
 
 #ifndef NO_IPV6
@@ -838,7 +956,9 @@ static const char *ai_name(const struct addrinfo *ai)
     if (getnameinfo(ai->ai_addr, ai->ai_addrlen, addr, sizeof(addr), NULL, 0,
                     NI_NUMERICHOST)
         != 0)
+    {
         xsnprintf(addr, sizeof(addr), "(unknown)");
+    }
 
     return addr;
 }
@@ -848,35 +968,49 @@ static const char *ai_name(const struct addrinfo *ai)
  */
 static int git_tcp_connect_sock(char *host, int flags)
 {
-    struct strbuf   error_message = STRBUF_INIT;
-    int             sockfd        = -1;
-    const char     *port          = STR(DEFAULT_GIT_PORT);
-    struct addrinfo hints, *ai0, *ai;
-    int             gai;
-    int             cnt = 0;
+    struct strbuf    error_message = STRBUF_INIT;
+    int              sockfd        = -1;
+    const char      *port          = STR(DEFAULT_GIT_PORT);
+    struct addrinfo  hints;
+    struct addrinfo *ai0;
+    struct addrinfo *ai;
+    int              gai;
+    int              cnt = 0;
 
     get_host_and_port(&host, &port);
     if (!*port)
+    {
         port = "<none>";
+    }
 
     memset(&hints, 0, sizeof(hints));
     if (flags & CONNECT_IPV4)
+    {
         hints.ai_family = AF_INET;
+    }
     else if (flags & CONNECT_IPV6)
+    {
         hints.ai_family = AF_INET6;
+    }
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
     if (flags & CONNECT_VERBOSE)
+    {
         fprintf(stderr, _("Looking up %s ... "), host);
+    }
 
     gai = getaddrinfo(host, port, &hints, &ai);
     if (gai)
+    {
         die(_("unable to look up %s (port %s) (%s)"), host, port, gai_strerror(gai));
+    }
 
     if (flags & CONNECT_VERBOSE)
+    {
         /* TRANSLATORS: this is the end of "Looking up %s ... " */
         fprintf(stderr, _("done.\nConnecting to %s (port %s) ... "), host, port);
+    }
 
     for (ai0 = ai; ai; ai = ai->ai_next, cnt++)
     {
@@ -887,25 +1021,33 @@ static int git_tcp_connect_sock(char *host, int flags)
             strbuf_addf(&error_message, "%s[%d: %s]: errno=%s\n",
                         host, cnt, ai_name(ai), strerror(errno));
             if (0 <= sockfd)
+            {
                 close(sockfd);
+            }
             sockfd = -1;
             continue;
         }
         if (flags & CONNECT_VERBOSE)
+        {
             fprintf(stderr, "%s ", ai_name(ai));
+        }
         break;
     }
 
     freeaddrinfo(ai0);
 
     if (sockfd < 0)
+    {
         die(_("unable to connect to %s:\n%s"), host, error_message.buf);
+    }
 
     enable_keepalive(sockfd);
 
     if (flags & CONNECT_VERBOSE)
+    {
         /* TRANSLATORS: this is the end of "Connecting to %s (port %s) ... " */
         fprintf_ln(stderr, _("done."));
+    }
 
     strbuf_release(&error_message);
 
@@ -1007,7 +1149,7 @@ static struct child_process *git_tcp_connect(int fd[2], char *host, int flags)
     int sockfd = git_tcp_connect_sock(host, flags);
 
     fd[0] = sockfd;
-    fd[1] = dup(sockfd);
+    fd[1] = fcntl(sockfd, F_DUPFD_CLOEXEC);
 
     return &no_fork;
 }
@@ -1026,9 +1168,13 @@ static int git_proxy_command_options(const char *var, const char *value,
         int         rhost_len  = strlen(rhost_name);
 
         if (git_proxy_command)
+        {
             return 0;
+        }
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         /* [core]
          * ;# matches www.kernel.org as well
          * gitproxy = netcatter-1 for kernel.org
@@ -1037,26 +1183,36 @@ static int git_proxy_command_options(const char *var, const char *value,
          */
         for_pos = strstr(value, " for ");
         if (!for_pos)
+        {
             /* matches everybody */
             matchlen = strlen(value);
+        }
         else
         {
             hostlen = strlen(for_pos + 5);
             if (rhost_len < hostlen)
+            {
                 matchlen = -1;
+            }
             else if (!strncmp(for_pos + 5,
                               rhost_name + rhost_len - hostlen,
                               hostlen)
                      && ((rhost_len == hostlen) || rhost_name[rhost_len - hostlen - 1] == '.'))
+            {
                 matchlen = for_pos - value;
+            }
             else
+            {
                 matchlen = -1;
+            }
         }
         if (0 <= matchlen)
         {
             /* core.gitproxy = none for kernel.org */
             if (matchlen == 4 && !memcmp(value, "none", 4))
+            {
                 matchlen = 0;
+            }
             git_proxy_command = xmemdupz(value, matchlen);
         }
         return 0;
@@ -1080,9 +1236,13 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
     get_host_and_port(&host, &port);
 
     if (looks_like_command_line_option(host))
+    {
         die(_("strange hostname '%s' blocked"), host);
+    }
     if (looks_like_command_line_option(port))
+    {
         die(_("strange port '%s' blocked"), port);
+    }
 
     proxy = xmalloc(sizeof(*proxy));
     child_process_init(proxy);
@@ -1092,7 +1252,9 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
     proxy->in  = -1;
     proxy->out = -1;
     if (start_command(proxy))
+    {
         die(_("cannot start proxy %s"), git_proxy_command);
+    }
     fd[0] = proxy->out; /* read from proxy stdout */
     fd[1] = proxy->in;  /* write to proxy stdin */
     return proxy;
@@ -1124,15 +1286,20 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
                                        char **ret_path)
 {
     char         *url;
-    char         *host, *path;
+    char         *host;
+    char         *path;
     char         *end;
     int           separator = '/';
     enum protocol protocol  = PROTO_LOCAL;
 
     if (is_url(url_orig))
+    {
         url = url_decode(url_orig);
+    }
     else
+    {
         url = xstrdup(url_orig);
+    }
 
     host = strstr(url, "://");
     if (host)
@@ -1158,16 +1325,26 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
     end = host_end(&host, 0);
 
     if (protocol == PROTO_LOCAL)
+    {
         path = end;
+    }
     else if (protocol == PROTO_FILE && *host != '/' && !has_dos_drive_prefix(host) && offset_1st_component(host - 2) > 1)
+    {
         path = host - 2; /* include the leading "//" */
+    }
     else if (protocol == PROTO_FILE && has_dos_drive_prefix(end))
+    {
         path = end; /* "file://$(pwd)" may be "file://C:/projects/repo" */
+    }
     else
+    {
         path = strchr(end, separator);
+    }
 
     if (!path || !*path)
+    {
         die(_("no path specified; see 'git help pull' for valid url syntax"));
+    }
 
     /*
      * null-terminate hostname and point path to ~ for URL's like this:
@@ -1176,11 +1353,15 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 
     end = path; /* Need to \0 terminate host here */
     if (separator == ':')
+    {
         path++; /* path starts after ':' */
+    }
     if (protocol == PROTO_GIT || protocol == PROTO_SSH)
     {
         if (path[1] == '~')
+        {
             path++;
+        }
     }
 
     path = xstrdup(path);
@@ -1197,10 +1378,14 @@ static const char *get_ssh_command(void)
     const char *ssh;
 
     if ((ssh = getenv("GIT_SSH_COMMAND")))
+    {
         return ssh;
+    }
 
     if (!git_config_get_string_tmp("core.sshcommand", &ssh))
+    {
         return ssh;
+    }
 
     return NULL;
 }
@@ -1220,20 +1405,34 @@ static void override_ssh_variant(enum ssh_variant *ssh_variant)
     const char *variant = getenv("GIT_SSH_VARIANT");
 
     if (!variant && git_config_get_string_tmp("ssh.variant", &variant))
+    {
         return;
+    }
 
     if (!strcmp(variant, "auto"))
+    {
         *ssh_variant = VARIANT_AUTO;
+    }
     else if (!strcmp(variant, "plink"))
+    {
         *ssh_variant = VARIANT_PLINK;
+    }
     else if (!strcmp(variant, "putty"))
+    {
         *ssh_variant = VARIANT_PUTTY;
+    }
     else if (!strcmp(variant, "tortoiseplink"))
+    {
         *ssh_variant = VARIANT_TORTOISEPLINK;
+    }
     else if (!strcmp(variant, "simple"))
+    {
         *ssh_variant = VARIANT_SIMPLE;
+    }
     else
+    {
         *ssh_variant = VARIANT_SSH;
+    }
 }
 
 static enum ssh_variant determine_ssh_variant(const char *ssh_command,
@@ -1246,7 +1445,9 @@ static enum ssh_variant determine_ssh_variant(const char *ssh_command,
     override_ssh_variant(&ssh_variant);
 
     if (ssh_variant != VARIANT_AUTO)
+    {
         return ssh_variant;
+    }
 
     if (!is_cmdline)
     {
@@ -1276,11 +1477,17 @@ static enum ssh_variant determine_ssh_variant(const char *ssh_command,
     }
 
     if (!strcasecmp(variant, "ssh") || !strcasecmp(variant, "ssh.exe"))
+    {
         ssh_variant = VARIANT_SSH;
+    }
     else if (!strcasecmp(variant, "plink") || !strcasecmp(variant, "plink.exe"))
+    {
         ssh_variant = VARIANT_PLINK;
+    }
     else if (!strcasecmp(variant, "tortoiseplink") || !strcasecmp(variant, "tortoiseplink.exe"))
+    {
         ssh_variant = VARIANT_TORTOISEPLINK;
+    }
 
     free(p);
     return ssh_variant;
@@ -1306,22 +1513,32 @@ static struct child_process *git_connect_git(int fd[2], char *hostandport,
      */
     char *target_host = getenv("GIT_OVERRIDE_VIRTUAL_HOST");
     if (target_host)
+    {
         target_host = xstrdup(target_host);
+    }
     else
+    {
         target_host = xstrdup(hostandport);
+    }
 
     transport_check_allowed("git");
     if (strchr(target_host, '\n') || strchr(path, '\n'))
+    {
         die(_("newline is forbidden in git:// hosts and repo paths"));
+    }
 
     /*
      * These underlying connection commands die() if they
      * cannot connect.
      */
     if (git_use_proxy(hostandport))
+    {
         conn = git_proxy_connect(fd, hostandport);
+    }
     else
+    {
         conn = git_tcp_connect(fd, hostandport, flags);
+    }
     /*
      * Separate original protocol components prog and path
      * from extended host header with a NUL byte.
@@ -1397,7 +1614,9 @@ static void push_ssh_options(struct strvec *args, struct strvec *env,
     }
 
     if (variant == VARIANT_TORTOISEPLINK)
+    {
         strvec_push(args, "-batch");
+    }
 
     if (port)
     {
@@ -1429,7 +1648,9 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
     enum ssh_variant variant;
 
     if (looks_like_command_line_option(ssh_host))
+    {
         die(_("strange hostname '%s' blocked"), ssh_host);
+    }
 
     ssh = get_ssh_command();
     if (ssh)
@@ -1447,7 +1668,9 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
 
         ssh = getenv("GIT_SSH");
         if (!ssh)
+        {
             ssh = "ssh";
+        }
         variant = determine_ssh_variant(ssh, 0);
     }
 
@@ -1488,7 +1711,8 @@ struct child_process *git_connect(int fd[2], const char *url,
                                   const char *name,
                                   const char *prog, int flags)
 {
-    char                 *hostandport, *path;
+    char                 *hostandport;
+    char                 *path;
     struct child_process *conn;
     enum protocol         protocol;
     enum protocol_version version = get_protocol_version_config();
@@ -1499,8 +1723,10 @@ struct child_process *git_connect(int fd[2], const char *url,
      * fetch, ls-remote, etc), then fallback to v0 since we don't know how
      * to do anything else (like push or remote archive) via v2.
      */
-    if (version == protocol_v2 && strcmp("git-upload-pack", name))
+    if (version == protocol_v2 && strcmp("git-upload-pack", name) != 0)
+    {
         version = protocol_v0;
+    }
 
     /* Without this we cannot rely on waitpid() to tell
      * what happened to our children.
@@ -1530,7 +1756,9 @@ struct child_process *git_connect(int fd[2], const char *url,
         child_process_init(conn);
 
         if (looks_like_command_line_option(path))
+        {
             die(_("strange pathname '%s' blocked"), path);
+        }
 
         strbuf_addstr(&cmd, prog);
         strbuf_addch(&cmd, ' ');
@@ -1538,7 +1766,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 
         /* remove repo-local variables from the environment */
         for (var = local_repo_env; *var; var++)
+        {
             strvec_push(&conn->env, *var);
+        }
 
         conn->use_shell = 1;
         conn->in = conn->out = -1;
@@ -1550,7 +1780,9 @@ struct child_process *git_connect(int fd[2], const char *url,
             get_host_and_port(&ssh_host, &port);
 
             if (!port)
+            {
                 port = get_port(ssh_host);
+            }
 
             if (flags & CONNECT_DIAG_URL)
             {
@@ -1583,7 +1815,9 @@ struct child_process *git_connect(int fd[2], const char *url,
         strvec_push(&conn->args, cmd.buf);
 
         if (start_command(conn))
+        {
             die(_("unable to fork"));
+        }
 
         fd[0] = conn->out; /* read from child's stdout */
         fd[1] = conn->in;  /* write to child's stdin */
@@ -1598,7 +1832,9 @@ int finish_connect(struct child_process *conn)
 {
     int code;
     if (!conn || git_connection_is_socket(conn))
+    {
         return 0;
+    }
 
     code = finish_command(conn);
     free(conn);

@@ -57,9 +57,10 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
     struct strbuf packname = STRBUF_INIT;
     int           i;
 
-    if (!state->f) {
+    if (!state->f)
+    {
         return;
-}
+    }
 
     if (state->nr_written == 0)
     {
@@ -87,9 +88,10 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
     finish_tmp_packfile(&packname, state->pack_tmp_name,
                         state->written, state->nr_written,
                         &state->pack_idx_opts, hash);
-    for (i = 0; i < state->nr_written; i++) {
+    for (i = 0; i < state->nr_written; i++)
+    {
         free(state->written[i]);
-}
+    }
 
 clear_exit:
     free(state->pack_tmp_name);
@@ -109,9 +111,10 @@ static void flush_batch_fsync(void)
     struct strbuf    temp_path = STRBUF_INIT;
     struct tempfile *temp;
 
-    if (!bulk_fsync_objdir) {
+    if (!bulk_fsync_objdir)
+    {
         return;
-}
+    }
 
     /*
      * Issue a full hardware flush against a temporary file to ensure
@@ -141,16 +144,19 @@ static int already_written(struct bulk_checkin_packfile *state, struct object_id
     int i;
 
     /* The object may already exist in the repository */
-    if (repo_has_object_file(the_repository, oid)) {
+    if (repo_has_object_file(the_repository, oid))
+    {
         return 1;
-}
+    }
 
     /* Might want to keep the list sorted */
-    for (i = 0; i < state->nr_written; i++) {
-        if (oideq(&state->written[i]->oid, oid)) {
+    for (i = 0; i < state->nr_written; i++)
+    {
+        if (oideq(&state->written[i]->oid, oid))
+        {
             return 1;
-}
-}
+        }
+    }
 
     /* This is a new object we need to keep */
     return 0;
@@ -196,23 +202,27 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
         {
             ssize_t rsize       = size < sizeof(ibuf) ? size : sizeof(ibuf);
             ssize_t read_result = read_in_full(fd, ibuf, rsize);
-            if (read_result < 0) {
+            if (read_result < 0)
+            {
                 die_errno("failed to read from '%s'", path);
-}
-            if (read_result != rsize) {
+            }
+            if (read_result != rsize)
+            {
                 die("failed to read %d bytes from '%s'",
                     (int)rsize, path);
-}
+            }
             offset += rsize;
             if (*already_hashed_to < offset)
             {
                 size_t hsize = offset - *already_hashed_to;
-                if (rsize < hsize) {
+                if (rsize < hsize)
+                {
                     hsize = rsize;
-}
-                if (hsize) {
+                }
+                if (hsize)
+                {
                     the_hash_algo->update_fn(ctx, ibuf, hsize);
-}
+                }
                 *already_hashed_to = offset;
             }
             s.next_in  = ibuf;
@@ -260,18 +270,20 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
 static void prepare_to_stream(struct bulk_checkin_packfile *state,
                               unsigned                      flags)
 {
-    if (!(flags & HASH_WRITE_OBJECT) || state->f) {
+    if (!(flags & HASH_WRITE_OBJECT) || state->f)
+    {
         return;
-}
+    }
 
     state->f = create_tmp_packfile(&state->pack_tmp_name);
     reset_pack_idx_option(&state->pack_idx_opts);
 
     /* Pretend we are going to write only one object */
     state->offset = write_pack_header(state->f, 1);
-    if (!state->offset) {
+    if (!state->offset)
+    {
         die_errno("unable to write pack header");
-}
+    }
 }
 
 static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
@@ -288,9 +300,10 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
     struct pack_idx_entry     *idx        = NULL;
 
     seekback = lseek(fd, 0, SEEK_CUR);
-    if (seekback == (off_t)-1) {
+    if (seekback == (off_t)-1)
+    {
         return error("cannot find the current offset");
-}
+    }
 
     header_len = format_object_header((char *)obuf, sizeof(obuf),
                                       OBJ_BLOB, size);
@@ -299,9 +312,10 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
     the_hash_algo->init_fn(&checkpoint.ctx);
 
     /* Note: idx is non-NULL when we are writing */
-    if ((flags & HASH_WRITE_OBJECT) != 0) {
+    if ((flags & HASH_WRITE_OBJECT) != 0)
+    {
         CALLOC_ARRAY(idx, 1);
-}
+    }
 
     already_hashed_to = 0;
 
@@ -315,28 +329,32 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
             crc32_begin(state->f);
         }
         if (!stream_blob_to_pack(state, &ctx, &already_hashed_to,
-                                 fd, size, path, flags)) {
+                                 fd, size, path, flags))
+        {
             break;
-}
+        }
         /*
          * Writing this object to the current pack will make
          * it too big; we need to truncate it, start a new
          * pack, and write into it.
          */
-        if (!idx) {
+        if (!idx)
+        {
             BUG("should not happen");
-}
+        }
         hashfile_truncate(state->f, &checkpoint);
         state->offset = checkpoint.offset;
         flush_bulk_checkin_packfile(state);
-        if (lseek(fd, seekback, SEEK_SET) == (off_t)-1) {
+        if (lseek(fd, seekback, SEEK_SET) == (off_t)-1)
+        {
             return error("cannot seek back");
-}
+        }
     }
     the_hash_algo->final_oid_fn(result_oid, &ctx);
-    if (!idx) {
+    if (!idx)
+    {
         return 0;
-}
+    }
 
     idx->crc32 = crc32_end(state->f);
     if (already_written(state, result_oid))
@@ -364,14 +382,16 @@ void prepare_loose_object_bulk_checkin(void)
      * callers may not know whether any objects will be
      * added at the time they call begin_odb_transaction.
      */
-    if (!odb_transaction_nesting || bulk_fsync_objdir) {
+    if (!odb_transaction_nesting || bulk_fsync_objdir)
+    {
         return;
-}
+    }
 
     bulk_fsync_objdir = tmp_objdir_create("bulk-fsync");
-    if (bulk_fsync_objdir) {
+    if (bulk_fsync_objdir)
+    {
         tmp_objdir_replace_primary_odb(bulk_fsync_objdir, 0);
-}
+    }
 }
 
 void fsync_loose_object_bulk_checkin(int fd, const char *filename)
@@ -385,9 +405,10 @@ void fsync_loose_object_bulk_checkin(int fd, const char *filename)
      */
     if (!bulk_fsync_objdir || git_fsync(fd, FSYNC_WRITEOUT_ONLY) < 0)
     {
-        if (errno == ENOSYS) {
+        if (errno == ENOSYS)
+        {
             warning(_("core.fsyncMethod = batch is unsupported on this platform"));
-}
+        }
         fsync_or_die(fd, filename);
     }
 }
@@ -398,9 +419,10 @@ int index_blob_bulk_checkin(struct object_id *oid,
 {
     int status = deflate_blob_to_pack(&bulk_checkin_packfile, oid, fd, size,
                                       path, flags);
-    if (!odb_transaction_nesting) {
+    if (!odb_transaction_nesting)
+    {
         flush_bulk_checkin_packfile(&bulk_checkin_packfile);
-}
+    }
     return status;
 }
 
@@ -418,13 +440,15 @@ void flush_odb_transaction(void)
 void end_odb_transaction(void)
 {
     odb_transaction_nesting -= 1;
-    if (odb_transaction_nesting < 0) {
+    if (odb_transaction_nesting < 0)
+    {
         BUG("Unbalanced ODB transaction nesting");
-}
+    }
 
-    if (odb_transaction_nesting) {
+    if (odb_transaction_nesting)
+    {
         return;
-}
+    }
 
     flush_odb_transaction();
 }

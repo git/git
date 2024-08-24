@@ -30,10 +30,12 @@ static struct cb_node *cb_internal_best_match(struct cb_node *p,
 /* returns NULL if successful, existing cb_node if duplicate */
 struct cb_node *cb_insert(struct cb_tree *t, struct cb_node *node, size_t klen)
 {
-    size_t           newbyte, newotherbits;
+    size_t           newbyte;
+    size_t           newotherbits;
     uint8_t          c;
     int              newdirection;
-    struct cb_node **wherep, *p;
+    struct cb_node **wherep;
+    struct cb_node  *p;
 
     assert(!((uintptr_t)node & 1)); /* allocations must be aligned */
 
@@ -50,7 +52,9 @@ struct cb_node *cb_insert(struct cb_tree *t, struct cb_node *node, size_t klen)
     for (newbyte = 0; newbyte < klen; newbyte++)
     {
         if (p->k[newbyte] != node->k[newbyte])
+        {
             goto different_byte_found;
+        }
     }
     return p; /* element exists, let user deal with it */
 
@@ -76,12 +80,18 @@ different_byte_found:
 
         p = *wherep;
         if (!(1 & (uintptr_t)p))
+        {
             break;
+        }
         q = cb_node_of(p);
         if (q->byte > newbyte)
+        {
             break;
+        }
         if (q->byte == newbyte && q->otherbits > newotherbits)
+        {
             break;
+        }
         c         = q->byte < klen ? node->k[q->byte] : 0;
         direction = (1 + (q->otherbits | c)) >> 8;
         wherep    = q->child + direction;
@@ -109,10 +119,8 @@ static enum cb_next cb_descend(struct cb_node *p, cb_iter fn, void *arg)
 
         return n == CB_BREAK ? n : cb_descend(q->child[1], fn, arg);
     }
-    else
-    {
-        return fn(p, arg);
-    }
+
+    return fn(p, arg);
 }
 
 void cb_each(struct cb_tree *t, const uint8_t *kpfx, size_t klen,
@@ -123,7 +131,9 @@ void cb_each(struct cb_tree *t, const uint8_t *kpfx, size_t klen,
     size_t          i   = 0;
 
     if (!p)
+    {
         return; /* empty tree */
+    }
 
     /* Walk tree, maintaining top pointer */
     while (1 & (uintptr_t)p)
@@ -134,13 +144,17 @@ void cb_each(struct cb_tree *t, const uint8_t *kpfx, size_t klen,
 
         p = q->child[direction];
         if (q->byte < klen)
+        {
             top = p;
+        }
     }
 
     for (i = 0; i < klen; i++)
     {
         if (p->k[i] != kpfx[i])
+        {
             return; /* "best" match failed */
+        }
     }
     cb_descend(top, fn, arg);
 }

@@ -75,7 +75,9 @@ static int get_hex_color(const char **inp, int width, unsigned char *out)
     assert(width == 1 || width == 2);
     val = (hexval(in[0]) << 4) | hexval(in[width - 1]);
     if (val & ~0xff)
+    {
         return -1;
+    }
     *inp += width;
     *out = val;
     return 0;
@@ -174,7 +176,9 @@ static int parse_color(struct color *out, const char *name, int len)
          * numbers are bogus.
          */
         if (val < -1)
+        {
             ; /* fall through to error */
+        }
         else if (val < 0)
         {
             out->type = COLOR_NORMAL;
@@ -235,7 +239,9 @@ static int parse_attr(const char *name, size_t len)
     for (i = 0; i < ARRAY_SIZE(attrs); i++)
     {
         if (attrs[i].len == len && !memcmp(attrs[i].name, name, len))
+        {
             return negate ? attrs[i].neg : attrs[i].val;
+        }
     }
     return -1;
 }
@@ -255,7 +261,9 @@ static char *color_output(char *out, int len, const struct color *c, int backgro
     int offset = 0;
 
     if (background)
+    {
         offset = COLOR_BACKGROUND_OFFSET;
+    }
     switch (c->type)
     {
         case COLOR_UNSPECIFIED:
@@ -309,7 +317,8 @@ int color_parse_mem(const char *value, int value_len, char *dst)
     {
         const char  *word = ptr;
         struct color c    = {COLOR_UNSPECIFIED};
-        int          val, wordlen = 0;
+        int          val;
+        int          wordlen = 0;
 
         while (len > 0 && !isspace(word[wordlen]))
         {
@@ -346,9 +355,13 @@ int color_parse_mem(const char *value, int value_len, char *dst)
         }
         val = parse_attr(word, wordlen);
         if (0 <= val)
+        {
             attr |= (1 << val);
+        }
         else
+        {
             goto bad;
+        }
     }
 
 #undef OUT
@@ -369,28 +382,38 @@ int color_parse_mem(const char *value, int value_len, char *dst)
         OUT('[');
 
         if (has_reset)
+        {
             sep++;
+        }
 
         for (i = 0; attr; i++)
         {
             unsigned bit = (1 << i);
             if (!(attr & bit))
+            {
                 continue;
+            }
             attr &= ~bit;
             if (sep++)
+            {
                 OUT(';');
+            }
             dst += xsnprintf(dst, end - dst, "%d", i);
         }
         if (!color_empty(&fg))
         {
             if (sep++)
+            {
                 OUT(';');
+            }
             dst = color_output(dst, end - dst, &fg, 0);
         }
         if (!color_empty(&bg))
         {
             if (sep++)
+            {
                 OUT(';');
+            }
             dst = color_output(dst, end - dst, &bg, 1);
         }
         OUT('m');
@@ -407,19 +430,29 @@ int git_config_colorbool(const char *var, const char *value)
     if (value)
     {
         if (!strcasecmp(value, "never"))
+        {
             return 0;
+        }
         if (!strcasecmp(value, "always"))
+        {
             return 1;
+        }
         if (!strcasecmp(value, "auto"))
+        {
             return GIT_COLOR_AUTO;
+        }
     }
 
     if (!var)
+    {
         return -1;
+    }
 
     /* Missing or explicit false to turn off colorization */
     if (!git_config_bool(var, value))
+    {
         return 0;
+    }
 
     /* any normal truth value defaults to 'auto' */
     return GIT_COLOR_AUTO;
@@ -430,11 +463,15 @@ static int check_auto_color(int fd)
     static int color_stderr_is_tty = -1;
     int       *is_tty_p            = fd == 1 ? &color_stdout_is_tty : &color_stderr_is_tty;
     if (*is_tty_p < 0)
+    {
         *is_tty_p = isatty(fd);
+    }
     if (*is_tty_p || (fd == 1 && pager_in_use() && pager_use_color))
     {
         if (!is_terminal_dumb())
+        {
             return 1;
+        }
     }
     return 0;
 }
@@ -451,15 +488,21 @@ int want_color_fd(int fd, int var)
     static int want_auto[3] = {-1, -1, -1};
 
     if (fd < 1 || fd >= ARRAY_SIZE(want_auto))
+    {
         BUG("file descriptor out of range: %d", fd);
+    }
 
     if (var < 0)
+    {
         var = git_use_color_default;
+    }
 
     if (var == GIT_COLOR_AUTO)
     {
         if (want_auto[fd] < 0)
+        {
             want_auto[fd] = check_auto_color(fd);
+        }
         return want_auto[fd];
     }
     return var;
@@ -479,10 +522,14 @@ int git_color_config(const char *var, const char *value, void *cb UNUSED)
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)
 {
     if (*color)
+    {
         fprintf(fp, "%s", color);
+    }
     fprintf(fp, "%s", sb->buf);
     if (*color)
+    {
         fprintf(fp, "%s", GIT_COLOR_RESET);
+    }
 }
 
 static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
@@ -491,12 +538,18 @@ static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
     int r = 0;
 
     if (*color)
+    {
         r += fprintf(fp, "%s", color);
+    }
     r += vfprintf(fp, fmt, args);
     if (*color)
+    {
         r += fprintf(fp, "%s", GIT_COLOR_RESET);
+    }
     if (trail)
+    {
         r += fprintf(fp, "%s", trail);
+    }
     return r;
 }
 

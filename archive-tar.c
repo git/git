@@ -74,9 +74,10 @@ static void do_write_blocked(const void *data, unsigned long size)
     if (offset)
     {
         unsigned long chunk = BLOCKSIZE - offset;
-        if (size < chunk) {
+        if (size < chunk)
+        {
             chunk = size;
-}
+        }
         memcpy(block + offset, buf, chunk);
         size -= chunk;
         offset += chunk;
@@ -143,21 +144,24 @@ static int stream_blocked(struct repository *r, const struct object_id *oid)
     ssize_t             readlen;
 
     st = open_istream(r, oid, &type, &sz, NULL);
-    if (!st) {
+    if (!st)
+    {
         return error(_("cannot stream blob %s"), oid_to_hex(oid));
-}
+    }
     for (;;)
     {
         readlen = read_istream(st, buf, sizeof(buf));
-        if (readlen <= 0) {
+        if (readlen <= 0)
+        {
             break;
-}
+        }
         do_write_blocked(buf, readlen);
     }
     close_istream(st);
-    if (!readlen) {
+    if (!readlen)
+    {
         finish_record();
-}
+    }
     return readlen;
 }
 
@@ -176,20 +180,22 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 
     /* "%u %s=%s\n" */
     len = 1 + 1 + strlen(keyword) + 1 + valuelen + 1;
-    for (tmp = 1; len / 10 >= tmp; tmp *= 10) {
+    for (tmp = 1; len / 10 >= tmp; tmp *= 10)
+    {
         len++;
-}
+    }
 
     strbuf_grow(sb, len);
     strbuf_addf(sb, "%" PRIuMAX " %s=", (uintmax_t)len, keyword);
     strbuf_add(sb, value, valuelen);
     strbuf_addch(sb, '\n');
 
-    if (len != sb->len - orig_len) {
+    if (len != sb->len - orig_len)
+    {
         BUG("pax extended header length miscalculated as %" PRIuMAX
             ", should be %" PRIuMAX,
             (uintmax_t)len, (uintmax_t)(sb->len - orig_len));
-}
+    }
 }
 
 /*
@@ -210,26 +216,30 @@ static unsigned int ustar_header_chksum(const struct ustar_header *header)
 {
     const unsigned char *p      = (const unsigned char *)header;
     unsigned int         chksum = 0;
-    while (p < (const unsigned char *)header->chksum) {
+    while (p < (const unsigned char *)header->chksum)
+    {
         chksum += *p++;
-}
+    }
     chksum += sizeof(header->chksum) * ' ';
     p += sizeof(header->chksum);
-    while (p < (const unsigned char *)header + sizeof(struct ustar_header)) {
+    while (p < (const unsigned char *)header + sizeof(struct ustar_header))
+    {
         chksum += *p++;
-}
+    }
     return chksum;
 }
 
 static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 {
     size_t i = pathlen;
-    if (i > 1 && path[i - 1] == '/') {
+    if (i > 1 && path[i - 1] == '/')
+    {
         i--;
-}
-    if (i > maxlen) {
+    }
+    if (i > maxlen)
+    {
         i = maxlen;
-}
+    }
     do
     {
         i--;
@@ -324,9 +334,10 @@ static int write_tar_entry(struct archiver_args   *args,
                                      path, pathlen);
         }
     }
-    else {
+    else
+    {
         memcpy(header.name, path, pathlen);
-}
+    }
 
     if (S_ISLNK(mode))
     {
@@ -337,9 +348,10 @@ static int write_tar_entry(struct archiver_args   *args,
             strbuf_append_ext_header(&ext_header, "linkpath",
                                      buffer, size);
         }
-        else {
+        else
+        {
             memcpy(header.linkname, buffer, size);
-}
+        }
     }
 
     size_in_header = size;
@@ -360,11 +372,14 @@ static int write_tar_entry(struct archiver_args   *args,
     write_blocked(&header, sizeof(header));
     if (S_ISREG(mode) && size > 0)
     {
-        if (buffer) {
+        if (buffer)
+        {
             write_blocked(buffer, size);
-        } else {
+        }
+        else
+        {
             err = stream_blocked(args->repo, oid);
-}
+        }
     }
     return err;
 }
@@ -376,11 +391,12 @@ static void write_global_extended_header(struct archiver_args *args)
     struct ustar_header     header;
     unsigned int            mode;
 
-    if (oid) {
+    if (oid)
+    {
         strbuf_append_ext_header(&ext_header, "comment",
                                  oid_to_hex(oid),
                                  the_hash_algo->hexsz);
-}
+    }
     if (args->time > USTAR_MAX_MTIME)
     {
         strbuf_append_ext_header_uint(&ext_header, "mtime",
@@ -388,9 +404,10 @@ static void write_global_extended_header(struct archiver_args *args)
         args->time = USTAR_MAX_MTIME;
     }
 
-    if (!ext_header.len) {
+    if (!ext_header.len)
+    {
         return;
-}
+    }
 
     memset(&header, 0, sizeof(header));
     *header.typeflag = TYPEFLAG_GLOBAL_HEADER;
@@ -412,9 +429,10 @@ static struct archiver *find_tar_filter(const char *name, size_t len)
     for (i = 0; i < nr_tar_filters; i++)
     {
         struct archiver *ar = tar_filters[i];
-        if (!xstrncmpz(ar->name, name, len)) {
+        if (!xstrncmpz(ar->name, name, len))
+        {
             return ar;
-}
+        }
     }
     return NULL;
 }
@@ -427,9 +445,10 @@ static int tar_filter_config(const char *var, const char *value,
     const char      *type;
     size_t           namelen;
 
-    if (parse_config_key(var, "tar", &name, &namelen, &type) < 0 || !name) {
+    if (parse_config_key(var, "tar", &name, &namelen, &type) < 0 || !name)
+    {
         return 0;
-}
+    }
 
     ar = find_tar_filter(name, namelen);
     if (!ar)
@@ -444,20 +463,24 @@ static int tar_filter_config(const char *var, const char *value,
 
     if (!strcmp(type, "command"))
     {
-        if (!value) {
+        if (!value)
+        {
             return config_error_nonbool(var);
-}
+        }
         free(ar->filter_command);
         ar->filter_command = xstrdup(value);
         return 0;
     }
     if (!strcmp(type, "remote"))
     {
-        if (git_config_bool(var, value)) {
+        if (git_config_bool(var, value))
+        {
             ar->flags |= ARCHIVER_REMOTE;
-        } else {
+        }
+        else
+        {
             ar->flags &= ~ARCHIVER_REMOTE;
-}
+        }
         return 0;
     }
 
@@ -491,9 +514,10 @@ static int write_tar_archive(const struct archiver *ar UNUSED,
 
     write_global_extended_header(args);
     err = write_archive_entries(args, write_tar_entry);
-    if (!err) {
+    if (!err)
+    {
         write_trailer();
-}
+    }
     return err;
 }
 
@@ -510,13 +534,15 @@ static void tgz_deflate(int flush)
             write_or_die(1, outbuf, gzstream.next_out - outbuf);
             gzstream.next_out  = outbuf;
             gzstream.avail_out = sizeof(outbuf);
-            if (status == Z_STREAM_END) {
+            if (status == Z_STREAM_END)
+            {
                 break;
-}
+            }
         }
-        if (status != Z_OK && status != Z_BUF_ERROR) {
+        if (status != Z_OK && status != Z_BUF_ERROR)
+        {
             die(_("deflate error (%d)"), status);
-}
+        }
     }
 }
 
@@ -539,18 +565,20 @@ static int write_tar_filter_archive(const struct archiver *ar,
     struct child_process filter = CHILD_PROCESS_INIT;
     int                  r;
 
-    if (!ar->filter_command) {
+    if (!ar->filter_command)
+    {
         BUG("tar-filter archiver called with no filter defined");
-}
+    }
 
     if (!strcmp(ar->filter_command, internal_gzip_command))
     {
         write_block = tgz_write_block;
         git_deflate_init_gzip(&gzstream, args->compression_level);
 #if ZLIB_VERNUM >= 0x1221
-        if (deflateSetHeader(&gzstream.z, &gzhead) != Z_OK) {
+        if (deflateSetHeader(&gzstream.z, &gzhead) != Z_OK)
+        {
             BUG("deflateSetHeader() called too late");
-}
+        }
 #endif
         gzstream.next_out  = outbuf;
         gzstream.avail_out = sizeof(outbuf);
@@ -563,30 +591,34 @@ static int write_tar_filter_archive(const struct archiver *ar,
     }
 
     strbuf_addstr(&cmd, ar->filter_command);
-    if (args->compression_level >= 0) {
+    if (args->compression_level >= 0)
+    {
         strbuf_addf(&cmd, " -%d", args->compression_level);
-}
+    }
 
     strvec_push(&filter.args, cmd.buf);
     filter.use_shell           = 1;
     filter.in                  = -1;
     filter.silent_exec_failure = 1;
 
-    if (start_command(&filter) < 0) {
+    if (start_command(&filter) < 0)
+    {
         die_errno(_("unable to start '%s' filter"), cmd.buf);
-}
+    }
     close(1);
-    if (dup2(filter.in, 1) < 0) {
+    if (dup2(filter.in, 1) < 0)
+    {
         die_errno(_("unable to redirect descriptor"));
-}
+    }
     close(filter.in);
 
     r = write_tar_archive(ar, args);
 
     close(1);
-    if (finish_command(&filter) != 0) {
+    if (finish_command(&filter) != 0)
+    {
         die(_("'%s' filter reported error"), cmd.buf);
-}
+    }
 
     strbuf_release(&cmd);
     return r;
@@ -611,8 +643,9 @@ void init_tar_archiver(void)
     for (i = 0; i < nr_tar_filters; i++)
     {
         /* omit any filters that never had a command configured */
-        if (tar_filters[i]->filter_command) {
+        if (tar_filters[i]->filter_command)
+        {
             register_archiver(tar_filters[i]);
-}
+        }
     }
 }
