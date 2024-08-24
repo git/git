@@ -15,7 +15,7 @@ void put_be24(uint8_t *out, uint32_t i)
     out[2] = (uint8_t)(i & 0xff);
 }
 
-uint32_t get_be24(uint8_t *in)
+uint32_t get_be24(const uint8_t *in)
 {
     return (uint32_t)(in[0]) << 16 | (uint32_t)(in[1]) << 8 | (uint32_t)(in[2]);
 }
@@ -41,16 +41,24 @@ size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
         size_t mid = lo + (hi - lo) / 2;
         int    ret = f(mid, args);
         if (ret < 0)
+        {
             return sz;
+        }
 
         if (ret > 0)
+        {
             hi = mid;
+        }
         else
+        {
             lo = mid;
+        }
     }
 
     if (lo)
+    {
         return hi;
+    }
 
     return f(0, args) ? 0 : 1;
 }
@@ -73,7 +81,9 @@ size_t names_length(const char **names)
 {
     const char **p = names;
     while (*p)
+    {
         p++;
+    }
     return p - names;
 }
 
@@ -113,8 +123,12 @@ int names_equal(const char **a, const char **b)
 {
     size_t i = 0;
     for (; a[i] && b[i]; i++)
-        if (strcmp(a[i], b[i]))
+    {
+        if (strcmp(a[i], b[i]) != 0)
+        {
             return 0;
+        }
+    }
     return a[i] == b[i];
 }
 
@@ -124,7 +138,9 @@ int common_prefix_size(struct strbuf *a, struct strbuf *b)
     for (; p < a->len && p < b->len; p++)
     {
         if (a->buf[p] != b->buf[p])
+        {
             break;
+        }
     }
 
     return p;

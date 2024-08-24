@@ -35,7 +35,9 @@ static int count_dir_entries(const char *dirname)
     int            len = 0;
     struct dirent *d;
     if (!dir)
+    {
         return 0;
+    }
 
     while ((d = readdir(dir)))
     {
@@ -50,7 +52,9 @@ static int count_dir_entries(const char *dirname)
          * anyway.
          */
         if (starts_with(d->d_name, "."))
+        {
             continue;
+        }
         len++;
     }
     closedir(dir);
@@ -82,7 +86,8 @@ static void test_read_file(void)
     char       *fn        = get_tmp_template(__LINE__);
     int         fd        = mkstemp(fn);
     char        out[1024] = "line1\n\nline2\nline3";
-    int         n, err;
+    int         n;
+    int         err;
     char      **names  = NULL;
     const char *want[] = {"line1", "line2", "line3"};
     int         i      = 0;
@@ -310,7 +315,9 @@ static void test_reftable_stack_transaction_api_performs_auto_compaction(void)
     struct reftable_write_options opts = {0};
     struct reftable_addition     *add  = NULL;
     struct reftable_stack        *st   = NULL;
-    int                           i, n = 20, err;
+    int                           i;
+    int                           n = 20;
+    int                           err;
 
     err = reftable_new_stack(&st, dir, &opts);
     EXPECT_ERR(err);
@@ -351,9 +358,13 @@ static void test_reftable_stack_transaction_api_performs_auto_compaction(void)
          * all tables in the stack.
          */
         if (i != n)
+        {
             EXPECT(st->merged->stack_len == i + 1);
+        }
         else
+        {
             EXPECT(st->merged->stack_len == 1);
+        }
     }
 
     reftable_stack_destroy(st);
@@ -444,7 +455,8 @@ static void test_reftable_stack_lock_failure(void)
     char                         *dir  = get_tmp_dir(__LINE__);
     struct reftable_write_options opts = {0};
     struct reftable_stack        *st   = NULL;
-    int                           err, i;
+    int                           err;
+    int                           i;
 
     err = reftable_new_stack(&st, dir, &opts);
     EXPECT_ERR(err);
@@ -867,9 +879,13 @@ static int fastlog2(uint64_t sz)
 {
     int l = 0;
     if (sz == 0)
+    {
         return 0;
+    }
     for (; sz; sz /= 2)
+    {
         l++;
+    }
     return l - 1;
 }
 
@@ -880,7 +896,8 @@ static void test_reftable_stack_auto_compaction(void)
     };
     struct reftable_stack *st  = NULL;
     char                  *dir = get_tmp_dir(__LINE__);
-    int                    err, i;
+    int                    err;
+    int                    i;
     int                    N = 100;
 
     err = reftable_new_stack(&st, dir, &opts);
@@ -958,7 +975,9 @@ static void test_reftable_stack_add_performs_auto_compaction(void)
     struct reftable_stack        *st      = NULL;
     struct strbuf                 refname = STRBUF_INIT;
     char                         *dir     = get_tmp_dir(__LINE__);
-    int                           err, i, n = 20;
+    int                           err;
+    int                           i;
+    int                           n = 20;
 
     err = reftable_new_stack(&st, dir, &opts);
     EXPECT_ERR(err);
@@ -991,9 +1010,13 @@ static void test_reftable_stack_add_performs_auto_compaction(void)
          * all tables in the stack.
          */
         if (i != n)
+        {
             EXPECT(st->merged->stack_len == i + 1);
+        }
         else
+        {
             EXPECT(st->merged->stack_len == 1);
+        }
     }
 
     reftable_stack_destroy(st);
@@ -1039,8 +1062,9 @@ static void test_reftable_stack_compaction_with_locked_tables(void)
 static void test_reftable_stack_compaction_concurrent(void)
 {
     struct reftable_write_options opts = {0};
-    struct reftable_stack        *st1 = NULL, *st2 = NULL;
-    char                         *dir = get_tmp_dir(__LINE__);
+    struct reftable_stack        *st1  = NULL;
+    struct reftable_stack        *st2  = NULL;
+    char                         *dir  = get_tmp_dir(__LINE__);
     int                           err;
 
     err = reftable_new_stack(&st1, dir, &opts);
@@ -1075,8 +1099,10 @@ static void unclean_stack_close(struct reftable_stack *st)
 static void test_reftable_stack_compaction_concurrent_clean(void)
 {
     struct reftable_write_options opts = {0};
-    struct reftable_stack        *st1 = NULL, *st2 = NULL, *st3 = NULL;
-    char                         *dir = get_tmp_dir(__LINE__);
+    struct reftable_stack        *st1  = NULL;
+    struct reftable_stack        *st2  = NULL;
+    struct reftable_stack        *st3  = NULL;
+    char                         *dir  = get_tmp_dir(__LINE__);
     int                           err;
 
     err = reftable_new_stack(&st1, dir, &opts);

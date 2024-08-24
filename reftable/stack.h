@@ -37,7 +37,7 @@ struct segment
     uint64_t bytes;
 };
 
-struct segment suggest_compaction_segment(uint64_t *sizes, size_t n,
+struct segment suggest_compaction_segment(const uint64_t *sizes, size_t n,
                                           uint8_t factor);
 
 #endif

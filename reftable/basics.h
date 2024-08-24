@@ -18,7 +18,7 @@ https://developers.google.com/open-source/licenses/bsd
 /* Bigendian en/decoding of integers */
 
 void     put_be24(uint8_t *out, uint32_t i);
-uint32_t get_be24(uint8_t *in);
+uint32_t get_be24(const uint8_t *in);
 void     put_be16(uint8_t *out, uint16_t i);
 
 /*

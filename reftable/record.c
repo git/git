@@ -25,7 +25,9 @@ int get_var_int(uint64_t *dest, struct string_view *in)
     uint64_t val;
 
     if (in->len == 0)
+    {
         return -1;
+    }
     val = in->buf[ptr] & 0x7f;
 
     while (in->buf[ptr] & 0x80)
@@ -63,7 +65,9 @@ int put_var_int(struct string_view *dest, uint64_t val)
 
     n = sizeof(buf) - i - 1;
     if (dest->len < n)
+    {
         return -1;
+    }
     memcpy(dest->buf, &buf[i + 1], n);
     return n;
 }
@@ -111,10 +115,14 @@ static int decode_string(struct strbuf *dest, struct string_view in)
     uint64_t tsize     = 0;
     int      n         = get_var_int(&tsize, &in);
     if (n <= 0)
+    {
         return -1;
+    }
     string_view_consume(&in, n);
     if (in.len < tsize)
+    {
         return -1;
+    }
 
     strbuf_reset(dest);
     strbuf_add(dest, in.buf, tsize);
@@ -129,10 +137,14 @@ static int encode_string(const char *str, struct string_view s)
     int                l     = strlen(str);
     int                n     = put_var_int(&s, l);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&s, n);
     if (s.len < l)
+    {
         return -1;
+    }
     memcpy(s.buf, str, l);
     string_view_consume(&s, l);
 
@@ -148,18 +160,24 @@ int reftable_encode_key(int *restart, struct string_view dest,
     uint64_t           suffix_len = key.len - prefix_len;
     int                n          = put_var_int(&dest, (uint64_t)prefix_len);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&dest, n);
 
     *restart = (prefix_len == 0);
 
     n = put_var_int(&dest, suffix_len << 3 | (uint64_t)extra);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&dest, n);
 
     if (dest.len < suffix_len)
+    {
         return -1;
+    }
     memcpy(dest.buf, key.buf + prefix_len, suffix_len);
     string_view_consume(&dest, suffix_len);
 
@@ -176,12 +194,16 @@ int reftable_decode_keylen(struct string_view in,
 
     n = get_var_int(prefix_len, &in);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&in, n);
 
     n = get_var_int(suffix_len, &in);
     if (n <= 0)
+    {
         return -1;
+    }
     string_view_consume(&in, n);
 
     *extra = (uint8_t)(*suffix_len & 0x7);
@@ -200,11 +222,15 @@ int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
 
     n = reftable_decode_keylen(in, &prefix_len, &suffix_len, extra);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&in, n);
 
     if (in.len < suffix_len || prefix_len > last_key->len)
+    {
         return -1;
+    }
 
     strbuf_setlen(last_key, prefix_len);
     strbuf_add(last_key, in.buf, suffix_len);
@@ -270,7 +296,9 @@ static void reftable_ref_record_copy_from(void *rec, const void *src_rec,
 static char hexdigit(int c)
 {
     if (c <= 9)
+    {
         return '0' + c;
+    }
     return 'a' + (c - 10);
 }
 
@@ -365,7 +393,9 @@ static int reftable_ref_record_encode(const void *rec, struct string_view s,
     int                n     = put_var_int(&s, r->update_index);
     assert(hash_size > 0);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&s, n);
 
     switch (r->value_type)
@@ -420,7 +450,9 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 
     n = get_var_int(&update_index, &in);
     if (n < 0)
+    {
         return n;
+    }
     string_view_consume(&in, n);
 
     SWAP(refname, r->refname);
@@ -547,7 +579,9 @@ static void reftable_obj_record_print(const void *rec, int hash_size)
     int                               i;
 
     for (i = 0; i < obj->offset_len; i++)
+    {
         strbuf_addf(&offset_str, "%" PRIu64 " ", obj->offsets[i]);
+    }
     hex_format(hex, obj->hash_prefix, obj->hash_prefix_len);
     printf("prefix %s (len %d), offsets [%s]\n",
            hex, obj->hash_prefix_len, offset_str.buf);
@@ -566,7 +600,9 @@ static void reftable_obj_record_copy_from(void *rec, const void *src_rec,
     REFTABLE_ALLOC_ARRAY(obj->hash_prefix, src->hash_prefix_len);
     obj->hash_prefix_len = src->hash_prefix_len;
     if (src->hash_prefix_len)
+    {
         memcpy(obj->hash_prefix, src->hash_prefix, obj->hash_prefix_len);
+    }
 
     REFTABLE_ALLOC_ARRAY(obj->offsets, src->offset_len);
     obj->offset_len = src->offset_len;
@@ -577,7 +613,9 @@ static uint8_t reftable_obj_record_val_type(const void *rec)
 {
     const struct reftable_obj_record *r = rec;
     if (r->offset_len > 0 && r->offset_len < 8)
+    {
         return r->offset_len;
+    }
     return 0;
 }
 
@@ -599,10 +637,14 @@ static int reftable_obj_record_encode(const void *rec, struct string_view s,
         string_view_consume(&s, n);
     }
     if (r->offset_len == 0)
+    {
         return start.len - s.len;
+    }
     n = put_var_int(&s, r->offsets[0]);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&s, n);
 
     last = r->offsets[0];
@@ -650,14 +692,18 @@ static int reftable_obj_record_decode(void *rec, struct strbuf key,
     r->offsets    = NULL;
     r->offset_len = 0;
     if (count == 0)
+    {
         return start.len - in.len;
+    }
 
     REFTABLE_ALLOC_ARRAY(r->offsets, count);
     r->offset_len = count;
 
     n = get_var_int(&r->offsets[0], &in);
     if (n < 0)
+    {
         return n;
+    }
     string_view_consume(&in, n);
 
     last = r->offsets[0];
@@ -690,12 +736,18 @@ static int reftable_obj_record_equal_void(const void *a, const void *b, int hash
 
     if (ra->hash_prefix_len != rb->hash_prefix_len
         || ra->offset_len != rb->offset_len)
+    {
         return 0;
+    }
 
-    if (ra->hash_prefix_len && memcmp(ra->hash_prefix, rb->hash_prefix, ra->hash_prefix_len))
+    if (ra->hash_prefix_len && memcmp(ra->hash_prefix, rb->hash_prefix, ra->hash_prefix_len) != 0)
+    {
         return 0;
-    if (ra->offset_len && memcmp(ra->offsets, rb->offsets, ra->offset_len * sizeof(uint64_t)))
+    }
+    if (ra->offset_len && memcmp(ra->offsets, rb->offsets, ra->offset_len * sizeof(uint64_t)) != 0)
+    {
         return 0;
+    }
 
     return 1;
 }
@@ -709,7 +761,9 @@ static int reftable_obj_record_cmp_void(const void *_a, const void *_b)
     cmp = memcmp(a->hash_prefix, b->hash_prefix,
                  a->hash_prefix_len > b->hash_prefix_len ? a->hash_prefix_len : b->hash_prefix_len);
     if (cmp)
+    {
         return cmp;
+    }
 
     /*
      * When the prefix is the same then the object record that is longer is
@@ -859,10 +913,14 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
     struct string_view                start = s;
     int                               n     = 0;
     if (reftable_log_record_is_deletion(r))
+    {
         return 0;
+    }
 
     if (s.len < 2 * hash_size)
+    {
         return -1;
+    }
 
     memcpy(s.buf, r->value.update.old_hash, hash_size);
     memcpy(s.buf + hash_size, r->value.update.new_hash, hash_size);
@@ -870,22 +928,30 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
 
     n = encode_string(r->value.update.name ? r->value.update.name : "", s);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&s, n);
 
     n = encode_string(r->value.update.email ? r->value.update.email : "",
                       s);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&s, n);
 
     n = put_var_int(&s, r->value.update.time);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&s, n);
 
     if (s.len < 2)
+    {
         return -1;
+    }
 
     put_be16(s.buf, r->value.update.tz_offset);
     string_view_consume(&s, 2);
@@ -893,7 +959,9 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
     n = encode_string(
         r->value.update.message ? r->value.update.message : "", s);
     if (n < 0)
+    {
         return -1;
+    }
     string_view_consume(&s, n);
 
     return start.len - s.len;
@@ -910,7 +978,9 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
     int                         n;
 
     if (key.len <= 9 || key.buf[key.len - 9] != 0)
+    {
         return REFTABLE_FORMAT_ERROR;
+    }
 
     REFTABLE_ALLOC_GROW(r->refname, key.len - 8, r->refname_cap);
     memcpy(r->refname, key.buf, key.len - 8);
@@ -935,10 +1005,14 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 
     r->value_type = val_type;
     if (val_type == REFTABLE_LOG_DELETION)
+    {
         return 0;
+    }
 
     if (in.len < 2 * hash_size)
+    {
         return REFTABLE_FORMAT_ERROR;
+    }
 
     memcpy(r->value.update.old_hash, in.buf, hash_size);
     memcpy(r->value.update.new_hash, in.buf + hash_size, hash_size);
@@ -947,7 +1021,9 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 
     n = decode_string(scratch, in);
     if (n < 0)
+    {
         goto done;
+    }
     string_view_consume(&in, n);
 
     /*
@@ -956,7 +1032,7 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
      * target commits. As an optimization for this common case we can thus
      * skip copying over the name in case it's accurate already.
      */
-    if (!r->value.update.name || strcmp(r->value.update.name, scratch->buf))
+    if (!r->value.update.name || strcmp(r->value.update.name, scratch->buf) != 0)
     {
         r->value.update.name =
             reftable_realloc(r->value.update.name, scratch->len + 1);
@@ -966,11 +1042,13 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 
     n = decode_string(scratch, in);
     if (n < 0)
+    {
         goto done;
+    }
     string_view_consume(&in, n);
 
     /* Same as above, but for the reflog email. */
-    if (!r->value.update.email || strcmp(r->value.update.email, scratch->buf))
+    if (!r->value.update.email || strcmp(r->value.update.email, scratch->buf) != 0)
     {
         r->value.update.email =
             reftable_realloc(r->value.update.email, scratch->len + 1);
@@ -981,18 +1059,24 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
     ts = 0;
     n  = get_var_int(&ts, &in);
     if (n < 0)
+    {
         goto done;
+    }
     string_view_consume(&in, n);
     r->value.update.time = ts;
     if (in.len < 2)
+    {
         goto done;
+    }
 
     r->value.update.tz_offset = get_be16(in.buf);
     string_view_consume(&in, 2);
 
     n = decode_string(scratch, in);
     if (n < 0)
+    {
         goto done;
+    }
     string_view_consume(&in, n);
 
     REFTABLE_ALLOC_GROW(r->value.update.message, scratch->len + 1,
@@ -1010,10 +1094,14 @@ static int null_streq(const char *a, const char *b)
 {
     const char *empty = "";
     if (!a)
+    {
         a = empty;
+    }
 
     if (!b)
+    {
         b = empty;
+    }
 
     return 0 == strcmp(a, b);
 }
@@ -1032,7 +1120,9 @@ static int reftable_log_record_cmp_void(const void *_a, const void *_b)
     const struct reftable_log_record *b   = _b;
     int                               cmp = strcmp(a->refname, b->refname);
     if (cmp)
+    {
         return cmp;
+    }
 
     /*
      * Note that the comparison here is reversed. This is because the
@@ -1046,7 +1136,9 @@ int reftable_log_record_equal(const struct reftable_log_record *a,
                               const struct reftable_log_record *b, int hash_size)
 {
     if (!(null_streq(a->refname, b->refname) && a->update_index == b->update_index && a->value_type == b->value_type))
+    {
         return 0;
+    }
 
     switch (a->value_type)
     {
@@ -1122,7 +1214,9 @@ static int reftable_index_record_encode(const void *rec, struct string_view out,
 
     int n = put_var_int(&out, r->offset);
     if (n < 0)
+    {
         return n;
+    }
 
     string_view_consume(&out, n);
 
@@ -1142,7 +1236,9 @@ static int reftable_index_record_decode(void *rec, struct strbuf key,
 
     n = get_var_int(&r->offset, &in);
     if (n < 0)
+    {
         return n;
+    }
 
     string_view_consume(&in, n);
     return start.len - in.len;
@@ -1234,7 +1330,9 @@ int reftable_record_is_deletion(struct reftable_record *rec)
 int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b)
 {
     if (a->type != b->type)
+    {
         BUG("cannot compare reftable records of different type");
+    }
     return reftable_record_vtable(a)->cmp(
         reftable_record_data(a), reftable_record_data(b));
 }
@@ -1242,7 +1340,9 @@ int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b)
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size)
 {
     if (a->type != b->type)
+    {
         return 0;
+    }
     return reftable_record_vtable(a)->equal(
         reftable_record_data(a), reftable_record_data(b), hash_size);
 }
@@ -1250,7 +1350,9 @@ int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, 
 static int hash_equal(const unsigned char *a, const unsigned char *b, int hash_size)
 {
     if (a && b)
+    {
         return !memcmp(a, b, hash_size);
+    }
 
     return a == b;
 }
@@ -1260,10 +1362,14 @@ int reftable_ref_record_equal(const struct reftable_ref_record *a,
 {
     assert(hash_size > 0);
     if (!null_streq(a->refname, b->refname))
+    {
         return 0;
+    }
 
     if (a->update_index != b->update_index || a->value_type != b->value_type)
+    {
         return 0;
+    }
 
     switch (a->value_type)
     {
@@ -1301,9 +1407,13 @@ int reftable_log_record_compare_key(const void *a, const void *b)
 
     int cmp = strcmp(la->refname, lb->refname);
     if (cmp)
+    {
         return cmp;
+    }
     if (la->update_index > lb->update_index)
+    {
         return -1;
+    }
     return (la->update_index < lb->update_index) ? 1 : 0;
 }
 

@@ -52,7 +52,9 @@ static int filtering_ref_iterator_next(void                   *iter_arg,
 
             err = reftable_iterator_seek_ref(&it, ref->refname);
             if (err == 0)
+            {
                 err = reftable_iterator_next_ref(&it, ref);
+            }
 
             reftable_iterator_destroy(&it);
 
@@ -68,7 +70,9 @@ static int filtering_ref_iterator_next(void                   *iter_arg,
         }
 
         if (ref->value_type == REFTABLE_REF_VAL2 && (!memcmp(fri->oid.buf, ref->value.val2.target_value, fri->oid.len) || !memcmp(fri->oid.buf, ref->value.val2.value, fri->oid.len)))
+        {
             return 0;
+        }
 
         if (ref->value_type == REFTABLE_REF_VAL1 && !memcmp(fri->oid.buf, ref->value.val1, fri->oid.len))
         {

@@ -18,23 +18,31 @@ static void (*reftable_free_ptr)(void *);
 void *reftable_malloc(size_t sz)
 {
     if (reftable_malloc_ptr)
+    {
         return (*reftable_malloc_ptr)(sz);
+    }
     return malloc(sz);
 }
 
 void *reftable_realloc(void *p, size_t sz)
 {
     if (reftable_realloc_ptr)
+    {
         return (*reftable_realloc_ptr)(p, sz);
+    }
     return realloc(p, sz);
 }
 
 void reftable_free(void *p)
 {
     if (reftable_free_ptr)
+    {
         reftable_free_ptr(p);
+    }
     else
+    {
         free(p);
+    }
 }
 
 void *reftable_calloc(size_t nelem, size_t elsize)

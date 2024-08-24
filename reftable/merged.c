@@ -72,7 +72,9 @@ static int merged_iter_advance_subiter(struct merged_iter *mi, size_t idx)
 
     err = iterator_next(&mi->subiters[idx].iter, &mi->subiters[idx].rec);
     if (err)
+    {
         return err;
+    }
 
     merged_iter_pqueue_add(&mi->pq, &e);
     return 0;
@@ -88,13 +90,19 @@ static int merged_iter_seek(struct merged_iter *mi, struct reftable_record *want
     {
         err = iterator_seek(&mi->subiters[i].iter, want);
         if (err < 0)
+        {
             return err;
+        }
         if (err > 0)
+        {
             continue;
+        }
 
         err = merged_iter_advance_subiter(mi, i);
         if (err < 0)
+        {
             return err;
+        }
     }
 
     return 0;
@@ -104,7 +112,8 @@ static int merged_iter_next_entry(struct merged_iter     *mi,
                                   struct reftable_record *rec)
 {
     struct pq_entry entry = {0};
-    int             err   = 0, empty;
+    int             err   = 0;
+    int             empty;
 
     empty = merged_iter_pqueue_is_empty(mi->pq);
 
@@ -123,19 +132,27 @@ static int merged_iter_next_entry(struct merged_iter     *mi,
          * subiters but the one from that base ref.
          */
         if (empty)
+        {
             return iterator_next(&mi->subiters[mi->advance_index].iter,
                                  rec);
+        }
 
         err = merged_iter_advance_subiter(mi, mi->advance_index);
         if (err < 0)
+        {
             return err;
+        }
         if (!err)
+        {
             empty = 0;
+        }
         mi->advance_index = -1;
     }
 
     if (empty)
+    {
         return 1;
+    }
 
     entry = merged_iter_pqueue_remove(&mi->pq);
 
@@ -154,12 +171,16 @@ static int merged_iter_next_entry(struct merged_iter     *mi,
 
         cmp = reftable_record_cmp(top.rec, entry.rec);
         if (cmp > 0)
+        {
             break;
+        }
 
         merged_iter_pqueue_remove(&mi->pq);
         err = merged_iter_advance_subiter(mi, top.index);
         if (err < 0)
+        {
             return err;
+        }
     }
 
     mi->advance_index = entry.index;
@@ -179,9 +200,13 @@ static int merged_iter_next_void(void *p, struct reftable_record *rec)
     {
         int err = merged_iter_next_entry(mi, rec);
         if (err)
+        {
             return err;
+        }
         if (mi->suppress_deletions && reftable_record_is_deletion(rec))
+        {
             continue;
+        }
         return 0;
     }
 }
@@ -240,7 +265,9 @@ int reftable_new_merged_table(struct reftable_merged_table **dest,
 void reftable_merged_table_free(struct reftable_merged_table *mt)
 {
     if (!mt)
+    {
         return;
+    }
     FREE_AND_NULL(mt->stack);
     reftable_free(mt);
 }

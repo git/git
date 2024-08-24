@@ -16,7 +16,9 @@ int pq_less(struct pq_entry *a, struct pq_entry *b)
 {
     int cmp = reftable_record_cmp(a->rec, b->rec);
     if (cmp == 0)
+    {
         return a->index > b->index;
+    }
     return cmp < 0;
 }
 
@@ -33,11 +35,17 @@ struct pq_entry merged_iter_pqueue_remove(struct merged_iter_pqueue *pq)
         size_t j   = 2 * i + 1;
         size_t k   = 2 * i + 2;
         if (j < pq->len && pq_less(&pq->heap[j], &pq->heap[i]))
+        {
             min = j;
+        }
         if (k < pq->len && pq_less(&pq->heap[k], &pq->heap[min]))
+        {
             min = k;
+        }
         if (min == i)
+        {
             break;
+        }
         SWAP(pq->heap[i], pq->heap[min]);
         i = min;
     }
@@ -57,7 +65,9 @@ void merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry
     {
         size_t j = (i - 1) / 2;
         if (pq_less(&pq->heap[j], &pq->heap[i]))
+        {
             break;
+        }
         SWAP(pq->heap[j], pq->heap[i]);
         i = j;
     }

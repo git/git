@@ -16,7 +16,9 @@ https://developers.google.com/open-source/licenses/bsd
 static void strbuf_return_block(void *b, struct reftable_block *dest)
 {
     if (dest->len)
+    {
         memset(dest->data, 0xff, dest->len);
+    }
     reftable_free(dest->data);
 }
 
@@ -58,7 +60,9 @@ void block_source_from_strbuf(struct reftable_block_source *bs,
 static void malloc_return_block(void *b, struct reftable_block *dest)
 {
     if (dest->len)
+    {
         memset(dest->data, 0xff, dest->len);
+    }
     reftable_free(dest->data);
 }
 
@@ -121,11 +125,13 @@ int reftable_block_source_from_file(struct reftable_block_source *bs,
     struct stat               st;
     int                       fd;
 
-    fd = open(name, O_RDONLY);
+    fd = open(name, O_RDONLY | O_CLOEXEC);
     if (fd < 0)
     {
         if (errno == ENOENT)
+        {
             return REFTABLE_NOT_EXIST_ERROR;
+        }
         return -1;
     }
 

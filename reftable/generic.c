@@ -73,13 +73,17 @@ int reftable_table_read_ref(struct reftable_table *tab, const char *name,
 
     err = reftable_iterator_seek_ref(&it, name);
     if (err)
+    {
         goto done;
+    }
 
     err = reftable_iterator_next_ref(&it, ref);
     if (err)
+    {
         goto done;
+    }
 
-    if (strcmp(ref->refname, name) || reftable_ref_record_is_deletion(ref))
+    if (strcmp(ref->refname, name) != 0 || reftable_ref_record_is_deletion(ref))
     {
         reftable_ref_record_release(ref);
         err = 1;
@@ -103,7 +107,9 @@ int reftable_table_print(struct reftable_table *tab)
 
     err = reftable_iterator_seek_ref(&it, "");
     if (err < 0)
+    {
         return err;
+    }
 
     while (1)
     {
@@ -125,7 +131,9 @@ int reftable_table_print(struct reftable_table *tab)
 
     err = reftable_iterator_seek_log(&it, "");
     if (err < 0)
+    {
         return err;
+    }
 
     while (1)
     {
