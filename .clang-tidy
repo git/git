@@ -1,0 +1,93 @@
+Checks: " *,
+        -altera-id-dependent-backward-branch,
+        -altera-struct-pack-align,
+        -altera-unroll-loops,
+        -bugprone-branch-clone,
+        -bugprone-easily-swappable-parameters,
+        -cert-dcl58-cpp,
+        -clang-diagnostic-error,
+        -cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers,
+        -cppcoreguidelines-init-variables,
+        -cppcoreguidelines-non-private-member-variables-in-classes,
+        -cppcoreguidelines-pro-type-member-init,
+        -fuchsia-default-arguments-declarations,
+        -fuchsia-overloaded-operator,
+        -fuchsia-trailing-return,
+        -google-readability-casting,
+        -google-readability-namespace-comments,
+        -google-readability-todo,
+        -google-runtime-int,
+        -hicpp-explicit-conversions,
+        -hicpp-member-init,
+        -hicpp-use-equals-default,
+        -llvm-header-guard,
+        -llvm-include-order,
+        -llvm-namespace-comment,
+        -llvmlibc-callee-namespace,
+        -llvmlibc-implementation-in-namespace,
+        -llvmlibc-restrict-system-libc-headers,
+        -misc-const-correctness,
+        -misc-non-private-member-variables-in-classes,
+        -misc-unused-parameters,
+        -modernize-use-equals-default,
+        -modernize-use-trailing-return-type,
+        -modernize-pass-by-value,
+        -readability-avoid-const-params-in-decls,
+        -readability-convert-member-functions-to-static,        
+        -readability-implicit-bool-conversion,       
+        -readability-redundant-string-init,
+        -readability-identifier-naming,
+"
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle:     none
+CheckOptions:
+  - key: performance- 
+    value: warning
+  - key: modernize- 
+    value: warning
+  - key: readability- 
+    value: warning
+  - key: readability-identifier-naming.ConstVariableStyle 
+    value: UpperCamelCase
+  - key: readability-identifier-naming.ClassMemberPrefix 
+    value: m_
+  - key: readability-identifier-naming.ClassMemberCase 
+    value: CamelCase  
+  - key: readability-identifier-naming.FunctionCase 
+    value: CamelCase
+  - key: readability-identifier-naming.ClassMethodCase 
+    value: camelBack
+  - key: readability-identifier-naming.ClassConstantCase 
+    value: UPPER_CASE
+  - key: readability-identifier-naming.PrivateMemberPrefix 
+    value: m_
+  - key: readability-identifier-naming.PrivateMemberCase 
+    value: CamelCase
+  - key: readability-identifier-naming.ProtectedMemberPrefix 
+    value: m_
+  - key: readability-identifier-naming.ProtectedMemberCase 
+    value: CamelCase  
+  - key: readability-identifier-naming.PublicMemberCase 
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase 
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantCase 
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase 
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ParameterCase 
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase 
+    value: camelBack
+  - key: readability-identifier-naming.ConstMember 
+    value: UpperCamelCase
+  - key: readability-identifier-naming.ConstVariableCase 
+    value: UpperCamelCase
+  - key: readability-identifier-naming.NamespaceCase 
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefCase 
+    value: CamelCase
+  - key: readability-identifier-naming.TypedefSuffix 
+    value: _T
+
