@@ -38,8 +38,9 @@ static char de85[256];
 static void prep_base85(void)
 {
     int i;
-    if (de85['Z'])
+    if (de85['Z']) {
         return;
+}
     for (i = 0; i < ARRAY_SIZE(en85); i++)
     {
         int ch   = en85[i];
@@ -55,23 +56,27 @@ int decode_85(char *dst, const char *buffer, int len)
     while (len)
     {
         unsigned      acc = 0;
-        int           de, cnt = 4;
+        int           de;
+        int           cnt = 4;
         unsigned char ch;
         do
         {
             ch = *buffer++;
             de = de85[ch];
-            if (--de < 0)
+            if (--de < 0) {
                 return error("invalid base85 alphabet %c", ch);
+}
             acc = acc * 85 + de;
         } while (--cnt);
         ch = *buffer++;
         de = de85[ch];
-        if (--de < 0)
+        if (--de < 0) {
             return error("invalid base85 alphabet %c", ch);
+}
         /* Detect overflow. */
-        if (0xffffffff / 85 < acc || 0xffffffff - de < (acc *= 85))
+        if (0xffffffff / 85 < acc || 0xffffffff - de < (acc *= 85)) {
             return error("invalid base85 sequence %.5s", buffer - 5);
+}
         acc += de;
         say1(" %08x", acc);
 
@@ -99,8 +104,9 @@ void encode_85(char *buf, const unsigned char *data, int bytes)
         {
             unsigned ch = *data++;
             acc |= ch << cnt;
-            if (--bytes == 0)
+            if (--bytes == 0) {
                 break;
+}
         }
         say1(" %08x", acc);
         for (cnt = 4; cnt >= 0; cnt--)

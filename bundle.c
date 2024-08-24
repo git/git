@@ -50,8 +50,9 @@ static int parse_capability(struct bundle_header *header, const char *capability
     if (skip_prefix(capability, "object-format=", &arg))
     {
         int algo = hash_algo_by_name(arg);
-        if (algo == GIT_HASH_UNKNOWN)
+        if (algo == GIT_HASH_UNKNOWN) {
             return error(_("unrecognized bundle hash algorithm: %s"), arg);
+}
         header->hash_algo = &hash_algos[algo];
         return 0;
     }
@@ -87,9 +88,10 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
     /* The bundle header begins with the signature */
     if (strbuf_getwholeline_fd(&buf, fd, '\n') || parse_bundle_signature(header, buf.buf))
     {
-        if (report_path)
+        if (report_path) {
             error(_("'%s' does not look like a v2 or v3 bundle file"),
                   report_path);
+}
         status = -1;
         goto abort;
     }
@@ -133,20 +135,20 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
          */
         if (parse_oid_hex_algop(buf.buf, &oid, &p, header->hash_algo) || (*p && !isspace(*p)) || (!is_prereq && !*p))
         {
-            if (report_path)
+            if (report_path) {
                 error(_("unrecognized header: %s%s (%d)"),
                       (is_prereq ? "-" : ""), buf.buf, (int)buf.len);
+}
             status = -1;
             break;
         }
-        else
-        {
-            struct object_id *dup = oiddup(&oid);
+        
+                    struct object_id *dup = oiddup(&oid);
             if (is_prereq)
                 string_list_append(&header->prerequisites, "")->util = dup;
             else
                 string_list_append(&header->references, p + 1)->util = dup;
-        }
+       
     }
 
 abort:
@@ -161,23 +163,26 @@ abort:
 
 int read_bundle_header(const char *path, struct bundle_header *header)
 {
-    int fd = open(path, O_RDONLY);
+    int fd = open(path, O_RDONLY | O_CLOEXEC);
 
-    if (fd < 0)
+    if (fd < 0) {
         return error(_("could not open '%s'"), path);
+}
     return read_bundle_header_fd(fd, header, path);
 }
 
 int is_bundle(const char *path, int quiet)
 {
     struct bundle_header header = BUNDLE_HEADER_INIT;
-    int                  fd     = open(path, O_RDONLY);
+    int                  fd     = open(path, O_RDONLY | O_CLOEXEC);
 
-    if (fd < 0)
+    if (fd < 0) {
         return 0;
+}
     fd = read_bundle_header_fd(fd, &header, quiet ? NULL : path);
-    if (fd >= 0)
+    if (fd >= 0) {
         close(fd);
+}
     bundle_header_release(&header);
     return (fd >= 0);
 }
@@ -194,11 +199,14 @@ static int list_refs(struct string_list *r, int argc, const char **argv)
         if (argc > 1)
         {
             int j;
-            for (j = 1; j < argc; j++)
-                if (!strcmp(r->items[i].string, argv[j]))
+            for (j = 1; j < argc; j++) {
+                if (!strcmp(r->items[i].string, argv[j])) {
                     break;
-            if (j == argc)
+}
+}
+            if (j == argc) {
                 continue;
+}
         }
 
         oid  = r->items[i].util;
@@ -221,8 +229,9 @@ static const struct object_id *iterate_ref_map(void *cb_data)
 {
     struct string_list_iterator *iter = cb_data;
 
-    if (iter->cur >= iter->list->nr)
+    if (iter->cur >= iter->list->nr) {
         return NULL;
+}
 
     return iter->list->items[iter->cur++].util;
 }
@@ -236,7 +245,8 @@ int verify_bundle(struct repository       *r,
      * to be verbose about the errors
      */
     struct string_list         *p = &header->prerequisites;
-    int                         i, ret = 0;
+    int                         i;
+    int                         ret = 0;
     const char                 *message = _("Repository lacks these prerequisite commits:");
     struct string_list_iterator iter    = {
            .list = p,
@@ -245,8 +255,9 @@ int verify_bundle(struct repository       *r,
         .quiet = 1,
     };
 
-    if (!r || !r->objects || !r->objects->odb)
+    if (!r || !r->objects || !r->objects->odb) {
         return error(_("need a repository to verify a bundle"));
+}
 
     for (i = 0; i < p->nr; i++)
     {
@@ -254,22 +265,27 @@ int verify_bundle(struct repository       *r,
         const char              *name = e->string;
         struct object_id        *oid  = e->util;
         struct object           *o    = parse_object(r, oid);
-        if (o)
+        if (o) {
             continue;
+}
         ret++;
-        if (flags & VERIFY_BUNDLE_QUIET)
+        if (flags & VERIFY_BUNDLE_QUIET) {
             continue;
-        if (ret == 1)
+}
+        if (ret == 1) {
             error("%s", message);
+}
         error("%s %s", oid_to_hex(oid), name);
     }
-    if (ret)
+    if (ret) {
         goto cleanup;
+}
 
-    if ((ret = check_connected(iterate_ref_map, &iter, &opts)))
+    if ((ret = check_connected(iterate_ref_map, &iter, &opts))) {
         error(_(
             "some prerequisite commits exist in the object store, "
             "but are not connected to the repository's history"));
+}
 
     /* TODO: preserve this verbose language. */
     if (flags & VERIFY_BUNDLE_VERBOSE)
@@ -299,9 +315,10 @@ int verify_bundle(struct repository       *r,
 
         printf_ln(_("The bundle uses this hash algorithm: %s"),
                   header->hash_algo->name);
-        if (header->filter.choice)
+        if (header->filter.choice) {
             printf_ln(_("The bundle uses this filter: %s"),
                       list_objects_filter_spec(&header->filter));
+}
     }
 cleanup:
     return ret;
@@ -316,23 +333,29 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 {
     unsigned long    size;
     enum object_type type;
-    char            *buf = NULL, *line, *lineend;
+    char            *buf = NULL;
+    char            *line;
+    char            *lineend;
     timestamp_t      date;
     int              result = 1;
 
-    if (revs->max_age == -1 && revs->min_age == -1)
+    if (revs->max_age == -1 && revs->min_age == -1) {
         goto out;
+}
 
     buf = repo_read_object_file(the_repository, &tag->oid, &type, &size);
-    if (!buf)
+    if (!buf) {
         goto out;
+}
     line = memmem(buf, size, "\ntagger ", 8);
-    if (!line++)
+    if (!line++) {
         goto out;
+}
     lineend = memchr(line, '\n', buf + size - line);
     line    = memchr(line, '>', lineend ? lineend - line : buf + size - line);
-    if (!line++)
+    if (!line++) {
         goto out;
+}
     date   = parse_timestamp(line, NULL, 10);
     result = (revs->max_age == -1 || revs->max_age < date) && (revs->min_age == -1 || revs->min_age > date);
 out:
@@ -351,9 +374,10 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *
                  "--stdout", "--thin", "--delta-base-offset",
                  NULL);
     strvec_pushv(&pack_objects.args, pack_options->v);
-    if (revs->filter.choice)
+    if (revs->filter.choice) {
         strvec_pushf(&pack_objects.args, "--filter=%s",
                      list_objects_filter_spec(&revs->filter));
+}
     pack_objects.in      = -1;
     pack_objects.out     = bundle_fd;
     pack_objects.git_cmd = 1;
@@ -364,7 +388,7 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *
      */
     if (pack_objects.out > 1)
     {
-        pack_objects.out = dup(pack_objects.out);
+        pack_objects.out = fcntl(pack_objects.out, F_DUPFD_CLOEXEC);
         if (pack_objects.out < 0)
         {
             error_errno(_("unable to dup bundle descriptor"));
@@ -373,20 +397,23 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *
         }
     }
 
-    if (start_command(&pack_objects))
+    if (start_command(&pack_objects)) {
         return error(_("Could not spawn pack-objects"));
+}
 
     for (i = 0; i < revs->pending.nr; i++)
     {
         struct object *object = revs->pending.objects[i].item;
-        if (object->flags & UNINTERESTING)
+        if (object->flags & UNINTERESTING) {
             write_or_die(pack_objects.in, "^", 1);
+}
         write_or_die(pack_objects.in, oid_to_hex(&object->oid), the_hash_algo->hexsz);
         write_or_die(pack_objects.in, "\n", 1);
     }
     close(pack_objects.in);
-    if (finish_command(&pack_objects))
+    if (finish_command(&pack_objects)) {
         return error(_("pack-objects died"));
+}
     return 0;
 }
 
@@ -412,14 +439,17 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
         const char                *display_ref;
         int                        flag;
 
-        if (e->item->flags & UNINTERESTING)
+        if (e->item->flags & UNINTERESTING) {
             continue;
+}
         if (repo_dwim_ref(the_repository, e->name, strlen(e->name),
                           &oid, &ref, 0)
-            != 1)
+            != 1) {
             goto skip_write_ref;
-        if (refs_read_ref_full(get_main_ref_store(the_repository), e->name, RESOLVE_REF_READING, &oid, &flag))
+}
+        if (refs_read_ref_full(get_main_ref_store(the_repository), e->name, RESOLVE_REF_READING, &oid, &flag)) {
             flag = 0;
+}
         display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
 
         if (e->item->type == OBJ_TAG && !is_tag_in_date_range(e->item, revs))
@@ -503,8 +533,9 @@ static void write_bundle_prerequisites(struct commit *commit, void *data)
     struct pretty_print_context       ctx = {0};
     struct strbuf                     buf = STRBUF_INIT;
 
-    if (!(commit->object.flags & BOUNDARY))
+    if (!(commit->object.flags & BOUNDARY)) {
         return;
+}
     strbuf_addf(&buf, "-%s ", oid_to_hex(&commit->object.oid));
     write_or_die(bpi->fd, buf.buf, buf.len);
 
@@ -530,7 +561,8 @@ int create_bundle(struct repository *r, const char *path,
     int                              bundle_fd = -1;
     int                              bundle_to_stdout;
     int                              ref_count = 0;
-    struct rev_info                  revs, revs_copy;
+    struct rev_info                  revs;
+    struct rev_info                  revs_copy;
     int                              min_version = 2;
     struct bundle_prerequisites_info bpi;
     int                              ret;
@@ -555,8 +587,9 @@ int create_bundle(struct repository *r, const char *path,
      *    SHA1.
      * 2. @filter is required because we parsed an object filter.
      */
-    if (the_hash_algo != &hash_algos[GIT_HASH_SHA1] || revs.filter.choice)
+    if (the_hash_algo != &hash_algos[GIT_HASH_SHA1] || revs.filter.choice) {
         min_version = 3;
+}
 
     if (argc > 1)
     {
@@ -565,14 +598,16 @@ int create_bundle(struct repository *r, const char *path,
     }
 
     bundle_to_stdout = !strcmp(path, "-");
-    if (bundle_to_stdout)
+    if (bundle_to_stdout) {
         bundle_fd = 1;
-    else
+    } else {
         bundle_fd = hold_lock_file_for_update(&lock, path,
                                               LOCK_DIE_ON_ERROR);
+}
 
-    if (version == -1)
+    if (version == -1) {
         version = min_version;
+}
 
     if (version < 2 || version > 3)
     {
@@ -612,16 +647,18 @@ int create_bundle(struct repository *r, const char *path,
     for (i = 0; i < revs.pending.nr; i++)
     {
         struct object_array_entry *e = revs.pending.objects + i;
-        if (e)
+        if (e) {
             add_object_array_with_path(e->item, e->name,
                                        &revs_copy.pending,
                                        e->mode, e->path);
+}
     }
 
     /* write prerequisites */
     revs.boundary = 1;
-    if (prepare_revision_walk(&revs))
+    if (prepare_revision_walk(&revs)) {
         die("revision walk setup failed");
+}
     bpi.fd      = bundle_fd;
     bpi.pending = &revs_copy.pending;
 
@@ -654,8 +691,9 @@ int create_bundle(struct repository *r, const char *path,
 
     if (!bundle_to_stdout)
     {
-        if (commit_lock_file(&lock))
+        if (commit_lock_file(&lock)) {
             die_errno(_("cannot create '%s'"), path);
+}
     }
 
     ret = 0;
@@ -673,17 +711,20 @@ int unbundle(struct repository *r, struct bundle_header *header,
 {
     struct child_process ip = CHILD_PROCESS_INIT;
 
-    if (verify_bundle(r, header, flags))
+    if (verify_bundle(r, header, flags)) {
         return -1;
+}
 
     strvec_pushl(&ip.args, "index-pack", "--fix-thin", "--stdin", NULL);
 
     /* If there is a filter, then we need to create the promisor pack. */
-    if (header->filter.choice)
+    if (header->filter.choice) {
         strvec_push(&ip.args, "--promisor=from-bundle");
+}
 
-    if (flags & VERIFY_BUNDLE_FSCK)
+    if (flags & VERIFY_BUNDLE_FSCK) {
         strvec_push(&ip.args, "--fsck-objects");
+}
 
     if (extra_index_pack_args)
     {
@@ -694,7 +735,8 @@ int unbundle(struct repository *r, struct bundle_header *header,
     ip.in        = bundle_fd;
     ip.no_stdout = 1;
     ip.git_cmd   = 1;
-    if (run_command(&ip))
+    if (run_command(&ip)) {
         return error(_("index-pack died"));
+}
     return 0;
 }

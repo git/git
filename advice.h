@@ -73,10 +73,10 @@ int advice_enabled(enum advice_type type);
  */
 __attribute__((format(printf, 2, 3))) void advise_if_enabled(enum advice_type type, const char *advice, ...);
 
-int           error_resolve_conflict(const char *me);
-void NORETURN die_resolve_conflict(const char *me);
-void NORETURN die_conclude_merge(void);
-void NORETURN die_ff_impossible(void);
+int           error_resolve_conflict(const char *me); 
+void NORETURN die_resolve_conflict(const char *me); // NOLINT
+void NORETURN die_conclude_merge(void); // NOLINT
+void NORETURN die_ff_impossible(void); // NOLINT
 void          advise_on_updating_sparse_paths(struct string_list *pathspec_list);
 void          detach_advice(const char *new_name);
 void          advise_on_moving_dirty_path(struct string_list *pathspec_list);

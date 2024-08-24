@@ -59,8 +59,9 @@ static int clear_remote_bundle_info(struct remote_bundle_info *bundle,
 
 void clear_bundle_list(struct bundle_list *list)
 {
-    if (!list)
+    if (!list) {
         return;
+}
 
     for_all_bundles_in_list(list, clear_remote_bundle_info, NULL);
     hashmap_clear_and_free(&list->bundles, struct remote_bundle_info, ent);
@@ -78,8 +79,9 @@ int for_all_bundles_in_list(struct bundle_list *list,
     {
         int result = iter(info, data);
 
-        if (result)
+        if (result) {
             return result;
+}
     }
 
     return 0;
@@ -91,8 +93,9 @@ static int summarize_bundle(struct remote_bundle_info *info, void *data)
     fprintf(fp, "[bundle \"%s\"]\n", info->id);
     fprintf(fp, "\turi = %s\n", info->uri);
 
-    if (info->creationToken)
+    if (info->creationToken) {
         fprintf(fp, "\tcreationToken = %" PRIu64 "\n", info->creationToken);
+}
     return 0;
 }
 
@@ -147,21 +150,25 @@ static int bundle_list_update(const char *key, const char *value,
     struct strbuf              id     = STRBUF_INIT;
     struct remote_bundle_info  lookup = REMOTE_BUNDLE_INFO_INIT;
     struct remote_bundle_info *bundle;
-    const char                *subsection, *subkey;
+    const char                *subsection;
+    const char                *subkey;
     size_t                     subsection_len;
 
-    if (parse_config_key(key, "bundle", &subsection, &subsection_len, &subkey))
+    if (parse_config_key(key, "bundle", &subsection, &subsection_len, &subkey)) {
         return -1;
+}
 
     if (!subsection_len)
     {
         if (!strcmp(subkey, "version"))
         {
             int version;
-            if (!git_parse_int(value, &version))
+            if (!git_parse_int(value, &version)) {
                 return -1;
-            if (version != 1)
+}
+            if (version != 1) {
                 return -1;
+}
 
             list->version = version;
             return 0;
@@ -169,12 +176,13 @@ static int bundle_list_update(const char *key, const char *value,
 
         if (!strcmp(subkey, "mode"))
         {
-            if (!strcmp(value, "all"))
+            if (!strcmp(value, "all")) {
                 list->mode = BUNDLE_MODE_ALL;
-            else if (!strcmp(value, "any"))
+            } else if (!strcmp(value, "any")) {
                 list->mode = BUNDLE_MODE_ANY;
-            else
+            } else {
                 return -1;
+}
             return 0;
         }
 
@@ -217,17 +225,19 @@ static int bundle_list_update(const char *key, const char *value,
 
     if (!strcmp(subkey, "uri"))
     {
-        if (bundle->uri)
+        if (bundle->uri) {
             return -1;
+}
         bundle->uri = relative_url(list->baseURI, value, NULL);
         return 0;
     }
 
     if (!strcmp(subkey, "creationtoken"))
     {
-        if (sscanf(value, "%" PRIu64, &bundle->creationToken) != 1)
+        if (sscanf(value, "%" PRIu64, &bundle->creationToken) != 1) {
             warning(_("could not parse bundle list key %s with value '%s'"),
                     "creationToken", value);
+}
         return 0;
     }
 
@@ -307,7 +317,8 @@ static int download_https_uri_to_file(const char *file, const char *uri)
 {
     int                  result   = 0;
     struct child_process cp       = CHILD_PROCESS_INIT;
-    FILE                *child_in = NULL, *child_out = NULL;
+    FILE                *child_in = NULL;
+    FILE                *child_out = NULL;
     struct strbuf        line      = STRBUF_INIT;
     int                  found_get = 0;
 
@@ -316,8 +327,9 @@ static int download_https_uri_to_file(const char *file, const char *uri)
     cp.in  = -1;
     cp.out = -1;
 
-    if (start_command(&cp))
+    if (start_command(&cp)) {
         return 1;
+}
 
     child_in = fdopen(cp.in, "w");
     if (!child_in)
@@ -338,10 +350,12 @@ static int download_https_uri_to_file(const char *file, const char *uri)
 
     while (!strbuf_getline(&line, child_out))
     {
-        if (!line.len)
+        if (!line.len) {
             break;
-        if (!strcmp(line.buf, "get"))
+}
+        if (!strcmp(line.buf, "get")) {
             found_get = 1;
+}
     }
     strbuf_release(&line);
 
@@ -354,12 +368,15 @@ static int download_https_uri_to_file(const char *file, const char *uri)
     fprintf(child_in, "get %s %s\n\n", uri, file);
 
 cleanup:
-    if (child_in)
+    if (child_in) {
         fclose(child_in);
-    if (finish_command(&cp))
+}
+    if (finish_command(&cp)) {
         return 1;
-    if (child_out)
+}
+    if (child_out) {
         fclose(child_out);
+}
     return result;
 }
 
@@ -367,11 +384,13 @@ static int copy_uri_to_file(const char *filename, const char *uri)
 {
     const char *out;
 
-    if (starts_with(uri, "https:") || starts_with(uri, "http:"))
+    if (starts_with(uri, "https:") || starts_with(uri, "http:")) {
         return download_https_uri_to_file(filename, uri);
+}
 
-    if (skip_prefix(uri, "file://", &out))
+    if (skip_prefix(uri, "file://", &out)) {
         uri = out;
+}
 
     /* Copy as a file */
     return copy_file(filename, uri, 0);
@@ -386,8 +405,9 @@ static int unbundle_from_file(struct repository *r, const char *file)
     struct strbuf            bundle_ref = STRBUF_INIT;
     size_t                   bundle_prefix_len;
 
-    if ((bundle_fd = read_bundle_header(file, &header)) < 0)
+    if ((bundle_fd = read_bundle_header(file, &header)) < 0) {
         return 1;
+}
 
     /*
      * Skip the reachability walk here, since we will be adding
@@ -395,8 +415,9 @@ static int unbundle_from_file(struct repository *r, const char *file)
      * the prerequisite commits.
      */
     if ((result = unbundle(r, &header, bundle_fd, NULL,
-                           VERIFY_BUNDLE_QUIET | (fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0))))
+                           VERIFY_BUNDLE_QUIET | (fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0)))) {
         return 1;
+}
 
     /*
      * Convert all refs/heads/ from the bundle into refs/bundles/
@@ -412,8 +433,9 @@ static int unbundle_from_file(struct repository *r, const char *file)
         const char       *branch_name;
         int               has_old;
 
-        if (!skip_prefix(refname->string, "refs/heads/", &branch_name))
+        if (!skip_prefix(refname->string, "refs/heads/", &branch_name)) {
             continue;
+}
 
         strbuf_setlen(&bundle_ref, bundle_prefix_len);
         strbuf_addstr(&bundle_ref, branch_name);
@@ -456,8 +478,9 @@ static int download_bundle_to_file(struct remote_bundle_info *bundle, void *data
     int                         res;
     struct bundle_list_context *ctx = data;
 
-    if (ctx->mode == BUNDLE_MODE_ANY && ctx->count)
+    if (ctx->mode == BUNDLE_MODE_ANY && ctx->count) {
         return 0;
+}
 
     res = fetch_bundle_uri_internal(ctx->r, bundle, ctx->depth + 1, ctx->list);
 
@@ -466,8 +489,9 @@ static int download_bundle_to_file(struct remote_bundle_info *bundle, void *data
      * BUNDLE_MODE_ANY, then we will want to try other URIs in the
      * list in case they work instead.
      */
-    if (!res)
+    if (!res) {
         ctx->count++;
+}
 
     /*
      * To be opportunistic as possible, we continue iterating and
@@ -500,10 +524,12 @@ static int compare_creation_token_decreasing(const void *va, const void *vb)
     const struct remote_bundle_info *const *a = va;
     const struct remote_bundle_info *const *b = vb;
 
-    if ((*a)->creationToken > (*b)->creationToken)
+    if ((*a)->creationToken > (*b)->creationToken) {
         return -1;
-    if ((*a)->creationToken < (*b)->creationToken)
+}
+    if ((*a)->creationToken < (*b)->creationToken) {
         return 1;
+}
     return 0;
 }
 
@@ -513,7 +539,8 @@ static int fetch_bundles_by_token(struct repository  *r,
     int                        cur;
     int                        move_direction = 0;
     const char                *creationTokenStr;
-    uint64_t                   maxCreationToken = 0, newMaxCreationToken = 0;
+    uint64_t                   maxCreationToken = 0;
+    uint64_t                   newMaxCreationToken = 0;
     struct bundle_list_context ctx = {
         .r    = r,
         .list = list,
@@ -577,8 +604,9 @@ static int fetch_bundles_by_token(struct repository  *r,
          * state due to missing or invalid bundles. Halt the process
          * instead of continuing to download extra data.
          */
-        if (bundle->creationToken <= maxCreationToken)
+        if (bundle->creationToken <= maxCreationToken) {
             break;
+}
 
         if (!bundle->file)
         {
@@ -627,8 +655,9 @@ static int fetch_bundles_by_token(struct repository  *r,
                 move_direction    = -1;
                 bundle->unbundled = 1;
 
-                if (bundle->creationToken > newMaxCreationToken)
+                if (bundle->creationToken > newMaxCreationToken) {
                     newMaxCreationToken = bundle->creationToken;
+}
             }
         }
 
@@ -655,8 +684,9 @@ static int fetch_bundles_by_token(struct repository  *r,
         strbuf_addf(&value, "%" PRIu64 "", newMaxCreationToken);
         if (repo_config_set_multivar_gently(ctx.r,
                                             "fetch.bundleCreationToken",
-                                            value.buf, NULL, 0))
+                                            value.buf, NULL, 0)) {
             warning(_("failed to store maximum creation token"));
+}
 
         strbuf_release(&value);
     }
@@ -692,8 +722,9 @@ static int fetch_bundle_list_in_config_format(struct repository         *r,
 
     if ((result = bundle_uri_parse_config_format(bundle->uri,
                                                  bundle->file,
-                                                 &list_from_bundle)))
+                                                 &list_from_bundle))) {
         goto cleanup;
+}
 
     if (list_from_bundle.mode == BUNDLE_MODE_NONE)
     {
@@ -714,8 +745,9 @@ static int fetch_bundle_list_in_config_format(struct repository         *r,
         global_list->heuristic = BUNDLE_HEURISTIC_CREATIONTOKEN;
     }
     else if ((result = download_bundle_list(r, &list_from_bundle,
-                                            global_list, depth)))
+                                            global_list, depth))) {
         goto cleanup;
+}
 
 cleanup:
     clear_bundle_list(&list_from_bundle);
@@ -765,9 +797,10 @@ static int fetch_bundle_uri_internal(struct repository         *r,
     {
         result = fetch_bundle_list_in_config_format(
             r, list, bundle, depth);
-        if (result)
+        if (result) {
             warning(_("file at URI '%s' is not a bundle or bundle list"),
                     bundle->uri);
+}
         goto cleanup;
     }
 
@@ -779,8 +812,9 @@ static int fetch_bundle_uri_internal(struct repository         *r,
     hashmap_add(&list->bundles, &bcopy->ent);
 
 cleanup:
-    if (result && bundle->file)
+    if (result && bundle->file) {
         unlink(bundle->file);
+}
     return result;
 }
 
@@ -792,8 +826,9 @@ static int attempt_unbundle(struct remote_bundle_info *info, void *data)
 {
     struct repository *r = data;
 
-    if (!info->file || info->unbundled)
+    if (!info->file || info->unbundled) {
         return 0;
+}
 
     if (!unbundle_from_file(r, info->file))
     {
@@ -816,16 +851,18 @@ static int unbundle_all_bundles(struct repository  *r,
      * the loop terminated early on a successful unbundling, which
      * signals that we can try again.
      */
-    while (for_all_bundles_in_list(list, attempt_unbundle, r))
+    while (for_all_bundles_in_list(list, attempt_unbundle, r)) {
         ;
+}
 
     return 0;
 }
 
 static int unlink_bundle(struct remote_bundle_info *info, void *data UNUSED)
 {
-    if (info->file)
+    if (info->file) {
         unlink_or_warn(info->file);
+}
     return 0;
 }
 
@@ -854,14 +891,16 @@ int fetch_bundle_uri(struct repository *r, const char *uri,
     /* If a bundle is added to this global list, then it is required. */
     list.mode = BUNDLE_MODE_ALL;
 
-    if ((result = fetch_bundle_uri_internal(r, &bundle, 0, &list)))
+    if ((result = fetch_bundle_uri_internal(r, &bundle, 0, &list))) {
         goto cleanup;
+}
 
     result = unbundle_all_bundles(r, &list);
 
 cleanup:
-    if (has_heuristic)
+    if (has_heuristic) {
         *has_heuristic = (list.heuristic != BUNDLE_HEURISTIC_NONE);
+}
     for_all_bundles_in_list(&list, unlink_bundle, NULL);
     clear_bundle_list(&list);
     clear_remote_bundle_info(&bundle, NULL);
@@ -878,21 +917,24 @@ int fetch_bundle_list(struct repository *r, struct bundle_list *list)
      * advertised by 'list' are not nested lists and instead
      * direct bundles. We do not need to use global_list.
      */
-    if (list->heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN)
+    if (list->heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN) {
         return fetch_bundles_by_token(r, list);
+}
 
     init_bundle_list(&global_list);
 
     /* If a bundle is added to this global list, then it is required. */
     global_list.mode = BUNDLE_MODE_ALL;
 
-    if ((result = download_bundle_list(r, list, &global_list, 0)))
+    if ((result = download_bundle_list(r, list, &global_list, 0))) {
         goto cleanup;
+}
 
-    if (list->heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN)
+    if (list->heuristic == BUNDLE_HEURISTIC_CREATIONTOKEN) {
         result = fetch_bundles_by_token(r, list);
-    else
+    } else {
         result = unbundle_all_bundles(r, &global_list);
+}
 
 cleanup:
     for_all_bundles_in_list(&global_list, unlink_bundle, NULL);
@@ -908,8 +950,9 @@ int bundle_uri_advertise(struct repository *r, struct strbuf *value UNUSED)
 {
     static int advertise_bundle_uri = -1;
 
-    if (advertise_bundle_uri != -1)
+    if (advertise_bundle_uri != -1) {
         goto cached;
+}
 
     advertise_bundle_uri = 0;
     repo_config_get_maybe_bool(r, "uploadpack.advertisebundleuris", &advertise_bundle_uri);
@@ -924,8 +967,9 @@ static int config_to_packet_line(const char *key, const char *value,
 {
     struct packet_reader *writer = data;
 
-    if (starts_with(key, "bundle."))
+    if (starts_with(key, "bundle.")) {
         packet_write_fmt(writer->fd, "%s=%s", key, value);
+}
 
     return 0;
 }
@@ -936,10 +980,12 @@ int bundle_uri_command(struct repository    *r,
     struct packet_writer writer;
     packet_writer_init(&writer, 1);
 
-    while (packet_reader_read(request) == PACKET_READ_NORMAL)
+    while (packet_reader_read(request) == PACKET_READ_NORMAL) {
         die(_("bundle-uri: unexpected argument: '%s'"), request->line);
-    if (request->status != PACKET_READ_FLUSH)
+}
+    if (request->status != PACKET_READ_FLUSH) {
         die(_("bundle-uri: expected flush after arguments"));
+}
 
     /*
      * Read all "bundle.*" config lines to the client as key=value
@@ -961,15 +1007,18 @@ int bundle_uri_parse_line(struct bundle_list *list, const char *line)
     const char   *equals;
     struct strbuf key = STRBUF_INIT;
 
-    if (!strlen(line))
+    if (!strlen(line)) {
         return error(_("bundle-uri: got an empty line"));
+}
 
     equals = strchr(line, '=');
 
-    if (!equals)
+    if (!equals) {
         return error(_("bundle-uri: line is not of the form 'key=value'"));
-    if (line == equals || !*(equals + 1))
+}
+    if (line == equals || !*(equals + 1)) {
         return error(_("bundle-uri: line has empty key or value"));
+}
 
     strbuf_add(&key, line, equals - line);
     result = bundle_list_update(key.buf, equals + 1, list);

@@ -178,8 +178,9 @@ static void copy_le64(unsigned char *dest, uint64_t n)
 
 static uint64_t clamp_max(uint64_t n, uint64_t max, int *clamped)
 {
-    if (n <= max)
+    if (n <= max) {
         return n;
+}
     *clamped = 1;
     return max;
 }
@@ -286,10 +287,12 @@ static int has_only_ascii(const char *s)
     for (;;)
     {
         int c = *s++;
-        if (c == '\0')
+        if (c == '\0') {
             return 1;
-        if (!isascii(c))
+}
+        if (!isascii(c)) {
             return 0;
+}
     }
 }
 
@@ -297,10 +300,12 @@ static int entry_is_binary(struct index_state *istate, const char *path,
                            const void *buffer, size_t size)
 {
     struct userdiff_driver *driver = userdiff_find_by_path(istate, path);
-    if (!driver)
+    if (!driver) {
         driver = userdiff_find_by_name("default");
-    if (driver->binary != -1)
+}
+    if (driver->binary != -1) {
         return driver->binary;
+}
     return buffer_is_binary(buffer, size);
 }
 
@@ -337,10 +342,11 @@ static int write_zip_entry(struct archiver_args   *args,
 
     if (!has_only_ascii(path))
     {
-        if (is_utf8(path))
+        if (is_utf8(path)) {
             flags |= ZIP_UTF8;
-        else
+        } else {
             warning(_("path is not valid UTF-8: %s"), path);
+}
     }
 
     if (pathlen > 0xffff)
@@ -361,19 +367,22 @@ static int write_zip_entry(struct archiver_args   *args,
         method = ZIP_METHOD_STORE;
         attr2  = S_ISLNK(mode) ? ((mode | 0777) << 16) : (mode & 0111) ? ((mode) << 16)
                                                                        : 0;
-        if (S_ISLNK(mode) || (mode & 0111))
+        if (S_ISLNK(mode) || (mode & 0111)) {
             creator_version = 0x0317;
-        if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
+}
+        if (S_ISREG(mode) && args->compression_level != 0 && size > 0) {
             method = ZIP_METHOD_DEFLATE;
+}
 
         if (!buffer)
         {
             enum object_type type;
             stream = open_istream(args->repo, oid, &type, &size,
                                   NULL);
-            if (!stream)
+            if (!stream) {
                 return error(_("cannot stream blob %s"),
                              oid_to_hex(oid));
+}
             flags |= ZIP_STREAM;
             out = NULL;
         }
@@ -393,8 +402,9 @@ static int write_zip_entry(struct archiver_args   *args,
                      oid_to_hex(oid));
     }
 
-    if (creator_version > max_creator_version)
+    if (creator_version > max_creator_version) {
         max_creator_version = creator_version;
+}
 
     if (buffer && method == ZIP_METHOD_DEFLATE)
     {
@@ -414,13 +424,16 @@ static int write_zip_entry(struct archiver_args   *args,
     extra.flags[0] = 1; /* just mtime */
     copy_le32(extra.mtime, args->time);
 
-    if (size > 0xffffffff || compressed_size > 0xffffffff)
+    if (size > 0xffffffff || compressed_size > 0xffffffff) {
         need_zip64_extra = 1;
-    if (stream && size > 0x7fffffff)
+}
+    if (stream && size > 0x7fffffff) {
         need_zip64_extra = 1;
+}
 
-    if (need_zip64_extra)
+    if (need_zip64_extra) {
         version_needed = 45;
+}
 
     copy_le32(header.magic, 0x04034b50);
     copy_le16(header.version, version_needed);
@@ -463,18 +476,21 @@ static int write_zip_entry(struct archiver_args   *args,
         for (;;)
         {
             readlen = read_istream(stream, buf, sizeof(buf));
-            if (readlen <= 0)
+            if (readlen <= 0) {
                 break;
+}
             crc = crc32(crc, buf, readlen);
-            if (is_binary == -1)
+            if (is_binary == -1) {
                 is_binary = entry_is_binary(args->repo->index,
                                             path_without_prefix,
                                             buf, readlen);
+}
             write_or_die(1, buf, readlen);
         }
         close_istream(stream);
-        if (readlen)
+        if (readlen) {
             return readlen;
+}
 
         compressed_size = size;
         zip_offset += compressed_size;
@@ -499,19 +515,22 @@ static int write_zip_entry(struct archiver_args   *args,
         for (;;)
         {
             readlen = read_istream(stream, buf, sizeof(buf));
-            if (readlen <= 0)
+            if (readlen <= 0) {
                 break;
+}
             crc = crc32(crc, buf, readlen);
-            if (is_binary == -1)
+            if (is_binary == -1) {
                 is_binary = entry_is_binary(args->repo->index,
                                             path_without_prefix,
                                             buf, readlen);
+}
 
             zstream.next_in  = buf;
             zstream.avail_in = readlen;
             result           = git_deflate(&zstream, 0);
-            if (result != Z_OK)
+            if (result != Z_OK) {
                 die(_("deflate error (%d)"), result);
+}
             out_len = zstream.next_out - compressed;
 
             if (out_len > 0)
@@ -523,14 +542,16 @@ static int write_zip_entry(struct archiver_args   *args,
             }
         }
         close_istream(stream);
-        if (readlen)
+        if (readlen) {
             return readlen;
+}
 
         zstream.next_in  = buf;
         zstream.avail_in = 0;
         result           = git_deflate(&zstream, Z_FINISH);
-        if (result != Z_STREAM_END)
+        if (result != Z_STREAM_END) {
             die("deflate error (%d)", result);
+}
 
         git_deflate_end(&zstream);
         out_len = zstream.next_out - compressed;
@@ -550,12 +571,15 @@ static int write_zip_entry(struct archiver_args   *args,
 
     if (compressed_size > 0xffffffff || size > 0xffffffff || offset > 0xffffffff)
     {
-        if (compressed_size >= 0xffffffff)
+        if (compressed_size >= 0xffffffff) {
             zip64_dir_extra_payload_size += 8;
-        if (size >= 0xffffffff)
+}
+        if (size >= 0xffffffff) {
             zip64_dir_extra_payload_size += 8;
-        if (offset >= 0xffffffff)
+}
+        if (offset >= 0xffffffff) {
             zip64_dir_extra_payload_size += 8;
+}
         zip_dir_extra_size += 2 + 2 + zip64_dir_extra_payload_size;
     }
 
@@ -582,12 +606,15 @@ static int write_zip_entry(struct archiver_args   *args,
     {
         strbuf_add_le(&zip_dir, 2, 0x0001); /* magic */
         strbuf_add_le(&zip_dir, 2, zip64_dir_extra_payload_size);
-        if (size >= 0xffffffff)
+        if (size >= 0xffffffff) {
             strbuf_add_le(&zip_dir, 8, size);
-        if (compressed_size >= 0xffffffff)
+}
+        if (compressed_size >= 0xffffffff) {
             strbuf_add_le(&zip_dir, 8, compressed_size);
-        if (offset >= 0xffffffff)
+}
+        if (offset >= 0xffffffff) {
             strbuf_add_le(&zip_dir, 8, offset);
+}
     }
     zip_dir_entries++;
 
@@ -635,11 +662,13 @@ static void write_zip_trailer(const struct object_id *oid)
     copy_le16(trailer.comment_length, oid ? the_hash_algo->hexsz : 0);
 
     write_or_die(1, zip_dir.buf, zip_dir.len);
-    if (clamped)
+    if (clamped) {
         write_zip64_trailer();
+}
     write_or_die(1, &trailer, ZIP_DIR_TRAILER_SIZE);
-    if (oid)
+    if (oid) {
         write_or_die(1, oid_to_hex(oid), the_hash_algo->hexsz);
+}
 }
 
 static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
@@ -647,9 +676,10 @@ static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
     time_t    time;
     struct tm tm;
 
-    if (date_overflows(*timestamp))
+    if (date_overflows(*timestamp)) {
         die(_("timestamp too large for this system: %" PRItime),
             *timestamp);
+}
     time = (time_t)*timestamp;
     localtime_r(&time, &tm);
     *timestamp = time;
@@ -677,8 +707,9 @@ static int write_zip_archive(const struct archiver *ar UNUSED,
     strbuf_init(&zip_dir, 0);
 
     err = write_archive_entries(args, write_zip_entry);
-    if (!err)
+    if (!err) {
         write_zip_trailer(args->commit_oid);
+}
 
     strbuf_release(&zip_dir);
 

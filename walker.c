@@ -33,9 +33,10 @@ static void report_missing(const struct object *obj)
     fprintf(stderr, "Cannot obtain needed %s %s\n",
             obj->type ? type_name(obj->type) : "object",
             oid_to_hex(&obj->oid));
-    if (!is_null_oid(&current_commit_oid))
+    if (!is_null_oid(&current_commit_oid)) {
         fprintf(stderr, "while processing commit %s.\n",
                 oid_to_hex(&current_commit_oid));
+}
 }
 
 static int process(struct walker *walker, struct object *obj);
@@ -45,8 +46,9 @@ static int process_tree(struct walker *walker, struct tree *tree)
     struct tree_desc  desc;
     struct name_entry entry;
 
-    if (parse_tree(tree))
+    if (parse_tree(tree)) {
         return -1;
+}
 
     init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
     while (tree_entry(&desc, &entry))
@@ -54,24 +56,28 @@ static int process_tree(struct walker *walker, struct tree *tree)
         struct object *obj = NULL;
 
         /* submodule commits are not stored in the superproject */
-        if (S_ISGITLINK(entry.mode))
+        if (S_ISGITLINK(entry.mode)) {
             continue;
+}
         if (S_ISDIR(entry.mode))
         {
             struct tree *tree = lookup_tree(the_repository,
                                             &entry.oid);
-            if (tree)
+            if (tree) {
                 obj = &tree->object;
+}
         }
         else
         {
             struct blob *blob = lookup_blob(the_repository,
                                             &entry.oid);
-            if (blob)
+            if (blob) {
                 obj = &blob->object;
+}
         }
-        if (!obj || process(walker, obj))
+        if (!obj || process(walker, obj)) {
             return -1;
+}
     }
     free_tree_buffer(tree);
     return 0;
@@ -88,28 +94,32 @@ static int process_commit(struct walker *walker, struct commit *commit)
 {
     struct commit_list *parents;
 
-    if (repo_parse_commit(the_repository, commit))
+    if (repo_parse_commit(the_repository, commit)) {
         return -1;
+}
 
     while (complete && complete->item->date >= commit->date)
     {
         pop_most_recent_commit(&complete, COMPLETE);
     }
 
-    if (commit->object.flags & COMPLETE)
+    if (commit->object.flags & COMPLETE) {
         return 0;
+}
 
     oidcpy(&current_commit_oid, &commit->object.oid);
 
     walker_say(walker, "walk %s\n", oid_to_hex(&commit->object.oid));
 
-    if (process(walker, &repo_get_commit_tree(the_repository, commit)->object))
+    if (process(walker, &repo_get_commit_tree(the_repository, commit)->object)) {
         return -1;
+}
 
     for (parents = commit->parents; parents; parents = parents->next)
     {
-        if (process(walker, &parents->item->object))
+        if (process(walker, &parents->item->object)) {
             return -1;
+}
     }
 
     return 0;
@@ -117,8 +127,9 @@ static int process_commit(struct walker *walker, struct commit *commit)
 
 static int process_tag(struct walker *walker, struct tag *tag)
 {
-    if (parse_tag(tag))
+    if (parse_tag(tag)) {
         return -1;
+}
     return process(walker, tag->tagged);
 }
 
@@ -129,14 +140,16 @@ static int process_object(struct walker *walker, struct object *obj)
 {
     if (obj->type == OBJ_COMMIT)
     {
-        if (process_commit(walker, (struct commit *)obj))
+        if (process_commit(walker, (struct commit *)obj)) {
             return -1;
+}
         return 0;
     }
     if (obj->type == OBJ_TREE)
     {
-        if (process_tree(walker, (struct tree *)obj))
+        if (process_tree(walker, (struct tree *)obj)) {
             return -1;
+}
         return 0;
     }
     if (obj->type == OBJ_BLOB)
@@ -145,8 +158,9 @@ static int process_object(struct walker *walker, struct object *obj)
     }
     if (obj->type == OBJ_TAG)
     {
-        if (process_tag(walker, (struct tag *)obj))
+        if (process_tag(walker, (struct tag *)obj)) {
             return -1;
+}
         return 0;
     }
     return error(
@@ -157,8 +171,9 @@ static int process_object(struct walker *walker, struct object *obj)
 
 static int process(struct walker *walker, struct object *obj)
 {
-    if (obj->flags & SEEN)
+    if (obj->flags & SEEN) {
         return 0;
+}
     obj->flags |= SEEN;
 
     if (repo_has_object_file(the_repository, &obj->oid))
@@ -168,8 +183,9 @@ static int process(struct walker *walker, struct object *obj)
     }
     else
     {
-        if (obj->flags & COMPLETE)
+        if (obj->flags & COMPLETE) {
             return 0;
+}
         walker->prefetch(walker, obj->oid.hash);
     }
 
@@ -184,8 +200,9 @@ static int loop(struct walker *walker)
     struct progress    *progress = NULL;
     uint64_t            nr       = 0;
 
-    if (walker->get_progress)
+    if (walker->get_progress) {
         progress = start_delayed_progress(_("Fetching objects"), 0);
+}
 
     while (process_queue)
     {
@@ -193,8 +210,9 @@ static int loop(struct walker *walker)
         elem               = process_queue;
         process_queue      = elem->next;
         free(elem);
-        if (!process_queue)
+        if (!process_queue) {
             process_queue_end = &process_queue;
+}
 
         /* If we are not scanning this object, we placed it in
          * the queue because we needed to fetch it first.
@@ -208,8 +226,9 @@ static int loop(struct walker *walker)
                 return -1;
             }
         }
-        if (!obj->type)
+        if (!obj->type) {
             parse_object(the_repository, &obj->oid);
+}
         if (process_object(walker, obj))
         {
             stop_progress(&progress);
@@ -223,8 +242,9 @@ static int loop(struct walker *walker)
 
 static int interpret_target(struct walker *walker, char *target, struct object_id *oid)
 {
-    if (!get_oid_hex(target, oid))
+    if (!get_oid_hex(target, oid)) {
         return 0;
+}
     if (!check_refname_format(target, 0))
     {
         struct ref *ref = alloc_ref(target);
@@ -258,7 +278,8 @@ static int mark_complete(const char *path        UNUSED,
 
 int walker_targets_stdin(char ***target, const char ***write_ref)
 {
-    int           targets = 0, targets_alloc = 0;
+    int           targets = 0;
+    int           targets_alloc = 0;
     struct strbuf buf = STRBUF_INIT;
     *target           = NULL;
     *write_ref        = NULL;
@@ -267,12 +288,14 @@ int walker_targets_stdin(char ***target, const char ***write_ref)
         char *rf_one = NULL;
         char *tg_one;
 
-        if (strbuf_getline_lf(&buf, stdin) == EOF)
+        if (strbuf_getline_lf(&buf, stdin) == EOF) {
             break;
+}
         tg_one = buf.buf;
         rf_one = strchr(tg_one, '\t');
-        if (rf_one)
+        if (rf_one) {
             *rf_one++ = 0;
+}
 
         if (targets >= targets_alloc)
         {
@@ -293,8 +316,9 @@ void walker_targets_free(int targets, char **target, const char **write_ref)
     while (targets--)
     {
         free(target[targets]);
-        if (write_ref)
+        if (write_ref) {
             free((char *)write_ref[targets]);
+}
     }
 }
 
@@ -306,7 +330,8 @@ int walker_fetch(struct walker *walker, int targets, char **target,
     struct ref_transaction *transaction = NULL;
     struct object_id       *oids;
     char                   *msg = NULL;
-    int                     i, ret = -1;
+    int                     i;
+    int                     ret = -1;
 
     save_commit_buffer = 0;
 
@@ -337,12 +362,14 @@ int walker_fetch(struct walker *walker, int targets, char **target,
             error("Could not interpret response from server '%s' as something to pull", target[i]);
             goto done;
         }
-        if (process(walker, lookup_unknown_object(the_repository, &oids[i])))
+        if (process(walker, lookup_unknown_object(the_repository, &oids[i]))) {
             goto done;
+}
     }
 
-    if (loop(walker))
+    if (loop(walker)) {
         goto done;
+}
     if (!write_ref)
     {
         ret = 0;
@@ -358,8 +385,9 @@ int walker_fetch(struct walker *walker, int targets, char **target,
     }
     for (i = 0; i < targets; i++)
     {
-        if (!write_ref[i])
+        if (!write_ref[i]) {
             continue;
+}
         strbuf_reset(&refname);
         strbuf_addf(&refname, "refs/%s", write_ref[i]);
         if (ref_transaction_update(transaction, refname.buf,
