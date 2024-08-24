@@ -944,7 +944,16 @@ list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
 
 #libxdiff
-parse_makefile_for_sources(libxdiff_SOURCES "XDIFF_OBJS")
+# parse_makefile_for_sources(libxdiff_SOURCES "XDIFF_OBJS")
+set(libxdiff_SOURCES
+    xdiff/xdiffi.c
+    xdiff/xemit.c
+    xdiff/xhistogram.c
+    xdiff/xmerge.c
+    xdiff/xpatience.c
+    xdiff/xprepare.c
+    xdiff/xutils.c
+)
 
 list(TRANSFORM libxdiff_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_library(xdiff STATIC ${libxdiff_SOURCES})
