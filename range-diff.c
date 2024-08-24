@@ -41,11 +41,13 @@ struct patch_util
 static int read_patches(const char *range, struct string_list *list,
                         const struct strvec *other_arg)
 {
-    struct child_process cp  = CHILD_PROCESS_INIT;
-    struct strbuf        buf = STRBUF_INIT, contents = STRBUF_INIT;
+    struct child_process cp        = CHILD_PROCESS_INIT;
+    struct strbuf        buf       = STRBUF_INIT;
+    struct strbuf        contents  = STRBUF_INIT;
     struct patch_util   *util      = NULL;
     int                  in_header = 1;
-    char                *line, *current_filename = NULL;
+    char                *line;
+    char                *current_filename = NULL;
     ssize_t              len;
     size_t               size;
     int                  ret = -1;
@@ -67,13 +69,17 @@ static int read_patches(const char *range, struct string_list *list,
                  NULL);
     strvec_push(&cp.args, range);
     if (other_arg)
+    {
         strvec_pushv(&cp.args, other_arg->v);
+    }
     cp.out      = -1;
     cp.no_stdin = 1;
     cp.git_cmd  = 1;
 
     if (start_command(&cp))
+    {
         return error_errno(_("could not start `log`"));
+    }
     if (strbuf_read(&contents, cp.out, 0) < 0)
     {
         error_errno(_("could not read `log` output"));
@@ -81,7 +87,9 @@ static int read_patches(const char *range, struct string_list *list,
         goto cleanup;
     }
     if (finish_command(&cp))
+    {
         goto cleanup;
+    }
 
     line = contents.buf;
     size = contents.len;
@@ -140,9 +148,13 @@ static int read_patches(const char *range, struct string_list *list,
             in_header = 0;
             strbuf_addch(&buf, '\n');
             if (!util->diff_offset)
+            {
                 util->diff_offset = buf.len;
+            }
             if (eol)
+            {
                 *eol = '\n';
+            }
             orig_len = len;
             len      = parse_git_diff_header(&root, &linenr, 0, line,
                                              len, size, &patch);
@@ -156,23 +168,37 @@ static int read_patches(const char *range, struct string_list *list,
             }
             strbuf_addstr(&buf, " ## ");
             if (patch.is_new > 0)
+            {
                 strbuf_addf(&buf, "%s (new)", patch.new_name);
+            }
             else if (patch.is_delete > 0)
+            {
                 strbuf_addf(&buf, "%s (deleted)", patch.old_name);
+            }
             else if (patch.is_rename)
+            {
                 strbuf_addf(&buf, "%s => %s", patch.old_name, patch.new_name);
+            }
             else
+            {
                 strbuf_addstr(&buf, patch.new_name);
+            }
 
             free(current_filename);
             if (patch.is_delete > 0)
+            {
                 current_filename = xstrdup(patch.old_name);
+            }
             else
+            {
                 current_filename = xstrdup(patch.new_name);
+            }
 
             if (patch.new_mode && patch.old_mode && patch.old_mode != patch.new_mode)
+            {
                 strbuf_addf(&buf, " (mode change %06o => %06o)",
                             patch.old_mode, patch.new_mode);
+            }
 
             strbuf_addstr(&buf, " ##");
             release_patch(&patch);
@@ -197,7 +223,9 @@ static int read_patches(const char *range, struct string_list *list,
             {
                 p = line + len - 2;
                 while (isspace(*p) && p >= line)
+                {
                     p--;
+                }
                 strbuf_add(&buf, line, p - line + 1);
                 strbuf_addch(&buf, '\n');
             }
@@ -208,11 +236,16 @@ static int read_patches(const char *range, struct string_list *list,
             p = strstr(p, "@@");
             strbuf_addstr(&buf, "@@");
             if (current_filename && p[2])
+            {
                 strbuf_addf(&buf, " %s:", current_filename);
+            }
             if (p)
+            {
                 strbuf_addstr(&buf, p + 2);
+            }
         }
         else if (!line[0])
+        {
             /*
              * A completely blank (not ' \n', which is context)
              * line is not valid in a diff.  We skip it
@@ -221,6 +254,7 @@ static int read_patches(const char *range, struct string_list *list,
              * output.
              */
             continue;
+        }
         else if (line[0] == '>')
         {
             strbuf_addch(&buf, '+');
@@ -251,7 +285,9 @@ cleanup:
     strbuf_release(&contents);
 
     if (util)
+    {
         string_list_append(list, buf.buf)->util = util;
+    }
     strbuf_release(&buf);
     free(current_filename);
 
@@ -264,7 +300,8 @@ static int patch_util_cmp(const void *cmp_data        UNUSED,
                           const void                 *keydata)
 {
     const struct patch_util
-        *a = container_of(ha, const struct patch_util, e),
+        *a = container_of(ha, const struct patch_util, e);
+    const struct patch_util
         *b = container_of(hb, const struct patch_util, e);
     return strcmp(a->diff, keydata ? keydata : b->diff);
 }
@@ -289,7 +326,8 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
     /* Now try to find exact matches in b */
     for (i = 0; i < b->nr; i++)
     {
-        struct patch_util *util = b->items[i].util, *other;
+        struct patch_util *util = b->items[i].util;
+        struct patch_util *other;
 
         util->i     = i;
         util->patch = b->items[i].string;
@@ -299,7 +337,9 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
         if (other)
         {
             if (other->matching >= 0)
+            {
                 BUG("already assigned!");
+            }
 
             other->matching = i;
             util->matching  = other->i;
@@ -329,7 +369,8 @@ static int diffsize(const char *a, const char *b)
 {
     xpparam_t    pp  = {0};
     xdemitconf_t cfg = {0};
-    mmfile_t     mf1, mf2;
+    mmfile_t     mf1;
+    mmfile_t     mf2;
     int          count = 0;
 
     mf1.ptr  = (char *)a;
@@ -341,7 +382,9 @@ static int diffsize(const char *a, const char *b)
     if (!xdi_diff_outf(&mf1, &mf2,
                        diffsize_hunk, diffsize_consume, &count,
                        &pp, &cfg))
+    {
         return count;
+    }
 
     error(_("failed to generate diff"));
     return COST_MAX;
@@ -351,8 +394,12 @@ static void get_correspondences(struct string_list *a, struct string_list *b,
                                 int creation_factor)
 {
     int  n = a->nr + b->nr;
-    int *cost, c, *a2b, *b2a;
-    int  i, j;
+    int *cost;
+    int  c;
+    int *a2b;
+    int *b2a;
+    int  i;
+    int  j;
 
     ALLOC_ARRAY(cost, st_mult(n, n));
     ALLOC_ARRAY(a2b, n);
@@ -367,17 +414,25 @@ static void get_correspondences(struct string_list *a, struct string_list *b,
             struct patch_util *b_util = b->items[j].util;
 
             if (a_util->matching == j)
+            {
                 c = 0;
+            }
             else if (a_util->matching < 0 && b_util->matching < 0)
+            {
                 c = diffsize(a_util->diff, b_util->diff);
+            }
             else
+            {
                 c = COST_MAX;
+            }
             cost[i + n * j] = c;
         }
 
         c = a_util->matching < 0 ? a_util->diffsize * creation_factor / 100 : COST_MAX;
         for (j = b->nr; j < n; j++)
+        {
             cost[i + n * j] = c;
+        }
     }
 
     for (j = 0; j < b->nr; j++)
@@ -386,16 +441,23 @@ static void get_correspondences(struct string_list *a, struct string_list *b,
 
         c = util->matching < 0 ? util->diffsize * creation_factor / 100 : COST_MAX;
         for (i = a->nr; i < n; i++)
+        {
             cost[i + n * j] = c;
+        }
     }
 
     for (i = a->nr; i < n; i++)
+    {
         for (j = b->nr; j < n; j++)
+        {
             cost[i + n * j] = 0;
+        }
+    }
 
     compute_assignment(n, n, cost, a2b, b2a);
 
     for (i = 0; i < a->nr; i++)
+    {
         if (a2b[i] >= 0 && a2b[i] < b->nr)
         {
             struct patch_util *a_util = a->items[i].util;
@@ -404,6 +466,7 @@ static void get_correspondences(struct string_list *a, struct string_list *b,
             a_util->matching = a2b[i];
             b_util->matching = i;
         }
+    }
 
     free(cost);
     free(a2b);
@@ -428,11 +491,15 @@ static void output_pair_header(struct diff_options *diffopt,
     int               abbrev = diffopt->abbrev;
 
     if (abbrev < 0)
+    {
         abbrev = DEFAULT_ABBREV;
+    }
 
     if (!dashes->len)
+    {
         strbuf_addchars(dashes, '-',
                         strlen(repo_find_unique_abbrev(the_repository, oid, abbrev)));
+    }
 
     if (!b_util)
     {
@@ -444,7 +511,7 @@ static void output_pair_header(struct diff_options *diffopt,
         color  = color_new;
         status = '>';
     }
-    else if (strcmp(a_util->patch, b_util->patch))
+    else if (strcmp(a_util->patch, b_util->patch) != 0)
     {
         color  = color_commit;
         status = '!';
@@ -458,28 +525,42 @@ static void output_pair_header(struct diff_options *diffopt,
     strbuf_reset(buf);
     strbuf_addstr(buf, status == '!' ? color_old : color);
     if (!a_util)
+    {
         strbuf_addf(buf, "%*s:  %s ", patch_no_width, "-", dashes->buf);
+    }
     else
+    {
         strbuf_addf(buf, "%*d:  %s ", patch_no_width, a_util->i + 1,
                     repo_find_unique_abbrev(the_repository, &a_util->oid, abbrev));
+    }
 
     if (status == '!')
+    {
         strbuf_addf(buf, "%s%s", color_reset, color);
+    }
     strbuf_addch(buf, status);
     if (status == '!')
+    {
         strbuf_addf(buf, "%s%s", color_reset, color_new);
+    }
 
     if (!b_util)
+    {
         strbuf_addf(buf, " %*s:  %s", patch_no_width, "-", dashes->buf);
+    }
     else
+    {
         strbuf_addf(buf, " %*d:  %s", patch_no_width, b_util->i + 1,
                     repo_find_unique_abbrev(the_repository, &b_util->oid, abbrev));
+    }
 
     commit = lookup_commit_reference(the_repository, oid);
     if (commit)
     {
         if (status == '!')
+        {
             strbuf_addf(buf, "%s%s", color_reset, color);
+        }
 
         strbuf_addch(buf, ' ');
         pp_commit_easy(CMIT_FMT_ONELINE, commit, buf);
@@ -528,20 +609,28 @@ static struct strbuf *output_prefix_cb(struct diff_options *opt UNUSED, void *da
 static void output(struct string_list *a, struct string_list *b,
                    struct range_diff_options *range_diff_opts)
 {
-    struct strbuf       buf = STRBUF_INIT, dashes = STRBUF_INIT;
+    struct strbuf       buf            = STRBUF_INIT;
+    struct strbuf       dashes         = STRBUF_INIT;
     int                 patch_no_width = decimal_width(1 + (a->nr > b->nr ? a->nr : b->nr));
-    int                 i = 0, j = 0;
+    int                 i              = 0;
+    int                 j              = 0;
     struct diff_options opts;
     struct strbuf       indent = STRBUF_INIT;
 
     if (range_diff_opts->diffopt)
+    {
         memcpy(&opts, range_diff_opts->diffopt, sizeof(opts));
+    }
     else
+    {
         repo_diff_setup(the_repository, &opts);
+    }
 
     opts.no_free = 1;
     if (!opts.output_format)
+    {
         opts.output_format = DIFF_FORMAT_PATCH;
+    }
     opts.flags.suppress_diff_headers = 1;
     opts.flags.dual_color_diffed_diffs =
         range_diff_opts->dual_color;
@@ -561,20 +650,25 @@ static void output(struct string_list *a, struct string_list *b,
 
     while (i < a->nr || j < b->nr)
     {
-        struct patch_util *a_util, *b_util;
+        struct patch_util *a_util;
+        struct patch_util *b_util;
         a_util = i < a->nr ? a->items[i].util : NULL;
         b_util = j < b->nr ? b->items[j].util : NULL;
 
         /* Skip all the already-shown commits from the LHS. */
         while (i < a->nr && a_util->shown)
+        {
             a_util = ++i < a->nr ? a->items[i].util : NULL;
+        }
 
         /* Show unmatched LHS commit whose predecessors were shown. */
         if (i < a->nr && a_util->matching < 0)
         {
             if (!range_diff_opts->right_only)
+            {
                 output_pair_header(&opts, patch_no_width,
                                    &buf, &dashes, a_util, NULL);
+            }
             i++;
             continue;
         }
@@ -583,8 +677,10 @@ static void output(struct string_list *a, struct string_list *b,
         while (j < b->nr && b_util->matching < 0)
         {
             if (!range_diff_opts->left_only)
+            {
                 output_pair_header(&opts, patch_no_width,
                                    &buf, &dashes, NULL, b_util);
+            }
             b_util = ++j < b->nr ? b->items[j].util : NULL;
         }
 
@@ -595,8 +691,10 @@ static void output(struct string_list *a, struct string_list *b,
             output_pair_header(&opts, patch_no_width,
                                &buf, &dashes, a_util, b_util);
             if (!(opts.output_format & DIFF_FORMAT_NO_OUTPUT))
+            {
                 patch_diff(a->items[b_util->matching].string,
                            b->items[j].string, &opts);
+            }
             a_util->shown = 1;
             j++;
         }
@@ -617,12 +715,18 @@ int show_range_diff(const char *range1, const char *range2,
     struct string_list branch2 = STRING_LIST_INIT_DUP;
 
     if (range_diff_opts->left_only && range_diff_opts->right_only)
+    {
         res = error(_("options '%s' and '%s' cannot be used together"), "--left-only", "--right-only");
+    }
 
     if (!res && read_patches(range1, &branch1, range_diff_opts->other_arg))
+    {
         res = error(_("could not parse log for '%s'"), range1);
+    }
     if (!res && read_patches(range2, &branch2, range_diff_opts->other_arg))
+    {
         res = error(_("could not parse log for '%s'"), range2);
+    }
 
     if (!res)
     {
@@ -642,24 +746,34 @@ int is_range_diff_range(const char *arg)
 {
     char           *copy   = xstrdup(arg); /* setup_revisions() modifies it */
     const char     *argv[] = {"", copy, "--", NULL};
-    int             i, positive = 0, negative = 0;
+    int             i;
+    int             positive = 0;
+    int             negative = 0;
     struct rev_info revs;
 
     repo_init_revisions(the_repository, &revs, NULL);
     if (setup_revisions(3, argv, &revs, NULL) == 1)
     {
         for (i = 0; i < revs.pending.nr; i++)
+        {
             if (revs.pending.objects[i].item->flags & UNINTERESTING)
+            {
                 negative++;
+            }
             else
+            {
                 positive++;
+            }
+        }
         for (i = 0; i < revs.pending.nr; i++)
         {
             struct object *obj = revs.pending.objects[i].item;
 
             if (obj->type == OBJ_COMMIT)
+            {
                 clear_commit_marks((struct commit *)obj,
                                    ALL_REV_FLAGS);
+            }
         }
     }
 

@@ -113,23 +113,36 @@ static void add_mapping(struct string_list *map,
 static char *parse_name_and_email(char *buffer, char **name,
                                   char **email, int allow_empty_email)
 {
-    char *left, *right, *nstart, *nend;
+    char *left;
+    char *right;
+    char *nstart;
+    char *nend;
     *name = *email = NULL;
 
     if (!(left = strchr(buffer, '<')))
+    {
         return NULL;
+    }
     if (!(right = strchr(left + 1, '>')))
+    {
         return NULL;
+    }
     if (!allow_empty_email && (left + 1 == right))
+    {
         return NULL;
+    }
 
     /* remove whitespace from beginning and end of name */
     nstart = buffer;
     while (isspace(*nstart) && nstart < left)
+    {
         ++nstart;
+    }
     nend = left - 1;
     while (nend > nstart && isspace(*nend))
+    {
         --nend;
+    }
 
     *name       = (nstart <= nend ? nstart : NULL);
     *email      = left + 1;
@@ -141,16 +154,25 @@ static char *parse_name_and_email(char *buffer, char **name,
 
 static void read_mailmap_line(struct string_list *map, char *buffer)
 {
-    char *name1 = NULL, *email1 = NULL, *name2 = NULL, *email2 = NULL;
+    char *name1  = NULL;
+    char *email1 = NULL;
+    char *name2  = NULL;
+    char *email2 = NULL;
 
     if (buffer[0] == '#')
+    {
         return;
+    }
 
     if ((name2 = parse_name_and_email(buffer, &name1, &email1, 0)))
+    {
         parse_name_and_email(name2, &name2, &email2, 1);
+    }
 
     if (email1)
+    {
         add_mapping(map, name1, email1, name2, email2);
+    }
 }
 
 /* Flags for read_mailmap_file() */
@@ -164,23 +186,33 @@ static int read_mailmap_file(struct string_list *map, const char *filename,
     int   fd;
 
     if (!filename)
+    {
         return 0;
+    }
 
     if (flags & MAILMAP_NOFOLLOW)
+    {
         fd = open_nofollow(filename, O_RDONLY);
+    }
     else
-        fd = open(filename, O_RDONLY);
+    {
+        fd = open(filename, O_RDONLY | O_CLOEXEC);
+    }
 
     if (fd < 0)
     {
         if (errno == ENOENT)
+        {
             return 0;
+        }
         return error_errno("unable to open mailmap at %s", filename);
     }
     f = xfdopen(fd, "r");
 
     while (fgets(buffer, sizeof(buffer), f) != NULL)
+    {
         read_mailmap_line(map, buffer);
+    }
     fclose(f);
     return 0;
 }
@@ -192,7 +224,9 @@ static void read_mailmap_string(struct string_list *map, char *buf)
         char *end = strchrnul(buf, '\n');
 
         if (*end)
+        {
             *end++ = '\0';
+        }
 
         read_mailmap_line(map, buf);
         buf = end;
@@ -207,13 +241,19 @@ static int read_mailmap_blob(struct string_list *map, const char *name)
     enum object_type type;
 
     if (!name)
+    {
         return 0;
+    }
     if (repo_get_oid(the_repository, name, &oid) < 0)
+    {
         return 0;
+    }
 
     buf = repo_read_object_file(the_repository, &oid, &type, &size);
     if (!buf)
+    {
         return error("unable to read mailmap object at %s", name);
+    }
     if (type != OBJ_BLOB)
     {
         free(buf);
@@ -234,13 +274,19 @@ int read_mailmap(struct string_list *map)
     map->cmp            = namemap_cmp;
 
     if (!git_mailmap_blob && is_bare_repository())
+    {
         git_mailmap_blob = xstrdup("HEAD:.mailmap");
+    }
 
     if (!startup_info->have_repository || !is_bare_repository())
+    {
         err |= read_mailmap_file(map, ".mailmap",
                                  startup_info->have_repository ? MAILMAP_NOFOLLOW : 0);
+    }
     if (startup_info->have_repository)
+    {
         err |= read_mailmap_blob(map, git_mailmap_blob);
+    }
     err |= read_mailmap_file(map, git_mailmap_file, 0);
     return err;
 }
@@ -264,7 +310,9 @@ static struct string_list_item *lookup_prefix(struct string_list *map,
         /* exact match */
         i = -1 - i;
         if (!string[len])
+        {
             return &map->items[i];
+        }
         /*
          * that map entry matches exactly to the string, including
          * the cruft at the end beyond "len".  That is not a match
@@ -289,12 +337,14 @@ static struct string_list_item *lookup_prefix(struct string_list *map,
     {
         int cmp = strncasecmp(map->items[i].string, string, len);
         if (cmp < 0)
+        {
             /*
              * "i" points at a key definitely below the prefix;
              * the map does not have string[0:len] in it.
              */
             break;
-        else if (!cmp && !map->items[i].string[len])
+        }
+        if (!cmp && !map->items[i].string[len])
             /* found it */
             return &map->items[i];
         /*
@@ -327,14 +377,18 @@ int map_user(struct string_list *map,
             struct string_list_item *subitem;
             subitem = lookup_prefix(&me->namemap, *name, *namelen);
             if (subitem)
+            {
                 item = subitem;
+            }
         }
     }
     if (item)
     {
         struct mailmap_info *mi = (struct mailmap_info *)item->util;
         if (mi->name == NULL && mi->email == NULL)
+        {
             return 0;
+        }
         if (mi->email)
         {
             *email    = mi->email;

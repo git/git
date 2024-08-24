@@ -48,7 +48,9 @@ static void free_complete_reflog(struct complete_reflogs *array)
     int i;
 
     if (!array)
+    {
         return;
+    }
 
     for (i = 0; i < array->nr; i++)
     {
@@ -113,8 +115,12 @@ static int get_reflog_recno_by_time(struct complete_reflogs *array,
 {
     int i;
     for (i = array->nr - 1; i >= 0; i--)
+    {
         if (timestamp >= array->items[i].timestamp)
+        {
             return i;
+        }
+    }
     return -1;
 }
 
@@ -149,10 +155,14 @@ void reflog_walk_info_release(struct reflog_walk_info *info)
     size_t i;
 
     if (!info)
+    {
         return;
+    }
 
     for (i = 0; i < info->nr; i++)
+    {
         free(info->logs[i]);
+    }
     string_list_clear_func(&info->complete_reflogs,
                            complete_reflogs_clear);
     free(info->logs);
@@ -166,12 +176,15 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
     int                      recno     = -1;
     struct string_list_item *item;
     struct complete_reflogs *reflogs;
-    char                    *branch, *at = strchr(name, '@');
+    char                    *branch;
+    char                    *at = strchr(name, '@');
     struct commit_reflog    *commit_reflog;
     enum selector_type       selector = SELECTOR_NONE;
 
     if (commit->object.flags & UNINTERESTING)
+    {
         die("cannot walk reflogs for %s", name);
+    }
 
     branch = xstrdup(name);
     if (at && at[1] == '{')
@@ -186,14 +199,20 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
             selector  = SELECTOR_DATE;
         }
         else
+        {
             selector = SELECTOR_INDEX;
+        }
     }
     else
+    {
         recno = 0;
+    }
 
     item = string_list_lookup(&info->complete_reflogs, branch);
     if (item)
+    {
         reflogs = item->util;
+    }
     else
     {
         if (*branch == '\0')
@@ -202,7 +221,9 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
             branch = refs_resolve_refdup(get_main_ref_store(the_repository),
                                          "HEAD", 0, NULL, NULL);
             if (!branch)
+            {
                 die("no current branch");
+            }
         }
         reflogs = read_complete_reflog(branch);
         if (!reflogs || reflogs->nr == 0)
@@ -211,7 +232,9 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
             int   ret = repo_dwim_log(the_repository, branch, strlen(branch),
                                       NULL, &b);
             if (ret > 1)
+            {
                 free(b);
+            }
             else if (ret == 1)
             {
                 free_complete_reflog(reflogs);
@@ -241,7 +264,9 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
         }
     }
     else
+    {
         commit_reflog->recno = reflogs->nr - recno - 1;
+    }
     commit_reflog->selector = selector;
     commit_reflog->reflogs  = reflogs;
 
@@ -261,14 +286,18 @@ void get_reflog_selector(struct strbuf           *sb,
     const char           *printed_ref;
 
     if (!commit_reflog)
+    {
         return;
+    }
 
     if (shorten)
     {
         if (!commit_reflog->reflogs->short_ref)
+        {
             commit_reflog->reflogs->short_ref = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
                                                                              commit_reflog->reflogs->ref,
                                                                              0);
+        }
         printed_ref = commit_reflog->reflogs->short_ref;
     }
     else
@@ -298,12 +327,16 @@ void get_reflog_message(struct strbuf           *sb,
     size_t                len;
 
     if (!commit_reflog)
+    {
         return;
+    }
 
     info = &commit_reflog->reflogs->items[commit_reflog->recno + 1];
     len  = strlen(info->message);
     if (len > 0)
+    {
         len--; /* strip away trailing newline */
+    }
     strbuf_add(sb, info->message, len);
 }
 
@@ -313,7 +346,9 @@ const char *get_reflog_ident(struct reflog_walk_info *reflog_info)
     struct reflog_info   *info;
 
     if (!commit_reflog)
+    {
         return NULL;
+    }
 
     info = &commit_reflog->reflogs->items[commit_reflog->recno + 1];
     return info->email;
@@ -325,7 +360,9 @@ timestamp_t get_reflog_timestamp(struct reflog_walk_info *reflog_info)
     struct reflog_info   *info;
 
     if (!commit_reflog)
+    {
         return 0;
+    }
 
     info = &commit_reflog->reflogs->items[commit_reflog->recno + 1];
     return info->timestamp;
@@ -370,7 +407,9 @@ static struct commit *next_reflog_commit(struct commit_reflog *log)
                                                  &entry->noid);
 
         if (obj && obj->type == OBJ_COMMIT)
+        {
             return (struct commit *)obj;
+        }
     }
     return NULL;
 }
@@ -392,7 +431,9 @@ struct commit *next_reflog_entry(struct reflog_walk_info *walk)
         struct commit        *commit = next_reflog_commit(log);
 
         if (!commit)
+        {
             continue;
+        }
 
         if (!best || log_timestamp(log) > log_timestamp(best))
         {

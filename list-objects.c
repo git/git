@@ -32,7 +32,9 @@ static void show_commit(struct traversal_context *ctx,
                         struct commit            *commit)
 {
     if (!ctx->show_commit)
+    {
         return;
+    }
     ctx->show_commit(commit, ctx->show_data);
 }
 
@@ -41,9 +43,13 @@ static void show_object(struct traversal_context *ctx,
                         const char               *name)
 {
     if (!ctx->show_object)
+    {
         return;
+    }
     if (ctx->revs->unpacked && has_object_pack(&object->oid))
+    {
         return;
+    }
 
     ctx->show_object(object, name, ctx->show_data);
 }
@@ -58,11 +64,17 @@ static void process_blob(struct traversal_context *ctx,
     enum list_objects_filter_result r;
 
     if (!ctx->revs->blob_objects)
+    {
         return;
+    }
     if (!obj)
+    {
         die("bad blob object");
+    }
     if (obj->flags & (UNINTERESTING | SEEN))
+    {
         return;
+    }
 
     /*
      * Pre-filter known-missing objects when explicitly requested.
@@ -74,7 +86,9 @@ static void process_blob(struct traversal_context *ctx,
      * of missing objects.
      */
     if (ctx->revs->exclude_promisor_objects && !repo_has_object_file(the_repository, &obj->oid) && is_promisor_object(&obj->oid))
+    {
         return;
+    }
 
     pathlen = path->len;
     strbuf_addstr(path, name);
@@ -83,9 +97,13 @@ static void process_blob(struct traversal_context *ctx,
                                            path->buf, &path->buf[pathlen],
                                            ctx->filter);
     if (r & LOFR_MARK_SEEN)
+    {
         obj->flags |= SEEN;
+    }
     if (r & LOFR_DO_SHOW)
+    {
         show_object(ctx, obj, path->buf);
+    }
     strbuf_setlen(path, pathlen);
 }
 
@@ -112,9 +130,13 @@ static void process_tree_contents(struct traversal_context *ctx,
                                            &entry, base,
                                            &ctx->revs->diffopt.pathspec);
             if (match == all_entries_not_interesting)
+            {
                 break;
+            }
             if (match == entry_not_interesting)
+            {
                 continue;
+            }
         }
 
         if (S_ISDIR(entry.mode))
@@ -132,7 +154,9 @@ static void process_tree_contents(struct traversal_context *ctx,
             ctx->depth--;
         }
         else if (S_ISGITLINK(entry.mode))
+        {
             ; /* ignore gitlink */
+        }
         else
         {
             struct blob *b = lookup_blob(ctx->revs->repo, &entry.oid);
@@ -160,22 +184,34 @@ static void process_tree(struct traversal_context *ctx,
     int                             failed_parse;
 
     if (!revs->tree_objects)
+    {
         return;
+    }
     if (!obj)
+    {
         die("bad tree object");
+    }
     if (obj->flags & (UNINTERESTING | SEEN))
+    {
         return;
+    }
     if (revs->include_check_obj && !revs->include_check_obj(&tree->object, revs->include_check_data))
+    {
         return;
+    }
 
     if (ctx->depth > max_allowed_tree_depth)
+    {
         die("exceeded maximum allowed tree depth");
+    }
 
     failed_parse = parse_tree_gently(tree, 1);
     if (failed_parse)
     {
         if (revs->ignore_missing_links)
+        {
             return;
+        }
 
         /*
          * Pre-filter known-missing tree objects when explicitly
@@ -183,10 +219,14 @@ static void process_tree(struct traversal_context *ctx,
          * an incomplete list of missing objects.
          */
         if (revs->exclude_promisor_objects && is_promisor_object(&obj->oid))
+        {
             return;
+        }
 
         if (!revs->do_not_die_on_missing_objects)
+        {
             die("bad tree object %s", oid_to_hex(&obj->oid));
+        }
     }
 
     strbuf_addstr(base, name);
@@ -195,25 +235,39 @@ static void process_tree(struct traversal_context *ctx,
                                            base->buf, &base->buf[baselen],
                                            ctx->filter);
     if (r & LOFR_MARK_SEEN)
+    {
         obj->flags |= SEEN;
+    }
     if (r & LOFR_DO_SHOW)
+    {
         show_object(ctx, obj, base->buf);
+    }
     if (base->len)
+    {
         strbuf_addch(base, '/');
+    }
 
     if (r & LOFR_SKIP_TREE)
+    {
         trace_printf("Skipping contents of tree %s...\n", base->buf);
+    }
     else if (!failed_parse)
+    {
         process_tree_contents(ctx, tree, base);
+    }
 
     r = list_objects_filter__filter_object(ctx->revs->repo,
                                            LOFS_END_TREE, obj,
                                            base->buf, &base->buf[baselen],
                                            ctx->filter);
     if (r & LOFR_MARK_SEEN)
+    {
         obj->flags |= SEEN;
+    }
     if (r & LOFR_DO_SHOW)
+    {
         show_object(ctx, obj, base->buf);
+    }
 
     strbuf_setlen(base, baselen);
     free_tree_buffer(tree);
@@ -229,9 +283,13 @@ static void process_tag(struct traversal_context *ctx,
                                            &tag->object, NULL, NULL,
                                            ctx->filter);
     if (r & LOFR_MARK_SEEN)
+    {
         tag->object.flags |= SEEN;
+    }
     if (r & LOFR_DO_SHOW)
+    {
         show_object(ctx, &tag->object, name);
+    }
 }
 
 static void mark_edge_parents_uninteresting(struct commit   *commit,
@@ -244,7 +302,9 @@ static void mark_edge_parents_uninteresting(struct commit   *commit,
     {
         struct commit *parent = parents->item;
         if (!(parent->object.flags & UNINTERESTING))
+        {
             continue;
+        }
         mark_tree_uninteresting(revs->repo,
                                 repo_get_commit_tree(the_repository, parent));
         if (revs->edge_hint && !(parent->object.flags & SHOWN))
@@ -269,12 +329,16 @@ static void add_edge_parents(struct commit   *commit,
                                                      parent);
 
         if (!tree)
+        {
             continue;
+        }
 
         oidset_insert(set, &tree->object.oid);
 
         if (!(parent->object.flags & UNINTERESTING))
+        {
             continue;
+        }
         tree->object.flags |= UNINTERESTING;
 
         if (revs->edge_hint && !(parent->object.flags & SHOWN))
@@ -304,7 +368,9 @@ void mark_edges_uninteresting(struct rev_info *revs,
                                                          commit);
 
             if (commit->object.flags & UNINTERESTING)
+            {
                 tree->object.flags |= UNINTERESTING;
+            }
 
             oidset_insert(&set, &tree->object.oid);
             add_edge_parents(commit, revs, show_edge, &set);
@@ -340,7 +406,9 @@ void mark_edges_uninteresting(struct rev_info *revs,
             struct object *obj    = revs->cmdline.rev[i].item;
             struct commit *commit = (struct commit *)obj;
             if (obj->type != OBJ_COMMIT || !(obj->flags & UNINTERESTING))
+            {
                 continue;
+            }
             mark_tree_uninteresting(revs->repo,
                                     repo_get_commit_tree(the_repository, commit));
             if (!(obj->flags & SHOWN))
@@ -371,14 +439,18 @@ static void traverse_non_commits(struct traversal_context *ctx,
         const char                *name    = pending->name;
         const char                *path    = pending->path;
         if (obj->flags & (UNINTERESTING | SEEN))
+        {
             continue;
+        }
         if (obj->type == OBJ_TAG)
         {
             process_tag(ctx, (struct tag *)obj, name);
             continue;
         }
         if (!path)
+        {
             path = "";
+        }
         if (obj->type == OBJ_TREE)
         {
             ctx->depth = 0;
@@ -415,9 +487,13 @@ static void do_traverse(struct traversal_context *ctx)
          * parsed yet, but we are not going to show them anyway
          */
         if (!ctx->revs->tree_objects)
+        {
             ; /* do not bother loading tree */
+        }
         else if (ctx->revs->do_not_die_on_missing_objects && oidset_contains(&ctx->revs->missing_commits, &commit->object.oid))
+        {
             ;
+        }
         else if (repo_get_commit_tree(the_repository, commit))
         {
             struct tree *tree = repo_get_commit_tree(the_repository,
@@ -432,17 +508,23 @@ static void do_traverse(struct traversal_context *ctx)
         }
 
         if (r & LOFR_MARK_SEEN)
+        {
             commit->object.flags |= SEEN;
+        }
         if (r & LOFR_DO_SHOW)
+        {
             show_commit(ctx, commit);
+        }
 
         if (ctx->revs->tree_blobs_in_commit_order)
+        {
             /*
              * NEEDSWORK: Adding the tree and then flushing it here
              * needs a reallocation for each commit. Can we pass the
              * tree directory without allocation churn?
              */
             traverse_non_commits(ctx, &csp);
+        }
     }
     traverse_non_commits(ctx, &csp);
     strbuf_release(&csp);
@@ -463,10 +545,14 @@ void traverse_commit_list_filtered(
     };
 
     if (revs->filter.choice)
+    {
         ctx.filter = list_objects_filter__init(omitted, &revs->filter);
+    }
 
     do_traverse(&ctx);
 
     if (ctx.filter)
+    {
         list_objects_filter__free(ctx.filter);
+    }
 }

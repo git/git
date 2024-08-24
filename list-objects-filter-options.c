@@ -48,17 +48,21 @@ int gently_parse_list_objects_filter(
     const char *v0;
 
     if (!arg)
+    {
         return 0;
+    }
 
     if (filter_options->choice)
+    {
         BUG("filter_options already populated");
+    }
 
     if (!strcmp(arg, "blob:none"))
     {
         filter_options->choice = LOFC_BLOB_NONE;
         return 0;
     }
-    else if (skip_prefix(arg, "blob:limit=", &v0))
+    if (skip_prefix(arg, "blob:limit=", &v0))
     {
         if (git_parse_ulong(v0, &filter_options->blob_limit_value))
         {
@@ -203,14 +207,18 @@ static int parse_combine_filter(
 cleanup:
     strbuf_list_free(subspecs);
     if (result)
+    {
         list_objects_filter_release(filter_options);
+    }
     return result;
 }
 
 static int allow_unencoded(char ch)
 {
     if (ch <= ' ' || ch == '%' || ch == '+')
+    {
         return 0;
+    }
     return !strchr(RESERVED_NON_WS, ch);
 }
 
@@ -232,7 +240,9 @@ static void transform_to_combine_type(
 {
     assert(filter_options->choice);
     if (filter_options->choice == LOFC_COMBINE)
+    {
         return;
+    }
     {
         const int                           initial_sub_alloc = 2;
         struct list_objects_filter_options *sub_array =
@@ -259,7 +269,9 @@ void list_objects_filter_die_if_populated(
     struct list_objects_filter_options *filter_options)
 {
     if (filter_options->choice)
+    {
         die(_("multiple filter-specs cannot be combined"));
+    }
 }
 
 void parse_list_objects_filter(
@@ -270,7 +282,9 @@ void parse_list_objects_filter(
     int           parse_error;
 
     if (!filter_options->filter_spec.buf)
+    {
         BUG("filter_options not properly initialized");
+    }
 
     if (!filter_options->choice)
     {
@@ -300,7 +314,9 @@ void parse_list_objects_filter(
                                                        &errbuf);
     }
     if (parse_error)
+    {
         die("%s", errbuf.buf);
+    }
 }
 
 int opt_parse_list_objects_filter(const struct option *opt,
@@ -309,16 +325,22 @@ int opt_parse_list_objects_filter(const struct option *opt,
     struct list_objects_filter_options *filter_options = opt->value;
 
     if (unset || !arg)
+    {
         list_objects_filter_set_no_filter(filter_options);
+    }
     else
+    {
         parse_list_objects_filter(filter_options, arg);
+    }
     return 0;
 }
 
 const char *list_objects_filter_spec(struct list_objects_filter_options *filter)
 {
     if (!filter->filter_spec.len)
+    {
         BUG("no filter_spec available for this filter");
+    }
     return filter->filter_spec.buf;
 }
 
@@ -341,11 +363,15 @@ void list_objects_filter_release(
     size_t sub;
 
     if (!filter_options)
+    {
         return;
+    }
     strbuf_release(&filter_options->filter_spec);
     free(filter_options->sparse_oid_name);
     for (sub = 0; sub < filter_options->sub_nr; sub++)
+    {
         list_objects_filter_release(&filter_options->sub[sub]);
+    }
     free(filter_options->sub);
     list_objects_filter_init(filter_options);
 }
@@ -362,16 +388,20 @@ void partial_clone_register(
     if ((promisor_remote = repo_promisor_remote_find(the_repository, remote)))
     {
         if (promisor_remote->partial_clone_filter)
+        {
             /*
              * Remote is already registered and a filter is already
              * set, so we don't need to do anything here.
              */
             return;
+        }
     }
     else
     {
         if (upgrade_repository_format(1) < 0)
+        {
             die(_("unable to upgrade repository format to support partial clone"));
+        }
 
         /* Add promisor config for the remote */
         cfg_name = xstrfmt("remote.%s.promisor", remote);
@@ -405,7 +435,9 @@ void partial_clone_get_default_filter_spec(
      * Parse default value, but silently ignore it if it is invalid.
      */
     if (!promisor || !promisor->partial_clone_filter)
+    {
         return;
+    }
 
     strbuf_addstr(&filter_options->filter_spec,
                   promisor->partial_clone_filter);
@@ -430,7 +462,9 @@ void list_objects_filter_copy(
 
     ALLOC_ARRAY(dest->sub, dest->sub_alloc);
     for (i = 0; i < src->sub_nr; i++)
+    {
         list_objects_filter_copy(&dest->sub[i], &src->sub[i]);
+    }
 }
 
 void list_objects_filter_init(struct list_objects_filter_options *filter_options)

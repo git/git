@@ -12,12 +12,19 @@
  * The parameter `cost` is the cost matrix: the cost to assign column j to row
  * i is `cost[j + column_count * i].
  */
-void compute_assignment(int column_count, int row_count, int *cost,
+void compute_assignment(int column_count, int row_count, const int *cost,
                         int *column2row, int *row2column)
 {
-    int *v, *d;
-    int *free_row, free_count = 0, saved_free_count, *pred, *col;
-    int  i, j, phase;
+    int *v;
+    int *d;
+    int *free_row;
+    int  free_count = 0;
+    int  saved_free_count;
+    int *pred;
+    int *col;
+    int  i;
+    int  j;
+    int  phase;
 
     if (column_count < 2)
     {
@@ -36,8 +43,12 @@ void compute_assignment(int column_count, int row_count, int *cost,
         int i1 = 0;
 
         for (i = 1; i < row_count; i++)
+        {
             if (COST(j, i1) > COST(j, i))
+            {
                 i1 = i;
+            }
+        }
         v[j] = COST(j, i1);
         if (row2column[i1] == -1)
         {
@@ -48,7 +59,9 @@ void compute_assignment(int column_count, int row_count, int *cost,
         else
         {
             if (row2column[i1] >= 0)
+            {
                 row2column[i1] = -2 - row2column[i1];
+            }
             column2row[j] = -1;
         }
     }
@@ -59,15 +72,23 @@ void compute_assignment(int column_count, int row_count, int *cost,
     {
         int j1 = row2column[i];
         if (j1 == -1)
+        {
             free_row[free_count++] = i;
+        }
         else if (j1 < -1)
+        {
             row2column[i] = -2 - j1;
+        }
         else
         {
             int min = COST(!j1, i) - v[!j1];
             for (j = 1; j < column_count; j++)
+            {
                 if (j != j1 && min > COST(j, i) - v[j])
+                {
                     min = COST(j, i) - v[j];
+                }
+            }
             v[j1] -= min;
         }
     }
@@ -88,8 +109,11 @@ void compute_assignment(int column_count, int row_count, int *cost,
         free_count       = 0;
         while (k < saved_free_count)
         {
-            int u1, u2;
-            int j1 = 0, j2, i0;
+            int u1;
+            int u2;
+            int j1 = 0;
+            int j2;
+            int i0;
 
             i  = free_row[k++];
             u1 = COST(j1, i) - v[j1];
@@ -122,7 +146,9 @@ void compute_assignment(int column_count, int row_count, int *cost,
 
             i0 = column2row[j1];
             if (u1 < u2)
+            {
                 v[j1] -= u2 - u1;
+            }
             else if (i0 >= 0)
             {
                 j1 = j2;
@@ -132,9 +158,13 @@ void compute_assignment(int column_count, int row_count, int *cost,
             if (i0 >= 0)
             {
                 if (u1 < u2)
+                {
                     free_row[--k] = i0;
+                }
                 else
+                {
                     free_row[free_count++] = i0;
+                }
             }
             row2column[i]  = j1;
             column2row[j1] = i;
@@ -148,8 +178,14 @@ void compute_assignment(int column_count, int row_count, int *cost,
     ALLOC_ARRAY(col, column_count);
     for (free_count = 0; free_count < saved_free_count; free_count++)
     {
-        int i1 = free_row[free_count], low = 0, up = 0, last, k;
-        int min, c, u1;
+        int i1  = free_row[free_count];
+        int low = 0;
+        int up  = 0;
+        int last;
+        int k;
+        int min;
+        int c;
+        int u1;
 
         for (j = 0; j < column_count; j++)
         {
@@ -179,8 +215,12 @@ void compute_assignment(int column_count, int row_count, int *cost,
                 }
             }
             for (k = low; k < up; k++)
+            {
                 if (column2row[col[k]] == -1)
+                {
                     goto update;
+                }
+            }
 
             /* scan a row */
             do
@@ -200,7 +240,9 @@ void compute_assignment(int column_count, int row_count, int *cost,
                         if (c == min)
                         {
                             if (column2row[j] == -1)
+                            {
                                 goto update;
+                            }
                             col[k]    = col[up];
                             col[up++] = j;
                         }
@@ -221,7 +263,9 @@ void compute_assignment(int column_count, int row_count, int *cost,
         do
         {
             if (j < 0)
+            {
                 BUG("negative j: %d", j);
+            }
             i             = pred[j];
             column2row[j] = i;
             SWAP(j, row2column[i]);

@@ -75,7 +75,9 @@ static void set_progress_signal(void)
     struct itimerval v;
 
     if (progress_testing)
+    {
         return;
+    }
 
     progress_update = 0;
 
@@ -100,7 +102,9 @@ static void clear_progress_signal(void)
     };
 
     if (progress_testing)
+    {
         return;
+    }
 
     setitimer(ITIMER_REAL, &v, NULL);
     signal(SIGALRM, SIG_IGN);
@@ -121,7 +125,9 @@ static void display(struct progress *progress, uint64_t n, const char *done)
     int            last_count_len = counters_sb->len;
 
     if (progress->delay && (!progress_update || --progress->delay))
+    {
         return;
+    }
 
     progress->last_value = n;
     tp                   = (progress->throughput) ? progress->throughput->display.buf : "";
@@ -194,19 +200,24 @@ static void throughput_string(struct strbuf *buf, uint64_t total,
 static uint64_t progress_getnanotime(struct progress *progress)
 {
     if (progress_testing)
+    {
         return progress->start_ns + progress_test_ns;
-    else
-        return getnanotime();
+    }
+    return getnanotime();
 }
 
 void display_throughput(struct progress *progress, uint64_t total)
 {
     struct throughput *tp;
     uint64_t           now_ns;
-    unsigned int       misecs, count, rate;
+    unsigned int       misecs;
+    unsigned int       count;
+    unsigned int       rate;
 
     if (!progress)
+    {
         return;
+    }
     tp = progress->throughput;
 
     now_ns = progress_getnanotime(progress);
@@ -223,7 +234,9 @@ void display_throughput(struct progress *progress, uint64_t total)
 
     /* only update throughput every 0.5 s */
     if (now_ns - tp->prev_ns <= 500000000)
+    {
         return;
+    }
 
     /*
      * We have x = bytes and y = nanosecs.  We want z = KiB/s:
@@ -257,13 +270,17 @@ void display_throughput(struct progress *progress, uint64_t total)
 
     throughput_string(&tp->display, total, rate);
     if (progress->last_value != -1 && progress_update)
+    {
         display(progress, progress->last_value, NULL);
+    }
 }
 
 void display_progress(struct progress *progress, uint64_t n)
 {
     if (progress)
+    {
         display(progress, n, NULL);
+    }
 }
 
 static struct progress *start_progress_delay(const char *title, uint64_t total,
@@ -291,7 +308,9 @@ static int get_default_delay(void)
     static int delay_in_secs = -1;
 
     if (delay_in_secs < 0)
+    {
         delay_in_secs = git_env_ulong("GIT_PROGRESS_DELAY", 2);
+    }
 
     return delay_in_secs;
 }
@@ -329,7 +348,9 @@ struct progress *start_delayed_sparse_progress(const char *title,
 static void finish_if_sparse(struct progress *progress)
 {
     if (progress->sparse && progress->last_value != progress->total)
+    {
         display_progress(progress, progress->total);
+    }
 }
 
 static void force_last_update(struct progress *progress, const char *msg)
@@ -340,7 +361,8 @@ static void force_last_update(struct progress *progress, const char *msg)
     if (tp)
     {
         uint64_t     now_ns = progress_getnanotime(progress);
-        unsigned int misecs, rate;
+        unsigned int misecs;
+        unsigned int rate;
         misecs = ((now_ns - progress->start_ns) * 4398) >> 32;
         rate   = tp->curr_total / (misecs ? misecs : 1);
         throughput_string(&tp->display, tp->curr_total, rate);
@@ -357,8 +379,10 @@ static void log_trace2(struct progress *progress)
                        progress->total);
 
     if (progress->throughput)
+    {
         trace2_data_intmax("progress", the_repository, "total_bytes",
                            progress->throughput->curr_total);
+    }
 
     trace2_region_leave("progress", progress->title, the_repository);
 }
@@ -368,22 +392,30 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
     struct progress *progress;
 
     if (!p_progress)
+    {
         BUG("don't provide NULL to stop_progress_msg");
+    }
 
     progress = *p_progress;
     if (!progress)
+    {
         return;
+    }
     *p_progress = NULL;
 
     finish_if_sparse(progress);
     if (progress->last_value != -1)
+    {
         force_last_update(progress, msg);
+    }
     log_trace2(progress);
 
     clear_progress_signal();
     strbuf_release(&progress->counters_sb);
     if (progress->throughput)
+    {
         strbuf_release(&progress->throughput->display);
+    }
     free(progress->throughput);
     free(progress);
 }

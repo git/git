@@ -44,11 +44,15 @@ static int path_to_oid(const char *path, struct object_id *oid)
     while (*path && i < the_hash_algo->hexsz)
     {
         if (*path != '/')
+        {
             hex_oid[i++] = *path;
+        }
         path++;
     }
     if (*path || i != the_hash_algo->hexsz)
+    {
         return -1;
+    }
     return get_oid_hex(hex_oid, oid);
 }
 
@@ -90,13 +94,16 @@ static struct notes_merge_pair *find_notes_merge_pair_pos(
      */
     static int last_index;
     int        i        = last_index < len ? last_index : len - 1;
-    int        prev_cmp = 0, cmp = -1;
+    int        prev_cmp = 0;
+    int        cmp      = -1;
     while (i >= 0 && i < len)
     {
         cmp = oidcmp(obj, &list[i].obj);
-        if (!cmp) /* obj belongs @ i */
+        if (!cmp)
+        { /* obj belongs @ i */
             break;
-        else if (cmp < 0 && prev_cmp <= 0) /* obj belongs < i */
+        }
+        if (cmp < 0 && prev_cmp <= 0) /* obj belongs < i */
             i--;
         else if (cmp < 0) /* obj belongs between i-1 and i */
             break;
@@ -110,11 +117,15 @@ static struct notes_merge_pair *find_notes_merge_pair_pos(
         prev_cmp = cmp;
     }
     if (i < 0)
+    {
         i = 0;
+    }
     /* obj belongs at, or immediately preceding, index i (0 <= i <= len) */
 
     if (!cmp)
+    {
         *occupied = 1;
+    }
     else
     {
         *occupied = 0;
@@ -140,7 +151,8 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
 {
     struct diff_options      opt;
     struct notes_merge_pair *changes;
-    int                      i, len = 0;
+    int                      i;
+    int                      len = 0;
 
     trace_printf("\tdiff_tree_remote(base = %.7s, remote = %.7s)\n",
                  oid_to_hex(base), oid_to_hex(remote));
@@ -187,7 +199,9 @@ static struct notes_merge_pair *diff_tree_remote(struct notes_merge_options *o,
                 oidcpy(&mp->base, &p->one->oid);
             }
             else
+            {
                 assert(!"Invalid existing change recorded");
+            }
         }
         else
         {
@@ -267,7 +281,9 @@ static void diff_tree_local(struct notes_merge_options *o,
              *     (will be overwritten by following addition)
              */
             if (oideq(&mp->local, &uninitialized))
+            {
                 oidclr(&mp->local, the_repository->hash_algo);
+            }
         }
         else if (is_null_oid(&p->one->oid))
         { /* addition */
@@ -311,6 +327,7 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
         if (file_exists(git_path(NOTES_MERGE_WORKTREE)) && !is_empty_dir(git_path(NOTES_MERGE_WORKTREE)))
         {
             if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
+            {
                 die(_("You have not concluded your previous "
                       "notes merge (%s exists).\nPlease, use "
                       "'git notes merge --commit' or 'git notes "
@@ -318,22 +335,29 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
                       "previous merge before you start a new "
                       "notes merge."),
                     git_path("NOTES_MERGE_*"));
+            }
             else
+            {
                 die(_("You have not concluded your notes merge "
                       "(%s exists)."),
                     git_path("NOTES_MERGE_*"));
+            }
         }
 
         if (safe_create_leading_directories_const(git_path(
                 NOTES_MERGE_WORKTREE "/.test")))
+        {
             die_errno("unable to create directory %s",
                       git_path(NOTES_MERGE_WORKTREE));
+        }
         o->has_worktree = 1;
     }
     else if (!file_exists(git_path(NOTES_MERGE_WORKTREE)))
+    {
         /* NOTES_MERGE_WORKTREE should already be established */
         die("missing '%s'. This should not happen",
             git_path(NOTES_MERGE_WORKTREE));
+    }
 }
 
 static void write_buf_to_worktree(const struct object_id *obj,
@@ -342,7 +366,9 @@ static void write_buf_to_worktree(const struct object_id *obj,
     int   fd;
     char *path = git_pathdup(NOTES_MERGE_WORKTREE "/%s", oid_to_hex(obj));
     if (safe_create_leading_directories_const(path))
+    {
         die_errno("unable to create directory for '%s'", path);
+    }
 
     fd = xopen(path, O_WRONLY | O_EXCL | O_CREAT, 0666);
 
@@ -353,7 +379,9 @@ static void write_buf_to_worktree(const struct object_id *obj,
         {
             /* Ignore epipe */
             if (errno == EPIPE)
+            {
                 break;
+            }
             die_errno("notes-merge");
         }
         size -= ret;
@@ -372,11 +400,15 @@ static void write_note_to_worktree(const struct object_id *obj,
     void            *buf = repo_read_object_file(the_repository, note, &type, &size);
 
     if (!buf)
+    {
         die("cannot read note %s for object %s",
             oid_to_hex(note), oid_to_hex(obj));
+    }
     if (type != OBJ_BLOB)
+    {
         die("blob expected in note %s for object %s",
             oid_to_hex(note), oid_to_hex(obj));
+    }
     write_buf_to_worktree(obj, buf, size);
     free(buf);
 }
@@ -385,7 +417,9 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
                                 struct notes_merge_pair    *p)
 {
     mmbuffer_t           result_buf;
-    mmfile_t             base, local, remote;
+    mmfile_t             base;
+    mmfile_t             local;
+    mmfile_t             remote;
     enum ll_merge_result status;
 
     read_mmblob(&base, &p->base);
@@ -401,10 +435,14 @@ static int ll_merge_in_worktree(struct notes_merge_options *o,
     free(remote.ptr);
 
     if (status == LL_MERGE_BINARY_CONFLICT)
+    {
         warning("Cannot merge binary files: %s (%s vs. %s)",
                 oid_to_hex(&p->obj), o->local_ref, o->remote_ref);
+    }
     if ((status < 0) || !result_buf.ptr)
+    {
         die("Failed to execute internal merge");
+    }
 
     write_buf_to_worktree(&p->obj, result_buf.ptr, result_buf.size);
     free(result_buf.ptr);
@@ -427,23 +465,29 @@ static int merge_one_change_manual(struct notes_merge_options *o,
 
     /* add "Conflicts:" section to commit message first time through */
     if (!o->has_worktree)
+    {
         strbuf_addstr(&(o->commit_msg), "\n\nConflicts:\n");
+    }
 
     strbuf_addf(&(o->commit_msg), "\t%s\n", oid_to_hex(&p->obj));
 
     if (o->verbosity >= 2)
+    {
         printf("Auto-merging notes for %s\n", oid_to_hex(&p->obj));
+    }
     check_notes_merge_worktree(o);
     if (is_null_oid(&p->local))
     {
         /* D/F conflict, checkout p->remote */
         assert(!is_null_oid(&p->remote));
         if (o->verbosity >= 1)
+        {
             printf(
                 "CONFLICT (delete/modify): Notes for object %s "
                 "deleted in %s and modified in %s. Version from %s "
                 "left in tree.\n",
                 oid_to_hex(&p->obj), lref, rref, rref);
+        }
         write_note_to_worktree(&p->obj, &p->remote);
     }
     else if (is_null_oid(&p->remote))
@@ -451,11 +495,13 @@ static int merge_one_change_manual(struct notes_merge_options *o,
         /* D/F conflict, checkout p->local */
         assert(!is_null_oid(&p->local));
         if (o->verbosity >= 1)
+        {
             printf(
                 "CONFLICT (delete/modify): Notes for object %s "
                 "deleted in %s and modified in %s. Version from %s "
                 "left in tree.\n",
                 oid_to_hex(&p->obj), rref, lref, lref);
+        }
         write_note_to_worktree(&p->obj, &p->local);
     }
     else
@@ -463,15 +509,19 @@ static int merge_one_change_manual(struct notes_merge_options *o,
         /* "regular" conflict, checkout result of ll_merge() */
         const char *reason = "content";
         if (is_null_oid(&p->base))
+        {
             reason = "add/add";
+        }
         assert(!is_null_oid(&p->local));
         assert(!is_null_oid(&p->remote));
         if (o->verbosity >= 1)
+        {
             printf(
                 "CONFLICT (%s): Merge conflict in notes for "
                 "object %s\n",
                 reason,
                 oid_to_hex(&p->obj));
+        }
         ll_merge_in_worktree(o, p);
     }
 
@@ -495,44 +545,59 @@ static int merge_one_change(struct notes_merge_options *o,
             return merge_one_change_manual(o, p, t);
         case NOTES_MERGE_RESOLVE_OURS:
             if (o->verbosity >= 2)
+            {
                 printf("Using local notes for %s\n",
                        oid_to_hex(&p->obj));
+            }
             /* nothing to do */
             return 0;
         case NOTES_MERGE_RESOLVE_THEIRS:
             if (o->verbosity >= 2)
+            {
                 printf("Using remote notes for %s\n",
                        oid_to_hex(&p->obj));
+            }
             if (add_note(t, &p->obj, &p->remote, combine_notes_overwrite))
+            {
                 BUG("combine_notes_overwrite failed");
+            }
             return 0;
         case NOTES_MERGE_RESOLVE_UNION:
             if (o->verbosity >= 2)
+            {
                 printf("Concatenating local and remote notes for %s\n",
                        oid_to_hex(&p->obj));
+            }
             if (add_note(t, &p->obj, &p->remote, combine_notes_concatenate))
+            {
                 die("failed to concatenate notes "
                     "(combine_notes_concatenate)");
+            }
             return 0;
         case NOTES_MERGE_RESOLVE_CAT_SORT_UNIQ:
             if (o->verbosity >= 2)
+            {
                 printf(
                     "Concatenating unique lines in local and remote "
                     "notes for %s\n",
                     oid_to_hex(&p->obj));
+            }
             if (add_note(t, &p->obj, &p->remote, combine_notes_cat_sort_uniq))
+            {
                 die("failed to concatenate notes "
                     "(combine_notes_cat_sort_uniq)");
+            }
             return 0;
     }
     die("Unknown strategy (%i).", o->strategy);
 }
 
 static int merge_changes(struct notes_merge_options *o,
-                         struct notes_merge_pair *changes, int *num_changes,
+                         struct notes_merge_pair *changes, const int *num_changes,
                          struct notes_tree *t)
 {
-    int i, conflicts = 0;
+    int i;
+    int conflicts = 0;
 
     trace_printf("\tmerge_changes(num_changes = %i)\n", *num_changes);
     for (i = 0; i < *num_changes; i++)
@@ -559,7 +624,9 @@ static int merge_changes(struct notes_merge_options *o,
             trace_printf("\t\t\tno local change, adopted remote\n");
             if (add_note(t, &p->obj, &p->remote,
                          combine_notes_overwrite))
+            {
                 BUG("combine_notes_overwrite failed");
+            }
         }
         else
         {
@@ -579,7 +646,8 @@ static int merge_from_diffs(struct notes_merge_options *o,
                             struct notes_tree          *t)
 {
     struct notes_merge_pair *changes;
-    int                      num_changes, conflicts;
+    int                      num_changes;
+    int                      conflicts;
 
     trace_printf(
         "\tmerge_from_diffs(base = %.7s, local = %.7s, "
@@ -594,8 +662,10 @@ static int merge_from_diffs(struct notes_merge_options *o,
     free(changes);
 
     if (o->verbosity >= 4)
+    {
         printf(t->dirty ? "Merge result: %i unmerged notes and a dirty notes tree\n" : "Merge result: %i unmerged notes and a clean notes tree\n",
                conflicts);
+    }
 
     return conflicts ? -1 : 1;
 }
@@ -604,10 +674,13 @@ int notes_merge(struct notes_merge_options *o,
                 struct notes_tree          *local_tree,
                 struct object_id           *result_oid)
 {
-    struct object_id        local_oid, remote_oid;
-    struct commit          *local, *remote;
+    struct object_id        local_oid;
+    struct object_id        remote_oid;
+    struct commit          *local;
+    struct commit          *remote;
     struct commit_list     *bases = NULL;
-    const struct object_id *base_oid, *base_tree_oid;
+    const struct object_id *base_oid;
+    const struct object_id *base_tree_oid;
     int                     result = 0;
 
     assert(o->local_ref && o->remote_ref);
@@ -619,12 +692,18 @@ int notes_merge(struct notes_merge_options *o,
 
     /* Dereference o->local_ref into local_sha1 */
     if (refs_read_ref_full(get_main_ref_store(the_repository), o->local_ref, 0, &local_oid, NULL))
+    {
         die("Failed to resolve local notes ref '%s'", o->local_ref);
+    }
     else if (!check_refname_format(o->local_ref, 0) && is_null_oid(&local_oid))
+    {
         local = NULL; /* local_oid == null_oid indicates unborn ref */
+    }
     else if (!(local = lookup_commit_reference(o->repo, &local_oid)))
+    {
         die("Could not parse local commit %s (%s)",
             oid_to_hex(&local_oid), o->local_ref);
+    }
     trace_printf("\tlocal commit: %.7s\n", oid_to_hex(&local_oid));
 
     /* Dereference o->remote_ref into remote_oid */
@@ -653,9 +732,11 @@ int notes_merge(struct notes_merge_options *o,
     trace_printf("\tremote commit: %.7s\n", oid_to_hex(&remote_oid));
 
     if (!local && !remote)
+    {
         die("Cannot merge empty notes ref (%s) into empty notes ref "
             "(%s)",
             o->remote_ref, o->local_ref);
+    }
     if (!local)
     {
         /* result == remote commit */
@@ -672,21 +753,27 @@ int notes_merge(struct notes_merge_options *o,
 
     /* Find merge bases */
     if (repo_get_merge_bases(the_repository, local, remote, &bases) < 0)
+    {
         exit(128);
+    }
     if (!bases)
     {
         base_oid      = null_oid();
         base_tree_oid = the_hash_algo->empty_tree;
         if (o->verbosity >= 4)
+        {
             printf("No merge base found; doing history-less merge\n");
+        }
     }
     else if (!bases->next)
     {
         base_oid      = &bases->item->object.oid;
         base_tree_oid = get_commit_tree_oid(bases->item);
         if (o->verbosity >= 4)
+        {
             printf("One merge base found (%.7s)\n",
                    oid_to_hex(base_oid));
+        }
     }
     else
     {
@@ -694,25 +781,31 @@ int notes_merge(struct notes_merge_options *o,
         base_oid      = &bases->item->object.oid;
         base_tree_oid = get_commit_tree_oid(bases->item);
         if (o->verbosity >= 3)
+        {
             printf(
                 "Multiple merge bases found. Using the first "
                 "(%.7s)\n",
                 oid_to_hex(base_oid));
+        }
     }
 
     if (o->verbosity >= 4)
+    {
         printf(
             "Merging remote commit %.7s into local commit %.7s with "
             "merge-base %.7s\n",
             oid_to_hex(&remote->object.oid),
             oid_to_hex(&local->object.oid),
             oid_to_hex(base_oid));
+    }
 
     if (oideq(&remote->object.oid, base_oid))
     {
         /* Already merged; result == local commit */
         if (o->verbosity >= 2)
+        {
             printf_ln("Already up to date.");
+        }
         oidcpy(result_oid, &local->object.oid);
         goto found_result;
     }
@@ -720,7 +813,9 @@ int notes_merge(struct notes_merge_options *o,
     {
         /* Fast-forward; result == remote commit */
         if (o->verbosity >= 2)
+        {
             printf("Fast-forward\n");
+        }
         oidcpy(result_oid, &remote->object.oid);
         goto found_result;
     }
@@ -770,44 +865,61 @@ int notes_merge_commit(struct notes_merge_options *o,
 
     git_path_buf(&path, NOTES_MERGE_WORKTREE);
     if (o->verbosity >= 3)
+    {
         printf("Committing notes in notes merge worktree at %s\n",
                path.buf);
+    }
 
     if (!msg || msg[2] == '\0')
+    {
         die("partial notes commit has empty message");
+    }
     msg += 2;
 
     dir = opendir(path.buf);
     if (!dir)
+    {
         die_errno("could not open %s", path.buf);
+    }
 
     strbuf_addch(&path, '/');
     baselen = path.len;
     while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL)
     {
         struct stat      st;
-        struct object_id obj_oid, blob_oid;
+        struct object_id obj_oid;
+        struct object_id blob_oid;
 
         if (get_oid_hex(e->d_name, &obj_oid))
         {
             if (o->verbosity >= 3)
+            {
                 printf("Skipping non-SHA1 entry '%s%s'\n",
                        path.buf, e->d_name);
+            }
             continue;
         }
 
         strbuf_addstr(&path, e->d_name);
         /* write file as blob, and add to partial_tree */
         if (stat(path.buf, &st))
+        {
             die_errno("Failed to stat '%s'", path.buf);
+        }
         if (index_path(o->repo->index, &blob_oid, path.buf, &st, HASH_WRITE_OBJECT))
+        {
             die("Failed to write blob object from '%s'", path.buf);
+        }
         if (add_note(partial_tree, &obj_oid, &blob_oid, NULL))
+        {
             die("Failed to add resolved note '%s' to notes tree",
                 path.buf);
+        }
         if (o->verbosity >= 4)
+        {
             printf("Added resolved note for object %s: %s\n",
                    oid_to_hex(&obj_oid), oid_to_hex(&blob_oid));
+        }
         strbuf_setlen(&path, baselen);
     }
 
@@ -815,8 +927,10 @@ int notes_merge_commit(struct notes_merge_options *o,
                         strlen(msg), result_oid);
     repo_unuse_commit_buffer(the_repository, partial_commit, buffer);
     if (o->verbosity >= 4)
+    {
         printf("Finalized notes merge commit: %s\n",
                oid_to_hex(result_oid));
+    }
     strbuf_release(&path);
     closedir(dir);
     return 0;
@@ -834,7 +948,9 @@ int notes_merge_abort(struct notes_merge_options *o)
 
     git_path_buf(&buf, NOTES_MERGE_WORKTREE);
     if (o->verbosity >= 3)
+    {
         printf("Removing notes merge worktree at %s/*\n", buf.buf);
+    }
     ret = remove_dir_recursively(&buf, REMOVE_DIR_KEEP_TOPLEVEL);
     strbuf_release(&buf);
     return ret;

@@ -42,7 +42,9 @@
 static void *obstack_chunk_alloc(long size)
 {
     if (size < 0)
+    {
         BUG("Cannot allocate a negative amount: %ld", size);
+    }
     return xmalloc(size);
 }
 #define obstack_chunk_free free
@@ -399,7 +401,11 @@ const char *
         L,
         R
     } dirs[DEPTH_SIZE];
-    struct tree *t, *r, *l, *rl, *lr;
+    struct tree *t;
+    struct tree *r;
+    struct tree *l;
+    struct tree *rl;
+    struct tree *lr;
 
     kwset = (struct kwset *)kws;
     trie  = kwset->trie;
@@ -423,9 +429,13 @@ const char *
         {
             links[depth] = link;
             if (label < link->label)
+            {
                 dirs[depth++] = L, link = link->llink;
+            }
             else
+            {
                 dirs[depth++] = R, link = link->rlink;
+            }
         }
 
         /* The current character doesn't have an outgoing link at
@@ -436,7 +446,9 @@ const char *
             link = (struct tree *)obstack_alloc(&kwset->obstack,
                                                 sizeof(struct tree));
             if (!link)
+            {
                 return "memory exhausted";
+            }
             link->llink = NULL;
             link->rlink = NULL;
             link->trie  = (struct trie *)obstack_alloc(&kwset->obstack,
@@ -458,17 +470,25 @@ const char *
 
             /* Install the new tree node in its parent. */
             if (dirs[--depth] == L)
+            {
                 links[depth]->llink = link;
+            }
             else
+            {
                 links[depth]->rlink = link;
+            }
 
             /* Back up the tree fixing the balance flags. */
             while (depth && !links[depth]->balance)
             {
                 if (dirs[depth] == L)
+                {
                     --links[depth]->balance;
+                }
                 else
+                {
                     ++links[depth]->balance;
+                }
                 --depth;
             }
 
@@ -522,9 +542,13 @@ const char *
                 }
 
                 if (dirs[depth - 1] == L)
+                {
                     links[depth - 1]->llink = t;
+                }
                 else
+                {
                     links[depth - 1]->rlink = t;
+                }
             }
         }
 
@@ -534,14 +558,20 @@ const char *
     /* Mark the node we finally reached as accepting, encoding the
        index number of this word in the keyword set so far. */
     if (!trie->accepting)
+    {
         trie->accepting = 1 + 2 * kwset->words;
+    }
     ++kwset->words;
 
     /* Keep track of the longest and shortest string of the keyword set. */
     if (trie->depth < kwset->mind)
+    {
         kwset->mind = trie->depth;
+    }
     if (trie->depth > kwset->maxd)
+    {
         kwset->maxd = trie->depth;
+    }
 
     return NULL;
 }
@@ -552,7 +582,9 @@ static void
     enqueue(struct tree *tree, struct trie **last)
 {
     if (!tree)
+    {
         return;
+    }
     enqueue(tree->llink, last);
     enqueue(tree->rlink, last);
     (*last) = (*last)->next = tree->trie;
@@ -568,7 +600,9 @@ static void
     register struct tree *link;
 
     if (!tree)
+    {
         return;
+    }
 
     treefails(tree->llink, fail, recourse);
     treefails(tree->rlink, fail, recourse);
@@ -579,10 +613,16 @@ static void
     {
         link = fail->links;
         while (link && tree->label != link->label)
+        {
             if (tree->label < link->label)
+            {
                 link = link->llink;
+            }
             else
+            {
                 link = link->rlink;
+            }
+        }
         if (link)
         {
             tree->trie->fail = link->trie;
@@ -602,11 +642,15 @@ static void
               unsigned char               delta[])
 {
     if (!tree)
+    {
         return;
+    }
     treedelta(tree->llink, depth, delta);
     treedelta(tree->rlink, depth, delta);
     if (depth < delta[tree->label])
+    {
         delta[tree->label] = depth;
+    }
 }
 
 /* Return true if A has every label in B. */
@@ -614,16 +658,28 @@ static int
     hasevery(register struct tree const *a, register struct tree const *b)
 {
     if (!b)
+    {
         return 1;
+    }
     if (!hasevery(a, b->llink))
+    {
         return 0;
+    }
     if (!hasevery(a, b->rlink))
+    {
         return 0;
+    }
     while (a && b->label != a->label)
+    {
         if (b->label < a->label)
+        {
             a = a->llink;
+        }
         else
+        {
             a = a->rlink;
+        }
+    }
     return !!a;
 }
 
@@ -633,7 +689,9 @@ static void
     treenext(struct tree const *tree, struct trie *next[])
 {
     if (!tree)
+    {
         return;
+    }
     treenext(tree->llink, next);
     treenext(tree->rlink, next);
     next[tree->label] = tree->trie;
@@ -666,7 +724,9 @@ const char *
         /* Looking for just one string.  Extract it from the trie. */
         kwset->target = obstack_alloc(&kwset->obstack, kwset->mind);
         if (!kwset->target)
+        {
             return "memory exhausted";
+        }
         for (i = kwset->mind - 1, curr = kwset->trie; i >= 0; --i)
         {
             kwset->target[i] = curr->links->label;
@@ -674,19 +734,26 @@ const char *
         }
         /* Build the Boyer Moore delta.  Boy that's easy compared to CW. */
         for (i = 0; i < kwset->mind; ++i)
+        {
             delta[U(kwset->target[i])] = kwset->mind - (i + 1);
+        }
         /* Find the minimal delta2 shift that we might make after
            a backwards match has failed. */
         c = kwset->target[kwset->mind - 1];
         for (i = kwset->mind - 2; i >= 0; --i)
+        {
             if (kwset->target[i] == c)
+            {
                 break;
+            }
+        }
         kwset->mind2 = kwset->mind - (i + 1);
     }
     else
     {
         register struct trie *fail;
-        struct trie          *last, *next[NCHAR];
+        struct trie          *last;
+        struct trie          *next[NCHAR];
 
         /* Traverse the nodes of the trie in level order, simultaneously
            computing the delta table, failure function, and shift function. */
@@ -712,14 +779,20 @@ const char *
                    doesn't, then the shift at the fail should be no larger
                    than the difference of their depths. */
                 if (!hasevery(fail->links, curr->links))
+                {
                     if (curr->depth - fail->depth < fail->shift)
+                    {
                         fail->shift = curr->depth - fail->depth;
+                    }
+                }
 
                 /* If the current node is accepting then the shift at the
                    fail and its descendants should be no larger than the
                    difference of their depths. */
                 if (curr->accepting && fail->maxshift > curr->depth - fail->depth)
+                {
                     fail->maxshift = curr->depth - fail->depth;
+                }
             }
         }
 
@@ -728,30 +801,48 @@ const char *
         for (curr = kwset->trie->next; curr; curr = curr->next)
         {
             if (curr->maxshift > curr->parent->maxshift)
+            {
                 curr->maxshift = curr->parent->maxshift;
+            }
             if (curr->shift > curr->maxshift)
+            {
                 curr->shift = curr->maxshift;
+            }
         }
 
         /* Create a vector, indexed by character code, of the outgoing links
            from the root node. */
         for (i = 0; i < NCHAR; ++i)
+        {
             next[i] = NULL;
+        }
         treenext(kwset->trie->links, next);
 
         if ((trans = kwset->trans))
+        {
             for (i = 0; i < NCHAR; ++i)
+            {
                 kwset->next[i] = next[U(trans[i])];
+            }
+        }
         else
+        {
             COPY_ARRAY(kwset->next, next, NCHAR);
+        }
     }
 
     /* Fix things up for any translation table. */
     if ((trans = kwset->trans))
+    {
         for (i = 0; i < NCHAR; ++i)
+        {
             kwset->delta[i] = delta[U(trans[i])];
+        }
+    }
     else
+    {
         memcpy(kwset->delta, delta, NCHAR);
+    }
 
     return NULL;
 }
@@ -762,16 +853,26 @@ static size_t
 {
     struct kwset const           *kwset;
     register unsigned char const *d1;
-    register char const          *ep, *sp, *tp;
-    register int                  d, gc, i, len, md2;
+    register char const          *ep;
+    register char const          *sp;
+    register char const          *tp;
+    register int                  d;
+    register int                  gc;
+    register int                  i;
+    register int                  len;
+    register int                  md2;
 
     kwset = (struct kwset const *)kws;
     len   = kwset->mind;
 
     if (len == 0)
+    {
         return 0;
+    }
     if (len > size)
+    {
         return -1;
+    }
     if (len == 1)
     {
         tp = memchr(text, kwset->target[0], size);
@@ -786,6 +887,7 @@ static size_t
 
     /* Significance of 12: 1 (initial offset) + 10 (skip loop) + 1 (md2). */
     if (size > 12 * len)
+    {
         /* 11 is not a bug, the initial offset happens only once. */
         for (ep = text + size - 11 * len;;)
         {
@@ -794,17 +896,23 @@ static size_t
                 d = d1[U(tp[-1])], tp += d;
                 d = d1[U(tp[-1])], tp += d;
                 if (d == 0)
+                {
                     goto found;
+                }
                 d = d1[U(tp[-1])], tp += d;
                 d = d1[U(tp[-1])], tp += d;
                 d = d1[U(tp[-1])], tp += d;
                 if (d == 0)
+                {
                     goto found;
+                }
                 d = d1[U(tp[-1])], tp += d;
                 d = d1[U(tp[-1])], tp += d;
                 d = d1[U(tp[-1])], tp += d;
                 if (d == 0)
+                {
                     goto found;
+                }
                 d = d1[U(tp[-1])], tp += d;
                 d = d1[U(tp[-1])], tp += d;
             }
@@ -813,12 +921,17 @@ static size_t
             if (U(tp[-2]) == gc)
             {
                 for (i = 3; i <= len && U(tp[-i]) == U(sp[-i]); ++i)
+                {
                     ;
+                }
                 if (i > len)
+                {
                     return tp - len - text;
+                }
             }
             tp += md2;
         }
+    }
 
     /* Now we have only a few characters left to search.  We
        carefully avoid ever producing an out-of-bounds pointer. */
@@ -828,13 +941,19 @@ static size_t
     {
         d = d1[U((tp += d)[-1])];
         if (d != 0)
+        {
             continue;
+        }
         if (U(tp[-2]) == gc)
         {
             for (i = 3; i <= len && U(tp[-i]) == U(sp[-i]); ++i)
+            {
                 ;
+            }
             if (i > len)
+            {
                 return tp - len - text;
+            }
         }
         d = md2;
     }
@@ -850,11 +969,15 @@ static size_t
     struct trie *const           *next;
     struct trie const            *trie;
     struct trie const            *accept;
-    char const                   *beg, *lim, *mch, *lmch;
+    char const                   *beg;
+    char const                   *lim;
+    char const                   *mch;
+    char const                   *lmch;
     register unsigned char        c;
     register unsigned char const *delta;
     register int                  d;
-    register char const          *end, *qlim;
+    register char const          *end;
+    register char const          *qlim;
     register struct tree const   *tree;
     register unsigned char const *trans;
 
@@ -863,14 +986,18 @@ static size_t
     /* Initialize register copies and look for easy ways out. */
     kwset = (struct kwset *)kws;
     if (len < kwset->mind)
+    {
         return -1;
+    }
     next  = kwset->next;
     delta = kwset->delta;
     trans = kwset->trans;
     lim   = text + len;
     end   = text;
     if ((d = kwset->mind) != 0)
+    {
         mch = NULL;
+    }
     else
     {
         mch = text, accept = kwset->trie;
@@ -878,9 +1005,13 @@ static size_t
     }
 
     if (len >= 4 * kwset->mind)
+    {
         qlim = lim - 4 * kwset->mind;
+    }
     else
+    {
         qlim = NULL;
+    }
 
     while (lim - end >= d)
     {
@@ -896,9 +1027,13 @@ static size_t
             ++end;
         }
         else
+        {
             d = delta[c = (end += d)[-1]];
+        }
         if (d)
+        {
             continue;
+        }
         beg  = end - 1;
         trie = next[c];
         if (trie->accepting)
@@ -912,10 +1047,16 @@ static size_t
             c    = trans ? trans[U(*--beg)] : *--beg;
             tree = trie->links;
             while (tree && c != tree->label)
+            {
                 if (c < tree->label)
+                {
                     tree = tree->llink;
+                }
                 else
+                {
                     tree = tree->rlink;
+                }
+            }
             if (tree)
             {
                 trie = tree->trie;
@@ -926,11 +1067,15 @@ static size_t
                 }
             }
             else
+            {
                 break;
+            }
             d = trie->shift;
         }
         if (mch)
+        {
             goto match;
+        }
     }
     return -1;
 
@@ -939,13 +1084,17 @@ match:
        at or before its starting point.  This is nearly a verbatim
        copy of the preceding main search loops. */
     if (lim - mch > kwset->maxd)
+    {
         lim = mch + kwset->maxd;
+    }
     lmch = NULL;
     d    = 1;
     while (lim - end >= d)
     {
         if ((d = delta[c = (end += d)[-1]]) != 0)
+        {
             continue;
+        }
         beg = end - 1;
         if (!(trie = next[c]))
         {
@@ -963,10 +1112,16 @@ match:
             c    = trans ? trans[U(*--beg)] : *--beg;
             tree = trie->links;
             while (tree && c != tree->label)
+            {
                 if (c < tree->label)
+                {
                     tree = tree->llink;
+                }
                 else
+                {
                     tree = tree->rlink;
+                }
+            }
             if (tree)
             {
                 trie = tree->trie;
@@ -977,7 +1132,9 @@ match:
                 }
             }
             else
+            {
                 break;
+            }
             d = trie->shift;
         }
         if (lmch)
@@ -986,7 +1143,9 @@ match:
             goto match;
         }
         if (!d)
+        {
             d = 1;
+        }
     }
 
     if (kwsmatch)
@@ -1021,8 +1180,7 @@ size_t
         }
         return ret;
     }
-    else
-        return cwexec(kws, text, size, kwsmatch);
+    return cwexec(kws, text, size, kwsmatch);
 }
 
 /* Free the components of the given keyword set. */

@@ -41,9 +41,13 @@ static int need_large_offset(off_t offset, const struct pack_idx_option *opts)
     uint32_t ofsval;
 
     if ((offset >> 31) || (opts->off32_limit < offset))
+    {
         return 1;
+    }
     if (!opts->anomaly_nr)
+    {
         return 0;
+    }
     ofsval = offset;
     return !!bsearch(&ofsval, opts->anomaly, opts->anomaly_nr,
                      sizeof(ofsval), cmp_uint32);
@@ -58,9 +62,12 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
                            const unsigned char *sha1)
 {
     struct hashfile        *f;
-    struct pack_idx_entry **sorted_by_sha, **list, **last;
+    struct pack_idx_entry **sorted_by_sha;
+    struct pack_idx_entry **list;
+    struct pack_idx_entry **last;
     off_t                   last_obj_offset = 0;
-    int                     i, fd;
+    int                     i;
+    int                     fd;
     uint32_t                index_version;
 
     if (nr_objects)
@@ -71,12 +78,16 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
         for (i = 0; i < nr_objects; ++i)
         {
             if (objects[i]->offset > last_obj_offset)
+            {
                 last_obj_offset = objects[i]->offset;
+            }
         }
         QSORT(sorted_by_sha, nr_objects, sha1_compare);
     }
     else
+    {
         sorted_by_sha = list = last = NULL;
+    }
 
     if (opts->flags & WRITE_IDX_VERIFY)
     {
@@ -123,7 +134,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
         {
             struct pack_idx_entry *obj = *next;
             if (obj->oid.hash[0] != i)
+            {
                 break;
+            }
             next++;
         }
         hashwrite_be32(f, next - sorted_by_sha);
@@ -138,11 +151,15 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
     {
         struct pack_idx_entry *obj = *list++;
         if (index_version < 2)
+        {
             hashwrite_be32(f, obj->offset);
+        }
         hashwrite(f, obj->oid.hash, the_hash_algo->rawsz);
         if ((opts->flags & WRITE_IDX_STRICT) && (i && oideq(&list[-2]->oid, &obj->oid)))
+        {
             die("The same object %s appears twice in the pack",
                 oid_to_hex(&obj->oid));
+        }
     }
 
     if (index_version >= 2)
@@ -178,7 +195,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
             uint64_t               offset = obj->offset;
 
             if (!need_large_offset(offset, opts))
+            {
                 continue;
+            }
             hashwrite_be64(f, offset);
             nr_large_offset--;
         }
@@ -198,9 +217,13 @@ static int pack_order_cmp(const void *va, const void *vb, void *ctx)
     off_t ob = objects[*(uint32_t *)vb]->offset;
 
     if (oa < ob)
+    {
         return -1;
+    }
     if (oa > ob)
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -217,7 +240,9 @@ static void write_rev_index_positions(struct hashfile *f,
 {
     uint32_t i;
     for (i = 0; i < nr_objects; i++)
+    {
         hashwrite_be32(f, pack_order[i]);
+    }
 }
 
 static void write_rev_trailer(struct hashfile *f, const unsigned char *hash)
@@ -236,11 +261,15 @@ const char *write_rev_file(const char             *rev_name,
     const char *ret;
 
     if (!(flags & WRITE_REV) && !(flags & WRITE_REV_VERIFY))
+    {
         return NULL;
+    }
 
     ALLOC_ARRAY(pack_order, nr_objects);
     for (i = 0; i < nr_objects; i++)
+    {
         pack_order[i] = i;
+    }
     QSORT_S(pack_order, nr_objects, pack_order_cmp, objects);
 
     ret = write_rev_file_order(rev_name, pack_order, nr_objects, hash,
@@ -261,7 +290,9 @@ const char *write_rev_file_order(const char          *rev_name,
     int              fd;
 
     if ((flags & WRITE_REV) && (flags & WRITE_REV_VERIFY))
+    {
         die(_("cannot both write and verify reverse index"));
+    }
 
     if (flags & WRITE_REV)
     {
@@ -288,13 +319,14 @@ const char *write_rev_file_order(const char          *rev_name,
                 /* .rev files are optional */
                 return NULL;
             }
-            else
-                die_errno(_("could not stat: %s"), rev_name);
+            die_errno(_("could not stat: %s"), rev_name);
         }
         f = hashfd_check(rev_name);
     }
     else
+    {
         return NULL;
+    }
 
     write_rev_header(f);
 
@@ -302,7 +334,9 @@ const char *write_rev_file_order(const char          *rev_name,
     write_rev_trailer(f, hash);
 
     if (rev_name && adjust_shared_perm(rev_name) < 0)
+    {
         die(_("failed to make %s readable"), rev_name);
+    }
 
     finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
                       CSUM_HASH_IN_STREAM | CSUM_CLOSE | ((flags & WRITE_IDX_VERIFY) ? 0 : CSUM_FSYNC));
@@ -351,7 +385,9 @@ static char *write_mtimes_file(struct packing_data    *to_pack,
     int              fd;
 
     if (!to_pack)
+    {
         BUG("cannot call write_mtimes_file with NULL packing_data");
+    }
 
     fd          = odb_mkstemp(&tmp_file, "pack/tmp_mtimes_XXXXXX");
     mtimes_name = strbuf_detach(&tmp_file, NULL);
@@ -362,7 +398,9 @@ static char *write_mtimes_file(struct packing_data    *to_pack,
     write_mtimes_trailer(f, hash);
 
     if (adjust_shared_perm(mtimes_name) < 0)
+    {
         die(_("failed to make %s readable"), mtimes_name);
+    }
 
     finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
                       CSUM_HASH_IN_STREAM | CSUM_CLOSE | CSUM_FSYNC);
@@ -404,8 +442,10 @@ void fixup_pack_header_footer(int            pack_fd,
                               unsigned char *partial_pack_hash,
                               off_t          partial_pack_offset)
 {
-    int                aligned_sz, buf_sz = 8 * 1024;
-    git_hash_ctx       old_hash_ctx, new_hash_ctx;
+    int                aligned_sz;
+    int                buf_sz = 8 * 1024;
+    git_hash_ctx       old_hash_ctx;
+    git_hash_ctx       new_hash_ctx;
     struct pack_header hdr;
     char              *buf;
     ssize_t            read_result;
@@ -414,15 +454,23 @@ void fixup_pack_header_footer(int            pack_fd,
     the_hash_algo->init_fn(&new_hash_ctx);
 
     if (lseek(pack_fd, 0, SEEK_SET) != 0)
+    {
         die_errno("Failed seeking to start of '%s'", pack_name);
+    }
     read_result = read_in_full(pack_fd, &hdr, sizeof(hdr));
     if (read_result < 0)
+    {
         die_errno("Unable to reread header of '%s'", pack_name);
+    }
     else if (read_result != sizeof(hdr))
+    {
         die_errno("Unexpected short read for header of '%s'",
                   pack_name);
+    }
     if (lseek(pack_fd, 0, SEEK_SET) != 0)
+    {
         die_errno("Failed seeking to start of '%s'", pack_name);
+    }
     the_hash_algo->update_fn(&old_hash_ctx, &hdr, sizeof(hdr));
     hdr.hdr_entries = htonl(object_count);
     the_hash_algo->update_fn(&new_hash_ctx, &hdr, sizeof(hdr));
@@ -433,21 +481,30 @@ void fixup_pack_header_footer(int            pack_fd,
     aligned_sz = buf_sz - sizeof(hdr);
     for (;;)
     {
-        ssize_t m, n;
+        ssize_t m;
+        ssize_t n;
         m = (partial_pack_hash && partial_pack_offset < aligned_sz) ? partial_pack_offset : aligned_sz;
         n = xread(pack_fd, buf, m);
         if (!n)
+        {
             break;
+        }
         if (n < 0)
+        {
             die_errno("Failed to checksum '%s'", pack_name);
+        }
         the_hash_algo->update_fn(&new_hash_ctx, buf, n);
 
         aligned_sz -= n;
         if (!aligned_sz)
+        {
             aligned_sz = buf_sz;
+        }
 
         if (!partial_pack_hash)
+        {
             continue;
+        }
 
         the_hash_algo->update_fn(&old_hash_ctx, buf, n);
         partial_pack_offset -= n;
@@ -457,9 +514,11 @@ void fixup_pack_header_footer(int            pack_fd,
             the_hash_algo->final_fn(hash, &old_hash_ctx);
             if (!hasheq(hash, partial_pack_hash,
                         the_repository->hash_algo))
+            {
                 die("Unexpected checksum for %s "
                     "(disk corruption?)",
                     pack_name);
+            }
             /*
              * Now let's compute the SHA1 of the remainder of the
              * pack, which also means making partial_pack_offset
@@ -473,7 +532,9 @@ void fixup_pack_header_footer(int            pack_fd,
     free(buf);
 
     if (partial_pack_hash)
+    {
         the_hash_algo->final_fn(partial_pack_hash, &old_hash_ctx);
+    }
     the_hash_algo->final_fn(new_pack_hash, &new_hash_ctx);
     write_or_die(pack_fd, new_pack_hash, the_hash_algo->rawsz);
     fsync_component_or_die(FSYNC_COMPONENT_PACK, pack_fd, pack_name);
@@ -496,15 +557,21 @@ char *index_pack_lockfile(int ip_out, int *is_well_formed)
         const char *name;
 
         if (is_well_formed)
+        {
             *is_well_formed = 1;
+        }
         packname[len - 1] = 0;
         if (skip_prefix(packname, "keep\t", &name))
+        {
             return xstrfmt("%s/pack/pack-%s.keep",
                            get_object_directory(), name);
+        }
         return NULL;
     }
     if (is_well_formed)
+    {
         *is_well_formed = 0;
+    }
     return NULL;
 }
 
@@ -522,14 +589,18 @@ int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
     unsigned char c;
 
     if (type < OBJ_COMMIT || type > OBJ_REF_DELTA)
+    {
         die("bad type %d", type);
+    }
 
     c = (type << 4) | (size & 15);
     size >>= 4;
     while (size)
     {
         if (n == hdr_len)
+        {
             die("object size is too enormous to format");
+        }
         *hdr++ = c | 0x80;
         c      = size & 0x7f;
         size >>= 7;
@@ -556,8 +627,10 @@ static void rename_tmp_packfile(struct strbuf *name_prefix, const char *source,
 
     strbuf_addstr(name_prefix, ext);
     if (rename(source, name_prefix->buf))
+    {
         die_errno("unable to rename temporary file to '%s'",
                   name_prefix->buf);
+    }
     strbuf_setlen(name_prefix, name_prefix_len);
 }
 
@@ -580,12 +653,16 @@ void stage_tmp_packfiles(struct strbuf          *name_buffer,
     char       *mtimes_tmp_name = NULL;
 
     if (adjust_shared_perm(pack_tmp_name))
+    {
         die_errno("unable to make temporary pack file readable");
+    }
 
     *idx_tmp_name = (char *)write_idx_file(NULL, written_list, nr_written,
                                            pack_idx_opts, hash);
     if (adjust_shared_perm(*idx_tmp_name))
+    {
         die_errno("unable to make temporary index file readable");
+    }
 
     rev_tmp_name = write_rev_file(NULL, written_list, nr_written, hash,
                                   pack_idx_opts->flags);
@@ -599,9 +676,13 @@ void stage_tmp_packfiles(struct strbuf          *name_buffer,
 
     rename_tmp_packfile(name_buffer, pack_tmp_name, "pack");
     if (rev_tmp_name)
+    {
         rename_tmp_packfile(name_buffer, rev_tmp_name, "rev");
+    }
     if (mtimes_tmp_name)
+    {
         rename_tmp_packfile(name_buffer, mtimes_tmp_name, "mtimes");
+    }
 
     free((char *)rev_tmp_name);
     free(mtimes_tmp_name);
@@ -609,15 +690,20 @@ void stage_tmp_packfiles(struct strbuf          *name_buffer,
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)
 {
-    int   i, err;
+    int   i;
+    int   err;
     FILE *output = xfopen(promisor_name, "w");
 
     for (i = 0; i < nr_sought; i++)
+    {
         fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
                 sought[i]->name);
+    }
 
     err = ferror(output);
     err |= fclose(output);
     if (err)
+    {
         die(_("could not write '%s' promisor file"), promisor_name);
+    }
 }

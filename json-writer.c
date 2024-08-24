@@ -25,23 +25,41 @@ static void append_quoted_string(struct strbuf *out, const char *in)
     while ((c = *in++) != '\0')
     {
         if (c == '"')
+        {
             strbuf_addstr(out, "\\\"");
+        }
         else if (c == '\\')
+        {
             strbuf_addstr(out, "\\\\");
+        }
         else if (c == '\n')
+        {
             strbuf_addstr(out, "\\n");
+        }
         else if (c == '\r')
+        {
             strbuf_addstr(out, "\\r");
+        }
         else if (c == '\t')
+        {
             strbuf_addstr(out, "\\t");
+        }
         else if (c == '\f')
+        {
             strbuf_addstr(out, "\\f");
+        }
         else if (c == '\b')
+        {
             strbuf_addstr(out, "\\b");
+        }
         else if (c < 0x20)
+        {
             strbuf_addf(out, "\\u%04x", c);
+        }
         else
+        {
             strbuf_addch(out, c);
+        }
     }
     strbuf_addch(out, '"');
 }
@@ -71,9 +89,13 @@ static void begin(struct json_writer *jw, char ch_open, int pretty)
 static void assert_in_object(const struct json_writer *jw, const char *key)
 {
     if (!jw->open_stack.len)
+    {
         BUG("json-writer: object: missing jw_object_begin(): '%s'", key);
+    }
     if (jw->open_stack.buf[jw->open_stack.len - 1] != '{')
+    {
         BUG("json-writer: object: not in object: '%s'", key);
+    }
 }
 
 /*
@@ -82,9 +104,13 @@ static void assert_in_object(const struct json_writer *jw, const char *key)
 static void assert_in_array(const struct json_writer *jw)
 {
     if (!jw->open_stack.len)
+    {
         BUG("json-writer: array: missing jw_array_begin()");
+    }
     if (jw->open_stack.buf[jw->open_stack.len - 1] != '[')
+    {
         BUG("json-writer: array: not in array");
+    }
 }
 
 /*
@@ -93,9 +119,13 @@ static void assert_in_array(const struct json_writer *jw)
 static void maybe_add_comma(struct json_writer *jw)
 {
     if (jw->need_comma)
+    {
         strbuf_addch(&jw->json, ',');
+    }
     else
+    {
         jw->need_comma = 1;
+    }
 }
 
 static void fmt_double(struct json_writer *jw, int precision,
@@ -128,7 +158,9 @@ static void object_common(struct json_writer *jw, const char *key)
     append_quoted_string(&jw->json, key);
     strbuf_addch(&jw->json, ':');
     if (jw->pretty)
+    {
         strbuf_addch(&jw->json, ' ');
+    }
 }
 
 static void array_common(struct json_writer *jw)
@@ -150,8 +182,10 @@ static void array_common(struct json_writer *jw)
 static void assert_is_terminated(const struct json_writer *jw)
 {
     if (jw->open_stack.len)
+    {
         BUG("json-writer: object: missing jw_end(): '%s'",
             jw->json.buf);
+    }
 }
 
 void jw_object_begin(struct json_writer *jw, int pretty)
@@ -193,9 +227,13 @@ void jw_object_false(struct json_writer *jw, const char *key)
 void jw_object_bool(struct json_writer *jw, const char *key, int value)
 {
     if (value)
+    {
         jw_object_true(jw, key);
+    }
     else
+    {
         jw_object_false(jw, key);
+    }
 }
 
 void jw_object_null(struct json_writer *jw, const char *key)
@@ -216,7 +254,9 @@ static void increase_indent(struct strbuf            *sb,
         char ch = jw->json.buf[k];
         strbuf_addch(sb, ch);
         if (ch == '\n')
+        {
             strbuf_addchars(sb, ' ', indent);
+        }
     }
 }
 
@@ -231,7 +271,9 @@ static void kill_indent(struct strbuf            *sb,
     {
         char ch = jw->json.buf[k];
         if (eat_it && ch == ' ')
+        {
             continue;
+        }
         if (ch == '\n')
         {
             eat_it = 1;
@@ -343,9 +385,13 @@ void jw_array_false(struct json_writer *jw)
 void jw_array_bool(struct json_writer *jw, int value)
 {
     if (value)
+    {
         jw_array_true(jw);
+    }
     else
+    {
         jw_array_false(jw);
+    }
 }
 
 void jw_array_null(struct json_writer *jw)
@@ -367,13 +413,17 @@ void jw_array_argc_argv(struct json_writer *jw, int argc, const char **argv)
     int k;
 
     for (k = 0; k < argc; k++)
+    {
         jw_array_string(jw, argv[k]);
+    }
 }
 
 void jw_array_argv(struct json_writer *jw, const char **argv)
 {
     while (*argv)
+    {
         jw_array_string(jw, *argv++);
+    }
 }
 
 void jw_array_inline_begin_object(struct json_writer *jw)
@@ -401,7 +451,9 @@ void jw_end(struct json_writer *jw)
     int  len;
 
     if (!jw->open_stack.len)
+    {
         BUG("json-writer: too many jw_end(): '%s'", jw->json.buf);
+    }
 
     len     = jw->open_stack.len - 1;
     ch_open = jw->open_stack.buf[len];
@@ -416,7 +468,11 @@ void jw_end(struct json_writer *jw)
     }
 
     if (ch_open == '{')
+    {
         strbuf_addch(&jw->json, '}');
+    }
     else
+    {
         strbuf_addch(&jw->json, ']');
+    }
 }

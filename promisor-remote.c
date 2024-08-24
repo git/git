@@ -42,15 +42,21 @@ static int fetch_objects(struct repository      *repo,
     child.git_cmd = 1;
     child.in      = -1;
     if (repo != the_repository)
+    {
         prepare_other_repo_env(&child.env, repo->gitdir);
+    }
     strvec_pushl(&child.args, "-c", "fetch.negotiationAlgorithm=noop",
                  "fetch", remote_name, "--no-tags",
                  "--no-write-fetch-head", "--recurse-submodules=no",
                  "--filter=blob:none", "--stdin", NULL);
     if (!git_config_get_bool("promisor.quiet", &quiet) && quiet)
+    {
         strvec_push(&child.args, "--quiet");
+    }
     if (start_command(&child))
+    {
         die(_("promisor-remote: unable to fork off fetch subprocess"));
+    }
     child_in = xfdopen(child.in, "w");
 
     trace2_data_intmax("promisor", repo, "fetch_count", oid_nr);
@@ -58,13 +64,19 @@ static int fetch_objects(struct repository      *repo,
     for (i = 0; i < oid_nr; i++)
     {
         if (fputs(oid_to_hex(&oids[i]), child_in) < 0)
+        {
             die_errno(_("promisor-remote: could not write to fetch subprocess"));
+        }
         if (fputc('\n', child_in) < 0)
+        {
             die_errno(_("promisor-remote: could not write to fetch subprocess"));
+        }
     }
 
     if (fclose(child_in) < 0)
+    {
         die_errno(_("promisor-remote: could not close stdin to fetch subprocess"));
+    }
     return finish_command(&child) ? -1 : 0;
 }
 
@@ -92,15 +104,20 @@ static struct promisor_remote *promisor_remote_lookup(struct promisor_remote_con
                                                       const char                    *remote_name,
                                                       struct promisor_remote       **previous)
 {
-    struct promisor_remote *r, *p;
+    struct promisor_remote *r;
+    struct promisor_remote *p;
 
     for (p = NULL, r = config->promisors; r; p = r, r = r->next)
+    {
         if (!strcmp(r->name, remote_name))
         {
             if (previous)
+            {
                 *previous = p;
+            }
             return r;
         }
+    }
 
     return NULL;
 }
@@ -110,12 +127,18 @@ static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
                                          struct promisor_remote        *previous)
 {
     if (!r->next)
+    {
         return;
+    }
 
     if (previous)
+    {
         previous->next = r->next;
+    }
     else
+    {
         config->promisors = r->next ? r->next : r;
+    }
     r->next                 = NULL;
     *config->promisors_tail = r;
     config->promisors_tail  = &r->next;
@@ -131,19 +154,25 @@ static int promisor_remote_config(const char *var, const char *value,
     const char                    *subkey;
 
     if (parse_config_key(var, "remote", &name, &namelen, &subkey) < 0)
+    {
         return 0;
+    }
 
     if (!strcmp(subkey, "promisor"))
     {
         char *remote_name;
 
         if (!git_config_bool(var, value))
+        {
             return 0;
+        }
 
         remote_name = xmemdupz(name, namelen);
 
         if (!promisor_remote_lookup(config, remote_name, NULL))
+        {
             promisor_remote_new(config, remote_name);
+        }
 
         free(remote_name);
         return 0;
@@ -155,12 +184,16 @@ static int promisor_remote_config(const char *var, const char *value,
 
         r = promisor_remote_lookup(config, remote_name, NULL);
         if (!r)
+        {
             r = promisor_remote_new(config, remote_name);
+        }
 
         free(remote_name);
 
         if (!r)
+        {
             return 0;
+        }
 
         return git_config_string(&r->partial_clone_filter, var, value);
     }
@@ -173,7 +206,9 @@ static void promisor_remote_init(struct repository *r)
     struct promisor_remote_config *config;
 
     if (r->promisor_remote_config)
+    {
         return;
+    }
     config = r->promisor_remote_config =
         xcalloc(1, sizeof(*r->promisor_remote_config));
     config->promisors_tail = &config->promisors;
@@ -182,15 +217,20 @@ static void promisor_remote_init(struct repository *r)
 
     if (r->repository_format_partial_clone)
     {
-        struct promisor_remote *o, *previous;
+        struct promisor_remote *o;
+        struct promisor_remote *previous;
 
         o = promisor_remote_lookup(config,
                                    r->repository_format_partial_clone,
                                    &previous);
         if (o)
+        {
             promisor_remote_move_to_tail(config, o, previous);
+        }
         else
+        {
             promisor_remote_new(config, r->repository_format_partial_clone);
+        }
     }
 }
 
@@ -219,7 +259,9 @@ struct promisor_remote *repo_promisor_remote_find(struct repository *r,
     promisor_remote_init(r);
 
     if (!remote_name)
+    {
         return r->promisor_remote_config->promisors;
+    }
 
     return promisor_remote_lookup(r->promisor_remote_config, remote_name, NULL);
 }
@@ -233,29 +275,38 @@ static int remove_fetched_oids(struct repository *repo,
                                struct object_id **oids,
                                int oid_nr, int to_free)
 {
-    int               i, remaining_nr = 0;
-    int              *remaining = xcalloc(oid_nr, sizeof(*remaining));
-    struct object_id *old_oids  = *oids;
+    int               i;
+    int               remaining_nr = 0;
+    int              *remaining    = xcalloc(oid_nr, sizeof(*remaining));
+    struct object_id *old_oids     = *oids;
     struct object_id *new_oids;
 
     for (i = 0; i < oid_nr; i++)
+    {
         if (oid_object_info_extended(repo, &old_oids[i], NULL,
                                      OBJECT_INFO_SKIP_FETCH_OBJECT))
         {
             remaining[i] = 1;
             remaining_nr++;
         }
+    }
 
     if (remaining_nr)
     {
         int j = 0;
         CALLOC_ARRAY(new_oids, remaining_nr);
         for (i = 0; i < oid_nr; i++)
+        {
             if (remaining[i])
+            {
                 oidcpy(&new_oids[j++], &old_oids[i]);
+            }
+        }
         *oids = new_oids;
         if (to_free)
+        {
             free(old_oids);
+        }
     }
 
     free(remaining);
@@ -274,7 +325,9 @@ void promisor_remote_get_direct(struct repository      *repo,
     int                     i;
 
     if (oid_nr == 0)
+    {
         return;
+    }
 
     promisor_remote_init(repo);
 
@@ -283,7 +336,9 @@ void promisor_remote_get_direct(struct repository      *repo,
         if (fetch_objects(repo, r->name, remaining_oids, remaining_nr) < 0)
         {
             if (remaining_nr == 1)
+            {
                 continue;
+            }
             remaining_nr = remove_fetched_oids(repo, &remaining_oids,
                                                remaining_nr, to_free);
             if (remaining_nr)
@@ -298,11 +353,15 @@ void promisor_remote_get_direct(struct repository      *repo,
     for (i = 0; i < remaining_nr; i++)
     {
         if (is_promisor_object(&remaining_oids[i]))
+        {
             die(_("could not fetch %s from promisor remote"),
                 oid_to_hex(&remaining_oids[i]));
+        }
     }
 
 all_fetched:
     if (to_free)
+    {
         free(remaining_oids);
+    }
 }

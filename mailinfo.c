@@ -10,14 +10,17 @@
 
 static void cleanup_space(struct strbuf *sb)
 {
-    size_t pos, cnt;
+    size_t pos;
+    size_t cnt;
     for (pos = 0; pos < sb->len; pos++)
     {
         if (isspace(sb->buf[pos]))
         {
             sb->buf[pos] = ' ';
             for (cnt = 0; isspace(sb->buf[pos + cnt + 1]); cnt++)
+            {
                 ;
+            }
             strbuf_remove(sb, pos + 1, cnt);
         }
     }
@@ -27,9 +30,13 @@ static void get_sane_name(struct strbuf *out, struct strbuf *name, struct strbuf
 {
     struct strbuf *src = name;
     if (!name->len || 60 < name->len || strpbrk(name->buf, "@<>"))
+    {
         src = email;
+    }
     else if (name == out)
+    {
         return;
+    }
     strbuf_reset(out);
     strbuf_addbuf(out, src);
 }
@@ -38,19 +45,26 @@ static void parse_bogus_from(struct mailinfo *mi, const struct strbuf *line)
 {
     /* John Doe <johndoe> */
 
-    char *bra, *ket;
+    char *bra;
+    char *ket;
     /* This is fallback, so do not bother if we already have an
      * e-mail address.
      */
     if (mi->email.len)
+    {
         return;
+    }
 
     bra = strchr(line->buf, '<');
     if (!bra)
+    {
         return;
+    }
     ket = strchr(bra, '>');
     if (!ket)
+    {
         return;
+    }
 
     strbuf_reset(&mi->email);
     strbuf_add(&mi->email, bra + 1, ket - bra - 1);
@@ -89,7 +103,9 @@ static const char *unquote_comment(struct strbuf *outbuf, const char *in)
                 case ')':
                     strbuf_addch(outbuf, ')');
                     if (!--depth)
+                    {
                         return in;
+                    }
                     continue;
             }
         }
@@ -178,7 +194,9 @@ static void handle_from(struct mailinfo *mi, const struct strbuf *from)
      * If we already have one email, don't take any confusing lines
      */
     if (mi->email.len && strchr(at + 1, '@'))
+    {
         goto out;
+    }
 
     /* Pick up the string around '@', possibly delimited with <>
      * pair; that is the email part.
@@ -187,7 +205,9 @@ static void handle_from(struct mailinfo *mi, const struct strbuf *from)
     {
         char c = at[-1];
         if (isspace(c))
+        {
             break;
+        }
         if (c == '<')
         {
             at[-1] = ' ';
@@ -233,7 +253,9 @@ static void handle_header(struct strbuf **out, const struct strbuf *line)
         strbuf_init(*out, line->len);
     }
     else
+    {
         strbuf_reset(*out);
+    }
 
     strbuf_addbuf(*out, line);
 }
@@ -246,12 +268,15 @@ static void handle_header(struct strbuf **out, const struct strbuf *line)
 
 static int slurp_attr(const char *line, const char *name, struct strbuf *attr)
 {
-    const char *ends, *ap = strcasestr(line, name);
+    const char *ends;
+    const char *ap = strcasestr(line, name);
     size_t      sz;
 
     strbuf_setlen(attr, 0);
     if (!ap)
+    {
         return 0;
+    }
     ap += strlen(name);
     if (*ap == '"')
     {
@@ -259,7 +284,9 @@ static int slurp_attr(const char *line, const char *name, struct strbuf *attr)
         ends = "\"";
     }
     else
+    {
         ends = "; \t";
+    }
     sz = strcspn(ap, ends);
     strbuf_add(attr, ap, sz);
     return 1;
@@ -307,11 +334,17 @@ static void handle_content_transfer_encoding(struct mailinfo     *mi,
                                              const struct strbuf *line)
 {
     if (strcasestr(line->buf, "base64"))
+    {
         mi->transfer_encoding = TE_BASE64;
+    }
     else if (strcasestr(line->buf, "quoted-printable"))
+    {
         mi->transfer_encoding = TE_QP;
+    }
     else
+    {
         mi->transfer_encoding = TE_DONTCARE;
+    }
 }
 
 static int is_multipart_boundary(struct mailinfo *mi, const struct strbuf *line)
@@ -335,7 +368,9 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
             case 'r':
             case 'R':
                 if (subject->len <= at + 3)
+                {
                     break;
+                }
                 if ((subject->buf[at + 1] == 'e' || subject->buf[at + 1] == 'E') && subject->buf[at + 2] == ':')
                 {
                     strbuf_remove(subject, at, 3);
@@ -351,10 +386,14 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
             case '[':
                 pos = strchr(subject->buf + at, ']');
                 if (!pos)
+                {
                     break;
+                }
                 remove = pos - (subject->buf + at) + 1;
                 if (!mi->keep_non_patch_brackets_in_subject || (7 <= remove && memmem(subject->buf + at, remove, "PATCH", 5)))
+                {
                     strbuf_remove(subject, at, remove);
+                }
                 else
                 {
                     at += remove;
@@ -365,7 +404,9 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
                      * anyway.
                      */
                     if (isspace(subject->buf[at]))
+                    {
                         at += 1;
+                    }
                 }
                 continue;
         }
@@ -386,9 +427,13 @@ static inline int skip_header(const struct strbuf *line, const char *hdr,
 {
     const char *val;
     if (!skip_iprefix(line->buf, hdr, &val) || *val++ != ':')
+    {
         return 0;
+    }
     while (isspace(*val))
+    {
         val++;
+    }
     *outval = val;
     return 1;
 }
@@ -400,11 +445,17 @@ static int is_format_patch_separator(const char *line, int len)
     const char *cp;
 
     if (len != strlen(SAMPLE))
+    {
         return 0;
+    }
     if (!skip_prefix(line, "From ", &cp))
+    {
         return 0;
+    }
     if (strspn(cp, "0123456789abcdef") != 40)
+    {
         return 0;
+    }
     cp += 40;
     return !memcmp(SAMPLE + (cp - line), cp, strlen(SAMPLE) - (cp - line));
 }
@@ -420,9 +471,12 @@ static struct strbuf *decode_q_segment(const struct strbuf *q_seg, int rfc2047)
     {
         if (c == '=')
         {
-            int ch, d = *in;
+            int ch;
+            int d = *in;
             if (d == '\n' || !d)
+            {
                 break; /* drop trailing newline */
+            }
             ch = hex2chr(in);
             if (ch >= 0)
             {
@@ -432,8 +486,10 @@ static struct strbuf *decode_q_segment(const struct strbuf *q_seg, int rfc2047)
             }
             /* garbage -- fall through */
         }
-        if (rfc2047 && c == '_') /* rfc2047 4.2 (2) */
+        if (rfc2047 && c == '_')
+        { /* rfc2047 4.2 (2) */
             c = 0x20;
+        }
         strbuf_addch(out, c);
     }
     return out;
@@ -442,7 +498,9 @@ static struct strbuf *decode_q_segment(const struct strbuf *q_seg, int rfc2047)
 static struct strbuf *decode_b_segment(const struct strbuf *b_seg)
 {
     /* Decode in..ep, possibly in-place to ot */
-    int            c, pos = 0, acc = 0;
+    int            c;
+    int            pos = 0;
+    int            acc = 0;
     const char    *in  = b_seg->buf;
     struct strbuf *out = xmalloc(sizeof(struct strbuf));
     strbuf_init(out, b_seg->len);
@@ -450,17 +508,29 @@ static struct strbuf *decode_b_segment(const struct strbuf *b_seg)
     while ((c = *in++) != 0)
     {
         if (c == '+')
+        {
             c = 62;
+        }
         else if (c == '/')
+        {
             c = 63;
+        }
         else if ('A' <= c && c <= 'Z')
+        {
             c -= 'A';
+        }
         else if ('a' <= c && c <= 'z')
+        {
             c -= 'a' - 26;
+        }
         else if ('0' <= c && c <= '9')
+        {
             c -= '0' - 52;
+        }
         else
+        {
             continue; /* garbage */
+        }
         switch (pos++)
         {
             case 0:
@@ -490,10 +560,14 @@ static int convert_to_utf8(struct mailinfo *mi,
     size_t out_len;
 
     if (!mi->metainfo_charset || !charset || !*charset)
+    {
         return 0;
+    }
 
     if (same_encoding(mi->metainfo_charset, charset))
+    {
         return 0;
+    }
     out = reencode_string_len(line->buf, line->len,
                               mi->metainfo_charset, charset, &out_len);
     if (!out)
@@ -508,10 +582,14 @@ static int convert_to_utf8(struct mailinfo *mi,
 
 static void decode_header(struct mailinfo *mi, struct strbuf *it)
 {
-    char         *in, *ep, *cp;
-    struct strbuf outbuf    = STRBUF_INIT, *dec;
-    struct strbuf charset_q = STRBUF_INIT, piecebuf = STRBUF_INIT;
-    int           found_error = 1; /* pessimism */
+    char          *in;
+    char          *ep;
+    char          *cp;
+    struct strbuf  outbuf = STRBUF_INIT;
+    struct strbuf *dec;
+    struct strbuf  charset_q   = STRBUF_INIT;
+    struct strbuf  piecebuf    = STRBUF_INIT;
+    int            found_error = 1; /* pessimism */
 
     in = it->buf;
     while (in - it->buf <= it->len && (ep = strstr(in, "=?")) != NULL)
@@ -529,8 +607,12 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
              */
             char *scan;
             for (scan = in; scan < ep; scan++)
+            {
                 if (!isspace(*scan))
+                {
                     break;
+                }
+            }
 
             if (scan != ep || in == it->buf)
             {
@@ -550,18 +632,26 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
         ep += 2;
 
         if (ep - it->buf >= it->len || !(cp = strchr(ep, '?')))
+        {
             goto release_return;
+        }
 
         if (cp + 3 - it->buf > it->len)
+        {
             goto release_return;
+        }
         strbuf_add(&charset_q, ep, cp - ep);
 
         encoding = cp[1];
         if (!encoding || cp[2] != '?')
+        {
             goto release_return;
+        }
         ep = strstr(cp + 3, "?=");
         if (!ep)
+        {
             goto release_return;
+        }
         strbuf_add(&piecebuf, cp + 3, ep - cp - 3);
         switch (tolower(encoding))
         {
@@ -575,7 +665,9 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
                 break;
         }
         if (convert_to_utf8(mi, dec, charset_q.buf))
+        {
             goto release_return;
+        }
 
         strbuf_addbuf(&outbuf, dec);
         strbuf_release(dec);
@@ -592,7 +684,9 @@ release_return:
     strbuf_release(&piecebuf);
 
     if (found_error)
+    {
         mi->input_error = -1;
+    }
 }
 
 /*
@@ -608,7 +702,9 @@ static int parse_header(const struct strbuf *line,
     const char *val_str;
 
     if (!skip_header(line, hdr, &val_str))
+    {
         return 0;
+    }
     strbuf_addstr(val, val_str);
     decode_header(mi, val);
     return 1;
@@ -618,8 +714,9 @@ static int check_header(struct mailinfo     *mi,
                         const struct strbuf *line,
                         struct strbuf *hdr_data[], int overwrite)
 {
-    int           i, ret = 0;
-    struct strbuf sb = STRBUF_INIT;
+    int           i;
+    int           ret = 0;
+    struct strbuf sb  = STRBUF_INIT;
 
     /* search for the interesting parts */
     for (i = 0; header[i]; i++)
@@ -648,7 +745,9 @@ static int check_header(struct mailinfo     *mi,
     if (parse_header(line, "Message-ID", mi, &sb))
     {
         if (mi->add_message_id)
+        {
             mi->message_id = strbuf_detach(&sb, NULL);
+        }
         ret = 1;
         goto check_header_out;
     }
@@ -669,8 +768,12 @@ static int is_inbody_header(const struct mailinfo *mi,
     int         i;
     const char *val;
     for (i = 0; header[i]; i++)
+    {
         if (!mi->s_hdr_data[i] && skip_header(line, header[i], &val))
+        {
             return 1;
+        }
+    }
     return 0;
 }
 
@@ -702,32 +805,44 @@ static inline int patchbreak(const struct strbuf *line)
 
     /* Beginning of a "diff -" header? */
     if (starts_with(line->buf, "diff -"))
+    {
         return 1;
+    }
 
     /* CVS "Index: " line? */
     if (starts_with(line->buf, "Index: "))
+    {
         return 1;
+    }
 
     /*
      * "--- <filename>" starts patches without headers
      * "---<sp>*" is a manual separator
      */
     if (line->len < 4)
+    {
         return 0;
+    }
 
     if (starts_with(line->buf, "---"))
     {
         /* space followed by a filename? */
         if (line->buf[3] == ' ' && !isspace(line->buf[4]))
+        {
             return 1;
+        }
         /* Just whitespace? */
         for (i = 3; i < line->len; i++)
         {
             unsigned char c = line->buf[i];
             if (c == '\n')
+            {
                 return 1;
+            }
             if (!isspace(c))
+            {
                 break;
+            }
         }
         return 0;
     }
@@ -737,9 +852,13 @@ static inline int patchbreak(const struct strbuf *line)
 static int is_scissors_line(const char *line)
 {
     const char *c;
-    int         scissors = 0, gap = 0;
-    const char *first_nonblank = NULL, *last_nonblank = NULL;
-    int         visible, perforation = 0, in_perforation = 0;
+    int         scissors       = 0;
+    int         gap            = 0;
+    const char *first_nonblank = NULL;
+    const char *last_nonblank  = NULL;
+    int         visible;
+    int         perforation    = 0;
+    int         in_perforation = 0;
 
     for (c = line; *c; c++)
     {
@@ -754,7 +873,9 @@ static int is_scissors_line(const char *line)
         }
         last_nonblank = c;
         if (!first_nonblank)
+        {
             first_nonblank = c;
+        }
         if (*c == '-')
         {
             in_perforation = 1;
@@ -782,18 +903,26 @@ static int is_scissors_line(const char *line)
      */
 
     if (first_nonblank && last_nonblank)
+    {
         visible = last_nonblank - first_nonblank + 1;
+    }
     else
+    {
         visible = 0;
+    }
     return (scissors && 8 <= visible && visible < perforation * 3 && gap * 2 < perforation);
 }
 
 static void flush_inbody_header_accum(struct mailinfo *mi)
 {
     if (!mi->inbody_header_accum.len)
+    {
         return;
+    }
     if (!check_header(mi, &mi->inbody_header_accum, mi->s_hdr_data, 0))
+    {
         BUG("inbody_header_accum, if not empty, must always contain a valid in-body header");
+    }
     strbuf_reset(&mi->inbody_header_accum);
 }
 
@@ -818,16 +947,20 @@ static int check_inbody_header(struct mailinfo *mi, const struct strbuf *line)
     flush_inbody_header_accum(mi);
 
     if (starts_with(line->buf, ">From") && isspace(line->buf[5]))
+    {
         return is_format_patch_separator(line->buf + 1, line->len - 1);
+    }
     if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7]))
     {
         int i;
         for (i = 0; header[i]; i++)
+        {
             if (!strcmp("Subject", header[i]))
             {
                 handle_header(&mi->s_hdr_data[i], line);
                 return 1;
             }
+        }
         return 0;
     }
     if (is_inbody_header(mi, line))
@@ -859,17 +992,23 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
     {
         mi->header_stage = check_inbody_header(mi, line);
         if (mi->header_stage)
+        {
             return 0;
+        }
     }
     else
+    {
         /* Only trim the first (blank) line of the commit message
          * when ignoring in-body headers.
          */
         mi->header_stage = 0;
+    }
 
     /* normalize the log message to UTF-8. */
     if (convert_to_utf8(mi, line, mi->charset.buf))
+    {
         return 0; /* mi->input_error already set */
+    }
 
     if (mi->use_scissors && is_scissors_line(line->buf))
     {
@@ -885,7 +1024,9 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
         for (i = 0; header[i]; i++)
         {
             if (mi->s_hdr_data[i])
+            {
                 strbuf_release(mi->s_hdr_data[i]);
+            }
             FREE_AND_NULL(mi->s_hdr_data[i]);
         }
         return 0;
@@ -894,8 +1035,10 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
     if (patchbreak(line))
     {
         if (mi->message_id)
+        {
             strbuf_addf(&mi->log_message,
                         "Message-ID: %s\n", mi->message_id);
+        }
         return 1;
     }
 
@@ -915,7 +1058,9 @@ static void handle_filter(struct mailinfo *mi, struct strbuf *line)
     {
         case 0:
             if (!handle_commit_msg(mi, line))
+            {
                 break;
+            }
             mi->filter_stage++;
             /* fallthrough */
         case 1:
@@ -939,14 +1084,20 @@ static int is_rfc2822_header(const struct strbuf *line)
 
     /* Count mbox From headers as headers */
     if (starts_with(cp, "From ") || starts_with(cp, ">From "))
+    {
         return 1;
+    }
 
     while ((ch = *cp++))
     {
         if (ch == ':')
+        {
             return 1;
+        }
         if ((33 <= ch && ch <= 57) || (59 <= ch && ch <= 126))
+        {
             continue;
+        }
         break;
     }
     return 0;
@@ -958,7 +1109,9 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 
     /* Get the first part of the line. */
     if (strbuf_getline_lf(line, in))
+    {
         return 0;
+    }
 
     /*
      * Is it an empty line or not a valid rfc2822 header?
@@ -982,12 +1135,18 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 
         peek = fgetc(in);
         if (peek == EOF)
+        {
             break;
+        }
         ungetc(peek, in);
         if (peek != ' ' && peek != '\t')
+        {
             break;
+        }
         if (strbuf_getline_lf(&continuation, in))
+        {
             break;
+        }
         continuation.buf[0] = ' ';
         strbuf_rtrim(&continuation);
         strbuf_addbuf(line, &continuation);
@@ -1002,7 +1161,9 @@ static int find_boundary(struct mailinfo *mi, struct strbuf *line)
     while (!strbuf_getline_lf(line, mi->input))
     {
         if (*(mi->content_top) && is_multipart_boundary(mi, line))
+        {
             return 1;
+        }
     }
     return 0;
 }
@@ -1034,11 +1195,15 @@ again:
         handle_filter(mi, &newline);
         strbuf_release(&newline);
         if (mi->input_error)
+        {
             return 0;
+        }
 
         /* skip to the next boundary */
         if (!find_boundary(mi, line))
+        {
             return 0;
+        }
         goto again;
     }
 
@@ -1048,12 +1213,16 @@ again:
 
     /* slurp in this section's info */
     while (read_one_header_line(line, mi->input))
+    {
         check_header(mi, line, mi->p_hdr_data, 0);
+    }
 
     strbuf_release(&newline);
     /* replenish line */
     if (strbuf_getline_lf(line, mi->input))
+    {
         return 0;
+    }
     strbuf_addch(line, '\n');
     return 1;
 }
@@ -1084,7 +1253,9 @@ static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
     {
         len--;
         if (len && line->buf[len - 1] == '\r')
+        {
             len--;
+        }
     }
 
     /* Keep signature separator as-is. */
@@ -1123,7 +1294,9 @@ static void handle_filter_flowed(struct mailinfo *mi, struct strbuf *line,
 static void summarize_quoted_cr(struct mailinfo *mi)
 {
     if (mi->have_quoted_cr && mi->quoted_cr == quoted_cr_warn)
+    {
         warning(_("quoted CRLF detected"));
+    }
 }
 
 static void handle_body(struct mailinfo *mi, struct strbuf *line)
@@ -1134,7 +1307,9 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
     if (*(mi->content_top))
     {
         if (!find_boundary(mi, line))
+        {
             goto handle_body_out;
+        }
     }
 
     do
@@ -1151,7 +1326,9 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
             summarize_quoted_cr(mi);
             mi->have_quoted_cr = 0;
             if (!handle_boundary(mi, line))
+            {
                 goto handle_body_out;
+            }
         }
 
         /* Unwrap transfer encoding */
@@ -1162,7 +1339,9 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
             case TE_BASE64:
             case TE_QP:
             {
-                struct strbuf **lines, **it, *sb;
+                struct strbuf **lines;
+                struct strbuf **it;
+                struct strbuf  *sb;
 
                 /* Prepend any previous partial lines */
                 strbuf_insert(line, 0, prev.buf, prev.len);
@@ -1176,13 +1355,15 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
                 lines = strbuf_split(line, '\n');
                 for (it = lines; (sb = *it); it++)
                 {
-                    if (!*(it + 1)) /* The last line */
+                    if (!*(it + 1))
+                    { /* The last line */
                         if (sb->buf[sb->len - 1] != '\n')
                         {
                             /* Partial line, save it for later. */
                             strbuf_addbuf(&prev, sb);
                             break;
                         }
+                    }
                     handle_filter_flowed(mi, sb, &prev);
                 }
                 /*
@@ -1197,11 +1378,15 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
         }
 
         if (mi->input_error)
+        {
             break;
+        }
     } while (!strbuf_getwholeline(line, mi->input, '\n'));
 
     if (prev.len)
+    {
         handle_filter(mi, &prev);
+    }
     summarize_quoted_cr(mi);
 
     flush_inbody_header_accum(mi);
@@ -1218,12 +1403,18 @@ static void output_header_lines(FILE *fout, const char *hdr, const struct strbuf
         char *ep = strchr(sp, '\n');
         int   len;
         if (!ep)
+        {
             len = strlen(sp);
+        }
         else
+        {
             len = ep - sp;
+        }
         fprintf(fout, "%s: %.*s\n", hdr, len, sp);
         if (!ep)
+        {
             break;
+        }
         sp = ep + 1;
     }
 }
@@ -1237,11 +1428,17 @@ static void handle_info(struct mailinfo *mi)
     {
         /* only print inbody headers if we output a patch file */
         if (mi->patch_lines && mi->s_hdr_data[i])
+        {
             hdr = mi->s_hdr_data[i];
+        }
         else if (mi->p_hdr_data[i])
+        {
             hdr = mi->p_hdr_data[i];
+        }
         else
+        {
             continue;
+        }
 
         if (memchr(hdr->buf, '\0', hdr->len))
         {
@@ -1310,7 +1507,9 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 
     /* process the email header */
     while (read_one_header_line(&line, mi->input))
+    {
         check_header(mi, &line, mi->p_hdr_data, 1);
+    }
 
     handle_body(mi, &line);
     fwrite(mi->log_message.buf, 1, mi->log_message.len, cmitmsg);
@@ -1325,13 +1524,21 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 int mailinfo_parse_quoted_cr_action(const char *actionstr, int *action)
 {
     if (!strcmp(actionstr, "nowarn"))
+    {
         *action = quoted_cr_nowarn;
+    }
     else if (!strcmp(actionstr, "warn"))
+    {
         *action = quoted_cr_warn;
+    }
     else if (!strcmp(actionstr, "strip"))
+    {
         *action = quoted_cr_strip;
+    }
     else
+    {
         return -1;
+    }
     return 0;
 }
 
@@ -1341,7 +1548,9 @@ static int git_mailinfo_config(const char *var, const char *value,
     struct mailinfo *mi = mi_;
 
     if (!starts_with(var, "mailinfo."))
+    {
         return git_default_config(var, value, ctx, NULL);
+    }
     if (!strcmp(var, "mailinfo.scissors"))
     {
         mi->use_scissors = git_config_bool(var, value);
@@ -1350,9 +1559,13 @@ static int git_mailinfo_config(const char *var, const char *value,
     if (!strcmp(var, "mailinfo.quotedcr"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         if (mailinfo_parse_quoted_cr_action(value, &mi->quoted_cr) != 0)
+        {
             return error(_("bad action '%s' for '%s'"), value, var);
+        }
         return 0;
     }
     /* perhaps others here */

@@ -53,7 +53,9 @@ static struct passwd *xgetpwuid_self(int *is_bogus)
 #endif
         pw = &fallback;
         if (is_bogus)
+        {
             *is_bogus = 1;
+        }
     }
     return pw;
 }
@@ -70,7 +72,9 @@ static void copy_gecos(const struct passwd *w, struct strbuf *name)
     {
         int ch = *src;
         if (ch != '&')
+        {
             strbuf_addch(name, ch);
+        }
         else
         {
             /* Sorry, Mr. McDonald... */
@@ -87,12 +91,16 @@ static int add_mailname_host(struct strbuf *buf)
 
     mailname = fopen_or_warn("/etc/mailname", "r");
     if (!mailname)
+    {
         return -1;
+    }
 
     if (strbuf_getline(&mailnamebuf, mailname) == EOF)
     {
         if (ferror(mailname))
+        {
             warning_errno("cannot read /etc/mailname");
+        }
         strbuf_release(&mailnamebuf);
         fclose(mailname);
         return -1;
@@ -109,7 +117,8 @@ static int canonical_name(const char *host, struct strbuf *out)
     int status = -1;
 
 #ifndef NO_IPV6
-    struct addrinfo hints, *ai;
+    struct addrinfo  hints;
+    struct addrinfo *ai;
     memset(&hints, '\0', sizeof(hints));
     hints.ai_flags = AI_CANONNAME;
     if (!getaddrinfo(host, NULL, &hints, &ai))
@@ -145,7 +154,9 @@ static void add_domainname(struct strbuf *out, int *is_bogus)
         return;
     }
     if (strchr(buf, '.'))
+    {
         strbuf_addstr(out, buf);
+    }
     else if (canonical_name(buf, out) < 0)
     {
         strbuf_addf(out, "%s.(none)", buf);
@@ -164,7 +175,9 @@ static void copy_email(const struct passwd *pw, struct strbuf *email,
     strbuf_addch(email, '@');
 
     if (!add_mailname_host(email))
+    {
         return; /* read from "/etc/mailname" (Debian) */
+    }
     add_domainname(email, is_bogus);
 }
 
@@ -196,8 +209,10 @@ const char *ident_default_email(void)
             free((char *)email);
         }
         else
+        {
             copy_email(xgetpwuid_self(&default_email_is_bogus),
                        &git_default_email, &default_email_is_bogus);
+        }
         strbuf_trim(&git_default_email);
     }
     return git_default_email.buf;
@@ -206,7 +221,9 @@ const char *ident_default_email(void)
 static const char *ident_default_date(void)
 {
     if (!git_default_date.len)
+    {
         datestamp(&git_default_date);
+    }
     return git_default_date.buf;
 }
 
@@ -225,7 +242,9 @@ static int has_non_crud(const char *str)
     for (; *str; str++)
     {
         if (!crud(*str))
+        {
             return 1;
+        }
     }
     return 0;
 }
@@ -236,14 +255,17 @@ static int has_non_crud(const char *str)
  */
 static void strbuf_addstr_without_crud(struct strbuf *sb, const char *src)
 {
-    size_t        i, len;
+    size_t        i;
+    size_t        len;
     unsigned char c;
 
     /* Remove crud from the beginning.. */
     while ((c = *src) != 0)
     {
         if (!crud(c))
+        {
             break;
+        }
         src++;
     }
 
@@ -253,7 +275,9 @@ static void strbuf_addstr_without_crud(struct strbuf *sb, const char *src)
     {
         c = src[len - 1];
         if (!crud(c))
+        {
             break;
+        }
         --len;
     }
 
@@ -296,20 +320,26 @@ int split_ident_line(struct ident_split *split, const char *line, int len)
 
     split->name_begin = line;
     for (cp = line; *cp && cp < line + len; cp++)
+    {
         if (*cp == '<')
         {
             split->mail_begin = cp + 1;
             break;
         }
+    }
     if (!split->mail_begin)
+    {
         return status;
+    }
 
     for (cp = split->mail_begin - 2; line <= cp; cp--)
+    {
         if (!isspace(*cp))
         {
             split->name_end = cp + 1;
             break;
         }
+    }
     if (!split->name_end)
     {
         /* no human readable name */
@@ -317,13 +347,17 @@ int split_ident_line(struct ident_split *split, const char *line, int len)
     }
 
     for (cp = split->mail_begin; cp < line + len; cp++)
+    {
         if (*cp == '>')
         {
             split->mail_end = cp;
             break;
         }
+    }
     if (!split->mail_end)
+    {
         return status;
+    }
 
     /*
      * Look from the end-of-line to find the trailing ">" of the mail
@@ -337,25 +371,39 @@ int split_ident_line(struct ident_split *split, const char *line, int len)
      * bracket.
      */
     for (cp = line + len - 1; *cp != '>'; cp--)
+    {
         ;
+    }
 
     for (cp = cp + 1; cp < line + len && isspace(*cp); cp++)
+    {
         ;
+    }
     if (line + len <= cp)
+    {
         goto person_only;
+    }
     split->date_begin = cp;
     span              = strspn(cp, "0123456789");
     if (!span)
+    {
         goto person_only;
+    }
     split->date_end = split->date_begin + span;
     for (cp = split->date_end; cp < line + len && isspace(*cp); cp++)
+    {
         ;
+    }
     if (line + len <= cp || (*cp != '+' && *cp != '-'))
+    {
         goto person_only;
+    }
     split->tz_begin = cp;
     span            = strspn(cp + 1, "0123456789");
     if (!span)
+    {
         goto person_only;
+    }
     split->tz_end = split->tz_begin + 1 + span;
     return 0;
 
@@ -374,13 +422,16 @@ static ssize_t rewrite_ident_line(const char *person, size_t len,
                                   struct strbuf      *buf,
                                   struct string_list *mailmap)
 {
-    size_t             namelen, maillen;
+    size_t             namelen;
+    size_t             maillen;
     const char        *name;
     const char        *mail;
     struct ident_split ident;
 
     if (split_ident_line(&ident, person, len))
+    {
         return 0;
+    }
 
     mail    = ident.mail_begin;
     maillen = ident.mail_end - ident.mail_begin;
@@ -414,19 +465,25 @@ void apply_mailmap_to_header(struct strbuf *buf, const char **header,
     size_t buf_offset = 0;
 
     if (!mailmap)
+    {
         return;
+    }
 
     for (;;)
     {
-        const char *person, *line;
+        const char *person;
+        const char *line;
         size_t      i;
         int         found_header = 0;
 
         line = buf->buf + buf_offset;
         if (!*line || *line == '\n')
+        {
             return; /* End of headers */
+        }
 
         for (i = 0; header[i]; i++)
+        {
             if (skip_prefix(line, header[i], &person))
             {
                 const char *endp = strchrnul(person, '\n');
@@ -435,12 +492,15 @@ void apply_mailmap_to_header(struct strbuf *buf, const char **header,
                 buf_offset += rewrite_ident_line(person, endp - person, buf, mailmap);
                 break;
             }
+        }
 
         if (!found_header)
         {
             buf_offset = strchrnul(line, '\n') - buf->buf;
             if (buf->buf[buf_offset] == '\n')
+            {
                 buf_offset++;
+            }
         }
     }
 }
@@ -488,9 +548,13 @@ const char *fmt_ident(const char *name, const char *email,
     if (!email)
     {
         if (whose_ident == WANT_AUTHOR_IDENT && git_author_email.len)
+        {
             email = git_author_email.buf;
+        }
         else if (whose_ident == WANT_COMMITTER_IDENT && git_committer_email.len)
+        {
             email = git_committer_email.buf;
+        }
     }
     if (!email)
     {
@@ -514,9 +578,13 @@ const char *fmt_ident(const char *name, const char *email,
         if (!name)
         {
             if (whose_ident == WANT_AUTHOR_IDENT && git_author_name.len)
+            {
                 name = git_author_name.buf;
+            }
             else if (whose_ident == WANT_COMMITTER_IDENT && git_committer_name.len)
+            {
                 name = git_committer_name.buf;
+            }
         }
         if (!name)
         {
@@ -540,14 +608,18 @@ const char *fmt_ident(const char *name, const char *email,
             if (strict)
             {
                 if (using_default)
+                {
                     ident_env_hint(whose_ident);
+                }
                 die(_("empty ident name (for <%s>) not allowed"), email);
             }
             pw   = xgetpwuid_self(NULL);
             name = pw->pw_name;
         }
         if (strict && !has_non_crud(name))
+        {
             die(_("name consists only of disallowed characters: %s"), name);
+        }
     }
 
     strbuf_reset(ident);
@@ -558,17 +630,23 @@ const char *fmt_ident(const char *name, const char *email,
     }
     strbuf_addstr_without_crud(ident, email);
     if (want_name)
+    {
         strbuf_addch(ident, '>');
+    }
     if (want_date)
     {
         strbuf_addch(ident, ' ');
         if (date_str && date_str[0])
         {
             if (parse_date(date_str, ident) < 0)
+            {
                 die(_("invalid date format: %s"), date_str);
+            }
         }
         else
+        {
             strbuf_addstr(ident, ident_default_date());
+        }
     }
 
     return ident->buf;
@@ -599,9 +677,13 @@ const char *fmt_name(enum want_ident whose_ident)
 const char *git_author_info(int flag)
 {
     if (getenv("GIT_AUTHOR_NAME"))
+    {
         author_ident_explicitly_given |= IDENT_NAME_GIVEN;
+    }
     if (getenv("GIT_AUTHOR_EMAIL"))
+    {
         author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+    }
     return fmt_ident(getenv("GIT_AUTHOR_NAME"),
                      getenv("GIT_AUTHOR_EMAIL"),
                      WANT_AUTHOR_IDENT,
@@ -612,9 +694,13 @@ const char *git_author_info(int flag)
 const char *git_committer_info(int flag)
 {
     if (getenv("GIT_COMMITTER_NAME"))
+    {
         committer_ident_explicitly_given |= IDENT_NAME_GIVEN;
+    }
     if (getenv("GIT_COMMITTER_EMAIL"))
+    {
         committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
+    }
     return fmt_ident(getenv("GIT_COMMITTER_NAME"),
                      getenv("GIT_COMMITTER_EMAIL"),
                      WANT_COMMITTER_IDENT,
@@ -646,7 +732,9 @@ static int set_ident(const char *var, const char *value)
     if (!strcmp(var, "author.name"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         strbuf_reset(&git_author_name);
         strbuf_addstr(&git_author_name, value);
         author_ident_explicitly_given |= IDENT_NAME_GIVEN;
@@ -657,7 +745,9 @@ static int set_ident(const char *var, const char *value)
     if (!strcmp(var, "author.email"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         strbuf_reset(&git_author_email);
         strbuf_addstr(&git_author_email, value);
         author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
@@ -668,7 +758,9 @@ static int set_ident(const char *var, const char *value)
     if (!strcmp(var, "committer.name"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         strbuf_reset(&git_committer_name);
         strbuf_addstr(&git_committer_name, value);
         committer_ident_explicitly_given |= IDENT_NAME_GIVEN;
@@ -679,7 +771,9 @@ static int set_ident(const char *var, const char *value)
     if (!strcmp(var, "committer.email"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         strbuf_reset(&git_committer_email);
         strbuf_addstr(&git_committer_email, value);
         committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
@@ -690,7 +784,9 @@ static int set_ident(const char *var, const char *value)
     if (!strcmp(var, "user.name"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         strbuf_reset(&git_default_name);
         strbuf_addstr(&git_default_name, value);
         committer_ident_explicitly_given |= IDENT_NAME_GIVEN;
@@ -702,7 +798,9 @@ static int set_ident(const char *var, const char *value)
     if (!strcmp(var, "user.email"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         strbuf_reset(&git_default_email);
         strbuf_addstr(&git_default_email, value);
         committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
@@ -730,7 +828,9 @@ int git_ident_config(const char *var, const char *value,
 static void set_env_if(const char *key, const char *value, int *given, int bit)
 {
     if ((*given & bit) || getenv(key))
+    {
         return; /* nothing to do */
+    }
     setenv(key, value, 0);
     *given |= bit;
 }
@@ -757,7 +857,9 @@ static int buf_cmp(const char *a_begin, const char *a_end,
 
     cmp = memcmp(a_begin, b_begin, min);
     if (cmp)
+    {
         return cmp;
+    }
 
     return a_len - b_len;
 }
@@ -770,7 +872,9 @@ int ident_cmp(const struct ident_split *a,
     cmp = buf_cmp(a->mail_begin, a->mail_end,
                   b->mail_begin, b->mail_end);
     if (cmp)
+    {
         return cmp;
+    }
 
     return buf_cmp(a->name_begin, a->name_end,
                    b->name_begin, b->name_end);

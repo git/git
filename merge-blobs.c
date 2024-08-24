@@ -15,7 +15,9 @@ static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
     buf = repo_read_object_file(the_repository, &obj->object.oid, &type,
                                 &size);
     if (!buf)
+    {
         return -1;
+    }
     if (type != OBJ_BLOB)
     {
         free(buf);
@@ -51,10 +53,14 @@ static void *three_way_filemerge(struct index_state *istate,
                             our, ".our", their, ".their",
                             istate, NULL);
     if (merge_status < 0)
+    {
         return NULL;
+    }
     if (merge_status == LL_MERGE_BINARY_CONFLICT)
+    {
         warning("Cannot merge binary files: %s (%s vs. %s)",
                 path, ".our", ".their");
+    }
 
     *size = res.size;
     return res.ptr;
@@ -65,7 +71,9 @@ void *merge_blobs(struct index_state *istate, const char *path,
                   struct blob *their, unsigned long *size)
 {
     void    *res = NULL;
-    mmfile_t f1, f2, common;
+    mmfile_t f1;
+    mmfile_t f2;
+    mmfile_t common;
 
     /*
      * Removed in either branch?
@@ -78,22 +86,32 @@ void *merge_blobs(struct index_state *istate, const char *path,
     {
         enum object_type type;
         if (base)
+        {
             return NULL;
+        }
         if (!our)
+        {
             our = their;
+        }
         return repo_read_object_file(the_repository, &our->object.oid,
                                      &type, size);
     }
 
     if (fill_mmfile_blob(&f1, our) < 0)
+    {
         goto out_no_mmfile;
+    }
     if (fill_mmfile_blob(&f2, their) < 0)
+    {
         goto out_free_f1;
+    }
 
     if (base)
     {
         if (fill_mmfile_blob(&common, base) < 0)
+        {
             goto out_free_f2_f1;
+        }
     }
     else
     {

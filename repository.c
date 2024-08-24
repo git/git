@@ -42,10 +42,14 @@ static void set_default_hash_algo(struct repository *repo)
 
     hash_name = getenv("GIT_TEST_DEFAULT_HASH_ALGO");
     if (!hash_name)
+    {
         return;
+    }
     algo = hash_algo_by_name(hash_name);
     if (algo == GIT_HASH_UNKNOWN)
+    {
         return;
+    }
 
     repo_set_hash_algo(repo, algo);
 }
@@ -78,7 +82,9 @@ void initialize_repository(struct repository *repo)
      * telling them about it.
      */
     if (repo == the_repository)
+    {
         set_default_hash_algo(repo);
+    }
 }
 
 static void expand_base_dir(char **out, const char *in,
@@ -86,9 +92,13 @@ static void expand_base_dir(char **out, const char *in,
 {
     free(*out);
     if (in)
+    {
         *out = xstrdup(in);
+    }
     else
+    {
         *out = xstrfmt("%s/%s", base_dir, def_in);
+    }
 }
 
 static void repo_set_commondir(struct repository *repo,
@@ -152,10 +162,14 @@ void repo_set_hash_algo(struct repository *repo, int hash_algo)
 void repo_set_compat_hash_algo(struct repository *repo, int algo)
 {
     if (hash_algo_by_ptr(repo->hash_algo) == algo)
+    {
         BUG("hash_algo and compat_hash_algo match");
+    }
     repo->compat_hash_algo = algo ? &hash_algos[algo] : NULL;
     if (repo->compat_hash_algo)
+    {
         repo_read_loose_object_map(repo);
+    }
 }
 
 void repo_set_ref_storage_format(struct repository      *repo,
@@ -239,10 +253,14 @@ int repo_init(struct repository *repo,
     initialize_repository(repo);
 
     if (repo_init_gitdir(repo, gitdir))
+    {
         goto error;
+    }
 
     if (read_and_verify_repository_format(&format, repo->commondir))
+    {
         goto error;
+    }
 
     repo_set_hash_algo(repo, format.hash_algo);
     repo_set_compat_hash_algo(repo, format.compat_hash_algo);
@@ -254,10 +272,14 @@ int repo_init(struct repository *repo,
     format.partial_clone                  = NULL;
 
     if (worktree)
+    {
         repo_set_worktree(repo, worktree);
+    }
 
     if (repo->compat_hash_algo)
+    {
         repo_read_loose_object_map(repo);
+    }
 
     clear_repository_format(&format);
     return 0;
@@ -407,7 +429,9 @@ int repo_read_index(struct repository *repo)
 
     prepare_repo_settings(repo);
     if (repo->settings.command_requires_full_index)
+    {
         ensure_full_index(repo->index);
+    }
 
     /*
      * If sparse checkouts are in use, check whether paths with the
@@ -424,6 +448,8 @@ int repo_hold_locked_index(struct repository *repo,
                            int                flags)
 {
     if (!repo->index_file)
+    {
         BUG("the repo hasn't been setup");
+    }
     return hold_lock_file_for_update(lf, repo->index_file, flags);
 }

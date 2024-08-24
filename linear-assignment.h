@@ -13,7 +13,7 @@
  * assignments (-1 for unassigned, which can happen only if column_count !=
  * row_count).
  */
-void compute_assignment(int column_count, int row_count, int *cost,
+void compute_assignment(int column_count, int row_count, const int *cost,
                         int *column2row, int *row2column);
 
 /* The maximal cost in the cost matrix (to prevent integer overflows). */

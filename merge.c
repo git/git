@@ -25,25 +25,34 @@ int try_merge_command(struct repository *r,
                       const char *head_arg, struct commit_list *remotes)
 {
     struct child_process cmd = CHILD_PROCESS_INIT;
-    int                  i, ret;
+    int                  i;
+    int                  ret;
     struct commit_list  *j;
 
     strvec_pushf(&cmd.args, "merge-%s", strategy);
     for (i = 0; i < xopts_nr; i++)
+    {
         strvec_pushf(&cmd.args, "--%s", xopts[i]);
+    }
     for (j = common; j; j = j->next)
+    {
         strvec_push(&cmd.args, merge_argument(j->item));
+    }
     strvec_push(&cmd.args, "--");
     strvec_push(&cmd.args, head_arg);
     for (j = remotes; j; j = j->next)
+    {
         strvec_push(&cmd.args, merge_argument(j->item));
+    }
 
     cmd.git_cmd = 1;
     ret         = run_command(&cmd);
 
     discard_index(r->index);
     if (repo_read_index(r) < 0)
+    {
         die(_("failed to read the cache"));
+    }
     resolve_undo_clear_index(r->index);
 
     return ret;
@@ -57,13 +66,16 @@ int checkout_fast_forward(struct repository      *r,
     struct tree                *trees[MAX_UNPACK_TREES];
     struct unpack_trees_options opts;
     struct tree_desc            t[MAX_UNPACK_TREES];
-    int                         i, nr_trees = 0;
+    int                         i;
+    int                         nr_trees  = 0;
     struct lock_file            lock_file = LOCK_INIT;
 
     refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
 
     if (repo_hold_locked_index(r, &lock_file, LOCK_REPORT_ON_ERROR) < 0)
+    {
         return -1;
+    }
 
     memset(&trees, 0, sizeof(trees));
     memset(&t, 0, sizeof(t));
@@ -113,6 +125,8 @@ int checkout_fast_forward(struct repository      *r,
     clear_unpack_trees_porcelain(&opts);
 
     if (write_locked_index(r->index, &lock_file, COMMIT_LOCK))
+    {
         return error(_("unable to write new index file"));
+    }
     return 0;
 }

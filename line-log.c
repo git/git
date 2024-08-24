@@ -34,7 +34,9 @@ void range_set_init(struct range_set *rs, size_t prealloc)
     rs->alloc = rs->nr = 0;
     rs->ranges         = NULL;
     if (prealloc)
+    {
         range_set_grow(rs, prealloc);
+    }
 }
 
 void range_set_release(struct range_set *rs)
@@ -84,9 +86,13 @@ static int range_cmp(const void *_r, const void *_s)
 
     /* this could be simply 'return r.start-s.start', but for the types */
     if (r->start == s->start)
+    {
         return 0;
+    }
     if (r->start < s->start)
+    {
         return -1;
+    }
     return 1;
 }
 
@@ -98,10 +104,14 @@ static void range_set_check_invariants(struct range_set *rs)
     unsigned int i;
 
     if (!rs)
+    {
         return;
+    }
 
     if (rs->nr)
+    {
         assert(rs->ranges[0].start < rs->ranges[0].end);
+    }
 
     for (i = 1; i < rs->nr; i++)
     {
@@ -124,11 +134,15 @@ void sort_and_merge_range_set(struct range_set *rs)
     for (i = 0; i < rs->nr; i++)
     {
         if (rs->ranges[i].start == rs->ranges[i].end)
+        {
             continue;
+        }
         if (o > 0 && rs->ranges[i].start <= rs->ranges[o - 1].end)
         {
             if (rs->ranges[o - 1].end < rs->ranges[i].end)
+            {
                 rs->ranges[o - 1].end = rs->ranges[i].end;
+            }
         }
         else
         {
@@ -154,7 +168,8 @@ void sort_and_merge_range_set(struct range_set *rs)
 static void range_set_union(struct range_set *out,
                             struct range_set *a, struct range_set *b)
 {
-    unsigned int  i = 0, j = 0;
+    unsigned int  i  = 0;
+    unsigned int  j  = 0;
     struct range *ra = a->ranges;
     struct range *rb = b->ranges;
     /* cannot make an alias of out->ranges: it may change during grow */
@@ -166,20 +181,34 @@ static void range_set_union(struct range_set *out,
         if (i < a->nr && j < b->nr)
         {
             if (ra[i].start < rb[j].start)
+            {
                 new_range = &ra[i++];
+            }
             else if (ra[i].start > rb[j].start)
+            {
                 new_range = &rb[j++];
+            }
             else if (ra[i].end < rb[j].end)
+            {
                 new_range = &ra[i++];
+            }
             else
+            {
                 new_range = &rb[j++];
+            }
         }
-        else if (i < a->nr) /* b exhausted */
+        else if (i < a->nr)
+        { /* b exhausted */
             new_range = &ra[i++];
-        else /* a exhausted */
+        }
+        else
+        { /* a exhausted */
             new_range = &rb[j++];
+        }
         if (new_range->start == new_range->end)
+        {
             ; /* empty range */
+        }
         else if (!out->nr || out->ranges[out->nr - 1].end < new_range->start)
         {
             range_set_grow(out, 1);
@@ -202,7 +231,8 @@ static void range_set_union(struct range_set *out,
 static void range_set_difference(struct range_set *out,
                                  struct range_set *a, struct range_set *b)
 {
-    unsigned int i, j = 0;
+    unsigned int i;
+    unsigned int j = 0;
     for (i = 0; i < a->nr; i++)
     {
         long start = a->ranges[i].start;
@@ -210,11 +240,13 @@ static void range_set_difference(struct range_set *out,
         while (start < end)
         {
             while (j < b->nr && start >= b->ranges[j].end)
+            {
                 /*
                  * a:         |-------
                  * b: ------|
                  */
                 j++;
+            }
             if (j >= b->nr || end < b->ranges[j].start)
             {
                 /*
@@ -240,7 +272,9 @@ static void range_set_difference(struct range_set *out,
                  * b:    |--?????
                  */
                 if (start < b->ranges[j].start)
+                {
                     range_set_append(out, start, b->ranges[j].start);
+                }
                 start = b->ranges[j].end;
             }
         }
@@ -269,7 +303,9 @@ static void line_log_data_clear(struct line_log_data *r)
 {
     range_set_release(&r->ranges);
     if (r->pair)
+    {
         diff_free_filepair(r->pair);
+    }
 }
 
 static void free_line_log_data(struct line_log_data *r)
@@ -289,14 +325,20 @@ static struct line_log_data *
 {
     struct line_log_data *p = list;
     if (insertion_point)
+    {
         *insertion_point = NULL;
+    }
     while (p)
     {
         int cmp = strcmp(p->path, path);
         if (!cmp)
+        {
             return p;
+        }
         if (insertion_point && cmp < 0)
+        {
             *insertion_point = p;
+        }
         p = p->next;
     }
     return NULL;
@@ -347,9 +389,13 @@ static int collect_diff_cb(long start_a, long count_a,
     struct collect_diff_cbdata *d = data;
 
     if (count_a >= 0)
+    {
         range_set_append(&d->diff->parent, start_a, start_a + count_a);
+    }
     if (count_b >= 0)
+    {
         range_set_append(&d->diff->target, start_b, start_b + count_b);
+    }
 
     return 0;
 }
@@ -425,7 +471,8 @@ static void diff_ranges_filter_touched(struct diff_ranges *out,
                                        struct diff_ranges *diff,
                                        struct range_set   *rs)
 {
-    unsigned int i, j = 0;
+    unsigned int i;
+    unsigned int j = 0;
 
     assert(out->target.nr == 0);
 
@@ -435,7 +482,9 @@ static void diff_ranges_filter_touched(struct diff_ranges *out,
         {
             j++;
             if (j == rs->nr)
+            {
                 return;
+            }
         }
         if (ranges_overlap(&diff->target.ranges[i], &rs->ranges[j]))
         {
@@ -457,7 +506,8 @@ static void range_set_shift_diff(struct range_set   *out,
                                  struct range_set   *rs,
                                  struct diff_ranges *diff)
 {
-    unsigned int  i, j = 0;
+    unsigned int  i;
+    unsigned int  j      = 0;
     long          offset = 0;
     struct range *src    = rs->ranges;
     struct range *target = diff->target.ranges;
@@ -512,20 +562,28 @@ static struct commit *check_single_commit(struct rev_info *revs)
     {
         struct object *obj = revs->pending.objects[i].item;
         if (obj->flags & UNINTERESTING)
+        {
             continue;
+        }
         obj = deref_tag(revs->repo, obj, NULL, 0);
         if (!obj || obj->type != OBJ_COMMIT)
+        {
             die("Non commit %s?", revs->pending.objects[i].name);
+        }
         if (commit)
+        {
             die("More than one commit to dig from: %s and %s?",
                 revs->pending.objects[i].name,
                 revs->pending.objects[found].name);
+        }
         commit = obj;
         found  = i;
     }
 
     if (!commit)
+    {
         die("No commit specified?");
+    }
 
     return (struct commit *)commit;
 }
@@ -537,10 +595,10 @@ static void fill_blob_sha1(struct repository *r, struct commit *commit,
     struct object_id oid;
 
     if (get_tree_entry(r, &commit->object.oid, spec->path, &oid, &mode))
+    {
         die("There is no path %s in the commit", spec->path);
+    }
     fill_filespec(spec, &oid, 1, mode);
-
-    return;
 }
 
 static void fill_line_ends(struct repository    *r,
@@ -548,13 +606,16 @@ static void fill_line_ends(struct repository    *r,
                            long                 *lines,
                            unsigned long       **line_ends)
 {
-    int            num = 0, size = 50;
+    int            num  = 0;
+    int            size = 50;
     long           cur  = 0;
     unsigned long *ends = NULL;
     char          *data = NULL;
 
     if (diff_populate_filespec(r, spec, NULL))
+    {
         die("Cannot read blob %s", oid_to_hex(&spec->oid));
+    }
 
     ALLOC_ARRAY(ends, size);
     ends[cur++] = 0;
@@ -589,9 +650,10 @@ static const char *nth_line(void *data, long line)
     assert(d->spec && d->spec->data);
 
     if (line == 0)
+    {
         return (char *)d->spec->data;
-    else
-        return (char *)d->spec->data + d->line_ends[line] + 1;
+    }
+    return (char *)d->spec->data + d->line_ends[line] + 1;
 }
 
 static struct line_log_data *
@@ -607,16 +669,20 @@ static struct line_log_data *
 
     for_each_string_list_item(item, args)
     {
-        const char           *name_part, *range_part;
+        const char           *name_part;
+        const char           *range_part;
         char                 *full_name;
         struct diff_filespec *spec;
-        long                  begin = 0, end = 0;
+        long                  begin = 0;
+        long                  end   = 0;
         long                  anchor;
 
         name_part = skip_range_arg(item->string, r->index);
         if (!name_part || *name_part != ':' || !name_part[1])
+        {
             die("-L argument not 'start,end:file' or ':funcname:file': %s",
                 item->string);
+        }
         range_part = xstrndup(item->string, name_part - item->string);
         name_part++;
 
@@ -632,20 +698,32 @@ static struct line_log_data *
 
         p = search_line_log_data(ranges, full_name, NULL);
         if (p && p->ranges.nr)
+        {
             anchor = p->ranges.ranges[p->ranges.nr - 1].end + 1;
+        }
         else
+        {
             anchor = 1;
+        }
 
         if (parse_range_arg(range_part, nth_line, &cb_data,
                             lines, anchor, &begin, &end,
                             full_name, r->index))
+        {
             die("malformed -L argument '%s'", range_part);
+        }
         if ((!lines && (begin || end)) || lines < begin)
+        {
             die("file %s has only %lu lines", name_part, lines);
+        }
         if (begin < 1)
+        {
             begin = 1;
+        }
         if (end < 1 || lines < end)
+        {
             end = lines;
+        }
         begin--;
         line_log_data_insert(&ranges, full_name, begin, end);
 
@@ -654,7 +732,9 @@ static struct line_log_data *
     }
 
     for (p = ranges; p; p = p->next)
+    {
         sort_and_merge_range_set(&p->ranges);
+    }
 
     return ranges;
 }
@@ -675,8 +755,9 @@ static struct line_log_data *line_log_data_copy_one(struct line_log_data *r)
 static struct line_log_data *
     line_log_data_copy(struct line_log_data *r)
 {
-    struct line_log_data *ret = NULL;
-    struct line_log_data *tmp = NULL, *prev = NULL;
+    struct line_log_data *ret  = NULL;
+    struct line_log_data *tmp  = NULL;
+    struct line_log_data *prev = NULL;
 
     assert(r);
     ret = tmp = prev = line_log_data_copy_one(r);
@@ -696,7 +777,8 @@ static struct line_log_data *
 static struct line_log_data *line_log_data_merge(struct line_log_data *a,
                                                  struct line_log_data *b)
 {
-    struct line_log_data *head = NULL, **pp = &head;
+    struct line_log_data  *head = NULL;
+    struct line_log_data **pp   = &head;
 
     while (a || b)
     {
@@ -705,11 +787,17 @@ static struct line_log_data *line_log_data_merge(struct line_log_data *a,
         struct line_log_data *d;
         int                   cmp;
         if (!a)
+        {
             cmp = 1;
+        }
         else if (!b)
+        {
             cmp = -1;
+        }
         else
+        {
             cmp = strcmp(a->path, b->path);
+        }
         if (cmp < 0)
         {
             src = a;
@@ -733,9 +821,13 @@ static struct line_log_data *line_log_data_merge(struct line_log_data *a,
         *pp     = d;
         pp      = &d->next;
         if (src2)
+        {
             range_set_union(&d->ranges, &src->ranges, &src2->ranges);
+        }
         else
+        {
             range_set_copy(&d->ranges, &src->ranges);
+        }
     }
 
     return head;
@@ -754,10 +846,14 @@ static void add_line_range(struct rev_info *revs, struct commit *commit,
         free_line_log_data(old_line);
     }
     else if (range)
+    {
         new_line = line_log_data_copy(range);
+    }
 
     if (new_line)
+    {
         add_decoration(&revs->line_log_data, &commit->object, new_line);
+    }
 }
 
 static void clear_commit_line_range(struct rev_info *revs, struct commit *commit)
@@ -765,7 +861,9 @@ static void clear_commit_line_range(struct rev_info *revs, struct commit *commit
     struct line_log_data *r;
     r = lookup_decoration(&revs->line_log_data, &commit->object);
     if (!r)
+    {
         return;
+    }
     free_line_log_data(r);
     add_decoration(&revs->line_log_data, &commit->object, NULL);
 }
@@ -779,7 +877,9 @@ static struct line_log_data *lookup_line_range(struct rev_info *revs,
     ret = lookup_decoration(&revs->line_log_data, &commit->object);
 
     for (d = ret; d; d = d->next)
+    {
         range_set_check_invariants(&d->ranges);
+    }
 
     return ret;
 }
@@ -791,11 +891,17 @@ static int same_paths_in_pathspec_and_range(struct pathspec      *pathspec,
     struct line_log_data *r;
 
     for (i = 0, r = range; i < pathspec->nr && r; i++, r = r->next)
-        if (strcmp(pathspec->items[i].match, r->path))
+    {
+        if (strcmp(pathspec->items[i].match, r->path) != 0)
+        {
             return 0;
+        }
+    }
     if (i < pathspec->nr || r)
+    {
         /* different number of pathspec items and ranges */
         return 0;
+    }
 
     return 1;
 }
@@ -808,7 +914,9 @@ static void parse_pathspec_from_ranges(struct pathspec      *pathspec,
     const char          **paths;
 
     for (r = range; r; r = r->next)
+    {
         strvec_push(&array, r->path);
+    }
     paths = strvec_detach(&array);
 
     parse_pathspec(pathspec, 0, PATHSPEC_PREFER_FULL, "", paths);
@@ -850,20 +958,30 @@ static void filter_diffs_for_paths(struct line_log_data *range, int keep_deletio
         if (!DIFF_FILE_VALID(p->two))
         {
             if (keep_deletions)
+            {
                 diff_q(&outq, p);
+            }
             else
+            {
                 diff_free_filepair(p);
+            }
             continue;
         }
         for (rg = range; rg; rg = rg->next)
         {
             if (!strcmp(rg->path, p->two->path))
+            {
                 break;
+            }
         }
         if (rg)
+        {
             diff_q(&outq, p);
+        }
         else
+        {
             diff_free_filepair(p);
+        }
     }
     free(diff_queued_diff.queue);
     diff_queued_diff = outq;
@@ -873,12 +991,14 @@ static inline int diff_might_be_rename(void)
 {
     int i;
     for (i = 0; i < diff_queued_diff.nr; i++)
+    {
         if (!DIFF_FILE_VALID(diff_queued_diff.queue[i]->one))
         {
             /* fprintf(stderr, "diff_might_be_rename found creation of: %s\n", */
             /* 	diff_queued_diff.queue[i]->two->path); */
             return 1;
         }
+    }
     return 0;
 }
 
@@ -887,7 +1007,8 @@ static void queue_diffs(struct line_log_data     *range,
                         struct diff_queue_struct *queue,
                         struct commit *commit, struct commit *parent)
 {
-    struct object_id *tree_oid, *parent_tree_oid;
+    struct object_id *tree_oid;
+    struct object_id *parent_tree_oid;
 
     assert(commit);
 
@@ -919,9 +1040,10 @@ static void queue_diffs(struct line_log_data     *range,
 static char *get_nth_line(long line, unsigned long *ends, void *data)
 {
     if (line == 0)
+    {
         return (char *)data;
-    else
-        return (char *)data + ends[line] + 1;
+    }
+    return (char *)data + ends[line] + 1;
 }
 
 static void print_line(const char *prefix, char first,
@@ -945,7 +1067,9 @@ static void print_line(const char *prefix, char first,
     fputs(reset, file);
     putc('\n', file);
     if (!had_nl)
+    {
         fputs("\\ No newline at end of file\n", file);
+    }
 }
 
 static char *output_prefix(struct diff_options *opt)
@@ -955,19 +1079,20 @@ static char *output_prefix(struct diff_options *opt)
         struct strbuf *sb = opt->output_prefix(opt, opt->output_prefix_data);
         return sb->buf;
     }
-    else
-    {
-        return xstrdup("");
-    }
+
+    return xstrdup("");
 }
 
 static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *range)
 {
-    unsigned int          i, j = 0;
-    long                  p_lines, t_lines;
-    unsigned long        *p_ends = NULL, *t_ends = NULL;
-    struct diff_filepair *pair = range->pair;
-    struct diff_ranges   *diff = &range->diff;
+    unsigned int          i;
+    unsigned int          j = 0;
+    long                  p_lines;
+    long                  t_lines;
+    unsigned long        *p_ends = NULL;
+    unsigned long        *t_ends = NULL;
+    struct diff_filepair *pair   = range->pair;
+    struct diff_ranges   *diff   = &range->diff;
 
     struct diff_options *opt       = &rev->diffopt;
     char                *prefix    = output_prefix(opt);
@@ -979,10 +1104,14 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
     const char          *c_context = diff_get_color(opt->use_color, DIFF_CONTEXT);
 
     if (!pair || !diff)
+    {
         goto out;
+    }
 
     if (pair->one->oid_valid)
+    {
         fill_line_ends(rev->diffopt.repo, pair->one, &p_lines, &p_ends);
+    }
     fill_line_ends(rev->diffopt.repo, pair->two, &t_lines, &t_ends);
 
     fprintf(opt->file, "%s%sdiff --git a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
@@ -993,23 +1122,32 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
     fprintf(opt->file, "%s%s+++ b/%s%s\n", prefix, c_meta, pair->two->path, c_reset);
     for (i = 0; i < range->ranges.nr; i++)
     {
-        long         p_start, p_end;
+        long         p_start;
+        long         p_end;
         long         t_start = range->ranges.ranges[i].start;
         long         t_end   = range->ranges.ranges[i].end;
         long         t_cur   = t_start;
         unsigned int j_last;
 
         while (j < diff->target.nr && diff->target.ranges[j].end < t_start)
+        {
             j++;
+        }
         if (j == diff->target.nr || diff->target.ranges[j].start > t_end)
+        {
             continue;
+        }
 
         /* Scan ahead to determine the last diff that falls in this range */
         j_last = j;
         while (j_last < diff->target.nr && diff->target.ranges[j_last].start < t_end)
+        {
             j_last++;
+        }
         if (j_last > j)
+        {
             j_last--;
+        }
 
         /*
          * Compute parent hunk headers: we know that the diff
@@ -1019,13 +1157,21 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
          * fall in this range.
          */
         if (t_start < diff->target.ranges[j].start)
+        {
             p_start = diff->parent.ranges[j].start - (diff->target.ranges[j].start - t_start);
+        }
         else
+        {
             p_start = diff->parent.ranges[j].start;
+        }
         if (t_end > diff->target.ranges[j_last].end)
+        {
             p_end = diff->parent.ranges[j_last].end + (t_end - diff->target.ranges[j_last].end);
+        }
         else
+        {
             p_end = diff->parent.ranges[j_last].end;
+        }
 
         if (!p_start && !p_end)
         {
@@ -1042,19 +1188,27 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
         {
             int k;
             for (; t_cur < diff->target.ranges[j].start; t_cur++)
+            {
                 print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
                            c_context, c_reset, opt->file);
+            }
             for (k = diff->parent.ranges[j].start; k < diff->parent.ranges[j].end; k++)
+            {
                 print_line(prefix, '-', k, p_ends, pair->one->data,
                            c_old, c_reset, opt->file);
+            }
             for (; t_cur < diff->target.ranges[j].end && t_cur < t_end; t_cur++)
+            {
                 print_line(prefix, '+', t_cur, t_ends, pair->two->data,
                            c_new, c_reset, opt->file);
+            }
             j++;
         }
         for (; t_cur < t_end; t_cur++)
+        {
             print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
                        c_context, c_reset, opt->file);
+        }
     }
 
 out:
@@ -1093,7 +1247,8 @@ static int process_diff_filepair(struct rev_info      *rev,
     struct line_log_data *rg = range;
     struct range_set      tmp;
     struct diff_ranges    diff;
-    mmfile_t              file_parent, file_target;
+    mmfile_t              file_parent;
+    mmfile_t              file_target;
     char                 *parent_data_to_free = NULL;
 
     assert(pair->two->path);
@@ -1101,14 +1256,20 @@ static int process_diff_filepair(struct rev_info      *rev,
     {
         assert(rg->path);
         if (!strcmp(rg->path, pair->two->path))
+        {
             break;
+        }
         rg = rg->next;
     }
 
     if (!rg)
+    {
         return 0;
+    }
     if (rg->ranges.nr == 0)
+    {
         return 0;
+    }
 
     assert(pair->two->oid_valid);
     diff_populate_filespec(rev->diffopt.repo, pair->two, NULL);
@@ -1129,7 +1290,9 @@ static int process_diff_filepair(struct rev_info      *rev,
 
     diff_ranges_init(&diff);
     if (collect_diff(&file_parent, &file_target, &diff))
+    {
         die("unable to generate diff for %s", pair->one->path);
+    }
 
     /* NEEDSWORK should apply some heuristics to prevent mismatches */
     free(rg->path);
@@ -1159,7 +1322,9 @@ static struct diff_filepair *diff_filepair_dup(struct diff_filepair *pair)
 static void free_diffqueues(int n, struct diff_queue_struct *dq)
 {
     for (int i = 0; i < n; i++)
+    {
         diff_free_queue(&dq[i]);
+    }
     free(dq);
 }
 
@@ -1168,7 +1333,8 @@ static int process_all_files(struct line_log_data    **range_out,
                              struct diff_queue_struct *queue,
                              struct line_log_data     *range)
 {
-    int i, changed = 0;
+    int i;
+    int changed = 0;
 
     *range_out = line_log_data_copy(range);
 
@@ -1193,8 +1359,10 @@ static int process_all_files(struct line_log_data    **range_out,
              */
             struct line_log_data *rg = range;
             changed++;
-            while (rg && strcmp(rg->path, pair->two->path))
+            while (rg && strcmp(rg->path, pair->two->path) != 0)
+            {
                 rg = rg->next;
+            }
             assert(rg);
             rg->pair = diff_filepair_dup(queue->queue[i]);
             memcpy(&rg->diff, pairdiff, sizeof(struct diff_ranges));
@@ -1226,20 +1394,28 @@ static int bloom_filter_check(struct rev_info      *rev,
     int                  result = 0;
 
     if (!commit->parents)
+    {
         return 1;
+    }
 
     if (!rev->bloom_filter_settings || !(filter = get_bloom_filter(rev->repo, commit)))
+    {
         return 1;
+    }
 
     if (!range)
+    {
         return 0;
+    }
 
     while (!result && range)
     {
         fill_bloom_key(range->path, strlen(range->path), &key, rev->bloom_filter_settings);
 
         if (bloom_filter_contains(filter, &key, rev->bloom_filter_settings))
+        {
             result = 1;
+        }
 
         clear_bloom_key(&key);
         range = range->next;
@@ -1257,13 +1433,17 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
     int                      changed;
 
     if (commit->parents)
+    {
         parent = commit->parents->item;
+    }
 
     queue_diffs(range, &rev->diffopt, &queue, commit, parent);
     changed = process_all_files(&parent_range, rev, &queue, range);
 
     if (parent)
+    {
         add_line_range(rev, parent, parent_range);
+    }
     free_line_log_data(parent_range);
     diff_free_queue(&queue);
     return changed;
@@ -1280,7 +1460,9 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
     int                       nparents = commit_list_count(commit->parents);
 
     if (nparents > 1 && rev->first_parent_only)
+    {
         nparents = 1;
+    }
 
     ALLOC_ARRAY(diffqueues, nparents);
     ALLOC_ARRAY(cand, nparents);
@@ -1349,13 +1531,19 @@ int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit
             clear_commit_line_range(rev, commit);
         }
         else if (!commit->parents || !commit->parents->next)
+        {
             changed = process_ranges_ordinary_commit(rev, commit, range);
+        }
         else
+        {
             changed = process_ranges_merge_commit(rev, commit, range);
+        }
     }
 
     if (!changed)
+    {
         commit->object.flags |= TREESAME;
+    }
 
     return changed;
 }
@@ -1367,22 +1555,31 @@ static enum rewrite_result line_log_rewrite_one(struct rev_info *rev UNUSED,
     {
         struct commit *p = *pp;
         if (p->parents && p->parents->next)
+        {
             return rewrite_one_ok;
+        }
         if (p->object.flags & UNINTERESTING)
+        {
             return rewrite_one_ok;
+        }
         if (!(p->object.flags & TREESAME))
+        {
             return rewrite_one_ok;
+        }
         if (!p->parents)
+        {
             return rewrite_one_noparents;
+        }
         *pp = p->parents->item;
     }
 }
 
 int line_log_filter(struct rev_info *rev)
 {
-    struct commit      *commit;
-    struct commit_list *list = rev->commits;
-    struct commit_list *out = NULL, **pp = &out;
+    struct commit       *commit;
+    struct commit_list  *list = rev->commits;
+    struct commit_list  *out  = NULL;
+    struct commit_list **pp   = &out;
 
     while (list)
     {
@@ -1394,14 +1591,18 @@ int line_log_filter(struct rev_info *rev)
             pp  = &list->next;
         }
         else
+        {
             to_free = list;
+        }
         list = list->next;
         free(to_free);
     }
     *pp = NULL;
 
     for (list = out; list; list = list->next)
+    {
         rewrite_parents(rev, list->item, line_log_rewrite_one);
+    }
 
     rev->commits = out;
 

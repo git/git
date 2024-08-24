@@ -34,7 +34,8 @@ void add_pathspec_matches_against_index(const struct pathspec       *pathspec,
                                         char                        *seen,
                                         enum ps_skip_worktree_action sw_action)
 {
-    int num_unmatched = 0, i;
+    int num_unmatched = 0;
+    int i;
 
     /*
      * Since we are walking the index as if we were walking the directory,
@@ -43,15 +44,23 @@ void add_pathspec_matches_against_index(const struct pathspec       *pathspec,
      * anything.
      */
     for (i = 0; i < pathspec->nr; i++)
+    {
         if (!seen[i])
+        {
             num_unmatched++;
+        }
+    }
     if (!num_unmatched)
+    {
         return;
+    }
     for (i = 0; i < istate->cache_nr; i++)
     {
         const struct cache_entry *ce = istate->cache[i];
         if (sw_action == PS_IGNORE_SKIP_WORKTREE && (ce_skip_worktree(ce) || !path_in_sparse_checkout(ce->name, istate)))
+        {
             continue;
+        }
         ce_path_match(istate, ce, pathspec, seen);
     }
 }
@@ -83,7 +92,9 @@ char *find_pathspecs_matching_skip_worktree(const struct pathspec *pathspec)
     {
         struct cache_entry *ce = istate->cache[i];
         if (ce_skip_worktree(ce) || !path_in_sparse_checkout(ce->name, istate))
+        {
             ce_path_match(istate, ce, pathspec, seen);
+        }
     }
 
     return seen;
@@ -138,7 +149,9 @@ static void prefix_magic(struct strbuf *sb, int prefixlen,
             if ((magic & pathspec_magic[i].bit) && pathspec_magic[i].mnemonic)
             {
                 if (sb->buf[sb->len - 1] != '(')
+                {
                     strbuf_addch(sb, ',');
+                }
                 strbuf_addstr(sb, pathspec_magic[i].name);
             }
         }
@@ -166,7 +179,9 @@ static size_t strcspn_escaped(const char *s, const char *stop)
         }
 
         if (strchr(stop, *i))
+        {
             break;
+        }
     }
     return i - s;
 }
@@ -174,14 +189,17 @@ static size_t strcspn_escaped(const char *s, const char *stop)
 static inline int invalid_value_char(const char ch)
 {
     if (isalnum(ch) || strchr(",-_", ch))
+    {
         return 0;
+    }
     return -1;
 }
 
 static char *attr_value_unescape(const char *value)
 {
     const char *src;
-    char       *dst, *ret;
+    char       *dst;
+    char       *ret;
 
     ret = xmallocz(strlen(value));
     for (src = value, dst = ret; *src; src++, dst++)
@@ -189,13 +207,17 @@ static char *attr_value_unescape(const char *value)
         if (*src == '\\')
         {
             if (!src[1])
+            {
                 die(_(
                     "Escape character '\\' not allowed as "
                     "last character in attr value"));
+            }
             src++;
         }
         if (invalid_value_char(*src))
+        {
             die("cannot use '%c' for value matching", *src);
+        }
         *dst = *src;
     }
     *dst = '\0';
@@ -208,10 +230,14 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
     struct string_list       list = STRING_LIST_INIT_DUP;
 
     if (item->attr_check || item->attr_match)
+    {
         die(_("Only one 'attr:' specification is allowed."));
+    }
 
     if (!value || !*value)
+    {
         die(_("attr spec must not be empty"));
+    }
 
     string_list_split(&list, value, ' ', -1);
     string_list_remove_empty_items(&list, 0);
@@ -244,7 +270,9 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
             default:
                 attr_len = strcspn(attr, "=");
                 if (attr[attr_len] != '=')
+                {
                     am->match_mode = MATCH_SET;
+                }
                 else
                 {
                     const char *v  = &attr[attr_len + 1];
@@ -257,7 +285,9 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
         attr_name = xmemdupz(attr, attr_len);
         a         = git_attr(attr_name);
         if (!a)
+        {
             die(_("invalid attribute name %s"), attr_name);
+        }
 
         attr_check_append(item->attr_check, a);
 
@@ -265,7 +295,9 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
     }
 
     if (item->attr_check->nr != item->attr_match_nr)
+    {
         BUG("should have same number of entries");
+    }
 
     string_list_clear(&list, 0);
 }
@@ -275,7 +307,9 @@ static inline int get_literal_global(void)
     static int literal = -1;
 
     if (literal < 0)
+    {
         literal = git_env_bool(GIT_LITERAL_PATHSPECS_ENVIRONMENT, 0);
+    }
 
     return literal;
 }
@@ -285,7 +319,9 @@ static inline int get_glob_global(void)
     static int glob = -1;
 
     if (glob < 0)
+    {
         glob = git_env_bool(GIT_GLOB_PATHSPECS_ENVIRONMENT, 0);
+    }
 
     return glob;
 }
@@ -295,7 +331,9 @@ static inline int get_noglob_global(void)
     static int noglob = -1;
 
     if (noglob < 0)
+    {
         noglob = git_env_bool(GIT_NOGLOB_PATHSPECS_ENVIRONMENT, 0);
+    }
 
     return noglob;
 }
@@ -305,7 +343,9 @@ static inline int get_icase_global(void)
     static int icase = -1;
 
     if (icase < 0)
+    {
         icase = git_env_bool(GIT_ICASE_PATHSPECS_ENVIRONMENT, 0);
+    }
 
     return icase;
 }
@@ -315,26 +355,38 @@ static int get_global_magic(int element_magic)
     int global_magic = 0;
 
     if (get_literal_global())
+    {
         global_magic |= PATHSPEC_LITERAL;
+    }
 
     /* --glob-pathspec is overridden by :(literal) */
     if (get_glob_global() && !(element_magic & PATHSPEC_LITERAL))
+    {
         global_magic |= PATHSPEC_GLOB;
+    }
 
     if (get_glob_global() && get_noglob_global())
+    {
         die(_("global 'glob' and 'noglob' pathspec settings are incompatible"));
+    }
 
     if (get_icase_global())
+    {
         global_magic |= PATHSPEC_ICASE;
+    }
 
     if ((global_magic & PATHSPEC_LITERAL) && (global_magic & ~PATHSPEC_LITERAL))
+    {
         die(_(
             "global 'literal' pathspec setting is incompatible "
             "with all other global pathspec settings"));
+    }
 
     /* --noglob-pathspec adds :(literal) _unless_ :(glob) is specified */
     if (get_noglob_global() && !(element_magic & PATHSPEC_GLOB))
+    {
         global_magic |= PATHSPEC_LITERAL;
+    }
 
     return global_magic;
 }
@@ -359,19 +411,27 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
         int    i;
 
         if (pos[len] == ',')
+        {
             nextat = pos + len + 1; /* handle ',' */
+        }
         else
+        {
             nextat = pos + len; /* handle ')' and '\0' */
+        }
 
         if (!len)
+        {
             continue;
+        }
 
         if (starts_with(pos, "prefix:"))
         {
             char *endptr;
             *prefix_len = strtol(pos + 7, &endptr, 10);
             if (endptr - pos != len)
+            {
                 die(_("invalid parameter for pathspec magic 'prefix'"));
+            }
             continue;
         }
 
@@ -394,13 +454,17 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
         }
 
         if (ARRAY_SIZE(pathspec_magic) <= i)
+        {
             die(_("Invalid pathspec magic '%.*s' in '%s'"),
                 (int)len, pos, elem);
+        }
     }
 
     if (*pos != ')')
+    {
         die(_("Missing ')' at the end of pathspec magic in '%s'"),
             elem);
+    }
     pos++;
 
     return pos;
@@ -429,7 +493,9 @@ static const char *parse_short_magic(unsigned *magic, const char *elem)
         }
 
         if (!is_pathspec_magic(ch))
+        {
             break;
+        }
 
         for (i = 0; i < ARRAY_SIZE(pathspec_magic); i++)
         {
@@ -441,12 +507,16 @@ static const char *parse_short_magic(unsigned *magic, const char *elem)
         }
 
         if (ARRAY_SIZE(pathspec_magic) <= i)
+        {
             die(_("Unimplemented pathspec magic '%c' in '%s'"),
                 ch, elem);
+        }
     }
 
     if (*pos == ':')
+    {
         pos++;
+    }
 
     return pos;
 }
@@ -456,8 +526,10 @@ static const char *parse_element_magic(unsigned *magic, int *prefix_len,
                                        const char           *elem)
 {
     if (elem[0] != ':' || get_literal_global())
+    {
         return elem; /* nothing to do */
-    else if (elem[1] == '(')
+    }
+    if (elem[1] == '(')
         /* longhand */
         return parse_long_magic(magic, prefix_len, item, elem);
     else
@@ -472,8 +544,9 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
                                const char *prefix, int prefixlen,
                                const char *elt)
 {
-    unsigned    magic = 0, element_magic = 0;
-    const char *copyfrom = elt;
+    unsigned    magic         = 0;
+    unsigned    element_magic = 0;
+    const char *copyfrom      = elt;
     char       *match;
     int         pathspec_prefix = -1;
 
@@ -499,10 +572,14 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
     item->magic = magic;
 
     if (pathspec_prefix >= 0 && (prefixlen || (prefix && *prefix)))
+    {
         BUG("'prefix' magic is supposed to be used at worktree's root");
+    }
 
     if ((magic & PATHSPEC_LITERAL) && (magic & PATHSPEC_GLOB))
+    {
         die(_("%s: 'literal' and 'glob' are incompatible"), elt);
+    }
 
     /* Create match string which will be used for pathspec matching */
     if (pathspec_prefix >= 0)
@@ -524,11 +601,15 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
             const char *hint_path;
 
             if (!have_git_dir())
+            {
                 die(_("'%s' is outside the directory tree"),
                     copyfrom);
+            }
             hint_path = get_git_work_tree();
             if (!hint_path)
+            {
                 hint_path = get_git_dir();
+            }
             die(_("%s: '%s' is outside repository at '%s'"), elt,
                 copyfrom, absolute_path(hint_path));
         }
@@ -565,7 +646,9 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
     {
         item->nowildcard_len = simple_length(item->match);
         if (item->nowildcard_len < prefixlen)
+        {
             item->nowildcard_len = prefixlen;
+        }
     }
 
     item->flags = 0;
@@ -579,7 +662,9 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
     else
     {
         if (item->nowildcard_len < item->len && item->match[item->nowildcard_len] == '*' && no_wildcard(item->match + item->nowildcard_len + 1))
+        {
             item->flags |= PATHSPEC_ONESTAR;
+        }
     }
 
     /* sanity checks, pathspec matchers assume these are sane */
@@ -591,7 +676,8 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 
 static int pathspec_item_cmp(const void *a_, const void *b_)
 {
-    struct pathspec_item *a, *b;
+    struct pathspec_item *a;
+    struct pathspec_item *b;
 
     a = (struct pathspec_item *)a_;
     b = (struct pathspec_item *)b_;
@@ -605,15 +691,23 @@ void pathspec_magic_names(unsigned magic, struct strbuf *out)
     {
         const struct pathspec_magic *m = pathspec_magic + i;
         if (!(magic & m->bit))
+        {
             continue;
+        }
         if (out->len)
+        {
             strbuf_addstr(out, ", ");
+        }
 
         if (m->mnemonic)
+        {
             strbuf_addf(out, _("'%s' (mnemonic: '%c')"),
                         m->name, m->mnemonic);
+        }
         else
+        {
             strbuf_addf(out, "'%s'", m->name);
+        }
     }
 }
 
@@ -637,28 +731,41 @@ void parse_pathspec(struct pathspec *pathspec,
 {
     struct pathspec_item *item;
     const char           *entry = argv ? *argv : NULL;
-    int                   i, n, prefixlen, nr_exclude = 0;
+    int                   i;
+    int                   n;
+    int                   prefixlen;
+    int                   nr_exclude = 0;
 
     memset(pathspec, 0, sizeof(*pathspec));
 
     if (flags & PATHSPEC_MAXDEPTH_VALID)
+    {
         pathspec->magic |= PATHSPEC_MAXDEPTH;
+    }
 
     /* No arguments, no prefix -> no pathspec */
     if (!entry && !prefix)
+    {
         return;
+    }
 
     if ((flags & PATHSPEC_PREFER_CWD) && (flags & PATHSPEC_PREFER_FULL))
+    {
         BUG("PATHSPEC_PREFER_CWD and PATHSPEC_PREFER_FULL are incompatible");
+    }
 
     /* No arguments with prefix -> prefix pathspec */
     if (!entry)
     {
         if (flags & PATHSPEC_PREFER_FULL)
+        {
             return;
+        }
 
         if (!(flags & PATHSPEC_PREFER_CWD))
+        {
             BUG("PATHSPEC_PREFER_CWD requires arguments");
+        }
 
         pathspec->items      = CALLOC_ARRAY(item, 1);
         item->match          = xstrdup(prefix);
@@ -673,8 +780,10 @@ void parse_pathspec(struct pathspec *pathspec,
     while (argv[n])
     {
         if (*argv[n] == '\0')
+        {
             die("empty string is not a valid pathspec. "
                 "please use . instead if you meant to match all paths");
+        }
         n++;
     }
 
@@ -690,9 +799,13 @@ void parse_pathspec(struct pathspec *pathspec,
         init_pathspec_item(item + i, flags, prefix, prefixlen, entry);
 
         if (item[i].magic & PATHSPEC_EXCLUDE)
+        {
             nr_exclude++;
+        }
         if (item[i].magic & magic_mask)
+        {
             unsupported_magic(entry, item[i].magic & magic_mask);
+        }
 
         if ((flags & PATHSPEC_SYMLINK_LEADING_PATH) && has_symlink_leading_path(item[i].match, item[i].len))
         {
@@ -700,7 +813,9 @@ void parse_pathspec(struct pathspec *pathspec,
         }
 
         if (item[i].nowildcard_len < item[i].len)
+        {
             pathspec->has_wildcard = 1;
+        }
         pathspec->magic |= item[i].magic;
     }
 
@@ -718,7 +833,9 @@ void parse_pathspec(struct pathspec *pathspec,
     if (pathspec->magic & PATHSPEC_MAXDEPTH)
     {
         if (flags & PATHSPEC_KEEP_ORDER)
+        {
             BUG("PATHSPEC_MAXDEPTH_VALID and PATHSPEC_KEEP_ORDER are incompatible");
+        }
         QSORT(pathspec->items, pathspec->nr, pathspec_item_cmp);
     }
 }
@@ -734,9 +851,13 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
     FILE             *in;
 
     if (!strcmp(file, "-"))
+    {
         in = stdin;
+    }
     else
+    {
         in = xfopen(file, "r");
+    }
 
     while (getline_fn(&buf, in) != EOF)
     {
@@ -744,7 +865,9 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
         {
             strbuf_reset(&unquoted);
             if (unquote_c_style(&unquoted, buf.buf, NULL))
+            {
                 die(_("line is badly quoted: %s"), buf.buf);
+            }
             strbuf_swap(&buf, &unquoted);
         }
         strvec_push(&parsed_file, buf.buf);
@@ -754,7 +877,9 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
     strbuf_release(&unquoted);
     strbuf_release(&buf);
     if (in != stdin)
+    {
         fclose(in);
+    }
 
     parse_pathspec(pathspec, magic_mask, flags, prefix, parsed_file.v);
     strvec_clear(&parsed_file);
@@ -762,7 +887,8 @@ void parse_pathspec_file(struct pathspec *pathspec, unsigned magic_mask,
 
 void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 {
-    int i, j;
+    int i;
+    int j;
 
     *dst = *src;
     DUP_ARRAY(dst->items, src->items, dst->nr);
@@ -788,7 +914,8 @@ void copy_pathspec(struct pathspec *dst, const struct pathspec *src)
 
 void clear_pathspec(struct pathspec *pathspec)
 {
-    int i, j;
+    int i;
+    int j;
 
     for (i = 0; i < pathspec->nr; i++)
     {
@@ -796,11 +923,15 @@ void clear_pathspec(struct pathspec *pathspec)
         free(pathspec->items[i].original);
 
         for (j = 0; j < pathspec->items[i].attr_match_nr; j++)
+        {
             free(pathspec->items[i].attr_match[j].value);
+        }
         free(pathspec->items[i].attr_match);
 
         if (pathspec->items[i].attr_check)
+        {
             attr_check_free(pathspec->items[i].attr_check);
+        }
     }
 
     FREE_AND_NULL(pathspec->items);
@@ -815,7 +946,9 @@ int match_pathspec_attrs(struct index_state *istate,
     char *to_free = NULL;
 
     if (name[namelen])
+    {
         name = to_free = xmemdupz(name, namelen);
+    }
 
     git_check_attr(istate, name, item->attr_check);
 
@@ -831,15 +964,25 @@ int match_pathspec_attrs(struct index_state *istate,
         match_mode = item->attr_match[i].match_mode;
 
         if (ATTR_TRUE(value))
+        {
             matched = (match_mode == MATCH_SET);
+        }
         else if (ATTR_FALSE(value))
+        {
             matched = (match_mode == MATCH_UNSET);
+        }
         else if (ATTR_UNSET(value))
+        {
             matched = (match_mode == MATCH_UNSPECIFIED);
+        }
         else
+        {
             matched = (match_mode == MATCH_VALUE && !strcmp(item->attr_match[i].value, value));
+        }
         if (!matched)
+        {
             return 0;
+        }
     }
 
     return 1;
@@ -848,7 +991,8 @@ int match_pathspec_attrs(struct index_state *istate,
 int pathspec_needs_expanded_index(struct index_state    *istate,
                                   const struct pathspec *pathspec)
 {
-    unsigned int i, pos;
+    unsigned int i;
+    unsigned int pos;
     int          res                = 0;
     char        *skip_worktree_seen = NULL;
 
@@ -856,14 +1000,18 @@ int pathspec_needs_expanded_index(struct index_state    *istate,
      * If index is not sparse, no index expansion is needed.
      */
     if (!istate->sparse_index)
+    {
         return 0;
+    }
 
     /*
      * When using a magic pathspec, assume for the sake of simplicity that
      * the index needs to be expanded to match all matchable files.
      */
     if (pathspec->magic)
+    {
         return 1;
+    }
 
     for (i = 0; i < pathspec->nr; i++)
     {
@@ -893,14 +1041,18 @@ int pathspec_needs_expanded_index(struct index_state    *istate,
              * - **.c: may need expanded index
              */
             if (strspn(item.original + item.nowildcard_len, "*") == item.len - item.nowildcard_len && path_in_cone_mode_sparse_checkout(item.original, istate))
+            {
                 continue;
+            }
 
             for (pos = 0; pos < istate->cache_nr; pos++)
             {
                 struct cache_entry *ce = istate->cache[pos];
 
                 if (!S_ISSPARSEDIR(ce->ce_mode))
+                {
                     continue;
+                }
 
                 /*
                  * If the pre-wildcard length is longer than the sparse
@@ -926,10 +1078,14 @@ int pathspec_needs_expanded_index(struct index_state    *istate,
             }
         }
         else if (!path_in_cone_mode_sparse_checkout(item.original, istate) && !matches_skip_worktree(pathspec, i, &skip_worktree_seen))
+        {
             res = 1;
+        }
 
         if (res > 0)
+        {
             break;
+        }
     }
 
     free(skip_worktree_seen);

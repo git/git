@@ -20,14 +20,18 @@ static void trim_last_path_component(struct strbuf *path)
 
     /* back up past trailing slashes, if any */
     while (i && path->buf[i - 1] == '/')
+    {
         i--;
+    }
 
     /*
      * then go backwards until a slash, or the beginning of the
      * string
      */
     while (i && path->buf[i - 1] != '/')
+    {
         i--;
+    }
 
     strbuf_setlen(path, i);
 }
@@ -54,17 +58,23 @@ static void resolve_symlink(struct strbuf *path)
     while (depth--)
     {
         if (strbuf_readlink(&link, path->buf, path->len) < 0)
+        {
             break;
+        }
 
         if (is_absolute_path(link.buf))
+        {
             /* absolute path simply replaces p */
             strbuf_reset(path);
+        }
         else
+        {
             /*
              * link is a relative path, so replace the
              * last element of p with it.
              */
             trim_last_path_component(path);
+        }
 
         strbuf_addbuf(path, &link);
     }
@@ -79,7 +89,9 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
 
     strbuf_addstr(&filename, path);
     if (!(flags & LOCK_NO_DEREF))
+    {
         resolve_symlink(&filename);
+    }
 
     strbuf_addstr(&filename, LOCK_SUFFIX);
     lk->tempfile = create_tempfile_mode(filename.buf, mode);
@@ -110,7 +122,9 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
     static int random_initialized = 0;
 
     if (timeout_ms == 0)
+    {
         return lock_file(lk, path, flags, mode);
+    }
 
     if (!random_initialized)
     {
@@ -119,18 +133,23 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
     }
 
     if (timeout_ms > 0)
+    {
         remaining_ms = timeout_ms;
+    }
 
     while (1)
     {
-        long backoff_ms, wait_ms;
+        long backoff_ms;
+        long wait_ms;
         int  fd;
 
         fd = lock_file(lk, path, flags, mode);
 
         if (fd >= 0)
+        {
             return fd; /* success */
-        else if (errno != EEXIST)
+        }
+        if (errno != EEXIST)
             return -1; /* failure other than lock held */
         else if (timeout_ms > 0 && remaining_ms <= 0)
             return -1; /* failure due to timeout */
@@ -144,9 +163,13 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
         /* Recursion: (n+1)^2 = n^2 + 2n + 1 */
         multiplier += 2 * n + 1;
         if (multiplier > BACKOFF_MAX_MULTIPLIER)
+        {
             multiplier = BACKOFF_MAX_MULTIPLIER;
+        }
         else
+        {
             n++;
+        }
     }
 }
 
@@ -163,8 +186,10 @@ void unable_to_lock_message(const char *path, int err, struct strbuf *buf)
                     absolute_path(path), strerror(err));
     }
     else
+    {
         strbuf_addf(buf, _("Unable to create '%s.lock': %s"),
                     absolute_path(path), strerror(err));
+    }
 }
 
 NORETURN void unable_to_lock_die(const char *path, int err)
@@ -184,7 +209,9 @@ int hold_lock_file_for_update_timeout_mode(struct lock_file *lk,
     if (fd < 0)
     {
         if (flags & LOCK_DIE_ON_ERROR)
+        {
             unable_to_lock_die(path, errno);
+        }
         if (flags & LOCK_REPORT_ON_ERROR)
         {
             struct strbuf buf = STRBUF_INIT;
@@ -201,8 +228,10 @@ char *get_locked_file_path(struct lock_file *lk)
     struct strbuf ret = STRBUF_INIT;
 
     strbuf_addstr(&ret, get_tempfile_path(lk->tempfile));
-    if (ret.len <= LOCK_SUFFIX_LEN || strcmp(ret.buf + ret.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
+    if (ret.len <= LOCK_SUFFIX_LEN || strcmp(ret.buf + ret.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX) != 0)
+    {
         BUG("get_locked_file_path() called for malformed lock object");
+    }
     /* remove ".lock": */
     strbuf_setlen(&ret, ret.len - LOCK_SUFFIX_LEN);
     return strbuf_detach(&ret, NULL);

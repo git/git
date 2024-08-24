@@ -18,16 +18,22 @@ static char *do_askpass(const char *cmd, const char *prompt)
     pass.out = -1;
 
     if (start_command(&pass))
+    {
         return NULL;
+    }
 
     strbuf_reset(&buffer);
     if (strbuf_read(&buffer, pass.out, 20) < 0)
+    {
         err = 1;
+    }
 
     close(pass.out);
 
     if (finish_command(&pass))
+    {
         err = 1;
+    }
 
     if (err)
     {
@@ -51,11 +57,17 @@ char *git_prompt(const char *prompt, int flags)
 
         askpass = getenv("GIT_ASKPASS");
         if (!askpass)
+        {
             askpass = askpass_program;
+        }
         if (!askpass)
+        {
             askpass = getenv("SSH_ASKPASS");
+        }
         if (askpass && *askpass)
+        {
             r = do_askpass(askpass, prompt);
+        }
     }
 
     if (!r)
@@ -87,7 +99,9 @@ int git_read_line_interactively(struct strbuf *line)
     fflush(stdout);
     ret = strbuf_getline_lf(line, stdin);
     if (ret != EOF)
+    {
         strbuf_trim_trailing_newline(line);
+    }
 
     return ret;
 }

@@ -7,7 +7,9 @@ void oidset_init(struct oidset *set, size_t initial_size)
 {
     memset(&set->set, 0, sizeof(set->set));
     if (initial_size)
+    {
         kh_resize_oid_set(&set->set, initial_size);
+    }
 }
 
 int oidset_contains(const struct oidset *set, const struct object_id *oid)
@@ -30,14 +32,18 @@ void oidset_insert_from_set(struct oidset *dest, struct oidset *src)
 
     oidset_iter_init(src, &iter);
     while ((src_oid = oidset_iter_next(&iter)))
+    {
         oidset_insert(dest, src_oid);
+    }
 }
 
 int oidset_remove(struct oidset *set, const struct object_id *oid)
 {
     khiter_t pos = kh_get_oid_set(&set->set, *oid);
     if (pos == kh_end(&set->set))
+    {
         return 0;
+    }
     kh_del_oid_set(&set->set, pos);
     return 1;
 }
@@ -64,7 +70,9 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 
     fp = fopen(path, "r");
     if (!fp)
+    {
         die("could not open object name list: %s", path);
+    }
     while (!strbuf_getline(&sb, fp))
     {
         const char *p;
@@ -77,19 +85,29 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
          */
         name = strchr(sb.buf, '#');
         if (name)
+        {
             strbuf_setlen(&sb, name - sb.buf);
+        }
         strbuf_trim(&sb);
         if (!sb.len)
+        {
             continue;
+        }
 
         if (parse_oid_hex_algop(sb.buf, &oid, &p, algop) || *p != '\0')
+        {
             die("invalid object name: %s", sb.buf);
+        }
         if (fn && fn(&oid, cbdata))
+        {
             continue;
+        }
         oidset_insert(set, &oid);
     }
     if (ferror(fp))
+    {
         die_errno("Could not read '%s'", path);
+    }
     fclose(fp);
     strbuf_release(&sb);
 }

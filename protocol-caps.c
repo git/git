@@ -4,7 +4,6 @@
 #include "hex.h"
 #include "pkt-line.h"
 #include "hash.h"
-#include "hex.h"
 #include "object.h"
 #include "object-store-ll.h"
 #include "repository.h"
@@ -25,7 +24,9 @@ static int parse_oid(const char *line, struct string_list *oid_str_list)
     const char *arg;
 
     if (!skip_prefix(line, "oid ", &arg))
+    {
         return 0;
+    }
 
     string_list_append(oid_str_list, arg);
 
@@ -44,10 +45,14 @@ static void send_info(struct repository *r, struct packet_writer *writer,
     struct strbuf            send_buffer = STRBUF_INIT;
 
     if (!oid_str_list->nr)
+    {
         return;
+    }
 
     if (info->size)
+    {
         packet_writer_write(writer, "size");
+    }
 
     for_each_string_list_item(item, oid_str_list)
     {
@@ -101,7 +106,9 @@ int cap_object_info(struct repository *r, struct packet_reader *request)
         }
 
         if (parse_oid(request->line, &oid_str_list))
+        {
             continue;
+        }
 
         packet_writer_error(&writer,
                             "object-info: unexpected line: '%s'",

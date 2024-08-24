@@ -28,7 +28,9 @@ void sq_quote_buf(struct strbuf *dst, const char *src)
     char *to_free = NULL;
 
     if (dst->buf == src)
+    {
         to_free = strbuf_detach(dst, NULL);
+    }
 
     strbuf_addch(dst, '\'');
     while (*src)
@@ -106,7 +108,9 @@ void sq_quote_argv(struct strbuf *dst, const char **argv)
 void sq_quote_argv_pretty(struct strbuf *dst, const char **argv)
 {
     if (argv[0])
+    {
         strbuf_addch(dst, ' ');
+    }
     sq_append_quote_argv_pretty(dst, argv);
 }
 
@@ -120,7 +124,9 @@ void sq_append_quote_argv_pretty(struct strbuf *dst, const char **argv)
     for (i = 0; argv[i]; i++)
     {
         if (i > 0)
+        {
             strbuf_addch(dst, ' ');
+        }
         sq_quote_buf_pretty(dst, argv[i]);
     }
 }
@@ -132,12 +138,16 @@ char *sq_dequote_step(char *arg, char **next)
     char  c;
 
     if (*src != '\'')
+    {
         return NULL;
+    }
     for (;;)
     {
         c = *++src;
         if (!c)
+        {
             return NULL;
+        }
         if (c != '\'')
         {
             *dst++ = c;
@@ -149,7 +159,9 @@ char *sq_dequote_step(char *arg, char **next)
             case '\0':
                 *dst = 0;
                 if (next)
+                {
                     *next = NULL;
+                }
                 return arg;
             case '\\':
                 /*
@@ -167,7 +179,9 @@ char *sq_dequote_step(char *arg, char **next)
             /* Fallthrough */
             default:
                 if (!next)
+                {
                     return NULL;
+                }
                 *dst  = 0;
                 *next = src;
                 return arg;
@@ -187,17 +201,23 @@ static int sq_dequote_to_argv_internal(char         *arg,
     char *next = arg;
 
     if (!*arg)
+    {
         return 0;
+    }
     do
     {
         char *dequoted = sq_dequote_step(next, &next);
         if (!dequoted)
+        {
             return -1;
+        }
         if (next)
         {
             char c;
             if (!isspace(*next))
+            {
                 return -1;
+            }
             do
             {
                 c = *++next;
@@ -209,7 +229,9 @@ static int sq_dequote_to_argv_internal(char         *arg,
             (*argv)[(*nr)++] = dequoted;
         }
         if (array)
+        {
             strvec_push(array, dequoted);
+        }
     } while (next);
 
     return 0;
@@ -259,12 +281,16 @@ static size_t next_quote_pos(const char *s, ssize_t maxlen)
     if (maxlen < 0)
     {
         for (len = 0; !cq_must_quote(s[len]); len++)
+        {
             ;
+        }
     }
     else
     {
         for (len = 0; len < maxlen && !cq_must_quote(s[len]); len++)
+        {
             ;
+        }
     }
     return len;
 }
@@ -306,8 +332,9 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
     } while (0)
 
     int         no_dq = !!(flags & CQUOTE_NODQ);
-    size_t      len, count = 0;
-    const char *p = name;
+    size_t      len;
+    size_t      count = 0;
+    const char *p     = name;
 
     for (;;)
     {
@@ -315,17 +342,23 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
 
         len = next_quote_pos(p, maxlen);
         if (len == maxlen || (maxlen < 0 && !p[len]))
+        {
             break;
+        }
 
         if (!no_dq && p == name)
+        {
             EMIT('"');
+        }
 
         EMITBUF(p, len);
         EMIT('\\');
         p += len;
         ch = (unsigned char)*p++;
         if (maxlen >= 0)
+        {
             maxlen -= len + 1;
+        }
         if (cq_lookup[ch] >= ' ')
         {
             EMIT(cq_lookup[ch]);
@@ -339,11 +372,15 @@ static size_t quote_c_style_counted(const char *name, ssize_t maxlen,
     }
 
     EMITBUF(p, len);
-    if (p == name) /* no ending quote needed */
+    if (p == name)
+    { /* no ending quote needed */
         return 0;
+    }
 
     if (!no_dq)
+    {
         EMIT('"');
+    }
     return count;
 }
 
@@ -359,11 +396,15 @@ void quote_two_c_style(struct strbuf *sb, const char *prefix, const char *path,
     if (quote_c_style(prefix, NULL, NULL, 0) || quote_c_style(path, NULL, NULL, 0))
     {
         if (!nodq)
+        {
             strbuf_addch(sb, '"');
+        }
         quote_c_style(prefix, sb, NULL, CQUOTE_NODQ);
         quote_c_style(path, sb, NULL, CQUOTE_NODQ);
         if (!nodq)
+        {
             strbuf_addch(sb, '"');
+        }
     }
     else
     {
@@ -411,11 +452,15 @@ char *quote_path(const char *in, const char *prefix, struct strbuf *out, unsigne
      * and tell quote_c_style_counted() not to.
      */
     if (force_dq)
+    {
         strbuf_addch(out, '"');
+    }
     quote_c_style_counted(rel, strlen(rel), out, NULL,
                           force_dq ? CQUOTE_NODQ : 0);
     if (force_dq)
+    {
         strbuf_addch(out, '"');
+    }
     strbuf_release(&sb);
 
     return out->buf;
@@ -435,11 +480,15 @@ char *quote_path(const char *in, const char *prefix, struct strbuf *out, unsigne
  */
 int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
 {
-    size_t oldlen = sb->len, len;
-    int    ch, ac;
+    size_t oldlen = sb->len;
+    size_t len;
+    int    ch;
+    int    ac;
 
     if (*quoted++ != '"')
+    {
         return -1;
+    }
 
     for (;;)
     {
@@ -451,7 +500,9 @@ int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
         {
             case '"':
                 if (endp)
+                {
                     *endp = quoted;
+                }
                 return 0;
             case '\\':
                 break;
@@ -494,10 +545,14 @@ int unquote_c_style(struct strbuf *sb, const char *quoted, const char **endp)
             case '3':
                 ac = ((ch - '0') << 6);
                 if ((ch = *quoted++) < '0' || '7' < ch)
+                {
                     goto error;
+                }
                 ac |= ((ch - '0') << 3);
                 if ((ch = *quoted++) < '0' || '7' < ch)
+                {
                     goto error;
+                }
                 ac |= (ch - '0');
                 ch = ac;
                 break;
@@ -524,7 +579,9 @@ void perl_quote_buf(struct strbuf *sb, const char *src)
     while ((c = *src++))
     {
         if (c == sq || c == bq)
+        {
             strbuf_addch(sb, bq);
+        }
         strbuf_addch(sb, c);
     }
     strbuf_addch(sb, sq);
@@ -541,7 +598,9 @@ void perl_quote_buf_with_len(struct strbuf *sb, const char *src, size_t len)
     while (c != end)
     {
         if (*c == sq || *c == bq)
+        {
             strbuf_addch(sb, bq);
+        }
         strbuf_addch(sb, *c);
         c++;
     }
@@ -565,7 +624,9 @@ void python_quote_buf(struct strbuf *sb, const char *src)
             continue;
         }
         if (c == sq || c == bq)
+        {
             strbuf_addch(sb, bq);
+        }
         strbuf_addch(sb, c);
     }
     strbuf_addch(sb, sq);
@@ -623,8 +684,10 @@ void basic_regex_quote_buf(struct strbuf *sb, const char *src)
         strbuf_addch(sb, *src++);
     }
     if (*src == '*')
+    {
         /* beginning '*' is not special, no quoting */
         strbuf_addch(sb, *src++);
+    }
 
     while ((c = *src++))
     {
@@ -641,7 +704,9 @@ void basic_regex_quote_buf(struct strbuf *sb, const char *src)
             case '$':
                 /* only the end '$' is special and needs quoting */
                 if (*src == '\0')
+                {
                     strbuf_addch(sb, '\\');
+                }
                 strbuf_addch(sb, c);
                 break;
 

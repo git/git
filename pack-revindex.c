@@ -61,7 +61,9 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
      * keep track of them with alias pointers, always sorting from "from"
      * to "to".
      */
-    struct revindex_entry *tmp, *from, *to;
+    struct revindex_entry *tmp;
+    struct revindex_entry *from;
+    struct revindex_entry *to;
     int                    bits;
     unsigned              *pos;
 
@@ -90,9 +92,13 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
          * previous bucket to get the true index.
          */
         for (i = 0; i < n; i++)
+        {
             pos[BUCKET_FOR(from, i, bits)]++;
+        }
         for (i = 1; i < BUCKETS; i++)
+        {
             pos[i] += pos[i - 1];
+        }
 
         /*
          * Now we can drop the elements into their correct buckets (in
@@ -108,7 +114,9 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
          * wrap-around with UINT_MAX.
          */
         for (i = n - 1; i != UINT_MAX; i--)
+        {
             to[--pos[BUCKET_FOR(from, i, bits)]] = from[i];
+        }
 
         /*
          * Now "to" contains the most sorted list, so we swap "from" and
@@ -122,7 +130,9 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
      * we have to move it back from the temporary storage.
      */
     if (from != entries)
+    {
         COPY_ARRAY(entries, tmp, n);
+    }
     free(tmp);
     free(pos);
 
@@ -186,10 +196,14 @@ static void create_pack_revindex(struct packed_git *p)
 static int create_pack_revindex_in_memory(struct packed_git *p)
 {
     if (git_env_bool(GIT_TEST_REV_INDEX_DIE_IN_MEMORY, 0))
+    {
         die("dying as requested by '%s'",
             GIT_TEST_REV_INDEX_DIE_IN_MEMORY);
+    }
     if (open_pack_index(p))
+    {
         return -1;
+    }
     create_pack_revindex(p);
     return 0;
 }
@@ -198,7 +212,9 @@ static char *pack_revindex_filename(struct packed_git *p)
 {
     size_t len;
     if (!strip_suffix(p->pack_name, ".pack", &len))
+    {
         BUG("pack_name does not end in .pack");
+    }
     return xstrfmt("%.*s.rev", (int)len, p->pack_name);
 }
 
@@ -216,14 +232,17 @@ static int load_revindex_from_disk(char            *revindex_name,
                                    uint32_t         num_objects,
                                    const uint32_t **data_p, size_t *len_p)
 {
-    int                     fd, ret = 0;
+    int                     fd;
+    int                     ret = 0;
     struct stat             st;
     void                   *data = NULL;
     size_t                  revindex_size;
     struct revindex_header *hdr;
 
     if (git_env_bool(GIT_TEST_REV_INDEX_DIE_ON_DISK, 0))
+    {
         die("dying as requested by '%s'", GIT_TEST_REV_INDEX_DIE_ON_DISK);
+    }
 
     fd = git_open(revindex_name);
 
@@ -278,7 +297,9 @@ cleanup:
     if (ret)
     {
         if (data)
+        {
             munmap(data, revindex_size);
+        }
     }
     else
     {
@@ -287,7 +308,9 @@ cleanup:
     }
 
     if (fd >= 0)
+    {
         close(fd);
+    }
     return ret;
 }
 
@@ -296,7 +319,9 @@ int load_pack_revindex_from_disk(struct packed_git *p)
     char *revindex_name;
     int   ret;
     if (open_pack_index(p))
+    {
         return -1;
+    }
 
     revindex_name = pack_revindex_filename(p);
 
@@ -305,7 +330,9 @@ int load_pack_revindex_from_disk(struct packed_git *p)
                                   &p->revindex_map,
                                   &p->revindex_size);
     if (ret)
+    {
         goto cleanup;
+    }
 
     p->revindex_data = (const uint32_t *)((const char *)p->revindex_map + RIDX_HEADER_SIZE);
 
@@ -317,13 +344,17 @@ cleanup:
 int load_pack_revindex(struct repository *r, struct packed_git *p)
 {
     if (p->revindex || p->revindex_data)
+    {
         return 0;
+    }
 
     prepare_repo_settings(r);
 
     if (r->settings.pack_read_reverse_index && !load_pack_revindex_from_disk(p))
+    {
         return 0;
-    else if (!create_pack_revindex_in_memory(p))
+    }
+    if (!create_pack_revindex_in_memory(p))
         return 0;
     return -1;
 }
@@ -340,7 +371,9 @@ int verify_pack_revindex(struct packed_git *p)
 
     /* Do not bother checking if not initialized. */
     if (!p->revindex_map || !p->revindex_data)
+    {
         return res;
+    }
 
     if (!hashfile_checksum_valid((const unsigned char *)p->revindex_map, p->revindex_size))
     {
@@ -350,7 +383,9 @@ int verify_pack_revindex(struct packed_git *p)
 
     /* This may fail due to a broken .idx. */
     if (create_pack_revindex_in_memory(p))
+    {
         return res;
+    }
 
     for (size_t i = 0; i < p->num_objects; i++)
     {
@@ -371,7 +406,9 @@ int verify_pack_revindex(struct packed_git *p)
 static int can_use_midx_ridx_chunk(struct multi_pack_index *m)
 {
     if (!m->chunk_revindex)
+    {
         return 0;
+    }
     if (m->chunk_revindex_len != st_mult(sizeof(uint32_t), m->num_objects))
     {
         error(_("multi-pack-index reverse-index chunk is the wrong size"));
@@ -386,7 +423,9 @@ int load_midx_revindex(struct multi_pack_index *m)
     int           ret;
 
     if (m->revindex_data)
+    {
         return 0;
+    }
 
     if (can_use_midx_ridx_chunk(m))
     {
@@ -416,7 +455,9 @@ int load_midx_revindex(struct multi_pack_index *m)
                                   &m->revindex_map,
                                   &m->revindex_len);
     if (ret)
+    {
         goto cleanup;
+    }
 
     m->revindex_data = (const uint32_t *)((const char *)m->revindex_map + RIDX_HEADER_SIZE);
 
@@ -428,7 +469,9 @@ cleanup:
 int close_midx_revindex(struct multi_pack_index *m)
 {
     if (!m || !m->revindex_map)
+    {
         return 0;
+    }
 
     munmap((void *)m->revindex_map, m->revindex_len);
 
@@ -441,10 +484,13 @@ int close_midx_revindex(struct multi_pack_index *m)
 
 int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
-    unsigned lo, hi;
+    unsigned lo;
+    unsigned hi;
 
     if (load_pack_revindex(the_repository, p) < 0)
+    {
         return -1;
+    }
 
     lo = 0;
     hi = p->num_objects + 1;
@@ -459,7 +505,7 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
             *pos = mi;
             return 0;
         }
-        else if (ofs < got)
+        if (ofs < got)
             hi = mi;
         else
             lo = mi + 1;
@@ -472,26 +518,37 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos)
 {
     if (!(p->revindex || p->revindex_data))
+    {
         BUG("pack_pos_to_index: reverse index not yet loaded");
+    }
     if (p->num_objects <= pos)
+    {
         BUG("pack_pos_to_index: out-of-bounds object at %" PRIu32, pos);
+    }
 
     if (p->revindex)
+    {
         return p->revindex[pos].nr;
-    else
-        return get_be32(p->revindex_data + pos);
+    }
+    return get_be32(p->revindex_data + pos);
 }
 
 off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
 {
     if (!(p->revindex || p->revindex_data))
+    {
         BUG("pack_pos_to_index: reverse index not yet loaded");
+    }
     if (p->num_objects < pos)
+    {
         BUG("pack_pos_to_offset: out-of-bounds object at %" PRIu32, pos);
+    }
 
     if (p->revindex)
+    {
         return p->revindex[pos].offset;
-    else if (pos == p->num_objects)
+    }
+    if (pos == p->num_objects)
         return p->pack_size - the_hash_algo->rawsz;
     else
         return nth_packed_object_offset(p, pack_pos_to_index(p, pos));
@@ -500,9 +557,13 @@ off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
 uint32_t pack_pos_to_midx(struct multi_pack_index *m, uint32_t pos)
 {
     if (!m->revindex_data)
+    {
         BUG("pack_pos_to_midx: reverse index not yet loaded");
+    }
     if (m->num_objects <= pos)
+    {
         BUG("pack_pos_to_midx: out-of-bounds object at %" PRIu32, pos);
+    }
     return get_be32(m->revindex_data + pos);
 }
 
@@ -532,21 +593,27 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
      * comes first.
      */
     if (key_preferred && !versus_preferred)
+    {
         return -1;
-    else if (!key_preferred && versus_preferred)
+    }
+    if (!key_preferred && versus_preferred)
         return 1;
 
     /* Then, break ties first by comparing the pack IDs. */
     if (key->pack < versus_pack)
+    {
         return -1;
-    else if (key->pack > versus_pack)
+    }
+    if (key->pack > versus_pack)
         return 1;
 
     /* Finally, break ties by comparing offsets within a pack. */
     versus_offset = nth_midxed_offset(midx, versus);
     if (key->offset < versus_offset)
+    {
         return -1;
-    else if (key->offset > versus_offset)
+    }
+    if (key->offset > versus_offset)
         return 1;
 
     return 0;
@@ -559,8 +626,10 @@ static int midx_key_to_pack_pos(struct multi_pack_index *m,
     uint32_t *found;
 
     if (key->pack >= m->num_packs)
+    {
         BUG("MIDX pack lookup out of bounds (%" PRIu32 " >= %" PRIu32 ")",
             key->pack, m->num_packs);
+    }
     /*
      * The preferred pack sorts first, so determine its identifier by
      * looking at the first object in pseudo-pack order.
@@ -571,14 +640,18 @@ static int midx_key_to_pack_pos(struct multi_pack_index *m,
      * broken first by pack identifier).
      */
     if (midx_preferred_pack(key->midx, &key->preferred_pack) < 0)
+    {
         return error(_("could not determine preferred pack"));
+    }
 
     found = bsearch(key, m->revindex_data, m->num_objects,
                     sizeof(*m->revindex_data),
                     midx_pack_order_cmp);
 
     if (!found)
+    {
         return -1;
+    }
 
     *pos = found - m->revindex_data;
     return 0;
@@ -589,9 +662,13 @@ int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
     struct midx_pack_key key;
 
     if (!m->revindex_data)
+    {
         BUG("midx_to_pack_pos: reverse index not yet loaded");
+    }
     if (m->num_objects <= at)
+    {
         BUG("midx_to_pack_pos: out-of-bounds object at %" PRIu32, at);
+    }
 
     key.pack   = nth_midxed_pack_int_id(m, at);
     key.offset = nth_midxed_offset(m, at);

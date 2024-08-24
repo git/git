@@ -19,8 +19,10 @@ enum rebase_type rebase_parse_value(const char *value)
     int v = git_parse_maybe_bool(value);
 
     if (!v)
+    {
         return REBASE_FALSE;
-    else if (v > 0)
+    }
+    if (v > 0)
         return REBASE_TRUE;
     else if (!strcmp(value, "merges") || !strcmp(value, "m"))
         return REBASE_MERGES;

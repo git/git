@@ -27,10 +27,14 @@ static double gitexp(double base, int exp)
     while (1)
     {
         if (exp % 2)
+        {
             result *= base;
+        }
         exp >>= 1;
         if (!exp)
+        {
             break;
+        }
         base *= base;
     }
     return result;
@@ -40,7 +44,7 @@ static uint32_t pseudo_merge_group_size(const struct pseudo_merge_group   *group
                                         const struct pseudo_merge_matches *matches,
                                         uint32_t                           i)
 {
-    double   C = 0.0f;
+    double   C = 0.0F;
     uint32_t n;
 
     /*
@@ -78,7 +82,9 @@ static uint32_t pseudo_merge_group_size(const struct pseudo_merge_group   *group
      *   { 5012, 1772, 964, 626, 448, 341, 271, 221, 186, 158 }
      */
     for (n = 0; n < group->max_merges; n++)
+    {
         C += 1.0 / gitexp(n + 1, group->decay);
+    }
     C = matches->unstable_nr / C;
 
     return (uint32_t)((C / gitexp(i + 1, group->decay)) + 0.5);
@@ -106,15 +112,20 @@ static int pseudo_merge_config(const char *var, const char *value,
     struct string_list_item   *item;
     struct pseudo_merge_group *group;
     struct strbuf              buf = STRBUF_INIT;
-    const char                *sub, *key;
+    const char                *sub;
+    const char                *key;
     size_t                     sub_len;
     int                        ret = 0;
 
     if (parse_config_key(var, "bitmappseudomerge", &sub, &sub_len, &key))
+    {
         goto done;
+    }
 
     if (!sub_len)
+    {
         goto done;
+    }
 
     strbuf_add(&buf, sub, sub_len);
 
@@ -135,13 +146,17 @@ static int pseudo_merge_config(const char *var, const char *value,
 
         free(group->pattern);
         if (*value != '^')
+        {
             strbuf_addch(&re, '^');
+        }
         strbuf_addstr(&re, value);
 
         group->pattern = xcalloc(1, sizeof(regex_t));
         if (regcomp(group->pattern, re.buf, REG_EXTENDED))
+        {
             die(_("failed to load pseudo-merge regex for %s: '%s'"),
                 sub, re.buf);
+        }
 
         strbuf_release(&re);
     }
@@ -214,12 +229,16 @@ void load_pseudo_merges_from_config(struct string_list *list)
     {
         struct pseudo_merge_group *group = item->util;
         if (!group->pattern)
+        {
             die(_("pseudo-merge group '%s' missing required pattern"),
                 item->string);
+        }
         if (group->threshold < group->stable_threshold)
+        {
             die(_("pseudo-merge group '%s' has unstable threshold "
                   "before stable one"),
                 item->string);
+        }
     }
 }
 
@@ -236,11 +255,15 @@ static int find_pseudo_merge_group_for_ref(const char             *refname,
     int                   has_bitmap;
 
     if (!peel_iterated_oid(the_repository, oid, &peeled))
+    {
         oid = &peeled;
+    }
 
     c = lookup_commit(the_repository, oid);
     if (!c)
+    {
         return 0;
+    }
 
     has_bitmap = bitmap_writer_has_bitmapped_object_id(writer, oid);
 
@@ -255,21 +278,29 @@ static int find_pseudo_merge_group_for_ref(const char             *refname,
         group = writer->pseudo_merge_groups.items[i].util;
         if (regexec(group->pattern, refname, ARRAY_SIZE(captures),
                     captures, 0))
+        {
             continue;
+        }
 
         if (captures[ARRAY_SIZE(captures) - 1].rm_so != -1)
+        {
             warning(_("pseudo-merge regex from config has too many capture "
                       "groups (max=%" PRIuMAX ")"),
                     (uintmax_t)ARRAY_SIZE(captures) - 2);
+        }
 
         for (j = !!group->pattern->re_nsub; j < ARRAY_SIZE(captures); j++)
         {
             regmatch_t *match = &captures[j];
             if (match->rm_so == -1)
+            {
                 continue;
+            }
 
             if (group_name.len)
+            {
                 strbuf_addch(&group_name, '-');
+            }
 
             strbuf_add(&group_name, refname + match->rm_so,
                        match->rm_eo - match->rm_so);
@@ -345,15 +376,20 @@ static void select_pseudo_merges_1(struct bitmap_writer        *writer,
                                    struct pseudo_merge_group   *group,
                                    struct pseudo_merge_matches *matches)
 {
-    uint32_t i, j;
+    uint32_t i;
+    uint32_t j;
     uint32_t stable_merges_nr;
 
     if (!matches->stable_nr && !matches->unstable_nr)
+    {
         return; /* all tips in this group already have bitmaps */
+    }
 
     stable_merges_nr = matches->stable_nr / group->stable_size;
     if (matches->stable_nr % group->stable_size)
+    {
         stable_merges_nr++;
+    }
 
     /* make stable_merges_nr pseudo merges for stable commits */
     for (i = 0, j = 0; i < stable_merges_nr; i++)
@@ -375,7 +411,9 @@ static void select_pseudo_merges_1(struct bitmap_writer        *writer,
             struct pseudo_merge_commit_idx *pmc;
 
             if (j >= matches->stable_nr)
+            {
                 break;
+            }
 
             c = matches->stable[j++];
             /*
@@ -401,7 +439,8 @@ static void select_pseudo_merges_1(struct bitmap_writer        *writer,
     {
         struct commit       *merge;
         struct commit_list **p;
-        uint32_t             size, end;
+        uint32_t             size;
+        uint32_t             end;
 
         merge = push_pseudo_merge(group);
         p     = &merge->parents;
@@ -424,7 +463,9 @@ static void select_pseudo_merges_1(struct bitmap_writer        *writer,
             struct pseudo_merge_commit_idx *pmc;
 
             if (j % (uint32_t)(1.0 / group->sample_rate))
+            {
                 continue;
+            }
 
             pmc = pseudo_merge_idx(writer->pseudo_merge_commits,
                                    &c->object.oid);
@@ -438,7 +479,9 @@ static void select_pseudo_merges_1(struct bitmap_writer        *writer,
         bitmap_writer_push_commit(writer, merge, 1);
         writer->pseudo_merges_nr++;
         if (end >= matches->unstable_nr)
+        {
             break;
+        }
     }
 }
 
@@ -448,8 +491,10 @@ static int commit_date_cmp(const void *va, const void *vb)
     timestamp_t b = (*(const struct commit **)vb)->date;
 
     if (a < b)
+    {
         return -1;
-    else if (a > b)
+    }
+    if (a > b)
         return 1;
     return 0;
 }
@@ -467,11 +512,15 @@ void select_pseudo_merges(struct bitmap_writer *writer,
     uint32_t         i;
 
     if (!writer->pseudo_merge_groups.nr)
+    {
         return;
+    }
 
     if (writer->show_progress)
+    {
         progress = start_progress("Selecting pseudo-merge commits",
                                   writer->pseudo_merge_groups.nr);
+    }
 
     refs_for_each_ref(get_main_ref_store(the_repository),
                       find_pseudo_merge_group_for_ref, writer);
@@ -519,13 +568,17 @@ static int pseudo_merge_ext_at(const struct pseudo_merge_map  *pm,
                                struct pseudo_merge_commit_ext *ext, size_t at)
 {
     if (at >= pm->map_size)
+    {
         return error(_("extended pseudo-merge read out-of-bounds "
                        "(%" PRIuMAX " >= %" PRIuMAX ")"),
                      (uintmax_t)at, (uintmax_t)pm->map_size);
+    }
     if (at + 4 >= pm->map_size)
+    {
         return error(_("extended pseudo-merge entry is too short "
                        "(%" PRIuMAX " >= %" PRIuMAX ")"),
                      (uintmax_t)(at + 4), (uintmax_t)pm->map_size);
+    }
 
     ext->nr  = get_be32(pm->map + at);
     ext->ptr = pm->map + at + sizeof(uint32_t);
@@ -537,7 +590,9 @@ struct ewah_bitmap *pseudo_merge_bitmap(const struct pseudo_merge_map *pm,
                                         struct pseudo_merge           *merge)
 {
     if (!merge->loaded_commits)
+    {
         BUG("cannot use unloaded pseudo-merge bitmap");
+    }
 
     if (!merge->loaded_bitmap)
     {
@@ -577,8 +632,10 @@ static struct pseudo_merge *pseudo_merge_at(const struct pseudo_merge_map *pm,
         size_t got = pm->v[mi].at;
 
         if (got == want)
+        {
             return use_pseudo_merge(pm, &pm->v[mi]);
-        else if (got < want)
+        }
+        if (got < want)
             hi = mi;
         else
             lo = mi + 1;
@@ -613,14 +670,18 @@ static int nth_pseudo_merge_ext(const struct pseudo_merge_map  *pm,
     size_t ofs;
 
     if (n >= ext->nr)
+    {
         return error(_("extended pseudo-merge lookup out-of-bounds "
                        "(%" PRIu32 " >= %" PRIu32 ")"),
                      n, ext->nr);
+    }
 
     ofs = get_be64(ext->ptr + st_mult(n, sizeof(uint64_t)));
     if (ofs >= pm->map_size)
+    {
         return error(_("out-of-bounds read: (%" PRIuMAX " >= %" PRIuMAX ")"),
                      (uintmax_t)ofs, (uintmax_t)pm->map_size);
+    }
 
     read_pseudo_merge_commit_at(merge, pm->map + ofs);
 
@@ -633,14 +694,20 @@ static unsigned apply_pseudo_merge(const struct pseudo_merge_map *pm,
                                    struct bitmap                 *roots)
 {
     if (merge->satisfied)
+    {
         return 0;
+    }
 
     if (!ewah_bitmap_is_subset(merge->commits, roots ? roots : result))
+    {
         return 0;
+    }
 
     bitmap_or_ewah(result, pseudo_merge_bitmap(pm, merge));
     if (roots)
+    {
         bitmap_or_ewah(roots, pseudo_merge_bitmap(pm, merge));
+    }
     merge->satisfied = 1;
 
     return 1;
@@ -654,9 +721,13 @@ static int pseudo_merge_commit_cmp(const void *va, const void *vb)
     read_pseudo_merge_commit_at(&merge, vb);
 
     if (key < merge.commit_pos)
+    {
         return -1;
+    }
     if (key > merge.commit_pos)
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -664,7 +735,9 @@ static struct pseudo_merge_commit *find_pseudo_merge(const struct pseudo_merge_m
                                                      uint32_t                       pos)
 {
     if (!pm->commits_nr)
+    {
         return NULL;
+    }
 
     return bsearch(&pos, pm->commits, pm->commits_nr,
                    PSEUDO_MERGE_COMMIT_RAWSZ, pseudo_merge_commit_cmp);
@@ -680,7 +753,9 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
 
     merge_commit = find_pseudo_merge(pm, commit_pos);
     if (!merge_commit)
+    {
         return 0;
+    }
 
     if (merge_commit->pseudo_merge_ofs & ((uint64_t)1 << 63))
     {
@@ -699,16 +774,22 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
         for (i = 0; i < ext.nr; i++)
         {
             if (nth_pseudo_merge_ext(pm, &ext, merge_commit, i) < 0)
+            {
                 return ret;
+            }
 
             merge = pseudo_merge_at(pm, &commit->object.oid,
                                     merge_commit->pseudo_merge_ofs);
 
             if (!merge)
+            {
                 return ret;
+            }
 
             if (apply_pseudo_merge(pm, merge, result, NULL))
+            {
                 ret++;
+            }
         }
     }
     else
@@ -717,14 +798,20 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
                                 merge_commit->pseudo_merge_ofs);
 
         if (!merge)
+        {
             return ret;
+        }
 
         if (apply_pseudo_merge(pm, merge, result, NULL))
+        {
             ret++;
+        }
     }
 
     if (ret)
+    {
         cascade_pseudo_merges(pm, result, NULL);
+    }
 
     return ret;
 }
@@ -764,7 +851,9 @@ struct pseudo_merge *pseudo_merge_for_parents(const struct pseudo_merge_map *pm,
     size_t               i;
 
     if (!pm->nr)
+    {
         return NULL;
+    }
 
     /*
      * NOTE: this loop is quadratic in the worst-case (where no
@@ -801,9 +890,13 @@ struct pseudo_merge *pseudo_merge_for_parents(const struct pseudo_merge_map *pm,
     {
         struct pseudo_merge *candidate = use_pseudo_merge(pm, &pm->v[i]);
         if (!candidate || candidate->satisfied)
+        {
             continue;
+        }
         if (!bitmap_equals_ewah(parents, candidate->commits))
+        {
             continue;
+        }
 
         match            = candidate;
         match->satisfied = 1;

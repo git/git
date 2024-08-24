@@ -10,7 +10,9 @@ static char *pack_mtimes_filename(struct packed_git *p)
 {
     size_t len;
     if (!strip_suffix(p->pack_name, ".pack", &len))
+    {
         BUG("pack_name does not end in .pack");
+    }
     return xstrfmt("%.*s.mtimes", (int)len, p->pack_name);
 }
 
@@ -27,10 +29,12 @@ static int load_pack_mtimes_file(char            *mtimes_file,
                                  uint32_t         num_objects,
                                  const uint32_t **data_p, size_t *len_p)
 {
-    int                  fd, ret = 0;
+    int                  fd;
+    int                  ret = 0;
     struct stat          st;
     uint32_t            *data = NULL;
-    size_t               mtimes_size, expected_size;
+    size_t               mtimes_size;
+    size_t               expected_size;
     struct mtimes_header header;
 
     fd = git_open(mtimes_file);
@@ -94,7 +98,9 @@ cleanup:
     if (ret)
     {
         if (data)
+        {
             munmap(data, mtimes_size);
+        }
     }
     else
     {
@@ -103,7 +109,9 @@ cleanup:
     }
 
     if (fd >= 0)
+    {
         close(fd);
+    }
     return ret;
 }
 
@@ -113,13 +121,19 @@ int load_pack_mtimes(struct packed_git *p)
     int   ret         = 0;
 
     if (!p->is_cruft)
+    {
         return ret; /* not a cruft pack */
+    }
     if (p->mtimes_map)
+    {
         return ret; /* already loaded */
+    }
 
     ret = open_pack_index(p);
     if (ret < 0)
+    {
         goto cleanup;
+    }
 
     mtimes_name = pack_mtimes_filename(p);
     ret         = load_pack_mtimes_file(mtimes_name,
@@ -134,10 +148,14 @@ cleanup:
 uint32_t nth_packed_mtime(struct packed_git *p, uint32_t pos)
 {
     if (!p->mtimes_map)
+    {
         BUG("pack .mtimes file not loaded for %s", p->pack_name);
+    }
     if (p->num_objects <= pos)
+    {
         BUG("pack .mtimes out-of-bounds (%" PRIu32 " vs %" PRIu32 ")",
             pos, p->num_objects);
+    }
 
     return get_be32(p->mtimes_map + pos + 3);
 }

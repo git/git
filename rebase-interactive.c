@@ -32,11 +32,17 @@ static enum missing_commit_check_level get_missing_commit_check_level(void)
     const char *value;
 
     if (git_config_get_value("rebase.missingcommitscheck", &value) || !strcasecmp("ignore", value))
+    {
         return MISSING_COMMIT_CHECK_IGNORE;
+    }
     if (!strcasecmp("warn", value))
+    {
         return MISSING_COMMIT_CHECK_WARN;
+    }
     if (!strcasecmp("error", value))
+    {
         return MISSING_COMMIT_CHECK_ERROR;
+    }
     warning(_("unrecognized setting %s for option "
               "rebase.missingCommitsCheck. Ignoring."),
             value);
@@ -86,26 +92,34 @@ void append_todo_help(int         command_count,
     strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_str);
 
     if (get_missing_commit_check_level() == MISSING_COMMIT_CHECK_ERROR)
+    {
         msg = _(
             "\nDo not remove any line. Use 'drop' "
             "explicitly to remove a commit.\n");
+    }
     else
+    {
         msg = _(
             "\nIf you remove a line here "
             "THAT COMMIT WILL BE LOST.\n");
+    }
 
     strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_str);
 
     if (edit_todo)
+    {
         msg = _(
             "\nYou are editing the todo file "
             "of an ongoing interactive rebase.\n"
             "To continue rebase after editing, run:\n"
             "    git rebase --continue\n\n");
+    }
     else
+    {
         msg = _(
             "\nHowever, if you remove everything, "
             "the rebase will be aborted.\n\n");
+    }
 
     strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_str);
 }
@@ -115,33 +129,43 @@ int edit_todo_list(struct repository *r, struct replay_opts *opts,
                    const char *shortrevisions, const char *shortonto,
                    unsigned flags)
 {
-    const char *todo_file   = rebase_path_todo(),
-               *todo_backup = rebase_path_todo_backup();
-    unsigned initial        = shortrevisions && shortonto;
-    int      incorrect      = 0;
+    const char *todo_file   = rebase_path_todo();
+    const char *todo_backup = rebase_path_todo_backup();
+    unsigned    initial     = shortrevisions && shortonto;
+    int         incorrect   = 0;
 
     /* If the user is editing the todo list, we first try to parse
      * it.  If there is an error, we do not return, because the user
      * might want to fix it in the first place. */
     if (!initial)
+    {
         incorrect = todo_list_parse_insn_buffer(r, opts,
                                                 todo_list->buf.buf,
                                                 todo_list)
                     | file_exists(rebase_path_dropped());
+    }
 
     if (todo_list_write_to_file(r, todo_list, todo_file, shortrevisions, shortonto,
                                 -1, flags | TODO_LIST_SHORTEN_IDS | TODO_LIST_APPEND_TODO_HELP))
+    {
         return error_errno(_("could not write '%s'"), todo_file);
+    }
 
     if (!incorrect && todo_list_write_to_file(r, todo_list, todo_backup, shortrevisions, shortonto, -1, (flags | TODO_LIST_APPEND_TODO_HELP) & ~TODO_LIST_SHORTEN_IDS) < 0)
+    {
         return error(_("could not write '%s'."), rebase_path_todo_backup());
+    }
 
     if (launch_sequence_editor(todo_file, &new_todo->buf, NULL))
+    {
         return -2;
+    }
 
     strbuf_stripspace(&new_todo->buf, comment_line_str);
     if (initial && new_todo->buf.len == 0)
+    {
         return -3;
+    }
 
     if (todo_list_parse_insn_buffer(r, opts, new_todo->buf.buf, new_todo))
     {
@@ -158,7 +182,9 @@ int edit_todo_list(struct repository *r, struct replay_opts *opts,
         }
 
         if (incorrect > 0)
+        {
             unlink(rebase_path_dropped());
+        }
     }
     else if (todo_list_check(todo_list, new_todo))
     {
@@ -186,20 +212,25 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 {
     enum missing_commit_check_level check_level = get_missing_commit_check_level();
     struct strbuf                   missing     = STRBUF_INIT;
-    int                             res         = 0, i;
+    int                             res         = 0;
+    int                             i;
     struct commit_seen              commit_seen;
 
     init_commit_seen(&commit_seen);
 
     if (check_level == MISSING_COMMIT_CHECK_IGNORE)
+    {
         goto leave_check;
+    }
 
     /* Mark the commits in git-rebase-todo as seen */
     for (i = 0; i < new_todo->nr; i++)
     {
         struct commit *commit = new_todo->items[i].commit;
         if (commit)
+        {
             *commit_seen_at(&commit_seen, commit) = 1;
+        }
     }
 
     /* Find commits in git-rebase-todo.backup yet unseen */
@@ -219,10 +250,14 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 
     /* Warn about missing commits */
     if (!missing.len)
+    {
         goto leave_check;
+    }
 
     if (check_level == MISSING_COMMIT_CHECK_ERROR)
+    {
         res = 1;
+    }
 
     fprintf(stderr,
             _("Warning: some commits may have been dropped accidentally.\n"

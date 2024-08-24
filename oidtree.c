@@ -36,7 +36,9 @@ void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
     struct object_id k;
 
     if (!oid->algo)
+    {
         BUG("oidtree_insert requires oid->algo");
+    }
 
     on = mem_pool_alloc(&ot->mem_pool, sizeof(*on) + sizeof(*oid));
 
@@ -64,7 +66,9 @@ int oidtree_contains(struct oidtree *ot, const struct object_id *oid)
     oidcpy(&k, oid);
 
     if (oid->algo == GIT_HASH_UNKNOWN)
+    {
         klen -= sizeof(oid->algo);
+    }
 
     /* cb_lookup relies on memcmp on the struct, so order matters: */
     klen += BUILD_ASSERT_OR_ZERO(offsetof(struct object_id, hash) < offsetof(struct object_id, algo));
@@ -81,12 +85,16 @@ static enum cb_next iter(struct cb_node *n, void *arg)
     memcpy(&k, n->k, sizeof(k));
 
     if (x->algo != GIT_HASH_UNKNOWN && x->algo != k.algo)
+    {
         return CB_CONTINUE;
+    }
 
     if (x->last_nibble_at)
     {
         if ((k.hash[*x->last_nibble_at] ^ x->last_byte) & 0xf0)
+        {
             return CB_CONTINUE;
+        }
     }
 
     return x->fn(&k, x->arg);

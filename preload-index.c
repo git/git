@@ -44,7 +44,8 @@ struct thread_data
 
 static void *preload_thread(void *_data)
 {
-    int                  nr, last_nr;
+    int                  nr;
+    int                  last_nr;
     struct thread_data  *p     = _data;
     struct index_state  *index = p->index;
     struct cache_entry **cep   = index->cache + p->offset;
@@ -52,7 +53,9 @@ static void *preload_thread(void *_data)
 
     nr = p->nr;
     if (nr + p->offset > index->cache_nr)
+    {
         nr = index->cache_nr - p->offset;
+    }
     last_nr = nr;
 
     do
@@ -61,15 +64,25 @@ static void *preload_thread(void *_data)
         struct stat         st;
 
         if (ce_stage(ce))
+        {
             continue;
+        }
         if (S_ISGITLINK(ce->ce_mode))
+        {
             continue;
+        }
         if (ce_uptodate(ce))
+        {
             continue;
+        }
         if (ce_skip_worktree(ce))
+        {
             continue;
+        }
         if (ce->ce_flags & CE_FSMONITOR_VALID)
+        {
             continue;
+        }
         if (p->progress && !(nr & 31))
         {
             struct progress_data *pd = p->progress;
@@ -81,14 +94,22 @@ static void *preload_thread(void *_data)
             last_nr = nr;
         }
         if (!ce_path_match(index, ce, &p->pathspec, NULL))
+        {
             continue;
+        }
         if (threaded_has_symlink_leading_path(&cache, ce->name, ce_namelen(ce)))
+        {
             continue;
+        }
         p->t2_nr_lstat++;
         if (lstat(ce->name, &st))
+        {
             continue;
+        }
         if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY | CE_MATCH_IGNORE_FSMONITOR))
+        {
             continue;
+        }
         ce_mark_uptodate(ce);
         mark_fsmonitor_valid(index, ce);
     } while (--nr > 0);
@@ -108,25 +129,36 @@ void preload_index(struct index_state    *index,
                    const struct pathspec *pathspec,
                    unsigned int           refresh_flags)
 {
-    int                  threads, i, work, offset;
+    int                  threads;
+    int                  i;
+    int                  work;
+    int                  offset;
     struct thread_data   data[MAX_PARALLEL];
     struct progress_data pd;
     int                  t2_sum_lstat = 0;
 
     if (!HAVE_THREADS || !core_preload_index)
+    {
         return;
+    }
 
     threads = index->cache_nr / THREAD_COST;
     if ((index->cache_nr > 1) && (threads < 2) && git_env_bool("GIT_TEST_PRELOAD_INDEX", 0))
+    {
         threads = 2;
+    }
     if (threads < 2)
+    {
         return;
+    }
 
     trace2_region_enter("index", "preload", NULL);
 
     trace_performance_enter();
     if (threads > MAX_PARALLEL)
+    {
         threads = MAX_PARALLEL;
+    }
     offset = 0;
     work   = DIV_ROUND_UP(index->cache_nr, threads);
     memset(&data, 0, sizeof(data));
@@ -145,22 +177,30 @@ void preload_index(struct index_state    *index,
 
         p->index = index;
         if (pathspec)
+        {
             copy_pathspec(&p->pathspec, pathspec);
+        }
         p->offset = offset;
         p->nr     = work;
         if (pd.progress)
+        {
             p->progress = &pd;
+        }
         offset += work;
         err = pthread_create(&p->pthread, NULL, preload_thread, p);
 
         if (err)
+        {
             die(_("unable to create threaded lstat: %s"), strerror(err));
+        }
     }
     for (i = 0; i < threads; i++)
     {
         struct thread_data *p = data + i;
         if (pthread_join(p->pthread, NULL))
+        {
             die("unable to join threaded lstat");
+        }
         t2_sum_lstat += p->t2_nr_lstat;
     }
     stop_progress(&pd.progress);
@@ -169,7 +209,9 @@ void preload_index(struct index_state    *index,
     {
         /* earlier we made deep copies for each thread to work with */
         for (i = 0; i < threads; i++)
+        {
             clear_pathspec(&data[i].pathspec);
+        }
     }
 
     trace_performance_leave("preload index");

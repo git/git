@@ -109,7 +109,9 @@ static enum list_objects_filter_result filter_blobs_none(
             assert((obj->flags & SEEN) == 0);
 
             if (omits)
+            {
                 oidset_insert(omits, &obj->oid);
+            }
             return LOFR_MARK_SEEN; /* but not LOFR_DO_SHOW (hard omit) */
     }
 }
@@ -155,12 +157,15 @@ static int filter_trees_update_omits(
     int            include_it)
 {
     if (!omits)
+    {
         return 0;
+    }
 
     if (include_it)
+    {
         return oidset_remove(omits, &obj->oid);
-    else
-        return oidset_insert(omits, &obj->oid);
+    }
+    return oidset_insert(omits, &obj->oid);
 }
 
 static enum list_objects_filter_result filter_trees_depth(
@@ -235,15 +240,21 @@ static enum list_objects_filter_result filter_trees_depth(
                 seen_info->depth = filter_data->current_depth;
 
                 if (include_it)
+                {
                     filter_res = LOFR_DO_SHOW;
+                }
                 else if (omits && !been_omitted)
+                {
                     /*
                      * Must update omit information of children
                      * recursively; they have not been omitted yet.
                      */
                     filter_res = LOFR_ZERO;
+                }
                 else
+                {
                     filter_res = LOFR_SKIP_TREE;
+                }
             }
 
             filter_data->current_depth++;
@@ -255,7 +266,9 @@ static void filter_trees_free(void *filter_data)
 {
     struct filter_trees_depth_data *d = filter_data;
     if (!d)
+    {
         return;
+    }
     oidmap_free(&d->seen_at_depth, 1);
     free(d);
 }
@@ -337,16 +350,22 @@ static enum list_objects_filter_result filter_blobs_limit(
             }
 
             if (object_length < filter_data->max_bytes)
+            {
                 goto include_it;
+            }
 
             if (omits)
+            {
                 oidset_insert(omits, &obj->oid);
+            }
             return LOFR_MARK_SEEN; /* but not LOFR_DO_SHOW (hard omit) */
     }
 
 include_it:
     if (omits)
+    {
         oidset_remove(omits, &obj->oid);
+    }
     return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 }
 
@@ -436,7 +455,9 @@ static enum list_objects_filter_result filter_sparse(
                                               filename, &dtype, &filter_data->pl,
                                               r->index);
             if (match == UNDECIDED)
+            {
                 match = filter_data->array_frame[filter_data->nr - 1].default_match;
+            }
 
             ALLOC_GROW(filter_data->array_frame, filter_data->nr + 1,
                        filter_data->alloc);
@@ -461,7 +482,9 @@ static enum list_objects_filter_result filter_sparse(
              * may want to attempt to narrow this.
              */
             if (obj->flags & FILTER_SHOWN_BUT_REVISIT)
+            {
                 return LOFR_ZERO;
+            }
             obj->flags |= FILTER_SHOWN_BUT_REVISIT;
             return LOFR_DO_SHOW;
 
@@ -484,7 +507,9 @@ static enum list_objects_filter_result filter_sparse(
              * folder as SEEN (so we will not have to revisit it again).
              */
             if (!frame->child_prov_omit)
+            {
                 return LOFR_MARK_SEEN;
+            }
             return LOFR_ZERO;
 
         case LOFS_BLOB:
@@ -498,11 +523,15 @@ static enum list_objects_filter_result filter_sparse(
                                               filename, &dtype, &filter_data->pl,
                                               r->index);
             if (match == UNDECIDED)
+            {
                 match = frame->default_match;
+            }
             if (match == MATCHED)
             {
                 if (omits)
+                {
                     oidset_remove(omits, &obj->oid);
+                }
                 return LOFR_MARK_SEEN | LOFR_DO_SHOW;
             }
 
@@ -517,7 +546,9 @@ static enum list_objects_filter_result filter_sparse(
              * again in the traversal, we will be asked again.
              */
             if (omits)
+            {
                 oidset_insert(omits, &obj->oid);
+            }
 
             /*
              * Remember that at least 1 blob in this tree was
@@ -548,11 +579,15 @@ static void filter_sparse_oid__init(
     if (get_oid_with_context(the_repository,
                              filter_options->sparse_oid_name,
                              GET_OID_BLOB, &sparse_oid, &oc))
+    {
         die(_("unable to access sparse blob in '%s'"),
             filter_options->sparse_oid_name);
+    }
     if (add_patterns_from_blob_to_list(&sparse_oid, "", 0, &d->pl) < 0)
+    {
         die(_("unable to parse sparse filter data in %s"),
             oid_to_hex(&sparse_oid));
+    }
 
     ALLOC_GROW(d->array_frame, d->nr + 1, d->alloc);
     d->array_frame[d->nr].default_match   = 0; /* default to include */
@@ -594,13 +629,17 @@ static enum list_objects_filter_result filter_object_type(
         case LOFS_TAG:
             assert(obj->type == OBJ_TAG);
             if (filter_data->object_type == OBJ_TAG)
+            {
                 return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+            }
             return LOFR_MARK_SEEN;
 
         case LOFS_COMMIT:
             assert(obj->type == OBJ_COMMIT);
             if (filter_data->object_type == OBJ_COMMIT)
+            {
                 return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+            }
             return LOFR_MARK_SEEN;
 
         case LOFS_BEGIN_TREE:
@@ -611,10 +650,14 @@ static enum list_objects_filter_result filter_object_type(
              * need to walk down trees.
              */
             if (filter_data->object_type == OBJ_COMMIT || filter_data->object_type == OBJ_TAG)
+            {
                 return LOFR_SKIP_TREE;
+            }
 
             if (filter_data->object_type == OBJ_TREE)
+            {
                 return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+            }
 
             return LOFR_MARK_SEEN;
 
@@ -622,7 +665,9 @@ static enum list_objects_filter_result filter_object_type(
             assert(obj->type == OBJ_BLOB);
 
             if (filter_data->object_type == OBJ_BLOB)
+            {
                 return LOFR_MARK_SEEN | LOFR_DO_SHOW;
+            }
             return LOFR_MARK_SEEN;
 
         case LOFS_END_TREE:
@@ -671,18 +716,26 @@ static enum list_objects_filter_result process_subfilter(
     if (sub->is_skipping_tree)
     {
         if (filter_situation == LOFS_END_TREE && oideq(&obj->oid, &sub->skip_tree))
+        {
             sub->is_skipping_tree = 0;
+        }
         else
+        {
             return LOFR_ZERO;
+        }
     }
     if (oidset_contains(&sub->seen, &obj->oid))
+    {
         return LOFR_ZERO;
+    }
 
     result = list_objects_filter__filter_object(
         r, filter_situation, obj, pathname, filename, sub->filter);
 
     if (result & LOFR_MARK_SEEN)
+    {
         oidset_insert(&sub->seen, &obj->oid);
+    }
 
     if (result & LOFR_SKIP_TREE)
     {
@@ -713,11 +766,17 @@ static enum list_objects_filter_result filter_combine(
             r, filter_situation, obj, pathname, filename,
             &d->sub[sub]);
         if (!(sub_result & LOFR_DO_SHOW))
+        {
             combined_result &= ~LOFR_DO_SHOW;
+        }
         if (!(sub_result & LOFR_MARK_SEEN))
+        {
             combined_result &= ~LOFR_MARK_SEEN;
+        }
         if (!d->sub[sub].is_skipping_tree)
+        {
             combined_result &= ~LOFR_SKIP_TREE;
+        }
     }
 
     return combined_result;
@@ -732,7 +791,9 @@ static void filter_combine__free(void *filter_data)
         list_objects_filter__free(d->sub[sub].filter);
         oidset_clear(&d->sub[sub].seen);
         if (d->sub[sub].omits.set.size)
+        {
             BUG("expected oidset to be cleared already");
+        }
     }
     free(d->sub);
     free(d);
@@ -762,9 +823,11 @@ static void filter_combine__init(
     d->nr = filter_options->sub_nr;
     CALLOC_ARRAY(d->sub, d->nr);
     for (sub = 0; sub < d->nr; sub++)
+    {
         d->sub[sub].filter = list_objects_filter__init(
             filter->omits ? &d->sub[sub].omits : NULL,
             &filter_options->sub[sub]);
+    }
 
     filter->filter_data       = d;
     filter->filter_object_fn  = filter_combine;
@@ -796,18 +859,24 @@ struct filter *list_objects_filter__init(
     struct filter *filter;
     filter_init_fn init_fn;
 
-    assert((sizeof(s_filters) / sizeof(s_filters[0])) == LOFC__COUNT);
+    static_assert((sizeof(s_filters) / sizeof(s_filters[0])) == LOFC__COUNT, "");
 
     if (!filter_options)
+    {
         return NULL;
+    }
 
     if (filter_options->choice >= LOFC__COUNT)
+    {
         BUG("invalid list-objects filter choice: %d",
             filter_options->choice);
+    }
 
     init_fn = s_filters[filter_options->choice];
     if (!init_fn)
+    {
         return NULL;
+    }
 
     CALLOC_ARRAY(filter, 1);
     filter->omits = omitted;
@@ -824,26 +893,34 @@ enum list_objects_filter_result list_objects_filter__filter_object(
     struct filter                     *filter)
 {
     if (filter && (obj->flags & NOT_USER_GIVEN))
+    {
         return filter->filter_object_fn(r, filter_situation, obj,
                                         pathname, filename,
                                         filter->omits,
                                         filter->filter_data);
+    }
     /*
      * No filter is active or user gave object explicitly. In this case,
      * always show the object (except when LOFS_END_TREE, since this tree
      * had already been shown when LOFS_BEGIN_TREE).
      */
     if (filter_situation == LOFS_END_TREE)
+    {
         return 0;
+    }
     return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 }
 
 void list_objects_filter__free(struct filter *filter)
 {
     if (!filter)
+    {
         return;
+    }
     if (filter->finalize_omits_fn && filter->omits)
+    {
         filter->finalize_omits_fn(filter->omits, filter->filter_data);
+    }
     filter->free_fn(filter->filter_data);
     free(filter);
 }

@@ -15,13 +15,19 @@ int commit_patch_id(struct commit *commit, struct diff_options *options,
                     struct object_id *oid, int diff_header_only)
 {
     if (!patch_id_defined(commit))
+    {
         return -1;
+    }
 
     if (commit->parents)
+    {
         diff_tree_oid(&commit->parents->item->object.oid,
                       &commit->object.oid, "", options);
+    }
     else
+    {
         diff_root_tree_oid(&commit->object.oid, "", options);
+    }
     diffcore_std(options);
     return diff_flush_patch_id(options, oid, diff_header_only);
 }
@@ -43,17 +49,22 @@ static int patch_id_neq(const void                 *cmpfn_data,
 {
     /* NEEDSWORK: const correctness? */
     struct diff_options *opt = (void *)cmpfn_data;
-    struct patch_id     *a, *b;
+    struct patch_id     *a;
+    struct patch_id     *b;
 
     a = container_of(eptr, struct patch_id, ent);
     b = container_of(entry_or_key, struct patch_id, ent);
 
     if (is_null_oid(&a->patch_id) && commit_patch_id(a->commit, opt, &a->patch_id, 0))
+    {
         return error("Could not get patch ID for %s",
                      oid_to_hex(&a->commit->object.oid));
+    }
     if (is_null_oid(&b->patch_id) && commit_patch_id(b->commit, opt, &b->patch_id, 0))
+    {
         return error("Could not get patch ID for %s",
                      oid_to_hex(&b->commit->object.oid));
+    }
     return !oideq(&a->patch_id, &b->patch_id);
 }
 
@@ -82,7 +93,9 @@ static int init_patch_id_entry(struct patch_id  *patch,
 
     patch->commit = commit;
     if (commit_patch_id(commit, &ids->diffopts, &header_only_patch_id, 1))
+    {
         return -1;
+    }
 
     hashmap_entry_init(&patch->ent, oidhash(&header_only_patch_id));
     return 0;
@@ -94,11 +107,15 @@ struct patch_id *patch_id_iter_first(struct commit    *commit,
     struct patch_id patch;
 
     if (!patch_id_defined(commit))
+    {
         return NULL;
+    }
 
     memset(&patch, 0, sizeof(patch));
     if (init_patch_id_entry(&patch, commit, ids))
+    {
         return NULL;
+    }
 
     return hashmap_get_entry(&ids->patches, &patch, ent, NULL);
 }
@@ -121,7 +138,9 @@ struct patch_id *add_commit_patch_id(struct commit    *commit,
     struct patch_id *key;
 
     if (!patch_id_defined(commit))
+    {
         return NULL;
+    }
 
     CALLOC_ARRAY(key, 1);
     if (init_patch_id_entry(key, commit, ids))

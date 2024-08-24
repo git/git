@@ -67,12 +67,15 @@ void mem_pool_init(struct mem_pool *pool, size_t initial_size)
     pool->block_alloc = BLOCK_GROWTH_SIZE;
 
     if (initial_size > 0)
+    {
         mem_pool_alloc_block(pool, initial_size, NULL);
+    }
 }
 
 void mem_pool_discard(struct mem_pool *pool, int invalidate_memory)
 {
-    struct mp_block *block, *block_to_free;
+    struct mp_block *block;
+    struct mp_block *block_to_free;
 
     block = pool->mp_block;
     while (block)
@@ -81,7 +84,9 @@ void mem_pool_discard(struct mem_pool *pool, int invalidate_memory)
         block         = block->next_block;
 
         if (invalidate_memory)
+        {
             memset(block_to_free->space, 0xDD, ((char *)block_to_free->end) - ((char *)block_to_free->space));
+        }
 
         free(block_to_free);
     }
@@ -98,14 +103,20 @@ void *mem_pool_alloc(struct mem_pool *pool, size_t len)
     len = DIV_ROUND_UP(len, GIT_MAX_ALIGNMENT) * GIT_MAX_ALIGNMENT;
 
     if (pool->mp_block && pool->mp_block->end - pool->mp_block->next_free >= len)
+    {
         p = pool->mp_block;
+    }
 
     if (!p)
     {
         if (len >= (pool->block_alloc / 2))
+        {
             p = mem_pool_alloc_block(pool, len, pool->mp_block);
+        }
         else
+        {
             p = mem_pool_alloc_block(pool, pool->block_alloc, NULL);
+        }
     }
 
     r = p->next_free;
@@ -120,7 +131,8 @@ static char *mem_pool_strvfmt(struct mem_pool *pool, const char *fmt,
     char            *next_free = block ? block->next_free : NULL;
     size_t           available = block ? block->end - block->next_free : 0;
     va_list          cp;
-    int              len, len2;
+    int              len;
+    int              len2;
     size_t           size;
     char            *ret;
 
@@ -128,18 +140,24 @@ static char *mem_pool_strvfmt(struct mem_pool *pool, const char *fmt,
     len = vsnprintf(next_free, available, fmt, cp);
     va_end(cp);
     if (len < 0)
+    {
         die(_("unable to format message: %s"), fmt);
+    }
 
     size = st_add(len, 1); /* 1 for NUL */
     ret  = mem_pool_alloc(pool, size);
 
     /* Shortcut; relies on mem_pool_alloc() not touching buffer contents. */
     if (ret == next_free)
+    {
         return ret;
+    }
 
     len2 = vsnprintf(ret, size, fmt, ap);
     if (len2 != len)
+    {
         BUG("your vsnprintf is broken (returns inconsistent lengths)");
+    }
     return ret;
 }
 
@@ -186,8 +204,12 @@ int mem_pool_contains(struct mem_pool *pool, void *mem)
 
     /* Check if memory is allocated in a block */
     for (p = pool->mp_block; p; p = p->next_block)
+    {
         if ((mem >= ((void *)p->space)) && (mem < ((void *)p->end)))
+        {
             return 1;
+        }
+    }
 
     return 0;
 }
@@ -205,7 +227,9 @@ void mem_pool_combine(struct mem_pool *dst, struct mem_pool *src)
          */
         p = dst->mp_block;
         while (p->next_block)
+        {
             p = p->next_block;
+        }
 
         p->next_block = src->mp_block;
     }

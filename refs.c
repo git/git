@@ -43,15 +43,21 @@ static const struct ref_storage_be *find_ref_storage_backend(
     enum ref_storage_format ref_storage_format)
 {
     if (ref_storage_format < ARRAY_SIZE(refs_backends))
+    {
         return refs_backends[ref_storage_format];
+    }
     return NULL;
 }
 
 enum ref_storage_format ref_storage_format_by_name(const char *name)
 {
     for (unsigned int i = 0; i < ARRAY_SIZE(refs_backends); i++)
+    {
         if (refs_backends[i] && !strcmp(refs_backends[i]->name, name))
+        {
             return i;
+        }
+    }
     return REF_STORAGE_FORMAT_UNKNOWN;
 }
 
@@ -59,7 +65,9 @@ const char *ref_storage_format_to_name(enum ref_storage_format ref_storage_forma
 {
     const struct ref_storage_be *be = find_ref_storage_backend(ref_storage_format);
     if (!be)
+    {
         return "unknown";
+    }
     return be->name;
 }
 
@@ -156,11 +164,13 @@ struct ref_namespace_info ref_namespace[] = {
     },
 };
 
-void update_ref_namespace(enum ref_namespace namespace, char *ref)
+void update_ref_namespace(enum ref_namespace namespace, const char *ref)
 {
     struct ref_namespace_info *info = &ref_namespace[namespace];
     if (info->ref_updated)
+    {
         free((char *)info->ref);
+    }
     info->ref         = ref;
     info->ref_updated = 1;
 }
@@ -192,7 +202,9 @@ static int check_refname_component(const char *refname, int *flags,
     size_t      component_start = 0; /* garbage - not a reasonable initial value */
 
     if (sanitized)
+    {
         component_start = sanitized->len;
+    }
 
     for (cp = refname;; cp++)
     {
@@ -200,7 +212,9 @@ static int check_refname_component(const char *refname, int *flags,
         unsigned char disp = refname_disposition[ch];
 
         if (sanitized && disp != 1)
+        {
             strbuf_addch(sanitized, ch);
+        }
 
         switch (disp)
         {
@@ -210,36 +224,52 @@ static int check_refname_component(const char *refname, int *flags,
                 if (last == '.')
                 { /* Refname contains "..". */
                     if (sanitized)
+                    {
                         /* collapse ".." to single "." */
                         strbuf_setlen(sanitized, sanitized->len - 1);
+                    }
                     else
+                    {
                         return -1;
+                    }
                 }
                 break;
             case 3:
                 if (last == '@')
                 { /* Refname contains "@{". */
                     if (sanitized)
+                    {
                         sanitized->buf[sanitized->len - 1] = '-';
+                    }
                     else
+                    {
                         return -1;
+                    }
                 }
                 break;
             case 4:
                 /* forbidden char */
                 if (sanitized)
+                {
                     sanitized->buf[sanitized->len - 1] = '-';
+                }
                 else
+                {
                     return -1;
+                }
                 break;
             case 5:
                 if (!(*flags & REFNAME_REFSPEC_PATTERN))
                 {
                     /* refspec can't be a pattern */
                     if (sanitized)
+                    {
                         sanitized->buf[sanitized->len - 1] = '-';
+                    }
                     else
+                    {
                         return -1;
+                    }
                 }
 
                 /*
@@ -253,19 +283,27 @@ static int check_refname_component(const char *refname, int *flags,
     }
 out:
     if (cp == refname)
+    {
         return 0; /* Component has zero length. */
+    }
 
     if (refname[0] == '.')
     { /* Component starts with '.'. */
         if (sanitized)
+        {
             sanitized->buf[component_start] = '-';
+        }
         else
+        {
             return -1;
+        }
     }
     if (cp - refname >= LOCK_SUFFIX_LEN && !memcmp(cp - LOCK_SUFFIX_LEN, LOCK_SUFFIX, LOCK_SUFFIX_LEN))
     {
         if (!sanitized)
+        {
             return -1;
+        }
         /* Refname ends with ".lock". */
         while (strbuf_strip_suffix(sanitized, LOCK_SUFFIX))
         {
@@ -278,33 +316,46 @@ out:
 static int check_or_sanitize_refname(const char *refname, int flags,
                                      struct strbuf *sanitized)
 {
-    int component_len, component_count = 0;
+    int component_len;
+    int component_count = 0;
 
     if (!strcmp(refname, "@"))
     {
         /* Refname is a single character '@'. */
         if (sanitized)
+        {
             strbuf_addch(sanitized, '-');
+        }
         else
+        {
             return -1;
+        }
     }
 
     while (1)
     {
         if (sanitized && sanitized->len)
+        {
             strbuf_complete(sanitized, '/');
+        }
 
         /* We are at the start of a path component. */
         component_len = check_refname_component(refname, &flags,
                                                 sanitized);
         if (sanitized && component_len == 0)
+        {
             ; /* OK, omit empty component */
+        }
         else if (component_len <= 0)
+        {
             return -1;
+        }
 
         component_count++;
         if (refname[component_len] == '\0')
+        {
             break;
+        }
         /* Skip to next component. */
         refname += component_len + 1;
     }
@@ -313,12 +364,18 @@ static int check_or_sanitize_refname(const char *refname, int flags,
     {
         /* Refname ends with '.'. */
         if (sanitized)
+        {
             ; /* omit ending dot */
+        }
         else
+        {
             return -1;
+        }
     }
     if (!(flags & REFNAME_ALLOW_ONELEVEL) && component_count < 2)
+    {
         return -1; /* Refname has only one component. */
+    }
     return 0;
 }
 
@@ -335,7 +392,9 @@ int refs_fsck(struct ref_store *refs, struct fsck_options *o)
 void sanitize_refname_component(const char *refname, struct strbuf *out)
 {
     if (check_or_sanitize_refname(refname, REFNAME_ALLOW_ONELEVEL, out))
+    {
         BUG("sanitizing refname '%s' check returned error", refname);
+    }
 }
 
 int refname_is_safe(const char *refname)
@@ -350,7 +409,9 @@ int refname_is_safe(const char *refname)
 
         /* rest must not be empty, or start or end with "/" */
         if (!restlen || *rest == '/' || rest[restlen - 1] == '/')
+        {
             return 0;
+        }
 
         /*
          * Does the refname try to escape refs/?
@@ -366,7 +427,9 @@ int refname_is_safe(const char *refname)
     do
     {
         if (!isupper(*refname) && *refname != '_')
+        {
             return 0;
+        }
         refname++;
     } while (*refname);
     return 1;
@@ -383,7 +446,9 @@ int ref_resolves_to_object(const char             *refname,
                            unsigned int            flags)
 {
     if (flags & REF_ISBROKEN)
+    {
         return 0;
+    }
     if (!repo_has_object_file(repo, oid))
     {
         error(_("%s does not point to a valid object!"), refname);
@@ -417,7 +482,9 @@ int refs_read_ref_full(struct ref_store *refs, const char *refname,
 {
     if (refs_resolve_ref_unsafe(refs, refname, resolve_flags,
                                 oid, flags))
+    {
         return 0;
+    }
     return -1;
 }
 
@@ -439,9 +506,13 @@ static int for_each_filter_refs(const char *refname, const char *referent,
     struct for_each_ref_filter *filter = data;
 
     if (wildmatch(filter->pattern, refname, 0))
+    {
         return 0;
+    }
     if (filter->prefix)
+    {
         skip_prefix(refname, filter->prefix, &refname);
+    }
     return filter->fn(refname, referent, oid, flags, filter->cb_data);
 }
 
@@ -462,12 +533,14 @@ static int warn_if_dangling_symref(const char *refname, const char *referent UNU
     const char                   *resolves_to;
 
     if (!(flags & REF_ISSYMREF))
+    {
         return 0;
+    }
 
     resolves_to = refs_resolve_ref_unsafe(d->refs, refname, 0, NULL, NULL);
     if (!resolves_to
         || (d->refname
-                ? strcmp(resolves_to, d->refname)
+                ? strcmp(resolves_to, d->refname) != 0
                 : !string_list_has_string(d->refnames, resolves_to)))
     {
         return 0;
@@ -526,7 +599,9 @@ int refs_head_ref_namespaced(struct ref_store *refs, each_ref_fn fn, void *cb_da
 
     strbuf_addf(&buf, "%sHEAD", get_git_namespace());
     if (!refs_read_ref_full(refs, buf.buf, RESOLVE_REF_READING, &oid, &flag))
+    {
         ret = fn(buf.buf, NULL, &oid, flag, cb_data);
+    }
     strbuf_release(&buf);
 
     return ret;
@@ -538,12 +613,18 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
     struct strbuf normalized_pattern = STRBUF_INIT;
 
     if (*pattern == '/')
+    {
         BUG("pattern must not start with '/'");
+    }
 
     if (prefix)
+    {
         strbuf_addstr(&normalized_pattern, prefix);
-    else if (!starts_with(pattern, "refs/") && strcmp(pattern, "HEAD"))
+    }
+    else if (!starts_with(pattern, "refs/") && strcmp(pattern, "HEAD") != 0)
+    {
         strbuf_addstr(&normalized_pattern, "refs/");
+    }
     /*
      * NEEDSWORK: Special case other symrefs such as REBASE_HEAD,
      * MERGE_HEAD, etc.
@@ -565,9 +646,13 @@ int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
     int                        ret;
 
     if (!prefix && !starts_with(pattern, "refs/"))
+    {
         strbuf_addstr(&real_pattern, "refs/");
+    }
     else if (prefix)
+    {
         strbuf_addstr(&real_pattern, prefix);
+    }
     strbuf_addstr(&real_pattern, pattern);
 
     if (!has_glob_specials(pattern))
@@ -597,7 +682,9 @@ int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
 const char *prettify_refname(const char *name)
 {
     if (skip_prefix(name, "refs/heads/", &name) || skip_prefix(name, "refs/tags/", &name) || skip_prefix(name, "refs/remotes/", &name))
-        ; /* nothing */
+    {
+        /* nothing */
+    }
     return name;
 }
 
@@ -626,8 +713,12 @@ int refname_match(const char *abbrev_name, const char *full_name)
     const int    num_rules       = NUM_REV_PARSE_RULES;
 
     for (p = ref_rev_parse_rules; *p; p++)
+    {
         if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name)))
+        {
             return &ref_rev_parse_rules[num_rules] - p;
+        }
+    }
 
     return 0;
 }
@@ -642,7 +733,9 @@ void expand_ref_prefix(struct strvec *prefixes, const char *prefix)
     int          len = strlen(prefix);
 
     for (p = ref_rev_parse_rules; *p; p++)
+    {
         strvec_pushf(prefixes, *p, len, prefix);
+    }
 }
 
 static const char default_branch_name_advice[] = N_(
@@ -661,24 +754,33 @@ char *repo_default_branch_name(struct repository *r, int quiet)
 {
     const char *config_key         = "init.defaultbranch";
     const char *config_display_key = "init.defaultBranch";
-    char       *ret                = NULL, *full_ref;
-    const char *env                = getenv("GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME");
+    char       *ret                = NULL;
+    char       *full_ref;
+    const char *env = getenv("GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME");
 
     if (env && *env)
+    {
         ret = xstrdup(env);
+    }
     else if (repo_config_get_string(r, config_key, &ret) < 0)
+    {
         die(_("could not retrieve `%s`"), config_display_key);
+    }
 
     if (!ret)
     {
         ret = xstrdup("master");
         if (!quiet)
+        {
             advise(_(default_branch_name_advice), ret);
+        }
     }
 
     full_ref = xstrfmt("refs/heads/%s", ret);
     if (check_refname_format(full_ref, 0))
+    {
         die(_("invalid branch name: %s = %s"), config_display_key, ret);
+    }
     free(full_ref);
 
     return ret;
@@ -722,7 +824,8 @@ int repo_dwim_ref(struct repository *r, const char *str, int len,
 int expand_ref(struct repository *repo, const char *str, int len,
                struct object_id *oid, char **ref)
 {
-    const char  **p, *r;
+    const char  **p;
+    const char   *r;
     int           refs_found = 0;
     struct strbuf fullref    = STRBUF_INIT;
 
@@ -743,11 +846,15 @@ int expand_ref(struct repository *repo, const char *str, int len,
         if (r)
         {
             if (!refs_found++)
+            {
                 *ref = xstrdup(r);
+            }
             if (!warn_ambiguous_refs)
+            {
                 break;
+            }
         }
-        else if ((flag & REF_ISSYMREF) && strcmp(fullref.buf, "HEAD"))
+        else if ((flag & REF_ISSYMREF) && strcmp(fullref.buf, "HEAD") != 0)
         {
             warning(_("ignoring dangling symref %s"), fullref.buf);
         }
@@ -773,7 +880,8 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
     for (p = ref_rev_parse_rules; *p; p++)
     {
         struct object_id hash;
-        const char      *ref, *it;
+        const char      *ref;
+        const char      *it;
 
         strbuf_reset(&path);
         strbuf_addf(&path, *p, len, str);
@@ -781,21 +889,33 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
                                       RESOLVE_REF_READING,
                                       oid ? &hash : NULL, NULL);
         if (!ref)
+        {
             continue;
+        }
         if (refs_reflog_exists(refs, path.buf))
+        {
             it = path.buf;
-        else if (strcmp(ref, path.buf) && refs_reflog_exists(refs, ref))
+        }
+        else if (strcmp(ref, path.buf) != 0 && refs_reflog_exists(refs, ref))
+        {
             it = ref;
+        }
         else
+        {
             continue;
+        }
         if (!logs_found++)
         {
             *log = xstrdup(it);
             if (oid)
+            {
                 oidcpy(oid, &hash);
+            }
         }
         if (!warn_ambiguous_refs)
+        {
             break;
+        }
     }
     strbuf_release(&path);
     free(last_branch);
@@ -816,8 +936,12 @@ int is_pseudo_ref(const char *refname)
     size_t i;
 
     for (i = 0; i < ARRAY_SIZE(pseudo_refs); i++)
+    {
         if (!strcmp(refname, pseudo_refs[i]))
+        {
             return 1;
+        }
+    }
 
     return 0;
 }
@@ -829,7 +953,9 @@ static int is_root_ref_syntax(const char *refname)
     for (c = refname; *c; c++)
     {
         if (!isupper(*c) && *c != '-' && *c != '_')
+        {
             return 0;
+        }
     }
 
     return 1;
@@ -848,14 +974,22 @@ int is_root_ref(const char *refname)
     size_t i;
 
     if (!is_root_ref_syntax(refname) || is_pseudo_ref(refname))
+    {
         return 0;
+    }
 
     if (ends_with(refname, "_HEAD"))
+    {
         return 1;
+    }
 
     for (i = 0; i < ARRAY_SIZE(irregular_root_refs); i++)
+    {
         if (!strcmp(refname, irregular_root_refs[i]))
+        {
             return 1;
+        }
+    }
 
     return 0;
 }
@@ -874,11 +1008,17 @@ enum ref_worktree_type parse_worktree_ref(const char  *maybe_worktree_ref,
     const char *ref_dummy;
 
     if (!worktree_name)
+    {
         worktree_name = &name_dummy;
+    }
     if (!worktree_name_length)
+    {
         worktree_name_length = &name_length_dummy;
+    }
     if (!bare_refname)
+    {
         bare_refname = &ref_dummy;
+    }
 
     if (skip_prefix(maybe_worktree_ref, "worktrees/", bare_refname))
     {
@@ -898,7 +1038,9 @@ enum ref_worktree_type parse_worktree_ref(const char  *maybe_worktree_ref,
         *bare_refname         = slash + 1;
 
         if (is_current_worktree_ref(*bare_refname))
+        {
             return REF_WORKTREE_OTHER;
+        }
     }
 
     *worktree_name        = NULL;
@@ -906,11 +1048,15 @@ enum ref_worktree_type parse_worktree_ref(const char  *maybe_worktree_ref,
 
     if (skip_prefix(maybe_worktree_ref, "main-worktree/", bare_refname)
         && is_current_worktree_ref(*bare_refname))
+    {
         return REF_WORKTREE_MAIN;
+    }
 
     *bare_refname = maybe_worktree_ref;
     if (is_current_worktree_ref(maybe_worktree_ref))
+    {
         return REF_WORKTREE_CURRENT;
+    }
 
     return REF_WORKTREE_SHARED;
 }
@@ -960,10 +1106,14 @@ static void copy_reflog_msg(struct strbuf *sb, const char *msg)
     while ((c = *msg++))
     {
         if (wasspace && isspace(c))
+        {
             continue;
+        }
         wasspace = isspace(c);
         if (wasspace)
+        {
             c = ' ';
+        }
         strbuf_addch(sb, c);
     }
     strbuf_rtrim(sb);
@@ -974,7 +1124,9 @@ static char *normalize_reflog_message(const char *msg)
     struct strbuf sb = STRBUF_INIT;
 
     if (msg && *msg)
+    {
         copy_reflog_msg(&sb, msg);
+    }
     return strbuf_detach(&sb, NULL);
 }
 
@@ -1019,13 +1171,21 @@ static void set_read_ref_cutoffs(struct read_ref_at_cb *cb,
                                  timestamp_t timestamp, int tz, const char *message)
 {
     if (cb->msg)
+    {
         *cb->msg = xstrdup(message);
+    }
     if (cb->cutoff_time)
+    {
         *cb->cutoff_time = timestamp;
+    }
     if (cb->cutoff_tz)
+    {
         *cb->cutoff_tz = tz;
+    }
     if (cb->cutoff_cnt)
+    {
         *cb->cutoff_cnt = cb->reccnt;
+    }
 }
 
 static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
@@ -1049,14 +1209,20 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
         {
             oidcpy(cb->oid, noid);
             if (!oideq(&cb->ooid, noid))
+            {
                 warning(_("log for ref %s has gap after %s"),
                         cb->refname, show_date(cb->date, cb->tz, DATE_MODE(RFC2822)));
+            }
         }
         else if (cb->date == cb->at_time)
+        {
             oidcpy(cb->oid, noid);
+        }
         else if (!oideq(noid, cb->oid))
+        {
             warning(_("log for ref %s unexpectedly ended on %s"),
                     cb->refname, show_date(cb->date, cb->tz, DATE_MODE(RFC2822)));
+        }
         cb->reccnt++;
         oidcpy(&cb->ooid, ooid);
         oidcpy(&cb->noid, noid);
@@ -1067,7 +1233,9 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
     oidcpy(&cb->ooid, ooid);
     oidcpy(&cb->noid, noid);
     if (cb->cnt > 0)
+    {
         cb->cnt--;
+    }
     return 0;
 }
 
@@ -1081,7 +1249,9 @@ static int read_ref_at_ent_oldest(struct object_id *ooid, struct object_id *noid
     set_read_ref_cutoffs(cb, timestamp, tz, message);
     oidcpy(cb->oid, ooid);
     if (cb->at_time && is_null_oid(cb->oid))
+    {
         oidcpy(cb->oid, noid);
+    }
     /* We just want the first entry */
     return 1;
 }
@@ -1124,12 +1294,18 @@ int read_ref_at(struct ref_store *refs, const char *refname,
             return 1;
         }
         if (flags & GET_OID_QUIETLY)
+        {
             exit(128);
+        }
         else
+        {
             die(_("log for %s is empty"), refname);
+        }
     }
     if (cb.found_it)
+    {
         return 0;
+    }
 
     refs_for_each_reflog_ent(refs, refname, read_ref_at_ent_oldest, &cb);
 
@@ -1152,7 +1328,9 @@ void ref_transaction_free(struct ref_transaction *transaction)
     size_t i;
 
     if (!transaction)
+    {
         return;
+    }
 
     switch (transaction->state)
     {
@@ -1190,12 +1368,18 @@ struct ref_update *ref_transaction_add_update(
     struct ref_update *update;
 
     if (transaction->state != REF_TRANSACTION_OPEN)
+    {
         BUG("update called for transaction that is not open");
+    }
 
     if (old_oid && old_target)
+    {
         BUG("only one of old_oid and old_target should be non NULL");
+    }
     if (new_oid && new_target)
+    {
         BUG("only one of new_oid and new_target should be non NULL");
+    }
 
     FLEX_ALLOC_STR(update, refname, refname);
     ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
@@ -1206,9 +1390,13 @@ struct ref_update *ref_transaction_add_update(
     update->new_target = xstrdup_or_null(new_target);
     update->old_target = xstrdup_or_null(old_target);
     if ((flags & REF_HAVE_NEW) && new_oid)
+    {
         oidcpy(&update->new_oid, new_oid);
+    }
     if ((flags & REF_HAVE_OLD) && old_oid)
+    {
         oidcpy(&update->old_oid, old_oid);
+    }
 
     update->msg = normalize_reflog_message(msg);
     return update;
@@ -1246,7 +1434,9 @@ int ref_transaction_update(struct ref_transaction *transaction,
     }
 
     if (flags & ~REF_TRANSACTION_UPDATE_ALLOWED_FLAGS)
+    {
         BUG("illegal flags 0x%x passed to ref_transaction_update()", flags);
+    }
 
     /*
      * Clear flags outside the allowed set; this should be a noop because
@@ -1272,7 +1462,9 @@ int ref_transaction_create(struct ref_transaction *transaction,
                            struct strbuf *err)
 {
     if (new_oid && new_target)
+    {
         BUG("create called with both new_oid and new_target set");
+    }
     if ((!new_oid || is_null_oid(new_oid)) && !new_target)
     {
         strbuf_addf(err, "'%s' has neither a valid OID nor a target", refname);
@@ -1292,11 +1484,17 @@ int ref_transaction_delete(struct ref_transaction *transaction,
                            struct strbuf          *err)
 {
     if (old_oid && is_null_oid(old_oid))
+    {
         BUG("delete called with old_oid set to zeros");
+    }
     if (old_oid && old_target)
+    {
         BUG("delete called with both old_oid and old_target set");
+    }
     if (old_target && !(flags & REF_NO_DEREF))
+    {
         BUG("delete cannot operate on symrefs with deref mode");
+    }
     return ref_transaction_update(transaction, refname,
                                   null_oid(), old_oid,
                                   NULL, old_target, flags,
@@ -1311,11 +1509,17 @@ int ref_transaction_verify(struct ref_transaction *transaction,
                            struct strbuf          *err)
 {
     if (!old_target && !old_oid)
+    {
         BUG("verify called with old_oid and old_target set to NULL");
+    }
     if (old_oid && old_target)
+    {
         BUG("verify called with both old_oid and old_target set");
+    }
     if (old_target && !(flags & REF_NO_DEREF))
+    {
         BUG("verify cannot operate on symrefs with deref mode");
+    }
     return ref_transaction_update(transaction, refname,
                                   NULL, old_oid,
                                   NULL, old_target,
@@ -1357,7 +1561,9 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
     }
     strbuf_release(&err);
     if (t)
+    {
         ref_transaction_free(t);
+    }
     return 0;
 }
 
@@ -1378,9 +1584,13 @@ static const char *match_parse_rule(const char *refname, const char *rule,
     while (*rule != '%')
     {
         if (!*rule)
+        {
             BUG("rev-parse rule did not have percent");
+        }
         if (*refname++ != *rule++)
+        {
             return NULL;
+        }
     }
 
     /*
@@ -1389,13 +1599,17 @@ static const char *match_parse_rule(const char *refname, const char *rule,
      * that is sufficient for our rev-parse rules.
      */
     if (!skip_prefix(rule, "%.*s", &rule))
+    {
         return NULL;
+    }
 
     /*
      * And now check that our suffix (if any) matches.
      */
     if (!strip_suffix(refname, rule, len))
+    {
         return NULL;
+    }
 
     return refname; /* len set by strip_suffix() */
 }
@@ -1417,14 +1631,18 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
         short_name = match_parse_rule(refname, ref_rev_parse_rules[i],
                                       &short_name_len);
         if (!short_name)
+        {
             continue;
+        }
 
         /*
          * in strict mode, all (except the matched one) rules
          * must fail to resolve to a valid non-ambiguous ref
          */
         if (strict)
+        {
             rules_to_fail = NUM_REV_PARSE_RULES;
+        }
 
         /*
          * check if the short name resolves to a valid ref,
@@ -1436,7 +1654,9 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
 
             /* skip matched rule */
             if (i == j)
+            {
                 continue;
+            }
 
             /*
              * the short name is ambiguous, if it resolves
@@ -1448,7 +1668,9 @@ char *refs_shorten_unambiguous_ref(struct ref_store *refs,
                         cast_size_t_to_int(short_name_len),
                         short_name);
             if (refs_ref_exists(refs, resolved_buf.buf))
+            {
                 break;
+            }
         }
 
         /*
@@ -1476,13 +1698,17 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
         int   len;
 
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
 
         /* drop const to remove trailing '/' characters */
         ref = (char *)strvec_push(hide_refs, value);
         len = strlen(ref);
         while (len && ref[len - 1] == '/')
+        {
             ref[--len] = '\0';
+        }
     }
     return 0;
 }
@@ -1517,7 +1743,9 @@ int ref_is_hidden(const char *refname, const char *refname_full,
 
         /* refname can be NULL when namespaces are used. */
         if (subject && skip_prefix(subject, match, &p) && (!*p || *p == '/'))
+        {
             return !neg;
+        }
     }
     return 0;
 }
@@ -1542,7 +1770,9 @@ const char **hidden_refs_to_excludes(const struct strvec *hide_refs)
          * these patterns.
          */
         if (**pattern == '!' || **pattern == '^')
+        {
             return NULL;
+        }
     }
     return hide_refs->v;
 }
@@ -1554,7 +1784,9 @@ const char *find_descendant_ref(const char               *dirname,
     int pos;
 
     if (!extras)
+    {
         return NULL;
+    }
 
     /*
      * Look at the place where dirname would be inserted into
@@ -1568,10 +1800,14 @@ const char *find_descendant_ref(const char               *dirname,
         const char *extra_refname = extras->items[pos].string;
 
         if (!starts_with(extra_refname, dirname))
+        {
             break;
+        }
 
         if (!skip || !string_list_has_string(skip, extra_refname))
+        {
             return extra_refname;
+        }
     }
     return NULL;
 }
@@ -1583,7 +1819,9 @@ int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 
     if (refs_resolve_ref_unsafe(refs, "HEAD", RESOLVE_REF_READING,
                                 &oid, &flag))
+    {
         return fn("HEAD", NULL, &oid, flag, cb_data);
+    }
 
     return 0;
 }
@@ -1602,7 +1840,9 @@ struct ref_iterator *refs_ref_iterator_begin(
         static int ref_paranoia = -1;
 
         if (ref_paranoia < 0)
+        {
             ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 1);
+        }
         if (ref_paranoia)
         {
             flags |= DO_FOR_EACH_INCLUDE_BROKEN;
@@ -1616,7 +1856,9 @@ struct ref_iterator *refs_ref_iterator_begin(
      * might need to do some trimming:
      */
     if (trim)
+    {
         iter = prefix_ref_iterator_begin(iter, "", trim);
+    }
 
     return iter;
 }
@@ -1629,7 +1871,9 @@ static int do_for_each_ref(struct ref_store *refs, const char *prefix,
     struct ref_iterator *iter;
 
     if (!refs)
+    {
         return 0;
+    }
 
     iter = refs_ref_iterator_begin(refs, prefix, exclude_patterns, trim,
                                    flags);
@@ -1724,7 +1968,9 @@ static void find_longest_prefixes_1(struct string_list *out,
         for (end = i + 1; end < nr; end++)
         {
             if (patterns[i][prefix->len] != patterns[end][prefix->len])
+            {
                 break;
+            }
         }
 
         strbuf_addch(prefix, patterns[i][prefix->len]);
@@ -1759,12 +2005,15 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
     struct string_list       prefixes = STRING_LIST_INIT_DUP;
     struct string_list_item *prefix;
     struct strbuf            buf = STRBUF_INIT;
-    int                      ret = 0, namespace_len;
+    int                      ret = 0;
+    int                      namespace_len;
 
     find_longest_prefixes(&prefixes, patterns);
 
     if (namespace)
+    {
         strbuf_addstr(&buf, namespace);
+    }
     namespace_len = buf.len;
 
     for_each_string_list_item(prefix, &prefixes)
@@ -1773,7 +2022,9 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
         ret = refs_for_each_fullref_in(ref_store, buf.buf,
                                        exclude_patterns, fn, cb_data);
         if (ret)
+        {
             break;
+        }
         strbuf_setlen(&buf, namespace_len);
     }
 
@@ -1813,8 +2064,10 @@ int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 {
     assert(failure_errno);
     if (is_pseudo_ref(refname))
+    {
         return refs_read_special_head(ref_store, refname, oid, referent,
                                       type, failure_errno);
+    }
 
     return ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
                                        type, failure_errno);
@@ -1838,16 +2091,22 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
     int                  symref_count;
 
     if (!oid)
+    {
         oid = &unused_oid;
+    }
     if (!flags)
+    {
         flags = &unused_flags;
+    }
 
     *flags = 0;
 
     if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
     {
         if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) || !refname_is_safe(refname))
+        {
             return NULL;
+        }
 
         /*
          * repo_dwim_ref() uses REF_ISBROKEN to distinguish between
@@ -1872,7 +2131,9 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
 
             /* In reading mode, refs must eventually resolve */
             if (resolve_flags & RESOLVE_REF_READING)
+            {
                 return NULL;
+            }
 
             /*
              * Otherwise a missing ref is OK. But the files backend
@@ -1880,11 +2141,15 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
              * similarly-named refs.
              */
             if (failure_errno != ENOENT && failure_errno != EISDIR && failure_errno != ENOTDIR)
+            {
                 return NULL;
+            }
 
             oidclr(oid, refs->repo->hash_algo);
             if (*flags & REF_BAD_NAME)
+            {
                 *flags |= REF_ISBROKEN;
+            }
             return refname;
         }
 
@@ -1909,7 +2174,9 @@ const char *refs_resolve_ref_unsafe(struct ref_store *refs,
         if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
         {
             if (!(resolve_flags & RESOLVE_REF_ALLOW_BAD_NAME) || !refname_is_safe(refname))
+            {
                 return NULL;
+            }
 
             *flags |= REF_ISBROKEN | REF_BAD_NAME;
         }
@@ -1938,10 +2205,14 @@ int repo_resolve_gitlink_ref(struct repository *r,
 
     refs = repo_get_submodule_ref_store(r, submodule);
     if (!refs)
+    {
         return -1;
+    }
 
     if (!refs_resolve_ref_unsafe(refs, refname, 0, oid, &flags) || is_null_oid(oid))
+    {
         return -1;
+    }
     return 0;
 }
 
@@ -1955,8 +2226,10 @@ static struct ref_store *lookup_ref_store_map(struct strmap *map,
     struct strmap_entry *entry;
 
     if (!map->map.tablesize)
+    {
         /* It's initialized on demand in register_ref_store(). */
         return NULL;
+    }
 
     entry = strmap_get_entry(map, name);
     return entry ? entry->value : NULL;
@@ -1976,7 +2249,9 @@ static struct ref_store *ref_store_init(struct repository      *repo,
 
     be = find_ref_storage_backend(format);
     if (!be)
+    {
         BUG("reference backend is unknown");
+    }
 
     refs = be->init(repo, gitdir, flags);
     return refs;
@@ -1991,10 +2266,14 @@ void ref_store_release(struct ref_store *ref_store)
 struct ref_store *get_main_ref_store(struct repository *r)
 {
     if (r->refs_private)
+    {
         return r->refs_private;
+    }
 
     if (!r->gitdir)
+    {
         BUG("attempting to get main_ref_store outside of repository");
+    }
 
     r->refs_private = ref_store_init(r, r->ref_storage_format,
                                      r->gitdir, REF_STORE_ALL_CAPS);
@@ -2012,9 +2291,13 @@ static void register_ref_store_map(struct strmap    *map,
                                    const char       *name)
 {
     if (!map->map.tablesize)
+    {
         strmap_init(map);
+    }
     if (strmap_put(map, name, refs))
+    {
         BUG("%s ref_store '%s' initialized twice", type, name);
+    }
 }
 
 struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
@@ -2027,28 +2310,42 @@ struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
     struct repository *subrepo;
 
     if (!submodule)
+    {
         return NULL;
+    }
 
     len = strlen(submodule);
     while (len && is_dir_sep(submodule[len - 1]))
+    {
         len--;
+    }
     if (!len)
+    {
         return NULL;
+    }
 
     if (submodule[len])
+    {
         /* We need to strip off one or more trailing slashes */
         submodule = to_free = xmemdupz(submodule, len);
+    }
 
     refs = lookup_ref_store_map(&repo->submodule_ref_stores, submodule);
     if (refs)
+    {
         goto done;
+    }
 
     strbuf_addstr(&submodule_sb, submodule);
     if (!is_nonbare_repository_dir(&submodule_sb))
+    {
         goto done;
+    }
 
     if (submodule_to_gitdir(&submodule_sb, submodule))
+    {
         goto done;
+    }
 
     subrepo = xmalloc(sizeof(*subrepo));
 
@@ -2077,12 +2374,16 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
     const char       *id;
 
     if (wt->is_current)
+    {
         return get_main_ref_store(wt->repo);
+    }
 
     id   = wt->id ? wt->id : "/";
     refs = lookup_ref_store_map(&wt->repo->worktree_ref_stores, id);
     if (refs)
+    {
         return refs;
+    }
 
     if (wt->id)
     {
@@ -2100,8 +2401,10 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
     }
 
     if (refs)
+    {
         register_ref_store_map(&wt->repo->worktree_ref_stores,
                                "worktree", refs, id);
+    }
 
     return refs;
 }
@@ -2123,7 +2426,9 @@ int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts)
 int peel_iterated_oid(struct repository *r, const struct object_id *base, struct object_id *peeled)
 {
     if (current_ref_iter && (current_ref_iter->oid == base || oideq(current_ref_iter->oid, base)))
+    {
         return ref_iterator_peel(current_ref_iter, peeled);
+    }
 
     return peel_object(r, base, peeled) ? -1 : 0;
 }
@@ -2143,7 +2448,9 @@ int refs_update_symref(struct ref_store *refs, const char *ref,
 
     strbuf_release(&err);
     if (transaction)
+    {
         ref_transaction_free(transaction);
+    }
 
     return ret;
 }
@@ -2151,7 +2458,8 @@ int refs_update_symref(struct ref_store *refs, const char *ref,
 int ref_update_reject_duplicates(struct string_list *refnames,
                                  struct strbuf      *err)
 {
-    size_t i, n = refnames->nr;
+    size_t i;
+    size_t n = refnames->nr;
 
     assert(err);
 
@@ -2167,7 +2475,7 @@ int ref_update_reject_duplicates(struct string_list *refnames,
                         refnames->items[i].string);
             return 1;
         }
-        else if (cmp > 0)
+        if (cmp > 0)
         {
             BUG("ref_update_reject_duplicates() received unsorted list");
         }
@@ -2181,11 +2489,14 @@ static int run_transaction_hook(struct ref_transaction *transaction,
     struct child_process proc = CHILD_PROCESS_INIT;
     struct strbuf        buf  = STRBUF_INIT;
     const char          *hook;
-    int                  ret = 0, i;
+    int                  ret = 0;
+    int                  i;
 
     hook = find_hook(transaction->ref_store->repo, "reference-transaction");
     if (!hook)
+    {
         return ret;
+    }
 
     strvec_pushl(&proc.args, hook, state, NULL);
     proc.in               = -1;
@@ -2194,7 +2505,9 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 
     ret = start_command(&proc);
     if (ret)
+    {
         return ret;
+    }
 
     sigchain_push(SIGPIPE, SIG_IGN);
 
@@ -2205,18 +2518,30 @@ static int run_transaction_hook(struct ref_transaction *transaction,
         strbuf_reset(&buf);
 
         if (!(update->flags & REF_HAVE_OLD))
+        {
             strbuf_addf(&buf, "%s ", oid_to_hex(null_oid()));
+        }
         else if (update->old_target)
+        {
             strbuf_addf(&buf, "ref:%s ", update->old_target);
+        }
         else
+        {
             strbuf_addf(&buf, "%s ", oid_to_hex(&update->old_oid));
+        }
 
         if (!(update->flags & REF_HAVE_NEW))
+        {
             strbuf_addf(&buf, "%s ", oid_to_hex(null_oid()));
+        }
         else if (update->new_target)
+        {
             strbuf_addf(&buf, "ref:%s ", update->new_target);
+        }
         else
+        {
             strbuf_addf(&buf, "%s ", oid_to_hex(&update->new_oid));
+        }
 
         strbuf_addf(&buf, "%s\n", update->refname);
 
@@ -2271,7 +2596,9 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 
     ret = refs->be->transaction_prepare(refs, transaction, err);
     if (ret)
+    {
         return ret;
+    }
 
     ret = run_transaction_hook(transaction, "prepared");
     if (ret)
@@ -2323,7 +2650,9 @@ int ref_transaction_commit(struct ref_transaction *transaction,
             /* Need to prepare first. */
             ret = ref_transaction_prepare(transaction, err);
             if (ret)
+            {
                 return ret;
+            }
             break;
         case REF_TRANSACTION_PREPARED:
             /* Fall through to finish. */
@@ -2338,7 +2667,9 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
     ret = refs->be->transaction_finish(refs, transaction, err);
     if (!ret)
+    {
         run_transaction_hook(transaction, "committed");
+    }
     return ret;
 }
 
@@ -2384,7 +2715,9 @@ int refs_verify_refname_available(struct ref_store         *refs,
          * it is a conflict, *unless* it is in skip.
          */
         if (skip && string_list_has_string(skip, dirname.buf))
+        {
             continue;
+        }
 
         if (!refs_read_raw_ref(refs, dirname.buf, &oid, &referent,
                                &type, &ignore_errno))
@@ -2418,7 +2751,9 @@ int refs_verify_refname_available(struct ref_store         *refs,
     while ((ok = ref_iterator_advance(iter)) == ITER_OK)
     {
         if (skip && string_list_has_string(skip, iter->refname))
+        {
             continue;
+        }
 
         strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
                     iter->refname, refname);
@@ -2427,14 +2762,20 @@ int refs_verify_refname_available(struct ref_store         *refs,
     }
 
     if (ok != ITER_DONE)
+    {
         BUG("error while iterating over references");
+    }
 
     extra_refname = find_descendant_ref(dirname.buf, extras, skip);
     if (extra_refname)
+    {
         strbuf_addf(err, _("cannot process '%s' and '%s' at the same time"),
                     refname, extra_refname);
+    }
     else
+    {
         ret = 0;
+    }
 
 cleanup:
     strbuf_release(&referent);
@@ -2542,11 +2883,14 @@ int refs_delete_refs(struct ref_store *refs, const char *logmsg,
     struct ref_transaction  *transaction;
     struct strbuf            err = STRBUF_INIT;
     struct string_list_item *item;
-    int                      ret = 0, failures = 0;
+    int                      ret      = 0;
+    int                      failures = 0;
     char                    *msg;
 
     if (!refnames->nr)
+    {
         return 0;
+    }
 
     msg = normalize_reflog_message(logmsg);
 
@@ -2579,15 +2923,21 @@ int refs_delete_refs(struct ref_store *refs, const char *logmsg,
     if (ret)
     {
         if (refnames->nr == 1)
+        {
             error(_("could not delete reference %s: %s"),
                   refnames->items[0].string, err.buf);
+        }
         else
+        {
             error(_("could not delete references: %s"), err.buf);
+        }
     }
 
 out:
     if (!ret && failures)
+    {
         ret = -1;
+    }
     ref_transaction_free(transaction);
     strbuf_release(&err);
     free(msg);
@@ -2621,7 +2971,9 @@ int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
 const char *ref_update_original_update_refname(struct ref_update *update)
 {
     while (update->parent_update)
+    {
         update = update->parent_update;
+    }
 
     return update->refname;
 }
@@ -2635,23 +2987,31 @@ int ref_update_check_old_target(const char *referent, struct ref_update *update,
                                 struct strbuf *err)
 {
     if (!update->old_target)
+    {
         BUG("called without old_target set");
+    }
 
     if (!strcmp(referent, update->old_target))
+    {
         return 0;
+    }
 
     if (!strcmp(referent, ""))
+    {
         strbuf_addf(err,
                     "verifying symref target: '%s': "
                     "reference is missing but expected %s",
                     ref_update_original_update_refname(update),
                     update->old_target);
+    }
     else
+    {
         strbuf_addf(err,
                     "verifying symref target: '%s': "
                     "is at %s but expected %s",
                     ref_update_original_update_refname(update),
                     referent, update->old_target);
+    }
     return -1;
 }
 
@@ -2673,13 +3033,17 @@ static int migrate_one_ref(const char *refname, const char *referent UNUSED, con
     {
         ret = refs_read_symbolic_ref(data->old_refs, refname, &symref_target);
         if (ret < 0)
+        {
             goto done;
+        }
 
         ret = ref_transaction_update(data->transaction, refname, NULL, null_oid(),
                                      symref_target.buf, NULL,
                                      REF_SKIP_CREATE_REFLOG | REF_NO_DEREF, NULL, data->errbuf);
         if (ret < 0)
+        {
             goto done;
+        }
     }
     else
     {
@@ -2687,7 +3051,9 @@ static int migrate_one_ref(const char *refname, const char *referent UNUSED, con
                                      REF_SKIP_CREATE_REFLOG | REF_SKIP_OID_VERIFICATION,
                                      NULL, data->errbuf);
         if (ret < 0)
+        {
             goto done;
+        }
     }
 
 done:
@@ -2697,8 +3063,10 @@ done:
 
 static int move_files(const char *from_path, const char *to_path, struct strbuf *errbuf)
 {
-    struct strbuf from_buf = STRBUF_INIT, to_buf = STRBUF_INIT;
-    size_t        from_len, to_len;
+    struct strbuf from_buf = STRBUF_INIT;
+    struct strbuf to_buf   = STRBUF_INIT;
+    size_t        from_len;
+    size_t        to_len;
     DIR          *from_dir;
     int           ret;
 
@@ -2726,10 +3094,14 @@ static int move_files(const char *from_path, const char *to_path, struct strbuf 
         errno = 0;
         ent   = readdir(from_dir);
         if (!ent)
+        {
             break;
+        }
 
         if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, ".."))
+        {
             continue;
+        }
 
         strbuf_setlen(&from_buf, from_len);
         strbuf_addstr(&from_buf, ent->d_name);
@@ -2760,7 +3132,9 @@ done:
     strbuf_release(&from_buf);
     strbuf_release(&to_buf);
     if (from_dir)
+    {
         closedir(from_dir);
+    }
     return ret;
 }
 
@@ -2780,7 +3154,9 @@ static int has_worktrees(void)
     for (i = 0; worktrees[i]; i++)
     {
         if (is_main_worktree(worktrees[i]))
+        {
             continue;
+        }
         ret = 1;
     }
 
@@ -2793,7 +3169,8 @@ int repo_migrate_ref_storage_format(struct repository      *repo,
                                     unsigned int            flags,
                                     struct strbuf          *errbuf)
 {
-    struct ref_store       *old_refs = NULL, *new_refs = NULL;
+    struct ref_store       *old_refs    = NULL;
+    struct ref_store       *new_refs    = NULL;
     struct ref_transaction *transaction = NULL;
     struct strbuf           new_gitdir  = STRBUF_INIT;
     struct migration_data   data;
@@ -2878,11 +3255,15 @@ int repo_migrate_ref_storage_format(struct repository      *repo,
                               REF_STORE_ALL_CAPS);
     ret      = ref_store_create_on_disk(new_refs, 0, errbuf);
     if (ret < 0)
+    {
         goto done;
+    }
 
     transaction = ref_store_transaction_begin(new_refs, errbuf);
     if (!transaction)
+    {
         goto done;
+    }
 
     data.old_refs    = old_refs;
     data.transaction = transaction;
@@ -2903,7 +3284,9 @@ int repo_migrate_ref_storage_format(struct repository      *repo,
                           DO_FOR_EACH_INCLUDE_ROOT_REFS | DO_FOR_EACH_INCLUDE_BROKEN,
                           &data);
     if (ret < 0)
+    {
         goto done;
+    }
 
     /*
      * TODO: we might want to migrate to `initial_ref_transaction_commit()`
@@ -2914,7 +3297,9 @@ int repo_migrate_ref_storage_format(struct repository      *repo,
      */
     ret = ref_transaction_commit(transaction, errbuf);
     if (ret < 0)
+    {
         goto done;
+    }
     did_migrate_refs = 1;
 
     if (flags & REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN)
@@ -2948,15 +3333,21 @@ int repo_migrate_ref_storage_format(struct repository      *repo,
      */
     ret = ref_store_remove_on_disk(old_refs, errbuf);
     if (ret < 0)
+    {
         goto done;
+    }
 
     ret = move_files(new_gitdir.buf, old_refs->gitdir, errbuf);
     if (ret < 0)
+    {
         goto done;
+    }
 
     if (rmdir(new_gitdir.buf) < 0)
+    {
         warning_errno(_("could not remove temporary migration directory '%s'"),
                       new_gitdir.buf);
+    }
 
     /*
      * We have migrated the repository, so we now need to adjust the

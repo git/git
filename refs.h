@@ -1032,7 +1032,7 @@ extern struct ref_namespace_info ref_namespace[NAMESPACE__COUNT];
  * Some ref namespaces can be modified by config values or environment
  * variables. Modify a namespace as specified by its ref_namespace key.
  */
-void update_ref_namespace(enum ref_namespace namespace, char *ref);
+void update_ref_namespace(enum ref_namespace namespace, const char *ref);
 
 /*
  * Check whether the provided name names a root reference. This function only

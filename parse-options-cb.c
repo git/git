@@ -27,14 +27,20 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
     else
     {
         if (!*arg)
+        {
             return error(_("option `%s' expects a numerical value"),
                          opt->long_name);
+        }
         v = strtol(arg, (char **)&arg, 10);
         if (*arg)
+        {
             return error(_("option `%s' expects a numerical value"),
                          opt->long_name);
+        }
         if (v && v < MINIMUM_ABBREV)
+        {
             v = MINIMUM_ABBREV;
+        }
     }
     *(int *)(opt->value) = v;
     return 0;
@@ -44,9 +50,13 @@ int parse_opt_expiry_date_cb(const struct option *opt, const char *arg,
                              int unset)
 {
     if (unset)
+    {
         arg = "never";
+    }
     if (parse_expiry_date(arg, (timestamp_t *)opt->value))
+    {
         die(_("malformed expiration date '%s'"), arg);
+    }
     return 0;
 }
 
@@ -56,11 +66,15 @@ int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
     int value;
 
     if (!arg)
+    {
         arg = unset ? "never" : (const char *)opt->defval;
+    }
     value = git_config_colorbool(NULL, arg);
     if (value < 0)
+    {
         return error(_("option `%s' expects \"always\", \"auto\", or \"never\""),
                      opt->long_name);
+    }
     *(int *)opt->value = value;
     return 0;
 }
@@ -73,21 +87,31 @@ int parse_opt_verbosity_cb(const struct option *opt, const char *arg,
     BUG_ON_OPT_ARG(arg);
 
     if (unset)
+    {
         /* --no-quiet, --no-verbose */
         *target = 0;
+    }
     else if (opt->short_name == 'v')
     {
         if (*target >= 0)
+        {
             (*target)++;
+        }
         else
+        {
             *target = 1;
+        }
     }
     else
     {
         if (*target <= 0)
+        {
             (*target)--;
+        }
         else
+        {
             *target = -1;
+        }
     }
     return 0;
 }
@@ -100,12 +124,18 @@ int parse_opt_commits(const struct option *opt, const char *arg, int unset)
     BUG_ON_OPT_NEG(unset);
 
     if (!arg)
+    {
         return -1;
+    }
     if (repo_get_oid(the_repository, arg, &oid))
+    {
         return error("malformed object name %s", arg);
+    }
     commit = lookup_commit_reference(the_repository, &oid);
     if (!commit)
+    {
         return error("no such commit %s", arg);
+    }
     commit_list_insert(commit, opt->value);
     return 0;
 }
@@ -119,12 +149,18 @@ int parse_opt_commit(const struct option *opt, const char *arg, int unset)
     BUG_ON_OPT_NEG(unset);
 
     if (!arg)
+    {
         return -1;
+    }
     if (repo_get_oid(the_repository, arg, &oid))
+    {
         return error("malformed object name %s", arg);
+    }
     commit = lookup_commit_reference(the_repository, &oid);
     if (!commit)
+    {
         return error("no such commit %s", arg);
+    }
     *target = commit;
     return 0;
 }
@@ -139,9 +175,13 @@ int parse_opt_object_name(const struct option *opt, const char *arg, int unset)
         return 0;
     }
     if (!arg)
+    {
         return -1;
+    }
     if (repo_get_oid(the_repository, arg, &oid))
+    {
         return error(_("malformed object name '%s'"), arg);
+    }
     oid_array_append(opt->value, &oid);
     return 0;
 }
@@ -157,9 +197,13 @@ int parse_opt_object_id(const struct option *opt, const char *arg, int unset)
         return 0;
     }
     if (!arg)
+    {
         return -1;
+    }
     if (repo_get_oid(the_repository, arg, &oid))
+    {
         return error(_("malformed object name '%s'"), arg);
+    }
     *target = oid;
     return 0;
 }
@@ -179,7 +223,9 @@ static size_t parse_options_count(const struct option *opt)
     size_t n = 0;
 
     for (; opt && opt->type != OPTION_END; opt++)
+    {
         n++;
+    }
     return n;
 }
 
@@ -215,7 +261,9 @@ int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
     }
 
     if (!arg)
+    {
         return -1;
+    }
 
     string_list_append(v, arg);
     return 0;
@@ -232,7 +280,9 @@ int parse_opt_strvec(const struct option *opt, const char *arg, int unset)
     }
 
     if (!arg)
+    {
         return -1;
+    }
 
     strvec_push(v, arg);
     return 0;
@@ -268,10 +318,14 @@ static int recreate_opt(struct strbuf *sb, const struct option *opt,
         strbuf_addch(sb, '-');
         strbuf_addch(sb, opt->short_name);
         if (arg)
+        {
             strbuf_addstr(sb, arg);
+        }
     }
     else
+    {
         return -1;
+    }
 
     return 0;
 }
@@ -289,7 +343,9 @@ int parse_opt_passthru(const struct option *opt, const char *arg, int unset)
     char               **opt_value = opt->value;
 
     if (recreate_opt(&sb, opt, arg, unset) < 0)
+    {
         return -1;
+    }
 
     free(*opt_value);
 
@@ -310,7 +366,9 @@ int parse_opt_passthru_argv(const struct option *opt, const char *arg, int unset
     struct strvec       *opt_value = opt->value;
 
     if (recreate_opt(&sb, opt, arg, unset) < 0)
+    {
         return -1;
+    }
 
     strvec_push(opt_value, sb.buf);
 
@@ -320,14 +378,22 @@ int parse_opt_passthru_argv(const struct option *opt, const char *arg, int unset
 int parse_opt_tracking_mode(const struct option *opt, const char *arg, int unset)
 {
     if (unset)
+    {
         *(enum branch_track *)opt->value = BRANCH_TRACK_NEVER;
+    }
     else if (!arg || !strcmp(arg, "direct"))
+    {
         *(enum branch_track *)opt->value = BRANCH_TRACK_EXPLICIT;
+    }
     else if (!strcmp(arg, "inherit"))
+    {
         *(enum branch_track *)opt->value = BRANCH_TRACK_INHERIT;
+    }
     else
+    {
         return error(_("option `%s' expects \"%s\" or \"%s\""),
                      "--track", "direct", "inherit");
+    }
 
     return 0;
 }

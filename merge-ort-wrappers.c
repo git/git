@@ -32,7 +32,9 @@ int merge_ort_nonrecursive(struct merge_options *opt,
     struct merge_result result;
 
     if (unclean(opt, head))
+    {
         return -1;
+    }
 
     if (oideq(&merge_base->object.oid, &merge->object.oid))
     {
@@ -57,7 +59,9 @@ int merge_ort_recursive(struct merge_options     *opt,
     struct merge_result tmp;
 
     if (unclean(opt, head))
+    {
         return -1;
+    }
 
     memset(&tmp, 0, sizeof(tmp));
     merge_incore_recursive(opt, merge_bases, side1, side2, &tmp);

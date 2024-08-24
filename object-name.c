@@ -27,8 +27,8 @@
 #include "date.h"
 #include "object-file-convert.h"
 
-static int get_oid_oneline(struct repository *r, const char *, struct object_id *,
-                           const struct commit_list *);
+static int get_oid_oneline(struct repository *r, const char * /*prefix*/, struct object_id * /*oid*/,
+                           const struct commit_list * /*list*/);
 
 typedef int (*disambiguate_hint_fn)(struct repository *, const struct object_id *, void *);
 
@@ -65,7 +65,7 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
         ds->candidate_exists = 1;
         return;
     }
-    else if (oideq(&ds->candidate, current))
+    if (oideq(&ds->candidate, current))
     {
         /* the same as what we already have seen */
         return;
@@ -107,7 +107,7 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
     /* otherwise, current can be discarded and candidate is still good */
 }
 
-static int match_hash(unsigned, const unsigned char *, const unsigned char *);
+static int match_hash(unsigned /*len*/, const unsigned char * /*a*/, const unsigned char * /*b*/);
 
 static enum cb_next match_prefix(const struct object_id *oid, void *arg)
 {
@@ -122,8 +122,10 @@ static void find_short_object_filename(struct disambiguate_state *ds)
     struct object_directory *odb;
 
     for (odb = ds->repo->objects->odb; odb && !ds->ambiguous; odb = odb->next)
+    {
         oidtree_each(odb_loose_cache(odb, &ds->bin_pfx),
                      &ds->bin_pfx, ds->len, match_prefix, ds);
+    }
 }
 
 static int match_hash(unsigned len, const unsigned char *a, const unsigned char *b)
@@ -131,14 +133,20 @@ static int match_hash(unsigned len, const unsigned char *a, const unsigned char 
     do
     {
         if (*a != *b)
+        {
             return 0;
+        }
         a++;
         b++;
         len -= 2;
     } while (len > 1);
     if (len)
+    {
         if ((*a ^ *b) & 0xf0)
+        {
             return 0;
+        }
+    }
     return 1;
 }
 
@@ -147,12 +155,16 @@ static void unique_in_midx(struct multi_pack_index   *m,
 {
     for (; m; m = m->base_midx)
     {
-        uint32_t                num, i, first = 0;
+        uint32_t                num;
+        uint32_t                i;
+        uint32_t                first   = 0;
         const struct object_id *current = NULL;
         int                     len     = ds->len > ds->repo->hash_algo->hexsz ? ds->repo->hash_algo->hexsz : ds->len;
 
         if (!m->num_objects)
+        {
             continue;
+        }
 
         num = m->num_objects + m->num_objects_in_base;
 
@@ -169,7 +181,9 @@ static void unique_in_midx(struct multi_pack_index   *m,
             struct object_id oid;
             current = nth_midxed_object_oid(&oid, m, i);
             if (!match_hash(len, ds->bin_pfx.hash, current->hash))
+            {
                 break;
+            }
             update_candidates(ds, current);
         }
     }
@@ -178,14 +192,20 @@ static void unique_in_midx(struct multi_pack_index   *m,
 static void unique_in_pack(struct packed_git         *p,
                            struct disambiguate_state *ds)
 {
-    uint32_t num, i, first = 0;
-    int      len = ds->len > ds->repo->hash_algo->hexsz ? ds->repo->hash_algo->hexsz : ds->len;
+    uint32_t num;
+    uint32_t i;
+    uint32_t first = 0;
+    int      len   = ds->len > ds->repo->hash_algo->hexsz ? ds->repo->hash_algo->hexsz : ds->len;
 
     if (p->multi_pack_index)
+    {
         return;
+    }
 
     if (open_pack_index(p) || !p->num_objects)
+    {
         return;
+    }
 
     num = p->num_objects;
     bsearch_pack(&ds->bin_pfx, p, &first);
@@ -200,7 +220,9 @@ static void unique_in_pack(struct packed_git         *p,
         struct object_id oid;
         nth_packed_object_id(&oid, p, i);
         if (!match_hash(len, ds->bin_pfx.hash, oid.hash))
+        {
             break;
+        }
         update_candidates(ds, &oid);
     }
 }
@@ -212,26 +234,37 @@ static void find_short_packed_object(struct disambiguate_state *ds)
 
     /* Skip, unless oids from the storage hash algorithm are wanted */
     if (ds->bin_pfx.algo && (&hash_algos[ds->bin_pfx.algo] != ds->repo->hash_algo))
+    {
         return;
+    }
 
     for (m = get_multi_pack_index(ds->repo); m && !ds->ambiguous;
          m = m->next)
+    {
         unique_in_midx(m, ds);
+    }
     for (p = get_packed_git(ds->repo); p && !ds->ambiguous;
          p = p->next)
+    {
         unique_in_pack(p, ds);
+    }
 }
 
 static int finish_object_disambiguation(struct disambiguate_state *ds,
                                         struct object_id          *oid)
 {
     if (ds->ambiguous)
+    {
         return SHORT_NAME_AMBIGUOUS;
+    }
 
     if (!ds->candidate_exists)
+    {
         return MISSING_OBJECT;
+    }
 
     if (!ds->candidate_checked)
+    {
         /*
          * If this is the only candidate, there is no point
          * calling the disambiguation hint callback.
@@ -247,9 +280,12 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
          * same repository!
          */
         ds->candidate_ok = (!ds->disambiguate_fn_used || ds->fn(ds->repo, &ds->candidate, ds->cb_data));
+    }
 
     if (!ds->candidate_ok)
+    {
         return SHORT_NAME_AMBIGUOUS;
+    }
 
     oidcpy(oid, &ds->candidate);
     return 0;
@@ -272,14 +308,20 @@ static int disambiguate_committish_only(struct repository      *r,
 
     kind = oid_object_info(r, oid, NULL);
     if (kind == OBJ_COMMIT)
+    {
         return 1;
+    }
     if (kind != OBJ_TAG)
+    {
         return 0;
+    }
 
     /* We need to do this the hard way... */
     obj = deref_tag(r, parse_object(r, oid), NULL, 0);
     if (obj && obj->type == OBJ_COMMIT)
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -300,14 +342,20 @@ static int disambiguate_treeish_only(struct repository      *r,
 
     kind = oid_object_info(r, oid, NULL);
     if (kind == OBJ_TREE || kind == OBJ_COMMIT)
+    {
         return 1;
+    }
     if (kind != OBJ_TAG)
+    {
         return 0;
+    }
 
     /* We need to do this the hard way... */
     obj = deref_tag(r, parse_object(r, oid), NULL, 0);
     if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_COMMIT))
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -337,7 +385,9 @@ int set_disambiguate_hint_config(const char *var, const char *value)
     int i;
 
     if (!value)
+    {
         return config_error_nonbool(var);
+    }
 
     for (i = 0; i < ARRAY_SIZE(hints); i++)
     {
@@ -359,7 +409,9 @@ static int init_object_disambiguation(struct repository *r,
     int i;
 
     if (len < MINIMUM_ABBREV || len > GIT_MAX_HEXSZ)
+    {
         return -1;
+    }
 
     memset(ds, 0, sizeof(*ds));
 
@@ -368,19 +420,27 @@ static int init_object_disambiguation(struct repository *r,
         unsigned char c = name[i];
         unsigned char val;
         if (c >= '0' && c <= '9')
+        {
             val = c - '0';
+        }
         else if (c >= 'a' && c <= 'f')
+        {
             val = c - 'a' + 10;
+        }
         else if (c >= 'A' && c <= 'F')
         {
             val = c - 'A' + 10;
             c -= 'A' - 'a';
         }
         else
+        {
             return -1;
+        }
         ds->hex_pfx[i] = c;
         if (!(i & 1))
+        {
             val <<= 4;
+        }
         ds->bin_pfx.hash[i >> 1] |= val;
     }
 
@@ -409,7 +469,9 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
     const char                      *hash;
 
     if (ds->fn && !ds->fn(ds->repo, oid, ds->cb_data))
+    {
         return 0;
+    }
 
     hash = repo_find_unique_abbrev(ds->repo, oid, DEFAULT_ABBREV);
     type = oid_object_info(ds->repo, oid, NULL);
@@ -536,9 +598,10 @@ static int repo_collect_ambiguous(struct repository *r    UNUSED,
 static int sort_ambiguous(const void *va, const void *vb, void *ctx)
 {
     struct repository      *sort_ambiguous_repo = ctx;
-    const struct object_id *a = va, *b = vb;
-    int                     a_type = oid_object_info(sort_ambiguous_repo, a, NULL);
-    int                     b_type = oid_object_info(sort_ambiguous_repo, b, NULL);
+    const struct object_id *a                   = va;
+    const struct object_id *b                   = vb;
+    int                     a_type              = oid_object_info(sort_ambiguous_repo, a, NULL);
+    int                     b_type              = oid_object_info(sort_ambiguous_repo, b, NULL);
     int                     a_type_sort;
     int                     b_type_sort;
 
@@ -549,9 +612,10 @@ static int sort_ambiguous(const void *va, const void *vb, void *ctx)
     if (a_type == b_type)
     {
         if (a->algo == b->algo)
+        {
             return oidcmp(a, b);
-        else
-            return a->algo > b->algo ? 1 : -1;
+        }
+        return a->algo > b->algo ? 1 : -1;
     }
 
     /*
@@ -584,26 +648,44 @@ static enum get_oid_result get_short_oid(struct repository *r,
     const struct git_hash_algo *algo    = r->hash_algo;
 
     if (flags & GET_OID_HASH_ANY)
+    {
         algo = NULL;
+    }
 
     if (init_object_disambiguation(r, name, len, algo, &ds) < 0)
+    {
         return -1;
+    }
 
     if (HAS_MULTI_BITS(flags & GET_OID_DISAMBIGUATORS))
+    {
         BUG("multiple get_short_oid disambiguator flags");
+    }
 
     if (flags & GET_OID_COMMIT)
+    {
         ds.fn = disambiguate_commit_only;
+    }
     else if (flags & GET_OID_COMMITTISH)
+    {
         ds.fn = disambiguate_committish_only;
+    }
     else if (flags & GET_OID_TREE)
+    {
         ds.fn = disambiguate_tree_only;
+    }
     else if (flags & GET_OID_TREEISH)
+    {
         ds.fn = disambiguate_treeish_only;
+    }
     else if (flags & GET_OID_BLOB)
+    {
         ds.fn = disambiguate_blob_only;
+    }
     else
+    {
         ds.fn = default_disambiguate_hint;
+    }
 
     find_short_object_filename(&ds);
     find_short_packed_object(&ds);
@@ -640,13 +722,17 @@ static enum get_oid_result get_short_oid(struct repository *r,
          * function entirely.
          */
         if (!ds.ambiguous)
+        {
             ds.fn = NULL;
+        }
 
         repo_for_each_abbrev(r, ds.hex_pfx, algo, collect_ambiguous, &collect);
         sort_ambiguous_oid_array(r, &collect);
 
         if (oid_array_for_each(&collect, show_ambiguous_object, &out))
+        {
             BUG("show_ambiguous_object shouldn't return non-zero");
+        }
 
         /*
          * TRANSLATORS: The argument is the list of ambiguous
@@ -672,7 +758,9 @@ int repo_for_each_abbrev(struct repository *r, const char *prefix,
     int                       ret;
 
     if (init_object_disambiguation(r, prefix, strlen(prefix), algo, &ds) < 0)
+    {
         return -1;
+    }
 
     ds.always_call_fn = 1;
     ds.fn             = repo_collect_ambiguous;
@@ -694,7 +782,9 @@ static unsigned msb(unsigned long val)
 {
     unsigned r = 0;
     while (val >>= 1)
+    {
         r++;
+    }
     return r;
 }
 
@@ -713,9 +803,10 @@ static inline char get_hex_char_from_oid(const struct object_id *oid,
     static const char hex[] = "0123456789abcdef";
 
     if ((pos & 1) == 0)
+    {
         return hex[oid->hash[pos >> 1] >> 4];
-    else
-        return hex[oid->hash[pos >> 1] & 0xf];
+    }
+    return hex[oid->hash[pos >> 1] & 0xf];
 }
 
 static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
@@ -724,10 +815,14 @@ static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
 
     unsigned int i = mad->init_len;
     while (mad->hex[i] && mad->hex[i] == get_hex_char_from_oid(oid, i))
+    {
         i++;
+    }
 
     if (i < GIT_MAX_RAWSZ && i >= mad->cur_len)
+    {
         mad->cur_len = i + 1;
+    }
 
     return 0;
 }
@@ -745,12 +840,15 @@ static void find_abbrev_len_for_midx(struct multi_pack_index *m,
     for (; m; m = m->base_midx)
     {
         int                     match = 0;
-        uint32_t                num, first = 0;
+        uint32_t                num;
+        uint32_t                first = 0;
         struct object_id        oid;
         const struct object_id *mad_oid;
 
         if (!m->num_objects)
+        {
             continue;
+        }
 
         num     = m->num_objects + m->num_objects_in_base;
         mad_oid = mad->oid;
@@ -767,17 +865,23 @@ static void find_abbrev_len_for_midx(struct multi_pack_index *m,
         if (!match)
         {
             if (nth_midxed_object_oid(&oid, m, first))
+            {
                 extend_abbrev_len(&oid, mad);
+            }
         }
         else if (first < num - 1)
         {
             if (nth_midxed_object_oid(&oid, m, first + 1))
+            {
                 extend_abbrev_len(&oid, mad);
+            }
         }
         if (first > 0)
         {
             if (nth_midxed_object_oid(&oid, m, first - 1))
+            {
                 extend_abbrev_len(&oid, mad);
+            }
         }
         mad->init_len = mad->cur_len;
     }
@@ -787,15 +891,20 @@ static void find_abbrev_len_for_pack(struct packed_git      *p,
                                      struct min_abbrev_data *mad)
 {
     int                     match = 0;
-    uint32_t                num, first = 0;
+    uint32_t                num;
+    uint32_t                first = 0;
     struct object_id        oid;
     const struct object_id *mad_oid;
 
     if (p->multi_pack_index)
+    {
         return;
+    }
 
     if (open_pack_index(p) || !p->num_objects)
+    {
         return;
+    }
 
     num     = p->num_objects;
     mad_oid = mad->oid;
@@ -811,17 +920,23 @@ static void find_abbrev_len_for_pack(struct packed_git      *p,
     if (!match)
     {
         if (!nth_packed_object_id(&oid, p, first))
+        {
             extend_abbrev_len(&oid, mad);
+        }
     }
     else if (first < num - 1)
     {
         if (!nth_packed_object_id(&oid, p, first + 1))
+        {
             extend_abbrev_len(&oid, mad);
+        }
     }
     if (first > 0)
     {
         if (!nth_packed_object_id(&oid, p, first - 1))
+        {
             extend_abbrev_len(&oid, mad);
+        }
     }
     mad->init_len = mad->cur_len;
 }
@@ -832,9 +947,13 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
     struct packed_git       *p;
 
     for (m = get_multi_pack_index(mad->repo); m; m = m->next)
+    {
         find_abbrev_len_for_midx(m, mad);
+    }
     for (p = get_packed_git(mad->repo); p; p = p->next)
+    {
         find_abbrev_len_for_pack(p, mad);
+    }
 }
 
 void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
@@ -882,12 +1001,16 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
          * For very small repos, we stick with our regular fallback.
          */
         if (len < FALLBACK_DEFAULT_ABBREV)
+        {
             len = FALLBACK_DEFAULT_ABBREV;
+        }
     }
 
     oid_to_hex_r(hex, oid);
     if (len >= hexsz || !len)
+    {
         return hexsz;
+    }
 
     mad.repo     = r;
     mad.init_len = len;
@@ -898,7 +1021,9 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
     find_abbrev_len_packed(&mad);
 
     if (init_object_disambiguation(r, hex, mad.cur_len, algo, &ds) < 0)
+    {
         return -1;
+    }
 
     ds.fn             = repo_extend_abbrev_len;
     ds.always_call_fn = 1;
@@ -936,7 +1061,9 @@ static int ambiguous_path(const char *path, int len)
                 break;
             case '/':
                 if (slash)
+                {
                     break;
+                }
                 slash = 1;
                 continue;
             case '.':
@@ -960,7 +1087,9 @@ static inline int at_mark(const char *string, int len,
         int suffix_len = strlen(suffix[i]);
         if (suffix_len <= len
             && !strncasecmp(string, suffix[i], suffix_len))
+        {
             return suffix_len;
+        }
     }
     return 0;
 }
@@ -997,8 +1126,10 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
     struct object_id tmp_oid;
     char            *real_ref   = NULL;
     int              refs_found = 0;
-    int              at, reflog_len, nth_prior = 0;
-    int              fatal = !(flags & GET_OID_QUIETLY);
+    int              at;
+    int              reflog_len;
+    int              nth_prior = 0;
+    int              fatal     = !(flags & GET_OID_QUIETLY);
 
     if (len == r->hash_algo->hexsz && !get_oid_hex(str, oid))
     {
@@ -1009,7 +1140,9 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
             {
                 warning(warn_msg, len, str);
                 if (advice_enabled(ADVICE_OBJECT_NAME_WARNING))
+                {
                     fprintf(stderr, "%s\n", _(object_name_msg));
+                }
             }
             free(real_ref);
         }
@@ -1027,8 +1160,10 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
                 if (str[at + 2] == '-')
                 {
                     if (at != 0)
+                    {
                         /* @{-N} not at start */
                         return -1;
+                    }
                     nth_prior = 1;
                     continue;
                 }
@@ -1044,7 +1179,9 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 
     /* Accept only unambiguous ref paths. */
     if (len && ambiguous_path(str, len))
+    {
         return -1;
+    }
 
     if (nth_prior)
     {
@@ -1056,39 +1193,57 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
             detached = (buf.len == r->hash_algo->hexsz && !get_oid_hex(buf.buf, oid));
             strbuf_release(&buf);
             if (detached)
+            {
                 return 0;
+            }
         }
     }
 
     if (!len && reflog_len)
+    {
         /* allow "@{...}" to mean the current branch reflog */
         refs_found = repo_dwim_ref(r, "HEAD", 4, oid, &real_ref, !fatal);
+    }
     else if (reflog_len)
+    {
         refs_found = repo_dwim_log(r, str, len, oid, &real_ref);
+    }
     else
+    {
         refs_found = repo_dwim_ref(r, str, len, oid, &real_ref, !fatal);
+    }
 
     if (!refs_found)
+    {
         return -1;
+    }
 
     if (warn_ambiguous_refs && !(flags & GET_OID_QUIETLY) && (refs_found > 1 || !get_short_oid(r, str, len, &tmp_oid, GET_OID_QUIETLY)))
+    {
         warning(warn_msg, len, str);
+    }
 
     if (reflog_len)
     {
-        int         nth, i;
+        int         nth;
+        int         i;
         timestamp_t at_time;
         timestamp_t co_time;
-        int         co_tz, co_cnt;
+        int         co_tz;
+        int         co_cnt;
 
         /* Is it asking for N-th entry, or approxidate? */
         for (i = nth = 0; 0 <= nth && i < reflog_len; i++)
         {
             char ch = str[at + 2 + i];
             if ('0' <= ch && ch <= '9')
+            {
                 nth = nth * 10 + ch - '0';
+            }
             else
+            {
                 nth = -1;
+            }
         }
         if (100000000 <= nth)
         {
@@ -1096,7 +1251,9 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
             nth     = -1;
         }
         else if (0 <= nth)
+        {
             at_time = 0;
+        }
         else
         {
             int   errors = 0;
@@ -1116,7 +1273,9 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
             if (!len)
             {
                 if (!skip_prefix(real_ref, "refs/heads/", &str))
+                {
                     str = "HEAD";
+                }
                 len = strlen(str);
             }
             if (at_time)
@@ -1166,10 +1325,14 @@ static enum get_oid_result get_parent(struct repository *r,
     struct commit_list *p;
 
     if (ret)
+    {
         return ret;
+    }
     commit = lookup_commit_reference(r, &oid);
     if (repo_parse_commit(r, commit))
+    {
         return MISSING_OBJECT;
+    }
     if (!idx)
     {
         oidcpy(result, &commit->object.oid);
@@ -1199,15 +1362,21 @@ static enum get_oid_result get_nth_ancestor(struct repository *r,
 
     ret = get_oid_1(r, name, len, &oid, GET_OID_COMMITTISH);
     if (ret)
+    {
         return ret;
+    }
     commit = lookup_commit_reference(r, &oid);
     if (!commit)
+    {
         return MISSING_OBJECT;
+    }
 
     while (generation--)
     {
         if (repo_parse_commit(r, commit) || !commit->parents)
+        {
             return MISSING_OBJECT;
+        }
         commit = commit->parents->item;
     }
     oidcpy(result, &commit->object.oid);
@@ -1218,25 +1387,37 @@ struct object *repo_peel_to_type(struct repository *r, const char *name, int nam
                                  struct object *o, enum object_type expected_type)
 {
     if (name && !namelen)
+    {
         namelen = strlen(name);
+    }
     while (1)
     {
         if (!o || (!o->parsed && !parse_object(r, &o->oid)))
+        {
             return NULL;
+        }
         if (expected_type == OBJ_ANY || o->type == expected_type)
+        {
             return o;
+        }
         if (o->type == OBJ_TAG)
+        {
             o = ((struct tag *)o)->tagged;
+        }
         else if (o->type == OBJ_COMMIT)
+        {
             o = &(repo_get_commit_tree(r, ((struct commit *)o))->object);
+        }
         else
         {
             if (name)
+            {
                 error(
                     "%.*s: expected %s type, but the object "
                     "dereferences to %s type",
                     namelen, name, type_name(expected_type),
                     type_name(o->type));
+            }
             return NULL;
         }
     }
@@ -1259,52 +1440,84 @@ static int peel_onion(struct repository *r, const char *name, int len,
      * top-level tree of the given commit.
      */
     if (len < 4 || name[len - 1] != '}')
+    {
         return -1;
+    }
 
     for (sp = name + len - 1; name <= sp; sp--)
     {
         int ch = *sp;
         if (ch == '{' && name < sp && sp[-1] == '^')
+        {
             break;
+        }
     }
     if (sp <= name)
+    {
         return -1;
+    }
 
     sp++; /* beginning of type name, or closing brace for empty */
     if (starts_with(sp, "commit}"))
+    {
         expected_type = OBJ_COMMIT;
+    }
     else if (starts_with(sp, "tag}"))
+    {
         expected_type = OBJ_TAG;
+    }
     else if (starts_with(sp, "tree}"))
+    {
         expected_type = OBJ_TREE;
+    }
     else if (starts_with(sp, "blob}"))
+    {
         expected_type = OBJ_BLOB;
+    }
     else if (starts_with(sp, "object}"))
+    {
         expected_type = OBJ_ANY;
+    }
     else if (sp[0] == '}')
+    {
         expected_type = OBJ_NONE;
+    }
     else if (sp[0] == '/')
+    {
         expected_type = OBJ_COMMIT;
+    }
     else
+    {
         return -1;
+    }
 
     lookup_flags &= ~GET_OID_DISAMBIGUATORS;
     if (expected_type == OBJ_COMMIT)
+    {
         lookup_flags |= GET_OID_COMMITTISH;
+    }
     else if (expected_type == OBJ_TREE)
+    {
         lookup_flags |= GET_OID_TREEISH;
+    }
 
     if (get_oid_1(r, name, sp - name - 2, &outer, lookup_flags))
+    {
         return -1;
+    }
 
     o = parse_object(r, &outer);
     if (!o)
+    {
         return -1;
+    }
     if (!expected_type)
     {
         o = deref_tag(r, o, name, sp - name - 2);
         if (!o || (!o->parsed && !parse_object(r, &o->oid)))
+        {
             return -1;
+        }
         oidcpy(oid, &o->oid);
         return 0;
     }
@@ -1316,7 +1529,9 @@ static int peel_onion(struct repository *r, const char *name, int len,
      */
     o = repo_peel_to_type(r, name, len, o, expected_type);
     if (!o)
+    {
         return -1;
+    }
 
     oidcpy(oid, &o->oid);
     if (sp[0] == '/')
@@ -1331,7 +1546,9 @@ static int peel_onion(struct repository *r, const char *name, int len,
          * We don't need regex anyway. '' pattern always matches.
          */
         if (sp[1] == '}')
+        {
             return 0;
+        }
 
         prefix = xstrndup(sp + 1, name + len - 1 - (sp + 1));
         commit_list_insert((struct commit *)o, &list);
@@ -1376,7 +1593,8 @@ static enum get_oid_result get_oid_1(struct repository *r,
                                      struct object_id *oid,
                                      unsigned          lookup_flags)
 {
-    int         ret, has_suffix;
+    int         ret;
+    int         has_suffix;
     const char *cp;
 
     /*
@@ -1387,9 +1605,13 @@ static enum get_oid_result get_oid_1(struct repository *r,
     {
         int ch = *cp;
         if ('0' <= ch && ch <= '9')
+        {
             continue;
+        }
         if (ch == '~' || ch == '^')
+        {
             has_suffix = ch;
+        }
         break;
     }
 
@@ -1402,34 +1624,50 @@ static enum get_oid_result get_oid_1(struct repository *r,
         {
             unsigned int digit = *cp++ - '0';
             if (unsigned_mult_overflows(num, 10))
+            {
                 return MISSING_OBJECT;
+            }
             num *= 10;
             if (unsigned_add_overflows(num, digit))
+            {
                 return MISSING_OBJECT;
+            }
             num += digit;
         }
         if (!num && len1 == len - 1)
+        {
             num = 1;
+        }
         else if (num > INT_MAX)
+        {
             return MISSING_OBJECT;
+        }
         if (has_suffix == '^')
+        {
             return get_parent(r, name, len1, oid, num);
+        }
         /* else if (has_suffix == '~') -- goes without saying */
         return get_nth_ancestor(r, name, len1, oid, num);
     }
 
     ret = peel_onion(r, name, len, oid, lookup_flags);
     if (!ret)
+    {
         return FOUND;
+    }
 
     ret = get_oid_basic(r, name, len, oid, lookup_flags);
     if (!ret)
+    {
         return FOUND;
+    }
 
     /* It could be describe output that is "SOMETHING-gXXXX" */
     ret = get_describe_name(r, name, len, oid);
     if (!ret)
+    {
         return FOUND;
+    }
 
     return get_short_oid(r, name, len, oid, lookup_flags);
 }
@@ -1464,16 +1702,22 @@ static int handle_one_ref(const char *path, const char *referent UNUSED, const s
     struct commit_list      **list   = cb->list;
     struct object            *object = parse_object(cb->repo, oid);
     if (!object)
+    {
         return 0;
+    }
     if (object->type == OBJ_TAG)
     {
         object = deref_tag(cb->repo, object, path,
                            strlen(path));
         if (!object)
+        {
             return 0;
+        }
     }
     if (object->type != OBJ_COMMIT)
+    {
         return 0;
+    }
     commit_list_insert((struct commit *)object, list);
     return 0;
 }
@@ -1504,7 +1748,9 @@ static int get_oid_oneline(struct repository *r,
     }
 
     if (regcomp(&regex, prefix, REG_EXTENDED))
+    {
         return -1;
+    }
 
     for (l = list; l; l = l->next)
     {
@@ -1513,13 +1759,16 @@ static int get_oid_oneline(struct repository *r,
     }
     while (copy)
     {
-        const char    *p, *buf;
+        const char    *p;
+        const char    *buf;
         struct commit *commit;
         int            matches;
 
         commit = pop_most_recent_commit(&copy, ONELINE_SEEN);
         if (!parse_object(r, &commit->object.oid))
+        {
             continue;
+        }
         buf     = repo_get_commit_buffer(r, commit, NULL);
         p       = strstr(buf, "\n\n");
         matches = negative ^ (p && !regexec(&regex, p + 2, 0, NULL, 0));
@@ -1534,7 +1783,9 @@ static int get_oid_oneline(struct repository *r,
     }
     regfree(&regex);
     for (l = list; l; l = l->next)
+    {
         clear_commit_marks(l->item, ONELINE_SEEN);
+    }
     free_commit_list(copy);
     return found ? 0 : -1;
 }
@@ -1552,15 +1803,20 @@ static int grab_nth_branch_switch(struct object_id *ooid UNUSED,
                                   int tz                 UNUSED,
                                   const char *message, void *cb_data)
 {
-    struct grab_nth_branch_switch_cbdata *cb    = cb_data;
-    const char                           *match = NULL, *target = NULL;
+    struct grab_nth_branch_switch_cbdata *cb     = cb_data;
+    const char                           *match  = NULL;
+    const char                           *target = NULL;
     size_t                                len;
 
     if (skip_prefix(message, "checkout: moving from ", &match))
+    {
         target = strstr(match, " to ");
+    }
 
     if (!match || !target)
+    {
         return 0;
+    }
     if (--(cb->remaining) == 0)
     {
         len = target - match;
@@ -1586,17 +1842,27 @@ static int interpret_nth_prior_checkout(struct repository *r,
     char                                *num_end;
 
     if (namelen < 4)
+    {
         return -1;
+    }
     if (name[0] != '@' || name[1] != '{' || name[2] != '-')
+    {
         return -1;
+    }
     brace = memchr(name, '}', namelen);
     if (!brace)
+    {
         return -1;
+    }
     nth = strtol(name + 3, &num_end, 10);
     if (num_end != brace)
+    {
         return -1;
+    }
     if (nth <= 0)
+    {
         return -1;
+    }
     cb.remaining = nth;
     cb.sb        = buf;
 
@@ -1607,7 +1873,9 @@ static int interpret_nth_prior_checkout(struct repository *r,
         retval = brace - name + 1;
     }
     else
+    {
         retval = 0;
+    }
 
     return retval;
 }
@@ -1616,7 +1884,8 @@ int repo_get_oid_mb(struct repository *r,
                     const char        *name,
                     struct object_id  *oid)
 {
-    struct commit      *one, *two;
+    struct commit      *one;
+    struct commit      *two;
     struct commit_list *mbs = NULL;
     struct object_id    oid_tmp;
     const char         *dots;
@@ -1624,9 +1893,13 @@ int repo_get_oid_mb(struct repository *r,
 
     dots = strstr(name, "...");
     if (!dots)
+    {
         return repo_get_oid(r, name, oid);
+    }
     if (dots == name)
+    {
         st = repo_get_oid(r, "HEAD", &oid_tmp);
+    }
     else
     {
         struct strbuf sb;
@@ -1636,23 +1909,33 @@ int repo_get_oid_mb(struct repository *r,
         strbuf_release(&sb);
     }
     if (st)
+    {
         return st;
+    }
     one = lookup_commit_reference_gently(r, &oid_tmp, 0);
     if (!one)
+    {
         return -1;
+    }
 
     if (repo_get_oid_committish(r, dots[3] ? (dots + 3) : "HEAD", &oid_tmp))
+    {
         return -1;
+    }
     two = lookup_commit_reference_gently(r, &oid_tmp, 0);
     if (!two)
+    {
         return -1;
+    }
     if (repo_get_merge_bases(r, one, two, &mbs) < 0)
     {
         free_commit_list(mbs);
         return -1;
     }
     if (!mbs || mbs->next)
+    {
         st = -1;
+    }
     else
     {
         st = 0;
@@ -1668,16 +1951,24 @@ static int interpret_empty_at(const char *name, int namelen, int len, struct str
     const char *next;
 
     if (len || name[1] == '{')
+    {
         return -1;
+    }
 
     /* make sure it's a single @, or @@{.*}, not @foo */
     next = memchr(name + len + 1, '@', namelen - len - 1);
     if (next && next[1] != '{')
+    {
         return -1;
+    }
     if (!next)
+    {
         next = name + namelen;
+    }
     if (next != name + 1)
+    {
         return -1;
+    }
 
     strbuf_reset(buf);
     strbuf_add(buf, "HEAD", 4);
@@ -1721,12 +2012,18 @@ static void set_shortened_ref(struct repository *r, struct strbuf *buf, const ch
 static int branch_interpret_allowed(const char *refname, unsigned allowed)
 {
     if (!allowed)
+    {
         return 1;
+    }
 
     if ((allowed & INTERPRET_BRANCH_LOCAL) && starts_with(refname, "refs/heads/"))
+    {
         return 1;
+    }
     if ((allowed & INTERPRET_BRANCH_REMOTE) && starts_with(refname, "refs/remotes/"))
+    {
         return 1;
+    }
 
     return 0;
 }
@@ -1746,10 +2043,14 @@ static int interpret_branch_mark(struct repository *r,
 
     len = get_mark(name + at, namelen - at);
     if (!len)
+    {
         return -1;
+    }
 
     if (memchr(name, ':', at))
+    {
         return -1;
+    }
 
     if (at)
     {
@@ -1758,7 +2059,9 @@ static int interpret_branch_mark(struct repository *r,
         free(name_str);
     }
     else
+    {
         branch = branch_get(NULL);
+    }
 
     value = get_data(branch, &err);
     if (!value)
@@ -1768,14 +2071,14 @@ static int interpret_branch_mark(struct repository *r,
             strbuf_release(&err);
             return -1;
         }
-        else
-        {
-            die("%s", err.buf);
-        }
+
+        die("%s", err.buf);
     }
 
     if (!branch_interpret_allowed(value, options->allowed))
+    {
         return -1;
+    }
 
     set_shortened_ref(r, buf, value);
     return len + at;
@@ -1791,7 +2094,9 @@ int repo_interpret_branch_name(struct repository *r,
     int         len;
 
     if (!namelen)
+    {
         namelen = strlen(name);
+    }
 
     if (!options->allowed || (options->allowed & INTERPRET_BRANCH_LOCAL))
     {
@@ -1800,7 +2105,7 @@ int repo_interpret_branch_name(struct repository *r,
         {
             return len; /* syntax Ok, not enough switches */
         }
-        else if (len > 0)
+        if (len > 0)
         {
             if (len == namelen)
                 return len; /* consumed all */
@@ -1819,21 +2124,27 @@ int repo_interpret_branch_name(struct repository *r,
         {
             len = interpret_empty_at(name, namelen, at - name, buf);
             if (len > 0)
+            {
                 return reinterpret(r, name, namelen, len, buf,
                                    options->allowed);
+            }
         }
 
         len = interpret_branch_mark(r, name, namelen, at - name, buf,
                                     upstream_mark, branch_get_upstream,
                                     options);
         if (len > 0)
+        {
             return len;
+        }
 
         len = interpret_branch_mark(r, name, namelen, at - name, buf,
                                     push_mark, branch_get_push,
                                     options);
         if (len > 0)
+        {
             return len;
+        }
     }
 
     return -1;
@@ -1848,16 +2159,22 @@ void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed)
                                           &options);
 
     if (used < 0)
+    {
         used = 0;
+    }
     strbuf_add(sb, name + used, len - used);
 }
 
 int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 {
     if (startup_info->have_repository)
+    {
         strbuf_branchname(sb, name, INTERPRET_BRANCH_LOCAL);
+    }
     else
+    {
         strbuf_addstr(sb, name);
+    }
 
     /*
      * This splice must be done even if we end up rejecting the
@@ -1868,7 +2185,9 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
     strbuf_splice(sb, 0, 0, "refs/heads/", 11);
 
     if (*name == '-' || !strcmp(sb->buf, "refs/heads/HEAD"))
+    {
         return -1;
+    }
 
     return check_refname_format(sb->buf, 0);
 }
@@ -1988,11 +2307,15 @@ static void diagnose_invalid_oid_path(struct repository      *r,
     unsigned short   mode;
 
     if (!prefix)
+    {
         prefix = "";
+    }
 
     if (file_exists(filename))
+    {
         die(_("path '%s' exists on disk, but not in '%.*s'"),
             filename, object_name_len, object_name);
+    }
     if (is_missing_file_error(errno))
     {
         char *fullname = xstrfmt("%s%s", prefix, filename);
@@ -2026,20 +2349,26 @@ static void diagnose_invalid_index_path(struct repository *r,
     struct strbuf             fullname = STRBUF_INIT;
 
     if (!prefix)
+    {
         prefix = "";
+    }
 
     /* Wrong stage number? */
     pos = index_name_pos(istate, filename, namelen);
     if (pos < 0)
+    {
         pos = -pos - 1;
+    }
     if (pos < istate->cache_nr)
     {
         ce = istate->cache[pos];
         if (!S_ISSPARSEDIR(ce->ce_mode) && ce_namelen(ce) == namelen && !memcmp(ce->name, filename, namelen))
+        {
             die(_("path '%s' is in the index, but not at stage %d\n"
                   "hint: Did you mean ':%d:%s'?"),
                 filename, stage,
                 ce_stage(ce), filename);
+        }
     }
 
     /* Confusion between relative and absolute filenames? */
@@ -2047,23 +2376,31 @@ static void diagnose_invalid_index_path(struct repository *r,
     strbuf_addstr(&fullname, filename);
     pos = index_name_pos(istate, fullname.buf, fullname.len);
     if (pos < 0)
+    {
         pos = -pos - 1;
+    }
     if (pos < istate->cache_nr)
     {
         ce = istate->cache[pos];
         if (!S_ISSPARSEDIR(ce->ce_mode) && ce_namelen(ce) == fullname.len && !memcmp(ce->name, fullname.buf, fullname.len))
+        {
             die(_("path '%s' is in the index, but not '%s'\n"
                   "hint: Did you mean ':%d:%s' aka ':%d:./%s'?"),
                 fullname.buf, filename,
                 ce_stage(ce), fullname.buf,
                 ce_stage(ce), filename);
+        }
     }
 
     if (repo_file_exists(r, filename))
+    {
         die(_("path '%s' exists on disk, but not in the index"), filename);
+    }
     if (is_missing_file_error(errno))
+    {
         die(_("path '%s' does not exist (neither on disk nor in the index)"),
             filename);
+    }
 
     strbuf_release(&fullname);
 }
@@ -2071,10 +2408,14 @@ static void diagnose_invalid_index_path(struct repository *r,
 static char *resolve_relative_path(struct repository *r, const char *rel)
 {
     if (!starts_with(rel, "./") && !starts_with(rel, "../"))
+    {
         return NULL;
+    }
 
     if (r != the_repository || !is_inside_work_tree())
+    {
         die(_("relative path syntax can't be used outside working tree"));
+    }
 
     /* die() inside prefix_path() if resolved path is outside worktree */
     return prefix_path(startup_info->prefix,
@@ -2090,9 +2431,13 @@ static int reject_tree_in_index(struct repository        *repo,
                                 const char               *cp)
 {
     if (!S_ISSPARSEDIR(ce->ce_mode))
+    {
         return 0;
+    }
     if (only_to_die)
+    {
         diagnose_invalid_index_path(repo, stage, prefix, cp);
+    }
     return -1;
 }
 
@@ -2103,7 +2448,8 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
                                                   struct object_id      *oid,
                                                   struct object_context *oc)
 {
-    int         ret, bracket_depth;
+    int         ret;
+    int         bracket_depth;
     int         namelen = strlen(name);
     const char *cp;
     int         only_to_die = flags & GET_OID_ONLY_TO_DIE;
@@ -2113,10 +2459,14 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
     strbuf_init(&oc->symlink_path, 0);
     ret = get_oid_1(repo, name, namelen, oid, flags);
     if (!ret && flags & GET_OID_REQUIRE_PATH)
+    {
         die(_("<object>:<path> required, only <object> '%s' given"),
             name);
+    }
     if (!ret)
+    {
         return ret;
+    }
     /*
      * tree:path --> object name of path in tree
      * :path -> object name of absolute path in index
@@ -2146,7 +2496,9 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
             return ret;
         }
         if (namelen < 3 || name[2] != ':' || name[1] < '0' || '3' < name[1])
+        {
             cp = name + 1;
+        }
         else
         {
             stage = name[1] - '0';
@@ -2164,24 +2516,34 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
         }
 
         if (flags & GET_OID_RECORD_PATH)
+        {
             oc->path = xstrdup(cp);
+        }
 
         if (!repo->index || !repo->index->cache)
+        {
             repo_read_index(repo);
+        }
         pos = index_name_pos(repo->index, cp, namelen);
         if (pos < 0)
+        {
             pos = -pos - 1;
+        }
         while (pos < repo->index->cache_nr)
         {
             ce = repo->index->cache[pos];
-            if (ce_namelen(ce) != namelen || memcmp(ce->name, cp, namelen))
+            if (ce_namelen(ce) != namelen || memcmp(ce->name, cp, namelen) != 0)
+            {
                 break;
+            }
             if (ce_stage(ce) == stage)
             {
                 free(new_path);
                 if (reject_tree_in_index(repo, only_to_die, ce,
                                          stage, prefix, cp))
+                {
                     return -1;
+                }
                 oidcpy(oid, &ce->oid);
                 oc->mode = ce->ce_mode;
                 return 0;
@@ -2189,18 +2551,26 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
             pos++;
         }
         if (only_to_die && name[1] && name[1] != '/')
+        {
             diagnose_invalid_index_path(repo, stage, prefix, cp);
+        }
         free(new_path);
         return -1;
     }
     for (cp = name, bracket_depth = 0; *cp; cp++)
     {
         if (*cp == '{')
+        {
             bracket_depth++;
+        }
         else if (bracket_depth && *cp == '}')
+        {
             bracket_depth--;
+        }
         else if (!bracket_depth && *cp == ':')
+        {
             break;
+        }
     }
     if (*cp == ':')
     {
@@ -2218,7 +2588,9 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
 
             new_filename = resolve_relative_path(repo, filename);
             if (new_filename)
+            {
                 filename = new_filename;
+            }
             if (flags & GET_OID_FOLLOW_SYMLINKS)
             {
                 ret = get_tree_entry_follow_symlinks(repo, &tree_oid,
@@ -2238,16 +2610,16 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
                 }
             }
             if (flags & GET_OID_RECORD_PATH)
+            {
                 oc->path = xstrdup(filename);
+            }
 
             free(new_filename);
             return ret;
         }
-        else
-        {
-            if (only_to_die)
-                die(_("invalid object name '%.*s'."), len, name);
-        }
+
+        if (only_to_die)
+            die(_("invalid object name '%.*s'."), len, name);
     }
     return ret;
 }
@@ -2277,6 +2649,8 @@ enum get_oid_result get_oid_with_context(struct repository     *repo,
                                          struct object_context *oc)
 {
     if (flags & GET_OID_FOLLOW_SYMLINKS && flags & GET_OID_ONLY_TO_DIE)
+    {
         BUG("incompatible flags for get_oid_with_context");
+    }
     return get_oid_with_context_1(repo, str, flags, NULL, oid, oc);
 }

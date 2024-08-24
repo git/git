@@ -33,7 +33,9 @@ static int register_replace_ref(const char             *refname,
 
     /* Register new object */
     if (oidmap_put(r->objects->replace_map, repl_obj))
+    {
         die(_("duplicate replace ref: %s"), refname);
+    }
 
     return 0;
 }
@@ -41,7 +43,9 @@ static int register_replace_ref(const char             *refname,
 void prepare_replace_object(struct repository *r)
 {
     if (r->objects->replace_map_initialized)
+    {
         return;
+    }
 
     pthread_mutex_lock(&r->objects->replace_mutex);
     if (r->objects->replace_map_initialized)
@@ -85,7 +89,9 @@ const struct object_id *do_lookup_replace_object(struct repository      *r,
         struct replace_object *repl_obj =
             oidmap_get(r->objects->replace_map, cur);
         if (!repl_obj)
+        {
             return cur;
+        }
         cur = &repl_obj->replacement;
     }
     die(_("replace depth too high for object %s"), oid_to_hex(oid));
@@ -106,7 +112,9 @@ void disable_replace_refs(void)
 int replace_refs_enabled(struct repository *r)
 {
     if (!read_replace_refs)
+    {
         return 0;
+    }
 
     if (r->gitdir)
     {

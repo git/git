@@ -30,7 +30,7 @@ static int packet_trace_pack(const char *buf, unsigned int len, int sideband)
         trace_verbatim(&trace_pack, buf, len);
         return 1;
     }
-    else if (len && *buf == '\1')
+    if (len && *buf == '\1')
     {
         trace_verbatim(&trace_pack, buf + 1, len - 1);
         return 1;
@@ -46,15 +46,20 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 {
     int           i;
     struct strbuf out;
-    static int    in_pack, sideband;
+    static int    in_pack;
+    static int    sideband;
 
     if (!trace_want(&trace_packet) && !trace_want(&trace_pack))
+    {
         return;
+    }
 
     if (in_pack)
     {
         if (packet_trace_pack(buf, len, sideband))
+        {
             return;
+        }
     }
     else if (starts_with(buf, "PACK") || starts_with(buf, "\1PACK"))
     {
@@ -71,7 +76,9 @@ static void packet_trace(const char *buf, unsigned int len, int write)
     }
 
     if (!trace_want(&trace_packet))
+    {
         return;
+    }
 
     /* +32 is just a guess for header + quoting */
     strbuf_init(&out, len + 32);
@@ -84,11 +91,17 @@ static void packet_trace(const char *buf, unsigned int len, int write)
     {
         /* suppress newlines */
         if (buf[i] == '\n')
+        {
             continue;
+        }
         if (buf[i] >= 0x20 && buf[i] <= 0x7e)
+        {
             strbuf_addch(&out, buf[i]);
+        }
         else
+        {
             strbuf_addf(&out, "\\%o", buf[i]);
+        }
     }
 
     strbuf_addch(&out, '\n');
@@ -104,28 +117,36 @@ void packet_flush(int fd)
 {
     packet_trace("0000", 4, 1);
     if (write_in_full(fd, "0000", 4) < 0)
+    {
         die_errno(_("unable to write flush packet"));
+    }
 }
 
 void packet_delim(int fd)
 {
     packet_trace("0001", 4, 1);
     if (write_in_full(fd, "0001", 4) < 0)
+    {
         die_errno(_("unable to write delim packet"));
+    }
 }
 
 void packet_response_end(int fd)
 {
     packet_trace("0002", 4, 1);
     if (write_in_full(fd, "0002", 4) < 0)
+    {
         die_errno(_("unable to write response end packet"));
+    }
 }
 
 int packet_flush_gently(int fd)
 {
     packet_trace("0000", 4, 1);
     if (write_in_full(fd, "0000", 4) < 0)
+    {
         return error(_("flush packet write failed"));
+    }
     return 0;
 }
 
@@ -156,7 +177,8 @@ void set_packet_header(char *buf, int size)
 static void format_packet(struct strbuf *out, const char *prefix,
                           const char *fmt, va_list args)
 {
-    size_t orig_len, n;
+    size_t orig_len;
+    size_t n;
 
     orig_len = out->len;
     strbuf_addstr(out, "0000");
@@ -165,7 +187,9 @@ static void format_packet(struct strbuf *out, const char *prefix,
     n = out->len - orig_len;
 
     if (n > LARGE_PACKET_MAX)
+    {
         die(_("protocol error: impossibly long line"));
+    }
 
     set_packet_header(&out->buf[orig_len], n);
     packet_trace(out->buf + orig_len + 4, n - 4, 1);
@@ -259,7 +283,9 @@ void packet_write(int fd_out, const char *buf, size_t size)
 {
     struct strbuf err = STRBUF_INIT;
     if (do_packet_write(fd_out, buf, size, &err))
+    {
         die("%s", err.buf);
+    }
 }
 
 void packet_fwrite(FILE *f, const char *buf, size_t size)
@@ -268,7 +294,9 @@ void packet_fwrite(FILE *f, const char *buf, size_t size)
     char   header[4];
 
     if (size > LARGE_PACKET_DATA_MAX)
+    {
         die(_("packet write failed - data exceeds max packet size"));
+    }
 
     packet_trace(buf, size, 1);
     packet_size = size + 4;
@@ -323,7 +351,9 @@ int write_packetized_from_fd_no_flush(int fd_in, int fd_out)
             return COPY_READ_ERROR;
         }
         if (bytes_to_write == 0)
+        {
             break;
+        }
         err = packet_write_gently(fd_out, buf, bytes_to_write);
     }
     free(buf);
@@ -340,15 +370,23 @@ int write_packetized_from_buf_no_flush_count(const char *src_in, size_t len,
     while (!err)
     {
         if ((len - bytes_written) > LARGE_PACKET_DATA_MAX)
+        {
             bytes_to_write = LARGE_PACKET_DATA_MAX;
+        }
         else
+        {
             bytes_to_write = len - bytes_written;
+        }
         if (bytes_to_write == 0)
+        {
             break;
+        }
         err = packet_write_gently(fd_out, src_in + bytes_written, bytes_to_write);
         bytes_written += bytes_to_write;
         if (packet_counter)
+        {
             (*packet_counter)++;
+        }
     }
     return err;
 }
@@ -359,7 +397,9 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
     ssize_t ret;
 
     if (fd >= 0 && src_buf && *src_buf)
+    {
         BUG("multiple sources given to packet_read");
+    }
 
     /* Read up to "size" bytes from our source, whatever it is. */
     if (src_buf && *src_buf)
@@ -375,7 +415,9 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
         if (ret < 0)
         {
             if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
+            {
                 return error_errno(_("read error"));
+            }
             die_errno(_("read error"));
         }
     }
@@ -384,10 +426,14 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
     if (ret != size)
     {
         if (options & PACKET_READ_GENTLE_ON_EOF)
+        {
             return -1;
+        }
 
         if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
+        {
             return error(_("the remote end hung up unexpectedly"));
+        }
         die(_("the remote end hung up unexpectedly"));
     }
 
@@ -397,7 +443,9 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 int packet_length(const char lenbuf_hex[4], size_t size)
 {
     if (size < 4)
+    {
         BUG("buffer too small");
+    }
     return hexval(lenbuf_hex[0]) << 12 | hexval(lenbuf_hex[1]) << 8 | hexval(lenbuf_hex[2]) << 4 | hexval(lenbuf_hex[3]);
 }
 
@@ -413,15 +461,21 @@ static char *find_packfile_uri_path(const char *buffer)
     len = strspn(buffer, "0123456789abcdefABCDEF");
     /* size of SHA1 and SHA256 hash */
     if (!(len == 40 || len == 64) || buffer[len] != ' ')
+    {
         return NULL; /* required "<hash>SP" not seen */
+    }
 
     path = strstr(buffer + len + 1, URI_MARK);
     if (!path)
+    {
         return NULL;
+    }
 
     path = strchr(path + strlen(URI_MARK), '/');
     if (!path || !*(path + 1))
+    {
         return NULL;
+    }
 
     /* position after '/' */
     return ++path;
@@ -447,9 +501,11 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
     if (len < 0)
     {
         if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
+        {
             return error(_("protocol error: bad line length "
                            "character: %.4s"),
                          linelen);
+        }
         die(_("protocol error: bad line length character: %.4s"), linelen);
     }
     else if (!len)
@@ -473,8 +529,10 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
     else if (len < 4)
     {
         if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
+        {
             return error(_("protocol error: bad line length %d"),
                          len);
+        }
         die(_("protocol error: bad line length %d"), len);
     }
 
@@ -482,8 +540,10 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
     if ((unsigned)len >= size)
     {
         if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
+        {
             return error(_("protocol error: bad line length %d"),
                          len);
+        }
         die(_("protocol error: bad line length %d"), len);
     }
 
@@ -542,7 +602,9 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
     }
 
     if ((options & PACKET_READ_DIE_ON_ERR_PACKET) && starts_with(buffer, "ERR "))
+    {
         die(_("remote error: %s"), buffer + 4);
+    }
 
     *pktlen = len;
     return PACKET_READ_NORMAL;
@@ -563,7 +625,9 @@ char *packet_read_line(int fd, int *dst_len)
     int len = packet_read(fd, packet_buffer, sizeof(packet_buffer),
                           PACKET_READ_CHOMP_NEWLINE);
     if (dst_len)
+    {
         *dst_len = len;
+    }
     return (len > 0) ? packet_buffer : NULL;
 }
 
@@ -572,9 +636,13 @@ int packet_read_line_gently(int fd, int *dst_len, char **dst_line)
     int len = packet_read(fd, packet_buffer, sizeof(packet_buffer),
                           PACKET_READ_CHOMP_NEWLINE | PACKET_READ_GENTLE_ON_EOF);
     if (dst_len)
+    {
         *dst_len = len;
+    }
     if (dst_line)
+    {
         *dst_line = (len > 0) ? packet_buffer : NULL;
+    }
     return len;
 }
 
@@ -597,16 +665,22 @@ ssize_t read_packetized_to_strbuf(int fd_in, struct strbuf *sb_out, int options)
                                  sb_out->buf + sb_out->len, LARGE_PACKET_DATA_MAX + 1,
                                  options);
         if (packet_len <= 0)
+        {
             break;
+        }
         sb_out->len += packet_len;
     }
 
     if (packet_len < 0)
     {
         if (orig_alloc == 0)
+        {
             strbuf_release(sb_out);
+        }
         else
+        {
             strbuf_setlen(sb_out, orig_len);
+        }
         return packet_len;
     }
     return sb_out->len - orig_len;
@@ -627,7 +701,9 @@ int recv_sideband(const char *me, int in_stream, int out)
                                              PACKET_READ_GENTLE_ON_EOF);
         if (!demultiplex_sideband(me, status, buf, len, 0, &scratch,
                                   &sideband_type))
+        {
             continue;
+        }
         switch (sideband_type)
         {
             case SIDEBAND_PRIMARY:
@@ -635,8 +711,10 @@ int recv_sideband(const char *me, int in_stream, int out)
                 break;
             default: /* errors: message already written */
                 if (scratch.len > 0)
+                {
                     BUG("unhandled incomplete sideband: '%s'",
                         scratch.buf);
+                }
                 return sideband_type;
         }
     }
@@ -669,7 +747,9 @@ enum packet_read_status packet_reader_read(struct packet_reader *reader)
     }
 
     if (reader->use_sideband)
+    {
         reader->options |= PACKET_READ_USE_SIDEBAND;
+    }
 
     /*
      * Consume all progress packets until a primary payload packet is
@@ -686,18 +766,26 @@ enum packet_read_status packet_reader_read(struct packet_reader *reader)
                                                  &reader->pktlen,
                                                  reader->options);
         if (!reader->use_sideband)
+        {
             break;
+        }
         if (demultiplex_sideband(reader->me, reader->status,
                                  reader->buffer, reader->pktlen, 1,
                                  &reader->scratch, &sideband_type))
+        {
             break;
+        }
     }
 
     if (reader->status == PACKET_READ_NORMAL)
+    {
         /* Skip the sideband designator if sideband is used */
         reader->line = reader->use_sideband ? reader->buffer + 1 : reader->buffer;
+    }
     else
+    {
         reader->line = NULL;
+    }
 
     return reader->status;
 }
@@ -706,7 +794,9 @@ enum packet_read_status packet_reader_peek(struct packet_reader *reader)
 {
     /* Only allow peeking a single line */
     if (reader->line_peeked)
+    {
         return reader->status;
+    }
 
     /* Peek a line by reading it and setting peeked flag */
     packet_reader_read(reader);

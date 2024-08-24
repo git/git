@@ -17,7 +17,8 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 {
     size_t      llen;
     int         is_glob;
-    const char *lhs, *rhs;
+    const char *lhs;
+    const char *rhs;
     int         flags;
 
     is_glob = 0;
@@ -38,7 +39,9 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 
     /* negative refspecs only have one side */
     if (item->negative && rhs)
+    {
         return 0;
+    }
 
     /*
      * Before going on, special case ":" (or "+:") as a refspec
@@ -65,7 +68,9 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
     if (1 <= llen && memchr(lhs, '*', llen))
     {
         if ((rhs && !is_glob) || (!rhs && !item->negative && fetch))
+        {
             return 0;
+        }
         is_glob = 1;
     }
     else if (rhs && is_glob)
@@ -75,9 +80,13 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 
     item->pattern = is_glob;
     if (llen == 1 && *lhs == '@')
+    {
         item->src = xstrdup("HEAD");
+    }
     else
+    {
         item->src = xstrndup(lhs, llen);
+    }
     flags = REFNAME_ALLOW_ONELEVEL | (is_glob ? REFNAME_REFSPEC_PATTERN : 0);
 
     if (item->negative)
@@ -91,8 +100,10 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
          * match is not currently supported.
          */
         if (!*item->src)
+        {
             return 0; /* negative refspecs must not be empty */
-        else if (llen == the_hash_algo->hexsz && !get_oid_hex(item->src, &unused))
+        }
+        if (llen == the_hash_algo->hexsz && !get_oid_hex(item->src, &unused))
             return 0; /* negative refpsecs cannot be exact sha1 */
         else if (!check_refname_format(item->src, flags))
             ; /* valid looking ref is ok */
@@ -109,22 +120,38 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 
         /* LHS */
         if (!*item->src)
+        {
             ; /* empty is ok; it means "HEAD" */
+        }
         else if (llen == the_hash_algo->hexsz && !get_oid_hex(item->src, &unused))
+        {
             item->exact_sha1 = 1; /* ok */
+        }
         else if (!check_refname_format(item->src, flags))
+        {
             ; /* valid looking ref is ok */
+        }
         else
+        {
             return 0;
+        }
         /* RHS */
         if (!item->dst)
+        {
             ; /* missing is ok; it is the same as empty */
+        }
         else if (!*item->dst)
+        {
             ; /* empty is ok; it means "do not store" */
+        }
         else if (!check_refname_format(item->dst, flags))
+        {
             ; /* valid looking ref is ok */
+        }
         else
+        {
             return 0;
+        }
     }
     else
     {
@@ -136,14 +163,20 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
          *   there is no existing way to validate this.
          */
         if (!*item->src)
+        {
             ; /* empty is ok */
+        }
         else if (is_glob)
         {
             if (check_refname_format(item->src, flags))
+            {
                 return 0;
+            }
         }
         else
+        {
             ; /* anything goes, for now */
+        }
         /*
          * RHS
          * - missing is allowed, but LHS then must be a
@@ -154,7 +187,9 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
         if (!item->dst)
         {
             if (check_refname_format(item->src, flags))
+            {
                 return 0;
+            }
         }
         else if (!*item->dst)
         {
@@ -163,7 +198,9 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
         else
         {
             if (check_refname_format(item->dst, flags))
+            {
                 return 0;
+            }
         }
     }
 
@@ -180,7 +217,9 @@ void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
                               int fetch)
 {
     if (!refspec_item_init(item, refspec, fetch))
+    {
         die(_("invalid refspec '%s'"), refspec);
+    }
 }
 
 void refspec_item_clear(struct refspec_item *item)
@@ -230,7 +269,9 @@ void refspec_appendn(struct refspec *rs, const char **refspecs, int nr)
 {
     int i;
     for (i = 0; i < nr; i++)
+    {
         refspec_append(rs, refspecs[i]);
+    }
 }
 
 void refspec_clear(struct refspec *rs)
@@ -238,14 +279,18 @@ void refspec_clear(struct refspec *rs)
     int i;
 
     for (i = 0; i < rs->nr; i++)
+    {
         refspec_item_clear(&rs->items[i]);
+    }
 
     FREE_AND_NULL(rs->items);
     rs->alloc = 0;
     rs->nr    = 0;
 
     for (i = 0; i < rs->raw_nr; i++)
+    {
         free((char *)rs->raw[i]);
+    }
     FREE_AND_NULL(rs->raw);
     rs->raw_alloc = 0;
     rs->raw_nr    = 0;
@@ -281,16 +326,26 @@ void refspec_ref_prefixes(const struct refspec *rs,
         const char                *prefix = NULL;
 
         if (item->exact_sha1 || item->negative)
+        {
             continue;
+        }
         if (rs->fetch == REFSPEC_FETCH)
+        {
             prefix = item->src;
+        }
         else if (item->dst)
+        {
             prefix = item->dst;
+        }
         else if (item->src && !item->exact_sha1)
+        {
             prefix = item->src;
+        }
 
         if (!prefix)
+        {
             continue;
+        }
 
         if (item->pattern)
         {

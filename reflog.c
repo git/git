@@ -23,11 +23,17 @@ static int tree_is_complete(const struct object_id *oid)
 
     tree = lookup_tree(the_repository, oid);
     if (!tree)
+    {
         return 0;
+    }
     if (tree->object.flags & SEEN)
+    {
         return 1;
+    }
     if (tree->object.flags & INCOMPLETE)
+    {
         return 0;
+    }
 
     if (!tree->buffer)
     {
@@ -56,7 +62,9 @@ static int tree_is_complete(const struct object_id *oid)
     free_tree_buffer(tree);
 
     if (complete)
+    {
         tree->object.flags |= SEEN;
+    }
     return complete;
 }
 
@@ -69,9 +77,13 @@ static int commit_is_complete(struct commit *commit)
 
     /* early return */
     if (commit->object.flags & SEEN)
+    {
         return 1;
+    }
     if (commit->object.flags & INCOMPLETE)
+    {
         return 0;
+    }
     /*
      * Find all commits that are reachable and are not marked as
      * SEEN.  Then make sure the trees and blobs contained are
@@ -91,20 +103,24 @@ static int commit_is_complete(struct commit *commit)
 
         c = (struct commit *)object_array_pop(&study);
         if (!c->object.parsed && !parse_object(the_repository, &c->object.oid))
+        {
             c->object.flags |= INCOMPLETE;
+        }
 
         if (c->object.flags & INCOMPLETE)
         {
             is_incomplete = 1;
             break;
         }
-        else if (c->object.flags & SEEN)
+        if (c->object.flags & SEEN)
             continue;
         for (parent = c->parents; parent; parent = parent->next)
         {
             struct commit *p = parent->item;
             if (p->object.flags & STUDYING)
+            {
                 continue;
+            }
             p->object.flags |= STUDYING;
             add_object_array(&p->object, NULL, &study);
             add_object_array(&p->object, NULL, &found);
@@ -130,14 +146,20 @@ static int commit_is_complete(struct commit *commit)
         {
             /* mark all found commits as complete, iow SEEN */
             for (i = 0; i < found.nr; i++)
+            {
                 found.objects[i].item->flags |= SEEN;
+            }
         }
     }
     /* clear flags from the objects we traversed */
     for (i = 0; i < found.nr; i++)
+    {
         found.objects[i].item->flags &= ~STUDYING;
+    }
     if (is_incomplete)
+    {
         commit->object.flags |= INCOMPLETE;
+    }
     else
     {
         /*
@@ -149,7 +171,9 @@ static int commit_is_complete(struct commit *commit)
          * we have seen during this process are complete.
          */
         for (i = 0; i < found.nr; i++)
+        {
             found.objects[i].item->flags |= SEEN;
+        }
     }
     /* free object arrays */
     object_array_clear(&study);
@@ -162,10 +186,14 @@ static int keep_entry(struct commit **it, struct object_id *oid)
     struct commit *commit;
 
     if (is_null_oid(oid))
+    {
         return 1;
+    }
     commit = lookup_commit_reference_gently(the_repository, oid, 1);
     if (!commit)
+    {
         return 0;
+    }
 
     /*
      * Make sure everything in this commit exists.
@@ -176,7 +204,9 @@ static int keep_entry(struct commit **it, struct object_id *oid)
      * SEEN as well.
      */
     if (!commit_is_complete(commit))
+    {
         return 0;
+    }
     *it = commit;
     return 1;
 }
@@ -194,7 +224,9 @@ static void mark_reachable(struct expire_reflog_policy_cb *cb)
     struct commit_list *leftover     = NULL;
 
     for (pending = cb->mark_list; pending; pending = pending->next)
+    {
         pending->item->object.flags &= ~REACHABLE;
+    }
 
     pending = cb->mark_list;
     while (pending)
@@ -202,9 +234,13 @@ static void mark_reachable(struct expire_reflog_policy_cb *cb)
         struct commit_list *parent;
         struct commit      *commit = pop_commit(&pending);
         if (commit->object.flags & REACHABLE)
+        {
             continue;
+        }
         if (repo_parse_commit(the_repository, commit))
+        {
             continue;
+        }
         commit->object.flags |= REACHABLE;
         if (commit->date < expire_limit)
         {
@@ -217,7 +253,9 @@ static void mark_reachable(struct expire_reflog_policy_cb *cb)
             commit = parent->item;
             parent = parent->next;
             if (commit->object.flags & REACHABLE)
+            {
                 continue;
+            }
             commit_list_insert(commit, &pending);
         }
     }
@@ -233,19 +271,25 @@ static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit
     if (!commit)
     {
         if (is_null_oid(oid))
+        {
             return 0;
+        }
 
         commit = lookup_commit_reference_gently(the_repository, oid,
                                                 1);
 
         /* Not a commit -- keep it */
         if (!commit)
+        {
             return 0;
+        }
     }
 
     /* Reachable from the current ref?  Don't prune. */
     if (commit->object.flags & REACHABLE)
+    {
         return 0;
+    }
 
     if (cb->mark_list && cb->mark_limit)
     {
@@ -265,14 +309,19 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
                              const char *message UNUSED, void *cb_data)
 {
     struct expire_reflog_policy_cb *cb = cb_data;
-    struct commit                  *old_commit, *new_commit;
+    struct commit                  *old_commit;
+    struct commit                  *new_commit;
 
     if (timestamp < cb->cmd.expire_total)
+    {
         return 1;
+    }
 
     old_commit = new_commit = NULL;
     if (cb->cmd.stalefix && (!keep_entry(&old_commit, ooid) || !keep_entry(&new_commit, noid)))
+    {
         return 1;
+    }
 
     if (timestamp < cb->cmd.expire_unreachable)
     {
@@ -283,13 +332,17 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
             case UE_NORMAL:
             case UE_HEAD:
                 if (unreachable(cb, old_commit, ooid) || unreachable(cb, new_commit, noid))
+                {
                     return 1;
+                }
                 break;
         }
     }
 
     if (cb->cmd.recno && --(cb->cmd.recno) == 0)
+    {
         return 1;
+    }
 
     return 0;
 }
@@ -307,11 +360,17 @@ int should_expire_reflog_ent_verbose(struct object_id *ooid,
                                       message, cb);
 
     if (!expire)
+    {
         printf("keep %s", message);
+    }
     else if (cb->dry_run)
+    {
         printf("would prune %s", message);
+    }
     else
+    {
         printf("prune %s", message);
+    }
 
     return expire;
 }
@@ -324,10 +383,14 @@ static int push_tip_to_list(const char *refname     UNUSED,
     struct commit_list **list = cb_data;
     struct commit       *tip_commit;
     if (flags & REF_ISSYMREF)
+    {
         return 0;
+    }
     tip_commit = lookup_commit_reference_gently(the_repository, oid, 1);
     if (!tip_commit)
+    {
         return 0;
+    }
     commit_list_insert(tip_commit, list);
     return 0;
 }
@@ -356,12 +419,16 @@ void reflog_expiry_prepare(const char             *refname,
         commit = lookup_commit_reference_gently(the_repository,
                                                 oid, 1);
         if (commit && is_null_oid(&commit->object.oid))
+        {
             commit = NULL;
+        }
         cb->unreachable_expire_kind = commit ? UE_NORMAL : UE_ALWAYS;
     }
 
     if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
+    {
         cb->unreachable_expire_kind = UE_ALWAYS;
+    }
 
     switch (cb->unreachable_expire_kind)
     {
@@ -371,7 +438,9 @@ void reflog_expiry_prepare(const char             *refname,
             refs_for_each_ref(get_main_ref_store(the_repository),
                               push_tip_to_list, &cb->tips);
             for (elem = cb->tips; elem; elem = elem->next)
+            {
                 commit_list_insert(elem->item, &cb->mark_list);
+            }
             break;
         case UE_NORMAL:
             commit_list_insert(commit, &cb->mark_list);
@@ -393,7 +462,9 @@ void reflog_expiry_cleanup(void *cb_data)
             return;
         case UE_HEAD:
             for (elem = cb->tips; elem; elem = elem->next)
+            {
                 clear_commit_marks(elem->item, REACHABLE);
+            }
             free_commit_list(cb->tips);
             break;
         case UE_NORMAL:
@@ -401,7 +472,9 @@ void reflog_expiry_cleanup(void *cb_data)
             break;
     }
     for (elem = cb->mark_list; elem; elem = elem->next)
+    {
         clear_commit_marks(elem->item, REACHABLE);
+    }
     free_commit_list(cb->mark_list);
 }
 
@@ -413,7 +486,9 @@ int count_reflog_ent(struct object_id *ooid UNUSED,
 {
     struct cmd_reflog_expire_cb *cb = cb_data;
     if (!cb->expire_total || timestamp < cb->expire_total)
+    {
         cb->recno++;
+    }
     return 0;
 }
 
@@ -423,17 +498,22 @@ int reflog_delete(const char *rev, enum expire_reflog_flags flags, int verbose)
     int                            status          = 0;
     reflog_expiry_should_prune_fn *should_prune_fn = should_expire_reflog_ent;
     const char                    *spec            = strstr(rev, "@{");
-    char                          *ep, *ref;
+    char                          *ep;
+    char                          *ref;
     int                            recno;
     struct expire_reflog_policy_cb cb = {
         .dry_run = !!(flags & EXPIRE_REFLOGS_DRY_RUN),
     };
 
     if (verbose)
+    {
         should_prune_fn = should_expire_reflog_ent_verbose;
+    }
 
     if (!spec)
+    {
         return error(_("not a reflog: %s"), rev);
+    }
 
     if (!repo_dwim_log(the_repository, rev, spec - rev, NULL, &ref))
     {

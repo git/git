@@ -41,7 +41,9 @@ static struct attr_check *merge_attributes;
 static struct attr_check *load_merge_attributes(void)
 {
     if (!merge_attributes)
+    {
         merge_attributes = attr_check_initl("merge", "conflict-marker-size", NULL);
+    }
     return merge_attributes;
 }
 
@@ -132,11 +134,17 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
     xmp.favor     = opts->variant;
     xmp.xpp.flags = opts->xdl_opts;
     if (opts->conflict_style >= 0)
+    {
         xmp.style = opts->conflict_style;
+    }
     else if (git_xmerge_style >= 0)
+    {
         xmp.style = git_xmerge_style;
+    }
     if (marker_size > 0)
+    {
         xmp.marker_size = marker_size;
+    }
     xmp.ancestor = orig_name;
     xmp.file1    = name1;
     xmp.file2    = name2;
@@ -180,7 +188,9 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
     xsnprintf(path, len, ".merge_file_XXXXXX");
     fd = xmkstemp(path);
     if (write_in_full(fd, src->ptr, src->size) < 0)
+    {
         die_errno("unable to write temp-file");
+    }
     close(fd);
 }
 
@@ -200,13 +210,17 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
     struct strbuf        cmd    = STRBUF_INIT;
     const char          *format = fn->cmdline;
     struct child_process child  = CHILD_PROCESS_INIT;
-    int                  status, fd, i;
+    int                  status;
+    int                  fd;
+    int                  i;
     struct stat          st;
     enum ll_merge_result ret;
     assert(opts);
 
     if (!fn->cmdline)
+    {
         die("custom merge driver %s lacks command line.", fn->name);
+    }
 
     result->ptr  = NULL;
     result->size = 0;
@@ -217,35 +231,59 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
     while (strbuf_expand_step(&cmd, &format))
     {
         if (skip_prefix(format, "%", &format))
+        {
             strbuf_addch(&cmd, '%');
+        }
         else if (skip_prefix(format, "O", &format))
+        {
             strbuf_addstr(&cmd, temp[0]);
+        }
         else if (skip_prefix(format, "A", &format))
+        {
             strbuf_addstr(&cmd, temp[1]);
+        }
         else if (skip_prefix(format, "B", &format))
+        {
             strbuf_addstr(&cmd, temp[2]);
+        }
         else if (skip_prefix(format, "L", &format))
+        {
             strbuf_addf(&cmd, "%d", marker_size);
+        }
         else if (skip_prefix(format, "P", &format))
+        {
             sq_quote_buf(&cmd, path);
+        }
         else if (skip_prefix(format, "S", &format))
+        {
             sq_quote_buf(&cmd, orig_name ? orig_name : "");
+        }
         else if (skip_prefix(format, "X", &format))
+        {
             sq_quote_buf(&cmd, name1 ? name1 : "");
+        }
         else if (skip_prefix(format, "Y", &format))
+        {
             sq_quote_buf(&cmd, name2 ? name2 : "");
+        }
         else
+        {
             strbuf_addch(&cmd, '%');
+        }
     }
 
     child.use_shell = 1;
     strvec_push(&child.args, cmd.buf);
     status = run_command(&child);
-    fd     = open(temp[1], O_RDONLY);
+    fd     = open(temp[1], O_RDONLY | O_CLOEXEC);
     if (fd < 0)
+    {
         goto bad;
+    }
     if (fstat(fd, &st))
+    {
         goto close_bad;
+    }
     result->size = st.st_size;
     result->ptr  = xmallocz(result->size);
     if (read_in_full(fd, result->ptr, result->size) != result->size)
@@ -257,15 +295,23 @@ close_bad:
     close(fd);
 bad:
     for (i = 0; i < 3; i++)
+    {
         unlink_or_warn(temp[i]);
+    }
     strbuf_release(&cmd);
     if (!status)
+    {
         ret = LL_MERGE_OK;
+    }
     else if (status <= 128)
+    {
         ret = LL_MERGE_CONFLICT;
+    }
     else
+    {
         /* died due to a signal: WTERMSIG(status) + 128 */
         ret = LL_MERGE_ERROR;
+    }
     return ret;
 }
 
@@ -280,11 +326,14 @@ static int read_merge_config(const char *var, const char *value,
                              void *cb                         UNUSED)
 {
     struct ll_merge_driver *fn;
-    const char             *key, *name;
+    const char             *key;
+    const char             *name;
     size_t                  namelen;
 
     if (!strcmp(var, "merge.default"))
+    {
         return git_config_string(&default_ll_merge, var, value);
+    }
 
     /*
      * We are not interested in anything but "merge.<name>.variable";
@@ -292,15 +341,21 @@ static int read_merge_config(const char *var, const char *value,
      * "merge.summary", "merge.tool", and "merge.verbosity".
      */
     if (parse_config_key(var, "merge", &name, &namelen, &key) < 0 || !name)
+    {
         return 0;
+    }
 
     /*
      * Find existing one as we might be processing merge.<name>.var2
      * after seeing merge.<name>.var1.
      */
     for (fn = ll_user_merge; fn; fn = fn->next)
+    {
         if (!xstrncmpz(fn->name, name, namelen))
+        {
             break;
+        }
+    }
     if (!fn)
     {
         CALLOC_ARRAY(fn, 1);
@@ -322,7 +377,9 @@ static int read_merge_config(const char *var, const char *value,
     if (!strcmp("driver", key))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         /*
          * merge.<name>.driver specifies the command line:
          *
@@ -351,7 +408,9 @@ static int read_merge_config(const char *var, const char *value,
     }
 
     if (!strcmp("recursive", key))
+    {
         return git_config_string(&fn->recursive, var, value);
+    }
 
     return 0;
 }
@@ -359,7 +418,9 @@ static int read_merge_config(const char *var, const char *value,
 static void initialize_ll_merge(void)
 {
     if (ll_user_merge_tail)
+    {
         return;
+    }
     ll_user_merge_tail = &ll_user_merge;
     git_config(read_merge_config, NULL);
 }
@@ -373,8 +434,10 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
     initialize_ll_merge();
 
     if (ATTR_TRUE(merge_attr))
+    {
         return &ll_merge_drv[LL_TEXT_MERGE];
-    else if (ATTR_FALSE(merge_attr))
+    }
+    if (ATTR_FALSE(merge_attr))
         return &ll_merge_drv[LL_BINARY_MERGE];
     else if (ATTR_UNSET(merge_attr))
     {
@@ -387,12 +450,20 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
         name = merge_attr;
 
     for (fn = ll_user_merge; fn; fn = fn->next)
+    {
         if (!strcmp(fn->name, name))
+        {
             return fn;
+        }
+    }
 
     for (i = 0; i < ARRAY_SIZE(ll_merge_drv); i++)
+    {
         if (!strcmp(ll_merge_drv[i].name, name))
+        {
             return &ll_merge_drv[i];
+        }
+    }
 
     /* default to the 3-way */
     return &ll_merge_drv[LL_TEXT_MERGE];
@@ -424,7 +495,9 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
     const struct ll_merge_driver        *driver;
 
     if (!opts)
+    {
         opts = &default_opts;
+    }
 
     if (opts->renormalize)
     {
@@ -439,14 +512,18 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
     {
         marker_size = atoi(check->items[1].value);
         if (marker_size <= 0)
+        {
             marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
+        }
     }
     driver = find_ll_merge_driver(ll_driver_name);
 
     if (opts->virtual_ancestor)
     {
         if (driver->recursive)
+        {
             driver = find_ll_merge_driver(driver->recursive);
+        }
     }
     if (opts->extra_marker_size)
     {
@@ -463,13 +540,17 @@ int ll_merge_marker_size(struct index_state *istate, const char *path)
     int                       marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 
     if (!check)
+    {
         check = attr_check_initl("conflict-marker-size", NULL);
+    }
     git_check_attr(istate, path, check);
     if (check->items[0].value)
     {
         marker_size = atoi(check->items[0].value);
         if (marker_size <= 0)
+        {
             marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
+        }
     }
     return marker_size;
 }

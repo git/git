@@ -31,7 +31,9 @@ static void update_progress(struct connectivity_progress *cp)
 {
     cp->count++;
     if ((cp->count & 1023) == 0)
+    {
         display_progress(cp->progress, cp->count);
+    }
 }
 
 static void add_one_file(const char *path, struct rev_info *revs)
@@ -143,7 +145,9 @@ static int run_one_gc_recent_objects_hook(struct oidset *set,
     strvec_push(&cmd.args, args);
 
     if (start_command(&cmd))
+    {
         return -1;
+    }
 
     out = xfdopen(cmd.out, "r");
     while (strbuf_getline(&buf, out) != EOF)
@@ -176,14 +180,18 @@ static void load_gc_recent_objects(struct recent_data *data)
     data->extra_recent_oids_loaded = 1;
 
     if (git_config_get_string_multi("gc.recentobjectshook", &programs))
+    {
         return;
+    }
 
     for (i = 0; i < programs->nr; i++)
     {
         ret = run_one_gc_recent_objects_hook(&data->extra_recent_oids,
                                              programs->items[i].string);
         if (ret)
+        {
             die(_("unable to enumerate additional recent objects"));
+        }
     }
 }
 
@@ -191,10 +199,14 @@ static int obj_is_recent(const struct object_id *oid, timestamp_t mtime,
                          struct recent_data *data)
 {
     if (mtime > data->timestamp)
+    {
         return 1;
+    }
 
     if (!data->extra_recent_oids_loaded)
+    {
         load_gc_recent_objects(data);
+    }
     return oidset_contains(&data->extra_recent_oids, oid);
 }
 
@@ -208,7 +220,9 @@ static void add_recent_object(const struct object_id *oid,
     enum object_type type;
 
     if (!obj_is_recent(oid, mtime, data))
+    {
         return;
+    }
 
     /*
      * We do not want to call parse_object here, because
@@ -219,7 +233,9 @@ static void add_recent_object(const struct object_id *oid,
      */
     type = oid_object_info(the_repository, oid, NULL);
     if (type < 0)
+    {
         die("unable to get object info for %s", oid_to_hex(oid));
+    }
 
     switch (type)
     {
@@ -239,18 +255,24 @@ static void add_recent_object(const struct object_id *oid,
     }
 
     if (!obj)
+    {
         die("unable to lookup %s", oid_to_hex(oid));
+    }
 
     add_pending_object(data->revs, obj, "");
     if (data->cb)
+    {
         data->cb(obj, pack, offset, mtime);
+    }
 }
 
 static int want_recent_object(struct recent_data     *data,
                               const struct object_id *oid)
 {
     if (data->ignore_in_core_kept_packs && has_object_kept_pack(oid, IN_CORE_KEEP_PACKS))
+    {
         return 0;
+    }
     return 1;
 }
 
@@ -261,12 +283,16 @@ static int add_recent_loose(const struct object_id *oid,
     struct object *obj;
 
     if (!want_recent_object(data, oid))
+    {
         return 0;
+    }
 
     obj = lookup_object(the_repository, oid);
 
     if (obj && obj->flags & SEEN)
+    {
         return 0;
+    }
 
     if (stat(path, &st) < 0)
     {
@@ -277,7 +303,9 @@ static int add_recent_loose(const struct object_id *oid,
          * which should not be pruned.
          */
         if (errno == ENOENT)
+        {
             return 0;
+        }
         return error_errno("unable to stat %s", oid_to_hex(oid));
     }
 
@@ -294,16 +322,22 @@ static int add_recent_packed(const struct object_id *oid,
     timestamp_t    mtime = p->mtime;
 
     if (!want_recent_object(data, oid))
+    {
         return 0;
+    }
 
     obj = lookup_object(the_repository, oid);
 
     if (obj && obj->flags & SEEN)
+    {
         return 0;
+    }
     if (p->is_cruft)
     {
         if (load_pack_mtimes(p) < 0)
+        {
             die(_("could not load cruft pack .mtimes"));
+        }
         mtime = nth_packed_mtime(p, pos);
     }
     add_recent_object(oid, p, nth_packed_object_offset(p, pos), mtime, data);
@@ -330,11 +364,15 @@ int add_unseen_recent_objects_to_traversal(struct rev_info         *revs,
     r = for_each_loose_object(add_recent_loose, &data,
                               FOR_EACH_OBJECT_LOCAL_ONLY);
     if (r)
+    {
         goto done;
+    }
 
     flags = FOR_EACH_OBJECT_LOCAL_ONLY | FOR_EACH_OBJECT_PACK_ORDER;
     if (ignore_in_core_kept_packs)
+    {
         flags |= FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS;
+    }
 
     r = for_each_packed_object(add_recent_packed, &data, flags);
 
@@ -353,7 +391,9 @@ static int mark_object_seen(const struct object_id       *oid,
 {
     struct object *obj = lookup_object_by_type(the_repository, oid, type);
     if (!obj)
+    {
         die("unable to create object '%s'", oid_to_hex(oid));
+    }
 
     obj->flags |= SEEN;
     return 0;
@@ -389,7 +429,9 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
     /* Add all reflog info */
     if (mark_reflog)
+    {
         add_reflogs_to_pending(revs, 0);
+    }
 
     cp.progress = progress;
     cp.count    = 0;
@@ -403,7 +445,9 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
     else
     {
         if (prepare_revision_walk(revs))
+        {
             die("revision walk setup failed");
+        }
         traverse_commit_list(revs, mark_commit, mark_object, &cp);
     }
 
@@ -412,9 +456,13 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
         revs->ignore_missing_links = 1;
         if (add_unseen_recent_objects_to_traversal(revs, mark_recent,
                                                    NULL, 0))
+        {
             die("unable to mark recent objects");
+        }
         if (prepare_revision_walk(revs))
+        {
             die("revision walk setup failed");
+        }
         traverse_commit_list(revs, mark_commit, mark_object, &cp);
     }
 

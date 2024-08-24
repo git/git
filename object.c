@@ -38,7 +38,9 @@ static const char *object_type_strings[] = {
 const char *type_name(unsigned int type)
 {
     if (type >= ARRAY_SIZE(object_type_strings))
+    {
         return NULL;
+    }
     return object_type_strings[type];
 }
 
@@ -47,14 +49,22 @@ int type_from_string_gently(const char *str, ssize_t len, int gentle)
     int i;
 
     if (len < 0)
+    {
         len = strlen(str);
+    }
 
     for (i = 1; i < ARRAY_SIZE(object_type_strings); i++)
+    {
         if (!xstrncmpz(object_type_strings[i], str, len))
+        {
             return i;
+        }
+    }
 
     if (gentle)
+    {
         return -1;
+    }
 
     die(_("invalid object type \"%s\""), str);
 }
@@ -82,7 +92,9 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
     {
         j++;
         if (j >= size)
+        {
             j = 0;
+        }
     }
     hash[j] = obj;
 }
@@ -93,20 +105,27 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
  */
 struct object *lookup_object(struct repository *r, const struct object_id *oid)
 {
-    unsigned int   i, first;
+    unsigned int   i;
+    unsigned int   first;
     struct object *obj;
 
     if (!r->parsed_objects->obj_hash)
+    {
         return NULL;
+    }
 
     first = i = hash_obj(oid, r->parsed_objects->obj_hash_size);
     while ((obj = r->parsed_objects->obj_hash[i]) != NULL)
     {
         if (oideq(oid, &obj->oid))
+        {
             break;
+        }
         i++;
         if (i == r->parsed_objects->obj_hash_size)
+        {
             i = 0;
+        }
     }
     if (obj && i != first)
     {
@@ -142,7 +161,9 @@ static void grow_object_hash(struct repository *r)
         struct object *obj = r->parsed_objects->obj_hash[i];
 
         if (!obj)
+        {
             continue;
+        }
         insert_obj_hash(obj, new_hash, new_hash_size);
     }
     free(r->parsed_objects->obj_hash);
@@ -159,7 +180,9 @@ void *create_object(struct repository *r, const struct object_id *oid, void *o)
     oidcpy(&obj->oid, oid);
 
     if (r->parsed_objects->obj_hash_size - 1 <= r->parsed_objects->nr_objs * 2)
+    {
         grow_object_hash(r);
+    }
 
     insert_obj_hash(obj, r->parsed_objects->obj_hash,
                     r->parsed_objects->obj_hash_size);
@@ -170,8 +193,10 @@ void *create_object(struct repository *r, const struct object_id *oid, void *o)
 void *object_as_type(struct object *obj, enum object_type type, int quiet)
 {
     if (obj->type == type)
+    {
         return obj;
-    else if (obj->type == OBJ_NONE)
+    }
+    if (obj->type == OBJ_NONE)
     {
         if (type == OBJ_COMMIT)
             init_commit_node((struct commit *)obj);
@@ -193,7 +218,9 @@ struct object *lookup_unknown_object(struct repository *r, const struct object_i
 {
     struct object *obj = lookup_object(r, oid);
     if (!obj)
+    {
         obj = create_object(r, oid, alloc_object_node(r));
+    }
     return obj;
 }
 
@@ -226,15 +253,21 @@ enum peel_status peel_object(struct repository      *r,
     {
         int type = oid_object_info(r, name, NULL);
         if (type < 0 || !object_as_type(o, type, 0))
+        {
             return PEEL_INVALID;
+        }
     }
 
     if (o->type != OBJ_TAG)
+    {
         return PEEL_NON_TAG;
+    }
 
     o = deref_tag_noverify(r, o);
     if (!o)
+    {
         return PEEL_INVALID;
+    }
 
     oidcpy(oid, &o->oid);
     return PEEL_PEELED;
@@ -262,11 +295,15 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
         {
             obj = &tree->object;
             if (!tree->buffer)
+            {
                 tree->object.parsed = 0;
+            }
             if (!tree->object.parsed)
             {
                 if (parse_tree_buffer(tree, buffer, size))
+                {
                     return NULL;
+                }
                 *eaten_p = 1;
             }
         }
@@ -277,7 +314,9 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
         if (commit)
         {
             if (parse_commit_buffer(r, commit, buffer, size, 1))
+            {
                 return NULL;
+            }
             if (save_commit_buffer && !get_cached_commit_buffer(r, commit, NULL))
             {
                 set_commit_buffer(r, commit, buffer, size);
@@ -292,7 +331,9 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
         if (tag)
         {
             if (parse_tag_buffer(r, tag, buffer, size))
+            {
                 return NULL;
+            }
             obj = &tag->object;
         }
     }
@@ -309,7 +350,9 @@ struct object *parse_object_or_die(const struct object_id *oid,
 {
     struct object *o = parse_object(the_repository, oid);
     if (o)
+    {
         return o;
+    }
 
     die(_("unable to parse object: %s"), name ? name : oid_to_hex(oid));
 }
@@ -329,13 +372,17 @@ struct object *parse_object_with_flags(struct repository      *r,
 
     obj = lookup_object(r, oid);
     if (obj && obj->parsed)
+    {
         return obj;
+    }
 
     if (skip_hash)
     {
         struct commit *commit = lookup_commit_in_graph(r, repl);
         if (commit)
+        {
             return &commit->object;
+        }
     }
 
     if ((!obj || obj->type == OBJ_BLOB) && oid_object_info(r, oid, NULL) == OBJ_BLOB)
@@ -372,9 +419,13 @@ struct object *parse_object_with_flags(struct repository      *r,
         obj = parse_object_buffer(r, oid, type, size,
                                   buffer, &eaten);
         if (!eaten)
+        {
             free(buffer);
+        }
         if (discard_tree && type == OBJ_TREE)
+        {
             free_tree_buffer((struct tree *)obj);
+        }
         return obj;
     }
     return NULL;
@@ -400,7 +451,9 @@ int object_list_contains(struct object_list *list, struct object *obj)
     while (list)
     {
         if (list->item == obj)
+        {
             return 1;
+        }
         list = list->next;
     }
     return 0;
@@ -447,17 +500,27 @@ void add_object_array_with_path(struct object *obj, const char *name,
     entry       = &objects[nr];
     entry->item = obj;
     if (!name)
+    {
         entry->name = NULL;
+    }
     else if (!*name)
+    {
         /* Use our own empty string instead of allocating one: */
         entry->name = object_array_slopbuf;
+    }
     else
+    {
         entry->name = xstrdup(name);
+    }
     entry->mode = mode;
     if (path)
+    {
         entry->path = xstrdup(path);
+    }
     else
+    {
         entry->path = NULL;
+    }
     array->nr = ++nr;
 }
 
@@ -473,7 +536,9 @@ void add_object_array(struct object *obj, const char *name, struct object_array 
 static void object_array_release_entry(struct object_array_entry *ent)
 {
     if (ent->name != object_array_slopbuf)
+    {
         free(ent->name);
+    }
     free(ent->path);
 }
 
@@ -482,7 +547,9 @@ struct object *object_array_pop(struct object_array *array)
     struct object *ret;
 
     if (!array->nr)
+    {
         return NULL;
+    }
 
     ret = array->objects[array->nr - 1].item;
     object_array_release_entry(&array->objects[array->nr - 1]);
@@ -493,7 +560,9 @@ struct object *object_array_pop(struct object_array *array)
 void object_array_filter(struct object_array     *array,
                          object_array_each_func_t want, void *cb_data)
 {
-    unsigned                   nr      = array->nr, src, dst;
+    unsigned                   nr = array->nr;
+    unsigned                   src;
+    unsigned                   dst;
     struct object_array_entry *objects = array->objects;
 
     for (src = dst = 0; src < nr; src++)
@@ -501,7 +570,9 @@ void object_array_filter(struct object_array     *array,
         if (want(&objects[src], cb_data))
         {
             if (src != dst)
+            {
                 objects[dst] = objects[src];
+            }
             dst++;
         }
         else
@@ -516,7 +587,9 @@ void object_array_clear(struct object_array *array)
 {
     int i;
     for (i = 0; i < array->nr; i++)
+    {
         object_array_release_entry(&array->objects[i]);
+    }
     FREE_AND_NULL(array->objects);
     array->nr = array->alloc = 0;
 }
@@ -527,18 +600,24 @@ void object_array_clear(struct object_array *array)
 static int contains_object(struct object_array *array,
                            const struct object *item, const char *name)
 {
-    unsigned                   nr     = array->nr, i;
+    unsigned                   nr = array->nr;
+    unsigned                   i;
     struct object_array_entry *object = array->objects;
 
     for (i = 0; i < nr; i++, object++)
+    {
         if (item == object->item && !strcmp(object->name, name))
+        {
             return 1;
+        }
+    }
     return 0;
 }
 
 void object_array_remove_duplicates(struct object_array *array)
 {
-    unsigned                   nr      = array->nr, src;
+    unsigned                   nr = array->nr;
+    unsigned                   src;
     struct object_array_entry *objects = array->objects;
 
     array->nr = 0;
@@ -548,7 +627,9 @@ void object_array_remove_duplicates(struct object_array *array)
                              objects[src].name))
         {
             if (src != array->nr)
+            {
                 objects[array->nr] = objects[src];
+            }
             array->nr++;
         }
         else
@@ -566,7 +647,9 @@ void clear_object_flags(unsigned flags)
     {
         struct object *obj = the_repository->parsed_objects->obj_hash[i];
         if (obj)
+        {
             obj->flags &= ~flags;
+        }
     }
 }
 
@@ -578,7 +661,9 @@ void repo_clear_commit_marks(struct repository *r, unsigned int flags)
     {
         struct object *obj = r->parsed_objects->obj_hash[i];
         if (obj && obj->type == OBJ_COMMIT)
+        {
             obj->flags &= ~flags;
+        }
     }
 }
 
@@ -683,14 +768,22 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
         struct object *obj = o->obj_hash[i];
 
         if (!obj)
+        {
             continue;
+        }
 
         if (obj->type == OBJ_TREE)
+        {
             free_tree_buffer((struct tree *)obj);
+        }
         else if (obj->type == OBJ_COMMIT)
+        {
             release_commit_memory(o, (struct commit *)obj);
+        }
         else if (obj->type == OBJ_TAG)
+        {
             release_tag_memory((struct tag *)obj);
+        }
     }
 
     FREE_AND_NULL(o->obj_hash);

@@ -13,11 +13,17 @@ static int score_missing(unsigned mode)
     int score;
 
     if (S_ISDIR(mode))
+    {
         score = -1000;
+    }
     else if (S_ISLNK(mode))
+    {
         score = -500;
+    }
     else
+    {
         score = -50;
+    }
     return score;
 }
 
@@ -26,11 +32,17 @@ static int score_differs(unsigned mode1, unsigned mode2)
     int score;
 
     if (S_ISDIR(mode1) != S_ISDIR(mode2))
+    {
         score = -100;
+    }
     else if (S_ISLNK(mode1) != S_ISLNK(mode2))
+    {
         score = -50;
+    }
     else
+    {
         score = -5;
+    }
     return score;
 }
 
@@ -40,16 +52,25 @@ static int score_matches(unsigned mode1, unsigned mode2)
 
     /* Heh, we found SHA-1 collisions between different kind of objects */
     if (S_ISDIR(mode1) != S_ISDIR(mode2))
+    {
         score = -100;
+    }
     else if (S_ISLNK(mode1) != S_ISLNK(mode2))
+    {
         score = -50;
-
+    }
     else if (S_ISDIR(mode1))
+    {
         score = 1000;
+    }
     else if (S_ISLNK(mode1))
+    {
         score = 500;
+    }
     else
+    {
         score = 250;
+    }
     return score;
 }
 
@@ -62,9 +83,13 @@ static void *fill_tree_desc_strict(struct tree_desc       *desc,
 
     buffer = repo_read_object_file(the_repository, hash, &type, &size);
     if (!buffer)
+    {
         die("unable to read tree (%s)", oid_to_hex(hash));
+    }
     if (type != OBJ_TREE)
+    {
         die("%s is not a tree", oid_to_hex(hash));
+    }
     init_tree_desc(desc, hash, buffer, size);
     return buffer;
 }
@@ -92,15 +117,23 @@ static int score_trees(const struct object_id *hash1, const struct object_id *ha
         int cmp;
 
         if (one.size && two.size)
+        {
             cmp = base_name_entries_compare(&one.entry, &two.entry);
+        }
         else if (one.size)
+        {
             /* two lacks this entry */
             cmp = -1;
+        }
         else if (two.size)
+        {
             /* two has more entries */
             cmp = 1;
+        }
         else
+        {
             break;
+        }
 
         if (cmp < 0)
         {
@@ -160,7 +193,9 @@ static void match_trees(const struct object_id *hash1,
 
         elem = tree_entry_extract(&one, &path, &mode);
         if (!S_ISDIR(mode))
+        {
             goto next;
+        }
         score = score_trees(elem, hash2);
         if (*best_score < score)
         {
@@ -203,11 +238,15 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
     subpath = strchrnul(prefix, '/');
     toplen  = subpath - prefix;
     if (*subpath)
+    {
         subpath++;
+    }
 
     buf = repo_read_object_file(the_repository, oid1, &type, &sz);
     if (!buf)
+    {
         die("cannot read tree %s", oid_to_hex(oid1));
+    }
     init_tree_desc(&desc, oid1, buf, sz);
 
     rewrite_here = NULL;
@@ -220,8 +259,10 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
         if (strlen(name) == toplen && !memcmp(name, prefix, toplen))
         {
             if (!S_ISDIR(mode))
+            {
                 die("entry %s in tree %s is not a tree", name,
                     oid_to_hex(oid1));
+            }
 
             /*
              * We cast here for two reasons:
@@ -238,15 +279,19 @@ static int splice_tree(const struct object_id *oid1, const char *prefix,
         update_tree_entry(&desc);
     }
     if (!rewrite_here)
+    {
         die("entry %.*s not found in tree %s", toplen, prefix,
             oid_to_hex(oid1));
+    }
     if (*subpath)
     {
         struct object_id tree_oid;
         oidread(&tree_oid, rewrite_here, the_repository->hash_algo);
         status = splice_tree(&tree_oid, subpath, oid2, &subtree);
         if (status)
+        {
             return status;
+        }
         rewrite_with = &subtree;
     }
     else
@@ -275,14 +320,17 @@ void shift_tree(struct repository      *r,
 {
     char *add_prefix;
     char *del_prefix;
-    int   add_score, del_score;
+    int   add_score;
+    int   del_score;
 
     /*
      * NEEDSWORK: this limits the recursion depth to hardcoded
      * value '2' to avoid excessive overhead.
      */
     if (!depth_limit)
+    {
         depth_limit = 2;
+    }
 
     add_score = del_score = score_trees(hash1, hash2);
     add_prefix            = xcalloc(1, 1);
@@ -309,16 +357,22 @@ void shift_tree(struct repository      *r,
         unsigned short mode;
 
         if (!*del_prefix)
+        {
             return;
+        }
 
         if (get_tree_entry(r, hash2, del_prefix, shifted, &mode))
+        {
             die("cannot find path %s in tree %s",
                 del_prefix, oid_to_hex(hash2));
+        }
         return;
     }
 
     if (!*add_prefix)
+    {
         return;
+    }
 
     splice_tree(hash1, add_prefix, hash2, shifted);
 }
@@ -334,17 +388,23 @@ void shift_tree_by(struct repository      *r,
                    struct object_id       *shifted,
                    const char             *shift_prefix)
 {
-    struct object_id sub1, sub2;
-    unsigned short   mode1, mode2;
+    struct object_id sub1;
+    struct object_id sub2;
+    unsigned short   mode1;
+    unsigned short   mode2;
     unsigned         candidate = 0;
 
     /* Can hash2 be a tree at shift_prefix in tree hash1? */
     if (!get_tree_entry(r, hash1, shift_prefix, &sub1, &mode1) && S_ISDIR(mode1))
+    {
         candidate |= 1;
+    }
 
     /* Can hash1 be a tree at shift_prefix in tree hash2? */
     if (!get_tree_entry(r, hash2, shift_prefix, &sub2, &mode2) && S_ISDIR(mode2))
+    {
         candidate |= 2;
+    }
 
     if (candidate == 3)
     {
@@ -361,7 +421,9 @@ void shift_tree_by(struct repository      *r,
         }
         score = score_trees(&sub2, hash1);
         if (score > best_score)
+        {
             candidate = 2;
+        }
     }
 
     if (!candidate)
@@ -372,15 +434,19 @@ void shift_tree_by(struct repository      *r,
     }
 
     if (candidate == 1)
+    {
         /*
          * shift tree2 down by adding shift_prefix above it
          * to match tree1.
          */
         splice_tree(hash1, shift_prefix, hash2, shifted);
+    }
     else
+    {
         /*
          * shift tree2 up by removing shift_prefix from it
          * to match tree1.
          */
         oidcpy(shifted, &sub2);
+    }
 }

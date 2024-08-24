@@ -24,7 +24,9 @@ static void close_pager_fds(void)
     /* signal EOF to pager */
     close(1);
     if (old_fd2 != -1)
+    {
         close(2);
+    }
 }
 
 static void finish_pager(void)
@@ -38,7 +40,9 @@ static void finish_pager(void)
 static void wait_for_pager_atexit(void)
 {
     if (old_fd1 == -1)
+    {
         return;
+    }
 
     finish_pager();
 }
@@ -46,7 +50,9 @@ static void wait_for_pager_atexit(void)
 void wait_for_pager(void)
 {
     if (old_fd1 == -1)
+    {
         return;
+    }
 
     finish_pager();
     sigchain_pop_common();
@@ -65,7 +71,9 @@ void wait_for_pager(void)
 static void wait_for_pager_signal(int signo)
 {
     if (old_fd1 == -1)
+    {
         return;
+    }
 
     close_pager_fds();
     finish_command_in_signal(&pager_process);
@@ -78,7 +86,9 @@ static int core_pager_config(const char *var, const char *value,
                              void *data                       UNUSED)
 {
     if (!strcmp(var, "core.pager"))
+    {
         return git_config_string(&pager_program, var, value);
+    }
     return 0;
 }
 
@@ -87,21 +97,31 @@ const char *git_pager(int stdout_is_tty)
     const char *pager;
 
     if (!stdout_is_tty)
+    {
         return NULL;
+    }
 
     pager = getenv("GIT_PAGER");
     if (!pager)
     {
         if (!pager_program)
+        {
             read_early_config(core_pager_config, NULL);
+        }
         pager = pager_program;
     }
     if (!pager)
+    {
         pager = getenv("PAGER");
+    }
     if (!pager)
+    {
         pager = DEFAULT_PAGER;
+    }
     if (!*pager || !strcmp(pager, "cat"))
+    {
         pager = NULL;
+    }
 
     return pager;
 }
@@ -114,15 +134,19 @@ static void setup_pager_env(struct strvec *env)
     int          n         = split_cmdline(pager_env, &argv);
 
     if (n < 0)
+    {
         die("malformed build-time PAGER_ENV: %s",
             split_cmdline_strerror(n));
+    }
 
     for (i = 0; i < n; i++)
     {
         char *cp = strchr(argv[i], '=');
 
         if (!cp)
+        {
             die("malformed build-time PAGER_ENV");
+        }
 
         *cp = '\0';
         if (!getenv(argv[i]))
@@ -149,7 +173,9 @@ void setup_pager(void)
     const char *pager = git_pager(isatty(1));
 
     if (!pager)
+    {
         return;
+    }
 
     /*
      * After we redirect standard output, we won't be able to use an ioctl
@@ -160,7 +186,9 @@ void setup_pager(void)
         char buf[64];
         xsnprintf(buf, sizeof(buf), "%d", term_columns());
         if (!term_columns_guessed)
+        {
             setenv("COLUMNS", buf, 0);
+        }
     }
 
     setenv("GIT_PAGER_IN_USE", "true", 1);
@@ -172,14 +200,16 @@ void setup_pager(void)
     pager_process.in = -1;
     strvec_push(&pager_process.env, "GIT_PAGER_IN_USE");
     if (start_command(&pager_process))
+    {
         die("unable to execute pager '%s'", pager);
+    }
 
     /* original process continues, but writes to the pipe */
-    old_fd1 = dup(1);
+    old_fd1 = fcntl(1, F_DUPFD_CLOEXEC);
     dup2(pager_process.in, 1);
     if (isatty(2))
     {
-        old_fd2 = dup(2);
+        old_fd2 = fcntl(2, F_DUPFD_CLOEXEC);
         dup2(pager_process.in, 2);
     }
     close(pager_process.in);
@@ -211,7 +241,9 @@ int term_columns(void)
     int   n_cols;
 
     if (term_columns_at_startup)
+    {
         return term_columns_at_startup;
+    }
 
     term_columns_at_startup = 80;
     term_columns_guessed    = 1;
@@ -243,18 +275,22 @@ int term_columns(void)
 void term_clear_line(void)
 {
     if (is_terminal_dumb())
+    {
         /*
          * Fall back to print a terminal width worth of space
          * characters (hoping that the terminal is still as wide
          * as it was upon the first call to term_columns()).
          */
         fprintf(stderr, "\r%*s\r", term_columns(), "");
+    }
     else
+    {
         /*
          * On non-dumb terminals use an escape sequence to clear
          * the whole line, no matter how wide the terminal.
          */
         fputs("\r\033[K", stderr);
+    }
 }
 
 /*
@@ -265,7 +301,9 @@ int decimal_width(uintmax_t number)
     int width;
 
     for (width = 1; number >= 10; width++)
+    {
         number /= 10;
+    }
     return width;
 }
 
@@ -287,7 +325,9 @@ static int pager_command_config(const char *var, const char *value,
     {
         int b = git_parse_maybe_bool(value);
         if (b >= 0)
+        {
             data->want = b;
+        }
         else
         {
             data->want  = 1;
@@ -310,6 +350,8 @@ int check_pager_config(const char *cmd)
     read_early_config(pager_command_config, &data);
 
     if (data.value)
+    {
         pager_program = data.value;
+    }
     return data.want;
 }
