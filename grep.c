@@ -36,8 +36,10 @@ static const char *color_grep_slots[] = {
 static int parse_pattern_type_arg(const char *opt, const char *arg)
 {
     if (!strcmp(arg, "default"))
+    {
         return GREP_PATTERN_TYPE_UNSPECIFIED;
-    else if (!strcmp(arg, "basic"))
+    }
+    if (!strcmp(arg, "basic"))
         return GREP_PATTERN_TYPE_BRE;
     else if (!strcmp(arg, "extended"))
         return GREP_PATTERN_TYPE_ERE;
@@ -61,7 +63,9 @@ int grep_config(const char *var, const char *value,
     const char      *slot;
 
     if (userdiff_config(var, value) < 0)
+    {
         return -1;
+    }
 
     if (!strcmp(var, "grep.extendedregexp"))
     {
@@ -93,13 +97,19 @@ int grep_config(const char *var, const char *value,
     }
 
     if (!strcmp(var, "color.grep"))
+    {
         opt->color = git_config_colorbool(var, value);
+    }
     if (!strcmp(var, "color.grep.match"))
     {
         if (grep_config("color.grep.matchcontext", value, ctx, cb) < 0)
+        {
             return -1;
+        }
         if (grep_config("color.grep.matchselected", value, ctx, cb) < 0)
+        {
             return -1;
+        }
     }
     else if (skip_prefix(var, "color.grep.", &slot))
     {
@@ -107,10 +117,14 @@ int grep_config(const char *var, const char *value,
         char *color;
 
         if (i < 0)
+        {
             return -1;
+        }
         color = opt->colors[i];
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         return color_parse(value, color);
     }
     return 0;
@@ -156,7 +170,8 @@ static void do_append_grep_pat(struct grep_pat ***tail, struct grep_pat *p)
             {
                 struct grep_pat *new_pat;
                 size_t           len = 0;
-                char            *cp = p->pattern + p->patternlen, *nl = NULL;
+                char            *cp  = p->pattern + p->patternlen;
+                char            *nl  = NULL;
                 while (++len <= p->patternlen)
                 {
                     if (*(--cp) == '\n')
@@ -166,12 +181,16 @@ static void do_append_grep_pat(struct grep_pat ***tail, struct grep_pat *p)
                     }
                 }
                 if (!nl)
+                {
                     break;
+                }
                 new_pat       = create_grep_pat(nl + 1, len - 1, p->origin,
                                                 p->no, p->token, p->field);
                 new_pat->next = p->next;
                 if (!p->next)
+                {
                     *tail = &new_pat->next;
+                }
                 p->next = new_pat;
                 *nl     = '\0';
                 p->patternlen -= len;
@@ -188,7 +207,9 @@ void append_header_grep_pattern(struct grep_opt       *opt,
     struct grep_pat *p = create_grep_pat(pat, strlen(pat), "header", 0,
                                          GREP_PATTERN_HEAD, field);
     if (field == GREP_HEADER_REFLOG)
+    {
         opt->use_reflog_filter = 1;
+    }
     do_append_grep_pat(&opt->header_tail, p);
 }
 
@@ -217,11 +238,15 @@ struct grep_opt *grep_opt_dup(const struct grep_opt *opt)
     for (pat = opt->pattern_list; pat != NULL; pat = pat->next)
     {
         if (pat->token == GREP_PATTERN_HEAD)
+        {
             append_header_grep_pattern(ret, pat->field,
                                        pat->pattern);
+        }
         else
+        {
             append_grep_pat(ret, pat->pattern, pat->patternlen,
                             pat->origin, pat->no, pat->token);
+        }
     }
 
     return ret;
@@ -233,11 +258,17 @@ static NORETURN void compile_regexp_failed(const struct grep_pat *p,
     char where[1024];
 
     if (p->no)
+    {
         xsnprintf(where, sizeof(where), "In '%s' at %d, ", p->origin, p->no);
+    }
     else if (p->origin)
+    {
         xsnprintf(where, sizeof(where), "%s, ", p->origin);
+    }
     else
+    {
         where[0] = 0;
+    }
 
     die("%s'%s': %s", where, p->pattern, error);
 }
@@ -249,7 +280,9 @@ static int is_fixed(const char *s, size_t len)
     for (i = 0; i < len; i++)
     {
         if (is_regex_special(s[i]))
+        {
             return 0;
+        }
     }
 
     return 1;
@@ -501,7 +534,9 @@ static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
 
     basic_regex_quote_buf(&sb, p->pattern);
     if (opt->ignore_case)
+    {
         regflags |= REG_ICASE;
+    }
     err = regcomp(&p->regexp, sb.buf, regflags);
     strbuf_release(&sb);
     if (err)
@@ -519,16 +554,20 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
     int regflags = REG_NEWLINE;
 
     if (opt->pattern_type_option == GREP_PATTERN_TYPE_UNSPECIFIED)
+    {
         opt->pattern_type_option = (opt->extended_regexp_option
                                         ? GREP_PATTERN_TYPE_ERE
                                         : GREP_PATTERN_TYPE_BRE);
+    }
 
     p->word_regexp = opt->word_regexp;
     p->ignore_case = opt->ignore_case;
     p->fixed       = opt->pattern_type_option == GREP_PATTERN_TYPE_FIXED;
 
     if (opt->pattern_type_option != GREP_PATTERN_TYPE_PCRE && memchr(p->pattern, 0, p->patternlen))
+    {
         die(_("given pattern contains NULL byte (via -f <file>). This is only supported with -P under PCRE v2"));
+    }
 
     p->is_fixed = is_fixed(p->pattern, p->patternlen);
 #ifdef USE_LIBPCRE2
@@ -588,9 +627,13 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
     }
 
     if (p->ignore_case)
+    {
         regflags |= REG_ICASE;
+    }
     if (opt->pattern_type_option == GREP_PATTERN_TYPE_ERE)
+    {
         regflags |= REG_EXTENDED;
+    }
     err = regcomp(&p->regexp, p->pattern, regflags);
     if (err)
     {
@@ -629,7 +672,7 @@ static struct grep_expr *grep_and_expr(struct grep_expr *left, struct grep_expr 
     return grep_binexp(GREP_NODE_AND, left, right);
 }
 
-static struct grep_expr *compile_pattern_or(struct grep_pat **);
+static struct grep_expr *compile_pattern_or(struct grep_pat ** /*list*/);
 static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 {
     struct grep_pat  *p;
@@ -637,7 +680,9 @@ static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 
     p = *list;
     if (!p)
+    {
         return NULL;
+    }
     switch (p->token)
     {
         case GREP_PATTERN: /* atom */
@@ -652,7 +697,9 @@ static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
             *list = p->next;
             x     = compile_pattern_or(list);
             if (!*list || (*list)->token != GREP_CLOSE_PAREN)
+            {
                 die("unmatched ( for expression group");
+            }
             *list = (*list)->next;
             return x;
         default:
@@ -667,16 +714,22 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 
     p = *list;
     if (!p)
+    {
         return NULL;
+    }
     switch (p->token)
     {
         case GREP_NOT:
             if (!p->next)
+            {
                 die("--not not followed by pattern expression");
+            }
             *list = p->next;
             x     = compile_pattern_not(list);
             if (!x)
+            {
                 die("--not followed by non pattern expression");
+            }
             return grep_not_expr(x);
         default:
             return compile_pattern_atom(list);
@@ -686,20 +739,27 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 {
     struct grep_pat  *p;
-    struct grep_expr *x, *y;
+    struct grep_expr *x;
+    struct grep_expr *y;
 
     x = compile_pattern_not(list);
     p = *list;
     if (p && p->token == GREP_AND)
     {
         if (!x)
+        {
             die("--and not preceded by pattern expression");
+        }
         if (!p->next)
+        {
             die("--and not followed by pattern expression");
+        }
         *list = p->next;
         y     = compile_pattern_and(list);
         if (!y)
+        {
             die("--and not followed by pattern expression");
+        }
         return grep_and_expr(x, y);
     }
     return x;
@@ -708,7 +768,8 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 {
     struct grep_pat  *p;
-    struct grep_expr *x, *y;
+    struct grep_expr *x;
+    struct grep_expr *y;
 
     x = compile_pattern_and(list);
     p = *list;
@@ -716,7 +777,9 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
     {
         y = compile_pattern_or(list);
         if (!y)
+        {
             die("not a pattern expression %s", p->pattern);
+        }
         return grep_or_expr(x, y);
     }
     return x;
@@ -742,19 +805,27 @@ static struct grep_expr *prep_header_patterns(struct grep_opt *opt)
     enum grep_header_field fld;
 
     if (!opt->header_list)
+    {
         return NULL;
+    }
 
     for (p = opt->header_list; p; p = p->next)
     {
         if (p->token != GREP_PATTERN_HEAD)
+        {
             BUG("a non-header pattern in grep header list.");
+        }
         if (p->field < GREP_HEADER_FIELD_MIN || GREP_HEADER_FIELD_MAX <= p->field)
+        {
             BUG("unknown header field %d", p->field);
+        }
         compile_regexp(p, opt);
     }
 
     for (fld = 0; fld < GREP_HEADER_FIELD_MAX; fld++)
+    {
         header_group[fld] = NULL;
+    }
 
     for (p = opt->header_list; p; p = p->next)
     {
@@ -763,7 +834,9 @@ static struct grep_expr *prep_header_patterns(struct grep_opt *opt)
 
         h = compile_pattern_atom(&pp);
         if (!h || pp != p->next)
+        {
             BUG("malformed header expr");
+        }
         if (!header_group[p->field])
         {
             header_group[p->field] = h;
@@ -777,9 +850,13 @@ static struct grep_expr *prep_header_patterns(struct grep_opt *opt)
     for (fld = 0; fld < GREP_HEADER_FIELD_MAX; fld++)
     {
         if (!header_group[fld])
+        {
             continue;
+        }
         if (!header_expr)
+        {
             header_expr = grep_true_expr();
+        }
         header_expr = grep_or_expr(header_group[fld], header_expr);
     }
     return header_expr;
@@ -824,30 +901,48 @@ void compile_grep_patterns(struct grep_opt *opt)
     }
 
     if (opt->all_match || opt->no_body_match || header_expr)
+    {
         extended = 1;
+    }
     else if (!extended)
+    {
         return;
+    }
 
     p = opt->pattern_list;
     if (p)
+    {
         opt->pattern_expression = compile_pattern_expr(&p);
+    }
     if (p)
+    {
         die("incomplete pattern expression group: %s", p->pattern);
+    }
 
     if (opt->no_body_match && opt->pattern_expression)
+    {
         opt->pattern_expression = grep_not_expr(opt->pattern_expression);
+    }
 
     if (!header_expr)
+    {
         return;
+    }
 
     if (!opt->pattern_expression)
+    {
         opt->pattern_expression = header_expr;
+    }
     else if (opt->all_match)
+    {
         opt->pattern_expression = grep_splice_or(header_expr,
                                                  opt->pattern_expression);
+    }
     else
+    {
         opt->pattern_expression = grep_or_expr(opt->pattern_expression,
                                                header_expr);
+    }
     opt->all_match = 1;
 }
 
@@ -872,7 +967,8 @@ static void free_pattern_expr(struct grep_expr *x)
 
 static void free_grep_pat(struct grep_pat *pattern)
 {
-    struct grep_pat *p, *n;
+    struct grep_pat *p;
+    struct grep_pat *n;
 
     for (p = pattern; p; p = n)
     {
@@ -883,9 +979,13 @@ static void free_grep_pat(struct grep_pat *pattern)
             case GREP_PATTERN_HEAD:
             case GREP_PATTERN_BODY:
                 if (p->pcre2_pattern)
+                {
                     free_pcre2_pattern(p);
+                }
                 else
+                {
                     regfree(&p->regexp);
+                }
                 free(p->pattern);
                 break;
             default:
@@ -901,7 +1001,9 @@ void free_grep_patterns(struct grep_opt *opt)
     free_grep_pat(opt->header_list);
 
     if (opt->pattern_expression)
+    {
         free_pattern_expr(opt->pattern_expression);
+    }
 }
 
 static const char *end_of_line(const char *cp, unsigned long *left)
@@ -931,15 +1033,21 @@ static void output_color(struct grep_opt *opt, const void *data, size_t size,
         opt->output(opt, GIT_COLOR_RESET, strlen(GIT_COLOR_RESET));
     }
     else
+    {
         opt->output(opt, data, size);
+    }
 }
 
 static void output_sep(struct grep_opt *opt, char sign)
 {
     if (opt->null_following_name)
+    {
         opt->output(opt, "\0", 1);
+    }
     else
+    {
         output_color(opt, &sign, 1, opt->colors[GREP_COLOR_SEP]);
+    }
 }
 
 static void show_name(struct grep_opt *opt, const char *name)
@@ -955,10 +1063,14 @@ static int patmatch(struct grep_pat *p,
     int hit;
 
     if (p->pcre2_pattern)
+    {
         hit = !pcre2match(p, line, eol, match, eflags);
+    }
     else
+    {
         hit = !regexec_buf(&p->regexp, line, eol - line, 1, match,
                            eflags);
+    }
 
     return hit;
 }
@@ -970,7 +1082,9 @@ static void strip_timestamp(const char *bol, const char **eol_p)
     while (bol < --eol)
     {
         if (*eol != '>')
+        {
             continue;
+        }
         *eol_p = ++eol;
         break;
     }
@@ -995,7 +1109,9 @@ static int headerless_match_one_pattern(struct grep_pat *p,
     const char *start = bol;
 
     if ((p->token != GREP_PATTERN) && ((p->token == GREP_PATTERN_HEAD) != (ctx == GREP_CONTEXT_HEAD)))
+    {
         return 0;
+    }
 
 again:
     hit = patmatch(p, bol, eol, pmatch, eflags);
@@ -1003,7 +1119,9 @@ again:
     if (hit && p->word_regexp)
     {
         if ((pmatch[0].rm_so < 0) || (eol - bol) < pmatch[0].rm_so || (pmatch[0].rm_eo < 0) || (eol - bol) < pmatch[0].rm_eo)
+        {
             die("regexp returned nonsense");
+        }
 
         /* Match beginning must be either beginning of the
          * line, or at word boundary (i.e. the last char must
@@ -1012,13 +1130,19 @@ again:
          * (i.e. the next char must not be a word char).
          */
         if (((pmatch[0].rm_so == 0) || !word_char(bol[pmatch[0].rm_so - 1])) && ((pmatch[0].rm_eo == (eol - bol)) || !word_char(bol[pmatch[0].rm_eo])))
+        {
             ;
+        }
         else
+        {
             hit = 0;
+        }
 
         /* Words consist of at least one character. */
         if (pmatch->rm_so == pmatch->rm_eo)
+        {
             hit = 0;
+        }
 
         if (!hit && pmatch[0].rm_so + bol + 1 < eol)
         {
@@ -1030,10 +1154,14 @@ again:
              */
             bol = pmatch[0].rm_so + bol + 1;
             while (word_char(bol[-1]) && bol < eol)
+            {
                 bol++;
+            }
             eflags |= REG_NOTBOL;
             if (bol < eol)
+            {
                 goto again;
+            }
         }
     }
     if (hit)
@@ -1057,8 +1185,10 @@ static int match_one_pattern(struct grep_pat *p,
         assert(p->field < ARRAY_SIZE(header_field));
         field = header_field[p->field].field;
         len   = header_field[p->field].len;
-        if (strncmp(bol, field, len))
+        if (strncmp(bol, field, len) != 0)
+        {
             return 0;
+        }
         bol += len;
 
         switch (p->field)
@@ -1093,10 +1223,14 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
             h = match_one_pattern(x->u.atom, bol, eol, ctx,
                                   &tmp, 0);
             if (h && (*col < 0 || tmp.rm_so < *col))
+            {
                 *col = tmp.rm_so;
+            }
         }
             if (x->u.atom->token == GREP_PATTERN_BODY)
+            {
                 opt->body_hit |= h;
+            }
             break;
         case GREP_NODE_NOT:
             /*
@@ -1135,7 +1269,9 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
             h = match_expr_eval(opt, x->u.binary.left, bol, eol, ctx, col,
                                 icol, 0);
             if (collect_hits)
+            {
                 x->u.binary.left->hit |= h;
+            }
             h |= match_expr_eval(opt, x->u.binary.right, bol, eol, ctx, col,
                                  icol, collect_hits);
             break;
@@ -1143,7 +1279,9 @@ static int match_expr_eval(struct grep_opt *opt, struct grep_expr *x,
             die("Unexpected node type (internal error) %d", x->node);
     }
     if (collect_hits)
+    {
         x->hit |= h;
+    }
     return h;
 }
 
@@ -1165,8 +1303,10 @@ static int match_line(struct grep_opt *opt,
     int              hit = 0;
 
     if (opt->pattern_expression)
+    {
         return match_expr(opt, bol, eol, ctx, col, icol,
                           collect_hits);
+    }
 
     /* we do not call with collect_hits without being extended */
     for (p = opt->pattern_list; p; p = p->next)
@@ -1186,7 +1326,9 @@ static int match_line(struct grep_opt *opt,
                 break;
             }
             if (*col < 0 || tmp.rm_so < *col)
+            {
                 *col = tmp.rm_so;
+            }
         }
     }
     return hit;
@@ -1200,15 +1342,23 @@ static int match_next_pattern(struct grep_pat *p,
     regmatch_t match;
 
     if (!headerless_match_one_pattern(p, bol, eol, ctx, &match, eflags))
+    {
         return 0;
+    }
     if (match.rm_so < 0 || match.rm_eo < 0)
+    {
         return 0;
+    }
     if (pmatch->rm_so >= 0 && pmatch->rm_eo >= 0)
     {
         if (match.rm_so > pmatch->rm_so)
+        {
             return 1;
+        }
         if (match.rm_so == pmatch->rm_so && match.rm_eo < pmatch->rm_eo)
+        {
             return 1;
+        }
     }
     pmatch->rm_so = match.rm_so;
     pmatch->rm_eo = match.rm_eo;
@@ -1235,7 +1385,9 @@ int grep_next_match(struct grep_opt *opt,
             {
                 case GREP_PATTERN_HEAD:
                     if ((field != GREP_HEADER_FIELD_MAX) && (p->field != field))
+                    {
                         continue;
+                    }
                     /* fall thru */
                 case GREP_PATTERN: /* atom */
                 case GREP_PATTERN_BODY:
@@ -1297,7 +1449,9 @@ static void show_line(struct grep_opt *opt,
     if (opt->file_break && opt->last_shown == 0)
     {
         if (opt->show_hunk_mark)
+        {
             opt->output(opt, "\n", 1);
+        }
     }
     else if (opt->pre_context || opt->post_context || opt->funcbody)
     {
@@ -1332,30 +1486,48 @@ static void show_line(struct grep_opt *opt,
         if (opt->color)
         {
             if (sign == ':')
+            {
                 match_color = opt->colors[GREP_COLOR_MATCH_SELECTED];
+            }
             else
+            {
                 match_color = opt->colors[GREP_COLOR_MATCH_CONTEXT];
+            }
             if (sign == ':')
+            {
                 line_color = opt->colors[GREP_COLOR_SELECTED];
+            }
             else if (sign == '-')
+            {
                 line_color = opt->colors[GREP_COLOR_CONTEXT];
+            }
             else if (sign == '=')
+            {
                 line_color = opt->colors[GREP_COLOR_FUNCTION];
+            }
         }
         while (grep_next_match(opt, bol, eol, ctx, &match,
                                GREP_HEADER_FIELD_MAX, eflags))
         {
             if (match.rm_so == match.rm_eo)
+            {
                 break;
+            }
 
             if (opt->only_matching)
+            {
                 show_line_header(opt, name, lno, cno, sign);
+            }
             else
+            {
                 output_color(opt, bol, match.rm_so, line_color);
+            }
             output_color(opt, bol + match.rm_so,
                          match.rm_eo - match.rm_so, match_color);
             if (opt->only_matching)
+            {
                 opt->output(opt, "\n", 1);
+            }
             bol += match.rm_eo;
             cno += match.rm_eo;
             rest -= match.rm_eo;
@@ -1380,13 +1552,17 @@ pthread_mutex_t grep_attr_mutex;
 static inline void grep_attr_lock(void)
 {
     if (grep_use_locks)
+    {
         pthread_mutex_lock(&grep_attr_mutex);
+    }
 }
 
 static inline void grep_attr_unlock(void)
 {
     if (grep_use_locks)
+    {
         pthread_mutex_unlock(&grep_attr_mutex);
+    }
 }
 
 static int match_funcname(struct grep_opt *opt, struct grep_source *gs,
@@ -1416,9 +1592,13 @@ static int match_funcname(struct grep_opt *opt, struct grep_source *gs,
     }
 
     if (bol == eol)
+    {
         return 0;
+    }
     if (isalpha(*bol) || *bol == '_' || *bol == '$')
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -1430,11 +1610,15 @@ static void show_funcname_line(struct grep_opt *opt, struct grep_source *gs,
         const char *eol = --bol;
 
         while (bol > gs->buf && bol[-1] != '\n')
+        {
             bol--;
+        }
         lno--;
 
         if (lno <= opt->last_shown)
+        {
             break;
+        }
 
         if (match_funcname(opt, gs, bol, eol))
         {
@@ -1449,20 +1633,32 @@ static int is_empty_line(const char *bol, const char *eol);
 static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
                              const char *bol, const char *end, unsigned lno)
 {
-    unsigned cur = lno, from = 1, funcname_lno = 0, orig_from;
-    int      funcname_needed = !!opt->funcname, comment_needed = 0;
+    unsigned cur          = lno;
+    unsigned from         = 1;
+    unsigned funcname_lno = 0;
+    unsigned orig_from;
+    int      funcname_needed = !!opt->funcname;
+    int      comment_needed  = 0;
 
     if (opt->pre_context < lno)
+    {
         from = lno - opt->pre_context;
+    }
     if (from <= opt->last_shown)
+    {
         from = opt->last_shown + 1;
+    }
     orig_from = from;
     if (opt->funcbody)
     {
         if (match_funcname(opt, gs, bol, end))
+        {
             comment_needed = 1;
+        }
         else
+        {
             funcname_needed = 1;
+        }
         from = opt->last_shown + 1;
     }
 
@@ -1473,7 +1669,9 @@ static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
         const char *eol      = --bol;
 
         while (bol > gs->buf && bol[-1] != '\n')
+        {
             bol--;
+        }
         cur--;
         if (comment_needed && (is_empty_line(bol, eol) || match_funcname(opt, gs, bol, eol)))
         {
@@ -1491,23 +1689,32 @@ static void show_pre_context(struct grep_opt *opt, struct grep_source *gs,
             funcname_lno    = cur;
             funcname_needed = 0;
             if (opt->funcbody)
+            {
                 comment_needed = 1;
+            }
             else
+            {
                 from = orig_from;
+            }
         }
     }
 
     /* We need to look even further back to find a function signature. */
     if (opt->funcname && funcname_needed)
+    {
         show_funcname_line(opt, gs, bol, cur);
+    }
 
     /* Back forward. */
     while (cur < lno)
     {
-        const char *eol = bol, sign = (cur == funcname_lno) ? '=' : '-';
+        const char *eol  = bol;
+        const char  sign = (cur == funcname_lno) ? '=' : '-';
 
         while (*eol != '\n')
+        {
             eol++;
+        }
         show_line(opt, bol, eol, gs->name, cur, 0, sign);
         bol = eol + 1;
         cur++;
@@ -1519,13 +1726,19 @@ static int should_lookahead(struct grep_opt *opt)
     struct grep_pat *p;
 
     if (opt->pattern_expression)
+    {
         return 0; /* punt for too complex stuff */
+    }
     if (opt->invert)
+    {
         return 0;
+    }
     for (p = opt->pattern_list; p; p = p->next)
     {
         if (p->token != GREP_PATTERN)
+        {
             return 0; /* punt for "header only" and stuff */
+        }
     }
     return 1;
 }
@@ -1538,7 +1751,8 @@ static int look_ahead(struct grep_opt *opt,
     unsigned         lno = *lno_p;
     const char      *bol = *bol_p;
     struct grep_pat *p;
-    const char      *sp, *last_bol;
+    const char      *sp;
+    const char      *last_bol;
     regoff_t         earliest = -1;
 
     for (p = opt->pattern_list; p; p = p->next)
@@ -1548,9 +1762,13 @@ static int look_ahead(struct grep_opt *opt,
 
         hit = patmatch(p, bol, bol + *left_p, &m, 0);
         if (!hit || m.rm_so < 0 || m.rm_eo < 0)
+        {
             continue;
+        }
         if (earliest < 0 || m.rm_so < earliest)
+        {
             earliest = m.rm_so;
+        }
     }
 
     if (earliest < 0)
@@ -1560,13 +1778,17 @@ static int look_ahead(struct grep_opt *opt,
         return 1;
     }
     for (sp = bol + earliest; bol < sp && sp[-1] != '\n'; sp--)
+    {
         ; /* find the beginning of the line */
+    }
     last_bol = sp;
 
     for (sp = bol; sp < last_bol; sp++)
     {
         if (*sp == '\n')
+        {
             lno++;
+        }
     }
     *left_p -= last_bol - bol;
     *bol_p = last_bol;
@@ -1583,7 +1805,9 @@ static int fill_textconv_grep(struct repository      *r,
     size_t                size;
 
     if (!driver || !driver->textconv)
+    {
         return grep_source_load(gs);
+    }
 
     /*
      * The textconv interface is intimately tied to diff_filespecs, so we
@@ -1638,7 +1862,9 @@ static int fill_textconv_grep(struct repository      *r,
 static int is_empty_line(const char *bol, const char *eol)
 {
     while (bol < eol && isspace(*bol))
+    {
         bol++;
+    }
     return bol == eol;
 }
 
@@ -1658,24 +1884,32 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
     xdemitconf_t            xecfg;
 
     if (!opt->status_only && gs->name == NULL)
+    {
         BUG("grep call which could print a name requires "
             "grep_source.name be non-NULL");
+    }
 
     if (!opt->output)
+    {
         opt->output = std_output;
+    }
 
     if (opt->pre_context || opt->post_context || opt->file_break || opt->funcbody)
     {
         /* Show hunk marks, except for the first file. */
         if (opt->last_shown)
+        {
             opt->show_hunk_mark = 1;
+        }
         /*
          * If we're using threads then we can't easily identify
          * the first file.  Always put hunk marks in that case
          * and skip the very first one later in work_done().
          */
         if (opt->output != std_output)
+        {
             opt->show_hunk_mark = 1;
+        }
     }
     opt->last_shown = 0;
 
@@ -1706,11 +1940,15 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
         {
             case GREP_BINARY_DEFAULT:
                 if (grep_source_is_binary(gs, opt->repo->index))
+                {
                     binary_match_only = 1;
+                }
                 break;
             case GREP_BINARY_NOMATCH:
                 if (grep_source_is_binary(gs, opt->repo->index))
+                {
                     return 0; /* Assume unmatch */
+                }
                 break;
             case GREP_BINARY_TEXT:
                 break;
@@ -1725,7 +1963,9 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
     try_lookahead = should_lookahead(opt);
 
     if (fill_textconv_grep(opt->repo, textconv, gs) < 0)
+    {
         return 0;
+    }
 
     bol  = gs->buf;
     left = gs->size;
@@ -1734,7 +1974,8 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
         const char *eol;
         int         hit;
         ssize_t     cno;
-        ssize_t     col = -1, icol = -1;
+        ssize_t     col  = -1;
+        ssize_t     icol = -1;
 
         /*
          * look_ahead() skips quickly to the line that possibly
@@ -1749,41 +1990,55 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
             && !(last_hit
                  && (show_function || lno <= last_hit + opt->post_context))
             && look_ahead(opt, &left, &lno, &bol))
+        {
             break;
+        }
         eol = end_of_line(bol, &left);
 
         if ((ctx == GREP_CONTEXT_HEAD) && (eol == bol))
+        {
             ctx = GREP_CONTEXT_BODY;
+        }
 
         hit = match_line(opt, bol, eol, &col, &icol, ctx, collect_hits);
 
         if (collect_hits)
+        {
             goto next_line;
+        }
 
         /* "grep -v -e foo -e bla" should list lines
          * that do not have either, so inversion should
          * be done outside.
          */
         if (opt->invert)
+        {
             hit = !hit;
+        }
         if (opt->unmatch_name_only)
         {
             if (hit)
+            {
                 return 0;
+            }
             goto next_line;
         }
         if (hit && (opt->max_count < 0 || count < opt->max_count))
         {
             count++;
             if (opt->status_only)
+            {
                 return 1;
+            }
             if (opt->name_only)
             {
                 show_name(opt, gs->name);
                 return 1;
             }
             if (opt->count)
+            {
                 goto next_line;
+            }
             if (binary_match_only)
             {
                 opt->output(opt, "Binary file ", 12);
@@ -1796,9 +2051,13 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
              * pre-context lines, we would need to show them.
              */
             if (opt->pre_context || opt->funcbody)
+            {
                 show_pre_context(opt, gs, bol, eol, lno);
+            }
             else if (opt->funcname)
+            {
                 show_funcname_line(opt, gs, bol, lno);
+            }
             cno = opt->invert ? icol : col;
             if (cno < 0)
             {
@@ -1814,7 +2073,9 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
             show_line(opt, bol, eol, gs->name, lno, cno + 1, ':');
             last_hit = lno;
             if (opt->funcbody)
+            {
                 show_function = 1;
+            }
             goto next_line;
         }
         if (show_function && (!peek_bol || peek_bol < bol))
@@ -1835,7 +2096,9 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
             }
 
             if (peek_bol >= gs->buf + gs->size || match_funcname(opt, gs, peek_bol, peek_eol))
+            {
                 show_function = 0;
+            }
         }
         if (show_function || (last_hit && lno <= last_hit + opt->post_context))
         {
@@ -1848,16 +2111,22 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
     next_line:
         bol = eol + 1;
         if (!left)
+        {
             break;
+        }
         left--;
         lno++;
     }
 
     if (collect_hits)
+    {
         return 0;
+    }
 
     if (opt->status_only)
+    {
         return opt->unmatch_name_only;
+    }
     if (opt->unmatch_name_only)
     {
         /* We did not see any hit, so we want to show this */
@@ -1898,7 +2167,9 @@ static void clr_hit_marker(struct grep_expr *x)
     {
         x->hit = 0;
         if (x->node != GREP_NODE_OR)
+        {
             return;
+        }
         x->u.binary.left->hit = 0;
         x                     = x->u.binary.right;
     }
@@ -1910,9 +2181,13 @@ static int chk_hit_marker(struct grep_expr *x)
     while (1)
     {
         if (x->node != GREP_NODE_OR)
+        {
             return x->hit;
+        }
         if (!x->u.binary.left->hit)
+        {
             return 0;
+        }
         x = x->u.binary.right;
     }
 }
@@ -1924,7 +2199,9 @@ int grep_source(struct grep_opt *opt, struct grep_source *gs)
      * buffer-wide "all-match".
      */
     if (!opt->all_match && !opt->no_body_match)
+    {
         return grep_source_1(opt, gs, 0);
+    }
 
     /* Otherwise the toplevel "or" terms hit a bit differently.
      * We first clear hit markers from them.
@@ -1934,9 +2211,13 @@ int grep_source(struct grep_opt *opt, struct grep_source *gs)
     grep_source_1(opt, gs, 1);
 
     if (opt->all_match && !chk_hit_marker(opt->pattern_expression))
+    {
         return 0;
+    }
     if (opt->no_body_match && opt->body_hit)
+    {
         return 0;
+    }
 
     return grep_source_1(opt, gs, 0);
 }
@@ -2025,9 +2306,11 @@ static int grep_source_load_oid(struct grep_source *gs)
     gs->buf = repo_read_object_file(gs->repo, gs->identifier, &type,
                                     &gs->size);
     if (!gs->buf)
+    {
         return error(_("'%s': unable to read %s"),
                      gs->name,
                      oid_to_hex(gs->identifier));
+    }
     return 0;
 }
 
@@ -2043,15 +2326,21 @@ static int grep_source_load_file(struct grep_source *gs)
     {
     err_ret:
         if (errno != ENOENT)
+        {
             error_errno(_("failed to stat '%s'"), filename);
+        }
         return -1;
     }
     if (!S_ISREG(st.st_mode))
+    {
         return -1;
+    }
     size = xsize_t(st.st_size);
-    i    = open(filename, O_RDONLY);
+    i    = open(filename, O_RDONLY | O_CLOEXEC);
     if (i < 0)
+    {
         goto err_ret;
+    }
     data = xmallocz(size);
     if (st.st_size != read_in_full(i, data, size))
     {
@@ -2070,7 +2359,9 @@ static int grep_source_load_file(struct grep_source *gs)
 static int grep_source_load(struct grep_source *gs)
 {
     if (gs->buf)
+    {
         return 0;
+    }
 
     switch (gs->type)
     {
@@ -2088,13 +2379,19 @@ void grep_source_load_driver(struct grep_source *gs,
                              struct index_state *istate)
 {
     if (gs->driver)
+    {
         return;
+    }
 
     grep_attr_lock();
     if (gs->path)
+    {
         gs->driver = userdiff_find_by_path(istate, gs->path);
+    }
     if (!gs->driver)
+    {
         gs->driver = userdiff_find_by_name("default");
+    }
     grep_attr_unlock();
 }
 
@@ -2103,10 +2400,14 @@ static int grep_source_is_binary(struct grep_source *gs,
 {
     grep_source_load_driver(gs, istate);
     if (gs->driver->binary != -1)
+    {
         return gs->driver->binary;
+    }
 
     if (!grep_source_load(gs))
+    {
         return buffer_is_binary(gs->buf, gs->size);
+    }
 
     return 0;
 }

@@ -54,9 +54,13 @@ static void zlib_post_call(git_zstream *s)
     bytes_consumed = s->z.next_in - s->next_in;
     bytes_produced = s->z.next_out - s->next_out;
     if (s->z.total_out != s->total_out + bytes_produced)
+    {
         BUG("total_out mismatch");
+    }
     if (s->z.total_in != s->total_in + bytes_consumed)
+    {
         BUG("total_in mismatch");
+    }
 
     s->total_out = s->z.total_out;
     s->total_in  = s->z.total_in;
@@ -74,7 +78,9 @@ void git_inflate_init(git_zstream *strm)
     status = inflateInit(&strm->z);
     zlib_post_call(strm);
     if (status == Z_OK)
+    {
         return;
+    }
     die("inflateInit: %s (%s)", zerr_to_string(status),
         strm->z.msg ? strm->z.msg : "no message");
 }
@@ -92,7 +98,9 @@ void git_inflate_init_gzip_only(git_zstream *strm)
     status = inflateInit2(&strm->z, windowBits);
     zlib_post_call(strm);
     if (status == Z_OK)
+    {
         return;
+    }
     die("inflateInit2: %s (%s)", zerr_to_string(status),
         strm->z.msg ? strm->z.msg : "no message");
 }
@@ -105,7 +113,9 @@ void git_inflate_end(git_zstream *strm)
     status = inflateEnd(&strm->z);
     zlib_post_call(strm);
     if (status == Z_OK)
+    {
         return;
+    }
     error("inflateEnd: %s (%s)", zerr_to_string(status),
           strm->z.msg ? strm->z.msg : "no message");
 }
@@ -123,7 +133,9 @@ int git_inflate(git_zstream *strm, int flush)
                              ? 0
                              : flush);
         if (status == Z_MEM_ERROR)
+        {
             die("inflate: out of memory");
+        }
         zlib_post_call(strm);
 
         /*
@@ -131,7 +143,9 @@ int git_inflate(git_zstream *strm, int flush)
          * make progress.
          */
         if ((strm->avail_out && !strm->z.avail_out) && (status == Z_OK || status == Z_BUF_ERROR))
+        {
             continue;
+        }
         break;
     }
 
@@ -168,7 +182,9 @@ void git_deflate_init(git_zstream *strm, int level)
     status = deflateInit(&strm->z, level);
     zlib_post_call(strm);
     if (status == Z_OK)
+    {
         return;
+    }
     die("deflateInit: %s (%s)", zerr_to_string(status),
         strm->z.msg ? strm->z.msg : "no message");
 }
@@ -184,7 +200,9 @@ static void do_git_deflate_init(git_zstream *strm, int level, int windowBits)
                           8, Z_DEFAULT_STRATEGY);
     zlib_post_call(strm);
     if (status == Z_OK)
+    {
         return;
+    }
     die("deflateInit2: %s (%s)", zerr_to_string(status),
         strm->z.msg ? strm->z.msg : "no message");
 }
@@ -222,7 +240,9 @@ void git_deflate_end(git_zstream *strm)
     int status = git_deflate_abort(strm);
 
     if (status == Z_OK)
+    {
         return;
+    }
     error("deflateEnd: %s (%s)", zerr_to_string(status),
           strm->z.msg ? strm->z.msg : "no message");
 }
@@ -251,7 +271,9 @@ int git_deflate(git_zstream *strm, int flush)
                              ? 0
                              : flush);
         if (status == Z_MEM_ERROR)
+        {
             die("deflate: out of memory");
+        }
         zlib_post_call(strm);
 
         /*
@@ -259,7 +281,9 @@ int git_deflate(git_zstream *strm, int flush)
          * make progress.
          */
         if ((strm->avail_out && !strm->z.avail_out) && (status == Z_OK || status == Z_BUF_ERROR))
+        {
             continue;
+        }
         break;
     }
 

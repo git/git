@@ -51,12 +51,16 @@ const char *get_preferred_languages(void)
 
     retval = getenv("LANGUAGE");
     if (retval && *retval)
+    {
         return retval;
+    }
 
 #ifndef NO_GETTEXT
     retval = setlocale(LC_MESSAGES, NULL);
-    if (retval && *retval && strcmp(retval, "C") && strcmp(retval, "POSIX"))
+    if (retval && *retval && strcmp(retval, "C") != 0 && strcmp(retval, "POSIX") != 0)
+    {
         return retval;
+    }
 #endif
 
     return NULL;
@@ -94,7 +98,9 @@ static void init_gettext_charset(const char *domain)
      * 2011-11-18) for more details.
      */
     if (test_vsnprintf("%.*s", 13, "David_K\345gedal") < 0)
+    {
         setlocale(LC_CTYPE, "C");
+    }
 }
 
 int git_gettext_enabled = 0;
@@ -105,7 +111,9 @@ void git_setup_gettext(void)
     char       *p     = NULL;
 
     if (!podir)
+    {
         podir = p = system_path(GIT_LOCALE_PATH);
+    }
 
     if (!is_directory(podir))
     {
@@ -129,7 +137,9 @@ int gettext_width(const char *s)
 {
     static int is_utf8 = -1;
     if (is_utf8 == -1)
+    {
         is_utf8 = is_utf8_locale();
+    }
 
     return is_utf8 ? utf8_strwidth(s) : strlen(s);
 }
