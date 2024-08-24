@@ -1425,7 +1425,85 @@ foreach(unit_test ${unit_test_PROGRAMS})
 endforeach()
 
 #test-tool
-parse_makefile_for_sources(test-tool_SOURCES "TEST_BUILTINS_OBJS")
+# parse_makefile_for_sources(test-tool_SOURCES "TEST_BUILTINS_OBJS")
+set(test-tool_SOURCES
+    test-advise.c
+    test-bitmap.c
+    test-bloom.c
+    test-bundle-uri.c
+    test-cache-tree.c
+    test-chmtime.c
+    test-config.c
+    test-crontab.c
+    test-csprng.c
+    test-date.c
+    test-delete-gpgsig.c
+    test-delta.c
+    test-dir-iterator.c
+    test-drop-caches.c
+    test-dump-cache-tree.c
+    test-dump-fsmonitor.c
+    test-dump-split-index.c
+    test-dump-untracked-cache.c
+    test-env-helper.c
+    test-example-tap.c
+    test-find-pack.c
+    test-fsmonitor-client.c
+    test-genrandom.c
+    test-genzeros.c
+    test-getcwd.c
+    test-hash-speed.c
+    test-hash.c
+    test-hashmap.c
+    test-hexdump.c
+    test-json-writer.c
+    test-lazy-init-name-hash.c
+    test-match-trees.c
+    test-mergesort.c
+    test-mktemp.c
+    test-oid-array.c
+    test-online-cpus.c
+    test-pack-mtimes.c
+    test-parse-options.c
+    test-parse-pathspec-file.c
+    test-partial-clone.c
+    test-path-utils.c
+    test-pcre2-config.c
+    test-pkt-line.c
+    test-proc-receive.c
+    test-progress.c
+    test-reach.c
+    test-read-cache.c
+    test-read-graph.c
+    test-read-midx.c
+    test-ref-store.c
+    test-reftable.c
+    test-regex.c
+    test-rot13-filter.c
+    test-repository.c
+    test-revision-walking.c
+    test-run-command.c
+    test-scrap-cache-tree.c
+    test-serve-v2.c
+    test-sha1.c
+    test-sha256.c
+    test-sigchain.c
+    test-simple-ipc.c
+    test-string-list.c
+    test-submodule-config.c
+    test-submodule-nested-repo-config.c
+    test-submodule.c
+    test-subprocess.c
+    test-trace2.c
+    test-truncate.c
+    test-urlmatch-normalization.c
+    test-userdiff.c
+    test-wildmatch.c
+    test-windows-named-pipe.c
+    test-write-cache.c
+    test-xml-encode.c
+)
+
 add_library(test-lib OBJECT ${CMAKE_SOURCE_DIR}/t/unit-tests/test-lib.c)
 
 list(TRANSFORM test-tool_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/t/helper/")
