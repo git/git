@@ -110,7 +110,7 @@ enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
          */
         return ITER_SELECT_0;
     }
-    else if (iter_common)
+    if (iter_common)
     {
         /*
          * In case we have pending worktree and common refs we need to
@@ -162,13 +162,17 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
         {
             iter->iter0 = NULL;
             if (ok == ITER_ERROR)
+            {
                 goto error;
+            }
         }
         if ((ok = ref_iterator_advance(iter->iter1)) != ITER_OK)
         {
             iter->iter1 = NULL;
             if (ok == ITER_ERROR)
+            {
                 goto error;
+            }
         }
     }
     else
@@ -181,7 +185,9 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
         {
             *iter->current = NULL;
             if (ok == ITER_ERROR)
+            {
                 goto error;
+            }
         }
     }
 
@@ -196,7 +202,7 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
         {
             return ref_iterator_abort(ref_iterator);
         }
-        else if (selection == ITER_SELECT_ERROR)
+        if (selection == ITER_SELECT_ERROR)
         {
             ref_iterator_abort(ref_iterator);
             return ITER_ERROR;
@@ -219,7 +225,9 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
             {
                 *secondary = NULL;
                 if (ok == ITER_ERROR)
+                {
                     goto error;
+                }
             }
         }
 
@@ -260,12 +268,16 @@ static int merge_ref_iterator_abort(struct ref_iterator *ref_iterator)
     if (iter->iter0)
     {
         if (ref_iterator_abort(iter->iter0) != ITER_DONE)
+        {
             ok = ITER_ERROR;
+        }
     }
     if (iter->iter1)
     {
         if (ref_iterator_abort(iter->iter1) != ITER_DONE)
+        {
             ok = ITER_ERROR;
+        }
     }
     base_ref_iterator_free(ref_iterator);
     return ok;
@@ -313,15 +325,19 @@ static enum iterator_selection overlay_iterator_select(
     int cmp;
 
     if (!back)
+    {
         return front ? ITER_SELECT_0 : ITER_SELECT_DONE;
-    else if (!front)
+    }
+    if (!front)
         return ITER_SELECT_1;
 
     cmp = strcmp(front->refname, back->refname);
 
     if (cmp < 0)
+    {
         return ITER_SELECT_0;
-    else if (cmp > 0)
+    }
+    if (cmp > 0)
         return ITER_SELECT_1;
     else
         return ITER_SELECT_0_SKIP_1;
@@ -340,7 +356,7 @@ struct ref_iterator *overlay_ref_iterator_begin(
         ref_iterator_abort(front);
         return back;
     }
-    else if (is_empty_ref_iterator(back))
+    if (is_empty_ref_iterator(back))
     {
         ref_iterator_abort(back);
         return front;
@@ -364,7 +380,9 @@ static int compare_prefix(const char *refname, const char *prefix)
     while (*prefix)
     {
         if (*refname != *prefix)
+        {
             return ((unsigned char)*refname < (unsigned char)*prefix) ? -1 : +1;
+        }
 
         refname++;
         prefix++;
@@ -384,7 +402,9 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
         int cmp = compare_prefix(iter->iter0->refname, iter->prefix);
 
         if (cmp < 0)
+        {
             continue;
+        }
 
         if (cmp > 0)
         {
@@ -409,7 +429,9 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
              * trimming, report it as a bug:
              */
             if (strlen(iter->iter0->refname) <= iter->trim)
+            {
                 BUG("attempt to trim too many characters");
+            }
             iter->base.refname = iter->iter0->refname + iter->trim;
         }
         else
@@ -424,7 +446,9 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
     iter->iter0 = NULL;
     if (ref_iterator_abort(ref_iterator) != ITER_DONE)
+    {
         return ITER_ERROR;
+    }
     return ok;
 }
 
@@ -444,7 +468,9 @@ static int prefix_ref_iterator_abort(struct ref_iterator *ref_iterator)
     int ok = ITER_DONE;
 
     if (iter->iter0)
+    {
         ok = ref_iterator_abort(iter->iter0);
+    }
     free(iter->prefix);
     base_ref_iterator_free(ref_iterator);
     return ok;
@@ -464,7 +490,9 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
     struct ref_iterator        *ref_iterator;
 
     if (!*prefix && !trim)
+    {
         return iter0; /* optimization: no need to wrap iterator */
+    }
 
     CALLOC_ARRAY(iter, 1);
     ref_iterator = &iter->base;
@@ -483,7 +511,8 @@ struct ref_iterator *current_ref_iter = NULL;
 int do_for_each_ref_iterator(struct ref_iterator *iter,
                              each_ref_fn fn, void *cb_data)
 {
-    int                  retval       = 0, ok;
+    int                  retval = 0;
+    int                  ok;
     struct ref_iterator *old_ref_iter = current_ref_iter;
 
     current_ref_iter = iter;
@@ -505,6 +534,8 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
 out:
     current_ref_iter = old_ref_iter;
     if (ok == ITER_ERROR)
+    {
         return -1;
+    }
     return retval;
 }

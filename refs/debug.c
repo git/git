@@ -72,9 +72,13 @@ static void print_update(int i, const char *refname,
     char o[GIT_MAX_HEXSZ + 1] = "null";
     char n[GIT_MAX_HEXSZ + 1] = "null";
     if (old_oid)
+    {
         oid_to_hex_r(o, old_oid);
+    }
     if (new_oid)
+    {
         oid_to_hex_r(n, new_oid);
+    }
 
     type &= 0xf; /* see refs.h REF_* */
     flags &= REF_HAVE_NEW | REF_HAVE_OLD | REF_NO_DEREF | REF_FORCE_CREATE_REFLOG;
@@ -174,10 +178,14 @@ static int debug_ref_iterator_advance(struct ref_iterator *ref_iterator)
         (struct debug_ref_iterator *)ref_iterator;
     int res = diter->iter->vtable->advance(diter->iter);
     if (res)
+    {
         trace_printf_key(&trace_refs, "iterator_advance: (%d)\n", res);
+    }
     else
+    {
         trace_printf_key(&trace_refs, "iterator_advance: %s (0)\n",
                          diter->iter->refname);
+    }
 
     diter->base.refname = diter->iter->refname;
     diter->base.oid     = diter->iter->oid;
@@ -260,11 +268,15 @@ static int debug_read_symbolic_ref(struct ref_store *ref_store, const char *refn
 
     res = refs->be->read_symbolic_ref(refs, refname, referent);
     if (!res)
+    {
         trace_printf_key(&trace_refs, "read_symbolic_ref: %s: (%s)\n",
                          refname, referent->buf);
+    }
     else
+    {
         trace_printf_key(&trace_refs,
                          "read_symbolic_ref: %s: %d\n", refname, res);
+    }
     return res;
 }
 
@@ -296,9 +308,13 @@ static int debug_print_reflog_ent(struct object_id *old_oid,
     char                 n[GIT_MAX_HEXSZ + 1] = "null";
     char                *msgend               = strchrnul(msg, '\n');
     if (old_oid)
+    {
         oid_to_hex_r(o, old_oid);
+    }
     if (new_oid)
+    {
         oid_to_hex_r(n, new_oid);
+    }
 
     ret = dbg->fn(old_oid, new_oid, committer, timestamp, tz, msg,
                   dbg->cb_data);

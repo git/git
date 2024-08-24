@@ -187,8 +187,10 @@ static void clear_snapshot_buffer(struct snapshot *snapshot)
     if (snapshot->mmapped)
     {
         if (munmap(snapshot->buf, snapshot->eof - snapshot->buf))
+        {
             die_errno("error ummapping packed-refs file %s",
                       snapshot->refs->path);
+        }
         snapshot->mmapped = 0;
     }
     else
@@ -211,10 +213,8 @@ static int release_snapshot(struct snapshot *snapshot)
         free(snapshot);
         return 1;
     }
-    else
-    {
-        return 0;
-    }
+
+    return 0;
 }
 
 static size_t snapshot_hexsz(const struct snapshot *snapshot)
@@ -252,14 +252,18 @@ static struct packed_ref_store *packed_downcast(struct ref_store *ref_store,
     struct packed_ref_store *refs;
 
     if (ref_store->be != &refs_be_packed)
+    {
         BUG("ref_store is type \"%s\" not \"packed\" in %s",
             ref_store->be->name, caller);
+    }
 
     refs = (struct packed_ref_store *)ref_store;
 
     if ((refs->store_flags & required_flags) != required_flags)
+    {
         BUG("unallowed operation (%s), requires %x, has %x\n",
             caller, required_flags, refs->store_flags);
+    }
 
     return refs;
 }
@@ -288,9 +292,13 @@ static NORETURN void die_unterminated_line(const char *path,
                                            const char *p, size_t len)
 {
     if (len < 80)
+    {
         die("unterminated line in %s: %.*s", path, (int)len, p);
+    }
     else
+    {
         die("unterminated line in %s: %.75s...", path, p);
+    }
 }
 
 static NORETURN void die_invalid_line(const char *path,
@@ -299,11 +307,17 @@ static NORETURN void die_invalid_line(const char *path,
     const char *eol = memchr(p, '\n', len);
 
     if (!eol)
+    {
         die_unterminated_line(path, p, len);
+    }
     else if (eol - p < 80)
+    {
         die("unexpected line in %s: %.*s", path, (int)(eol - p), p);
+    }
     else
+    {
         die("unexpected line in %s: %.75s...", path, p);
+    }
 }
 
 struct snapshot_record
@@ -316,20 +330,24 @@ static int cmp_packed_ref_records(const void *v1, const void *v2,
                                   void *cb_data)
 {
     const struct snapshot        *snapshot = cb_data;
-    const struct snapshot_record *e1 = v1, *e2 = v2;
-    const char                   *r1 = e1->start + snapshot_hexsz(snapshot) + 1;
-    const char                   *r2 = e2->start + snapshot_hexsz(snapshot) + 1;
+    const struct snapshot_record *e1       = v1;
+    const struct snapshot_record *e2       = v2;
+    const char                   *r1       = e1->start + snapshot_hexsz(snapshot) + 1;
+    const char                   *r2       = e2->start + snapshot_hexsz(snapshot) + 1;
 
     while (1)
     {
         if (*r1 == '\n')
+        {
             return *r2 == '\n' ? 0 : -1;
+        }
         if (*r1 != *r2)
         {
             if (*r2 == '\n')
+            {
                 return 1;
-            else
-                return (unsigned char)*r1 < (unsigned char)*r2 ? -1 : +1;
+            }
+            return (unsigned char)*r1 < (unsigned char)*r2 ? -1 : +1;
         }
         r1++;
         r2++;
@@ -349,11 +367,17 @@ static int cmp_record_to_refname(const char *rec, const char *refname,
     while (1)
     {
         if (*r1 == '\n')
+        {
             return *r2 ? -1 : 0;
+        }
         if (!*r2)
+        {
             return start ? 1 : -1;
+        }
         if (*r1 != *r2)
+        {
             return (unsigned char)*r1 < (unsigned char)*r2 ? -1 : +1;
+        }
         r1++;
         r2++;
     }
@@ -366,17 +390,24 @@ static int cmp_record_to_refname(const char *rec, const char *refname,
 static void sort_snapshot(struct snapshot *snapshot)
 {
     struct snapshot_record *records = NULL;
-    size_t                  alloc = 0, nr = 0;
-    int                     sorted = 1;
-    const char             *pos, *eof, *eol;
-    size_t                  len, i;
-    char                   *new_buffer, *dst;
+    size_t                  alloc   = 0;
+    size_t                  nr      = 0;
+    int                     sorted  = 1;
+    const char             *pos;
+    const char             *eof;
+    const char             *eol;
+    size_t                  len;
+    size_t                  i;
+    char                   *new_buffer;
+    char                   *dst;
 
     pos = snapshot->start;
     eof = snapshot->eof;
 
     if (pos == eof)
+    {
         return;
+    }
 
     len = eof - pos;
 
@@ -390,11 +421,15 @@ static void sort_snapshot(struct snapshot *snapshot)
     {
         eol = memchr(pos, '\n', eof - pos);
         if (!eol)
+        {
             /* The safety check should prevent this. */
             BUG("unterminated line found in packed-refs");
+        }
         if (eol - pos < snapshot_hexsz(snapshot) + 2)
+        {
             die_invalid_line(snapshot->refs->path,
                              pos, eof - pos);
+        }
         eol++;
         if (eol < eof && *eol == '^')
         {
@@ -406,8 +441,10 @@ static void sort_snapshot(struct snapshot *snapshot)
 
             eol = memchr(peeled_start, '\n', eof - peeled_start);
             if (!eol)
+            {
                 /* The safety check should prevent this. */
                 BUG("unterminated peeled line found in packed-refs");
+            }
             eol++;
         }
 
@@ -417,13 +454,17 @@ static void sort_snapshot(struct snapshot *snapshot)
         nr++;
 
         if (sorted && nr > 1 && cmp_packed_ref_records(&records[nr - 2], &records[nr - 1], snapshot) >= 0)
+        {
             sorted = 0;
+        }
 
         pos = eol;
     }
 
     if (sorted)
+    {
         goto cleanup;
+    }
 
     /* We need to sort the memory. First we sort the records array: */
     QSORT_S(records, nr, cmp_packed_ref_records, snapshot);
@@ -460,7 +501,9 @@ cleanup:
 static const char *find_start_of_record(const char *buf, const char *p)
 {
     while (p > buf && (p[-1] != '\n' || p[0] == '^'))
+    {
         p--;
+    }
     return p;
 }
 
@@ -471,7 +514,9 @@ static const char *find_start_of_record(const char *buf, const char *p)
 static const char *find_end_of_record(const char *p, const char *end)
 {
     while (++p < end && (p[-1] != '\n' || p[0] == '^'))
+    {
         ;
+    }
     return p;
 }
 
@@ -500,12 +545,16 @@ static void verify_buffer_safe(struct snapshot *snapshot)
     const char *last_line;
 
     if (start == eof)
+    {
         return;
+    }
 
     last_line = find_start_of_record(start, eof - 1);
     if (*(eof - 1) != '\n' || eof - last_line < snapshot_hexsz(snapshot) + 2)
+    {
         die_invalid_line(snapshot->refs->path,
                          last_line, eof - last_line);
+    }
 }
 
 #define SMALL_FILE_SIZE (32 * 1024)
@@ -523,7 +572,7 @@ static int load_contents(struct snapshot *snapshot)
     size_t      size;
     ssize_t     bytes_read;
 
-    fd = open(snapshot->refs->path, O_RDONLY);
+    fd = open(snapshot->refs->path, O_RDONLY | O_CLOEXEC);
     if (fd < 0)
     {
         if (errno == ENOENT)
@@ -537,16 +586,16 @@ static int load_contents(struct snapshot *snapshot)
              */
             return 0;
         }
-        else
-        {
-            die_errno("couldn't read %s", snapshot->refs->path);
-        }
+
+        die_errno("couldn't read %s", snapshot->refs->path);
     }
 
     stat_validity_update(&snapshot->validity, fd);
 
     if (fstat(fd, &st) < 0)
+    {
         die_errno("couldn't stat %s", snapshot->refs->path);
+    }
     size = xsize_t(st.st_size);
 
     if (!size)
@@ -554,7 +603,7 @@ static int load_contents(struct snapshot *snapshot)
         close(fd);
         return 0;
     }
-    else if (mmap_strategy == MMAP_NONE || size <= SMALL_FILE_SIZE)
+    if (mmap_strategy == MMAP_NONE || size <= SMALL_FILE_SIZE)
     {
         snapshot->buf = xmalloc(size);
         bytes_read    = read_in_full(fd, snapshot->buf, size);
@@ -603,7 +652,8 @@ static const char *find_reference_location_1(struct snapshot *snapshot,
 
     while (lo != hi)
     {
-        const char *mid, *rec;
+        const char *mid;
+        const char *rec;
         int         cmp;
 
         mid = lo + (hi - lo) / 2;
@@ -624,9 +674,10 @@ static const char *find_reference_location_1(struct snapshot *snapshot,
     }
 
     if (mustexist)
+    {
         return NULL;
-    else
-        return lo;
+    }
+    return lo;
 }
 
 /*
@@ -707,34 +758,46 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
     snapshot->peeled = PEELED_NONE;
 
     if (!load_contents(snapshot))
+    {
         return snapshot;
+    }
 
     /* If the file has a header line, process it: */
     if (snapshot->buf < snapshot->eof && *snapshot->buf == '#')
     {
-        char              *tmp, *p, *eol;
+        char              *tmp;
+        char              *p;
+        char              *eol;
         struct string_list traits = STRING_LIST_INIT_NODUP;
 
         eol = memchr(snapshot->buf, '\n',
                      snapshot->eof - snapshot->buf);
         if (!eol)
+        {
             die_unterminated_line(refs->path,
                                   snapshot->buf,
                                   snapshot->eof - snapshot->buf);
+        }
 
         tmp = xmemdupz(snapshot->buf, eol - snapshot->buf);
 
         if (!skip_prefix(tmp, "# pack-refs with:", (const char **)&p))
+        {
             die_invalid_line(refs->path,
                              snapshot->buf,
                              snapshot->eof - snapshot->buf);
+        }
 
         string_list_split_in_place(&traits, p, " ", -1);
 
         if (unsorted_string_list_has_string(&traits, "fully-peeled"))
+        {
             snapshot->peeled = PEELED_FULLY;
+        }
         else if (unsorted_string_list_has_string(&traits, "peeled"))
+        {
             snapshot->peeled = PEELED_TAGS;
+        }
 
         sorted = unsorted_string_list_has_string(&traits, "sorted");
 
@@ -786,7 +849,9 @@ static struct snapshot *create_snapshot(struct packed_ref_store *refs)
 static void validate_snapshot(struct packed_ref_store *refs)
 {
     if (refs->snapshot && !stat_validity_check(&refs->snapshot->validity, refs->path))
+    {
         clear_snapshot(refs);
+    }
 }
 
 /*
@@ -801,10 +866,14 @@ static void validate_snapshot(struct packed_ref_store *refs)
 static struct snapshot *get_snapshot(struct packed_ref_store *refs)
 {
     if (!is_lock_file_locked(&refs->lock))
+    {
         validate_snapshot(refs);
+    }
 
     if (!refs->snapshot)
+    {
         refs->snapshot = create_snapshot(refs);
+    }
 
     return refs->snapshot;
 }
@@ -830,7 +899,9 @@ static int packed_read_raw_ref(struct ref_store *ref_store, const char *refname,
     }
 
     if (get_oid_hex_algop(rec, oid, ref_store->repo->hash_algo))
+    {
         die_invalid_line(refs->path, rec, snapshot->eof - rec);
+    }
 
     *type = REF_ISPACKED;
     return 0;
@@ -884,7 +955,8 @@ struct packed_ref_iterator
  */
 static int next_record(struct packed_ref_iterator *iter)
 {
-    const char *p, *eol;
+    const char *p;
+    const char *eol;
 
     strbuf_reset(&iter->refname_buf);
 
@@ -899,7 +971,9 @@ static int next_record(struct packed_ref_iterator *iter)
     {
         struct jump_list_entry *curr = &iter->jump[iter->jump_cur];
         if (iter->pos < curr->start)
+        {
             break; /* not to the next jump yet */
+        }
 
         iter->jump_cur++;
         if (iter->pos < curr->end)
@@ -912,19 +986,25 @@ static int next_record(struct packed_ref_iterator *iter)
     }
 
     if (iter->pos == iter->eof)
+    {
         return ITER_DONE;
+    }
 
     iter->base.flags = REF_ISPACKED;
     p                = iter->pos;
 
     if (iter->eof - p < snapshot_hexsz(iter->snapshot) + 2 || parse_oid_hex_algop(p, &iter->oid, &p, iter->repo->hash_algo) || !isspace(*p++))
+    {
         die_invalid_line(iter->snapshot->refs->path,
                          iter->pos, iter->eof - iter->pos);
+    }
 
     eol = memchr(p, '\n', iter->eof - p);
     if (!eol)
+    {
         die_unterminated_line(iter->snapshot->refs->path,
                               iter->pos, iter->eof - iter->pos);
+    }
 
     strbuf_add(&iter->refname_buf, p, eol - p);
     iter->base.refname = iter->refname_buf.buf;
@@ -932,13 +1012,17 @@ static int next_record(struct packed_ref_iterator *iter)
     if (check_refname_format(iter->base.refname, REFNAME_ALLOW_ONELEVEL))
     {
         if (!refname_is_safe(iter->base.refname))
+        {
             die("packed refname is dangerous: %s",
                 iter->base.refname);
+        }
         oidclr(&iter->oid, iter->repo->hash_algo);
         iter->base.flags |= REF_BAD_NAME | REF_ISBROKEN;
     }
     if (iter->snapshot->peeled == PEELED_FULLY || (iter->snapshot->peeled == PEELED_TAGS && starts_with(iter->base.refname, "refs/tags/")))
+    {
         iter->base.flags |= REF_KNOWS_PEELED;
+    }
 
     iter->pos = eol + 1;
 
@@ -946,8 +1030,10 @@ static int next_record(struct packed_ref_iterator *iter)
     {
         p = iter->pos + 1;
         if (iter->eof - p < snapshot_hexsz(iter->snapshot) + 1 || parse_oid_hex_algop(p, &iter->peeled, &p, iter->repo->hash_algo) || *p++ != '\n')
+        {
             die_invalid_line(iter->snapshot->refs->path,
                              iter->pos, iter->eof - iter->pos);
+        }
         iter->pos = p;
 
         /*
@@ -982,16 +1068,22 @@ static int packed_ref_iterator_advance(struct ref_iterator *ref_iterator)
     while ((ok = next_record(iter)) == ITER_OK)
     {
         if (iter->flags & DO_FOR_EACH_PER_WORKTREE_ONLY && !is_per_worktree_ref(iter->base.refname))
+        {
             continue;
+        }
 
         if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) && !ref_resolves_to_object(iter->base.refname, iter->repo, &iter->oid, iter->flags))
+        {
             continue;
+        }
 
         return ITER_OK;
     }
 
     if (ref_iterator_abort(ref_iterator) != ITER_DONE)
+    {
         ok = ITER_ERROR;
+    }
 
     return ok;
 }
@@ -1007,7 +1099,7 @@ static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
         oidcpy(peeled, &iter->peeled);
         return is_null_oid(&iter->peeled) ? -1 : 0;
     }
-    else if ((iter->base.flags & (REF_ISBROKEN | REF_ISSYMREF)))
+    if ((iter->base.flags & (REF_ISBROKEN | REF_ISSYMREF)))
     {
         return -1;
     }
@@ -1041,9 +1133,13 @@ static int jump_list_entry_cmp(const void *va, const void *vb)
     const struct jump_list_entry *b = vb;
 
     if (a->start < b->start)
+    {
         return -1;
+    }
     if (a->start > b->start)
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -1053,7 +1149,9 @@ static int has_glob_special(const char *str)
     for (p = str; *p; p++)
     {
         if (is_glob_special(*p))
+        {
             return 1;
+        }
     }
     return 0;
 }
@@ -1062,17 +1160,21 @@ static void populate_excluded_jump_list(struct packed_ref_iterator *iter,
                                         struct snapshot            *snapshot,
                                         const char                **excluded_patterns)
 {
-    size_t                  i, j;
+    size_t                  i;
+    size_t                  j;
     const char            **pattern;
     struct jump_list_entry *last_disjoint;
 
     if (!excluded_patterns)
+    {
         return;
+    }
 
     for (pattern = excluded_patterns; *pattern; pattern++)
     {
         struct jump_list_entry *e;
-        const char             *start, *end;
+        const char             *start;
+        const char             *end;
 
         /*
          * We can't feed any excludes with globs in them to the
@@ -1083,13 +1185,17 @@ static void populate_excluded_jump_list(struct packed_ref_iterator *iter,
          * would match that and mark it for exclusion).
          */
         if (has_glob_special(*pattern))
+        {
             continue;
+        }
 
         start = find_reference_location(snapshot, *pattern, 0);
         end   = find_reference_location_end(snapshot, *pattern, 0);
 
         if (start == end)
+        {
             continue; /* nothing to jump over */
+        }
 
         ALLOC_GROW(iter->jump, iter->jump_nr + 1, iter->jump_alloc);
 
@@ -1158,7 +1264,9 @@ static struct ref_iterator *packed_ref_iterator_begin(
     unsigned int                required_flags = REF_STORE_READ;
 
     if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN))
+    {
         required_flags |= REF_STORE_ODB;
+    }
     refs = packed_downcast(ref_store, required_flags, "ref_iterator_begin");
 
     /*
@@ -1169,19 +1277,27 @@ static struct ref_iterator *packed_ref_iterator_begin(
     snapshot = get_snapshot(refs);
 
     if (prefix && *prefix)
+    {
         start = find_reference_location(snapshot, prefix, 0);
+    }
     else
+    {
         start = snapshot->start;
+    }
 
     if (start == snapshot->eof)
+    {
         return empty_ref_iterator_begin();
+    }
 
     CALLOC_ARRAY(iter, 1);
     ref_iterator = &iter->base;
     base_ref_iterator_init(ref_iterator, &packed_ref_iterator_vtable);
 
     if (exclude_patterns)
+    {
         populate_excluded_jump_list(iter, snapshot, exclude_patterns);
+    }
 
     iter->snapshot = snapshot;
     acquire_snapshot(snapshot);
@@ -1196,8 +1312,10 @@ static struct ref_iterator *packed_ref_iterator_begin(
     iter->flags = flags;
 
     if (prefix && *prefix)
+    {
         /* Stop iteration after we've gone *past* prefix: */
         ref_iterator = prefix_ref_iterator_begin(ref_iterator, prefix, 0);
+    }
 
     return ref_iterator;
 }
@@ -1213,7 +1331,9 @@ static int write_packed_entry(FILE *fh, const char *refname,
                               const struct object_id *peeled)
 {
     if (fprintf(fh, "%s %s\n", oid_to_hex(oid), refname) < 0 || (peeled && fprintf(fh, "^%s\n", oid_to_hex(peeled)) < 0))
+    {
         return -1;
+    }
 
     return 0;
 }
@@ -1289,7 +1409,9 @@ void packed_refs_unlock(struct ref_store *ref_store)
         "packed_refs_unlock");
 
     if (!is_lock_file_locked(&refs->lock))
+    {
         BUG("packed_refs_unlock() called when not locked");
+    }
     rollback_lock_file(&refs->lock);
 }
 
@@ -1358,7 +1480,9 @@ static int write_with_updates(struct packed_ref_store *refs,
     char                *packed_refs_path;
 
     if (!is_lock_file_locked(&refs->lock))
+    {
         BUG("write_with_updates() called while unlocked");
+    }
 
     /*
      * If packed-refs is a symlink, we want to overwrite the
@@ -1387,7 +1511,9 @@ static int write_with_updates(struct packed_ref_store *refs,
     }
 
     if (fprintf(out, "%s", PACKED_REFS_HEADER) < 0)
+    {
         goto write_error;
+    }
 
     /*
      * We iterate in parallel through the current list of refs and
@@ -1399,7 +1525,9 @@ static int write_with_updates(struct packed_ref_store *refs,
     iter = packed_ref_iterator_begin(&refs->base, "", NULL,
                                      DO_FOR_EACH_INCLUDE_BROKEN);
     if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+    {
         iter = NULL;
+    }
 
     i = 0;
 
@@ -1417,9 +1545,13 @@ static int write_with_updates(struct packed_ref_store *refs,
             update = updates->items[i].util;
 
             if (!iter)
+            {
                 cmp = +1;
+            }
             else
+            {
                 cmp = strcmp(iter->refname, update->refname);
+            }
         }
 
         if (!cmp)
@@ -1460,7 +1592,9 @@ static int write_with_updates(struct packed_ref_store *refs,
                  * value.
                  */
                 if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+                {
                     iter = NULL;
+                }
                 cmp = +1;
             }
             else
@@ -1501,10 +1635,14 @@ static int write_with_updates(struct packed_ref_store *refs,
             if (write_packed_entry(out, iter->refname,
                                    iter->oid,
                                    peel_error ? NULL : &peeled))
+            {
                 goto write_error;
+            }
 
             if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+            {
                 iter = NULL;
+            }
         }
         else if (is_null_oid(&update->new_oid))
         {
@@ -1527,7 +1665,9 @@ static int write_with_updates(struct packed_ref_store *refs,
             if (write_packed_entry(out, update->refname,
                                    &update->new_oid,
                                    peel_error ? NULL : &peeled))
+            {
                 goto write_error;
+            }
 
             i++;
         }
@@ -1559,7 +1699,9 @@ write_error:
 
 error:
     if (iter)
+    {
         ref_iterator_abort(iter);
+    }
 
     delete_tempfile(&refs->tempfile);
     return -1;
@@ -1577,7 +1719,9 @@ int is_packed_transaction_needed(struct ref_store       *ref_store,
     int           ret;
 
     if (!is_lock_file_locked(&refs->lock))
+    {
         BUG("is_packed_transaction_needed() called while unlocked");
+    }
 
     /*
      * We're only going to bother returning false for the common,
@@ -1616,12 +1760,16 @@ int is_packed_transaction_needed(struct ref_store       *ref_store,
         struct ref_update *update = transaction->updates[i];
 
         if (update->flags & REF_HAVE_OLD)
+        {
             /* Have to check the old value -> needed. */
             return 1;
+        }
 
         if ((update->flags & REF_HAVE_NEW) && !is_null_oid(&update->new_oid))
+        {
             /* Have to set a new value -> needed. */
             return 1;
+        }
     }
 
     /*
@@ -1640,11 +1788,13 @@ int is_packed_transaction_needed(struct ref_store       *ref_store,
         struct object_id   oid;
 
         if (!(update->flags & REF_HAVE_NEW))
+        {
             /*
              * This reference isn't being deleted -> not
              * needed.
              */
             continue;
+        }
 
         if (!refs_read_raw_ref(ref_store, update->refname, &oid,
                                &referent, &type, &failure_errno)
@@ -1681,7 +1831,9 @@ static void packed_transaction_cleanup(struct packed_ref_store *refs,
         string_list_clear(&data->updates, 0);
 
         if (is_tempfile_active(refs->tempfile))
+        {
             delete_tempfile(&refs->tempfile);
+        }
 
         if (data->own_lock && is_lock_file_locked(&refs->lock))
         {
@@ -1738,17 +1890,23 @@ static int packed_transaction_prepare(struct ref_store       *ref_store,
     string_list_sort(&data->updates);
 
     if (ref_update_reject_duplicates(&data->updates, err))
+    {
         goto failure;
+    }
 
     if (!is_lock_file_locked(&refs->lock))
     {
         if (packed_refs_lock(ref_store, 0, err))
+        {
             goto failure;
+        }
         data->own_lock = 1;
     }
 
     if (write_with_updates(refs, &data->updates, err))
+    {
         goto failure;
+    }
 
     transaction->state = REF_TRANSACTION_PREPARED;
     return 0;

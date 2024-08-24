@@ -12,7 +12,9 @@ void add_entry_to_dir(struct ref_dir *dir, struct ref_entry *entry)
     dir->entries[dir->nr++] = entry;
     /* optimize for the case that entries are added in order */
     if (dir->nr == 1 || (dir->nr == dir->sorted + 1 && strcmp(dir->entries[dir->nr - 2]->name, dir->entries[dir->nr - 1]->name) < 0))
+    {
         dir->sorted = dir->nr;
+    }
 }
 
 struct ref_dir *get_ref_dir(struct ref_entry *entry)
@@ -23,7 +25,9 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry)
     if (entry->flag & REF_INCOMPLETE)
     {
         if (!dir->cache->fill_ref_dir)
+        {
             BUG("incomplete ref_store without fill_ref_dir function");
+        }
 
         dir->cache->fill_ref_dir(dir->cache->ref_store, dir, entry->name);
         entry->flag &= ~REF_INCOMPLETE;
@@ -75,7 +79,9 @@ static void free_ref_entry(struct ref_entry *entry)
 void free_ref_cache(struct ref_cache *cache)
 {
     if (!cache)
+    {
         return;
+    }
     free_ref_entry(cache->root);
     free(cache);
 }
@@ -87,7 +93,9 @@ static void clear_ref_dir(struct ref_dir *dir)
 {
     int i;
     for (i = 0; i < dir->nr; i++)
+    {
         free_ref_entry(dir->entries[i]);
+    }
     FREE_AND_NULL(dir->entries);
     dir->sorted = dir->nr = dir->alloc = 0;
 }
@@ -124,7 +132,9 @@ static int ref_entry_cmp_sslice(const void *key_, const void *ent_)
     const struct ref_entry    *ent = *(const struct ref_entry *const *)ent_;
     int                        cmp = strncmp(key->str, ent->name, key->len);
     if (cmp)
+    {
         return cmp;
+    }
     return '\0' - (unsigned char)ent->name[key->len];
 }
 
@@ -134,7 +144,9 @@ int search_ref_dir(struct ref_dir *dir, const char *refname, size_t len)
     struct string_slice key;
 
     if (refname == NULL || !dir->nr)
+    {
         return -1;
+    }
 
     sort_ref_dir(dir);
     key.len = len;
@@ -143,7 +155,9 @@ int search_ref_dir(struct ref_dir *dir, const char *refname, size_t len)
                       ref_entry_cmp_sslice);
 
     if (!r)
+    {
         return -1;
+    }
 
     return r - dir->entries;
 }
@@ -161,7 +175,9 @@ static struct ref_dir *search_for_subdir(struct ref_dir *dir,
     struct ref_entry *entry;
 
     if (entry_index == -1)
+    {
         return NULL;
+    }
 
     entry = dir->entries[entry_index];
     return get_ref_dir(entry);
@@ -201,10 +217,14 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname)
     struct ref_entry *entry;
     dir = find_containing_dir(dir, refname);
     if (!dir)
+    {
         return NULL;
+    }
     entry_index = search_ref_dir(dir, refname, strlen(refname));
     if (entry_index == -1)
+    {
         return NULL;
+    }
     entry = dir->entries[entry_index];
     return (entry->flag & REF_DIR) ? NULL : entry;
 }
@@ -216,17 +236,23 @@ struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname)
  */
 static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2)
 {
-    if (strcmp(ref1->name, ref2->name))
+    if (strcmp(ref1->name, ref2->name) != 0)
+    {
         return 0;
+    }
 
     /* Duplicate name; make sure that they don't conflict: */
 
     if ((ref1->flag & REF_DIR) || (ref2->flag & REF_DIR))
+    {
         /* This is impossible by construction */
         die("Reference directory conflict: %s", ref1->name);
+    }
 
     if (!oideq(&ref1->u.value.oid, &ref2->u.value.oid))
+    {
         die("Duplicated ref, and SHA1s don't match: %s", ref1->name);
+    }
 
     warning("Duplicated ref: %s", ref1->name);
     return 1;
@@ -238,7 +264,8 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
  */
 static void sort_ref_dir(struct ref_dir *dir)
 {
-    int               i, j;
+    int               i;
+    int               j;
     struct ref_entry *last = NULL;
 
     /*
@@ -246,7 +273,9 @@ static void sort_ref_dir(struct ref_dir *dir)
      * which is a problem on some platforms.
      */
     if (dir->sorted == dir->nr)
+    {
         return;
+    }
 
     QSORT(dir->entries, dir->nr, ref_entry_cmp);
 
@@ -255,9 +284,13 @@ static void sort_ref_dir(struct ref_dir *dir)
     {
         struct ref_entry *entry = dir->entries[j];
         if (last && is_dup_ref(last, entry))
+        {
             free_ref_entry(entry);
+        }
         else
+        {
             last = dir->entries[i++] = entry;
+        }
     }
     dir->sorted = dir->nr = i;
 }
@@ -287,8 +320,10 @@ static enum prefix_state overlaps_prefix(const char *dirname,
         prefix++;
     }
     if (!*prefix)
+    {
         return PREFIX_CONTAINS_DIR;
-    else if (!*dirname)
+    }
+    if (!*dirname)
         return PREFIX_WITHIN_DIR;
     else
         return PREFIX_EXCLUDES_DIR;
@@ -418,13 +453,17 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
         enum prefix_state entry_prefix_state;
 
         if (level->index == -1)
+        {
             sort_ref_dir(dir);
+        }
 
         if (++level->index == level->dir->nr)
         {
             /* This level is exhausted; pop up a level */
             if (--iter->levels_nr == 0)
+            {
                 return ref_iterator_abort(ref_iterator);
+            }
 
             continue;
         }
@@ -435,7 +474,9 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
         {
             entry_prefix_state = overlaps_prefix(entry->name, iter->prefix);
             if (entry_prefix_state == PREFIX_EXCLUDES_DIR || (entry_prefix_state == PREFIX_WITHIN_DIR && !(entry->flag & REF_DIR)))
+            {
                 continue;
+            }
         }
         else
         {
@@ -500,13 +541,19 @@ struct ref_iterator *cache_ref_iterator_begin(struct ref_cache  *cache,
 
     dir = get_ref_dir(cache->root);
     if (prefix && *prefix)
+    {
         dir = find_containing_dir(dir, prefix);
+    }
     if (!dir)
+    {
         /* There's nothing to iterate over. */
         return empty_ref_iterator_begin();
+    }
 
     if (prime_dir)
+    {
         prime_ref_dir(dir, prefix);
+    }
 
     CALLOC_ARRAY(iter, 1);
     ref_iterator = &iter->base;
