@@ -110,7 +110,9 @@ static void lookup_fsmonitor_settings(struct repository *r)
     int         bool_value;
 
     if (r->settings.fsmonitor)
+    {
         return;
+    }
 
     /*
      * Overload the existing "core.fsmonitor" config setting (which
@@ -124,9 +126,13 @@ static void lookup_fsmonitor_settings(struct repository *r)
 
         case 0: /* config value was set to <bool> */
             if (bool_value)
+            {
                 fsm_settings__set_ipc(r);
+            }
             else
+            {
                 fsm_settings__set_disabled(r);
+            }
             return;
 
         case 1: /* config value was unset */
@@ -135,7 +141,9 @@ static void lookup_fsmonitor_settings(struct repository *r)
 
         case -1: /* config value set to an arbitrary string */
             if (repo_config_get_pathname(r, "core.fsmonitor", &to_free))
+            {
                 return; /* should not happen */
+            }
             const_str = to_free;
             break;
 
@@ -144,16 +152,22 @@ static void lookup_fsmonitor_settings(struct repository *r)
     }
 
     if (const_str && *const_str)
+    {
         fsm_settings__set_hook(r, const_str);
+    }
     else
+    {
         fsm_settings__set_disabled(r);
+    }
     free(to_free);
 }
 
 enum fsmonitor_mode fsm_settings__get_mode(struct repository *r)
 {
     if (!r->settings.fsmonitor)
+    {
         lookup_fsmonitor_settings(r);
+    }
 
     return r->settings.fsmonitor->mode;
 }
@@ -161,7 +175,9 @@ enum fsmonitor_mode fsm_settings__get_mode(struct repository *r)
 const char *fsm_settings__get_hook_path(struct repository *r)
 {
     if (!r->settings.fsmonitor)
+    {
         lookup_fsmonitor_settings(r);
+    }
 
     return r->settings.fsmonitor->hook_path;
 }
@@ -181,7 +197,9 @@ void fsm_settings__set_ipc(struct repository *r)
      * recursive) config lookup.
      */
     if (!r->settings.fsmonitor)
+    {
         r->settings.fsmonitor = alloc_settings();
+    }
 
     r->settings.fsmonitor->mode   = FSMONITOR_MODE_IPC;
     r->settings.fsmonitor->reason = reason;
@@ -203,7 +221,9 @@ void fsm_settings__set_hook(struct repository *r, const char *path)
      * recursive) config lookup.
      */
     if (!r->settings.fsmonitor)
+    {
         r->settings.fsmonitor = alloc_settings();
+    }
 
     r->settings.fsmonitor->mode   = FSMONITOR_MODE_HOOK;
     r->settings.fsmonitor->reason = reason;
@@ -214,7 +234,9 @@ void fsm_settings__set_hook(struct repository *r, const char *path)
 void fsm_settings__set_disabled(struct repository *r)
 {
     if (!r->settings.fsmonitor)
+    {
         r->settings.fsmonitor = alloc_settings();
+    }
 
     r->settings.fsmonitor->mode   = FSMONITOR_MODE_DISABLED;
     r->settings.fsmonitor->reason = FSMONITOR_REASON_OK;
@@ -225,7 +247,9 @@ void fsm_settings__set_incompatible(struct repository    *r,
                                     enum fsmonitor_reason reason)
 {
     if (!r->settings.fsmonitor)
+    {
         r->settings.fsmonitor = alloc_settings();
+    }
 
     r->settings.fsmonitor->mode   = FSMONITOR_MODE_INCOMPATIBLE;
     r->settings.fsmonitor->reason = reason;
@@ -235,7 +259,9 @@ void fsm_settings__set_incompatible(struct repository    *r,
 enum fsmonitor_reason fsm_settings__get_reason(struct repository *r)
 {
     if (!r->settings.fsmonitor)
+    {
         lookup_fsmonitor_settings(r);
+    }
 
     return r->settings.fsmonitor->reason;
 }

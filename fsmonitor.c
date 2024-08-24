@@ -22,8 +22,10 @@ struct trace_key trace_fsmonitor = TRACE_KEY_INIT(FSMONITOR);
 static void assert_index_minimum(struct index_state *istate, size_t pos)
 {
     if (pos > istate->cache_nr)
+    {
         BUG("fsmonitor_dirty has more entries than the index (%" PRIuMAX " > %u)",
             (uintmax_t)pos, istate->cache_nr);
+    }
 }
 
 static void fsmonitor_ewah_callback(size_t pos, void *is)
@@ -42,10 +44,14 @@ static int fsmonitor_hook_version(void)
     int hook_version;
 
     if (git_config_get_int("core.fsmonitorhookversion", &hook_version))
+    {
         return -1;
+    }
 
     if (hook_version == HOOK_INTERFACE_VERSION1 || hook_version == HOOK_INTERFACE_VERSION2)
+    {
         return hook_version;
+    }
 
     warning(
         "Invalid hook version '%i' in core.fsmonitorhookversion. "
@@ -66,7 +72,9 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
     struct strbuf       last_update = STRBUF_INIT;
 
     if (sz < sizeof(uint32_t) + 1 + sizeof(uint32_t))
+    {
         return error("corrupt fsmonitor extension (too short)");
+    }
 
     hdr_version = get_be32(index);
     index += sizeof(uint32_t);
@@ -101,7 +109,9 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
     istate->fsmonitor_dirty = fsmonitor_dirty;
 
     if (!istate->split_index)
+    {
         assert_index_minimum(istate, istate->fsmonitor_dirty->bit_size);
+    }
 
     trace2_data_string("index", NULL, "extension/fsmn/read/token",
                        istate->fsmonitor_last_update);
@@ -113,14 +123,19 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 
 void fill_fsmonitor_bitmap(struct index_state *istate)
 {
-    unsigned int i, skipped = 0;
+    unsigned int i;
+    unsigned int skipped    = 0;
     istate->fsmonitor_dirty = ewah_new();
     for (i = 0; i < istate->cache_nr; i++)
     {
         if (istate->cache[i]->ce_flags & CE_REMOVE)
+        {
             skipped++;
+        }
         else if (!(istate->cache[i]->ce_flags & CE_FSMONITOR_VALID))
+        {
             ewah_set(istate->fsmonitor_dirty, i - skipped);
+        }
     }
 }
 
@@ -132,7 +147,9 @@ void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
     int      fixup     = 0;
 
     if (!istate->split_index)
+    {
         assert_index_minimum(istate, istate->fsmonitor_dirty->bit_size);
+    }
 
     put_be32(&hdr_version, INDEX_EXTENSION_VERSION2);
     strbuf_add(sb, &hdr_version, sizeof(uint32_t));
@@ -171,7 +188,9 @@ static int query_fsmonitor_hook(struct repository *r,
     int                  result;
 
     if (fsm_settings__get_mode(r) != FSMONITOR_MODE_HOOK)
+    {
         return -1;
+    }
 
     strvec_push(&cp.args, fsm_settings__get_hook_path(r));
     strvec_pushf(&cp.args, "%d", version);
@@ -184,10 +203,14 @@ static int query_fsmonitor_hook(struct repository *r,
     result = capture_command(&cp, query_result, 1024);
 
     if (result)
+    {
         trace2_data_intmax("fsm_hook", NULL, "query/failed", result);
+    }
     else
+    {
         trace2_data_intmax("fsm_hook", NULL, "query/response-length",
                            query_result->len);
+    }
 
     trace2_region_leave("fsm_hook", "query", NULL);
 
@@ -227,7 +250,9 @@ static size_t handle_using_name_hash_icase(
 
     ce = index_file_exists(istate, name, strlen(name), 1);
     if (!ce)
+    {
         return 0;
+    }
 
     /*
      * A case-insensitive search in the name-hash using the
@@ -281,10 +306,14 @@ static size_t handle_using_dir_name_hash_icase(
     size_t        nr_in_cone;
 
     if (name[len - 1] == '/')
+    {
         len--;
+    }
 
     if (!index_dir_find(istate, name, len, &canonical_path))
+    {
         return 0; /* name is untracked */
+    }
 
     if (!memcmp(name, canonical_path.buf, canonical_path.len))
     {
@@ -359,27 +388,25 @@ static size_t handle_path_without_trailing_slash(
         invalidate_ce_fsm(istate->cache[pos]);
         return 1;
     }
-    else
-    {
-        size_t        nr_in_cone;
-        struct strbuf work_path = STRBUF_INIT;
 
-        /*
-         * The negative "pos" gives us the suggested insertion
-         * point for the pathname (without the trailing slash).
-         * We need to see if there is a directory with that
-         * prefix, but there can be lots of pathnames between
-         * "foo" and "foo/" like "foo-" or "foo-bar", so we
-         * don't want to do our own scan.
-         */
-        strbuf_add(&work_path, name, strlen(name));
-        strbuf_addch(&work_path, '/');
-        pos        = index_name_pos(istate, work_path.buf, work_path.len);
-        nr_in_cone = handle_path_with_trailing_slash(
-            istate, work_path.buf, pos);
-        strbuf_release(&work_path);
-        return nr_in_cone;
-    }
+    size_t        nr_in_cone;
+    struct strbuf work_path = STRBUF_INIT;
+
+    /*
+     * The negative "pos" gives us the suggested insertion
+     * point for the pathname (without the trailing slash).
+     * We need to see if there is a directory with that
+     * prefix, but there can be lots of pathnames between
+     * "foo" and "foo/" like "foo-" or "foo-bar", so we
+     * don't want to do our own scan.
+     */
+    strbuf_add(&work_path, name, strlen(name));
+    strbuf_addch(&work_path, '/');
+    pos        = index_name_pos(istate, work_path.buf, work_path.len);
+    nr_in_cone = handle_path_with_trailing_slash(
+        istate, work_path.buf, pos);
+    strbuf_release(&work_path);
+    return nr_in_cone;
 }
 
 /*
@@ -430,13 +457,17 @@ static size_t handle_path_with_trailing_slash(
     untracked_cache_invalidate_trimmed_path(istate, name, 0);
 
     if (pos < 0)
+    {
         pos = -pos - 1;
+    }
 
     /* Mark all entries for the folder invalid */
     for (i = pos; i < istate->cache_nr; i++)
     {
         if (!starts_with(istate->cache[i]->name, name))
+        {
             break;
+        }
         invalidate_ce_fsm(istate->cache[i]);
         nr_in_cone++;
     }
@@ -455,9 +486,13 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
                      name, pos);
 
     if (name[len - 1] == '/')
+    {
         nr_in_cone = handle_path_with_trailing_slash(istate, name, pos);
+    }
     else
+    {
         nr_in_cone = handle_path_without_trailing_slash(istate, name, pos);
+    }
 
     /*
      * If we did not find an exact match for this pathname or any
@@ -469,14 +504,18 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
     {
         nr_in_cone = handle_using_name_hash_icase(istate, name);
         if (!nr_in_cone)
+        {
             nr_in_cone = handle_using_dir_name_hash_icase(
                 istate, name);
+        }
     }
 
     if (nr_in_cone)
+    {
         trace_printf_key(&trace_fsmonitor,
                          "fsmonitor_refresh_callback CNT: %d",
                          (int)nr_in_cone);
+    }
 }
 
 /*
@@ -520,8 +559,9 @@ void refresh_fsmonitor(struct index_state *istate)
 {
     static int            warn_once     = 0;
     struct strbuf         query_result  = STRBUF_INIT;
-    int                   query_success = 0, hook_version = -1;
-    size_t                bol = 0; /* beginning of line */
+    int                   query_success = 0;
+    int                   hook_version  = -1;
+    size_t                bol           = 0; /* beginning of line */
     uint64_t              last_update;
     struct strbuf         last_update_token = STRBUF_INIT;
     char                 *buf;
@@ -540,7 +580,9 @@ void refresh_fsmonitor(struct index_state *istate)
     }
 
     if (fsm_mode <= FSMONITOR_MODE_DISABLED || istate->fsmonitor_has_run_once)
+    {
         return;
+    }
 
     istate->fsmonitor_has_run_once = 1;
 
@@ -567,8 +609,10 @@ void refresh_fsmonitor(struct index_state *istate)
             bol        = last_update_token.len + 1;
             is_trivial = query_result.buf[bol] == '/';
             if (is_trivial)
+            {
                 trace2_data_intmax("fsm_client", NULL,
                                    "query/trivial-response", 1);
+            }
         }
         else
         {
@@ -597,7 +641,9 @@ void refresh_fsmonitor(struct index_state *istate)
      */
     last_update = getnanotime();
     if (hook_version == HOOK_INTERFACE_VERSION1)
+    {
         strbuf_addf(&last_update_token, "%" PRIu64 "", last_update);
+    }
 
     /*
      * If we have a last update token, call query_fsmonitor_hook for the set of
@@ -615,7 +661,9 @@ void refresh_fsmonitor(struct index_state *istate)
             if (query_success)
             {
                 if (hook_version < 0)
+                {
                     hook_version = HOOK_INTERFACE_VERSION2;
+                }
 
                 /*
                  * First entry will be the last update token
@@ -641,7 +689,9 @@ void refresh_fsmonitor(struct index_state *istate)
             {
                 hook_version = HOOK_INTERFACE_VERSION1;
                 if (!last_update_token.len)
+                {
                     strbuf_addf(&last_update_token, "%" PRIu64 "", last_update);
+                }
             }
         }
 
@@ -651,12 +701,16 @@ void refresh_fsmonitor(struct index_state *istate)
                 r, HOOK_INTERFACE_VERSION1,
                 istate->fsmonitor_last_update, &query_result);
             if (query_success)
+            {
                 is_trivial = query_result.buf[0] == '/';
+            }
         }
 
         if (is_trivial)
+        {
             trace2_data_intmax("fsm_hook", NULL,
                                "query/trivial-response", 1);
+        }
 
         trace_performance_since(last_update, "fsmonitor process '%s'",
                                 fsm_settings__get_hook_path(r));
@@ -695,7 +749,9 @@ apply_results:
         for (i = bol; i < query_result.len; i++)
         {
             if (buf[i] != '\0')
+            {
                 continue;
+            }
             fsmonitor_refresh_callback(istate, buf + bol);
             bol = i + 1;
             count++;
@@ -708,10 +764,14 @@ apply_results:
 
         /* Now mark the untracked cache for fsmonitor usage */
         if (istate->untracked)
+        {
             istate->untracked->use_fsmonitor = 1;
+        }
 
         if (count > fsmonitor_force_update_threshold)
+        {
             istate->cache_changed |= FSMONITOR_CHANGED;
+        }
 
         trace2_data_intmax("fsmonitor", istate->repo, "apply_count",
                            count);
@@ -742,10 +802,14 @@ apply_results:
          * the results.
          */
         if (is_cache_changed)
+        {
             istate->cache_changed |= FSMONITOR_CHANGED;
+        }
 
         if (istate->untracked)
+        {
             istate->untracked->use_fsmonitor = 0;
+        }
     }
     trace2_region_leave("fsmonitor", "apply_results", istate->repo);
 
@@ -799,7 +863,9 @@ void add_fsmonitor(struct index_state *istate)
 
         /* reset the fsmonitor state */
         for (i = 0; i < istate->cache_nr; i++)
+        {
             istate->cache[i]->ce_flags &= ~CE_FSMONITOR_VALID;
+        }
 
         /* reset the untracked cache */
         if (istate->untracked)
@@ -837,7 +903,9 @@ void tweak_fsmonitor(struct index_state *istate)
             for (i = 0; i < istate->cache_nr; i++)
             {
                 if (S_ISGITLINK(istate->cache[i]->ce_mode))
+                {
                     continue;
+                }
                 istate->cache[i]->ce_flags |= CE_FSMONITOR_VALID;
             }
 
@@ -853,7 +921,11 @@ void tweak_fsmonitor(struct index_state *istate)
     }
 
     if (fsmonitor_enabled)
+    {
         add_fsmonitor(istate);
+    }
     else
+    {
         remove_fsmonitor(istate);
+    }
 }
