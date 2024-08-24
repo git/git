@@ -123,8 +123,10 @@ static combine_notes_fn parse_combine_notes_fn(const char *v)
         return combine_notes_ignore;
     }
     if (!strcasecmp(v, "concatenate"))
+    {
         return combine_notes_concatenate;
-    else if (!strcasecmp(v, "cat_sort_uniq"))
+    }
+    if (!strcasecmp(v, "cat_sort_uniq"))
         return combine_notes_cat_sort_uniq;
     else
         return NULL;
@@ -157,15 +159,21 @@ static int notes_rewrite_config(const char *k, const char *v,
     if (!c->refs_from_env && !strcmp(k, "notes.rewriteref"))
     {
         if (!v)
+        {
             return config_error_nonbool(k);
+        }
         /* note that a refs/ prefix is implied in the
          * underlying for_each_glob_ref */
         if (starts_with(v, "refs/notes/"))
+        {
             string_list_add_refs_by_glob(c->refs, v);
+        }
         else
+        {
             warning(_("Refusing to rewrite notes in %s"
                       " (outside of refs/notes/)"),
                     v);
+        }
         return 0;
     }
 

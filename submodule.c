@@ -466,8 +466,10 @@ enum submodule_update_type parse_submodule_update_type(const char *value)
         return SM_UPDATE_CHECKOUT;
     }
     if (!strcmp(value, "rebase"))
+    {
         return SM_UPDATE_REBASE;
-    else if (!strcmp(value, "merge"))
+    }
+    if (!strcmp(value, "merge"))
         return SM_UPDATE_MERGE;
     else if (*value == '!')
         return SM_UPDATE_COMMAND;

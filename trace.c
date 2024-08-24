@@ -470,9 +470,13 @@ uint64_t getnanotime(void)
     uint64_t now     = gettimeofday_nanos();
     uint64_t highres = highres_nanos();
     if (highres)
+    {
         offset = now - highres;
+    }
     else
+    {
         offset = 1;
+    }
     return now;
 }
 

@@ -334,8 +334,10 @@ static int compare_info(const void *a_, const void *b_)
         return -1;
     }
     if (0 <= (*b)->old_num)
+    {
         /* The other way around. */
         return 1;
+    }
 
     /* then it does not matter but at least keep the comparison stable */
     if ((*a)->p == (*b)->p)

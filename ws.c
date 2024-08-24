@@ -130,11 +130,9 @@ unsigned whitespace_rule(struct index_state *istate, const char *pathname)
         /* reset to default (!whitespace) */
         return whitespace_rule_cfg;
     }
-    else
-    {
-        /* string */
-        return parse_whitespace_rule(value);
-    }
+
+    /* string */
+    return parse_whitespace_rule(value);
 }
 
 /* The returned string should be freed by the caller. */

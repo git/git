@@ -141,7 +141,9 @@ static int should_include_pack(const struct write_midx_context *ctx,
         return 0;
     }
     if (ctx->to_include && !string_list_has_string(ctx->to_include, file_name))
+    {
         return 0;
+    }
     return 1;
 }
 
@@ -686,8 +688,10 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
         return 1;
     }
     if (a->offset < b->offset)
+    {
         return -1;
-    else if (a->offset > b->offset)
+    }
+    if (a->offset > b->offset)
         return 1;
     else
         return 0;

@@ -2244,7 +2244,9 @@ static int handle_curl_result(struct slot_results *results)
 #endif
     }
     else if (missing_target(results))
+    {
         return HTTP_MISSING_TARGET;
+    }
     else if (results->http_code == 401)
     {
         if ((http_auth.username && http_auth.password) || (http_auth.authtype && http_auth.credential))
@@ -2256,28 +2258,32 @@ static int handle_curl_result(struct slot_results *results)
             }
             credential_reject(&http_auth);
             if (always_auth_proactively())
+            {
                 http_proactive_auth = PROACTIVE_AUTH_NONE;
+            }
             return HTTP_NOAUTH;
         }
-        else
+
+        http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
+        if (results->auth_avail)
         {
-            http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
-            if (results->auth_avail)
-            {
-                http_auth_methods &= results->auth_avail;
-                http_auth_methods_restricted = 1;
-            }
-            return HTTP_REAUTH;
+            http_auth_methods &= results->auth_avail;
+            http_auth_methods_restricted = 1;
         }
+        return HTTP_REAUTH;
     }
     else
     {
         if (results->http_connectcode == 407)
+        {
             credential_reject(&proxy_auth);
+        }
         if (!curl_errorstr[0])
+        {
             strlcpy(curl_errorstr,
                     curl_easy_strerror(results->curl_result),
                     sizeof(curl_errorstr));
+        }
         return HTTP_ERROR;
     }
 }

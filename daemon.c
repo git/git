@@ -1519,8 +1519,7 @@ int cmd_main(int argc, const char **argv)
                 log_destination = LOG_DESTINATION_NONE;
                 continue;
             }
-            else
-                die("unknown log destination '%s'", v);
+            die("unknown log destination '%s'", v);
         }
         if (!strcmp(arg, "--export-all"))
         {

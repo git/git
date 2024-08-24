@@ -1665,8 +1665,10 @@ void diffcore_rename_extended(struct diff_options *options,
                 continue; /* not interested */
             }
             if (!options->flags.rename_empty && is_empty_blob_oid(&p->two->oid, the_repository->hash_algo))
+            {
                 continue;
-            else if (add_rename_dst(p) < 0)
+            }
+            if (add_rename_dst(p) < 0)
             {
                 warning(
                     "skipping rename detection, detected"

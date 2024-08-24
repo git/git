@@ -450,7 +450,9 @@ static int handle_config(const char *key, const char *value,
         if (!strcmp(subkey, "merge"))
         {
             if (!value)
+            {
                 return config_error_nonbool(key);
+            }
             add_merge(branch, xstrdup(value));
         }
         return 0;

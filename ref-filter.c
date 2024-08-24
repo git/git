@@ -705,8 +705,10 @@ static int parse_signature_option(const char *arg)
         return S_SIGNER;
     }
     if (!strcmp(arg, "grade"))
+    {
         return S_GRADE;
-    else if (!strcmp(arg, "key"))
+    }
+    if (!strcmp(arg, "key"))
         return S_KEY;
     else if (!strcmp(arg, "fingerprint"))
         return S_FINGERPRINT;
@@ -1063,7 +1065,9 @@ static align_type parse_align_position(const char *s)
         return ALIGN_MIDDLE;
     }
     if (!strcmp(s, "left"))
+    {
         return ALIGN_LEFT;
+    }
     return -1;
 }
 
@@ -2756,9 +2760,10 @@ static const char *show_ref(struct refname_atom *atom, const char *refname)
         return lstrip_ref_components(refname, atom->lstrip);
     }
     if (atom->option == R_RSTRIP)
+    {
         return rstrip_ref_components(refname, atom->rstrip);
-    else
-        return xstrdup(refname);
+    }
+    return xstrdup(refname);
 }
 
 static void fill_remote_ref_details(struct used_atom *atom, const char *refname,

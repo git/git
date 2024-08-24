@@ -276,7 +276,7 @@ static int set_git_option(struct git_transport_options *opts,
         opts->thin = !!value;
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_FOLLOWTAGS))
+    if (!strcmp(name, TRANS_OPT_FOLLOWTAGS))
     {
         opts->followtags = !!value;
         return 0;
@@ -1269,7 +1269,9 @@ static enum protocol_allow_config parse_protocol_config(const char *key,
         return PROTOCOL_ALLOW_NEVER;
     }
     if (!strcasecmp(value, "user"))
+    {
         return PROTOCOL_ALLOW_USER_ONLY;
+    }
 
     die(_("unknown value for config '%s': %s"), key, value);
 }

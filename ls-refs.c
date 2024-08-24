@@ -39,7 +39,7 @@ static enum
     {
         return UNBORN_ALLOW;
     }
-    else if (!strcmp(str, "ignore"))
+    if (!strcmp(str, "ignore"))
     {
         return UNBORN_IGNORE;
     }

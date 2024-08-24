@@ -210,9 +210,11 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
     }
 
     if (!quiet)
+    {
         error(_("object %s is a %s, not a %s"),
               oid_to_hex(&obj->oid),
               type_name(obj->type), type_name(type));
+    }
     return NULL;
 }
 

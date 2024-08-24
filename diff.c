@@ -260,8 +260,10 @@ long parse_algorithm_value(const char *value)
         return 0;
     }
     if (!strcasecmp(value, "minimal"))
+    {
         return XDF_NEED_MINIMAL;
-    else if (!strcasecmp(value, "patience"))
+    }
+    if (!strcasecmp(value, "patience"))
         return XDF_PATIENCE_DIFF;
     else if (!strcasecmp(value, "histogram"))
         return XDF_HISTOGRAM_DIFF;
@@ -368,8 +370,10 @@ static int parse_color_moved(const char *arg)
         return COLOR_MOVED_PLAIN;
     }
     if (!strcmp(arg, "blocks"))
+    {
         return COLOR_MOVED_BLOCKS;
-    else if (!strcmp(arg, "zebra"))
+    }
+    if (!strcmp(arg, "zebra"))
         return COLOR_MOVED_ZEBRA;
     else if (!strcmp(arg, "default"))
         return COLOR_MOVED_DEFAULT;
@@ -4566,7 +4570,7 @@ static const char *get_compact_summary(const struct diff_filepair *p, int is_ren
             }
             return "new";
         }
-        else if (p->status == DIFF_STATUS_DELETED)
+        if (p->status == DIFF_STATUS_DELETED)
         {
             return "gone";
         }
@@ -4580,8 +4584,10 @@ static const char *get_compact_summary(const struct diff_filepair *p, int is_ren
         return "mode +l";
     }
     if ((p->one->mode & 0777) == 0644 && (p->two->mode & 0777) == 0755)
+    {
         return "mode +x";
-    else if ((p->one->mode & 0777) == 0755 && (p->two->mode & 0777) == 0644)
+    }
+    if ((p->one->mode & 0777) == 0755 && (p->two->mode & 0777) == 0644)
         return "mode -x";
     return NULL;
 }

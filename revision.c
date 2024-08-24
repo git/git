@@ -2848,7 +2848,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if (!strcmp(arg, "-n"))
     {
         if (argc <= 1)
+        {
             return error("-n requires an argument");
+        }
         revs->max_count = parse_count(argv[1]);
         revs->no_walk   = 0;
         return 2;
@@ -2919,11 +2921,15 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
         revs->limited          = 1;
 
         if (repo_get_oid_committish(revs->repo, optarg, &oid))
+        {
             return error(msg, optarg);
+        }
         get_reference(revs, optarg, &oid, ANCESTRY_PATH);
         c = lookup_commit_reference(revs->repo, &oid);
         if (!c)
+        {
             return error(msg, optarg);
+        }
         commit_list_insert(c, &revs->ancestry_path_bottoms);
     }
     else if (!strcmp(arg, "-g") || !strcmp(arg, "--walk-reflogs"))
@@ -2933,7 +2939,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if (!strcmp(arg, "--default"))
     {
         if (argc <= 1)
+        {
             return error("bad --default argument");
+        }
         revs->def = argv[1];
         return 2;
     }
@@ -2982,7 +2990,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if (skip_prefix(arg, "--early-output=", &optarg))
     {
         if (strtoul_ui(optarg, 10, &revs->early_output) < 0)
+        {
             die("'%s': not a non-negative integer", optarg);
+        }
         revs->topo_order = 1;
     }
     else if (!strcmp(arg, "--parents"))
@@ -3041,20 +3051,26 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if (!strcmp(arg, "--left-only"))
     {
         if (revs->right_only)
+        {
             die(_("options '%s' and '%s' cannot be used together"),
                 "--left-only", "--right-only/--cherry");
+        }
         revs->left_only = 1;
     }
     else if (!strcmp(arg, "--right-only"))
     {
         if (revs->left_only)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--right-only", "--left-only");
+        }
         revs->right_only = 1;
     }
     else if (!strcmp(arg, "--cherry"))
     {
         if (revs->left_only)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--cherry", "--left-only");
+        }
         revs->cherry_mark = 1;
         revs->right_only  = 1;
         revs->max_parents = 1;
@@ -3067,14 +3083,18 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if (!strcmp(arg, "--cherry-mark"))
     {
         if (revs->cherry_pick)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--cherry-mark", "--cherry-pick");
+        }
         revs->cherry_mark = 1;
         revs->limited     = 1; /* needs limit_list() */
     }
     else if (!strcmp(arg, "--cherry-pick"))
     {
         if (revs->cherry_mark)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--cherry-pick", "--cherry-mark");
+        }
         revs->cherry_pick = 1;
         revs->limited     = 1;
     }
@@ -3125,9 +3145,13 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     {
         revs->no_kept_objects = 1;
         if (!strcmp(optarg, "in-core"))
+        {
             revs->keep_pack_cache_flags |= IN_CORE_KEEP_PACKS;
+        }
         if (!strcmp(optarg, "on-disk"))
+        {
             revs->keep_pack_cache_flags |= ON_DISK_KEEP_PACKS;
+        }
     }
     else if (!strcmp(arg, "-r"))
     {
@@ -3176,7 +3200,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     {
         int val;
         if (strtol_i(arg, 10, &val) < 0 || val < 0)
+        {
             die("'%s': not a non-negative integer", arg);
+        }
         revs->expand_tabs_in_log = val;
     }
     else if (!strcmp(arg, "--show-notes") || !strcmp(arg, "--notes"))
@@ -3211,7 +3237,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if (skip_prefix(arg, "--show-notes=", &optarg) || skip_prefix(arg, "--notes=", &optarg))
     {
         if (starts_with(arg, "--show-notes=") && revs->notes_opt.use_default_notes < 0)
+        {
             revs->notes_opt.use_default_notes = 1;
+        }
         enable_ref_display_notes(&revs->notes_opt, &revs->show_notes, optarg);
         revs->show_notes_given = 1;
     }
@@ -3278,9 +3306,13 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     {
         revs->abbrev = strtoul(optarg, NULL, 10);
         if (revs->abbrev < MINIMUM_ABBREV)
+        {
             revs->abbrev = MINIMUM_ABBREV;
+        }
         else if (revs->abbrev > hexsz)
+        {
             revs->abbrev = hexsz;
+        }
     }
     else if (!strcmp(arg, "--abbrev-commit"))
     {
@@ -3374,10 +3406,14 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if ((argcount = parse_long_opt("encoding", argv, &optarg)))
     {
         free(git_log_output_encoding);
-        if (strcmp(optarg, "none"))
+        if (strcmp(optarg, "none") != 0)
+        {
             git_log_output_encoding = xstrdup(optarg);
+        }
         else
+        {
             git_log_output_encoding = xstrdup("");
+        }
         return argcount;
     }
     else if (!strcmp(arg, "--reverse"))
@@ -3396,14 +3432,18 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
     else if (opt && opt->allow_exclude_promisor_objects && !strcmp(arg, "--exclude-promisor-objects"))
     {
         if (fetch_if_missing)
+        {
             BUG("exclude_promisor_objects can only be used when fetch_if_missing is 0");
+        }
         revs->exclude_promisor_objects = 1;
     }
     else
     {
         int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
         if (!opts)
+        {
             unkv[(*unkc)++] = arg;
+        }
         return opts;
     }
 
@@ -5663,8 +5703,10 @@ const char *get_revision_mark(const struct rev_info *revs, const struct commit *
         return "^";
     }
     if (commit->object.flags & PATCHSAME)
+    {
         return "=";
-    else if (!revs || revs->left_right)
+    }
+    if (!revs || revs->left_right)
     {
         if (commit->object.flags & SYMMETRIC_LEFT)
             return "<";

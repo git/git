@@ -444,12 +444,15 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
     if (ATTR_UNSET(merge_attr))
     {
         if (!default_ll_merge)
+        {
             return &ll_merge_drv[LL_TEXT_MERGE];
-        else
-            name = default_ll_merge;
+        }
+        name = default_ll_merge;
     }
     else
+    {
         name = merge_attr;
+    }
 
     for (fn = ll_user_merge; fn; fn = fn->next)
     {

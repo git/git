@@ -154,7 +154,9 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
             return -1; /* failure other than lock held */
         }
         if (timeout_ms > 0 && remaining_ms <= 0)
+        {
             return -1; /* failure due to timeout */
+        }
 
         backoff_ms = multiplier * INITIAL_BACKOFF_MS;
         /* back off for between 0.75*backoff_ms and 1.25*backoff_ms */

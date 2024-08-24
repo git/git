@@ -150,9 +150,10 @@ static enum fsck_msg_type parse_msg_type(const char *str)
         return FSCK_WARN;
     }
     if (!strcmp(str, "ignore"))
+    {
         return FSCK_IGNORE;
-    else
-        die("Unknown fsck message type: '%s'", str);
+    }
+    die("Unknown fsck message type: '%s'", str);
 }
 
 int is_valid_msg_type(const char *msg_id, const char *msg_type)

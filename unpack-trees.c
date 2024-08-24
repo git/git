@@ -3007,19 +3007,19 @@ static int verify_absent_1(const struct cache_entry     *ce,
     if (lstat(ce->name, &st))
     {
         if (errno != ENOENT)
+        {
             return error_errno("cannot stat '%s'", ce->name);
+        }
         return 0;
     }
-    else
-    {
-        if (submodule_from_ce(ce))
-            return check_submodule_move_head(ce, oid_to_hex(&ce->oid),
-                                             NULL, o);
 
-        return check_ok_to_remove(ce->name, ce_namelen(ce),
-                                  ce_to_dtype(ce), ce, &st,
-                                  error_type, absent_type, o);
-    }
+    if (submodule_from_ce(ce))
+        return check_submodule_move_head(ce, oid_to_hex(&ce->oid),
+                                         NULL, o);
+
+    return check_ok_to_remove(ce->name, ce_namelen(ce),
+                              ce_to_dtype(ce), ce, &st,
+                              error_type, absent_type, o);
 }
 
 static int verify_absent(const struct cache_entry     *ce,
@@ -3537,7 +3537,7 @@ int twoway_merge(const struct cache_entry *const *src,
             /* 10 or 11 */
             return deleted_entry(oldtree, current, o);
         }
-        else if (oldtree && newtree && same(current, oldtree) && !same(current, newtree))
+        if (oldtree && newtree && same(current, oldtree) && !same(current, newtree))
         {
             /* 20 or 21 */
             return merged_entry(newtree, current, o);

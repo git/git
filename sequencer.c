@@ -763,8 +763,10 @@ enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
         return COMMIT_MSG_CLEANUP_NONE;
     }
     if (!strcmp(cleanup_arg, "whitespace"))
+    {
         return COMMIT_MSG_CLEANUP_SPACE;
-    else if (!strcmp(cleanup_arg, "strip"))
+    }
+    if (!strcmp(cleanup_arg, "strip"))
         return COMMIT_MSG_CLEANUP_ALL;
     else if (!strcmp(cleanup_arg, "scissors"))
         return use_editor ? COMMIT_MSG_CLEANUP_SCISSORS : COMMIT_MSG_CLEANUP_SPACE;
@@ -1003,7 +1005,7 @@ static int write_author_script(const char *message)
         {
             break;
         }
-        else if ((eol = strchr(message, '\n')))
+        if ((eol = strchr(message, '\n')))
         {
             message = eol + 1;
         }
@@ -2178,9 +2180,10 @@ static int allow_empty(struct repository  *r,
         return 1;
     }
     if (opts->drop_redundant_commits)
+    {
         return 2;
-    else
-        return 0;
+    }
+    return 0;
 }
 
 static struct
@@ -3629,10 +3632,8 @@ static int read_populate_todo(struct repository  *r,
             {
                 return error(_("cannot cherry-pick during a revert."));
             }
-            else
-            {
-                return error(_("cannot revert during a cherry-pick."));
-            }
+
+            return error(_("cannot revert during a cherry-pick."));
         }
     }
 
@@ -7922,7 +7923,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 
         return error(_("nothing to do"));
     }
-    else if (res == -4)
+    if (res == -4)
     {
         checkout_onto(r, opts, onto_name, &onto->object.oid, orig_head);
         todo_list_release(&new_todo);

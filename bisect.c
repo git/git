@@ -1046,8 +1046,10 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
             printf(_("Bisecting: a merge base must be tested\n"));
             res = bisect_checkout(mb, no_checkout);
             if (!res)
+            {
                 /* indicate early success */
                 res = BISECT_INTERNAL_SUCCESS_MERGE_BASE;
+            }
             break;
         }
     }

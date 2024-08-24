@@ -4171,12 +4171,10 @@ static int load_patch_target(struct apply_state       *state,
         {
             return error(_("reading from '%s' beyond a symbolic link"), name);
         }
-        else
+
+        if (read_old_data(st, patch, name, buf))
         {
-            if (read_old_data(st, patch, name, buf))
-            {
-                return error(_("failed to read %s"), name);
-            }
+            return error(_("failed to read %s"), name);
         }
     }
     return 0;

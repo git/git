@@ -108,9 +108,13 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
             return 0; /* negative refpsecs cannot be exact sha1 */
         }
         if (!check_refname_format(item->src, flags))
+        {
             ; /* valid looking ref is ok */
+        }
         else
+        {
             return 0;
+        }
 
         /* the other rules below do not apply to negative refspecs */
         return 1;

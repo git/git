@@ -17,9 +17,10 @@ static enum protocol_version parse_protocol_version(const char *value)
         return protocol_v1;
     }
     if (!strcmp(value, "2"))
+    {
         return protocol_v2;
-    else
-        return protocol_unknown_version;
+    }
+    return protocol_unknown_version;
 }
 
 enum protocol_version get_protocol_version_config(void)

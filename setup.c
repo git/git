@@ -743,11 +743,13 @@ static enum extension_result handle_extension_v0(const char               *var,
     if (!strcmp(ext, "partialclone"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         data->partial_clone = xstrdup(value);
         return EXTENSION_OK;
     }
-    else if (!strcmp(ext, "worktreeconfig"))
+    if (!strcmp(ext, "worktreeconfig"))
     {
         data->worktree_config = git_config_bool(var, value);
         return EXTENSION_OK;
@@ -791,23 +793,29 @@ static enum extension_result handle_extension(const char               *var,
         int                      format;
 
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         format = hash_algo_by_name(value);
         if (format == GIT_HASH_UNKNOWN)
+        {
             return error(_("invalid value for '%s': '%s'"),
                          "extensions.compatobjectformat", value);
+        }
         /* For now only support compatObjectFormat being specified once. */
         for_each_string_list_item(item, &data->v1_only_extensions)
         {
             if (!strcmp(item->string, "compatobjectformat"))
+            {
                 return error(_("'%s' already specified as '%s'"),
                              "extensions.compatobjectformat",
                              hash_algos[data->compat_hash_algo].name);
+            }
         }
         data->compat_hash_algo = format;
         return EXTENSION_OK;
     }
-    else if (!strcmp(ext, "refstorage"))
+    if (!strcmp(ext, "refstorage"))
     {
         unsigned int format;
 
@@ -1449,17 +1457,15 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
         /* Keep entry but do not canonicalize it */
         return 1;
     }
-    else
+
+    char *real_path = real_pathdup(ceil, 0);
+    if (!real_path)
     {
-        char *real_path = real_pathdup(ceil, 0);
-        if (!real_path)
-        {
-            return 0;
-        }
-        free(item->string);
-        item->string = real_path;
-        return 1;
+        return 0;
     }
+    free(item->string);
+    item->string = real_path;
+    return 1;
 }
 
 struct safe_directory_data

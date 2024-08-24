@@ -13,8 +13,10 @@ static uintmax_t get_unit_factor(const char *end)
         return 1024;
     }
     if (!strcasecmp(end, "m"))
+    {
         return 1024 * 1024;
-    else if (!strcasecmp(end, "g"))
+    }
+    if (!strcasecmp(end, "g"))
         return 1024 * 1024 * 1024;
     return 0;
 }

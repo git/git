@@ -27,8 +27,10 @@ enum rebase_type rebase_parse_value(const char *value)
         return REBASE_TRUE;
     }
     if (!strcmp(value, "merges") || !strcmp(value, "m"))
+    {
         return REBASE_MERGES;
-    else if (!strcmp(value, "interactive") || !strcmp(value, "i"))
+    }
+    if (!strcmp(value, "interactive") || !strcmp(value, "i"))
         return REBASE_INTERACTIVE;
     else if (!strcmp(value, "preserve") || !strcmp(value, "p"))
         error(_("%s: 'preserve' superseded by 'merges'"), value);

@@ -396,13 +396,14 @@ int parse_conflict_style_name(const char *value)
         return XDL_MERGE_ZEALOUS_DIFF3;
     }
     if (!strcmp(value, "merge"))
+    {
         return 0;
-    /*
-     * Please update _git_checkout() in git-completion.bash when
-     * you add new merge config
-     */
-    else
-        return -1;
+        /*
+         * Please update _git_checkout() in git-completion.bash when
+         * you add new merge config
+         */
+    }
+    return -1;
 }
 
 int git_xmerge_style = -1;
