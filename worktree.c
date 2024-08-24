@@ -17,7 +17,9 @@
 void free_worktree(struct worktree *worktree)
 {
     if (!worktree)
+    {
         return;
+    }
     free(worktree->path);
     free(worktree->id);
     free(worktree->head_ref);
@@ -30,7 +32,9 @@ void free_worktrees(struct worktree **worktrees)
 {
     int i = 0;
     for (i = 0; worktrees[i]; i++)
+    {
         free_worktree(worktrees[i]);
+    }
     free(worktrees);
 }
 
@@ -47,12 +51,18 @@ static void add_head_info(struct worktree *wt)
                                      0,
                                      &wt->head_oid, &flags);
     if (!target)
+    {
         return;
+    }
 
     if (flags & REF_ISSYMREF)
+    {
         wt->head_ref = xstrdup(target);
+    }
     else
+    {
         wt->is_detached = 1;
+    }
 }
 
 static int is_current_worktree(struct worktree *wt)
@@ -88,7 +98,9 @@ static struct worktree *get_main_worktree(int skip_reading_head)
     worktree->is_bare    = (is_bare_repository_cfg == 1) || is_bare_repository();
     worktree->is_current = is_current_worktree(worktree);
     if (!skip_reading_head)
+    {
         add_head_info(worktree);
+    }
     return worktree;
 }
 
@@ -100,12 +112,16 @@ struct worktree *get_linked_worktree(const char *id,
     struct strbuf    worktree_path = STRBUF_INIT;
 
     if (!id)
+    {
         die("Missing linked worktree name");
+    }
 
     strbuf_git_common_path(&path, the_repository, "worktrees/%s/gitdir", id);
     if (strbuf_read_file(&worktree_path, path.buf, 0) <= 0)
+    {
         /* invalid gitdir file */
         goto done;
+    }
     strbuf_rtrim(&worktree_path);
     strbuf_strip_suffix(&worktree_path, "/.git");
 
@@ -115,7 +131,9 @@ struct worktree *get_linked_worktree(const char *id,
     worktree->id         = xstrdup(id);
     worktree->is_current = is_current_worktree(worktree);
     if (!skip_reading_head)
+    {
         add_head_info(worktree);
+    }
 
 done:
     strbuf_release(&path);
@@ -136,7 +154,8 @@ static struct worktree **get_worktrees_internal(int skip_reading_head)
     struct strbuf     path = STRBUF_INIT;
     DIR              *dir;
     struct dirent    *d;
-    int               counter = 0, alloc = 2;
+    int               counter = 0;
+    int               alloc   = 2;
 
     ALLOC_ARRAY(list, alloc);
 
@@ -173,8 +192,10 @@ struct worktree **get_worktrees(void)
 const char *get_worktree_git_dir(const struct worktree *wt)
 {
     if (!wt)
+    {
         return get_git_dir();
-    else if (!wt->id)
+    }
+    if (!wt->id)
         return get_git_common_dir();
     else
         return git_common_path("worktrees/%s", wt->id);
@@ -184,11 +205,14 @@ static struct worktree *find_worktree_by_suffix(struct worktree **list,
                                                 const char       *suffix)
 {
     struct worktree *found    = NULL;
-    int              nr_found = 0, suffixlen;
+    int              nr_found = 0;
+    int              suffixlen;
 
     suffixlen = strlen(suffix);
     if (!suffixlen)
+    {
         return NULL;
+    }
 
     for (; *list && nr_found < 2; list++)
     {
@@ -214,10 +238,14 @@ struct worktree *find_worktree(struct worktree **list,
     char            *to_free = NULL;
 
     if ((wt = find_worktree_by_suffix(list, arg)))
+    {
         return wt;
+    }
 
     if (prefix)
+    {
         arg = to_free = prefix_filename(prefix, arg);
+    }
     wt = find_worktree_by_path(list, arg);
     free(to_free);
     return wt;
@@ -229,14 +257,20 @@ struct worktree *find_worktree_by_path(struct worktree **list, const char *p)
     char         *path    = real_pathdup(p, 0);
 
     if (!path)
+    {
         return NULL;
+    }
     for (; *list; list++)
     {
         if (!strbuf_realpath(&wt_path, (*list)->path, 0))
+        {
             continue;
+        }
 
         if (!fspathcmp(path, wt_path.buf))
+        {
             break;
+        }
     }
     free(path);
     strbuf_release(&wt_path);
@@ -251,7 +285,9 @@ int is_main_worktree(const struct worktree *wt)
 const char *worktree_lock_reason(struct worktree *wt)
 {
     if (is_main_worktree(wt))
+    {
         return NULL;
+    }
 
     if (!wt->lock_reason_valid)
     {
@@ -262,12 +298,16 @@ const char *worktree_lock_reason(struct worktree *wt)
         {
             struct strbuf lock_reason = STRBUF_INIT;
             if (strbuf_read_file(&lock_reason, path.buf, 0) < 0)
+            {
                 die_errno(_("failed to read '%s'"), path.buf);
+            }
             strbuf_trim(&lock_reason);
             wt->lock_reason = strbuf_detach(&lock_reason, NULL);
         }
         else
+        {
             wt->lock_reason = NULL;
+        }
         wt->lock_reason_valid = 1;
         strbuf_release(&path);
     }
@@ -281,12 +321,18 @@ const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire)
     char         *path   = NULL;
 
     if (is_main_worktree(wt))
+    {
         return NULL;
+    }
     if (wt->prune_reason_valid)
+    {
         return wt->prune_reason;
+    }
 
     if (should_prune_worktree(wt->id, &reason, &path, expire))
+    {
         wt->prune_reason = strbuf_detach(&reason, NULL);
+    }
     wt->prune_reason_valid = 1;
 
     strbuf_release(&reason);
@@ -300,7 +346,9 @@ __attribute__((format(printf, 2, 3))) static void strbuf_addf_gently(struct strb
     va_list params;
 
     if (!buf)
+    {
         return;
+    }
 
     va_start(params, fmt);
     strbuf_vaddf(buf, fmt, params);
@@ -313,7 +361,8 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
     struct strbuf wt_path  = STRBUF_INIT;
     struct strbuf realpath = STRBUF_INIT;
     char         *path     = NULL;
-    int           err, ret = -1;
+    int           err;
+    int           ret = -1;
 
     strbuf_addf(&wt_path, "%s/.git", wt->path);
 
@@ -372,8 +421,10 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
     ret = fspathcmp(path, realpath.buf);
 
     if (ret)
+    {
         strbuf_addf_gently(errmsg, _("'%s' does not point back to '%s'"),
                            wt->path, git_common_path("worktrees/%s", wt->id));
+    }
 done:
     free(path);
     strbuf_release(&wt_path);
@@ -386,7 +437,9 @@ void update_worktree_location(struct worktree *wt, const char *path_)
     struct strbuf path = STRBUF_INIT;
 
     if (is_main_worktree(wt))
+    {
         BUG("can't relocate main worktree");
+    }
 
     strbuf_realpath(&path, path_, 1);
     if (fspathcmp(wt->path, path.buf))
@@ -437,21 +490,29 @@ int is_shared_symref(const struct worktree *wt, const char *symref,
     int               flags;
 
     if (wt->is_bare)
+    {
         return 0;
+    }
 
     if (wt->is_detached && !strcmp(symref, "HEAD"))
     {
         if (is_worktree_being_rebased(wt, target))
+        {
             return 1;
+        }
         if (is_worktree_being_bisected(wt, target))
+        {
             return 1;
+        }
     }
 
     refs          = get_worktree_ref_store(wt);
     symref_target = refs_resolve_ref_unsafe(refs, symref, 0,
                                             NULL, &flags);
     if ((flags & REF_ISSYMREF) && symref_target && !strcmp(symref_target, target))
+    {
         return 1;
+    }
 
     return 0;
 }
@@ -462,8 +523,12 @@ const struct worktree *find_shared_symref(struct worktree **worktrees,
 {
 
     for (int i = 0; worktrees[i]; i++)
+    {
         if (is_shared_symref(worktrees[i], symref, target))
+        {
             return worktrees[i];
+        }
+    }
 
     return NULL;
 }
@@ -471,7 +536,8 @@ const struct worktree *find_shared_symref(struct worktree **worktrees,
 int submodule_uses_worktrees(const char *path)
 {
     char                    *submodule_gitdir;
-    struct strbuf            sb = STRBUF_INIT, err = STRBUF_INIT;
+    struct strbuf            sb  = STRBUF_INIT;
+    struct strbuf            err = STRBUF_INIT;
     DIR                     *dir;
     struct dirent           *d;
     int                      ret    = 0;
@@ -479,7 +545,9 @@ int submodule_uses_worktrees(const char *path)
 
     submodule_gitdir = git_pathdup_submodule(path, "%s", "");
     if (!submodule_gitdir)
+    {
         return 0;
+    }
 
     /* The env would be set for the superproject. */
     get_common_dir_noenv(&sb, submodule_gitdir);
@@ -506,11 +574,15 @@ int submodule_uses_worktrees(const char *path)
     strbuf_release(&sb);
 
     if (!dir)
+    {
         return 0;
+    }
 
     d = readdir_skip_dot_and_dotdot(dir);
     if (d)
+    {
         ret = 1;
+    }
     closedir(dir);
     return ret;
 }
@@ -522,16 +594,21 @@ void strbuf_worktree_ref(const struct worktree *wt,
     if (parse_worktree_ref(refname, NULL, NULL, NULL) == REF_WORKTREE_CURRENT && wt && !wt->is_current)
     {
         if (is_main_worktree(wt))
+        {
             strbuf_addstr(sb, "main-worktree/");
+        }
         else
+        {
             strbuf_addf(sb, "worktrees/%s/", wt->id);
+        }
     }
     strbuf_addstr(sb, refname);
 }
 
 int other_head_refs(each_ref_fn fn, void *cb_data)
 {
-    struct worktree **worktrees, **p;
+    struct worktree **worktrees;
+    struct worktree **p;
     struct strbuf     refname = STRBUF_INIT;
     int               ret     = 0;
 
@@ -543,7 +620,9 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
         int              flag;
 
         if (wt->is_current)
+        {
             continue;
+        }
 
         strbuf_reset(&refname);
         strbuf_worktree_ref(wt, &refname, "HEAD");
@@ -551,9 +630,13 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
                                     refname.buf,
                                     RESOLVE_REF_READING,
                                     &oid, &flag))
+        {
             ret = fn(refname.buf, NULL, &oid, flag, cb_data);
+        }
         if (ret)
+        {
             break;
+        }
     }
     free_worktrees(worktrees);
     strbuf_release(&refname);
@@ -575,7 +658,9 @@ static void repair_gitfile(struct worktree   *wt,
 
     /* missing worktree can't be repaired */
     if (!file_exists(wt->path))
+    {
         return;
+    }
 
     if (!is_directory(wt->path))
     {
@@ -588,11 +673,17 @@ static void repair_gitfile(struct worktree   *wt,
     backlink = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
 
     if (err == READ_GITFILE_ERR_NOT_A_FILE)
+    {
         fn(1, wt->path, _(".git is not a file"), cb_data);
+    }
     else if (err)
+    {
         repair = _(".git file broken");
+    }
     else if (fspathcmp(backlink, repo.buf))
+    {
         repair = _(".git file incorrect");
+    }
 
     if (repair)
     {
@@ -619,9 +710,13 @@ void repair_worktrees(worktree_repair_fn fn, void *cb_data)
     struct worktree **wt        = worktrees + 1; /* +1 skips main worktree */
 
     if (!fn)
+    {
         fn = repair_noop;
+    }
     for (; *wt; wt++)
+    {
         repair_gitfile(*wt, fn, cb_data);
+    }
     free_worktrees(worktrees);
 }
 
@@ -656,18 +751,28 @@ static char *infer_backlink(const char *gitfile)
     const char   *id;
 
     if (strbuf_read_file(&actual, gitfile, 0) < 0)
+    {
         goto error;
+    }
     if (!starts_with(actual.buf, "gitdir:"))
+    {
         goto error;
+    }
     if (!(id = find_last_dir_sep(actual.buf)))
+    {
         goto error;
+    }
     strbuf_trim(&actual);
     id++; /* advance past '/' to point at <id> */
     if (!*id)
+    {
         goto error;
+    }
     strbuf_git_common_path(&inferred, the_repository, "worktrees/%s", id);
     if (!is_directory(inferred.buf))
+    {
         goto error;
+    }
 
     strbuf_release(&actual);
     return strbuf_detach(&inferred, NULL);
@@ -694,10 +799,14 @@ void repair_worktree_at_path(const char        *path,
     int           err;
 
     if (!fn)
+    {
         fn = repair_noop;
+    }
 
     if (is_main_worktree_path(path))
+    {
         goto done;
+    }
 
     strbuf_addf(&dotgit, "%s/.git", path);
     if (!strbuf_realpath(&realdotgit, dotgit.buf, 0))
@@ -728,12 +837,16 @@ void repair_worktree_at_path(const char        *path,
 
     strbuf_addf(&gitdir, "%s/gitdir", backlink);
     if (strbuf_read_file(&olddotgit, gitdir.buf, 0) < 0)
+    {
         repair = _("gitdir unreadable");
+    }
     else
     {
         strbuf_rtrim(&olddotgit);
         if (fspathcmp(olddotgit.buf, realdotgit.buf))
+        {
             repair = _("gitdir incorrect");
+        }
     }
 
     if (repair)
@@ -764,13 +877,15 @@ int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, 
         return 1;
     }
     if (file_exists(git_path("worktrees/%s/locked", id)))
+    {
         return 0;
+    }
     if (stat(git_path("worktrees/%s/gitdir", id), &st))
     {
         strbuf_addstr(reason, _("gitdir file does not exist"));
         return 1;
     }
-    fd = open(git_path("worktrees/%s/gitdir", id), O_RDONLY);
+    fd = open(git_path("worktrees/%s/gitdir", id), O_RDONLY | O_CLOEXEC);
     if (fd < 0)
     {
         strbuf_addf(reason, _("unable to read gitdir file (%s)"),
@@ -800,7 +915,9 @@ int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, 
         return 1;
     }
     while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))
+    {
         len--;
+    }
     if (!len)
     {
         strbuf_addstr(reason, _("invalid gitdir file"));
@@ -816,11 +933,9 @@ int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, 
             free(path);
             return 1;
         }
-        else
-        {
-            *wtpath = path;
-            return 0;
-        }
+
+        *wtpath = path;
+        return 0;
     }
     *wtpath = path;
     return 0;
@@ -830,9 +945,13 @@ static int move_config_setting(const char *key, const char *value,
                                const char *from_file, const char *to_file)
 {
     if (git_config_set_in_file_gently(to_file, key, NULL, value))
+    {
         return error(_("unable to set %s in '%s'"), key, to_file);
+    }
     if (git_config_set_in_file_gently(from_file, key, NULL, NULL))
+    {
         return error(_("unable to unset %s in '%s'"), key, from_file);
+    }
     return 0;
 }
 
@@ -850,9 +969,13 @@ int init_worktree_config(struct repository *r)
      * upgrade process.
      */
     if (r->repository_format_worktree_config)
+    {
         return 0;
+    }
     if ((res = git_config_set_gently("extensions.worktreeConfig", "true")))
+    {
         return error(_("failed to set extensions.worktreeConfig setting"));
+    }
 
     common_config_file = xstrfmt("%s/config", r->commondir);
     main_worktree_file = xstrfmt("%s/config.worktree", r->commondir);
@@ -871,7 +994,9 @@ int init_worktree_config(struct repository *r)
         if ((res = move_config_setting("core.bare", "true",
                                        common_config_file,
                                        main_worktree_file)))
+        {
             goto cleanup;
+        }
     }
     /*
      * If core.worktree is set, then the main worktree is located
@@ -884,7 +1009,9 @@ int init_worktree_config(struct repository *r)
         if ((res = move_config_setting("core.worktree", core_worktree,
                                        common_config_file,
                                        main_worktree_file)))
+        {
             goto cleanup;
+        }
     }
 
     /*

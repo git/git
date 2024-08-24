@@ -11,20 +11,20 @@ static int                     drivers_alloc;
 
 #define PATTERNS(lang, rx, wrx)                                                                                  \
     {                                                                                                            \
-        .name     = lang,                                                                                        \
+        .name     = (lang),                                                                                      \
         .binary   = -1,                                                                                          \
         .funcname = {                                                                                            \
-            .pattern = rx,                                                                                       \
+            .pattern = (rx),                                                                                     \
             .cflags  = REG_EXTENDED,                                                                             \
         },                                                                                                       \
         .word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", .word_regex_multi_byte = wrx "|[^[:space:]]", \
     }
 #define IPATTERN(lang, rx, wrx)                                                                                  \
     {                                                                                                            \
-        .name     = lang,                                                                                        \
+        .name     = (lang),                                                                                      \
         .binary   = -1,                                                                                          \
         .funcname = {                                                                                            \
-            .pattern = rx,                                                                                       \
+            .pattern = (rx),                                                                                     \
             .cflags  = REG_EXTENDED | REG_ICASE,                                                                 \
         },                                                                                                       \
         .word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", .word_regex_multi_byte = wrx "|[^[:space:]]", \
@@ -378,9 +378,13 @@ static int regexec_supports_multi_byte_chars(void)
     static int        result = -1;
 
     if (result != -1)
+    {
         return result;
+    }
     if (regcomp(&re, not_space, REG_EXTENDED))
+    {
         BUG("invalid regular expression: %s", not_space);
+    }
     result = !regexec(&re, utf8_multi_byte_char, 1, &match, 0) && match.rm_so == 0 && match.rm_eo == strlen(utf8_multi_byte_char);
     regfree(&re);
     return result;
@@ -402,7 +406,9 @@ static int parse_funcname(struct userdiff_funcname *f, const char *k,
     f->pattern = NULL;
     FREE_AND_NULL(f->pattern_owned);
     if (git_config_string(&f->pattern_owned, k, v) < 0)
+    {
         return -1;
+    }
     f->pattern = f->pattern_owned;
     f->cflags  = cflags;
     return 0;
@@ -411,9 +417,13 @@ static int parse_funcname(struct userdiff_funcname *f, const char *k,
 static int parse_tristate(int *b, const char *k, const char *v)
 {
     if (v && !strcasecmp(v, "auto"))
+    {
         *b = -1;
+    }
     else
+    {
         *b = git_config_bool(k, v);
+    }
     return 0;
 }
 
@@ -426,11 +436,14 @@ static int parse_bool(int *b, const char *k, const char *v)
 int userdiff_config(const char *k, const char *v)
 {
     struct userdiff_driver *drv;
-    const char             *name, *type;
+    const char             *name;
+    const char             *type;
     size_t                  namelen;
 
     if (parse_config_key(k, "diff", &name, &namelen, &type) || !name)
+    {
         return 0;
+    }
 
     drv = userdiff_find_by_namelen(name, namelen);
     if (!drv)
@@ -443,11 +456,17 @@ int userdiff_config(const char *k, const char *v)
     }
 
     if (!strcmp(type, "funcname"))
+    {
         return parse_funcname(&drv->funcname, k, v, 0);
+    }
     if (!strcmp(type, "xfuncname"))
+    {
         return parse_funcname(&drv->funcname, k, v, REG_EXTENDED);
+    }
     if (!strcmp(type, "binary"))
+    {
         return parse_tristate(&drv->binary, k, v);
+    }
     if (!strcmp(type, "command"))
     {
         FREE_AND_NULL(drv->external.cmd);
@@ -467,7 +486,9 @@ int userdiff_config(const char *k, const char *v)
         return ret;
     }
     if (!strcmp(type, "cachetextconv"))
+    {
         return parse_bool(&drv->textconv_want_cache, k, v);
+    }
     if (!strcmp(type, "wordregex"))
     {
         int ret;
@@ -495,7 +516,9 @@ struct userdiff_driver *userdiff_find_by_name(const char *name)
     if (driver && driver->word_regex_multi_byte)
     {
         if (regexec_supports_multi_byte_chars())
+        {
             driver->word_regex = driver->word_regex_multi_byte;
+        }
         driver->word_regex_multi_byte = NULL;
     }
     return driver;
@@ -507,17 +530,27 @@ struct userdiff_driver *userdiff_find_by_path(struct index_state *istate,
     static struct attr_check *check;
 
     if (!check)
+    {
         check = attr_check_initl("diff", NULL);
+    }
     if (!path)
+    {
         return NULL;
+    }
     git_check_attr(istate, path, check);
 
     if (ATTR_TRUE(check->items[0].value))
+    {
         return &driver_true;
+    }
     if (ATTR_FALSE(check->items[0].value))
+    {
         return &driver_false;
+    }
     if (ATTR_UNSET(check->items[0].value))
+    {
         return NULL;
+    }
     return userdiff_find_by_name(check->items[0].value);
 }
 
@@ -525,7 +558,9 @@ struct userdiff_driver *userdiff_get_textconv(struct repository      *r,
                                               struct userdiff_driver *driver)
 {
     if (!driver->textconv)
+    {
         return NULL;
+    }
 
     if (driver->textconv_want_cache && !driver->textconv_cache && have_git_dir())
     {
@@ -552,7 +587,9 @@ static int for_each_userdiff_driver_list(each_userdiff_driver_fn   fn,
     {
         struct userdiff_driver *item = drv + i;
         if ((ret = fn(item, type, cb_data)))
+        {
             return ret;
+        }
     }
     return 0;
 }
@@ -564,13 +601,17 @@ int for_each_userdiff_driver(each_userdiff_driver_fn fn, void *cb_data)
     ret = for_each_userdiff_driver_list(fn, USERDIFF_DRIVER_TYPE_CUSTOM,
                                         cb_data, drivers, ndrivers);
     if (ret)
+    {
         return ret;
+    }
 
     ret = for_each_userdiff_driver_list(fn, USERDIFF_DRIVER_TYPE_BUILTIN,
                                         cb_data, builtin_drivers,
                                         ARRAY_SIZE(builtin_drivers));
     if (ret)
+    {
         return ret;
+    }
 
     return 0;
 }

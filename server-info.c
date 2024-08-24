@@ -59,11 +59,15 @@ __attribute__((format(printf, 2, 3))) static int uic_printf(struct update_info_c
         strbuf_reset(old);
         strbuf_grow(old, cur->len);
         r = fread(old->buf, 1, cur->len, uic->old_fp);
-        if (r != cur->len || memcmp(old->buf, cur->buf, r))
+        if (r != cur->len || memcmp(old->buf, cur->buf, r) != 0)
+        {
             uic_mark_stale(uic);
+        }
 
         if (fwrite(cur->buf, 1, cur->len, uic->cur_fp) == cur->len)
+        {
             ret = 0;
+        }
     }
 
     va_end(ap);
@@ -92,14 +96,20 @@ static int update_info_file(char *path,
     safe_create_leading_directories(path);
     f = mks_tempfile_m(tmp, 0666);
     if (!f)
+    {
         goto out;
+    }
     uic.cur_fp = fdopen_tempfile(f, "w");
     if (!uic.cur_fp)
+    {
         goto out;
+    }
 
     /* no problem on ENOENT and old_fp == NULL, it's stale, now */
     if (!force)
+    {
         uic.old_fp = fopen_or_warn(path, "r");
+    }
 
     /*
      * uic_printf will compare incremental comparison against old_fp
@@ -107,7 +117,9 @@ static int update_info_file(char *path,
      */
     ret = generate(&uic);
     if (ret)
+    {
         goto out;
+    }
 
     /* new file may be shorter than the old one, check here */
     if (!uic_is_stale(&uic))
@@ -122,7 +134,9 @@ static int update_info_file(char *path,
             goto out;
         }
         if (fstat(old_fd, &st) || (st.st_size != (size_t)new_len))
+        {
             uic_mark_stale(&uic);
+        }
     }
 
     uic.cur_fp = NULL;
@@ -130,9 +144,13 @@ static int update_info_file(char *path,
     if (uic_is_stale(&uic))
     {
         if (adjust_shared_perm(get_tempfile_path(f)) < 0)
+        {
             goto out;
+        }
         if (rename_tempfile(&f, path) < 0)
+        {
             goto out;
+        }
     }
     else
     {
@@ -145,11 +163,15 @@ out:
     {
         error_errno("unable to update %s", path);
         if (f)
+        {
             delete_tempfile(&f);
+        }
     }
     free(tmp);
     if (uic.old_fp)
+    {
         fclose(uic.old_fp);
+    }
     strbuf_release(&uic.old_sb);
     strbuf_release(&uic.cur_sb);
     return ret;
@@ -162,19 +184,27 @@ static int add_info_ref(const char *path, const char *referent UNUSED, const str
     struct update_info_ctx *uic = cb_data;
     struct object          *o   = parse_object(the_repository, oid);
     if (!o)
+    {
         return -1;
+    }
 
     if (uic_printf(uic, "%s	%s\n", oid_to_hex(oid), path) < 0)
+    {
         return -1;
+    }
 
     if (o->type == OBJ_TAG)
     {
         o = deref_tag(the_repository, o, path, 0);
         if (o)
+        {
             if (uic_printf(uic, "%s	%s^{}\n",
                            oid_to_hex(&o->oid), path)
                 < 0)
+            {
                 return -1;
+            }
+        }
     }
     return 0;
 }
@@ -209,7 +239,9 @@ static struct pack_info *find_pack_by_name(const char *name)
     {
         struct packed_git *p = info[i]->p;
         if (!strcmp(pack_basename(p), name))
+        {
             return info[i];
+        }
     }
     return NULL;
 }
@@ -225,11 +257,9 @@ static int parse_pack_def(const char *packname, int old_cnt)
         i->old_num = old_cnt;
         return 0;
     }
-    else
-    {
-        /* The file describes a pack that is no longer here */
-        return 1;
-    }
+
+    /* The file describes a pack that is no longer here */
+    return 1;
 }
 
 /* Returns non-zero when we detect that the info in the
@@ -244,20 +274,26 @@ static int read_pack_info_file(const char *infofile)
 
     fp = fopen_or_warn(infofile, "r");
     if (!fp)
+    {
         return 1; /* nonexistent is not an error. */
+    }
 
     while (strbuf_getline(&line, fp) != EOF)
     {
         const char *arg;
 
         if (!line.len)
+        {
             continue;
+        }
 
         if (skip_prefix(line.buf, "P ", &arg))
         {
             /* P name */
             if (parse_pack_def(arg, old_cnt++))
+            {
                 goto out_stale;
+            }
         }
         else if (line.buf[0] == 'D')
         {
@@ -288,9 +324,11 @@ static int compare_info(const void *a_, const void *b_)
     struct pack_info *const *b = b_;
 
     if (0 <= (*a)->old_num && 0 <= (*b)->old_num)
+    {
         /* Keep the order in the original */
         return (*a)->old_num - (*b)->old_num;
-    else if (0 <= (*a)->old_num)
+    }
+    if (0 <= (*a)->old_num)
         /* Only A existed in the original so B is obviously newer */
         return -1;
     else if (0 <= (*b)->old_num)
@@ -299,8 +337,10 @@ static int compare_info(const void *a_, const void *b_)
 
     /* then it does not matter but at least keep the comparison stable */
     if ((*a)->p == (*b)->p)
+    {
         return 0;
-    else if ((*a)->p < (*b)->p)
+    }
+    if ((*a)->p < (*b)->p)
         return -1;
     else
         return 1;
@@ -319,7 +359,9 @@ static void init_pack_info(const char *infofile, int force)
          * not available to the pullers in general.
          */
         if (!p->pack_local || !file_exists(p->pack_name))
+        {
             continue;
+        }
 
         i = num_pack++;
         ALLOC_GROW(info, num_pack, alloc);
@@ -329,25 +371,37 @@ static void init_pack_info(const char *infofile, int force)
     }
 
     if (infofile && !force)
+    {
         stale = read_pack_info_file(infofile);
+    }
     else
+    {
         stale = 1;
+    }
 
     for (i = 0; i < num_pack; i++)
+    {
         if (stale)
+        {
             info[i]->old_num = -1;
+        }
+    }
 
     /* renumber them */
     QSORT(info, num_pack, compare_info);
     for (i = 0; i < num_pack; i++)
+    {
         info[i]->new_num = i;
+    }
 }
 
 static void free_pack_info(void)
 {
     int i;
     for (i = 0; i < num_pack; i++)
+    {
         free(info[i]);
+    }
     free(info);
 }
 
@@ -357,10 +411,14 @@ static int write_pack_info_file(struct update_info_ctx *uic)
     for (i = 0; i < num_pack; i++)
     {
         if (uic_printf(uic, "P %s\n", pack_basename(info[i]->p)) < 0)
+        {
             return -1;
+        }
     }
     if (uic_printf(uic, "\n") < 0)
+    {
         return -1;
+    }
     return 0;
 }
 

@@ -47,6 +47,7 @@ static void find_better_matching_suffix(const char *tagname, const char *suffix,
     int end = match->len < suffix_len ? match->start : match->start - 1;
     int i;
     for (i = start; i <= end; i++)
+    {
         if (starts_with(tagname + i, suffix))
         {
             match->conf_pos = conf_pos;
@@ -54,6 +55,7 @@ static void find_better_matching_suffix(const char *tagname, const char *suffix,
             match->len      = suffix_len;
             break;
         }
+    }
 }
 
 /*
@@ -86,30 +88,45 @@ static int swap_prereleases(const char *s1,
     for (i = 0; i < prereleases->nr; i++)
     {
         const char *suffix = prereleases->items[i].string;
-        int         start, suffix_len = strlen(suffix);
+        int         start;
+        int         suffix_len = strlen(suffix);
         if (suffix_len < off)
+        {
             start = off - suffix_len;
+        }
         else
+        {
             start = 0;
+        }
         find_better_matching_suffix(s1, suffix, suffix_len, start,
                                     i, &match1);
         find_better_matching_suffix(s2, suffix, suffix_len, start,
                                     i, &match2);
     }
     if (match1.conf_pos == -1 && match2.conf_pos == -1)
+    {
         return 0;
+    }
     if (match1.conf_pos == match2.conf_pos)
+    {
         /* Found the same suffix in both, e.g. "-rc" in "v1.0-rcX"
          * and "v1.0-rcY": the caller should decide based on "X"
          * and "Y". */
         return 0;
+    }
 
     if (match1.conf_pos >= 0 && match2.conf_pos >= 0)
+    {
         *diff = match1.conf_pos - match2.conf_pos;
+    }
     else if (match1.conf_pos >= 0)
+    {
         *diff = -1;
-    else /* if (match2.conf_pos >= 0) */
+    }
+    else
+    { /* if (match2.conf_pos >= 0) */
         *diff = 1;
+    }
     return 1;
 }
 
@@ -124,8 +141,10 @@ int versioncmp(const char *s1, const char *s2)
 {
     const unsigned char *p1 = (const unsigned char *)s1;
     const unsigned char *p2 = (const unsigned char *)s2;
-    unsigned char        c1, c2;
-    int                  state, diff;
+    unsigned char        c1;
+    unsigned char        c2;
+    int                  state;
+    int                  diff;
 
     /*
      * Symbol(s)    0       [1-9]   others
@@ -147,7 +166,9 @@ int versioncmp(const char *s1, const char *s2)
         /* S_Z */ CMP, +1, +1, -1, CMP, CMP, -1, CMP, CMP};
 
     if (p1 == p2)
+    {
         return 0;
+    }
 
     c1 = *p1++;
     c2 = *p2++;
@@ -157,7 +178,9 @@ int versioncmp(const char *s1, const char *s2)
     while ((diff = c1 - c2) == 0)
     {
         if (c1 == '\0')
+        {
             return diff;
+        }
 
         state = next_state[state];
         c1    = *p1++;
@@ -175,16 +198,24 @@ int versioncmp(const char *s1, const char *s2)
         int old = git_config_get_string_multi(oldk, &oldl);
 
         if (!new && !old)
+        {
             warning("ignoring %s because %s is set", oldk, newk);
+        }
         if (!new)
+        {
             prereleases = newl;
+        }
         else if (!old)
+        {
             prereleases = oldl;
+        }
 
         initialized = 1;
     }
     if (prereleases && swap_prereleases(s1, s2, (const char *)p1 - s1 - 1, &diff))
+    {
         return diff;
+    }
 
     state = result_type[state * 3 + (((c2 == '0') + (isdigit(c2) != 0)))];
 
@@ -195,8 +226,12 @@ int versioncmp(const char *s1, const char *s2)
 
         case LEN:
             while (isdigit(*p1++))
+            {
                 if (!isdigit(*p2++))
+                {
                     return 1;
+                }
+            }
 
             return isdigit(*p2) ? -1 : diff;
 

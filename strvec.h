@@ -49,7 +49,7 @@ void strvec_init(struct strvec *);
 const char *strvec_push(struct strvec *, const char *);
 
 /* Push an allocated string onto the end of the array, taking ownership. */
-void strvec_push_nodup(struct strvec *array, char *value);
+void strvec_push_nodup(struct strvec *array, const char *value);
 
 /**
  * Format a string and push it onto the end of the array. This is a

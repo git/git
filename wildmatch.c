@@ -15,8 +15,8 @@
 typedef unsigned char uchar;
 
 /* Internal return values */
-#define WM_ABORT_ALL         -1
-#define WM_ABORT_TO_STARSTAR -2
+#define WM_ABORT_ALL         (-1)
+#define WM_ABORT_TO_STARSTAR (-2)
 
 /* What character marks an inverted character class? */
 #define NEGATE_CLASS  '!'
@@ -24,7 +24,7 @@ typedef unsigned char uchar;
 
 #define CC_EQ(class, len, litmatch) ((len) == sizeof(litmatch) - 1 \
                                      && *(class) == *(litmatch)    \
-                                     && strncmp((char *)class, litmatch, len) == 0)
+                                     && strncmp((char *)(class), litmatch, len) == 0)
 
 #if defined STDC_HEADERS || !defined isascii
     #define ISASCII(c) 1
@@ -63,14 +63,23 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 
     for (; (p_ch = *p) != '\0'; text++, p++)
     {
-        int   matched, match_slash, negated;
-        uchar t_ch, prev_ch;
+        int   matched;
+        int   match_slash;
+        int   negated;
+        uchar t_ch;
+        uchar prev_ch;
         if ((t_ch = *text) == '\0' && p_ch != '*')
+        {
             return WM_ABORT_ALL;
+        }
         if ((flags & WM_CASEFOLD) && ISUPPER(t_ch))
+        {
             t_ch = tolower(t_ch);
+        }
         if ((flags & WM_CASEFOLD) && ISUPPER(p_ch))
+        {
             p_ch = tolower(p_ch);
+        }
         switch (p_ch)
         {
             case '\\':
@@ -80,12 +89,16 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                 /* FALLTHROUGH */
             default:
                 if (t_ch != p_ch)
+                {
                     return WM_NOMATCH;
+                }
                 continue;
             case '?':
                 /* Match anything but '/'. */
                 if ((flags & WM_PATHNAME) && t_ch == '/')
+                {
                     return WM_NOMATCH;
+                }
                 continue;
             case '*':
                 if (*++p == '*')
@@ -95,8 +108,10 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                     {
                     }
                     if (!(flags & WM_PATHNAME))
+                    {
                         /* without WM_PATHNAME, '*' == '**' */
                         match_slash = 1;
+                    }
                     else if ((prev_p - pattern < 2 || *(prev_p - 2) == '/') && (*p == '\0' || *p == '/' || (p[0] == '\\' && p[1] == '/')))
                     {
                         /*
@@ -109,15 +124,21 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                          * both foo/bar and foo/a/bar.
                          */
                         if (p[0] == '/' && dowild(p + 1, text, flags) == WM_MATCH)
+                        {
                             return WM_MATCH;
+                        }
                         match_slash = 1;
                     }
-                    else /* WM_PATHNAME is set */
+                    else
+                    { /* WM_PATHNAME is set */
                         match_slash = 0;
+                    }
                 }
                 else
+                {
                     /* without WM_PATHNAME, '*' == '**' */
                     match_slash = flags & WM_PATHNAME ? 0 : 1;
+                }
                 if (*p == '\0')
                 {
                     /* Trailing "**" matches everything.  Trailing "*" matches
@@ -125,11 +146,13 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                     if (!match_slash)
                     {
                         if (strchr((char *)text, '/'))
+                        {
                             return WM_ABORT_TO_STARSTAR;
+                        }
                     }
                     return WM_MATCH;
                 }
-                else if (!match_slash && *p == '/')
+                if (!match_slash && *p == '/')
                 {
                     /*
                      * _one_ asterisk followed by a slash
@@ -146,7 +169,9 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                 while (1)
                 {
                     if (t_ch == '\0')
+                    {
                         break;
+                    }
                     /*
                      * Try to advance faster when an asterisk is
                      * followed by a literal. We know in this case
@@ -159,30 +184,41 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                     {
                         p_ch = *p;
                         if ((flags & WM_CASEFOLD) && ISUPPER(p_ch))
+                        {
                             p_ch = tolower(p_ch);
+                        }
                         while ((t_ch = *text) != '\0' && (match_slash || t_ch != '/'))
                         {
                             if ((flags & WM_CASEFOLD) && ISUPPER(t_ch))
+                            {
                                 t_ch = tolower(t_ch);
+                            }
                             if (t_ch == p_ch)
+                            {
                                 break;
+                            }
                             text++;
                         }
                         if (t_ch != p_ch)
                         {
                             if (match_slash)
+                            {
                                 return WM_ABORT_ALL;
-                            else
-                                return WM_ABORT_TO_STARSTAR;
+                            }
+                            return WM_ABORT_TO_STARSTAR;
                         }
                     }
                     if ((matched = dowild(p, text, flags)) != WM_NOMATCH)
                     {
                         if (!match_slash || matched != WM_ABORT_TO_STARSTAR)
+                        {
                             return matched;
+                        }
                     }
                     else if (!match_slash && t_ch == '/')
+                    {
                         return WM_ABORT_TO_STARSTAR;
+                    }
                     t_ch = *++text;
                 }
                 return WM_ABORT_ALL;
@@ -190,7 +226,9 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                 p_ch = *++p;
 #ifdef NEGATE_CLASS2
                 if (p_ch == NEGATE_CLASS2)
+                {
                     p_ch = NEGATE_CLASS;
+                }
 #endif
                 /* Assign literal 1/0 because of "matched" comparison. */
                 negated = p_ch == NEGATE_CLASS ? 1 : 0;
@@ -204,14 +242,20 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                 do
                 {
                     if (!p_ch)
+                    {
                         return WM_ABORT_ALL;
+                    }
                     if (p_ch == '\\')
                     {
                         p_ch = *++p;
                         if (!p_ch)
+                        {
                             return WM_ABORT_ALL;
+                        }
                         if (t_ch == p_ch)
+                        {
                             matched = 1;
+                        }
                     }
                     else if (p_ch == '-' && prev_ch && p[1] && p[1] != ']')
                     {
@@ -220,15 +264,21 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                         {
                             p_ch = *++p;
                             if (!p_ch)
+                            {
                                 return WM_ABORT_ALL;
+                            }
                         }
                         if (t_ch <= p_ch && t_ch >= prev_ch)
+                        {
                             matched = 1;
+                        }
                         else if ((flags & WM_CASEFOLD) && ISLOWER(t_ch))
                         {
                             uchar t_ch_upper = toupper(t_ch);
                             if (t_ch_upper <= p_ch && t_ch_upper >= prev_ch)
+                            {
                                 matched = 1;
+                            }
                         }
                         p_ch = 0; /* This makes "prev_ch" get set to 0. */
                     }
@@ -240,7 +290,9 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                         {
                         } /*SHARED ITERATOR*/
                         if (!p_ch)
+                        {
                             return WM_ABORT_ALL;
+                        }
                         i = p - s - 1;
                         if (i < 0 || p[-1] != ':')
                         {
@@ -248,80 +300,114 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                             p    = s - 2;
                             p_ch = '[';
                             if (t_ch == p_ch)
+                            {
                                 matched = 1;
+                            }
                             continue;
                         }
                         if (CC_EQ(s, i, "alnum"))
                         {
                             if (ISALNUM(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "alpha"))
                         {
                             if (ISALPHA(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "blank"))
                         {
                             if (ISBLANK(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "cntrl"))
                         {
                             if (ISCNTRL(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "digit"))
                         {
                             if (ISDIGIT(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "graph"))
                         {
                             if (ISGRAPH(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "lower"))
                         {
                             if (ISLOWER(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "print"))
                         {
                             if (ISPRINT(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "punct"))
                         {
                             if (ISPUNCT(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "space"))
                         {
                             if (ISSPACE(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "upper"))
                         {
                             if (ISUPPER(t_ch))
+                            {
                                 matched = 1;
+                            }
                             else if ((flags & WM_CASEFOLD) && ISLOWER(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
                         else if (CC_EQ(s, i, "xdigit"))
                         {
                             if (ISXDIGIT(t_ch))
+                            {
                                 matched = 1;
+                            }
                         }
-                        else /* malformed [:class:] string */
+                        else
+                        { /* malformed [:class:] string */
                             return WM_ABORT_ALL;
+                        }
                         p_ch = 0; /* This makes "prev_ch" get set to 0. */
                     }
                     else if (t_ch == p_ch)
+                    {
                         matched = 1;
+                    }
                 } while (prev_ch = p_ch, (p_ch = *++p) != ']');
                 if (matched == negated || ((flags & WM_PATHNAME) && t_ch == '/'))
+                {
                     return WM_NOMATCH;
+                }
                 continue;
         }
     }

@@ -10,7 +10,9 @@ uintmax_t decode_varint(const unsigned char **bufp)
     {
         val += 1;
         if (!val || MSB(val, 7))
+        {
             return 0; /* overflow */
+        }
         c   = *buf++;
         val = (val << 7) + (c & 127);
     }
@@ -24,8 +26,12 @@ int encode_varint(uintmax_t value, unsigned char *buf)
     unsigned      pos = sizeof(varint) - 1;
     varint[pos]       = value & 127;
     while (value >>= 7)
+    {
         varint[--pos] = 128 | (--value & 127);
+    }
     if (buf)
+    {
         memcpy(buf, varint + pos, sizeof(varint) - pos);
+    }
     return sizeof(varint) - pos;
 }

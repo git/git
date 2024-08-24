@@ -86,7 +86,9 @@ struct git_istream
 static void close_deflated_stream(struct git_istream *st)
 {
     if (st->z_state == z_used)
+    {
         git_inflate_end(&st->z);
+    }
 }
 
 /*****************************************************************
@@ -114,7 +116,9 @@ static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
         {
             size_t to_move = fs->o_end - fs->o_ptr;
             if (sz < to_move)
+            {
                 to_move = sz;
+            }
             memcpy(buf + filled, fs->obuf + fs->o_ptr, to_move);
             fs->o_ptr += to_move;
             sz -= to_move;
@@ -131,7 +135,9 @@ static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
             if (stream_filter(fs->filter,
                               fs->ibuf + fs->i_ptr, &to_feed,
                               fs->obuf, &to_receive))
+            {
                 return -1;
+            }
             fs->i_ptr = fs->i_end - to_feed;
             fs->o_end = FILTER_BUFFER - to_receive;
             continue;
@@ -144,10 +150,14 @@ static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
             if (stream_filter(fs->filter,
                               NULL, NULL,
                               fs->obuf, &to_receive))
+            {
                 return -1;
+            }
             fs->o_end = FILTER_BUFFER - to_receive;
             if (!fs->o_end)
+            {
                 break;
+            }
             continue;
         }
         fs->i_end = fs->i_ptr = 0;
@@ -157,9 +167,13 @@ static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
         {
             fs->i_end = read_istream(fs->upstream, fs->ibuf, FILTER_BUFFER);
             if (fs->i_end < 0)
+            {
                 return -1;
+            }
             if (fs->i_end)
+            {
                 continue;
+            }
         }
         fs->input_finished = 1;
     }
@@ -207,7 +221,9 @@ static ssize_t read_istream_loose(struct git_istream *st, char *buf, size_t sz)
     {
         size_t to_copy = st->u.loose.hdr_avail - st->u.loose.hdr_used;
         if (sz < to_copy)
+        {
             to_copy = sz;
+        }
         memcpy(buf, st->u.loose.hdr + st->u.loose.hdr_used, to_copy);
         st->u.loose.hdr_used += to_copy;
         total_read += to_copy;
@@ -256,7 +272,9 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 
     st->u.loose.mapped = map_loose_object(r, oid, &st->u.loose.mapsize);
     if (!st->u.loose.mapped)
+    {
         return -1;
+    }
     switch (unpack_loose_header(&st->z, st->u.loose.mapped,
                                 st->u.loose.mapsize, st->u.loose.hdr,
                                 sizeof(st->u.loose.hdr), NULL))
@@ -268,7 +286,9 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
             goto error;
     }
     if (parse_loose_header(st->u.loose.hdr, &oi) < 0 || *type < 0)
+    {
         goto error;
+    }
 
     st->u.loose.hdr_used  = strlen(st->u.loose.hdr) + 1;
     st->u.loose.hdr_avail = st->z.total_out;
@@ -408,7 +428,9 @@ static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
     size_t remainder = st->size - st->u.incore.read_ptr;
 
     if (remainder <= read_size)
+    {
         read_size = remainder;
+    }
     if (read_size)
     {
         memcpy(buf, st->u.incore.buf + st->u.incore.read_ptr, read_size);
@@ -450,7 +472,9 @@ static int istream_source(struct git_istream     *st,
     oi.sizep = &size;
     status   = oid_object_info_extended(r, oid, &oi, 0);
     if (status < 0)
+    {
         return status;
+    }
 
     switch (oi.whence)
     {
@@ -541,26 +565,39 @@ int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter 
     if (!st)
     {
         if (filter)
+        {
             free_stream_filter(filter);
+        }
         return result;
     }
     if (type != OBJ_BLOB)
+    {
         goto close_and_exit;
+    }
     for (;;)
     {
         char    buf[1024 * 16];
-        ssize_t wrote, holeto;
+        ssize_t wrote;
+        ssize_t holeto;
         ssize_t readlen = read_istream(st, buf, sizeof(buf));
 
         if (readlen < 0)
+        {
             goto close_and_exit;
+        }
         if (!readlen)
+        {
             break;
+        }
         if (can_seek && sizeof(buf) == readlen)
         {
             for (holeto = 0; holeto < readlen; holeto++)
+            {
                 if (buf[holeto])
+                {
                     break;
+                }
+            }
             if (readlen == holeto)
             {
                 kept += holeto;
@@ -569,16 +606,24 @@ int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter 
         }
 
         if (kept && lseek(fd, kept, SEEK_CUR) == (off_t)-1)
+        {
             goto close_and_exit;
+        }
         else
+        {
             kept = 0;
+        }
         wrote = write_in_full(fd, buf, readlen);
 
         if (wrote < 0)
+        {
             goto close_and_exit;
+        }
     }
     if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t)-1 || xwrite(fd, "", 1) != 1))
+    {
         goto close_and_exit;
+    }
     result = 0;
 
 close_and_exit:

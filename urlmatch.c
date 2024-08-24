@@ -48,18 +48,26 @@ static int append_normalized_escapes(struct strbuf *buf,
         if (ch == '%')
         {
             if (from_len < 2)
+            {
                 return 0;
+            }
             ch = hex2chr(from);
             if (ch < 0)
+            {
                 return 0;
+            }
             from += 2;
             from_len -= 2;
             was_esc = 1;
         }
         if ((unsigned char)ch <= 0x1F || (unsigned char)ch >= 0x7F || strchr(URL_UNSAFE_CHARS, ch) || (esc_extra && strchr(esc_extra, ch)) || (was_esc && strchr(esc_ok, ch)))
+        {
             strbuf_addf(buf, "%%%02X", (unsigned char)ch);
+        }
         else
+        {
             strbuf_addch(buf, ch);
+        }
     }
 
     return 1;
@@ -69,7 +77,9 @@ static const char *end_of_token(const char *s, int c, size_t n)
 {
     const char *next = memchr(s, c, n);
     if (!next)
+    {
         next = s + n;
+    }
     return next;
 }
 
@@ -87,20 +97,30 @@ static int match_host(const struct url_info *url_info,
         const char *pat_next = end_of_token(pat, '.', pat_len);
 
         if (pat_next == pat + 1 && pat[0] == '*')
+        {
             /* wildcard matches anything */
             ;
+        }
         else if ((pat_next - pat) == (url_next - url) && !memcmp(url, pat, url_next - url))
+        {
             /* the components are the same */
             ;
+        }
         else
+        {
             return 0; /* found an unmatch */
+        }
 
         if (url_next < url + url_len)
+        {
             url_next++;
+        }
         url_len -= url_next - url;
         url = url_next;
         if (pat_next < pat + pat_len)
+        {
             pat_next++;
+        }
         pat_len -= pat_next - pat;
         pat = pat_next;
     }
@@ -148,9 +168,22 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
     size_t        url_len = strlen(url);
     struct strbuf norm;
     size_t        spanned;
-    size_t        scheme_len, user_off = 0, user_len = 0, passwd_off = 0, passwd_len = 0;
-    size_t        host_off = 0, host_len = 0, port_off = 0, port_len = 0, path_off, path_len, result_len;
-    const char   *slash_ptr, *at_ptr, *colon_ptr, *path_start;
+    size_t        scheme_len;
+    size_t        user_off   = 0;
+    size_t        user_len   = 0;
+    size_t        passwd_off = 0;
+    size_t        passwd_len = 0;
+    size_t        host_off   = 0;
+    size_t        host_len   = 0;
+    size_t        port_off   = 0;
+    size_t        port_len   = 0;
+    size_t        path_off;
+    size_t        path_len;
+    size_t        result_len;
+    const char   *slash_ptr;
+    const char   *at_ptr;
+    const char   *colon_ptr;
+    const char   *path_start;
     char         *result;
 
     /*
@@ -172,7 +205,9 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
     spanned += 3;
     url_len -= spanned;
     while (spanned--)
+    {
         strbuf_addch(&norm, tolower(*url++));
+    }
 
     /*
      * Copy any username:password if present normalizing %-escapes
@@ -235,7 +270,9 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
     }
     colon_ptr = slash_ptr - 1;
     while (colon_ptr > url && *colon_ptr != ':' && *colon_ptr != ']')
+    {
         colon_ptr--;
+    }
     if (*colon_ptr != ':')
     {
         colon_ptr = slash_ptr;
@@ -253,9 +290,13 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
     }
 
     if (allow_globs)
+    {
         spanned = strspn(url, URL_HOST_CHARS "*");
+    }
     else
+    {
         spanned = strspn(url, URL_HOST_CHARS);
+    }
 
     if (spanned < colon_ptr - url)
     {
@@ -284,7 +325,9 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
         url++;
         url += strspn(url, "0");
         if (url == slash_ptr && url[-1] == '0')
+        {
             url--;
+        }
         if (url == slash_ptr)
         {
             /* Skip ":" port with no number, it's same as default */
@@ -320,7 +363,9 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
                 return NULL;
             }
             if (slash_ptr - url <= 5)
+            {
                 pnum = strtoul(url, NULL, 10);
+            }
             if (pnum == 0 || pnum > 65535)
             {
                 /* port number not in range 1..65535 */
@@ -341,7 +386,9 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
         url = slash_ptr;
     }
     if (host_off)
+    {
         host_len = norm.len - host_off - (port_len ? port_len + 1 : 0);
+    }
 
     /*
      * Now copy the path resolving any . and .. segments being careful not
@@ -428,11 +475,15 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
         url = next_slash;
         /* if the next char is not '/' done with the path */
         if (*url != '/')
+        {
             break;
+        }
         url++;
         url_len--;
         if (!skip_add_slash)
+        {
             strbuf_addch(&norm, '/');
+        }
     }
     path_len = norm.len - path_off;
 
@@ -500,15 +551,25 @@ static size_t url_match_prefix(const char *url,
      * returned without causing any faults.
      */
     if (!url || !url_prefix)
+    {
         return 0;
+    }
     if (!url_prefix_len || (url_prefix_len == 1 && *url_prefix == '/'))
+    {
         return (!*url || *url == '/') ? 1 : 0;
+    }
     if (url_prefix[url_prefix_len - 1] == '/')
+    {
         url_prefix_len--;
-    if (strncmp(url, url_prefix, url_prefix_len))
+    }
+    if (strncmp(url, url_prefix, url_prefix_len) != 0)
+    {
         return 0;
+    }
     if ((strlen(url) == url_prefix_len) || (url[url_prefix_len] == '/'))
+    {
         return url_prefix_len + 1;
+    }
     return 0;
 }
 
@@ -537,27 +598,37 @@ static int match_urls(const struct url_info *url,
     size_t pathmatchlen;
 
     if (!url || !url_prefix || !url->url || !url_prefix->url)
+    {
         return 0;
+    }
 
     /* check the scheme */
-    if (url_prefix->scheme_len != url->scheme_len || strncmp(url->url, url_prefix->url, url->scheme_len))
+    if (url_prefix->scheme_len != url->scheme_len || strncmp(url->url, url_prefix->url, url->scheme_len) != 0)
+    {
         return 0; /* schemes do not match */
+    }
 
     /* check the user name if url_prefix has one */
     if (url_prefix->user_off)
     {
-        if (!url->user_off || url->user_len != url_prefix->user_len || strncmp(url->url + url->user_off, url_prefix->url + url_prefix->user_off, url->user_len))
+        if (!url->user_off || url->user_len != url_prefix->user_len || strncmp(url->url + url->user_off, url_prefix->url + url_prefix->user_off, url->user_len) != 0)
+        {
             return 0; /* url_prefix has a user but it's not a match */
+        }
         usermatched = 1;
     }
 
     /* check the host */
     if (!match_host(url, url_prefix))
+    {
         return 0; /* host names do not match */
+    }
 
     /* check the port */
-    if (url_prefix->port_len != url->port_len || strncmp(url->url + url->port_off, url_prefix->url + url_prefix->port_off, url->port_len))
+    if (url_prefix->port_len != url->port_len || strncmp(url->url + url->port_off, url_prefix->url + url_prefix->port_off, url->port_len) != 0)
+    {
         return 0; /* ports do not match */
+    }
 
     /* check the path */
     pathmatchlen = url_match_prefix(
@@ -565,7 +636,9 @@ static int match_urls(const struct url_info *url,
         url_prefix->url + url_prefix->path_off,
         url_prefix->url_len - url_prefix->path_off);
     if (!pathmatchlen)
+    {
         return 0; /* paths do not match */
+    }
 
     if (match)
     {
@@ -581,11 +654,17 @@ static int cmp_matches(const struct urlmatch_item *a,
                        const struct urlmatch_item *b)
 {
     if (a->hostmatch_len != b->hostmatch_len)
+    {
         return a->hostmatch_len < b->hostmatch_len ? -1 : 1;
+    }
     if (a->pathmatch_len != b->pathmatch_len)
+    {
         return a->pathmatch_len < b->pathmatch_len ? -1 : 1;
+    }
     if (a->user_matched != b->user_matched)
+    {
         return b->user_matched ? -1 : 1;
+    }
     return 0;
 }
 
@@ -596,7 +675,8 @@ int urlmatch_config_entry(const char *var, const char *value,
     struct urlmatch_config  *collect = cb;
     struct urlmatch_item     matched = {0};
     struct url_info         *url     = &collect->url;
-    const char              *key, *dot;
+    const char              *key;
+    const char              *dot;
     struct strbuf            synthkey = STRBUF_INIT;
     int                      retval;
     int (*select_fn)(const struct urlmatch_item *a, const struct urlmatch_item *b) =
@@ -605,33 +685,46 @@ int urlmatch_config_entry(const char *var, const char *value,
     if (!skip_prefix(var, collect->section, &key) || *(key++) != '.')
     {
         if (collect->cascade_fn)
+        {
             return collect->cascade_fn(var, value, ctx, cb);
+        }
         return 0; /* not interested */
     }
     dot = strrchr(key, '.');
     if (dot)
     {
-        char           *config_url, *norm_url;
+        char           *config_url;
+        char           *norm_url;
         struct url_info norm_info;
 
         config_url = xmemdupz(key, dot - key);
         norm_url   = url_normalize_1(config_url, &norm_info, 1);
         if (norm_url)
+        {
             retval = match_urls(url, &norm_info, &matched);
+        }
         else if (collect->fallback_match_fn)
+        {
             retval = collect->fallback_match_fn(config_url,
                                                 collect->cb);
+        }
         else
+        {
             retval = 0;
+        }
         free(config_url);
         free(norm_url);
         if (!retval)
+        {
             return 0;
+        }
         key = dot + 1;
     }
 
-    if (collect->key && strcmp(key, collect->key))
+    if (collect->key && strcmp(key, collect->key) != 0)
+    {
         return 0;
+    }
 
     item = string_list_insert(&collect->vars, key);
     if (!item->util)
@@ -641,11 +734,13 @@ int urlmatch_config_entry(const char *var, const char *value,
     else
     {
         if (select_fn(&matched, item->util) < 0)
+        {
             /*
              * Our match is worse than the old one,
              * we cannot use it.
              */
             return 0;
+        }
         /* Otherwise, replace it with this one. */
     }
 

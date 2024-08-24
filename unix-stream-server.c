@@ -43,13 +43,17 @@ int unix_ss_create(const char                           *path,
     *new_server_socket = NULL;
 
     if (timeout_ms < 0)
+    {
         timeout_ms = DEFAULT_LOCK_TIMEOUT;
+    }
 
     /*
      * Create a lock at "<path>.lock" if we can.
      */
     if (hold_lock_file_for_update_timeout(&lock, path, 0, timeout_ms) < 0)
+    {
         return -1;
+    }
 
     /*
      * If another server is listening on "<path>" give up.  We do not
@@ -94,12 +98,16 @@ int unix_ss_create(const char                           *path,
 void unix_ss_free(struct unix_ss_socket *server_socket)
 {
     if (!server_socket)
+    {
         return;
+    }
 
     if (server_socket->fd_socket >= 0)
     {
         if (!unix_ss_was_stolen(server_socket))
+        {
             unlink(server_socket->path_socket);
+        }
         close(server_socket->fd_socket);
     }
 
@@ -112,18 +120,28 @@ int unix_ss_was_stolen(struct unix_ss_socket *server_socket)
     struct stat st_now;
 
     if (!server_socket)
+    {
         return 0;
+    }
 
     if (lstat(server_socket->path_socket, &st_now) == -1)
+    {
         return 1;
+    }
 
     if (st_now.st_ino != server_socket->st_socket.st_ino)
+    {
         return 1;
+    }
     if (st_now.st_dev != server_socket->st_socket.st_dev)
+    {
         return 1;
+    }
 
     if (!S_ISSOCK(st_now.st_mode))
+    {
         return 1;
+    }
 
     return 0;
 }

@@ -40,15 +40,15 @@ static struct tr2_tgt *tr2_tgt_builtins[] =
 
 /* clang-format off */
 #define for_each_builtin(j, tgt_j)			\
-	for (j = 0, tgt_j = tr2_tgt_builtins[j];	\
+	for ((j) = 0, (tgt_j) = tr2_tgt_builtins[j];	\
 	     tgt_j;					\
-	     j++, tgt_j = tr2_tgt_builtins[j])
+	     (j)++, (tgt_j) = tr2_tgt_builtins[j])
 /* clang-format on */
 
 /* clang-format off */
 #define for_each_wanted_builtin(j, tgt_j)            \
 	for_each_builtin(j, tgt_j)                   \
-		if (tr2_dst_trace_want(tgt_j->pdst))
+		if (tr2_dst_trace_want((tgt_j)->pdst))
 /* clang-format on */
 
 /*
@@ -66,7 +66,9 @@ static int tr2_tgt_want_builtins(void)
     int             sum = 0;
 
     for_each_builtin(j, tgt_j) if (tgt_j->pfn_init())
+    {
         sum++;
+    }
 
     return sum;
 }
@@ -98,7 +100,9 @@ static void tr2_tgt_emit_a_timer(const struct tr2_timer_metadata *meta,
     int             j;
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_timer)
+    {
         tgt_j->pfn_timer(meta, timer, is_final_data);
+    }
 }
 
 /*
@@ -113,7 +117,9 @@ static void tr2_tgt_emit_a_counter(const struct tr2_counter_metadata *meta,
     int             j;
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_counter)
+    {
         tgt_j->pfn_counter(meta, counter, is_final_data);
+    }
 }
 
 static int tr2main_exit_code;
@@ -170,8 +176,10 @@ static void tr2main_atexit_handler(void)
     tr2tls_unlock();
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_atexit)
+    {
         tgt_j->pfn_atexit(us_elapsed_absolute,
                           tr2main_exit_code);
+    }
 
     tr2_tgt_disable_builtins();
 
@@ -196,7 +204,9 @@ static void tr2main_signal_handler(int signo)
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_signal)
+    {
         tgt_j->pfn_signal(us_elapsed_absolute, signo);
+    }
 
     sigchain_pop(signo);
     raise(signo);
@@ -213,15 +223,21 @@ void trace2_initialize_fl(const char *file, int line)
     int             j;
 
     if (trace2_enabled)
+    {
         return;
+    }
 
     tr2_sysenv_load();
 
     if (!tr2_tgt_want_builtins())
+    {
         return;
+    }
     trace2_enabled = 1;
     if (!git_env_bool("GIT_TRACE2_REDACT", 1))
+    {
         trace2_redact = 0;
+    }
 
     tr2_sid_get();
 
@@ -233,7 +249,9 @@ void trace2_initialize_fl(const char *file, int line)
      * Emit 'version' message on each active builtin target.
      */
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_version_fl)
+    {
         tgt_j->pfn_version_fl(file, line);
+    }
 }
 
 int trace2_is_enabled(void)
@@ -250,19 +268,26 @@ int trace2_is_enabled(void)
  */
 static const char *redact_arg(const char *arg)
 {
-    const char *p, *colon;
+    const char *p;
+    const char *colon;
     size_t      at;
 
     if (!trace2_redact || (!skip_prefix(arg, "https://", &p) && !skip_prefix(arg, "http://", &p)))
+    {
         return arg;
+    }
 
     at = strcspn(p, "@/");
     if (p[at] != '@')
+    {
         return arg;
+    }
 
     colon = memchr(p, ':', at);
     if (!colon)
+    {
         return arg;
+    }
 
     return xstrfmt("%.*s:<REDACTED>%s", (int)(colon - arg), arg, p + at);
 }
@@ -276,28 +301,41 @@ static const char *redact_arg(const char *arg)
  */
 static const char **redact_argv(const char **argv)
 {
-    int          i, j;
+    int          i;
+    int          j;
     const char  *redacted = NULL;
     const char **ret;
 
     if (!trace2_redact)
+    {
         return argv;
+    }
 
     for (i = 0; argv[i]; i++)
+    {
         if ((redacted = redact_arg(argv[i])) != argv[i])
+        {
             break;
+        }
+    }
 
     if (!argv[i])
+    {
         return argv;
+    }
 
     for (j = 0; argv[j]; j++)
+    {
         ; /* keep counting */
+    }
 
     ALLOC_ARRAY(ret, j + 1);
     ret[j] = NULL;
 
     for (j = 0; j < i; j++)
+    {
         ret[j] = argv[j];
+    }
     ret[i] = redacted;
     for (++i; argv[i]; i++)
     {
@@ -315,8 +353,12 @@ static void free_redacted_argv(const char **redacted, const char **argv)
     if (redacted != argv)
     {
         for (i = 0; argv[i]; i++)
+        {
             if (redacted[i] != argv[i])
+            {
                 free((void *)redacted[i]);
+            }
+        }
         free((void *)redacted);
     }
 }
@@ -330,7 +372,9 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
     const char    **redacted;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
@@ -338,8 +382,10 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
     redacted = redact_argv(argv);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_start_fl)
+    {
         tgt_j->pfn_start_fl(file, line, us_elapsed_absolute,
                             redacted);
+    }
 
     free_redacted_argv(redacted, argv);
 }
@@ -352,7 +398,9 @@ void trace2_cmd_exit_fl(const char *file, int line, int code)
     uint64_t        us_elapsed_absolute;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     trace2_collect_process_info(TRACE2_PROCESS_INFO_EXIT);
 
@@ -362,8 +410,10 @@ void trace2_cmd_exit_fl(const char *file, int line, int code)
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_exit_fl)
+    {
         tgt_j->pfn_exit_fl(file, line, us_elapsed_absolute,
                            code);
+    }
 }
 
 void trace2_cmd_error_va_fl(const char *file, int line, const char *fmt,
@@ -373,14 +423,18 @@ void trace2_cmd_error_va_fl(const char *file, int line, const char *fmt,
     int             j;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     /*
      * We expect each target function to treat 'ap' as constant
      * and use va_copy (because an 'ap' can only be walked once).
      */
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_error_va_fl)
+    {
         tgt_j->pfn_error_va_fl(file, line, fmt, ap);
+    }
 }
 
 void trace2_cmd_path_fl(const char *file, int line, const char *pathname)
@@ -389,10 +443,14 @@ void trace2_cmd_path_fl(const char *file, int line, const char *pathname)
     int             j;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_command_path_fl)
+    {
         tgt_j->pfn_command_path_fl(file, line, pathname);
+    }
 }
 
 void trace2_cmd_ancestry_fl(const char *file, int line, const char **parent_names)
@@ -401,10 +459,14 @@ void trace2_cmd_ancestry_fl(const char *file, int line, const char **parent_name
     int             j;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_command_ancestry_fl)
+    {
         tgt_j->pfn_command_ancestry_fl(file, line, parent_names);
+    }
 }
 
 void trace2_cmd_name_fl(const char *file, int line, const char *name)
@@ -414,13 +476,17 @@ void trace2_cmd_name_fl(const char *file, int line, const char *name)
     int             j;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     tr2_cmd_name_append_hierarchy(name);
     hierarchy = tr2_cmd_name_get_hierarchy();
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_command_name_fl)
+    {
         tgt_j->pfn_command_name_fl(file, line, name, hierarchy);
+    }
 
     trace2_cmd_list_config();
     trace2_cmd_list_env_vars();
@@ -432,10 +498,14 @@ void trace2_cmd_mode_fl(const char *file, int line, const char *mode)
     int             j;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_command_mode_fl)
+    {
         tgt_j->pfn_command_mode_fl(file, line, mode);
+    }
 }
 
 void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
@@ -445,10 +515,14 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
     int             j;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_alias_fl)
+    {
         tgt_j->pfn_alias_fl(file, line, alias, argv);
+    }
 }
 
 void trace2_cmd_list_config_fl(const char *file, int line)
@@ -456,10 +530,14 @@ void trace2_cmd_list_config_fl(const char *file, int line)
     static int emitted = 0;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (emitted)
+    {
         return;
+    }
     emitted = 1;
 
     tr2_cfg_list_config_fl(file, line);
@@ -470,10 +548,14 @@ void trace2_cmd_list_env_vars_fl(const char *file, int line)
     static int emitted = 0;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (emitted)
+    {
         return;
+    }
     emitted = 1;
 
     tr2_list_env_vars_fl(file, line);
@@ -483,7 +565,9 @@ void trace2_cmd_set_config_fl(const char *file, int line, const char *key,
                               const char *value)
 {
     if (!trace2_enabled)
+    {
         return;
+    }
 
     tr2_cfg_set_fl(file, line, key, value);
 }
@@ -498,7 +582,9 @@ void trace2_child_start_fl(const char *file, int line,
     const char    **orig_argv = cmd->args.v;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
@@ -516,8 +602,10 @@ void trace2_child_start_fl(const char *file, int line,
     cmd->args.v = redact_argv(orig_argv);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_child_start_fl)
+    {
         tgt_j->pfn_child_start_fl(file, line,
                                   us_elapsed_absolute, cmd);
+    }
 
     if (cmd->args.v != orig_argv)
     {
@@ -536,22 +624,30 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
     uint64_t        us_elapsed_child;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
     if (cmd->trace2_child_us_start)
+    {
         us_elapsed_child = us_now - cmd->trace2_child_us_start;
+    }
     else
+    {
         us_elapsed_child = 0;
+    }
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_child_exit_fl)
+    {
         tgt_j->pfn_child_exit_fl(file, line,
                                  us_elapsed_absolute,
                                  cmd->trace2_child_id, cmd->pid,
                                  child_exit_code,
                                  us_elapsed_child);
+    }
 }
 
 void trace2_child_ready_fl(const char *file, int line,
@@ -565,23 +661,31 @@ void trace2_child_ready_fl(const char *file, int line,
     uint64_t        us_elapsed_child;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
     if (cmd->trace2_child_us_start)
+    {
         us_elapsed_child = us_now - cmd->trace2_child_us_start;
+    }
     else
+    {
         us_elapsed_child = 0;
+    }
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_child_ready_fl)
+    {
         tgt_j->pfn_child_ready_fl(file, line,
                                   us_elapsed_absolute,
                                   cmd->trace2_child_id,
                                   cmd->pid,
                                   ready,
                                   us_elapsed_child);
+    }
 }
 
 int trace2_exec_fl(const char *file, int line, const char *exe,
@@ -595,7 +699,9 @@ int trace2_exec_fl(const char *file, int line, const char *exe,
     const char    **redacted;
 
     if (!trace2_enabled)
+    {
         return -1;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
@@ -605,8 +711,10 @@ int trace2_exec_fl(const char *file, int line, const char *exe,
     redacted = redact_argv(argv);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_exec_fl)
+    {
         tgt_j->pfn_exec_fl(file, line, us_elapsed_absolute,
                            exec_id, exe, redacted);
+    }
 
     free_redacted_argv(redacted, argv);
 
@@ -621,14 +729,18 @@ void trace2_exec_result_fl(const char *file, int line, int exec_id, int code)
     uint64_t        us_elapsed_absolute;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_exec_result_fl)
+    {
         tgt_j->pfn_exec_result_fl(
             file, line, us_elapsed_absolute, exec_id, code);
+    }
 }
 
 void trace2_thread_start_fl(const char *file, int line, const char *thread_base_name)
@@ -639,7 +751,9 @@ void trace2_thread_start_fl(const char *file, int line, const char *thread_base_
     uint64_t        us_elapsed_absolute;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (tr2tls_is_main_thread())
     {
@@ -664,8 +778,10 @@ void trace2_thread_start_fl(const char *file, int line, const char *thread_base_
     tr2tls_create_self(thread_base_name, us_now);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_thread_start_fl)
+    {
         tgt_j->pfn_thread_start_fl(file, line,
                                    us_elapsed_absolute);
+    }
 }
 
 void trace2_thread_exit_fl(const char *file, int line)
@@ -677,7 +793,9 @@ void trace2_thread_exit_fl(const char *file, int line)
     uint64_t        us_elapsed_thread;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (tr2tls_is_main_thread())
     {
@@ -727,9 +845,11 @@ void trace2_thread_exit_fl(const char *file, int line)
     tr2tls_unlock();
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_thread_exit_fl)
+    {
         tgt_j->pfn_thread_exit_fl(file, line,
                                   us_elapsed_absolute,
                                   us_elapsed_thread);
+    }
 
     tr2tls_unset_self();
 }
@@ -742,15 +862,21 @@ void trace2_def_param_fl(const char *file, int line, const char *param,
     const char     *redacted;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     redacted = redact_arg(value);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_param_fl)
+    {
         tgt_j->pfn_param_fl(file, line, param, redacted, kvi);
+    }
 
     if (redacted != value)
+    {
         free((void *)redacted);
+    }
 }
 
 void trace2_def_repo_fl(const char *file, int line, struct repository *repo)
@@ -759,15 +885,21 @@ void trace2_def_repo_fl(const char *file, int line, struct repository *repo)
     int             j;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (repo->trace2_repo_id)
+    {
         return;
+    }
 
     repo->trace2_repo_id = tr2tls_locked_increment(&tr2_next_repo_id);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_repo_fl)
+    {
         tgt_j->pfn_repo_fl(file, line, repo);
+    }
 }
 
 void trace2_region_enter_printf_va_fl(const char *file, int line,
@@ -781,7 +913,9 @@ void trace2_region_enter_printf_va_fl(const char *file, int line,
     uint64_t        us_elapsed_absolute;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
@@ -794,9 +928,11 @@ void trace2_region_enter_printf_va_fl(const char *file, int line,
      * and use va_copy.
      */
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_region_enter_printf_va_fl)
+    {
         tgt_j->pfn_region_enter_printf_va_fl(
             file, line, us_elapsed_absolute, category,
             label, repo, fmt, ap);
+    }
 
     tr2tls_push_self(us_now);
 }
@@ -836,7 +972,9 @@ void trace2_region_leave_printf_va_fl(const char *file, int line,
     uint64_t        us_elapsed_region;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
@@ -856,10 +994,12 @@ void trace2_region_leave_printf_va_fl(const char *file, int line,
      * and use va_copy.
      */
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_region_leave_printf_va_fl)
+    {
         tgt_j->pfn_region_leave_printf_va_fl(
             file, line, us_elapsed_absolute,
             us_elapsed_region, category, label, repo, fmt,
             ap);
+    }
 }
 
 void trace2_region_leave_fl(const char *file, int line, const char *category,
@@ -896,16 +1036,20 @@ void trace2_data_string_fl(const char *file, int line, const char *category,
     uint64_t        us_elapsed_region;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
     us_elapsed_region   = tr2tls_region_elasped_self(us_now);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_data_fl)
+    {
         tgt_j->pfn_data_fl(file, line, us_elapsed_absolute,
                            us_elapsed_region, category, repo,
                            key, value);
+    }
 }
 
 void trace2_data_intmax_fl(const char *file, int line, const char *category,
@@ -915,7 +1059,9 @@ void trace2_data_intmax_fl(const char *file, int line, const char *category,
     struct strbuf buf_string = STRBUF_INIT;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     strbuf_addf(&buf_string, "%" PRIdMAX, value);
     trace2_data_string_fl(file, line, category, repo, key, buf_string.buf);
@@ -933,16 +1079,20 @@ void trace2_data_json_fl(const char *file, int line, const char *category,
     uint64_t        us_elapsed_region;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
     us_elapsed_region   = tr2tls_region_elasped_self(us_now);
 
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_data_json_fl)
+    {
         tgt_j->pfn_data_json_fl(file, line, us_elapsed_absolute,
                                 us_elapsed_region, category,
                                 repo, key, value);
+    }
 }
 
 void trace2_printf_va_fl(const char *file, int line, const char *fmt,
@@ -954,7 +1104,9 @@ void trace2_printf_va_fl(const char *file, int line, const char *fmt,
     uint64_t        us_elapsed_absolute;
 
     if (!trace2_enabled)
+    {
         return;
+    }
 
     us_now              = getnanotime() / 1000;
     us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
@@ -964,8 +1116,10 @@ void trace2_printf_va_fl(const char *file, int line, const char *fmt,
      * and use va_copy.
      */
     for_each_wanted_builtin(j, tgt_j) if (tgt_j->pfn_printf_va_fl)
+    {
         tgt_j->pfn_printf_va_fl(file, line, us_elapsed_absolute,
                                 fmt, ap);
+    }
 }
 
 void trace2_printf_fl(const char *file, int line, const char *fmt, ...)
@@ -980,10 +1134,14 @@ void trace2_printf_fl(const char *file, int line, const char *fmt, ...)
 void trace2_timer_start(enum trace2_timer_id tid)
 {
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (tid < 0 || tid >= TRACE2_NUMBER_OF_TIMERS)
+    {
         BUG("trace2_timer_start: invalid timer id: %d", tid);
+    }
 
     tr2_start_timer(tid);
 }
@@ -991,10 +1149,14 @@ void trace2_timer_start(enum trace2_timer_id tid)
 void trace2_timer_stop(enum trace2_timer_id tid)
 {
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (tid < 0 || tid >= TRACE2_NUMBER_OF_TIMERS)
+    {
         BUG("trace2_timer_stop: invalid timer id: %d", tid);
+    }
 
     tr2_stop_timer(tid);
 }
@@ -1002,10 +1164,14 @@ void trace2_timer_stop(enum trace2_timer_id tid)
 void trace2_counter_add(enum trace2_counter_id cid, uint64_t value)
 {
     if (!trace2_enabled)
+    {
         return;
+    }
 
     if (cid < 0 || cid >= TRACE2_NUMBER_OF_COUNTERS)
+    {
         BUG("trace2_counter_add: invalid counter id: %d", cid);
+    }
 
     tr2_counter_increment(cid, value);
 }

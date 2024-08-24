@@ -58,7 +58,9 @@ int online_cpus(void)
 
     #ifdef _SC_NPROCESSORS_ONLN
     if ((ncpus = (long)sysconf(_SC_NPROCESSORS_ONLN)) > 0)
+    {
         return (int)ncpus;
+    }
     #endif
 
     return 1;
@@ -76,7 +78,9 @@ int init_recursive_mutex(pthread_mutex_t *m)
     {
         ret = pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE);
         if (!ret)
+        {
             ret = pthread_mutex_init(m, &a);
+        }
         pthread_mutexattr_destroy(&a);
     }
     return ret;

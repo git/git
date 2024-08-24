@@ -19,13 +19,21 @@ size_t display_mode_esc_sequence_len(const char *s)
 {
     const char *p = s;
     if (*p++ != '\033')
+    {
         return 0;
+    }
     if (*p++ != '[')
+    {
         return 0;
+    }
     while (isdigit(*p) || *p == ';')
+    {
         p++;
+    }
     if (*p++ != 'm')
+    {
         return 0;
+    }
     return p - s;
 }
 
@@ -36,16 +44,24 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
     int mid;
 
     if (ucs < table[0].first || ucs > table[max].last)
+    {
         return 0;
+    }
     while (max >= min)
     {
         mid = min + (max - min) / 2;
         if (ucs > table[mid].last)
+        {
             min = mid + 1;
+        }
         else if (ucs < table[mid].first)
+        {
             max = mid - 1;
+        }
         else
+        {
             return 1;
+        }
     }
 
     return 0;
@@ -92,17 +108,25 @@ static int git_wcwidth(ucs_char_t ch)
 
     /* test for 8-bit control characters */
     if (ch == 0)
+    {
         return 0;
+    }
     if (ch < 32 || (ch >= 0x7f && ch < 0xa0))
+    {
         return -1;
+    }
 
     /* binary search in table of non-spacing characters */
     if (bisearch(ch, zero_width, ARRAY_SIZE(zero_width) - 1))
+    {
         return 0;
+    }
 
     /* binary search in table of double width characters */
     if (bisearch(ch, double_width, ARRAY_SIZE(double_width) - 1))
+    {
         return 2;
+    }
 
     return 1;
 }
@@ -123,7 +147,8 @@ static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
 {
     unsigned char *s = (unsigned char *)*start;
     ucs_char_t     ch;
-    size_t         remainder, incr;
+    size_t         remainder;
+    size_t         incr;
 
     /*
      * A caller that assumes NUL terminated text can choose
@@ -146,7 +171,9 @@ static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
     {
         /* 110XXXXx 10xxxxxx */
         if (remainder < 2 || (s[1] & 0xc0) != 0x80 || (s[0] & 0xfe) == 0xc0)
+        {
             goto invalid;
+        }
         ch   = ((s[0] & 0x1f) << 6) | (s[1] & 0x3f);
         incr = 2;
     }
@@ -160,7 +187,9 @@ static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
             (s[0] == 0xed && (s[1] & 0xe0) == 0xa0) ||
             /* U+FFFE or U+FFFF? */
             (s[0] == 0xef && s[1] == 0xbf && (s[2] & 0xfe) == 0xbe))
+        {
             goto invalid;
+        }
         ch   = ((s[0] & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
         incr = 3;
     }
@@ -172,7 +201,9 @@ static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
             (s[0] == 0xf0 && (s[1] & 0xf0) == 0x80) ||
             /* > U+10FFFF? */
             (s[0] == 0xf4 && s[1] > 0x8f) || s[0] > 0xf4)
+        {
             goto invalid;
+        }
         ch   = ((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
         incr = 4;
     }
@@ -185,7 +216,9 @@ static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
 
     *start += incr;
     if (remainder_p)
+    {
         *remainder_p = remainder - incr;
+    }
     return ch;
 }
 
@@ -200,7 +233,9 @@ int utf8_width(const char **start, size_t *remainder_p)
 {
     ucs_char_t ch = pick_one_utf8_char(start, remainder_p);
     if (!*start)
+    {
         return 0;
+    }
     return git_wcwidth(ch);
 }
 
@@ -220,11 +255,15 @@ int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
         size_t skip;
 
         while (skip_ansi && (skip = display_mode_esc_sequence_len(string)) != 0)
+        {
             string += skip;
+        }
 
         glyph_width = utf8_width(&string, NULL);
         if (glyph_width > 0)
+        {
             width += glyph_width;
+        }
     }
 
     /*
@@ -250,7 +289,9 @@ int is_utf8(const char *text)
         }
         utf8_width(&text, NULL);
         if (!text)
+        {
             return 0;
+        }
     }
     return 1;
 }
@@ -259,12 +300,16 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
                                      int indent, int indent2)
 {
     if (indent < 0)
+    {
         indent = 0;
+    }
     while (*text)
     {
         const char *eol = strchrnul(text, '\n');
         if (*eol == '\n')
+        {
             eol++;
+        }
         strbuf_addchars(buf, ' ', indent);
         strbuf_add(buf, text, eol - text);
         text   = eol;
@@ -281,8 +326,12 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 void strbuf_add_wrapped_text(struct strbuf *buf,
                              const char *text, int indent1, int indent2, int width)
 {
-    int         indent, w, assume_utf8 = 1;
-    const char *bol, *space, *start    = text;
+    int         indent;
+    int         w;
+    int         assume_utf8 = 1;
+    const char *bol;
+    const char *space;
+    const char *start    = text;
     size_t      orig_len = buf->len;
 
     if (width <= 0)
@@ -307,7 +356,9 @@ retry:
         size_t skip;
 
         while ((skip = display_mode_esc_sequence_len(text)))
+        {
             text += skip;
+        }
 
         c = *text;
         if (!c || isspace(c))
@@ -316,17 +367,27 @@ retry:
             {
                 const char *start = bol;
                 if (!c && text == start)
+                {
                     return;
+                }
                 if (space)
+                {
                     start = space;
+                }
                 else
+                {
                     strbuf_addchars(buf, ' ', indent);
+                }
                 strbuf_add(buf, start, text - start);
                 if (!c)
+                {
                     return;
+                }
                 space = text;
                 if (c == '\t')
+                {
                     w |= 0x07;
+                }
                 else if (c == '\n')
                 {
                     space++;
@@ -336,9 +397,13 @@ retry:
                         goto new_line;
                     }
                     else if (!isalnum(*space))
+                    {
                         goto new_line;
+                    }
                     else
+                    {
                         strbuf_addch(buf, ' ');
+                    }
                 }
                 w++;
                 text++;
@@ -383,7 +448,8 @@ void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
 void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
                          const char *subst)
 {
-    const char   *src = sb_src->buf, *end = sb_src->buf + sb_src->len;
+    const char   *src = sb_src->buf;
+    const char   *end = sb_src->buf + sb_src->len;
     struct strbuf dst;
     int           w = 0;
 
@@ -402,19 +468,25 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
         }
 
         if (src >= end)
+        {
             break;
+        }
 
         old         = src;
         glyph_width = utf8_width((const char **)&src, NULL);
-        if (!src) /* broken utf-8, do nothing */
+        if (!src)
+        { /* broken utf-8, do nothing */
             goto out;
+        }
 
         /*
          * In case we see a control character we copy it into the
          * buffer, but don't add it to the width.
          */
         if (glyph_width < 0)
+        {
             glyph_width = 0;
+        }
 
         if (glyph_width && w >= pos && w < pos + width)
         {
@@ -456,9 +528,13 @@ static int same_utf_encoding(const char *src, const char *dst)
 int is_encoding_utf8(const char *name)
 {
     if (!name)
+    {
         return 1;
+    }
     if (same_utf_encoding("utf-8", name))
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -467,11 +543,17 @@ int same_encoding(const char *src, const char *dst)
     static const char utf8[] = "UTF-8";
 
     if (!src)
+    {
         src = utf8;
+    }
     if (!dst)
+    {
         dst = utf8;
+    }
     if (same_utf_encoding(src, dst))
+    {
         return 1;
+    }
     return !strcasecmp(src, dst);
 }
 
@@ -490,8 +572,10 @@ int utf8_fprintf(FILE *stream, const char *format, ...)
     va_end(arg);
 
     columns = fputs(buf.buf, stream);
-    if (0 <= columns) /* keep the error from the I/O */
+    if (0 <= columns)
+    { /* keep the error from the I/O */
         columns = utf8_strwidth(buf.buf);
+    }
     strbuf_release(&buf);
     return columns;
 }
@@ -509,8 +593,10 @@ typedef char *iconv_ibp;
 char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
                             size_t bom_len, size_t *outsz_p)
 {
-    size_t    outsz, outalloc;
-    char     *out, *outpos;
+    size_t    outsz;
+    size_t    outalloc;
+    char     *out;
+    char     *outpos;
     iconv_ibp cp;
 
     outsz    = insz;
@@ -546,7 +632,9 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
         {
             *outpos = '\0';
             if (outsz_p)
+            {
                 *outsz_p = outpos - out;
+            }
             break;
         }
     }
@@ -563,14 +651,18 @@ static const char *fallback_encoding(const char *name)
      * one.
      */
     if (is_encoding_utf8(name))
+    {
         return "UTF-8";
+    }
 
     /*
      * Even though latin-1 is still seen in e-mail
      * headers, some platforms only install ISO-8859-1.
      */
     if (!strcasecmp(name, "latin-1"))
+    {
         return "ISO-8859-1";
+    }
 
     return name;
 }
@@ -585,11 +677,15 @@ char *reencode_string_len(const char *in, size_t insz,
     size_t      bom_len = 0;
 
     if (!in_encoding)
+    {
         return NULL;
+    }
 
     /* UTF-16LE-BOM is the same as UTF-16 for reading */
     if (same_utf_encoding("UTF-16LE-BOM", in_encoding))
+    {
         in_encoding = "UTF-16";
+    }
 
     /*
      * For writing, UTF-16 iconv typically creates "UTF-16BE-BOM"
@@ -634,12 +730,16 @@ char *reencode_string_len(const char *in, size_t insz,
 
         conv = iconv_open(out_encoding, in_encoding);
         if (conv == (iconv_t)-1)
+        {
             return NULL;
+        }
     }
     out = reencode_string_iconv(in, insz, conv, bom_len, outsz);
     iconv_close(conv);
     if (out && bom_str && bom_len)
+    {
         memcpy(out, bom_str, bom_len);
+    }
     return out;
 }
 #endif
@@ -680,7 +780,9 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding)
     size_t      r = (remainder_p ? *remainder_p : SIZE_MAX);
 
     if (r < 1)
+    {
         return 0;
+    }
 
     if (is_encoding_utf8(encoding))
     {
@@ -700,7 +802,9 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding)
 
     *text += chrlen;
     if (remainder_p)
+    {
         *remainder_p -= chrlen;
+    }
 
     return chrlen;
 }
@@ -722,7 +826,9 @@ static ucs_char_t next_hfs_char(const char **in)
          * to realize it cannot be .git
          */
         if (!*in)
+        {
             return 0;
+        }
 
         /* these code points are ignored completely */
         switch (out)
@@ -757,7 +863,9 @@ static int is_hfs_dot_generic(const char *path,
 
     c = next_hfs_char(&path);
     if (c != '.')
+    {
         return 0;
+    }
 
     /*
      * there's a great deal of other case-folding that occurs
@@ -773,14 +881,20 @@ static int is_hfs_dot_generic(const char *path,
          * make the results of tolower() sane.
          */
         if (c > 127)
+        {
             return 0;
+        }
         if (tolower(c) != *needle)
+        {
             return 0;
+        }
     }
 
     c = next_hfs_char(&path);
     if (c && !is_dir_sep(c))
+    {
         return 0;
+    }
 
     return 1;
 }
@@ -823,8 +937,10 @@ const char utf8_bom[] = "\357\273\277";
 
 int skip_utf8_bom(char **text, size_t len)
 {
-    if (len < strlen(utf8_bom) || memcmp(*text, utf8_bom, strlen(utf8_bom)))
+    if (len < strlen(utf8_bom) || memcmp(*text, utf8_bom, strlen(utf8_bom)) != 0)
+    {
         return 0;
+    }
     *text += strlen(utf8_bom);
     return 1;
 }
@@ -843,12 +959,16 @@ void strbuf_utf8_align(struct strbuf *buf, align_type position, unsigned int wid
     }
 
     if (position == ALIGN_LEFT)
+    {
         strbuf_addf(buf, "%-*s", width + utf8_compensation, s);
+    }
     else if (position == ALIGN_MIDDLE)
     {
         int left = (width - display_len) / 2;
         strbuf_addf(buf, "%*s%-*s", left, "", width - left + utf8_compensation, s);
     }
     else if (position == ALIGN_RIGHT)
+    {
         strbuf_addf(buf, "%*s", width + utf8_compensation, s);
+    }
 }

@@ -10,10 +10,12 @@ void strvec_init(struct strvec *array)
     memcpy(array, &blank, sizeof(*array));
 }
 
-void strvec_push_nodup(struct strvec *array, char *value)
+void strvec_push_nodup(struct strvec *array, const char *value)
 {
     if (array->v == empty_strvec)
+    {
         array->v = NULL;
+    }
 
     ALLOC_GROW(array->v, array->nr + 2, array->alloc);
     array->v[array->nr++] = value;
@@ -46,21 +48,27 @@ void strvec_pushl(struct strvec *array, ...)
 
     va_start(ap, array);
     while ((arg = va_arg(ap, const char *)))
+    {
         strvec_push(array, arg);
+    }
     va_end(ap);
 }
 
 void strvec_pushv(struct strvec *array, const char **items)
 {
     for (; *items; items++)
+    {
         strvec_push(array, *items);
+    }
 }
 
 const char *strvec_replace(struct strvec *array, size_t idx, const char *replacement)
 {
     char *to_free;
     if (idx >= array->nr)
+    {
         BUG("index outside of array boundary");
+    }
     to_free       = (char *)array->v[idx];
     array->v[idx] = xstrdup(replacement);
     free(to_free);
@@ -70,7 +78,9 @@ const char *strvec_replace(struct strvec *array, size_t idx, const char *replace
 void strvec_remove(struct strvec *array, size_t idx)
 {
     if (idx >= array->nr)
+    {
         BUG("index outside of array boundary");
+    }
     free((char *)array->v[idx]);
     memmove(array->v + idx, array->v + idx + 1, (array->nr - idx) * sizeof(char *));
     array->nr--;
@@ -79,7 +89,9 @@ void strvec_remove(struct strvec *array, size_t idx)
 void strvec_pop(struct strvec *array)
 {
     if (!array->nr)
+    {
         return;
+    }
     free((char *)array->v[array->nr - 1]);
     array->v[array->nr - 1] = NULL;
     array->nr--;
@@ -88,20 +100,28 @@ void strvec_pop(struct strvec *array)
 void strvec_split(struct strvec *array, const char *to_split)
 {
     while (isspace(*to_split))
+    {
         to_split++;
+    }
     for (;;)
     {
         const char *p = to_split;
 
         if (!*p)
+        {
             break;
+        }
 
         while (*p && !isspace(*p))
+        {
             p++;
+        }
         strvec_push_nodup(array, xstrndup(to_split, p - to_split));
 
         while (isspace(*p))
+        {
             p++;
+        }
         to_split = p;
     }
 }
@@ -112,7 +132,9 @@ void strvec_clear(struct strvec *array)
     {
         int i;
         for (i = 0; i < array->nr; i++)
+        {
             free((char *)array->v[i]);
+        }
         free(array->v);
     }
     strvec_init(array);
@@ -121,11 +143,10 @@ void strvec_clear(struct strvec *array)
 const char **strvec_detach(struct strvec *array)
 {
     if (array->v == empty_strvec)
-        return xcalloc(1, sizeof(const char *));
-    else
     {
-        const char **ret = array->v;
-        strvec_init(array);
-        return ret;
+        return xcalloc(1, sizeof(const char *));
     }
+    const char **ret = array->v;
+    strvec_init(array);
+    return ret;
 }

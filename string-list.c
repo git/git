@@ -18,17 +18,22 @@ void string_list_init_dup(struct string_list *list)
 static int get_entry_index(const struct string_list *list, const char *string,
                            int *exact_match)
 {
-    int                left = -1, right = list->nr;
-    compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
+    int                left  = -1;
+    int                right = list->nr;
+    compare_strings_fn cmp   = list->cmp ? list->cmp : strcmp;
 
     while (left + 1 < right)
     {
         int middle  = left + (right - left) / 2;
         int compare = cmp(string, list->items[middle].string);
         if (compare < 0)
+        {
             right = middle;
+        }
         else if (compare > 0)
+        {
             left = middle;
+        }
         else
         {
             *exact_match = 1;
@@ -47,12 +52,16 @@ static int add_entry(int insert_at, struct string_list *list, const char *string
     int index       = insert_at != -1 ? insert_at : get_entry_index(list, string, &exact_match);
 
     if (exact_match)
+    {
         return -1 - index;
+    }
 
     ALLOC_GROW(list->items, list->nr + 1, list->alloc);
     if (index < list->nr)
+    {
         MOVE_ARRAY(list->items + index + 1, list->items + index,
                    list->nr - index);
+    }
     list->items[index].string = list->strdup_strings ? xstrdup(string) : (char *)string;
     list->items[index].util   = NULL;
     list->nr++;
@@ -65,7 +74,9 @@ struct string_list_item *string_list_insert(struct string_list *list, const char
     int index = add_entry(-1, list, string);
 
     if (index < 0)
+    {
         index = -1 - index;
+    }
 
     return list->items + index;
 }
@@ -79,9 +90,13 @@ void string_list_remove(struct string_list *list, const char *string,
     if (exact_match)
     {
         if (list->strdup_strings)
+        {
             free(list->items[i].string);
+        }
         if (free_util)
+        {
             free(list->items[i].util);
+        }
 
         list->nr--;
         MOVE_ARRAY(list->items + i, list->items + i + 1, list->nr - i);
@@ -101,15 +116,20 @@ int string_list_find_insert_index(const struct string_list *list, const char *st
     int exact_match;
     int index = get_entry_index(list, string, &exact_match);
     if (exact_match)
+    {
         index = -1 - (negative_existing_index ? index : 0);
+    }
     return index;
 }
 
 struct string_list_item *string_list_lookup(struct string_list *list, const char *string)
 {
-    int exact_match, i = get_entry_index(list, string, &exact_match);
+    int exact_match;
+    int i = get_entry_index(list, string, &exact_match);
     if (!exact_match)
+    {
         return NULL;
+    }
     return list->items + i;
 }
 
@@ -117,19 +137,26 @@ void string_list_remove_duplicates(struct string_list *list, int free_util)
 {
     if (list->nr > 1)
     {
-        int                src, dst;
+        int                src;
+        int                dst;
         compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
         for (src = dst = 1; src < list->nr; src++)
         {
             if (!cmp(list->items[dst - 1].string, list->items[src].string))
             {
                 if (list->strdup_strings)
+                {
                     free(list->items[src].string);
+                }
                 if (free_util)
+                {
                     free(list->items[src].util);
+                }
             }
             else
+            {
                 list->items[dst++] = list->items[src];
+            }
         }
         list->nr = dst;
     }
@@ -138,17 +165,23 @@ void string_list_remove_duplicates(struct string_list *list, int free_util)
 int for_each_string_list(struct string_list     *list,
                          string_list_each_func_t fn, void *cb_data)
 {
-    int i, ret = 0;
+    int i;
+    int ret = 0;
     for (i = 0; i < list->nr; i++)
+    {
         if ((ret = fn(&list->items[i], cb_data)))
+        {
             break;
+        }
+    }
     return ret;
 }
 
 void filter_string_list(struct string_list *list, int free_util,
                         string_list_each_func_t want, void *cb_data)
 {
-    int src, dst = 0;
+    int src;
+    int dst = 0;
     for (src = 0; src < list->nr; src++)
     {
         if (want(&list->items[src], cb_data))
@@ -158,9 +191,13 @@ void filter_string_list(struct string_list *list, int free_util,
         else
         {
             if (list->strdup_strings)
+            {
                 free(list->items[src].string);
+            }
             if (free_util)
+            {
                 free(list->items[src].util);
+            }
         }
     }
     list->nr = dst;
@@ -184,12 +221,16 @@ void string_list_clear(struct string_list *list, int free_util)
         if (list->strdup_strings)
         {
             for (i = 0; i < list->nr; i++)
+            {
                 free(list->items[i].string);
+            }
         }
         if (free_util)
         {
             for (i = 0; i < list->nr; i++)
+            {
                 free(list->items[i].util);
+            }
         }
         free(list->items);
     }
@@ -205,12 +246,16 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
         if (clearfunc)
         {
             for (i = 0; i < list->nr; i++)
+            {
                 clearfunc(list->items[i].util, list->items[i].string);
+            }
         }
         if (list->strdup_strings)
         {
             for (i = 0; i < list->nr; i++)
+            {
                 free(list->items[i].string);
+            }
         }
         free(list->items);
     }
@@ -221,9 +266,13 @@ void string_list_clear_func(struct string_list *list, string_list_clear_func_t c
 void string_list_setlen(struct string_list *list, size_t nr)
 {
     if (list->strdup_strings)
+    {
         BUG("cannot setlen a string_list which owns its entries");
+    }
     if (nr > list->nr)
+    {
         BUG("cannot grow a string_list with setlen");
+    }
     list->nr = nr;
 }
 
@@ -276,7 +325,10 @@ struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
     struct string_list_item *item;
     compare_strings_fn       cmp = list->cmp ? list->cmp : strcmp;
 
-    for_each_string_list_item(item, list) if (!cmp(string, item->string)) return item;
+    for_each_string_list_item(item, list) if (!cmp(string, item->string))
+    {
+        return item;
+    }
     return NULL;
 }
 
@@ -289,9 +341,13 @@ int unsorted_string_list_has_string(struct string_list *list,
 void unsorted_string_list_delete_item(struct string_list *list, int i, int free_util)
 {
     if (list->strdup_strings)
+    {
         free(list->items[i].string);
+    }
     if (free_util)
+    {
         free(list->items[i].util);
+    }
     list->items[i] = list->items[list->nr - 1];
     list->nr--;
 }
@@ -300,11 +356,14 @@ int string_list_split(struct string_list *list, const char *string,
                       int delim, int maxsplit)
 {
     int         count = 0;
-    const char *p     = string, *end;
+    const char *p     = string;
+    const char *end;
 
     if (!list->strdup_strings)
+    {
         die("internal error in string_list_split(): "
             "list->strdup_strings must be set");
+    }
     for (;;)
     {
         count++;
@@ -331,11 +390,14 @@ int string_list_split_in_place(struct string_list *list, char *string,
                                const char *delim, int maxsplit)
 {
     int   count = 0;
-    char *p     = string, *end;
+    char *p     = string;
+    char *end;
 
     if (list->strdup_strings)
+    {
         die("internal error in string_list_split_in_place(): "
             "list->strdup_strings must not be set");
+    }
     for (;;)
     {
         count++;

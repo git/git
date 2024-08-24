@@ -24,9 +24,13 @@
 void set_alternate_shallow_file(struct repository *r, const char *path, int override)
 {
     if (r->parsed_objects->is_shallow != -1)
+    {
         BUG("is_repository_shallow must not be called before set_alternate_shallow_file");
+    }
     if (r->parsed_objects->alternate_shallow_file && !override)
+    {
         return;
+    }
     free(r->parsed_objects->alternate_shallow_file);
     r->parsed_objects->alternate_shallow_file = xstrdup_or_null(path);
 }
@@ -51,11 +55,15 @@ int unregister_shallow(const struct object_id *oid)
 {
     int pos = commit_graft_pos(the_repository, oid);
     if (pos < 0)
+    {
         return -1;
+    }
     if (pos + 1 < the_repository->parsed_objects->grafts_nr)
+    {
         MOVE_ARRAY(the_repository->parsed_objects->grafts + pos,
                    the_repository->parsed_objects->grafts + pos + 1,
                    the_repository->parsed_objects->grafts_nr - pos - 1);
+    }
     the_repository->parsed_objects->grafts_nr--;
     return 0;
 }
@@ -67,10 +75,14 @@ int is_repository_shallow(struct repository *r)
     const char *path = r->parsed_objects->alternate_shallow_file;
 
     if (r->parsed_objects->is_shallow >= 0)
+    {
         return r->parsed_objects->is_shallow;
+    }
 
     if (!path)
+    {
         path = git_path_shallow(r);
+    }
     /*
      * fetch-pack sets '--shallow-file ""' as an indicator that no
      * shallow file should be used. We could just open it and it
@@ -89,7 +101,9 @@ int is_repository_shallow(struct repository *r)
     {
         struct object_id oid;
         if (get_oid_hex(buf, &oid))
+        {
             die("bad shallow line: %s", buf);
+        }
         register_shallow(r, &oid);
     }
     fclose(fp);
@@ -135,10 +149,11 @@ static void free_depth_in_slab(int **ptr)
 struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
                                         int shallow_flag, int not_shallow_flag)
 {
-    int                  i = 0, cur_depth = 0;
-    struct commit_list  *result = NULL;
-    struct object_array  stack  = OBJECT_ARRAY_INIT;
-    struct commit       *commit = NULL;
+    int                  i         = 0;
+    int                  cur_depth = 0;
+    struct commit_list  *result    = NULL;
+    struct object_array  stack     = OBJECT_ARRAY_INIT;
+    struct commit       *commit    = NULL;
     struct commit_graft *graft;
     struct commit_depth  depths;
 
@@ -162,7 +177,9 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
                 }
                 depth_slot = commit_depth_at(&depths, commit);
                 if (!*depth_slot)
+                {
                     *depth_slot = xmalloc(sizeof(int));
+                }
                 **depth_slot = 0;
                 cur_depth    = 0;
             }
@@ -194,12 +211,16 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
             else
             {
                 if (cur_depth >= **depth_slot)
+                {
                     continue;
+                }
                 **depth_slot = cur_depth;
             }
             if (p->next)
+            {
                 add_object_array(&p->item->object,
                                  NULL, &stack);
+            }
             else
             {
                 commit    = p->item;
@@ -227,7 +248,8 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
                                                     int shallow_flag,
                                                     int not_shallow_flag)
 {
-    struct commit_list *result           = NULL, *p;
+    struct commit_list *result = NULL;
+    struct commit_list *p;
     struct commit_list *not_shallow_list = NULL;
     struct rev_info     revs;
     int                 both_flags = shallow_flag | not_shallow_flag;
@@ -245,15 +267,21 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
     setup_revisions(ac, av, &revs, NULL);
 
     if (prepare_revision_walk(&revs))
+    {
         die("revision walk setup failed");
+    }
     traverse_commit_list(&revs, show_commit, NULL, &not_shallow_list);
 
     if (!not_shallow_list)
+    {
         die("no commits selected for shallow requests");
+    }
 
     /* Mark all reachable commits as NOT_SHALLOW */
     for (p = not_shallow_list; p; p = p->next)
+    {
         p->item->object.flags |= not_shallow_flag;
+    }
 
     /*
      * mark border commits SHALLOW + NOT_SHALLOW.
@@ -268,16 +296,20 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
         struct commit_list *parent;
 
         if (repo_parse_commit(the_repository, c))
+        {
             die("unable to parse commit %s",
                 oid_to_hex(&c->object.oid));
+        }
 
         for (parent = c->parents; parent; parent = parent->next)
+        {
             if (!(parent->item->object.flags & not_shallow_flag))
             {
                 c->object.flags |= shallow_flag;
                 commit_list_insert(c, &result);
                 break;
             }
+        }
     }
     free_commit_list(not_shallow_list);
 
@@ -289,7 +321,9 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
     {
         struct object *o = &p->item->object;
         if ((o->flags & both_flags) == both_flags)
+        {
             o->flags &= ~not_shallow_flag;
+        }
     }
     release_revisions(&revs);
     return result;
@@ -298,11 +332,15 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 static void check_shallow_file_for_update(struct repository *r)
 {
     if (r->parsed_objects->is_shallow == -1)
+    {
         BUG("shallow must be initialized by now");
+    }
 
     if (!stat_validity_check(r->parsed_objects->shallow_stat,
                              git_path_shallow(r)))
+    {
         die("shallow file has changed since we read it");
+    }
 }
 
 #define SEEN_ONLY 1
@@ -322,11 +360,15 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
     struct write_shallow_data *data = cb_data;
     const char                *hex  = oid_to_hex(&graft->oid);
     if (graft->nr_parent != -1)
+    {
         return 0;
+    }
     if (data->flags & QUICK)
     {
         if (!repo_has_object_file(the_repository, &graft->oid))
+        {
             return 0;
+        }
     }
     else if (data->flags & SEEN_ONLY)
     {
@@ -334,14 +376,18 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
         if (!c || !(c->object.flags & SEEN))
         {
             if (data->flags & VERBOSE)
+            {
                 printf("Removing %s from .git/shallow\n",
                        oid_to_hex(&c->object.oid));
+            }
             return 0;
         }
     }
     data->count++;
     if (data->use_pack_protocol)
+    {
         packet_buf_write(data->out, "shallow %s", hex);
+    }
     else
     {
         strbuf_addstr(data->out, hex);
@@ -362,7 +408,9 @@ static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
     data.flags             = flags;
     for_each_commit_graft(write_one_shallow, &data);
     if (!extra)
+    {
         return data.count;
+    }
     for (i = 0; i < extra->nr; i++)
     {
         strbuf_addstr(out, oid_to_hex(extra->oid + i));
@@ -388,8 +436,10 @@ const char *setup_temporary_shallow(const struct oid_array *extra)
         temp = xmks_tempfile(git_path("shallow_XXXXXX"));
 
         if (write_in_full(temp->fd, sb.buf, sb.len) < 0 || close_tempfile_gently(temp) < 0)
+        {
             die_errno("failed to write to %s",
                       get_tempfile_path(temp));
+        }
         strbuf_release(&sb);
         return get_tempfile_path(temp);
     }
@@ -414,16 +464,20 @@ void setup_alternate_shallow(struct shallow_lock    *shallow_lock,
     if (write_shallow_commits(&sb, 0, extra))
     {
         if (write_in_full(fd, sb.buf, sb.len) < 0)
+        {
             die_errno("failed to write to %s",
                       get_lock_file_path(&shallow_lock->lock));
+        }
         *alternate_shallow_file = get_lock_file_path(&shallow_lock->lock);
     }
     else
+    {
         /*
          * is_repository_shallow() sees empty string as "no
          * shallow file".
          */
         *alternate_shallow_file = "";
+    }
     strbuf_release(&sb);
 }
 
@@ -431,14 +485,18 @@ static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *c
 {
     int fd = *(int *)cb;
     if (graft->nr_parent == -1)
+    {
         packet_write_fmt(fd, "shallow %s\n", oid_to_hex(&graft->oid));
+    }
     return 0;
 }
 
 void advertise_shallow_grafts(int fd)
 {
     if (!is_repository_shallow(the_repository))
+    {
         return;
+    }
     for_each_commit_graft(advertise_shallow_grafts_cb, &fd);
 }
 
@@ -456,7 +514,9 @@ void prune_shallow(unsigned options)
     int                 fd;
 
     if (options & PRUNE_QUICK)
+    {
         flags |= QUICK;
+    }
 
     if (options & PRUNE_SHOW_ONLY)
     {
@@ -472,8 +532,10 @@ void prune_shallow(unsigned options)
     if (write_shallow_commits_1(&sb, 0, NULL, flags))
     {
         if (write_in_full(fd, sb.buf, sb.len) < 0)
+        {
             die_errno("failed to write to %s",
                       get_lock_file_path(&shallow_lock.lock));
+        }
         commit_shallow_file(the_repository, &shallow_lock);
     }
     else
@@ -497,7 +559,9 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
     memset(info, 0, sizeof(*info));
     info->shallow = sa;
     if (!sa)
+    {
         return;
+    }
     ALLOC_ARRAY(info->ours, sa->nr);
     ALLOC_ARRAY(info->theirs, sa->nr);
     for (i = 0; i < sa->nr; i++)
@@ -508,11 +572,15 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
             graft = lookup_commit_graft(the_repository,
                                         &sa->oid[i]);
             if (graft && graft->nr_parent < 0)
+            {
                 continue;
+            }
             info->ours[info->nr_ours++] = i;
         }
         else
+        {
             info->theirs[info->nr_theirs++] = i;
+        }
     }
 }
 
@@ -527,14 +595,19 @@ void clear_shallow_info(struct shallow_info *info)
 void remove_nonexistent_theirs_shallow(struct shallow_info *info)
 {
     struct object_id *oid = info->shallow->oid;
-    int               i, dst;
+    int               i;
+    int               dst;
     trace_printf_key(&trace_shallow, "shallow: remove_nonexistent_theirs_shallow\n");
     for (i = dst = 0; i < info->nr_theirs; i++)
     {
         if (i != dst)
+        {
             info->theirs[dst] = info->theirs[i];
+        }
         if (repo_has_object_file(the_repository, oid + info->theirs[i]))
+        {
             dst++;
+        }
     }
     info->nr_theirs = dst;
 }
@@ -560,8 +633,10 @@ static uint32_t *paint_alloc(struct paint_info *info)
     if (!info->pool_count || size > info->end - info->free)
     {
         if (size > POOL_SIZE)
+        {
             BUG("pool size too small for %d in paint_alloc()",
                 size);
+        }
         info->pool_count++;
         REALLOC_ARRAY(info->pools, info->pool_count);
         info->free                        = xmalloc(POOL_SIZE);
@@ -581,7 +656,8 @@ static uint32_t *paint_alloc(struct paint_info *info)
 static void paint_down(struct paint_info *info, const struct object_id *oid,
                        unsigned int id)
 {
-    unsigned int        i, nr;
+    unsigned int        i;
+    unsigned int        nr;
     struct commit_list *head        = NULL;
     int                 bitmap_nr   = DIV_ROUND_UP(info->nr_bits, 32);
     size_t              bitmap_size = st_mult(sizeof(uint32_t), bitmap_nr);
@@ -591,7 +667,9 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
     uint32_t           *bitmap;
 
     if (!c)
+    {
         return;
+    }
 
     tmp    = xmalloc(bitmap_size);
     bitmap = paint_alloc(info);
@@ -606,18 +684,23 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 
         /* XXX check "UNINTERESTING" from pack bitmaps if available */
         if (c->object.flags & (SEEN | UNINTERESTING))
+        {
             continue;
-        else
-            c->object.flags |= SEEN;
+        }
+        c->object.flags |= SEEN;
 
         if (!*refs)
+        {
             *refs = bitmap;
+        }
         else
         {
             memcpy(tmp, *refs, bitmap_size);
             for (i = 0; i < bitmap_nr; i++)
+            {
                 tmp[i] |= bitmap[i];
-            if (memcmp(tmp, *refs, bitmap_size))
+            }
+            if (memcmp(tmp, *refs, bitmap_size) != 0)
             {
                 *refs = paint_alloc(info);
                 memcpy(*refs, tmp, bitmap_size);
@@ -625,16 +708,22 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
         }
 
         if (c->object.flags & BOTTOM)
+        {
             continue;
+        }
 
         if (repo_parse_commit(the_repository, c))
+        {
             die("unable to parse commit %s",
                 oid_to_hex(&c->object.oid));
+        }
 
         for (p = c->parents; p; p = p->next)
         {
             if (p->item->object.flags & SEEN)
+            {
                 continue;
+            }
             commit_list_insert(p->item, &head);
         }
     }
@@ -644,7 +733,9 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
     {
         struct object *o = get_indexed_object(i);
         if (o && o->type == OBJ_COMMIT)
+        {
             o->flags &= ~SEEN;
+        }
     }
 
     free(tmp);
@@ -659,7 +750,9 @@ static int mark_uninteresting(const char *refname     UNUSED,
     struct commit *commit = lookup_commit_reference_gently(the_repository,
                                                            oid, 1);
     if (!commit)
+    {
         return 0;
+    }
     commit->object.flags |= UNINTERESTING;
     mark_parents_uninteresting(NULL, commit);
     return 0;
@@ -687,16 +780,22 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 {
     struct object_id *oid = info->shallow->oid;
     struct oid_array *ref = info->ref;
-    unsigned int      i, nr;
-    int              *shallow, nr_shallow = 0;
+    unsigned int      i;
+    unsigned int      nr;
+    int              *shallow;
+    int               nr_shallow = 0;
     struct paint_info pi;
 
     trace_printf_key(&trace_shallow, "shallow: assign_shallow_commits_to_refs\n");
     ALLOC_ARRAY(shallow, info->nr_ours + info->nr_theirs);
     for (i = 0; i < info->nr_ours; i++)
+    {
         shallow[nr_shallow++] = info->ours[i];
+    }
     for (i = 0; i < info->nr_theirs; i++)
+    {
         shallow[nr_shallow++] = info->theirs[i];
+    }
 
     /*
      * Prepare the commit graph to track what refs can reach what
@@ -707,7 +806,9 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
     {
         struct object *o = get_indexed_object(i);
         if (!o || o->type != OBJ_COMMIT)
+        {
             continue;
+        }
 
         o->flags &= ~(UNINTERESTING | BOTTOM | SEEN);
     }
@@ -735,7 +836,9 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
     }
 
     for (i = 0; i < ref->nr; i++)
+    {
         paint_down(&pi, ref->oid + i, i);
+    }
 
     if (used)
     {
@@ -747,7 +850,9 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
                                                      &oid[shallow[i]]);
             uint32_t           **map = ref_bitmap_at(&pi.ref_bitmap, c);
             if (*map)
+            {
                 used[shallow[i]] = xmemdupz(*map, bitmap_size);
+            }
         }
         /*
          * unreachable shallow commits are not removed from
@@ -757,11 +862,15 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
          */
     }
     else
+    {
         post_assign_shallow(info, &pi.ref_bitmap, ref_status);
+    }
 
     clear_ref_bitmap(&pi.ref_bitmap);
     for (i = 0; i < pi.pool_count; i++)
+    {
         free(pi.pools[i]);
+    }
     free(pi.pools);
     free(shallow);
 }
@@ -783,18 +892,26 @@ static int add_ref(const char *refname     UNUSED,
     ca->commits[ca->nr] = lookup_commit_reference_gently(the_repository,
                                                          oid, 1);
     if (ca->commits[ca->nr])
+    {
         ca->nr++;
+    }
     return 0;
 }
 
-static void update_refstatus(int *ref_status, int nr, uint32_t *bitmap)
+static void update_refstatus(int *ref_status, int nr, const uint32_t *bitmap)
 {
     unsigned int i;
     if (!ref_status)
+    {
         return;
+    }
     for (i = 0; i < nr; i++)
+    {
         if (bitmap[i / 32] & (1U << (i % 32)))
+        {
             ref_status[i]++;
+        }
+    }
 }
 
 /*
@@ -807,30 +924,40 @@ static void post_assign_shallow(struct shallow_info *info,
     struct object_id   *oid = info->shallow->oid;
     struct commit      *c;
     uint32_t          **bitmap;
-    int                 dst, i, j;
+    int                 dst;
+    int                 i;
+    int                 j;
     int                 bitmap_nr = DIV_ROUND_UP(info->ref->nr, 32);
     struct commit_array ca;
 
     trace_printf_key(&trace_shallow, "shallow: post_assign_shallow\n");
     if (ref_status)
+    {
         memset(ref_status, 0, sizeof(*ref_status) * info->ref->nr);
+    }
 
     /* Remove unreachable shallow commits from "theirs" */
     for (i = dst = 0; i < info->nr_theirs; i++)
     {
         if (i != dst)
+        {
             info->theirs[dst] = info->theirs[i];
+        }
         c      = lookup_commit(the_repository, &oid[info->theirs[i]]);
         bitmap = ref_bitmap_at(ref_bitmap, c);
         if (!*bitmap)
+        {
             continue;
+        }
         for (j = 0; j < bitmap_nr; j++)
+        {
             if (bitmap[0][j])
             {
                 update_refstatus(ref_status, info->ref->nr, *bitmap);
                 dst++;
                 break;
             }
+        }
     }
     info->nr_theirs = dst;
 
@@ -842,18 +969,25 @@ static void post_assign_shallow(struct shallow_info *info,
     for (i = dst = 0; i < info->nr_ours; i++)
     {
         if (i != dst)
+        {
             info->ours[dst] = info->ours[i];
+        }
         c      = lookup_commit(the_repository, &oid[info->ours[i]]);
         bitmap = ref_bitmap_at(ref_bitmap, c);
         if (!*bitmap)
+        {
             continue;
+        }
         for (j = 0; j < bitmap_nr; j++)
+        {
             if (bitmap[0][j])
             {
                 /* Step 7, reachability test at commit level */
                 int ret = repo_in_merge_bases_many(the_repository, c, ca.nr, ca.commits, 1);
                 if (ret < 0)
+                {
                     exit(128);
+                }
                 if (!ret)
                 {
                     update_refstatus(ref_status, info->ref->nr, *bitmap);
@@ -861,6 +995,7 @@ static void post_assign_shallow(struct shallow_info *info,
                     break;
                 }
             }
+        }
     }
     info->nr_ours = dst;
 
@@ -894,7 +1029,9 @@ int delayed_reachability_test(struct shallow_info *si, int c)
                                                     si->commits,
                                                     1);
         if (si->reachable[c] < 0)
+        {
             exit(128);
+        }
         si->need_reachability_test[c] = 0;
     }
     return si->reachable[c];

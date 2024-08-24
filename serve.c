@@ -27,7 +27,9 @@ static int agent_advertise(struct repository *r UNUSED,
                            struct strbuf       *value)
 {
     if (value)
+    {
         strbuf_addstr(value, git_user_agent_sanitized());
+    }
     return 1;
 }
 
@@ -35,7 +37,9 @@ static int object_format_advertise(struct repository *r,
                                    struct strbuf     *value)
 {
     if (value)
+    {
         strbuf_addstr(value, r->hash_algo->name);
+    }
     return 1;
 }
 
@@ -43,21 +47,31 @@ static void object_format_receive(struct repository *r UNUSED,
                                   const char          *algo_name)
 {
     if (!algo_name)
+    {
         die("object-format capability requires an argument");
+    }
 
     client_hash_algo = hash_algo_by_name(algo_name);
     if (client_hash_algo == GIT_HASH_UNKNOWN)
+    {
         die("unknown object format '%s'", algo_name);
+    }
 }
 
 static int session_id_advertise(struct repository *r, struct strbuf *value)
 {
     if (advertise_sid == -1 && repo_config_get_bool(r, "transfer.advertisesid", &advertise_sid))
+    {
         advertise_sid = 0;
+    }
     if (!advertise_sid)
+    {
         return 0;
+    }
     if (value)
+    {
         strbuf_addstr(value, trace2_session_id());
+    }
     return 1;
 }
 
@@ -65,7 +79,9 @@ static void session_id_receive(struct repository *r UNUSED,
                                const char          *client_sid)
 {
     if (!client_sid)
+    {
         client_sid = "";
+    }
     trace2_data_string("transfer", NULL, "client-sid", client_sid);
 }
 
@@ -199,14 +215,18 @@ static struct protocol_capability *get_capability(const char *key, const char **
     int i;
 
     if (!key)
+    {
         return NULL;
+    }
 
     for (i = 0; i < ARRAY_SIZE(capabilities); i++)
     {
         struct protocol_capability *c = &capabilities[i];
         const char                 *out;
         if (!skip_prefix(key, c->name, &out))
+        {
             continue;
+        }
         if (!*out)
         {
             *value = NULL;
@@ -228,10 +248,14 @@ static int receive_client_capability(const char *key)
     const struct protocol_capability *c = get_capability(key, &value);
 
     if (!c || c->command || !c->advertise(the_repository, NULL))
+    {
         return 0;
+    }
 
     if (c->receive)
+    {
         c->receive(the_repository, value);
+    }
     return 1;
 }
 
@@ -245,10 +269,14 @@ static int parse_command(const char *key, struct protocol_capability **command)
         struct protocol_capability *cmd = get_capability(out, &value);
 
         if (*command)
+        {
             die("command '%s' requested after already requesting command '%s'",
                 out, (*command)->name);
+        }
         if (!cmd || !cmd->advertise(the_repository, NULL) || !cmd->command || value)
+        {
             die("invalid command '%s'", out);
+        }
 
         *command = cmd;
         return 1;
@@ -278,7 +306,9 @@ static int process_request(void)
      * request.  If so we can terminate the connection.
      */
     if (packet_reader_peek(&reader) == PACKET_READ_EOF)
+    {
         return 1;
+    }
     reader.options &= ~PACKET_READ_GENTLE_ON_EOF;
 
     while (state != PROCESS_REQUEST_DONE)
@@ -289,9 +319,13 @@ static int process_request(void)
                 BUG("Should have already died when seeing EOF");
             case PACKET_READ_NORMAL:
                 if (parse_command(reader.line, &command) || receive_client_capability(reader.line))
+                {
                     seen_capability_or_command = 1;
+                }
                 else
+                {
                     die("unknown capability '%s'", reader.line);
+                }
 
                 /* Consume the peeked line */
                 packet_reader_read(&reader);
@@ -302,7 +336,9 @@ static int process_request(void)
                  * wanted to terminate the connection.
                  */
                 if (!seen_capability_or_command)
+                {
                     return 1;
+                }
 
                 /*
                  * The flush packet isn't consume here like it is in
@@ -326,12 +362,16 @@ static int process_request(void)
     }
 
     if (!command)
+    {
         die("no command requested");
+    }
 
     if (client_hash_algo != hash_algo_by_ptr(the_repository->hash_algo))
+    {
         die("mismatched object format: server %s; client %s\n",
             the_repository->hash_algo->name,
             hash_algos[client_hash_algo].name);
+    }
 
     command->command(the_repository, &reader);
 
@@ -341,7 +381,9 @@ static int process_request(void)
 void protocol_v2_serve_loop(int stateless_rpc)
 {
     if (!stateless_rpc)
+    {
         protocol_v2_advertise_capabilities();
+    }
 
     /*
      * If stateless-rpc was requested then exit after
@@ -354,7 +396,11 @@ void protocol_v2_serve_loop(int stateless_rpc)
     else
     {
         for (;;)
+        {
             if (process_request())
+            {
                 break;
+            }
+        }
     }
 }

@@ -57,7 +57,8 @@ static int convert_to_sparse_rec(struct index_state *istate,
                                  const char *ct_path, size_t ct_pathlen,
                                  struct cache_tree *ct)
 {
-    int           i, can_convert = 1;
+    int           i;
+    int           can_convert     = 1;
     int           start_converted = num_converted;
     struct strbuf child_path      = STRBUF_INIT;
 
@@ -67,14 +68,18 @@ static int convert_to_sparse_rec(struct index_state *istate,
      * directory entry (everything is sparse and merged).
      */
     if (path_in_sparse_checkout(ct_path, istate))
+    {
         can_convert = 0;
+    }
 
     for (i = start; can_convert && i < end; i++)
     {
         struct cache_entry *ce = istate->cache[i];
 
         if (ce_stage(ce) || S_ISGITLINK(ce->ce_mode) || !(ce->ce_flags & CE_SKIP_WORKTREE))
+        {
             can_convert = 0;
+        }
     }
 
     if (can_convert)
@@ -88,8 +93,11 @@ static int convert_to_sparse_rec(struct index_state *istate,
 
     for (i = start; i < end;)
     {
-        int                 count, span, pos = -1;
-        const char         *base, *slash;
+        int                 count;
+        int                 span;
+        int                 pos = -1;
+        const char         *base;
+        const char         *slash;
         struct cache_entry *ce = istate->cache[i];
 
         /*
@@ -100,7 +108,9 @@ static int convert_to_sparse_rec(struct index_state *istate,
         slash = strchr(base, '/');
 
         if (slash)
+        {
             pos = cache_tree_subtree_pos(ct, base, slash - base);
+        }
 
         if (pos < 0)
         {
@@ -141,7 +151,9 @@ static int index_has_unmerged_entries(struct index_state *istate)
     for (i = 0; i < istate->cache_nr; i++)
     {
         if (ce_stage(istate->cache[i]))
+        {
             return 1;
+        }
     }
 
     return 0;
@@ -150,7 +162,9 @@ static int index_has_unmerged_entries(struct index_state *istate)
 int is_sparse_index_allowed(struct index_state *istate, int flags)
 {
     if (!core_apply_sparse_checkout || !core_sparse_checkout_cone)
+    {
         return 0;
+    }
 
     if (!(flags & SPARSE_INDEX_MEMORY_ONLY))
     {
@@ -160,25 +174,33 @@ int is_sparse_index_allowed(struct index_state *istate, int flags)
          * The sparse index is not (yet) integrated with a split index.
          */
         if (istate->split_index || git_env_bool("GIT_TEST_SPLIT_INDEX", 0))
+        {
             return 0;
+        }
         /*
          * The GIT_TEST_SPARSE_INDEX environment variable triggers the
          * index.sparse config variable to be on.
          */
         test_env = git_env_bool("GIT_TEST_SPARSE_INDEX", -1);
         if (test_env >= 0)
+        {
             set_sparse_index_config(istate->repo, test_env);
+        }
 
         /*
          * Only convert to sparse if index.sparse is set.
          */
         prepare_repo_settings(istate->repo);
         if (!istate->repo->settings.sparse_index)
+        {
             return 0;
+        }
     }
 
     if (init_sparse_checkout_patterns(istate))
+    {
         return 0;
+    }
 
     /*
      * We need cone-mode patterns to use sparse-index. If a user edits
@@ -189,7 +211,9 @@ int is_sparse_index_allowed(struct index_state *istate, int flags)
      * bad patterns.
      */
     if (!istate->sparse_checkout_patterns->use_cone_patterns)
+    {
         return 0;
+    }
 
     return 1;
 }
@@ -201,7 +225,9 @@ int convert_to_sparse(struct index_state *istate, int flags)
      * cannot be converted to sparse, do not convert.
      */
     if (istate->sparse_index == INDEX_COLLAPSED || !istate->cache_nr || !is_sparse_index_allowed(istate, flags))
+    {
         return 0;
+    }
 
     /*
      * If we are purposefully collapsing a full index, then don't give
@@ -214,7 +240,9 @@ int convert_to_sparse(struct index_state *istate, int flags)
      * Unmerged entries prevent the cache-tree extension from working.
      */
     if (index_has_unmerged_entries(istate))
+    {
         return 0;
+    }
 
     if (!cache_tree_fully_valid(istate->cache_tree))
     {
@@ -229,7 +257,9 @@ int convert_to_sparse(struct index_state *istate, int flags)
          * WRITE_TREE_MISSING_OK.
          */
         if (cache_tree_update(istate, WRITE_TREE_MISSING_OK))
+        {
             return 0;
+        }
     }
 
     remove_fsmonitor(istate);
@@ -273,7 +303,9 @@ static int add_path_to_index(const struct object_id *oid,
         int    dtype;
         size_t baselen = base->len;
         if (!ctx->pl)
+        {
             return READ_TREE_RECURSIVE;
+        }
 
         /*
          * Have we expanded to a point outside of the sparse-checkout?
@@ -332,7 +364,9 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
      * it to a sparse index on write, if possible.
      */
     if (istate->sparse_index == INDEX_EXPANDED)
+    {
         return;
+    }
 
     /*
      * If our index is sparse, but our new pattern set does not use
@@ -359,7 +393,9 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
          * the current request as a sparse index.
          */
         if (cache_tree_update(istate, 0))
+        {
             pl = NULL;
+        }
     }
 
     if (!pl && give_advice_on_expansion)
@@ -418,8 +454,10 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
         }
 
         if (!(ce->ce_flags & CE_SKIP_WORKTREE))
+        {
             warning(_("index entry is a directory, but not sparse (%08x)"),
                     ce->ce_flags);
+        }
 
         /* recursively walk into cd->name */
         tree = lookup_tree(istate->repo, &ce->oid);
@@ -464,7 +502,9 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
 void ensure_full_index(struct index_state *istate)
 {
     if (!istate)
+    {
         BUG("ensure_full_index() must get an index!");
+    }
     expand_index(istate, NULL);
 }
 
@@ -475,9 +515,13 @@ void ensure_correct_sparsity(struct index_state *istate)
      * ensure the index is full.
      */
     if (is_sparse_index_allowed(istate, 0))
+    {
         convert_to_sparse(istate, 0);
+    }
     else
+    {
         ensure_full_index(istate);
+    }
 }
 
 struct path_found_data
@@ -516,14 +560,18 @@ static size_t max_common_dir_prefix(const char *path1, const char *path2)
     for (size_t i = 0; path1[i] && path2[i]; i++)
     {
         if (path1[i] != path2[i])
+        {
             break;
+        }
 
         /*
          * If they agree at a directory separator, then add one
          * to make sure it is included in the common prefix string.
          */
         if (path1[i] == '/')
+        {
             common_prefix = i + 1;
+        }
     }
 
     return common_prefix;
@@ -540,7 +588,9 @@ static int path_found(const char *path, struct path_found_data *data)
      * then we can return 0.
      */
     if (data->dir.len && !memcmp(path, data->dir.buf, data->dir.len))
+    {
         return 0;
+    }
 
     /*
      * Otherwise, we must check if the current path exists. If it does, then
@@ -549,7 +599,9 @@ static int path_found(const char *path, struct path_found_data *data)
      */
     data->lstat_count++;
     if (!lstat(path, &st))
+    {
         return 1;
+    }
 
     /*
      * At this point, we know that 'path' doesn't exist, and we know that
@@ -602,7 +654,9 @@ static int path_found(const char *path, struct path_found_data *data)
         /* If the parent dir doesn't exist, then stop here. */
         data->lstat_count++;
         if (lstat(data->dir.buf, &st))
+        {
             return 0;
+        }
     }
 
     /*
@@ -664,13 +718,17 @@ static void clear_skip_worktree_from_present_files_full(struct index_state *ista
         struct cache_entry *ce = istate->cache[i];
 
         if (S_ISSPARSEDIR(ce->ce_mode))
+        {
             BUG("ensure-full-index did not fully flatten?");
+        }
 
         if (ce_skip_worktree(ce))
         {
             path_count++;
             if (path_found(ce->name, &data))
+            {
                 ce->ce_flags &= ~CE_SKIP_WORKTREE;
+            }
         }
     }
 
@@ -686,7 +744,9 @@ static void clear_skip_worktree_from_present_files_full(struct index_state *ista
 void clear_skip_worktree_from_present_files(struct index_state *istate)
 {
     if (!core_apply_sparse_checkout || sparse_expect_files_outside_of_patterns)
+    {
         return;
+    }
 
     if (clear_skip_worktree_from_present_files_sparse(istate))
     {
@@ -709,10 +769,14 @@ void expand_to_path(struct index_state *istate,
 
     /* prevent extra recursion */
     if (in_expand_to_path)
+    {
         return;
+    }
 
     if (!istate->sparse_index)
+    {
         return;
+    }
 
     in_expand_to_path = 1;
 
@@ -725,7 +789,9 @@ void expand_to_path(struct index_state *istate,
      */
 
     if (index_file_exists(istate, path, pathlen, icase))
+    {
         goto cleanup;
+    }
 
     strbuf_add(&path_mutable, path, pathlen);
     strbuf_addch(&path_mutable, '/');
@@ -738,7 +804,9 @@ void expand_to_path(struct index_state *istate,
         char *replace = strchr(path_mutable.buf + substr_len, '/');
 
         if (!replace)
+        {
             break;
+        }
 
         /* replace the character _after_ the slash */
         replace++;

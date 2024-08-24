@@ -10,11 +10,15 @@ static void msort_with_tmp(void *b, size_t n, size_t s,
                            char *t)
 {
     char  *tmp;
-    char  *b1, *b2;
-    size_t n1, n2;
+    char  *b1;
+    char  *b2;
+    size_t n1;
+    size_t n2;
 
     if (n <= 1)
+    {
         return;
+    }
 
     n1 = n / 2;
     n2 = n - n1;
@@ -44,7 +48,9 @@ static void msort_with_tmp(void *b, size_t n, size_t s,
         }
     }
     if (n1 > 0)
+    {
         memcpy(tmp, b1, n1 * s);
+    }
     memcpy(b, t, (n - n2) * s);
 }
 

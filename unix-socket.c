@@ -20,14 +20,18 @@ struct unix_sockaddr_context
 static void unix_sockaddr_cleanup(struct unix_sockaddr_context *ctx)
 {
     if (!ctx->orig_dir)
+    {
         return;
+    }
     /*
      * If we fail, we can't just return an error, since we have
      * moved the cwd of the whole process, which could confuse calling
      * code.  We are better off to just die.
      */
     if (chdir(ctx->orig_dir) < 0)
+    {
         die("unable to restore original working directory");
+    }
     free(ctx->orig_dir);
 }
 
@@ -66,10 +70,14 @@ static int unix_sockaddr_init(struct sockaddr_un *sa, const char *path,
             return -1;
         }
         if (strbuf_getcwd(&cwd))
+        {
             return -1;
+        }
         ctx->orig_dir = strbuf_detach(&cwd, NULL);
         if (chdir_len(dir, slash - dir) < 0)
+        {
             return -1;
+        }
     }
 
     memset(sa, 0, sizeof(*sa));
@@ -80,25 +88,34 @@ static int unix_sockaddr_init(struct sockaddr_un *sa, const char *path,
 
 int unix_stream_connect(const char *path, int disallow_chdir)
 {
-    int                          fd = -1, saved_errno;
+    int                          fd = -1;
+    int                          saved_errno;
     struct sockaddr_un           sa;
     struct unix_sockaddr_context ctx;
 
     if (unix_sockaddr_init(&sa, path, &ctx, disallow_chdir) < 0)
+    {
         return -1;
+    }
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd < 0)
+    {
         goto fail;
+    }
 
     if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+    {
         goto fail;
+    }
     unix_sockaddr_cleanup(&ctx);
     return fd;
 
 fail:
     saved_errno = errno;
     if (fd != -1)
+    {
         close(fd);
+    }
     unix_sockaddr_cleanup(&ctx);
     errno = saved_errno;
     return -1;
@@ -107,7 +124,8 @@ fail:
 int unix_stream_listen(const char                           *path,
                        const struct unix_stream_listen_opts *opts)
 {
-    int                          fd = -1, saved_errno;
+    int                          fd = -1;
+    int                          saved_errno;
     int                          backlog;
     struct sockaddr_un           sa;
     struct unix_sockaddr_context ctx;
@@ -115,19 +133,29 @@ int unix_stream_listen(const char                           *path,
     unlink(path);
 
     if (unix_sockaddr_init(&sa, path, &ctx, opts->disallow_chdir) < 0)
+    {
         return -1;
+    }
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd < 0)
+    {
         goto fail;
+    }
 
     if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+    {
         goto fail;
+    }
 
     backlog = opts->listen_backlog_size;
     if (backlog <= 0)
+    {
         backlog = DEFAULT_UNIX_STREAM_LISTEN_BACKLOG;
+    }
     if (listen(fd, backlog) < 0)
+    {
         goto fail;
+    }
 
     unix_sockaddr_cleanup(&ctx);
     return fd;
@@ -135,7 +163,9 @@ int unix_stream_listen(const char                           *path,
 fail:
     saved_errno = errno;
     if (fd != -1)
+    {
         close(fd);
+    }
     unix_sockaddr_cleanup(&ctx);
     errno = saved_errno;
     return -1;

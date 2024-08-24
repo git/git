@@ -101,7 +101,7 @@ int check_submodule_url(const char *url);
  * New helpers to retrieve arbitrary configuration from the '.gitmodules' file
  * should NOT be added.
  */
-void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules);
+void fetch_config_from_gitmodules(const int *max_children, const int *recurse_submodules);
 void update_clone_config_from_gitmodules(int *max_jobs);
 
 /*

@@ -64,25 +64,35 @@ struct helper_data
 static void sendline(struct helper_data *helper, struct strbuf *buffer)
 {
     if (debug)
+    {
         fprintf(stderr, "Debug: Remote helper: -> %s", buffer->buf);
+    }
     if (write_in_full(helper->helper->in, buffer->buf, buffer->len) < 0)
+    {
         die_errno(_("full write to remote helper failed"));
+    }
 }
 
 static int recvline_fh(FILE *helper, struct strbuf *buffer)
 {
     strbuf_reset(buffer);
     if (debug)
+    {
         fprintf(stderr, "Debug: Remote helper: Waiting...\n");
+    }
     if (strbuf_getline(buffer, helper) == EOF)
     {
         if (debug)
+        {
             fprintf(stderr, "Debug: Remote helper quit.\n");
+        }
         return 1;
     }
 
     if (debug)
+    {
         fprintf(stderr, "Debug: Remote helper: <- %s\n", buffer->buf);
+    }
     return 0;
 }
 
@@ -94,9 +104,13 @@ static int recvline(struct helper_data *helper, struct strbuf *buffer)
 static void write_constant(int fd, const char *str)
 {
     if (debug)
+    {
         fprintf(stderr, "Debug: Remote helper: -> %s", str);
+    }
     if (write_in_full(fd, str, strlen(str)) < 0)
+    {
         die_errno(_("full write to remote helper failed"));
+    }
 }
 
 static const char *remove_ext_force(const char *url)
@@ -105,7 +119,9 @@ static const char *remove_ext_force(const char *url)
     {
         const char *colon = strchr(url, ':');
         if (colon && colon[1] == ':')
+        {
             return colon + 2;
+        }
     }
     return url;
 }
@@ -131,7 +147,9 @@ static struct child_process *get_helper(struct transport *transport)
     int                   code;
 
     if (data->helper)
+    {
         return data->helper;
+    }
 
     helper = xmalloc(sizeof(*helper));
     child_process_init(helper);
@@ -145,16 +163,22 @@ static struct child_process *get_helper(struct transport *transport)
     helper->silent_exec_failure = 1;
 
     if (have_git_dir())
+    {
         strvec_pushf(&helper->env, "%s=%s",
                      GIT_DIR_ENVIRONMENT, get_git_dir());
+    }
 
     helper->trace2_child_class = helper->args.v[0]; /* "remote-<name>" */
 
     code = start_command(helper);
     if (code < 0 && errno == ENOENT)
+    {
         die(_("unable to find remote helper for '%s'"), data->name);
+    }
     else if (code != 0)
+    {
         exit(code);
+    }
 
     data->helper            = helper;
     data->no_disconnect_req = 0;
@@ -166,22 +190,29 @@ static struct child_process *get_helper(struct transport *transport)
      * Do this with duped fd because fclose() will close the fd,
      * and stuff like taking over will require the fd to remain.
      */
-    duped = dup(helper->out);
+    duped = fcntl(helper->out, F_DUPFD_CLOEXEC);
     if (duped < 0)
+    {
         die_errno(_("can't dup helper output fd"));
+    }
     data->out = xfdopen(duped, "r");
 
     write_constant(helper->in, "capabilities\n");
 
     while (1)
     {
-        const char *capname, *arg;
+        const char *capname;
+        const char *arg;
         int         mandatory = 0;
         if (recvline(data, &buf))
+        {
             exit(128);
+        }
 
         if (!*buf.buf)
+        {
             break;
+        }
 
         if (*buf.buf == '*')
         {
@@ -189,24 +220,42 @@ static struct child_process *get_helper(struct transport *transport)
             mandatory = 1;
         }
         else
+        {
             capname = buf.buf;
+        }
 
         if (debug)
+        {
             fprintf(stderr, "Debug: Got cap %s\n", capname);
+        }
         if (!strcmp(capname, "fetch"))
+        {
             data->fetch = 1;
+        }
         else if (!strcmp(capname, "option"))
+        {
             data->option = 1;
+        }
         else if (!strcmp(capname, "push"))
+        {
             data->push = 1;
+        }
         else if (!strcmp(capname, "import"))
+        {
             data->import = 1;
+        }
         else if (!strcmp(capname, "bidi-import"))
+        {
             data->bidi_import = 1;
+        }
         else if (!strcmp(capname, "export"))
+        {
             data->export = 1;
+        }
         else if (!strcmp(capname, "check-connectivity"))
+        {
             data->check_connectivity = 1;
+        }
         else if (skip_prefix(capname, "refspec ", &arg))
         {
             refspec_append(&data->rs, arg);
@@ -252,7 +301,9 @@ static struct child_process *get_helper(struct transport *transport)
     }
     strbuf_release(&buf);
     if (debug)
+    {
         fprintf(stderr, "Debug: Capabilities complete.\n");
+    }
     standard_options(transport);
     return data->helper;
 }
@@ -265,7 +316,9 @@ static int disconnect_helper(struct transport *transport)
     if (data->helper)
     {
         if (debug)
+        {
             fprintf(stderr, "Debug: Disconnecting.\n");
+        }
         if (!data->no_disconnect_req)
         {
             /*
@@ -307,14 +360,22 @@ static int strbuf_set_helper_option(struct helper_data *data,
 
     sendline(data, buf);
     if (recvline(data, buf))
+    {
         exit(128);
+    }
 
     if (!strcmp(buf->buf, "ok"))
+    {
         ret = 0;
+    }
     else if (starts_with(buf->buf, "error"))
+    {
         ret = -1;
+    }
     else if (!strcmp(buf->buf, "unsupported"))
+    {
         ret = 1;
+    }
     else
     {
         warning(_("%s unexpectedly said: '%s'"), data->name, buf->buf);
@@ -328,7 +389,8 @@ static int string_list_set_helper_option(struct helper_data *data,
                                          struct string_list *list)
 {
     struct strbuf buf = STRBUF_INIT;
-    int           i, ret = 0;
+    int           i;
+    int           ret = 0;
 
     for (i = 0; i < list->nr; i++)
     {
@@ -337,7 +399,9 @@ static int string_list_set_helper_option(struct helper_data *data,
         strbuf_addch(&buf, '\n');
 
         if ((ret = strbuf_set_helper_option(data, &buf)))
+        {
             break;
+        }
         strbuf_reset(&buf);
     }
     strbuf_release(&buf);
@@ -349,21 +413,29 @@ static int set_helper_option(struct transport *transport,
 {
     struct helper_data *data = transport->data;
     struct strbuf       buf  = STRBUF_INIT;
-    int                 i, ret, is_bool = 0;
+    int                 i;
+    int                 ret;
+    int                 is_bool = 0;
 
     get_helper(transport);
 
     if (!data->option)
+    {
         return 1;
+    }
 
     if (!strcmp(name, "deepen-not"))
+    {
         return string_list_set_helper_option(data, name,
                                              (struct string_list *)value);
+    }
 
     for (i = 0; i < ARRAY_SIZE(unsupported_options); i++)
     {
         if (!strcmp(name, unsupported_options[i]))
+        {
             return 1;
+        }
     }
 
     for (i = 0; i < ARRAY_SIZE(boolean_options); i++)
@@ -377,9 +449,13 @@ static int set_helper_option(struct transport *transport,
 
     strbuf_addf(&buf, "option %s ", name);
     if (is_bool)
+    {
         strbuf_addstr(&buf, value ? "true" : "false");
+    }
     else
+    {
         quote_c_style(value, &buf, NULL, 0);
+    }
     strbuf_addch(&buf, '\n');
 
     ret = strbuf_set_helper_option(data, &buf);
@@ -435,7 +511,9 @@ static int fetch_with_fetch(struct transport *transport,
     {
         const struct ref *posn = to_fetch[i];
         if (posn->status & REF_STATUS_UPTODATE)
+        {
             continue;
+        }
 
         strbuf_addf(&buf, "fetch %s %s\n",
                     oid_to_hex(&posn->old_oid),
@@ -450,22 +528,34 @@ static int fetch_with_fetch(struct transport *transport,
         const char *name;
 
         if (recvline(data, &buf))
+        {
             exit(128);
+        }
 
         if (skip_prefix(buf.buf, "lock ", &name))
         {
             if (transport->pack_lockfiles.nr)
+            {
                 warning(_("%s also locked %s"), data->name, name);
+            }
             else
+            {
                 string_list_append(&transport->pack_lockfiles,
                                    name);
+            }
         }
         else if (data->check_connectivity && data->transport_options.check_self_contained_and_connected && !strcmp(buf.buf, "connectivity-ok"))
+        {
             data->transport_options.self_contained_and_connected = 1;
+        }
         else if (!buf.len)
+        {
             break;
+        }
         else
+        {
             warning(_("%s unexpectedly said: '%s'"), data->name, buf.buf);
+        }
     }
     strbuf_release(&buf);
 
@@ -477,7 +567,8 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 {
     struct child_process *helper = get_helper(transport);
     struct helper_data   *data   = transport->data;
-    int                   cat_blob_fd, code;
+    int                   cat_blob_fd;
+    int                   code;
     child_process_init(fastimport);
     fastimport->in = xdup(helper->out);
     strvec_push(&fastimport->args, "fast-import");
@@ -507,17 +598,23 @@ static int get_exporter(struct transport     *transport,
 
     /* we need to duplicate helper->in because we want to use it after
      * fastexport is done with it. */
-    fastexport->out = dup(helper->in);
+    fastexport->out = fcntl(helper->in, F_DUPFD_CLOEXEC);
     strvec_push(&fastexport->args, "fast-export");
     strvec_push(&fastexport->args, "--use-done-feature");
     strvec_push(&fastexport->args, data->signed_tags ? "--signed-tags=verbatim" : "--signed-tags=warn-strip");
     if (data->export_marks)
+    {
         strvec_pushf(&fastexport->args, "--export-marks=%s.tmp", data->export_marks);
+    }
     if (data->import_marks)
+    {
         strvec_pushf(&fastexport->args, "--import-marks=%s", data->import_marks);
+    }
 
     for (i = 0; i < revlist_args->nr; i++)
+    {
         strvec_push(&fastexport->args, revlist_args->items[i].string);
+    }
 
     fastexport->git_cmd = 1;
     return start_command(fastexport);
@@ -535,13 +632,17 @@ static int fetch_with_import(struct transport *transport,
     get_helper(transport);
 
     if (get_importer(transport, &fastimport))
+    {
         die(_("couldn't run fast-import"));
+    }
 
     for (i = 0; i < nr_heads; i++)
     {
         posn = to_fetch[i];
         if (posn->status & REF_STATUS_UPTODATE)
+        {
             continue;
+        }
 
         strbuf_addf(&buf, "import %s\n",
                     posn->symref ? posn->symref : posn->name);
@@ -559,7 +660,9 @@ static int fetch_with_import(struct transport *transport,
      */
 
     if (finish_command(&fastimport))
+    {
         die(_("error while running fast-import"));
+    }
 
     /*
      * The fast-import stream of a remote helper that advertises
@@ -578,18 +681,28 @@ static int fetch_with_import(struct transport *transport,
      */
     for (i = 0; i < nr_heads; i++)
     {
-        char *private, *name;
+        char *private;
+        char *name;
         posn = to_fetch[i];
         if (posn->status & REF_STATUS_UPTODATE)
+        {
             continue;
+        }
         name = posn->symref ? posn->symref : posn->name;
         if (data->rs.nr)
-        private      = apply_refspecs(&data->rs, name);
-        else private = xstrdup(name);
+        {
+            private = apply_refspecs(&data->rs, name);
+        }
+        else
+        {
+            private = xstrdup(name);
+        }
         if (private)
         {
             if (refs_read_ref(get_main_ref_store(the_repository), private, &posn->old_oid) < 0)
+            {
                 die(_("could not read ref %s"), private);
+            }
             free(private);
         }
     }
@@ -613,31 +726,39 @@ static int run_connect(struct transport *transport, struct strbuf *cmdbuf)
      * stream buffering only can be changed before first I/O operation
      * on it.
      */
-    duped = dup(helper->out);
+    duped = fcntl(helper->out, F_DUPFD_CLOEXEC);
     if (duped < 0)
+    {
         die_errno(_("can't dup helper output fd"));
+    }
     input = xfdopen(duped, "r");
     setvbuf(input, NULL, _IONBF, 0);
 
     sendline(data, cmdbuf);
     if (recvline_fh(input, cmdbuf))
+    {
         exit(128);
+    }
 
     if (!strcmp(cmdbuf->buf, ""))
     {
         data->no_disconnect_req = 1;
         if (debug)
+        {
             fprintf(stderr,
                     "Debug: Smart transport connection "
                     "ready.\n");
+        }
         ret = 1;
     }
     else if (!strcmp(cmdbuf->buf, "fallback"))
     {
         if (debug)
+        {
             fprintf(stderr,
                     "Debug: Falling back to dumb "
                     "transport.\n");
+        }
     }
     else
     {
@@ -660,13 +781,17 @@ static int process_connect_service(struct transport *transport,
      * Handle --upload-pack and friends. This is fire and forget...
      * just warn if it fails.
      */
-    if (strcmp(name, exec))
+    if (strcmp(name, exec) != 0)
     {
         int r = set_helper_option(transport, "servpath", exec);
         if (r > 0)
+        {
             warning(_("setting remote service path not supported by protocol"));
+        }
         else if (r < 0)
+        {
             warning(_("invalid remote service path"));
+        }
     }
 
     if (data->connect)
@@ -679,7 +804,9 @@ static int process_connect_service(struct transport *transport,
         strbuf_addf(&cmdbuf, "stateless-connect %s\n", name);
         ret = run_connect(transport, &cmdbuf);
         if (ret)
+        {
             transport->stateless_rpc = 1;
+        }
     }
 
     strbuf_release(&cmdbuf);
@@ -696,13 +823,19 @@ static int process_connect(struct transport *transport,
 
     name = for_push ? "git-receive-pack" : "git-upload-pack";
     if (for_push)
+    {
         exec = data->transport_options.receivepack;
+    }
     else
+    {
         exec = data->transport_options.uploadpack;
+    }
 
     ret = process_connect_service(transport, name, exec);
     if (ret)
+    {
         do_take_over(transport);
+    }
     return ret;
 }
 
@@ -715,7 +848,9 @@ static int connect_helper(struct transport *transport, const char *name,
     get_helper(transport);
 
     if (!process_connect_service(transport, name, exec))
+    {
         die(_("can't connect to subservice %s"), name);
+    }
 
     fd[0] = data->helper->out;
     fd[1] = data->helper->in;
@@ -731,12 +866,15 @@ static int fetch_refs(struct transport *transport,
                       int nr_heads, struct ref **to_fetch)
 {
     struct helper_data *data = transport->data;
-    int                 i, count;
+    int                 i;
+    int                 count;
 
     get_helper(transport);
 
     if (process_connect(transport, 0))
+    {
         return transport->vtable->fetch_refs(transport, nr_heads, to_fetch);
+    }
 
     /*
      * If we reach here, then the server, the client, and/or the transport
@@ -750,27 +888,43 @@ static int fetch_refs(struct transport *transport,
     }
 
     if (!data->get_refs_list_called)
+    {
         get_refs_list_using_list(transport, 0);
+    }
 
     count = 0;
     for (i = 0; i < nr_heads; i++)
+    {
         if (!(to_fetch[i]->status & REF_STATUS_UPTODATE))
+        {
             count++;
+        }
+    }
 
     if (!count)
+    {
         return 0;
+    }
 
     if (data->check_connectivity && data->transport_options.check_self_contained_and_connected)
+    {
         set_helper_option(transport, "check-connectivity", "true");
+    }
 
     if (transport->cloning)
+    {
         set_helper_option(transport, "cloning", "true");
+    }
 
     if (data->transport_options.update_shallow)
+    {
         set_helper_option(transport, "update-shallow", "true");
+    }
 
     if (data->transport_options.refetch)
+    {
         set_helper_option(transport, "refetch", "true");
+    }
 
     if (data->transport_options.filter_options.choice)
     {
@@ -780,13 +934,19 @@ static int fetch_refs(struct transport *transport,
     }
 
     if (data->transport_options.negotiation_tips)
+    {
         warning("Ignoring --negotiation-tip because the protocol does not support it.");
+    }
 
     if (data->fetch)
+    {
         return fetch_with_fetch(transport, nr_heads, to_fetch);
+    }
 
     if (data->import)
+    {
         return fetch_with_import(transport, nr_heads, to_fetch);
+    }
 
     return -1;
 }
@@ -802,17 +962,23 @@ static int push_update_ref_status(struct strbuf                *buf,
                                   struct push_update_ref_state *state,
                                   struct ref                   *remote_refs)
 {
-    char *refname, *msg;
-    int   status, forced = 0;
+    char *refname;
+    char *msg;
+    int   status;
+    int   forced = 0;
 
     if (starts_with(buf->buf, "option "))
     {
-        struct object_id old_oid, new_oid;
-        const char      *key, *val;
+        struct object_id old_oid;
+        struct object_id new_oid;
+        const char      *key;
+        const char      *val;
         char            *p;
 
         if (!state->hint || !(state->report || state->new_report))
+        {
             die(_("'option' without a matching 'ok/error' directive"));
+        }
         if (state->new_report)
         {
             if (!state->hint->report)
@@ -824,7 +990,9 @@ static int push_update_ref_status(struct strbuf                *buf,
             {
                 state->report = state->hint->report;
                 while (state->report->next)
+                {
                     state->report = state->report->next;
+                }
                 CALLOC_ARRAY(state->report->next, 1);
                 state->report = state->report->next;
             }
@@ -833,16 +1001,26 @@ static int push_update_ref_status(struct strbuf                *buf,
         key = buf->buf + 7;
         p   = strchr(key, ' ');
         if (p)
+        {
             *p++ = '\0';
+        }
         val = p;
         if (!strcmp(key, "refname"))
+        {
             state->report->ref_name = xstrdup_or_null(val);
+        }
         else if (!strcmp(key, "old-oid") && val && !parse_oid_hex(val, &old_oid, &val))
+        {
             state->report->old_oid = oiddup(&old_oid);
+        }
         else if (!strcmp(key, "new-oid") && val && !parse_oid_hex(val, &new_oid, &val))
+        {
             state->report->new_oid = oiddup(&new_oid);
+        }
         else if (!strcmp(key, "forced-update"))
+        {
             state->report->forced_update = 1;
+        }
         /* Not update remote namespace again. */
         return 1;
     }
@@ -861,7 +1039,9 @@ static int push_update_ref_status(struct strbuf                *buf,
         refname = buf->buf + 6;
     }
     else
+    {
         die(_("expected ok/error, helper said '%s'"), buf->buf);
+    }
 
     msg = strchr(refname, ' ');
     if (msg)
@@ -871,9 +1051,13 @@ static int push_update_ref_status(struct strbuf                *buf,
 
         *msg++ = '\0';
         if (!unquote_c_style(&msg_buf, msg, &end))
+        {
             msg = strbuf_detach(&msg_buf, NULL);
+        }
         else
+        {
             msg = xstrdup(msg);
+        }
         strbuf_release(&msg_buf);
 
         if (!strcmp(msg, "no match"))
@@ -929,9 +1113,13 @@ static int push_update_ref_status(struct strbuf                *buf,
     }
 
     if (state->hint)
+    {
         state->hint = find_ref_by_name(state->hint, refname);
+    }
     if (!state->hint)
+    {
         state->hint = find_ref_by_name(remote_refs, refname);
+    }
     if (!state->hint)
     {
         warning(_("helper reported unexpected status of %s"), refname);
@@ -945,11 +1133,15 @@ static int push_update_ref_status(struct strbuf                *buf,
          * status reported by the remote helper if the latter is 'no match'.
          */
         if (status == REF_STATUS_NONE)
+        {
             return 1;
+        }
     }
 
     if (status == REF_STATUS_OK)
+    {
         state->new_report = 1;
+    }
     state->hint->status = status;
     state->hint->forced_update |= forced;
     state->hint->remote_status = msg;
@@ -973,13 +1165,17 @@ static int push_update_refs_status(struct helper_data *data,
             return 1;
         }
         if (!buf.len)
+        {
             break;
+        }
         push_update_ref_status(&buf, &state, remote_refs);
     }
     strbuf_release(&buf);
 
     if (flags & TRANSPORT_PUSH_DRY_RUN || !data->rs.nr || data->no_private_update)
+    {
         return 0;
+    }
 
     /* propagate back the update to the remote namespace */
     for (ref = remote_refs; ref; ref = ref->next)
@@ -987,13 +1183,17 @@ static int push_update_refs_status(struct helper_data *data,
         char *private;
 
         if (ref->status != REF_STATUS_OK)
+        {
             continue;
+        }
 
         if (!ref->report)
         {
             private = apply_refspecs(&data->rs, ref->name);
             if (!private)
+            {
                 continue;
+            }
             refs_update_ref(get_main_ref_store(the_repository),
                             "update by helper", private,
                             &(ref->new_oid),
@@ -1009,7 +1209,9 @@ static int push_update_refs_status(struct helper_data *data,
                                              ? report->ref_name
                                              : ref->name);
                 if (!private)
+                {
                     continue;
+                }
                 refs_update_ref(get_main_ref_store(the_repository),
                                 "update by helper", private,
                                 report->new_oid
@@ -1029,33 +1231,49 @@ static void set_common_push_options(struct transport *transport,
     if (flags & TRANSPORT_PUSH_DRY_RUN)
     {
         if (set_helper_option(transport, "dry-run", "true") != 0)
+        {
             die(_("helper %s does not support dry-run"), name);
+        }
     }
     else if (flags & TRANSPORT_PUSH_CERT_ALWAYS)
     {
         if (set_helper_option(transport, TRANS_OPT_PUSH_CERT, "true") != 0)
+        {
             die(_("helper %s does not support --signed"), name);
+        }
     }
     else if (flags & TRANSPORT_PUSH_CERT_IF_ASKED)
     {
         if (set_helper_option(transport, TRANS_OPT_PUSH_CERT, "if-asked") != 0)
+        {
             die(_("helper %s does not support --signed=if-asked"), name);
+        }
     }
 
     if (flags & TRANSPORT_PUSH_ATOMIC)
+    {
         if (set_helper_option(transport, TRANS_OPT_ATOMIC, "true") != 0)
+        {
             die(_("helper %s does not support --atomic"), name);
+        }
+    }
 
     if (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES)
+    {
         if (set_helper_option(transport, TRANS_OPT_FORCE_IF_INCLUDES, "true") != 0)
+        {
             die(_("helper %s does not support --%s"),
                 name, TRANS_OPT_FORCE_IF_INCLUDES);
+        }
+    }
 
     if (flags & TRANSPORT_PUSH_OPTIONS)
     {
         struct string_list_item *item;
         for_each_string_list_item(item, transport->push_options) if (set_helper_option(transport, "push-option", item->string) != 0)
+        {
             die(_("helper %s does not support 'push-option'"), name);
+        }
     }
 }
 
@@ -1073,12 +1291,16 @@ static int push_refs_with_push(struct transport *transport,
 
     get_helper(transport);
     if (!data->push)
+    {
         return 1;
+    }
 
     for (ref = remote_refs; ref; ref = ref->next)
     {
         if (!ref->peer_ref && !mirror)
+        {
             continue;
+        }
 
         /* Check for statuses set by set_ref_status_for_push() */
         switch (ref->status)
@@ -1094,24 +1316,34 @@ static int push_refs_with_push(struct transport *transport,
                     return 0;
                 }
                 else
+                {
                     continue;
+                }
             case REF_STATUS_UPTODATE:
                 continue;
             default:; /* do nothing */
         }
 
         if (force_all)
+        {
             ref->force = 1;
+        }
 
         strbuf_addstr(&buf, "push ");
         if (!ref->deletion)
         {
             if (ref->force)
+            {
                 strbuf_addch(&buf, '+');
+            }
             if (ref->peer_ref)
+            {
                 strbuf_addstr(&buf, ref->peer_ref->name);
+            }
             else
+            {
                 strbuf_addstr(&buf, oid_to_hex(&ref->new_oid));
+            }
         }
         strbuf_addch(&buf, ':');
         strbuf_addstr(&buf, ref->name);
@@ -1155,19 +1387,24 @@ static int push_refs_with_export(struct transport *transport,
                                  struct ref *remote_refs, int flags)
 {
     struct ref           *ref;
-    struct child_process *helper, exporter;
+    struct child_process *helper;
+    struct child_process  exporter;
     struct helper_data   *data         = transport->data;
     struct string_list    revlist_args = STRING_LIST_INIT_DUP;
     struct strbuf         buf          = STRBUF_INIT;
 
     if (!data->rs.nr)
+    {
         die(_("remote-helper doesn't support push; refspec needed"));
+    }
 
     set_common_push_options(transport, data->name, flags);
     if (flags & TRANSPORT_PUSH_FORCE)
     {
         if (set_helper_option(transport, "force", "true") != 0)
+        {
             warning(_("helper %s does not support '--force'"), data->name);
+        }
     }
 
     helper = get_helper(transport);
@@ -1191,7 +1428,7 @@ static int push_refs_with_export(struct transport *transport,
 
         if (ref->peer_ref)
         {
-            if (strcmp(ref->name, ref->peer_ref->name))
+            if (strcmp(ref->name, ref->peer_ref->name) != 0)
             {
                 if (!ref->deletion)
                 {
@@ -1205,31 +1442,43 @@ static int push_refs_with_export(struct transport *transport,
                                                    &oid,
                                                    &flag);
                     if (!name || !(flag & REF_ISSYMREF))
+                    {
                         name = ref->peer_ref->name;
+                    }
 
                     strbuf_addf(&buf, "%s:%s", name, ref->name);
                 }
                 else
+                {
                     strbuf_addf(&buf, ":%s", ref->name);
+                }
 
                 string_list_append(&revlist_args, "--refspec");
                 string_list_append(&revlist_args, buf.buf);
                 strbuf_release(&buf);
             }
             if (!ref->deletion)
+            {
                 string_list_append(&revlist_args, ref->peer_ref->name);
+            }
         }
     }
 
     if (get_exporter(transport, &exporter, &revlist_args))
+    {
         die(_("couldn't run fast-export"));
+    }
 
     string_list_clear(&revlist_args, 1);
 
     if (finish_command(&exporter))
+    {
         die(_("error while running fast-export"));
+    }
     if (push_update_refs_status(data, remote_refs, flags))
+    {
         return 1;
+    }
 
     if (data->export_marks)
     {
@@ -1247,7 +1496,9 @@ static int push_refs(struct transport *transport,
     struct helper_data *data = transport->data;
 
     if (process_connect(transport, 1))
+    {
         return transport->vtable->push_refs(transport, remote_refs, flags);
+    }
 
     if (!remote_refs)
     {
@@ -1258,10 +1509,14 @@ static int push_refs(struct transport *transport,
     }
 
     if (data->push)
+    {
         return push_refs_with_push(transport, remote_refs, flags);
+    }
 
     if (data->export)
+    {
         return push_refs_with_export(transport, remote_refs, flags);
+    }
 
     return -1;
 }
@@ -1270,16 +1525,22 @@ static int has_attribute(const char *attrs, const char *attr)
 {
     int len;
     if (!attrs)
+    {
         return 0;
+    }
 
     len = strlen(attr);
     for (;;)
     {
         const char *space = strchrnul(attrs, ' ');
         if (len == space - attrs && !strncmp(attrs, attr, len))
+        {
             return 1;
+        }
         if (!*space)
+        {
             return 0;
+        }
         attrs = space + 1;
     }
 }
@@ -1290,8 +1551,10 @@ static struct ref *get_refs_list(struct transport *transport, int for_push,
     get_helper(transport);
 
     if (process_connect(transport, for_push))
+    {
         return transport->vtable->get_refs_list(transport, for_push,
                                                 transport_options);
+    }
 
     return get_refs_list_using_list(transport, for_push);
 }
@@ -1310,22 +1573,33 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
     helper                     = get_helper(transport);
 
     if (data->object_format)
+    {
         set_helper_option(transport, "object-format", "true");
+    }
 
     if (data->push && for_push)
+    {
         write_constant(helper->in, "list for-push\n");
+    }
     else
+    {
         write_constant(helper->in, "list\n");
+    }
 
     while (1)
     {
-        char *eov, *eon;
+        char *eov;
+        char *eon;
         if (recvline(data, &buf))
+        {
             exit(128);
+        }
 
         if (!*buf.buf)
+        {
             break;
-        else if (buf.buf[0] == ':')
+        }
+        if (buf.buf[0] == ':')
         {
             const char *value;
             if (skip_prefix(buf.buf, ":object-format ", &value))
@@ -1341,34 +1615,48 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
 
         eov = strchr(buf.buf, ' ');
         if (!eov)
+        {
             die(_("malformed response in ref list: %s"), buf.buf);
+        }
         eon  = strchr(eov + 1, ' ');
         *eov = '\0';
         if (eon)
+        {
             *eon = '\0';
+        }
         *tail = alloc_ref(eov + 1);
         if (buf.buf[0] == '@')
+        {
             (*tail)->symref = xstrdup(buf.buf + 1);
+        }
         else if (buf.buf[0] != '?')
+        {
             get_oid_hex_algop(buf.buf, &(*tail)->old_oid, transport->hash_algo);
+        }
         if (eon)
         {
             if (has_attribute(eon + 1, "unchanged"))
             {
                 (*tail)->status |= REF_STATUS_UPTODATE;
                 if (refs_read_ref(get_main_ref_store(the_repository), (*tail)->name, &(*tail)->old_oid) < 0)
+                {
                     die(_("could not read ref %s"),
                         (*tail)->name);
+                }
             }
         }
         tail = &((*tail)->next);
     }
     if (debug)
+    {
         fprintf(stderr, "Debug: Read ref listing.\n");
+    }
     strbuf_release(&buf);
 
     for (posn = ret; posn; posn = posn->next)
+    {
         resolve_remote_symref(posn, ret);
+    }
 
     return ret;
 }
@@ -1378,7 +1666,9 @@ static int get_bundle_uri(struct transport *transport)
     get_helper(transport);
 
     if (process_connect(transport, 0))
+    {
         return transport->vtable->get_bundle_uri(transport);
+    }
 
     return -1;
 }
@@ -1400,7 +1690,9 @@ int transport_helper_init(struct transport *transport, const char *name)
     transport_check_allowed(name);
 
     if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))
+    {
         debug = 1;
+    }
 
     list_objects_filter_init(&data->transport_options.filter_options);
 
@@ -1433,9 +1725,13 @@ __attribute__((format(printf, 1, 2))) static void transfer_debug(const char *fmt
     static int debug_enabled = -1;
 
     if (debug_enabled < 0)
+    {
         debug_enabled = getenv("GIT_TRANSLOOP_DEBUG") ? 1 : 0;
+    }
     if (!debug_enabled)
+    {
         return;
+    }
 
     va_start(args, fmt);
     vsnprintf(msgbuf, PBUFFERSIZE, fmt, args);
@@ -1487,9 +1783,13 @@ static void udt_close_if_finished(struct unidirectional_transfer *t)
     {
         t->state = SSTATE_FINISHED;
         if (t->dest_is_sock)
+        {
             shutdown(t->dest, SHUT_WR);
+        }
         else
+        {
             close(t->dest);
+        }
         transfer_debug("Closed %s.", t->dest_name);
     }
 }
@@ -1503,7 +1803,9 @@ static int udt_do_read(struct unidirectional_transfer *t)
     ssize_t bytes;
 
     if (t->bufuse == BUFFERSIZE)
+    {
         return 0; /* No space for more. */
+    }
 
     transfer_debug("%s is readable", t->src_name);
     bytes = xread(t->src, t->buf + t->bufuse, BUFFERSIZE - t->bufuse);
@@ -1512,7 +1814,7 @@ static int udt_do_read(struct unidirectional_transfer *t)
         error_errno(_("read(%s) failed"), t->src_name);
         return -1;
     }
-    else if (bytes == 0)
+    if (bytes == 0)
     {
         transfer_debug("%s EOF (with %i bytes in buffer)",
                        t->src_name, (int)t->bufuse);
@@ -1535,7 +1837,9 @@ static int udt_do_write(struct unidirectional_transfer *t)
     ssize_t bytes;
 
     if (t->bufuse == 0)
+    {
         return 0; /* Nothing to write. */
+    }
 
     transfer_debug("%s is writable", t->dest_name);
     bytes = xwrite(t->dest, t->buf, t->bufuse);
@@ -1544,7 +1848,7 @@ static int udt_do_write(struct unidirectional_transfer *t)
         error_errno(_("write(%s) failed"), t->dest_name);
         return -1;
     }
-    else if (bytes > 0)
+    if (bytes > 0)
     {
         t->bufuse -= bytes;
         if (t->bufuse)
@@ -1570,13 +1874,23 @@ static void *udt_copy_task_routine(void *udt)
     while (t->state != SSTATE_FINISHED)
     {
         if (STATE_NEEDS_READING(t->state))
+        {
             if (udt_do_read(t))
+            {
                 return NULL;
+            }
+        }
         if (STATE_NEEDS_WRITING(t->state))
+        {
             if (udt_do_write(t))
+            {
                 return NULL;
+            }
+        }
         if (STATE_NEEDS_CLOSING(t->state))
+        {
             udt_close_if_finished(t);
+        }
     }
     return udt; /* Just some non-NULL value. */
 }
@@ -1618,11 +1932,15 @@ static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
     err           = pthread_create(&gtp_thread, NULL, udt_copy_task_routine,
                                    &s->gtp);
     if (err)
+    {
         die(_("can't start thread for copying data: %s"), strerror(err));
+    }
     err = pthread_create(&ptg_thread, NULL, udt_copy_task_routine,
                          &s->ptg);
     if (err)
+    {
         die(_("can't start thread for copying data: %s"), strerror(err));
+    }
 
     ret |= tloop_join(gtp_thread, "Git to program copy");
     ret |= tloop_join(ptg_thread, "Program to git copy");
@@ -1751,7 +2069,9 @@ void reject_atomic_push(struct ref *remote_refs, int mirror_mode)
     for (ref = remote_refs; ref; ref = ref->next)
     {
         if (!ref->peer_ref && !mirror_mode)
+        {
             continue;
+        }
 
         switch (ref->status)
         {
@@ -1764,5 +2084,4 @@ void reject_atomic_push(struct ref *remote_refs, int mirror_mode)
                 break; /* do nothing */
         }
     }
-    return;
 }

@@ -15,9 +15,13 @@ static int do_generic_cmd(const char *me, char *arg)
 
     setup_path();
     if (!arg || !(arg = sq_dequote(arg)) || *arg == '-')
+    {
         die("bad argument");
+    }
     if (!skip_prefix(me, "git-", &me))
+    {
         die("bad command");
+    }
 
     my_argv[0] = me;
     my_argv[1] = arg;
@@ -41,9 +45,13 @@ static void cd_to_homedir(void)
 {
     const char *home = getenv("HOME");
     if (!home)
+    {
         die("could not determine user's home directory; HOME is unset");
+    }
     if (chdir(home) == -1)
+    {
         die("could not chdir to user's home directory");
+    }
 }
 
 #define MAX_INTERACTIVE_COMMAND (4 * 1024 * 1024)
@@ -62,7 +70,9 @@ static void run_shell(void)
         strvec_push(&nologin_cmd.args, NOLOGIN_COMMAND);
         status = run_command(&nologin_cmd);
         if (status < 0)
+        {
             exit(127);
+        }
         exit(status);
     }
 
@@ -106,12 +116,16 @@ static void run_shell(void)
          * there's a good chance it's just malicious garbage anyway.
          */
         if (len >= MAX_INTERACTIVE_COMMAND - 1)
+        {
             die("invalid command format: input too long");
+        }
 
         if (len > 0 && rawargs[len - 1] == '\n')
         {
             if (--len > 0 && rawargs[len - 1] == '\r')
+            {
                 --len;
+            }
             rawargs[len] = '\0';
         }
 
@@ -198,7 +212,7 @@ int cmd_main(int argc, const char **argv)
         run_shell();
         exit(0);
     }
-    else if (argc != 3 || strcmp(argv[1], "-c"))
+    else if (argc != 3 || strcmp(argv[1], "-c") != 0)
     {
         /*
          * We do not accept any other modes except "-c" followed by
@@ -210,15 +224,19 @@ int cmd_main(int argc, const char **argv)
 
     prog = xstrdup(argv[2]);
     if (!strncmp(prog, "git", 3) && isspace(prog[3]))
+    {
         /* Accept "git foo" as if the caller said "git-foo". */
         prog[3] = '-';
+    }
 
     for (cmd = cmd_list; cmd->name; cmd++)
     {
         int   len = strlen(cmd->name);
         char *arg;
-        if (strncmp(cmd->name, prog, len))
+        if (strncmp(cmd->name, prog, len) != 0)
+        {
             continue;
+        }
         arg = NULL;
         switch (prog[len])
         {

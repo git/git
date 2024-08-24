@@ -12,7 +12,8 @@ int is_urlschemechar(int first_flag, int ch)
      * of check used '[A-Za-z0-9]+' so not to break any remote
      * helpers.
      */
-    int alphanumeric, special;
+    int alphanumeric;
+    int special;
     alphanumeric = ch > 0 && isalnum(ch);
     special      = ch == '+' || ch == '-' || ch == '.';
     return alphanumeric || (!first_flag && special);
@@ -22,11 +23,15 @@ int is_url(const char *url)
 {
     /* Is "scheme" part reasonable? */
     if (!url || !is_urlschemechar(1, *url++))
+    {
         return 0;
+    }
     while (*url && *url != ':')
     {
         if (!is_urlschemechar(0, *url++))
+        {
             return 0;
+        }
     }
     /* We've seen "scheme"; we want colon-slash-slash */
     return (url[0] == ':' && url[1] == '/' && url[2] == '/');
@@ -43,7 +48,9 @@ static char *url_decode_internal(const char **query, int len,
         unsigned char c = *q;
 
         if (!c)
+        {
             break;
+        }
         if (stop_at && strchr(stop_at, c))
         {
             q++;
@@ -64,9 +71,13 @@ static char *url_decode_internal(const char **query, int len,
         }
 
         if (decode_plus && c == '+')
+        {
             strbuf_addch(out, ' ');
+        }
         else
+        {
             strbuf_addch(out, c);
+        }
         q++;
         len--;
     }

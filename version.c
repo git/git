@@ -13,7 +13,9 @@ const char *git_user_agent(void)
     {
         agent = getenv("GIT_USER_AGENT");
         if (!agent)
+        {
             agent = GIT_USER_AGENT;
+        }
     }
 
     return agent;
@@ -33,7 +35,9 @@ const char *git_user_agent_sanitized(void)
         for (i = 0; i < buf.len; i++)
         {
             if (buf.buf[i] <= 32 || buf.buf[i] >= 127)
+            {
                 buf.buf[i] = '.';
+            }
         }
         agent = buf.buf;
     }

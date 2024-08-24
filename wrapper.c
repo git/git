@@ -22,7 +22,9 @@ static int memory_limit_check(size_t size, int gentle)
     {
         limit = git_env_ulong("GIT_ALLOC_LIMIT", 0);
         if (!limit)
+        {
             limit = SIZE_MAX;
+        }
     }
     if (size > limit)
     {
@@ -32,9 +34,8 @@ static int memory_limit_check(size_t size, int gentle)
                   (uintmax_t)size, (uintmax_t)limit);
             return -1;
         }
-        else
-            die("attempting to allocate %" PRIuMAX " over limit %" PRIuMAX,
-                (uintmax_t)size, (uintmax_t)limit);
+        die("attempting to allocate %" PRIuMAX " over limit %" PRIuMAX,
+            (uintmax_t)size, (uintmax_t)limit);
     }
     return 0;
 }
@@ -43,7 +44,9 @@ char *xstrdup(const char *str)
 {
     char *ret = strdup(str);
     if (!ret)
+    {
         die("Out of memory, strdup failed");
+    }
     return ret;
 }
 
@@ -52,15 +55,21 @@ static void *do_xmalloc(size_t size, int gentle)
     void *ret;
 
     if (memory_limit_check(size, gentle))
+    {
         return NULL;
+    }
     ret = malloc(size);
     if (!ret && !size)
+    {
         ret = malloc(1);
+    }
     if (!ret)
     {
         if (!gentle)
+        {
             die("Out of memory, malloc failed (tried to allocate %lu bytes)",
                 (unsigned long)size);
+        }
         else
         {
             error("Out of memory, malloc failed (tried to allocate %lu bytes)",
@@ -89,12 +98,13 @@ static void *do_xmallocz(size_t size, int gentle)
             error("Data too large to fit into virtual memory space.");
             return NULL;
         }
-        else
-            die("Data too large to fit into virtual memory space.");
+        die("Data too large to fit into virtual memory space.");
     }
     ret = do_xmalloc(size + 1, gentle);
     if (ret)
+    {
         ((char *)ret)[size] = 0;
+    }
     return ret;
 }
 
@@ -129,7 +139,9 @@ int xstrncmpz(const char *s, const char *t, size_t len)
 {
     int res = strncmp(s, t, len);
     if (res)
+    {
         return res;
+    }
     return s[len] == '\0' ? 0 : 1;
 }
 
@@ -146,7 +158,9 @@ void *xrealloc(void *ptr, size_t size)
     memory_limit_check(size, 0);
     ret = realloc(ptr, size);
     if (!ret)
+    {
         die("Out of memory, realloc failed");
+    }
     return ret;
 }
 
@@ -155,21 +169,29 @@ void *xcalloc(size_t nmemb, size_t size)
     void *ret;
 
     if (unsigned_mult_overflows(nmemb, size))
+    {
         die("data too large to fit into virtual memory space");
+    }
 
     memory_limit_check(size * nmemb, 0);
     ret = calloc(nmemb, size);
     if (!ret && (!nmemb || !size))
+    {
         ret = calloc(1, 1);
+    }
     if (!ret)
+    {
         die("Out of memory, calloc failed");
+    }
     return ret;
 }
 
 void xsetenv(const char *name, const char *value, int overwrite)
 {
     if (setenv(name, value, overwrite))
+    {
         die_errno(_("could not setenv '%s'"), name ? name : "(null)");
+    }
 }
 
 /**
@@ -188,25 +210,39 @@ int xopen(const char *path, int oflag, ...)
      */
     va_start(ap, oflag);
     if (oflag & O_CREAT)
+    {
         mode = va_arg(ap, int);
+    }
     va_end(ap);
 
     for (;;)
     {
         int fd = open(path, oflag, mode);
         if (fd >= 0)
+        {
             return fd;
+        }
         if (errno == EINTR)
+        {
             continue;
+        }
 
         if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
+        {
             die_errno(_("unable to create '%s'"), path);
+        }
         else if ((oflag & O_RDWR) == O_RDWR)
+        {
             die_errno(_("could not open '%s' for reading and writing"), path);
+        }
         else if ((oflag & O_WRONLY) == O_WRONLY)
+        {
             die_errno(_("could not open '%s' for writing"), path);
+        }
         else
+        {
             die_errno(_("could not open '%s' for reading"), path);
+        }
     }
 }
 
@@ -215,7 +251,9 @@ static int handle_nonblock(int fd, short poll_events, int err)
     struct pollfd pfd;
 
     if (err != EAGAIN && err != EWOULDBLOCK)
+    {
         return 0;
+    }
 
     pfd.fd     = fd;
     pfd.events = poll_events;
@@ -237,16 +275,22 @@ ssize_t xread(int fd, void *buf, size_t len)
 {
     ssize_t nr;
     if (len > MAX_IO_SIZE)
+    {
         len = MAX_IO_SIZE;
+    }
     while (1)
     {
         nr = read(fd, buf, len);
         if (nr < 0)
         {
             if (errno == EINTR)
+            {
                 continue;
+            }
             if (handle_nonblock(fd, POLLIN, errno))
+            {
                 continue;
+            }
         }
         return nr;
     }
@@ -261,16 +305,22 @@ ssize_t xwrite(int fd, const void *buf, size_t len)
 {
     ssize_t nr;
     if (len > MAX_IO_SIZE)
+    {
         len = MAX_IO_SIZE;
+    }
     while (1)
     {
         nr = write(fd, buf, len);
         if (nr < 0)
         {
             if (errno == EINTR)
+            {
                 continue;
+            }
             if (handle_nonblock(fd, POLLOUT, errno))
+            {
                 continue;
+            }
         }
 
         return nr;
@@ -286,12 +336,16 @@ ssize_t xpread(int fd, void *buf, size_t len, off_t offset)
 {
     ssize_t nr;
     if (len > MAX_IO_SIZE)
+    {
         len = MAX_IO_SIZE;
+    }
     while (1)
     {
         nr = pread(fd, buf, len, offset);
         if ((nr < 0) && (errno == EAGAIN || errno == EINTR))
+        {
             continue;
+        }
         return nr;
     }
 }
@@ -305,9 +359,13 @@ ssize_t read_in_full(int fd, void *buf, size_t count)
     {
         ssize_t loaded = xread(fd, p, count);
         if (loaded < 0)
+        {
             return -1;
+        }
         if (loaded == 0)
+        {
             return total;
+        }
         count -= loaded;
         p += loaded;
         total += loaded;
@@ -325,7 +383,9 @@ ssize_t write_in_full(int fd, const void *buf, size_t count)
     {
         ssize_t written = xwrite(fd, p, count);
         if (written < 0)
+        {
             return -1;
+        }
         if (!written)
         {
             errno = ENOSPC;
@@ -348,9 +408,13 @@ ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset)
     {
         ssize_t loaded = xpread(fd, p, count, offset);
         if (loaded < 0)
+        {
             return -1;
+        }
         if (loaded == 0)
+        {
             return total;
+        }
         count -= loaded;
         p += loaded;
         total += loaded;
@@ -362,9 +426,11 @@ ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset)
 
 int xdup(int fd)
 {
-    int ret = dup(fd);
+    int ret = fcntl(fd, F_DUPFD_CLOEXEC);
     if (ret < 0)
+    {
         die_errno("dup failed");
+    }
     return ret;
 }
 
@@ -377,16 +443,26 @@ FILE *xfopen(const char *path, const char *mode)
     {
         FILE *fp = fopen(path, mode);
         if (fp)
+        {
             return fp;
+        }
         if (errno == EINTR)
+        {
             continue;
+        }
 
         if (*mode && mode[1] == '+')
+        {
             die_errno(_("could not open '%s' for reading and writing"), path);
+        }
         else if (*mode == 'w' || *mode == 'a')
+        {
             die_errno(_("could not open '%s' for writing"), path);
+        }
         else
+        {
             die_errno(_("could not open '%s' for reading"), path);
+        }
     }
 }
 
@@ -394,7 +470,9 @@ FILE *xfdopen(int fd, const char *mode)
 {
     FILE *stream = fdopen(fd, mode);
     if (!stream)
+    {
         die_errno("Out of memory? fdopen failed");
+    }
     return stream;
 }
 
@@ -405,9 +483,13 @@ FILE *fopen_for_writing(const char *path)
     if (!ret && errno == EPERM)
     {
         if (!unlink(path))
+        {
             ret = fopen(path, "w");
+        }
         else
+        {
             errno = EPERM;
+        }
     }
     return ret;
 }
@@ -433,7 +515,9 @@ FILE *fopen_or_warn(const char *path, const char *mode)
     FILE *fp = fopen(path, mode);
 
     if (fp)
+    {
         return fp;
+    }
 
     warn_on_fopen_errors(path);
     return NULL;
@@ -452,7 +536,9 @@ int xmkstemp(char *filename_template)
         const char *nonrelative_template;
 
         if (strlen(filename_template) != strlen(origtemplate))
+        {
             filename_template = origtemplate;
+        }
 
         nonrelative_template = absolute_path(filename_template);
         errno                = saved_errno;
@@ -478,7 +564,8 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
     static const int  num_x       = ARRAY_SIZE(x_pattern) - 1;
     char             *filename_template;
     size_t            len;
-    int               fd, count;
+    int               fd;
+    int               count;
 
     len = strlen(pattern);
 
@@ -488,7 +575,7 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
         return -1;
     }
 
-    if (strncmp(&pattern[len - num_x - suffix_len], x_pattern, num_x))
+    if (strncmp(&pattern[len - num_x - suffix_len], x_pattern, num_x) != 0)
     {
         errno = EINVAL;
         return -1;
@@ -504,7 +591,9 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
         int      i;
         uint64_t v;
         if (csprng_bytes(&v, sizeof(v)) < 0)
+        {
             return error_errno("unable to get random bytes for temporary file");
+        }
 
         /* Fill in the random bits. */
         for (i = 0; i < num_x; i++)
@@ -513,15 +602,19 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
             v /= num_letters;
         }
 
-        fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
+        fd = open(pattern, O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, mode);
         if (fd >= 0)
+        {
             return fd;
+        }
         /*
          * Fatal error (EPERM, ENOSPC etc).
          * It doesn't make sense to loop.
          */
         if (errno != EEXIST)
+        {
             break;
+        }
     }
     /* We return the null string if we can't find a unique file name.  */
     pattern[0] = '\0';
@@ -547,7 +640,9 @@ int xmkstemp_mode(char *filename_template, int mode)
         const char *nonrelative_template;
 
         if (!filename_template[0])
+        {
             filename_template = origtemplate;
+        }
 
         nonrelative_template = absolute_path(filename_template);
         errno                = saved_errno;
@@ -628,7 +723,9 @@ static int warn_if_unremovable(const char *op, const char *file, int rc)
 {
     int err;
     if (!rc || errno == ENOENT)
+    {
         return 0;
+    }
     err = errno;
     warning_errno("unable to %s '%s'", op, file);
     errno = err;
@@ -642,7 +739,9 @@ int unlink_or_msg(const char *file, struct strbuf *err)
     assert(err);
 
     if (!rc || errno == ENOENT)
+    {
         return 0;
+    }
 
     strbuf_addf(err, "unable to unlink '%s': %s",
                 file, strerror(errno));
@@ -668,7 +767,9 @@ int access_or_warn(const char *path, int mode, unsigned flag)
 {
     int ret = access(path, mode);
     if (ret && !access_error_is_ok(errno, flag))
+    {
         warn_on_inaccessible(path);
+    }
     return ret;
 }
 
@@ -676,7 +777,9 @@ int access_or_die(const char *path, int mode, unsigned flag)
 {
     int ret = access(path, mode);
     if (ret && !access_error_is_ok(errno, flag))
+    {
         die_errno(_("unable to access '%s'"), path);
+    }
     return ret;
 }
 
@@ -684,7 +787,9 @@ char *xgetcwd(void)
 {
     struct strbuf sb = STRBUF_INIT;
     if (strbuf_getcwd(&sb))
+    {
         die_errno(_("unable to get current working directory"));
+    }
     return strbuf_detach(&sb, NULL);
 }
 
@@ -698,9 +803,13 @@ int xsnprintf(char *dst, size_t max, const char *fmt, ...)
     va_end(ap);
 
     if (len < 0)
+    {
         die(_("unable to format message: %s"), fmt);
+    }
     if (len >= max)
+    {
         BUG("attempt to snprintf into too-small buffer");
+    }
     return len;
 }
 
@@ -708,9 +817,13 @@ void write_file_buf(const char *path, const char *buf, size_t len)
 {
     int fd = xopen(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
     if (write_in_full(fd, buf, len) < 0)
+    {
         die_errno(_("could not write to '%s'"), path);
+    }
     if (close(fd))
+    {
         die_errno(_("could not close '%s'"), path);
+    }
 }
 
 void write_file(const char *path, const char *fmt, ...)
@@ -742,7 +855,9 @@ int xgethostname(char *buf, size_t len)
      */
     int ret = gethostname(buf, len);
     if (!ret)
+    {
         buf[len - 1] = 0;
+    }
     return ret;
 }
 
@@ -753,7 +868,9 @@ int is_empty_or_missing_file(const char *filename)
     if (stat(filename, &st) < 0)
     {
         if (errno == ENOENT)
+        {
             return 1;
+        }
         die_errno(_("could not stat %s"), filename);
     }
 
@@ -825,10 +942,13 @@ int csprng_bytes(void *buf, size_t len)
 #else
     ssize_t res;
     char   *p = buf;
-    int     fd, err;
-    fd = open("/dev/urandom", O_RDONLY);
+    int     fd;
+    int     err;
+    fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
     if (fd < 0)
+    {
         return -1;
+    }
     while (len)
     {
         res = xread(fd, p, len);
@@ -852,7 +972,9 @@ uint32_t git_rand(void)
     uint32_t result;
 
     if (csprng_bytes(&result, sizeof(result)) < 0)
+    {
         die(_("unable to get random bytes"));
+    }
 
     return result;
 }

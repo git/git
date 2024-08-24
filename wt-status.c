@@ -56,9 +56,13 @@ static const char *color(int slot, struct wt_status *s)
 {
     const char *c = "";
     if (want_color(s->use_color))
+    {
         c = s->color_palette[slot];
+    }
     if (slot == WT_STATUS_ONBRANCH && color_is_nil(c))
+    {
         c = s->color_palette[WT_STATUS_HEADER];
+    }
     return c;
 }
 
@@ -67,7 +71,8 @@ static void status_vprintf(struct wt_status *s, int at_bol, const char *color,
 {
     struct strbuf sb      = STRBUF_INIT;
     struct strbuf linebuf = STRBUF_INIT;
-    const char   *line, *eol;
+    const char   *line;
+    const char   *eol;
 
     strbuf_vaddf(&sb, fmt, ap);
     if (!sb.len)
@@ -76,11 +81,15 @@ static void status_vprintf(struct wt_status *s, int at_bol, const char *color,
         {
             strbuf_addstr(&sb, comment_line_str);
             if (!trail)
+            {
                 strbuf_addch(&sb, ' ');
+            }
         }
         color_print_strbuf(s->fp, color, &sb);
         if (trail)
+        {
             fprintf(s->fp, "%s", trail);
+        }
         strbuf_release(&sb);
         return;
     }
@@ -93,21 +102,33 @@ static void status_vprintf(struct wt_status *s, int at_bol, const char *color,
         {
             strbuf_addstr(&linebuf, comment_line_str);
             if (*line != '\n' && *line != '\t')
+            {
                 strbuf_addch(&linebuf, ' ');
+            }
         }
         if (eol)
+        {
             strbuf_add(&linebuf, line, eol - line);
+        }
         else
+        {
             strbuf_addstr(&linebuf, line);
+        }
         color_print_strbuf(s->fp, color, &linebuf);
         if (eol)
+        {
             fprintf(s->fp, "\n");
+        }
         else
+        {
             break;
+        }
         at_bol = 1;
     }
     if (trail)
+    {
         fprintf(s->fp, "%s", trail);
+    }
     strbuf_release(&linebuf);
     strbuf_release(&sb);
 }
@@ -201,28 +222,42 @@ static void wt_longstatus_print_unmerged_header(struct wt_status *s)
     }
 
     if (!s->hints)
+    {
         return;
+    }
     if (s->whence != FROM_COMMIT)
+    {
         ;
+    }
     else if (!s->is_initial)
     {
         if (!strcmp(s->reference, "HEAD"))
+        {
             status_printf_ln(s, c,
                              _("  (use \"git restore --staged <file>...\" to unstage)"));
+        }
         else
+        {
             status_printf_ln(s, c,
                              _("  (use \"git restore --source=%s --staged <file>...\" to unstage)"),
                              s->reference);
+        }
     }
     else
+    {
         status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
+    }
 
     if (!both_deleted)
     {
         if (!del_mod_conflict)
+        {
             status_printf_ln(s, c, _("  (use \"git add <file>...\" to mark resolution)"));
+        }
         else
+        {
             status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" as appropriate to mark resolution)"));
+        }
     }
     else if (!del_mod_conflict && !not_deleted)
     {
@@ -240,20 +275,30 @@ static void wt_longstatus_print_cached_header(struct wt_status *s)
 
     status_printf_ln(s, c, _("Changes to be committed:"));
     if (!s->hints)
+    {
         return;
+    }
     if (s->whence != FROM_COMMIT)
+    {
         ; /* NEEDSWORK: use "git reset --unresolve"??? */
+    }
     else if (!s->is_initial)
     {
         if (!strcmp(s->reference, "HEAD"))
+        {
             status_printf_ln(s, c, _("  (use \"git restore --staged <file>...\" to unstage)"));
+        }
         else
+        {
             status_printf_ln(s, c,
                              _("  (use \"git restore --source=%s --staged <file>...\" to unstage)"),
                              s->reference);
+        }
     }
     else
+    {
         status_printf_ln(s, c, _("  (use \"git rm --cached <file>...\" to unstage)"));
+    }
 }
 
 static void wt_longstatus_print_dirty_header(struct wt_status *s,
@@ -264,14 +309,22 @@ static void wt_longstatus_print_dirty_header(struct wt_status *s,
 
     status_printf_ln(s, c, _("Changes not staged for commit:"));
     if (!s->hints)
+    {
         return;
+    }
     if (!has_deleted)
+    {
         status_printf_ln(s, c, _("  (use \"git add <file>...\" to update what will be committed)"));
+    }
     else
+    {
         status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" to update what will be committed)"));
+    }
     status_printf_ln(s, c, _("  (use \"git restore <file>...\" to discard changes in working directory)"));
     if (has_dirty_submodules)
+    {
         status_printf_ln(s, c, _("  (commit or discard the untracked or modified content in submodules)"));
+    }
 }
 
 static void wt_longstatus_print_other_header(struct wt_status *s,
@@ -281,7 +334,9 @@ static void wt_longstatus_print_other_header(struct wt_status *s,
     const char *c = color(WT_STATUS_HEADER, s);
     status_printf_ln(s, c, "%s:", what);
     if (!s->hints)
+    {
         return;
+    }
     status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be committed)"), how);
 }
 
@@ -340,14 +395,17 @@ static const char *wt_status_diff_status_string(int status)
 
 static int maxwidth(const char *(*label)(int), int minval, int maxval)
 {
-    int result = 0, i;
+    int result = 0;
+    int i;
 
     for (i = minval; i <= maxval; i++)
     {
         const char *s   = label(i);
         int         len = s ? utf8_strwidth(s) : 0;
         if (len > result)
+        {
             result = len;
+        }
     }
     return result;
 }
@@ -360,7 +418,8 @@ static void wt_longstatus_print_unmerged_data(struct wt_status        *s,
     struct strbuf                 onebuf = STRBUF_INIT;
     static char                  *padding;
     static int                    label_width;
-    const char                   *one, *how;
+    const char                   *one;
+    const char                   *how;
     int                           len;
 
     if (!padding)
@@ -389,9 +448,11 @@ static void wt_longstatus_print_change_data(struct wt_status        *s,
     int                           status;
     char                         *one_name;
     char                         *two_name;
-    const char                   *one, *two;
-    struct strbuf                 onebuf = STRBUF_INIT, twobuf = STRBUF_INIT;
-    struct strbuf                 extra = STRBUF_INIT;
+    const char                   *one;
+    const char                   *two;
+    struct strbuf                 onebuf = STRBUF_INIT;
+    struct strbuf                 twobuf = STRBUF_INIT;
+    struct strbuf                 extra  = STRBUF_INIT;
     static char                  *padding;
     static int                    label_width;
     const char                   *what;
@@ -417,11 +478,17 @@ static void wt_longstatus_print_change_data(struct wt_status        *s,
             {
                 strbuf_addstr(&extra, " (");
                 if (d->new_submodule_commits)
+                {
                     strbuf_addstr(&extra, _("new commits, "));
+                }
                 if (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
+                {
                     strbuf_addstr(&extra, _("modified content, "));
+                }
                 if (d->dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
+                {
                     strbuf_addstr(&extra, _("untracked content, "));
+                }
                 strbuf_setlen(&extra, extra.len - 2);
                 strbuf_addch(&extra, ')');
             }
@@ -438,7 +505,9 @@ static void wt_longstatus_print_change_data(struct wt_status        *s,
      * ignore it.
      */
     if (d->rename_status == status)
+    {
         one_name = d->rename_source;
+    }
 
     one = quote_path(one_name, s->prefix, &onebuf, 0);
     two = quote_path(two_name, s->prefix, &twobuf, 0);
@@ -446,15 +515,21 @@ static void wt_longstatus_print_change_data(struct wt_status        *s,
     status_printf(s, color(WT_STATUS_HEADER, s), "\t");
     what = wt_status_diff_status_string(status);
     if (!what)
+    {
         BUG("unhandled diff status %c", status);
+    }
     len = label_width - utf8_strwidth(what);
     assert(len >= 0);
     if (one_name != two_name)
+    {
         status_printf_more(s, c, "%s%.*s%s -> %s",
                            what, len, padding, one, two);
+    }
     else
+    {
         status_printf_more(s, c, "%s%.*s%s",
                            what, len, padding, one);
+    }
     if (extra.len)
     {
         status_printf_more(s, color(WT_STATUS_HEADER, s), "%s", extra.buf);
@@ -468,11 +543,17 @@ static void wt_longstatus_print_change_data(struct wt_status        *s,
 static char short_submodule_status(struct wt_status_change_data *d)
 {
     if (d->new_submodule_commits)
+    {
         return 'M';
+    }
     if (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
+    {
         return 'm';
+    }
     if (d->dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
+    {
         return '?';
+    }
     return d->worktree_status;
 }
 
@@ -484,7 +565,9 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct    *q,
     int               i;
 
     if (!q->nr)
+    {
         return;
+    }
     s->workdir_dirty = 1;
     for (i = 0; i < q->nr; i++)
     {
@@ -501,14 +584,18 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct    *q,
             it->util = d;
         }
         if (!d->worktree_status)
+        {
             d->worktree_status = p->status;
+        }
         if (S_ISGITLINK(p->two->mode))
         {
             d->dirty_submodule       = p->two->dirty_submodule;
             d->new_submodule_commits = !oideq(&p->one->oid,
                                               &p->two->oid);
             if (s->status_format == STATUS_FORMAT_SHORT)
+            {
                 d->worktree_status = short_submodule_status(d);
+            }
         }
 
         switch (p->status)
@@ -526,7 +613,9 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct    *q,
             case DIFF_STATUS_COPIED:
             case DIFF_STATUS_RENAMED:
                 if (d->rename_status)
+                {
                     BUG("multiple renames on the same target? how?");
+                }
                 d->rename_source = xstrdup(p->one->path);
                 d->rename_score  = p->score * 100 / MAX_SCORE;
                 d->rename_status = p->status;
@@ -548,20 +637,25 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct    *q,
 
 static int unmerged_mask(struct index_state *istate, const char *path)
 {
-    int                       pos, mask;
+    int                       pos;
+    int                       mask;
     const struct cache_entry *ce;
 
     pos = index_name_pos(istate, path, strlen(path));
     if (0 <= pos)
+    {
         return 0;
+    }
 
     mask = 0;
     pos  = -pos - 1;
     while (pos < istate->cache_nr)
     {
         ce = istate->cache[pos++];
-        if (strcmp(ce->name, path) || !ce_stage(ce))
+        if (strcmp(ce->name, path) != 0 || !ce_stage(ce))
+        {
             break;
+        }
         mask |= (1 << (ce_stage(ce) - 1));
     }
     return mask;
@@ -589,7 +683,9 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct    *q,
             it->util = d;
         }
         if (!d->index_status)
+        {
             d->index_status = p->status;
+        }
         switch (p->status)
         {
             case DIFF_STATUS_ADDED:
@@ -608,7 +704,9 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct    *q,
             case DIFF_STATUS_COPIED:
             case DIFF_STATUS_RENAMED:
                 if (d->rename_status)
+                {
                     BUG("multiple renames on the same target? how?");
+                }
                 d->rename_source = xstrdup(p->one->path);
                 d->rename_score  = p->score * 100 / MAX_SCORE;
                 d->rename_status = p->status;
@@ -648,14 +746,18 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
     rev.diffopt.flags.dirty_submodules = 1;
     rev.diffopt.ita_invisible_in_index = 1;
     if (!s->show_untracked_files)
+    {
         rev.diffopt.flags.ignore_untracked_in_submodules = 1;
+    }
     if (s->ignore_submodule_arg)
     {
         rev.diffopt.flags.override_submodule_config = 1;
         handle_ignore_submodules_arg(&rev.diffopt, s->ignore_submodule_arg);
     }
     else if (!rev.diffopt.flags.ignore_submodule_set && s->show_untracked_files != SHOW_NO_UNTRACKED_FILES)
+    {
         handle_ignore_submodules_arg(&rev.diffopt, "none");
+    }
     rev.diffopt.format_callback      = wt_status_collect_changed_cb;
     rev.diffopt.format_callback_data = s;
     rev.diffopt.detect_rename        = s->detect_rename >= 0 ? s->detect_rename : rev.diffopt.detect_rename;
@@ -725,7 +827,9 @@ static int add_file_to_list(const struct object_id *oid,
     struct strbuf                 full_name = STRBUF_INIT;
 
     if (S_ISDIR(mode))
+    {
         return READ_TREE_RECURSIVE;
+    }
 
     strbuf_add(&full_name, base->buf, base->len);
     strbuf_addstr(&full_name, path);
@@ -758,9 +862,13 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
         const struct cache_entry     *ce = istate->cache[i];
 
         if (!ce_path_match(istate, ce, &s->pathspec, NULL))
+        {
             continue;
+        }
         if (ce_intent_to_add(ce))
+        {
             continue;
+        }
         if (S_ISSPARSEDIR(ce->ce_mode))
         {
             /*
@@ -820,17 +928,23 @@ static void wt_status_collect_untracked(struct wt_status *s)
     struct index_state *istate  = s->repo->index;
 
     if (!s->show_untracked_files)
+    {
         return;
+    }
 
     if (s->show_untracked_files != SHOW_ALL_UNTRACKED_FILES)
+    {
         dir.flags |=
             DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
+    }
     if (s->show_ignored_mode)
     {
         dir.flags |= DIR_SHOW_IGNORED_TOO;
 
         if (s->show_ignored_mode == SHOW_MATCHING_IGNORED)
+        {
             dir.flags |= DIR_SHOW_IGNORED_TOO_MODE_MATCHING;
+        }
     }
     else
     {
@@ -845,20 +959,26 @@ static void wt_status_collect_untracked(struct wt_status *s)
     {
         struct dir_entry *ent = dir.entries[i];
         if (index_name_is_other(istate, ent->name, ent->len))
+        {
             string_list_insert(&s->untracked, ent->name);
+        }
     }
 
     for (i = 0; i < dir.ignored_nr; i++)
     {
         struct dir_entry *ent = dir.ignored[i];
         if (index_name_is_other(istate, ent->name, ent->len))
+        {
             string_list_insert(&s->ignored, ent->name);
+        }
     }
 
     dir_clear(&dir);
 
     if (advice_enabled(ADVICE_STATUS_U_OPTION))
+    {
         s->untracked_in_ms = (getnanotime() - t_begin) / 1000000;
+    }
 }
 
 static int has_unmerged(struct wt_status *s)
@@ -870,7 +990,9 @@ static int has_unmerged(struct wt_status *s)
         struct wt_status_change_data *d;
         d = s->change.items[i].util;
         if (d->stagemask)
+        {
             return 1;
+        }
     }
     return 0;
 }
@@ -900,7 +1022,9 @@ void wt_status_collect(struct wt_status *s)
 
     wt_status_get_state(s->repo, &s->state, s->branch && !strcmp(s->branch, "HEAD"));
     if (s->state.merge_in_progress && !has_unmerged(s))
+    {
         s->committable = 1;
+    }
 }
 
 void wt_status_collect_free_buffers(struct wt_status *s)
@@ -928,7 +1052,9 @@ static void wt_longstatus_print_unmerged(struct wt_status *s)
         it = &(s->change.items[i]);
         d  = it->util;
         if (!d->stagemask)
+        {
             continue;
+        }
         if (!shown_header)
         {
             wt_longstatus_print_unmerged_header(s);
@@ -937,7 +1063,9 @@ static void wt_longstatus_print_unmerged(struct wt_status *s)
         wt_longstatus_print_unmerged_data(s, it);
     }
     if (shown_header)
+    {
         wt_longstatus_print_trailer(s);
+    }
 }
 
 static void wt_longstatus_print_updated(struct wt_status *s)
@@ -952,7 +1080,9 @@ static void wt_longstatus_print_updated(struct wt_status *s)
         it = &(s->change.items[i]);
         d  = it->util;
         if (!d->index_status || d->index_status == DIFF_STATUS_UNMERGED)
+        {
             continue;
+        }
         if (!shown_header)
         {
             wt_longstatus_print_cached_header(s);
@@ -961,7 +1091,9 @@ static void wt_longstatus_print_updated(struct wt_status *s)
         wt_longstatus_print_change_data(s, WT_STATUS_UPDATED, it);
     }
     if (shown_header)
+    {
         wt_longstatus_print_trailer(s);
+    }
 }
 
 /*
@@ -982,24 +1114,35 @@ static int wt_status_check_worktree_changes(struct wt_status *s,
         struct wt_status_change_data *d;
         d = s->change.items[i].util;
         if (!d->worktree_status || d->worktree_status == DIFF_STATUS_UNMERGED)
+        {
             continue;
+        }
         if (!changes)
+        {
             changes = 1;
+        }
         if (d->dirty_submodule)
+        {
             *dirty_submodules = 1;
+        }
         if (d->worktree_status == DIFF_STATUS_DELETED)
+        {
             changes = -1;
+        }
     }
     return changes;
 }
 
 static void wt_longstatus_print_changed(struct wt_status *s)
 {
-    int i, dirty_submodules;
+    int i;
+    int dirty_submodules;
     int worktree_changes = wt_status_check_worktree_changes(s, &dirty_submodules);
 
     if (!worktree_changes)
+    {
         return;
+    }
 
     wt_longstatus_print_dirty_header(s, worktree_changes < 0, dirty_submodules);
 
@@ -1010,7 +1153,9 @@ static void wt_longstatus_print_changed(struct wt_status *s)
         it = &(s->change.items[i]);
         d  = it->util;
         if (!d->worktree_status || d->worktree_status == DIFF_STATUS_UNMERGED)
+        {
             continue;
+        }
         wt_longstatus_print_change_data(s, WT_STATUS_CHANGED, it);
     }
     wt_longstatus_print_trailer(s);
@@ -1040,10 +1185,12 @@ static void wt_longstatus_print_stash_summary(struct wt_status *s)
     int stash_count = count_stash_entries();
 
     if (stash_count > 0)
+    {
         status_printf_ln(s, GIT_COLOR_NORMAL,
                          Q_("Your stash currently has %d entry",
                             "Your stash currently has %d entries", stash_count),
                          stash_count);
+    }
 }
 
 static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncommitted)
@@ -1062,7 +1209,9 @@ static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncom
     strvec_push(&sm_summary.args, "--summary-limit");
     strvec_pushf(&sm_summary.args, "%d", s->submodule_summary);
     if (!uncommitted)
+    {
         strvec_push(&sm_summary.args, s->amend ? "HEAD^" : "HEAD");
+    }
 
     sm_summary.git_cmd  = 1;
     sm_summary.no_stdin = 1;
@@ -1073,9 +1222,13 @@ static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncom
     if (cmd_stdout.len)
     {
         if (uncommitted)
+        {
             strbuf_addstr(&summary, _("Submodules changed but not updated:"));
+        }
         else
+        {
             strbuf_addstr(&summary, _("Submodule changes to be committed:"));
+        }
         strbuf_addstr(&summary, "\n\n");
     }
     strbuf_addbuf(&summary, &cmd_stdout);
@@ -1104,7 +1257,9 @@ static void wt_longstatus_print_other(struct wt_status   *s,
     struct column_options     copts;
 
     if (!l->nr)
+    {
         return;
+    }
 
     wt_longstatus_print_other_header(s, what, how);
 
@@ -1126,7 +1281,9 @@ static void wt_longstatus_print_other(struct wt_status   *s,
 
     strbuf_release(&buf);
     if (!column_active(s->colopts))
+    {
         goto conclude;
+    }
 
     strbuf_addf(&buf, "%s%s\t%s",
                 color(WT_STATUS_HEADER, s),
@@ -1136,7 +1293,9 @@ static void wt_longstatus_print_other(struct wt_status   *s,
     copts.padding = 1;
     copts.indent  = buf.buf;
     if (want_color(s->use_color))
+    {
         copts.nl = GIT_COLOR_RESET "\n";
+    }
     print_columns(&output, s->colopts, &copts);
     string_list_clear(&output, 0);
     strbuf_release(&buf);
@@ -1151,12 +1310,16 @@ size_t wt_status_locate_end(const char *s, size_t len)
 
     strbuf_addf(&pattern, "\n%s %s", comment_line_str, cut_line);
     if (starts_with(s, pattern.buf + 1))
+    {
         len = 0;
+    }
     else if ((p = strstr(s, pattern.buf)))
     {
         size_t newlen = p - s + 1;
         if (newlen < len)
+        {
             len = newlen;
+        }
     }
     strbuf_release(&pattern);
     return len;
@@ -1175,7 +1338,9 @@ void wt_status_add_cut_line(struct wt_status *s)
     struct strbuf buf = STRBUF_INIT;
 
     if (s->added_cut_line)
+    {
         return;
+    }
     s->added_cut_line = 1;
     wt_status_append_cut_line(&buf);
     fputs(buf.buf, s->fp);
@@ -1221,7 +1386,9 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
     {
         /* print_updated() printed a header, so do we */
         if (s->fp != stdout)
+        {
             wt_longstatus_print_trailer(s);
+        }
         status_printf_ln(s, c, _("Changes to be committed:"));
         rev.diffopt.a_prefix = "c/";
         rev.diffopt.b_prefix = "i/";
@@ -1243,20 +1410,26 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 static void wt_longstatus_print_tracking(struct wt_status *s)
 {
     struct strbuf  sb = STRBUF_INIT;
-    const char    *cp, *ep, *branch_name;
+    const char    *cp;
+    const char    *ep;
+    const char    *branch_name;
     struct branch *branch;
     uint64_t       t_begin = 0;
 
     assert(s->branch && !s->is_initial);
     if (!skip_prefix(s->branch, "refs/heads/", &branch_name))
+    {
         return;
+    }
     branch = branch_get(branch_name);
 
     t_begin = getnanotime();
 
     if (!format_tracking_info(branch, &sb, s->ahead_behind_flags,
                               !s->commit_template))
+    {
         return;
+    }
 
     if (advice_enabled(ADVICE_STATUS_AHEAD_BEHIND_WARNING) && s->ahead_behind_flags == AHEAD_BEHIND_FULL)
     {
@@ -1271,23 +1444,31 @@ static void wt_longstatus_print_tracking(struct wt_status *s)
     }
 
     for (cp = sb.buf; (ep = strchr(cp, '\n')) != NULL; cp = ep + 1)
+    {
         color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s),
                          "%s%s%.*s",
                          s->display_comment_prefix ? comment_line_str : "",
                          s->display_comment_prefix ? " " : "",
                          (int)(ep - cp), cp);
+    }
     if (s->display_comment_prefix)
+    {
         color_fprintf_ln(s->fp, color(WT_STATUS_HEADER, s), "%s",
                          comment_line_str);
+    }
     else
+    {
         fputs("\n", s->fp);
+    }
     strbuf_release(&sb);
 }
 
 static int uf_was_slow(struct wt_status *s)
 {
     if (getenv("GIT_TEST_UF_DELAY_WARNING"))
+    {
         s->untracked_in_ms = 3250;
+    }
     return UF_DELAY_WARNING_IN_MS < s->untracked_in_ms;
 }
 
@@ -1310,8 +1491,10 @@ static void show_merge_in_progress(struct wt_status *s,
         status_printf_ln(s, color,
                          _("All conflicts fixed but you are still merging."));
         if (s->hints)
+        {
             status_printf_ln(s, color,
                              _("  (use \"git commit\" to conclude merge)"));
+        }
     }
     wt_longstatus_print_trailer(s);
 }
@@ -1324,19 +1507,25 @@ static void show_am_in_progress(struct wt_status *s,
     status_printf_ln(s, color,
                      _("You are in the middle of an am session."));
     if (s->state.am_empty_patch)
+    {
         status_printf_ln(s, color,
                          _("The current patch is empty."));
+    }
     if (s->hints)
     {
         am_empty_patch = s->state.am_empty_patch;
         if (!am_empty_patch)
+        {
             status_printf_ln(s, color,
                              _("  (fix conflicts and then run \"git am --continue\")"));
+        }
         status_printf_ln(s, color,
                          _("  (use \"git am --skip\" to skip this patch)"));
         if (am_empty_patch)
+        {
             status_printf_ln(s, color,
                              _("  (use \"git am --allow-empty\" to record this patch as an empty commit)"));
+        }
         status_printf_ln(s, color,
                          _("  (use \"git am --abort\" to restore the original branch)"));
     }
@@ -1358,40 +1547,53 @@ static char *read_line_from_git_path(const char *filename)
     {
         return strbuf_detach(&buf, NULL);
     }
-    else
-    {
-        strbuf_release(&buf);
-        return NULL;
-    }
+
+    strbuf_release(&buf);
+    return NULL;
 }
 
 static int split_commit_in_progress(struct wt_status *s)
 {
     int              split_in_progress = 0;
-    struct object_id head_oid, orig_head_oid;
-    char            *rebase_amend, *rebase_orig_head;
-    int              head_flags, orig_head_flags;
+    struct object_id head_oid;
+    struct object_id orig_head_oid;
+    char            *rebase_amend;
+    char            *rebase_orig_head;
+    int              head_flags;
+    int              orig_head_flags;
 
-    if ((!s->amend && !s->nowarn && !s->workdir_dirty) || !s->branch || strcmp(s->branch, "HEAD"))
+    if ((!s->amend && !s->nowarn && !s->workdir_dirty) || !s->branch || strcmp(s->branch, "HEAD") != 0)
+    {
         return 0;
+    }
 
     if (refs_read_ref_full(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
                            &head_oid, &head_flags)
         || refs_read_ref_full(get_main_ref_store(the_repository), "ORIG_HEAD", RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
                               &orig_head_oid, &orig_head_flags))
+    {
         return 0;
+    }
     if (head_flags & REF_ISSYMREF || orig_head_flags & REF_ISSYMREF)
+    {
         return 0;
+    }
 
     rebase_amend     = read_line_from_git_path("rebase-merge/amend");
     rebase_orig_head = read_line_from_git_path("rebase-merge/orig-head");
 
     if (!rebase_amend || !rebase_orig_head)
+    {
         ; /* fall through, no split in progress */
+    }
     else if (!strcmp(rebase_amend, rebase_orig_head))
+    {
         split_in_progress = !!strcmp(oid_to_hex(&head_oid), rebase_amend);
-    else if (strcmp(oid_to_hex(&orig_head_oid), rebase_orig_head))
+    }
+    else if (strcmp(oid_to_hex(&orig_head_oid), rebase_orig_head) != 0)
+    {
         split_in_progress = 1;
+    }
 
     free(rebase_amend);
     free(rebase_orig_head);
@@ -1414,7 +1616,9 @@ static void abbrev_oid_in_line(struct strbuf *line)
     int             i;
 
     if (starts_with(line->buf, "exec ") || starts_with(line->buf, "x ") || starts_with(line->buf, "label ") || starts_with(line->buf, "l "))
+    {
         return;
+    }
 
     split = strbuf_split_max(line, ' ', 3);
     if (split[0] && split[1])
@@ -1434,7 +1638,9 @@ static void abbrev_oid_in_line(struct strbuf *line)
             strbuf_addch(split[1], ' ');
             strbuf_reset(line);
             for (i = 0; split[i]; i++)
+            {
                 strbuf_addbuf(line, split[i]);
+            }
         }
     }
     strbuf_list_free(split);
@@ -1448,17 +1654,23 @@ static int read_rebase_todolist(const char *fname, struct string_list *lines)
     if (!f)
     {
         if (errno == ENOENT)
+        {
             return -1;
+        }
         die_errno("Could not open file %s for reading",
                   git_path("%s", fname));
     }
     while (!strbuf_getline_lf(&line, f))
     {
         if (starts_with(line.buf, comment_line_str))
+        {
             continue;
+        }
         strbuf_trim(&line);
         if (!line.len)
+        {
             continue;
+        }
         abbrev_oid_in_line(&line);
         string_list_append(lines, line.buf);
     }
@@ -1481,10 +1693,14 @@ static void show_rebase_information(struct wt_status *s,
         read_rebase_todolist("rebase-merge/done", &have_done);
         if (read_rebase_todolist("rebase-merge/git-rebase-todo",
                                  &yet_to_do))
+        {
             status_printf_ln(s, color,
                              _("git-rebase-todo is missing."));
+        }
         if (have_done.nr == 0)
+        {
             status_printf_ln(s, color, _("No commands done."));
+        }
         else
         {
             status_printf_ln(s, color,
@@ -1497,15 +1713,21 @@ static void show_rebase_information(struct wt_status *s,
                          : 0;
                  i < have_done.nr;
                  i++)
+            {
                 status_printf_ln(s, color, "   %s", have_done.items[i].string);
+            }
             if (have_done.nr > nr_lines_to_show && s->hints)
+            {
                 status_printf_ln(s, color,
                                  _("  (see more in file %s)"), git_path("rebase-merge/done"));
+            }
         }
 
         if (yet_to_do.nr == 0)
+        {
             status_printf_ln(s, color,
                              _("No commands remaining."));
+        }
         else
         {
             status_printf_ln(s, color,
@@ -1514,10 +1736,14 @@ static void show_rebase_information(struct wt_status *s,
                                 yet_to_do.nr),
                              (uintmax_t)yet_to_do.nr);
             for (i = 0; i < nr_lines_to_show && i < yet_to_do.nr; i++)
+            {
                 status_printf_ln(s, color, "   %s", yet_to_do.items[i].string);
+            }
             if (s->hints)
+            {
                 status_printf_ln(s, color,
                                  _("  (use \"git rebase --edit-todo\" to view and edit)"));
+            }
         }
         string_list_clear(&yet_to_do, 0);
         string_list_clear(&have_done, 0);
@@ -1528,13 +1754,17 @@ static void print_rebase_state(struct wt_status *s,
                                const char       *color)
 {
     if (s->state.branch)
+    {
         status_printf_ln(s, color,
                          _("You are currently rebasing branch '%s' on '%s'."),
                          s->state.branch,
                          s->state.onto);
+    }
     else
+    {
         status_printf_ln(s, color,
                          _("You are currently rebasing."));
+    }
 }
 
 static void show_rebase_in_progress(struct wt_status *s,
@@ -1560,33 +1790,45 @@ static void show_rebase_in_progress(struct wt_status *s,
     {
         print_rebase_state(s, color);
         if (s->hints)
+        {
             status_printf_ln(s, color,
                              _("  (all conflicts fixed: run \"git rebase --continue\")"));
+        }
     }
     else if (split_commit_in_progress(s))
     {
         if (s->state.branch)
+        {
             status_printf_ln(s, color,
                              _("You are currently splitting a commit while rebasing branch '%s' on '%s'."),
                              s->state.branch,
                              s->state.onto);
+        }
         else
+        {
             status_printf_ln(s, color,
                              _("You are currently splitting a commit during a rebase."));
+        }
         if (s->hints)
+        {
             status_printf_ln(s, color,
                              _("  (Once your working directory is clean, run \"git rebase --continue\")"));
+        }
     }
     else
     {
         if (s->state.branch)
+        {
             status_printf_ln(s, color,
                              _("You are currently editing a commit while rebasing branch '%s' on '%s'."),
                              s->state.branch,
                              s->state.onto);
+        }
         else
+        {
             status_printf_ln(s, color,
                              _("You are currently editing a commit during a rebase."));
+        }
         if (s->hints && !s->amend)
         {
             status_printf_ln(s, color,
@@ -1602,25 +1844,35 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
                                          const char       *color)
 {
     if (is_null_oid(&s->state.cherry_pick_head_oid))
+    {
         status_printf_ln(s, color,
                          _("Cherry-pick currently in progress."));
+    }
     else
+    {
         status_printf_ln(s, color,
                          _("You are currently cherry-picking commit %s."),
                          repo_find_unique_abbrev(the_repository, &s->state.cherry_pick_head_oid,
                                                  DEFAULT_ABBREV));
+    }
 
     if (s->hints)
     {
         if (has_unmerged(s))
+        {
             status_printf_ln(s, color,
                              _("  (fix conflicts and run \"git cherry-pick --continue\")"));
+        }
         else if (is_null_oid(&s->state.cherry_pick_head_oid))
+        {
             status_printf_ln(s, color,
                              _("  (run \"git cherry-pick --continue\" to continue)"));
+        }
         else
+        {
             status_printf_ln(s, color,
                              _("  (all conflicts fixed: run \"git cherry-pick --continue\")"));
+        }
         status_printf_ln(s, color,
                          _("  (use \"git cherry-pick --skip\" to skip this patch)"));
         status_printf_ln(s, color,
@@ -1633,24 +1885,34 @@ static void show_revert_in_progress(struct wt_status *s,
                                     const char       *color)
 {
     if (is_null_oid(&s->state.revert_head_oid))
+    {
         status_printf_ln(s, color,
                          _("Revert currently in progress."));
+    }
     else
+    {
         status_printf_ln(s, color,
                          _("You are currently reverting commit %s."),
                          repo_find_unique_abbrev(the_repository, &s->state.revert_head_oid,
                                                  DEFAULT_ABBREV));
+    }
     if (s->hints)
     {
         if (has_unmerged(s))
+        {
             status_printf_ln(s, color,
                              _("  (fix conflicts and run \"git revert --continue\")"));
+        }
         else if (is_null_oid(&s->state.revert_head_oid))
+        {
             status_printf_ln(s, color,
                              _("  (run \"git revert --continue\" to continue)"));
+        }
         else
+        {
             status_printf_ln(s, color,
                              _("  (all conflicts fixed: run \"git revert --continue\")"));
+        }
         status_printf_ln(s, color,
                          _("  (use \"git revert --skip\" to skip this patch)"));
         status_printf_ln(s, color,
@@ -1663,15 +1925,21 @@ static void show_bisect_in_progress(struct wt_status *s,
                                     const char       *color)
 {
     if (s->state.bisecting_from)
+    {
         status_printf_ln(s, color,
                          _("You are currently bisecting, started from branch '%s'."),
                          s->state.bisecting_from);
+    }
     else
+    {
         status_printf_ln(s, color,
                          _("You are currently bisecting."));
+    }
     if (s->hints)
+    {
         status_printf_ln(s, color,
                          _("  (use \"git bisect reset\" to get back to the original branch)"));
+    }
     wt_longstatus_print_trailer(s);
 }
 
@@ -1679,14 +1947,20 @@ static void show_sparse_checkout_in_use(struct wt_status *s,
                                         const char       *color)
 {
     if (s->state.sparse_checkout_percentage == SPARSE_CHECKOUT_DISABLED)
+    {
         return;
+    }
 
     if (s->state.sparse_checkout_percentage == SPARSE_CHECKOUT_SPARSE_INDEX)
+    {
         status_printf_ln(s, color, _("You are in a sparse checkout."));
+    }
     else
+    {
         status_printf_ln(s, color,
                          _("You are in a sparse checkout with %d%% of tracked files present."),
                          s->state.sparse_checkout_percentage);
+    }
     wt_longstatus_print_trailer(s);
 }
 
@@ -1700,25 +1974,39 @@ static char *get_branch(const struct worktree *wt, const char *path)
     const char      *branch_name;
 
     if (strbuf_read_file(&sb, worktree_git_path(the_repository, wt, "%s", path), 0) <= 0)
+    {
         goto got_nothing;
+    }
 
     while (sb.len && sb.buf[sb.len - 1] == '\n')
+    {
         strbuf_setlen(&sb, sb.len - 1);
+    }
     if (!sb.len)
+    {
         goto got_nothing;
+    }
     if (skip_prefix(sb.buf, "refs/heads/", &branch_name))
+    {
         strbuf_remove(&sb, 0, branch_name - sb.buf);
+    }
     else if (starts_with(sb.buf, "refs/"))
+    {
         ;
+    }
     else if (!get_oid_hex(sb.buf, &oid))
     {
         strbuf_reset(&sb);
         strbuf_add_unique_abbrev(&sb, &oid, DEFAULT_ABBREV);
     }
-    else if (!strcmp(sb.buf, "detached HEAD")) /* rebase */
+    else if (!strcmp(sb.buf, "detached HEAD"))
+    { /* rebase */
         goto got_nothing;
-    else /* bisect */
+    }
+    else
+    { /* bisect */
         ;
+    }
     return strbuf_detach(&sb, NULL);
 
 got_nothing:
@@ -1739,13 +2027,18 @@ static int grab_1st_switch(struct object_id *ooid UNUSED,
                            const char *message, void *cb_data)
 {
     struct grab_1st_switch_cbdata *cb     = cb_data;
-    const char                    *target = NULL, *end;
+    const char                    *target = NULL;
+    const char                    *end;
 
     if (!skip_prefix(message, "checkout: moving from ", &message))
+    {
         return 0;
+    }
     target = strstr(message, " to ");
     if (!target)
+    {
         return 0;
+    }
     target += strlen(" to ");
     strbuf_reset(&cb->buf);
     oidcpy(&cb->noid, noid);
@@ -1786,12 +2079,16 @@ static void wt_status_get_detached_from(struct repository      *r,
     {
         const char *from = ref;
         if (!skip_prefix(from, "refs/tags/", &from))
+        {
             skip_prefix(from, "refs/remotes/", &from);
+        }
         state->detached_from = xstrdup(from);
     }
     else
+    {
         state->detached_from =
             xstrdup(repo_find_unique_abbrev(r, &cb.noid, DEFAULT_ABBREV));
+    }
     oidcpy(&state->detached_oid, &cb.noid);
     state->detached_at = !repo_get_oid(r, "HEAD", &oid) && oideq(&oid, &state->detached_oid);
 
@@ -1810,7 +2107,9 @@ int wt_status_check_rebase(const struct worktree  *wt,
         {
             state->am_in_progress = 1;
             if (!stat(worktree_git_path(the_repository, wt, "rebase-apply/patch"), &st) && !st.st_size)
+            {
                 state->am_empty_patch = 1;
+            }
         }
         else
         {
@@ -1822,14 +2121,20 @@ int wt_status_check_rebase(const struct worktree  *wt,
     else if (!stat(worktree_git_path(the_repository, wt, "rebase-merge"), &st))
     {
         if (!stat(worktree_git_path(the_repository, wt, "rebase-merge/interactive"), &st))
+        {
             state->rebase_interactive_in_progress = 1;
+        }
         else
+        {
             state->rebase_in_progress = 1;
+        }
         state->branch = get_branch(wt, "rebase-merge/head-name");
         state->onto   = get_branch(wt, "rebase-merge/onto");
     }
     else
+    {
         return 0;
+    }
     return 1;
 }
 
@@ -1873,7 +2178,9 @@ static void wt_status_check_sparse_checkout(struct repository      *r,
     {
         struct cache_entry *ce = r->index->cache[i];
         if (ce_skip_worktree(ce))
+        {
             skip_worktree++;
+        }
     }
 
     state->sparse_checkout_percentage =
@@ -1922,7 +2229,9 @@ void wt_status_get_state(struct repository      *r,
         }
     }
     if (get_detached_from)
+    {
         wt_status_get_detached_from(r, state);
+    }
     wt_status_check_sparse_checkout(r, state);
 }
 
@@ -1941,18 +2250,30 @@ static void wt_longstatus_print_state(struct wt_status *s)
         show_merge_in_progress(s, state_color);
     }
     else if (state->am_in_progress)
+    {
         show_am_in_progress(s, state_color);
+    }
     else if (state->rebase_in_progress || state->rebase_interactive_in_progress)
+    {
         show_rebase_in_progress(s, state_color);
+    }
     else if (state->cherry_pick_in_progress)
+    {
         show_cherry_pick_in_progress(s, state_color);
+    }
     else if (state->revert_in_progress)
+    {
         show_revert_in_progress(s, state_color);
+    }
     if (state->bisect_in_progress)
+    {
         show_bisect_in_progress(s, state_color);
+    }
 
     if (state->sparse_checkout_percentage != SPARSE_CHECKOUT_DISABLED)
+    {
         show_sparse_checkout_in_use(s, state_color);
+    }
 }
 
 static void wt_longstatus_print(struct wt_status *s)
@@ -1971,18 +2292,26 @@ static void wt_longstatus_print(struct wt_status *s)
             if (s->state.rebase_in_progress || s->state.rebase_interactive_in_progress)
             {
                 if (s->state.rebase_interactive_in_progress)
+                {
                     on_what = _("interactive rebase in progress; onto ");
+                }
                 else
+                {
                     on_what = _("rebase in progress; onto ");
+                }
                 branch_name = s->state.onto;
             }
             else if (s->state.detached_from)
             {
                 branch_name = s->state.detached_from;
                 if (s->state.detached_at)
+                {
                     on_what = _("HEAD detached at ");
+                }
                 else
+                {
                     on_what = _("HEAD detached from ");
+                }
             }
             else
             {
@@ -1991,12 +2320,16 @@ static void wt_longstatus_print(struct wt_status *s)
             }
         }
         else
+        {
             skip_prefix(branch_name, "refs/heads/", &branch_name);
+        }
         status_printf(s, color(WT_STATUS_HEADER, s), "%s", "");
         status_printf_more(s, branch_status_color, "%s", on_what);
         status_printf_more(s, branch_color, "%s\n", branch_name);
         if (!s->is_initial)
+        {
             wt_longstatus_print_tracking(s);
+        }
     }
 
     wt_longstatus_print_state(s);
@@ -2014,7 +2347,7 @@ static void wt_longstatus_print(struct wt_status *s)
     wt_longstatus_print_updated(s);
     wt_longstatus_print_unmerged(s);
     wt_longstatus_print_changed(s);
-    if (s->submodule_summary && (!s->ignore_submodule_arg || strcmp(s->ignore_submodule_arg, "all")))
+    if (s->submodule_summary && (!s->ignore_submodule_arg || strcmp(s->ignore_submodule_arg, "all") != 0))
     {
         wt_longstatus_print_submodule_summary(s, 0); /* staged */
         wt_longstatus_print_submodule_summary(s, 1); /* unstaged */
@@ -2023,7 +2356,9 @@ static void wt_longstatus_print(struct wt_status *s)
     {
         wt_longstatus_print_other(s, &s->untracked, _("Untracked files"), "add");
         if (s->show_ignored_mode)
+        {
             wt_longstatus_print_other(s, &s->ignored, _("Ignored files"), "add -f");
+        }
         if (advice_enabled(ADVICE_STATUS_U_OPTION) && uf_was_slow(s))
         {
             status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
@@ -2046,62 +2381,90 @@ static void wt_longstatus_print(struct wt_status *s)
         }
     }
     else if (s->committable)
+    {
         status_printf_ln(s, GIT_COLOR_NORMAL, _("Untracked files not listed%s"),
                          s->hints
                              ? _(" (use -u option to show untracked files)")
                              : "");
+    }
 
     if (s->verbose)
+    {
         wt_longstatus_print_verbose(s);
+    }
     if (!s->committable)
     {
         if (s->amend)
+        {
             status_printf_ln(s, GIT_COLOR_NORMAL, _("No changes"));
+        }
         else if (s->nowarn)
+        {
             ; /* nothing */
+        }
         else if (s->workdir_dirty)
         {
             if (s->hints)
+            {
                 fprintf(s->fp, _("no changes added to commit "
                                  "(use \"git add\" and/or "
                                  "\"git commit -a\")\n"));
+            }
             else
+            {
                 fprintf(s->fp, _("no changes added to "
                                  "commit\n"));
+            }
         }
         else if (s->untracked.nr)
         {
             if (s->hints)
+            {
                 fprintf(s->fp, _("nothing added to commit but "
                                  "untracked files present (use "
                                  "\"git add\" to track)\n"));
+            }
             else
+            {
                 fprintf(s->fp, _("nothing added to commit but "
                                  "untracked files present\n"));
+            }
         }
         else if (s->is_initial)
         {
             if (s->hints)
+            {
                 fprintf(s->fp, _("nothing to commit (create/"
                                  "copy files and use \"git "
                                  "add\" to track)\n"));
+            }
             else
+            {
                 fprintf(s->fp, _("nothing to commit\n"));
+            }
         }
         else if (!s->show_untracked_files)
         {
             if (s->hints)
+            {
                 fprintf(s->fp, _("nothing to commit (use -u to "
                                  "show untracked files)\n"));
+            }
             else
+            {
                 fprintf(s->fp, _("nothing to commit\n"));
+            }
         }
         else
+        {
             fprintf(s->fp, _("nothing to commit, working tree "
                              "clean\n"));
+        }
     }
     if (s->show_stash)
+    {
         wt_longstatus_print_stash_summary(s);
+    }
 }
 
 static void wt_shortstatus_unmerged(struct string_list_item *it,
@@ -2155,19 +2518,29 @@ static void wt_shortstatus_status(struct string_list_item *it,
     struct wt_status_change_data *d = it->util;
 
     if (d->index_status)
+    {
         color_fprintf(s->fp, color(WT_STATUS_UPDATED, s), "%c", d->index_status);
+    }
     else
+    {
         fputc(' ', s->fp);
+    }
     if (d->worktree_status)
+    {
         color_fprintf(s->fp, color(WT_STATUS_CHANGED, s), "%c", d->worktree_status);
+    }
     else
+    {
         fputc(' ', s->fp);
+    }
     fputc(' ', s->fp);
     if (s->null_termination)
     {
         fprintf(s->fp, "%s%c", it->string, 0);
         if (d->rename_source)
+        {
             fprintf(s->fp, "%s%c", d->rename_source, 0);
+        }
     }
     else
     {
@@ -2215,19 +2588,25 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
     const char *base;
     char       *short_base;
     const char *branch_name;
-    int         num_ours, num_theirs, sti;
+    int         num_ours;
+    int         num_theirs;
+    int         sti;
     int         upstream_is_gone = 0;
 
     color_fprintf(s->fp, color(WT_STATUS_HEADER, s), "## ");
 
     if (!s->branch)
+    {
         return;
+    }
     branch_name = s->branch;
 
 #define LABEL(string) (s->no_gettext ? (string) : _(string))
 
     if (s->is_initial)
+    {
         color_fprintf(s->fp, header_color, LABEL(N_("No commits yet on ")));
+    }
 
     if (!strcmp(s->branch, "HEAD"))
     {
@@ -2247,7 +2626,9 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
     if (sti < 0)
     {
         if (!base)
+        {
             goto conclude;
+        }
 
         upstream_is_gone = 1;
     }
@@ -2259,7 +2640,9 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
     free(short_base);
 
     if (!upstream_is_gone && !sti)
+    {
         goto conclude;
+    }
 
     color_fprintf(s->fp, header_color, " [");
     if (upstream_is_gone)
@@ -2298,16 +2681,22 @@ static void wt_shortstatus_print(struct wt_status *s)
     struct string_list_item *it;
 
     if (s->show_branch)
+    {
         wt_shortstatus_print_tracking(s);
+    }
 
     for_each_string_list_item(it, &s->change)
     {
         struct wt_status_change_data *d = it->util;
 
         if (d->stagemask)
+        {
             wt_shortstatus_unmerged(it, s);
+        }
         else
+        {
             wt_shortstatus_status(it, s);
+        }
     }
     for_each_string_list_item(it, &s->untracked)
         wt_shortstatus_other(it, s, "??");
@@ -2363,7 +2752,9 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
     struct branch *branch;
     const char    *base;
     const char    *branch_name;
-    int            ab_info, nr_ahead, nr_behind;
+    int            ab_info;
+    int            nr_ahead;
+    int            nr_behind;
     char           eol = s->null_termination ? '\0' : '\n';
 
     fprintf(s->fp, "# branch.oid %s%c",
@@ -2371,7 +2762,9 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
             eol);
 
     if (!s->branch)
+    {
         fprintf(s->fp, "# branch.head %s%c", "(unknown)", eol);
+    }
     else
     {
         if (!strcmp(s->branch, "HEAD"))
@@ -2379,11 +2772,17 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
             fprintf(s->fp, "# branch.head %s%c", "(detached)", eol);
 
             if (s->state.rebase_in_progress || s->state.rebase_interactive_in_progress)
+            {
                 branch_name = s->state.onto;
+            }
             else if (s->state.detached_from)
+            {
                 branch_name = s->state.detached_from;
+            }
             else
+            {
                 branch_name = "";
+            }
         }
         else
         {
@@ -2409,11 +2808,15 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
             {
                 /* different */
                 if (nr_ahead || nr_behind)
+                {
                     fprintf(s->fp, "# branch.ab +%d -%d%c",
                             nr_ahead, nr_behind, eol);
+                }
                 else
+                {
                     fprintf(s->fp, "# branch.ab +? -?%c",
                             eol);
+                }
             }
             else if (!ab_info)
             {
@@ -2433,7 +2836,9 @@ static void wt_porcelain_v2_print_stash(struct wt_status *s)
     char eol         = s->null_termination ? '\0' : '\n';
 
     if (stash_count > 0)
+    {
         fprintf(s->fp, "# stash %d%c", stash_count, eol);
+    }
 }
 
 /*
@@ -2524,7 +2929,8 @@ static void wt_porcelain_v2_print_changed_entry(
     const char                   *path_from = NULL;
     char                          key[3];
     char                          submodule_token[5];
-    char                          sep_char, eol_char;
+    char                          sep_char;
+    char                          eol_char;
 
     wt_porcelain_v2_fix_up_changed(it);
     wt_porcelain_v2_submodule_state(d, submodule_token);
@@ -2556,22 +2962,28 @@ static void wt_porcelain_v2_print_changed_entry(
         eol_char = '\n';
         path     = quote_path(it->string, s->prefix, &buf, 0);
         if (d->rename_source)
+        {
             path_from = quote_path(d->rename_source, s->prefix, &buf_from, 0);
+        }
     }
 
     if (path_from)
+    {
         fprintf(s->fp, "2 %s %s %06o %06o %06o %s %s %c%d %s%c%s%c",
                 key, submodule_token,
                 d->mode_head, d->mode_index, d->mode_worktree,
                 oid_to_hex(&d->oid_head), oid_to_hex(&d->oid_index),
                 d->rename_status, d->rename_score,
                 path, sep_char, path_from, eol_char);
+    }
     else
+    {
         fprintf(s->fp, "1 %s %s %06o %06o %06o %s %s %s%c",
                 key, submodule_token,
                 d->mode_head, d->mode_index, d->mode_worktree,
                 oid_to_hex(&d->oid_head), oid_to_hex(&d->oid_index),
                 path, eol_char);
+    }
 
     strbuf_release(&buf);
     strbuf_release(&buf_from);
@@ -2589,7 +3001,9 @@ static void wt_porcelain_v2_print_unmerged_entry(
     const struct cache_entry     *ce;
     struct strbuf                 buf_index  = STRBUF_INIT;
     const char                   *path_index = NULL;
-    int                           pos, stage, sum;
+    int                           pos;
+    int                           stage;
+    int                           sum;
     struct
     {
         int              mode;
@@ -2647,19 +3061,27 @@ static void wt_porcelain_v2_print_unmerged_entry(
     {
         ce    = istate->cache[pos++];
         stage = ce_stage(ce);
-        if (strcmp(ce->name, it->string) || !stage)
+        if (strcmp(ce->name, it->string) != 0 || !stage)
+        {
             break;
+        }
         stages[stage - 1].mode = ce->ce_mode;
         oidcpy(&stages[stage - 1].oid, &ce->oid);
         sum |= (1 << (stage - 1));
     }
     if (sum != d->stagemask)
+    {
         BUG("observed stagemask 0x%x != expected stagemask 0x%x", sum, d->stagemask);
+    }
 
     if (s->null_termination)
+    {
         path_index = it->string;
+    }
     else
+    {
         path_index = quote_path(it->string, s->prefix, &buf_index, 0);
+    }
 
     fprintf(s->fp, "%c %s %s %06o %06o %06o %06o %s %s %s %s%c",
             unmerged_prefix, key, submodule_token,
@@ -2721,17 +3143,23 @@ static void wt_porcelain_v2_print(struct wt_status *s)
     int                           i;
 
     if (s->show_branch)
+    {
         wt_porcelain_v2_print_tracking(s);
+    }
 
     if (s->show_stash)
+    {
         wt_porcelain_v2_print_stash(s);
+    }
 
     for (i = 0; i < s->change.nr; i++)
     {
         it = &(s->change.items[i]);
         d  = it->util;
         if (!d->stagemask)
+        {
             wt_porcelain_v2_print_changed_entry(it, s);
+        }
     }
 
     for (i = 0; i < s->change.nr; i++)
@@ -2739,7 +3167,9 @@ static void wt_porcelain_v2_print(struct wt_status *s)
         it = &(s->change.items[i]);
         d  = it->util;
         if (d->stagemask)
+        {
             wt_porcelain_v2_print_unmerged_entry(it, s);
+        }
     }
 
     for (i = 0; i < s->untracked.nr; i++)
@@ -2819,11 +3249,15 @@ int has_uncommitted_changes(struct repository *r,
     int             result;
 
     if (is_index_unborn(r->index))
+    {
         return 0;
+    }
 
     repo_init_revisions(r, &rev_info, NULL);
     if (ignore_submodules)
+    {
         rev_info.diffopt.flags.ignore_submodules = 1;
+    }
     rev_info.diffopt.flags.quick = 1;
 
     add_head_to_pending(&rev_info);
@@ -2855,12 +3289,15 @@ int require_clean_work_tree(struct repository *r,
                             int                gently)
 {
     struct lock_file lock_file = LOCK_INIT;
-    int              err       = 0, fd;
+    int              err       = 0;
+    int              fd;
 
     fd = repo_hold_locked_index(r, &lock_file, 0);
     refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
     if (0 <= fd)
+    {
         repo_update_index_if_able(r, &lock_file);
+    }
     rollback_lock_file(&lock_file);
 
     if (has_unstaged_changes(r, ignore_submodules))
@@ -2873,10 +3310,14 @@ int require_clean_work_tree(struct repository *r,
     if (has_uncommitted_changes(r, ignore_submodules))
     {
         if (err)
+        {
             error(_("additionally, your index contains uncommitted changes."));
+        }
         else
+        {
             error(_("cannot %s: Your index contains uncommitted changes."),
                   _(action));
+        }
         err = 1;
     }
 
@@ -2885,12 +3326,16 @@ int require_clean_work_tree(struct repository *r,
         if (hint)
         {
             if (!*hint)
+            {
                 BUG("empty hint passed to require_clean_work_tree();"
                     " use NULL instead");
+            }
             error("%s", hint);
         }
         if (!gently)
+        {
             exit(128);
+        }
     }
 
     return err;

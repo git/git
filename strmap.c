@@ -7,7 +7,8 @@ int cmp_strmap_entry(const void *hashmap_cmp_fn_data UNUSED,
                      const struct hashmap_entry     *entry2,
                      const void *keydata             UNUSED)
 {
-    const struct strmap_entry *e1, *e2;
+    const struct strmap_entry *e1;
+    const struct strmap_entry *e2;
 
     e1 = container_of(entry1, const struct strmap_entry, ent);
     e2 = container_of(entry2, const struct strmap_entry, ent);
@@ -44,11 +45,15 @@ static void strmap_free_entries_(struct strmap *map, int free_values)
     struct strmap_entry *e;
 
     if (!map)
+    {
         return;
+    }
 
     if (!free_values && map->pool)
+    {
         /* Memory other than util is owned by and freed with the pool */
         return;
+    }
 
     /*
      * We need to iterate over the hashmap entries and free
@@ -60,9 +65,13 @@ static void strmap_free_entries_(struct strmap *map, int free_values)
     hashmap_for_each_entry(&map->map, &iter, e, ent)
     {
         if (free_values)
+        {
             free(e->value);
+        }
         if (!map->pool)
+        {
             free(e);
+        }
     }
 }
 
@@ -109,7 +118,9 @@ static struct strmap_entry *create_entry(struct strmap *map,
     }
     hashmap_entry_init(&entry->ent, strhash(str));
     if (!map->strdup_strings)
+    {
         entry->key = str;
+    }
     entry->value = data;
     return entry;
 }
@@ -148,16 +159,23 @@ int strmap_contains(struct strmap *map, const char *str)
 
 void strmap_remove(struct strmap *map, const char *str, int free_value)
 {
-    struct strmap_entry entry, *ret;
+    struct strmap_entry  entry;
+    struct strmap_entry *ret;
     hashmap_entry_init(&entry.ent, strhash(str));
     entry.key = str;
     ret       = hashmap_remove_entry(&map->map, &entry, ent, NULL);
     if (!ret)
+    {
         return;
+    }
     if (free_value)
+    {
         free(ret->value);
+    }
     if (!map->pool)
+    {
         free(ret);
+    }
 }
 
 void strintmap_incr(struct strintmap *map, const char *str, intptr_t amt)
@@ -169,7 +187,9 @@ void strintmap_incr(struct strintmap *map, const char *str, intptr_t amt)
         *whence += amt;
     }
     else
+    {
         strintmap_set(map, str, map->default_value + amt);
+    }
 }
 
 int strset_add(struct strset *set, const char *str)
@@ -182,7 +202,9 @@ int strset_add(struct strset *set, const char *str)
     struct strmap_entry *entry = find_strmap_entry(&set->map, str);
 
     if (entry)
+    {
         return 0;
+    }
 
     entry = create_entry(&set->map, str, NULL);
     hashmap_add(&set->map.map, &entry->ent);

@@ -37,7 +37,9 @@ static int use_sideband_colors(void)
     int           i;
 
     if (use_sideband_colors_cached >= 0)
+    {
         return use_sideband_colors_cached;
+    }
 
     if (!git_config_get_string(key, &value))
     {
@@ -57,9 +59,13 @@ static int use_sideband_colors(void)
         strbuf_reset(&sb);
         strbuf_addf(&sb, "%s.%s", key, keywords[i].keyword);
         if (git_config_get_string(sb.buf, &value))
+        {
             continue;
+        }
         if (color_parse(value, keywords[i].color))
+        {
             continue;
+        }
     }
     strbuf_release(&sb);
     return use_sideband_colors_cached;
@@ -70,7 +76,9 @@ void list_config_color_sideband_slots(struct string_list *list, const char *pref
     int i;
 
     for (i = 0; i < ARRAY_SIZE(keywords); i++)
+    {
         list_config_item(list, prefix, keywords[i].keyword);
+    }
 }
 
 /*
@@ -106,7 +114,9 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
         int                   len = strlen(p->keyword);
 
         if (n < len)
+        {
             continue;
+        }
         /*
          * Match case insensitively, so we colorize output from existing
          * servers regardless of the case that they use for their
@@ -139,15 +149,20 @@ int demultiplex_sideband(const char *me, int status,
                          enum sideband_type *sideband_type)
 {
     static const char *suffix;
-    const char        *b, *brk;
+    const char        *b;
+    const char        *brk;
     int                band;
 
     if (!suffix)
     {
         if (isatty(2) && !is_terminal_dumb())
+        {
             suffix = ANSI_SUFFIX;
+        }
         else
+        {
             suffix = DUMB_SUFFIX;
+        }
     }
 
     if (status == PACKET_READ_EOF)
@@ -160,7 +175,9 @@ int demultiplex_sideband(const char *me, int status,
     }
 
     if (len < 0)
+    {
         BUG("negative length on non-eof packet read");
+    }
 
     if (len == 0)
     {
@@ -186,7 +203,9 @@ int demultiplex_sideband(const char *me, int status,
     {
         case 3:
             if (die_on_error)
+            {
                 die(_("remote error: %s"), buf + 1);
+            }
             strbuf_addf(scratch, "%s%s", scratch->len ? "\n" : "",
                         DISPLAY_PREFIX);
             maybe_colorize_sideband(scratch, buf + 1, len);
@@ -217,10 +236,14 @@ int demultiplex_sideband(const char *me, int status,
                  * the same line.
                  */
                 if (scratch->len && !linelen)
+                {
                     strbuf_addstr(scratch, suffix);
+                }
 
                 if (!scratch->len)
+                {
                     strbuf_addstr(scratch, DISPLAY_PREFIX);
+                }
 
                 /*
                  * A use case that we should not add clear-to-eol suffix
@@ -264,7 +287,9 @@ int demultiplex_sideband(const char *me, int status,
 
 cleanup:
     if (die_on_error && *sideband_type == SIDEBAND_PROTOCOL_ERROR)
+    {
         die("%s", scratch->buf);
+    }
     if (scratch->len)
     {
         strbuf_addch(scratch, '\n');
@@ -289,7 +314,9 @@ void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_ma
 
         n = sz;
         if (packet_max - 5 < n)
+        {
             n = packet_max - 5;
+        }
         if (0 <= band)
         {
             xsnprintf(hdr, sizeof(hdr), "%04x", n + 5);

@@ -86,8 +86,10 @@ int cmd_main(int argc, const char *argv[])
             break;
         case 3:
             /* git sh-i18n--envsubst --variables '$foo and $bar' */
-            if (strcmp(argv[1], "--variables"))
+            if (strcmp(argv[1], "--variables") != 0)
+            {
                 error("first argument must be --variables when two are given");
+            }
             /* show_variables = 1; */
             print_variables(argv[2]);
             break;
@@ -106,7 +108,9 @@ int cmd_main(int argc, const char *argv[])
         return (EXIT_FAILURE);
     }
     if (fclose(stderr) && errno != EBADF)
+    {
         return (EXIT_FAILURE);
+    }
 
     return (EXIT_SUCCESS);
 }
@@ -125,6 +129,7 @@ static void
                    void (*callback)(const char *var_ptr, size_t var_len))
 {
     for (; *string != '\0';)
+    {
         if (*string++ == '$')
         {
             const char        *variable_start;
@@ -133,16 +138,19 @@ static void
             char               c;
 
             if (*string == '{')
+            {
                 string++;
+            }
 
             variable_start = string;
             c              = *string;
             if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
             {
                 do
+                {
                     c = *++string;
-                while ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-                       || (c >= '0' && c <= '9') || c == '_');
+                } while ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+                         || (c >= '0' && c <= '9') || c == '_');
                 variable_end = string;
 
                 if (variable_start[-1] == '{')
@@ -153,15 +161,22 @@ static void
                         valid = 1;
                     }
                     else
+                    {
                         valid = 0;
+                    }
                 }
                 else
+                {
                     valid = 1;
+                }
 
                 if (valid)
+                {
                     callback(variable_start, variable_end - variable_start);
+                }
             }
         }
+    }
 }
 
 /* Print a variable to stdout, followed by a newline.  */
@@ -235,7 +250,8 @@ static inline void
 static int
     sorted_string_list_member(const string_list_ty *slp, const char *s)
 {
-    size_t j1, j2;
+    size_t j1;
+    size_t j2;
 
     j1 = 0;
     j2 = slp->nitems;
@@ -250,15 +266,25 @@ static int
             int    result = strcmp(slp->item[j], s);
 
             if (result > 0)
+            {
                 j2 = j;
+            }
             else if (result == 0)
+            {
                 return 1;
+            }
             else
+            {
                 j1 = j + 1;
+            }
         }
         if (j2 > j1)
+        {
             if (strcmp(slp->item[j1], s) == 0)
+            {
                 return 1;
+            }
+        }
     }
     return 0;
 }
@@ -293,7 +319,9 @@ static int
     if (c == EOF)
     {
         if (ferror(stdin))
+        {
             error("error while reading standard input");
+        }
     }
 
     return c;
@@ -303,7 +331,9 @@ static inline void
     do_ungetc(int c)
 {
     if (c != EOF)
+    {
         ungetc(c, stdin);
+    }
 }
 
 /* Copies stdin to stdout, performing substitutions.  */
@@ -319,7 +349,9 @@ static void
     {
         c = do_getc();
         if (c == EOF)
+        {
             break;
+        }
         /* Look for $VARIABLE or ${VARIABLE}.  */
         if (c == '$')
         {
@@ -383,7 +415,9 @@ static void
                     /* Test whether the variable shall be substituted.  */
                     if (!all_variables
                         && !sorted_string_list_member(&variables_set, buffer))
+                    {
                         valid = 0;
+                    }
                 }
 
                 if (valid)
@@ -392,7 +426,9 @@ static void
                     const char *env_value = getenv(buffer);
 
                     if (env_value)
+                    {
                         fputs(env_value, stdout);
+                    }
                 }
                 else
                 {
@@ -401,10 +437,14 @@ static void
                        output all the buffered contents.  */
                     putchar('$');
                     if (opening_brace)
+                    {
                         putchar('{');
+                    }
                     fwrite(buffer, buflen, 1, stdout);
                     if (closing_brace)
+                    {
                         putchar('}');
+                    }
                 }
             }
             else
@@ -412,10 +452,14 @@ static void
                 do_ungetc(c);
                 putchar('$');
                 if (opening_brace)
+                {
                     putchar('{');
+                }
             }
         }
         else
+        {
             putchar(c);
+        }
     }
 }

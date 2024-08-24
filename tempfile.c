@@ -56,9 +56,10 @@ static int remove_template_directory(struct tempfile *tempfile,
     if (tempfile->directory)
     {
         if (in_signal_handler)
+        {
             return rmdir(tempfile->directory);
-        else
-            return rmdir_or_warn(tempfile->directory);
+        }
+        return rmdir_or_warn(tempfile->directory);
     }
 
     return 0;
@@ -74,15 +75,23 @@ static void remove_tempfiles(int in_signal_handler)
         struct tempfile *p = list_entry(pos, struct tempfile, list);
 
         if (!is_tempfile_active(p) || p->owner != me)
+        {
             continue;
+        }
 
         if (p->fd >= 0)
+        {
             close(p->fd);
+        }
 
         if (in_signal_handler)
+        {
             unlink(p->filename.buf);
+        }
         else
+        {
             unlink_or_warn(p->filename.buf);
+        }
         remove_template_directory(p, in_signal_handler);
     }
 }
@@ -143,9 +152,11 @@ struct tempfile *create_tempfile_mode(const char *path, int mode)
     tempfile->fd = open(tempfile->filename.buf,
                         O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, mode);
     if (O_CLOEXEC && tempfile->fd < 0 && errno == EINVAL)
+    {
         /* Try again w/o O_CLOEXEC: the kernel might not support it */
         tempfile->fd = open(tempfile->filename.buf,
-                            O_RDWR | O_CREAT | O_EXCL, mode);
+                            O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, mode);
+    }
     if (tempfile->fd < 0)
     {
         deactivate_tempfile(tempfile);
@@ -194,7 +205,9 @@ struct tempfile *mks_tempfile_tsm(const char *filename_template, int suffixlen, 
 
     tmpdir = getenv("TMPDIR");
     if (!tmpdir)
+    {
         tmpdir = "/tmp";
+    }
 
     strbuf_addf(&tempfile->filename, "%s/%s", tmpdir, filename_template);
     tempfile->fd = git_mkstemps_mode(tempfile->filename.buf, suffixlen, mode);
@@ -224,7 +237,9 @@ struct tempfile *mks_tempfile_dt(const char *directory_template,
 
     tmpdir = getenv("TMPDIR");
     if (!tmpdir)
+    {
         tmpdir = "/tmp";
+    }
 
     strbuf_addf(&sb, "%s/%s", tmpdir, directory_template);
     directorylen = sb.len;
@@ -237,7 +252,7 @@ struct tempfile *mks_tempfile_dt(const char *directory_template,
     }
 
     strbuf_addf(&sb, "/%s", filename);
-    fd = open(sb.buf, O_CREAT | O_EXCL | O_RDWR, 0600);
+    fd = open(sb.buf, O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, 0600);
     if (fd < 0)
     {
         int orig_errno = errno;
@@ -264,8 +279,10 @@ struct tempfile *xmks_tempfile_m(const char *filename_template, int mode)
     strbuf_add_absolute_path(&full_template, filename_template);
     tempfile = mks_tempfile_m(full_template.buf, mode);
     if (!tempfile)
+    {
         die_errno("Unable to create temporary file '%s'",
                   full_template.buf);
+    }
 
     strbuf_release(&full_template);
     return tempfile;
@@ -274,9 +291,13 @@ struct tempfile *xmks_tempfile_m(const char *filename_template, int mode)
 FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 {
     if (!is_tempfile_active(tempfile))
+    {
         BUG("fdopen_tempfile() called for inactive object");
+    }
     if (tempfile->fp)
+    {
         BUG("fdopen_tempfile() called for open object");
+    }
 
     tempfile->fp = fdopen(tempfile->fd, mode);
     return tempfile->fp;
@@ -285,21 +306,27 @@ FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode)
 const char *get_tempfile_path(struct tempfile *tempfile)
 {
     if (!is_tempfile_active(tempfile))
+    {
         BUG("get_tempfile_path() called for inactive object");
+    }
     return tempfile->filename.buf;
 }
 
 int get_tempfile_fd(struct tempfile *tempfile)
 {
     if (!is_tempfile_active(tempfile))
+    {
         BUG("get_tempfile_fd() called for inactive object");
+    }
     return tempfile->fd;
 }
 
 FILE *get_tempfile_fp(struct tempfile *tempfile)
 {
     if (!is_tempfile_active(tempfile))
+    {
         BUG("get_tempfile_fp() called for inactive object");
+    }
     return tempfile->fp;
 }
 
@@ -310,7 +337,9 @@ int close_tempfile_gently(struct tempfile *tempfile)
     int   err;
 
     if (!is_tempfile_active(tempfile) || tempfile->fd < 0)
+    {
         return 0;
+    }
 
     fd           = tempfile->fd;
     fp           = tempfile->fp;
@@ -322,7 +351,9 @@ int close_tempfile_gently(struct tempfile *tempfile)
         {
             err = -1;
             if (!fclose(fp))
+            {
                 errno = EIO;
+            }
         }
         else
         {
@@ -340,10 +371,14 @@ int close_tempfile_gently(struct tempfile *tempfile)
 int reopen_tempfile(struct tempfile *tempfile)
 {
     if (!is_tempfile_active(tempfile))
+    {
         BUG("reopen_tempfile called for an inactive object");
+    }
     if (0 <= tempfile->fd)
+    {
         BUG("reopen_tempfile called for an open object");
-    tempfile->fd = open(tempfile->filename.buf, O_WRONLY | O_TRUNC);
+    }
+    tempfile->fd = open(tempfile->filename.buf, O_WRONLY | O_TRUNC | O_CLOEXEC);
     return tempfile->fd;
 }
 
@@ -352,7 +387,9 @@ int rename_tempfile(struct tempfile **tempfile_p, const char *path)
     struct tempfile *tempfile = *tempfile_p;
 
     if (!is_tempfile_active(tempfile))
+    {
         BUG("rename_tempfile called for inactive object");
+    }
 
     if (close_tempfile_gently(tempfile))
     {
@@ -379,7 +416,9 @@ int delete_tempfile(struct tempfile **tempfile_p)
     int              err      = 0;
 
     if (!is_tempfile_active(tempfile))
+    {
         return 0;
+    }
 
     err |= close_tempfile_gently(tempfile);
     err |= unlink_or_warn(tempfile->filename.buf);

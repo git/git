@@ -15,7 +15,10 @@ static int longest_path_match(const char *name_a, int len_a,
                               const char *name_b, int len_b,
                               int *previous_slash)
 {
-    int max_len, match_len = 0, match_len_prev = 0, i = 0;
+    int max_len;
+    int match_len      = 0;
+    int match_len_prev = 0;
+    int i              = 0;
 
     max_len = len_a < len_b ? len_a : len_b;
     while (i < max_len && name_a[i] == name_b[i])
@@ -76,8 +79,13 @@ static int lstat_cache_matchlen(struct cache_def *cache,
                                 int *ret_flags, int track_flags,
                                 int prefix_len_stat_func)
 {
-    int         match_len, last_slash, last_slash_dir, previous_slash;
-    int         save_flags, ret, saved_errno = 0;
+    int         match_len;
+    int         last_slash;
+    int         last_slash_dir;
+    int         previous_slash;
+    int         save_flags;
+    int         ret;
+    int         saved_errno = 0;
     struct stat st;
 
     if (cache->track_flags != track_flags || cache->prefix_len_stat_func != prefix_len_stat_func)
@@ -104,10 +112,14 @@ static int lstat_cache_matchlen(struct cache_def *cache,
         *ret_flags = cache->flags & track_flags & (FL_NOENT | FL_SYMLINK);
 
         if (!(track_flags & FL_FULLPATH) && match_len == len)
+        {
             match_len = last_slash = previous_slash;
+        }
 
         if (*ret_flags && match_len == cache->path.len)
+        {
             return match_len;
+        }
         /*
          * If we now have match_len > 0, we would know that
          * the matched part will always be a directory.
@@ -118,7 +130,9 @@ static int lstat_cache_matchlen(struct cache_def *cache,
          */
         *ret_flags = track_flags & FL_DIR;
         if (*ret_flags && len == match_len)
+        {
             return match_len;
+        }
     }
 
     /*
@@ -128,7 +142,9 @@ static int lstat_cache_matchlen(struct cache_def *cache,
     *ret_flags     = FL_DIR;
     last_slash_dir = last_slash;
     if (len > cache->path.len)
+    {
         strbuf_grow(&cache->path, len - cache->path.len);
+    }
     while (match_len < len)
     {
         do
@@ -137,21 +153,29 @@ static int lstat_cache_matchlen(struct cache_def *cache,
             match_len++;
         } while (match_len < len && name[match_len] != '/');
         if (match_len >= len && !(track_flags & FL_FULLPATH))
+        {
             break;
+        }
         last_slash                  = match_len;
         cache->path.buf[last_slash] = '\0';
 
         if (last_slash <= prefix_len_stat_func)
+        {
             ret = stat(cache->path.buf, &st);
+        }
         else
+        {
             ret = lstat(cache->path.buf, &st);
+        }
 
         if (ret)
         {
             *ret_flags  = FL_LSTATERR;
             saved_errno = errno;
             if (errno == ENOENT)
+            {
                 *ret_flags |= FL_NOENT;
+            }
         }
         else if (S_ISDIR(st.st_mode))
         {
@@ -203,7 +227,9 @@ static int lstat_cache_matchlen(struct cache_def *cache,
         reset_lstat_cache(cache);
     }
     if (saved_errno)
+    {
         errno = saved_errno;
+    }
     return match_len;
 }
 
@@ -255,8 +281,10 @@ static int threaded_check_leading_path(struct cache_def *cache, const char *name
     int saved_errno = errno;
 
     if (flags & FL_NOENT)
+    {
         return 0;
-    else if (flags & FL_DIR)
+    }
+    if (flags & FL_DIR)
         return -1;
     if (warn_on_lstat_err && (flags & FL_LSTATERR))
     {
@@ -302,7 +330,9 @@ static void do_remove_scheduled_dirs(int new_len)
     {
         removal.buf[removal.len] = '\0';
         if ((startup_info->original_cwd && !strcmp(removal.buf, startup_info->original_cwd)) || rmdir(removal.buf))
+        {
             break;
+        }
         do
         {
             removal.len--;
@@ -313,10 +343,15 @@ static void do_remove_scheduled_dirs(int new_len)
 
 void schedule_dir_for_removal(const char *name, int len)
 {
-    int match_len, last_slash, i, previous_slash;
+    int match_len;
+    int last_slash;
+    int i;
+    int previous_slash;
 
     if (startup_info->original_cwd && !strcmp(name, startup_info->original_cwd))
+    {
         return; /* Do not remove the current working directory */
+    }
 
     match_len = last_slash = i =
         longest_path_match(name, len, removal.buf, removal.len,
@@ -325,7 +360,9 @@ void schedule_dir_for_removal(const char *name, int len)
     while (i < len)
     {
         if (name[i] == '/')
+        {
             last_slash = i;
+        }
         i++;
     }
 
@@ -335,13 +372,17 @@ void schedule_dir_for_removal(const char *name, int len)
      * remove possible empty directories as we go upwards.
      */
     if (match_len < last_slash && match_len < removal.len)
+    {
         do_remove_scheduled_dirs(match_len);
+    }
     /*
      * If we go deeper down the directory tree, we only need to
      * save the new path components as we go down.
      */
     if (match_len < last_slash)
+    {
         strbuf_add(&removal, &name[match_len], last_slash - match_len);
+    }
 }
 
 void remove_scheduled_dirs(void)
@@ -361,7 +402,9 @@ int lstat_cache_aware_rmdir(const char *path)
     int ret = rmdir(path);
 
     if (!ret)
+    {
         invalidate_lstat_cache();
+    }
 
     return ret;
 }

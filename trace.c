@@ -39,19 +39,27 @@ static int get_trace_fd(struct trace_key *key, const char *override_envvar)
 
     /* don't open twice */
     if (key->initialized)
+    {
         return key->fd;
+    }
 
     trace = override_envvar ? override_envvar : getenv(key->key);
 
     if (!trace || !strcmp(trace, "") || !strcmp(trace, "0") || !strcasecmp(trace, "false"))
+    {
         key->fd = 0;
+    }
     else if (!strcmp(trace, "1") || !strcasecmp(trace, "true"))
+    {
         key->fd = STDERR_FILENO;
+    }
     else if (strlen(trace) == 1 && isdigit(*trace))
+    {
         key->fd = atoi(trace);
+    }
     else if (is_absolute_path(trace))
     {
-        int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT, 0666);
+        int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT | O_CLOEXEC, 0666);
         if (fd == -1)
         {
             warning("could not open '%s' for tracing: %s",
@@ -93,7 +101,9 @@ void trace_override_envvar(struct trace_key *key, const char *value)
 void trace_disable(struct trace_key *key)
 {
     if (key->need_close)
+    {
         close(key->fd);
+    }
     key->fd          = 0;
     key->initialized = 1;
     key->need_close  = 0;
@@ -108,11 +118,15 @@ static int prepare_trace_line(const char *file, int line,
     time_t                  secs;
 
     if (!trace_want(key))
+    {
         return 0;
+    }
 
     /* unit tests may want to disable additional trace output */
     if (trace_want(&trace_bare))
+    {
         return 1;
+    }
 
     /* print current timestamp */
     gettimeofday(&tv, NULL);
@@ -122,7 +136,9 @@ static int prepare_trace_line(const char *file, int line,
                 tm.tm_sec, (long)tv.tv_usec, file, line);
     /* align trace output (column 40 catches most files names in git) */
     while (buf->len < 40)
+    {
         strbuf_addch(buf, ' ');
+    }
 
     return 1;
 }
@@ -140,7 +156,9 @@ static void trace_write(struct trace_key *key, const void *buf, unsigned len)
 void trace_verbatim(struct trace_key *key, const void *buf, unsigned len)
 {
     if (!trace_want(key))
+    {
         return;
+    }
     trace_write(key, buf, len);
 }
 
@@ -156,7 +174,9 @@ static void trace_vprintf_fl(const char *file, int line, struct trace_key *key,
     struct strbuf buf = STRBUF_INIT;
 
     if (!prepare_trace_line(file, line, key, &buf))
+    {
         return;
+    }
 
     strbuf_vaddf(&buf, format, ap);
     print_trace_line(key, &buf);
@@ -170,7 +190,9 @@ static void trace_argv_vprintf_fl(const char *file, int line,
     struct strbuf buf = STRBUF_INIT;
 
     if (!prepare_trace_line(file, line, &trace_default_key, &buf))
+    {
         return;
+    }
 
     strbuf_vaddf(&buf, format, ap);
 
@@ -185,7 +207,9 @@ void trace_strbuf_fl(const char *file, int line, struct trace_key *key,
     struct strbuf buf = STRBUF_INIT;
 
     if (!prepare_trace_line(file, line, key, &buf))
+    {
         return;
+    }
 
     strbuf_addbuf(&buf, data);
     print_trace_line(key, &buf);
@@ -200,14 +224,20 @@ uint64_t trace_performance_enter(void)
     uint64_t now;
 
     if (!trace_want(&trace_perf_key))
+    {
         return 0;
+    }
 
     now                           = getnanotime();
     perf_start_times[perf_indent] = now;
     if (perf_indent + 1 < ARRAY_SIZE(perf_start_times))
+    {
         perf_indent++;
+    }
     else
+    {
         BUG("Too deep indentation");
+    }
     return now;
 }
 
@@ -219,14 +249,18 @@ static void trace_performance_vprintf_fl(const char *file, int line,
     struct strbuf     buf     = STRBUF_INIT;
 
     if (!prepare_trace_line(file, line, &trace_perf_key, &buf))
+    {
         return;
+    }
 
     strbuf_addf(&buf, "performance: %.9f s", (double)nanos / 1000000000);
 
     if (format && *format)
     {
         if (perf_indent >= strlen(space))
+        {
             BUG("Too deep indentation");
+        }
 
         strbuf_addf(&buf, ":%.*s ", perf_indent, space);
         strbuf_vaddf(&buf, format, ap);
@@ -270,10 +304,14 @@ void trace_performance_leave_fl(const char *file, int line,
     uint64_t since;
 
     if (perf_indent)
+    {
         perf_indent--;
+    }
 
-    if (!format) /* Allow callers to leave without tracing anything */
+    if (!format)
+    { /* Allow callers to leave without tracing anything */
         return;
+    }
 
     since = perf_start_times[perf_indent];
     va_start(ap, format);
@@ -286,7 +324,9 @@ static const char *quote_crnl(const char *path)
     static struct strbuf new_path = STRBUF_INIT;
 
     if (!path)
+    {
         return NULL;
+    }
 
     strbuf_reset(&new_path);
 
@@ -313,19 +353,26 @@ static const char *quote_crnl(const char *path)
 
 void trace_repo_setup(void)
 {
-    const char *git_work_tree, *prefix = startup_info->prefix;
+    const char *git_work_tree;
+    const char *prefix = startup_info->prefix;
     char       *cwd;
 
     if (!trace_want(&trace_setup_key))
+    {
         return;
+    }
 
     cwd = xgetcwd();
 
     if (!(git_work_tree = get_git_work_tree()))
+    {
         git_work_tree = "(null)";
+    }
 
     if (!startup_info->prefix)
+    {
         prefix = "(null)";
+    }
 
     trace_printf_key(&trace_setup_key, "setup: git_dir: %s\n", quote_crnl(get_git_dir()));
     trace_printf_key(&trace_setup_key, "setup: git_common_dir: %s\n", quote_crnl(get_git_common_dir()));
@@ -347,7 +394,9 @@ static inline uint64_t highres_nanos(void)
 {
     struct timespec ts;
     if (clock_gettime(CLOCK_MONOTONIC, &ts))
+    {
         return 0;
+    }
     return (uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec;
 }
 
@@ -411,7 +460,7 @@ uint64_t getnanotime(void)
         /* initialization succeeded, return offset + high res time */
         return offset + highres_nanos();
     }
-    else if (offset == 1)
+    if (offset == 1)
     {
         /* initialization failed, fall back to gettimeofday */
         return gettimeofday_nanos();
@@ -439,10 +488,14 @@ static void print_command_performance_atexit(void)
 void trace_command_performance(const char **argv)
 {
     if (!trace_want(&trace_perf_key))
+    {
         return;
+    }
 
     if (!command_line.len)
+    {
         atexit(print_command_performance_atexit);
+    }
 
     strbuf_reset(&command_line);
     sq_quote_argv_pretty(&command_line, argv);
