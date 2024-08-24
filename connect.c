@@ -758,9 +758,13 @@ const char *parse_feature_value(const char *feature_list, const char *feature, s
                 value++;
                 end = strcspn(value, " \t\n");
                 if (lenp)
+                {
                     *lenp = end;
+                }
                 if (offset)
+                {
                     *offset = value + end - orig_start;
+                }
                 return value;
             }
             /*

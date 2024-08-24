@@ -35,7 +35,7 @@ static enum
     {
         return UNBORN_ADVERTISE;
     }
-    else if (!strcmp(str, "allow"))
+    if (!strcmp(str, "allow"))
     {
         return UNBORN_ALLOW;
     }

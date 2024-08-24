@@ -35,11 +35,9 @@ static int packet_trace_pack(const char *buf, unsigned int len, int sideband)
         trace_verbatim(&trace_pack, buf + 1, len - 1);
         return 1;
     }
-    else
-    {
-        /* it's another non-pack sideband */
-        return 0;
-    }
+
+    /* it's another non-pack sideband */
+    return 0;
 }
 
 static void packet_trace(const char *buf, unsigned int len, int write)

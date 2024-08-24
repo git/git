@@ -352,7 +352,9 @@ void diffcore_merge_broken(void)
             diff_q(&outq, p);
         }
         else
+        {
             diff_q(&outq, p);
+        }
     next:;
     }
     free(q->queue);

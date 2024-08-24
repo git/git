@@ -495,7 +495,9 @@ static int commit_date_cmp(const void *va, const void *vb)
         return -1;
     }
     if (a > b)
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -636,9 +638,13 @@ static struct pseudo_merge *pseudo_merge_at(const struct pseudo_merge_map *pm,
             return use_pseudo_merge(pm, &pm->v[mi]);
         }
         if (got < want)
+        {
             hi = mi;
+        }
         else
+        {
             lo = mi + 1;
+        }
     }
 
     warning(_("could not find pseudo-merge for commit %s at offset %" PRIuMAX),

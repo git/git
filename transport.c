@@ -271,7 +271,7 @@ static int set_git_option(struct git_transport_options *opts,
         opts->receivepack = value;
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_THIN))
+    if (!strcmp(name, TRANS_OPT_THIN))
     {
         opts->thin = !!value;
         return 0;
@@ -1265,8 +1265,10 @@ static enum protocol_allow_config parse_protocol_config(const char *key,
         return PROTOCOL_ALLOW_ALWAYS;
     }
     if (!strcasecmp(value, "never"))
+    {
         return PROTOCOL_ALLOW_NEVER;
-    else if (!strcasecmp(value, "user"))
+    }
+    if (!strcasecmp(value, "user"))
         return PROTOCOL_ALLOW_USER_ONLY;
 
     die(_("unknown value for config '%s': %s"), key, value);

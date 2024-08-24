@@ -846,8 +846,7 @@ static char *getdir(void)
     {
         return xstrdup(path);
     }
-    else
-        die("No GIT_PROJECT_ROOT or PATH_TRANSLATED from server");
+    die("No GIT_PROJECT_ROOT or PATH_TRANSLATED from server");
     return NULL;
 }
 

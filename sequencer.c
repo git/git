@@ -759,8 +759,10 @@ enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
         return use_editor ? COMMIT_MSG_CLEANUP_ALL : COMMIT_MSG_CLEANUP_SPACE;
     }
     if (!strcmp(cleanup_arg, "verbatim"))
+    {
         return COMMIT_MSG_CLEANUP_NONE;
-    else if (!strcmp(cleanup_arg, "whitespace"))
+    }
+    if (!strcmp(cleanup_arg, "whitespace"))
         return COMMIT_MSG_CLEANUP_SPACE;
     else if (!strcmp(cleanup_arg, "strip"))
         return COMMIT_MSG_CLEANUP_ALL;
@@ -997,7 +999,7 @@ static int write_author_script(const char *message)
             unlink(rebase_path_author_script());
             return 0;
         }
-        else if (skip_prefix(message, "author ", &message))
+        if (skip_prefix(message, "author ", &message))
         {
             break;
         }
@@ -1018,7 +1020,7 @@ static int write_author_script(const char *message)
         {
             break;
         }
-        else if (*message != '\'')
+        if (*message != '\'')
         {
             strbuf_addch(&buf, *(message++));
         }
@@ -1034,7 +1036,7 @@ static int write_author_script(const char *message)
         {
             break;
         }
-        else if (*message != '\'')
+        if (*message != '\'')
         {
             strbuf_addch(&buf, *(message++));
         }
@@ -2172,8 +2174,10 @@ static int allow_empty(struct repository  *r,
         return opts->allow_empty;
     }
     if (opts->keep_redundant_commits)
+    {
         return 1;
-    else if (opts->drop_redundant_commits)
+    }
+    if (opts->drop_redundant_commits)
         return 2;
     else
         return 0;
@@ -3621,7 +3625,7 @@ static int read_populate_todo(struct repository  *r,
             {
                 continue;
             }
-            else if (valid == TODO_PICK)
+            if (valid == TODO_PICK)
             {
                 return error(_("cannot cherry-pick during a revert."));
             }
@@ -5633,7 +5637,7 @@ static int is_final_fixup(struct todo_list *todo_list)
         {
             return 0;
         }
-        else if (!is_noop(todo_list->items[i].command))
+        if (!is_noop(todo_list->items[i].command))
         {
             break;
         }
@@ -6008,7 +6012,9 @@ static int pick_one_commit(struct repository  *r,
          * otherwise we do not.
          */
         if (item->command == TODO_REWORD && !repo_get_oid(r, "HEAD", &oid) && (oideq(&item->commit->object.oid, &oid) || (opts->have_squash_onto && oideq(&opts->squash_onto, &oid))))
+        {
             to_amend = 1;
+        }
 
         return res | error_with_patch(r, item->commit, arg, item->arg_len, opts, res, to_amend);
     }
@@ -7908,7 +7914,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 
         return -1;
     }
-    else if (res == -3)
+    if (res == -3)
     {
         apply_autostash(rebase_path_autostash());
         sequencer_remove_state(opts);

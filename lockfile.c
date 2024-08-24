@@ -150,8 +150,10 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
             return fd; /* success */
         }
         if (errno != EEXIST)
+        {
             return -1; /* failure other than lock held */
-        else if (timeout_ms > 0 && remaining_ms <= 0)
+        }
+        if (timeout_ms > 0 && remaining_ms <= 0)
             return -1; /* failure due to timeout */
 
         backoff_ms = multiplier * INITIAL_BACKOFF_MS;

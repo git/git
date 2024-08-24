@@ -1514,7 +1514,7 @@ int cmd_main(int argc, const char **argv)
                 log_destination = LOG_DESTINATION_STDERR;
                 continue;
             }
-            else if (!strcmp(v, "none"))
+            if (!strcmp(v, "none"))
             {
                 log_destination = LOG_DESTINATION_NONE;
                 continue;

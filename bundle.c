@@ -148,9 +148,13 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
 
         struct object_id *dup = oiddup(&oid);
         if (is_prereq)
+        {
             string_list_append(&header->prerequisites, "")->util = dup;
+        }
         else
+        {
             string_list_append(&header->references, p + 1)->util = dup;
+        }
     }
 
 abort:

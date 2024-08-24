@@ -1606,8 +1606,10 @@ static struct ref *get_refs_list_using_list(struct transport *transport,
             {
                 int algo = hash_algo_by_name(value);
                 if (algo == GIT_HASH_UNKNOWN)
+                {
                     die(_("unsupported object format '%s'"),
                         value);
+                }
                 transport->hash_algo = &hash_algos[algo];
             }
             continue;
@@ -1852,7 +1854,9 @@ static int udt_do_write(struct unidirectional_transfer *t)
     {
         t->bufuse -= bytes;
         if (t->bufuse)
+        {
             memmove(t->buf, t->buf + bytes, t->bufuse);
+        }
         transfer_debug("Wrote %i bytes to %s (buffer now at %i)",
                        (int)bytes, t->dest_name, (int)t->bufuse);
     }

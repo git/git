@@ -464,8 +464,10 @@ static int include_condition_is_true(const struct key_value_info *kvi,
         return include_by_gitdir(kvi, opts, cond, cond_len, 0);
     }
     if (skip_prefix_mem(cond, cond_len, "gitdir/i:", &cond, &cond_len))
+    {
         return include_by_gitdir(kvi, opts, cond, cond_len, 1);
-    else if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
+    }
+    if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
         return include_by_branch(inc, cond, cond_len);
     else if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.*.url:", &cond,
                              &cond_len))
@@ -1268,7 +1270,9 @@ static int git_parse_source(struct config_source *cs, config_fn_t fn,
 
             /* Do not tolerate partial BOM. */
             if (bomptr != utf8_bom)
+            {
                 break;
+            }
             /* No BOM at file beginning. Cool. */
             bomptr = NULL;
         }
@@ -1949,17 +1953,23 @@ static int git_default_core_config(const char *var, const char *value,
             return config_error_nonbool(var);
         }
         if (!strcasecmp(value, "auto"))
+        {
             auto_comment_line_char = 1;
+        }
         else if (value[0])
         {
             if (strchr(value, '\n'))
+            {
                 return error(_("%s cannot contain newline"), var);
+            }
             comment_line_str = value;
             FREE_AND_NULL(comment_line_str_to_free);
             auto_comment_line_char = 0;
         }
         else
+        {
             return error(_("%s must have at least one character"), var);
+        }
         return 0;
     }
 
@@ -2140,7 +2150,7 @@ static int git_default_branch_config(const char *var, const char *value)
             git_branch_track = BRANCH_TRACK_INHERIT;
             return 0;
         }
-        else if (value && !strcmp(value, "simple"))
+        if (value && !strcmp(value, "simple"))
         {
             git_branch_track = BRANCH_TRACK_SIMPLE;
             return 0;
@@ -2155,15 +2165,25 @@ static int git_default_branch_config(const char *var, const char *value)
             return config_error_nonbool(var);
         }
         if (!strcmp(value, "never"))
+        {
             autorebase = AUTOREBASE_NEVER;
+        }
         else if (!strcmp(value, "local"))
+        {
             autorebase = AUTOREBASE_LOCAL;
+        }
         else if (!strcmp(value, "remote"))
+        {
             autorebase = AUTOREBASE_REMOTE;
+        }
         else if (!strcmp(value, "always"))
+        {
             autorebase = AUTOREBASE_ALWAYS;
+        }
         else
+        {
             return error(_("malformed value for %s"), var);
+        }
         return 0;
     }
 
@@ -2180,17 +2200,29 @@ static int git_default_push_config(const char *var, const char *value)
             return config_error_nonbool(var);
         }
         if (!strcmp(value, "nothing"))
+        {
             push_default = PUSH_DEFAULT_NOTHING;
+        }
         else if (!strcmp(value, "matching"))
+        {
             push_default = PUSH_DEFAULT_MATCHING;
+        }
         else if (!strcmp(value, "simple"))
+        {
             push_default = PUSH_DEFAULT_SIMPLE;
+        }
         else if (!strcmp(value, "upstream"))
+        {
             push_default = PUSH_DEFAULT_UPSTREAM;
-        else if (!strcmp(value, "tracking")) /* deprecated */
+        }
+        else if (!strcmp(value, "tracking"))
+        { /* deprecated */
             push_default = PUSH_DEFAULT_UPSTREAM;
+        }
         else if (!strcmp(value, "current"))
+        {
             push_default = PUSH_DEFAULT_CURRENT;
+        }
         else
         {
             error(_("malformed value for %s: %s"), var, value);
@@ -2893,7 +2925,9 @@ int git_configset_get_value_multi(struct config_set *set, const char *key,
         return ret;
     }
     if (!e)
+    {
         return 1;
+    }
     *dest = &e->value_list;
 
     return 0;
@@ -2932,7 +2966,9 @@ int git_configset_get(struct config_set *set, const char *key)
         return ret;
     }
     if (!e)
+    {
         return 1;
+    }
     return 0;
 }
 

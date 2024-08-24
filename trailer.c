@@ -1118,7 +1118,9 @@ static size_t find_trailer_block_start(const char *buf, size_t len)
                 return next_line(bol) - buf;
             }
             if (trailer_lines && !non_trailer_lines)
+            {
                 return next_line(bol) - buf;
+            }
             return len;
         }
         only_spaces = 0;

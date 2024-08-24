@@ -279,7 +279,8 @@ static int queue_diff(struct diff_options *o,
         return ret;
     }
 
-    struct diff_filespec *d1, *d2;
+    struct diff_filespec *d1;
+    struct diff_filespec *d2;
 
     if (o->flags.reverse_diff)
     {

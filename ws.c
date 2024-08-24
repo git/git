@@ -125,7 +125,7 @@ unsigned whitespace_rule(struct index_state *istate, const char *pathname)
         /* false (-whitespace) */
         return ws_tab_width(whitespace_rule_cfg);
     }
-    else if (ATTR_UNSET(value))
+    if (ATTR_UNSET(value))
     {
         /* reset to default (!whitespace) */
         return whitespace_rule_cfg;

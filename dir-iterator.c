@@ -246,7 +246,9 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
             if (ret > 0)
             {
                 if (pop_level(iter) == 0)
+                {
                     return dir_iterator_abort(dir_iterator);
+                }
                 continue;
             }
 

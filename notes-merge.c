@@ -103,12 +103,18 @@ static struct notes_merge_pair *find_notes_merge_pair_pos(
         { /* obj belongs @ i */
             break;
         }
-        if (cmp < 0 && prev_cmp <= 0) /* obj belongs < i */
+        if (cmp < 0 && prev_cmp <= 0)
+        { /* obj belongs < i */
             i--;
-        else if (cmp < 0) /* obj belongs between i-1 and i */
+        }
+        else if (cmp < 0)
+        { /* obj belongs between i-1 and i */
             break;
-        else if (cmp > 0 && prev_cmp >= 0) /* obj belongs > i */
+        }
+        else if (cmp > 0 && prev_cmp >= 0)
+        { /* obj belongs > i */
             i++;
+        }
         else /* if (cmp > 0) */
         {    /* obj belongs between i and i+1 */
             i++;

@@ -1750,7 +1750,9 @@ static int handle_rename_via_dir(struct merge_options        *opt,
 
     /* Update dest->path both in index and in worktree */
     if (update_file(opt, 1, dest, dest->path))
+    {
         return -1;
+    }
     return 1; /* clean */
 }
 

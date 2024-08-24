@@ -447,7 +447,7 @@ static int handle_config(const char *key, const char *value,
         {
             return git_config_string(&branch->pushremote_name, key, value);
         }
-        else if (!strcmp(subkey, "merge"))
+        if (!strcmp(subkey, "merge"))
         {
             if (!value)
                 return config_error_nonbool(key);
@@ -1461,7 +1461,9 @@ int count_refspec_match(const char  *pattern,
     }
 
     if (matched_ref)
+    {
         *matched_ref = matched;
+    }
     return match;
 }
 

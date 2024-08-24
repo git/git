@@ -857,8 +857,10 @@ static void filter_refs(struct fetch_pack_args *args,
         {
             int cmp = strcmp(ref->name, sought[i]->name);
             if (cmp < 0)
+            {
                 break; /* definitely do not have it */
-            else if (cmp == 0)
+            }
+            if (cmp == 0)
             {
                 keep                    = 1; /* definitely have it */
                 sought[i]->match_status = REF_MATCHED;
@@ -867,7 +869,9 @@ static void filter_refs(struct fetch_pack_args *args,
         }
 
         if (!keep && args->fetch_all && (!args->deepen || !starts_with(ref->name, "refs/tags/")))
+        {
             keep = 1;
+        }
 
         if (keep)
         {

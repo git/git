@@ -1031,7 +1031,9 @@ int compare_commits_by_author_date(const void *a_, const void *b_,
         return 1;
     }
     if (a_date > b_date)
+    {
         return -1;
+    }
     return 0;
 }
 
@@ -1049,7 +1051,9 @@ int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_,
         return 1;
     }
     if (generation_a > generation_b)
+    {
         return -1;
+    }
 
     /* use date as a heuristic when generations are equal */
     if (a->date < b->date)
@@ -1057,7 +1061,9 @@ int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_,
         return 1;
     }
     if (a->date > b->date)
+    {
         return -1;
+    }
     return 0;
 }
 
@@ -1072,7 +1078,9 @@ int compare_commits_by_commit_date(const void *a_, const void *b_,
         return 1;
     }
     if (a->date > b->date)
+    {
         return -1;
+    }
     return 0;
 }
 

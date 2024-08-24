@@ -138,7 +138,7 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
         {
             continue; /* '.' component */
         }
-        else if (next.len == 2 && !strcmp(next.buf, ".."))
+        if (next.len == 2 && !strcmp(next.buf, ".."))
         {
             /* '..' component; strip the last path component */
             strip_last_component(resolved);

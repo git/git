@@ -40,7 +40,9 @@ struct chunkfile *init_chunkfile(struct hashfile *f)
 void free_chunkfile(struct chunkfile *cf)
 {
     if (!cf)
+    {
         return;
+    }
     free(cf->chunks);
     free(cf);
 }
@@ -65,7 +67,8 @@ void add_chunk(struct chunkfile *cf,
 
 int write_chunkfile(struct chunkfile *cf, void *data)
 {
-    int      i, result = 0;
+    int      i;
+    int      result     = 0;
     uint64_t cur_offset = hashfile_total(cf->f);
 
     trace2_region_enter("chunkfile", "write", the_repository);
@@ -91,12 +94,16 @@ int write_chunkfile(struct chunkfile *cf, void *data)
         result             = cf->chunks[i].write_fn(cf->f, data);
 
         if (result)
+        {
             goto cleanup;
+        }
 
         if (hashfile_total(cf->f) - start_offset != cf->chunks[i].size)
+        {
             BUG("expected to write %" PRId64 " bytes to chunk %" PRIx32 ", but wrote %" PRId64 " instead",
                 cf->chunks[i].size, cf->chunks[i].id,
                 hashfile_total(cf->f) - start_offset);
+        }
     }
 
 cleanup:
@@ -119,7 +126,8 @@ int read_table_of_contents(struct chunkfile    *cf,
 
     while (toc_length--)
     {
-        uint64_t chunk_offset, next_chunk_offset;
+        uint64_t chunk_offset;
+        uint64_t next_chunk_offset;
 
         chunk_id     = get_be32(table_of_contents);
         chunk_offset = get_be64(table_of_contents + 4);
@@ -191,7 +199,7 @@ static int pair_chunk_fn(const unsigned char *chunk_start,
 int pair_chunk(struct chunkfile     *cf,
                uint32_t              chunk_id,
                const unsigned char **p,
-               size_t               *size)
+               const size_t         *size)
 {
     struct pair_chunk_data pcd = {.p = p, .size = size};
     return read_chunk(cf, chunk_id, pair_chunk_fn, &pcd);
@@ -207,7 +215,9 @@ int read_chunk(struct chunkfile *cf,
     for (i = 0; i < cf->chunks_nr; i++)
     {
         if (cf->chunks[i].id == chunk_id)
+        {
             return fn(cf->chunks[i].start, cf->chunks[i].size, data);
+        }
     }
 
     return CHUNK_NOT_FOUND;

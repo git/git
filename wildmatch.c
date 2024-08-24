@@ -161,7 +161,9 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
                      */
                     const char *slash = strchr((char *)text, '/');
                     if (!slash)
+                    {
                         return WM_ABORT_ALL;
+                    }
                     text = (const uchar *)slash;
                     /* the slash is consumed by the top-level for loop */
                     break;

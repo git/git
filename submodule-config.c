@@ -716,7 +716,7 @@ static int parse_config(const char *var, const char *value,
             warn_multiple_config(me->treeish_name, submodule->name,
                                  "ignore");
         }
-        else if (strcmp(value, "untracked") != 0 && strcmp(value, "dirty") && strcmp(value, "all") != 0 && strcmp(value, "none") != 0)
+        else if (strcmp(value, "untracked") != 0 && strcmp(value, "dirty") != 0 && strcmp(value, "all") != 0 && strcmp(value, "none") != 0)
         {
             warning(
                 "Invalid parameter '%s' for config option "
@@ -1188,8 +1188,10 @@ static int gitmodules_fetch_config(const char *var, const char *value,
     if (!strcmp(var, "fetch.recursesubmodules"))
     {
         if (config->recurse_submodules)
+        {
             *(config->recurse_submodules) =
                 parse_fetch_recurse_submodules_arg(var, value);
+        }
         return 0;
     }
 

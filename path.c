@@ -1012,7 +1012,9 @@ const char *relative_path(const char *in, const char *prefix,
         return "./";
     }
     if (!prefix_len)
+    {
         return in;
+    }
 
     if (have_same_root(in, prefix))
     {
@@ -1685,7 +1687,7 @@ static int is_ntfs_dot_generic(const char *name,
         {
             return 0;
         }
-        else if (saw_tilde)
+        if (saw_tilde)
         {
             if (name[i] < '0' || name[i] > '9')
             {

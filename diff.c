@@ -256,8 +256,10 @@ long parse_algorithm_value(const char *value)
         return -1;
     }
     if (!strcasecmp(value, "myers") || !strcasecmp(value, "default"))
+    {
         return 0;
-    else if (!strcasecmp(value, "minimal"))
+    }
+    if (!strcasecmp(value, "minimal"))
         return XDF_NEED_MINIMAL;
     else if (!strcasecmp(value, "patience"))
         return XDF_PATIENCE_DIFF;
@@ -362,8 +364,10 @@ static int parse_color_moved(const char *arg)
         return COLOR_MOVED_NO;
     }
     if (!strcmp(arg, "plain"))
+    {
         return COLOR_MOVED_PLAIN;
-    else if (!strcmp(arg, "blocks"))
+    }
+    if (!strcmp(arg, "blocks"))
         return COLOR_MOVED_BLOCKS;
     else if (!strcmp(arg, "zebra"))
         return COLOR_MOVED_ZEBRA;
@@ -802,7 +806,9 @@ static int fill_mmfile(struct repository *r, mmfile_t *mf,
         return 0;
     }
     if (diff_populate_filespec(r, one, NULL))
+    {
         return -1;
+    }
 
     mf->ptr  = one->data;
     mf->size = one->size;
@@ -2897,7 +2903,7 @@ static int fn_out_consume(void *priv, char *line, unsigned long len)
                               &ecbdata->diff_words->plus);
             return 0;
         }
-        else if (starts_with(line, "\\ "))
+        if (starts_with(line, "\\ "))
         {
             /*
              * Eat the "no newline at eof" marker as if we
@@ -4555,9 +4561,10 @@ static const char *get_compact_summary(const struct diff_filepair *p, int is_ren
                 return "new +l";
             }
             if ((p->two->mode & 0777) == 0755)
+            {
                 return "new +x";
-            else
-                return "new";
+            }
+            return "new";
         }
         else if (p->status == DIFF_STATUS_DELETED)
         {
@@ -4569,8 +4576,10 @@ static const char *get_compact_summary(const struct diff_filepair *p, int is_ren
         return "mode -l";
     }
     if (!S_ISLNK(p->one->mode) && S_ISLNK(p->two->mode))
+    {
         return "mode +l";
-    else if ((p->one->mode & 0777) == 0644 && (p->two->mode & 0777) == 0755)
+    }
+    if ((p->one->mode & 0777) == 0644 && (p->two->mode & 0777) == 0755)
         return "mode +x";
     else if ((p->one->mode & 0777) == 0755 && (p->two->mode & 0777) == 0644)
         return "mode -x";
@@ -5248,7 +5257,9 @@ static struct diff_tempfile *prepare_temp_file(struct repository    *r,
     }
 
     if (diff_populate_filespec(r, one, NULL))
+    {
         die("cannot read data blob for %s", one->path);
+    }
     prep_temp_blob(r->index, one->path, temp,
                    one->data, one->size,
                    &one->oid, one->mode);
@@ -5356,11 +5367,17 @@ static const char *diff_abbrev_oid(const struct object_id *oid, int abbrev)
     }
     char *hex = oid_to_hex(oid);
     if (abbrev < 0)
+    {
         abbrev = FALLBACK_DEFAULT_ABBREV;
+    }
     if (abbrev > the_hash_algo->hexsz)
+    {
         BUG("oid abbreviation out of range: %d", abbrev);
+    }
     if (abbrev)
+    {
         hex[abbrev] = '\0';
+    }
     return hex;
 }
 

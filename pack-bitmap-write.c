@@ -1109,7 +1109,9 @@ static int table_cmp(const void *_va, const void *_vb, void *_data)
         return -1;
     }
     if (a->commit_pos > b->commit_pos)
+    {
         return 1;
+    }
 
     return 0;
 }

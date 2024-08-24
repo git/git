@@ -329,9 +329,11 @@ static int compare_info(const void *a_, const void *b_)
         return (*a)->old_num - (*b)->old_num;
     }
     if (0 <= (*a)->old_num)
+    {
         /* Only A existed in the original so B is obviously newer */
         return -1;
-    else if (0 <= (*b)->old_num)
+    }
+    if (0 <= (*b)->old_num)
         /* The other way around. */
         return 1;
 
@@ -341,9 +343,10 @@ static int compare_info(const void *a_, const void *b_)
         return 0;
     }
     if ((*a)->p < (*b)->p)
+    {
         return -1;
-    else
-        return 1;
+    }
+    return 1;
 }
 
 static void init_pack_info(const char *infofile, int force)

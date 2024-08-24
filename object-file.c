@@ -325,9 +325,10 @@ static int get_conv_flags(unsigned flags)
         return CONV_EOL_RENORMALIZE;
     }
     if (flags & HASH_WRITE_OBJECT)
+    {
         return global_conv_flags_eol | CONV_WRITE_OBJECT;
-    else
-        return 0;
+    }
+    return 0;
 }
 
 int mkdir_in_gitdir(const char *path)
@@ -2164,9 +2165,13 @@ void *read_object_with_reference(struct repository      *r,
         }
         /* Handle references */
         if (type == OBJ_COMMIT)
+        {
             ref_type = "tree ";
+        }
         else if (type == OBJ_TAG)
+        {
             ref_type = "object ";
+        }
         else
         {
             free(buffer);
@@ -2405,12 +2410,13 @@ static int start_loose_object_common(struct strbuf *tmp_file,
             return -1;
         }
         if (errno == EACCES)
+        {
             return error(_("insufficient permission for adding "
                            "an object to repository database %s"),
                          get_object_directory());
-        else
-            return error_errno(
-                _("unable to create temporary file"));
+        }
+        return error_errno(
+            _("unable to create temporary file"));
     }
 
     /*  Setup zlib stream for compression */

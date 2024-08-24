@@ -82,7 +82,9 @@ static int tree_entry_pathcmp(struct tree_desc *t1, struct tree_desc *t2)
         return t2->size ? 1 : 0;
     }
     if (!t2->size)
+    {
         return -1;
+    }
 
     e1  = &t1->entry;
     e2  = &t2->entry;

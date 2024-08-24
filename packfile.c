@@ -1214,7 +1214,9 @@ static int sort_pack(const struct packed_git *a, const struct packed_git *b)
         return 1;
     }
     if (a->mtime == b->mtime)
+    {
         return 0;
+    }
     return -1;
 }
 
@@ -1542,16 +1544,19 @@ static int get_delta_base_oid(struct packed_git   *p,
                                               type, delta_obj_offset);
 
         if (!base_offset)
+        {
             return -1;
+        }
 
         if (offset_to_pack_pos(p, base_offset, &base_pos) < 0)
+        {
             return -1;
+        }
 
         return nth_packed_object_id(oid, p,
                                     pack_pos_to_index(p, base_pos));
     }
-    else
-        return -1;
+    return -1;
 }
 
 static int retry_bad_packed_offset(struct repository *r,
@@ -2376,7 +2381,9 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
     index += st_add(8, st_mult(p->num_objects, hashsz + 4));
     off = ntohl(*((uint32_t *)(index + st_mult(4, n))));
     if (!(off & 0x80000000))
+    {
         return off;
+    }
     index += st_add(st_mult(p->num_objects, 4),
                     st_mult(off & 0x7fffffff, 8));
     check_pack_index_ptr(p, index);

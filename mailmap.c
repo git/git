@@ -345,8 +345,10 @@ static struct string_list_item *lookup_prefix(struct string_list *map,
             break;
         }
         if (!cmp && !map->items[i].string[len])
+        {
             /* found it */
             return &map->items[i];
+        }
         /*
          * otherwise, the string at "i" may be string[0:len]
          * followed by a string that sorts later than string[len:];

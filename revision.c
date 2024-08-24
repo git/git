@@ -1996,7 +1996,7 @@ void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
 {
     struct exclude_hidden_refs_cb cb;
 
-    if (strcmp(section, "fetch") != 0 && strcmp(section, "receive") && strcmp(section, "uploadpack") != 0)
+    if (strcmp(section, "fetch") != 0 && strcmp(section, "receive") != 0 && strcmp(section, "uploadpack") != 0)
     {
         die(_("unsupported section for hidden refs: %s"), section);
     }
@@ -2839,7 +2839,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
         revs->skip_count = parse_count(optarg);
         return argcount;
     }
-    else if ((*arg == '-') && isdigit(arg[1]))
+    if ((*arg == '-') && isdigit(arg[1]))
     {
         /* accept -<digit>, like traditional "head" */
         revs->max_count = parse_count(arg + 1);
@@ -5659,8 +5659,10 @@ const char *get_revision_mark(const struct rev_info *revs, const struct commit *
         return "-";
     }
     if (commit->object.flags & UNINTERESTING)
+    {
         return "^";
-    else if (commit->object.flags & PATCHSAME)
+    }
+    if (commit->object.flags & PATCHSAME)
         return "=";
     else if (!revs || revs->left_right)
     {

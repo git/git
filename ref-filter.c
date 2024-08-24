@@ -701,8 +701,10 @@ static int parse_signature_option(const char *arg)
         return S_BARE;
     }
     if (!strcmp(arg, "signer"))
+    {
         return S_SIGNER;
-    else if (!strcmp(arg, "grade"))
+    }
+    if (!strcmp(arg, "grade"))
         return S_GRADE;
     else if (!strcmp(arg, "key"))
         return S_KEY;
@@ -1057,8 +1059,10 @@ static align_type parse_align_position(const char *s)
         return ALIGN_RIGHT;
     }
     if (!strcmp(s, "middle"))
+    {
         return ALIGN_MIDDLE;
-    else if (!strcmp(s, "left"))
+    }
+    if (!strcmp(s, "left"))
         return ALIGN_LEFT;
     return -1;
 }
@@ -1149,7 +1153,9 @@ static int if_atom_parser(struct ref_format *format UNUSED,
         atom->u.if_then_else.cmp_status = COMPARE_UNEQUAL;
     }
     else
+    {
         return err_bad_arg(err, "if", arg);
+    }
     return 0;
 }
 
@@ -1721,8 +1727,10 @@ static const char *find_next(const char *cp)
                 return cp;
             }
             if (cp[1] == '%')
+            {
                 cp++; /* skip over two % */
-                      /* otherwise this is a singleton, literal % */
+            }
+            /* otherwise this is a singleton, literal % */
         }
         cp++;
     }
@@ -2200,7 +2208,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
      * For a tag or a commit object, if "creator" or "creatordate" is
      * requested, do something special.
      */
-    if (strcmp(who, "tagger") != 0 && strcmp(who, "committer"))
+    if (strcmp(who, "tagger") != 0 && strcmp(who, "committer") != 0)
     {
         return; /* "author" for commit object is not wanted */
     }
@@ -2744,8 +2752,10 @@ static const char *show_ref(struct refname_atom *atom, const char *refname)
                                             warn_ambiguous_refs);
     }
     if (atom->option == R_LSTRIP)
+    {
         return lstrip_ref_components(refname, atom->lstrip);
-    else if (atom->option == R_RSTRIP)
+    }
+    if (atom->option == R_RSTRIP)
         return rstrip_ref_components(refname, atom->rstrip);
     else
         return xstrdup(refname);
@@ -4058,7 +4068,9 @@ static int compare_detached_head(struct ref_array_item *a, struct ref_array_item
         return -1;
     }
     if (b->kind & FILTER_REFS_DETACHED_HEAD)
+    {
         return 1;
+    }
     BUG("should have died in the xor check above");
     return 0;
 }

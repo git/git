@@ -737,7 +737,7 @@ static void init_curl_http_auth(CURL *result)
         {
             return;
         }
-        else if (http_proactive_auth == PROACTIVE_AUTH_BASIC)
+        if (http_proactive_auth == PROACTIVE_AUTH_BASIC)
         {
             strvec_push(&http_auth.wwwauth_headers, "Basic");
         }
@@ -2238,7 +2238,7 @@ static int handle_curl_result(struct slot_results *results)
         return HTTP_NOAUTH;
 #ifdef GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH
     }
-    else if (results->curl_result == CURLE_SSL_PINNEDPUBKEYNOTMATCH)
+    if (results->curl_result == CURLE_SSL_PINNEDPUBKEYNOTMATCH)
     {
         return HTTP_NOMATCHPUBLICKEY;
 #endif

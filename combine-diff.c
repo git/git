@@ -686,10 +686,8 @@ static unsigned long find_next(struct sline *sline,
         {
             return i;
         }
-        else
-        {
-            i++;
-        }
+
+        i++;
     }
     return i;
 }
@@ -992,8 +990,12 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
             break;
         }
         for (hunk_end = lno + 1; hunk_end <= cnt; hunk_end++)
+        {
             if (!(sline[hunk_end].flag & mark))
+            {
                 break;
+            }
+        }
 
         rlines = hunk_end - lno;
         if (cnt < hunk_end)

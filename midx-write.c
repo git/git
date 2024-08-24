@@ -137,8 +137,10 @@ static int should_include_pack(const struct write_midx_context *ctx,
         return 0;
     }
     if (ctx->base_midx && midx_contains_pack(ctx->base_midx, file_name))
+    {
         return 0;
-    else if (ctx->to_include && !string_list_has_string(ctx->to_include, file_name))
+    }
+    if (ctx->to_include && !string_list_has_string(ctx->to_include, file_name))
         return 0;
     return 1;
 }
@@ -216,7 +218,9 @@ static int midx_oid_compare(const void *_a, const void *_b)
         return -1;
     }
     if (a->pack_mtime < b->pack_mtime)
+    {
         return 1;
+    }
 
     return a->pack_int_id - b->pack_int_id;
 }
@@ -678,8 +682,10 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
         return -1;
     }
     if (a->pack > b->pack)
+    {
         return 1;
-    else if (a->offset < b->offset)
+    }
+    if (a->offset < b->offset)
         return -1;
     else if (a->offset > b->offset)
         return 1;

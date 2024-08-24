@@ -199,19 +199,21 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
     if (obj->type == OBJ_NONE)
     {
         if (type == OBJ_COMMIT)
+        {
             init_commit_node((struct commit *)obj);
+        }
         else
+        {
             obj->type = type;
+        }
         return obj;
     }
-    else
-    {
-        if (!quiet)
-            error(_("object %s is a %s, not a %s"),
-                  oid_to_hex(&obj->oid),
-                  type_name(obj->type), type_name(type));
-        return NULL;
-    }
+
+    if (!quiet)
+        error(_("object %s is a %s, not a %s"),
+              oid_to_hex(&obj->oid),
+              type_name(obj->type), type_name(type));
+    return NULL;
 }
 
 struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid)

@@ -1632,14 +1632,18 @@ static int git_imap_config(const char *var, const char *val,
         }
 
         if (starts_with(val, "imap:"))
+        {
             val += 5;
+        }
         else if (starts_with(val, "imaps:"))
         {
             val += 6;
             cfg->use_ssl = 1;
         }
         if (starts_with(val, "//"))
+        {
             val += 2;
+        }
         cfg->host = xstrdup(val);
     }
     else

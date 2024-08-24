@@ -489,7 +489,9 @@ static int read_patch_file(struct strbuf *sb, int fd)
         return error_errno(_("failed to read patch"));
     }
     if (sb->len >= MAX_APPLY_SIZE)
+    {
         return error(_("patch too large"));
+    }
     /*
      * Make sure that we have some slop in the buffer
      * so that we can do speculative "memcmp" etc, and
@@ -1961,7 +1963,7 @@ static int find_header(struct apply_state *state,
         }
 
         /* --- followed by +++ ? */
-        if (memcmp("--- ", line, 4) != 0 || memcmp("+++ ", line + len, 4))
+        if (memcmp("--- ", line, 4) != 0 || memcmp("+++ ", line + len, 4) != 0)
         {
             continue;
         }
@@ -4165,7 +4167,7 @@ static int load_patch_target(struct apply_state       *state,
             }
             return SUBMODULE_PATCH_WITHOUT_INDEX;
         }
-        else if (has_symlink_leading_path(name, strlen(name)))
+        if (has_symlink_leading_path(name, strlen(name)))
         {
             return error(_("reading from '%s' beyond a symbolic link"), name);
         }
@@ -4276,7 +4278,9 @@ static int three_way_merge(struct apply_state     *state,
         return resolve_to(image, theirs);
     }
     if (oideq(base, theirs) || oideq(ours, theirs))
+    {
         return resolve_to(image, ours);
+    }
 
     read_mmblob(&base_file, base);
     read_mmblob(&our_file, ours);
@@ -4359,7 +4363,9 @@ static int load_current(struct apply_state *state,
         return status;
     }
     if (status)
+    {
         return -1;
+    }
     img = strbuf_detach(&buf, &len);
     prepare_image(image, img, len, !patch->is_binary);
     return 0;
@@ -5633,7 +5639,9 @@ static int create_file(struct apply_state *state, struct patch *patch)
         return add_conflicted_stages_file(state, patch);
     }
     if (state->update_index)
+    {
         return add_index_file(state, path, mode, buf, size);
+    }
     return 0;
 }
 

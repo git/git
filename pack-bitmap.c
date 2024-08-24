@@ -828,7 +828,9 @@ static int triplet_cmp(const void *commit_pos, const void *table_entry)
         return 1;
     }
     if (a < b)
+    {
         return -1;
+    }
 
     return 0;
 }

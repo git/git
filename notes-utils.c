@@ -119,8 +119,10 @@ static combine_notes_fn parse_combine_notes_fn(const char *v)
         return combine_notes_overwrite;
     }
     if (!strcasecmp(v, "ignore"))
+    {
         return combine_notes_ignore;
-    else if (!strcasecmp(v, "concatenate"))
+    }
+    if (!strcasecmp(v, "concatenate"))
         return combine_notes_concatenate;
     else if (!strcasecmp(v, "cat_sort_uniq"))
         return combine_notes_cat_sort_uniq;
@@ -141,7 +143,9 @@ static int notes_rewrite_config(const char *k, const char *v,
     if (!c->mode_from_env && !strcmp(k, "notes.rewritemode"))
     {
         if (!v)
+        {
             return config_error_nonbool(k);
+        }
         c->combine = parse_combine_notes_fn(v);
         if (!c->combine)
         {
@@ -150,7 +154,7 @@ static int notes_rewrite_config(const char *k, const char *v,
         }
         return 0;
     }
-    else if (!c->refs_from_env && !strcmp(k, "notes.rewriteref"))
+    if (!c->refs_from_env && !strcmp(k, "notes.rewriteref"))
     {
         if (!v)
             return config_error_nonbool(k);

@@ -1557,7 +1557,9 @@ int copy_note(struct notes_tree      *t,
         return add_note(t, to_obj, note, combine_notes);
     }
     if (existing_note)
+    {
         return add_note(t, to_obj, null_oid(), combine_notes);
+    }
 
     return 0;
 }
@@ -1569,9 +1571,13 @@ void expand_notes_ref(struct strbuf *sb)
         return; /* we're happy */
     }
     if (starts_with(sb->buf, "notes/"))
+    {
         strbuf_insertstr(sb, 0, "refs/");
+    }
     else
+    {
         strbuf_insertstr(sb, 0, "refs/notes/");
+    }
 }
 
 void expand_loose_notes_ref(struct strbuf *sb)

@@ -285,7 +285,9 @@ static int threaded_check_leading_path(struct cache_def *cache, const char *name
         return 0;
     }
     if (flags & FL_DIR)
+    {
         return -1;
+    }
     if (warn_on_lstat_err && (flags & FL_LSTATERR))
     {
         char *path = xmemdupz(name, match_len);

@@ -355,7 +355,9 @@ int load_pack_revindex(struct repository *r, struct packed_git *p)
         return 0;
     }
     if (!create_pack_revindex_in_memory(p))
+    {
         return 0;
+    }
     return -1;
 }
 
@@ -506,9 +508,13 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
             return 0;
         }
         if (ofs < got)
+        {
             hi = mi;
+        }
         else
+        {
             lo = mi + 1;
+        }
     } while (lo < hi);
 
     error("bad offset for revindex");
@@ -549,9 +555,10 @@ off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
         return p->revindex[pos].offset;
     }
     if (pos == p->num_objects)
+    {
         return p->pack_size - the_hash_algo->rawsz;
-    else
-        return nth_packed_object_offset(p, pack_pos_to_index(p, pos));
+    }
+    return nth_packed_object_offset(p, pack_pos_to_index(p, pos));
 }
 
 uint32_t pack_pos_to_midx(struct multi_pack_index *m, uint32_t pos)
@@ -597,7 +604,9 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
         return -1;
     }
     if (!key_preferred && versus_preferred)
+    {
         return 1;
+    }
 
     /* Then, break ties first by comparing the pack IDs. */
     if (key->pack < versus_pack)
@@ -605,7 +614,9 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
         return -1;
     }
     if (key->pack > versus_pack)
+    {
         return 1;
+    }
 
     /* Finally, break ties by comparing offsets within a pack. */
     versus_offset = nth_midxed_offset(midx, versus);
@@ -614,7 +625,9 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
         return -1;
     }
     if (key->offset > versus_offset)
+    {
         return 1;
+    }
 
     return 0;
 }

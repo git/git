@@ -465,17 +465,15 @@ uint64_t getnanotime(void)
         /* initialization failed, fall back to gettimeofday */
         return gettimeofday_nanos();
     }
+
+    /* initialize offset if high resolution timer works */
+    uint64_t now     = gettimeofday_nanos();
+    uint64_t highres = highres_nanos();
+    if (highres)
+        offset = now - highres;
     else
-    {
-        /* initialize offset if high resolution timer works */
-        uint64_t now     = gettimeofday_nanos();
-        uint64_t highres = highres_nanos();
-        if (highres)
-            offset = now - highres;
-        else
-            offset = 1;
-        return now;
-    }
+        offset = 1;
+    return now;
 }
 
 static struct strbuf command_line = STRBUF_INIT;

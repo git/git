@@ -198,7 +198,9 @@ static int commit_gen_cmp(const void *va, const void *vb)
         return -1;
     }
     if (generation_a > generation_b)
+    {
         return 1;
+    }
 
     /* use date as a heuristic when generations are equal */
     if (a->date < b->date)
@@ -206,7 +208,9 @@ static int commit_gen_cmp(const void *va, const void *vb)
         return -1;
     }
     if (a->date > b->date)
+    {
         return 1;
+    }
     return 0;
 }
 

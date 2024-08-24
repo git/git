@@ -740,7 +740,7 @@ static enum extension_result handle_extension_v0(const char               *var,
         data->precious_objects = git_config_bool(var, value);
         return EXTENSION_OK;
     }
-    else if (!strcmp(ext, "partialclone"))
+    if (!strcmp(ext, "partialclone"))
     {
         if (!value)
             return config_error_nonbool(var);
@@ -773,15 +773,19 @@ static enum extension_result handle_extension(const char               *var,
         int format;
 
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         format = hash_algo_by_name(value);
         if (format == GIT_HASH_UNKNOWN)
+        {
             return error(_("invalid value for '%s': '%s'"),
                          "extensions.objectformat", value);
+        }
         data->hash_algo = format;
         return EXTENSION_OK;
     }
-    else if (!strcmp(ext, "compatobjectformat"))
+    if (!strcmp(ext, "compatobjectformat"))
     {
         struct string_list_item *item;
         int                      format;
@@ -1440,7 +1444,7 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
     {
         return 0;
     }
-    else if (*empty_entry_found)
+    if (*empty_entry_found)
     {
         /* Keep entry but do not canonicalize it */
         return 1;

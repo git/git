@@ -2108,10 +2108,11 @@ int repo_interpret_branch_name(struct repository *r,
         if (len > 0)
         {
             if (len == namelen)
+            {
                 return len; /* consumed all */
-            else
-                return reinterpret(r, name, namelen, len, buf,
-                                   options->allowed);
+            }
+            return reinterpret(r, name, namelen, len, buf,
+                               options->allowed);
         }
     }
 
@@ -2619,7 +2620,9 @@ static enum get_oid_result get_oid_with_context_1(struct repository     *repo,
         }
 
         if (only_to_die)
+        {
             die(_("invalid object name '%.*s'."), len, name);
+        }
     }
     return ret;
 }

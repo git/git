@@ -296,7 +296,7 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 
         report     = NULL;
         new_report = 0;
-        if (strcmp(head, "ok") != 0 && strcmp(head, "ng"))
+        if (strcmp(head, "ok") != 0 && strcmp(head, "ng") != 0)
         {
             error("invalid ref status from remote: %s", head);
             ret = -1;

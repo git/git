@@ -2983,22 +2983,28 @@ static int verify_absent_1(const struct cache_entry     *ce,
 
         path = xmemdupz(ce->name, len);
         if (lstat(path, &st))
+        {
             ret = error_errno("cannot stat '%s'", path);
+        }
         else
         {
             if (submodule_from_ce(ce))
+            {
                 ret = check_submodule_move_head(ce,
                                                 oid_to_hex(&ce->oid),
                                                 NULL, o);
+            }
             else
+            {
                 ret = check_ok_to_remove(path, len, DT_UNKNOWN, NULL,
                                          &st, error_type,
                                          absent_type, o);
+            }
         }
         free(path);
         return ret;
     }
-    else if (lstat(ce->name, &st))
+    if (lstat(ce->name, &st))
     {
         if (errno != ENOENT)
             return error_errno("cannot stat '%s'", ce->name);
@@ -3526,7 +3532,7 @@ int twoway_merge(const struct cache_entry *const *src,
         {
             return keep_entry(current, o);
         }
-        else if (oldtree && !newtree && same(current, oldtree))
+        if (oldtree && !newtree && same(current, oldtree))
         {
             /* 10 or 11 */
             return deleted_entry(oldtree, current, o);

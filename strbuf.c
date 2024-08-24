@@ -14,7 +14,7 @@ int starts_with(const char *str, const char *prefix)
         {
             return 1;
         }
-        else if (*str != *prefix)
+        if (*str != *prefix)
         {
             return 0;
         }
@@ -29,7 +29,7 @@ int istarts_with(const char *str, const char *prefix)
         {
             return 1;
         }
-        else if (tolower(*str) != tolower(*prefix))
+        if (tolower(*str) != tolower(*prefix))
         {
             return 0;
         }
@@ -46,7 +46,9 @@ int starts_with_mem(const char *str, size_t len, const char *prefix)
             return 1;
         }
         if (str == end || *str != *prefix)
+        {
             return 0;
+        }
     }
 }
 

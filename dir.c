@@ -3915,13 +3915,14 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
             return keep_toplevel ? -1 : 0;
         }
         if (errno == EACCES && !keep_toplevel)
+        {
             /*
              * An empty dir could be removable even if it
              * is unreadable:
              */
             return rmdir(path->buf);
-        else
-            return -1;
+        }
+        return -1;
     }
     strbuf_complete(path, '/');
 
@@ -4818,6 +4819,8 @@ int path_match_flags(const char *const str, const enum path_match_flags flags)
         return is_dir_sep(*p);
     }
     if (flags & PATH_MATCH_XPLATFORM)
+    {
         return is_xplatform_dir_sep(*p);
+    }
     BUG("unreachable");
 }

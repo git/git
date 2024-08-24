@@ -3029,7 +3029,9 @@ int repo_index_has_changes(struct repository *repo,
     for (i = 0; sb && i < istate->cache_nr; i++)
     {
         if (i)
+        {
             strbuf_addch(sb, ' ');
+        }
         strbuf_addstr(sb, istate->cache[i]->name);
     }
     return !!istate->cache_nr;

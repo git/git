@@ -292,7 +292,9 @@ static int score_compare(const void *a_, const void *b_)
         return (0 <= b->dst);
     }
     if (b->dst < 0)
+    {
         return -1;
+    }
 
     if (a->score == b->score)
     {
@@ -1658,9 +1660,11 @@ void diffcore_rename_extended(struct diff_options *options,
             {
                 continue; /* unmerged */
             }
-            if (options->single_follow && strcmp(options->single_follow, p->two->path))
+            if (options->single_follow && strcmp(options->single_follow, p->two->path) != 0)
+            {
                 continue; /* not interested */
-            else if (!options->flags.rename_empty && is_empty_blob_oid(&p->two->oid, the_repository->hash_algo))
+            }
+            if (!options->flags.rename_empty && is_empty_blob_oid(&p->two->oid, the_repository->hash_algo))
                 continue;
             else if (add_rename_dst(p) < 0)
             {

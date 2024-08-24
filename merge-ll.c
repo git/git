@@ -438,8 +438,10 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
         return &ll_merge_drv[LL_TEXT_MERGE];
     }
     if (ATTR_FALSE(merge_attr))
+    {
         return &ll_merge_drv[LL_BINARY_MERGE];
-    else if (ATTR_UNSET(merge_attr))
+    }
+    if (ATTR_UNSET(merge_attr))
     {
         if (!default_ll_merge)
             return &ll_merge_drv[LL_TEXT_MERGE];

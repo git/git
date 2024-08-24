@@ -52,7 +52,7 @@ int read_table_of_contents(struct chunkfile    *cf,
 int pair_chunk(struct chunkfile     *cf,
                uint32_t              chunk_id,
                const unsigned char **p,
-               size_t               *size);
+               const size_t         *size);
 
 typedef int (*chunk_read_fn)(const unsigned char *chunk_start,
                              size_t chunk_size, void *data);

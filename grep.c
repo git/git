@@ -40,8 +40,10 @@ static int parse_pattern_type_arg(const char *opt, const char *arg)
         return GREP_PATTERN_TYPE_UNSPECIFIED;
     }
     if (!strcmp(arg, "basic"))
+    {
         return GREP_PATTERN_TYPE_BRE;
-    else if (!strcmp(arg, "extended"))
+    }
+    if (!strcmp(arg, "extended"))
         return GREP_PATTERN_TYPE_ERE;
     else if (!strcmp(arg, "fixed"))
         return GREP_PATTERN_TYPE_FIXED;

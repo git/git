@@ -2245,7 +2245,7 @@ void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
 
     for (var = local_repo_env; *var; var++)
     {
-        if (strcmp(*var, CONFIG_DATA_ENVIRONMENT) != 0 && strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
+        if (strcmp(*var, CONFIG_DATA_ENVIRONMENT) != 0 && strcmp(*var, CONFIG_COUNT_ENVIRONMENT) != 0)
         {
             strvec_push(env, *var);
         }

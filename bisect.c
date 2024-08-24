@@ -1037,7 +1037,7 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
         {
             continue;
         }
-        else if (0 <= oid_array_lookup(&skipped_revs, mb))
+        if (0 <= oid_array_lookup(&skipped_revs, mb))
         {
             handle_skipped_merge_base(mb);
         }

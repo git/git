@@ -644,7 +644,9 @@ int repo_is_descendant_of(struct repository  *r,
         with_commit = with_commit->next;
         ret         = repo_in_merge_bases_many(r, other, 1, &commit, 0);
         if (ret)
+        {
             return ret;
+        }
     }
     return 0;
 }

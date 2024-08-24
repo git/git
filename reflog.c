@@ -113,7 +113,9 @@ static int commit_is_complete(struct commit *commit)
             break;
         }
         if (c->object.flags & SEEN)
+        {
             continue;
+        }
         for (parent = c->parents; parent; parent = parent->next)
         {
             struct commit *p = parent->item;
