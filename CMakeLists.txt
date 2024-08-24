@@ -110,25 +110,25 @@ project(git
 #TODO Enable NLS on windows natively
 
 #macros for parsing the Makefile for sources and scripts
-macro(parse_makefile_for_sources list_var regex)
-	file(STRINGS ${CMAKE_SOURCE_DIR}/old_Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
-	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
-
-        #remove "$(COMPAT_OBJS)" This is only for libgit.
-	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) 
-
-        #remove trailing/leading whitespaces
-	string(STRIP ${${list_var}} ${list_var}) 
-        
-        #change .o to .c, ; is for converting the string into a list
-	string(REPLACE ".o" ".c;" ${list_var} ${${list_var}}) 
-
-        #remove trailing/leading whitespaces for each element in list
-	list(TRANSFORM ${list_var} STRIP) 
-
-        #remove empty list elements
-	list(REMOVE_ITEM ${list_var} "") 
-endmacro()
+# macro(parse_makefile_for_sources list_var regex)
+# 	file(STRINGS ${CMAKE_SOURCE_DIR}/old_Makefile ${list_var} REGEX "^${regex} \\+=(.*)")
+# 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
+# 
+#         #remove "$(COMPAT_OBJS)" This is only for libgit.
+# 	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) 
+# 
+#         #remove trailing/leading whitespaces
+# 	string(STRIP ${${list_var}} ${list_var}) 
+#         
+#         #change .o to .c, ; is for converting the string into a list
+# 	string(REPLACE ".o" ".c;" ${list_var} ${${list_var}}) 
+# 
+#         #remove trailing/leading whitespaces for each element in list
+# 	list(TRANSFORM ${list_var} STRIP) 
+# 
+#         #remove empty list elements
+# 	list(REMOVE_ITEM ${list_var} "") 
+# endmacro()
 
 
 
@@ -1205,6 +1205,8 @@ if(CURL_FOUND)
 endif()
 
 parse_makefile_for_executables(git_builtin_extra "BUILT_INS")
+# set(git_builtin_extra
+# )
 
 option(SKIP_DASHED_BUILT_INS "Skip hardlinking the dashed versions of the built-ins")
 
