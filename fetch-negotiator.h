@@ -17,47 +17,48 @@ struct repository;
  * Once negotiation is done, call release(). The negotiator then cannot be used
  * (unless reinitialized with fetch_negotiator_init()).
  */
-struct fetch_negotiator {
-	/*
-	 * Before negotiation starts, indicate that the server is known to have
-	 * this commit.
-	 */
-	void (*known_common)(struct fetch_negotiator *, struct commit *);
+struct fetch_negotiator
+{
+    /*
+     * Before negotiation starts, indicate that the server is known to have
+     * this commit.
+     */
+    void (*known_common)(struct fetch_negotiator *, struct commit *);
 
-	/*
-	 * Once this function is invoked, known_common() cannot be invoked any
-	 * more.
-	 *
-	 * Indicate that this commit and all its ancestors are to be checked
-	 * for commonality with the server.
-	 */
-	void (*add_tip)(struct fetch_negotiator *, struct commit *);
+    /*
+     * Once this function is invoked, known_common() cannot be invoked any
+     * more.
+     *
+     * Indicate that this commit and all its ancestors are to be checked
+     * for commonality with the server.
+     */
+    void (*add_tip)(struct fetch_negotiator *, struct commit *);
 
-	/*
-	 * Once this function is invoked, known_common() and add_tip() cannot
-	 * be invoked any more.
-	 *
-	 * Return the next commit that the client should send as a "have" line.
-	 */
-	const struct object_id *(*next)(struct fetch_negotiator *);
+    /*
+     * Once this function is invoked, known_common() and add_tip() cannot
+     * be invoked any more.
+     *
+     * Return the next commit that the client should send as a "have" line.
+     */
+    const struct object_id *(*next)(struct fetch_negotiator *);
 
-	/*
-	 * Inform the negotiator that the server has the given commit. This
-	 * method must only be called on commits returned by next().
-	 */
-	int (*ack)(struct fetch_negotiator *, struct commit *);
+    /*
+     * Inform the negotiator that the server has the given commit. This
+     * method must only be called on commits returned by next().
+     */
+    int (*ack)(struct fetch_negotiator *, struct commit *);
 
-	void (*release)(struct fetch_negotiator *);
+    void (*release)(struct fetch_negotiator *);
 
-	/* internal use */
-	void *data;
+    /* internal use */
+    void *data;
 };
 
 /*
  * Initialize a negotiator based on the repository settings.
  */
-void fetch_negotiator_init(struct repository *r,
-			   struct fetch_negotiator *negotiator);
+void fetch_negotiator_init(struct repository       *r,
+                           struct fetch_negotiator *negotiator);
 
 /*
  * Initialize a noop negotiator.

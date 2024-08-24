@@ -1,11 +1,12 @@
 #ifndef SIDEBAND_H
 #define SIDEBAND_H
 
-enum sideband_type {
-	SIDEBAND_PROTOCOL_ERROR = -2,
-	SIDEBAND_REMOTE_ERROR = -1,
-	SIDEBAND_FLUSH = 0,
-	SIDEBAND_PRIMARY = 1
+enum sideband_type
+{
+    SIDEBAND_PROTOCOL_ERROR = -2,
+    SIDEBAND_REMOTE_ERROR   = -1,
+    SIDEBAND_FLUSH          = 0,
+    SIDEBAND_PRIMARY        = 1
 };
 
 /*
@@ -23,10 +24,10 @@ enum sideband_type {
  * packet_read_with_status() (e.g., PACKET_READ_NORMAL).
  */
 int demultiplex_sideband(const char *me, int status,
-			 char *buf, int len,
-			 int die_on_error,
-			 struct strbuf *scratch,
-			 enum sideband_type *sideband_type);
+                         char *buf, int len,
+                         int                 die_on_error,
+                         struct strbuf      *scratch,
+                         enum sideband_type *sideband_type);
 
 void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_max);
 

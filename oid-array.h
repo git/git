@@ -49,14 +49,18 @@
  * contains the number of items in the set. The `alloc` and `sorted` members
  * are used internally, and should not be needed by API callers.
  */
-struct oid_array {
-	struct object_id *oid;
-	size_t nr;
-	size_t alloc;
-	int sorted;
+struct oid_array
+{
+    struct object_id *oid;
+    size_t            nr;
+    size_t            alloc;
+    int               sorted;
 };
 
-#define OID_ARRAY_INIT { 0 }
+#define OID_ARRAY_INIT \
+    {                  \
+        0              \
+    }
 
 /**
  * Add an item to the set. The object ID will be placed at the end of the array
@@ -79,7 +83,7 @@ int oid_array_lookup(struct oid_array *array, const struct object_id *oid);
 void oid_array_clear(struct oid_array *array);
 
 typedef int (*for_each_oid_fn)(const struct object_id *oid,
-			       void *data);
+                               void                   *data);
 /**
  * Iterate over each element of the list, executing the callback function for
  * each one. Does not sort the list, so any custom hash order is retained.
@@ -87,8 +91,8 @@ typedef int (*for_each_oid_fn)(const struct object_id *oid,
  * and the callback's return is propagated; otherwise, 0 is returned.
  */
 int oid_array_for_each(struct oid_array *array,
-		       for_each_oid_fn fn,
-		       void *data);
+                       for_each_oid_fn   fn,
+                       void             *data);
 
 /**
  * Iterate over each unique element of the list in sorted order, but otherwise
@@ -96,8 +100,8 @@ int oid_array_for_each(struct oid_array *array,
  * has the side effect of sorting it.
  */
 int oid_array_for_each_unique(struct oid_array *array,
-			      for_each_oid_fn fn,
-			      void *data);
+                              for_each_oid_fn   fn,
+                              void             *data);
 
 /**
  * Apply the callback function `want` to each entry in the array, retaining
@@ -105,8 +109,8 @@ int oid_array_for_each_unique(struct oid_array *array,
  * of the entries that are retained.
  */
 void oid_array_filter(struct oid_array *array,
-		      for_each_oid_fn want,
-		      void *cbdata);
+                      for_each_oid_fn   want,
+                      void             *cbdata);
 
 /**
  * Sort the array in order of ascending object id.
@@ -127,11 +131,11 @@ void oid_array_sort(struct oid_array *array);
  */
 static inline size_t oid_array_next_unique(struct oid_array *array, size_t cur)
 {
-	do {
-		cur++;
-	} while (cur < array->nr &&
-		 oideq(array->oid + cur, array->oid + cur - 1));
-	return cur;
+    do
+    {
+        cur++;
+    } while (cur < array->nr && oideq(array->oid + cur, array->oid + cur - 1));
+    return cur;
 }
 
 #endif /* OID_ARRAY_H */

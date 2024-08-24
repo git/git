@@ -22,11 +22,12 @@
  */
 #define DEFAULT_GIT_PORT 9418
 
-enum protocol_version {
-	protocol_unknown_version = -1,
-	protocol_v0 = 0,
-	protocol_v1 = 1,
-	protocol_v2 = 2,
+enum protocol_version
+{
+    protocol_unknown_version = -1,
+    protocol_v0              = 0,
+    protocol_v1              = 1,
+    protocol_v2              = 2,
 };
 
 /*

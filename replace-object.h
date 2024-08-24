@@ -5,9 +5,10 @@
 #include "repository.h"
 #include "object-store-ll.h"
 
-struct replace_object {
-	struct oidmap_entry original;
-	struct object_id replacement;
+struct replace_object
+{
+    struct oidmap_entry original;
+    struct object_id    replacement;
 };
 
 void prepare_replace_object(struct repository *r);
@@ -16,8 +17,8 @@ void prepare_replace_object(struct repository *r);
  * This internal function is only declared here for the benefit of
  * lookup_replace_object().  Please do not call it directly.
  */
-const struct object_id *do_lookup_replace_object(struct repository *r,
-						 const struct object_id *oid);
+const struct object_id *do_lookup_replace_object(struct repository      *r,
+                                                 const struct object_id *oid);
 
 /*
  * Some commands disable replace-refs unconditionally, and otherwise each
@@ -42,14 +43,12 @@ int replace_refs_enabled(struct repository *r);
  * problem in the value being updated by one thread right after another one read
  * it here (and it should be written to only once, anyway).
  */
-static inline const struct object_id *lookup_replace_object(struct repository *r,
-							    const struct object_id *oid)
+static inline const struct object_id *lookup_replace_object(struct repository      *r,
+                                                            const struct object_id *oid)
 {
-	if (!replace_refs_enabled(r) ||
-	    (r->objects->replace_map_initialized &&
-	     r->objects->replace_map->map.tablesize == 0))
-		return oid;
-	return do_lookup_replace_object(r, oid);
+    if (!replace_refs_enabled(r) || (r->objects->replace_map_initialized && r->objects->replace_map->map.tablesize == 0))
+        return oid;
+    return do_lookup_replace_object(r, oid);
 }
 
 /*

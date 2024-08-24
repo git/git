@@ -8,40 +8,41 @@ struct commit;
 struct tree;
 struct strmap;
 
-struct merge_result {
-	/*
-	 * Whether the merge is clean; possible values:
-	 *    1: clean
-	 *    0: not clean (merge conflicts)
-	 *   <0: operation aborted prematurely.  (object database
-	 *       unreadable, disk full, etc.)  Worktree may be left in an
-	 *       inconsistent state if operation failed near the end.
-	 */
-	int clean;
+struct merge_result
+{
+    /*
+     * Whether the merge is clean; possible values:
+     *    1: clean
+     *    0: not clean (merge conflicts)
+     *   <0: operation aborted prematurely.  (object database
+     *       unreadable, disk full, etc.)  Worktree may be left in an
+     *       inconsistent state if operation failed near the end.
+     */
+    int clean;
 
-	/*
-	 * Result of merge.  If !clean, represents what would go in worktree
-	 * (thus possibly including files containing conflict markers).
-	 */
-	struct tree *tree;
+    /*
+     * Result of merge.  If !clean, represents what would go in worktree
+     * (thus possibly including files containing conflict markers).
+     */
+    struct tree *tree;
 
-	/*
-	 * Special messages and conflict notices for various paths
-	 *
-	 * This is a map of pathnames to a string_list. It contains various
-	 * warning/conflict/notice messages (possibly multiple per path)
-	 * that callers may want to use.
-	 */
-	struct strmap *path_messages;
+    /*
+     * Special messages and conflict notices for various paths
+     *
+     * This is a map of pathnames to a string_list. It contains various
+     * warning/conflict/notice messages (possibly multiple per path)
+     * that callers may want to use.
+     */
+    struct strmap *path_messages;
 
-	/*
-	 * Additional metadata used by merge_switch_to_result() or future calls
-	 * to merge_incore_*().  Includes data needed to update the index (if
-	 * !clean) and to print "CONFLICT" messages.  Not for external use.
-	 */
-	void *priv;
-	/* Also private */
-	unsigned _properly_initialized;
+    /*
+     * Additional metadata used by merge_switch_to_result() or future calls
+     * to merge_incore_*().  Includes data needed to update the index (if
+     * !clean) and to print "CONFLICT" messages.  Not for external use.
+     */
+    void *priv;
+    /* Also private */
+    unsigned _properly_initialized;
 };
 
 /*
@@ -58,28 +59,28 @@ struct merge_result {
  *       [2] commit 8918b0c9c2 ("merge-recur: try to merge older merge bases
  *           first", 2006-08-09)
  */
-void merge_incore_recursive(struct merge_options *opt,
-			    const struct commit_list *merge_bases,
-			    struct commit *side1,
-			    struct commit *side2,
-			    struct merge_result *result);
+void merge_incore_recursive(struct merge_options     *opt,
+                            const struct commit_list *merge_bases,
+                            struct commit            *side1,
+                            struct commit            *side2,
+                            struct merge_result      *result);
 
 /*
  * rename-detecting three-way merge, no recursion.
  * working tree and index are untouched.
  */
 void merge_incore_nonrecursive(struct merge_options *opt,
-			       struct tree *merge_base,
-			       struct tree *side1,
-			       struct tree *side2,
-			       struct merge_result *result);
+                               struct tree          *merge_base,
+                               struct tree          *side1,
+                               struct tree          *side2,
+                               struct merge_result  *result);
 
 /* Update the working tree and index from head to result after incore merge */
 void merge_switch_to_result(struct merge_options *opt,
-			    struct tree *head,
-			    struct merge_result *result,
-			    int update_worktree_and_index,
-			    int display_update_msgs);
+                            struct tree          *head,
+                            struct merge_result  *result,
+                            int                   update_worktree_and_index,
+                            int                   display_update_msgs);
 
 /*
  * Display messages about conflicts and which files were 3-way merged.
@@ -87,13 +88,14 @@ void merge_switch_to_result(struct merge_options *opt,
  * so only call this when bypassing merge_switch_to_result().
  */
 void merge_display_update_messages(struct merge_options *opt,
-				   int detailed,
-				   struct merge_result *result);
+                                   int                   detailed,
+                                   struct merge_result  *result);
 
-struct stage_info {
-	struct object_id oid;
-	int mode;
-	int stage;
+struct stage_info
+{
+    struct object_id oid;
+    int              mode;
+    int              stage;
 };
 
 /*
@@ -108,10 +110,10 @@ struct stage_info {
  * conflicted_files should be empty before calling this function.
  */
 void merge_get_conflicted_files(struct merge_result *result,
-				struct string_list *conflicted_files);
+                                struct string_list  *conflicted_files);
 
 /* Do needed cleanup when not calling merge_switch_to_result() */
 void merge_finalize(struct merge_options *opt,
-		    struct merge_result *result);
+                    struct merge_result  *result);
 
 #endif

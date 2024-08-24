@@ -1,24 +1,26 @@
 #ifndef MEM_POOL_H
 #define MEM_POOL_H
 
-struct mp_block {
-	struct mp_block *next_block;
-	char *next_free;
-	char *end;
-	uintmax_t space[FLEX_ARRAY]; /* more */
+struct mp_block
+{
+    struct mp_block *next_block;
+    char            *next_free;
+    char            *end;
+    uintmax_t        space[FLEX_ARRAY]; /* more */
 };
 
-struct mem_pool {
-	struct mp_block *mp_block;
+struct mem_pool
+{
+    struct mp_block *mp_block;
 
-	/*
-	 * The amount of available memory to grow the pool by.
-	 * This size does not include the overhead for the mp_block.
-	 */
-	size_t block_alloc;
+    /*
+     * The amount of available memory to grow the pool by.
+     * This size does not include the overhead for the mp_block.
+     */
+    size_t block_alloc;
 
-	/* The total amount of memory allocated by the pool. */
-	size_t pool_alloc;
+    /* The total amount of memory allocated by the pool. */
+    size_t pool_alloc;
 };
 
 /*
@@ -50,8 +52,7 @@ char *mem_pool_strndup(struct mem_pool *pool, const char *str, size_t len);
 /*
  * Allocate memory from the memory pool and format a string into it.
  */
-__attribute__((format (printf, 2, 3)))
-char *mem_pool_strfmt(struct mem_pool *pool, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) char *mem_pool_strfmt(struct mem_pool *pool, const char *fmt, ...);
 
 /*
  * Move the memory associated with the 'src' pool to the 'dst' pool. The 'src'

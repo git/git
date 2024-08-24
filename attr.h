@@ -113,10 +113,10 @@
  */
 #define ATTR_MAX_LINE_LENGTH 2048
 
- /**
-  * The maximum size of the giattributes file. If the file exceeds this size we
-  * will ignore it.
-  */
+/**
+ * The maximum size of the giattributes file. If the file exceeds this size we
+ * will ignore it.
+ */
 #define ATTR_MAX_FILE_SIZE (100 * 1024 * 1024)
 
 struct index_state;
@@ -170,9 +170,10 @@ extern const char git_attr__false[];
 #define ATTR_UNSET(v) ((v) == NULL)
 
 /* This structure represents one attribute and its value. */
-struct attr_check_item {
-	const struct git_attr *attr;
-	const char *value;
+struct attr_check_item
+{
+    const struct git_attr *attr;
+    const char            *value;
 };
 
 /**
@@ -180,13 +181,14 @@ struct attr_check_item {
  * `git_check_attr()` function, specifying the attributes to check, and
  * receives their values.
  */
-struct attr_check {
-	int nr;
-	int alloc;
-	struct attr_check_item *items;
-	int all_attrs_nr;
-	struct all_attrs_item *all_attrs;
-	struct attr_stack *stack;
+struct attr_check
+{
+    int                     nr;
+    int                     alloc;
+    struct attr_check_item *items;
+    int                     all_attrs_nr;
+    struct all_attrs_item  *all_attrs;
+    struct attr_stack      *stack;
 };
 
 struct attr_check *attr_check_alloc(void);
@@ -195,8 +197,8 @@ LAST_ARG_MUST_BE_NULL
 struct attr_check *attr_check_initl(const char *, ...);
 struct attr_check *attr_check_dup(const struct attr_check *check);
 
-struct attr_check_item *attr_check_append(struct attr_check *check,
-					  const struct git_attr *attr);
+struct attr_check_item *attr_check_append(struct attr_check     *check,
+                                          const struct git_attr *attr);
 
 void attr_check_reset(struct attr_check *check);
 void attr_check_clear(struct attr_check *check);
@@ -210,20 +212,21 @@ void attr_check_free(struct attr_check *check);
 const char *git_attr_name(const struct git_attr *);
 
 void git_check_attr(struct index_state *istate,
-		    const char *path,
-		    struct attr_check *check);
+                    const char         *path,
+                    struct attr_check  *check);
 
 /*
  * Retrieve all attributes that apply to the specified path.
  * check holds the attributes and their values.
  */
 void git_all_attrs(struct index_state *istate,
-		   const char *path, struct attr_check *check);
+                   const char *path, struct attr_check *check);
 
-enum git_attr_direction {
-	GIT_ATTR_CHECKIN,
-	GIT_ATTR_CHECKOUT,
-	GIT_ATTR_INDEX
+enum git_attr_direction
+{
+    GIT_ATTR_CHECKIN,
+    GIT_ATTR_CHECKOUT,
+    GIT_ATTR_INDEX
 };
 void git_attr_set_direction(enum git_attr_direction new_direction);
 

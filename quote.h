@@ -31,10 +31,9 @@ extern int quote_path_fully;
  * sq_quotef() quotes the entire formatted string as a single result.
  */
 
-void sq_quote_buf(struct strbuf *, const char *src);
-void sq_quote_argv(struct strbuf *, const char **argv);
-__attribute__((format (printf, 2, 3)))
-void sq_quotef(struct strbuf *, const char *fmt, ...);
+void                                       sq_quote_buf(struct strbuf *, const char *src);
+void                                       sq_quote_argv(struct strbuf *, const char **argv);
+__attribute__((format(printf, 2, 3))) void sq_quotef(struct strbuf *, const char *fmt, ...);
 
 /*
  * These match their non-pretty variants, except that they avoid
@@ -85,11 +84,11 @@ int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);
 /* Bits in the flags parameter to quote_c_style() */
 #define CQUOTE_NODQ 01
 size_t quote_c_style(const char *name, struct strbuf *, FILE *, unsigned);
-void quote_two_c_style(struct strbuf *, const char *, const char *, unsigned);
+void   quote_two_c_style(struct strbuf *, const char *, const char *, unsigned);
 
 void write_name_quoted(const char *name, FILE *, int terminator);
 void write_name_quoted_relative(const char *name, const char *prefix,
-				FILE *fp, int terminator);
+                                FILE *fp, int terminator);
 
 /* quote path as relative to the given prefix */
 char *quote_path(const char *in, const char *prefix, struct strbuf *out, unsigned flags);

@@ -75,13 +75,14 @@
  * delete the temporary file before returning.
  */
 
-struct tempfile {
-	volatile struct volatile_list_head list;
-	volatile int fd;
-	FILE *volatile fp;
-	volatile pid_t owner;
-	struct strbuf filename;
-	char *directory;
+struct tempfile
+{
+    volatile struct volatile_list_head list;
+    volatile int                       fd;
+    FILE *volatile fp;
+    volatile pid_t owner;
+    struct strbuf  filename;
+    char          *directory;
 };
 
 /*
@@ -96,7 +97,7 @@ struct tempfile *create_tempfile_mode(const char *path, int mode);
 
 static inline struct tempfile *create_tempfile(const char *path)
 {
-	return create_tempfile_mode(path, 0666);
+    return create_tempfile_mode(path, 0666);
 }
 
 /*
@@ -106,7 +107,6 @@ static inline struct tempfile *create_tempfile(const char *path)
  * example, it can be opened using reopen_tempfile()).
  */
 struct tempfile *register_tempfile(const char *path);
-
 
 /*
  * mks_tempfile functions
@@ -145,48 +145,48 @@ struct tempfile *register_tempfile(const char *path);
 
 /* See "mks_tempfile functions" above. */
 struct tempfile *mks_tempfile_sm(const char *filename_template,
-				 int suffixlen, int mode);
+                                 int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_s(const char *filename_template,
-					      int suffixlen)
+                                              int         suffixlen)
 {
-	return mks_tempfile_sm(filename_template, suffixlen, 0600);
+    return mks_tempfile_sm(filename_template, suffixlen, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_m(const char *filename_template, int mode)
 {
-	return mks_tempfile_sm(filename_template, 0, mode);
+    return mks_tempfile_sm(filename_template, 0, mode);
 }
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile(const char *filename_template)
 {
-	return mks_tempfile_sm(filename_template, 0, 0600);
+    return mks_tempfile_sm(filename_template, 0, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
 struct tempfile *mks_tempfile_tsm(const char *filename_template,
-				  int suffixlen, int mode);
+                                  int suffixlen, int mode);
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_ts(const char *filename_template,
-					       int suffixlen)
+                                               int         suffixlen)
 {
-	return mks_tempfile_tsm(filename_template, suffixlen, 0600);
+    return mks_tempfile_tsm(filename_template, suffixlen, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_tm(const char *filename_template, int mode)
 {
-	return mks_tempfile_tsm(filename_template, 0, mode);
+    return mks_tempfile_tsm(filename_template, 0, mode);
 }
 
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *mks_tempfile_t(const char *filename_template)
 {
-	return mks_tempfile_tsm(filename_template, 0, 0600);
+    return mks_tempfile_tsm(filename_template, 0, 0600);
 }
 
 /* See "mks_tempfile functions" above. */
@@ -195,7 +195,7 @@ struct tempfile *xmks_tempfile_m(const char *filename_template, int mode);
 /* See "mks_tempfile functions" above. */
 static inline struct tempfile *xmks_tempfile(const char *filename_template)
 {
-	return xmks_tempfile_m(filename_template, 0600);
+    return xmks_tempfile_m(filename_template, 0600);
 }
 
 /*
@@ -208,7 +208,7 @@ static inline struct tempfile *xmks_tempfile(const char *filename_template)
  * writing the file. On error return NULL and set errno appropriately.
  */
 struct tempfile *mks_tempfile_dt(const char *directory_template,
-				 const char *filename);
+                                 const char *filename);
 
 /*
  * Associate a stdio stream with the temporary file (which must still
@@ -220,7 +220,7 @@ FILE *fdopen_tempfile(struct tempfile *tempfile, const char *mode);
 
 static inline int is_tempfile_active(struct tempfile *tempfile)
 {
-	return !!tempfile;
+    return !!tempfile;
 }
 
 /*
@@ -229,7 +229,7 @@ static inline int is_tempfile_active(struct tempfile *tempfile)
  */
 const char *get_tempfile_path(struct tempfile *tempfile);
 
-int get_tempfile_fd(struct tempfile *tempfile);
+int   get_tempfile_fd(struct tempfile *tempfile);
 FILE *get_tempfile_fp(struct tempfile *tempfile);
 
 /*

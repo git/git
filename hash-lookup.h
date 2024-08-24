@@ -4,9 +4,9 @@
 typedef const struct object_id *oid_access_fn(size_t index, const void *table);
 
 int oid_pos(const struct object_id *oid,
-	    const void *table,
-	    size_t nr,
-	    oid_access_fn fn);
+            const void             *table,
+            size_t                  nr,
+            oid_access_fn           fn);
 
 /*
  * Searches for hash in table, using the given fanout table to determine the
@@ -28,5 +28,5 @@ int oid_pos(const struct object_id *oid,
  * This function does not verify the validity of the fanout table.
  */
 int bsearch_hash(const unsigned char *hash, const uint32_t *fanout_nbo,
-		 const unsigned char *table, size_t stride, uint32_t *result);
+                 const unsigned char *table, size_t stride, uint32_t *result);
 #endif

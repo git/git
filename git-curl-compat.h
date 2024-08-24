@@ -32,16 +32,15 @@
  * CURL_SOCKOPT_OK was added in 7.21.5, released in April 2011.
  */
 #if LIBCURL_VERSION_NUM < 0x071505
-#define CURL_SOCKOPT_OK 0
+    #define CURL_SOCKOPT_OK 0
 #endif
 
 /**
  * CURLOPT_TCP_KEEPALIVE was added in 7.25.0, released in March 2012.
  */
 #if LIBCURL_VERSION_NUM >= 0x071900
-#define GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE 1
+    #define GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE 1
 #endif
-
 
 /**
  * CURLOPT_LOGIN_OPTIONS was added in 7.34.0, released in December
@@ -54,7 +53,7 @@
 
  */
 #if LIBCURL_VERSION_NUM >= 0x072200
-#define GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS 1
+    #define GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS 1
 #endif
 
 /**
@@ -62,7 +61,7 @@
  * December 2013.
  */
 #if LIBCURL_VERSION_NUM >= 0x072200
-#define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
+    #define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
 #endif
 
 /**
@@ -70,8 +69,8 @@
  * 2014. CURLE_SSL_PINNEDPUBKEYNOTMATCH was added in that same version.
  */
 #if LIBCURL_VERSION_NUM >= 0x072c00
-#define GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY 1
-#define GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH 1
+    #define GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY        1
+    #define GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH 1
 #endif
 
 /**
@@ -82,7 +81,7 @@
  * 7.78.0)
  */
 #if LIBCURL_VERSION_NUM >= 0x072b00
-#define GIT_CURL_HAVE_CURL_HTTP_VERSION_2 1
+    #define GIT_CURL_HAVE_CURL_HTTP_VERSION_2 1
 #endif
 
 /**
@@ -92,14 +91,14 @@
  * field (checked on curl version 7.78.0)
  */
 #if LIBCURL_VERSION_NUM >= 0x072c00
-#define GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE 1
+    #define GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE 1
 #endif
 
 /**
  * CURLOPT_PROXY_CAINFO was added in 7.52.0, released in August 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO 1
+    #define GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO 1
 #endif
 
 /**
@@ -107,7 +106,7 @@
  * released in August 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD 1
+    #define GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD 1
 #endif
 
 /**
@@ -115,7 +114,7 @@
  * 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3 1
+    #define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3 1
 #endif
 
 /**
@@ -123,7 +122,7 @@
  * 7.56.0, released in September 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073800
-#define GIT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
+    #define GIT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
 #endif
 
 /**
@@ -132,7 +131,7 @@
  * automatically.
  */
 #if LIBCURL_VERSION_NUM < 0x074200
-#define GIT_CURL_NEED_TRANSFER_ENCODING_HEADER
+    #define GIT_CURL_NEED_TRANSFER_ENCODING_HEADER
 #endif
 
 /**
@@ -140,7 +139,7 @@
  * released in August 2022.
  */
 #if LIBCURL_VERSION_NUM >= 0x075500
-#define GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR 1
+    #define GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR 1
 #endif
 
 #endif

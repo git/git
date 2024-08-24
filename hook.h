@@ -6,50 +6,52 @@ struct repository;
 
 struct run_hooks_opt
 {
-	/* Environment vars to be set for each hook */
-	struct strvec env;
+    /* Environment vars to be set for each hook */
+    struct strvec env;
 
-	/* Args to be passed to each hook */
-	struct strvec args;
+    /* Args to be passed to each hook */
+    struct strvec args;
 
-	/* Emit an error if the hook is missing */
-	unsigned int error_if_missing:1;
+    /* Emit an error if the hook is missing */
+    unsigned int error_if_missing : 1;
 
-	/**
-	 * An optional initial working directory for the hook,
-	 * translates to "struct child_process"'s "dir" member.
-	 */
-	const char *dir;
+    /**
+     * An optional initial working directory for the hook,
+     * translates to "struct child_process"'s "dir" member.
+     */
+    const char *dir;
 
-	/**
-	 * A pointer which if provided will be set to 1 or 0 depending
-	 * on if a hook was started, regardless of whether or not that
-	 * was successful. I.e. if the underlying start_command() was
-	 * successful this will be set to 1.
-	 *
-	 * Used for avoiding TOCTOU races in code that would otherwise
-	 * call hook_exist() after a "maybe hook run" to see if a hook
-	 * was invoked.
-	 */
-	int *invoked_hook;
+    /**
+     * A pointer which if provided will be set to 1 or 0 depending
+     * on if a hook was started, regardless of whether or not that
+     * was successful. I.e. if the underlying start_command() was
+     * successful this will be set to 1.
+     *
+     * Used for avoiding TOCTOU races in code that would otherwise
+     * call hook_exist() after a "maybe hook run" to see if a hook
+     * was invoked.
+     */
+    int *invoked_hook;
 
-	/**
-	 * Path to file which should be piped to stdin for each hook.
-	 */
-	const char *path_to_stdin;
+    /**
+     * Path to file which should be piped to stdin for each hook.
+     */
+    const char *path_to_stdin;
 };
 
-#define RUN_HOOKS_OPT_INIT { \
-	.env = STRVEC_INIT, \
-	.args = STRVEC_INIT, \
-}
+#define RUN_HOOKS_OPT_INIT   \
+    {                        \
+        .env  = STRVEC_INIT, \
+        .args = STRVEC_INIT, \
+    }
 
-struct hook_cb_data {
-	/* rc reflects the cumulative failure state */
-	int rc;
-	const char *hook_name;
-	const char *hook_path;
-	struct run_hooks_opt *options;
+struct hook_cb_data
+{
+    /* rc reflects the cumulative failure state */
+    int                   rc;
+    const char           *hook_name;
+    const char           *hook_path;
+    struct run_hooks_opt *options;
 };
 
 /*
@@ -73,7 +75,7 @@ int hook_exists(struct repository *r, const char *hookname);
  * error().
  */
 int run_hooks_opt(struct repository *r, const char *hook_name,
-		  struct run_hooks_opt *options);
+                  struct run_hooks_opt *options);
 
 /**
  * A wrapper for run_hooks_opt() which provides a dummy "struct

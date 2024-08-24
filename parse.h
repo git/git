@@ -15,7 +15,7 @@ int git_parse_double(const char *value, double *ret);
 int git_parse_maybe_bool(const char *);
 int git_parse_maybe_bool_text(const char *value);
 
-int git_env_bool(const char *, int);
+int           git_env_bool(const char *, int);
 unsigned long git_env_ulong(const char *, unsigned long);
 
 #endif /* PARSE_H */

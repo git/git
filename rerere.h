@@ -19,12 +19,13 @@ struct repository;
 extern void *RERERE_RESOLVED;
 
 struct rerere_dir;
-struct rerere_id {
-	struct rerere_dir *collection;
-	int variant;
+struct rerere_id
+{
+    struct rerere_dir *collection;
+    int                variant;
 };
 
-int setup_rerere(struct repository *,struct string_list *, int);
+int setup_rerere(struct repository *, struct string_list *, int);
 int repo_rerere(struct repository *, int);
 /*
  * Given the conflict ID and the name of a "file" used for replaying
@@ -33,12 +34,12 @@ int repo_rerere(struct repository *, int);
  * return the path to the directory that houses these files.
  */
 const char *rerere_path(const struct rerere_id *, const char *file);
-int rerere_forget(struct repository *, struct pathspec *);
-int rerere_remaining(struct repository *, struct string_list *);
-void rerere_clear(struct repository *, struct string_list *);
-void rerere_gc(struct repository *, struct string_list *);
+int         rerere_forget(struct repository *, struct pathspec *);
+int         rerere_remaining(struct repository *, struct string_list *);
+void        rerere_clear(struct repository *, struct string_list *);
+void        rerere_gc(struct repository *, struct string_list *);
 
 #define OPT_RERERE_AUTOUPDATE(v) OPT_UYN(0, "rerere-autoupdate", (v), \
-	N_("update the index with reused conflict resolution if possible"))
+                                         N_("update the index with reused conflict resolution if possible"))
 
 #endif

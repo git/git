@@ -46,28 +46,29 @@
 
 struct json_writer
 {
-	/*
-	 * Buffer of the in-progress JSON currently being composed.
-	 */
-	struct strbuf json;
+    /*
+     * Buffer of the in-progress JSON currently being composed.
+     */
+    struct strbuf json;
 
-	/*
-	 * Simple stack of the currently open array and object forms.
-	 * This is a string of '{' and '[' characters indicating the
-	 * currently unterminated forms.  This is used to ensure the
-	 * properly closing character is used when popping a level and
-	 * to know when the JSON is completely closed.
-	 */
-	struct strbuf open_stack;
+    /*
+     * Simple stack of the currently open array and object forms.
+     * This is a string of '{' and '[' characters indicating the
+     * currently unterminated forms.  This is used to ensure the
+     * properly closing character is used when popping a level and
+     * to know when the JSON is completely closed.
+     */
+    struct strbuf open_stack;
 
-	unsigned int need_comma:1;
-	unsigned int pretty:1;
+    unsigned int need_comma : 1;
+    unsigned int pretty : 1;
 };
 
-#define JSON_WRITER_INIT { \
-	.json = STRBUF_INIT, \
-	.open_stack = STRBUF_INIT, \
-}
+#define JSON_WRITER_INIT           \
+    {                              \
+        .json       = STRBUF_INIT, \
+        .open_stack = STRBUF_INIT, \
+    }
 
 void jw_init(struct json_writer *jw);
 void jw_release(struct json_writer *jw);
@@ -76,16 +77,16 @@ void jw_object_begin(struct json_writer *jw, int pretty);
 void jw_array_begin(struct json_writer *jw, int pretty);
 
 void jw_object_string(struct json_writer *jw, const char *key,
-		      const char *value);
+                      const char *value);
 void jw_object_intmax(struct json_writer *jw, const char *key, intmax_t value);
 void jw_object_double(struct json_writer *jw, const char *key, int precision,
-		      double value);
+                      double value);
 void jw_object_true(struct json_writer *jw, const char *key);
 void jw_object_false(struct json_writer *jw, const char *key);
 void jw_object_bool(struct json_writer *jw, const char *key, int value);
 void jw_object_null(struct json_writer *jw, const char *key);
 void jw_object_sub_jw(struct json_writer *jw, const char *key,
-		      const struct json_writer *value);
+                      const struct json_writer *value);
 
 void jw_object_inline_begin_object(struct json_writer *jw, const char *key);
 void jw_object_inline_begin_array(struct json_writer *jw, const char *key);
@@ -104,7 +105,7 @@ void jw_array_argv(struct json_writer *jw, const char **argv);
 void jw_array_inline_begin_object(struct json_writer *jw);
 void jw_array_inline_begin_array(struct json_writer *jw);
 
-int jw_is_terminated(const struct json_writer *jw);
+int  jw_is_terminated(const struct json_writer *jw);
 void jw_end(struct json_writer *jw);
 
 #endif /* JSON_WRITER_H */

@@ -30,13 +30,12 @@
  *     first.
  */
 
-
 #define RIDX_SIGNATURE 0x52494458 /* "RIDX" */
-#define RIDX_VERSION 1
+#define RIDX_VERSION   1
 
-#define GIT_TEST_NO_WRITE_REV_INDEX "GIT_TEST_NO_WRITE_REV_INDEX"
+#define GIT_TEST_NO_WRITE_REV_INDEX      "GIT_TEST_NO_WRITE_REV_INDEX"
 #define GIT_TEST_REV_INDEX_DIE_IN_MEMORY "GIT_TEST_REV_INDEX_DIE_IN_MEMORY"
-#define GIT_TEST_REV_INDEX_DIE_ON_DISK "GIT_TEST_REV_INDEX_DIE_ON_DISK"
+#define GIT_TEST_REV_INDEX_DIE_ON_DISK   "GIT_TEST_REV_INDEX_DIE_ON_DISK"
 
 struct packed_git;
 struct multi_pack_index;
@@ -143,6 +142,6 @@ uint32_t pack_pos_to_midx(struct multi_pack_index *m, uint32_t pos);
 int midx_to_pack_pos(struct multi_pack_index *midx, uint32_t at, uint32_t *pos);
 
 int midx_pair_to_pack_pos(struct multi_pack_index *midx, uint32_t pack_id,
-			  off_t ofs, uint32_t *pos);
+                          off_t ofs, uint32_t *pos);
 
 #endif

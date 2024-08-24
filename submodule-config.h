@@ -31,17 +31,18 @@
  * Submodule entry containing the information about a certain submodule
  * in a certain revision. It is returned by the lookup functions.
  */
-struct submodule {
-	const char *path;
-	const char *name;
-	const char *url;
-	enum submodule_recurse_mode fetch_recurse;
-	const char *ignore;
-	const char *branch;
-	struct submodule_update_strategy update_strategy;
-	/* the object id of the responsible .gitmodules file */
-	struct object_id gitmodules_oid;
-	int recommend_shallow;
+struct submodule
+{
+    const char                      *path;
+    const char                      *name;
+    const char                      *url;
+    enum submodule_recurse_mode      fetch_recurse;
+    const char                      *ignore;
+    const char                      *branch;
+    struct submodule_update_strategy update_strategy;
+    /* the object id of the responsible .gitmodules file */
+    struct object_id gitmodules_oid;
+    int              recommend_shallow;
 };
 struct submodule_cache;
 struct repository;
@@ -49,30 +50,30 @@ struct repository;
 void submodule_cache_free(struct submodule_cache *cache);
 
 int parse_submodule_fetchjobs(const char *var, const char *value,
-			      const struct key_value_info *kvi);
+                              const struct key_value_info *kvi);
 int parse_fetch_recurse_submodules_arg(const char *opt, const char *arg);
 struct option;
-int option_fetch_parse_recurse_submodules(const struct option *opt,
-					  const char *arg, int unset);
-int parse_update_recurse_submodules_arg(const char *opt, const char *arg);
-int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
+int  option_fetch_parse_recurse_submodules(const struct option *opt,
+                                           const char *arg, int unset);
+int  parse_update_recurse_submodules_arg(const char *opt, const char *arg);
+int  parse_push_recurse_submodules_arg(const char *opt, const char *arg);
 void repo_read_gitmodules(struct repository *repo, int skip_if_read);
 void gitmodules_config_oid(const struct object_id *commit_oid);
 
 /**
  * Same as submodule_from_path but lookup by name.
  */
-const struct submodule *submodule_from_name(struct repository *r,
-					    const struct object_id *commit_or_tree,
-					    const char *name);
+const struct submodule *submodule_from_name(struct repository      *r,
+                                            const struct object_id *commit_or_tree,
+                                            const char             *name);
 
 /**
  * Given a tree-ish in the superproject and a path, return the submodule that
  * is bound at the path in the named tree.
  */
-const struct submodule *submodule_from_path(struct repository *r,
-					    const struct object_id *commit_or_tree,
-					    const char *path);
+const struct submodule *submodule_from_path(struct repository      *r,
+                                            const struct object_id *commit_or_tree,
+                                            const char             *path);
 
 /**
  * Use these to free the internally cached values.
@@ -107,25 +108,27 @@ void update_clone_config_from_gitmodules(int *max_jobs);
  * Submodule entry that contains relevant information about a
  * submodule in a tree.
  */
-struct submodule_tree_entry {
-	/* The submodule's tree entry. */
-	struct name_entry *name_entry;
-	/*
-	 * A struct repository corresponding to the submodule. May be
-	 * NULL if the submodule has not been updated.
-	 */
-	struct repository *repo;
-	/*
-	 * A struct submodule containing the submodule config in the
-	 * tree's .gitmodules.
-	 */
-	const struct submodule *submodule;
+struct submodule_tree_entry
+{
+    /* The submodule's tree entry. */
+    struct name_entry *name_entry;
+    /*
+     * A struct repository corresponding to the submodule. May be
+     * NULL if the submodule has not been updated.
+     */
+    struct repository *repo;
+    /*
+     * A struct submodule containing the submodule config in the
+     * tree's .gitmodules.
+     */
+    const struct submodule *submodule;
 };
 
-struct submodule_entry_list {
-	struct submodule_tree_entry *entries;
-	int entry_nr;
-	int entry_alloc;
+struct submodule_entry_list
+{
+    struct submodule_tree_entry *entries;
+    int                          entry_nr;
+    int                          entry_alloc;
 };
 
 /**
@@ -133,7 +136,7 @@ struct submodule_entry_list {
  * but excluding nested submodules. Callers that require nested
  * submodules are expected to recurse into the submodules themselves.
  */
-void submodules_of_tree(struct repository *r,
-			const struct object_id *treeish_name,
-			struct submodule_entry_list *ret);
+void submodules_of_tree(struct repository           *r,
+                        const struct object_id      *treeish_name,
+                        struct submodule_entry_list *ret);
 #endif /* SUBMODULE_CONFIG_H */

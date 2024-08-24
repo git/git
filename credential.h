@@ -103,16 +103,18 @@
  * At each stage, we will emit the capability only if the previous stage
  * supported it.
  */
-enum credential_op_type {
-	CREDENTIAL_OP_INITIAL  = 1,
-	CREDENTIAL_OP_HELPER   = 2,
-	CREDENTIAL_OP_RESPONSE = 3,
+enum credential_op_type
+{
+    CREDENTIAL_OP_INITIAL  = 1,
+    CREDENTIAL_OP_HELPER   = 2,
+    CREDENTIAL_OP_RESPONSE = 3,
 };
 
-struct credential_capability {
-	unsigned request_initial:1,
-		 request_helper:1,
-		 response:1;
+struct credential_capability
+{
+    unsigned request_initial : 1,
+        request_helper : 1,
+        response : 1;
 };
 
 /**
@@ -126,76 +128,78 @@ struct credential_capability {
  * This struct should always be initialized with `CREDENTIAL_INIT` or
  * `credential_init`.
  */
-struct credential {
+struct credential
+{
 
-	/**
-	 * A `string_list` of helpers. Each string specifies an external
-	 * helper which will be run, in order, to either acquire or store
-	 * credentials. This list is filled-in by the API functions
-	 * according to the corresponding configuration variables before
-	 * consulting helpers, so there usually is no need for a caller to
-	 * modify the helpers field at all.
-	 */
-	struct string_list helpers;
+    /**
+     * A `string_list` of helpers. Each string specifies an external
+     * helper which will be run, in order, to either acquire or store
+     * credentials. This list is filled-in by the API functions
+     * according to the corresponding configuration variables before
+     * consulting helpers, so there usually is no need for a caller to
+     * modify the helpers field at all.
+     */
+    struct string_list helpers;
 
-	/**
-	 * A `strvec` of WWW-Authenticate header values. Each string
-	 * is the value of a WWW-Authenticate header in an HTTP response,
-	 * in the order they were received in the response.
-	 */
-	struct strvec wwwauth_headers;
+    /**
+     * A `strvec` of WWW-Authenticate header values. Each string
+     * is the value of a WWW-Authenticate header in an HTTP response,
+     * in the order they were received in the response.
+     */
+    struct strvec wwwauth_headers;
 
-	/**
-	 * A `strvec` of state headers received from credential helpers.
-	 */
-	struct strvec state_headers;
+    /**
+     * A `strvec` of state headers received from credential helpers.
+     */
+    struct strvec state_headers;
 
-	/**
-	 * A `strvec` of state headers to send to credential helpers.
-	 */
-	struct strvec state_headers_to_send;
+    /**
+     * A `strvec` of state headers to send to credential helpers.
+     */
+    struct strvec state_headers_to_send;
 
-	/**
-	 * Internal use only. Keeps track of if we previously matched against a
-	 * WWW-Authenticate header line in order to re-fold future continuation
-	 * lines into one value.
-	 */
-	unsigned header_is_last_match:1;
+    /**
+     * Internal use only. Keeps track of if we previously matched against a
+     * WWW-Authenticate header line in order to re-fold future continuation
+     * lines into one value.
+     */
+    unsigned header_is_last_match : 1;
 
-	unsigned approved:1,
-		 ephemeral:1,
-		 configured:1,
-		 multistage: 1,
-		 quit:1,
-		 use_http_path:1,
-		 username_from_proto:1;
+    unsigned approved : 1,
+        ephemeral : 1,
+        configured : 1,
+        multistage : 1,
+        quit : 1,
+        use_http_path : 1,
+        username_from_proto : 1;
 
-	struct credential_capability capa_authtype;
-	struct credential_capability capa_state;
+    struct credential_capability capa_authtype;
+    struct credential_capability capa_state;
 
-	char *username;
-	char *password;
-	char *credential;
-	char *protocol;
-	char *host;
-	char *path;
-	char *oauth_refresh_token;
-	timestamp_t password_expiry_utc;
+    char       *username;
+    char       *password;
+    char       *credential;
+    char       *protocol;
+    char       *host;
+    char       *path;
+    char       *oauth_refresh_token;
+    timestamp_t password_expiry_utc;
 
-	/**
-	 * The authorization scheme to use.  If this is NULL, libcurl is free to
-	 * negotiate any scheme it likes.
-	 */
-	char *authtype;
+    /**
+     * The authorization scheme to use.  If this is NULL, libcurl is free to
+     * negotiate any scheme it likes.
+     */
+    char *authtype;
 };
 
-#define CREDENTIAL_INIT { \
-	.helpers = STRING_LIST_INIT_DUP, \
-	.password_expiry_utc = TIME_MAX, \
-	.wwwauth_headers = STRVEC_INIT, \
-	.state_headers = STRVEC_INIT, \
-	.state_headers_to_send = STRVEC_INIT, \
-}
+#define CREDENTIAL_INIT                                \
+    {                                                  \
+        .helpers               = STRING_LIST_INIT_DUP, \
+        .password_expiry_utc   = TIME_MAX,             \
+        .wwwauth_headers       = STRVEC_INIT,          \
+        .state_headers         = STRVEC_INIT,          \
+        .state_headers_to_send = STRVEC_INIT,          \
+    }
 
 /* Initialize a credential structure, setting all fields to empty. */
 void credential_init(struct credential *);
@@ -244,8 +248,8 @@ void credential_reject(struct credential *);
 /**
  * Enable all of the supported credential flags in this credential.
  */
-void credential_set_all_capabilities(struct credential *c,
-				     enum credential_op_type op_type);
+void credential_set_all_capabilities(struct credential      *c,
+                                     enum credential_op_type op_type);
 
 /**
  * Clear the secrets in this credential, but leave other data intact.
@@ -275,12 +279,12 @@ void credential_next_state(struct credential *c);
  * Return true if the capability is enabled for an operation of op_type.
  */
 int credential_has_capability(const struct credential_capability *capa,
-			      enum credential_op_type op_type);
+                              enum credential_op_type             op_type);
 
-int credential_read(struct credential *, FILE *,
-		    enum credential_op_type);
+int  credential_read(struct credential *, FILE *,
+                     enum credential_op_type);
 void credential_write(const struct credential *, FILE *,
-		      enum credential_op_type);
+                      enum credential_op_type);
 
 /*
  * Parse a url into a credential struct, replacing any existing contents.
@@ -296,9 +300,9 @@ void credential_write(const struct credential *, FILE *,
  * an empty credential.
  */
 void credential_from_url(struct credential *, const char *url);
-int credential_from_url_gently(struct credential *, const char *url, int quiet);
+int  credential_from_url_gently(struct credential *, const char *url, int quiet);
 
 int credential_match(const struct credential *want,
-		     const struct credential *have, int match_password);
+                     const struct credential *have, int match_password);
 
 #endif /* CREDENTIAL_H */

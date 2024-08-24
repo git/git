@@ -30,8 +30,8 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_h
  */
 char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
 char *oid_to_hex_r(char *out, const struct object_id *oid);
-char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
-char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
+char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *); /* static buffer result! */
+char *oid_to_hex(const struct object_id *oid);                                    /* same static buffer */
 
 /*
  * Parse a 40-character hexadecimal object ID starting from hex, updating the
@@ -41,7 +41,7 @@ char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
  * unmodified.
  */
 int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
-			const struct git_hash_algo *algo);
+                        const struct git_hash_algo *algo);
 
 /*
  * These functions work like get_oid_hex and parse_oid_hex, but they will parse

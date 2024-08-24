@@ -4,15 +4,16 @@
 struct repository;
 struct strbuf;
 
-enum branch_track {
-	BRANCH_TRACK_UNSPECIFIED = -1,
-	BRANCH_TRACK_NEVER = 0,
-	BRANCH_TRACK_REMOTE,
-	BRANCH_TRACK_ALWAYS,
-	BRANCH_TRACK_EXPLICIT,
-	BRANCH_TRACK_OVERRIDE,
-	BRANCH_TRACK_INHERIT,
-	BRANCH_TRACK_SIMPLE,
+enum branch_track
+{
+    BRANCH_TRACK_UNSPECIFIED = -1,
+    BRANCH_TRACK_NEVER       = 0,
+    BRANCH_TRACK_REMOTE,
+    BRANCH_TRACK_ALWAYS,
+    BRANCH_TRACK_EXPLICIT,
+    BRANCH_TRACK_OVERRIDE,
+    BRANCH_TRACK_INHERIT,
+    BRANCH_TRACK_SIMPLE,
 };
 
 extern enum branch_track git_branch_track;
@@ -38,8 +39,8 @@ extern enum branch_track git_branch_track;
  *   - quiet suppresses tracking information.
  */
 void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
-			     const char *orig_ref, enum branch_track track,
-			     int quiet);
+                             const char *orig_ref, enum branch_track track,
+                             int quiet);
 
 /*
  * Creates a new branch, where:
@@ -67,10 +68,10 @@ void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
  *
  */
 void create_branch(struct repository *r,
-		   const char *name, const char *start_name,
-		   int force, int clobber_head_ok,
-		   int reflog, int quiet, enum branch_track track,
-		   int dry_run);
+                   const char *name, const char *start_name,
+                   int force, int clobber_head_ok,
+                   int reflog, int quiet, enum branch_track track,
+                   int dry_run);
 
 /*
  * Creates a new branch in a repository and its submodules (and its
@@ -97,10 +98,10 @@ void create_branch(struct repository *r,
  * used for tracking instead.
  */
 void create_branches_recursively(struct repository *r, const char *name,
-				 const char *start_committish,
-				 const char *tracking_name, int force,
-				 int reflog, int quiet, enum branch_track track,
-				 int dry_run);
+                                 const char *start_committish,
+                                 const char *tracking_name, int force,
+                                 int reflog, int quiet, enum branch_track track,
+                                 int dry_run);
 
 /*
  * If the branch at 'refname' is currently checked out in a worktree,

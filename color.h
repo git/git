@@ -22,48 +22,48 @@ struct strbuf;
  */
 #define COLOR_MAXLEN 75
 
-#define GIT_COLOR_NORMAL	""
-#define GIT_COLOR_RESET		"\033[m"
-#define GIT_COLOR_BOLD		"\033[1m"
-#define GIT_COLOR_BLACK		"\033[30m"
-#define GIT_COLOR_RED		"\033[31m"
-#define GIT_COLOR_GREEN		"\033[32m"
-#define GIT_COLOR_YELLOW	"\033[33m"
-#define GIT_COLOR_BLUE		"\033[34m"
-#define GIT_COLOR_MAGENTA	"\033[35m"
-#define GIT_COLOR_CYAN		"\033[36m"
-#define GIT_COLOR_WHITE		"\033[37m"
-#define GIT_COLOR_DEFAULT	"\033[39m"
-#define GIT_COLOR_BOLD_BLACK	"\033[1;30m"
-#define GIT_COLOR_BOLD_RED	"\033[1;31m"
-#define GIT_COLOR_BOLD_GREEN	"\033[1;32m"
-#define GIT_COLOR_BOLD_YELLOW	"\033[1;33m"
-#define GIT_COLOR_BOLD_BLUE	"\033[1;34m"
-#define GIT_COLOR_BOLD_MAGENTA	"\033[1;35m"
-#define GIT_COLOR_BOLD_CYAN	"\033[1;36m"
-#define GIT_COLOR_BOLD_WHITE	"\033[1;37m"
-#define GIT_COLOR_BOLD_DEFAULT	"\033[1;39m"
-#define GIT_COLOR_FAINT_BLACK	"\033[2;30m"
-#define GIT_COLOR_FAINT_RED	"\033[2;31m"
-#define GIT_COLOR_FAINT_GREEN	"\033[2;32m"
-#define GIT_COLOR_FAINT_YELLOW	"\033[2;33m"
-#define GIT_COLOR_FAINT_BLUE	"\033[2;34m"
-#define GIT_COLOR_FAINT_MAGENTA	"\033[2;35m"
-#define GIT_COLOR_FAINT_CYAN	"\033[2;36m"
-#define GIT_COLOR_FAINT_WHITE	"\033[2;37m"
-#define GIT_COLOR_FAINT_DEFAULT	"\033[2;39m"
-#define GIT_COLOR_BG_BLACK	"\033[40m"
-#define GIT_COLOR_BG_RED	"\033[41m"
-#define GIT_COLOR_BG_GREEN	"\033[42m"
-#define GIT_COLOR_BG_YELLOW	"\033[43m"
-#define GIT_COLOR_BG_BLUE	"\033[44m"
-#define GIT_COLOR_BG_MAGENTA	"\033[45m"
-#define GIT_COLOR_BG_CYAN	"\033[46m"
-#define GIT_COLOR_BG_WHITE	"\033[47m"
-#define GIT_COLOR_BG_DEFAULT	"\033[49m"
-#define GIT_COLOR_FAINT		"\033[2m"
-#define GIT_COLOR_FAINT_ITALIC	"\033[2;3m"
-#define GIT_COLOR_REVERSE	"\033[7m"
+#define GIT_COLOR_NORMAL        ""
+#define GIT_COLOR_RESET         "\033[m"
+#define GIT_COLOR_BOLD          "\033[1m"
+#define GIT_COLOR_BLACK         "\033[30m"
+#define GIT_COLOR_RED           "\033[31m"
+#define GIT_COLOR_GREEN         "\033[32m"
+#define GIT_COLOR_YELLOW        "\033[33m"
+#define GIT_COLOR_BLUE          "\033[34m"
+#define GIT_COLOR_MAGENTA       "\033[35m"
+#define GIT_COLOR_CYAN          "\033[36m"
+#define GIT_COLOR_WHITE         "\033[37m"
+#define GIT_COLOR_DEFAULT       "\033[39m"
+#define GIT_COLOR_BOLD_BLACK    "\033[1;30m"
+#define GIT_COLOR_BOLD_RED      "\033[1;31m"
+#define GIT_COLOR_BOLD_GREEN    "\033[1;32m"
+#define GIT_COLOR_BOLD_YELLOW   "\033[1;33m"
+#define GIT_COLOR_BOLD_BLUE     "\033[1;34m"
+#define GIT_COLOR_BOLD_MAGENTA  "\033[1;35m"
+#define GIT_COLOR_BOLD_CYAN     "\033[1;36m"
+#define GIT_COLOR_BOLD_WHITE    "\033[1;37m"
+#define GIT_COLOR_BOLD_DEFAULT  "\033[1;39m"
+#define GIT_COLOR_FAINT_BLACK   "\033[2;30m"
+#define GIT_COLOR_FAINT_RED     "\033[2;31m"
+#define GIT_COLOR_FAINT_GREEN   "\033[2;32m"
+#define GIT_COLOR_FAINT_YELLOW  "\033[2;33m"
+#define GIT_COLOR_FAINT_BLUE    "\033[2;34m"
+#define GIT_COLOR_FAINT_MAGENTA "\033[2;35m"
+#define GIT_COLOR_FAINT_CYAN    "\033[2;36m"
+#define GIT_COLOR_FAINT_WHITE   "\033[2;37m"
+#define GIT_COLOR_FAINT_DEFAULT "\033[2;39m"
+#define GIT_COLOR_BG_BLACK      "\033[40m"
+#define GIT_COLOR_BG_RED        "\033[41m"
+#define GIT_COLOR_BG_GREEN      "\033[42m"
+#define GIT_COLOR_BG_YELLOW     "\033[43m"
+#define GIT_COLOR_BG_BLUE       "\033[44m"
+#define GIT_COLOR_BG_MAGENTA    "\033[45m"
+#define GIT_COLOR_BG_CYAN       "\033[46m"
+#define GIT_COLOR_BG_WHITE      "\033[47m"
+#define GIT_COLOR_BG_DEFAULT    "\033[49m"
+#define GIT_COLOR_FAINT         "\033[2m"
+#define GIT_COLOR_FAINT_ITALIC  "\033[2;3m"
+#define GIT_COLOR_REVERSE       "\033[7m"
 
 /* A special value meaning "no color selected" */
 #define GIT_COLOR_NIL "NIL"
@@ -74,13 +74,13 @@ struct strbuf;
  * config_colorbool, and will be converted by want_color() into either 0 or 1.
  */
 #define GIT_COLOR_UNKNOWN -1
-#define GIT_COLOR_NEVER  0
-#define GIT_COLOR_ALWAYS 1
-#define GIT_COLOR_AUTO   2
+#define GIT_COLOR_NEVER   0
+#define GIT_COLOR_ALWAYS  1
+#define GIT_COLOR_AUTO    2
 
 /* A default list of colors to use for commit graphs and show-branch output */
 extern const char *column_colors_ansi[];
-extern const int column_colors_ansi_max;
+extern const int   column_colors_ansi_max;
 
 /*
  * Generally the color code will lazily figure this out itself, but
@@ -105,7 +105,7 @@ int git_config_colorbool(const char *var, const char *value);
  * one of GIT_COLOR_UNKNOWN, GIT_COLOR_NEVER, GIT_COLOR_ALWAYS, GIT_COLOR_AUTO.
  */
 int want_color_fd(int fd, int var);
-#define want_color(colorbool) want_color_fd(1, (colorbool))
+#define want_color(colorbool)        want_color_fd(1, (colorbool))
 #define want_color_stderr(colorbool) want_color_fd(2, (colorbool))
 
 /*
@@ -125,11 +125,9 @@ int color_parse_mem(const char *value, int len, char *dst);
  * the color.  The `color_print_strbuf` prints the contents of the given
  * strbuf (BUG: but only up to its first NUL character).
  */
-__attribute__((format (printf, 3, 4)))
-int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
-__attribute__((format (printf, 3, 4)))
-int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
-void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
+__attribute__((format(printf, 3, 4))) int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
+void                                      color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
 
 /*
  * Check if the given color is GIT_COLOR_NIL that means "no color selected".

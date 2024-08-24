@@ -18,12 +18,17 @@
 /**
  * A single oidset; should be zero-initialized (or use OIDSET_INIT).
  */
-struct oidset {
-	kh_oid_set_t set;
+struct oidset
+{
+    kh_oid_set_t set;
 };
 
-#define OIDSET_INIT { { 0 } }
-
+#define OIDSET_INIT \
+    {               \
+        {           \
+            0       \
+        }           \
+    }
 
 /**
  * Initialize the oidset structure `set`.
@@ -65,7 +70,7 @@ int oidset_remove(struct oidset *set, const struct object_id *oid);
  */
 static inline int oidset_size(const struct oidset *set)
 {
-	return kh_size(&set->set);
+    return kh_size(&set->set);
 }
 
 /**
@@ -81,7 +86,7 @@ void oidset_clear(struct oidset *set);
  * ignored.
  */
 void oidset_parse_file(struct oidset *set, const char *path,
-		       const struct git_hash_algo *algop);
+                       const struct git_hash_algo *algop);
 
 /*
  * Similar to the above, but with a callback which can (1) return non-zero to
@@ -90,35 +95,37 @@ void oidset_parse_file(struct oidset *set, const char *path,
  */
 typedef int (*oidset_parse_tweak_fn)(struct object_id *, void *);
 void oidset_parse_file_carefully(struct oidset *set, const char *path,
-				 const struct git_hash_algo *algop,
-				 oidset_parse_tweak_fn fn, void *cbdata);
+                                 const struct git_hash_algo *algop,
+                                 oidset_parse_tweak_fn fn, void *cbdata);
 
-struct oidset_iter {
-	kh_oid_set_t *set;
-	khiter_t iter;
+struct oidset_iter
+{
+    kh_oid_set_t *set;
+    khiter_t      iter;
 };
 
-static inline void oidset_iter_init(struct oidset *set,
-				    struct oidset_iter *iter)
+static inline void oidset_iter_init(struct oidset      *set,
+                                    struct oidset_iter *iter)
 {
-	iter->set = &set->set;
-	iter->iter = kh_begin(iter->set);
+    iter->set  = &set->set;
+    iter->iter = kh_begin(iter->set);
 }
 
 static inline struct object_id *oidset_iter_next(struct oidset_iter *iter)
 {
-	for (; iter->iter != kh_end(iter->set); iter->iter++) {
-		if (kh_exist(iter->set, iter->iter))
-			return &kh_key(iter->set, iter->iter++);
-	}
-	return NULL;
+    for (; iter->iter != kh_end(iter->set); iter->iter++)
+    {
+        if (kh_exist(iter->set, iter->iter))
+            return &kh_key(iter->set, iter->iter++);
+    }
+    return NULL;
 }
 
-static inline struct object_id *oidset_iter_first(struct oidset *set,
-						  struct oidset_iter *iter)
+static inline struct object_id *oidset_iter_first(struct oidset      *set,
+                                                  struct oidset_iter *iter)
 {
-	oidset_iter_init(set, iter);
-	return oidset_iter_next(iter);
+    oidset_iter_init(set, iter);
+    return oidset_iter_next(iter);
 }
 
 #endif /* OIDSET_H */

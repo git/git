@@ -2,7 +2,7 @@
 #define PACK_MTIMES_H
 
 #define MTIMES_SIGNATURE 0x4d544d45 /* "MTME" */
-#define MTIMES_VERSION 1
+#define MTIMES_VERSION   1
 
 struct packed_git;
 

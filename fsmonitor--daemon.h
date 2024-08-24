@@ -3,9 +3,9 @@
 
 #ifdef HAVE_FSMONITOR_DAEMON_BACKEND
 
-#include "hashmap.h"
-#include "thread-utils.h"
-#include "fsmonitor-path-utils.h"
+    #include "hashmap.h"
+    #include "thread-utils.h"
+    #include "fsmonitor-path-utils.h"
 
 struct fsmonitor_batch;
 struct fsmonitor_token_data;
@@ -34,31 +34,31 @@ void fsmonitor_batch__add_path(struct fsmonitor_batch *batch, const char *path);
 struct fsm_listen_data; /* opaque platform-specific data for listener thread */
 struct fsm_health_data; /* opaque platform-specific data for health thread */
 
-struct fsmonitor_daemon_state {
-	pthread_t listener_thread;
-	pthread_t health_thread;
-	pthread_mutex_t main_lock;
+struct fsmonitor_daemon_state
+{
+    pthread_t       listener_thread;
+    pthread_t       health_thread;
+    pthread_mutex_t main_lock;
 
-	struct strbuf path_worktree_watch;
-	struct strbuf path_gitdir_watch;
-	struct alias_info alias;
-	int nr_paths_watching;
+    struct strbuf     path_worktree_watch;
+    struct strbuf     path_gitdir_watch;
+    struct alias_info alias;
+    int               nr_paths_watching;
 
-	struct fsmonitor_token_data *current_token_data;
+    struct fsmonitor_token_data *current_token_data;
 
-	struct strbuf path_cookie_prefix;
-	pthread_cond_t cookies_cond;
-	int cookie_seq;
-	struct hashmap cookies;
+    struct strbuf  path_cookie_prefix;
+    pthread_cond_t cookies_cond;
+    int            cookie_seq;
+    struct hashmap cookies;
 
-	int listen_error_code;
-	int health_error_code;
-	struct fsm_listen_data *listen_data;
-	struct fsm_health_data *health_data;
+    int                     listen_error_code;
+    int                     health_error_code;
+    struct fsm_listen_data *listen_data;
+    struct fsm_health_data *health_data;
 
-	struct ipc_server_data *ipc_server_data;
-	struct strbuf path_ipc;
-
+    struct ipc_server_data *ipc_server_data;
+    struct strbuf           path_ipc;
 };
 
 /*
@@ -114,39 +114,40 @@ struct fsmonitor_daemon_state {
  * index.  The daemon does not read the index nor have any internal
  * index-relative state, so there are no "IS...INDEX..." enum values.
  */
-enum fsmonitor_path_type {
-	IS_WORKDIR_PATH = 0,
+enum fsmonitor_path_type
+{
+    IS_WORKDIR_PATH = 0,
 
-	IS_DOT_GIT,
-	IS_INSIDE_DOT_GIT,
-	IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX,
+    IS_DOT_GIT,
+    IS_INSIDE_DOT_GIT,
+    IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX,
 
-	IS_GITDIR,
-	IS_INSIDE_GITDIR,
-	IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX,
+    IS_GITDIR,
+    IS_INSIDE_GITDIR,
+    IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX,
 
-	IS_OUTSIDE_CONE,
+    IS_OUTSIDE_CONE,
 };
 
 /*
  * Classify a pathname relative to the root of the working directory.
  */
 enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
-	const char *relative_path);
+    const char *relative_path);
 
 /*
  * Classify a pathname relative to a <gitdir> that is external to the
  * worktree directory.
  */
 enum fsmonitor_path_type fsmonitor_classify_path_gitdir_relative(
-	const char *relative_path);
+    const char *relative_path);
 
 /*
  * Classify an absolute pathname received from a filesystem event.
  */
 enum fsmonitor_path_type fsmonitor_classify_path_absolute(
-	struct fsmonitor_daemon_state *state,
-	const char *path);
+    struct fsmonitor_daemon_state *state,
+    const char                    *path);
 
 /*
  * Prepend the this batch of path(s) onto the list of batches associated
@@ -157,8 +158,8 @@ enum fsmonitor_path_type fsmonitor_classify_path_absolute(
  * Wake up the client threads waiting on these cookies.
  */
 void fsmonitor_publish(struct fsmonitor_daemon_state *state,
-		       struct fsmonitor_batch *batch,
-		       const struct string_list *cookie_names);
+                       struct fsmonitor_batch        *batch,
+                       const struct string_list      *cookie_names);
 
 /*
  * If the platform-specific layer loses sync with the filesystem,

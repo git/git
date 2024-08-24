@@ -23,38 +23,40 @@ struct bitmap_writer;
  * into individual pseudo-merge(s) according to the decay, max_merges,
  * sample_rate, and threshold parameters.
  */
-struct pseudo_merge_group {
-	regex_t *pattern;
+struct pseudo_merge_group
+{
+    regex_t *pattern;
 
-	/* capture group(s) -> struct pseudo_merge_matches */
-	struct strmap matches;
+    /* capture group(s) -> struct pseudo_merge_matches */
+    struct strmap matches;
 
-	/*
-	 * The individual pseudo-merge(s) that are generated from the
-	 * above array of matches, partitioned according to the below
-	 * parameters.
-	 */
-	struct commit **merges;
-	size_t merges_nr;
-	size_t merges_alloc;
+    /*
+     * The individual pseudo-merge(s) that are generated from the
+     * above array of matches, partitioned according to the below
+     * parameters.
+     */
+    struct commit **merges;
+    size_t          merges_nr;
+    size_t          merges_alloc;
 
-	/*
-	 * Pseudo-merge grouping parameters. See git-config(1) for
-	 * more information.
-	 */
-	double decay;
-	int max_merges;
-	double sample_rate;
-	int stable_size;
-	timestamp_t threshold;
-	timestamp_t stable_threshold;
+    /*
+     * Pseudo-merge grouping parameters. See git-config(1) for
+     * more information.
+     */
+    double      decay;
+    int         max_merges;
+    double      sample_rate;
+    int         stable_size;
+    timestamp_t threshold;
+    timestamp_t stable_threshold;
 };
 
-struct pseudo_merge_matches {
-	struct commit **stable;
-	struct commit **unstable;
-	size_t stable_nr, stable_alloc;
-	size_t unstable_nr, unstable_alloc;
+struct pseudo_merge_matches
+{
+    struct commit **stable;
+    struct commit **unstable;
+    size_t          stable_nr, stable_alloc;
+    size_t          unstable_nr, unstable_alloc;
 };
 
 /*
@@ -79,9 +81,10 @@ void load_pseudo_merges_from_config(struct string_list *list);
  * particular (non-pseudo-merge) commit to the list of pseudo-merge(s)
  * it appears in.
  */
-struct pseudo_merge_commit_idx {
-	uint32_t *pseudo_merge;
-	size_t nr, alloc;
+struct pseudo_merge_commit_idx
+{
+    uint32_t *pseudo_merge;
+    size_t    nr, alloc;
 };
 
 /*
@@ -95,33 +98,34 @@ struct pseudo_merge_commit_idx {
  * Optionally shows a progress meter.
  */
 void select_pseudo_merges(struct bitmap_writer *writer,
-			  struct commit **commits, size_t commits_nr);
+                          struct commit **commits, size_t commits_nr);
 
 /*
  * Represents a serialized view of a file containing pseudo-merge(s)
  * (see Documentation/technical/bitmap-format.txt for a specification
  * of the format).
  */
-struct pseudo_merge_map {
-	/*
-	 * An array of pseudo-merge(s), lazily loaded from the .bitmap
-	 * file.
-	 */
-	struct pseudo_merge *v;
-	size_t nr;
-	size_t commits_nr;
+struct pseudo_merge_map
+{
+    /*
+     * An array of pseudo-merge(s), lazily loaded from the .bitmap
+     * file.
+     */
+    struct pseudo_merge *v;
+    size_t               nr;
+    size_t               commits_nr;
 
-	/*
-	 * Pointers into a memory-mapped view of the .bitmap file:
-	 *
-	 *   - map: the beginning of the .bitmap file
-	 *   - commits: the beginning of the pseudo-merge commit index
-	 *   - map_size: the size of the .bitmap file
-	 */
-	const unsigned char *map;
-	const unsigned char *commits;
+    /*
+     * Pointers into a memory-mapped view of the .bitmap file:
+     *
+     *   - map: the beginning of the .bitmap file
+     *   - commits: the beginning of the pseudo-merge commit index
+     *   - map_size: the size of the .bitmap file
+     */
+    const unsigned char *map;
+    const unsigned char *commits;
 
-	size_t map_size;
+    size_t map_size;
 };
 
 /*
@@ -135,24 +139,25 @@ struct pseudo_merge_map {
  * The `at` and `bitmap_at` fields are used to store the locations of
  * each of the above bitmaps in the .bitmap file.
  */
-struct pseudo_merge {
-	struct ewah_bitmap *commits;
-	struct ewah_bitmap *bitmap;
+struct pseudo_merge
+{
+    struct ewah_bitmap *commits;
+    struct ewah_bitmap *bitmap;
 
-	off_t at;
-	off_t bitmap_at;
+    off_t at;
+    off_t bitmap_at;
 
-	/*
-	 * `satisfied` indicates whether the given pseudo-merge has been
-	 * used.
-	 *
-	 * `loaded_commits` and `loaded_bitmap` indicate whether the
-	 * respective bitmaps have been loaded and read from the
-	 * .bitmap file.
-	 */
-	unsigned satisfied : 1,
-		 loaded_commits : 1,
-		 loaded_bitmap : 1;
+    /*
+     * `satisfied` indicates whether the given pseudo-merge has been
+     * used.
+     *
+     * `loaded_commits` and `loaded_bitmap` indicate whether the
+     * respective bitmaps have been loaded and read from the
+     * .bitmap file.
+     */
+    unsigned satisfied : 1,
+        loaded_commits : 1,
+        loaded_bitmap : 1;
 };
 
 /*
@@ -167,14 +172,14 @@ void free_pseudo_merge_map(struct pseudo_merge_map *pm);
  * map, if it has not already been loaded.
  */
 struct ewah_bitmap *pseudo_merge_bitmap(const struct pseudo_merge_map *pm,
-					struct pseudo_merge *merge);
+                                        struct pseudo_merge           *merge);
 
 /*
  * Loads the pseudo-merge and its commits bitmap from the given
  * pseudo-merge map, if it has not already been loaded.
  */
 struct pseudo_merge *use_pseudo_merge(const struct pseudo_merge_map *pm,
-				      struct pseudo_merge *merge);
+                                      struct pseudo_merge           *merge);
 
 /*
  * Applies pseudo-merge(s) containing the given commit to the bitmap
@@ -185,8 +190,8 @@ struct pseudo_merge *use_pseudo_merge(const struct pseudo_merge_map *pm,
  * remaining unsatisfied pseudo-merges are cascaded (see below).
  */
 int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
-				   struct bitmap *result,
-				   struct commit *commit, uint32_t commit_pos);
+                                   struct bitmap                 *result,
+                                   struct commit *commit, uint32_t commit_pos);
 
 /*
  * Applies pseudo-merge(s) which are satisfied according to the
@@ -203,14 +208,14 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
  * closure over tips is not yet known.
  */
 int cascade_pseudo_merges(const struct pseudo_merge_map *pm,
-			  struct bitmap *result,
-			  struct bitmap *roots);
+                          struct bitmap                 *result,
+                          struct bitmap                 *roots);
 
 /*
  * Returns a pseudo-merge which contains the exact set of commits
  * listed in the "parents" bitamp, or NULL if none could be found.
  */
 struct pseudo_merge *pseudo_merge_for_parents(const struct pseudo_merge_map *pm,
-					      struct bitmap *parents);
+                                              struct bitmap                 *parents);
 
 #endif

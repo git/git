@@ -79,7 +79,6 @@ struct tmp_objdir *tmp_objdir_unapply_primary_odb(void);
  * changing its relative path.
  */
 void tmp_objdir_reapply_primary_odb(struct tmp_objdir *, const char *old_cwd,
-		const char *new_cwd);
-
+                                    const char *new_cwd);
 
 #endif /* TMP_OBJDIR_H */

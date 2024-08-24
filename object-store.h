@@ -6,6 +6,6 @@
 #include "object-store-ll.h"
 
 KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
-	struct object_directory *, 1, fspathhash, fspatheq)
+           struct object_directory *, 1, fspathhash, fspatheq)
 
 #endif /* OBJECT_STORE_H */

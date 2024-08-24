@@ -5,10 +5,11 @@
 
 struct option;
 
-enum diagnose_mode {
-	DIAGNOSE_NONE,
-	DIAGNOSE_STATS,
-	DIAGNOSE_ALL
+enum diagnose_mode
+{
+    DIAGNOSE_NONE,
+    DIAGNOSE_STATS,
+    DIAGNOSE_ALL
 };
 
 int option_parse_diagnose(const struct option *opt, const char *arg, int unset);

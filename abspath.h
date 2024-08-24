@@ -1,14 +1,14 @@
 #ifndef ABSPATH_H
 #define ABSPATH_H
 
-int is_directory(const char *);
-char *strbuf_realpath(struct strbuf *resolved, const char *path,
-		      int die_on_error);
-char *strbuf_realpath_forgiving(struct strbuf *resolved, const char *path,
-				int die_on_error);
-char *real_pathdup(const char *path, int die_on_error);
+int         is_directory(const char *);
+char       *strbuf_realpath(struct strbuf *resolved, const char *path,
+                            int die_on_error);
+char       *strbuf_realpath_forgiving(struct strbuf *resolved, const char *path,
+                                      int die_on_error);
+char       *real_pathdup(const char *path, int die_on_error);
 const char *absolute_path(const char *path);
-char *absolute_pathdup(const char *path);
+char       *absolute_pathdup(const char *path);
 
 /*
  * Concatenate "prefix" (if len is non-zero) and "path", with no
@@ -27,7 +27,7 @@ char *prefix_filename_except_for_dash(const char *prefix, const char *path);
 
 static inline int is_absolute_path(const char *path)
 {
-	return is_dir_sep(path[0]) || has_dos_drive_prefix(path);
+    return is_dir_sep(path[0]) || has_dos_drive_prefix(path);
 }
 
 /**

@@ -5,67 +5,72 @@
  * See Documentation/technical/api-simple-ipc.txt
  */
 
-enum ipc_active_state {
-	/*
-	 * The pipe/socket exists and the daemon is waiting for connections.
-	 */
-	IPC_STATE__LISTENING = 0,
+enum ipc_active_state
+{
+    /*
+     * The pipe/socket exists and the daemon is waiting for connections.
+     */
+    IPC_STATE__LISTENING = 0,
 
-	/*
-	 * The pipe/socket exists, but the daemon is not listening.
-	 * Perhaps it is very busy.
-	 * Perhaps the daemon died without deleting the path.
-	 * Perhaps it is shutting down and draining existing clients.
-	 * Perhaps it is dead, but other clients are lingering and
-	 * still holding a reference to the pathname.
-	 */
-	IPC_STATE__NOT_LISTENING,
+    /*
+     * The pipe/socket exists, but the daemon is not listening.
+     * Perhaps it is very busy.
+     * Perhaps the daemon died without deleting the path.
+     * Perhaps it is shutting down and draining existing clients.
+     * Perhaps it is dead, but other clients are lingering and
+     * still holding a reference to the pathname.
+     */
+    IPC_STATE__NOT_LISTENING,
 
-	/*
-	 * The requested pathname is bogus and no amount of retries
-	 * will fix that.
-	 */
-	IPC_STATE__INVALID_PATH,
+    /*
+     * The requested pathname is bogus and no amount of retries
+     * will fix that.
+     */
+    IPC_STATE__INVALID_PATH,
 
-	/*
-	 * The requested pathname is not found.  This usually means
-	 * that there is no daemon present.
-	 */
-	IPC_STATE__PATH_NOT_FOUND,
+    /*
+     * The requested pathname is not found.  This usually means
+     * that there is no daemon present.
+     */
+    IPC_STATE__PATH_NOT_FOUND,
 
-	IPC_STATE__OTHER_ERROR,
+    IPC_STATE__OTHER_ERROR,
 };
 
 #ifdef SUPPORTS_SIMPLE_IPC
-#include "pkt-line.h"
+    #include "pkt-line.h"
 
 /*
  * Simple IPC Client Side API.
  */
 
-struct ipc_client_connect_options {
-	/*
-	 * Spin under timeout if the server is running but can't
-	 * accept our connection yet.  This should always be set
-	 * unless you just want to poke the server and see if it
-	 * is alive.
-	 */
-	unsigned int wait_if_busy:1;
+struct ipc_client_connect_options
+{
+    /*
+     * Spin under timeout if the server is running but can't
+     * accept our connection yet.  This should always be set
+     * unless you just want to poke the server and see if it
+     * is alive.
+     */
+    unsigned int wait_if_busy : 1;
 
-	/*
-	 * Spin under timeout if the pipe/socket is not yet present
-	 * on the file system.  This is useful if we just started
-	 * the service and need to wait for it to become ready.
-	 */
-	unsigned int wait_if_not_found:1;
+    /*
+     * Spin under timeout if the pipe/socket is not yet present
+     * on the file system.  This is useful if we just started
+     * the service and need to wait for it to become ready.
+     */
+    unsigned int wait_if_not_found : 1;
 
-	/*
-	 * Disallow chdir() when creating a Unix domain socket.
-	 */
-	unsigned int uds_disallow_chdir:1;
+    /*
+     * Disallow chdir() when creating a Unix domain socket.
+     */
+    unsigned int uds_disallow_chdir : 1;
 };
 
-#define IPC_CLIENT_CONNECT_OPTIONS_INIT { 0 }
+    #define IPC_CLIENT_CONNECT_OPTIONS_INIT \
+        {                                   \
+            0                               \
+        }
 
 /*
  * Determine if a server is listening on this named pipe or socket using
@@ -74,8 +79,9 @@ struct ipc_client_connect_options {
  */
 enum ipc_active_state ipc_get_active_state(const char *path);
 
-struct ipc_client_connection {
-	int fd;
+struct ipc_client_connection
+{
+    int fd;
 };
 
 /*
@@ -87,9 +93,9 @@ struct ipc_client_connection {
  * spawn/respawn the server.
  */
 enum ipc_active_state ipc_client_try_connect(
-	const char *path,
-	const struct ipc_client_connect_options *options,
-	struct ipc_client_connection **p_connection);
+    const char                              *path,
+    const struct ipc_client_connect_options *options,
+    struct ipc_client_connection           **p_connection);
 
 void ipc_client_close_connection(struct ipc_client_connection *connection);
 
@@ -102,9 +108,9 @@ void ipc_client_close_connection(struct ipc_client_connection *connection);
  * Calls error() and returns non-zero otherwise.
  */
 int ipc_client_send_command_to_connection(
-	struct ipc_client_connection *connection,
-	const char *message, size_t message_len,
-	struct strbuf *answer);
+    struct ipc_client_connection *connection,
+    const char *message, size_t message_len,
+    struct strbuf *answer);
 
 /*
  * Used by the client to synchronously connect and send and receive a
@@ -114,10 +120,10 @@ int ipc_client_send_command_to_connection(
  *
  * Calls error() and returns non-zero otherwise.
  */
-int ipc_client_send_command(const char *path,
-			    const struct ipc_client_connect_options *options,
-			    const char *message, size_t message_len,
-			    struct strbuf *answer);
+int ipc_client_send_command(const char                              *path,
+                            const struct ipc_client_connect_options *options,
+                            const char *message, size_t message_len,
+                            struct strbuf *answer);
 
 /*
  * Simple IPC Server Side API.
@@ -125,9 +131,9 @@ int ipc_client_send_command(const char *path,
 
 struct ipc_server_reply_data;
 
-typedef int (ipc_server_reply_cb)(struct ipc_server_reply_data *,
-				  const char *response,
-				  size_t response_len);
+typedef int(ipc_server_reply_cb)(struct ipc_server_reply_data *,
+                                 const char *response,
+                                 size_t      response_len);
 
 /*
  * Prototype for an application-supplied callback to process incoming
@@ -140,13 +146,13 @@ typedef int (ipc_server_reply_cb)(struct ipc_server_reply_data *,
  * The return value from the application callback is ignored.
  * The value `SIMPLE_IPC_QUIT` can be used to shutdown the server.
  */
-typedef int (ipc_server_application_cb)(void *application_data,
-					const char *request,
-					size_t request_len,
-					ipc_server_reply_cb *reply_cb,
-					struct ipc_server_reply_data *reply_data);
+typedef int(ipc_server_application_cb)(void                         *application_data,
+                                       const char                   *request,
+                                       size_t                        request_len,
+                                       ipc_server_reply_cb          *reply_cb,
+                                       struct ipc_server_reply_data *reply_data);
 
-#define SIMPLE_IPC_QUIT -2
+    #define SIMPLE_IPC_QUIT -2
 
 /*
  * Opaque instance data to represent an IPC server instance.
@@ -159,12 +165,12 @@ struct ipc_server_data;
  */
 struct ipc_server_opts
 {
-	int nr_threads;
+    int nr_threads;
 
-	/*
-	 * Disallow chdir() when creating a Unix domain socket.
-	 */
-	unsigned int uds_disallow_chdir:1;
+    /*
+     * Disallow chdir() when creating a Unix domain socket.
+     */
+    unsigned int uds_disallow_chdir : 1;
 };
 
 /*
@@ -181,9 +187,9 @@ struct ipc_server_opts
  * optionally compose a reply message.
  */
 int ipc_server_run_async(struct ipc_server_data **returned_server_data,
-			 const char *path, const struct ipc_server_opts *opts,
-			 ipc_server_application_cb *application_cb,
-			 void *application_data);
+                         const char *path, const struct ipc_server_opts *opts,
+                         ipc_server_application_cb *application_cb,
+                         void                      *application_data);
 
 /*
  * Gently signal the IPC server pool to shutdown.  No new client
@@ -227,8 +233,8 @@ void ipc_server_free(struct ipc_server_data *server_data);
  * simple synchronous interface.
  */
 int ipc_server_run(const char *path, const struct ipc_server_opts *opts,
-		   ipc_server_application_cb *application_cb,
-		   void *application_data);
+                   ipc_server_application_cb *application_cb,
+                   void                      *application_data);
 
 #endif /* SUPPORTS_SIMPLE_IPC */
 #endif /* GIT_SIMPLE_IPC_H */

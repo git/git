@@ -11,57 +11,59 @@ struct oidmap;
 struct oidtree;
 struct strbuf;
 
-struct object_directory {
-	struct object_directory *next;
+struct object_directory
+{
+    struct object_directory *next;
 
-	/*
-	 * Used to store the results of readdir(3) calls when we are OK
-	 * sacrificing accuracy due to races for speed. That includes
-	 * object existence with OBJECT_INFO_QUICK, as well as
-	 * our search for unique abbreviated hashes. Don't use it for tasks
-	 * requiring greater accuracy!
-	 *
-	 * Be sure to call odb_load_loose_cache() before using.
-	 */
-	uint32_t loose_objects_subdir_seen[8]; /* 256 bits */
-	struct oidtree *loose_objects_cache;
+    /*
+     * Used to store the results of readdir(3) calls when we are OK
+     * sacrificing accuracy due to races for speed. That includes
+     * object existence with OBJECT_INFO_QUICK, as well as
+     * our search for unique abbreviated hashes. Don't use it for tasks
+     * requiring greater accuracy!
+     *
+     * Be sure to call odb_load_loose_cache() before using.
+     */
+    uint32_t        loose_objects_subdir_seen[8]; /* 256 bits */
+    struct oidtree *loose_objects_cache;
 
-	/* Map between object IDs for loose objects. */
-	struct loose_object_map *loose_map;
+    /* Map between object IDs for loose objects. */
+    struct loose_object_map *loose_map;
 
-	/*
-	 * This is a temporary object store created by the tmp_objdir
-	 * facility. Disable ref updates since the objects in the store
-	 * might be discarded on rollback.
-	 */
-	int disable_ref_updates;
+    /*
+     * This is a temporary object store created by the tmp_objdir
+     * facility. Disable ref updates since the objects in the store
+     * might be discarded on rollback.
+     */
+    int disable_ref_updates;
 
-	/*
-	 * This object store is ephemeral, so there is no need to fsync.
-	 */
-	int will_destroy;
+    /*
+     * This object store is ephemeral, so there is no need to fsync.
+     */
+    int will_destroy;
 
-	/*
-	 * Path to the alternative object store. If this is a relative path,
-	 * it is relative to the current working directory.
-	 */
-	char *path;
+    /*
+     * Path to the alternative object store. If this is a relative path,
+     * it is relative to the current working directory.
+     */
+    char *path;
 };
 
-struct input_stream {
-	const void *(*read)(struct input_stream *, unsigned long *len);
-	void *data;
-	int is_finished;
+struct input_stream
+{
+    const void *(*read)(struct input_stream *, unsigned long *len);
+    void *data;
+    int   is_finished;
 };
 
-void prepare_alt_odb(struct repository *r);
-int has_alt_odb(struct repository *r);
-char *compute_alternate_path(const char *path, struct strbuf *err);
+void                     prepare_alt_odb(struct repository *r);
+int                      has_alt_odb(struct repository *r);
+char                    *compute_alternate_path(const char *path, struct strbuf *err);
 struct object_directory *find_odb(struct repository *r, const char *obj_dir);
-typedef int alt_odb_fn(struct object_directory *, void *);
-int foreach_alt_odb(alt_odb_fn, void*);
-typedef void alternate_ref_fn(const struct object_id *oid, void *);
-void for_each_alternate_ref(alternate_ref_fn, void *);
+typedef int              alt_odb_fn(struct object_directory *, void *);
+int                      foreach_alt_odb(alt_odb_fn, void *);
+typedef void             alternate_ref_fn(const struct object_id *oid, void *);
+void                     for_each_alternate_ref(alternate_ref_fn, void *);
 
 /*
  * Add the directory to the on-disk alternates file; the new entry will also
@@ -92,7 +94,7 @@ void restore_primary_odb(struct object_directory *restore_odb, const char *old_p
  * given object ID.
  */
 struct oidtree *odb_loose_cache(struct object_directory *odb,
-				  const struct object_id *oid);
+                                const struct object_id  *oid);
 
 /* Empty the loose object cache for the specified object directory. */
 void odb_clear_loose_cache(struct object_directory *odb);
@@ -100,173 +102,176 @@ void odb_clear_loose_cache(struct object_directory *odb);
 /* Clear and free the specified object directory */
 void free_object_directory(struct object_directory *odb);
 
-struct packed_git {
-	struct hashmap_entry packmap_ent;
-	struct packed_git *next;
-	struct list_head mru;
-	struct pack_window *windows;
-	off_t pack_size;
-	const void *index_data;
-	size_t index_size;
-	uint32_t num_objects;
-	size_t crc_offset;
-	struct oidset bad_objects;
-	int index_version;
-	time_t mtime;
-	int pack_fd;
-	int index;              /* for builtin/pack-objects.c */
-	unsigned pack_local:1,
-		 pack_keep:1,
-		 pack_keep_in_core:1,
-		 freshened:1,
-		 do_not_close:1,
-		 pack_promisor:1,
-		 multi_pack_index:1,
-		 is_cruft:1;
-	unsigned char hash[GIT_MAX_RAWSZ];
-	struct revindex_entry *revindex;
-	const uint32_t *revindex_data;
-	const uint32_t *revindex_map;
-	size_t revindex_size;
-	/*
-	 * mtimes_map points at the beginning of the memory mapped region of
-	 * this pack's corresponding .mtimes file, and mtimes_size is the size
-	 * of that .mtimes file
-	 */
-	const uint32_t *mtimes_map;
-	size_t mtimes_size;
-	/* something like ".git/objects/pack/xxxxx.pack" */
-	char pack_name[FLEX_ARRAY]; /* more */
+struct packed_git
+{
+    struct hashmap_entry packmap_ent;
+    struct packed_git   *next;
+    struct list_head     mru;
+    struct pack_window  *windows;
+    off_t                pack_size;
+    const void          *index_data;
+    size_t               index_size;
+    uint32_t             num_objects;
+    size_t               crc_offset;
+    struct oidset        bad_objects;
+    int                  index_version;
+    time_t               mtime;
+    int                  pack_fd;
+    int                  index; /* for builtin/pack-objects.c */
+    unsigned             pack_local : 1,
+        pack_keep : 1,
+        pack_keep_in_core : 1,
+        freshened : 1,
+        do_not_close : 1,
+        pack_promisor : 1,
+        multi_pack_index : 1,
+        is_cruft : 1;
+    unsigned char          hash[GIT_MAX_RAWSZ];
+    struct revindex_entry *revindex;
+    const uint32_t        *revindex_data;
+    const uint32_t        *revindex_map;
+    size_t                 revindex_size;
+    /*
+     * mtimes_map points at the beginning of the memory mapped region of
+     * this pack's corresponding .mtimes file, and mtimes_size is the size
+     * of that .mtimes file
+     */
+    const uint32_t *mtimes_map;
+    size_t          mtimes_size;
+    /* something like ".git/objects/pack/xxxxx.pack" */
+    char pack_name[FLEX_ARRAY]; /* more */
 };
 
 struct multi_pack_index;
 
-static inline int pack_map_entry_cmp(const void *cmp_data UNUSED,
-				     const struct hashmap_entry *entry,
-				     const struct hashmap_entry *entry2,
-				     const void *keydata)
+static inline int pack_map_entry_cmp(const void *cmp_data        UNUSED,
+                                     const struct hashmap_entry *entry,
+                                     const struct hashmap_entry *entry2,
+                                     const void                 *keydata)
 {
-	const char *key = keydata;
-	const struct packed_git *pg1, *pg2;
+    const char              *key = keydata;
+    const struct packed_git *pg1, *pg2;
 
-	pg1 = container_of(entry, const struct packed_git, packmap_ent);
-	pg2 = container_of(entry2, const struct packed_git, packmap_ent);
+    pg1 = container_of(entry, const struct packed_git, packmap_ent);
+    pg2 = container_of(entry2, const struct packed_git, packmap_ent);
 
-	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
+    return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
 }
 
-struct raw_object_store {
-	/*
-	 * Set of all object directories; the main directory is first (and
-	 * cannot be NULL after initialization). Subsequent directories are
-	 * alternates.
-	 */
-	struct object_directory *odb;
-	struct object_directory **odb_tail;
-	struct kh_odb_path_map *odb_by_path;
+struct raw_object_store
+{
+    /*
+     * Set of all object directories; the main directory is first (and
+     * cannot be NULL after initialization). Subsequent directories are
+     * alternates.
+     */
+    struct object_directory  *odb;
+    struct object_directory **odb_tail;
+    struct kh_odb_path_map   *odb_by_path;
 
-	int loaded_alternates;
+    int loaded_alternates;
 
-	/*
-	 * A list of alternate object directories loaded from the environment;
-	 * this should not generally need to be accessed directly, but will
-	 * populate the "odb" list when prepare_alt_odb() is run.
-	 */
-	char *alternate_db;
+    /*
+     * A list of alternate object directories loaded from the environment;
+     * this should not generally need to be accessed directly, but will
+     * populate the "odb" list when prepare_alt_odb() is run.
+     */
+    char *alternate_db;
 
-	/*
-	 * Objects that should be substituted by other objects
-	 * (see git-replace(1)).
-	 */
-	struct oidmap *replace_map;
-	unsigned replace_map_initialized : 1;
-	pthread_mutex_t replace_mutex; /* protect object replace functions */
+    /*
+     * Objects that should be substituted by other objects
+     * (see git-replace(1)).
+     */
+    struct oidmap  *replace_map;
+    unsigned        replace_map_initialized : 1;
+    pthread_mutex_t replace_mutex; /* protect object replace functions */
 
-	struct commit_graph *commit_graph;
-	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
+    struct commit_graph *commit_graph;
+    unsigned             commit_graph_attempted : 1; /* if loading has been attempted */
 
-	/*
-	 * private data
-	 *
-	 * should only be accessed directly by packfile.c and midx.c
-	 */
-	struct multi_pack_index *multi_pack_index;
+    /*
+     * private data
+     *
+     * should only be accessed directly by packfile.c and midx.c
+     */
+    struct multi_pack_index *multi_pack_index;
 
-	/*
-	 * private data
-	 *
-	 * should only be accessed directly by packfile.c
-	 */
+    /*
+     * private data
+     *
+     * should only be accessed directly by packfile.c
+     */
 
-	struct packed_git *packed_git;
-	/* A most-recently-used ordered version of the packed_git list. */
-	struct list_head packed_git_mru;
+    struct packed_git *packed_git;
+    /* A most-recently-used ordered version of the packed_git list. */
+    struct list_head packed_git_mru;
 
-	struct {
-		struct packed_git **packs;
-		unsigned flags;
-	} kept_pack_cache;
+    struct
+    {
+        struct packed_git **packs;
+        unsigned            flags;
+    } kept_pack_cache;
 
-	/*
-	 * A map of packfiles to packed_git structs for tracking which
-	 * packs have been loaded already.
-	 */
-	struct hashmap pack_map;
+    /*
+     * A map of packfiles to packed_git structs for tracking which
+     * packs have been loaded already.
+     */
+    struct hashmap pack_map;
 
-	/*
-	 * A fast, rough count of the number of objects in the repository.
-	 * These two fields are not meant for direct access. Use
-	 * repo_approximate_object_count() instead.
-	 */
-	unsigned long approximate_object_count;
-	unsigned approximate_object_count_valid : 1;
+    /*
+     * A fast, rough count of the number of objects in the repository.
+     * These two fields are not meant for direct access. Use
+     * repo_approximate_object_count() instead.
+     */
+    unsigned long approximate_object_count;
+    unsigned      approximate_object_count_valid : 1;
 
-	/*
-	 * Whether packed_git has already been populated with this repository's
-	 * packs.
-	 */
-	unsigned packed_git_initialized : 1;
+    /*
+     * Whether packed_git has already been populated with this repository's
+     * packs.
+     */
+    unsigned packed_git_initialized : 1;
 };
 
 struct raw_object_store *raw_object_store_new(void);
-void raw_object_store_clear(struct raw_object_store *o);
+void                     raw_object_store_clear(struct raw_object_store *o);
 
 /*
  * Put in `buf` the name of the file in the local object database that
  * would be used to store a loose object with the specified oid.
  */
 const char *loose_object_path(struct repository *r, struct strbuf *buf,
-			      const struct object_id *oid);
+                              const struct object_id *oid);
 
 void *map_loose_object(struct repository *r, const struct object_id *oid,
-		       unsigned long *size);
+                       unsigned long *size);
 
-void *repo_read_object_file(struct repository *r,
-			    const struct object_id *oid,
-			    enum object_type *type,
-			    unsigned long *size);
+void *repo_read_object_file(struct repository      *r,
+                            const struct object_id *oid,
+                            enum object_type       *type,
+                            unsigned long          *size);
 
 /* Read and unpack an object file into memory, write memory to an object file */
 int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		      unsigned long len, enum object_type type,
-		      struct object_id *oid);
+                      unsigned long len, enum object_type type,
+                      struct object_id *oid);
 
-int write_object_file_flags(const void *buf, unsigned long len,
-			    enum object_type type, struct object_id *oid,
-			    struct object_id *comapt_oid_in, unsigned flags);
+int               write_object_file_flags(const void *buf, unsigned long len,
+                                          enum object_type type, struct object_id *oid,
+                                          struct object_id *comapt_oid_in, unsigned flags);
 static inline int write_object_file(const void *buf, unsigned long len,
-				    enum object_type type, struct object_id *oid)
+                                    enum object_type type, struct object_id *oid)
 {
-	return write_object_file_flags(buf, len, type, oid, NULL, 0);
+    return write_object_file_flags(buf, len, type, oid, NULL, 0);
 }
 
 int write_object_file_literally(const void *buf, unsigned long len,
-				const char *type, struct object_id *oid,
-				unsigned flags);
+                                const char *type, struct object_id *oid,
+                                unsigned flags);
 int stream_loose_object(struct input_stream *in_stream, size_t len,
-			struct object_id *oid);
+                        struct object_id *oid);
 
 /*
  * Add an object file to the in-memory object store, without writing it
@@ -277,48 +282,55 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
  * that reference it.
  */
 int pretend_object_file(void *, unsigned long, enum object_type,
-			struct object_id *oid);
+                        struct object_id *oid);
 
 int force_object_loose(const struct object_id *oid, time_t mtime);
 
-struct object_info {
-	/* Request */
-	enum object_type *typep;
-	unsigned long *sizep;
-	off_t *disk_sizep;
-	struct object_id *delta_base_oid;
-	struct strbuf *type_name;
-	void **contentp;
+struct object_info
+{
+    /* Request */
+    enum object_type *typep;
+    unsigned long    *sizep;
+    off_t            *disk_sizep;
+    struct object_id *delta_base_oid;
+    struct strbuf    *type_name;
+    void            **contentp;
 
-	/* Response */
-	enum {
-		OI_CACHED,
-		OI_LOOSE,
-		OI_PACKED,
-		OI_DBCACHED
-	} whence;
-	union {
-		/*
-		 * struct {
-		 * 	... Nothing to expose in this case
-		 * } cached;
-		 * struct {
-		 * 	... Nothing to expose in this case
-		 * } loose;
-		 */
-		struct {
-			struct packed_git *pack;
-			off_t offset;
-			unsigned int is_delta;
-		} packed;
-	} u;
+    /* Response */
+    enum
+    {
+        OI_CACHED,
+        OI_LOOSE,
+        OI_PACKED,
+        OI_DBCACHED
+    } whence;
+    union
+    {
+        /*
+         * struct {
+         * 	... Nothing to expose in this case
+         * } cached;
+         * struct {
+         * 	... Nothing to expose in this case
+         * } loose;
+         */
+        struct
+        {
+            struct packed_git *pack;
+            off_t              offset;
+            unsigned int       is_delta;
+        } packed;
+    } u;
 };
 
 /*
  * Initializer for a "struct object_info" that wants no items. You may
  * also memset() the memory to all-zeroes.
  */
-#define OBJECT_INFO_INIT { 0 }
+#define OBJECT_INFO_INIT \
+    {                    \
+        0                \
+    }
 
 /* Invoke lookup_replace_object() on the given hash */
 #define OBJECT_INFO_LOOKUP_REPLACE 1
@@ -341,8 +353,8 @@ struct object_info {
 #define OBJECT_INFO_DIE_IF_CORRUPT 32
 
 int oid_object_info_extended(struct repository *r,
-			     const struct object_id *,
-			     struct object_info *, unsigned flags);
+                             const struct object_id *,
+                             struct object_info *, unsigned flags);
 
 /*
  * Open the loose object at path, check its hash, and return the contents,
@@ -352,11 +364,11 @@ int oid_object_info_extended(struct repository *r,
  *
  * Returns 0 on success, negative on error (details may be written to stderr).
  */
-int read_loose_object(const char *path,
-		      const struct object_id *expected_oid,
-		      struct object_id *real_oid,
-		      void **contents,
-		      struct object_info *oi);
+int read_loose_object(const char             *path,
+                      const struct object_id *expected_oid,
+                      struct object_id       *real_oid,
+                      void                  **contents,
+                      struct object_info     *oi);
 
 /* Retry packed storage after checking packed and loose storage */
 #define HAS_OBJECT_RECHECK_PACKED 1
@@ -366,7 +378,7 @@ int read_loose_object(const char *path,
  * in a partial clone.
  */
 int has_object(struct repository *r, const struct object_id *oid,
-	       unsigned flags);
+               unsigned flags);
 
 /*
  * These macros and functions are deprecated. If checking existence for an
@@ -382,8 +394,8 @@ int has_object(struct repository *r, const struct object_id *oid,
  * has_object() and/or oid_object_info_extended().
  */
 int repo_has_object_file(struct repository *r, const struct object_id *oid);
-int repo_has_object_file_with_flags(struct repository *r,
-				    const struct object_id *oid, int flags);
+int repo_has_object_file_with_flags(struct repository      *r,
+                                    const struct object_id *oid, int flags);
 
 /*
  * Return true iff an alternate object database has a loose object
@@ -400,7 +412,7 @@ int has_loose_object(const struct object_id *);
  * header. It returns the size that snprintf() returns + 1.
  */
 int format_object_header(char *str, size_t size, enum object_type type,
-			 size_t objsize);
+                         size_t objsize);
 
 void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
@@ -422,19 +434,19 @@ void assert_oid_type(const struct object_id *oid, enum object_type expect);
 void enable_obj_read_lock(void);
 void disable_obj_read_lock(void);
 
-extern int obj_read_use_lock;
+extern int             obj_read_use_lock;
 extern pthread_mutex_t obj_read_mutex;
 
 static inline void obj_read_lock(void)
 {
-	if(obj_read_use_lock)
-		pthread_mutex_lock(&obj_read_mutex);
+    if (obj_read_use_lock)
+        pthread_mutex_lock(&obj_read_mutex);
 }
 
 static inline void obj_read_unlock(void)
 {
-	if(obj_read_use_lock)
-		pthread_mutex_unlock(&obj_read_mutex);
+    if (obj_read_use_lock)
+        pthread_mutex_unlock(&obj_read_mutex);
 }
 
 /*
@@ -460,49 +472,50 @@ static inline void obj_read_unlock(void)
  * the function returns.
  */
 typedef int each_loose_object_fn(const struct object_id *oid,
-				 const char *path,
-				 void *data);
+                                 const char             *path,
+                                 void                   *data);
 typedef int each_loose_cruft_fn(const char *basename,
-				const char *path,
-				void *data);
+                                const char *path,
+                                void       *data);
 typedef int each_loose_subdir_fn(unsigned int nr,
-				 const char *path,
-				 void *data);
-int for_each_file_in_obj_subdir(unsigned int subdir_nr,
-				struct strbuf *path,
-				each_loose_object_fn obj_cb,
-				each_loose_cruft_fn cruft_cb,
-				each_loose_subdir_fn subdir_cb,
-				void *data);
-int for_each_loose_file_in_objdir(const char *path,
-				  each_loose_object_fn obj_cb,
-				  each_loose_cruft_fn cruft_cb,
-				  each_loose_subdir_fn subdir_cb,
-				  void *data);
-int for_each_loose_file_in_objdir_buf(struct strbuf *path,
-				      each_loose_object_fn obj_cb,
-				      each_loose_cruft_fn cruft_cb,
-				      each_loose_subdir_fn subdir_cb,
-				      void *data);
+                                 const char  *path,
+                                 void        *data);
+int         for_each_file_in_obj_subdir(unsigned int         subdir_nr,
+                                        struct strbuf       *path,
+                                        each_loose_object_fn obj_cb,
+                                        each_loose_cruft_fn  cruft_cb,
+                                        each_loose_subdir_fn subdir_cb,
+                                        void                *data);
+int         for_each_loose_file_in_objdir(const char          *path,
+                                          each_loose_object_fn obj_cb,
+                                          each_loose_cruft_fn  cruft_cb,
+                                          each_loose_subdir_fn subdir_cb,
+                                          void                *data);
+int         for_each_loose_file_in_objdir_buf(struct strbuf       *path,
+                                              each_loose_object_fn obj_cb,
+                                              each_loose_cruft_fn  cruft_cb,
+                                              each_loose_subdir_fn subdir_cb,
+                                              void                *data);
 
 /* Flags for for_each_*_object() below. */
-enum for_each_object_flags {
-	/* Iterate only over local objects, not alternates. */
-	FOR_EACH_OBJECT_LOCAL_ONLY = (1<<0),
+enum for_each_object_flags
+{
+    /* Iterate only over local objects, not alternates. */
+    FOR_EACH_OBJECT_LOCAL_ONLY = (1 << 0),
 
-	/* Only iterate over packs obtained from the promisor remote. */
-	FOR_EACH_OBJECT_PROMISOR_ONLY = (1<<1),
+    /* Only iterate over packs obtained from the promisor remote. */
+    FOR_EACH_OBJECT_PROMISOR_ONLY = (1 << 1),
 
-	/*
-	 * Visit objects within a pack in packfile order rather than .idx order
-	 */
-	FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
+    /*
+     * Visit objects within a pack in packfile order rather than .idx order
+     */
+    FOR_EACH_OBJECT_PACK_ORDER = (1 << 2),
 
-	/* Only iterate over packs that are not marked as kept in-core. */
-	FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1<<3),
+    /* Only iterate over packs that are not marked as kept in-core. */
+    FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1 << 3),
 
-	/* Only iterate over packs that do not have .keep files. */
-	FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
+    /* Only iterate over packs that do not have .keep files. */
+    FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1 << 4),
 };
 
 /*
@@ -513,7 +526,7 @@ enum for_each_object_flags {
  * Any flags specific to packs are ignored.
  */
 int for_each_loose_object(each_loose_object_fn, void *,
-			  enum for_each_object_flags flags);
+                          enum for_each_object_flags flags);
 
 /*
  * Iterate over all accessible packed objects without respect to reachability.
@@ -524,13 +537,13 @@ int for_each_loose_object(each_loose_object_fn, void *,
  * pack are visited in pack-idx order (i.e., sorted by oid).
  */
 typedef int each_packed_object_fn(const struct object_id *oid,
-				  struct packed_git *pack,
-				  uint32_t pos,
-				  void *data);
-int for_each_object_in_pack(struct packed_git *p,
-			    each_packed_object_fn, void *data,
-			    enum for_each_object_flags flags);
-int for_each_packed_object(each_packed_object_fn, void *,
-			   enum for_each_object_flags flags);
+                                  struct packed_git      *pack,
+                                  uint32_t                pos,
+                                  void                   *data);
+int         for_each_object_in_pack(struct packed_git *p,
+                                    each_packed_object_fn, void *data,
+                                    enum for_each_object_flags flags);
+int         for_each_packed_object(each_packed_object_fn, void *,
+                                   enum for_each_object_flags flags);
 
 #endif /* OBJECT_STORE_LL_H */

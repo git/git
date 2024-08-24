@@ -3,8 +3,8 @@
 
 struct strbuf;
 
-int is_url(const char *url);
-int is_urlschemechar(int first_flag, int ch);
+int   is_url(const char *url);
+int   is_urlschemechar(int first_flag, int ch);
 char *url_decode(const char *url);
 char *url_decode_mem(const char *url, int len);
 

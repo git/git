@@ -59,7 +59,7 @@ struct string_list;
  *    - 1` even if it's true in the current implementation. Alloc is somehow a
  *    "private" member that should not be messed with. Use `strbuf_avail()`
  *    instead.
-*/
+ */
 
 /**
  * Data Structures
@@ -71,14 +71,18 @@ struct string_list;
  * determine the current length of the string, and `buf` member provides
  * access to the string itself.
  */
-struct strbuf {
-	size_t alloc;
-	size_t len;
-	char *buf;
+struct strbuf
+{
+    size_t alloc;
+    size_t len;
+    char  *buf;
 };
 
 extern char strbuf_slopbuf[];
-#define STRBUF_INIT  { .buf = strbuf_slopbuf }
+#define STRBUF_INIT           \
+    {                         \
+        .buf = strbuf_slopbuf \
+    }
 
 struct object_id;
 
@@ -128,9 +132,8 @@ void strbuf_attach(struct strbuf *sb, void *str, size_t len, size_t mem);
  */
 static inline void strbuf_swap(struct strbuf *a, struct strbuf *b)
 {
-	SWAP(*a, *b);
+    SWAP(*a, *b);
 }
-
 
 /**
  * Functions related to the size of the buffer
@@ -142,7 +145,7 @@ static inline void strbuf_swap(struct strbuf *a, struct strbuf *b)
  */
 static inline size_t strbuf_avail(const struct strbuf *sb)
 {
-	return sb->alloc ? sb->alloc - sb->len - 1 : 0;
+    return sb->alloc ? sb->alloc - sb->len - 1 : 0;
 }
 
 /**
@@ -163,20 +166,19 @@ void strbuf_grow(struct strbuf *sb, size_t amount);
  */
 static inline void strbuf_setlen(struct strbuf *sb, size_t len)
 {
-	if (len > (sb->alloc ? sb->alloc - 1 : 0))
-		BUG("strbuf_setlen() beyond buffer");
-	sb->len = len;
-	if (sb->buf != strbuf_slopbuf)
-		sb->buf[len] = '\0';
-	else
-		assert(!strbuf_slopbuf[0]);
+    if (len > (sb->alloc ? sb->alloc - 1 : 0))
+        BUG("strbuf_setlen() beyond buffer");
+    sb->len = len;
+    if (sb->buf != strbuf_slopbuf)
+        sb->buf[len] = '\0';
+    else
+        assert(!strbuf_slopbuf[0]);
 }
 
 /**
  * Empty the buffer by setting the size of it to zero.
  */
-#define strbuf_reset(sb)  strbuf_setlen(sb, 0)
-
+#define strbuf_reset(sb) strbuf_setlen(sb, 0)
 
 /**
  * Functions related to the contents of the buffer
@@ -215,7 +217,6 @@ void strbuf_tolower(struct strbuf *sb);
  */
 int strbuf_cmp(const struct strbuf *first, const struct strbuf *second);
 
-
 /**
  * Adding data to the buffer
  * -------------------------
@@ -231,10 +232,10 @@ int strbuf_cmp(const struct strbuf *first, const struct strbuf *second);
  */
 static inline void strbuf_addch(struct strbuf *sb, int c)
 {
-	if (!strbuf_avail(sb))
-		strbuf_grow(sb, 1);
-	sb->buf[sb->len++] = c;
-	sb->buf[sb->len] = '\0';
+    if (!strbuf_avail(sb))
+        strbuf_grow(sb, 1);
+    sb->buf[sb->len++] = c;
+    sb->buf[sb->len]   = '\0';
 }
 
 /**
@@ -255,9 +256,9 @@ void strbuf_insert(struct strbuf *sb, size_t pos, const void *, size_t);
  * constants at compile time.
  */
 static inline void strbuf_insertstr(struct strbuf *sb, size_t pos,
-				    const char *s)
+                                    const char *s)
 {
-	strbuf_insert(sb, pos, s, strlen(s));
+    strbuf_insert(sb, pos, s, strlen(s));
 }
 
 /**
@@ -265,10 +266,9 @@ static inline void strbuf_insertstr(struct strbuf *sb, size_t pos,
  * string. The contents will be shifted, not overwritten.
  */
 void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt,
-		     va_list ap);
+                     va_list ap);
 
-__attribute__((format (printf, 3, 4)))
-void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
 
 /**
  * Remove given amount of data from a given position of the buffer.
@@ -280,16 +280,15 @@ void strbuf_remove(struct strbuf *sb, size_t pos, size_t len);
  * data.
  */
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
-		   const void *data, size_t data_len);
+                   const void *data, size_t data_len);
 
 /**
  * Add a NUL-terminated string to the buffer. Each line will be prepended
  * by a comment character and a blank.
  */
 void strbuf_add_commented_lines(struct strbuf *out,
-				const char *buf, size_t size,
-				const char *comment_prefix);
-
+                                const char *buf, size_t size,
+                                const char *comment_prefix);
 
 /**
  * Add data of given length to the buffer.
@@ -307,7 +306,7 @@ void strbuf_add(struct strbuf *sb, const void *data, size_t len);
  */
 static inline void strbuf_addstr(struct strbuf *sb, const char *s)
 {
-	strbuf_add(sb, s, strlen(s));
+    strbuf_add(sb, s, strlen(s));
 }
 
 /**
@@ -325,7 +324,7 @@ void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2);
  * two arguments.
  */
 const char *strbuf_join_argv(struct strbuf *buf, int argc,
-			     const char **argv, char delim);
+                             const char **argv, char delim);
 
 /**
  * Used with `strbuf_expand_step` to expand the literals %n and %x
@@ -381,18 +380,15 @@ void strbuf_humanise_rate(struct strbuf *buf, off_t bytes);
 /**
  * Add a formatted string to the buffer.
  */
-__attribute__((format (printf,2,3)))
-void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 
 /**
  * Add a formatted string prepended by a comment character and a
  * blank to the buffer.
  */
-__attribute__((format (printf, 3, 4)))
-void strbuf_commented_addf(struct strbuf *sb, const char *comment_prefix, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void strbuf_commented_addf(struct strbuf *sb, const char *comment_prefix, const char *fmt, ...);
 
-__attribute__((format (printf,2,0)))
-void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
+__attribute__((format(printf, 2, 0))) void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 
 /**
  * Add the time specified by `tm`, as formatted by `strftime`.
@@ -403,8 +399,8 @@ void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
  * string rather than passing it to `strftime`.
  */
 void strbuf_addftime(struct strbuf *sb, const char *fmt,
-		    const struct tm *tm, int tz_offset,
-		    int suppress_tz_name);
+                     const struct tm *tm, int tz_offset,
+                     int suppress_tz_name);
 
 /**
  * Read a given size of data from a FILE* pointer to the buffer.
@@ -489,7 +485,6 @@ int strbuf_getline_nul(struct strbuf *sb, FILE *fp);
  */
 int strbuf_getline(struct strbuf *sb, FILE *file);
 
-
 /**
  * Like `strbuf_getline`, but keeps the trailing terminator (if
  * any) in the buffer.
@@ -531,11 +526,13 @@ void strbuf_stripspace(struct strbuf *buf, const char *comment_prefix);
 
 static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
 {
-	if (strip_suffix_mem(sb->buf, &sb->len, suffix)) {
-		strbuf_setlen(sb, sb->len);
-		return 1;
-	} else
-		return 0;
+    if (strip_suffix_mem(sb->buf, &sb->len, suffix))
+    {
+        strbuf_setlen(sb, sb->len);
+        return 1;
+    }
+    else
+        return 0;
 }
 
 /**
@@ -557,24 +554,24 @@ static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
  * string_list_split_in_place().
  */
 struct strbuf **strbuf_split_buf(const char *str, size_t len,
-				 int terminator, int max);
+                                 int terminator, int max);
 
 static inline struct strbuf **strbuf_split_str(const char *str,
-					       int terminator, int max)
+                                               int terminator, int max)
 {
-	return strbuf_split_buf(str, strlen(str), terminator, max);
+    return strbuf_split_buf(str, strlen(str), terminator, max);
 }
 
 static inline struct strbuf **strbuf_split_max(const struct strbuf *sb,
-					       int terminator, int max)
+                                               int terminator, int max)
 {
-	return strbuf_split_buf(sb->buf, sb->len, terminator, max);
+    return strbuf_split_buf(sb->buf, sb->len, terminator, max);
 }
 
 static inline struct strbuf **strbuf_split(const struct strbuf *sb,
-					   int terminator)
+                                           int                  terminator)
 {
-	return strbuf_split_max(sb, terminator, 0);
+    return strbuf_split_max(sb, terminator, 0);
 }
 
 /*
@@ -587,9 +584,9 @@ static inline struct strbuf **strbuf_split(const struct strbuf *sb,
  *   'element1, element2, ..., elementN'
  * to str.  If only one element, just write "element1" to str.
  */
-void strbuf_add_separated_string_list(struct strbuf *str,
-				      const char *sep,
-				      struct string_list *slist);
+void strbuf_add_separated_string_list(struct strbuf      *str,
+                                      const char         *sep,
+                                      struct string_list *slist);
 
 /**
  * Free a NULL-terminated list of strbufs (for example, the return
@@ -609,16 +606,16 @@ void strbuf_list_free(struct strbuf **list);
 void strbuf_strip_file_from_path(struct strbuf *sb);
 
 void strbuf_add_lines(struct strbuf *sb,
-		      const char *prefix,
-		      const char *buf,
-		      size_t size);
+                      const char    *prefix,
+                      const char    *buf,
+                      size_t         size);
 
 /**
  * Append s to sb, with the characters '<', '>', '&' and '"' converted
  * into XML entities.
  */
 void strbuf_addstr_xml_quoted(struct strbuf *sb,
-			      const char *s);
+                              const char    *s);
 
 /**
  * "Complete" the contents of `sb` by ensuring that either it ends with the
@@ -628,13 +625,13 @@ void strbuf_addstr_xml_quoted(struct strbuf *sb,
  */
 static inline void strbuf_complete(struct strbuf *sb, char term)
 {
-	if (sb->len && sb->buf[sb->len - 1] != term)
-		strbuf_addch(sb, term);
+    if (sb->len && sb->buf[sb->len - 1] != term)
+        strbuf_addch(sb, term);
 }
 
 static inline void strbuf_complete_line(struct strbuf *sb)
 {
-	strbuf_complete(sb, '\n');
+    strbuf_complete(sb, '\n');
 }
 
 /*
@@ -649,7 +646,7 @@ static inline void strbuf_complete_line(struct strbuf *sb)
  * repo_interpret_branch_name() for details.
  */
 void strbuf_branchname(struct strbuf *sb, const char *name,
-		       unsigned allowed);
+                       unsigned allowed);
 
 /*
  * Like strbuf_branchname() above, but confirm that the result is
@@ -662,12 +659,10 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
 typedef int (*char_predicate)(char ch);
 
 void strbuf_addstr_urlencode(struct strbuf *sb, const char *name,
-			     char_predicate allow_unencoded_fn);
+                             char_predicate allow_unencoded_fn);
 
-__attribute__((format (printf,1,2)))
-int printf_ln(const char *fmt, ...);
-__attribute__((format (printf,2,3)))
-int fprintf_ln(FILE *fp, const char *fmt, ...);
+__attribute__((format(printf, 1, 2))) int printf_ln(const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) int fprintf_ln(FILE *fp, const char *fmt, ...);
 
 char *xstrdup_tolower(const char *);
 char *xstrdup_toupper(const char *);
@@ -676,10 +671,8 @@ char *xstrdup_toupper(const char *);
  * Create a newly allocated string using printf format. You can do this easily
  * with a strbuf, but this provides a shortcut to save a few lines.
  */
-__attribute__((format (printf, 1, 0)))
-char *xstrvfmt(const char *fmt, va_list ap);
-__attribute__((format (printf, 1, 2)))
-char *xstrfmt(const char *fmt, ...);
+__attribute__((format(printf, 1, 0))) char *xstrvfmt(const char *fmt, va_list ap);
+__attribute__((format(printf, 1, 2))) char *xstrfmt(const char *fmt, ...);
 
 int starts_with(const char *str, const char *prefix);
 int istarts_with(const char *str, const char *prefix);
@@ -700,18 +693,18 @@ int starts_with_mem(const char *str, size_t len, const char *prefix);
  * skip_prefix(arg, "--key=", &arg) to parse such an option.
  */
 int skip_to_optional_arg_default(const char *str, const char *prefix,
-				 const char **arg, const char *def);
+                                 const char **arg, const char *def);
 
 static inline int skip_to_optional_arg(const char *str, const char *prefix,
-				       const char **arg)
+                                       const char **arg)
 {
-	return skip_to_optional_arg_default(str, prefix, arg, "");
+    return skip_to_optional_arg_default(str, prefix, arg, "");
 }
 
 static inline int ends_with(const char *str, const char *suffix)
 {
-	size_t len;
-	return strip_suffix(str, suffix, &len);
+    size_t len;
+    return strip_suffix(str, suffix, &len);
 }
 
 #endif /* STRBUF_H */

@@ -6,57 +6,64 @@
 struct buffer_slab;
 struct repository;
 
-struct parsed_object_pool {
-	struct object **obj_hash;
-	int nr_objs, obj_hash_size;
+struct parsed_object_pool
+{
+    struct object **obj_hash;
+    int             nr_objs, obj_hash_size;
 
-	/* TODO: migrate alloc_states to mem-pool? */
-	struct alloc_state *blob_state;
-	struct alloc_state *tree_state;
-	struct alloc_state *commit_state;
-	struct alloc_state *tag_state;
-	struct alloc_state *object_state;
+    /* TODO: migrate alloc_states to mem-pool? */
+    struct alloc_state *blob_state;
+    struct alloc_state *tree_state;
+    struct alloc_state *commit_state;
+    struct alloc_state *tag_state;
+    struct alloc_state *object_state;
 
-	/* parent substitutions from .git/info/grafts and .git/shallow */
-	struct commit_graft **grafts;
-	int grafts_alloc, grafts_nr;
+    /* parent substitutions from .git/info/grafts and .git/shallow */
+    struct commit_graft **grafts;
+    int                   grafts_alloc, grafts_nr;
 
-	int is_shallow;
-	struct stat_validity *shallow_stat;
-	char *alternate_shallow_file;
+    int                   is_shallow;
+    struct stat_validity *shallow_stat;
+    char                 *alternate_shallow_file;
 
-	int commit_graft_prepared;
-	int substituted_parent;
+    int commit_graft_prepared;
+    int substituted_parent;
 
-	struct buffer_slab *buffer_slab;
+    struct buffer_slab *buffer_slab;
 };
 
 struct parsed_object_pool *parsed_object_pool_new(void);
-void parsed_object_pool_clear(struct parsed_object_pool *o);
+void                       parsed_object_pool_clear(struct parsed_object_pool *o);
 
-struct object_list {
-	struct object *item;
-	struct object_list *next;
+struct object_list
+{
+    struct object      *item;
+    struct object_list *next;
 };
 
-struct object_array {
-	unsigned int nr;
-	unsigned int alloc;
-	struct object_array_entry {
-		struct object *item;
-		/*
-		 * name or NULL.  If non-NULL, the memory pointed to
-		 * is owned by this object *except* if it points at
-		 * object_array_slopbuf, which is a static copy of the
-		 * empty string.
-		 */
-		char *name;
-		char *path;
-		unsigned mode;
-	} *objects;
+struct object_array
+{
+    unsigned int nr;
+    unsigned int alloc;
+    struct object_array_entry
+    {
+        struct object *item;
+        /*
+         * name or NULL.  If non-NULL, the memory pointed to
+         * is owned by this object *except* if it points at
+         * object_array_slopbuf, which is a static copy of the
+         * empty string.
+         */
+        char    *name;
+        char    *path;
+        unsigned mode;
+    } * objects;
 };
 
-#define OBJECT_ARRAY_INIT { 0 }
+#define OBJECT_ARRAY_INIT \
+    {                     \
+        0                 \
+    }
 
 void object_array_init(struct object_array *array);
 
@@ -84,7 +91,7 @@ void object_array_init(struct object_array *array);
  * builtin/unpack-objects.c:                                 2021
  * pack-bitmap.h:                                              2122
  */
-#define FLAG_BITS  28
+#define FLAG_BITS 28
 
 #define TYPE_BITS 3
 
@@ -92,22 +99,23 @@ void object_array_init(struct object_array *array);
  * Values in this enum (except those outside the 3 bit range) are part
  * of pack file format. See gitformat-pack(5) for more information.
  */
-enum object_type {
-	OBJ_BAD = -1,
-	OBJ_NONE = 0,
-	OBJ_COMMIT = 1,
-	OBJ_TREE = 2,
-	OBJ_BLOB = 3,
-	OBJ_TAG = 4,
-	/* 5 for future expansion */
-	OBJ_OFS_DELTA = 6,
-	OBJ_REF_DELTA = 7,
-	OBJ_ANY,
-	OBJ_MAX
+enum object_type
+{
+    OBJ_BAD    = -1,
+    OBJ_NONE   = 0,
+    OBJ_COMMIT = 1,
+    OBJ_TREE   = 2,
+    OBJ_BLOB   = 3,
+    OBJ_TAG    = 4,
+    /* 5 for future expansion */
+    OBJ_OFS_DELTA = 6,
+    OBJ_REF_DELTA = 7,
+    OBJ_ANY,
+    OBJ_MAX
 };
 
 /* unknown mode (impossible combination S_IFIFO|S_IFCHR) */
-#define S_IFINVALID     0030000
+#define S_IFINVALID 0030000
 
 /*
  * A "directory link" is a link to another git directory.
@@ -115,53 +123,53 @@ enum object_type {
  * The value 0160000 is not normally a valid mode, and
  * also just happens to be S_IFDIR + S_IFLNK
  */
-#define S_IFGITLINK	0160000
-#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
+#define S_IFGITLINK    0160000
+#define S_ISGITLINK(m) (((m)&S_IFMT) == S_IFGITLINK)
 
 #define S_ISSPARSEDIR(m) ((m) == S_IFDIR)
 
 static inline enum object_type object_type(unsigned int mode)
 {
-	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_COMMIT :
-		OBJ_BLOB;
+    return S_ISDIR(mode) ? OBJ_TREE : S_ISGITLINK(mode) ? OBJ_COMMIT
+                                                        : OBJ_BLOB;
 }
 
-#define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
+#define ce_permissions(mode) (((mode)&0100) ? 0755 : 0644)
 static inline unsigned int create_ce_mode(unsigned int mode)
 {
-	if (S_ISLNK(mode))
-		return S_IFLNK;
-	if (S_ISSPARSEDIR(mode))
-		return S_IFDIR;
-	if (S_ISDIR(mode) || S_ISGITLINK(mode))
-		return S_IFGITLINK;
-	return S_IFREG | ce_permissions(mode);
+    if (S_ISLNK(mode))
+        return S_IFLNK;
+    if (S_ISSPARSEDIR(mode))
+        return S_IFDIR;
+    if (S_ISDIR(mode) || S_ISGITLINK(mode))
+        return S_IFGITLINK;
+    return S_IFREG | ce_permissions(mode);
 }
 
 static inline unsigned int canon_mode(unsigned int mode)
 {
-	if (S_ISREG(mode))
-		return S_IFREG | ce_permissions(mode);
-	if (S_ISLNK(mode))
-		return S_IFLNK;
-	if (S_ISDIR(mode))
-		return S_IFDIR;
-	return S_IFGITLINK;
+    if (S_ISREG(mode))
+        return S_IFREG | ce_permissions(mode);
+    if (S_ISLNK(mode))
+        return S_IFLNK;
+    if (S_ISDIR(mode))
+        return S_IFDIR;
+    return S_IFGITLINK;
 }
 
 /*
  * The object type is stored in 3 bits.
  */
-struct object {
-	unsigned parsed : 1;
-	unsigned type : TYPE_BITS;
-	unsigned flags : FLAG_BITS;
-	struct object_id oid;
+struct object
+{
+    unsigned         parsed : 1;
+    unsigned         type : TYPE_BITS;
+    unsigned         flags : FLAG_BITS;
+    struct object_id oid;
 };
 
 const char *type_name(unsigned int type);
-int type_from_string_gently(const char *str, ssize_t, int gentle);
+int         type_from_string_gently(const char *str, ssize_t, int gentle);
 #define type_from_string(str) type_from_string_gently(str, -1, 0)
 
 /*
@@ -192,22 +200,22 @@ void *create_object(struct repository *r, const struct object_id *oid, void *obj
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
 
-
 static inline const char *parse_mode(const char *str, uint16_t *modep)
 {
-	unsigned char c;
-	unsigned int mode = 0;
+    unsigned char c;
+    unsigned int  mode = 0;
 
-	if (*str == ' ')
-		return NULL;
+    if (*str == ' ')
+        return NULL;
 
-	while ((c = *str++) != ' ') {
-		if (c < '0' || c > '7')
-			return NULL;
-		mode = (mode << 3) + (c - '0');
-	}
-	*modep = mode;
-	return str;
+    while ((c = *str++) != ' ')
+    {
+        if (c < '0' || c > '7')
+            return NULL;
+        mode = (mode << 3) + (c - '0');
+    }
+    *modep = mode;
+    return str;
 }
 
 /*
@@ -215,14 +223,15 @@ static inline const char *parse_mode(const char *str, uint16_t *modep)
  *
  * Returns NULL if the object is missing or corrupt.
  */
-enum parse_object_flags {
-	PARSE_OBJECT_SKIP_HASH_CHECK = 1 << 0,
-	PARSE_OBJECT_DISCARD_TREE = 1 << 1,
+enum parse_object_flags
+{
+    PARSE_OBJECT_SKIP_HASH_CHECK = 1 << 0,
+    PARSE_OBJECT_DISCARD_TREE    = 1 << 1,
 };
 struct object *parse_object(struct repository *r, const struct object_id *oid);
-struct object *parse_object_with_flags(struct repository *r,
-				       const struct object_id *oid,
-				       enum parse_object_flags flags);
+struct object *parse_object_with_flags(struct repository      *r,
+                                       const struct object_id *oid,
+                                       enum parse_object_flags flags);
 
 /*
  * Like parse_object, but will die() instead of returning NULL. If the
@@ -256,31 +265,32 @@ struct object *lookup_unknown_object(struct repository *r, const struct object_i
  * "type".
  */
 struct object *lookup_object_by_type(struct repository *r, const struct object_id *oid,
-				     enum object_type type);
+                                     enum object_type type);
 
-enum peel_status {
-	/* object was peeled successfully: */
-	PEEL_PEELED = 0,
+enum peel_status
+{
+    /* object was peeled successfully: */
+    PEEL_PEELED = 0,
 
-	/*
-	 * object cannot be peeled because the named object (or an
-	 * object referred to by a tag in the peel chain), does not
-	 * exist.
-	 */
-	PEEL_INVALID = -1,
+    /*
+     * object cannot be peeled because the named object (or an
+     * object referred to by a tag in the peel chain), does not
+     * exist.
+     */
+    PEEL_INVALID = -1,
 
-	/* object cannot be peeled because it is not a tag: */
-	PEEL_NON_TAG = -2,
+    /* object cannot be peeled because it is not a tag: */
+    PEEL_NON_TAG = -2,
 
-	/* ref_entry contains no peeled value because it is a symref: */
-	PEEL_IS_SYMREF = -3,
+    /* ref_entry contains no peeled value because it is a symref: */
+    PEEL_IS_SYMREF = -3,
 
-	/*
-	 * ref_entry cannot be peeled because it is broken (i.e., the
-	 * symbolic reference cannot even be resolved to an object
-	 * name):
-	 */
-	PEEL_BROKEN = -4
+    /*
+     * ref_entry cannot be peeled because it is broken (i.e., the
+     * symbolic reference cannot even be resolved to an object
+     * name):
+     */
+    PEEL_BROKEN = -4
 };
 
 /*
@@ -290,11 +300,11 @@ enum peel_status {
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
  * and leave oid unchanged.
  */
-enum peel_status peel_object(struct repository *r,
-			     const struct object_id *name, struct object_id *oid);
+enum peel_status peel_object(struct repository      *r,
+                             const struct object_id *name, struct object_id *oid);
 
-struct object_list *object_list_insert(struct object *item,
-				       struct object_list **list_p);
+struct object_list *object_list_insert(struct object       *item,
+                                       struct object_list **list_p);
 
 int object_list_contains(struct object_list *list, struct object *obj);
 
@@ -319,8 +329,8 @@ typedef int (*object_array_each_func_t)(struct object_array_entry *, void *);
  * which the function returns true.  Preserve the order of the entries
  * that are retained.
  */
-void object_array_filter(struct object_array *array,
-			 object_array_each_func_t want, void *cb_data);
+void object_array_filter(struct object_array     *array,
+                         object_array_each_func_t want, void *cb_data);
 
 /*
  * Remove from array all but the first entry with a given name.

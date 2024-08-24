@@ -15,47 +15,51 @@ typedef const struct object_id *(*oid_iterate_fn)(void *);
  * Named-arguments struct for check_connected. All arguments are
  * optional, and can be left to defaults as set by CHECK_CONNECTED_INIT.
  */
-struct check_connected_options {
-	/* Avoid printing any errors to stderr. */
-	int quiet;
+struct check_connected_options
+{
+    /* Avoid printing any errors to stderr. */
+    int quiet;
 
-	/* --shallow-file to pass to rev-list sub-process */
-	const char *shallow_file;
+    /* --shallow-file to pass to rev-list sub-process */
+    const char *shallow_file;
 
-	/* Transport whose objects we are checking, if available. */
-	struct transport *transport;
+    /* Transport whose objects we are checking, if available. */
+    struct transport *transport;
 
-	/*
-	 * If non-zero, send error messages to this descriptor rather
-	 * than stderr. The descriptor is closed before check_connected
-	 * returns.
-	 */
-	int err_fd;
+    /*
+     * If non-zero, send error messages to this descriptor rather
+     * than stderr. The descriptor is closed before check_connected
+     * returns.
+     */
+    int err_fd;
 
-	/* If non-zero, show progress as we traverse the objects. */
-	int progress;
+    /* If non-zero, show progress as we traverse the objects. */
+    int progress;
 
-	/*
-	 * Insert these variables into the environment of the child process.
-	 */
-	const char **env;
+    /*
+     * Insert these variables into the environment of the child process.
+     */
+    const char **env;
 
-	/*
-	 * If non-zero, check the ancestry chain completely, not stopping at
-	 * any existing ref. This is necessary when deepening existing refs
-	 * during a fetch.
-	 */
-	unsigned is_deepening_fetch : 1;
+    /*
+     * If non-zero, check the ancestry chain completely, not stopping at
+     * any existing ref. This is necessary when deepening existing refs
+     * during a fetch.
+     */
+    unsigned is_deepening_fetch : 1;
 
-	/*
-	 * If not NULL, use `--exclude-hidden=$section` to exclude all refs
-	 * hidden via the `$section.hideRefs` config from the set of
-	 * already-reachable refs.
-	 */
-	const char *exclude_hidden_refs_section;
+    /*
+     * If not NULL, use `--exclude-hidden=$section` to exclude all refs
+     * hidden via the `$section.hideRefs` config from the set of
+     * already-reachable refs.
+     */
+    const char *exclude_hidden_refs_section;
 };
 
-#define CHECK_CONNECTED_INIT { 0 }
+#define CHECK_CONNECTED_INIT \
+    {                        \
+        0                    \
+    }
 
 /*
  * Make sure that all given objects and all objects reachable from them
@@ -67,6 +71,6 @@ struct check_connected_options {
  * If "opt" is NULL, behaves as if CHECK_CONNECTED_INIT was passed.
  */
 int check_connected(oid_iterate_fn fn, void *cb_data,
-		    struct check_connected_options *opt);
+                    struct check_connected_options *opt);
 
 #endif /* CONNECTED_H */

@@ -1,10 +1,10 @@
 #ifndef HEX_LL_H
 #define HEX_LL_H
 
-extern const signed char hexval_table[256];
+extern const signed char   hexval_table[256];
 static inline unsigned int hexval(unsigned char c)
 {
-	return hexval_table[c];
+    return hexval_table[c];
 }
 
 /*
@@ -13,8 +13,8 @@ static inline unsigned int hexval(unsigned char c)
  */
 static inline int hex2chr(const char *s)
 {
-	unsigned int val = hexval(s[0]);
-	return (val & ~0xf) ? val : (val << 4) | hexval(s[1]);
+    unsigned int val = hexval(s[0]);
+    return (val & ~0xf) ? val : (val << 4) | hexval(s[1]);
 }
 
 /*

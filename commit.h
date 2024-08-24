@@ -7,15 +7,16 @@ struct signature_check;
 struct strbuf;
 struct tree;
 
-#define COMMIT_NOT_FROM_GRAPH 0xFFFFFFFF
-#define GENERATION_NUMBER_INFINITY ((1ULL << 63) - 1)
-#define GENERATION_NUMBER_V1_MAX 0x3FFFFFFF
-#define GENERATION_NUMBER_ZERO 0
+#define COMMIT_NOT_FROM_GRAPH           0xFFFFFFFF
+#define GENERATION_NUMBER_INFINITY      ((1ULL << 63) - 1)
+#define GENERATION_NUMBER_V1_MAX        0x3FFFFFFF
+#define GENERATION_NUMBER_ZERO          0
 #define GENERATION_NUMBER_V2_OFFSET_MAX ((1ULL << 31) - 1)
 
-struct commit_list {
-	struct commit *item;
-	struct commit_list *next;
+struct commit_list
+{
+    struct commit      *item;
+    struct commit_list *next;
 };
 
 /*
@@ -23,42 +24,45 @@ struct commit_list {
  * 'git clone' or 'git gc'. Consider using commit-slab to attach data
  * to a commit instead of adding new fields here.
  */
-struct commit {
-	struct object object;
-	timestamp_t date;
-	struct commit_list *parents;
+struct commit
+{
+    struct object       object;
+    timestamp_t         date;
+    struct commit_list *parents;
 
-	/*
-	 * If the commit is loaded from the commit-graph file, then this
-	 * member may be NULL. Only access it through repo_get_commit_tree()
-	 * or get_commit_tree_oid().
-	 */
-	struct tree *maybe_tree;
-	unsigned int index;
+    /*
+     * If the commit is loaded from the commit-graph file, then this
+     * member may be NULL. Only access it through repo_get_commit_tree()
+     * or get_commit_tree_oid().
+     */
+    struct tree *maybe_tree;
+    unsigned int index;
 };
 
-extern int save_commit_buffer;
-extern int no_graft_file_deprecated_advice;
+extern int         save_commit_buffer;
+extern int         no_graft_file_deprecated_advice;
 extern const char *commit_type;
 
 /* While we can decorate any object with a name, it's only used for commits.. */
-struct name_decoration {
-	struct name_decoration *next;
-	int type;
-	char name[FLEX_ARRAY];
+struct name_decoration
+{
+    struct name_decoration *next;
+    int                     type;
+    char                    name[FLEX_ARRAY];
 };
 
-enum decoration_type {
-	DECORATION_NONE = 0,
-	DECORATION_REF_LOCAL,
-	DECORATION_REF_REMOTE,
-	DECORATION_REF_TAG,
-	DECORATION_REF_STASH,
-	DECORATION_REF_HEAD,
-	DECORATION_GRAFTED,
+enum decoration_type
+{
+    DECORATION_NONE = 0,
+    DECORATION_REF_LOCAL,
+    DECORATION_REF_REMOTE,
+    DECORATION_REF_TAG,
+    DECORATION_REF_STASH,
+    DECORATION_REF_HEAD,
+    DECORATION_GRAFTED,
 };
 
-void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
+void                          add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
 const struct name_decoration *get_name_decoration(const struct object *obj);
 
 /*
@@ -75,11 +79,11 @@ struct commit *lookup_commit_object(struct repository *r, const struct object_id
  * "oid" is not in the object cache.
  */
 struct commit *lookup_commit(struct repository *r, const struct object_id *oid);
-struct commit *lookup_commit_reference(struct repository *r,
-				       const struct object_id *oid);
-struct commit *lookup_commit_reference_gently(struct repository *r,
-					      const struct object_id *oid,
-					      int quiet);
+struct commit *lookup_commit_reference(struct repository      *r,
+                                       const struct object_id *oid);
+struct commit *lookup_commit_reference_gently(struct repository      *r,
+                                              const struct object_id *oid,
+                                              int                     quiet);
 struct commit *lookup_commit_reference_by_name(const char *name);
 
 /*
@@ -89,28 +93,28 @@ struct commit *lookup_commit_reference_by_name(const char *name);
  */
 struct commit *lookup_commit_or_die(const struct object_id *oid, const char *ref_name);
 
-int parse_commit_buffer(struct repository *r, struct commit *item, const void *buffer, unsigned long size, int check_graph);
-int repo_parse_commit_internal(struct repository *r, struct commit *item,
-			       int quiet_on_missing, int use_commit_graph);
-int repo_parse_commit_gently(struct repository *r,
-			     struct commit *item,
-			     int quiet_on_missing);
+int               parse_commit_buffer(struct repository *r, struct commit *item, const void *buffer, unsigned long size, int check_graph);
+int               repo_parse_commit_internal(struct repository *r, struct commit *item,
+                                             int quiet_on_missing, int use_commit_graph);
+int               repo_parse_commit_gently(struct repository *r,
+                                           struct commit     *item,
+                                           int                quiet_on_missing);
 static inline int repo_parse_commit(struct repository *r, struct commit *item)
 {
-	return repo_parse_commit_gently(r, item, 0);
+    return repo_parse_commit_gently(r, item, 0);
 }
 
 static inline int repo_parse_commit_no_graph(struct repository *r,
-					     struct commit *commit)
+                                             struct commit     *commit)
 {
-	return repo_parse_commit_internal(r, commit, 0, 0);
+    return repo_parse_commit_internal(r, commit, 0, 0);
 }
 
 void parse_commit_or_die(struct commit *item);
 
 struct buffer_slab;
 struct buffer_slab *allocate_commit_buffer_slab(void);
-void free_commit_buffer_slab(struct buffer_slab *bs);
+void                free_commit_buffer_slab(struct buffer_slab *bs);
 
 /*
  * Associate an object buffer with the commit. The ownership of the
@@ -130,8 +134,8 @@ const void *get_cached_commit_buffer(struct repository *, const struct commit *,
  * to repo_unuse_commit_buffer when the caller is done.
  */
 const void *repo_get_commit_buffer(struct repository *r,
-				   const struct commit *,
-				   unsigned long *size);
+                                   const struct commit *,
+                                   unsigned long *size);
 
 /*
  * Tell the commit subsystem that we are done with a particular commit buffer.
@@ -140,15 +144,15 @@ const void *repo_get_commit_buffer(struct repository *r,
  * freed by this call; callers should not access the memory afterwards.
  */
 void repo_unuse_commit_buffer(struct repository *r,
-			      const struct commit *,
-			      const void *buffer);
+                              const struct commit *,
+                              const void *buffer);
 
 /*
  * Free any cached object buffer associated with the commit.
  */
 void free_commit_buffer(struct parsed_object_pool *pool, struct commit *);
 
-struct tree *repo_get_commit_tree(struct repository *, const struct commit *);
+struct tree      *repo_get_commit_tree(struct repository *, const struct commit *);
 struct object_id *get_commit_tree_oid(const struct commit *);
 
 /*
@@ -169,16 +173,16 @@ int find_commit_subject(const char *commit_buffer, const char **subject);
 /* Return length of the commit subject from commit log message. */
 size_t commit_subject_length(const char *body);
 
-struct commit_list *commit_list_insert(struct commit *item,
-					struct commit_list **list);
-int commit_list_contains(struct commit *item,
-			 struct commit_list *list);
-struct commit_list **commit_list_append(struct commit *commit,
-					struct commit_list **next);
-unsigned commit_list_count(const struct commit_list *l);
-struct commit_list *commit_list_insert_by_date(struct commit *item,
-				    struct commit_list **list);
-void commit_list_sort_by_date(struct commit_list **list);
+struct commit_list  *commit_list_insert(struct commit       *item,
+                                        struct commit_list **list);
+int                  commit_list_contains(struct commit      *item,
+                                          struct commit_list *list);
+struct commit_list **commit_list_append(struct commit       *commit,
+                                        struct commit_list **next);
+unsigned             commit_list_count(const struct commit_list *l);
+struct commit_list  *commit_list_insert_by_date(struct commit       *item,
+                                                struct commit_list **list);
+void                 commit_list_sort_by_date(struct commit_list **list);
 
 /* Shallow copy of the input list */
 struct commit_list *copy_commit_list(const struct commit_list *list);
@@ -190,10 +194,10 @@ void free_commit_list(struct commit_list *list);
 
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 
-const char *repo_logmsg_reencode(struct repository *r,
-				 const struct commit *commit,
-				 char **commit_encoding,
-				 const char *output_encoding);
+const char *repo_logmsg_reencode(struct repository   *r,
+                                 const struct commit *commit,
+                                 char               **commit_encoding,
+                                 const char          *output_encoding);
 
 const char *skip_blank_lines(const char *msg);
 
@@ -201,18 +205,18 @@ const char *skip_blank_lines(const char *msg);
  * of its parents.
  **/
 struct commit *pop_most_recent_commit(struct commit_list **list,
-				      unsigned int mark);
+                                      unsigned int         mark);
 
 struct commit *pop_commit(struct commit_list **stack);
 
 void clear_commit_marks(struct commit *commit, unsigned int mark);
 void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark);
 
-
-enum rev_sort_order {
-	REV_SORT_IN_GRAPH_ORDER = 0,
-	REV_SORT_BY_COMMIT_DATE,
-	REV_SORT_BY_AUTHOR_DATE
+enum rev_sort_order
+{
+    REV_SORT_IN_GRAPH_ORDER = 0,
+    REV_SORT_BY_COMMIT_DATE,
+    REV_SORT_BY_AUTHOR_DATE
 };
 
 /*
@@ -227,20 +231,21 @@ enum rev_sort_order {
  */
 void sort_in_topological_order(struct commit_list **, enum rev_sort_order);
 
-struct commit_graft {
-	struct object_id oid;
-	int nr_parent; /* < 0 if shallow commit */
-	struct object_id parent[FLEX_ARRAY]; /* more */
+struct commit_graft
+{
+    struct object_id oid;
+    int              nr_parent;          /* < 0 if shallow commit */
+    struct object_id parent[FLEX_ARRAY]; /* more */
 };
 typedef int (*each_commit_graft_fn)(const struct commit_graft *, void *);
 
 struct commit_graft *read_graft_line(struct strbuf *line);
 /* commit_graft_pos returns an index into r->parsed_objects->grafts. */
-int commit_graft_pos(struct repository *r, const struct object_id *oid);
-int register_commit_graft(struct repository *r, struct commit_graft *, int);
-void prepare_commit_graft(struct repository *r);
+int                  commit_graft_pos(struct repository *r, const struct object_id *oid);
+int                  register_commit_graft(struct repository *r, struct commit_graft *, int);
+void                 prepare_commit_graft(struct repository *r);
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid);
-void reset_commit_grafts(struct repository *r);
+void                 reset_commit_grafts(struct repository *r);
 
 struct commit *get_fork_point(const char *refname, struct commit *commit);
 
@@ -253,26 +258,27 @@ int for_each_commit_graft(each_commit_graft_fn, void *);
 
 int interactive_add(const char **argv, const char *prefix, int patch);
 
-struct commit_extra_header {
-	struct commit_extra_header *next;
-	char *key;
-	char *value;
-	size_t len;
+struct commit_extra_header
+{
+    struct commit_extra_header *next;
+    char                       *key;
+    char                       *value;
+    size_t                      len;
 };
 
-void append_merge_tag_headers(const struct commit_list *parents,
-			      struct commit_extra_header ***tail);
+void append_merge_tag_headers(const struct commit_list     *parents,
+                              struct commit_extra_header ***tail);
 
 int commit_tree(const char *msg, size_t msg_len,
-		const struct object_id *tree,
-		const struct commit_list *parents, struct object_id *ret,
-		const char *author, const char *sign_commit);
+                const struct object_id   *tree,
+                const struct commit_list *parents, struct object_id *ret,
+                const char *author, const char *sign_commit);
 
 int commit_tree_extended(const char *msg, size_t msg_len,
-			 const struct object_id *tree,
-			 const struct commit_list *parents, struct object_id *ret,
-			 const char *author, const char *committer,
-			 const char *sign_commit, const struct commit_extra_header *);
+                         const struct object_id   *tree,
+                         const struct commit_list *parents, struct object_id *ret,
+                         const char *author, const char *committer,
+                         const char *sign_commit, const struct commit_extra_header *);
 
 struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
 
@@ -287,23 +293,24 @@ void free_commit_extra_headers(struct commit_extra_header *extra);
  * responsibility to parse further in this case!
  */
 const char *find_commit_header(const char *msg, const char *key,
-			       size_t *out_len);
+                               size_t *out_len);
 
 /* Find the number of bytes to ignore from the end of a log message. */
 size_t ignored_log_message_bytes(const char *buf, size_t len);
 
 typedef int (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
-				void *cb_data);
+                                void *cb_data);
 
 int for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data);
 
-struct merge_remote_desc {
-	struct object *obj; /* the named object, could be a tag */
-	char name[FLEX_ARRAY];
+struct merge_remote_desc
+{
+    struct object *obj; /* the named object, could be a tag */
+    char           name[FLEX_ARRAY];
 };
 struct merge_remote_desc *merge_remote_util(const struct commit *);
-void set_merge_remote_desc(struct commit *commit,
-			   const char *name, struct object *obj);
+void                      set_merge_remote_desc(struct commit *commit,
+                                                const char *name, struct object *obj);
 
 /*
  * Given "name" from the command line to merge, find the commit object
@@ -313,8 +320,8 @@ void set_merge_remote_desc(struct commit *commit,
 struct commit *get_merge_parent(const char *name);
 
 int parse_signed_commit(const struct commit *commit,
-			struct strbuf *message, struct strbuf *signature,
-			const struct git_hash_algo *algop);
+                        struct strbuf *message, struct strbuf *signature,
+                        const struct git_hash_algo *algop);
 int remove_signature(struct strbuf *buf);
 
 /*
@@ -329,7 +336,7 @@ int check_commit_signature(const struct commit *commit, struct signature_check *
 /* record author-date for each commit object */
 struct author_date_slab;
 void record_author_date(struct author_date_slab *author_date,
-			struct commit *commit);
+                        struct commit           *commit);
 
 int compare_commits_by_author_date(const void *a_, const void *b_, void *unused);
 
@@ -348,23 +355,23 @@ int compare_commits_by_author_date(const void *a_, const void *b_, void *unused)
  * the default trust level for merges.
  */
 void verify_merge_signature(struct commit *commit, int verbose,
-			    int check_trust);
+                            int check_trust);
 
 int compare_commits_by_commit_date(const void *a_, const void *b_, void *unused);
 int compare_commits_by_gen_then_commit_date(const void *a_, const void *b_, void *unused);
 
 LAST_ARG_MUST_BE_NULL
 int run_commit_hook(int editor_is_used, const char *index_file,
-		    int *invoked_hook, const char *name, ...);
+                    int *invoked_hook, const char *name, ...);
 
 /* Sign a commit or tag buffer, storing the result in a header. */
 int sign_with_header(struct strbuf *buf, const char *keyid);
 /* Parse the signature out of a header. */
-int parse_buffer_signed_by_header(const char *buffer,
-				  unsigned long size,
-				  struct strbuf *payload,
-				  struct strbuf *signature,
-				  const struct git_hash_algo *algop);
+int parse_buffer_signed_by_header(const char                 *buffer,
+                                  unsigned long               size,
+                                  struct strbuf              *payload,
+                                  struct strbuf              *signature,
+                                  const struct git_hash_algo *algop);
 int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct git_hash_algo *algo);
 
 #endif /* COMMIT_H */

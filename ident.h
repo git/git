@@ -3,25 +3,27 @@
 
 #include "string-list.h"
 
-struct ident_split {
-	const char *name_begin;
-	const char *name_end;
-	const char *mail_begin;
-	const char *mail_end;
-	const char *date_begin;
-	const char *date_end;
-	const char *tz_begin;
-	const char *tz_end;
+struct ident_split
+{
+    const char *name_begin;
+    const char *name_end;
+    const char *mail_begin;
+    const char *mail_end;
+    const char *date_begin;
+    const char *date_end;
+    const char *tz_begin;
+    const char *tz_end;
 };
 
-#define IDENT_STRICT	       1
-#define IDENT_NO_DATE	       2
-#define IDENT_NO_NAME	       4
+#define IDENT_STRICT  1
+#define IDENT_NO_DATE 2
+#define IDENT_NO_NAME 4
 
-enum want_ident {
-	WANT_BLANK_IDENT,
-	WANT_AUTHOR_IDENT,
-	WANT_COMMITTER_IDENT
+enum want_ident
+{
+    WANT_BLANK_IDENT,
+    WANT_AUTHOR_IDENT,
+    WANT_COMMITTER_IDENT
 };
 
 const char *ident_default_name(void);
@@ -55,8 +57,8 @@ int ident_cmp(const struct ident_split *, const struct ident_split *);
 const char *git_author_info(int);
 const char *git_committer_info(int);
 const char *fmt_ident(const char *name, const char *email,
-		      enum want_ident whose_ident,
-		      const char *date_str, int);
+                      enum want_ident whose_ident,
+                      const char     *date_str, int);
 const char *fmt_name(enum want_ident);
 
 int committer_ident_sufficiently_given(void);
@@ -64,6 +66,6 @@ int author_ident_sufficiently_given(void);
 
 struct config_context;
 int git_ident_config(const char *, const char *, const struct config_context *,
-		     void *);
+                     void *);
 
 #endif

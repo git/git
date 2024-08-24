@@ -30,13 +30,13 @@ extern const unsigned char tolower_trans_tbl[256];
 
 struct kwsmatch
 {
-  int index;			/* Index number of matching keyword. */
-  size_t offset[1];		/* Offset of each submatch. */
-  size_t size[1];		/* Length of each submatch. */
+    int    index;     /* Index number of matching keyword. */
+    size_t offset[1]; /* Offset of each submatch. */
+    size_t size[1];   /* Length of each submatch. */
 };
 
 struct kwset_t;
-typedef struct kwset_t* kwset_t;
+typedef struct kwset_t *kwset_t;
 
 /* Return an opaque pointer to a newly allocated keyword set, or NULL
    if enough memory cannot be obtained.  The argument if non-NULL

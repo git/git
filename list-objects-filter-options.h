@@ -10,15 +10,16 @@ struct option;
 /*
  * The list of defined filters for list-objects.
  */
-enum list_objects_filter_choice {
-	LOFC_DISABLED = 0,
-	LOFC_BLOB_NONE,
-	LOFC_BLOB_LIMIT,
-	LOFC_TREE_DEPTH,
-	LOFC_SPARSE_OID,
-	LOFC_OBJECT_TYPE,
-	LOFC_COMBINE,
-	LOFC__COUNT /* must be last */
+enum list_objects_filter_choice
+{
+    LOFC_DISABLED = 0,
+    LOFC_BLOB_NONE,
+    LOFC_BLOB_LIMIT,
+    LOFC_TREE_DEPTH,
+    LOFC_SPARSE_OID,
+    LOFC_OBJECT_TYPE,
+    LOFC_COMBINE,
+    LOFC__COUNT /* must be last */
 };
 
 /*
@@ -27,51 +28,55 @@ enum list_objects_filter_choice {
  */
 const char *list_object_filter_config_name(enum list_objects_filter_choice c);
 
-struct list_objects_filter_options {
-	/*
-	 * 'filter_spec' is the raw argument value given on the command line
-	 * or protocol request.  (The part after the "--keyword=".)  For
-	 * commands that launch filtering sub-processes, or for communication
-	 * over the network, don't use this value; use the result of
-	 * expand_list_objects_filter_spec() instead.
-	 * To get the raw filter spec given by the user, use the result of
-	 * list_objects_filter_spec().
-	 */
-	struct strbuf filter_spec;
+struct list_objects_filter_options
+{
+    /*
+     * 'filter_spec' is the raw argument value given on the command line
+     * or protocol request.  (The part after the "--keyword=".)  For
+     * commands that launch filtering sub-processes, or for communication
+     * over the network, don't use this value; use the result of
+     * expand_list_objects_filter_spec() instead.
+     * To get the raw filter spec given by the user, use the result of
+     * list_objects_filter_spec().
+     */
+    struct strbuf filter_spec;
 
-	/*
-	 * 'choice' is determined by parsing the filter-spec.  This indicates
-	 * the filtering algorithm to use.
-	 */
-	enum list_objects_filter_choice choice;
+    /*
+     * 'choice' is determined by parsing the filter-spec.  This indicates
+     * the filtering algorithm to use.
+     */
+    enum list_objects_filter_choice choice;
 
-	/*
-	 * Choice is LOFC_DISABLED because "--no-filter" was requested.
-	 */
-	unsigned int no_filter : 1;
+    /*
+     * Choice is LOFC_DISABLED because "--no-filter" was requested.
+     */
+    unsigned int no_filter : 1;
 
-	/*
-	 * BEGIN choice-specific parsed values from within the filter-spec. Only
-	 * some values will be defined for any given choice.
-	 */
+    /*
+     * BEGIN choice-specific parsed values from within the filter-spec. Only
+     * some values will be defined for any given choice.
+     */
 
-	char *sparse_oid_name;
-	unsigned long blob_limit_value;
-	unsigned long tree_exclude_depth;
-	enum object_type object_type;
+    char            *sparse_oid_name;
+    unsigned long    blob_limit_value;
+    unsigned long    tree_exclude_depth;
+    enum object_type object_type;
 
-	/* LOFC_COMBINE values */
+    /* LOFC_COMBINE values */
 
-	/* This array contains all the subfilters which this filter combines. */
-	size_t sub_nr, sub_alloc;
-	struct list_objects_filter_options *sub;
+    /* This array contains all the subfilters which this filter combines. */
+    size_t                              sub_nr, sub_alloc;
+    struct list_objects_filter_options *sub;
 
-	/*
-	 * END choice-specific parsed values.
-	 */
+    /*
+     * END choice-specific parsed values.
+     */
 };
 
-#define LIST_OBJECTS_FILTER_INIT { .filter_spec = STRBUF_INIT }
+#define LIST_OBJECTS_FILTER_INIT   \
+    {                              \
+        .filter_spec = STRBUF_INIT \
+    }
 void list_objects_filter_init(struct list_objects_filter_options *filter_options);
 
 /*
@@ -90,12 +95,12 @@ void list_objects_filter_init(struct list_objects_filter_options *filter_options
  * convenience of the current command.
  */
 int gently_parse_list_objects_filter(
-	struct list_objects_filter_options *filter_options,
-	const char *arg,
-	struct strbuf *errbuf);
+    struct list_objects_filter_options *filter_options,
+    const char                         *arg,
+    struct strbuf                      *errbuf);
 
 void list_objects_filter_die_if_populated(
-	struct list_objects_filter_options *filter_options);
+    struct list_objects_filter_options *filter_options);
 
 /*
  * Parses the filter spec string given by arg and either (1) simply places the
@@ -106,8 +111,8 @@ void list_objects_filter_die_if_populated(
  * Dies and prints a user-facing message if an error occurs.
  */
 void parse_list_objects_filter(
-	struct list_objects_filter_options *filter_options,
-	const char *arg);
+    struct list_objects_filter_options *filter_options,
+    const char                         *arg);
 
 /**
  * The opt->value to opt_parse_list_objects_filter() is either a
@@ -115,11 +120,11 @@ void parse_list_objects_filter(
  * OPT_PARSE_LIST_OBJECTS_FILTER().
  */
 int opt_parse_list_objects_filter(const struct option *opt,
-				  const char *arg, int unset);
+                                  const char *arg, int unset);
 
-#define OPT_PARSE_LIST_OBJECTS_FILTER(fo) \
-	OPT_CALLBACK(0, "filter", (fo), N_("args"), \
-		     N_("object filtering"), opt_parse_list_objects_filter)
+#define OPT_PARSE_LIST_OBJECTS_FILTER(fo)       \
+    OPT_CALLBACK(0, "filter", (fo), N_("args"), \
+                 N_("object filtering"), opt_parse_list_objects_filter)
 
 /*
  * Translates abbreviated numbers in the filter's filter_spec into their
@@ -130,7 +135,7 @@ int opt_parse_list_objects_filter(const struct option *opt,
  * value when communicating with a remote process or subprocess.
  */
 const char *expand_list_objects_filter_spec(
-	struct list_objects_filter_options *filter);
+    struct list_objects_filter_options *filter);
 
 /*
  * Returns the filter spec string more or less in the form as the user
@@ -139,27 +144,27 @@ const char *expand_list_objects_filter_spec(
  * object.
  */
 const char *list_objects_filter_spec(
-	struct list_objects_filter_options *filter);
+    struct list_objects_filter_options *filter);
 
 void list_objects_filter_release(
-	struct list_objects_filter_options *filter_options);
+    struct list_objects_filter_options *filter_options);
 
 static inline void list_objects_filter_set_no_filter(
-	struct list_objects_filter_options *filter_options)
+    struct list_objects_filter_options *filter_options)
 {
-	list_objects_filter_release(filter_options);
-	filter_options->no_filter = 1;
+    list_objects_filter_release(filter_options);
+    filter_options->no_filter = 1;
 }
 
 void partial_clone_register(
-	const char *remote,
-	struct list_objects_filter_options *filter_options);
+    const char                         *remote,
+    struct list_objects_filter_options *filter_options);
 void partial_clone_get_default_filter_spec(
-	struct list_objects_filter_options *filter_options,
-	const char *remote);
+    struct list_objects_filter_options *filter_options,
+    const char                         *remote);
 
 void list_objects_filter_copy(
-	struct list_objects_filter_options *dest,
-	const struct list_objects_filter_options *src);
+    struct list_objects_filter_options       *dest,
+    const struct list_objects_filter_options *src);
 
 #endif /* LIST_OBJECTS_FILTER_OPTIONS_H */

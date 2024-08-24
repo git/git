@@ -16,10 +16,9 @@
  */
 static inline int is_fsmonitor_refreshed(const struct index_state *istate)
 {
-	enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(istate->repo);
+    enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(istate->repo);
 
-	return fsm_mode <= FSMONITOR_MODE_DISABLED ||
-		istate->fsmonitor_has_run_once;
+    return fsm_mode <= FSMONITOR_MODE_DISABLED || istate->fsmonitor_has_run_once;
 }
 
 /*
@@ -38,16 +37,16 @@ static inline int is_fsmonitor_refreshed(const struct index_state *istate)
  */
 static inline void mark_fsmonitor_valid(struct index_state *istate, struct cache_entry *ce)
 {
-	enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(istate->repo);
+    enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(istate->repo);
 
-	if (fsm_mode > FSMONITOR_MODE_DISABLED &&
-	    !(ce->ce_flags & CE_FSMONITOR_VALID)) {
-		if (S_ISGITLINK(ce->ce_mode))
-			return;
-		istate->cache_changed |= FSMONITOR_CHANGED;
-		ce->ce_flags |= CE_FSMONITOR_VALID;
-		trace_printf_key(&trace_fsmonitor, "mark_fsmonitor_clean '%s'", ce->name);
-	}
+    if (fsm_mode > FSMONITOR_MODE_DISABLED && !(ce->ce_flags & CE_FSMONITOR_VALID))
+    {
+        if (S_ISGITLINK(ce->ce_mode))
+            return;
+        istate->cache_changed |= FSMONITOR_CHANGED;
+        ce->ce_flags |= CE_FSMONITOR_VALID;
+        trace_printf_key(&trace_fsmonitor, "mark_fsmonitor_clean '%s'", ce->name);
+    }
 }
 
 /*
@@ -59,13 +58,14 @@ static inline void mark_fsmonitor_valid(struct index_state *istate, struct cache
  */
 static inline void mark_fsmonitor_invalid(struct index_state *istate, struct cache_entry *ce)
 {
-	enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(istate->repo);
+    enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(istate->repo);
 
-	if (fsm_mode > FSMONITOR_MODE_DISABLED) {
-		ce->ce_flags &= ~CE_FSMONITOR_VALID;
-		untracked_cache_invalidate_path(istate, ce->name, 1);
-		trace_printf_key(&trace_fsmonitor, "mark_fsmonitor_invalid '%s'", ce->name);
-	}
+    if (fsm_mode > FSMONITOR_MODE_DISABLED)
+    {
+        ce->ce_flags &= ~CE_FSMONITOR_VALID;
+        untracked_cache_invalidate_path(istate, ce->name, 1);
+        trace_printf_key(&trace_fsmonitor, "mark_fsmonitor_invalid '%s'", ce->name);
+    }
 }
 
 #endif

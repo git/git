@@ -8,18 +8,20 @@
 struct packed_git;
 struct object_info;
 
-struct pack_window {
-	struct pack_window *next;
-	unsigned char *base;
-	off_t offset;
-	size_t len;
-	unsigned int last_used;
-	unsigned int inuse_cnt;
+struct pack_window
+{
+    struct pack_window *next;
+    unsigned char      *base;
+    off_t               offset;
+    size_t              len;
+    unsigned int        last_used;
+    unsigned int        inuse_cnt;
 };
 
-struct pack_entry {
-	off_t offset;
-	struct packed_git *p;
+struct pack_entry
+{
+    off_t              offset;
+    struct packed_git *p;
 };
 
 /*
@@ -54,29 +56,29 @@ const char *pack_basename(struct packed_git *p);
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
-				      const char *file_name, void *data);
-void for_each_file_in_pack_subdir(const char *objdir,
-				  const char *subdir,
-				  each_file_in_pack_dir_fn fn,
-				  void *data);
-void for_each_file_in_pack_dir(const char *objdir,
-			       each_file_in_pack_dir_fn fn,
-			       void *data);
+                                      const char *file_name, void *data);
+void         for_each_file_in_pack_subdir(const char              *objdir,
+                                          const char              *subdir,
+                                          each_file_in_pack_dir_fn fn,
+                                          void                    *data);
+void         for_each_file_in_pack_dir(const char              *objdir,
+                                       each_file_in_pack_dir_fn fn,
+                                       void                    *data);
 
 /* A hook to report invalid files in pack directory */
-#define PACKDIR_FILE_PACK 1
-#define PACKDIR_FILE_IDX 2
+#define PACKDIR_FILE_PACK    1
+#define PACKDIR_FILE_IDX     2
 #define PACKDIR_FILE_GARBAGE 4
 extern void (*report_garbage)(unsigned seen_bits, const char *path);
 
 void reprepare_packed_git(struct repository *r);
 void install_packed_git(struct repository *r, struct packed_git *pack);
 
-struct packed_git *get_packed_git(struct repository *r);
-struct list_head *get_packed_git_mru(struct repository *r);
+struct packed_git       *get_packed_git(struct repository *r);
+struct list_head        *get_packed_git_mru(struct repository *r);
 struct multi_pack_index *get_multi_pack_index(struct repository *r);
 struct multi_pack_index *get_local_multi_pack_index(struct repository *r);
-struct packed_git *get_all_packs(struct repository *r);
+struct packed_git       *get_all_packs(struct repository *r);
 
 /*
  * Give a rough count of objects in the repository. This sacrifices accuracy
@@ -85,7 +87,7 @@ struct packed_git *get_all_packs(struct repository *r);
 unsigned long repo_approximate_object_count(struct repository *r);
 
 struct packed_git *find_sha1_pack(const unsigned char *sha1,
-				  struct packed_git *packs);
+                                  struct packed_git   *packs);
 
 void pack_report(void);
 
@@ -107,12 +109,12 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 
 struct raw_object_store;
 
-unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
-void close_pack_windows(struct packed_git *);
-void close_pack(struct packed_git *);
-void close_object_store(struct raw_object_store *o);
-void unuse_pack(struct pack_window **);
-void clear_delta_base_cache(void);
+unsigned char     *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
+void               close_pack_windows(struct packed_git *);
+void               close_pack(struct packed_git *);
+void               close_object_store(struct raw_object_store *o);
+void               unuse_pack(struct pack_window **);
+void               clear_delta_base_cache(void);
 struct packed_git *add_packed_git(const char *path, size_t path_len, int local);
 
 /*
@@ -159,14 +161,14 @@ off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
  */
 off_t find_pack_entry_one(const unsigned char *sha1, struct packed_git *);
 
-int is_pack_valid(struct packed_git *);
-void *unpack_entry(struct repository *r, struct packed_git *, off_t, enum object_type *, unsigned long *);
+int           is_pack_valid(struct packed_git *);
+void         *unpack_entry(struct repository *r, struct packed_git *, off_t, enum object_type *, unsigned long *);
 unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
-int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, unsigned long *);
-off_t get_delta_base(struct packed_git *p, struct pack_window **w_curs,
-		     off_t *curpos, enum object_type type,
-		     off_t delta_obj_offset);
+int           unpack_object_header(struct packed_git *, struct pack_window **, off_t *, unsigned long *);
+off_t         get_delta_base(struct packed_git *p, struct pack_window **w_curs,
+                             off_t *curpos, enum object_type type,
+                             off_t delta_obj_offset);
 
 void release_pack_memory(size_t);
 
@@ -174,10 +176,10 @@ void release_pack_memory(size_t);
 extern int do_check_packed_object_crc;
 
 int packed_object_info(struct repository *r,
-		       struct packed_git *pack,
-		       off_t offset, struct object_info *);
+                       struct packed_git *pack,
+                       off_t              offset, struct object_info *);
 
-void mark_bad_packed_object(struct packed_git *, const struct object_id *);
+void                     mark_bad_packed_object(struct packed_git *, const struct object_id *);
 const struct packed_git *has_packed_and_bad(struct repository *, const struct object_id *);
 
 #define ON_DISK_KEEP_PACKS 1
@@ -212,6 +214,6 @@ int is_promisor_object(const struct object_id *oid);
  * probably use open_pack_index() or parse_pack_index() instead.
  */
 int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
-	     size_t idx_size, struct packed_git *p);
+             size_t idx_size, struct packed_git *p);
 
 #endif

@@ -47,19 +47,21 @@ struct repository;
  * Therefore, it will be omitted from the results *unless* a later
  * iteration causes it to be shown.
  */
-enum list_objects_filter_result {
-	LOFR_ZERO      = 0,
-	LOFR_MARK_SEEN = 1<<0,
-	LOFR_DO_SHOW   = 1<<1,
-	LOFR_SKIP_TREE = 1<<2,
+enum list_objects_filter_result
+{
+    LOFR_ZERO      = 0,
+    LOFR_MARK_SEEN = 1 << 0,
+    LOFR_DO_SHOW   = 1 << 1,
+    LOFR_SKIP_TREE = 1 << 2,
 };
 
-enum list_objects_filter_situation {
-	LOFS_COMMIT,
-	LOFS_TAG,
-	LOFS_BEGIN_TREE,
-	LOFS_END_TREE,
-	LOFS_BLOB
+enum list_objects_filter_situation
+{
+    LOFS_COMMIT,
+    LOFS_TAG,
+    LOFS_BEGIN_TREE,
+    LOFS_END_TREE,
+    LOFS_BLOB
 };
 
 struct filter;
@@ -72,8 +74,8 @@ struct filter;
  * filter *`.
  */
 struct filter *list_objects_filter__init(
-	struct oidset *omitted,
-	struct list_objects_filter_options *filter_options);
+    struct oidset                      *omitted,
+    struct list_objects_filter_options *filter_options);
 
 /*
  * Lets `filter` decide how to handle the `obj`. If `filter` is NULL, this
@@ -81,12 +83,12 @@ struct filter *list_objects_filter__init(
  * included.
  */
 enum list_objects_filter_result list_objects_filter__filter_object(
-	struct repository *r,
-	enum list_objects_filter_situation filter_situation,
-	struct object *obj,
-	const char *pathname,
-	const char *filename,
-	struct filter *filter);
+    struct repository                 *r,
+    enum list_objects_filter_situation filter_situation,
+    struct object                     *obj,
+    const char                        *pathname,
+    const char                        *filename,
+    struct filter                     *filter);
 
 /*
  * Destroys `filter` and finalizes the `omitted` set, if present. Does

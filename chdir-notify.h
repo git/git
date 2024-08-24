@@ -37,9 +37,9 @@
  * storage which lasts as long as the registration is active.
  */
 typedef void (*chdir_notify_callback)(const char *name,
-				      const char *old_cwd,
-				      const char *new_cwd,
-				      void *data);
+                                      const char *old_cwd,
+                                      const char *new_cwd,
+                                      void       *data);
 void chdir_notify_register(const char *name, chdir_notify_callback cb, void *data);
 void chdir_notify_reparent(const char *name, char **path);
 
@@ -67,7 +67,7 @@ int chdir_notify(const char *new_cwd);
  * new_cwd).
  */
 char *reparent_relative_path(const char *old_cwd,
-			     const char *new_cwd,
-			     const char *path);
+                             const char *new_cwd,
+                             const char *path);
 
 #endif /* CHDIR_NOTIFY_H */
