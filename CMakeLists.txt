@@ -1384,7 +1384,14 @@ add_executable(test-fake-ssh ${CMAKE_SOURCE_DIR}/t/helper/test-fake-ssh.c)
 target_link_libraries(test-fake-ssh common-main)
 
 #reftable-tests
-parse_makefile_for_sources(test-reftable_SOURCES "REFTABLE_TEST_OBJS")
+# parse_makefile_for_sources(test-reftable_SOURCES "REFTABLE_TEST_OBJS")
+set(test-reftable_SOURCES
+    reftable/block_test.c
+    reftable/dump.c
+    reftable/stack_test.c
+    reftable/test_framework.c
+)
+
 list(TRANSFORM test-reftable_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 
 #unit-tests
