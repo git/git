@@ -46,10 +46,14 @@ static int send_request(const char *socket, const struct strbuf *out)
     int fd       = unix_stream_connect(socket, 0);
 
     if (fd < 0)
+    {
         return -1;
+    }
 
     if (write_in_full(fd, out->buf, out->len) < 0)
+    {
         die_errno("unable to write to cache daemon");
+    }
     shutdown(fd, SHUT_WR);
 
     while (1)
@@ -59,9 +63,13 @@ static int send_request(const char *socket, const struct strbuf *out)
 
         r = read_in_full(fd, in, sizeof(in));
         if (r == 0 || (r < 0 && connection_closed(errno)))
+        {
             break;
+        }
         if (r < 0)
+        {
             die_errno("read error from cache daemon");
+        }
         write_or_die(1, in, r);
         got_data = 1;
     }
@@ -83,12 +91,18 @@ static void spawn_daemon(const char *socket)
     daemon.out      = -1;
 
     if (start_command(&daemon))
+    {
         die_errno("unable to start cache daemon");
+    }
     r = read_in_full(daemon.out, buf, sizeof(buf));
     if (r < 0)
+    {
         die_errno("unable to read result code from cache daemon");
-    if (r != 3 || memcmp(buf, "ok\n", 3))
+    }
+    if (r != 3 || memcmp(buf, "ok\n", 3) != 0)
+    {
         die("cache daemon did not start: %.*s", r, buf);
+    }
 
     child_process_clear(&daemon);
     close(daemon.out);
@@ -104,18 +118,24 @@ static void do_cache(const char *socket, const char *action, int timeout,
     if (flags & FLAG_RELAY)
     {
         if (strbuf_read(&buf, 0, 0) < 0)
+        {
             die_errno("unable to relay credential");
+        }
     }
 
     if (send_request(socket, &buf) < 0)
     {
         if (connection_fatally_broken(errno))
+        {
             die_errno("unable to connect to cache daemon");
+        }
         if (flags & FLAG_SPAWN)
         {
             spawn_daemon(socket);
             if (send_request(socket, &buf) < 0)
+            {
                 die_errno("unable to connect to cache daemon");
+            }
         }
     }
     strbuf_release(&buf);
@@ -124,12 +144,17 @@ static void do_cache(const char *socket, const char *action, int timeout,
 static char *get_socket_path(void)
 {
     struct stat sb;
-    char       *old_dir, *socket;
+    char       *old_dir;
+    char       *socket;
     old_dir = interpolate_path("~/.git-credential-cache", 0);
     if (old_dir && !stat(old_dir, &sb) && S_ISDIR(sb.st_mode))
+    {
         socket = xstrfmt("%s/socket", old_dir);
+    }
     else
+    {
         socket = xdg_cache_home("credential/socket");
+    }
     free(old_dir);
     return socket;
 }
@@ -159,28 +184,46 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 
     argc = parse_options(argc, argv, prefix, options, usage, 0);
     if (!argc)
+    {
         usage_with_options(usage, options);
+    }
     op = argv[0];
 
     if (!have_unix_sockets())
+    {
         die(_("credential-cache unavailable; no unix socket support"));
+    }
 
     socket_path = xstrdup_or_null(socket_path_arg);
     if (!socket_path)
+    {
         socket_path = get_socket_path();
+    }
     if (!socket_path)
+    {
         die("unable to find a suitable socket path; use --socket");
+    }
 
     if (!strcmp(op, "exit"))
+    {
         do_cache(socket_path, op, timeout, 0);
+    }
     else if (!strcmp(op, "get") || !strcmp(op, "erase"))
+    {
         do_cache(socket_path, op, timeout, FLAG_RELAY);
+    }
     else if (!strcmp(op, "store"))
+    {
         do_cache(socket_path, op, timeout, FLAG_RELAY | FLAG_SPAWN);
+    }
     else if (!strcmp(op, "capability"))
+    {
         announce_capabilities();
+    }
     else
+    {
         ; /* ignore unknown operation */
+    }
 
     free(socket_path);
     return 0;

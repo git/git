@@ -35,9 +35,13 @@ static int cmd_refs_migrate(int argc, const char **argv, const char *prefix)
 
     argc = parse_options(argc, argv, prefix, options, migrate_usage, 0);
     if (argc)
+    {
         usage(_("too many arguments"));
+    }
     if (!format_str)
+    {
         usage(_("missing --ref-format=<format>"));
+    }
 
     format = ref_storage_format_by_name(format_str);
     if (format == REF_STORAGE_FORMAT_UNKNOWN)
@@ -82,7 +86,9 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
 
     argc = parse_options(argc, argv, prefix, options, verify_usage, 0);
     if (argc)
+    {
         usage(_("'git refs verify' takes no arguments"));
+    }
 
     git_config(git_fsck_config, &fsck_refs_options);
     prepare_repo_settings(the_repository);

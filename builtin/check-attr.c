@@ -40,11 +40,17 @@ static void output_attr(struct attr_check *check, const char *file)
         const char *value = check->items[j].value;
 
         if (ATTR_TRUE(value))
+        {
             value = "set";
+        }
         else if (ATTR_FALSE(value))
+        {
             value = "unset";
+        }
         else if (ATTR_UNSET(value))
+        {
             value = "unspecified";
+        }
 
         if (nul_term_line)
         {
@@ -99,7 +105,9 @@ static void check_attr_stdin_paths(const char *prefix, struct attr_check *check,
         {
             strbuf_reset(&unquoted);
             if (unquote_c_style(&unquoted, buf.buf, NULL))
+            {
                 die("line is badly quoted");
+            }
             strbuf_swap(&buf, &unquoted);
         }
         check_attr(prefix, check, collect_all, buf.buf);
@@ -119,10 +127,15 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 {
     struct attr_check *check;
     struct object_id   initialized_oid;
-    int                cnt, i, doubledash, filei;
+    int                cnt;
+    int                i;
+    int                doubledash;
+    int                filei;
 
     if (!is_bare_repository())
+    {
         setup_work_tree();
+    }
 
     git_config(git_default_config, NULL);
 
@@ -138,20 +151,26 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
     }
 
     if (cached_attrs)
+    {
         git_attr_set_direction(GIT_ATTR_INDEX);
+    }
 
     doubledash = -1;
     for (i = 0; doubledash < 0 && i < argc; i++)
     {
         if (!strcmp(argv[i], "--"))
+        {
             doubledash = i;
+        }
     }
 
     /* Process --all and/or attribute arguments: */
     if (all_attrs)
     {
         if (doubledash >= 1)
+        {
             error_with_usage("Attributes and --all both specified");
+        }
 
         cnt   = 0;
         filei = doubledash + 1;
@@ -163,7 +182,9 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
     else if (doubledash < 0)
     {
         if (!argc)
+        {
             error_with_usage("No attribute specified");
+        }
 
         if (stdin_paths)
         {
@@ -188,12 +209,16 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
     if (stdin_paths)
     {
         if (filei < argc)
+        {
             error_with_usage("Can't specify files with --stdin");
+        }
     }
     else
     {
         if (filei >= argc)
+        {
             error_with_usage("No file specified");
+        }
     }
 
     check = attr_check_alloc();
@@ -204,8 +229,10 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
             const struct git_attr *a = git_attr(argv[i]);
 
             if (!a)
+            {
                 return error("%s: not a valid attribute name",
                              argv[i]);
+            }
             attr_check_append(check, a);
         }
     }
@@ -213,16 +240,22 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
     if (source)
     {
         if (repo_get_oid_tree(the_repository, source, &initialized_oid))
+        {
             die("%s: not a valid tree-ish source", source);
+        }
         set_git_attr_source(source);
     }
 
     if (stdin_paths)
+    {
         check_attr_stdin_paths(prefix, check, all_attrs);
+    }
     else
     {
         for (i = filei; i < argc; i++)
+        {
             check_attr(prefix, check, all_attrs, argv[i]);
+        }
         maybe_flush_or_die(stdout, "attribute to stdout");
     }
 

@@ -40,7 +40,9 @@ static struct credential_cache_entry *lookup_credential(const struct credential 
     {
         struct credential *e = &entries[i].item;
         if (credential_match(c, e, 0))
+        {
             return &entries[i];
+        }
     }
     return NULL;
 }
@@ -54,7 +56,9 @@ static void remove_credential(const struct credential *c, int match_password)
     {
         e = &entries[i];
         if (credential_match(c, &e->item, match_password))
+        {
             e->expiration = 0;
+        }
     }
 }
 
@@ -71,7 +75,9 @@ static timestamp_t check_expirations(void)
      * keeping the daemon around.
      */
     if (!wait_for_entry_until)
+    {
         wait_for_entry_until = now + 30;
+    }
 
     while (i < entries_nr)
     {
@@ -80,7 +86,9 @@ static timestamp_t check_expirations(void)
             entries_nr--;
             credential_clear(&entries[i].item);
             if (i != entries_nr)
+            {
                 memcpy(&entries[i], &entries[entries_nr], sizeof(*entries));
+            }
             /*
              * Stick around 30 seconds in case a new credential
              * shows up (e.g., because we just removed a failed
@@ -91,7 +99,9 @@ static timestamp_t check_expirations(void)
         else
         {
             if (entries[i].expiration < next)
+            {
                 next = entries[i].expiration;
+            }
             i++;
         }
     }
@@ -99,7 +109,9 @@ static timestamp_t check_expirations(void)
     if (!entries_nr)
     {
         if (wait_for_entry_until <= now)
+        {
             return 0;
+        }
         next = wait_for_entry_until;
     }
 
@@ -114,18 +126,24 @@ static int read_request(FILE *fh, struct credential *c,
 
     strbuf_getline_lf(&item, fh);
     if (!skip_prefix(item.buf, "action=", &p))
+    {
         return error("client sent bogus action line: %s", item.buf);
+    }
     strbuf_addstr(action, p);
 
     strbuf_getline_lf(&item, fh);
     if (!skip_prefix(item.buf, "timeout=", &p))
+    {
         return error("client sent bogus timeout line: %s", item.buf);
+    }
     *timeout = atoi(p);
 
     credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
 
     if (credential_read(c, fh, CREDENTIAL_OP_HELPER) < 0)
+    {
         return -1;
+    }
     return 0;
 }
 
@@ -136,7 +154,9 @@ static void serve_one_client(FILE *in, FILE *out)
     int               timeout = -1;
 
     if (read_request(in, &c, &action, &timeout) < 0)
+    {
         /* ignore error */;
+    }
     else if (!strcmp(action.buf, "get"))
     {
         struct credential_cache_entry *e = lookup_credential(&c);
@@ -147,19 +167,31 @@ static void serve_one_client(FILE *in, FILE *out)
 
             fprintf(out, "capability[]=authtype\n");
             if (e->item.username)
+            {
                 fprintf(out, "username=%s\n", e->item.username);
+            }
             if (e->item.password)
+            {
                 fprintf(out, "password=%s\n", e->item.password);
+            }
             if (credential_has_capability(&c.capa_authtype, CREDENTIAL_OP_HELPER) && e->item.authtype)
+            {
                 fprintf(out, "authtype=%s\n", e->item.authtype);
+            }
             if (credential_has_capability(&c.capa_authtype, CREDENTIAL_OP_HELPER) && e->item.credential)
+            {
                 fprintf(out, "credential=%s\n", e->item.credential);
+            }
             if (e->item.password_expiry_utc != TIME_MAX)
+            {
                 fprintf(out, "password_expiry_utc=%" PRItime "\n",
                         e->item.password_expiry_utc);
+            }
             if (e->item.oauth_refresh_token)
+            {
                 fprintf(out, "oauth_refresh_token=%s\n",
                         e->item.oauth_refresh_token);
+            }
         }
     }
     else if (!strcmp(action.buf, "exit"))
@@ -175,15 +207,23 @@ static void serve_one_client(FILE *in, FILE *out)
         exit(0);
     }
     else if (!strcmp(action.buf, "erase"))
+    {
         remove_credential(&c, 1);
+    }
     else if (!strcmp(action.buf, "store"))
     {
         if (timeout < 0)
+        {
             warning("cache client didn't specify a timeout");
+        }
         else if ((!c.username || !c.password) && (!c.authtype && !c.credential))
+        {
             warning("cache client gave us a partial credential");
+        }
         else if (c.ephemeral)
+        {
             warning("not storing ephemeral credential");
+        }
         else
         {
             remove_credential(&c, 0);
@@ -191,7 +231,9 @@ static void serve_one_client(FILE *in, FILE *out)
         }
     }
     else
+    {
         warning("cache client sent unknown action: %s", action.buf);
+    }
 
     credential_clear(&c);
     strbuf_release(&action);
@@ -204,21 +246,27 @@ static int serve_cache_loop(int fd)
 
     wakeup = check_expirations();
     if (!wakeup)
+    {
         return 0;
+    }
 
     pfd.fd     = fd;
     pfd.events = POLLIN;
     if (poll(&pfd, 1, 1000 * wakeup) < 0)
     {
         if (errno != EINTR)
+        {
             die_errno("poll failed");
+        }
         return 1;
     }
 
     if (pfd.revents & POLLIN)
     {
-        int   client, client2;
-        FILE *in, *out;
+        int   client;
+        int   client2;
+        FILE *in;
+        FILE *out;
 
         client = accept(fd, NULL, NULL);
         if (client < 0)
@@ -226,7 +274,7 @@ static int serve_cache_loop(int fd)
             warning_errno("accept failed");
             return 1;
         }
-        client2 = dup(client);
+        client2 = fcntl(client, F_DUPFD_CLOEXEC);
         if (client2 < 0)
         {
             warning_errno("dup failed");
@@ -250,18 +298,24 @@ static void serve_cache(const char *socket_path, int debug)
 
     fd = unix_stream_listen(socket_path, &opts);
     if (fd < 0)
+    {
         die_errno("unable to bind to '%s'", socket_path);
+    }
 
     printf("ok\n");
     fclose(stdout);
     if (!debug)
     {
         if (!freopen("/dev/null", "w", stderr))
+        {
             die_errno("unable to point stderr to /dev/null");
+        }
     }
 
     while (serve_cache_loop(fd))
+    {
         ; /* nothing */
+    }
 
     close(fd);
 }
@@ -280,7 +334,9 @@ static void init_socket_directory(const char *path)
     if (!stat(dir, &st))
     {
         if (st.st_mode & 077)
+        {
             die(_(permissions_advice), dir);
+        }
     }
     else
     {
@@ -291,18 +347,23 @@ static void init_socket_directory(const char *path)
          * our protected socket.
          */
         if (safe_create_leading_directories_const(dir) < 0)
+        {
             die_errno("unable to create directories for '%s'", dir);
+        }
         if (mkdir(dir, 0700) < 0)
+        {
             die_errno("unable to mkdir '%s'", dir);
+        }
     }
 
     if (chdir(dir))
+    {
         /*
          * We don't actually care what our cwd is; we chdir here just to
          * be a friendly daemon and avoid tying up our original cwd.
          * If this fails, it's OK to just continue without that benefit.
          */
-        ;
+    }
 
     free(path_copy);
 }
@@ -327,18 +388,26 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
     socket_path = argv[0];
 
     if (!have_unix_sockets())
+    {
         die(_("credential-cache--daemon unavailable; no unix socket support"));
+    }
     if (!socket_path)
+    {
         usage_with_options(usage, options);
+    }
 
     if (!is_absolute_path(socket_path))
+    {
         die("socket directory must be an absolute path");
+    }
 
     init_socket_directory(socket_path);
     socket_file = register_tempfile(socket_path);
 
     if (ignore_sighup)
+    {
         signal(SIGHUP, SIG_IGN);
+    }
 
     serve_cache(socket_path, debug);
     delete_tempfile(&socket_file);

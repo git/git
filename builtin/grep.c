@@ -103,7 +103,9 @@ static int skip_first_line;
 static void add_work(struct grep_opt *opt, struct grep_source *gs)
 {
     if (opt->binary != GREP_BINARY_TEXT)
+    {
         grep_source_load_driver(gs, opt->repo->index);
+    }
 
     grep_lock();
 
@@ -167,7 +169,9 @@ static void work_done(struct work_item *w)
                 {
                     len--;
                     if (*p++ == '\n')
+                    {
                         break;
+                    }
                 }
                 skip_first_line = 0;
             }
@@ -178,10 +182,14 @@ static void work_done(struct work_item *w)
     }
 
     if (old_done != todo_done)
+    {
         pthread_cond_signal(&cond_write);
+    }
 
     if (all_work_added && todo_done == todo_end)
+    {
         pthread_cond_signal(&cond_result);
+    }
 
     grep_unlock();
 }
@@ -209,7 +217,9 @@ static void *run(void *arg)
     {
         struct work_item *w = get_work();
         if (!w)
+        {
             break;
+        }
 
         opt->output_priv = w;
         hit |= grep_source(opt, &w->source);
@@ -255,8 +265,10 @@ static void start_threads(struct grep_opt *opt)
         err = pthread_create(&threads[i], NULL, run, o);
 
         if (err)
+        {
             die(_("grep: failed to create thread: %s"),
                 strerror(err));
+        }
     }
 }
 
@@ -266,14 +278,18 @@ static int wait_all(void)
     int i;
 
     if (!HAVE_THREADS)
+    {
         BUG("Never call this function unless you have started threads");
+    }
 
     grep_lock();
     all_work_added = 1;
 
     /* Wait until all work is done. */
     while (todo_done != todo_end)
+    {
         pthread_cond_wait(&cond_result, &grep_mutex);
+    }
 
     /* Wake up all the consumer threads so they can see that there
      * is no more work to do.
@@ -307,16 +323,22 @@ static int grep_cmd_config(const char *var, const char *value,
     int st = grep_config(var, value, ctx, cb);
 
     if (git_color_config(var, value, cb) < 0)
+    {
         st = -1;
+    }
     else if (git_default_config(var, value, ctx, cb) < 0)
+    {
         st = -1;
+    }
 
     if (!strcmp(var, "grep.threads"))
     {
         num_threads = git_config_int(var, value, ctx->kvi);
         if (num_threads < 0)
+        {
             die(_("invalid number of threads specified (%d) for %s"),
                 num_threads, var);
+        }
         else if (!HAVE_THREADS && num_threads > 1)
         {
             /*
@@ -330,7 +352,9 @@ static int grep_cmd_config(const char *var, const char *value,
     }
 
     if (!strcmp(var, "submodule.recurse"))
+    {
         recurse_submodules = git_config_bool(var, value);
+    }
 
     return st;
 }
@@ -350,7 +374,9 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
                               grep_prefix, &rel_buf);
 
             if (tree_name_len)
+            {
                 strbuf_add(out, filename, tree_name_len);
+            }
 
             strbuf_addstr(out, rel_name);
             strbuf_release(&rel_buf);
@@ -363,12 +389,18 @@ static void grep_source_name(struct grep_opt *opt, const char *filename,
     }
 
     if (opt->relative && grep_prefix)
+    {
         quote_path(filename + tree_name_len, grep_prefix, out, 0);
+    }
     else
+    {
         quote_c_style(filename + tree_name_len, out, NULL, 0);
+    }
 
     if (tree_name_len)
+    {
         strbuf_insert(out, 0, filename, tree_name_len);
+    }
 }
 
 static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
@@ -391,15 +423,13 @@ static int grep_oid(struct grep_opt *opt, const struct object_id *oid,
         add_work(opt, &gs);
         return 0;
     }
-    else
-    {
-        int hit;
 
-        hit = grep_source(opt, &gs);
+    int hit;
 
-        grep_source_clear(&gs);
-        return hit;
-    }
+    hit = grep_source(opt, &gs);
+
+    grep_source_clear(&gs);
+    return hit;
 }
 
 static int grep_file(struct grep_opt *opt, const char *filename)
@@ -420,15 +450,13 @@ static int grep_file(struct grep_opt *opt, const char *filename)
         add_work(opt, &gs);
         return 0;
     }
-    else
-    {
-        int hit;
 
-        hit = grep_source(opt, &gs);
+    int hit;
 
-        grep_source_clear(&gs);
-        return hit;
-    }
+    hit = grep_source(opt, &gs);
+
+    grep_source_clear(&gs);
+    return hit;
 }
 
 static void append_path(struct grep_opt *opt, const void *data, size_t len)
@@ -436,7 +464,9 @@ static void append_path(struct grep_opt *opt, const void *data, size_t len)
     struct string_list *path_list = opt->output_priv;
 
     if (len == 1 && *(const char *)data == '\0')
+    {
         return;
+    }
     string_list_append_nodup(path_list, xstrndup(data, len));
 }
 
@@ -444,16 +474,21 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 {
     struct string_list  *path_list = opt->output_priv;
     struct child_process child     = CHILD_PROCESS_INIT;
-    int                  i, status;
+    int                  i;
+    int                  status;
 
     for (i = 0; i < path_list->nr; i++)
+    {
         strvec_push(&child.args, path_list->items[i].string);
+    }
     child.dir       = prefix;
     child.use_shell = 1;
 
     status = run_command(&child);
     if (status)
+    {
         exit(status);
+    }
 }
 
 static int grep_cache(struct grep_opt       *opt,
@@ -473,7 +508,9 @@ static int grep_submodule(struct grep_opt        *opt,
     int                hit = 0;
 
     if (!is_submodule_active(superproject, path))
+    {
         return 0;
+    }
 
     subrepo = xmalloc(sizeof(*subrepo));
     if (repo_submodule_init(subrepo, superproject, path, null_oid()))
@@ -550,7 +587,9 @@ static int grep_submodule(struct grep_opt        *opt,
                                           oid, OBJ_TREE,
                                           &size, NULL);
         if (!data)
+        {
             die(_("unable to read tree (%s)"), oid_to_hex(oid));
+        }
 
         strbuf_addstr(&base, filename);
         strbuf_addch(&base, '/');
@@ -584,14 +623,18 @@ static int grep_cache(struct grep_opt       *opt,
     }
 
     if (repo_read_index(repo) < 0)
+    {
         die(_("index file corrupt"));
+    }
 
     for (nr = 0; nr < repo->index->cache_nr; nr++)
     {
         const struct cache_entry *ce = repo->index->cache[nr];
 
         if (!cached && ce_skip_worktree(ce))
+        {
             continue;
+        }
 
         strbuf_setlen(&name, name_base_len);
         strbuf_addstr(&name, ce->name);
@@ -605,7 +648,9 @@ static int grep_cache(struct grep_opt       *opt,
             data = repo_read_object_file(the_repository, &ce->oid,
                                          &type, &size);
             if (!data)
+            {
                 die(_("unable to read tree %s"), oid_to_hex(&ce->oid));
+            }
             init_tree_desc(&tree, &ce->oid, data, size);
 
             hit |= grep_tree(opt, pathspec, &tree, &name, 0, 0);
@@ -623,7 +668,9 @@ static int grep_cache(struct grep_opt       *opt,
             if (cached || (ce->ce_flags & CE_VALID))
             {
                 if (ce_stage(ce) || ce_intent_to_add(ce))
+                {
                     continue;
+                }
                 hit |= grep_oid(opt, &ce->oid, name.buf,
                                 0, name.buf);
             }
@@ -651,7 +698,9 @@ static int grep_cache(struct grep_opt       *opt,
             nr--; /* compensate for loop control */
         }
         if (hit && opt->status_only)
+        {
             break;
+        }
     }
 
     strbuf_release(&name);
@@ -688,9 +737,13 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
             strbuf_setlen(&name, name_base_len);
 
             if (match == all_entries_not_interesting)
+            {
                 break;
+            }
             if (match == entry_not_interesting)
+            {
                 continue;
+            }
         }
 
         strbuf_add(base, entry.path, te_len);
@@ -710,8 +763,10 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
             data = repo_read_object_file(the_repository,
                                          &entry.oid, &type, &size);
             if (!data)
+            {
                 die(_("unable to read tree (%s)"),
                     oid_to_hex(&entry.oid));
+            }
 
             strbuf_addch(base, '/');
             init_tree_desc(&sub, &entry.oid, data, size);
@@ -729,7 +784,9 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
         strbuf_setlen(base, old_baselen);
 
         if (hit && opt->status_only)
+        {
             break;
+        }
     }
 
     strbuf_release(&name);
@@ -740,20 +797,25 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
                        struct object *obj, const char *name, const char *path)
 {
     if (obj->type == OBJ_BLOB)
+    {
         return grep_oid(opt, &obj->oid, name, 0, path);
+    }
     if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE)
     {
         struct tree_desc tree;
         void            *data;
         unsigned long    size;
         struct strbuf    base;
-        int              hit, len;
+        int              hit;
+        int              len;
 
         data = read_object_with_reference(opt->repo,
                                           &obj->oid, OBJ_TREE,
                                           &size, NULL);
         if (!data)
+        {
             die(_("unable to read tree (%s)"), oid_to_hex(&obj->oid));
+        }
 
         len = name ? strlen(name) : 0;
         strbuf_init(&base, PATH_MAX + len + 1);
@@ -814,7 +876,9 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
         {
             hit = 1;
             if (opt->status_only)
+            {
                 break;
+            }
         }
     }
     return hit;
@@ -824,19 +888,26 @@ static int grep_directory(struct grep_opt *opt, const struct pathspec *pathspec,
                           int exc_std, int use_index)
 {
     struct dir_struct dir = DIR_INIT;
-    int               i, hit = 0;
+    int               i;
+    int               hit = 0;
 
     if (!use_index)
+    {
         dir.flags |= DIR_NO_GITLINKS;
+    }
     if (exc_std)
+    {
         setup_standard_excludes(&dir);
+    }
 
     fill_directory(&dir, opt->repo->index, pathspec);
     for (i = 0; i < dir.nr; i++)
     {
         hit |= grep_file(opt, dir.entries[i]->name);
         if (hit && opt->status_only)
+        {
             break;
+        }
     }
     dir_clear(&dir);
     return hit;
@@ -876,28 +947,40 @@ static int file_callback(const struct option *opt, const char *arg, int unset)
     BUG_ON_OPT_NEG(unset);
 
     if (!*filename)
+    {
         ; /* leave it as-is */
+    }
     else
+    {
         filename = prefix_filename_except_for_dash(grep_prefix, filename);
+    }
 
     from_stdin = !strcmp(filename, "-");
     patterns   = from_stdin ? stdin : fopen(filename, "r");
     if (!patterns)
+    {
         die_errno(_("cannot open '%s'"), arg);
+    }
     while (strbuf_getline(&sb, patterns) == 0)
     {
         /* ignore empty line like grep does */
         if (sb.len == 0)
+        {
             continue;
+        }
 
         append_grep_pat(grep_opt, sb.buf, sb.len, arg, ++lno,
                         GREP_PATTERN);
     }
     if (!from_stdin)
+    {
         fclose(patterns);
+    }
     strbuf_release(&sb);
     if (filename != arg)
+    {
         free((void *)filename);
+    }
     return 0;
 }
 
@@ -948,11 +1031,14 @@ static int pattern_callback(const struct option *opt, const char *arg,
 
 int cmd_grep(int argc, const char **argv, const char *prefix)
 {
-    int                 hit    = 0;
-    int                 cached = 0, untracked = 0, opt_exclude = -1;
+    int                 hit           = 0;
+    int                 cached        = 0;
+    int                 untracked     = 0;
+    int                 opt_exclude   = -1;
     int                 seen_dashdash = 0;
     int                 external_grep_allowed__ignored;
-    const char         *show_in_pager = NULL, *default_pager = "dummy";
+    const char         *show_in_pager = NULL;
+    const char         *default_pager = "dummy";
     struct grep_opt     opt;
     struct object_array list = OBJECT_ARRAY_INIT;
     struct pathspec     pathspec;
@@ -1107,14 +1193,20 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
         int fallback = 0;
         git_config_get_bool("grep.fallbacktonoindex", &fallback);
         if (fallback)
+        {
             use_index = 0;
+        }
         else
+        {
             /* die the same way as if we did it at the beginning */
             setup_git_directory();
+        }
     }
     /* Ignore --recurse-submodules if --no-index is given or implied */
     if (!use_index)
+    {
         recurse_submodules = 0;
+    }
 
     /*
      * skip a -- separator; we know it cannot be
@@ -1137,7 +1229,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
     }
 
     if (show_in_pager == default_pager)
+    {
         show_in_pager = git_pager(1);
+    }
     if (show_in_pager)
     {
         opt.color               = 0;
@@ -1149,11 +1243,15 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
     }
 
     if (!opt.pattern_list)
+    {
         die(_("no pattern given"));
+    }
 
     /* --only-matching has no effect with --invert. */
     if (opt.invert)
+    {
         opt.only_matching = 0;
+    }
 
     /*
      * We have to find "--" in a separate pass, because its presence
@@ -1190,7 +1288,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
         if (!allow_revs)
         {
             if (seen_dashdash)
+            {
                 die(_("--no-index or --untracked cannot be used with revs"));
+            }
             break;
         }
 
@@ -1199,13 +1299,17 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
                                  &oid, &oc))
         {
             if (seen_dashdash)
+            {
                 die(_("unable to resolve revision: %s"), arg);
+            }
             break;
         }
 
         object = parse_object_or_die(&oid, arg);
         if (!seen_dashdash)
+        {
             verify_non_filename(prefix, arg);
+        }
         add_object_array_with_path(object, arg, &list, oc.mode, oc.path);
         object_context_release(&oc);
     }
@@ -1218,7 +1322,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
     {
         int j;
         for (j = i; j < argc; j++)
+        {
             verify_filename(prefix, argv[j], j == i && allow_revs);
+        }
     }
 
     parse_pathspec(&pathspec, 0,
@@ -1229,19 +1335,25 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
     pathspec.recurse_submodules = !!recurse_submodules;
 
     if (recurse_submodules && untracked)
+    {
         die(_("--untracked not supported with --recurse-submodules"));
+    }
 
     /*
      * Optimize out the case where the amount of matches is limited to zero.
      * We do this to keep results consistent with GNU grep(1).
      */
     if (opt.max_count == 0)
+    {
         return 1;
+    }
 
     if (show_in_pager)
     {
         if (num_threads > 1)
+        {
             warning(_("invalid option combination, ignoring --threads"));
+        }
         num_threads = 1;
     }
     else if (!HAVE_THREADS && num_threads > 1)
@@ -1250,17 +1362,25 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
         num_threads = 1;
     }
     else if (num_threads < 0)
+    {
         die(_("invalid number of threads specified (%d)"), num_threads);
+    }
     else if (num_threads == 0)
+    {
         num_threads = HAVE_THREADS ? online_cpus() : 1;
+    }
 
     if (num_threads > 1)
     {
         if (!HAVE_THREADS)
+        {
             BUG("Somebody got num_threads calculation wrong!");
+        }
         if (!(opt.name_only || opt.unmatch_name_only || opt.count)
             && (opt.pre_context || opt.post_context || opt.file_break || opt.funcbody))
+        {
             skip_first_line = 1;
+        }
 
         /*
          * Pre-read gitmodules (if not read already) and force eager
@@ -1268,9 +1388,13 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
          * reading/initialization once worker threads are started.
          */
         if (recurse_submodules)
+        {
             repo_read_gitmodules(the_repository, 1);
+        }
         if (startup_info->have_repository)
+        {
             (void)get_packed_git(the_repository);
+        }
 
         start_threads(&opt);
     }
@@ -1286,7 +1410,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
     }
 
     if (show_in_pager && (cached || list.nr))
+    {
         die(_("--open-files-in-pager only works on the worktree"));
+    }
 
     if (show_in_pager && opt.pattern_list && !opt.pattern_list->next)
     {
@@ -1294,10 +1420,14 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
         int         len   = strlen(pager);
 
         if (len > 4 && is_dir_sep(pager[len - 5]))
+        {
             pager += len - 4;
+        }
 
         if (opt.ignore_case && !strcmp("less", pager))
+        {
             string_list_append(&path_list, "-I");
+        }
 
         if (!strcmp("less", pager) || !strcmp("vi", pager))
         {
@@ -1311,7 +1441,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
     }
 
     if (!show_in_pager && !opt.status_only)
+    {
         setup_pager();
+    }
 
     die_for_incompatible_opt3(!use_index, "--no-index",
                               untracked, "--untracked",
@@ -1329,22 +1461,30 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
     else if (!list.nr)
     {
         if (!cached)
+        {
             setup_work_tree();
+        }
 
         hit = grep_cache(&opt, &pathspec, cached);
     }
     else
     {
         if (cached)
+        {
             die(_("both --cached and trees are given"));
+        }
 
         hit = grep_objects(&opt, &pathspec, &list);
     }
 
     if (num_threads > 1)
+    {
         hit |= wait_all();
+    }
     if (hit && show_in_pager)
+    {
         run_pager(&opt, prefix);
+    }
     clear_pathspec(&pathspec);
     string_list_clear(&path_list, 0);
     free_grep_patterns(&opt);

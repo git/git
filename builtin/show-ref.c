@@ -35,20 +35,30 @@ static void show_one(const struct show_one_options *opts,
     struct object_id peeled;
 
     if (!repo_has_object_file(the_repository, oid))
+    {
         die("git show-ref: bad ref %s (%s)", refname,
             oid_to_hex(oid));
+    }
 
     if (opts->quiet)
+    {
         return;
+    }
 
     hex = repo_find_unique_abbrev(the_repository, oid, opts->abbrev);
     if (opts->hash_only)
+    {
         printf("%s\n", hex);
+    }
     else
+    {
         printf("%s %s\n", hex, refname);
+    }
 
     if (!opts->deref_tags)
+    {
         return;
+    }
 
     if (!peel_iterated_oid(the_repository, oid, &peeled))
     {
@@ -71,23 +81,34 @@ static int show_ref(const char *refname, const char *referent UNUSED, const stru
     struct show_ref_data *data = cbdata;
 
     if (data->show_head && !strcmp(refname, "HEAD"))
+    {
         goto match;
+    }
 
     if (data->patterns)
     {
         int          reflen = strlen(refname);
-        const char **p      = data->patterns, *m;
+        const char **p      = data->patterns;
+        const char  *m;
         while ((m = *p++) != NULL)
         {
             int len = strlen(m);
             if (len > reflen)
+            {
                 continue;
-            if (memcmp(m, refname + reflen - len, len))
+            }
+            if (memcmp(m, refname + reflen - len, len) != 0)
+            {
                 continue;
+            }
             if (len == reflen)
+            {
                 goto match;
+            }
             if (refname[reflen - len - 1] == '/')
+            {
                 goto match;
+            }
         }
         return 0;
     }
@@ -143,22 +164,32 @@ static int cmd_show_ref__exclude_existing(const struct exclude_existing_options 
         int   len = strlen(buf);
 
         if (len > 0 && buf[len - 1] == '\n')
+        {
             buf[--len] = '\0';
+        }
         if (3 <= len && !strcmp(buf + len - 3, "^{}"))
         {
             len -= 3;
             buf[len] = '\0';
         }
         for (ref = buf + len; buf < ref; ref--)
+        {
             if (isspace(ref[-1]))
+            {
                 break;
+            }
+        }
         if (opts->pattern)
         {
             int reflen = buf + len - ref;
             if (reflen < patternlen)
+            {
                 continue;
-            if (strncmp(ref, opts->pattern, patternlen))
+            }
+            if (strncmp(ref, opts->pattern, patternlen) != 0)
+            {
                 continue;
+            }
         }
         if (check_refname_format(ref, 0))
         {
@@ -179,7 +210,9 @@ static int cmd_show_ref__verify(const struct show_one_options *show_one_opts,
                                 const char                   **refs)
 {
     if (!refs || !*refs)
+    {
         die("--verify requires a reference");
+    }
 
     while (*refs)
     {
@@ -190,9 +223,13 @@ static int cmd_show_ref__verify(const struct show_one_options *show_one_opts,
             show_one(show_one_opts, *refs, &oid);
         }
         else if (!show_one_opts->quiet)
+        {
             die("'%s' - not a valid ref", *refs);
+        }
         else
+        {
             return 1;
+        }
         refs++;
     }
 
@@ -216,21 +253,29 @@ static int cmd_show_ref__patterns(const struct patterns_options *opts,
     };
 
     if (patterns && *patterns)
+    {
         show_ref_data.patterns = patterns;
+    }
 
     if (opts->show_head)
+    {
         refs_head_ref(get_main_ref_store(the_repository), show_ref,
                       &show_ref_data);
+    }
     if (opts->branches_only || opts->tags_only)
     {
         if (opts->branches_only)
+        {
             refs_for_each_fullref_in(get_main_ref_store(the_repository),
                                      "refs/heads/", NULL,
                                      show_ref, &show_ref_data);
+        }
         if (opts->tags_only)
+        {
             refs_for_each_fullref_in(get_main_ref_store(the_repository),
                                      "refs/tags/", NULL, show_ref,
                                      &show_ref_data);
+        }
     }
     else
     {
@@ -238,7 +283,9 @@ static int cmd_show_ref__patterns(const struct patterns_options *opts,
                           show_ref, &show_ref_data);
     }
     if (!show_ref_data.found_match)
+    {
         return 1;
+    }
 
     return 0;
 }
@@ -253,10 +300,14 @@ static int cmd_show_ref__exists(const char **refs)
     int              ret = 0;
 
     if (!refs || !*refs)
+    {
         die("--exists requires a reference");
+    }
     ref = *refs++;
     if (*refs)
+    {
         die("--exists requires exactly one reference");
+    }
 
     if (refs_read_raw_ref(get_main_ref_store(the_repository), ref,
                           &unused_oid, &unused_referent, &unused_type,
@@ -290,7 +341,9 @@ static int hash_callback(const struct option *opt, const char *arg, int unset)
     opts->hash_only = 1;
     /* Use full length SHA1 if no argument */
     if (!arg)
+    {
         return 0;
+    }
 
     abbrev_opt.value = &opts->abbrev;
     return parse_opt_abbrev_cb(&abbrev_opt, arg, unset);
@@ -311,31 +364,32 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
     struct exclude_existing_options exclude_existing_opts = {0};
     struct patterns_options         patterns_opts         = {0};
     struct show_one_options         show_one_opts         = {0};
-    int                             verify = 0, exists = 0;
-    const struct option             show_ref_options[] = {
-                    OPT_BOOL(0, "tags", &patterns_opts.tags_only, N_("only show tags (can be combined with --branches)")),
-                    OPT_BOOL(0, "branches", &patterns_opts.branches_only, N_("only show branches (can be combined with --tags)")),
-                    OPT_HIDDEN_BOOL(0, "heads", &patterns_opts.branches_only,
-                                    N_("deprecated synonym for --branches")),
-                    OPT_BOOL(0, "exists", &exists, N_("check for reference existence without resolving")),
-                    OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
-                                                                  "requires exact ref path")),
-                    OPT_HIDDEN_BOOL('h', NULL, &patterns_opts.show_head,
-                                    N_("show the HEAD reference, even if it would be filtered out")),
-                    OPT_BOOL(0, "head", &patterns_opts.show_head,
-                             N_("show the HEAD reference, even if it would be filtered out")),
-                    OPT_BOOL('d', "dereference", &show_one_opts.deref_tags,
-                             N_("dereference tags into object IDs")),
-                    OPT_CALLBACK_F('s', "hash", &show_one_opts, N_("n"),
-                                   N_("only show SHA1 hash using <n> digits"),
-                                   PARSE_OPT_OPTARG, &hash_callback),
-                    OPT__ABBREV(&show_one_opts.abbrev),
-                    OPT__QUIET(&show_one_opts.quiet,
-                               N_("do not print results to stdout (useful with --verify)")),
-                    OPT_CALLBACK_F(0, "exclude-existing", &exclude_existing_opts,
-                                   N_("pattern"), N_("show refs from stdin that aren't in local repository"),
-                                   PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback),
-                    OPT_END()};
+    int                             verify                = 0;
+    int                             exists                = 0;
+    const struct option             show_ref_options[]    = {
+                       OPT_BOOL(0, "tags", &patterns_opts.tags_only, N_("only show tags (can be combined with --branches)")),
+                       OPT_BOOL(0, "branches", &patterns_opts.branches_only, N_("only show branches (can be combined with --tags)")),
+                       OPT_HIDDEN_BOOL(0, "heads", &patterns_opts.branches_only,
+                                       N_("deprecated synonym for --branches")),
+                       OPT_BOOL(0, "exists", &exists, N_("check for reference existence without resolving")),
+                       OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
+                                                                        "requires exact ref path")),
+                       OPT_HIDDEN_BOOL('h', NULL, &patterns_opts.show_head,
+                                       N_("show the HEAD reference, even if it would be filtered out")),
+                       OPT_BOOL(0, "head", &patterns_opts.show_head,
+                                N_("show the HEAD reference, even if it would be filtered out")),
+                       OPT_BOOL('d', "dereference", &show_one_opts.deref_tags,
+                                N_("dereference tags into object IDs")),
+                       OPT_CALLBACK_F('s', "hash", &show_one_opts, N_("n"),
+                                      N_("only show SHA1 hash using <n> digits"),
+                                      PARSE_OPT_OPTARG, &hash_callback),
+                       OPT__ABBREV(&show_one_opts.abbrev),
+                       OPT__QUIET(&show_one_opts.quiet,
+                                  N_("do not print results to stdout (useful with --verify)")),
+                       OPT_CALLBACK_F(0, "exclude-existing", &exclude_existing_opts,
+                                      N_("pattern"), N_("show refs from stdin that aren't in local repository"),
+                                      PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback),
+                       OPT_END()};
 
     git_config(git_default_config, NULL);
 
@@ -347,8 +401,10 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
                               exists, "--exists");
 
     if (exclude_existing_opts.enabled)
+    {
         return cmd_show_ref__exclude_existing(&exclude_existing_opts);
-    else if (verify)
+    }
+    if (verify)
         return cmd_show_ref__verify(&show_one_opts, argv);
     else if (exists)
         return cmd_show_ref__exists(argv);

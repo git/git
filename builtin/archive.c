@@ -16,9 +16,13 @@ static void create_output_file(const char *output_file)
     if (output_fd != 1)
     {
         if (dup2(output_fd, 1) < 0)
+        {
             die_errno(_("could not redirect output"));
+        }
         else
+        {
             close(output_fd);
+        }
     }
 }
 
@@ -26,7 +30,9 @@ static int run_remote_archiver(int argc, const char **argv,
                                const char *remote, const char *exec,
                                const char *name_hint)
 {
-    int                  fd[2], i, rv;
+    int                  fd[2];
+    int                  i;
+    int                  rv;
     struct transport    *transport;
     struct remote       *_remote;
     struct packet_reader reader;
@@ -45,26 +51,36 @@ static int run_remote_archiver(int argc, const char **argv,
     {
         const char *format = archive_format_from_filename(name_hint);
         if (format)
+        {
             packet_write_fmt(fd[1], "argument --format=%s\n", format);
+        }
     }
     for (i = 1; i < argc; i++)
+    {
         packet_write_fmt(fd[1], "argument %s\n", argv[i]);
+    }
     packet_flush(fd[1]);
 
     packet_reader_init(&reader, fd[0], NULL, 0,
                        PACKET_READ_CHOMP_NEWLINE | PACKET_READ_DIE_ON_ERR_PACKET);
 
     if (packet_reader_read(&reader) != PACKET_READ_NORMAL)
+    {
         die(_("git archive: expected ACK/NAK, got a flush packet"));
-    if (strcmp(reader.line, "ACK"))
+    }
+    if (strcmp(reader.line, "ACK") != 0)
     {
         if (starts_with(reader.line, "NACK "))
+        {
             die(_("git archive: NACK %s"), reader.line + 5);
+        }
         die(_("git archive: protocol error"));
     }
 
     if (packet_reader_read(&reader) != PACKET_READ_FLUSH)
+    {
         die(_("git archive: expected a flush"));
+    }
 
     /* Now, start reading from fd[0] and spit it out to stdout */
     rv = recv_sideband("archive", fd[0], 1);
@@ -96,10 +112,14 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
     init_archivers();
 
     if (output)
+    {
         create_output_file(output);
+    }
 
     if (remote)
+    {
         return run_remote_archiver(argc, argv, remote, exec, output);
+    }
 
     setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 

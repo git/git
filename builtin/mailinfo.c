@@ -45,7 +45,9 @@ static int parse_opt_quoted_cr(const struct option *opt, const char *arg, int un
     BUG_ON_OPT_NEG(unset);
 
     if (mailinfo_parse_quoted_cr_action(arg, opt->value) != 0)
+    {
         return error(_("bad action '%s' for '%s'"), arg, "--quoted-cr");
+    }
     return 0;
 }
 
@@ -54,7 +56,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
     struct metainfo_charset meta_charset;
     struct mailinfo         mi;
     int                     status;
-    char                   *msgfile, *patchfile;
+    char                   *msgfile;
+    char                   *patchfile;
 
     struct option options[] = {
         OPT_BOOL('k', NULL, &mi.keep_subject, N_("keep subject")),
@@ -85,7 +88,9 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, mailinfo_usage, 0);
 
     if (argc != 2)
+    {
         usage_with_options(mailinfo_usage, options);
+    }
 
     switch (meta_charset.policy)
     {

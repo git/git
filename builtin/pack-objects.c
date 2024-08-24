@@ -52,18 +52,23 @@ static inline struct object_entry *oe_delta(
     const struct object_entry *e)
 {
     if (!e->delta_idx)
+    {
         return NULL;
+    }
     if (e->ext_base)
+    {
         return &pack->ext_bases[e->delta_idx - 1];
-    else
-        return &pack->objects[e->delta_idx - 1];
+    }
+    return &pack->objects[e->delta_idx - 1];
 }
 
 static inline unsigned long oe_delta_size(struct packing_data       *pack,
                                           const struct object_entry *e)
 {
     if (e->delta_size_valid)
+    {
         return e->delta_size_;
+    }
 
     /*
      * pack->delta_size[] can't be NULL because oe_set_delta_size()
@@ -83,7 +88,9 @@ static inline unsigned long oe_size(struct packing_data       *pack,
                                     const struct object_entry *e)
 {
     if (e->size_valid)
+    {
         return e->size_;
+    }
 
     return oe_get_size_slow(pack, e);
 }
@@ -93,9 +100,13 @@ static inline void oe_set_delta(struct packing_data *pack,
                                 struct object_entry *delta)
 {
     if (delta)
+    {
         e->delta_idx = (delta - pack->objects) + 1;
+    }
     else
+    {
         e->delta_idx = 0;
+    }
 }
 
 static inline struct object_entry *oe_delta_sibling(
@@ -103,7 +114,9 @@ static inline struct object_entry *oe_delta_sibling(
     const struct object_entry *e)
 {
     if (e->delta_sibling_idx)
+    {
         return &pack->objects[e->delta_sibling_idx - 1];
+    }
     return NULL;
 }
 
@@ -112,7 +125,9 @@ static inline struct object_entry *oe_delta_child(
     const struct object_entry *e)
 {
     if (e->delta_child_idx)
+    {
         return &pack->objects[e->delta_child_idx - 1];
+    }
     return NULL;
 }
 
@@ -121,9 +136,13 @@ static inline void oe_set_delta_child(struct packing_data *pack,
                                       struct object_entry *delta)
 {
     if (delta)
+    {
         e->delta_child_idx = (delta - pack->objects) + 1;
+    }
     else
+    {
         e->delta_child_idx = 0;
+    }
 }
 
 static inline void oe_set_delta_sibling(struct packing_data *pack,
@@ -131,9 +150,13 @@ static inline void oe_set_delta_sibling(struct packing_data *pack,
                                         struct object_entry *delta)
 {
     if (delta)
+    {
         e->delta_sibling_idx = (delta - pack->objects) + 1;
+    }
     else
+    {
         e->delta_sibling_idx = 0;
+    }
 }
 
 static inline void oe_set_size(struct packing_data *pack,
@@ -149,7 +172,9 @@ static inline void oe_set_size(struct packing_data *pack,
     {
         e->size_valid = 0;
         if (oe_get_size_slow(pack, e) != size)
+        {
             BUG("'size' is supposed to be the object size!");
+        }
     }
 }
 
@@ -166,7 +191,9 @@ static inline void oe_set_delta_size(struct packing_data *pack,
     {
         packing_data_lock(pack);
         if (!pack->delta_size)
+        {
             ALLOC_ARRAY(pack->delta_size, pack->nr_alloc);
+        }
         packing_data_unlock(pack);
 
         pack->delta_size[e - pack->objects] = size;
@@ -302,20 +329,28 @@ static void index_commit_for_bitmap(struct commit *commit)
 
 static void *get_delta(struct object_entry *entry)
 {
-    unsigned long    size, base_size, delta_size;
-    void            *buf, *base_buf, *delta_buf;
+    unsigned long    size;
+    unsigned long    base_size;
+    unsigned long    delta_size;
+    void            *buf;
+    void            *base_buf;
+    void            *delta_buf;
     enum object_type type;
 
     buf = repo_read_object_file(the_repository, &entry->idx.oid, &type,
                                 &size);
     if (!buf)
+    {
         die(_("unable to read %s"), oid_to_hex(&entry->idx.oid));
+    }
     base_buf = repo_read_object_file(the_repository,
                                      &DELTA(entry)->idx.oid, &type,
                                      &base_size);
     if (!base_buf)
+    {
         die("unable to read %s",
             oid_to_hex(&DELTA(entry)->idx.oid));
+    }
     delta_buf = diff_delta(base_buf, base_size,
                            buf, size, &delta_size, 0);
     /*
@@ -324,7 +359,9 @@ static void *get_delta(struct object_entry *entry)
      * recompute and create a different delta.
      */
     if (!delta_buf || delta_size != DELTA_SIZE(entry))
+    {
         BUG("delta size changed");
+    }
     free(buf);
     free(base_buf);
     return delta_buf;
@@ -333,7 +370,8 @@ static void *get_delta(struct object_entry *entry)
 static unsigned long do_compress(void **pptr, unsigned long size)
 {
     git_zstream   stream;
-    void         *in, *out;
+    void         *in;
+    void         *out;
     unsigned long maxsize;
 
     git_deflate_init(&stream, pack_compression_level);
@@ -348,7 +386,9 @@ static unsigned long do_compress(void **pptr, unsigned long size)
     stream.next_out  = out;
     stream.avail_out = maxsize;
     while (git_deflate(&stream, Z_FINISH) == Z_OK)
+    {
         ; /* nothing */
+    }
     git_deflate_end(&stream);
 
     free(in);
@@ -371,7 +411,9 @@ static unsigned long write_large_blob_data(struct git_istream *st, struct hashfi
         int     zret = Z_OK;
         readlen      = read_istream(st, ibuf, sizeof(ibuf));
         if (readlen == -1)
+        {
             die(_("unable to read %s"), oid_to_hex(oid));
+        }
 
         stream.next_in  = ibuf;
         stream.avail_in = readlen;
@@ -384,11 +426,15 @@ static unsigned long write_large_blob_data(struct git_istream *st, struct hashfi
             olen += stream.next_out - obuf;
         }
         if (stream.avail_in)
+        {
             die(_("deflate error (%d)"), zret);
+        }
         if (readlen == 0)
         {
             if (zret != Z_STREAM_END)
+            {
                 die(_("deflate error (%d)"), zret);
+            }
             break;
         }
     }
@@ -406,9 +452,10 @@ static int check_pack_inflate(struct packed_git   *p,
                               off_t                len,
                               unsigned long        expect)
 {
-    git_zstream   stream;
-    unsigned char fakebuf[4096], *in;
-    int           st;
+    git_zstream    stream;
+    unsigned char  fakebuf[4096];
+    unsigned char *in;
+    int            st;
 
     memset(&stream, 0, sizeof(stream));
     git_inflate_init(&stream);
@@ -438,7 +485,9 @@ static void copy_pack_data(struct hashfile     *f,
     {
         in = use_pack(p, w_curs, offset, &avail);
         if (avail > len)
+        {
             avail = (unsigned long)len;
+        }
         hashwrite(f, in, avail);
         offset += avail;
         len -= avail;
@@ -450,9 +499,13 @@ static inline int oe_size_greater_than(struct packing_data       *pack,
                                        unsigned long              rhs)
 {
     if (lhs->size_valid)
+    {
         return lhs->size_ > rhs;
-    if (rhs < pack->oe_size_limit) /* rhs < 2^x <= lhs ? */
+    }
+    if (rhs < pack->oe_size_limit)
+    { /* rhs < 2^x <= lhs ? */
         return 1;
+    }
     return oe_get_size_slow(pack, lhs) > rhs;
 }
 
@@ -460,9 +513,10 @@ static inline int oe_size_greater_than(struct packing_data       *pack,
 static unsigned long write_no_reuse_object(struct hashfile *f, struct object_entry *entry,
                                            unsigned long limit, int usable_delta)
 {
-    unsigned long size, datalen;
-    unsigned char header[MAX_PACK_OBJECT_HEADER],
-        dheader[MAX_PACK_OBJECT_HEADER];
+    unsigned long       size;
+    unsigned long       datalen;
+    unsigned char       header[MAX_PACK_OBJECT_HEADER];
+    unsigned char       dheader[MAX_PACK_OBJECT_HEADER];
     unsigned            hdrlen;
     enum object_type    type;
     void               *buf;
@@ -472,15 +526,19 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
     if (!usable_delta)
     {
         if (oe_type(entry) == OBJ_BLOB && oe_size_greater_than(&to_pack, entry, big_file_threshold) && (st = open_istream(the_repository, &entry->idx.oid, &type, &size, NULL)) != NULL)
+        {
             buf = NULL;
+        }
         else
         {
             buf = repo_read_object_file(the_repository,
                                         &entry->idx.oid, &type,
                                         &size);
             if (!buf)
+            {
                 die(_("unable to read %s"),
                     oid_to_hex(&entry->idx.oid));
+            }
         }
         /*
          * make sure no cached delta data remains from a
@@ -503,12 +561,18 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
         type = (allow_ofs_delta && DELTA(entry)->idx.offset) ? OBJ_OFS_DELTA : OBJ_REF_DELTA;
     }
 
-    if (st) /* large blob case, just assume we don't compress well */
+    if (st)
+    { /* large blob case, just assume we don't compress well */
         datalen = size;
+    }
     else if (entry->z_delta_size)
+    {
         datalen = entry->z_delta_size;
+    }
     else
+    {
         datalen = do_compress(&buf, size);
+    }
 
     /*
      * The object header is a byte of 'type' followed by zero or
@@ -528,11 +592,15 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
         unsigned pos = sizeof(dheader) - 1;
         dheader[pos] = ofs & 127;
         while (ofs >>= 7)
+        {
             dheader[--pos] = 128 | (--ofs & 127);
+        }
         if (limit && hdrlen + sizeof(dheader) - pos + datalen + hashsz >= limit)
         {
             if (st)
+            {
                 close_istream(st);
+            }
             free(buf);
             return 0;
         }
@@ -549,7 +617,9 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
         if (limit && hdrlen + hashsz + datalen + hashsz >= limit)
         {
             if (st)
+            {
                 close_istream(st);
+            }
             free(buf);
             return 0;
         }
@@ -562,7 +632,9 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
         if (limit && hdrlen + datalen + hashsz >= limit)
         {
             if (st)
+            {
                 close_istream(st);
+            }
             free(buf);
             return 0;
         }
@@ -592,23 +664,27 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
     off_t               offset;
     enum object_type    type = oe_type(entry);
     off_t               datalen;
-    unsigned char       header[MAX_PACK_OBJECT_HEADER],
-        dheader[MAX_PACK_OBJECT_HEADER];
-    unsigned       hdrlen;
-    const unsigned hashsz     = the_hash_algo->rawsz;
-    unsigned long  entry_size = SIZE(entry);
+    unsigned char       header[MAX_PACK_OBJECT_HEADER];
+    unsigned char       dheader[MAX_PACK_OBJECT_HEADER];
+    unsigned            hdrlen;
+    const unsigned      hashsz     = the_hash_algo->rawsz;
+    unsigned long       entry_size = SIZE(entry);
 
     if (DELTA(entry))
+    {
         type = (allow_ofs_delta && DELTA(entry)->idx.offset) ? OBJ_OFS_DELTA : OBJ_REF_DELTA;
+    }
     hdrlen = encode_in_pack_object_header(header, sizeof(header),
                                           type, entry_size);
 
     offset = entry->in_pack_offset;
     if (offset_to_pack_pos(p, offset, &pos) < 0)
+    {
         die(_("write_reuse_object: could not locate %s, expected at "
               "offset %" PRIuMAX " in pack %s"),
             oid_to_hex(&entry->idx.oid), (uintmax_t)offset,
             p->pack_name);
+    }
     datalen = pack_pos_to_offset(p, pos + 1) - offset;
     if (!pack_to_stdout && p->index_version > 1 && check_pack_crc(p, &w_curs, offset, datalen, pack_pos_to_index(p, pos)))
     {
@@ -635,7 +711,9 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
         unsigned pos = sizeof(dheader) - 1;
         dheader[pos] = ofs & 127;
         while (ofs >>= 7)
+        {
             dheader[--pos] = 128 | (--ofs & 127);
+        }
         if (limit && hdrlen + sizeof(dheader) - pos + datalen + hashsz >= limit)
         {
             unuse_pack(&w_curs);
@@ -680,63 +758,104 @@ static off_t write_object(struct hashfile     *f,
 {
     unsigned long limit;
     off_t         len;
-    int           usable_delta, to_reuse;
+    int           usable_delta;
+    int           to_reuse;
 
     if (!pack_to_stdout)
+    {
         crc32_begin(f);
+    }
 
     /* apply size limit if limited packsize and not first object */
     if (!pack_size_limit || !nr_written)
+    {
         limit = 0;
+    }
     else if (pack_size_limit <= write_offset)
+    {
         /*
          * the earlier object did not fit the limit; avoid
          * mistaking this with unlimited (i.e. limit = 0).
          */
         limit = 1;
+    }
     else
+    {
         limit = pack_size_limit - write_offset;
+    }
 
     if (!DELTA(entry))
+    {
         usable_delta = 0; /* no delta */
+    }
     else if (!pack_size_limit)
+    {
         usable_delta = 1; /* unlimited packfile */
+    }
     else if (DELTA(entry)->idx.offset == (off_t)-1)
+    {
         usable_delta = 0; /* base was written to another pack */
+    }
     else if (DELTA(entry)->idx.offset)
+    {
         usable_delta = 1; /* base already exists in this pack */
+    }
     else
+    {
         usable_delta = 0; /* base could end up in another pack */
+    }
 
     if (!reuse_object)
+    {
         to_reuse = 0; /* explicit */
+    }
     else if (!IN_PACK(entry))
+    {
         to_reuse = 0; /* can't reuse what we don't have */
+    }
     else if (oe_type(entry) == OBJ_REF_DELTA || oe_type(entry) == OBJ_OFS_DELTA)
+    {
         /* check_object() decided it for us ... */
         to_reuse = usable_delta;
-    /* ... but pack split may override that */
+        /* ... but pack split may override that */
+    }
     else if (oe_type(entry) != entry->in_pack_type)
+    {
         to_reuse = 0; /* pack has delta which is unusable */
+    }
     else if (DELTA(entry))
+    {
         to_reuse = 0; /* we want to pack afresh */
+    }
     else
-        to_reuse = 1; /* we have it in-pack undeltified,
-                       * and we do not need to deltify it.
-                       */
+    {
+        to_reuse = 1;
+    } /* we have it in-pack undeltified,
+       * and we do not need to deltify it.
+       */
 
     if (!to_reuse)
+    {
         len = write_no_reuse_object(f, entry, limit, usable_delta);
+    }
     else
+    {
         len = write_reuse_object(f, entry, limit, usable_delta);
+    }
     if (!len)
+    {
         return 0;
+    }
 
     if (usable_delta)
+    {
         written_delta++;
+    }
     written++;
     if (!pack_to_stdout)
+    {
         entry->idx.crc32 = crc32_end(f);
+    }
     return len;
 }
 
@@ -767,7 +886,7 @@ static enum write_one_status write_one(struct hashfile     *f,
                 oid_to_hex(&e->idx.oid));
         return WRITE_ONE_RECURSIVE;
     }
-    else if (e->idx.offset || e->preferred_base)
+    if (e->idx.offset || e->preferred_base)
     {
         /* offset is non zero if object is written already. */
         return WRITE_ONE_SKIP;
@@ -802,7 +921,9 @@ static enum write_one_status write_one(struct hashfile     *f,
 
     /* make sure off_t is sufficiently large not to wrap */
     if (signed_add_overflows(*offset, size))
+    {
         die(_("pack too large for current definition of off_t"));
+    }
     *offset += size;
     return WRITE_ONE_WRITTEN;
 }
@@ -814,12 +935,16 @@ static int mark_tagged(const char *path UNUSED, const char *referent UNUSED, con
     struct object_entry *entry = packlist_find(&to_pack, oid);
 
     if (entry)
+    {
         entry->tagged = 1;
+    }
     if (!peel_iterated_oid(the_repository, oid, &peeled))
     {
         entry = packlist_find(&to_pack, &peeled);
         if (entry)
+        {
             entry->tagged = 1;
+        }
     }
     return 0;
 }
@@ -828,7 +953,9 @@ static inline unsigned char oe_layer(struct packing_data *pack,
                                      struct object_entry *e)
 {
     if (!pack->layer)
+    {
         return 0;
+    }
     return pack->layer[e - pack->objects];
 }
 
@@ -837,7 +964,9 @@ static inline void add_to_write_order(struct object_entry **wo,
                                       struct object_entry  *e)
 {
     if (e->filled || oe_layer(&to_pack, e) != write_layer)
+    {
         return;
+    }
     wo[(*endp)++] = e;
     e->filled     = 1;
 }
@@ -901,19 +1030,24 @@ static void add_family_to_write_order(struct object_entry **wo,
     struct object_entry *root;
 
     for (root = e; DELTA(root); root = DELTA(root))
+    {
         ; /* nothing */
+    }
     add_descendants_to_write_order(wo, endp, root);
 }
 
 static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
 {
-    unsigned int         i, last_untagged;
+    unsigned int         i;
+    unsigned int         last_untagged;
     struct object_entry *objects = to_pack.objects;
 
     for (i = 0; i < to_pack.nr_objects; i++)
     {
         if (objects[i].tagged)
+        {
             break;
+        }
         add_to_write_order(wo, wo_end, &objects[i]);
     }
     last_untagged = i;
@@ -924,7 +1058,9 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
     for (; i < to_pack.nr_objects; i++)
     {
         if (objects[i].tagged)
+        {
             add_to_write_order(wo, wo_end, &objects[i]);
+        }
     }
 
     /*
@@ -933,7 +1069,9 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
     for (i = last_untagged; i < to_pack.nr_objects; i++)
     {
         if (oe_type(&objects[i]) != OBJ_COMMIT && oe_type(&objects[i]) != OBJ_TAG)
+        {
             continue;
+        }
         add_to_write_order(wo, wo_end, &objects[i]);
     }
 
@@ -943,7 +1081,9 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
     for (i = last_untagged; i < to_pack.nr_objects; i++)
     {
         if (oe_type(&objects[i]) != OBJ_TREE)
+        {
             continue;
+        }
         add_to_write_order(wo, wo_end, &objects[i]);
     }
 
@@ -953,14 +1093,17 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
     for (i = last_untagged; i < to_pack.nr_objects; i++)
     {
         if (!objects[i].filled && oe_layer(&to_pack, &objects[i]) == write_layer)
+        {
             add_family_to_write_order(wo, wo_end, &objects[i]);
+        }
     }
 }
 
 static struct object_entry **compute_write_order(void)
 {
     uint32_t     max_layers = 1;
-    unsigned int i, wo_end;
+    unsigned int i;
+    unsigned int wo_end;
 
     struct object_entry **wo;
     struct object_entry  *objects = to_pack.objects;
@@ -982,7 +1125,9 @@ static struct object_entry **compute_write_order(void)
     {
         struct object_entry *e = &objects[--i];
         if (!DELTA(e))
+        {
             continue;
+        }
         /* Mark me as the first child */
         e->delta_sibling_idx = DELTA(e)->delta_child_idx;
         SET_DELTA_CHILD(DELTA(e), e);
@@ -1004,11 +1149,15 @@ static struct object_entry **compute_write_order(void)
     wo_end = 0;
 
     for (; write_layer < max_layers; ++write_layer)
+    {
         compute_layer_order(wo, &wo_end);
+    }
 
     if (wo_end != to_pack.nr_objects)
+    {
         die(_("ordered %u objects, expected %" PRIu32),
             wo_end, to_pack.nr_objects);
+    }
 
     return wo;
 }
@@ -1034,7 +1183,9 @@ static int reused_chunks_alloc;
 static void record_reused_object(off_t where, off_t offset)
 {
     if (reused_chunks_nr && reused_chunks[reused_chunks_nr - 1].difference == offset)
+    {
         return;
+    }
 
     ALLOC_GROW(reused_chunks, reused_chunks_nr + 1,
                reused_chunks_alloc);
@@ -1051,16 +1202,23 @@ static void record_reused_object(off_t where, off_t offset)
  */
 static off_t find_reused_offset(off_t where)
 {
-    int lo = 0, hi = reused_chunks_nr;
+    int lo = 0;
+    int hi = reused_chunks_nr;
     while (lo < hi)
     {
         int mi = lo + ((hi - lo) / 2);
         if (where == reused_chunks[mi].original)
+        {
             return reused_chunks[mi].difference;
+        }
         if (where < reused_chunks[mi].original)
+        {
             hi = mi;
+        }
         else
+        {
             lo = mi + 1;
+        }
     }
 
     /*
@@ -1076,7 +1234,9 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
                                   off_t                pack_start,
                                   struct pack_window **w_curs)
 {
-    off_t            offset, next, cur;
+    off_t            offset;
+    off_t            next;
+    off_t            cur;
     enum object_type type;
     unsigned long    size;
 
@@ -1108,10 +1268,12 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
             struct object_id base_oid;
 
             if (offset_to_pack_pos(reuse_packfile, base_offset, &base_pos) < 0)
+            {
                 die(_("expected object at offset %" PRIuMAX " "
                       "in pack %s"),
                     (uintmax_t)base_offset,
                     reuse_packfile->pack_name);
+            }
 
             nth_packed_object_id(&base_oid, reuse_packfile,
                                  pack_pos_to_index(reuse_packfile, base_pos));
@@ -1129,7 +1291,8 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
         if (fixup)
         {
             unsigned char ofs_header[10];
-            unsigned      i, ofs_len;
+            unsigned      i;
+            unsigned      ofs_len;
             off_t         ofs = offset - base_offset - fixup;
 
             len = encode_in_pack_object_header(header, sizeof(header),
@@ -1138,7 +1301,9 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
             i             = sizeof(ofs_header) - 1;
             ofs_header[i] = ofs & 127;
             while (ofs >>= 7)
+            {
                 ofs_header[--i] = 128 | (--ofs & 127);
+            }
 
             ofs_len = sizeof(ofs_header) - i;
 
@@ -1170,17 +1335,25 @@ static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
         eword_t word = reuse_packfile_bitmap->words[word_pos];
 
         if (offset + reuse_packfile->bitmap_nr < BITS_IN_EWORD)
+        {
             last = offset + reuse_packfile->bitmap_nr;
+        }
         else
+        {
             last = BITS_IN_EWORD;
+        }
 
         for (; offset < last; offset++)
         {
             if (word >> offset == 0)
+            {
                 return word_pos;
+            }
             if (!bitmap_get(reuse_packfile_bitmap,
                             word_pos * BITS_IN_EWORD + offset))
+            {
                 return word_pos;
+            }
         }
 
         pos += BITS_IN_EWORD - (pos % BITS_IN_EWORD);
@@ -1199,15 +1372,23 @@ static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
      */
     end = reuse_packfile->bitmap_pos + reuse_packfile->bitmap_nr;
     if (end % BITS_IN_EWORD)
+    {
         end -= end % BITS_IN_EWORD;
+    }
     if (pos >= end)
+    {
         return reuse_packfile->bitmap_pos / BITS_IN_EWORD;
+    }
 
     while (pos < end && reuse_packfile_bitmap->words[pos / BITS_IN_EWORD] == (eword_t)~0)
+    {
         pos += BITS_IN_EWORD;
+    }
 
     if (pos > end)
+    {
         pos = end;
+    }
 
     if (reuse_packfile->bitmap_pos < pos)
     {
@@ -1227,8 +1408,10 @@ static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
         display_progress(progress_state, written);
     }
     if (pos % BITS_IN_EWORD)
+    {
         BUG("attempted to jump past a word boundary to %" PRIuMAX,
             (uintmax_t)pos);
+    }
     return pos / BITS_IN_EWORD;
 }
 
@@ -1241,8 +1424,10 @@ static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
     struct pack_window *w_curs     = NULL;
 
     if (allow_ofs_delta)
+    {
         i = write_reused_pack_verbatim(reuse_packfile, f, pack_start,
                                        &w_curs);
+    }
 
     for (; i < reuse_packfile_bitmap->word_alloc; ++i)
     {
@@ -1252,13 +1437,19 @@ static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
         for (offset = 0; offset < BITS_IN_EWORD; ++offset)
         {
             if ((word >> offset) == 0)
+            {
                 break;
+            }
 
             offset += ewah_bit_ctz64(word >> offset);
             if (pos + offset < reuse_packfile->bitmap_pos)
+            {
                 continue;
+            }
             if (pos + offset >= reuse_packfile->bitmap_pos + reuse_packfile->bitmap_nr)
+            {
                 goto done;
+            }
             /*
              * Can use bit positions directly, even for MIDX
              * bitmaps. See comment in try_partial_reuse()
@@ -1287,7 +1478,9 @@ static void write_excluded_by_configs(void)
             oidmap_get(&configured_exclusions, oid);
 
         if (!ex)
+        {
             BUG("configured exclusion wasn't configured");
+        }
         write_in_full(1, ex->pack_hash_hex, strlen(ex->pack_hash_hex));
         write_in_full(1, " ", 1);
         write_in_full(1, ex->uri, strlen(ex->uri));
@@ -1300,7 +1493,8 @@ static const char no_split_warning[] = N_(
 
 static void write_pack_file(void)
 {
-    uint32_t              i = 0, j;
+    uint32_t              i = 0;
+    uint32_t              j;
     struct hashfile      *f;
     off_t                 offset;
     uint32_t              nr_remaining = nr_result;
@@ -1308,7 +1502,9 @@ static void write_pack_file(void)
     struct object_entry **write_order;
 
     if (progress > pack_to_stdout)
+    {
         progress_state = start_progress(_("Writing objects"), nr_result);
+    }
     ALLOC_ARRAY(written_list, to_pack.nr_objects);
     write_order = compute_write_order();
 
@@ -1318,9 +1514,13 @@ static void write_pack_file(void)
         char         *pack_tmp_name = NULL;
 
         if (pack_to_stdout)
+        {
             f = hashfd_throughput(1, "<stdout>", progress_state);
+        }
         else
+        {
             f = create_tmp_packfile(&pack_tmp_name);
+        }
 
         offset = write_pack_header(f, nr_remaining);
 
@@ -1332,7 +1532,9 @@ static void write_pack_file(void)
                 reused_chunks_nr = 0;
                 write_reused_pack(&reuse_packfiles[j], f);
                 if (reused_chunks_nr)
+                {
                     reuse_packfiles_used_nr++;
+                }
             }
             offset = hashfile_total(f);
         }
@@ -1342,7 +1544,9 @@ static void write_pack_file(void)
         {
             struct object_entry *e = write_order[i];
             if (write_one(f, e, &offset) == WRITE_ONE_BREAK)
+            {
                 break;
+            }
             display_progress(progress_state, written);
         }
 
@@ -1377,7 +1581,9 @@ static void write_pack_file(void)
             if (write_bitmap_index)
             {
                 if (write_bitmap_index != WRITE_BITMAP_QUIET)
+                {
                     warning(_(no_split_warning));
+                }
                 write_bitmap_index = 0;
             }
         }
@@ -1410,7 +1616,9 @@ static void write_pack_file(void)
                 utb.actime  = st.st_atime;
                 utb.modtime = --last_mtime;
                 if (utime(pack_tmp_name, &utb) < 0)
+                {
                     warning_errno(_("failed utime() on %s"), pack_tmp_name);
+                }
             }
 
             strbuf_addf(&tmpname, "%s-%s.", base_name,
@@ -1426,7 +1634,9 @@ static void write_pack_file(void)
             }
 
             if (cruft)
+            {
                 pack_idx_opts.flags |= WRITE_MTIMES;
+            }
 
             stage_tmp_packfiles(&tmpname, pack_tmp_name,
                                 written_list, nr_written,
@@ -1446,7 +1656,9 @@ static void write_pack_file(void)
                                              indexed_commits,
                                              indexed_commits_nr);
                 if (bitmap_writer_build(&bitmap_writer, &to_pack) < 0)
+                {
                     die(_("failed to write bitmap index"));
+                }
                 bitmap_writer_finish(&bitmap_writer,
                                      written_list, nr_written,
                                      tmpname.buf, write_bitmap_options);
@@ -1475,8 +1687,10 @@ static void write_pack_file(void)
     free(write_order);
     stop_progress(&progress_state);
     if (written != nr_result)
+    {
         die(_("wrote %" PRIu32 " objects while expecting %" PRIu32),
             written, nr_result);
+    }
     trace2_data_intmax("pack-objects", the_repository,
                        "write_pack_file/wrote", nr_result);
 }
@@ -1486,10 +1700,14 @@ static int no_try_delta(const char *path)
     static struct attr_check *check;
 
     if (!check)
+    {
         check = attr_check_initl("delta", NULL);
+    }
     git_check_attr(the_repository->index, path, check);
     if (ATTR_FALSE(check->items[0].value))
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -1509,16 +1727,22 @@ static int have_duplicate_entry(const struct object_id *oid,
     struct object_entry *entry;
 
     if (reuse_packfile_bitmap && bitmap_walk_contains(bitmap_git, reuse_packfile_bitmap, oid))
+    {
         return 1;
+    }
 
     entry = packlist_find(&to_pack, oid);
     if (!entry)
+    {
         return 0;
+    }
 
     if (exclude)
     {
         if (!entry->preferred_base)
+        {
             nr_result--;
+        }
         entry->preferred_base = 1;
     }
 
@@ -1529,12 +1753,18 @@ static int want_found_object(const struct object_id *oid, int exclude,
                              struct packed_git *p)
 {
     if (exclude)
+    {
         return 1;
+    }
     if (incremental)
+    {
         return 0;
+    }
 
     if (!is_pack_valid(p))
+    {
         return -1;
+    }
 
     /*
      * When asked to do --local (do not include an object that appears in a
@@ -1556,7 +1786,9 @@ static int want_found_object(const struct object_id *oid, int exclude,
      * if they appear in other packs that weren't borrowed.
      */
     if (local && !p->pack_local)
+    {
         return 0;
+    }
 
     /*
      * Then handle .keep first, as we have a fast(er) path there.
@@ -1573,16 +1805,26 @@ static int want_found_object(const struct object_id *oid, int exclude,
          */
         unsigned flags = 0;
         if (ignore_packed_keep_on_disk)
+        {
             flags |= ON_DISK_KEEP_PACKS;
+        }
         if (ignore_packed_keep_in_core)
+        {
             flags |= IN_CORE_KEEP_PACKS;
+        }
 
         if (ignore_packed_keep_on_disk && p->pack_keep)
+        {
             return 0;
+        }
         if (ignore_packed_keep_in_core && p->pack_keep_in_core)
+        {
             return 0;
+        }
         if (has_object_kept_pack(oid, flags))
+        {
             return 0;
+        }
     }
 
     /*
@@ -1591,7 +1833,9 @@ static int want_found_object(const struct object_id *oid, int exclude,
      * conditions...
      */
     if (!local || !have_non_local_packs)
+    {
         return 1;
+    }
 
     /* we don't know yet; keep looking for more packs */
     return -1;
@@ -1606,16 +1850,22 @@ static int want_object_in_pack_one(struct packed_git      *p,
     off_t offset;
 
     if (p == *found_pack)
+    {
         offset = *found_offset;
+    }
     else
+    {
         offset = find_pack_entry_one(oid->hash, p);
+    }
 
     if (offset)
     {
         if (!*found_pack)
         {
             if (!is_pack_valid(p))
+            {
                 return -1;
+            }
             *found_offset = offset;
             *found_pack   = p;
         }
@@ -1643,7 +1893,9 @@ static int want_object_in_pack(const struct object_id *oid,
     struct multi_pack_index *m;
 
     if (!exclude && local && has_loose_object_nonlocal(oid))
+    {
         return 0;
+    }
 
     /*
      * If we already know the pack object lives in, start checks from that
@@ -1654,7 +1906,9 @@ static int want_object_in_pack(const struct object_id *oid,
     {
         want = want_found_object(oid, exclude, *found_pack);
         if (want != -1)
+        {
             return want;
+        }
 
         *found_pack   = NULL;
         *found_offset = 0;
@@ -1667,7 +1921,9 @@ static int want_object_in_pack(const struct object_id *oid,
         {
             want = want_object_in_pack_one(e.p, oid, exclude, found_pack, found_offset);
             if (want != -1)
+            {
                 return want;
+            }
         }
     }
 
@@ -1676,10 +1932,14 @@ static int want_object_in_pack(const struct object_id *oid,
         struct packed_git *p = list_entry(pos, struct packed_git, mru);
         want                 = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset);
         if (!exclude && want > 0)
+        {
             list_move(&p->mru,
                       get_packed_git_mru(the_repository));
+        }
         if (want != -1)
+        {
             return want;
+        }
     }
 
     if (uri_protocols.nr)
@@ -1722,9 +1982,13 @@ static struct object_entry *create_object_entry(const struct object_id *oid,
     entry->hash = hash;
     oe_set_type(entry, type);
     if (exclude)
+    {
         entry->preferred_base = 1;
+    }
     else
+    {
         nr_result++;
+    }
     if (found_pack)
     {
         oe_set_in_pack(&to_pack, entry, found_pack);
@@ -1748,7 +2012,9 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
     display_progress(progress_state, ++nr_seen);
 
     if (have_duplicate_entry(oid, exclude))
+    {
         return 0;
+    }
 
     if (!want_object_in_pack(oid, exclude, &found_pack, &found_offset))
     {
@@ -1756,7 +2022,9 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
         if (write_bitmap_index)
         {
             if (write_bitmap_index != WRITE_BITMAP_QUIET)
+            {
                 warning(_(no_closure_warning));
+            }
             write_bitmap_index = 0;
         }
         return 0;
@@ -1776,10 +2044,14 @@ static int add_object_entry_from_bitmap(const struct object_id *oid,
     display_progress(progress_state, ++nr_seen);
 
     if (have_duplicate_entry(oid, 0))
+    {
         return 0;
+    }
 
     if (!want_object_in_pack(oid, 0, &pack, &offset))
+    {
         return 0;
+    }
 
     create_object_entry(oid, type, name_hash, 0, 0, pack, offset);
     return 1;
@@ -1817,7 +2089,8 @@ static struct pbase_tree
 
 static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
 {
-    struct pbase_tree_cache *ent, *nent;
+    struct pbase_tree_cache *ent;
+    struct pbase_tree_cache *nent;
     void                    *data;
     unsigned long            size;
     enum object_type         type;
@@ -1837,10 +2110,12 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
             ent->ref++;
             return ent;
         }
-        else if (((available_ix < 0) && (!ent || !ent->ref)) || ((0 <= available_ix) && (!ent && pbase_tree_cache[available_ix])))
+        if (((available_ix < 0) && (!ent || !ent->ref)) || ((0 <= available_ix) && (!ent && pbase_tree_cache[available_ix])))
             available_ix = my_ix;
         if (!ent)
+        {
             break;
+        }
         my_ix = pbase_tree_cache_ix_incr(my_ix);
     }
 
@@ -1849,7 +2124,9 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
      */
     data = repo_read_object_file(the_repository, oid, &type, &size);
     if (!data)
+    {
         return NULL;
+    }
     if (type != OBJ_TREE)
     {
         free(data);
@@ -1859,7 +2136,9 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
     /* We need to either cache or return a throwaway copy */
 
     if (available_ix < 0)
+    {
         ent = NULL;
+    }
     else
     {
         ent   = pbase_tree_cache[available_ix];
@@ -1882,7 +2161,9 @@ static struct pbase_tree_cache *pbase_tree_get(const struct object_id *oid)
     nent->tree_size = size;
     nent->ref       = 1;
     if (!nent->temporary)
+    {
         pbase_tree_cache[my_ix] = nent;
+    }
     return nent;
 }
 
@@ -1913,12 +2194,18 @@ static void add_pbase_object(struct tree_desc *tree,
     while (tree_entry(tree, &entry))
     {
         if (S_ISGITLINK(entry.mode))
+        {
             continue;
+        }
         cmp = tree_entry_len(&entry) != cmplen ? 1 : memcmp(name, entry.path, cmplen);
         if (cmp > 0)
+        {
             continue;
+        }
         if (cmp < 0)
+        {
             return;
+        }
         if (name[cmplen] != '/')
         {
             add_object_entry(&entry.oid,
@@ -1935,7 +2222,9 @@ static void add_pbase_object(struct tree_desc *tree,
 
             tree = pbase_tree_get(&entry.oid);
             if (!tree)
+            {
                 return;
+            }
             init_tree_desc(&sub, &tree->oid,
                            tree->tree_data, tree->tree_size);
 
@@ -1956,11 +2245,17 @@ static int       done_pbase_path_pos(unsigned hash)
     {
         int mi = lo + (hi - lo) / 2;
         if (done_pbase_paths[mi] == hash)
+        {
             return mi;
+        }
         if (done_pbase_paths[mi] < hash)
+        {
             hi = mi;
+        }
         else
+        {
             lo = mi + 1;
+        }
     }
     return -lo - 1;
 }
@@ -1969,15 +2264,19 @@ static int check_pbase_path(unsigned hash)
 {
     int pos = done_pbase_path_pos(hash);
     if (0 <= pos)
+    {
         return 1;
+    }
     pos = -pos - 1;
     ALLOC_GROW(done_pbase_paths,
                done_pbase_paths_num + 1,
                done_pbase_paths_alloc);
     done_pbase_paths_num++;
     if (pos < done_pbase_paths_num)
+    {
         MOVE_ARRAY(done_pbase_paths + pos + 1, done_pbase_paths + pos,
                    done_pbase_paths_num - pos - 1);
+    }
     done_pbase_paths[pos] = hash;
     return 0;
 }
@@ -1989,7 +2288,9 @@ static void add_preferred_base_object(const char *name)
     unsigned           hash = pack_name_hash(name);
 
     if (!num_preferred_base || check_pbase_path(hash))
+    {
         return;
+    }
 
     cmplen = name_cmp_len(name);
     for (it = pbase_tree; it; it = it->next)
@@ -2016,12 +2317,16 @@ static void add_preferred_base(struct object_id *oid)
     struct object_id   tree_oid;
 
     if (window <= num_preferred_base++)
+    {
         return;
+    }
 
     data = read_object_with_reference(the_repository, oid,
                                       OBJ_TREE, &size, &tree_oid);
     if (!data)
+    {
         return;
+    }
 
     for (it = pbase_tree; it; it = it->next)
     {
@@ -2059,7 +2364,9 @@ static void cleanup_preferred_base(void)
     for (i = 0; i < ARRAY_SIZE(pbase_tree_cache); i++)
     {
         if (!pbase_tree_cache[i])
+        {
             continue;
+        }
         free(pbase_tree_cache[i]->tree_data);
         FREE_AND_NULL(pbase_tree_cache[i]);
     }
@@ -2093,7 +2400,9 @@ static int can_reuse_delta(const struct object_id *base_oid,
     if (base)
     {
         if (!in_same_island(&delta->idx.oid, &base->idx.oid))
+        {
             return 0;
+        }
         *base_out = base;
         return 1;
     }
@@ -2108,7 +2417,9 @@ static int can_reuse_delta(const struct object_id *base_oid,
         if (use_delta_islands)
         {
             if (!in_same_island(&delta->idx.oid, base_oid))
+            {
                 return 0;
+            }
         }
         *base_out = NULL;
         return 1;
@@ -2130,7 +2441,9 @@ static void prefetch_to_pack(uint32_t object_index_start)
                                       &entry->idx.oid,
                                       NULL,
                                       OBJECT_INFO_FOR_PREFETCH))
+        {
             continue;
+        }
         oid_array_append(&to_fetch, &entry->idx.oid);
     }
     promisor_remote_get_direct(the_repository,
@@ -2151,10 +2464,12 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
         int                  have_base = 0;
         struct object_id     base_ref;
         struct object_entry *base_entry;
-        unsigned long        used, used_0;
+        unsigned long        used;
+        unsigned long        used_0;
         unsigned long        avail;
         off_t                ofs;
-        unsigned char       *buf, c;
+        unsigned char       *buf;
+        unsigned char        c;
         enum object_type     type;
         unsigned long        in_pack_size;
 
@@ -2168,10 +2483,14 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
                                            &type,
                                            &in_pack_size);
         if (used == 0)
+        {
             goto give_up;
+        }
 
         if (type < 0)
+        {
             BUG("invalid type %d", type);
+        }
         entry->in_pack_type = type;
 
         /*
@@ -2187,7 +2506,9 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
                 SET_SIZE(entry, in_pack_size);
                 entry->in_pack_header_size = used;
                 if (oe_type(entry) < OBJ_COMMIT || oe_type(entry) > OBJ_BLOB)
+                {
                     goto give_up;
+                }
                 unuse_pack(&w_curs);
                 return;
             case OBJ_REF_DELTA:
@@ -2231,10 +2552,14 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
                 {
                     uint32_t pos;
                     if (offset_to_pack_pos(p, ofs, &pos) < 0)
+                    {
                         goto give_up;
+                    }
                     if (!nth_packed_object_id(&base_ref, p,
                                               pack_pos_to_index(p, pos)))
+                    {
                         have_base = 1;
+                    }
                 }
                 entry->in_pack_header_size = used + used_0;
                 break;
@@ -2273,7 +2598,9 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
             delta_pos      = entry->in_pack_offset + entry->in_pack_header_size;
             canonical_size = get_size_from_delta(p, &w_curs, delta_pos);
             if (canonical_size == 0)
+            {
                 goto give_up;
+            }
             SET_SIZE(entry, canonical_size);
             unuse_pack(&w_curs);
             return;
@@ -2298,7 +2625,9 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
             if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
                                          OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE)
                 < 0)
+            {
                 type = -1;
+            }
         }
         else
         {
@@ -2330,12 +2659,18 @@ static int pack_offset_sort(const void *_a, const void *_b)
 
     /* avoid filesystem trashing with loose objects */
     if (!a_in_pack && !b_in_pack)
+    {
         return oidcmp(&a->idx.oid, &b->idx.oid);
+    }
 
     if (a_in_pack < b_in_pack)
+    {
         return -1;
+    }
     if (a_in_pack > b_in_pack)
+    {
         return 1;
+    }
     return a->in_pack_offset < b->in_pack_offset ? -1 : (a->in_pack_offset > b->in_pack_offset);
 }
 
@@ -2364,9 +2699,13 @@ static void drop_reused_delta(struct object_entry *entry)
         struct object_entry *oe = &to_pack.objects[*idx - 1];
 
         if (oe == entry)
+        {
             *idx = oe->delta_sibling_idx;
+        }
         else
+        {
             idx = &oe->delta_sibling_idx;
+        }
     }
     SET_DELTA(entry, NULL);
     entry->depth = 0;
@@ -2408,7 +2747,8 @@ static void break_delta_chains(struct object_entry *entry)
      * number of objects, which is elsewhere bounded to a uint32_t.
      */
     uint32_t             total_depth;
-    struct object_entry *cur, *next;
+    struct object_entry *cur;
+    struct object_entry *next;
 
     for (cur = entry, total_depth = 0;
          cur;
@@ -2431,8 +2771,10 @@ static void break_delta_chains(struct object_entry *entry)
          * is a bug.
          */
         if (cur->dfs_state != DFS_NONE)
+        {
             BUG("confusing delta dfs state in first pass: %d",
                 cur->dfs_state);
+        }
 
         /*
          * Now we know this is the first time we've seen the object. If
@@ -2489,8 +2831,10 @@ static void break_delta_chains(struct object_entry *entry)
          * call.
          */
         if (cur->dfs_state == DFS_DONE)
+        {
             break;
-        else if (cur->dfs_state != DFS_ACTIVE)
+        }
+        if (cur->dfs_state != DFS_ACTIVE)
             BUG("confusing delta dfs state in second pass: %d",
                 cur->dfs_state);
 
@@ -2514,7 +2858,9 @@ static void break_delta_chains(struct object_entry *entry)
          */
         cur->depth = (total_depth--) % (depth + 1);
         if (!cur->depth)
+        {
             drop_reused_delta(cur);
+        }
 
         cur->dfs_state = DFS_DONE;
     }
@@ -2526,12 +2872,16 @@ static void get_object_details(void)
     struct object_entry **sorted_by_offset;
 
     if (progress)
+    {
         progress_state = start_progress(_("Counting objects"),
                                         to_pack.nr_objects);
+    }
 
     CALLOC_ARRAY(sorted_by_offset, to_pack.nr_objects);
     for (i = 0; i < to_pack.nr_objects; i++)
+    {
         sorted_by_offset[i] = to_pack.objects + i;
+    }
     QSORT(sorted_by_offset, to_pack.nr_objects, pack_offset_sort);
 
     for (i = 0; i < to_pack.nr_objects; i++)
@@ -2539,7 +2889,9 @@ static void get_object_details(void)
         struct object_entry *entry = sorted_by_offset[i];
         check_object(entry, i);
         if (entry->type_valid && oe_size_greater_than(&to_pack, entry, big_file_threshold))
+        {
             entry->no_try_delta = 1;
+        }
         display_progress(progress_state, i + 1);
     }
     stop_progress(&progress_state);
@@ -2549,7 +2901,9 @@ static void get_object_details(void)
      * information for the whole list being completed.
      */
     for (i = 0; i < to_pack.nr_objects; i++)
+    {
         break_delta_chains(&to_pack.objects[i]);
+    }
 
     free(sorted_by_offset);
 }
@@ -2573,27 +2927,45 @@ static int type_size_sort(const void *_a, const void *_b)
     const unsigned long        b_size = SIZE(b);
 
     if (a_type > b_type)
+    {
         return -1;
+    }
     if (a_type < b_type)
+    {
         return 1;
+    }
     if (a->hash > b->hash)
+    {
         return -1;
+    }
     if (a->hash < b->hash)
+    {
         return 1;
+    }
     if (a->preferred_base > b->preferred_base)
+    {
         return -1;
+    }
     if (a->preferred_base < b->preferred_base)
+    {
         return 1;
+    }
     if (use_delta_islands)
     {
         const int island_cmp = island_delta_cmp(&a->idx.oid, &b->idx.oid);
         if (island_cmp)
+        {
             return island_cmp;
+        }
     }
     if (a_size > b_size)
+    {
         return -1;
+    }
     if (a_size < b_size)
+    {
         return 1;
+    }
     return a < b ? -1 : (a > b); /* newest first */
 }
 
@@ -2609,14 +2981,20 @@ static int delta_cacheable(unsigned long src_size, unsigned long trg_size,
                            unsigned long delta_size)
 {
     if (max_delta_cache_size && delta_cache_size + delta_size > max_delta_cache_size)
+    {
         return 0;
+    }
 
     if (delta_size < cache_max_small_delta_size)
+    {
         return 1;
+    }
 
     /* cache delta, if objects are large enough compared to delta size */
     if ((src_size >> 20) + (trg_size >> 21) > (delta_size >> 10))
+    {
         return 1;
+    }
 
     return 0;
 }
@@ -2646,9 +3024,13 @@ static inline int oe_size_less_than(struct packing_data       *pack,
                                     unsigned long              rhs)
 {
     if (lhs->size_valid)
+    {
         return lhs->size_ < rhs;
-    if (rhs < pack->oe_size_limit) /* rhs < 2^x <= lhs ? */
+    }
+    if (rhs < pack->oe_size_limit)
+    { /* rhs < 2^x <= lhs ? */
         return 0;
+    }
     return oe_get_size_slow(pack, lhs) < rhs;
 }
 
@@ -2657,7 +3039,9 @@ static inline void oe_set_tree_depth(struct packing_data *pack,
                                      unsigned int         tree_depth)
 {
     if (!pack->tree_depth)
+    {
         CALLOC_ARRAY(pack->tree_depth, pack->nr_alloc);
+    }
     pack->tree_depth[e - pack->objects] = tree_depth;
 }
 
@@ -2673,29 +3057,37 @@ unsigned long oe_get_size_slow(struct packing_data       *pack,
     struct pack_window *w_curs;
     unsigned char      *buf;
     enum object_type    type;
-    unsigned long       used, avail, size;
+    unsigned long       used;
+    unsigned long       avail;
+    unsigned long       size;
 
     if (e->type_ != OBJ_OFS_DELTA && e->type_ != OBJ_REF_DELTA)
     {
         packing_data_lock(&to_pack);
         if (oid_object_info(the_repository, &e->idx.oid, &size) < 0)
+        {
             die(_("unable to get size of %s"),
                 oid_to_hex(&e->idx.oid));
+        }
         packing_data_unlock(&to_pack);
         return size;
     }
 
     p = oe_in_pack(pack, e);
     if (!p)
+    {
         BUG("when e->type is a delta, it must belong to a pack");
+    }
 
     packing_data_lock(&to_pack);
     w_curs = NULL;
     buf    = use_pack(p, &w_curs, e->in_pack_offset, &avail);
     used   = unpack_object_header_buffer(buf, avail, &type, &size);
     if (used == 0)
+    {
         die(_("unable to parse object header of %s"),
             oid_to_hex(&e->idx.oid));
+    }
 
     unuse_pack(&w_curs);
     packing_data_unlock(&to_pack);
@@ -2707,14 +3099,21 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 {
     struct object_entry *trg_entry = trg->entry;
     struct object_entry *src_entry = src->entry;
-    unsigned long        trg_size, src_size, delta_size, sizediff, max_size, sz;
+    unsigned long        trg_size;
+    unsigned long        src_size;
+    unsigned long        delta_size;
+    unsigned long        sizediff;
+    unsigned long        max_size;
+    unsigned long        sz;
     unsigned             ref_depth;
     enum object_type     type;
     void                *delta_buf;
 
     /* Don't bother doing diffs between different types */
     if (oe_type(trg_entry) != oe_type(src_entry))
+    {
         return -1;
+    }
 
     /*
      * We do not bother to try a delta that we discarded on an
@@ -2725,11 +3124,15 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
      * the other side has it and we won't send src_entry at all.
      */
     if (reuse_delta && IN_PACK(trg_entry) && IN_PACK(trg_entry) == IN_PACK(src_entry) && !src_entry->preferred_base && trg_entry->in_pack_type != OBJ_REF_DELTA && trg_entry->in_pack_type != OBJ_OFS_DELTA)
+    {
         return 0;
+    }
 
     /* Let's not bust the allowed depth. */
     if (src->depth >= max_depth)
+    {
         return 0;
+    }
 
     /* Now some size filtering heuristics. */
     trg_size = SIZE(trg_entry);
@@ -2745,16 +3148,24 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
     }
     max_size = (uint64_t)max_size * (max_depth - src->depth) / (max_depth - ref_depth + 1);
     if (max_size == 0)
+    {
         return 0;
+    }
     src_size = SIZE(src_entry);
     sizediff = src_size < trg_size ? trg_size - src_size : 0;
     if (sizediff >= max_size)
+    {
         return 0;
+    }
     if (trg_size < src_size / 32)
+    {
         return 0;
+    }
 
     if (!in_same_island(&trg->entry->idx.oid, &src->entry->idx.oid))
+    {
         return 0;
+    }
 
     /* Load data if not already done */
     if (!trg->data)
@@ -2765,12 +3176,16 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
                                           &sz);
         packing_data_unlock(&to_pack);
         if (!trg->data)
+        {
             die(_("object %s cannot be read"),
                 oid_to_hex(&trg_entry->idx.oid));
+        }
         if (sz != trg_size)
+        {
             die(_("object %s inconsistent object length (%" PRIuMAX " vs %" PRIuMAX ")"),
                 oid_to_hex(&trg_entry->idx.oid), (uintmax_t)sz,
                 (uintmax_t)trg_size);
+        }
         *mem_usage += sz;
     }
     if (!src->data)
@@ -2786,8 +3201,10 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
             {
                 static int warned = 0;
                 if (!warned++)
+                {
                     warning(_("object %s cannot be read"),
                             oid_to_hex(&src_entry->idx.oid));
+                }
                 /*
                  * Those objects are not included in the
                  * resulting pack.  Be resilient and ignore
@@ -2800,9 +3217,11 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
                 oid_to_hex(&src_entry->idx.oid));
         }
         if (sz != src_size)
+        {
             die(_("object %s inconsistent object length (%" PRIuMAX " vs %" PRIuMAX ")"),
                 oid_to_hex(&src_entry->idx.oid), (uintmax_t)sz,
                 (uintmax_t)src_size);
+        }
         *mem_usage += sz;
     }
     if (!src->index)
@@ -2812,7 +3231,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
         {
             static int warned = 0;
             if (!warned++)
+            {
                 warning(_("suboptimal pack - out of memory"));
+            }
             return 0;
         }
         *mem_usage += sizeof_delta_index(src->index);
@@ -2820,7 +3241,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
     delta_buf = create_delta(src->index, trg->data, trg_size, &delta_size, max_size);
     if (!delta_buf)
+    {
         return 0;
+    }
 
     if (DELTA(trg_entry))
     {
@@ -2871,7 +3294,9 @@ static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
     {
         const unsigned int c = check_delta_limit(child, n + 1);
         if (m < c)
+        {
             m = c;
+        }
         child = DELTA_SIBLING(child);
     }
     return m;
@@ -2895,7 +3320,9 @@ static unsigned long free_unpacked(struct unpacked *n)
 static void find_deltas(struct object_entry **list, unsigned *list_size,
                         int window, int depth, unsigned *processed)
 {
-    uint32_t         i, idx = 0, count = 0;
+    uint32_t         i;
+    uint32_t         idx   = 0;
+    uint32_t         count = 0;
     struct unpacked *array;
     unsigned long    mem_usage = 0;
 
@@ -2905,7 +3332,9 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
     {
         struct object_entry *entry;
         struct unpacked     *n = array + idx;
-        int                  j, max_depth, best_base = -1;
+        int                  j;
+        int                  max_depth;
+        int                  best_base = -1;
 
         progress_lock();
         if (!*list_size)
@@ -2936,7 +3365,9 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
          * going to pack.
          */
         if (entry->preferred_base)
+        {
             goto next;
+        }
 
         /*
          * If the current object is at pack edge, take the depth the
@@ -2948,7 +3379,9 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
         {
             max_depth -= check_delta_limit(entry, 0);
             if (max_depth <= 0)
+            {
                 goto next;
+            }
         }
 
         j = window;
@@ -2958,14 +3391,20 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
             uint32_t         other_idx = idx + j;
             struct unpacked *m;
             if (other_idx >= window)
+            {
                 other_idx -= window;
+            }
             m = array + other_idx;
             if (!m->entry)
+            {
                 break;
+            }
             ret = try_delta(n, m, max_depth, &mem_usage);
             if (ret < 0)
+            {
                 break;
-            else if (ret > 0)
+            }
+            if (ret > 0)
                 best_base = other_idx;
         }
 
@@ -3008,7 +3447,9 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
          * should evict it first.
          */
         if (DELTA(entry) && max_depth <= n->depth)
+        {
             continue;
+        }
 
         /*
          * Move the best delta base up in the window, after the
@@ -3032,9 +3473,13 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
     next:
         idx++;
         if (count + 1 < window)
+        {
             count++;
+        }
         if (idx >= window)
+        {
             idx = 0;
+        }
     }
 
     for (i = 0; i < window; ++i)
@@ -3122,7 +3567,9 @@ static void *threaded_find_deltas(void *arg)
          */
         pthread_mutex_lock(&me->mutex);
         while (!me->data_ready)
+        {
             pthread_cond_wait(&me->cond, &me->mutex);
+        }
         me->data_ready = 0;
         pthread_mutex_unlock(&me->mutex);
 
@@ -3137,7 +3584,9 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
                            int window, int depth, unsigned *processed)
 {
     struct thread_params *p;
-    int                   i, ret, active_threads = 0;
+    int                   i;
+    int                   ret;
+    int                   active_threads = 0;
 
     init_threaded_search();
 
@@ -3148,8 +3597,10 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
         return;
     }
     if (progress > pack_to_stdout)
+    {
         fprintf_ln(stderr, _("Delta compression using up to %d threads"),
                    delta_search_threads);
+    }
     CALLOC_ARRAY(p, delta_search_threads);
 
     /* Partition the work amongst work threads. */
@@ -3159,7 +3610,9 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 
         /* don't use too small segments or no deltas will be found */
         if (sub_size < 2 * window && i + 1 < delta_search_threads)
+        {
             sub_size = 0;
+        }
 
         p[i].window     = window;
         p[i].depth      = depth;
@@ -3169,7 +3622,9 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 
         /* try to split chunks on "path" boundaries */
         while (sub_size && sub_size < list_size && list[sub_size]->hash && list[sub_size]->hash == list[sub_size - 1]->hash)
+        {
             sub_size++;
+        }
 
         p[i].list      = list;
         p[i].list_size = sub_size;
@@ -3183,13 +3638,17 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
     for (i = 0; i < delta_search_threads; i++)
     {
         if (!p[i].list_size)
+        {
             continue;
+        }
         pthread_mutex_init(&p[i].mutex, NULL);
         pthread_cond_init(&p[i].cond, NULL);
         ret = pthread_create(&p[i].thread, NULL,
                              threaded_find_deltas, &p[i]);
         if (ret)
+        {
             die(_("unable to create thread: %s"), strerror(ret));
+        }
         active_threads++;
     }
 
@@ -3211,16 +3670,26 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
         for (;;)
         {
             for (i = 0; !target && i < delta_search_threads; i++)
+            {
                 if (!p[i].working)
+                {
                     target = &p[i];
+                }
+            }
             if (target)
+            {
                 break;
+            }
             pthread_cond_wait(&progress_cond, &progress_mutex);
         }
 
         for (i = 0; i < delta_search_threads; i++)
+        {
             if (p[i].remaining > 2 * window && (!victim || victim->remaining < p[i].remaining))
+            {
                 victim = &p[i];
+            }
+        }
         if (victim)
         {
             sub_size = victim->remaining / 2;
@@ -3284,19 +3753,25 @@ static void add_tag_chain(const struct object_id *oid)
      * previously).
      */
     if (obj_is_packed(oid))
+    {
         return;
+    }
 
     tag = lookup_tag(the_repository, oid);
     while (1)
     {
         if (!tag || parse_tag(tag) || !tag->tagged)
+        {
             die(_("unable to pack objects reachable from tag %s"),
                 oid_to_hex(oid));
+        }
 
         add_object_entry(&tag->object.oid, OBJ_TAG, NULL, 0);
 
         if (tag->tagged->type != OBJ_TAG)
+        {
             return;
+        }
 
         tag = (struct tag *)tag->tagged;
     }
@@ -3308,18 +3783,23 @@ static int add_ref_tag(const char *tag UNUSED, const char *referent UNUSED, cons
     struct object_id peeled;
 
     if (!peel_iterated_oid(the_repository, oid, &peeled) && obj_is_packed(&peeled))
+    {
         add_tag_chain(oid);
+    }
     return 0;
 }
 
 static void prepare_pack(int window, int depth)
 {
     struct object_entry **delta_list;
-    uint32_t              i, nr_deltas;
+    uint32_t              i;
+    uint32_t              nr_deltas;
     unsigned              n;
 
     if (use_delta_islands)
+    {
         resolve_tree_islands(the_repository, progress, &to_pack);
+    }
 
     get_object_details();
 
@@ -3331,10 +3811,14 @@ static void prepare_pack(int window, int depth)
      * the additional cost here in that case.
      */
     if (!pack_to_stdout)
+    {
         do_check_packed_object_crc = 1;
+    }
 
     if (!to_pack.nr_objects || !window || !depth)
+    {
         return;
+    }
 
     ALLOC_ARRAY(delta_list, to_pack.nr_objects);
     nr_deltas = n = 0;
@@ -3344,23 +3828,31 @@ static void prepare_pack(int window, int depth)
         struct object_entry *entry = to_pack.objects + i;
 
         if (DELTA(entry))
+        {
             /* This happens if we decided to reuse existing
              * delta from a pack.  "reuse_delta &&" is implied.
              */
             continue;
+        }
 
         if (!entry->type_valid || oe_size_less_than(&to_pack, entry, 50))
+        {
             continue;
+        }
 
         if (entry->no_try_delta)
+        {
             continue;
+        }
 
         if (!entry->preferred_base)
         {
             nr_deltas++;
             if (oe_type(entry) < 0)
+            {
                 die(_("unable to get type of object %s"),
                     oid_to_hex(&entry->idx.oid));
+            }
         }
         else
         {
@@ -3382,13 +3874,17 @@ static void prepare_pack(int window, int depth)
         unsigned nr_done = 0;
 
         if (progress)
+        {
             progress_state = start_progress(_("Compressing objects"),
                                             nr_deltas);
+        }
         QSORT(delta_list, n, type_size_sort);
         ll_find_deltas(delta_list, n, window + 1, depth, &nr_done);
         stop_progress(&progress_state);
         if (nr_done != nr_deltas)
+        {
             die(_("inconsistency with delta count"));
+        }
     }
     free(delta_list);
 }
@@ -3424,17 +3920,25 @@ static int git_pack_config(const char *k, const char *v,
     if (!strcmp(k, "pack.writebitmaphashcache"))
     {
         if (git_config_bool(k, v))
+        {
             write_bitmap_options |= BITMAP_OPT_HASH_CACHE;
+        }
         else
+        {
             write_bitmap_options &= ~BITMAP_OPT_HASH_CACHE;
+        }
     }
 
     if (!strcmp(k, "pack.writebitmaplookuptable"))
     {
         if (git_config_bool(k, v))
+        {
             write_bitmap_options |= BITMAP_OPT_LOOKUP_TABLE;
+        }
         else
+        {
             write_bitmap_options &= ~BITMAP_OPT_LOOKUP_TABLE;
+        }
     }
 
     if (!strcmp(k, "pack.usebitmaps"))
@@ -3448,11 +3952,17 @@ static int git_pack_config(const char *k, const char *v,
         if (res < 0)
         {
             if (!strcasecmp(v, "single"))
+            {
                 allow_pack_reuse = SINGLE_PACK_REUSE;
+            }
             else if (!strcasecmp(v, "multi"))
+            {
                 allow_pack_reuse = MULTI_PACK_REUSE;
+            }
             else
+            {
                 die(_("invalid pack.allowPackReuse value: '%s'"), v);
+            }
         }
         else if (res)
         {
@@ -3468,8 +3978,10 @@ static int git_pack_config(const char *k, const char *v,
     {
         delta_search_threads = git_config_int(k, v, ctx->kvi);
         if (delta_search_threads < 0)
+        {
             die(_("invalid number of threads specified (%d)"),
                 delta_search_threads);
+        }
         if (!HAVE_THREADS && delta_search_threads != 1)
         {
             warning(_("no threads support, ignoring %s"), k);
@@ -3481,22 +3993,29 @@ static int git_pack_config(const char *k, const char *v,
     {
         pack_idx_opts.version = git_config_int(k, v, ctx->kvi);
         if (pack_idx_opts.version > 2)
+        {
             die(_("bad pack.indexVersion=%" PRIu32),
                 pack_idx_opts.version);
+        }
         return 0;
     }
     if (!strcmp(k, "pack.writereverseindex"))
     {
         if (git_config_bool(k, v))
+        {
             pack_idx_opts.flags |= WRITE_REV;
+        }
         else
+        {
             pack_idx_opts.flags &= ~WRITE_REV;
+        }
         return 0;
     }
     if (!strcmp(k, "uploadpack.blobpackfileuri"))
     {
         struct configured_exclusion *ex;
-        const char                  *oid_end, *pack_end;
+        const char                  *oid_end;
+        const char                  *pack_end;
         /*
          * Stores the pack hash. This is not a true object ID, but is
          * of the same form.
@@ -3504,17 +4023,23 @@ static int git_pack_config(const char *k, const char *v,
         struct object_id pack_hash;
 
         if (!v)
+        {
             return config_error_nonbool(k);
+        }
 
         ex = xmalloc(sizeof(*ex));
         if (parse_oid_hex(v, &ex->e.oid, &oid_end) || *oid_end != ' ' || parse_oid_hex(oid_end + 1, &pack_hash, &pack_end) || *pack_end != ' ')
+        {
             die(_("value of uploadpack.blobpackfileuri must be "
                   "of the form '<object-hash> <pack-hash> <uri>' (got '%s')"),
                 v);
+        }
         if (oidmap_get(&configured_exclusions, &ex->e.oid))
+        {
             die(_("object already configured in another "
                   "uploadpack.blobpackfileuri (got '%s')"),
                 v);
+        }
         ex->pack_hash_hex = xcalloc(1, pack_end - oid_end);
         memcpy(ex->pack_hash_hex, oid_end + 1, pack_end - oid_end - 1);
         ex->uri = xstrdup(pack_end + 1);
@@ -3538,11 +4063,15 @@ static int add_object_entry_from_pack(const struct object_id *oid,
     display_progress(progress_state, ++nr_seen);
 
     if (have_duplicate_entry(oid, 0))
+    {
         return 0;
+    }
 
     ofs = nth_packed_object_offset(p, pos);
     if (!want_object_in_pack(oid, 0, &p, &ofs))
+    {
         return 0;
+    }
 
     if (p)
     {
@@ -3583,7 +4112,9 @@ static void show_object_pack_hint(struct object *object, const char *name,
 {
     struct object_entry *oe = packlist_find(&to_pack, &object->oid);
     if (!oe)
+    {
         return;
+    }
 
     /*
      * Our 'to_pack' list was constructed by iterating all objects packed in
@@ -3610,8 +4141,10 @@ static int pack_mtime_cmp(const void *_a, const void *_b)
      * roughly as newest-to-oldest
      */
     if (a->mtime < b->mtime)
+    {
         return 1;
-    else if (b->mtime < a->mtime)
+    }
+    if (b->mtime < a->mtime)
         return -1;
     else
         return 0;
@@ -3647,12 +4180,18 @@ static void read_packs_list_from_stdin(void)
     while (strbuf_getline(&buf, stdin) != EOF)
     {
         if (!buf.len)
+        {
             continue;
+        }
 
         if (*buf.buf == '^')
+        {
             string_list_append(&exclude_packs, buf.buf + 1);
+        }
         else
+        {
             string_list_append(&include_packs, buf.buf);
+        }
 
         strbuf_reset(&buf);
     }
@@ -3667,9 +4206,13 @@ static void read_packs_list_from_stdin(void)
         const char *pack_name = pack_basename(p);
 
         if ((item = string_list_lookup(&include_packs, pack_name)))
+        {
             item->util = p;
+        }
         if ((item = string_list_lookup(&exclude_packs, pack_name)))
+        {
             item->util = p;
+        }
     }
 
     /*
@@ -3687,9 +4230,13 @@ static void read_packs_list_from_stdin(void)
     {
         struct packed_git *p = item->util;
         if (!p)
+        {
             die(_("could not find pack '%s'"), item->string);
+        }
         if (!is_pack_valid(p))
+        {
             die(_("packfile %s cannot be accessed"), p->pack_name);
+        }
     }
 
     /*
@@ -3701,7 +4248,9 @@ static void read_packs_list_from_stdin(void)
     {
         struct packed_git *p = item->util;
         if (!p)
+        {
             die(_("could not find pack '%s'"), item->string);
+        }
         p->pack_keep_in_core = 1;
     }
 
@@ -3722,7 +4271,9 @@ static void read_packs_list_from_stdin(void)
     }
 
     if (prepare_revision_walk(&revs))
+    {
         die(_("revision walk setup failed"));
+    }
     traverse_commit_list(&revs,
                          show_commit_pack_hint,
                          show_object_pack_hint,
@@ -3758,7 +4309,9 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
     else
     {
         if (!want_object_in_pack(oid, 0, &pack, &offset))
+        {
             return;
+        }
         if (!pack && type == OBJ_BLOB && !has_loose_object(oid))
         {
             /*
@@ -3783,8 +4336,9 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
     }
 
     if (mtime > oe_cruft_mtime(&to_pack, entry))
+    {
         oe_set_cruft_mtime(&to_pack, entry, mtime);
-    return;
+    }
 }
 
 static void show_cruft_object(struct object *obj, const char *name, void *data UNUSED)
@@ -3832,7 +4386,9 @@ static void mark_pack_kept_in_core(struct string_list *packs, unsigned keep)
     {
         struct packed_git *p = item->util;
         if (!p)
+        {
             die(_("could not find pack '%s'"), item->string);
+        }
         p->pack_keep_in_core = keep;
     }
 }
@@ -3843,7 +4399,9 @@ static void add_objects_in_unpacked_packs(void);
 static void enumerate_cruft_objects(void)
 {
     if (progress)
+    {
         progress_state = start_progress(_("Enumerating cruft objects"), 0);
+    }
 
     add_objects_in_unpacked_packs();
     add_unreachable_loose_objects();
@@ -3869,26 +4427,36 @@ static void enumerate_and_traverse_cruft_objects(struct string_list *fresh_packs
     revs.ignore_missing_links = 1;
 
     if (progress)
+    {
         progress_state = start_progress(_("Enumerating cruft objects"), 0);
+    }
     ret = add_unseen_recent_objects_to_traversal(&revs, cruft_expiration,
                                                  set_cruft_mtime, 1);
     stop_progress(&progress_state);
 
     if (ret)
+    {
         die(_("unable to add cruft objects"));
+    }
 
     /*
      * Re-mark only the fresh packs as kept so that objects in
      * unknown packs do not halt the reachability traversal early.
      */
     for (p = get_all_packs(the_repository); p; p = p->next)
+    {
         p->pack_keep_in_core = 0;
+    }
     mark_pack_kept_in_core(fresh_packs, 1);
 
     if (prepare_revision_walk(&revs))
+    {
         die(_("revision walk setup failed"));
+    }
     if (progress)
+    {
         progress_state = start_progress(_("Traversing cruft objects"), 0);
+    }
     nr_seen = 0;
     traverse_commit_list(&revs, show_cruft_commit, show_cruft_object, NULL);
 
@@ -3907,12 +4475,18 @@ static void read_cruft_objects(void)
     while (strbuf_getline(&buf, stdin) != EOF)
     {
         if (!buf.len)
+        {
             continue;
+        }
 
         if (*buf.buf == '-')
+        {
             string_list_append(&discard_packs, buf.buf + 1);
+        }
         else
+        {
             string_list_append(&fresh_packs, buf.buf);
+        }
     }
 
     string_list_sort(&discard_packs);
@@ -3925,7 +4499,9 @@ static void read_cruft_objects(void)
 
         item = string_list_lookup(&fresh_packs, pack_name);
         if (!item)
+        {
             item = string_list_lookup(&discard_packs, pack_name);
+        }
 
         if (item)
         {
@@ -3950,9 +4526,13 @@ static void read_cruft_objects(void)
     mark_pack_kept_in_core(&discard_packs, 0);
 
     if (cruft_expiration)
+    {
         enumerate_and_traverse_cruft_objects(&fresh_packs);
+    }
     else
+    {
         enumerate_cruft_objects();
+    }
 
     strbuf_release(&buf);
     string_list_clear(&discard_packs, 0);
@@ -3970,24 +4550,34 @@ static void read_object_list_from_stdin(void)
         if (!fgets(line, sizeof(line), stdin))
         {
             if (feof(stdin))
+            {
                 break;
+            }
             if (!ferror(stdin))
+            {
                 BUG("fgets returned NULL, not EOF, not error!");
+            }
             if (errno != EINTR)
+            {
                 die_errno("fgets");
+            }
             clearerr(stdin);
             continue;
         }
         if (line[0] == '-')
         {
             if (get_oid_hex(line + 1, &oid))
+            {
                 die(_("expected edge object ID, got garbage:\n %s"),
                     line);
+            }
             add_preferred_base(&oid);
             continue;
         }
         if (parse_oid_hex(line, &oid, &p))
+        {
             die(_("expected object ID, got garbage:\n %s"), line);
+        }
 
         add_preferred_base_object(p + 1);
         add_object_entry(&oid, OBJ_NONE, p + 1, 0);
@@ -3999,10 +4589,14 @@ static void show_commit(struct commit *commit, void *data UNUSED)
     add_object_entry(&commit->object.oid, OBJ_COMMIT, NULL, 0);
 
     if (write_bitmap_index)
+    {
         index_commit_for_bitmap(commit);
+    }
 
     if (use_delta_islands)
+    {
         propagate_island_marks(commit);
+    }
 }
 
 static void show_object(struct object *obj, const char *name,
@@ -4020,11 +4614,15 @@ static void show_object(struct object *obj, const char *name,
         /* the empty string is a root tree, which is depth 0 */
         depth = *name ? 1 : 0;
         for (p = strchr(name, '/'); p; p = strchr(p + 1, '/'))
+        {
             depth++;
+        }
 
         ent = packlist_find(&to_pack, &obj->oid);
         if (ent && depth > oe_tree_depth(&to_pack, ent))
+        {
             oe_set_tree_depth(&to_pack, ent, depth);
+        }
     }
 }
 
@@ -4037,7 +4635,9 @@ static void show_object__ma_allow_any(struct object *obj, const char *name, void
      * staging them now and getting an odd error later.
      */
     if (!has_object(the_repository, &obj->oid, 0))
+    {
         return;
+    }
 
     show_object(obj, name, data);
 }
@@ -4051,7 +4651,9 @@ static void show_object__ma_allow_promisor(struct object *obj, const char *name,
      * staging them now and getting an odd error later.
      */
     if (!has_object(the_repository, &obj->oid, 0) && is_promisor_object(&obj->oid))
+    {
         return;
+    }
 
     show_object(obj, name, data);
 }
@@ -4107,7 +4709,9 @@ static int add_object_in_unpacked_pack(const struct object_id *oid,
         if (pack->is_cruft)
         {
             if (load_pack_mtimes(pack) < 0)
+            {
                 die(_("could not load cruft pack .mtimes"));
+            }
             mtime = nth_packed_mtime(pack, pos);
         }
         else
@@ -4130,7 +4734,9 @@ static void add_objects_in_unpacked_packs(void)
 {
     if (for_each_packed_object(add_object_in_unpacked_pack, NULL,
                                FOR_EACH_OBJECT_PACK_ORDER | FOR_EACH_OBJECT_LOCAL_ONLY | FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS | FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS))
+    {
         die(_("cannot open pack index"));
+    }
 }
 
 static int add_loose_object(const struct object_id *oid, const char *path,
@@ -4150,7 +4756,9 @@ static int add_loose_object(const struct object_id *oid, const char *path,
         if (stat(path, &st) < 0)
         {
             if (errno == ENOENT)
+            {
                 return 0;
+            }
             return error_errno("unable to stat %s", oid_to_hex(oid));
         }
 
@@ -4191,11 +4799,17 @@ static int has_sha1_pack_kept_or_nonlocal(const struct object_id *oid)
             return 1;
         }
         if (p == last_found)
+        {
             p = get_all_packs(the_repository);
+        }
         else
+        {
             p = p->next;
+        }
         if (p == last_found)
+        {
             p = p->next;
+        }
     }
     return 0;
 }
@@ -4213,11 +4827,17 @@ static int loosened_object_can_be_discarded(const struct object_id *oid,
                                             timestamp_t             mtime)
 {
     if (!unpack_unreachable_expiration)
+    {
         return 0;
+    }
     if (mtime > unpack_unreachable_expiration)
+    {
         return 0;
+    }
     if (oid_array_lookup(&recent_objects, oid) >= 0)
+    {
         return 0;
+    }
     return 1;
 }
 
@@ -4231,10 +4851,14 @@ static void loosen_unused_packed_objects(void)
     for (p = get_all_packs(the_repository); p; p = p->next)
     {
         if (!p->pack_local || p->pack_keep || p->pack_keep_in_core)
+        {
             continue;
+        }
 
         if (open_pack_index(p))
+        {
             die(_("cannot open pack index"));
+        }
 
         for (i = 0; i < p->num_objects; i++)
         {
@@ -4242,7 +4866,9 @@ static void loosen_unused_packed_objects(void)
             if (!packlist_find(&to_pack, &oid) && !has_sha1_pack_kept_or_nonlocal(&oid) && !loosened_object_can_be_discarded(&oid, p->mtime))
             {
                 if (force_object_loose(&oid, p->mtime))
+                {
                     die(_("unable to force loose object"));
+                }
                 loosened_objects_nr++;
             }
         }
@@ -4265,20 +4891,26 @@ static int pack_options_allow_reuse(void)
 static int get_object_list_from_bitmap(struct rev_info *revs)
 {
     if (!(bitmap_git = prepare_bitmap_walk(revs, 0)))
+    {
         return -1;
+    }
 
     if (pack_options_allow_reuse())
+    {
         reuse_partial_packfile_from_bitmap(bitmap_git,
                                            &reuse_packfiles,
                                            &reuse_packfiles_nr,
                                            &reuse_packfile_bitmap,
                                            allow_pack_reuse == MULTI_PACK_REUSE);
+    }
 
     if (reuse_packfiles)
     {
         reuse_packfile_objects = bitmap_popcount(reuse_packfile_bitmap);
         if (!reuse_packfile_objects)
+        {
             BUG("expected non-empty reuse bitmap");
+        }
 
         nr_result += reuse_packfile_objects;
         nr_seen += reuse_packfile_objects;
@@ -4312,11 +4944,15 @@ static int mark_bitmap_preferred_tip(const char             *refname,
     struct object   *object;
 
     if (!peel_iterated_oid(the_repository, oid, &peeled))
+    {
         oid = &peeled;
+    }
 
     object = parse_object_or_die(oid, refname);
     if (object->type == OBJ_COMMIT)
+    {
         object->flags |= NEEDS_BITMAP;
+    }
 
     return 0;
 }
@@ -4328,7 +4964,9 @@ static void mark_bitmap_preferred_tips(void)
 
     preferred_tips = bitmap_preferred_tips(the_repository);
     if (!preferred_tips)
+    {
         return;
+    }
 
     for_each_string_list_item(item, preferred_tips)
     {
@@ -4360,9 +4998,13 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
     {
         int len = strlen(line);
         if (len && line[len - 1] == '\n')
+        {
             line[--len] = 0;
+        }
         if (!len)
+        {
             break;
+        }
         if (*line == '-')
         {
             if (!strcmp(line, "--not"))
@@ -4375,7 +5017,9 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
             {
                 struct object_id oid;
                 if (get_oid_hex(line + 10, &oid))
+                {
                     die("not an object name '%s'", line + 10);
+                }
                 register_shallow(the_repository, &oid);
                 use_bitmap_index = 0;
                 continue;
@@ -4383,26 +5027,38 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
             die(_("not a rev '%s'"), line);
         }
         if (handle_revision_arg(line, revs, flags, REVARG_CANNOT_BE_FILENAME))
+        {
             die(_("bad revision '%s'"), line);
+        }
     }
 
     warn_on_object_refname_ambiguity = save_warning;
 
     if (use_bitmap_index && !get_object_list_from_bitmap(revs))
+    {
         return;
+    }
 
     if (use_delta_islands)
+    {
         load_delta_islands(the_repository, progress);
+    }
 
     if (write_bitmap_index)
+    {
         mark_bitmap_preferred_tips();
+    }
 
     if (prepare_revision_walk(revs))
+    {
         die(_("revision walk setup failed"));
+    }
     mark_edges_uninteresting(revs, show_edge, sparse);
 
     if (!fn_show_object)
+    {
         fn_show_object = show_object;
+    }
     traverse_commit_list(revs,
                          show_commit, fn_show_object,
                          NULL);
@@ -4412,19 +5068,29 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
         revs->ignore_missing_links = 1;
         if (add_unseen_recent_objects_to_traversal(revs,
                                                    unpack_unreachable_expiration, NULL, 0))
+        {
             die(_("unable to add recent objects"));
+        }
         if (prepare_revision_walk(revs))
+        {
             die(_("revision walk setup failed"));
+        }
         traverse_commit_list(revs, record_recent_commit,
                              record_recent_object, NULL);
     }
 
     if (keep_unreachable)
+    {
         add_objects_in_unpacked_packs();
+    }
     if (pack_loose_unreachable)
+    {
         add_unreachable_loose_objects();
+    }
     if (unpack_unreachable)
+    {
         loosen_unused_packed_objects();
+    }
 
     oid_array_clear(&recent_objects);
 }
@@ -4434,7 +5100,9 @@ static void add_extra_kept_packs(const struct string_list *names)
     struct packed_git *p;
 
     if (!names->nr)
+    {
         return;
+    }
 
     for (p = get_all_packs(the_repository); p; p = p->next)
     {
@@ -4442,11 +5110,17 @@ static void add_extra_kept_packs(const struct string_list *names)
         int         i;
 
         if (!p->pack_local)
+        {
             continue;
+        }
 
         for (i = 0; i < names->nr; i++)
+        {
             if (!fspathcmp(name, names->items[i].string))
+            {
                 break;
+            }
+        }
 
         if (i < names->nr)
         {
@@ -4465,9 +5139,13 @@ static int option_parse_quiet(const struct option *opt, const char *arg,
     BUG_ON_OPT_ARG(arg);
 
     if (!unset)
+    {
         *val = 0;
+    }
     else if (!*val)
+    {
         *val = 1;
+    }
     return 0;
 }
 
@@ -4482,11 +5160,17 @@ static int option_parse_index_version(const struct option *opt,
 
     popts->version = strtoul(val, &c, 10);
     if (popts->version > 2)
+    {
         die(_("unsupported index version %s"), val);
+    }
     if (*c == ',' && c[1])
+    {
         popts->off32_limit = strtoul(c + 1, &c, 0);
+    }
     if (*c || popts->off32_limit & 0x80000000)
+    {
         die(_("bad index version '%s'"), val);
+    }
     return 0;
 }
 
@@ -4502,7 +5186,9 @@ static int option_parse_unpack_unreachable(const struct option *opt UNUSED,
     {
         unpack_unreachable = 1;
         if (arg)
+        {
             unpack_unreachable_expiration = approxidate(arg);
+        }
     }
     return 0;
 }
@@ -4519,7 +5205,9 @@ static int option_parse_cruft_expiration(const struct option *opt UNUSED,
     {
         cruft = 1;
         if (arg)
+        {
             cruft_expiration = approxidate(arg);
+        }
     }
     return 0;
 }
@@ -4530,10 +5218,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
     int                                shallow               = 0;
     int                                all_progress_implied  = 0;
     struct strvec                      rp                    = STRVEC_INIT;
-    int                                rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
-    int                                rev_list_index = 0;
-    int                                stdin_packs    = 0;
-    struct string_list                 keep_pack_list = STRING_LIST_INIT_NODUP;
+    int                                rev_list_unpacked     = 0;
+    int                                rev_list_all          = 0;
+    int                                rev_list_reflog       = 0;
+    int                                rev_list_index        = 0;
+    int                                stdin_packs           = 0;
+    struct string_list                 keep_pack_list        = STRING_LIST_INIT_NODUP;
     struct list_objects_filter_options filter_options =
         LIST_OBJECTS_FILTER_INIT;
 
@@ -4642,7 +5332,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
     };
 
     if (DFS_NUM_STATES > (1 << OE_DFS_STATE_BITS))
+    {
         BUG("too many dfs states, increase OE_DFS_STATE_BITS");
+    }
 
     disable_replace_refs();
 
@@ -4651,16 +5343,22 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
     {
         prepare_repo_settings(the_repository);
         if (sparse < 0)
+        {
             sparse = the_repository->settings.pack_use_sparse;
+        }
         if (the_repository->settings.pack_use_multi_pack_reuse)
+        {
             allow_pack_reuse = MULTI_PACK_REUSE;
+        }
     }
 
     reset_pack_idx_option(&pack_idx_opts);
     pack_idx_opts.flags |= WRITE_REV;
     git_config(git_pack_config, NULL);
     if (git_env_bool(GIT_TEST_NO_WRITE_REV_INDEX, 0))
+    {
         pack_idx_opts.flags &= ~WRITE_REV;
+    }
 
     progress = isatty(2);
     argc     = parse_options(argc, argv, prefix, pack_objects_options,
@@ -4672,10 +5370,14 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
         argc--;
     }
     if (pack_to_stdout != !base_name || argc)
+    {
         usage_with_options(pack_usage, pack_objects_options);
+    }
 
     if (depth < 0)
+    {
         depth = 0;
+    }
     if (depth >= (1 << OE_DEPTH_BITS))
     {
         warning(_("delta chain depth %d is too deep, forcing %d"),
@@ -4689,7 +5391,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
         cache_max_small_delta_size = (1U << OE_Z_DELTA_BITS) - 1;
     }
     if (window < 0)
+    {
         window = 0;
+    }
 
     strvec_push(&rp, "pack-objects");
     if (thin)
@@ -4700,7 +5404,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
                              : "--objects-edge");
     }
     else
+    {
         strvec_push(&rp, "--objects");
+    }
 
     if (rev_list_all)
     {
@@ -4730,24 +5436,40 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
         strvec_push(&rp, "--exclude-promisor-objects");
     }
     if (unpack_unreachable || keep_unreachable || pack_loose_unreachable)
+    {
         use_internal_rev_list = 1;
+    }
 
     if (!reuse_object)
+    {
         reuse_delta = 0;
+    }
     if (pack_compression_level == -1)
+    {
         pack_compression_level = Z_DEFAULT_COMPRESSION;
+    }
     else if (pack_compression_level < 0 || pack_compression_level > Z_BEST_COMPRESSION)
+    {
         die(_("bad pack compression level %d"), pack_compression_level);
+    }
 
-    if (!delta_search_threads) /* --threads=0 means autodetect */
+    if (!delta_search_threads)
+    { /* --threads=0 means autodetect */
         delta_search_threads = online_cpus();
+    }
 
     if (!HAVE_THREADS && delta_search_threads != 1)
+    {
         warning(_("no threads support, ignoring --threads"));
+    }
     if (!pack_to_stdout && !pack_size_limit)
+    {
         pack_size_limit = pack_size_limit_cfg;
+    }
     if (pack_to_stdout && pack_size_limit)
+    {
         die(_("--max-pack-size cannot be used to build a pack for transfer"));
+    }
     if (pack_size_limit && pack_size_limit < 1024 * 1024)
     {
         warning(_("minimum pack size limit is 1 MiB"));
@@ -4755,25 +5477,39 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
     }
 
     if (!pack_to_stdout && thin)
+    {
         die(_("--thin cannot be used to build an indexable pack"));
+    }
 
     if (keep_unreachable && unpack_unreachable)
+    {
         die(_("options '%s' and '%s' cannot be used together"), "--keep-unreachable", "--unpack-unreachable");
+    }
     if (!rev_list_all || !rev_list_reflog || !rev_list_index)
+    {
         unpack_unreachable_expiration = 0;
+    }
 
     if (stdin_packs && filter_options.choice)
+    {
         die(_("cannot use --filter with --stdin-packs"));
+    }
 
     if (stdin_packs && use_internal_rev_list)
+    {
         die(_("cannot use internal rev list with --stdin-packs"));
+    }
 
     if (cruft)
     {
         if (use_internal_rev_list)
+        {
             die(_("cannot use internal rev list with --cruft"));
+        }
         if (stdin_packs)
+        {
             die(_("cannot use --stdin-packs with --cruft"));
+        }
     }
 
     /*
@@ -4786,33 +5522,51 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
      *   bugs in bitmap code and possible bitmap index corruption).
      */
     if (!pack_to_stdout)
+    {
         use_bitmap_index_default = 0;
+    }
 
     if (use_bitmap_index < 0)
+    {
         use_bitmap_index = use_bitmap_index_default;
+    }
 
     /* "hard" reasons not to use bitmaps; these just won't work at all */
     if (!use_internal_rev_list || (!pack_to_stdout && write_bitmap_index) || is_repository_shallow(the_repository))
+    {
         use_bitmap_index = 0;
+    }
 
     if (pack_to_stdout || !rev_list_all)
+    {
         write_bitmap_index = 0;
+    }
 
     if (use_delta_islands)
+    {
         strvec_push(&rp, "--topo-order");
+    }
 
     if (progress && all_progress_implied)
+    {
         progress = 2;
+    }
 
     add_extra_kept_packs(&keep_pack_list);
     if (ignore_packed_keep_on_disk)
     {
         struct packed_git *p;
         for (p = get_all_packs(the_repository); p; p = p->next)
+        {
             if (p->pack_local && p->pack_keep)
+            {
                 break;
-        if (!p) /* no keep-able packs found */
+            }
+        }
+        if (!p)
+        { /* no keep-able packs found */
             ignore_packed_keep_on_disk = 0;
+        }
     }
     if (local)
     {
@@ -4837,14 +5591,18 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
     prepare_packing_data(the_repository, &to_pack);
 
     if (progress && !cruft)
+    {
         progress_state = start_progress(_("Enumerating objects"), 0);
+    }
     if (stdin_packs)
     {
         /* avoids adding objects in excluded packs */
         ignore_packed_keep_in_core = 1;
         read_packs_list_from_stdin();
         if (rev_list_unpacked)
+        {
             add_unreachable_loose_objects();
+        }
     }
     else if (cruft)
     {
@@ -4865,14 +5623,18 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
     }
     cleanup_preferred_base();
     if (include_tag && nr_result)
+    {
         refs_for_each_tag_ref(get_main_ref_store(the_repository),
                               add_ref_tag, NULL);
+    }
     stop_progress(&progress_state);
     trace2_region_leave("pack-objects", "enumerate-objects",
                         the_repository);
 
     if (non_empty && !nr_result)
+    {
         goto cleanup;
+    }
     if (nr_result)
     {
         trace2_region_enter("pack-objects", "prepare-pack",
@@ -4888,6 +5650,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
     trace2_region_leave("pack-objects", "write-pack-file", the_repository);
 
     if (progress)
+    {
         fprintf_ln(stderr,
                    _("Total %" PRIu32 " (delta %" PRIu32 "),"
                      " reused %" PRIu32 " (delta %" PRIu32 "),"
@@ -4895,6 +5658,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
                    written, written_delta, reused, reused_delta,
                    reuse_packfile_objects,
                    (uintmax_t)reuse_packfiles_used_nr);
+    }
 
     trace2_data_intmax("pack-objects", the_repository, "written", written);
     trace2_data_intmax("pack-objects", the_repository, "written/delta", written_delta);

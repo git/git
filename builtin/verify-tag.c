@@ -20,7 +20,9 @@ static const char *const verify_tag_usage[] = {
 
 int cmd_verify_tag(int argc, const char **argv, const char *prefix)
 {
-    int                 i = 1, verbose = 0, had_error = 0;
+    int                 i                    = 1;
+    int                 verbose              = 0;
+    int                 had_error            = 0;
     unsigned            flags                = 0;
     struct ref_format   format               = REF_FORMAT_INIT;
     const struct option verify_tag_options[] = {
@@ -34,16 +36,22 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, verify_tag_options,
                          verify_tag_usage, PARSE_OPT_KEEP_ARGV0);
     if (argc <= i)
+    {
         usage_with_options(verify_tag_usage, verify_tag_options);
+    }
 
     if (verbose)
+    {
         flags |= GPG_VERIFY_VERBOSE;
+    }
 
     if (format.format)
     {
         if (verify_ref_format(&format))
+        {
             usage_with_options(verify_tag_usage,
                                verify_tag_options);
+        }
         flags |= GPG_VERIFY_OMIT_STATUS;
     }
 
@@ -65,7 +73,9 @@ int cmd_verify_tag(int argc, const char **argv, const char *prefix)
         }
 
         if (format.format)
+        {
             pretty_print_ref(name, &oid, &format);
+        }
     }
     return had_error;
 }

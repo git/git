@@ -18,15 +18,19 @@ static int merge_entry(int pos, const char *path)
     struct child_process cmd = CHILD_PROCESS_INIT;
 
     if (pos >= the_repository->index->cache_nr)
+    {
         die("git merge-index: %s not in the cache", path);
+    }
     found = 0;
     do
     {
         const struct cache_entry *ce    = the_repository->index->cache[pos];
         int                       stage = ce_stage(ce);
 
-        if (strcmp(ce->name, path))
+        if (strcmp(ce->name, path) != 0)
+        {
             break;
+        }
         found++;
         oid_to_hex_r(hexbuf[stage], &ce->oid);
         xsnprintf(ownbuf[stage], sizeof(ownbuf[stage]), "%o", ce->ce_mode);
@@ -34,17 +38,23 @@ static int merge_entry(int pos, const char *path)
         arguments[stage + 4] = ownbuf[stage];
     } while (++pos < the_repository->index->cache_nr);
     if (!found)
+    {
         die("git merge-index: %s not in the cache", path);
+    }
 
     strvec_pushv(&cmd.args, arguments);
     if (run_command(&cmd))
     {
         if (one_shot)
+        {
             err++;
+        }
         else
         {
             if (!quiet)
+            {
                 die("merge program failed");
+            }
             exit(1);
         }
     }
@@ -60,7 +70,9 @@ static void merge_one_path(const char *path)
      * already merged and there is nothing to do.
      */
     if (pos < 0)
+    {
         merge_entry(-pos - 1, path);
+    }
 }
 
 static void merge_all(void)
@@ -72,14 +84,17 @@ static void merge_all(void)
     {
         const struct cache_entry *ce = the_repository->index->cache[i];
         if (!ce_stage(ce))
+        {
             continue;
+        }
         i += merge_entry(i, ce->name) - 1;
     }
 }
 
 int cmd_merge_index(int argc, const char **argv, const char *prefix UNUSED)
 {
-    int i, force_file = 0;
+    int i;
+    int force_file = 0;
 
     /* Without this we cannot rely on waitpid() to tell
      * what happened to our children.
@@ -87,7 +102,9 @@ int cmd_merge_index(int argc, const char **argv, const char *prefix UNUSED)
     signal(SIGCHLD, SIG_DFL);
 
     if (argc < 3)
+    {
         usage("git merge-index [-o] [-q] <merge-program> (-a | [--] [<filename>...])");
+    }
 
     repo_read_index(the_repository);
 
@@ -126,6 +143,8 @@ int cmd_merge_index(int argc, const char **argv, const char *prefix UNUSED)
         merge_one_path(arg);
     }
     if (err && !quiet)
+    {
         die("merge program failed");
+    }
     return err;
 }

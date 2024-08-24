@@ -21,7 +21,9 @@ static int remove_space(char *line)
     while ((c = *src++) != '\0')
     {
         if (!isspace(c))
+        {
             *dst++ = c;
+        }
     }
     return dst - line;
 }
@@ -29,7 +31,8 @@ static int remove_space(char *line)
 static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 {
     static const char digits[] = "0123456789";
-    const char       *q, *r;
+    const char       *q;
+    const char       *r;
     int               n;
 
     q = p + 4;
@@ -46,7 +49,9 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
     }
 
     if (n == 0 || q[n] != ' ' || q[n + 1] != '+')
+    {
         return 0;
+    }
 
     r = q + n + 2;
     n = strspn(r, digits);
@@ -61,7 +66,9 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
         *p_after = 1;
     }
     if (n == 0)
+    {
         return 0;
+    }
 
     return 1;
 }
@@ -85,13 +92,16 @@ enum
 static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
                            struct strbuf *line_buf, unsigned flags)
 {
-    int          stable      = flags & GOPID_STABLE;
-    int          verbatim    = flags & GOPID_VERBATIM;
-    int          find_header = flags & GOPID_FIND_HEADER;
-    int          patchlen = 0, found_next = 0;
-    int          before = -1, after = -1;
+    int          stable         = flags & GOPID_STABLE;
+    int          verbatim       = flags & GOPID_VERBATIM;
+    int          find_header    = flags & GOPID_FIND_HEADER;
+    int          patchlen       = 0;
+    int          found_next     = 0;
+    int          before         = -1;
+    int          after          = -1;
     int          diff_is_binary = 0;
-    char         pre_oid_str[GIT_MAX_HEXSZ + 1], post_oid_str[GIT_MAX_HEXSZ + 1];
+    char         pre_oid_str[GIT_MAX_HEXSZ + 1];
+    char         post_oid_str[GIT_MAX_HEXSZ + 1];
     git_hash_ctx ctx;
 
     the_hash_algo->init_fn(&ctx);
@@ -117,13 +127,18 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
              * we are done with the one we have been processing.
              */
             if (skip_prefix(line, "commit ", &p))
+            {
                 ;
+            }
             else if (skip_prefix(line, "From ", &p))
-                ;
+            {
+            }
             if (!get_oid_hex(p, next_oid))
             {
                 if (verbatim)
+                {
                     the_hash_algo->update_fn(&ctx, line, strlen(line));
+                }
                 found_next = 1;
                 break;
             }
@@ -131,7 +146,9 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 
         /* Ignore commit comments */
         if (!patchlen && !starts_with(line, "diff "))
+        {
             continue;
+        }
 
         /*
          * We are past the commit log message.  Prepare to
@@ -151,10 +168,12 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
                 the_hash_algo->update_fn(&ctx, post_oid_str,
                                          strlen(post_oid_str));
                 if (stable)
+                {
                     flush_one_hunk(result, &ctx);
+                }
                 continue;
             }
-            else if (skip_prefix(line, "index ", &p))
+            if (skip_prefix(line, "index ", &p))
             {
                 char *oid1_end = strstr(line, "..");
                 char *oid2_end = NULL;
@@ -183,7 +202,9 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
         if (starts_with(line, "\\ ") && 12 < strlen(line))
         {
             if (verbatim)
+            {
                 the_hash_algo->update_fn(&ctx, line, strlen(line));
+            }
             continue;
         }
 
@@ -209,19 +230,27 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 
             /* Split at the end of the patch.  */
             if (!starts_with(line, "diff "))
+            {
                 break;
+            }
 
             /* Else we're parsing another header.  */
             if (stable)
+            {
                 flush_one_hunk(result, &ctx);
+            }
             before = after = -1;
         }
 
         /* If we get here, we're inside a hunk.  */
         if (line[0] == '-' || line[0] == ' ')
+        {
             before--;
+        }
         if (line[0] == '+' || line[0] == ' ')
+        {
             after--;
+        }
 
         /* Add line to hash algo (possibly removing whitespace) */
         len = verbatim ? strlen(line) : remove_space(line);
@@ -230,7 +259,9 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
     }
 
     if (!found_next)
+    {
         oidclr(next_oid, the_repository->hash_algo);
+    }
 
     flush_one_hunk(result, &ctx);
 
@@ -239,7 +270,9 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 
 static void generate_id_list(unsigned flags)
 {
-    struct object_id oid, n, result;
+    struct object_id oid;
+    struct object_id n;
+    struct object_id result;
     int              patchlen;
     struct strbuf    line_buf = STRBUF_INIT;
 
@@ -249,7 +282,9 @@ static void generate_id_list(unsigned flags)
     {
         patchlen = get_one_patchid(&n, &result, &line_buf, flags);
         if (patchlen)
+        {
             flush_current_id(&oid, &result);
+        }
         oidcpy(&oid, &n);
         flags &= ~GOPID_FIND_HEADER;
     }
@@ -303,7 +338,9 @@ int cmd_patch_id(int argc, const char **argv, const char *prefix)
 
     /* verbatim implies stable */
     if (config.verbatim)
+    {
         config.stable = 1;
+    }
 
     argc = parse_options(argc, argv, prefix, builtin_patch_id_options,
                          patch_id_usage, 0);
@@ -318,12 +355,18 @@ int cmd_patch_id(int argc, const char **argv, const char *prefix)
      * the code that computes patch IDs to always use SHA1.
      */
     if (!the_hash_algo)
+    {
         repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+    }
 
     if (opts ? opts > 1 : config.stable)
+    {
         flags |= GOPID_STABLE;
+    }
     if (opts ? opts == 3 : config.verbatim)
+    {
         flags |= GOPID_VERBATIM;
+    }
     generate_id_list(flags);
 
     return 0;

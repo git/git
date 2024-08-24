@@ -56,13 +56,21 @@ static int parse_opt_empty(const struct option *opt, const char *arg, int unset)
     BUG_ON_OPT_NEG(unset);
 
     if (!strcmp(arg, "stop"))
+    {
         *opt_value = STOP_ON_EMPTY_COMMIT;
+    }
     else if (!strcmp(arg, "drop"))
+    {
         *opt_value = DROP_EMPTY_COMMIT;
+    }
     else if (!strcmp(arg, "keep"))
+    {
         *opt_value = KEEP_EMPTY_COMMIT;
+    }
     else
+    {
         return error(_("invalid value for '%s': '%s'"), "--empty", arg);
+    }
 
     return 0;
 }
@@ -81,8 +89,10 @@ static int option_parse_m(const struct option *opt,
 
     replay->mainline = strtol(arg, &end, 10);
     if (*end || replay->mainline <= 0)
+    {
         return error(_("option `%s' expects a number greater than zero"),
                      opt->long_name);
+    }
 
     return 0;
 }
@@ -97,12 +107,16 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
     while ((this_opt = va_arg(ap, const char *)))
     {
         if (va_arg(ap, int))
+        {
             break;
+        }
     }
     va_end(ap);
 
     if (this_opt)
+    {
         die(_("%s: %s cannot be used with %s"), me, this_opt, base_opt);
+    }
 }
 
 static int run_sequencer(int argc, const char **argv, const char *prefix,
@@ -173,7 +187,9 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 
     /* implies allow_empty */
     if (opts->keep_redundant_commits)
+    {
         opts->allow_empty = 1;
+    }
 
     if (cleanup_arg)
     {
@@ -186,11 +202,17 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
     {
         const char *this_operation;
         if (cmd == 'q')
+        {
             this_operation = "--quit";
+        }
         else if (cmd == 'c')
+        {
             this_operation = "--continue";
+        }
         else if (cmd == 's')
+        {
             this_operation = "--skip";
+        }
         else
         {
             assert(cmd == 'a');
@@ -219,12 +241,14 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
     }
 
     if (opts->allow_ff)
+    {
         verify_opt_compatible(me, "--ff",
                               "--signoff", opts->signoff,
                               "--no-commit", opts->no_commit,
                               "-x", opts->record_origin,
                               "--edit", opts->edit > 0,
                               NULL);
+    }
 
     if (cmd)
     {
@@ -238,37 +262,53 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
         opts->revs->no_walk        = 1;
         opts->revs->unsorted_input = 1;
         if (argc < 2)
+        {
             usage_with_options(usage_str, options);
+        }
         if (!strcmp(argv[1], "-"))
+        {
             argv[1] = "@{-1}";
+        }
         memset(&s_r_opt, 0, sizeof(s_r_opt));
         s_r_opt.assume_dashdash = 1;
         argc                    = setup_revisions(argc, argv, opts->revs, &s_r_opt);
     }
 
     if (argc > 1)
+    {
         usage_with_options(usage_str, options);
+    }
 
     /* These option values will be free()d */
     opts->gpg_sign = xstrdup_or_null(opts->gpg_sign);
     opts->strategy = xstrdup_or_null(opts->strategy);
     if (!opts->strategy && getenv("GIT_TEST_MERGE_ALGORITHM"))
+    {
         opts->strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
+    }
     free(options);
 
     if (cmd == 'q')
     {
         int ret = sequencer_remove_state(opts);
         if (!ret)
+        {
             remove_branch_state(the_repository, 0);
+        }
         return ret;
     }
     if (cmd == 'c')
+    {
         return sequencer_continue(the_repository, opts);
+    }
     if (cmd == 'a')
+    {
         return sequencer_rollback(the_repository, opts);
+    }
     if (cmd == 's')
+    {
         return sequencer_skip(the_repository, opts);
+    }
     return sequencer_pick_revisions(the_repository, opts);
 }
 
@@ -281,7 +321,9 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
     sequencer_init_config(&opts);
     res = run_sequencer(argc, argv, prefix, &opts);
     if (res < 0)
+    {
         die(_("revert failed"));
+    }
     replay_opts_release(&opts);
     return res;
 }
@@ -295,7 +337,9 @@ int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
     sequencer_init_config(&opts);
     res = run_sequencer(argc, argv, prefix, &opts);
     if (res < 0)
+    {
         die(_("cherry-pick failed"));
+    }
     replay_opts_release(&opts);
     return res;
 }

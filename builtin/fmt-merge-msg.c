@@ -29,8 +29,9 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
            OPT_FILENAME('F', "file", &inpath, N_("file to read from")),
            OPT_END()};
 
-    FILE                     *in    = stdin;
-    struct strbuf             input = STRBUF_INIT, output = STRBUF_INIT;
+    FILE                     *in     = stdin;
+    struct strbuf             input  = STRBUF_INIT;
+    struct strbuf             output = STRBUF_INIT;
     int                       ret;
     struct fmt_merge_msg_opts opts;
 
@@ -38,22 +39,32 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, fmt_merge_msg_usage,
                          0);
     if (argc > 0)
+    {
         usage_with_options(fmt_merge_msg_usage, options);
+    }
     if (shortlog_len < 0)
+    {
         shortlog_len = (merge_log_config > 0) ? merge_log_config : 0;
+    }
 
-    if (inpath && strcmp(inpath, "-"))
+    if (inpath && strcmp(inpath, "-") != 0)
     {
         in = fopen(inpath, "r");
         if (!in)
+        {
             die_errno("cannot open '%s'", inpath);
+        }
     }
 
     if (strbuf_read(&input, fileno(in), 0) < 0)
+    {
         die_errno("could not read input file");
+    }
 
     if (message)
+    {
         strbuf_addstr(&output, message);
+    }
 
     memset(&opts, 0, sizeof(opts));
     opts.add_title     = !message;
@@ -63,7 +74,9 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
     ret = fmt_merge_msg(&input, &output, &opts);
     if (ret)
+    {
         return ret;
+    }
     write_in_full(STDOUT_FILENO, output.buf, output.len);
 
     free(inpath);

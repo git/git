@@ -36,16 +36,22 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
     };
     git_config(git_default_config, NULL);
     if (parse_options(argc, argv, prefix, opts, pack_refs_usage, 0))
+    {
         usage_with_options(pack_refs_usage, opts);
+    }
 
     for_each_string_list_item(item, &option_excluded_refs)
         add_ref_exclusion(pack_refs_opts.exclusions, item->string);
 
     if (pack_all)
+    {
         string_list_append(pack_refs_opts.includes, "*");
+    }
 
     if (!pack_refs_opts.includes->nr)
+    {
         string_list_append(pack_refs_opts.includes, "refs/tags/*");
+    }
 
     ret = refs_pack_refs(get_main_ref_store(the_repository), &pack_refs_opts);
 

@@ -52,10 +52,13 @@ static void internal_prefix_pathspec(struct strvec *out,
         size_t      length  = strlen(pathspec[i]);
         size_t      to_copy = length;
         const char *maybe_basename;
-        char       *trimmed, *prefixed_path;
+        char       *trimmed;
+        char       *prefixed_path;
 
         while (!(flags & KEEP_TRAILING_SLASH) && to_copy > 0 && is_dir_sep(pathspec[i][to_copy - 1]))
+        {
             to_copy--;
+        }
 
         trimmed        = xmemdupz(pathspec[i], to_copy);
         maybe_basename = (flags & DUP_BASENAME) ? basename(trimmed) : trimmed;
@@ -89,16 +92,22 @@ static const char *submodule_gitfile_path(const char *src, int first)
     const char   *path;
 
     if (!S_ISGITLINK(the_repository->index->cache[first]->ce_mode))
+    {
         die(_("Directory %s is in index and no submodule?"), src);
+    }
     if (!is_staging_gitmodules_ok(the_repository->index))
+    {
         die(_("Please stage your changes to .gitmodules or stash them to proceed"));
+    }
 
     strbuf_addf(&submodule_dotgit, "%s/.git", src);
 
     path = read_gitfile(submodule_dotgit.buf);
     strbuf_release(&submodule_dotgit);
     if (path)
+    {
         return path;
+    }
     return SUBMODULE_WITH_GITDIR;
 }
 
@@ -106,18 +115,24 @@ static int index_range_of_same_dir(const char *src, int length,
                                    int *first_p, int *last_p)
 {
     char *src_w_slash = add_slash(src);
-    int   first, last, len_w_slash = length + 1;
+    int   first;
+    int   last;
+    int   len_w_slash = length + 1;
 
     first = index_name_pos(the_repository->index, src_w_slash, len_w_slash);
     if (first >= 0)
+    {
         die(_("%.*s is in index"), len_w_slash, src_w_slash);
+    }
 
     first = -1 - first;
     for (last = first; last < the_repository->index->cache_nr; last++)
     {
         const char *path = the_repository->index->cache[last]->name;
-        if (strncmp(path, src_w_slash, len_w_slash))
+        if (strncmp(path, src_w_slash, len_w_slash) != 0)
+        {
             break;
+        }
     }
 
     free(src_w_slash);
@@ -146,12 +161,18 @@ static int empty_dir_has_sparse_contents(const char *name)
     {
         pos = -pos - 1;
         if (pos >= the_repository->index->cache_nr)
+        {
             goto free_return;
+        }
         ce = the_repository->index->cache[pos];
-        if (strncmp(with_slash, ce->name, length))
+        if (strncmp(with_slash, ce->name, length) != 0)
+        {
             goto free_return;
+        }
         if (ce_skip_worktree(ce))
+        {
             ret = 1;
+        }
     }
 
 free_return:
@@ -186,8 +207,14 @@ static void remove_empty_src_dirs(const char **src_dir, size_t src_dir_nr)
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
-    int           i, flags, gitmodules_modified = 0;
-    int           verbose = 0, show_only = 0, force = 0, ignore_errors = 0, ignore_sparse = 0;
+    int           i;
+    int           flags;
+    int           gitmodules_modified  = 0;
+    int           verbose              = 0;
+    int           show_only            = 0;
+    int           force                = 0;
+    int           ignore_errors        = 0;
+    int           ignore_sparse        = 0;
     struct option builtin_mv_options[] = {
         OPT__VERBOSE(&verbose, N_("be verbose")),
         OPT__DRY_RUN(&show_only, N_("dry run")),
@@ -204,8 +231,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
     const char        **submodule_gitfiles;
     char               *dst_w_slash = NULL;
     struct strvec       src_dir     = STRVEC_INIT;
-    enum update_mode   *modes, dst_mode = 0;
-    struct stat         st, dest_st;
+    enum update_mode   *modes;
+    enum update_mode    dst_mode = 0;
+    struct stat         st;
+    struct stat         dest_st;
     struct string_list  src_for_dst = STRING_LIST_INIT_DUP;
     struct lock_file    lock_file   = LOCK_INIT;
     struct cache_entry *ce;
@@ -218,11 +247,15 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, builtin_mv_options,
                          builtin_mv_usage, 0);
     if (--argc < 1)
+    {
         usage_with_options(builtin_mv_usage, builtin_mv_options);
+    }
 
     repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
     if (repo_read_index(the_repository) < 0)
+    {
         die(_("index file corrupt"));
+    }
 
     internal_prefix_pathspec(&sources, prefix, argv, argc, 0);
     CALLOC_ARRAY(modes, argc);
@@ -234,14 +267,18 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
      */
     flags = KEEP_TRAILING_SLASH;
     if (argc == 1 && is_directory(argv[0]) && !is_directory(argv[1]))
+    {
         flags = 0;
+    }
     internal_prefix_pathspec(&dest_paths, prefix, argv + argc, 1, flags);
     dst_w_slash        = add_slash(dest_paths.v[0]);
     submodule_gitfiles = xcalloc(argc, sizeof(char *));
 
     if (dest_paths.v[0][0] == '\0')
+    {
         /* special case: "." was normalized to "" */
         internal_prefix_pathspec(&destinations, dest_paths.v[0], argv, argc, DUP_BASENAME);
+    }
     else if (!lstat(dest_paths.v[0], &st) && S_ISDIR(st.st_mode))
     {
         internal_prefix_pathspec(&destinations, dst_w_slash, argv, argc, DUP_BASENAME);
@@ -268,19 +305,24 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
          * SPARSE here is only considering cone-mode situation.
          */
         if (!path_in_cone_mode_sparse_checkout(destinations.v[0], the_repository->index))
+        {
             dst_mode = SPARSE;
+        }
     }
 
     /* Checking */
     for (i = 0; i < argc; i++)
     {
-        const char *src = sources.v[i], *dst = destinations.v[i];
+        const char *src = sources.v[i];
+        const char *dst = destinations.v[i];
         int         length;
         const char *bad         = NULL;
         int         skip_sparse = 0;
 
         if (show_only)
+        {
             printf(_("Checking rename of '%s' to '%s'\n"), src, dst);
+        }
 
         length = strlen(src);
         if (lstat(src, &st) < 0)
@@ -301,7 +343,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
                 free(src_w_slash);
                 /* only error if existence is expected. */
                 if (!(modes[i] & SPARSE))
+                {
                     bad = _("bad source");
+                }
                 goto act_on_entry;
             }
             ce = the_repository->index->cache[pos];
@@ -346,14 +390,18 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
         {
             char  *dst_with_slash;
             size_t dst_with_slash_len;
-            int    j, n;
-            int    first = index_name_pos(the_repository->index, src, length), last;
+            int    j;
+            int    n;
+            int    first = index_name_pos(the_repository->index, src, length);
+            int    last;
 
             if (first >= 0)
             {
                 const char *path = submodule_gitfile_path(src, first);
                 if (path != SUBMODULE_WITH_GITDIR)
+                {
                     path = strvec_push(&submodule_gitfiles_to_free, path);
+                }
                 submodule_gitfiles[i] = path;
                 goto act_on_entry;
             }
@@ -407,7 +455,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
             bad = _("conflicted");
             goto act_on_entry;
         }
-        if (lstat(dst, &st) == 0 && (!ignore_case || strcasecmp(src, dst)))
+        if (lstat(dst, &st) == 0 && (!ignore_case || strcasecmp(src, dst) != 0))
         {
             bad = _("destination exists");
             if (force)
@@ -419,11 +467,15 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
                 if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))
                 {
                     if (verbose)
+                    {
                         warning(_("overwriting '%s'"), dst);
+                    }
                     bad = NULL;
                 }
                 else
+                {
                     bad = _("Cannot overwrite");
+                }
             }
             goto act_on_entry;
         }
@@ -444,7 +496,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
             if (force)
             {
                 if (verbose)
+                {
                     warning(_("overwriting '%s'"), dst);
+                }
                 bad = NULL;
             }
             else
@@ -470,16 +524,22 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
         }
 
         if (skip_sparse)
+        {
             goto remove_entry;
+        }
 
         string_list_insert(&src_for_dst, dst);
 
     act_on_entry:
         if (!bad)
+        {
             continue;
+        }
         if (!ignore_errors)
+        {
             die(_("%s, source=%s, destination=%s"),
                 bad, src, dst);
+        }
     remove_entry:
         if (--argc > 0)
         {
@@ -505,7 +565,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
     for (i = 0; i < argc; i++)
     {
-        const char      *src = sources.v[i], *dst = destinations.v[i];
+        const char      *src  = sources.v[i];
+        const char      *dst  = destinations.v[i];
         enum update_mode mode = modes[i];
         int              pos;
         int              sparse_and_dirty = 0;
@@ -513,37 +574,53 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
         state.istate                      = the_repository->index;
 
         if (force)
+        {
             state.force = 1;
+        }
         if (show_only || verbose)
+        {
             printf(_("Renaming %s to %s\n"), src, dst);
+        }
         if (show_only)
+        {
             continue;
+        }
         if (!(mode & (INDEX | SPARSE | SKIP_WORKTREE_DIR)) && !(dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) && rename(src, dst) < 0)
         {
             if (ignore_errors)
+            {
                 continue;
+            }
             die_errno(_("renaming '%s' failed"), src);
         }
         if (submodule_gitfiles[i])
         {
             if (!update_path_in_gitmodules(src, dst))
+            {
                 gitmodules_modified = 1;
+            }
             if (submodule_gitfiles[i] != SUBMODULE_WITH_GITDIR)
+            {
                 connect_work_tree_and_git_dir(dst,
                                               submodule_gitfiles[i],
                                               1);
+            }
         }
 
         if (mode & (WORKING_DIRECTORY | SKIP_WORKTREE_DIR))
+        {
             continue;
+        }
 
         pos = index_name_pos(the_repository->index, src, strlen(src));
         assert(pos >= 0);
         if (!(mode & SPARSE) && !lstat(src, &st))
+        {
             sparse_and_dirty = ie_modified(the_repository->index,
                                            the_repository->index->cache[pos],
                                            &st,
                                            0);
+        }
         rename_index_entry_at(the_repository->index, pos, dst);
 
         if (ignore_sparse && core_apply_sparse_checkout && core_sparse_checkout_cone)
@@ -564,7 +641,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
                 dst_ce->ce_flags &= ~CE_SKIP_WORKTREE;
 
                 if (checkout_entry(dst_ce, &state, NULL, NULL))
+                {
                     die(_("cannot checkout %s"), dst_ce->name);
+                }
             }
             else if ((dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) && !(mode & SPARSE) && !path_in_sparse_checkout(dst, the_repository->index))
             {
@@ -601,14 +680,20 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
     remove_empty_src_dirs(src_dir.v, src_dir.nr);
 
     if (dirty_paths.nr)
+    {
         advise_on_moving_dirty_path(&dirty_paths);
+    }
 
     if (gitmodules_modified)
+    {
         stage_updated_gitmodules(the_repository->index);
+    }
 
     if (write_locked_index(the_repository->index, &lock_file,
                            COMMIT_LOCK | SKIP_IF_UNCHANGED))
+    {
         die(_("Unable to write new index file"));
+    }
 
     ret = 0;
 

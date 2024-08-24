@@ -152,19 +152,27 @@ static void list_config_help(enum show_config_type type)
         }
         strbuf_release(&sb);
         if (!e->prefix)
+        {
             string_list_append(&keys, var);
+        }
     }
 
     for (e = slot_expansions; e->prefix; e++)
+    {
         if (!e->found)
+        {
             BUG("slot_expansion %s.%s is not used",
                 e->prefix, e->placeholder);
+        }
+    }
 
     string_list_sort(&keys);
     for (i = 0; i < keys.nr; i++)
     {
         const char   *var = keys.items[i].string;
-        const char   *wildcard, *tag, *cut;
+        const char   *wildcard;
+        const char   *tag;
+        const char   *cut;
         const char   *dot = NULL;
         struct strbuf sb  = STRBUF_INIT;
 
@@ -189,13 +197,21 @@ static void list_config_help(enum show_config_type type)
         }
 
         if (dot)
+        {
             cut = dot;
+        }
         else if (wildcard && !tag)
+        {
             cut = wildcard;
+        }
         else if (!wildcard && tag)
+        {
             cut = tag;
+        }
         else
+        {
             cut = wildcard < tag ? wildcard : tag;
+        }
 
         strbuf_add(&sb, var, cut - var);
         string_list_append(&keys_uniq, sb.buf);
@@ -211,11 +227,17 @@ static void list_config_help(enum show_config_type type)
 static enum help_format parse_help_format(const char *format)
 {
     if (!strcmp(format, "man"))
+    {
         return HELP_FORMAT_MAN;
+    }
     if (!strcmp(format, "info"))
+    {
         return HELP_FORMAT_INFO;
+    }
     if (!strcmp(format, "web") || !strcmp(format, "html"))
+    {
         return HELP_FORMAT_WEB;
+    }
     /*
      * Please update _git_config() in git-completion.bash when you
      * add new help formats.
@@ -230,7 +252,9 @@ static const char *get_man_viewer_info(const char *name)
     for (viewer = man_viewer_info_list; viewer; viewer = viewer->next)
     {
         if (!strcasecmp(name, viewer->name))
+        {
             return viewer->info;
+        }
     }
     return NULL;
 }
@@ -246,7 +270,9 @@ static int check_emacsclient_version(void)
     ec_process.err              = -1;
     ec_process.stdout_to_stderr = 1;
     if (start_command(&ec_process))
+    {
         return error(_("Failed to start emacsclient."));
+    }
 
     strbuf_read(&buffer, ec_process.err, 20);
     close(ec_process.err);
@@ -285,7 +311,9 @@ static void exec_woman_emacs(const char *path, const char *page)
         struct strbuf man_page = STRBUF_INIT;
 
         if (!path)
+        {
             path = "emacsclient";
+        }
         strbuf_addf(&man_page, "(woman \"%s\")", page);
         execlp(path, "emacsclient", "-e", man_page.buf, (char *)NULL);
         warning_errno(_("failed to exec '%s'"), path);
@@ -306,11 +334,15 @@ static void exec_man_konqueror(const char *path, const char *page)
         {
             size_t len;
             if (strip_suffix(path, "/konqueror", &len))
+            {
                 path = xstrfmt("%.*s/kfmclient", (int)len, path);
+            }
             filename = basename((char *)path);
         }
         else
+        {
             path = "kfmclient";
+        }
         strbuf_addf(&man_page, "man:%s(1)", page);
         execlp(path, filename, "newTab", man_page.buf, (char *)NULL);
         warning_errno(_("failed to exec '%s'"), path);
@@ -321,7 +353,9 @@ static void exec_man_konqueror(const char *path, const char *page)
 static void exec_man_man(const char *path, const char *page)
 {
     if (!path)
+    {
         path = "man";
+    }
     execlp(path, "man", page, (char *)NULL);
     warning_errno(_("failed to exec '%s'"), path);
 }
@@ -340,7 +374,9 @@ static void add_man_viewer(const char *name)
     struct man_viewer_list **p = &man_viewer_list;
 
     while (*p)
+    {
         p = &((*p)->next);
+    }
     FLEX_ALLOC_STR(*p, name, name);
 }
 
@@ -365,11 +401,15 @@ static int add_man_viewer_path(const char *name,
                                const char *value)
 {
     if (supported_man_viewer(name, len))
+    {
         do_add_man_viewer_info(name, len, value);
+    }
     else
+    {
         warning(_("'%s': path for unsupported man viewer.\n"
                   "Please consider using 'man.<tool>.cmd' instead."),
                 name);
+    }
 
     return 0;
 }
@@ -379,33 +419,44 @@ static int add_man_viewer_cmd(const char *name,
                               const char *value)
 {
     if (supported_man_viewer(name, len))
+    {
         warning(_("'%s': cmd for supported man viewer.\n"
                   "Please consider using 'man.<tool>.path' instead."),
                 name);
+    }
     else
+    {
         do_add_man_viewer_info(name, len, value);
+    }
 
     return 0;
 }
 
 static int add_man_viewer_info(const char *var, const char *value)
 {
-    const char *name, *subkey;
+    const char *name;
+    const char *subkey;
     size_t      namelen;
 
     if (parse_config_key(var, "man", &name, &namelen, &subkey) < 0 || !name)
+    {
         return 0;
+    }
 
     if (!strcmp(subkey, "path"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         return add_man_viewer_path(name, namelen, value);
     }
     if (!strcmp(subkey, "cmd"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         return add_man_viewer_cmd(name, namelen, value);
     }
 
@@ -418,26 +469,34 @@ static int git_help_config(const char *var, const char *value,
     if (!strcmp(var, "help.format"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         help_format = parse_help_format(value);
         return 0;
     }
     if (!strcmp(var, "help.htmlpath"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         html_path = xstrdup(value);
         return 0;
     }
     if (!strcmp(var, "man.viewer"))
     {
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         add_man_viewer(value);
         return 0;
     }
     if (starts_with(var, "man."))
+    {
         return add_man_viewer_info(var, value);
+    }
 
     return git_default_config(var, value, ctx, cb);
 }
@@ -447,7 +506,9 @@ static struct cmdnames main_cmds, other_cmds;
 static int is_git_command(const char *s)
 {
     if (is_builtin(s))
+    {
         return 1;
+    }
 
     load_command_list("git-", &main_cmds, &other_cmds);
     return is_in_cmdlist(&main_cmds, s) || is_in_cmdlist(&other_cmds, s);
@@ -456,8 +517,10 @@ static int is_git_command(const char *s)
 static const char *cmd_to_page(const char *git_cmd)
 {
     if (!git_cmd)
+    {
         return "git";
-    else if (starts_with(git_cmd, "git"))
+    }
+    if (starts_with(git_cmd, "git"))
         return git_cmd;
     else if (is_git_command(git_cmd))
         return xstrfmt("git-%s", git_cmd);
@@ -480,7 +543,9 @@ static void setup_man_path(void)
     strbuf_addstr(&new_path, git_man_path);
     strbuf_addch(&new_path, ':');
     if (old_path)
+    {
         strbuf_addstr(&new_path, old_path);
+    }
 
     free(git_man_path);
     setenv("MANPATH", new_path.buf, 1);
@@ -493,15 +558,25 @@ static void exec_viewer(const char *name, const char *page)
     const char *info = get_man_viewer_info(name);
 
     if (!strcasecmp(name, "man"))
+    {
         exec_man_man(info, page);
+    }
     else if (!strcasecmp(name, "woman"))
+    {
         exec_woman_emacs(info, page);
+    }
     else if (!strcasecmp(name, "konqueror"))
+    {
         exec_man_konqueror(info, page);
+    }
     else if (info)
+    {
         exec_man_cmd(info, page);
+    }
     else
+    {
         warning(_("'%s': unknown man viewer."), name);
+    }
 }
 
 static void show_man_page(const char *page)
@@ -515,7 +590,9 @@ static void show_man_page(const char *page)
         exec_viewer(viewer->name, page); /* will return when unable */
     }
     if (fallback)
+    {
         exec_viewer(fallback, page);
+    }
     exec_viewer("man", page);
     die(_("no man viewer handled the request"));
 }
@@ -533,7 +610,9 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
     char       *to_free = NULL;
 
     if (!html_path)
+    {
         html_path = to_free = system_path(GIT_HTML_PATH);
+    }
 
     /*
      * Check that the page we're looking for exists.
@@ -542,8 +621,10 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
     {
         if (stat(mkpath("%s/%s.html", html_path, page), &st)
             || !S_ISREG(st.st_mode))
+        {
             die("'%s/%s.html': documentation file not found.",
                 html_path, page);
+        }
     }
 
     strbuf_init(page_path, 0);
@@ -570,7 +651,9 @@ static const char *check_git_cmd(const char *cmd)
     char *alias;
 
     if (is_git_command(cmd))
+    {
         return cmd;
+    }
 
     alias = alias_lookup(cmd);
     if (alias)
@@ -602,15 +685,19 @@ static const char *check_git_cmd(const char *cmd)
         fprintf_ln(stderr, _("'%s' is aliased to '%s'"), cmd, alias);
         count = split_cmdline(alias, &argv);
         if (count < 0)
+        {
             die(_("bad alias.%s string: %s"), cmd,
                 split_cmdline_strerror(count));
+        }
         free(argv);
         UNLEAK(alias);
         return alias;
     }
 
     if (exclude_guides)
+    {
         return help_unknown_cmd(cmd);
+    }
 
     return cmd;
 }
@@ -645,9 +732,11 @@ static void opt_mode_usage(int argc, const char *opt_mode,
                            enum help_format fmt)
 {
     if (argc)
+    {
         usage_msg_optf(_("the '%s' option doesn't take any non-option arguments"),
                        builtin_help_usage, builtin_help_options,
                        opt_mode);
+    }
 
     no_help_format(opt_mode, fmt);
 }
@@ -663,8 +752,10 @@ int cmd_help(int argc, const char **argv, const char *prefix)
     parsed_help_format = help_format;
 
     if (cmd_mode != HELP_ACTION_ALL && (show_external_commands >= 0 || show_aliases >= 0))
+    {
         usage_msg_opt(_("the '--no-[external-commands|aliases]' options can only be used with '--all'"),
                       builtin_help_usage, builtin_help_options);
+    }
 
     switch (cmd_mode)
     {
@@ -724,9 +815,13 @@ int cmd_help(int argc, const char **argv, const char *prefix)
     git_config(git_help_config, NULL);
 
     if (parsed_help_format != HELP_FORMAT_NONE)
+    {
         help_format = parsed_help_format;
+    }
     if (help_format == HELP_FORMAT_NONE)
+    {
         help_format = parse_help_format(DEFAULT_HELP_FORMAT);
+    }
 
     argv[0] = check_git_cmd(argv[0]);
 

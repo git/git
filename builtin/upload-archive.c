@@ -24,10 +24,14 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
     const char   *arg_cmd   = "argument ";
 
     if (argc != 2 || !strcmp(argv[1], "-h"))
+    {
         usage(upload_archive_usage);
+    }
 
     if (!enter_repo(argv[1], 0))
+    {
         die("'%s' does not appear to be a git repository", argv[1]);
+    }
 
     init_archivers();
 
@@ -37,12 +41,18 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
     {
         char *buf = packet_read_line(0, NULL);
         if (!buf)
+        {
             break; /* got a flush */
+        }
         if (sent_argv.nr > MAX_ARGS)
+        {
             die("Too many options (>%d)", MAX_ARGS - 1);
+        }
 
         if (!starts_with(buf, arg_cmd))
+        {
             die("'argument' token or flush expected");
+        }
         strvec_push(&sent_argv, buf + strlen(arg_cmd));
     }
 
@@ -70,7 +80,9 @@ static ssize_t process_input(int child_fd, int band)
     if (sz < 0)
     {
         if (errno != EAGAIN && errno != EINTR)
+        {
             error_clnt("read error: %s\n", strerror(errno));
+        }
         return sz;
     }
     send_sideband(1, band, buf, sz, LARGE_PACKET_MAX);
@@ -84,7 +96,9 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
     BUG_ON_NON_EMPTY_PREFIX(prefix);
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage(upload_archive_usage);
+    }
 
     /*
      * Set up sideband subprocess.
@@ -125,16 +139,26 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
             continue;
         }
         if (pfd[1].revents & POLLIN)
+        {
             /* Status stream ready */
             if (process_input(pfd[1].fd, 2))
+            {
                 continue;
+            }
+        }
         if (pfd[0].revents & POLLIN)
+        {
             /* Data stream ready */
             if (process_input(pfd[0].fd, 1))
+            {
                 continue;
+            }
+        }
 
         if (finish_command(&writer))
+        {
             error_clnt("%s", deadchild);
+        }
         packet_flush(1);
         break;
     }

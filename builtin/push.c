@@ -40,16 +40,22 @@ enum color_push
 static int parse_push_color_slot(const char *slot)
 {
     if (!strcasecmp(slot, "reset"))
+    {
         return PUSH_COLOR_RESET;
+    }
     if (!strcasecmp(slot, "error"))
+    {
         return PUSH_COLOR_ERROR;
+    }
     return -1;
 }
 
 static const char *push_get_color(enum color_push ix)
 {
     if (want_color_stderr(push_use_color))
+    {
         return push_colors[ix];
+    }
     return "";
 }
 
@@ -111,17 +117,25 @@ static void set_refspecs(const char **refs, int nr, struct remote *remote)
         if (!strcmp("tag", ref))
         {
             if (nr <= ++i)
+            {
                 die(_("tag shorthand without <tag>"));
+            }
             ref = refs[i];
             if (deleterefs)
+            {
                 refspec_appendf(&rs, ":refs/tags/%s", ref);
+            }
             else
+            {
                 refspec_appendf(&rs, "refs/tags/%s", ref);
+            }
         }
         else if (deleterefs)
         {
             if (strchr(ref, ':') || !*ref)
+            {
                 die(_("--delete only accepts plain target ref names"));
+            }
             refspec_appendf(&rs, ":%s", ref);
         }
         else if (!strchr(ref, ':'))
@@ -130,16 +144,24 @@ static void set_refspecs(const char **refs, int nr, struct remote *remote)
 
             /* lazily grab local_refs */
             if (!local_refs)
+            {
                 local_refs = get_local_heads();
+            }
 
             /* Does "ref" uniquely name our ref? */
             if (count_refspec_match(ref, local_refs, &matched) != 1)
+            {
                 refspec_append(&rs, ref);
+            }
             else
+            {
                 refspec_append_mapped(&rs, ref, remote, matched);
+            }
         }
         else
+        {
             refspec_append(&rs, ref);
+        }
     }
     free_refs(local_refs);
 }
@@ -166,11 +188,14 @@ static NORETURN void die_push_simple(struct branch *branch,
      * push.default.
      */
     if (push_default == PUSH_DEFAULT_UNSPECIFIED)
+    {
         advice_pushdefault_maybe = _(
             "\n"
             "To choose either option permanently, "
             "see push.default in 'git help config'.\n");
+    }
     if (git_branch_track != BRANCH_TRACK_SIMPLE)
+    {
         advice_automergesimple_maybe = _(
             "\n"
             "To avoid automatically configuring "
@@ -178,6 +203,7 @@ static NORETURN void die_push_simple(struct branch *branch,
             "won't match the local branch, see option "
             "'simple' of branch.autoSetupMerge\n"
             "in 'git help config'.\n");
+    }
     die(_("The upstream branch of your current branch does not match\n"
           "the name of your current branch.  To push to the upstream branch\n"
           "on the remote, use\n"
@@ -231,9 +257,11 @@ static const char *get_upstream_ref(int flags, struct branch *branch, const char
             advice_autosetup_maybe);
     }
     if (branch->merge_nr != 1)
+    {
         die(_("The current branch %s has multiple upstream branches, "
               "refusing to push."),
             branch->name);
+    }
 
     return branch->merge[0]->src;
 }
@@ -261,7 +289,9 @@ static void setup_default_push_refspecs(int *flags, struct remote *remote)
 
     branch = branch_get(NULL);
     if (!branch)
+    {
         die(_(message_detached_head_die), remote->name);
+    }
 
     dst         = branch->refname;
     same_remote = !strcmp(remote->name, remote_for_branch(branch, NULL));
@@ -272,17 +302,23 @@ static void setup_default_push_refspecs(int *flags, struct remote *remote)
         case PUSH_DEFAULT_UNSPECIFIED:
         case PUSH_DEFAULT_SIMPLE:
             if (!same_remote)
+            {
                 break;
-            if (strcmp(branch->refname, get_upstream_ref(*flags, branch, remote->name)))
+            }
+            if (strcmp(branch->refname, get_upstream_ref(*flags, branch, remote->name)) != 0)
+            {
                 die_push_simple(branch, remote);
+            }
             break;
 
         case PUSH_DEFAULT_UPSTREAM:
             if (!same_remote)
+            {
                 die(_("You are pushing to remote '%s', which is not the upstream of\n"
                       "your current branch '%s', without telling me what to push\n"
                       "to update which remote branch."),
                     remote->name, branch->name);
+            }
             dst = get_upstream_ref(*flags, branch, remote->name);
             break;
 
@@ -296,7 +332,9 @@ static void setup_default_push_refspecs(int *flags, struct remote *remote)
      * and 'current').
      */
     if ((*flags & TRANSPORT_PUSH_AUTO_UPSTREAM) && branch->merge_nr == 0)
+    {
         *flags |= TRANSPORT_PUSH_SET_UPSTREAM;
+    }
 
     refspec_appendf(&rs, "%s:%s", branch->refname, dst);
 }
@@ -337,42 +375,54 @@ static const char message_advice_ref_needs_update[] =
 static void advise_pull_before_push(void)
 {
     if (!advice_enabled(ADVICE_PUSH_NON_FF_CURRENT) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
+    {
         return;
+    }
     advise(_(message_advice_pull_before_push));
 }
 
 static void advise_checkout_pull_push(void)
 {
     if (!advice_enabled(ADVICE_PUSH_NON_FF_MATCHING) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
+    {
         return;
+    }
     advise(_(message_advice_checkout_pull_push));
 }
 
 static void advise_ref_already_exists(void)
 {
     if (!advice_enabled(ADVICE_PUSH_ALREADY_EXISTS) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
+    {
         return;
+    }
     advise(_(message_advice_ref_already_exists));
 }
 
 static void advise_ref_fetch_first(void)
 {
     if (!advice_enabled(ADVICE_PUSH_FETCH_FIRST) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
+    {
         return;
+    }
     advise(_(message_advice_ref_fetch_first));
 }
 
 static void advise_ref_needs_force(void)
 {
     if (!advice_enabled(ADVICE_PUSH_NEEDS_FORCE) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
+    {
         return;
+    }
     advise(_(message_advice_ref_needs_force));
 }
 
 static void advise_ref_needs_update(void)
 {
     if (!advice_enabled(ADVICE_PUSH_REF_NEEDS_UPDATE) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
+    {
         return;
+    }
     advise(_(message_advice_ref_needs_update));
 }
 
@@ -387,20 +437,26 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
     transport->family = family;
 
     if (receivepack)
+    {
         transport_set_option(transport,
                              TRANS_OPT_RECEIVEPACK, receivepack);
+    }
     transport_set_option(transport, TRANS_OPT_THIN, thin ? "yes" : NULL);
 
     if (!is_empty_cas(&cas))
     {
         if (!transport->smart_options)
+        {
             die("underlying transport does not support --%s option",
                 "force-with-lease");
+        }
         transport->smart_options->cas = &cas;
     }
 
     if (verbosity > 0)
+    {
         fprintf(stderr, _("Pushing to %s\n"), anon_url);
+    }
     trace2_region_enter("push", "transport_push", the_repository);
     err = transport_push(the_repository, transport,
                          rs, flags, &reject_reasons);
@@ -415,7 +471,9 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
     err |= transport_disconnect(transport);
     free(anon_url);
     if (!err)
+    {
         return 0;
+    }
 
     if (reject_reasons & REJECT_NON_FF_HEAD)
     {
@@ -449,12 +507,15 @@ static int do_push(int                       flags,
                    const struct string_list *push_options,
                    struct remote            *remote)
 {
-    int             i, errs;
+    int             i;
+    int             errs;
     struct strvec  *url;
     struct refspec *push_refspec = &rs;
 
     if (push_options->nr)
+    {
         flags |= TRANSPORT_PUSH_OPTIONS;
+    }
 
     if (!push_refspec->nr && !(flags & TRANSPORT_PUSH_ALL))
     {
@@ -463,7 +524,9 @@ static int do_push(int                       flags,
             push_refspec = &remote->push;
         }
         else if (!(flags & TRANSPORT_PUSH_MIRROR))
+        {
             setup_default_push_refspecs(&flags, remote);
+        }
     }
     errs = 0;
     url  = push_url_of_remote(remote);
@@ -472,9 +535,13 @@ static int do_push(int                       flags,
         struct transport *transport =
             transport_get(remote, url->v[i]);
         if (flags & TRANSPORT_PUSH_OPTIONS)
+        {
             transport->push_options = push_options;
+        }
         if (push_with_options(transport, push_refspec, flags))
+        {
             errs++;
+        }
     }
     return !!errs;
 }
@@ -485,7 +552,9 @@ static int option_parse_recurse_submodules(const struct option *opt,
     int *recurse_submodules = opt->value;
 
     if (unset)
+    {
         *recurse_submodules = RECURSE_SUBMODULES_OFF;
+    }
     else
     {
         if (!strcmp(arg, "only-is-on-demand"))
@@ -532,12 +601,16 @@ static int git_push_config(const char *k, const char *v,
     if (!strcmp(k, "push.followtags"))
     {
         if (git_config_bool(k, v))
+        {
             *flags |= TRANSPORT_PUSH_FOLLOW_TAGS;
+        }
         else
+        {
             *flags &= ~TRANSPORT_PUSH_FOLLOW_TAGS;
+        }
         return 0;
     }
-    else if (!strcmp(k, "push.autosetupremote"))
+    if (!strcmp(k, "push.autosetupremote"))
     {
         if (git_config_bool(k, v))
             *flags |= TRANSPORT_PUSH_AUTO_UPSTREAM;
@@ -668,26 +741,40 @@ int cmd_push(int argc, const char **argv, const char *prefix)
                               flags & TRANSPORT_PUSH_ALL, "--all/--branches",
                               flags & TRANSPORT_PUSH_MIRROR, "--mirror");
     if (deleterefs && argc < 2)
+    {
         die(_("--delete doesn't make sense without any refs"));
+    }
 
     if (recurse_submodules == RECURSE_SUBMODULES_CHECK)
+    {
         flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
+    }
     else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+    {
         flags |= TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND;
+    }
     else if (recurse_submodules == RECURSE_SUBMODULES_ONLY)
+    {
         flags |= TRANSPORT_RECURSE_SUBMODULES_ONLY;
+    }
 
     if (tags)
+    {
         refspec_append(&rs, "refs/tags/*");
+    }
 
     if (argc > 0)
+    {
         repo = argv[0];
+    }
 
     remote = pushremote_get(repo);
     if (!remote)
     {
         if (repo)
+        {
             die(_("bad repository '%s'"), repo);
+        }
         die(_(
             "No configured push destination.\n"
             "Either specify the URL from the command-line or configure a remote repository using\n"
@@ -700,33 +787,49 @@ int cmd_push(int argc, const char **argv, const char *prefix)
     }
 
     if (argc > 0)
+    {
         set_refspecs(argv + 1, argc - 1, remote);
+    }
 
     if (remote->mirror)
+    {
         flags |= (TRANSPORT_PUSH_MIRROR | TRANSPORT_PUSH_FORCE);
+    }
 
     if (flags & TRANSPORT_PUSH_ALL)
     {
         if (argc >= 2)
+        {
             die(_("--all can't be combined with refspecs"));
+        }
     }
     if (flags & TRANSPORT_PUSH_MIRROR)
     {
         if (argc >= 2)
+        {
             die(_("--mirror can't be combined with refspecs"));
+        }
     }
 
     if (!is_empty_cas(&cas) && (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES))
+    {
         cas.use_force_if_includes = 1;
+    }
 
     for_each_string_list_item(item, push_options) if (strchr(item->string, '\n'))
+    {
         die(_("push options must not have new line characters"));
+    }
 
     rc = do_push(flags, push_options, remote);
     string_list_clear(&push_options_cmdline, 0);
     string_list_clear(&push_options_config, 0);
     if (rc == -1)
+    {
         usage_with_options(push_usage, options);
+    }
     else
+    {
         return rc;
+    }
 }

@@ -67,13 +67,17 @@ static void output_pattern(const char *path, struct path_pattern *pattern)
         else
         {
             if (pattern)
+            {
                 printf("%s%c%d%c%s%s%s%c%s%c",
                        pattern->pl->src, '\0',
                        pattern->srcpos, '\0',
                        bang, pattern->pattern, slash, '\0',
                        path, '\0');
+            }
             else
+            {
                 printf("%c%c%c%s%c", '\0', '\0', '\0', path, '\0');
+            }
         }
     }
 }
@@ -83,14 +87,17 @@ static int check_ignore(struct dir_struct *dir,
 {
     const char          *full_path;
     char                *seen;
-    int                  num_ignored = 0, i;
+    int                  num_ignored = 0;
+    int                  i;
     struct path_pattern *pattern;
     struct pathspec      pathspec;
 
     if (!argc)
     {
         if (!quiet)
+        {
             fprintf(stderr, "no pathspec given.\n");
+        }
         return 0;
     }
 
@@ -122,12 +129,18 @@ static int check_ignore(struct dir_struct *dir,
             pattern   = last_matching_pattern(dir, the_repository->index,
                                               full_path, &dtype);
             if (!verbose && pattern && pattern->flags & PATTERN_FLAG_NEGATIVE)
+            {
                 pattern = NULL;
+            }
         }
         if (!quiet && (pattern || show_non_matching))
+        {
             output_pattern(pathspec.items[i].original, pattern);
+        }
         if (pattern)
+        {
             num_ignored++;
+        }
     }
     free(seen);
     clear_pathspec(&pathspec);
@@ -150,7 +163,9 @@ static int check_ignore_stdin_paths(struct dir_struct *dir, const char *prefix)
         {
             strbuf_reset(&unquoted);
             if (unquote_c_style(&unquoted, buf.buf, NULL))
+            {
                 die("line is badly quoted");
+            }
             strbuf_swap(&buf, &unquoted);
         }
         pathspec[0] = buf.buf;
@@ -176,28 +191,42 @@ int cmd_check_ignore(int argc, const char **argv, const char *prefix)
     if (stdin_paths)
     {
         if (argc > 0)
+        {
             die(_("cannot specify pathnames with --stdin"));
+        }
     }
     else
     {
         if (nul_term_line)
+        {
             die(_("-z only makes sense with --stdin"));
+        }
         if (argc == 0)
+        {
             die(_("no path specified"));
+        }
     }
     if (quiet)
     {
         if (argc > 1)
+        {
             die(_("--quiet is only valid with a single pathname"));
+        }
         if (verbose)
+        {
             die(_("cannot have both --quiet and --verbose"));
+        }
     }
     if (show_non_matching && !verbose)
+    {
         die(_("--non-matching is only valid with --verbose"));
+    }
 
     /* read_cache() is only necessary so we can watch out for submodules. */
     if (!no_index && repo_read_index(the_repository) < 0)
+    {
         die(_("index file corrupt"));
+    }
 
     setup_standard_excludes(&dir);
 

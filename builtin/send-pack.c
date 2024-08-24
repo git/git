@@ -99,7 +99,9 @@ static void print_helper_status(struct ref *ref)
         strbuf_reset(&buf);
         strbuf_addf(&buf, "%s %s", res, ref->name);
         if (ref->remote_status)
+        {
             msg = ref->remote_status;
+        }
         if (msg)
         {
             strbuf_addch(&buf, ' ');
@@ -112,18 +114,28 @@ static void print_helper_status(struct ref *ref)
             for (report = ref->report; report; report = report->next)
             {
                 if (count++ > 0)
+                {
                     strbuf_addf(&buf, "ok %s\n", ref->name);
+                }
                 if (report->ref_name)
+                {
                     strbuf_addf(&buf, "option refname %s\n",
                                 report->ref_name);
+                }
                 if (report->old_oid)
+                {
                     strbuf_addf(&buf, "option old-oid %s\n",
                                 oid_to_hex(report->old_oid));
+                }
                 if (report->new_oid)
+                {
                     strbuf_addf(&buf, "option new-oid %s\n",
                                 oid_to_hex(report->new_oid));
+                }
                 if (report->forced_update)
+                {
                     strbuf_addstr(&buf, "option forced-update\n");
+                }
             }
         }
         write_or_die(1, buf.buf, buf.len);
@@ -146,9 +158,13 @@ static int send_pack_config(const char *k, const char *v,
                 break;
             default:
                 if (!strcasecmp(v, "if-asked"))
+                {
                     args.push_cert = SEND_PACK_PUSH_CERT_IF_ASKED;
+                }
                 else
+                {
                     return error(_("invalid value for '%s'"), k);
+                }
         }
     }
     return git_default_config(k, v, ctx, cb);
@@ -164,7 +180,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
     struct child_process  *conn;
     struct oid_array       extra_have = OID_ARRAY_INIT;
     struct oid_array       shallow    = OID_ARRAY_INIT;
-    struct ref            *remote_refs, *local_refs;
+    struct ref            *remote_refs;
+    struct ref            *local_refs;
     int                    ret;
     int                    helper_status = 0;
     int                    send_all      = 0;
@@ -223,7 +240,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
     }
 
     if (!dest)
+    {
         usage_with_options(send_pack_usage, options);
+    }
 
     args.verbose       = verbose;
     args.dry_run       = dry_run;
@@ -244,13 +263,17 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
         {
             const char *buf;
             while ((buf = packet_read_line(0, NULL)))
+            {
                 refspec_append(&rs, buf);
+            }
         }
         else
         {
             struct strbuf line = STRBUF_INIT;
             while (strbuf_getline(&line, stdin) != EOF)
+            {
                 refspec_append(&rs, line.buf);
+            }
             strbuf_release(&line);
         }
     }
@@ -260,7 +283,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
      * with any refspecs.
      */
     if ((rs.nr > 0 && (send_all || args.send_mirror)) || (send_all && args.send_mirror))
+    {
         usage_with_options(send_pack_usage, options);
+    }
 
     if (remote_name)
     {
@@ -273,7 +298,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
     }
 
     if (progress == -1)
+    {
         progress = !args.quiet && isatty(2);
+    }
     args.progress = progress;
 
     if (args.stateless_rpc)
@@ -310,19 +337,29 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
     flags = MATCH_REFS_NONE;
 
     if (send_all)
+    {
         flags |= MATCH_REFS_ALL;
+    }
     if (args.send_mirror)
+    {
         flags |= MATCH_REFS_MIRROR;
+    }
 
     /* match them up */
     if (match_push_refs(local_refs, &remote_refs, &rs, flags))
+    {
         return -1;
+    }
 
     if (!is_empty_cas(&cas))
+    {
         apply_push_cas(&cas, remote, remote_refs);
+    }
 
     if (!is_empty_cas(&cas) && force_if_includes)
+    {
         cas.use_force_if_includes = 1;
+    }
 
     set_ref_status_for_push(remote_refs, args.send_mirror,
                             args.force_update);
@@ -330,7 +367,9 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
     ret = send_pack(&args, fd, conn, remote_refs, &extra_have);
 
     if (helper_status)
+    {
         print_helper_status(remote_refs);
+    }
 
     close(fd[1]);
     close(fd[0]);
@@ -338,18 +377,24 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
     ret |= finish_connect(conn);
 
     if (!helper_status)
+    {
         transport_print_push_status(dest, remote_refs, args.verbose, 0, &reject_reasons);
+    }
 
     if (!args.dry_run && remote)
     {
         struct ref *ref;
         for (ref = remote_refs; ref; ref = ref->next)
+        {
             transport_update_tracking_ref(remote, ref, args.verbose);
+        }
     }
 
     if (!ret && !transport_refs_pushed(remote_refs))
+    {
         /* stable plumbing output; do not modify or localize */
         fprintf(stderr, "Everything up-to-date\n");
+    }
 
     free_refs(remote_refs);
     free_refs(local_refs);

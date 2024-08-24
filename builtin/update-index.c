@@ -66,7 +66,9 @@ __attribute__((format(printf, 1, 2))) static void report(const char *fmt, ...)
     va_list vp;
 
     if (!verbose)
+    {
         return;
+    }
 
     /*
      * It is possible, though unlikely, that a caller could use the verbose
@@ -85,7 +87,9 @@ __attribute__((format(printf, 1, 2))) static void report(const char *fmt, ...)
 static void remove_test_directory(void)
 {
     if (mtime_dir.len)
+    {
         remove_dir_recursively(&mtime_dir, 0);
+    }
 }
 
 static const char *get_mtime_path(const char *path)
@@ -100,13 +104,17 @@ static void xmkdir(const char *path)
 {
     path = get_mtime_path(path);
     if (mkdir(path, 0700))
+    {
         die_errno(_("failed to create directory %s"), path);
+    }
 }
 
 static int xstat_mtime_dir(struct stat *st)
 {
     if (stat(mtime_dir.buf, st))
+    {
         die_errno(_("failed to stat %s"), mtime_dir.buf);
+    }
     return 0;
 }
 
@@ -122,14 +130,18 @@ static void xunlink(const char *path)
 {
     path = get_mtime_path(path);
     if (unlink(path))
+    {
         die_errno(_("failed to delete file %s"), path);
+    }
 }
 
 static void xrmdir(const char *path)
 {
     path = get_mtime_path(path);
     if (rmdir(path))
+    {
         die_errno(_("failed to delete directory %s"), path);
+    }
 }
 
 static void avoid_racy(void)
@@ -146,12 +158,15 @@ static int test_if_untracked_cache_is_supported(void)
 {
     struct stat      st;
     struct stat_data base;
-    int              fd, ret = 0;
+    int              fd;
+    int              ret = 0;
     char            *cwd;
 
     strbuf_addstr(&mtime_dir, "mtime-test-XXXXXX");
     if (!mkdtemp(mtime_dir.buf))
+    {
         die_errno("Could not make temporary directory");
+    }
 
     cwd = xgetcwd();
     fprintf(stderr, _("Testing mtime in '%s' "), cwd);
@@ -241,7 +256,9 @@ static int test_if_untracked_cache_is_supported(void)
     }
 
     if (rmdir(mtime_dir.buf))
+    {
         die_errno(_("failed to delete directory %s"), mtime_dir.buf);
+    }
     fprintf_ln(stderr, _(" OK"));
     ret = 1;
 
@@ -258,9 +275,13 @@ static int mark_ce_flags(const char *path, int flag, int mark)
     {
         mark_fsmonitor_invalid(the_repository->index, the_repository->index->cache[pos]);
         if (mark)
+        {
             the_repository->index->cache[pos]->ce_flags |= flag;
+        }
         else
+        {
             the_repository->index->cache[pos]->ce_flags &= ~flag;
+        }
         the_repository->index->cache[pos]->ce_flags |= CE_UPDATE_IN_BASE;
         cache_tree_invalidate_path(the_repository->index, path);
         the_repository->index->cache_changed |= CE_ENTRY_CHANGED;
@@ -272,9 +293,13 @@ static int mark_ce_flags(const char *path, int flag, int mark)
 static int remove_one_path(const char *path)
 {
     if (!allow_remove)
+    {
         return error("%s: does not exist and --remove not passed", path);
+    }
     if (remove_file_from_index(the_repository->index, path))
+    {
         return error("%s: cannot remove from the index", path);
+    }
     return 0;
 }
 
@@ -288,7 +313,9 @@ static int remove_one_path(const char *path)
 static int process_lstat_error(const char *path, int err)
 {
     if (is_missing_file_error(err))
+    {
         return remove_one_path(path);
+    }
     return error("lstat(\"%s\"): %s", path, strerror(err));
 }
 
@@ -299,7 +326,9 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 
     /* Was the old index entry already up-to-date? */
     if (old && !ce_stage(old) && !ie_match_stat(the_repository->index, old, st, 0))
+    {
         return 0;
+    }
 
     ce = make_empty_cache_entry(the_repository->index, len);
     memcpy(ce->name, path, len);
@@ -363,7 +392,9 @@ static int process_directory(const char *path, int len, struct stat *st)
             if (repo_resolve_gitlink_ref(the_repository, path,
                                          "HEAD", &oid)
                 < 0)
+            {
                 return 0;
+            }
 
             return add_one_path(ce, path, len, st);
         }
@@ -377,12 +408,18 @@ static int process_directory(const char *path, int len, struct stat *st)
     {
         const struct cache_entry *ce = the_repository->index->cache[pos++];
 
-        if (strncmp(ce->name, path, len))
+        if (strncmp(ce->name, path, len) != 0)
+        {
             break;
+        }
         if (ce->name[len] > '/')
+        {
             break;
+        }
         if (ce->name[len] < '/')
+        {
             continue;
+        }
 
         /* Subdirectory match - error out */
         return error("%s: is a directory - add individual files instead", path);
@@ -390,7 +427,9 @@ static int process_directory(const char *path, int len, struct stat *st)
 
     /* No match - should we add it as a gitlink? */
     if (!repo_resolve_gitlink_ref(the_repository, path, "HEAD", &oid))
+    {
         return add_one_path(NULL, path, len, st);
+    }
 
     /* Error out. */
     return error("%s: is a directory - add files inside instead", path);
@@ -398,12 +437,15 @@ static int process_directory(const char *path, int len, struct stat *st)
 
 static int process_path(const char *path, struct stat *st, int stat_errno)
 {
-    int                       pos, len;
+    int                       pos;
+    int                       len;
     const struct cache_entry *ce;
 
     len = strlen(path);
     if (has_symlink_leading_path(path, len))
+    {
         return error("'%s' is beyond a symbolic link", path);
+    }
 
     pos = index_name_pos(the_repository->index, path, len);
     ce  = pos < 0 ? NULL : the_repository->index->cache[pos];
@@ -415,7 +457,9 @@ static int process_path(const char *path, struct stat *st, int stat_errno)
          * On the other hand, removing it from index should work
          */
         if (!ignore_skip_worktree_entries && allow_remove && remove_file_from_index(the_repository->index, path))
+        {
             return error("%s: cannot remove from the index", path);
+        }
         return 0;
     }
 
@@ -424,10 +468,14 @@ static int process_path(const char *path, struct stat *st, int stat_errno)
      * what to do about the pathname!
      */
     if (stat_errno)
+    {
         return process_lstat_error(path, stat_errno);
+    }
 
     if (S_ISDIR(st->st_mode))
+    {
         return process_directory(path, len, st);
+    }
 
     return add_one_path(ce, path, len, st);
 }
@@ -435,11 +483,14 @@ static int process_path(const char *path, struct stat *st, int stat_errno)
 static int add_cacheinfo(unsigned int mode, const struct object_id *oid,
                          const char *path, int stage)
 {
-    int                 len, option;
+    int                 len;
+    int                 option;
     struct cache_entry *ce;
 
     if (!verify_path(path, mode))
+    {
         return error("Invalid path '%s'", path);
+    }
 
     len = strlen(path);
     ce  = make_empty_cache_entry(the_repository->index, len);
@@ -450,12 +501,16 @@ static int add_cacheinfo(unsigned int mode, const struct object_id *oid,
     ce->ce_namelen = len;
     ce->ce_mode    = create_ce_mode(mode);
     if (assume_unchanged)
+    {
         ce->ce_flags |= CE_VALID;
+    }
     option = allow_add ? ADD_CACHE_OK_TO_ADD : 0;
     option |= allow_replace ? ADD_CACHE_OK_TO_REPLACE : 0;
     if (add_index_entry(the_repository->index, ce, option))
+    {
         return error("%s: cannot add to the index - missing --add option?",
                      path);
+    }
     report("add '%s'", path);
     return 0;
 }
@@ -467,10 +522,14 @@ static void chmod_path(char flip, const char *path)
 
     pos = index_name_pos(the_repository->index, path, strlen(path));
     if (pos < 0)
+    {
         goto fail;
+    }
     ce = the_repository->index->cache[pos];
     if (chmod_index_entry(the_repository->index, ce, flip) < 0)
+    {
         goto fail;
+    }
 
     report("chmod %cx '%s'", flip, path);
     return;
@@ -484,7 +543,9 @@ static void update_one(const char *path)
     struct stat st;
 
     if (mark_valid_only || mark_skip_worktree_only || force_remove || mark_fsmonitor_only)
+    {
         st.st_mode = 0;
+    }
     else if (lstat(path, &st) < 0)
     {
         st.st_mode = 0;
@@ -499,31 +560,41 @@ static void update_one(const char *path)
     if (mark_valid_only)
     {
         if (mark_ce_flags(path, CE_VALID, mark_valid_only == MARK_FLAG))
+        {
             die("Unable to mark file %s", path);
+        }
         return;
     }
     if (mark_skip_worktree_only)
     {
         if (mark_ce_flags(path, CE_SKIP_WORKTREE, mark_skip_worktree_only == MARK_FLAG))
+        {
             die("Unable to mark file %s", path);
+        }
         return;
     }
     if (mark_fsmonitor_only)
     {
         if (mark_ce_flags(path, CE_FSMONITOR_VALID, mark_fsmonitor_only == MARK_FLAG))
+        {
             die("Unable to mark file %s", path);
+        }
         return;
     }
 
     if (force_remove)
     {
         if (remove_file_from_index(the_repository->index, path))
+        {
             die("git update-index: unable to remove %s", path);
+        }
         report("remove '%s'", path);
         return;
     }
     if (process_path(path, &st, stat_errno))
+    {
         die("Unable to process path %s", path);
+    }
     report("add '%s'", path);
 }
 
@@ -537,7 +608,8 @@ static void read_index_info(int nul_term_line)
     getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
     while (getline_fn(&buf, stdin) != EOF)
     {
-        char            *ptr, *tab;
+        char            *ptr;
+        char            *tab;
         char            *path_name;
         struct object_id oid;
         unsigned int     mode;
@@ -564,12 +636,16 @@ static void read_index_info(int nul_term_line)
         ul    = strtoul(buf.buf, &ptr, 8);
         if (ptr == buf.buf || *ptr != ' '
             || errno || (unsigned int)ul != ul)
+        {
             goto bad_line;
+        }
         mode = ul;
 
         tab = strchr(ptr, '\t');
         if (!tab || tab - ptr < hexsz + 1)
+        {
             goto bad_line;
+        }
 
         if (tab[-2] == ' ' && '0' <= tab[-1] && tab[-1] <= '3')
         {
@@ -584,7 +660,9 @@ static void read_index_info(int nul_term_line)
         }
 
         if (get_oid_hex(tab - hexsz, &oid) || tab[-(hexsz + 1)] != ' ')
+        {
             goto bad_line;
+        }
 
         path_name = ptr;
         if (!nul_term_line && path_name[0] == '"')
@@ -607,8 +685,10 @@ static void read_index_info(int nul_term_line)
         {
             /* mode == 0 means there is no such path -- remove */
             if (remove_file_from_index(the_repository->index, path_name))
+            {
                 die("git update-index: unable to remove %s",
                     ptr);
+            }
         }
         else
         {
@@ -618,8 +698,10 @@ static void read_index_info(int nul_term_line)
              */
             ptr[-(hexsz + 2)] = ptr[-1] = 0;
             if (add_cacheinfo(mode, &oid, path_name, stage))
+            {
                 die("git update-index: unable to update %s",
                     path_name);
+            }
         }
         continue;
 
@@ -645,13 +727,17 @@ static struct cache_entry *read_one_ent(const char       *which,
     if (get_tree_entry(the_repository, ent, path, &oid, &mode))
     {
         if (which)
+        {
             error("%s: not in %s branch.", path, which);
+        }
         return NULL;
     }
     if (!the_repository->index->sparse_index && mode == S_IFDIR)
     {
         if (which)
+        {
             error("%s: not a blob in %s branch.", path, which);
+        }
         return NULL;
     }
     ce = make_empty_cache_entry(the_repository->index, namelen);
@@ -670,10 +756,14 @@ static int unresolve_one(const char *path)
     int                      res = 0;
 
     if (!the_repository->index->resolve_undo)
+    {
         return res;
+    }
     item = string_list_lookup(the_repository->index->resolve_undo, path);
     if (!item)
+    {
         return res; /* no resolve-undo record for the path */
+    }
     res = unmerge_index_entry(the_repository->index, path, item->util, 0);
     FREE_AND_NULL(item->util);
     return res;
@@ -711,10 +801,12 @@ static int do_reupdate(const char **paths,
                    prefix, paths);
 
     if (refs_read_ref(get_main_ref_store(the_repository), "HEAD", &head_oid))
+    {
         /* If there is no HEAD, that means it is an initial
          * commit.  Update everything in the index.
          */
         has_head = 0;
+    }
 redo:
     for (pos = 0; pos < the_repository->index->cache_nr; pos++)
     {
@@ -724,10 +816,14 @@ redo:
         char                     *path;
 
         if (ce_stage(ce) || !ce_path_match(the_repository->index, ce, &pathspec, NULL))
+        {
             continue;
+        }
         if (has_head)
+        {
             old = read_one_ent(NULL, &head_oid,
                                ce->name, ce_namelen(ce), 0);
+        }
         if (old && ce->ce_mode == old->ce_mode && oideq(&ce->oid, &old->oid))
         {
             discard_cache_entry(old);
@@ -754,7 +850,9 @@ redo:
         free(path);
         discard_cache_entry(old);
         if (save_nr != the_repository->index->cache_nr)
+        {
             goto redo;
+        }
     }
     clear_pathspec(&pathspec);
     return 0;
@@ -809,7 +907,9 @@ static int chmod_callback(const struct option *opt,
     char *flip = opt->value;
     BUG_ON_OPT_NEG(unset);
     if ((arg[0] != '-' && arg[0] != '+') || arg[1] != 'x' || arg[2])
+    {
         return error("option 'chmod' expects \"+x\" or \"-x\"");
+    }
     *flip = arg[0];
     return 0;
 }
@@ -833,16 +933,22 @@ static int parse_new_style_cacheinfo(const char       *arg,
     const char   *p;
 
     if (!arg)
+    {
         return -1;
+    }
 
     errno = 0;
     ul    = strtoul(arg, &endp, 8);
     if (errno || endp == arg || *endp != ',' || (unsigned int)ul != ul)
+    {
         return -1; /* not a new-style cacheinfo */
+    }
     *mode = ul;
     endp++;
     if (parse_oid_hex(endp, oid, &p) || *p != ',')
+    {
         return -1;
+    }
     *path = p + 1;
     return 0;
 }
@@ -861,15 +967,21 @@ static enum parse_opt_result cacheinfo_callback(
     if (!parse_new_style_cacheinfo(ctx->argv[1], &mode, &oid, &path))
     {
         if (add_cacheinfo(mode, &oid, path, 0))
+        {
             die("git update-index: --cacheinfo cannot add %s", path);
+        }
         ctx->argv++;
         ctx->argc--;
         return 0;
     }
     if (ctx->argc <= 3)
+    {
         return error("option 'cacheinfo' expects <mode>,<sha1>,<path>");
+    }
     if (strtoul_ui(*++ctx->argv, 8, &mode) || get_oid_hex(*++ctx->argv, &oid) || add_cacheinfo(mode, &oid, *++ctx->argv, 0))
+    {
         die("git update-index: --cacheinfo cannot add %s", *ctx->argv);
+    }
     ctx->argc -= 3;
     return 0;
 }
@@ -884,7 +996,9 @@ static enum parse_opt_result stdin_cacheinfo_callback(
     BUG_ON_OPT_ARG(arg);
 
     if (ctx->argc != 1)
+    {
         return error("option '%s' must be the last argument", opt->long_name);
+    }
     allow_add = allow_replace = allow_remove = 1;
     read_index_info(*nul_term_line);
     return 0;
@@ -900,7 +1014,9 @@ static enum parse_opt_result stdin_callback(
     BUG_ON_OPT_ARG(arg);
 
     if (ctx->argc != 1)
+    {
         return error("option '%s' must be the last argument", opt->long_name);
+    }
     *read_from_stdin = 1;
     return 0;
 }
@@ -919,7 +1035,9 @@ static enum parse_opt_result unresolve_callback(
     *has_errors = do_unresolve(ctx->argc, ctx->argv,
                                prefix, prefix ? strlen(prefix) : 0);
     if (*has_errors)
+    {
         the_repository->index->cache_changed = 0;
+    }
 
     ctx->argv += ctx->argc - 1;
     ctx->argc = 1;
@@ -940,7 +1058,9 @@ static enum parse_opt_result reupdate_callback(
     setup_work_tree();
     *has_errors = do_reupdate(ctx->argv + 1, prefix);
     if (*has_errors)
+    {
         the_repository->index->cache_changed = 0;
+    }
 
     ctx->argv += ctx->argc - 1;
     ctx->argc = 1;
@@ -949,7 +1069,10 @@ static enum parse_opt_result reupdate_callback(
 
 int cmd_update_index(int argc, const char **argv, const char *prefix)
 {
-    int                    newfd, entries, has_errors = 0, nul_term_line = 0;
+    int                    newfd;
+    int                    entries;
+    int                    has_errors             = 0;
+    int                    nul_term_line          = 0;
     enum uc_mode           untracked_cache        = UC_UNSPECIFIED;
     int                    read_from_stdin        = 0;
     int                    prefix_length          = prefix ? strlen(prefix) : 0;
@@ -1070,7 +1193,9 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
                       OPT_END()};
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage_with_options(update_index_usage, options);
+    }
 
     git_config(git_default_config, NULL);
 
@@ -1080,11 +1205,15 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
     /* we will diagnose later if it turns out that we need to update it */
     newfd = repo_hold_locked_index(the_repository, &lock_file, 0);
     if (newfd < 0)
+    {
         lock_error = errno;
+    }
 
     entries = repo_read_index(the_repository);
     if (entries < 0)
+    {
         die("cache corrupted");
+    }
 
     the_repository->index->updated_skipworktree = 1;
 
@@ -1103,10 +1232,14 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
     while (ctx.argc)
     {
         if (parseopt_state != PARSE_OPT_DONE)
+        {
             parseopt_state = parse_options_step(&ctx, options,
                                                 update_index_usage);
+        }
         if (!ctx.argc)
+        {
             break;
+        }
         switch (parseopt_state)
         {
             case PARSE_OPT_HELP:
@@ -1124,7 +1257,9 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
                 p = prefix_path(prefix, prefix_length, path);
                 update_one(p);
                 if (set_executable_bit)
+                {
                     chmod_path(set_executable_bit, p);
+                }
                 free(p);
                 ctx.argc--;
                 ctx.argv++;
@@ -1132,9 +1267,13 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
             }
             case PARSE_OPT_UNKNOWN:
                 if (ctx.argv[0][1] == '-')
+                {
                     error("unknown option '%s'", ctx.argv[0] + 2);
+                }
                 else
+                {
                     error("unknown switch '%c'", *ctx.opt);
+                }
                 usage_with_options(update_index_usage, options);
         }
     }
@@ -1156,7 +1295,9 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
         else
         {
             if (the_repository->index->version != preferred_index_format)
+            {
                 the_repository->index->cache_changed |= SOMETHING_CHANGED;
+            }
             report(_("index-version: was %d, set to %d"),
                    the_repository->index->version, preferred_index_format);
             the_repository->index->version = preferred_index_format;
@@ -1176,13 +1317,17 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
             {
                 strbuf_reset(&unquoted);
                 if (unquote_c_style(&unquoted, buf.buf, NULL))
+                {
                     die("line is badly quoted");
+                }
                 strbuf_swap(&buf, &unquoted);
             }
             p = prefix_path(prefix, prefix_length, buf.buf);
             update_one(p);
             if (set_executable_bit)
+            {
                 chmod_path(set_executable_bit, p);
+            }
             free(p);
         }
         strbuf_release(&unquoted);
@@ -1197,22 +1342,30 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
     if (split_index > 0)
     {
         if (repo_config_get_split_index(the_repository) == 0)
+        {
             warning(_(
                 "core.splitIndex is set to false; "
                 "remove or change it, if you really want to "
                 "enable split index"));
+        }
         if (the_repository->index->split_index)
+        {
             the_repository->index->cache_changed |= SPLIT_INDEX_ORDERED;
+        }
         else
+        {
             add_split_index(the_repository->index);
+        }
     }
     else if (!split_index)
     {
         if (repo_config_get_split_index(the_repository) == 1)
+        {
             warning(_(
                 "core.splitIndex is set to true; "
                 "remove or change it, if you really want to "
                 "disable split index"));
+        }
         remove_split_index(the_repository->index);
     }
 
@@ -1223,10 +1376,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
             break;
         case UC_DISABLE:
             if (r->settings.core_untracked_cache == UNTRACKED_CACHE_WRITE)
+            {
                 warning(_(
                     "core.untrackedCache is set to true; "
                     "remove or change it, if you really want to "
                     "disable the untracked cache"));
+            }
             remove_untracked_cache(the_repository->index);
             report(_("Untracked cache disabled"));
             break;
@@ -1236,10 +1391,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
         case UC_ENABLE:
         case UC_FORCE:
             if (r->settings.core_untracked_cache == UNTRACKED_CACHE_REMOVE)
+            {
                 warning(_(
                     "core.untrackedCache is set to false; "
                     "remove or change it, if you really want to "
                     "enable the untracked cache"));
+            }
             add_untracked_cache(the_repository->index);
             report(_("Untracked cache enabled for '%s'"), get_git_work_tree());
             break;
@@ -1263,8 +1420,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
          * here with a nice error message.
          */
         if (reason > FSMONITOR_REASON_OK)
+        {
             die("%s",
                 fsm_settings__get_incompatible_msg(r, reason));
+        }
 
         if (fsm_mode == FSMONITOR_MODE_DISABLED)
         {
@@ -1280,10 +1439,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
     {
         enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(r);
         if (fsm_mode > FSMONITOR_MODE_DISABLED)
+        {
             warning(_(
                 "core.fsmonitor is set; "
                 "remove it if you really want to "
                 "disable fsmonitor"));
+        }
         remove_fsmonitor(the_repository->index);
         report(_("fsmonitor disabled"));
     }
@@ -1293,11 +1454,15 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
         if (newfd < 0)
         {
             if (refresh_args.flags & REFRESH_QUIET)
+            {
                 exit(128);
+            }
             unable_to_lock_die(get_index_file(), lock_error);
         }
         if (write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
+        {
             die("Unable to write new index file");
+        }
     }
 
     rollback_lock_file(&lock_file);

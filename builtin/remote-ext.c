@@ -59,7 +59,9 @@ static char *strip_escapes(const char *str, const char *service,
                 case 'V':
                     special = str[rpos];
                     if (rpos == 1)
+                    {
                         break;
+                    }
                     /* fallthrough */
                 default:
                     die("Bad remote-ext placeholder '%%%c'.",
@@ -68,14 +70,20 @@ static char *strip_escapes(const char *str, const char *service,
             escape = 0;
         }
         else
+        {
             escape = (str[rpos] == '%');
+        }
         rpos++;
     }
     if (escape && !str[rpos])
+    {
         die("remote-ext command has incomplete placeholder");
+    }
     *next = str + rpos;
     if (**next == ' ')
+    {
         ++*next; /* Skip over space */
+    }
 
     /*
      * Do the actual placeholder substitution. The string will be short
@@ -103,6 +111,7 @@ static char *strip_escapes(const char *str, const char *service,
             escape = 0;
         }
         else
+        {
             switch (str[rpos])
             {
                 case '%':
@@ -112,6 +121,7 @@ static char *strip_escapes(const char *str, const char *service,
                     strbuf_addch(&ret, str[rpos]);
                     break;
             }
+        }
         rpos++;
     }
     switch (special)
@@ -133,7 +143,9 @@ static void parse_argv(struct strvec *out, const char *arg, const char *service)
     {
         char *expanded = strip_escapes(arg, service, &arg);
         if (expanded)
+        {
             strvec_push(out, expanded);
+        }
         free(expanded);
     }
 }
@@ -142,10 +154,14 @@ static void send_git_request(int stdin_fd, const char *serv, const char *repo,
                              const char *vhost)
 {
     if (!vhost)
+    {
         packet_write_fmt(stdin_fd, "%s %s%c", serv, repo, 0);
+    }
     else
+    {
         packet_write_fmt(stdin_fd, "%s %s%chost=%s%c", serv, repo, 0,
                          vhost, 0);
+    }
 }
 
 static int run_child(const char *arg, const char *service)
@@ -159,16 +175,24 @@ static int run_child(const char *arg, const char *service)
     parse_argv(&child.args, arg, service);
 
     if (start_command(&child) < 0)
+    {
         die("Can't run specified command");
+    }
 
     if (git_req)
+    {
         send_git_request(child.in, service, git_req, git_req_vhost);
+    }
 
     r = bidirectional_transfer_loop(child.out, child.in);
     if (!r)
+    {
         r = finish_command(&child);
+    }
     else
+    {
         finish_command(&child);
+    }
     return r;
 }
 
@@ -186,13 +210,17 @@ static int command_loop(const char *child)
         if (!fgets(buffer, MAXCOMMAND - 1, stdin))
         {
             if (ferror(stdin))
+            {
                 die("Command input error");
+            }
             exit(0);
         }
         /* Strip end of line characters. */
         i = strlen(buffer);
         while (i > 0 && isspace(buffer[i - 1]))
+        {
             buffer[--i] = 0;
+        }
 
         if (!strcmp(buffer, "capabilities"))
         {
@@ -218,7 +246,9 @@ int cmd_remote_ext(int argc, const char **argv, const char *prefix)
     BUG_ON_NON_EMPTY_PREFIX(prefix);
 
     if (argc != 3)
+    {
         usage(usage_msg);
+    }
 
     return command_loop(argv[2]);
 }

@@ -14,7 +14,9 @@ int cmd_credential(int argc, const char **argv, const char *prefix UNUSED)
     git_config(git_default_config, NULL);
 
     if (argc != 2 || !strcmp(argv[1], "-h"))
+    {
         usage(usage_msg);
+    }
     op = argv[1];
 
     if (!strcmp(op, "capability"))
@@ -25,7 +27,9 @@ int cmd_credential(int argc, const char **argv, const char *prefix UNUSED)
     }
 
     if (credential_read(&c, stdin, CREDENTIAL_OP_INITIAL) < 0)
+    {
         die("unable to read credential from stdin");
+    }
 
     if (!strcmp(op, "fill"))
     {

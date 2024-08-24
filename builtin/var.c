@@ -41,7 +41,9 @@ static char *pager(int ident_flag UNUSED)
     const char *pgm = git_pager(1);
 
     if (!pgm)
+    {
         pgm = "cat";
+    }
     return xstrdup(pgm);
 }
 
@@ -91,7 +93,8 @@ static char *git_config_val_system(int ident_flag UNUSED)
 static char *git_config_val_global(int ident_flag UNUSED)
 {
     struct strbuf buf = STRBUF_INIT;
-    char         *user, *xdg;
+    char         *user;
+    char         *xdg;
     size_t        unused;
 
     git_global_config_paths(&user, &xdg);
@@ -180,6 +183,7 @@ static void list_vars(void)
     char           *val;
 
     for (ptr = git_vars; ptr->read; ptr++)
+    {
         if ((val = ptr->read(0)))
         {
             if (ptr->multivalued && *val)
@@ -189,7 +193,9 @@ static void list_vars(void)
 
                 string_list_split(&list, val, '\n', -1);
                 for (i = 0; i < list.nr; i++)
+                {
                     printf("%s=%s\n", ptr->name, list.items[i].string);
+                }
                 string_list_clear(&list, 0);
             }
             else
@@ -198,6 +204,7 @@ static void list_vars(void)
             }
             free(val);
         }
+    }
 }
 
 static const struct git_var *get_git_var(const char *var)
@@ -217,9 +224,13 @@ static int show_config(const char *var, const char *value,
                        const struct config_context *ctx, void *cb)
 {
     if (value)
+    {
         printf("%s=%s\n", var, value);
+    }
     else
+    {
         printf("%s\n", var);
+    }
     return git_default_config(var, value, ctx, cb);
 }
 
@@ -229,7 +240,9 @@ int cmd_var(int argc, const char **argv, const char *prefix UNUSED)
     char                 *val;
 
     if (argc != 2)
+    {
         usage(var_usage);
+    }
 
     if (strcmp(argv[1], "-l") == 0)
     {
@@ -241,11 +254,15 @@ int cmd_var(int argc, const char **argv, const char *prefix UNUSED)
 
     git_var = get_git_var(argv[1]);
     if (!git_var)
+    {
         usage(var_usage);
+    }
 
     val = git_var->read(IDENT_STRICT);
     if (!val)
+    {
         return 1;
+    }
 
     printf("%s\n", val);
     free(val);

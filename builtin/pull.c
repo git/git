@@ -40,12 +40,18 @@ static enum rebase_type parse_config_rebase(const char *key, const char *value,
 {
     enum rebase_type v = rebase_parse_value(value);
     if (v != REBASE_INVALID)
+    {
         return v;
+    }
 
     if (fatal)
+    {
         die(_("invalid value for '%s': '%s'"), key, value);
+    }
     else
+    {
         error(_("invalid value for '%s': '%s'"), key, value);
+    }
 
     return REBASE_INVALID;
 }
@@ -58,9 +64,13 @@ static int parse_opt_rebase(const struct option *opt, const char *arg, int unset
     enum rebase_type *value = opt->value;
 
     if (arg)
+    {
         *value = parse_config_rebase("--rebase", arg, 0);
+    }
     else
+    {
         *value = unset ? REBASE_FALSE : REBASE_TRUE;
+    }
     return *value == REBASE_INVALID ? -1 : 0;
 }
 
@@ -260,10 +270,14 @@ static void argv_push_verbosity(struct strvec *arr)
     int verbosity;
 
     for (verbosity = opt_verbosity; verbosity > 0; verbosity--)
+    {
         strvec_push(arr, "-v");
+    }
 
     for (verbosity = opt_verbosity; verbosity < 0; verbosity++)
+    {
         strvec_push(arr, "-q");
+    }
 }
 
 /**
@@ -273,7 +287,9 @@ static void argv_push_force(struct strvec *arr)
 {
     int force = opt_force;
     while (force-- > 0)
+    {
         strvec_push(arr, "-f");
+    }
 }
 
 /**
@@ -287,7 +303,9 @@ static void set_reflog_message(int argc, const char **argv)
     for (i = 0; i < argc; i++)
     {
         if (i)
+        {
             strbuf_addch(&msg, ' ');
+        }
         strbuf_addstr(&msg, argv[i]);
     }
 
@@ -307,7 +325,9 @@ static const char *config_get_ff(void)
     const char *value;
 
     if (git_config_get_value("pull.ff", &value))
+    {
         return NULL;
+    }
 
     switch (git_parse_maybe_bool(value))
     {
@@ -318,7 +338,9 @@ static const char *config_get_ff(void)
     }
 
     if (!strcmp(value, "only"))
+    {
         return "--ff-only";
+    }
 
     die(_("invalid value for '%s': '%s'"), "pull.ff", value);
 }
@@ -350,7 +372,9 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
     }
 
     if (!git_config_get_value("pull.rebase", &value))
+    {
         return parse_config_rebase("pull.rebase", value, 1);
+    }
 
     *rebase_unspecified = 1;
 
@@ -368,7 +392,7 @@ static int git_pull_config(const char *var, const char *value,
         config_autostash = git_config_bool(var, value);
         return 0;
     }
-    else if (!strcmp(var, "submodule.recurse"))
+    if (!strcmp(var, "submodule.recurse"))
     {
         recurse_submodules = git_config_bool(var, value) ? RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
         return 0;
@@ -397,9 +421,13 @@ static void get_merge_heads(struct oid_array *merge_heads)
     {
         const char *p;
         if (parse_oid_hex(sb.buf, &oid, &p))
+        {
             continue; /* invalid line: does not start with object ID */
+        }
         if (starts_with(p, "\tnot-for-merge\t"))
+        {
             continue; /* ref is not-for-merge */
+        }
         oid_array_append(merge_heads, &oid);
     }
     fclose(fp);
@@ -415,7 +443,9 @@ static int get_only_remote(struct remote *remote, void *cb_data)
     const char **remote_name = cb_data;
 
     if (*remote_name)
+    {
         return -1;
+    }
 
     *remote_name = remote->name;
     return 0;
@@ -451,13 +481,17 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
     if (*refspecs)
     {
         if (opt_rebase)
+        {
             fprintf_ln(stderr, _("There is no candidate for rebasing against among the refs that you just fetched."));
+        }
         else
+        {
             fprintf_ln(stderr, _("There are no candidates for merging among the refs that you just fetched."));
+        }
         fprintf_ln(stderr, _("Generally this means that you provided a wildcard refspec which had no\n"
                              "matches on the remote end."));
     }
-    else if (repo && curr_branch && (!remote || strcmp(repo, remote)))
+    else if (repo && curr_branch && (!remote || strcmp(repo, remote) != 0))
     {
         fprintf_ln(stderr, _("You asked to pull from the remote '%s', but did not specify\n"
                              "a branch. Because this is not the default configured remote\n"
@@ -468,9 +502,13 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
     {
         fprintf_ln(stderr, _("You are not currently on a branch."));
         if (opt_rebase)
+        {
             fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
+        }
         else
+        {
             fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
+        }
         fprintf_ln(stderr, _("See git-pull(1) for details."));
         fprintf(stderr, "\n");
         fprintf_ln(stderr, "    git pull %s %s", _("<remote>"), _("<branch>"));
@@ -481,13 +519,19 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
         const char *remote_name = NULL;
 
         if (for_each_remote(get_only_remote, &remote_name) || !remote_name)
+        {
             remote_name = _("<remote>");
+        }
 
         fprintf_ln(stderr, _("There is no tracking information for the current branch."));
         if (opt_rebase)
+        {
             fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
+        }
         else
+        {
             fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
+        }
         fprintf_ln(stderr, _("See git-pull(1) for details."));
         fprintf(stderr, "\n");
         fprintf_ln(stderr, "    git pull %s %s", _("<remote>"), _("<branch>"));
@@ -498,9 +542,11 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
                    remote_name, _("<branch>"), curr_branch->name);
     }
     else
+    {
         fprintf_ln(stderr, _("Your configuration specifies to merge with the ref '%s'\n"
                              "from the remote, but no such ref was fetched."),
                    *curr_branch->merge_name);
+    }
     exit(1);
 }
 
@@ -518,7 +564,9 @@ static void parse_repo_refspecs(int argc, const char **argv, const char **repo,
         argc--;
     }
     else
+    {
         *repo = NULL;
+    }
     *refspecs = argv;
 }
 
@@ -535,21 +583,34 @@ static int run_fetch(const char *repo, const char **refspecs)
     /* Shared options */
     argv_push_verbosity(&cmd.args);
     if (opt_progress)
+    {
         strvec_push(&cmd.args, opt_progress);
+    }
 
     /* Options passed to git-fetch */
     if (opt_all)
+    {
         strvec_push(&cmd.args, opt_all);
+    }
     if (opt_append)
+    {
         strvec_push(&cmd.args, opt_append);
+    }
     if (opt_upload_pack)
+    {
         strvec_push(&cmd.args, opt_upload_pack);
+    }
     argv_push_force(&cmd.args);
     if (opt_tags)
+    {
         strvec_push(&cmd.args, opt_tags);
+    }
     if (opt_prune)
+    {
         strvec_push(&cmd.args, opt_prune);
+    }
     if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
+    {
         switch (recurse_submodules_cli)
         {
             case RECURSE_SUBMODULES_ON:
@@ -564,30 +625,55 @@ static int run_fetch(const char *repo, const char **refspecs)
             default:
                 BUG("submodule recursion option not understood");
         }
+    }
     if (max_children)
+    {
         strvec_push(&cmd.args, max_children);
+    }
     if (opt_dry_run)
+    {
         strvec_push(&cmd.args, "--dry-run");
+    }
     if (opt_keep)
+    {
         strvec_push(&cmd.args, opt_keep);
+    }
     if (opt_depth)
+    {
         strvec_push(&cmd.args, opt_depth);
+    }
     if (opt_unshallow)
+    {
         strvec_push(&cmd.args, opt_unshallow);
+    }
     if (opt_update_shallow)
+    {
         strvec_push(&cmd.args, opt_update_shallow);
+    }
     if (opt_refmap)
+    {
         strvec_push(&cmd.args, opt_refmap);
+    }
     if (opt_ipv4)
+    {
         strvec_push(&cmd.args, opt_ipv4);
+    }
     if (opt_ipv6)
+    {
         strvec_push(&cmd.args, opt_ipv6);
+    }
     if (opt_show_forced_updates > 0)
+    {
         strvec_push(&cmd.args, "--show-forced-updates");
+    }
     else if (opt_show_forced_updates == 0)
+    {
         strvec_push(&cmd.args, "--no-show-forced-updates");
+    }
     if (set_upstream)
+    {
         strvec_push(&cmd.args, set_upstream);
+    }
     strvec_pushv(&cmd.args, opt_fetch.v);
 
     if (repo)
@@ -596,7 +682,9 @@ static int run_fetch(const char *repo, const char **refspecs)
         strvec_pushv(&cmd.args, refspecs);
     }
     else if (*refspecs)
+    {
         BUG("refspecs without repo?");
+    }
     cmd.git_cmd            = 1;
     cmd.close_object_store = 1;
     return run_command(&cmd);
@@ -614,8 +702,10 @@ static int pull_into_void(const struct object_id *merge_head,
 
         commit = lookup_commit(the_repository, merge_head);
         if (!commit)
+        {
             die(_("unable to access commit %s"),
                 oid_to_hex(merge_head));
+        }
 
         verify_merge_signature(commit, opt_verbosity,
                                check_trust_level);
@@ -630,10 +720,14 @@ static int pull_into_void(const struct object_id *merge_head,
     if (checkout_fast_forward(the_repository,
                               the_hash_algo->empty_tree,
                               merge_head, 0))
+    {
         return 1;
+    }
 
     if (refs_update_ref(get_main_ref_store(the_repository), "initial pull", "HEAD", merge_head, curr_head, 0, UPDATE_REFS_DIE_ON_ERR))
+    {
         return 1;
+    }
 
     return 0;
 }
@@ -676,39 +770,69 @@ static int run_merge(void)
     /* Shared options */
     argv_push_verbosity(&cmd.args);
     if (opt_progress)
+    {
         strvec_push(&cmd.args, opt_progress);
+    }
 
     /* Options passed to git-merge */
     if (opt_diffstat)
+    {
         strvec_push(&cmd.args, opt_diffstat);
+    }
     if (opt_log)
+    {
         strvec_push(&cmd.args, opt_log);
+    }
     if (opt_signoff)
+    {
         strvec_push(&cmd.args, opt_signoff);
+    }
     if (opt_squash)
+    {
         strvec_push(&cmd.args, opt_squash);
+    }
     if (opt_commit)
+    {
         strvec_push(&cmd.args, opt_commit);
+    }
     if (opt_edit)
+    {
         strvec_push(&cmd.args, opt_edit);
+    }
     if (cleanup_arg)
+    {
         strvec_pushf(&cmd.args, "--cleanup=%s", cleanup_arg);
+    }
     if (opt_ff)
+    {
         strvec_push(&cmd.args, opt_ff);
+    }
     if (opt_verify)
+    {
         strvec_push(&cmd.args, opt_verify);
+    }
     if (opt_verify_signatures)
+    {
         strvec_push(&cmd.args, opt_verify_signatures);
+    }
     strvec_pushv(&cmd.args, opt_strategies.v);
     strvec_pushv(&cmd.args, opt_strategy_opts.v);
     if (opt_gpg_sign)
+    {
         strvec_push(&cmd.args, opt_gpg_sign);
+    }
     if (opt_autostash == 0)
+    {
         strvec_push(&cmd.args, "--no-autostash");
+    }
     else if (opt_autostash == 1)
+    {
         strvec_push(&cmd.args, "--autostash");
+    }
     if (opt_allow_unrelated_histories > 0)
+    {
         strvec_push(&cmd.args, "--allow-unrelated-histories");
+    }
 
     strvec_push(&cmd.args, "FETCH_HEAD");
     cmd.git_cmd = 1;
@@ -730,17 +854,23 @@ static const char *get_upstream_branch(const char *remote)
 
     rm = remote_get(remote);
     if (!rm)
+    {
         return NULL;
+    }
 
     curr_branch = branch_get("HEAD");
     if (!curr_branch)
+    {
         return NULL;
+    }
 
     curr_branch_remote = remote_for_branch(curr_branch, NULL);
     assert(curr_branch_remote);
 
-    if (strcmp(curr_branch_remote, rm->name))
+    if (strcmp(curr_branch_remote, rm->name) != 0)
+    {
         return NULL;
+    }
 
     return branch_get_upstream(curr_branch, NULL);
 }
@@ -760,23 +890,37 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
     refspec_item_init_or_die(&spec, refspec, REFSPEC_FETCH);
     spec_src = spec.src;
     if (!*spec_src || !strcmp(spec_src, "HEAD"))
+    {
         spec_src = "HEAD";
+    }
     else if (skip_prefix(spec_src, "heads/", &spec_src))
+    {
         ;
+    }
     else if (skip_prefix(spec_src, "refs/heads/", &spec_src))
+    {
         ;
+    }
     else if (starts_with(spec_src, "refs/") || starts_with(spec_src, "tags/") || starts_with(spec_src, "remotes/"))
+    {
         spec_src = "";
+    }
 
     if (*spec_src)
     {
         if (!strcmp(remote, "."))
+        {
             merge_branch = mkpath("refs/heads/%s", spec_src);
+        }
         else
+        {
             merge_branch = mkpath("refs/remotes/%s/%s", remote, spec_src);
+        }
     }
     else
+    {
         merge_branch = NULL;
+    }
 
     refspec_item_clear(&spec);
     return merge_branch;
@@ -798,15 +942,23 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 
     curr_branch = branch_get("HEAD");
     if (!curr_branch)
+    {
         return -1;
+    }
 
     if (refspec)
+    {
         remote_branch = get_tracking_branch(repo, refspec);
+    }
     else
+    {
         remote_branch = get_upstream_branch(repo);
+    }
 
     if (!remote_branch)
+    {
         return -1;
+    }
 
     strvec_pushl(&cp.args, "merge-base", "--fork-point",
                  remote_branch, curr_branch->name, NULL);
@@ -816,11 +968,15 @@ static int get_rebase_fork_point(struct object_id *fork_point, const char *repo,
 
     ret = capture_command(&cp, &sb, GIT_MAX_HEXSZ);
     if (ret)
+    {
         goto cleanup;
+    }
 
     ret = get_oid_hex(sb.buf, fork_point);
     if (ret)
+    {
         goto cleanup;
+    }
 
 cleanup:
     strbuf_release(&sb);
@@ -836,23 +992,30 @@ static int get_octopus_merge_base(struct object_id       *merge_base,
                                   const struct object_id *merge_head,
                                   const struct object_id *fork_point)
 {
-    struct commit_list *revs = NULL, *result = NULL;
+    struct commit_list *revs   = NULL;
+    struct commit_list *result = NULL;
 
     commit_list_insert(lookup_commit_reference(the_repository, curr_head),
                        &revs);
     commit_list_insert(lookup_commit_reference(the_repository, merge_head),
                        &revs);
     if (!is_null_oid(fork_point))
+    {
         commit_list_insert(lookup_commit_reference(the_repository, fork_point),
                            &revs);
+    }
 
     if (get_octopus_merge_bases(revs, &result) < 0)
+    {
         exit(128);
+    }
     free_commit_list(revs);
     reduce_heads_replace(&result);
 
     if (!result)
+    {
         return 1;
+    }
 
     oidcpy(merge_base, &result->item->object.oid);
     free_commit_list(result);
@@ -873,13 +1036,21 @@ static int get_rebase_newbase_and_upstream(struct object_id       *newbase,
     struct object_id oct_merge_base;
 
     if (!get_octopus_merge_base(&oct_merge_base, curr_head, merge_head, fork_point))
+    {
         if (!is_null_oid(fork_point) && oideq(&oct_merge_base, fork_point))
+        {
             fork_point = NULL;
+        }
+    }
 
     if (fork_point && !is_null_oid(fork_point))
+    {
         oidcpy(upstream, fork_point);
+    }
     else
+    {
         oidcpy(upstream, merge_head);
+    }
 
     oidcpy(newbase, merge_head);
 
@@ -903,23 +1074,39 @@ static int run_rebase(const struct object_id *newbase,
 
     /* Options passed to git-rebase */
     if (opt_rebase == REBASE_MERGES)
+    {
         strvec_push(&cmd.args, "--rebase-merges");
+    }
     else if (opt_rebase == REBASE_INTERACTIVE)
+    {
         strvec_push(&cmd.args, "--interactive");
+    }
     if (opt_diffstat)
+    {
         strvec_push(&cmd.args, opt_diffstat);
+    }
     strvec_pushv(&cmd.args, opt_strategies.v);
     strvec_pushv(&cmd.args, opt_strategy_opts.v);
     if (opt_gpg_sign)
+    {
         strvec_push(&cmd.args, opt_gpg_sign);
+    }
     if (opt_signoff)
+    {
         strvec_push(&cmd.args, opt_signoff);
+    }
     if (opt_autostash == 0)
+    {
         strvec_push(&cmd.args, "--no-autostash");
+    }
     else if (opt_autostash == 1)
+    {
         strvec_push(&cmd.args, "--autostash");
+    }
     if (opt_verify_signatures && !strcmp(opt_verify_signatures, "--verify-signatures"))
+    {
         warning(_("ignoring --verify-signatures for rebase"));
+    }
 
     strvec_push(&cmd.args, "--onto");
     strvec_push(&cmd.args, oid_to_hex(newbase));
@@ -935,11 +1122,14 @@ static int get_can_ff(struct object_id *orig_head,
 {
     int                 ret;
     struct commit_list *list = NULL;
-    struct commit      *merge_head, *head;
+    struct commit      *merge_head;
+    struct commit      *head;
     struct object_id   *orig_merge_head;
 
     if (merge_heads->nr > 1)
+    {
         return 0;
+    }
 
     orig_merge_head = &merge_heads->oid[0];
     head            = lookup_commit_reference(the_repository, orig_head);
@@ -948,7 +1138,9 @@ static int get_can_ff(struct object_id *orig_head,
     ret        = repo_is_descendant_of(the_repository, merge_head, list);
     free_commit_list(list);
     if (ret < 0)
+    {
         exit(128);
+    }
     return ret;
 }
 
@@ -975,9 +1167,13 @@ static int already_up_to_date(struct object_id *orig_head,
         ok = repo_is_descendant_of(the_repository, ours, list);
         free_commit_list(list);
         if (ok < 0)
+        {
             exit(128);
+        }
         if (!ok)
+        {
             return 0;
+        }
     }
     return 1;
 }
@@ -1001,9 +1197,11 @@ static void show_advice_pull_non_ff(void)
 
 int cmd_pull(int argc, const char **argv, const char *prefix)
 {
-    const char      *repo, **refspecs;
+    const char      *repo;
+    const char     **refspecs;
     struct oid_array merge_heads = OID_ARRAY_INIT;
-    struct object_id orig_head, curr_head;
+    struct object_id orig_head;
+    struct object_id curr_head;
     struct object_id rebase_fork_point;
     int              rebase_unspecified = 0;
     int              can_ff;
@@ -1011,7 +1209,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
     int              ret;
 
     if (!getenv("GIT_REFLOG_ACTION"))
+    {
         set_reflog_message(argc, argv);
+    }
 
     git_config(git_pull_config, NULL);
     if (the_repository->gitdir)
@@ -1023,14 +1223,18 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
 
     if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
+    {
         recurse_submodules = recurse_submodules_cli;
+    }
 
     if (cleanup_arg)
+    {
         /*
          * this only checks the validity of cleanup_arg; we don't need
          * a valid value for use_editor
          */
         get_cleanup_mode(cleanup_arg, 0);
+    }
 
     parse_repo_refspecs(argc, argv, &repo, &refspecs);
 
@@ -1049,46 +1253,70 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
          * pull.ff=only.
          */
         if (opt_rebase >= 0 && opt_ff && !strcmp(opt_ff, "--ff-only"))
+        {
             opt_ff = "--ff";
+        }
     }
 
     if (opt_rebase < 0)
+    {
         opt_rebase = config_get_rebase(&rebase_unspecified);
+    }
 
     if (repo_read_index_unmerged(the_repository))
+    {
         die_resolve_conflict("pull");
+    }
 
     if (file_exists(git_path_merge_head(the_repository)))
+    {
         die_conclude_merge();
+    }
 
     if (repo_get_oid(the_repository, "HEAD", &orig_head))
+    {
         oidclr(&orig_head, the_repository->hash_algo);
+    }
 
     if (opt_rebase)
     {
         if (opt_autostash == -1)
+        {
             opt_autostash = config_autostash;
+        }
 
         if (is_null_oid(&orig_head) && !is_index_unborn(the_repository->index))
+        {
             die(_("Updating an unborn branch with changes added to the index."));
+        }
 
         if (!opt_autostash)
+        {
             require_clean_work_tree(the_repository,
                                     N_("pull with rebase"),
                                     _("Please commit or stash them."), 1, 0);
+        }
 
         if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
+        {
             oidclr(&rebase_fork_point, the_repository->hash_algo);
+        }
     }
 
     if (run_fetch(repo, refspecs))
+    {
         return 1;
+    }
 
     if (opt_dry_run)
+    {
         return 0;
+    }
 
     if (repo_get_oid(the_repository, "HEAD", &curr_head))
+    {
         oidclr(&curr_head, the_repository->hash_algo);
+    }
 
     if (!is_null_oid(&orig_head) && !is_null_oid(&curr_head) && !oideq(&orig_head, &curr_head))
     {
@@ -1107,6 +1335,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
         if (checkout_fast_forward(the_repository, &orig_head,
                                   &curr_head, 0))
+        {
             die(_("Cannot fast-forward your working tree.\n"
                   "After making sure that you saved anything precious from\n"
                   "$ git diff %s\n"
@@ -1114,26 +1343,35 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
                   "$ git reset --hard\n"
                   "to recover."),
                 oid_to_hex(&orig_head));
+        }
     }
 
     get_merge_heads(&merge_heads);
 
     if (!merge_heads.nr)
+    {
         die_no_merge_candidates(repo, refspecs);
+    }
 
     if (is_null_oid(&orig_head))
     {
         if (merge_heads.nr > 1)
+        {
             die(_("Cannot merge multiple branches into empty head."));
+        }
         ret = pull_into_void(merge_heads.oid, &curr_head);
         goto cleanup;
     }
     if (merge_heads.nr > 1)
     {
         if (opt_rebase)
+        {
             die(_("Cannot rebase onto multiple branches."));
+        }
         if (opt_ff && !strcmp(opt_ff, "--ff-only"))
+        {
             die(_("Cannot fast-forward to multiple branches."));
+        }
     }
 
     can_ff    = get_can_ff(&orig_head, &merge_heads);
@@ -1143,7 +1381,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
     if (opt_ff && !strcmp(opt_ff, "--ff-only"))
     {
         if (divergent)
+        {
             die_ff_impossible();
+        }
         opt_rebase = REBASE_FALSE;
     }
     /* If no action specified and we can't fast forward, then warn. */
@@ -1161,7 +1401,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
                                         merge_heads.oid, &rebase_fork_point);
 
         if ((recurse_submodules == RECURSE_SUBMODULES_ON || recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND) && submodule_touches_in_range(the_repository, &upstream, &curr_head))
+        {
             die(_("cannot rebase with locally recorded submodule modifications"));
+        }
 
         if (can_ff)
         {
@@ -1175,7 +1417,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
         }
 
         if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON || recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
+        {
             ret = rebase_submodules();
+        }
 
         goto cleanup;
     }
@@ -1183,7 +1427,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
     {
         ret = run_merge();
         if (!ret && (recurse_submodules == RECURSE_SUBMODULES_ON || recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND))
+        {
             ret = update_submodules();
+        }
         goto cleanup;
     }
 

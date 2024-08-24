@@ -113,7 +113,9 @@ static int git_clean_config(const char *var, const char *value,
     const char *slot_name;
 
     if (starts_with(var, "column."))
+    {
         return git_column_config(var, value, "clean", &colopts);
+    }
 
     /* honors the color.interactive* config variables which also
        applied in git-add--interactive and git-stash */
@@ -126,9 +128,13 @@ static int git_clean_config(const char *var, const char *value,
     {
         int slot = LOOKUP_CONFIG(color_interactive_slots, slot_name);
         if (slot < 0)
+        {
             return 0;
+        }
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         return color_parse(value, clean_colors[slot]);
     }
 
@@ -139,7 +145,9 @@ static int git_clean_config(const char *var, const char *value,
     }
 
     if (git_color_config(var, value, cb) < 0)
+    {
         return -1;
+    }
 
     return git_default_config(var, value, ctx, cb);
 }
@@ -147,7 +155,9 @@ static int git_clean_config(const char *var, const char *value,
 static const char *clean_get_color(enum color_clean ix)
 {
     if (want_color(clean_use_color))
+    {
         return clean_colors[ix];
+    }
     return "";
 }
 
@@ -172,7 +182,11 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
     struct strbuf      realpath  = STRBUF_INIT;
     struct strbuf      real_ocwd = STRBUF_INIT;
     struct dirent     *e;
-    int                res = 0, ret = 0, gone = 1, original_len = path->len, len;
+    int                res          = 0;
+    int                ret          = 0;
+    int                gone         = 1;
+    int                original_len = path->len;
+    int                len;
     struct string_list dels = STRING_LIST_INIT_DUP;
 
     *dir_gone = 1;
@@ -217,18 +231,24 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
         strbuf_setlen(path, len);
         strbuf_addstr(path, e->d_name);
         if (lstat(path->buf, &st))
+        {
             warning_errno(_(msg_warn_lstat_failed), path->buf);
+        }
         else if (S_ISDIR(st.st_mode))
         {
             if (remove_dirs(path, prefix, force_flag, dry_run, quiet, &gone))
+            {
                 ret = 1;
+            }
             if (gone)
             {
                 quote_path(path->buf, prefix, &quoted, 0);
                 string_list_append(&dels, quoted.buf);
             }
             else
+            {
                 *dir_gone = 0;
+            }
             continue;
         }
         else
@@ -274,8 +294,10 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
          * path too.
          */
         if (startup_info->original_cwd)
+        {
             strbuf_realpath(&real_ocwd,
                             startup_info->original_cwd, 1);
+        }
 
         if (!strbuf_cmp(&realpath, &real_ocwd))
         {
@@ -286,7 +308,9 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
         {
             res = dry_run ? 0 : rmdir(path->buf);
             if (!res)
+            {
                 *dir_gone = 1;
+            }
             else
             {
                 int saved_errno = errno;
@@ -303,7 +327,9 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
     {
         int i;
         for (i = 0; i < dels.nr; i++)
+        {
             printf(dry_run ? _(msg_would_remove) : _(msg_remove), dels.items[i].string);
+        }
     }
 out:
     strbuf_release(&realpath);
@@ -394,7 +420,9 @@ static void print_highlight_menu_stuff(struct menu_stuff *stuff, int **chosen)
 
                 p = menu_item->title;
                 if ((*chosen)[i] < 0)
+                {
                     (*chosen)[i] = menu_item->selected ? 1 : 0;
+                }
                 strbuf_addf(&menu, "%s%2d: ", (*chosen)[i] ? "*" : " ", i + 1);
                 for (; *p; p++)
                 {
@@ -419,7 +447,9 @@ static void print_highlight_menu_stuff(struct menu_stuff *stuff, int **chosen)
             for_each_string_list_item(string_list_item, (struct string_list *)stuff->stuff)
             {
                 if ((*chosen)[i] < 0)
+                {
                     (*chosen)[i] = 0;
+                }
                 strbuf_addf(&menu, "%s%2d: %s",
                             (*chosen)[i] ? "*" : " ", i + 1, string_list_item->string);
                 string_list_append(&menu_list, menu.buf);
@@ -439,7 +469,9 @@ static int find_unique(const char *choice, struct menu_stuff *menu_stuff)
 {
     struct menu_item        *menu_item;
     struct string_list_item *string_list_item;
-    int                      i, len, found = 0;
+    int                      i;
+    int                      len;
+    int                      found = 0;
 
     len = strlen(choice);
     switch (menu_stuff->type)
@@ -523,7 +555,8 @@ static int parse_choice(struct menu_stuff *menu_stuff,
                         struct strbuf      input,
                         int              **chosen)
 {
-    struct strbuf **choice_list, **ptr;
+    struct strbuf **choice_list;
+    struct strbuf **ptr;
     int             nr = 0;
     int             i;
 
@@ -537,7 +570,9 @@ static int parse_choice(struct menu_stuff *menu_stuff,
         do
         {
             if (*p == ',')
+            {
                 *p = ' ';
+            }
         } while (*p++);
         choice_list = strbuf_split_max(&input, ' ', 0);
     }
@@ -546,12 +581,16 @@ static int parse_choice(struct menu_stuff *menu_stuff,
     {
         char *p;
         int   choose = 1;
-        int   bottom = 0, top = 0;
-        int   is_range, is_number;
+        int   bottom = 0;
+        int   top    = 0;
+        int   is_range;
+        int   is_number;
 
         strbuf_trim(*ptr);
         if (!(*ptr)->len)
+        {
             continue;
+        }
 
         /* Input that begins with '-'; unchoose */
         if (*(*ptr)->buf == '-')
@@ -596,9 +635,13 @@ static int parse_choice(struct menu_stuff *menu_stuff,
             bottom = atoi((*ptr)->buf);
             /* a range can be specified like 5-7 or 5- */
             if (!*(strchr((*ptr)->buf, '-') + 1))
+            {
                 top = menu_stuff->nr;
+            }
             else
+            {
                 top = atoi(strchr((*ptr)->buf, '-') + 1);
+            }
         }
         else if (!strcmp((*ptr)->buf, "*"))
         {
@@ -620,13 +663,17 @@ static int parse_choice(struct menu_stuff *menu_stuff,
         }
 
         for (i = bottom; i <= top; i++)
+        {
             (*chosen)[i - 1] = choose;
+        }
     }
 
     strbuf_list_free(choice_list);
 
     for (i = 0; i < menu_stuff->nr; i++)
+    {
         nr += (*chosen)[i];
+    }
     return nr;
 }
 
@@ -644,7 +691,8 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 {
     struct strbuf choice = STRBUF_INIT;
-    int          *chosen, *result;
+    int          *chosen;
+    int          *result;
     int           nr  = 0;
     int           eof = 0;
     int           i;
@@ -652,7 +700,9 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
     ALLOC_ARRAY(chosen, stuff->nr);
     /* set chosen as uninitialized */
     for (i = 0; i < stuff->nr; i++)
+    {
         chosen[i] = -1;
+    }
 
     for (;;)
     {
@@ -668,7 +718,9 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
         print_highlight_menu_stuff(stuff, &chosen);
 
         if (opts->flags & MENU_OPTS_LIST_ONLY)
+        {
             break;
+        }
 
         if (opts->prompt)
         {
@@ -694,7 +746,9 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 
         /* for a multiple-choice menu, press ENTER (empty) will return back */
         if (!(opts->flags & MENU_OPTS_SINGLETON) && !choice.len)
+        {
             break;
+        }
 
         nr = parse_choice(stuff,
                           opts->flags & MENU_OPTS_SINGLETON,
@@ -704,7 +758,9 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
         if (opts->flags & MENU_OPTS_SINGLETON)
         {
             if (nr)
+            {
                 break;
+            }
         }
         else if (opts->flags & MENU_OPTS_IMMEDIATE)
         {
@@ -728,14 +784,18 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
         if (!nr)
         {
             for (i = 0; i < stuff->nr; i++)
+            {
                 nr += chosen[i];
+            }
         }
 
         CALLOC_ARRAY(result, st_add(nr, 1));
         for (i = 0; i < stuff->nr && j < nr; i++)
         {
             if (chosen[i])
+            {
                 result[j++] = i;
+            }
         }
         result[j] = EOF;
     }
@@ -757,25 +817,34 @@ static int filter_by_patterns_cmd(void)
     struct strbuf          **ignore_list;
     struct string_list_item *item;
     struct pattern_list     *pl;
-    int                      changed = -1, i;
+    int                      changed = -1;
+    int                      i;
 
     for (;;)
     {
         if (!del_list.nr)
+        {
             break;
+        }
 
         if (changed)
+        {
             pretty_print_dels();
+        }
 
         clean_print_color(CLEAN_COLOR_PROMPT);
         printf(_("Input ignore patterns>> "));
         clean_print_color(CLEAN_COLOR_RESET);
         if (git_read_line_interactively(&confirm) == EOF)
+        {
             putchar('\n');
+        }
 
         /* quit filter_by_pattern mode if press ENTER or Ctrl-D */
         if (!confirm.len)
+        {
             break;
+        }
 
         pl          = add_pattern_list(&dir, EXC_CMDL, "manual exclude");
         ignore_list = strbuf_split_max(&confirm, ' ', 0);
@@ -784,7 +853,9 @@ static int filter_by_patterns_cmd(void)
         {
             strbuf_trim(ignore_list[i]);
             if (!ignore_list[i]->len)
+            {
                 continue;
+            }
 
             add_pattern(ignore_list[i]->buf, "", 0, pl, -(i + 1));
         }
@@ -826,7 +897,8 @@ static int select_by_numbers_cmd(void)
     struct menu_stuff        menu_stuff;
     struct string_list_item *items;
     int                     *chosen;
-    int                      i, j;
+    int                      i;
+    int                      j;
 
     menu_opts.header = NULL;
     menu_opts.prompt = N_("Select items to delete");
@@ -869,7 +941,8 @@ static int ask_each_cmd(void)
     struct strbuf            buf     = STRBUF_INIT;
     struct string_list_item *item;
     const char              *qname;
-    int                      changed = 0, eof = 0;
+    int                      changed = 0;
+    int                      eof     = 0;
 
     for_each_string_list_item(item, &del_list)
     {
@@ -885,7 +958,7 @@ static int ask_each_cmd(void)
                 eof = 1;
             }
         }
-        if (!confirm.len || strncasecmp(confirm.buf, "yes", confirm.len))
+        if (!confirm.len || strncasecmp(confirm.buf, "yes", confirm.len) != 0)
         {
             *item->string = '\0';
             changed++;
@@ -893,7 +966,9 @@ static int ask_each_cmd(void)
     }
 
     if (changed)
+    {
         string_list_remove_empty_items(&del_list, 0);
+    }
 
     strbuf_release(&buf);
     strbuf_release(&confirm);
@@ -985,13 +1060,17 @@ static void interactive_main_loop(void)
 
 static void correct_untracked_entries(struct dir_struct *dir)
 {
-    int src, dst, ign;
+    int src;
+    int dst;
+    int ign;
 
     for (src = dst = ign = 0; src < dir->nr; src++)
     {
         /* skip paths in ignored[] that cannot be inside entries[src] */
         while (ign < dir->ignored_nr && 0 <= cmp_dir_entry(&dir->entries[src], &dir->ignored[ign]))
+        {
             ign++;
+        }
 
         if (ign < dir->ignored_nr && check_dir_entry_contains(dir->entries[src], dir->ignored[ign]))
         {
@@ -1007,7 +1086,9 @@ static void correct_untracked_entries(struct dir_struct *dir)
 
             /* then discard paths in entries[] contained inside entries[src] */
             while (src < dir->nr && check_dir_entry_contains(ent, dir->entries[src]))
+            {
                 free(dir->entries[src++]);
+            }
 
             /* compensate for the outer loop's loop control */
             src--;
@@ -1018,12 +1099,19 @@ static void correct_untracked_entries(struct dir_struct *dir)
 
 int cmd_clean(int argc, const char **argv, const char *prefix)
 {
-    int                      i, res;
-    int                      dry_run = 0, remove_directories = 0, quiet = 0, ignored = 0;
-    int                      ignored_only = 0, force = 0, errors = 0, gone = 1;
-    int                      rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
-    struct strbuf            abs_path = STRBUF_INIT;
-    struct dir_struct        dir      = DIR_INIT;
+    int                      i;
+    int                      res;
+    int                      dry_run            = 0;
+    int                      remove_directories = 0;
+    int                      quiet              = 0;
+    int                      ignored            = 0;
+    int                      ignored_only       = 0;
+    int                      force              = 0;
+    int                      errors             = 0;
+    int                      gone               = 1;
+    int                      rm_flags           = REMOVE_DIR_KEEP_NESTED_GIT;
+    struct strbuf            abs_path           = STRBUF_INIT;
+    struct dir_struct        dir                = DIR_INIT;
     struct pathspec          pathspec;
     struct strbuf            buf          = STRBUF_INIT;
     struct string_list       exclude_list = STRING_LIST_INIT_NODUP;
@@ -1050,21 +1138,33 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
                          0);
 
     if (require_force != 0 && !force && !interactive && !dry_run)
+    {
         die(_("clean.requireForce is true and -f not given: refusing to clean"));
+    }
 
     if (force > 1)
+    {
         rm_flags = 0;
+    }
     else
+    {
         dir.flags |= DIR_SKIP_NESTED_GIT;
+    }
 
     dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
     if (ignored && ignored_only)
+    {
         die(_("options '%s' and '%s' cannot be used together"), "-x", "-X");
+    }
     if (!ignored)
+    {
         setup_standard_excludes(&dir);
+    }
     if (ignored_only)
+    {
         dir.flags |= DIR_SHOW_IGNORED;
+    }
 
     if (argc)
     {
@@ -1094,7 +1194,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
          */
         dir.flags |= DIR_SHOW_IGNORED_TOO;
         if (!ignored)
+        {
             dir.flags |= DIR_SHOW_IGNORED_TOO_MODE_MATCHING;
+        }
 
         /*
          * Let the fill_directory() machinery know that we aren't
@@ -1112,11 +1214,15 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
     the_repository->settings.command_requires_full_index = 0;
 
     if (repo_read_index(the_repository) < 0)
+    {
         die(_("index file corrupt"));
+    }
 
     pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
     for (i = 0; i < exclude_list.nr; i++)
+    {
         add_pattern(exclude_list.items[i].string, "", 0, pl, -(i + 1));
+    }
 
     parse_pathspec(&pathspec, 0,
                    PATHSPEC_PREFER_CWD,
@@ -1132,13 +1238,19 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
         const char       *rel;
 
         if (!index_name_is_other(the_repository->index, ent->name, ent->len))
+        {
             continue;
+        }
 
         if (lstat(ent->name, &st))
+        {
             die_errno("Cannot lstat '%s'", ent->name);
+        }
 
         if (S_ISDIR(st.st_mode) && !remove_directories)
+        {
             continue;
+        }
 
         rel = relative_path(ent->name, prefix, &buf);
         string_list_append(&del_list, rel);
@@ -1147,7 +1259,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
     dir_clear(&dir);
 
     if (interactive && del_list.nr > 0)
+    {
         interactive_main_loop();
+    }
 
     for_each_string_list_item(item, &del_list)
     {
@@ -1155,7 +1269,9 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
         strbuf_reset(&abs_path);
         if (prefix)
+        {
             strbuf_addstr(&abs_path, prefix);
+        }
 
         strbuf_addstr(&abs_path, item->string);
 
@@ -1165,12 +1281,16 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
          * fail with ENOENT.
          */
         if (lstat(abs_path.buf, &st))
+        {
             continue;
+        }
 
         if (S_ISDIR(st.st_mode))
         {
             if (remove_dirs(&abs_path, prefix, rm_flags, dry_run, quiet, &gone))
+            {
                 errors++;
+            }
             if (gone && !quiet)
             {
                 qname = quote_path(item->string, NULL, &buf, 0);

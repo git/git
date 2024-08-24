@@ -23,7 +23,9 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
     unsigned        options = 0;
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage(diff_files_usage);
+    }
 
     git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 
@@ -45,20 +47,32 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
     while (1 < argc && argv[1][0] == '-')
     {
         if (!strcmp(argv[1], "--base"))
+        {
             rev.max_count = 1;
+        }
         else if (!strcmp(argv[1], "--ours"))
+        {
             rev.max_count = 2;
+        }
         else if (!strcmp(argv[1], "--theirs"))
+        {
             rev.max_count = 3;
+        }
         else if (!strcmp(argv[1], "-q"))
+        {
             options |= DIFF_SILENT_ON_REMOVED;
+        }
         else
+        {
             usage(diff_files_usage);
+        }
         argv++;
         argc--;
     }
     if (!rev.diffopt.output_format)
+    {
         rev.diffopt.output_format = DIFF_FORMAT_RAW;
+    }
     rev.diffopt.rotate_to_strict = 1;
 
     /*
@@ -67,7 +81,9 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
      * there is no other revision filtering parameters.
      */
     if (rev.pending.nr || rev.min_age != -1 || rev.max_age != -1 || 3 < rev.max_count)
+    {
         usage(diff_files_usage);
+    }
 
     /*
      * "diff-files --base -p" should not combine merges because it
@@ -75,10 +91,14 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
      * (the user should ask with "diff-files --cc" explicitly).
      */
     if (rev.max_count == -1 && (rev.diffopt.output_format & DIFF_FORMAT_PATCH))
+    {
         diff_merges_set_dense_combined_if_unset(&rev);
+    }
 
     if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0)
+    {
         die_errno("repo_read_index_preload");
+    }
     run_diff_files(&rev, options);
     result = diff_result_code(&rev.diffopt);
     release_revisions(&rev);

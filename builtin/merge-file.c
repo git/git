@@ -23,7 +23,9 @@ static int label_cb(const struct option *opt, const char *arg, int unset)
     BUG_ON_OPT_NEG(unset);
 
     if (label_count >= 3)
+    {
         return error("too many labels on the command line");
+    }
     names[label_count++] = arg;
     return 0;
 }
@@ -33,7 +35,9 @@ static int set_diff_algorithm(xpparam_t  *xpp,
 {
     long diff_algorithm = parse_algorithm_value(alg);
     if (diff_algorithm < 0)
+    {
         return -1;
+    }
     xpp->flags = (xpp->flags & ~XDF_DIFF_ALGORITHM_MASK) | diff_algorithm;
     return 0;
 }
@@ -46,20 +50,25 @@ static int diff_algorithm_cb(const struct option *opt,
     BUG_ON_OPT_NEG(unset);
 
     if (set_diff_algorithm(xpp, arg))
+    {
         return error(_(
             "option diff-algorithm accepts \"myers\", "
             "\"minimal\", \"patience\" and \"histogram\""));
+    }
 
     return 0;
 }
 
 int cmd_merge_file(int argc, const char **argv, const char *prefix)
 {
-    const char   *names[3] = {0};
-    mmfile_t      mmfs[3]  = {0};
-    mmbuffer_t    result   = {0};
-    xmparam_t     xmp      = {0};
-    int           ret = 0, i = 0, to_stdout = 0, object_id = 0;
+    const char   *names[3]  = {0};
+    mmfile_t      mmfs[3]   = {0};
+    mmbuffer_t    result    = {0};
+    xmparam_t     xmp       = {0};
+    int           ret       = 0;
+    int           i         = 0;
+    int           to_stdout = 0;
+    int           object_id = 0;
     int           quiet     = 0;
     struct option options[] = {
         OPT_BOOL('p', "stdout", &to_stdout, N_("send results to standard output")),
@@ -93,20 +102,28 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
         /* Read the configuration file */
         git_config(git_xmerge_config, NULL);
         if (0 <= git_xmerge_style)
+        {
             xmp.style = git_xmerge_style;
+        }
     }
 
     argc = parse_options(argc, argv, prefix, options, merge_file_usage, 0);
     if (argc != 3)
+    {
         usage_with_options(merge_file_usage, options);
+    }
     if (quiet)
     {
         if (!freopen("/dev/null", "w", stderr))
+        {
             return error_errno("failed to redirect stderr to /dev/null");
+        }
     }
 
     if (object_id)
+    {
         setup_git_directory();
+    }
 
     for (i = 0; i < 3; i++)
     {
@@ -115,19 +132,27 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
         mmfile_t        *mmf = mmfs + i;
 
         if (!names[i])
+        {
             names[i] = argv[i];
+        }
 
         fname = prefix_filename(prefix, argv[i]);
 
         if (object_id)
         {
             if (repo_get_oid(the_repository, argv[i], &oid))
+            {
                 ret = error(_("object '%s' does not exist"),
                             argv[i]);
+            }
             else if (!oideq(&oid, the_hash_algo->empty_blob))
+            {
                 read_mmblob(mmf, &oid);
+            }
             else
+            {
                 read_mmfile(mmf, "/dev/null");
+            }
         }
         else if (read_mmfile(mmf, fname))
         {
@@ -141,7 +166,9 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
         free(fname);
         if (ret)
+        {
             goto cleanup;
+        }
     }
 
     xmp.ancestor = names[1];
@@ -157,14 +184,18 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
             if (result.size)
             {
                 if (write_object_file(result.ptr, result.size, OBJ_BLOB, &oid) < 0)
+                {
                     ret = error(_("Could not write object file"));
+                }
             }
             else
             {
                 oidcpy(&oid, the_hash_algo->empty_blob);
             }
             if (ret >= 0)
+            {
                 printf("%s\n", oid_to_hex(&oid));
+            }
         }
         else
         {
@@ -173,23 +204,33 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
             FILE       *f        = to_stdout ? stdout : fopen(fpath, "wb");
 
             if (!f)
+            {
                 ret = error_errno("Could not open %s for writing",
                                   filename);
+            }
             else if (result.size && fwrite(result.ptr, result.size, 1, f) != 1)
+            {
                 ret = error_errno("Could not write to %s", filename);
+            }
             else if (fclose(f))
+            {
                 ret = error_errno("Could not close %s", filename);
+            }
             free(fpath);
         }
         free(result.ptr);
     }
 
     if (ret > 127)
+    {
         ret = 127;
+    }
 
 cleanup:
     for (i = 0; i < 3; i++)
+    {
         free(mmfs[i].ptr);
+    }
 
     return ret;
 }

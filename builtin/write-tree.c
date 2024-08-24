@@ -20,7 +20,8 @@ static const char *const write_tree_usage[] = {
 
 int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
 {
-    int              flags       = 0, ret;
+    int              flags = 0;
+    int              ret;
     const char      *tree_prefix = NULL;
     struct object_id oid;
     const char      *me                   = "git-write-tree";

@@ -36,22 +36,30 @@ static void write_tempfile_record(const char *name, const char *prefix)
     if (CHECKOUT_ALL == checkout_stage)
     {
         for (i = 1; i < 4; i++)
+        {
             if (topath[i][0])
             {
                 have_tempname = 1;
                 break;
             }
+        }
 
         if (have_tempname)
         {
             for (i = 1; i < 4; i++)
             {
                 if (i > 1)
+                {
                     putchar(' ');
+                }
                 if (topath[i][0])
+                {
                     fputs(topath[i], stdout);
+                }
                 else
+                {
                     putchar('.');
+                }
             }
         }
     }
@@ -85,36 +93,50 @@ static int checkout_file(const char *name, const char *prefix)
     int errs          = 0;
 
     if (pos < 0)
+    {
         pos = -pos - 1;
+    }
 
     while (pos < the_repository->index->cache_nr)
     {
         struct cache_entry *ce = the_repository->index->cache[pos];
-        if (ce_namelen(ce) != namelen || memcmp(ce->name, name, namelen))
+        if (ce_namelen(ce) != namelen || memcmp(ce->name, name, namelen) != 0)
+        {
             break;
+        }
         has_same_name = 1;
         pos++;
         if (S_ISSPARSEDIR(ce->ce_mode))
+        {
             break;
+        }
         is_file = 1;
         if (!ignore_skip_worktree && ce_skip_worktree(ce))
+        {
             break;
+        }
         is_skipped = 0;
         if (ce_stage(ce) != checkout_stage
             && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
+        {
             continue;
+        }
         did_checkout = 1;
         if (checkout_entry(ce, &state,
                            to_tempfile ? topath[ce_stage(ce)] : NULL,
                            NULL)
             < 0)
+        {
             errs++;
+        }
     }
 
     if (did_checkout)
     {
         if (to_tempfile)
+        {
             write_tempfile_record(name, prefix);
+        }
         return errs > 0 ? -1 : 0;
     }
 
@@ -124,24 +146,36 @@ static int checkout_file(const char *name, const char *prefix)
      * error.
      */
     if (has_same_name && checkout_stage == CHECKOUT_ALL)
+    {
         return 0;
+    }
 
     if (!state.quiet)
     {
         fprintf(stderr, "git checkout-index: %s ", name);
         if (!has_same_name)
+        {
             fprintf(stderr, "is not in the cache");
+        }
         else if (!is_file)
+        {
             fprintf(stderr, "is a sparse directory");
+        }
         else if (is_skipped)
+        {
             fprintf(stderr,
                     "has skip-worktree enabled; "
                     "use '--ignore-skip-worktree-bits' to checkout");
+        }
         else if (checkout_stage)
+        {
             fprintf(stderr, "does not exist at stage %d",
                     checkout_stage);
+        }
         else
+        {
             fprintf(stderr, "is unmerged");
+        }
         fputc('\n', stderr);
     }
     return -1;
@@ -149,7 +183,8 @@ static int checkout_file(const char *name, const char *prefix)
 
 static int checkout_all(const char *prefix, int prefix_length)
 {
-    int                 i, errs = 0;
+    int                 i;
+    int                 errs    = 0;
     struct cache_entry *last_ce = NULL;
 
     for (i = 0; i < the_repository->index->cache_nr; i++)
@@ -159,7 +194,9 @@ static int checkout_all(const char *prefix, int prefix_length)
         if (S_ISSPARSEDIR(ce->ce_mode))
         {
             if (!ce_skip_worktree(ce))
+            {
                 BUG("sparse directory '%s' does not have skip-worktree set", ce->name);
+            }
 
             /*
              * If the current entry is a sparse directory and skip-worktree
@@ -175,27 +212,39 @@ static int checkout_all(const char *prefix, int prefix_length)
         }
 
         if (!ignore_skip_worktree && ce_skip_worktree(ce))
+        {
             continue;
+        }
         if (ce_stage(ce) != checkout_stage
             && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
+        {
             continue;
-        if (prefix && *prefix && (ce_namelen(ce) <= prefix_length || memcmp(prefix, ce->name, prefix_length)))
+        }
+        if (prefix && *prefix && (ce_namelen(ce) <= prefix_length || memcmp(prefix, ce->name, prefix_length) != 0))
+        {
             continue;
+        }
         if (last_ce && to_tempfile)
         {
             if (ce_namelen(last_ce) != ce_namelen(ce)
-                || memcmp(last_ce->name, ce->name, ce_namelen(ce)))
+                || memcmp(last_ce->name, ce->name, ce_namelen(ce)) != 0)
+            {
                 write_tempfile_record(last_ce->name, prefix);
+            }
         }
         if (checkout_entry(ce, &state,
                            to_tempfile ? topath[ce_stage(ce)] : NULL,
                            NULL)
             < 0)
+        {
             errs++;
+        }
         last_ce = ce;
     }
     if (last_ce && to_tempfile)
+    {
         write_tempfile_record(last_ce->name, prefix);
+    }
     return !!errs;
 }
 
@@ -218,9 +267,13 @@ static int option_parse_stage(const struct option *opt,
     {
         int ch = arg[0];
         if ('1' <= ch && ch <= '3')
+        {
             *stage = arg[0] - '0';
+        }
         else
+        {
             die(_("stage should be between 1 and 3 or all"));
+        }
     }
     return 0;
 }
@@ -232,10 +285,13 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
     int              all             = 0;
     int              read_from_stdin = 0;
     int              prefix_length;
-    int              force = 0, quiet = 0, not_new = 0;
+    int              force     = 0;
+    int              quiet     = 0;
+    int              not_new   = 0;
     int              index_opt = 0;
     int              err       = 0;
-    int              pc_workers, pc_threshold;
+    int              pc_workers;
+    int              pc_threshold;
     struct option    builtin_checkout_index_options[] = {
            OPT_BOOL('a', "all", &all,
                     N_("check out all files in the index")),
@@ -262,8 +318,10 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
            OPT_END()};
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage_with_options(builtin_checkout_index_usage,
                            builtin_checkout_index_options);
+    }
     git_config(git_default_config, NULL);
     prefix_length = prefix ? strlen(prefix) : 0;
 
@@ -283,14 +341,20 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
     state.not_new = not_new;
 
     if (!state.base_dir)
+    {
         state.base_dir = "";
+    }
     state.base_dir_len = strlen(state.base_dir);
 
     if (to_tempfile < 0)
+    {
         to_tempfile = (checkout_stage == CHECKOUT_ALL);
+    }
     if (!to_tempfile && checkout_stage == CHECKOUT_ALL)
+    {
         die(_("options '%s' and '%s' cannot be used together"),
             "--stage=all", "--no-temp");
+    }
 
     /*
      * when --prefix is specified we do not want to update cache.
@@ -305,7 +369,9 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
     get_parallel_checkout_configs(&pc_workers, &pc_threshold);
     if (pc_workers > 1)
+    {
         init_parallel_checkout();
+    }
 
     /* Check out named files first */
     for (i = 0; i < argc; i++)
@@ -314,9 +380,13 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
         char       *p;
 
         if (all)
+        {
             die("git checkout-index: don't mix '--all' and explicit filenames");
+        }
         if (read_from_stdin)
+        {
             die("git checkout-index: don't mix '--stdin' and explicit filenames");
+        }
         p = prefix_path(prefix, prefix_length, arg);
         err |= checkout_file(p, prefix);
         free(p);
@@ -329,7 +399,9 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
         strbuf_getline_fn getline_fn;
 
         if (all)
+        {
             die("git checkout-index: don't mix '--all' and '--stdin'");
+        }
 
         getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
         while (getline_fn(&buf, stdin) != EOF)
@@ -339,7 +411,9 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
             {
                 strbuf_reset(&unquoted);
                 if (unquote_c_style(&unquoted, buf.buf, NULL))
+                {
                     die("line is badly quoted");
+                }
                 strbuf_swap(&buf, &unquoted);
             }
             p = prefix_path(prefix, prefix_length, buf.buf);
@@ -351,16 +425,24 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
     }
 
     if (all)
+    {
         err |= checkout_all(prefix, prefix_length);
+    }
 
     if (pc_workers > 1)
+    {
         err |= run_parallel_checkout(&state, pc_workers, pc_threshold,
                                      NULL, NULL);
+    }
 
     if (err)
+    {
         return 1;
+    }
 
     if (is_lock_file_locked(&lock_file) && write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
+    {
         die("Unable to write new index file");
+    }
     return 0;
 }

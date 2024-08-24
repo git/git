@@ -149,7 +149,9 @@ static void copy_obj_to_fd(int fd, const struct object_id *oid)
     if (buf)
     {
         if (size)
+        {
             write_or_die(fd, buf, size);
+        }
         free(buf);
     }
 }
@@ -168,11 +170,15 @@ static void write_commented_object(int fd, const struct object_id *object)
     show.err      = 0;
     show.git_cmd  = 1;
     if (start_command(&show))
+    {
         die(_("unable to start 'show' for object '%s'"),
             oid_to_hex(object));
+    }
 
     if (strbuf_read(&buf, show.out, 0) < 0)
+    {
         die_errno(_("could not read 'show' output"));
+    }
     strbuf_add_commented_lines(&cbuf, buf.buf, buf.len, comment_line_str);
     write_or_die(fd, cbuf.buf, cbuf.len);
 
@@ -180,8 +186,10 @@ static void write_commented_object(int fd, const struct object_id *object)
     strbuf_release(&buf);
 
     if (finish_command(&show))
+    {
         die(_("failed to finish 'show' for object '%s'"),
             oid_to_hex(object));
+    }
 }
 
 static void prepare_note_data(const struct object_id *object, struct note_data *d,
@@ -197,9 +205,13 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
         fd           = xopen(d->edit_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
         if (d->msg_nr)
+        {
             write_or_die(fd, d->buf.buf, d->buf.len);
+        }
         else if (old_note)
+        {
             copy_obj_to_fd(fd, old_note);
+        }
 
         strbuf_addch(&buf, '\n');
         strbuf_add_commented_lines(&buf, "\n", strlen("\n"), comment_line_str);
@@ -219,7 +231,9 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
             die(_("please supply the note contents using either -m or -F option"));
         }
         if (d->stripspace)
+        {
             strbuf_stripspace(&d->buf, comment_line_str);
+        }
     }
 }
 
@@ -230,8 +244,10 @@ static void write_note_data(struct note_data *d, struct object_id *oid)
         int status = die_message(_("unable to write note object"));
 
         if (d->edit_path)
+        {
             die_message(_("the note contents have been left in %s"),
                         d->edit_path);
+        }
         exit(status);
     }
 }
@@ -241,8 +257,10 @@ static void append_separator(struct strbuf *message)
     size_t sep_len = 0;
 
     if (!separator)
+    {
         return;
-    else if ((sep_len = strlen(separator)) && separator[sep_len - 1] == '\n')
+    }
+    if ((sep_len = strlen(separator)) && separator[sep_len - 1] == '\n')
         strbuf_addstr(message, separator);
     else
         strbuf_addf(message, "%s%s", separator, "\n");
@@ -256,11 +274,15 @@ static void concat_messages(struct note_data *d)
     for (i = 0; i < d->msg_nr; i++)
     {
         if (d->buf.len)
+        {
             append_separator(&d->buf);
+        }
         strbuf_add(&msg, d->messages[i]->buf.buf, d->messages[i]->buf.len);
         strbuf_addbuf(&d->buf, &msg);
         if ((d->stripspace == UNSPECIFIED && d->messages[i]->stripspace == STRIPSPACE) || d->stripspace == STRIPSPACE)
+        {
             strbuf_stripspace(&d->buf, NULL);
+        }
         strbuf_reset(&msg);
     }
     strbuf_release(&msg);
@@ -292,10 +314,14 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
     if (!strcmp(arg, "-"))
     {
         if (strbuf_read(&msg->buf, 0, 1024) < 0)
+        {
             die_errno(_("cannot read '%s'"), arg);
+        }
     }
     else if (strbuf_read_file(&msg->buf, arg, 1024) < 0)
+    {
         die_errno(_("could not open or read '%s'"), arg);
+    }
 
     ALLOC_GROW_BY(d->messages, d->msg_nr, 1, d->msg_alloc);
     d->messages[d->msg_nr - 1] = msg;
@@ -316,9 +342,13 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 
     strbuf_init(&msg->buf, 0);
     if (repo_get_oid(the_repository, arg, &object))
+    {
         die(_("failed to resolve '%s' as a valid ref."), arg);
+    }
     if (!(value = repo_read_object_file(the_repository, &object, &type, &len)))
+    {
         die(_("failed to read object '%s'."), arg);
+    }
     if (type != OBJ_BLOB)
     {
         strbuf_release(&msg->buf);
@@ -349,9 +379,13 @@ static int parse_separator_arg(const struct option *opt, const char *arg,
                                int unset)
 {
     if (unset)
+    {
         *(const char **)opt->value = NULL;
+    }
     else
+    {
         *(const char **)opt->value = arg ? arg : "\n";
+    }
     return 0;
 }
 
@@ -367,7 +401,9 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
     {
         c = init_copy_notes_for_rewrite(rewrite_cmd);
         if (!c)
+        {
             return 0;
+        }
     }
     else
     {
@@ -377,25 +413,36 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 
     while (strbuf_getline_lf(&buf, stdin) != EOF)
     {
-        struct object_id from_obj, to_obj;
+        struct object_id from_obj;
+        struct object_id to_obj;
         struct strbuf  **split;
         int              err;
 
         split = strbuf_split(&buf, ' ');
         if (!split[0] || !split[1])
+        {
             die(_("malformed input line: '%s'."), buf.buf);
+        }
         strbuf_rtrim(split[0]);
         strbuf_rtrim(split[1]);
         if (repo_get_oid(the_repository, split[0]->buf, &from_obj))
+        {
             die(_("failed to resolve '%s' as a valid ref."), split[0]->buf);
+        }
         if (repo_get_oid(the_repository, split[1]->buf, &to_obj))
+        {
             die(_("failed to resolve '%s' as a valid ref."), split[1]->buf);
+        }
 
         if (rewrite_cmd)
+        {
             err = copy_note_for_rewrite(c, &from_obj, &to_obj);
+        }
         else
+        {
             err = copy_note(t, &from_obj, &to_obj, force,
                             combine_notes_overwrite);
+        }
 
         if (err)
         {
@@ -430,12 +477,14 @@ static struct notes_tree *init_notes_check(const char *subcommand,
 
     ref = (flags & NOTES_INIT_WRITABLE) ? t->update_ref : t->ref;
     if (!starts_with(ref, "refs/notes/"))
+    {
         /*
          * TRANSLATORS: the first %s will be replaced by a git
          * notes command: 'add', 'merge', 'remove', etc.
          */
         die(_("refusing to %s notes in %s (outside of refs/notes/)"),
             subcommand, ref);
+    }
     return t;
 }
 
@@ -449,8 +498,10 @@ static int list(int argc, const char **argv, const char *prefix)
                   OPT_END()};
 
     if (argc)
+    {
         argc = parse_options(argc, argv, prefix, options,
                              git_notes_list_usage, 0);
+    }
 
     if (1 < argc)
     {
@@ -462,7 +513,9 @@ static int list(int argc, const char **argv, const char *prefix)
     if (argc)
     {
         if (repo_get_oid(the_repository, argv[0], &object))
+        {
             die(_("failed to resolve '%s' as a valid ref."), argv[0]);
+        }
         note = get_note(t, &object);
         if (note)
         {
@@ -470,11 +523,15 @@ static int list(int argc, const char **argv, const char *prefix)
             retval = 0;
         }
         else
+        {
             retval = error(_("no note found for object %s."),
                            oid_to_hex(&object));
+        }
     }
     else
+    {
         retval = for_each_note(t, 0, list_each_note, NULL);
+    }
 
     free_notes(t);
     return retval;
@@ -484,10 +541,12 @@ static int append_edit(int argc, const char **argv, const char *prefix);
 
 static int add(int argc, const char **argv, const char *prefix)
 {
-    int                     force = 0, allow_empty = 0;
+    int                     force       = 0;
+    int                     allow_empty = 0;
     const char             *object_ref;
     struct notes_tree      *t;
-    struct object_id        object, new_note;
+    struct object_id        object;
+    struct object_id        new_note;
     const struct object_id *note;
     struct note_data        d = {.buf = STRBUF_INIT, .stripspace = UNSPECIFIED};
 
@@ -525,12 +584,16 @@ static int add(int argc, const char **argv, const char *prefix)
     }
 
     if (d.msg_nr)
+    {
         concat_messages(&d);
+    }
 
     object_ref = argc > 1 ? argv[1] : "HEAD";
 
     if (repo_get_oid(the_repository, object_ref, &object))
+    {
         die(_("failed to resolve '%s' as a valid ref."), object_ref);
+    }
 
     t    = init_notes_check("add", NOTES_INIT_WRITABLE);
     note = get_note(t, &object);
@@ -567,7 +630,9 @@ static int add(int argc, const char **argv, const char *prefix)
     {
         write_note_data(&d, &new_note);
         if (add_note(t, &object, &new_note, combine_notes_overwrite))
+        {
             BUG("combine_notes_overwrite failed");
+        }
         commit_notes(the_repository, t,
                      "Notes added by 'git notes add'");
     }
@@ -587,10 +652,14 @@ static int add(int argc, const char **argv, const char *prefix)
 
 static int copy(int argc, const char **argv, const char *prefix)
 {
-    int                     retval = 0, force = 0, from_stdin = 0;
-    const struct object_id *from_note, *note;
+    int                     retval     = 0;
+    int                     force      = 0;
+    int                     from_stdin = 0;
+    const struct object_id *from_note;
+    const struct object_id *note;
     const char             *object_ref;
-    struct object_id        object, from_obj;
+    struct object_id        object;
+    struct object_id        from_obj;
     struct notes_tree      *t;
     const char             *rewrite_cmd = NULL;
     struct option           options[]   = {
@@ -629,12 +698,16 @@ static int copy(int argc, const char **argv, const char *prefix)
     }
 
     if (repo_get_oid(the_repository, argv[0], &from_obj))
+    {
         die(_("failed to resolve '%s' as a valid ref."), argv[0]);
+    }
 
     object_ref = 1 < argc ? argv[1] : "HEAD";
 
     if (repo_get_oid(the_repository, object_ref, &object))
+    {
         die(_("failed to resolve '%s' as a valid ref."), object_ref);
+    }
 
     t    = init_notes_check("copy", NOTES_INIT_WRITABLE);
     note = get_note(t, &object);
@@ -663,7 +736,9 @@ static int copy(int argc, const char **argv, const char *prefix)
     }
 
     if (add_note(t, &object, from_note, combine_notes_overwrite))
+    {
         BUG("combine_notes_overwrite failed");
+    }
     commit_notes(the_repository, t,
                  "Notes added by 'git notes copy'");
 out:
@@ -676,7 +751,8 @@ static int append_edit(int argc, const char **argv, const char *prefix)
     int                     allow_empty = 0;
     const char             *object_ref;
     struct notes_tree      *t;
-    struct object_id        object, new_note;
+    struct object_id        object;
+    struct object_id        new_note;
     const struct object_id *note;
     char                   *logmsg;
     const char *const      *usage;
@@ -719,16 +795,20 @@ static int append_edit(int argc, const char **argv, const char *prefix)
     {
         concat_messages(&d);
         if (edit)
+        {
             fprintf(stderr, _("The -m/-F/-c/-C options have been "
                               "deprecated for the 'edit' subcommand.\n"
                               "Please use 'git notes add -f -m/-F/-c/-C' "
                               "instead.\n"));
+        }
     }
 
     object_ref = 1 < argc ? argv[1] : "HEAD";
 
     if (repo_get_oid(the_repository, object_ref, &object))
+    {
         die(_("failed to resolve '%s' as a valid ref."), object_ref);
+    }
 
     t    = init_notes_check(argv[0], NOTES_INIT_WRITABLE);
     note = get_note(t, &object);
@@ -744,11 +824,17 @@ static int append_edit(int argc, const char **argv, const char *prefix)
         char            *prev_buf = repo_read_object_file(the_repository, note, &type, &size);
 
         if (!prev_buf)
+        {
             die(_("unable to read %s"), oid_to_hex(note));
+        }
         if (size)
+        {
             strbuf_add(&buf, prev_buf, size);
+        }
         if (d.buf.len && size)
+        {
             append_separator(&buf);
+        }
         strbuf_insert(&d.buf, 0, buf.buf, buf.len);
 
         free(prev_buf);
@@ -759,7 +845,9 @@ static int append_edit(int argc, const char **argv, const char *prefix)
     {
         write_note_data(&d, &new_note);
         if (add_note(t, &object, &new_note, combine_notes_overwrite))
+        {
             BUG("combine_notes_overwrite failed");
+        }
         logmsg = xstrfmt("Notes added by 'git notes %s'", argv[0]);
     }
     else
@@ -799,14 +887,18 @@ static int show(int argc, const char **argv, const char *prefix)
     object_ref = argc ? argv[0] : "HEAD";
 
     if (repo_get_oid(the_repository, object_ref, &object))
+    {
         die(_("failed to resolve '%s' as a valid ref."), object_ref);
+    }
 
     t    = init_notes_check("show", 0);
     note = get_note(t, &object);
 
     if (!note)
+    {
         retval = error(_("no note found for object %s."),
                        oid_to_hex(&object));
+    }
     else
     {
         const char *show_args[3] = {"show", oid_to_hex(note), NULL};
@@ -826,18 +918,25 @@ static int merge_abort(struct notes_merge_options *o)
      */
 
     if (refs_delete_ref(get_main_ref_store(the_repository), NULL, "NOTES_MERGE_PARTIAL", NULL, 0))
+    {
         ret += error(_("failed to delete ref NOTES_MERGE_PARTIAL"));
+    }
     if (refs_delete_ref(get_main_ref_store(the_repository), NULL, "NOTES_MERGE_REF", NULL, REF_NO_DEREF))
+    {
         ret += error(_("failed to delete ref NOTES_MERGE_REF"));
+    }
     if (notes_merge_abort(o))
+    {
         ret += error(_("failed to remove 'git notes merge' worktree"));
+    }
     return ret;
 }
 
 static int merge_commit(struct notes_merge_options *o)
 {
     struct strbuf               msg = STRBUF_INIT;
-    struct object_id            oid, parent_oid;
+    struct object_id            oid;
+    struct object_id            parent_oid;
     struct notes_tree           t = {0};
     struct commit              *partial;
     struct pretty_print_context pretty_ctx;
@@ -850,16 +949,26 @@ static int merge_commit(struct notes_merge_options *o)
      */
 
     if (repo_get_oid(the_repository, "NOTES_MERGE_PARTIAL", &oid))
+    {
         die(_("failed to read ref NOTES_MERGE_PARTIAL"));
+    }
     else if (!(partial = lookup_commit_reference(the_repository, &oid)))
+    {
         die(_("could not find commit from NOTES_MERGE_PARTIAL."));
+    }
     else if (repo_parse_commit(the_repository, partial))
+    {
         die(_("could not parse commit from NOTES_MERGE_PARTIAL."));
+    }
 
     if (partial->parents)
+    {
         oidcpy(&parent_oid, &partial->parents->item->object.oid);
+    }
     else
+    {
         oidclr(&parent_oid, the_repository->hash_algo);
+    }
 
     init_notes(&t, "NOTES_MERGE_PARTIAL", combine_notes_overwrite, 0);
 
@@ -867,10 +976,14 @@ static int merge_commit(struct notes_merge_options *o)
         refs_resolve_refdup(get_main_ref_store(the_repository),
                             "NOTES_MERGE_REF", 0, &oid, NULL);
     if (!o->local_ref)
+    {
         die(_("failed to resolve NOTES_MERGE_REF"));
+    }
 
     if (notes_merge_commit(o, &t, partial, &oid))
+    {
         die(_("failed to finalize notes merge"));
+    }
 
     /* Reuse existing commit message in reflog message */
     memset(&pretty_ctx, 0, sizeof(pretty_ctx));
@@ -896,9 +1009,13 @@ static int git_config_get_notes_strategy(const char                *key,
     char *value;
 
     if (git_config_get_string(key, &value))
+    {
         return 1;
+    }
     if (parse_notes_merge_strategy(value, strategy))
+    {
         git_die_config(the_repository, key, _("unknown notes merge strategy %s"), value);
+    }
 
     free(value);
     return 0;
@@ -906,12 +1023,16 @@ static int git_config_get_notes_strategy(const char                *key,
 
 static int merge(int argc, const char **argv, const char *prefix)
 {
-    struct strbuf              remote_ref = STRBUF_INIT, msg = STRBUF_INIT;
+    struct strbuf              remote_ref = STRBUF_INIT;
+    struct strbuf              msg        = STRBUF_INIT;
     struct object_id           result_oid;
     struct notes_tree         *t;
     struct notes_merge_options o;
-    int                        do_merge = 0, do_commit = 0, do_abort = 0;
-    int                        verbosity = 0, result;
+    int                        do_merge  = 0;
+    int                        do_commit = 0;
+    int                        do_abort  = 0;
+    int                        verbosity = 0;
+    int                        result;
     const char                *strategy  = NULL;
     struct option              options[] = {
                      OPT_GROUP(N_("General options")),
@@ -934,7 +1055,9 @@ static int merge(int argc, const char **argv, const char *prefix)
                          git_notes_merge_usage, 0);
 
     if (strategy || do_commit + do_abort == 0)
+    {
         do_merge = 1;
+    }
     if (do_merge + do_commit + do_abort != 1)
     {
         error(_("cannot mix --commit, --abort or -s/--strategy"));
@@ -956,9 +1079,13 @@ static int merge(int argc, const char **argv, const char *prefix)
     o.verbosity = verbosity + NOTES_MERGE_VERBOSITY_DEFAULT;
 
     if (do_abort)
+    {
         return merge_abort(&o);
+    }
     if (do_commit)
+    {
         return merge_commit(&o);
+    }
 
     o.local_ref = default_notes_ref();
     strbuf_addstr(&remote_ref, argv[0]);
@@ -981,13 +1108,17 @@ static int merge(int argc, const char **argv, const char *prefix)
         const char   *short_ref = NULL;
 
         if (!skip_prefix(o.local_ref, "refs/notes/", &short_ref))
+        {
             BUG("local ref %s is outside of refs/notes/",
                 o.local_ref);
+        }
 
         strbuf_addf(&merge_key, "notes.%s.mergeStrategy", short_ref);
 
         if (git_config_get_notes_strategy(merge_key.buf, &o.strategy))
+        {
             git_config_get_notes_strategy("notes.mergeStrategy", &o.strategy);
+        }
 
         strbuf_release(&merge_key);
     }
@@ -998,11 +1129,13 @@ static int merge(int argc, const char **argv, const char *prefix)
 
     result = notes_merge(&o, t, &result_oid);
 
-    if (result >= 0) /* Merge resulted (trivially) in result_oid */
+    if (result >= 0)
+    { /* Merge resulted (trivially) in result_oid */
         /* Update default notes ref with new commit */
         refs_update_ref(get_main_ref_store(the_repository), msg.buf,
                         default_notes_ref(), &result_oid, NULL, 0,
                         UPDATE_REFS_DIE_ON_ERR);
+    }
     else
     { /* Merge has unresolved conflicts */
         struct worktree      **worktrees;
@@ -1016,12 +1149,16 @@ static int merge(int argc, const char **argv, const char *prefix)
         wt        = find_shared_symref(worktrees, "NOTES_MERGE_REF",
                                        default_notes_ref());
         if (wt)
+        {
             die(_("a notes merge into %s is already in-progress at %s"),
                 default_notes_ref(), wt->path);
+        }
         free_worktrees(worktrees);
         if (refs_update_symref(get_main_ref_store(the_repository), "NOTES_MERGE_REF", default_notes_ref(), NULL))
+        {
             die(_("failed to store link to current notes ref (%s)"),
                 default_notes_ref());
+        }
         fprintf(stderr, _("Automatic notes merge failed. Fix conflicts in %s "
                           "and commit the result with 'git notes merge --commit', "
                           "or abort the merge with 'git notes merge --abort'.\n"),
@@ -1041,12 +1178,18 @@ static int remove_one_note(struct notes_tree *t, const char *name, unsigned flag
     int              status;
     struct object_id oid;
     if (repo_get_oid(the_repository, name, &oid))
+    {
         return error(_("Failed to resolve '%s' as a valid ref."), name);
+    }
     status = remove_note(t, oid.hash);
     if (status)
+    {
         fprintf(stderr, _("Object %s has no note\n"), name);
+    }
     else
+    {
         fprintf(stderr, _("Removing note for object %s\n"), name);
+    }
     return (flag & IGNORE_MISSING) ? 0 : status;
 }
 
@@ -1092,8 +1235,10 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
         strbuf_release(&sb);
     }
     if (!retval)
+    {
         commit_notes(the_repository, t,
                      "Notes removed by 'git notes remove'");
+    }
     free_notes(t);
     return retval;
 }
@@ -1101,7 +1246,8 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 static int prune(int argc, const char **argv, const char *prefix)
 {
     struct notes_tree *t;
-    int                show_only = 0, verbose = 0;
+    int                show_only = 0;
+    int                verbose   = 0;
     struct option      options[] = {
              OPT__DRY_RUN(&show_only, N_("do not remove, show only")),
              OPT__VERBOSE(&verbose, N_("report pruned notes")),
@@ -1120,8 +1266,10 @@ static int prune(int argc, const char **argv, const char *prefix)
 
     prune_notes(t, (verbose ? NOTES_PRUNE_VERBOSE : 0) | (show_only ? NOTES_PRUNE_VERBOSE | NOTES_PRUNE_DRYRUN : 0));
     if (!show_only)
+    {
         commit_notes(the_repository, t,
                      "Notes removed by 'git notes prune'");
+    }
     free_notes(t);
     return 0;
 }

@@ -46,7 +46,8 @@ static int option_parse_if_missing(const struct option *opt,
 
 static void new_trailers_clear(struct list_head *trailers)
 {
-    struct list_head        *pos, *tmp;
+    struct list_head        *pos;
+    struct list_head        *tmp;
     struct new_trailer_item *item;
 
     list_for_each_safe(pos, tmp, trailers)
@@ -70,7 +71,9 @@ static int option_parse_trailer(const struct option *opt,
     }
 
     if (!arg)
+    {
         return -1;
+    }
 
     item             = xmalloc(sizeof(*item));
     item->text       = arg;
@@ -103,23 +106,33 @@ static FILE *create_in_place_tempfile(const char *file)
     FILE         *outfile;
 
     if (stat(file, &st))
+    {
         die_errno(_("could not stat %s"), file);
+    }
     if (!S_ISREG(st.st_mode))
+    {
         die(_("file %s is not a regular file"), file);
+    }
     if (!(st.st_mode & S_IWUSR))
+    {
         die(_("file %s is not writable by user"), file);
+    }
 
     /* Create temporary file in the same directory as the original */
     tail = strrchr(file, '/');
     if (tail)
+    {
         strbuf_add(&filename_template, file, tail - file + 1);
+    }
     strbuf_addstr(&filename_template, "git-interpret-trailers-XXXXXX");
 
     trailers_tempfile = xmks_tempfile_m(filename_template.buf, st.st_mode);
     strbuf_release(&filename_template);
     outfile = fdopen_tempfile(trailers_tempfile, "w");
     if (!outfile)
+    {
         die_errno(_("could not open temporary file"));
+    }
 
     return outfile;
 }
@@ -129,12 +142,16 @@ static void read_input_file(struct strbuf *sb, const char *file)
     if (file)
     {
         if (strbuf_read_file(sb, file, 0) < 0)
+        {
             die_errno(_("could not read input file '%s'"), file);
+        }
     }
     else
     {
         if (strbuf_read(sb, fileno(stdin), 0) < 0)
+        {
             die_errno(_("could not read from stdin"));
+        }
     }
 }
 
@@ -153,16 +170,22 @@ static void interpret_trailers(const struct process_trailer_options *opts,
     read_input_file(&sb, file);
 
     if (opts->in_place)
+    {
         outfile = create_in_place_tempfile(file);
+    }
 
     info = parse_trailers(opts, sb.buf, &head);
 
     /* Print the lines before the trailers */
     if (!opts->only_trailers)
+    {
         fwrite(sb.buf, 1, trailer_block_start(info), outfile);
+    }
 
     if (!opts->only_trailers && !blank_line_before_trailer_block(info))
+    {
         fprintf(outfile, "\n");
+    }
 
     if (!opts->only_input)
     {
@@ -182,12 +205,18 @@ static void interpret_trailers(const struct process_trailer_options *opts,
 
     /* Print the lines after the trailers as is */
     if (!opts->only_trailers)
+    {
         fwrite(sb.buf + trailer_block_end(info), 1, sb.len - trailer_block_end(info), outfile);
+    }
     trailer_info_release(info);
 
     if (opts->in_place)
+    {
         if (rename_tempfile(&trailers_tempfile, file))
+        {
             die_errno(_("could not rename temporary file to %s"), file);
+        }
+    }
 
     strbuf_release(&sb);
 }
@@ -224,21 +253,27 @@ int cmd_interpret_trailers(int argc, const char **argv, const char *prefix)
                          git_interpret_trailers_usage, 0);
 
     if (opts.only_input && !list_empty(&trailers))
+    {
         usage_msg_opt(
             _("--trailer with --only-input does not make sense"),
             git_interpret_trailers_usage,
             options);
+    }
 
     if (argc)
     {
         int i;
         for (i = 0; i < argc; i++)
+        {
             interpret_trailers(&opts, &trailers, argv[i]);
+        }
     }
     else
     {
         if (opts.in_place)
+        {
             die(_("no input file given for in-place editing"));
+        }
         interpret_trailers(&opts, &trailers, NULL);
     }
 

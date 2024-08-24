@@ -16,25 +16,35 @@ static int is_from_line(const char *line, int len)
 {
     const char *colon;
 
-    if (len < 20 || memcmp("From ", line, 5))
+    if (len < 20 || memcmp("From ", line, 5) != 0)
+    {
         return 0;
+    }
 
     colon = line + len - 2;
     line += 5;
     for (;;)
     {
         if (colon < line)
+        {
             return 0;
+        }
         if (*--colon == ':')
+        {
             break;
+        }
     }
 
     if (!isdigit(colon[-4]) || !isdigit(colon[-2]) || !isdigit(colon[-1]) || !isdigit(colon[1]) || !isdigit(colon[2]))
+    {
         return 0;
+    }
 
     /* year */
     if (strtol(colon + 3, NULL, 10) <= 90)
+    {
         return 0;
+    }
 
     /* Ok, close enough */
     return 1;
@@ -50,7 +60,9 @@ static int is_gtfrom(const struct strbuf *buf)
     size_t ngt;
 
     if (buf->len < min)
+    {
         return 0;
+    }
 
     ngt = strspn(buf->buf, ">");
     return ngt && starts_with(buf->buf + ngt, "From ");
@@ -88,10 +100,14 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
         }
 
         if (mboxrd && is_gtfrom(&buf))
+        {
             strbuf_remove(&buf, 0, 1);
+        }
 
         if (fwrite(buf.buf, 1, buf.len, output) != buf.len)
+        {
             die_errno("cannot write output");
+        }
 
         if (strbuf_getwholeline(&buf, mbox, '\n'))
         {
@@ -103,7 +119,9 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
             die_errno("cannot read mbox");
         }
         if (!is_bare && is_from_line(buf.buf, buf.len))
+        {
             break; /* done with one message */
+        }
     }
     fclose(output);
     return status;
@@ -125,7 +143,9 @@ static int populate_maildir_list(struct string_list *list, const char *path)
         if (!(dir = opendir(name)))
         {
             if (errno == ENOENT)
+            {
                 continue;
+            }
             error_errno("cannot opendir %s", name);
             goto out;
         }
@@ -133,7 +153,9 @@ static int populate_maildir_list(struct string_list *list, const char *path)
         while ((dent = readdir(dir)) != NULL)
         {
             if (dent->d_name[0] == '.')
+            {
                 continue;
+            }
             free(name);
             name = xstrfmt("%s/%s", *sub, dent->d_name);
             string_list_insert(list, name);
@@ -155,17 +177,22 @@ static int maildir_filename_cmp(const char *a, const char *b)
     {
         if (isdigit(*a) && isdigit(*b))
         {
-            long int na, nb;
+            long int na;
+            long int nb;
             na = strtol(a, (char **)&a, 10);
             nb = strtol(b, (char **)&b, 10);
             if (na != nb)
+            {
                 return na - nb;
+            }
             /* strtol advanced our pointers */
         }
         else
         {
             if (*a != *b)
+            {
                 return (unsigned char)*a - (unsigned char)*b;
+            }
             a++;
             b++;
         }
@@ -185,7 +212,9 @@ static int split_maildir(const char *maildir, const char *dir,
     list.cmp = maildir_filename_cmp;
 
     if (populate_maildir_list(&list, maildir) < 0)
+    {
         goto out;
+    }
 
     for (i = 0; i < list.nr; i++)
     {
@@ -218,7 +247,9 @@ static int split_maildir(const char *maildir, const char *dir,
     ret = skip;
 out:
     if (f)
+    {
         fclose(f);
+    }
     free(file);
     string_list_clear(&list, 1);
     return ret;
@@ -234,7 +265,9 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
     int   file_done = 0;
 
     if (isatty(fileno(f)))
+    {
         warning(_("reading patches from stdin/tty..."));
+    }
 
     if (!f)
     {
@@ -248,8 +281,10 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
         if (peek == EOF)
         {
             if (f == stdin)
+            {
                 /* empty stdin is OK */
                 ret = skip;
+            }
             else
             {
                 fclose(f);
@@ -279,7 +314,9 @@ static int split_mbox(const char *file, const char *dir, int allow_bare,
     }
 
     if (f != stdin)
+    {
         fclose(f);
+    }
 
     ret = skip;
 out:
@@ -288,7 +325,9 @@ out:
 
 int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 {
-    int                nr = 0, nr_prec = 4, num = 0;
+    int                nr         = 0;
+    int                nr_prec    = 4;
+    int                num        = 0;
     int                allow_bare = 0;
     const char        *dir        = NULL;
     const char       **argp;
@@ -301,16 +340,20 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
         const char *arg = *argp;
 
         if (arg[0] != '-')
+        {
             break;
+        }
         /* do flags here */
         if (arg[1] == 'd')
         {
             nr_prec = strtol(arg + 2, NULL, 10);
             if (nr_prec < 3 || 10 <= nr_prec)
+            {
                 usage(git_mailsplit_usage);
+            }
             continue;
         }
-        else if (arg[1] == 'f')
+        if (arg[1] == 'f')
         {
             nr = strtol(arg + 2, NULL, 10);
         }
@@ -368,7 +411,9 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
     {
         /* New usage: if no more argument, parse stdin */
         if (!*argp)
+        {
             argp = stdin_only;
+        }
     }
 
     while (*argp)
@@ -397,9 +442,13 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
         }
 
         if (S_ISDIR(argstat.st_mode))
+        {
             ret = split_maildir(arg, dir, nr_prec, nr);
+        }
         else
+        {
             ret = split_mbox(arg, dir, allow_bare, nr_prec, nr);
+        }
 
         if (ret < 0)
         {

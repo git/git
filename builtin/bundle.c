@@ -59,7 +59,9 @@ static int parse_options_cmd_bundle(int                 argc,
     argc = parse_options(argc, argv, NULL, options, usagestr,
                          PARSE_OPT_STOP_AT_NON_OPTION);
     if (!argc)
+    {
         usage_msg_opt(_("need a <file> argument"), usagestr, options);
+    }
     *bundle_file = prefix_filename_except_for_dash(prefix, argv[0]);
     return argc;
 }
@@ -88,7 +90,9 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix)
     char *bundle_file;
 
     if (isatty(STDERR_FILENO))
+    {
         strvec_push(&pack_opts, "--progress");
+    }
     strvec_push(&pack_opts, "--all-progress-implied");
 
     argc = parse_options_cmd_bundle(argc, argv, prefix,
@@ -96,7 +100,9 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix)
     /* bundle internals use argv[1] as further parameters */
 
     if (!startup_info->have_repository)
+    {
         die(_("Need a repository to create a bundle."));
+    }
     ret = !!create_bundle(the_repository, bundle_file, argc, argv, &pack_opts, version);
     strvec_clear(&pack_opts);
     free(bundle_file);
@@ -112,12 +118,16 @@ static int open_bundle(const char *path, struct bundle_header *header,
     if (!strcmp(path, "-"))
     {
         if (name)
+        {
             *name = "<stdin>";
+        }
         return read_bundle_header_fd(0, header, "<stdin>");
     }
 
     if (name)
+    {
         *name = path;
+    }
     return read_bundle_header(path, header);
 }
 
@@ -210,7 +220,9 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix)
     /* bundle internals use argv[1] as further parameters */
 
     if (!startup_info->have_repository)
+    {
         die(_("Need a repository to unbundle."));
+    }
 
     if ((bundle_fd = open_bundle(bundle_file, &header, NULL)) < 0)
     {
@@ -218,8 +230,10 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix)
         goto cleanup;
     }
     if (progress)
+    {
         strvec_pushl(&extra_index_pack_args, "-v", "--progress-title",
                      _("Unbundling objects"), NULL);
+    }
     ret = !!unbundle(the_repository, &header, bundle_fd,
                      &extra_index_pack_args, 0)
           || list_bundle_refs(&header, argc, argv);

@@ -25,7 +25,9 @@ static int parse_credential_file(const char        *fn,
     if (!fh)
     {
         if (errno != ENOENT && errno != EACCES)
+        {
             die_errno("unable to open %s", fn);
+        }
         return found_credential;
     }
 
@@ -41,7 +43,9 @@ static int parse_credential_file(const char        *fn,
             }
         }
         else if (other_cb)
+        {
             other_cb(&line);
+        }
     }
 
     credential_clear(&entry);
@@ -69,12 +73,18 @@ static void rewrite_credential_file(const char *fn, struct credential *c,
 
     git_config_get_int("credentialstore.locktimeoutms", &timeout_ms);
     if (hold_lock_file_for_update_timeout(&credential_lock, fn, 0, timeout_ms) < 0)
+    {
         die_errno(_("unable to get credential storage lock in %d ms"), timeout_ms);
+    }
     if (extra)
+    {
         print_line(extra);
+    }
     parse_credential_file(fn, c, NULL, print_line, match_password);
     if (commit_lock_file(&credential_lock) < 0)
+    {
         die_errno("unable to write credential store");
+    }
 }
 
 static int is_rfc3986_unreserved(char ch)
@@ -85,7 +95,9 @@ static int is_rfc3986_unreserved(char ch)
 static int is_rfc3986_reserved_or_unreserved(char ch)
 {
     if (is_rfc3986_unreserved(ch))
+    {
         return 1;
+    }
     switch (ch)
     {
         case '!':
@@ -121,7 +133,9 @@ static void store_credential_file(const char *fn, struct credential *c)
     strbuf_addstr_urlencode(&buf, c->password, is_rfc3986_unreserved);
     strbuf_addch(&buf, '@');
     if (c->host)
+    {
         strbuf_addstr_urlencode(&buf, c->host, is_rfc3986_unreserved);
+    }
     if (c->path)
     {
         strbuf_addch(&buf, '/');
@@ -145,7 +159,9 @@ static void store_credential(const struct string_list *fns, struct credential *c
      * we are not actually storing a credential.
      */
     if (!c->protocol || !(c->host || c->path) || !c->username || !c->password)
+    {
         return;
+    }
 
     for_each_string_list_item(fn, fns) if (!access(fn->string, F_OK))
     {
@@ -157,7 +173,9 @@ static void store_credential(const struct string_list *fns, struct credential *c
      * creating it
      */
     if (fns->nr)
+    {
         store_credential_file(fns->items[0].string, c);
+    }
 }
 
 static void remove_credential(const struct string_list *fns, struct credential *c)
@@ -173,16 +191,23 @@ static void remove_credential(const struct string_list *fns, struct credential *
      * pattern have some actual content to match.
      */
     if (!c->protocol && !c->host && !c->path && !c->username)
+    {
         return;
+    }
     for_each_string_list_item(fn, fns) if (!access(fn->string, F_OK))
+    {
         rewrite_credential_file(fn->string, c, NULL, 1);
+    }
 }
 
 static void lookup_credential(const struct string_list *fns, struct credential *c)
 {
     struct string_list_item *fn;
 
-    for_each_string_list_item(fn, fns) if (parse_credential_file(fn->string, c, print_entry, NULL, 0)) return; /* Found credential */
+    for_each_string_list_item(fn, fns) if (parse_credential_file(fn->string, c, print_entry, NULL, 0))
+    {
+        return; /* Found credential */
+    }
 }
 
 int cmd_credential_store(int argc, const char **argv, const char *prefix)
@@ -203,7 +228,9 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 
     argc = parse_options(argc, (const char **)argv, prefix, options, usage, 0);
     if (argc != 1)
+    {
         usage_with_options(usage, options);
+    }
     op = argv[0];
 
     if (file)
@@ -213,25 +240,41 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
     else
     {
         if ((file = interpolate_path("~/.git-credentials", 0)))
+        {
             string_list_append_nodup(&fns, file);
+        }
         file = xdg_config_home("credentials");
         if (file)
+        {
             string_list_append_nodup(&fns, file);
+        }
     }
     if (!fns.nr)
+    {
         die("unable to set up default path; use --file");
+    }
 
     if (credential_read(&c, stdin, CREDENTIAL_OP_HELPER) < 0)
+    {
         die("unable to read credential");
+    }
 
     if (!strcmp(op, "get"))
+    {
         lookup_credential(&fns, &c);
+    }
     else if (!strcmp(op, "erase"))
+    {
         remove_credential(&fns, &c);
+    }
     else if (!strcmp(op, "store"))
+    {
         store_credential(&fns, &c);
+    }
     else
+    {
         ; /* Ignore unknown operation. */
+    }
 
     string_list_clear(&fns, 0);
     credential_clear(&c);

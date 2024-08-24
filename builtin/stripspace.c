@@ -46,7 +46,9 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
 
     argc = parse_options(argc, argv, prefix, options, stripspace_usage, 0);
     if (argc)
+    {
         usage_with_options(stripspace_usage, options);
+    }
 
     if (mode == STRIP_COMMENTS || mode == COMMENT_LINES)
     {
@@ -55,13 +57,19 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
     }
 
     if (strbuf_read(&buf, 0, 1024) < 0)
+    {
         die_errno("could not read the input");
+    }
 
     if (mode == STRIP_DEFAULT || mode == STRIP_COMMENTS)
+    {
         strbuf_stripspace(&buf,
                           mode == STRIP_COMMENTS ? comment_line_str : NULL);
+    }
     else
+    {
         comment_lines(&buf);
+    }
 
     write_or_die(1, buf.buf, buf.len);
     strbuf_release(&buf);

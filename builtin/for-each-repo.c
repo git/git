@@ -21,7 +21,9 @@ static int run_command_on_repo(const char *path, int argc, const char **argv)
     strvec_pushl(&child.args, "-C", abspath, NULL);
 
     for (i = 0; i < argc; i++)
+    {
         strvec_push(&child.args, argv[i]);
+    }
 
     free(abspath);
 
@@ -32,7 +34,8 @@ int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
 {
     static const char        *config_key = NULL;
     int                       keep_going = 0;
-    int                       i, result = 0;
+    int                       i;
+    int                       result = 0;
     const struct string_list *values;
     int                       err;
 
@@ -47,14 +50,20 @@ int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
                          PARSE_OPT_STOP_AT_NON_OPTION);
 
     if (!config_key)
+    {
         die(_("missing --config=<config>"));
+    }
 
     err = repo_config_get_string_multi(the_repository, config_key, &values);
     if (err < 0)
+    {
         usage_msg_optf(_("got bad config --config=%s"),
                        for_each_repo_usage, options, config_key);
+    }
     else if (err)
+    {
         return 0;
+    }
 
     for (i = 0; i < values->nr; i++)
     {
@@ -62,7 +71,9 @@ int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
         if (ret)
         {
             if (!keep_going)
+            {
                 return ret;
+            }
             result = 1;
         }
     }

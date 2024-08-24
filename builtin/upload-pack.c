@@ -43,22 +43,30 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, upload_pack_usage, 0);
 
     if (argc != 1)
+    {
         usage_with_options(upload_pack_usage, options);
+    }
 
     setup_path();
 
     dir = argv[0];
 
     if (!enter_repo(dir, strict))
+    {
         die("'%s' does not appear to be a git repository", dir);
+    }
 
     switch (determine_protocol_version_server())
     {
         case protocol_v2:
             if (advertise_refs)
+            {
                 protocol_v2_advertise_capabilities();
+            }
             else
+            {
                 protocol_v2_serve_loop(stateless_rpc);
+            }
             break;
         case protocol_v1:
             /*
@@ -66,7 +74,9 @@ int cmd_upload_pack(int argc, const char **argv, const char *prefix)
              * so just fall through after writing the version string.
              */
             if (advertise_refs || !stateless_rpc)
+            {
                 packet_write_fmt(1, "version 1\n");
+            }
 
             /* fallthrough */
         case protocol_v0:

@@ -79,7 +79,9 @@ static int collect_reflog(const char *ref, void *cb_data)
      * they are available via all worktrees.
      */
     if (!worktree->is_current && parse_worktree_ref(ref, NULL, NULL, NULL) == REF_WORKTREE_SHARED)
+    {
         return 0;
+    }
 
     strbuf_worktree_ref(worktree, &newref, ref);
     string_list_append_nodup(&cb->reflogs, strbuf_detach(&newref, NULL));
@@ -100,11 +102,17 @@ static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
     struct reflog_expire_cfg *ent;
 
     if (!reflog_expire_cfg_tail)
+    {
         reflog_expire_cfg_tail = &reflog_expire_cfg;
+    }
 
     for (ent = reflog_expire_cfg; ent; ent = ent->next)
+    {
         if (!xstrncmpz(ent->pattern, pattern, len))
+        {
             return ent;
+        }
+    }
 
     FLEX_ALLOC_MEM(ent, pattern, pattern, len);
     *reflog_expire_cfg_tail = ent;
@@ -119,29 +127,38 @@ static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
 static int reflog_expire_config(const char *var, const char *value,
                                 const struct config_context *ctx, void *cb)
 {
-    const char               *pattern, *key;
+    const char               *pattern;
+    const char               *key;
     size_t                    pattern_len;
     timestamp_t               expire;
     int                       slot;
     struct reflog_expire_cfg *ent;
 
     if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
+    {
         return git_default_config(var, value, ctx, cb);
+    }
 
     if (!strcmp(key, "reflogexpire"))
     {
         slot = EXPIRE_TOTAL;
         if (git_config_expiry_date(&expire, var, value))
+        {
             return -1;
+        }
     }
     else if (!strcmp(key, "reflogexpireunreachable"))
     {
         slot = EXPIRE_UNREACH;
         if (git_config_expiry_date(&expire, var, value))
+        {
             return -1;
+        }
     }
     else
+    {
         return git_default_config(var, value, ctx, cb);
+    }
 
     if (!pattern)
     {
@@ -159,7 +176,9 @@ static int reflog_expire_config(const char *var, const char *value,
 
     ent = find_cfg_ent(pattern, pattern_len);
     if (!ent)
+    {
         return -1;
+    }
     switch (slot)
     {
         case EXPIRE_TOTAL:
@@ -177,16 +196,22 @@ static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, const char 
     struct reflog_expire_cfg *ent;
 
     if (cb->explicit_expiry == (EXPIRE_TOTAL | EXPIRE_UNREACH))
+    {
         return; /* both given explicitly -- nothing to tweak */
+    }
 
     for (ent = reflog_expire_cfg; ent; ent = ent->next)
     {
         if (!wildmatch(ent->pattern, ref, 0))
         {
             if (!(cb->explicit_expiry & EXPIRE_TOTAL))
+            {
                 cb->expire_total = ent->expire_total;
+            }
             if (!(cb->explicit_expiry & EXPIRE_UNREACH))
+            {
                 cb->expire_unreachable = ent->expire_unreachable;
+            }
             return;
         }
     }
@@ -197,17 +222,25 @@ static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, const char 
     if (!strcmp(ref, "refs/stash"))
     {
         if (!(cb->explicit_expiry & EXPIRE_TOTAL))
+        {
             cb->expire_total = 0;
+        }
         if (!(cb->explicit_expiry & EXPIRE_UNREACH))
+        {
             cb->expire_unreachable = 0;
+        }
         return;
     }
 
     /* Nothing matched -- use the default value */
     if (!(cb->explicit_expiry & EXPIRE_TOTAL))
+    {
         cb->expire_total = default_reflog_expire;
+    }
     if (!(cb->explicit_expiry & EXPIRE_UNREACH))
+    {
         cb->expire_unreachable = default_reflog_expire_unreachable;
+    }
 }
 
 static int expire_unreachable_callback(const struct option *opt,
@@ -219,8 +252,10 @@ static int expire_unreachable_callback(const struct option *opt,
     BUG_ON_OPT_NEG(unset);
 
     if (parse_expiry_date(arg, &cmd->expire_unreachable))
+    {
         die(_("invalid timestamp '%s' given to '--%s'"),
             arg, opt->long_name);
+    }
 
     cmd->explicit_expiry |= EXPIRE_UNREACH;
     return 0;
@@ -235,8 +270,10 @@ static int expire_total_callback(const struct option *opt,
     BUG_ON_OPT_NEG(unset);
 
     if (parse_expiry_date(arg, &cmd->expire_total))
+    {
         die(_("invalid timestamp '%s' given to '--%s'"),
             arg, opt->long_name);
+    }
 
     cmd->explicit_expiry |= EXPIRE_TOTAL;
     return 0;
@@ -267,8 +304,10 @@ static int cmd_reflog_list(int argc, const char **argv, const char *prefix)
 
     argc = parse_options(argc, argv, prefix, options, reflog_list_usage, 0);
     if (argc)
+    {
         return error(_("%s does not accept arguments: '%s'"),
                      "list", argv[0]);
+    }
 
     ref_store = get_main_ref_store(the_repository);
 
@@ -279,7 +318,10 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 {
     struct cmd_reflog_expire_cb    cmd = {0};
     timestamp_t                    now = time(NULL);
-    int                            i, status, do_all, single_worktree = 0;
+    int                            i;
+    int                            status;
+    int                            do_all;
+    int                            single_worktree = 0;
     unsigned int                   flags           = 0;
     int                            verbose         = 0;
     reflog_expiry_should_prune_fn *should_prune_fn = should_expire_reflog_ent;
@@ -322,7 +364,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, reflog_expire_usage, 0);
 
     if (verbose)
+    {
         should_prune_fn = should_expire_reflog_ent_verbose;
+    }
 
     /*
      * We can trust the commits and objects reachable from refs
@@ -338,11 +382,15 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
         revs.ignore_missing                = 1;
         revs.ignore_missing_links          = 1;
         if (verbose)
+        {
             printf(_("Marking reachable objects..."));
+        }
         mark_reachable_objects(&revs, 0, 0, NULL);
         release_revisions(&revs);
         if (verbose)
+        {
             putchar('\n');
+        }
     }
 
     if (do_all)
@@ -351,13 +399,16 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
             .reflogs = STRING_LIST_INIT_DUP,
         };
         struct string_list_item *item;
-        struct worktree        **worktrees, **p;
+        struct worktree        **worktrees;
+        struct worktree        **p;
 
         worktrees = get_worktrees();
         for (p = worktrees; *p; p++)
         {
             if (single_worktree && !(*p)->is_current)
+            {
                 continue;
+            }
             collected.worktree = *p;
             refs_for_each_reflog(get_worktree_ref_store(*p),
                                  collect_reflog, &collected);
@@ -406,7 +457,8 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 
 static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 {
-    int          i, status = 0;
+    int          i;
+    int          status  = 0;
     unsigned int flags   = 0;
     int          verbose = 0;
 
@@ -425,10 +477,14 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, reflog_delete_usage, 0);
 
     if (argc < 1)
+    {
         return error(_("no reflog specified to delete"));
+    }
 
     for (i = 0; i < argc; i++)
+    {
         status |= reflog_delete(argv[i], flags, verbose);
+    }
 
     return status;
 }
@@ -442,11 +498,15 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, reflog_exists_usage,
                          0);
     if (!argc)
+    {
         usage_with_options(reflog_exists_usage, options);
+    }
 
     refname = argv[0];
     if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
+    {
         die(_("invalid ref format: %s"), refname);
+    }
     return !refs_reflog_exists(get_main_ref_store(the_repository),
                                refname);
 }
@@ -469,7 +529,8 @@ int cmd_reflog(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, reflog_usage,
                          PARSE_OPT_SUBCOMMAND_OPTIONAL | PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
     if (fn)
+    {
         return fn(argc - 1, argv + 1, prefix);
-    else
-        return cmd_log_reflog(argc, argv, prefix);
+    }
+    return cmd_log_reflog(argc, argv, prefix);
 }

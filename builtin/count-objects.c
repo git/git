@@ -46,10 +46,14 @@ static void real_report_garbage(unsigned seen_bits, const char *path)
     const char *desc = bits_to_msg(seen_bits);
 
     if (!desc)
+    {
         return;
+    }
 
     if (!stat(path, &st))
+    {
         size_garbage += st.st_size;
+    }
     warning("%s: %s", desc, path);
     garbage++;
 }
@@ -57,7 +61,9 @@ static void real_report_garbage(unsigned seen_bits, const char *path)
 static void loose_garbage(const char *path)
 {
     if (verbose)
+    {
         report_garbage(PACKDIR_FILE_GARBAGE, path);
+    }
 }
 
 static int count_loose(const struct object_id *oid, const char *path,
@@ -66,13 +72,17 @@ static int count_loose(const struct object_id *oid, const char *path,
     struct stat st;
 
     if (lstat(path, &st) || !S_ISREG(st.st_mode))
+    {
         loose_garbage(path);
+    }
     else
     {
         loose_size += on_disk_bytes(st);
         loose++;
         if (verbose && has_object_pack(oid))
+        {
             packed_loose++;
+        }
     }
     return 0;
 }
@@ -111,7 +121,9 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, opts, count_objects_usage, 0);
     /* we do not take arguments other than flags for now */
     if (argc)
+    {
         usage_with_options(count_objects_usage, opts);
+    }
     if (verbose)
     {
         report_garbage = real_report_garbage;
@@ -133,9 +145,13 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
         for (p = get_all_packs(the_repository); p; p = p->next)
         {
             if (!p->pack_local)
+            {
                 continue;
+            }
             if (open_pack_index(p))
+            {
                 continue;
+            }
             packed += p->num_objects;
             size_pack += p->pack_size + p->index_size;
             num_pack++;
@@ -174,10 +190,14 @@ int cmd_count_objects(int argc, const char **argv, const char *prefix)
     {
         struct strbuf buf = STRBUF_INIT;
         if (human_readable)
+        {
             strbuf_humanise_bytes(&buf, loose_size);
+        }
         else
+        {
             strbuf_addf(&buf, "%lu kilobytes",
                         (unsigned long)(loose_size / 1024));
+        }
         printf("%lu objects, %s\n", loose, buf.buf);
         strbuf_release(&buf);
     }

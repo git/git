@@ -19,7 +19,9 @@ int cmd_update_server_info(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options,
                          update_server_info_usage, 0);
     if (argc > 0)
+    {
         usage_with_options(update_server_info_usage, options);
+    }
 
     return !!update_server_info(force);
 }

@@ -53,11 +53,13 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
 {
-    int                    i, ret;
-    struct ref            *ref       = NULL;
-    const char            *dest      = NULL;
-    struct ref           **sought    = NULL;
-    int                    nr_sought = 0, alloc_sought = 0;
+    int                    i;
+    int                    ret;
+    struct ref            *ref          = NULL;
+    const char            *dest         = NULL;
+    struct ref           **sought       = NULL;
+    int                    nr_sought    = 0;
+    int                    alloc_sought = 0;
     int                    fd[2];
     struct string_list     pack_lockfiles     = STRING_LIST_INIT_DUP;
     struct string_list    *pack_lockfiles_ptr = NULL;
@@ -205,19 +207,27 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
         usage(fetch_pack_usage);
     }
     if (deepen_not.nr)
+    {
         args.deepen_not = &deepen_not;
+    }
 
     if (i < argc)
+    {
         dest = argv[i++];
+    }
     else
+    {
         usage(fetch_pack_usage);
+    }
 
     /*
      * Copy refs from cmdline to growable list, then append any
      * refs from the standard input:
      */
     for (; i < argc; i++)
+    {
         add_sought_entry(&sought, &nr_sought, &alloc_sought, argv[i]);
+    }
     if (args.stdin_refs)
     {
         if (args.stateless_rpc)
@@ -229,7 +239,9 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
             {
                 char *line = packet_read_line(0, NULL);
                 if (!line)
+                {
                     break;
+                }
                 add_sought_entry(&sought, &nr_sought, &alloc_sought, line);
             }
         }
@@ -238,7 +250,9 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
             /* read from stdin one ref per line, until EOF */
             struct strbuf line = STRBUF_INIT;
             while (strbuf_getline_lf(&line, stdin) != EOF)
+            {
                 add_sought_entry(&sought, &nr_sought, &alloc_sought, line.buf);
+            }
             strbuf_release(&line);
         }
     }
@@ -253,11 +267,15 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
     {
         int flags = args.verbose ? CONNECT_VERBOSE : 0;
         if (args.diag_url)
+        {
             flags |= CONNECT_DIAG_URL;
+        }
         conn = git_connect(fd, dest, "git-upload-pack",
                            args.uploadpack, flags);
         if (!conn)
+        {
             return args.diag_url ? 0 : 1;
+        }
     }
 
     packet_reader_init(&reader, fd[0], NULL, 0,
@@ -287,8 +305,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
         printf("lock %s\n", pack_lockfiles.items[0].string);
         fflush(stdout);
         for (i = 1; i < pack_lockfiles.nr; i++)
+        {
             warning(_("Lockfile created but not reported: %s"),
                     pack_lockfiles.items[i].string);
+        }
     }
     if (args.check_self_contained_and_connected && args.self_contained_and_connected)
     {
@@ -298,7 +318,9 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
     close(fd[0]);
     close(fd[1]);
     if (finish_connect(conn))
+    {
         return 1;
+    }
 
     ret = !ref;
 

@@ -36,28 +36,38 @@ static int run(int argc, const char **argv, const char *prefix)
                          PARSE_OPT_KEEP_DASHDASH);
 
     if (!argc)
+    {
         goto usage;
+    }
 
     /*
      * Having a -- for "run" when providing <hook-args> is
      * mandatory.
      */
-    if (argc > 1 && strcmp(argv[1], "--") && strcmp(argv[1], "--end-of-options"))
+    if (argc > 1 && strcmp(argv[1], "--") != 0 && strcmp(argv[1], "--end-of-options") != 0)
+    {
         goto usage;
+    }
 
     /* Add our arguments, start after -- */
     for (i = 2; i < argc; i++)
+    {
         strvec_push(&opt.args, argv[i]);
+    }
 
     /* Need to take into account core.hooksPath */
     git_config(git_default_config, NULL);
 
     hook_name = argv[0];
     if (!ignore_missing)
+    {
         opt.error_if_missing = 1;
+    }
     ret = run_hooks_opt(the_repository, hook_name, &opt);
-    if (ret < 0) /* error() return */
+    if (ret < 0)
+    { /* error() return */
         ret = 1;
+    }
     return ret;
 usage:
     usage_with_options(builtin_hook_run_usage, run_options);

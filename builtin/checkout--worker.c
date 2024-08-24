@@ -15,13 +15,17 @@ static void packet_to_pc_item(const char *buffer, int len,
     char                               *encoding;
 
     if (len < sizeof(struct pc_item_fixed_portion))
+    {
         BUG("checkout worker received too short item (got %dB, exp %dB)",
             len, (int)sizeof(struct pc_item_fixed_portion));
+    }
 
     fixed_portion = (struct pc_item_fixed_portion *)buffer;
 
     if (len - sizeof(struct pc_item_fixed_portion) != fixed_portion->name_len + fixed_portion->working_tree_encoding_len)
+    {
         BUG("checkout worker received corrupted item");
+    }
 
     variant = buffer + sizeof(struct pc_item_fixed_portion);
 
@@ -86,7 +90,9 @@ static void release_pc_item_data(struct parallel_checkout_item *pc_item)
 static void worker_loop(struct checkout *state)
 {
     struct parallel_checkout_item *items = NULL;
-    size_t                         i, nr = 0, alloc = 0;
+    size_t                         i;
+    size_t                         nr    = 0;
+    size_t                         alloc = 0;
 
     while (1)
     {
@@ -94,9 +100,13 @@ static void worker_loop(struct checkout *state)
                               0);
 
         if (len < 0)
+        {
             BUG("packet_read() returned negative value");
+        }
         else if (!len)
+        {
             break;
+        }
 
         ALLOC_GROW(items, nr + 1, alloc);
         packet_to_pc_item(packet_buffer, len, &items[nr++]);
@@ -128,17 +138,23 @@ int cmd_checkout__worker(int argc, const char **argv, const char *prefix)
           OPT_END()};
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage_with_options(checkout_worker_usage,
                            checkout_worker_options);
+    }
 
     git_config(git_default_config, NULL);
     argc = parse_options(argc, argv, prefix, checkout_worker_options,
                          checkout_worker_usage, 0);
     if (argc > 0)
+    {
         usage_with_options(checkout_worker_usage, checkout_worker_options);
+    }
 
     if (state.base_dir)
+    {
         state.base_dir_len = strlen(state.base_dir);
+    }
 
     /*
      * Setting this on a worker won't actually update the index. We just

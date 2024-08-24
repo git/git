@@ -64,26 +64,44 @@ static int parse_index_info(char *p, int *mode1, int *mode2,
                             char *status)
 {
     if (*p != ':')
+    {
         return error("expected ':', got '%c'", *p);
+    }
     *mode1 = (int)strtol(p + 1, &p, 8);
     if (*p != ' ')
+    {
         return error("expected ' ', got '%c'", *p);
+    }
     *mode2 = (int)strtol(p + 1, &p, 8);
     if (*p != ' ')
+    {
         return error("expected ' ', got '%c'", *p);
+    }
     if (parse_oid_hex(++p, oid1, (const char **)&p))
+    {
         return error("expected object ID, got '%s'", p);
+    }
     if (*p != ' ')
+    {
         return error("expected ' ', got '%c'", *p);
+    }
     if (parse_oid_hex(++p, oid2, (const char **)&p))
+    {
         return error("expected object ID, got '%s'", p);
+    }
     if (*p != ' ')
+    {
         return error("expected ' ', got '%c'", *p);
+    }
     *status = *++p;
     if (!*status)
+    {
         return error("missing status");
+    }
     if (p[1] && !isdigit(p[1]))
+    {
         return error("unexpected trailer: '%s'", p + 1);
+    }
     return 0;
 }
 
@@ -95,7 +113,9 @@ static void add_path(struct strbuf *buf, size_t base_len, const char *path)
 {
     strbuf_setlen(buf, base_len);
     if (buf->len && buf->buf[buf->len - 1] != '/')
+    {
         strbuf_addch(buf, '/');
+    }
     strbuf_addstr(buf, path);
 }
 
@@ -115,7 +135,7 @@ static int use_wt_file(const char *workdir, const char *name,
     if (!lstat(buf.buf, &st) && !S_ISLNK(st.st_mode))
     {
         struct object_id wt_oid;
-        int              fd = open(buf.buf, O_RDONLY);
+        int              fd = open(buf.buf, O_RDONLY | O_CLOEXEC);
 
         if (fd >= 0 && !index_fd(the_repository->index, &wt_oid, fd, &st, OBJ_BLOB, name, 0))
         {
@@ -125,7 +145,9 @@ static int use_wt_file(const char *workdir, const char *name,
                 use = 1;
             }
             else if (oideq(oid, &wt_oid))
+            {
                 use = 1;
+            }
         }
     }
 
@@ -145,7 +167,8 @@ static int working_tree_entry_cmp(const void *cmp_data        UNUSED,
                                   const struct hashmap_entry *entry_or_key,
                                   const void *keydata         UNUSED)
 {
-    const struct working_tree_entry *a, *b;
+    const struct working_tree_entry *a;
+    const struct working_tree_entry *b;
 
     a = container_of(eptr, const struct working_tree_entry, entry);
     b = container_of(entry_or_key, const struct working_tree_entry, entry);
@@ -169,7 +192,8 @@ static int pair_cmp(const void *cmp_data        UNUSED,
                     const struct hashmap_entry *entry_or_key,
                     const void *keydata         UNUSED)
 {
-    const struct pair_entry *a, *b;
+    const struct pair_entry *a;
+    const struct pair_entry *b;
 
     a = container_of(eptr, const struct pair_entry, entry);
     b = container_of(entry_or_key, const struct pair_entry, entry);
@@ -180,7 +204,8 @@ static int pair_cmp(const void *cmp_data        UNUSED,
 static void add_left_or_right(struct hashmap *map, const char *path,
                               const char *content, int is_right)
 {
-    struct pair_entry *e, *existing;
+    struct pair_entry *e;
+    struct pair_entry *existing;
 
     FLEX_ALLOC_STR(e, path, path);
     hashmap_entry_init(&e->entry, strhash(path));
@@ -209,7 +234,8 @@ static int path_entry_cmp(const void *cmp_data        UNUSED,
                           const struct hashmap_entry *entry_or_key,
                           const void                 *key)
 {
-    const struct path_entry *a, *b;
+    const struct path_entry *a;
+    const struct path_entry *b;
 
     a = container_of(eptr, const struct path_entry, entry);
     b = container_of(entry_or_key, const struct path_entry, entry);
@@ -252,7 +278,9 @@ static void changed_files(struct hashmap *result, const char *index_path,
     diff_files.dir           = workdir;
     strvec_pushf(&diff_files.env, "GIT_INDEX_FILE=%s", index_path);
     if (start_command(&diff_files))
+    {
         die("could not obtain raw diff");
+    }
     fp = xfdopen(diff_files.out, "r");
     while (!strbuf_getline_nul(&buf, fp))
     {
@@ -263,7 +291,9 @@ static void changed_files(struct hashmap *result, const char *index_path,
     }
     fclose(fp);
     if (finish_command(&diff_files))
+    {
         die("diff-files did not exit properly");
+    }
     strbuf_release(&buf);
 }
 
@@ -309,10 +339,14 @@ static char *get_symlink(const struct object_id *oid, const char *path)
         if (has_symlinks)
         {
             if (strbuf_readlink(&link, path, strlen(path)))
+            {
                 die(_("could not read symlink %s"), path);
+            }
         }
         else if (strbuf_read_file(&link, path, 128))
+        {
             die(_("could not read symlink file %s"), path);
+        }
 
         data = strbuf_detach(&link, NULL);
     }
@@ -323,8 +357,10 @@ static char *get_symlink(const struct object_id *oid, const char *path)
         data = repo_read_object_file(the_repository, oid, &type,
                                      &size);
         if (!data)
+        {
             die(_("could not read object %s for symlink %s"),
                 oid_to_hex(oid), path);
+        }
     }
 
     return data;
@@ -363,23 +399,35 @@ static void write_standin_files(struct pair_entry *entry,
                                 struct strbuf *rdir, size_t rdir_len)
 {
     if (*entry->left)
+    {
         write_file_in_directory(ldir, ldir_len, entry->path, entry->left);
+    }
     if (*entry->right)
+    {
         write_file_in_directory(rdir, rdir_len, entry->path, entry->right);
+    }
 }
 
 static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
                         struct child_process *child)
 {
-    struct strbuf        info = STRBUF_INIT, lpath = STRBUF_INIT;
-    struct strbuf        rpath = STRBUF_INIT, buf = STRBUF_INIT;
-    struct strbuf        ldir = STRBUF_INIT, rdir = STRBUF_INIT;
+    struct strbuf        info      = STRBUF_INIT;
+    struct strbuf        lpath     = STRBUF_INIT;
+    struct strbuf        rpath     = STRBUF_INIT;
+    struct strbuf        buf       = STRBUF_INIT;
+    struct strbuf        ldir      = STRBUF_INIT;
+    struct strbuf        rdir      = STRBUF_INIT;
     struct strbuf        wtdir     = STRBUF_INIT;
     struct strbuf        tmpdir    = STRBUF_INIT;
-    char                *lbase_dir = NULL, *rbase_dir = NULL;
-    size_t               ldir_len, rdir_len, wtdir_len;
-    const char          *workdir, *tmp;
-    int                  ret               = 0, i;
+    char                *lbase_dir = NULL;
+    char                *rbase_dir = NULL;
+    size_t               ldir_len;
+    size_t               rdir_len;
+    size_t               wtdir_len;
+    const char          *workdir;
+    const char          *tmp;
+    int                  ret = 0;
+    int                  i;
     FILE                *fp                = NULL;
     struct hashmap       working_tree_dups = HASHMAP_INIT(working_tree_entry_cmp,
                                                           NULL);
@@ -388,10 +436,12 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
     struct hashmap_iter  iter;
     struct pair_entry   *entry;
     struct index_state   wtindex = INDEX_STATE_INIT(the_repository);
-    struct checkout      lstate, rstate;
+    struct checkout      lstate;
+    struct checkout      rstate;
     int                  err = 0;
     struct child_process cmd = CHILD_PROCESS_INIT;
-    struct hashmap       wt_modified, tmp_modified;
+    struct hashmap       wt_modified;
+    struct hashmap       tmp_modified;
     int                  indices_loaded = 0;
 
     workdir = get_git_work_tree();
@@ -410,7 +460,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
     strbuf_addf(&rdir, "%s/right/", tmpdir.buf);
     strbuf_addstr(&wtdir, workdir);
     if (!wtdir.len || !is_dir_sep(wtdir.buf[wtdir.len - 1]))
+    {
         strbuf_addch(&wtdir, '/');
+    }
     mkdir(ldir.buf, 0700);
     mkdir(rdir.buf, 0700);
 
@@ -434,29 +486,40 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
     child->dir           = prefix;
     child->out           = -1;
     if (start_command(child))
+    {
         die("could not obtain raw diff");
+    }
     fp = xfdopen(child->out, "r");
 
     /* Build index info for left and right sides of the diff */
     i = 0;
     while (!strbuf_getline_nul(&info, fp))
     {
-        int              lmode, rmode;
-        struct object_id loid, roid;
+        int              lmode;
+        int              rmode;
+        struct object_id loid;
+        struct object_id roid;
         char             status;
-        const char      *src_path, *dst_path;
+        const char      *src_path;
+        const char      *dst_path;
 
         if (starts_with(info.buf, "::"))
+        {
             die(N_(
                 "combined diff formats ('-c' and '--cc') are "
                 "not supported in\n"
                 "directory diff mode ('-d' and '--dir-diff')."));
+        }
 
         if (parse_index_info(info.buf, &lmode, &rmode, &loid, &roid,
                              &status))
+        {
             break;
+        }
         if (strbuf_getline_nul(&lpath, fp))
+        {
             break;
+        }
         src_path = lpath.buf;
 
         i++;
@@ -467,7 +530,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
         else
         {
             if (strbuf_getline_nul(&rpath, fp))
+            {
                 break;
+            }
             dst_path = rpath.buf;
         }
 
@@ -481,7 +546,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
             strbuf_addf(&buf, "Subproject commit %s",
                         oid_to_hex(&roid));
             if (oideq(&loid, &roid))
+            {
                 strbuf_addstr(&buf, "-dirty");
+            }
             add_left_or_right(&submodules, dst_path, buf.buf, 1);
             continue;
         }
@@ -570,7 +637,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
                 {
                     struct stat st;
                     if (stat(wtdir.buf, &st))
+                    {
                         st.st_mode = 0644;
+                    }
                     if (copy_file(rdir.buf, wtdir.buf,
                                   st.st_mode))
                     {
@@ -591,7 +660,9 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
     }
 
     if (!i)
+    {
         goto finish;
+    }
 
     /*
      * Changes to submodules require special treatment.This loop writes a
@@ -657,10 +728,14 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 
         add_path(&rdir, rdir_len, name);
         if (lstat(rdir.buf, &st))
+        {
             continue;
+        }
 
         if ((symlinks && S_ISLNK(st.st_mode)) || !S_ISREG(st.st_mode))
+        {
             continue;
+        }
 
         if (!indices_loaded)
         {
@@ -692,8 +767,10 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
                 err = 1;
             }
             else if (unlink(wtdir.buf) || copy_file(wtdir.buf, rdir.buf, st.st_mode))
+            {
                 warning_errno(_("could not copy '%s' to '%s'"),
                               rdir.buf, wtdir.buf);
+            }
         }
     }
 
@@ -707,12 +784,16 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
     {
         remove_dir_recursively(&tmpdir, 0);
         if (ret)
+        {
             warning(_("failed: %d"), ret);
+        }
     }
 
 finish:
     if (fp)
+    {
         fclose(fp);
+    }
 
     free(lbase_dir);
     free(rbase_dir);
@@ -734,9 +815,13 @@ static int run_file_diff(int prompt, const char *prefix,
     strvec_push(&child->env, "GIT_PAGER=");
     strvec_push(&child->env, "GIT_EXTERNAL_DIFF=git-difftool--helper");
     if (prompt > 0)
+    {
         strvec_push(&child->env, "GIT_DIFFTOOL_PROMPT=true");
+    }
     else if (!prompt)
+    {
         strvec_push(&child->env, "GIT_DIFFTOOL_NO_PROMPT=true");
+    }
 
     child->git_cmd = 1;
     child->dir     = prefix;
@@ -746,9 +831,14 @@ static int run_file_diff(int prompt, const char *prefix,
 
 int cmd_difftool(int argc, const char **argv, const char *prefix)
 {
-    int use_gui_tool = -1, dir_diff = 0, prompt = -1, symlinks = 0,
-        tool_help = 0, no_index = 0;
-    static char  *difftool_cmd = NULL, *extcmd = NULL;
+    int           use_gui_tool               = -1;
+    int           dir_diff                   = 0;
+    int           prompt                     = -1;
+    int           symlinks                   = 0;
+    int           tool_help                  = 0;
+    int           no_index                   = 0;
+    static char  *difftool_cmd               = NULL;
+    static char  *extcmd                     = NULL;
     struct option builtin_difftool_options[] = {
         OPT_BOOL('g', "gui", &use_gui_tool,
                  N_("use `diff.guitool` instead of `diff.tool`")),
@@ -782,10 +872,14 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
                          builtin_difftool_usage, PARSE_OPT_KEEP_UNKNOWN_OPT | PARSE_OPT_KEEP_DASHDASH);
 
     if (tool_help)
+    {
         return print_tool_help();
+    }
 
     if (!no_index && !startup_info->have_repository)
+    {
         die(_("difftool requires worktree or --no-index"));
+    }
 
     if (!no_index)
     {
@@ -794,7 +888,9 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
         setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(get_git_work_tree()), 1);
     }
     else if (dir_diff)
+    {
         die(_("options '%s' and '%s' cannot be used together"), "--dir-diff", "--no-index");
+    }
 
     die_for_incompatible_opt3(use_gui_tool == 1, "--gui",
                               !!difftool_cmd, "--tool",
@@ -806,24 +902,36 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
      * false".
      */
     if (use_gui_tool == 1)
+    {
         setenv("GIT_MERGETOOL_GUI", "true", 1);
+    }
     else if (use_gui_tool == 0)
+    {
         setenv("GIT_MERGETOOL_GUI", "false", 1);
+    }
 
     if (difftool_cmd)
     {
         if (*difftool_cmd)
+        {
             setenv("GIT_DIFF_TOOL", difftool_cmd, 1);
+        }
         else
+        {
             die(_("no <tool> given for --tool=<tool>"));
+        }
     }
 
     if (extcmd)
     {
         if (*extcmd)
+        {
             setenv("GIT_DIFFTOOL_EXTCMD", extcmd, 1);
+        }
         else
+        {
             die(_("no <cmd> given for --extcmd=<cmd>"));
+        }
     }
 
     setenv("GIT_DIFFTOOL_TRUST_EXIT_CODE",
@@ -837,12 +945,18 @@ int cmd_difftool(int argc, const char **argv, const char *prefix)
      */
     strvec_push(&child.args, "diff");
     if (no_index)
+    {
         strvec_push(&child.args, "--no-index");
+    }
     if (dir_diff)
+    {
         strvec_pushl(&child.args, "--raw", "--no-abbrev", "-z", NULL);
+    }
     strvec_pushv(&child.args, argv);
 
     if (dir_diff)
+    {
         return run_dir_diff(extcmd, symlinks, prefix, &child);
+    }
     return run_file_diff(prompt, prefix, &child);
 }

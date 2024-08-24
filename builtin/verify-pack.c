@@ -20,14 +20,22 @@ static int verify_one_pack(const char *path, unsigned int flags, const char *has
     strvec_push(argv, "index-pack");
 
     if (stat_only)
+    {
         strvec_push(argv, "--verify-stat-only");
+    }
     else if (verbose)
+    {
         strvec_push(argv, "--verify-stat");
+    }
     else
+    {
         strvec_push(argv, "--verify");
+    }
 
     if (hash_algo)
+    {
         strvec_pushf(argv, "--object-format=%s", hash_algo);
+    }
 
     /*
      * In addition to "foo.pack" we accept "foo.idx" and "foo";
@@ -35,7 +43,9 @@ static int verify_one_pack(const char *path, unsigned int flags, const char *has
      */
     strbuf_addstr(&arg, path);
     if (strbuf_strip_suffix(&arg, ".idx") || !ends_with(arg.buf, ".pack"))
+    {
         strbuf_addstr(&arg, ".pack");
+    }
     strvec_push(argv, arg.buf);
 
     index_pack.git_cmd = 1;
@@ -45,11 +55,15 @@ static int verify_one_pack(const char *path, unsigned int flags, const char *has
     if (verbose || stat_only)
     {
         if (err)
+        {
             printf("%s: bad\n", arg.buf);
+        }
         else
         {
             if (!stat_only)
+            {
                 printf("%s: ok\n", arg.buf);
+            }
         }
     }
     strbuf_release(&arg);
@@ -80,11 +94,15 @@ int cmd_verify_pack(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, verify_pack_options,
                          verify_pack_usage, 0);
     if (argc < 1)
+    {
         usage_with_options(verify_pack_usage, verify_pack_options);
+    }
     for (i = 0; i < argc; i++)
     {
         if (verify_one_pack(argv[i], flags, object_format))
+        {
             err = 1;
+        }
     }
 
     return err;

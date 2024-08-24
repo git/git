@@ -26,20 +26,28 @@ static int guess_repository_type(const char *git_dir)
      * "GIT_DIR=`pwd` git init" too.
      */
     if (!strcmp(".", git_dir))
+    {
         return 1;
+    }
     cwd            = xgetcwd();
     cwd_is_git_dir = !strcmp(git_dir, cwd);
     free(cwd);
     if (cwd_is_git_dir)
+    {
         return 1;
+    }
     /*
      * "GIT_DIR=.git or GIT_DIR=something/.git is usually not.
      */
     if (!strcmp(git_dir, ".git"))
+    {
         return 0;
+    }
     slash = strrchr(git_dir, '/');
     if (slash && !strcmp(slash, "/.git"))
+    {
         return 0;
+    }
 
     /*
      * Otherwise it is often bare.  At this point
@@ -105,10 +113,14 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
     if (real_git_dir && is_bare_repository_cfg == 1)
+    {
         die(_("options '%s' and '%s' cannot be used together"), "--separate-git-dir", "--bare");
+    }
 
     if (real_git_dir && !is_absolute_path(real_git_dir))
+    {
         real_git_dir = real_pathdup(real_git_dir, 1);
+    }
 
     if (template_dir && *template_dir && !is_absolute_path(template_dir))
     {
@@ -146,7 +158,9 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
                 }
                 set_shared_repository(saved);
                 if (mkdir(argv[0], 0777) < 0)
+                {
                     die_errno(_("cannot mkdir %s"), argv[0]);
+                }
                 mkdir_tried = 1;
                 goto retry;
             }
@@ -168,18 +182,24 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
     {
         hash_algo = hash_algo_by_name(object_format);
         if (hash_algo == GIT_HASH_UNKNOWN)
+        {
             die(_("unknown hash algorithm '%s'"), object_format);
+        }
     }
 
     if (ref_format)
     {
         ref_storage_format = ref_storage_format_by_name(ref_format);
         if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+        {
             die(_("unknown ref storage format '%s'"), ref_format);
+        }
     }
 
     if (init_shared_repository != -1)
+    {
         set_shared_repository(init_shared_repository);
+    }
 
     /*
      * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
@@ -188,16 +208,20 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
     git_dir   = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
     work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
     if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
+    {
         die(_("%s (or --work-tree=<directory>) not allowed without "
               "specifying %s (or --git-dir=<directory>)"),
             GIT_WORK_TREE_ENVIRONMENT,
             GIT_DIR_ENVIRONMENT);
+    }
 
     /*
      * Set up the default .git directory contents
      */
     if (!git_dir)
+    {
         git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+    }
 
     /*
      * When --separate-git-dir is used inside a linked worktree, take
@@ -218,7 +242,9 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
             strbuf_addbuf(&mainwt, &sb);
             strbuf_strip_suffix(&mainwt, "/.git");
             if (chdir(mainwt.buf) < 0)
+            {
                 die_errno(_("cannot chdir to %s"), mainwt.buf);
+            }
             strbuf_release(&mainwt);
             git_dir = strbuf_detach(&sb, NULL);
         }
@@ -226,7 +252,9 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
     }
 
     if (is_bare_repository_cfg < 0)
+    {
         is_bare_repository_cfg = guess_repository_type(git_dir);
+    }
 
     if (!is_bare_repository_cfg)
     {
@@ -238,21 +266,33 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
             free(rel);
         }
         if (!git_work_tree_cfg)
+        {
             git_work_tree_cfg = xgetcwd();
+        }
         if (work_tree)
+        {
             set_git_work_tree(work_tree);
+        }
         else
+        {
             set_git_work_tree(git_work_tree_cfg);
+        }
         if (access(get_git_work_tree(), X_OK))
+        {
             die_errno(_("Cannot access work tree '%s'"),
                       get_git_work_tree());
+        }
     }
     else
     {
         if (real_git_dir)
+        {
             die(_("--separate-git-dir incompatible with bare repository"));
+        }
         if (work_tree)
+        {
             set_git_work_tree(work_tree);
+        }
     }
 
     UNLEAK(real_git_dir);

@@ -21,7 +21,9 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
     int             result;
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage(diff_cache_usage);
+    }
 
     git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
     repo_init_revisions(the_repository, &rev, prefix);
@@ -40,16 +42,26 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
         const char *arg = argv[i];
 
         if (!strcmp(arg, "--cached"))
+        {
             option |= DIFF_INDEX_CACHED;
+        }
         else if (!strcmp(arg, "--merge-base"))
+        {
             option |= DIFF_INDEX_MERGE_BASE;
+        }
         else if (!strcmp(arg, "-m"))
+        {
             rev.match_missing = 1;
+        }
         else
+        {
             usage(diff_cache_usage);
+        }
     }
     if (!rev.diffopt.output_format)
+    {
         rev.diffopt.output_format = DIFF_FORMAT_RAW;
+    }
 
     rev.diffopt.rotate_to_strict = 1;
 
@@ -58,7 +70,9 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
      * and there is no revision filtering parameters.
      */
     if (rev.pending.nr != 1 || rev.max_count != -1 || rev.min_age != -1 || rev.max_age != -1)
+    {
         usage(diff_cache_usage);
+    }
     if (!(option & DIFF_INDEX_CACHED))
     {
         setup_work_tree();

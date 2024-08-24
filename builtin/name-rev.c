@@ -50,14 +50,18 @@ static void set_commit_cutoff(struct commit *commit)
 {
 
     if (cutoff > commit->date)
+    {
         cutoff = commit->date;
+    }
 
     if (generation_cutoff)
     {
         timestamp_t generation = commit_graph_generation(commit);
 
         if (generation_cutoff > generation)
+        {
             generation_cutoff = generation;
+        }
     }
 }
 
@@ -70,9 +74,13 @@ static void adjust_cutoff_timestamp_for_slop(void)
     {
         /* check for undeflow */
         if (cutoff > TIME_MIN + CUTOFF_DATE_SLOP)
+        {
             cutoff = cutoff - CUTOFF_DATE_SLOP;
+        }
         else
+        {
             cutoff = TIME_MIN;
+        }
     }
 }
 
@@ -82,7 +90,9 @@ static void adjust_cutoff_timestamp_for_slop(void)
 static int commit_is_before_cutoff(struct commit *commit)
 {
     if (generation_cutoff < GENERATION_NUMBER_INFINITY)
+    {
         return generation_cutoff && commit_graph_generation(commit) < generation_cutoff;
+    }
 
     return commit->date < cutoff;
 }
@@ -118,22 +128,30 @@ static int is_better_name(struct rev_name *name,
 
     /* If both are tags, we prefer the nearer one. */
     if (from_tag && name->from_tag)
+    {
         return name_distance > new_distance;
+    }
 
     /* Favor a tag over a non-tag. */
     if (name->from_tag != from_tag)
+    {
         return from_tag;
+    }
 
     /*
      * We are now looking at two non-tags.  Tiebreak to favor
      * shorter hops.
      */
     if (name_distance != new_distance)
+    {
         return name_distance > new_distance;
+    }
 
     /* ... or tiebreak to favor older date */
     if (name->taggerdate != taggerdate)
+    {
         return name->taggerdate > taggerdate;
+    }
 
     /* keep the current one if we cannot decide */
     return 0;
@@ -147,7 +165,9 @@ static struct rev_name *create_or_update_name(struct commit *commit,
     struct rev_name *name = commit_rev_name_at(&rev_names, commit);
 
     if (is_valid_rev_name(name) && !is_better_name(name, taggerdate, generation, distance, from_tag))
+    {
         return NULL;
+    }
 
     name->taggerdate = taggerdate;
     name->generation = generation;
@@ -169,11 +189,9 @@ static char *get_parent_name(const struct rev_name *name, int parent_number,
                                (int)len, name->tip_name,
                                name->generation, parent_number);
     }
-    else
-    {
-        return mem_pool_strfmt(string_pool, "%.*s^%d",
-                               (int)len, name->tip_name, parent_number);
-    }
+
+    return mem_pool_strfmt(string_pool, "%.*s^%d",
+                           (int)len, name->tip_name, parent_number);
 }
 
 static void name_rev(struct commit *start_commit,
@@ -183,22 +201,31 @@ static void name_rev(struct commit *start_commit,
     struct prio_queue queue;
     struct commit    *commit;
     struct commit   **parents_to_queue = NULL;
-    size_t            parents_to_queue_nr, parents_to_queue_alloc = 0;
+    size_t            parents_to_queue_nr;
+    size_t            parents_to_queue_alloc = 0;
     struct rev_name  *start_name;
 
     repo_parse_commit(the_repository, start_commit);
     if (commit_is_before_cutoff(start_commit))
+    {
         return;
+    }
 
     start_name = create_or_update_name(start_commit, taggerdate, 0, 0,
                                        from_tag);
     if (!start_name)
+    {
         return;
+    }
     if (deref)
+    {
         start_name->tip_name = mem_pool_strfmt(string_pool, "%s^0",
                                                tip_name);
+    }
     else
+    {
         start_name->tip_name = mem_pool_strdup(string_pool, tip_name);
+    }
 
     memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
     prio_queue_put(&queue, start_commit);
@@ -217,11 +244,14 @@ static void name_rev(struct commit *start_commit,
         {
             struct commit   *parent = parents->item;
             struct rev_name *parent_name;
-            int              generation, distance;
+            int              generation;
+            int              distance;
 
             repo_parse_commit(the_repository, parent);
             if (commit_is_before_cutoff(parent))
+            {
                 continue;
+            }
 
             if (parent_number > 1)
             {
@@ -240,12 +270,16 @@ static void name_rev(struct commit *start_commit,
             if (parent_name)
             {
                 if (parent_number > 1)
+                {
                     parent_name->tip_name =
                         get_parent_name(name,
                                         parent_number,
                                         string_pool);
+                }
                 else
+                {
                     parent_name->tip_name = name->tip_name;
+                }
                 ALLOC_GROW(parents_to_queue,
                            parents_to_queue_nr + 1,
                            parents_to_queue_alloc);
@@ -256,8 +290,10 @@ static void name_rev(struct commit *start_commit,
 
         /* The first parent must come out first from the prio_queue */
         while (parents_to_queue_nr)
+        {
             prio_queue_put(&queue,
                            parents_to_queue[--parents_to_queue_nr]);
+        }
     }
 
     clear_prio_queue(&queue);
@@ -271,10 +307,14 @@ static int subpath_matches(const char *path, const char *filter)
     while (subpath)
     {
         if (!wildmatch(filter, subpath, 0))
+        {
             return subpath - path;
+        }
         subpath = strchr(subpath, '/');
         if (subpath)
+        {
             subpath++;
+        }
     }
     return -1;
 }
@@ -310,12 +350,18 @@ static void add_to_tip_table(const struct object_id *oid, const char *refname,
     char *short_refname = NULL;
 
     if (shorten_unambiguous)
+    {
         short_refname = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
                                                      refname, 0);
+    }
     else if (skip_prefix(refname, "refs/heads/", &refname))
+    {
         ; /* refname already advanced */
+    }
     else
+    {
         skip_prefix(refname, "refs/", &refname);
+    }
 
     ALLOC_GROW(tip_table.table, tip_table.nr + 1, tip_table.alloc);
     oidcpy(&tip_table.table[tip_table.nr].oid, oid);
@@ -330,23 +376,29 @@ static void add_to_tip_table(const struct object_id *oid, const char *refname,
 
 static int tipcmp(const void *a_, const void *b_)
 {
-    const struct tip_table_entry *a = a_, *b = b_;
+    const struct tip_table_entry *a = a_;
+    const struct tip_table_entry *b = b_;
     return oidcmp(&a->oid, &b->oid);
 }
 
 static int cmp_by_tag_and_age(const void *a_, const void *b_)
 {
-    const struct tip_table_entry *a = a_, *b = b_;
+    const struct tip_table_entry *a = a_;
+    const struct tip_table_entry *b = b_;
     int                           cmp;
 
     /* Prefer tags. */
     cmp = b->from_tag - a->from_tag;
     if (cmp)
+    {
         return cmp;
+    }
 
     /* Older is better. */
     if (a->taggerdate < b->taggerdate)
+    {
         return -1;
+    }
     return a->taggerdate != b->taggerdate;
 }
 
@@ -362,7 +414,9 @@ static int name_ref(const char *path, const char *referent UNUSED, const struct 
     timestamp_t           taggerdate            = TIME_MAX;
 
     if (data->tags_only && !starts_with(path, "refs/tags/"))
+    {
         return 0;
+    }
 
     if (data->exclude_filters.nr)
     {
@@ -371,7 +425,9 @@ static int name_ref(const char *path, const char *referent UNUSED, const struct 
         for_each_string_list_item(item, &data->exclude_filters)
         {
             if (subpath_matches(path, item->string) >= 0)
+            {
                 return 0;
+            }
         }
     }
 
@@ -409,14 +465,18 @@ static int name_ref(const char *path, const char *referent UNUSED, const struct 
 
         /* If none of the patterns matched, stop now */
         if (!matched)
+        {
             return 0;
+        }
     }
 
     while (o && o->type == OBJ_TAG)
     {
         struct tag *t = (struct tag *)o;
         if (!t->tagged)
+        {
             break; /* broken repository */
+        }
         o          = parse_object(the_repository, &t->tagged->oid);
         deref      = 1;
         taggerdate = t->date;
@@ -426,7 +486,9 @@ static int name_ref(const char *path, const char *referent UNUSED, const struct 
         commit   = (struct commit *)o;
         from_tag = starts_with(path, "refs/tags/");
         if (taggerdate == TIME_MAX)
+        {
             taggerdate = commit->date;
+        }
     }
 
     add_to_tip_table(oid, path, can_abbreviate_output, commit, taggerdate,
@@ -465,7 +527,9 @@ static const char *get_exact_ref_match(const struct object *o)
     int found;
 
     if (!tip_table.table || !tip_table.nr)
+    {
         return NULL;
+    }
 
     if (!tip_table.sorted)
     {
@@ -476,7 +540,9 @@ static const char *get_exact_ref_match(const struct object *o)
     found = oid_pos(&o->oid, tip_table.table, tip_table.nr,
                     nth_tip_table_ent);
     if (0 <= found)
+    {
         return tip_table.table[found].refname;
+    }
     return NULL;
 }
 
@@ -487,22 +553,25 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
     const struct commit *c;
 
     if (o->type != OBJ_COMMIT)
+    {
         return get_exact_ref_match(o);
+    }
     c = (const struct commit *)o;
     n = get_commit_rev_name(c);
     if (!n)
+    {
         return NULL;
+    }
 
     if (!n->generation)
-        return n->tip_name;
-    else
     {
-        strbuf_reset(buf);
-        strbuf_addstr(buf, n->tip_name);
-        strbuf_strip_suffix(buf, "^0");
-        strbuf_addf(buf, "~%d", n->generation);
-        return buf->buf;
+        return n->tip_name;
     }
+    strbuf_reset(buf);
+    strbuf_addstr(buf, n->tip_name);
+    strbuf_strip_suffix(buf, "^0");
+    strbuf_addf(buf, "~%d", n->generation);
+    return buf->buf;
 }
 
 static void show_name(const struct object *obj,
@@ -514,17 +583,27 @@ static void show_name(const struct object *obj,
     struct strbuf           buf = STRBUF_INIT;
 
     if (!name_only)
+    {
         printf("%s ", caller_name ? caller_name : oid_to_hex(oid));
+    }
     name = get_rev_name(obj, &buf);
     if (name)
+    {
         printf("%s\n", name);
+    }
     else if (allow_undefined)
+    {
         printf("undefined\n");
+    }
     else if (always)
+    {
         printf("%s\n",
                repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV));
+    }
     else
+    {
         die("cannot describe '%s'", oid_to_hex(oid));
+    }
     strbuf_release(&buf);
 }
 
@@ -545,7 +624,9 @@ static void name_rev_line(char *p, struct name_ref_data *data)
     {
 #define ishex(x) (isdigit((x)) || ((x) >= 'a' && (x) <= 'f'))
         if (!ishex(*p))
+        {
             counter = 0;
+        }
         else if (++counter == hexsz && !ishex(*(p + 1)))
         {
             struct object_id oid;
@@ -561,24 +642,34 @@ static void name_rev_line(char *p, struct name_ref_data *data)
                 struct object *o =
                     lookup_object(the_repository, &oid);
                 if (o)
+                {
                     name = get_rev_name(o, &buf);
+                }
             }
             *(p + 1) = c;
 
             if (!name)
+            {
                 continue;
+            }
 
             if (data->name_only)
+            {
                 printf("%.*s%s", p_len - hexsz, p_start, name);
+            }
             else
+            {
                 printf("%.*s (%s)", p_len, p_start, name);
+            }
             p_start = p + 1;
         }
     }
 
     /* flush */
     if (p_start != p)
+    {
         fwrite(p_start, p - p_start, 1, stdout);
+    }
 
     strbuf_release(&buf);
 }
@@ -586,30 +677,35 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
     struct mem_pool      string_pool;
-    struct object_array  revs = OBJECT_ARRAY_INIT;
-    int                  all = 0, annotate_stdin = 0, transform_stdin = 0, allow_undefined = 1, always = 0, peel_tag = 0;
-    struct name_ref_data data   = {0, 0, STRING_LIST_INIT_NODUP, STRING_LIST_INIT_NODUP};
-    struct option        opts[] = {
-               OPT_BOOL(0, "name-only", &data.name_only, N_("print only ref-based names (no object names)")),
-               OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
-               OPT_STRING_LIST(0, "refs", &data.ref_filters, N_("pattern"),
-                               N_("only use refs matching <pattern>")),
-               OPT_STRING_LIST(0, "exclude", &data.exclude_filters, N_("pattern"),
-                               N_("ignore refs matching <pattern>")),
-               OPT_GROUP(""),
-               OPT_BOOL(0, "all", &all, N_("list all commits reachable from all refs")),
-               OPT_BOOL_F(0,
-                          "stdin",
-                          &transform_stdin,
-                          N_("deprecated: use --annotate-stdin instead"),
-                          PARSE_OPT_HIDDEN),
-               OPT_BOOL(0, "annotate-stdin", &annotate_stdin, N_("annotate text from stdin")),
-               OPT_BOOL(0, "undefined", &allow_undefined, N_("allow to print `undefined` names (default)")),
-               OPT_BOOL(0, "always", &always,
-                        N_("show abbreviated commit object as fallback")),
-               OPT_HIDDEN_BOOL(0, "peel-tag", &peel_tag,
-                               N_("dereference tags in the input (internal use)")),
-               OPT_END(),
+    struct object_array  revs            = OBJECT_ARRAY_INIT;
+    int                  all             = 0;
+    int                  annotate_stdin  = 0;
+    int                  transform_stdin = 0;
+    int                  allow_undefined = 1;
+    int                  always          = 0;
+    int                  peel_tag        = 0;
+    struct name_ref_data data            = {0, 0, STRING_LIST_INIT_NODUP, STRING_LIST_INIT_NODUP};
+    struct option        opts[]          = {
+                        OPT_BOOL(0, "name-only", &data.name_only, N_("print only ref-based names (no object names)")),
+                        OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
+                        OPT_STRING_LIST(0, "refs", &data.ref_filters, N_("pattern"),
+                                        N_("only use refs matching <pattern>")),
+                        OPT_STRING_LIST(0, "exclude", &data.exclude_filters, N_("pattern"),
+                                        N_("ignore refs matching <pattern>")),
+                        OPT_GROUP(""),
+                        OPT_BOOL(0, "all", &all, N_("list all commits reachable from all refs")),
+                        OPT_BOOL_F(0,
+                                   "stdin",
+                                   &transform_stdin,
+                                   N_("deprecated: use --annotate-stdin instead"),
+                                   PARSE_OPT_HIDDEN),
+                        OPT_BOOL(0, "annotate-stdin", &annotate_stdin, N_("annotate text from stdin")),
+                        OPT_BOOL(0, "undefined", &allow_undefined, N_("allow to print `undefined` names (default)")),
+                        OPT_BOOL(0, "always", &always,
+                                 N_("show abbreviated commit object as fallback")),
+                        OPT_HIDDEN_BOOL(0, "peel-tag", &peel_tag,
+                                        N_("dereference tags in the input (internal use)")),
+                        OPT_END(),
     };
 
     mem_pool_init(&string_pool, 0);
@@ -632,7 +728,9 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
         usage_with_options(name_rev_usage, opts);
     }
     if (all || annotate_stdin)
+    {
         disable_cutoff();
+    }
 
     for (; argc; argc--, argv++)
     {
@@ -654,7 +752,9 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
             struct object *peeled = deref_tag(the_repository,
                                               object, *argv, 0);
             if (peeled && peeled->type == OBJ_COMMIT)
+            {
                 commit = (struct commit *)peeled;
+            }
         }
 
         if (!object)
@@ -665,7 +765,9 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
         }
 
         if (commit)
+        {
             set_commit_cutoff(commit);
+        }
 
         if (peel_tag)
         {
@@ -698,14 +800,17 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
     }
     else if (all)
     {
-        int i, max;
+        int i;
+        int max;
 
         max = get_max_object_index();
         for (i = 0; i < max; i++)
         {
             struct object *obj = get_indexed_object(i);
             if (!obj || obj->type != OBJ_COMMIT)
+            {
                 continue;
+            }
             show_name(obj, NULL,
                       always, allow_undefined, data.name_only);
         }
@@ -714,8 +819,10 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
     {
         int i;
         for (i = 0; i < revs.nr; i++)
+        {
             show_name(revs.objects[i].item, revs.objects[i].name,
                       always, allow_undefined, data.name_only);
+        }
     }
 
     string_list_clear(&data.ref_filters, 0);

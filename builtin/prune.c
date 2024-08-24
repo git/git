@@ -29,13 +29,19 @@ static int prune_tmp_file(const char *fullpath)
 {
     struct stat st;
     if (lstat(fullpath, &st))
+    {
         return error("Could not stat '%s'", fullpath);
+    }
     if (st.st_mtime > expire)
+    {
         return 0;
+    }
     if (S_ISDIR(st.st_mode))
     {
         if (show_only || verbose)
+        {
             printf("Removing stale temporary directory %s\n", fullpath);
+        }
         if (!show_only)
         {
             struct strbuf remove_dir_buf = STRBUF_INIT;
@@ -48,9 +54,13 @@ static int prune_tmp_file(const char *fullpath)
     else
     {
         if (show_only || verbose)
+        {
             printf("Removing stale temporary file %s\n", fullpath);
+        }
         if (!show_only)
+        {
             unlink_or_warn(fullpath);
+        }
     }
     return 0;
 }
@@ -61,10 +71,14 @@ static void perform_reachability_traversal(struct rev_info *revs)
     struct progress *progress = NULL;
 
     if (initialized)
+    {
         return;
+    }
 
     if (show_progress)
+    {
         progress = start_delayed_progress(_("Checking connectivity"), 0);
+    }
     mark_reachable_objects(revs, 1, expire, progress);
     stop_progress(&progress);
     initialized = 1;
@@ -88,7 +102,9 @@ static int prune_object(const struct object_id *oid, const char *fullpath,
     struct stat      st;
 
     if (is_object_reachable(oid, revs))
+    {
         return 0;
+    }
 
     if (lstat(fullpath, &st))
     {
@@ -97,7 +113,9 @@ static int prune_object(const struct object_id *oid, const char *fullpath,
         return 0;
     }
     if (st.st_mtime > expire)
+    {
         return 0;
+    }
     if (show_only || verbose)
     {
         enum object_type type = oid_object_info(the_repository, oid,
@@ -106,7 +124,9 @@ static int prune_object(const struct object_id *oid, const char *fullpath,
                (type > 0) ? type_name(type) : "unknown");
     }
     if (!show_only)
+    {
         unlink_or_warn(fullpath);
+    }
     return 0;
 }
 
@@ -114,9 +134,13 @@ static int prune_cruft(const char *basename, const char *path,
                        void *data UNUSED)
 {
     if (starts_with(basename, "tmp_obj_"))
+    {
         prune_tmp_file(path);
+    }
     else
+    {
         fprintf(stderr, "bad sha1 file: %s\n", path);
+    }
     return 0;
 }
 
@@ -124,7 +148,9 @@ static int prune_subdir(unsigned int nr UNUSED, const char *path,
                         void *data UNUSED)
 {
     if (!show_only)
+    {
         rmdir(path);
+    }
     return 0;
 }
 
@@ -143,13 +169,19 @@ static void remove_temporary_files(const char *path)
     if (!dir)
     {
         if (errno != ENOENT)
+        {
             fprintf(stderr, "Unable to open directory %s: %s\n",
                     path, strerror(errno));
+        }
         return;
     }
     while ((de = readdir(dir)) != NULL)
+    {
         if (starts_with(de->d_name, "tmp_"))
+        {
             prune_tmp_file(mkpath("%s/%s", path, de->d_name));
+        }
+    }
     closedir(dir);
 }
 
@@ -176,7 +208,9 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
 
     if (repository_format_precious_objects)
+    {
         die(_("cannot prune in a precious-objects repo"));
+    }
 
     while (argc--)
     {
@@ -190,11 +224,15 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
             add_pending_object(&revs, object, "");
         }
         else
+        {
             die("unrecognized argument: %s", name);
+        }
     }
 
     if (show_progress == -1)
+    {
         show_progress = isatty(2);
+    }
     if (exclude_promisor_objects)
     {
         fetch_if_missing              = 0;

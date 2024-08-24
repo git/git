@@ -29,7 +29,9 @@ static struct commit *peel_committish(const char *name)
     struct object_id oid;
 
     if (repo_get_oid(the_repository, name, &oid))
+    {
         return NULL;
+    }
     obj = parse_object(the_repository, &oid);
     return (struct commit *)repo_peel_to_type(the_repository, name, 0, obj,
                                               OBJ_COMMIT);
@@ -42,7 +44,9 @@ static char *get_author(const char *message)
 
     a = find_commit_header(message, "author", &len);
     if (a)
+    {
         return xmemdupz(a, len);
+    }
 
     return NULL;
 }
@@ -131,23 +135,33 @@ static void get_ref_information(struct rev_cmdline_info *cmd_info,
         int                       can_uniquely_dwim = 1;
 
         if (*refexpr == '^')
+        {
             refexpr++;
+        }
         if (repo_dwim_ref(the_repository, refexpr, strlen(refexpr), &oid, &fullname, 0) != 1)
+        {
             can_uniquely_dwim = 0;
+        }
 
         if (e->flags & BOTTOM)
         {
             if (can_uniquely_dwim)
+            {
                 strset_add(&ref_info->negative_refs, fullname);
+            }
             if (!ref_info->negative_refexprs)
+            {
                 ref_info->onto = lookup_commit_reference_gently(the_repository,
                                                                 &e->item->oid, 1);
+            }
             ref_info->negative_refexprs++;
         }
         else
         {
             if (can_uniquely_dwim)
+            {
                 strset_add(&ref_info->positive_refs, fullname);
+            }
             ref_info->positive_refexprs++;
         }
 
@@ -165,14 +179,20 @@ static void determine_replay_mode(struct rev_cmdline_info *cmd_info,
 
     get_ref_information(cmd_info, &rinfo);
     if (!rinfo.positive_refexprs)
+    {
         die(_("need some commits to replay"));
+    }
     if (onto_name && *advance_name)
+    {
         die(_("--onto and --advance are incompatible"));
+    }
     else if (onto_name)
     {
         *onto = peel_committish(onto_name);
         if (rinfo.positive_refexprs < strset_get_size(&rinfo.positive_refs))
+        {
             die(_("all positive revisions given must be references"));
+        }
     }
     else if (*advance_name)
     {
@@ -192,7 +212,9 @@ static void determine_replay_mode(struct rev_cmdline_info *cmd_info,
             die(_("argument to --advance must be a reference"));
         }
         if (rinfo.positive_refexprs > 1)
+        {
             die(_("cannot advance target with multiple sources because ordering would be ill-defined"));
+        }
     }
     else
     {
@@ -203,7 +225,9 @@ static void determine_replay_mode(struct rev_cmdline_info *cmd_info,
          * negative_refs_complete, but not both.
          */
         if (rinfo.negative_refexprs > 0 && positive_refs_complete == negative_refs_complete)
+        {
             die(_("cannot implicitly determine whether this is an --advance or --onto operation"));
+        }
         if (negative_refs_complete)
         {
             struct hashmap_iter  iter;
@@ -211,11 +235,17 @@ static void determine_replay_mode(struct rev_cmdline_info *cmd_info,
             const char          *last_key = NULL;
 
             if (rinfo.negative_refexprs == 0)
+            {
                 die(_("all positive revisions given must be references"));
+            }
             else if (rinfo.negative_refexprs > 1)
+            {
                 die(_("cannot implicitly determine whether this is an --advance or --onto operation"));
+            }
             else if (rinfo.positive_refexprs > 1)
+            {
                 die(_("cannot advance target with multiple source branches because ordering would be ill-defined"));
+            }
 
             /* Only one entry, but we have to loop to get it */
             strset_for_each_entry(&rinfo.negative_refs,
@@ -230,9 +260,13 @@ static void determine_replay_mode(struct rev_cmdline_info *cmd_info,
         else
         { /* positive_refs_complete */
             if (rinfo.negative_refexprs > 1)
+            {
                 die(_("cannot implicitly determine correct base for --onto"));
+            }
             if (rinfo.negative_refexprs == 1)
+            {
                 *onto = rinfo.onto;
+            }
         }
     }
     if (!*advance_name)
@@ -251,7 +285,9 @@ static struct commit *mapped_commit(kh_oid_map_t  *replayed_commits,
 {
     khint_t pos = kh_get_oid_map(replayed_commits, commit->object.oid);
     if (pos == kh_end(replayed_commits))
+    {
         return fallback;
+    }
     return kh_value(replayed_commits, pos);
 }
 
@@ -261,8 +297,10 @@ static struct commit *pick_regular_commit(struct commit        *pickme,
                                           struct merge_options *merge_opt,
                                           struct merge_result  *result)
 {
-    struct commit *base, *replayed_base;
-    struct tree   *pickme_tree, *base_tree;
+    struct commit *base;
+    struct commit *replayed_base;
+    struct tree   *pickme_tree;
+    struct tree   *base_tree;
 
     base          = pickme->parents->item;
     replayed_base = mapped_commit(replayed_commits, base, onto);
@@ -284,7 +322,9 @@ static struct commit *pick_regular_commit(struct commit        *pickme,
     free((char *)merge_opt->ancestor);
     merge_opt->ancestor = NULL;
     if (!result->clean)
+    {
         return NULL;
+    }
     return create_commit(result->tree, pickme, replayed_base);
 }
 
@@ -331,8 +371,10 @@ int cmd_replay(int argc, const char **argv, const char *prefix)
     }
 
     if (advance_name_opt && contained)
+    {
         die(_("options '%s' and '%s' cannot be used together"),
             "--advance", "--contained");
+    }
     advance_name = xstrdup_or_null(advance_name_opt);
 
     repo_init_revisions(the_repository, &revs, prefix);
@@ -394,8 +436,10 @@ int cmd_replay(int argc, const char **argv, const char *prefix)
     determine_replay_mode(&revs.cmdline, onto_name, &advance_name,
                           &onto, &update_refs);
 
-    if (!onto) /* FIXME: Should handle replaying down to root commit */
+    if (!onto)
+    { /* FIXME: Should handle replaying down to root commit */
         die("Replaying down to root commit is not supported yet!");
+    }
 
     if (prepare_revision_walk(&revs) < 0)
     {
@@ -415,28 +459,40 @@ int cmd_replay(int argc, const char **argv, const char *prefix)
         int                           hr;
 
         if (!commit->parents)
+        {
             die(_("replaying down to root commit is not supported yet!"));
+        }
         if (commit->parents->next)
+        {
             die(_("replaying merge commits is not supported yet!"));
+        }
 
         last_commit = pick_regular_commit(commit, replayed_commits, onto,
                                           &merge_opt, &result);
         if (!last_commit)
+        {
             break;
+        }
 
         /* Record commit -> last_commit mapping */
         pos = kh_put_oid_map(replayed_commits, commit->object.oid, &hr);
         if (hr == 0)
+        {
             BUG("Duplicate rewritten commit: %s\n",
                 oid_to_hex(&commit->object.oid));
+        }
         kh_value(replayed_commits, pos) = last_commit;
 
         /* Update any necessary branches */
         if (advance_name)
+        {
             continue;
+        }
         decoration = get_name_decoration(&commit->object);
         if (!decoration)
+        {
             continue;
+        }
         while (decoration)
         {
             if (decoration->type == DECORATION_REF_LOCAL && (contained || strset_contains(update_refs, decoration->name)))
@@ -474,6 +530,8 @@ cleanup:
 
     /* Return */
     if (ret < 0)
+    {
         exit(128);
+    }
     return ret ? 0 : 1;
 }

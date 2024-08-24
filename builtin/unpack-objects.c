@@ -53,7 +53,9 @@ static void add_object_buffer(struct object *object, char *buffer, unsigned long
     obj->buffer = buffer;
     obj->size   = size;
     if (add_decoration(&obj_decorate, object, obj))
+    {
         die("object %s tried to add buffer twice!", oid_to_hex(&object->oid));
+    }
 }
 
 /*
@@ -63,9 +65,13 @@ static void add_object_buffer(struct object *object, char *buffer, unsigned long
 static void *fill(int min)
 {
     if (min <= len)
+    {
         return buffer + offset;
+    }
     if (min > sizeof(buffer))
+    {
         die("cannot fill %d bytes", min);
+    }
     if (offset)
     {
         the_hash_algo->update_fn(&ctx, buffer, offset);
@@ -78,7 +84,9 @@ static void *fill(int min)
         if (ret <= 0)
         {
             if (!ret)
+            {
                 die("early EOF");
+            }
             die_errno("read error on input");
         }
         len += ret;
@@ -89,16 +97,22 @@ static void *fill(int min)
 static void use(int bytes)
 {
     if (bytes > len)
+    {
         die("used more bytes than were available");
+    }
     len -= bytes;
     offset += bytes;
 
     /* make sure off_t is sufficiently large not to wrap */
     if (signed_add_overflows(consumed_bytes, bytes))
+    {
         die("pack too large for current definition of off_t");
+    }
     consumed_bytes += bytes;
     if (max_input_size && consumed_bytes > max_input_size)
+    {
         die(_("pack exceeds maximum allowed size"));
+    }
     display_throughput(progress, consumed_bytes);
 }
 
@@ -132,13 +146,17 @@ static void *get_data(unsigned long size)
         int ret = git_inflate(&stream, 0);
         use(len - stream.avail_in);
         if (stream.total_out == size && ret == Z_STREAM_END)
+        {
             break;
+        }
         if (ret != Z_OK)
         {
             error("inflate returned %d", ret);
             FREE_AND_NULL(buf);
             if (!recover)
+            {
                 exit(1);
+            }
             has_errors = 1;
             break;
         }
@@ -153,7 +171,9 @@ static void *get_data(unsigned long size)
     }
     git_inflate_end(&stream);
     if (dry_run)
+    {
         FREE_AND_NULL(buf);
+    }
     return buf;
 }
 
@@ -209,7 +229,9 @@ static void write_cached_object(struct object *obj, struct obj_buffer *obj_buf)
     if (write_object_file(obj_buf->buffer, obj_buf->size,
                           obj->type, &oid)
         < 0)
+    {
         die("failed to write object %s", oid_to_hex(&obj->oid));
+    }
     obj->flags |= FLAG_WRITTEN;
 }
 
@@ -225,32 +247,46 @@ static int check_object(struct object *obj, enum object_type type,
     struct obj_buffer *obj_buf;
 
     if (!obj)
+    {
         return 1;
+    }
 
     if (obj->flags & FLAG_WRITTEN)
+    {
         return 0;
+    }
 
     if (type != OBJ_ANY && obj->type != type)
+    {
         die("object type mismatch");
+    }
 
     if (!(obj->flags & FLAG_OPEN))
     {
         unsigned long size;
         int           type = oid_object_info(the_repository, &obj->oid, &size);
         if (type != obj->type || type <= 0)
+        {
             die("object of unexpected type");
+        }
         obj->flags |= FLAG_WRITTEN;
         return 0;
     }
 
     obj_buf = lookup_object_buffer(obj);
     if (!obj_buf)
+    {
         die("Whoops! Cannot find object '%s'", oid_to_hex(&obj->oid));
+    }
     if (fsck_object(obj, obj_buf->buffer, obj_buf->size, &fsck_options))
+    {
         die("fsck error in packed object");
+    }
     fsck_options.walk = check_object;
     if (fsck_walk(obj, NULL, &fsck_options))
+    {
         die("Error on reachable objects of %s", oid_to_hex(&obj->oid));
+    }
     write_cached_object(obj, obj_buf);
     return 0;
 }
@@ -261,7 +297,9 @@ static void write_rest(void)
     for (i = 0; i < nr_objects; i++)
     {
         if (obj_list[i].obj)
+        {
             check_object(obj_list[i].obj, OBJ_ANY, NULL, NULL);
+        }
     }
 }
 
@@ -281,7 +319,9 @@ static void write_object(unsigned nr, enum object_type type,
         if (write_object_file(buf, size, type,
                               &obj_list[nr].oid)
             < 0)
+        {
             die("failed to write object");
+        }
         added_object(nr, type, buf, size);
         free(buf);
         obj_list[nr].obj = NULL;
@@ -292,15 +332,21 @@ static void write_object(unsigned nr, enum object_type type,
         if (write_object_file(buf, size, type,
                               &obj_list[nr].oid)
             < 0)
+        {
             die("failed to write object");
+        }
         added_object(nr, type, buf, size);
         free(buf);
 
         blob = lookup_blob(the_repository, &obj_list[nr].oid);
         if (blob)
+        {
             blob->object.flags |= FLAG_WRITTEN;
+        }
         else
+        {
             die("invalid blob object");
+        }
         obj_list[nr].obj = NULL;
     }
     else
@@ -314,7 +360,9 @@ static void write_object(unsigned nr, enum object_type type,
                                   type, size, buf,
                                   &eaten);
         if (!obj)
+        {
             die("invalid %s", type_name(type));
+        }
         add_object_buffer(obj, buf, size);
         obj->flags |= FLAG_OPEN;
         obj_list[nr].obj = obj;
@@ -332,7 +380,9 @@ static void resolve_delta(unsigned nr, enum object_type type,
                          delta, delta_size,
                          &result_size);
     if (!result)
+    {
         die("failed to apply delta");
+    }
     free(delta);
     write_object(nr, type, result, result_size);
 }
@@ -368,7 +418,9 @@ static void unpack_non_delta_entry(enum object_type type, unsigned long size,
     void *buf = get_data(size);
 
     if (buf)
+    {
         write_object(nr, type, buf, size);
+    }
 }
 
 struct input_zstream_data
@@ -419,10 +471,14 @@ static void stream_blob(unsigned long size, unsigned nr)
     git_inflate_init(&zstream);
 
     if (stream_loose_object(&in_stream, size, &info->oid))
+    {
         die(_("failed to write object in stream"));
+    }
 
     if (data.status != Z_STREAM_END)
+    {
         die(_("inflate returned (%d)"), data.status);
+    }
     git_inflate_end(&zstream);
 
     if (strict)
@@ -430,7 +486,9 @@ static void stream_blob(unsigned long size, unsigned nr)
         struct blob *blob = lookup_blob(the_repository, &info->oid);
 
         if (!blob)
+        {
             die(_("invalid blob object from stream"));
+        }
         blob->object.flags |= FLAG_WRITTEN;
     }
     info->obj = NULL;
@@ -443,10 +501,14 @@ static int resolve_against_held(unsigned nr, const struct object_id *base,
     struct obj_buffer *obj_buffer;
     obj = lookup_object(the_repository, base);
     if (!obj)
+    {
         return 0;
+    }
     obj_buffer = lookup_object_buffer(obj);
     if (!obj_buffer)
+    {
         return 0;
+    }
     resolve_delta(nr, obj->type, obj_buffer->buffer,
                   obj_buffer->size, delta_data, delta_size);
     return 1;
@@ -455,7 +517,8 @@ static int resolve_against_held(unsigned nr, const struct object_id *base,
 static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
                                unsigned nr)
 {
-    void            *delta_data, *base;
+    void            *delta_data;
+    void            *base;
     unsigned long    base_size;
     struct object_id base_oid;
 
@@ -465,12 +528,18 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
         use(the_hash_algo->rawsz);
         delta_data = get_data(delta_size);
         if (!delta_data)
+        {
             return;
+        }
         if (repo_has_object_file(the_repository, &base_oid))
+        {
             ; /* Ok we have this one */
+        }
         else if (resolve_against_held(nr, &base_oid,
                                       delta_data, delta_size))
+        {
             return; /* we are done */
+        }
         else
         {
             /* cannot resolve yet --- queue it */
@@ -482,9 +551,12 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
     else
     {
         unsigned       base_found = 0;
-        unsigned char *pack, c;
+        unsigned char *pack;
+        unsigned char  c;
         off_t          base_offset;
-        unsigned       lo, mid, hi;
+        unsigned       lo;
+        unsigned       mid;
+        unsigned       hi;
 
         pack = fill(1);
         c    = *pack;
@@ -494,7 +566,9 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
         {
             base_offset += 1;
             if (!base_offset || MSB(base_offset, 7))
+            {
                 die("offset value overflow for delta base object");
+            }
             pack = fill(1);
             c    = *pack;
             use(1);
@@ -502,11 +576,15 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
         }
         base_offset = obj_list[nr].offset - base_offset;
         if (base_offset <= 0 || base_offset >= obj_list[nr].offset)
+        {
             die("offset value out of bound for delta base object");
+        }
 
         delta_data = get_data(delta_size);
         if (!delta_data)
+        {
             return;
+        }
         lo = 0;
         hi = nr;
         while (lo < hi)
@@ -541,7 +619,9 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
     }
 
     if (resolve_against_held(nr, &base_oid, delta_data, delta_size))
+    {
         return;
+    }
 
     base = repo_read_object_file(the_repository, &base_oid, &type,
                                  &base_size);
@@ -550,7 +630,9 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
         error("failed to read delta-pack base object %s",
               oid_to_hex(&base_oid));
         if (!recover)
+        {
             exit(1);
+        }
         has_errors = 1;
         return;
     }
@@ -562,7 +644,8 @@ static void unpack_one(unsigned nr)
 {
     unsigned         shift;
     unsigned char   *pack;
-    unsigned long    size, c;
+    unsigned long    size;
+    unsigned long    c;
     enum object_type type;
 
     obj_list[nr].offset = consumed_bytes;
@@ -604,7 +687,9 @@ static void unpack_one(unsigned nr)
             error("bad object type %d", type);
             has_errors = 1;
             if (recover)
+            {
                 return;
+            }
             exit(1);
     }
 }
@@ -617,14 +702,20 @@ static void unpack_all(void)
     nr_objects = ntohl(hdr->hdr_entries);
 
     if (ntohl(hdr->hdr_signature) != PACK_SIGNATURE)
+    {
         die("bad pack file");
+    }
     if (!pack_version_ok(hdr->hdr_version))
+    {
         die("unknown pack file version %" PRIu32,
             ntohl(hdr->hdr_version));
+    }
     use(sizeof(struct pack_header));
 
     if (!quiet)
+    {
         progress = start_progress(_("Unpacking objects"), nr_objects);
+    }
     CALLOC_ARRAY(obj_list, nr_objects);
     begin_odb_transaction();
     for (i = 0; i < nr_objects; i++)
@@ -636,7 +727,9 @@ static void unpack_all(void)
     stop_progress(&progress);
 
     if (delta_list)
+    {
         die("unresolved deltas left after unpacking");
+    }
 }
 
 int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
@@ -692,10 +785,14 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
                 hdr->hdr_signature = htonl(PACK_SIGNATURE);
                 hdr->hdr_version   = htonl(strtoul(arg + 14, &c, 10));
                 if (*c != ',')
+                {
                     die("bad %s", arg);
+                }
                 hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
                 if (*c)
+                {
                     die("bad %s", arg);
+                }
                 len = sizeof(*hdr);
                 continue;
             }
@@ -720,11 +817,15 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
     {
         write_rest();
         if (fsck_finish(&fsck_options))
+        {
             die(_("fsck error in pack objects"));
+        }
     }
     if (!hasheq(fill(the_hash_algo->rawsz), oid.hash,
                 the_repository->hash_algo))
+    {
         die("final sha1 did not match");
+    }
     use(the_hash_algo->rawsz);
 
     /* Write the last part of the buffer to stdout */

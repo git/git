@@ -51,7 +51,7 @@ static const char *force_path;
 static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 static int                use_mailmap;
 
-static char *replace_idents_using_mailmap(char *, size_t *);
+static char *replace_idents_using_mailmap(char * /*object_buf*/, size_t * /*size*/);
 
 static char *replace_idents_using_mailmap(char *object_buf, size_t *size)
 {
@@ -72,8 +72,10 @@ static int filter_object(const char *path, unsigned mode,
 
     *buf = repo_read_object_file(the_repository, oid, &type, size);
     if (!*buf)
+    {
         return error(_("cannot read object %s '%s'"),
                      oid_to_hex(oid), path);
+    }
     if ((type == OBJ_BLOB) && S_ISREG(mode))
     {
         struct strbuf            strbuf = STRBUF_INIT;
@@ -94,7 +96,9 @@ static int filter_object(const char *path, unsigned mode,
 static int stream_blob(const struct object_id *oid)
 {
     if (stream_blob_to_fd(1, oid, NULL, 0))
+    {
         die("unable to stream %s to stdout", oid_to_hex(oid));
+    }
     return 0;
 }
 
@@ -115,19 +119,29 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
     const char *path   = force_path;
     const int   opt_cw = (opt == 'c' || opt == 'w');
     if (!path && opt_cw)
+    {
         get_oid_flags |= GET_OID_REQUIRE_PATH;
+    }
 
     if (unknown_type)
+    {
         flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
+    }
 
     if (get_oid_with_context(the_repository, obj_name, get_oid_flags, &oid,
                              &obj_context))
+    {
         die("Not a valid object name %s", obj_name);
+    }
 
     if (!path)
+    {
         path = obj_context.path;
+    }
     if (obj_context.mode == S_IFINVALID)
+    {
         obj_context.mode = 0100644;
+    }
 
     buf = NULL;
     switch (opt)
@@ -135,7 +149,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
         case 't':
             oi.type_name = &sb;
             if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
+            {
                 die("git cat-file: could not get object info");
+            }
             if (sb.len)
             {
                 printf("%s\n", sb.buf);
@@ -155,7 +171,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
             }
 
             if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
+            {
                 die("git cat-file: could not get object info");
+            }
 
             if (use_mailmap && (type == OBJ_COMMIT || type == OBJ_TAG))
             {
@@ -185,13 +203,17 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
         case 'c':
             if (textconv_object(the_repository, path, obj_context.mode,
                                 &oid, 1, &buf, &size))
+            {
                 break;
+            }
             /* else fallthrough */
 
         case 'p':
             type = oid_object_info(the_repository, &oid, NULL);
             if (type < 0)
+            {
                 die("Not a valid object name %s", obj_name);
+            }
 
             /* custom pretty-print here */
             if (type == OBJ_TREE)
@@ -211,7 +233,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
             buf = repo_read_object_file(the_repository, &oid, &type,
                                         &size);
             if (!buf)
+            {
                 die("Cannot read object %s", obj_name);
+            }
 
             if (use_mailmap)
             {
@@ -239,14 +263,20 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
                     const char *target;
 
                     if (!buffer)
+                    {
                         die(_("unable to read %s"), oid_to_hex(&oid));
+                    }
 
                     if (!skip_prefix(buffer, "object ", &target) || get_oid_hex_algop(target, &blob_oid, &hash_algos[oid.algo]))
+                    {
                         die("%s not a valid tag", oid_to_hex(&oid));
+                    }
                     free(buffer);
                 }
                 else
+                {
                     oidcpy(&blob_oid, &oid);
+                }
 
                 if (oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB)
                 {
@@ -276,7 +306,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
     }
 
     if (!buf)
+    {
         die("git cat-file %s: bad file", obj_name);
+    }
 
     write_or_die(1, buf, size);
     ret = 0;
@@ -335,46 +367,70 @@ static int expand_atom(struct strbuf *sb, const char *atom, int len,
     if (is_atom("objectname", atom, len))
     {
         if (!data->mark_query)
+        {
             strbuf_addstr(sb, oid_to_hex(&data->oid));
+        }
     }
     else if (is_atom("objecttype", atom, len))
     {
         if (data->mark_query)
+        {
             data->info.typep = &data->type;
+        }
         else
+        {
             strbuf_addstr(sb, type_name(data->type));
+        }
     }
     else if (is_atom("objectsize", atom, len))
     {
         if (data->mark_query)
+        {
             data->info.sizep = &data->size;
+        }
         else
+        {
             strbuf_addf(sb, "%" PRIuMAX, (uintmax_t)data->size);
+        }
     }
     else if (is_atom("objectsize:disk", atom, len))
     {
         if (data->mark_query)
+        {
             data->info.disk_sizep = &data->disk_size;
+        }
         else
+        {
             strbuf_addf(sb, "%" PRIuMAX, (uintmax_t)data->disk_size);
+        }
     }
     else if (is_atom("rest", atom, len))
     {
         if (data->mark_query)
+        {
             data->split_on_whitespace = 1;
+        }
         else if (data->rest)
+        {
             strbuf_addstr(sb, data->rest);
+        }
     }
     else if (is_atom("deltabase", atom, len))
     {
         if (data->mark_query)
+        {
             data->info.delta_base_oid = &data->delta_base_oid;
+        }
         else
+        {
             strbuf_addstr(sb,
                           oid_to_hex(&data->delta_base_oid));
+        }
     }
     else
+    {
         return 0;
+    }
     return 1;
 }
 
@@ -386,11 +442,17 @@ static void expand_format(struct strbuf *sb, const char *start,
         const char *end;
 
         if (skip_prefix(start, "%", &start) || *start != '(')
+        {
             strbuf_addch(sb, '%');
+        }
         else if ((end = strchr(start + 1, ')')) && expand_atom(sb, start + 1, end - start - 1, data))
+        {
             start = end + 1;
+        }
         else
+        {
             strbuf_expand_bad_format(start, "cat-file");
+        }
     }
 }
 
@@ -399,10 +461,14 @@ static void batch_write(struct batch_options *opt, const void *data, int len)
     if (opt->buffer_output)
     {
         if (fwrite(data, 1, len, stdout) != len)
+        {
             die_errno("unable to write to stdout");
+        }
     }
     else
+    {
         write_or_die(1, data, len);
+    }
 }
 
 static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
@@ -414,21 +480,27 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
     if (data->type == OBJ_BLOB)
     {
         if (opt->buffer_output)
+        {
             fflush(stdout);
+        }
         if (opt->transform_mode)
         {
             char         *contents;
             unsigned long size;
 
             if (!data->rest)
+            {
                 die("missing path for '%s'", oid_to_hex(oid));
+            }
 
             if (opt->transform_mode == 'w')
             {
                 if (filter_object(data->rest, 0100644, oid,
                                   &contents, &size))
+                {
                     die("could not convert '%s' %s",
                         oid_to_hex(oid), data->rest);
+                }
             }
             else if (opt->transform_mode == 'c')
             {
@@ -436,16 +508,22 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
                 if (!textconv_object(the_repository,
                                      data->rest, 0100644, oid,
                                      1, &contents, &size))
+                {
                     contents = repo_read_object_file(the_repository,
                                                      oid,
                                                      &type,
                                                      &size);
+                }
                 if (!contents)
+                {
                     die("could not convert '%s' %s",
                         oid_to_hex(oid), data->rest);
+                }
             }
             else
+            {
                 BUG("invalid transform_mode: %c", opt->transform_mode);
+            }
             batch_write(opt, contents, size);
             free(contents);
         }
@@ -463,7 +541,9 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
         contents = repo_read_object_file(the_repository, oid, &type,
                                          &size);
         if (!contents)
+        {
             die("object %s disappeared", oid_to_hex(oid));
+        }
 
         if (use_mailmap)
         {
@@ -473,9 +553,13 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
         }
 
         if (type != data->type)
+        {
             die("object %s changed type!?", oid_to_hex(oid));
+        }
         if (data->info.sizep && size != data->size && !use_mailmap)
+        {
             die("object %s changed size!?", oid_to_hex(oid));
+        }
 
         batch_write(opt, contents, size);
         free(contents);
@@ -507,15 +591,21 @@ static void batch_object_write(const char           *obj_name,
         int ret;
 
         if (use_mailmap)
+        {
             data->info.typep = &data->type;
+        }
 
         if (pack)
+        {
             ret = packed_object_info(the_repository, pack, offset,
                                      &data->info);
+        }
         else
+        {
             ret = oid_object_info_extended(the_repository,
                                            &data->oid, &data->info,
                                            OBJECT_INFO_LOOKUP_REPLACE);
+        }
         if (ret < 0)
         {
             printf("%s missing%c",
@@ -532,7 +622,9 @@ static void batch_object_write(const char           *obj_name,
             buf = repo_read_object_file(the_repository, &data->oid, &data->type,
                                         &data->size);
             if (!buf)
+            {
                 die(_("unable to read %s"), oid_to_hex(&data->oid));
+            }
             buf        = replace_idents_using_mailmap(buf, &s);
             data->size = cast_size_t_to_ulong(s);
 
@@ -664,7 +756,9 @@ static int batch_unordered_object(const struct object_id *oid,
     struct object_cb_data *data = vdata;
 
     if (oidset_insert(data->seen, oid))
+    {
         return 0;
+    }
 
     oidcpy(&data->expand->oid, oid);
     batch_object_write(NULL, data->scratch, data->opt, data->expand,
@@ -725,10 +819,14 @@ static void dispatch_calls(struct batch_options *opt,
     int i;
 
     if (!opt->buffer_output)
+    {
         die(_("flush is only for --buffer mode"));
+    }
 
     for (i = 0; i < nr; i++)
+    {
         cmd[i].fn(opt, cmd[i].line, output, data);
+    }
 
     fflush(stdout);
 }
@@ -738,7 +836,9 @@ static void free_cmds(struct queued_cmd *cmd, size_t *nr)
     size_t i;
 
     for (i = 0; i < *nr; i++)
+    {
         FREE_AND_NULL(cmd[i].line);
+    }
 
     *nr = 0;
 }
@@ -760,31 +860,41 @@ static void batch_objects_command(struct batch_options *opt,
 {
     struct strbuf      input      = STRBUF_INIT;
     struct queued_cmd *queued_cmd = NULL;
-    size_t             alloc = 0, nr = 0;
+    size_t             alloc      = 0;
+    size_t             nr         = 0;
 
     while (strbuf_getdelim_strip_crlf(&input, stdin, opt->input_delim) != EOF)
     {
         int                     i;
-        const struct parse_cmd *cmd  = NULL;
-        const char             *p    = NULL, *cmd_end;
+        const struct parse_cmd *cmd = NULL;
+        const char             *p   = NULL;
+        const char             *cmd_end;
         struct queued_cmd       call = {0};
 
         if (!input.len)
+        {
             die(_("empty command in input"));
+        }
         if (isspace(*input.buf))
+        {
             die(_("whitespace before command: '%s'"), input.buf);
+        }
 
         for (i = 0; i < ARRAY_SIZE(commands); i++)
         {
             if (!skip_prefix(input.buf, commands[i].name, &cmd_end))
+            {
                 continue;
+            }
 
             cmd = &commands[i];
             if (cmd->takes_args)
             {
                 if (*cmd_end != ' ')
+                {
                     die(_("%s requires arguments"),
                         commands[i].name);
+                }
 
                 p = cmd_end + 1;
             }
@@ -798,7 +908,9 @@ static void batch_objects_command(struct batch_options *opt,
         }
 
         if (!cmd)
+        {
             die(_("unknown command: '%s'"), input.buf);
+        }
 
         if (!strcmp(cmd->name, "flush"))
         {
@@ -852,16 +964,22 @@ static int batch_objects(struct batch_options *opt)
     data.mark_query = 0;
     strbuf_release(&output);
     if (opt->transform_mode)
+    {
         data.split_on_whitespace = 1;
+    }
 
     if (opt->format && !strcmp(opt->format, DEFAULT_FORMAT))
+    {
         opt->format = NULL;
+    }
     /*
      * If we are printing out the object, then always fill in the type,
      * since we will want to decide whether or not to stream.
      */
     if (opt->batch_mode == BATCH_MODE_CONTENTS)
+    {
         data.info.typep = &data.type;
+    }
 
     if (opt->all_objects)
     {
@@ -869,10 +987,14 @@ static int batch_objects(struct batch_options *opt)
         struct object_info    empty = OBJECT_INFO_INIT;
 
         if (!memcmp(&data.info, &empty, sizeof(empty)))
+        {
             data.skip_object_info = 1;
+        }
 
         if (repo_has_promisor_remote(the_repository))
+        {
             warning("This repository uses promisor remotes. Some objects may not be loaded.");
+        }
 
         disable_replace_refs();
 
@@ -937,7 +1059,9 @@ static int batch_objects(struct batch_options *opt)
             if (p)
             {
                 while (*p && strchr(" \t", *p))
+                {
                     *p++ = '\0';
+                }
             }
             data.rest = p;
         }
@@ -956,7 +1080,9 @@ static int git_cat_file_config(const char *var, const char *value,
                                const struct config_context *ctx, void *cb)
 {
     if (userdiff_config(var, value) < 0)
+    {
         return -1;
+    }
 
     return git_default_config(var, value, ctx, cb);
 }
@@ -977,13 +1103,21 @@ static int batch_option_callback(const struct option *opt,
     bo->enabled = 1;
 
     if (!strcmp(opt->long_name, "batch"))
+    {
         bo->batch_mode = BATCH_MODE_CONTENTS;
+    }
     else if (!strcmp(opt->long_name, "batch-check"))
+    {
         bo->batch_mode = BATCH_MODE_INFO;
+    }
     else if (!strcmp(opt->long_name, "batch-command"))
+    {
         bo->batch_mode = BATCH_MODE_QUEUE_AND_DISPATCH;
+    }
     else
+    {
         BUG("%s given to batch-option-callback", opt->long_name);
+    }
 
     bo->format = arg;
 
@@ -992,10 +1126,11 @@ static int batch_option_callback(const struct option *opt,
 
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
-    int                  opt      = 0;
-    int                  opt_cw   = 0;
-    int                  opt_epts = 0;
-    const char          *exp_type = NULL, *obj_name = NULL;
+    int                  opt                  = 0;
+    int                  opt_cw               = 0;
+    int                  opt_epts             = 0;
+    const char          *exp_type             = NULL;
+    const char          *obj_name             = NULL;
     struct batch_options batch                = {0};
     int                  unknown_type         = 0;
     int                  input_nul_terminated = 0;
@@ -1070,59 +1205,89 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
     opt_epts = (opt == 'e' || opt == 'p' || opt == 't' || opt == 's');
 
     if (use_mailmap)
+    {
         read_mailmap(&mailmap);
+    }
 
     /* --batch-all-objects? */
     if (opt == 'b')
+    {
         batch.all_objects = 1;
+    }
 
     /* Option compatibility */
     if (force_path && !opt_cw)
+    {
         usage_msg_optf(_("'%s=<%s>' needs '%s' or '%s'"),
                        usage, options,
                        "--path", _("path|tree-ish"), "--filters",
                        "--textconv");
+    }
 
     /* Option compatibility with batch mode */
     if (batch.enabled)
+    {
         ;
+    }
     else if (batch.follow_symlinks)
+    {
         usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
                        "--follow-symlinks");
+    }
     else if (batch.buffer_output >= 0)
+    {
         usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
                        "--buffer");
+    }
     else if (batch.all_objects)
+    {
         usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
                        "--batch-all-objects");
+    }
     else if (input_nul_terminated)
+    {
         usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
                        "-z");
+    }
     else if (nul_terminated)
+    {
         usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
                        "-Z");
+    }
 
     batch.input_delim = batch.output_delim = '\n';
     if (input_nul_terminated)
+    {
         batch.input_delim = '\0';
+    }
     if (nul_terminated)
+    {
         batch.input_delim = batch.output_delim = '\0';
+    }
 
     /* Batch defaults */
     if (batch.buffer_output < 0)
+    {
         batch.buffer_output = batch.all_objects;
+    }
 
     /* Return early if we're in batch mode? */
     if (batch.enabled)
     {
         if (opt_cw)
+        {
             batch.transform_mode = opt;
+        }
         else if (opt && opt != 'b')
+        {
             usage_msg_optf(_("'-%c' is incompatible with batch mode"),
                            usage, options, opt);
+        }
         else if (argc)
+        {
             usage_msg_opt(_("batch modes take no arguments"), usage,
                           options);
+        }
 
         return batch_objects(&batch);
     }
@@ -1130,18 +1295,28 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
     if (opt)
     {
         if (!argc && opt == 'c')
+        {
             usage_msg_optf(_("<rev> required with '%s'"),
                            usage, options, "--textconv");
+        }
         else if (!argc && opt == 'w')
+        {
             usage_msg_optf(_("<rev> required with '%s'"),
                            usage, options, "--filters");
+        }
         else if (!argc && opt_epts)
+        {
             usage_msg_optf(_("<object> required with '-%c'"),
                            usage, options, opt);
+        }
         else if (argc == 1)
+        {
             obj_name = argv[0];
+        }
         else
+        {
             usage_msg_opt(_("too many arguments"), usage, options);
+        }
     }
     else if (!argc)
     {
@@ -1159,6 +1334,8 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
     }
 
     if (unknown_type && opt != 't' && opt != 's')
+    {
         die("git cat-file --allow-unknown-type: use with -s or -t");
+    }
     return cat_one_file(opt, exp_type, obj_name, unknown_type);
 }

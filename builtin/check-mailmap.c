@@ -19,12 +19,16 @@ static const struct option check_mailmap_options[] = {
 
 static void check_mailmap(struct string_list *mailmap, const char *contact)
 {
-    const char        *name, *mail;
-    size_t             namelen, maillen;
+    const char        *name;
+    const char        *mail;
+    size_t             namelen;
+    size_t             maillen;
     struct ident_split ident;
 
     if (split_ident_line(&ident, contact, strlen(contact)))
+    {
         die(_("unable to parse contact: %s"), contact);
+    }
 
     name    = ident.name_begin;
     namelen = ident.name_end - ident.name_begin;
@@ -34,7 +38,9 @@ static void check_mailmap(struct string_list *mailmap, const char *contact)
     map_user(mailmap, &mail, &maillen, &name, &namelen);
 
     if (namelen)
+    {
         printf("%.*s ", (int)namelen, name);
+    }
     printf("<%.*s>\n", (int)maillen, mail);
 }
 
@@ -47,12 +53,16 @@ int cmd_check_mailmap(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, check_mailmap_options,
                          check_mailmap_usage, 0);
     if (argc == 0 && !use_stdin)
+    {
         die(_("no contacts specified"));
+    }
 
     read_mailmap(&mailmap);
 
     for (i = 0; i < argc; ++i)
+    {
         check_mailmap(&mailmap, argv[i]);
+    }
     maybe_flush_or_die(stdout, "stdout");
 
     if (use_stdin)

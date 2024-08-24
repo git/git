@@ -32,12 +32,16 @@ static void write_patterns_to_file(FILE *fp, struct pattern_list *pl)
         struct path_pattern *p = pl->patterns[i];
 
         if (p->flags & PATTERN_FLAG_NEGATIVE)
+        {
             fprintf(fp, "!");
+        }
 
         fprintf(fp, "%s", p->pattern);
 
         if (p->flags & PATTERN_FLAG_MUSTBEDIR)
+        {
             fprintf(fp, "/");
+        }
 
         fprintf(fp, "\n");
     }
@@ -58,7 +62,9 @@ static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
 
     setup_work_tree();
     if (!core_apply_sparse_checkout)
+    {
         die(_("this worktree is not sparse"));
+    }
 
     argc = parse_options(argc, argv, prefix,
                          builtin_sparse_checkout_list_options,
@@ -113,8 +119,9 @@ static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
 
 static void clean_tracked_sparse_directories(struct repository *r)
 {
-    int                      i, was_full = 0;
-    struct strbuf            path = STRBUF_INIT;
+    int                      i;
+    int                      was_full = 0;
+    struct strbuf            path     = STRBUF_INIT;
     size_t                   pathlen;
     struct string_list_item *item;
     struct string_list       sparse_dirs = STRING_LIST_INIT_DUP;
@@ -124,9 +131,13 @@ static void clean_tracked_sparse_directories(struct repository *r)
      * delete directories outside of the sparse cone.
      */
     if (!r || !r->index || !r->worktree)
+    {
         return;
+    }
     if (init_sparse_checkout_patterns(r->index) || !r->index->sparse_checkout_patterns->use_cone_patterns)
+    {
         return;
+    }
 
     /*
      * Use the sparse index as a data structure to assist finding
@@ -142,7 +153,9 @@ static void clean_tracked_sparse_directories(struct repository *r)
          * not try deleting files.
          */
         if (convert_to_sparse(r->index, SPARSE_INDEX_MEMORY_ONLY))
+        {
             return;
+        }
         was_full = 1;
     }
 
@@ -161,7 +174,9 @@ static void clean_tracked_sparse_directories(struct repository *r)
         struct cache_entry *ce = r->index->cache[i];
 
         if (S_ISSPARSEDIR(ce->ce_mode) && repo_file_exists(r, ce->name))
+        {
             string_list_append(&sparse_dirs, ce->name);
+        }
     }
 
     for_each_string_list_item(item, &sparse_dirs)
@@ -206,7 +221,9 @@ static void clean_tracked_sparse_directories(struct repository *r)
     strbuf_release(&path);
 
     if (was_full)
+    {
         ensure_full_index(r->index);
+    }
 }
 
 static int update_working_directory(struct pattern_list *pl)
@@ -219,7 +236,9 @@ static int update_working_directory(struct pattern_list *pl)
 
     /* If no branch has been checked out, there are no updates to make. */
     if (is_index_unborn(r->index))
+    {
         return UPDATE_SPARSITY_SUCCESS;
+    }
 
     old_pl                             = r->index->sparse_checkout_patterns;
     r->index->sparse_checkout_patterns = pl;
@@ -241,15 +260,21 @@ static int update_working_directory(struct pattern_list *pl)
     clear_unpack_trees_porcelain(&o);
 
     if (result == UPDATE_SPARSITY_WARNINGS)
+    {
         /*
          * We don't do any special handling of warnings from untracked
          * files in the way or dirty entries that can't be removed.
          */
         result = UPDATE_SPARSITY_SUCCESS;
+    }
     if (result == UPDATE_SPARSITY_SUCCESS)
+    {
         write_locked_index(r->index, &lock_file, COMMIT_LOCK);
+    }
     else
+    {
         rollback_lock_file(&lock_file);
+    }
 
     clean_tracked_sparse_directories(r);
 
@@ -271,7 +296,9 @@ static char *escaped_pattern(char *pattern)
     while (*p)
     {
         if (is_glob_special(*p))
+        {
             strbuf_addch(&final, '\\');
+        }
 
         strbuf_addch(&final, *p);
         p++;
@@ -291,12 +318,16 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
     hashmap_for_each_entry(&pl->parent_hashmap, &iter, pe, ent)
     {
         if (hashmap_get_entry(&pl->recursive_hashmap, pe, ent, NULL))
+        {
             continue;
+        }
 
         if (!hashmap_contains_parent(&pl->recursive_hashmap,
                                      pe->pattern,
                                      &parent_pattern))
+        {
             string_list_insert(&sl, pe->pattern);
+        }
     }
 
     string_list_sort(&sl);
@@ -309,7 +340,9 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
         char *pattern = escaped_pattern(sl.items[i].string);
 
         if (strlen(pattern))
+        {
             fprintf(fp, "%s/\n!%s/*/\n", pattern, pattern);
+        }
         free(pattern);
     }
 
@@ -320,7 +353,9 @@ static void write_cone_to_file(FILE *fp, struct pattern_list *pl)
         if (!hashmap_contains_parent(&pl->recursive_hashmap,
                                      pe->pattern,
                                      &parent_pattern))
+        {
             string_list_insert(&sl, pe->pattern);
+        }
     }
 
     strbuf_release(&parent_pattern);
@@ -349,7 +384,9 @@ static int write_patterns_and_update(struct pattern_list *pl)
     sparse_filename = get_sparse_checkout_filename();
 
     if (safe_create_leading_directories(sparse_filename))
+    {
         die(_("failed to create directory for sparse-checkout file"));
+    }
 
     fd = hold_lock_file_for_update(&lk, sparse_filename,
                                    LOCK_DIE_ON_ERROR);
@@ -367,9 +404,13 @@ static int write_patterns_and_update(struct pattern_list *pl)
     fp = xfdopen(fd, "w");
 
     if (core_sparse_checkout_cone)
+    {
         write_cone_to_file(fp, pl);
+    }
     else
+    {
         write_patterns_to_file(fp, pl);
+    }
 
     fflush(fp);
     commit_lock_file(&lk);
@@ -401,10 +442,14 @@ static int set_config(enum sparse_checkout_mode mode)
         || repo_config_set_worktree_gently(the_repository,
                                            "core.sparseCheckoutCone",
                                            mode == MODE_CONE_PATTERNS ? "true" : "false"))
+    {
         return 1;
+    }
 
     if (mode == MODE_NO_PATTERNS)
+    {
         return set_sparse_index_config(the_repository, 0);
+    }
 
     return 0;
 }
@@ -413,7 +458,9 @@ static enum sparse_checkout_mode update_cone_mode(int *cone_mode)
 {
     /* If not specified, use previous definition of cone mode */
     if (*cone_mode == -1 && core_apply_sparse_checkout)
+    {
         *cone_mode = core_sparse_checkout_cone;
+    }
 
     /* Set cone/non-cone mode appropriately */
     core_apply_sparse_checkout = 1;
@@ -426,29 +473,36 @@ static enum sparse_checkout_mode update_cone_mode(int *cone_mode)
     return MODE_ALL_PATTERNS;
 }
 
-static int update_modes(int *cone_mode, int *sparse_index)
+static int update_modes(int *cone_mode, const int *sparse_index)
 {
-    int mode, record_mode;
+    int mode;
+    int record_mode;
 
     /* Determine if we need to record the mode; ensure sparse checkout on */
     record_mode = (*cone_mode != -1) || !core_apply_sparse_checkout;
 
     mode = update_cone_mode(cone_mode);
     if (record_mode && set_config(mode))
+    {
         return 1;
+    }
 
     /* Set sparse-index/non-sparse-index mode if specified */
     if (*sparse_index >= 0)
     {
         if (set_sparse_index_config(the_repository, *sparse_index) < 0)
+        {
             die(_("failed to modify sparse-index config"));
+        }
 
         /* force an index rewrite */
         repo_read_index(the_repository);
         the_repository->index->updated_workdir = 1;
 
         if (!*sparse_index)
+        {
             ensure_full_index(the_repository->index);
+        }
     }
 
     return 0;
@@ -490,7 +544,9 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
                          builtin_sparse_checkout_init_usage, 0);
 
     if (update_modes(&init_opts.cone_mode, &init_opts.sparse_index))
+    {
         return 1;
+    }
 
     memset(&pl, 0, sizeof(pl));
 
@@ -511,11 +567,15 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
 
         /* assume we are in a fresh repo, but update the sparse-checkout file */
         if (safe_create_leading_directories(sparse_filename))
+        {
             die(_("unable to create leading directories of %s"),
                 sparse_filename);
+        }
         fp = xfopen(sparse_filename, "w");
         if (!fp)
+        {
             die(_("failed to open '%s'"), sparse_filename);
+        }
 
         free(sparse_filename);
         fprintf(fp, "/*\n!/*/\n");
@@ -549,7 +609,9 @@ static void insert_recursive_pattern(struct pattern_list *pl, struct strbuf *pat
         struct pattern_entry *dup;
 
         if (!slash || slash == e->pattern)
+        {
             break;
+        }
 
         newlen        = slash - e->pattern;
         e             = xmalloc(sizeof(struct pattern_entry));
@@ -578,13 +640,19 @@ static void strbuf_to_cone_pattern(struct strbuf *line, struct pattern_list *pl)
     strbuf_trim_trailing_dir_sep(line);
 
     if (strbuf_normalize_path(line))
+    {
         die(_("could not normalize path %s"), line->buf);
+    }
 
     if (!line->len)
+    {
         return;
+    }
 
     if (line->buf[0] != '/')
+    {
         strbuf_insertstr(line, 0, "/");
+    }
 
     insert_recursive_pattern(pl, line);
 }
@@ -611,8 +679,10 @@ static void add_patterns_from_input(struct pattern_list *pl,
                 {
                     strbuf_reset(&unquoted);
                     if (unquote_c_style(&unquoted, line.buf, NULL))
+                    {
                         die(_("unable to unquote C-style string '%s'"),
                             line.buf);
+                    }
 
                     strbuf_swap(&unquoted, &line);
                 }
@@ -640,14 +710,18 @@ static void add_patterns_from_input(struct pattern_list *pl,
             struct strbuf line = STRBUF_INIT;
 
             while (!strbuf_getline(&line, file))
+            {
                 add_pattern(line.buf, empty_base, 0, pl, 0);
+            }
 
             strbuf_release(&line);
         }
         else
         {
             for (i = 0; i < argc; i++)
+            {
                 add_pattern(argv[i], empty_base, 0, pl, 0);
+            }
         }
     }
 }
@@ -676,11 +750,15 @@ static void add_patterns_cone_mode(int argc, const char **argv,
 
     if (add_patterns_from_file_to_list(sparse_filename, "", 0,
                                        &existing, NULL, 0))
+    {
         die(_("unable to load existing sparse-checkout patterns"));
+    }
     free(sparse_filename);
 
     if (!existing.use_cone_patterns)
+    {
         die(_("existing sparse-checkout patterns do not use cone mode"));
+    }
 
     hashmap_for_each_entry(&existing.recursive_hashmap, &iter, pe, ent)
     {
@@ -706,7 +784,9 @@ static void add_patterns_literal(int argc, const char **argv,
     char *sparse_filename = get_sparse_checkout_filename();
     if (add_patterns_from_file_to_list(sparse_filename, "", 0,
                                        pl, NULL, 0))
+    {
         die(_("unable to load existing sparse-checkout patterns"));
+    }
     free(sparse_filename);
     add_patterns_from_input(pl, argc, argv, use_stdin ? stdin : NULL);
 }
@@ -722,9 +802,13 @@ static int modify_pattern_list(int argc, const char **argv, int use_stdin,
     {
         case ADD:
             if (core_sparse_checkout_cone)
+            {
                 add_patterns_cone_mode(argc, argv, pl, use_stdin);
+            }
             else
+            {
                 add_patterns_literal(argc, argv, pl, use_stdin);
+            }
             break;
 
         case REPLACE:
@@ -743,7 +827,9 @@ static int modify_pattern_list(int argc, const char **argv, int use_stdin,
     result = write_patterns_and_update(pl);
 
     if (result && changed_config)
+    {
         set_config(MODE_NO_PATTERNS);
+    }
 
     clear_pattern_list(pl);
     free(pl);
@@ -756,7 +842,9 @@ static void sanitize_paths(int argc, const char **argv,
     int i;
 
     if (!argc)
+    {
         return;
+    }
 
     if (prefix && *prefix && core_sparse_checkout_cone)
     {
@@ -767,25 +855,37 @@ static void sanitize_paths(int argc, const char **argv,
         int prefix_len = strlen(prefix);
 
         for (i = 0; i < argc; i++)
+        {
             argv[i] = prefix_path(prefix, prefix_len, argv[i]);
+        }
     }
 
     if (skip_checks)
+    {
         return;
+    }
 
     if (prefix && *prefix && !core_sparse_checkout_cone)
+    {
         die(_("please run from the toplevel directory in non-cone mode"));
+    }
 
     if (core_sparse_checkout_cone)
     {
         for (i = 0; i < argc; i++)
         {
             if (argv[i][0] == '/')
+            {
                 die(_("specify directories rather than patterns (no leading slash)"));
+            }
             if (argv[i][0] == '!')
+            {
                 die(_("specify directories rather than patterns.  If your directory starts with a '!', pass --skip-checks"));
+            }
             if (strpbrk(argv[i], "*?[]"))
+            {
                 die(_("specify directories rather than patterns.  If your directory really has any of '*?[]\\' in it, pass --skip-checks"));
+            }
         }
     }
 
@@ -796,15 +896,23 @@ static void sanitize_paths(int argc, const char **argv,
         int                 pos   = index_name_pos(index, argv[i], strlen(argv[i]));
 
         if (pos < 0)
+        {
             continue;
+        }
         ce = index->cache[pos];
         if (S_ISSPARSEDIR(ce->ce_mode))
+        {
             continue;
+        }
 
         if (core_sparse_checkout_cone)
+        {
             die(_("'%s' is not a directory; to treat it as a directory anyway, rerun with --skip-checks"), argv[i]);
+        }
         else
+        {
             warning(_("pass a leading slash before paths such as '%s' if you want a single file (see NON-CONE PROBLEMS in the git-sparse-checkout manual)."), argv[i]);
+        }
     }
 }
 
@@ -831,7 +939,9 @@ static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
 
     setup_work_tree();
     if (!core_apply_sparse_checkout)
+    {
         die(_("no sparse-checkout to add to"));
+    }
 
     repo_read_index(the_repository);
 
@@ -886,7 +996,9 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
                          builtin_sparse_checkout_set_usage, 0);
 
     if (update_modes(&set_opts.cone_mode, &set_opts.sparse_index))
+    {
         return 1;
+    }
 
     /*
      * Cone mode automatically specifies the toplevel directory.  For
@@ -929,7 +1041,9 @@ static int sparse_checkout_reapply(int argc, const char **argv,
 
     setup_work_tree();
     if (!core_apply_sparse_checkout)
+    {
         die(_("must be in a sparse-checkout to reapply sparsity patterns"));
+    }
 
     reapply_opts.cone_mode    = -1;
     reapply_opts.sparse_index = -1;
@@ -941,7 +1055,9 @@ static int sparse_checkout_reapply(int argc, const char **argv,
     repo_read_index(the_repository);
 
     if (update_modes(&reapply_opts.cone_mode, &reapply_opts.sparse_index))
+    {
         return 1;
+    }
 
     return update_working_directory(NULL);
 }
@@ -988,7 +1104,9 @@ static int sparse_checkout_disable(int argc, const char **argv,
     the_repository->settings.sparse_index = 0;
 
     if (update_working_directory(&pl))
+    {
         die(_("error while refreshing working directory"));
+    }
 
     clear_pattern_list(&pl);
     return set_config(MODE_NO_PATTERNS);
@@ -1022,14 +1140,18 @@ static int check_rules(struct pattern_list *pl, int null_terminated)
         {
             strbuf_reset(&unquoted);
             if (unquote_c_style(&unquoted, line.buf, NULL))
+            {
                 die(_("unable to unquote C-style string '%s'"),
                     line.buf);
+            }
 
             path = unquoted.buf;
         }
 
         if (path_in_sparse_checkout(path, the_repository->index))
+        {
             write_name_quoted(path, stdout, line_terminator);
+        }
     }
     strbuf_release(&line);
     strbuf_release(&unquoted);
@@ -1060,7 +1182,9 @@ static int sparse_checkout_check_rules(int argc, const char **argv, const char *
                          builtin_sparse_checkout_check_rules_usage, 0);
 
     if (check_rules_opts.rules_file && check_rules_opts.cone_mode < 0)
+    {
         check_rules_opts.cone_mode = 1;
+    }
 
     update_cone_mode(&check_rules_opts.cone_mode);
     pl.use_cone_patterns = core_sparse_checkout_cone;
@@ -1075,7 +1199,9 @@ static int sparse_checkout_check_rules(int argc, const char **argv, const char *
         sparse_filename = get_sparse_checkout_filename();
         if (add_patterns_from_file_to_list(sparse_filename, "", 0, &pl,
                                            NULL, 0))
+        {
             die(_("unable to load existing sparse-checkout patterns"));
+        }
         free(sparse_filename);
     }
 

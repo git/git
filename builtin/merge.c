@@ -120,14 +120,18 @@ static int option_parse_message(const struct option *opt,
     struct strbuf *buf = opt->value;
 
     if (unset)
+    {
         strbuf_setlen(buf, 0);
+    }
     else if (arg)
     {
         strbuf_addf(buf, "%s%s", buf->len ? "\n\n" : "", arg);
         have_message = 1;
     }
     else
+    {
         return error(_("switch `m' requires a value"));
+    }
     return 0;
 }
 
@@ -141,7 +145,9 @@ static enum parse_opt_result option_read_message(struct parse_opt_ctx_t *ctx,
 
     BUG_ON_OPT_ARG(arg_not_used);
     if (unset)
+    {
         BUG("-F cannot be negated");
+    }
 
     if (ctx->opt)
     {
@@ -154,14 +160,22 @@ static enum parse_opt_result option_read_message(struct parse_opt_ctx_t *ctx,
         arg = *++ctx->argv;
     }
     else
+    {
         return error(_("option `%s' requires a value"), opt->long_name);
+    }
 
     if (buf->len)
+    {
         strbuf_addch(buf, '\n');
+    }
     if (ctx->prefix && !is_absolute_path(arg))
+    {
         arg = prefix_filename(ctx->prefix, arg);
+    }
     if (strbuf_read_file(buf, arg, 0) < 0)
+    {
         return error(_("could not read file '%s'"), arg);
+    }
     have_message = 1;
 
     return 0;
@@ -171,12 +185,15 @@ static struct strategy *get_strategy(const char *name)
 {
     int                    i;
     struct strategy       *ret;
-    static struct cmdnames main_cmds = {0}, other_cmds = {0};
+    static struct cmdnames main_cmds  = {0};
+    static struct cmdnames other_cmds = {0};
     static int             loaded;
     char                  *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
 
     if (!name)
+    {
         return NULL;
+    }
 
     if (default_strategy && !strcmp(default_strategy, "ort") && !strcmp(name, "recursive"))
     {
@@ -184,8 +201,12 @@ static struct strategy *get_strategy(const char *name)
     }
 
     for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
+    {
         if (!strcmp(name, all_strategy[i].name))
+        {
             return &all_strategy[i];
+        }
+    }
 
     if (!loaded)
     {
@@ -195,13 +216,20 @@ static struct strategy *get_strategy(const char *name)
         load_command_list("git-merge-", &main_cmds, &other_cmds);
         for (i = 0; i < main_cmds.cnt; i++)
         {
-            int             j, found = 0;
-            struct cmdname *ent = main_cmds.names[i];
+            int             j;
+            int             found = 0;
+            struct cmdname *ent   = main_cmds.names[i];
             for (j = 0; !found && j < ARRAY_SIZE(all_strategy); j++)
+            {
                 if (!xstrncmpz(all_strategy[j].name, ent->name, ent->len))
+                {
                     found = 1;
+                }
+            }
             if (!found)
+            {
                 add_cmdname(&not_strategies, ent->name, ent->len);
+            }
         }
         exclude_cmds(&main_cmds, &not_strategies);
 
@@ -212,13 +240,17 @@ static struct strategy *get_strategy(const char *name)
         fprintf(stderr, _("Could not find merge strategy '%s'.\n"), name);
         fprintf(stderr, _("Available strategies are:"));
         for (i = 0; i < main_cmds.cnt; i++)
+        {
             fprintf(stderr, " %s", main_cmds.names[i]->name);
+        }
         fprintf(stderr, ".\n");
         if (other_cmds.cnt)
         {
             fprintf(stderr, _("Available custom strategies are:"));
             for (i = 0; i < other_cmds.cnt; i++)
+            {
                 fprintf(stderr, " %s", other_cmds.names[i]->name);
+            }
             fprintf(stderr, ".\n");
         }
         exit(1);
@@ -243,7 +275,9 @@ static int option_parse_strategy(const struct option *opt UNUSED,
                                  const char *name, int unset)
 {
     if (unset)
+    {
         return 0;
+    }
 
     append_strategy(get_strategy(name));
     return 0;
@@ -314,7 +348,9 @@ static int save_state(struct object_id *stash)
     fd = repo_hold_locked_index(the_repository, &lock_file, 0);
     refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL, NULL);
     if (0 <= fd)
+    {
         repo_update_index_if_able(the_repository, &lock_file);
+    }
     rollback_lock_file(&lock_file);
 
     strvec_pushl(&cp.args, "stash", "create", NULL);
@@ -322,17 +358,25 @@ static int save_state(struct object_id *stash)
     cp.git_cmd = 1;
 
     if (start_command(&cp))
+    {
         die(_("could not run stash."));
+    }
     len = strbuf_read(&buffer, cp.out, 1024);
     close(cp.out);
 
     if (finish_command(&cp) || len < 0)
+    {
         die(_("stash failed"));
-    else if (!len) /* no changes */
+    }
+    else if (!len)
+    { /* no changes */
         goto out;
+    }
     strbuf_setlen(&buffer, buffer.len - 1);
     if (repo_get_oid(the_repository, buffer.buf, stash))
+    {
         die(_("not a valid object: %s"), buffer.buf);
+    }
     rc = 0;
 out:
     strbuf_release(&buffer);
@@ -349,7 +393,9 @@ static void read_empty(const struct object_id *oid)
     cmd.git_cmd = 1;
 
     if (run_command(&cmd))
+    {
         die(_("read-tree failed"));
+    }
 }
 
 static void reset_hard(const struct object_id *oid)
@@ -361,7 +407,9 @@ static void reset_hard(const struct object_id *oid)
     cmd.git_cmd = 1;
 
     if (run_command(&cmd))
+    {
         die(_("read-tree failed"));
+    }
 }
 
 static void restore_state(const struct object_id *head,
@@ -372,7 +420,9 @@ static void restore_state(const struct object_id *head,
     reset_hard(head);
 
     if (is_null_oid(stash))
+    {
         goto refresh_cache;
+    }
 
     strvec_pushl(&cmd.args, "stash", "apply", "--index", "--quiet", NULL);
     strvec_push(&cmd.args, oid_to_hex(stash));
@@ -387,7 +437,9 @@ static void restore_state(const struct object_id *head,
 refresh_cache:
     discard_index(the_repository->index);
     if (repo_read_index(the_repository) < 0)
+    {
         die(_("could not read index"));
+    }
 }
 
 /* This is called when no merge was necessary. */
@@ -396,9 +448,13 @@ static void finish_up_to_date(void)
     if (verbosity >= 0)
     {
         if (squash)
+        {
             puts(_("Already up to date. (nothing to squash)"));
+        }
         else
+        {
             puts(_("Already up to date."));
+        }
     }
     remove_merge_branch_state(the_repository);
 }
@@ -420,11 +476,15 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
     add_pending_object(&rev, &commit->object, NULL);
 
     for (j = remoteheads; j; j = j->next)
+    {
         add_pending_object(&rev, &j->item->object, NULL);
+    }
 
     setup_revisions(0, NULL, &rev, NULL);
     if (prepare_revision_walk(&rev))
+    {
         die(_("revision walk setup failed"));
+    }
 
     ctx.abbrev    = rev.abbrev;
     ctx.date_mode = rev.date_mode;
@@ -451,11 +511,15 @@ static void finish(struct commit          *head_commit,
     const struct object_id *head           = &head_commit->object.oid;
 
     if (!msg)
+    {
         strbuf_addstr(&reflog_message, getenv("GIT_REFLOG_ACTION"));
+    }
     else
     {
         if (verbosity >= 0)
+        {
             printf("%s\n", msg);
+        }
         strbuf_addf(&reflog_message, "%s: %s",
                     getenv("GIT_REFLOG_ACTION"), msg);
     }
@@ -466,7 +530,9 @@ static void finish(struct commit          *head_commit,
     else
     {
         if (verbosity >= 0 && !merge_msg.len)
+        {
             printf(_("No merge message -- not updating HEAD\n"));
+        }
         else
         {
             refs_update_ref(get_main_ref_store(the_repository),
@@ -498,7 +564,9 @@ static void finish(struct commit          *head_commit,
     run_hooks_l(the_repository, "post-merge", squash ? "1" : "0", NULL);
 
     if (new_head)
+    {
         apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+    }
     strbuf_release(&reflog_message);
 }
 
@@ -511,7 +579,8 @@ static void merge_name(const char *remote, struct strbuf *msg)
     struct merge_remote_desc *desc;
     const char               *ptr;
     char                     *found_ref = NULL;
-    int                       len, early;
+    int                       len;
+    int                       early;
 
     strbuf_branchname(&bname, remote, 0);
     remote = bname.buf;
@@ -519,7 +588,9 @@ static void merge_name(const char *remote, struct strbuf *msg)
     oidclr(&branch_head, the_repository->hash_algo);
     remote_head = get_merge_parent(remote);
     if (!remote_head)
+    {
         die(_("'%s' does not point to a commit"), remote);
+    }
 
     if (repo_dwim_ref(the_repository, remote, strlen(remote), &branch_head,
                       &found_ref, 0)
@@ -549,9 +620,13 @@ static void merge_name(const char *remote, struct strbuf *msg)
     for (len = 0, ptr = remote + strlen(remote);
          remote < ptr && ptr[-1] == '^';
          ptr--)
+    {
         len++;
+    }
     if (len)
+    {
         early = 1;
+    }
     else
     {
         early = 0;
@@ -567,11 +642,17 @@ static void merge_name(const char *remote, struct strbuf *msg)
                 len++;
             }
             if (*ptr)
+            {
                 len = 0; /* not ...~<number> */
+            }
             else if (seen_nonzero)
+            {
                 early = 1;
+            }
             else if (len == 1)
+            {
                 early = 1; /* "name~" is "name~1"! */
+            }
         }
     }
     if (len)
@@ -615,11 +696,15 @@ static void parse_branch_merge_options(char *bmo)
     int          argc;
 
     if (!bmo)
+    {
         return;
+    }
     argc = split_cmdline(bmo, &argv);
     if (argc < 0)
+    {
         die(_("Bad branch.%s.mergeoptions string: %s"), branch,
             _(split_cmdline_strerror(argc)));
+    }
     REALLOC_ARRAY(argv, argc + 2);
     MOVE_ARRAY(argv + 1, argv, argc + 1);
     argc++;
@@ -699,14 +784,17 @@ static int git_merge_config(const char *k, const char *v,
 
     status = fmt_merge_msg_config(k, v, ctx, cb);
     if (status)
+    {
         return status;
+    }
     return git_diff_ui_config(k, v, ctx, cb);
 }
 
 static int read_tree_trivial(struct object_id *common, struct object_id *head,
                              struct object_id *one)
 {
-    int                         i, nr_trees = 0;
+    int                         i;
+    int                         nr_trees = 0;
     struct tree                *trees[MAX_UNPACK_TREES];
     struct tree_desc            t[MAX_UNPACK_TREES];
     struct unpack_trees_options opts;
@@ -722,13 +810,19 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
     opts.preserve_ignored    = 0; /* FIXME: !overwrite_ignore */
     trees[nr_trees]          = parse_tree_indirect(common);
     if (!trees[nr_trees++])
+    {
         return -1;
+    }
     trees[nr_trees] = parse_tree_indirect(head);
     if (!trees[nr_trees++])
+    {
         return -1;
+    }
     trees[nr_trees] = parse_tree_indirect(one);
     if (!trees[nr_trees++])
+    {
         return -1;
+    }
     opts.fn = threeway_merge;
     cache_tree_free(&the_repository->index->cache_tree);
     for (i = 0; i < nr_trees; i++)
@@ -738,14 +832,18 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
                        trees[i]->buffer, trees[i]->size);
     }
     if (unpack_trees(nr_trees, t, &opts))
+    {
         return -1;
+    }
     return 0;
 }
 
 static void write_tree_trivial(struct object_id *oid)
 {
     if (write_index_as_tree(oid, the_repository->index, get_index_file(), 0, NULL))
+    {
         die(_("git write-tree failed to write a tree"));
+    }
 }
 
 static int try_merge_strategy(const char *strategy, struct commit_list *common,
@@ -758,12 +856,15 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
                                      SKIP_IF_UNCHANGED, 0, NULL, NULL,
                                      NULL)
         < 0)
+    {
         die(_("Unable to write index."));
+    }
 
     if (!strcmp(strategy, "recursive") || !strcmp(strategy, "subtree") || !strcmp(strategy, "ort"))
     {
         struct lock_file     lock = LOCK_INIT;
-        int                  clean, x;
+        int                  clean;
+        int                  x;
         struct commit       *result;
         struct commit_list  *reversed = NULL;
         struct merge_options o;
@@ -777,29 +878,41 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
         init_ui_merge_options(&o, the_repository);
         if (!strcmp(strategy, "subtree"))
+        {
             o.subtree_shift = "";
+        }
 
         o.show_rename_progress =
             show_progress == -1 ? isatty(2) : show_progress;
 
         for (x = 0; x < xopts.nr; x++)
+        {
             if (parse_merge_opt(&o, xopts.v[x]))
+            {
                 die(_("unknown strategy option: -X%s"), xopts.v[x]);
+            }
+        }
 
         o.branch1 = head_arg;
         o.branch2 = merge_remote_util(remoteheads->item)->name;
 
         for (j = common; j; j = j->next)
+        {
             commit_list_insert(j->item, &reversed);
+        }
 
         repo_hold_locked_index(the_repository, &lock,
                                LOCK_DIE_ON_ERROR);
         if (!strcmp(strategy, "ort"))
+        {
             clean = merge_ort_recursive(&o, head, remoteheads->item,
                                         reversed, &result);
+        }
         else
+        {
             clean = merge_recursive(&o, head, remoteheads->item,
                                     reversed, &result);
+        }
         free_commit_list(reversed);
 
         if (clean < 0)
@@ -809,15 +922,15 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
         }
         if (write_locked_index(the_repository->index, &lock,
                                COMMIT_LOCK | SKIP_IF_UNCHANGED))
+        {
             die(_("unable to write %s"), get_index_file());
+        }
         return clean ? 0 : 1;
     }
-    else
-    {
-        return try_merge_command(the_repository,
-                                 strategy, xopts.nr, xopts.v,
-                                 common, head_arg, remoteheads);
-    }
+
+    return try_merge_command(the_repository,
+                             strategy, xopts.nr, xopts.v,
+                             common, head_arg, remoteheads);
 }
 
 static void count_diff_files(struct diff_queue_struct *q,
@@ -830,11 +943,16 @@ static void count_diff_files(struct diff_queue_struct *q,
 
 static int count_unmerged_entries(void)
 {
-    int i, ret = 0;
+    int i;
+    int ret = 0;
 
     for (i = 0; i < the_repository->index->cache_nr; i++)
+    {
         if (ce_stage(the_repository->index->cache[i]))
+        {
             ret++;
+        }
+    }
 
     return ret;
 }
@@ -854,8 +972,12 @@ static void add_strategies(const char *string, unsigned attr)
         return;
     }
     for (i = 0; i < ARRAY_SIZE(all_strategy); i++)
+    {
         if (all_strategy[i].attr & attr)
+        {
             append_strategy(&all_strategy[i]);
+        }
+    }
 }
 
 static void read_merge_msg(struct strbuf *msg)
@@ -863,14 +985,18 @@ static void read_merge_msg(struct strbuf *msg)
     const char *filename = git_path_merge_msg(the_repository);
     strbuf_reset(msg);
     if (strbuf_read_file(msg, filename, 0) < 0)
+    {
         die_errno(_("Could not read from '%s'"), filename);
+    }
 }
 
-static void write_merge_state(struct commit_list *);
+static void write_merge_state(struct commit_list * /*remoteheads*/);
 static void abort_commit(struct commit_list *remoteheads, const char *err_msg)
 {
     if (err_msg)
+    {
         error("%s", err_msg);
+    }
     fprintf(stderr,
             _("Not committing merge; use 'git commit' to complete the merge.\n"));
     write_merge_state(remoteheads);
@@ -889,7 +1015,7 @@ static const char no_scissors_editor_comment[] =
     N_("Lines starting with '%s' will be ignored, and an empty message aborts\n"
        "the commit.\n");
 
-static void write_merge_heads(struct commit_list *);
+static void write_merge_heads(struct commit_list * /*remoteheads*/);
 static void prepare_to_commit(struct commit_list *remoteheads)
 {
     struct strbuf msg        = STRBUF_INIT;
@@ -901,19 +1027,25 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 
         if (run_commit_hook(0 < option_edit, index_file, &invoked_hook,
                             "pre-merge-commit", NULL))
+        {
             abort_commit(remoteheads, NULL);
+        }
         /*
          * Re-read the index as pre-merge-commit hook could have updated it,
          * and write it out as a tree.  We must do this before we invoke
          * the editor and after we invoke run_status above.
          */
         if (invoked_hook)
+        {
             discard_index(the_repository->index);
+        }
     }
     read_index_from(the_repository->index, index_file, get_git_dir());
     strbuf_addbuf(&msg, &merge_msg);
     if (squash)
+    {
         BUG("the control must not reach here under --squash");
+    }
     if (0 < option_edit)
     {
         strbuf_addch(&msg, '\n');
@@ -925,33 +1057,47 @@ static void prepare_to_commit(struct commit_list *remoteheads)
         strbuf_commented_addf(&msg, comment_line_str,
                               _(merge_editor_comment));
         if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
+        {
             strbuf_commented_addf(&msg, comment_line_str,
                                   _(scissors_editor_comment));
+        }
         else
+        {
             strbuf_commented_addf(&msg, comment_line_str,
                                   _(no_scissors_editor_comment), comment_line_str);
+        }
     }
     if (signoff)
+    {
         append_signoff(&msg, ignored_log_message_bytes(msg.buf, msg.len), 0);
+    }
     write_merge_heads(remoteheads);
     write_file_buf(git_path_merge_msg(the_repository), msg.buf, msg.len);
     if (run_commit_hook(0 < option_edit, get_index_file(), NULL,
                         "prepare-commit-msg",
                         git_path_merge_msg(the_repository), "merge", NULL))
+    {
         abort_commit(remoteheads, NULL);
+    }
     if (0 < option_edit)
     {
         if (launch_editor(git_path_merge_msg(the_repository), NULL, NULL))
+        {
             abort_commit(remoteheads, NULL);
+        }
     }
 
     if (!no_verify && run_commit_hook(0 < option_edit, get_index_file(), NULL, "commit-msg", git_path_merge_msg(the_repository), NULL))
+    {
         abort_commit(remoteheads, NULL);
+    }
 
     read_merge_msg(&msg);
     cleanup_message(&msg, cleanup_mode, 0);
     if (!msg.len)
+    {
         abort_commit(remoteheads, _("Empty commit message."));
+    }
     strbuf_release(&merge_msg);
     strbuf_addbuf(&merge_msg, &msg);
     strbuf_release(&msg);
@@ -959,14 +1105,18 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 
 static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 {
-    struct object_id    result_tree, result_commit;
-    struct commit_list *parents = NULL, **pptr = &parents;
+    struct object_id     result_tree;
+    struct object_id     result_commit;
+    struct commit_list  *parents = NULL;
+    struct commit_list **pptr    = &parents;
 
     if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET,
                                      SKIP_IF_UNCHANGED, 0, NULL, NULL,
                                      NULL)
         < 0)
+    {
         return error(_("Unable to write index."));
+    }
 
     write_tree_trivial(&result_tree);
     printf(_("Wonderful.\n"));
@@ -975,7 +1125,9 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
     prepare_to_commit(remoteheads);
     if (commit_tree(merge_msg.buf, merge_msg.len, &result_tree, parents,
                     &result_commit, NULL, sign_commit))
+    {
         die(_("failed to write commit object"));
+    }
     finish(head, remoteheads, &result_commit, "In-index merge");
 
     remove_merge_branch_state(the_repository);
@@ -998,11 +1150,15 @@ static int finish_automerge(struct commit      *head,
     free_commit_list(common);
     parents = remoteheads;
     if (!head_subsumed || fast_forward == FF_NO)
+    {
         commit_list_insert(head, &parents);
+    }
     prepare_to_commit(remoteheads);
     if (commit_tree(merge_msg.buf, merge_msg.len, result_tree, parents,
                     &result_commit, NULL, sign_commit))
+    {
         die(_("failed to write commit object"));
+    }
     strbuf_addf(&buf, "Merge made by the '%s' strategy.", wt_strategy);
     finish(head, remoteheads, &result_commit, buf.buf);
 
@@ -1075,18 +1231,26 @@ static int setup_with_upstream(const char ***argv)
     const char   **args;
 
     if (!branch)
+    {
         die(_("No current branch."));
+    }
     if (!branch->remote_name)
+    {
         die(_("No remote for the current branch."));
+    }
     if (!branch->merge_nr)
+    {
         die(_("No default upstream defined for the current branch."));
+    }
 
     args = xcalloc(st_add(branch->merge_nr, 1), sizeof(char *));
     for (i = 0; i < branch->merge_nr; i++)
     {
         if (!branch->merge[i]->dst)
+        {
             die(_("No remote-tracking branch for %s from %s"),
                 branch->merge[i]->src, branch->remote_name);
+        }
         args[i] = branch->merge[i]->dst;
     }
     args[i] = NULL;
@@ -1120,7 +1284,9 @@ static void write_merge_heads(struct commit_list *remoteheads)
 
     strbuf_reset(&buf);
     if (fast_forward == FF_NO)
+    {
         strbuf_addstr(&buf, "no-ff");
+    }
     write_file_buf(git_path_merge_mode(the_repository), buf.buf, buf.len);
     strbuf_release(&buf);
 }
@@ -1137,17 +1303,22 @@ static int default_edit_option(void)
 {
     static const char name[] = "GIT_MERGE_AUTOEDIT";
     const char       *e      = getenv(name);
-    struct stat       st_stdin, st_stdout;
+    struct stat       st_stdin;
+    struct stat       st_stdout;
 
     if (have_message)
+    {
         /* an explicit -m msg without --[no-]edit */
         return 0;
+    }
 
     if (e)
     {
         int v = git_parse_maybe_bool(e);
         if (v < 0)
+        {
             die(_("Bad value '%s' in environment '%s'"), e, name);
+        }
         return v;
     }
 
@@ -1159,7 +1330,8 @@ static struct commit_list *reduce_parents(struct commit      *head_commit,
                                           int                *head_subsumed,
                                           struct commit_list *remoteheads)
 {
-    struct commit_list *parents, **remotes;
+    struct commit_list  *parents;
+    struct commit_list **remotes;
 
     /*
      * Is the current HEAD reachable from another commit being
@@ -1180,9 +1352,13 @@ static struct commit_list *reduce_parents(struct commit      *head_commit,
     {
         struct commit *commit = pop_commit(&parents);
         if (commit == head_commit)
+        {
             *head_subsumed = 0;
+        }
         else
+        {
             remotes = &commit_list_insert(commit, remotes)->next;
+        }
     }
     return remoteheads;
 }
@@ -1199,26 +1375,36 @@ static void prepare_merge_message(struct strbuf *merge_names, struct strbuf *mer
 
     fmt_merge_msg(merge_names, merge_msg, &opts);
     if (merge_msg->len)
+    {
         strbuf_setlen(merge_msg, merge_msg->len - 1);
+    }
 }
 
 static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge_names)
 {
     const char    *filename;
-    int            fd, pos, npos;
+    int            fd;
+    int            pos;
+    int            npos;
     struct strbuf  fetch_head_file = STRBUF_INIT;
     const unsigned hexsz           = the_hash_algo->hexsz;
 
     if (!merge_names)
+    {
         merge_names = &fetch_head_file;
+    }
 
     filename = git_path_fetch_head(the_repository);
     fd       = xopen(filename, O_RDONLY);
 
     if (strbuf_read(merge_names, fd, 0) < 0)
+    {
         die_errno(_("could not read '%s'"), filename);
+    }
     if (close(fd) < 0)
+    {
         die_errno(_("could not close '%s'"), filename);
+    }
 
     for (pos = 0; pos < merge_names->len; pos = npos)
     {
@@ -1228,14 +1414,22 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
 
         ptr = strchr(merge_names->buf + pos, '\n');
         if (ptr)
+        {
             npos = ptr - merge_names->buf + 1;
+        }
         else
+        {
             npos = merge_names->len;
+        }
 
         if (npos - pos < hexsz + 2 || get_oid_hex(merge_names->buf + pos, &oid))
+        {
             commit = NULL; /* bad */
-        else if (memcmp(merge_names->buf + pos + hexsz, "\t\t", 2))
+        }
+        else if (memcmp(merge_names->buf + pos + hexsz, "\t\t", 2) != 0)
+        {
             continue; /* not-for-merge */
+        }
         else
         {
             char saved                    = merge_names->buf[pos + hexsz];
@@ -1246,7 +1440,9 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
         if (!commit)
         {
             if (ptr)
+            {
                 *ptr = '\0';
+            }
             die(_("not something we can merge in %s: %s"),
                 filename, merge_names->buf + pos);
         }
@@ -1254,7 +1450,9 @@ static void handle_fetch_head(struct commit_list **remotes, struct strbuf *merge
     }
 
     if (merge_names == &fetch_head_file)
+    {
         strbuf_release(&fetch_head_file);
+    }
 }
 
 static struct commit_list *collect_parents(struct commit *head_commit,
@@ -1265,13 +1463,18 @@ static struct commit_list *collect_parents(struct commit *head_commit,
     int                  i;
     struct commit_list  *remoteheads = NULL;
     struct commit_list **remotes     = &remoteheads;
-    struct strbuf        merge_names = STRBUF_INIT, *autogen = NULL;
+    struct strbuf        merge_names = STRBUF_INIT;
+    struct strbuf       *autogen     = NULL;
 
     if (merge_msg && (!have_message || shortlog_len))
+    {
         autogen = &merge_names;
+    }
 
     if (head_commit)
+    {
         remotes = &commit_list_insert(head_commit, remotes)->next;
+    }
 
     if (argc == 1 && !strcmp(argv[0], "FETCH_HEAD"))
     {
@@ -1284,8 +1487,10 @@ static struct commit_list *collect_parents(struct commit *head_commit,
         {
             struct commit *commit = get_merge_parent(argv[i]);
             if (!commit)
+            {
                 help_unknown_ref(argv[i], "merge",
                                  _("not something we can merge"));
+            }
             remotes = &commit_list_insert(commit, remotes)->next;
         }
         remoteheads = reduce_parents(head_commit, head_subsumed, remoteheads);
@@ -1293,7 +1498,9 @@ static struct commit_list *collect_parents(struct commit *head_commit,
         {
             struct commit_list *p;
             for (p = remoteheads; p; p = p->next)
+            {
                 merge_name(merge_remote_util(p->item)->name, autogen);
+            }
         }
     }
 
@@ -1314,7 +1521,9 @@ static int merging_a_throwaway_tag(struct commit *commit)
 
     /* Are we merging a tag? */
     if (!merge_remote_util(commit) || !merge_remote_util(commit)->obj || merge_remote_util(commit)->obj->type != OBJ_TAG)
+    {
         return is_throwaway_tag;
+    }
 
     /*
      * Now we know we are merging a tag object.  Are we downstream
@@ -1333,28 +1542,42 @@ static int merging_a_throwaway_tag(struct commit *commit)
     tag_ref = xstrfmt("refs/tags/%s",
                       ((struct tag *)merge_remote_util(commit)->obj)->tag);
     if (!refs_read_ref(get_main_ref_store(the_repository), tag_ref, &oid) && oideq(&oid, &merge_remote_util(commit)->obj->oid))
+    {
         is_throwaway_tag = 0;
+    }
     else
+    {
         is_throwaway_tag = 1;
+    }
     free(tag_ref);
     return is_throwaway_tag;
 }
 
 int cmd_merge(int argc, const char **argv, const char *prefix)
 {
-    struct object_id    result_tree, stash, head_oid;
+    struct object_id    result_tree;
+    struct object_id    stash;
+    struct object_id    head_oid;
     struct commit      *head_commit;
     struct strbuf       buf = STRBUF_INIT;
-    int                 i, ret = 0, head_subsumed;
-    int                 best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
-    struct commit_list *common        = NULL;
-    const char         *best_strategy = NULL, *wt_strategy = NULL;
-    struct commit_list *remoteheads = NULL, *p;
+    int                 i;
+    int                 ret = 0;
+    int                 head_subsumed;
+    int                 best_cnt         = -1;
+    int                 merge_was_ok     = 0;
+    int                 automerge_was_ok = 0;
+    struct commit_list *common           = NULL;
+    const char         *best_strategy    = NULL;
+    const char         *wt_strategy      = NULL;
+    struct commit_list *remoteheads      = NULL;
+    struct commit_list *p;
     void               *branch_to_free;
     int                 orig_argc = argc;
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage_with_options(builtin_merge_usage, builtin_merge_options);
+    }
 
     prepare_repo_settings(the_repository);
     the_repository->settings.command_requires_full_index = 0;
@@ -1367,32 +1590,46 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
                                                   "HEAD", 0, &head_oid,
                                                   NULL);
     if (branch)
+    {
         skip_prefix(branch, "refs/heads/", &branch);
+    }
 
     if (!pull_twohead)
     {
         char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
         if (default_strategy && !strcmp(default_strategy, "ort"))
+        {
             pull_twohead = xstrdup("ort");
+        }
     }
 
     init_diff_ui_defaults();
     git_config(git_merge_config, NULL);
 
     if (!branch || is_null_oid(&head_oid))
+    {
         head_commit = NULL;
+    }
     else
+    {
         head_commit = lookup_commit_or_die(&head_oid, "HEAD");
+    }
 
     if (branch_mergeoptions)
+    {
         parse_branch_merge_options(branch_mergeoptions);
+    }
     argc = parse_options(argc, argv, prefix, builtin_merge_options,
                          builtin_merge_usage, 0);
     if (shortlog_len < 0)
+    {
         shortlog_len = (merge_log_config > 0) ? merge_log_config : 0;
+    }
 
     if (verbosity < 0 && show_progress == -1)
+    {
         show_progress = 0;
+    }
 
     if (abort_current_merge)
     {
@@ -1402,16 +1639,22 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
         struct object_id stash_oid = {0};
 
         if (orig_argc != 2)
+        {
             usage_msg_opt(_("--abort expects no arguments"),
                           builtin_merge_usage, builtin_merge_options);
+        }
 
         if (!file_exists(git_path_merge_head(the_repository)))
+        {
             die(_("There is no merge to abort (MERGE_HEAD missing)."));
+        }
 
         if (!refs_read_ref(get_main_ref_store(the_repository), "MERGE_AUTOSTASH", &stash_oid))
+        {
             refs_delete_ref(get_main_ref_store(the_repository),
                             "", "MERGE_AUTOSTASH", &stash_oid,
                             REF_NO_DEREF);
+        }
 
         /* Invoke 'git reset --merge' */
         ret = cmd_reset(nargc, nargv, prefix);
@@ -1428,9 +1671,11 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
     if (quit_current_merge)
     {
         if (orig_argc != 2)
+        {
             usage_msg_opt(_("--quit expects no arguments"),
                           builtin_merge_usage,
                           builtin_merge_options);
+        }
 
         remove_merge_branch_state(the_repository);
         goto done;
@@ -1442,11 +1687,15 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
         const char *nargv[] = {"commit", NULL};
 
         if (orig_argc != 2)
+        {
             usage_msg_opt(_("--continue expects no arguments"),
                           builtin_merge_usage, builtin_merge_options);
+        }
 
         if (!file_exists(git_path_merge_head(the_repository)))
+        {
             die(_("There is no merge in progress (MERGE_HEAD missing)."));
+        }
 
         /* Invoke 'git commit' */
         ret = cmd_commit(nargc, nargv, prefix);
@@ -1454,7 +1703,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
     }
 
     if (repo_read_index_unmerged(the_repository))
+    {
         die_resolve_conflict("merge");
+    }
 
     if (file_exists(git_path_merge_head(the_repository)))
     {
@@ -1463,37 +1714,53 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
          * add/rm <file>', just 'git commit'.
          */
         if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
+        {
             die(_(
                 "You have not concluded your merge (MERGE_HEAD exists).\n"
                 "Please, commit your changes before you merge."));
+        }
         else
+        {
             die(_("You have not concluded your merge (MERGE_HEAD exists)."));
+        }
     }
     if (refs_ref_exists(get_main_ref_store(the_repository), "CHERRY_PICK_HEAD"))
     {
         if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
+        {
             die(_(
                 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
                 "Please, commit your changes before you merge."));
+        }
         else
+        {
             die(_("You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."));
+        }
     }
     resolve_undo_clear_index(the_repository->index);
 
     if (option_edit < 0)
+    {
         option_edit = default_edit_option();
+    }
 
     cleanup_mode = get_cleanup_mode(cleanup_arg, 0 < option_edit);
 
     if (verbosity < 0)
+    {
         show_diffstat = 0;
+    }
 
     if (squash)
     {
         if (fast_forward == FF_NO)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--squash", "--no-ff.");
+        }
         if (option_commit > 0)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--squash", "--commit.");
+        }
         /*
          * squash can now silently disable option_commit - this is not
          * a problem as it is only overriding the default, not a user
@@ -1503,14 +1770,20 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
     }
 
     if (option_commit < 0)
+    {
         option_commit = 1;
+    }
 
     if (!argc)
     {
         if (default_to_upstream)
+        {
             argc = setup_with_upstream(&argv);
+        }
         else
+        {
             die(_("No commit specified and merge.defaultToUpstream not set."));
+        }
     }
     else if (argc == 1 && !strcmp(argv[0], "-"))
     {
@@ -1518,8 +1791,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
     }
 
     if (!argc)
+    {
         usage_with_options(builtin_merge_usage,
                            builtin_merge_options);
+    }
 
     if (!head_commit)
     {
@@ -1530,21 +1805,31 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
          */
         struct object_id *remote_head_oid;
         if (squash)
+        {
             die(_("Squash commit into empty head not supported yet"));
+        }
         if (fast_forward == FF_NO)
+        {
             die(_(
                 "Non-fast-forward commit does not make sense into "
                 "an empty head"));
+        }
         remoteheads = collect_parents(head_commit, &head_subsumed,
                                       argc, argv, NULL);
         if (!remoteheads)
+        {
             die(_("%s - not something we can merge"), argv[0]);
+        }
         if (remoteheads->next)
+        {
             die(_("Can merge only exactly one commit into empty head"));
+        }
 
         if (verify_signatures)
+        {
             verify_merge_signature(remoteheads->item, verbosity,
                                    check_trust_level);
+        }
 
         remote_head_oid = &remoteheads->item->object.oid;
         read_empty(remote_head_oid);
@@ -1564,8 +1849,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
                                   argc, argv, &merge_msg);
 
     if (!head_commit || !argc)
+    {
         usage_with_options(builtin_merge_usage,
                            builtin_merge_options);
+    }
 
     if (verify_signatures)
     {
@@ -1578,7 +1865,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
     strbuf_addstr(&buf, "merge");
     for (p = remoteheads; p; p = p->next)
+    {
         strbuf_addf(&buf, " %s", merge_remote_util(p->item)->name);
+    }
     setenv("GIT_REFLOG_ACTION", buf.buf, 0);
     strbuf_reset(&buf);
 
@@ -1590,35 +1879,51 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
         setenv(buf.buf, merge_remote_util(commit)->name, 1);
         strbuf_reset(&buf);
         if (fast_forward != FF_ONLY && merging_a_throwaway_tag(commit))
+        {
             fast_forward = FF_NO;
+        }
     }
 
     if (!use_strategies && !pull_twohead && remoteheads && !remoteheads->next)
     {
         char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
         if (default_strategy)
+        {
             append_strategy(get_strategy(default_strategy));
+        }
     }
     if (!use_strategies)
     {
         if (!remoteheads)
+        {
             ; /* already up-to-date */
+        }
         else if (!remoteheads->next)
+        {
             add_strategies(pull_twohead, DEFAULT_TWOHEAD);
+        }
         else
+        {
             add_strategies(pull_octopus, DEFAULT_OCTOPUS);
+        }
     }
 
     for (i = 0; i < use_strategies_nr; i++)
     {
         if (use_strategies[i]->attr & NO_FAST_FORWARD)
+        {
             fast_forward = FF_NO;
+        }
         if (use_strategies[i]->attr & NO_TRIVIAL)
+        {
             allow_trivial = 0;
+        }
     }
 
     if (!remoteheads)
+    {
         ; /* already up-to-date */
+    }
     else if (!remoteheads->next)
     {
         if (repo_get_merge_bases(the_repository, head_commit,
@@ -1651,7 +1956,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
     {
         /* No common ancestors found. */
         if (!allow_unrelated_histories)
+        {
             die(_("refusing to merge unrelated histories"));
+        }
         /* otherwise, we need a real merge. */
     }
     else if (!remoteheads || (!remoteheads->next && !common->next && common->item == remoteheads->item))
@@ -1685,7 +1992,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
         }
 
         if (autostash)
+        {
             create_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+        }
         if (checkout_fast_forward(the_repository,
                                   &head_commit->object.oid,
                                   &commit->object.oid,
@@ -1701,11 +2010,13 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
         goto done;
     }
     else if (!remoteheads->next && common->next)
+    {
         ;
-    /*
-     * We are not doing octopus and not fast-forward.  Need
-     * a real merge.
-     */
+        /*
+         * We are not doing octopus and not fast-forward.  Need
+         * a real merge.
+         */
+    }
     else if (!remoteheads->next && !common->next && option_commit)
     {
         /*
@@ -1768,7 +2079,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
             if (repo_get_merge_bases(the_repository, head_commit,
                                      j->item, &common_one)
                 < 0)
+            {
                 exit(128);
+            }
 
             common_item = common_one->item;
             free_commit_list(common_one);
@@ -1786,10 +2099,14 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
     }
 
     if (fast_forward == FF_ONLY)
+    {
         die_ff_impossible();
+    }
 
     if (autostash)
+    {
         create_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+    }
 
     /* We are going to make a new commit. */
     git_committer_info(IDENT_STRICT);
@@ -1807,19 +2124,24 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
      * index and working tree polluted.
      */
     if (save_state(&stash))
+    {
         oidclr(&stash, the_repository->hash_algo);
+    }
 
     for (i = 0; i < use_strategies_nr; i++)
     {
-        int ret, cnt;
+        int ret;
+        int cnt;
         if (i)
         {
             printf(_("Rewinding the tree to pristine...\n"));
             restore_state(&head_commit->object.oid, &stash);
         }
         if (use_strategies_nr != 1)
+        {
             printf(_("Trying merge strategy %s...\n"),
                    use_strategies[i]->name);
+        }
         /*
          * Remember which strategy left the state in the working
          * tree.
@@ -1876,17 +2198,23 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
     {
         restore_state(&head_commit->object.oid, &stash);
         if (use_strategies_nr > 1)
+        {
             fprintf(stderr,
                     _("No merge strategy handled the merge.\n"));
+        }
         else
+        {
             fprintf(stderr, _("Merge with strategy %s failed.\n"),
                     use_strategies[0]->name);
+        }
         apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
         ret = 2;
         goto done;
     }
     else if (best_strategy == wt_strategy)
+    {
         ; /* We already have its result in the working tree. */
+    }
     else
     {
         printf(_("Rewinding the tree to pristine...\n"));
@@ -1904,15 +2232,23 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
         git_test_write_commit_graph_or_die();
     }
     else
+    {
         write_merge_state(remoteheads);
+    }
 
     if (merge_was_ok)
+    {
         fprintf(stderr, _("Automatic merge went well; "
                           "stopped before committing as requested\n"));
+    }
     else
+    {
         ret = suggest_conflicts();
+    }
     if (autostash)
+    {
         printf(_("When finished, apply stashed changes with `git stash pop`\n"));
+    }
 
 done:
     if (!automerge_was_ok)

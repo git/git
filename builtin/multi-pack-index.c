@@ -58,9 +58,13 @@ static int parse_object_dir(const struct option *opt, const char *arg,
     char **value = opt->value;
     free(*value);
     if (unset)
+    {
         *value = xstrdup(get_object_directory());
+    }
     else
+    {
         *value = real_pathdup(arg, 1);
+    }
     return 0;
 }
 
@@ -84,17 +88,25 @@ static int git_multi_pack_index_write_config(const char *var, const char *value,
     if (!strcmp(var, "pack.writebitmaphashcache"))
     {
         if (git_config_bool(var, value))
+        {
             opts.flags |= MIDX_WRITE_BITMAP_HASH_CACHE;
+        }
         else
+        {
             opts.flags &= ~MIDX_WRITE_BITMAP_HASH_CACHE;
+        }
     }
 
     if (!strcmp(var, "pack.writebitmaplookuptable"))
     {
         if (git_config_bool(var, value))
+        {
             opts.flags |= MIDX_WRITE_BITMAP_LOOKUP_TABLE;
+        }
         else
+        {
             opts.flags &= ~MIDX_WRITE_BITMAP_LOOKUP_TABLE;
+        }
     }
 
     /*
@@ -108,7 +120,9 @@ static void read_packs_from_stdin(struct string_list *to)
 {
     struct strbuf buf = STRBUF_INIT;
     while (strbuf_getline(&buf, stdin) != EOF)
+    {
         string_list_append(to, buf.buf);
+    }
     string_list_sort(to);
 
     strbuf_release(&buf);
@@ -145,13 +159,17 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
     trace2_cmd_mode(argv[0]);
 
     if (isatty(2))
+    {
         opts.flags |= MIDX_PROGRESS;
+    }
     argc = parse_options(argc, argv, prefix,
                          options, builtin_multi_pack_index_write_usage,
                          0);
     if (argc)
+    {
         usage_with_options(builtin_multi_pack_index_write_usage,
                            options);
+    }
 
     FREE_AND_NULL(options);
 
@@ -192,13 +210,17 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv,
     trace2_cmd_mode(argv[0]);
 
     if (isatty(2))
+    {
         opts.flags |= MIDX_PROGRESS;
+    }
     argc = parse_options(argc, argv, prefix,
                          options, builtin_multi_pack_index_verify_usage,
                          0);
     if (argc)
+    {
         usage_with_options(builtin_multi_pack_index_verify_usage,
                            options);
+    }
 
     FREE_AND_NULL(options);
 
@@ -219,13 +241,17 @@ static int cmd_multi_pack_index_expire(int argc, const char **argv,
     trace2_cmd_mode(argv[0]);
 
     if (isatty(2))
+    {
         opts.flags |= MIDX_PROGRESS;
+    }
     argc = parse_options(argc, argv, prefix,
                          options, builtin_multi_pack_index_expire_usage,
                          0);
     if (argc)
+    {
         usage_with_options(builtin_multi_pack_index_expire_usage,
                            options);
+    }
 
     FREE_AND_NULL(options);
 
@@ -249,14 +275,18 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
     trace2_cmd_mode(argv[0]);
 
     if (isatty(2))
+    {
         opts.flags |= MIDX_PROGRESS;
+    }
     argc = parse_options(argc, argv, prefix,
                          options,
                          builtin_multi_pack_index_repack_usage,
                          0);
     if (argc)
+    {
         usage_with_options(builtin_multi_pack_index_repack_usage,
                            options);
+    }
 
     FREE_AND_NULL(options);
 
@@ -283,7 +313,9 @@ int cmd_multi_pack_index(int argc, const char **argv,
     git_config(git_default_config, NULL);
 
     if (the_repository && the_repository->objects && the_repository->objects->odb)
+    {
         opts.object_dir = xstrdup(the_repository->objects->odb->path);
+    }
 
     argc = parse_options(argc, argv, prefix, options,
                          builtin_multi_pack_index_usage, 0);

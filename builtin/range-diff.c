@@ -20,7 +20,9 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
         .creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT,
         .diffopt         = &diffopt,
         .other_arg       = &other_arg};
-    int           simple_color = -1, left_only = 0, right_only = 0;
+    int           simple_color         = -1;
+    int           left_only            = 0;
+    int           right_only           = 0;
     struct option range_diff_options[] = {
         OPT_INTEGER(0, "creation-factor",
                     &range_diff_opts.creation_factor,
@@ -36,8 +38,11 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
                  N_("only emit output related to the second range")),
         OPT_END()};
     struct option   *options;
-    int              i, dash_dash = -1, res = 0;
-    struct strbuf    range1 = STRBUF_INIT, range2 = STRBUF_INIT;
+    int              i;
+    int              dash_dash = -1;
+    int              res       = 0;
+    struct strbuf    range1    = STRBUF_INIT;
+    struct strbuf    range2    = STRBUF_INIT;
     struct object_id oid;
     const char      *three_dots = NULL;
 
@@ -53,31 +58,43 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
 
     /* force color when --dual-color was used */
     if (!simple_color)
+    {
         diffopt.use_color = 1;
+    }
 
     for (i = 0; i < argc; i++)
+    {
         if (!strcmp(argv[i], "--"))
         {
             dash_dash = i;
             break;
         }
+    }
 
     if (dash_dash == 3 || (dash_dash < 0 && argc > 2 && !repo_get_oid_committish(the_repository, argv[0], &oid) && !repo_get_oid_committish(the_repository, argv[1], &oid) && !repo_get_oid_committish(the_repository, argv[2], &oid)))
     {
         if (dash_dash < 0)
+        {
             ; /* already validated arguments */
+        }
         else if (repo_get_oid_committish(the_repository, argv[0], &oid))
+        {
             usage_msg_optf(_("not a revision: '%s'"),
                            builtin_range_diff_usage, options,
                            argv[0]);
+        }
         else if (repo_get_oid_committish(the_repository, argv[1], &oid))
+        {
             usage_msg_optf(_("not a revision: '%s'"),
                            builtin_range_diff_usage, options,
                            argv[1]);
+        }
         else if (repo_get_oid_committish(the_repository, argv[2], &oid))
+        {
             usage_msg_optf(_("not a revision: '%s'"),
                            builtin_range_diff_usage, options,
                            argv[2]);
+        }
 
         strbuf_addf(&range1, "%s..%s", argv[0], argv[1]);
         strbuf_addf(&range2, "%s..%s", argv[0], argv[2]);
@@ -87,15 +104,21 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
     else if (dash_dash == 2 || (dash_dash < 0 && argc > 1 && is_range_diff_range(argv[0]) && is_range_diff_range(argv[1])))
     {
         if (dash_dash < 0)
+        {
             ; /* already validated arguments */
+        }
         else if (!is_range_diff_range(argv[0]))
+        {
             usage_msg_optf(_("not a commit range: '%s'"),
                            builtin_range_diff_usage, options,
                            argv[0]);
+        }
         else if (!is_range_diff_range(argv[1]))
+        {
             usage_msg_optf(_("not a commit range: '%s'"),
                            builtin_range_diff_usage, options,
                            argv[1]);
+        }
 
         strbuf_addstr(&range1, argv[0]);
         strbuf_addstr(&range2, argv[1]);
@@ -104,15 +127,20 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
     }
     else if (dash_dash == 1 || (dash_dash < 0 && argc > 0 && (three_dots = strstr(argv[0], "..."))))
     {
-        const char *a, *b;
+        const char *a;
+        const char *b;
         int         a_len;
 
         if (dash_dash < 0)
+        {
             ; /* already validated arguments */
+        }
         else if (!(three_dots = strstr(argv[0], "...")))
+        {
             usage_msg_optf(_("not a symmetric range: '%s'"),
                            builtin_range_diff_usage, options,
                            argv[0]);
+        }
 
         if (three_dots == argv[0])
         {
@@ -126,9 +154,13 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
         }
 
         if (three_dots[3])
+        {
             b = three_dots + 3;
+        }
         else
+        {
             b = "HEAD";
+        }
 
         strbuf_addf(&range1, "%s..%.*s", b, a_len, a);
         strbuf_addf(&range2, "%.*s..%s", a_len, a, b);
@@ -136,8 +168,10 @@ int cmd_range_diff(int argc, const char **argv, const char *prefix)
         strvec_pushv(&other_arg, argv + (dash_dash < 0 ? 1 : dash_dash));
     }
     else
+    {
         usage_msg_opt(_("need two commit ranges"),
                       builtin_range_diff_usage, options);
+    }
     FREE_AND_NULL(options);
 
     range_diff_opts.dual_color = simple_color < 1;

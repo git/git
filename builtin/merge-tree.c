@@ -51,33 +51,45 @@ static const char *explanation(struct merge_list *entry)
             return "added in remote";
         case 2:
             if (entry->link)
+            {
                 return "added in both";
+            }
             return "added in local";
     }
 
     /* Existed in base */
     entry = entry->link;
     if (!entry)
+    {
         return "removed in both";
+    }
 
     if (entry->link)
+    {
         return "changed in both";
+    }
 
     if (entry->stage == 3)
+    {
         return "removed in local";
+    }
     return "removed in remote";
 }
 
 static void *result(struct merge_list *entry, unsigned long *size)
 {
     enum object_type type;
-    struct blob     *base, *our, *their;
+    struct blob     *base;
+    struct blob     *our;
+    struct blob     *their;
     const char      *path = entry->path;
 
     if (!entry->stage)
+    {
         return repo_read_object_file(the_repository,
                                      &entry->blob->object.oid, &type,
                                      size);
+    }
     base = NULL;
     if (entry->stage == 1)
     {
@@ -92,7 +104,9 @@ static void *result(struct merge_list *entry, unsigned long *size)
     }
     their = NULL;
     if (entry)
+    {
         their = entry->blob;
+    }
     return merge_blobs(the_repository->index, path,
                        base, our, their, size);
 }
@@ -103,9 +117,11 @@ static void *origin(struct merge_list *entry, unsigned long *size)
     while (entry)
     {
         if (entry->stage == 2)
+        {
             return repo_read_object_file(the_repository,
                                          &entry->blob->object.oid,
                                          &type, size);
+        }
         entry = entry->link;
     }
     return NULL;
@@ -115,14 +131,17 @@ static int show_outf(void *priv UNUSED, mmbuffer_t *mb, int nbuf)
 {
     int i;
     for (i = 0; i < nbuf; i++)
+    {
         printf("%.*s", (int)mb[i].size, mb[i].ptr);
+    }
     return 0;
 }
 
 static void show_diff(struct merge_list *entry)
 {
     unsigned long size;
-    mmfile_t      src, dst;
+    mmfile_t      src;
+    mmfile_t      dst;
     xpparam_t     xpp;
     xdemitconf_t  xecfg;
     xdemitcb_t    ecb = {.out_line = show_outf};
@@ -134,14 +153,20 @@ static void show_diff(struct merge_list *entry)
 
     src.ptr = origin(entry, &size);
     if (!src.ptr)
+    {
         size = 0;
+    }
     src.size = size;
     dst.ptr  = result(entry, &size);
     if (!dst.ptr)
+    {
         size = 0;
+    }
     dst.size = size;
     if (xdi_diff(&src, &dst, &xpp, &xecfg, &ecb))
+    {
         die("unable to generate diff");
+    }
     free(src.ptr);
     free(dst.ptr);
 }
@@ -202,12 +227,15 @@ static char *traverse_path(const struct traverse_info *info, const struct name_e
 
 static void resolve(const struct traverse_info *info, struct name_entry *ours, struct name_entry *result)
 {
-    struct merge_list *orig, *final;
+    struct merge_list *orig;
+    struct merge_list *final;
     const char        *path;
 
     /* If it's already ours, don't bother showing it */
     if (!ours)
+    {
         return;
+    }
 
     path  = traverse_path(info, result);
     orig  = create_entry(2, ours->mode, &ours->oid, path);
@@ -225,15 +253,21 @@ static void unresolved_directory(const struct traverse_info *info,
     char              *newbase;
     struct name_entry *p;
     struct tree_desc   t[3];
-    void              *buf0, *buf1, *buf2;
+    void              *buf0;
+    void              *buf1;
+    void              *buf2;
 
     for (p = n; p < n + 3; p++)
     {
         if (p->mode && S_ISDIR(p->mode))
+        {
             break;
+        }
     }
     if (n + 3 <= p)
+    {
         return; /* there is no tree here */
+    }
 
     newbase = traverse_path(info, p);
 
@@ -257,11 +291,17 @@ static struct merge_list *link_entry(unsigned stage, const struct traverse_info 
     struct merge_list *link;
 
     if (!n->mode)
+    {
         return entry;
+    }
     if (entry)
+    {
         path = entry->path;
+    }
     else
+    {
         path = traverse_path(info, n);
+    }
     link       = create_entry(stage, n->mode, &n->oid, path);
     link->link = entry;
     return link;
@@ -271,7 +311,8 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
 {
     struct merge_list *entry = NULL;
     int                i;
-    unsigned           dirmask = 0, mask = 0;
+    unsigned           dirmask = 0;
+    unsigned           mask    = 0;
 
     for (i = 0; i < 3; i++)
     {
@@ -281,20 +322,30 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
          * after unresolved_directory has handled this.
          */
         if (!n[i].mode || S_ISDIR(n[i].mode))
+        {
             dirmask |= (1 << i);
+        }
     }
 
     unresolved_directory(info, n);
 
     if (dirmask == mask)
+    {
         return;
+    }
 
     if (n[2].mode && !S_ISDIR(n[2].mode))
+    {
         entry = link_entry(3, info, n + 2, entry);
+    }
     if (n[1].mode && !S_ISDIR(n[1].mode))
+    {
         entry = link_entry(2, info, n + 1, entry);
+    }
     if (n[0].mode && !S_ISDIR(n[0].mode))
+    {
         entry = link_entry(1, info, n + 0, entry);
+    }
 
     add_merge_entry(entry);
 }
@@ -383,10 +434,14 @@ static void *get_tree_descriptor(struct repository *r,
     void            *buf;
 
     if (repo_get_oid(r, rev, &oid))
+    {
         die("unknown rev %s", rev);
+    }
     buf = fill_tree_descriptor(r, desc, &oid);
     if (!buf)
+    {
         die("%s is not a tree", rev);
+    }
     return buf;
 }
 
@@ -396,7 +451,9 @@ static int trivial_merge(const char *base,
 {
     struct repository *r = the_repository;
     struct tree_desc   t[3];
-    void              *buf1, *buf2, *buf3;
+    void              *buf1;
+    void              *buf2;
+    void              *buf3;
 
     buf1 = get_tree_descriptor(r, t + 0, base);
     buf2 = get_tree_descriptor(r, t + 1, branch1);
@@ -432,7 +489,8 @@ static int real_merge(struct merge_tree_options *o,
                       const char *branch1, const char *branch2,
                       const char *prefix)
 {
-    struct commit       *parent1, *parent2;
+    struct commit       *parent1;
+    struct commit       *parent2;
     struct commit_list  *merge_bases   = NULL;
     struct merge_result  result        = {0};
     int                  show_messages = o->show_messages;
@@ -446,29 +504,45 @@ static int real_merge(struct merge_tree_options *o,
 
     if (merge_base)
     {
-        struct tree *base_tree, *parent1_tree, *parent2_tree;
+        struct tree *base_tree;
+        struct tree *parent1_tree;
+        struct tree *parent2_tree;
 
         /*
          * We actually only need the trees because we already
          * have a merge base.
          */
-        struct object_id base_oid, head_oid, merge_oid;
+        struct object_id base_oid;
+        struct object_id head_oid;
+        struct object_id merge_oid;
 
         if (repo_get_oid_treeish(the_repository, merge_base, &base_oid))
+        {
             die(_("could not parse as tree '%s'"), merge_base);
+        }
         base_tree = parse_tree_indirect(&base_oid);
         if (!base_tree)
+        {
             die(_("unable to read tree (%s)"), oid_to_hex(&base_oid));
+        }
         if (repo_get_oid_treeish(the_repository, branch1, &head_oid))
+        {
             die(_("could not parse as tree '%s'"), branch1);
+        }
         parent1_tree = parse_tree_indirect(&head_oid);
         if (!parent1_tree)
+        {
             die(_("unable to read tree (%s)"), oid_to_hex(&head_oid));
+        }
         if (repo_get_oid_treeish(the_repository, branch2, &merge_oid))
+        {
             die(_("could not parse as tree '%s'"), branch2);
+        }
         parent2_tree = parse_tree_indirect(&merge_oid);
         if (!parent2_tree)
+        {
             die(_("unable to read tree (%s)"), oid_to_hex(&merge_oid));
+        }
 
         opt.ancestor = merge_base;
         merge_incore_nonrecursive(&opt, base_tree, parent1_tree, parent2_tree, &result);
@@ -477,13 +551,17 @@ static int real_merge(struct merge_tree_options *o,
     {
         parent1 = get_merge_parent(branch1);
         if (!parent1)
+        {
             help_unknown_ref(branch1, "merge-tree",
                              _("not something we can merge"));
+        }
 
         parent2 = get_merge_parent(branch2);
         if (!parent2)
+        {
             help_unknown_ref(branch2, "merge-tree",
                              _("not something we can merge"));
+        }
 
         /*
          * Get the merge bases, in reverse order; see comment above
@@ -492,22 +570,32 @@ static int real_merge(struct merge_tree_options *o,
         if (repo_get_merge_bases(the_repository, parent1,
                                  parent2, &merge_bases)
             < 0)
+        {
             exit(128);
+        }
         if (!merge_bases && !o->allow_unrelated_histories)
+        {
             die(_("refusing to merge unrelated histories"));
+        }
         merge_bases = reverse_commit_list(merge_bases);
         merge_incore_recursive(&opt, merge_bases, parent1, parent2, &result);
         free_commit_list(merge_bases);
     }
 
     if (result.clean < 0)
+    {
         die(_("failure to merge"));
+    }
 
     if (show_messages == -1)
+    {
         show_messages = !result.clean;
+    }
 
     if (o->use_stdin)
+    {
         printf("%d%c", result.clean, line_termination);
+    }
     printf("%s%c", oid_to_hex(&result.tree->object.oid), line_termination);
     if (!result.clean)
     {
@@ -521,10 +609,14 @@ static int real_merge(struct merge_tree_options *o,
             const char        *name = conflicted_files.items[i].string;
             struct stage_info *c    = conflicted_files.items[i].util;
             if (!o->name_only)
+            {
                 printf("%06o %s %d\t",
                        c->mode, oid_to_hex(&c->oid), c->stage);
+            }
             else if (last && !strcmp(last, name))
+            {
                 continue;
+            }
             write_name_quoted_relative(
                 name, prefix, stdout, line_termination);
             last = name;
@@ -538,7 +630,9 @@ static int real_merge(struct merge_tree_options *o,
                                       &result);
     }
     if (o->use_stdin)
+    {
         putchar(line_termination);
+    }
     merge_finalize(&opt, &result);
     clear_merge_options(&opt);
     return !result.clean; /* result.clean < 0 handled above */
@@ -595,10 +689,16 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
                                   merge_tree_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 
     if (xopts.nr && o.mode == MODE_TRIVIAL)
+    {
         die(_("--trivial-merge is incompatible with all other options"));
+    }
     for (int x = 0; x < xopts.nr; x++)
+    {
         if (parse_merge_opt(&o.merge_options, xopts.v[x]))
+        {
             die(_("unknown strategy option: -X%s"), xopts.v[x]);
+        }
+    }
 
     /* Handle --stdin */
     if (o.use_stdin)
@@ -606,10 +706,14 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
         struct strbuf buf = STRBUF_INIT;
 
         if (o.mode == MODE_TRIVIAL)
+        {
             die(_("--trivial-merge is incompatible with all other options"));
+        }
         if (merge_base)
+        {
             die(_("options '%s' and '%s' cannot be used together"),
                 "--merge-base", "--stdin");
+        }
         line_termination = '\0';
         while (strbuf_getline_lf(&buf, stdin) != EOF)
         {
@@ -619,7 +723,9 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
 
             split = strbuf_split(&buf, ' ');
             if (!split[0] || !split[1])
+            {
                 die(_("malformed input line: '%s'."), buf.buf);
+            }
             strbuf_rtrim(split[0]);
             strbuf_rtrim(split[1]);
 
@@ -645,7 +751,9 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
             }
 
             if (result < 0)
+            {
                 die(_("merging cannot continue; got unclean result of %d"), result);
+            }
             strbuf_list_free(split);
         }
         strbuf_release(&buf);
@@ -681,16 +789,21 @@ int cmd_merge_tree(int argc, const char **argv, const char *prefix)
             break;
     }
     if (o.mode == MODE_TRIVIAL && argc < original_argc)
+    {
         die(_("--trivial-merge is incompatible with all other options"));
+    }
 
     if (argc != expected_remaining_argc)
+    {
         usage_with_options(merge_tree_usage, mt_options);
+    }
 
     git_config(git_default_config, NULL);
 
     /* Do the relevant type of merge */
     if (o.mode == MODE_REAL)
+    {
         return real_merge(&o, merge_base, argv[0], argv[1], prefix);
-    else
-        return trivial_merge(argv[0], argv[1], argv[2]);
+    }
+    return trivial_merge(argv[0], argv[1], argv[2]);
 }

@@ -176,7 +176,9 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
     replay.signoff  = opts->signoff;
     replay.allow_ff = !(opts->flags & REBASE_FORCE);
     if (opts->allow_rerere_autoupdate)
+    {
         replay.allow_rerere_auto = opts->allow_rerere_autoupdate;
+    }
     replay.allow_empty            = 1;
     replay.allow_empty_message    = opts->allow_empty_message;
     replay.drop_redundant_commits = (opts->empty == EMPTY_DROP);
@@ -191,7 +193,9 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
     replay.gpg_sign      = xstrdup_or_null(opts->gpg_sign_opt);
     replay.reflog_action = xstrdup(opts->reflog_action);
     if (opts->strategy)
+    {
         replay.strategy = xstrdup_or_null(opts->strategy);
+    }
     else if (!replay.strategy && replay.default_strategy)
     {
         replay.strategy         = replay.default_strategy;
@@ -199,7 +203,9 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
     }
 
     for (size_t i = 0; i < opts->strategy_opts.nr; i++)
+    {
         strvec_push(&replay.xopts, opts->strategy_opts.items[i].string);
+    }
 
     if (opts->squash_onto)
     {
@@ -213,18 +219,22 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 static int edit_todo_file(unsigned flags, struct replay_opts *opts)
 {
     const char      *todo_file = rebase_path_todo();
-    struct todo_list todo_list = TODO_LIST_INIT,
-                     new_todo  = TODO_LIST_INIT;
-    int res                    = 0;
+    struct todo_list todo_list = TODO_LIST_INIT;
+    struct todo_list new_todo  = TODO_LIST_INIT;
+    int              res       = 0;
 
     if (strbuf_read_file(&todo_list.buf, todo_file, 0) < 0)
+    {
         return error_errno(_("could not read '%s'."), todo_file);
+    }
 
     strbuf_stripspace(&todo_list.buf, comment_line_str);
     res = edit_todo_list(the_repository, opts, &todo_list, &new_todo,
                          NULL, NULL, flags);
     if (!res && todo_list_write_to_file(the_repository, &new_todo, todo_file, NULL, NULL, -1, flags & ~(TODO_LIST_SHORTEN_IDS)))
+    {
         res = error_errno(_("could not write '%s'"), todo_file);
+    }
 
     todo_list_release(&todo_list);
     todo_list_release(&new_todo);
@@ -256,7 +266,9 @@ static int get_revision_ranges(struct commit *upstream, struct commit *onto,
         *shortrevisions = xstrfmt("%s..%s", shortrev, shorthead);
     }
     else
+    {
         *shortrevisions = xstrdup(shorthead);
+    }
 
     return 0;
 }
@@ -268,13 +280,17 @@ static int init_basic_state(struct replay_opts *opts, const char *head_name,
     FILE *interactive;
 
     if (!is_directory(merge_dir()) && mkdir_in_gitdir(merge_dir()))
+    {
         return error_errno(_("could not create temporary %s"), merge_dir());
+    }
 
     refs_delete_reflog(get_main_ref_store(the_repository), "REBASE_HEAD");
 
     interactive = fopen(path_interactive(), "w");
     if (!interactive)
+    {
         return error_errno(_("could not mark as interactive"));
+    }
     fclose(interactive);
 
     return write_basic_state(opts, head_name, onto, orig_head);
@@ -282,42 +298,55 @@ static int init_basic_state(struct replay_opts *opts, const char *head_name,
 
 static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 {
-    int                ret       = -1;
-    char              *revisions = NULL, *shortrevisions = NULL;
+    int                ret              = -1;
+    char              *revisions        = NULL;
+    char              *shortrevisions   = NULL;
     struct strvec      make_script_args = STRVEC_INIT;
     struct todo_list   todo_list        = TODO_LIST_INIT;
     struct replay_opts replay           = get_replay_opts(opts);
 
     if (get_revision_ranges(opts->upstream, opts->onto, &opts->orig_head->object.oid,
                             &revisions, &shortrevisions))
+    {
         goto cleanup;
+    }
 
     if (init_basic_state(&replay,
                          opts->head_name ? opts->head_name : "detached HEAD",
                          opts->onto, &opts->orig_head->object.oid))
+    {
         goto cleanup;
+    }
 
     if (!opts->upstream && opts->squash_onto)
+    {
         write_file(path_squash_onto(), "%s\n",
                    oid_to_hex(opts->squash_onto));
+    }
 
     strvec_pushl(&make_script_args, "", revisions, NULL);
     if (opts->restrict_revision)
+    {
         strvec_pushf(&make_script_args, "^%s",
                      oid_to_hex(&opts->restrict_revision->object.oid));
+    }
 
     ret = sequencer_make_script(the_repository, &todo_list.buf,
                                 make_script_args.nr, make_script_args.v,
                                 flags);
 
     if (ret)
+    {
         error(_("could not generate todo list"));
+    }
     else
     {
         discard_index(the_repository->index);
         if (todo_list_parse_insn_buffer(the_repository, &replay,
                                         todo_list.buf.buf, &todo_list))
+        {
             BUG("unusable todo list");
+        }
 
         ret = complete_action(the_repository, &replay, flags,
                               shortrevisions, opts->onto_name, opts->onto,
@@ -338,7 +367,8 @@ cleanup:
 static int run_sequencer_rebase(struct rebase_options *opts)
 {
     unsigned flags               = 0;
-    int      abbreviate_commands = 0, ret = 0;
+    int      abbreviate_commands = 0;
+    int      ret                 = 0;
 
     git_config_get_bool("rebase.abbreviatecommands", &abbreviate_commands);
 
@@ -355,7 +385,9 @@ static int run_sequencer_rebase(struct rebase_options *opts)
         case ACTION_NONE:
         {
             if (!opts->onto && !opts->upstream)
+            {
                 die(_("a base commit must be provided with --upstream or --onto"));
+            }
 
             ret = do_interactive_rebase(opts, flags);
             break;
@@ -448,11 +480,15 @@ static int read_basic_state(struct rebase_options *opts)
                        READ_ONELINER_WARN_MISSING)
         || !read_oneliner(&buf, state_dir_path("onto", opts),
                           READ_ONELINER_WARN_MISSING))
+    {
         return -1;
+    }
     opts->head_name = starts_with(head_name.buf, "refs/") ? xstrdup(head_name.buf) : NULL;
     strbuf_release(&head_name);
     if (get_oid_hex(buf.buf, &oid) || !(opts->onto = lookup_commit_object(the_repository, &oid)))
+    {
         return error(_("invalid onto: '%s'"), buf.buf);
+    }
 
     /*
      * We always write to orig-head, but interactive rebase used to write to
@@ -464,21 +500,33 @@ static int read_basic_state(struct rebase_options *opts)
     {
         if (!read_oneliner(&buf, state_dir_path("orig-head", opts),
                            READ_ONELINER_WARN_MISSING))
+        {
             return -1;
+        }
     }
     else if (!read_oneliner(&buf, state_dir_path("head", opts),
                             READ_ONELINER_WARN_MISSING))
+    {
         return -1;
+    }
     if (get_oid_hex(buf.buf, &oid) || !(opts->orig_head = lookup_commit_object(the_repository, &oid)))
+    {
         return error(_("invalid orig-head: '%s'"), buf.buf);
+    }
 
     if (file_exists(state_dir_path("quiet", opts)))
+    {
         opts->flags &= ~REBASE_NO_QUIET;
+    }
     else
+    {
         opts->flags |= REBASE_NO_QUIET;
+    }
 
     if (file_exists(state_dir_path("verbose", opts)))
+    {
         opts->flags |= REBASE_VERBOSE;
+    }
 
     if (file_exists(state_dir_path("signoff", opts)))
     {
@@ -491,15 +539,23 @@ static int read_basic_state(struct rebase_options *opts)
         strbuf_reset(&buf);
         if (!read_oneliner(&buf, state_dir_path("allow_rerere_autoupdate", opts),
                            READ_ONELINER_WARN_MISSING))
+        {
             return -1;
+        }
         if (!strcmp(buf.buf, "--rerere-autoupdate"))
+        {
             opts->allow_rerere_autoupdate = RERERE_AUTOUPDATE;
+        }
         else if (!strcmp(buf.buf, "--no-rerere-autoupdate"))
+        {
             opts->allow_rerere_autoupdate = RERERE_NOAUTOUPDATE;
+        }
         else
+        {
             warning(_("ignoring invalid allow_rerere_autoupdate: "
                       "'%s'"),
                     buf.buf);
+        }
     }
 
     if (file_exists(state_dir_path("gpg_sign_opt", opts)))
@@ -507,7 +563,9 @@ static int read_basic_state(struct rebase_options *opts)
         strbuf_reset(&buf);
         if (!read_oneliner(&buf, state_dir_path("gpg_sign_opt", opts),
                            READ_ONELINER_WARN_MISSING))
+        {
             return -1;
+        }
         free(opts->gpg_sign_opt);
         opts->gpg_sign_opt = xstrdup(buf.buf);
     }
@@ -526,18 +584,28 @@ static int rebase_write_basic_state(struct rebase_options *opts)
     write_file(state_dir_path("orig-head", opts), "%s",
                oid_to_hex(&opts->orig_head->object.oid));
     if (!(opts->flags & REBASE_NO_QUIET))
+    {
         write_file(state_dir_path("quiet", opts), "%s", "");
+    }
     if (opts->flags & REBASE_VERBOSE)
+    {
         write_file(state_dir_path("verbose", opts), "%s", "");
+    }
     if (opts->allow_rerere_autoupdate > 0)
+    {
         write_file(state_dir_path("allow_rerere_autoupdate", opts),
                    "-%s-rerere-autoupdate",
                    opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE ? "" : "-no");
+    }
     if (opts->gpg_sign_opt)
+    {
         write_file(state_dir_path("gpg_sign_opt", opts), "%s",
                    opts->gpg_sign_opt);
+    }
     if (opts->signoff)
+    {
         write_file(state_dir_path("signoff", opts), "--signoff");
+    }
 
     return 0;
 }
@@ -569,8 +637,10 @@ static int finish_rebase(struct rebase_options *opts)
     {
         strbuf_addstr(&dir, opts->state_dir);
         if (remove_dir_recursively(&dir, 0))
+        {
             ret = error(_("could not remove '%s'"),
                         opts->state_dir);
+        }
         strbuf_release(&dir);
     }
 
@@ -579,15 +649,20 @@ static int finish_rebase(struct rebase_options *opts)
 
 static int move_to_original_branch(struct rebase_options *opts)
 {
-    struct strbuf          branch_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
-    struct reset_head_opts ropts = {0};
+    struct strbuf          branch_reflog = STRBUF_INIT;
+    struct strbuf          head_reflog   = STRBUF_INIT;
+    struct reset_head_opts ropts         = {0};
     int                    ret;
 
     if (!opts->head_name)
+    {
         return 0; /* nothing to move back to */
+    }
 
     if (!opts->onto)
+    {
         BUG("move_to_original_branch without onto");
+    }
 
     strbuf_addf(&branch_reflog, "%s (finish): %s onto %s",
                 opts->reflog_action,
@@ -621,10 +696,14 @@ static int run_am(struct rebase_options *opts)
         strvec_push(&am.args, "--resolved");
         strvec_pushf(&am.args, "--resolvemsg=%s", rebase_resolvemsg);
         if (opts->gpg_sign_opt)
+        {
             strvec_push(&am.args, opts->gpg_sign_opt);
+        }
         status = run_command(&am);
         if (status)
+        {
             return status;
+        }
 
         return move_to_original_branch(opts);
     }
@@ -634,7 +713,9 @@ static int run_am(struct rebase_options *opts)
         strvec_pushf(&am.args, "--resolvemsg=%s", rebase_resolvemsg);
         status = run_command(&am);
         if (status)
+        {
             return status;
+        }
 
         return move_to_original_branch(opts);
     }
@@ -646,7 +727,7 @@ static int run_am(struct rebase_options *opts)
 
     rebased_patches  = xstrdup(git_path("rebased-patches"));
     format_patch.out = open(rebased_patches,
-                            O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                            O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0666);
     if (format_patch.out < 0)
     {
         status = error_errno(_("could not open '%s' for writing"),
@@ -663,8 +744,10 @@ static int run_am(struct rebase_options *opts)
                  "--no-cover-letter", "--pretty=mboxrd", "--topo-order",
                  "--no-base", NULL);
     if (opts->git_format_patch_opt.len)
+    {
         strvec_split(&format_patch.args,
                      opts->git_format_patch_opt.buf);
+    }
     strvec_pushf(&format_patch.args, "%s...%s",
                  oid_to_hex(opts->root ?
                                        /* this is now equivalent to !opts->upstream */
@@ -672,8 +755,10 @@ static int run_am(struct rebase_options *opts)
                                        : &opts->upstream->object.oid),
                  oid_to_hex(&opts->orig_head->object.oid));
     if (opts->restrict_revision)
+    {
         strvec_pushf(&format_patch.args, "^%s",
                      oid_to_hex(&opts->restrict_revision->object.oid));
+    }
 
     status = run_command(&format_patch);
     if (status)
@@ -697,7 +782,7 @@ static int run_am(struct rebase_options *opts)
         return status;
     }
 
-    am.in = open(rebased_patches, O_RDONLY);
+    am.in = open(rebased_patches, O_RDONLY | O_CLOEXEC);
     if (am.in < 0)
     {
         status = error_errno(_("could not open '%s' for reading"),
@@ -712,11 +797,17 @@ static int run_am(struct rebase_options *opts)
     strvec_pushf(&am.args, "--resolvemsg=%s", rebase_resolvemsg);
     strvec_push(&am.args, "--patch-format=mboxrd");
     if (opts->allow_rerere_autoupdate == RERERE_AUTOUPDATE)
+    {
         strvec_push(&am.args, "--rerere-autoupdate");
+    }
     else if (opts->allow_rerere_autoupdate == RERERE_NOAUTOUPDATE)
+    {
         strvec_push(&am.args, "--no-rerere-autoupdate");
+    }
     if (opts->gpg_sign_opt)
+    {
         strvec_push(&am.args, opts->gpg_sign_opt);
+    }
     status = run_command(&am);
     unlink(rebased_patches);
     free(rebased_patches);
@@ -727,7 +818,9 @@ static int run_am(struct rebase_options *opts)
     }
 
     if (is_directory(opts->state_dir))
+    {
         rebase_write_basic_state(opts);
+    }
 
     return status;
 }
@@ -740,7 +833,9 @@ static int run_specific_rebase(struct rebase_options *opts)
     {
         /* Run sequencer-based rebase */
         if (!(opts->flags & REBASE_INTERACTIVE_EXPLICIT))
+        {
             setenv("GIT_SEQUENCE_EDITOR", ":", 1);
+        }
         if (opts->gpg_sign_opt)
         {
             /* remove the leading "-S" */
@@ -752,18 +847,28 @@ static int run_specific_rebase(struct rebase_options *opts)
         status = run_sequencer_rebase(opts);
     }
     else if (opts->type == REBASE_APPLY)
+    {
         status = run_am(opts);
+    }
     else
+    {
         BUG("Unhandled rebase type %d", opts->type);
+    }
 
     if (opts->dont_finish_rebase)
+    {
         ; /* do nothing */
+    }
     else if (opts->type == REBASE_MERGE)
+    {
         ; /* merge backend cleans up after itself */
+    }
     else if (status == 0)
     {
         if (!file_exists(state_dir_path("stopped-sha", opts)))
+        {
             finish_rebase(opts);
+        }
     }
     else if (status == 2)
     {
@@ -782,11 +887,17 @@ static int run_specific_rebase(struct rebase_options *opts)
 static void parse_rebase_merges_value(struct rebase_options *options, const char *value)
 {
     if (!strcmp("no-rebase-cousins", value))
+    {
         options->rebase_cousins = 0;
+    }
     else if (!strcmp("rebase-cousins", value))
+    {
         options->rebase_cousins = 1;
+    }
     else
+    {
         die(_("Unknown rebase-merges mode: %s"), value);
+    }
 }
 
 static int rebase_config(const char *var, const char *value,
@@ -797,9 +908,13 @@ static int rebase_config(const char *var, const char *value,
     if (!strcmp(var, "rebase.stat"))
     {
         if (git_config_bool(var, value))
+        {
             opts->flags |= REBASE_DIFFSTAT;
+        }
         else
+        {
             opts->flags &= ~REBASE_DIFFSTAT;
+        }
         return 0;
     }
 
@@ -876,10 +991,14 @@ static int checkout_up_to_date(struct rebase_options *options)
     ropts.branch = options->head_name;
     ropts.flags  = RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
     if (!ropts.branch)
+    {
         ropts.flags |= RESET_HEAD_DETACH;
+    }
     ropts.head_msg = buf.buf;
     if (reset_head(the_repository, &ropts) < 0)
+    {
         ret = error(_("could not switch to %s"), options->switch_to);
+    }
     strbuf_release(&buf);
 
     return ret;
@@ -896,9 +1015,13 @@ static int is_linear_history(struct commit *from, struct commit *to)
     {
         repo_parse_commit(the_repository, to);
         if (!to->parents)
+        {
             return 1;
+        }
         if (to->parents->next)
+        {
             return 0;
+        }
         to = to->parents->item;
     }
     return 1;
@@ -912,24 +1035,38 @@ static int can_fast_forward(struct commit *onto, struct commit *upstream,
     int                 res         = 0;
 
     if (is_null_oid(branch_base))
+    {
         goto done; /* fill_branch_base() found multiple merge bases */
+    }
 
     if (!oideq(branch_base, &onto->object.oid))
+    {
         goto done;
+    }
 
     if (restrict_revision && !oideq(&restrict_revision->object.oid, branch_base))
+    {
         goto done;
+    }
 
     if (!upstream)
+    {
         goto done;
+    }
 
     if (repo_get_merge_bases(the_repository, upstream, head, &merge_bases) < 0)
+    {
         exit(128);
+    }
     if (!merge_bases || merge_bases->next)
+    {
         goto done;
+    }
 
     if (!oideq(&onto->object.oid, &merge_bases->item->object.oid))
+    {
         goto done;
+    }
 
     res = 1;
 
@@ -946,11 +1083,17 @@ static void fill_branch_base(struct rebase_options *options,
     if (repo_get_merge_bases(the_repository, options->onto,
                              options->orig_head, &merge_bases)
         < 0)
+    {
         exit(128);
+    }
     if (!merge_bases || merge_bases->next)
+    {
         oidcpy(branch_base, null_oid());
+    }
     else
+    {
         oidcpy(branch_base, &merge_bases->item->object.oid);
+    }
 
     free_commit_list(merge_bases);
 }
@@ -963,7 +1106,9 @@ static int parse_opt_am(const struct option *opt, const char *arg, int unset)
     BUG_ON_OPT_ARG(arg);
 
     if (opts->type != REBASE_UNSPECIFIED && opts->type != REBASE_APPLY)
+    {
         die(_("apply options and merge options cannot be used together"));
+    }
 
     opts->type = REBASE_APPLY;
 
@@ -979,7 +1124,9 @@ static int parse_opt_merge(const struct option *opt, const char *arg, int unset)
     BUG_ON_OPT_ARG(arg);
 
     if (opts->type != REBASE_UNSPECIFIED && opts->type != REBASE_MERGE)
+    {
         die(_("apply options and merge options cannot be used together"));
+    }
 
     opts->type = REBASE_MERGE;
 
@@ -996,7 +1143,9 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
     BUG_ON_OPT_ARG(arg);
 
     if (opts->type != REBASE_UNSPECIFIED && opts->type != REBASE_MERGE)
+    {
         die(_("apply options and merge options cannot be used together"));
+    }
 
     opts->type = REBASE_MERGE;
     opts->flags |= REBASE_INTERACTIVE_EXPLICIT;
@@ -1007,8 +1156,10 @@ static int parse_opt_interactive(const struct option *opt, const char *arg,
 static enum empty_type parse_empty_value(const char *value)
 {
     if (!strcasecmp(value, "drop"))
+    {
         return EMPTY_DROP;
-    else if (!strcasecmp(value, "keep"))
+    }
+    if (!strcasecmp(value, "keep"))
         return EMPTY_KEEP;
     else if (!strcasecmp(value, "stop"))
         return EMPTY_STOP;
@@ -1088,7 +1239,9 @@ static void NORETURN error_on_missing_default_upstream(void)
         const char *remote = current_branch->remote_name;
 
         if (!remote)
+        {
             remote = _("<remote>");
+        }
 
         printf(_("If you wish to set tracking information for this "
                  "branch you can do so with:\n"
@@ -1103,11 +1256,15 @@ static void NORETURN error_on_missing_default_upstream(void)
 static int check_exec_cmd(const char *cmd)
 {
     if (strchr(cmd, '\n'))
+    {
         return error(_("exec commands cannot contain newlines"));
+    }
 
     /* Does the command consist purely of whitespace? */
     if (!cmd[strspn(cmd, " \t\r\f\v")])
+    {
         return error(_("empty exec command"));
+    }
 
     return 0;
 }
@@ -1117,7 +1274,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     struct rebase_options  options = REBASE_OPTIONS_INIT;
     const char            *branch_name;
     const char            *strategy_opt = NULL;
-    int                    ret, flags, total_argc, in_progress = 0;
+    int                    ret;
+    int                    flags;
+    int                    total_argc;
+    int                    in_progress           = 0;
     int                    keep_base             = 0;
     int                    ok_to_skip_pre_rebase = 0;
     struct strbuf          msg                   = STRBUF_INIT;
@@ -1250,8 +1410,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     int i;
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage_with_options(builtin_rebase_usage,
                            builtin_rebase_options);
+    }
 
     prepare_repo_settings(the_repository);
     the_repository->settings.command_requires_full_index = 0;
@@ -1264,7 +1426,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     strbuf_reset(&buf);
     strbuf_addf(&buf, "%s/applying", apply_dir());
     if (file_exists(buf.buf))
+    {
         die(_("It looks like 'git am' is in progress. Cannot rebase."));
+    }
 
     if (is_directory(apply_dir()))
     {
@@ -1288,13 +1452,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             strbuf_addf(&buf, "%s/interactive", merge_dir());
             options.type = REBASE_MERGE;
             if (file_exists(buf.buf))
+            {
                 options.flags |= REBASE_INTERACTIVE_EXPLICIT;
+            }
         }
         options.state_dir = merge_dir();
     }
 
     if (options.type != REBASE_UNSPECIFIED)
+    {
         in_progress = 1;
+    }
 
     total_argc = argc;
     argc       = parse_options(argc, argv, prefix,
@@ -1302,10 +1470,12 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
                                builtin_rebase_usage, 0);
 
     if (preserve_merges_selected)
+    {
         die(_(
             "--preserve-merges was replaced by --rebase-merges\n"
             "Note: Your `pull.rebase` configuration may also be set to 'preserve',\n"
             "which is no longer supported; use 'merges' instead"));
+    }
 
     if (options.action != ACTION_NONE && total_argc != 2)
     {
@@ -1314,41 +1484,61 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     }
 
     if (argc > 2)
+    {
         usage_with_options(builtin_rebase_usage,
                            builtin_rebase_options);
+    }
 
     if (keep_base)
     {
         if (options.onto_name)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--keep-base", "--onto");
+        }
         if (options.root)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "--keep-base", "--root");
+        }
         /*
          * --keep-base defaults to --no-fork-point to keep the
          * base the same.
          */
         if (options.fork_point < 0)
+        {
             options.fork_point = 0;
+        }
     }
     if (options.root && options.fork_point > 0)
+    {
         die(_("options '%s' and '%s' cannot be used together"), "--root", "--fork-point");
+    }
 
     if (options.action != ACTION_NONE && !in_progress)
+    {
         die(_("no rebase in progress"));
+    }
 
     if (options.action == ACTION_EDIT_TODO && !is_merge(&options))
+    {
         die(_(
             "The --edit-todo action can only be used during "
             "interactive rebase."));
+    }
 
     if (trace2_is_enabled())
     {
         if (is_merge(&options))
+        {
             trace2_cmd_mode("interactive");
+        }
         else if (options.exec.nr)
+        {
             trace2_cmd_mode("interactive-exec");
+        }
         else
+        {
             trace2_cmd_mode(action_names[options.action]);
+        }
     }
 
     options.reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
@@ -1365,15 +1555,21 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
             /* Sanity check */
             if (repo_get_oid(the_repository, "HEAD", &head))
+            {
                 die(_("Cannot read HEAD"));
+            }
 
             fd = repo_hold_locked_index(the_repository, &lock_file, 0);
             if (repo_read_index(the_repository) < 0)
+            {
                 die(_("could not read index"));
+            }
             refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL,
                           NULL);
             if (0 <= fd)
+            {
                 repo_update_index_if_able(the_repository, &lock_file);
+            }
             rollback_lock_file(&lock_file);
 
             if (has_unstaged_changes(the_repository, 1))
@@ -1384,7 +1580,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
                 exit(1);
             }
             if (read_basic_state(&options))
+            {
                 exit(1);
+            }
             goto run_rebase;
         }
         case ACTION_SKIP:
@@ -1395,10 +1593,14 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             string_list_clear(&merge_rr, 1);
             ropts.flags = RESET_HEAD_HARD;
             if (reset_head(the_repository, &ropts) < 0)
+            {
                 die(_("could not discard worktree changes"));
+            }
             remove_branch_state(the_repository, 0);
             if (read_basic_state(&options))
+            {
                 exit(1);
+            }
             goto run_rebase;
         }
         case ACTION_ABORT:
@@ -1410,7 +1612,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             string_list_clear(&merge_rr, 1);
 
             if (read_basic_state(&options))
+            {
                 exit(1);
+            }
 
             strbuf_addf(&head_msg, "%s (abort): returning to %s",
                         options.reflog_action,
@@ -1421,8 +1625,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             ropts.branch   = options.head_name;
             ropts.flags    = RESET_HEAD_HARD;
             if (reset_head(the_repository, &ropts) < 0)
+            {
                 die(_("could not move back to %s"),
                     oid_to_hex(&options.orig_head->object.oid));
+            }
             strbuf_release(&head_msg);
             remove_branch_state(the_repository, 0);
             ret = finish_rebase(&options);
@@ -1445,8 +1651,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
                 strbuf_addstr(&buf, options.state_dir);
                 ret = remove_dir_recursively(&buf, 0);
                 if (ret)
+                {
                     error(_("could not remove '%s'"),
                           options.state_dir);
+                }
             }
             goto cleanup;
         }
@@ -1488,46 +1696,68 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
         allow_preemptive_ff = 0;
     }
     if (options.committer_date_is_author_date || options.ignore_date)
+    {
         options.flags |= REBASE_FORCE;
+    }
 
     for (i = 0; i < options.git_am_opts.nr; i++)
     {
-        const char *option = options.git_am_opts.v[i], *p;
+        const char *option = options.git_am_opts.v[i];
+        const char *p;
         if (!strcmp(option, "--whitespace=fix") || !strcmp(option, "--whitespace=strip"))
+        {
             allow_preemptive_ff = 0;
+        }
         else if (skip_prefix(option, "-C", &p))
         {
             while (*p)
+            {
                 if (!isdigit(*(p++)))
+                {
                     die(_(
                         "switch `C' expects a "
                         "numerical value"));
+                }
+            }
         }
         else if (skip_prefix(option, "--whitespace=", &p))
         {
-            if (*p && strcmp(p, "warn") && strcmp(p, "nowarn") && strcmp(p, "error") && strcmp(p, "error-all"))
+            if (*p && strcmp(p, "warn") != 0 && strcmp(p, "nowarn") != 0 && strcmp(p, "error") != 0 && strcmp(p, "error-all") != 0)
+            {
                 die("Invalid whitespace option: '%s'", p);
+            }
         }
     }
 
     for (i = 0; i < options.exec.nr; i++)
+    {
         if (check_exec_cmd(options.exec.items[i].string))
+        {
             exit(1);
+        }
+    }
 
     if (!(options.flags & REBASE_NO_QUIET))
+    {
         strvec_push(&options.git_am_opts, "-q");
+    }
 
     if (options.empty != EMPTY_UNSPECIFIED)
+    {
         imply_merge(&options, "--empty");
+    }
 
     if (options.reapply_cherry_picks < 0)
+    {
         /*
          * We default to --no-reapply-cherry-picks unless
          * --keep-base is given; when --keep-base is given, we want
          * to default to --reapply-cherry-picks.
          */
         options.reapply_cherry_picks = keep_base;
+    }
     else if (!keep_base)
+    {
         /*
          * The apply backend always searches for and drops cherry
          * picks.  This is often not wanted with --keep-base, so
@@ -1539,23 +1769,34 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
          * --keep-base is left out.
          */
         imply_merge(&options, options.reapply_cherry_picks ? "--reapply-cherry-picks" : "--no-reapply-cherry-picks");
+    }
 
     if (gpg_sign)
+    {
         options.gpg_sign_opt = xstrfmt("-S%s", gpg_sign);
+    }
 
     if (options.exec.nr)
+    {
         imply_merge(&options, "--exec");
+    }
 
     if (options.type == REBASE_APPLY)
     {
         if (ignore_whitespace)
+        {
             strvec_push(&options.git_am_opts,
                         "--ignore-whitespace");
+        }
         if (options.committer_date_is_author_date)
+        {
             strvec_push(&options.git_am_opts,
                         "--committer-date-is-author-date");
+        }
         if (options.ignore_date)
+        {
             strvec_push(&options.git_am_opts, "--ignore-date");
+        }
     }
     else
     {
@@ -1568,46 +1809,72 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     }
 
     if (strategy_opt)
+    {
         options.strategy = xstrdup(strategy_opt);
+    }
     else if (options.strategy_opts.nr && !options.strategy)
+    {
         options.strategy = xstrdup("ort");
+    }
     if (options.strategy)
+    {
         imply_merge(&options, "--strategy");
+    }
 
     if (options.root && !options.onto_name)
+    {
         imply_merge(&options, "--root without --onto");
+    }
 
     if (isatty(2) && options.flags & REBASE_NO_QUIET)
+    {
         strbuf_addstr(&options.git_format_patch_opt, " --progress");
+    }
 
     if (options.git_am_opts.nr || options.type == REBASE_APPLY)
     {
         /* all am options except -q are compatible only with --apply */
         for (i = options.git_am_opts.nr - 1; i >= 0; i--)
-            if (strcmp(options.git_am_opts.v[i], "-q"))
+        {
+            if (strcmp(options.git_am_opts.v[i], "-q") != 0)
+            {
                 break;
+            }
+        }
 
         if (i >= 0 || options.type == REBASE_APPLY)
         {
             if (is_merge(&options))
+            {
                 die(_(
                     "apply options and merge options "
                     "cannot be used together"));
+            }
             else if (options.rebase_merges == -1 && options.config_rebase_merges == 1)
+            {
                 die(_("apply options are incompatible with rebase.rebaseMerges.  Consider adding --no-rebase-merges"));
+            }
             else if (options.update_refs == -1 && options.config_update_refs == 1)
+            {
                 die(_("apply options are incompatible with rebase.updateRefs.  Consider adding --no-update-refs"));
+            }
             else
+            {
                 options.type = REBASE_APPLY;
+            }
         }
     }
 
     if (options.update_refs == 1)
+    {
         imply_merge(&options, "--update-refs");
+    }
     options.update_refs = (options.update_refs >= 0) ? options.update_refs : ((options.config_update_refs >= 0) ? options.config_update_refs : 0);
 
     if (options.rebase_merges == 1)
+    {
         imply_merge(&options, "--rebase-merges");
+    }
     options.rebase_merges = (options.rebase_merges >= 0) ? options.rebase_merges : ((options.config_rebase_merges >= 0) ? options.config_rebase_merges : 0);
 
     if (options.autosquash == 1)
@@ -1623,16 +1890,24 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     if (options.type == REBASE_UNSPECIFIED)
     {
         if (!strcmp(options.default_backend, "merge"))
+        {
             options.type = REBASE_MERGE;
+        }
         else if (!strcmp(options.default_backend, "apply"))
+        {
             options.type = REBASE_APPLY;
+        }
         else
+        {
             die(_("Unknown rebase backend: %s"),
                 options.default_backend);
+        }
     }
 
     if (options.type == REBASE_MERGE && !options.strategy && getenv("GIT_TEST_MERGE_ALGORITHM"))
+    {
         options.strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
+    }
 
     switch (options.type)
     {
@@ -1649,18 +1924,28 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     if (options.empty == EMPTY_UNSPECIFIED)
     {
         if (options.flags & REBASE_INTERACTIVE_EXPLICIT)
+        {
             options.empty = EMPTY_STOP;
+        }
         else if (options.exec.nr > 0)
+        {
             options.empty = EMPTY_KEEP;
+        }
         else
+        {
             options.empty = EMPTY_DROP;
+        }
     }
     if (reschedule_failed_exec > 0 && !is_merge(&options))
+    {
         die(_(
             "--reschedule-failed-exec requires "
             "--exec or --interactive"));
+    }
     if (reschedule_failed_exec >= 0)
+    {
         options.reschedule_failed_exec = reschedule_failed_exec;
+    }
 
     if (options.signoff)
     {
@@ -1678,9 +1963,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             options.upstream_name = branch_get_upstream(branch,
                                                         NULL);
             if (!options.upstream_name)
+            {
                 error_on_missing_default_upstream();
+            }
             if (options.fork_point < 0)
+            {
                 options.fork_point = 1;
+            }
         }
         else
         {
@@ -1688,12 +1977,16 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             argc--;
             argv++;
             if (!strcmp(options.upstream_name, "-"))
+            {
                 options.upstream_name = "@{-1}";
+            }
         }
         options.upstream =
             lookup_commit_reference_by_name(options.upstream_name);
         if (!options.upstream)
+        {
             die(_("invalid upstream '%s'"), options.upstream_name);
+        }
         options.upstream_arg = options.upstream_name;
     }
     else
@@ -1703,19 +1996,25 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             if (commit_tree("", 0, the_hash_algo->empty_tree, NULL,
                             &squash_onto, NULL, NULL)
                 < 0)
+            {
                 die(_("Could not create new root commit"));
+            }
             options.squash_onto = &squash_onto;
             options.onto_name   = squash_onto_name =
                 xstrdup(oid_to_hex(&squash_onto));
         }
         else
+        {
             options.root_with_onto = 1;
+        }
 
         options.upstream_name = NULL;
         options.upstream      = NULL;
         if (argc > 1)
+        {
             usage_with_options(builtin_rebase_usage,
                                builtin_rebase_options);
+        }
         options.upstream_arg = "--root";
     }
 
@@ -1752,7 +2051,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             options.head_name = NULL;
         }
         if (!options.orig_head)
+        {
             die(_("no such branch/commit '%s'"), branch_name);
+        }
     }
     else if (argc == 0)
     {
@@ -1761,12 +2062,16 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             xstrdup_or_null(refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", 0, NULL,
                                                     &flags));
         if (!options.head_name)
+        {
             die(_("No such ref: %s"), "HEAD");
+        }
         if (flags & REF_ISSYMREF)
         {
             if (!skip_prefix(options.head_name,
                              "refs/heads/", &branch_name))
+            {
                 branch_name = options.head_name;
+            }
         }
         else
         {
@@ -1775,10 +2080,14 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
         }
         options.orig_head = lookup_commit_reference_by_name("HEAD");
         if (!options.orig_head)
+        {
             die(_("Could not resolve HEAD to a commit"));
+        }
     }
     else
+    {
         BUG("unexpected number of arguments left to parse");
+    }
 
     /* Make sure the branch to rebase onto is valid. */
     if (keep_base)
@@ -1790,17 +2099,23 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
         options.onto_name = keep_base_onto_name = xstrdup(buf.buf);
     }
     else if (!options.onto_name)
+    {
         options.onto_name = options.upstream_name;
+    }
     if (strstr(options.onto_name, "..."))
     {
         if (repo_get_oid_mb(the_repository, options.onto_name, &branch_base) < 0)
         {
             if (keep_base)
+            {
                 die(_("'%s': need exactly one merge base with branch"),
                     options.upstream_name);
+            }
             else
+            {
                 die(_("'%s': need exactly one merge base"),
                     options.onto_name);
+            }
         }
         options.onto = lookup_commit_or_die(&branch_base,
                                             options.onto_name);
@@ -1810,24 +2125,34 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
         options.onto =
             lookup_commit_reference_by_name(options.onto_name);
         if (!options.onto)
+        {
             die(_("Does not point to a valid commit '%s'"),
                 options.onto_name);
+        }
         fill_branch_base(&options, &branch_base);
     }
 
     if (keep_base && options.reapply_cherry_picks)
+    {
         options.upstream = options.onto;
+    }
 
     if (options.fork_point > 0)
+    {
         options.restrict_revision =
             get_fork_point(options.upstream_name, options.orig_head);
+    }
 
     if (repo_read_index(the_repository) < 0)
+    {
         die(_("could not read index"));
+    }
 
     if (options.autostash)
+    {
         create_autostash(the_repository,
                          state_dir_path("autostash", &options));
+    }
 
     if (require_clean_work_tree(the_repository, "rebase",
                                 _("Please commit or stash them."), 1, 1))
@@ -1857,32 +2182,48 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
             {
                 ret = checkout_up_to_date(&options);
                 if (ret)
+                {
                     goto cleanup;
+                }
             }
 
             if (!(options.flags & REBASE_NO_QUIET))
+            {
                 ; /* be quiet */
+            }
             else if (!strcmp(branch_name, "HEAD") && refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", 0, NULL, &flag))
+            {
                 puts(_("HEAD is up to date."));
+            }
             else
+            {
                 printf(_("Current branch %s is up to date.\n"),
                        branch_name);
+            }
             ret = finish_rebase(&options);
             goto cleanup;
         }
         else if (!(options.flags & REBASE_NO_QUIET))
+        {
             ; /* be quiet */
+        }
         else if (!strcmp(branch_name, "HEAD") && refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", 0, NULL, &flag))
+        {
             puts(_("HEAD is up to date, rebase forced."));
+        }
         else
+        {
             printf(_("Current branch %s is up to date, rebase "
                      "forced.\n"),
                    branch_name);
+        }
     }
 
     /* If a hook exists, give it a chance to interrupt*/
     if (!ok_to_skip_pre_rebase && run_hooks_l(the_repository, "pre-rebase", options.upstream_arg, argc ? argv[0] : NULL, NULL))
+    {
         die(_("The pre-rebase hook refused to rebase."));
+    }
 
     if (options.flags & REBASE_DIFFSTAT)
     {
@@ -1891,12 +2232,16 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
         if (options.flags & REBASE_VERBOSE)
         {
             if (is_null_oid(&branch_base))
+            {
                 printf(_("Changes to %s:\n"),
                        oid_to_hex(&options.onto->object.oid));
+            }
             else
+            {
                 printf(_("Changes from %s to %s:\n"),
                        oid_to_hex(&branch_base),
                        oid_to_hex(&options.onto->object.oid));
+            }
         }
 
         /* We want color (if set), but no pager */
@@ -1913,13 +2258,17 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     }
 
     if (is_merge(&options))
+    {
         goto run_rebase;
+    }
 
     /* Detach HEAD and reset the tree */
     if (options.flags & REBASE_NO_QUIET)
+    {
         printf(_(
             "First, rewinding head to replay your work on top of "
             "it...\n"));
+    }
 
     strbuf_addf(&msg, "%s (start): checkout %s",
                 options.reflog_action, options.onto_name);
@@ -1929,7 +2278,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
     ropts.head_msg              = msg.buf;
     ropts.default_reflog_action = options.reflog_action;
     if (reset_head(the_repository, &ropts))
+    {
         die(_("Could not detach HEAD"));
+    }
     strbuf_release(&msg);
 
     /*

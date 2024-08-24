@@ -24,15 +24,19 @@ static void get_system_info(struct strbuf *sys_info)
     /* system call for other version info */
     strbuf_addstr(sys_info, "uname: ");
     if (uname(&uname_info))
+    {
         strbuf_addf(sys_info, _("uname() failed with error '%s' (%d)\n"),
                     strerror(errno),
                     errno);
+    }
     else
+    {
         strbuf_addf(sys_info, "%s %s %s %s\n",
                     uname_info.sysname,
                     uname_info.release,
                     uname_info.version,
                     uname_info.machine);
+    }
 
     strbuf_addstr(sys_info, _("compiler info: "));
     get_compiler_info(sys_info);
@@ -61,7 +65,9 @@ static void get_populated_hooks(struct strbuf *hook_info, int nongit)
         const char *hook = *p;
 
         if (hook_exists(the_repository, hook))
+        {
             strbuf_addf(hook_info, "%s\n", hook);
+        }
     }
 }
 
@@ -168,7 +174,9 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
         strbuf_addstr(&zip_path, ".zip");
 
         if (create_diagnostics_archive(&zip_path, diagnose))
+        {
             die_errno(_("unable to create diagnostics archive %s"), zip_path.buf);
+        }
 
         strbuf_release(&zip_path);
     }
@@ -186,7 +194,9 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
     report = xopen(report_path.buf, O_CREAT | O_EXCL | O_WRONLY, 0666);
 
     if (write_in_full(report, buffer.buf, buffer.len) < 0)
+    {
         die_errno(_("unable to write to %s"), report_path.buf);
+    }
 
     close(report);
 
@@ -195,7 +205,9 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
      * path relative to us to give to the editor.
      */
     if (!(prefix && skip_prefix(report_path.buf, prefix, &user_relative_path)))
+    {
         user_relative_path = report_path.buf;
+    }
     fprintf(stderr, _("Created new report at '%s'.\n"),
             user_relative_path);
 

@@ -55,8 +55,10 @@ int cmd_diagnose(int argc, const char **argv, const char *prefix)
 
     /* Prepare diagnostics */
     if (create_diagnostics_archive(&zip_path, mode))
+    {
         die_errno(_("unable to create diagnostics archive %s"),
                   zip_path.buf);
+    }
 
     free(prefixed_filename);
     strbuf_release(&zip_path);

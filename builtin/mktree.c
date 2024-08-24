@@ -26,7 +26,9 @@ static void append_to_tree(unsigned mode, struct object_id *oid, char *path)
     struct treeent *ent;
     size_t          len = strlen(path);
     if (strchr(path, '/'))
+    {
         die("path %s contains slash", path);
+    }
 
     FLEX_ALLOC_MEM(ent, name, path, len);
     ent->mode = mode;
@@ -53,7 +55,9 @@ static void write_tree(struct object_id *oid)
 
     QSORT(entries, used, ent_compare);
     for (size = i = 0; i < used; i++)
+    {
         size += 32 + entries[i]->len;
+    }
 
     strbuf_init(&buf, size);
     for (i = 0; i < used; i++)
@@ -73,13 +77,15 @@ static const char *mktree_usage[] = {
 
 static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 {
-    char              *ptr, *ntr;
+    char              *ptr;
+    char              *ntr;
     const char        *p;
     unsigned           mode;
     enum object_type   mode_type; /* object type derived from mode */
     enum object_type   obj_type;  /* object type derived from sha */
     struct object_info oi = OBJECT_INFO_INIT;
-    char              *path, *to_free = NULL;
+    char              *path;
+    char              *to_free = NULL;
     struct object_id   oid;
 
     ptr = buf;
@@ -89,15 +95,21 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
      */
     mode = strtoul(ptr, &ntr, 8);
     if (ptr == ntr || !ntr || *ntr != ' ')
+    {
         die("input format error: %s", buf);
+    }
     ptr = ntr + 1; /* type */
     ntr = strchr(ptr, ' ');
     if (!ntr || parse_oid_hex(ntr + 1, &oid, &p) || *p != '\t')
+    {
         die("input format error: %s", buf);
+    }
 
     /* It is perfectly normal if we do not have a commit from a submodule */
     if (S_ISGITLINK(mode))
+    {
         allow_missing = 1;
+    }
 
     *ntr++ = 0; /* now at the beginning of SHA1 */
 
@@ -106,7 +118,9 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
     {
         struct strbuf p_uq = STRBUF_INIT;
         if (unquote_c_style(&p_uq, path, NULL))
+        {
             die("invalid quoting");
+        }
         path = to_free = strbuf_detach(&p_uq, NULL);
     }
 
@@ -126,7 +140,9 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
     if (oid_object_info_extended(the_repository, &oid, &oi,
                                  OBJECT_INFO_LOOKUP_REPLACE | OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT)
         < 0)
+    {
         obj_type = -1;
+    }
 
     if (obj_type < 0)
     {
@@ -189,7 +205,9 @@ int cmd_mktree(int ac, const char **av, const char *prefix)
             {
                 /* empty lines denote tree boundaries in batch mode */
                 if (is_batch_mode)
+                {
                     break;
+                }
                 die("input format error: (blank line only valid in batch mode)");
             }
             mktree_line(sb.buf, nul_term_line, allow_missing);

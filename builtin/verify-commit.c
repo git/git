@@ -38,21 +38,29 @@ static int verify_commit(const char *name, unsigned flags)
     struct object   *obj;
 
     if (repo_get_oid(the_repository, name, &oid))
+    {
         return error("commit '%s' not found.", name);
+    }
 
     obj = parse_object(the_repository, &oid);
     if (!obj)
+    {
         return error("%s: unable to read file.", name);
+    }
     if (obj->type != OBJ_COMMIT)
+    {
         return error("%s: cannot verify a non-commit object of type %s.",
                      name, type_name(obj->type));
+    }
 
     return run_gpg_verify((struct commit *)obj, flags);
 }
 
 int cmd_verify_commit(int argc, const char **argv, const char *prefix)
 {
-    int                 i = 1, verbose = 0, had_error = 0;
+    int                 i                       = 1;
+    int                 verbose                 = 0;
+    int                 had_error               = 0;
     unsigned            flags                   = 0;
     const struct option verify_commit_options[] = {
         OPT__VERBOSE(&verbose, N_("print commit contents")),
@@ -64,16 +72,24 @@ int cmd_verify_commit(int argc, const char **argv, const char *prefix)
     argc = parse_options(argc, argv, prefix, verify_commit_options,
                          verify_commit_usage, PARSE_OPT_KEEP_ARGV0);
     if (argc <= i)
+    {
         usage_with_options(verify_commit_usage, verify_commit_options);
+    }
 
     if (verbose)
+    {
         flags |= GPG_VERIFY_VERBOSE;
+    }
 
     /* sometimes the program was terminated because this signal
      * was received in the process of writing the gpg input: */
     signal(SIGPIPE, SIG_IGN);
     while (i < argc)
+    {
         if (verify_commit(argv[i++], flags))
+        {
             had_error = 1;
+        }
+    }
     return had_error;
 }

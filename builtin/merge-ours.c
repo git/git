@@ -18,7 +18,9 @@ static const char builtin_merge_ours_usage[] =
 int cmd_merge_ours(int argc, const char **argv, const char *prefix UNUSED)
 {
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage(builtin_merge_ours_usage);
+    }
 
     /*
      * The contents of the current index becomes the tree we
@@ -26,8 +28,12 @@ int cmd_merge_ours(int argc, const char **argv, const char *prefix UNUSED)
      * through.
      */
     if (repo_read_index(the_repository) < 0)
+    {
         die_errno("read_cache failed");
+    }
     if (index_differs_from(the_repository, "HEAD", NULL, 0))
+    {
         return 2;
+    }
     return 0;
 }

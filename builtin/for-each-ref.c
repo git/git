@@ -18,12 +18,14 @@ static char const *const for_each_ref_usage[] = {
 int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 {
     struct ref_sorting *sorting;
-    struct string_list  sorting_options = STRING_LIST_INIT_DUP;
-    int                 icase = 0, include_root_refs = 0, from_stdin = 0;
-    struct ref_filter   filter = REF_FILTER_INIT;
-    struct ref_format   format = REF_FORMAT_INIT;
-    unsigned int        flags  = FILTER_REFS_REGULAR;
-    struct strvec       vec    = STRVEC_INIT;
+    struct string_list  sorting_options   = STRING_LIST_INIT_DUP;
+    int                 icase             = 0;
+    int                 include_root_refs = 0;
+    int                 from_stdin        = 0;
+    struct ref_filter   filter            = REF_FILTER_INIT;
+    struct ref_format   format            = REF_FORMAT_INIT;
+    unsigned int        flags             = FILTER_REFS_REGULAR;
+    struct strvec       vec               = STRVEC_INIT;
 
     struct option opts[] = {
         OPT_BIT('s', "shell", &format.quote_style,
@@ -75,7 +77,9 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
         usage_with_options(for_each_ref_usage, opts);
     }
     if (verify_ref_format(&format))
+    {
         usage_with_options(for_each_ref_usage, opts);
+    }
 
     sorting = ref_sorting_options(&sorting_options);
     ref_sorting_set_sort_flags_all(sorting, REF_SORTING_ICASE, icase);
@@ -86,10 +90,14 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
         struct strbuf line = STRBUF_INIT;
 
         if (argv[0])
+        {
             die(_("unknown arguments supplied with --stdin"));
+        }
 
         while (strbuf_getline(&line, stdin) != EOF)
+        {
             strvec_push(&vec, line.buf);
+        }
 
         strbuf_release(&line);
 
@@ -102,7 +110,9 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
     }
 
     if (include_root_refs)
+    {
         flags |= FILTER_REFS_ROOT_REFS | FILTER_REFS_DETACHED_HEAD;
+    }
 
     filter.match_as_path = 1;
     filter_and_format_refs(&filter, flags, sorting, &format);

@@ -74,10 +74,14 @@ static void write_eolinfo(struct index_state       *istate,
         const char *w_txt = "";
         const char *a_txt = get_convert_attr_ascii(istate, path);
         if (ce && S_ISREG(ce->ce_mode))
+        {
             i_txt = get_cached_convert_stats_ascii(istate,
                                                    ce->name);
+        }
         if (!lstat(path, &st) && S_ISREG(st.st_mode))
+        {
             w_txt = get_wt_convert_stats_ascii(path);
+        }
         printf("i/%-5s w/%-5s attr/%-17s\t", i_txt, w_txt, a_txt);
     }
 }
@@ -98,9 +102,13 @@ static void write_name_to_buf(struct strbuf *sb, const char *name)
     const char   *rel = relative_path(name, prefix_len ? prefix : NULL, &buf);
 
     if (line_terminator)
+    {
         quote_c_style(rel, sb, NULL, 0);
+    }
     else
+    {
         strbuf_addstr(sb, rel);
+    }
 
     strbuf_release(&buf);
 }
@@ -155,11 +163,15 @@ static void show_dir_entry(struct index_state *istate,
     int len = max_prefix_len;
 
     if (len > ent->len)
+    {
         die("git ls-files: internal error - directory entry not superset of prefix");
+    }
 
     /* If ps_matches is non-NULL, figure out which pathspec(s) match. */
     if (ps_matched)
+    {
         dir_path_match(istate, ent, &pathspec, len, ps_matched);
+    }
 
     fputs(tag, stdout);
     write_eolinfo(istate, NULL, ent->name);
@@ -175,7 +187,9 @@ static void show_other_files(struct index_state      *istate,
     {
         struct dir_entry *ent = dir->entries[i];
         if (!index_name_is_other(istate, ent->name, ent->len))
+        {
             continue;
+        }
         show_dir_entry(istate, tag_other, ent);
     }
 }
@@ -187,8 +201,11 @@ static void show_killed_files(struct index_state      *istate,
     for (i = 0; i < dir->nr; i++)
     {
         struct dir_entry *ent = dir->entries[i];
-        char             *cp, *sp;
-        int               pos, len, killed = 0;
+        char             *cp;
+        char             *sp;
+        int               pos;
+        int               len;
+        int               killed = 0;
 
         for (cp = ent->name; cp - ent->name < ent->len; cp = sp + 1)
         {
@@ -200,20 +217,28 @@ static void show_killed_files(struct index_state      *istate,
                  */
                 pos = index_name_pos(istate, ent->name, ent->len);
                 if (0 <= pos)
+                {
                     BUG("killed-file %.*s not found",
                         ent->len, ent->name);
+                }
                 pos = -pos - 1;
                 while (pos < istate->cache_nr && ce_stage(istate->cache[pos]))
+                {
                     pos++; /* skip unmerged */
+                }
                 if (istate->cache_nr <= pos)
+                {
                     break;
+                }
                 /* pos points at a name immediately after
                  * ent->name in the cache.  Does it expect
                  * ent->name to be a directory?
                  */
                 len = ce_namelen(istate->cache[pos]);
                 if ((ent->len < len) && !strncmp(istate->cache[pos]->name, ent->name, ent->len) && istate->cache[pos]->name[ent->len] == '/')
+                {
                     killed = 1;
+                }
                 break;
             }
             if (0 <= index_name_pos(istate, ent->name, sp - ent->name))
@@ -227,7 +252,9 @@ static void show_killed_files(struct index_state      *istate,
             }
         }
         if (killed)
+        {
             show_dir_entry(istate, tag_killed, dir->entries[i]);
+        }
     }
 }
 
@@ -239,10 +266,14 @@ static void show_submodule(struct repository *superproject,
     struct repository subrepo;
 
     if (repo_submodule_init(&subrepo, superproject, path, null_oid()))
+    {
         return;
+    }
 
     if (repo_read_index(&subrepo) < 0)
+    {
         die("index file corrupt");
+    }
 
     show_files(&subrepo, dir);
 
@@ -256,12 +287,18 @@ static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
     {
         unsigned long size;
         if (oid_object_info(the_repository, oid, &size) < 0)
+        {
             die(_("could not get object info about '%s'"),
                 oid_to_hex(oid));
+        }
         if (padded)
+        {
             strbuf_addf(line, "%7" PRIuMAX, (uintmax_t)size);
+        }
         else
+        {
             strbuf_addf(line, "%" PRIuMAX, (uintmax_t)size);
+        }
     }
     else if (padded)
     {
@@ -284,36 +321,62 @@ static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
         struct stat st;
 
         if (skip_prefix(format, "%", &format))
+        {
             strbuf_addch(&sb, '%');
+        }
         else if ((len = strbuf_expand_literal(&sb, format)))
+        {
             format += len;
+        }
         else if (skip_prefix(format, "(objectmode)", &format))
+        {
             strbuf_addf(&sb, "%06o", ce->ce_mode);
+        }
         else if (skip_prefix(format, "(objectname)", &format))
+        {
             strbuf_add_unique_abbrev(&sb, &ce->oid, abbrev);
+        }
         else if (skip_prefix(format, "(objecttype)", &format))
+        {
             strbuf_addstr(&sb, type_name(object_type(ce->ce_mode)));
+        }
         else if (skip_prefix(format, "(objectsize:padded)", &format))
+        {
             expand_objectsize(&sb, &ce->oid,
                               object_type(ce->ce_mode), 1);
+        }
         else if (skip_prefix(format, "(objectsize)", &format))
+        {
             expand_objectsize(&sb, &ce->oid,
                               object_type(ce->ce_mode), 0);
+        }
         else if (skip_prefix(format, "(stage)", &format))
+        {
             strbuf_addf(&sb, "%d", ce_stage(ce));
+        }
         else if (skip_prefix(format, "(eolinfo:index)", &format))
+        {
             strbuf_addstr(&sb, S_ISREG(ce->ce_mode) ? get_cached_convert_stats_ascii(repo->index,
                                                                                      ce->name)
                                                     : "");
+        }
         else if (skip_prefix(format, "(eolinfo:worktree)", &format))
+        {
             strbuf_addstr(&sb, !lstat(fullname, &st) && S_ISREG(st.st_mode) ? get_wt_convert_stats_ascii(fullname) : "");
+        }
         else if (skip_prefix(format, "(eolattr)", &format))
+        {
             strbuf_addstr(&sb, get_convert_attr_ascii(repo->index,
                                                       fullname));
+        }
         else if (skip_prefix(format, "(path)", &format))
+        {
             write_name_to_buf(&sb, fullname);
+        }
         else
+        {
             strbuf_expand_bad_format(format, "ls-files");
+        }
     }
     strbuf_addch(&sb, line_terminator);
     fwrite(sb.buf, sb.len, 1, stdout);
@@ -325,7 +388,9 @@ static void show_ce(struct repository *repo, struct dir_struct *dir,
                     const char *tag)
 {
     if (max_prefix_len > strlen(fullname))
+    {
         die("git ls-files: internal error - cache entry not superset of prefix");
+    }
 
     if (recurse_submodules && S_ISGITLINK(ce->ce_mode) && is_submodule_active(repo, ce->name))
     {
@@ -367,24 +432,33 @@ static void show_ru_info(struct index_state *istate)
     struct string_list_item *item;
 
     if (!istate->resolve_undo)
+    {
         return;
+    }
 
     for_each_string_list_item(item, istate->resolve_undo)
     {
         const char               *path = item->string;
         struct resolve_undo_info *ui   = item->util;
-        int                       i, len;
+        int                       i;
+        int                       len;
 
         len = strlen(path);
         if (len < max_prefix_len)
+        {
             continue; /* outside of the prefix */
+        }
         if (!match_pathspec(istate, &pathspec, path, len,
                             max_prefix_len, ps_matched, 0))
+        {
             continue; /* uninterested */
+        }
         for (i = 0; i < 3; i++)
         {
             if (!ui->mode[i])
+            {
                 continue;
+            }
             printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
                    repo_find_unique_abbrev(the_repository, &ui->oid[i], abbrev),
                    i + 1);
@@ -405,7 +479,9 @@ static void construct_fullname(struct strbuf *out, const struct repository *repo
 {
     strbuf_reset(out);
     if (repo->submodule_prefix)
+    {
         strbuf_addstr(out, repo->submodule_prefix);
+    }
     strbuf_addstr(out, ce->name);
 }
 
@@ -418,19 +494,29 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
     if (show_others || show_killed)
     {
         if (!show_others)
+        {
             dir->flags |= DIR_COLLECT_KILLED_ONLY;
+        }
         fill_directory(dir, repo->index, &pathspec);
         if (show_others)
+        {
             show_other_files(repo->index, dir);
+        }
         if (show_killed)
+        {
             show_killed_files(repo->index, dir);
+        }
     }
 
     if (!(show_cached || show_stage || show_deleted || show_modified))
+    {
         return;
+    }
 
     if (!show_sparse_dirs)
+    {
         ensure_full_index(repo->index);
+    }
 
     for (i = 0; i < repo->index->cache_nr; i++)
     {
@@ -441,35 +527,51 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
         construct_fullname(&fullname, repo, ce);
 
         if ((dir->flags & DIR_SHOW_IGNORED) && !ce_excluded(dir, repo->index, fullname.buf, ce))
+        {
             continue;
+        }
         if (ce->ce_flags & CE_UPDATE)
+        {
             continue;
+        }
         if ((show_cached || show_stage) && (!show_unmerged || ce_stage(ce)))
         {
             show_ce(repo, dir, ce, fullname.buf,
                     ce_stage(ce) ? tag_unmerged : (ce_skip_worktree(ce) ? tag_skip_worktree : tag_cached));
             if (skipping_duplicates)
+            {
                 goto skip_to_next_name;
+            }
         }
 
         if (!(show_deleted || show_modified))
+        {
             continue;
+        }
         if (ce_skip_worktree(ce))
+        {
             continue;
+        }
         stat_err = lstat(fullname.buf, &st);
         if (stat_err && (errno != ENOENT && errno != ENOTDIR))
+        {
             error_errno("cannot lstat '%s'", fullname.buf);
+        }
         if (stat_err && show_deleted)
         {
             show_ce(repo, dir, ce, fullname.buf, tag_removed);
             if (skipping_duplicates)
+            {
                 goto skip_to_next_name;
+            }
         }
         if (show_modified && (stat_err || ie_modified(repo->index, ce, &st, 0)))
         {
             show_ce(repo, dir, ce, fullname.buf, tag_modified);
             if (skipping_duplicates)
+            {
                 goto skip_to_next_name;
+            }
         }
         continue;
 
@@ -478,8 +580,12 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
         int                  j;
         struct cache_entry **cache = repo->index->cache;
         for (j = i + 1; j < repo->index->cache_nr; j++)
-            if (strcmp(ce->name, cache[j]->name))
+        {
+            if (strcmp(ce->name, cache[j]->name) != 0)
+            {
                 break;
+            }
+        }
         i = j - 1; /* compensate for the for loop */
     }
     }
@@ -494,13 +600,18 @@ static void prune_index(struct index_state *istate,
                         const char *prefix, size_t prefixlen)
 {
     int          pos;
-    unsigned int first, last;
+    unsigned int first;
+    unsigned int last;
 
     if (!prefix || !istate->cache_nr)
+    {
         return;
+    }
     pos = index_name_pos(istate, prefix, prefixlen);
     if (pos < 0)
+    {
         pos = -pos - 1;
+    }
     first = pos;
     last  = istate->cache_nr;
     while (last > first)
@@ -523,7 +634,9 @@ static int get_common_prefix_len(const char *common_prefix)
     int common_prefix_len;
 
     if (!common_prefix)
+    {
         return 0;
+    }
 
     common_prefix_len = strlen(common_prefix);
 
@@ -532,7 +645,9 @@ static int get_common_prefix_len(const char *common_prefix)
      * be pruned from the index.
      */
     if (common_prefix[common_prefix_len - 1] == '/')
+    {
         common_prefix_len--;
+    }
 
     return common_prefix_len;
 }
@@ -583,7 +698,9 @@ static int option_parse_exclude_standard(const struct option *opt,
 
 int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 {
-    int                  require_work_tree = 0, show_tag = 0, i;
+    int                  require_work_tree = 0;
+    int                  show_tag          = 0;
+    int                  i;
     char                *max_prefix;
     struct dir_struct    dir = DIR_INIT;
     struct pattern_list *pl;
@@ -658,18 +775,24 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
     int ret = 0;
 
     if (argc == 2 && !strcmp(argv[1], "-h"))
+    {
         usage_with_options(ls_files_usage, builtin_ls_files_options);
+    }
 
     prepare_repo_settings(the_repository);
     the_repository->settings.command_requires_full_index = 0;
 
     prefix = cmd_prefix;
     if (prefix)
+    {
         prefix_len = strlen(prefix);
+    }
     git_config(git_default_config, NULL);
 
     if (repo_read_index(the_repository) < 0)
+    {
         die("index file corrupt");
+    }
 
     argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
                          ls_files_usage, 0);
@@ -680,9 +803,11 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
     }
 
     if (format && (show_stage || show_others || show_killed || show_resolve_undo || skipping_duplicates || show_eol || show_tag))
+    {
         usage_msg_opt(_("--format cannot be used with -s, -o, -k, -t, "
                         "--resolve-undo, --deduplicate, --eol"),
                       ls_files_usage, builtin_ls_files_options);
+    }
 
     if (show_tag || show_valid_bit || show_fsmonitor_bit)
     {
@@ -696,27 +821,41 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
         tag_resolve_undo  = "U ";
     }
     if (show_modified || show_others || show_deleted || (dir.flags & DIR_SHOW_IGNORED) || show_killed)
+    {
         require_work_tree = 1;
+    }
     if (show_unmerged)
+    {
         /*
          * There's no point in showing unmerged unless
          * you also show the stage information.
          */
         show_stage = 1;
+    }
     if (show_tag || show_stage)
+    {
         skipping_duplicates = 0;
+    }
     if (dir.exclude_per_dir)
+    {
         exc_given = 1;
+    }
 
     if (require_work_tree && !is_inside_work_tree())
+    {
         setup_work_tree();
+    }
 
     if (recurse_submodules && (show_deleted || show_others || show_unmerged || show_killed || show_modified || show_resolve_undo || with_tree))
+    {
         die("ls-files --recurse-submodules unsupported mode");
+    }
 
     if (recurse_submodules && error_unmatch)
+    {
         die("ls-files --recurse-submodules does not support "
             "--error-unmatch");
+    }
 
     parse_pathspec(&pathspec, 0,
                    PATHSPEC_PREFER_CWD,
@@ -731,26 +870,38 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
      * submodule.
      */
     if (recurse_submodules)
+    {
         max_prefix = NULL;
+    }
     else
+    {
         max_prefix = common_prefix(&pathspec);
+    }
     max_prefix_len = get_common_prefix_len(max_prefix);
 
     prune_index(the_repository->index, max_prefix, max_prefix_len);
 
     /* Treat unmatching pathspec elements as errors */
     if (pathspec.nr && error_unmatch)
+    {
         ps_matched = xcalloc(pathspec.nr, 1);
+    }
 
     if ((dir.flags & DIR_SHOW_IGNORED) && !show_others && !show_cached)
+    {
         die("ls-files -i must be used with either -o or -c");
+    }
 
     if ((dir.flags & DIR_SHOW_IGNORED) && !exc_given)
+    {
         die("ls-files --ignored needs some exclude pattern");
+    }
 
     /* With no flags, we default to showing the cached files */
     if (!(show_stage || show_deleted || show_others || show_unmerged || show_killed || show_modified || show_resolve_undo))
+    {
         show_cached = 1;
+    }
 
     if (with_tree)
     {
@@ -759,14 +910,18 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
          * would not make any sense with this option.
          */
         if (show_stage || show_unmerged)
+        {
             die(_("options '%s' and '%s' cannot be used together"), "ls-files --with-tree", "-s/-u");
+        }
         overlay_tree_on_index(the_repository->index, with_tree, max_prefix);
     }
 
     show_files(the_repository, &dir);
 
     if (show_resolve_undo)
+    {
         show_ru_info(the_repository->index);
+    }
 
     if (ps_matched && report_path_error(ps_matched, &pathspec))
     {
